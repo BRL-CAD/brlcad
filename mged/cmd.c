@@ -50,13 +50,20 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #endif
 
-#ifdef MGED_TCL
+#ifndef XMGED
 #  define XLIB_ILLEGAL_ACCESS	/* necessary on facist SGI 5.0.1 */
 #  include "tcl.h"
 #  include "tk.h"
 #endif
 
-#ifdef XMGED
+#ifndef FALSE
+#define FALSE 0
+#endif
+
+#ifndef TRUE
+#define TRUE 1
+#endif
+
 #ifndef False
 #define False (0)
 #endif
@@ -65,6 +72,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define True (1)
 #endif
 
+#ifdef XMGED
 #define DEFSHELL "/bin/sh"
 #define TIME_STR_SIZE 32
 #define NFUNC   ( (sizeof(funtab)) / (sizeof(struct funtab)) )
@@ -152,7 +160,8 @@ extern void	sync();
 
 int	inpara;			/* parameter input from keyboard */
 
-extern int	cmd_glob();
+extern int cmd_glob(), cmd_glob_args();
+extern Tcl_CmdProc cmd_expand, cmd_db;
 
 int	f_matpick();
 int	mged_cmd();
@@ -161,8 +170,9 @@ int	f_shells();
 int	f_arced();
 int	f_xpush();
 
-#ifdef MGED_TCL
+#ifndef XMGED
 int	f_gui();
+int	f_tk();
 
 int gui_mode = 0;
 char text_widget_name[200];
@@ -178,411 +188,405 @@ FILE *journalfp;
 int firstjournal;
 
 struct funtab {
-	char *ft_name;
-	char *ft_parms;
-	char *ft_comment;
-	int (*ft_func)();
-	int ft_min;
-	int ft_max;
+    char *ft_name;
+    char *ft_parms;
+    char *ft_comment;
+    int (*ft_func)();
+    int ft_min;
+    int ft_max;
+    int tcl_converted;
 };
 
 static struct funtab funtab[] = {
 "", "", "Primary command Table.",
-	0, 0, 0,
+        0, 0, 0, FALSE,
 "?", "", "summary of available commands",
-	f_fhelp,0,MAXARGS,
+        f_fhelp,0,MAXARGS,FALSE,
 "%", "", "escape to interactive shell",
-	f_comm,1,1,
+	f_comm,1,1,FALSE,
 "3ptarb", "", "makes arb given 3 pts, 2 coord of 4th pt, and thickness",
-	f_3ptarb, 1, 27,
+	f_3ptarb, 1, 27,FALSE,
 "adc", "[<a1|a2|dst|dh|dv|hv|dx|dy|dz|xyz|reset|help> value(s)]",
 	"control the angle/distance cursor",
-        f_adc, 1, 5,
+        f_adc, 1, 5, FALSE,
 "ae", "azim elev", "set view using az and elev angles",
-	f_aeview, 3, 3,
+	f_aeview, 3, 3, FALSE,
 #ifdef XMGED
 "aip", "[fb]", "advance illumination pointer or path position forward or backward",
-        f_aip, 1, 2,
+        f_aip, 1, 2, FALSE,
 "alias", "[name definition]", "lists or creates an alias",
-	f_alias, 1, MAXARGS,
+	f_alias, 1, MAXARGS, FALSE,
 #endif
 "analyze", "[arbname]", "analyze faces of ARB",
-	f_analyze,1,MAXARGS,
+	f_analyze,1,MAXARGS,FALSE,
 "arb", "name rot fb", "make arb8, rotation + fallback",
-	f_arbdef,4,4,
+	f_arbdef,4,4,FALSE,
 "arced", "a/b ...anim_command...", "edit matrix or materials on combination's arc",
-	f_arced, 3,MAXARGS,
+	f_arced, 3,MAXARGS,FALSE,
 "area", "[endpoint_tolerance]", "calculate presented area of view",
-	f_area, 1, 2,
+	f_area, 1, 2, FALSE,
 "attach", "[device]", "attach to a display processor, or NU",
-	f_attach,1,2,
+	f_attach,1,2,FALSE,
 "B", "<objects>", "clear screen, edit objects",
-	f_blast,2,MAXARGS,
+	f_blast,2,MAXARGS,FALSE,
 "bev",	"[-t] [-P#] new_obj obj1 op obj2 op obj3 op ...", "Boolean evaluation of objects via NMG's",
-	f_bev, 2, MAXARGS,
+	f_bev, 2, MAXARGS, FALSE,
 #ifdef XMGED
 "bindkey", "[key] [command]", "bind key to a command",
-        f_bindkey, 1, MAXARGS,
+        f_bindkey, 1, MAXARGS, FALSE,
 "button", "number", "simulates a button press, not intended for the user",
-	f_button, 2, 2,
+	f_button, 2, 2, FALSE,
 #endif
 "cat", "<objects>", "list attributes (brief)",
-	f_cat,2,MAXARGS,
+	f_cat,2,MAXARGS,FALSE,
 "center", "x y z", "set view center",
-	f_center, 4,4,
+	f_center, 4,4, FALSE,
 #ifdef XMGED
 "closew", "[host]", "close drawing window associated with host",
-	f_closew, 1, 2,
+	f_closew, 1, 2, FALSE,
 #endif
 "color", "low high r g b str", "make color entry",
-	f_color, 7, 7,
+	f_color, 7, 7, FALSE,
 "comb", "comb_name <operation solid>", "create or extend combination w/booleans",
-	f_comb,4,MAXARGS,
-#ifdef MGED_TCL
-"mconcat", "file [prefix]", "concatenate 'file' onto end of present database.  Run 'dup file' first.",
-	f_concat, 2, 3,
-#else
-"concat", "file [prefix]", "concatenate 'file' onto end of present database.  Run 'dup file' first.",
-	f_concat, 2, 3,
-#endif
+	f_comb,4,MAXARGS,FALSE,
+"dbconcat", "file [prefix]", "concatenate 'file' onto end of present database.  Run 'dup file' first.",
+	f_concat, 2, 3, FALSE,
 "copyeval", "new_solid path_to_old_solid (seperate path components with spaces, not /)",
 	"copy an 'evaluated' path solid",
-	f_copyeval, 1, 27,
+	f_copyeval, 1, 27, FALSE,
 "cp", "from to", "copy [duplicate] object",
-	f_copy,3,3,
+	f_copy,3,3, FALSE,
 #ifdef XMGED
 "cue", "", "toggle cueing",
-        f_cue, 1, 1,
+        f_cue, 1, 1, FALSE,
 #endif
 "cpi", "from to", "copy cylinder and position at end of original cylinder",
-	f_copy_inv,3,3,
+	f_copy_inv,3,3,FALSE,
 "d", "<objects>", "delete list of objects",
-	f_delobj,2,MAXARGS,
+	f_delobj,2,MAXARGS,FALSE,
+"db", "command", "database manipulation routines",
+	cmd_db, 1, MAXARGS, TRUE,
 "debugdir", "", "Print in-memory directory, for debugging",
-	f_debugdir, 1, 1,
+	f_debugdir, 1, 1, FALSE,
 "debuglib", "[hex_code]", "Show/set debugging bit vector for librt",
-	f_debuglib,1,2,
+	f_debuglib,1,2,FALSE,
 "debugmem", "", "Print librt memory use map",
-	f_debugmem, 1, 1,
+	f_debugmem, 1, 1, FALSE,
 "debugnmg", "[hex code]", "Show/set debugging bit vector for NMG",
-	f_debugnmg,1,2,
+	f_debugnmg,1,2,FALSE,
 "delay", "sec usec", "Delay for the specified amount of time",
-	f_delay,3,3,
-"dm", "set var=val", "Do display-manager specific command",
-	f_dm, 2, MAXARGS,
+	f_delay,3,3,FALSE,
+"dm", "set var [val]", "Do display-manager specific command",
+	f_dm, 2, MAXARGS, FALSE,
 "dup", "file [prefix]", "check for dup names in 'file'",
-	f_dup, 2, 3,
+	f_dup, 2, 3, FALSE,
 "E", "<objects>", "evaluated edit of objects",
-	f_evedit,2,MAXARGS,
+	f_evedit,2,MAXARGS,FALSE,
 "e", "<objects>", "edit objects",
-	f_edit,2,MAXARGS,
+	f_edit,2,MAXARGS,FALSE,
 "echo", "[text]", "echo arguments back",
-	f_echo, 1, MAXARGS,
+	f_echo, 1, MAXARGS, FALSE,
 "edcodes", "object(s)", "edit region ident codes",
-	f_edcodes, 2, MAXARGS,
+	f_edcodes, 2, MAXARGS, FALSE,
 "edcolor", "", "text edit color table",
-	f_edcolor, 1, 1,
+	f_edcolor, 1, 1, FALSE,
 "edcomb", "combname Regionflag regionid air los [GIFTmater]", "edit combination record info",
-	f_edcomb,6,7,
+	f_edcomb,6,7,FALSE,
 "edgedir", "[delta_x delta_y delta_z]|[rot fb]", "define direction of ARB edge being moved",
-	f_edgedir, 3, 4,
+	f_edgedir, 3, 4, FALSE,
 "ev",	"[-dnqsuvwT] [-P #] <objects>", "evaluate objects via NMG tessellation",
-	f_ev, 2, MAXARGS,
+	f_ev, 2, MAXARGS, FALSE,
 "eqn", "A B C", "planar equation coefficients",
-	f_eqn, 4, 4,
+	f_eqn, 4, 4, FALSE,
 "extrude", "#### distance", "extrude dist from face",
-	f_extrude,3,3,
+	f_extrude,3,3,FALSE,
+"expand", "wildcard expression", "expands wildcard expression",
+        cmd_expand, 1, MAXARGS, TRUE,
 "facedef", "####", "define new face for an arb",
-	f_facedef, 2, MAXARGS,
+	f_facedef, 2, MAXARGS, FALSE,
 "facetize", "[-t] [-P#] new_obj old_obj(s)", "convert objects to faceted NMG objects at current tol",
-	f_facetize, 3, MAXARGS,
+	f_facetize, 3, MAXARGS, FALSE,
 "find", "<objects>", "find all references to objects",
-	f_find, 1, MAXARGS,
+	f_find, 1, MAXARGS, FALSE,
 "fix", "", "fix display after hardware error",
-	f_fix,1,1,
+	f_fix,1,1,FALSE,
 "fracture", "NMGsolid [prefix]", "fracture an NMG solid into many NMG solids, each containing one face\n",
-	f_fracture, 2, 3,
+	f_fracture, 2, 3, FALSE,
 "g", "groupname <objects>", "group objects",
-	f_group,3,MAXARGS,
-#ifdef MGED_TCL
+	f_group,3,MAXARGS,FALSE,
+#ifndef XMGED
 "gui",	"text_widget_name", "Bring up a Tcl/Tk Graphical User Interface",
-	f_gui, 2, 2,
+	f_gui, 2, 2, FALSE,
 #endif
 #ifdef HIDELINE
 "H", "plotfile [step_size %epsilon]", "produce hidden-line unix-plot",
-	f_hideline,2,4,
+	f_hideline,2,4,FALSE,
 #endif
 "help", "[commands]", "give usage message for given commands",
-	f_help,0,MAXARGS,
+	f_help,0,MAXARGS,FALSE,
 #ifdef XMGED
 "history", "[N]", "print out history of commands or last N commands",
-	f_history,1, 2,
+	f_history,1, 2,FALSE,
 #else
-"history", "[-delays]", "describe command history",
-	f_history, 1, 4,
+"hist", "[-delays]", "describe command history",
+	f_history, 1, 4,FALSE,
 #endif
 "i", "obj combination [operation]", "add instance of obj to comb",
-	f_instance,3,4,
+	f_instance,3,4,FALSE,
 "idents", "file object(s)", "make ascii summary of region idents",
-	f_tables, 3, MAXARGS,
+	f_tables, 3, MAXARGS, FALSE,
 #ifdef XMGED
 "iknob", "id [val]", "increment knob value",
-       f_knob,2,3,
+       f_knob,2,3, FALSE,
 #endif
 "ill", "name", "illuminate object",
-	f_ill,2,2,
+	f_ill,2,2,FALSE,
 "in", "[-f] [-s] parameters...", "keyboard entry of solids.  -f for no drawing, -s to enter solid edit",
-	f_in, 1, MAXARGS,
+	f_in, 1, MAXARGS, FALSE,
 "inside", "", "finds inside solid per specified thicknesses",
-	f_inside, 1, MAXARGS,
+	f_inside, 1, MAXARGS, FALSE,
 #ifdef XMGED
 "irot", "x y z", "incremental/relative rotate",
-        f_irot, 4, 4,
+        f_irot, 4, 4, FALSE,
 #endif
 "item", "region item [air]", "change item # or air code",
-	f_itemair,3,4,
+	f_itemair,3,4,FALSE,
 #ifdef XMGED
 "itran", "x y z", "incremental/relative translate using normalized screen coordinates",
-        f_tran, 4, 4,
+        f_tran, 4, 4,FALSE,
 #endif
 "joint", "command [options]", "articualtion/animation commands",
-	f_joint, 1, MAXARGS,
+	f_joint, 1, MAXARGS, FALSE,
 #ifdef XMGED
 "journal", "[file]", "toggle journaling on or off",
-	f_journal, 1, 2,
+	f_journal, 1, 2, FALSE,
 #else
 "journal", "fileName", "record all commands and timings to journal",
-	f_journal, 1, 2,
+	f_journal, 1, 2, FALSE,
 #endif
 "keep", "keep_file object(s)", "save named objects in specified file",
-	f_keep, 3, MAXARGS,
+	f_keep, 3, MAXARGS, FALSE,
 "keypoint", "[x y z | reset]", "set/see center of editing transformations",
-	f_keypoint,1,4,
+	f_keypoint,1,4, FALSE,
 "kill", "[-f] <objects>", "delete object[s] from file",
-	f_kill,2,MAXARGS,
+	f_kill,2,MAXARGS,FALSE,
 "killall", "<objects>", "kill object[s] and all references",
-	f_killall, 2, MAXARGS,
+	f_killall, 2, MAXARGS,FALSE,
 "killtree", "<object>", "kill complete tree[s] - BE CAREFUL",
-	f_killtree, 2, MAXARGS,
+	f_killtree, 2, MAXARGS, FALSE,
 "knob", "id [val]", "emulate knob twist",
-	f_knob,2,3,
+	f_knob,2,3, FALSE,
 "l", "<objects>", "list attributes (verbose)",
-	f_list,2,MAXARGS,
+	f_list,2,MAXARGS, FALSE,
 "labelvert", "object[s]", "label vertices of wireframes of objects",
-	f_labelvert, 2, MAXARGS,
+	f_labelvert, 2, MAXARGS, FALSE,
 #ifdef XMGED
 "light", "", "toggle lighting",
-        f_light, 1, 1,
+        f_light, 1, 1, FALSE,
 #endif
 "listeval", "", "lists 'evaluated' path solids",
-	f_pathsum, 1, MAXARGS,
+	f_pathsum, 1, MAXARGS, FALSE,
+#ifndef XMGED
+"loadtk", "", "Initializes Tk",
+        f_tk, 1, 1, FALSE,
+#endif
 "ls", "", "table of contents",
-	dir_print,1,MAXARGS,
+	dir_print,1,MAXARGS, FALSE,
 "M", "1|0 xpos ypos", "handle a mouse event",
-	f_mouse, 4,4,
+	f_mouse, 4,4, FALSE,
 "make", "name <arb8|sph|ellg|tor|tgc|rpc|rhc|epa|ehy|eto|part|grip|half|nmg>", "create a primitive",
-	f_make,3,3,
+	f_make,3,3,FALSE,
 "mater", "comb [material]", "assign/delete material to combination",
-	f_mater,2,3,
+	f_mater,2,3,FALSE,
 "matpick", "# or a/b", "select arc which has matrix to be edited, in O_PATH state",
-	f_matpick, 2,2,
+	f_matpick, 2,2,FALSE,
 "memprint", "", "print memory maps",
-	f_memprint, 1, 1,
+	f_memprint, 1, 1,FALSE,
 "mirface", "#### axis", "mirror an ARB face",
-	f_mirface,3,3,
+	f_mirface,3,3,FALSE,
 "mirror", "old new axis", "Arb mirror ??",
-	f_mirror,4,4,
+	f_mirror,4,4,FALSE,
 "mv", "old new", "rename object",
-	f_name,3,3,
+	f_name,3,3,FALSE,
 "mvall", "oldname newname", "rename object everywhere",
-	f_mvall, 3, 3,
+	f_mvall, 3, 3,FALSE,
 "nirt", "", "trace a single ray from current view",
-	f_nirt,1,MAXARGS,
+	f_nirt,1,MAXARGS,FALSE,
 "opendb", "database.g", "Close current .g file, and open new .g file",
-	f_opendb, 2, 2,
+	f_opendb, 2, 2,FALSE,
 #ifdef XMGED
 "openw", "[host]", "open a drawing window on host",
-	f_openw, 1, 2,
+	f_openw, 1, 2,FALSE,
 #endif
 "orientation", "x y z w", "Set view direction from quaternion",
-	f_orientation, 5, 5,
+	f_orientation, 5, 5,FALSE,
 "orot", "xdeg ydeg zdeg", "rotate object being edited",
-	f_rot_obj, 4, 4,
+	f_rot_obj, 4, 4,FALSE,
 "overlay", "file.plot [name]", "Read UNIX-Plot as named overlay",
-	f_overlay, 2, 3,
+	f_overlay, 2, 3,FALSE,
 "p", "dx [dy dz]", "set parameters",
-	f_param,2,4,
+	f_param,2,4,FALSE,
 "paths", "pattern", "lists all paths matching input path",
-	f_pathsum, 1, MAXARGS,
+	f_pathsum, 1, MAXARGS,FALSE,
 "permute", "tuple", "permute vertices of an ARB",
-	f_permute,2,2,
+	f_permute,2,2,FALSE,
 #ifdef XMGED
 "perspective", "[n]", "toggle perspective",
-        f_perspective, 1, 2,
+        f_perspective, 1, 2,FALSE,
 #endif
 "plot", "[-float] [-zclip] [-2d] [-grid] [out_file] [|filter]", "make UNIX-plot of view",
-	f_plot, 2, MAXARGS,
+	f_plot, 2, MAXARGS,FALSE,
 "polybinout", "file", "store vlist polygons into polygon file (experimental)",
-	f_polybinout, 2, 2,
+	f_polybinout, 2, 2,FALSE,
 "pov", "args", "experimental:  set point-of-view",
-	f_pov, 3+4+1, MAXARGS,
+	f_pov, 3+4+1, MAXARGS,FALSE,
 "prcolor", "", "print color&material table",
-	f_prcolor, 1, 1,
+	f_prcolor, 1, 1,FALSE,
 "prefix", "new_prefix object(s)", "prefix each occurrence of object name(s)",
-	f_prefix, 3, MAXARGS,
+	f_prefix, 3, MAXARGS,FALSE,
 "preview", "[-v] [-d sec_delay] rt_script_file", "preview new style RT animation script",
-	f_preview, 2, MAXARGS,
+	f_preview, 2, MAXARGS,FALSE,
 "press", "button_label", "emulate button press",
-	f_press,2,MAXARGS,
+	f_press,2,MAXARGS,FALSE,
 #ifdef XMGED
 "ps", "[f] file", "create postscript file of current view with or without the faceplate",
-        f_ps, 2, 3,
+        f_ps, 2, 3,FALSE,
 #endif
 "push", "object[s]", "pushes object's path transformations to solids",
-	f_push, 2, MAXARGS,
+	f_push, 2, MAXARGS,FALSE,
 "q", "", "quit",
-	f_quit,1,1,
+	f_quit,1,1,FALSE,
 "quit", "", "quit",
-	f_quit,1,1,
+	f_quit,1,1,FALSE,
 "qorot", "x y z dx dy dz theta", "rotate object being edited about specified vector",
-	f_qorot, 8, 8,
+	f_qorot, 8, 8,FALSE,
 "qvrot", "dx dy dz theta", "set view from direction vector and twist angle",
-	f_qvrot, 5, 5,
+	f_qvrot, 5, 5,FALSE,
 "r", "region <operation solid>", "create or extend a Region combination",
-	f_region,4,MAXARGS,
+	f_region,4,MAXARGS,FALSE,
 "red", "object", "edit a group or region using a text editor",
-	f_red, 2, 2,
+	f_red, 2, 2,FALSE,
 "refresh", "", "send new control list",
-	f_refresh, 1,1,
+	f_refresh, 1,1,FALSE,
 "regdebug", "", "toggle register print",
-	f_regdebug, 1,2,
+	f_regdebug, 1,2,FALSE,
 "regdef", "item [air] [los] [GIFTmaterial]", "change next region default codes",
-	f_regdef, 2, 5,
+	f_regdef, 2, 5,FALSE,
 "regions", "file object(s)", "make ascii summary of regions",
-	f_tables, 3, MAXARGS,
+	f_tables, 3, MAXARGS,FALSE,
 "release", "", "release current display processor [attach NU]",
-	f_release,1,1,
+	f_release,1,1,FALSE,
 "rfarb", "", "makes arb given point, 2 coord of 3 pts, rot, fb, thickness",
-	f_rfarb, 1, 27,
+	f_rfarb, 1, 27,FALSE,
 "rm", "comb <members>", "remove members from comb",
-	f_rm,3,MAXARGS,
+	f_rm,3,MAXARGS,FALSE,
 "rmats", "file", "load views from file (experimental)",
-	f_rmats,2,MAXARGS,
+	f_rmats,2,MAXARGS,FALSE,
 "rotobj", "xdeg ydeg zdeg", "rotate object being edited",
-	f_rot_obj, 4, 4,
+	f_rot_obj, 4, 4,FALSE,
 "rrt", "prog [options]", "invoke prog with view",
-	f_rrt,2,MAXARGS,
+	f_rrt,2,MAXARGS,FALSE,
 "rt", "[options]", "do raytrace of view",
-	f_rt,1,MAXARGS,
+	f_rt,1,MAXARGS,FALSE,
 "rtcheck", "[options]", "check for overlaps in current view",
-	f_rtcheck,1,MAXARGS,
+	f_rtcheck,1,MAXARGS,FALSE,
 #ifdef XMGED
 "savedit", "", "save current edit and remain in edit state",
-	f_savedit, 1, 1,
+	f_savedit, 1, 1,FALSE,
 #endif
 "savekey", "file [time]", "save keyframe in file (experimental)",
-	f_savekey,2,MAXARGS,
+	f_savekey,2,MAXARGS,FALSE,
 "saveview", "file [args]", "save view in file for RT",
-	f_saveview,2,MAXARGS,
-#ifdef MGED_TCL
-"mscale", "factor", "scale object by factor",
-	f_sc_obj,2,2,
-#else
-"scale", "factor", "scale object by factor",
-	f_sc_obj,2,2,
-#endif
+	f_saveview,2,MAXARGS,FALSE,
+"oscale", "factor", "scale object by factor",
+	f_sc_obj,2,2,FALSE,
 "sed", "solid", "solid-edit named solid",
-	f_sed,2,2,
-#ifdef MGED_TCL
-"mset",	"[var=opt]", "assign/display mged variables",
-	f_set,1,2,
+	f_sed,2,2,FALSE,
+#ifndef XMGED
+"vars",	"[var=opt]", "assign/display mged variables",
+	f_set,1,2,FALSE,
 #else
 "set",	"[var=opt]", "assign/display mged variables",
-	f_set,1,2,
+	f_set,1,2,FALSE,
 #endif
 "shells", "nmg_model", "breaks model into seperate shells",
-	f_shells, 2,2,
+	f_shells, 2,2,FALSE,
 "shader", "comb material [arg(s)]", "assign materials (like 'mater')",
-	f_shader, 3,MAXARGS,
+	f_shader, 3,MAXARGS,FALSE,
 "size", "size", "set view size",
-	f_view, 2,2,
+	f_view, 2,2,FALSE,
 #ifdef XMGED
 "slider", "slider number, value", "adjust sliders using keyboard",
-	f_slider, 3,3,
+	f_slider, 3,3,FALSE,
 #endif
 "solids", "file object(s)", "make ascii summary of solid parameters",
-	f_tables, 3, MAXARGS,
-#ifndef MGED_TCL
+	f_tables, 3, MAXARGS,FALSE,
 #ifdef XMGED
 "source", "[beh] filename", "reads in and records and/or executes a file of commands",
-	f_source, 2, MAXARGS,
-#else
-"source", "file/pipe", "read and process file/pipe of commands",
-	f_source, 2,MAXARGS,
-#endif
+	f_source, 2, MAXARGS,FALSE,
 #endif
 "status", "", "get view status",
-	f_status, 1,1,
+	f_status, 1,1,FALSE,
 "summary", "[s r g]", "count/list solid/reg/groups",
-	f_summary,1,2,
+	f_summary,1,2,FALSE,
 #ifdef XMGED
 "sv", "x y", "Move view center to (x, y, 0)",
-	f_slewview, 3, 3,
+	f_slewview, 3, 3,FALSE,
 #endif
 "sync",	"",	"forces UNIX sync",
-	f_sync, 1, 1,
+	f_sync, 1, 1,FALSE,
 "t", "", "table of contents",
-	dir_print,1,MAXARGS,
+	dir_print,1,MAXARGS,FALSE,
 "tab", "object[s]", "tabulates objects as stored in database",
-	f_tabobj, 2, MAXARGS,
+	f_tabobj, 2, MAXARGS,FALSE,
 "ted", "", "text edit a solid's parameters",
-	f_tedit,1,1,
+	f_tedit,1,1,FALSE,
 "title", "string", "change the title",
-	f_title,1,MAXARGS,
+	f_title,1,MAXARGS,FALSE,
 "tol", "[abs #] [rel #] [norm #] [dist #] [perp #]", "show/set tessellation and calculation tolerances",
-	f_tol, 1, 11,
+	f_tol, 1, 11,FALSE,
 "tops", "", "find all top level objects",
-	f_tops,1,1,
+	f_tops,1,1,FALSE,
 "track", "<parameters>", "adds tracks to database",
-	f_amtrack, 1, 27,
+	f_amtrack, 1, 27,FALSE,
 #ifdef XMGED
 "tran", "x y z", "absolute translate using view coordinates",
-        f_tran, 4, 4,
+        f_tran, 4, 4,FALSE,
 #endif
 "translate", "x y z", "trans object to x,y, z",
-	f_tr_obj,4,4,
+	f_tr_obj,4,4,FALSE,
 "tree",	"object(s)", "print out a tree of all members of an object",
-	f_tree, 2, MAXARGS,
+	f_tree, 2, MAXARGS,FALSE,
 #ifdef XMGED
 "unalias","name/s", "deletes an alias or aliases",
-	f_unalias, 2, MAXARGS,
+	f_unalias, 2, MAXARGS,FALSE,
 #endif
 "units", "[mm|cm|m|in|ft|...]", "change units",
-	f_units,1,2,
+	f_units,1,2,FALSE,
 "vrmgr", "host {master|slave|overview}", "link with Virtual Reality manager",
-	f_vrmgr, 3, MAXARGS,
+	f_vrmgr, 3, MAXARGS,FALSE,
 "vrot", "xdeg ydeg zdeg", "rotate viewpoint",
-	f_vrot,4,4,
+	f_vrot,4,4,FALSE,
 "vrot_center", "v|m x y z", "set center point of viewpoint rotation, in model or view coords",
-	f_vrot_center, 5, 5,
+	f_vrot_center, 5, 5,FALSE,
 "whichid", "ident(s)", "lists all regions with given ident code",
-	f_which_id, 2, MAXARGS,
+	f_which_id, 2, MAXARGS,FALSE,
 "x", "lvl", "print solid table & vector list",
-	f_debug, 1,2,
+	f_debug, 1,2,FALSE,
 "xpush", "object", "Experimental Push Command",
-	f_xpush, 2,2,
+	f_xpush, 2,2,FALSE,
 "Z", "", "zap all objects off screen",
-	f_zap,1,1,
+	f_zap,1,1,FALSE,
 #ifdef XMGED
 "zbuffer", "", "toggle zbuffer",
-        f_zbuffer, 1, 1,
+        f_zbuffer, 1, 1,FALSE,
 "zclip", "", "toggle zclipping",
-        f_zclip, 1, 1,
+        f_zclip, 1, 1,FALSE,
 #endif
 "zoom", "scale_factor", "zoom view in or out",
-	f_zoom, 2,2,
+	f_zoom, 2,2,FALSE,
 0, 0, 0,
-	0, 0, 0,
+	0, 0, 0, 0
 };
 
 
@@ -926,7 +930,7 @@ char **argv;
 }
 #endif
 
-#ifdef MGED_TCL
+#ifndef XMGED
 
 /*
  *	T C L _ A P P I N I T
@@ -955,20 +959,39 @@ Tcl_Interp *interp;
 int argc;
 char **argv;
 {
-	switch (mged_cmd(argc, argv, funtab)) {
-	case CMD_OK:
-		interp->result = "MGED_Ok";
-		return TCL_OK;
-	case CMD_BAD:
-		interp->result = "MGED_Error";
-		return TCL_ERROR;
-	case CMD_MORE:
-		interp->result = "MGED_More";
-		return TCL_ERROR;
-	default:
-		interp->result = "MGED_Unknown";
-		return TCL_ERROR;
-	}
+    int new_argc;
+    char **new_argv;
+    int result;
+
+    argv[0] = ((struct funtab *)clientData)->ft_name;
+#if 0
+    cmd_glob_args(argc, argv, &new_argc, &new_argv);
+
+    switch (mged_cmd(new_argc, new_argv, funtab)) {
+#else
+    switch (mged_cmd(argc, argv, funtab)) {
+#endif
+    case CMD_OK:
+	interp->result = "MGED_Ok";
+	result = TCL_OK;
+	break;
+    case CMD_BAD:
+	interp->result = "MGED_Error";
+	result = TCL_ERROR;
+	break;
+    case CMD_MORE:
+	interp->result = "MGED_More";
+	result = TCL_ERROR;
+	break;
+    default:
+	interp->result = "MGED_Unknown";
+	result = TCL_ERROR;
+	break;
+    }
+#if 0
+    rt_free((char *)new_argv, "new_argv array for wildcard expansion");
+#endif
+    return result;
 }
 
 void
@@ -1097,6 +1120,46 @@ char **argv;
 	}
 }
 
+int
+f_tk( argc, argv )
+int argc;
+char **argv;
+{
+    /* Screen name should be same as attachment, or should ask, or
+       should be settable from "-display" option. */
+
+    if (tkwin != NULL)
+	return CMD_OK;
+
+    tkwin = Tk_CreateMainWindow(interp, NULL, "TkMGED", "tkMGED");
+    if (tkwin == NULL)
+	rt_log("Error creating Tk window: %s\n", interp->result);
+
+    if (tkwin != NULL) {
+	/* XXX HACK! */
+	extern void (*extrapoll_hook)();	/* ged.c */
+	extern int  extrapoll_fd;		/* ged.c */
+
+	extrapoll_hook = mged_tk_hook;
+	extrapoll_fd = Tk_Display(tkwin)->fd;
+
+	Tk_GeometryRequest(tkwin, 200, 200);
+#if 0
+	Tk_MakeWindowExist(tkwin);
+	Tk_MapWindow(tkwin);
+#endif
+	/* This runs the tk.tcl script */
+	if( Tk_Init(interp) == TCL_ERROR )
+	    rt_log("Tk_init error %s\n", interp->result);
+    }
+    
+    /* Handle any delayed events which result */
+    while( Tk_DoOneEvent( TK_DONT_WAIT | TK_ALL_EVENTS ) )  /*NIL*/
+	;
+
+    return CMD_OK;
+}    
+
 /*
  *	C M D _ P R E V
  */
@@ -1140,67 +1203,41 @@ Tcl_Interp *interp;
 int argc;
 char **argv;
 {
-	char *cmd;
+    register int i;
 
-	if( argc < 2 ) {
-		interp->result = "getknob: need a knob name";
-		return TCL_ERROR;
-	}
+    static struct {
+	char *knobname;
+	double *variable;
+    } knobs[] = {
+	"ax", &absolute_rotate[X],
+	"ay", &absolute_rotate[Y],
+	"az", &absolute_rotate[Z],
+	"aX", &absolute_slew[X],
+	"aY", &absolute_slew[Y],
+	"aZ", &absolute_slew[Z],
+	"aS", &absolute_zoom,
+	"x", &rate_rotate[X],
+	"y", &rate_rotate[Y],
+	"z", &rate_rotate[Z],
+	"X", &rate_slew[X],
+	"Y", &rate_slew[Y],
+	"Z", &rate_slew[Z],
+	"S", &rate_zoom
+    };
+	
+    if( argc < 2 ) {
+	interp->result = "getknob: need a knob name";
+	return TCL_ERROR;
+    }
 
-	cmd = argv[1];
-	switch( cmd[0] ) {
-	case 'a':
-		switch( cmd[1] ) {
-		case 'x':
-			sprintf( interp->result, "%lf", absolute_rotate[X] );
-			return TCL_OK;
-		case 'y':
-			sprintf( interp->result, "%lf", absolute_rotate[Y] );
-			return TCL_OK;
-		case 'z':
-			sprintf( interp->result, "%lf", absolute_rotate[Z] );
-			return TCL_OK;
-		case 'X':
-			sprintf( interp->result, "%lf", absolute_slew[X] );
-			return TCL_OK;
-		case 'Y':
-			sprintf( interp->result, "%lf", absolute_slew[Y] );
-			return TCL_OK;
-		case 'Z':
-			sprintf( interp->result, "%lf", absolute_slew[Z] );
-			return TCL_OK;
-		case 'S':
-			sprintf( interp->result, "%lf", absolute_zoom );
-			return TCL_OK;
-		default:
-			interp->result = "getknob: invalid knob name";
-			return TCL_ERROR;
-		}
-	case 'x':
-		sprintf(interp->result, "%lf", rate_rotate[X]);
-		return TCL_OK;
-	case 'y':
-		sprintf(interp->result, "%lf", rate_rotate[Y]);
-		return TCL_OK;
-	case 'z':
-		sprintf(interp->result, "%lf", rate_rotate[Z]);
-		return TCL_OK;
-	case 'X':
-		sprintf(interp->result, "%lf", rate_slew[X]);
-		return TCL_OK;
-	case 'Y':
-		sprintf(interp->result, "%lf", rate_slew[Y]);
-		return TCL_OK;
-	case 'Z':
-		sprintf(interp->result, "%lf", rate_slew[Z]);
-		return TCL_OK;
-	case 'S':
-		sprintf(interp->result, "%lf", rate_zoom);
-		return TCL_OK;
-	default:
-		interp->result = "getknob: invalid knob name";
-		return TCL_ERROR;
+    for (i = 0; i < sizeof(knobs); i++)
+	if (strcmp(knobs[i].knobname, argv[1]) == 0) {
+	    sprintf(interp->result, "%lf", *(knobs[i].variable));
+	    return TCL_OK;
 	}
+    
+    interp->result = "getknob: invalid knob name";
+    return TCL_ERROR;
 }
 
 /*
@@ -1279,84 +1316,89 @@ char **argv;
 
 /* 			C M D _ S E T U P
  *
-#ifdef MGED_TCL
- * Sets up the TCL interpreter.
-#endif
+ * Sets up the Tcl interpreter, if running in Tcl mode.
  */ 
 
 void
 cmd_setup(interactive)
-int	interactive;
+int interactive;
 {
-#ifdef MGED_TCL
-        register struct funtab *ftp;
-	char	buf[1024];
+#ifndef XMGED
+    register struct funtab *ftp;
+    char	buf[1024];
+    extern int glob_compat_mode;
+    struct rt_vls _mged_name;
+
+    rt_vls_init( &_mged_name );
+
 #endif
+    rt_vls_init( &history );
+    rt_vls_strcpy( &history, "" );
+    
+    rt_vls_init( &replay_history );
+    rt_vls_strcpy( &replay_history, "" );
 
-	rt_vls_init( &history );
-	rt_vls_strcpy( &history, "" );
+    journalfp = NULL;
 
-	rt_vls_init( &replay_history );
-	rt_vls_strcpy( &replay_history, "" );
+#ifndef XMGED
 
-	journalfp = NULL;
+    interp = Tcl_CreateInterp();
 
-#ifdef MGED_TCL
+    /* XXX This is done so the user doesn't run the Tcl version of exit
+       (we want to run "quit" instead).  Needs to be improved */
+    
+    (void)Tcl_CreateCommand(interp, "exit", cmd_wrapper, (ClientData)NULL,
+			    (Tcl_CmdDeleteProc *)NULL);
 
-	interp = Tcl_CreateInterp();
+    Tcl_SetVar(interp, "tcl_interactive",
+	       interactive ? "1" : "0", TCL_GLOBAL_ONLY);
 
-	Tcl_CreateCommand(interp, "exit", cmd_wrapper, (ClientData)NULL,
-			(Tcl_CmdDeleteProc *)NULL);
-
-	Tcl_SetVar(interp, "tcl_interactive",
-		interactive ? "1" : "0", TCL_GLOBAL_ONLY);
-
-	/* This runs the init.tcl script */
-	if( Tcl_Init(interp) == TCL_ERROR )
+    /* This runs the init.tcl script */
+    if( Tcl_Init(interp) == TCL_ERROR )
 	rt_log("Tcl_Init error %s\n", interp->result);
 
-	/* Screen name should be same as attachment */
-	/* This binds in Tk commands.  Do AFTER binding MGED commands */
-	tkwin = Tk_CreateMainWindow(interp, NULL, "TkMGED", "tkMGED");
-	if (tkwin == NULL)
-	rt_log("Error creating Tk window: %s\n", interp->result);
+    /* The Tk initialization stuff is run with the "loadtk" command */
 
-	if (tkwin != NULL) {
-		/* XXX HACK! */
-		extern void (*extrapoll_hook)();	/* ged.c */
-		extern int  extrapoll_fd;		/* ged.c */
-
-		extrapoll_hook = mged_tk_hook;
-		extrapoll_fd = Tk_Display(tkwin)->fd;
-
-		Tk_GeometryRequest(tkwin, 200, 200);
-#if 0
-		Tk_MakeWindowExist(tkwin);
-		Tk_MapWindow(tkwin);
-#endif
-		/* This runs the tk.tcl script */
-		if( Tk_Init(interp) == TCL_ERROR )
-		rt_log("Tk_init error %s\n", interp->result);
+    /* Finally, add in all the MGED commands.  Warn if they conflict */
+    for (ftp = funtab+1; ftp->ft_name != NULL; ftp++)  {
+	sprintf(buf, "info commands %s", ftp->ft_name);
+	if( Tcl_Eval(interp, buf) != TCL_OK ||
+	   interp->result[0] != '\0' )  {
+	    rt_log("WARNING:  '%s' name collision (%s)\n", ftp->ft_name,
+		   interp->result);
 	}
 
-	/* Finally, add in all the MGED commands, if they don't conflict */
-        for (ftp = funtab+1; ftp->ft_name != NULL; ftp++)  {
-        	sprintf(buf, "info commands %s", ftp->ft_name);
-        	if( Tcl_Eval(interp, buf) != TCL_OK ||
-		    interp->result[0] != '\0' )  {
-	        	rt_log("WARNING:  '%s' name collision (%s)\n", ftp->ft_name, interp->result);
-        	}
-		Tcl_CreateCommand(interp, ftp->ft_name, cmd_wrapper, 
-			(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
-        }
+	rt_vls_trunc( &_mged_name, 0 );
+	rt_vls_printf( &_mged_name, "_mged_%s", ftp->ft_name );
+	
+	if (ftp->tcl_converted) {
+	    Tcl_CreateCommand(interp, ftp->ft_name, ftp->ft_func,
+			      (ClientData)ftp, (Tcl_CmdDeleteProc *)NULL);
+	    Tcl_CreateCommand(interp, rt_vls_addr( &_mged_name ), ftp->ft_func,
+			      (ClientData)ftp, (Tcl_CmdDeleteProc *)NULL);
+	} else {
+	    Tcl_CreateCommand(interp, ftp->ft_name, cmd_wrapper, 	    
+			      (ClientData)ftp, (Tcl_CmdDeleteProc *)NULL);
+	    Tcl_CreateCommand(interp, rt_vls_addr( &_mged_name ), cmd_wrapper,
+			      (ClientData)ftp, (Tcl_CmdDeleteProc *)NULL);
+	}
+    }
 
-	/* Handle any delayed events which result */
-	while( Tk_DoOneEvent( TK_DONT_WAIT | TK_ALL_EVENTS ) )  /*NIL*/;
+#if 0
+    /* Link to some internal variables */
+    Tcl_LinkVar(interp, "mged_center_x", (char *)&toViewcenter[MDX],
+		TCL_LINK_DOUBLE);
+    Tcl_LinkVar(interp, "mged_center_y", (char *)&toViewcenter[MDY],
+		TCL_LINK_DOUBLE);
+    Tcl_LinkVar(interp, "mged_center_z", (char *)&toViewcenter[MDZ],
+		TCL_LINK_DOUBLE);
 
-	/* Link to some internal variables */
-	Tcl_LinkVar(interp, "mged_center_x", (char *)&toViewcenter[MDX], TCL_LINK_DOUBLE );
-	Tcl_LinkVar(interp, "mged_center_y", (char *)&toViewcenter[MDY], TCL_LINK_DOUBLE );
-	Tcl_LinkVar(interp, "mged_center_z", (char *)&toViewcenter[MDZ], TCL_LINK_DOUBLE );
+#endif
+    Tcl_LinkVar(interp, "glob_compat_mode", (char *)&glob_compat_mode,
+		TCL_LINK_BOOLEAN);
+    mged_variable_setup(interp);
+
+    tkwin = NULL;
 #endif
 }
 
@@ -1367,10 +1409,144 @@ f_sync(argc, argv)
 int argc;
 char **argv;
 {
-	sync();
-	return CMD_OK;
+    sync();
+    return CMD_OK;
 }
 
+
+/*
+   */
+
+void
+debackslash( dest, src )
+struct rt_vls *dest, *src;
+{
+    char *ptr;
+
+    ptr = rt_vls_addr(src);
+    while( *ptr ) {
+	if( *ptr == '\\' )
+	    ++ptr;
+	if( *ptr == '\0' )
+	    break;
+	rt_vls_putc( dest, *ptr++ );
+    }
+}
+
+void
+backslash_specials( dest, src )
+struct rt_vls *dest, *src;
+{
+    int backslashed;
+    char *ptr, buf[2];
+
+    buf[1] = '\0';
+    backslashed = 0;
+    for( ptr = rt_vls_addr( src ); *ptr; ptr++ ) {
+	if( *ptr == '[' && !backslashed )
+	    rt_vls_strcat( dest, "\\[" );
+	else if( *ptr == ']' && !backslashed )
+	    rt_vls_strcat( dest, "\\]" );
+	else if( backslashed ) {
+	    rt_vls_strcat( dest, "\\" );
+	    buf[0] = *ptr;
+	    rt_vls_strcat( dest, buf );
+	    backslashed = 0;
+	} else if( *ptr == '\\' )
+	    backslashed = 1;
+	else {
+	    buf[0] = *ptr;
+	    rt_vls_strcat( dest, buf );
+	}
+    }
+}
+
+int glob_compat_mode = 1;
+
+/*                    M G E D _ C O M P A T
+ *
+ * This routine is called to perform wildcard expansion and character quoting
+ * on the given vls (typically input from the keyboard.)
+ */
+
+int
+mged_compat( dest, src )
+struct rt_vls *dest, *src;
+{
+    char *start, *end;          /* Start and ends of words */
+    int regexp;                 /* Set to TRUE when word is a regexp */
+    int backslashed;
+    int firstword;
+    struct rt_vls word;         /* Current word being processed */
+    struct rt_vls temp;
+
+    rt_vls_init( &word );
+    rt_vls_init( &temp );
+    
+    start = end = rt_vls_addr( src );
+    firstword = 1;
+    while( *end != '\0' ) {            /* Run through entire string */
+
+	/* First, pass along leading whitespace. */
+
+	start = end;                   /* Begin where last word ended */
+	while( *start != '\0' ) {
+	    if( *start == ' '  ||
+	        *start == '\t' ||
+	        *start == '\n' )
+		rt_vls_putc( dest, *start++ );
+	    else
+		break;
+	}
+	if( *start == '\0' )
+	    break;
+
+	/* Next, advance "end" pointer to the end of the word, while adding
+	   each character to the "word" vls.  Also make a note of any
+	   unbackslashed wildcard characters. */
+
+	end = start;
+	rt_vls_trunc( &word, 0 );
+	regexp = 0;
+	backslashed = 0;
+	while( *end != '\0' ) {
+	    if( *end == ' '  ||
+	        *end == '\t' ||
+		*end == '\n' )
+		break;
+	    if( (*end == '*' || *end == '?' || *end == '[') && !backslashed )
+		regexp = 1;
+	    if( *end == '\\' && !backslashed )
+		backslashed = 1;
+	    else
+		backslashed = 0;
+	    rt_vls_putc( &word, *end++ );
+	}
+
+	if( firstword )
+	    regexp = 0;
+
+	/* Now, if the word was suspected of being a wildcard, try to match
+	   it to the database. */
+
+	if( regexp ) {
+	    rt_vls_trunc( &temp, 0 );
+	    if( regexp_match_all(&temp, rt_vls_addr(&word)) == 0 ) {
+		debackslash( &temp, &word );
+		backslash_specials( dest, &temp );
+	    } else
+		rt_vls_vlscat( dest, &temp );
+	} else {
+	    debackslash( dest, &word );
+	}
+
+	firstword = 0;
+    }
+
+    rt_vls_free( &temp );
+    rt_vls_free( &word );
+}
+    
 /*
  *			C M D L I N E
  *
@@ -1393,163 +1569,160 @@ cmdline(vp)
 struct rt_vls	*vp;
 #endif
 {
-	int	i;
-	int	need_prompt = 0;
-	int	len;
-	register char	*cp;
-	char		*ep;
-	char		*end;
-	struct rt_vls	cmd;
-	struct rt_vls	cmd_buf;
-	struct rt_vls	str;
-	int  	result;
-	int	argc;
-	char 	*argv[MAXARGS+2];
-	struct timeval start, finish;
+    int	i;
+    int	need_prompt = 0;
+    int	len;
+    register char	*cp;
+    char		*ep;
+    char		*end;
+    struct rt_vls	line;
+    struct rt_vls       line_globbed;
+    struct rt_vls	cmd_buf;
+    struct rt_vls	str;
+    int  	result;
+    int	argc;
+    char 	*argv[MAXARGS+2];
+    struct timeval start, finish;
 
-	struct rt_vls	hadd;
+    struct rt_vls	hadd;
 
-	RT_VLS_CHECK(vp);
+    RT_VLS_CHECK(vp);
 
-	if( (len = rt_vls_strlen( vp )) <= 0 )  return 0;
+    if( (len = rt_vls_strlen( vp )) <= 0 )  return 0;
 		
-	cp = rt_vls_addr( vp );
-	end = cp + len;
+    cp = rt_vls_addr( vp );
+    end = cp + len;
 
-	rt_vls_init( &cmd );
-	rt_vls_init( &cmd_buf );
-	rt_vls_init( &str );
-	rt_vls_init( &hadd );
-	rt_vls_strcpy( &hadd, "" );
+    rt_vls_init( &line );
+    rt_vls_init( &line_globbed );
+    rt_vls_init( &cmd_buf );
+    rt_vls_init( &str );
+    rt_vls_init( &hadd );
 
-	while( cp < end )  {
-		ep = strchr( cp, '\n' );
-		if( ep == NULL )  break;
+    while( cp < end ) {
+	ep = strchr( cp, '\n' );
+	if( ep == NULL )  break;
 
-		/* Copy one cmd, incl newline.  Null terminate */
-		rt_vls_strncpy( &cmd, cp, ep-cp+1 );
-		/* parse_line insists on it ending with newline&null */
-#ifndef MGED_TCL		
-		rt_vls_strcpy( &cmd_buf, rt_vls_addr(&cmd) );
+	/* Copy one cmd, incl newline.  Null terminate */
+	rt_vls_strncpy( &line, cp, ep-cp+1 );
+	/* parse_line insists on it ending with newline&null */
 #ifdef XMGED
-		i = parse_line( record, &cmd_buf, &argc, argv);
-#else
-		i = parse_line( rt_vls_addr(&cmd_buf), &argc, argv );
+	rt_vls_strcpy( &cmd_buf, rt_vls_addr(&line) );
+	i = parse_line( record, &cmd_buf, &argc, argv );
 #endif
+	while (1) {
+	    int done;
+	    done = 0;
+#ifndef XMGED
+	    gettimeofday( &start, NULL );
+	    rt_vls_trunc( &line_globbed, 0 );
+	    if( glob_compat_mode )
+		mged_compat( &line_globbed, &line );
+	    else
+		rt_vls_vlscat( &line_globbed, &line );
+#if 0
+	    printf("BEFORE::%s", rt_vls_addr(&line));
+	    printf("AFTER:::%s", rt_vls_addr(&line_globbed));
 #endif
-		while (1) {
-			int done;
+	    result = Tcl_Eval( interp, rt_vls_addr(&line_globbed) );
+	    gettimeofday( &finish, NULL );
 
-			done = 0;
-#ifdef MGED_TCL
-			gettimeofday( &start, NULL );
-			result = Tcl_Eval(interp, rt_vls_addr(&cmd));
-			gettimeofday( &finish, NULL );
-
-			switch( result ) {
-			case TCL_OK:
-	/* If it's TCL's OK, then print out the associated return value. */
-				if( strcmp(interp->result, "MGED_Ok") != 0
-				    && strlen(interp->result) > 0 ) {
-					/* Some TCL value to display */
-					rt_log("%s\n", interp->result);
-				}
-				rt_vls_strcpy( &hadd, rt_vls_addr(&cmd) );
-				done = 1;
-				break;
-			case TCL_ERROR:
-	/* If it's an MGED error, don't print out an error message. */
-				if(strcmp(interp->result, "MGED_Error") == 0){
-					rt_vls_printf( &hadd, "# %s",
-						rt_vls_addr(&cmd) );
-					done = 1;
-					break;
-				} 
-
-	/* If it's a TCL error, print out the associated error message. */
-				if( strcmp(interp->result, "MGED_More") != 0 ){
-					rt_vls_printf( &hadd, "# %s",
-						rt_vls_addr(&cmd) );
-					rt_log("%s\n", interp->result);
-					done = 1;
-					break;
-				}
-
-	/* Fall through to here iff it's MGED_More. */
-				done = 0;
-				break;
-
-			}
-#else
-			gettimeofday( &start, NULL );
-			result = mged_cmd(argc, argv, funtab);
-			gettimeofday( &finish, NULL );
-			switch( result ) {
-			case CMD_OK:
-				rt_vls_strcpy( &hadd, rt_vls_addr(&cmd) );
-				done = 1;
-				break;
-			case CMD_BAD:
-				rt_vls_printf( &hadd, "# %s",
-					rt_vls_addr(&cmd) );
-				done = 1;
-				break;
-			case CMD_MORE:
-				done = 0;
-				break;
-			}
-#endif
-
-	/* Record into history and return if we're all done. */
-
-			if( done ) {
-#ifdef XMGED
-				if(record){
-				  addtohist(rt_vls_addr(&hadd));
-				  hcurr = htail;		/* reset hcurr to point to most recent command */
-				}
-#endif
-					/* Record non-newline commands */
-				if( rt_vls_strlen(&hadd) > 1 )
-				    history_record( &hadd, &start, &finish );
-				break;
-			}
-
-			/* If we get here, it means the command failed due
-			   to insufficient arguments.  In this case, grab some
-			   more from stdin and call the command again. */
-
-			rt_vls_gets( &str, stdin );
-
-			/* Remove newline */
-			rt_vls_trunc( &cmd, rt_vls_strlen(&cmd)-1 );
-
-			rt_vls_strcat( &cmd, " " );
-			rt_vls_vlscatzap( &cmd, &str );
-			rt_vls_strcat( &cmd, "\n" );
-#ifndef MGED_TCL
-			rt_vls_strcpy( &cmd_buf, rt_vls_addr(&cmd) );
-#ifdef XMGED
-			i = parse_line( record, &cmd_buf, &argc, argv );
-#else
-			i = parse_line( rt_vls_addr(&cmd_buf), &argc, argv );
-#endif
-#endif
-			rt_vls_free( &str );
+	    switch( result ) {
+	    case TCL_OK:
+    /* If it's TCL's OK, then print out the associated return value. */
+		if( strcmp(interp->result, "MGED_Ok") != 0
+		   && strlen(interp->result) > 0 ) {
+		    /* Some TCL value to display */
+		    rt_log("%s\n", interp->result);
 		}
-#ifndef MGED_TCL
-		if( i < 0 )  continue;	/* some kind of error */
+		rt_vls_strcpy( &hadd, rt_vls_addr(&line) );
+		done = 1;
+		break;
+	    case TCL_ERROR:
+    /* If it's an MGED error, don't print out an error message. */
+		if( strcmp(interp->result, "MGED_Error") == 0 ) {
+		    rt_vls_printf( &hadd, "# %s", rt_vls_addr(&line) );
+		    done = 1;
+		    break;
+		} 
+    /* If it's a TCL error, print out the associated error message. */
+		if( strcmp(interp->result, "MGED_More") != 0 ){
+		    rt_vls_printf( &hadd, "# %s", rt_vls_addr(&line) );
+		    rt_log("%s\n", interp->result);
+		    done = 1;
+		    break;
+		}
+
+    /* Fall through to here iff it's MGED_More. */
+		done = 0;
+		break;
+	    }
+#else
+	    gettimeofday( &start, NULL );
+	    result = mged_cmd(argc, argv, funtab);
+	    gettimeofday( &finish, NULL );
+	    switch( result ) {
+	    case CMD_OK:
+		rt_vls_strcpy( &hadd, rt_vls_addr(&line) );
+		done = 1;
+		break;
+	    case CMD_BAD:
+		rt_vls_printf( &hadd, "# %s", rt_vls_addr(&line) );
+		done = 1;
+		break;
+	    case CMD_MORE:
+		done = 0;
+		break;
+	    }
 #endif
-		need_prompt = 1;
+    /* Record into history and return if we're all done. */
 
-		cp = ep+1;
+	    if( done ) {
+#ifdef XMGED
+		if(record){
+		    addtohist(rt_vls_addr(&hadd));
+		       /* reset hcurr to point to most recent command */
+		    hcurr = htail;
+		}
+#endif
+		/* Record non-newline commands */
+		if( rt_vls_strlen(&hadd) > 1 )
+		    history_record( &hadd, &start, &finish );
+		break;
+	    }
+
+	    /* If we get here, it means the command failed due
+	       to insufficient arguments.  In this case, grab some
+	       more from stdin and call the command again. */
+	    
+	    rt_vls_gets( &str, stdin );
+
+	    /* Remove newline */
+	    rt_vls_trunc( &line, rt_vls_strlen(&line)-1 );
+
+	    rt_vls_strcat( &line, " " );
+	    rt_vls_vlscatzap( &line, &str );
+	    rt_vls_strcat( &line, "\n" );
+#ifdef XMGED
+	    rt_vls_strcpy( &cmd_buf, rt_vls_addr(&line) );
+	    i = parse_line( record, &cmd_buf, &argc, argv );
+#endif
+	    rt_vls_free( &str );
 	}
+#ifdef XMGED
+	if( i < 0 )  continue;	/* some kind of error */
+#endif
+	need_prompt = 1;
 
-	rt_vls_free( &cmd );
-	rt_vls_free( &cmd_buf );
-	rt_vls_free( &str );
-	rt_vls_free( &hadd );
-	return need_prompt;
+	cp = ep+1;
+    }
+
+    rt_vls_free( &line );
+    rt_vls_free( &line_globbed );
+    rt_vls_free( &cmd_buf );
+    rt_vls_free( &str );
+    rt_vls_free( &hadd );
+    return need_prompt;
 }
 
 /*
@@ -2590,12 +2763,12 @@ char    *argv[];
       perspective_angle = i;
 
     rt_vls_printf( &dm_values.dv_string,
-		  "set perspective=%d\n",
+		  "set perspective %d\n",
 		  perspective_table[perspective_angle] );
   }else{
     perspective_mode = 1 - perspective_mode;
     rt_vls_printf( &dm_values.dv_string,
-		  "set perspective=%d\n",
+		  "set perspective %d\n",
 		  perspective_mode ? perspective_table[perspective_angle] : -1 );
   }
 
