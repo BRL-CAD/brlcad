@@ -324,7 +324,7 @@ set -S2 "/bin/sh"
 #		define	RANLIB	ranlib5.sh
 #		define	STANDARD_LIBES	-n32 -lm -lmalloc -lc 
 #	endif
-#	define	LD_OPTS		GFLAG 
+#	define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85 -Wl,-woff,134
 /* -ansiposix	ANSI+POSIX mode is used over ANSI, to get fdopen(), etc, defined. */
 #	define  CC_OPTS		GFLAG -xansi -DIRIX=6 
 #	define	LGT_CONFIG	GFLAG
