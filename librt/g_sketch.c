@@ -1746,6 +1746,16 @@ struct curve *crv;
 	return( 0 );
 }
 
+int rt_sketch_tclform( const struct rt_functab *ftp, Tcl_Interp *interp)
+{
+	RT_CK_FUNCTAB(ftp);
+
+	Tcl_AppendResult( interp,
+			  "V {%f %f %f} A {%f %f %f} B {%f %f %f} VL { {%f %f} {%f %f} ...} SL { { segment_data } { segment_data} }" );
+
+	return TCL_OK;
+}
+
 int
 rt_sketch_tclget( interp, intern, attr )
 Tcl_Interp			*interp;

@@ -357,6 +357,8 @@ BU_EXTERN(int rt_sketch_tclget, (Tcl_Interp *interp,
 BU_EXTERN(int rt_sketch_tcladjust, (Tcl_Interp *interp,
 		struct rt_db_internal *intern, int argc, char **argv,
 		struct resource *resp));
+BU_EXTERN(int rt_sketch_tclform, (const struct rt_functab *ftp, Tcl_Interp *interp));
+
 /* CLINE */
 BU_EXTERN(int rt_cline_tclget, (Tcl_Interp *interp,
 		const struct rt_db_internal *intern, const char *attr));
@@ -809,7 +811,7 @@ const struct rt_functab rt_functab[] = {
 		rt_sketch_import, rt_sketch_export, rt_sketch_ifree,
 		rt_sketch_describe,rt_sketch_xform, NULL,
 		sizeof(struct rt_sketch_internal), RT_SKETCH_INTERNAL_MAGIC,
-		rt_sketch_tclget, rt_sketch_tcladjust, rt_parsetab_tclform,
+		rt_sketch_tclget, rt_sketch_tcladjust, rt_sketch_tclform,
 		NULL,
 	},
 
