@@ -776,7 +776,6 @@ int waittime;
 	/* Finally, handle any command input (This can recurse via "read") */
 	if( waittime>0 &&
 	    !feof(stdin) &&
-	    fileno(stdin) >= 0 &&
 	    FD_ISSET( fileno(stdin), &ifdset ) )  {
 		interactive_cmd(stdin);
 	}
