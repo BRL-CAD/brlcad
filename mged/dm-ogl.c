@@ -1609,12 +1609,16 @@ char	*name;
 
   /* Only need to do this once */
   if(tkwin == NULL){
+#if 1
+    gui_setup();
+#else
     rt_vls_printf(&str, "loadtk %s\n", name);
 
     if(cmdline(&str, FALSE) == CMD_BAD){
       rt_vls_free(&str);
       return -1;
     }
+#endif
   }
 
   /* Only need to do this once for this display manager */

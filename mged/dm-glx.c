@@ -425,6 +425,9 @@ char *name;
 
   /* Only need to do this once */
   if(tkwin == NULL){
+#if 1
+    gui_setup();
+#else
 #if 0    
     rt_vls_printf(&str, "loadtk %s\n", name);
 #else
@@ -435,6 +438,7 @@ char *name;
       rt_vls_free(&str);
       return -1;
     }
+#endif
   }
 
   /* Only need to do this once for this display manager */
