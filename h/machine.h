@@ -161,6 +161,27 @@ typedef long	bitv_t;		/* largest integer type */
 #define PARALLEL	1
 #endif
 
+#ifdef __stardent
+/********************************
+ *				*
+ *  Stardent VISTRA Workstation	*
+ *  based on Intel i860 chip	*
+ *				*
+ ********************************/
+#define __unix	1		/* It really is unix */
+typedef double	fastf_t;	/* double|float, "Fastest" float type */
+#define LOCAL	auto		/* for parallel cpus */
+#define FAST	register	/* LOCAL|register, for fastest floats */
+typedef long	bitv_t;		/* largest integer type */
+#define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
+
+#define RES_INIT(ptr)		;
+#define RES_ACQUIRE(ptr)	;
+#define RES_RELEASE(ptr)	;
+#define MAX_PSW		1	/* only one processor, max */
+#define DEFAULT_PSW	1
+#endif
+
 #if	(defined(__sgi) && defined(__mips))
 /* Strict ANSI C does not define CPP symbols that don't start with __ */
 #	define sgi	1
