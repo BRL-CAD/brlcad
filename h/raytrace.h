@@ -1312,7 +1312,8 @@ RT_EXTERN(struct vlhead *rt_vlblock_find, (struct vlblock *vbp,
 	int r, int g, int b) );
 
 /* plane.c */
-RT_EXTERN(int rt_mk_plane_3pts, (plane_t plane, point_t a, point_t b, point_t c) );
+RT_EXTERN(int rt_3pts_distinct, (point_t a, point_t b, point_t c, double dist_tol_sq) );
+RT_EXTERN(int rt_mk_plane_3pts, (plane_t plane, point_t a, point_t b, point_t c, double dist_tol_sq) );
 RT_EXTERN(int rt_mkpoint_3planes, (point_t pt, plane_t a, plane_t b, plane_t c) );
 RT_EXTERN(int rt_isect_ray_plane, (fastf_t *dist, point_t pt, vect_t dir, plane_t plane) );
 RT_EXTERN(int rt_isect_2planes, (point_t pt, vect_t  dir, plane_t a, plane_t b, vect_t  rpp_min) );
