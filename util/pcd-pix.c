@@ -18,12 +18,6 @@
 *  any way. This software is not public domain.
 */
 
-
-/* define OWN_WRITE either here or by compiler-option if you don't want to use
-   the pbmplus-routines for writing */
-#define xOWN_WRITE
-
-
 /* define DEBUG for some debugging informations, just remove the x from xDEBUG */
 #define xDEBUG
 
@@ -31,30 +25,11 @@
    just remove the x from xMeldung */
 #define xMELDUNG
 
-
-
-
-
 #include <stdio.h>
-
-#ifndef OWN_WRITE
-
-#include "ppm.h"
-
-#else
 
 /* If the own routines are used, this is the size of the buffer in bytes.
    You can shrink if needed. */
 #define own_BUsize 50000
-
-/* The header for the ppm-files */
-#if PPM
-#define PPM_Header "P6\n%d %d\n255\n"
-#else
-#define PPM_Header ""	/* for .pix file */
-#endif
-
-#endif
 
 
 /*
@@ -89,27 +64,16 @@ typedef unsigned long dim;
 #define L_Base   (1+SeBase)
 
 
-
-
-
-
 enum ERRORS { 
 	E_NONE,E_READ,E_WRITE,E_INTERN,E_ARG,E_OPT,E_MEM,E_HUFF,
 	    E_SEQ,E_SEQ1,E_SEQ2,E_SEQ3,E_SEQ4,E_SEQ5,E_SEQ6,E_SEQ7,E_POS,E_IMP,E_OVSKIP,
 	    E_TAUTO,E_TCANT };
-
-enum TURNS  { 
-	T_NONE,T_RIGHT,T_LEFT,T_AUTO };
 
 enum SIZES  { 
 	S_UNSPEC,S_Base16,S_Base4,S_Base,S_4Base,S_16Base,S_Over };
 
 /* Default taken when no size parameter given */
 #define S_DEFAULT S_Base16
-
-
-
-
 
 struct _implane
 {
@@ -140,9 +104,6 @@ static char nbuf[100];
 static uBYTE sbuffer[SECSIZE];
 static int keep_ycc;
 
-
-
-
 /* Using preprocessor for inline-procs */
 #ifdef DEBUG
 
@@ -170,13 +131,6 @@ static long bufpos;
 #define melde(x)
 #endif
 
-
-
-
-
-
-
-
 #define EREADBUF {if(READBUF < 1) error(E_READ);}
 
 #define SKIP(n)  { if (fseek(fin,(n),1)) error(E_READ);}
@@ -186,10 +140,6 @@ static long bufpos;
 #define xTRIF(x,u,o,a,b,c) ((x)<(u)? (a) : ( (x)>(o)?(c):(b)  ))
 #define xNORM(x) x=TRIF(x,0,255,0,x,255)
 #define NORM(x) { if(x<0) x=0; else if (x>255) x=255;}
-
-
-
-
 
 static void error(e)
 enum ERRORS e;
@@ -217,12 +167,7 @@ enum ERRORS e;
 		fprintf(stderr,"Opts:\n");
 		fprintf(stderr,"     -x Overskip mode (tries to improve color quality.)\n");
 		fprintf(stderr,"     -i Give some (buggy) informations from fileheader\n");
-		fprintf(stderr,"     -s Apply simple sharpness-operator on the Luma-channel\n");
 		fprintf(stderr,"     -d Show differential picture only \n\n");
-		fprintf(stderr,"     -r Rotate clockwise for portraits\n");
-		fprintf(stderr,"     -l Rotate counter-clockwise for portraits\n");
-		fprintf(stderr,"     -a Try to find out orientation automatically.\n");
-		fprintf(stderr,"        (Experimentally, please report if it doesn't work.)\n\n");
 		fprintf(stderr,"     -ycc suppress ycc to rgb conversion \n");
 		fprintf(stderr,"        (Experimentally, doesn't have deeper sense)\n\n");
 		fprintf(stderr,"     -0 Extract thumbnails from Overview file\n");
@@ -288,14 +233,6 @@ enum ERRORS e;
 	exit(9);
 }
 
-
-
-
-
-
-
-
-
 static void planealloc(p,width,height)
 implane *p;
 dim width,height;
@@ -304,14 +241,14 @@ dim width,height;
 	p->mwidth=width;
 	p->mheight=height;
 
+	/* XXX Really 8 bytes per pixel? */
 	p->im = ( uBYTE * ) malloc  (width*height*sizeof(uBYTE));
 	if(!(p->im)) error(E_MEM);
 }
 
-
-
-
-
+/*
+ *			M A I N
+ */
 void main(argc,argv)
 int argc;
 char **argv;
@@ -323,7 +260,6 @@ char **argv;
 	long cd_offset,cd_offhelp;
 	int do_info,do_diff,do_overskip;
 
-	enum TURNS turn=T_NONE;
 	enum SIZES size=S_UNSPEC;
 	enum ERRORS eret;
 	implane Luma, Chroma1,Chroma2;
@@ -337,27 +273,6 @@ char **argv;
 	{
 		opt= (*argv)+1;
 		ASKIP;
-
-		if(!strcmp(opt,"r"))
-		{
-			if (turn == T_NONE) turn=T_RIGHT;
-			else error(E_ARG);
-			continue;
-		}
-
-		if(!strcmp(opt,"l"))
-		{
-			if (turn == T_NONE) turn=T_LEFT;
-			else error(E_ARG);
-			continue;
-		}
-
-		if(!strcmp(opt,"a"))
-		{
-			if (turn == T_NONE) turn=T_AUTO;
-			else error(E_ARG);
-			continue;
-		}
 
 		if(!strcmp(opt,"i"))
 		{ 
@@ -456,43 +371,16 @@ char **argv;
 	if(do_overskip && do_diff) error(E_OPT);
 	if(do_diff && (size != S_4Base) && (size != S_16Base)) error(E_OPT);
 	if(do_overskip && (size != S_Base16) && (size != S_Base4) && (size != S_Base) && (size != S_4Base) ) error(E_OVSKIP);
-	if((turn==T_AUTO)&&(size==S_Over)) error(E_TAUTO);
-
-
-
-
 
 	if(!(fin=fopen(pcdname,"r"))) error(E_READ);
 
-	if(do_info || (turn==T_AUTO))
+	if(do_info)
 	{ 
 		SEEK(1);
 		EREADBUF;
 	}
 
-	if(turn==T_AUTO)
-	{
-		switch(sbuffer[0xe02 & 0x7ff]&0x03)
-		{
-		case 0x00: 
-			turn=T_NONE;  
-			break;
-		case 0x01: 
-			turn=T_LEFT;  
-			break;
-		case 0x03: 
-			turn=T_RIGHT; 
-			break;
-		default: 
-			error(E_TCANT);
-		}
-	}
-
 	if(do_info) druckeid();
-
-
-
-
 
 	switch(size)
 	{
@@ -527,7 +415,7 @@ char **argv;
 		{
 			if (!(fout=fopen(ppmname,"w"))) error(E_WRITE);
 		}
-		writepicture(w,h,&Luma,&Chroma1,&Chroma2,turn);
+		writepicture(w,h,&Luma,&Chroma1,&Chroma2);
 
 		break;
 
@@ -562,7 +450,7 @@ char **argv;
 		{
 			if (!(fout=fopen(ppmname,"w"))) error(E_WRITE);
 		}
-		writepicture(w,h,&Luma,&Chroma1,&Chroma2,turn);
+		writepicture(w,h,&Luma,&Chroma1,&Chroma2);
 
 		break;
 
@@ -612,7 +500,7 @@ char **argv;
 		{
 			if (!(fout=fopen(ppmname,"w"))) error(E_WRITE);
 		}
-		writepicture(w,h,&Luma,&Chroma1,&Chroma2,turn);
+		writepicture(w,h,&Luma,&Chroma1,&Chroma2);
 
 		break;
 
@@ -681,7 +569,7 @@ char **argv;
 		{
 			if (!(fout=fopen(ppmname,"w"))) error(E_WRITE);
 		}
-		writepicture(w,h,&Luma,&Chroma1,&Chroma2,turn);
+		writepicture(w,h,&Luma,&Chroma1,&Chroma2);
 
 		break;
 
@@ -733,7 +621,7 @@ char **argv;
 		{
 			if (!(fout=fopen(ppmname,"w"))) error(E_WRITE);
 		}
-		writepicture(w,h,&Luma,&Chroma1,&Chroma2,turn);
+		writepicture(w,h,&Luma,&Chroma1,&Chroma2);
 
 		break;
 
@@ -761,7 +649,7 @@ char **argv;
 
 			sprintf(nbuf,"%s%04d",ppmname,bildnr+1);
 			if (!(fout=fopen(nbuf,"w"))) error(E_WRITE);
-			writepicture(w,h,&Luma,&Chroma1,&Chroma2,turn);
+			writepicture(w,h,&Luma,&Chroma1,&Chroma2);
 		}
 		break;
 
@@ -1033,17 +921,12 @@ implane *l,*c1,*c2;
 
 
 
-static void writepicture(w,h,r,g,b,t)
+static void writepicture(w,h,r,g,b)
 dim w,h;
 implane *r,*g,*b;
-enum TURNS t;
 {
 	dim x,y;
 	register uBYTE *pr,*pg,*pb;
-#ifndef OWN_WRITE
-	pixel *pixrow;
-	register pixel* pP;
-#else
 	static uBYTE BUF[own_BUsize],*BUptr;
 	int   BUcount;
 
@@ -1051,166 +934,22 @@ enum TURNS t;
 #define BUflush {fwrite(BUF,BUcount*3,1,fout);BUinit; }
 #define BUwrite(r,g,b) {if(BUcount>=own_BUsize/3) BUflush; *BUptr++ = r ; *BUptr++ = g ; *BUptr++ = b ; BUcount++;}
 
-#endif
 
 	melde("writepicture\n");
 	if((!r) || (r->iwidth != w ) || (r->iheight != h) || (!r->im)) error(E_INTERN);
 	if((!g) || (g->iwidth != w ) || (g->iheight != h) || (!g->im)) error(E_INTERN);
 	if((!b) || (b->iwidth != w ) || (b->iheight != h) || (!b->im)) error(E_INTERN);
 
-	switch (t)
-	{ 
-	case T_NONE:
-#ifndef OWN_WRITE
-		ppm_writeppminit(fout,w,h,(pixval) 255, 0);
-		pixrow = ppm_allocrow( w );
-		for(y=0;y<h;y++)
-		{
-			pr= r->im + y * r->mwidth;
-			pg= g->im + y * g->mwidth;
-			pb= b->im + y * b->mwidth;
-
-			for(pP= pixrow,x=0;x<w;x++)
-			{
-				PPM_ASSIGN(*pP,((int)*pr),((int)*pg),((int)*pb));
-				pP++;  
-				pr++;  
-				pg++;  
-				pb++;
-			}
-			ppm_writeppmrow( fout, pixrow, w, (pixval) 255, 0 );
-
-		}
-		pm_close(fout);
-#else
-		fprintf(fout,PPM_Header,w,h);
-		BUinit;
-		for(y=0;y<h;y++)
-		{
-			pr= r->im + y * r->mwidth;
-			pg= g->im + y * g->mwidth;
-			pb= b->im + y * b->mwidth;
-
-			for(x=0;x<w;x++) BUwrite(*pr++,*pg++,*pb++);
-		}
-		BUflush;
-		if(ppmname) fclose(fout);
-#endif
-		break;
-	case T_RIGHT:
-#ifndef OWN_WRITE
-		ppm_writeppminit(fout,h,w,(pixval) 255, 0);
-		pixrow = ppm_allocrow( h );
-
-		for(y=0;y<w;y++)
-		{
-			pr= r->im + r->mwidth * ( r->iheight - 1) + y;
-			pg= g->im + g->mwidth * ( g->iheight - 1) + y;
-			pb= b->im + b->mwidth * ( b->iheight - 1) + y;
-
-			for(pP= pixrow,x=0;x<h;x++)
-			{
-				PPM_ASSIGN(*pP,((int)*pr),((int)*pg),((int)*pb));
-				pP++;	  
-				pr-= r->mwidth;  
-				pg-= g->mwidth;  
-				pb-= b->mwidth;
-			}
-			ppm_writeppmrow( fout, pixrow, h, (pixval) 255, 0 );
-
-		}
-		pm_close(fout);
-#else
-		fprintf(fout,PPM_Header,h,w);
-		BUinit;
-		for(y=0;y<w;y++)
-		{
-			pr= r->im + r->mwidth * ( r->iheight - 1) + y;
-			pg= g->im + g->mwidth * ( g->iheight - 1) + y;
-			pb= b->im + b->mwidth * ( b->iheight - 1) + y;
-
-			for(x=0;x<h;x++)
-			{
-				BUwrite(*pr,*pg,*pb);
-				pr-= r->mwidth;  
-				pg-= g->mwidth;  
-				pb-= b->mwidth;
-			}
-		}
-		BUflush;
-		if(ppmname) fclose(fout);
-#endif
-		break;
-
-	case T_LEFT:
-#ifndef OWN_WRITE
-		ppm_writeppminit(fout,h,w,(pixval) 255, 0);
-		pixrow = ppm_allocrow( h );
-
-		for(y=0;y<w;y++)
-		{
-			pr= r->im + r->iwidth - 1 - y;
-			pg= g->im + g->iwidth - 1 - y;
-			pb= b->im + b->iwidth - 1 - y;
-
-
-
-			for(pP= pixrow,x=0;x<h;x++)
-			{
-				PPM_ASSIGN(*pP,((int)*pr),((int)*pg),((int)*pb));
-				pP++;	  
-				pr+= r->mwidth;  
-				pg+= g->mwidth;  
-				pb+= b->mwidth;
-			}
-			ppm_writeppmrow( fout, pixrow, h, (pixval) 255, 0 );
-
-		}
-		pm_close(fout);
-#else
-		fprintf(fout,PPM_Header,h,w);
-		BUinit;
-		for(y=0;y<w;y++)
-		{
-			pr= r->im + r->iwidth - 1 - y;
-			pg= g->im + g->iwidth - 1 - y;
-			pb= b->im + b->iwidth - 1 - y;
-
-			for(x=0;x<h;x++)
-			{
-				BUwrite(*pr,*pg,*pb);
-				pr+= r->mwidth;  
-				pg+= g->mwidth;  
-				pb+= b->mwidth;
-			}
-		}
-		BUflush;
-		if(ppmname) fclose(fout);
-
-#endif
-		break;
-	default: 
-		error(E_INTERN);
+	BUinit;
+	for( y=h-1; y>+0; y-- )  {
+		pr= r->im + y * r->mwidth;
+		pg= g->im + y * g->mwidth;
+		pb= b->im + y * b->mwidth;
+		for(x=0;x<w;x++) BUwrite(*pr++,*pg++,*pb++);
 	}
+	BUflush;
+	if(ppmname) fclose(fout);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 struct ph1 
