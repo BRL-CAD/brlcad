@@ -33,7 +33,7 @@ wm withdraw .
 #auto_mkindex_parser::slavehook {_%@namespace import -force ::itcl::*}
 
 foreach arg $argv {
-    catch { auto_mkindex $arg *.tcl }
+    catch {auto_mkindex $arg *.tcl *.itcl}
 }
 
 # Use the following line with bwish
