@@ -1844,8 +1844,21 @@ nmg_fu_touchingloops(fu2);
 	/*
 	 *  The extents of face1 overlap the extents of face2.
 	 *  Construct a ray which contains the line of intersection.
-	 *  The start point will be at the edge, and direction isn't
-	 *  important, as the positive part of the ray will cross the faces.
+	 *  There are two choices for direction, and an infinite number
+	 *  of candidate points.
+	 *
+	 *  The correct choice of this ray is very important, so that:
+	 *	1)  All intersections are at positive distances on the ray,
+	 *	2)  dir cross N will point "left".
+	 *
+	 *  These two conditions can be satisfied by intersecting the
+	 *  line with the face's bounding RPP.  This will give two
+	 *  points A and B, where A is closer to the min point of the RPP
+	 *  and B is closer to the max point of the RPP.
+	 *  Let bs.pt be A, and let bs.dir point from A towards B.
+	 *  This choice will satisfy both constraints, above.
+	 *
+	 *  NOTE:  These conditions must be enforced in the 2D code, also.
 	 */
 	VMOVE(min_pt, f1->fg_p->min_pt);
 	VMIN(min_pt, f2->fg_p->min_pt);
