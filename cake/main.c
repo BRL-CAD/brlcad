@@ -466,7 +466,14 @@ build_cppargv()
 	}
 	if( strcmp( buf, "li" ) == 0 )  {
 		/* Linux with GNU CPP */
+#if 0
+		/* This worked with Redhat 4 */
 		cppargv[cppargc++] = new_name("/lib/cpp");
+		cppargv[cppargc++] = new_name("-traditional");
+#endif
+		/* For RedHat 5 */
+		cppargv[cppargc++] = new_name("cc");
+		cppargv[cppargc++] = new_name("-E");
 		cppargv[cppargc++] = new_name("-traditional");
 		goto out;
 	}
