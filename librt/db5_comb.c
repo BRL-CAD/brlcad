@@ -342,7 +342,8 @@ wid, tcs.n_mat, tcs.n_leaf, tcs.n_oper, tcs.leafbytes, tcs.non_union_seen, max_s
 
 	/* Encode all the other stuff as attributes. */
 	bu_vls_init( &value );
-	avsp = &ip->idb_avs;
+	/* WARNING:  We remove const from the ip pointer!!! */
+	avsp = (struct bu_attribute_value_set *)&ip->idb_avs;
 	if( avsp->magic != BU_AVS_MAGIC )
 		bu_avs_init( avsp, 32, "rt_comb v5 attributes" );
 	if( comb->region_flag )  {
