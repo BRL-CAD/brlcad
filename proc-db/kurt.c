@@ -301,7 +301,7 @@ point_t	pos;
 vect_t	dir_at;		/* direction or aim point */
 int	da_flag;	/* 0 = direction, !0 = aim point */
 double	r;		/* radius of light */
-char	*rgb;
+unsigned char	*rgb;
 {
 	char	nbuf[64];
 	vect_t	center;
