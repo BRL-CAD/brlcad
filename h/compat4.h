@@ -64,6 +64,11 @@ extern "C" {
 #define rt_ck_malloc_ptr(_p,_s)	bu_ck_malloc_ptr((genptr_t)_p,_s)
 #define rt_mem_barriercheck	bu_mem_barriercheck
 
+/* mappedfile.c */
+#define rt_mapped_file		bu_mapped_file		/* struct */
+#define rt_open_mapped_file	bu_open_mapped_file
+#define rt_close_mapped_file	bu_close_mapped_file
+
 /* parallel.c */
 #define rt_pri_set	bu_nice_set
 #define rt_cpuget	bu_cpulimit_get
