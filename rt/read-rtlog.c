@@ -242,14 +242,19 @@ mat_t 	model2view;
 		return(-1);
 	}
 
-	/* For now, just print the stuff */
+	if( verbose )  {
+		/* Take your chances on the %g with the orientation: it is difficult
+		 * to say how many figures it will take to print the orientation back,
+		 * and it is disconcerting to have it come back as 0.
+		 */
 
-	fprintf(stderr, "logfile: %s\n", name);
-	fprintf(stderr, "view: %.6f; azimuth: %.6f; elevation: %.6f\n", azimuth, elevation);
-	fprintf(stderr, "orientation: %.6f, %.6f, %.6f, %.6f\n", V4ARGS(orientation) );
-	fprintf(stderr, "eye_pos: %.6f, %.6f, %.6f\n", V3ARGS(eye_pos) );
-	fprintf(stderr, "size: %.6fmm\n", m_size);
-
+		fprintf(stderr, "logfile: %s\n", name);
+		fprintf(stderr, "view: azimuth %.6f; elevation: %.6f\n", azimuth, elevation);
+		fprintf(stderr, "orientation: %g, %g, %g, %g\n", V4ARGS(orientation) );
+		fprintf(stderr, "eye_pos: %.6f, %.6f, %.6f\n", V3ARGS(eye_pos) );
+		fprintf(stderr, "size: %.6fmm\n", m_size);
+	}
+		
 	/* Build the view2model matrix. */
 
 	quat_quat2mat( rotate, orientation );
