@@ -1046,7 +1046,7 @@ CONST char		*str;
 	} while( cur != hd );
 
 	if( head_count != 1 )  {
-		rt_log("nmg_ck_list(%s) head_count = %d\n", head_count);
+		rt_log("nmg_ck_list(%s) head_count = %d\n", str, head_count);
 		rt_bomb("nmg_ck_list() headless!\n");
 	}
 }
