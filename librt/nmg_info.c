@@ -529,7 +529,8 @@ CONST struct rt_tol	*tol;
 #endif
 
 	if( n_angles < 3 )  {
-		rt_log("nmg_loop_is_ccw():  only %d angles, can't tell\n", n_angles);
+	    	if (rt_g.NMG_debug)
+			rt_log("nmg_loop_is_ccw():  only %d angles, can't tell\n", n_angles);
 		return 0;
 	}
 
