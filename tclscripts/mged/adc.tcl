@@ -20,23 +20,6 @@
 proc init_adc_control { id } {
     global player_screen
     global mged_adc_control
-    global mged_adc_draw
-    global mged_adc_coords
-    global last_mged_adc_coords
-    global mged_adc_coords_text
-    global mged_adc_interpval
-    global mged_adc_interpval_text
-    global mged_adc_pos
-    global mged_adc_a1
-    global mged_adc_a2
-    global mged_adc_dst
-    global mged_adc_anchor_pos
-    global mged_adc_anchor_a1
-    global mged_adc_anchor_pt_a1
-    global mged_adc_anchor_a2
-    global mged_adc_anchor_pt_a2
-    global mged_adc_anchor_dst
-    global mged_adc_anchor_pt_dst
 
     set top .$id.adc_control
 
@@ -47,35 +30,35 @@ proc init_adc_control { id } {
 	return
     }
 
-    if ![info exists mged_adc_coords($id)] {
-	set mged_adc_coords($id) model
+    if ![info exists mged_adc_control($id,coords)] {
+	set mged_adc_control($id,coords) model
 	adc reset
     }
 
-    set last_mged_adc_coords($id) $mged_adc_coords($id)
+    set mged_adc_control($id,last_coords) $mged_adc_control($id,coords)
 
-    if ![info exists mged_adc_interpval($id)] {
-	set mged_adc_interpval($id) abs
+    if ![info exists mged_adc_control($id,interpval)] {
+	set mged_adc_control($id,interpval) abs
     }
 
     toplevel $top -screen $player_screen($id)
 
     frame $top.gridF1
-    menubutton $top.coordsMB -textvariable mged_adc_coords_text($id)\
+    menubutton $top.coordsMB -textvariable mged_adc_control($id,coords_text)\
 	    -menu $top.coordsMB.m -indicatoron 1
     menu $top.coordsMB.m -tearoff 0
-    $top.coordsMB.m add radiobutton -value model -variable mged_adc_coords($id)\
+    $top.coordsMB.m add radiobutton -value model -variable mged_adc_control($id,coords)\
 	    -label "Model" -command "adc_adjust_coords $id"
-    $top.coordsMB.m add radiobutton -value view -variable mged_adc_coords($id)\
+    $top.coordsMB.m add radiobutton -value view -variable mged_adc_control($id,coords)\
 	    -label "View" -command "adc_adjust_coords $id"
-    $top.coordsMB.m add radiobutton -value grid -variable mged_adc_coords($id)\
+    $top.coordsMB.m add radiobutton -value grid -variable mged_adc_control($id,coords)\
 	    -label "Grid" -command "adc_adjust_coords $id"
-    menubutton $top.interpvalMB -textvariable mged_adc_interpval_text($id)\
+    menubutton $top.interpvalMB -textvariable mged_adc_control($id,interpval_text)\
 	    -menu $top.interpvalMB.m -indicatoron 1
     menu $top.interpvalMB.m -tearoff 0
-    $top.interpvalMB.m add radiobutton -value abs -variable mged_adc_interpval($id)\
+    $top.interpvalMB.m add radiobutton -value abs -variable mged_adc_control($id,interpval)\
 	    -label "Absolute" -command "adc_interpval $id"
-    $top.interpvalMB.m add radiobutton -value rel -variable mged_adc_interpval($id)\
+    $top.interpvalMB.m add radiobutton -value rel -variable mged_adc_control($id,interpval)\
 	    -label "Relative" -command "adc_interpval $id"
     grid $top.coordsMB x $top.interpvalMB x -sticky "nw" -in $top.gridF1 -padx 8
     grid columnconfigure $top.gridF1 3 -weight 1
@@ -86,13 +69,13 @@ proc init_adc_control { id } {
     frame $top.a1F
     frame $top.a2F
     label $top.posL -text "Position" -anchor w
-    entry $top.posE -relief sunken -textvar mged_adc_pos($id)
+    entry $top.posE -relief sunken -textvar mged_adc_control($id,pos)
     label $top.tickL -text "Tick Distance" -anchor w
-    entry $top.tickE -relief sunken -width 15 -textvar mged_adc_dst($id)
+    entry $top.tickE -relief sunken -width 15 -textvar mged_adc_control($id,dst)
     label $top.a1L -text "Angle 1" -anchor w
-    entry $top.a1E -relief sunken -width 15 -textvar mged_adc_a1($id)
+    entry $top.a1E -relief sunken -width 15 -textvar mged_adc_control($id,a1)
     label $top.a2L -text "Angle 2" -anchor w
-    entry $top.a2E -relief sunken -width 15 -textvar mged_adc_a2($id)
+    entry $top.a2E -relief sunken -width 15 -textvar mged_adc_control($id,a2)
     grid $top.posL -sticky "ew" -in $top.posF
     grid $top.posE -sticky "ew" -in $top.posF
     grid columnconfigure $top.posF 0 -weight 1
@@ -118,22 +101,22 @@ proc init_adc_control { id } {
     frame $top.anchor_a2F
     label $top.anchorL -text "Anchor Points"
     label $top.enableL -text "Enable"
-    entry $top.anchor_xyzE -relief sunken -textvar mged_adc_pos($id)
+    entry $top.anchor_xyzE -relief sunken -textvar mged_adc_control($id,pos)
     label $top.anchor_xyzL -text "Position" -anchor w
     checkbutton $top.anchor_xyzCB -relief flat\
-	    -offvalue 0 -onvalue 1 -variable mged_adc_anchor_pos($id)
-    entry $top.anchor_tickE -relief sunken -textvar mged_adc_anchor_pt_dst($id)
+	    -offvalue 0 -onvalue 1 -variable mged_adc_control($id,anchor_pos)
+    entry $top.anchor_tickE -relief sunken -textvar mged_adc_control($id,anchor_pt_dst)
     label $top.anchor_tickL -text "Tick Distance" -anchor w
     checkbutton $top.anchor_tickCB -relief flat\
-	    -offvalue 0 -onvalue 1 -variable mged_adc_anchor_dst($id)
-    entry $top.anchor_a1E -relief sunken -textvar mged_adc_anchor_pt_a1($id)
+	    -offvalue 0 -onvalue 1 -variable mged_adc_control($id,anchor_dst)
+    entry $top.anchor_a1E -relief sunken -textvar mged_adc_control($id,anchor_pt_a1)
     label $top.anchor_a1L -text "Angle 1" -anchor w
     checkbutton $top.anchor_a1CB -relief flat\
-	    -offvalue 0 -onvalue 1 -variable mged_adc_anchor_a1($id)
-    entry $top.anchor_a2E -relief sunken -textvar mged_adc_anchor_pt_a2($id)
+	    -offvalue 0 -onvalue 1 -variable mged_adc_control($id,anchor_a1)
+    entry $top.anchor_a2E -relief sunken -textvar mged_adc_control($id,anchor_pt_a2)
     label $top.anchor_a2L -text "Angle 2" -anchor w
     checkbutton $top.anchor_a2CB -relief flat\
-	    -offvalue 0 -onvalue 1 -variable mged_adc_anchor_a2($id)
+	    -offvalue 0 -onvalue 1 -variable mged_adc_control($id,anchor_a2)
     grid $top.anchor_xyzL -sticky "ew" -in $top.anchor_xyzF
     grid $top.anchor_xyzE -sticky "ew" -in $top.anchor_xyzF
     grid $top.anchor_tickL -sticky "ew" -in $top.anchor_tickF
@@ -155,7 +138,7 @@ proc init_adc_control { id } {
 
     frame $top.gridF4
     checkbutton $top.drawB -relief flat -text "Draw"\
-	    -offvalue 0 -onvalue 1 -variable mged_adc_draw($id)
+	    -offvalue 0 -onvalue 1 -variable mged_adc_control($id,draw)
     grid $top.drawB -in $top.gridF4
 
     frame $top.gridF5
@@ -191,300 +174,260 @@ proc init_adc_control { id } {
 
 proc adc_apply { id } {
     global mged_active_dm
-    global mged_adc_draw
-    global mged_adc_coords
-    global mged_adc_interpval
-    global mged_adc_a1
-    global mged_adc_a2
-    global mged_adc_dst
-    global mged_adc_anchor_pos
-    global mged_adc_anchor_a1
-    global mged_adc_anchor_a2
-    global mged_adc_anchor_dst
+    global mged_adc_control
 
 #    winset $mged_active_dm($id)
     adc anchor_pos 0
     adc anchor_a1 0
     adc anchor_a2 0
     adc anchor_dst 0
-    adc draw $mged_adc_draw($id)
+    adc draw $mged_adc_control($id,draw)
 
-    switch $mged_adc_interpval($id) {
+    switch $mged_adc_control($id,interpval) {
 	abs {
-	    adc a1 $mged_adc_a1($id)
-	    adc a2 $mged_adc_a2($id)
-	    adc dst $mged_adc_dst($id)
+	    adc a1 $mged_adc_control($id,a1)
+	    adc a2 $mged_adc_control($id,a2)
+	    adc dst $mged_adc_control($id,dst)
 
 	    adc_apply_abs $id
 	}
 	rel {
-	    adc -i a1 $mged_adc_a1($id)
-	    adc -i a2 $mged_adc_a2($id)
-	    adc -i dst $mged_adc_dst($id)
+	    adc -i a1 $mged_adc_control($id,a1)
+	    adc -i a2 $mged_adc_control($id,a2)
+	    adc -i dst $mged_adc_control($id,dst)
 
 	    adc_apply_rel $id
 	}
     }
 
-    switch $mged_adc_coords($id) {
+    switch $mged_adc_control($id,coords) {
 	model {
-	    if {$mged_adc_anchor_pos($id)} {
+	    if {$mged_adc_control($id,anchor_pos)} {
 		adc anchor_pos 1
 	    }
 	}
 	view {
-	    if {$mged_adc_anchor_pos($id)} {
+	    if {$mged_adc_control($id,anchor_pos)} {
 		adc anchor_pos 1
 	    }
 	}
 	grid {
-	    if {$mged_adc_anchor_pos($id)} {
+	    if {$mged_adc_control($id,anchor_pos)} {
 		adc anchor_pos 2
 	    }
 	}
     }
-    adc anchor_a1 $mged_adc_anchor_a1($id)
-    adc anchor_a2 $mged_adc_anchor_a2($id)
-    adc anchor_dst $mged_adc_anchor_dst($id)
+    adc anchor_a1 $mged_adc_control($id,anchor_a1)
+    adc anchor_a2 $mged_adc_control($id,anchor_a2)
+    adc anchor_dst $mged_adc_control($id,anchor_dst)
 
-    if {$mged_adc_interpval($id) == "abs"} {
+    if {$mged_adc_control($id,interpval) == "abs"} {
 	adc_load $id
     }
 }
 
 proc adc_apply_abs { id } {
-    global mged_adc_coords
-    global mged_adc_pos
-    global mged_adc_anchor_pos
-    global mged_adc_anchor_pt_a1
-    global mged_adc_anchor_pt_a2
-    global mged_adc_anchor_pt_dst
+    global mged_adc_control
 
-    switch $mged_adc_coords($id) {
+    switch $mged_adc_control($id,coords) {
 	model {
-	    eval adc xyz $mged_adc_pos($id)
-	    eval adc anchorpoint_dst $mged_adc_anchor_pt_dst($id)
-	    eval adc anchorpoint_a1 $mged_adc_anchor_pt_a1($id)
-	    eval adc anchorpoint_a2 $mged_adc_anchor_pt_a2($id)
+	    eval adc xyz $mged_adc_control($id,pos)
+	    eval adc anchorpoint_dst $mged_adc_control($id,anchor_pt_dst)
+	    eval adc anchorpoint_a1 $mged_adc_control($id,anchor_pt_a1)
+	    eval adc anchorpoint_a2 $mged_adc_control($id,anchor_pt_a2)
 	}
 	view {
-	    eval adc xyz [eval view2model_lu $mged_adc_pos($id)]
-	    eval adc anchorpoint_dst [eval view2model_lu $mged_adc_anchor_pt_dst($id)]
-	    eval adc anchorpoint_a1 [eval view2model_lu $mged_adc_anchor_pt_a1($id)]
-	    eval adc anchorpoint_a2 [eval view2model_lu $mged_adc_anchor_pt_a2($id)]
+	    eval adc xyz [eval view2model_lu $mged_adc_control($id,pos)]
+	    eval adc anchorpoint_dst [eval view2model_lu $mged_adc_control($id,anchor_pt_dst)]
+	    eval adc anchorpoint_a1 [eval view2model_lu $mged_adc_control($id,anchor_pt_a1)]
+	    eval adc anchorpoint_a2 [eval view2model_lu $mged_adc_control($id,anchor_pt_a2)]
 	}
 	grid {
-	    eval adc hv $mged_adc_pos($id)
-	    eval adc anchorpoint_dst [eval grid2model_lu $mged_adc_anchor_pt_dst($id)]
-	    eval adc anchorpoint_a1 [eval grid2model_lu $mged_adc_anchor_pt_a1($id)]
-	    eval adc anchorpoint_a2 [eval grid2model_lu $mged_adc_anchor_pt_a2($id)]
+	    eval adc hv $mged_adc_control($id,pos)
+	    eval adc anchorpoint_dst [eval grid2model_lu $mged_adc_control($id,anchor_pt_dst)]
+	    eval adc anchorpoint_a1 [eval grid2model_lu $mged_adc_control($id,anchor_pt_a1)]
+	    eval adc anchorpoint_a2 [eval grid2model_lu $mged_adc_control($id,anchor_pt_a2)]
 	}
     }
 }
 
 proc adc_apply_rel { id } {
-    global mged_adc_coords
-    global mged_adc_pos
-    global mged_adc_anchor_pos
-    global mged_adc_anchor_pt_a1
-    global mged_adc_anchor_pt_a2
-    global mged_adc_anchor_pt_dst
+    global mged_adc_control
 
-    switch $mged_adc_coords($id) {
+    switch $mged_adc_control($id,coords) {
 	model {
-	    eval adc -i xyz $mged_adc_pos($id)
-	    eval adc -i anchorpoint_dst $mged_adc_anchor_pt_dst($id)
-	    eval adc -i anchorpoint_a1 $mged_adc_anchor_pt_a1($id)
-	    eval adc -i anchorpoint_a2 $mged_adc_anchor_pt_a2($id)
+	    eval adc -i xyz $mged_adc_control($id,pos)
+	    eval adc -i anchorpoint_dst $mged_adc_control($id,anchor_pt_dst)
+	    eval adc -i anchorpoint_a1 $mged_adc_control($id,anchor_pt_a1)
+	    eval adc -i anchorpoint_a2 $mged_adc_control($id,anchor_pt_a2)
 	}
 	view {
-	    eval adc -i xyz [eval view2model_vec $mged_adc_pos($id)]
-	    eval adc -i anchorpoint_dst [eval view2model_vec $mged_adc_anchor_pt_dst($id)]
-	    eval adc -i anchorpoint_a1 [eval view2model_vec $mged_adc_anchor_pt_a1($id)]
-	    eval adc -i anchorpoint_a2 [eval view2model_vec $mged_adc_anchor_pt_a2($id)]
+	    eval adc -i xyz [eval view2model_vec $mged_adc_control($id,pos)]
+	    eval adc -i anchorpoint_dst [eval view2model_vec $mged_adc_control($id,anchor_pt_dst)]
+	    eval adc -i anchorpoint_a1 [eval view2model_vec $mged_adc_control($id,anchor_pt_a1)]
+	    eval adc -i anchorpoint_a2 [eval view2model_vec $mged_adc_control($id,anchor_pt_a2)]
 	}
 	grid {
-	    eval adc -i xyz [eval view2model_vec $mged_adc_pos($id) 0.0]
-	    eval adc -i anchorpoint_dst [eval view2model_vec $mged_adc_anchor_pt_dst($id) 0.0]
-	    eval adc -i anchorpoint_a1 [eval view2model_vec $mged_adc_anchor_pt_a1($id) 0.0]
-	    eval adc -i anchorpoint_a2 [eval view2model_vec $mged_adc_anchor_pt_a2($id) 0.0]
+	    eval adc -i xyz [eval view2model_vec $mged_adc_control($id,pos) 0.0]
+	    eval adc -i anchorpoint_dst [eval view2model_vec $mged_adc_control($id,anchor_pt_dst) 0.0]
+	    eval adc -i anchorpoint_a1 [eval view2model_vec $mged_adc_control($id,anchor_pt_a1) 0.0]
+	    eval adc -i anchorpoint_a2 [eval view2model_vec $mged_adc_control($id,anchor_pt_a2) 0.0]
 	}
     }
 }
 
 proc adc_reset { id } {
     global mged_active_dm
-    global mged_adc_interpval
+    global mged_adc_control
 
 #    winset $mged_active_dm($id)
     adc reset
 
-    if {$mged_adc_interpval($id) == "abs"} {
+    if {$mged_adc_control($id,interpval) == "abs"} {
 	adc_load $id
     }
 }
 
 proc adc_load { id } {
     global mged_active_dm
-    global mged_adc_draw
-    global mged_adc_coords
-    global mged_adc_coords_text
-    global mged_adc_pos
-    global mged_adc_a1
-    global mged_adc_a2
-    global mged_adc_dst
-    global mged_adc_anchor_pos
-    global mged_adc_anchor_a1
-    global mged_adc_anchor_pt_a1
-    global mged_adc_anchor_a2
-    global mged_adc_anchor_pt_a2
-    global mged_adc_anchor_dst
-    global mged_adc_anchor_pt_dst
+    global mged_adc_control
 
 #    winset $mged_active_dm($id)
 
-    set mged_adc_draw($id) [adc draw]
-    set mged_adc_dst($id) [format "%.4f" [adc dst]]
-    set mged_adc_a1($id) [format "%.4f" [adc a1]]
-    set mged_adc_a2($id) [format "%.4f" [adc a2]]
-    set mged_adc_anchor_pos($id) [adc anchor_pos]
-    set mged_adc_anchor_dst($id) [adc anchor_dst]
-    set mged_adc_anchor_a1($id) [adc anchor_a1]
-    set mged_adc_anchor_a2($id) [adc anchor_a2]
+    set mged_adc_control($id,draw) [adc draw]
+    set mged_adc_control($id,dst) [format "%.4f" [adc dst]]
+    set mged_adc_control($id,a1) [format "%.4f" [adc a1]]
+    set mged_adc_control($id,a2) [format "%.4f" [adc a2]]
+    set mged_adc_control($id,anchor_pos) [adc anchor_pos]
+    set mged_adc_control($id,anchor_dst) [adc anchor_dst]
+    set mged_adc_control($id,anchor_a1) [adc anchor_a1]
+    set mged_adc_control($id,anchor_a2) [adc anchor_a2]
 
-    switch $mged_adc_coords($id) {
+    switch $mged_adc_control($id,coords) {
 	model {
-	    set mged_adc_pos($id) [eval format \"%.4f %.4f %.4f\" [adc xyz]]
-	    set mged_adc_anchor_pt_dst($id) [eval format \"%.4f %.4f %.4f\" [adc anchorpoint_dst]]
-	    set mged_adc_anchor_pt_a1($id) [eval format \"%.4f %.4f %.4f\" [adc anchorpoint_a1]]
-	    set mged_adc_anchor_pt_a2($id) [eval format \"%.4f %.4f %.4f\" [adc anchorpoint_a2]]
+	    set mged_adc_control($id,pos) [eval format \"%.4f %.4f %.4f\" [adc xyz]]
+	    set mged_adc_control($id,anchor_pt_dst) [eval format \"%.4f %.4f %.4f\" [adc anchorpoint_dst]]
+	    set mged_adc_control($id,anchor_pt_a1) [eval format \"%.4f %.4f %.4f\" [adc anchorpoint_a1]]
+	    set mged_adc_control($id,anchor_pt_a2) [eval format \"%.4f %.4f %.4f\" [adc anchorpoint_a2]]
 	}
 	view {
-	    set mged_adc_pos($id) [eval format \"%.4f %.4f %.4f\" [eval model2view_lu [adc xyz]]]
-	    set mged_adc_anchor_pt_dst($id) [eval format \"%.4f %.4f %.4f\" [eval model2view_lu [adc anchorpoint_dst]]]
-	    set mged_adc_anchor_pt_a1($id) [eval format \"%.4f %.4f %.4f\" [eval model2view_lu [adc anchorpoint_a1]]]
-	    set mged_adc_anchor_pt_a2($id) [eval format \"%.4f %.4f %.4f\" [eval model2view_lu [adc anchorpoint_a2]]]
+	    set mged_adc_control($id,pos) [eval format \"%.4f %.4f %.4f\" [eval model2view_lu [adc xyz]]]
+	    set mged_adc_control($id,anchor_pt_dst) [eval format \"%.4f %.4f %.4f\" [eval model2view_lu [adc anchorpoint_dst]]]
+	    set mged_adc_control($id,anchor_pt_a1) [eval format \"%.4f %.4f %.4f\" [eval model2view_lu [adc anchorpoint_a1]]]
+	    set mged_adc_control($id,anchor_pt_a2) [eval format \"%.4f %.4f %.4f\" [eval model2view_lu [adc anchorpoint_a2]]]
 	}
 	grid {
-	    set mged_adc_pos($id) [eval format \"%.4f %.4f\" [adc hv]]
-	    set mged_adc_anchor_pt_dst($id) [eval format \"%.4f %.4f\" [eval model2grid_lu [adc anchorpoint_dst]]]
-	    set mged_adc_anchor_pt_a1($id) [eval format \"%.4f %.4f\" [eval model2grid_lu [adc anchorpoint_a1]]]
-	    set mged_adc_anchor_pt_a2($id) [eval format \"%.4f %.4f\" [eval model2grid_lu [adc anchorpoint_a2]]]
+	    set mged_adc_control($id,pos) [eval format \"%.4f %.4f\" [adc hv]]
+	    set mged_adc_control($id,anchor_pt_dst) [eval format \"%.4f %.4f\" [eval model2grid_lu [adc anchorpoint_dst]]]
+	    set mged_adc_control($id,anchor_pt_a1) [eval format \"%.4f %.4f\" [eval model2grid_lu [adc anchorpoint_a1]]]
+	    set mged_adc_control($id,anchor_pt_a2) [eval format \"%.4f %.4f\" [eval model2grid_lu [adc anchorpoint_a2]]]
 	}
     }
 }
 
 proc convert_coords { id } {
-    global mged_adc_coords
-    global last_mged_adc_coords
-    global mged_adc_pos
-    global mged_adc_anchor_pos
-    global mged_adc_anchor_pt_dst
-    global mged_adc_anchor_pt_a1
-    global mged_adc_anchor_pt_a2
+    global mged_adc_control
 
-    if {$mged_adc_coords($id) == $last_mged_adc_coords($id)} {
+    if {$mged_adc_control($id,coords) == $mged_adc_control($id,last_coords)} {
 	return
     }
 
-    switch $mged_adc_coords($id) {
+    switch $mged_adc_control($id,coords) {
 	model {
-	    switch $last_mged_adc_coords($id) {
+	    switch $mged_adc_control($id,last_coords) {
 		view {
-		    set mged_adc_pos($id) [eval format \"%.4f %.4f %.4f\"\
-			    [eval view2model_lu $mged_adc_pos($id)]]
-		    set mged_adc_anchor_pt_dst($id) [eval format \"%.4f %.4f %.4f\"\
-			    [eval view2model_lu $mged_adc_anchor_pt_dst($id)]]
-		    set mged_adc_anchor_pt_a1($id) [eval format \"%.4f %.4f %.4f\"\
-			    [eval view2model_lu $mged_adc_anchor_pt_a1($id)]]
-		    set mged_adc_anchor_pt_a2($id) [eval format \"%.4f %.4f %.4f\"\
-			    [eval view2model_lu $mged_adc_anchor_pt_a2($id)]]
+		    set mged_adc_control($id,pos) [eval format \"%.4f %.4f %.4f\"\
+			    [eval view2model_lu $mged_adc_control($id,pos)]]
+		    set mged_adc_control($id,anchor_pt_dst) [eval format \"%.4f %.4f %.4f\"\
+			    [eval view2model_lu $mged_adc_control($id,anchor_pt_dst)]]
+		    set mged_adc_control($id,anchor_pt_a1) [eval format \"%.4f %.4f %.4f\"\
+			    [eval view2model_lu $mged_adc_control($id,anchor_pt_a1)]]
+		    set mged_adc_control($id,anchor_pt_a2) [eval format \"%.4f %.4f %.4f\"\
+			    [eval view2model_lu $mged_adc_control($id,anchor_pt_a2)]]
 		}
 		grid {
-		    set mged_adc_pos($id) [eval format \"%.4f %.4f %.4f\"\
-			    [eval grid2model_lu $mged_adc_pos($id)]]
-		    set mged_adc_anchor_pt_dst($id) [eval format \"%.4f %.4f %.4f\"\
-			    [eval grid2model_lu $mged_adc_anchor_pt_dst($id)]]
-		    set mged_adc_anchor_pt_a1($id) [eval format \"%.4f %.4f %.4f\"\
-			    [eval grid2model_lu $mged_adc_anchor_pt_a1($id)]]
-		    set mged_adc_anchor_pt_a2($id) [eval format \"%.4f %.4f %.4f\"\
-			    [eval grid2model_lu $mged_adc_anchor_pt_a2($id)]]
+		    set mged_adc_control($id,pos) [eval format \"%.4f %.4f %.4f\"\
+			    [eval grid2model_lu $mged_adc_control($id,pos)]]
+		    set mged_adc_control($id,anchor_pt_dst) [eval format \"%.4f %.4f %.4f\"\
+			    [eval grid2model_lu $mged_adc_control($id,anchor_pt_dst)]]
+		    set mged_adc_control($id,anchor_pt_a1) [eval format \"%.4f %.4f %.4f\"\
+			    [eval grid2model_lu $mged_adc_control($id,anchor_pt_a1)]]
+		    set mged_adc_control($id,anchor_pt_a2) [eval format \"%.4f %.4f %.4f\"\
+			    [eval grid2model_lu $mged_adc_control($id,anchor_pt_a2)]]
 		}
 	    }
 	}
 	view {
-	    switch $last_mged_adc_coords($id) {
+	    switch $mged_adc_control($id,last_coords) {
 		model {
-		    set mged_adc_pos($id) [eval format \"%.4f %.4f %.4f\"\
-			    [eval model2view_lu $mged_adc_pos($id)]]
-		    set mged_adc_anchor_pt_dst($id) [eval format \"%.4f %.4f %.4f\"\
-			    [eval model2view_lu $mged_adc_anchor_pt_dst($id)]]
-		    set mged_adc_anchor_pt_a1($id) [eval format \"%.4f %.4f %.4f\"\
-			    [eval model2view_lu $mged_adc_anchor_pt_a1($id)]]
-		    set mged_adc_anchor_pt_a2($id) [eval format \"%.4f %.4f %.4f\"\
-			    [eval model2view_lu $mged_adc_anchor_pt_a2($id)]]
+		    set mged_adc_control($id,pos) [eval format \"%.4f %.4f %.4f\"\
+			    [eval model2view_lu $mged_adc_control($id,pos)]]
+		    set mged_adc_control($id,anchor_pt_dst) [eval format \"%.4f %.4f %.4f\"\
+			    [eval model2view_lu $mged_adc_control($id,anchor_pt_dst)]]
+		    set mged_adc_control($id,anchor_pt_a1) [eval format \"%.4f %.4f %.4f\"\
+			    [eval model2view_lu $mged_adc_control($id,anchor_pt_a1)]]
+		    set mged_adc_control($id,anchor_pt_a2) [eval format \"%.4f %.4f %.4f\"\
+			    [eval model2view_lu $mged_adc_control($id,anchor_pt_a2)]]
 		}
 		grid {
-		    set mged_adc_pos($id) [eval format \"%.4f %.4f %.4f\"\
-			    [eval grid2view_lu $mged_adc_pos($id)]]
-		    set mged_adc_anchor_pt_dst($id) [eval format \"%.4f %.4f %.4f\"\
-			    [eval grid2view_lu $mged_adc_anchor_pt_dst($id)]]
-		    set mged_adc_anchor_pt_a1($id) [eval format \"%.4f %.4f %.4f\"\
-			    [eval grid2view_lu $mged_adc_anchor_pt_a1($id)]]
-		    set mged_adc_anchor_pt_a2($id) [eval format \"%.4f %.4f %.4f\"\
-			    [eval grid2view_lu $mged_adc_anchor_pt_a2($id)]]
+		    set mged_adc_control($id,pos) [eval format \"%.4f %.4f %.4f\"\
+			    [eval grid2view_lu $mged_adc_control($id,pos)]]
+		    set mged_adc_control($id,anchor_pt_dst) [eval format \"%.4f %.4f %.4f\"\
+			    [eval grid2view_lu $mged_adc_control($id,anchor_pt_dst)]]
+		    set mged_adc_control($id,anchor_pt_a1) [eval format \"%.4f %.4f %.4f\"\
+			    [eval grid2view_lu $mged_adc_control($id,anchor_pt_a1)]]
+		    set mged_adc_control($id,anchor_pt_a2) [eval format \"%.4f %.4f %.4f\"\
+			    [eval grid2view_lu $mged_adc_control($id,anchor_pt_a2)]]
 		}
 	    }
 	}
 	grid {
-	    switch $last_mged_adc_coords($id) {
+	    switch $mged_adc_control($id,last_coords) {
 		model {
-		    set mged_adc_pos($id) [eval format \"%.4f %.4f\"\
-			    [eval model2grid_lu $mged_adc_pos($id)]]
-		    set mged_adc_anchor_pt_dst($id) [eval format \"%.4f %.4f\"\
-			    [eval model2grid_lu $mged_adc_anchor_pt_dst($id)]]
-		    set mged_adc_anchor_pt_a1($id) [eval format \"%.4f %.4f\"\
-			    [eval model2grid_lu $mged_adc_anchor_pt_a1($id)]]
-		    set mged_adc_anchor_pt_a2($id) [eval format \"%.4f %.4f\"\
-			    [eval model2grid_lu $mged_adc_anchor_pt_a2($id)]]
+		    set mged_adc_control($id,pos) [eval format \"%.4f %.4f\"\
+			    [eval model2grid_lu $mged_adc_control($id,pos)]]
+		    set mged_adc_control($id,anchor_pt_dst) [eval format \"%.4f %.4f\"\
+			    [eval model2grid_lu $mged_adc_control($id,anchor_pt_dst)]]
+		    set mged_adc_control($id,anchor_pt_a1) [eval format \"%.4f %.4f\"\
+			    [eval model2grid_lu $mged_adc_control($id,anchor_pt_a1)]]
+		    set mged_adc_control($id,anchor_pt_a2) [eval format \"%.4f %.4f\"\
+			    [eval model2grid_lu $mged_adc_control($id,anchor_pt_a2)]]
 		}
 		view {
-		    set mged_adc_pos($id) [eval format \"%.4f %.4f\"\
-			    [eval view2grid_lu $mged_adc_pos($id)]]
-		    set mged_adc_anchor_pt_dst($id) [eval format \"%.4f %.4f\"\
-			    [eval view2grid_lu $mged_adc_anchor_pt_dst($id)]]
-		    set mged_adc_anchor_pt_a1($id) [eval format \"%.4f %.4f\"\
-			    [eval view2grid_lu $mged_adc_anchor_pt_a1($id)]]
-		    set mged_adc_anchor_pt_a2($id) [eval format \"%.4f %.4f\"\
-			    [eval view2grid_lu $mged_adc_anchor_pt_a2($id)]]
+		    set mged_adc_control($id,pos) [eval format \"%.4f %.4f\"\
+			    [eval view2grid_lu $mged_adc_control($id,pos)]]
+		    set mged_adc_control($id,anchor_pt_dst) [eval format \"%.4f %.4f\"\
+			    [eval view2grid_lu $mged_adc_control($id,anchor_pt_dst)]]
+		    set mged_adc_control($id,anchor_pt_a1) [eval format \"%.4f %.4f\"\
+			    [eval view2grid_lu $mged_adc_control($id,anchor_pt_a1)]]
+		    set mged_adc_control($id,anchor_pt_a2) [eval format \"%.4f %.4f\"\
+			    [eval view2grid_lu $mged_adc_control($id,anchor_pt_a2)]]
 		}
 	    }
 	}
     }
 
-    set last_mged_adc_coords($id) $mged_adc_coords($id)
+    set mged_adc_control($id,last_coords) $mged_adc_control($id,coords)
 }
 
 proc adc_adjust_coords { id } {
-    global mged_adc_coords
-    global mged_adc_coords_text
-    global mged_adc_interpval
+    global mged_adc_control
 
     set top .$id.adc_control
 
-    switch $mged_adc_coords($id) {
+    switch $mged_adc_control($id,coords) {
 	model {
-	    set mged_adc_coords_text($id) "Model Coords"
+	    set mged_adc_control($id,coords_text) "Model Coords"
 	}
 	view {
-	    set mged_adc_coords_text($id) "View Coords"
+	    set mged_adc_control($id,coords_text) "View Coords"
 	}
 	grid {
-	    set mged_adc_coords_text($id) "Grid Coords"
+	    set mged_adc_control($id,coords_text) "Grid Coords"
 	}
     }
 
-    if {$mged_adc_interpval($id) == "abs"} {
+    if {$mged_adc_control($id,interpval) == "abs"} {
 	convert_coords $id
     } else {
 	adc_clear $id
@@ -492,30 +435,21 @@ proc adc_adjust_coords { id } {
 }
 
 proc adc_interpval { id } {
-    global mged_adc_interpval
-    global mged_adc_interpval_text
-    global mged_adc_pos
-    global mged_adc_a1
-    global mged_adc_a2
-    global mged_adc_dst
-    global mged_adc_anchor_pos
-    global mged_adc_anchor_pt_dst
-    global mged_adc_anchor_pt_a1
-    global mged_adc_anchor_pt_a2
+    global mged_adc_control
 
     set top .$id.adc_control
 
-    switch $mged_adc_interpval($id) {
+    switch $mged_adc_control($id,interpval) {
 	abs {
 	    $top.loadB configure -text "Load"\
 		    -command "mged_apply $id \"adc_load $id\""
-	    set mged_adc_interpval_text($id) "Absolute"
+	    set mged_adc_control($id,interpval_text) "Absolute"
 	    adc_load $id
 	}
 	rel {
 	    $top.loadB configure -text "Clear"\
 		    -command "mged_apply $id \"adc_clear $id\""
-	    set mged_adc_interpval_text($id) "Relative"
+	    set mged_adc_control($id,interpval_text) "Relative"
 
 	    adc_clear $id
 	}
@@ -523,34 +457,26 @@ proc adc_interpval { id } {
 }
 
 proc adc_clear { id } {
-    global mged_adc_coords
-    global mged_adc_pos
-    global mged_adc_a1
-    global mged_adc_a2
-    global mged_adc_dst
-    global mged_adc_anchor_pos
-    global mged_adc_anchor_pt_dst
-    global mged_adc_anchor_pt_a1
-    global mged_adc_anchor_pt_a2
+    global mged_adc_control
 
-    if {$mged_adc_coords($id) == "grid"} {
-	set mged_adc_pos($id) "0.0 0.0"
-	set mged_adc_anchor_pt_dst($id) "0.0 0.0"
-	set mged_adc_anchor_pt_a1($id) "0.0 0.0"
-	set mged_adc_anchor_pt_a2($id) "0.0 0.0"
+    if {$mged_adc_control($id,coords) == "grid"} {
+	set mged_adc_control($id,pos) "0.0 0.0"
+	set mged_adc_control($id,anchor_pt_dst) "0.0 0.0"
+	set mged_adc_control($id,anchor_pt_a1) "0.0 0.0"
+	set mged_adc_control($id,anchor_pt_a2) "0.0 0.0"
     } else {
-	set mged_adc_pos($id) "0.0 0.0 0.0"
-	set mged_adc_anchor_pt_dst($id) "0.0 0.0 0.0"
-	set mged_adc_anchor_pt_a1($id) "0.0 0.0 0.0"
-	set mged_adc_anchor_pt_a2($id) "0.0 0.0 0.0"
+	set mged_adc_control($id,pos) "0.0 0.0 0.0"
+	set mged_adc_control($id,anchor_pt_dst) "0.0 0.0 0.0"
+	set mged_adc_control($id,anchor_pt_a1) "0.0 0.0 0.0"
+	set mged_adc_control($id,anchor_pt_a2) "0.0 0.0 0.0"
     }
 
-    set mged_adc_a1($id) "0.0"
-    set mged_adc_a2($id) "0.0"
-    set mged_adc_dst($id) "0.0"
+    set mged_adc_control($id,a1) "0.0"
+    set mged_adc_control($id,a2) "0.0"
+    set mged_adc_control($id,dst) "0.0"
 
-    set mged_adc_anchor_pos($id) 0
-    set mged_adc_anchor_a1($id) 0
-    set mged_adc_anchor_a2($id) 0
-    set mged_adc_anchor_dst($id) 0
+    set mged_adc_control($id,anchor_pos) 0
+    set mged_adc_control($id,anchor_a1) 0
+    set mged_adc_control($id,anchor_a2) 0
+    set mged_adc_control($id,anchor_dst) 0
 }
