@@ -22,9 +22,9 @@
 static char RCSconcat[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include <stdio.h>
 #include <pwd.h>
 #include <signal.h>
-#include <stdio.h>
 #include <math.h>
 #include <time.h>
 #ifdef BSD
