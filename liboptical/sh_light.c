@@ -903,7 +903,8 @@ int have;
 			if (rdebug& RDEBUG_RAYPLOT) {
 				point_t ray_endpt;
 
-				pl_color(stdout, 200, 200, 200);
+				/* Yelow -- light visibility ray */
+				pl_color(stdout, 200, 200, 0);
 				VADD2(ray_endpt, swp->sw_hit.hit_point,
 					tolight);
 				pdv_3line(stdout, swp->sw_hit.hit_point,
