@@ -175,7 +175,8 @@ char **argv;
 	/* Only in the simplest case use multi-line writes */
 	if( !inverse && !zoom &&
 	    xout == scr_width &&
-	    file_xoff == 0 )  {
+	    file_xoff == 0 &&
+	    file_width == scr_width )  {
 		streamline = 8;
 	    	scanpix *= streamline;
 	}
