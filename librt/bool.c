@@ -1696,9 +1696,9 @@ struct partition *partp;	/* Partition to evaluate */
 struct region	**trueregp;	/* XOR true (and overlap) return */
 struct resource	*resp;		/* resource pointer for this CPU */
 {
-	static union tree tree_not;		/* for OP_NOT nodes */
-	static union tree tree_guard;		/* for OP_GUARD nodes */
-	static union tree tree_xnop;		/* for OP_XNOP nodes */
+	static union tree tree_not[MAX_PSW];	/* for OP_NOT nodes */
+	static union tree tree_guard[MAX_PSW];	/* for OP_GUARD nodes */
+	static union tree tree_xnop[MAX_PSW];	/* for OP_XNOP nodes */
 	register union tree **sp;
 	register int ret;
 	register union tree **stackend;
@@ -1779,8 +1779,8 @@ pop:
 		if( !ret )  goto pop;	/* FALSE, we are done */
 		/* lhs was true, rewrite as NOT of rhs tree */
 		/* We introduce the special NOT operator here */
-		tree_not.tr_op = OP_NOT;
-		*sp++ = &tree_not;
+		tree_not[resp->re_cpu].tr_op = OP_NOT;
+		*sp++ = &tree_not[resp->re_cpu];
 		treep = treep->tr_b.tb_right;
 		goto stack;
 	case OP_NOT:
@@ -1795,18 +1795,18 @@ pop:
 			 */
 			if( treep->tr_b.tb_left->tr_regionp )
 				trueregp[0] = treep->tr_b.tb_left->tr_regionp;
-			tree_guard.tr_op = OP_GUARD;
+			tree_guard[resp->re_cpu].tr_op = OP_GUARD;
 			treep = treep->tr_b.tb_right;
 			*sp++ = treep;		/* temp val for guard node */
-			*sp++ = &tree_guard;
+			*sp++ = &tree_guard[resp->re_cpu];
 		} else {
 			/* lhs was false, rewrite as xnop node and
 			 * result of rhs.
 			 */
-			tree_xnop.tr_op = OP_XNOP;
+			tree_xnop[resp->re_cpu].tr_op = OP_XNOP;
 			treep = treep->tr_b.tb_right;
 			*sp++ = treep;		/* temp val for xnop */
-			*sp++ = &tree_xnop;
+			*sp++ = &tree_xnop[resp->re_cpu];
 		}
 		goto stack;
 	case OP_GUARD:
