@@ -91,6 +91,7 @@ mat_t 	es_invmat;		/* inverse of es_mat   KAA */
 
 point_t	es_keypoint;		/* center of editing xforms */
 char	*es_keytag;		/* string identifying the keypoint */
+int	es_keyfixed;		/* keypoint specified by user? */
 
 vect_t		es_para;	/* keyboard input param. Only when inpara set.  */
 extern int	inpara;		/* es_para valid.  es_mvalid mus = 0 */
@@ -1046,6 +1047,7 @@ init_sedit()
 
 		temprec = es_rec.s;		/* struct copy */
 		VMOVE( es_keypoint, es_rec.s.s_values );
+		es_keyfixed = 0;
 
 		if( (type = es_rec.s.s_cgtype) < 0 )
 			type *= -1;
@@ -1546,6 +1548,7 @@ sedit()
 		}
 		if( new_way )  {
 			mat_t	scalemat;
+		printf("%d: %s (%g, %g, %g)\n", __LINE__, es_keytag, V3ARGS(es_keypoint));
 			mat_scale_about_pt( scalemat, es_keypoint, es_scale );
 			transform_editing_solid(&es_int, scalemat, &es_int, 1);
 		} else {
@@ -1850,7 +1853,12 @@ sedit()
 
 	/* If the keypoint changed location, find about it here */
 	if( new_way )  {
+		if (! es_keyfixed)
+		{
+		printf("%d %s (%g, %g, %g)\n", __LINE__, es_keytag, V3ARGS(es_keypoint));
 		get_solid_keypoint( es_keypoint, &es_keytag, &es_int, es_mat );
+		printf("%d %s (%g, %g, %g)\n", __LINE__, es_keytag, V3ARGS(es_keypoint));
+		}
 	}
 
 	replot_editing_solid();
@@ -4036,4 +4044,43 @@ CONST mat_t			mat;
 	*vval = c_v;
 
 	return(0);				/* success */
+}
+void f_keypoint (argc, argv)
+int	argc;
+char	**argv;
+{
+	if ((state != ST_S_EDIT) && (state != ST_O_EDIT))
+	{
+	    state_err("keypoint assignment");
+	    return;
+	}
+
+	switch (--argc)
+	{
+	    case 0:
+		printf("%s (%g, %g, %g)\n", es_keytag, V3ARGS(es_keypoint));
+		break;
+	    case 3:
+		VSET(es_keypoint,
+		    atof( argv[1] ) * local2base,
+		    atof( argv[2] ) * local2base,
+		    atof( argv[3] ) * local2base);
+		es_keytag = "user-specified";
+		es_keyfixed = 1;
+		break;
+	    case 1:
+		if (strcmp(argv[1], "reset") == 0)
+		{
+		    es_keytag = "";
+		    es_keyfixed = 0;
+		    get_solid_keypoint(es_keypoint, &es_keytag,
+					&es_int, es_mat);
+		    break;
+		}
+	    default:
+		(void) printf("Usage: 'keypoint [<x y z> | reset]'\n");
+		break;
+	}
+
+	dmaflag = 1;
 }
