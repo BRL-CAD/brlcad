@@ -1395,6 +1395,12 @@ RT_EXTERN(int db_get, (struct db_i *, struct directory *dp, genptr_t where,
 RT_EXTERN(int db_put, ( struct db_i *, struct directory *dp, genptr_t where,
 	int offset, int len ) );
 #endif /* RECORD_DEFINED */
+RT_EXTERN(int db_get_external, ( struct rt_external *ep,
+	struct directory *dp, struct db_i *dbip ) );
+RT_EXTERN(int db_put_external, ( struct rt_external *ep,
+	struct directory *dp, struct db_i *dbip ) );
+RT_EXTERN(void db_free_external, ( struct rt_external *ep ) );
+
 /* db_scan.c */
 					/* read db (to build directory) */
 RT_EXTERN(int db_scan, ( struct db_i *, int (*handler)(), int do_old_matter ) );
