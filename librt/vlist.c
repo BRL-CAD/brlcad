@@ -26,58 +26,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
-#include "vmath.h"
-#include "rtstring.h"
-#include "raytrace.h"
 #include "externs.h"
-
-/************************************************************************
- *									*
- *			Generic RT_LIST routines			*
- *									*
- ************************************************************************/
-
-/*
- *			R T _ L I S T _ L E N
- *
- *  Returns the number of elements on an rt_list brand linked list.
- */
-int
-rt_list_len( hd )
-register CONST struct rt_list	*hd;
-{
-	register int			count = 0;
-	register CONST struct rt_list	*ep;
-
-	for( RT_LIST_FOR( ep, rt_list, hd ) )  {
-		count++;
-	}
-	return count;
-}
-
-/*
- *			R T _ L I S T _ R E V E R S E
- *
- *	Reverses the order of elements in an rt_list linked list.
- */
-void
-rt_list_reverse( hd )
-register struct rt_list   *hd;
-{
-	struct rt_list tmp_hd;
-	register struct rt_list *ep;
-
-	RT_CK_LIST_HEAD( hd );
-
-	RT_LIST_INIT( &tmp_hd );
-	RT_LIST_INSERT_LIST( &tmp_hd, hd );
-
-	while( RT_LIST_WHILE( ep, rt_list, &tmp_hd ) )
-	{
-		RT_LIST_DEQUEUE( ep );
-		RT_LIST_APPEND( hd, ep );
-	}
-}
+#include "vmath.h"
+#include "rtlist.h"
+#include "bu.h"
+#include "bn.h"
 
 /************************************************************************
  *									*
@@ -184,7 +137,7 @@ CONST char *rt_vlist_cmd_descriptions[] = {
  *			R T _ C K _ V L I S T
  *
  *  Validate an rt_vlist chain for having reasonable
- *  values inside.  Calls rt_bomb() if not.
+ *  values inside.  Calls bu_bomb() if not.
  *
  *  Returns -
  *	npts	Number of point/command sets in use.
@@ -222,12 +175,12 @@ CONST struct rt_list	*vhead;
 					rt_log("  %s (%g, %g, %g)\n",
 						rt_vlist_cmd_descriptions[*cmd],
 						V3ARGS( *pt ) );
-					rt_bomb("rt_ck_vlist() bad coordinate value\n");
+					bu_bomb("rt_ck_vlist() bad coordinate value\n");
 				}
 				/* XXX Need a define for largest command number */
 				if( *cmd < 0 || *cmd > RT_VLIST_POLY_VERTNORM )  {
 					rt_log("cmd = x%x (%d.)\n", *cmd, *cmd);
-					rt_bomb("rt_ck_vlist() bad vlist command\n");
+					bu_bomb("rt_ck_vlist() bad vlist command\n");
 				}
 			}
 		}
