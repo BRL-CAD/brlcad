@@ -461,9 +461,10 @@ light_cleanup()
  */
 
 int
-light_hit(ap, PartHeadp)
+light_hit(ap, PartHeadp, finished_segs )
 struct application *ap;
 struct partition *PartHeadp;
+struct seg *finished_segs;
 {
 	register struct partition *pp;
 	register struct region	*regp;
@@ -474,6 +475,7 @@ struct partition *PartHeadp;
 	vect_t	filter_color;
 	int	light_visible;
 
+	RT_CK_LIST_HEAD(&finished_segs->l);
 
 	/*XXX Bogus with Air.  We should check to see if it is the same 
 	 * surface.
@@ -586,6 +588,7 @@ struct partition *PartHeadp;
 	sw.sw_transmit = sw.sw_reflect = 0.0;
 	sw.sw_refrac_index = 1.0;
 	sw.sw_xmitonly = 1;		/* only want sw_transmit */
+	sw.sw_segs = finished_segs;
 	VSETALL( sw.sw_color, 1 );
 	VSETALL( sw.sw_basecolor, 1 );
 
