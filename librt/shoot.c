@@ -571,12 +571,10 @@ register struct application *ap;
 	auto struct partition	FinalPart;	/* Head of Final Partitions */
 	AUTO struct soltab	**stpp;
 	register CONST union cutter *cutp;
+	struct resource		*resp;
 	int			end_free_len;
 	AUTO struct rt_i	*rtip;
 	CONST int		debug_shoot = rt_g.debug & DEBUG_SHOOT;
-	int			l_nshots = 0;
-	int			l_nmiss = 0;
-	int			l_nhits = 0;
 
 	RT_AP_CHECK(ap);
 	if( ap->a_resource == RESOURCE_NULL )  {
@@ -587,11 +585,12 @@ register struct application *ap;
 	RT_RESOURCE_CHECK(ap->a_resource);
 	ss.ap = ap;
 	rtip = ap->a_rt_i;
+	resp = ap->a_resource;
 
 	if(rt_g.debug&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION)) {
 		rt_g.rtg_logindent += 2;
 		rt_log("\n**********shootray cpu=%d  %d,%d lvl=%d (%s)\n",
-			ap->a_resource->re_cpu,
+			resp->re_cpu,
 			ap->a_x, ap->a_y,
 			ap->a_level,
 			ap->a_purpose != (char *)0 ? ap->a_purpose : "?" );
@@ -610,7 +609,7 @@ register struct application *ap;
 	RT_LIST_INIT( &finished_segs.l );
 
 	/* see rt_get_bitv() for details on how bitvector len is set. */
-	GET_BITV( rtip, solidbits, ap->a_resource );
+	GET_BITV( rtip, solidbits, resp );
 	bzero( (char *)solidbits, rtip->rti_bv_bytes );
 	regionbits = &solidbits->be_v[
 		2+RT_BITV_BITS2WORDS(rtip->nsolids)];
@@ -675,13 +674,13 @@ register struct application *ap;
 			/* Shoot a ray */
 			if(debug_shoot)rt_log("shooting %s\n", stp->st_name);
 			BITSET( solidbits->be_v, stp->st_bit );
-			l_nshots++;
+			resp->re_shots++;
 			if( rt_functab[stp->st_id].ft_shot( 
 			    stp, &ap->a_ray, ap, &waiting_segs ) <= 0 )  {
-				l_nmiss++;
+				resp->re_shot_miss++;
 				continue;	/* MISS */
 			}
-			l_nhits++;
+			resp->re_shot_hit++;
 		}
 	}
 
@@ -700,7 +699,7 @@ register struct application *ap;
 	    		ss.model_end = INFINITY;
 	    		goto weave;
 	    	}
-		rtip->nmiss_model++;
+		resp->re_nmiss_model++;
 		ap->a_return = ap->a_miss( ap );
 		status = "MISS model";
 		goto out;
@@ -776,22 +775,22 @@ register struct application *ap;
 				if( !rt_in_rpp( &ss.newray, ss.inv_dir,
 				    stp->st_min, stp->st_max ) )  {
 					if(debug_shoot)rt_log("rpp miss %s\n", stp->st_name);
-					rtip->nmiss_solid++;
+					resp->re_prune_solrpp++;
 					continue;	/* MISS */
 				}
 				if( ss.dist_corr + ss.newray.r_max < BACKING_DIST )  {
 					if(debug_shoot)rt_log("rpp skip %s, dist_corr=%g, r_max=%g\n", stp->st_name, ss.dist_corr, ss.newray.r_max);
-					rtip->nmiss_solid++;
+					resp->re_prune_solrpp++;
 					continue;	/* MISS */
 				}
 			}
 
 			if(debug_shoot)rt_log("shooting %s\n", stp->st_name);
-			l_nshots++;
+			resp->re_shots++;
 			RT_LIST_INIT( &(new_segs.l) );
 			if( rt_functab[stp->st_id].ft_shot( 
 			    stp, &ss.newray, ap, &new_segs ) <= 0 )  {
-				l_nmiss++;
+				resp->re_shot_miss++;
 				continue;	/* MISS */
 			}
 
@@ -806,7 +805,7 @@ register struct application *ap;
 					RT_LIST_INSERT( &(waiting_segs.l), &(s2->l) );
 				}
 			}
-			l_nhits++;
+			resp->re_shot_hit++;
 		}
 
 		/*
@@ -869,8 +868,8 @@ weave:
 	if( FinalPart.pt_forw == &FinalPart )  {
 		ap->a_return = ap->a_miss( ap );
 		status = "MISS bool";
-		RT_FREE_PT_LIST( &InitialPart, ap->a_resource );
-		RT_FREE_SEG_LIST( &finished_segs, ap->a_resource );
+		RT_FREE_PT_LIST( &InitialPart, resp );
+		RT_FREE_SEG_LIST( &finished_segs, resp );
 		goto out;
 	}
 
@@ -894,13 +893,13 @@ hitit:
 	 *  finished_segs can not be released yet, because FinalPart
 	 *  partitions will point to hits in those segments.
 	 */
-	RT_FREE_PT_LIST( &InitialPart, ap->a_resource );
+	RT_FREE_PT_LIST( &InitialPart, resp );
 
 	ap->a_return = ap->a_hit( ap, &FinalPart );
 	status = "HIT";
 
-	RT_FREE_SEG_LIST( &finished_segs, ap->a_resource );
-	RT_FREE_PT_LIST( &FinalPart, ap->a_resource );
+	RT_FREE_SEG_LIST( &finished_segs, resp );
+	RT_FREE_PT_LIST( &FinalPart, resp );
 
 	/*
 	 * Processing of this ray is complete.
@@ -908,19 +907,13 @@ hitit:
 out:
 	/*  Free dynamic resources.  */
 	if( solidbits != BITV_NULL)  {
-		FREE_BITV( solidbits, ap->a_resource );
+		FREE_BITV( solidbits, resp );
 	}
 
 	/*
-	 *  Record essential statistics in a critical section.
-	 *  rti_nrays provides the RTFM, so it must be accurate.
+	 *  Record essential statistics in per-processor data structure.
 	 */
-	RES_ACQUIRE( &rt_g.res_stats );
-	rtip->rti_nrays++;
-	rtip->nshots += l_nshots;
-	rtip->nmiss += l_nmiss;
-	rtip->nhits += l_nhits;
-	RES_RELEASE( &rt_g.res_stats );
+	resp->re_nshootray++;
 
 	/* Terminate any logging */
 	if(rt_g.debug&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION))  {
@@ -929,7 +922,7 @@ out:
 		else
 			rt_g.rtg_logindent = 0;
 		rt_log("----------shootray cpu=%d  %d,%d lvl=%d (%s) %s ret=%d\n",
-			ap->a_resource->re_cpu,
+			resp->re_cpu,
 			ap->a_x, ap->a_y,
 			ap->a_level,
 			ap->a_purpose != (char *)0 ? ap->a_purpose : "?",
@@ -1274,4 +1267,44 @@ void
 rt_pr_library_version()
 {
 	rt_log("%s", rt_version);
+}
+
+/*
+ *			R T _ A D D _ R E S _ S T A T S
+ *
+ *  To be called only in non-parallel mode, to tally up the statistics
+ *  from the resource structure(s) into the rt instance structure.
+ *
+ *  Non-parallel programs should call
+ *	rt_add_res_stats( rtip, RESOURCE_NULL );
+ *  to have the default resource results tallied in.
+ */
+void
+rt_add_res_stats( rtip, resp )
+register struct rt_i		*rtip;
+register struct resource	*resp;
+{
+	RT_CK_RTI( rtip );
+
+	if( resp == RESOURCE_NULL )  resp = &rt_uniresource;
+	RT_CK_RESOURCE( resp );
+
+	rtip->rti_nrays += resp->re_nshootray;
+	rtip->nmiss_model += resp->re_nmiss_model;
+
+	rtip->nshots += resp->re_shots;
+	rtip->nhits += resp->re_shot_hit;
+	rtip->nmiss += resp->re_shot_miss;
+
+	rtip->nmiss_solid += resp->re_prune_solrpp;
+
+	/* Zero out resource totals, so repeated calls are not harmful */
+	resp->re_nshootray = 0;
+	resp->re_nmiss_model = 0;
+
+	resp->re_shots = 0;
+	resp->re_shot_hit = 0;
+	resp->re_shot_miss = 0;
+
+	resp->re_prune_solrpp = 0;
 }
