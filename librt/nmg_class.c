@@ -762,7 +762,7 @@ CONST struct rt_tol	*tol;
 	pt = vu->v_p->vg_p->coord;
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-		rt_log("class_vu_vs_s(vu=x%x) pt=(%g,%g,%g)\n", vu, V3ARGS(pt) );
+		rt_log("class_vu_vs_s(vu=x%x, v=x%x) pt=(%g,%g,%g)\n", vu, vu->v_p, V3ARGS(pt) );
 
 	/* As a mandatory consistency measure, check for cached classification */
 	reason = "of cached classification";
