@@ -2180,6 +2180,13 @@ Java_mil_army_arl_services_RtService_getDbTitle(JNIEnv *env, jobject jobj )
 	return( (*env)->NewStringUTF(env, title) );
 }
 
+/* JAVA getLibraryVersion method */
+JNIEXPORT jstring JNICALL
+Java_mil_army_arl_services_RtService_getLibraryVersion(JNIEnv *env, jobject jobj )
+{
+	return( (*env)->NewStringUTF(env, RCSid) );
+}
+
 /* JAVA shootRay method */
 JNIEXPORT jobject JNICALL
 Java_mil_army_arl_services_RtService_shootRay( JNIEnv *env, jobject jobj,

@@ -106,6 +106,14 @@ JNIEXPORT jstring JNICALL Java_mil_army_arl_services_RtService_getDbTitle
 
 /*
  * Class:     mil_army_arl_services_RtService
+ * Method:    getLibraryVersion
+ * Signature: ()Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_mil_army_arl_services_RtService_getLibraryVersion
+  (JNIEnv *, jobject);
+
+/*
+ * Class:     mil_army_arl_services_RtService
  * Method:    openSession
  * Signature: ()I
  */
