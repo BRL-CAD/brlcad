@@ -36,7 +36,9 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
+#include "externs.h"
 #include "vmath.h"
+#include "bu.h"
 #include "raytrace.h"
 
 
@@ -1617,7 +1619,7 @@ double			o;
 
 	for (ep = etbl, i=0 ; i < etbl_next ; i++, ep++) {
 		if (ep->magic != MAGIC_fbm_spec_wgt) rt_bomb("find_spec_wgt");
-		else if (ep->lacunarity == l && ep->h_val == h && 
+		if (ep->lacunarity == l && ep->h_val == h && 
 			ep->octaves >= o )
 				return ep;
 	}
@@ -1633,7 +1635,7 @@ double			o;
 	 */
 	for (ep = etbl, i=0 ; i < etbl_next ; i++, ep++) {
 		if (ep->magic != MAGIC_fbm_spec_wgt) rt_bomb("find_spec_wgt");
-		else if (ep->lacunarity == l && ep->h_val == h && 
+		if (ep->lacunarity == l && ep->h_val == h && 
 			ep->octaves >= o )
 		    		break;
 	}
