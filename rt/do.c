@@ -742,8 +742,9 @@ int framenumber;
 	/* initialize lighting, may update pix_start */
 	view_2init( &ap, framename );
 
+	/* Just while doing the ray-tracing */
 	if(rdebug&RDEBUG_RTMEM)
-		rt_g.debug |= DEBUG_MEM;	/* Just for the tracing */
+		rt_g.debug |= (DEBUG_MEM|DEBUG_MEM_FULL);
 
 	rtip->nshots = 0;
 	rtip->nmiss_model = 0;
@@ -784,8 +785,9 @@ int framenumber;
 	 */
 	view_end( &ap );
 
+	/* Stop memory debug printing until next frame, leave full checking on */
 	if(rdebug&RDEBUG_RTMEM)
-		rt_g.debug &= ~DEBUG_MEM;	/* Stop until next frame */
+		rt_g.debug &= ~DEBUG_MEM;
 
 	/*
 	 *  Certain parallel systems (eg, Alliant) count the entire 
