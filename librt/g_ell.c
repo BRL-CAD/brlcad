@@ -33,7 +33,7 @@ static char RCSell[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "./debug.h"
 
-extern int sph_prep();
+extern int rt_sph_prep();
 
 /*
  *  Algorithm:
@@ -217,7 +217,7 @@ struct rt_i		*rtip;
 	 *  If it takes it, then there is nothing to do, otherwise
 	 *  the solid is an ELL.
 	 */
-	if( sph_prep( stp, rec, rtip ) == 0 )
+	if( rt_sph_prep( stp, rec, rtip ) == 0 )
 		return(0);		/* OK */
 
 	if( rec == (union record *)0 )  {
