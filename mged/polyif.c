@@ -18,6 +18,8 @@
 static char RCSpolyif[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <math.h>
 #include <signal.h>
 #include <stdio.h>
