@@ -3420,7 +3420,7 @@ CONST struct db_i		*dbip;
 		return(-1);
 	}
 
-	RT_INIT_DB_INTERNAL( ip );
+	RT_CK_DB_INTERNAL( ip );
 	ip->idb_type = ID_PIPE;
 	ip->idb_meth = &rt_functab[ID_PIPE];
 	ip->idb_ptr = bu_malloc( sizeof(struct rt_pipe_internal), "rt_pipe_internal");
@@ -3546,7 +3546,7 @@ CONST struct db_i		*dbip;
 	total_count = 4 + byte_count;
 	BU_ASSERT_LONG( ep->ext_nbytes, ==, total_count);
 
-	RT_INIT_DB_INTERNAL( ip );
+	RT_CK_DB_INTERNAL( ip );
 	ip->idb_type = ID_PIPE;
 	ip->idb_meth = &rt_functab[ID_PIPE];
 	ip->idb_ptr = bu_malloc( sizeof(struct rt_pipe_internal), "rt_pipe_internal");

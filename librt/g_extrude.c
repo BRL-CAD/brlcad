@@ -1243,7 +1243,7 @@ CONST struct db_i		*dbip;
 		return(-1);
 	}
 
-	RT_INIT_DB_INTERNAL( ip );
+	RT_CK_DB_INTERNAL( ip );
 	ip->idb_type = ID_EXTRUDE;
 	ip->idb_meth = &rt_functab[ID_EXTRUDE];
 	ip->idb_ptr = bu_malloc( sizeof(struct rt_extrude_internal), "rt_extrude_internal");
@@ -1402,7 +1402,7 @@ CONST struct db_i		*dbip;
 
 	BU_CK_EXTERNAL( ep );
 
-	RT_INIT_DB_INTERNAL( ip );
+	RT_CK_DB_INTERNAL( ip );
 	ip->idb_type = ID_EXTRUDE;
 	ip->idb_meth = &rt_functab[ID_EXTRUDE];
 	ip->idb_ptr = bu_malloc( sizeof(struct rt_extrude_internal), "rt_extrude_internal");
@@ -1502,7 +1502,7 @@ struct rt_db_internal	*ip;
 	RT_EXTRUDE_CK_MAGIC(extrude_ip);
 	if( extrude_ip->skt )
 	{
-		RT_INIT_DB_INTERNAL( &tmp_ip );
+		RT_CK_DB_INTERNAL( &tmp_ip );
 		tmp_ip.idb_type = ID_SKETCH;
 		tmp_ip.idb_ptr = (genptr_t)extrude_ip->skt;
 		tmp_ip.idb_meth = &rt_functab[ID_SKETCH];
@@ -1538,7 +1538,7 @@ struct db_i *dbip;
 
 	if( op != ip )
 	{
-		RT_INIT_DB_INTERNAL( op );
+		RT_CK_DB_INTERNAL( op );
 		eop = (struct rt_extrude_internal *)bu_malloc( sizeof( struct rt_extrude_internal ), "eop" );
 		eop->magic = RT_EXTRUDE_INTERNAL_MAGIC;
 		op->idb_ptr = (genptr_t)eop;

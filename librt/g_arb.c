@@ -1204,7 +1204,7 @@ CONST struct db_i		*dbip;
 		return(-1);
 	}
 
-	RT_INIT_DB_INTERNAL( ip );
+	RT_CK_DB_INTERNAL( ip );
 	ip->idb_type = ID_ARB8;
 	ip->idb_meth = &rt_functab[ID_ARB8];
 	ip->idb_ptr = bu_malloc( sizeof(struct rt_arb_internal), "rt_arb_internal");
@@ -1282,7 +1282,7 @@ CONST struct db_i		*dbip;
 
 	BU_CK_EXTERNAL( ep );
 	BU_ASSERT_LONG( ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 3*8);
-	RT_INIT_DB_INTERNAL( ip );
+	RT_CK_DB_INTERNAL( ip );
 	ip->idb_type = ID_ARB8;
 	ip->idb_meth = &rt_functab[ID_ARB8];
 	ip->idb_ptr = bu_malloc( sizeof(struct rt_arb_internal), "rt_arb_internal");

@@ -684,7 +684,7 @@ CONST struct db_i		*dbip;
 		bu_mem_barriercheck();
 	}
 
-	RT_INIT_DB_INTERNAL( ip );
+	RT_CK_DB_INTERNAL( ip );
 	ip->idb_type = ID_SKETCH;
 	ip->idb_meth = &rt_functab[ID_SKETCH];
 	ip->idb_ptr = bu_calloc( 1, sizeof(struct rt_sketch_internal), "rt_sketch_internal");
@@ -1010,7 +1010,7 @@ CONST struct db_i		*dbip;
 		bu_mem_barriercheck();
 	}
 
-	RT_INIT_DB_INTERNAL( ip );
+	RT_CK_DB_INTERNAL( ip );
 	ip->idb_type = ID_SKETCH;
 	ip->idb_meth = &rt_functab[ID_SKETCH];
 	ip->idb_ptr = bu_calloc( 1, sizeof(struct rt_sketch_internal), "rt_sketch_internal");
