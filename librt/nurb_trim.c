@@ -20,7 +20,14 @@
 static char	rcs_ident[] = "$Header$";
 #endif
 
+#include "conf.h"
+
+#include <stdio.h>
 #include <math.h>
+
+#include "machine.h"
+#include "vmath.h"
+#include "raytrace.h"
 #include "nurb.h"
 
 extern void	rt_clip_cnurb();

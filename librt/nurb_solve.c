@@ -8,10 +8,14 @@
  * Copyright (c) 1983, University of Utah
  * 
  */
+
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
+#include "raytrace.h"
 #include "nurb.h"	
 
 /* These Procedures take a set of matrices of the form Ax = b and

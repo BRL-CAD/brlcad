@@ -27,9 +27,12 @@
  * paper we can use a one dimensional array for the ah.
  */
 
+#include "conf.h"
+
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
+#include "raytrace.h"
 #include "nurb.h"
 
 #define AMAX(i,j)    ( (i) > (j) ? (i) : (j) )

@@ -17,9 +17,13 @@
  *     All rights reserved.
  */
 
+#include "conf.h"
+
 #include <stdio.h>
 #include "machine.h"
+#include "externs.h"
 #include "vmath.h"
+#include "raytrace.h"
 #include "nurb.h"
 
 /* This routine takes a oslo refinement matrix as described in the
