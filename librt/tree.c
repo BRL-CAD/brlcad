@@ -703,6 +703,7 @@ vect_t				tree_max;
  *
  *  Convert any references to "dead" solids into NOP nodes.
  */
+void
 rt_tree_kill_dead_solid_refs( tp )
 register union tree	*tp;
 {	
