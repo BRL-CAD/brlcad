@@ -26,6 +26,8 @@
 #include "./iges_extern.h"
 
 RT_EXTERN( struct model *nmg_mmr , () );
+RT_EXTERN( struct shell *Get_outer_shell , ( struct nmgregion *r, int entityno, int shell_orient ) );
+RT_EXTERN( struct shell *Add_inner_shell , ( struct nmgregion *r, int entityno, int shell_orient ) );
 
 brep( entityno )
 int entityno;
@@ -41,17 +43,11 @@ int entityno;
 	struct nmgregion *r;			/* NMG region */
 	struct shell	*s;			/* NMG shell */
 	struct faceuse	*fu;			/* NMG faceuse */
+	struct shell	**void_shells;		/* List of void shells */
+	struct shell	*s_outer;		/* Outer shell */
 	struct iges_vertex_list *v_list;
 	struct iges_edge_list	*e_list;
-	struct rt_tol		tol;
 	int		i;
-
-	/* XXX These need to be improved */
-	tol.magic = RT_TOL_MAGIC;
-	tol.dist = 0.005;
-	tol.dist_sq = tol.dist * tol.dist;
-	tol.perp = 1e-6;
-	tol.para = 1 - tol.perp;
 
 	/* Acquiring Data */
 
@@ -63,18 +59,19 @@ int entityno;
 	}
 
 	Readrec( dir[entityno]->param );
-	Readint( &sol_num , "MSBO: " );
-	Readint( &shell_de , "\tShell de: " );
-	Readint( &orient , "\tShell orient: " );
-	Readint( &num_of_voids , "\tNo of voids: " );
+	Readint( &sol_num , "" );
+	Readint( &shell_de , "" );
+	Readint( &orient , "" );
+	Readint( &num_of_voids , "" );
 	if( num_of_voids )
 	{
 		void_shell_de = (int *)rt_calloc( num_of_voids , sizeof( int ) , "BREP: void shell DE's" );
 		void_orient = (int *)rt_calloc( num_of_voids , sizeof( int ) , "BREP: void shell orients" );
+		void_shells = (struct shell **)rt_calloc( num_of_voids , sizeof( struct shell *) , "BREP: void shell pointers" );
 		for( i=0 ; i<num_of_voids ; i++ )
 		{
-			Readint( &void_shell_de[i] , "\t\tVoid shell de: " );
-			Readint( &void_orient[i] , "\t\tVoid shell orient: " );
+			Readint( &void_shell_de[i] , "" );
+			Readint( &void_orient[i] , "" );
 		}
 	}
 
@@ -83,55 +80,30 @@ int entityno;
 	r = RT_LIST_FIRST( nmgregion, &m->r_hd );
 
 	/* Put outer shell in region */
-	if( !Get_outer_shell( r , (shell_de - 1)/2 , orient ) )
+	if( (s_outer=Get_outer_shell( r , (shell_de - 1)/2 , orient )) == (struct shell *)NULL )
 		goto err;
 
 	/* Put voids in */
 	for( i=0 ; i<num_of_voids ; i++ )
 	{
-		if( !Add_inner_shell( r , (void_shell_de[i] - 1)/2 , void_orient[i] ) )
-			goto err;
+		if( (void_shells[i]=Add_inner_shell( r, (void_shell_de[i] - 1)/2, void_orient[i] ))
+			== (struct shell *)NULL )
+				goto err;
 	}
 
-printf( "Associate geometry:\n" );
-	/* Associate geometry */
-	v_list = vertex_root;
-	while( v_list != NULL )
+	/* orient loops */
+	Orient_loops( r );
+
+	/* orient shells */
+	nmg_fix_normals( s_outer , &tol );
+	for( i=0 ; i<num_of_voids ; i++ )
 	{
-printf( "\tFor list at DE %d (%d vertices)\n:" , v_list->vert_de , v_list->no_of_verts );
-		for( i=0 ; i < v_list->no_of_verts ; i++ )
-		{
-printf( "\t\t%d v = x%x, set to ( %g %g %g)\n" , i+1 , v_list->i_verts[i].v , V3ARGS( v_list->i_verts[i].pt) );
-			if( v_list->i_verts[i].v != NULL )
-			{
-				NMG_CK_VERTEX( v_list->i_verts[i].v );
-				nmg_vertex_gv( v_list->i_verts[i].v ,
-					v_list->i_verts[i].pt );
-			}
-		}
-		v_list = v_list->next;
+		nmg_fix_normals( void_shells[i] , &tol );
+		nmg_invert_shell( void_shells[i] , &tol );
 	}
-
-        for (RT_LIST_FOR(s, shell, &r->s_hd))
-        {
-            NMG_CK_SHELL( s );
-            for (RT_LIST_FOR(fu, faceuse, &s->fu_hd))
-            {
-            	NMG_CK_FACEUSE( fu );
-            	if( fu->orientation == OT_SAME )
-            	{
-	            	if( nmg_fu_planeeqn( fu , &tol ) )
-	            		rt_log( "Failed to calculate plane eqn\n" );
-            	}
-            }
-        }
-
 
 	/* Compute "geometry" for region and shell */
 	nmg_region_a( r , &tol );
-
-	/* only do this in extreme cricumstances */
-/*	nmg_pr_m( m );	*/
 
 	if( mk_nmg( fdout , dir[entityno]->name , m ) )
 		goto err;
@@ -140,6 +112,7 @@ printf( "\t\t%d v = x%x, set to ( %g %g %g)\n" , i+1 , v_list->i_verts[i].v , V3
 	{
 		rt_free( (char *)void_shell_de , "BREP: void shell DE's" );
 		rt_free( (char *)void_orient , "BREP: void shell orients" );
+		rt_free( (char *)void_shells , "brep: void shell list" );
 	}
 	nmg_km( m );
 
@@ -167,6 +140,7 @@ printf( "\t\t%d v = x%x, set to ( %g %g %g)\n" , i+1 , v_list->i_verts[i].v , V3
 	{
 		rt_free( (char *)void_shell_de , "BREP: void shell DE's" );
 		rt_free( (char *)void_orient , "BREP: void shell orients" );
+		rt_free( (char *)void_shells , "brep: void shell list" );
 	}
 	nmg_km( m );
 	return( 0 );
