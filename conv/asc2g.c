@@ -27,6 +27,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "conf.h"
 
+
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
@@ -163,6 +170,10 @@ after_read:
 			pipebld();
 			continue;
 
+		case DBID_NMG:
+			nmgbld();
+			continue;
+
 		case DBID_PARTICLE:
 			particlebld();
 			continue;
@@ -178,6 +189,75 @@ after_read:
 		}
 	}
 	exit(0);
+}
+
+void
+nmgbld()
+{
+	register char *cp;
+	int cp_i;
+	char *ptr;
+	char nmg_id;
+	int version;
+	char name[NAMESIZE+1];
+	long granules,struct_count[26];
+	int i;
+	long j;
+
+	if( sizeof( union record )%32 )
+	{
+		rt_log( "asc2g: nmgbld() will only work with union records with size multipe of 32\n" );
+		exit( -1 );
+	}
+
+	cp = buf;
+	sscanf( buf , "%c %d %s %d" , &nmg_id, &version, name, &granules );
+
+	if( fgets( buf, BUFSIZE, ifp ) == (char *)0 )
+	{
+		rt_log( "Unexpected EOF while reading NMG data\n" );
+		exit( -1 );
+	}
+
+	ptr = strtok( buf , " " );
+	for( i=0 ; i<26 ; i++ )
+	{
+		struct_count[i] = atof( ptr );
+		ptr = strtok( (char *)NULL , " " );
+	}
+
+	record.nmg.N_id = nmg_id;
+	record.nmg.N_version = version;
+	strncpy( record.nmg.N_name , name , NAMESIZE );
+	rt_plong( record.nmg.N_count , granules );
+	for( i=0 ; i<26 ; i++ )
+		rt_plong( &record.nmg.N_structs[i*4] , struct_count[i] );
+
+	/* write out first record */
+	(void)fwrite( (char *)&record , sizeof( union record ) , 1 , ofp );
+
+	/* read and write the remaining granules */
+	for( j=0 ; j<granules ; j++ )
+	{
+		cp = (char *)&record;
+		for( i=0 ; i<sizeof( union record )/32 ; i++ )
+		{
+			int k;
+
+			if( fgets( buf, BUFSIZE, ifp ) == (char *)0 )
+			{
+				rt_log( "Unexpected EOF while reading NMG data\n" );
+				exit( -1 );
+			}
+
+			for( k=0 ; k<32 ; k++ )
+			{
+				sscanf( &buf[k*2] , "%2x" , &cp_i );
+				*cp++ = cp_i;
+			}
+		}
+		(void)fwrite( (char *)&record , sizeof( union record ) , 1 , ofp );
+	}
 }
 
 /*		S O L B L D
