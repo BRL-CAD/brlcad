@@ -86,10 +86,13 @@ AC_CHECK_MEMBERS([struct stat.st_blksize],[AC_DEFINE(HAVE_ST_BLKSIZE, 1,
 
 
 JAVA_CFLAGS=
+have_java=no
 AC_ARG_WITH(jdk,
         [  --with-jdk=path         Specify location of Java Development Kit],[
         JAVA_CFLAGS="-I$withval/include -I$withval/include/`uname | tr [A-Z] [a-z]`"
+        have_java=yes
         ])
+AM_CONDITIONAL(JAVA, test x$have_java = xyes)
 
 dnl ============================================================
 dnl union wait testing from tcl8.4's configure.in, should be revamped?
@@ -197,6 +200,7 @@ AC_SUBST(ITCL_LIBS)
 AC_SUBST(ITCL_VERSION)
 AC_SUBST(ITK_LIBS)
 AC_SUBST(JAVA_CFLAGS)
+AC_SUBST(JAVARTSERVER)
 AC_SUBST(LEX_CFLAGS)
 AC_SUBST(OPTICAL)
 AC_SUBST(ORLE)

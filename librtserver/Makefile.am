@@ -1,6 +1,11 @@
 # $Id$
 
+if JAVA
 lib_LTLIBRARIES = librtserver.la
+else
+lib_LTLIBRARIES =
+endif
+
 MAJOR=0
 MINOR=0
 PATCH=0
