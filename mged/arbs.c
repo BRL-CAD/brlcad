@@ -86,6 +86,13 @@ char	**argv;
 	struct rt_db_internal	internal;
 	struct rt_arb_internal	*aip;
 
+
+	if( dbip->dbi_read_only )
+	{
+		TCL_READ_ONLY;
+		return TCL_ERROR;
+	}
+
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 
@@ -339,6 +346,12 @@ char	**argv;
 	fastf_t			ndotv;
 	struct rt_db_internal	internal;
 	struct rt_arb_internal	*aip;
+
+	if( dbip->dbi_read_only )
+	{
+		TCL_READ_ONLY;
+		return TCL_ERROR;
+	}
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
