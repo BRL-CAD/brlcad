@@ -1554,8 +1554,10 @@ char	**argv;
 	    Tcl_AppendElement(interp, "part");
 	    Tcl_AppendElement(interp, "nmg");
 	    Tcl_AppendElement(interp, "pipe");
+#if 0
 	    Tcl_AppendElement(interp, "extrude");
 	    Tcl_AppendElement(interp, "sketch");
+#endif
 
 	    return TCL_OK;
 	  }
