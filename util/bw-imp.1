@@ -1,8 +1,8 @@
-.TH BW-IMPRESS 1 BRL/CAD
+.TH BW-IMP 1 BRL/CAD
 .SH NAME
-bw\(hyimpress \- convert a black and white bw image file to imPRESS bitmap
+bw\(hyimp \- convert a black and white bw image file to imPRESS bitmap
 .SH SYNOPSIS
-.B bw-impress
+.B bw-imp
 .RB [ \-Dh ]
 .RB [ \-s\  squaresize]
 .RB [ \-w\  width]
@@ -10,7 +10,7 @@ bw\(hyimpress \- convert a black and white bw image file to imPRESS bitmap
 .RB [ \-t\  thresh]
 \<\ file
 .SH DESCRIPTION
-.I Bw-impress
+.I Bw-imp
 converts an 8-bit monochrome
 .IR bw (5)
 format
@@ -35,17 +35,17 @@ The
 .B \-h
 option specifies a 1024x1024 image rather than the default of 512x512.
 .SH CAVEATS
-.I Bw-impress
+.I Bw-imp
 will take several CPU-minutes (on a VAX 780) to convert a single
 .IR file .
 .SH EXAMPLES
 The following invocations are fairly typical:
 .RS
-\fIpix-bw\| -ntsc\| image.pix\| | \|bw-impress\| | \| qpr \|\-qi300\fP \|&
+\fIpix-bw\| -ntsc\| image.pix\| | \|bw-imp\| | \| qpr \|\-qi300\fP \|&
 .RE
 .sp
 .RS
-\fIrle-pix\| image.rle\| | \|pix-bw\| -ntsc\| | \|bw-impress\| | \|qpr \|\-qi300\fP \|&
+\fIrle-pix\| image.rle\| | \|pix-bw\| -ntsc\| | \|bw-imp\| | \|qpr \|\-qi300\fP \|&
 .RE
 .SH "SEE ALSO"
 rle-pix(1), pix-bw(1), bw(5), pix(5)
