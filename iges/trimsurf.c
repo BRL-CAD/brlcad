@@ -32,615 +32,812 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./iges_extern.h"
 #include "wdb.h"
 
-struct nurb_verts
-{
-	point_t pt;
-	vect_t uvw;
-	struct vertex *v;
-};
+/* translations to get knot vectors in first quadrant */
+static fastf_t u_translation=0.0;
+static fastf_t v_translation=0.0;
 
-void
-set_edge_vertices_m( fu , nverts , nurb_v , vert_count , entityno )
-struct faceuse *fu;
-int nverts;
-struct nurb_verts *nurb_v;
-int *vert_count;
+RT_EXTERN( struct cnurb *rt_arc2d_to_cnurb, ( point_t center, point_t start, point_t end, int pt_type, struct rt_tol *tol ) );
+
+#define CTL_INDEX(_i,_j)	((_i * n_cols + _j) * ncoords)
+
+struct snurb *
+Get_nurb_surf( entityno )
 int entityno;
 {
+	struct snurb *srf;
 	int entity_type;
-	int i;
-	double x,y,z;
-	point_t pt;
-
-	if( dir[entityno]->param <= pstart )
-	{
-		printf( "Illegal parameter pointer for entity D%07d (%s)\n" ,
-				dir[entityno]->direct , dir[entityno]->name );
-		return;
-	}
-
-	if( *vert_count == nverts-1 )
-		return;
-
-	Readrec( dir[entityno]->param );
-	Readint( &entity_type , "" );
-	switch( entity_type )
-	{
-		case 102:
-			{
-				int curve_count;
-				int *curve_list;
-
-				Readint( &curve_count , "" );
-				curve_list = (int *)rt_calloc( curve_count , sizeof( int ) , "set_edge_vertices_m: curve_list" );
-				for( i=0 ; i<curve_count ; i++ )
-					Readint( &curve_list[i] , "" );
-				for( i=0 ; i<curve_count ; i++ )
-					set_edge_vertices_m( fu , nverts , nurb_v , vert_count , (curve_list[i]-1)/2 );
-				rt_free( (char *)curve_list , "set_edge_vertices_m: curve_list" );
-			}
-			break;
-		case 110:
-			Readcnv( &x , "" );
-			Readcnv( &y , "" );
-			Readcnv( &z , "" );
-			if( *vert_count == 0 )
-			{
-				VSET( pt , x , y , z );
-				MAT4X3PNT( nurb_v[0].pt , *dir[entityno]->rot , pt );
-				nmg_vertex_gv( nurb_v[0].v , nurb_v[0].pt );
-			}
-			Readcnv( &x , "" );
-			Readcnv( &y , "" );
-			Readcnv( &z , "" );
-			(*vert_count)++;
-			VSET( pt , x , y , z )
-			MAT4X3PNT( nurb_v[*vert_count].pt , *dir[entityno]->rot , pt );
-			nmg_vertex_gv( nurb_v[*vert_count].v , nurb_v[*vert_count].pt );
-			break;
-		case 100:
-			Readcnv( &z , "" );
-			Readcnv( &x , "" );
-			Readcnv( &y , "" );
-			Readcnv( &x , "" );
-			Readcnv( &y , "" );
-			if( *vert_count == 0 )
-			{
-				VSET( pt , x , y , z );
-				MAT4X3PNT( nurb_v[0].pt , *dir[entityno]->rot , pt );
-				nmg_vertex_gv( nurb_v[0].v , nurb_v[0].pt );
-			}
-			Readcnv( &x , "" );
-			Readcnv( &y , "" );
-			(*vert_count)++;
-			VSET( pt , x , y , z );
-			MAT4X3PNT( nurb_v[*vert_count].pt , *dir[entityno]->rot , pt );
-			nmg_vertex_gv( nurb_v[*vert_count].v , nurb_v[*vert_count].pt );
-			break;
-		case 104:
-			/* Skip conic coefficients */
-			Readdbl( &x , "" );
-			Readdbl( &x , "" );
-			Readdbl( &x , "" );
-			Readdbl( &x , "" );
-			Readdbl( &x , "" );
-			Readdbl( &x , "" );
-
-			/* common z coord */
-			Readcnv( &z , "" );
-
-			Readcnv( &x , "" );
-			Readcnv( &y , "" );
-			if( *vert_count == 0 )
-			{
-				VSET( pt , x , y , z );
-				MAT4X3PNT( nurb_v[0].pt , *dir[entityno]->rot , pt );
-				nmg_vertex_gv( nurb_v[0].v , nurb_v[0].pt );
-			}
-			Readcnv( &x , "" );
-			Readcnv( &y , "" );
-			(*vert_count)++;
-			VSET( pt , x , y , z );
-			MAT4X3PNT( nurb_v[*vert_count].pt , *dir[entityno]->rot , pt );
-			nmg_vertex_gv( nurb_v[*vert_count].v , nurb_v[*vert_count].pt );
-			break;
-		case 126:
-			{
-				int num_pts;
-				int degree;
-				int j;
-				double a;
-
-				Readint( &i , "" );
-				num_pts = i+1;
-				Readint( &degree , "" );
-
-				/* skip properties */
-				for( i=0 ; i<4 ; i++ )
-					Readint( &j , "" );
-
-				/* skip knot vector */
-				for( i=0 ; i<num_pts+degree+1 ; i++ )
-					Readdbl( &a , "" );
-
-				/* skip weights */
-				for( i=0 ; i<num_pts ; i++ )
-					Readdbl( &a , "" );
-
-				/* get first vertex */
-				Readcnv( &x , "" );
-				Readcnv( &y , "" );
-				Readcnv( &z , "" );
-				if( *vert_count == 0 )
-				{
-					VSET( pt , x , y , z );
-					MAT4X3PNT( nurb_v[0].pt , *dir[entityno]->rot , pt );
-					nmg_vertex_gv( nurb_v[0].v , nurb_v[0].pt );
-				}
-
-				/* skip to last vertex */
-				for( i=1 ; i<num_pts-1 ; i++ )
-				{
-					Readdbl( &x , "" );
-					Readdbl( &y , "" );
-					Readdbl( &z , "" );
-				}
-
-				/* get last vertex */
-				Readcnv( &x , "" );
-				Readcnv( &y , "" );
-				Readcnv( &z , "" );
-				(*vert_count)++;
-				VSET( pt , x , y , z );
-				MAT4X3PNT( nurb_v[*vert_count].pt , *dir[entityno]->rot , pt );
-				nmg_vertex_gv( nurb_v[*vert_count].v , nurb_v[*vert_count].pt );
-			}
-			break;
-		default:
-			printf( "Curves of type %d are not yet handled for trimmed surfaces\n" , entity_type );
-			break;
-	}
-}
-
-void
-set_edge_vertices_p( fu, nverts, nurb_v, vert_count, u_min, u_max, v_min, v_max, entityno )
-struct faceuse *fu;
-int nverts;
-struct nurb_verts *nurb_v;
-int *vert_count;
-fastf_t u_min,u_max,v_min,v_max;
-int entityno;
-{
-	int entity_type;
-	int i;
-	double x,y,z;
-	struct vertexuse *vu;
-	struct edgeuse *eu;
-	struct loopuse *lu;
-	point_t pt;
-
-	if( dir[entityno]->param <= pstart )
-	{
-		printf( "Illegal parameter pointer for entity D%07d (%s)\n" ,
-				dir[entityno]->direct , dir[entityno]->name );
-		return;
-	}
-
-	if( *vert_count == nverts-1 )
-		return;
-
-	Readrec( dir[entityno]->param );
-	Readint( &entity_type , "" );
-	switch( entity_type )
-	{
-		case 102:
-			{
-				int curve_count;
-				int *curve_list;
-
-				Readint( &curve_count , "" );
-				curve_list = (int *)rt_calloc( curve_count , sizeof( int ) , "set_edge_vertices_m: curve_list" );
-				for( i=0 ; i<curve_count ; i++ )
-					Readint( &curve_list[i] , "" );
-				for( i=0 ; i<curve_count ; i++ )
-					set_edge_vertices_p( fu, nverts, nurb_v, vert_count,
-						u_min, u_max, v_min, v_max, (curve_list[i]-1)/2 );
-				rt_free( (char *)curve_list , "set_edge_vertices_p: curve_list" );
-			}
-			break;
-		case 110:
-			Readdbl( &x , "" );
-			Readdbl( &y , "" );
-			Readdbl( &z , "" );
-			if( *vert_count == 0 )
-			{
-				VSET( pt , (x-u_min)/(u_max-u_min) , (y-v_min)/(v_max-v_min) , z );
-				MAT4X3PNT( nurb_v[0].uvw , *dir[entityno]->rot , pt );
-				for( RT_LIST_FOR( vu , vertexuse , &nurb_v[0].v->vu_hd ) )
-					nmg_vertexuse_a_cnurb( vu , nurb_v[0].uvw );
-			}
-			Readdbl( &x , "" );
-			Readdbl( &y , "" );
-			Readdbl( &z , "" );
-			(*vert_count)++;
-			VSET( pt , (x-u_min)/(u_max-u_min) , (y-v_min)/(v_max-v_min) , z );
-			MAT4X3PNT( nurb_v[*vert_count].uvw , *dir[entityno]->rot , pt );
-			for( RT_LIST_FOR( vu , vertexuse , &nurb_v[*vert_count].v->vu_hd ) )
-				nmg_vertexuse_a_cnurb( vu , nurb_v[*vert_count].uvw );
-			for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
-			{
-				for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
-				{
-					if( (eu->vu_p->v_p == nurb_v[*vert_count].v &&
-					    eu->eumate_p->vu_p->v_p == nurb_v[*vert_count-1].v ) ||
-					    (eu->vu_p->v_p == nurb_v[*vert_count-1].v &&
-					    eu->eumate_p->vu_p->v_p == nurb_v[*vert_count].v ) )
-							nmg_edge_g_cnurb_plinear( eu );
-				}
-			}
-			break;
-		case 100:
-		case 104:
-			printf( "Circular or conic arc edges not yet handled for trimmed surfaces\n" );
-			break;
-		case 126:
-			{
-				int num_pts;
-				int num_knots;
-				int degree;
-				int rational;
-				int coords;
-				int pt_type;
-				fastf_t *kv;
-				fastf_t knot_min,knot_max;
-				fastf_t *points;
-				int j;
-				double a;
-
-				Readint( &i , "" );
-				num_pts = i+1;
-				Readint( &degree , "" );
-
-				/* properties */
-				Readint( &j , "" );
-				Readint( &j , "" );
-				Readint( &j , "" );
-				rational = !j;
-				Readint( &j , "" );
-
-				pt_type = RT_NURB_MAKE_PT_TYPE( 3+rational , 2 , rational );
-				coords = RT_NURB_EXTRACT_COORDS( pt_type );
-
-				/* knot vector */
-				num_knots = num_pts + degree + 1;
-				kv = (fastf_t *)rt_calloc( num_knots , sizeof( fastf_t ) , "set_edge_vertices_p: kv" );
-				knot_min = MAX_FASTF;
-				knot_max = (-knot_min);
-				for( i=0 ; i<num_knots ; i++ )
-				{
-					Readdbl( &a , "" );
-					kv[i] = a;
-					V_MIN( knot_min , kv[i] );
-					V_MAX( knot_max , kv[i] );
-				}
-
-				/* normalize knot vector */
-				for( i=0 ; i<num_knots ; i++ )
-				{
-					kv[i] = (kv[i] - knot_min)/(knot_max - knot_min);
-					if( kv[i] < 0.0 )
-						kv[i] = 0.0;
-					if( kv[i] > 1.0 )
-						kv[i] = 1.0;
-				}
-
-				points = (fastf_t *)rt_calloc( num_pts*coords , sizeof( fastf_t ) , "set_edge_vertices_p: points" );
-				/* weights */
-				for( i=0 ; i<num_pts ; i++ )
-				{
-					Readdbl( &a , "" );
-					if( rational )
-						points[i*coords+3] = a;
-				}
-
-				/* get first vertex */
-				Readdbl( &x , "" );
-				Readdbl( &y , "" );
-				Readdbl( &z , "" );
-				VSET( pt , (x-u_min)/(u_max-u_min) , (y-v_min)/(v_max-v_min) , z );
-				MAT4X3PNT( &points[0] , *dir[entityno]->rot , pt );
-				if( *vert_count == 0 )
-				{
-					VMOVE( nurb_v[0].uvw , &points[0] )
-					for( RT_LIST_FOR( vu , vertexuse , &nurb_v[0].v->vu_hd ) )
-						nmg_vertexuse_a_cnurb( vu , nurb_v[0].uvw );
-				}
-
-				/* middle vertices */
-				for( i=1 ; i<num_pts-1 ; i++ )
-				{
-					Readdbl( &x , "" );
-					Readdbl( &y , "" );
-					Readdbl( &z , "" );
-					VSET( pt , (x-u_min)/(u_max-u_min) , (y-v_min)/(v_max-v_min) , z );
-					MAT4X3PNT( &points[i*coords] , *dir[entityno]->rot , pt );
-					VSET( &points[i*coords] , x , y , z );
-				}
-
-				/* get last vertex */
-				Readdbl( &x , "" );
-				Readdbl( &y , "" );
-				Readdbl( &z , "" );
-				VSET( pt , (x-u_min)/(u_max-u_min) , (y-v_min)/(v_max-v_min) , z );
-				MAT4X3PNT( &points[num_pts-1] , *dir[entityno]->rot , pt );
-
-				(*vert_count)++;
-				VMOVE( nurb_v[*vert_count].uvw , &points[num_pts-1] );
-				for( RT_LIST_FOR( vu , vertexuse , &nurb_v[*vert_count].v->vu_hd ) )
-					nmg_vertexuse_a_cnurb( vu , nurb_v[*vert_count].uvw );
-				for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
-				{
-					for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
-					{
-						if( (eu->vu_p->v_p == nurb_v[*vert_count].v &&
-						    eu->eumate_p->vu_p->v_p == nurb_v[*vert_count-1].v ) ||
-						    (eu->vu_p->v_p == nurb_v[*vert_count-1].v &&
-						    eu->eumate_p->vu_p->v_p == nurb_v[*vert_count].v ) )
-								nmg_edge_g_cnurb( eu, degree+1, num_knots,
-									kv, num_pts, pt_type, points );
-					}
-				}
-			}
-			break;
-		default:
-			printf( "Curve type %d not handled for trimmed surfaces yet\n" , entity_type );
-			break;
-	}
-}
-
-void
-Set_loop_vertices( fu , nverts , nurb_v , pcurve , mcurve, u_min, u_max, v_min, v_max )
-struct faceuse *fu;
-int nverts;
-struct nurb_verts *nurb_v;
-int pcurve,mcurve;
-fastf_t u_min,u_max,v_min,v_max;
-{
-	int vert_count;
-
-	/* first do model coordinates */
-	vert_count = 0;
-	set_edge_vertices_m( fu , nverts , nurb_v , &vert_count , mcurve );
-
-	/* now do parametric space */
-	vert_count = 0;
-	set_edge_vertices_p( fu , nverts , nurb_v , &vert_count, u_min, u_max, v_min, v_max , pcurve );
-}
-
-void
-Set_vertices( fu , nverts , nurb_v , on_surf_de , entityno , u_min , u_max , v_min , v_max )
-struct faceuse *fu;
-int nverts;
-struct nurb_verts *nurb_v;
-int on_surf_de;
-int entityno;
-fastf_t u_min,u_max,v_min,v_max;
-{
-	int entity_type;
-	int surf_de;
-	int param_curve_de,model_curve_de;
-	int i;
-
-	/* Acquiring Data */
-
-	if( dir[entityno]->param <= pstart )
-	{
-		printf( "Illegal parameter pointer for entity D%07d (%s)\n" ,
-				dir[entityno]->direct , dir[entityno]->name );
-		return;
-	}
-
-	Readrec( dir[entityno]->param );
-	Readint( &entity_type , "" );
-	if( entity_type != 142 )
-	{
-		printf( "Expected Curve on a Paremetric Surface, found entity type %d\n" , entity_type );
-		return;
-	}
-	Readint( &i , "" );
-	Readint( &surf_de , "" );
-	if( surf_de != on_surf_de )
-		printf( "Curve is on surface at DE %d, should be on surface at DE %d\n", surf_de, on_surf_de );
-
-	Readint( &param_curve_de , "" );
-	Readint( &model_curve_de , "" );
-
-	Set_loop_vertices( fu , nverts , nurb_v , (param_curve_de-1)/2 , (model_curve_de-1)/2, u_min, u_max, v_min, v_max );
-}
-
-int
-Count_verts( entityno )
-int entityno;
-{
-	int entity_type;
-	int vert_count=0;
-	int curve_count;
-	int *comp_curve_des;
-	int i;
-
-	/* Acquiring Data */
-
-	if( dir[entityno]->param <= pstart )
-	{
-		printf( "Illegal parameter pointer for entity D%07d (%s)\n" ,
-				dir[entityno]->direct , dir[entityno]->name );
-		return(0);
-	}
-
-	Readrec( dir[entityno]->param );
-	Readint( &entity_type , "" );
-
-	switch( entity_type )
-	{
-		case 110:
-		case 100:
-		case 126:
-			vert_count = 1;
-			break;
-		case 102:
-			Readint( &curve_count , "" );
-			comp_curve_des = (int *)rt_calloc( curve_count , sizeof( int ) , "Count_verts: comp_curve_des" );
-			for( i=0 ; i<curve_count ; i++ )
-				Readint( &comp_curve_des[i] , "" );
-
-			for( i=0 ; i<curve_count ; i++ )
-				vert_count += Count_verts( (comp_curve_des[i]-1)/2 );
-			break;
-	}
-
-	return( vert_count );
-}
-
-int
-Get_curve_verts( entityno, on_surf_de , nurb_v )
-int entityno;
-struct nurb_verts **nurb_v;
-{
-	int entity_type;
-	int vert_count=0;
-	int i;
-	int surf_de,param_curve_de,model_curve_de;
-
-	/* Acquiring Data */
-
-	if( dir[entityno]->param <= pstart )
-	{
-		printf( "Illegal parameter pointer for entity D%07d (%s)\n" ,
-				dir[entityno]->direct , dir[entityno]->name );
-		return(0);
-	}
-
-	Readrec( dir[entityno]->param );
-	Readint( &entity_type , "" );
-	if( entity_type != 142 )
-	{
-		printf( "Expected Curve on a Paremetric Surface, found entity type %d\n" , entity_type );
-		return( 0 );
-	}
-	Readint( &i , "" );
-	Readint( &surf_de , "" );
-	if( surf_de != on_surf_de )
-		printf( "Curve is on surface at DE %d, should be on surface at DE %d\n", surf_de, on_surf_de );
-
-	Readint( &param_curve_de , "" );
-	Readint( &model_curve_de , "" );
-
-	vert_count = Count_verts( (model_curve_de-1)/2 );
-
-	(*nurb_v) = (struct nurb_verts *)rt_calloc( vert_count , sizeof( struct nurb_verts ) , "Get_curve_verts: (*nurb_v)" );
-
-	return( vert_count );
-}
-
-int
-Get_nurb_surf( entityno, u_order, v_order, n_u_knots, n_v_knots, ukv, vkv, u_min, u_max, v_min, v_max, n_rows, n_cols, pt_type, mesh )
-int entityno;
-int *u_order,*v_order,*n_u_knots,*n_v_knots,*n_rows,*n_cols,*pt_type;
-fastf_t **ukv,**vkv,**mesh;
-fastf_t *u_min,*u_max,*v_min,*v_max;
-{
-	int entity_type;
-	int i;
+	int i,j;
 	int num_knots;
 	int num_pts;
 	int rational;
+	int ncoords;
+	int n_rows,n_cols,u_order,v_order;
+	int n_u_knots,n_v_knots;
+	int pt_type;
+	fastf_t u_min,u_max;
+	fastf_t v_min,v_max;
 	double a;
+rt_log( "Get_nurb_surf( %d )\n" , entityno );
 
 	/* Acquiring Data */
 
 	if( dir[entityno]->param <= pstart )
 	{
-		printf( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+		rt_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
-		return(0);
+		return( (struct snurb *)NULL );
 	}
 
 	Readrec( dir[entityno]->param );
 	Readint( &entity_type , "" );
 	if( entity_type != 128 )
 	{
-		printf( "Only B-Spline surfaces allowed for faces (found type %d)\n", entity_type );
-		return( 1 );
+		rt_log( "Only B-Spline surfaces allowed for faces (found type %d)\n", entity_type );
+		return( (struct snurb *)NULL );
 	}
 	Readint( &i , "" );
-	*n_rows = i+1;
+	n_rows = i+1;
 	Readint( &i , "" );
-	*n_cols = i+1;
+	n_cols = i+1;
 	Readint( &i , "" );
-	*u_order = i+1;
+	u_order = i+1;
 	Readint ( &i , "" );
-	*v_order = i+1;
+	v_order = i+1;
 	Readint( &i , "" );
 	Readint( &i , "" );
 	Readint( &i , "" );
 	rational = !i;
-	*pt_type = RT_NURB_MAKE_PT_TYPE( 3+rational , 2 , rational );
+	ncoords = 3+rational;
+	pt_type = RT_NURB_MAKE_PT_TYPE( ncoords , RT_NURB_PT_XYZ , rational );
 	Readint( &i , "" );
 	Readint( &i , "" );
-	*n_u_knots = (*n_rows)+(*u_order);
-	*ukv = (fastf_t *)rt_calloc( *n_u_knots , sizeof( fastf_t ) , "Get_nurb_surf: *ukv" );
-	for( i=0 ; i<*n_u_knots ; i++ )
+
+	n_u_knots = n_cols+u_order;
+	n_v_knots = n_rows+v_order;
+	srf = rt_nurb_new_snurb( u_order, v_order, n_u_knots, n_v_knots, n_rows, n_cols, pt_type );
+
+	/* Read knot vectors */
+	for( i=0 ; i<n_v_knots ; i++ )
 	{
 		Readdbl( &a , "" );
-		(*ukv)[i] = a;
+		srf->v_knots.knots[i] = a;
 	}
-	*n_v_knots = (*n_cols)+(*v_order);
-	(*vkv) = (fastf_t *)rt_calloc( *n_v_knots , sizeof( fastf_t ) , "Get_nurb_surf: *vkv" );
-	for( i=0 ; i<*n_v_knots ; i++ )
+	for( i=0 ; i<n_u_knots ; i++ )
 	{
 		Readdbl( &a , "" );
-		(*vkv)[i] = a;
+		srf->u_knots.knots[i] = a;
 	}
-	num_pts = (*n_rows)*(*n_cols);
-	*mesh = (fastf_t *)rt_calloc( num_pts*(3+rational) , sizeof( fastf_t ) , "Get_nurb_surf: *mesh" );
+
+	/* Insure that knot values are non-negative */
+	if( srf->v_knots.knots[0] < 0.0 )
+	{
+		v_translation = (-srf->v_knots.knots[0]);
+		for( i=0 ; i<n_v_knots ; i++ )
+			srf->v_knots.knots[i] += v_translation;
+	}
+	else
+		v_translation = 0.0;
+
+	if( srf->u_knots.knots[0] < 0.0 )
+	{
+		u_translation = (-srf->u_knots.knots[0]);
+		for( i=0 ; i<n_u_knots ; i++ )
+			srf->u_knots.knots[i] += u_translation;
+	}
+	else
+		u_translation = 0.0;
+
+	for( j=0 ; j<n_cols ; j++ )
+		for( i=0 ; i<n_rows ; i++ )
+		{
+			Readdbl( &a , "" );
+			if( rational )
+				srf->ctl_points[CTL_INDEX(i,j)+3] = a;
+		}
+	for( j=0 ; j<n_cols ; j++ )
+		for( i=0 ; i<n_rows ; i++ )
+		{
+			Readcnv( &a , "" );
+			srf->ctl_points[CTL_INDEX(i,j)] = a;
+			Readcnv( &a , "" );
+			srf->ctl_points[CTL_INDEX(i,j)+1] = a;
+			Readcnv( &a , "" );
+			srf->ctl_points[CTL_INDEX(i,j)+2] = a;
+		}
+	Readdbl( &a , "" );
+	u_min = a;
+	Readdbl( &a , "" );
+	u_max = a;
+	Readdbl( &a , "" );
+	v_min = a;
+	Readdbl( &a , "" );
+	v_max = a;
+
+	return( srf );
+}
+
+void
+Assign_cnurb_to_eu( eu, crv )
+struct edgeuse *eu;
+struct cnurb *crv;
+{
+	fastf_t *ctl_points;
+	fastf_t *knots;
+	int ncoords;
+	int i;
+
+	NMG_CK_EDGEUSE( eu );
+	NMG_CK_CNURB( crv );
+
+	ncoords = RT_NURB_EXTRACT_COORDS( crv->pt_type );
+
+	ctl_points = (fastf_t *)rt_calloc( ncoords*crv->c_size, sizeof( fastf_t ),
+			"Assign_cnurb_to_eu: ctl_points" );
+
+	for( i=0 ; i<crv->c_size ; i++ )
+		VMOVEN( &ctl_points[i*ncoords], &crv->ctl_points[i*ncoords], ncoords )
+
+	knots = (fastf_t *)rt_calloc( crv->knot.k_size, sizeof( fastf_t ),
+			"Assign_cnurb_to_eu: knots" );
+
+	for( i=0 ; i<crv->knot.k_size; i++ )
+		knots[i] = crv->knot.knots[i];
+
+	nmg_edge_g_cnurb( eu, crv->order, crv->knot.k_size, knots, crv->c_size,
+			crv->pt_type, ctl_points );
+}
+
+struct cnurb *
+Get_cnurb( entity_no )
+int entity_no;
+{
+	struct cnurb *crv;
+	int entity_type;
+	int num_pts;
+	int degree;
+	int i,j;
+	int planar;
+	int rational;
+	int pt_type;
+	int ncoords;
+	double a;
+	double x,y,z;
+rt_log( "Get_cnurb( %d )\n" ,  entity_no );
+
+	if( dir[entity_no]->param <= pstart )
+	{
+		rt_log( "Get_cnurb: Illegal parameter pointer for entity D%07d (%s)\n" ,
+				dir[entity_no]->direct , dir[entity_no]->name );
+		return( (struct cnurb *)NULL );
+	}
+
+	Readrec( dir[entity_no]->param );
+	Readint( &entity_type , "" );
+
+	if( entity_type != 126 )
+	{
+		rt_log( "Get_cnurb: Was expecting spline curve, got type %d\n" , entity_type );
+		return( (struct cnurb *)NULL );
+	}
+
+	Readint( &i , "" );
+	num_pts = i+1;
+	Readint( &degree , "" );
+
+	/* properties */
+	Readint( &planar , "" );
+	Readint( &i, "" );	/* open or closed */
+	Readint( &i, "" );	/* polynomial */
+	rational = !i;
+	Readint( &i, "" );	/* periodic */
+
+	if( rational )
+	{
+		ncoords = 3;
+		pt_type = RT_NURB_MAKE_PT_TYPE( ncoords, RT_NURB_PT_UV, RT_NURB_PT_RATIONAL );
+	}
+	else
+	{
+		ncoords = 2;
+		pt_type = RT_NURB_MAKE_PT_TYPE( ncoords, RT_NURB_PT_UV, RT_NURB_PT_NONRAT );
+	}
+
+	crv = rt_nurb_new_cnurb( degree+1, num_pts+degree+1, num_pts, pt_type );
+
+	/* knot vector */
+	for( i=0 ; i<num_pts+degree+1 ; i++ )
+	{
+		Readdbl( &a , "" );
+		crv->knot.knots[i] = a;
+	}
+
+	/* weights */
 	for( i=0 ; i<num_pts ; i++ )
 	{
 		Readdbl( &a , "" );
 		if( rational )
-			(*mesh)[i*4+3] = a;
+			crv->ctl_points[i*ncoords+2] = a;
 	}
+
+	/* vertices */
 	for( i=0 ; i<num_pts ; i++ )
 	{
-		Readcnv( &a , "" );
-		(*mesh)[i*(3+rational)] = a;
-		Readcnv( &a , "" );
-		(*mesh)[i*(3+rational)+1] = a;
-		Readcnv( &a , "" );
-		(*mesh)[i*(3+rational)+2] = a;
-	}
-	Readdbl( &a , "" );
-	*u_min = a;
-	Readdbl( &a , "" );
-	*u_max = a;
-	Readdbl( &a , "" );
-	*v_min = a;
-	Readdbl( &a , "" );
-	*v_max = a;
-
-	if( *u_min != 0.0 || *u_max != 1.0 )
-	{
-		num_knots = (*n_rows)+(*u_order);
-		for( i=0 ; i<num_knots ; i++ )
-			(*ukv)[i] = ((*ukv)[i]-(*u_min))/(*u_max-(*u_min));
-	}
-	if( *v_min != 0.0 || *v_max != 1.0 )
-	{
-		num_knots = (*n_cols)+(*v_order);
-		for( i=0 ; i<num_knots ; i++ )
-			(*vkv)[i] = ((*vkv)[i]-(*v_min))/(*v_max-(*v_min));
+		if( dir[entity_no]->status & 500 )
+		{
+			Readdbl( &x , "" );
+			Readdbl( &y , "" );
+			Readdbl( &z , "" );
+		}
+		else
+		{
+			Readcnv( &x , "" );
+			Readcnv( &y , "" );
+			Readcnv( &z , "" );
+		}
+		crv->ctl_points[i*ncoords] = y + u_translation;
+		crv->ctl_points[i*ncoords+1] = x + v_translation;
 	}
 
-	return( 0 );
+	return( crv );
+}
+
+void
+Assign_vu_geom( vu, u, v, srf )
+struct vertexuse *vu;
+fastf_t u,v;
+struct snurb *srf;
+{
+	point_t uvw;
+	point_t pt_on_srf;
+	struct vertexuse *vu1;
+
+	NMG_CK_VERTEXUSE( vu );
+	NMG_CK_SNURB( srf );
+
+	rt_nurb_s_eval( srf, u, v, pt_on_srf );
+	nmg_vertex_gv( vu->v_p, pt_on_srf );
+	VSET( uvw, u, v, 1.0 );
+
+	for( RT_LIST_FOR( vu1, vertexuse, &vu->v_p->vu_hd ) )
+		nmg_vertexuse_a_cnurb( vu1, uvw );
+}
+
+void
+Add_trim_curve( entity_no, lu, srf )
+int entity_no;
+struct loopuse *lu;
+struct snurb *srf;
+{
+	int entity_type;
+	struct cnurb *crv;
+	struct edgeuse *eu;
+	struct edgeuse *new_eu;
+	struct vertex *vp;
+	double x,y,z;
+	fastf_t u,v;
+	int ncoords;
+	int i;
+
+rt_log( "in Add_trim_curve, entity_no = %d\n", entity_no );
+
+	NMG_CK_LOOPUSE( lu );
+	NMG_CK_SNURB( srf );
+
+	if( dir[entity_no]->param <= pstart )
+	{
+		rt_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+				dir[entity_no]->direct , dir[entity_no]->name );
+		return;
+	}
+
+	Readrec( dir[entity_no]->param );
+	Readint( &entity_type , "" );
+
+	switch( entity_type )
+	{
+		case 102:	/* composite curve */
+			{
+				int curve_count;
+				int *curve_list;
+rt_log( "\tComposite curve\n" );
+
+				Readint( &curve_count , "Curve Count: " );
+				curve_list = (int *)rt_calloc( curve_count , sizeof( int ),
+						"Add_trim_curve: curve_list" );
+
+				for( i=0 ; i<curve_count ; i++ )
+					Readint( &curve_list[i] , "\t Curve: " );
+
+				for( i=0 ; i<curve_count ; i++ )
+					Add_trim_curve( (curve_list[i]-1)/2, lu, srf );
+
+				rt_free( (char *)curve_list , "Add_trim_curve: curve_list" );
+			}
+			break;
+		case 110:	/* line */
+rt_log( "\tLines\n" );
+			/* get start point */
+			Readdbl( &x , "X: " );
+			Readdbl( &y , "Y: " );
+			Readdbl( &z , "Z: " );
+
+			/* Split last edge in loop */
+			eu = RT_LIST_LAST( edgeuse, &lu->down_hd );
+			new_eu = nmg_eusplit( (struct vertex *)NULL, eu, 0 );
+			vp = eu->vu_p->v_p;
+
+			/* if old edge doesn't have vertex geometry, assign some */
+			if( !vp->vg_p )
+			{
+				u = y + u_translation;
+				v = x + v_translation;
+rt_log( "\t\tstart point at ( %g %g ) translated to ( %g %g )\n", x, y, u, v );
+				Assign_vu_geom( eu->vu_p, u, v, srf );
+			}
+
+			/* read terminate point */
+			Readdbl( &x , "X: " );
+			Readdbl( &y , "Y: " );
+			Readdbl( &z , "Z: " );
+
+			/* assign geometry to vertex of new edgeuse */
+			u = y + u_translation;
+			v = x + v_translation;
+rt_log( "\t\tend point at ( %g %g ) translated to ( %g %g )\n", x, y, u, v );
+			Assign_vu_geom( new_eu->vu_p, u, v, srf );
+
+			/* assign edge geometry */
+			nmg_edge_g_cnurb( eu, 2, 0, (fastf_t *)NULL, 2,
+				RT_NURB_MAKE_PT_TYPE( 2, RT_NURB_PT_UV, RT_NURB_PT_NONRAT),
+				 (fastf_t *)NULL );
+			break;
+		case 100:	/* circular arc */
+			{
+				struct cnurb *crv;
+				point_t center, start, end;
+rt_log( "In Add_trim_curve; ARC:\n" );
+
+				/* read Arc center start and end points */
+				Readcnv( &z , "" );	/* common Z-coord */
+				Readcnv( &x , "" );	/* center */
+				Readcnv( &y , "" );	/* center */
+				VSET( center, y+u_translation, x+v_translation, z )
+
+				Readcnv( &x , "" );	/* start */
+				Readcnv( &y , "" );	/* start */
+				VSET( start, y+u_translation, x+v_translation, z )
+
+				Readcnv( &x , "" );	/* end */
+				Readcnv( &y , "" );	/* end */
+				VSET( end, y+u_translation, x+v_translation, z )
+
+				/* build cnurb arc */
+				crv = rt_arc2d_to_cnurb( center, start, end, RT_NURB_PT_UV, &tol );
+rt_log( "\t ARC:\n" );
+rt_nurb_c_print( crv );
+
+				/* add a new edge to loop */
+rt_log( "split eu\n" );
+				eu = RT_LIST_LAST( edgeuse, &lu->down_hd );
+				new_eu = nmg_eusplit( (struct vertex *)NULL, eu, 0 );
+				vp = eu->vu_p->v_p;
+
+				/* if old edge doesn't have vertex geometry, assign some */
+				if( !vp->vg_p )
+				{
+rt_log( "Assign geometry to start of eu\n" );
+					u = start[X];
+					v = start[Y];
+					Assign_vu_geom( eu->vu_p, u, v, srf );
+				}
+
+				/* Assign geometry to new vertex */
+rt_log( "Assign geometry to end of eu\n" );
+				u = end[X];
+				v = end[Y];
+				Assign_vu_geom( new_eu->vu_p, u, v, srf );
+
+				/* Assign edge geometry */
+rt_log( "Assign crv geometry to eu\n" );
+				Assign_cnurb_to_eu( eu, crv );
+
+				rt_nurb_free_cnurb( crv );
+			}
+			break;
+
+		case 104:	/* conic arc */
+			rt_log( "Conic Arc not yet handled as a trimming curve\n" );
+			break;
+
+		case 126:	/* spline curve */
+			/* Get spline curve */
+rt_log( "\tSpline curve\n" );
+			crv = Get_cnurb( entity_no );
+rt_nurb_c_print( crv );
+
+			ncoords = RT_NURB_EXTRACT_COORDS( crv->pt_type );
+rt_log( "split eu \n" );
+			/* add a new edge to loop */
+			eu = RT_LIST_LAST( edgeuse, &lu->down_hd );
+			new_eu = nmg_eusplit( (struct vertex *)NULL, eu, 0 );
+			vp = eu->vu_p->v_p;
+
+			/* if old edge doesn't have vertex geometry, assign some */
+			if( !vp->vg_p )
+			{
+rt_log( "Assign geometry to start of eu\n" );
+				Assign_vu_geom( eu->vu_p, crv->ctl_points[0],
+					crv->ctl_points[1], srf );
+			}
+
+			/* Assign geometry to new vertex */
+rt_log( "Assign geometry to end of eu\n" );
+			Assign_vu_geom( new_eu->vu_p, crv->ctl_points[(crv->c_size-1)*ncoords],
+					crv->ctl_points[(crv->c_size-1)*ncoords+1], srf );
+
+			/* Assign edge geometry */
+rt_log( "Assign crv geometry to eu\n" );
+			Assign_cnurb_to_eu( eu, crv );
+
+			rt_nurb_free_cnurb( crv );
+
+			break;
+		default:
+			rt_log( "Curves of type %d are not yet handled for trimmed surfaces\n", entity_type );
+			break;
+	}
+}
+
+struct loopuse *
+Make_trim_loop( entity_no, orientation, srf, fu )
+int entity_no;
+int orientation;
+struct snurb *srf;
+struct faceuse *fu;
+{
+	struct cnurb *crv;
+	struct loopuse *lu;
+	struct edgeuse *eu;
+	struct edgeuse *new_eu;
+	struct vertexuse *vu;
+	struct vertex *vp;
+	point_t pt_on_srf;
+	vect_t uvw;
+	int entity_type;
+	int ncoords;
+	double x,y,z;
+	fastf_t u,v;
+	int i;
+
+rt_log( "In Make_trim_loop, entity_no = %d\n", entity_no );
+
+	NMG_CK_SNURB( srf );
+	NMG_CK_FACEUSE( fu );
+
+	if( dir[entity_no]->param <= pstart )
+	{
+		rt_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+				dir[entity_no]->direct , dir[entity_no]->name );
+		return( (struct loopuse *)NULL );
+	}
+
+	Readrec( dir[entity_no]->param );
+	Readint( &entity_type , "" );
+
+	lu = nmg_mlv( &fu->l.magic, (struct vertex *)NULL, orientation );
+	vu = RT_LIST_FIRST(vertexuse, &lu->down_hd);
+	eu = nmg_meonvu(vu);
+
+	switch( entity_type )
+	{
+		case 102:	/* composite curve */
+			{
+				int curve_count;
+				int *curve_list;
+rt_log( "Composite curve\n" );
+
+				Readint( &curve_count , "Curve Count: " );
+				curve_list = (int *)rt_calloc( curve_count , sizeof( int ),
+						"Make_trim_loop: curve_list" );
+
+				for( i=0 ; i<curve_count ; i++ )
+					Readint( &curve_list[i] , "\tCurve: " );
+
+				for( i=0 ; i<curve_count ; i++ )
+					Add_trim_curve( (curve_list[i]-1)/2, lu, srf );
+
+				rt_free( (char *)curve_list , "Make_trim_loop: curve_list" );
+			}
+			break;
+		case 110:	/* line */
+
+			/* get sart point */
+			Readdbl( &x , "" );
+			Readdbl( &y , "" );
+			Readdbl( &z , "" );
+
+			/* Split last edge in loop */
+			eu = RT_LIST_LAST( edgeuse, &lu->down_hd );
+			new_eu = nmg_eusplit( (struct vertex *)NULL, eu, 0 );
+			vp = eu->vu_p->v_p;
+
+			/* if old edge doesn't have vertex geometry, assign some */
+			if( !vp->vg_p )
+			{
+				u = y + u_translation;
+				v = x + v_translation;
+				Assign_vu_geom( eu->vu_p, u, v, srf );
+			}
+
+			/* read terminate point */
+			Readdbl( &x , "" );
+			Readdbl( &y , "" );
+			Readdbl( &z , "" );
+
+			/* assign geometry to vertex of new edgeuse */
+			u = y + u_translation;
+			v = x + v_translation;
+			Assign_vu_geom( new_eu->vu_p, u, v, srf );
+
+			/* assign edge geometry */
+			nmg_edge_g_cnurb( eu, 2, 0, (fastf_t *)NULL, 2,
+				RT_NURB_MAKE_PT_TYPE( 3, RT_NURB_PT_UV, RT_NURB_PT_RATIONAL),
+				 (fastf_t *)NULL );
+			break;
+		case 100:	/* circular arc */
+			{
+				struct cnurb *crv;
+				point_t center, start, end;
+
+				/* read Arc center start and end points */
+				Readcnv( &z , "" );	/* common Z-coord */
+				Readcnv( &x , "" );	/* center */
+				Readcnv( &y , "" );	/* center */
+				VSET( center, y+u_translation, x+v_translation, z )
+
+				Readcnv( &x , "" );	/* start */
+				Readcnv( &y , "" );	/* start */
+				VSET( start, y+u_translation, x+v_translation, z )
+
+				Readcnv( &x , "" );	/* end */
+				Readcnv( &y , "" );	/* end */
+				VSET( end, y+u_translation, x+v_translation, z )
+
+				/* build cnurb arc */
+				crv = rt_arc2d_to_cnurb( center, start, end, RT_NURB_PT_UV, &tol );
+
+				/* add a new edge to loop */
+				eu = RT_LIST_LAST( edgeuse, &lu->down_hd );
+				new_eu = nmg_eusplit( (struct vertex *)NULL, eu, 0 );
+				vp = eu->vu_p->v_p;
+
+				/* if old edge doesn't have vertex geometry, assign some */
+				if( !vp->vg_p )
+				{
+					u = start[X];
+					v = start[Y];
+					Assign_vu_geom( eu->vu_p, u, v, srf );
+				}
+
+				/* Assign geometry to new vertex */
+				u = end[X];
+				v = end[Y];
+				Assign_vu_geom( new_eu->vu_p, u, v, srf );
+
+				/* Assign edge geometry */
+				Assign_cnurb_to_eu( eu, crv );
+
+				rt_nurb_free_cnurb( crv );
+			}
+			break;
+
+		case 104:	/* conic arc */
+			rt_log( "Conic Arc not yet handled as a trimming curve\n" );
+			break;
+
+		case 126:	/* spline curve */
+			/* Get spline curve */
+			crv = Get_cnurb( entity_no );
+
+			ncoords = RT_NURB_EXTRACT_COORDS( crv->pt_type );
+
+			/* add a new edge to loop */
+			eu = RT_LIST_LAST( edgeuse, &lu->down_hd );
+			new_eu = nmg_eusplit( (struct vertex *)NULL, eu, 0 );
+			vp = eu->vu_p->v_p;
+
+			/* if old edge doesn't have vertex geometry, assign some */
+			if( !vp->vg_p )
+				Assign_vu_geom( eu->vu_p, crv->ctl_points[0],
+					crv->ctl_points[1], v, srf );
+
+			/* Assign geometry to new vertex */
+			Assign_vu_geom( new_eu->vu_p, crv->ctl_points[(crv->c_size-1)*ncoords],
+					crv->ctl_points[(crv->c_size-1)*ncoords+1], srf );
+
+			/* Assign edge geometry */
+			Assign_cnurb_to_eu( eu, crv );
+
+			rt_nurb_free_cnurb( crv );
+
+			break;
+		default:
+			rt_log( "Curves of type %d are not yet handled for trimmed surfaces\n", entity_type );
+			break;
+	}
+	eu = RT_LIST_LAST( edgeuse, &lu->down_hd );
+	nmg_keu( eu );
+	return( lu );
+}
+
+struct loopuse *
+Make_loop( entity_no, orientation, on_surf_de, srf, fu )
+int entity_no;
+int orientation;
+int on_surf_de;
+struct snurb *srf;
+struct faceuse *fu;
+{
+	struct loopuse *lu;
+	int entity_type;
+	int surf_de,param_curve_de,model_curve_de;
+	int i;
+
+rt_log( "In Make_loop, entity_no = %d:\n", entity_no );
+
+	NMG_CK_SNURB( srf );
+	NMG_CK_FACEUSE( fu );
+
+	/* Acquiring Data */
+	if( dir[entity_no]->param <= pstart )
+	{
+		rt_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+				dir[entity_no]->direct , dir[entity_no]->name );
+		return(0);
+	}
+
+	Readrec( dir[entity_no]->param );
+	Readint( &entity_type , "" );
+	if( entity_type != 142 )
+	{
+		rt_log( "Expected Curve on a Parametric Surface, found entity type %d\n" , entity_type );
+		return( 0 );
+	}
+	Readint( &i , "" );
+	Readint( &surf_de , "" );
+	if( surf_de != on_surf_de )
+		rt_log( "Curve is on surface at DE %d, should be on surface at DE %d\n", surf_de, on_surf_de );
+
+	Readint( &param_curve_de , "" );
+	Readint( &model_curve_de , "" );
+
+	lu = Make_trim_loop( (param_curve_de-1)/2, orientation, srf, fu );
+nmg_pr_lu_briefly( lu, " " );
+	return( lu );
+}
+
+struct loopuse *
+Make_default_loop( srf, fu )
+struct snurb *srf;
+struct faceuse *fu;
+{
+	struct shell *s;
+	struct loopuse *lu;
+	struct edgeuse *eu;
+	struct vertexuse *vu;
+	struct vertex *v[4];
+	fastf_t knots[4];
+	fastf_t ctl_points[4];
+	int edge_no=0;
+	int pt_type;
+	int ncoords;
+	int planar=0;
+	int i;
+
+	NMG_CK_FACEUSE( fu );
+	NMG_CK_SNURB( srf );
+
+	pt_type = RT_NURB_MAKE_PT_TYPE( 2, RT_NURB_PT_UV, RT_NURB_PT_NONRAT );
+	ncoords = RT_NURB_EXTRACT_COORDS( srf->pt_type );
+
+	if( srf->order[0] < 3 && srf->order[2] < 3 )
+		planar = 1;
+
+	lu = nmg_mlv( &fu->l.magic, (struct vertex *)NULL, OT_SAME );
+	vu = RT_LIST_FIRST(vertexuse, &lu->down_hd);
+	eu = nmg_meonvu(vu);
+	for( i=0 ; i<3 ; i++ )
+		(void)nmg_eusplit( (struct vertex *)NULL, eu, 0 );
+
+	knots[0] = 0.0;
+	knots[1] = 0.0;
+	knots[2] = 1.0;
+	knots[3] = 1.0;
+	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+	{
+		int u_index,v_index;
+
+		NMG_CK_EDGEUSE( eu );
+		vu = eu->vu_p;
+		NMG_CK_VERTEXUSE( vu );
+		switch( edge_no )
+		{
+			case 0:
+				u_index = 0;
+				v_index = 0;
+				ctl_points[0] = 0.0;
+				ctl_points[1] = 0.0;
+				ctl_points[2] = 1.0;
+				ctl_points[3] = 0.0;
+				break;
+			case 1:
+				u_index = srf->s_size[0] - 1;
+				v_index = 0;
+				ctl_points[0] = 0.0;
+				ctl_points[1] = 1.0;
+				ctl_points[2] = 1.0;
+				ctl_points[3] = 1.0;
+				break;
+			case 2:
+				u_index = srf->s_size[0] - 1;
+				v_index = srf->s_size[1] - 1;
+				ctl_points[0] = 1.0;
+				ctl_points[1] = 1.0;
+				ctl_points[2] = 0.0;
+				ctl_points[3] = 1.0;
+				break;
+			case 3:
+				u_index = 0;
+				v_index = srf->s_size[0] - 1;
+				ctl_points[0] = 0.0;
+				ctl_points[1] = 1.0;
+				ctl_points[2] = 0.0;
+				ctl_points[3] = 0.0;
+				break;
+		}
+		nmg_vertex_gv( vu->v_p, &srf->ctl_points[(u_index*srf->s_size[1] + v_index)*ncoords] );
+		if( planar )
+			nmg_edge_g( eu );
+		else
+			nmg_edge_g_cnurb( eu, 2, 4, knots, 2, pt_type, ctl_points );
+		edge_no++;
+	}
+
+	return( lu );
+}
+
+void
+Assign_surface_to_fu( fu, srf )
+struct faceuse *fu;
+struct snurb *srf;
+{
+	fastf_t *ukv;
+	fastf_t *vkv;
+	fastf_t *mesh;
+	int ncoords;
+	int i;
+
+	NMG_CK_FACEUSE( fu );
+	NMG_CK_SNURB( srf );
+
+	ncoords = RT_NURB_EXTRACT_COORDS( srf->pt_type );
+
+	ukv = (fastf_t *)rt_calloc( srf->u_knots.k_size, sizeof( fastf_t ), "Assign_surface_to_fu: ukv" );
+	for( i=0 ; i<srf->u_knots.k_size ; i++ )
+		ukv[i] = srf->u_knots.knots[i];
+
+	vkv = (fastf_t *)rt_calloc( srf->v_knots.k_size, sizeof( fastf_t ), "Assign_surface_to_fu: vkv" );
+	for( i=0 ; i<srf->v_knots.k_size ; i++ )
+		vkv[i] = srf->v_knots.knots[i];
+
+	mesh = (fastf_t *)rt_calloc( srf->s_size[0]*srf->s_size[1]*ncoords, sizeof( fastf_t ),
+		"Assign_surface_to_fu: mesh" );
+
+	for( i=0 ; i<srf->s_size[0]*srf->s_size[1]*ncoords ; i++ )
+		mesh[i] = srf->ctl_points[i];
+
+	nmg_face_g_snurb( fu, srf->order[0], srf->order[1], srf->u_knots.k_size, srf->v_knots.k_size,
+			ukv, vkv, srf->s_size[0], srf->s_size[1], srf->pt_type, mesh );
 }
 
 struct faceuse *
@@ -648,10 +845,14 @@ trim_surf( entityno , s )
 int entityno;
 struct shell *s;
 {
+	struct snurb *srf;
 	struct faceuse *fu;
+	struct loopuse *lu;
+	struct loopuse *lumate;
+	struct loopuse *kill_lu;
 	struct nurb_verts *nurb_v;
-	struct vertex ***verts;
-	int sol_num;
+	struct vertex *verts[3];
+	int entity_type;
 	int surf_de;
 	int nverts;
 	int u_order,v_order,n_u_knots,n_v_knots,n_rows,n_cols,pt_type;
@@ -660,21 +861,24 @@ struct shell *s;
 	int has_outer_boundary,inner_loop_count,outer_loop;
 	int *inner_loop;
 	int i;
+rt_log( "trim_surf( %d )\n", entityno );
+
+	NMG_CK_SHELL( s );
 
 	/* Acquiring Data */
-
 	if( dir[entityno]->param <= pstart )
 	{
-		printf( "Illegal parameter pointer for entity D%07d (%s)\n" ,
+		rt_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
 		return(0);
 	}
 
+rt_log( "in trim_surf\n" );
 	Readrec( dir[entityno]->param );
-	Readint( &sol_num , "" );
-	if( sol_num != 144 )
+	Readint( &entity_type , "" );
+	if( entity_type != 144 )
 	{
-		printf( "Expected Trimmed Surface Entity found type %d\n" );
+		rt_log( "Expected Trimmed Surface Entity found type %d\n" );
 		return( (struct faceuse *)NULL );
 	}
 	Readint( &surf_de , "" );
@@ -688,62 +892,42 @@ struct shell *s;
 			Readint( &inner_loop[i] , "" );
 	}
 
-	if( Get_nurb_surf( (surf_de-1)/2, &u_order, &v_order, &n_u_knots, &n_v_knots, &ukv, &vkv,
-				&u_min, &u_max, &v_min, &v_max, &n_rows, &n_cols, &pt_type, &mesh ) )
+	if( (srf=Get_nurb_surf( (surf_de-1)/2 )) == (struct snurb *)NULL )
 	{
 		rt_free( (char *)inner_loop , "trim_surf: inner_loop" );
 		return( (struct faceuse *)NULL );
 	}
-	coords = RT_NURB_EXTRACT_COORDS( pt_type );
+	coords = RT_NURB_EXTRACT_COORDS( srf->pt_type );
+rt_log( "In Trim_surf:\n" );
+rt_nurb_s_print( " " , srf );
+
+	/* Make a face (with a loop to be destroted later)
+	 * because loop routines insist that face and face geometry
+	 * must already be assigned
+	 */
+	for( i=0 ; i<3 ; i++ )
+		verts[i] = (struct vertex *)NULL;
+	fu = nmg_cface( s, verts, 3 );
+	Assign_surface_to_fu( fu, srf );
+	kill_lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
 
 	if( !has_outer_boundary )
 	{
-		nverts = 4;
-		nurb_v = (struct nurb_verts *)rt_calloc( nverts , sizeof( struct nurb_verts ) , "trim_surf: nurb_v " );
+rt_log( "\tCalling Make_default_loop\n" );
+		lu = Make_default_loop( srf, fu);
 	}
 	else
-		nverts = Get_curve_verts( (outer_loop-1)/2 , surf_de , &nurb_v );
-
-	verts = (struct vertex ***)rt_calloc( nverts , sizeof( struct vertex **) , "trim_surf: verts" );
-	if( has_outer_boundary )
 	{
-		for( i=0 ; i<nverts ; i++ )
-			verts[i] = &nurb_v[i].v;
+rt_log( "\tCalling Make_loop\n" );
+		lu = Make_loop( (outer_loop-1)/2, OT_SAME, surf_de, srf, fu );
 	}
 
-	fu = nmg_cmface( s , verts , nverts );
-	nmg_face_g_snurb( fu, u_order, v_order, n_u_knots, n_v_knots, ukv, vkv, n_rows, n_cols, pt_type, mesh );
+	(void)nmg_klu( kill_lu );
 
-	if( !has_outer_boundary )
-	{
-		struct vertexuse *vu;
+	for( i=0 ; i<inner_loop_count ; i++ )
+		lu = Make_loop( (inner_loop[i]-1)/2, OT_OPPOSITE, surf_de, srf, fu );
 
-		VMOVE( nurb_v[0].pt , &mesh[0] );
-		nmg_vertex_gv( nurb_v[0].v , nurb_v[0].pt );
-		VSET( nurb_v[0].uvw , 0, 0, 0 );
-		for( RT_LIST_FOR( vu , vertexuse , &nurb_v[0].v->vu_hd ) )
-			nmg_vertexuse_a_cnurb( vu , nurb_v[0].uvw );
-
-		VMOVE( nurb_v[1].pt , &mesh[(n_rows-1)*coords] );
-		nmg_vertex_gv( nurb_v[1].v , nurb_v[1].pt );
-		VSET( nurb_v[1].uvw , 1, 0, 0 );
-		for( RT_LIST_FOR( vu , vertexuse , &nurb_v[1].v->vu_hd ) )
-			nmg_vertexuse_a_cnurb( vu , nurb_v[1].uvw );
-
-		VMOVE( nurb_v[2].pt , &mesh[(n_rows-1)*(n_cols-1)*coords] );
-		nmg_vertex_gv( nurb_v[2].v , nurb_v[2].pt );
-		VSET( nurb_v[2].uvw , 1, 1, 0 );
-		for( RT_LIST_FOR( vu , vertexuse , &nurb_v[2].v->vu_hd ) )
-			nmg_vertexuse_a_cnurb( vu , nurb_v[2].uvw );
-
-		VMOVE( nurb_v[3].pt , &mesh[((n_rows-1)*(n_cols-2)+1)*coords] );
-		nmg_vertex_gv( nurb_v[3].v , nurb_v[3].pt );
-		VSET( nurb_v[3].uvw , 0, 1, 0 );
-		for( RT_LIST_FOR( vu , vertexuse , &nurb_v[3].v->vu_hd ) )
-			nmg_vertexuse_a_cnurb( vu , nurb_v[3].uvw );
-	}
-	else
-		Set_vertices( fu , nverts , nurb_v , surf_de , (outer_loop-1)/2 , u_min , u_max , v_min , v_max );
+	rt_nurb_free_snurb( srf );
 
 	if( inner_loop_count )	
 		rt_free( (char *)inner_loop , "trim_surf: inner_loop" );
@@ -761,7 +945,9 @@ Convtrimsurfs()
 	struct shell *s;
 	struct faceuse *fu;
 
-	printf( "\n\nConverting Trimmed Surface entities:\n" );
+	rt_log( "\n\nConverting Trimmed Surface entities:\n" );
+
+rt_g.NMG_debug = 1;
 
 	m = nmg_mm();
 	r = nmg_mrsv( m );
@@ -780,9 +966,12 @@ Convtrimsurfs()
 			}
 		}
 	}
-	printf( "Converted %d Trimmed Sufaces successfully out of %d total Trimmed Sufaces\n" , convsurf , totsurfs );
+	rt_log( "Converted %d Trimmed Sufaces successfully out of %d total Trimmed Sufaces\n" , convsurf , totsurfs );
 
 	(void)nmg_model_fuse( m , &tol );
+
+nmg_vmodel( m );
+nmg_pr_m( m );
 
 	mk_nmg( fdout , "Trimmed_surf" , m );
 	nmg_km( m );
