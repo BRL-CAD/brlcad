@@ -425,6 +425,37 @@ struct partition *PartHeadp;
 	}
 	if( pp == PartHeadp )  {
 		pp=PartHeadp->pt_forw;
+
+		if (pp->pt_inhit->hit_dist <= 0.0) {
+			int retval;
+
+			/* What has probably happened is that the shadow ray
+			 * has produced an Out-hit from the current solid
+			 * which looks valid, but is in fact an intersection
+			 * with the current hit point.
+			 */
+
+			sub_ap = *ap;	/* struct copy */
+			sub_ap.a_level++;
+			VMOVE(sub_ap.a_ray.r_pt, pp->pt_outhit->hit_point);
+
+			retval = rt_shootray( &sub_ap );
+
+			ap->a_user = sub_ap.a_user;
+			ap->a_uptr = sub_ap.a_uptr;
+			ap->a_color[0] = sub_ap.a_color[0];
+			ap->a_color[1] = sub_ap.a_color[1];
+			ap->a_color[2] = sub_ap.a_color[2];
+			VMOVE(ap->a_uvec, sub_ap.a_uvec);
+			VMOVE(ap->a_vvec, sub_ap.a_vvec);
+			ap->a_refrac_index = sub_ap.a_refrac_index;
+			ap->a_cumlen = sub_ap.a_cumlen;
+			ap->a_return = sub_ap.a_return;
+
+			return ( retval );
+		}
+
+
 		rt_log("light_hit:  ERROR, nothing hit, sxy=%d,%d, dtol=%e\n",
 			ap->a_x, ap->a_y,
 			ap->a_rt_i->rti_tol.dist);
