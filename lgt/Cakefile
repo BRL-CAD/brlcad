@@ -40,15 +40,18 @@ lgt:	OBJ
 tfiles/model.g:	tfiles/model.asc
 	asc2g < tfiles/model.asc > tfiles/model.g
 
+/* The 'test' and 'untest' targets are for local testing where the 'tfiles'
+	sub-directory is available.  Since 'tfiles' is not part of the
+	BRLCAD distribution, remote sites should use bench/lgt.sh to test
+	'lgt'.
+ */
 test&:	TFILES PRODUCTS PIXCMP
 	@./lgt tfiles/model.g all.g < tfiles/lgt.in && tfiles/script1 < /dev/null && tfiles/script2 < /dev/null && tfiles/script3 < /dev/null || \{ echo "Test failed."; exit 1; }
 	@for i in 1 2 3; do if PIXCMP tfiles/image$\{i\}.pix tfiles/image$\{i\}a.pix; then :; else echo "Test failed."; exit 1; fi; done
 	@for i in 1 2 3; do if PIXCMP tfiles/image$\{i\}a.pix tfiles/image$\{i\}b.pix; then :; else echo "Test failed."; exit 1; fi; done
 	@echo "Tested OK."
 
-clobber&: xxclober
-	rm -f tfiles/script? tfiles/*.pix tfiles/model.g
-
-#define clobber	xxclober	/* rename "clobber" in Cakefile.rules */
+untest&:
+	rm -f tfiles/script\? tfiles/\*.pix tfiles/model.g
 
 #include "../Cakefile.rules"
