@@ -50,14 +50,40 @@ static char 		buf[BUFSIZE];		/* Record input buffer */
 char			name[NAMESIZE + 2];
 int 			debug;
 
+FILE	*ifp;
+FILE	*ofp;
+
+static char usage[] = "\
+Usage: asc2g < file.asc > file.g\n\
+   or  asc2g file.asc file.g\n\
+ Convert an ASCII BRL-CAD database to binary form\n\
+";
+
 main(argc, argv)
+int argc;
 char **argv;
 {
-	if( argc > 1 )
+	ifp = stdin;
+	ofp = stdout;
+
+	if( argc == 2 || argc == 4 )
 		debug = 1;
 
+	if( argc >= 3 ) {
+		ifp = fopen(argv[1],"r");
+		ofp = fopen(argv[2],"w");
+		if (ifp == NULL || ofp == NULL) {
+			fprintf(stderr, "asc2g: can't open files.");
+			exit(1);
+		}
+	}
+	if (isatty(fileno(ofp))) {
+		fprintf(stderr, usage);
+		exit(1);
+	}
+
 	/* Read ASCII input file, each record on a line */
-	while( ( fgets( buf, BUFSIZE, stdin ) ) != (char *)0 )  {
+	while( ( fgets( buf, BUFSIZE, ifp ) ) != (char *)0 )  {
 
 after_read:
 		/* Clear the output record -- vital! */
@@ -192,7 +218,7 @@ solbld()
 			/* Prevent illegal torii from floating point fuzz */
 			if( rad2 > rad1 )  rad2 = rad1;
 
-			mk_tor(stdout, name, center, n, rad1, rad2);
+			mk_tor(ofp, name, center, n, rad1, rad2);
 			break;
 
 		case GENTGC:
@@ -203,7 +229,7 @@ solbld()
 			VSET(c, val[12], val[13], val[14]);
 			VSET(d, val[15], val[16], val[17]);
 			
-			mk_tgc(stdout, name, center, height, a, b, c, d);
+			mk_tgc(ofp, name, center, height, a, b, c, d);
 			break;
 
 		case GENELL:
@@ -212,7 +238,7 @@ solbld()
 			VSET(b, val[6], val[7], val[8]);
 			VSET(c, val[9], val[10], val[11]);
 
-			mk_ell(stdout, name, center, a, b, c);
+			mk_ell(ofp, name, center, a, b, c);
 			break;
 
 		case GENARB8:
@@ -230,14 +256,14 @@ solbld()
 				VADD2( pnts[i], pnts[i], pnts[0] );
 			}
 
-			mk_arb8(stdout, name, (CONST point_t *)pnts);
+			mk_arb8(ofp, name, (CONST point_t *)pnts);
 			break;
 
 		case HALFSPACE:
 			VSET(norm, val[0], val[1], val[2]);
 			dd = val[3];
 
-			mk_half(stdout, name, norm, dd);
+			mk_half(ofp, name, norm, dd);
 			break;
 
 		default:
@@ -340,19 +366,19 @@ combbld()
 		is_reg = 0;
 
 	if( temp_nflag )  {
-		fgets( buf, BUFSIZE, stdin );
+		fgets( buf, BUFSIZE, ifp );
 		zap_nl();
 		strncpy( matname, buf, sizeof(matname)-1 );
 	}
 	if( temp_pflag )  {
-		fgets( buf, BUFSIZE, stdin );
+		fgets( buf, BUFSIZE, ifp );
 		zap_nl();
 		strncpy( matparm, buf, sizeof(matparm)-1 );
 	}
 
 	for(;;)  {
 		buf[0] = '\0';
-		if( fgets( buf, BUFSIZE, stdin ) == (char *)0 )
+		if( fgets( buf, BUFSIZE, ifp ) == (char *)0 )
 			break;
 
 		if( buf[0] != ID_MEMB )  break;
@@ -362,7 +388,7 @@ combbld()
 	}
 
 	/* Spit them out, all at once */
-	if( mk_lrcomb(stdout, name, &head, is_reg,
+	if( mk_lrcomb(ofp, name, &head, is_reg,
 		temp_nflag ? matname : (char *)0,
 		temp_pflag ? matparm : (char *)0,
 		override ? (char *)rgb : (char *)0,
@@ -467,7 +493,7 @@ arsabld()
 	record.a.a_zmin = atof( cp );
 
 	/* Write out the record */
-	(void)fwrite( (char *)&record, sizeof record, 1, stdout );
+	(void)fwrite( (char *)&record, sizeof record, 1, ofp );
 
 }
 
@@ -499,7 +525,7 @@ arsbbld()
 	}
 
 	/* Write out the record */
-	(void)fwrite( (char *)&record, sizeof record, 1, stdout );
+	(void)fwrite( (char *)&record, sizeof record, 1, ofp );
 
 }
 
@@ -563,7 +589,7 @@ identbld()
 			version, ID_VERSION);
 	}
 
-	(void)fgets( buf, BUFSIZE, stdin);
+	(void)fgets( buf, BUFSIZE, ifp);
 	zap_nl();
 	(void)strncpy( title, buf, sizeof(title)-1 );
 
@@ -591,7 +617,7 @@ identbld()
 		exit(1);
 	}
 
-	if( mk_id_units(stdout, title, unit_str) < 0 )  {
+	if( mk_id_units(ofp, title, unit_str) < 0 )  {
 		fprintf(stderr, "asc2g: unable to write database ID\n");
 		exit(2);
 	}
@@ -622,7 +648,7 @@ polyhbld()
 		*np++ = *cp++;
 	}
 
-	mk_polysolid(stdout, name);
+	mk_polysolid(ofp, name);
 }
 
 /*		P O L Y D B L D
@@ -660,7 +686,7 @@ polydbld()
 		}
 	}
 
-	mk_poly(stdout, count, verts, norms);
+	mk_poly(ofp, count, verts, norms);
 }
 
 
@@ -693,7 +719,7 @@ materbld()
 	record.md.md_b = (unsigned char)atoi( cp);
 
 	/* Write out the record */
-	(void)fwrite( (char *)&record, sizeof record, 1, stdout );
+	(void)fwrite( (char *)&record, sizeof record, 1, ofp );
 }
 
 /*		B S P L B L D
@@ -725,7 +751,7 @@ bsplbld()
 	cp = nxt_spc( cp );
 	resolution = atof( cp );
 
-	mk_bsolid(stdout, name, nsurf, resolution);
+	mk_bsolid(ofp, name, nsurf, resolution);
 }
 
 /* 		B S U R F B L D
@@ -775,7 +801,7 @@ bsurfbld()
 			* record.d.d_geom_type);
 
 	/* Write out the record */
-	(void)fwrite( (char *)&record, sizeof record, 1, stdout );
+	(void)fwrite( (char *)&record, sizeof record, 1, ofp );
 
 	/* 
 	 * The b_surf_head record is followed by
@@ -804,11 +830,11 @@ bsurfbld()
 	/* Read the knot vector information */
 	count = record.d.d_kv_size[0] + record.d.d_kv_size[1];
 	for( i = 0; i < count; i++ )  {
-		fgets( buf, BUFSIZE, stdin );
+		fgets( buf, BUFSIZE, ifp );
 		(void)sscanf( buf, "%f", vp++);
 	}
 	/* Write out the information */
-	(void)fwrite( (char *)fp, nbytes, 1, stdout );
+	(void)fwrite( (char *)fp, nbytes, 1, ofp );
 
 	/* Free the knot data memory */
 	(void)free( (char *)fp );
@@ -825,11 +851,11 @@ bsurfbld()
 	count = record.d.d_ctl_size[0] * record.d.d_ctl_size[1] *
 		record.d.d_geom_type;
 	for( i = 0; i < count; i++ )  {
-		fgets( buf, BUFSIZE, stdin );
+		fgets( buf, BUFSIZE, ifp );
 		(void)sscanf( buf, "%f", vp++);
 	}
 	/* Write out the information */
-	(void)fwrite( (char *)fp, nbytes, 1, stdout );
+	(void)fwrite( (char *)fp, nbytes, 1, ofp );
 
 	/* Free the control mesh memory */
 	(void)free( (char *)fp );
@@ -875,7 +901,7 @@ pipebld()
 
 	RT_LIST_INIT( &head.l );
 	do{
-		fgets( buf, BUFSIZE, stdin);
+		fgets( buf, BUFSIZE, ifp);
 		(void)sscanf( buf, "%s %le %le %le %le %le %le %le %le", type, 
 				&id, &od,
 				&start[0],
@@ -887,7 +913,7 @@ pipebld()
 
 		if( (sp = (struct wdb_pipeseg *)malloc(sizeof(struct wdb_pipeseg) ) )
 			== WDB_PIPESEG_NULL)  {
-				printf("asc2g: malloc failure for pipe\n");
+				fprintf(stderr,"asc2g: malloc failure for pipe\n");
 				exit(-1);
 		}
 
@@ -910,7 +936,7 @@ pipebld()
 		RT_LIST_INSERT( &head.l, &sp->l);
 	} while( (ret = (strcmp (type , "end"))) != 0);
 
-	mk_pipe(stdout, name, &head);
+	mk_pipe(ofp, name, &head);
 	mk_pipe_free( &head );
 	free( (char *)sp );
 }
@@ -950,7 +976,7 @@ particlebld()
 		&height[2],
 		&vrad, &hrad);
 
-	mk_particle( stdout, name, vertex, height, vrad, hrad);
+	mk_particle( ofp, name, vertex, height, vrad, hrad);
 }
 
 
@@ -1000,7 +1026,7 @@ arbnbld()
  */
 	/* Malloc space for the in-coming plane equations */
 	if( (eqn = (plane_t *)malloc( sizeof( plane_t ) * neqn ) ) == NULL)  {
-		printf("asc2g: malloc failure for arbn\n");
+		fprintf(stderr, "asc2g: malloc failure for arbn\n");
 		exit(-1);
 	}
 
@@ -1009,14 +1035,14 @@ arbnbld()
 /*fprintf(stderr, "starting to dump eqns\n");
  */
 	for( i = 0; i < neqn; i++ )  {
-		fgets( buf, BUFSIZE, stdin);
+		fgets( buf, BUFSIZE, ifp);
 		(void)sscanf( buf, "%s %le %le %le %le", type,
 			&eqn[i][X], &eqn[i][Y], &eqn[i][Z], &eqn[i][3]);
 	}
 
 /*fprintf(stderr, "sending info to mk_arbn\n");
  */
-	mk_arbn( stdout, name, neqn, eqn);
+	mk_arbn( ofp, name, neqn, eqn);
 }
 
 char *
