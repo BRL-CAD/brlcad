@@ -53,7 +53,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 //#include "tabdata.h"
 #include "spectrum.h"
 
-struct rt_table	*spectrum;		/* definition of spectrum */
 
 struct rt_tabdata *curve;
 
