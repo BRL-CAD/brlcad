@@ -117,33 +117,6 @@ for PRIM in $PRIMITIVES ; do
     # 
     # in args =>
     #
-    set _IN_ARGS ""
-    set _DB_ARGS ""
-
-    #
-    # () Arguments
-    # 
-    # in args =>
-    # db args =>
-    #
-    set _IN_ARGS ""
-    set _DB_ARGS ""
-
-    #
-    # () Arguments
-    # 
-    # in args =>
-    # db args =>
-    #
-    set _IN_ARGS ""
-    set _DB_ARGS ""
-
-    #
-    # () Arguments
-    # 
-    # in args =>
-    # db args =>
-    #
     set eto_IN_ARGS ""
     set eto_DB_ARGS ""
 
