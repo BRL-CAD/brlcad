@@ -29,6 +29,9 @@ static char sccsTag[] = "%Z% %M% %I%, modified %G% at %U%, archive %P%";
 #include "./hmenu.h"
 extern char	*malloc();
 extern int	LI, CO;
+#ifndef _LOCAL_
+#define _LOCAL_ static
+#endif
 #define MAX_PROMPT	10
 #define Alloc(p_,t_,s_)\
 		if( ((p_) = (t_ *) malloc((unsigned)(s_))) == (t_ *) 0 )\
@@ -66,8 +69,8 @@ extern int	LI, CO;
 			}\
 		(_bit) <<= 1;\
 		(_co)++;\
-		}\
-		
+		}
+
 
 int		hm_dirty = 0;
 static HWindow	*windows = 0;
