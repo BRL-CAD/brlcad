@@ -231,6 +231,15 @@ the form of the selected shader type." } }
 	    -command "comb_shader_gui $id glass"
     hoc_register_menu_data "Shader" glass "Shader - Glass" \
 	    { { summary "Set shader parameters to make this object appear as glass." } }
+
+
+    $top.shaderMB.m add command -label light \
+	    -command "comb_shader_gui $id light"
+    hoc_register_menu_data "Shader" light "Shader - Light" \
+	    { { summary "Set shader parameters to make this object appear as a light source." } }
+
+
+
     $top.shaderMB.m add command -label "texture (color)" \
 	    -command "comb_shader_gui $id texture"
     hoc_register_menu_data "Shader" "texture (color)" "Shader - Texture (color)"\

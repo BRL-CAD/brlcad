@@ -1542,7 +1542,7 @@ b visible  v 1 "Is the light object visible"
 v bright   b 1000 "1000"
 v angle    a 180 ""
 v fraction f 1 ""
-v direct   d {0 0 0} ""
+v target   t {0 0 0} ""
 }
 
 proc set_light_defaults { id } {
@@ -1571,7 +1571,7 @@ proc do_light { shade_var id } {
 
 	# Destroy our frame in case it already exists
 	catch { destroy $shader_params($id,window).fr }
-
+ 
 	# Create a frame for the widgets for this shader
 	frame $shader_params($id,window).fr
 
@@ -1583,68 +1583,54 @@ proc do_light { shade_var id } {
 
 	assign_light_defaults $id
 
-	grid [checkbutton $w.infinite -text Infinite \
-		-variable shader_params($id,light_i) \
-		-command "do_shader_apply $shade_var $id" ] \
-		-row 0 -column 0
+	# Create the labeled entry widgets
+	set row 0
+	foreach { n i } { bright b fraction f angle a target t } {
+	    grid [label $w.${i}_lbl -text $n ] -row $row -column 0
+	    grid [entry $w.${i}_ent -width 10 -textvariable shader_params($id,light_$i)]\
+		 -row $row -column 1
+	    bind $w.${i}_ent <KeyRelease> "do_shader_apply $shade_var $id"
+	    incr row
+	}
 
-#	grid [scale $w.shadows -from 0 -to 9 -orient horiz -label "Shadows" \
-#		-resolution 1 -variable shader_params($id,light_s) ] \
-#		-row 0 -column 1
+	# Create the scale for shadow rays
+	grid [scale $w.shadows -orient horiz -label "Shadow Rays" \
+		-from 0 -to 9 -bd 3 -relief sunken \
+		-command "light_scale $shade_var $id $w.icon"\
+		-variable shader_params($id,light_s) ] \
+		-row 0 -column 2 -rowspan 3 -columnspan 2 -sticky nesw
 
-	grid [checkbutton $w.shadows -text "Shadows" \
-		-variable shader_params($id,light_s) \
-		-command "do_shader_apply $shade_var $id" ] \
-		-row 0 -column 1
+	# Create checkboxes for booleans
+	set column 2
+	foreach { n i } { infinite i visible v } {
+	    grid [checkbutton $w.${i} -text $n -relief sunken -bd 3 \
+		-variable shader_params($id,light_$i) \
+		-command "do_shader_apply $shade_var $id"] \
+		-row 3 -column $column
+	    incr column
+	}
 
-	grid [checkbutton $w.visible -text "Visible" \
-		-variable shader_params($id,light_v) \
-		-command "do_shader_apply $shade_var $id" ] \
-		-row 0 -column 2
-
+	# Load the images
 	if { [info exists shader_params(light_i0_v0_s0)] == 0 } {
 	    foreach i { 0 1 } {
 		foreach v { 0 1 } {
-		    foreach s { 0 1 9 } {
+		    foreach s { 0 1 2 3 4 5 6 7 8 9 } {
 			set shader_params(light_i${i}_v${v}_s${s}) \
 			  [image create photo -file \
 				[bu_brlcad_path \
-				    "tclscripts/mged/l_i${i}_v${v}_s${s}.ppm"]]
+				    "tclscripts/mged/l_i${i}_v${v}_s${s}.gif"]]
 		    }
 		}
 	    }
 	}
 
+	# Create a label to display the selected image
 	grid [label $w.icon -relief sunken -bd 3 \
 		-image $shader_params(light_i0_v1_s1) ] \
-		-rowspan 3 -row 0 -column 3
+		-rowspan 3 -row 0 -column 4
 
 	set shader_params($id,icon) $w.icon
 
-
-	grid [labeled_entry $w.bright bright shader_params($id,light_b) \
-		"How bright should the light be" "0..1"] \
-		-row 1 -column 0
-	bind $w.bright.entry <KeyRelease> "do_shader_apply $shade_var $id"
-
-	grid [labeled_entry $w.fraction fraction \
-		shader_params($id,light_f) \
-		"What percentage of the total light does this produce" \
-		"0..1" ] \
-		-row 1 -column 1
-	bind $w.fraction.entry <KeyRelease> "do_shader_apply $shade_var $id"
-
-	grid [labeled_entry $w.angle angle shader_params($id,light_a) \
-		"What is the angle of the light cone?" "0..180"] \
-		-row 2 -column 0
-	bind $w.angle.entry <KeyRelease> "do_shader_apply $shade_var $id"
-
-	grid [labeled_entry $w.direct direct \
-		shader_params($id,light_d) \
-		"Where is the light pointed (when angle < 180)" \
-		"0..1"] \
-		-row 2 -column 1
-	bind $w.direct.entry <KeyRelease> "do_shader_apply $shade_var $id"
 
 	# Set the entry widget values from the current shader string
 	set_light_values $shader_str $id
@@ -1704,9 +1690,15 @@ proc set_light_values { shader_str id } {
 	    }
 	}
 
-
 	do_light_icon $id
 
+}
+# Since the scale appends a value to the end of it's args, we can't
+# use do_shader_apply directly for scale widgets  That's why we have this
+# wrapper proc
+proc light_scale {shade_var id icon val args} {
+	global shader_params
+	do_shader_apply $shade_var $id
 }
 
 # This routine takes the values in the shader_params array and creates
@@ -1739,18 +1731,7 @@ proc do_light_icon { id } {
 
 	append name "light_i" $shader_params($id,light_i) 
 	append name "_v"  $shader_params($id,light_v)
-
-	 
-
-	if { $shader_params($id,light_s) > 1 } then {
-		append name "_s" 9
-	} 
-
-	if { $shader_params($id,light_s) > 0 } then {
-		append name "_s" 1
-	} else {
-		append name "_s" 0
-	}
+	append name "_s"  $shader_params($id,light_s)
 
 	$shader_params($id,icon) configure -image $shader_params($name)
 }
