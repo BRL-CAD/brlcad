@@ -20,20 +20,21 @@
 #	The MultiDisplay class is comprised of four Display objects. 
 #
 class MultiDisplay {
+    private variable destroy_parent 0
+    private variable width ""
+    private variable height ""
+    private variable dm_big_size ""
+    private variable dm_small_size ""
+    private variable initializing 1
     protected variable ul ""
     protected variable ur ""
     protected variable ll ""
     protected variable lr ""
     public variable pane ur
     public variable parent ""
-    private variable destroy_parent 0
     public variable multi_mode 1
     public variable size ""
-    private variable width ""
-    private variable height ""
-    private variable dm_big_size ""
-    private variable dm_small_size ""
-    private variable initializing 1
+    public variable type X
 
     constructor {args} {
 	# process options
@@ -71,10 +72,10 @@ class MultiDisplay {
 	}
 
 	# create Display objects
-	set ul [Display #auto -type ogl -dm_size $dmsize -dm_name $parent.ul -istoplevel 0]
-	set ur [Display #auto -type ogl -dm_size $dmsize -dm_name $parent.ur -istoplevel 0]
-	set ll [Display #auto -type ogl -dm_size $dmsize -dm_name $parent.ll -istoplevel 0]
-	set lr [Display #auto -type ogl -dm_size $dmsize -dm_name $parent.lr -istoplevel 0]
+	set ul [Display #auto -type $type -dm_size $dmsize -dm_name $parent.ul -istoplevel 0]
+	set ur [Display #auto -type $type -dm_size $dmsize -dm_name $parent.ur -istoplevel 0]
+	set ll [Display #auto -type $type -dm_size $dmsize -dm_name $parent.ll -istoplevel 0]
+	set lr [Display #auto -type $type -dm_size $dmsize -dm_name $parent.lr -istoplevel 0]
 
 	# put each display manager window in a frame 
 	grid $parent.ul -in $parent.ulf -sticky nsew
@@ -184,6 +185,12 @@ configbody MultiDisplay::size {
     } elseif {$slen == 2} {
 	set width [lindex $size 0]
 	set height [lindex $size 1]
+    }
+}
+
+configbody MultiDisplay::type {
+    if {!$initializing} {
+	return -code error "type is read-only"
     }
 }
 
