@@ -264,6 +264,8 @@ register struct partition *PartHeadp;
 	for( pp=PartHeadp->pt_forw; pp!=PartHeadp; pp=pp->pt_forw )  {
 		comp_count++;
 	}
+	if( comp_count == 0 )
+		return( 0 );
 
 	/* Set up variable length string, to buffer this shotline in.
 	 * Note that there is one component per card, and that each card
@@ -331,7 +333,7 @@ register struct partition *PartHeadp;
 
 	dfirst = -(PartHeadp->pt_forw->pt_inhit->hit_dist + dcorrection);
 	dlast = -(PartHeadp->pt_back->pt_outhit->hit_dist + dcorrection);
-
+#if 0
 	/* This code is to note any occurances of negative distances. */
 		if( PartHeadp->pt_forw->pt_inhit->hit_dist < 0)  {
 			rt_log("ERROR: dfirst=%g at partition x%x\n", dfirst , PartHeadp->pt_forw );
@@ -342,7 +344,7 @@ register struct partition *PartHeadp;
 			rt_pr_partitions(ap->a_rt_i, PartHeadp, "Defective partion:");
 		}
 	/* End of bug trap. */
-
+#endif
 	/*
 	 *  Output the ray header.  The GIFT statements that
 	 *  would have generated this are:
@@ -394,6 +396,7 @@ register struct partition *PartHeadp;
 		fastf_t	out_obliq;	/* out obliquity angle */
 		int	region_id;	/* solid region's id */
 		int	air_id;		/* air id */
+		fastf_t	dot_prod;	/* dot product of normal and ray dir */
 		fastf_t	air_thickness;	/* air line of sight thickness */
 		vect_t	normal;		/* surface normal */
 		register struct partition	*nextpp = pp->pt_forw;
@@ -409,6 +412,7 @@ register struct partition *PartHeadp;
 		 * negative thicknesses.  This is not supposed to be possible,
 		 * but the condition has been seen.
 		 */
+#if 0
 		if( comp_thickness <= 0 )  {
 			VJOIN1( pp->pt_inhit->hit_point , ap->a_ray.r_pt ,pp->pt_inhit->hit_dist , ap->a_ray.r_dir );
 			VJOIN1( pp->pt_outhit->hit_point , ap->a_ray.r_pt ,pp->pt_outhit->hit_dist , ap->a_ray.r_dir );
@@ -416,14 +420,13 @@ register struct partition *PartHeadp;
 				comp_thickness, region_id, hv[0], hv[1], ap->a_x, ap->a_y , pp );
 			rt_pr_partitions(ap->a_rt_i, PartHeadp, "Defective partion:");
 			rt_log("Send this output to Sue Muuss (sue@brl.mil)\n");
-#if 0
 			if ( ! (rt_g.debug & DEBUG_ARB8)) {
 				rt_g.debug |= DEBUG_ARB8;
 				rt_shootray(ap);
 				rt_g.debug &= ~DEBUG_ARB8;
 			}
-#endif
 		}
+#endif
 
 		if( nextpp == PartHeadp )  {
 			/* Last partition, no air follows, use code 9 */
@@ -465,7 +468,13 @@ register struct partition *PartHeadp;
 		} else {
 			VMOVE( normal, pp->pt_inhit->hit_normal );
 		}
-		in_obliq = acos( -VDOT( ap->a_ray.r_dir, normal ) ) *
+		dot_prod = VDOT( ap->a_ray.r_dir, normal );
+		if( dot_prod > 1.0 )
+			dot_prod = 1.0;
+		if( dot_prod < -1.0 )
+			dot_prod = (-1.0);
+
+		in_obliq = acos( -dot_prod ) *
 			mat_radtodeg;
 		/* next macro must be on one line for 3d compiler */
 		RT_HIT_NORM( pp->pt_outhit, pp->pt_outseg->seg_stp, &(ap->a_ray) );
@@ -474,10 +483,17 @@ register struct partition *PartHeadp;
 		} else {
 			VMOVE( normal, pp->pt_outhit->hit_normal );
 		}
-		out_obliq = acos( VDOT( ap->a_ray.r_dir, normal ) ) *
+		dot_prod = VDOT( ap->a_ray.r_dir, normal );
+		if( dot_prod > 1.0 )
+			dot_prod = 1.0;
+		if( dot_prod < -1.0 )
+			dot_prod = (-1.0);
+
+		out_obliq = acos( dot_prod ) *
 			mat_radtodeg;
 
 		/* Check for exit obliquties greater than 90 degrees. */
+#if 0
 		if( in_obliq > 90 || in_obliq < 0 )  {
 			rt_log("ERROR: in_obliquity=%g\n", in_obliq);
 			rt_pr_partitions(ap->a_rt_i, PartHeadp, "Defective partion:");
@@ -494,6 +510,16 @@ register struct partition *PartHeadp;
 			/* Print the whole ray's partition list */
 			rt_pr_partitions(ap->a_rt_i, PartHeadp, "Defective partion:");
 		}
+#endif
+
+		if( in_obliq > 90.0 )
+			in_obliq = 90.0;
+		if( in_obliq < 0.0 )
+			in_obliq = 0.0;
+		if( out_obliq > 90.0 )
+			out_obliq = 90.0;
+		if( out_obliq < 0.0 )
+			out_obliq = 0.0;
 
 		/*
 		 *  Handle 3-components per card output format, with
@@ -650,6 +676,21 @@ fastf_t					tolerance;
 	struct partition		*pp;
 	struct partition		*nextpp;
 
+	/* first eliminate zero thickness partitions */
+	pp = PartHeadp->pt_forw;
+	while( pp != PartHeadp )
+	{
+		fastf_t comp_thickness;
+
+		nextpp = pp->pt_forw;
+		comp_thickness = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
+		if( comp_thickness <= 0.0 )
+		{
+			DEQUEUE_PT( pp );
+			FREE_PT( pp, ap->a_resource);
+		}
+		pp = nextpp;
+	}
 
 	for(pp = PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw)  {
 top:		nextpp = pp->pt_forw;
