@@ -53,6 +53,11 @@ char	*argv[];
 		exit(1);
 	}
 
+	if( isatty(fileno(stdout)) )  {
+		fprintf(stderr, "dpix-pix:  binary output directed to terminal, aborting\n");
+		exit(2);
+	}
+
 	/* Note that the minimum is set to 1.0e20, the computer's working
 	 * equivalent of positive infinity.  Thus any subsequent value
 	 * must be larger. Likewise, the maximun is set to -1.0e20, the
