@@ -155,6 +155,7 @@ MGED_EXTERN(int f_wcodes, (ClientData clientData, Tcl_Interp *interp, int argc, 
 MGED_EXTERN(int f_whatid, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_which_air, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_which_id, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+MGED_EXTERN(int f_which_shader, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_winset, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_wmater, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_xpush, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));

@@ -509,6 +509,8 @@ static struct funtab funtab[] = {
 	f_which_air, 2, MAXARGS,TRUE,
 "whichid", "ident(s)", "lists all regions with given ident code",
 	f_which_id, 2, MAXARGS,TRUE,
+"which_shader", "Shader(s)", "lists all combinations using the given shaders",
+	f_which_shader, 2, MAXARGS,TRUE,
 "who", "[r(eal)|p(hony)|b(oth)]", "list the displayed objects",
 	cmd_who,1,2,TRUE,
 "winset", "pathname", "sets the current display manager to pathname",

@@ -1016,6 +1016,62 @@ char	**argv;
 	(void)signal( SIGINT, SIG_IGN );
 	return TCL_OK;
 }
+/*		F _ W H I C H _ S H A D E R
+ *
+ *	Finds all combinations using the given shaders
+ */
+int
+f_which_shader(clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
+{
+	register int	i,j;
+	register struct directory *dp;
+	struct rt_db_internal	intern;
+	struct rt_comb_internal	*comb;
+
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  return TCL_ERROR;
+
+	if( setjmp( jmp_env ) == 0 )
+	  (void)signal( SIGINT, sig3);  /* allow interupts */
+        else
+	  return TCL_OK;
+
+	for( j=1; j<argc; j++) {
+		item = atoi( argv[j] );
+		Tcl_AppendResult(interp, "Combination[s] with shader ", argv[j],
+				 ":\n", (char *)NULL);
+
+		/* Examine all COMB nodes */
+		for( i = 0; i < RT_DBNHASH; i++ )  {
+			for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )  {
+				if( !(dp->d_flags & DIR_COMB) )
+					continue;
+
+				if( rt_get_comb( &intern, dp, (mat_t *)NULL, dbip ) < 0 )  {
+					Tcl_AppendResult(interp, "rt_get_comb(", dp->d_namep,
+						") failure", (char *)NULL );
+					return TCL_ERROR;
+				}
+				comb = (struct rt_comb_internal *)intern.idb_ptr;
+
+				if( !strstr( bu_vls_addr( &comb->shader ), argv[j] ) )
+					continue;
+
+				Tcl_AppendResult(interp, "   ", dp->d_namep,
+						 "\n", (char *)NULL);
+				rt_comb_ifree( &intern );
+			}
+		}
+	}
+
+	(void)signal( SIGINT, SIG_IGN );
+	return TCL_OK;
+}
+
 /*
  *	F _ W H I C H _ A I R ( ) :	finds all regions with given air codes
  */
@@ -1066,6 +1122,17 @@ char	**argv;
 	(void)signal( SIGINT, SIG_IGN );
 	return TCL_OK;
 }
+
+/*		F _ D E C O M P O S E
+ *
+ *	decompose an NMG object into shells,
+ *	making a new NMG object for each shell.
+ *	This is not just copying each shell from the NMG object into a new
+ *	object. The NMG object is actually disassembled and each face
+ *	is placed into an appropriate shell so that the end product is a
+ *	group of shell(s) that can be described as exterior shells and interior
+ *	void shells.
+ */
 
 int
 f_decompose(clientData, interp, argc, argv )
