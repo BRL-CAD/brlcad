@@ -244,7 +244,8 @@ register struct application *ap;
 	box_start = ap->a_ray.r_min;
 	if( box_start < 0.0 )
 		box_start = 0.0;
-	box_start -= 0.99;	/* Compensate for 0.99 below on 1st loop */
+#define OFFSET_DIST	0.75		/* mm */
+	box_start -= OFFSET_DIST;	/* Compensate for OFFSET_DIST below on 1st loop */
 	box_end = model_end = ap->a_ray.r_max;
 	lastcut = CUTTER_NULL;
 	last_bool_start = -10.0;
@@ -265,7 +266,7 @@ register struct application *ap;
 		 * slightly into the new box.
 		 * Note that a box is never less than 1mm wide per axis.
 		 */
-		dist_corr = box_start + 0.99;
+		dist_corr = box_start + OFFSET_DIST;
 		if( dist_corr >= model_end )
 			break;	/* done! */
 		VJOIN1( newray.r_pt, ap->a_ray.r_pt,
@@ -380,8 +381,6 @@ rt_log("\nrt_shootray:  missed box: rmin,rmax(%g,%g) box(%g,%g)\n",
 				continue;	/* MISS */
 			}
 
-			if(rt_g.debug&DEBUG_SHOOT)  rt_pr_seg(newseg);
-
 			/* Add seg chain to list awaiting rt_boolweave() */
 			{
 				register struct seg *seg2 = newseg;
@@ -393,12 +392,14 @@ rt_log("\nrt_shootray:  missed box: rmin,rmax(%g,%g) box(%g,%g)\n",
 						break;
 					seg2 = seg2->seg_next;
 				}
+				if(rt_g.debug&DEBUG_SHOOT)  rt_pr_seg(newseg);
 				seg2->seg_next = waitsegs;
 				waitsegs = newseg;
 			}
 			trybool++;	/* flag to rerun bool, below */
 
 			/* Would be even better done by per-partition bitv */
+			/* XXX do this inline? */
 			rt_bitv_or( regionbits, stp->st_regions, stp->st_maxreg);
 			if(rt_g.debug&DEBUG_PARTITION)
 				rt_pr_bitv( "shoot Regionbits", regionbits, ap->a_rt_i->nregions);
