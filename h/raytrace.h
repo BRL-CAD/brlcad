@@ -2530,6 +2530,8 @@ BU_EXTERN(int			nmg_2lu_identical, (CONST struct edgeuse *eu1,
 				CONST struct edgeuse *eu2));
 
 	/* Edge routines */
+BU_EXTERN(struct edgeuse	*nmg_find_matching_eu_in_s, (CONST struct edgeuse	*eu1,
+				CONST struct shell	*s2));
 BU_EXTERN(struct edgeuse	*nmg_findeu, (CONST struct vertex *v1, CONST struct vertex *v2,
 				CONST struct shell *s, CONST struct edgeuse *eup,
 				int dangling_only) );
@@ -2557,6 +2559,8 @@ BU_EXTERN(void			nmg_eu_2vecs_perp, (vect_t xvec, vect_t yvec,
 				CONST struct bn_tol *tol) );
 BU_EXTERN(int			nmg_find_eu_leftvec, (vect_t left,
 				CONST struct edgeuse *eu) );
+BU_EXTERN(int			nmg_find_eu_left_non_unit, (vect_t left,
+				CONST struct edgeuse	*eu));
 BU_EXTERN(struct edgeuse	*nmg_find_ot_same_eu_of_e,
 				(CONST struct edge *e));
 
@@ -2593,12 +2597,31 @@ BU_EXTERN(int			nmg_is_edge_in_facelist, (CONST struct edge *e,
 BU_EXTERN(int			nmg_is_loop_in_facelist, (CONST struct loop *l,
 				CONST struct bu_list *fu_hd) );
 
-BU_EXTERN(void			nmg_edgeuse_tabulate, (struct bu_ptbl *tab,
-				CONST long *magic_p));
+	/* Tabulation routines */
 BU_EXTERN(void			nmg_vertex_tabulate, (struct bu_ptbl *tab,
 				CONST long *magic_p));
+BU_EXTERN(void			nmg_vertexuse_normal_tabulate, (struct bu_ptbl *tab,
+				CONST long		*magic_p));
+BU_EXTERN(void			nmg_edgeuse_tabulate, (struct bu_ptbl *tab,
+				CONST long *magic_p));
+BU_EXTERN(void			nmg_edge_tabulate, (struct bu_ptbl *tab,
+				CONST long *magic_p));
+BU_EXTERN(void			nmg_edge_g_tabulate, (struct bu_ptbl *tab,
+				CONST long		*magic_p));
 BU_EXTERN(void			nmg_face_tabulate, (struct bu_ptbl *tab,
 				CONST long *magic_p));
+BU_EXTERN(void			nmg_edgeuse_with_eg_tabulate, (struct bu_ptbl *tab,
+				CONST struct edge_g_lseg *eg));
+BU_EXTERN(void			nmg_edgeuse_on_line_tabulate,
+				(struct bu_ptbl		*tab,
+				CONST long		*magic_p,
+				CONST point_t		pt,
+				CONST vect_t		dir,
+				CONST struct bn_tol	*tol));
+BU_EXTERN(void			nmg_e_and_v_tabulate,
+				(struct bu_ptbl		*eutab,
+				struct bu_ptbl		*vtab,
+				CONST long		*magic_p));
 BU_EXTERN(int			nmg_2edgeuse_g_coincident,
 				(CONST struct edgeuse	*eu1,
 				CONST struct edgeuse	*eu2,

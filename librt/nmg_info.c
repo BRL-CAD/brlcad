@@ -33,9 +33,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "./debug.h"	/* For librt debug flags, XXX temp */
-
-RT_EXTERN( fastf_t nmg_loop_plane_area, ( CONST struct loopuse *lu, plane_t pl ) );
 
 /************************************************************************
  *									*
@@ -2101,6 +2098,12 @@ CONST struct bu_list	*fu_hd;
 	}
 	return(0);
 }
+
+/************************************************************************
+ *									*
+ *				Tabulation Routines			*
+ *									*
+ ************************************************************************/
 
 struct vf_state {
 	char		*visited;
