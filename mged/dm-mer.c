@@ -541,7 +541,7 @@ Mer_input( cmd_fd, noblock )
 		(void)eat_chars();
 	}
 
-	if( readfds & (1<<0) )
+	if( readfds & (1<<cmd_fd) )
 		return(1);		/* command awaits */
 	else
 		return(0);		/* just peripheral stuff */
