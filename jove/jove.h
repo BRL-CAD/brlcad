@@ -7,6 +7,10 @@
 /* jove.h header file to be included by EVERYONE */
 
 #ifdef SYSV
+# define SYS5	1
+#endif
+
+#ifdef SYSV
 #	define	USE_STRING_H	1	/* use <string.h>, not <strings.h> */
 #endif
 
@@ -31,10 +35,6 @@
 #include <strings.h>
 #else
 #include <string.h>
-#endif
-
-#ifdef SYSV
-# define SYS5	1
 #endif
 
 /* The following is tailorable */
