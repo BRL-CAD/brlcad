@@ -5042,6 +5042,10 @@ const char		*title;
 {
 	struct rt_wdb		*fp;
 	struct rt_db_internal	intern;
+	struct bu_external	ext;
+	int			ret;
+	int			flags;
+	char			*name="error.s";
 
 	bu_log("nmg_stash_model_to_file('%s', x%x, %s)\n", filename, m, title);
 
@@ -5059,11 +5063,31 @@ const char		*title;
 	intern.idb_meth = &rt_functab[ID_NMG];
 	intern.idb_ptr = (genptr_t)m;
 
-	/* Scale change on export is 1.0 -- no change */
-	if( wdb_put_internal( fp, "error.s", &intern, 1.0 ) < 0 )  {
-		bu_bomb("nmg_stash_model_to_file() wdb_put_internal failure\n");
+	if( fp->dbip->dbi_version <= 4 )  {
+		BU_INIT_EXTERNAL( &ext );
+		ret = intern.idb_meth->ft_export( &ext, &intern, 1.0, fp->dbip, &rt_uniresource );
+		if( ret < 0 )  {
+			bu_log("rt_db_put_internal(%s):  solid export failure\n",
+				name);
+			ret = -1;
+			goto out;
+		}
+		db_wrap_v4_external( &ext, name );
+	} else {
+		if( rt_db_cvt_to_external5( &ext, name, &intern, 1.0, fp->dbip, &rt_uniresource, intern.idb_major_type ) < 0 )  {
+			bu_log("wdb_export(%s): solid export failure\n",
+				name );
+			ret = -2;
+			goto out;
+		}
 	}
-	/* intern has been freed */
+	BU_CK_EXTERNAL( &ext );
+
+	flags = db_flags_internal( &intern );
+	ret = wdb_export_external( fp, &ext, name, flags, intern.idb_type );
+out:
+	bu_free_external( &ext );
+	wdb_close( fp );
 
 	bu_log("nmg_stash_model_to_file(): wrote error.s to '%s'\n",
 		filename);
