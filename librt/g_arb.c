@@ -679,6 +679,7 @@ arb_plot( rp, matp, vhead, dp )
 register union record	*rp;
 register matp_t		matp;
 struct vlhead		*vhead;
+struct directory	*dp;
 {
 	register int		i;
 	register dbfloat_t	*ip;
