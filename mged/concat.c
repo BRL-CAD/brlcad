@@ -334,12 +334,34 @@ genptr_t		ptr;
 
 
 /*
+ *			I N V O K E _ D B _ W R A P P E R
+ *
+ *  This is generally useful for all MGED commands
+ *  that have been subsumed by "db" object methods.
+ */
+int
+invoke_db_wrapper( ClientData clientData, Tcl_Interp *interp, int argc, char **argv, const char *cmd )
+{
+	struct bu_vls	str;
+	int	ret;
+
+	bu_vls_init(&str);
+
+	bu_vls_printf( &str, "db %s ", cmd );
+	bu_vls_from_argv( &str, argc-1, argv+1 );
+
+	ret = Tcl_Eval( interp, bu_vls_addr(&str) );
+	bu_vls_free( &str );
+	return ret;
+}
+
+/*
  *			F _ C O N C A T
  *
  *  Concatenate another GED file into the current file.
  *  Interrupts are not permitted during this function.
  *
- *  Usage:  dup file.g [prefix]
+ *  Usage:  dbconcat file.g [prefix]
  *
  *  NOTE:  If a prefix is not given on the command line,
  *  then the users insist that they be prompted for the prefix,
@@ -352,9 +374,6 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	struct db_i		*newdbp;
-	int bad = 0;
-
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
@@ -376,37 +395,5 @@ char	**argv;
 	  return TCL_ERROR;
 	}
 
-	if( strcmp( argv[2], "/" ) == 0 )  {
-		/* No prefix desired */
-		(void)strcpy(prestr, "\0");
-	} else {
-		(void)strcpy(prestr, argv[2]);
-	}
-
-	if( (ncharadd = strlen( prestr )) > 12 )  {
-		ncharadd = 12;
-		prestr[12] = '\0';
-	}
-
-	/* open the input file */
-	if( (newdbp = db_open( argv[1], "r" )) == DBI_NULL )  {
-		perror( argv[1] );
-		Tcl_AppendResult(interp, "concat: Can't open ",
-				 argv[1], "\n", (char *)NULL);
-		return TCL_ERROR;
-	}
-
-	/* Scan new database, adding everything encountered. */
-	if( db_scan( newdbp, mged_dir_add, 1, NULL ) < 0 )  {
-	  Tcl_AppendResult(interp, "concat: db_scan failure\n", (char *)NULL);
-	  bad = 1;	
-	  /* Fall through, to close off database */
-	}
-
-	/* Free all the directory entries, and close the input database */
-	db_close( newdbp );
-
-	sync();		/* just in case... */
-
-	return bad ? TCL_ERROR : TCL_OK;
+	return invoke_db_wrapper( clientData, interp, argc, argv, "concat" );
 }
