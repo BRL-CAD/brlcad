@@ -192,7 +192,7 @@ set -S2 "/bin/sh"
 #		define	STANDARD_LIBES	-lm -lmalloc -lc''SHARED -rpath /usr/lib:LIBDIR
 /*		When debugging libraries, -m and -v are helpful LD_OPTS */
 #		define	LD_OPTS		GFLAG
-#		define	LIBFB_LIBES	LIBPKG LIBTK LIBTCL -L''XLIBDIR -lX11''SHARED -lgl''SHARED -lGL''SHARED
+#		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11''SHARED -lgl''SHARED -lGL''SHARED
 #		define	LIBDM_LIBES	LIBTK LIBTCL
 #		define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi''SHARED -lXext''SHARED -lX11''SHARED -lgl''SHARED -lGL''SHARED
 #		define  LIBDM_SAMPLER_LIBES 	MGED_LIBES
@@ -211,7 +211,7 @@ set -S2 "/bin/sh"
 #		endif
 
 #		define	LIBDM_LIBES	LIBTK LIBTCL
-#		define	LIBFB_LIBES	LIBPKG LIBTK LIBTCL -L''XLIBDIR -lX11_s -lgl_s -lGL
+#		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11_s -lgl_s -lGL
 #		define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11_s -lgl_s -lGL
 #		define  LIBDM_SAMPLER_LIBES	MGED_LIBES
 #	endif
@@ -224,7 +224,7 @@ set -S2 "/bin/sh"
 #	define	TK_DEFS	OPTIMIZER -DTK_LIBRARY='"'TKLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_LIMITS_H=1 -DSTDC_HEADERS=1 -D__CHAR_UNSIGNED__=1 -DTK_NO_SECURITY=1
 
 #	define	LIBFB_OBJS	if_remote if_ab if_4d if_X if_X24 if_ogl
-#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_4D -DIF_5D -DIF_OGL -DBSD=43 -DIF_X -I''XINCDIR -DFB_USING_TCL_TK
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_4D -DIF_5D -DIF_OGL -DBSD=43 -DIF_X -I''XINCDIR
 
 #	define	LIBMESA_CONFIG	-DFBIND=2
 #	define  LIBDM_OBJS	dm-X dm-ogl dm-glx
@@ -288,8 +288,8 @@ set -S2 "/bin/sh"
 
 /* GAK!  No GL library in 64-bit mode, only OpenGL!  ARRRRGH! */
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24 if_ogl
-#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DBSD=43 -DIF_X -I''XINCDIR -DIF_OGL -DFB_USING_TCL_TK
-#       define  LIBFB_LIBES     LIBPKG LIBTK LIBTCL -L''XLIBDIR -lX11 -lGL
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DBSD=43 -DIF_X -I''XINCDIR -DIF_OGL
+#       define  LIBFB_LIBES     LIBPKG -L''XLIBDIR -lX11 -lGL
 #	define	LIBDM_OBJS	dm-X dm-ogl
 #	define	LIBDM_CONFIG	-DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL
 #	define	LIBDM_LIBES	LIBTK LIBTCL
@@ -351,8 +351,8 @@ set -S2 "/bin/sh"
 #	define	IRIX	6
 #	define	LGT_CONFIG	GFLAG
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24 if_ogl
-#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DBSD=43 -DIF_X -I''XINCDIR -DIF_OGL -DFB_USING_TCL_TK
-#       define  LIBFB_LIBES     LIBPKG LIBTK LIBTCL -L''XLIBDIR -lX11 -lGL
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DBSD=43 -DIF_X -I''XINCDIR -DIF_OGL
+#       define  LIBFB_LIBES     LIBPKG -L''XLIBDIR -lX11 -lGL
 #	define	LIBDM_OBJS	dm-X dm-ogl
 #	define	LIBDM_CONFIG	-DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL
 #	define	LIBDM_LIBES	LIBTK LIBTCL
