@@ -198,9 +198,9 @@ _LOCAL_ ColorMap _sgi_cmap;
 #define MARGIN	4			/* # pixels margin to screen edge */
 #define BANNER	18			/* Size of MEX title banner */
 #define WIN_L	(1024-ifp->if_width-MARGIN)
-#define WIN_R	(1024-MARGIN)
+#define WIN_R	(1024-1-MARGIN)
 #define WIN_B	MARGIN
-#define WIN_T	(ifp->if_height+MARGIN)
+#define WIN_T	(ifp->if_height-1+MARGIN)
 
 #define MAP_RESERVED	16		/* # slots reserved by MEX */
 #define MAP_TOL		28		/* pixel delta across all channels */
@@ -531,8 +531,8 @@ FBIO	*ifp;
 	case MODE_FIT:
 	case MODE_APPROX:
 		if( ismex() )  {
-			/* Leave mex's cursor on */
-			/* winclose( SGI(ifp)->si_fd ); */
+			winclose( ifp->if_fd );
+			curson();	/* Leave mex's cursor on */
 		}  else  {
 			setcursor( 0, 1, 0x2000 );
 			cursoff();
@@ -635,8 +635,6 @@ sgi_zoom_set( ifp, x, y )
 FBIO	*ifp;
 int	x, y;
 {
-	int npts;
-
 	if( qtest() )
 		sgw_inqueue(ifp);
 
@@ -1039,6 +1037,10 @@ FBIO	*ifp;
 int	mode;
 int	x, y;
 {
+	short	xmin, ymin;
+	register short	i;
+	short	xwidth;
+
 	if( qtest() )
 		sgw_inqueue(ifp);
 
@@ -1047,6 +1049,13 @@ int	x, y;
 		cursoff();
 		return	0;
 	}
+	xwidth = ifp->if_width/SGI(ifp)->si_xzoom;
+	i = xwidth/2;
+	xmin = SGI(ifp)->si_xcenter - i;
+	i = (ifp->if_height/2)/SGI(ifp)->si_yzoom;
+	ymin = SGI(ifp)->si_ycenter - i;
+	x -= xmin;
+	y -= ymin;
 	x *= SGI(ifp)->si_xzoom;
 	y *= SGI(ifp)->si_yzoom;
 	curson();
@@ -1058,11 +1067,16 @@ int	x, y;
 		break;
 	case MODE_APPROX:
 	case MODE_FIT:
+		{
+			long	xwin, ywin;
+
 		/* Color and bitmask ignored under MEX.	*/
 		setcursor( 1, YELLOW, 0x2000 );
-		setvaluator( MOUSEX, x + WIN_L, 0, 1023 );
-		setvaluator( MOUSEY, y + WIN_B, 0, 1023 );
+		getorigin( &xwin, &ywin );
+		setvaluator( MOUSEX, (short)(x+xwin), 0, 1023 );
+		setvaluator( MOUSEY, (short)(y+ywin), 0, 1023 );
 		break;
+		}
 	}
 	return	0;
 }
@@ -1191,6 +1205,9 @@ int	width, height;
 			return	-1;
 			}
 		wintitle( "BRL libfb Frame Buffer" );
+		/* Free window of position constraint.		*/
+		prefsize( (long)ifp->if_width, (long)ifp->if_height );
+		winconstraints();
 		singlebuffer();
 		gconfig();	/* Must be called after singlebuffer().	*/
 		/* Need to clean out images from windows below */
