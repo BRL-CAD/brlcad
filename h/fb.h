@@ -128,6 +128,19 @@ typedef struct  {
 		(*_ifp->if_writerect)(_ifp,_xmin,_ymin,_width,_height,_pp)
 
 /* Library entry points which are true functions.			*/
+#if __STDC__
+extern FBIO	*fb_open(char *file, int width, int height);
+extern int	fb_close(FBIO *ifp);
+extern int	fb_genhelp(void);
+extern int	fb_ioinit(FBIO *ifp);
+extern int	fb_seek(FBIO *ifp, int x, int y);
+extern int	fb_tell(FBIO *ifp, int *xp, int *yp);
+extern int	fb_rpixel(FBIO *ifp, RGBpixel *pp);
+extern int	fb_wpixel(FBIO *ifp, RGBpixel *pp);
+extern int	fb_flush(FBIO *ifp);
+extern void	fb_log(char *fmt, ...);
+extern int	fb_null(void);
+#else
 extern FBIO	*fb_open();
 extern int	fb_close();
 extern int	fb_genhelp();
@@ -139,6 +152,7 @@ extern int	fb_wpixel();
 extern int	fb_flush();
 extern void	fb_log();
 extern int	fb_null();
+#endif
 
 /*
  * Some functions and variables we couldn't hide.
