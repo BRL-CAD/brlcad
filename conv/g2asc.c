@@ -403,7 +403,7 @@ membdump()	/* Print out Member record information */
 	(void)printf("%.16s ", name(record.M.m_instname) );	/* referred-to obj. */
 	for( i = 0; i < 16; i++ )			/* homogeneous transform matrix */
 		(void)printf("%.12e ", record.M.m_mat[i] );
-	(void)printf("%d ", record.M.m_num );		/* COMGEOM solid # */
+	(void)printf("%d ", 0 );			/* was COMGEOM solid # */
 	(void)printf("\n");				/* Terminate w/ nl */
 }
 
