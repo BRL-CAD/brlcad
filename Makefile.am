@@ -104,7 +104,7 @@ all-local:
 	@@ECHO@
 	@@ECHO@ "BRL-CAD Release @BRLCAD_VERSION@, Build @CONFIG_DATE@"
 	@@ECHO@
-	@if test "x$(MAKECMDGOALS)" = "xall-am" ; then \
+	@if test "x$(MAKECMDGOALS)" = "xall-am" -o "x$(.TARGETS)" = "xall-am" ; then \
 	  @ECHO@ @ECHO_N@ "Elapsed compilation time: " ;\
 	  sh $(top_srcdir)/sh/elapsed.sh `cat $(top_builddir)/include/brlcad_version.h | grep Compilation` ;\
 	  @ECHO@ @ECHO_N@ "Elapsed time since configuration: " ;\
@@ -112,7 +112,7 @@ all-local:
 	  @ECHO@ "---" ;\
 	  @ECHO@ "Run 'make install' to begin installation into $(prefix)" ;\
 	  @ECHO@ "Run 'make benchmark' to run the BRL-CAD Benchmark Suite" ;\
-	elif test "x$(MAKECMDGOALS)" = "xinstall-am" ; then \
+	elif test "x$(MAKECMDGOALS)" = "xinstall-am" -o "x$(.TARGETS)" = "xinstall-am" ; then \
 	  @ECHO@ @ECHO_N@ "Elapsed installation time: " ;\
 	  sh $(top_srcdir)/sh/elapsed.sh `cat $(top_builddir)/include/brlcad_version.h | grep Compilation` ;\
 	  @ECHO@ @ECHO_N@ "Elapsed time since configuration: " ;\
@@ -133,7 +133,7 @@ all-local:
 	  @ECHO@ "$$line1" ;\
 	  @ECHO@ "$$line2" ;\
 	  @ECHO@ "$$separator" ;\
-	elif test "x$(MAKECMDGOALS)" = "x" ; then \
+	elif test "x$(MAKECMDGOALS)" = "x" -a "x$(.TARGETS)" = "x" ; then \
 	  @ECHO@ @ECHO_N@ "Elapsed time: " ;\
 	  sh $(top_srcdir)/sh/elapsed.sh `cat $(top_builddir)/include/brlcad_version.h | grep Compilation` ;\
 	  @ECHO@ @ECHO_N@ "Elapsed time since configuration: " ;\
