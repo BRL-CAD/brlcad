@@ -250,12 +250,13 @@ CONST struct rt_dsp_internal *dsp_ip;
 	RT_DSP_CK_MAGIC(dsp_ip);
 
 	bu_vls_init( vls );
-	bu_vls_printf( vls, "Displacement Map\n  file='%s' xc=%d yc=%d sm=%d\n",
+
+	bu_vls_printf( vls, "Displacement Map\n  file='%s' xs=%d ys=%d sm=%d\n",
 		dsp_ip->dsp_file, dsp_ip->dsp_xcnt, dsp_ip->dsp_ycnt, dsp_ip->dsp_smooth);
 
 	VSETALL(pt, 0.0);
 	MAT4X3PNT(v, dsp_ip->dsp_stom, pt);
-	bu_vls_printf( vls, "  V=(%g %g %g)\n", V3ARGS(pt));
+	bu_vls_printf( vls, "  V=(%g %g %g)mm\n", V3ARGS(pt));
 
 	bu_vls_printf( vls, "  stom=\n");
 	bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n",
@@ -593,7 +594,9 @@ int inside;
 	VSET(D, cell[X]+1, cell[Y]+1, DSP(isect->dsp, cell[X]+1, cell[Y]+1));
 
 	bu_semaphore_acquire( RT_SEM_MODEL);
+	bu_semaphore_acquire( BU_SEM_SYSCALL);
 	sprintf(buf, "dsp%02d.pl", plot_file_num++);
+	bu_semaphore_release( BU_SEM_SYSCALL);
 	bu_semaphore_release( RT_SEM_MODEL);
 	bu_log("%s\n", buf);
 
@@ -1844,12 +1847,13 @@ struct seg		*seghead;
 				segp->seg_out.hit_dist);
 		}
 
-		MAT4X3VEC(v, dsp->dsp_i.dsp_stom, segp->seg_in.hit_normal);
+		MAT4X3VEC(v, dsp->dsp_i.dsp_mtos, segp->seg_in.hit_normal);
 		VMOVE(segp->seg_in.hit_normal, v);
+		VUNITIZE( segp->seg_in.hit_normal );
 
-		MAT4X3VEC(v, dsp->dsp_i.dsp_stom, segp->seg_out.hit_normal);
+		MAT4X3VEC(v, dsp->dsp_i.dsp_mtos, segp->seg_out.hit_normal);
 		VMOVE(segp->seg_out.hit_normal, v);
-
+		VUNITIZE( segp->seg_out.hit_normal );
 
 		if (rt_g.debug & DEBUG_HF) {
 			bu_log("model in:%6g out:%6g\n",
@@ -2005,15 +2009,43 @@ register struct hit	*hitp;
 struct soltab		*stp;
 register struct xray	*rp;
 {
-#if 1
- 	if (rt_g.debug & DEBUG_HF)
-		bu_log("rt_dsp_norm()\n");
-
-	VUNITIZE(hitp->hit_normal);
-
-#else
 	register struct dsp_specific *dsp =
 		(struct dsp_specific *)stp->st_specific;
+#if 1
+	vect_t N;
+ 	if (rt_g.debug & DEBUG_HF)
+		bu_log("rt_dsp_norm(%g %g %g,   %g %g %g)",
+		V3ARGS(hitp->hit_point),
+		V3ARGS(hitp->hit_normal));
+
+/*	MAT4X3VEC(N, dsp->dsp_i.dsp_stom, hitp->hit_normal);
+	VUNITIZE(N);
+	VMOVE(hitp->hit_normal, N);
+*/
+
+ 	if (rt_g.debug & DEBUG_HF) {
+		char buf[132];
+ 		point_t n;
+ 		FILE *fd;
+
+		bu_log("\n\t %g %g %g\n", V3ARGS(hitp->hit_normal));
+
+		bu_semaphore_acquire( BU_SEM_SYSCALL);
+		sprintf(buf, "dsp%02d.pl", plot_file_num++);
+
+		if ((fd=fopen(buf, "w")) != (FILE *)NULL) {
+			pl_color(fd, 255, 40, 40);
+
+			pdv_3move(fd, hitp->hit_point);
+			VADD2(n, hitp->hit_point, hitp->hit_normal);
+			pdv_3cont(fd, n);
+			fclose(fd);
+		}
+		bu_semaphore_release( BU_SEM_SYSCALL);
+
+
+ 	}
+#else
 	vect_t N, tmp, A, B, C, D, AB, AC, AD;
 	int cell[2];
 	char buf[32];
