@@ -8352,8 +8352,8 @@ wdb_combadd(Tcl_Interp			*interp,
 						 combname, "' to the database.\n", (char *)NULL);
 				return DIR_NULL;
 			}
+			bu_avs_free( &avs );
 		}
-		bu_avs_free( &avs );
 
 		BU_GETSTRUCT(comb, rt_comb_internal);
 		intern.idb_ptr = (genptr_t)comb;
