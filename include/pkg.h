@@ -38,6 +38,18 @@
 #ifndef PKG_H_SEENYET
 #define PKG_H_SEENYET
 
+#ifndef PKG_EXPORT
+#   if defined(WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
+#      ifdef PKG_EXPORT_DLL
+#         define PKG_EXPORT __declspec(dllexport)
+#      else
+#         define PKG_EXPORT __declspec(dllimport)
+#      endif
+#   else
+#      define PKG_EXPORT
+#   endif
+#endif
+
 struct pkg_switch {
 	unsigned short	pks_type;	/* Type code */
 	void	(*pks_handler)();	/* Message Handler */
@@ -89,27 +101,27 @@ struct pkg_conn {
 	pkg_send( (type), bu_vls_addr((vlsp)), bu_vls_strlen((vlsp))+1, (pkg) )
 
 
-extern int pkg_process(register struct pkg_conn *);
-extern int pkg_suckin(register struct pkg_conn *);
-extern struct pkg_conn *pkg_open();
-extern struct pkg_conn *pkg_transerver();
-extern int pkg_permserver();
-extern struct pkg_conn *pkg_getclient(int fd, struct pkg_switch *switchp, void (*errlog) (/* ??? */), int nodelay);
-extern void pkg_close();
-extern int pkg_send();
-extern int pkg_2send();
-extern int pkg_stream();
-extern int pkg_flush();
-extern int pkg_waitfor();
-extern char *pkg_bwaitfor();
-extern int pkg_get();
-extern int pkg_block();
+PKG_EXPORT extern int pkg_process(register struct pkg_conn *);
+PKG_EXPORT extern int pkg_suckin(register struct pkg_conn *);
+PKG_EXPORT extern struct pkg_conn *pkg_open();
+PKG_EXPORT extern struct pkg_conn *pkg_transerver();
+PKG_EXPORT extern int pkg_permserver();
+PKG_EXPORT extern struct pkg_conn *pkg_getclient(int fd, struct pkg_switch *switchp, void (*errlog) (/* ??? */), int nodelay);
+PKG_EXPORT extern void pkg_close();
+PKG_EXPORT extern int pkg_send();
+PKG_EXPORT extern int pkg_2send();
+PKG_EXPORT extern int pkg_stream();
+PKG_EXPORT extern int pkg_flush();
+PKG_EXPORT extern int pkg_waitfor();
+PKG_EXPORT extern char *pkg_bwaitfor();
+PKG_EXPORT extern int pkg_get();
+PKG_EXPORT extern int pkg_block();
 
 /* Data conversion routines */
-extern unsigned short pkg_gshort();
-extern unsigned long pkg_glong();
-extern char *pkg_pshort(unsigned char *msgp, short unsigned int s);
-extern char *pkg_plong();
+PKG_EXPORT extern unsigned short pkg_gshort();
+PKG_EXPORT extern unsigned long pkg_glong();
+PKG_EXPORT extern char *pkg_pshort(unsigned char *msgp, short unsigned int s);
+PKG_EXPORT extern char *pkg_plong();
 
 #endif /* PKG_H_SEENYET */
 
