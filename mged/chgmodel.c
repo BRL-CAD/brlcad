@@ -658,9 +658,7 @@ char	**argv;
 	if(dbip == DBI_NULL)
 	  return TCL_OK;
 
-	CHECK_READ_ONLY;
-
-	if(argc < 3 || MAXARGS < argc){
+	if(argc < 2 || MAXARGS < argc){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -669,6 +667,7 @@ char	**argv;
 	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
+
 
 	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 	  return TCL_ERROR;
@@ -682,13 +681,24 @@ char	**argv;
 	}
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	RT_CK_COMB(comb);
-	bu_vls_free( &comb->shader );
 
-	/* Bunch up the rest of the args, space separated */
-	bu_vls_from_argv( &comb->shader, argc-2, argv+2 );
+	if(argc == 2)  {
+		/* Return the current shader string */
+		Tcl_AppendResult( interp, bu_vls_addr(&comb->shader), (char *)NULL);
+		rt_db_free_internal( &intern );
+	} else {
+		CHECK_READ_ONLY;
 
-	if( rt_db_put_internal( dp, dbip, &intern ) < 0 )  {
-		TCL_WRITE_ERR_return;
+		/* Replace with new shader string from command line */
+		bu_vls_free( &comb->shader );
+
+		/* Bunch up the rest of the args, space separated */
+		bu_vls_from_argv( &comb->shader, argc-2, argv+2 );
+
+		if( rt_db_put_internal( dp, dbip, &intern ) < 0 )  {
+			TCL_WRITE_ERR_return;
+		}
+		/* Internal representation has been freed by rt_db_put_internal */
 	}
 	return TCL_OK;
 }
