@@ -1660,7 +1660,6 @@ do_cline()
 	fastf_t radius;
 	vect_t height;
 	char name[NAMESIZE+1];
-	char name2[NAMESIZE+1];
 	struct wmember r_head;
 
 	if( debug )
@@ -2065,9 +2064,9 @@ void
 do_ccone3()
 {
 	int element_id;
-	int pt1, pt2, pt3, pt4, c1, c2, i;
+	int pt1, pt2, pt3, pt4, i;
 	char name[NAMESIZE+1];
-	fastf_t ro[4], ri[4], dot2, dot3, len03, len01, len12, len23;
+	fastf_t ro[4], ri[4], len03, len01, len12, len23;
 	vect_t diff, diff2, diff3, diff4;
 	struct wmember r_head;
 
@@ -2104,14 +2103,14 @@ do_ccone3()
 	if( !getline() )
 	{
 		bu_log( "Unexpected EOF while reading continuation card for CCONE3\n" );
-		bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
-			group_id, comp_id, element_id , c1 );
+		bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %8.8s\n",
+			group_id, comp_id, element_id , field );
 		rt_bomb( "CCONE3\n" );
 	}
 
 	if( strncmp( field, line, 8 ) )
 	{
-		bu_log( "WARNING: CCONE3 continuation flags disagree, %d vs %d\n" , c1 , c2 );
+		bu_log( "WARNING: CCONE3 continuation flags disagree, %8.8s vs %8.8s\n" , field , line );
 		bu_log( "\tgroup_id = %d, comp_id = %d, element_id = %d\n",
 			group_id, comp_id, element_id );
 	}
@@ -2149,8 +2148,6 @@ do_ccone3()
 	VSUB2( diff4, grid_pts[pt4], grid_pts[pt1] );
 	VSUB2( diff3, grid_pts[pt3], grid_pts[pt1] );
 	VSUB2( diff2, grid_pts[pt2], grid_pts[pt1] );
-	dot3 = VDOT( diff4, diff3 );
-	dot2 = VDOT( diff4, diff2 );
 
 	len03 = MAGNITUDE( diff4 );
 	len01 = MAGNITUDE( diff2 );
