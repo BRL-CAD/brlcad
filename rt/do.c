@@ -409,9 +409,15 @@ extern struct structparse view_parse[];
  *  Matching compensation code for the CRAY is located in librt/parse.c
  */
 #if CRAY
-#	define byteoffset(_i)	(((int)&(_i)))
+#	define byteoffset(_i)	(((int)&(_i)))	/* actually a word offset */
 #else
+#    if sgi
+	/* "Lazy" way.  Works on reasonable machines with byte addressing */
+#	define byteoffset(_i)	((int)((char *)&(_i)))
+#    else
+	/* "Conservative" way of finding # bytes as diff of 2 char ptrs */
 #	define byteoffset(_i)	((int)(((char *)&(_i))-((char *)0)))
+#    endif
 #endif
 struct structparse set_parse[] = {
 	"%d",	1, "width",	byteoffset(width),		FUNC_NULL,
