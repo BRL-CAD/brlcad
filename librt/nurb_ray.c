@@ -42,6 +42,10 @@ plane_t plane1, plane2;
 	int	rational;
 	int	i;
 
+	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+		bu_log( "rt_nurb_project_srf: projecting surface, planes = (%g %g %g %g) (%g %g %g %g)\n",
+			V4ARGS( plane1 ), V4ARGS( plane2 ) );
+
 	rational = RT_NURB_IS_PT_RATIONAL( srf->pt_type);
 
 	n_pt_type = RT_NURB_MAKE_PT_TYPE( 2, RT_NURB_PT_PROJ, 0);
@@ -80,6 +84,14 @@ plane_t plane1, plane2;
 			    mp1[2] * plane1[2] - plane1[3];
 			mp2[1] = mp1[0] * plane2[0] + mp1[1] * plane2[1] + 
 			    mp1[2] * plane2[2] - plane2[3];
+		}
+
+		if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+		{
+			if( rational )
+				bu_log( "\tmesh pt (%g %g %g %g), becomes (%g %g)\n", V4ARGS( mp1 ), mp2[0], mp2[1] );
+			else
+				bu_log( "\tmesh pt (%g %g %g), becomes (%g %g)\n", V3ARGS( mp1 ), mp2[0], mp2[1] );
 		}
 
 		mp1 += RT_NURB_EXTRACT_COORDS(srf->pt_type);
@@ -381,6 +393,8 @@ top:
 			if( !(vmin[0] <= 0.0 && vmin[1] <= 0.0 &&
 				vmax[0] >= 0.0 && vmax[1] >= 0.0 ))
 			{
+				if( rt_g.debug & DEBUG_SPLINE )
+					bu_log( "this srf doesn't include the origin\n" );
 				flat = 1;
 				rt_nurb_free_snurb( psrf );
 				continue;
@@ -391,12 +405,16 @@ top:
 			if( (smax - smin) > .8)  {
 				/* Split surf, requeue both sub-surfs at head */
 				/* New surfs will have same dir as arg, here */
+				if( rt_g.debug & DEBUG_SPLINE )
+					bu_log( "splitting this surface\n" );
 				rt_nurb_s_split( &plist, psrf, dir );
 				rt_nurb_free_snurb( psrf );
 				goto top;
 			}
 			if( smin > 1.0 || smax < 0.0 )
 			{
+				if( rt_g.debug & DEBUG_SPLINE )
+					bu_log( "eliminating this surface (smin=%g, smax=%g)\n", smin, smax );
 				flat = 1;
 				rt_nurb_free_snurb( psrf );
 				continue;
@@ -425,6 +443,12 @@ top:
 
 			psrf->dir = dir;
 			rt_nurb_free_snurb(osrf);
+
+			if( rt_g.debug & DEBUG_SPLINE )
+			{
+				bu_log( "After call to rt_nurb_region_from_srf() (smin=%g, smax=%g)\n", smin, smax );
+				rt_nurb_s_print("psrf", psrf);
+			}
 
 			u[0] = psrf->u.knots[0];
 			u[1] = psrf->u.knots[psrf->u.k_size -1];
