@@ -9,6 +9,8 @@
 libredblack \- red-black tree subroutines
 .\"
 .SH SYNOPSIS
+\fB#include "machine.h"
+.br
 \fB#include "redblack.h"
 .\"
 .PP
@@ -60,6 +62,13 @@ libredblack \- red-black tree subroutines
 .B void *data;
 .\"
 .PP
+.B int rb_is_uniq (tree, order)
+.br
+.B rb_tree *tree;
+.br
+.B int order;
+.\"
+.PP
 .B void *rb_neighbor (tree, order, sense)
 .br
 .B rb_tree *tree;
@@ -78,9 +87,40 @@ libredblack \- red-black tree subroutines
 .B void *data;
 .\"
 .PP
+.B void rb_set_uniqv (tree, vec)
+.br
+.B rb_tree *tree;
+.br
+.B bitv_t vec;
+.\"
+.PP
 .B void rb_summarize_tree (tree)
 .br
 .B rb_tree *tree;
+.\"
+.PP
+.B void rb_uniq_all_off (tree)
+.br
+.B rb_tree *tree;
+.\"
+.PP
+.B void rb_uniq_all_on (tree)
+.br
+.B rb_tree *tree;
+.\"
+.PP
+.B int rb_uniq_off (tree, order)
+.br
+.B rb_tree *tree;
+.br
+.B int order;
+.\"
+.PP
+.B int rb_uniq_on (tree, order)
+.br
+.B rb_tree *tree;
+.br
+.B int order;
 .\"
 .PP
 .B void rb_walk (tree, order, visit, trav_type)
@@ -146,19 +186,77 @@ except that it creates a tree that supports only the single order
 specified by
 .I order_func.
 .PP
+The application can specify that
+.I libredblack
+may not insert new nodes that compare equal in any of the orders
+to an existing node.
+Such uniqueness enforcement is switch selectable
+and may be controlled independently for each order
+and modified dynamically.
+The default behavior is not to enforce any uniqueness.
+.PP
 .I rb_insert
 creates a new node containing
 .I data
 and adds it to
-.I tree.
-The node is inserted in the appropriate place
+.I tree,
+provided that doing so would not violate current uniqueness requirements.
+If a uniqueness requirement would be violated,
+.I rb_insert
+does nothing but return a negative integer,
+the absolute value of which is the first order for which a violation exists.
+Otherwise,
+the node is inserted in the appropriate place
 in each order,
-as determined by the comparison functions.
+as determined by the comparison functions,
+and
 .I rb_insert
 returns the number of orders
 for which the new node compared equal to an existing node in the tree.
-This provides a mechanism by which the application
-can enforce uniqueness, if desired.
+.PP
+.I rb_uniq_on
+specifies that subsequent insertion of nodes into
+.I tree
+should enforce uniqueness on
+.I order,
+and returns the previous setting of the switch.
+.I rb_uniq_off
+specifies that subsequent insertion of nodes into
+.I tree
+should proceed without regard for uniqueness on
+.I order,
+and returns the previous setting of the switch.
+The macros
+.I rb_uniq_on1(tree)
+and
+.I rb_uniq_off1(tree)
+available in
+\fI"redblack.h"\fR,
+are similar,
+except that they control the first (perhaps only) order.
+.I rb_is_uniq
+returns 1 if uniqueness is currently enforced
+for
+.I order
+in
+.I tree,
+and 0 otherwise.
+The macro
+.I rb_is_uniq1(tree)
+available in
+\fI"redblack.h"\fR,
+is similar,
+except that it queries the first (perhaps only) order.
+.I rb_uniq_all_on
+and
+.I rb_uniq_all_off
+set all
+.I nm_orders
+orders identically on or off,
+and
+.I rb_set_uniqv
+sets the orders according to the bit vector
+.I vec.
 .PP
 .I rb_extreme
 searches through
