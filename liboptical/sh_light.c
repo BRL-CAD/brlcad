@@ -618,7 +618,7 @@ light_setup(register struct region *rp,
 	BU_GETSTRUCT( lsp, light_specific );
 
 	BU_LIST_MAGIC_SET( &(lsp->l), LIGHT_MAGIC );
-	lsp->lt_intensity = 1000.0;	/* Lumens */
+	lsp->lt_intensity = 1.0;	/* Lumens */
 	lsp->lt_fraction = -1.0;		/* Recomputed later */
 	lsp->lt_visible = 1;		/* explicitly modeled */
 	lsp->lt_invisible = 0;		/* explicitly modeled */
