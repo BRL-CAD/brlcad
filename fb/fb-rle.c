@@ -273,7 +273,7 @@ char	*argv[];
 	outrle.ymin = screen_yoff;
 	outrle.xmax = screen_xoff + file_width - 1;
 	outrle.ymax = screen_yoff + file_height - 1;
-	outrle.comments = (char **)0;
+	outrle.comments = (CONST_DECL char **)0;
 
 	/* Add comments to the header file, since we have one */
 	if( framebuffer == (char *)0 )
