@@ -3809,15 +3809,21 @@ Add_unique_verts( int *piece_verts, int *v )
 	}
 }
 
+
+/*	This routine sorts the faces of the BOT such that when they are taken in groups of "tris_per_piece",
+ *	each group (piece) will consist of adjacent faces
+ */
 int
 rt_bot_sort_faces( struct rt_bot_internal *bot, int tris_per_piece )
 {
 	int *new_faces;		/* the sorted list of faces to be attached to the BOT at the end of this routine */
 	int new_face_count=0;	/* the current number of faces in the "new_faces" list */
+	int *new_norms;		/* the sorted list of vertex normals corrsponding to the "new_faces" list */
 	int *old_faces;		/* a copy of the original face list from the BOT */
 	int *piece;		/* a small face list, for just the faces in the current piece */
+	int *piece_norms;	/* vertex normals for faces in the current piece */
 	int *piece_verts;	/* a list of vertices in the current piece (each vertex appears only once) */
-	char *vert_count;	/* an array used to hold the number of piece vertices that appear in each BOT face */
+	unsigned char *vert_count;	/* an array used to hold the number of piece vertices that appear in each BOT face */
 	int faces_left;		/* the number of faces in the "old_faces" array that have not yet been used */
 	int piece_len;		/* the current number of faces in the piece */
 	int max_verts;		/* the maximum number of piece_verts found in a single unused face */
@@ -3826,20 +3832,25 @@ rt_bot_sort_faces( struct rt_bot_internal *bot, int tris_per_piece )
 
 	RT_BOT_CK_MAGIC( bot );
 
-	faces_left = bot->num_faces;
-
+	/* allocate memory for all the data */
 	new_faces = (int *)bu_calloc( bot->num_faces * 3, sizeof( int ), "new_faces" );
 	old_faces = (int *)bu_calloc( bot->num_faces * 3, sizeof( int ), "old_faces" );
 	piece = (int *)bu_calloc( tris_per_piece * 3, sizeof( int ), "piece" );
-	vert_count = (char *)bu_malloc( bot->num_faces * sizeof( char ), "vert_count" );
+	vert_count = (unsigned char *)bu_malloc( bot->num_faces * sizeof( unsigned char ), "vert_count" );
 	piece_verts = (int *)bu_malloc( tris_per_piece * 3 * sizeof( int ), "piece_verts" );
 	centers = (fastf_t *)NULL;
+
+	if( bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS ) {
+		new_norms = (int *)bu_calloc( bot->num_faces * 3, sizeof( int ), "new_norms" );
+		piece_norms = (int *)bu_calloc( tris_per_piece * 3, sizeof( int ), "piece_norms" );
+	}
 
 	/* make a copy of the faces list, this list will be modified during the process */
 	for( i=0 ; i<bot->num_faces*3 ; i++) {
 		old_faces[i] = bot->faces[i];
 	}
 
+	/* process until we have sorted all the faces */
 	faces_left = bot->num_faces;
 	while( faces_left ) {
 		int cur_face;
@@ -3857,11 +3868,15 @@ rt_bot_sort_faces( struct rt_bot_internal *bot, int tris_per_piece )
 		}
 
 		if( cur_face >= bot->num_faces ) {
+			/* all faces used, we must be done */
 			break;
 		}
 
 		/* copy that face to start the piece */
 		VMOVE( piece, &old_faces[cur_face*3] );
+		if( bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS ) {
+			VMOVE( piece_norms, &bot->face_normals[cur_face*3] );
+		}
 
 		/* also copy it to the piece vertex list */
 		VMOVE( piece_verts, piece );
@@ -3877,6 +3892,9 @@ rt_bot_sort_faces( struct rt_bot_internal *bot, int tris_per_piece )
 			/* handle the case where the first face in a piece is the only face left */
 			for( j=0 ; j<piece_len ; j++ ) {
 				VMOVE( &new_faces[new_face_count*3], &piece[j*3] );
+				if( bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS ) {
+					VMOVE( &new_norms[new_face_count*3], &piece_norms[j*3] );
+				}
 				new_face_count++;
 			}
 			piece_len = 0;
@@ -3933,6 +3951,9 @@ rt_bot_sort_faces( struct rt_bot_internal *bot, int tris_per_piece )
 
 				/* Add this face to the current piece */
 				VMOVE( &piece[piece_len*3], &old_faces[face_to_add*3] );
+				if( bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS ) {
+					VMOVE( &piece_norms[piece_len*3], &bot->face_normals[face_to_add*3] );
+				}
 
 				/* Add its vertices to the list of piece vertices */
 				Add_unique_verts( piece_verts, &old_faces[face_to_add*3] );
@@ -3949,6 +3970,9 @@ rt_bot_sort_faces( struct rt_bot_internal *bot, int tris_per_piece )
 					/* copy this piece to the "new_faces" list */
 					for( j=0 ; j<piece_len ; j++ ) {
 						VMOVE( &new_faces[new_face_count*3], &piece[j*3] );
+						if( bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS ) {
+							VMOVE( &new_norms[new_face_count*3], &piece_norms[j*3] );
+						}
 						new_face_count++;
 					}
 					piece_len = 0;
@@ -3975,6 +3999,9 @@ rt_bot_sort_faces( struct rt_bot_internal *bot, int tris_per_piece )
 					 */
 					if( vert_count[i] == max_verts ) {
 						VMOVE( &piece[piece_len*3], &old_faces[i*3] );
+						if( bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS ) {
+							VMOVE( &piece_norms[piece_len*3], &bot->face_normals[i*3] );
+						}
 						Add_unique_verts( piece_verts, &old_faces[i*3] );
 						VSETALL( &old_faces[i*3], -1 );
 
@@ -3986,6 +4013,9 @@ rt_bot_sort_faces( struct rt_bot_internal *bot, int tris_per_piece )
 							/* copy this piece to the "new_faces" list */
 							for( j=0 ; j<piece_len ; j++ ) {
 								VMOVE( &new_faces[new_face_count*3], &piece[j*3] );
+								if( bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS ) {
+									VMOVE( &new_norms[new_face_count*3], &piece_norms[j*3] );
+								}
 								new_face_count++;
 							}
 							piece_len = 0;
@@ -4018,6 +4048,12 @@ rt_bot_sort_faces( struct rt_bot_internal *bot, int tris_per_piece )
 	bu_free( (char *)bot->faces, "bot->faces" );
 
 	bot->faces = new_faces;
+
+	if( bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS ) {
+		bu_free( (char *)piece_norms, "piece_norms" );
+		bu_free( (char *)bot->face_normals, "bot->face_normals" );
+		bot->face_normals = new_norms;
+	}
 
 	return( 0 );
 }
