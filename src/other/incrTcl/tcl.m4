@@ -2428,6 +2428,12 @@ The PACKAGE variable must be defined by your TEA configure.in])
 	    ;;
     esac
 
+    # am_init_automake performs a ac_prog_install check so need to handle
+    # problematic /usr/brl/bin/install on irix
+    if test "x`uname -s`" = "xIRIX64" ; then
+	PATH="`echo $PATH | sed 's/\/brl\/bin/bin/g'`"
+    fi
+
     # Check if exec_prefix is set. If not use fall back to prefix
     if test x$exec_prefix = xNONE ; then exec_prefix=$prefix ; fi
 
