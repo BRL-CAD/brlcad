@@ -1,0 +1,46 @@
+/*
+ *			jove/Cakefile
+ *
+ *  $Header$
+ */
+
+#define SRCDIR	jove
+#define PRODUCTS	jove findcom
+#define	SRCSUFF	.c
+#define MANSECTION	1
+
+#define FILES	xxx
+
+#define JOVE_OBJ	jove_buf.o \
+		jove_c.o \
+		jove_delete.o \
+		jove_disp.o \
+		jove_draw.o \
+		jove_extend.o \
+		jove_funcs.o \
+		jove_insert.o \
+		jove_io.o \
+		jove_main.o \
+		jove_marks.o \
+		jove_misc.o \
+		jove_proc.o \
+		jove_re.o \
+		jove_screen.o \
+		jove_term.o \
+		jove_tune.o \
+		jove_wind.o 
+
+
+#include "../Cakefile.defs"
+#include "../Cakefile.prog"
+
+/* Explicit composition of each product */
+
+jove:	JOVE_OBJ
+	sh mkversion
+	CC LDFLAGS -o jove JOVE_OBJ version.o LIBTERMLIB LIBES
+
+findcom:	findcom.o jove_tune.o
+	CC LDFLAGS findcom.o jove_tune.o LIBES -o findcom
+
+#include "../Cakefile.rules"
