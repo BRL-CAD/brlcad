@@ -2235,13 +2235,14 @@ char **argv;
 	struct directory *dp;
 	long count;
 	char count_str[32];
+	fastf_t tol_coll;
 
 	if(dbip == DBI_NULL)
 	  return TCL_OK;
 
 	CHECK_READ_ONLY;
 
-	if(argc < 3 || MAXARGS < argc){
+	if(argc < 4 || MAXARGS < argc){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -2251,13 +2252,20 @@ char **argv;
 	  return TCL_ERROR;
 	}
 
-	if( strchr( argv[1], '/' ) )
+	tol_coll = atof( argv[1] ) * local2base;
+	if( tol_coll <= 0.0 )
 	{
-	  Tcl_AppendResult(interp, "Do not use '/' in solid names: ", argv[1], "\n", (char *)NULL);
+		Tcl_AppendResult(interp, "tolerance distance too small\n", (char *)NULL );
+		return TCL_ERROR;
+	}
+
+	if( strchr( argv[2], '/' ) )
+	{
+	  Tcl_AppendResult(interp, "Do not use '/' in solid names: ", argv[2], "\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
 
-	new_name = argv[1];
+	new_name = argv[2];
 	
 	if( db_lookup( dbip, new_name, LOOKUP_QUIET ) != DIR_NULL )
 	{
@@ -2265,24 +2273,24 @@ char **argv;
 	  return TCL_ERROR;
 	}
 
-	if( (dp=db_lookup( dbip, argv[2], LOOKUP_NOISY )) == DIR_NULL )
+	if( (dp=db_lookup( dbip, argv[3], LOOKUP_NOISY )) == DIR_NULL )
 		return TCL_ERROR;
 
 	if( dp->d_flags & DIR_COMB )
 	{
-		Tcl_AppendResult(interp, argv[2], " is a combination, only NMG solids are allowed here\n", (char *)NULL );
+		Tcl_AppendResult(interp, argv[3], " is a combination, only NMG solids are allowed here\n", (char *)NULL );
 		return TCL_ERROR;
 	}
 
 	if( rt_db_get_internal( &intern, dp, dbip, (matp_t)NULL ) < 0 )
 	{
-		Tcl_AppendResult(interp, "Failed to get internal form of ", argv[2], "!!!!\n", (char *)NULL);
+		Tcl_AppendResult(interp, "Failed to get internal form of ", argv[3], "!!!!\n", (char *)NULL);
 		return TCL_ERROR;
 	}
 
 	if( intern.idb_type != ID_NMG )
 	{
-		Tcl_AppendResult(interp, argv[2], " is not an NMG solid!!!!\n", (char *)NULL );
+		Tcl_AppendResult(interp, argv[3], " is not an NMG solid!!!!\n", (char *)NULL );
 		rt_db_free_internal( &intern );
 		return TCL_ERROR;
 	}
@@ -2293,7 +2301,7 @@ char **argv;
 	/* triangulate model */
 	nmg_triangulate_model( m, &mged_tol );
 
-	count = nmg_edge_collapse( m, &mged_tol );
+	count = nmg_edge_collapse( m, &mged_tol, tol_coll );
 
 	if( (dp=db_diradd( dbip, new_name, -1L, 0, DIR_SOLID)) == DIR_NULL )
 	{
