@@ -1007,11 +1007,12 @@ out:
 	/*
 	 *  User is finally done with the frame buffer,
 	 *  return control to our caller (who may have more to do).
-	 *  set a 20 minute screensave blanking when fb is closed.
+	 *  set an 8 minute screensave blanking when fb is closed.
+	 *  The 4D has a hardware botch limiting the time to 2**15 frames.
 	 *  We have no way of knowing if there are other libfb windows
 	 *  still open.
 	 */
-	blanktime( (long) 67 * 60 * 20L );
+	blanktime( (long) 32767L );
 
 	/* Restore initial operation mode, if this was 30Hz */
 	if( (ifp->if_mode & MODE_4MASK) == MODE_4HZ30 )
