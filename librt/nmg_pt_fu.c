@@ -84,10 +84,10 @@ struct fpi {
 #ifdef USE_PROTOTYPES
 static int	nmg_class_pt_vu(struct fpi *fpi, struct vertexuse *vu);
 static void	pl_pt_e(struct fpi *fpi, struct edge_info *ei);
-static struct edge_info *nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list);
+static struct edge_info *nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list, CONST int in_or_out_only);
 static int	compute_loop_class(struct fpi *fpi,struct loopuse *lu,struct edge_info *edge_list);
-static int	nmg_class_pt_lu(struct loopuse *lu, struct fpi *fpi);
-int		nmg_class_pt_fu_except(CONST point_t pt, CONST struct faceuse *fu, CONST struct loopuse *ignore_lu, void (*eu_func)(), void (*vu_func)(), CONST char *priv, CONST int call_on_hits, CONST struct rt_tol *tol);
+static int	nmg_class_pt_lu(struct loopuse *lu, struct fpi *fpi, CONST int in_or_out_only);
+int		nmg_class_pt_fu_except(CONST point_t pt, CONST struct faceuse *fu, CONST struct loopuse *ignore_lu, void (*eu_func)(), void (*vu_func)(), CONST char *priv, CONST int call_on_hits, CONST int in_or_out_only, CONST struct rt_tol *tol);
 #endif
 
 /*
@@ -606,11 +606,13 @@ CONST struct rt_tol *tol;
  * Sort an edge_info structure into the loops list of edgeuse status
  */
 static struct edge_info *
-nmg_class_pt_eu(fpi, eu, edge_list)
+nmg_class_pt_eu(fpi, eu, edge_list, in_or_out_only)
 struct fpi		*fpi;
 struct edgeuse		*eu;
 struct edge_info	*edge_list;
+CONST int		in_or_out_only;
 {
+	struct rt_tol	tmp_tol;
 	struct edgeuse	*next_eu;
 	struct ve_dist	*ved, *ed;
 	struct edge_info	*ei_p;
@@ -667,13 +669,20 @@ struct edge_info	*edge_list;
 	/* we didn't find a ve_dist structure for this edge, so we'll
 	 * have to do the calculations.
 	 */
+	tmp_tol = (*fpi->tol);
+	if( in_or_out_only )
+	{
+		tmp_tol.dist = 0.0;
+		tmp_tol.dist_sq = 0.0;
+	}
+
 	ved = (struct ve_dist *)rt_malloc(sizeof(struct ve_dist), "ve_dist structure");
 	ved->magic_p = &eu->e_p->magic;
 	ved->status = rt_dist_pt3_lseg3_jra(&ved->dist, ved->pca,
 					eu->vu_p->v_p->vg_p->coord,
 					eu->eumate_p->vu_p->v_p->vg_p->coord,
 					fpi->pt,
-					fpi->tol);
+					&tmp_tol);
 	ved->v1 = eu->vu_p->v_p;
 	ved->v2 = eu->eumate_p->vu_p->v_p;
 	RT_LIST_MAGIC_SET(&ved->l, NMG_VE_DIST_MAGIC);
@@ -1126,9 +1135,10 @@ departure:
  *
  */
 static int
-nmg_class_pt_lu(lu, fpi)
+nmg_class_pt_lu(lu, fpi, in_or_out_only)
 struct loopuse	*lu;
 struct fpi	*fpi;
+CONST int	in_or_out_only;
 {
 	int 	lu_class = NMG_CLASS_Unknown;
 
@@ -1179,10 +1189,10 @@ struct fpi	*fpi;
 		RT_LIST_INIT(&edge_list.l);
 
 		for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-			ei = nmg_class_pt_eu(fpi, eu, &edge_list);
+			ei = nmg_class_pt_eu(fpi, eu, &edge_list, in_or_out_only);
 			NMG_CK_EI(ei);
 			NMG_CK_VED(ei->ved_p);
-			if (ei->ved_p->dist < fpi->tol->dist) {
+			if ( !in_or_out_only && ei->ved_p->dist < fpi->tol->dist) {
 				lu_class = NMG_CLASS_AinB;
 				break;
 			}
@@ -1305,7 +1315,7 @@ point_t pt;
  *
  * For each loopuse, compute IN/ON/OUT
  *
- * if any loop has pt classified as "ON" return "ON"
+ * if any loop has pt classified as "ON" return "ON" (actually returns "IN" -jra)
  *
  * ignore all OT_SAME loops w/pt classified as "OUT"
  * ignore all OT_OPPOSITE loops w/pt classified as "IN"
@@ -1321,12 +1331,16 @@ point_t pt;
  *	1	find all elements pt touches, call user routine for each geom.
  *	2	find all elements pt touches, call user routine for each use
  *
+ *  in_or_out_only:
+ *	non-zero	pt is known NOT to be on an EU of FU
+ *	   0		pt may be on an EU of FU
+ *
  *  Returns -
  *	NMG_CLASS_AonB, etc...
  */
 int
 nmg_class_pt_fu_except(pt, fu, ignore_lu,
-	eu_func, vu_func, priv, call_on_hits, tol)
+	eu_func, vu_func, priv, call_on_hits, in_or_out_only, tol)
 CONST point_t pt;
 CONST struct faceuse *fu;
 CONST struct loopuse    *ignore_lu;
@@ -1334,6 +1348,7 @@ void                    (*eu_func)();   /* func to call when pt on edgeuse */
 void                    (*vu_func)();   /* func to call when pt on vertexuse*/
 CONST char		*priv;          /* private data for [ev]u_func */
 CONST int		call_on_hits;
+CONST int		in_or_out_only;
 CONST struct rt_tol     *tol;
 {
 	struct fpi	fpi;
@@ -1399,7 +1414,7 @@ CONST struct rt_tol     *tol;
 		if( lu->orientation != OT_SAME && lu->orientation != OT_OPPOSITE )
 			continue;
 
-		lu_class = nmg_class_pt_lu(lu, &fpi);
+		lu_class = nmg_class_pt_lu(lu, &fpi, in_or_out_only);
 		if (rt_g.NMG_debug & DEBUG_PT_FU )
 			rt_log("loop %s says pt is %s\n",
 				nmg_orientation(lu->orientation),
@@ -1461,7 +1476,7 @@ CONST struct rt_tol     *tol;
 			if( lu->orientation != OT_SAME && lu->orientation != OT_OPPOSITE )
 				continue;
 
-			lu_class = nmg_class_pt_lu(lu, &fpi);
+			lu_class = nmg_class_pt_lu(lu, &fpi, in_or_out_only);
 		}
 #endif
 		rt_bomb("nmg_class_pt_fu_except() loop classification parity error\n");
@@ -1573,7 +1588,7 @@ struct rt_tol	*tol;
 			continue;
 		}
 
-		ei = nmg_class_pt_eu(&fpi, eu, &edge_list);
+		ei = nmg_class_pt_eu(&fpi, eu, &edge_list, 0);
 		NMG_CK_EI(ei);
 		NMG_CK_VED(ei->ved_p);
 		if (ei->ved_p->dist < tol->dist) {
