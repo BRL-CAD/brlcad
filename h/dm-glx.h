@@ -4,7 +4,6 @@
 /* Map +/-2048 GED space into -1.0..+1.0 :: x/2048*/
 #define GED2IRIS(x)	(((float)(x))*0.00048828125)
 
-#define NSLOTS		4080	/* The mostest possible - may be fewer */
 #define Glx_MV_O(_m) offsetof(struct modifiable_glx_vars, _m)
 
 struct modifiable_glx_vars {
@@ -44,16 +43,6 @@ struct glx_vars {
   int is_gt;
   fastf_t aspect;
   struct modifiable_glx_vars mvars;
-/*
- * SGI Color Map table
- */
-  int nslots;          /* how many we have, <= NSLOTS */
-  int uslots;          /* how many actually used */
-  struct rgbtab {
-    unsigned char   r;
-    unsigned char   g;
-    unsigned char   b;
-  }rgbtab[NSLOTS];
 };
 
 extern void Glx_viewchange();
@@ -66,6 +55,7 @@ extern int Glx_irlimit();
 extern int Glx_add_tol();
 extern int Glx_irisX2ged();
 extern int Glx_irisY2ged();
+extern struct dm dm_glx;
 extern struct glx_vars head_glx_vars;
 
 #endif /* SEEN_DM_GLX */

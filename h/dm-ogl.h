@@ -1,6 +1,9 @@
 #ifndef SEEN_DM_OGL
 #define SEEN_DM_OGL
 
+#include "dm_color.h"
+#define CMAP_BASE 40
+
 /*
  * Display coordinate conversion:
  *  GED is using -2048..+2048,
@@ -12,7 +15,6 @@
 /* Map +/-2048 GED space into -1.0..+1.0 :: x/2048*/
 #define GED2IRIS(x)	(((float)(x))*0.00048828125)
 
-#define NSLOTS		4080	/* The mostest possible - may be fewer */
 #define Ogl_MV_O(_m) offsetof(struct modifiable_ogl_vars, _m)
 
 struct modifiable_ogl_vars {
@@ -56,18 +58,7 @@ struct ogl_vars {
   int fontOffset;
   int ovec;		/* Old color map entry number */
   char is_direct;
-  int index_size;
   struct modifiable_ogl_vars mvars;
-/*
- * SGI Color Map table
- */
-  int nslots;		/* how many we have, <= NSLOTS */
-  int uslots;		/* how many actually used */
-  struct rgbtab {
-	unsigned char	r;
-	unsigned char	g;
-	unsigned char	b;
-  }rgbtab[NSLOTS];
 };
 
 extern void Ogl_configure_window_shape();
@@ -83,6 +74,7 @@ extern int Ogl_irlimit();			/* provides knob dead spot */
 #endif
 extern int Ogl_irisX2ged();
 extern int Ogl_irisY2ged();
+extern struct dm dm_ogl;
 extern struct ogl_vars head_ogl_vars;
 
 #endif /* SEEN_DM_OGL */
