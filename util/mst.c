@@ -36,40 +36,167 @@ struct vertex
 {
     long		v_magic;
     long		v_index;
-    struct bu_list	v_halfedges;
+    int			v_civilized;
+    struct bu_list	v_neighbors;
+    struct bridge	*v_bridge;
 };
 #define	VERTEX_NULL	((struct vertex *) 0)
 #define	VERTEX_MAGIC	0x6d737476
 
-struct edge
+struct bridge
 {
-    long		e_magic;
-    struct halfedge	*e_half[2];	/* The edge's ends */
-    double		e_weight;	/*  "    "    weight */
+    long		b_magic;
+    double		b_weight;
+    struct vertex	*b_vert_civ;
+    struct vertex	*b_vert_unciv;
 };
-#define	EDGE_NULL	((struct edge *) 0)
-#define	EDGE_MAGIC	0x6d737465
+#define	BRIDGE_NULL	((struct bridge *) 0)
+#define	BRIDGE_MAGIC	0x6d737462
 
-struct halfedge
+static rb_tree		*prioq;		/* Priority queue of bridges */
+
+struct neighbor
 {
     struct bu_list	l;
-    struct edge		*h_edge;	/* The parent edge */
-    struct halfedge	*h_mate;	/* The other half of this edge */
-    struct vertex	*h_vertex;	/* The vertex */
-    struct vertex	*h_neighbor;	/* The adjacent vertex */
+    struct vertex	*n_vertex;
+    double		n_weight;
 };
-#define h_magic		l.magic
-#define	HALFEDGE_NULL	((struct halfedge *) 0)
-#define	HALFEDGE_MAGIC	0x6d737468
+#define	n_magic		l.magic
+#define	NEIGHBOR_NULL	((struct neighbor *) 0)
+#define	NEIGHBOR_MAGIC	0x6d73746e
 
-struct prioq_entry
+/************************************************************************
+ *									*
+ *	  Helper routines for manipulating the data structures		*
+ *									*
+ ************************************************************************/
+
+/*
+ *			  M K _ B R I D G E ( )
+ *
+ */
+struct bridge *mk_bridge (vcp, vup, weight)
+
+struct vertex	*vcp;
+struct vertex	*vup;
+double		weight;
+
 {
-    long		q_magic;
-    struct halfedge	*q_hedge;	/* The (far half of the) edge */
-    double		q_weight;	/*  "    "    weight */
-};
-#define	PRIOQENTRY_NULL	((struct prioq_entry *) 0)
-#define	PRIOQENTRY_MAGIC	0x6d737471
+    struct bridge	*bp;
+
+    bp = (struct bridge *) bu_malloc(sizeof(struct bridge), "bridge");
+
+    bp -> b_magic = BRIDGE_MAGIC;
+    bp -> b_weight = weight;
+    bp -> b_vert_civ = vcp;
+    bp -> b_vert_unciv = vup;
+
+    return (bp);
+}
+#define	mk_init_bridge(vp)	(mk_bridge(VERTEX_NULL, (vp), 0.0))
+#define	is_finite_bridge(bp)	((bp) -> b_vert_civ != VERTEX_NULL)
+#define	is_infinite_bridge(bp)	((bp) -> b_vert_civ == VERTEX_NULL)
+
+/*
+ *		   F R E E _ B R I D G E ( )
+ *
+ *	N.B. - It is up to the calling routine to free
+ *		the b_vert_civ and b_vert_unciv members of bp.
+ */
+void free_bridge (bp)
+
+struct bridge	*bp;
+
+{
+    BU_CKMAG(bp, BRIDGE_MAGIC, "bridge");
+    bu_free((genptr_t) bp, "bridge");
+}
+
+/*
+ *			M K _ V E R T E X ( )
+ *
+ */
+struct vertex *mk_vertex (index)
+
+long	index;
+
+{
+    struct vertex	*vp;
+
+    vp = (struct vertex *) bu_malloc(sizeof(struct vertex), "vertex");
+
+    vp -> v_magic = VERTEX_MAGIC;
+    vp -> v_index = index;
+    vp -> v_civilized = 0;
+    BU_LIST_INIT(&(vp -> v_neighbors));
+    vp -> v_bridge = mk_init_bridge(vp);
+
+    return (vp);
+}
+
+/*
+ *		     P R I N T _ V E R T E X ( )
+ *
+ */
+void print_vertex (v, depth)
+
+void	*v;
+int	depth;
+
+{
+    struct vertex	*vp = (struct vertex *) v;
+    struct neighbor	*np;
+
+    BU_CKMAG(vp, VERTEX_MAGIC, "vertex");
+
+    bu_log(" vertex %d <x%x> %s...\n",
+	vp -> v_index, vp,
+	vp -> v_civilized ? "civilized" : "uncivilized");
+    for (BU_LIST_FOR(np, neighbor, &(vp -> v_neighbors)))
+    {
+	BU_CKMAG(np, NEIGHBOR_MAGIC, "neighbor");
+	BU_CKMAG(np -> n_vertex, VERTEX_MAGIC, "vertex");
+
+	bu_log("  is a neighbor <x%x> of vertex <x%x> %d at cost %g\n",
+	    np, np -> n_vertex, np -> n_vertex -> v_index, np -> n_weight);
+    }
+}
+
+/*
+ *		   F R E E _ V E R T E X ( )
+ *
+ *	N.B. - This routine frees the v_bridge member of vp.
+ */
+void free_vertex (vp)
+
+struct vertex	*vp;
+
+{
+    BU_CKMAG(vp, VERTEX_MAGIC, "vertex");
+    free_bridge(vp -> v_bridge);
+    bu_free((genptr_t) vp, "vertex");
+}
+
+/*
+ *			  M K _ N E I G H B O R ( )
+ *
+ */
+struct neighbor *mk_neighbor (vp, weight)
+
+struct vertex	*vp;
+double		weight;
+
+{
+    struct neighbor	*np;
+
+    np = (struct neighbor *) bu_malloc(sizeof(struct neighbor), "neighbor");
+
+    np -> n_magic = NEIGHBOR_MAGIC;
+    np -> n_vertex = vp;
+    np -> n_weight = weight;
+
+    return (np);
+}
 
 /************************************************************************
  *									*
@@ -96,22 +223,30 @@ void	*v2;
 }
 
 /*
- *	    C O M P A R E _ P R I O Q _ E N T R I E S ( )
+ *	    C O M P A R E _ B R I D G E S ( )
  */
-int compare_prioq_entries (v1, v2)
+int compare_bridges (v1, v2)
 
 void	*v1;
 void	*v2;
 
 {
-    double	delta;
-    struct prioq_entry	*q1 = (struct prioq_entry *) v1;
-    struct prioq_entry	*q2 = (struct prioq_entry *) v2;
+    double		delta;
+    struct bridge	*b1 = (struct bridge *) v1;
+    struct bridge	*b2 = (struct bridge *) v2;
 
-    BU_CKMAG(q1, PRIOQENTRY_MAGIC, "priority-queue entry");
-    BU_CKMAG(q2, PRIOQENTRY_MAGIC, "priority-queue entry");
+    BU_CKMAG(b1, BRIDGE_MAGIC, "bridge");
+    BU_CKMAG(b2, BRIDGE_MAGIC, "bridge");
 
-    delta = q1 -> q_weight  -  q2 -> q_weight;
+    if (is_infinite_bridge(b1))
+	if (is_infinite_bridge(b2))
+	    return 0;
+	else
+	    return 1;
+    else if (is_infinite_bridge(b2))
+	return -1;
+
+    delta = b1 -> b_weight  -  b2 -> b_weight;
     return ((delta <  0) ? -1 :
 	    (delta == 0) ?  0 :
 			    1);
@@ -119,178 +254,9 @@ void	*v2;
 
 /************************************************************************
  *									*
- *	  Helper routines for manipulating the data structures		*
+ *	  Routines for manipulating the dictionary and priority queue	*
  *									*
  ************************************************************************/
-
-/*
- *			M K _ V E R T E X ( )
- *
- */
-struct vertex *mk_vertex ()
-{
-    struct vertex	*vp;
-
-    vp = (struct vertex *) bu_malloc(sizeof(struct vertex), "vertex");
-
-    vp -> v_magic = VERTEX_MAGIC;
-    BU_LIST_INIT(&(vp -> v_halfedges));
-
-    return (vp);
-}
-
-/*
- *		     P R I N T _ V E R T E X ( )
- *
- */
-void print_vertex (v, depth)
-
-void	*v;
-int	depth;
-
-{
-    struct vertex	*vp = (struct vertex *) v;	/* The vertex */
-    struct halfedge	*hp;			/* One of its edge ends */
-    struct halfedge	*mp;			/* Its mate */
-    struct vertex	*np;			/* The neighbor */
-    struct edge		*ep;			/* The edge */
-
-    BU_CKMAG(vp, VERTEX_MAGIC, "vertex");
-
-    bu_log(" vertex %d...\n", vp -> v_index);
-    for (BU_LIST_FOR(hp, halfedge, &(vp -> v_halfedges)))
-    {
-	BU_CKMAG(hp, HALFEDGE_MAGIC, "halfedge");
-
-	ep = hp -> h_edge;
-	BU_CKMAG(ep, EDGE_MAGIC, "edge");
-
-	mp = hp -> h_mate;
-	BU_CKMAG(mp, HALFEDGE_MAGIC, "halfedge");
-
-	np = hp -> h_neighbor;
-	BU_CKMAG(np, VERTEX_MAGIC, "vertex");
-
-	bu_log("  shares edge <x%x> (<x%x>, <x%x>) with %d at cost %g\n",
-	    ep, hp, mp, np -> v_index, ep -> e_weight);
-    }
-}
-
-/*
- *		   F R E E _ V E R T E X ( )
- *
- */
-void free_vertex (vp)
-
-struct vertex	*vp;
-
-{
-    BU_CKMAG(vp, VERTEX_MAGIC, "vertex");
-    bu_free((genptr_t) vp, "vertex");
-}
-
-/*
- *			  M K _ E D G E ( )
- *
- */
-struct edge *mk_edge ()
-{
-    struct edge	*ep;
-
-    ep = (struct edge *) bu_malloc(sizeof(struct edge), "edge");
-
-    ep -> e_magic = EDGE_MAGIC;
-
-    return (ep);
-}
-
-/*
- *			M K _ H A L F E D G E ( )
- *
- */
-struct halfedge *mk_halfedge ()
-{
-    struct halfedge	*hp;
-
-    hp = (struct halfedge *) bu_malloc(sizeof(struct halfedge), "halfedge");
-
-    BU_LIST_INIT(&(hp -> l));
-    hp -> h_magic = HALFEDGE_MAGIC;
-
-    return (hp);
-}
-
-/*
- *		     P R I N T _ H A L F E D G E ( )
- *
- */
-void print_halfedge (hp)
-
-struct halfedge	*hp;
-
-{
-    BU_CKMAG(hp, HALFEDGE_MAGIC, "halfedge");
-
-    bu_log(" halfedge <x%x>...\n {\n", hp);
-    bu_log("     edge   =   <x%x>...\n", hp -> h_edge);
-    bu_log("     mate   =   <x%x>...\n", hp -> h_mate);
-    bu_log("     vertex  =  <x%x>...\n", hp -> h_vertex);
-    bu_log("     neighbor = <x%x>...\n }\n", hp -> h_neighbor);
-}
-
-/*
- *		    M K _ P R I O Q _ E N T R Y ( )
- *
- */
-struct prioq_entry *mk_prioq_entry ()
-{
-    struct prioq_entry	*qp;
-
-    qp = (struct prioq_entry *) bu_malloc(sizeof(struct prioq_entry),
-					    "priority-queue entry");
-
-    qp -> q_magic = PRIOQENTRY_MAGIC;
-
-    return (qp);
-}
-
-/*
- *			G E T _ E D G E ( )
- */
-int get_edge (fp, vertex, w)
-
-FILE	*fp;
-long	*vertex;		/* Indices of edge endpoints */
-double	*w;			/* Weight */
-
-{
-    char		*bp;
-    static int		line_nm = 0;
-    struct edge		*ep;
-    struct bu_vls	buf;
-
-    bu_vls_init_if_uninit(&buf);
-    for ( ; ; )
-    {
-	++line_nm;
-	bu_vls_trunc(&buf, 0);
-	if (bu_vls_gets(&buf, fp) == -1)
-	    return (0);
-	bp = bu_vls_addr(&buf);
-	while ((*bp == ' ') || (*bp == '\t'))
-	    ++bp;
-	if (*bp == '#')
-	    continue;
-	if (sscanf(bp, "%ld%ld%lg", &vertex[0], &vertex[1], w) != 3)
-	{
-	    bu_log("Illegal input on line %d: '%s'\n", line_nm, bp);
-	    return (-1);
-	}
-	else
-	    break;
-    }
-    return (1);
-}
 
 /*
  *			L O O K U P _ V E R T E X ( )
@@ -308,8 +274,7 @@ long	index;
     /*
      *	Prepare the dictionary query
      */
-    qvp = mk_vertex();
-    qvp-> v_index = index;
+    qvp = mk_vertex(index);
 
     /*
      *	Perform the query by attempting an insertion...
@@ -335,51 +300,103 @@ long	index;
 }
 
 /*
- *		E N Q U E U E _ H A L F E D G E ( )
+ *		     A D D _ T O _ P R I O Q ( )
+ *
  */
-int enqueue_halfedge (prioq, hp)
+void add_to_prioq (v, depth)
 
-rb_tree		*prioq;
-struct halfedge	*hp;
+void	*v;
+int	depth;
 
 {
-    int			rc;	/* Return code from rb_insert() */
-    struct prioq_entry	*qp;	/* The queue entry */
+    struct vertex	*vp = (struct vertex *) v;
 
-    /*
-     *	Prepare the queue query
-     */
-    qp = mk_prioq_entry();
-    qp -> q_hedge = hp;
-    BU_CKMAG(hp -> h_edge, EDGE_MAGIC, "edge");
-    qp -> q_weight = hp -> h_edge -> e_weight;
+    BU_CKMAG(vp, VERTEX_MAGIC, "vertex");
+    BU_CKMAG(vp -> v_bridge, BRIDGE_MAGIC, "bridge");
 
-    /*
-     *	Perform the query by attempting an insertion...
-     *	If the query succeeds (i.e., the insertion fails!),
-     *	then we have our vertex.
-     *	Otherwise, we must create a new vertex.
-     */
-    bu_log(" enqueueing halfedge <x%x>\n", hp);
-    return (rb_insert(prioq, (void *) qp));
+    rb_insert(prioq, (void *) (vp -> v_bridge));
 }
 
 /*
- *		D E Q U E U E _ H A L F E D G E ( )
+ *		     D E L _ F R O M _ P R I O Q ( )
+ *
  */
-struct halfedge *dequeue_halfedge (prioq)
+void del_from_prioq (vp)
 
-rb_tree	*prioq;
+struct vertex	*vp;
 
 {
-    struct prioq_entry	*qp;
 
-    qp = (struct prioq_entry *) rb_min(prioq, 0);
-    BU_CKMAG(qp, PRIOQENTRY_MAGIC, "priority-queue entry");
+    BU_CKMAG(vp, VERTEX_MAGIC, "vertex");
+    BU_CKMAG(vp -> v_bridge, BRIDGE_MAGIC, "bridge");
+
+    if (rb_search1(prioq, (void *) (vp -> v_bridge)) == NULL)
+    {
+	bu_log("del_from_prioq: Cannot find bridge <x%x>.", vp -> v_bridge);
+	bu_log("  This should not happen\n");
+	exit (1);
+    }
     rb_delete1(prioq);
-    bu_log(" dequeueing");
-    print_halfedge(qp -> q_hedge);
-    return (qp -> q_hedge);
+}
+
+/*
+ *		     E X T R A C T _ M I N ( )
+ *
+ */
+struct bridge *extract_min ()
+{
+    struct bridge	*bp;
+
+    bp = (struct bridge *) rb_min(prioq, 0);
+    if (bp != BRIDGE_NULL)
+    {
+	BU_CKMAG(bp, BRIDGE_MAGIC, "bridge");
+    }
+    rb_delete1(prioq);
+    return (bp);
+}
+
+/************************************************************************
+ *									*
+ *	  More or less vanilla-flavored stuff for MST			*
+ *									*
+ ************************************************************************/
+
+/*
+ *			G E T _ E D G E ( )
+ */
+int get_edge (fp, index, w)
+
+FILE	*fp;
+long	*index;		/* Indices of edge endpoints */
+double	*w;		/* Weight */
+
+{
+    char		*bp;
+    static int		line_nm = 0;
+    struct bu_vls	buf;
+
+    bu_vls_init_if_uninit(&buf);
+    for ( ; ; )
+    {
+	++line_nm;
+	bu_vls_trunc(&buf, 0);
+	if (bu_vls_gets(&buf, fp) == -1)
+	    return (0);
+	bp = bu_vls_addr(&buf);
+	while ((*bp == ' ') || (*bp == '\t'))
+	    ++bp;
+	if (*bp == '#')
+	    continue;
+	if (sscanf(bp, "%ld%ld%lg", &index[0], &index[1], w) != 3)
+	{
+	    bu_log("Illegal input on line %d: '%s'\n", line_nm, bp);
+	    return (-1);
+	}
+	else
+	    break;
+    }
+    return (1);
 }
 
 main (argc, argv)
@@ -389,110 +406,107 @@ char	*argv[];
 
 {
     int			i;
-    int			n;		/* Number of vertices in the graph */
-    long		vertex[2];	/* Indices of edge endpoints */
+    long		index[2];	/* Indices of edge endpoints */
     double		weight;		/* Edge weight */
     rb_tree		*dictionary;	/* Dictionary of vertices */
-    rb_tree		*prioq;		/* Priority queue of edges */
-    struct vertex	*vp;		/* The current vertex */
-    struct vertex	*np;		/* The neighbor of vp */
-    struct edge		*ep;
-    struct halfedge	*hp;		/* The current half edge */
-    struct halfedge	*mp;		/* The mate (other end) of hp */
+    struct bridge	*bp;		/* The current bridge */
+    struct vertex	*up;		/* An uncivilized neighbor of vup */
+    struct vertex	*vcp;		/* The civilized vertex of bp */
+    struct vertex	*vup;		/* The uncvilized vertex of bp */
+    struct vertex	*vertex[2];	/* The current edge */
+    struct neighbor	*neighbor[2];	/* Their neighbors */
+    struct neighbor	*np;		/* A neighbor of vup */
 
     /*
      *	Initialize the dictionary and the priority queue
      */
     dictionary = rb_create1("Dictionary of vertices", compare_vertices);
     rb_uniq_on1(dictionary);
-    prioq = rb_create1("Priority queue of edges", compare_prioq_entries);
 
     /*
      *	Read in the graph
      */
-    while (get_edge(stdin, vertex, &weight))
+    while (get_edge(stdin, index, &weight))
     {
-	ep = mk_edge();
 	for (i = 0; i < 2; ++i)		/* For each end of the edge... */
 	{
-	    hp = mk_halfedge();
-	    vp = lookup_vertex(dictionary, vertex[i]);
-	    hp -> h_edge = ep;
-	    hp -> h_vertex = vp;
-	    ep -> e_half[i] = hp;
-	    BU_LIST_INSERT(&(vp -> v_halfedges), &(hp -> l));
+	    vertex[i] = lookup_vertex(dictionary, index[i]);
+	    neighbor[i] = mk_neighbor(VERTEX_NULL, weight);
+	    BU_LIST_INSERT(&(vertex[i] -> v_neighbors), &(neighbor[i] -> l));
 	}
-	ep -> e_half[0] -> h_mate = ep -> e_half[1];
-	ep -> e_half[1] -> h_mate = ep -> e_half[0];
-	ep -> e_half[0] -> h_neighbor = ep -> e_half[1] -> h_vertex;
-	ep -> e_half[1] -> h_neighbor = ep -> e_half[0] -> h_vertex;
-	bu_log("Got edge <x%x>, comprised of...\n", ep);
-	print_halfedge(ep -> e_half[0]);
-	print_halfedge(ep -> e_half[1]);
-	ep -> e_weight = weight;
+	neighbor[0] -> n_vertex = vertex[1];
+	neighbor[1] -> n_vertex = vertex[0];
     }
-    n = dictionary -> rbt_nm_nodes;
 
     /*
-     *	Show us what you got
+     *	Initialize the priority queue
      */
-#if 1
-    bu_log("Residual adjaceny lists\n");
-    rb_walk1(dictionary, print_vertex, INORDER);
-    bu_log("-----------------------\n");
-#endif
+    prioq = rb_create1("Priority queue of bridges", compare_bridges);
+    rb_walk1(dictionary, add_to_prioq, INORDER);
     
     /*
      *	Grow a minimum spanning tree,
      *	using Prim's algorithm
      */
-    for (i = 1; i < n; ++i)
+    while ((bp = extract_min()) != BRIDGE_NULL)
     {
-	bu_log("%d: vp is now <x%x> %d", i, vp, vp -> v_index);
-	for (BU_LIST_FOR(hp, halfedge, &(vp -> v_halfedges)))
+	BU_CKMAG(bp, BRIDGE_MAGIC, "bridge");
+	vcp = bp -> b_vert_civ;
+	vup = bp -> b_vert_unciv;
+	BU_CKMAG(vup, VERTEX_MAGIC, "vertex");
+
+	if (is_finite_bridge(bp))
 	{
-	    BU_CKMAG(hp, HALFEDGE_MAGIC, "halfedge");
-	    mp = hp -> h_mate;
-	    BU_CKMAG(mp, HALFEDGE_MAGIC, "halfedge");
-
-	    enqueue_halfedge(prioq, hp);
-	    bu_log("discarding halfedge <x%x>, mate of <x%x>\n", mp, hp);
-	    BU_LIST_DEQUEUE(&(mp -> l));
+	    BU_CKMAG(vcp, VERTEX_MAGIC, "vertex");
+	    bu_log(" ...edge %d %d of weight %d\n",
+		vcp -> v_index, vup -> v_index, bp -> b_weight);
 	}
-	hp = dequeue_halfedge(prioq);
-	BU_CKMAG(hp, HALFEDGE_MAGIC, "halfedge");
+	free_bridge(bp);
+	vup -> v_civilized = 1;
 
-	np = hp -> h_neighbor;
-	BU_CKMAG(np, VERTEX_MAGIC, "vertex");
-	bu_log(" and np is <x%x> %d\n", np, np -> v_index);
-	BU_CKMAG(hp -> h_edge, EDGE_MAGIC, "edge");
+	for (BU_LIST_FOR(np, neighbor, &(vup -> v_neighbors)))
+	{
+	    BU_CKMAG(np, NEIGHBOR_MAGIC, "neighbor");
+	    up = np -> n_vertex;
+	    BU_CKMAG(up, VERTEX_MAGIC, "vertex");
 
-	printf("OK, we're adding edge <x%x> (%d,%d) of weight %g\n",
-	    hp -> h_edge, vp -> v_index, np -> v_index,
-	    hp -> h_edge -> e_weight);
-	fflush(stdout);
-	vp = np;
+	    if (up -> v_civilized)
+	    {
+		BU_CKMAG(up -> v_bridge, BRIDGE_MAGIC, "bridge");
+		if (np -> n_weight < up -> v_bridge -> b_weight)
+		{
+		    del_from_prioq(up);
+		    up -> v_bridge -> b_vert_civ = vup;
+		    up -> v_bridge -> b_weight = np -> n_weight;
+		    add_to_prioq(up);
+		}
+	    }
+	    BU_LIST_DEQUEUE(&(np -> l));
+	}
     }
 }
 
 /*
- *	For each edge on input
- *	    Create the edge struc
+ *	For each edge in the input stream
  *	    For each vertex of the edge
  *		Get its vertex structure
  *		    If vertex is not in the dictionary
  *			Create the vertex struc
  *			Record the vertex struc in the dictionary
  *		    Return the vertex struc
- *		Record the vertex in the edge's vertexlist
- *		Record the edge in the vertex's edgelist
- *	    Record the weight in the edge
+ *		Create a neighbor structure and install it
+ *	    Record each vertex as the other's neighbor
  *
- *    Pick any vertex v
- *    While you haven't reached every vertex
- *	For each of v's edges
- *	    Add the edge to the priority queue
- *	    Delete edge from the other endpoint's edgelist
- *	Dequeue a min-weight edge
- *	Set v to the edge's not-yet-reached vertex
+ *	For every vertex v
+ *	    Enqueue an infinite-weight bridge to v
+ *
+ *	While there exists a min-weight bridge (to a vertex v) in the queue
+ *	    Dequeue the bridge
+ *	    If the weight is finite
+ *	        Output the bridge
+ *	    Mark v as civilized
+ *	    For every uncivilized neighbor u of v
+ *	        if uv is cheaper than u's current bridge
+ *		    dequeue u's current bridge
+ *		    enqueue bridge(uv)
  */
