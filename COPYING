@@ -1,11 +1,12 @@
-BRL-CAD Distribution
-====================
+BRL-CAD Copying and Distribution
+================================
 
 BRL-CAD is open source software controlled and maintained by the
-BRL-CAD developers and the US Army Research Laboratory.  BRL-CAD is
-made available under the terms of the GNU General Public License as
-published by the Free Software Foundation; either version 2 of the
-License, or (at your option) any later version.
+designated project developers and the US Army Research Laboratory.
+
+BRL-CAD is made available under the terms of the GNU General Public
+License (GPL) as published by the Free Software Foundation; either
+version 2 of the License, or (at your option) any later version.
 
 BRL-CAD is distributed in the hope that it will be useful, but WITHOUT
 ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
@@ -13,7 +14,8 @@ FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 for more details.
 
 You should have received a copy of the GNU General Public License
-along with this file.
+along with this file.  If you did not, please contact one of the
+BRL-CAD project admins listed at http://sf.net/projects/brlcad/.
 
 Overview
 --------
@@ -23,33 +25,34 @@ and build infrastructure.  The BRL-CAD libraries include the headers
 in the include/ directory as well as all of the directories that begin
 with the prefix "lib" in the src/ directory (e.g. src/librt/).  All of
 BRL-CAD's libraries are covered by the terms of the GNU Lesser General
-Public License as published by the Free Software Foundation unless noted
-otherwise in the source files.
+Public License (LGPL) as published by the Free Software Foundation
+unless noted otherwise in the source files.
 
 BRL-CAD's documentation consists of manual pages located throughout
 the package, most of the files in the doc/ directory, and the
 top-level administrative project text files (e.g. README & AUTHORS).
+All of BRL-CAD's documentation is made available under the terms of
+the GNU Free Documentation License (GFDL) as published by the Free
+Software Foundation unless otherwise denoted.
 
 Most of BRL-CAD's build infrastructure (i.e. files required by the GNU
-Autotools), a variety of scripts located in the misc/ and sh/
+Build System), a variety of scripts located in the misc/ and sh/
 directories, and the testing infrastructure are provided either under
-a rather unrestrictive BSD-style license or said files are in the
-public domain.  Refer to each individual file for specific terms.
+a rather unrestrictive Berkeley Software Distribution (BSD) license or
+said files are in the public domain.  Refer to each individual file
+for specific terms.
 
 Unless previously described or otherwise already covered by another
-license, the BRL-CAD package is covered under the terms of the 
-GNU General Public License as published by the Free Software Foundation.
+license, the BRL-CAD package is covered under the terms of the GNU
+General Public License as published by the Free Software Foundation.
+
+The full text of the GPL, LGPL, GFDL, and BSD license should be
+included in the source distribution of BRL-CAD in the doc/legal/
+directory.  Refer to the full license text for more details,
+information, and implications of each license.
 
 3rd Party Components
 --------------------
-
-BRL-CAD includes software code and files that are covered by other
-licenses including but not limited to the Berkeley Software
-Distribution (BSD) license and the GNU Free Documentation License.
-The specific terms of BRL-CAD's licenses should be included in the
-doc/legal/ directory of the source code distribution and should be
-consulted for more details, information, and implications of each
-license.
 
 The BRL-CAD package utilizes and redistributes copies of several 3rd
 party source code, libraries, and/or applications.  Said 3rd party
@@ -57,7 +60,7 @@ source code, libraries, and/or applications all retain their
 respective agreements, licenses, and copyrights and should be referred
 to individually for their specific terms.  
 
-When referring to BRL-CAD source code, documentation, and/or
+When referring to BRL-CAD, it's source code, documentation, and/or
 libraries, this is not meant to include or imply 3rd party source
 code, libraries, and/or applications unless specifically stated
 otherwise.  The majority of the 3rd party source code, libraries, and
@@ -67,23 +70,23 @@ directory of the source code distribution.
 Copyright
 ---------
 
-All contributions to BRL-CAD have been provided under agreement.   By
+All contributions to BRL-CAD have been provided under agreement.  By
 requiring all contributions be given back to the BRL-CAD developers,
-this agreement allows the BRL-CAD project to continue to grow unhindered.
-As such, a majority of the source code is copyright by the United
-States government.
-
+this agreement allows the BRL-CAD project to continue to grow
+unhindered.  As such, a majority of the source code is copyright by
+the United States Government.
 
 Authors and other BRL-CAD contributors must comply with the copyright
 terms for their respective contributions unless otherwise noted or
 arranged.  The following notice should be prominent in the BRL-CAD
 sources:
 
-  Copyright 2004, United States Government as represented by the
+  Copyright (c) 2005 United States Government as represented by the
   U.S. Army Research Laboratory.  All Rights Reserved.
 
 Trademark
 ---------
 
-The mark "BRL-CAD" and the "BRL-CAD Eagle" are registered trademarks
-of the United States Army.  All rights are reserved.
+The work mark "BRL-CAD" and the "BRL-CAD Eagle" image are registered
+trademarks of the Department of the Army, United States Government.
+All rights are reserved.
