@@ -73,7 +73,7 @@ extern int      savedit;
 #endif
 
 static void	arb8_edge(), ars_ed(), ell_ed(), tgc_ed(), tor_ed(), spline_ed();
-static void	nmg_ed(), pipe_ed(), vol_ed(), ebm_ed();
+static void	nmg_ed(), pipe_ed(), vol_ed(), ebm_ed(), dsp_ed();
 static void	rpc_ed(), rhc_ed(), epa_ed(), ehy_ed(), eto_ed();
 static void	arb7_edge(), arb6_edge(), arb5_edge(), arb4_point();
 static void	arb8_mv_face(), arb7_mv_face(), arb6_mv_face();
@@ -204,6 +204,12 @@ int	es_menu;		/* item selected from menu */
 #define	MENU_EBM_FNAME		79
 #define	MENU_EBM_FSIZE		80
 #define	MENU_EBM_HEIGHT		81
+#define	MENU_DSP_FNAME		82
+#define	MENU_DSP_FSIZE		83
+#define	MENU_DSP_SCALE_X	84
+#define	MENU_DSP_SCALE_Y	85
+#define	MENU_DSP_SCALE_ALT	86
+
 
 extern int arb_faces[5][24];	/* from edarb.c */
 
@@ -558,6 +564,16 @@ struct menu_item ebm_menu[] = {
 	{ "", (void (*)())NULL, 0 }
 };
 
+struct menu_item dsp_menu[] = {
+	{"DSP MENU", (void (*)())NULL, 0 },
+	{"file name", dsp_ed, MENU_DSP_FNAME },
+	{"file size (W N)", dsp_ed, MENU_DSP_FSIZE },
+	{"Scale X", dsp_ed, MENU_DSP_SCALE_X },
+	{"Scale Y", dsp_ed, MENU_DSP_SCALE_Y },
+	{"Scale ALT", dsp_ed, MENU_DSP_SCALE_ALT },
+	{ "", (void (*)())NULL, 0 }
+};
+
 struct menu_item *which_menu[] = {
 	point4_menu,
 	edge5_menu,
@@ -694,6 +710,33 @@ int arg;
 
   sedit();
   set_e_axes_pos(1);
+}
+
+static void
+dsp_ed( arg )
+int arg;
+{
+	es_menu = arg;
+	
+	switch( arg ) {
+	case MENU_DSP_FNAME:
+		es_edflag = ECMD_DSP_FNAME;
+		break;
+	case MENU_DSP_FSIZE:
+		es_edflag = ECMD_DSP_FSIZE;
+		break;
+	case MENU_DSP_SCALE_X:
+		es_edflag = ECMD_DSP_SCALE_X;
+		break;
+	case MENU_DSP_SCALE_Y:
+		es_edflag = ECMD_DSP_SCALE_Y;
+		break;
+	case MENU_DSP_SCALE_ALT:
+		es_edflag = ECMD_DSP_SCALE_ALT;
+		break;
+	}
+	sedit();
+	set_e_axes_pos(1);
 }
 
 static void
@@ -1490,6 +1533,19 @@ mat_t		mat;
 			*strp = "V";
 			break;
 		}
+	case ID_DSP:
+		{
+			struct rt_dsp_internal *dsp =
+				(struct rt_dsp_internal *)ip->idb_ptr;
+			point_t pt;
+			
+			RT_DSP_CK_MAGIC( dsp );
+			
+			VSETALL( pt , 0.0 );
+			MAT4X3PNT( mpt , dsp->dsp_stom , pt );
+			*strp = "V";
+			break;
+		}
 	case ID_HF:
 		{
 			struct rt_hf_internal *hf =
@@ -2231,6 +2287,9 @@ sedit_menu()  {
 	case ID_EBM:
 		mmenu_set_all( MENU_L1, ebm_menu );
 		break;
+	case ID_DSP:
+		mmenu_set_all( MENU_L1, dsp_menu );
+		break;
 	}
 	es_edflag = IDLE;	/* Drop out of previous edit mode */
 	es_menu = 0;
@@ -2362,6 +2421,114 @@ sedit()
 	  update_views = 0;
 	  break;
 
+	case ECMD_DSP_SCALE_X:
+		{
+			break;
+		}
+	case ECMD_DSP_SCALE_Y:
+		{
+			break;
+		}
+	case ECMD_DSP_SCALE_ALT:
+		{
+			struct rt_dsp_internal *dsp =
+				(struct rt_dsp_internal *)es_int.idb_ptr;
+			mat_t m, mat1, mat2;
+			mat_t scalemat;
+
+			RT_DSP_CK_MAGIC(dsp);
+			
+			if ( inpara == 1) {
+				mat_idn(m);
+				m[MSZ] = es_para[0];
+			}
+			bn_mat_xform_about_pt(scalemat, m, es_keypoint);
+			bn_mat_mul(mat2, scalemat, es_mat);
+			bn_mat_mul(mat1, es_invmat, mat2);
+			transform_editing_solid(&es_int, mat, &es_int, 1);
+			
+
+			break;
+		}
+	case ECMD_DSP_FSIZE:	/* set file size */
+		{
+			struct rt_dsp_internal *dsp =
+				(struct rt_dsp_internal *)es_int.idb_ptr;
+			struct stat stat_buf;
+			off_t need_size;
+
+			RT_DSP_CK_MAGIC( dsp );
+
+			if( inpara == 2 )
+			{
+				if( stat( dsp->dsp_file, &stat_buf ) )
+				{
+					Tcl_AppendResult(interp, "Cannot get status of file ", dsp->dsp_file, (char *)NULL );
+					mged_print_result( TCL_ERROR );
+					return;
+				}
+				need_size = dsp->dsp_xcnt * dsp->dsp_ycnt * 2;
+				
+				if( stat_buf.st_size < need_size )
+				{
+					Tcl_AppendResult(interp,
+						"File (", dsp->dsp_file,
+						") is too small, set file name first",
+						(char *)NULL );
+					mged_print_result( TCL_ERROR );
+					return;
+				}
+				dsp->dsp_xcnt = es_para[0];
+				dsp->dsp_ycnt = es_para[1];
+			}
+			else if( inpara > 0 )
+			{
+				Tcl_AppendResult(interp,
+					"width and length of file are required\n",
+					(char *)NULL );
+				mged_print_result( TCL_ERROR );
+				return;
+			}
+		}
+		break;
+
+	case ECMD_DSP_FNAME:
+		{
+			struct rt_dsp_internal *dsp =
+				(struct rt_dsp_internal *)es_int.idb_ptr;
+			char *fname;
+			struct stat stat_buf;
+			off_t need_size;
+			struct bu_vls message;
+
+			RT_DSP_CK_MAGIC( dsp );
+
+			fname = get_file_name( dsp->dsp_file );
+			if ( ! fname) break;
+
+			if( stat( fname, &stat_buf ) ) {
+				bu_vls_init( &message );
+				bu_vls_printf( &message, "Cannot get status of file %s\n", fname );
+				Tcl_SetResult(interp, bu_vls_addr( &message ), TCL_VOLATILE );
+				bu_vls_free( &message );
+				mged_print_result( TCL_ERROR );
+				return;
+			}
+
+			need_size = dsp->dsp_xcnt * dsp->dsp_ycnt * 2;
+			if (stat_buf.st_size < need_size) {
+				bu_vls_init( &message );
+				bu_vls_printf( &message, "File (%s) is too small, adjust the file size parameters first", fname);
+				Tcl_SetResult(interp, bu_vls_addr( &message ), TCL_VOLATILE);
+				bu_vls_free( &message );
+				mged_print_result( TCL_ERROR );
+				return;
+			}
+			strcpy( dsp->dsp_file, fname );
+
+			break;
+		}
+
 	case ECMD_EBM_FSIZE:	/* set file size */
 		{
 			struct rt_ebm_internal *ebm =
@@ -2450,7 +2617,9 @@ sedit()
 				ebm->tallness = es_para[0];
 			else if( inpara > 0 )
 			{
-				Tcl_AppendResult(interp, "extrusion depth required\n", (char *)NULL );
+				Tcl_AppendResult(interp,
+					"extrusion depth required\n",
+					(char *)NULL );
 				mged_print_result( TCL_ERROR );
 				return;
 			}

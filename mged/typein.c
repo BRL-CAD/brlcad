@@ -78,6 +78,12 @@ char *p_half[] = {
 	"Enter the distance from the origin: "
 };
 
+char *p_dsp[] = {
+	"Enter name of displacement-map file: ",
+	"Enter width of displacement-map (number of cells): ",
+	"Enter length of displacement-map (number of cells): "
+};
+
 char *p_hf[] = {
 	"Enter name of control file (or \"\" for none): ",
 	"Enter name of data file (containing heights): ",
@@ -396,7 +402,8 @@ char **argv;
 				epa_in(), eto_in(), half_in(), rec_in(),
 				rcc_in(), rhc_in(), rpc_in(), rpp_in(),
 				sph_in(), tec_in(), tgc_in(), tor_in(),
-				trc_in(), ebm_in(), vol_in(), hf_in();
+				trc_in(), ebm_in(), vol_in(), hf_in(),
+				dsp_in();
 
 	if(argc < 1 || MAXARGS < argc){
 	  struct bu_vls vls;
@@ -481,6 +488,10 @@ char **argv;
 		nvals = 19;
 		menu = p_hf;
 		fn_in = hf_in;
+	} else if( strcmp( argv[2], "dsp" ) == 0 )  {
+		nvals = 3;
+		menu = p_dsp;
+		fn_in = dsp_in;
 	} else if( strcmp( argv[2], "ars" ) == 0 )  {
 		switch( ars_in(argc, argv, &internal, &p_ars[0]) ) {
 		case CMD_BAD:
@@ -644,6 +655,33 @@ struct rt_db_internal	*intern;
 
 	return( 0 );
 }
+
+/*			D S P _ I N
+ *
+ *	Read DSP solid from keyboard
+ */
+int
+dsp_in ( cmd_argvs, intern )
+char			*cmd_argvs[];
+struct rt_db_internal	*intern;
+{
+	struct rt_dsp_internal	*dsp;
+
+	BU_GETSTRUCT( dsp, rt_dsp_internal );
+	intern->idb_type = ID_DSP;
+	intern->idb_ptr = (genptr_t)dsp;
+	dsp->magic = RT_DSP_INTERNAL_MAGIC;
+
+	strcpy( dsp->dsp_file, cmd_argvs[3] );
+	dsp->dsp_xcnt = atoi( cmd_argvs[4] );
+	dsp->dsp_ycnt = atoi( cmd_argvs[5] );
+	bn_mat_idn( dsp->dsp_mtos );
+	bn_mat_idn( dsp->dsp_stom );
+
+	return( 0 );
+}
+
+
 
 /*			H F _ I N
  *

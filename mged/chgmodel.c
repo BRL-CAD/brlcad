@@ -1136,6 +1136,18 @@ char	**argv;
 
 			break;
 		}
+		case ID_DSP:
+		{
+			struct rt_dsp_internal *dsp;
+			
+			dsp = (struct rt_dsp_internal *)internal.idb_ptr;
+			RT_DSP_CK_MAGIC( dsp );
+			
+			bn_mat_mul( temp, mirmat, dsp->dsp_mtos);
+			bn_mat_copy( dsp->dsp_mtos, temp);
+			
+			break;
+		}
 		case ID_VOL:
 		{
 			struct rt_vol_internal *vol;
@@ -1759,6 +1771,7 @@ char	**argv;
 	} else if( strcmp( argv[2], "ars" ) == 0 ||
 		   strcmp( argv[2], "poly" ) == 0 ||
 		   strcmp( argv[2], "ebm" ) == 0 ||
+		   strcmp( argv[2], "dsp" ) == 0 ||
 		   strcmp( argv[2], "vol" ) == 0 ||
 		   strcmp( argv[2], "arbn" ) == 0 ||
 		   strcmp( argv[2], "nurb" ) == 0 ||

@@ -92,6 +92,13 @@
 #define	ECMD_EBM_FSIZE		54	/* set EBM file size */
 #define	ECMD_EBM_HEIGHT		55	/* set EBM extrusion depth */
 
+#define	ECMD_DSP_FNAME		56	/* set DSP file name */
+#define	ECMD_DSP_FSIZE		57	/* set DSP file size */
+#define ECMD_DSP_SCALE_X        58	/* Scale DSP x size */
+#define ECMD_DSP_SCALE_Y        59	/* Scale DSP y size */
+#define ECMD_DSP_SCALE_ALT      60	/* Scale DSP Altitude size */
+
+
 #define SEDIT_ROTATE (state == ST_S_EDIT && \
 		      (es_edflag == SROT || \
 		       es_edflag == ECMD_TGC_ROT_H || \
