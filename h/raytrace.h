@@ -1510,6 +1510,7 @@ RT_EXTERN(void rt_log, () );		/* Log message */
 RT_EXTERN(struct rt_i *rt_dirbuild, (char *filename, char *buf, int len) );
 					/* Prepare for raytracing */
 RT_EXTERN(void rt_prep, (struct rt_i *rtip) );
+RT_EXTERN(void rt_prep_parallel, (struct rt_i *rtip, int ncpu) );
 					/* Shoot a ray */
 RT_EXTERN(int rt_shootray, (struct application *ap) );
 					/* Get expr tree for object */
@@ -1643,7 +1644,7 @@ RT_EXTERN(int rt_byte_roundup, (int nbytes) );
 					/* logical OR on bit vectors */
 RT_EXTERN(void rt_bitv_or, (bitv_t *out, bitv_t *in, int nbits) );
 					/* space partitioning */
-RT_EXTERN(void rt_cut_it, (struct rt_i *rtip) );
+RT_EXTERN(void rt_cut_it, (struct rt_i *rtip, int ncpu) );
 					/* print cut node */
 RT_EXTERN(void rt_pr_cut, (CONST union cutter *cutp, int lvl) );
 					/* free a cut tree */
