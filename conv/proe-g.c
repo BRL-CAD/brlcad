@@ -50,6 +50,7 @@ static int NMG_debug=0;		/* NMG debug flag */
 static int solid_count=0;	/* count of solids converted */
 static struct rt_tol tol;	/* Tolerance structure */
 static int id_no=1000;		/* Ident numbers */
+static int debug=0;		/* Debug flag */
 static char *usage="proe-g [-p] < proe_file.brl > output.g\n\
 	where proe_file.brl is the output from Pro/Engineer's BRL-CAD EXPORT option\n\
 	and output.g is the name of a BRL-CAD database file\n\
@@ -64,15 +65,16 @@ struct render_verts
 struct name_conv_list
 {
 	char brlcad_name[NAMESIZE+1];
-	char name[80],type[10],path[256];
+	char name[80];
+	char *obj;
 	struct name_conv_list *next;
 } *name_root=(struct name_conv_list *)NULL;
 
 #define	MAX_LINE_LEN	512
 
 struct name_conv_list *
-Add_new_name( name , type , path )
-char *name,*type,*path;
+Add_new_name( name , obj )
+char *name,*obj;
 {
 	struct name_conv_list *ptr,*ptr2;
 	char tmp_name[NAMESIZE];
@@ -81,11 +83,10 @@ char *name,*type,*path;
 	char try_char='@';
 
 	/* Add a new name */
-	ptr = (struct name_conv_list *)rt_malloc( sizeof( struct name_conv_list ) , "Get_unique_name: prev->next" );
+	ptr = (struct name_conv_list *)rt_malloc( sizeof( struct name_conv_list ) , "Add_new_name: prev->next" );
 	ptr->next = (struct name_conv_list *)NULL;
 	strcpy( ptr->name , name );
-	strcpy( ptr->type , type );
-	strcpy( ptr->path , path );
+	ptr->obj = obj;
 	strncpy( ptr->brlcad_name , name , NAMESIZE );
 	ptr->brlcad_name[NAMESIZE] = '\0';
 
@@ -116,15 +117,15 @@ char *name,*type,*path;
 }
 
 char *
-Get_unique_name( name , type , path )
-char *name,*type,*path;
+Get_unique_name( name , obj )
+char *name,*obj;
 {
 	struct name_conv_list *ptr,*prev;
 
 	if( name_root == (struct name_conv_list *)NULL )
 	{
 		/* start new list */
-		name_root = Add_new_name( name , type , path );
+		name_root = Add_new_name( name , obj );
 		ptr = name_root;
 	}
 	else
@@ -135,16 +136,9 @@ char *name,*type,*path;
 		ptr = name_root;
 		while( ptr && !found )
 		{
-			found = 1;
-
-			if( strcmp( name , ptr->name ) )
-				found = 0;
-			else if( strcmp( type , ptr->type ) )
-				found = 0;
-			else if( strcmp( path , ptr->path ) )
-				found = 0;
-
-			if( !found )
+			if( obj == ptr->obj )
+				found = 1;
+			else
 			{
 				prev = ptr;
 				ptr = ptr->next;
@@ -153,7 +147,7 @@ char *name,*type,*path;
 
 		if( !found )
 		{
-			prev->next = Add_new_name( name , type , path );
+			prev->next = Add_new_name( name , obj );
 			ptr = prev->next;
 		}
 	}
@@ -170,11 +164,9 @@ char line[MAX_LINE_LEN];
 	struct wmember *wmem;
 	char line1[MAX_LINE_LEN];
 	char name[80];
-	char type[10];
-	char path[256];
+	char *obj;
 	char memb_name[80];
-	char memb_type[10];
-	char memb_path[256];
+	char *memb_obj;
 	char *brlcad_name;
 	double mat_col[4];
 	int start;
@@ -202,21 +194,13 @@ char line[MAX_LINE_LEN];
 		name[++i] = line[start];
 	name[++i] = '\0';
 
-	/* get type */
-	i = (-1);
-	while( isspace( line[++start] ) && line[start] != '\0' );
-	start--;
-	while( !isspace( line[++start] ) && line[start] != '\0' )
-		type[++i] = line[start];
-	type[++i] = '\0';
+	/* get object pointer */
+	sscanf( &line[start] , "%x" , &obj );
 
-	/* get path */
-	i = (-1);
-	while( isspace( line[++start] ) && line[start] != '\0' );
-	start--;
-	while( !isspace( line[++start] ) && line[start] != '\0' )
-		path[++i] = line[start];
-	path[++i] = '\0';
+	rt_log( "Converting Assembly: %s\n" , name );
+
+	if( debug )
+		rt_log( "Convert_assy: %s x%x\n" , name , obj );
 
 	while( gets( line1 ) )
 	{
@@ -227,7 +211,9 @@ char line[MAX_LINE_LEN];
 		if( !strncmp( &line1[start] , "endassembly" , 11 ) )
 		{
 
-			brlcad_name = Get_unique_name( name , type , path );
+			brlcad_name = Get_unique_name( name , obj );
+			if( debug )
+				rt_log( "\tmake assembly ( %s)\n" , brlcad_name );
 			mk_lcomb( stdout , brlcad_name , &head , 0 , (char *)NULL , (char *)NULL , (char *)NULL , 0 );
 			break;
 		}
@@ -241,21 +227,12 @@ char line[MAX_LINE_LEN];
 				memb_name[++i] = line1[start];
 			memb_name[++i] = '\0';
 
-			while( isspace( line1[++start] ) && line1[start] != '\0' );
-			i = (-1);
-			start--;
-			while( !isspace( line1[++start] ) && line1[start] != '\0' )
-				memb_type[++i] = line1[start];
-			memb_type[++i] = '\0';
 
-			while( isspace( line1[++start] ) && line1[start] != '\0' );
-			i = (-1);
-			start--;
-			while( !isspace( line1[++start] ) && line1[start] != '\0' )
-				memb_path[++i] = line1[start];
-			memb_path[++i] = '\0';
+			sscanf( &line1[start] , "%x" , &memb_obj );
 
-			brlcad_name = Get_unique_name( memb_name , memb_type , memb_path );
+			brlcad_name = Get_unique_name( memb_name , memb_obj );
+			if( debug )
+				rt_log( "\tmember (%s)\n" , brlcad_name );
 			wmem = mk_addmember( brlcad_name , &head , WMOP_UNION );
 		}
 		else if( !strncmp( &line1[start] , "matrix" , 6 ) )
@@ -287,8 +264,7 @@ char line[MAX_LINE_LEN];
 {
 	char line1[MAX_LINE_LEN];
 	char name[80];
-	char type[10];
-	char path[256];
+	char *obj;
 	char solid_name[NAMESIZE+1];
 	int start;
 	int i;
@@ -332,21 +308,13 @@ char line[MAX_LINE_LEN];
 		name[++i] = line[start];
 	name[++i] = '\0';
 
-	/* get type */
-	i = (-1);
-	while( isspace( line[++start] ) && line[start] != '\0' );
-	start--;
-	while( !isspace( line[++start] ) && line[start] != '\0' )
-		type[++i] = line[start];
-	type[++i] = '\0';
+	/* get object id */
+	sscanf( &line[start] , "%x" , &obj );
 
-	/* get path */
-	i = (-1);
-	while( isspace( line[++start] ) && line[start] != '\0' );
-	start--;
-	while( !isspace( line[++start] ) && line[start] != '\0' )
-		path[++i] = line[start];
-	path[++i] = '\0';
+	rt_log( "Converting Part: %s\n" , name );
+
+	if( debug )
+		rt_log( "Conv_part %s %s x%x\n" , name , obj );
 
 	while( gets( line1 ) != NULL )
 	{
@@ -447,6 +415,8 @@ char line[MAX_LINE_LEN];
 
 		(void)nmg_model_vertex_fuse( m , &tol );
 	}
+	else
+		nmg_rebound( m , &tol );
 
 	sprintf( solid_name , "sol.%d" , solid_count );
 	solid_count++;
@@ -463,7 +433,9 @@ char line[MAX_LINE_LEN];
 
 	mk_addmember( solid_name , &head , WMOP_UNION );
 
-	brlcad_name = Get_unique_name( name , type , path );
+	brlcad_name = Get_unique_name( name , obj );
+	if( debug )
+		rt_log( "\tMake region (%s)\n" , brlcad_name );
 
 	mk_lrcomb( stdout , brlcad_name , &head , 1 , (char *)NULL , (char *)NULL , color , id_no , 0 , 1 , 100 , 0 );
 	id_no++;
@@ -503,8 +475,11 @@ char	*argv[];
         tol.para = 1 - tol.perp;
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "x:X:p")) != EOF) {
+	while ((c = getopt(argc, argv, "dx:X:p")) != EOF) {
 		switch (c) {
+		case 'd':
+			debug = 1;
+			break;
 		case 'x':
 			sscanf( optarg, "%x", &rt_g.debug );
 			break;
