@@ -20,6 +20,8 @@ static char RCSid[] = "$Header$";
 #endif
 
 #include <unistd.h>
+#include <signal.h>
+#include <setjmp.h>
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
@@ -64,6 +66,15 @@ struct facets
 	(_lo1)[X] >= (_lo2)[X] && (_hi1)[X] <= (_hi2)[X] && \
 	(_lo1)[Y] >= (_lo2)[Y] && (_hi1)[Y] <= (_hi2)[Y] && \
 	(_lo1)[Z] >= (_lo2)[Z] && (_hi1)[Z] <= (_hi2)[Z] )
+
+void
+handler( sig, code, sc)
+int sig;
+int code;
+struct sigcontext *sc;
+{
+	rt_bomb( "ALARM boolean evaluation aborted\n" );
+}
 
 static void
 Write_euclid_face( lu , facet_type , regionid , face_number , fp_out )
@@ -531,7 +542,6 @@ union tree		*curtree;
 	struct nmgregion	*r;
 	struct rt_list		vhead;
 	struct directory	*dir;
-	char			file_name[25];
 
 	if( verbose )
 		rt_log( "do_region_end: regionid = %d\n" , tsp->ts_regionid );
@@ -571,6 +581,8 @@ union tree		*curtree;
 		/* Error, bail out */
 		RT_UNSETJUMP;		/* Relinquish the protection */
 
+		(void)alarm( 0 );
+
 		/* Sometimes the NMG library adds debugging bits when
 		 * it detects an internal error, before rt_bomb().
 		 */
@@ -605,7 +617,9 @@ union tree		*curtree;
 	if( verbose )
 		rt_log( "\tEvaluating region\n" );
 
-	(void)alarm( 1200 );
+	signal( SIGALRM , handler );
+
+	(void)alarm( 600 );
 
 	r = nmg_booltree_evaluate(curtree, tsp->ts_tol);	/* librt/nmg_bool.c */
 
@@ -618,7 +632,7 @@ union tree		*curtree;
 		/* Write the region to the EUCLID file */
 		Write_euclid_region( r , tsp , fp_out );
 
-		rt_log( "Wrote region %s to file %s\n" , dir->d_namep , file_name );
+		rt_log( "Wrote region %s\n" , dir->d_namep );
 
 		if( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )
 			nmg_km(*tsp->ts_m);
