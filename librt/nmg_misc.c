@@ -47,6 +47,58 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 RT_EXTERN( struct edgeuse *nmg_find_e, (struct vertex *v1, struct vertex *v2, struct shell *s, struct edge *e ) );
 
 void
+nmg_get_fu_snurb_norm( fu, vu, norm )
+CONST struct faceuse *fu;
+CONST struct vertexuse *vu;
+vect_t norm;
+{
+	struct face *f;
+	struct snurb srf;
+	struct vertexuse_a_cnurb *va;
+	point_t uvw;
+
+	NMG_CK_FACEUSE( fu );
+	NMG_CK_VERTEXUSE( vu );
+
+	f = fu->f_p;
+	if( !f->g.magic_p )
+	{
+		rt_log( "nmg_get_fu_snurb_norm: face has no geometry (x%x)\n", f );
+		rt_bomb( "nmg_get_fu_snurb_norm: bad face\n" );
+	}
+	if( *f->g.magic_p != NMG_FACE_G_SNURB_MAGIC )
+	{
+		rt_log( "nmg_get_fu_snurb_norm: face is not a NURB face (x%x)\n", f );
+		rt_bomb( "nmg_get_fu_snurb_norm: bad face\n" );
+	}
+
+	if( !vu->a.magic_p )
+	{
+		rt_log( "nmg_get_fu_snurb_norm: vertexuse does not have an attribute (x%x)\n", vu );
+		rt_bomb( "nmg_get_fu_snurb_norm: bad VU\n" );
+	}
+
+	if( *vu->a.magic_p != NMG_VERTEXUSE_A_CNURB_MAGIC )
+	{
+		rt_log( "nmg_get_fu_snurb_norm: vertexuse does not have a cnurb attribute (x%x)\n", vu );
+		rt_bomb( "nmg_get_fu_snurb_norm: bad VU\n" );
+	}
+
+	va = vu->a.cnurb_p;
+	VMOVE( uvw, va->param );
+	if( uvw[2] )
+	{
+		uvw[0] = uvw[0]/uvw[2];
+		uvw[1] = uvw[1]/uvw[2];
+	}
+	nmg_hack_snurb( &srf, f->g.snurb_p );
+	rt_nurb_s_norm( &srf, uvw[0], uvw[1], norm );
+
+	if( (fu->orientation != OT_SAME) != (f->flip != 0 ) )
+		VREVERSE( norm, norm )
+}
+
+void
 nmg_find_zero_length_edges( m )
 struct model *m;
 {
@@ -309,7 +361,11 @@ long *flags;
 			rt_log( "edge_dir is ( %g %g %g )\n", V3ARGS( edge_dir ) );
 
 		/* find the normal for this faceuse */
-		NMG_GET_FU_NORMAL( normal, fu );
+		if( *fu->f_p->g.magic_p == NMG_FACE_G_PLANE_MAGIC )
+			NMG_GET_FU_NORMAL( normal, fu )
+		else if( *fu->f_p->g.magic_p == NMG_FACE_G_SNURB_MAGIC )
+			nmg_get_fu_snurb_norm( fu, eu1->vu_p, normal );
+
 		if( rt_g.NMG_debug & DEBUG_BASIC )
 			rt_log( "fu normal is ( %g %g %g )\n" , V3ARGS( normal ) );
 
@@ -3373,6 +3429,11 @@ CONST struct rt_tol *tol;
 			rt_free( (char *)flags, "nmg_fix_normals: flags" );
 			return;
 		}
+		if( *f_top->g.magic_p != NMG_FACE_G_PLANE_MAGIC )
+		{
+			NMG_INDEX_SET( flags, f_top );
+			goto missed;
+		}
 
 		if( NMG_INDEX_TEST( flags, f_top ) )
 			rt_log(" nmg_find_top_face returned a flagged face %x\n" , f_top );
@@ -3435,6 +3496,8 @@ CONST struct rt_tol *tol;
 			rt_log( "nmg_fix_normals: After propagation top faceuse normal is ( %g %g %g )\n",
 				V3ARGS( new_norm ) );
 		}
+
+missed:
 
 		/* check if all the faces have been processed */
 		missed_faces = 0;
