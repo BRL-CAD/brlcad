@@ -52,7 +52,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
  */
 void
 nmg_vvg(vg)
-struct vertex_g *vg;
+CONST struct vertex_g *vg;
 {
 	NMG_CK_VERTEX_G(vg);
 }
@@ -64,8 +64,8 @@ struct vertex_g *vg;
  */
 void
 nmg_vvertex(v, vup)
-struct vertex *v;
-struct vertexuse *vup;
+CONST struct vertex *v;
+CONST struct vertexuse *vup;
 {
 	struct vertexuse *vu;
 	int vup_is_in_list = 0;
@@ -87,7 +87,7 @@ struct vertexuse *vup;
 /* Verify vertex attributes */
 void
 nmg_vvua(vua)
-long *vua;
+CONST long *vua;
 {
 	NMG_CK_VERTEXUSE_A_EITHER(vua);
 }
@@ -99,8 +99,8 @@ long *vua;
  */
 void
 nmg_vvu(vu, up_magic_p)
-struct vertexuse *vu;
-long		*up_magic_p;
+CONST struct vertexuse *vu;
+CONST long		*up_magic_p;
 {
 	long	magic;
 
@@ -130,7 +130,7 @@ long		*up_magic_p;
 /* Verify edge geometry */
 void
 nmg_veg(eg)
-long *eg;
+CONST long *eg;
 {
 	struct bu_list	*eu2;
 
@@ -171,10 +171,10 @@ long *eg;
  */
 void
 nmg_vedge(e, eup)
-struct edge *e;
-struct edgeuse *eup;
+CONST struct edge *e;
+CONST struct edgeuse *eup;
 {
-	struct edgeuse *eu;
+	CONST struct edgeuse *eu;
 	int is_use = 0;		/* flag: eup is in edge's use list */
 
 	NMG_CK_EDGE(e);
@@ -242,8 +242,8 @@ struct edgeuse *eup;
  */
 void
 nmg_veu(hp, up_magic_p)
-struct bu_list	*hp;
-long	*up_magic_p;
+CONST struct bu_list	*hp;
+CONST long	*up_magic_p;
 {
 	struct edgeuse	*eu;
 	struct edgeuse	*eunext;
@@ -374,7 +374,7 @@ long	*up_magic_p;
  */
 void
 nmg_vlg(lg)
-struct loop_g *lg;
+CONST struct loop_g *lg;
 {
 	int i;
 	
@@ -392,8 +392,8 @@ struct loop_g *lg;
  */
 void
 nmg_vloop(l, lup)
-struct loop *l;
-struct loopuse *lup;
+CONST struct loop *l;
+CONST struct loopuse *lup;
 {
 
 	NMG_CK_LOOP(l);
@@ -423,8 +423,8 @@ struct loopuse *lup;
  */
 void
 nmg_vlu(hp, up)
-struct bu_list	*hp;
-long		*up;
+CONST struct bu_list	*hp;
+CONST long		*up;
 {
 	struct loopuse *lu;
 
@@ -485,7 +485,7 @@ long		*up;
  */
 void
 nmg_vfg(fg)
-struct face_g_plane *fg;
+CONST struct face_g_plane *fg;
 {
 	NMG_CK_FACE_G_EITHER(fg);
 
@@ -511,8 +511,8 @@ struct face_g_plane *fg;
  */
 void
 nmg_vface(f, fup)
-struct face *f;
-struct faceuse *fup;
+CONST struct face *f;
+CONST struct faceuse *fup;
 {
 	int		i;
 
@@ -546,8 +546,8 @@ struct faceuse *fup;
  */
 void
 nmg_vfu(hp, s)
-struct bu_list	*hp;
-struct shell *s;
+CONST struct bu_list	*hp;
+CONST struct shell *s;
 {
 	struct faceuse *fu;
 
@@ -603,8 +603,8 @@ struct shell *s;
  */
 void
 nmg_vshell(hp, r)
-struct bu_list	*hp;
-struct nmgregion *r;
+CONST struct bu_list	*hp;
+CONST struct nmgregion *r;
 {
 	struct shell *s;
 	pointp_t lpt, hpt;
@@ -672,8 +672,8 @@ struct nmgregion *r;
  */
 void
 nmg_vregion(hp, m)
-struct bu_list	*hp;
-struct model *m;
+CONST struct bu_list	*hp;
+CONST struct model *m;
 {
 	struct nmgregion *r;
 
@@ -703,7 +703,7 @@ struct model *m;
  */
 void
 nmg_vmodel(m)
-struct model *m;
+CONST struct model *m;
 {
 	NMG_CK_MODEL(m);
 	nmg_vregion( &m->r_hd, m);
@@ -721,9 +721,9 @@ struct model *m;
  */
 void
 nmg_ck_e(eu, e, str)
-struct edgeuse *eu;
-struct edge *e;
-char *str;
+CONST struct edgeuse *eu;
+CONST struct edge *e;
+CONST char *str;
 {
 	char *errstr;
 	struct edgeuse *eparent;
@@ -754,9 +754,9 @@ char *str;
  */
 void
 nmg_ck_vu(parent, vu, str)
-long *parent;
-struct vertexuse *vu;
-char *str;
+CONST long *parent;
+CONST struct vertexuse *vu;
+CONST char *str;
 {
 	char *errstr;
 
@@ -774,9 +774,9 @@ char *str;
  */
 void
 nmg_ck_eu(parent, eu, str)
-long *parent;
-struct edgeuse *eu;
-char *str;
+CONST long *parent;
+CONST struct edgeuse *eu;
+CONST char *str;
 {
 	char *errstr;
 	struct edgeuse *eur, *eu_next, *eu_last;	
@@ -842,9 +842,9 @@ char *str;
  */
 void
 nmg_ck_lg(l, lg, str)
-struct loop *l;
-struct loop_g *lg;
-char *str;
+CONST struct loop *l;
+CONST struct loop_g *lg;
+CONST char *str;
 {
 	char *errstr;
 	errstr = bu_calloc(strlen(str)+128, 1, "nmg_ck_lg error str");
@@ -861,9 +861,9 @@ char *str;
  */
 void
 nmg_ck_l(lu, l, str)
-struct loopuse *lu;
-struct loop *l;
-char *str;
+CONST struct loopuse *lu;
+CONST struct loop *l;
+CONST char *str;
 {
 	char *errstr;
 	errstr = bu_calloc(strlen(str)+128, 1, "nmg_ck_l error str");
@@ -885,9 +885,9 @@ char *str;
  */
 void
 nmg_ck_lu(parent, lu, str)
-long *parent;
-struct loopuse *lu;
-char *str;
+CONST long *parent;
+CONST struct loopuse *lu;
+CONST char *str;
 {
 	struct edgeuse *eu;
 	struct vertexuse *vu;
@@ -947,9 +947,9 @@ char *str;
  */
 void
 nmg_ck_fg(f, fg, str)
-struct face *f;
-struct face_g_plane *fg;
-char *str;
+CONST struct face *f;
+CONST struct face_g_plane *fg;
+CONST char *str;
 {
 	char *errstr;
 	errstr = bu_calloc(strlen(str)+128, 1, "nmg_ck_fg error str");
@@ -971,9 +971,9 @@ char *str;
  */
 void
 nmg_ck_f(fu, f, str)
-struct faceuse *fu;
-struct face *f;
-char *str;
+CONST struct faceuse *fu;
+CONST struct face *f;
+CONST char *str;
 {
 	char *errstr;
 	errstr = bu_calloc(strlen(str)+128, 1, "nmg_ck_f error str");
@@ -995,9 +995,9 @@ char *str;
  */
 void
 nmg_ck_fu(s, fu, str)
-struct shell *s;
-struct faceuse *fu;
-char *str;
+CONST struct shell *s;
+CONST struct faceuse *fu;
+CONST char *str;
 {
 	char *errstr;
 	int l;
@@ -1207,9 +1207,9 @@ CONST struct faceuse	*fu;
 /*
  *			N M G _ C K _ L I S T
  *
- *  Generic rt_list doubly-linked list checker.
+ *  Generic bu_list doubly-linked list checker.
  *
- *  XXX Probably should be called rt_ck_list().
+ *  XXX Probably should be called bu_ck_list().
  */
 void
 nmg_ck_list( hd, str )
@@ -1259,7 +1259,7 @@ CONST char		*str;
  *
  *  rt_list doubly-linked list checker which checks the magic number for
  *	all elements in the linked list
- *  XXX Probably should be called rt_ck_list_magic().
+ *  XXX Probably should be called bu_ck_list_magic().
  */
 void
 nmg_ck_list_magic( hd, str, magic )
@@ -1327,8 +1327,8 @@ CONST long		magic;
  *	know who thier parent really is.
  */
 void nmg_ck_lueu(cklu, s)
-struct loopuse *cklu;
-char *s;
+CONST struct loopuse *cklu;
+CONST char *s;
 {
 	struct edgeuse *eu;
 

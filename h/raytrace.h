@@ -2862,17 +2862,82 @@ BU_EXTERN(int nmg_ray_isect_segs, (struct soltab *stp,
 #endif
 
 /* From nmg_ck.c */
-/* XXX many others here */
+BU_EXTERN(void			nmg_vvg, (CONST struct vertex_g *vg));
+BU_EXTERN(void			nmg_vvertex, (CONST struct vertex *v,
+				CONST struct vertexuse *vup));
+BU_EXTERN(void			nmg_vvua, (CONST long *vua));
+BU_EXTERN(void			nmg_vvu, (CONST struct vertexuse *vu,
+				CONST long *up_magic_p));
+BU_EXTERN(void			nmg_veg, (CONST long *eg));
+BU_EXTERN(void			nmg_vedge, (CONST struct edge *e,
+				CONST struct edgeuse *eup));
+BU_EXTERN(void			nmg_veu, (CONST struct bu_list	*hp,
+				CONST long *up_magic_p));
+BU_EXTERN(void			nmg_vlg, (CONST struct loop_g *lg));
+BU_EXTERN(void			nmg_vloop, (CONST struct loop *l,
+				CONST struct loopuse *lup));
+BU_EXTERN(void			nmg_vlu, (CONST struct bu_list	*hp,
+				CONST long *up));
+BU_EXTERN(void			nmg_vfg, (CONST struct face_g_plane *fg));
+BU_EXTERN(void			nmg_vface, (CONST struct face *f,
+				CONST struct faceuse *fup));
+BU_EXTERN(void			nmg_vfu, (CONST struct bu_list	*hp,
+				CONST struct shell *s));
+BU_EXTERN(void			nmg_vshell, (CONST struct bu_list *hp,
+				CONST struct nmgregion *r));
+BU_EXTERN(void			nmg_vregion, (CONST struct bu_list *hp,
+				CONST struct model *m));
+BU_EXTERN(void			nmg_vmodel, (CONST struct model *m));
+
+/* checking routines */
+BU_EXTERN(void			nmg_ck_e, (CONST struct edgeuse *eu,
+				CONST struct edge *e, CONST char *str));
+BU_EXTERN(void			nmg_ck_vu, (CONST long *parent,
+				CONST struct vertexuse *vu,
+				CONST char *str));
+BU_EXTERN(void			nmg_ck_eu, (CONST long *parent,
+				CONST struct edgeuse *eu,
+				CONST char *str));
+BU_EXTERN(void			nmg_ck_lg, (CONST struct loop *l,
+				CONST struct loop_g *lg,
+				CONST char *str));
+BU_EXTERN(void			nmg_ck_l, (CONST struct loopuse *lu,
+				CONST struct loop *l,
+				CONST char *str));
+BU_EXTERN(void			nmg_ck_lu, (CONST long *parent,
+				CONST struct loopuse *lu,
+				CONST char *str));
+BU_EXTERN(void			nmg_ck_fg, (CONST struct face *f,
+				CONST struct face_g_plane *fg,
+				CONST char *str));
+BU_EXTERN(void			nmg_ck_f, (CONST struct faceuse *fu,
+				CONST struct face *f,
+				CONST char *str));
+BU_EXTERN(void			nmg_ck_fu, (CONST struct shell *s,
+				CONST struct faceuse *fu,
+				CONST char *str));
+BU_EXTERN(int			nmg_ck_eg_verts, (CONST struct edge_g_lseg *eg,
+				CONST struct bn_tol *tol));
+BU_EXTERN(int			nmg_ck_geometry, (CONST struct model *m,
+				CONST struct bn_tol *tol));
+BU_EXTERN(int			nmg_ck_face_worthless_edges, (CONST struct faceuse *fu));
+BU_EXTERN(void			nmg_ck_list, (struct bu_list *hd, CONST char *str) );
 BU_EXTERN(void			nmg_ck_list_magic, (CONST struct bu_list *hd,
 				CONST char *str, CONST long magic) );
-BU_EXTERN(void			nmg_ck_list, (struct bu_list *hd, CONST char *str) );
-BU_EXTERN(void			nmg_ck_lueu, (struct loopuse *lu, char *s) );
+BU_EXTERN(void			nmg_ck_lueu, (CONST struct loopuse *lu, CONST char *s) );
 BU_EXTERN(int			nmg_check_radial, (CONST struct edgeuse *eu, CONST struct bn_tol *tol));
+BU_EXTERN(int			nmg_eu_2s_orient_bad, (CONST struct edgeuse	*eu,
+				CONST struct shell	*s1,
+				CONST struct shell	*s2,
+				CONST struct bn_tol	*tol));
 BU_EXTERN(int			nmg_ck_closed_surf, (CONST struct shell *s, CONST struct bn_tol *tol) );
 BU_EXTERN(int			nmg_ck_closed_region, (CONST struct nmgregion *r, CONST struct bn_tol *tol) );
 BU_EXTERN(void			nmg_ck_v_in_2fus, (CONST struct vertex *vp,
 				CONST struct faceuse *fu1, CONST struct faceuse *fu2,
 				CONST struct bn_tol *tol));
+BU_EXTERN(void			nmg_ck_vs_in_region, (CONST struct nmgregion *r,
+				CONST struct bn_tol *tol));
+
 
 /* From nmg_inter.c */
 BU_EXTERN(void			nmg_crackshells, (struct shell *s1, struct shell *s2, CONST struct bn_tol *tol) );
@@ -2994,8 +3059,8 @@ BU_EXTERN(void			nmg_radial_exchange_marked,
 				(struct bu_list		*hd,
 				CONST struct bn_tol	*tol));
 BU_EXTERN(int			nmg_eu_radial_check,
-				(struct edgeuse		*eu,
-				struct shell		*s,
+				(CONST struct edgeuse	*eu,
+				CONST struct shell	*s,
 				CONST struct bn_tol	*tol));
 BU_EXTERN(void			nmg_s_radial_check,
 				(struct shell		*s,

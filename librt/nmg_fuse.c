@@ -3646,8 +3646,8 @@ CONST struct bn_tol	*tol;
  */
 int
 nmg_eu_radial_check( eu, s, tol )
-struct edgeuse		*eu;
-struct shell		*s;
+CONST struct edgeuse	*eu;
+CONST struct shell	*s;
 CONST struct bn_tol	*tol;
 {
 #if 1
