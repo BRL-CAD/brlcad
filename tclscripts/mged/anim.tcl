@@ -35,6 +35,20 @@ proc sketch_init_main {} {
 	uplevel #0 set mged_sketch_tab_path "/m/cad/.tab.6d/"
 	uplevel #0 set mged_sketch_temp1 "./_mged_sketch_temp1_"
 	uplevel #0 set mged_sketch_temp2 "./_mged_sketch_temp2_"
+	puts whosever
+	uplevel #0 { set mged_sketch_bindclasses {Button Radiobutton Checkbutton Menubutton}}
+	puts whatever
+	upvar #0 mged_sketch_bindclasses wlist
+	puts inever
+	foreach wclass $wlist {
+		uplevel #0 [list set mged_sketch_bindB($wclass) [bind $wclass <Button-2>] ]
+		uplevel #0 [list set mged_sketch_bindBR($wclass) [bind $wclass <ButtonRelease-2>] ]
+		uplevel #0 [list set mged_sketch_bindBM($wclass) [bind $wclass <B2-Motion>] ]
+		bind $wclass <Button-2> +[bind $wclass <Button-1>]
+		bind $wclass <ButtonRelease-2> +[bind $wclass <ButtonRelease-1>]
+		bind $wclass <B2-Motion> +[bind $wclass <B1-Motion>]
+	}
+	puts younever
 }
 
 proc sketch_popup_main { {p .} } {
@@ -73,6 +87,7 @@ proc sketch_popup_main { {p .} } {
 	pack $root.b0 $root.b1 $root.b2 $root.b3 $root.b4 \
 		$root.b5 $root.b6 \
 		-side top -fill x -expand yes
+
 }
 
 proc sketch_post_table_menu {menu} {
@@ -3432,6 +3447,15 @@ proc sketch_quit { p } {
 		#uplevel #0 "unset $var"
 	}
 	kill -f _VDRW_sketch_hl_
+
+	#reset button 2 bindings
+	upvar #0 mged_sketch_bindclasses wlist
+	global mged_sketch_bindB mged_sketch_bindBR mged_sketch_bindBM
+	foreach wclass $wlist {
+		bind $wclass <Button-2> $mged_sketch_bindB($wclass)
+		bind $wclass <ButtonRelease-2> $mged_sketch_bindBR($wclass)
+		bind $wclass <B2-Motion> $mged_sketch_bindBM($wclass)
+	}
 	# anything else?
 }
 
