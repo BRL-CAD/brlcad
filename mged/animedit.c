@@ -40,7 +40,7 @@ static char RCSid[] = "@(#)$Header$";
 #include "./ged.h"
 #include "./solid.h"
 #include "./sedit.h"	/* ??? */
-#include "./dm.h"	/* ??? */
+#include "./mged_dm.h"	/* ??? */
 #include "./joints.h"
 
 extern struct db_i	*dbip;	/* database instance pointer */

@@ -42,7 +42,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "externs.h"
 #include "./ged.h"
-#include "./dm.h"
+#include "./mged_dm.h"
 
 extern int	newargs;
 extern char	**promp;

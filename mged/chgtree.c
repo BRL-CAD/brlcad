@@ -50,7 +50,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./ged.h"
 #include "externs.h"
 #include "./solid.h"
-#include "./dm.h"
+#include "./mged_dm.h"
 #include "./mgedtcl.h"
 
 extern struct db_tree_state	mged_initial_tree_state;	/* dodraw.c */
