@@ -3128,7 +3128,7 @@ sedit()
 					break;
 
 				for( i=0 ; i<bot->num_faces ; i++ )
-					bot->thickness[i] = es_para[0] * local2base;
+					bot->thickness[i] = es_para[0];
 			}
 			else
 			{
@@ -3154,7 +3154,7 @@ sedit()
 					break;
 				}
 
-				bot->thickness[face_no] = es_para[0] * local2base;
+				bot->thickness[face_no] = es_para[0];
 			}
 		}
 		break;
@@ -7837,7 +7837,7 @@ vect_t argvect;
     es_para[ inpara++ ] = argvect[i];
   }
 
-  if( es_edflag == PSCALE || es_edflag == SSCALE )  {
+  if( es_edflag == PSCALE || es_edflag == SSCALE || es_edflag == ECMD_BOT_THICK )  {
     if (inpara != 1) {
 	    Tcl_AppendResult(interp, "ERROR: only one argument needed\n", (char *)NULL);
 	    inpara = 0;
