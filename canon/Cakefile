@@ -5,7 +5,7 @@
 #define SRCDIR	canon
 #define PRODUCTS	canonize pix-ipu ipustat ipuscan
 
-#if defined(__CAKE__irix4) || defined(__CAKE__irix5)
+#if defined(__CAKE__irix4) || defined(__CAKE__irix5) || defined( __CAKE__irix6)
 #	define DSLIB	-lds
 #else
 #	define DSLIB
