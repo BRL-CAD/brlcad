@@ -46,6 +46,7 @@ static char	red_tmpcomb[15];
 static char	*red_tmpcomb_init = "red_tmp.aXXXXX";
 static char	delims[] = " \t/";	/* allowable delimiters */
 
+void put_rgb_into_comb();
 void restore_comb();
 int editit();
 int clear_comb(),build_comb(),save_comb();
@@ -253,15 +254,17 @@ matp_t matrix;
   }
 }
 
-HIDDEN int
+void
 put_rgb_into_comb(comb, str)
 struct rt_comb_internal *comb;
 char *str;
 {
   int r, g, b;
 
-  if(sscanf(str, "%d%d%d", &r, &g, &b) != 3)
-    return TCL_ERROR;
+  if(sscanf(str, "%d%d%d", &r, &g, &b) != 3){
+    comb->rgb_valid = 0;
+    return;
+  }
 
   /* clamp the RGB values to [0,255] */
   if(r < 0)
@@ -283,8 +286,6 @@ char *str;
   comb->rgb[1] = (unsigned char)g;
   comb->rgb[2] = (unsigned char)b;
   comb->rgb_valid = 1;
-
-  return TCL_OK;
 }
 
 struct line_list{
