@@ -748,6 +748,8 @@ struct solid		*existing_sp;
  *  Find the transformation matrix obtained when traversing
  *  the arc indicated in sp->s_path[] to the indicated depth.
  *  Be sure to omit s_path[sp->s_last] -- it's a solid.
+ *
+ *  XXX Change to using db_path_to_mat().
  */
 void
 pathHmat( sp, matp, depth )
