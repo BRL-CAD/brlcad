@@ -226,12 +226,12 @@ cat << EOF > ${IN_FILE}
 #endif
 
 #if defined(CRAY1)
-/*	Cray X-M/P running UNICOS. */
+/*	Cray X-MP or Y-MP running UNICOS. */
 #	undef	xmp
 	MACHINE=xmp;
 	UNIXTYPE=SYSV;
 	HAS_TCP=1;
-	HAS_SYMLINKS=0;
+	HAS_SYMLINKS=1;
 #endif
 
 #if defined(CRAY2)
