@@ -164,30 +164,31 @@ rt_arb_get_cgtype(
 	register int i,j;
 	int	numuvec, unique, done;
 	int	si;
-
+	
 	RT_ARB_CK_MAGIC(arb);
 	BN_CK_TOL(tol);
-
+	
 	done = NO;		/* done checking for like vectors */
-
+	
 	svec[0] = svec[1] = 0;
 	si = 2;
-
+	
 	for(i=0; i<7; i++) {
 		unique = YES;
-		if(done == NO)
+		if(done == NO) {
 			svec[si] = i;
+		}
 		for(j=i+1; j<8; j++) {
 			int tmp;
 			vect_t vtmp;
-
+			
 			VSUB2( vtmp, arb->pt[i], arb->pt[j] );
-
+			
 			if( fabs(vtmp[0]) > tol->dist) tmp = 0;
 			else 	if( fabs(vtmp[1]) > tol->dist) tmp = 0;
 			else 	if( fabs(vtmp[2]) > tol->dist) tmp = 0;
 			else tmp = 1;
-
+			
 			if( tmp ) {
 				if( done == NO )
 					svec[++si] = j;
@@ -207,16 +208,20 @@ rt_arb_get_cgtype(
 			}
 		}
 	}
-
-	if( si > 2 && si < 6 ) 
+	
+	if( si > 2 && si < 6 ) {
 		svec[0] = si - 1;
-	if( si > 6 )
+	}
+	if( si > 6 ) {
 		svec[1] = si - 5;
-	for(i=1; i<=svec[1]; i++)
+	}
+	for(i=1; i<=svec[1]; i++) {
 		svec[svec[0]+1+i] = svec[5+i];
-	for(i=svec[0]+svec[1]+2; i<11; i++)
+	}
+	for(i=svec[0]+svec[1]+2; i<11; i++) {
 		svec[i] = -1;
-
+	}
+	
 	/* find the unique points */
 	numuvec = 0;
 	for(j=0; j<8; j++) {
@@ -227,13 +232,14 @@ rt_arb_get_cgtype(
 				break;
 			}
 		}
-		if( unique == YES )
+		if( unique == YES ) {
 			uvec[numuvec++] = j;
+		}
 	}
 
 	/* Figure out what kind of ARB this is */
 	switch( numuvec ) {
-
+		
 	case 8:
 		*cgtype = ARB8;		/* ARB8 */
 		break;
