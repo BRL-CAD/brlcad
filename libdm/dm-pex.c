@@ -115,6 +115,7 @@ struct dm dm_pex = {
   0,
   0,
   0,
+  0,
   0
 };
 
@@ -140,6 +141,7 @@ char *argv[];
   if(!count)
     Pex_load_startup(dmp);
 
+  bu_vls_init(&dmp->dm_pathName);
   bu_vls_printf(&dmp->dmr_pathName, ".dm_pex%d", count++);
 
   dmp->dmr_vars = bu_calloc(1, sizeof(struct pex_vars), "Pex_init: pex_vars");
