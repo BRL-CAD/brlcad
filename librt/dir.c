@@ -110,6 +110,7 @@ CONST mat_t		mat;
 	}
 	db_free_external( &ext );
 	RT_CK_DB_INTERNAL( ip );
+	ip->idb_meth = &rt_functab[id];
 	return id;			/* OK */
 }
 
