@@ -1,5 +1,3 @@
-#define NEWLINE 1	/* "New" algorithm:  isect line with 2 faces in 2d */
-
 /*
  *			N M G _ I N T E R . C
  *
@@ -2249,7 +2247,6 @@ f2_again:
 }
 
 /*
- * NEWLINE!
  *			N M G _ I S E C T _ L I N E 2 _ E D G E 2 P
  *
  *  A parallel to nmg_isect_edge2p_edge2p().
@@ -2540,8 +2537,6 @@ enlist:
 }
 
 /*
- *  NEWLINE2
- *
  *			N M G _ I S E C T _ L I N E _ E D G E G E O M 2 P
  *
  *  Given an edgeuse eu1 in fu1 with edge geometry eg1,
@@ -2606,8 +2601,9 @@ struct nmg_ptbl		*line_eutab;	/* optional */
 	NMG_CK_EDGE_G(eg1);
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
-		rt_log("nmg_isect_line2_edgegeom2p(eg1=x%x, fu1=x%x) eu1=x%x START\n",
-			eg1, fu1, eu1);
+		rt_log("nmg_isect_line2_edgegeom2p(eu1=x%x, fu1=x%x)  START\n\teg1=x%x, e=x%x, line_eutab=x%x\n",
+			fu1, eu1,
+			eg1, e, line_eutab);
 	}
 
 	/* If the edge generated this line, colinearity is assured. */
@@ -2949,7 +2945,6 @@ out:
 }
 
 /*
- * NEWLINE!
  *			N M G _ I S E C T _ L I N E 2 _ F A C E 2 P
  *
  *  The line is provided by the caller, and lies in the plane of both
@@ -3055,7 +3050,6 @@ do_ret:
 }
 
 /*
- * NEWLINE!
  *			N M G _ I S E C T _ T W O _ F A C E 3 P
  *
  *  Handle the complete mutual intersection of
