@@ -85,9 +85,8 @@ int		mode;
 
 	if( mode == RT_WDB_TYPE_DB_DISK && dbip->dbi_read_only )  {
 		/* In-mem updates happen regardless of disk read-only flag */
-		bu_log("wdb_dbopen(%s) database is read-only, aborting\n",
+		bu_log("wdb_dbopen(%s): read-only\n",
 			dbip->dbi_filename );
-		return RT_WDB_NULL;
 	}
 
 	GETSTRUCT(wdbp, rt_wdb);
@@ -184,6 +183,10 @@ double		local2mm;
 		break;
 
 	case RT_WDB_TYPE_DB_DISK:
+		if( wdbp->dbip->dbi_read_only )  {
+			bu_log("wdb_export(%s): read-only database, write aborted\n");
+			return -5;
+		}
 		flags = db_flags_internal( &intern );
 		/* If name already exists, temporary name will be generated */
 		if( (dp = db_diradd( wdbp->dbip, name, -1L, 0, flags )) == DIR_NULL )  {
