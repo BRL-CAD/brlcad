@@ -579,6 +579,7 @@ be_o_rotate()  {
 static void
 be_accept()  {
 	register struct solid *sp;
+	register struct dm_list *dmlp;
 	struct bu_vls vls;
 
 	if( state == ST_S_EDIT )  {
@@ -613,6 +614,10 @@ be_accept()  {
 		return;
 	}
 
+	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
+	  if(dmlp->_mged_variables->transform == 'e')
+	    dmlp->_mged_variables->transform = 'v';
+
 	bu_vls_init(&vls);
 	bu_vls_strcpy(&vls, "undo_edit_menu");
 	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -621,6 +626,7 @@ be_accept()  {
 static void
 be_reject()  {
 	register struct solid *sp;
+	register struct dm_list *dmlp;
 	struct bu_vls vls;
 
 	update_views = 1;
@@ -665,6 +671,10 @@ be_reject()  {
 		sp->s_iflag = DOWN;
 	color_soltab();
 	(void)chg_state( state, ST_VIEW, "Edit Reject" );
+
+	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
+	  if(dmlp->_mged_variables->transform == 'e')
+	    dmlp->_mged_variables->transform = 'v';
 
 	bu_vls_init(&vls);
 	bu_vls_strcpy(&vls, "undo_edit_menu");
