@@ -1,12 +1,12 @@
 /*
- *	@(#) vdeck.c		retrieved 8/13/86 at 08:05:39,
- *	@(#) version 1.7		  created 6/14/83 at 08:51:37.
+ *	@(#) vdeck.c			retrieved: 8/13/86 at 08:05:57,
+ *	@(#) version 1.8		last edit: 10/11/83 at 09:31:19.
  *
  *	Written by Gary S. Moss.
  *	All rights reserved, Ballistic Research Laboratory.
  *
- *	Generates interactively, a COMGEOM deck of objects from GED data
- *	base file.
+ *	Generates interactively, a COMGEOM deck of objects from "vged"
+ *	file.
  *
  *	Written by	Gary S. Moss
  *
@@ -17,39 +17,15 @@
 #include <stdio.h>
 #include <signal.h>
 #include <setjmp.h>
-#include "ged_types.h"
-#include "3d.h"
-#include "deck.h"
-#include "deck_glob.h"
-
-char	*cmd[] = {
-"",
-"C O M M A N D                  D E S C R I P T I O N",
-"",
-"deck [output file prefix]      Produce COM GEOM card deck.",
-"erase                          Erase current list of objects.",
-"insert [object[s]]             Add an object to current list.",
-"list [object[s]]               Display current list of selected objects.",
-"number [solid] [region]        Specify starting numbers for objects.",
-"quit                           Terminate run.",
-"remove [object[s]]             Remove an object from current list.",
-"sort                           Sort table of contents alphabetically.",
-"toc [object[s]]                Table of contents of solids database.",
-"! [shell command]              Execute a UNIX shell command.",
-"",
-"NOTE:",
-"First letter of command is sufficient, and all arguments are optional.",
-"Objects may be specified with string matching operators (*, [], -, ? or \\)",
-"as in the UNIX shell.",
-0 };
-
-char	*usage[] = {
-"",
-"d e c k ====",
-"Make COMGEOM decks of objects from a GED data base file",
-"Usage:  deck {file}.g [{obj1} {obj2} ... {objn}]",
-"",
-0 };
+#include "./ged_types.h"
+#include "./3d.h"
+#include "./vdeck.h"
+#include "./vextern.h"
+extern Directory	*diradd();
+extern double		fabs();
+extern long		lseek();
+int			quit(), abort();
+char			getcmd();
 
 /*	==== m a i n ( )
  */
@@ -169,7 +145,7 @@ Directory *dp;
 int	pathpos;
 matp_t	old_xlate;
 {
-	register struct members	*mp;
+	register struct member	*mp;
 	Record		rec;
 	Directory	*nextdp, *tdp;
 	mat_t			new_xlate;
@@ -368,7 +344,7 @@ matp_t	old_xlate;
  
 			path[pathpos] = dp;
 			if(	(nextdp =
-				lookup( mp->m_instname, NOISY )) == -1 )
+				lookup( mp->m_instname, NOISY )) == DIR_NULL )
 				continue;
 			if( mp->m_brname[0] != 0 )  {
 				/* Create an alias.
@@ -377,8 +353,9 @@ matp_t	old_xlate;
 				 * being unique.
 				 */
 				if(	(tdp =
-					lookup( mp->m_brname, QUIET )) !=
-					-1 )
+					lookup( mp->m_brname, QUIET ))
+				     !=	DIR_NULL
+					)
 					/* use existing alias
 					 */
 					nextdp = tdp;
@@ -724,10 +701,10 @@ Record *rec;
 	/* Enter new arb code.						*/
 	if( (i = cgarbs( rec, univecs, samevecs )) == 0 ) return;
 	redoarb( rec, univecs, samevecs, i );
-	rec->s.s_num *= -1;
+	rec->s.s_cgtype *= -1;
 	
 	/* Print the solid parameters.					*/
-	switch( rec->s.s_num ) {
+	switch( rec->s.s_cgtype ) {
 	case ARB8:
 		write( solfd, "arb8   ", 7 );
 		psp( 8, rec );
@@ -786,7 +763,7 @@ Record *rec;
 		psp( 2, rec );
 		break;
 	default:
-		fprintf( stderr, "Unknown arb (%d).\n", rec->s.s_num );
+		fprintf( stderr, "Unknown arb (%d).\n", rec->s.s_cgtype );
 		exit( 10 );
 	}
 	return;
@@ -821,11 +798,11 @@ Record *rec;
 	 */
 	if( fabs( MAGNITUDE(SV1) - MAGNITUDE(SV2) ) < .0001 ) {
 		/* vector A == vector B */
-		rec->s.s_num = ELL1;
+		rec->s.s_cgtype = ELL1;
 		/* SPH if vector B == vector C also */
 		if(fabs(MAGNITUDE(SV2) - MAGNITUDE(SV3)) < .0001)
-			rec->s.s_num = SPH;
-		if(rec->s.s_num != SPH) {
+			rec->s.s_cgtype = SPH;
+		if(rec->s.s_cgtype != SPH) {
 			/* switch A and C */
 			VMOVE(work, SV1);
 			VMOVE(SV1, SV3);
@@ -836,7 +813,7 @@ Record *rec;
 	else
 	if(fabs(MAGNITUDE(SV1) - MAGNITUDE(SV3)) < .0001) {
 		/* vector A == vector C */
-		rec->s.s_num = ELL1;
+		rec->s.s_cgtype = ELL1;
 		/* switch vector A and vector B */
 		VMOVE(work, SV1);
 		VMOVE(SV1, SV2);
@@ -845,14 +822,14 @@ Record *rec;
 
 	else
 	if(fabs(MAGNITUDE(SV2) - MAGNITUDE(SV3)) < .0001) 
-		rec->s.s_num = ELL1;
+		rec->s.s_cgtype = ELL1;
 
 	else
-		rec->s.s_num = GENELL;
+		rec->s.s_cgtype = GENELL;
 
 	/* print the solid parameters
 	 */
-	switch( rec->s.s_num ) {
+	switch( rec->s.s_cgtype ) {
 	case GENELL:
 		write( solfd, "ellg   ", 7 );
 		psp( 4, rec );
@@ -873,7 +850,7 @@ Record *rec;
 		break;
 	default:
 		fprintf( stderr,
-			"Error in type of ellipse (%d).\n", rec->s.s_num );
+			"Error in type of ellipse (%d).\n", rec->s.s_cgtype );
 		exit( 10 );
 	}
 	return;
@@ -905,7 +882,7 @@ Record *rec;
 
 	/* check for tec rec trc rcc
 	 */
-	rec->s.s_num = TGC;
+	rec->s.s_cgtype = TGC;
 	VCROSS( axb, SV2, SV3 );
 	VCROSS( cxd, SV4, SV5 );
 	ma = MAGNITUDE( SV2 );
@@ -920,21 +897,21 @@ Record *rec;
 	 */
 	if(	fabs( (mb/md)-(ma/mc) ) < .0001
 	    &&  fabs( fabs(DOT(axb,cxd)) - (maxb*mcxd) ) < .0001
-	)	rec->s.s_num = TEC;
+	)	rec->s.s_cgtype = TEC;
 
 	/* check for right cylinder
 	 */
 	if( fabs( fabs(DOT(SV1,axb)) - (mh*maxb) ) < .0001 ) {
 		if( fabs( ma-mb ) < .0001 ) {
-			if( fabs( ma-mc ) < .0001 )	rec->s.s_num = RCC;
-			else				rec->s.s_num = TRC;
+			if( fabs( ma-mc ) < .0001 )	rec->s.s_cgtype = RCC;
+			else				rec->s.s_cgtype = TRC;
 		} else    /* elliptical */
-		if( fabs( ma-mc ) < .0001 )		rec->s.s_num = REC;
+		if( fabs( ma-mc ) < .0001 )		rec->s.s_cgtype = REC;
 	}
 
 	/* print the solid parameters
 	 */
-	switch( rec->s.s_num ) {
+	switch( rec->s.s_cgtype ) {
 	case TGC :
 		write( solfd, "tgc    ", 7 );
 		work[0] = MAGNITUDE( SV4 );
@@ -971,7 +948,7 @@ Record *rec;
 		break;
 	default:
 		fprintf( stderr,
-			"Error in tgc type (%d).\n", rec->s.s_num );
+			"Error in tgc type (%d).\n", rec->s.s_cgtype );
 		exit( 10 );
 	}
 	return;
