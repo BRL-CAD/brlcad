@@ -19,8 +19,6 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#define	IGS_VERSION	"4.0"
-
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
@@ -44,6 +42,8 @@ char operator[]={
 mat_t *identity;
 extern int errno;
 
+extern char	version[];
+
 main( argc , argv )
 int argc;
 char *argv[];
@@ -53,8 +53,8 @@ char *argv[];
 	if( argc != 3 )
 		usage();
 
-	printf( "IGES-to-BRLCAD translator version %s\n" , IGS_VERSION );
-	printf( "Please direct bug reports to 'jra@brl.mil'\n" );
+	printf( "%s", version+5);
+	printf( "Please direct bug reports to <jra@brl.mil>\n\n" );
 
 	ntypes = NTYPES;
 	regroot = NULL;
