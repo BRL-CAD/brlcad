@@ -15,10 +15,14 @@
 #include "./tea.h"		/* IEEE Data Structures */
 #include "./ducks.h"		/* Teapot Vertex data */
 #include "./patches.h"		/* Teapot Patch data */
-
+#include "raytrace.h"
+#include "../librt/debug.h"	/* rt_g.debug flag settings */
 
 extern dt ducks[DUCK_COUNT];		/* Vertex data of teapot */
 extern pt patches[PATCH_COUNT];		/* Patch data of teapot */
+
+char *Usage = "This program ordinarily generates a database on stdout.\n\
+	Your terminal probably wouldn't like it.";
 
 main(argc, argv) 			/* really has no arguments */
 int argc; char *argv[];
@@ -26,6 +30,23 @@ int argc; char *argv[];
 	char * id_name = "Spline Example";
 	char * tea_name = "UtahTeapot";
 	int i;
+
+
+	if (isatty(fileno(stdout))) {
+		(void)fprintf(stderr, "%s: %s\n", *argv, Usage);
+		return(-1);
+	}
+
+	while ((i=getopt(argc, argv, "d")) != EOF) {
+		switch (i) {
+		case 'd' : rt_g.debug |= DEBUG_MEM | DEBUG_MEM_FULL; break;
+		default	:
+			(void)fprintf(stderr,
+				"Usage: %s [-d] > database.g\n", *argv);
+			return(-1);
+			break;
+		}
+	}
 
 
 	/* Setup information 
@@ -78,12 +99,26 @@ pt patch;
 	 * 		Number of interior knots )
  	 */
 	
+
+	rt_free(b_patch->u_kv->knots, "dumping u_kv knots I'm about to realloc");
+	rt_free(b_patch->u_kv, "dumping u_kv I'm about to realloc");
 	b_patch->u_kv = 
 	    (struct knot_vec *) spl_kvknot( 4, 0.0, 1.0, 0);
 
+	rt_free(b_patch->v_kv->knots, "dumping v_kv knots I'm about to realloc");
+	rt_free(b_patch->v_kv, "dumping v_kv I'm about to realloc");
 	b_patch->v_kv = 
 	    (struct knot_vec *) spl_kvknot( 4, 0.0, 1.0, 0);
 
+	if (rt_g.debug) {
+		rt_ck_malloc_ptr(b_patch, "b_patch");
+		rt_ck_malloc_ptr(b_patch->u_kv, "b_patch->u_kv");
+		rt_ck_malloc_ptr(b_patch->u_kv->knots,
+			"b_patch->u_kv->knots");
+		rt_ck_malloc_ptr(b_patch->v_kv, "b_patch->v_kv");
+		rt_ck_malloc_ptr(b_patch->v_kv->knots,
+			"b_patch->v_kv->knots");
+	}
 
 	/* Copy the control points */
 
@@ -92,9 +127,9 @@ pt patch;
 	for( i = 0; i< 4; i++)
 	for( j = 0; j < 4; j++)
 	{
-		*mesh_pointer = ducks[patch[i][j]-1].x;
-		*(mesh_pointer+1) = ducks[patch[i][j]-1].y;
-		*(mesh_pointer+2) = ducks[patch[i][j]-1].z;
+		*mesh_pointer = ducks[patch[i][j]-1].x * 1000;
+		*(mesh_pointer+1) = ducks[patch[i][j]-1].y * 1000;
+		*(mesh_pointer+2) = ducks[patch[i][j]-1].z * 1000;
 		mesh_pointer += 3;
 	}
 
