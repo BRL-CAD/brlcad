@@ -210,7 +210,7 @@ mk_addmember(
 
 	BU_GETSTRUCT( wp, wmember );
 	wp->l.magic = WMEMBER_MAGIC;
-	strncpy( wp->wm_name, name, sizeof(wp->wm_name) );
+	wp->wm_name = bu_strdup( name );
 	switch( op )  {
 	case WMOP_UNION:
 	case WMOP_INTERSECT:
@@ -245,6 +245,7 @@ mk_freemembers( struct bu_list *headp )
 	while( BU_LIST_WHILE( wp, wmember, headp ) )  {
 		WDB_CK_WMEMBER(wp);
 		BU_LIST_DEQUEUE( &wp->l );
+		bu_free( (char *)wp->wm_name, "wm_name" );
 		bu_free( (char *)wp, "wmember" );
 	}
 }
