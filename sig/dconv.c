@@ -19,11 +19,18 @@
 #include <strings.h>
 #endif
 
+#include <unistd.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
 
 #define	MAXM	4096
+
+void	rfft256();
+void	rfft();
+void	irfft256();
+void	irfft();
 
 double	savebuffer[MAXM-1];
 double	xbuf[2*MAXM];
