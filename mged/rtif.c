@@ -568,6 +568,7 @@ char	**argv;
 
 		if( sp->s_iflag == UP )
 			continue;
+		if (sp->s_path[0]->d_addr == RT_DIR_PHONY_ADDR) continue;
 		(void)fprintf(fp, "'%s' ", sp->s_path[0]->d_namep);
 		sp->s_iflag = UP;
 		for( forw=sp->s_forw; forw != &HeadSolid; forw=forw->s_forw) {
