@@ -17,7 +17,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include "vmath.h"
-#include "ray.h"
+#include "raytrace.h"
 #include "debug.h"
 
 extern long nsolids;		/* total # of solids participating */
@@ -47,7 +47,6 @@ register struct application *ap;
 	register struct soltab *stp;
 	static vect_t diff;	/* diff between shot base & solid center */
 	FAST fastf_t distsq;	/* distance**2 */
-	static struct partition *PartHeadp, *pp;
 	static struct seg *HeadSeg;
 
 	if(debug&DEBUG_ALLRAYS) {
@@ -57,7 +56,6 @@ register struct application *ap;
 	}
 
 	HeadSeg = SEG_NULL;
-	PartHeadp = PT_NULL;
 
 	/*
 	 * For now, shoot at all solids in model.
@@ -72,6 +70,9 @@ register struct application *ap;
 			nmiss++;
 			continue;
 		}
+
+		/* Here we should also consider the bounding RPP */
+
 		nshots++;
 		newseg = functab[stp->st_id].ft_shot( stp, &ap->a_ray );
 		if( newseg == SEG_NULL )
@@ -79,7 +80,7 @@ register struct application *ap;
 
 		/* First, some checking */
 		if( newseg->seg_in.hit_dist > newseg->seg_out.hit_dist )  {
-			static struct hit temp;	/* XXX */
+			static struct hit temp;		/* XXX */
 			printf("ERROR %s %s: in/out reversal (%f,%f)\n",
 				functab[stp->st_id].ft_name,
 				newseg->seg_stp->st_name,
@@ -102,42 +103,42 @@ register struct application *ap;
 	/* HeadSeg chain now has all segments hit by this ray */
 	if( HeadSeg == SEG_NULL )  {
 		ap->a_miss( ap );
-		goto done;
-	}
-
-	/*
-	 *  All intersections of the ray with the model have
-	 *  been computed.  Evaluate the boolean functions.
-	 */
-	PartHeadp = bool_regions( HeadSeg );
-
-	if( PartHeadp->pt_forw == PartHeadp )  {
-		ap->a_miss( ap );
 	}  else  {
-		/* Hand final partitioned intersection list to application. */
-		ap->a_hit( ap, PartHeadp );
-	}
+		register struct partition *PartHeadp;
+		/*
+		 *  All intersections of the ray with the model have
+		 *  been computed.  Evaluate the boolean functions.
+		 */
+		PartHeadp = bool_regions( HeadSeg );
 
-	/*
-	 * Processing of this ray is complete, so release resources.
-	 *
-	 * Free up Seg memory.
-	 */
-done:
-	while( HeadSeg != SEG_NULL )  {
-		register struct seg *hsp;	/* XXX */
+		if( PartHeadp->pt_forw == PartHeadp )  {
+			ap->a_miss( ap );
+		}  else  {
+			register struct partition *pp;
+			/*
+			 * Hand final partitioned intersection list
+			 * to the application.
+			 */
+			ap->a_hit( ap, PartHeadp );
 
-		hsp = HeadSeg->seg_next;
-		FREE_SEG( HeadSeg );
-		HeadSeg = hsp;
-	}
-	/* Free up partition list */
-	if( PartHeadp != PT_NULL)  {
-		for( pp = PartHeadp->pt_forw; pp != PartHeadp;  )  {
-			register struct partition *newpp;
-			newpp = pp;
-			pp = pp->pt_forw;
-			FREE_PT(newpp);
+			/* Free up partition list */
+			for( pp = PartHeadp->pt_forw; pp != PartHeadp;  )  {
+				register struct partition *newpp;
+				newpp = pp;
+				pp = pp->pt_forw;
+				FREE_PT(newpp);
+			}
+		}
+
+		/*
+		 * Processing of this ray is complete, so release resources.
+		 */
+		while( HeadSeg != SEG_NULL )  {
+			register struct seg *hsp;	/* XXX */
+
+			hsp = HeadSeg->seg_next;
+			FREE_SEG( HeadSeg );
+			HeadSeg = hsp;
 		}
 	}
 	if( debug )  fflush(stdout);

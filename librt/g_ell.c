@@ -19,8 +19,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include "vmath.h"
-#include "ray.h"
+#include "raytrace.h"
 #include "db.h"
+#include "debug.h"
 
 /*
  *  Algorithm:
@@ -219,6 +220,27 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 		f = magsq_c;
 	stp->st_radsq = f;
 
+	/* Compute bounding RPP */
+
+	/* init maxima and minima */
+	stp->st_max[X] = stp->st_max[Y] = stp->st_max[Z] = -INFINITY;
+	stp->st_min[X] = stp->st_min[Y] = stp->st_min[Z] =  INFINITY;
+
+#define MINMAX(a,b,c)	{ FAST fastf_t ftemp;\
+			if( (ftemp = (c)) < (a) )  a = ftemp;\
+			if( ftemp > (b) )  b = ftemp; }
+
+#define MM(v)	MINMAX( stp->st_min[X], stp->st_max[X], v[X] ); \
+		MINMAX( stp->st_min[Y], stp->st_max[Y], v[Y] ); \
+		MINMAX( stp->st_min[Z], stp->st_max[Z], v[Z] )
+
+	VADD2( work, ell->ell_V, A ); MM( work );
+	VSUB2( work, ell->ell_V, A ); MM( work );
+	VADD2( work, ell->ell_V, B ); MM( work );
+	VSUB2( work, ell->ell_V, B ); MM( work );
+	VADD2( work, ell->ell_V, C ); MM( work );
+	VSUB2( work, ell->ell_V, C ); MM( work );
+
 	return(0);			/* OK */
 }
 
@@ -247,7 +269,7 @@ register struct soltab *stp;
 struct seg *
 ellg_shot( stp, rp )
 struct soltab *stp;
-register struct ray *rp;
+register struct xray *rp;
 {
 	register struct ell_specific *ell =
 		(struct ell_specific *)stp->st_specific;

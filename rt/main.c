@@ -18,7 +18,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include "vmath.h"
-#include "ray.h"
+#include "raytrace.h"
 #include "debug.h"
 
 extern int null_prep(),	null_print();

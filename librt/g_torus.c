@@ -20,7 +20,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include "vmath.h"
-#include "ray.h"
+#include "raytrace.h"
 #include "db.h"
 #include "debug.h"
 
@@ -157,6 +157,7 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	static fastf_t	magsq_a, magsq_b, magsq_h;
 	static mat_t	R;
 	static vect_t	A, B, Hv;
+	static vect_t	work, temp;
 	FAST fastf_t	f;
 	static fastf_t	r1, r2;	/* primary and secondary radius */
 
@@ -245,6 +246,48 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	f = r1 + r2;
 	stp->st_radsq = f * f;
 
+	/* Compute bounding RPP */
+
+	/* init maxima and minima */
+	stp->st_max[X] = stp->st_max[Y] = stp->st_max[Z] = -INFINITY;
+	stp->st_min[X] = stp->st_min[Y] = stp->st_min[Z] =  INFINITY;
+
+#define MINMAX(a,b,c)	{ FAST fastf_t ftemp;\
+			if( (ftemp = (c)) < (a) )  a = ftemp;\
+			if( ftemp > (b) )  b = ftemp; }
+
+#define MM(v)	MINMAX( stp->st_min[X], stp->st_max[X], v[X] ); \
+		MINMAX( stp->st_min[Y], stp->st_max[Y], v[Y] ); \
+		MINMAX( stp->st_min[Z], stp->st_max[Z], v[Z] )
+
+	VADD2( work, tor->tor_V, A );
+	VADD2( temp, work, Hv ); MM( work );
+	VSUB2( temp, work, Hv ); MM( work );
+
+	VSUB2( work, tor->tor_V, A );
+	VADD2( temp, work, Hv ); MM( work );
+	VSUB2( temp, work, Hv ); MM( work );
+
+	VADD2( work, tor->tor_V, B );
+	VADD2( temp, work, Hv ); MM( work );
+	VSUB2( temp, work, Hv ); MM( work );
+
+	VSUB2( work, tor->tor_V, B );
+	VADD2( temp, work, Hv ); MM( work );
+	VSUB2( temp, work, Hv ); MM( work );
+
+	/*  In the case of A and B being 45 degrees off an axis,
+	 *  the above code is not good enough, and sqrt(2)*radius
+	 *  error will creep in, so compensate for this.
+	 *  We +/- one half of the correction factor.
+	 */
+	f *= sqrt(2.0) / 2.0;
+	stp->st_min[X] -= f;
+	stp->st_min[Y] -= f;
+	stp->st_min[Z] -= f;
+	stp->st_max[X] += f;
+	stp->st_max[X] += f;
+	stp->st_max[X] += f;
 	return(0);			/* OK */
 }
 
@@ -295,7 +338,7 @@ register struct soltab *stp;
 struct seg *
 tor_shot( stp, rp )
 struct soltab *stp;
-register struct ray *rp;
+register struct xray *rp;
 {
 	register struct tor_specific *tor =
 		(struct tor_specific *)stp->st_specific;

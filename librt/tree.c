@@ -17,9 +17,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include "vmath.h"
-#include "ray.h"
+#include "raytrace.h"
 #include "db.h"
-#include "dir.h"
+#include "rtdir.h"
 #include "debug.h"
 
 extern struct soltab *HeadSolid;
@@ -153,6 +153,8 @@ struct region *regp;
 		printf("-------------- %s -------------\n", stp->st_name);
 		VPRINT("Bound Sph CENTER", stp->st_center);
 		printf("Bound Sph Rad**2 = %f\n", stp->st_radsq);
+		VPRINT("Bound RPP min", stp->st_min);
+		VPRINT("Bound RPP max", stp->st_max);
 		if( regp != REGION_NULL )
 			printf("Member of region %s\n", regp->reg_name );
 		functab[stp->st_id].ft_print( stp );

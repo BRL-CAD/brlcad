@@ -17,8 +17,9 @@
  */
 #include <stdio.h>
 #include "vmath.h"
-#include "ray.h"
+#include "raytrace.h"
 #include "db.h"
+#include "debug.h"
 
 #include "./polyno.h"
 #include "./complex.h"
@@ -163,22 +164,20 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 
 	/* Compute bounding sphere */
 	{
-		static fastf_t xmax, ymax, zmax;/* For bounding sphere */
-		static fastf_t xmin, ymin, zmin;/* For bounding sphere */
 		static fastf_t dx, dy, dz;	/* For bounding sphere */
 		static vect_t temp;
 
 		/* init maxima and minima */
-		xmax = ymax = zmax = -INFINITY;
-		xmin = ymin = zmin =  INFINITY;
+		stp->st_max[X] = stp->st_max[Y] = stp->st_max[Z] = -INFINITY;
+		stp->st_min[X] = stp->st_min[Y] = stp->st_min[Z] =  INFINITY;
 
 #define MINMAX(a,b,c)	{ FAST fastf_t ftemp;\
 			if( (ftemp = (c)) < (a) )  a = ftemp;\
 			if( ftemp > (b) )  b = ftemp; }
 
-#define MM(v)	MINMAX( xmin, xmax, v[X] ); \
-		MINMAX( ymin, ymax, v[Y] ); \
-		MINMAX( zmin, zmax, v[Z] )
+#define MM(v)	MINMAX( stp->st_min[X], stp->st_max[X], v[X] ); \
+		MINMAX( stp->st_min[Y], stp->st_max[Y], v[Y] ); \
+		MINMAX( stp->st_min[Z], stp->st_max[Z], v[Z] )
 
 		VADD2( work, tgc->tgc_V, A ); MM( work );
 		VSUB2( work, tgc->tgc_V, A ); MM( work );
@@ -192,11 +191,13 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 		VSUB2( work, temp, D );  MM( work );
 
 		VSET( stp->st_center,
-			(xmax + xmin)/2, (ymax + ymin)/2, (zmax + zmin)/2 );
+			(stp->st_max[X] + stp->st_min[X])/2,
+			(stp->st_max[Y] + stp->st_min[Y])/2,
+			(stp->st_max[Z] + stp->st_min[Z])/2 );
 
-		dx = (xmax - xmin)/2;
-		dy = (ymax - ymin)/2;
-		dz = (zmax - zmin)/2;
+		dx = (stp->st_max[X] - stp->st_min[X])/2;
+		dy = (stp->st_max[Y] - stp->st_min[Y])/2;
+		dz = (stp->st_max[Z] - stp->st_min[Z])/2;
 		stp->st_radsq = dx*dx + dy*dy + dz*dz;
 	}
 	return (0);
@@ -343,7 +344,7 @@ register struct soltab	*stp;
 struct seg *
 tgc_shot( stp, rp )
 struct soltab		*stp;
-register struct ray	*rp;
+register struct xray	*rp;
 {
 	register struct tgc_specific	*tgc =
 		(struct tgc_specific *)stp->st_specific;
@@ -377,8 +378,6 @@ register struct ray	*rp;
 
 	/* General Cone may have 4 intersections, but	*
 	 * Truncated Cone may only have 2.		*/
-	GET_SEG( segp );
-	segp->seg_stp = stp;
 
 #define OUT		0
 #define	IN		1
@@ -415,6 +414,8 @@ register struct ray	*rp;
 		/*  If two between-plane intersections exist, they are
 		 *  the hit points for the ray.
 		 */
+		GET_SEG( segp );
+		segp->seg_stp = stp;
 		VJOIN1(	segp->seg_in.hit_point,
 			rp->r_pt, pt[IN], rp->r_dir );
 		VJOIN1( work, pprime, pt[IN], dprime );
@@ -426,7 +427,9 @@ register struct ray	*rp;
 		VJOIN1( work, pprime, pt[OUT], dprime );
 		tgcnormal( segp->seg_out.hit_normal, work, tgc );
 		segp->seg_out.hit_dist = pt[OUT];
-	} else if ( intersect == 1 ){
+		return( segp );
+	}
+	if ( intersect == 1 )  {
 		/*  If only one such intersection exists, the other
 		 *  intersection must be on one of the planar surfaces.
 		 *
@@ -456,6 +459,8 @@ register struct ray	*rp;
 			return( SEG_NULL );
 		}
 
+		GET_SEG( segp );
+		segp->seg_stp = stp;
 		if ( pt[OUT] == Max( pt[OUT], pt[IN] ) ){
 			VJOIN1(	segp->seg_in.hit_point,
 				rp->r_pt, pt[IN], rp->r_dir );
@@ -479,60 +484,60 @@ register struct ray	*rp;
 			VMOVE(	segp->seg_out.hit_normal, norm );
 			segp->seg_out.hit_dist = pt[IN];
 		}
+		return( segp );
+	}
+
+	/*  If all conic interections lie outside the plane,
+	 *  then check to see whether there are two planar
+	 *  intersections inside the governing ellipses.
+	 *
+	 *  But first, if the direction is parallel (or nearly
+	 *  so) to the planes, it (obviously) won't intersect
+	 *  either of them.
+	 */
+	dir = VDOT( tgc->tgc_norm, rp->r_dir );	/* direc */
+	if ( NEAR_ZERO( dir ) )
+		return( SEG_NULL );
+
+	b = ( -pprime[2] )/dprime[2];
+	t = ( tgc->tgc_sH - pprime[2] )/dprime[2];
+
+	VJOIN1( work, pprime, b, dprime );
+	Alpha( alf1, work[0], work[1], tgc->tgc_A, tgc->tgc_B );
+
+	VJOIN1( work, pprime, t, dprime );
+	Alpha( alf2, work[0], work[1], tgc->tgc_C, tgc->tgc_D );
+
+	/*  It should not be possible for one planar intersection
+	 *  to be outside its ellipse while the other is inside ...
+	 *  but I wouldn't take any chances.
+	 */
+	if ( alf1 > 1.0 || alf2 > 1.0 )
+		return( SEG_NULL );
+
+	GET_SEG( segp );
+	segp->seg_stp = stp;
+
+	/*  Use the dot product (found earlier) of the plane
+	 *  normal with the direction vector to determine the
+	 *  orientation of the intersections.
+	 */
+	if ( dir > 0.0 ){
+		VJOIN1(	segp->seg_in.hit_point, rp->r_pt, b, rp->r_dir );
+		VREVERSE( segp->seg_in.hit_normal, tgc->tgc_norm );
+		segp->seg_in.hit_dist = b;
+
+		VJOIN1(	segp->seg_out.hit_point, rp->r_pt, t, rp->r_dir );
+		VMOVE( segp->seg_out.hit_normal, tgc->tgc_norm );
+		segp->seg_out.hit_dist = t;
 	} else {
-		/*  If all conic interections lie outside the plane,
-		 *  then check to see whether there are two planar
-		 *  intersections inside the governing ellipses.
-		 *
-		 *  But first, if the direction is parallel (or nearly
-		 *  so) to the planes, it (obviously) won't intersect
-		 *  either of them.
-		 */
-		dir = VDOT( tgc->tgc_norm, rp->r_dir );	/* direc */
-		if ( NEAR_ZERO( dir ) )
-			return( SEG_NULL );
+		VJOIN1(	segp->seg_in.hit_point, rp->r_pt, t, rp->r_dir );
+		VMOVE( segp->seg_in.hit_normal, tgc->tgc_norm );
+		segp->seg_in.hit_dist = t;
 
-		b = ( -pprime[2] )/dprime[2];
-		t = ( tgc->tgc_sH - pprime[2] )/dprime[2];
-
-		VJOIN1( work, pprime, b, dprime );
-		Alpha( alf1, work[0], work[1], tgc->tgc_A, tgc->tgc_B );
-
-		VJOIN1( work, pprime, t, dprime );
-		Alpha( alf2, work[0], work[1], tgc->tgc_C, tgc->tgc_D );
-
-		/*  It should not be possible for one planar intersection
-		 *  to be outside its ellipse while the other is inside ...
-		 *  but I wouldn't take any chances.
-		 */
-		if ( alf1 > 1.0 || alf2 > 1.0 )
-			return( SEG_NULL );
-
-		/*  Use the dot product (found earlier) of the plane
-		 *  normal with the direction vector to determine the
-		 *  orientation of the intersections.
-		 */
-		if ( dir > 0.0 ){
-			VJOIN1(	segp->seg_in.hit_point,
-				rp->r_pt, b, rp->r_dir );
-			VREVERSE( segp->seg_in.hit_normal, tgc->tgc_norm );
-			segp->seg_in.hit_dist = b;
-
-			VJOIN1(	segp->seg_out.hit_point,
-				rp->r_pt, t, rp->r_dir );
-			VMOVE( segp->seg_out.hit_normal, tgc->tgc_norm );
-			segp->seg_out.hit_dist = t;
-		} else {
-			VJOIN1(	segp->seg_in.hit_point,
-				rp->r_pt, t, rp->r_dir );
-			VMOVE( segp->seg_in.hit_normal, tgc->tgc_norm );
-			segp->seg_in.hit_dist = t;
-
-			VJOIN1(	segp->seg_out.hit_point,
-				rp->r_pt, b, rp->r_dir );
-			VREVERSE( segp->seg_out.hit_normal, tgc->tgc_norm );
-			segp->seg_out.hit_dist = b;
-		}
+		VJOIN1(	segp->seg_out.hit_point, rp->r_pt, b, rp->r_dir );
+		VREVERSE( segp->seg_out.hit_normal, tgc->tgc_norm );
+		segp->seg_out.hit_dist = b;
 	}
 	return( segp );
 }
