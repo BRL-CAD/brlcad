@@ -50,7 +50,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
  */
 
 /*
- * XXX These should be bracketed in {} !!!!
+ * XXX On output, these should be bracketed in {} !!!!
  */
 
 int
@@ -70,6 +70,12 @@ char *str;
 	    &m[8], &m[9], &m[10], &m[11], &m[12], &m[13], &m[14], &m[15]);
 }
 
+/*
+ *			B N _ D E C O D E _ T O L
+ *
+ *  If the user specifies {}, or only the distance tolerance,
+ *  provide the same defaults that LIBRT uses.
+ */
 int
 bn_decode_tol(tol, str)
 struct bn_tol *tol;
