@@ -25,6 +25,7 @@ extern int errno;
 static struct node **stk;
 static int jtop,stklen;
 
+void
 Initstack()
 {
 
@@ -41,6 +42,7 @@ Initstack()
 
 /*  This function pushes a pointer onto the stack. */
 
+void
 Push(ptr)
 struct node *ptr;
 {
@@ -64,7 +66,8 @@ struct node *ptr;
 /*  This function pops the top of the stack. */
 
 
-struct node *Pop()
+struct node *
+Pop()
 {
 	struct node *ptr;
 
@@ -79,7 +82,7 @@ struct node *Pop()
 	return(ptr);
 }
 
-
+void
 Freestack()
 {
 	jtop = (-1);

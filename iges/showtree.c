@@ -39,6 +39,7 @@ int sjtop,sstklen;
 char **stk;
 int jtop,stklen;
 
+void
 Showtree( root )
 struct node *root;
 {
@@ -113,6 +114,7 @@ struct node *root;
 
 /* The following are stack routines for character strings */
 
+void
 Initastack()
 {
 	int i;
@@ -132,6 +134,7 @@ Initastack()
 
 /*  This function pushes a pointer onto the stack. */
 
+void
 Apush(ptr)
 char *ptr;
 {
@@ -158,7 +161,8 @@ char *ptr;
 /*  This function pops the top of the stack. */
 
 
-char *Apop()
+char *
+Apop()
 {
 	char *ptr;
 
@@ -174,6 +178,7 @@ char *Apop()
 }
 
 /* Free the memory associated with the stack */
+void
 Afreestack()
 {
 
@@ -185,6 +190,7 @@ Afreestack()
 
 
 /* The following routines are stack routines for 'struct node' */
+void
 Initsstack() /* initialize the stack */
 {
 
@@ -201,6 +207,7 @@ Initsstack() /* initialize the stack */
 
 /*  This function pushes a pointer onto the stack. */
 
+void
 Spush(ptr)
 struct node *ptr;
 {
@@ -224,7 +231,8 @@ struct node *ptr;
 /*  This function pops the top of the stack. */
 
 
-struct node *Spop()
+struct node *
+Spop()
 {
 	struct node *ptr;
 
@@ -240,6 +248,7 @@ struct node *Spop()
 }
 
 /* free memory associated with the stack, but not the pointed to nodes */
+void
 Sfreestack()
 {
 	sjtop = (-1);
