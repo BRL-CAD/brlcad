@@ -721,7 +721,7 @@ db5_import_attributes( struct bu_attribute_value_set *avs, const struct bu_exter
 
 	BU_CK_EXTERNAL(ap);
 
-	BU_ASSERT_LONG( ap->ext_nbytes, >=, 5 );
+	BU_ASSERT_LONG( ap->ext_nbytes, >=, 4 );
 
 	/* First pass -- count number of attributes */
 	cp = (const char *)ap->ext_buf;
