@@ -41,7 +41,11 @@ proc distribute_text { w cmd str } {
 		}
 
 		if {$str != ""} {
-		    mged_print_tag $_w $str\n result
+		    if {[string index $str end] == "\n"} {
+			mged_print_tag $_w $str result
+		    } else {
+			mged_print_tag $_w $str\n result
+		    }
 		}
 
 		$_w mark set insert curr
