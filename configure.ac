@@ -879,9 +879,9 @@ if test "x$fno_strict_aliasing_flag_works" = "xno" ; then
 	LDFLAGS="$PRELDFLAGS"
 fi
 
-dnl check for -search_paths_first linker flag
-search_paths_first_flag="-Wl,-search_paths_first"
-AC_MSG_CHECKING([if the linker understands $search_paths_first_flag])
+dnl check for -search_paths_first linker flag when making dylibs
+search_paths_first_flag="-Wl,-search_paths_first -mdynamic-no-pic"
+AC_MSG_CHECKING([if the compiler understands $search_paths_first_flag])
 search_paths_first_flag_works=yes
 PRELDFLAGS="$LDFLAGS"
 LDFLAGS="$LDFLAGS $search_paths_first_flag"
