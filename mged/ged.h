@@ -340,10 +340,7 @@ extern struct mged_variables mged_variables;
 
 /* Commands */
 
-MGED_EXTERN(int f_3ptarb, (int argc, char **argv));	/* arbs.c */
-
-
-
+MGED_EXTERN(int f_3ptarb, (int argc, char **argv));
 MGED_EXTERN(int f_adc, (int argc, char **argv));
 MGED_EXTERN(int f_aeview, (int argc, char **argv));
 MGED_EXTERN(int f_amtrack, (int argc, char **argv));
@@ -446,6 +443,7 @@ MGED_EXTERN(int f_saveview, (int argc, char **argv));
 MGED_EXTERN(int f_sc_obj, (int argc, char **argv));
 MGED_EXTERN(int f_sed, (int argc, char **argv));
 MGED_EXTERN(int f_set, (int argc, char **argv));
+MGED_EXTERN(int f_shader, (int argc, char **argv));
 MGED_EXTERN(int f_source, (int argc, char **argv));
 MGED_EXTERN(int f_status, (int argc, char **argv));
 MGED_EXTERN(int f_summary, (int argc, char **argv));
