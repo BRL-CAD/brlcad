@@ -291,7 +291,7 @@ char *argv[];
 
 #if 0
   /*XXX For debugging purposes */
-  XSynchronize(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy, TRUE);
+  XSynchronize(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy, 1);
 #endif
 
   a_screen = Tk_ScreenNumber(((struct dm_xvars *)dmp->dm_vars.pub_vars)->top);
@@ -1210,19 +1210,6 @@ struct dm *dmp;
 			     maxvip->depth,
 			     ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap)){
 	((struct dm_xvars *)dmp->dm_vars.pub_vars)->depth = maxvip->depth;
-
-	if (!dmp->dm_top) {
-	  /*
-	   * Try to set the visual of the toplevel window to be the same
-	   * as the display manager window . This seems to be necessary
-	   * to avoid the case where the toplevel window's colormap gets
-	   * swapped in and hoses things up.
-	   */
-	  Tk_SetWindowVisual(((struct dm_xvars *)dmp->dm_vars.pub_vars)->top,
-			     maxvip->visual,
-			     maxvip->depth,
-			     ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap);
-	}
 
 	return maxvip; /* success */
       } else { 

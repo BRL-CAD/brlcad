@@ -1341,19 +1341,6 @@ Tk_Window tkwin;
 	  if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.depth > 0)
 	    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuf = 1;
 
-	  if (!dmp->dm_top) {
-	    /*
-	     * Try to set the visual of the toplevel window to be the same
-	     * as the display manager window . This seems to be necessary
-	     * to avoid the case where the toplevel window's colormap gets
-	     * swapped in and hoses things up.
-	     */
-	    Tk_SetWindowVisual(((struct dm_xvars *)dmp->dm_vars.pub_vars)->top,
-			       maxvip->visual,
-			       maxvip->depth,
-			       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap);
-	  }
-
 	  return (maxvip); /* success */
 	} else { 
 	  /* retry with lesser depth */
