@@ -582,7 +582,6 @@ CONST struct bn_tol	*tol;
 	vect_t			unit_d;
 	vect_t			unit_c;
 	vect_t			unit_h;
-	fastf_t			dot;
 	int			parallel;
 	int			parallel1;
 
@@ -2396,7 +2395,6 @@ vect_t dir;
 	fastf_t NdotDir;
 	plane_t pl;
 	fastf_t dist;
-	fastf_t area;
 
 	/* insersect with plane */
 

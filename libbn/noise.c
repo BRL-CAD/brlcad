@@ -347,7 +347,6 @@ point_t result;
 	register int	jx, jy, jz;
 	int ix, iy, iz;		/* lower integer lattice point */
 	double x, y, z;		/* corrected point */
-	double fx, fy, fz;	/* distance above integer lattice point */
 	double		px, py, pz, s;
 	double		sx, sy, sz, tx, ty, tz;
 	short		m;
@@ -367,10 +366,6 @@ point_t result;
 	ix = ip[X];
 	iy = ip[Y];
 	iz = ip[Z];
-
-	fx = f[X];
-	fy = f[Y];
-	fz = f[Z];
 
 	x = p[X];
 	y = p[Y];
