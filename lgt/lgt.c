@@ -16,7 +16,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./extern.h"
 #include "./vecmath.h"
 #include "./screen.h"
-
 #if defined( CRAY )
 #include <sys/category.h>
 #include <sys/resource.h>
@@ -28,16 +27,15 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define MAX_CPU_TICKS	(200000*HZ) /* Max ticks = seconds * ticks/sec.	*/
 #define NICENESS	-6 /* should bring it down from 16 to 10 */
 #endif
-
-int ready_Output_Device();
-void close_Output_Device();
+int	ready_Output_Device();
+void	close_Output_Device();
 #if STD_SIGNAL_DECLS
-STATIC void intr_sig();
+STATIC void	intr_sig();
 #else
-STATIC int intr_sig();
+STATIC int	intr_sig();
 #endif
-STATIC void init_Lgts();
-void exit_Neatly();
+STATIC void	init_Lgts();
+void		exit_Neatly();
 
 STATIC int
 substr( str, pattern )
@@ -50,13 +48,10 @@ char	*str, *pattern;
 	return	TRUE;
 	}
 
-/*
-	int main( int argc, char *argv[] )
- */
+/*	m a i n ( )							*/
 main( argc, argv )
-int argc;
-char *argv[];
-	{	register int i;
+char	*argv[];
+{	register int	i;
 #if ! defined( BSD ) && ! defined( sgi ) && ! defined( CRAY2 )
 	(void) setvbuf( stderr, (char *) NULL, _IOLBF, BUFSIZ );
 #endif
@@ -72,9 +67,9 @@ char *argv[];
 	RES_INIT( &rt_g.res_results );
 
 #if defined( CRAY )
-	{	int newnice;
-		long oldlimit;
-		long newlimit;
+	{	int	newnice;
+		long	oldlimit;
+		long	newlimit;
 	if( (newnice = nicem( C_PROC, 0, NICENESS )) == -1 )
 		perror( "nicem" );
 	else
@@ -161,12 +156,10 @@ tty_sig:
 	return	99; /* Stupid UTX compiler considers this as reachable. */
 	}
 
-/*
-	int interpolate_Frame( int frame )
- */
+/*	i n t e r p o l a t e _ F r a m e ( )				*/
 int
 interpolate_Frame( frame )
-int frame;
+int	frame;
 	{	fastf_t	rel_frame = (fastf_t) frame / movie.m_noframes;
 	if( movie.m_noframes == 1 )
 		return	TRUE;
@@ -182,18 +175,18 @@ int frame;
 	if( movie.m_keys )
 		return	key_Frame() == -1 ? FALSE : TRUE;
 	lgts[0].azim = movie.m_azim_beg +
-			rel_frame * (movie.m_azim_end - movie.m_azim_beg);
+				rel_frame * (movie.m_azim_end - movie.m_azim_beg);
 	lgts[0].elev = movie.m_elev_beg +
-			rel_frame * (movie.m_elev_end - movie.m_elev_beg);
+				rel_frame * (movie.m_elev_end - movie.m_elev_beg);
 	grid_roll = movie.m_roll_beg +
-			rel_frame * (movie.m_roll_end - movie.m_roll_beg);
+				rel_frame * (movie.m_roll_end - movie.m_roll_beg);
 	if( movie.m_over )
 		{
 		lgts[0].over = TRUE;
 		lgts[0].dist = movie.m_dist_beg +
-			rel_frame * (movie.m_dist_end - movie.m_dist_beg);
+				rel_frame * (movie.m_dist_end - movie.m_dist_beg);
 		grid_dist = movie.m_grid_beg +
-			rel_frame * (movie.m_grid_end - movie.m_grid_beg);
+				rel_frame * (movie.m_grid_end - movie.m_grid_beg);
 		}
 	else
 		{
@@ -215,9 +208,7 @@ int frame;
 	return	TRUE;
 	}
 
-/*
-	void exit_Neatly( int status )
- */
+/*	e x i t _ N e a t l y ( )					*/
 void
 exit_Neatly( status )
 int	status;
@@ -226,12 +217,10 @@ int	status;
 	exit( status );
 	}
 
-/*
-	int ready_Output_Device( int frame )
- */
+/*	r e a d y _ O u t p u t _ D e v i c e ( )			*/
 int
 ready_Output_Device( frame )
-int frame;
+int	frame;
 	{	int size;
 	if( force_cellsz )
 		{
@@ -265,9 +254,7 @@ int frame;
 	return	1;
 	}
 
-/*
-	void close_Output_Device( int frame )
- */
+/*	c l o s e _ O u t p u t _ D e v i c e ( )			*/
 void
 close_Output_Device( frame )
 int frame;
@@ -302,15 +289,13 @@ int	sig;
 #endif
 	}
 
-/*
-	void init_Lgts( void )
-
-	Set certain default lighting information.
+/*	i n i t _ L g t s ( )
+	Set certain default lighting info.
  */
 STATIC void
 init_Lgts()
 	{
-	/* Ambient lighting. */
+	/* Ambient lighting.						*/
 	(void) strcpy( lgts[0].name, "EYE" );
 	lgts[0].beam = FALSE;
 	lgts[0].over = FALSE;
@@ -323,7 +308,7 @@ init_Lgts()
 	lgts[0].energy = 0.4;
 	lgts[0].stp = SOLTAB_NULL;
 
-	/* Primary lighting. */
+	/* Primary lighting.						*/
 	(void) strcpy( lgts[1].name, "LIGHT" );
 	lgts[1].beam = FALSE;
 	lgts[1].over = TRUE;
