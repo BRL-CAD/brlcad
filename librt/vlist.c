@@ -54,9 +54,9 @@ rt_vlblock_init()
 	BU_GETSTRUCT( vbp, rt_vlblock );
 	vbp->magic = RT_VLBLOCK_MAGIC;
 	vbp->max = 32;
-	vbp->head = (struct bu_list *)rt_calloc( vbp->max,
+	vbp->head = (struct bu_list *)bu_calloc( vbp->max,
 		sizeof(struct bu_list), "head[]" );
-	vbp->rgb = (long *)rt_calloc( vbp->max,
+	vbp->rgb = (long *)bu_calloc( vbp->max,
 		sizeof(long), "rgb[]" );
 
 	for( i=0; i < vbp->max; i++ )  {
@@ -87,9 +87,9 @@ struct rt_vlblock *vbp;
 		RT_FREE_VLIST( &(vbp->head[i]) );
 	}
 
-	rt_free( (char *)(vbp->head), "head[]" );
-	rt_free( (char *)(vbp->rgb), "rgb[]" );
-	rt_free( (char *)vbp, "rt_vlblock" );
+	bu_free( (char *)(vbp->head), "head[]" );
+	bu_free( (char *)(vbp->rgb), "rgb[]" );
+	bu_free( (char *)vbp, "rt_vlblock" );
 }
 
 /*
@@ -226,7 +226,7 @@ CONST struct bu_list	*src;
  *			R T _ V L I S T _ C L E A N U P
  *
  *  The macro RT_FREE_VLIST() simply appends to the list &rt_g.rtg_vlfree.
- *  Now, give those structures back to rt_free().
+ *  Now, give those structures back to bu_free().
  */
 void
 rt_vlist_cleanup()
@@ -241,7 +241,7 @@ rt_vlist_cleanup()
 	while( BU_LIST_WHILE( vp, rt_vlist, &rt_g.rtg_vlfree ) )  {
 		RT_CK_VLIST( vp );
 		BU_LIST_DEQUEUE( &(vp->l) );
-		rt_free( (char *)vp, "rt_vlist" );
+		bu_free( (char *)vp, "rt_vlist" );
 	}
 }
 
