@@ -53,6 +53,7 @@ struct qray_dataList {
 };
 
 extern struct bu_vls qray_basename;
+extern struct bu_vls qray_script;
 extern char qray_effects;
 extern int qray_cmd_echo;
 extern struct qray_fmt *qray_fmts;
