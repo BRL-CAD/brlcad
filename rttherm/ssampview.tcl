@@ -14,6 +14,8 @@ global line_num
 set pixel_num 32
 global pixel_num
 
+set cursor_on 1
+
 set initial_maxval $maxval
 
 # This should be imported from the C code.
@@ -47,24 +49,26 @@ label .min1 -text "Min:"
 label .min2 -textvariable minval
 label .max1 -text "Max:"
 label .max2 -textvariable maxval
-pack .min1 .min2 .max1 .max2 -side left -in .entry_line1
+checkbutton .cursor_on -text "FB cursor" -variable cursor_on -command {update}
+pack .min1 .min2 .max1 .max2 .cursor_on -side left -in .entry_line1
 
 label .wl1 -text "Wavelength of Framebuffer = "
 label .wl3 -textvariable lambda -width 8
 label .wl4 -text "microns"
 pack .wl1 .wl3 .wl4 -side left -in .entry_line2
 
-proc update {foo} {
+proc update { {foo 0} } {
 	global wavel
 	global pixel_num
 	global line_num
+	global cursor_on
 
 	doit1 $wavel
-	scanline 0
-	pixelplot 0
+	scanline
+	pixelplot
 
 	# Points to lower left corner of selected pixel, bump up one.
-	fb_cursor -42 1 [expr $pixel_num + 1] [expr $line_num + 1]
+	fb_cursor -42 $cursor_on [expr $pixel_num + 1] [expr $line_num + 1]
 }
 
 proc scalechange {var value} {
@@ -74,7 +78,7 @@ proc scalechange {var value} {
 	global line_num
 
 	set $var [expr $initial_maxval * $value / 1000]
-	update 0
+	update
 }
 
 label .scanline4 -text "Scanline Plot"
@@ -97,7 +101,7 @@ pack .spatial1 .canvas_pixel .wl2 -side top -in .spectral
 pack .spatial .spectral -side left -in .plot
 
 # Remember: 4th quadrant addressing!
-proc scanline {foo} {
+proc scanline { {foo 0} } {
 	global wavel
 	global width
 	global height
@@ -133,7 +137,7 @@ proc scanline {foo} {
 
 # Draw spectral curve for one pixel.
 # Remember: 4th quadrant addressing!
-proc pixelplot {foo} {
+proc pixelplot { {foo 0} } {
 	global wavel
 	global width
 	global height
