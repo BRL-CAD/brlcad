@@ -110,9 +110,10 @@ struct region		*reg2;
  *  Called once for this run.
  */
 int
-view_init( ap, file, obj, npts, minus_o )
+view_init( ap, file, obj, minus_o )
 register struct application *ap;
 char *file, *obj;
+int minus_o;
 {
 	ap->a_hit = hit;
 	ap->a_miss = miss;
