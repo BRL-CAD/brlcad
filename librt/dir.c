@@ -150,18 +150,17 @@ struct rt_db_internal	*ip;
 	if( ret < 0 )  {
 		bu_log("rt_db_put_internal(%s):  solid export failure\n",
 			dp->d_namep);
+		rt_db_free_internal( ip );
 		db_free_external( &ext );
 		return -2;		/* FAIL */
 	}
+	rt_db_free_internal( ip );
 
 	if( db_put_external( &ext, dp, dbip ) < 0 )  {
 		db_free_external( &ext );
 		return -1;		/* FAIL */
 	}
 
-    	if( ip->idb_ptr )  ip->idb_meth->ft_ifree( ip );
-
-	RT_INIT_DB_INTERNAL(ip);
 	db_free_external( &ext );
 	return 0;			/* OK */
 }
