@@ -98,6 +98,7 @@ static struct rtserver_geometry **rts_geometry=NULL;	/* array of rtserver_geomet
 							 */
 static int num_geometries=0;	/* the length of the rts_geometry array */
 static int used_session_0=0;	/* flag indicating if initial session has been used */
+static int needs_initialization=1;	/* flag indicating if init has already been done */
 #define GEOMETRIES_BLOCK_SIZE	5	/* the number of slots to allocate at one time */
 
 /* number of cpus (only used for call to rt_prep_parallel) */
@@ -368,6 +369,7 @@ copy_geometry( int dest, int src )
 		rts_geometry[src]->rts_comp_names;
 }
 
+
 /* routine to free memory associated with the rtserver_geometry */
 void
 rts_clean( int sessionid)
@@ -413,11 +415,16 @@ rts_clean( int sessionid)
 void
 rts_init()
 {
+	if( !needs_initialization ) {
+		return;
+	}
 	/* Things like bu_malloc() must have these initialized for use with parallel processing */
 	bu_semaphore_init( RT_SEM_LAST );
 
 	/* initialize the rtserver resources (cached structures) */
 	rts_resource_init();
+
+	needs_initialization = 0;
 }
 
 /* routine to create a new sesion id
@@ -567,6 +574,9 @@ rts_load_geometry( char *filename, int use_articulation, int num_objs, char **ob
 
 	/* clean up any prior geometry data */
 	if( rts_geometry ) {
+		struct db_i *dbip;
+
+		dbip = rts_geometry[0]->rts_rtis[0]->rtrti_rtip->rti_dbip;
 		for( i=0 ; i<num_geometries ; i++ ) {
 			if( rts_geometry[i] ) {
 				rts_clean( i );
@@ -574,6 +584,7 @@ rts_load_geometry( char *filename, int use_articulation, int num_objs, char **ob
 		}
 		num_geometries = 0;
 		bu_free( (char *)rts_geometry, "rts_geometry" );
+		rts_geometry = NULL;
 	}
 
 	if( hash_table_exists ) {
@@ -974,6 +985,11 @@ rtserver_thread( void *num )
 				BU_LIST_DEQUEUE( &ajob->l );
 				pthread_mutex_unlock( &input_queue_mutex[queue] );
 
+				/* if this job is an exit signal, just exit */
+				if( ajob->exit_flag ) {
+					pthread_exit( (void *)0 );
+				}
+
 				/* grab the session id */
 				sessionid = ajob->sessionid;
 
@@ -1335,6 +1351,92 @@ get_muves_components()
 
 		name_entry = Tcl_NextHashEntry( &search );
 	}
+}
+
+
+/* shutdown the server */
+void
+rts_shutdown()
+{
+	int i;
+	struct db_i *dbip;
+
+	dbip = rts_geometry[0]->rts_rtis[0]->rtrti_rtip->rti_dbip;
+
+	/* send a shutdown job to each thread */
+	for( i=0 ; i<num_threads ; i++ ) {
+		struct rtserver_job *ajob;
+
+		RTS_GET_RTSERVER_JOB( ajob );
+		ajob->exit_flag = 1;
+
+		rts_submit_job( ajob, 0 );
+	}
+
+	/* wait for each thread to exit */
+	for( i=0 ; i<num_threads ; i++ ) {
+		pthread_t thread = threads[i];
+		pthread_join( thread, NULL );
+	}
+
+	/* clean up */
+	bu_free( (char *)threads, "threads" );
+	threads = NULL;
+
+	for( i=0 ; i<num_geometries ; i++ ) {
+		rts_clean( i );
+	}
+
+	if( dbip ) {
+		db_close( dbip );
+	}
+	num_geometries = 0;
+	bu_free( (char *)rts_geometry, "rts_geometry" );
+	rts_geometry = NULL;
+
+	if( hash_table_exists ) {
+		Tcl_DeleteHashTable( &name_tbl );
+		Tcl_DeleteHashTable( &ident_tbl);
+		Tcl_DeleteHashTable( &air_tbl );
+		hash_table_exists = 0;
+	}
+
+	/* free resources */
+	while( BU_LIST_NON_EMPTY( &rts_resource.rtserver_results ) ) {
+		struct rtserver_result *p;
+		p = (struct rtserver_result *)BU_LIST_FIRST( rtserver_result, &rts_resource.rtserver_results );
+		BU_LIST_DEQUEUE( &p->l );
+		bu_free( (char *)p, "rtserver_result" );
+	}
+
+	while( BU_LIST_NON_EMPTY( &rts_resource.ray_results ) ) {
+		struct ray_result *p;
+		p = (struct ray_result *)BU_LIST_FIRST( ray_result, &rts_resource.ray_results );
+		BU_LIST_DEQUEUE( &p->l );
+		bu_free( (char *)p, "ray_result" );
+	}
+
+	while( BU_LIST_NON_EMPTY( &rts_resource.ray_hits ) ) {
+		struct ray_hit *p;
+		p = (struct ray_hit *)BU_LIST_FIRST( ray_hit, &rts_resource.ray_hits );
+		BU_LIST_DEQUEUE( &p->l );
+		bu_free( (char *)p, "ray_hit" );
+	}
+
+	while( BU_LIST_NON_EMPTY( &rts_resource.rtserver_jobs ) ) {
+		struct rtserver_job *p;
+		p = (struct rtserver_job *)BU_LIST_FIRST( rtserver_job, &rts_resource.rtserver_jobs );
+		BU_LIST_DEQUEUE( &p->l );
+		bu_free( (char *)p, "rtserver_job" );
+	}
+
+	for( i=0 ; i<BU_PTBL_LEN( &rts_resource.xrays ) ; i++ ) {
+		struct xray *p = (struct xray *)BU_PTBL_GET( &rts_resource.xrays, i );
+		bu_free( (char *)p, "xray" );
+	}
+	bu_ptbl_free( &rts_resource.xrays );
+
+	needs_initialization = 1;
 }
 
 /*				b u i l d _ J a v a _ R a y R e s u l t
@@ -1782,6 +1884,11 @@ Java_mil_army_arl_muves_rtserver_RtServerImpl_shootRay( JNIEnv *env, jobject job
 	return( jrayResult );
 }
 
+JNIEXPORT void JNICALL
+Java_mil_army_arl_muves_rtserver_RtServerImpl_shutdownNative(JNIEnv *env, jobject obj )
+{
+	rts_shutdown();
+}
 
 #ifdef TESTING
 /* usage statement */
