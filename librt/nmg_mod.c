@@ -2769,7 +2769,8 @@ CONST struct rt_tol	*tol;
 	if( ccw == 0 )  {
 		int	class;
 		/* Loop does not have 3 linearly independent vertices, can't tell. */
-		rt_log("nmg_lu_reorient:  unable to determine orientation from geometry\n");
+		if (rt_g.NMG_debug & DEBUG_BASIC)
+			rt_log("nmg_lu_reorient:  unable to determine orientation from geometry\n");
 		class = nmg_class_lu_fu( lu, tol );
 		switch( class )  {
 		case NMG_CLASS_AinB:
