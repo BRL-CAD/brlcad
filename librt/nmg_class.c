@@ -88,57 +88,22 @@ long		*novote;
 
 	rt_log("nmg intersection: assuming miss\n");
 	return;
-/*	rt_bomb("joint_hitmiss2:  Dangerous stuff\n"); */
-	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
+
+	if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_NMGRT) )
 		EUPRINT("Hard question time", eu);
 
-	/*
-	 *  For each pair of radially adjacent interior faceloops in this
-	 * shell, compute a hit/miss
-	 */
-	if (eu->up.lu_p->up.fu_p->orientation == OT_SAME)
-		eu = eu->eumate_p;
-	p = eu;
-/*	do { */
-		/* get a pair of edges whose face enclose space */
-		eu_r = p->radial_p;
-		while ((*eu_r->up.magic_p != NMG_LOOPUSE_MAGIC ||
-		   *eu_r->up.lu_p->up.magic_p != NMG_FACEUSE_MAGIC ||
-		   eu_r->up.lu_p->up.fu_p->orientation != OT_OPPOSITE ||
-		   eu_r->up.lu_p->up.fu_p->s_p != eu->up.lu_p->up.fu_p->s_p ||
 
-/* XXX this was		nmg_tbl(novote, TBL_LOC, (long *)&eu_r) >= 0 ***/
-/* XXX was this right, or should it have been  eu_r->up.lu_p->up.fu_p->f_p ***/
 
-		   NMG_INDEX_TEST(novote, eu_r)
-		   ) && eu_r != eu->eumate_p)
-			eu_r = eu_r->eumate_p->radial_p;
 
-		if (eu_r == eu->eumate_p) {
-			/* only radial edge/face is planar with projection vector */
-			rt_bomb("joint_hitmiss2: bogus Dewd, Non-Manifold on the radial edge!\n");
-		}
 
-		N1 = eu->up.lu_p->up.fu_p->f_p->fg_p->N;
-		N2 = eu_r->up.lu_p->up.fu_p->f_p->fg_p->N;
 
-		PdotN1 = VDOT(N1, projection_dir);
-		PdotN2 = VDOT(N2, projection_dir);
 
-		if ( ((PdotN1 > 0) && (PdotN2 > 0)) ||
-		     ((PdotN1 < 0) && (PdotN2 < 0)) ) {
-				closest->dist = 0.0;
-				closest->p.eu = eu;
-				closest->inout = FACE_HIT;
-	     		/* record both faces as prev intersected with ray */
-		} else if ( ((PdotN1 > 0) && (PdotN2 < 0)) ||
-		     ((PdotN1 < 0) && (PdotN2 > 0)) ) {
-				closest->dist = 0.0;
-				closest->p.eu = eu;
-				closest->inout = FACE_MISS;
-		     	/* record both faces as prev intersected with ray */
-		}
-/*	} while (0);*/
+
+
+
+
+
+
 }
 
 /*	P T _ H I T M I S _ E
