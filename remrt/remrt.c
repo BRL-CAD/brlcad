@@ -249,6 +249,7 @@ struct servers {
 	double		sr_l_elapsed;	/* last: elapsed_sec */
 	double		sr_l_el_rate;	/* last: pix/elapsed_sec */
 	double		sr_w_elapsed;	/* weighted avg: pix/elapsed_sec */
+	double		sr_w_rays;	/* weighted avg: rays/elapsed_sec */
 	double		sr_s_elapsed;	/* sum of pix/elapsed_sec */
 	double		sr_sq_elapsed;	/* sum of pix/elapsed_sec squared */
 	double		sr_l_cpu;	/* cpu_sec for last scanline */
@@ -265,9 +266,17 @@ struct ihost {
 #define HT_ALWAYS	1		/* Always try to use this one */
 #define HT_NIGHT	2		/* Only use at night */
 #define HT_PASSIVE	3		/* May call in, never initiated */
+#define HT_RS		4		/* While rays/second > ht_rs */
+#define HT_PASSRS	5		/* passive rays/second */
+	int		ht_rs;		/* rays/second level */
+	int		ht_rs_miss;	/* number of consecutive misses */
+	int		ht_rs_wait;	/* # of auto adds to wait before */
+					/* restarting this server */
 	int		ht_where;	/* Where to find database */
 #define HT_CD		1		/* cd to ht_path first */
 #define HT_CONVERT	2		/* cd to ht_path, asc2g database */
+#define HT_USE		3		/* cd to ht_path, use asc database */
+					/* best of cd and convert */
 	char		*ht_path;	/* remote directory to run in */
 	struct ihost	*ht_next;
 };
@@ -772,8 +781,16 @@ struct timeval	*nowp;
 			else
 				add = 0;
 			break;
+		case HT_RS:
+			if (ihp->ht_rs_wait-- <= 0) {
+				add = 1;
+			} else {
+				add = 0;
+			}
+			break;
 		default:
 		case HT_PASSIVE:
+		case HT_PASSRS:
 			continue;
 		}
 
@@ -1879,6 +1896,8 @@ char *buf;
 #define BLEND	0.8
 	sp->sr_w_elapsed = BLEND * sp->sr_w_elapsed +
 		(1.0-BLEND) * sp->sr_l_el_rate;
+	sp->sr_w_rays = BLEND * sp->sr_w_rays +
+		(1.0-BLEND) * (info.li_nrays/sp->sr_l_elapsed);
 	sp->sr_sendtime = tvnow;		/* struct copy */
 	sp->sr_l_cpu = info.li_cpusec;
 	sp->sr_s_cpu += info.li_cpusec;
@@ -1890,6 +1909,22 @@ char *buf;
 	/* Remove from work list */
 	list_remove( &(sp->sr_work), info.li_startpix, info.li_endpix );
 
+/*
+ * Check to see if this host is load limited.  If the host is loaded
+ * limited check to see if it is time to drop this server.
+ */
+	if (sp->sr_host->ht_when == HT_RS ||
+	    sp->sr_host->ht_when == HT_PASSRS) {
+		if(sp->sr_host->ht_rs >= info.li_nrays / sp->sr_l_elapsed) {
+			if (++sp->sr_host->ht_rs_miss > 60 ) {
+				sp->sr_host->ht_rs_miss = 0;
+				sp->sr_host->ht_rs_wait = 3;
+				drop_server(sp, "rays/second low");
+			}
+		} else {
+			sp->sr_host->ht_rs_miss /= 2;
+		}
+	}
 out:
 	if(buf) (void)free(buf);
 }
@@ -2062,15 +2097,15 @@ char *name;
 
 	while( xx < width )
 		xx <<= 1;
-	while( yy < width )
+	while( yy < height )
 		yy <<= 1;
 	if( (fbp = fb_open( name?name:framebuffer, xx, yy )) == FBIO_NULL )  {
-		rt_log("fb_open %d,%d failed\n", width, height);
+		rt_log("fb_open %d,%d failed\n", xx, yy);
 		return(-1);
 	}
 	/* ALERT:  The library wants zoom before window! */
-	fb_zoom( fbp, fb_getwidth(fbp)/width, fb_getheight(fbp)/height );
-	fb_window( fbp, width/2, height/2 );
+	fb_zoom( fbp, fb_getwidth(fbp)/xx, fb_getheight(fbp)/yy );
+	fb_window( fbp, xx/2, yy/2 );
 
 	fb_wmap( fbp, COLORMAP_NULL );	/* Standard map: linear */
 	cur_fbwidth = 0;
@@ -2690,6 +2725,17 @@ char	**argv;
 		fbwidth, fbheight);
 }
 
+cd_N( argc, argv )
+int	argc;
+char	**argv;
+{
+	fbheight = atoi( argv[1] );
+	if( fbheight < 4 || fbheight > 16*1024 )
+		fbheight = 512;
+	rt_log("fb height=%d, takes effect after next attach\n",
+		fbheight);
+}
+
 cd_hyper( argc, argv )
 int	argc;
 char	**argv;
@@ -3041,7 +3087,10 @@ char	**argv;
 		rt_log("\t avg:  elapsed=%gp/s, cpu=%g, weighted=%gp/s\n",
 			(sp->sr_s_elapsed/num),
 			sp->sr_s_cpu/num,
-			sp->sr_w_elapsed );
+			sp->sr_w_elapsed);
+		rt_log("\t r/s:  weighted=%gr/s missed = %d\n",
+			sp->sr_w_rays,
+			sp->sr_host->ht_rs_miss );
 
 		if( debug )
 			pr_list( &(sp->sr_work) );
@@ -3110,6 +3159,7 @@ char	**argv;
 			rt_log("Stopped, waiting for servers to become idle\n");
 			check_input( 30 );	/* delay up to 30 secs */
 		}
+		rt_log("All servers idle\n");
 	}
 	clients |= 1<<fileno(stdin);
 }
@@ -3135,6 +3185,7 @@ int	argc;
 char	**argv;
 {
 	register struct ihost	*ihp;
+	int argpoint = 1;
 
 	if( argc < 5 )  {
 		rt_log("Registered Host Table:\n");
@@ -3149,6 +3200,12 @@ char	**argv;
 				break;
 			case HT_PASSIVE:
 				rt_log("passive ");
+				break;
+			case HT_RS:
+				rt_log("r/s %d ",ihp->ht_rs);
+				break;
+			case HT_PASSRS:
+				rt_log("passive r/s %d ",ihp->ht_rs);
 				break;
 			default:
 				rt_log("?when? ");
@@ -3169,28 +3226,45 @@ char	**argv;
 		return;
 	}
 
-	if( (ihp = host_lookup_by_name( argv[1], 1 )) == IHOST_NULL )  return;
+	if( (ihp = host_lookup_by_name( argv[argpoint++], 1 )) == IHOST_NULL )  return;
 
 	/* When */
-	if( strcmp( argv[2], "always" ) == 0 ) {
+	if( strcmp( argv[argpoint], "always" ) == 0 ) {
 		ihp->ht_when = HT_ALWAYS;
-	} else if( strcmp( argv[2], "night" ) == 0 )  {
+	} else if( strcmp( argv[argpoint], "night" ) == 0 )  {
 		ihp->ht_when = HT_NIGHT;
-	} else if( strcmp( argv[2], "passive" ) == 0 )  {
+	} else if( strcmp( argv[argpoint], "passive" ) == 0 )  {
 		ihp->ht_when = HT_PASSIVE;
+	} else if( strcmp( argv[argpoint], "rs" ) == 0 ) {
+		ihp->ht_when = HT_RS;
+	} else if ( strcmp( argv[argpoint], "passrs" ) == 0 ) {
+		ihp->ht_when = HT_PASSRS;
 	} else {
-		rt_log("unknown 'when' string '%s'\n", argv[2]);
+		rt_log("unknown 'when' string '%s'\n", argv[argpoint]);
 	}
+	++argpoint;
+	if (ihp->ht_when == HT_RS ||
+	    ihp->ht_when == HT_PASSRS) {
+		ihp->ht_rs_miss = 0;
+		ihp->ht_rs_wait = 0;
+		ihp->ht_rs = 500;
+		if ( isdigit(*argv[argpoint])) {
+			ihp->ht_rs = atoi(argv[argpoint++]);
+		}
+	    }
 
 	/* Where */
-	if( strcmp( argv[3], "cd" ) == 0 )  {
+	if( strcmp( argv[argpoint], "cd" ) == 0 )  {
 		ihp->ht_where = HT_CD;
-		ihp->ht_path = rt_strdup( argv[4] );
-	} else if( strcmp( argv[3], "convert" ) == 0 )  {
+		ihp->ht_path = rt_strdup( argv[argpoint+1] );
+	} else if( strcmp( argv[argpoint], "convert" ) == 0 )  {
 		ihp->ht_where = HT_CONVERT;
-		ihp->ht_path = rt_strdup( argv[4] );
+		ihp->ht_path = rt_strdup( argv[argpoint+1] );
+	} else if (strcmp( argv[argpoint], "use" ) == 0 ) {
+		ihp->ht_where = HT_USE;
+		ihp->ht_path = rt_strdup( argv[argpoint+1]);
 	} else {
-		rt_log("unknown 'where' string '%s'\n", argv[3] );
+		rt_log("unknown 'where' string '%s'\n", argv[argpoint] );
 	}
 }
 
@@ -3230,8 +3304,8 @@ struct command_tab cmd_tab[] = {
 		cd_status,	1, 1,
 	"detach", "",		"detatch from interactive keyboard",
 		cd_detach,	1, 1,
-	"host", "name always|night|passive cd|convert path", "register server host",
-		cd_host,	1, 5,
+	"host", "name always|night|passive|rs[ rays/sec]|passrs[ rays/sec] cd|convert path", "register server host",
+		cd_host,	1, 6,
 	"wait", "",		"wait for current work assignment to finish",
 		cd_wait,	1, 1,
 	"exit", "",		"terminate remrt",
@@ -3254,6 +3328,8 @@ struct command_tab cmd_tab[] = {
 		cd_f,		2, 2,
 	"S", "square_size",	"set square frame buffer size",
 		cd_S,		2, 2,
+	"N", "square_height",	"set height of frame buffer",
+		cd_N,		2, 2,
 	"-H", "hypersample",	"set number of hypersamples/pixel",
 		cd_hyper,	2, 2,
 	"-B", "0|1",		"set benchmark flag",
