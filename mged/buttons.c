@@ -38,12 +38,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./dm.h"
 #include "./sedit.h"
 
-#ifdef XMGED
-extern point_t orig_pos;
-extern mat_t	ModelDelta;
-void (*adc_hook)();
-#endif
-
 #ifndef MULTI_ATTACH
 int	adcflag;	/* angle/distance cursor in use */
 #endif
@@ -361,18 +355,12 @@ static void bv_adcursor()  {
 		adcflag = 1;
 		dmp->dmr_light( LIGHT_ON, BV_ADCURSOR );
 	}
-#ifdef XMGED
-		 if(adc_hook)
-		   (*adc_hook)(0);  /* toggle adc button */
-#endif
+
 	dmaflag = 1;
 }
 
 static void bv_reset()  {
 	/* Reset view such that all solids can be seen */
-#ifdef XMGED
-/*XXXX*/        mat_idn( ModelDelta );
-#endif
 	size_reset();
 	setview( 0.0, 0.0, 0.0 );
 }
@@ -712,10 +700,47 @@ char *str;
 		return(1);	/* BAD */
 	}
 	state = to;
+
+#ifdef MULTI_ATTACH
+	{
+	  register struct dm_list *p;
+	  struct dm_list *save_dm_list;
+
+	  save_dm_list = curr_dm_list;
+	  for( RT_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+	    curr_dm_list = p;
+
+	    /* Advise display manager of state change */
+	    dmp->dmr_statechange( from, to );
+#ifdef VIRTUAL_TRACKBALL
+	    if(to == ST_VIEW){
+	      mat_t o_toViewcenter;
+	      fastf_t o_Viewscale;
+
+	      /* save toViewcenter and Viewscale */
+	      mat_copy(o_toViewcenter, toViewcenter);
+	      o_Viewscale = Viewscale;
+
+	      /* get new orig_pos */
+	      size_reset();
+	      MAT_DELTAS_GET(orig_pos, toViewcenter);
+
+	      /* restore old toViewcenter and Viewscale */
+	      mat_copy(toViewcenter, o_toViewcenter);
+	      Viewscale = o_Viewscale;
+	    }
+#endif
+
+	    new_mats();
+	  }
+
+	  curr_dm_list = save_dm_list;
+	}
+#else
 	/* Advise display manager of state change */
 	dmp->dmr_statechange( from, to );
 
-#ifdef XMGED
+#ifdef VIRTUAL_TRACKBALL
 	if(to == ST_VIEW){
 	  mat_t o_toViewcenter;
 	  fastf_t o_Viewscale;
@@ -732,6 +757,7 @@ char *str;
 	  mat_copy(toViewcenter, o_toViewcenter);
 	  Viewscale = o_Viewscale;
 	}
+#endif
 #endif
 
 	return(0);		/* GOOD */
