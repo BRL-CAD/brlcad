@@ -395,14 +395,16 @@ done_weave:	; /* Sorry about the goto's, but they give clarity */
  *  Default handler for overlaps in rt_boolfinal().
  *  Returns -
  *	 0	to eliminate partition with overlap entirely
- *	!0	to retain partition in output list
+ *	 1	to retain partition in output list, claimed by reg1
+ *	 2	to retain partition in output list, claimed by reg2
  */
 int
-rt_defoverlap( ap, pp, reg1, reg2 )
+rt_defoverlap( ap, pp, reg1, reg2, pheadp )
 register struct application	*ap;
 register struct partition	*pp;
 struct region			*reg1;
 struct region			*reg2;
+struct partition		*pheadp;
 {
 	point_t	pt;
 	static long count = 0;		/* Not PARALLEL, shouldn't hurt */
@@ -411,11 +413,11 @@ struct region			*reg2;
 	RT_CHECK_PT(pp);
 
 	depth = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
-	if( depth <= 0 )  return(1);	/* Retain 0-thickness partition */
+	if( depth <= 0 )  goto choose;	/* Retain 0-thickness partition */
 
 	/* Attempt to control tremendous error outputs */
 	if( ++count > 100 )  {
-		if( (count%100) != 3 )  return(1);
+		if( (count%100) != 3 )  goto choose;
 		rt_log("(overlaps omitted)\n");
 	}
 
@@ -430,16 +432,35 @@ struct region			*reg2;
 	rt_log( "\
 OVERLAP1: %s\n\
 OVERLAP2: %s\n\
-OVERLAP3: isol=%s osol=%s dist=(%g,%g)\n\
+OVERLAP3: dist=(%g,%g) isol=%s osol=%s\n\
 OVERLAP4: depth %.5fmm at (%g,%g,%g) x%d y%d lvl%d\n",
 		reg1->reg_name,
 		reg2->reg_name,
+		pp->pt_inhit->hit_dist, pp->pt_outhit->hit_dist,
 		pp->pt_inseg->seg_stp->st_name,
 		pp->pt_outseg->seg_stp->st_name,
-		pp->pt_inhit->hit_dist, pp->pt_outhit->hit_dist,
 		depth, pt[X], pt[Y], pt[Z],
 		ap->a_x, ap->a_y, ap->a_level );
-	return(1);
+
+	/*
+	 *  Apply heuristics as to which region should claim partition.
+	 */
+choose:
+	if( reg1->reg_aircode != 0 )  {
+		/* reg1 was air, replace with reg2 */
+		return 2;
+	}
+	if( pp->pt_back != pheadp ) {
+		/* Repeat a prev region, if that is a choice */
+		if( pp->pt_back->pt_regionp == reg1 )
+			return 1;
+		if( pp->pt_back->pt_regionp == reg2 )
+			return 2;
+	}
+	/* To provide some consistency from ray to ray, use lowest bit # */
+	if( reg1->reg_bit < reg2->reg_bit )
+		return 1;
+	return 2;
 }
 
 /*
@@ -657,6 +678,7 @@ struct application *ap;
 		/* Evaluate the boolean trees of any regions involved */
 		RT_BITV_LOOP_START( regionbits, ap->a_rt_i->nregions )  {
 			register struct region *regp;
+			int	code;
 
 			regp = ap->a_rt_i->Regions[RT_BITV_LOOP_INDEX];
 			if(rt_g.debug&DEBUG_PARTITION)  {
@@ -682,45 +704,46 @@ struct application *ap;
 			/*
 			 * Two or more regions claim this partition
 			 */
-			if((	(	regp->reg_aircode == 0
-				    &&	lastregion->reg_aircode == 0 
-				) /* Neither are air */
-			     ||	(	regp->reg_aircode != 0
-				   &&	lastregion->reg_aircode != 0
-				   &&	regp->reg_aircode != lastregion->reg_aircode
-				) /* Both are air, but different types */
-			   ) )  {
+			if( lastregion->reg_aircode != 0 && regp->reg_aircode == 0 )  {
+				/* last region is air, replace with solid regp */
+				code = 2;
+			} else if( lastregion->reg_aircode == 0 && regp->reg_aircode != 0 )  {
+				/* last region solid, regp is air, keep last */
+				code = 1;
+			} else if( lastregion->reg_aircode != 0 &&
+			    regp->reg_aircode != 0 &&
+			    regp->reg_aircode == lastregion->reg_aircode )  {
+			    	/* both are same air, keep last */
+			    	code = 1;
+			} else {
 			   	/*
 			   	 *  Hand overlap to application-specific
 			   	 *  overlap handler, or default.
+				 *	0 = destroy partition,
+				 *	1 = keep part, reg=lastregion
+				 *	2 = keep part, reg=regp
 			   	 */
 			   	if( ap->a_overlap == RT_AFN_NULL )
 			   		ap->a_overlap = rt_defoverlap;
-				if( ap->a_overlap(ap, pp, regp, lastregion) )  {
-				    	/* non-zero => retain the partition */
-					if( lastregion->reg_aircode != 0 )  {
-						/* Last was air, replace */
-						lastregion = regp;
-					} else if( pp->pt_back != InputHdp ) {
-						/* Repeat prev region, if that is a choice */
-						if( pp->pt_back->pt_regionp == regp )
-							lastregion = regp;
-					} else {
-						/* Keep lastregion as is */
-					}
-				    	claiming_regions--;	/* now = 1 */
-					if(rt_g.debug&DEBUG_PARTITION)  rt_log("rt_boolfinal:  overlap p retained, as region=%s\n",
-						lastregion->reg_namep );
-				} else {
-					/* zero => delete the partition.
-					 * The dirty work happens below.
-					 */
-				}
+				code = ap->a_overlap(ap, pp, lastregion, regp, InputHdp);
+			}
+			/* Implement the policy in "code" */
+			if( code == 0 )  {
+				/* zero => delete the partition.
+				 * The dirty work happens below.
+				 */
+				if(rt_g.debug&DEBUG_PARTITION)  rt_log("rt_boolfinal:  overlap code=0, p deleted\n");
+			} else if( code == 1 ) {
+				/* Keep part, region = lastregion */
+			    	claiming_regions--;	/* now = 1 */
+				if(rt_g.debug&DEBUG_PARTITION)  rt_log("rt_boolfinal:  overlap code=%d, p retained in region=%s\n",
+					code, lastregion->reg_name );
 			} else {
-				/* last region is air, replace with solid */
-				if( lastregion->reg_aircode != 0 )
-					lastregion = regp;
-				claiming_regions--;		/* now = 1 */
+				/* Keep part, region = regp */
+				lastregion = regp;
+			    	claiming_regions--;	/* now = 1 */
+				if(rt_g.debug&DEBUG_PARTITION)  rt_log("rt_boolfinal:  overlap code=%d, p retained in region=%s\n",
+					code, lastregion->reg_name );
 			}
 		} RT_BITV_LOOP_END;
 		if( claiming_regions == 0 )  {
