@@ -1724,8 +1724,12 @@ char	**argv;
   if( Tcl_Eval( interp, "wdb_close $wdbp" ) != TCL_OK )
 	  return TCL_ERROR;
 #endif
-  if( Tcl_Eval( interp, "set wdbp [wdb_open db disk [get_dbip]]" ) != TCL_OK )
-	  return TCL_ERROR;
+  if( Tcl_Eval( interp, "set wdbp [wdb_open db disk [get_dbip]]; wdb_open .inmem inmem [get_dbip]" ) != TCL_OK )  {
+	bu_log("%s\n%s\n",
+    		interp->result,
+		Tcl_GetVar(interp,"errorInfo", TCL_GLOBAL_ONLY) );
+	return TCL_ERROR;
+  }
   Tcl_ResetResult( interp );
 
   return TCL_OK;
