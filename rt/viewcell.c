@@ -185,11 +185,26 @@ register struct partition *PartHeadp;
 	if( pp == PartHeadp )
 		return(0);		/* nothing was actually hit?? */
 
-	/*
-	 *  Find exact h,v coordinates of actual ray start by
-	 *  projecting start point into GIFT h,v coordinates.
-	 */
-	MAT4X3PNT( hv, model2hv, ap->a_ray.r_pt );
+	if( jitter )  {
+		/*
+		 *  Find exact h,v coordinates of actual ray start by
+		 *  projecting start point into GIFT h,v coordinates.
+		 */
+		MAT4X3PNT( hv, model2hv, ap->a_ray.r_pt );
+	} else {
+		/*
+		 *  Find the H,V coordinates of the grid cell center.
+		 *  RT uses the lower left corner of each cell.
+		 */
+		point_t		center;
+		fastf_t		dx;
+		fastf_t		dy;
+
+		dx = ap->a_x + 0.5;
+		dy = ap->a_y + 0.5;
+		VJOIN2( center, viewbase_model, dx, dx_model, dy, dy_model );
+		MAT4X3PNT( hv, model2hv, center );
+	}
 
 	/* next macro must be on one line for 3d compiler */
 	RT_HIT_NORM( pp->pt_inhit, pp->pt_inseg->seg_stp, &(ap->a_ray) );
