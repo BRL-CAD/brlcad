@@ -71,7 +71,7 @@ char	*string;
     if (*sp == '/')
         ++sp;
     sp2 = sp;
-    while (*sp2 != '{' AND *sp2 != '\0')
+    while (*sp2 != '{' && *sp2 != '\0')
     	++sp2;
     *sp2 = '\0';
     return (sp);
