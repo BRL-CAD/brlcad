@@ -190,7 +190,6 @@ register char **argv;
 	return(1);		/* OK */
 }
 
-#ifdef BSD
 /*
  *			I S _ S O C K E T
  *
@@ -210,7 +209,6 @@ int fd;
 	else
 		return	0;
 }
-#endif /* BSD */
 
 static void
 sigalarm(code)
@@ -289,7 +287,6 @@ int argc; char **argv;
 	fb_server_select_list = &select_list;
 	fb_server_max_fd = &max_fd;
 
-#ifdef BSD
 	/*
 	 * Inetd Daemon.
 	 * Check to see if we were invoked by /etc/inetd.  If so
@@ -305,7 +302,6 @@ int argc; char **argv;
 		main_loop();
 		exit(0);
 	}
-#endif /* BSD */
 
 	/* for now, make them set a port_num, for usage message */
 	if ( !get_args( argc, argv ) || !port_set ) {
