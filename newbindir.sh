@@ -44,6 +44,7 @@ for i in \
 	remrt/remrt.c libbu/vfont.c \
 	fb/cat-fb.c canon/canonserver.c \
 	h/tcl.h libtk/tkInt.h \
+	mged/cmd.c \
 	brlman/awf brlman/brlman
 do
 	chmod 775 $i
