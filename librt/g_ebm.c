@@ -63,6 +63,12 @@ struct structparse rt_ebm_parse[] = {
 	{"",	0, (char *)0, 0,			FUNC_NULL }
 };
 
+struct ebm_hit_private {
+	int	x_cell;
+	int	y_cell;
+};
+
+
 RT_EXTERN(int rt_ebm_dda,(struct xray *rp, struct soltab *stp,
 	struct application *ap, struct seg *seghead));
 RT_EXTERN(int rt_seg_planeclip,(struct seg *out_hd, struct seg *in_hd,
@@ -247,7 +253,10 @@ struct seg		*seghead;
 	VSETALL( P, 0 );
 	if( ! rt_in_rpp(rp, invdir, P, ebmp->ebm_large ) )
 		return(0);	/* MISS */
-	VJOIN1( P, rp->r_pt, rp->r_min, rp->r_dir );	/* P is hit point */
+
+	VJOIN1( P, rp->r_pt, rp->r_min, rp->r_dir );
+	/* P is hit point (on RPP?) */
+
 if(rt_g.debug&DEBUG_EBM)VPRINT("ebm_origin", ebmp->ebm_origin);
 if(rt_g.debug&DEBUG_EBM)VPRINT("r_pt", rp->r_pt);
 if(rt_g.debug&DEBUG_EBM)VPRINT("P", P);
@@ -273,6 +282,7 @@ if(rt_g.debug&DEBUG_EBM)rt_log("g[X] = %d, g[Y] = %d\n", igrid[X], igrid[Y]);
 
 	if( rp->r_dir[X] == 0.0 && rp->r_dir[Y] == 0.0 )  {
 		register struct seg	*segp;
+		register struct ebm_hit_private *hp;
 
 		/*  Ray is traveling exactly along Z axis.
 		 *  Just check the one cell hit.
@@ -285,6 +295,17 @@ if(rt_g.debug&DEBUG_EBM)rt_log("ray on local Z axis\n");
 		segp->seg_stp = stp;
 		segp->seg_in.hit_dist = 0;
 		segp->seg_out.hit_dist = INFINITY;
+
+		segp->seg_in.hit_vpriv[X] = 
+			(double) igrid[X] / ebmp->ebm_i.xdim;
+		segp->seg_in.hit_vpriv[Y] = 
+			(double) igrid[Y] / ebmp->ebm_i.ydim;
+
+		segp->seg_out.hit_vpriv[X] = 
+			(double) igrid[X] / ebmp->ebm_i.xdim;
+		segp->seg_out.hit_vpriv[Y] = 
+			(double) igrid[Y] / ebmp->ebm_i.ydim;
+
 		if( rp->r_dir[Z] < 0 )  {
 			segp->seg_in.hit_surfno = NORM_ZPOS;
 			segp->seg_out.hit_surfno = NORM_ZNEG;
@@ -381,6 +402,7 @@ if(rt_g.debug&DEBUG_EBM)rt_log("igrid [%d %d] from %g to %g, val=%d\n",
 if(rt_g.debug&DEBUG_EBM)rt_log("Exit index is %s, t[X]=%g, t[Y]=%g\n",
 			out_index==X ? "X" : "Y", t[X], t[Y] );
 
+
 		if( t1 <= t0 )  rt_log("ERROR ebm t1=%g < t0=%g\n", t1, t0 );
 		if( !inside )  {
 			if( val > 0 )  {
@@ -391,6 +413,11 @@ if(rt_g.debug&DEBUG_EBM)rt_log("Exit index is %s, t[X]=%g, t[Y]=%g\n",
 				RT_GET_SEG(segp, ap->a_resource);
 				segp->seg_stp = stp;
 				segp->seg_in.hit_dist = t0;
+
+				segp->seg_in.hit_vpriv[X] = 
+					(double) igrid[X] / ebmp->ebm_i.xdim;
+				segp->seg_in.hit_vpriv[Y] = 
+					(double) igrid[Y] / ebmp->ebm_i.ydim;
 
 				/* Compute entry normal */
 				if( rp->r_dir[in_index] < 0 )  {
@@ -420,6 +447,11 @@ if(rt_g.debug&DEBUG_EBM)rt_log("Exit index is %s, t[X]=%g, t[Y]=%g\n",
 
 				tail = RT_LIST_LAST( seg, &(seghead->l) );
 				tail->seg_out.hit_dist = t0;
+
+				tail->seg_out.hit_vpriv[X] = 
+					(double) igrid[X] / ebmp->ebm_i.xdim;
+				tail->seg_out.hit_vpriv[Y] = 
+					(double) igrid[Y] / ebmp->ebm_i.ydim;
 
 				/* Compute exit normal */
 				if( rp->r_dir[in_index] < 0 )  {
@@ -453,6 +485,7 @@ if(rt_g.debug&DEBUG_EBM)rt_log("Exit index is %s, t[X]=%g, t[Y]=%g\n",
 		/* Close off the final segment */
 		tail = RT_LIST_LAST( seg, &(seghead->l) );
 		tail->seg_out.hit_dist = tmax;
+		VSETALL(tail->seg_out.hit_vpriv, 0.0);
 
 		/* Compute exit normal.  Previous out_index is now in_index */
 		if( rp->r_dir[in_index] < 0 )  {
@@ -884,10 +917,15 @@ struct soltab		*stp;
 register struct hit	*hitp;
 register struct uvcoord	*uvp;
 {
-/*	register struct rt_ebm_specific *ebmp =
-		(struct rt_ebm_specific *)stp->st_specific; */
+	register struct rt_ebm_specific *ebmp =
+		(struct rt_ebm_specific *)stp->st_specific;
 
-	/* XXX uv should be xy in ideal space */
+	uvp->uv_u = hitp->hit_vpriv[X];
+	uvp->uv_v = hitp->hit_vpriv[Y];
+
+	/* XXX should compute this based upon footprint of ray in ebm space */
+	uvp->uv_du = 0.0;
+	uvp->uv_dv = 0.0;
 }
 
 /*
