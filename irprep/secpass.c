@@ -281,7 +281,7 @@ char *argv[];
 
 	if(iwrite == 1)
 	{
-	  (void)fprintf(stdout,fp3,"Number of regions in mged file:  %d\n",nmged);
+	  (void)fprintf(fp3,"Number of regions in mged file:  %d\n",nmged);
 	  (void)fflush(fp3);
 	}
 
@@ -388,12 +388,12 @@ char *argv[];
 
 	  if(iwrite == 1)
 	  {
-	    (void)fprintf(stdout,fp3,"ERROR -- The number of regions in the mged\n");
-	    (void)fprintf(stdout,fp3,"file (%f) does not equal the number of\n",
+	    (void)fprintf(fp3,"ERROR -- The number of regions in the mged\n");
+	    (void)fprintf(fp3,"file (%f) does not equal the number of\n",
 		nmged);
-	    (void)fprintf(stdout,fp3,"regions in the second pass file (%f).\n",
+	    (void)fprintf(fp3,"regions in the second pass file (%f).\n",
 		numreg);
-	    (void)fprintf(stdout,fp3,"Watch for unexplained errors.\n");
+	    (void)fprintf(fp3,"Watch for unexplained errors.\n");
 	    (void)fflush(fp3);
 	  }
 	}
