@@ -49,8 +49,8 @@ for PRIM in $PRIMITIVES ; do
     # in args =>
     # db args =>
     #
-    set _IN_ARGS ""
-    set _DB_ARGS ""
+    set arb_IN_ARGS ""
+    set arb_DB_ARGS ""
 
     #
     # () Arguments
@@ -58,8 +58,8 @@ for PRIM in $PRIMITIVES ; do
     # in args =>
     # db args =>
     #
-    set _IN_ARGS ""
-    set _DB_ARGS ""
+    set arbn_IN_ARGS ""
+    set arbn_DB_ARGS ""
 
     #
     # () Arguments
@@ -67,8 +67,8 @@ for PRIM in $PRIMITIVES ; do
     # in args =>
     # db args =>
     #
-    set _IN_ARGS ""
-    set _DB_ARGS ""
+    set arg_IN_ARGS ""
+    set arg_DB_ARGS ""
 
     #
     # () Arguments
@@ -76,8 +76,8 @@ for PRIM in $PRIMITIVES ; do
     # in args =>
     # db args =>
     #
-    set _IN_ARGS ""
-    set _DB_ARGS ""
+    set bot_IN_ARGS ""
+    set bot_DB_ARGS ""
 
     #
     # () Arguments
@@ -85,8 +85,8 @@ for PRIM in $PRIMITIVES ; do
     # in args =>
     # db args =>
     #
-    set _IN_ARGS ""
-    set _DB_ARGS ""
+    set cline_IN_ARGS ""
+    set cline_DB_ARGS ""
 
     #
     # () Arguments
