@@ -59,7 +59,7 @@ pack .res_title .res_value -side left -in .fb2_fr
 pack .fb1_fr .fb2_fr -side top -in .fbserv_fr
 
 # Set up MGED parameters
-set database_file /m/cad/.db.6d/world.g
+set database_file ../.db.6d/world.g
 set mged_treetops all.g
 frame .mged1_fr
 label .mged1_title -text "MGED database:"
@@ -150,30 +150,34 @@ proc start_vrmgr {} {
 # Select machines to run RTNODE on
 label .rtnode_title -text "RTNODE hosts:"
 pack .rtnode_title -side top -in .rtnode_fr
-proc register {host formalname cmd} {
+proc register {host formalname cmd dir} {
 	global nodes
 	global	cmds
+	global dirs
 
+	set dirs($formalname) $dir
 	frame .fr_$host
 	checkbutton .button_$host -variable nodes($formalname)
 	label .title_$host -text "$formalname $cmd"
-	pack .button_$host .title_$host -side left -in .fr_$host
+	entry .entry_$host -width 20 -relief sunken -bd 2 -textvariable dirs($formalname)
+	pack .button_$host .title_$host .entry_$host -side left -in .fr_$host
 	pack .fr_$host -side top -in .rtnode_fr
 	set cmds($formalname) $cmd
 }
-register "vapor" "vapor.arl.mil" ssh
-register "wax" "wax.arl.mil" ssh
-register wilson "wilson.arl.mil" ssh
-register jewel "jewel.arl.mil" ssh
-register cosm0 "cosm0.arl.hpc.mil" rsh
-register cosm1 "cosm1.arl.hpc.mil" rsh
-register cosm2 "cosm2.arl.hpc.mil" rsh
-register cosm3 "cosm3.arl.hpc.mil" rsh
-register cosm4 "cosm4.arl.hpc.mil" rsh
-register cosm5 "cosm5.arl.hpc.mil" rsh
-register cosm6 "cosm6.arl.hpc.mil" rsh
-register cosm7 "cosm7.arl.hpc.mil" rsh
-register eckert "eckert-ether.arl.hpc.mil" ssh
+register "vapor" "vapor.arl.mil" ssh /m/cad/remrt
+register "wax" "wax.arl.mil" ssh /n/vapor/m/cad/remrt
+# wilson has 100 MHz cpus, slows things down.
+##register wilson "wilson.arl.mil" ssh /n/vapor/m/cad/remrt
+register jewel "jewel.arl.mil" ssh /n/vapor/m/cad/remrt
+register cosm0 "cosm0.arl.hpc.mil" rsh /r/mike/cad/remrt
+register cosm1 "cosm1.arl.hpc.mil" rsh /r/mike/cad/remrt
+register cosm2 "cosm2.arl.hpc.mil" rsh /r/mike/cad/remrt
+register cosm3 "cosm3.arl.hpc.mil" rsh /r/mike/cad/remrt
+register cosm4 "cosm4.arl.hpc.mil" rsh /r/mike/cad/remrt
+register cosm5 "cosm5.arl.hpc.mil" rsh /r/mike/cad/remrt
+register cosm6 "cosm6.arl.hpc.mil" rsh /r/mike/cad/remrt
+register cosm7 "cosm7.arl.hpc.mil" rsh /r/mike/cad/remrt
+register eckert "eckert-ether.arl.hpc.mil" ssh /n/vapor/m/cad/remrt
 
 
 button .rtnode_button -text "Start NODES" -command start_nodes
@@ -184,6 +188,7 @@ proc start_nodes {} {
 	global rtsync_port
 	global nodes
 	global	cmds
+	global dirs
 
 	puts "start_nodes"
 	# loop through list of nodes selected, starting each one.
@@ -197,7 +202,8 @@ proc start_nodes {} {
 			# ssh -f flag means detatch
 			# ssh -n flag means take stdin from /dev/null.
 			exec echo "no" | $cmds($host) $host \
-				/m/cad/remrt/rtnode \
+				cd $dirs($host) \; \
+				../remrt/rtnode \
 				$rtsync_host $rtsync_port &
 		} code
 		puts "$host results = $code"
@@ -207,3 +213,7 @@ proc start_nodes {} {
 }
 
 puts "demo.tcl done"
+
+
+## Todo:  send change directory command.
+##  Maybe give a sequence of 'em.
