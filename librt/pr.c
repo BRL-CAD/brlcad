@@ -27,8 +27,38 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./debug.h"
 
+/* XXX Move these to raytrace.h */
 RT_EXTERN(void rt_pr_tree_vls, (struct rt_vls *vls, CONST union tree *tp));
+RT_EXTERN(void rt_pr_hit_vls, (struct rt_vls *v, CONST char *str,
+	CONST struct hit *hitp));
+RT_EXTERN(void rt_pr_pt_vls, (struct rt_vls *v, CONST struct rt_i *rtip,
+	CONST struct partition *pp));
+RT_EXTERN(void rt_pr_bitv_vls, (struct rt_vls *v, CONST bitv_t *bv, int len));
+RT_EXTERN(void rt_logindent_vls, (struct rt_vls	*v));
 
+/*
+ *			R T _ L O G I N D E N T _ V L S
+ *
+ *  For multi-line vls generators, honor rtg_logindent like rt_log() does.
+ *  Should be called at the front of each new line.
+ */
+void
+rt_logindent_vls( v )
+struct rt_vls	*v;
+{
+	register int	i, todo;
+	CONST static char	spaces[65] = "                                                                ";
+
+	RT_VLS_CHECK( v );
+
+	i = rt_g.rtg_logindent;
+	while( i > 0 )  {
+		todo = i;
+		if( todo > 64 )  todo = 64;
+		rt_vls_strncat( v, spaces, todo );
+		i -= todo;
+	}
+}
 
 /*
  *			R T _ P R _ S O L T A B
@@ -98,18 +128,64 @@ register CONST struct partition	*phead;
 CONST char			*title;
 {
 	register CONST struct partition *pp;
+	struct rt_vls		v;
 
 	RT_CHECK_RTI(rtip);
 
-	rt_log("------%s\n", title);
+	rt_vls_init( &v );
+	rt_logindent_vls( &v );
+	rt_vls_strcat( &v, "------" );
+	rt_vls_strcat( &v, title );
+	rt_vls_strcat( &v, "\n" );
+
 	for( pp = phead->pt_forw; pp != phead; pp = pp->pt_forw ) {
 		RT_CHECK_PT(pp);
-		rt_pr_pt(rtip, pp);
+		rt_pr_pt_vls( &v, rtip, pp );
 	}
-	rt_log("------\n");
+	rt_logindent_vls( &v );
+	rt_vls_strcat( &v, "------\n");
+
+	rt_log("%s", rt_vls_addr( &v ) );
+	rt_vls_free( &v );
 }
 
 /*
+ *			R T _ P R _ P T _ V L S
+ */
+void
+rt_pr_pt_vls( v, rtip, pp )
+struct rt_vls			*v;
+CONST struct rt_i		*rtip;
+register CONST struct partition *pp;
+{
+	char		buf[128];
+
+	RT_CHECK_RTI(rtip);
+	RT_CHECK_PT(pp);
+	RT_VLS_CHECK(v);
+
+	rt_logindent_vls( v );
+	sprintf(buf, "%.8x: PT ", pp );
+	rt_vls_strcat( v, buf );
+	rt_vls_strcat( v, pp->pt_inseg->seg_stp->st_dp->d_namep );
+	rt_vls_strcat( v, " " );
+	rt_vls_strcat( v, pp->pt_outseg->seg_stp->st_dp->d_namep );
+	sprintf(buf, " (%g,%g)",
+		pp->pt_inhit->hit_dist, pp->pt_outhit->hit_dist );
+	rt_vls_strcat( v, buf );
+	if( pp->pt_inflip )  rt_vls_strcat( v, " Iflip" );
+	if( pp->pt_outflip )  rt_vls_strcat( v, " Oflip" );
+	rt_vls_strcat( v, "\n");
+
+	rt_pr_hit_vls( v, " In hit", pp->pt_inhit );
+	rt_pr_hit_vls( v, "Out hit", pp->pt_outhit );
+	rt_logindent_vls( v );
+	rt_vls_strcat( v, "Solids present: " );
+	rt_pr_bitv_vls( v, pp->pt_solhit, rtip->nsolids );
+	rt_vls_strcat( v, "\n" );
+	}
+}
+
 /*
  *			R T _ P R _ P T
  */
@@ -117,26 +193,51 @@ void
 rt_pr_pt( rtip, pp )
 CONST struct rt_i		*rtip;
 register CONST struct partition *pp;
+	struct rt_vls	v;
+	char		buf[128];
+	struct bu_vls	v;
 
 	RT_CHECK_RTI(rtip);
+	rt_vls_init( &v );
+	bu_vls_init( &v );
+	rt_log("%s", rt_vls_addr( &v ) );
+	rt_vls_free( &v );
+	bu_vls_free( &v );
 }
-	rt_log("%.8x: PT %s %s (%g,%g)",
-		pp,
-		pp->pt_inseg->seg_stp->st_name,
-		pp->pt_outseg->seg_stp->st_name,
-		pp->pt_inhit->hit_dist, pp->pt_outhit->hit_dist );
-	rt_log("%s%s\n",
-		pp->pt_inflip ? " Iflip" : "",
-		pp->pt_outflip ?" Oflip" : "" );
-	rt_pr_hit( " In hit", pp->pt_inhit );
-	rt_pr_hit( "Out hit", pp->pt_outhit );
-	rt_pr_bitv( "Solids present", pp->pt_solhit, rtip->nsolids );
+
+ *			R T _ P R _ B I T V _ V L S
+ *
+ *  Print the bits set in a bit vector.
+ */
+void
+rt_pr_bitv_vls( v, bv, len )
+struct rt_vls		*v;
+register CONST bitv_t	*bv;
+register int		len;
+{
+	register int	i;
+	char		buf[128];
+	int		seen = 0;
+
+	RT_VLS_CHECK( v );
+
+	rt_vls_strcat( v, "(" );
+	for( i=0; i<len; i++ )  {
+		if( BITTEST(bv,i) )  {
+			if( seen )  rt_vls_strcat( v, ", " );
+			sprintf( buf, "%d", i );
+			rt_vls_strcat( v, buf );
+			seen = 1;
+		}
+	}
+	rt_vls_strcat( v, ") " );
 }
 
 /*
  *			R T _ P R _ B I T V
  *
  *  Print the bits set in a bit vector.
+ *  Use rt_vls stuff, to make only a single call to rt_log().
  */
 void
 rt_pr_bitv( str, bv, len )
@@ -144,12 +245,15 @@ CONST char		*str;
 register CONST bitv_t	*bv;
 register int		len;
 {
-	register int i;
-	rt_log("%s: ", str);
-	for( i=0; i<len; i++ )
-		if( BITTEST(bv,i) )
-			rt_log("%d, ", i );
-	rt_log("\n");
+	register int	i;
+	struct rt_vls	v;
+
+	rt_vls_init( &v );
+	rt_vls_strcat( &v, str );
+	rt_vls_strcat( &v, ": " );
+	rt_pr_bitv_vls( &v, bv, len );
+	rt_log("%s", rt_vls_addr( &v ) );
+	rt_vls_free( &v );
 }
 
 /*
@@ -176,13 +280,46 @@ void
 rt_pr_hit( str, hitp )
 CONST char			*str;
 register CONST struct hit	*hitp;
-	rt_log("HIT %s dist=%g (surf %d)\n",
-		str, hitp->hit_dist, hitp->hit_surfno );
-	if( !VNEAR_ZERO( hitp->hit_point, SQRT_SMALL_FASTF ) )  {
-		VPRINT("HIT Point ", hitp->hit_point );
+	struct rt_vls		v;
+	struct bu_vls		v;
+	rt_vls_init( &v );
+	bu_vls_init( &v );
+	rt_log("%s", rt_vls_addr( &v ) );
+	rt_vls_free( &v );
+	bu_vls_free( &v );
+}
+
+/*
+ *			R T _ P R _ H I T _ V L S
+ */
+void
+struct rt_vls			*v;
+struct bu_vls			*v;
+CONST char			*str;
+register CONST struct hit	*hitp;
+	char		buf[128];
+	BU_CK_VLS( v );
+	RT_VLS_CHECK( v );
+	bu_vls_strcat( v, str );
+	rt_logindent_vls( v );
+	rt_vls_strcat( v, "HIT " );
+	rt_vls_strcat( v, str );
+
+	sprintf(buf, " dist=%g (surf %d)\n",
+	bu_vls_printf(v, "HIT dist=%g (surf %d)\n",
+	rt_vls_strcat( v, buf );
+
+	if( !VNEAR_ZERO( hitp->hit_point, SMALL_FASTF ) )  {
+		rt_logindent_vls( v );
+		sprintf(buf, "HIT Point (%g, %g, %g)\n",
+			V3ARGS(hitp->hit_point) );
+		rt_vls_strcat( v, buf );
 	}
-	if( !VNEAR_ZERO( hitp->hit_normal, SQRT_SMALL_FASTF ) )  {
-		VPRINT("HIT Normal", hitp->hit_normal );
+	if( !VNEAR_ZERO( hitp->hit_normal, SMALL_FASTF ) )  {
+		rt_logindent_vls( v );
+		sprintf(buf, "HIT Normal (%g, %g, %g)\n",
+			V3ARGS(hitp->hit_normal) );
+		rt_vls_strcat( v, buf );
 	}
 		hitp->hit_dist, hitp->hit_surfno );
 }
