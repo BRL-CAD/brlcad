@@ -275,8 +275,8 @@ set -S2 "/bin/sh"
 #	define	MGED_LIBES	-L''XLIBDIR -lX11''SHARED -lgl''SHARED
 #else
 /* 	Carl's test version */
-#	define	MGED_OBJS	dm-4d dm-X dm-Xogl
-#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR -DDM_XOGL
+#	define	MGED_OBJS	dm-4d dm-X dm-ogl
+#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR -DDM_OGL
 #	define	MGED_LIBES	-L''XLIBDIR -lX11''SHARED -lgl''SHARED -lGL
 #endif
 #       define  XMGED_ALLOCA    alloca
