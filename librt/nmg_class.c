@@ -894,9 +894,12 @@ CONST struct rt_tol	*tol;
 		    	/* march around the two loops to see if they 
 		    	 * are the same all the way around.
 		    	 */
-		    	while (p->vu_p->v_p == q->vu_p->v_p &&
-			    q->up.lu_p == q_lu && /* sanity check */
-		    	    RT_LIST_NOT_HEAD(p, &lu->down_hd) ) {
+		/* XXX why isn't "p" also traversed circularly? */
+		    	while (
+		    	    RT_LIST_NOT_HEAD(p, &lu->down_hd) &&
+			    p->vu_p->v_p == q->vu_p->v_p &&
+			    q->up.lu_p == q_lu
+			) {
 				q = RT_LIST_PNEXT_CIRC(edgeuse, &q->l);
 				p = RT_LIST_PNEXT(edgeuse, p);
 			}
@@ -905,7 +908,7 @@ CONST struct rt_tol	*tol;
 
 				/* the two loops are "on" each other.  All
 				 * that remains is to determine
-				 * shared/anit-shared status.
+				 * shared/anti-shared status.
 				 */
 				NMG_CK_FACE_G(q_lu->up.fu_p->f_p->fg_p);
 				if (VDOT(q_lu->up.fu_p->f_p->fg_p->N,
