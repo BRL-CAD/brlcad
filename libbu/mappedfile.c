@@ -383,6 +383,9 @@ CONST char	*appl;		/* non-null only when app. will use 'apbuf' */
 	struct bu_vls	str;
 	struct bu_mapped_file	*ret;
 
+	BU_ASSERT_PTR( name, !=, NULL );
+	BU_ASSERT_PTR( pathp, !=, NULL );
+
 	/* Do not resort to path for a rooted filename */
 	if( name[0] == '/' )
 		return bu_open_mapped_file( name, appl );
