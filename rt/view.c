@@ -229,6 +229,10 @@ register struct application *ap;
 		    	g = inonbackground[1];
 		    	b = inonbackground[2];
 		}
+
+		/* Make sure it's never perfect black */
+		if (b == 0)
+		  b= 1;
 	}
 
 	if(rdebug&RDEBUG_HITS) bu_log("rgb=%3d,%3d,%3d xy=%3d,%3d (%g,%g,%g)\n",
@@ -1445,7 +1449,8 @@ bu_log("mallocing curr_float_frame\n");
 			register int	xx, yy;
 		    	int		got;
 
-			pix_start = sb.st_size / sizeof(RGBpixel);
+			/* Replaced with new method of looking through whole image and calculating black pixels */
+			/* pix_start = sb.st_size / sizeof(RGBpixel); */
 
 		    	/* Protect against file being too large */
 			if( pix_start > pix_end )  pix_start = pix_end;
