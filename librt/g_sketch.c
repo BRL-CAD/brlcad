@@ -218,7 +218,8 @@ struct curve                    *crv;
 	struct carc_seg *csg;
 	struct nurb_seg *nsg;
 	fastf_t delta;
-	point_t center, pt, start_pt, end_pt;
+	point_t center, start_pt, end_pt;
+	fastf_t pt[4];
 	vect_t semi_a, semi_b;
 	fastf_t radius;
 
@@ -487,17 +488,16 @@ struct curve                    *crv;
 				param_delta = (nsg->k.knots[nsg->k.k_size-1] - nsg->k.knots[0])/(double)num_intervals;
 				for( i=0 ; i<=num_intervals ; i++ )
 				{
-					fastf_t t, pt_skt[3];
+					fastf_t t;
 					int j;
 
 					t = nsg->k.knots[0] + i*param_delta;
-					rt_nurb_c_eval( &eg, t, pt_skt );
+					rt_nurb_c_eval( &eg, t, pt );
 					if( RT_NURB_IS_PT_RATIONAL( nsg->pt_type ) )
 					{
 						for( j=0 ; j<coords-1 ; j++ )
-							pt_skt[j] /= pt_skt[coords-1];
+							pt[j] /= pt[coords-1];
 					}
-					VJOIN2( pt, V, pt_skt[0], u_vec, pt_skt[1], v_vec );
 					if( i == 0 )
 						RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_MOVE )
 					else
