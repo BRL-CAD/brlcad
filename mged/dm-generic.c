@@ -564,6 +564,34 @@ end:
     return TCL_OK;
   }
 
+  if(!strcmp(argv[0], "bg")){
+    int r, g, b;
+    struct bu_vls vls;
+
+    if(argc != 4){
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "Usage: dm bg r g b");
+      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+      bu_vls_free(&vls);
+
+      return TCL_ERROR;
+    }
+
+    if(sscanf(argv[1], "%d", &r) != 1 ||
+       sscanf(argv[2], "%d", &g) != 1 ||
+       sscanf(argv[3], "%d", &b) != 1){
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "Usage: dm bg r g b");
+      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+      bu_vls_free(&vls);
+
+      return TCL_ERROR;
+    }
+
+    dirty = 1;
+    return DM_SET_BGCOLOR(dmp, r, g, b);
+  }
+
   Tcl_AppendResult(interp, "dm: bad command - ", argv[0], "\n", (char *)NULL);
   return TCL_ERROR;
 }
