@@ -1703,7 +1703,7 @@ register struct xray	*rp;
 {
 	register struct dsp_specific *dsp =
 		(struct dsp_specific *)stp->st_specific;
-	vect_t N, T;
+	vect_t N, T, A, B, C, D, AB, AC, AD;
 	int cell[2];
 
 	if (rt_g.debug & DEBUG_HF)
@@ -1717,14 +1717,33 @@ register struct xray	*rp;
 		cell[X] = hitp->hit_vpriv[X];
 		cell[Y] = hitp->hit_vpriv[Y];
 		
-		VSET(T, .5, 0.0, 1.0);
+		VSET(A, cell[X],   cell[Y],   DSP(dsp, cell[X],   cell[Y])  );
+		VSET(B, cell[X]+1, cell[Y],   DSP(dsp, cell[X]+1, cell[Y])  );
+		VSET(D, cell[X]+1, cell[Y]+1, DSP(dsp, cell[X]+1, cell[Y]+1));
+
+		VSUB2(AB, B, A);
+		VSUB2(AD, D, A);
+
+		VCROSS(T, AB, AD); 
+		VUNITIZE(T);
+
 		MAT4X3VEC(N, dsp->dsp_i.dsp_stom, T);
 
 	} else if ( hitp->hit_surfno == TRI2 ) {
 		cell[X] = hitp->hit_vpriv[X];
 		cell[Y] = hitp->hit_vpriv[Y];
 
-		VSET(T, 0.0, .5, 1.0);
+		VSET(A, cell[X],   cell[Y],   DSP(dsp, cell[X],   cell[Y])  );
+		VSET(C, cell[X],   cell[Y]+1, DSP(dsp, cell[X],   cell[Y]+1));
+		VSET(D, cell[X]+1, cell[Y]+1, DSP(dsp, cell[X]+1, cell[Y]+1));
+
+		VSUB2(AD, D, A);
+		VSUB2(AC, C, A);
+
+
+		VCROSS(T, AD, AC); 
+		VUNITIZE(T);
+
 		MAT4X3VEC(N, dsp->dsp_i.dsp_stom, T);
 
 	} else {
