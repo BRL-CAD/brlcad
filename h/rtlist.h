@@ -75,7 +75,7 @@
  *									*
  ************************************************************************/
 
-struct rt_list  {
+struct rt_list {
 	long		magic;
 	struct rt_list	*forw;		/* "forward", "next" */
 	struct rt_list	*back;		/* "back", "last" */
@@ -193,6 +193,7 @@ struct rt_list  {
 	(((struct rt_list *)(p)) == (hp))
 #define RT_LIST_NOT_HEAD(p,hp)	\
 	(((struct rt_list *)(p)) != (hp))
+#define RT_CK_LIST_HEAD( _p )	RT_CKMAG( (_p), RT_LIST_HEAD_MAGIC, "rt_list")
 
 /* Boolean test to see if the next list element is the head */
 #define RT_LIST_NEXT_IS_HEAD(p,hp)	\
