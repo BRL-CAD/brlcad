@@ -2305,6 +2305,70 @@ CONST plane_t p;
 	}
 }
 
+
+/*		N M G _ F A C E _ N E W _ P L A N E
+ *
+ *	Assign plane equation to this face. If other faces use current
+ *	geometry for this face, then make a new geometry for this face.
+ */
+void
+nmg_face_new_g( fu, pl )
+struct faceuse *fu;
+CONST plane_t pl;
+{
+	struct face *f;
+	struct face *f_tmp;
+	struct face_g_plane *fg;
+	struct model *m;
+	int use_count=0;
+
+	NMG_CK_FACEUSE( fu );
+	f = fu->f_p;
+	NMG_CK_FACE( f );
+	fg = f->g.plane_p;
+
+	/* if this face has no geometry, just call nmg_face_g() */
+	if( !fg )
+	{
+		nmg_face_g( fu, pl );
+		return;
+	}
+
+	/* count uses of this face geometry */
+	for( RT_LIST_FOR( f_tmp, face, &fg->f_hd ) )
+		use_count++;
+
+	/* if this is the only use, just call nmg_face_g() */
+	if( use_count < 2 )
+	{
+		nmg_face_g( fu, pl );
+		return;
+	}
+
+	/* There is at least one other use of this face geometry */
+
+	fu->orientation = OT_SAME;
+	fu->fumate_p->orientation = OT_OPPOSITE;
+
+	/* dequeue this face from fg's face list */
+	RT_LIST_DEQUEUE( &f->l );
+
+	/* get a new geometry sructure */
+	m = nmg_find_model( &fu->l.magic );
+	GET_FACE_G_PLANE(f->g.plane_p, m);
+	f->flip = 0;
+	fg = f->g.plane_p;
+	fg->magic = NMG_FACE_G_PLANE_MAGIC;
+	RT_LIST_INIT(&fg->f_hd);
+	RT_LIST_APPEND( &fg->f_hd, &f->l );
+
+	HMOVE( fg->N, pl );
+
+	if (rt_g.NMG_debug & DEBUG_BASIC)  {
+		rt_log("nmg_face_new_g(fu=x%x, pl=(%g %g %g %g))\n", fu , V4ARGS( pl ));
+	}
+}
+
 /*
  *			N M G _ F A C E _ G _ S N U R B
  *
