@@ -1,4 +1,5 @@
-/*	    F L A B E L . C
+/*
+ *			F B L A B E L . C
  *
  *  Function -
  *	Draw a Label on a Frame buffer image.
@@ -18,6 +19,7 @@
 
 
 #include <stdio.h>
+#include <ctype.h>
 #include "fb.h"
 
 #define INCL_FONT
@@ -173,49 +175,59 @@ char **argv;
 
 	fb_close( fbp );
 	exit(0);
- }
+}
 
- do_line( line )
- register char	*line;
- {	
-	 register int    currx;
-	 register int    char_count, char_id;
-	 register int	len = strlen( line );
-	 if( ffdes == NULL )
-	 {
-		 fprintf(stderr,
+do_line( line )
+register char	*line;
+{
+	register int    currx;
+	register int    char_count, char_id;
+	register int	len = strlen( line );
+	if( ffdes == NULL )
+	{
+		fprintf(stderr,
 		     "ERROR: do_line() called before get_Font().\n" );
-		 return;
-	 }
-	 currx = xpos;
+		return;
+	}
+	currx = xpos;
 
-	 for( char_count = 0; char_count < len; char_count++ )
-	 {
-		 char_id = (int) line[char_count] & 0377;
+	for( char_count = 0; char_count < len; char_count++ )  {
+		char_id = (int) line[char_count] & 0377;
 
-		 /* locate the bitmap for the character in the file */
-		 if( fseek( ffdes, (long)(SWABV(dir[char_id].addr)+offset), 0 )
+		/*
+		 *  Space characters are frequently not represented
+		 *  in the font set, so leave white space here.
+		 */
+	 	if( isascii(char_id) && isspace(char_id) )  {
+	 		char_id = 'n';	/* 1-en space */
+			width = SWABV(dir[char_id].right) + SWABV(dir[char_id].left);
+	 		currx += width;
+	 		continue;
+	 	}
+
+		/* locate the bitmap for the character in the file */
+		if( fseek( ffdes, (long)(SWABV(dir[char_id].addr)+offset), 0 )
 		     == EOF
 		     )
-		 {
+		{
 			 fprintf(stderr,  "fseek() to %ld failed.\n",
 			 (long)(SWABV(dir[char_id].addr) + offset)
 			     );
 			 return;
-		 }
+		}
 
-		 /* Read in the dimensions for the character */
-		 width = dir[char_id].right + dir[char_id].left;
-		 height = dir[char_id].up + dir[char_id].down;
+		/* Obtain the dimensions for the character */
+		width = SWABV(dir[char_id].right) + SWABV(dir[char_id].left);
+		height = SWABV(dir[char_id].up) + SWABV(dir[char_id].down);
 
-		 if( currx + width > fb_getwidth(fbp) - 1 )
+		if( currx + width > fb_getwidth(fbp) - 1 )
 			 break;		/* won't fit on screen */
 
-		 do_char( char_id, currx, ypos, dir[char_id].down%2 );
-		 currx += SWABV(dir[char_id].width) + 2;
+		do_char( char_id, currx, ypos, dir[char_id].down%2 );
+		currx += SWABV(dir[char_id].width) + 2;
 	 }
 	 return;
- }
+}
 
 do_char( c, x, y, odd )
 int c;
