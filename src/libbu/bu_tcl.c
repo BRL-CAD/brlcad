@@ -32,8 +32,7 @@ static const char libbu_bu_tcl_RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
-
+#include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
@@ -697,7 +696,7 @@ bu_tcl_ck_malloc_ptr(ClientData		clientData,
 		Tcl_AppendResult( interp, "Usage: bu_ck_malloc_ptr ascii-ptr description\n");
 		return TCL_ERROR;
 	}
-	bu_ck_malloc_ptr( (void *)atoi(argv[1]), argv[2] );
+	bu_ck_malloc_ptr( (genptr_t)atol(argv[1]), argv[2] );
 	return TCL_OK;
 }
 
