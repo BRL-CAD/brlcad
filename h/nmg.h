@@ -530,8 +530,14 @@ struct edge_g_lseg {
 	long			index;	/* struct # in this model */
 };
 
-/* The ctl_points on this curve are (u,v) values on the face's surface */
-/* If order <= 0, cnurb is straight line seg in param space, with null knots and ctl_points */
+/*
+ *  The ctl_points on this curve are (u,v) values on the face's surface.
+ *  As a storage and performance efficiency measure, if order <= 0,
+ *  then the cnurb is a straight line segment in parameter space,
+ *  and the k.knots and ctl_points pointers will be NULL.
+ *  In this case, the vertexuse_a_cnurb's at both ends of the edgeuse define
+ *  the path through parameter space.
+ */
 struct edge_g_cnurb {
 	long			magic;
 	struct rt_list		eu_hd2;	/* heads l2 list of edgeuses on this curve */
@@ -543,20 +549,6 @@ struct edge_g_cnurb {
 	fastf_t			*ctl_points; /* array [c_size] */
 	long			index;	/* struct # in this model */
 };
-
-/* XXX move to rtlist.h */
-/*
- *  When a structure of type '_type' contains more than one rt_list structure
- *  within it (such as the NMG edgeuse), this macro can be used to convert
- *  a pointer '_ptr2' to a "midway" rt_list structure (an element called
- *  '_name2' in structure '_type') back into a pointer to the overall
- *  enclosing structure.  For example:
- *		eu = RT_LIST_MAIN_PTR( edgeuse, midway, l2 );
- *
- *  eu1 = RT_LIST_MAIN_PTR(edgeuse, RT_LIST_FIRST(rt_list, &eg1->eu_hd2), l2);
- */  
-#define RT_LIST_MAIN_PTR(_type, _ptr2, _name2)	\
-	((struct _type *)(((char *)(_ptr2)) - offsetof(struct _type, _name2.magic)))
 
 struct edgeuse {
 	struct rt_list		l;	/* cw/ccw edges in loop or wire edges in shell */
