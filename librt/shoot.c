@@ -102,6 +102,7 @@ struct rt_i	*rtip;
 		psp->stp = stp;
 		psp->shot = bu_bitv_new(stp->st_npieces);
 		rt_htbl_init( &psp->htab, 8, "psp->htab" );
+		psp->cutp = CUTTER_NULL;
 	} RT_VISIT_ALL_SOLTABS_END
 }
 
@@ -1018,6 +1019,7 @@ start_cell:
 
 				/* Allow solid to shoot all pieces in this cell at once */
 				resp->re_piece_shots++;
+				psp->cutp = cutp;
 
 				if( (ret = stp->st_meth->ft_piece_shot(
 				    psp, plp, ss.dist_corr, &ss.newray, ap )) <= 0 )  {
