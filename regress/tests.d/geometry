@@ -137,12 +137,12 @@ dsp_IN_ARGS=""
 dsp_DB_ARGS=""
 
 #
-# (ebm) Arguments
+# Extruded Bitmap (ebm) Arguments
 # 
-# in args =>
+# in args => bw_file width height extrusion_distance
 #
-ebm_IN_ARGS=""
-ebm_DB_ARGS=""
+ebm_IN_ARGS="ebm.bw 32 32 10"
+ebm_DB_ARGS="F ebm.bw W 32 N 32 H 10 M { 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 }"
 
 #
 # (ehy) Arguments
@@ -348,6 +348,14 @@ for PRIM in $PRIMITIVES ; do
     if [ "x$IN_ARGS" = "x" ] ; then
         warn "Primitive ${PRIM} has no arguments set, skipping"
     else
+
+        #
+        # If the solid is an ebm, create the bitmap to extrude
+	#
+	if [ "x${PRIM}" = "xebm" ]; then
+	    gencolor -r205 0 16 32 64 128 | \
+                dd of=ebm.bw bs=1024 count=1 >/dev/null 2>&1
+	fi
 
         log ""
         log "Evaluating $PRIM"
