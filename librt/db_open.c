@@ -32,12 +32,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <string.h>
 #endif
 
-#ifdef unix
+#if defined(unix) || defined(__unix)
 # include <sys/types.h>
 # include <sys/stat.h>
 #endif
 
-#if defined(sgi) && defined(mips)
+#if (defined(sgi) && defined(mips)) || (defined(__sgi) && defined(__mips))
 # include <sys/mman.h>
 #endif
 
@@ -68,7 +68,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef vax
 #	define	INMEM_LIM	8*1024*1024
 #endif
-#if defined(sgi) && defined(mips)
+#if (defined(sgi) && defined(mips)) || (defined(__sgi) && defined(__mips))
 #	define	INMEM_LIM	8*1024*1024
 #endif
 #if !defined(INMEM_LIM)
@@ -92,7 +92,7 @@ char	*mode;
 {
 	register struct db_i	*dbip;
 	register int		i;
-#if unix
+#if defined(unix) || defined(__unix)
 	struct stat		sb;
 #endif
 
@@ -101,21 +101,21 @@ char	*mode;
 	GETSTRUCT( dbip, db_i );
 	dbip->dbi_magic = DBI_MAGIC;
 
-#if unix
+#if defined(unix) || defined(__unix)
 	if( stat( name, &sb ) < 0 )
 		goto fail;
 #endif
 
 	if( mode[0] == 'r' && mode[1] == '\0' )  {
 		/* Read-only mode */
-#		if unix
+#		if defined(unix) || defined(__unix)
 			if( sb.st_size == 0 )  goto fail;
 			if( (dbip->dbi_fd = open( name, O_RDONLY )) < 0 )
 				goto fail;
 			if( (dbip->dbi_fp = fdopen( dbip->dbi_fd, "r" )) == NULL )
 				goto fail;
 
-#			if defined(sgi) && defined(mips)
+#			if (defined(sgi) && defined(mips)) || (defined(__sgi) && defined(_mips))
 			/* Attempt to access as memory-mapped file */
 			if( (dbip->dbi_inmem = mmap(
 			    (caddr_t)0, sb.st_size, PROT_READ, MAP_PRIVATE,
@@ -145,7 +145,7 @@ char	*mode;
 		dbip->dbi_read_only = 1;
 	}  else  {
 		/* Read-write mode */
-#		if unix
+#		if defined(unix) || defined(__unix)
 			if( (dbip->dbi_fd = open( name, O_RDWR )) < 0 )
 				goto fail;
 			if( (dbip->dbi_fp = fdopen( dbip->dbi_fd, "r+w" )) == NULL )
@@ -201,7 +201,7 @@ char *name;
 	strncpy( new.i.i_version, ID_VERSION, sizeof(new.i.i_version) );
 	strcpy( new.i.i_title, "Untitled MGED Database" );
 
-#	if unix
+#	if defined(unix) || defined(__unix)
 	{
 		int	fd;
 		if( (fd = creat(name, 0644)) < 0 ||
@@ -238,7 +238,7 @@ register struct db_i	*dbip;
 	if(rt_g.debug&DEBUG_DB) rt_log("db_close(%s) x%x\n",
 		dbip->dbi_filename, dbip );
 
-#if unix
+#if defined(unix) || defined(__unix)
 	(void)close( dbip->dbi_fd );
 #endif
 	fclose( dbip->dbi_fp );

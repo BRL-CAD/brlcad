@@ -194,7 +194,7 @@ long		offset;		/* byte offset from start of file */
 		return(0);
 	}
 	RES_ACQUIRE( &rt_g.res_syscall );
-#if unix
+#if defined(unix) || defined(__unix)
 	(void)lseek( dbip->dbi_fd, offset, 0 );
 	got = read( dbip->dbi_fd, addr, count );
 #else
@@ -249,7 +249,7 @@ long		offset;
 		return(-1);
 	}
 	RES_ACQUIRE( &rt_g.res_syscall );
-#if unix
+#if defined(unix) || defined(__unix)
 	(void)lseek( dbip->dbi_fd, offset, 0 );
 	got = write( dbip->dbi_fd, addr, count );
 #else

@@ -164,7 +164,7 @@ register char	*lp;
 	if( *lp == '\0' )
 		return(0);		/* No words */
 
-#ifdef unix
+#if defined(unix) || defined(__unix)
 	/* Handle "!" shell escape char so the shell can parse the line */
 	if( *lp == '!' )  {
 		(void)system( lp+1 );
