@@ -166,7 +166,7 @@ struct fast4_color HeadColor;
 			}
 #else
 /* convenient macro for building regions */
-#define		MK_REGION( fp , headp , name , r_id, ) \
+#define		MK_REGION( fp , headp , name , r_id ) \
 			{\
 				if( mode == 1 ) {\
 					if( !quiet )\
