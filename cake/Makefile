@@ -62,6 +62,9 @@ $(OBJ):		$(HDR)
 $(GOBJ):	$(HDR)
 
 cake_g.c:	cake_g.y
+# for bison instead of yacc, use the following line, you may need to remove the "void" declaration for
+# yyerror() in "cake_g.y"
+#		bison -ydv cake_g.y
 		yacc -dv cake_g.y
 		mv -f y.tab.h cake_g.h
 		mv -f y.tab.c cake_g.c
