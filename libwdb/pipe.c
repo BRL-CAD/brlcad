@@ -98,6 +98,7 @@ struct wdb_pipeseg	*psptr;
 {
 	register struct exported_pipeseg *ep;
 	register struct wdb_pipeseg	*psp = psptr;
+	struct wdb_pipeseg		tmp;
 	int		count;
 	int		ngran;
 	int		nbytes;
@@ -144,10 +145,15 @@ struct wdb_pipeseg	*psptr;
 	for( psp = psptr; psp != WDB_PIPESEG_NULL; psp = psp->ps_next, ep++ )  {
 		/* Avoid need for htonl() here */
 		ep->eps_type[0] = (char)psp->ps_type;
-		htond( ep->eps_start, psp->ps_start, 3 );
-		htond( ep->eps_bendcenter, psp->ps_bendcenter, 3 );
-		htond( ep->eps_id, &psp->ps_id, 1 );
-		htond( ep->eps_od, &psp->ps_od, 1 );
+		/* Convert from user units to mm */
+		VSCALE( tmp.ps_start, psp->ps_start, mk_conv2mm );
+		VSCALE( tmp.ps_bendcenter, psp->ps_bendcenter, mk_conv2mm );
+		tmp.ps_id = psp->ps_id * mk_conv2mm;
+		tmp.ps_od = psp->ps_od * mk_conv2mm;
+		htond( ep->eps_start, tmp.ps_start, 3 );
+		htond( ep->eps_bendcenter, tmp.ps_bendcenter, 3 );
+		htond( ep->eps_id, &tmp.ps_id, 1 );
+		htond( ep->eps_od, &tmp.ps_od, 1 );
 	}
 
 	if( fwrite( (char *) rec, nbytes, 1, fp) != 1 )  {
