@@ -114,6 +114,10 @@ extern struct dm dm_XGL;
 extern struct dm dm_ogl;
 #endif
 
+#ifdef DM_OGL2
+extern struct dm dm_ogl2;
+#endif
+
 #ifdef DM_GLX
 extern struct dm dm_glx;
 #endif
@@ -180,6 +184,9 @@ static struct dm *which_dm[] = {
 #ifdef DM_OGL
 	&dm_ogl,
 #endif
+#ifdef DM_OGL2
+	&dm_ogl2,
+#endif
 	0
 };
 
@@ -235,6 +242,10 @@ char *name;
   register struct dm_list *dmlp;
   register struct dm_list *o_dm_list;
 
+  /* The Null display manager is already attached */
+  if(!strcmp(name, which_dm[0]->dmr_name))
+    return;
+
   for( dp=which_dm; *dp != (struct dm *)0; dp++ )  {
     if( strcmp( (*dp)->dmr_name, name ) != 0 )
       continue;
@@ -281,7 +292,8 @@ char *name;
   curr_dm_list->_dmp = &dm_Null;
   dm_var_init(o_dm_list);
 #else
-  release();
+  if(*dp != (struct dm *)0)
+    release();
 #endif
 #else
 	if( dmp != &dm_Null )
@@ -386,12 +398,10 @@ get_attached()
 		for( ; *dp != (struct dm *)0; dp++ )
 			rt_log("|%s", (*dp)->dmr_name);
 		rt_log(")[%s]? ", which_dm[0]->dmr_name);
-#ifdef XMGED
-		(void)mged_gets( line );                /* Null terminated */
-#else
+
 		(void)fgets(line, sizeof(line), stdin);	/* \n, Null terminated */
 		line[strlen(line)-1] = '\0';		/* remove newline */
-#endif
+
 		if( feof(stdin) )  quit();
 		if( line[0] == '\0' )  {
 			dp = &which_dm[0];	/* default */
@@ -411,7 +421,19 @@ get_attached()
 void
 reattach()
 {
+#ifdef MULTI_ATTACH
+  char *name;
+
+  if(curr_dm_list == &head_dm_list)
+    return;
+
+  name = strdup(dmp->dmr_name);
+  release();
+  attach(name);
+  free((void *)name);
+#else
 	attach( dmp->dmr_name );		/* reattach */
+#endif
 	dmaflag = 1;
 }
 
@@ -451,7 +473,7 @@ int
 is_dm_null()
 {
 #ifdef MULTI_ATTACH
-  return curr_dm_list == &head_dm_list;
+  return(curr_dm_list == &head_dm_list);
 #else
 	return dmp == &dm_Null;
 #endif
@@ -463,29 +485,16 @@ void
 dm_var_init(initial_dm_list)
 struct dm_list *initial_dm_list;
 {
-#if 0
-  /* init rotation matrix */
-  Viewscale = 500;		/* => viewsize of 1000mm (1m) */
-  mat_idn( Viewrot );
-  mat_idn( toViewcenter );
-
-  new_mats();
-  setview( 0.0, 0.0, 0.0 );
-#else
-  Viewscale = initial_dm_list->_Viewscale;
-  mat_copy( Viewrot, initial_dm_list->_Viewrot );
-  mat_copy( toViewcenter, initial_dm_list->_toViewcenter);
-  mat_copy( model2view, initial_dm_list->_model2view );
-  mat_copy( view2model, view2model);
-
-  if( state != ST_VIEW ) {
-    mat_mul( model2objview, model2view, modelchanges );
-    mat_inv( objview2model, model2objview );
-  }
-
-  dmaflag = 1;
-#endif
 
   mged_variables = default_mged_variables;
+  mat_copy( Viewrot, initial_dm_list->_Viewrot );
+  size_reset();
+  new_mats();
+
+#ifdef VIRTUAL_TRACKBALL
+  MAT_DELTAS_GET(orig_pos, toViewcenter);
+#endif
+
+  dmaflag = 1;
 }
 #endif
