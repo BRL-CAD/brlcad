@@ -14,7 +14,8 @@
 The <I>mged</I> prompt will be replaced by a system prompt for the shell and
 the user may perform any legal shell commands.  The <I>mged</I> process
 waits for the shell process to finish, which occurs when the user exits
-the shell.
+the shell. This only works in a command window associated with a tty
+(i.e. the window used to start <I>mged</I> in classic mode).
 
      <DL>
        <DT><big>Examples:</big></DT>
@@ -66,7 +67,13 @@ the points appear in counter&#173clockwise order.
 <DT><a NAME="question"><B>?</B></DT>
 
 <DD> Provide a list of available <I>mged</I> commands.
-The <a href="#help">help</a>, <a href="#helplib">helplib</a>, and <a href="#lib_help">?lib</a>
+The 
+<a href="#question_devel">?devel</a>,
+<a href="#question_lib">?lib</a>,
+<a href="#help">help</a>,
+<a href="#helpdevel">helpdevel</a> 
+and
+<a href="#helplib">helplib</a>
 commands provide additional information on available commands.
 
 	<DL>
@@ -77,12 +84,39 @@ commands provide additional information on available commands.
 </DD>
 <HR>
 
-<DT><a NAME="lib_help"><B>?lib</B></DT>
+<DT><a NAME="question_devel"><B>?devel</B></DT>
+
+<DD> Provide a list of available <I>mged developer</I> commands.
+The
+<a href="#question">?</a>,
+<a href="#question_lib">?lib</a>,
+<a href="#help">help</a>,
+<a href="#helpdevel">helpdevel</a>
+and
+<a href="#helplib">helplib</a>
+commands provide additional
+information on available commands.
+
+        <DL>
+        <DT><big>Examples:</big></DT>
+        <DD><kbd>mged></kbd> <b>?devel</b><br> -- get a list of available <I>developer</I> commands.
+        </DD>
+        </DL>
+</DD>
+<HR>
+
+<DT><a NAME="question_lib"><B>?lib</B></DT>
 
 <DD> Provide a list of available <I>BRL&#173CAD</I> library interface commands.
-The <a href="#help">help</a>, <a href="#helplib">helplib</a>, and
-<a href="#question">?</a> commands provide additional information on
-available commands.
+The
+<a href="#question">?</a>,
+<a href="#question_devel">?devel</a>,
+<a href="#help">help</a>,
+<a href="#helpdevel">helpdevel</a>, 
+and
+<a href="#helplib">helplib</a>
+commands provide additional
+information on available commands.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
@@ -245,36 +279,6 @@ as increments.
 </DD>
 <HR>
 
-<DT><a NAME="aip"><B>aip</B> [<I>f|b</I>]</DT>
-
-<DD> The ``aip'' command advances the <a href="#ill">illumination</a> pointer when
-<I>mged</I> is in the <a href="#ill">solid illuminate</a> state or the
-<a href="#ill">object illuminate</a> state. In either of the <I>illuminate</I>
-states, a single primitive solid is highlighted at one time, and the path to that solid
-is displayed. Moving the mouse vertically in the <I>mged</I> display causes different
-solids to be highlighted and their paths to be displayed. The <I>aip</I> command causes the next solid in
-the list to be highlighted (if used with no arguments or the <I>f</I> argument), or
-it causes the previous solid in the list to be highlighted (if used with the <I>b</I>
-argument). Once the desired solid is highlighted, it is selected by clicking the middle
-mouse button or by using the <a href="#M">M</a> command.
-     If <I>mged</I> is in the <a href="#ill">object path</a> state, the place
-     along the path where the edit is to take place will advance.
-     Once the desired path position is displayed, it is selected by
-     clicking the middle mouse button or by using the
-     <a href="#M">M</a> command.
-     This command was designed to be used within a Tcl script.
-
-     <DL>
-       <DT><big>Examples:</big></DT>
-       <DD>mged> <b><a href="#press">press</a> sill</b><br> -- enter solid illuminate mode
-	    <br>mged> <b>aip</b><br> -- hightlight the next solid
-	    <br>mged> <b>aip b</b><br> -- highlight the previous solid
-	    <br>mged> <b><a href="#M">M</a> 1 0 0</b><br> -- select the highlighted solid
-       </DD>
-     </DL>
-</DD>
-<HR>
-
 <DT><a NAME="analyze"><B>analyze</B> [<I>arb_name</I>]</DT>
 
 <DD> The ``analyze'' command displays the rotation and fallback angles,
@@ -299,6 +303,35 @@ may be omitted, and the <I>ARB</I> being edited will be analyzed.
 	<DL>
 	<DT><big>Examples:</big></DT>
 	<DD>mged> <b>apropos region</b><br> -- list all commands that contain the word ``region''
+		in their one line usage messages.
+	</DD>
+	</DL>
+</DD>
+<HR>
+
+<DT><a NAME="aproposdevel"><B>aproposdevel</B> <I>keyword</I></DT>
+
+<DD> The ``aproposdevel'' command searches through the one line usage messages for each
+<I>mged developer</I> command and displays the name of each command where a match is found.
+
+	<DL>
+	<DT><big>Examples:</big></DT>
+	<DD>mged> <b>aproposdevel region</b><br> -- list all <I>developer</I> commands that contain the word ``region''
+		in their one line usage messages.
+	</DD>
+	</DL>
+</DD>
+<HR>
+
+<DT><a NAME="aproposlib"><B>aproposlib</B> <I>keyword</I></DT>
+
+<DD> The ``aproposlib'' command searches through the one line usage messages for each
+<I>BRL&#173CAD</I> library interface command and displays the name of each command
+where a match is found.
+
+	<DL>
+	<DT><big>Examples:</big></DT>
+	<DD>mged> <b>aproposlib mat</b><br> -- list all commands that contain the word ``mat''
 		in their one line usage messages.
 	</DD>
 	</DL>
@@ -523,76 +556,6 @@ a similar function by changing the viewing direction, but not moving the eye loc
 </DD>
 <HR>
 
-<DT><a NAME="cmd_close"><B>cmd_close</B> <I>id</I></DT>
-<DD>This command releases <I>id</I>'s internal data structures.
-     The parameter <I>id</I> refers to a command window.
-
-     <DL>
-       <DT><big>Examples:</big></DT>
-       <DD>mged> <b>cmd_close my_id</b>
-	    <br> -- closes the command window <I>my_id</I>
-       </DD>
-     </DL>
-</DD>
-<HR>
-
-<DT><a NAME="cmd_get"><B>cmd_get</B></DT>
-<DD>This command returns information about the current command
-     window. More specifically, it returns the following:
-     <UL>
-       <LI>the display manager associated with the current command window
-       <LI>the display manager that is sharing its view state with the above display manager
-       <LI>the id of the command window
-       <LI>a list of command window ids associated with the current command window
-	    (Note: a command window is considered to be associated with another
-	    command window if each is being tied to some
-	    display manager and these display managers are sharing their
-	    view state.)
-     </UL>
-     This command was designed to be used within a Tcl script.
-     <DL>
-       <DT><big>Examples:</big></DT>
-       <DD>mged> <b>cmd_get</b>
-	    <br><b>.my_window .their_window me {{them} {me} }</b>
-	    <br> -- the current command window is <I>me</I> and is
-	    <a href="#tie">tied</a> to <I>.my_window</I>.
-	    The display window <I>.their_window</I> is sharing its
-	    view state with <I>.my_window</I>.
-	    Also, <I>.their_window</I> is sharing its view state with the
-	    display manager window that is tied to <I>them</I>.
-       </DD>
-     </DL>
-</DD>
-<HR>
-
-<DT><a NAME="cmd_init"><B>cmd_init</B> <I>id</I></DT>
-<DD>This command is used to create the internal data structures
-     for a new command window.
-     This command was designed to be used within a Tcl script.
-
-     <DL>
-       <DT><big>Examples:</big></DT>
-       <DD>mged> <b>cmd_init my_id</b>
-	    <br> -- create another command window named <I>my_id</I>
-       </DD>
-     </DL>
-</DD>
-<HR>
-
-<DT><a NAME="cmd_set"><B>cmd_set</B> <I>id</I></DT>
-<DD>This command sets the current command window to <I>id</I>. If this
-     command window is associated with a display manager, that display
-     manager becomes the current display manager. This command was
-     designed to be used within a Tcl script.
-     <DL>
-       <DT><big>Examples:</big></DT>
-       <DD>mged> <b>cmd_set my_id</b>
-	    <br> -- <I>my_id</I> becomes the current command window
-       </DD>
-     </DL>
-</DD>
-<HR>
-     
 <DT><a NAME="color"><B>color</B> <I>low high r g b str</I></DT>
 
 <DD> The ``color'' command creates an entry in the database that functions as part of a color lookup
@@ -816,6 +779,13 @@ The <I>command</I> must be one of the following with appropriate arguments:
 		<a href="brlcad_solids.html#TGC">TGC</a> solid type.
 	</DD>
 	</DL>
+</DD>
+<HR>
+
+<DT><a NAME="db_glob"><B>db_glob</B> <I>cmd_string</I></DT>
+
+<DD>Globs <I>cmd_string</I> against the MGED database
+resulting in an expanded command string.
 </DD>
 <HR>
 
@@ -1569,36 +1539,10 @@ Other commands to build
 </DD>
 <HR>
 
-<DT><a NAME="get_comb"><B>get_comb</B> <I>comb_name</I></DT>
-
-<DD> The ``get_comb'' command returns a Tcl list of information about
-     <I>comb_name</I>. If <I>comb_name</I> is a region,
-     the following information is returned:
-     <center>
-     <br>
-     <I>NAME REGION REGION_ID AIRCODE GIFT_MATERIAL
-     <br>LOS COLOR SHADER INHERIT BOOLEAN_FORMULA</I>
-     </center>
-     <br>Otherwise, the following shorter list is returned: 
-     <center>
-     <br>
-     <I>NAME REGION COLOR SHADER INHERIT BOOLEAN_FORMULA</I>
-     </center>
-     <br>This command was designed to be used within a Tcl/Tk interface script.
-     
-     <DL>
-       <DT><big>Examples:</big></DT>
-       <DD>mged> <b>get_comb some_region</b>
-	    <br> some_region Yes 1000 0 1 100 {0 220 220} plastic No { u box
-	    <br> - ball
-	    <br> }
-	    <br>mged> <b>get_comb some_non_region</b>
-	    <br>some_non_region No {0 220 220} plastic No { u box2
-	    <br> - ball2
-	    <br> }
-       </DD>
-     </DL>
-</DD>
+<DT><a NAME="gui"><B>gui</B> [<I>-config b|c|g</I>] [<I>-d display string</I>]
+	[<I>-gd graphics display string</I>] [<I>-dt graphics type</I>]
+	[<I>-id name</I>] [<I>-c -h -j -s</I>]
+</DD>Create display/command window pair.
 <HR>
 
 <DT><a NAME="help"><B>help</B> [<I>command</I>]</DT>
@@ -1606,8 +1550,15 @@ Other commands to build
 <DD> The ``help'' command provides a list of available <I>mged</I>
 commands along with a one line usage message for each. If a command is
 supplied as an argument, the one line usage message for that command is
-displayed. The <a href="#lib_help">?lib</a>, <a href="#helplib">helplib</a> and <a href="#question">?</a> commands
-provide additional information on available commands.
+displayed.
+The 
+<a href="#helpdevel">helpdevel</a>,
+<a href="#helplib">helplib</a>, 
+<a href="#question">?</a>,
+<a href="#question_devel">?devel</a>
+and
+<a href="#question_lib">?lib</a>
+commands provide additional information on available commands.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
@@ -1618,13 +1569,44 @@ provide additional information on available commands.
 </DD>
 <HR>
 
+<DT><a NAME="helpdevel"><B>helpdevel</B> [<I>command</I>]</DT>
+
+<DD> The ``helpdevel'' command provides a list of available <I>developer</I>
+commands along with a one line usage message for each. If a command is
+supplied as an argument, the one line usage message for that command is
+displayed.
+The
+<a href="#help">help</a>,
+<a href="#helplib">helplib</a>,
+<a href="#question">?</a>,
+<a href="#question_devel">?devel</a>
+and
+<a href="#question_lib">?lib</a>
+commands provide additional information on available commands.
+
+	<DL>
+	<DT><big>Examples:</big></DT>
+	<DD>mged> <b>helpdevel winset</b><br>
+		-- display a one-line usage message for the <I>winset</I> command
+	</DD>
+	</DL>
+</DD>
+<HR>
+
 <DT><a NAME="helplib"><B>helplib</B> [<I>command</I>]</DT>
 
 <DD> The ``helplib'' command provides a list of available <I>library</I>
 commands along with a one line usage message for each. If a command is
 supplied as an argument, the one line usage message for that command is
-displayed. The <a href="#lib_help">?lib</a>, <a href="#help">help</a> and <a href="#question">?</a> commands
-provide additional information on available commands.
+displayed.
+The
+<a href="#help">help</a>,
+<a href="#helpdevel">helpdevel</a>,
+<a href="#question">?</a>,
+<a href="#question_devel">?devel</a>
+and
+<a href="#question_lib">?lib</a>
+commands provide additional information on available commands.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
@@ -1635,53 +1617,10 @@ provide additional information on available commands.
 </DD>
 <HR>
 
-<DT><a NAME="hist_add"><B>hist_add</B> [<I>command</I>]</DT>
-
-<DD> The ``hist_add'' command adds <I>command</I> to the <I>history</I>
-list of commands executed during the current <I>mged</I> session without actually executing it.
-If <I>command</I> is more than one word, it must be surrounded by ``{'' and ``}''.
-
-	<DL>
-	<DT><big>Examples:</big></DT>
-	<DD>mged> <b>hist_add {ae 35 25}</b><br>
-		-- add the command ``ae 35 25'' to the history list without actually executing it.
-	</DD>
-	</DL>
-</DD>
-<HR>
-
-<DT><a NAME="hist_next"><B>hist_next</B></DT>
-
-<DD> The ``hist_next'' command returns the next command in the command history list.
-This command is used in the implimentation of the command line editing available in <I>mged</I>.
-
-	<DL>
-	<DT><big>Examples:</big></DT>
-	<DD>mged> <b>hist_next</b><br>
-		-- return the next command in the command history list.
-	</DD>
-	</DL>
-</DD>
-<HR>
-
-<DT><a NAME="hist_prev"><B>hist_prev</B></DT>
-
-<DD> The ``hist_prev'' command returns the previous command in the command history list.
-This command is used in the implimentation of the command line editing available in <I>mged</I>.
-
-	<DL>
-	<DT><big>Examples:</big></DT>
-	<DD>mged> <b>hist_prev</b><br>
-		-- return the previous command in the command history list.
-	</DD>
-	</DL>
-</DD>
-<HR>
-
 <DT><a NAME="history"><B>history</B> [<I>-delays</I>]</DT>
 
 <DD> The ``history'' command displays the list of commands executed during the current
-<I>mged</I> session. The one exception is the <a href="#hist_add">hist_add</a> command
+<I>mged</I> session. The one exception is the <a href="mged_devel_cmds.html#hist_add">hist_add</a> command
 which can add a command to the history list without executing it. If the <I>-delays</I>
 option is used, then the delays between commands will also be displayed.
 
@@ -1742,7 +1681,7 @@ the mouse to select where along the object path the editing should be applied. I
 modes, the <I>ill</I> command will only succeed if the specified <I>obj_name</I>
 is only referenced once in the displayed objects, otherwise a <I>multiply referenced</I>
 message will be displayed. If the <I>ill</I> command fails, the user must resort to
-either using the mouse to make the selection, or using <a href="#aip">aip</a> and
+either using the mouse to make the selection, or using <a href="mged_devel_cmds.html#aip">aip</a> and
 <a href="#M">M 1 0 0</a>.
 
 	<DL>
@@ -1829,21 +1768,6 @@ for the specified <a href="brlcad_glossary.html#REGION">region</a>.
 		-- set <I>ident number</I> to 1137, <I>air code</I> to 0, <I>material code</I> to 8, and <I>los</I> to 100 for <I>region_1</I>
 	</DD>
 	</DL>
-</DD>
-<HR>
-
-<DT><a NAME="jcs"><B>jcs</B> <I>id</I></DT>
-
-<DD> The ``jcs'' command is a tcl script that takes care of setting up the
-     Tcl/Tk interface windows associated with <I>id</I> (i.e. windows created
-     with <a href="#openw">openw</a>) to join the collaborative session.
-
-     <DL>
-       <DT><big>Examples:</big></DT>
-       <DD>mged> <b>jcs its_me</b>
-	    <br> -- its_me joined the collaborative session
-       </DD>
-     </DL>
 </DD>
 <HR>
 
@@ -2350,21 +2274,6 @@ selection.
 </DD>
 <HR>
 
-<DT><a NAME="mged_update"><B>mged_update</B></DT>
-
-<DD>The ``mged_update'' command refreshes the <I>mged</I> display. This is used
-internally in <I>mged</I>. It may be useful in Tcl scripts to get the <I>mged</I>
-display to update.
-
-	<DL>
-	<DT><big>Examples:</big></DT>
-	<DD>mged> <b>mged_update</b><br>
-		-- update the <I>mged</I> display
-	</DD>
-	</DL>
-</DD>
-<HR>
-
 <DT><a NAME="mirface"><B>mirface</B> <I>#### x</I>|<I>y</I>|<I>z</I></DT>
 
 <DD>The ``mirface'' command modifies an <a href="brlcad_solids.html#ARB">ARB</a>
@@ -2404,19 +2313,8 @@ members matrices set do perform the appropriate reflection.
 </DD>
 <HR>
 
-<DT><a NAME="model2view"><B>model2view</B> <I> x y z</I></DT>
-
-<DD>The ``model2view'' command converts the supplied point (in model coordinates)
-to view coordinates. View coordinates are the coordinates in the viewing cube
-with values between -1.0 and +1.0 being inside the viewing cube.
-
-	<DL>
-	<DT><big>Examples:</big></DT>
-	<DD>mged> <b>model2view 10 20 30</b><br>
-		-- display the view coordinates that correspond to the point (10 20 30)
-		in model space.
-	</DD>
-	</DL>
+<DT><a NAME="mrot"><B>mrot</B> <I>x y z</I></DT>
+<DD>Rotate view using model <I>x y z</I>.
 </DD>
 <HR>
 
@@ -2463,7 +2361,7 @@ By default, <I>nirt</I> is run using the current database and the currently
 displayed objects, and uses the current eye point as the ray start point and the
 current viewing direction as the ray direction. This effectively fires a ray at the
 center of the <I>mged</I> display. The resulting list of intersections between the
-ray and the objects are listed. Additional argumenst may be supplied on the <I>nirt</I>
+ray and the objects are listed. Additional arguments may be supplied on the <I>nirt</I>
 command line. See the <I>man</I> page of <I>nirt</I> for more details.
 
 	<DL>
@@ -2693,38 +2591,6 @@ may be specified as by ``/'' separated components or they may be separated by sp
 </DD>
 <HR>
 
-<DT><a  NAME="pcs"><B>pcs</B></DT>
-
-<DD>The ``pcs'' command prints a list of the mged players (i.e. the id's
-     associated with the Tcl/Tk interface windows created with
-     <a href="#openw">openw</a>)
-     taking part in the collaborative session.
-
-     <DL>
-       <DT><big>Examples:</big></DT>
-       <DD>mged> <b>pcs
-	    <br>lisa joe mike sue</b>
-	    <br> -- shows that lisa, joe, mike, and sue are part of the collaborative session
-       </DD>
-     </DL>
-</DD>
-<HR>
-
-<DT><a NAME="pmp"><B>pmp</B></DT>
-<DD>This command prints a list of the mged players (i.e. the id's
-     associated with the Tcl/Tk interface windows created with
-     <a href="#openw">openw</a>).
-
-     <DL>
-       <DT><big>Examples:</big></DT>
-       <DD>mged> <b>pmp
-	    <br>lisa joe mike sue larry moe curly</b>
-	    <br> -- shows the current mged players
-       </DD>
-     </DL>
-</DD>
-<HR>
-     
 <DT><a NAME="permute"><B>permute</B> <I>tuple</I></DT>
 
 <DD>The ``permute'' command permutes the vertex labels for the face of an
@@ -2790,6 +2656,16 @@ the <I>dm-plot</I> display manager.
 		the results to the <I>pldebug</I> command
 	</DD>
 	</DL>
+</DD>
+<HR>
+
+<DT><a NAME="polybinout"><B>polybinout</B> <I>file</I></DT>
+<DD>Store vlist polygons into polygon file (experimental).
+</DD>
+<HR>
+
+<DT><a NAME="pov"><B>pov</B> <I>args</I></DT>
+<DD>Set the point-of-view (experimental).
 </DD>
 <HR>
 
@@ -2962,25 +2838,6 @@ similar function, even if some solids are multiply referenced.
 </DD>
 <HR>
 
-<DT><a NAME="put_comb"><B>put_comb</B> <I>comb_name is_Region [id air gift los] color shader inherit boolean_expr</I>
-
-<DD>The ``put_comb'' command defines the combination <I>comb_name</I>.
-     If <I>is_Region</I> is <I>Yes</I>, then
-     <I>id, air, gift</I> and <I>los</I> must be specified. If <I>is_Region</I>
-     is <I>No</I>, then <I>id, air, gift</I> and <I>los</I> must not be
-     specified. This command was designed to be used from within a script.
-
-     <DL>
-       <DT><big>Examples:</big></DT>
-       <DD>mged> <b>put_comb not_region No \"0 220 220\" plastic No \"u box\\n- ball\"</b>
-	    <br> -- defines a combination called <I>not_region</I>
-	    <br>mged> <b>put_comb my_region Yes 1000 0 1 100 \"0 220 220\" plastic No \"u box\\n- ball\"</b>
-	    <br> -- defines a region called <I>my_region</I>
-       </DD>
-     </DL>
-</DD>
-<HR>
-
 <DT><a NAME="putmat"><B>putmat</B> <I>comb_name/member_name</I> {<I>I</I> | <I>m0 m1 m2 m3 ... m16</I>}</DT>
 
 <DD>The ``putmat'' command replaces the existing transformation matrix in the
@@ -3017,18 +2874,6 @@ command.
 </DD>
 <HR>
 
-<DT><a NAME="qcs"><B>qcs</B> <I>id</I></DT>
-
-<DD>The ``qcs'' command is used to quit the collaborative session.
-     <DL>
-       <DT><big>Examples:</big></DT>
-       <DD>mged> <b>qcs my_id</b>
-	    <br> -- <I>my_id</I> is removed from the collaborative session.
-       </DD>
-     </DL>
-</DD>
-<HR>
-
 <DT><a NAME="qorot"><B>qorot</B> <I>x y z dx dy dz angle</I></DT>
 
 <DD>The ``qorot'' command rotates an object through the specified <I>angle</I> (in degress).
@@ -3041,6 +2886,32 @@ vector (<I>dx dy dz</I>).
 	<DD>mged> <b>qorot 1 2 3 0 0 1 25</b><br>
 		-- rotate the currently edited object through 25 degrees about the axis
 		through the point (1, 2, 3) and in the Z-direction.
+	</DD>
+	</DL>
+</DD>
+<HR>
+
+<DT><a NAME="qray"><B>qray</B> <I>command</I></DT>
+
+<DD>Get/set <I>query ray</I> characteristics.
+</DD>
+<HR>
+
+<DT><a NAME="query_ray"><B>query_ray</B> [<I>nirt_args</I>]</DT>
+
+<DD>The ``query_ray'' command runs the <I>nirt</I> program that is distributed with <I>BRL&#173CAD</I>
+to intersect a single ray with the displayed objects.
+By default, <I>nirt</I> is run using the current database and the currently
+displayed objects, and uses the current eye point as the ray start point and the
+current viewing direction as the ray direction. This effectively fires a ray at the
+center of the <I>mged</I> display. The resulting list of intersections between the
+ray and the objects are listed. Additional arguments may be supplied on the <I>nirt</I>
+command line. See the <I>man</I> page of <I>nirt</I> for more details.
+
+	<DL>
+	<DT><big>Examples:</big></DT>
+	<DD>mged> <b>query_ray</b><br>
+		-- fire a single ray through the center of the <I>mged</I> display
 	</DD>
 	</DL>
 </DD>
@@ -3168,6 +3039,15 @@ some basic <I>combination</I> editing capabilities.
 		-- edit the <I>combination</I> <I>group2</I> with the users editor of choice.
 	</DD>
 	</DL>
+</DD>
+<HR>
+
+<DT><a NAME="redraw_vlist"><B>redraw_vlist</B> <I>object</I></DT>
+
+<DD>Given the name(s) of database objects, re-generate the vlist
+associated with every solid in view which references the
+named object(s), either solids or regions. Particularly
+useful with outboard .inmem database modifications.
 </DD>
 <HR>
 
@@ -3649,31 +3529,6 @@ Related commands are
 </DD>
 <HR>
 
-<DT><a NAME="sliders"><B>sliders</B> [<I>on</I>|<I>off</I>]</DT>
-
-<DD>The ``sliders'' command with no options will report the status of the <I>sliders</I>
-(whether or not <I>sliders</I> are displayed). If one of the <I>on</I> or <I>off</I>
-flags is supplied, then the <I>sliders</I> are turned <I>on</I> or <I>off</I> respectively.
-The <I>sliders</I> provide a graphical interface to control the <I>mged</I> view
-parameters. Translation, rotation, and scaling of the current view are adjustable
-through the <I>sliders</I>. Positioning the mouse over the desired <I>slider</I> bar and
-clicking the middle mouse button will activate that <I>slider</I> bar. The position of
-any <I>slider</I> bar may be continuously adjusted by holding down the middle mouse
-button over the <I>slider</I> bar while moving the mouse horizontally. The <I>sliders</I>
-may be user in <I>rate</I> or <I>absolute</I> mode (toggled by clicking on the
-<I>Rate/Abs</I> button). In <I>rate</I> mode, the <I>slider</I> position indicates the rate
-at which that parameter changes. In <I>absolute</I> mode, the <I>slider</I> position indicates
-the actual value of that parameter.
-
-	<DL>
-	<DT><big>Examples:</big></DT>
-	<DD>mged> <b>sliders on</b><br>
-		-- display the sliders
-	</DD>
-	</DL>
-</DD>
-<HR>
-
 <DT><a NAME="solids"><B>solids</B> <I>file</I> &lt;<I>objects</I>&gt</DT>
 
 <DD>The ``solids'' command lists a summary of all the
@@ -3756,21 +3611,6 @@ asks for the names of all the <a href="brlcad_glossary.html#COMBINATION">combina
 </DD>
 <HR>
 
-<DT><a NAME="svb"><B>svb</B></DT>
-<DD>The ``svb'' command sets the view reference base variables.
-     These variables
-     are used internally by the <a href="#knob">knob</a> command to calculate
-     absolute rotation, translation, and scale.
-
-     <DL>
-       <DT><big>Examples:</big></DT>
-       <DD>mged> <b>svb</b>
-	    <br> -- set the view reference base variables with respect to the current view
-       </DD>
-     </DL>
-</DD>
-<HR>
-
 <DT><a NAME="sync"><B>sync</B></DT>
 
 <DD>The ``sync'' command  causes all information in memory that should be on disk to be
@@ -3824,40 +3664,6 @@ command performs a similar function for <a href="brlcad_glossary.html#COMBINATIO
 </DD>
 <HR>
 
-<DT><a name="tie"><B>tie</B> <I>[[-u] command_window [display_window]]</I></DT>
-
-<DD> The ``tie'' command is used to create (or destroy with the <b>-u</b> option) an association between
-     a command window and a display window. When there exists such an
-     association, all commands entered
-     from the command window will be directed at the
-     display window. The <I>command_window</I> can be specified with <I>mged</I>
-     to refer to the tty MGED was started from, or an id associated with
-     a Tcl/Tk interface window <a href="#openw"> created with <I>openw</I> </a>.
-     The <I>display_window</I> is specified with its Tcl/Tk pathname.
-     If no arguments are given, a listing of the current
-     <I>command_window</I>/<I>display_window</I> associations is returned.
-     If only the <I>command_window</I> is given, the <I>command_window</I>/<I>display_window</I>
-     association is returned. If both arguments are given, the
-     <I>command_window</I>/<I>display_window</I> association is created. This
-     command was designed to be used within a Tcl script.
-
-     <DL>
-       <DT><big>Examples:</big></DT>
-       <DD>mged> <b>tie my_id .my_window</b>
-	    <br> -- Create the association between my_id and .my_window
-	    <br>mged> <b>tie my_id
-	    <br>my_id ---> .my_window</b>
-	    <br> -- list the command_window/display_window association for my_id
-	    <br>mged> <b>tie
-	    <br>my_id ---> .my_window
-	    <br>mged ---></b>
-	    <br> -- list all of the command_window/display_window associations
-	    <br>
-       </DD>
-     </DL>
-</DD>
-<HR>
-	
 <DT><a NAME="title"><B>title</B> [<I>string</I>]</DT>
 
 <DD>The ``title'' command, with no arguments, returns the title string for
@@ -4118,8 +3924,7 @@ The available <I>variables</I> are:
 	it draws to an empty display.</li>
 	<li>rateknobs -- if non-zero, then the knobs and sliders act as rate adjustments,
 	otherwise they act as absolute adjustments.</li>
-	<li>adcflag -- if non-zero, the <a href="#adc">adc</a> is displayed.</li>
-	<li>sliders -- if non-zero, the <a href="#sliders">sliders</a> are displayed.</li>
+	<li>slidersflag -- if non-zero, the sliders are displayed.</li>
 	<li>faceplate -- if non-zero, the <I>mged</I> faceplate is displayed.</li>
 	<li>show_menu -- if non-zero, the ``viewing'' menu is displayed.</li>
 	<li>w_axes -- if non-zero, display a set of world axes at the origin of the model
@@ -4303,75 +4108,19 @@ All textual arguments may be abbreviated by their first letter.
 </DD>
 <HR>
 
-<DT><a NAME="view2model"><B>view2model</B> <I>x y z</I></DT>
+<DT><a NAME="view"><B>view</B> <I>center|size|eye|ypr|quat|aet</I></DT>
 
-<DD>The ``view2model'' command converts the specified point (<I>x y z</I>) in
-view coordinates to model coordinates (mm). The part of view space displayed by <I>mged</I>
-is the cube -1.0 <= x,y,z <= +1.0.
- 
-
-	<DL>
-	<DT><big>Examples:</big></DT>
-	<DD>mged> <b>view2model 1 1 0</b><br>
-		-- list the model coordinates of the upper right corner of the
-		<I>mged</I> display (in a plane at the center of the viewing cube).
-	</DD>
-	</DL>
+<DD>Get/set view parameters (local units) - experimental.
 </DD>
 <HR>
 
-<DT><a NAME="viewget"><B>viewget</B> <I>parameter</I></DT>
-
-<DD>The ``viewget'' command displays various <I>mged</I> view parameters. The
-possible parameters are:
-<ul>
-	<li>aet -- list the <a href="brlcad_glossary.html#AZIMUTH">azimuth</a>,
-		<a href="brlcad_glossary.html#ELEVATION">elevation</a>,
-		and <a href="brlcad_glossary.html#TWIST">twist</a> for the current
-		viewing aspect.</li>
-	<li>center -- list the model coordinates (mm) of the center of the viewing cube.</li>
-	<li>size -- list the size (mm) of a side the current <I>mged</I> display.</li>
-	<li>eye -- list the model coordinates (mm) of the current eye point.</li>
-	<li>ypr -- list the yaw, pitch, and roll angles (degrees) of the current viewing aspect.</li>
-	<li>quat -- list the quaternion for the current viewing aspect.</li>
-</ul>
- 
-
-	<DL>
-	<DT><big>Examples:</big></DT>
-	<DD>mged> <b>viewget center</b><br>
-		-- list the model coordinates of the center of the
-		<I>mged</I> viewing cube
-	</DD>
-	</DL>
+<DT><a NAME="vnirt"><B>vnirt</B> <I>x y</I></DT>
+<DD>Trace a single ray from x y.
 </DD>
 <HR>
 
-<DT><a NAME="viewset"><B>viewset</B> &lt;<I>parameter value</I>&gt</DT>
-
-<DD>The ``viewset'' command sets various <I>mged</I> view parameters.
-More than one parameter may be set with one command.
-The possible parameters are:
-<ul>
-	<li>aet -- set the <a href="brlcad_glossary.html#AZIMUTH">azimuth</a>,
-		<a href="brlcad_glossary.html#ELEVATION">elevation</a>,
-		and <a href="brlcad_glossary.html#TWIST">twist</a> for the current
-		viewing aspect.</li>
-	<li>center -- set the model coordinates (mm) of the center of the viewing cube.</li>
-	<li>size -- set the size (mm) of a side the current <I>mged</I> display.</li>
-	<li>eye -- set the model coordinates (mm) of the current eye point.</li>
-	<li>ypr -- set the yaw, pitch, and roll angles (degrees) of the current viewing aspect.</li>
-	<li>quat -- set the quaternion for the current viewing aspect.</li>
-</ul>
- 
-
-	<DL>
-	<DT><big>Examples:</big></DT>
-	<DD>mged> <b>viewset center 1 2 3 size 100</b><br>
-		-- set the model coordinates of the center of the
-		<I>mged</I> viewing cube to the point (1 2 3) and set the size of the viewing cube to 100 mm
-	</DD>
-	</DL>
+<DT><a NAME="vquery_ray"><B>vquery_ray</B> <I>x y</I></DT>
+<DD>Trace a single ray from x y.
 </DD>
 <HR>
 
@@ -4385,8 +4134,6 @@ The second command line argument to the <I>vrmgr</I> command is the role of the 
 <I>mged</I> display. The <I>master</I> display controls the viewing parameters of itself
 and all the <I>slave</I> displays. The <I>overview</I> display acts as an observer
 of the entire virtual reality process.
-
- 
 
 	<DL>
 	<DT><big>Examples:</big></DT>
@@ -4513,21 +4260,6 @@ The <a href="#x">x</a> command also lists displayed solids, but in more detail.
 	<DD>mged> <b>who p</b><br>
 	-- list all top  level <I>phony</I> objects currently displayed
 	</DL>
-</DD>
-<HR>
-
-<DT><a NAME="winset"><B>winset</B> [<I>pathName</I>]
-<DD>The ``winset'' command sets the current display manager to <I>pathName</I>.
-     If <I>pathName</I> is not given, the current display manager is returned.
-
-     <DL>
-       <DT><big>Examples:</big></DT>
-       <DD>mged> <b>winset .my_window</b>
-	    <br> -- .my_window is now the current display manager
-	    <br>mged> <b>winset</b>
-	    <br> -- returns the current display manager (i.e. .my_window)
-       </DD>
-     </DL>
 </DD>
 <HR>
 
