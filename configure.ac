@@ -582,7 +582,7 @@ dnl *********************************
 AC_PATH_X
 AC_PATH_XTRA
 
-if ! test "x$enable_only_rts" = "xno" ; then
+if ! test "x$only_rts" = "xno" ; then
 	if test "x$with_java" = "xno" ; then
 		AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
 		AC_MSG_NOTICE([Try adding --with-jdk=/path/to/jdk to find jni.h])
