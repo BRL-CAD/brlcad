@@ -51,10 +51,10 @@ exec_Shell( args )
 char	*args[];
 	{	register int	child_pid;
 		static char	error_buf[32];
-#if defined( BSD ) || (defined( SYSV ) && ! defined( mips ))
-		int		(*intr_sig)(), (*quit_sig)();
-#else
+#if __STDC__ || defined( SYSV ) || defined( mips )
 		void		(*intr_sig)(), (*quit_sig)();
+#else
+		int		(*intr_sig)(), (*quit_sig)();
 #endif
 	if( args[0] == NULL )
 		{ char	*arg_sh = getenv( "SHELL" );
