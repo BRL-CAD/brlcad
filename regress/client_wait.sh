@@ -7,14 +7,14 @@
 # include standard utility functions
 . `dirname $0`/library
 
-echo "client_wait.sh"
-echo "=============="
+log "client_wait.sh"
+log "=============="
 
 
 args=`getopt b:d:e:qr:u: $*`
 
 if [ $? != 0 ] ; then
-	echo "Usage: $0 [-r brlcad_root] [-b begin_time] [-e end_time] [-u user] -d regress_dir "
+	log "Usage: $0 [-r brlcad_root] [-b begin_time] [-e end_time] [-u user] -d regress_dir "
 	exit 2
 fi
 
@@ -29,32 +29,32 @@ SLEEP_DELTA=10
 for i in $* ; do
 	case "$i" in
 		-b)
-			echo "-b $2";
+			log "-b $2";
 			BEGIN_HOUR=$2;
 			shift 2;;
 		-d)
-			echo "-d $2";
+			log "-d $2";
 			REGRESS_DIR=$2;
 			export REGRESS_DIR
 			shift 2;;
 		-e)
-			echo "-e $2";
+			log "-e $2";
 			END_HOUR=$2;
 			shift 2;;
 		-q)
-			echo "-q";
+			log "-q";
 			QUIET=1;
 			shift;;
 		-r)
-			echo "-r $2";
+			log "-r $2";
 			BRLCAD_ROOT=$2;
 			shift 2;;
 		-s)
-			echo "-S $2";
+			log "-S $2";
 			SLEEP_DELTA=$;
 			shift 2;;
 		-u)
-			echo "-d $2";
+			log "-d $2";
 			MAIUSERUSER=$2;
 			export MAILUSER
 			shift 2;;
@@ -69,13 +69,13 @@ export QUIET
 export BRLCAD_ROOT
 
 if [ X$REGRESS_DIR = X ] ; then
-	echo "must specify regression directory"
+	log "must specify regression directory"
 	exit 2
 fi
 
 START_HOUR=`date | awk '{print $4}' | awk -F: '{print $1}'`
 if [ $START_HOUR -ge $END_HOUR ] ; then
-    echo "$HOSTNAME started after end time ${END_HOUR}:00 (at ${START_HOUR}:`date | awk '{print $4}' | awk -F: '{print $2}'`)"
+    log "$HOSTNAME started after end time ${END_HOUR}:00 (at ${START_HOUR}:`date | awk '{print $4}' | awk -F: '{print $2}'`)"
     exit 2
 fi
 
@@ -87,50 +87,49 @@ WAIT_MACH_TIME=`expr $SLEEP_DELTA \* 60`
 HOUR=$START_HOUR
 while [ ! -f $REGRESS_DIR/brlcad/sh/machinetype.sh ] ; do
     if [ $HOUR -ge $END_HOUR ] ; then
-	echo "$HOSTNAME time expired waiting for creation of machinetype.sh"
+	log "$HOSTNAME time expired waiting for creation of machinetype.sh"
 	exit 2
     fi
-    echo "Waiting for [$REGRESS_DIR/brlcad/sh/machinetype.sh] to get created...sleeping $WAIT_MACH_TIME seconds"
+    log "Waiting for [$REGRESS_DIR/brlcad/sh/machinetype.sh] to get created...sleeping $WAIT_MACH_TIME seconds"
     sleep $WAIT_MACH_TIME
     HOUR=`date | awk '{print $4}' | awk -F: '{print $1}'`
 done
-echo "Verified that machinetype.sh exists"
+log "Verified that machinetype.sh exists"
 
 ARCH=`${REGRESS_DIR}/brlcad/sh/machinetype.sh`
 export ARCH
 
 initializeVariable BRLCAD_ROOT "${REGRESS_DIR}/brlcad.$ARCH"
 
-echo "Regression testing an [$ARCH] architecture in [$REGRESS_DIR]"
+log "Regression testing an [$ARCH] architecture in [$REGRESS_DIR]"
 
 #
 # try to acquire the semaphore every minute until we run out of time
 #
 COUNT=0
 HOUR=`date | awk '{print $4}' | awk -F: '{print $1}'`
-echo "HOUR=$HOUR, END_HOUR=$END_HOUR, BEGIN_HOUR=$BEGIN_HOUR"
+log "HOUR=$HOUR, END_HOUR=$END_HOUR, BEGIN_HOUR=$BEGIN_HOUR"
 
 # !!! booo, sun5 sh giving trouble with while ! true
-if acquireLock ${REGRESS_DIR}/start_${ARCH}.semaphore 2 10 ; then LOCKED=1 ; else LOCKED=0 ; fi
+if acquireSemaphore "start_${ARCH}" 2 10 "${REGRESS_DIR}" ; then LOCKED=1 ; else LOCKED=0 ; fi
 while [ ! "x$LOCKED" = "x1" ]  ; do
     if [ $HOUR -ge $END_HOUR -o $HOUR -lt $BEGIN_HOUR ] ; then
-	echo "ERROR: time expired on $HOSTNAME waiting for creation of start_${ARCH}.semaphore"
-	exit 2
+	bomb "time expired on $HOSTNAME waiting for creation of start_${ARCH}.semaphore"
     fi
     HOUR=`date | awk '{print $4}' | awk -F: '{print $1}'`
-    if acquireLock ${REGRESS_DIR}/start_${ARCH}.semaphore 2 10 ; then LOCKED=1 ; else LOCKED=0 ; fi
+    if acquireSemaphore "start_${ARCH}" 2 10 "${REGRESS_DIR}" ; then LOCKED=1 ; else LOCKED=0 ; fi
 done
 
-echo "$ARCH commencing build at `date`"
+log "$ARCH commencing build at `date`"
 if [ ! -d ${REGRESS_DIR}/.regress.$ARCH ] ; then mkdir ${REGRESS_DIR}/.regress.$ARCH ; fi
 
 #
 # run the build script out of the source tree
 #
-echo "Building source"
-echo "Running [client_build.sh -d $REGRESS_DIR]"
+log "Building source"
+log "Running [client_build.sh -d $REGRESS_DIR]"
 `dirname $0`/client_build.sh -d $REGRESS_DIR
 
-releaseLock ${REGRESS_DIR}/start_${ARCH}.semaphore
+releaseSemaphore "start_${ARCH}" "${REGRESS_DIR}"
 
-echo "Done client_wait.sh"
+log "Done $0"

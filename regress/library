@@ -259,8 +259,6 @@ initializeVariable ( ) {
 # variables, then we try uname.  by default we set to
 # the HOSTNAME environment variable
 #
-# returns the host name set
-#
 setHostName ( ) {
     if [ ! "x$DEBUG" = x ] ; then log "setHostName( \$1=[${1}] \$2=[${2}] )" ; fi
 
@@ -283,9 +281,6 @@ setHostName ( ) {
     if [ x`eval $VARVAL` = x ] ; then initializeVariable $VAR $HOST ; fi
     if [ x`eval $VARVAL` = x ] ; then initializeVariable $VAR `uname -n` ; fi
     if [ x`eval $VARVAL` = x ] ; then initializeVariable $VAR $DEFVAL ; fi
-
-    # return value is only useful if DEBUG is off (since echo'd values are return values)
-    if [ "x$DEBUG" = "x" ] ; then return "$VARVAL" ; fi
 }
 
 #
