@@ -5,7 +5,7 @@ Installing The BRL-CAD Package
 .br
 Release 3.0
 .sp
-4-Sept-1988
+8-Sept-1988
 .AU
 Michael John Muuss
 .AI
@@ -378,6 +378,9 @@ after the large NFS comment block, so that it reads:
 Then, further on, you will also be instructed to run \fBcake mkdir\fR
 to set up the binary directories for the machine you are installing.
 .PP
+You will also have to update the shell script \fBgen.sh\fR to
+change \fBNFS=0\fR to \fBNFS=1\fR.
+.PP
 Some C-shell aliases that have proven helpful for dealing with this
 somewhat more complex environment are:
 .sp .5
@@ -458,15 +461,13 @@ but you can substitute any name here, if you prefer.
 If you don't have some kind of "bin" directory yet, run:
 .ft B
 .sp .5
+.nf
 	cd
-.br
 	mkdir bin
-.br
 	cd bin
-.br
 	pwd
-.br
 	cd
+.fi
 .sp .5
 .ft R
 For this example, assume that the path to your "bin"
@@ -609,7 +610,18 @@ has been correctly installed into your search path and exported.
 Next, it installs several shell scripts (including \fBmachinetype.sh\fR)
 into BINDIR.
 Finally, it compiles \fBcake\fR and \fBcakeaux\fR.
-.pp
+.PP
+Once this is complete, if you use \fBcsh\fR for your login shell,
+(or a derrivative of \fBcsh\fR, such as \fBtcsh\fR), run:
+.ft B
+.sp .5
+	rehash
+.sp .5
+.ft R
+to get these additional programs into your shell's hash table.
+Bourne shell (\fBsh\fR) and Korn shell (\fBksh\fR) users should skip
+this step.
+.PP
 Only if you elected the NFS-style multi-machine support above
 and edited \fBCakefile.defs\fR, you need to run
 .ft B
