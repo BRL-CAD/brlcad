@@ -1,6 +1,24 @@
 /*
- * From scrsave.c
+ *			S G I - P I X . C
+ *
+ *  Authors -
+ *	Multiple Sources (Dykstra, Muuss, etc)
+ *	Based on scrsave.c
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Distribution Status -
+ *	Public Domain, Distribution Unlimitied.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
+
+#include <stdio.h>
+#include "machine.h"
 
 #ifdef sgi
 # ifdef mips
@@ -9,8 +27,6 @@
 #	include <gl.h>
 # endif
 #endif
-
-#include <stdio.h>
 
 #define	MIN(a,b)	((a)<(b)?(a):(b))
 #define	ABS(a)		((a)<0? -(a):(a))
@@ -94,13 +110,14 @@ char **argv;
 		ysize = YMAXSCREEN-yorg;
 	xsize++;
 	ysize++;
-	fprintf(stderr,"(%d %d)\n", xsize, ysize);
+	fprintf(stderr,"origin(%d, %d) size (%d, %d)\n",
+		xorg, yorg, xsize, ysize);
 
 #ifdef mips
 	foreground();
 	noport();
 	winopen("sgi-pix");
-	savescreen(ofp,x1,x2,y1,y2);
+	savescreen(ofp, xorg, yorg, xsize, ysize);
 #else
 	gbegin();
 	foreground();
@@ -111,7 +128,7 @@ char **argv;
 	if((mode = getdisplaymode()) == 0) {
 		/* RGB mode */
 		fprintf(stderr,"RGB mode\n");
-		savescreen(ofp,x1,x2,y1,y2);
+		savescreen(ofp, xorg, yorg, xsize, ysize);
 	} else {
 		if( mode == 1 )
 			fprintf(stderr,"CMAP mode (single buffered)\n");
@@ -139,7 +156,13 @@ char **argv;
 #endif
 }
 
-#ifdef sgi
+/*
+ *  This block of code is for SGI 3030 machines, and 4Ds running Irix 3.
+ */
+#if defined(sgi) && !defined(__mips)
+/*
+ *			S A V E S C R E E N
+ */
 savescreen(ofp,xorg,yorg,xsize,ysize)
 FILE	*ofp;
 int	xorg,yorg,xsize,ysize;
@@ -203,6 +226,48 @@ int	xorg,yorg,xsize,ysize;
 			obuf[i*3] = cmap[buff[i]].red;
 			obuf[i*3+1] = cmap[buff[i]].grn;
 			obuf[i*3+2] = cmap[buff[i]].blu;
+		}
+		if( fwrite(obuf,3,xsize,ofp) != xsize )  {
+			perror("fwrite");
+			exit(2);
+		}
+	}
+}
+#endif
+
+/*
+ *  This block of code is for SGI 4Ds running Irix 4.
+ */
+#if defined(__sgi) && defined(__mips)
+/*
+ *			S A V E S C R E E N
+ *
+ *  In order for this to work reasonably, the entire screen should be read
+ *  at once.
+ */
+savescreen(ofp,xorg,yorg,xsize,ysize)
+FILE	*ofp;
+int	xorg,yorg,xsize,ysize;
+{
+	unsigned long	lbuf[2048];
+	int	x;
+	int	y;
+	register unsigned char	*op;
+	long	got;
+
+	for(y=0; y<ysize; y++) {
+		got = readdisplay( xorg, yorg+y, xorg+xsize-1, yorg+y,
+			lbuf, RD_FREEZE );
+		if( got != xsize )  {
+			fprintf(stderr,"sgi-pix: readdisplay() wanted %d, got %d\n",
+				xsize, got );
+			/* exit? */
+		}
+		op = (unsigned char *)obuf;
+		for( x=0; x<xsize; x++ )  {
+			*op++ = (lbuf[x]    ) & 0xFF;
+			*op++ = (lbuf[x]>> 8) & 0xFF;
+			*op++ = (lbuf[x]>>16) & 0xFF;
 		}
 		if( fwrite(obuf,3,xsize,ofp) != xsize )  {
 			perror("fwrite");
