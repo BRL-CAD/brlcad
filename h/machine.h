@@ -518,10 +518,55 @@ typedef long    bitv_t;         /* could use long long */
 #define BITV_SHIFT      5       /* log2( bits_wide(bitv_t) ) */
 
 #define MAX_PSW         4       /* Unused, I actually pull from posix */
-#define DEFAULT_PSW     1
+#define DEFAULT_PSW     2       /* Using 2 allows rt to use both cpus
+				 * on a dual box without the user spec'ing
+				 * -P 2. Does not adversely affect usage
+				 * on 1 cpu box because bu_avail_cpus will
+				 * return 1. */
+			        
 #define PARALLEL        1
 /* #define MALLOC_NOT_MP_SAFE 1 -- not confirmed */
 #endif
+
+#ifdef linux
+/********************************
+ *                              *
+ *        Linux on IA32         *
+ *                              *
+ ********************************/
+#define IEEE_FLOAT      1      /* Uses IEEE style floating point */
+#define BITV_SHIFT      5      /* log2( bits_wide(bitv_t) ) */
+
+typedef double fastf_t;       /* double|float, "Fastest" float type */
+typedef long bitv_t;          /* could use long long */
+
+/*
+ * Note that by default a Linux installation supports parallel using
+ * pthreads. For a 1 cpu installation, toggle these blocks
+ */
+# if 1 /* multi-cpu linux build */
+
+# define LOCAL auto             /* static|auto, for serial|parallel cpu */
+# define FAST register          /* LOCAL|register, for fastest floats */
+# define MAX_PSW         4
+# define DEFAULT_PSW     2      /* Using 2 allows rt to use both cpus
+				 * on a dual box without the user spec'ing
+				 * -P 2. Does not adversely affect usage
+				 * on 1 cpu box because bu_avail_cpus will
+				 * return 1. */
+# define PARALLEL        1
+# define HAS_POSIX_THREADS 1    /* formerly in conf.h */
+# define MALLOC_NOT_MP_SAFE 1   /* uncertain, but this is safer for now */
+
+# else  /* 1 CPU Linux build */
+
+# define LOCAL static		/* static|auto, for serial|parallel cpu */
+# define FAST LOCAL		/* LOCAL|register, for fastest floats */
+# define MAX_PSW        1	/* only one processor, max */
+# define DEFAULT_PSW	1
+
+# endif
+#endif /* linux */
 
 #ifndef LOCAL
 /********************************
