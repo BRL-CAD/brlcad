@@ -778,34 +778,23 @@ ColorMap	*cmp;
 }
 
 _LOCAL_ int
-is_linear_cmap( cmp )
-ColorMap *cmp;
-{
-	int	i;
-	for( i = 0; i < 256; i++ ) {
-		if( cmp->cm_red[i]>>8 != i
-		 || cmp->cm_green[i]>>8 != i
-		 || cmp->cm_blue[i]>>8 != i )
-			return	0;
-	}
-	return	1;
-}
-
-_LOCAL_ int
 X_wmap( ifp, cmp )
 FBIO	*ifp;
 CONST ColorMap	*cmp;
 {
 	register int i;
+	int	is_linear = 1;
 
 	if( cmp == (ColorMap *)NULL ) {
 		fb_make_linear_cmap( &(XI(ifp)->rgb_cmap) );
+		is_linear = 1;
 	} else {
 		XI(ifp)->rgb_cmap = *cmp;	/* struct copy */
+		is_linear = fb_is_linear_cmap(cmp);
 	}
 
 	/* Hack to save it into a file - this may go away */
-	if( is_linear_cmap(cmp) ) {
+	if( is_linear ) {
 		/* no file => linear map */
 		(void) unlink( TMP_FILE );
 	} else {
