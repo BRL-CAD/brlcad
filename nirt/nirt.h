@@ -34,9 +34,8 @@
 #define    RAND_NUM     (double)random()/MAX_RAND  /* 0 < number < 1 */
 #endif
 
-/*	STRINGS FOR USE WITH GETOPT(3)	*/
+/*	STRING FOR USE WITH GETOPT(3)	*/
 #define         OPT_STRING      "u:?"
-#define         USAGE_LINE      "Usage: 'nirt [options] model.g objects...'\n"
 
 /*	MACROS WITH ARGUMENTS	*/
 #define    max(a,b)             (((a)>(b))?(a):(b))
@@ -61,6 +60,12 @@ struct VarTable
 	vect_t  direct;
 	vect_t  target;
 	vect_t  grid;
+};
+
+struct nirt_obj
+{
+    char		*obj_name;
+    struct nirt_obj	*obj_next;
 };
 
 extern void		az_el();
