@@ -586,15 +586,38 @@ struct rt_imexport rt_fmt_vertexuse_a[] = {
 };
 
 /* ---------------------------------------------------------------------- */
+#define NSTRUCTS	22
+int	rt_disk_sizes[NSTRUCTS] = {
+	sizeof(struct disk_model),
+	sizeof(struct disk_model_a),
+	sizeof(struct disk_nmgregion),
+	sizeof(struct disk_nmgregion_a),
+	sizeof(struct disk_shell),
+	sizeof(struct disk_shell_a),
+	sizeof(struct disk_faceuse),
+	sizeof(struct disk_faceuse_a),
+	sizeof(struct disk_face),
+	sizeof(struct disk_face_g),
+	sizeof(struct disk_loopuse),
+	sizeof(struct disk_loopuse_a),
+	sizeof(struct disk_loop),
+	sizeof(struct disk_loop_g),
+	sizeof(struct disk_edgeuse),
+	sizeof(struct disk_edgeuse_a),
+	sizeof(struct disk_edge),
+	sizeof(struct disk_edge_g),
+	sizeof(struct disk_vertexuse),
+	sizeof(struct disk_vertexuse_a),
+	sizeof(struct disk_vertex),
+	sizeof(struct disk_vertex_g)
+};
+/* ---------------------------------------------------------------------- */
 
 int
-rt_nmg_magic_to_subscript( magic )
+rt_nmg_magic_to_kind( magic )
 register long	magic;
 {
 	switch(magic)  {
-	default:
-		rt_bomb("rt_nmg_magic_to_subscript: bad magic");
-		return -1;
 	case NMG_MODEL_MAGIC:
 		return 0;
 	case NMG_MODEL_A_MAGIC:
@@ -640,6 +663,352 @@ register long	magic;
 	case NMG_VERTEX_G_MAGIC:
 		return 21;
 	}
+	/* default */
+	rt_log("magic = x%x\n", magic);
+	rt_bomb("rt_nmg_magic_to_kind: bad magic");
+	return -1;
+}
+
+int
+rt_nmg_index_of_struct( p )
+register long	*p;
+{
+	switch(*p)  {
+	case NMG_MODEL_MAGIC:
+		return ((struct model *)p)->index;
+	case NMG_MODEL_A_MAGIC:
+		return ((struct model_a *)p)->index;
+	case NMG_REGION_MAGIC:
+		return ((struct nmgregion *)p)->index;
+	case NMG_REGION_A_MAGIC:
+		return ((struct nmgregion_a *)p)->index;
+	case NMG_SHELL_MAGIC:
+		return ((struct shell *)p)->index;
+	case NMG_SHELL_A_MAGIC:
+		return ((struct shell_a *)p)->index;
+	case NMG_FACEUSE_MAGIC:
+		return ((struct faceuse *)p)->index;
+	case NMG_FACEUSE_A_MAGIC:
+		return ((struct faceuse_a *)p)->index;
+	case NMG_FACE_MAGIC:
+		return ((struct face *)p)->index;
+	case NMG_FACE_G_MAGIC:
+		return ((struct face_g *)p)->index;
+	case NMG_LOOPUSE_MAGIC:
+		return ((struct loopuse *)p)->index;
+	case NMG_LOOPUSE_A_MAGIC:
+		return ((struct loopuse_a *)p)->index;
+	case NMG_LOOP_MAGIC:
+		return ((struct loop *)p)->index;
+	case NMG_LOOP_G_MAGIC:
+		return ((struct loop_g *)p)->index;
+	case NMG_EDGEUSE_MAGIC:
+		return ((struct edgeuse *)p)->index;
+	case NMG_EDGEUSE_A_MAGIC:
+		return ((struct edgeuse_a *)p)->index;
+	case NMG_EDGE_MAGIC:
+		return ((struct edge *)p)->index;
+	case NMG_EDGE_G_MAGIC:
+		return ((struct edge_g *)p)->index;
+	case NMG_VERTEXUSE_MAGIC:
+		return ((struct vertexuse *)p)->index;
+	case NMG_VERTEXUSE_A_MAGIC:
+		return ((struct vertexuse_a *)p)->index;
+	case NMG_VERTEX_MAGIC:
+		return ((struct vertex *)p)->index;
+	case NMG_VERTEX_G_MAGIC:
+		return ((struct vertex_g *)p)->index;
+	}
+	/* default */
+	rt_log("magicp = x%x, magic = x%x\n", p, *p);
+	rt_bomb("rt_nmg_index_of_struct: bad magic");
+	return -1;
+}
+
+struct nmg_exp_counts {
+	long	new_subscript;
+	long	per_struct_index;
+	int	kind;
+};
+
+#define REINDEX(p)	(ecnt[nmg_index_of_struct((long *)(p))].new_subscript)
+#define INDEX(o,i,elem)		(o)->elem = REINDEX((i)->elem)
+#define INDEXL(oo,ii,elem)	{ \
+	(oo)->elem.forw = REINDEX((ii)->elem.forw); \
+	(oo)->elem.back = REINDEX((ii)->elem.back); }
+
+rt_nmg_edisk( op, ip, ecnt, index )
+genptr_t	op;		/* base of disk array */
+genptr_t	ip;		/* ptr to in-memory structure */
+struct nmg_exp_counts	*ecnt;
+int		index;
+{
+	int	oindex;		/* index in op */
+
+	oindex = ecnt[index].per_struct_index;
+	switch(ecnt[index].kind)  {
+	case 0:
+		/* model */
+		{
+			struct model	*m = (struct model *)ip;
+			struct disk_model	*d;
+			d = &((struct disk_model *)op)[oindex];
+			NMG_CK_MODEL(m);
+			INDEX( d, m, ma_p );
+			INDEXL( d, m, r_hd );
+		}
+		return;
+	case 1:
+		/* model_a */
+		{
+			struct model_a	*ma = (struct model_a *)ip;
+			struct disk_model_a	*d;
+			d = &((struct disk_model_a *)op)[oindex];
+			NMG_CK_MODEL_A(ma);
+			d->magic = ma->magic;	/* NOOP */
+		}
+		return;
+	case 2:
+		/* region */
+		{
+			struct nmgregion	*r = (struct nmgregion *)ip;
+			struct disk_nmgregion	*d;
+			d = &((struct disk_nmgregion *)op)[oindex];
+			NMG_CK_REGION(r);
+			INDEXL( d, r, l );
+			INDEX( d, r, m_p );
+			INDEX( d, r, ra_p );
+			INDEXL( d, r, s_hd );
+		}
+		return;
+	case 3:
+		/* region_a */
+		{
+			struct nmgregion_a	*r = (struct nmgregion_a *)ip;
+			struct disk_nmgregion_a	*d;
+			d = &((struct disk_nmgregion_a *)op)[oindex];
+			NMG_CK_REGION_A(r);
+			VMOVE( d->min_pt, r->min_pt );
+			VMOVE( d->max_pt, r->max_pt );
+		}
+		return;
+	case 4:
+		/* shell */
+		{
+			struct shell	*s = (struct shell *)ip;
+			struct disk_shell	*d;
+			d = &((struct disk_shell *)op)[oindex];
+			NMG_CK_SHELL(s);
+			INDEXL( d, s, l );
+			INDEX( d, s, r_p );
+			INDEX( d, s, sa_p );
+			INDEXL( d, s, fu_hd );
+			INDEXL( d, s, lu_hd );
+			INDEXL( d, s, eu_hd );
+			INDEX( d, s, vu_p );
+		}
+		return;
+	case 5:
+		/* shell_a */
+		{
+			struct shell_a	*sa = (struct shell_a *)ip;
+			struct disk_shell_a	*d;
+			d = &((struct disk_shell_a *)op)[oindex];
+			NMG_CK_SHELL_A(sa);
+			VMOVE( d->min_pt, sa->min_pt );
+			VMOVE( d->max_pt, sa->max_pt );
+		}
+		return;
+	case 6:
+		/* faceuse */
+		{
+			struct faceuse	*fu = (struct faceuse *)ip;
+			struct disk_faceuse	*d;
+			d = &((struct disk_faceuse *)op)[oindex];
+			NMG_CK_FACEUSE(fu);
+			INDEXL( d, fu, l );
+			INDEX( d, fu, s_p );
+			INDEX( d, fu, fumate_p );
+			d->orientation = fu->orientation;
+			INDEX( d, fu, f_p );
+			INDEX( d, fu, fua_p );
+			INDEXL( d, fu, lu_hd );
+		}
+		return;
+	case 7:
+		/* faceuse_a */
+		{
+			struct faceuse_a	*fua = (struct faceuse_a *)ip;
+			struct disk_faceuse_a	*d;
+			d = &((struct disk_faceuse_a *)op)[oindex];
+			NMG_CK_FACEUSE_A(fua);
+			d->magic = fua->magic;	/* NOOP */
+		}
+		return;
+	case 8:
+		/* face */
+		{
+			struct face	*f = (struct face *)ip;
+			struct disk_face	*d;
+			d = &((struct disk_face *)op)[oindex];
+			NMG_CK_FACE(f);
+			INDEX( d, f, fu_p );
+			INDEX( d, f, fg_p );
+		}
+		return;
+	case 9:
+		/* face_g */
+		{
+			struct face_g	*fg = (struct face_g *)ip;
+			struct disk_face_g	*d;
+			d = &((struct disk_face_g *)op)[oindex];
+			NMG_CK_FACE_G(fg);
+			VMOVEN( d->N, fg->N, 4 );
+			VMOVE( d->min_pt, fg->min_pt );
+			VMOVE( d->max_pt, fg->max_pt );
+		}
+		return;
+	case 10:
+		/* loopuse */
+		{
+			struct loopuse	*lu = (struct loopuse *)ip;
+			struct disk_loopuse	*d;
+			d = &((struct disk_loopuse *)op)[oindex];
+			NMG_CK_LOOPUSE(lu);
+			INDEXL( d, lu, l );
+			d->up = REINDEX(lu->up.magic_p);
+			INDEX( d, lu, lumate_p );
+			d->orientation = lu->orientation;
+			INDEX( d, lu, l_p );
+			INDEX( d, lu, lua_p );
+			INDEXL( d, lu, down_hd );
+		}
+		return;
+	case 11:
+		/* loopuse_a */
+		{
+			struct loopuse_a	*lua = (struct loopuse_a *)ip;
+			struct disk_loopuse_a	*d;
+			d = &((struct disk_loopuse_a *)op)[oindex];
+			NMG_CK_LOOPUSE_A(lua);
+			d->magic = lua->magic;	/* NOOP */
+		}
+		return;
+	case 12:
+		/* loop */
+		{
+			struct loop	*l = (struct loop *)ip;
+			struct disk_loop	*d;
+			d = &((struct disk_loop *)op)[oindex];
+			NMG_CK_LOOP(l);
+			INDEX( d, l, lu_p );
+			INDEX( d, l, lg_p );
+		}
+		return;
+	case 13:
+		/* loop_g */
+		{
+			struct loop_g	*lg = (struct loop_g *)ip;
+			struct disk_loop_g	*d;
+			d = &((struct disk_loop_g *)op)[oindex];
+			NMG_CK_LOOP_G(lg);
+			VMOVE( d->min_pt, lg->min_pt );
+			VMOVE( d->max_pt, lg->max_pt );
+		}
+		return;
+	case 14:
+		/* edgeuse */
+		{
+			struct edgeuse	*eu = (struct edgeuse *)ip;
+			struct disk_edgeuse	*d;
+			d = &((struct disk_edgeuse *)op)[oindex];
+			NMG_CK_EDGEUSE(eu);
+			INDEXL( d, eu, l );
+			d->up = REINDEX(eu->up.magic_p);
+			INDEX( d, eu, eumate_p );
+			INDEX( d, eu, radial_p );
+			INDEX( d, eu, e_p );
+			INDEX( d, eu, eua_p );
+			d->orientation = eu->orientation;
+			INDEX( d, eu, vu_p );
+		}
+		return;
+	case 15:
+		/* edgeuse_a */
+		{
+			struct edgeuse_a	*eua = (struct edgeuse_a *)ip;
+			struct disk_edgeuse_a	*d;
+			d = &((struct disk_edgeuse_a *)op)[oindex];
+			NMG_CK_EDGEUSE_A(eua);
+			d->magic = eua->magic;	/* NOOP */
+		}
+		return;
+	case 16:
+		/* edge */
+		{
+			struct edge	*e = (struct edge *)ip;
+			struct disk_edge	*d;
+			d = &((struct disk_edge *)op)[oindex];
+			NMG_CK_EDGE(e);
+			INDEX( d, e, eu_p );
+			INDEX( d, e, eg_p );
+		}
+		return;
+	case 17:
+		/* edge_g */
+		{
+			struct edge_g	*eg = (struct edge_g *)ip;
+			struct disk_edge_g	*d;
+			d = &((struct disk_edge_g *)op)[oindex];
+			NMG_CK_EDGE_G(eg);
+			d->magic = eg->magic;	/* NOOP */
+		}
+		return;
+	case 18:
+		/* vertexuse */
+		{
+			struct vertexuse	*vu = (struct vertexuse *)ip;
+			struct disk_vertexuse	*d;
+			d = &((struct disk_vertexuse *)op)[oindex];
+			NMG_CK_VERTEXUSE(vu);
+			INDEXL( d, vu, l );
+			d->up = REINDEX(vu->up.magic_p);
+			INDEX( d, vu, v_p );
+			INDEX( d, vu, vua_p );
+		}
+		return;
+	case 19:
+		/* vertexuse_a */
+		{
+			struct vertexuse_a	*vua = (struct vertexuse_a *)ip;
+			struct disk_vertexuse_a	*d;
+			d = &((struct disk_vertexuse_a *)op)[oindex];
+			NMG_CK_VERTEXUSE_A(vua);
+			VMOVEN( d->N, vua->N, 4 );
+		}
+		return;
+	case 20:
+		/* vertex */
+		{
+			struct vertex	*v = (struct vertex *)ip;
+			struct disk_vertex	*d;
+			d = &((struct disk_vertex *)op)[oindex];
+			NMG_CK_VERTEX(v);
+			INDEXL( d, v, vu_hd );
+			INDEX( d, v, vg_p );
+		}
+		return;
+	case 21:
+		/* vertex_g */
+		{
+			struct vertex_g	*vg = (struct vertex_g *)ip;
+			struct disk_vertex_g	*d;
+			d = &((struct disk_vertex_g *)op)[oindex];
+			NMG_CK_VERTEX_G(vg);
+			VMOVE( d->coord, vg->coord );
+		}
+		return;
+	}
 }
 
 /*
@@ -658,14 +1027,12 @@ double			local2mm;
 	struct nmg_struct_counts	cntbuf;
 	struct rt_external		count_ext;
 	long				**ptrs;
-	struct nmg_exp_counts {
-		long	new_subscript;
-		long	per_struct_index;
-	};
 	struct nmg_exp_counts		*ecnt;
 	int				i;
 	int				subscript;
-	int				indices[22];
+	int				indices[NSTRUCTS];
+	genptr_t			disk_arrays[NSTRUCTS];
+	int				kind;
 
 	RT_CK_DB_INTERNAL(ip);
 	if( ip->idb_type != ID_NMG )  return(-1);
@@ -679,17 +1046,39 @@ double			local2mm;
 	/* Collect overall new subscripts, and structure-specific indices */
 	ecnt = (struct nmg_exp_counts *)rt_calloc( m->maxindex,
 		sizeof(struct nmg_exp_counts), "ecnt[]" );
-	for( i = 0; i < 22; i++ )
+	for( i = 0; i < NSTRUCTS; i++ )
 		indices[i] = 0;
 	subscript = 1;
 	for( i = m->maxindex-1; i >= 0; i-- )  {
 		if( ptrs[i] == (long *)0 )  continue;
-		ecnt[i].new_subscript = subscript++;
-		ecnt[i].per_struct_index = indices[
-			rt_nmg_magic_to_subscript( (long)(ptrs[i]) )]++;
+		kind = rt_nmg_magic_to_kind( *(ptrs[i]) );
+		ecnt[i].per_struct_index = indices[kind]++;
+		ecnt[i].kind = kind;
 	}
-	for( i = 0; i < 22; i++ )
+	/* Assign new subscripts to ascending guys of same kind */
+	for( kind = 0; kind < NSTRUCTS; kind++ )  {
+		for( i=0; i < m->maxindex-1; i++ )  {
+			if( ecnt[i].kind != kind )  continue;
+			ecnt[i].new_subscript = subscript++;
+		}
+	}
+
+	for( i = 0; i < NSTRUCTS; i++ )  {
 		rt_log("%d of kind %d\n", indices[i], i);
+		if( indices[i] <= 0 )  {
+			disk_arrays[i] = GENPTR_NULL;
+			continue;
+		}
+		disk_arrays[i] = (genptr_t)rt_calloc( indices[i],
+			rt_disk_sizes[i], "disk_arrays[i]" );
+	}
+
+	/* Convert all the structures to their disk versions */
+	for( i = m->maxindex-1; i >= 0; i-- )  {
+		if( ptrs[i] == (long *)0 )  continue;
+		kind = ecnt[i].kind;
+		rt_nmg_edisk( disk_arrays[kind], ptrs[i], ecnt, i );
+	}
 
 	RT_INIT_EXTERNAL(ep);
 	ep->ext_nbytes = sizeof(union record);
