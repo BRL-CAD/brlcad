@@ -1,20 +1,54 @@
 #!/bin/sh
-#			M A C H I N E T Y P E . S H
+#                  M A C H I N E T Y P E . S H
+# BRL-CAD
 #
-# A Shell script to determine the machine architecture type,
-# operating system variant (Berkeley or SysV), and
-# the presence of Berkeley-style TCP networking capability.
-# The machine type must be FOUR characters or less.
+# Copyright (c) 2004 United States Government as represented by the
+# U.S. Army Research Laboratory.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above 
+# copyright notice, this list of conditions and the following
+# disclaimer in the documentation and/or other materials provided
+# with the distribution.
+#
+# 3. The name of the author may not be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+###
+#
+# A Shell script to determine the machine architecture type, operating
+# system variant (Berkeley or SysV), and the presence of
+# Berkeley-style TCP networking capability.  The machine type must be
+# FOUR characters or less.
 # 
-# This is useful to permit the separation of
-# incompatible binary program files, and to drive proper tailoring
-# of some of the Makefiles.
+# This is useful to permit the separation of incompatible binary
+# program files, and to drive proper tailoring of some of the
+# Makefiles.
 #
 # The old way of operating is described here:
-# Note that this Shell script uses the same mechanism (ie, CPP)
-# to determine the system type as the main Cakefile (Cakefile.defs)
-# uses.  To support a new type of machine, the same #ifdef construction
-# will be required both here and in Cakefile.defs
+# Note that this Shell script uses the same mechanism (ie, CPP) to
+# determine the system type as the main Cakefile (Cakefile.defs) uses.
+# To support a new type of machine, the same #ifdef construction will
+# be required both here and in Cakefile.defs
 #
 # The new way of operating is this:
 # If /bin/uname exists, run it, and base all decisions on it's output.
@@ -31,7 +65,8 @@
 #	-n	Print only HAS_TCP variable
 #	-b | -v	Print all, in Bourne-Shell legible form
 #
-# Info note:  On a VAX-11/780, this script takes about 1.3 CPU seconds to run
+# Info note: On a VAX-11/780, this script takes about 1.3 CPU seconds
+# to run.
 #
 # Mike Muuss, BRL, 10-May-1988
 # With thanks to Terry Slattery and Bob Reschly for assistance.
