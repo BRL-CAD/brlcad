@@ -9,8 +9,8 @@ extern double atof();
 extern char *malloc();
 
 #include <stdio.h>
-#include "ged_types.h"
-#include "3d.h"
+#include "./ged_types.h"
+#include "./3d.h"
 
 #define DOWN 0
 #define UP   1
