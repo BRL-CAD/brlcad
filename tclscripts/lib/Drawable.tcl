@@ -22,14 +22,8 @@
 class Drawable {
     protected variable dg ""
 
-    constructor {db} {
-	set dg [subst $this]_dg
-	dg_open $dg $db
-    }
-
-    destructor {
-	$dg close
-    }
+    constructor {db} {}
+    destructor {}
 
     public method observer {args}
     public method assoc {args}
@@ -49,6 +43,15 @@ class Drawable {
     public method get_name {}
     public method illum {obj}
     public method label {obj}
+}
+
+body Drawable::constructor {db} {
+    set dg [subst $this]_dg
+    dg_open $dg $db
+}
+
+body Drawable::destructor {} {
+    $dg close
 }
 
 body Drawable::observer {args} {

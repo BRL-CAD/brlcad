@@ -24,16 +24,8 @@ class Db {
     private variable initializing 1
     public variable name ""
 
-    constructor {filename} {
-	set name $filename
-	set db [subst $this]_db
-	wdb_open $db db $name
-	set initializing 0
-    }
-
-    destructor {
-	$db close
-    }
+    constructor {filename} {}
+    destructor {}
 
     public method open {args}
     public method observer {args}
@@ -84,6 +76,17 @@ configbody Db::name {
     if {!$initializing} {
 	Db::open $name
     }
+}
+
+body Db::constructor {filename} {
+    set name $filename
+    set db [subst $this]_db
+    wdb_open $db db $name
+    set initializing 0
+}
+
+body Db::destructor {} {
+    $db close
 }
 
 body Db::open {args} {
