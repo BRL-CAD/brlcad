@@ -139,18 +139,20 @@ int	width, height;
 		return	-1;
 	}
 	PCPL(ifp) = (char *)pc;			/* stash in u1 */
-	ifp->if_fd = pc->pkc_fd;
-	ifp->if_width = width;
-	ifp->if_height = height;
+	ifp->if_fd = pc->pkc_fd;		/* unused */
 
-	(void)fbputlong( ifp->if_width, &buf[0] );
-	(void)fbputlong( ifp->if_height, &buf[4] );
+	(void)fbputlong( width, &buf[0] );
+	(void)fbputlong( height, &buf[4] );
 	(void) strcpy( &buf[8], file + 1 );
 	pkg_send( MSG_FBOPEN, buf, strlen(devicename)+8, pc );
 
-	/* XXX - need to get the size back! */
-	pkg_waitfor( MSG_RETURN, buf, 4, pc );
-	return( fbgetlong( buf ) );
+	/* return code, max_width, max_height, width, height as longs */
+	pkg_waitfor( MSG_RETURN, buf, sizeof(buf), pc );
+	ifp->if_max_width = fbgetlong( &buf[1*4] );
+	ifp->if_max_height = fbgetlong( &buf[2*4] );
+	ifp->if_width = fbgetlong( &buf[3*4] );
+	ifp->if_height = fbgetlong( &buf[4*4] );
+	return( fbgetlong( &buf[0*4] ) );
 }
 
 _LOCAL_ int
@@ -173,9 +175,15 @@ Pixel	*bgpp;
 {
 	char	buf[4+1];
 
-	/* XXX - need to send background color */
 	/* send a clear package to remote */
-	pkg_send( MSG_FBCLEAR, 0L, 0L, PCP(ifp) );
+	if( bgpp == PIXEL_NULL )  {
+		buf[0] = buf[1] = buf[2] = 0;	/* black */
+	} else {
+		buf[0] = bgpp->red;
+		buf[1] = bgpp->green;
+		buf[2] = bgpp->blue;
+	}
+	pkg_send( MSG_FBCLEAR, buf, 3, PCP(ifp) );
 	pkg_waitfor( MSG_RETURN, buf, 4, PCP(ifp) );
 	return( fbgetlong( buf ) );
 }
