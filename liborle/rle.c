@@ -25,7 +25,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include "fb.h"
-#include "rle.h"
+#include "orle.h"
 
 typedef unsigned char	u_char;
 
