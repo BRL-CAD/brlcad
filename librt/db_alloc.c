@@ -244,8 +244,6 @@ struct db_i		*dbip;
 register struct directory *dp;
 int			recnum;
 {
-	union record	*rp;
-	register union record *in, *out;
 
 	RT_CK_DBI(dbip);
 	RT_CK_DIR(dp);

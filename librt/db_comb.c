@@ -235,7 +235,6 @@ CONST struct db_i		*dbip;
 		/* Build leaf node for in-memory tree */
 		{
 			union tree		*tp;
-			struct tree_db_leaf	*mi;
 			mat_t			diskmat;
 			char			namebuf[NAMESIZE+2];
 
@@ -490,8 +489,7 @@ int			indented;
 int			lvl;
 double			mm2local;
 {
-	int	status;
-	int node_count, actual_count;
+	int node_count;
 	struct rt_tree_array	*rt_tree_array;
 	
 
@@ -513,7 +511,11 @@ double			mm2local;
 		int status;
 
 		rt_tree_array = (struct rt_tree_array *)bu_calloc( node_count , sizeof( struct rt_tree_array ) , "rt_tree_array" );
+#if 0
 		actual_count = db_flatten_tree( rt_tree_array, tp, OP_UNION ) - rt_tree_array;
+#else
+		(void)db_flatten_tree( rt_tree_array, tp, OP_UNION );
+#endif
 		for( i=0 ; i<node_count ; i++ )
 		{
 			switch (rt_tree_array[i].tl_op)

@@ -134,7 +134,6 @@ db_dup_combined_tree_state( old )
 CONST struct combined_tree_state	*old;
 {
 	struct combined_tree_state	*new;
-	int				shader_len=0;
 
  	RT_CK_CTS(old);
 	BU_GETSTRUCT( new, combined_tree_state );
@@ -338,7 +337,6 @@ CONST union tree	*tp;
 	register struct directory *mdp;
 	mat_t			xmat;
 	mat_t			old_xlate;
-	register struct animate *anp;
 
 	RT_CK_FULL_PATH(pathp);
 	RT_CK_TREE(tp);
@@ -770,7 +768,6 @@ int				depth;		/* # arcs in new_path to use */
 {
 	struct rt_db_internal	intern;
 	struct rt_comb_internal	*comb;
-	register int		i;
 	struct directory	*comb_dp;	/* combination's dp */
 	struct directory	*dp;		/* element's dp */
 	int			j;
@@ -1026,10 +1023,6 @@ out:
 	return;
 }
 
-static vect_t xaxis = { 1.0, 0, 0 };
-static vect_t yaxis = { 0, 1.0, 0 };
-static vect_t zaxis = { 0, 0, 1.0 };
-
 /*
  *			D B _ R E C U R S E
  *
@@ -1048,7 +1041,6 @@ struct combined_tree_state	**region_start_statepp;
 	struct directory	*dp;
 	struct bu_external	ext;
 	struct rt_db_internal	intern;
-	int			i;
 	union tree		*curtree = TREE_NULL;
 
 	RT_CHECK_DBI( tsp->ts_dbip );
@@ -1477,8 +1469,8 @@ void
 db_non_union_push( tp )
 register union tree	*tp;
 {
-	union tree *A, *B, *C, *D;
-	union tree *dup, *tmp, *new;
+	union tree *A, *B, *C;
+	union tree *tmp;
 	int repush_child=0;
 
 	RT_CK_TREE(tp);
