@@ -76,7 +76,7 @@ static struct camo_specific camo_defaults = {
 	1.0,			/* noise_h_val */
 	4.0,			/* noise_octaves */
 	1.0,			/* noise_size */
-	{ 1.0, 1.0, 1.0 },	/* noise_vscale */
+	{ 0.0125, 0.0125, 0.0125 },	/* noise_vscale */
 	{ 1000.0, 1000.0, 1000.0 },	/* delta into noise space */
 	-0.25,			/* t1 */
 	0.25,			/* t2 */

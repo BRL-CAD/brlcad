@@ -57,7 +57,16 @@ char					*base;	/* begining of structure */
 CONST char				*value;	/* string containing value */
 {
 	int *p = (int *)(base+sdp->sp_offset);
+	struct light_specific *lp = (struct light_specific *)base;
 
+	switch (sdp->sp_offset) {
+	case LIGHT_O(lt_invisible):
+		lp->lt_visible = !lp->lt_invisible;
+		break;
+	case LIGHT_O(lt_visible):
+		lp->lt_invisible = !lp->lt_visible;
+		break;
+	}
 	/* reconvert with optional units */
 	*p = !*p;
 }
@@ -95,9 +104,9 @@ struct bu_structparse light_parse[] = {
 {"%d",	1, "infinite",	LIGHT_O(lt_infinite),	BU_STRUCTPARSE_FUNC_NULL },
 {"%d",	1, "i",		LIGHT_O(lt_infinite),	BU_STRUCTPARSE_FUNC_NULL },
 
-{"%d",	1, "visible",	LIGHT_O(lt_visible),	BU_STRUCTPARSE_FUNC_NULL },
-{"%d",  1, "invisible",	LIGHT_O(lt_visible),	light_cvt_visible },
-{"%d",	1, "v",		LIGHT_O(lt_visible),	BU_STRUCTPARSE_FUNC_NULL },
+{"%d",	1, "visible",	LIGHT_O(lt_visible),	light_cvt_visible },
+{"%d",  1, "invisible",	LIGHT_O(lt_invisible),	light_cvt_visible },
+{"%d",	1, "v",		LIGHT_O(lt_visible),	light_cvt_visible },
 
 {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
 };
@@ -222,6 +231,7 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 	lp->lt_intensity = 1000.0;	/* Lumens */
 	lp->lt_fraction = -1.0;		/* Recomputed later */
 	lp->lt_visible = 1;		/* explicitly modeled */
+	lp->lt_invisible = 0;		/* explicitly modeled */
 	lp->lt_shadows = 1;		/* by default, casts shadows */
 	lp->lt_angle = 180;		/* spherical emission by default */
 	lp->lt_exaim = 0;		/* use default aiming mechanism */
@@ -328,7 +338,7 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 	}
 	BU_LIST_INSERT( &(LightHead.l), &(lp->l) );
 
-	if( ! lp->lt_visible )  {
+	if( lp->lt_invisible )  {
 		lp->lt_rp = REGION_NULL;
 		/* Note that *dpp (reg_udata) is left null */
 		return(0);	/* don't show light, destroy it */
@@ -429,6 +439,7 @@ mat_t	v2m;
 		lp->lt_intensity = 1000.0;
 		lp->lt_radius = 0.1;		/* mm, "point" source */
 		lp->lt_visible = 0;		/* NOT explicitly modeled */
+		lp->lt_invisible = 1;		/* NOT explicitly modeled */
 		lp->lt_shadows = 0;		/* no shadows for speed */
 		lp->lt_angle = 180;		/* spherical emission */
 		lp->lt_cosangle = -1;		/* cos(180) */
@@ -531,7 +542,7 @@ light_cleanup()
 	}
 	for( BU_LIST_FOR( lp, light_specific, &(LightHead.l) ) )  {
 		RT_CK_LIGHT(lp);
-		if( lp->lt_rp != REGION_NULL && lp->lt_visible != 0 )  {
+		if( lp->lt_rp != REGION_NULL && lp->lt_visible )  {
 			/* Will be cleaned up by mlib_free() */
 			continue;
 		}
@@ -659,7 +670,7 @@ struct seg *finished_segs;
 		pp=PartHeadp->pt_forw;
 		RT_CK_PT(pp);
 
-		if( (! lp->lt_visible) || lp->lt_infinite )  {
+		if( lp->lt_invisible || lp->lt_infinite )  {
 			light_visible = 1;
 #if RT_MULTISPECTRAL
 			bn_tabdata_copy( ap->a_spectrum, ms_filter_color );
@@ -749,7 +760,7 @@ struct seg *finished_segs;
 	}
 
 	/* or something futher away than a finite invisible light */
-	if( (!lp->lt_visible) && !(lp->lt_infinite) ) {
+	if( lp->lt_invisible && !(lp->lt_infinite) ) {
 		vect_t	tolight;
 		VSUB2( tolight, lp->lt_pos, ap->a_ray.r_pt );
 		if( pp->pt_inhit->hit_dist >= MAGNITUDE(tolight) ) {
@@ -887,11 +898,15 @@ register struct application *ap;
 	struct light_specific *lp = (struct light_specific *)(ap->a_uptr);
 
 	RT_CK_LIGHT(lp);
-	if( (!lp->lt_visible) || lp->lt_infinite ) {
+	if( lp->lt_invisible || lp->lt_infinite ) {
 		VSETALL( ap->a_color, 1 );
 		if( rdebug & RDEBUG_LIGHT ) bu_log("light_miss vis=1\n");
 		return(1);		/* light_visible = 1 */
 	}
+
+	bu_log("light ray missed non-infinite, visible light source\n");
+	bu_log("on pixel: %d %d\n", ap->a_x, ap->a_y);
+
 	/* Missed light, either via blockage or dither.  Return black */
 	VSETALL( ap->a_color, 0 );
 	if( rdebug & RDEBUG_LIGHT ) bu_log("light_miss vis=0\n");
@@ -901,7 +916,6 @@ register struct application *ap;
 struct light_obs_stuff {
 	struct application *ap;
 	struct shadework *swp;
-	int have;
 	struct light_specific *lp;
 	int *rand_idx;
 
@@ -912,7 +926,13 @@ struct light_obs_stuff {
 	vect_t light_y;
 };
 
-
+/***********************************************************************
+ *
+ *	light_vis
+ *
+ *	Compute 1 light visibility ray from a hit point to the light.
+ *
+ */
 static int 
 light_vis(los)
 struct light_obs_stuff *los;
@@ -1069,6 +1089,18 @@ struct light_obs_stuff *los;
  *
  *	Determine the visibility of each light source in the scene from a
  *	particular location.
+ *
+ *	Sets 
+ *	swp:	sw_tolight[]
+ *		sw_intensity[]  or msw_intensity[]
+ *		sw_visible[]
+ *		sw_lightfract[]
+ *
+ *	References
+ *	ap:	a_resource
+ *		a_rti_i->rti_tol
+ *		a_rbeam
+ *		a_diverge
  */
 void
 light_obs(ap, swp, have)
@@ -1094,7 +1126,6 @@ int have;
 	los.rand_idx = &rand_idx;
 	los.ap = ap;
 	los.swp = swp;
-	los.have = have;
 
 	/*
 	 *  Determine light visibility
