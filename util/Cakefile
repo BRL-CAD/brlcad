@@ -6,7 +6,7 @@
 
 #define SRCDIR	util
 #define PRODUCTS	\
-	alias-pix ap-pix asc-pl azel buffer dbcp \
+	alias-pix ap-pix asc-pl azel bary buffer dbcp \
 	bw-a bw-imp bw-pix bw-ps bw3-pix \
 	bwcrop bwdiff bwfilter bwhist bwhisteq \
 	bwmod bwrect bwrot bwscale bwshrink \
@@ -313,6 +313,9 @@ xyz-pl: xyz-pl.o
 
 azel:	azel.o
 	CC LDFLAGS -o azel azel.o LIBES
+
+bary:	bary.o
+	CC LDFLAGS -o bary bary.o LIBRT LIBRT_LIBES LIBES
 
 bwthresh: bwthresh.o
 	CC LDFLAGS -o bwthresh bwthresh.o LIBES
