@@ -136,13 +136,15 @@ vr_viewpoint_hook()
 	/* Need to send current viewpoint to VR mgr */
 	/* XXX more will be needed */
 	/* Eye point, quaturnion for orientation */
-	rt_vls_printf( &str, "pov %e %e %e   %e %e %e %e   %e   %e %e %e\n", 
+	rt_vls_printf( &str, "pov %e %e %e   %e %e %e %e   %e   %e %e %e  %e\n", 
 		-toViewcenter[MDX],
 		-toViewcenter[MDY],
 		-toViewcenter[MDZ],
 		V4ARGS(orient),
 		Viewscale,
-		V3ARGS(eye_pos_scr) );
+		V3ARGS(eye_pos_scr),
+		mged_variables.perspective
+		);
 
 	if( pkg_send_vls( VRMSG_POV, &str, vrmgr ) < 0 )  {
 		rt_log("viewpoint: pkg_send VRMSG_POV failed, disconnecting\n");
@@ -166,8 +168,8 @@ char	*argv[];
 {
 	quat_t		orient;
 
-	if( argc < 1+3+4+1+3 )  {
-		rt_log("pov: insufficient args\n");
+	if( argc < 1+3+4+1+3+1 )  {
+		rt_log("pov: insufficient args, only got %d\n", argc);
 		return CMD_BAD;
 	}
 	toViewcenter[MDX] = -atof(argv[1]);
@@ -182,6 +184,7 @@ char	*argv[];
 	eye_pos_scr[X] = atof(argv[9]);		/* interpreted in dozoom.c */
 	eye_pos_scr[Y] = atof(argv[10]);
 	eye_pos_scr[Z] = atof(argv[11]);
+	mged_variables.perspective = atof(argv[12]);
 	new_mats();
 
 	return CMD_OK;
