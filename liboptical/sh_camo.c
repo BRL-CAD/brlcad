@@ -26,17 +26,18 @@
 #define camo_MAGIC 0x18364	/* XXX change this number for each shader */
 struct camo_specific {
 	long	magic;
-	double	lacunarity;
-	double	h_val;
-	double	octaves;
+	double	noise_lacunarity;
+	double	noise_h_val;
+	double	noise_octaves;
+	double	noise_size;
+	point_t	noise_vscale;	/* size of noise coordinate space */
+	vect_t	noise_delta;	/* a delta in noise space to be applied to pts */
+
 	double	t1;	/* color threshold 1 */
 	double	t2;	/* color threshold 2 */
-	double	size;
-	point_t	vscale;	/* size of noise coordinate space */
 	point_t c1;	/* color 1 */
 	point_t c2;	/* color 2 */
 	point_t c3;	/* color 3 */
-	vect_t	delta;	/* a delta in noise space to be applied to pts */
 	mat_t	xform;	/* model->region coord sys matrix */
 };
 #define CK_camo_SP(_p) RT_CKMAG(_p, camo_MAGIC, "camo_specific")
@@ -61,18 +62,17 @@ CONST char				*value;	/* string containing value */
 
 static struct camo_specific camo_defaults = {
 	camo_MAGIC,
-	2.1753974,	/* lacunarity */
-	1.0,		/* h_val */
-	4.0,		/* octaves */
-	-0.25,		/* t1 */
-	0.25,		/* t2 */
-	1.0,		/* size */
-	{ 1.0, 1.0, 1.0 },	/* vscale */
+	2.1753974,		/* noise_lacunarity */
+	1.0,			/* noise_h_val */
+	4.0,			/* noise_octaves */
+	1.0,			/* noise_size */
+	{ 1.0, 1.0, 1.0 },	/* noise_vscale */
+	{ 1000.0, 1000.0, 1000.0 },	/* delta into noise space */
+	-0.25,			/* t1 */
+	0.25,			/* t2 */
 	{ .38, .29, .16 },	/* darker color c1 (97/74/41) */
 	{ .1, .30, .04 },	/* basic color c2 (26/77/10) */
-/*	{ .815, .635, .35 },	brighter color c3 */
-	{ .15, .15, .15 },	/* dark black (38/38/38) */
-	{ 1000.0, 1000.0, 1000.0 }	/* delta into noise space */
+	{ .15, .15, .15 }	/* dark black (38/38/38) */
 	};
 
 #define SHDR_NULL	((struct camo_specific *)0)
@@ -80,37 +80,37 @@ static struct camo_specific camo_defaults = {
 #define SHDR_AO(m)	offsetofarray(struct camo_specific, m)
 
 struct bu_structparse camo_print_tab[] = {
-	{"%f",	1, "lacunarity",	SHDR_O(lacunarity),	FUNC_NULL },
-	{"%f",	1, "H", 		SHDR_O(h_val),		FUNC_NULL },
-	{"%f",	1, "octaves", 		SHDR_O(octaves),	FUNC_NULL },
-	{"%f",  1, "size",		SHDR_O(size),		bu_mm_cvt },
-	{"%f",  3, "vscale",		SHDR_AO(vscale),	FUNC_NULL },
+	{"%f",	1, "lacunarity",	SHDR_O(noise_lacunarity),	FUNC_NULL },
+	{"%f",	1, "H", 		SHDR_O(noise_h_val),		FUNC_NULL },
+	{"%f",	1, "octaves", 		SHDR_O(noise_octaves),	FUNC_NULL },
+	{"%f",  1, "size",		SHDR_O(noise_size),		bu_mm_cvt },
+	{"%f",  3, "vscale",		SHDR_AO(noise_vscale),	FUNC_NULL },
 	{"%f",	1, "thresh1",		SHDR_O(t1),		FUNC_NULL },
 	{"%f",	1, "thresh2",		SHDR_O(t2),		FUNC_NULL },
 	{"%f",  3, "color1",		SHDR_AO(c1),		FUNC_NULL },
 	{"%f",  3, "color2",		SHDR_AO(c2),		FUNC_NULL },
 	{"%f",  3, "color3",		SHDR_AO(c3),		FUNC_NULL },
-	{"%f",  3, "delta",		SHDR_AO(delta),		FUNC_NULL },
+	{"%f",  3, "delta",		SHDR_AO(noise_delta),		FUNC_NULL },
 };
 
 struct bu_structparse camo_parse[] = {
-	{"%f",	1, "lacunarity",	SHDR_O(lacunarity),	FUNC_NULL },
-	{"%f",	1, "l",			SHDR_O(lacunarity),	FUNC_NULL },
-	{"%f",	1, "H", 		SHDR_O(h_val),		FUNC_NULL },
-	{"%f",	1, "octaves", 		SHDR_O(octaves),	FUNC_NULL },
-	{"%f",	1, "o", 		SHDR_O(octaves),	FUNC_NULL },
+	{"%f",	1, "lacunarity",	SHDR_O(noise_lacunarity),	FUNC_NULL },
+	{"%f",	1, "l",			SHDR_O(noise_lacunarity),	FUNC_NULL },
+	{"%f",	1, "H", 		SHDR_O(noise_h_val),		FUNC_NULL },
+	{"%f",	1, "octaves", 		SHDR_O(noise_octaves),	FUNC_NULL },
+	{"%f",	1, "o", 		SHDR_O(noise_octaves),	FUNC_NULL },
 	{"%f",	1, "t1",		SHDR_O(t1),		FUNC_NULL },
 	{"%f",	1, "t2",		SHDR_O(t2),		FUNC_NULL },
-	{"%f",  1, "size",		SHDR_O(size),		bu_mm_cvt },
-	{"%f",  1, "s",			SHDR_O(size),		bu_mm_cvt },
-	{"%f",  3, "vscale",		SHDR_AO(vscale),	FUNC_NULL },
-	{"%f",  3, "vs",		SHDR_AO(vscale),	FUNC_NULL },
-	{"%f",  3, "v",			SHDR_AO(vscale),	FUNC_NULL },
+	{"%f",  1, "size",		SHDR_O(noise_size),		bu_mm_cvt },
+	{"%f",  1, "s",			SHDR_O(noise_size),		bu_mm_cvt },
+	{"%f",  3, "vscale",		SHDR_AO(noise_vscale),	FUNC_NULL },
+	{"%f",  3, "vs",		SHDR_AO(noise_vscale),	FUNC_NULL },
+	{"%f",  3, "v",			SHDR_AO(noise_vscale),	FUNC_NULL },
 	{"%f",  3, "c1",		SHDR_AO(c1),		FUNC_NULL },
 	{"%f",  3, "c2",		SHDR_AO(c2),		FUNC_NULL },
 	{"%f",  3, "c3",		SHDR_AO(c3),		FUNC_NULL },
-	{"%f",  3, "delta",		SHDR_AO(delta),		FUNC_NULL },
-	{"%f",  3, "d",			SHDR_AO(delta),		FUNC_NULL },
+	{"%f",  3, "delta",		SHDR_AO(noise_delta),		FUNC_NULL },
+	{"%f",  3, "d",			SHDR_AO(noise_delta),		FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 };
 
@@ -164,24 +164,24 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 
 	/* add the noise-space scaling */
 	mat_idn(tmp);
-	if (camo_sp->size != 1.0) {
-		/* the user sets "size" to the size of the biggest
+	if (camo_sp->noise_size != 1.0) {
+		/* the user sets "noise_size" to the size of the biggest
 		 * noise-space blob in model coordinates
 		 */
-		tmp[0] = tmp[5] = tmp[10] = 1.0/camo_sp->size;
+		tmp[0] = tmp[5] = tmp[10] = 1.0/camo_sp->noise_size;
 	} else {
-		tmp[0] = 1.0/camo_sp->vscale[0];
-		tmp[5] = 1.0/camo_sp->vscale[1];
-		tmp[10] = 1.0/camo_sp->vscale[2];
+		tmp[0] = 1.0/camo_sp->noise_vscale[0];
+		tmp[5] = 1.0/camo_sp->noise_vscale[1];
+		tmp[10] = 1.0/camo_sp->noise_vscale[2];
 	}
 
 	mat_mul(camo_sp->xform, tmp, model_to_region);
 
 	/* Add any translation within shader/region space */
 	mat_idn(tmp);
-	tmp[MDX] = camo_sp->delta[0];
-	tmp[MDY] = camo_sp->delta[1];
-	tmp[MDZ] = camo_sp->delta[2];
+	tmp[MDX] = camo_sp->noise_delta[0];
+	tmp[MDY] = camo_sp->noise_delta[1];
+	tmp[MDZ] = camo_sp->noise_delta[2];
 	mat_mul2(tmp, camo_sp->xform);
 
 	if( rdebug&RDEBUG_SHADE) {
@@ -245,8 +245,8 @@ char	*dp;
 	/* noise_fbm returns a value in the approximate range of
 	 *	-1.0 ~<= noise_fbm() ~<= 1.0
 	 */
-	val = noise_fbm(pt, camo_sp->h_val,
-		camo_sp->lacunarity, camo_sp->octaves );
+	val = noise_fbm(pt, camo_sp->noise_h_val,
+		camo_sp->noise_lacunarity, camo_sp->noise_octaves );
 
 	if (val < camo_sp->t1) {
 		VMOVE(swp->sw_color, camo_sp->c1);

@@ -402,14 +402,8 @@ struct ckr_specific  {
 #define CKR_O(m)	offsetof(struct ckr_specific, m)
 
 struct bu_structparse ckr_parse[] = {
-#if CRAY && !__STDC__
-	/* Hack for old Cray compilers */
-	{"%d",	1, "a",		0,			FUNC_NULL },
-	{"%d",	1, "b",		1,			FUNC_NULL },
-#else
-	{"%d",	1, "a",	offsetofarray(struct ckr_specific, ckr_a), FUNC_NULL },
-	{"%d",	1, "b",	offsetofarray(struct ckr_specific, ckr_b), FUNC_NULL },
-#endif
+	{"%d",	3, "a",	offsetofarray(struct ckr_specific, ckr_a), FUNC_NULL },
+	{"%d",	3, "b",	offsetofarray(struct ckr_specific, ckr_b), FUNC_NULL },
 	{"",	0, (char *)0,	0,			FUNC_NULL }
 };
 

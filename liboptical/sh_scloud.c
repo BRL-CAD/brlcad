@@ -65,7 +65,7 @@ struct bu_structparse scloud_parse[] = {
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 };
 
-HIDDEN int	scloud_setup(), scloud_render();
+HIDDEN int	scloud_setup(), scloud_render(), tsplat_render();
 HIDDEN void	scloud_print(), scloud_free();
 
 struct mfuncs scloud_mfuncs[] = {
@@ -73,7 +73,7 @@ struct mfuncs scloud_mfuncs[] = {
 	scloud_setup,	scloud_render,	scloud_print,	scloud_free },
 
 	{"tsplat",	0,		0,	MFI_HIT, MFF_PROC,
-	scloud_setup,	tcloud_render,	scloud_print,	scloud_free },
+	scloud_setup,	tsplat_render,	scloud_print,	scloud_free },
 
 	{(char *)0,	0,		0,		0, 0,
 	0,		0,		0,		0 }
@@ -176,7 +176,7 @@ char *cp;
  *	based upon noise value of surface spot.
  */
 int
-tcloud_render( ap, pp, swp, dp )
+tsplat_render( ap, pp, swp, dp )
 struct application	*ap;
 struct partition	*pp;
 struct shadework	*swp;
@@ -232,10 +232,6 @@ char	*dp;
 	double	trans;
 	double	sum;
 	point_t	incident_light;
-#if SEEK_MINVAL
-	double	minval = 1;
-	int	min_i;
-#endif
 
 	RT_CHECK_PT(pp);
 	RT_AP_CHECK(ap);
@@ -283,10 +279,6 @@ char	*dp;
 	VUNITIZE(v_cloud);
 	VMOVE(pt, in_pt);
 	trans = 1.0;
-#if SEEK_MINVAL
-	minval = 1;
-	min_i = 0;
-#endif
 	for (i=0 ; i < steps ; i++ ) {
 		/* compute the next point in the cloud space */
 		VJOIN1(pt, in_pt, i*step_delta, v_cloud);
@@ -300,30 +292,20 @@ char	*dp;
 
 		val = exp( - val * scloud_sp->max_d_p_mm * step_delta);
 		trans *= val;
-#if SEEK_MINVAL
-		if( val < minval )  {
-			minval = val;
-			min_i = i;
-		}
-#endif
 	}
 
 	/* scloud is basically a white object with partial transparency */
 	swp->sw_transmit = trans;
 	if( swp->sw_xmitonly )  return 1;
 
-#if 1
+
 	/*
 	 *  At the point of maximum opacity, check light visibility
 	 *  for light color and cloud shadowing.
 	 *  OOPS:  Don't use an interior point, or light_visibility()
 	 *  will see an attenuated light source.
 	 */
-# if SEEK_MINVAL
-	swp->sw_hit.hit_dist = pp->pt_inhit->hit_dist + min_i * model_step;
-# else
 	swp->sw_hit.hit_dist = pp->pt_inhit->hit_dist;
-# endif
 	VJOIN1(swp->sw_hit.hit_point, ap->a_ray.r_pt, swp->sw_hit.hit_dist,
  		ap->a_ray.r_dir);
 	VREVERSE( swp->sw_hit.hit_normal, ap->a_ray.r_dir );
@@ -340,18 +322,8 @@ char	*dp;
 		incident_light[2] += swp->sw_intensity[3*i+2] * lp->lt_color[2];
 	}
 	VELMUL( swp->sw_color, swp->sw_color, incident_light );
-#else
-	/*  Rather than assume the cloud is white, use the color of
-	 *  the first light source.  This is a hack.
-	 */
-	{
-		struct light_specific	*lp;
-		if( BU_LIST_NON_EMPTY(&LightHead.l) )  {
-			lp = BU_LIST_FIRST(light_specific, &LightHead.l);
-			VELMUL( swp->sw_color, swp->sw_color, lp->lt_color );
-		}
-	}
-#endif
+
+
 	if( rdebug&RDEBUG_SHADE ) {
 		pr_shadework( "scloud: after light vis, before rr_render", swp);
 	}

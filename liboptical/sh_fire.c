@@ -65,9 +65,10 @@ struct fire_specific {
 	double	noise_lacunarity;
 	double	noise_h_val;
 	double	noise_octaves;
-	vect_t	noise_scale;
+	double	noise_size;
+	vect_t	noise_vscale;
 	vect_t	noise_delta;
-
+				/* the following values are computed */
 	point_t fire_min;
 	point_t fire_max;
 	mat_t	fire_m_to_sh;		/* model to shader space matrix */
@@ -85,7 +86,8 @@ struct fire_specific fire_defaults = {
 	2.1753974,		/* noise_lacunarity */
 	1.0,			/* noise_h_val */
 	2.0,			/* noise_octaves */
-	{ 10.0, 10.0, 10.0 },	/* noise_scale */
+	-1.0,			/* noise_size */
+	{ 10.0, 10.0, 10.0 },	/* noise_vscale */
 	{ 0.0, 0.0, 0.0 },	/* noise_delta */
 	{ 0.0, 0.0, 0.0 },	/* fire_min */
 	{ 0.0, 0.0, 0.0 },	/* fire_max */
@@ -124,7 +126,8 @@ struct bu_structparse fire_print_tab[] = {
 	{"%f",	1, "lacunarity", SHDR_O(noise_lacunarity),	FUNC_NULL },
 	{"%f",	1, "H", 	SHDR_O(noise_h_val),		FUNC_NULL },
 	{"%f",	1, "octaves", 	SHDR_O(noise_octaves),		FUNC_NULL },
-	{"%f",  3, "scale",	SHDR_AO(noise_scale),		FUNC_NULL },
+	{"%f",  3, "scale",	SHDR_O(noise_size),		bu_mm_cvt },
+	{"%f",  3, "vscale",	SHDR_AO(noise_vscale),		FUNC_NULL },
 	{"%f",  3, "delta",	SHDR_AO(noise_delta),		FUNC_NULL },
 	{"%f",	3,  "max",	SHDR_AO(fire_max),		FUNC_NULL },
 	{"%f",	3,  "min",	SHDR_AO(fire_min),		FUNC_NULL },
@@ -138,7 +141,9 @@ struct bu_structparse fire_parse_tab[] = {
 	{"%f",	1, "l",		SHDR_O(noise_lacunarity),	FUNC_NULL },
 	{"%f",	1, "H", 	SHDR_O(noise_h_val),		FUNC_NULL },
 	{"%f",	1, "o", 	SHDR_O(noise_octaves),		FUNC_NULL },
-	{"%f",  3, "sc",	SHDR_AO(noise_scale),		FUNC_NULL },
+	{"%f",  1, "s",		SHDR_O(noise_size),		bu_mm_cvt },
+	{"%f",  3, "v",		SHDR_AO(noise_vscale),		FUNC_NULL },
+	{"%f",  3, "vs",	SHDR_AO(noise_vscale),		FUNC_NULL },
 	{"%f",  3, "d",		SHDR_AO(noise_delta),		FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 };
@@ -221,11 +226,14 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	if( bu_struct_parse( matparm, fire_parse_tab, (char *)fire_sp ) < 0 )
 		return(-1);
 
-	/* Optional:
-	 *
-	 * If the shader needs to operate in a coordinate system which stays
-	 * fixed on the region when the region is moved (as in animation)
-	 * we need to get a matrix to perform the appropriate transform(s).
+	if (fire_sp->noise_size != -1.0) {
+		VSETALL(fire_sp->noise_vscale, fire_sp->noise_size);
+	}
+
+	/*
+	 * The shader needs to operate in a coordinate system which stays
+	 * fixed on the region when the region is moved (as in animation).
+	 * We need to get a matrix to perform the appropriate transform(s).
 	 */
 
 	db_shader_mat(fire_sp->fire_m_to_sh, rtip, rp, fire_sp->fire_min,
@@ -238,7 +246,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	 */
 	mat_idn(fire_sp->fire_sh_to_noise);
 	MAT_DELTAS_VEC(fire_sp->fire_sh_to_noise, fire_sp->noise_delta);
-	MAT_SCALE_VEC(fire_sp->fire_sh_to_noise, fire_sp->noise_scale);
+	MAT_SCALE_VEC(fire_sp->fire_sh_to_noise, fire_sp->noise_vscale);
 
 	/* get matrix for performing spline of fire colors */
 	rt_dspline_matrix(fire_sp->fire_colorspline_mat, "Catmull", 0.5);
