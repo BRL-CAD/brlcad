@@ -716,6 +716,7 @@ work:
 				for( i = 0; i < nused; i++,cmd++,pt++ )  {
 					switch( *cmd )  {
 					case RT_VLIST_POLY_START:
+					case RT_VLIST_POLY_VERTNORM:
 						break;
 					case RT_VLIST_LINE_MOVE:
 					case RT_VLIST_LINE_DRAW:
@@ -745,6 +746,7 @@ work:
 				for( i = 0; i < nused; i++,cmd++,pt++ )  {
 					switch( *cmd )  {
 					case RT_VLIST_POLY_START:
+					case RT_VLIST_POLY_VERTNORM:
 						break;
 					case RT_VLIST_LINE_MOVE:
 					case RT_VLIST_LINE_DRAW:
