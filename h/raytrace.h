@@ -1247,6 +1247,7 @@ RT_EXTERN(void rt_pr_hit, (char *str, struct hit *hitp) );
 RT_EXTERN(void rt_fastf_float, (fastf_t *ff, float *fp, int n) );
 					/* convert dbfloat mat->fastf_t */
 RT_EXTERN(void rt_mat_dbmat, (fastf_t *ff, float *dbp) );
+RT_EXTERN(void rt_dbmat_mat, (float *dbp, fastf_t *ff) );
 					/* storage obtainers */
 RT_EXTERN(void rt_get_seg, (struct resource *res) );
 RT_EXTERN(void rt_get_pt, (struct rt_i *rtip, struct resource *res) );
