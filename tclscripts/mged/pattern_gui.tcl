@@ -445,27 +445,27 @@ body pattern_control::constructor {} {
 
 
 
-    #bind $itk_component() <Enter> { set [scope helpvar] ""}
-    bind $itk_component(l_combo_r) <Enter> { set [scope helpvar]   "Depth of duplication of objects. ``top'' - only build top level objects.\n\t\t``regions'' - duplicate down to and including regions.\n\t\t``solids'' - duplicate down to and including primitives" }
-    bind $itk_component(l_group_r) <Enter> { set [scope helpvar]   "Enter the name for the created group" }
-    bind $itk_component(l_xdir_r) <Enter>  { set [scope helpvar]   "Enter the X Direction Vector for the pattern"}
-    bind $itk_component(l_ydir_r) <Enter>  { set [scope helpvar]   "Enter the Y Direction Vector for the pattern"}
-    bind $itk_component(l_zdir_r) <Enter>  { set [scope helpvar]   "Enter the Z Direction Vector for the pattern"}
-    bind $itk_component(rb_dir_r) <Enter> { set [scope helpvar]    "Select to generate creation points based on number of points and distances between them"}
-    bind $itk_component(l_nxdir_r) <Enter> { set [scope helpvar]   "Enter the number of objects to create in X direction"}
-    bind $itk_component(l_nydir_r) <Enter> { set [scope helpvar]   "Enter the number of objects to create in Y direction"}
-    bind $itk_component(l_nzdir_r) <Enter> { set [scope helpvar]   "Enter the number of objects to create in Z direction"}
-    bind $itk_component(l_dxdir_r) <Enter> { set [scope helpvar]   "Enter the distance between objects in X direction (mm)"}
-    bind $itk_component(l_dydir_r) <Enter> { set [scope helpvar]   "Enter the distance between objects in Y direction (mm)"}
-    bind $itk_component(l_dzdir_r) <Enter> { set [scope helpvar]   "Enter the distance between objects in Z direction (mm)"}
-    bind $itk_component(l_incr_r) <Enter> { set [scope helpvar]    "Enter the amount to increment tag numbers (0 is OK)"}
-    bind $itk_component(l_sstring_r) <Enter> { set [scope helpvar] "Enter a string appearing in the objects to duplicate that you want to change (empty is OK)"}
-    bind $itk_component(l_rstring_r) <Enter> { set [scope helpvar] "Enter the string you want to replace the above string with (empty is OK)"}
-    bind $itk_component(l_obj_r) <Enter> { set [scope helpvar]     "Enter the list of objects to duplicate"}
-    bind $itk_component(rb_list_r) <Enter> { set [scope helpvar]   "Select to generate creation points using lists of coordinate values"}
-    bind $itk_component(l_xlist_r) <Enter> { set [scope helpvar]   "Enter a list of X values for creation points (mm)"}
-    bind $itk_component(l_ylist_r) <Enter> { set [scope helpvar]   "Enter a list of Y values for creation points (mm)"}
-    bind $itk_component(l_zlist_r) <Enter> { set [scope helpvar]   "Enter a list of Z values for creation points (mm)"}
+    #bind $itk_component() <Enter> " set [list [scope helpvar]] {}"
+    bind $itk_component(l_combo_r) <Enter> " set [list [scope helpvar]]   {Depth of duplication of objects. ``top'' - only build top level objects.\n\t\t``regions'' - duplicate down to and including regions.\n\t\t``solids'' - duplicate down to and including primitives} "
+    bind $itk_component(l_group_r) <Enter> " set [list [scope helpvar]]   {Enter the name for the created group} "
+    bind $itk_component(l_xdir_r) <Enter>  " set [list [scope helpvar]]   {Enter the X Direction Vector for the pattern}"
+    bind $itk_component(l_ydir_r) <Enter>  " set [list [scope helpvar]]   {Enter the Y Direction Vector for the pattern}"
+    bind $itk_component(l_zdir_r) <Enter>  " set [list [scope helpvar]]   {Enter the Z Direction Vector for the pattern}"
+    bind $itk_component(rb_dir_r) <Enter> " set [list [scope helpvar]]    {Select to generate creation points based on number of points and distances between them}"
+    bind $itk_component(l_nxdir_r) <Enter> " set [list [scope helpvar]]   {Enter the number of objects to create in X direction}"
+    bind $itk_component(l_nydir_r) <Enter> " set [list [scope helpvar]]   {Enter the number of objects to create in Y direction}"
+    bind $itk_component(l_nzdir_r) <Enter> " set [list [scope helpvar]]   {Enter the number of objects to create in Z direction}"
+    bind $itk_component(l_dxdir_r) <Enter> " set [list [scope helpvar]]   {Enter the distance between objects in X direction (mm)}"
+    bind $itk_component(l_dydir_r) <Enter> " set [list [scope helpvar]]   {Enter the distance between objects in Y direction (mm)}"
+    bind $itk_component(l_dzdir_r) <Enter> " set [list [scope helpvar]]   {Enter the distance between objects in Z direction (mm)}"
+    bind $itk_component(l_incr_r) <Enter> " set [list [scope helpvar]]    {Enter the amount to increment tag numbers (0 is OK)}"
+    bind $itk_component(l_sstring_r) <Enter> " set [list [scope helpvar]] {Enter a string appearing in the objects to duplicate that you want to change (empty is OK)}"
+    bind $itk_component(l_rstring_r) <Enter> " set [list [scope helpvar]] {Enter the string you want to replace the above string with (empty is OK)}"
+    bind $itk_component(l_obj_r) <Enter> " set [list [scope helpvar]]     {Enter the list of objects to duplicate}"
+    bind $itk_component(rb_list_r) <Enter> " set [list [scope helpvar]]   {Select to generate creation points using lists of coordinate values}"
+    bind $itk_component(l_xlist_r) <Enter> " set [list [scope helpvar]]   {Enter a list of X values for creation points (mm)}"
+    bind $itk_component(l_ylist_r) <Enter> " set [list [scope helpvar]]   {Enter a list of Y values for creation points (mm)}"
+    bind $itk_component(l_zlist_r) <Enter> " set [list [scope helpvar]]   {Enter a list of Z values for creation points (mm)}"
     
 
     foreach obj { l_combo_r \
@@ -489,7 +489,7 @@ body pattern_control::constructor {} {
 		  l_ylist_r \
 		  l_zlist_r} {
 
-	bind $itk_component($obj) <Leave> { set [scope helpvar] "" }
+	bind $itk_component($obj) <Leave> " set [list [scope helpvar]] {} "
     }
     
      
@@ -856,37 +856,37 @@ body pattern_control::constructor {} {
     grid columnconfigure $itk_component(f_radlist_s) 1 -weight 1
 
     
-    #bind $itk_component() <Enter> { set [scope helpvar] ""}
-    bind $itk_component(l_combo_s) <Enter> { set [scope helpvar] "Depth of duplication of objects. ``top'' - only build top level objects.\n\t\t``regions'' - duplicate down to and including regions.\n\t\t``solids'' - duplicate down to and including primitives" }
-    bind $itk_component(l_group_s) <Enter> { set [scope helpvar] "Enter the name for the created group" }
-    bind $itk_component(l_cpatt_s) <Enter> { set [scope helpvar] "Enter the coordinates of center of pattern (mm)"}
-    bind $itk_component(l_cobj_s) <Enter> { set [scope helpvar] "Enter the coordinates of center of object to be duplicated (mm)"}
-    bind $itk_component(cb_rotaz_s) <Enter> { set [scope helpvar] "Select to rotate the duplicates in Azimuth"}
-    bind $itk_component(cb_rotel_s) <Enter> { set [scope helpvar] "Select to rotate the duplicates in Elevation"}
-    bind $itk_component(rb_num_s) <Enter> { set [scope helpvar] "Select to generate creation points based on number of aziumth and elevation angles and delta angles"}
-    bind $itk_component(l_numaz_s) <Enter> { set [scope helpvar] "Enter the number of aziumth angles to be used"}
-    bind $itk_component(l_numel_s) <Enter> { set [scope helpvar] "Enter the number of elevation angles to be used"} 
-    bind $itk_component(l_delaz_s) <Enter> { set [scope helpvar] "Enter the azimuth delta angle (degrees)"}
-    bind $itk_component(l_delel_s) <Enter> { set [scope helpvar] "Enter the elevation angle delta (degrees)"}
-    bind $itk_component(cb_list_s) <Enter> { set [scope helpvar] "Select to generate creation points based on lists of azimuth and elevation angles"}
-    bind $itk_component(l_listaz_s) <Enter> { set [scope helpvar] "Enter a list of azimuth angles in degrees (0-360)"}
-    bind $itk_component(l_listel_s) <Enter> { set [scope helpvar] "Enter a list of elevation angles in degrees (-90 - 90)"}
-    bind $itk_component(rb_radius_s) <Enter> { set [scope helpvar] "Select to generate creation points based on numer of radii and radius delta"}
-    bind $itk_component(l_radius_s) <Enter> { set [scope helpvar] "Enter the number of radii to be used"}
-    bind $itk_component(l_delta_s) <Enter> { set [scope helpvar] "Enter the radius delta to be used (mm)"}
-    bind $itk_component(rb_radlist_s) <Enter> { set [scope helpvar] "Select to generate creation points based on a list of radii"}
-    bind $itk_component(l_radlist_s) <Enter> { set [scope helpvar] "Enter a list of radii to be used (mm)"}
-    bind $itk_component(l_startaz_s) <Enter> { set [scope helpvar] "Enter starting aziumth angle in degrees (0-360)"}
-    bind $itk_component(l_startel_s) <Enter> { set [scope helpvar] "Enter starting elevation angle in degrees (-90 - 90)"}
-    bind $itk_component(l_startr_s) <Enter> { set [scope helpvar] "Enter starting radius (mm)"}
-    bind $itk_component(l_obj_s) <Enter> { set [scope helpvar] "Enter the list of objects to duplicate"}
-    bind $itk_component(l_sstring_s) <Enter> { set [scope helpvar] "Enter a string appearing in the objects to duplicate that you want to change (empty is OK)"}
-    bind $itk_component(l_rstring_s) <Enter> { set [scope helpvar] "Enter the string you want to replace the above string with (empty is OK)"}
-    bind $itk_component(l_incr_s) <Enter> { set [scope helpvar] "Enter value to use in incrementing solid/region numbers (0 is OK)"}
+    #bind $itk_component() <Enter> " set [list [scope helpvar]] {}"
+    bind $itk_component(l_combo_s) <Enter> " set [list [scope helpvar]] {Depth of duplication of objects. ``top'' - only build top level objects.\n\t\t``regions'' - duplicate down to and including regions.\n\t\t``solids'' - duplicate down to and including primitives} "
+    bind $itk_component(l_group_s) <Enter> " set [list [scope helpvar]] {Enter the name for the created group} "
+    bind $itk_component(l_cpatt_s) <Enter> " set [list [scope helpvar]] {Enter the coordinates of center of pattern (mm)}"
+    bind $itk_component(l_cobj_s) <Enter> " set [list [scope helpvar]] {Enter the coordinates of center of object to be duplicated (mm)}"
+    bind $itk_component(cb_rotaz_s) <Enter> " set [list [scope helpvar]] {Select to rotate the duplicates in Azimuth}"
+    bind $itk_component(cb_rotel_s) <Enter> " set [list [scope helpvar]] {Select to rotate the duplicates in Elevation}"
+    bind $itk_component(rb_num_s) <Enter> " set [list [scope helpvar]] {Select to generate creation points based on number of aziumth and elevation angles and delta angles}"
+    bind $itk_component(l_numaz_s) <Enter> " set [list [scope helpvar]] {Enter the number of aziumth angles to be used}"
+    bind $itk_component(l_numel_s) <Enter> " set [list [scope helpvar]] {Enter the number of elevation angles to be used}"
+    bind $itk_component(l_delaz_s) <Enter> " set [list [scope helpvar]] {Enter the azimuth delta angle (degrees)}"
+    bind $itk_component(l_delel_s) <Enter> " set [list [scope helpvar]] {Enter the elevation angle delta (degrees)}"
+    bind $itk_component(cb_list_s) <Enter> " set [list [scope helpvar]] {Select to generate creation points based on lists of azimuth and elevation angles}"
+    bind $itk_component(l_listaz_s) <Enter> " set [list [scope helpvar]] {Enter a list of azimuth angles in degrees (0-360)}"
+    bind $itk_component(l_listel_s) <Enter> " set [list [scope helpvar]] {Enter a list of elevation angles in degrees (-90 - 90)}"
+    bind $itk_component(rb_radius_s) <Enter> " set [list [scope helpvar]] {Select to generate creation points based on numer of radii and radius delta}"
+    bind $itk_component(l_radius_s) <Enter> " set [list [scope helpvar]] {Enter the number of radii to be used}"
+    bind $itk_component(l_delta_s) <Enter> " set [list [scope helpvar]] {Enter the radius delta to be used (mm)}"
+    bind $itk_component(rb_radlist_s) <Enter> " set [list [scope helpvar]] {Select to generate creation points based on a list of radii}"
+    bind $itk_component(l_radlist_s) <Enter> " set [list [scope helpvar]] {Enter a list of radii to be used (mm)}"
+    bind $itk_component(l_startaz_s) <Enter> " set [list [scope helpvar]] {Enter starting aziumth angle in degrees (0-360)}"
+    bind $itk_component(l_startel_s) <Enter> " set [list [scope helpvar]] {Enter starting elevation angle in degrees (-90 - 90)}"
+    bind $itk_component(l_startr_s) <Enter> " set [list [scope helpvar]] {Enter starting radius (mm)}"
+    bind $itk_component(l_obj_s) <Enter> " set [list [scope helpvar]] {Enter the list of objects to duplicate}"
+    bind $itk_component(l_sstring_s) <Enter> " set [list [scope helpvar]] {Enter a string appearing in the objects to duplicate that you want to change (empty is OK)}"
+    bind $itk_component(l_rstring_s) <Enter> " set [list [scope helpvar]] {Enter the string you want to replace the above string with (empty is OK)}"
+    bind $itk_component(l_incr_s) <Enter> " set [list [scope helpvar]] {Enter value to use in incrementing solid/region numbers (0 is OK)}"
 
     foreach obj {l_combo_s l_group_s l_cpatt_s l_cobj_s cb_rotaz_s cb_rotel_s rb_num_s l_numaz_s l_numel_s l_delaz_s l_delel_s cb_list_s l_listaz_s l_listel_s rb_radius_s l_radius_s l_delta_s rb_radlist_s l_radlist_s l_startaz_s l_startel_s l_obj_s l_sstring_s l_rstring_s l_incr_s } {
 	
-	bind $itk_component($obj) <Leave> { set [scope helpvar] "" }
+	bind $itk_component($obj) <Leave> " set [list [scope helpvar]] {} "
     }
 
 #CYL TAB
@@ -1326,42 +1326,42 @@ body pattern_control::constructor {} {
     }
 
     itk_component add l_help {
-	label $itk_interior.l_help -relief flat -textvariable helpvar -justify left
+	label $itk_interior.l_help -relief flat -textvariable [scope helpvar] -justify left
     }
     
     itk_component add fb_progress {
 	feedback $itk_interior.fb_progress
     }
 
-    #bind $itk_component() <Enter> { set [scope helpvar] ""}
-    bind $itk_component(rb_num_c) <Enter> { set [scope helpvar] "Select to generate creation points based on number and delta of azimuths"}
-    bind $itk_component(l_combo_c) <Enter> { set [scope helpvar] "Depth of duplication of objects. ``top'' - only build top level objects.\n\t\t``regions'' - duplicate down to and including regions.\n\t\t``solids'' - duplicate down to and including primitives"}
-    bind $itk_component(l_group_c) <Enter> { set [scope helpvar] "Enter the name for the created group"}
-    bind $itk_component(l_cbase_c) <Enter> { set [scope helpvar] "Enter the base of the created cylindrical pattern"}
-    bind $itk_component(l_cobj_c) <Enter> { set [scope helpvar] "Enter the coordinates of center of object to be duplicated (mm)"}
-    bind $itk_component(cb_rot_c) <Enter> { set [scope helpvar] "Select to rotate the duplicates"}
-    bind $itk_component(l_numaz_c) <Enter> { set [scope helpvar] "Enter the number of aziumth angles to be used"}
-    bind $itk_component(l_delaz_c) <Enter> { set [scope helpvar] "Enter the azimuth delta angle (degrees)"}
-    bind $itk_component(cb_list_c) <Enter> { set [scope helpvar] "Select to generate creation points based on a list of azimuths"}
-    bind $itk_component(l_listaz_c) <Enter> { set [scope helpvar] "Enter a list of azimuths to be used (mm)"}
-    bind $itk_component(l_startr_c) <Enter> { set [scope helpvar] "Enter starting radius (mm)"}
-    bind $itk_component(rb_radius_c) <Enter> { set [scope helpvar] "Select to generate creation points based on number and delta of radii"}
-    bind $itk_component(l_radius_c) <Enter> { set [scope helpvar] "Enter the number of radii to be used"}
-    bind $itk_component(l_delta_c) <Enter> { set [scope helpvar] "Enter the delta angle (degrees)"}
-    bind $itk_component(rb_radlist_c) <Enter> { set [scope helpvar] "Select to generate creation points based on a list of radii"}
-    bind $itk_component(l_radlist_c) <Enter> { set [scope helpvar] "Enter a list of radii to be used (mm)"}
-    bind $itk_component(l_startaz_c) <Enter> { set [scope helpvar] "Enter starting azimuth direction vector"}
-    bind $itk_component(l_heightdir_c) <Enter> { set [scope helpvar] "Enter direction vector for cylinder height"}
-    bind $itk_component(l_starth_c) <Enter> { set [scope helpvar] "Enter starting height of the cylinder (mm)"}
-    bind $itk_component(l_obj_c) <Enter> { set [scope helpvar] "Enter the list of objects to duplicate"}
-    bind $itk_component(rb_height_c) <Enter> { set [scope helpvar] "Select to generate creation points based on number and delta of heights"}
-    bind $itk_component(l_hnum_c) <Enter> { set [scope helpvar] "Enter the number of heights to be used"}
-    bind $itk_component(l_dnum_c) <Enter> { set [scope helpvar] "Enter the delta of heights to be used"}
-    bind $itk_component(rb_lnum_c) <Enter> { set [scope helpvar] "Select to generate creation points based on a list of heights"}
-    bind $itk_component(l_lnum_c) <Enter> { set [scope helpvar] "Enter a list of heights (mm)"}
-    bind $itk_component(l_sstring_c) <Enter> { set [scope helpvar] "Enter a string appearing in the objects to duplicate that you want to change (empty is OK)"}
-    bind $itk_component(l_rstring_c) <Enter> { set [scope helpvar] "Enter the string you want to replace the above string with (empty is OK)"}
-    bind $itk_component(l_incr_c) <Enter> { set [scope helpvar] "Enter value to use in incrementing solid/region numbers (0 is OK)"}
+    #bind $itk_component() <Enter> " set [list [scope helpvar]] {}"
+    bind $itk_component(rb_num_c) <Enter> " set [list [scope helpvar]] {Select to generate creation points based on number and delta of azimuths}"
+    bind $itk_component(l_combo_c) <Enter> " set [list [scope helpvar]] {Depth of duplication of objects. ``top'' - only build top level objects.\n\t\t``regions'' - duplicate down to and including regions.\n\t\t``solids'' - duplicate down to and including primitives}"
+    bind $itk_component(l_group_c) <Enter> " set [list [scope helpvar]] {Enter the name for the created group}"
+    bind $itk_component(l_cbase_c) <Enter> " set [list [scope helpvar]] {Enter the base of the created cylindrical pattern}"
+    bind $itk_component(l_cobj_c) <Enter> " set [list [scope helpvar]] {Enter the coordinates of center of object to be duplicated (mm)}"
+    bind $itk_component(cb_rot_c) <Enter> " set [list [scope helpvar]] {Select to rotate the duplicates}"
+    bind $itk_component(l_numaz_c) <Enter> " set [list [scope helpvar]] {Enter the number of aziumth angles to be used}"
+    bind $itk_component(l_delaz_c) <Enter> " set [list [scope helpvar]] {Enter the azimuth delta angle (degrees)}"
+    bind $itk_component(cb_list_c) <Enter> " set [list [scope helpvar]] {Select to generate creation points based on a list of azimuths}"
+    bind $itk_component(l_listaz_c) <Enter> " set [list [scope helpvar]] {Enter a list of azimuths to be used (mm)}"
+    bind $itk_component(l_startr_c) <Enter> " set [list [scope helpvar]] {Enter starting radius (mm)}"
+    bind $itk_component(rb_radius_c) <Enter> " set [list [scope helpvar]] {Select to generate creation points based on number and delta of radii}"
+    bind $itk_component(l_radius_c) <Enter> " set [list [scope helpvar]] {Enter the number of radii to be used}"
+    bind $itk_component(l_delta_c) <Enter> " set [list [scope helpvar]] {Enter the delta angle (degrees)}"
+    bind $itk_component(rb_radlist_c) <Enter> " set [list [scope helpvar]] {Select to generate creation points based on a list of radii}"
+    bind $itk_component(l_radlist_c) <Enter> " set [list [scope helpvar]] {Enter a list of radii to be used (mm)}"
+    bind $itk_component(l_startaz_c) <Enter> " set [list [scope helpvar]] {Enter starting azimuth direction vector}"
+    bind $itk_component(l_heightdir_c) <Enter> " set [list [scope helpvar]] {Enter direction vector for cylinder height}"
+    bind $itk_component(l_starth_c) <Enter> " set [list [scope helpvar]] {Enter starting height of the cylinder (mm)}"
+    bind $itk_component(l_obj_c) <Enter> " set [list [scope helpvar]] {Enter the list of objects to duplicate}"
+    bind $itk_component(rb_height_c) <Enter> " set [list [scope helpvar]] {Select to generate creation points based on number and delta of heights}"
+    bind $itk_component(l_hnum_c) <Enter> " set [list [scope helpvar]] {Enter the number of heights to be used}"
+    bind $itk_component(l_dnum_c) <Enter> " set [list [scope helpvar]] {Enter the delta of heights to be used}"
+    bind $itk_component(rb_lnum_c) <Enter> " set [list [scope helpvar]] {Select to generate creation points based on a list of heights}"
+    bind $itk_component(l_lnum_c) <Enter> " set [list [scope helpvar]] {Enter a list of heights (mm)}"
+    bind $itk_component(l_sstring_c) <Enter> " set [list [scope helpvar]] {Enter a string appearing in the objects to duplicate that you want to change (empty is OK)}"
+    bind $itk_component(l_rstring_c) <Enter> " set [list [scope helpvar]] {Enter the string you want to replace the above string with (empty is OK)}"
+    bind $itk_component(l_incr_c) <Enter> " set [list [scope helpvar]] {Enter value to use in incrementing solid/region numbers (0 is OK)}"
     
      foreach obj { l_combo_c \
                    l_group_c \
@@ -1392,7 +1392,7 @@ body pattern_control::constructor {} {
                    l_incr_c \
                    rb_num_c} {
 
-	bind $itk_component($obj) <Leave> { set [scope helpvar] "" }
+	bind $itk_component($obj) <Leave> " set [list [scope helpvar]] {} "
     }
     
 
