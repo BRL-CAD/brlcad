@@ -194,8 +194,6 @@ set -S2 "/bin/sh"
 #		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11 -lgl -lGL
 #		define	LIBDM_LIBES	LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES
 #		define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -lgl -lGL
-#		define	BWISH_CONFIG	-I''XINCDIR
-#		define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
 #		define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11 -lGL
 #	else
 /*		Static linked executables */
@@ -214,11 +212,11 @@ set -S2 "/bin/sh"
 #		define	LIBDM_LIBES	LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES
 #		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11 -lgl_s -lGL
 #		define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext 
-#	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
-#	define	BWISH_CONFIG	-I''XINCDIR
 #	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11 -lGL
 #	endif
 
+#	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
+#	define	BWISH_CONFIG	-I''XINCDIR -DBWISH
 /* -ansiposix	ANSI+POSIX mode is used over ANSI, to get fdopen(), etc, defined. */
 #	define  CC_OPTS		GFLAG -ansiposix -DIRIX=5
 #	define	LGT_CONFIG	GFLAG
@@ -292,7 +290,7 @@ set -S2 "/bin/sh"
 #	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -I''XINCDIR
 #	define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext
 #	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
-#	define	BWISH_CONFIG	-I''XINCDIR
+#	define	BWISH_CONFIG	-I''XINCDIR -DBWISH
 #	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11 -lGL
 #	define	HAS_TCP	1
 #	define	CC	cc
@@ -366,7 +364,7 @@ set -S2 "/bin/sh"
 #	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -I''XINCDIR
 #	define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext
 #	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
-#	define	BWISH_CONFIG	-I''XINCDIR
+#	define	BWISH_CONFIG	-I''XINCDIR -DBWISH
 #	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11 -lGL
 #	define	HAS_TCP	1
 #	define	CC	cc
@@ -434,7 +432,7 @@ set -S2 "/bin/sh"
 #	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -I''XINCDIR
 #	define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext
 #	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
-#	define	BWISH_CONFIG	-I''XINCDIR
+#	define	BWISH_CONFIG	-I''XINCDIR -DBWISH
 #	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11 -lGL
 #	define	HAS_TCP	1
 #	define	CC	cc
@@ -551,7 +549,7 @@ set -S2 "/bin/sh"
 #	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -I''XINCDIR
 #	define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext
 #	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
-#	define	BWISH_CONFIG	-I''XINCDIR
+#	define	BWISH_CONFIG	-I''XINCDIR -DBWISH
 #	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11 -lGL
 #	define	HAS_TCP	1
 #	define	CC	cc
@@ -667,7 +665,7 @@ set -S2 "/bin/sh"
 #	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -I''XINCDIR
 #	define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext
 #	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
-#	define	BWISH_CONFIG	-I''XINCDIR
+#	define	BWISH_CONFIG	-I''XINCDIR -DBWISH
 #	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11 -lGL
 #	define	HAS_TCP	1
 #	define	CC	cc
@@ -723,8 +721,6 @@ set -S2 "/bin/sh"
 #		define	MGED_OBJS	doevent update dm-X dm-generic
 #		define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #		define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly
-#	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
-#	define	BWISH_CONFIG	-I''XINCDIR
 #	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11
 #	else
 /*		Sun with site-provided MIT X11. */
@@ -743,7 +739,7 @@ set -S2 "/bin/sh"
 #			define	MGED_OBJS	doevent update dm-X dm-ogl dm-generic
 $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../.libMesa.sun4 -lMesaGL
 #	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
-#	define	BWISH_CONFIG	-I''XINCDIR
+#	define	BWISH_CONFIG	-I''XINCDIR -DBWISH
 #	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11 -lGL
 #		else
 #			define	LIBDM_OBJS	color query dm-X
@@ -752,13 +748,13 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #			define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #			define	MGED_OBJS	doevent update dm-X dm-generic
 #			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly
-#	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
-#	define	BWISH_CONFIG	-I''XINCDIR
 #	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11
 #		endif
 
 #	endif
 
+#	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
+#	define	BWISH_CONFIG	-I''XINCDIR -DBWISH
 #	if 0
 /*		"Unbundled" (i.e. "improved") compilers.  Use if you have them */
 #		define	CC	/usr/lang/cc
@@ -839,7 +835,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -lnsl -lsocket
 #endif
 #	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
-#	define	BWISH_CONFIG	-I''XINCDIR
+#	define	BWISH_CONFIG	-I''XINCDIR -DBWISH
 #	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11
 #  else
 /*	Compiling XGL requires SDK (Solaris Developer's Kit) */
@@ -1012,7 +1008,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		endif
 #	endif
 #	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
-#	define	BWISH_CONFIG	-I''XINCDIR
+#	define	BWISH_CONFIG	-I''XINCDIR -DBWISH
 #	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" -ldl \$"(XLIBDIR)" -lXi -lXext -lX11
 #	if 0	/*	Use the system-provided TCL and Tk libraries */
 #		define	LIBTCL_DIR	_use_system_tcl_
@@ -1099,7 +1095,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		endif
 #	endif
 #	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
-#	define	BWISH_CONFIG	-I''XINCDIR
+#	define	BWISH_CONFIG	-I''XINCDIR -DBWISH
 #	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11
 /*	Use the system-provided libz and libpng */
 #	define	LIBZ_DIR	_use_system_z_
@@ -1134,7 +1130,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #	define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lX11 -lipc
 #	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
-#	define	BWISH_CONFIG	-I''XINCDIR
+#	define	BWISH_CONFIG	-I''XINCDIR -DBWISH
 #	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" -ldl \$"(XLIBDIR)" -lXi -lXext -lX11
 #endif
 
@@ -1167,7 +1163,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #	define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lX11
 #	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
-#	define	BWISH_CONFIG	-I''XINCDIR
+#	define	BWISH_CONFIG	-I''XINCDIR -DBWISH
 #	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11
 #endif
 
@@ -2007,6 +2003,14 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 
 #ifndef BWISH_LIBES
 #	define	BWISH_LIBES	/**/
+#endif
+
+#ifndef BTCLSH_CONFIG
+#	define	BTCLSH_CONFIG	/**/
+#endif
+
+#ifndef BTCLSH_LIBES
+#	define	BTCLSH_LIBES	/**/
 #endif
 
 #ifndef LIBVERS
