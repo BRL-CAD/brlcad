@@ -141,6 +141,12 @@ char	**argv;
 		exit( 1 );
 	}
 
+	/* Assume default space, in case one is not provided */
+	sp[0] = sp[1] = sp[2] = -32767;
+	sp[3] = sp[4] = sp[5] = 32767;
+	if( scale )
+		doscale();
+
 	while( (c = getchar()) != EOF ) {
 		/* look it up */
 		if( c < 'A' || c > 'z' ) {
@@ -169,6 +175,7 @@ char	**argv;
 			sp[5] = 0;
 			if( scale )
 				doscale();
+			seenscale++;
 			break;
 		case 'S':
 		case 'W':
@@ -180,6 +187,7 @@ char	**argv;
 			sp[5] = arg[5];
 			if( scale )
 				doscale();
+			seenscale++;
 			break;
 		}
 
@@ -309,8 +317,10 @@ char	**argv;
 			printf( "%s\n", up->desc );
 	}
 
-	if( !seenscale ) {
-		fprintf( stderr, "pl-pl: warning no space command\n" );
+	if( scale && !seenscale ) {
+		fprintf( stderr, "pl-pl: WARNING no space command in file, defaulting to +/-32k\n" );
+	} else if( !scale && seenscale ) {
+		fprintf( stderr, "pl-pl: WARNING space command(s) ignored, use -S to apply them.\n" );
 	}
 
 	return(0);
@@ -477,6 +487,4 @@ doscale()
 	if( dz > max ) max = dz;
 
 	scale = 32767.0 / max;
-
-	seenscale++;
 }
