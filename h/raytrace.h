@@ -1747,8 +1747,8 @@ struct rt_functab {
 	int 	(*ft_piece_shot) BU_ARGS((
 			struct rt_piecestate * /*psp*/,
 			struct rt_piecelist * /*plp*/,
-			double /* dist_corr */,
-			struct xray * /*rp*/,
+			double /* dist_correction to apply to hit distances */,
+			struct xray * /* ray transformed to be near cut cell */,
 			struct application * /*ap*/));
 	void 	(*ft_piece_hitsegs) BU_ARGS((
 			struct rt_piecestate * /*psp*/,

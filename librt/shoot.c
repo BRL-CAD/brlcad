@@ -1017,7 +1017,15 @@ start_cell:
 					had_hits_before = psp->htab.end;
 				}
 
-				/* Allow solid to shoot all pieces in this cell at once */
+				/*
+				 *  Allow this solid to shoot at all of its
+				 *  'pieces' in this cell, all at once.
+				 *  'newray' has been transformed to be near
+				 *  to this cell, and
+				 *  'dist_corr' is the additive correction
+				 *  factor that ft_piece_shot() must apply
+				 *  to hits calculated using 'newray'.
+				 */
 				resp->re_piece_shots++;
 				psp->cutp = cutp;
 
