@@ -68,10 +68,10 @@ static struct camo_specific camo_defaults = {
 	0.25,		/* t2 */
 	1.0,		/* size */
 	{ 1.0, 1.0, 1.0 },	/* vscale */
-	{ .38, .29, .16 },	/* darker color c1 */
-	{ .1, .30, .04 },	/* basic color c2 */
+	{ .38, .29, .16 },	/* darker color c1 (97/74/41) */
+	{ .1, .30, .04 },	/* basic color c2 (26/77/10) */
 /*	{ .815, .635, .35 },	brighter color c3 */
-	{ .15, .15, .15 },	/* dark black */
+	{ .15, .15, .15 },	/* dark black (38/38/38) */
 	{ 1000.0, 1000.0, 1000.0 }	/* delta into noise space */
 	};
 
@@ -135,6 +135,9 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	GETSTRUCT( camo_sp, camo_specific );
 	*dpp = (char *)camo_sp;
 
+	if( rdebug&RDEBUG_SHADE) {
+		rt_log("camouflage parameters = '%s'", bu_vls_addr(matparm));
+	}
 	memcpy(camo_sp, &camo_defaults, sizeof(struct camo_specific) );
 
 	if( bu_struct_parse( matparm, camo_parse, (char *)camo_sp ) < 0 )
