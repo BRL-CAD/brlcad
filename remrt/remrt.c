@@ -168,10 +168,10 @@ struct servers {
 	/* Timings */
 	struct timeval	sr_sendtime;	/* time of last sending */
 	double		sr_l_elapsed;	/* last: elapsed_sec */
-	double		sr_l_el_rate;	/* last: elapsed_sec/pixel */
-	double		sr_w_elapsed;	/* weighted avg: elapsed_sec/pixel */
-	double		sr_s_elapsed;	/* sum of elapsed_sec/pixel */
-	double		sr_sq_elapsed;	/* sum of elapsed_sec/pixel squared */
+	double		sr_l_el_rate;	/* last: pix/elapsed_sec */
+	double		sr_w_elapsed;	/* weighted avg: pix/elapsed_sec */
+	double		sr_s_elapsed;	/* sum of pix/elapsed_sec */
+	double		sr_sq_elapsed;	/* sum of pix/elapsed_sec squared */
 	double		sr_l_cpu;	/* cpu_sec for last scanline */
 	double		sr_s_cpu;	/* sum of all cpu times */
 	int		sr_nsamp;	/* number of samples summed over */
@@ -1029,7 +1029,7 @@ register struct frame	*fr;
 
 #define MAX_LUMP		(8*1024)
 #define ASSIGNMENT_TIME		5	/* desired seconds between results */
-	sp->sr_lump = ASSIGNMENT_TIME / sp->sr_w_elapsed;
+	sp->sr_lump = ASSIGNMENT_TIME * sp->sr_w_elapsed;
 	if( sp->sr_lump < 32 )  sp->sr_lump = 32;
 	if( sp->sr_lump > MAX_LUMP )  sp->sr_lump = MAX_LUMP;
 
@@ -1209,7 +1209,8 @@ char *buf;
 
 	sp = &servers[pc->pkc_fd];
 	fr = sp->sr_curframe;
-	sp->sr_l_elapsed = tvdiff( &tvnow, &sp->sr_sendtime );
+	if( (sp->sr_l_elapsed = tvdiff( &tvnow, &sp->sr_sendtime )) < 0.1 )
+		sp->sr_l_elapsed = 0.1;
 
 	i = struct_import( (stroff_t)&info, desc_line_info, buf );
 	if( i < 0 || i != info.li_len )  {
@@ -1253,8 +1254,10 @@ info.li_nrays, info.li_cpusec, sp->sr_l_elapsed );
 	/* Stash the statistics that came back */
 	fr->fr_nrays += info.li_nrays;
 	fr->fr_cpu += info.li_cpusec;
-	sp->sr_l_el_rate = sp->sr_l_elapsed / npix;
-	sp->sr_w_elapsed = 0.9 * sp->sr_w_elapsed + 0.1 * sp->sr_l_el_rate;
+	sp->sr_l_el_rate = npix / sp->sr_l_elapsed;
+#define BLEND	0.8
+	sp->sr_w_elapsed = BLEND * sp->sr_w_elapsed +
+		(1.0-BLEND) * sp->sr_l_el_rate;
 	sp->sr_sendtime = tvnow;		/* struct copy */
 	sp->sr_l_cpu = info.li_cpusec;
 	sp->sr_s_cpu += info.li_cpusec;
@@ -1408,7 +1411,6 @@ register struct servers *sp;
 {
 	if( start_cmd[0] == '\0' || sp->sr_started != SRST_NEW )  return;
 
-	printf("Sending start to %s\n", sp->sr_host->ht_name);
 	if( pkg_send( MSG_START, start_cmd, strlen(start_cmd)+1, sp->sr_pc ) < 0 )
 		dropclient(sp->sr_pc);
 	sp->sr_started = SRST_LOADING;
@@ -2053,21 +2055,27 @@ char	**argv;
 		default:
 			printf("Unknown"); break;
 		}
-		if( sp->sr_curframe != FRAME_NULL )
-			printf(" frame %d\n", sp->sr_curframe->fr_number);
-		else
+		if( sp->sr_curframe != FRAME_NULL )  {
+			printf(" frame %d, assignments=%d\n",
+				sp->sr_curframe->fr_number,
+				server_q_len(sp) );
+		}  else  {
 			printf("\n");
+		}
 		num = sp->sr_nsamp<=0 ? 1 : sp->sr_nsamp;
-		printf("\tlast:  elapsed=%g, cpu=%g\n",
+		printf("\tlast:  elapsed=%g, cpu=%g, lump=%d\n",
 			sp->sr_l_elapsed,
-			sp->sr_l_cpu );
-		printf("\t avg:  elapsed=%gp/s, cpu=%g, weighted=%g, clump=%d\n",
-			1.0/(sp->sr_s_elapsed/num),
-			sp->sr_s_cpu/num,
-			sp->sr_w_elapsed,
+			sp->sr_l_cpu,
 			sp->sr_lump );
+		printf("\t avg:  elapsed=%gp/s, cpu=%g, weighted=%gp/s\n",
+			(sp->sr_s_elapsed/num),
+			sp->sr_s_cpu/num,
+			sp->sr_w_elapsed );
 
+		/* May want to print this only on debugging flag */
+#if 0
 		pr_list( &(sp->sr_work) );
+#endif
 	}
 }
 
