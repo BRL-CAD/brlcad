@@ -1510,18 +1510,6 @@ char	**argv;
 	if(dbip == DBI_NULL)
 	  return TCL_OK;
 
-	CHECK_READ_ONLY;
-
-	if(argc < 2 || 3 < argc){
-	  struct bu_vls vls;
-
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help make");
-	  Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	  return TCL_ERROR;
-	}
-
 	if(argc == 2){
 	  struct bu_vls vls;
 
@@ -1555,6 +1543,18 @@ char	**argv;
 
 	    return TCL_OK;
 	  }
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help make");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
+	  return TCL_ERROR;
+	}
+
+	CHECK_READ_ONLY;
+
+	if(argc < 2 || 3 < argc){
+	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
 	  bu_vls_printf(&vls, "help make");
