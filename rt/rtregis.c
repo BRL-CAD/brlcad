@@ -56,7 +56,7 @@ Usage:  regis plot.log pix.log\n";
 
 int	mat_build();
 int	read_rt_file();
-int	overlay();
+
 
 static FILE	*fp;
 
@@ -74,14 +74,14 @@ char	**argv;
 
 {
 
-	mat_t		mod1;			/* matrix from first log */
-	mat_t		mod2;			/* matrix from second log */
+	mat_t		mod2view1;		/* first log matrix its view */
+	mat_t		mod2view2;		/* second log matrix to its view*/
 	mat_t		regismat;		/* registration matrix */
 	mat_t		view2model;		/* matrix for converting from view to model space */
 	int		ret;			/* function return code */
 
-	mat_idn(mod1);				/* makes an identity matrix */
-	mat_idn(mod2);
+	mat_idn(mod2view1);				/* makes an identity matrix */
+	mat_idn(mod2view2);
 	mat_idn(regismat);
 
 	/* Check to see that the correct format is given, else print
@@ -106,7 +106,7 @@ char	**argv;
 		exit(-1);
 	}
 
-	ret = read_rt_file(fp, argv[1], mod1);
+	ret = read_rt_file(fp, argv[1], mod2view1);
 	if(ret < 0)  {
 		exit(-1);
 	}
@@ -118,7 +118,7 @@ char	**argv;
 		exit(-1);
 	}
 
-	ret = read_rt_file(fp, argv[2], mod2);
+	ret = read_rt_file(fp, argv[2], mod2view2);
 	if(ret < 0)  {
 		exit(-1);
 	}
@@ -127,15 +127,15 @@ char	**argv;
 
 /*	mat_inv(view2model, model2view);
  */
-mat_print("mod1-plot.log", mod1);
-mat_print("mod2-pix.log", mod2);
-/* fprintf(stderr, "mod1[0, 1, 2, 3, 15]: %g, %g, %g, %g, %g\n",
- *	mod1[0], mod1[1], mod1[2], mod1[3], mod1[15]);
+mat_print("mod2view1-plot.log", mod2view1);
+mat_print("mod2view2-pix.log", mod2view2);
+/* fprintf(stderr, "mod2view1[0, 1, 2, 3, 15]: %g, %g, %g, %g, %g\n",
+ *	mod2view1[0], mod2view1[1], mod2view1[2], mod2view1[3], mod2view1[15]);
  */
 
 	/* Now build the registration matrix for the two files. */
 
-	ret = mat_build(mod1, mod2, regismat);
+	ret = mat_build(mod2view1, mod2view2, regismat);
 	if(ret == FALSE)  {
 		fprintf(stderr, "regis: can't build registration matrix!\n");
 		exit(-1);
@@ -184,6 +184,22 @@ mat_t	regismat;
 
 	VPRINT("delta", delta);
 	fprintf(stderr, "scale: %g\n", scale);	
+
+	/* If the first log corresponds to a UNIX-Plot file, following
+	 * applies.  Since UNIX-Plot files are in model coordinates, the 
+	 * mod2view2 ("model2pix") is also the registration matrix.  In
+	 * this case, pl-fb needs to learn that the UNIX-Plot file's space
+	 * runs from -1 -> 1 in x and y.  This can be done by adding an
+	 * alternate space command in that program. Therefore the below
+	 * applies.
+	 * What if the first log corresponds to a hi-res pixel file to be
+	 * registered with a lo-res pixel file?  Is the treated the same as
+	 * as two plot files (i.e. two plot files are cat'ed together;
+	 * two plot files may be pixmatte'ed...
+	 */
+
+	mat_copy( regismat, mat2);
+	mat_print("regismat", regismat);
 }
 
 
@@ -242,14 +258,23 @@ mat_t 	model2view;
 			string[i] = '\0';
 		}
 		ret = fgets(string, BUFF_LEN, infp);
-#ifdef
+
 		if( ret == NULL )  {
+			/* There are two times when NULL might be seen:
+			 * at the end of the file (handled above) and
+			 * when the process dies horriblely and unexpectedly.
+			 */
+
+			if( feof(infp) )
+				break;
+			
+			/* This needs to be seen only if there is an
+			 * unexpected end.
+			 */
 			fprintf(stderr, "read_rt_log: read failure on file %s\n",
  				name);
  			return(-1);
-			break;
 		}
-#endif
 
 		/* Check the first for a colon in the buffer.  If there is
 		 * one, replace it with a NULL, and set a pointer to the
@@ -390,43 +415,3 @@ mat_t 	model2view;
 
 
 	
-
-/*		D R A W S C A L E
- *
- * 
- * 
- * 
- * 
- * 
- */
-
-int
-drawscale(outfp, startpt, len, hgt, lenv, hgtv, inv_hgtv)
-FILE		*outfp;
-point_t		startpt;
-fastf_t		len;
-fastf_t		hgt;
-vect_t		lenv;
-vect_t		hgtv;
-vect_t		inv_hgtv;
-{
-}
-
-
-/*		D R A W T I C K S
- *
- *
- *
- *
- *
- */
-
-int
-drawticks(outfp, centerpt, hgtv, hgt, inv_hgtv)
-FILE		*outfp;
-point_t		centerpt;
-vect_t		hgtv;
-fastf_t		hgt;
-vect_t		inv_hgtv;
-{
-}
