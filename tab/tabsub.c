@@ -25,18 +25,21 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
-
-#include "machine.h"
-#include "vmath.h"
-#include "raytrace.h"
-
-#if defined(unix) || defined(__unix) || defined(__unix__)
+#if defined(HAVE_UNIX_IO)
 # include <sys/types.h>
 # include <sys/stat.h>
 #endif
+
+
+#include "machine.h"
+#include "externs.h"
+#include "vmath.h"
+#include "raytrace.h"
 
 int	debug = 0;
 
