@@ -1,9 +1,5 @@
 # $Id$
 
-common_files = \
-	ssampview.c \
-	viewtherm.c
-
 # pixtest removed, looks like an outdated sample_application
 bin_PROGRAMS = \
 	rttherm \
@@ -49,7 +45,8 @@ ssamp_bw_SOURCES = \
 	ssamp-bw.c
 ssamp_bw_LDADD = \
 	${BU} \
-	${BN}
+	${BN} \
+	${OPTICAL}
 
 # pixtest removed, looks like an outdated sample_application
 #pixtest_SOURCES = \
