@@ -51,7 +51,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 char MGEDCopyRight_Notice[] = "@(#) \
-BRL-CAD is Open Source software.
+BRL-CAD is Open Source software. \
 This software is Copyright (C) 1985-2004 by the United States Government \
 as represented by the U.S. Army Research Laboratory.  All rights reserved.";
 
