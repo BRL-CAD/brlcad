@@ -677,15 +677,12 @@ struct faceuse	*fu1, *fu2;
 point_t		pt;
 vect_t		dir;
 {
-	point_t		min_pt;
-	vect_t		vect;
 	union {
 		struct vertexuse **vu;
 		long **magic_p;
 	} p;
-	struct vertexuse *tvu;
-	fastf_t *mag, tmag;
-	int i, j;
+	fastf_t	*mag;
+	register int i, j;
 
 	mag = (fastf_t *)rt_calloc(b->end, sizeof(fastf_t),
 					"vector magnitudes for sort");
@@ -693,10 +690,11 @@ vect_t		dir;
 	p.magic_p = b->buffer;
 	/* check vertexuses and compute distance from start of line */
 	for(i = 0 ; i < b->end ; ++i) {
+		vect_t		vect;
 		NMG_CK_VERTEXUSE(p.vu[i]);
 
 		VSUB2(vect, pt, p.vu[i]->v_p->vg_p->coord);
-		mag[i] = MAGNITUDE(vect);
+		mag[i] = VDOT( vect, dir );
 	}
 
 	/* a trashy bubble-head sort, because I hope this list is never
@@ -705,6 +703,9 @@ vect_t		dir;
 	for(i=0 ; i < b->end - 1 ; ++i) {
 		for (j=i+1; j < b->end ; ++j) {
 			if (mag[i] > mag[j]) {
+				register struct vertexuse *tvu;
+				register fastf_t	tmag;
+
 				tvu = p.vu[i];
 				p.vu[i] = p.vu[j];
 				p.vu[j] = tvu;
@@ -715,20 +716,7 @@ vect_t		dir;
 			}
 		}
 	}
-	/*
-	 * We should do something here to "properly"
-	 * order vertexuses which share a vertex
-	 * or whose coordinates are equal.
-	 *
-	 * Just what should be done & how is not
-	 * clear to me at this hour of the night.
-	 * for (i=0 ; i < b->end - 1 ; ++i) {
-	 *	if (p.vu[i]->v_p == p.vu[i+1]->v_p ||
-	 *	    VAPPROXEQUAL(p.vu[i]->v_p->vg_p->coord,
-	 *	    p.vu[i+1]->v_p->vg_p->coord, VDIVIDE_TOL) ) {
-	 *	}
-	 * }
-	 */
+
 	rt_free((char *)mag, "vector magnitudes");
 }
 
