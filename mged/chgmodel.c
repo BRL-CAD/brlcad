@@ -1370,6 +1370,7 @@ f_make(ClientData	clientData,
 	    Tcl_AppendElement(interp, "rec");
 	    Tcl_AppendElement(interp, "rhc");
 	    Tcl_AppendElement(interp, "rpc");
+	    Tcl_AppendElement(interp, "rpp");
 	    Tcl_AppendElement(interp, "sketch");
 	    Tcl_AppendElement(interp, "sph");
 	    Tcl_AppendElement(interp, "tec");
@@ -1409,7 +1410,8 @@ f_make(ClientData	clientData,
 
 	/* make name <arb8 | arb7 | arb6 | arb5 | arb4 | ellg | ell |
 	 * sph | tor | tgc | rec | trc | rcc | grp | half | nmg | bot | sketch | extrude> */
-	if( strcmp( argv[2], "arb8" ) == 0 )  {
+	if (strcmp(argv[2], "arb8") == 0 ||
+	    strcmp(argv[2],  "rpp") == 0)  {
 		internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		internal.idb_type = ID_ARB8;
 		internal.idb_meth = &rt_functab[ID_ARB8];
@@ -1978,22 +1980,28 @@ f_make(ClientData	clientData,
 		csg->radius = -1.0;
 		csg->center_is_left = 1;
 		csg->orientation = 0;
-	} else if( strcmp( argv[2], "ars" ) == 0 ||
-		   strcmp( argv[2], "poly" ) == 0 ||
-		   strcmp( argv[2], "ebm" ) == 0 ||
-		   strcmp( argv[2], "dsp" ) == 0 ||
-		   strcmp( argv[2], "vol" ) == 0 ||
-		   strcmp( argv[2], "arbn" ) == 0 ||
-		   strcmp( argv[2], "nurb" ) == 0 ||
-		   strcmp( argv[2], "spline" ) == 0 )  {
-	  Tcl_AppendResult(interp, "make ", argv[2], " not implimented yet\n", (char *)NULL);
-	  return TCL_ERROR;
+	} else if (strcmp(argv[2], "hf") == 0) {
+		Tcl_AppendResult(interp, "make: the height field is not supported by this command\nand is also deprecated. Use the dsp primitive.\n", (char *)NULL);
+		return TCL_ERROR;
+	} else if (strcmp(argv[2], "pg") == 0 ||
+		   strcmp(argv[2], "poly") == 0) {
+		Tcl_AppendResult(interp, "make: the polysolid is not supported by this command\nand is also deprecated. Use the bot primitive.\n", (char *)NULL);
+		return TCL_ERROR;
+	} else if (strcmp(argv[2], "cline") == 0 ||
+		   strcmp(argv[2], "dsp") == 0 ||
+		   strcmp(argv[2], "ebm") == 0 ||
+		   strcmp(argv[2], "nurb") == 0 ||
+		   strcmp(argv[2], "spline") == 0 ||
+		   strcmp(argv[2], "submodel") == 0 ||
+		   strcmp(argv[2], "vol") == 0) {
+		Tcl_AppendResult(interp, "make: the ", argv[2], " primitive is not supported by this command.\n", (char *)NULL);
+		return TCL_ERROR;
 	} else {
 	  Tcl_AppendResult(interp, "make:  ", argv[2], " is not a known primitive\n",
-			   "\tchoices are: arb8, arb7, arb6, arb5, arb4, bot, ehy,\n",
-			   "\t\tell, ell1, epa, eto, extrude, grip, half, nmg,\n",
-			   "\t\tpart, pipe, rcc, rec, rhc, rpc, sketch, sph,\n",
-			   "\t\ttec, tgc, tor, trc\n",
+			   "\tchoices are: arb8, arb7, arb6, arb5, arb4, arbn, ars, bot,\n",
+			   "\t\tehy, ell, ell1, epa, eto, extrude, grip, half, nmg,\n",
+			   "\t\tpart, pipe, rcc, rec, rhc, rpc, sketch, sph, tec,\n",
+			   "\t\ttgc, tor, trc\n",
 			   (char *)NULL);
 	  return TCL_ERROR;
 	}
