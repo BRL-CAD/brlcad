@@ -872,7 +872,7 @@ set -S2 "/bin/sh"
 #endif
 
 #if defined(CRAY1)
-/*	Cray 1, X-M/P or Y-M/P running UNICOS 5 only */
+/*	Cray 1, X-MP or Y-MP running UNICOS 5 or later (tested on 8) */
 #	undef	xmp
 #	undef	cray
 #	define	MTYPE	xmp
@@ -887,7 +887,7 @@ set -S2 "/bin/sh"
 #		else
 /*			 -hreport=v gives vectorization report */
 /*			 -hmsglevel_0 gives full warnings, as well as errors */
-#			define	CC_DEFS	-hmsglevel_0
+#			define	CC_DEFS	-hmsglevel_2
 #		endif
 #	else
 #		if 1
