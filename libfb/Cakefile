@@ -5,13 +5,15 @@
  *  a program desiring to use a framebuffer need link ONLY with
  *  this library.  Therefore, any vendor libraries need to be included
  *  within libfb.
+ *
+ *  $Header$
  */
 
 #define	CONFIGDEFS	LIBFB_CONFIG
 
 #define PRODUCTS	libfb.ARCH_SUF
 #define SRCDIR	libfb
-#define FILES	fb_generic fb_log fb_paged_io fb_rect getput \
+#define FILES	fb_generic fb_log fb_paged_io fb_rect fb_util getput asize \
 		if_disk if_debug if_stack if_mem if_null LIBFB_OBJS
 #define	SRCSUFF	.c
 #define MANSECTION	3
@@ -23,14 +25,5 @@
 #endif
 
 #include "../Cakefile.lib"
-
-#if defined(NFS)
-pkg.o:	../.libpkg.MTYPE/pkg.o
-	cp ../.libpkg.MTYPE/pkg.o pkg.o
-#else
-pkg.o:	../libpkg/pkg.o
-	cp ../libpkg/pkg.o pkg.o
-
-#endif
 
 #include "../Cakefile.rules"
