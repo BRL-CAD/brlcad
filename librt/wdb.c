@@ -357,6 +357,7 @@ wdb_export(
 	}
 
 	RT_INIT_DB_INTERNAL( &intern );
+	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = id;
 	intern.idb_ptr = gp;
 	intern.idb_meth = &rt_functab[id];
