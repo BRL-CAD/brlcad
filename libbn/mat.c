@@ -58,6 +58,7 @@ double	mat_degtorad = 0.0174532925199433;
 double	mat_radtodeg = 57.29577951308230698802;
 
 extern void	mat_print();
+extern void	mat_vec_perp();
 
 /*
  *			M A T _ A T A N 2
