@@ -83,6 +83,8 @@ int hit_count;
 void	n_shoot();		/* XXX needs an rt_ or spl_ name */
 void	add_hit();		/* XXX */
 void	interp_uv();		/* XXX */
+void	n_free();		/* XXX */
+void	shot_poly();		/* XXX */
 
 /* 
  * S P L _ P R E P
@@ -487,6 +489,7 @@ register struct soltab * stp;
 	return;
 }
 
+void
 n_free( tree)
 struct b_tree * tree;
 {
@@ -779,6 +782,7 @@ int level;
 	    OTHERDIR(dir), level+1);
 }
 
+void
 shot_poly( rp, tree, level )
 struct xray *rp;
 struct b_tree * tree;
