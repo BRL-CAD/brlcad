@@ -18,7 +18,14 @@
  *  Kevin Weiler, 5/7/87 (SIGGraph 1989 Course #20 Notes)
  *
  *  Note -
- *	Any program that uses this header file must also include <stdio.h>
+ *	Any program that uses this header file must also include
+ *	these other header files, in this order:
+ *		<stdio.h>
+ *		<math.h>
+ *		"machine.h"
+ *		"vmath.h"
+ *		"nmg.h"		(This file)
+ *		"raytrace.h"
  */
 #ifndef NMG_H
 #define NMG_H seen
