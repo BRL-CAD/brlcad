@@ -36,12 +36,12 @@
 #endif
 
 #include "machine.h"
+#include "externs.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "externs.h"
+#include "./ged.h"
 #include "./solid.h"
 #include "./dm.h"
-#include "./ged.h"
 
 #define MAXOBJECTS	3000
 
