@@ -90,7 +90,7 @@ extern void sync();
 int	inpara;			/* parameter input from keyboard */
 
 int glob_compat_mode = 1;
-int output_as_return = 0;
+int output_as_return = 1;
 
 int mged_cmd();
 struct rt_vls tcl_output_hook;
@@ -181,7 +181,7 @@ static struct funtab funtab[] = {
 "area", "[endpoint_tolerance]", "calculate presented area of view",
 	f_area, 1, 2, FALSE,
 "attach", "[device]", "attach to a display processor, or NU",
-	f_attach,1,2,FALSE,
+	f_attach,1,3,FALSE,
 "B", "<objects>", "clear screen, edit objects",
 	f_blast,2,MAXARGS,FALSE,
 "bev",	"[-t] [-P#] new_obj obj1 op obj2 op obj3 op ...", "Boolean evaluation of objects via NMG's",
@@ -335,7 +335,7 @@ static struct funtab funtab[] = {
 "make_bb", "new_rpp_name obj1 [obj2 obj3 ...]", "make a bounding box solid enclosing specified objects",
 	f_make_bb, 1, MAXARGS, FALSE,
 "mater", "comb [material]", "assign/delete material to combination",
-	f_mater,2,3,FALSE,
+	f_mater,2,8,FALSE,
 "matpick", "# or a/b", "select arc which has matrix to be edited, in O_PATH state",
 	f_matpick, 2,2,FALSE,
 "memprint", "", "print memory maps",
