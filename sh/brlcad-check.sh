@@ -108,12 +108,14 @@ ${OUT_FILE}:
 	echo C_MACHINE=MTYPE ';' > ${OUT_FILE}
 	echo C_UNIXTYPE=\'BSD\' ';' >> ${OUT_FILE}
 	echo C_HAS_TCP=HAS_TCP >> ${OUT_FILE}
+	echo C_BRLCAD_ROOT=BRLCAD_ROOT >> ${OUT_FILE}
 #else
 #undef SYSV
 ${OUT_FILE}:
 	echo C_MACHINE=MTYPE ';' > ${OUT_FILE}
 	echo C_UNIXTYPE=\'SYSV\' ';' >> ${OUT_FILE}
 	echo C_HAS_TCP=HAS_TCP >> ${OUT_FILE}
+	echo C_BRLCAD_ROOT=BRLCAD_ROOT >> ${OUT_FILE}
 #endif
 EOF
 
@@ -141,11 +143,12 @@ fi
 # See if things match up
 if test "x${MACHINE}" != "x${C_MACHINE}" -o \
 	"x${UNIXTYPE}" != "x${C_UNIXTYPE}" -o \
+	"x${BRLCAD_ROOT}" != "x${C_BRLCAD_ROOT}" -o \
 	"x${HAS_TCP}" != "x${C_HAS_TCP}"
 then
 	echo "$0 ERROR:  Mis-match between machinetype.sh and Cakefile.defs"
-	echo "$0 ERROR:  machinetype.sh claims ${MACHINE} ${UNIXTYPE} ${HAS_TCP}"
-	echo "$0 ERROR:  Cakefile.defs claims ${C_MACHINE} ${C_UNIXTYPE} ${C_HAS_TCP}"
+	echo "$0 ERROR:  machinetype.sh claims ${MACHINE} ${UNIXTYPE} ${HAS_TCP} ${BRLCAD_ROOT}"
+	echo "$0 ERROR:  Cakefile.defs claims ${C_MACHINE} ${C_UNIXTYPE} ${C_HAS_TCP} ${C_BRLCAD_ROOT}"
 	echo "It may be useful to examine ${IN_FILE} and ${OUT_FILE}"
 	exit 6		# Die
 fi
