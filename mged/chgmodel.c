@@ -1158,8 +1158,8 @@ int	argc;
 char	**argv;
 {
 	mat_t temp;
-	vect_t	specified_pt;
 	vect_t s_point, point, v_work, model_pt;
+	vect_t	specified_pt, direc;
 
 	if( not_state( ST_O_EDIT, "Object Rotation" ) )
 		return CMD_BAD;
@@ -1171,9 +1171,8 @@ char	**argv;
 		dmp->dmr_light( LIGHT_OFF, BE_O_XY );
 		movedir = ROTARROW;
 	}
-	specified_pt[X] = atof(argv[1]);
-	specified_pt[Y] = atof(argv[2]);
-	specified_pt[Z] = atof(argv[3]);
+	VSET(specified_pt, atof(argv[1]), atof(argv[2]), atof(argv[3]));
+	VSET(direc, atof(argv[4]), atof(argv[5]), atof(argv[6]));
 
 	/* find point for rotation to take place wrt */
 	MAT4X3PNT(model_pt, es_mat, specified_pt);
@@ -1197,12 +1196,12 @@ char	**argv;
 
 	/* build new rotation matrix */
 	mat_idn(temp);
-	buildHrot(temp, 0.0, atof(argv[7])*degtorad, 0,0);
+	buildHrot(temp, 0.0, 0.0, atof(argv[7])*degtorad);
 
 	/* Record the new rotation matrix into the revised
 	 *	modelchanges matrix wrt "point"
 	 */
-	wrt_point(modelchanges, temp, modelchanges, point);
+	wrt_point_direc(modelchanges, temp, modelchanges, point, direc);
 
 	new_mats();
 	dmaflag = 1;
