@@ -204,7 +204,7 @@ BDIRS="bench \
 	tk \
 	dhrystone"
 
-TDIRS="libtk"
+TDIRS="libtk libtkGLX"
 
 # If there is no TCP networking, eliminate network-only directories.
 if test "${HAS_TCP}" = "0"
