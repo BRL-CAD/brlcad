@@ -2876,6 +2876,7 @@ BU_EXTERN(void db_functree, (struct db_i *dbip, struct directory *dp,
 
 /* g_arb.c */
 int rt_arb_std_type( const struct rt_db_internal *ip, const struct bn_tol *tol );
+void rt_arb_centroid();			/* needs rt_arb_internal for arg list */
 int rt_arb_calc_points();		/* needs wdb.h for arg list */
 int rt_arb_3face_intersect(
 	point_t			point,
@@ -3608,6 +3609,9 @@ BU_EXTERN(int			nmg_edge_collapse, (struct model *m,
 struct rt_bot_internal		*nmg_bot( struct shell *s, const struct bn_tol *tol );
 
 /* g_bot.c */
+int rt_bot_find_v_nearest_pt2();	/* needs rt_bot_internal for arg list */
+int rt_bot_edge_in_list( const int v1, const int v2, const int edge_list[], const int edge_count );
+int rt_bot_find_e_nearest_pt2();	/* needs rt_bot_internal for arg list */
 int rt_bot_vertex_fuse( struct rt_bot_internal *bot );
 int rt_bot_same_orientation( const int *a, const int *b );
 int rt_bot_face_fuse( struct rt_bot_internal *bot );

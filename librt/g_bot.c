@@ -1668,9 +1668,9 @@ struct db_i	*dbip;
 
 int
 rt_bot_find_v_nearest_pt2(
-	CONST struct rt_bot_internal *bot,
-	CONST point_t	pt2,
-	CONST mat_t	mat)
+	const struct rt_bot_internal *bot,
+	const point_t	pt2,
+	const mat_t	mat)
 {
 	point_t v;
 	int index;
@@ -1725,9 +1725,9 @@ int
 rt_bot_find_e_nearest_pt2(
 	int *vert1,
 	int *vert2,
-	CONST struct rt_bot_internal *bot,
-	CONST point_t	pt2,
-	CONST mat_t	mat)
+	const struct rt_bot_internal *bot,
+	const point_t	pt2,
+	const mat_t	mat)
 {
 	int i;
 	int v1, v2, v3;
