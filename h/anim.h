@@ -22,6 +22,8 @@
  	Be sure to include vmath.h before this file.
 */
 
+#include "compat4.h"
+
 #define ANIM_STEER_NEW	0
 #define ANIM_STEER_END	1
 
