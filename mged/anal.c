@@ -210,10 +210,10 @@ int edge;
 	b = nedge[edge][1];
 
 	VSUB2(v_temp, &temp_rec.s.s_values[b*3], &temp_rec.s.s_values[a*3]);
-	(void)printf("  |  %d%d   %7.2f ",a+1,b+1,MAGNITUDE(v_temp)*base2local);
+	(void)printf("  |  %d%d   %6.2f",a+1,b+1,MAGNITUDE(v_temp)*base2local);
 
 	if( ++edge%4 == 0 )
-		(void)printf("|\n");
+		(void)printf("  |\n");
 
 }
 
