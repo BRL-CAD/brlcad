@@ -42,6 +42,45 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "db.h"		/* for debugging stuff at bottom */
 
+void
+nmg_find_zero_length_edges( m )
+struct model *m;
+{
+	struct nmg_ptbl eu_tab;
+	struct edgeuse *eu;
+	int i;
+
+	nmg_tbl( &eu_tab, TBL_INIT, (long *)0 );
+
+	nmg_edgeuse_tabulate( &eu_tab, &m->magic );
+
+	for( i=0 ; i<NMG_TBL_END( &eu_tab ) ; i++ )
+	{
+		struct loopuse *lu;
+
+		eu = (struct edgeuse *)NMG_TBL_GET( &eu_tab, i );
+		NMG_CK_EDGEUSE( eu );
+
+		if( eu->vu_p->v_p != eu->eumate_p->vu_p->v_p )
+			continue;
+
+		/* found a zero length edge */
+
+		rt_log( "Edgeuse x%x (vp %x to vp %x)\n" , eu, eu->vu_p->v_p, eu->eumate_p->vu_p->v_p );
+		if( *eu->up.magic_p != NMG_LOOPUSE_MAGIC )
+		{
+			rt_log( "\tThis is a wire edge\n" );
+			continue;
+		}
+
+		lu = eu->up.lu_p;
+
+		nmg_pr_lu_briefly( lu, "" );
+	}
+
+	nmg_tbl( &eu_tab, TBL_FREE, (long *)0 );
+}
+
 /*
  *	N M G _ F I N D _ T O P _ F A C E _ I N _ D I R
  *
