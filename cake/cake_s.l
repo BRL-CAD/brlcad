@@ -44,7 +44,7 @@ bool		afterifdef = FALSE;
 
 %start	edge middle
 
-pat	[a-zA-Z_0-9/%+-.,]
+pat	[a-zA-Z_0-9/%+\-.,]
 sp	[ \t]
 nl	[\n\f]
 nonl	[^\n\f]
