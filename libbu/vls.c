@@ -108,7 +108,7 @@ register CONST struct bu_vls	*vp;
 
 	BU_CK_VLS(vp);
 
-	if( vp->vls_max == 0 || vp->vls_len == 0 )  {
+	if( vp->vls_max == 0 || vp->vls_len == 0 || vp->vls_str == (char *)NULL )  {
 		/* A zero-length VLS is a null string */
 		nullbuf[0] = '\0';
 		return(nullbuf);
@@ -118,7 +118,7 @@ register CONST struct bu_vls	*vp;
 	if( vp->vls_max < 0 ||
 		vp->vls_len < 0 ||
 		vp->vls_offset < 0 ||
-		vp->vls_str == (char *)0 ||
+		vp->vls_str == (char *)NULL ||
 		vp->vls_len + vp->vls_offset >= vp->vls_max )  {
 		bu_log("bu_vls_addr: bad VLS.  max=%d, len=%d, offset=%d\n",
 		   vp->vls_max, vp->vls_len, vp->vls_offset);
@@ -137,8 +137,10 @@ register struct bu_vls	*vp;
 int			extra;
 {
 	BU_CK_VLS(vp);
+	if( extra < 40 )  extra = 40;
 	if( vp->vls_max <= 0 || vp->vls_str == (char *)0 )  {
-		vp->vls_str = (char *)bu_malloc( vp->vls_max = extra*4,
+		vp->vls_max = extra;
+		vp->vls_str = (char *)bu_malloc( vp->vls_max,
 			"bu_vls_extend (initial)" );
 		vp->vls_len = 0;
 		vp->vls_offset = 0;
@@ -146,7 +148,7 @@ int			extra;
 		return;
 	}
 	if( vp->vls_offset + vp->vls_len + extra >= vp->vls_max )  {
-		vp->vls_max = (vp->vls_max + extra) * 2;
+		vp->vls_max += extra;
 		if( vp->vls_max < 120 )  vp->vls_max = 120;
 		vp->vls_str = (char *)bu_realloc( vp->vls_str, vp->vls_max,
 			 "bu_vls_extend (grow)" );
@@ -244,7 +246,7 @@ int len;
 	BU_CK_VLS(vp);
 	if( len < 0 && (-len) > vp->vls_offset )  len = -vp->vls_offset;
 	if (len >= vp->vls_len) {
-		bu_vls_free( vp );
+		bu_vls_trunc( vp, 0 );
 		return;
 	}
 	vp->vls_len -= len;
@@ -539,22 +541,14 @@ register FILE		*fp;
 
 	BU_CK_VLS(vp);
 
-	startlen = vp->vls_len;
-	vp->vls_offset = 0;
+	startlen = bu_vls_strlen(vp);
+	bu_vls_extend( vp, 80 );		/* Ensure room to grow */
 	while( (c = getc(fp)) != EOF && c != '\n' )  {
-		if( vp->vls_len+1 >= vp->vls_max )  bu_vls_extend( vp, 80 );
-		vp->vls_str[vp->vls_len++] = c;
+		bu_vls_putc( vp, c );
 	}
-	if( c == EOF && vp->vls_len <= startlen )  return -1;
-	/*
-	 * nobody is suppose to peek inside a vls, so when they
-	 * use bu_vls_addr() to get the address, they will be given
-	 * the address of a short null terminated string.
-	 */
-	if( vp->vls_len <= 0 )  return 0;
-	vp->vls_str[vp->vls_len] = '\0';	/* force null termination */
-
-	return vp->vls_len;
+	if( c == EOF && bu_vls_strlen(vp) <= startlen )  return -1;
+	vp->vls_str[vp->vls_offset + vp->vls_len] = '\0';	/* force null termination */
+	return bu_vls_strlen(vp);
 }
 
 /*
