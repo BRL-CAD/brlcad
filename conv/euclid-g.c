@@ -74,7 +74,7 @@ struct nmg_ptbl groups[11];
 
 static int polysolids;
 static int debug;
-static char	usage[] = "Usage: %s [-i euclid_db] [-o brlcad_db] [-p] [-xX lvl]\n\t\t(-p indicates write as polysolids)\n ";
+static char	usage[] = "Usage: %s [-v] [-i euclid_db] [-o brlcad_db] [-d tolerance] [-p] [-xX lvl]\n\t\t(-p indicates write as polysolids)\n ";
 static struct rt_tol  tol;
 
 main(argc, argv)
@@ -488,16 +488,34 @@ int	reg_id;
 
 			switch(facet_type) {
 			case 0:	/* Simple facet (no holes). */
+				if( debug )
+				{
+					rt_log( "Making simple face:\n" );
+					for( i=0; i<np; i++ )
+						rt_log( "\( %g %g %g )\n" , V3ARGS( &vert.pt[lst[i]*3] ));
+				}
 				outfaceuses[face] = nmg_cface(s, vertlist, np);
 				face++;
 				break;
 
 			case 1:	/* Facet is a hole. */
+				if( debug )
+				{
+					rt_log( "Making a hole:\n" );
+					for( i=0; i<np; i++ )
+						rt_log( "\( %g %g %g )\n" , V3ARGS( &vert.pt[lst[i]*3] ));
+				}
 				nmg_add_loop_to_face(s, outfaceuses[hole_face],
 					vertlist, np, OT_OPPOSITE);
 				break;
 
 			case 2:	/* Facet will be given at least one hole. */
+				if( debug )
+				{
+					rt_log( "Making face which will get a hole:\n" );
+					for( i=0; i<np; i++ )
+						rt_log( "\( %g %g %g )\n" , V3ARGS( &vert.pt[lst[i]*3] ));
+				}
 				outfaceuses[face] = nmg_cface(s, vertlist, np);
 				hole_face = face;
 				face++;
@@ -531,6 +549,40 @@ int	reg_id;
 		}
 	}
 
+	/* kill zero length edgeuses */
+	if( nmg_kill_zero_length_edgeuses( m ) )
+	{
+		nmg_km( m );
+		m = (struct model *)NULL;
+		return( cur_id );
+	}
+
+	/* kill cracks */
+	s = RT_LIST_FIRST( shell , &r->s_hd );
+	if( nmg_kill_cracks( s ) )
+	{
+		if( nmg_ks( s ) )
+		{
+			nmg_km( m );
+			m = (struct model *)0;
+		}
+		s = (struct shell *)0;
+	}
+
+	if( !m )
+		return( cur_id );
+
+	for (i = 0; i < face; i++)
+	{
+		if( outfaceuses[i]->l.magic != NMG_FACEUSE_MAGIC )
+		{
+			face--;
+			for( j=i; j<face; j++ )
+				outfaceuses[j] = outfaceuses[j+1];
+			i--;
+		}
+	}
+
 	/* Associate the face geometry. */
 	if( debug )
 		rt_log( "Associating face geometry:\n" );
@@ -544,33 +596,77 @@ int	reg_id;
 		}
 	}
 
+	/* Break edges on vertices */
+	if( debug )
+		rt_log( "Calling nmg_model_break_e_on_v()\n" );
+	(void)nmg_model_break_e_on_v( m, &tol );
+
 	/* Glue edges of outward pointing face uses together. */
+	if( debug )
+		rt_log( "Glueing faces\n" );
 	nmg_gluefaces(outfaceuses, face);
 
 	/* Compute "geometry" for model, region, and shell */
+	if( debug )
+		rt_log( "Rebound\n" );
 	nmg_rebound( m , &tol );
 
 	/* fix the normals */
-	s = RT_LIST_FIRST( shell , &r->s_hd );
+	if( debug )
+		rt_log( "Fix normals\n" );
 	nmg_fix_normals( s, &tol );
 
-	/* Fuse faces */
-	(void)nmg_model_face_fuse( m, &tol );
-	if( nmg_simplify_shell( s ) )
+	/* Get rid of cracks */
+	if( debug )
+		rt_log( "Kill cracks\n" );
+	s = RT_LIST_FIRST( shell , &r->s_hd );
+	if( nmg_kill_cracks( s ) )
 	{
-		/* Simplified away to nothing!!! */
 		if( nmg_ks( s ) )
 		{
 			nmg_km( m );
-			m = (struct model *)NULL;
+			m = (struct model *)0;
 		}
-		s = (struct shell *)NULL;
+		s = (struct shell *)0;
 	}
 
 	if( !m )
 		return( cur_id );
 
+	/* kill zero length edgeuses */
+	if( nmg_kill_zero_length_edgeuses( m ) )
+	{
+		nmg_km( m );
+		m = (struct model *)NULL;
+		return( cur_id );
+	}
+
+	/* Get rid of cracks */
+	if( debug )
+		rt_log( "Kill cracks\n" );
+	s = RT_LIST_FIRST( shell , &r->s_hd );
+	if( nmg_kill_cracks( s ) )
+	{
+		if( nmg_ks( s ) )
+		{
+			nmg_km( m );
+			m = (struct model *)0;
+		}
+		s = (struct shell *)0;
+	}
+
+	if( !m )
+		return( cur_id );
+
+	nmg_s_join_touchingloops( s, &tol );
+	nmg_s_split_touchingloops( s, &tol);
+
 	/* verify face plane calculations */
+	if( debug )
+	{
+		nmg_stash_model_to_file( "before_tri.g", m, "before_tri" );
+		rt_log( "Verify plane equations:\n" );
+	}
 	for (i = 0; i < face; i++)
 	{
 		plane_t pl;
@@ -631,8 +727,11 @@ int	reg_id;
 		{
 			/* Need to triangulate this face */
 			if( debug )
+			{
 				rt_log( "\tTriangulating fu x%x (mate is x%x)\n",
 					outfaceuses[i], outfaceuses[i]->fumate_p );
+				nmg_pr_fu_briefly( outfaceuses[i], "" );
+			}
 
 			nmg_triangulate_fu( outfaceuses[i], &tol );
 
@@ -745,6 +844,26 @@ int	reg_id;
 			}
 		}
 	}
+
+	if( debug )
+		rt_log( "%d vertices out of tolerance after fixing out of tolerance faces\n" , nmg_ck_geometry( m , &tol ) );
+
+#if 1
+	/* Fuse */
+	if( debug )
+	{
+		nmg_stash_model_to_file( "before_fuse.g", m, "before_fuse" );
+		rt_log( "Fuse model:\n" );
+	}
+	i = nmg_model_fuse( m, &tol );
+	if( debug )
+		rt_log( "\t%d objects fused\n" , i );
+
+	nmg_s_join_touchingloops( s, &tol );
+	nmg_s_split_touchingloops( s, &tol);
+
+#endif
+
 #if 0
 	/* if the shell we just built has a void shell inside, nmg_fix_normals will
 	 * point the normals of the void shell in the wrong direction. This section
@@ -955,7 +1074,11 @@ int	reg_id;
 	}
 	else
 #endif
+	{
+		if( debug )
+			rt_log( "Writing model to database:\n" );
 		add_nmg_to_db( fpdb, m, reg_id );
+	}
 
 	nmg_km(m);				/* Safe to kill model now. */
 
