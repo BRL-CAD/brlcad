@@ -456,7 +456,7 @@ BU_EXTERN(void			bu_printb, (CONST char *s, unsigned long v,
 				CONST char *bits));
 
 /* ptbl.c */
-BU_EXTERN(void			bu_ptbl_init, (struct bu_ptbl *b, int len));
+BU_EXTERN(void			bu_ptbl_init, (struct bu_ptbl *b, int len, CONST char *str));
 BU_EXTERN(void			bu_ptbl_reset, (struct bu_ptbl	*b));
 BU_EXTERN(int			bu_ptbl_ins, (struct bu_ptbl *b, long *p));
 BU_EXTERN(int			bu_ptbl_locate, (CONST struct bu_ptbl *b, CONST long *p));
