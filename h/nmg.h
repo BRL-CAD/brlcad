@@ -53,6 +53,7 @@
 
 #define DEBUG_PL_ANIM	0x00000001	/* 1 mged animated evaluation */
 #define DEBUG_PL_SLOW	0x00000002	/* 2 add delays to animation */
+
 #define DEBUG_COMBINE	0x00000008	/* 4 combine() */
 #define DEBUG_CUTLOOP	0x00000010	/* 5 cutting loops in two */
 #define DEBUG_POLYSECT	0x00000020	/* 6 combine() */
@@ -67,11 +68,12 @@
 #define DEBUG_LABEL_PTS 0x00004000	/* 15 label points in plot files */
 #define DEBUG_INS	0x00008000	/* 16 nmg_tbl table insert */
 #define DEBUG_NMGRT     0x00010000	/* 17 ray tracing */
-#define DEBUG_FINDEU	0x00100000	/* 21 findeu (find edge[use]) */
-#define DEBUG_CMFACE	0x00200000	/* 22 nmg_cmface() */
 
+#define DEBUG_FINDEU	0x00020000	/* 18 findeu (find edge[use]) */
+#define DEBUG_CMFACE	0x00040000	/* 19 nmg_cmface() */
+#define DEBUG_GRAPHCL	0x00080000	/* 20 graphic classification */
 #define NMG_DEBUG_FORMAT \
-"\020\026CMFACE\025FINDEU\021NMGRT\020TBL_INS\
+"\020\024GRAPHCL\023CMFACE\022FINDEU\021NMGRT\020TBL_INS\
 \017LABEL_PTS\016POLYTO\015MESH_EU\014MESH\
 \013GRAZING\
 \012BOOLEVAL\011CLASSIFY\
