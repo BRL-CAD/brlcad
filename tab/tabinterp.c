@@ -66,6 +66,9 @@ struct chan {
 	int	c_offset;	/* source offset (NEXT) */
 };
 
+extern int optind;
+extern char *optarg;
+
 int		verbose = 1;
 
 int		o_len;		/* length of all output arrays */
@@ -128,6 +131,7 @@ char	**argv;
 	rt_g.debug = DEBUG_MEM;
 #endif
 
+	get_args(argc,argv);
 	/*
 	 * All the work happens in the functions
 	 * called by rt_do_cmd().
@@ -1221,4 +1225,23 @@ int	ch;
 		return 1;
 	}
 	return 0;
+}
+
+#define OPT_STR "q"
+int get_args(argc,argv)
+int argc;
+char **argv;
+{
+	int c;
+	while ( (c=getopt(argc,argv,OPT_STR)) != EOF) {
+		switch(c){
+		case 'q':
+			verbose = 0;
+			break;
+		default:
+			fprintf(stderr,"Unknown option: -%c\n",c);
+			return(0);
+		}
+	}
+	return(1);
 }
