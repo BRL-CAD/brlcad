@@ -23,7 +23,7 @@ RT_EXTERN( fastf_t nmg_loop_plane_area , (struct loopuse *lu , plane_t pl ) );
 
 #define	LINELEN	256 /* max input line length from elements file */
 
-static char *usage="dxf-g [-p] [-t tolerance] [-i input_file] [-o output_file_name]";
+static char *usage="dxf-g [-v] [-d] [-t tolerance] [-i input_file] [-o output_file_name]";
 
 main( argc , argv )
 int argc;
@@ -39,6 +39,7 @@ char *argv[];
 	struct rt_tol tol;
 	int done=0;
 	int polysolids=0;
+	int verbose=0;
 	int i,j,group_code;
 	char line[LINELEN];
 	struct nmg_ptbl vertices;
@@ -56,13 +57,12 @@ char *argv[];
         tol.para = 1 - tol.perp;
 
 	out_fp = stdout;
-	dxf = NULL;
-
-	if( argc < 2 )
-		rt_bomb( usage );
+	dxf = stdin;
+	dxf_name = (char *)NULL;
+	base_name = (char *)NULL;
 
 	/* get command line arguments */
-	while ((c = getopt(argc, argv, "pt:i:o:")) != EOF)
+	while ((c = getopt(argc, argv, "pvt:i:o:")) != EOF)
 	{
 		switch( c )
 		{
@@ -70,8 +70,11 @@ char *argv[];
 				tol.dist = atof( optarg );
 				tol.dist_sq = tol.dist * tol.dist;
 				break;
+			case 'v':	/* verbose */
+				verbose = 1;
+				break;
 			case 'i':	/* input DXF file name */
-				dxf_name = (char *)rt_malloc( strlen( optarg ) + 1 , "Viewpoint-g: base name" );
+				dxf_name = (char *)rt_malloc( strlen( optarg ) + 1 , "Dxf-g: dxf_name" );
 				strcpy( dxf_name , optarg );
 				if( (dxf = fopen( dxf_name , "r" )) == NULL )
 				{
@@ -97,46 +100,65 @@ char *argv[];
 		}
 	}
 
-	if( dxf == NULL )
+	if( isatty( fileno( out_fp ) ) )
+	{
+		rt_log( "This routine creates a BRL-CAD which you wold not want sent to your terminal\n" );
 		rt_bomb( usage );
+	}
 
-	ptr1 = strrchr( dxf_name , '/' );
-	if( ptr1 == NULL )
-		ptr1 = dxf_name;
+	if( dxf_name )
+	{
+		ptr1 = strrchr( dxf_name , '/' );
+		if( ptr1 == NULL )
+			ptr1 = dxf_name;
+		else
+			ptr1++;
+		ptr2 = strchr( ptr1 , '.' );
+
+		if( ptr2 == NULL )
+			name_len = strlen( ptr1 );
+		else
+			name_len = ptr2 - ptr1;
+
+		base_name = (char *)rt_malloc( name_len + 1 , "base_name" );
+		strncpy( base_name , ptr1 , name_len );
+
+		mk_id( out_fp , base_name );
+	}
 	else
-		ptr1++;
-	ptr2 = strchr( ptr1 , '.' );
-
-	if( ptr2 == NULL )
-		name_len = strlen( ptr1 );
-	else
-		name_len = ptr2 - ptr1;
-
-	base_name = (char *)rt_malloc( name_len + 1 , "base_name" );
-	strncpy( base_name , ptr1 , name_len );
+		mk_id( out_fp , "Conversion from DXF" );
 	
-	mk_id( out_fp , base_name );
 
 	/* Find the ENTITIES SECTION */
+	if( verbose )
+		rt_log( "Looking for ENTITIES section..\n" );
 	while( fgets( line , LINELEN , dxf ) != NULL )
 	{
 		sscanf( line , "%d" , &group_code );
 		if( group_code == 0 )
 		{
+			if( verbose )
+				rt_log( "Found group code 0\n" );
 			/* read label from next line */
 			if( fgets( line , LINELEN , dxf ) == NULL )
 				rt_bomb( "Unexpected EOF in input file\n" );
 			if( !strncmp( line , "SECTION" , 7 ) )
 			{
+				if( verbose )
+					rt_log( "Found 'SECTION'\n" );
 				if( fgets( line , LINELEN , dxf ) == NULL )
 					rt_bomb( "Unexpected EOF in input file\n" );
 				sscanf( line , "%d" , &group_code );
 				if( group_code == 2 )
 				{
+					if( verbose )
+						rt_log( "Found group code 2\n" );
 					if( fgets( line , LINELEN , dxf ) == NULL )
 						rt_bomb( "Unexpected EOF in input file\n" );
 					if( !strncmp( line , "ENTITIES" , 8 ) )
 					{
+						if( verbose )
+							rt_log( "Found 'ENTITIES'\n" );
 						if( fgets( line , LINELEN , dxf ) == NULL )
 							rt_bomb( "Unexpected EOF in input file\n" );
 						sscanf( line , "%d" , &group_code );
@@ -190,6 +212,9 @@ char *argv[];
 		if( done )
 			break;
 
+		if( verbose )
+			rt_log( "Found 3DFACE\n" );
+
 		no_of_pts = (-1);
 		group_code = 1;
 		while( group_code )
@@ -230,6 +255,8 @@ char *argv[];
 					if( fgets( line , LINELEN , dxf ) == NULL )
 						rt_bomb( "Unexpected EOF in input file\n" );
 					pt[i][j] = atof( line );
+					if( verbose )
+						rt_log( "\tpt[%d][%d]=%g\n", i,j,pt[i][j] );
 					break;
 				case 0:
 					no_of_pts++;
@@ -240,12 +267,16 @@ char *argv[];
 							if( VAPPROXEQUAL( pt[i] , pt[j] , tol.dist ) )
 							{
 								int k;
-/* rt_log( "Combining points %d and %d\n" , i , j ); */
+
+								if( verbose )
+									rt_log( "Combining points %d (%g,%g,%g) and %d (%g,%g,%g)\n",
+										i, V3ARGS(pt[i]),j, V3ARGS(pt[j]) );
 								no_of_pts--;
 								for( k=j ; k<no_of_pts ; k++ )
 								{
 									VMOVE( pt[k] , pt[k+1] );
 								}
+								j--;
 							}
 						}
 					}
@@ -254,10 +285,13 @@ char *argv[];
 						rt_log( "Skipping face with %d vertices\n" , no_of_pts );
 						break;
 					}
-/* rt_log( "FACE:\n" ); */
+
+					if( verbose )
+						rt_log( "FACE:\n" );
 					for( i=0 ; i<no_of_pts ; i++ )
 					{
-/* rt_log( "\t( %f %f %f )\n" , V3ARGS( pt[i] ) ); */
+						if( verbose )
+							rt_log( "\t( %f %f %f )\n" , V3ARGS( pt[i] ) );
 						vp[i] = (struct vertex *)NULL;
 					}
 					fu = nmg_cface( s , vp , no_of_pts );
@@ -286,6 +320,10 @@ char *argv[];
 						}
 					}
 					break;
+				default:
+					if( fgets( line , LINELEN , dxf ) == NULL )
+						rt_bomb( "Unexpected EOF in input file\n" );
+					break;
 			}
 		}
 	}
@@ -297,9 +335,9 @@ char *argv[];
 	rt_log( "Glueing %d faces together...\n" , NMG_TBL_END( &faces ) );
 	nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
 
-	nmg_fix_normals( s , &tol );
-
 	nmg_rebound( m , &tol );
+
+	nmg_fix_normals( s , &tol );
 
 	nmg_vshell( &r->s_hd , r );
 
@@ -307,12 +345,18 @@ char *argv[];
 	if( polysolids )
 	{
 		rt_log( "Writing polysolid to output...\n" );
-		write_shell_as_polysolid( out_fp , base_name , s );
+		if( base_name )
+			write_shell_as_polysolid( out_fp , base_name , s );
+		else
+			write_shell_as_polysolid( out_fp , "DXF" , s );
 	}
 	else
 	{
 		rt_log( "Writing NMG to output...\n" );
-		mk_nmg( out_fp , base_name  , m );
+		if( base_name )
+			mk_nmg( out_fp , base_name  , m );
+		else
+			mk_nmg( out_fp , "DXF"  , m );
 	}
 
 	fprintf( stderr , "%d polygons\n" , NMG_TBL_END( &faces ) );
