@@ -827,7 +827,6 @@ char *file, *obj;
 		extern struct mfuncs points_mfuncs[];
 		extern struct mfuncs toyota_mfuncs[];
 		extern struct mfuncs wood_mfuncs[];
-		extern struct mfuncs Nfbm_mfuncs[];
 		extern struct mfuncs camo_mfuncs[];
 		extern struct mfuncs scloud_mfuncs[];
 		extern struct mfuncs air_mfuncs[];
@@ -836,6 +835,8 @@ char *file, *obj;
 		extern struct mfuncs brdf_mfuncs[];
 		extern struct mfuncs gauss_mfuncs[];
 		extern struct mfuncs paint_mfuncs[];
+		extern struct mfuncs gravel_mfuncs[];
+		extern struct mfuncs prj_mfuncs[];
 
 		mlib_add( phg_mfuncs );
 		mlib_add( light_mfuncs );
@@ -849,7 +850,6 @@ char *file, *obj;
 		mlib_add( points_mfuncs );
 		mlib_add( toyota_mfuncs );
 		mlib_add( wood_mfuncs );
-		mlib_add( Nfbm_mfuncs );
 		mlib_add( camo_mfuncs );
 		mlib_add( scloud_mfuncs );
 		mlib_add( air_mfuncs );
@@ -858,6 +858,8 @@ char *file, *obj;
 		mlib_add( brdf_mfuncs );
 		mlib_add( gauss_mfuncs );
 		mlib_add( paint_mfuncs );
+		mlib_add( gravel_mfuncs );
+		mlib_add( prj_mfuncs );
 	}
 
 	if( minus_o )  {
@@ -1022,7 +1024,10 @@ char	*framename;
 	switch( lightmodel )  {
 	case 0:
 		ap->a_hit = colorview;
-		/* If present, use user-specified light solids */
+
+		/* If user did not specify any light sources then 
+		 *	create default light sources
+		 */
 		if( RT_LIST_IS_EMPTY( &(LightHead.l) )  ||
 		    RT_LIST_UNINITIALIZED( &(LightHead.l ) ) )  {
 			if(rdebug&RDEBUG_SHOWERR)rt_log("No explicit light\n");
