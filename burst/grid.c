@@ -204,10 +204,13 @@ STATIC int
 f_BurstHit( ap, pt_headp )
 struct application *ap;
 struct partition *pt_headp;
-	{	Pt_Queue			*qshield = PT_Q_NULL;
-		register struct partition	*cpp, *spp;
-		register int			nbar;
-		register int			ncrit = 0;
+	{	Pt_Queue *qshield = PT_Q_NULL;
+		register struct partition *cpp, *spp;
+		register int nbar;
+		register int ncrit = 0;
+#ifdef VDEBUG
+	prntDbgPartitions( ap, pt_headp, "f_BurstHit: initial partitions" );
+#endif
 	/* Find first barrier in front of the burst point. */
 	for(	spp = pt_headp->pt_forw;
 		spp != pt_headp
@@ -224,7 +227,7 @@ struct partition *pt_headp;
 		if( Air( regp ) )
 			continue; /* Air doesn't matter here. */
 		if( findIdents( regp->reg_regionid, &critids ) )
-			{
+			{	fastf_t entrynorm[3], exitnorm[3];
 			if( ncrit == 0 )
 				prntRayHeader( ap->a_ray.r_dir, viewdir,
 						ap->a_user );
@@ -235,13 +238,14 @@ struct partition *pt_headp;
 
 			/* Output critical component intersection;
 			   prntRegionHdr fills in hit entry/exit normals. */
-			prntRegionHdr( ap, pt_headp, cpp );
+			prntRegionHdr( ap, pt_headp, cpp, entrynorm, exitnorm );
 			colorPartition( regp, C_CRIT );
 			plotPartition( cpp->pt_inhit, cpp->pt_outhit,
 					rayp, regp );
 			if( fbfile[0] != NUL && ncrit == 0 )
 				/* first hit on critical component */
-				lgtModel( ap, cpp, cpp->pt_inhit, rayp );
+				lgtModel( ap, cpp, cpp->pt_inhit, rayp,
+					entrynorm );
 			ncrit++;
 			}
 		else
@@ -263,61 +267,117 @@ struct partition *pt_headp;
 		return	ncrit;
 	}
 
+
 /*
 	int f_HushOverlap( struct application *ap, struct partition *pp,
-				struct region *reg1, struct region *reg2 )
+		struct region *reg1, struct region *reg2,
+		struct partition *pheadp )
 
 	Do not report diagnostics about individual overlaps, but keep count
 	of significant ones (at least as thick as OVERLAP_TOL).
+	Some of this code is from librt/bool.c:rt_defoverlap() for
+	consistency of which region is picked.
+
+	Returns -
+	 0	to eliminate partition with overlap entirely
+	 1	to retain partition in output list, claimed by reg1
+	 2	to retain partition in output list, claimed by reg2
  */
 /*ARGSUSED*/
 STATIC int
-f_HushOverlap( ap, pp, reg1, reg2 )
-struct application	*ap;
-struct partition	*pp;
-struct region		*reg1, *reg2;
-	{	fastf_t depth = pp->pt_outhit->hit_dist -
-					pp->pt_inhit->hit_dist;
-	if( depth < OVERLAP_TOL )
-		return  1;
-	noverlaps++;
-	return	1;
+f_HushOverlap( ap, pp, reg1, reg2, pheadp )
+struct application *ap;
+struct partition *pp;
+struct region *reg1, *reg2;
+struct partition *pheadp;
+	{	fastf_t depth;
+#ifdef BRLCAD4_0
+	RT_CHECK_PT(pp);
+#endif
+	depth = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
+	if( depth >= OVERLAP_TOL )
+		noverlaps++;
+
+	/* Apply heuristics as to which region should claim partition. */
+	if( reg1->reg_aircode != 0 )
+		/* reg1 was air, replace with reg2 */
+		return 2;
+	if( pp->pt_back != pheadp )
+		{ /* Repeat a prev region, if that is a choice */
+		if( pp->pt_back->pt_regionp == reg1 )
+			return 1;
+		if( pp->pt_back->pt_regionp == reg2 )
+			return 2;
+		}
+	/* To provide some consistency from ray to ray, use lowest bit # */
+	if( reg1->reg_bit < reg2->reg_bit )
+		return 1;
+	return 2;
 	}
 
 /*
 	int f_Overlap( struct application *ap, struct partition *pp,
-				struct region *reg1, struct region *reg2 )
+		struct region *reg1, struct region *reg2,
+		struct partition *pheadp )
 
 	Do report diagnostics and keep count of individual overlaps
 	that are at least as thick as OVERLAP_TOL.
+	Some of this code is from librt/bool.c:rt_defoverlap() for
+	consistency of which region is picked.
+
+	Returns -
+	 0	to eliminate partition with overlap entirely
+	 1	to retain partition in output list, claimed by reg1
+	 2	to retain partition in output list, claimed by reg2
  */
 /*ARGSUSED*/
 STATIC int
-f_Overlap( ap, pp, reg1, reg2 )
-struct application	*ap;
-struct partition	*pp;
-struct region		*reg1, *reg2;
-	{	point_t pt;
-		fastf_t depth = pp->pt_outhit->hit_dist -
-					pp->pt_inhit->hit_dist;
-	if( depth < OVERLAP_TOL )
-		return  1;
-	VJOIN1( pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist,
-		ap->a_ray.r_dir );
-	rt_log( "OVERLAP:\n" );
-	rt_log( "reg=%s isol=%s,\n",
-		reg1->reg_name, pp->pt_inseg->seg_stp->st_name
-		);
-	rt_log( "reg=%s osol=%s,\n",
-		reg2->reg_name, pp->pt_outseg->seg_stp->st_name
-		);
-	rt_log( "depth %.2fmm at (%g,%g,%g) x%d y%d lvl%d purpose=%s\n",
-		depth,
-		pt[X], pt[Y], pt[Z],
-		ap->a_x, ap->a_y, ap->a_level, ap->a_purpose
-		);
-	noverlaps++;
-	return	1;
+f_Overlap( ap, pp, reg1, reg2, pheadp )
+struct application *ap;
+struct partition *pp;
+struct region *reg1, *reg2;
+struct partition *pheadp;
+	{	fastf_t depth;
+		point_t pt;
+#ifdef BRLCAD4_0
+	RT_CHECK_PT(pp);
+#endif
+	depth = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
+	if( depth >= OVERLAP_TOL )
+		{
+		noverlaps++;
+
+		VJOIN1( pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist,
+			ap->a_ray.r_dir );
+		rt_log( "OVERLAP:\n" );
+		rt_log( "reg=%s isol=%s,\n",
+			reg1->reg_name, pp->pt_inseg->seg_stp->st_name
+			);
+		rt_log( "reg=%s osol=%s,\n",
+			reg2->reg_name, pp->pt_outseg->seg_stp->st_name
+			);
+		rt_log( "depth %.2fmm at (%g,%g,%g) x%d y%d lvl%d purpose=%s\n",
+			depth,
+			pt[X], pt[Y], pt[Z],
+			ap->a_x, ap->a_y, ap->a_level, ap->a_purpose
+			);
+		}
+
+	/* Apply heuristics as to which region should claim partition. */
+	if( reg1->reg_aircode != 0 )
+		/* reg1 was air, replace with reg2 */
+		return 2;
+	if( pp->pt_back != pheadp )
+		{ /* Repeat a prev region, if that is a choice */
+		if( pp->pt_back->pt_regionp == reg1 )
+			return 1;
+		if( pp->pt_back->pt_regionp == reg2 )
+			return 2;
+		}
+	/* To provide some consistency from ray to ray, use lowest bit # */
+	if( reg1->reg_bit < reg2->reg_bit )
+		return 1;
+	return 2;
 	}
 
 /*
@@ -337,7 +397,8 @@ f_ShotHit( ap, pt_headp )
 struct application *ap;
 struct partition *pt_headp;
 	{	register struct partition *pp;
-		struct partition	*bp = PT_NULL;
+		struct partition *bp = PT_NULL;
+		fastf_t burstnorm[3]; /* normal at burst point */
 #if DEBUG_GRID
 	rt_log( "f_ShotHit\n" );
 	for( pp = pt_headp->pt_forw; pp != pt_headp; pp = pp->pt_forw )
@@ -489,14 +550,29 @@ struct partition *pt_headp;
 			}				
 		else
 		if( ! Air( regp ) ) /* If we have a component, output it. */
-			{
+			{	fastf_t entrynorm[3];	/* normal at entry */
+				fastf_t exitnorm[3];	/* normal at exit */
+			/* Get entry normal. */
+			getRtHitNorm( pp->pt_inhit, pp->pt_inseg->seg_stp,
+				&ap->a_ray, (bool) pp->pt_inflip, entrynorm );
+			(void) chkEntryNorm( pp, &ap->a_ray, entrynorm,
+				"shotline entry normal" );
+			/* Get exit normal. */
+			getRtHitNorm( pp->pt_outhit, pp->pt_outseg->seg_stp,
+				&ap->a_ray, (bool) pp->pt_outflip, exitnorm );
+			(void) chkExitNorm( pp, &ap->a_ray, exitnorm,
+				"shotline exit normal" );
+
 #if DEBUG_GRID
 			rt_log( "\twe have a component\n" );
 #endif
 			/* In the case of fragmenting munitions, a hit on any
 				component will cause a burst point. */
 			if( bp == PT_NULL && bdist > 0.0 )
+				{
 				bp = pp;	/* register exterior burst */
+				CopyVec( burstnorm, exitnorm );
+				}
 
 			/* If there is a void, output 01 air as space. */
 			if( voidflag )
@@ -508,9 +584,12 @@ struct partition *pt_headp;
 				if(	bp == PT_NULL && ! reqburstair
 				    &&	findIdents( regp->reg_regionid,
 							&armorids ) )
-					/* Bursting on armor/void (ouchh). */
+					{ /* Bursting on armor/void (ouchh). */
 					bp = pp;
-				prntSeg( ap, pp, OUTSIDE_AIR );
+					CopyVec( burstnorm, exitnorm );
+					}
+				prntSeg( ap, pp, OUTSIDE_AIR,
+					entrynorm, exitnorm );
 				}
 			else
 			/* If air expicitly follows, output space code. */
@@ -528,8 +607,12 @@ struct partition *pt_headp;
 				     ||	findIdents( nregp->reg_aircode,
 							&airids ))
 					)
+					{
 					bp = pp; /* register interior burst */
-				prntSeg( ap, pp, nregp->reg_aircode );
+					CopyVec( burstnorm, exitnorm );
+					}
+				prntSeg( ap, pp, nregp->reg_aircode,
+					entrynorm, exitnorm );
 				}
 			else
 			if( np == pt_headp )
@@ -538,7 +621,8 @@ struct partition *pt_headp;
 #if DEBUG_GRID
 				rt_log( "\t\tlast component\n" );
 #endif
-				prntSeg( ap, pp, EXIT_AIR );
+				prntSeg( ap, pp, EXIT_AIR,
+					entrynorm, exitnorm );
 				}
 			else
 			/* No air follows component. */
@@ -559,7 +643,9 @@ struct partition *pt_headp;
 #if DEBUG_GRID
 				rt_log( "\t\tdifferent component follows\n" );
 #endif
-				prntSeg( ap, pp, 0 ); /* component follows */
+				prntSeg( ap, pp, 0,
+					entrynorm, exitnorm );
+					/* component follows */
 				}
 			}
 		/* Check for adjacency of differing airs, implicit or
@@ -621,8 +707,6 @@ struct partition *pt_headp;
 
 	if( bp != PT_NULL )
 		{	fastf_t burstpt[3];
-			register struct hit *ohitp;
-			register struct soltab	*stp;
 		/* This is a burst point, calculate coordinates. */
 		if( bdist > 0.0 )
 			{ /* Exterior burst point (i.e. case-fragmenting
@@ -648,14 +732,135 @@ struct partition *pt_headp;
 		if( nspallrays < 1 )
 			return	true;
 
-		/* fill in hit point and normal */
-		stp = bp->pt_outseg->seg_stp;
-		ohitp = bp->pt_outhit;
-		RT_HIT_NORM( ohitp, stp, &(ap->a_ray) );
-		Check_Oflip( bp, ohitp->hit_normal, ap->a_ray.r_dir );
-		return	burstPoint( ap, ohitp->hit_normal, burstpt );
+		return	burstPoint( ap, burstnorm, burstpt );
 		}
 	return	true;
+	}
+
+/*
+	void getRtHitNorm( struct hit *hitp, struct soltab *stp,
+			struct xray *rayp, bool flipped, fastf_t normvec[3] )
+
+	Fill normal and hit point into hit struct and if the flipped
+	flag is set, reverse the normal.  Return a private copy of the
+	flipped normal in normvec.  NOTE: the normal placed in the hit
+	struct should not be modified (ie reversed) by the application
+	because it can be instanced by other solids.
+ */
+void
+getRtHitNorm( hitp, stp, rayp, flipped, normvec )
+struct hit *hitp;
+struct soltab *stp;
+struct xray *rayp;
+bool flipped;
+fastf_t normvec[3];
+	{
+	RT_HIT_NORM( hitp, stp, rayp );
+	CopyVec( normvec, hitp->hit_normal ); 
+	if( flipped )
+		{
+		ScaleVec( normvec, -1.0 );
+		}
+	}
+
+bool
+chkEntryNorm( pp, rayp, normvec, purpose )
+struct partition *pp;
+struct xray *rayp;
+fastf_t normvec[3];
+char *purpose;
+	{	fastf_t f;
+		static int flipct = 0;
+		static int totalct = 0;
+		struct soltab *stp = pp->pt_inseg->seg_stp;
+		bool ret = true;
+	totalct++;
+	/* Dot product of ray direction with normal *should* be negative. */
+	f = Dot( rayp->r_dir, normvec );
+	if( NearZero( f ) )
+		{
+#ifdef DEBUG
+		rt_log( "chkEntryNorm: near 90 degree obliquity.\n" );
+		rt_log( "\tPnt %g,%g,%g\n\tDir %g,%g,%g\n\tNorm %g,%g,%g.\n",
+			rayp->r_pt[X], rayp->r_pt[Y], rayp->r_pt[Z],
+			rayp->r_dir[X], rayp->r_dir[Y], rayp->r_dir[Z],
+			normvec[X], normvec[Y], normvec[Z] );
+#endif
+		ret = false;
+		}
+	if( f > 0.0 )
+		{
+		flipct++;
+		rt_log( "Fixed flipped entry normal:\n" );
+		rt_log( "\tregion \"%s\" solid \"%s\" type %d \"%s\".\n",
+			pp->pt_regionp->reg_name, stp->st_name,
+			stp->st_id, purpose );
+#ifdef DEBUG
+		rt_log( "\tPnt %g,%g,%g\n\tDir %g,%g,%g\n\tNorm %g,%g,%g.\n",
+			rayp->r_pt[X], rayp->r_pt[Y], rayp->r_pt[Z],
+			rayp->r_dir[X], rayp->r_dir[Y], rayp->r_dir[Z],
+			normvec[X], normvec[Y], normvec[Z] );
+		rt_log( "\tDist %g Hit Pnt %g,%g,%g\n",
+			pp->pt_inhit->hit_dist,
+			pp->pt_inhit->hit_point[X],
+			pp->pt_inhit->hit_point[Y],
+			pp->pt_inhit->hit_point[Z] );
+		rt_log( "\t%d of %d normals flipped.\n", flipct, totalct );
+#endif
+		ScaleVec( normvec, -1.0 );
+		ret = false;
+		}
+	return ret;
+	}
+
+bool
+chkExitNorm( pp, rayp, normvec, purpose )
+struct partition *pp;
+struct xray *rayp;
+fastf_t normvec[3];
+char *purpose;
+	{	fastf_t f;
+		static int flipct = 0;
+		static int totalct = 0;
+		struct soltab *stp = pp->pt_outseg->seg_stp;
+		bool ret = true;
+	totalct++;
+	/* Dot product of ray direction with normal *should* be positive. */
+	f = Dot( rayp->r_dir, normvec );
+	if( NearZero( f ) )
+		{
+#ifdef DEBUG
+		rt_log( "chkExitNorm: near 90 degree obliquity.\n" );
+		rt_log( "\tPnt %g,%g,%g\n\tDir %g,%g,%g\n\tNorm %g,%g,%g.\n",
+			rayp->r_pt[X], rayp->r_pt[Y], rayp->r_pt[Z],
+			rayp->r_dir[X], rayp->r_dir[Y], rayp->r_dir[Z],
+			normvec[X], normvec[Y], normvec[Z] );
+#endif
+		ret = false;
+		}
+	if( f < 0.0 )
+		{
+		flipct++;
+		rt_log( "Fixed flipped exit normal:\n" );
+		rt_log( "\tregion \"%s\" solid \"%s\" type %d \"%s\".\n",
+			pp->pt_regionp->reg_name, stp->st_name,
+			stp->st_id, purpose );
+#ifdef DEBUG
+		rt_log( "\tPnt %g,%g,%g\n\tDir %g,%g,%g\n\tNorm %g,%g,%g.\n",
+			rayp->r_pt[X], rayp->r_pt[Y], rayp->r_pt[Z],
+			rayp->r_dir[X], rayp->r_dir[Y], rayp->r_dir[Z],
+			normvec[X], normvec[Y], normvec[Z] );
+		rt_log( "\tDist %g Hit Pnt %g,%g,%g\n",
+			pp->pt_outhit->hit_dist,
+			pp->pt_outhit->hit_point[X],
+			pp->pt_outhit->hit_point[Y],
+			pp->pt_outhit->hit_point[Z] );
+		rt_log( "\t%d of %d normals flipped.\n", flipct, totalct );
+#endif
+		ScaleVec( normvec, -1.0 );
+		ret = false;
+		}
+	return ret;
 	}
 
 /*
@@ -1139,7 +1344,8 @@ gridShot()
 
 /*
 	void lgtModel( register struct application *ap, struct partition *pp,
-			struct hit *hitp, struct xray *rayp )
+			struct hit *hitp, struct xray *rayp,
+			fastf_t surfnorm[3] )
 
 	This routine is a simple lighting model which places RGB coefficients
 	(0 to 1) in ap->a_color based on the cosine of the angle between
@@ -1149,13 +1355,14 @@ gridShot()
 	space.
  */
 STATIC void
-lgtModel( ap, pp, hitp, rayp )
+lgtModel( ap, pp, hitp, rayp, surfnorm )
 register struct application *ap;
 struct partition *pp;
 struct hit *hitp;
 struct xray *rayp;
+fastf_t surfnorm[3];
 	{	Colors  *colorp;
-		fastf_t intensity = -Dot( viewdir, hitp->hit_normal );
+		fastf_t intensity = -Dot( viewdir, surfnorm );
 	if( intensity < 0.0 )
 		intensity = -intensity;
 
@@ -1174,7 +1381,6 @@ struct xray *rayp;
 		ap->a_color[BLU] = 1.0;
 	ScaleVec( ap->a_color, intensity );
 	ap->a_cumlen = hitp->hit_dist;
-	return;
 	}
 
 /*
