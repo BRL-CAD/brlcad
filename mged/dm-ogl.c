@@ -181,10 +181,10 @@ char *argv[];
   if((dmp = Ogl_open(DM_EVENT_HANDLER_NULL, argc, argv)) == DM_NULL)
     return TCL_ERROR;
 
-  /*XXXX this need to move into Ogl's private structure */
+  /*XXXX this eventually needs to move into Ogl's private structure */
   dmp->dm_vp = &Viewscale;
   dmp->dm_eventHandler = Ogl_doevent;
-  curr_dm_list->s_info->opp = &pathName;
+  curr_dm_list->s_info->opp = &tkName;
   Tk_CreateGenericHandler(Ogl_doevent, (ClientData)DM_TYPE_OGL);
   Ogl_configure_window_shape(dmp);
 
@@ -288,15 +288,15 @@ XEvent *eventPtr;
       if(EDIT_TRAN && mged_variables.edit){
 	vect_t view_pos;
 #if 0
-	view_pos[X] = (mx/(fastf_t)((struct ogl_vars *)dmp->dm_vars)->width
+	view_pos[X] = (mx/(fastf_t)dmp->dm_width
 		       - 0.5) * 2.0;
 #else
 	view_pos[X] = (mx /
-		      (fastf_t)((struct ogl_vars *)dmp->dm_vars)->width - 0.5) /
-	              ((struct ogl_vars *)dmp->dm_vars)->aspect * 2.0; 
+		      (fastf_t)dmp->dm_width - 0.5) /
+	              dmp->dm_aspect * 2.0; 
 #endif
 	view_pos[Y] = (0.5 - my/
-		       (fastf_t)((struct ogl_vars *)dmp->dm_vars)->height) * 2.0;
+		       (fastf_t)dmp->dm_height) * 2.0;
 	view_pos[Z] = 0.0;
 
 	if(state == ST_S_EDIT)
@@ -310,14 +310,14 @@ XEvent *eventPtr;
 
 #if 0
 	fx = (mx - ((struct ogl_vars *)dmp->dm_vars)->omx)/
-	  (fastf_t)((struct ogl_vars *)dmp->dm_vars)->width * 2.0;
+	  (fastf_t)dmp->dm_width * 2.0;
 #else
 	fx = (mx - ((struct ogl_vars *)dmp->dm_vars)->omx) /
-	     (fastf_t)((struct ogl_vars *)dmp->dm_vars)->width /
-	     ((struct ogl_vars *)dmp->dm_vars)->aspect * 2.0;
+	     (fastf_t)dmp->dm_width /
+	     dmp->dm_aspect * 2.0;
 #endif
 	fy = (((struct ogl_vars *)dmp->dm_vars)->omy - my)/
-	  (fastf_t)((struct ogl_vars *)dmp->dm_vars)->height * 2.0;
+	  (fastf_t)dmp->dm_height * 2.0;
 	bu_vls_printf( &cmd, "knob -i aX %f aY %f\n", fx, fy);
       }
 
@@ -325,7 +325,7 @@ XEvent *eventPtr;
     case ALT_MOUSE_MODE_ZOOM:
       bu_vls_printf( &cmd, "knob -i aS %f\n",
 		     (((struct ogl_vars *)dmp->dm_vars)->omy - my)/
-		      (fastf_t)((struct ogl_vars *)dmp->dm_vars)->height);
+		      (fastf_t)dmp->dm_height);
       break;
     }
 
@@ -732,8 +732,25 @@ XEvent *eventPtr;
     goto end;
   }
 #endif
-  else
+  else {
+    /*XXX Hack to prevent Tk from choking on Ctrl-c */
+    if(eventPtr->type == KeyPress && eventPtr->xkey.state & ControlMask){
+      char buffer[1];
+      KeySym keysym;
+
+      XLookupString(&(eventPtr->xkey), buffer, 1,
+		    &keysym, (XComposeStatus *)NULL);
+
+      if(*buffer = 'c'){
+	bu_vls_free(&cmd);
+	curr_dm_list = save_dm_list;
+
+	return TCL_RETURN;
+      }
+    }
+
     goto end;
+  }
 
   status = Tcl_Eval(interp, bu_vls_addr(&cmd));
 end:
@@ -879,6 +896,7 @@ end:
       bu_vls_printf(&vls, "M %s %d %d", argv[2], x, y);
       status = Tcl_Eval(interp, bu_vls_addr(&vls));
       mged_variables.show_menu = old_show_menu;
+      bu_vls_free(&vls);
 
       return status;
     }
@@ -913,15 +931,15 @@ end:
 
 #if 0
 	  view_pos[X] = (((struct ogl_vars *)dmp->dm_vars)->omx /
-			 (fastf_t)((struct ogl_vars *)dmp->dm_vars)->width -
+			 (fastf_t)dmp->dm_width -
 			 0.5) * 2.0;
 #else
 	  view_pos[X] = (((struct ogl_vars *)dmp->dm_vars)->omx /
-			(fastf_t)((struct ogl_vars *)dmp->dm_vars)->width - 0.5) /
-	                ((struct ogl_vars *)dmp->dm_vars)->aspect * 2.0;
+			(fastf_t)dmp->dm_width - 0.5) /
+	                dmp->dm_aspect * 2.0;
 #endif
 	  view_pos[Y] = (0.5 - ((struct ogl_vars *)dmp->dm_vars)->omy /
-			 (fastf_t)((struct ogl_vars *)dmp->dm_vars)->height) * 2.0;
+			 (fastf_t)dmp->dm_height) * 2.0;
 	  view_pos[Z] = 0.0;
 
 	  if(state == ST_S_EDIT)
