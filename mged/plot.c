@@ -64,6 +64,7 @@ f_plot()
 	int nvec;
 	int Three_D;			/* 0=2-D -vs- 1=3-D */
 	int Z_clip;			/* Z clipping */
+	int Dashing;			/* linetype is dashed */
 	char **argv;
 	char buf[128];
 
@@ -142,7 +143,16 @@ f_plot()
 	else
 		up_space( -2048, -2048, 2048, 2048 );
 	up_erase();
+	Dashing = 0;
+	up_linemod("solid");
 	FOR_ALL_SOLIDS( sp )  {
+		if( Dashing != sp->s_soldash )  {
+			if( sp->s_soldash )
+				up_linemod("dotdashed");
+			else
+				up_linemod("solid");
+			Dashing = sp->s_soldash;
+		}
 		nvec = sp->s_vlen;
 		for( vp = sp->s_vlist; nvec-- > 0; vp++ )  {
 			if( vp->vl_pen == PEN_UP )  {
@@ -166,18 +176,18 @@ f_plot()
 						mp->mt_g,
 						mp->mt_b );
 				up_line3(
-					(int)( start[X] * 2048 ),
-					(int)( start[Y] * 2048 ),
-					(int)( start[Z] * 2048 ),
-					(int)( fin[X] * 2048 ),
-					(int)( fin[Y] * 2048 ),
-					(int)( fin[Z] * 2048 ) );
+					(int)( start[X] * 2047 ),
+					(int)( start[Y] * 2047 ),
+					(int)( start[Z] * 2047 ),
+					(int)( fin[X] * 2047 ),
+					(int)( fin[Y] * 2047 ),
+					(int)( fin[Z] * 2047 ) );
 			}  else
 				up_line(
-					(int)( start[0] * 2048 ),
-					(int)( start[1] * 2048 ),
-					(int)( fin[0] * 2048 ),
-					(int)( fin[1] * 2048 ) );
+					(int)( start[0] * 2047 ),
+					(int)( start[1] * 2047 ),
+					(int)( fin[0] * 2047 ),
+					(int)( fin[1] * 2047 ) );
 		}
 	}
 	if( cmd_args[1][0] == '|' )
