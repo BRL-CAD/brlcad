@@ -303,14 +303,71 @@ struct seg		*seghead;
 		 * presence of this solid known.  There may be something
 		 * better we can do.
 		 */
-		hits[nhits] = hits[nhits-1];	/* struct copy */
-		VREVERSE( hits[nhits].hit_normal, hits[nhits-1].hit_normal );
-		nhits++;
+
 		if( nerrors++ < 6 )  {
-			rt_log("rt_pg_shot(%s): %d hits: ", stp->st_name, nhits-1);
+			rt_log("rt_pg_shot(%s): WARNING %d hits:\n", stp->st_name, nhits);
 			for(i=0; i < nhits; i++ )
-				rt_log("%f, ", hits[i].hit_dist );
-			rt_log("\n");
+			{
+				if( VDOT( rp->r_dir, hits[i].hit_normal ) < 0.0 )
+					rt_log("\tentrance at %f\n", hits[i].hit_dist );
+				else
+					rt_log("\texit at %f\n", hits[i].hit_dist );
+			}
+		}
+
+		if( nhits > 2 )
+		{
+			fastf_t dot1,dot2;
+			int j;
+
+			/* likely an extra hit,
+			 * look for consecutive entrances or exits */
+
+			dot2 = 1.0;
+			i = 0;
+			while( i<nhits )
+			{
+				dot1 = dot2;
+				dot2 = VDOT( rp->r_dir, hits[i].hit_normal );
+				if( dot1 > 0.0 && dot2 > 0.0 )
+				{
+					/* two consectutive exits,
+					 * manufacture an entrance at same distance
+					 * as second exit.
+					 */
+					for( j=nhits ; j>i ; j-- )
+						hits[j] = hits[j-1];	/* struct copy */
+
+					VREVERSE( hits[i].hit_normal, hits[i].hit_normal );
+					dot2 = VDOT( rp->r_dir, hits[i].hit_normal );
+					nhits++;
+					rt_log( "\t\tadding fictitious entry at %f\n", hits[i].hit_dist );
+				}
+				else if( dot1 < 0.0 && dot2 < 0.0 )
+				{
+					/* two consectutive entrances,
+					 * manufacture an exit between them.
+					 */
+
+					for( j=nhits ; j>i ; j-- )
+						hits[j] = hits[j-1];	/* struct copy */
+
+					hits[i] = hits[i-1];	/* struct copy */
+					VREVERSE( hits[i].hit_normal, hits[i-1].hit_normal );
+					dot2 = VDOT( rp->r_dir, hits[i].hit_normal );
+					nhits++;
+					rt_log( "\t\tadding fictitious exit at %f\n", hits[i].hit_dist );
+				}
+				i++;
+			}
+
+		}
+		else
+		{
+			hits[nhits] = hits[nhits-1];	/* struct copy */
+			VREVERSE( hits[nhits].hit_normal, hits[nhits-1].hit_normal );
+			nhits++;
+			rt_log( "\t\tadding fictitious hit at %f\n", hits[i].hit_dist );
 		}
 	}
 
