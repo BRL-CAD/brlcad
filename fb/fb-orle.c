@@ -34,7 +34,7 @@ static char	*usage[] = {
 
 static FBIO	*fbp;
 static FILE	*fp = stdout;
-static Pixel	bgpixel = { 0, 0, 0, 0 };
+static RGBpixel	bgpixel;
 static int	bgflag = 1;
 static int	ncolors = 3;
 static int	cmflag = 1;
@@ -50,7 +50,7 @@ main( argc, argv )
 int	argc;
 char	*argv[];
 {
-	static Pixel	scan_buf[1024];
+	static RGBpixel	scan_buf[1024];
 	static ColorMap	cmap;
 	register int	y;
 	register int	y_end;
@@ -81,7 +81,7 @@ char	*argv[];
 
 	/* Acquire "background" pixel from special location */
 	if(	bgflag
-	    &&	fb_read( fbp, 1, 1, &bgpixel, 1 ) == -1
+	    &&	fb_read( fbp, 1, 1, bgpixel, 1 ) == -1
 	    )
 	{
 		(void) fprintf( stderr, "Couldn't read background!\n" );
@@ -90,11 +90,11 @@ char	*argv[];
 	if( bgflag && rle_verbose )
 		(void) fprintf( stderr,
 		"Background saved as %d %d %d\n",
-		bgpixel.red, bgpixel.green, bgpixel.blue
+		bgpixel[RED], bgpixel[GRN], bgpixel[BLU]
 		    );
 
 	/* Write RLE header */
-	if( rle_whdr( fp, ncolors, bgflag, cmflag, &bgpixel ) == -1 )
+	if( rle_whdr( fp, ncolors, bgflag, cmflag, bgpixel ) == -1 )
 		return	1;
 
 	/* Follow RLE header with colormap */
@@ -243,15 +243,15 @@ prntUsage()
 /*	d o _ C r u n c h ( )						*/
 static void
 do_Crunch( scan_buf, pixel_ct, cmap )
-register Pixel		*scan_buf;
+register RGBpixel	*scan_buf;
 register int		pixel_ct;
 register ColorMap	*cmap;
 {
 	for( ; pixel_ct > 0; pixel_ct--, scan_buf++ )
 	{
-		scan_buf->red = cmap->cm_red[scan_buf->red]>>8;
-		scan_buf->green = cmap->cm_green[scan_buf->green]>>8;
-		scan_buf->blue = cmap->cm_blue[scan_buf->blue]>>8;
+		(*scan_buf)[RED] = cmap->cm_red[(*scan_buf)[RED]]>>8;
+		(*scan_buf)[GRN] = cmap->cm_green[(*scan_buf)[GRN]]>>8;
+		(*scan_buf)[BLU] = cmap->cm_blue[(*scan_buf)[BLU]]>>8;
 	}
 	return;
 }
