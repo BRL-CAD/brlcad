@@ -55,6 +55,9 @@ rt_vlblock_init()
 	struct rt_vlblock *vbp;
 	int	i;
 
+	if (RT_LIST_UNINITIALIZED( &rt_g.rtg_vlfree ))
+		RT_LIST_INIT( &rt_g.rtg_vlfree );
+
 	GETSTRUCT( vbp, rt_vlblock );
 	vbp->magic = RT_VLBLOCK_MAGIC;
 	vbp->max = 32;
@@ -80,6 +83,7 @@ struct rt_vlblock *vbp;
 {
 	int	i;
 
+	RT_CK_VLBLOCK(vbp);
 	for( i=0; i < vbp->nused; i++ )  {
 		/* Release any remaining vlist storage */
 		if( vbp->rgb[i] == 0 )  continue;
@@ -99,6 +103,8 @@ int	r, g, b;
 {
 	long	new;
 	int	n;
+
+	RT_CK_VLBLOCK(vbp);
 
 	new = ((r&0xFF)<<16)|((g&0xFF)<<8)|(b&0xFF);
 
@@ -133,6 +139,8 @@ FILE			*fp;
 CONST struct rt_vlblock	*vbp;
 {
 	int	i;
+
+	RT_CK_VLBLOCK(vbp);
 
 	for( i=0; i < vbp->nused; i++ )  {
 		if( vbp->rgb[i] == 0 )  continue;
@@ -938,6 +946,7 @@ long				*tab;
 	static char label[128];
 	struct rt_list	*vh;
 
+	RT_CK_VLBLOCK(vbp);
 	NMG_CK_VERTEX(v);
 	NMG_INDEX_RETURN_IF_SET_ELSE_SET( tab, v->index );
 
@@ -972,6 +981,7 @@ int			fancy;
 	vect_t v;
 	struct rt_list	*vh;
 
+	RT_CK_VLBLOCK(vbp);
 	NMG_CK_EDGE(e);
 	NMG_INDEX_RETURN_IF_SET_ELSE_SET( tab, e->index );
 	
@@ -1019,6 +1029,7 @@ int				fancy;
 	point_t	last_tip;
 	struct rt_list	*vh;
 
+	RT_CK_VLBLOCK(vbp);
 	NMG_CK_EDGEUSE(eu);
 	NMG_INDEX_RETURN_IF_SET_ELSE_SET( tab, eu->index );
 
@@ -1085,6 +1096,7 @@ long				*tab;
 {
 	register CONST struct edgeuse	*eu;
 
+	RT_CK_VLBLOCK(vbp);
 	orig_eu = orig_eu->eumate_p;
 
 	eu = orig_eu;
@@ -1111,6 +1123,7 @@ int			fancy;
 	long		magic1;
 	struct vertexuse *vu;
 
+	RT_CK_VLBLOCK(vbp);
 	NMG_CK_LOOPUSE(lu);
 	NMG_INDEX_RETURN_IF_SET_ELSE_SET( tab, lu->index );
 
@@ -1139,6 +1152,7 @@ int			fancy;
 {
 	struct loopuse *lu;
 
+	RT_CK_VLBLOCK(vbp);
 	NMG_CK_FACEUSE(fu);
 	NMG_INDEX_RETURN_IF_SET_ELSE_SET( tab, fu->index );
 
@@ -1168,6 +1182,7 @@ int			fancy;
 	struct model	*m;
 	long		*tab;
 
+	RT_CK_VLBLOCK(vbp);
 	NMG_CK_SHELL(s);
 	m = s->r_p->m_p;
 	NMG_CK_MODEL(m);
@@ -1220,6 +1235,7 @@ int			fancy;
 {
 	struct shell *s;
 
+	RT_CK_VLBLOCK(vbp);
 	for( RT_LIST_FOR( s, shell, &r->s_hd ) )  {
 		nmg_vlblock_s(vbp, s, fancy);
 	}
@@ -1236,6 +1252,7 @@ int			fancy;
 {
 	struct nmgregion *r;
 
+	RT_CK_VLBLOCK(vbp);
 	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )  {
 		nmg_vlblock_r(vbp, r, fancy);
 	}
