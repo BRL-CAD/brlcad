@@ -65,6 +65,7 @@ read_data( )
 
 	int             data_type;
 	int             sphere_id;
+	point_t		center;
 	float           x, y, z;
 	float           sphere_radius;
 	int             atom_type;
@@ -95,7 +96,8 @@ read_data( )
 		        scanf("%f", &z);
 		        scanf("%f", &sphere_radius);
 		        scanf("%d", &atom_type);
-			process_sphere(sphere_id, x,y,z, sphere_radius,
+			VSET( center, x, y, z );
+			process_sphere(sphere_id, center, sphere_radius,
 				atom_type);
 			break;
 		case (2):
@@ -110,10 +112,11 @@ read_data( )
 }
 
 
-process_sphere(id, x, y, z, rad, sph_type)
-int id;
-float x, y, z, rad;
-int sph_type;
+process_sphere(id, center, rad, sph_type)
+int	id;
+point_t	center;
+double	rad;
+int	sph_type;
 {
 	struct sphere * new = (struct sphere *)
 	    malloc( sizeof ( struct sphere) );
@@ -129,16 +132,14 @@ int sph_type;
 
 	sprintf(nm, "SPH.%d", id );
 	sprintf(nm1, "sph.%d", id );
-	mk_sph( stdout, nm1, x, y, z, rad );
+	mk_sph( stdout, nm1, center, rad );
 	mk_mcomb( stdout, nm, 1, 1, matname, matparm, 1, rgb );
-	mk_memb( stdout, UNION, nm1, m);
+	mk_memb( stdout, nm1, m, UNION);
 
 	new->next = ( struct sphere *)0;
 	new->s_id = id;
 	NAMEMOVE(nm1, new->s_name);
-	new->s_center[0] = x;
-	new->s_center[1] = y;
-	new->s_center[2] = z;
+	VMOVE( new->s_center, center );
 	new->s_rad = rad;
 	new->s_atom_type = sph_type;
 
@@ -191,8 +192,8 @@ int sp1, sp2;
 	mk_rcc( stdout, nm, base, height, 5.0 );
 
 	mk_mcomb( stdout, nm1, 3, 1, matname, matparm, 1, rgb);
-	mk_memb( stdout, UNION, nm, m);
-	mk_memb( stdout, SUBTRACT, s1->s_name, m);
-	mk_memb( stdout, SUBTRACT, s2->s_name, m);
+	mk_memb( stdout, nm, m, UNION);
+	mk_memb( stdout, s1->s_name, m, SUBTRACT);
+	mk_memb( stdout, s2->s_name, m, SUBTRACT);
 
 }

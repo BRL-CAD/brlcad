@@ -166,19 +166,19 @@ int	level;
 
 	mat_idn( m );
 	sprintf(nm, "%sL", name);
-	mk_memb( stdout, UNION, leafp, m );
+	mk_memb( stdout, leafp, m, UNION );
 
 	MAT_DELTAS( m, 1*scale, 0, 0 );
 	sprintf(nm, "%sR", name);
-	mk_memb( stdout, UNION, leafp, m );
+	mk_memb( stdout, leafp, m, UNION );
 
 	MAT_DELTAS( m, 0.5*scale, sin60*scale, 0 );
 	sprintf(nm, "%sB", name);
-	mk_memb( stdout, UNION, leafp, m );
+	mk_memb( stdout, leafp, m, UNION );
 
 	MAT_DELTAS( m, 0.5*scale, sin60/3*scale, sin60*scale );
 	sprintf(nm, "%sT", name);
-	mk_memb( stdout, UNION, leafp, m );
+	mk_memb( stdout, leafp, m, UNION );
 
 	/* Loop for children if level > 1 */
 	if( level <= 1 )
