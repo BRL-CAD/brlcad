@@ -590,7 +590,13 @@ char line[MAX_LINE_LEN];
 
 			brlcad_name = Get_unique_name( name , obj , ASSEMBLY_TYPE );
 			if( debug )
+			{
+				struct wmember *wp;
+
 				rt_log( "\tmake assembly ( %s)\n" , brlcad_name );
+				for( RT_LIST_FOR( wp, wmember, &head.l ) )
+					rt_log( "\t%c %s\n", wp->wm_op, wp->wm_name );
+			}
 			mk_lcomb( fd_out , brlcad_name , &head , 0 ,
 			(char *)NULL , (char *)NULL , (unsigned char *)NULL , 0 );
 			break;
@@ -693,6 +699,7 @@ char line[MAX_LINE_LEN];
 	if( strncmp( &line[start] , "solid" , 5 ) )
 	{
 		rt_log( "Convert_part: Called for non-part\n%s\n" , line );
+		nmg_tbl( &faces, TBL_FREE, (long *)NULL );
 		return;
 	}
 
@@ -779,6 +786,7 @@ char line[MAX_LINE_LEN];
 					}
 					VSET( verts[vert_no].pt , x , y , z );
 					vert_no++;
+
 				}
 				else
 					rt_log( "Unrecognized line: %s\n", line1 );
@@ -833,7 +841,8 @@ char line[MAX_LINE_LEN];
 
 		rt_log( "\t%s has no solid parts, ignoring\n" , name );
 		save_name = (char *)rt_malloc( NAMESIZE*sizeof( char ), "proe-g: save_name" );
-		NAMEMOVE( name, save_name );
+		brlcad_name = Get_unique_name( name , obj , PART_TYPE );
+		NAMEMOVE( brlcad_name, save_name );
 		nmg_tbl( &null_parts, TBL_INS, (long *)save_name );
 		nmg_tbl( &faces, TBL_FREE, (long *)NULL );
 		nmg_km( m );
@@ -936,8 +945,20 @@ Rm_nulls()
 	if( dbip == DBI_NULL )
 	{
 		rt_log( "Cannot db_open %s\n", brlcad_file );
-		rt_log( "References to NULL pat not removed\n" );
+		rt_log( "References to NULL parts not removed\n" );
 		return;
+	}
+
+	if( debug )
+	{
+		rt_log( "Deleting references to the following null parts:\n" );
+		for( i=0 ; i<NMG_TBL_END( &null_parts ) ; i++ )
+		{
+			char *save_name;
+
+			save_name = (char *)NMG_TBL_GET( &null_parts, i );
+			rt_log( "\t%s\n" , save_name );
+		}
 	}
 
 	db_scan(dbip, (int (*)())db_diradd, 1);
@@ -954,13 +975,13 @@ Rm_nulls()
 			if( dp->d_flags & DIR_SOLID )
 				continue;
 
+top:
 			if( (rp=db_getmrec( dbip , dp )) == (union record *)0 )
 			{
 				rt_log( "Cannot get records for combination %s\n" , dp->d_namep );
 				continue;
 			}
 
-top:
 			for( j=1; j<dp->d_len; j++ )
 			{
 				int k;
@@ -980,6 +1001,9 @@ top:
 				if( found )
 				{
 					/* This is a NULL part, delete the reference */
+					if( debug )
+						rt_log( "Deleting reference to null part (%s) from combination %s\n",
+							rp[j].M.m_instname, dp->d_namep );
 					if( db_delrec( dbip, dp, j ) < 0 )
 					{
 						rt_log( "Error in deleting reference to null part (%s)\n", rp[j].M.m_instname );
@@ -987,9 +1011,12 @@ top:
 						rt_log( "references to NULL parts (just a nuisance)\n" );
 						exit( 1 );
 					}
+					rt_free( (char *)rp, "Rm_nulls: rp" );
 					goto top;
 				}
 			}
+
+			rt_free( (char *)rp, "Rm_nulls: rp" );
 		}
 	}
 	db_close( dbip );
