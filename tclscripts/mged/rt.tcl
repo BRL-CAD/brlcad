@@ -196,7 +196,7 @@ tied to the GUI." } }
     if {[info exists env(FB_FILE)] && $env(FB_FILE) != ""} {
 	$top.destMB.menu add command -label "$env(FB_FILE)"\
 		-command "rt_cook_dest $id $env(FB_FILE)"
-	hoc_register_menu_data "Destination" "$env(FB_FILE)" "Destination - $env(FBFILE)"\
+	hoc_register_menu_data "Destination" "$env(FB_FILE)" "Destination - $env(FB_FILE)"\
 		{ { summary "Set the destination to the specified framebuffer." } }
     }
 
@@ -442,6 +442,10 @@ if { 1 } {
 	append rt_cmd " -l$rt_control($id,lmodel)"
     }
 
+    if {$rt_control($id,other) != ""} {
+	append rt_cmd " $rt_control($id,other)"
+    }
+
     if {!$fb_all} {
 	set pos [rset rb pos]
 	set xmin [lindex $pos 0]
@@ -665,6 +669,12 @@ showing the inverse radius of curvature." } }
 	    { { summary "This is a curvature debugging display,
 showing the principal direction vector." } }
 
+    set hoc_data { { summary "A place to specify other rt options." } }
+    label $top.otherL -text "Other" -anchor e
+    hoc_register_data $top.otherL "Other" $hoc_data
+    entry $top.otherE -relief sunken -bd 2 -width 2 -textvar rt_control($id,other)
+    hoc_register_data $top.otherE "Other" $hoc_data
+
     button $top.dismissB -relief raised -text "Dismiss" \
 	    -command "catch { destroy $top }"
     hoc_register_data $top.dismissB "Dismiss"\
@@ -674,6 +684,7 @@ showing the principal direction vector." } }
     grid $top.hsampleL $top.hsampleE -sticky nsew -pady 1 -in $top.gridF1
     grid $top.jitterL $top.jitterMB -sticky nsew -pady 1 -in $top.gridF1
     grid $top.lmodelL $top.lmodelMB -sticky nsew -pady 1 -in $top.gridF1
+    grid $top.otherL $top.otherE -sticky nsew -pady 1 -in $top.gridF1
     grid columnconfigure $top.gridF1 1 -weight 1
     grid rowconfigure $top.gridF1 0 -weight 1
     grid rowconfigure $top.gridF1 1 -weight 1
@@ -997,6 +1008,7 @@ proc rt_init_vars { id win } {
 	set rt_control($id,jitterTitle) "None"
 	set rt_control($id,lmodel) 0
 	set rt_control($id,lmodelTitle) "Full"
+	set rt_control($id,other) {}
 
 	# set widget padding
 	set rt_control($id,padx) 4
