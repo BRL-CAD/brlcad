@@ -348,8 +348,21 @@ or
 .TP
 .B \-X#
 Turns on the
-.I rt (1)
+.IR rt (1)
 program debugging flags.  See rt/rdebug.h for the meaning of these bits.
+.TP
+.B \-!#
+Turns on the
+.IR libbu (3)
+library debugging flags.  See h/bu.h for the meaning of these bits.
+In particular, specifying
+.B \-!1
+will cause
+.I bu_bomb()
+to dump core, rather than logging the error and exiting.
+This is useful with
+.IR dbx (1)
+for debugging.
 .PP
 The
 .B rt
