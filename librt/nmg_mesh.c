@@ -235,12 +235,6 @@ CONST struct rt_tol	*tol;
 	    eu1->eumate_p->vu_p->v_p->vg_p->coord, tol ) )
 		rt_bomb("nmg_radial_join_eu(): 0 length edge (geometry)\n");
 
-	/* XXX It would be nice if there was a convention for where to include these guys, but... */
-	if( *eu1->up.magic_p != NMG_LOOPUSE_MAGIC )
-		rt_bomb("nmg_radial_join_eu() eu1 not part of a loopuse\n");
-	if( *eu2->up.magic_p != NMG_LOOPUSE_MAGIC )
-		rt_bomb("nmg_radial_join_eu() eu2 not part of a loopuse\n");
-
 	/*  Construct local coordinate system for this edge,
 	 *  so all angles can be measured relative to a common reference.
 	 */
@@ -277,9 +271,9 @@ CONST struct rt_tol	*tol;
 
 			abs1 = abs2 = absr = -rt_twopi;
 
-			fu1 = eu1->up.lu_p->up.fu_p;
-			fu2 = eu2->up.lu_p->up.fu_p;
-			fur = eu1->radial_p->up.lu_p->up.fu_p;
+			fu1 = nmg_find_fu_of_eu(eu1);
+			fu2 = nmg_find_fu_of_eu(eu2);
+			fur = nmg_find-fu_of_eu(eu1->radial_p);
 			NMG_CK_FACEUSE(fu1);
 			NMG_CK_FACEUSE(fu2);
 			NMG_CK_FACEUSE(fur);
@@ -297,6 +291,32 @@ CONST struct rt_tol	*tol;
 					absr*rt_radtodeg );
 			}
 
+			/* If abs1 == absr, warn about unfused faces, and skip. */
+			if( NEAR_ZERO( abs1-absr, 1.0e-8 ) )  {
+				if( fu1->f_p->fg_p == fur->f_p->fg_p )  {
+					/* abs1 == absr, faces are fused, don't insert here. */
+					if (rt_g.NMG_debug & DEBUG_MESH_EU )  {
+						rt_log("fu1 and fur share face geometry x%x (flip1=%d, flip2=%d), skip\n",
+							fu1->f_p->fg_p, fu1->f_p->flip, fur->f_p->flip );
+					}
+					goto cont;
+				}
+
+				rt_log("nmg_radial_join_eu: WARNING 2 faces should have been fused, may be ambiguous.\n  abs1=%e, absr=%e, asb2=%e\n",
+					abs1*rt_radtodeg, absr*rt_radtodeg, abs2*rt_radtodeg);
+				rt_log("  fu1=x%x, f1=x%x, f1->flip=%d, fg1=x%x\n",
+					fu1, fu1->f_p, fu1->f_p->flip, fu1->f_p->fg_p );
+				rt_log("  fu2=x%x, f2=x%x, f2->flip=%d, fg2=x%x\n",
+					fu2, fu2->f_p, fu2->f_p->flip, fu2->f_p->fg_p );
+				rt_log("  fur=x%x, fr=x%x, fr->flip=%d, fgr=x%x\n",
+					fur, fur->f_p, fur->f_p->flip, fur->f_p->fg_p );
+				PLPRINT("  fu1", fu1->f_p->fg_p->N );
+				PLPRINT("  fu2", fu2->f_p->fg_p->N );
+				PLPRINT("  fur", fur->f_p->fg_p->N );
+				rt_log("  skipping\n");
+				goto cont;
+			}
+
 			/*
 			 *  If abs1 < abs2 < absr
 			 *  (taking into account 360 wrap),
@@ -306,7 +326,15 @@ CONST struct rt_tol	*tol;
 			code = nmg_is_angle_in_wedge( abs1, absr, abs2 );
 			if (rt_g.NMG_debug & DEBUG_MESH_EU )
 				rt_log("    code=%d %s\n", code, (code!=0)?"INSERT_HERE":"skip");
-			if( code != 0 )  break;
+			if( code > 0 )  break;
+			if( code == -1 )  {
+				/* absr == abs2 */
+				break;
+			}
+			if( code <= -2 )  {
+				/* abs1 == abs2 */
+				break;
+			}
 
 cont:
 			if( iteration2 > 9997 )  rt_g.NMG_debug |= DEBUG_MESH_EU;
@@ -320,26 +348,6 @@ cont:
 		}
 		if(iteration2 >= 10000)  {
 			rt_bomb("nmg_radial_join_eu: infinite loop (2)\n");
-		}
-		/*
-		 *  XXX If abs1 == absr within a very tight tolerance,
-		 *  then it's necessary to be sure that the face gets
-		 *  interted on the proper side of eu1.
-		 *  Really, these two faces should be fused together here
-		 *  (or somewhere).
-		 */
-		if( code < 0 ) {
-			struct faceuse	*fu1, *fu2;
-			fu1 = eu1->up.lu_p->up.fu_p;
-			fu2 = eu2->up.lu_p->up.fu_p;
-			NMG_CK_FACEUSE(fu1);
-			NMG_CK_FACEUSE(fu2);
-/* XXX This check should be done before nmg_angle_in_wedge() call above. */
-			if( fu1->f_p->fg_p == fu2->f_p->fg_p )  {
-				rt_log("nmg_radial_join_eu: NOTICE: 2 faces already share geometry,  horay!\n");
-			} else {
-				rt_log("nmg_radial_join_eu: WARNING 2 faces should have been fused, may be ambiguous. abs1=%e, absr=%e, asb2=%e\n", abs1*rt_radtodeg, absr*rt_radtodeg, abs2*rt_radtodeg);
-			}
 		}
 
 		/* find the next use of the edge eu2 is on.  If eu2 and it's
