@@ -1,0 +1,28 @@
+/*
+ *			librtserver/Cakefile
+ */
+#define SRCDIR	librtserver
+#define PRODUCTS	librtserver.ARCH_SUF
+#define	SRCSUFF	.c
+#define MANSECTION	3
+
+#include "../Cakefile.defs"
+
+#if defined(RESOLVE_LIBRARIES)
+#	define EXTRA_OBJ_NO_DEPENDENCY -lc -lm -brtl -L../.libbu.sp3 -lbu -L../.libbn.sp3 -lbn -L../.libtcl8.4.sp3 -ltcl8.4
+#endif
+
+#define FILES	librtserver
+
+/* Oddly, this line needs to be present to keep IBM AIX cpp happy. */
+#ifdef FAST_SQRT
+#	define	EXTRA_OBJ	FAST_SQRT
+#else
+#	define	EXTRA_OBJ	/**/
+#endif
+
+#define VERSION_VARIABLE	rtserver_version
+#define LIBRARY_TITLE		"The BRL-CAD Ray-Tracing Server library"
+
+#include "../Cakefile.lib"
+#include "../Cakefile.rules"
