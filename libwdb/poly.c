@@ -34,28 +34,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "wdb.h"
 
 /*
- *			M K _ I D
- *
- *  Make a database header (ID) record.
- */
-int
-mk_id( fp, title )
-FILE	*fp;
-char	*title;
-{
-	union record rec;
-
-	bzero( (char *)&rec, sizeof(rec) );
-	rec.i.i_id = ID_IDENT;
-	rec.i.i_units = ID_MM_UNIT;
-	strncpy( rec.i.i_version, ID_VERSION, sizeof(rec.i.i_version) );
-	strncpy( rec.i.i_title, title, sizeof(rec.i.i_title) );
-	if( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1 )
-		return(-1);
-	return(0);
-}
-
-/*
  *			M K _ P O L Y S O L I D
  *
  *  Make the header record for a polygon solid.
