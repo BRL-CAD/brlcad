@@ -2,7 +2,8 @@
  *				D B _ O B J . C
  *
  * A database object contains the attributes and
- * methods for controlling BRLCAD databases.
+ * methods for controlling a BRLCAD database. Much
+ * of this code was borrowed from MGED.
  * 
  * Source -
  *	SLAD CAD Team
@@ -49,6 +50,7 @@ HIDDEN int dbo_dbip_tcl();
 HIDDEN int dbo_ls_tcl();
 HIDDEN int dbo_draw_tcl();
 HIDDEN int dbo_headSolid_tcl();
+HIDDEN int dbo_close_tcl();
 #if 0
 HIDDEN int dbo_slist_tcl();
 HIDDEN int dbo_vlist_tcl();
@@ -78,6 +80,7 @@ HIDDEN struct cmdtab dbo_cmds[] = {
        "ls",			dbo_ls_tcl,
        "draw",			dbo_draw_tcl,
        "headSolid",		dbo_headSolid_tcl,
+       "close",			dbo_close_tcl,
        (char *)0,		(int (*)())0
 };
 
@@ -131,20 +134,69 @@ Tcl_Interp *interp;
  */
 HIDDEN void
 dbo_deleteProc(clientData)
-ClientData clientData;
+     ClientData clientData;
 {
-  struct db_obj *dbop = (struct db_obj *)clientData;
+	struct db_obj *dbop = (struct db_obj *)clientData;
 
-  bu_vls_free(&dbop->dbo_name);
+	bu_log("dbo_deleteProc\n");
 
-  RT_CK_WDB(dbop->dbo_wp);
-  wdb_close(dbop->dbo_wp);
+	bu_vls_free(&dbop->dbo_name);
 
-  RT_CK_DBI(dbop->dbo_ip);
-  db_close(dbop->dbo_ip);
+	RT_CK_WDB(dbop->dbo_wp);
+	wdb_close(dbop->dbo_wp);
 
-  BU_LIST_DEQUEUE(&dbop->l);
-  bu_free((genptr_t)dbop, "dbo_deleteProc: dbop");
+	RT_CK_DBI(dbop->dbo_ip);
+	db_close(dbop->dbo_ip);
+
+	BU_LIST_DEQUEUE(&dbop->l);
+	bu_free((genptr_t)dbop, "dbo_deleteProc: dbop");
+}
+
+/*
+ * Close a BRLCAD database object.
+ *
+ * USAGE:
+ *	  dbo_close name
+ *	  procname close
+ */
+HIDDEN int
+dbo_close_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
+{
+	struct bu_vls vls;
+	struct db_obj *dbop = (struct db_obj *)clientData;
+
+	if (argc != 2) {
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib dbo_close");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+#if 0
+	/* check to see if database object exists */
+	for (BU_LIST_FOR(dbop, db_obj, &HeadDBObj.l)) {
+		/* found it */
+		if (strcmp(argv[1],bu_vls_addr(&dbop->dbo_name)) == 0) {
+			Tcl_DeleteCommand(interp, bu_vls_addr(&dbop->dbo_name));
+			dbo_deleteProc(clientData);
+			return TCL_OK;
+		}
+	}
+
+	Tcl_AppendResult(interp, "dbo_close: ", argv[1],
+			 " does not exist.\n", (char *)NULL);
+	return TCL_ERROR;
+#else
+	/* Among other things, this will call dbo_deleteProc. */
+	Tcl_DeleteCommand(interp, bu_vls_addr(&dbop->dbo_name));
+
+	return TCL_OK;
+#endif
 }
 
 /*
@@ -182,6 +234,8 @@ char    **argv;
     return TCL_ERROR;
   }
 
+  /*XXX Leaving this commented out allows us to redefine an object. */
+#if 0
   /* check to see if database object exists */
   for (BU_LIST_FOR(dbop, db_obj, &HeadDBObj.l)) {
     if (strcmp(argv[1],bu_vls_addr(&dbop->dbo_name)) == 0) {
@@ -190,6 +244,7 @@ char    **argv;
       return TCL_ERROR;
     }
   }
+#endif
 
   /* open database */
   if (((dbip = db_open(argv[2], "r+w")) == DBI_NULL ) &&
@@ -218,17 +273,6 @@ char    **argv;
   /* --- Scan geometry database and build in-memory directory --- */
   db_scan(dbip, (int (*)())db_diradd, 1);
 
-#if 0
-  bu_vls_strcpy(&vls, "wdb_open db%d disk %lu", ++count, dbip);
-  if (Tcl_Eval(interp, bu_vls_addr(&vls)) != TCL_OK) {
-    bu_vls_printf(&vls, "%s\n%s\n",
-		  interp->result,
-		  Tcl_GetVar(interp,"errorInfo", TCL_GLOBAL_ONLY));
-    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
-#else
   wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
 
   if (wdbp == RT_WDB_NULL) {
@@ -238,7 +282,6 @@ char    **argv;
     bu_vls_free(&vls);
     return TCL_ERROR;
   }
-#endif
 
   /* acquire db_obj struct */
   BU_GETSTRUCT(dbop,db_obj);
