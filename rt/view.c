@@ -588,6 +588,11 @@ struct rt_i	*rtip;
 			}
 			/* Perhaps this should be a function? */
 			break;
+	        case 2:
+			/* Full success, and this region should get dropped later */
+			/* Add to list of regions to drop */
+			bu_ptbl_ins( &rtip->delete_regs, (long *)regp );
+			break;
 		}
 		regp = BU_LIST_NEXT( region, &regp->l );
 	}
@@ -1234,6 +1239,25 @@ out:
 	bu_semaphore_release( RT_SEM_WORKER );
 }
 
+void
+collect_soltabs( struct bu_ptbl *stp_list, union tree *tr )
+{
+	switch( tr->tr_op ) {
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_XOR:
+		collect_soltabs( stp_list, tr->tr_b.tb_left );
+		collect_soltabs( stp_list, tr->tr_b.tb_right );
+		break;
+	case OP_SUBTRACT:
+		collect_soltabs( stp_list, tr->tr_b.tb_left );
+		break;
+	case OP_SOLID:
+		bu_ptbl_ins( stp_list, (long *)tr->tr_a.tu_stp );
+		break;
+	}
+}
+
 /*
  *  			V I E W 2 _ I N I T
  *
@@ -1245,6 +1269,7 @@ register struct application *ap;
 char	*framename;
 {
 	register int i;
+	struct bu_ptbl stps;
 #ifdef HAVE_UNIX_IO
 	struct stat sb;
 #endif
@@ -1462,6 +1487,54 @@ bu_log("mallocing curr_float_frame\n");
 		rt_bomb("bad lighting model #");
 	}
 	ap->a_rt_i->rti_nlights = light_init(ap);
+
+	/* Now OK to delete invisible light regions.
+	 * Actually we just remove the references to these regions
+	 * from the soltab structures in the space paritioning tree
+	 */
+	bu_ptbl_init( &stps, 8, "soltabs to delete" );
+	if (rdebug & RDEBUG_LIGHT) {
+		bu_log( "deleting %d invisible light regions\n", BU_PTBL_LEN( &ap->a_rt_i->delete_regs ) );
+	}
+	for( i=0 ; i<BU_PTBL_LEN( &ap->a_rt_i->delete_regs ) ; i++ ) {
+		struct region *rp;
+		struct soltab *stp;
+		int j;
+		
+
+		rp = (struct region *)BU_PTBL_GET( &ap->a_rt_i->delete_regs, i );
+
+		/* make a list of soltabs containing primitives referenced by 
+		 * invisible light regions
+		 */
+		collect_soltabs( &stps, rp->reg_treetop );
+
+		/* remove the invisible light region pointers from the soltab structs */
+		if (rdebug & RDEBUG_LIGHT) {
+			bu_log( "Removing invisible light region pointers from %d soltabs\n",
+				BU_PTBL_LEN( &stps ) );
+		}
+		for( j=0 ; j<BU_PTBL_LEN( &stps ) ; j++ ) {
+			int k;
+			struct region *rp2;
+			stp = (struct soltab *)BU_PTBL_GET( &stps, j );
+
+			k = BU_PTBL_LEN( &stp->st_regions ) - 1;
+			for( ; k>=0 ; k-- ) {
+				rp2 = (struct region *)BU_PTBL_GET( &stp->st_regions, k );
+				if( rp2 == rp ) {
+					if (rdebug & RDEBUG_LIGHT) {
+						bu_log( "\tRemoving region %s from soltab for %s\n", rp2->reg_name, stp->st_dp->d_namep );
+					}
+					bu_ptbl_rm( &stp->st_regions, (long *)rp2 );
+				}
+			}
+
+		}
+
+		bu_ptbl_reset( &stps );
+	}
+	bu_ptbl_free( &stps );
 
 	/* Create integer version of background color */
 	inonbackground[0] = ibackground[0] = background[0] * 255.0 + 0.5;
