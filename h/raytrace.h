@@ -1358,7 +1358,7 @@ RT_EXTERN(void rt_printb, (CONST char *s, unsigned long v, CONST char *bits) );
 RT_EXTERN(struct soltab *rt_find_solid, (CONST struct rt_i *rtip,
 	CONST char *name) );
 					/* Parse arbitrary data structure */
-RT_EXTERN(int rt_structparse, (struct rt_vls *vls,
+RT_EXTERN(int rt_structparse, (CONST struct rt_vls *vls,
 	CONST struct structparse *tab, char *base ) );
 		/* Print arbitrary data structure for human consuption*/
 RT_EXTERN(void rt_structprint, (CONST char *title,
