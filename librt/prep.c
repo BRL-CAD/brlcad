@@ -870,6 +870,11 @@ register struct rt_i *rtip;
 #endif
 		}
 	}
+
+	if( rtip->Orca_hash_tbl ) {
+		bu_free( (char *)rtip->Orca_hash_tbl, "rtip->Orca_hash_tbl" );
+		rtip->Orca_hash_tbl = NULL;
+	}
 	if( rt_uniresource.re_magic )  {
 		rt_clean_resource(rtip, &rt_uniresource );/* Used for rt_optim_tree() */
 	}
