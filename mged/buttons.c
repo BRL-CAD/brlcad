@@ -212,7 +212,7 @@ char *str;{
 		bp->bu_func();
 		return;
 	}
-	(void)printf("press(%s):  Unknown operation, type 'press ?' for help\n",
+	(void)printf("press(%s):  Unknown operation, type 'press help' for help\n",
 		str);
 }
 /*
