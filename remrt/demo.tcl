@@ -234,6 +234,9 @@ proc sense_servers {} {
 	global db_path
 	global status
 
+# XXX to conquer latency of computing uptime, should really
+# XXX run this loop twice.  One to send the commands,
+# XXX a second time to read the replies.
 	# loop through list of nodes selected, starting each one.
 	set j [array startsearch nodes]
 	while { [array anymore nodes $j] } {
