@@ -76,6 +76,8 @@ static vect_t	clipmin, clipmax;	/* for vector clipping */
 static FILE	*ps_fp;			/* PostScript file pointer */
 static char	ttybuf[BUFSIZ];
 
+static int	in_middle;		/* !0 when in middle of image */
+
 /*
  * Display coordinate conversion:
  *  GED is using -2048..+2047,
@@ -106,10 +108,43 @@ PS_open()
 	}
 
 	setbuf( ps_fp, ttybuf );
-	/** Copy the prolog out **/
 
-	fprintf(ps_fp, "%f %f scale\n", 1.0, 1.0);
-/*	pl_space( ps_fp, -2048, -2048, 2048, 2048 );*/
+	fputs( "%!PS-Adobe-1.0\n\
+%begin(plot)\n\
+%%DocumentFonts:  Courier\n", ps_fp );
+	fprintf(ps_fp, "%%%%Title: %s\n", line );
+	fputs( "\
+%%Creator: MGED dm-ps.c\n\
+%%BoundingBox: 0 0 324 324	% 4.5in square, for TeX\n\
+%%EndComments\n\
+\n", ps_fp );
+
+	fputs( "\
+4 setlinewidth\n\
+\n\
+% Sizes, made functions to avoid scaling if not needed\n\
+/FntH /Courier findfont 80 scalefont def\n\
+/DFntL { /FntL /Courier findfont 73.4 scalefont def } def\n\
+/DFntM { /FntM /Courier findfont 50.2 scalefont def } def\n\
+/DFntS { /FntS /Courier findfont 44 scalefont def } def\n\
+\n\
+% line styles\n\
+/NV { [] 0 setdash } def	% normal vectors\n\
+/DV { [8] 0 setdash } def	% dotted vectors\n\
+/DDV { [8 8 32 8] 0 setdash } def	% dot-dash vectors\n\
+/SDV { [32 8] 0 setdash } def	% short-dash vectors\n\
+/LDV { [64 8] 0 setdash } def	% long-dash vectors\n\
+\n\
+/NEWPG {\n\
+	.0791 .0791 scale	% 0-4096 to 324 units (4.5 inches)\n\
+} def\n\
+\n\
+FntH  setfont\n\
+NEWPG\n\
+", ps_fp);
+
+	in_middle = 0;
+
 	return(0);			/* OK */
 }
 
@@ -121,8 +156,13 @@ PS_open()
 void
 PS_close()
 {
+
+	if( !ps_fp )  return;
+
+	fputs("%end(plot)\n", ps_fp);
 	(void)fclose(ps_fp);
 	ps_fp = (FILE *)0;
+	printf("PS_close()\n");
 }
 
 /*
@@ -136,12 +176,19 @@ PS_prolog()
 	if( !dmaflag )
 		return;
 
-	/* We expect the screen to be blank so far, from last frame flush */
+	/* We expect the screen to be blank so far */
+	if( in_middle )  {
+		/*
+		 *  Force the release of this Display Manager
+		 *  This assures only one frame goes into the file.
+		 */
+		release();
+		return;
+	}
+	in_middle = 1;
 
 	/* Put the center point up */
-	fprintf(ps_fp,"%d %d moveto %d %d 1 0 360 arc\n",
-		GED_TO_PS(0), GED_TO_PS(0),
-		GED_TO_PS(0), GED_TO_PS(0) );
+	PS_2d_line( 0, 0, 1, 1, 0 );
 }
 
 /*
@@ -150,7 +197,9 @@ PS_prolog()
 void
 PS_epilog()
 {
-	fprintf(ps_fp, "showpage\n");
+	if( !ps_fp )  return;
+
+	fputs("% showpage	% uncomment to use raw file\n", ps_fp);
 	(void)fflush( ps_fp );
 	return;
 }
@@ -187,10 +236,12 @@ double ratio;
 	register struct vlist *vp;
 	int useful = 0;
 
+	if( !ps_fp )  return;
+
 	if( sp->s_soldash )
-		fprintf(ps_fp, "DDV\n");	/* Dot-dashed vectors */
+		fprintf(ps_fp, "DDV ");		/* Dot-dashed vectors */
 	else
-		fprintf(ps_fp, "NV\n");		/* Normal vectors */
+		fprintf(ps_fp, "NV ");		/* Normal vectors */
 
 	for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
 		/* Viewing region is from -1.0 to +1.0 */
@@ -240,6 +291,8 @@ PS_normal()
 void
 PS_update()
 {
+	if( !ps_fp )  return;
+
 	(void)fflush(ps_fp);
 }
 
@@ -254,6 +307,8 @@ void
 PS_puts( str, x, y, size, color )
 register u_char *str;
 {
+	if( !ps_fp )  return;
+
 	switch( size )  {
 	default:
 		/* Smallest */
@@ -271,7 +326,8 @@ register u_char *str;
 		break;
 	}
 
-	fprintf(ps_fp, "(%s) %d %d PR\n", str, GED_TO_PS(x), GED_TO_PS(y) );
+	fprintf(ps_fp, "(%s) %d %d moveto show\n",
+		str, GED_TO_PS(x), GED_TO_PS(y) );
 }
 
 /*
@@ -284,10 +340,13 @@ int x1, y1;
 int x2, y2;
 int dashed;
 {
+
+	if( !ps_fp )  return;
+
 	if( dashed )
-		fprintf(ps_fp, "DDV\n");	/* Dot-dashed vectors */
+		fprintf(ps_fp, "DDV ");	/* Dot-dashed vectors */
 	else
-		fprintf(ps_fp, "NV\n");		/* Normal vectors */
+		fprintf(ps_fp, "NV ");		/* Normal vectors */
 	fprintf(ps_fp,"newpath %d %d moveto %d %d lineto stroke\n",
 		GED_TO_PS(x1), GED_TO_PS(y1),
 		GED_TO_PS(x2), GED_TO_PS(y2) );
@@ -384,8 +443,6 @@ PS_colorchange()
 void
 PS_debug(lvl)
 {
-	(void)fflush(ps_fp);
-	printf("flushed\n");
 }
 
 void
