@@ -61,9 +61,10 @@ char *argv[];
 	int c;
 	int do_splines=0;
 	int do_drawings=0;
+	int trimmed_surf=0;
 	char *output_file=(char *)NULL;
 
-	while( (c=getopt( argc , argv , "dno:" )) != EOF )
+	while( (c=getopt( argc , argv , "dnto:" )) != EOF )
 	{
 		switch( c )
 		{
@@ -76,10 +77,13 @@ char *argv[];
 			case 'o':
 				output_file = optarg;
 				break;
+			case 't':
+				trimmed_surf = 1;
+				break;
 		}
 	}
 
-	if (optind >= argc || output_file == (char *)NULL) {
+	if (optind >= argc || output_file == (char *)NULL || do_drawings+do_splines+trimmed_surf > 1) {
 		usage();
 		exit(1);
 	}
@@ -156,6 +160,8 @@ char *argv[];
 
 	if( do_drawings )
 		Conv_drawings();	/* convert drawings to wire edges */
+	else if( trimmed_surf )
+		Convtrimsurfs();
 	else
 	{
 		Convinst();	/* Handle Instances */
@@ -169,4 +175,5 @@ char *argv[];
 
 		Convassem();	/* Convert solid assemblies */
 	}
+
 }
