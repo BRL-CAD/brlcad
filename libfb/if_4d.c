@@ -73,8 +73,7 @@ static Cursor	cursor =  {
 #include "./sgicursor.h"
  };
 
-extern int	fb_sim_readrect(), fb_sim_writerect();
-
+extern int	fb_sim_readrect();
 
 /* Internal routines */
 _LOCAL_ void	sgi_cminit();
@@ -92,6 +91,7 @@ _LOCAL_ int	sgi_dopen(),
 		sgi_zoom_set(),
 		sgi_curs_set(),
 		sgi_cmemory_addr(),
+		sgi_writerect(),
 		sgi_help();
 
 /* This is the ONLY thing that we "export" */
@@ -112,9 +112,9 @@ FBIO sgi_interface =
 		sgi_cmemory_addr,
 		fb_null,		/* cscreen_addr */
 		fb_sim_readrect,
-		fb_sim_writerect,
+		sgi_writerect,
 		sgi_help,
-		"Silicon Graphics Iris '4D'",
+		"SiliconGraphics Iris '4D'",
 		XMAXSCREEN+1,		/* max width */
 		YMAXSCREEN+1,		/* max height */
 		"/dev/sgi",
@@ -519,6 +519,11 @@ int		nlines;
 				SGI(ifp)->mi_yoff+y,
 				&ifp->if_mem[(y*SGI(ifp)->mi_memwidth)*
 				    sizeof(struct sgi_pixel)] );
+			/*  XXX big performance hit here.
+			 *  GTX is limited to about 1000 lrectwrites/sec,
+			 *  due to some library synchronization mechanism
+			 *  that burns 60% of the CPU in sys-time. ?!?!
+			 */
 		}
 		return;
 	}
@@ -1453,6 +1458,62 @@ register int	count;
 }
 
 /*
+ *			S G I _ W R I T E R E C T
+ *
+ *  The task of this routine is to reformat the pixels into
+ *  SGI internal form, and then arrange to have them sent to
+ *  the screen separately.
+ */
+_LOCAL_ int
+sgi_writerect( ifp, xmin, ymin, width, height, pp )
+FBIO		*ifp;
+int		xmin, ymin;
+int		width, height;
+RGBpixel	*pp;
+{
+	register int		x;
+	register int		y;
+	register unsigned char	*cp;
+	register struct sgi_pixel	*sgip;
+
+	if( width <= 0 || height <= 0 )
+		return(0);
+	if( xmin < 0 || xmin+width > ifp->if_width ||
+	    ymin < 0 || ymin+height > ifp->if_height )
+		return(-1);
+
+	cp = (unsigned char *)(pp);
+	for( y = ymin; y < ymin+height; y++ )  {
+		sgip = (struct sgi_pixel *)&ifp->if_mem[
+		    (y*SGI(ifp)->mi_memwidth+xmin)*sizeof(struct sgi_pixel) ];
+		for( x = xmin; x < xmin+width; x++ )  {
+			/* alpha channel is always zero */
+			sgip->red   = cp[RED];
+			sgip->green = cp[GRN];
+			sgip->blue  = cp[BLU];
+			sgip++;
+			cp += 3;
+		}
+	}
+
+	/*
+	 * Handle events after updating the memory, and
+	 * before updating the screen
+	 */
+	if( SGI(ifp)->mi_pid != getpid() )  {fb_log("libfb/sgi call from wrong process!\n");return(-1);}
+
+	if( qtest() )
+		sgi_inqueue(ifp);
+
+	sgi_xmit_scanlines( ifp, ymin, height );
+	if( SGI(ifp)->mi_is_gt )  {
+		/* repaint screen from Z buffer */
+		gt_zbuf_to_screen( ifp );
+	}
+	return(width*height);
+}
+
+/*
  *			S G I _ V I E W P O R T _ S E T
  */
 _LOCAL_ int
@@ -1733,7 +1794,7 @@ FBIO	*ifp;
 /***************************************************************************/
 
 /*
- *			G T _ Z B U F
+ *			G T _ Z B U F _ T O _ S C R E E N
  *
  */
 _LOCAL_ int
@@ -1762,7 +1823,7 @@ register FBIO	*ifp;
 
 	cpack(0x00000000);	/* clear to black first */
 	/* XXX why is this done -- could be performance problem */
-	clear();
+	clear();		/* takes ~1 frame time */
 
 	/* All coordinates are window-relative, not viewport-relative */
 	rectcopy(
