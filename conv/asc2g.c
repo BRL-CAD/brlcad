@@ -85,6 +85,15 @@ Usage: asc2g file.asc file.g\n\
  Convert an ASCII BRL-CAD database to binary form\n\
 ";
 
+char *aliases[] = {
+	"attr",
+	"color",
+	"put",
+	"title",
+	"units",
+	(char *)0
+};
+
 int
 incr_ars_pt()
 {
@@ -133,11 +142,12 @@ char **argv;
 
 	rt_init_resource( &rt_uniresource, 0, NULL );
 
-	if( fgets( c1, 3, ifp ) == NULL ) {
+	if( fgets( c1, 6, ifp ) == NULL ) {
 		bu_bomb( "Unexpected EOF!!!\n" );
 	}
 
-	if( !strncmp( c1, db_name, 2 ) ) {
+	/* new style ascii database */
+	if (!strncmp(c1, "title", 5)) {
 		Tcl_Interp     *interp;
 		Tcl_Interp     *safe_interp;
 
@@ -151,15 +161,22 @@ char **argv;
 		}
 
 		/* Create the safe interpreter */
-		safe_interp = Tcl_CreateSlave(interp, slave_name, 1);
+		if ((safe_interp = Tcl_CreateSlave(interp, slave_name, 1)) == NULL) {
+			bu_log("Failed to create safe interpreter");
+			exit(1);
+		}
 
 		/* Create aliases */
 		{
-			int	ac = 0;
-			char	*av[1];
+			int	i;
+			int	ac = 1;
+			char	*av[2];
 
-			argv[0] = (char *)0;
-			Tcl_CreateAlias(safe_interp, db_name, interp, db_name, ac, av);
+			av[1] = (char *)0;
+			for (i = 0; aliases[i] != (char *)0; ++i) {
+				av[0] = aliases[i];
+				Tcl_CreateAlias(safe_interp, aliases[i], interp, db_name, ac, av);
+			}
 		}
 
 		if( Tcl_EvalFile( safe_interp, argv[1] ) != TCL_OK ) {
