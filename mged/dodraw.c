@@ -1349,7 +1349,7 @@ char	**argv;
 	}
 	/* New region remains part of this nmg "model" */
 	NMG_CK_REGION( tmp_tree->tr_d.td_r );
-	rt_log("facetize:  %s\n", mged_facetize_tree->tr_d.td_name );
+	rt_log("facetize:  %s\n", tmp_tree->tr_d.td_name );
 
 	nmg_vmodel( mged_nmg_model );
 
