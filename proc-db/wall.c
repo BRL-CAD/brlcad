@@ -931,6 +931,7 @@ FILE *fd;
 	rt_log("Not Yet Implemented\n");
 	exit(0);
 
+#if 0
 	horiz_bricks = (WALL_WIDTH-brick_depth) / (brick_width + min_mortar);
 
 	/* compute excess distance to be used in mortar */
@@ -1011,6 +1012,7 @@ FILE *fd;
 	*sol_name = 'r';
 	mk_lcomb(fd, sol_name, &wm_hd, 1, (char *)NULL, (char *)NULL,
 		mortar_color, 0);
+#endif
 }
 
 
@@ -1031,6 +1033,7 @@ FILE *fd;
 	rt_log("Not Yet Implemented\n");
 	exit(0);
 
+#if 0
 	if (!color) color = brick_color;
 
 	horiz_bricks = (WALL_WIDTH-brick_depth) / brick_width;
@@ -1060,8 +1063,7 @@ FILE *fd;
 
 	mk_lcomb(fd, proto_brick, &wm_hd, 1, (char *)NULL, (char *)NULL,
 			(char *)NULL, 0);
-
-	
+#endif
 }
 
 
