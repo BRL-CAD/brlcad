@@ -127,12 +127,14 @@ set -S2 "/bin/sh"
 #	define BUILD_XWINDOWS	1
 #	define BUILD_OPENGL	0
 # 	define BUILD_PRODUCTION	1
+#	define BUILD_SMP	0
 #else
 #	define BUILD_OPTIMIZED	0
-#	define BUILD_SHARED	0
+#	define BUILD_SHARED	1
 #	define BUILD_XWINDOWS	1
 #	define BUILD_OPENGL	0
 #	define BUILD_PRODUCTION	0
+#	define BUILD_SMP	0
 #endif
 
 /* This is the version of Tcl/Tk distributed with BRL-CAD */
@@ -830,11 +832,12 @@ set -S2 "/bin/sh"
 #	if defined( __GNUC__ )
 #		define	CC		gcc
 #		if BUILD_OPTIMIZED	/* PRODUCTION=1 */
-#			define	OPTIMIZER	-O2 -fwritable-strings -Wall
+#			define	OPTIMIZER	-O3 -fno-strict-aliasing
 #		else
-#			define	OPTIMIZER	-g -fwritable-strings -Wall
+#			define	OPTIMIZER	-O -g
+#			define  PROFILER	-pg
 #		endif
-#		define	CC_DEFS		-D_REENTRANT -DSUNOS=55
+#		define	CC_DEFS		-Wall -pedantic -D_REENTRANT -DSUNOS=55
 #		define	CC_OPTS		-I''XINCDIR
 #	else
 /*		For now, we expect /opt/SUNWspro/bin ANSI compiler to be used */
@@ -1090,7 +1093,7 @@ set -S2 "/bin/sh"
 #	define	CC	gcc
 #	define	LEX_OPTS	-l
 #	if BUILD_OPTIMIZED	/* PRODUCTION=1 */
-#		define	OPTIMIZER	-O3
+#		define	OPTIMIZER	-O3 -fno-strict-aliasing
 #	else
 #		define	OPTIMIZER	-O -g
 #		define	PROFILER	-pg  /* gprof profiling -- build staticly to include libraries */
