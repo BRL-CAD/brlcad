@@ -117,6 +117,7 @@ struct rt_i	*rtip;
 struct mfuncs	**headp;
 {
 	register struct mfuncs *mfp;
+	register struct mfuncs *mfp_new;
 	struct bu_vls	arg;
 	char	matname[32];
 	int	i;
@@ -139,12 +140,31 @@ struct mfuncs	**headp;
 	}
 	matname[i] = '\0';	/* ensure null termination */
 
+retry:
 	for( mfp = *headp; mfp != MF_NULL; mfp = mfp->mf_forw )  {
 		if (matname[0] != mfp->mf_name[0]  ||
 		    strcmp( matname, mfp->mf_name ) != 0 )
 			continue;
 		goto found;
 	}
+#ifdef HAVE_DLOPEN
+	/* If we get here, then the shader wasn't found in the list of 
+	 * compiled-in (or previously loaded) shaders.  See if we can
+	 * dynamically load it.
+	 */
+
+	bu_log("Shader \"%s\"... ", matname);
+
+	if ((mfp_new = load_dynamic_shader(matname, strlen(matname)))) {
+		mlib_add_shader(headp, mfp_new);
+		goto retry;
+	}
+#else
+	bu_log("****** dynamic shader loading not available ******\n");
+#endif
+
+
+
 	bu_log("stack_setup(%s):  material not known\n",
 		matname );
 	return(-1);
