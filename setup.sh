@@ -24,7 +24,7 @@ echo "  BINDIR = ${BINDIR}"
 PATH_ELEMENTS=`echo $PATH | sed 's/^://
 				s/:://g
 				s/:$//
-				s/:\\.://g
+				s/:\\.:/:/g
 				s/:/ /g'`
 
 not_found=1		# Assume cmd not found
@@ -69,3 +69,27 @@ make clobber
 make cakesub			# XXX
 cp cakesub ${BINDIR}/.
 make clobber
+
+#
+# Handle any vendor-specific configurations and setups.
+# This is messy, and should be avoided where possible.
+eval `sh machinetype.sh -b`
+case X$MACHINE in
+
+X4gt|X4d|X4d2)
+	# SGI 4D foolishness
+	case $MACHINE in
+	4gt)	SGI_TYPE=1;;
+	4d)	SGI_TYPE=2;;
+	4d2)	SGI_TYPE=3;;
+	esac
+	ed - Cakefile.defs << EOF
+g/define	SGI_TYPE/d
+/SGI_4D_TYPE_MARKER/a
+#	define	SGI_TYPE	$SGI_TYPE
+.
+w
+EOF
+#	End of SGI stuff
+
+esac
