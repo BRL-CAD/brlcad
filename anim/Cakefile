@@ -49,7 +49,7 @@ anim_sort: anim_sort.o
 	CC LDFLAGS anim_sort.o LIBES -o anim_sort
 
 anim_time: anim_time.o 
-	CC LDFLAGS anim_time.o LIBES -o anim_time
+	CC LDFLAGS anim_time.o LIBRT LIBRT_LIBES LIBES -o anim_time
 
 anim_track: anim_track.o cattrack.o anim.o
 	CC LDFLAGS anim_track.o cattrack.o anim.o LIBRT LIBRT_LIBES LIBES -o anim_track
