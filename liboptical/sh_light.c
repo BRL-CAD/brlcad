@@ -788,7 +788,7 @@ out:
 			lp->lt_name,
 			reason,
 			regp ? regp->reg_name : "" );
-		rt_pr_tabdata("light spectrum", ap->a_spectrum);
+		bn_pr_tabdata("light spectrum", ap->a_spectrum);
 	}
 #else
 	if( rdebug & RDEBUG_LIGHT ) bu_log("light vis=%d %s (%4.2f, %4.2f, %4.2f) %s %s\n",

@@ -308,8 +308,8 @@ register CONST struct shadework *swp;
 	rt_log( " sw_refract_index %f\n", swp->sw_refrac_index );
 	rt_log( " sw_extinction %f\n", swp->sw_extinction );
 #if RT_MULTISPECTRAL
-	rt_pr_tabdata( "msw_color", swp->msw_color );
-	rt_pr_tabdata( "msw_basecolor", swp->msw_basecolor );
+	bn_pr_tabdata( "msw_color", swp->msw_color );
+	bn_pr_tabdata( "msw_basecolor", swp->msw_basecolor );
 #else
 	VPRINT( " sw_color", swp->sw_color );
 	VPRINT( " sw_basecolor", swp->sw_basecolor );
@@ -328,7 +328,7 @@ register CONST struct shadework *swp;
 			i,
 			V3ARGS(&swp->sw_tolight[i*3]) );
 		BN_CK_TABDATA(swp->msw_intensity[i]);
-		rt_pr_tabdata("light intensity", swp->msw_intensity[i] );
+		bn_pr_tabdata("light intensity", swp->msw_intensity[i] );
 #else
 		rt_log("   light %d visible, intensity=%g, dir=(%g,%g,%g)\n",
 			i,
