@@ -808,6 +808,8 @@ set -S2 "/bin/sh"
 #	define	XLIBDIR		/usr/openwin/lib
 
 #	define	LIBPKG_CONFIG	-DBSD=43 -D_KERNEL
+#	define	LIBPKG_LIBES	-lnsl -lsocket
+
 #	define	LIBRT_TIMER	timerunix
 #	define	LIBRT_LIBES	-lthread
 
@@ -1203,6 +1205,10 @@ set -S2 "/bin/sh"
 
 #ifndef LIBPKG_CONFIG
 #	define	LIBPKG_CONFIG	/**/
+#endif
+
+#ifndef LIBPKG_LIBES
+#	define	LIBPKG_LIBES	/**/
 #endif
 
 #ifndef MGED_CONFIG
