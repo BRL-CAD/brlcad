@@ -13,6 +13,7 @@
 #include <string.h>
 #include <math.h>
 #include "machine.h"
+#include "bu.h"
 #include "vmath.h"
 #include "wdb.h" 
 
@@ -93,20 +94,23 @@ int dir[9][2] = {  {0,-90},
 		   {360,-30} };
 
 /****** Function Prototypes ******/
-void initializeInfo(params_t *p, int inter, int def, char *name, int depth);
-void createSphereflake(params_t *p);
-void createLights(params_t *p);
-void createPlane(params_t *p);
-void createScene(params_t *p);
-void createEnvironMap(params_t *p);
-void getYRotMat(mat_t *, fastf_t theta);
-void getZRotMat(mat_t *, fastf_t phi);
-void getTrans(mat_t *, int, int, fastf_t); 
-void makeFlake(int depth,mat_t *trans,point_t center, fastf_t radius, float delta,int maxDepth);
-void usage(char *n);
+BU_EXTERN(void initializeInfo, (params_t *p, int inter, int def, char *name, int depth));
+BU_EXTERN(void createSphereflake, (params_t *p));
+BU_EXTERN(void createLights, (params_t *p));
+BU_EXTERN(void createPlane, (params_t *p));
+BU_EXTERN(void createScene, (params_t *p));
+BU_EXTERN(void createEnvironMap, (params_t *p));
+BU_EXTERN(void getYRotMat, (mat_t *, fastf_t theta));
+BU_EXTERN(void getZRotMat, (mat_t *, fastf_t phi));
+BU_EXTERN(void getTrans, (mat_t *, int, int, fastf_t)); 
+BU_EXTERN(void makeFlake, (int depth,mat_t *trans,point_t center, fastf_t radius, float delta,int maxDepth));
+BU_EXTERN(void usage, (char *n));
 
 
-void main(int argc, char **argv) {
+void main(argc, argv)
+int argc;
+char **argv;
+{
   int i, j;
   extern char *optarg;
   int optc;
@@ -207,15 +211,24 @@ void main(int argc, char **argv) {
   return;
 }
 
-void usage(char *n) {
-  printf("\nUSAGE: %s -D -d# -i -f fileName\n"
-	   "       D -- use default parameters\n"
-	   "       d -- set the recursive depth of the procedure\n"
-	   "       i -- use interactive mode\n"
-	 "       f -- specify output file\n\n", n);
+void usage(n)
+char *n;
+{
+  printf(
+"\nUSAGE: %s -D -d# -i -f fileName\n\
+       D -- use default parameters\n\
+       d -- set the recursive depth of the procedure\n\
+       i -- use interactive mode\n\
+       f -- specify output file\n\n", n);
 }
 
-void initializeInfo(params_t *p, int inter, int def, char *name, int depth) {
+void initializeInfo(p, inter, def, name, depth)
+params_t *p;
+int inter;
+int def;
+char *name;
+int depth;
+{
   char matName[20];
   int i = 0;
   char c[3];
@@ -285,14 +298,16 @@ void initializeInfo(params_t *p, int inter, int def, char *name, int depth) {
   MAT_IDN(IDENT);
 }
 
-void createSphereflake(params_t *p) {
+void createSphereflake(p)
+params_t *p;
+{
   mat_t trans;
   char name[20];
   int i = 0;
 
   /* now begin the creation of the sphereflake... */
   MAT_IDN(trans); /* get the identity matrix */
-  makeFlake(0, &trans, p->pos, (fastf_t)p->maxRadius * DEFAULT_SCALE, p->deltaRadius, p->maxDepth);
+  makeFlake(0, trans, p->pos, (fastf_t)p->maxRadius * DEFAULT_SCALE, p->deltaRadius, p->maxDepth);
   /* 
      Now create the depth combinations/regions
      This is done to facilitate application of different
@@ -306,7 +321,9 @@ void createSphereflake(params_t *p) {
 
 }
 
-void createLights(params_t *p) {
+void createLights(p)
+params_t *p;
+{
   char name[20];
   point_t lPos;
   int r, g, b;
@@ -325,7 +342,8 @@ void createLights(params_t *p) {
   c[0] = (char)r;
   c[1] = (char)g;
   c[2] = (char)b;
-  mk_lcomb(fp, name, &(wmemberArray[LIGHT0_ID]), 1, LIGHT0_MAT, LIGHT0_MATPARAM, (const unsigned char *) c, 0);
+  mk_lcomb(fp, name, &(wmemberArray[LIGHT0_ID]), 1, LIGHT0_MAT, LIGHT0_MATPARAM,
+	(CONST unsigned char *) c, 0);
   
   VSET(lPos, p->pos[X]+(13 * p->maxRadius), p->pos[Y]+(-13 * p->maxRadius), p->pos[Z]+(152 * p->maxRadius));
   sprintf(name, "light1");
@@ -338,12 +356,15 @@ void createLights(params_t *p) {
   c[0] = (char)r;
   c[1] = (char)g;
   c[2] = (char)b;
-  mk_lcomb(fp, name, &(wmemberArray[LIGHT1_ID]), 1, LIGHT1_MAT, LIGHT1_MATPARAM, (const unsigned char *) c, 0);
+  mk_lcomb(fp, name, &(wmemberArray[LIGHT1_ID]), 1, LIGHT1_MAT, LIGHT1_MATPARAM,
+	(CONST unsigned char *) c, 0);
 
   printf("\nLights created");
 }
 
-void createPlane(params_t *p) {
+void createPlane(p)
+params_t *p;
+{
   char name[20];
   point_t lPos;
 
@@ -359,7 +380,9 @@ void createPlane(params_t *p) {
   printf("\nPlane created");
 }
 
-void createEnvironMap(params_t *p) {
+void createEnvironMap(p)
+params_t *p;
+{
   char name[20];
   
   sprintf(name, "light0");
@@ -371,7 +394,9 @@ void createEnvironMap(params_t *p) {
 
 }
 
-void createScene(params_t *p) {
+void createScene(p)
+params_t *p;
+{
   int i;
   char name[20];
 
@@ -389,7 +414,10 @@ void createScene(params_t *p) {
   printf("\nScene created (FILE: %s)\n", p->fileName);
 }
 
-void printMatrix(char *n, mat_t m) {
+void printMatrix(n, m)
+char *n;
+mat_t m;
+{
   int i = 0;
   printf("\n-----%s------\n", n);
   for (i = 0; i < 16; i++) {
@@ -399,7 +427,12 @@ void printMatrix(char *n, mat_t m) {
   printf("\n-----------\n");
 }
 
-void getTrans(mat_t *t, int theta, int phi, fastf_t radius) {
+void getTrans(t, theta, phi, radius)
+mat_t *t;
+int theta;
+int phi;
+fastf_t radius;
+{
   mat_t z;
   mat_t y;
   mat_t toRelative;
@@ -411,8 +444,8 @@ void getTrans(mat_t *t, int theta, int phi, fastf_t radius) {
  
   MAT_DELTAS(toRelative, 0, 0, radius);
 
-  getZRotMat(&z, theta);
-  getYRotMat(&y, phi);
+  getZRotMat(z, theta);
+  getYRotMat(y, phi);
 
   mat_mul2(toRelative, newPos); /* translate to new position */
   mat_mul2(y, newPos);          /* rotate z */
@@ -423,7 +456,10 @@ void getTrans(mat_t *t, int theta, int phi, fastf_t radius) {
   memcpy(*t, newPos, sizeof(newPos));
 }
 
-void getYRotMat(mat_t *t, fastf_t theta) {
+void getYRotMat(t, theta)
+mat_t *t;
+fastf_t theta;
+{
   fastf_t sin_ = sin(D2R(theta));
   fastf_t cos_ = cos(D2R(theta));
   mat_t r;
@@ -437,7 +473,10 @@ void getYRotMat(mat_t *t, fastf_t theta) {
   memcpy(*t, r, sizeof(*t));
 }
 
-void getZRotMat(mat_t *t, fastf_t phi) {
+void getZRotMat(t, phi)
+mat_t *t;
+fastf_t phi;
+{
   fastf_t sin_ = sin(D2R(phi));
   fastf_t cos_ = cos(D2R(phi));
   mat_t r;
@@ -451,10 +490,14 @@ void getZRotMat(mat_t *t, fastf_t phi) {
   memcpy(*t, r, sizeof(*t));
 }
 
-void makeFlake(int depth, mat_t *trans, 
-	       point_t center, 
-	       fastf_t radius, float delta, 
-	       int maxDepth) {
+void makeFlake(depth, trans, center, radius, delta, maxDepth)
+int depth;
+mat_t *trans;
+point_t center;
+fastf_t radius;
+float delta;
+int maxDepth;
+{
   char name[20];
   int i = 0;
   point_t pcent;
@@ -481,9 +524,9 @@ void makeFlake(int depth, mat_t *trans,
 
   for (i = 0; i < 9; i++) {
     memcpy(temp, trans, sizeof(temp));
-    getTrans(&temp, dir[i][0], dir[i][1], radius+newRadius);
+    getTrans(temp, dir[i][0], dir[i][1], radius+newRadius);
     MATXPNT(pcentTemp, temp, origin);
     VADD2(pcent, pcentTemp, center);
-    makeFlake(depth+1, &temp, pcent, newRadius, delta, maxDepth);
+    makeFlake(depth+1, temp, pcent, newRadius, delta, maxDepth);
   }
 }
