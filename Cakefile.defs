@@ -367,7 +367,7 @@ set -S2 "/bin/sh"
 /*		-fullwarn is pretty verbose */
 #		define	OPTIMIZER	-g -use_readonly_const
 #	endif
-#	define	GFLAG		-64 -KPIC -G 7
+#	define	GFLAG		-mips3 -KPIC -G 7
 #	define  XINCDIR /usr/include/X11
 #	define	XLIBDIR /usr/lib64
 #	if 0	/* PRODUCTION=1 */
@@ -394,7 +394,7 @@ set -S2 "/bin/sh"
 
 /* GAK!  No GL library in 64-bit mode, only OpenGL!  ARRRRGH! */
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
-#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DBSD=43 -DIF_X -DIF_OGL -I''XINCDIR
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DBSD=43 -DIF_X -I''XINCDIR
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11 
 #if 1
 #	define	LIBDM_OBJS	dm-X dm-ogl
