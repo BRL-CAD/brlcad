@@ -37,6 +37,7 @@ struct ef_data {
     	struct edgeuse *eu;
 };
 
+#if 0
 static CONST 
 struct bu_structparse rt_ef_parsetab[] = {
 	{"%f", 1, "fdotr", offsetof(struct ef_data, fdotr), BU_STRUCTPARSE_FUNC_NULL},
@@ -56,7 +57,7 @@ struct bu_structparse rt_hit_parsetab[] = {
 {"%d", 1, "hit_surfno", offsetof(struct hit, hit_surfno), BU_STRUCTPARSE_FUNC_NULL},
 {"", 0, (char *)NULL,	  0,			  BU_STRUCTPARSE_FUNC_NULL}
 };
-
+#endif
 
 #define CK_SEGP(_p) if ( !(_p) || !(*(_p)) ) {\
 	bu_log("%s[line:%d]: Bad seg_p pointer\n", __FILE__, __LINE__); \
