@@ -1931,6 +1931,7 @@ CONST char		*title;
 	fwrite( (char *)&rec, sizeof(rec), 1, fp );
 	fwrite( ext.ext_buf, ext.ext_nbytes, 1, fp );
 	fclose(fp);
+	db_free_external( &ext );
 	rt_log("nmg_stash_model_to_file(): wrote '%s' in %d bytes\n", filename, ext.ext_nbytes);
 }
 
