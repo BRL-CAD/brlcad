@@ -332,7 +332,7 @@ int			ncpu;
 	}
 
 	/* Plot solid outlines */
-	if( (rt_g.debug&DEBUG_PLOTBOX) )  {
+	if( (rt_g.debug&DEBUG_PLOTSOLIDS) )  {
 		FILE		*plotfp;
 
 		if( (plotfp=fopen("rtsolids.pl", "w")) != NULL)  {

@@ -115,11 +115,13 @@ extern "C" {
 #define DEBUG_HF	0x04000000	/* 27 Height Field solids */
 
 /* Options which will cause the library to write binary debugging output */
+#define DEBUG_PLOTSOLIDS 0x40000000	/* 31 plot all solids */
 #define DEBUG_PLOTBOX	0x80000000	/* 32 Plot(3) bounding boxes and cuts */
 
 /* Format string for bu_printb() */
 #define DEBUG_FORMAT	\
 "\020\040PLOTBOX\
+\037PLOTSOLIDS\
 \033HF\032EBM\031MATH\030ADVANCE\
 \027TESTING\026TREEWALK\025CUTDETAIL\024PARALLEL\023FDIFF\022MEM_FULL\
 \021MEM\020BOXING\017CUTTING\016PARTITION\015ROOTS\014VOL\
