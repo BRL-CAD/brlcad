@@ -200,6 +200,7 @@ if [ "x$INST_SIZE" = "x" ] ; then
 fi
 
 COMP_SIZE=`ls -l "${PKG_NAME}.pkg/Contents/Archive.pax.gz" | awk '{print $5}'`
+COMP_SIZE=`echo "$COMP_SIZE 1024 / p" | dc`
 if [ "x$COMP_SIZE" = "x" ] ; then
     echo "ERROR: unable to get the compressed archive size"
     exit 1
