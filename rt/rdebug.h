@@ -30,6 +30,7 @@ extern int	rdebug;
 #define RDEBUG_RTMEM	0x00000008	/* Debug librt mem after startup */
 #define RDEBUG_PARALLEL	0x00000010	/* Debug parallelism */
 #define RDEBUG_PARSE	0x00000020	/* Command parsing */
+#define RDEBUG_LIGHT	0x00000040	/* Debug lighting */
 
 /* These will cause binary debugging output */
 #define RDEBUG_RAYWRITE	0x40000000	/* Ray(5V) view rays to stdout */
