@@ -108,22 +108,13 @@ matp_t xlate;
 	RT_CK_DB_INTERNAL( &intern );
 	db_free_external( &ext );
 
-	/* Scale change on export is 1.0 -- no change */
-	if( rt_functab[id].ft_export( &ext, &intern, 1.0 ) < 0 )  {
+	if( rt_db_put_internal( dp, dbip, &intern ) < 0 )  {
 		rt_log("moveHobj(%s):  solid export failure\n",
 			dp->d_namep );
 		if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
-		db_free_external( &ext );
-		return;				/* FAIL */
-	}
-	rt_functab[id].ft_ifree( &intern );
-
-	if( db_put_external( &ext, dp, dbip ) < 0 )  {
-		db_free_external( &ext );
 		ERROR_RECOVERY_SUGGESTION;
 		WRITE_ERR_return;
 	}
-	db_free_external( &ext );
 	return;					/* OK */
 }
 
