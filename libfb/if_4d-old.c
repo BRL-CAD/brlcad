@@ -53,6 +53,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <gl/immed.h>
 #include <signal.h>
 #undef RED
+#include <gl/addrs.h>
+#include <gl/cg2vme.h>
 
 #include "fb.h"
 #include "./fblocal.h"
@@ -65,6 +67,7 @@ extern int errno;
 extern char *shmat();
 extern int brk();
 
+static Cursor	nilcursor;	/* to make it go away -- all bits off */
 static Cursor	cursor =
 	{
 #include "./sgicursor.h"
@@ -144,6 +147,7 @@ struct mipsinfo {
 	short	mi_cmap_flag;
 	int	mi_shmid;
 	int	mi_memwidth;		/* width of scanline in if_mem */
+	long	mi_der1;		/* Saved DE_R1 */
 };
 #define	MIPS(ptr)	((struct mipsinfo *)((ptr)->u1.p))
 #define	MIPSL(ptr)	((ptr)->u1.p)		/* left hand side version */
@@ -165,9 +169,11 @@ struct mipsinfo {
 static int map_size;			/* # of color map slots available */
 
 /*
- *  The mode has 2 independent bits:
+ *  The mode has several independent bits:
  *	SHARED -vs- MALLOC'ed memory for the image
  *	TRANSIENT -vs- LINGERING windows
+ *	Windowed -vs- Full screen
+ *	Default Hz -vs- 30hz monitor mode
  */
 #define MODE_1MASK	(1<<0)
 #define MODE_1MALLOC	(0<<0)		/* Use malloc memory */
@@ -176,6 +182,14 @@ static int map_size;			/* # of color map slots available */
 #define MODE_2MASK	(1<<1)
 #define MODE_2TRANSIENT	(0<<1)
 #define MODE_2LINGERING (1<<1)
+
+#define MODE_3MASK	(1<<2)
+#define MODE_3WINDOW	(0<<2)
+#define MODE_3FULLSCR	(1<<2)
+
+#define MODE_4MASK	(1<<3)
+#define MODE_4HZDEF	(0<<3)
+#define MODE_4HZ30	(1<<3)
 
 static RGBpixel	rgb_table[4096];
 
@@ -221,7 +235,6 @@ FBIO	*ifp;
 	char	*sp;
 	int	new = 0;
 
-
 	errno = 0;
 
 	if( (ifp->if_mode & MODE_1MASK) == MODE_1MALLOC )  {
@@ -265,9 +278,9 @@ FBIO	*ifp;
 
 	/* Move up the existing break, to leave room for later malloc()s */
 	old_brk = sbrk(0);
-	new_brk = (char *)(6 * 1024 * 1024);
+	new_brk = (char *)(6 * (XMAXSCREEN+1) * 1024);
 	if( new_brk <= old_brk )
-		new_brk = old_brk + 1024 * 1024;
+		new_brk = old_brk + (XMAXSCREEN+1) * 1024;
 	new_brk = (char *)((((int)new_brk) + 4096-1) & ~(4096-1));
 	if( brk( new_brk ) < 0 )  {
 		fb_log("mips_getmem: new brk(x%x) failure, errno=%d\n", new_brk, errno);
@@ -345,9 +358,6 @@ register FBIO	*ifp;
 	short xwidth;
 	static RGBpixel black = { 0, 0, 0 };
 	im_setup;			/* declares GE & Windowstate vars */
-
-	if( MIPS(ifp)->mi_curs_on )
-		cursoff();		/* Cursor interferes with drawing */
 
 	xscroff = yscroff = 0;
 	xscrpad = yscrpad = 0;
@@ -515,8 +525,7 @@ register FBIO	*ifp;
 
 	/* The common final section */
 out:
-	if( MIPS(ifp)->mi_curs_on )
-		curson();		/* Cursor interferes with drawing */
+	;
 }
 
 /*
@@ -547,8 +556,13 @@ int	width, height;
 	 *  First, attempt to determine operating mode for this open,
 	 *  based upon the "unit number".  For the SGI, this unit number
 	 *  is used as the operating mode.
+	 *  The default mode is set here, and it isn't mode 0, but mode 1.
 	 */
-	mode = MODE_1SHARED | MODE_2TRANSIENT;	/* defaults */
+	mode =  MODE_4HZDEF |		/* 0 */
+		MODE_3WINDOW |		/* 0 */
+		MODE_2TRANSIENT |	/* 0 */
+		MODE_1SHARED;		/* 1 */
+
 	if( file != NULL )  {
 		register char *cp;
 
@@ -565,7 +579,7 @@ int	width, height;
 		}
 
 		/* Pick off just the mode bits of interest here */
-		mode &= (MODE_1MASK | MODE_2MASK);
+		mode &= (MODE_1MASK | MODE_2MASK | MODE_3MASK | MODE_4MASK);
 	}
 	ifp->if_mode = mode;
 
@@ -611,17 +625,24 @@ int	width, height;
 		width = ifp->if_width;
 	if( height <= 0 )
 		height = ifp->if_height;
-	if ( width > ifp->if_max_width - 2 * MARGIN)
-		width = ifp->if_max_width - 2 * MARGIN;
-	if ( height > ifp->if_max_height - 2 * MARGIN - BANNER)
-		height = ifp->if_max_height - 2 * MARGIN - BANNER;
+	if ( width > ifp->if_max_width )
+		width = ifp->if_max_width;
+	if ( height > ifp->if_max_height)
+		height = ifp->if_max_height;
 
 	ifp->if_width = width;
 	ifp->if_height = height;
 
 	blanktime(0);
 
-	prefposition( WIN_L, WIN_R, WIN_B, WIN_T );
+	if( (ifp->if_mode & MODE_3MASK) == MODE_3WINDOW )  {
+		prefposition( WIN_L, WIN_R, WIN_B, WIN_T );
+		MIPS(ifp)->mi_curs_on = 1;	/* Mex usually has it on */
+	}  else  {
+		prefposition( 0, XMAXSCREEN, 0, YMAXSCREEN );
+		MIPS(ifp)->mi_curs_on = 0;	/* cursoff() happens below */
+	}
+
 	foreground();		/* Direct focus here, don't detach */
 	if( (ifp->if_fd = winopen( "Frame buffer" )) == -1 )
 	{
@@ -629,9 +650,22 @@ int	width, height;
 		return	-1;
 	}
 
+	/*  Establish operating mode (Hz).
+	 *  The assumption is that the device is always in the
+	 *  desired normal mode to start with.  The mode will only
+	 *  be saved and restored when 30Hz operation is specified.
+	 */
+	if( (ifp->if_mode & MODE_4MASK) == MODE_4HZ30 )  {
+		MIPS(ifp)->mi_der1 = getvideo(DE_R1);
+		setvideo( DE_R1, DER1_30HZ);	/* 4-wire RS-343 */
+	}
+
 	/* Build a descriptive window title bar */
-	(void)sprintf( title, "BRL libfb /dev/sgi%d %s, %s",
+	(void)sprintf( title, "BRL libfb /dev/sgi%d%s %s, %s",
 		ifp->if_mode,
+		((ifp->if_mode & MODE_4MASK) == MODE_4HZ30) ?
+			" 30Hz" :
+			"",
 		((ifp->if_mode & MODE_2MASK) == MODE_2TRANSIENT) ?
 			"Transient Win" :
 			"Lingering Win",
@@ -652,6 +686,19 @@ int	width, height;
 	color(BLACK);
 	clear();
 
+	/* In full screen mode, center the image on the screen */
+	if( (ifp->if_mode & MODE_3MASK) == MODE_3FULLSCR )  {
+		int	xleft, ybot;
+		xleft = (XMAXSCREEN+1)/2 - ifp->if_width/2;
+		ybot = (YMAXSCREEN+1)/2 - ifp->if_height/2;
+		viewport( xleft, xleft + ifp->if_width,
+			  ybot, ybot + ifp->if_height );
+		ortho2( 0, ifp->if_width, 0, ifp->if_height );
+		/* set input focus to current window, so that
+		 * we can manipulate the cursor icon */
+		winattach();
+	}
+
 	/* Must initialize these window state variables BEFORE calling
 		"mips_getmem", because this function can indirectly trigger
 		a call to "mips_repaint" (when initializing shared memory
@@ -671,11 +718,17 @@ int	width, height;
 
 	/* Setup default cursor.					*/
 	defcursor( 1, cursor );
+	defcursor( 2, nilcursor );
 	curorigin( 1, 0, 0 );
 	drawmode( CURSORDRAW );
 	mapcolor( 1, 255, 0, 0 );
 	drawmode( NORMALDRAW );
 	setcursor(1, 1, 0);
+
+	if( MIPS(ifp)->mi_curs_on == 0 )  {
+		setcursor( 2, 1, 0 );		/* nilcursor */
+		cursoff();
+	}
 
 	/* The screen has no useful state.  Restore it as it was before */
 	/* Smarter deferral logic needed */
@@ -780,7 +833,18 @@ out:
 	 *  still open.
 	 */
 	blanktime( (long) 67 * 60 * 20L );
-	gexit();			/* mandatory */
+
+	/* Restore initial operation mode, if this was 30Hz */
+	if( (ifp->if_mode & MODE_4MASK) == MODE_4HZ30 )
+		setvideo( DE_R1, MIPS(ifp)->mi_der1 );
+
+	/* Always leave cursor on when done */
+	if( MIPS(ifp)->mi_curs_on == 0 )  {
+		setcursor( 0, 1, 0 );		/* system default cursor */
+		curson();
+	}
+
+	gexit();			/* mandatory finish */
 	if( fp )  fclose(fp);
 
 	if( MIPSL(ifp) != NULL )
@@ -943,8 +1007,6 @@ int	count;
 	if( xmem < 0 || xmem > ifp->if_width ||
 	    ymem < 0 || ymem > ifp->if_height)
 		return(-1);
-	if( MIPS(ifp)->mi_curs_on )
-		cursoff();		/* Cursor interferes with writing */
 
 	ret = 0;
 	xscr = (xmem - (MIPS(ifp)->mi_xcenter-hfwidth)) * MIPS(ifp)->mi_xzoom;
@@ -1064,8 +1126,6 @@ int	count;
 		yscr++;
 	}
 
-	if( MIPS(ifp)->mi_curs_on )
-		curson();		/* Cursor interferes with writing */
 	return(ret);
 }
 
@@ -1229,6 +1289,7 @@ int	x, y;
 
 	MIPS(ifp)->mi_curs_on = mode;
 	if( ! mode )  {
+		setcursor( 2, 1, 0 );		/* nilcursor */
 		cursoff();
 		return	0;
 	}
@@ -1241,6 +1302,7 @@ int	x, y;
 	y -= ymin;
 	x *= MIPS(ifp)->mi_xzoom;
 	y *= MIPS(ifp)->mi_yzoom;
+	setcursor( 1, 1, 0 );			/* our cursor */
 	curson();
 	getsize(&x_size, &y_size);
 	getorigin( &left, &bottom );
