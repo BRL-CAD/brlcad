@@ -112,6 +112,7 @@ register char **argv;
 		col[2] = atof(argv[optind++]);
 
 		rgbhsv( col, hsv );
+		hsv[2] = h_start;	/* Change given RGB to starting inten */
 	}
 	return(1);			/* OK */
 }
@@ -157,14 +158,28 @@ char **argv;
 	}
 
 	/* Do rest with V dropping from start to end values */
-	deltav = (hsv[2]-h_end) / (double)(file_height-line);
+	if( hsv[2] > h_end )  {
+		/* Go from bright at the top to dim at the bottom */
+		deltav = (hsv[2]-h_end) / (double)(file_height-line);
 
-	for( ; line<file_height; line++ )  {
-		hsv[2] -= deltav;
-		hsvrgb( hsv, col );
-		*vp++ = col[0];
-		*vp++ = col[1];
-		*vp++ = col[2];
+		for( ; line<file_height; line++ )  {
+			hsv[2] -= deltav;
+			hsvrgb( hsv, col );
+			*vp++ = col[0];
+			*vp++ = col[1];
+			*vp++ = col[2];
+		}
+	} else {
+		/* Go from dim at the top to bright at the bottom */
+		deltav = (h_end-hsv[2]) / (double)(file_height-line);
+
+		for( ; line<file_height; line++ )  {
+			hsv[2] += deltav;
+			hsvrgb( hsv, col );
+			*vp++ = col[0];
+			*vp++ = col[1];
+			*vp++ = col[2];
+		}
 	}
 
 	/*
