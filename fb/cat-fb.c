@@ -42,8 +42,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define GLOBAL_RAILMAG		"/usr/lib/vfont/railmag"
 
 /* The vfonts are scaled for 200 dpi */
-#define CONVERT(n)		(n*(200./432.))
-#define RECONVERT(n)		(n*(432./200.))
+#define CONVERT(n)		((n)*(200./432.))
+#define RECONVERT(n)		((n)*(432./200.))
 
 
 RGBpixel	*scanline;
@@ -101,7 +101,8 @@ int	new_pt_size = 10;		/* new point size */
 int	last_ssize = 02;
 int	xpos, ypos;
 int	esc, lead, back, verd, mcase, railmag;
-double	row, col;		/* position in phototypesetter units */
+double	row = -31;
+double	col;		/* position in phototypesetter units */
 char	*fontname[MAXF];
 char	fnbuf[120];
 
@@ -521,16 +522,14 @@ ofile(fp)
 register FILE	*fp;
 {
 	register int c;
-	double scol;
 	static int initialized;
 
 	while ((c = getc(fp)) != EOF) {
-		if(debug>1)fprintf(stderr,"0%o v=%d (row=%g) h=%d col=%g\n", c, xpos, row, ypos, col);
 		if (!c)
 			continue;
 		if (c & 0200) {
 			esc += (~c) & 0177;
-			if(debug>1)fprintf(stderr,"esc=%d\n", esc);
+			if(debug>1)fprintf(stderr,"esc+= %d ", (~c)&0177 );
 			continue;
 		}
 		if (esc) {
@@ -541,6 +540,8 @@ register FILE	*fp;
 			ypos = CONVERT(col);
 			esc = 0;
 		}
+		if(debug>1)fprintf(stderr,"   0%o v=%d (row=%g) h=%d (col=%g)\n", c, xpos, row, ypos, col);
+
 		if ((c & 0377) < 0100)	/*  Purely for efficiency  */
 			goto normal_char;
 		switch (c) {
@@ -629,7 +630,7 @@ register FILE	*fp;
 					c = CONVERT(row);
 				}
 				xpos = c;
-				if(debug)fprintf(stderr,"v=%d (%f)\n", xpos, row);
+				if(debug)fprintf(stderr,"v=%d (row=%g)\n", xpos, row);
 				continue;
 			}
 			if ((c & 0360) == 0120)	/* size change */ {
@@ -641,7 +642,6 @@ register FILE	*fp;
 
 normal_char:
 			c = (c & 077) | mcase;
-			if(debug>1)fprintf(stderr,"outc(0%o %c)\n", c, c);
 			outc(c);
 		}
 	}
@@ -661,19 +661,20 @@ findsize(code)
 			break;
 		psp++;
 	}
-	delta = 0;
-	if (!(last_ssize & 0200) && (psp->stupid_code & 0200))
-		delta = -55;		/* Size getting larger */
-	else if ((last_ssize & 0200) && !(psp->stupid_code & 0200))
-		delta = 55;		/* Size getting smaller */
-	if (back)
-		delta = -delta;
 	/*
 	 * Due to the optics in the C/A/T, characters appear with an X offset
 	 * when some of the larger sizes are used.
 	 */
+	delta = 0;
+#define DBL	0200
+	if (!(last_ssize & DBL) && (psp->stupid_code & DBL))
+		delta = -55;		/* Size getting larger */
+	else if ((last_ssize & DBL) && !(psp->stupid_code & DBL))
+		delta = 55;		/* Size getting smaller */
+	if (back)
+		delta = -delta;
 	esc += delta;	/* Compensate for C/A/T hardware shift during size change */
-	if(debug>1)fprintf(stderr,"findsize: dorking escapment by %d, code=0%o, last_ssize=0%o, stupid_code=0%o\n", delta, code, last_ssize, psp->stupid_code);
+	if(debug)fprintf(stderr,"findsize: changing escapment by %d, code=0%o, last_ssize=0%o, stupid_code=0%o\n", delta, code, last_ssize, psp->stupid_code);
 	last_ssize = psp->stupid_code;
 	return (psp->real_code);
 }
@@ -810,9 +811,13 @@ outc(code)
 
 	/* xpos is vertical (typ. called Y), ypos is horizontal (typ. X)
 	 * like a strip-chart recorder */
-	if(debug)fprintf(stderr,"%c h=%d v=%d  l=%d r=%d  u=%d d=%d  w=%d\n",
-		c, ypos, xpos, vdp->vd_left, vdp->vd_right,
+	if(debug)  {
+		fprintf(stderr,"%c h=%d v=%d  (row=%g col=%g) l=%d r=%d  u=%d d=%d  w=%d\n",
+		c, ypos, xpos,
+		row, col,
+		vdp->vd_left, vdp->vd_right,
 		vdp->vd_up, vdp->vd_down, vdp->vd_width);
+	}
 	if( ypos + vdp->vd_right > bytes_per_line*8 )  {
 		fprintf(stderr, "cat-fb: '%c' off right edge of screen\n", c);
 		return(0);
