@@ -25,8 +25,6 @@
 #include "vmath.h"
 #include "nurb.h"
 
-static FILE * plotfile;
-
 void rt_nurb_setfile(n)
 int n;
 {
@@ -38,23 +36,16 @@ rt_nurb_closefile()
 
 }
 
-void rt_nurb_s_plot( srf)
+void rt_nurb_s_plot( srf )
 struct snurb * srf;
 {
-
-	rt_nurb_m_plot( srf->mesh);
-}
-
-rt_nurb_m_plot( m )
-struct s_mesh * m;
-{
 	int i,j,k;
-	fastf_t * m_ptr = m->ctl_points;
-	int evp = RT_NURB_EXTRACT_COORDS( m->pt_type);
+	fastf_t * m_ptr = srf->ctl_points;
+	int evp = RT_NURB_EXTRACT_COORDS( srf->pt_type);
 
-	for( i = 0; i < m->s_size[0]; i++)
+	for( i = 0; i < srf->s_size[0]; i++)
 	{
-		for( j = 0; j < m->s_size[1]; j++)
+		for( j = 0; j < srf->s_size[1]; j++)
 		{
 			if( j == 0)
 			{
@@ -66,12 +57,12 @@ struct s_mesh * m;
 		}
 	}
 
-	for( j = 0; j < m->s_size[1]; j++)
+	for( j = 0; j < srf->s_size[1]; j++)
 	{
 		int stride;
-		stride = m->s_size[1] * evp;
-		m_ptr = &m->ctl_points[j * evp];
-		for( i = 0; i < m->s_size[0]; i++)
+		stride = srf->s_size[1] * evp;
+		m_ptr = &srf->ctl_points[j * evp];
+		for( i = 0; i < srf->s_size[0]; i++)
 		{
 			if( i == 0)
 				pd_3move( stdout, m_ptr[0], m_ptr[1], m_ptr[2]);

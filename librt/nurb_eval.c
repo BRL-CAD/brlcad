@@ -35,17 +35,17 @@ struct snurb *srf;
 fastf_t	u;
 fastf_t v;
 {
-	fastf_t * mesh_ptr = srf->mesh.ctl_points;
+	fastf_t * mesh_ptr = srf->ctl_points;
 	fastf_t * curves;
 	int	i, j, k;
-	int	row_size = srf->mesh.s_size[RT_NURB_SPLIT_ROW];
-	int	col_size = srf->mesh.s_size[RT_NURB_SPLIT_COL];
+	int	row_size = srf->s_size[RT_NURB_SPLIT_ROW];
+	int	col_size = srf->s_size[RT_NURB_SPLIT_COL];
 	fastf_t * c_ptr;
 	fastf_t * diff_curve, *ev_pt;
 	fastf_t * final_value;
 	int	k_index;
 
-	int	coords = RT_NURB_EXTRACT_COORDS(srf->mesh.pt_type);
+	int	coords = RT_NURB_EXTRACT_COORDS(srf->pt_type);
 
 	final_value = (fastf_t * ) rt_malloc( 
 	    sizeof (fastf_t) * coords,
@@ -114,7 +114,7 @@ fastf_t param;
 	int	coords;
 	int	i, k_index;
 
-	coords = RT_NURB_EXTRACT_COORDS( crv->mesh.pt_type);
+	coords = RT_NURB_EXTRACT_COORDS( crv->pt_type);
 
 	final_value = (fastf_t * ) rt_malloc( coords * sizeof(fastf_t),
 	    "diff: rt_nurb_c_eval");
@@ -122,10 +122,10 @@ fastf_t param;
 	k_index = rt_nurb_knot_index( &crv->knot, param, crv->order);
 
 	pnts = (fastf_t * ) rt_malloc( coords * sizeof( fastf_t) * 
-	    crv->mesh.c_size, "diff: rt_nurb_c_eval");
+	    crv->c_size, "diff: rt_nurb_c_eval");
 
-	for ( i = 0; i < coords * crv->mesh.c_size; i++)
-		pnts[i] = crv->mesh.ctl_points[i];
+	for ( i = 0; i < coords * crv->c_size; i++)
+		pnts[i] = crv->ctl_points[i];
 
 	ev_pt = (fastf_t * ) rt_nurb_eval_crv(
 	    pnts, crv->order, param, &crv->knot, k_index, coords);

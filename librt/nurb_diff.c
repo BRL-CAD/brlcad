@@ -48,25 +48,25 @@ int	dir;
 		nsrf = (struct snurb *)
 		rt_nurb_new_snurb( srf->order[0] - 1, srf->order[1], 
 		    srf->u_knots.k_size - 2, srf->v_knots.k_size,
-		    srf->mesh.s_size[0], srf->mesh.s_size[1] - 1, 
-		    srf->mesh.pt_type );
+		    srf->s_size[0], srf->s_size[1] - 1, 
+		    srf->pt_type );
 
-		for ( i = 0; i < srf->mesh.s_size[0]; i++) {
+		for ( i = 0; i < srf->s_size[0]; i++) {
 			fastf_t * old_points, *new_points;
 
-			old_points = srf->mesh.ctl_points + 
-			    i * RT_NURB_EXTRACT_COORDS(srf->mesh.pt_type)
-			*srf->mesh.s_size[1];
+			old_points = srf->ctl_points + 
+			    i * RT_NURB_EXTRACT_COORDS(srf->pt_type)
+			*srf->s_size[1];
 
-			new_points = nsrf->mesh.ctl_points + 
-			    i * RT_NURB_EXTRACT_COORDS(nsrf->mesh.pt_type)
-			*nsrf->mesh.s_size[1];
+			new_points = nsrf->ctl_points + 
+			    i * RT_NURB_EXTRACT_COORDS(nsrf->pt_type)
+			*nsrf->s_size[1];
 
 			rt_nurb_mesh_diff( srf->order[0], 
 			    old_points, new_points, srf->u_knots.knots,
-			    RT_NURB_EXTRACT_COORDS(srf->mesh.pt_type),
-			    RT_NURB_EXTRACT_COORDS(nsrf->mesh.pt_type),
-			    srf->mesh.s_size[1], srf->mesh.pt_type);
+			    RT_NURB_EXTRACT_COORDS(srf->pt_type),
+			    RT_NURB_EXTRACT_COORDS(nsrf->pt_type),
+			    srf->s_size[1], srf->pt_type);
 		}
 
 		for (i = 1; i < srf->u_knots.k_size - 1; i++)
@@ -78,25 +78,25 @@ int	dir;
 		nsrf = (struct snurb *) rt_nurb_new_snurb( 
 		    srf->order[0], srf->order[1] - 1, 
 		    srf->u_knots.k_size, srf->v_knots.k_size - 2,
-		    srf->mesh.s_size[0] - 1, srf->mesh.s_size[1], 
-		    srf->mesh.pt_type );
+		    srf->s_size[0] - 1, srf->s_size[1], 
+		    srf->pt_type );
 
-		for ( i = 0; i < srf->mesh.s_size[1]; i++) {
+		for ( i = 0; i < srf->s_size[1]; i++) {
 			fastf_t * old_points, *new_points;
 
-			old_points = srf->mesh.ctl_points + 
-			    i * RT_NURB_EXTRACT_COORDS(srf->mesh.pt_type);
+			old_points = srf->ctl_points + 
+			    i * RT_NURB_EXTRACT_COORDS(srf->pt_type);
 
-			new_points = nsrf->mesh.ctl_points + 
-			    i * RT_NURB_EXTRACT_COORDS(nsrf->mesh.pt_type);
+			new_points = nsrf->ctl_points + 
+			    i * RT_NURB_EXTRACT_COORDS(nsrf->pt_type);
 
 			rt_nurb_mesh_diff( srf->order[1], 
 			    old_points, new_points, srf->v_knots.knots,
-			    RT_NURB_EXTRACT_COORDS(srf->mesh.pt_type) * 
-			    srf->mesh.s_size[1],
-			    RT_NURB_EXTRACT_COORDS(nsrf->mesh.pt_type) * 
-			    nsrf->mesh.s_size[1],
-			    srf->mesh.s_size[0], srf->mesh.pt_type);
+			    RT_NURB_EXTRACT_COORDS(srf->pt_type) * 
+			    srf->s_size[1],
+			    RT_NURB_EXTRACT_COORDS(nsrf->pt_type) * 
+			    nsrf->s_size[1],
+			    srf->s_size[0], srf->pt_type);
 		}
 
 		for (i = 0; i < srf->u_knots.k_size; i++)
@@ -120,16 +120,16 @@ struct cnurb *crv;
 	int	i;
 
 	ncrv = (struct cnurb *) rt_nurb_new_cnurb( crv->order - 1, 
-	    crv->knot.k_size - 2, crv->mesh.c_size - 1, 
-	    crv->mesh.pt_type);
+	    crv->knot.k_size - 2, crv->c_size - 1, 
+	    crv->pt_type);
 
-	opts = (fastf_t * ) crv->mesh.ctl_points;
-	npts = (fastf_t * ) ncrv->mesh.ctl_points;
+	opts = (fastf_t * ) crv->ctl_points;
+	npts = (fastf_t * ) ncrv->ctl_points;
 
 	rt_nurb_mesh_diff( crv->order, opts, npts, crv->knot.knots, 
-	    RT_NURB_EXTRACT_COORDS( crv->mesh.pt_type),
-	    RT_NURB_EXTRACT_COORDS( ncrv->mesh.pt_type),
-	    crv->mesh.c_size, crv->mesh.pt_type );
+	    RT_NURB_EXTRACT_COORDS( crv->pt_type),
+	    RT_NURB_EXTRACT_COORDS( ncrv->pt_type),
+	    crv->c_size, crv->pt_type );
 
 	for ( i = 1; i < crv->knot.k_size - 1; i++)
 		ncrv->knot.knots[ i - 1] = crv->knot.knots[i];

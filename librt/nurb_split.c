@@ -78,16 +78,16 @@ int dir;
 		rt_nurb_kvextract(&srf1->u_knots, &new_kv, 0, k_index + srf1->order[0]);
 		rt_nurb_kvcopy(&srf1->v_knots, &srf->v_knots);
 		
-		srf1->mesh.pt_type = srf->mesh.pt_type;
-		srf1->mesh.s_size[0] = srf1->v_knots.k_size - 
+		srf1->pt_type = srf->pt_type;
+		srf1->s_size[0] = srf1->v_knots.k_size - 
 			srf1->order[1];
-		srf1->mesh.s_size[1] = srf1->u_knots.k_size - 
+		srf1->s_size[1] = srf1->u_knots.k_size - 
 			srf1->order[0];
 
-		srf1->mesh.ctl_points = (fastf_t *)
-			rt_malloc( sizeof(fastf_t) * srf1->mesh.s_size[0] *
-				srf1->mesh.s_size[1] * 
-				RT_NURB_EXTRACT_COORDS( srf1->mesh.pt_type),
+		srf1->ctl_points = (fastf_t *)
+			rt_malloc( sizeof(fastf_t) * srf1->s_size[0] *
+				srf1->s_size[1] * 
+				RT_NURB_EXTRACT_COORDS( srf1->pt_type),
 				"rt_nurb_s_split: srf1 row mesh control points");
 
 		srf2 = (struct snurb *) rt_malloc( sizeof( struct snurb),
@@ -98,41 +98,41 @@ int dir;
 		rt_nurb_kvextract(&srf2->u_knots, &new_kv, k_index, new_kv.k_size);
 		rt_nurb_kvcopy(&srf2->v_knots, &srf->v_knots);
 		
-		srf2->mesh.pt_type = srf->mesh.pt_type;
-		srf2->mesh.s_size[0] = srf2->v_knots.k_size - 
+		srf2->pt_type = srf->pt_type;
+		srf2->s_size[0] = srf2->v_knots.k_size - 
 			srf2->order[1];
-		srf2->mesh.s_size[1] = srf2->u_knots.k_size - 
+		srf2->s_size[1] = srf2->u_knots.k_size - 
 			srf2->order[0];
 
-		srf2->mesh.ctl_points = (fastf_t *)
-			rt_malloc( sizeof(fastf_t) * srf2->mesh.s_size[0] *
-				srf2->mesh.s_size[1] * 
-				RT_NURB_EXTRACT_COORDS( srf2->mesh.pt_type),
+		srf2->ctl_points = (fastf_t *)
+			rt_malloc( sizeof(fastf_t) * srf2->s_size[0] *
+				srf2->s_size[1] * 
+				RT_NURB_EXTRACT_COORDS( srf2->pt_type),
 				"rt_nurb_s_split: srf2 row mesh control points");
 
-		for( i = 0; i < srf->mesh.s_size[0]; i++)
+		for( i = 0; i < srf->s_size[0]; i++)
 		{
 			fastf_t * old_mesh_ptr;
 			fastf_t * new_mesh_ptr;
 
-			old_mesh_ptr = &srf->mesh.ctl_points[
-				i * srf->mesh.s_size[1] * 
-				RT_NURB_EXTRACT_COORDS( srf->mesh.pt_type)];
-			new_mesh_ptr = &srf1->mesh.ctl_points[
-				i * srf1->mesh.s_size[1] * 
-				RT_NURB_EXTRACT_COORDS( srf1->mesh.pt_type)];
+			old_mesh_ptr = &srf->ctl_points[
+				i * srf->s_size[1] * 
+				RT_NURB_EXTRACT_COORDS( srf->pt_type)];
+			new_mesh_ptr = &srf1->ctl_points[
+				i * srf1->s_size[1] * 
+				RT_NURB_EXTRACT_COORDS( srf1->pt_type)];
 			rt_nurb_map_oslo( oslo, old_mesh_ptr, new_mesh_ptr,
-				RT_NURB_EXTRACT_COORDS( srf->mesh.pt_type ),
-				RT_NURB_EXTRACT_COORDS( srf1->mesh.pt_type ),
-				0, k_index, srf1->mesh.pt_type);
-			new_mesh_ptr = &srf2->mesh.ctl_points[
-				i * srf2->mesh.s_size[1] * 
-				RT_NURB_EXTRACT_COORDS( srf2->mesh.pt_type)];
+				RT_NURB_EXTRACT_COORDS( srf->pt_type ),
+				RT_NURB_EXTRACT_COORDS( srf1->pt_type ),
+				0, k_index, srf1->pt_type);
+			new_mesh_ptr = &srf2->ctl_points[
+				i * srf2->s_size[1] * 
+				RT_NURB_EXTRACT_COORDS( srf2->pt_type)];
 			rt_nurb_map_oslo( oslo, old_mesh_ptr, new_mesh_ptr,
-				RT_NURB_EXTRACT_COORDS( srf->mesh.pt_type ),
-				RT_NURB_EXTRACT_COORDS( srf2->mesh.pt_type ),
+				RT_NURB_EXTRACT_COORDS( srf->pt_type ),
+				RT_NURB_EXTRACT_COORDS( srf2->pt_type ),
 				k_index, new_kv.k_size - srf2->order[0], 
-				srf2->mesh.pt_type);
+				srf2->pt_type);
 		}
 	}
 	else 
@@ -166,16 +166,16 @@ int dir;
 		rt_nurb_kvextract(&srf1->v_knots, &new_kv, 0, k_index + srf1->order[RT_NURB_SPLIT_COL]);
 		rt_nurb_kvcopy(&srf1->u_knots, &srf->u_knots);
 		
-		srf1->mesh.pt_type = srf->mesh.pt_type;
-		srf1->mesh.s_size[0] = srf1->v_knots.k_size - 
+		srf1->pt_type = srf->pt_type;
+		srf1->s_size[0] = srf1->v_knots.k_size - 
 			srf1->order[1];
-		srf1->mesh.s_size[1] = srf1->u_knots.k_size - 
+		srf1->s_size[1] = srf1->u_knots.k_size - 
 			srf1->order[0];
 
-		srf1->mesh.ctl_points = (fastf_t *)
-			rt_malloc( sizeof(fastf_t) * srf1->mesh.s_size[0] *
-				srf1->mesh.s_size[1] * 
-				RT_NURB_EXTRACT_COORDS( srf1->mesh.pt_type),
+		srf1->ctl_points = (fastf_t *)
+			rt_malloc( sizeof(fastf_t) * srf1->s_size[0] *
+				srf1->s_size[1] * 
+				RT_NURB_EXTRACT_COORDS( srf1->pt_type),
 				"rt_nurb_s_split: srf1 col mesh control points");
 
 		srf2 = (struct snurb *) rt_malloc( sizeof( struct snurb),
@@ -186,42 +186,42 @@ int dir;
 		rt_nurb_kvextract(&srf2->v_knots, &new_kv, k_index, new_kv.k_size);
 		rt_nurb_kvcopy(&srf2->u_knots, &srf->u_knots);
 
-		srf2->mesh.pt_type = srf->mesh.pt_type;
-		srf2->mesh.s_size[0] = srf2->v_knots.k_size - 
+		srf2->pt_type = srf->pt_type;
+		srf2->s_size[0] = srf2->v_knots.k_size - 
 			srf2->order[1];
-		srf2->mesh.s_size[1] = srf2->u_knots.k_size - 
+		srf2->s_size[1] = srf2->u_knots.k_size - 
 			srf2->order[0];
 
-		srf2->mesh.ctl_points = (fastf_t *)
-			rt_malloc( sizeof(fastf_t) * srf2->mesh.s_size[0] *
-				srf2->mesh.s_size[1] * 
-				RT_NURB_EXTRACT_COORDS( srf2->mesh.pt_type),
+		srf2->ctl_points = (fastf_t *)
+			rt_malloc( sizeof(fastf_t) * srf2->s_size[0] *
+				srf2->s_size[1] * 
+				RT_NURB_EXTRACT_COORDS( srf2->pt_type),
 				"rt_nurb_s_split: srf2 col mesh control points");
 
-		for( i = 0; i < srf->mesh.s_size[1]; i++)
+		for( i = 0; i < srf->s_size[1]; i++)
 		{
 			fastf_t * old_mesh_ptr;
 			fastf_t * new_mesh_ptr;
 
-			old_mesh_ptr = &srf->mesh.ctl_points[
-				i * RT_NURB_EXTRACT_COORDS( srf->mesh.pt_type)];
-			new_mesh_ptr = &srf1->mesh.ctl_points[
-				i * RT_NURB_EXTRACT_COORDS( srf1->mesh.pt_type)];
+			old_mesh_ptr = &srf->ctl_points[
+				i * RT_NURB_EXTRACT_COORDS( srf->pt_type)];
+			new_mesh_ptr = &srf1->ctl_points[
+				i * RT_NURB_EXTRACT_COORDS( srf1->pt_type)];
 			rt_nurb_map_oslo( oslo, old_mesh_ptr, new_mesh_ptr,
-				srf->mesh.s_size[1] *
-				RT_NURB_EXTRACT_COORDS( srf->mesh.pt_type ),
-				srf1->mesh.s_size[1] * 
-				RT_NURB_EXTRACT_COORDS( srf1->mesh.pt_type ),
-				0, k_index, srf1->mesh.pt_type);
-			new_mesh_ptr = &srf2->mesh.ctl_points[
-				i * RT_NURB_EXTRACT_COORDS( srf2->mesh.pt_type)];
+				srf->s_size[1] *
+				RT_NURB_EXTRACT_COORDS( srf->pt_type ),
+				srf1->s_size[1] * 
+				RT_NURB_EXTRACT_COORDS( srf1->pt_type ),
+				0, k_index, srf1->pt_type);
+			new_mesh_ptr = &srf2->ctl_points[
+				i * RT_NURB_EXTRACT_COORDS( srf2->pt_type)];
 			rt_nurb_map_oslo( oslo, old_mesh_ptr, new_mesh_ptr,
-				srf->mesh.s_size[1] *
-				RT_NURB_EXTRACT_COORDS( srf->mesh.pt_type ),
-				srf2->mesh.s_size[1] *
-				RT_NURB_EXTRACT_COORDS( srf2->mesh.pt_type ),
+				srf->s_size[1] *
+				RT_NURB_EXTRACT_COORDS( srf->pt_type ),
+				srf2->s_size[1] *
+				RT_NURB_EXTRACT_COORDS( srf2->pt_type ),
 				k_index, new_kv.k_size - srf2->order[1], 
-				srf2->mesh.pt_type);
+				srf2->pt_type);
 		}
 	}
 	
@@ -260,7 +260,7 @@ struct cnurb * crv;
 	struct cnurb * crv1, * crv2;
 	int coords;
 
-	coords = RT_NURB_EXTRACT_COORDS( crv->mesh.pt_type ),
+	coords = RT_NURB_EXTRACT_COORDS( crv->pt_type ),
 
 	value = crv->knot.knots[(crv->knot.k_size -1)/2];
 		
@@ -288,11 +288,11 @@ struct cnurb * crv;
 
 	crv1->order  = crv->order;
 	rt_nurb_kvextract(&crv1->knot, &new_kv, 0, k_index + crv->order);
-	crv1->mesh.pt_type = crv->mesh.pt_type;
-	crv1->mesh.c_size = crv1->knot.k_size - crv1->order;
-	crv1->mesh.ctl_points = (fastf_t *)
-		rt_malloc( sizeof(fastf_t) * crv1->mesh.c_size *
-			RT_NURB_EXTRACT_COORDS( crv1->mesh.pt_type),
+	crv1->pt_type = crv->pt_type;
+	crv1->c_size = crv1->knot.k_size - crv1->order;
+	crv1->ctl_points = (fastf_t *)
+		rt_malloc( sizeof(fastf_t) * crv1->c_size *
+			RT_NURB_EXTRACT_COORDS( crv1->pt_type),
 			"rt_nurb_c_split: crv1 control points");
 
 	crv2 = (struct cnurb *) rt_malloc( sizeof( struct cnurb),
@@ -300,23 +300,23 @@ struct cnurb * crv;
 
 	crv2->order  = crv->order;
 	rt_nurb_kvextract(&crv2->knot, &new_kv, k_index, new_kv.k_size);
-	crv2->mesh.pt_type = crv->mesh.pt_type;
-	crv2->mesh.c_size = crv2->knot.k_size - crv2->order;
-	crv2->mesh.ctl_points = (fastf_t *)
-		rt_malloc( sizeof(fastf_t) * crv2->mesh.c_size *
-			RT_NURB_EXTRACT_COORDS( crv2->mesh.pt_type),
+	crv2->pt_type = crv->pt_type;
+	crv2->c_size = crv2->knot.k_size - crv2->order;
+	crv2->ctl_points = (fastf_t *)
+		rt_malloc( sizeof(fastf_t) * crv2->c_size *
+			RT_NURB_EXTRACT_COORDS( crv2->pt_type),
 			"rt_nurb_s_split: crv2 mesh control points");
 
-	rt_nurb_map_oslo( oslo, crv->mesh.ctl_points, crv1->mesh.ctl_points,
-		coords, coords, 0, k_index, crv->mesh.pt_type );
+	rt_nurb_map_oslo( oslo, crv->ctl_points, crv1->ctl_points,
+		coords, coords, 0, k_index, crv->pt_type );
 
-	rt_nurb_map_oslo( oslo, crv->mesh.ctl_points, crv2->mesh.ctl_points,
+	rt_nurb_map_oslo( oslo, crv->ctl_points, crv2->ctl_points,
 		coords, coords, k_index, new_kv.k_size - crv2->order, 
-		crv2->mesh.pt_type );
+		crv2->pt_type );
 
 	rt_nurb_free_oslo( oslo );
 
-	/* XXX Who frees new_kv */
+	/* XXX Who frees new_kv.knots */
 
 	crv1->next = crv2;
 	return (struct cnurb *) crv1;

@@ -19,7 +19,7 @@
 
 /* Since a B-Spline surface follows the convex hull property 
  * the bounding box can be found by taking the min and max of
- * all points in the control mesh. If the surface mesh contains
+ * all points in the control  If the surface mesh contains
  * homogeneous points (i.e. [XYZW]) then divide out the W first.
  */
 
@@ -59,12 +59,12 @@ point_t bmin, bmax;
 		return(-1);		/* BAD */
 	}
 
-	p_ptr = srf->mesh.ctl_points;
-	coords = RT_NURB_EXTRACT_COORDS(srf->mesh.pt_type);
-	rat =    RT_NURB_IS_PT_RATIONAL(srf->mesh.pt_type);
+	p_ptr = srf->ctl_points;
+	coords = RT_NURB_EXTRACT_COORDS(srf->pt_type);
+	rat =    RT_NURB_IS_PT_RATIONAL(srf->pt_type);
 
-	for ( i = ( srf->mesh.s_size[RT_NURB_SPLIT_ROW] * 
-	    srf->mesh.s_size[RT_NURB_SPLIT_COL] ); i > 0; i--) {
+	for ( i = ( srf->s_size[RT_NURB_SPLIT_ROW] * 
+	    srf->s_size[RT_NURB_SPLIT_COL] ); i > 0; i--) {
 		if ( !rat ) {
 			VMINMAX( bmin, bmax, p_ptr );
 		} else if ( rat  ) {
@@ -102,11 +102,11 @@ point_t bmin, bmax;
 		return(-1);		/* BAD */
 	}
 
-	p_ptr = crv->mesh.ctl_points;
-	coords = RT_NURB_EXTRACT_COORDS(crv->mesh.pt_type);
-	rat =    RT_NURB_IS_PT_RATIONAL(crv->mesh.pt_type);
+	p_ptr = crv->ctl_points;
+	coords = RT_NURB_EXTRACT_COORDS(crv->pt_type);
+	rat =    RT_NURB_IS_PT_RATIONAL(crv->pt_type);
 
-	for ( i = crv->mesh.c_size; i > 0; i--) {
+	for ( i = crv->c_size; i > 0; i--) {
 		if ( !rat ) {
 			VMINMAX( bmin, bmax, p_ptr );
 		} else if ( rat  ) {
@@ -138,10 +138,10 @@ register struct snurb *srf;
 	register fastf_t *mp;	/* Mesh pointr */
 	register int	i;
 
-	mp = srf->mesh.ctl_points;
-	i = srf->mesh.s_size[RT_NURB_SPLIT_ROW] * 
-	    srf->mesh.s_size[RT_NURB_SPLIT_COL] * 
-	    srf->mesh.pt_type;
+	mp = srf->ctl_points;
+	i = srf->s_size[RT_NURB_SPLIT_ROW] * 
+	    srf->s_size[RT_NURB_SPLIT_COL] * 
+	    srf->pt_type;
 	for ( ; i > 0; i--, mp++)  {
 		/* Sanity checking */
 		if ( !NEAR_ZERO( *mp, INFINITY ) )  {
@@ -167,9 +167,9 @@ register struct cnurb *crv;
 	register fastf_t *mp;	/* Mesh pointr */
 	register int	i;
 
-	mp = crv->mesh.ctl_points;
-	i = crv->mesh.c_size * 
-	    crv->mesh.pt_type;
+	mp = crv->ctl_points;
+	i = crv->c_size * 
+	    crv->pt_type;
 	for ( ; i > 0; i--, mp++)  {
 		/* Sanity checking */
 		if ( !NEAR_ZERO( *mp, INFINITY ) )  {

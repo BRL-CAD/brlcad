@@ -32,30 +32,30 @@ struct rt_nurb_poly *
 rt_nurb_to_poly( srf )
 struct snurb *srf;
 {
-	int	coords = srf->mesh.pt_type;
+	int	coords = srf->pt_type;
 	fastf_t 	 * p1, *p2, *p3, *p4;
 	fastf_t 	uv1[2], uv2[2], uv3[2], uv4[2];
 	struct rt_nurb_poly *p, *p_head;
 
 	/* Extract the four corners from the mesh */
 
-	p1 = srf->mesh.ctl_points;
-	p2 = srf->mesh.ctl_points + coords * srf->mesh.s_size[1];
-	p3 = srf->mesh.ctl_points + (coords * srf->mesh.s_size[1] * 
-	    (srf->mesh.s_size[0] - 1)) + 
-	    ((srf->mesh.s_size[1] - 1) * coords);
-	p4 = srf->mesh.ctl_points + (coords * srf->mesh.s_size[1] * 
-	    (srf->mesh.s_size[0] - 1));
+	p1 = srf->ctl_points;
+	p2 = srf->ctl_points + coords * srf->s_size[1];
+	p3 = srf->ctl_points + (coords * srf->s_size[1] * 
+	    (srf->s_size[0] - 1)) + 
+	    ((srf->s_size[1] - 1) * coords);
+	p4 = srf->ctl_points + (coords * srf->s_size[1] * 
+	    (srf->s_size[0] - 1));
 
 	/* If the point is rational then divide out the w component */
-	if ( RT_NURB_IS_PT_RATIONAL(srf->mesh.pt_type)) {
+	if ( RT_NURB_IS_PT_RATIONAL(srf->pt_type)) {
 		int	w_index;
 
-		if ( RT_NURB_EXTRACT_PT_TYPE( srf->mesh.pt_type) == RT_NURB_PT_XY)
+		if ( RT_NURB_EXTRACT_PT_TYPE( srf->pt_type) == RT_NURB_PT_XY)
 			w_index = 2;
-		else if ( RT_NURB_EXTRACT_PT_TYPE( srf->mesh.pt_type) == RT_NURB_PT_UV)
+		else if ( RT_NURB_EXTRACT_PT_TYPE( srf->pt_type) == RT_NURB_PT_UV)
 			w_index = 2;
-		else if ( RT_NURB_EXTRACT_PT_TYPE( srf->mesh.pt_type) == RT_NURB_PT_XYZ)
+		else if ( RT_NURB_EXTRACT_PT_TYPE( srf->pt_type) == RT_NURB_PT_XYZ)
 			w_index = 3;
 		else /* assume the forth coordinate */
 			w_index = 3;

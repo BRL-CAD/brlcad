@@ -65,7 +65,7 @@ fastf_t v;
 	rt_nurb_free_snurb( vvs);
 	rt_nurb_free_snurb( uvs);
 
-	if( RT_NURB_IS_PT_RATIONAL( srf->mesh.pt_type ))
+	if( RT_NURB_IS_PT_RATIONAL( srf->pt_type ))
 	{
 		for( i = 0; i < 3; i++)
 		{

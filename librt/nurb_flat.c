@@ -33,8 +33,8 @@ fastf_t epsilon;		/* Epsilon value for flatness testing */
 	register fastf_t 	max_col_dist;
 	register fastf_t 	max_dist;
 	int	dir;
-	fastf_t        * mesh_ptr = srf->mesh.ctl_points;
-	int	coords = RT_NURB_EXTRACT_COORDS(srf->mesh.pt_type);
+	fastf_t        * mesh_ptr = srf->ctl_points;
+	int	coords = RT_NURB_EXTRACT_COORDS(srf->pt_type);
 	int	j, i, k;
 	int	mesh_elt;
 	vect_t          p1, p2, p3, p4, v1, v2, v3;
@@ -52,7 +52,7 @@ fastf_t epsilon;		/* Epsilon value for flatness testing */
 	max_row_dist = max_col_dist = -INFINITY;
 
 	crv = (fastf_t * ) rt_malloc( sizeof(fastf_t) * 
-	    RT_NURB_EXTRACT_COORDS(srf->mesh.pt_type) * srf->mesh.s_size[1], 
+	    RT_NURB_EXTRACT_COORDS(srf->pt_type) * srf->s_size[1], 
 	    "rt_nurb_s_flat: crv");
 
 	/* Test Row and RT_NURB_SPLIT_COL curves for flatness, 
@@ -60,39 +60,39 @@ fastf_t epsilon;		/* Epsilon value for flatness testing */
 
 	/* Test Row Curves */
 
-	for (i = 0; i < (srf->mesh.s_size[0]); i++) {
+	for (i = 0; i < (srf->s_size[0]); i++) {
 		fastf_t rdist;
 		for (j = 0; 
-		    j < (srf->mesh.s_size[1] * 
-			RT_NURB_EXTRACT_COORDS(srf->mesh.pt_type)); 
+		    j < (srf->s_size[1] * 
+			RT_NURB_EXTRACT_COORDS(srf->pt_type)); 
 		    j++)
 			crv[j] = *mesh_ptr++;
 
-		rdist = rt_nurb_crv_flat(crv, srf->mesh.s_size[1], 
-		    srf->mesh.pt_type);
+		rdist = rt_nurb_crv_flat(crv, srf->s_size[1], 
+		    srf->pt_type);
 		max_row_dist = MAX(max_row_dist, rdist);
 	}
 
 	rt_free( (char *)crv, "rt_nurb_s_flat: crv" );
 
 	crv = (fastf_t * ) rt_malloc(sizeof(fastf_t) * 
-	    RT_NURB_EXTRACT_COORDS(srf->mesh.pt_type) *  
-	    srf->mesh.s_size[0], 	"rt_nurb_s_flat: crv");
+	    RT_NURB_EXTRACT_COORDS(srf->pt_type) *  
+	    srf->s_size[0], 	"rt_nurb_s_flat: crv");
 
-	for (i = 0; i < (coords * srf->mesh.s_size[1]); i += coords) {
+	for (i = 0; i < (coords * srf->s_size[1]); i += coords) {
 		fastf_t rdist;
 
-		for (j = 0; j < (srf->mesh.s_size[0]); j++) {
+		for (j = 0; j < (srf->s_size[0]); j++) {
 			mesh_elt = 
-			    (j * (srf->mesh.s_size[1] * coords)) + i;
+			    (j * (srf->s_size[1] * coords)) + i;
 
 			for (k = 0; k < coords; k++)
 				crv[j * coords + k] = 
-				    srf->mesh.ctl_points[mesh_elt + k];
+				    srf->ctl_points[mesh_elt + k];
 		}
 
 		rdist = rt_nurb_crv_flat(crv, 
-		    srf->mesh.s_size[0], srf->mesh.pt_type);
+		    srf->s_size[0], srf->pt_type);
 
 		max_col_dist = MAX( max_col_dist, rdist);
 	}
@@ -115,23 +115,23 @@ fastf_t epsilon;		/* Epsilon value for flatness testing */
 	 * see how far the fourth is to the plane. 
 	 */
 
-	mesh_ptr = srf->mesh.ctl_points;
+	mesh_ptr = srf->ctl_points;
 
-	if ( !RT_NURB_IS_PT_RATIONAL(srf->mesh.pt_type) ) {
+	if ( !RT_NURB_IS_PT_RATIONAL(srf->pt_type) ) {
 
 		VMOVE(p1, mesh_ptr);
 		VMOVE(p2,
-		    (mesh_ptr + (srf->mesh.s_size[1] - 1) * coords));
+		    (mesh_ptr + (srf->s_size[1] - 1) * coords));
 		VMOVE(p3,
 		    (mesh_ptr + 
-		    ((srf->mesh.s_size[1] * 
-		    (srf->mesh.s_size[0] - 1)) + 
-		    (srf->mesh.s_size[1] - 1)) * coords));
+		    ((srf->s_size[1] * 
+		    (srf->s_size[0] - 1)) + 
+		    (srf->s_size[1] - 1)) * coords));
 
 		VMOVE(p4,
 		    (mesh_ptr + 
-		    (srf->mesh.s_size[1] * 
-		    (srf->mesh.s_size[0] - 1)) * coords));
+		    (srf->s_size[1] * 
+		    (srf->s_size[0] - 1)) * coords));
 	} else
 	 {
 		hvect_t h1, h2, h3, h4;
@@ -140,20 +140,20 @@ fastf_t epsilon;		/* Epsilon value for flatness testing */
 		HMOVE(h1, mesh_ptr);
 		HDIVIDE( p1, h1 );
 
-	 	offset = (srf->mesh.s_size[1] - 1) * coords;
+	 	offset = (srf->s_size[1] - 1) * coords;
 		HMOVE(h2, mesh_ptr + offset);
 		HDIVIDE( p2, h2 );
 
 	 	offset = 
-		    ((srf->mesh.s_size[1] * 
-		    (srf->mesh.s_size[0] - 1)) + 
-		    (srf->mesh.s_size[1] - 1)) * coords;
+		    ((srf->s_size[1] * 
+		    (srf->s_size[0] - 1)) + 
+		    (srf->s_size[1] - 1)) * coords;
 		HMOVE(h3, mesh_ptr + offset);
 		HDIVIDE( p3, h3 );
 
 	 	offset = 
-		    (srf->mesh.s_size[1] * 
-		    (srf->mesh.s_size[0] - 1)) * coords;
+		    (srf->s_size[1] * 
+		    (srf->s_size[0] - 1)) * coords;
 		HMOVE(h4, mesh_ptr + offset);
 		HDIVIDE( p4, h4 );
 	}

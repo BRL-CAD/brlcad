@@ -77,7 +77,7 @@ fastf_t u, v;
 
 		ve = (fastf_t *) rt_nurb_s_eval( srf, u, p);		
 	
-		if( RT_NURB_IS_PT_RATIONAL(srf->mesh.pt_type))
+		if( RT_NURB_IS_PT_RATIONAL(srf->pt_type))
 		{
 			ue[0] = ue[0] / ue[3];
 			ue[1] = ue[1] / ue[3];
@@ -135,7 +135,7 @@ fastf_t u, v;
 
 		ve = (fastf_t *) rt_nurb_s_eval(vsrf, u, v);
 
-		if( RT_NURB_IS_PT_RATIONAL(srf->mesh.pt_type) )
+		if( RT_NURB_IS_PT_RATIONAL(srf->pt_type) )
 		{
 			fastf_t w, inv_w;
 			
@@ -196,7 +196,7 @@ fastf_t u, v;
 		usrf = (struct snurb *) rt_nurb_s_diff(srf, RT_NURB_SPLIT_ROW);
 		ue = (fastf_t *) rt_nurb_s_eval(usrf, u, v);
 
-		if( RT_NURB_IS_PT_RATIONAL(srf->mesh.pt_type) )
+		if( RT_NURB_IS_PT_RATIONAL(srf->pt_type) )
 		{
 			fastf_t w, inv_w;
 			
@@ -234,7 +234,7 @@ fastf_t u, v;
 	}
 	
 	/* Case Non Rational (order > 2, order > 2) */
-	if( !RT_NURB_IS_PT_RATIONAL(srf->mesh.pt_type))
+	if( !RT_NURB_IS_PT_RATIONAL(srf->pt_type))
 	{
 
 		norm = (fastf_t *) rt_malloc( sizeof( fastf_t) * 3, 
@@ -258,7 +258,7 @@ fastf_t u, v;
 	}
 
 	/* Case Rational (order > 2, order > 2) */
-	if( RT_NURB_IS_PT_RATIONAL(srf->mesh.pt_type))
+	if( RT_NURB_IS_PT_RATIONAL(srf->pt_type))
 	{
 		fastf_t w, inv_w;
 		vect_t unorm, vnorm;

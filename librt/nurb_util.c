@@ -45,12 +45,12 @@ int u_order, v_order, n_u_knots, n_v_knots, n_rows, n_cols, pt_type;
 	srf->v_knots.knots = (fastf_t *) rt_malloc ( 
 		n_v_knots * sizeof (fastf_t ), "rt_nurb_new_snurb: v kv knot values");
 
-	srf->mesh.s_size[0] = n_rows;
-	srf->mesh.s_size[1] = n_cols;
-	srf->mesh.pt_type = pt_type;
+	srf->s_size[0] = n_rows;
+	srf->s_size[1] = n_cols;
+	srf->pt_type = pt_type;
 	
 	pnum = sizeof (fastf_t) * n_rows * n_cols * RT_NURB_EXTRACT_COORDS(pt_type);
-	srf->mesh.ctl_points = ( fastf_t *) rt_malloc( 
+	srf->ctl_points = ( fastf_t *) rt_malloc( 
 		pnum, "rt_nurb_new_snurb: control mesh points");
 
 	return srf;
@@ -74,10 +74,10 @@ int order, n_knots, n_pts, pt_type;
 		rt_malloc(n_knots * sizeof(fastf_t),
 			"rt_nurb_new_cnurb: knot values");
 
-	crv->mesh.c_size = n_pts;
-	crv->mesh.pt_type = pt_type;
+	crv->c_size = n_pts;
+	crv->pt_type = pt_type;
 
-	crv->mesh.ctl_points = (fastf_t *)
+	crv->ctl_points = (fastf_t *)
 		rt_malloc( sizeof(fastf_t) * RT_NURB_EXTRACT_COORDS(pt_type) *
 			n_pts, 
 			"rt_nurb_new_cnurb: mesh point values");
@@ -95,7 +95,7 @@ struct snurb * srf;
 
     rt_free( (char *)srf->u_knots.knots, "rt_nurb_free_snurb: u kv knots" );
     rt_free( (char *)srf->v_knots.knots, "rt_nurb_free_snurb: v kv knots" );
-    rt_free( (char *)srf->mesh.ctl_points, "rt_nurb_free_snurb: mesh points");
+    rt_free( (char *)srf->ctl_points, "rt_nurb_free_snurb: mesh points");
 
     rt_free( (char *)srf, "rt_nurb_free_snurb: snurb struct" );
 }
@@ -108,7 +108,7 @@ rt_nurb_free_cnurb( crv)
 struct cnurb * crv;
 {
 	rt_free( (char*)crv->knot.knots, "rt_nurb_free_cnurb: knots");
-	rt_free( (char*)crv->mesh.ctl_points, "rt_nurb_free_cnurb: control points");
+	rt_free( (char*)crv->ctl_points, "rt_nurb_free_cnurb: control points");
 	rt_free( (char*)crv, "rt_nurb_free_cnurb: cnurb struct");
 
 }
@@ -129,13 +129,13 @@ struct cnurb * crv;
 
 	fprintf(stderr,"\n\t}\n");
 	fprintf(stderr,"\t");
-	rt_nurb_print_pt_type(crv->mesh.pt_type);
+	rt_nurb_print_pt_type(crv->pt_type);
 	fprintf(stderr,"\tmesh = {\n");
-	for( ptr = &crv->mesh.ctl_points[0], i= 0;
-		i < crv->mesh.c_size; i++, ptr += RT_NURB_EXTRACT_COORDS(crv->mesh.pt_type))
+	for( ptr = &crv->ctl_points[0], i= 0;
+		i < crv->c_size; i++, ptr += RT_NURB_EXTRACT_COORDS(crv->pt_type))
 	{
 		fprintf(stderr,"\t\t");
-		for(j = 0; j < RT_NURB_EXTRACT_COORDS(crv->mesh.pt_type); j++)
+		for(j = 0; j < RT_NURB_EXTRACT_COORDS(crv->pt_type); j++)
 			fprintf(stderr,"%4.5f\t", ptr[j]);
 		fprintf(stderr,"\n");
 
@@ -163,7 +163,7 @@ struct snurb * srf;
 
     rt_nurb_pr_kv( &srf->v_knots );
 
-    rt_nurb_pr_mesh( &srf->mesh );
+    rt_nurb_pr_mesh( srf );
 
 }
 
@@ -186,7 +186,7 @@ struct knot_vector * kv;
 
 void
 rt_nurb_pr_mesh( m )
-struct s_mesh * m;
+struct snurb * m;
 {
 
 	int i,j,k;
