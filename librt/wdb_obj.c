@@ -151,6 +151,8 @@ static int wdb_reopen_tcl();
 static int wdb_make_bb_tcl();
 static int wdb_make_name_tcl();
 static int wdb_units_tcl();
+static int wdb_hide_tcl();
+static int wdb_unhide_tcl();
 
 static void wdb_deleteProc();
 static void wdb_deleteProc_rt();
@@ -185,6 +187,7 @@ static struct bu_cmdtab wdb_cmds[] = {
 	{"form",	wdb_form_tcl},
 	{"g",		wdb_group_tcl},
 	{"get",		wdb_get_tcl},
+	{"hide",	wdb_hide_tcl},
 	{"i",		wdb_instance_tcl},
 	{"keep",	wdb_keep_tcl},
 	{"kill",	wdb_kill_tcl},
@@ -211,6 +214,7 @@ static struct bu_cmdtab wdb_cmds[] = {
 	{"tol",		wdb_tol_tcl},
 	{"tops",	wdb_tops_tcl},
 	{"tree",	wdb_tree_tcl},
+	{"unhide",	wdb_unhide_tcl},
 	{"units",	wdb_units_tcl},
 	{"whatid",	wdb_whatid_tcl},
 	{"whichair",	wdb_which_tcl},
@@ -5522,4 +5526,151 @@ wdb_identitize(dp, dbip, interp)
 			return;
 		}
 	}
+}
+
+static int
+wdb_hide_tcl( clientData, interp, argc, argv)
+     ClientData	clientData;
+     Tcl_Interp	*interp;
+     int	argc;
+     char	**argv;
+{
+	struct rt_wdb			*wdbp = (struct rt_wdb *)clientData;
+	struct directory		*dp;
+	struct db_i			*dbip;
+	struct bu_external		ext;
+	struct bu_external		tmp;
+	struct db5_raw_internal		raw;
+	int				i;
+
+	RT_CK_WDB( wdbp );
+
+	dbip = wdbp->dbip;
+
+	RT_CK_DBI( dbip );
+	if( dbip->dbi_version < 5 ) {
+		Tcl_AppendResult(interp, "The \"hide\" command is only valid for version 5 databases and later\n",
+				 (char *)NULL );
+		return TCL_ERROR;
+	}
+
+	for( i=2 ; i<argc ; i++ ) {
+		if( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY )) == DIR_NULL ) {
+			continue;
+		}
+
+		RT_CK_DIR( dp );
+
+		BU_INIT_EXTERNAL(&ext);
+
+		if( db_get_external( &ext, dp, dbip ) < 0 ) {
+			Tcl_AppendResult(interp, "db_get_external failed for ",
+					 dp->d_namep, " \n", (char *)NULL );
+			continue;
+		}
+
+		if( db5_get_raw_internal_ptr( &raw, ext.ext_buf ) < 0 ) {
+			Tcl_AppendResult(interp, "db5_get_raw_internal_ptr() failed for ",
+					 dp->d_namep, " \n", (char *)NULL );
+			bu_free_external( &ext );
+			continue;
+		}
+
+		raw.h_name_hidden = (unsigned char)(0x1);
+
+		BU_INIT_EXTERNAL( &tmp );
+		db5_export_object3( &tmp, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
+			dp->d_namep,
+			raw.h_name_hidden,
+			&raw.attributes,
+			&raw.body,
+			raw.major_type, raw.minor_type,
+			raw.a_zzz, raw.b_zzz );
+		bu_free_external( &ext );
+
+		if( db_put_external( &tmp, dp, dbip ) ) {
+			Tcl_AppendResult(interp, "db_put_external() failed for ",
+					 dp->d_namep, " \n", (char *)NULL );
+			bu_free_external( &tmp );
+			continue;
+		}
+		bu_free_external( &tmp );
+		dp->d_flags |= DIR_HIDDEN;
+	}
+
+	return TCL_OK;
+}
+
+
+static int
+wdb_unhide_tcl( clientData, interp, argc, argv)
+     ClientData	clientData;
+     Tcl_Interp	*interp;
+     int	argc;
+     char	**argv;
+{
+	struct rt_wdb			*wdbp = (struct rt_wdb *)clientData;
+	struct directory		*dp;
+	struct db_i			*dbip;
+	struct bu_external		ext;
+	struct bu_external		tmp;
+	struct db5_raw_internal		raw;
+	int				i;
+
+	RT_CK_WDB( wdbp );
+
+	dbip = wdbp->dbip;
+
+	RT_CK_DBI( dbip );
+	if( dbip->dbi_version < 5 ) {
+		Tcl_AppendResult(interp, "The \"hide\" command is only valid for version 5 databases and later\n",
+				 (char *)NULL );
+		return TCL_ERROR;
+	}
+
+	for( i=2 ; i<argc ; i++ ) {
+		if( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY )) == DIR_NULL ) {
+			continue;
+		}
+
+		RT_CK_DIR( dp );
+
+		BU_INIT_EXTERNAL(&ext);
+
+		if( db_get_external( &ext, dp, dbip ) < 0 ) {
+			Tcl_AppendResult(interp, "db_get_external failed for ",
+					 dp->d_namep, " \n", (char *)NULL );
+			continue;
+		}
+
+		if( db5_get_raw_internal_ptr( &raw, ext.ext_buf ) < 0 ) {
+			Tcl_AppendResult(interp, "db5_get_raw_internal_ptr() failed for ",
+					 dp->d_namep, " \n", (char *)NULL );
+			bu_free_external( &ext );
+			continue;
+		}
+
+		raw.h_name_hidden = (unsigned char)(0x0);
+
+		BU_INIT_EXTERNAL( &tmp );
+		db5_export_object3( &tmp, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
+			dp->d_namep,
+			raw.h_name_hidden,
+			&raw.attributes,
+			&raw.body,
+			raw.major_type, raw.minor_type,
+			raw.a_zzz, raw.b_zzz );
+		bu_free_external( &ext );
+
+		if( db_put_external( &tmp, dp, dbip ) ) {
+			Tcl_AppendResult(interp, "db_put_external() failed for ",
+					 dp->d_namep, " \n", (char *)NULL );
+			bu_free_external( &tmp );
+			continue;
+		}
+		bu_free_external( &tmp );
+		dp->d_flags &= (~DIR_HIDDEN);
+	}
+
+	return TCL_OK;
 }
