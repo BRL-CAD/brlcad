@@ -467,9 +467,6 @@ struct seg		*seghead;
 				dist = hits[i].hit_dist - hits[i+1].hit_dist;
 				if( NEAR_ZERO( dist, ap->a_rt_i->rti_tol.dist ) )
 				{
-					if( RT_G_DEBUG & DEBUG_SHOOT ) {
-						bu_log( "Removing duplicate hit on %s at dist %g, ray = -p %g %g %g -d %g %g %g\n", stp->st_name, rm_dist, V3ARGS( rp->r_pt ), V3ARGS( rp->r_dir ) );
-					}
 					removed++;
 					rm_dist = hits[i+1].hit_dist;
 					for( j=i ; j<nhits-1 ; j++ )
@@ -492,9 +489,6 @@ struct seg		*seghead;
 
 			for( i=0 ; i<nhits ; i++ ) {
 				if( hits[i].hit_dist == rm_dist ) {
-					if( RT_G_DEBUG & DEBUG_SHOOT ) {
-						bu_log( "Removing the other hit on %s at dist = %g\n", stp->st_name, rm_dist );
-					}
 					for( j=i ; j<nhits-1 ; j++ )
 						hits[j] = hits[j+1];
 					nhits--;
@@ -700,9 +694,15 @@ struct seg		*seghead;
 	LOCAL struct hit hits[MAXHITS];
 	register struct hit *hp;
 	LOCAL int	nhits;
+	fastf_t		toldist, dn_plus_tol;
 
 	nhits = 0;
 	hp = &hits[0];
+	if( bot->bot_orientation != RT_BOT_UNORIENTED && bot->bot_mode == RT_BOT_SOLID ) {
+		toldist = ap->a_rt_i->rti_tol.dist;
+	} else {
+		toldist = 0.0;
+	}
 
 	/* consider each face */
 	for( ; trip; trip = trip->tri_forw )  {
@@ -724,24 +724,30 @@ struct seg		*seghead;
 		 *  is zero), drop this face.
 		 */
 		abs_dn = dn >= 0.0 ? dn : (-dn);
-		if( abs_dn < SQRT_SMALL_FASTF )
+		if( abs_dn < SQRT_SMALL_FASTF ) {
 			continue;
+		}
 		VSUB2( wxb, trip->tri_A, rp->r_pt );
 		VCROSS( xp, wxb, rp->r_dir );
+
+		dn_plus_tol = toldist + abs_dn;
 
 		/* Check for exceeding along the one side */
 		alpha = VDOT( trip->tri_CA, xp );
 		if( dn < 0.0 )  alpha = -alpha;
-		if( alpha < 0.0 || alpha > abs_dn )
+		if( alpha < -toldist || alpha > dn_plus_tol ) {
 			continue;
+		}
 
 		/* Check for exceeding along the other side */
 		beta = VDOT( trip->tri_BA, xp );
 		if( dn > 0.0 )  beta = -beta;
-		if( beta < 0.0 || beta > abs_dn )
+		if( beta < -toldist || beta > dn_plus_tol ) {
 			continue;
-		if( alpha+beta > abs_dn )
+		}
+		if( alpha+beta > dn_plus_tol ) {
 			continue;
+		}
 		k = VDOT( wxb, trip->tri_wn ) / dn;
 
 		/* HIT is within planar face */
@@ -797,6 +803,7 @@ struct seg		*seghead;
 	struct bot_specific *bot;
 	const int	debug_shoot = RT_G_DEBUG & DEBUG_SHOOT;
 	int		starting_hits;
+	fastf_t		toldist, dn_plus_tol;
 
 	RT_CK_PIECELIST(plp);
 	RT_CK_PIECESTATE(psp);
@@ -806,6 +813,12 @@ struct seg		*seghead;
 	RT_CK_RESOURCE(resp);
 	bot = (struct bot_specific *)stp->st_specific;
 	starting_hits = psp->htab.end;
+
+	if( bot->bot_orientation != RT_BOT_UNORIENTED && bot->bot_mode == RT_BOT_SOLID ) {
+		toldist = ap->a_rt_i->rti_tol.dist;
+	} else {
+		toldist = 0.0;
+	}
 
 	sol_piece_subscr_p = &(plp->pieces[plp->npieces-1]);
 	for( ; sol_piece_subscr_p >= plp->pieces; sol_piece_subscr_p-- )  {
@@ -849,24 +862,30 @@ struct seg		*seghead;
 		 *  is zero), drop this face.
 		 */
 		abs_dn = dn >= 0.0 ? dn : (-dn);
-		if( abs_dn < SQRT_SMALL_FASTF )
+		if( abs_dn < SQRT_SMALL_FASTF ) {
 			continue;
+		}
 		VSUB2( wxb, trip->tri_A, rp->r_pt );
 		VCROSS( xp, wxb, rp->r_dir );
+
+		dn_plus_tol = toldist + abs_dn;
 
 		/* Check for exceeding along the one side */
 		alpha = VDOT( trip->tri_CA, xp );
 		if( dn < 0.0 )  alpha = -alpha;
-		if( alpha < 0.0 || alpha > abs_dn )
+		if( alpha < -toldist || alpha > dn_plus_tol ) {
 			continue;
+		}
 
 		/* Check for exceeding along the other side */
 		beta = VDOT( trip->tri_BA, xp );
 		if( dn > 0.0 )  beta = -beta;
-		if( beta < 0.0 || beta > abs_dn )
+		if( beta < -toldist || beta > dn_plus_tol ) {
 			continue;
-		if( alpha+beta > abs_dn )
+		}
+		if( alpha+beta > dn_plus_tol ) {
 			continue;
+		}
 		k = VDOT( wxb, trip->tri_wn ) / dn;
 
 		/* HIT is within planar face */
