@@ -139,7 +139,7 @@ char	**argv;
 
 	/* Now, create & allocate memory for each chan */
 	for( i = 1; i < nwords; i++ )  {
-		sprintf( buf, "File %s, Column %d", file, i );
+		sprintf( buf, "File '%s', Column %d", file, i );
 		if( (cnum[i] = create_chan( argv[i+1], nlines, buf )) < 0 )
 			return(-1);	/* abort */
 		/* Share array of times */
@@ -151,17 +151,26 @@ char	**argv;
 		(void)fgets( buf, sizeof(buf), fp );
 		i = rt_split_cmd( iwords, nwords+1, buf );
 		if( i != nwords )  {
-			printf("File %s, Line %s:  expected %d columns, got %d\n",
+			printf("File '%s', Line %d:  expected %d columns, got %d\n",
 				file, line, nwords, i );
 			while( i < nwords )
-				iwords[i++] = (char *)0;
+				iwords[i++] = "0.123456789";
 		}
+
+		/* Obtain the time from the first column */
 		sscanf( iwords[0], "%lf", &d );
 		times[line] = d;
+		if( line > 0 && times[line-1] > times[line] )  {
+		    	printf("File '%s', Line %d:  time sequence error %g > %g\n",
+		    		file, line, times[line-1], times[line] );
+		}
+
+		/* Obtain the desired values from the remaining columns,
+		 * and assign them to the channels indicated in cnum[]
+		 */
 		for( i=1; i < nwords; i++ )  {
-			d = 2.34;
 			if( sscanf( iwords[i], "%lf", &d ) != 1 )  {
-			    	printf("File %s, Line %s:  scanf failure on '%s'\n",
+			    	printf("File '%s', Line %d:  scanf failure on '%s'\n",
 			    		file, line, iwords[i] );
 				d = 0.0;
 			}
