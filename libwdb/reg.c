@@ -448,33 +448,34 @@ int	material;
 int	los;
 int	inherit;
 {
-	register struct wmember *wp;
-	register int len = 0;
+	struct rt_comb_internal *comb;
 
-	/* Measure length of list */
-	for( BU_LIST_FOR( wp, wmember, &headp->l ) )  {
-		if( wp->l.magic != WMEMBER_MAGIC )  {
-			fprintf(stderr, "mk_wmcomb:  corrupted linked list\n");
-			abort();
-		}
-		len++;
+	comb = mk_comb_internal( headp );
+	if( region )  comb->region_flag = 1;
+	if( matname )  bu_vls_strcat( &comb->shader, matname );
+	if( matparm )  {
+		bu_vls_strcat( &comb->shader, " " );
+		bu_vls_strcat( &comb->shader, matparm );
+	}
+	/* XXX Convert to TCL form? */
+	if( rgb )  {
+		comb->rgb_valid = 1;
+		comb->rgb[0] = rgb[0];
+		comb->rgb[1] = rgb[1];
+		comb->rgb[2] = rgb[2];
 	}
 
-	/* Output combination record and member records */
+	comb->region_id = id;
+	comb->aircode = air;
+	comb->GIFTmater = material;
+	comb->los = los;
 
-	if( mk_rcomb( fp, name, len, region, matname, matparm, rgb, id, air, material, los, inherit ) < 0 )  {
-		(void)mk_freemembers( headp );
-		return(-1);
-	}
-	for( BU_LIST_FOR( wp, wmember, &headp->l ) )  {
-		if( mk_memb( fp, wp->wm_name, wp->wm_mat, wp->wm_op ) < 0 )  {
-			(void)mk_freemembers( headp );
-			return(-1);
-		}
-	}
+	comb->inherit = inherit;
 
 	/* Release the member structure dynamic storage */
-	return( mk_freemembers( headp ) );
+	mk_freemembers( headp );
+
+	return mk_export_fwrite( fp, name, comb, ID_COMB );
 }
 
 /*
@@ -519,61 +520,44 @@ int	material;
 int	los;
 int	inherit;
 {
-	register struct wmember *wp;
-	register int len = 0;
-	union record rec;
+	struct rt_comb_internal *comb;
 
-	/* Measure length of list */
-	for( BU_LIST_FOR( wp, wmember, &headp->l ) )  {
-		if( wp->l.magic != WMEMBER_MAGIC )  {
-			fprintf(stderr, "mk_fastgen_region:  corrupted linked list\n");
-			abort();
-		}
-		len++;
-	}
-
-	bzero( (char *)&rec, sizeof(rec) );
-	rec.c.c_id = ID_COMB;
-	if( mode == 'P' )
-		rec.c.c_flags = DBV4_REGION_FASTGEN_PLATE;
-	else if( mode == 'V' )
-		rec.c.c_flags = DBV4_REGION_FASTGEN_VOLUME;
-	else
-	{
+	comb = mk_comb_internal( headp );
+	comb->region_flag = 1;
+	switch( mode )  {
+	case 'P':
+		comb->is_fastgen = REGION_FASTGEN_PLATE;
+		break;
+	case 'V':
+		comb->is_fastgen = REGION_FASTGEN_VOLUME;
+		break;
+	default:
 		fprintf( stderr, "ERROR: mk_fastgen_region: Unrecognized mode flag (%c)\n", mode );
 		abort();
 	}
-	rec.c.c_inherit = inherit;
-	rec.c.c_regionid = id;
-	rec.c.c_aircode = air;
-	rec.c.c_material = material;
-	rec.c.c_los = los;
-	NAMEMOVE( name, rec.c.c_name );
-	rec.c.c_pad1 = len;		/* backwards compat, was c_length */
-	if( matname ) {
-		strncpy( rec.c.c_matname, matname, sizeof(rec.c.c_matname) );
-		if( matparm )
-			strncpy( rec.c.c_matparm, matparm,
-				sizeof(rec.c.c_matparm) );
+	if( matname )  bu_vls_strcat( &comb->shader, matname );
+	if( matparm )  {
+		bu_vls_strcat( &comb->shader, " " );
+		bu_vls_strcat( &comb->shader, matparm );
 	}
+	/* XXX Convert to TCL form? */
 	if( rgb )  {
-		rec.c.c_override = 1;
-		rec.c.c_rgb[0] = rgb[0];
-		rec.c.c_rgb[1] = rgb[1];
-		rec.c.c_rgb[2] = rgb[2];
+		comb->rgb_valid = 1;
+		comb->rgb[0] = rgb[0];
+		comb->rgb[1] = rgb[1];
+		comb->rgb[2] = rgb[2];
 	}
 
-	if( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1 )
-		return(-1);
-	
-	for( BU_LIST_FOR( wp, wmember, &headp->l ) )  {
-		if( mk_memb( fp, wp->wm_name, wp->wm_mat, wp->wm_op ) < 0 )  {
-			(void)mk_freemembers( headp );
-			return(-1);
-		}
-	}
+	comb->region_id = id;
+	comb->aircode = air;
+	comb->GIFTmater = material;
+	comb->los = los;
+
+	comb->inherit = inherit;
 
 	/* Release the member structure dynamic storage */
-	return( mk_freemembers( headp ) );
+	mk_freemembers( headp );
+
+	return mk_export_fwrite( fp, name, comb, ID_COMB );
 }
 
