@@ -47,13 +47,13 @@ static char RCSparse[] = "@(#)$Header$ (BRL)";
  */
 HIDDEN void
 rt_parse_double(str, count, loc)
-char	*str;
-int	count;
-double	*loc;
+CONST char	*str;
+int		count;
+double		*loc;
 {
 	int	i;
 	int	dot_seen;
-	char	*numstart;
+	CONST char	*numstart;
 	double	tmp_double;
 	char	buf[128];	
 	int	len;
@@ -114,10 +114,10 @@ double	*loc;
  */
 HIDDEN int
 rt_struct_lookup( sdp, name, base, value )
-register struct structparse	*sdp;		/* structure description */
-register char			*name;		/* struct member name */
-char				*base;		/* begining of structure */
-char				*value;		/* string containing value */
+register CONST struct structparse	*sdp;	/* structure description */
+register CONST char			*name;	/* struct member name */
+char					*base;	/* begining of structure */
+CONST char				*value;	/* string containing value */
 {
 	register char *loc;
 	int i;
@@ -184,7 +184,7 @@ char				*value;		/* string containing value */
 		case 'i':
 			{	register short *ip = (short *)loc;
 				register short tmpi;
-				register char *cp;
+				register CONST char *cp;
 				for (i=0 ; i < sdp->sp_count && *value ; ++i){
 					tmpi = atoi( value );
 
@@ -214,7 +214,7 @@ char				*value;		/* string containing value */
 		case 'd':
 			{	register int *ip = (int *)loc;
 				register int tmpi;
-				register char *cp;
+				register char CONST *cp;
 				for (i=0 ; i < sdp->sp_count && *value ; ++i){
 					tmpi = atoi( value );
 
@@ -250,7 +250,7 @@ char				*value;		/* string containing value */
 			return(-1);
 			break;
 		}
-		if( sdp->sp_hook != FUNC_NULL )  {
+		if( !(sdp->sp_hook) )  {
 			sdp->sp_hook( sdp, name, base, value );
 		}
 		return(0);		/* OK */
@@ -270,9 +270,9 @@ char				*value;		/* string containing value */
  */
 int
 rt_structparse( vls, desc, base )
-struct rt_vls		*vls;		/* string to parse through */
-struct structparse	*desc;		/* structure description */
-char			*base;		/* base address of users structure */
+struct rt_vls			*vls;		/* string to parse through */
+CONST struct structparse	*desc;		/* structure description */
+char				*base;		/* base addr of users struct */
 {
 	register char *cp;
 	char	*name;
@@ -353,8 +353,8 @@ char			*base;		/* base address of users structure */
  */
 HIDDEN void
 rt_matprint(name, mat)
-char *name;
-register matp_t mat;
+CONST char		*name;
+register CONST matp_t	mat;
 {
 	int i = rt_g.rtg_logindent;
 
@@ -382,11 +382,11 @@ register matp_t mat;
  */
 void
 rt_structprint( title, parsetab, base )
-char 			*title;
-struct structparse	*parsetab;	/* structure description */
-char			*base;		/* base address of users structure */
+CONST char			*title;
+CONST struct structparse	*parsetab;/* structure description */
+CONST char			*base;	  /* base address of users structure */
 {
-	register struct structparse	*sdp;
+	register CONST struct structparse	*sdp;
 	register char			*loc;
 	register int			lastoff = -1;
 
@@ -521,10 +521,10 @@ char			*base;		/* base address of users structure */
  */
 HIDDEN void
 rt_vls_print_double(vls, name, count, dp)
-struct rt_vls *vls;
-char *name;
-register int count;
-register double *dp;
+struct rt_vls		*vls;
+CONST char		*name;
+register int		count;
+register CONST double	*dp;
 {
 	register int tmpi;
 	register char *cp;
@@ -552,9 +552,9 @@ register double *dp;
  */
 void
 rt_vls_structprint( vls, sdp, base)
-struct	rt_vls			*vls;	/* vls to print into */
-register struct structparse	*sdp;	/* structure description */
-char				*base;	/* structure ponter */
+struct	rt_vls				*vls;	/* vls to print into */
+register CONST struct structparse	*sdp;	/* structure description */
+CONST char				*base;	/* structure ponter */
 {
 	register char			*loc;
 	register int			lastoff = -1;
