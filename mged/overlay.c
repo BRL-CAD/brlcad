@@ -99,7 +99,7 @@ char	**argv;
 			int	j;
 			for( j = s->s_last; j >= 0; j-- )  {
 				if( s->s_path[j] == dp )  {
-					rt_label_vlist_verts( vbp, &s->s_vlist, mat, scale );
+					rt_label_vlist_verts( vbp, &s->s_vlist, mat, scale, base2local );
 					break;
 				}
 			}
