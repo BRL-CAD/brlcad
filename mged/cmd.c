@@ -402,7 +402,7 @@ static struct funtab funtab[] = {
 "knob", "id [val]", "emulate knob twist",
 	f_knob,2,3, FALSE,
 "l", "<objects>", "list attributes (verbose)",
-	f_list,2,MAXARGS, FALSE,
+	cmd_list,2,MAXARGS, TRUE,
 "L",  "1|0 xpos ypos", "handle a left mouse event",
 	cmd_left_mouse, 4,4, TRUE,
 "labelvert", "object[s]", "label vertices of wireframes of objects",

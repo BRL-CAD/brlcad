@@ -11,7 +11,7 @@
  *	f_delobj	delete an object or several from the display
  *	f_debug		(DEBUG) print solid info?
  *	f_regdebug	toggle debugging state
- *	f_list		list object information
+ *	cmd_list	list object information
  *	f_zap		zap the display -- everything dropped
  *	f_status	print view info
  *	f_fix		fix display processor after hardware error
@@ -45,6 +45,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 #include <signal.h>
 #include <stdio.h>
+
+#include "tcl.h"
+#include "tk.h"
+
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
@@ -637,7 +641,9 @@ out:
 /* List object information, verbose */
 /* Format: l object	*/
 int
-f_list(argc, argv)
+cmd_list(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
@@ -657,14 +663,13 @@ char	**argv;
 		if( (dp = db_lookup( dbip, argv[arg], LOOKUP_NOISY )) == DIR_NULL )
 			continue;
 
-		rt_vls_trunc( &str, 0 );
 		do_list( &str, dp, 99 );	/* very verbose */
-		rt_log( "%s", rt_vls_addr(&str) );
 	}
 
-	rt_vls_free( &str );
+	Tcl_SetResult(interp, rt_vls_strdup( &str), TCL_DYNAMIC);
 
-	return CMD_OK;
+	rt_vls_vlsfree( &str );
+	return TCL_OK;
 }
 
 /* List object information, briefly */
