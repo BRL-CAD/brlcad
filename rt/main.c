@@ -79,6 +79,8 @@ extern char	*framebuffer;		/* desired framebuffer */
 
 extern struct command_tab	rt_cmdtab[];
 
+extern char	version[];		/* From vers.c */
+
 /*
  *			M A I N
  */
@@ -99,6 +101,8 @@ char **argv;
 		(void) setvbuf( stderr, (char *) NULL, _IOLBF, BUFSIZ );
 #	endif
 #endif
+
+	(void)fprintf(stderr, "%s\n", version+5);	/* skip @(#) */
 
 	beginptr = sbrk(0);
 	width = height = 512;
