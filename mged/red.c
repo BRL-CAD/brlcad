@@ -72,7 +72,7 @@ char **argv;
 
 	if( db_get( dbip , dp , &record , 0 , 1 ) < 0 ) {
 		READ_ERR;
-		return;
+		return CMD_BAD;
 	}
 	if( record.u_id != ID_COMB )	/* Not a combination */
 	{
