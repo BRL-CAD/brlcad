@@ -722,6 +722,31 @@ char *buf;
 	if( buf ) (void)free(buf);
 }
 
+void
+rfbsetcursor(pcp, buf)
+struct pkg_conn *pcp;
+char		*buf;
+{
+	char	rbuf[NET_LONG_LEN+1];
+	int	ret;
+	int	xbits, ybits;
+	int	xorig, yorig;
+
+	xbits = pkg_glong( &buf[0*NET_LONG_LEN] );
+	ybits = pkg_glong( &buf[1*NET_LONG_LEN] );
+	xorig = pkg_glong( &buf[2*NET_LONG_LEN] );
+	yorig = pkg_glong( &buf[3*NET_LONG_LEN] );
+
+	ret = fb_setcursor( fbp, (unsigned char *)&buf[4*NET_LONG_LEN],
+		xbits, ybits, xorig, yorig );
+
+	if( pcp->pkc_type < MSG_NORETURN ) {
+		(void)pkg_plong( &rbuf[0*NET_LONG_LEN], ret );
+		pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp );
+	}
+	if( buf ) (void)free(buf);
+}
+
 /*OLD*/
 void
 rfbscursor(pcp, buf)
