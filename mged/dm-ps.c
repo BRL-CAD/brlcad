@@ -237,7 +237,7 @@ double ratio;
 	register struct vlist *vp;
 	int useful = 0;
 
-	if( !ps_fp )  return;
+	if( !ps_fp )  return(0);
 
 	if( sp->s_soldash )
 		fprintf(ps_fp, "DDV ");		/* Dot-dashed vectors */
