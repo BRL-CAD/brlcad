@@ -613,9 +613,11 @@ int *nhits;
 		xx = loc[X] - CellX* xWidth;
 		break;
 	}
+#if 0 /* What does this indicate that it generates so much noise? */
 	if (xx < 0) {
 		bu_log("hf: xx < 0, plane = %d\n", plane);
 	}
+#endif
 
 	if (hf->hf_shorts) {
 		register unsigned short *sp;
@@ -771,7 +773,7 @@ bzero(hits,sizeof(hits));
 
 		dxbdn = VDOT( peqn, rp->r_pt) - pdist;
 		dn = -VDOT( peqn, rp->r_dir);
-		allDist[allIndex] = s = dxbdn/dn;
+/*		allDist[allIndex] = s = dxbdn/dn; */
 		if (rt_g.debug & DEBUG_HF) {
 			VPRINT("hf: Plane Equation", peqn);
 			bu_log("hf: dn=%g, dxbdn=%g, s=%g\n", dn, dxbdn, dxbdn/dn);
@@ -779,12 +781,12 @@ bzero(hits,sizeof(hits));
 
 		if (dn < -SQRT_SMALL_FASTF) {		/* Leaving */
 			if ( out > s ) {
-				out = s;
+				allDist[allIndex] = out = s = dxbdn/dn;
 				oplane = j;
 			}
 		} else if (dn > SQRT_SMALL_FASTF) {	/* entering */
 			if ( in < s ) {
-				in = s; 
+				allDist[allIndex] = in = s = dxbdn/dn; 
 				iplane = j;
 			}
 		} else {				/* Parallel */
@@ -852,7 +854,7 @@ bzero(hits,sizeof(hits));
 
 	/*
 	 * Now we figure out which direction we are going to be moving,
-	 * X or Y.
+	 * X, Y or Z.
 	 */
 	{
 		vect_t tmp;
@@ -861,7 +863,17 @@ bzero(hits,sizeof(hits));
 		VUNITIZE(tmp);
 		cosine = VDOT(tmp, hf->hf_X);
 	}
-	if (cosine*cosine > 0.5) {
+	if (abs(cosine) < SMALL_FASTF) {	/* near enough to Z */
+		vect_t tmp;
+		int xCell, yCell, r;
+		VSUB2(tmp, rp->r_pt, hf->hf_V);
+		xCell = tmp[X]/hf->hf_Xlen*hf->hf_w;
+		yCell = tmp[Y]/hf->hf_Ylen*hf->hf_n;
+		if (r=rt_hf_cell_shot(stp, rp, ap, hp, xCell, yCell)) {
+			if ((nhits+=r)>MAXHITS) rt_bomb("g_hf.c: too many hits.\n");
+			hp+=r;
+		}
+	} else if (cosine*cosine > 0.5) {
 		double tmp;
 		register double farZ, minZ, maxZ;
 		int	xCell, yCell, signX, signY;
