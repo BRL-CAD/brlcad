@@ -2628,7 +2628,7 @@ point_t Q;
 vect_t e_in;
 point_t pt1, pt2;
 {
-	fastf_t de, Qe, Pe, denom;
+	fastf_t de, denom;
 	vect_t diff, PmQ, tmp;
 	vect_t d, e;
 	fastf_t len_e, inv_len_e, len_d, inv_len_d;
@@ -2669,8 +2669,6 @@ point_t pt1, pt2;
 		{
 			VBLEND2( tmp, 1.0, e, -de, d );
 			dist[1] = VDOT( PmQ, tmp )/denom;
-			Qe = VDOT( Q, e );
-			Pe = VDOT( P, e );
 			dist[0] = dist[1] * de - VDOT( PmQ, d );
 		}
 	}
