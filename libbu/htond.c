@@ -377,7 +377,7 @@ ibm_normalized:
 #	define	HTOND	yes
 #endif
 
-#ifdef convex
+#if defined(convex) || defined(__convex__)
 	/*
 	 *  Convex C1 version, for Native Convex floating point.
 	 *  (Which seems to be VAX "G" format -- almost IEEE).
@@ -695,7 +695,7 @@ cray_out:
 #	define	NTOHD	yes
 #endif
 
-#ifdef convex
+#if defined(convex) || defined(__convex__)
 	/*
 	 *  Convex C1 version, for Native Convex floating point.
 	 */
