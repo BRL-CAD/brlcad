@@ -693,10 +693,12 @@ register struct application *ap;
 	InitialPart.pt_magic = PT_HD_MAGIC;
 	FinalPart.pt_forw = FinalPart.pt_back = &FinalPart;
 	FinalPart.pt_magic = PT_HD_MAGIC;
+	ap->a_Final_Part_hdp = &FinalPart;
 
 	BU_LIST_INIT( &new_segs.l );
 	BU_LIST_INIT( &waiting_segs.l );
 	BU_LIST_INIT( &finished_segs.l );
+	ap->a_finished_segs_hdp = &finished_segs;
 
 	if( BU_LIST_UNINITIALIZED( &resp->re_parthead ) )  {
 		/*
