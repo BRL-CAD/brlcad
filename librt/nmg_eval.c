@@ -156,7 +156,7 @@ static CONST int		subtraction_actions[8] = {
 	BACTION_RETAIN,		/* anti-shared */
 	BACTION_RETAIN,
 
-	BACTION_RETAIN_AND_FLIP,
+	BACTION_RETAIN,		/* (formerly BACTION_RETAIN_AND_FLIP) */
 	BACTION_KILL,
 	BACTION_KILL,
 	BACTION_KILL
@@ -225,6 +225,7 @@ CONST struct rt_tol	*tol;
 	switch( op )  {
 	case NMG_BOOL_SUB:
 		actions = subtraction_actions;
+		nmg_invert_shell(sB, tol);	/* FLIP all faceuse normals */
 		break;
 	case NMG_BOOL_ADD:
 		actions = union_actions;
@@ -306,10 +307,10 @@ struct nmg_bool_state *bs;
 	struct vertexuse *vu;
 	struct vertex	*v;
 	int		loops_retained;
-	int		loops_flipped;
 	plane_t		peqn;
 
 	NMG_CK_SHELL(s);
+	RT_CK_TOL(bs->bs_tol);
 
 	if( rt_g.NMG_debug & DEBUG_VERIFY )
 		nmg_vshell( &s->r_p->s_hd, s->r_p );
@@ -336,7 +337,7 @@ struct nmg_bool_state *bs;
 		NMG_CK_FACE(fu->f_p);
 		NMG_GET_FU_PLANE( peqn, fu );
 
-		loops_retained = loops_flipped = 0;
+		loops_retained = 0;
 		lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
 		while( RT_LIST_NOT_HEAD( lu, &fu->lu_hd ) )  {
 			NMG_CK_LOOPUSE(lu);
@@ -365,9 +366,6 @@ struct nmg_bool_state *bs;
 			case BACTION_RETAIN:
 				loops_retained++;
 				break;
-			case BACTION_RETAIN_AND_FLIP:
-				loops_flipped++;
-				break;
 			default:
 				rt_bomb("nmg_eval_shell() bad BACTION\n");
 			}
@@ -375,8 +373,8 @@ struct nmg_bool_state *bs;
 		}
 
 		if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
-			rt_log("faceuse x%x loops retained=%d, flipped=%d\n",
-				fu, loops_retained, loops_flipped);
+			rt_log("faceuse x%x loops retained=%d\n",
+				fu, loops_retained);
 		if( rt_g.NMG_debug & DEBUG_VERIFY )
 			nmg_vshell( &s->r_p->s_hd, s->r_p );
 
@@ -386,6 +384,7 @@ struct nmg_bool_state *bs;
 		 *  then any remaining loops, edges, etc, will die too.
 		 */
 		if( RT_LIST_IS_EMPTY( &fu->lu_hd ) )  {
+			if( loops_retained )  rt_bomb("nmg_eval_shell() empty faceuse with retained loops?\n");
 			/* faceuse is empty, face & mate die */
 			if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
 		    		rt_log("faceuse x%x empty, kill\n", fu);
@@ -397,24 +396,9 @@ struct nmg_bool_state *bs;
 			continue;
 		}
 
-		if( loops_flipped > 0 )  {
-			if( loops_retained > 0 )  {
-				rt_log("ERROR nmg_eval_shell() face both retained & flipped?\n");
-				/* Just retain un-flipped, for now */
-			} else {
-				if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
-			    		rt_log("faceuse x%x flipped\n", fu);
-				nmg_reverse_face( fu );
-			}
-		} else {
-			/* loops_flipped <= 0 */
-			if( loops_retained > 0 )  {
-				if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
-			    		rt_log("faceuse x%x retained\n", fu);
-			} else {
-				nmg_pr_fu(fu, "  ");
-				rt_bomb("nmg_eval_shell() retaining face with no loops?\n");
-			}
+		if( loops_retained <= 0 )  {
+			nmg_pr_fu(fu, (char *)NULL);
+			rt_bomb("nmg_eval_shell() non-empty faceuse, no loops retained?\n");
 		}
 		fu = nextfu;
 	}
@@ -449,7 +433,6 @@ struct nmg_bool_state *bs;
 			lu = nextlu;
 			continue;
 		case BACTION_RETAIN:
-		case BACTION_RETAIN_AND_FLIP:
 			break;
 		default:
 			rt_bomb("nmg_eval_shell() bad BACTION\n");
@@ -480,7 +463,6 @@ struct nmg_bool_state *bs;
 			eu = nexteu;
 			continue;
 		case BACTION_RETAIN:
-		case BACTION_RETAIN_AND_FLIP:
 			break;
 		default:
 			rt_bomb("nmg_eval_shell() bad BACTION\n");
@@ -523,7 +505,6 @@ struct nmg_bool_state *bs;
 			lu = nextlu;
 			continue;
 		case BACTION_RETAIN:
-		case BACTION_RETAIN_AND_FLIP:
 			break;
 		default:
 			rt_bomb("nmg_eval_shell() bad BACTION\n");
@@ -546,7 +527,6 @@ struct nmg_bool_state *bs;
 			s->vu_p = (struct vertexuse *)0;	/* sanity */
 			break;
 		case BACTION_RETAIN:
-		case BACTION_RETAIN_AND_FLIP:
 			break;
 		default:
 			rt_bomb("nmg_eval_shell() bad BACTION\n");
@@ -573,6 +553,8 @@ register struct nmg_bool_state	*bs;
 	register int	ret;
 	register int	class;
 	int		index;
+
+	RT_CK_TOL(bs->bs_tol);
 
 	index = nmg_index_of_struct(ptr);
 	if( bs->bs_isA )  {
@@ -664,6 +646,8 @@ int		delay;
 	if( rt_g.NMG_debug & DEBUG_PL_ANIM )  do_anim = 1;
 
 	if( !do_plot && !do_anim )  return;
+
+	RT_CK_TOL(bs->bs_tol);
 
 	if( do_plot )  {
 		sprintf(fname, "nmg_eval%d.pl", num);
