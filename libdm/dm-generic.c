@@ -22,15 +22,7 @@ extern struct dm *ogl_open();
 extern void ogl_configureWindowShape();
 extern void ogl_zbuffer();
 extern void ogl_lighting();
-#endif
-#ifdef DM_GLX
-extern struct dm *glx_open();
-extern void glx_configureWindowShape();
-extern void glx_lighting();
-extern void glx_zbuffer();
-#endif
-#ifdef DM_PEX
-extern struct dm *pex_open();
+extern void ogl_fogHint();
 #endif
 
 struct dm *
@@ -53,13 +45,6 @@ char *argv[];
 #ifdef DM_OGL
   case DM_TYPE_OGL:
     return ogl_open(argc, argv);
-#endif
-#ifdef DM_GLX
-  case DM_TYPE_GLX:
-    return glx_open(argc, argv);;
-#endif
-#ifdef DM_PEX
-  case DM_TYPE_PEX:
 #endif
   default:
     break;
@@ -155,77 +140,54 @@ struct dm *dmp;
     ogl_configureWindowShape(dmp);
     return;
 #endif
-#ifdef DM_GLX
-  case DM_TYPE_GLX:
-    glx_configureWindowShape(dmp);
-    return;
-#endif
-#ifdef DM_PEX
-  case DM_TYPE_PEX:
-    Pex_configureWindowShape(dmp);
-    return;
-#endif
-  case DM_TYPE_PLOT:
-  case DM_TYPE_PS:
-  case DM_TYPE_NULL:
   default:
     return;
   }
 }
 
 void
-dm_zbuffer(dmp)
+dm_zbuffer(dmp, zbuffer_on)
 struct dm *dmp;
+int zbuffer_on;
 {
   switch(dmp->dm_type){
 #ifdef DM_OGL
   case DM_TYPE_OGL:
-    ogl_zbuffer(dmp);
+    ogl_zbuffer(dmp, zbuffer_on);
     return;
 #endif
-#ifdef DM_GLX
-  case DM_TYPE_GLX:
-   glx_zbuffer(dmp);
-    return;
-#endif
-#ifdef DM_X
-  case DM_TYPE_X:
-#endif
-#ifdef DM_PEX
-  case DM_TYPE_PEX:
-#endif
-  case DM_TYPE_PLOT:
-  case DM_TYPE_PS:
-  case DM_TYPE_NULL:
   default:
     return;
   }
 }
 
 void
-dm_lighting(dmp)
+dm_lighting(dmp, lighting_on)
 struct dm *dmp;
+int lighting_on;
 {
   switch(dmp->dm_type){
 #ifdef DM_OGL
   case DM_TYPE_OGL:
-    ogl_lighting(dmp);
+    ogl_lighting(dmp, lighting_on);
     return;
 #endif
-#ifdef DM_GLX
-  case DM_TYPE_GLX:
-    glx_lighting(dmp);
+  default:
+    return;
+  }
+}
+
+void
+dm_fogHint(dmp, fastfog)
+struct dm *dmp;
+int fastfog;
+{
+  switch(dmp->dm_type){
+#ifdef DM_OGL
+  case DM_TYPE_OGL:
+    ogl_fogHint(dmp, fastfog);
     return;
 #endif
-#ifdef DM_X
-  case DM_TYPE_X:
-#endif
-#ifdef DM_PEX
-  case DM_TYPE_PEX:
-#endif
-  case DM_TYPE_PLOT:
-  case DM_TYPE_PS:
-  case DM_TYPE_NULL:
   default:
     return;
   }
