@@ -61,11 +61,33 @@
 #define	ECMD_PIPE_PT_DEL	32	/* Delete a pipe point */
 #define	ECMD_PIPE_PT_MOVE	33	/* Move a pipe point */
 
-#define EDIT_ROTATE (es_edflag == SROT || \
+#define SEDIT_ROTATE (es_edflag == SROT || \
 		     es_edflag == ECMD_TGC_ROT_H || \
 		     es_edflag ==  ECMD_TGC_ROT_AB || \
 		     es_edflag == ECMD_ARB_ROTATE_FACE || \
 		     es_edflag == ECMD_ETO_ROT_C)
+#define OEDIT_ROTATE (edobj == BE_O_ROTATE)
+#define EDIT_ROTATE (SEDIT_ROTATE || OEDIT_ROTATE)
+#define SEDIT_SCALE (es_edflag == SSCALE || \
+		     es_edflag == PSCALE )
+#define OEDIT_SCALE (edobj == BE_O_XSCALE || \
+		     edobj == BE_O_YSCALE || \
+		     edobj == BE_O_ZSCALE || \
+		     edobj == BE_O_SCALE)
+#define EDIT_SCALE (SEDIT_SCALE || OEDIT_SCALE)
+#define SEDIT_TRAN (es_edflag == STRANS || \
+		    es_edflag == ECMD_TGC_MV_H || \
+		    es_edflag == ECMD_TGC_MV_HH || \
+		    es_edflag == EARB || \
+		    es_edflag == PTARB || \
+		    es_edflag == ECMD_ARB_MOVE_FACE || \
+		    es_edflag == ECMD_VTRANS || \
+		    es_edflag == ECMD_NMG_EMOVE || \
+		    es_edflag == ECMD_PIPE_PT_MOVE)
+#define OEDIT_TRAN (edobj == BE_O_X || \
+		    edobj == BE_O_Y || \
+		    edobj == BE_O_XY)
+#define EDIT_TRAN (SEDIT_TRAN || OEDIT_TRAN)
 
 extern fastf_t	es_scale;		/* scale factor */
 extern fastf_t 	es_para[3];		/* keyboard input parameter changes */

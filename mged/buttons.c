@@ -311,10 +311,18 @@ static void bv_zoomout()
 
 static void bv_rate_toggle()
 {
-	mged_variables.rateknobs = !mged_variables.rateknobs;
-	rt_vls_printf( &dm_values.dv_string, "set sliders(rate) %d; sliders %s\n",
-		       mged_variables.rateknobs, scroll_enabled ? "on" : "off");
-	dmaflag = 1;
+  mged_variables.rateknobs = !mged_variables.rateknobs;
+
+  if(mged_variables.scroll_enabled){
+    struct rt_vls cmd;
+
+    rt_vls_init(&cmd);
+    rt_vls_strcpy( &cmd, "sliders on\n");
+    (void)cmdline(&cmd, False);
+    rt_vls_free(&cmd);
+  }
+
+  dmaflag = 1;
 }
 
 static void bv_top()  {
@@ -367,18 +375,25 @@ static void bv_vsave()  {
 }
 
 static void bv_adcursor()  {
-	if (adcflag)  {
+	if (mged_variables.adcflag)  {
 		/* Was on, turn off */
-		adcflag = 0;
+		mged_variables.adcflag = 0;
 		dmp->dmr_light( LIGHT_OFF, BV_ADCURSOR );
 	}  else  {
 		/* Was off, turn on */
-		adcflag = 1;
+		mged_variables.adcflag = 1;
 		dmp->dmr_light( LIGHT_ON, BV_ADCURSOR );
 	}
 
-	rt_vls_printf( &dm_values.dv_string, "set sliders(adc) %d; sliders %s\n",
-		       adcflag, scroll_enabled ? "on" : "off");
+	if(mged_variables.scroll_enabled){
+	  struct rt_vls cmd;
+
+	  rt_vls_init(&cmd);
+	  rt_vls_strcpy( &cmd, "sliders on\n");
+	  (void)cmdline(&cmd, False);
+	  rt_vls_free(&cmd);
+	}
+
 	dmaflag = 1;
 }
 
@@ -785,7 +800,8 @@ char *str;
  *
  *  Called when a menu item is hit
  */
-void btn_item_hit(arg, menu, item)  {
+void
+ btn_item_hit(arg, menu, item)  {
 	button(arg);
 	if( menu == MENU_GEN && 
 	    ( arg != BE_O_ILLUMINATE && arg != BE_S_ILLUMINATE) )
