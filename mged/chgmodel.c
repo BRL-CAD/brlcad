@@ -46,11 +46,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "vmath.h"
+#include "externs.h"
 #include "db.h"
 #include "rtstring.h"
+#include "nmg.h"
 #include "raytrace.h"
 #include "./ged.h"
-#include "externs.h"
 #include "./solid.h"
 #include "./dm.h"
 #include "./sedit.h"
@@ -813,4 +814,68 @@ char	**argv;
 		return;
 
 	mat_default = atoi(argv[4]);
+}
+
+/*
+ *			F _ F R A C T U R E
+ *
+ * Usage: fracture nmgsolid [prefix]
+ *
+ *
+ *
+ */
+void
+f_fracture( argc, argv )
+int	argc;
+char	**argv;
+{
+	register int i;
+	struct directory *old_dp;
+	struct rt_db_internal	old_intern;
+	struct rt_db_internal	new_intern;
+	struct model	*m;
+	char		newname[32];
+	struct directory *new_dp;
+
+	rt_log("fracture:");
+	for (i=0 ; i < argc ; i++)
+		rt_log(" %s", argv[i]);
+	rt_log("\n");
+
+	if( (old_dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
+		return;
+
+	if( rt_db_get_internal( &old_intern, old_dp, dbip, rt_identity ) < 0 )  {
+		(void)printf("rt_db_get_internal() error\n");
+		return;
+	}
+
+	m = (struct model *)old_intern.idb_ptr;
+	NMG_CK_MODEL(m);
+
+	/* Bust it up here */
+	sprintf( newname, "newname" );
+
+	if( db_lookup( dbip,  newname, LOOKUP_QUIET ) != DIR_NULL )  {
+		aexists( newname );
+		/* Free memory here */
+		return;
+	}
+
+	if( (new_dp=db_diradd( dbip, newname, -1, 0, old_dp->d_flags)) == DIR_NULL )  {
+	    	ALLOC_ERR_return;
+	}
+
+	/* Export NMG as a new solid */
+	RT_INIT_DB_INTERNAL(&new_intern);
+	new_intern.idb_type = ID_NMG;
+	new_intern.idb_ptr = (genptr_t)m;
+
+	if( rt_db_put_internal( new_dp, dbip, &new_intern ) < 0 )  {
+		/* Free memory */
+		printf("rt_db_put_internal() failure\n");
+		return;
+	}
+	/* Internal representation has been freed by rt_db_put_internal */
+	new_intern.idb_ptr = (genptr_t)NULL;
 }
