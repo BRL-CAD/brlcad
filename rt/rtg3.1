@@ -47,7 +47,10 @@ This option is most useful when
 .B rtg3
 is being invoked from a shell script created by an
 .IR mged (1)
-\fIsaveview\fR command.
+\fIsaveview\fR command.  Note that it conflicts with the use of
+.B \-G#
+and
+.B \-g#: negative hit distances have been seen as a result.
 .LP
 The following options are recognized.
 .TP
@@ -75,11 +78,15 @@ and
 .B \-e
 .TP
 .B \-g#
-Select grid cell width.
+Select grid cell width.  Do not use with the 
+.B \-s#
+option.
 .TP
 .B \-G#
 Select grid cell height.  If \fInot\fR specified, cell height equals
-cell width.
+cell width.  Do not use with the 
+.B \-s#
+option.
 .TP
 .B \-U #
 sets the Boolean variable
@@ -254,7 +261,9 @@ Most deficiencies observed while using the
 .B rtg3
 program are usually with the
 .IR librt (3)
-package instead.
+package instead.  If the \fB\-s#\fR option is used together with the
+\fB\-G#\fR and \fB\-g#\fR options, negative hit distances will be
+seen.
 .SH "BUG REPORTS"
 Reports of bugs or problems should be submitted via electronic
 mail to <CAD@BRL.MIL>.
