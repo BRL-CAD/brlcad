@@ -302,6 +302,8 @@ int			id;
 /* XXX Grotesque, shameless hack */
 static int mged_do_not_draw_nmg_solids_during_debugging = 0;
 static int mged_draw_edge_uses=0;
+static int mged_enable_fastpath = 0;
+static int mged_fastpath_count=0;	/* statistics */
 static struct rt_vlblock	*mged_draw_edge_uses_vbp;
 
 /*
@@ -376,7 +378,7 @@ CONST struct rt_comb_internal *combp;
 			int		p;
 
 			if(rt_g.debug&DEBUG_TREEWALK)  {
-				bu_log("fast-path draw ID_POLY\n", dp->d_namep);
+				bu_log("fastpath draw ID_POLY\n", dp->d_namep);
 			}
 			pgp = (struct rt_pg_internal *)intern.idb_ptr;
 			RT_PG_CK_MAGIC(pgp);
@@ -427,11 +429,12 @@ CONST struct rt_comb_internal *combp;
 	return 0;
 
 out:
-	/* Successful fast-path drawing of this solid */
+	/* Successful fastpath drawing of this solid */
 	db_add_node_to_full_path( pathp, dp );
 	drawH_part2( 0, &vhead, pathp, tsp, SOLID_NULL );
 	DB_FULL_PATH_POP(pathp);
 	rt_db_free_internal(&intern);
+	mged_fastpath_count++;
 	return -1;	/* SKIP THIS REGION */
 }
 
@@ -577,7 +580,7 @@ int	argc;
 char	**argv;
 int	kind;
 {
-	int		i;
+	int		ret = 0;
 	register int	c;
 	int		ncpu;
 	int		mged_nmg_use_tnurbs = 0;
@@ -600,10 +603,12 @@ int	kind;
 	mged_shade_per_vertex_normals = 0;
 	mged_draw_no_surfaces = 0;
 	mged_wireframe_color_override = 0;
+	mged_fastpath_count = 0;
+	mged_enable_fastpath = 0;
 
 	/* Parse options. */
 	bu_optind = 1;		/* re-init bu_getopt() */
-	while( (c=bu_getopt(argc,argv,"dnqstuvwSTP:C:")) != EOF )  {
+	while( (c=bu_getopt(argc,argv,"dfnqstuvwSTP:C:")) != EOF )  {
 		switch(c)  {
 		case 'u':
 			mged_draw_edge_uses = 1;
@@ -637,6 +642,9 @@ int	kind;
 			break;
 		case 'd':
 			mged_draw_nmg_only = 1;
+			break;
+		case 'f':
+			mged_enable_fastpath = 1;
 			break;
 		case 'C':
 			{
@@ -674,8 +682,9 @@ int	kind;
 				return TCL_ERROR;
 			}
 #if 0
-		  Tcl_AppendResult(interp, "Usage: ev [-dnqstuvwST] [-P ncpu] object(s)\n\
+		  Tcl_AppendResult(interp, "Usage: ev [-dfnqstuvwST] [-P ncpu] object(s)\n\
 	-d draw nmg without performing boolean operations\n\
+	-f enable polysolid fastpath\n\
 	-w draw wireframes (rather than polygons)\n\
 	-n draw surface normals as little 'hairs'\n\
 	-s draw solid lines only (no dot-dash for subtract and intersect)\n\
@@ -715,23 +724,21 @@ int	kind;
 	  Tcl_AppendResult(interp, "ERROR, bad kind\n", (char *)NULL);
 	  return(-1);
 	case 1:		/* Wireframes */
-		i = db_walk_tree( dbip, argc, (CONST char **)argv,
+		ret = db_walk_tree( dbip, argc, (CONST char **)argv,
 			ncpu,
 			&mged_initial_tree_state,
 			0,			/* take all regions */
 			mged_wireframe_region_end,
 			mged_wireframe_leaf );
-		if( i < 0 )  return(-1);
 		break;
 	case 2:		/* Big-E */
 #	    if 0
-		i = db_walk_tree( dbip, argc, argv,
+		ret = db_walk_tree( dbip, argc, argv,
 			ncpu,
 			&mged_initial_tree_state,
 			0,			/* take all regions */
 			mged_bigE_region_end,
 			mged_bigE_leaf );
-		if( i < 0 )  return(-1);
 		break;
 #	    else
 		Tcl_AppendResult(interp, "drawtrees:  can't do big-E here\n", (char *)NULL);
@@ -752,10 +759,10 @@ A production implementation will exist in the maintenance release.\n", (char *)N
 		  mged_draw_edge_uses_vbp = rt_vlblock_init();
 	  	}
 
-		i = db_walk_tree( dbip, argc, (CONST char **)argv,
+		ret = db_walk_tree( dbip, argc, (CONST char **)argv,
 			ncpu,
 			&mged_initial_tree_state,
-			mged_nmg_region_start,
+			mged_enable_fastpath ? mged_nmg_region_start : 0,
 			mged_nmg_region_end,
 	  		mged_nmg_use_tnurbs ?
 	  			nmg_booltree_leaf_tnurb :
@@ -770,11 +777,14 @@ A production implementation will exist in the maintenance release.\n", (char *)N
 
 		/* Destroy NMG */
 		nmg_km( mged_nmg_model );
-
-		if( i < 0 )  return(-1);
 	  	break;
 	  }
 	}
+	if(mged_fastpath_count)  {
+		bu_log("%d region%s rendered through polygon fastpath\n",
+			mged_fastpath_count, mged_fastpath_count==1?"":"s");
+	}
+	if( ret < 0 )  return(-1);
 	return(0);	/* OK */
 }
 
