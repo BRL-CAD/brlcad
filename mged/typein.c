@@ -396,7 +396,7 @@ char **argv;
 		}
 		goto do_extern_update;
 	} else if( strcmp( argv[2], "vol" ) == 0 )  {
-		switch( strsol_in( &external, "vol" ) )  {
+		switch( strsol_in( &external, "vol", argc, argv ) )  {
 		case CMD_BAD:
 			(void)printf("ERROR, VOL solid not made!\n");
 			return CMD_BAD;
@@ -576,7 +576,7 @@ char 		       **argv;
 	rt_vls_from_argv( &str, argc-3, &argv[3] );
 
 	rec->ss.ss_id = DBID_STRSOL;
-	strncpy( rec->ss.ss_keyword, "ebm", NAMESIZE-1 );
+	strncpy( rec->ss.ss_keyword, sol, NAMESIZE-1 );
 	strncpy( rec->ss.ss_args, rt_vls_addr(&str), DB_SS_LEN-1 );
 	rt_vls_free( &str );
 
