@@ -156,3 +156,26 @@ int rb_insert (rb_tree *tree, void *data)
     current_node = node;
     return (1);
 }
+
+/*		    R B _ C R E A T E 1 ( )
+ *
+ *		Create a single red-black tree
+ *
+ *	This function has two parameters: a comment describing the
+ *	tree to create and a comparison function.  Rb_create1() builds
+ *	an array of one function pointer and passes it to rb_create().
+ *	Onsuccess, rb_create1() returns a pointer to the red-black tree
+ *	header record created.  Otherwise, it returns RB_TREE_NULL.
+ */
+rb_tree *rb_create1 (char *description, int (*order_func)())
+{
+    int		(**ofp)();
+
+    if ((ofp = (int (**)()) malloc(sizeof(int (*)()))) == NULL)
+    {
+	fputs("rb_create1(): Ran out of memory\n", stderr);
+	return (RB_TREE_NULL);
+    }
+    *ofp = order_func;
+    return (rb_create(description, 1, ofp));
+}
