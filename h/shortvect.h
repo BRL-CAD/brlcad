@@ -5,6 +5,13 @@
  *  loop which is known to never involve more than 32,
  *  to permit vectorizing compilers to omit extra overhead.
  *
+ *  Vector register file lengths:
+ *	Alliant		32
+ *	Cray XMP	64
+ *	Cray 2		64
+ *	Convex		128
+ *	ETA-10		Unlimited
+ *
  *  This file contains various definitions which can be safely seen
  *  by both ANSI and non-ANSI compilers and preprocessors.
  *  Absolutely NO #pragma's can go in this file;  they spoil backwards
