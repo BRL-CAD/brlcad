@@ -39,6 +39,10 @@ static char RCSrtstring[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "bu.h"
 
+#if defined(HAVE_VARARGS_H) || defined(HAVE_STDARG_H)
+BU_EXTERN(void	bu_vls_vprintf, (struct bu_vls *vls, CONST char *fmt, va_list ap));
+#endif
+
 /*
  *			B U _ V L S _ I N I T
  *
