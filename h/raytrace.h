@@ -400,6 +400,7 @@ struct seg {
  */
 struct soltab {
 	struct rt_list	l;		/* links, headed by rti_headsolid */
+	struct rt_list	l2;		/* links, headed by st_dp->d_use_hd */
 	int		st_uses;	/* Usage count, for instanced solids */
 	int		st_id;		/* Solid ident */
 	vect_t		st_center;	/* Centroid of solid */
@@ -417,7 +418,8 @@ struct soltab {
 #define st_name		st_dp->d_namep
 #define RT_SOLTAB_NULL	((struct soltab *)0)
 #define	SOLTAB_NULL	RT_SOLTAB_NULL	/* backwards compat */
-#define RT_SOLTAB_MAGIC	0x92bfcde0
+#define RT_SOLTAB_MAGIC		0x92bfcde0	/* l.magic */
+#define RT_SOLTAB2_MAGIC	0x92bfcde2	/* l2.magic */
 
 #define RT_CHECK_SOLTAB(_p)	RT_CKMAG( _p, RT_SOLTAB_MAGIC, "struct soltab")
 #define RT_CK_SOLTAB(_p)	RT_CKMAG( _p, RT_SOLTAB_MAGIC, "struct soltab")
@@ -748,6 +750,7 @@ struct directory  {
 	long		d_len;			/* # of db granules used */
 	long		d_nref;			/* # times ref'ed by COMBs */
 	int		d_flags;		/* flags */
+	struct rt_list	d_use_hd;		/* heads list of uses (struct soltab l2) */
 };
 #define DIR_NULL	((struct directory *)0)
 #define RT_DIR_MAGIC	0x05551212		/* Directory assistance */
