@@ -119,17 +119,15 @@ register mat_t	m;
  */
 void
 mat_copy( dest, src )
-mat_t	dest;
-mat_t	src;
+register mat_t		dest;
+register CONST mat_t	src;
 {
-	register matp_t om = dest;
-	register matp_t im = src;
 	register int i;
 
 	/* Copy all elements */
 #	include "noalias.h"
 	for( i=15; i>=0; i--)
-		*om++ = *im++;
+		dest[i] = src[i];
 }
 
 
@@ -143,9 +141,9 @@ mat_t	src;
  */
 void
 mat_mul( o, a, b )
-register mat_t o;
-register mat_t a;
-register mat_t b;
+register mat_t		o;
+register CONST mat_t	a;
+register CONST mat_t	b;
 {
 	o[ 0] = a[ 0]*b[ 0] + a[ 1]*b[ 4] + a[ 2]*b[ 8] + a[ 3]*b[12];
 	o[ 1] = a[ 0]*b[ 1] + a[ 1]*b[ 5] + a[ 2]*b[ 9] + a[ 3]*b[13];
@@ -178,8 +176,8 @@ register mat_t b;
 void
 matXvec(ov, im, iv)
 register vect_t ov;
-register mat_t im;
-register vect_t iv;
+register CONST mat_t im;
+register CONST vect_t iv;
 {
 	register int eo = 0;		/* Position in output vector */
 	register int em = 0;		/* Position in input matrix */
@@ -209,8 +207,8 @@ register vect_t iv;
  */
 void
 mat_inv( output, input )
-mat_t		input;
 register mat_t	output;
+CONST mat_t	input;
 {
 	register int i, j;			/* Indices */
 	LOCAL int k;				/* Indices */
@@ -344,8 +342,8 @@ register CONST vect_t	h;
  */
 void
 mat_print( title, m )
-char	*title;
-mat_t	m;
+CONST char	*title;
+CONST mat_t	m;
 {
 	register int i;
 
@@ -364,8 +362,8 @@ mat_t	m;
  */
 void
 mat_trn( om, im )
-mat_t		om;
-register mat_t	im;
+mat_t			om;
+register CONST mat_t	im;
 {
 	register matp_t op = om;
 
@@ -443,9 +441,9 @@ double		elev;
  */
 void
 mat_ae_vec( azp, elp, v )
-fastf_t	*azp;
-fastf_t	*elp;
-vect_t	v;
+fastf_t		*azp;
+fastf_t		*elp;
+CONST vect_t	v;
 {
 	register fastf_t	az;
 
@@ -584,9 +582,9 @@ fastf_t	a, b, c;
  */
 void
 mat_fromto( m, from, to )
-mat_t	m;
-vect_t	from;
-vect_t	to;
+mat_t		m;
+CONST vect_t	from;
+CONST vect_t	to;
 {
 	double	az, el;
 	LOCAL double sin_az, sin_el;
@@ -726,9 +724,9 @@ double	sinz, cosz;
  */
 void
 mat_lookat( rot, dir, yflip )
-mat_t	rot;
-vect_t	dir;
-int	yflip;
+mat_t		rot;
+CONST vect_t	dir;
+int		yflip;
 {
 	mat_t	first;
 	mat_t	second;
