@@ -814,7 +814,7 @@ int			red, green, blue;
 	vbp = rt_vlblock_init();
 	nmg_vlblock_lu(vbp, lu, b, red, green, blue, 0, 0);
 	rt_plot_vlblock(fp, vbp);
-	bn_vlblock_free(vbp);
+	rt_vlblock_free(vbp);
 }
 
 /*
@@ -841,7 +841,7 @@ int			red, green, blue;
 	}
 
 	rt_plot_vlblock(fp, vbp);
-	bn_vlblock_free(vbp);
+	rt_vlblock_free(vbp);
 }
 
 /*
@@ -860,7 +860,7 @@ CONST struct shell	*s;
 	vbp = rt_vlblock_init();
 	nmg_vlblock_s(vbp, s, 0);
 	rt_plot_vlblock(fp, vbp);
-	bn_vlblock_free(vbp);
+	rt_vlblock_free(vbp);
 }
 
 void
@@ -874,7 +874,7 @@ int			fancy;
 	vbp = rt_vlblock_init();
 	nmg_vlblock_s(vbp, s, fancy);
 	rt_plot_vlblock(fp, vbp);
-	bn_vlblock_free(vbp);
+	rt_vlblock_free(vbp);
 }
 
 /*
@@ -890,7 +890,7 @@ CONST struct nmgregion	*r;
 	vbp = rt_vlblock_init();
 	nmg_vlblock_r(vbp, r, 0);
 	rt_plot_vlblock(fp, vbp);
-	bn_vlblock_free(vbp);
+	rt_vlblock_free(vbp);
 }
 
 /*
@@ -906,7 +906,7 @@ CONST struct model	*m;
 	vbp = rt_vlblock_init();
 	nmg_vlblock_m(vbp, m, 0);
 	rt_plot_vlblock(fp, vbp);
-	bn_vlblock_free(vbp);
+	rt_vlblock_free(vbp);
 }
 
 /************************************************************************
@@ -1505,7 +1505,7 @@ CONST struct bn_tol	*tol;
 	}
 
 	rt_plot_vlblock(fp, vbp);
-	bn_vlblock_free(vbp);
+	rt_vlblock_free(vbp);
 
 	bu_free( (char *)b, "nmg_pl_isect flags[]" );
 
@@ -1569,7 +1569,7 @@ CONST struct faceuse	*fu1;
 			bu_log("null nmg_vlblock_anim_upcall, no animation\n");
 		}
 	}
-	bn_vlblock_free(vbp);
+	rt_vlblock_free(vbp);
 	bu_free( (char *)tab, "nmg_pl_comb_fu tab[]" );
 }
 
@@ -1634,7 +1634,7 @@ int			show_mates;
 		}
 	}
 
-	bn_vlblock_free(vbp);
+	rt_vlblock_free(vbp);
 	bu_free( (char *)tab, "nmg_pl_2fu tab[]" );
 }
 
@@ -1980,7 +1980,7 @@ CONST char	*a_string;
 	if (!vbp)
 		vbp = rt_vlblock_init();
 	else if (all_new) {
-		bn_vlblock_free(vbp);
+		rt_vlblock_free(vbp);
 		vbp = (struct bn_vlblock *)NULL;
 		vbp = rt_vlblock_init();
 	}
@@ -2094,7 +2094,7 @@ CONST char	*a_string;
 			bu_log("overlay %s for %s\n", buf, a_string);
 		}
 
-		bn_vlblock_free(vbp);
+		rt_vlblock_free(vbp);
 		vbp = (struct bn_vlblock *)NULL;
 		bu_free((char *)broken_tab, "broken_tab");
 		broken_tab = (long *)NULL;
@@ -2156,7 +2156,7 @@ CONST struct faceuse	*fu;
 			bu_log("null nmg_vlblock_anim_upcall, no animation\n");
 		}
 	}
-	bn_vlblock_free(vbp);
+	rt_vlblock_free(vbp);
 	bu_free( (char *)tab, "nmg_face_plot tab[]" );
 
 }
@@ -2203,7 +2203,7 @@ CONST struct faceuse	*fu1, *fu2;
 	} else {
 		bu_log("null nmg_vlblock_anim_upcall, no animation\n");
 	}
-	bn_vlblock_free(vbp);
+	rt_vlblock_free(vbp);
 	bu_free( (char *)tab, "nmg_2face_plot tab[]" );
 
 }
@@ -2409,7 +2409,7 @@ CONST struct bn_tol	*tol;
 
 	rt_plot_vlblock( fp, vbp );
 	(void)fclose(fp);
-	bn_vlblock_free(vbp);
+	rt_vlblock_free(vbp);
 	bu_free((char *)tab, "bit vec");
 }
 

@@ -1599,7 +1599,7 @@ CONST struct bn_tol	*tol;
 		fclose(fp);
 		bu_log("wrote %s\n", buf);
 		bu_free( (char *)b, "nmg_special_wedge_processing flag[]" );
-		bn_vlblock_free(vbp);
+		rt_vlblock_free(vbp);
 	}
 
 	if( end-start >= 128 )  rt_bomb("nmg_special_wedge_processing: array overflow\n");
