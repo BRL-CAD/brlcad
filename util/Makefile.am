@@ -27,6 +27,8 @@ bin_PROGRAMS= alias-pix ap-pix asc-pl azel bary buffer dbcp \
 	wavelet pixsubst terrain ttcp dsp_add \
 	pl-X
 
+bin_SCRIPTS = rtwizard
+
 pixsubst_SOURCES = pixsubst.c
 
 wavelet_SOURCES = wavelet.c

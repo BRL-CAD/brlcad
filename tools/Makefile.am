@@ -13,8 +13,7 @@ bin_PROGRAMS = applymap avg4 crop fant into mcut mergechan pyrmask \
 	rletogif rletoabA62
 BUILT_SOURCES = font.c
 
-RLE=$(top_builddir)/libutahrle/libutahrle.la -lm
-LDADD = ${RLE}
+LDADD = @RLE@
 noinst_HEADERS = font.h rletogif.h
 
 applymap_SOURCES = applymap.c

@@ -34,7 +34,9 @@ SUBDIRS=\
 	gtools\
 	html\
 	irprep\
+	lgt\
 	mged\
+	nirt\
 	rt\
 	sh\
 	sig\

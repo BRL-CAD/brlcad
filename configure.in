@@ -133,9 +133,10 @@ AC_CHECK_FUNCS(dlopen, DL="" ,[AC_CHECK_LIB(dl, dlopen, DL="-ldl", AC_CHECK_LIB(
 
 BN='${top_builddir}/libbn/libbn.la ${BU}'
 BU='${top_builddir}/libbu/libbu.la ${TCL_LIBS} ${PTHREAD_LIBS} -lm ${DL}'
-CURSOR='${top_builddir}/libcursor/libcursor.la'
+CURSOR='${top_builddir}/libcursor/libcursor.la ${CURSES}'
 DM='${top_builddir}/libdm/libdm.la ${TK_LIBS} ${RT}'
 FB='${top_builddir}/libfb/libfb.la ${X_LIBS} ${PKG} ${BU}'
+FFT='${top_builddir}/libfft/libfft.la -lm'
 OPTICAL='${top_builddir}/liboptical/liboptical.la'
 ORLE='${top_builddir}/liborle/liborle.la'
 PKG='${top_builddir}/libpkg/libpkg.la'
@@ -147,9 +148,10 @@ WDB='${top_builddir}/libwdb/libwdb.la'
 AC_SUBST(BN)
 AC_SUBST(BU)
 AC_SUBST(CURSOR)
-AC_SUBST(DM)
 AC_SUBST(DL)
+AC_SUBST(DM)
 AC_SUBST(FB)
+AC_SUBST(FFT)
 AC_SUBST(OPTICAL)
 AC_SUBST(ORLE)
 AC_SUBST(PKG)
@@ -248,6 +250,7 @@ AC_OUTPUT([
 	iwidgets4.0.1/generic/Makefile
 	iwidgets4.0.1/iwidgets.tcl
 	iwidgets4.0.1/pkgIndex.tcl
+	lgt/Makefile
 	libbn/Makefile
 	libbu/Makefile
 	libcursor/Makefile
@@ -285,19 +288,20 @@ AC_OUTPUT([
 	libtcl8.4/library/tcltest/Makefile
 	libtcl8.4/unix/Makefile
 	libtermio/Makefile
+	libtk8.4/Makefile
 	libtk8.4/bitmaps/Makefile
 	libtk8.4/doc/Makefile
 	libtk8.4/generic/Makefile
-	libtk8.4/library/demos/Makefile
 	libtk8.4/library/Makefile
+	libtk8.4/library/demos/Makefile
 	libtk8.4/library/msgs/Makefile
-	libtk8.4/Makefile
 	libtk8.4/unix/Makefile
 	libtk8.4/xlib/Makefile
 	libutahrle/Makefile
 	libwdb/Makefile
 	libz/Makefile
 	mged/Makefile
+	nirt/Makefile
 	rt/Makefile
 	sh/Makefile
 	sig/Makefile

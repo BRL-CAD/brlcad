@@ -10,10 +10,10 @@ noinst_HEADERS = cmd.h comb_bool.h editobjGui.h fbserv.h ged.h htmlLibraryUi.h i
 INCLUDES = @TCL_CFLAGS@ @ITCL_CFLAGS@ @TK_CFLAGS@ @ITK_CFLAGS@ @X_CFLAGS@ @PTHREAD_CFLAGS@ -I$(top_srcdir)/h
 
 
-mged_LDADD = $(top_builddir)/libbn/libbn.la $(top_builddir)/libpkg/libpkg.la $(top_builddir)/libdm/libdm.la $(top_builddir)/libbu/libbu.la $(top_builddir)/librt/librt.la $(top_builddir)/libfb/libfb.la $(top_builddir)/libwdb/libwdb.la $(top_builddir)/libsysv/libsysv.la $(top_builddir)/libtermio/libtermio.la @TCL_LIBS@ @ITCL_LIBS@ @TK_LIBS@ @ITK_LIBS@ @X_LIBS@ @PTHREAD_LIBS@
+mged_LDADD = @DM@ @FB@ @ITCL_LIBS@ @ITK_LIBS@ @SYSV@ @TERMIO@ @TK_LIBS@ @WDB@
 
-cad_parea_LDADD = $(top_builddir)/libbu/libbu.la @PTHREAD_LIBS@ @TCL_LIBS@
-cad_boundp_LDADD = $(top_builddir)/libbu/libbu.la @PTHREAD_LIBS@ @TCL_LIBS@ -lm
+cad_parea_LDADD = @BU@
+cad_boundp_LDADD = @BU@
 
 man_MANS = cad_boundp.1 cad_parea.1 mged.1
 EXTRA_DIST = $(man_MANS)

@@ -30,8 +30,7 @@ noinst_HEADERS = ext.h light.h rad.h scat.h
 
 CFLAGS = -I$(top_srcdir)/h
 
-LDADD = ../libbu/libbu.la ../libbn/libbn.la ../librt/librt.la ../libfb/libfb.la ../libpkg/libpkg.la ../liboptical/liboptical.la -lm -L/usr/X11R6/lib -lX11 @TCL_LIBS@ @PTHREAD_LIBS@
-rt_LDADD = ../liboptical/liboptical.la $(LDADD)
+LDADD = @RT@ @FB@ @OPTICAL@
 
 man_MANS = rt.1 rtcheck.1 rtedge.1 rtg3.1 rthide.1 rtpp.1 rtrange.1 rtray.1 rtregis.1 rtscale.1 rtshot.1 rtwalk.1 rtweight.1 rtxray.1
 EXTRA_DIST=$(man_MANS) $(ALLSRCS)
