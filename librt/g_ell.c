@@ -449,8 +449,10 @@ register struct uvcoord *uvp;
 	MAT4X3VEC( pprime, ell->ell_SoR, work );
 	/* Assert that pprime has unit length */
 
-	uvp->uv_u = atan2( pprime[Y], pprime[X] ) * rt_inv2pi + 0.5;
-	uvp->uv_v = asin( pprime[Z] ) * rt_invpi + 0.5;
+	uvp->uv_u = mat_atan2( pprime[Y], pprime[X] ) * rt_inv2pi + 0.5;
+	uvp->uv_v = mat_atan2( pprime[Z],
+		sqrt( pprime[X] * pprime[X] + pprime[Y] * pprime[Y]) ) *
+		rt_inv2pi + 0.5;
 
 	/* approximation: r / (circumference, 2 * pi * aradius) */
 	r = ap->a_rbeam + ap->a_diverge * hitp->hit_dist;
