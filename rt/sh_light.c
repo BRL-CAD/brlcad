@@ -222,7 +222,7 @@ char *cp;
 		register struct light_specific **llp;	/* last light lt_forw */
 
 		llp = &LightHeadp;
-		lp = LightHeadp->lt_forw;
+		lp = LightHeadp;
 		while( lp != LIGHT_NULL )  {
 			if( lp == (struct light_specific *)cp )  {
 				*llp = lp->lt_forw;
