@@ -144,7 +144,7 @@
 #	define HAVE_VFORK	1
 #endif
 
-#if defined(__STDC__) || (defined(alliant) && defined(i860))
+#if defined(__STDC__) || (defined(alliant) && defined(i860)) || defined(sun)
 #	define HAVE_VPRINTF	1
 #endif
 
