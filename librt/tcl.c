@@ -1372,11 +1372,30 @@ char	      **argv;
 	if( rt_tcl_import_from_path( interp, &intern, argv[1], wdb ) == TCL_ERROR )
 		return TCL_ERROR;
 
-	status = rt_db_report( interp, &intern, argv[2] );
-	/* status = intern.idb_meth->ft_tclget( interp, &intern, argv[2] ); */
+	if( intern.idb_meth->ft_tclget )  {
+		status = intern.idb_meth->ft_tclget( interp, &intern, argv[2] );
+	} else {
+		status = rt_db_report( interp, &intern, argv[2] );
+	}
 
 	intern.idb_meth->ft_ifree( &intern );
 	return status;
+}
+
+/*
+ *			R T _ C O M B _ T C L F O R M
+ */
+int
+rt_comb_tclform( ftp, interp )
+CONST struct rt_functab *ftp;
+Tcl_Interp		*interp;
+{
+	RT_CK_FUNCTAB(ftp);
+
+	Tcl_AppendResult( interp,
+"region {%s} id {%d} air {%d} los {%d} GIFTmater {%d} rgb {%d %d %d} \
+shader {%s} material {%s} inherit {%s} tree {%s}", (char *)NULL );
+	return TCL_OK;
 }
 
 /*
@@ -1526,23 +1545,19 @@ char	      **argv;
 		return TCL_ERROR;
 	}
 
-	if( strcmp(type, "comb")==0 ) {
-		rt_comb_make( ftp, &intern, 0.0 );
-		/* ftp->ft_make( ftp, &intern, 0.0 ); */
+	if( ftp->ft_make )  {
+		ftp->ft_make( ftp, &intern, 0.0 );
+	} else {
+		rt_generic_make( ftp, &intern, 0.0 );
+	}
 
-		/* ftp->ft_tcladjust( interp, &intern, argc-3, argv+3 ) */
-
-		if( rt_comb_tcladjust( interp, &intern, argc-3,
+	if( ftp->ft_tcladjust )  {
+		if( ftp->ft_tcladjust( interp, &intern, argc-3,
 					argv+3 ) == TCL_ERROR ) {
 			rt_db_free_internal( &intern );
 			return TCL_ERROR;
 		}
 	} else {
-		rt_generic_make( ftp, &intern, 0.0 );
-		/* ftp->ft_make( ftp, &intern, 0.0 ); */
-
-		/* ftp->ft_tcladjust( interp, intern, argc-3, argv+3 ) */
-
 		if( rt_generic_tcladjust( interp, &intern, argc-3, argv+3 ) == TCL_ERROR )  {
 			rt_db_free_internal(&intern);
 			return TCL_ERROR;
@@ -1568,8 +1583,13 @@ char	      **argv;
  ** For use with Tcl, this routine accepts as its first argument an item in
  ** the database; as its remaining arguments it takes the properties that
  ** need to be changed and their values.
- **	.inmem adjust LIGHT V { -46 -13 5 }
- **/
+ *
+ *  Example of adjust operation on a solid:
+ *	.inmem adjust LIGHT V { -46 -13 5 }
+ *
+ *  Example of adjust operation on a combination:
+ *	.inmem adjust light.r rgb { 255 255 255 }
+ */
 
 int
 rt_db_adjust( clientData, interp, argc, argv )
@@ -1617,12 +1637,10 @@ char	      **argv;
 	id = intern.idb_type;
 	RT_CK_FUNCTAB(intern.idb_meth);
 
-	/* status = ftp->ft_tcladjust( interp, intern, argc-3, argv+3 ) */
-	if( id == ID_COMBINATION ) {
-		/* .inmem adjust light.r rgb { 255 255 255 } */
-		status = rt_comb_tcladjust( interp, &intern, argc-3, argv+3 );
+	/* status = ftp->ft_tcladjust( interp, &intern, argc-3, argv+3 ) */
+	if( intern.idb_meth->ft_tcladjust )  {
+		status = intern.idb_meth->ft_tcladjust( interp, &intern, argc-3, argv+3 );
 	} else {
-		/* .inmem adjust LIGHT V { -46 -13 5 } */
 		status = rt_generic_tcladjust( interp, &intern, argc-3, argv+3 );
 	}
 
@@ -1665,6 +1683,9 @@ char **argv;
 			argv[1], "\".", (char *)NULL);
 		return TCL_ERROR;
 	}
+	if( ftp->ft_tclform )
+		return ftp->ft_tclform( ftp, interp );
+
 	sp = ftp->ft_parsetab;
     
 	if (sp != NULL)

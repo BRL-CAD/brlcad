@@ -23,6 +23,9 @@ static char RCStree[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
+
+#include "tcl.h"
+
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
@@ -221,6 +224,15 @@ RT_EXTERN(void rt_comb_ifree, (struct rt_db_internal *ip));
 RT_EXTERN(int rt_comb_describe, (struct bu_vls *str,
 		struct rt_db_internal *ip, int verbose,
 		double mm2local));
+/* from tcl.c */
+BU_EXTERN(int rt_comb_tclget, (Tcl_Interp *interp,
+		CONST struct rt_db_internal *intern, CONST char	*item));
+BU_EXTERN(int rt_comb_tcladjust, (Tcl_Interp *interp,
+		struct rt_db_internal *intern, int argc, char **argv));
+BU_EXTERN(int rt_comb_tclform, (CONST struct rt_functab *ftp,
+		Tcl_Interp *interp));
+BU_EXTERN(void rt_comb_make, (CONST struct rt_functab *ftp,
+		struct rt_db_internal *intern, double diameter));
 
 /* XXX from shoot.c / vshoot.c */
 RT_EXTERN(void rt_vstub, (struct soltab *stp[], struct xray *rp[],
@@ -550,6 +562,8 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_comb_import,	rt_comb_export,	rt_comb_ifree,
 		rt_comb_describe,rt_generic_xform, NULL,
 		0,				0,
+		rt_comb_tclget,	rt_comb_tcladjust, rt_comb_tclform,
+		rt_comb_make,
 	},
 
 
