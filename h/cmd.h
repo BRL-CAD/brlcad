@@ -8,12 +8,12 @@
 #define MAXARGS 9000
 #define CMD_NULL (int (*)())NULL
 
-struct cmdtab {
+struct bu_cmdtab {
   char *ct_name;
   int (*ct_func)();
 };
 
-struct cmdhist {
+struct bu_cmdhist {
   struct bu_list l;
   struct bu_vls h_command;
   struct timeval h_start;
@@ -21,7 +21,7 @@ struct cmdhist {
   int h_status;
 };
 
-extern int do_cmd();
-extern void register_cmds();
+extern int bu_cmd();
+extern void bu_register_cmds();
 
 #endif /* SEEN_CMD_H */
