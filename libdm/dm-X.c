@@ -371,9 +371,6 @@ X_open(interp, argc, argv)
 		 Tk_Depth(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin));
 
   if(((struct x_vars *)dmp->dm_vars.priv_vars)->is_trueColor){
-    int r = 255;
-    int g = 0;
-    int b = 0;
     XColor fg, bg;
 
     fg.red = 65535;
@@ -385,7 +382,6 @@ X_open(interp, argc, argv)
 
     ((struct x_vars *)dmp->dm_vars.priv_vars)->fg = fg.pixel;
 
-    r = g = b = 0;
     bg.red = bg.green = bg.blue = 0;
     get_color(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 		((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap,

@@ -1101,7 +1101,7 @@ make_comp_group()
 	{
 		char *tmp_name;
 
-		if( (tmp_name=find_region_name( group_id , comp_id , 0 )) )
+		if( (tmp_name=find_region_name( group_id , comp_id )) )
 			strcpy( name , tmp_name );
 		else
 		{
@@ -1263,7 +1263,7 @@ do_name()
 
 	/* reserve this name for group name */
 	make_unique_name( name_name );
-	Insert_region_name( name_name , region_id , 0 );
+	Insert_region_name( name_name , region_id );
 
 	name_count = 0;
 	if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
@@ -2527,7 +2527,7 @@ make_bot_object()
 
 	if( !pass )
 	{
-		make_region_name( name , group_id , comp_id , element_id , BOT );
+		make_region_name( name , group_id , comp_id );
 		return;
 	}
 
@@ -2655,7 +2655,7 @@ int final;
 	{
 		char	name[NAMESIZE+1];
 
-		make_region_name( name , group_id , comp_id , bot , NMG );
+		make_region_name( name , group_id , comp_id );
 	}
 
 	if( !final )
@@ -3407,7 +3407,6 @@ char *argv[];
 {
 	int i;
 	int c;
-	char *output_file;
 	char *plot_file=NULL;
 
 	while( (c=getopt( argc , argv , "qm:o:c:dwx:b:X:" ) ) != EOF )
@@ -3474,7 +3473,6 @@ char *argv[];
 		perror( "fast4-g" );
 		exit( 1 );
 	}
-	output_file = argv[optind+1];
 
 	if( plot_file )
 	{

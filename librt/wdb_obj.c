@@ -5345,7 +5345,6 @@ wdb_combadd(interp, dbip, objp, combname, region_flag, relation, ident, air, wdb
 		RT_INIT_DB_INTERNAL(&intern);
 		intern.idb_type = ID_COMBINATION;
 		intern.idb_meth = &rt_functab[ID_COMBINATION];
-		intern.idb_ptr = (genptr_t)comb;
 
 		/* Update the in-core directory */
 		if ((dp = db_diradd(dbip, combname, -1, 2, flags, (genptr_t)&intern.idb_type)) == DIR_NULL )  {
@@ -5355,6 +5354,7 @@ wdb_combadd(interp, dbip, objp, combname, region_flag, relation, ident, air, wdb
 		}
 
 		BU_GETSTRUCT(comb, rt_comb_internal);
+		intern.idb_ptr = (genptr_t)comb;
 		comb->magic = RT_COMB_MAGIC;
 		bu_vls_init(&comb->shader);
 		bu_vls_init(&comb->material);

@@ -482,7 +482,6 @@ rt_retrieve_binunif(struct rt_db_internal *intern,
 {
 	register struct directory	*dp;
 	struct rt_binunif_internal	*bip;
-	size_t				nbytes; /* not really needed */
 	struct bu_external		ext;
 	struct db5_raw_internal		raw;
 	char				*tmp;
@@ -526,44 +525,36 @@ rt_retrieve_binunif(struct rt_db_internal *intern,
 	case DB5_MINORTYPE_BINU_FLOAT:
 		if (rt_g.debug & DEBUG_VOL)
 			bu_log("bip->type switch... float");
-		nbytes = (size_t) (bip->count * sizeof(float));
 		break;
 	case DB5_MINORTYPE_BINU_DOUBLE:
 		if (rt_g.debug & DEBUG_VOL)
 			bu_log("bip->type switch... double");
-		nbytes = (size_t) (bip->count * sizeof(double));
 		break;
 	case DB5_MINORTYPE_BINU_8BITINT:
 		if (rt_g.debug & DEBUG_VOL)
 			bu_log("bip->type switch... 8bitint");
-		nbytes = (size_t) (bip->count);
 		break;
 	case DB5_MINORTYPE_BINU_8BITINT_U:
 		if (rt_g.debug & DEBUG_VOL)
 			bu_log("bip->type switch... 8bituint");
-		nbytes = (size_t) (bip->count);
 		break;
 	case DB5_MINORTYPE_BINU_16BITINT:
 		if (rt_g.debug & DEBUG_VOL)
 			bu_log("bip->type switch... 16bituint");
-		nbytes = (size_t) (bip->count * 2);
 		break;
 	case DB5_MINORTYPE_BINU_16BITINT_U:
 		if (rt_g.debug & DEBUG_VOL)
 			bu_log("bip->type switch... 16bitint");
-		nbytes = (size_t) (bip->count * 2);
 		break;
 	case DB5_MINORTYPE_BINU_32BITINT:
 	case DB5_MINORTYPE_BINU_32BITINT_U:
 		if (rt_g.debug & DEBUG_VOL)
 			bu_log("bip->type switch... 32bitint");
-		nbytes = (size_t) (bip->count * 4);
 		break;
 	case DB5_MINORTYPE_BINU_64BITINT:
 	case DB5_MINORTYPE_BINU_64BITINT_U:
 		if (rt_g.debug & DEBUG_VOL)
 			bu_log("bip->type switch... 64bitint");
-		nbytes = (size_t) (bip->count * 8);
 		break;
 	default:
 		/* XXX	This shouln't happen!!    */
