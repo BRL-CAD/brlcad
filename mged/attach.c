@@ -263,6 +263,8 @@ char *name;
   curr_dm_list = dmlp;
   curr_dm_list->_dmp = &dm_Null;
   dm_var_init(o_dm_list);
+#else
+  release();
 #endif
 #else
 	if( dmp != &dm_Null )

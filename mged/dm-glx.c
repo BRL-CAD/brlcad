@@ -463,15 +463,11 @@ Glx_open()
   line[strlen(line)-1] = '\0';		/* remove newline */
   if( feof(stdin) )  quit();
   if( line[0] != '\0' ) {
-    if( glx_setup(line) ) {
-      rt_free(dm_vars, "Glx_open: dm_vars");
+    if( glx_setup(line) )
       return(1);		/* BAD */
-    }
   } else {
-    if( glx_setup(envp) ) {
-      rt_free(dm_vars, "Glx_open: dm_vars");
+    if( glx_setup(envp) )
       return(1);	/* BAD */
-    }
   }
 
   /* Ignore the old scrollbars and menus */

@@ -21,7 +21,7 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#define DO_XSELECTINPUT 1
+#define DO_XSELECTINPUT 0
 #define TRY_PIPES 1
 
 #include "conf.h"
@@ -140,6 +140,10 @@ static int perspective_angle = 3;	/* Angle of perspective */
 static int perspective_table[] = { 
 	30, 45, 60, 90 };
 
+#if !DO_XSELECTINPUT
+static int XdoMotion = 0;
+#endif
+
 /*
  * Display coordinate conversion:
  *  GED is using -2048..+2048,
@@ -178,15 +182,11 @@ X_open()
   line[strlen(line)-1] = '\0';		/* remove newline */
   if( feof(stdin) )  quit();
   if( line[0] != '\0' ) {
-    if( xsetup(line) ) {
-      rt_free(dm_vars, "X_open: dm_vars");
+    if( xsetup(line) )
       return(1);		/* BAD */
-    }
   } else {
-    if( xsetup(envp) ) {
-      rt_free(dm_vars, "X_open: dm_vars");
+    if( xsetup(envp) )
       return(1);	/* BAD */
-    }
   }
 
   /* Ignore the old scrollbars and menus */
@@ -203,19 +203,18 @@ X_open()
 void
 X_close()
 {
+  if(((struct x_vars *)dm_vars)->gc != 0)
     XFreeGC(((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->gc);
+
+  if(((struct x_vars *)dm_vars)->xtkwin != 0)
     Tk_DestroyWindow(((struct x_vars *)dm_vars)->xtkwin);
 
-#if 0
-    Tcl_DeleteInterp(xinterp);
-#endif
-
 #if 1
-    rt_free(dm_vars, "X_close: dm_vars");
-    Tk_DeleteGenericHandler(Xdoevent, (ClientData)rt_vls_addr(&pathName));
+  rt_free(dm_vars, "X_close: dm_vars");
+  Tk_DeleteGenericHandler(Xdoevent, (ClientData)rt_vls_addr(&pathName));
 #else
-    /* to prevent events being processed after window destroyed */
-    win = -1;
+  /* to prevent events being processed after window destroyed */
+  win = -1;
 #endif
 }
 
@@ -227,7 +226,7 @@ X_close()
 void
 X_prolog()
 {
-    XClearWindow(((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->win);
+  XClearWindow(((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->win);
 }
 
 /*
@@ -236,11 +235,11 @@ X_prolog()
 void
 X_epilog()
 {
-    /* Prevent lag between events and updates */
-    XSync(((struct x_vars *)dm_vars)->dpy, 0);
-
     /* Put the center point up last */
     draw( 0, 0, 0, 0 );
+
+    /* Prevent lag between events and updates */
+    XSync(((struct x_vars *)dm_vars)->dpy, 0);
 }
 
 /*
@@ -499,11 +498,13 @@ XEvent *eventPtr;
   if(curr_dm_list == DM_LIST_NULL)
     goto end;
 
+#if 0
   /* Not interested */
   if (eventPtr->xany.window != ((struct x_vars *)dm_vars)->win){
     curr_dm_list = save_dm_list;
     return TCL_OK;
   }
+#endif
 
 #if TRY_PIPES
   if(mged_variables.focus && eventPtr->type == KeyPress){
@@ -525,49 +526,36 @@ XEvent *eventPtr;
     XGetWindowAttributes( ((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->win, &xwa);
     ((struct x_vars *)dm_vars)->height = xwa.height;
     ((struct x_vars *)dm_vars)->width = xwa.width;
-#if 1
+
     dmaflag = 1;
     refresh();
     goto end;
-#else
-    rt_vls_init(&cmd);
-    rt_vls_printf( &cmd, "refresh\n" );
-#endif
   }else if(eventPtr->type == ConfigureNotify){
     XGetWindowAttributes( ((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->win, &xwa);
     ((struct x_vars *)dm_vars)->height = xwa.height;
     ((struct x_vars *)dm_vars)->width = xwa.width;
-#if 1
+
     dmaflag = 1;
     refresh();
     goto end;
-#else
-    rt_vls_init(&cmd);
-    rt_vls_printf( &cmd, "refresh\n" );
-#endif
   } else if( eventPtr->type == MotionNotify ) {
     int	x, y;
 
 #if !DO_XSELECTINPUT
     if ( !XdoMotion )
-      goto end;
+      return TCL_OK;
 #endif
 
     x = (eventPtr->xmotion.x/(double)((struct x_vars *)dm_vars)->width - 0.5) * 4095;
     y = (0.5 - eventPtr->xmotion.y/(double)((struct x_vars *)dm_vars)->height) * 4095;
     /* Constant tracking (e.g. illuminate mode) bound to M mouse */
-#if 1
     rt_vls_init(&cmd);
     rt_vls_printf( &cmd, "M 0 %d %d\n", x, y );
-#else
-    rt_vls_printf( &dm_values.dv_string, "M 0 %d %d\n", x, y );
-#endif
   } else {
-#if 1
     XGetWindowAttributes( ((struct x_vars *)dm_vars)->dpy, ((struct x_vars *)dm_vars)->win, &xwa);
     ((struct x_vars *)dm_vars)->height = xwa.height;
     ((struct x_vars *)dm_vars)->width = xwa.width;
-#endif
+
     goto end;
   }
 
@@ -863,14 +851,14 @@ char	*name;
 
 #else
   /* Make xtkwin a toplevel window */
-  ((struct x_vars *)dm_vars)->xtkwin = Tk_CreateWindow(interp, tkwin,
+  ((struct x_vars *)dm_vars)->xtkwin = Tk_CreateWindowFromPath(interp, tkwin,
 						       rt_vls_addr(&pathName), name);
 
   /*
    * Create the X drawing window by calling create_x which
    * is defined in xinit.tk
    */
-  rt_vls_strcpy(&str, "create_x ");
+  rt_vls_strcpy(&str, "init_x ");
   rt_vls_printf(&str, "%s\n", rt_vls_addr(&pathName));
 
   if(cmdline(&str, FALSE) == CMD_BAD){
@@ -894,6 +882,12 @@ char	*name;
     ((struct x_vars *)dm_vars)->height = ((struct x_vars *)dm_vars)->width;
 
 #endif
+
+#if 0
+  /*XXX*/
+  XSynchronize(((struct x_vars *)dm_vars)->dpy, TRUE);
+#endif
+
   Tk_MakeWindowExist(((struct x_vars *)dm_vars)->xtkwin);
   ((struct x_vars *)dm_vars)->win =
       Tk_WindowId(((struct x_vars *)dm_vars)->xtkwin);
@@ -1005,10 +999,12 @@ char	*name;
     Tk_CreateGenericHandler(Xdoevent,
 			    (ClientData)rt_vls_addr(&pathName));
 
+#if DO_XSELECTINPUT
     /* start with constant tracking OFF */
     XSelectInput(((struct x_vars *)dm_vars)->dpy,
 		 ((struct x_vars *)dm_vars)->win,
 		 ExposureMask|ButtonPressMask|KeyPressMask|StructureNotifyMask);
+#endif
 
     Tk_SetWindowBackground(((struct x_vars *)dm_vars)->xtkwin, ((struct x_vars *)dm_vars)->bg);
     Tk_MapWindow(((struct x_vars *)dm_vars)->xtkwin);
