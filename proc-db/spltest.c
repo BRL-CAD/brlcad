@@ -26,7 +26,7 @@ char	**argv;
 
 	si.magic = RT_NURB_INTERNAL_MAGIC;
 	si.nsrf = 0;
-	si.srfs = (struct snurb **)rt_malloc( sizeof(struct snurb *)*100, "snurb ptrs");
+	si.srfs = (struct snurb **)bu_malloc( sizeof(struct snurb *)*100, "snurb ptrs");
 
 	mk_id( stdout, "Mike's Spline Test" );
 

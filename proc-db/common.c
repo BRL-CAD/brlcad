@@ -103,10 +103,10 @@ struct wmember	*headp;
 	 * then xlate to final position.
 	 */
 	VSET( from, 0, 0, -1 );
-	mat_fromto( rot, from, dir );
-	mat_idn( xlate );
+	bn_mat_fromto( rot, from, dir );
+	bn_mat_idn( xlate );
 	MAT_DELTAS( xlate, pos[X], pos[Y], pos[Z] );
-	mat_mul( both, xlate, rot );
+	bn_mat_mul( both, xlate, rot );
 
 	mk_comb( stdout, name, 1, 1, "light", "shadows=1", rgb, 0 );
 	mk_memb( stdout, nbuf, both, UNION );

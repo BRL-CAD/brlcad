@@ -60,7 +60,7 @@ char ** argv;
 		exit(1);
 	}
 
-	RT_LIST_INIT( &head.l );
+	BU_LIST_INIT( &head.l );
 	mk_id( stdout, argv[1] );
 	read_data();
 
@@ -143,7 +143,7 @@ int	sph_type;
 	mat_t m;
 	unsigned char rgb[3];
 
-	mat_idn( m);
+	bn_mat_idn( m);
 
 	rgb[0] = atom_list[sph_type].red;
 	rgb[1] = atom_list[sph_type].green;
@@ -183,7 +183,7 @@ int sp1, sp2;
 	char nm[128], nm1[128];
 	unsigned char rgb[3];
 
-	mat_idn( m );
+	bn_mat_idn( m );
 
 	s1 = s2 = (struct sphere *) 0;
 

@@ -45,7 +45,7 @@ char *Usage = "This program ordinarily generates a database on stdout.\n\
 
 static struct shell *s;
 static struct model *m;
-static struct rt_tol tol;
+static struct bn_tol tol;
 
 void dump_patch();
 
@@ -56,17 +56,17 @@ int argc; char *argv[];
 	char * id_name = "BRL-CAD t-NURBS NMG Example";
 	char * tea_name = "UtahTeapot";
 	char * uplot_name = "teapot.pl";
-	struct rt_list vhead;
+	struct bu_list vhead;
 	FILE *fp;
 	int i;
 
-        tol.magic = RT_TOL_MAGIC;
+        tol.magic = BN_TOL_MAGIC;
         tol.dist = 0.005;
         tol.dist_sq = tol.dist * tol.dist;
         tol.perp = 1e-6;
         tol.para = 1 - tol.perp;
 
-	RT_LIST_INIT( &rt_g.rtg_vlfree );
+	BU_LIST_INIT( &rt_g.rtg_vlfree );
 
 	if (isatty(fileno(stdout))) {
 		(void)fprintf(stderr, "%s: %s\n", *argv, Usage);
@@ -91,7 +91,7 @@ int argc; char *argv[];
 	NMG_CK_MODEL( m );
 	r = nmg_mrsv( m );
 	NMG_CK_REGION( r );
-	s = RT_LIST_FIRST( shell , &r->s_hd );
+	s = BU_LIST_FIRST( shell , &r->s_hd );
 	NMG_CK_SHELL( s );
 
 	/* Step through each patch and create a NMG TNURB face
@@ -111,13 +111,13 @@ int argc; char *argv[];
 	fflush( stdout );
 
 	/* Make a vlist drawing of the model */
-	RT_LIST_INIT( &vhead );
+	BU_LIST_INIT( &vhead );
 	nmg_m_to_vlist( &vhead , m , 0 );
 
 	/* Make a UNIX plot file from this vlist */
 	if( (fp=fopen( uplot_name , "w" )) == NULL )
 	{
-		rt_log( "Cannot open plot file: %s\n" , uplot_name );
+		bu_log( "Cannot open plot file: %s\n" , uplot_name );
 		perror( "teapot_nmg" );
 	}
 	else
@@ -193,7 +193,7 @@ pt patch;
 			ducks[patch[k][j]-1].z * 1000 );
 		nmg_vertex_gv( verts[i] , pnt );
 
-		for( RT_LIST_FOR( vu , vertexuse , &verts[i]->vu_hd ) )
+		for( BU_LIST_FOR( vu , vertexuse , &verts[i]->vu_hd ) )
 			nmg_vertexuse_a_cnurb( vu , uvw );
 	}
 
@@ -233,9 +233,9 @@ pt patch;
 
 	/* set eu geometry */
 	pt_type = RT_NURB_MAKE_PT_TYPE(2, RT_NURB_PT_UV,0); /* see nurb.h for details */
-	lu = RT_LIST_FIRST( loopuse , &fu->lu_hd );
+	lu = BU_LIST_FIRST( loopuse , &fu->lu_hd );
 	NMG_CK_LOOPUSE( lu );
-	for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+	for( BU_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
 	{
 #if 0
 		nmg_edge_g_cnurb( eu , 2 , 0 , (fastf_t *)NULL , 2 ,

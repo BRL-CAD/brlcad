@@ -67,7 +67,7 @@ unsigned char stud_color[3] = { 250, 178, 108 };
 char *stud_properties[] = { "plastic", "sh=10 di=0.7 sp=0.3" };
 
 struct opening {
-	struct rt_list	l;
+	struct bu_list	l;
 	double		sx;	/* start in X direction */
 	double		sz;	/* start in Z direction */
 	double		ex;	/* end in X direction */
@@ -78,7 +78,7 @@ struct opening {
 #define WALL_HEIGHT ol_hd.ez
 
 struct boardseg {
-	struct rt_list	l;
+	struct bu_list	l;
 	double		s;	/* start */
 	double		e;	/* end */
 };
@@ -90,9 +90,9 @@ struct boardseg {
 void usage(s)
 char *s;
 {
-	if (s) (void)rt_log("%s\n", s);
+	if (s) (void)bu_log("%s\n", s);
 
-	rt_log("Usage: %s %s\n%s\n%s\n%s\n",
+	bu_log("Usage: %s %s\n%s\n%s\n%s\n",
 progname,
 "[ -u units ] -w(all) width,height [-o(pening) lx,lz,hx,hz ...]",
 " [-n name] [ -d(ebug) ] [-t {frame|brick|block|sheetrock} ] [-c R/G/B]",
@@ -114,9 +114,9 @@ char *s;
 		usage("translation option problem\n");
 
     	if (!trans_matrix) {
-    		trans_matrix = (matp_t)rt_calloc(sizeof(mat_t), 1,
+    		trans_matrix = (matp_t)bu_calloc(sizeof(mat_t), 1,
     					"transformation matrix");
-    		bcopy( (char *)rt_identity, (char *)trans_matrix, sizeof(mat_t));
+    		bcopy( (char *)bn_mat_identity, (char *)trans_matrix, sizeof(mat_t));
     	}
 	
     	MAT_DELTAS(trans_matrix, dx*unit_conv, dy*unit_conv, dz*unit_conv);
@@ -194,9 +194,9 @@ char *s;
 		usage("rotation option problem\n");
 
     	if (!trans_matrix) {
-    		trans_matrix = (matp_t)rt_calloc(sizeof(mat_t), 1,
+    		trans_matrix = (matp_t)bu_calloc(sizeof(mat_t), 1,
 	    		"rotation matrix");
-    		bcopy((char *)rt_identity, (char *)trans_matrix, sizeof(mat_t));
+    		bcopy((char *)bn_mat_identity, (char *)trans_matrix, sizeof(mat_t));
     	}
 	buildHrot(trans_matrix,
 		rx * degtorad,
@@ -225,7 +225,7 @@ char *av[];
 		++progname;
 
 
-	RT_LIST_INIT(&ol_hd.l);
+	BU_LIST_INIT(&ol_hd.l);
 
 	/* Turn off getopt's error messages */
 	opterr = 0;
@@ -271,8 +271,8 @@ char *av[];
 					usage("set wall dim before openings\n");
 				  else if (sscanf(optarg, "%lf,%lf,%lf,%lf",
 				     &dx, &dy, &width, &height) == 4) {
-					op = (struct opening *)rt_calloc(1, sizeof(struct opening), "calloc opening");
-				     	RT_LIST_INSERT(&ol_hd.l, &op->l);
+					op = (struct opening *)bu_calloc(1, sizeof(struct opening), "calloc opening");
+				     	BU_LIST_INSERT(&ol_hd.l, &op->l);
 				     	op->sx = dx * unit_conv;
 				     	op->sz = dy * unit_conv;
 				     	op->ex = width * unit_conv;
@@ -293,7 +293,7 @@ char *av[];
 		case 'r'	: rand_brick_color = !rand_brick_color; break;
 		case 't'	: type = optarg; break;
 		case 'u'	: if (units_lock)
-					rt_log(
+					bu_log(
 					"Warning: attempting to change units in mid-parse\n");
 				if ((dx=rt_units_conversion(optarg)) != 0.0) {
 					unit_conv = dx;
@@ -340,7 +340,7 @@ struct boardseg *seglist;
 	struct opening *op;
 	struct boardseg *seg, *sp;
 
-	seg = (struct boardseg *)rt_calloc(1, sizeof(struct boardseg), "initial seg");
+	seg = (struct boardseg *)bu_calloc(1, sizeof(struct boardseg), "initial seg");
 	seg->s = sz;
 	seg->e = ez;
 
@@ -349,16 +349,16 @@ struct boardseg *seglist;
 	/* trim opening to X bounds of wall */
     	if (seg->s < ol_hd.sz) seg->s = ol_hd.sz;
     	if (seg->e > WALL_HEIGHT) seg->e = WALL_HEIGHT;
-	RT_LIST_APPEND(&(seglist->l), &(seg->l));
+	BU_LIST_APPEND(&(seglist->l), &(seg->l));
 
 
-	for (RT_LIST_FOR(op, opening, &ol_hd.l) ) {
+	for (BU_LIST_FOR(op, opening, &ol_hd.l) ) {
 	    if ((sx >= op->sx && sx <= op->ex) ||
 	    	    (ex >= op->sx && ex <= op->ex) ||
 	    	    (sx <= op->sx && ex >= op->ex) ) {
 
     	    	/* opening in vertical segment */
-	    	for (RT_LIST_FOR(seg, boardseg, &(seglist->l)) ) {
+	    	for (BU_LIST_FOR(seg, boardseg, &(seglist->l)) ) {
 
 
 			if (op->sz <= seg->s) {
@@ -366,11 +366,11 @@ struct boardseg *seglist;
 			    	/* opening covers entire segment.
 			    	 * segement gets deleted
 			    	 */
-			    	sp = RT_LIST_PLAST(boardseg, &(seg->l));
-			    	RT_LIST_DEQUEUE(&(seg->l));
-			    	rt_free((char *)seg, "seg free");
+			    	sp = BU_LIST_PLAST(boardseg, &(seg->l));
+			    	BU_LIST_DEQUEUE(&(seg->l));
+			    	bu_free((char *)seg, "seg free");
 				if (debug)
-				 	rt_log("deleting segment\n");
+				 	bu_log("deleting segment\n");
 			    	seg = sp;
 			    } else if (op->ez > seg->s) {
 			    	/* opening covers begining of segment */
@@ -388,13 +388,13 @@ struct boardseg *seglist;
 				 * segment.  We must divide the segment into
 				 * 2 segements
 				 */
-				 sp = (struct boardseg *)rt_calloc(1, sizeof(struct boardseg), "alloc boardseg");
+				 sp = (struct boardseg *)bu_calloc(1, sizeof(struct boardseg), "alloc boardseg");
 				 sp->s = seg->s;
 				 sp->e = op->sz;
 				 seg->s = op->ez;
-				 RT_LIST_INSERT(&(seg->l), &(sp->l));
+				 BU_LIST_INSERT(&(seg->l), &(sp->l));
 				 if (debug)
-				 	rt_log("splitting segment\n");
+				 	bu_log("splitting segment\n");
 			}
 
 
@@ -414,32 +414,32 @@ struct boardseg *seglist;
 	struct opening *op;
 	struct boardseg *seg, *sp;
 
-	seg = (struct boardseg *)rt_calloc(1, sizeof(struct boardseg), "initial seg");
+	seg = (struct boardseg *)bu_calloc(1, sizeof(struct boardseg), "initial seg");
 	seg->s = sx;
 	seg->e = ex;
 	/* trim opening to X bounds of wall */
     	if (seg->s < ol_hd.sx) seg->s = ol_hd.sx;
     	if (seg->e > WALL_WIDTH) seg->e = WALL_WIDTH;
-	RT_LIST_APPEND(&(seglist->l), &(seg->l));
+	BU_LIST_APPEND(&(seglist->l), &(seg->l));
 
 
 
-	for(RT_LIST_FOR(op, opening, &ol_hd.l) ) {
+	for(BU_LIST_FOR(op, opening, &ol_hd.l) ) {
 
 	    if ((op->sz >= sz && op->sz <= ez) ||
 		(op->ez >= sz && op->ez <= ez) ||
 		(op->sz <= sz && op->ez >= ez) ) {
 
 		/* opening in horizontal segment */
-	    	for (RT_LIST_FOR(seg, boardseg, &(seglist->l)) ) {
+	    	for (BU_LIST_FOR(seg, boardseg, &(seglist->l)) ) {
 			if (op->sx <= seg->s) {
 			    if (op->ex >= seg->e) {
 			    	/* opening covers entire segment.
 			    	 * segement gets deleted
 			    	 */
-			    	sp = RT_LIST_PLAST(boardseg, &(seg->l));
-			    	RT_LIST_DEQUEUE(&(seg->l));
-			    	rt_free((char *)seg, "seg free 2");
+			    	sp = BU_LIST_PLAST(boardseg, &(seg->l));
+			    	BU_LIST_DEQUEUE(&(seg->l));
+			    	bu_free((char *)seg, "seg free 2");
 			    	seg = sp;
 
 			    } else if (op->ex > seg->s) {
@@ -458,11 +458,11 @@ struct boardseg *seglist;
 				 * segment.  We must divide the segment into
 				 * 2 segements
 				 */
-				 sp = (struct boardseg *)rt_calloc(1, sizeof(struct boardseg), "alloc boardseg");
+				 sp = (struct boardseg *)bu_calloc(1, sizeof(struct boardseg), "alloc boardseg");
 				 sp->s = seg->s;
 				 sp->e = op->sx;
 				 seg->s = op->ex;
-				 RT_LIST_INSERT(&(seg->l), &(sp->l));
+				 BU_LIST_INSERT(&(seg->l), &(sp->l));
 			}
 		}
 	    }
@@ -649,13 +649,13 @@ struct opening *op;
 				dx = span / ((double)studs+1.0);
 
 				if (debug)
-					rt_log("making %d xtra studs, spacing %g on span %g\n",
+					bu_log("making %d xtra studs, spacing %g on span %g\n",
 						studs, dx / unit_conv,
 						span / unit_conv);
 
 				for(pos=op->sx+dx ; studs ; pos+=dx,studs--) {
 					if (debug)
-						rt_log("making xtra stud @ %g\n",
+						bu_log("making xtra stud @ %g\n",
 						pos / unit_conv);
 
 					mk_v_rpp(fd,	wm_hd,
@@ -761,14 +761,14 @@ FILE *fd;
 	struct wmember wm_hd;
 
 	if (WALL_WIDTH <= bd_thin*2) {
-		rt_log("wall width must exceed %g.\n", (bd_thin*2)/unit_conv);
+		bu_log("wall width must exceed %g.\n", (bd_thin*2)/unit_conv);
 		return;
 	}
 	if (WALL_HEIGHT <= bd_thin*2) {
-		rt_log("wall height must exceed %g.\n", (bd_thin*2)/unit_conv);
+		bu_log("wall height must exceed %g.\n", (bd_thin*2)/unit_conv);
 		return;
 	}
-	RT_LIST_INIT(&wm_hd.l);
+	BU_LIST_INIT(&wm_hd.l);
 
 	if (!color) color = stud_color;
 
@@ -777,16 +777,16 @@ FILE *fd;
 
 
 	/* find the segments of the base-board */
-	s_hd = (struct boardseg *)rt_calloc(1, sizeof(struct boardseg), "s_hd");
-	RT_LIST_INIT(&(s_hd->l));
+	s_hd = (struct boardseg *)bu_calloc(1, sizeof(struct boardseg), "s_hd");
+	BU_LIST_INIT(&(s_hd->l));
 	
 	h_segs(0.0, bd_thin, s_hd, 0.0, WALL_WIDTH);
 	
 	/* make the base-board segments */
-	while (RT_LIST_WHILE(seg, boardseg, &(s_hd->l))) {
+	while (BU_LIST_WHILE(seg, boardseg, &(s_hd->l))) {
 
 		if (debug) {
-			rt_log("baseboard seg: %g -> %g\n",
+			bu_log("baseboard seg: %g -> %g\n",
 				seg->s/unit_conv, seg->e/unit_conv);
 		}
 
@@ -795,8 +795,8 @@ FILE *fd;
 			0.0, bd_thick,
 			0.0, bd_thin);
 
-		RT_LIST_DEQUEUE(&(seg->l));
-		rt_free( (char *)seg, "seg free 3");
+		BU_LIST_DEQUEUE(&(seg->l));
+		bu_free( (char *)seg, "seg free 3");
 	}
 
 	/* now find the segments of the cap board */
@@ -804,10 +804,10 @@ FILE *fd;
 	h_segs(WALL_HEIGHT - bd_thin, WALL_HEIGHT, s_hd, 0.0, WALL_WIDTH);
 
 	/* make the cap board segments */
-	while (RT_LIST_WHILE(seg, boardseg, &(s_hd->l))) {
+	while (BU_LIST_WHILE(seg, boardseg, &(s_hd->l))) {
 
 		if (debug) {
-			rt_log("capboard seg: %g -> %g\n",
+			bu_log("capboard seg: %g -> %g\n",
 				seg->s/unit_conv, seg->e/unit_conv);
 		}
 
@@ -816,8 +816,8 @@ FILE *fd;
 			0.0, bd_thick,
 			WALL_HEIGHT-bd_thin, WALL_HEIGHT);
 
-		RT_LIST_DEQUEUE(&(seg->l));
-		rt_free( (char *)seg, "seg_free 4");
+		BU_LIST_DEQUEUE(&(seg->l));
+		bu_free( (char *)seg, "seg_free 4");
 	}
 
 
@@ -833,14 +833,14 @@ FILE *fd;
 
 		mk_stud_flag = 1;
 		/* make sure stud doesn't overlap an opening */
-		for (RT_LIST_FOR(op, opening, &ol_hd.l)) {
+		for (BU_LIST_FOR(op, opening, &ol_hd.l)) {
 			if ((pos > op->sx-bd_thin*2.0 &&
 				pos < op->ex+bd_thin*2.0) ||
 			    (pos+bd_thin > op->sx-bd_thin*2.0 &&
 				pos+bd_thin < op->ex+bd_thin*2.0)
 			    ) {
 			    	if (debug)
-			    		rt_log("not making stud @ %g\n", pos / unit_conv);
+			    		bu_log("not making stud @ %g\n", pos / unit_conv);
 
 				mk_stud_flag = 0;
 				break;
@@ -849,7 +849,7 @@ FILE *fd;
 		if (mk_stud_flag) {
 			/* put in the vertical stud */
 		    	if (debug)
-		    		rt_log("Making stud @ %g\n", pos / unit_conv);
+		    		bu_log("Making stud @ %g\n", pos / unit_conv);
 
 			mk_v_rpp(fd, &wm_hd,
 				pos, pos+bd_thin,
@@ -863,7 +863,7 @@ FILE *fd;
 		    	pos = WALL_WIDTH - bd_thin - stud_spacing;
 	}
 
-	for (RT_LIST_FOR(op, opening, &ol_hd.l))
+	for (BU_LIST_FOR(op, opening, &ol_hd.l))
 		frame_opening(fd, &wm_hd, op);
 
 
@@ -885,7 +885,7 @@ FILE *fd;
 	
 	if (!color) color = sheetrock_color;
 
-	RT_LIST_INIT(&wm_hd.l);
+	BU_LIST_INIT(&wm_hd.l);
 
 	/* now add the sheetrock */
 	VSET(pts[0], 0.0, 0.0, 0.0);
@@ -901,7 +901,7 @@ FILE *fd;
 	mk_arb8(fd, sol_name, &pts[0][X]);
 	(void)mk_addmember(sol_name, &wm_hd, WMOP_UNION);
 
-	for (RT_LIST_FOR(op, opening, &ol_hd.l)) {
+	for (BU_LIST_FOR(op, opening, &ol_hd.l)) {
 		VSET(pts[0], op->sx, -0.01,		op->sz);
 		VSET(pts[1], op->sx, sr_thick+0.01,	op->sz);
 		VSET(pts[2], op->sx, sr_thick+0.01,	op->ez);
@@ -1015,9 +1015,9 @@ FILE *fd;
 	mk_lcomb(fd, sol_name, &wm_hd, 1, (char *)NULL, (char *)NULL,
 		mortar_color, 0);
 #else
-	RT_LIST_INIT(&wm_hd.l);
+	BU_LIST_INIT(&wm_hd.l);
 
-	rt_log("Not Yet Implemented\n");
+	bu_log("Not Yet Implemented\n");
 	exit(0);
 
 #endif
@@ -1067,9 +1067,9 @@ FILE *fd;
 	mk_lcomb(fd, proto_brick, &wm_hd, 1, (char *)NULL, (char *)NULL,
 			(char *)NULL, 0);
 #else
-	RT_LIST_INIT(&wm_hd.l);
+	BU_LIST_INIT(&wm_hd.l);
 
-	rt_log("Not Yet Implemented\n");
+	bu_log("Not Yet Implemented\n");
 	exit(0);
 
 #endif
@@ -1103,10 +1103,10 @@ char *av[];
 	}
 
 	if (debug) {
-		rt_log("Wall \"%s\"(%g) %g by %g\n", units, unit_conv,
+		bu_log("Wall \"%s\"(%g) %g by %g\n", units, unit_conv,
 			WALL_WIDTH/unit_conv, WALL_HEIGHT/unit_conv);
-		for (RT_LIST_FOR(op, opening, &ol_hd.l)) {
-			rt_log("opening at %g %g to %g %g\n",
+		for (BU_LIST_FOR(op, opening, &ol_hd.l)) {
+			bu_log("opening at %g %g to %g %g\n",
 				op->sx/unit_conv, op->sz/unit_conv,
 				op->ex/unit_conv, op->ez/unit_conv);
 		}

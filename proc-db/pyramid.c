@@ -177,7 +177,7 @@ int	level;
 	/* len = 4, set region on lowest level */
 	mk_fcomb( stdout, name, 4, level<=1 );
 
-	mat_idn( m );
+	bn_mat_idn( m );
 	sprintf(nm, "%sL", name);
 	mk_memb( stdout, leafp, m, WMOP_UNION );
 

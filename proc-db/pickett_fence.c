@@ -79,10 +79,10 @@ int main(int argc, char *argv[])
   f = fopen(argv[1], "w");
   mk_id(f, "Picket Fence");
   
-  RT_LIST_INIT(&wm.l);
-  RT_LIST_INIT(&wm2.l);
-  RT_LIST_INIT(&fwm.l);
-  RT_LIST_INIT(&swm.l);
+  BU_LIST_INIT(&wm.l);
+  BU_LIST_INIT(&wm2.l);
+  BU_LIST_INIT(&fwm.l);
+  BU_LIST_INIT(&swm.l);
 
   for (j = 0; j < ((argc - 4) / 3) - 1; j++)
     {

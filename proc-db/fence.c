@@ -726,8 +726,8 @@ int generateFence(fp, fencename, startposition, heightvector, widthvector)
   struct wmember fencemembers;
   struct wmember fenceregionmembers;
   
-  RT_LIST_INIT(&fencemembers.l);
-  RT_LIST_INIT(&fenceregionmembers.l);
+  BU_LIST_INIT(&fencemembers.l);
+  BU_LIST_INIT(&fenceregionmembers.l);
   
   VMOVE(fenceStartPosition, startposition);
   VMOVE(fenceHeight, heightvector);
@@ -865,8 +865,8 @@ int generatePoles(fp, polename, startposition, heightvector, widthvector, radius
   struct wmember polemembers;
   struct wmember poleregionmembers;
   
-  RT_LIST_INIT(&polemembers.l);
-  RT_LIST_INIT(&poleregionmembers.l);
+  BU_LIST_INIT(&polemembers.l);
+  BU_LIST_INIT(&poleregionmembers.l);
   
   if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "\nBeginning pole [%s] generation...\n", polename);
   
@@ -1010,8 +1010,8 @@ int generateMesh(fp, meshname, startposition, heightvector, widthvector)
   struct wmember meshmembers;
   struct wmember meshregionmembers;
   
-  RT_LIST_INIT(&meshmembers.l);
-  RT_LIST_INIT(&meshregionmembers.l);
+  BU_LIST_INIT(&meshmembers.l);
+  BU_LIST_INIT(&meshregionmembers.l);
   
   if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "\nBeginning mesh [%s] generation...\n", meshname);
   
@@ -1159,10 +1159,10 @@ int generateWire(fp, wirename, position, fenceheightvector, fencewidthvector, ra
     if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateWire:(struct wmember *)matrixextractor malloc FAILED\n");
     errors++;
   }
-  RT_LIST_INIT(&basicmeshmembers.l);
-  RT_LIST_INIT(&wiremembers.l);
-  RT_LIST_INIT(&basicmeshregionmembers.l);
-  RT_LIST_INIT(&wireregionmembers.l);
+  BU_LIST_INIT(&basicmeshmembers.l);
+  BU_LIST_INIT(&wiremembers.l);
+  BU_LIST_INIT(&basicmeshregionmembers.l);
+  BU_LIST_INIT(&wireregionmembers.l);
   
   if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "\nBeginning wire [%s] generation...\n", wirename);
   

@@ -122,9 +122,9 @@ char	**argv;
 	mk_particle( stdout, "p3", vert, h, 0.5, 1.0 );
 
 	/* Make a piece of pipe */
-	RT_LIST_INIT( &head.l );
+	BU_LIST_INIT( &head.l );
 	for( i=0; i<pipe1_npts ; i++ )  {
-		RT_LIST_INSERT( &head.l, &pipe1[i].l );
+		BU_LIST_INSERT( &head.l, &pipe1[i].l );
 	}
 	pr_pipe( "pipe1", &head );
 	if( (i = mk_pipe( stdout, "pipe1", &head )) < 0 )
@@ -169,7 +169,7 @@ struct wdb_pipept *head;
 	register struct wdb_pipept	*psp;
 
 	fprintf(stderr,"\n--- %s:\n", name);
-	for( RT_LIST_FOR( psp, wdb_pipept, &head->l ) )
+	for( BU_LIST_FOR( psp, wdb_pipept, &head->l ) )
 	{
 		fprintf(stderr,"id=%g od=%g, coord=(%g,%g,%g), bend radius=%g\n",
 			psp->pp_id, psp->pp_od,

@@ -100,7 +100,7 @@ char *av[];
 
 void
 make_3manifold_bits(tol)
-struct rt_tol *tol;
+struct bn_tol *tol;
 {
 	plane_t plane;
 	struct faceuse *fu_end;
@@ -221,7 +221,7 @@ struct rt_tol *tol;
 	/* this face isn't strictly convex, so we have to make the plane
 	 * equation the old-fashioned way.
 	 */
-	rt_mk_plane_3pts(plane, 
+	bn_mk_plane_3pts(plane, 
 			vertl[7]->vg_p->coord,
 			vertl[17]->vg_p->coord,
 			vertl[12]->vg_p->coord,
@@ -285,7 +285,7 @@ struct rt_tol *tol;
 	 * to an existing face
 	 */
 
-	lu = RT_LIST_FIRST(loopuse, &fu->lu_hd);
+	lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
 	lu->orientation = OT_OPPOSITE;
 	lu->lumate_p->orientation = OT_OPPOSITE;
 
@@ -311,7 +311,7 @@ struct rt_tol *tol;
 	 * to an existing face.
 	 */
 
-	lu = RT_LIST_FIRST(loopuse, &fu->lu_hd);
+	lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
 	lu->orientation = OT_OPPOSITE;
 	lu->lumate_p->orientation = OT_OPPOSITE;
 
@@ -423,7 +423,7 @@ struct rt_tol *tol;
 
 void
 make_2manifold_bits(tol)
-struct rt_tol *tol;
+struct bn_tol *tol;
 {
 	struct vertex *f2_vertl[8];
 
@@ -477,7 +477,7 @@ struct rt_tol *tol;
 
 void
 make_1manifold_bits(tol)
-struct rt_tol *tol;
+struct bn_tol *tol;
 {
 	struct edgeuse *eu;
 
@@ -494,7 +494,7 @@ struct rt_tol *tol;
 
 void
 make_0manifold_bits(tol)
-struct rt_tol *tol;
+struct bn_tol *tol;
 {
 #if 0
 	struct nmgregion *lrp;
@@ -512,7 +512,7 @@ struct rt_tol *tol;
 #if 0
 	/* make a region &shell of a single vertex */
 	lrp = nmg_mrsv(m);
-	sp = RT_LIST_FIRST(shell, &lrp->s_hd);
+	sp = BU_LIST_FIRST(shell, &lrp->s_hd);
 	vertl[47] = sp->vu_p->v_p;
 	nmg_vertex_g(vertl[47],  -10.0, 50.0, -10.0);
 #endif
@@ -529,7 +529,7 @@ int main(ac,av)
 int ac;
 char *av[];
 {
-	struct rt_tol tol;
+	struct bn_tol tol;
 	FILE *fdplot, *fdmodel;
 
 	if (parse_args(ac, av) < ac) usage((char *)NULL);
@@ -539,9 +539,9 @@ char *av[];
 	
 	m = nmg_mm();
 	r = nmg_mrsv(m);
-	s = RT_LIST_FIRST(shell, &r->s_hd);
+	s = BU_LIST_FIRST(shell, &r->s_hd);
 
-	tol.magic = RT_TOL_MAGIC;
+	tol.magic = BN_TOL_MAGIC;
 	tol.dist = 0.01;
 	tol.dist_sq = tol.dist * tol.dist;
 	tol.perp = 0.001;

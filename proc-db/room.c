@@ -78,9 +78,9 @@ char	**argv;
 	vect_t	lwh;		/* length, width, height */
 	vect_t	pbase;
 
-	RT_LIST_INIT( &head.l );
+	BU_LIST_INIT( &head.l );
 
-	mat_idn( identity );
+	bn_mat_idn( identity );
 	sin60 = sin(60.0 * 3.14159265358979323846264 / 180.0);
 
 	mk_id( stdout, "Procedural Rooms" );
@@ -155,7 +155,7 @@ struct wmember *headp;
 	vect_t	omin;
 	vect_t	omax;
 
-	RT_LIST_INIT( &head.l );
+	BU_LIST_INIT( &head.l );
 
 	VSUB2( omin, imin, thickness );
 	VADD2( omax, imax, thickness );
@@ -187,7 +187,7 @@ struct wmember *headp;
 	vect_t	wmin, wmax;
 	int	mask;
 
-	RT_LIST_INIT( &head.l );
+	BU_LIST_INIT( &head.l );
 
 	/* thickness[Z] = 0; */
 
@@ -260,7 +260,7 @@ struct wmember *headp;
 	struct wmember head;
 	struct wmember *wp;
 
-	RT_LIST_INIT( &head.l );
+	BU_LIST_INIT( &head.l );
 
 	sprintf( pilname, "%s%d,%d", prefix, ix, iy );
 	sprintf( rname, "%s.r", pilname );

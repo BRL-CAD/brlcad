@@ -183,7 +183,7 @@ int main(argc, argv)
   wmemberArray = (struct wmember *)malloc(sizeof(struct wmember)
 					  *(params.maxDepth+1+ADDITIONAL_OBJECTS));
   for (i = 0; i <= params.maxDepth+ADDITIONAL_OBJECTS; i++) {
-    RT_LIST_INIT(&(wmemberArray[i].l));
+    BU_LIST_INIT(&(wmemberArray[i].l));
   }
   
   /****** Create the SphereFlake ******/
@@ -541,11 +541,11 @@ void getTrans(t, theta, phi, radius)
   getZRotMat(&z, theta);
   getYRotMat(&y, phi);
   
-  mat_mul2(toRelative, newPos); /* translate to new position */
-  mat_mul2(y, newPos);          /* rotate z */
-  mat_mul2(z, newPos);          /* rotate y */
+  bn_mat_mul2(toRelative, newPos); /* translate to new position */
+  bn_mat_mul2(y, newPos);          /* rotate z */
+  bn_mat_mul2(z, newPos);          /* rotate y */
   MAT_DELTAS(*t, 0,0,0);
-  mat_mul2(*t, newPos);
+  bn_mat_mul2(*t, newPos);
   
   memcpy(*t, newPos, sizeof(newPos));
 }

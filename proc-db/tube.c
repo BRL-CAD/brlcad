@@ -113,8 +113,8 @@ char	**argv;
 	vect_t	from, to;
 	vect_t	offset;
 
-	RT_LIST_INIT( &head.l );
-	RT_LIST_INIT( &ghead.l );
+	BU_LIST_INIT( &head.l );
+	BU_LIST_INIT( &ghead.l );
 	rt_uniresource.re_magic = RESOURCE_MAGIC;
 
 	if( (pos_fp = fopen( "pos.dat", "r" )) == NULL )
@@ -194,17 +194,17 @@ char	**argv;
 
 		VSET( from, 0, -1, 0 );
 		VSET( to, 1, 0, 0 );		/* to X axis */
-		mat_fromto( rot1, from, to );
+		bn_mat_fromto( rot1, from, to );
 
 		VSET( from, 1, 0, 0 );
 		/* Projectile is 480mm long -- use center pt, not end */
 		xfinddir( to, projectile_pos + 480.0/2, offset );
-		mat_fromto( rot2, from, to );
+		bn_mat_fromto( rot2, from, to );
 
-		mat_idn( xlate );
+		bn_mat_idn( xlate );
 		MAT_DELTAS( xlate, offset[X], offset[Y], offset[Z] );
-		mat_mul( rot3, rot2, rot1 );
-		mat_mul( matp, xlate, rot3 );
+		bn_mat_mul( rot3, rot2, rot1 );
+		bn_mat_mul( matp, xlate, rot3 );
 
 		(void)mk_addmember( "light.r", &ghead, WMOP_UNION );
 		(void)mk_addmember( "bg.r", &ghead, WMOP_UNION );
@@ -452,7 +452,7 @@ double	radius;
 	char	name[32];
 	struct wmember head;
 
-	RT_LIST_INIT( &head.l );
+	BU_LIST_INIT( &head.l );
 
 	for( i=0; i<npts-1; i++ )  {
 		VMOVE( v, sample[i] );
