@@ -989,6 +989,7 @@ struct rt_tol		*tol;
 
 #define PT(www,lll)	((((www)%nw)*nlen)+((lll)%nlen))
 #define PTA(ww,ll)	(&pts[PT(ww,ll)*3])
+#define NORM_A(ww,ll)	(&norms[PT(ww,ll)*3])
 
 	for( len = 0; len < nlen; len++ )  {
 		beta = rt_twopi * len / nlen;
@@ -1056,7 +1057,7 @@ struct rt_tol		*tol;
 	struct shell	*s;
 	struct vertex	**verts;
 	struct faceuse	**faces;
-	vect_t		**norms;
+	fastf_t		*norms;
 	struct vertex	**vertp[4];
 	int		nfaces;
 	int		i;
@@ -1112,9 +1113,7 @@ struct rt_tol		*tol;
 	dist_to_rim = tip->r_h/tip->r_a;
 	pts = (fastf_t *)rt_malloc( nw * nlen * sizeof(point_t),
 		"rt_tor_tess pts[]" );
-	norms = (vect_t **)rt_calloc( nlen , sizeof( vect_t *) , "rt_tor_tess: norms" );
-	for( len=0 ; len<nlen ; len++ )
-		norms[len] = (vect_t *)rt_calloc( nw , sizeof( vect_t ) , "rt_tor_tess: norms[len]" );
+	norms = (fastf_t *)rt_malloc( nw * nlen * sizeof( vect_t ) , "rt_tor_tess: norms[]" );
 
 	for( len = 0; len < nlen; len++ )  {
 		beta = rt_twopi * len / nlen;
@@ -1131,7 +1130,7 @@ struct rt_tol		*tol;
 			VCOMB2( edge, cos_alpha, G, sin_alpha*tip->r_h, tip->h );
 			VADD3( PTA(w,len), tip->v, edge, radius );
 
-			VCOMB2( norms[len][w] , cos_alpha , radius , sin_alpha , tip->h );
+			VCOMB2( NORM_A(w,len), cos_alpha , radius , sin_alpha , tip->h );
 		}
 	}
 
@@ -1181,7 +1180,7 @@ struct rt_tol		*tol;
 			struct vertexuse *vu;
 			vect_t rev_norm;
 
-			VREVERSE( rev_norm , norms[len][w] );
+			VREVERSE( rev_norm , NORM_A(w,len) );
 
 			for( RT_LIST_FOR( vu , vertexuse , &verts[PT(w,len)]->vu_hd ) )
 			{
@@ -1193,7 +1192,7 @@ struct rt_tol		*tol;
 				NMG_CK_FACEUSE( fu );
 
 				if( fu->orientation == OT_SAME )
-					nmg_vertexuse_nv( vu , norms[len][w] );
+					nmg_vertexuse_nv( vu , NORM_A(w,len) );
 				else if( fu->orientation == OT_OPPOSITE )
 					nmg_vertexuse_nv( vu , rev_norm );
 			}
@@ -1209,9 +1208,7 @@ struct rt_tol		*tol;
 	rt_free( (char *)pts, "rt_tor_tess pts[]" );
 	rt_free( (char *)verts, "rt_tor_tess *verts[]" );
 	rt_free( (char *)faces, "rt_tor_tess *faces[]" );
-	for( len=0 ; len<nlen ; len++ )
-		rt_free( (char *)norms[i] , "rt_tor_tess norms[]" );
-	rt_free( (char *)norms , "rt_tor_tess norms" );
+	rt_free( (char *)norms , "rt_tor_tess norms[]" );
 	return(0);
 }
 
