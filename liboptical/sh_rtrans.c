@@ -77,7 +77,7 @@ struct mfuncs rtrans_mfuncs[] = {
 };
 
 
-/*	R T R A N S _ S E T U P
+/*	R T R A N S _ S E T U P
  *
  *	This routine is called (at prep time)
  *	once for each region which uses this shader.
@@ -112,7 +112,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	return(1);
 }
 
-/*
+/*
  *	R T R A N S _ P R I N T
  */
 HIDDEN void
@@ -133,7 +133,7 @@ char *cp;
 	bu_free( cp, "rtrans_specific" );
 }
 
-/*
+/*
  *	R T R A N S _ R E N D E R
  *
  *	This is called (from viewshade() in shade.c)

@@ -14,7 +14,7 @@
  * Mike Muuss and Terry Slattery have released this code to the Public Domain.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #define BSD43
@@ -31,8 +31,15 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <netdb.h>
 #include <sys/time.h>		/* struct timeval */
+
+#ifdef BSD
+#  define __BSDbackup BSD
+#  undef BSD
+#  include <netdb.h>
+#  undef BSD
+#  define BSD __BSDbackup
+#endif
 
 #ifdef SYSV
 #include <sys/times.h>
@@ -118,7 +125,7 @@ mread(int		fd,
 	return((int)count);
 }
 
-void
+static void
 err(char *s)
 {
 	fprintf(stderr,"ttcp%s: ", trans?"-t":"-r");
@@ -256,14 +263,14 @@ prusage(register struct rusage *r0,
 
 		case 'U':
 			tvsub(&tdiff, &r1->ru_utime, &r0->ru_utime);
-			sprintf(outp,"%ld.%01ld", tdiff.tv_sec,
-				tdiff.tv_usec/100000);
+			sprintf(outp,"%ld.%01ld", (long int)tdiff.tv_sec,
+				(long int)tdiff.tv_usec/100000L);
 			END(outp);
 			break;
 
 		case 'S':
 			tvsub(&tdiff, &r1->ru_stime, &r0->ru_stime);
-			sprintf(outp,"%ld.%01ld", tdiff.tv_sec, tdiff.tv_usec/100000);
+			sprintf(outp,"%ld.%01ld", (long int)tdiff.tv_sec, (long int)tdiff.tv_usec/100000L);
 			END(outp);
 			break;
 

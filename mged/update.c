@@ -30,7 +30,11 @@
 #include <strings.h>
 #endif
 
-#include "tk.h"
+#ifdef DM_X
+#  include "tk.h"
+#else
+#  include "tcl.h"
+#endif
 
 #include "machine.h"
 #include "bu.h"

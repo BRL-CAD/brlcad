@@ -18,11 +18,16 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "tk.h"
-#include <X11/Xutil.h>
-#include <X11/extensions/XI.h>
-#include <X11/extensions/XInput.h>
-#include <X11/keysym.h>
+#ifdef DM_X
+#  include "tk.h"
+#  include <X11/Xutil.h>
+#  include <X11/extensions/XI.h>
+#  include <X11/extensions/XInput.h>
+#  include <X11/keysym.h>
+#else
+#  include "tcl.h"
+#endif
+
 #if IR_KNOBS
 #include <gl/device.h>
 #endif

@@ -726,7 +726,7 @@ register struct pkg_conn *pc;
 			return(-1);
 		}
 		sprintf(errbuf,"pkg_send of %d+%d, wrote %d\n",
-			sizeof(hdr), len, i);
+			(int)sizeof(hdr), len, i);
 		(pc->pkc_errlog)(errbuf);
 		return(i-sizeof(hdr));	/* amount of user data sent */
 	}
@@ -853,7 +853,7 @@ register struct pkg_conn *pc;
 			return(-1);
 		}
 		sprintf(errbuf,"pkg_2send of %d+%d+%d, wrote %d\n",
-			sizeof(hdr), len1, len2, i);
+			(int)sizeof(hdr), len1, len2, i);
 		(pc->pkc_errlog)(errbuf);
 		return(i-sizeof(hdr));	/* amount of user data sent */
 	}

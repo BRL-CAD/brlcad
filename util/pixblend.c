@@ -153,10 +153,11 @@ main(argc, argv)
 int argc;
 char **argv;
 {
-        int c = 0;
 #ifndef HAVE_DRAND48
-        int threshold, gthreshold;
+	int threshold = 0;
+	int gthreshold = 0;
 #endif
+        int c = 0;
 	
 	if ( !get_args( argc, argv ) || isatty(fileno(stdout)) )  {
 		(void)fputs(usage, stderr);

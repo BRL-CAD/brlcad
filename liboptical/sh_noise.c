@@ -222,7 +222,7 @@ struct mfuncs noise_mfuncs[] = {
 };
 
 
-/*	G R A V E L _ S E T U P
+/*	G R A V E L _ S E T U P
  *
  *	This routine is called (at prep time)
  *	once for each region which uses this shader.
@@ -310,7 +310,7 @@ found:
 	return(1);
 }
 
-/*
+/*
  *	G R A V E L _ P R I N T
  */
 HIDDEN void
@@ -331,7 +331,7 @@ char *cp;
 	bu_free( cp, "noise_specific" );
 }
 #define RESCALE_NOISE(n) n += 1.0
-
+
 /*
  *	N O R M _ N O I S E
  *

@@ -19,6 +19,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 #include "./burst.h"
 #include "./vecmath.h"
 #include "./extern.h"

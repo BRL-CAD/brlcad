@@ -1015,7 +1015,6 @@ char	*argv[];
     int			tankill = 0;	/* TANKILL format (vs. BRL-CAD)? */
 
     extern int	optind;			/* index from getopt(3C) */
-    extern char	*optarg;		/* argument from getopt(3C) */
 
     bu_stdin->file_ptr = stdin;		/* LINUX-required init */
 

@@ -39,7 +39,6 @@ int
 parsArg( argc, argv )	char	*argv[];
 	{ 	register int	i, c, arg_cnt;
 		extern int	optind;
-		extern char	*optarg;
 
 	while( (c = getopt( argc, argv, "d" )) != EOF )
 		{

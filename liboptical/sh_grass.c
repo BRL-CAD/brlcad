@@ -51,9 +51,10 @@ extern int rr_render(struct application	*ap,
 #define CK_grass_SP(_p) BU_CKMAG(_p, grass_MAGIC, "grass_specific")
 
 /* compute the Region coordinates of the origin of a cell */
-#define CELL_POS(cell_pos, grass_sp, cell_num) \
+#define CELL_POS(cell_pos, grass_sp, cell_num) {\
 	cell_pos[X] = cell_num[X] * grass_sp->cell[X]; \
-	cell_pos[Y] = cell_num[Y] * grass_sp->cell[Y]
+	cell_pos[Y] = cell_num[Y] * grass_sp->cell[Y]; \
+}
 
 #define BLADE_SEGS_MAX 4
 
@@ -136,8 +137,7 @@ struct grass_specific {
 };
 
 /* The default values for the variables in the shader specific structure */
-static const
-struct grass_specific grass_defaults = {
+static const struct grass_specific grass_defaults = {
 	grass_MAGIC,
 	0,
 	(FILE *)0,
@@ -154,8 +154,8 @@ struct grass_specific grass_defaults = {
 	.31415926535,			/* size */
 	{ 1.0, 1.0, 1.0 },		/* vscale */
 	{ 1001.6, 1020.5, 1300.4 },	/* delta into noise space */
-	{.7, .6, .3},	
-	};
+	{.7, .6, .3}
+};
 
 #define SHDR_NULL	((struct grass_specific *)0)
 #define SHDR_O(m)	offsetof(struct grass_specific, m)
@@ -195,8 +195,10 @@ struct bu_structparse grass_parse_tab[] = {
 	{"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
-HIDDEN int	grass_setup(), grass_render();
-HIDDEN void	grass_print(), grass_free();
+HIDDEN int	grass_setup();
+HIDDEN int	grass_render();
+HIDDEN void	grass_print();
+HIDDEN void	grass_free();
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -207,11 +209,8 @@ HIDDEN void	grass_print(), grass_free();
  * values for the parameters.
  */
 struct mfuncs grass_mfuncs[] = {
-	{MF_MAGIC,	"grass",	0,	MFI_NORMAL|MFI_HIT|MFI_UV,  MFF_PROC,
-	grass_setup,	grass_render,	grass_print,	grass_free },
-
-	{0,		(char *)0,	0,		0,		0,
-	0,		0,		0,		0 }
+	{MF_MAGIC,	"grass",	0,	MFI_NORMAL|MFI_HIT|MFI_UV,	MFF_PROC,	grass_setup,	grass_render,	grass_print,	grass_free },
+	{0,		(char *)0,	0,	0,				0,		0,		0,		0,		0 }
 };
 
 /* fraction of total allowed returned */
@@ -239,24 +238,24 @@ print_plant(str, plant)
 char *str;
 const struct plant *plant;
 {
-	int blade, seg;
+  int blade, seg;
 
-  	bu_log("%s: %d blades\n", str, plant->blades);
-	bu_log(" root: %g %g %g\n", V3ARGS(plant->root));
-
-  	for (blade=0 ; blade < plant->blades ; blade++) {
-  		bu_log("  blade %d  segs:%d tot_len:%g\n",
-  			blade, plant->b[blade].segs, plant->b[blade].tot_len);
-  		bu_log("    min:%g %g %g  max:%g %g %g\n",
-  			V3ARGS(plant->b[blade].pmin),
-  			V3ARGS(plant->b[blade].pmax));
-  		for (seg=0 ; seg < plant->b[blade].segs ; seg++) {
-  			bu_log("    leaf[%d](%g %g %g) %g\n", seg,
-  				V3ARGS(plant->b[blade].leaf[seg].blade),
-  				plant->b[blade].leaf[seg].len );
-  		}
-  	}
+  bu_log("%s: %d blades\n", str, plant->blades);
+  bu_log(" root: %g %g %g\n", V3ARGS(plant->root));
+  
+  for (blade=0 ; blade < plant->blades ; blade++) {
+    bu_log("  blade %d  segs:%d tot_len:%g\n", blade, plant->b[blade].segs, plant->b[blade].tot_len);
+    /* this printing is separated in two to avoid a nasty -O bug in gcc 2.95.2 */
+    bu_log("    min:%g %g %g", V3ARGS(plant->b[blade].pmin));
+    bu_log("    max:%g %g %g\n", V3ARGS(plant->b[blade].pmax));
+    for (seg=0 ; seg < plant->b[blade].segs ; seg++) {
+    /* this printing is separated in two to avoid a nasty -O bug in gcc 2.95.2 */
+      bu_log("    leaf[%d](%g %g %g)", seg, V3ARGS(plant->b[blade].leaf[seg].blade));
+      bu_log(" %g\n", plant->b[blade].leaf[seg].len );
+    }
+  }
 }
+
 /*
  *	Rotate a blade about the Z axis, compute blade bounding box
  *
@@ -471,7 +470,7 @@ struct grass_specific *grass_sp;
 
 }
 
-/*	G R A S S _ S E T U P
+/*	G R A S S _ S E T U P
  *
  *	This routine is called (at prep time)
  *	once for each region which uses this shader.
@@ -506,8 +505,8 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	if (rp->reg_aircode == 0) {
 		bu_log("%s\n%s\n",
 		"*** WARNING: grass shader applied to non-air region!!! ***",
-		"Set air flag with \"edcodes\" in mged");
-		rt_bomb("");
+		"Set air flag with 'edcodes' in mged");
+		rt_bomb("grass shader applied improperly");
 	}
 
 	/* parse the user's arguments for this use of the shader. */
@@ -537,7 +536,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	return(1);
 }
 
-/*
+/*
  *	G R A S S _ P R I N T
  */
 HIDDEN void
@@ -910,7 +909,7 @@ double radius;	/* radius of ray */
 	double h;
 
 	double ratio = grass_sp->blade_width / radius;
-	/* the ray is "large" so just pick something appropriate */
+	/* the ray is *large* so just pick something appropriate */
 
 	CK_grass_SP(grass_sp);
 	BU_CKMAG(r, GRASSRAY_MAGIC, "grass_ray");
@@ -1159,7 +1158,7 @@ double			curr_dist;
 	}
 }
 
-/*
+/*
  *	G R A S S _ R E N D E R
  *
  *	This is called (from viewshade() in shade.c) once for each hit point
@@ -1216,7 +1215,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 #endif
 	gr.ap = ap;
 
-	/* Convert everything over to "Region" space.
+	/* Convert everything over to Region space.
 	 * First the ray and its radius then
 	 * the in/out points
 	 */
@@ -1432,7 +1431,7 @@ char			*dp;	/* ptr to the shader-specific struct */
 			VSET(swp->sw_basecolor, bc*.7, bc*.7, bc);
 		}
 	} else {
-		/* setting basecolor to 1.0 prevents "filterglass" effect */
+		/* setting basecolor to 1.0 prevents 'filterglass' effect */
 		VSETALL(swp->sw_basecolor, 1.0); 
 	}
 

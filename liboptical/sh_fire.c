@@ -210,7 +210,7 @@ const double flame_colors[18][3] = {
 	{1.0, 0.945, 0.902}
 };
 
-/*	F I R E _ S E T U P
+/*	F I R E _ S E T U P
  *
  *	This routine is called (at prep time)
  *	once for each region which uses this shader.
@@ -283,7 +283,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	return(1);
 }
 
-/*
+/*
  *	F I R E _ P R I N T
  */
 HIDDEN void
@@ -304,7 +304,7 @@ char *cp;
 	bu_free( cp, "fire_specific" );
 }
 
-/*
+/*
  *	F I R E _ R E N D E R
  *
  *	This is called (from viewshade() in shade.c) once for each hit point

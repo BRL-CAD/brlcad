@@ -90,7 +90,7 @@ struct mfuncs tcl_mfuncs[] = {
 };
 
 
-/*	T C L _ S E T U P
+/*	T C L _ S E T U P
  *
  *	This routine is called (at prep time)
  *	once for each region which uses this shader.
@@ -160,7 +160,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	return(1);
 }
 
-/*
+/*
  *	T C L _ P R I N T
  */
 HIDDEN void
@@ -181,7 +181,7 @@ char *cp;
 	bu_free( cp, "tcl_specific" );
 }
 
-/*
+/*
  *	T C L _ R E N D E R
  *
  *	This is called (from viewshade() in shade.c) once for each hit point

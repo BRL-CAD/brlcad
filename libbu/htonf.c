@@ -21,6 +21,9 @@ static const char libbu_htond_RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "bu.h"
 
+#ifdef HAVE_MEMORY_H
+#  include <memory.h>
+#endif
 #include <stdio.h>
 
 /*
@@ -40,10 +43,10 @@ int			count;
 	 *  IEEE format internally, using big-endian order.
 	 *  These are the lucky ones.
 	 */
-#	if BSD
-		bcopy( in, out, count*SIZEOF_NETWORK_FLOAT );
-#	else
+#	ifdef HAVE_MEMORY_H
 		memcpy( out, in, count*SIZEOF_NETWORK_FLOAT );
+#	else
+		bcopy( in, out, count*SIZEOF_NETWORK_FLOAT );
 #	endif
 	return;
 #	define	HTONF	yes1
@@ -90,10 +93,10 @@ int			count;
 	 */
 	if( sizeof(float) != SIZEOF_NETWORK_FLOAT )
 		bu_bomb("ntohf:  sizeof(float) != SIZEOF_NETWORK_FLOAT\n");
-#	if BSD
-		bcopy( in, out, count*SIZEOF_NETWORK_FLOAT );
-#	else
+#	ifdef HAVE_MEMORY_H
 		memcpy( out, in, count*SIZEOF_NETWORK_FLOAT );
+#	else
+		bcopy( in, out, count*SIZEOF_NETWORK_FLOAT );
 #	endif
 	return;
 #	define	NTOHF	yes1

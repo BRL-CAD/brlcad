@@ -67,7 +67,7 @@ int suppress_shell;	/* suppress shell script for each frame */
 int frame_offset;	/* offset added to frame numbers */
 
 void squirtframes();
-void sf();
+static void sf();
 
 void addtext(fp, tp)
 struct frame *fp;
@@ -364,7 +364,7 @@ int base;
 	}
 }
 
-void
+static void
 sf(start, skip)
 int start;
 int skip;

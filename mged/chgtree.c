@@ -38,8 +38,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 #include <string.h>
 
-#include "tcl.h"
-#include "tk.h"
+#ifdef DM_X
+#  include "tk.h"
+#else
+#  include "tcl.h"
+#endif
 
 #include "machine.h"
 #include "bu.h"
@@ -62,7 +65,11 @@ extern struct bn_tol		mged_tol;	/* from ged.c */
 extern struct rt_tess_tol	mged_ttol;	/* XXX needs to replace mged_abs_tol, et.al. from dodraw.c */
 extern int			classic_mged;
 
+#ifdef DM_X
 extern Tk_Window	tkwin;
+#else
+int tkwin=0;
+#endif
 
 static char *really_delete="tk_messageBox -icon question -title {Are you sure?}\
  -type yesno -message {If you delete the \"_GLOBAL\" object you will be losing some important information\

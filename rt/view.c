@@ -145,7 +145,7 @@ int a_onehit = -1;
  * If in overlay mode, and writeing to a framebuffer, 
  * only write non-background pixels.
  */
-int overlay = 0;
+static int overlay = 0;
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {

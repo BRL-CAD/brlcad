@@ -30,11 +30,21 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <time.h>
 #include <fcntl.h>
 
+#ifdef BSD
+#  define __BSDbackup BSD
+#  undef BSD
+#endif
+
 #include <netdb.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
+#ifdef __BSDbackup
+#  undef BSD
+#  define BSD __BSDbackup
+#endif
 
 #ifdef USE_STRING_H
 #include <string.h>

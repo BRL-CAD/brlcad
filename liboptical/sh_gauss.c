@@ -291,7 +291,7 @@ struct resource *resp;
 	}
 }
 
-/*	G A U S S _ S E T U P
+/*	G A U S S _ S E T U P
  *
  *	This routine is called (at prep time)
  *	once for each region which uses this shader.

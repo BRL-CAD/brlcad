@@ -198,7 +198,7 @@ struct region *rp;
 }
 
 
-/*	T R E E T H E R M _ S E T U P
+/*	T R E E T H E R M _ S E T U P
  *
  *	This routine is called (at prep time)
  *	once for each region which uses this shader.
@@ -443,7 +443,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	return(1);
 }
 
-/*
+/*
  *	T R E E T H E R M _ P R I N T
  */
 HIDDEN void
@@ -515,7 +515,7 @@ struct partition	*pp;
 	return atoi(solid_digits);
 }
 
-/*
+/*
  *	T R E E T H E R M _ R E N D E R
  *
  *	This is called (from viewshade() in shade.c) once for each hit point

@@ -28,7 +28,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #ifdef HAVE_TERMCAP_H
-# include <termcap.h>
+#  include <termcap.h>
+#endif
+#ifdef __ppc__
+#  include <curses.h>
 #endif
 
 #include <sys/ioctl.h>
@@ -146,7 +149,7 @@ FILE	*fp;
 	LoadTP();
 	LoadTCS();
 
-	tputs( TI, 1, PutChr );	/* Initialize terminal.			*/
+	tputs( TI, 1, (void *)PutChr );	/* Initialize terminal.			*/
 	return	1;		/* All is well.				*/
 	}
 
@@ -206,7 +209,7 @@ HmCursor()
 	{
 	if( HO != NULL )
 		{
-		tputs( HO, 1, PutChr );
+		tputs( HO, 1, (void *)PutChr );
 		return	1;
 		}
 	else
@@ -221,7 +224,7 @@ ScrollUp()
 	{
 	if( SF != NULL )
 		{
-		tputs( SF, 1, PutChr );
+		tputs( SF, 1, (void *)PutChr );
 		return	1;
 		}
 	else
@@ -236,7 +239,7 @@ ScrollDn()
 	{
 	if( SR != NULL )
 		{
-		tputs( SR, 1, PutChr );
+		tputs( SR, 1, (void *)PutChr );
 		return	1;
 		}
 	else
@@ -251,7 +254,7 @@ DeleteLn()
 	{
 	if( DL != NULL )
 		{
-		tputs( DL, 1, PutChr );
+		tputs( DL, 1, (void *)PutChr );
 		return	1;
 		}
 	else
@@ -268,7 +271,7 @@ int	x, y;
 	--x; --y; /* Tgoto() adds 1 to each coordinate!?		*/
 	if( CM != NULL )
 		{
-		tputs( tgoto( CM, x, y ), 1, PutChr );
+		tputs( tgoto( CM, x, y ), 1, (void *)PutChr );
 		return	1;
 		}
 	else
@@ -283,7 +286,7 @@ ClrEOL()
 	{
 	if( CE != NULL )
 		{
-		tputs( CE, 1, PutChr );
+		tputs( CE, 1, (void *)PutChr );
 		return	1;
 		}
 	else
@@ -298,7 +301,7 @@ ClrText()
 	{
 	if( CL != NULL )
 		{
-		tputs( CL, LI, PutChr );
+		tputs( CL, LI, (void *)PutChr );
 		return	1;
 		}
 	else
@@ -314,7 +317,7 @@ int	top, btm;
 	{
 	if( CS != NULL )
 		{
-		tputs( tgoto( CS, btm-1, top-1 ), 1, PutChr );
+		tputs( tgoto( CS, btm-1, top-1 ), 1, (void *)PutChr );
 		return	1;
 		}
 	else
@@ -329,7 +332,7 @@ ResetScrlReg()
 	{
 	if( CS != NULL )
 		{
-		tputs( tgoto( CS, LI-1, 0 ), 1, PutChr );
+		tputs( tgoto( CS, LI-1, 0 ), 1, (void *)PutChr );
 		return	1;
 		}
 	else
@@ -344,7 +347,7 @@ ClrStandout()
 	{
 	if( SE != NULL )
 		{
-		tputs( SE, 1, PutChr );
+		tputs( SE, 1, (void *)PutChr );
 		return	1;
 		}
 	else
@@ -359,7 +362,7 @@ SetStandout()
 	{
 	if( SO != NULL )
 		{
-		tputs( SO, 1, PutChr );
+		tputs( SO, 1, (void *)PutChr );
 		return	1;
 		}
 	else

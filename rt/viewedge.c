@@ -105,7 +105,7 @@ RGBpixel bg_color;
 #define OVERLAY_MODE_DOIT  1
 #define OVERLAY_MODE_FORCE 2
 
-int    overlay = OVERLAY_MODE_UNSET;
+static int    overlay = OVERLAY_MODE_UNSET;
 
 /*
  * Blend Mode

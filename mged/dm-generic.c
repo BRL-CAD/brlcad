@@ -20,8 +20,12 @@
 #include <ctype.h>
 #include <sys/types.h>
 
-#include "tk.h"
-#include <X11/Xutil.h>
+#ifdef DM_X
+#  include "tk.h"
+#  include <X11/Xutil.h>
+#else
+#  include "tcl.h"
+#endif
 
 #ifdef USE_STRING_H
 #include <string.h>

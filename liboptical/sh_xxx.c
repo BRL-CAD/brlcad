@@ -135,7 +135,7 @@ struct mfuncs xxx_mfuncs[] = {
 };
 
 
-/*	X X X _ S E T U P
+/*	X X X _ S E T U P
  *
  *	This routine is called (at prep time)
  *	once for each region which uses this shader.
@@ -208,7 +208,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	return(1);
 }
 
-/*
+/*
  *	X X X _ P R I N T
  */
 HIDDEN void
@@ -229,7 +229,7 @@ char *cp;
 	bu_free( cp, "xxx_specific" );
 }
 
-/*
+/*
  *	X X X _ R E N D E R
  *
  *	This is called (from viewshade() in shade.c) once for each hit point

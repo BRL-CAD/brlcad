@@ -62,9 +62,9 @@ in all countries except the USA.  All rights reserved.";
 #include <sys/errno.h>
 
 #ifdef DM_X
-#include "tk.h"
+#  include "tk.h"
 #else
-#include "tcl.h"
+#  include "tcl.h"
 #endif
 
 #include "machine.h"

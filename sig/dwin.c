@@ -40,7 +40,7 @@ int	window = 0;
 int	hamming = 0;
 int	bias = 0;
 int	bartlett = 0;
-int	endwin = 0;
+static int	endwin = 0;
 int	midwin = 0;
 
 void	fill_buffer();

@@ -38,9 +38,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <time.h>
 
 #ifdef DM_X
-#include "tk.h"
+#  include "tk.h"
 #else
-#include "tcl.h"
+#  include "tcl.h"
 #endif
 
 #include "tclInt.h"

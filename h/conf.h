@@ -332,6 +332,7 @@
 #       define HAVE_GETOPT_DECL 1
 #       define HAVE_IOCTL_COMPAT_H      1
 #	define HAVE_LIMITS_H	1
+#	define HAVE_MEMORY_H	1
 #       define HAVE_POSIX_REGEXEC       1
 #       define HAVE_REGEX	1
 #       define HAVE_REGEX_DECL  1

@@ -23,12 +23,23 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include <ctype.h>
 #include <signal.h>
 #include <errno.h>
-#include <netdb.h>
 #include <math.h>
 #ifdef USE_STRING_H
+
 # include <string.h>
 #else
 # include <strings.h>
+#endif
+
+#ifdef BSD
+#  define __BSDbackup BSD
+#  undef BSD
+#endif
+#include <netdb.h>
+#ifdef __BSDbackup
+#  undef BSD
+#  define BSD __BSDbackup
+#  undef __BSDbackup
 #endif
 
 #include <sys/types.h>

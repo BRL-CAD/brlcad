@@ -494,10 +494,10 @@ struct termios	*tio_ptr;
 #endif
 #ifdef HAVE_TERMIOS_H
 
-	(void) fprintf( stderr, "\tc_iflag=0x%x\n\r", tio_ptr->c_iflag );
-	(void) fprintf( stderr, "\tc_oflag=0x%x\n\r", tio_ptr->c_oflag );
-	(void) fprintf( stderr, "\tc_cflag=0x%x\n\r", tio_ptr->c_cflag );
-	(void) fprintf( stderr, "\tc_lflag=0x%x\n\r", tio_ptr->c_lflag );
+	(void) fprintf( stderr, "\tc_iflag=0x%x\n\r", (unsigned int)tio_ptr->c_iflag );
+	(void) fprintf( stderr, "\tc_oflag=0x%x\n\r", (unsigned int)tio_ptr->c_oflag );
+	(void) fprintf( stderr, "\tc_cflag=0x%x\n\r", (unsigned int)tio_ptr->c_cflag );
+	(void) fprintf( stderr, "\tc_lflag=0x%x\n\r", (unsigned int)tio_ptr->c_lflag );
 	for( i = 0; i < NCCS; ++i )
 		{
 		(void) fprintf( stderr,

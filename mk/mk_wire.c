@@ -198,11 +198,11 @@ char *argv[];
    for(i=0; i<numseg; i++)
    {							/*  START # 5  */
 	(void)printf("Segment # %d:  ",(i+1));
-	(void)printf("(%f,%f,%f) %f\n",
-		strtpt[i][0],strtpt[i][1],strtpt[i][2],strtrad[i]);
+	(void)printf("(%f,%f,%f)", strtpt[i][0],strtpt[i][1],strtpt[i][2]);
+        (void)printf(" %f\n", strtrad[i]);
 	(void)printf("              ");
-	(void)printf("(%f,%f,%f) %f\n",
-		endpt[i][0],endpt[i][1],endpt[i][2],endrad[i]);
+	(void)printf("(%f,%f,%f)", endpt[i][0],endpt[i][1],endpt[i][2]);
+	(void)printf("%f\n",endrad[i]);
 	(void)fflush(stdout);
    }							/*  END # 5  */
 

@@ -36,10 +36,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "bu.h"
 #ifdef DM_X
-#include "tk.h"
-#include "itk.h"
+#  include "tk.h"
+#  include "itk.h"
 #else
-#include "tcl.h"
+#  include "tcl.h"
 #endif
 #include "vmath.h"
 #include "raytrace.h"

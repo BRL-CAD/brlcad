@@ -49,6 +49,9 @@ static const char libbu_htond_RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "bu.h"
 
+#ifdef HAVE_MEMORY_H
+#  include <memory.h>
+#endif
 #include <stdio.h>
 
 #define	OUT_IEEE_ZERO	{ \
@@ -90,10 +93,10 @@ int			count;
 	 *  IEEE format internally, using big-endian order.
 	 *  These are the lucky ones.
 	 */
-#	if BSD
-		bcopy( in, out, count*8 );
-#	else
+#	ifdef HAVE_MEMORY_H
 		memcpy( out, in, count*8 );
+#	else
+		bcopy( in, out, count*8 );
 #	endif
 	return;
 #	define	HTOND	yes1
@@ -417,10 +420,10 @@ int			count;
 	 */
 	if( sizeof(double) != SIZEOF_NETWORK_DOUBLE )
 		bu_bomb("ntohd:  sizeof(double) != SIZEOF_NETWORK_DOUBLE\n");
-#	if BSD
-		bcopy( in, out, count*SIZEOF_NETWORK_DOUBLE );
-#	else
+#	ifdef HAVE_MEMORY_H
 		memcpy( out, in, count*SIZEOF_NETWORK_DOUBLE );
+#	else
+		bcopy( in, out, count*SIZEOF_NETWORK_DOUBLE );
 #	endif
 	return;
 #	define	NTOHD	yes1

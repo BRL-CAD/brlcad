@@ -193,7 +193,7 @@ const char				*value;	/* string containing value */
 
 
 
-/*	C A M O _ S E T U P
+/*	C A M O _ S E T U P
  *
  *	This routine is called (at prep time)
  *	once for each region which uses this shader.
@@ -282,7 +282,7 @@ char *cp;
 	bu_free( cp, "camo_specific" );
 }
 
-/*
+/*
  *	C A M O _ R E N D E R
  *
  *	This is called (from viewshade() in shade.c)
@@ -344,7 +344,7 @@ char	*dp;
 
 	return(1);
 }
-/*	M A R B L E 2 _ S E T U P
+/*	M A R B L E 2 _ S E T U P
  *
  *	This routine is called (at prep time)
  *	once for each region which uses this shader.
@@ -414,7 +414,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 
 
 
-/*
+/*
  *	M A R B L E 2 _ R E N D E R
  *
  *	This is called (from viewshade() in shade.c)

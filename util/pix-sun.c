@@ -134,7 +134,7 @@ static unsigned char nvec[16] = {  0, 246, 247,  43, 248, 249,  86, 250,
 	if ( (d = v + noise * mag) > 255) d=255; \
 	else if (d < 0) d = 0; }
 
-double table[10] = {0.0, 0.1, -0.4, 0.2, -0.3, 0.3, -0.2, 0.4, -0.1, 0.5};
+static double table[10] = {0.0, 0.1, -0.4, 0.2, -0.3, 0.3, -0.2, 0.4, -0.1, 0.5};
 double *noise_ptr = table;
 double *end_table = &table[10];
 #define NOISE() (noise_ptr < end_table ? *noise_ptr++ : *(noise_ptr=table) )
