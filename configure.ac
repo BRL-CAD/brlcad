@@ -631,7 +631,8 @@ AC_PROG_YACC
 # XXX libtool shouldn't be generated until after LD is set
 # dnl went poof in libtool 1.9 -- AC_PROG_LIBTOOL
 # LT_INIT
-AC_PATH_PROG(LIBTOOL, libtool)
+AC_PROG_LIBTOOL
+#AC_PATH_PROG(LIBTOOL, libtool)
 AC_PROG_RANLIB
 AM_PROG_LEX
 
