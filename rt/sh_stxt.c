@@ -21,17 +21,16 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
+#include "externs.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "./material.h"
 #include "./rdebug.h"
-
-#if defined(alliant) && !__STDC__
-extern double	modf();
-#endif
 
 HIDDEN int  stxt_setup(), brick_render(), mbound_render(), rbound_render();
 HIDDEN void	stxt_print(), stxt_free();
