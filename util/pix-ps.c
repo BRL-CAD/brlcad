@@ -54,6 +54,7 @@ Usage: pix-ps [-e] [-c|-l] [-L] [-h]\n\
         [-s input_squaresize] [-w input_width] [-n input_height]\n\
         [-S inches_square] [-W inches_width] [-N inches_height] [file.pix]\n";
 
+int
 get_args( argc, argv )
 register char **argv;
 {

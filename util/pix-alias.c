@@ -149,4 +149,6 @@ char *av[];
 
 	if (optind >= ac) doit();
 	else usage();
+
+	return 0;
 }

@@ -22,6 +22,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include <unistd.h>
 
 unsigned char	ibuf[3*1024];
 unsigned char	red[1024], green[1024], blue[1024];
@@ -62,4 +63,6 @@ char **argv;
 		fwrite( green, sizeof( *green ), num/3, gfp );
 		fwrite( blue, sizeof( *blue ), num/3, bfp );
 	}
+
+	return 0;
 }

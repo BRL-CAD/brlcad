@@ -221,4 +221,5 @@ char	*argv[];
 	perror("double-asc");
 	exit (1);
     }
+    return 0;
 }

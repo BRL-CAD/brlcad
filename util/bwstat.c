@@ -30,6 +30,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include <unistd.h>
 #include <math.h>
 
 #define	IBUFSIZE 1024		/* Max read size in pixels */
@@ -145,6 +146,8 @@ char **argv;
 
 	if( verbose )
 		show_hist( bin, sum );
+
+	return 0;
 }
 
 /*

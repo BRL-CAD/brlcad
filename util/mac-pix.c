@@ -79,6 +79,7 @@ Usage: mac-pix [-c -l -b]\n\
 	[-S squareoutpsize] [-W outp_width] [-N outp_height]\n\
 	[-C r/g/b] [file.mac]\n";
 
+int
 get_args( argc, argv )
 register char **argv;
 {
@@ -179,6 +180,33 @@ register char **argv;
 	return(1);		/* OK */
 }
 
+int
+getbits(fp)
+register FILE *fp;
+{
+	static int count, rep, chr;
+	register int c;
+
+	if (rep) {
+		rep--;
+		return chr;
+	}
+	if (count) {
+		count--;
+		return getc(fp);
+	}
+	c = getc(fp);
+	if (c & 0x80) {			/* repeated character count */
+		rep = 0x100 - c;	/* byte length 2's comp + 1 */
+					/* 	allow for this call */
+		chr = getc(fp);		/* character to repeat */
+		return chr;
+	}
+	else {
+		count = c;		/* already counted this char */
+		return getc(fp);
+	}
+}
 
 int
 main(argc, argv)
@@ -300,29 +328,3 @@ char **argv;
 	exit(0);
 }
 
-getbits(fp)
-register FILE *fp;
-{
-	static int count, rep, chr;
-	register int c;
-
-	if (rep) {
-		rep--;
-		return chr;
-	}
-	if (count) {
-		count--;
-		return getc(fp);
-	}
-	c = getc(fp);
-	if (c & 0x80) {			/* repeated character count */
-		rep = 0x100 - c;	/* byte length 2's comp + 1 */
-					/* 	allow for this call */
-		chr = getc(fp);		/* character to repeat */
-		return chr;
-	}
-	else {
-		count = c;		/* already counted this char */
-		return getc(fp);
-	}
-}

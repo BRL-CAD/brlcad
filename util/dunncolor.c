@@ -24,10 +24,17 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
 
 extern int	fd;
 extern char	cmd;
 extern int	polaroid;
+
+extern void dunnopen();
+extern int ready(int nsecs);
+extern void getexposure(char *title);
+extern int dunnsend(char color, int val);
+
 
 int
 main(argc, argv)
@@ -70,4 +77,5 @@ char **argv;
 		printf("dunncolor:  camera not ready\n");
 		exit(50);
 	}
+	return 0;
 }

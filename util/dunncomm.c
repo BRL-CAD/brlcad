@@ -25,6 +25,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <fcntl.h>
 #include <signal.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+
 #include <sys/time.h>
 #ifdef __NetBSD__
 #	define USE_OLD_TTY

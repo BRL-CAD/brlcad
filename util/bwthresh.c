@@ -28,11 +28,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #define		USAGE		"Usage: 'bwthresh val ...'\n"
 
+int
 main (argc, argv)
-
 int	argc;
 char	**argv;
-
 {
     int			Ch;		/* The current input character */
     int			*thresh_val;	/* The threshold value */
@@ -91,4 +90,5 @@ char	**argv;
 		break;
 	(void) putchar(bin_color[i]);
     }
+    return 0;
 }

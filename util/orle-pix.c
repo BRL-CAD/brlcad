@@ -20,7 +20,12 @@ static const char RCSid[] = "@(#)$Id$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
-
+#include <unistd.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 #include "machine.h"
 #include "fb.h"		/* For Pixel typedef */
 #include "orle.h"

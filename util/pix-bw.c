@@ -27,6 +27,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <math.h>
 
 unsigned char	ibuf[3*1024], obuf[1024];
@@ -158,4 +160,6 @@ int argc; char **argv;
 		fprintf( stderr, "pix-bw: clipped %d high, %d, low\n",
 			clip_high, clip_low );
 	}
+
+	return 0;
 }

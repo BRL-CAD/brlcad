@@ -61,6 +61,7 @@ static char usage[] = "\
 Usage: yuv-pix [-h] [-a]\n\
 	[-s squaresize] [-w file_width] [-n file_height] [file.yuv] > file.pix\n";
 
+int
 get_args( argc, argv )
 register char **argv;
 {

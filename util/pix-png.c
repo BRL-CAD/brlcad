@@ -181,4 +181,6 @@ char	**argv;
 	png_write_info( png_p, info_p );
 	png_write_image( png_p, rows );
 	png_write_end( png_p, NULL );
+
+	return 0;
 }
