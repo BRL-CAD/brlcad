@@ -993,7 +993,7 @@ union tree		*curtree;
 }
 
 /* facetize [opts] new_obj old_obj(s) */
-void
+int
 f_facetize( argc, argv )
 int	argc;
 char	**argv;
@@ -1051,7 +1051,7 @@ char	**argv;
 
 	if( db_lookup( dbip, newname, LOOKUP_QUIET ) != DIR_NULL )  {
 		printf("error: solid '%s' already exists, aborting\n", newname);
-		return;
+		return CMD_BAD;
 	}
 
 	rt_log("facetize:  tessellating primitives with tolerances a=%g, r=%g, n=%g\n",
@@ -1071,7 +1071,7 @@ char	**argv;
 		rt_log("facetize: error in db_walk_tree()\n");
 		/* Destroy NMG */
 		nmg_km( mged_nmg_model );
-		return;
+		return CMD_BAD;
 	}
 
 	/* Now, evaluate the boolean tree into ONE region */
@@ -1081,7 +1081,7 @@ char	**argv;
 	if( r == 0 )  {
 		rt_log("facetize:  no resulting region, aborting\n");
 		nmg_km( mged_nmg_model );
-		return;
+		return CMD_BAD;
 	}
 	/* New region remains part of this nmg "model" */
 	NMG_CK_REGION( r );
@@ -1112,23 +1112,25 @@ char	**argv;
 			newname );
 		if( intern.idb_ptr )  rt_functab[ID_NMG].ft_ifree( &intern );
 		db_free_external( &ext );
-		return;				/* FAIL */
+		return CMD_BAD;				/* FAIL */
 	}
 	rt_functab[ID_NMG].ft_ifree( &intern );
 
 	ngran = (ext.ext_nbytes + sizeof(union record)-1)/sizeof(union record);
 	if( (dp=db_diradd( dbip, newname, -1, ngran, DIR_SOLID)) == DIR_NULL ||
 	    db_alloc( dbip, dp, ngran ) < 0 )  {
-	    	ALLOC_ERR_return;
+	    	ALLOC_ERR;
+		return CMD_BAD;
 	}
 
 	if( db_put_external( &ext, dp, dbip ) < 0 )  {
 		db_free_external( &ext );
 		ERROR_RECOVERY_SUGGESTION;
-		WRITE_ERR_return;
+		WRITE_ERR;
+		return CMD_BAD;
 	}
 	rt_log("facetize:  wrote %.2f Kbytes to database\n",
 		ext.ext_nbytes / 1024.0 );
 	db_free_external( &ext );
-	return;					/* OK */
+	return CMD_OK;					/* OK */
 }
