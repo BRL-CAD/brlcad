@@ -235,7 +235,7 @@ flat_render( struct application *ap, struct partition *pp, struct shadework *swp
 
 	register struct flat_specific *flat_sp = (struct flat_specific *)dp;
 	LOCAL const point_t unit = {1.0, 1.0, 1.0};
-	register point_t intensity;
+	point_t intensity;
 
 	/* check the validity of the arguments we got */
 	RT_AP_CHECK(ap);
