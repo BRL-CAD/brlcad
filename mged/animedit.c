@@ -60,29 +60,29 @@ static joint_debug = 0;
 
 void joint_move();
 
-static void f_jfhelp();
-void f_fhelp2();
-static void f_jhelp();
-void f_help2();
-void f_jmesh();
-void f_jdebug();
-void f_jload();
-void f_junload();
-void f_jmove();
-void f_jlist();
-void f_jaccept();
-void f_jreject();
-void f_jsave();
-void f_jhold();
-void f_jsolve();
-void f_jtest();
+static int f_jfhelp();
+int f_fhelp2();
+static int f_jhelp();
+int f_help2();
+int f_jmesh();
+int f_jdebug();
+int f_jload();
+int f_junload();
+int f_jmove();
+int f_jlist();
+int f_jaccept();
+int f_jreject();
+int f_jsave();
+int f_jhold();
+int f_jsolve();
+int f_jtest();
 
 #define MAXARGS	2000
 static struct funtab {
 	char *ft_name;
 	char *ft_parms;
 	char *ft_comment;
-	void (*ft_func)MGED_ARGS((int, char **));
+	int (*ft_func)MGED_ARGS((int, char **));
 	int  ft_min;
 	int  ft_max;
 } joint_tab[] = {
@@ -124,7 +124,7 @@ static struct funtab {
 #define db_init_full_path(_fp) {\
 	(_fp)->fp_len = (_fp)->fp_maxlen = 0; \
 	(_fp)->magic = DB_FULL_PATH_MAGIC; }	
-void
+int
 f_jdebug(argc, argv)
 int argc;
 char **argv;
@@ -137,6 +137,7 @@ char **argv;
 	}
 	rt_printb( "joint_debug", joint_debug, JOINT_DEBUG_FORMAT );
 	rt_log("\n");
+	return CMD_OK;
 }
 int
 f_joint( argc, argv )
@@ -146,24 +147,23 @@ char **argv;
 	argc--;
 	argv++;
 
-	mged_cmd(argc, argv, &joint_tab[0]);
-	return CMD_OK;
+	return mged_cmd(argc, argv, &joint_tab[0]);
 }
 
-static void
+static int
 f_jfhelp(argc, argv)
 int argc;
 char **argv;
 {
-	f_fhelp2(argc, argv, &joint_tab[0]);
+	return f_fhelp2(argc, argv, &joint_tab[0]);
 }
 
-static void
+static int
 f_jhelp(argc, argv)
 int argc;
 char **argv;
 {
-	f_help2(argc, argv, &joint_tab[0]);
+	return f_help2(argc, argv, &joint_tab[0]);
 }
 struct rt_list joint_head = {
 	RT_LIST_HEAD_MAGIC,
@@ -418,7 +418,7 @@ FILE *fip;
 	}
 #endif /* 0 */
 
-void
+int
 f_junload(argc, argv)
 int argc;
 char **argv;
@@ -447,6 +447,7 @@ char **argv;
 		rt_log("joint unload: unloaded %d joints, %d constraints.\n",
 		    joints, holds);
 	}
+	return CMD_OK;
 }
 #define	KEY_JOINT	1
 #define KEY_CON		2
@@ -1866,7 +1867,7 @@ struct rt_vls *str;
 	/* NOTREACHED */
 }
 static struct rt_list path_head;
-void
+int
 f_jload(argc, argv)
 int argc;
 char **argv;
@@ -2013,15 +2014,16 @@ char **argv;
 		}
 	}
 	if (!no_mesh) (void) f_jmesh(0,0);
-	return;
+	return CMD_OK;
 }
-void
+int
 f_jtest(argc, argv)
 int argc;
 char **argv;
 {
+	return CMD_OK;
 }
-void
+int
 f_jsave(argc, argv)
 int argc;
 char **argv;
@@ -2035,13 +2037,13 @@ char **argv;
 
 	if (argc <1) {
 		rt_log("joint save: missing file name");
-		return;
+		return CMD_BAD;
 	}
 	fop = fopen(*argv,"w");
 	if (!fop) {
 		rt_log("joint save: unable to open '%s' for writing.\n",
 		    *argv);
-		return;
+		return CMD_BAD;
 	}
 	fprintf(fop,"# joints and constraints for '%s'\n",
 	    dbip->dbi_title);
@@ -2109,8 +2111,9 @@ char **argv;
 		fprintf(fop,"};\n");
 	}
 	fclose(fop);
+	return CMD_OK;
 }
-void
+int
 f_jaccept(argc, argv)
 int argc;
 char **argv;
@@ -2145,8 +2148,9 @@ char **argv;
 		}
 	}
 	if (!no_mesh) f_jmesh(0,0);
+	return CMD_OK;
 }
-void
+int
 f_jreject(argc, argv)
 int argc;
 char **argv;
@@ -2183,6 +2187,7 @@ char **argv;
 		joint_move(jp);
 	}
 	if (!no_mesh) f_jmesh(0,0);
+	return CMD_OK;
 }
 static int
 hold_point_location(loc, hp)
@@ -2831,7 +2836,7 @@ Middle:
 	return 0;
 
 }
-void
+int
 f_jsolve(argc, argv)
 int argc;
 char **argv;
@@ -2922,7 +2927,7 @@ char **argv;
 	}
 	rt_free((char *)myargv,"param pointers");
 
-	if (found >= 0) return;
+	if (found >= 0) return CMD_BAD;
 
 	/*
 	 * solve the whole system of constraints.
@@ -3003,8 +3008,7 @@ char **argv;
 		f_jmesh(0,0);
 		refresh();
 	}
-
-	return;
+	return CMD_OK;
 }
 static char *
 hold_point_to_string(hp)
@@ -3049,7 +3053,7 @@ struct hold *hp;
 	rt_log("\n\twith a weight: %g, pull %g\n",
 	    hp->weight, hold_eval(hp) );
 }
-void
+int
 f_jhold(argc, argv)
 int argc;
 char **argv;
@@ -3068,8 +3072,9 @@ char **argv;
 		hold_clear_flags(hp);
 		print_hold(hp);
 	}
+	return CMD_OK;
 }
-void
+int
 f_jlist(argc, argv)
 int argc;
 char **argv;
@@ -3079,7 +3084,7 @@ char **argv;
 		col_item(jp->name);
 	}
 	col_eol();
-	return;
+	return CMD_OK;
 }
 void
 joint_move(jp)
@@ -3200,7 +3205,7 @@ struct joint *jp;
 		mat_print("joint move: ANIM_MAT", ANIM_MAT);
 	}
 }
-void
+int
 f_jmove(argc, argv)
 int argc;
 char **argv;
@@ -3218,7 +3223,7 @@ char **argv;
 	jp = joint_lookup(*argv);
 	if (!jp) {
 		rt_log("joint move: %s not found\n", *argv);
-		return;
+		return CMD_BAD;
 	}
 
 	argv++;
@@ -3273,6 +3278,7 @@ char **argv;
 	}
 	joint_move(jp);
 	f_jmesh(0,0);
+	return CMD_OK;
 }
 
 struct artic_grips {
@@ -3437,7 +3443,7 @@ static struct db_tree_state mesh_initial_tree_state = {
 	0.0, 0.0, 1.0, 0.0,
 	0.0, 0.0, 0.0, 1.0,
 };
-void
+int
 f_jmesh(argc, argv)
 int argc;
 char **argv;
@@ -3506,4 +3512,5 @@ char **argv;
 		RT_LIST_DEQUEUE(&jp->l);
 		rt_free((char *)jp, "Artic Joint");
 	}
+	return CMD_OK;
 }
