@@ -101,6 +101,8 @@
 #define OT_UNSPEC   3    /* orientation unspecified */
 #define OT_BOOLPLACE 4   /* object is intermediate data for boolean ops */
 
+
+
 /* support for pointer tables.  Our table is currently un-ordered, and is
  * merely a list of objects.  The support routine nmg_tbl manipulates the
  * list structure for you.  Objects to be referenced (inserted, deleted,
@@ -251,6 +253,7 @@ struct model {
 	struct model_a		*ma_p;
 	struct rt_list		r_hd;	/* list of regions */
 	long			index;	/* struct # in this model */
+	char			*manifolds; /*  structure 1-3manifold table */
 	long			maxindex; /* # of structs so far */
 };
 #endif /* !MODEL_DEFINED */
@@ -666,6 +669,20 @@ struct nmg_struct_counts {
 	( (_tab)[(_p)->index] == 0 ? ((_tab)[(_p)->index] = 1) : 0 )
 #define NMG_INDEX_IS_SET(_tab,_p)	NMG_INDEX_TEST(_tab,_p)
 #define NMG_INDEX_FIRST_TIME(_tab,_p)	NMG_INDEX_TEST_AND_SET(_tab,_p)
+#define NMG_INDEX_ASSIGN(_tab,_p,_val)	{(_tab)[(_p)->index] = _val;}
+#define NMG_INDEX_OR(_tab,_p,_val)	{(_tab)[(_p)->index] |= _val;}
+#define NMG_INDEX_AND(_tab,_p,_val)	{(_tab)[(_p)->index] &= _val;}
+
+/* flags for manifold-ness */
+#define NMG_3MANIFOLD	0	/* zero, not eight */
+#define NMG_2MANIFOLD	4
+#define NMG_1MANIFOLD	2
+#define NMG_0MANIFOLD	1
+#define NMG_DANGLING	8 /* NMG_2MANIFOLD + 4th bit for special cond */
+
+#define NMG_SET_MANIFOLD(_t,_p,_v) NMG_INDEX_OR(_t, _p, _v)
+#define NMG_MANIFOLDS(_t, _p)	   NMG_INDEX_VALUE(_t, (_p)->index)
+#define NMG_CP_MANIFOLD(_t, _p, _q) (_t)[(_p)->index] = (_t)[(_q)->index]
 
 
 /************************************************************************
@@ -762,7 +779,9 @@ NMG_EXTERN(struct shell		*nmg_eups, (struct edgeuse *eu) );
 NMG_EXTERN(struct edgeuse	*nmg_faceradial, (struct edgeuse *eu) );
 NMG_EXTERN(int			nmg_manifold_face, (struct faceuse *fu) );
 NMG_EXTERN(void			nmg_euprint, (char *str, struct edgeuse *eu) );
-
+NMG_EXTERN(char 		*nmg_manifolds, (struct model *m) );
+NMG_EXTERN(char 		*nmg_shell_manifolds, (struct shell *sp, char *tbl) );
+NMG_EXTERN(struct edgeuse	*nmg_radial_face_edge_in_shell, (struct edgeuse *eu) );
 /* g_nmg.c */
 
 /* nmg_class.c */
