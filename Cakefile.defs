@@ -210,7 +210,11 @@ set -S2 "/bin/sh"
 
 #		define	LIBDM_LIBES	LIBTK LIBTCL LIBTCL_LIBES
 #		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11_s -lgl_s -lGL
-#		define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11_s -lgl_s -lGL
+#if 0
+#		define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11_s -lgl_s -lGL -l 
+#else
+#		define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext 
+#endif
 #		define  LIBDM_SAMPLER_LIBES	MGED_LIBES
 #	endif
 
@@ -801,11 +805,26 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	HAS_TCP 1
 #	define	HAS_SYMLINKS 1
 #	define	BSD	44
-#	define	CC	/usr/bin/cc
 #	define	OPTIMIZER	/**/
-#	define	CC_OPTS -O
 #	define	XINCDIR	/usr/X11R6/include
 #	define	XLIBDIR	/usr/X11R6/lib
+
+#	if 0
+/*		Static linked executables */
+#		define	CC	gcc
+#		define	GFLAG	/**/
+#		define	CC_OPTS GFLAG
+/*		Don't use -ansi, that gives __STRICT_ANSI__.  Default is _GNU_SOURCE. */
+#	else
+/*		Shared library version support.  */
+#		define	CC	gcc
+#		define	GFLAG	-fPIC
+#		define	CC_OPTS GFLAG
+#		define	ARCH_SUF	so
+#		define	LIBVERS ../sh/sharedlibvers.sh
+#		define	BUILD_LIBRARY	gcc -shared -o
+#		define	STANDARD_LIBES	-lm -lc -Wl,-rpath -Wl,LIBDIR:/usr/lib
+#	endif
 
 #	define	LIBRT_TIMER	timer42
 #	define	LIBFB_CONFIG	-DIF_REMOTE -I''XINCDIR -DIF_X
