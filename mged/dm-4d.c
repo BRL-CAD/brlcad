@@ -41,6 +41,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <gl/device.h>		/* SGI IRIS library */
 #include <gl/get.h>		/* SGI IRIS library */
 #include <sys/types.h>
+#include <sys/time.h>
 #include <sys/invent.h>
 
 extern inventory_t	*getinvent();
@@ -1006,6 +1007,12 @@ Ir_input( cmd_fd, rateflg )
 {
 	static int cnt;
 	register int i;
+	struct timeval	tv;
+	fd_set		files;
+	int		width;
+
+	if( (width = getdtablesize()) <= 0 )
+		width = 32;
 
 	/*
 	 * Check for input on the keyboard or on the polled registers.
@@ -1020,38 +1027,29 @@ Ir_input( cmd_fd, rateflg )
 	 * but we still have to update the display,
 	 * do not suspend execution.
 	 */
-	/* System V on IRIS defines select() for graphics library.
-	 * Also note that we need to frequently check qtest() for devices.
-	 * Under MEX, need to swap buffers, for -other- programs to get
-	 * a chance.
-	 */
 	do  {
 		cnt = 0;
 		i = qtest();
 		if( i != 0 )
-			break;
-#ifdef NONBLOCK
-		clearerr( stdin );
-		cnt = 1;
-		(void)ioctl( cmd_fd, FIONBIO, &cnt );
-		cnt = 1;
-#else
+			break;		/* There is device input */
+		FD_ZERO( &files );
+		FD_SET( cmd_fd, &files );
+		tv.tv_sec = 0;
+
 		if( rateflg )  {
-			cnt = bsdselect( (long)(1<<cmd_fd), 0, 0 );
+			tv.tv_usec = 0;
 		}  else  {
 			/* 1/20th second */
-			cnt = bsdselect( (long)(1<<cmd_fd), 0, 50000 );
+			tv.tv_usec = 50000;
 		}
-#endif
-		if( cnt != 0 )
+		cnt = select( width, &files, (fd_set *)0,  (fd_set *)0, &tv );
+		if( cnt < 0 )  {
+			perror("dm-4d.c/select");
 			break;
-		/* If Rate operation, return immed., else wait. */
-		/* For MEX in double buffered mode, we really ought to
-		 * do a swapbuffers() here, but that means arranging to
-		 * have something sensible in the back buffer already,
-		 * and at the moment, it's black.  We could leave it stale,
-		 * but that would be just as bad.  For now, punt.
-		 */
+		}
+		cnt = FD_ISSET(cmd_fd, &files);
+		if( cnt != 0 )
+			break;		/* There is keyboard input */
 	} while( rateflg == 0 );
 
 	/*
