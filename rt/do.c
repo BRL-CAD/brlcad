@@ -429,16 +429,17 @@ cm_set( argc, argv )
 int	argc;
 char	**argv;
 {
+	struct rt_vls	str;
+
 	if( argc <= 1 ) {
 		rt_structprint( "Generic and Application-Specific Parameter Values",
 			set_parse, (char *)0 );
 		return(0);
 	}
-	while( argc > 1 ) {
-		rt_structparse( argv[1], set_parse, (char *)0 );
-		argc--;
-		argv++;
-	}
+	rt_vls_init( &str );
+	rt_vls_from_argv( &str, argc-1, argv+1 );
+	rt_structparse( &str, set_parse, (char *)0 );
+	rt_vls_free( &str );
 	return(0);
 }
 
