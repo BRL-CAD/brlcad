@@ -53,19 +53,21 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "./mgedtcl.h"
 
+#if 0
 extern float default_wireframe_color[];
 extern int wireframe_highlight_color[];
 
 #define DEFAULT_WIREFRAME_COLOR 1
 #define WIREFRAME_HIGHLIGHT_COLOR 2
 
+char *handle_global_variable_read_traces();
+char *handle_global_variable_write_traces();
+char *handle_global_variable_unset_traces();
+#endif
 
 void mged_setup(), cmd_setup(), mged_compat();
 void mged_print_result();
 void mged_global_variable_setup();
-char *handle_global_variable_read_traces();
-char *handle_global_variable_write_traces();
-char *handle_global_variable_unset_traces();
 
 extern void set_scroll();			/* in set.c */
 extern void sync();
@@ -192,6 +194,8 @@ static struct cmdtab cmdtab[] = {
 	"copymat", f_copymat,
 	"cp", f_copy,
 	"cpi", f_copy_inv,
+	"cs_def", f_cs_def,
+	"cs_set", f_cs_set,
 	"d", f_erase,
 	"dall", f_erase_all,
 	"db_glob", cmd_mged_glob,
@@ -2269,6 +2273,7 @@ Tcl_Interp *interp;
   bu_vls_init(&edit_info_vls);
   bu_vls_strcpy(&edit_info_vls, "edit_info");
 
+#if 0
   /* Set up variable traces */
   bu_vls_strcpy(&vls, "default_wireframe_color");
   Tcl_TraceVar(interp, bu_vls_addr(&vls), TCL_TRACE_READS|TCL_GLOBAL_ONLY,
@@ -2285,10 +2290,12 @@ Tcl_Interp *interp;
 	       handle_global_variable_write_traces, (ClientData)WIREFRAME_HIGHLIGHT_COLOR);
   Tcl_TraceVar(interp, bu_vls_addr(&vls), TCL_TRACE_UNSETS|TCL_GLOBAL_ONLY,
 	       handle_global_variable_unset_traces, (ClientData)WIREFRAME_HIGHLIGHT_COLOR);
+#endif
 
   bu_vls_free(&vls);
 }
 
+#if 0
 char *
 handle_global_variable_read_traces(clientData, interp, name1, name2, flags)
 ClientData clientData;
@@ -2446,3 +2453,4 @@ int flags;
 
   return (char *)0;
 }
+#endif
