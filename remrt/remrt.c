@@ -319,7 +319,7 @@ char	**argv;
 	if( argc <= 1 )  {
 		(void)signal( SIGINT, SIG_IGN );
 		printf("Interactive REMRT listening at port %d\n", pkg_permport);
-		clients = (1<<0);
+		clients = (1<<fileno(stdin));
 
 		/* Read .remrtrc file to acquire server info */
 		read_rc_file();
@@ -336,7 +336,6 @@ char	**argv;
 	} else {
 		printf("Automatic REMRT listening at port %d\n", pkg_permport);
 		clients = 0;
-		clients = (1<<0);	/* for testing only */
 
 		/* parse command line args for sizes, etc */
 		if( !get_args( argc, argv ) )  {
@@ -1953,7 +1952,9 @@ FILE	*fp;
 			sprintf(cmd,
 				"cd %s; rtsrv %s %d",
 				rem_dir, ourname, port );
+#if 0
 			printf("%s\n", cmd); fflush(stdout);
+#endif
 
 			pid = fork();
 			if( pid == 0 )  {
@@ -1986,7 +1987,9 @@ FILE	*fp;
 				RSH, host,
 				rem_dir, rem_db,
 				ourname, port );
-printf("%s\n", cmd); fflush(stdout);
+#if 0
+			printf("%s\n", cmd); fflush(stdout);
+#endif
 
 			pid = fork();
 			if( pid == 0 )  {
@@ -2616,6 +2619,22 @@ char	**argv;
 	do_a_frame();
 }
 
+cd_wait( argc, argv )
+int	argc;
+char	**argv;
+{
+	struct timeval	now;
+
+	clients &= ~(1<<fileno(stdin));
+	while( running && clients && FrameHead.fr_forw != &FrameHead )  {
+		check_input( 30 );	/* delay up to 30 secs */
+
+		(void)gettimeofday( &now, (struct timezone *)0 );
+		schedule( &now );
+	}
+	clients |= 1<<fileno(stdin);
+}
+
 cd_help( argc, argv )
 int	argc;
 char	**argv;
@@ -2727,6 +2746,8 @@ struct command_tab cmd_tab[] = {
 		cd_detach,	1, 1,
 	"host", "name always|night|passive cd|convert path", "register server host",
 		cd_host,	1, 5,
+	"wait", "",		"wait for current work assignment to finish",
+		cd_wait,	1, 1,
 	/* FRAME BUFFER */
 	"attach", "[fb]",	"attach to frame buffer",
 		cd_attach,	1, 2,
