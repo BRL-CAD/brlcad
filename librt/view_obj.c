@@ -379,8 +379,12 @@ vo_aet_tcl(clientData, interp, argc, argv)
 
 		return TCL_OK;
 	} else if (argc == 3) {  /* set aet */
-		if (bn_decode_vect(aet, argv[2]) != 3)
-			return TCL_ERROR;
+		int n;
+
+		if ((n = bn_decode_vect(aet, argv[2])) == 2)
+			aet[2] = 0;
+		else if (n != 3)
+			goto error;
 
 		VMOVE(vop->vo_aet, aet);
 		vo_mat_aet(vop);
@@ -389,6 +393,7 @@ vo_aet_tcl(clientData, interp, argc, argv)
 		return TCL_OK;
 	}
 
+error:
 	/* compose error message */
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib vo_aet");
