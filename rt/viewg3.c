@@ -674,7 +674,7 @@ out:
 
 	if( shot_fp )
 	{
-		fprintf( shot_fp, "%g %g %g %g %g %g %g %g %ld\n",
+		fprintf( shot_fp, "%.5f %.5f %.5f %.5f %.5f %.5f %.5f %.5f %ld\n",
 			azimuth, elevation, V3ARGS( ap->a_ray.r_pt ), V3ARGS( ap->a_ray.r_dir ), line_num );
 
 		line_num +=  1 + (comp_count / 3 );
