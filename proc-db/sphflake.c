@@ -18,7 +18,7 @@
 
 #define D2R(x) (((x)/180)*3.14159265358979)
 #define MATXPNT(d, m, v) { \
-  register _i = 1.0/((m)[12]*(v)[0] + (m)[13]*(v)[1] + (m)[14]*(v)[2] + (m)[15]*1); \
+  register double _i = 1.0/((m)[12]*(v)[0] + (m)[13]*(v)[1] + (m)[14]*(v)[2] + (m)[15]*1); \
   (d)[0] = ((m)[0]*(v)[0] + (m)[1]*(v)[1] + (m)[2]*(v)[2] + (m)[3])*_i; \
   (d)[1] = ((m)[4]*(v)[0] + (m)[5]*(v)[1] + (m)[6]*(v)[2] + (m)[7])*_i; \
   (d)[2] = ((m)[8]*(v)[0] + (m)[9]*(v)[1] + (m)[10]*(v)[2] + (m)[11])*_i; \
@@ -111,7 +111,9 @@ void main(int argc, char **argv) {
   extern char *optarg;
   int optc;
   params_t params;
-  int inter = 0, def = 0, depth = 0;
+  int inter = 0;
+  def = 0;
+  depth = 0;
   char fileName[20];
   int opts = 0;
 
@@ -232,23 +234,15 @@ void initializeInfo(params_t *p, int inter, int def, char *name, int depth) {
   p->pos[X] = DEFAULT_ORIGIN_X;
   p->pos[Y] = DEFAULT_ORIGIN_Y;
   p->pos[Z] = DEFAULT_ORIGIN_Z;
-  for (i = 0; i <= p->maxDepth; i++) {
-    strcpy(p->matArray[i].name, DEFAULT_MAT);
-    strcpy(p->matArray[i].params, DEFAULT_MATPARAM);
-    sscanf(DEFAULT_MATCOLOR, "%d %d %d", &r, &g, &b);
-    p->matArray[i].color[0] = (char)r;
-    p->matArray[i].color[1] = (char)g;
-    p->matArray[i].color[2] = (char)b;
-  }
   if (inter) {
     /* prompt the user for some data */
     /* no error checking here.... */
     if (name != NULL) {
       printf("\nPlease enter a filename: ");
       scanf("%s", p->fileName);
-    }
-    else 
+    } else
       strcpy(p->fileName, name);
+
     printf("maxRadius: ");
     scanf("%d", &(p->maxRadius));
     printf("maxDepth: ");
@@ -256,10 +250,11 @@ void initializeInfo(params_t *p, int inter, int def, char *name, int depth) {
     printf("deltaRadius: ");
     scanf("%f", &(p->deltaRadius));
     printf("init. position X Y Z: ");
-    scanf("%d %d %d", &(p->pos[X]), &(p->pos[Y]), &(p->pos[Z]));
+    scanf("%lg %lg %lg", &(p->pos[X]), &(p->pos[Y]), &(p->pos[Z]));
     getchar();
     
     p->matArray = (depthMat_t *)malloc(sizeof(depthMat_t) * (p->maxDepth+1));
+
     for (i = 0; i <= p->maxDepth; i++) {
       printf("Material for depth %d: [%s] ", i, DEFAULT_MAT);
       gets(p->matArray[i].name);
@@ -330,7 +325,7 @@ void createLights(params_t *p) {
   c[0] = (char)r;
   c[1] = (char)g;
   c[2] = (char)b;
-  mk_lcomb(fp, name, &(wmemberArray[LIGHT0_ID]), 1, LIGHT0_MAT, LIGHT0_MATPARAM, c, 0);
+  mk_lcomb(fp, name, &(wmemberArray[LIGHT0_ID]), 1, LIGHT0_MAT, LIGHT0_MATPARAM, (const unsigned char *) c, 0);
   
   VSET(lPos, p->pos[X]+(13 * p->maxRadius), p->pos[Y]+(-13 * p->maxRadius), p->pos[Z]+(152 * p->maxRadius));
   sprintf(name, "light1");
@@ -343,7 +338,7 @@ void createLights(params_t *p) {
   c[0] = (char)r;
   c[1] = (char)g;
   c[2] = (char)b;
-  mk_lcomb(fp, name, &(wmemberArray[LIGHT1_ID]), 1, LIGHT1_MAT, LIGHT1_MATPARAM, c, 0);
+  mk_lcomb(fp, name, &(wmemberArray[LIGHT1_ID]), 1, LIGHT1_MAT, LIGHT1_MATPARAM, (const unsigned char *) c, 0);
 
   printf("\nLights created");
 }
@@ -492,21 +487,3 @@ void makeFlake(int depth, mat_t *trans,
     makeFlake(depth+1, &temp, pcent, newRadius, delta, maxDepth);
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
