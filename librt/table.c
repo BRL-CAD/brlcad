@@ -485,7 +485,6 @@ static char idmap[] = {
 	ID_EHY,		/* HACK: EHY 29: elliptical hyperboloid */
 	ID_ETO,		/* HACK: ETO 29: elliptical torus */
 	ID_GRIP,	/* HACK: GRP 30: grip pseudo solid */
-	ID_FBM,		/* HACK: FBM 32: fBm sphere solid */
 	ID_NULL		/* n+1 */
 };
 
