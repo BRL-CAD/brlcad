@@ -648,11 +648,23 @@ genptr_t	arg;
 		 *  task-management services of, eg, taskcreate() are needed.
 		 */
 #if IRIX <= 4
-		/*  Stack size per proc comes from RLIMIT_STACK (64MBytes). */
+		/*  Stack size per proc comes from RLIMIT_STACK (typ 64MBytes). */
 		new = sproc( bu_parallel_interface, PR_SALL, 0 );
 #else
+		/* State maximum stack size.
+		 * Be generous, as this mainly costs address space.
+		 * RAM is allocated only to those pages used.
+		 * On the other hand, don't be too generous, because each
+		 * proc needs this much space on, e.g. a 64 processor system.
+		 */
 		new = sprocsp( (void (*)(void *, size_t))bu_parallel_interface,
-			PR_SALL, 0, NULL, 4*1024*1024 );
+			PR_SALL, 0, NULL,
+#			if IRIX64
+				8*1024*1024
+#			else
+				4*1024*1024
+#			endif
+			);
 #endif
 		if( new < 0 )  {
 			perror("sproc");
