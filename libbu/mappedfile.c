@@ -50,6 +50,9 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #ifdef HAVE_SYS_MMAN_H
 # include <sys/mman.h>
+# if !defined(MAP_FAILED)
+#    define MAP_FAILED	((void *)-1)	/* Error return from mmap() */
+# endif
 #endif
 
 #include "bu.h"
@@ -371,11 +374,11 @@ int	verbose;
  */
 struct bu_mapped_file *
 bu_open_mapped_file_with_path( path, name, appl )
-CONST char * CONST path[];
+char * CONST *path;
 CONST char	*name;		/* file name */
 CONST char	*appl;		/* non-null only when app. will use 'apbuf' */
 {
-	CONST char	* CONST *pathp = path;
+	char	* CONST *pathp = path;
 	struct bu_vls	str;
 	struct bu_mapped_file	*ret;
 
@@ -386,7 +389,7 @@ CONST char	*appl;		/* non-null only when app. will use 'apbuf' */
 	bu_vls_init(&str);
 
 	/* Try each path prefix in sequence */
-	for( pathp = path; *pathp != NULL; pathp++ )  {
+	for( ; *pathp != NULL; pathp++ )  {
 		bu_vls_strcpy( &str, *pathp );
 		bu_vls_putc( &str, '/' );
 		bu_vls_strcat( &str, name );

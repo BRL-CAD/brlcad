@@ -1226,7 +1226,7 @@ BU_EXTERN(void			bu_pr_mapped_file, (CONST char *title,
 					CONST struct bu_mapped_file *mp));
 BU_EXTERN(void			bu_free_mapped_files, (int verbose));
 BU_EXTERN(struct bu_mapped_file *bu_open_mapped_file_with_path,
-					(CONST char * CONST path[],
+					(char * CONST *path,
 					CONST char *name, CONST char *appl));
 
 /* parallel.c */
