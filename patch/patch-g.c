@@ -101,9 +101,7 @@ int	argc;
 char	*argv[];
 {
 
-	fastf_t  x1, y1, z1;
-	int numf = 3;
-	int fd,fl,nread;
+	int fd,nread;
 	FILE	*gfp=NULL;
 	FILE    *mfp=NULL;
 	char	buf[99],s[132+2];
@@ -112,10 +110,6 @@ char	*argv[];
 	int i;
 	int done;
 	int stop,num;
-	char *next, *ptr;
-	char *matname = "plastic";
-	char *matparm = "sh=100.0,sp=.9,di=.1";
-	char hold = 0;
 	char	name[17];
 
 	RT_LIST_INIT( &head.l);
@@ -331,7 +325,7 @@ char	*argv[];
 
 			if( (stop=fscanf( gfp, "%4d", &num )) == 1 ){
 				fscanf( gfp, "%s %s", nm[num].ug, nm[num].lg );
-				while( (hold=fgetc( gfp )) != '\n' )
+				while( (fgetc( gfp )) != '\n' )
 					;
 			}
 			else {
@@ -339,7 +333,7 @@ char	*argv[];
 					done = 0;
 				}
 				else {
-					while( (hold=fgetc( gfp )) != '\n' )
+					while( (fgetc( gfp )) != '\n' )
 						;
 				}
 			}
@@ -973,7 +967,6 @@ struct rt_tol *tol;
 	struct nmg_ptbl verts_to_move;
 	struct patch_faces *p_faces;
 	struct patch_verts *verts;
-	struct rt_tol tol_tmp;
 	vect_t out;
 	int face_count;
 	int missed_faces;
@@ -985,13 +978,6 @@ struct rt_tol *tol;
 	int planar=0;
 	long *flags;
 	long **copy_tbl;
-
-	/* A local tolerance structure for times when I don't want tolerancing */
-	tol_tmp.magic = RT_TOL_MAGIC;
-	tol_tmp.dist = SQRT_SMALL_FASTF;
-	tol_tmp.dist_sq = SMALL_FASTF;
-	tol_tmp.perp = 0.0;
-	tol_tmp.para = 1.0;
 
 	if( debug )
 		rt_log( "%s\n" , name );
@@ -1434,7 +1420,6 @@ struct rt_tol *tol;
 	for( i=0 ; i<face_count ; i++ )
 	{
 		struct face_g_plane *fg_p;
-		plane_t plane;
 
 		fu = NMG_INDEX_GETP( faceuse , copy_tbl , p_faces[i].fu );
 		if( !fu )
@@ -1770,11 +1755,9 @@ void
 proc_triangle(cnt)
 int cnt;
 {
-	vect_t	ab,bc,ca;
 	int	k,l;
 	int	index;
 	int	cpts;
-	vect_t  norm,out;
 	char	shflg,mrflg,ctflg;
 	static int count=0;
 	static int mir_count=0;
@@ -1909,7 +1892,6 @@ fastf_t *x,*y,*z;
 	vect_t vsum;
 	int i;
 	fastf_t det;
-	int failed=0;
 
 	/* build matrix */
 	mat_zero( matrix );
@@ -2038,7 +2020,6 @@ fastf_t *x,*y,*z;
 		else
 		{
 			rt_log( "Get_plane: Cannot calculate plane\n" );
-			failed = 1;
 		}
 	}
 }
@@ -2050,15 +2031,9 @@ void
 proc_plate(cnt)
 int cnt;
 {
-	point_t arb6pt[8];
-	vect_t	out;
-	vect_t	norm;
-	vect_t	ab,bc,ca,ac;
 	int	thick_no;
-	fastf_t ndot,outdot;
 	int k,l;
 	int index;
-	int thick_warn=0;
 	static int count=0;
 	static int mir_count=0;
 	static int last_cc=0;
@@ -2252,12 +2227,10 @@ void
 proc_wedge(cnt)
 int cnt;
 {
-	point_t	pts[1];
 	point_t	pt8[8];
 	point_t inpt8[8];
-	int i,k,l;
+	int i,k;
 	vect_t	ab, ac , ad;
-	fastf_t len;
 	plane_t planes[5];
 	static int count=0;
 	static int mir_count=0;
@@ -2632,11 +2605,9 @@ void
 proc_box(cnt)
 int cnt;
 {
-	point_t	pts[1];
 	point_t	pt8[8];
-	int k,l;
+	int k;
 	vect_t	ab, ac , ad, abi, aci, adi;
-	vect_t	v1,v2,v3,v4;
 	fastf_t len,leni;			/* box edge lengths */
 	int valid;				/* valid inside box? */
 	char    shflg,mrflg,ctflg;
@@ -2849,7 +2820,7 @@ int cnt;
 	point_t base1_in, top1_in, base2_in, top2_in;
 	fastf_t rbase1, rtop1, rbase2, rtop2;
 	fastf_t rbase1_in, rtop1_in, rbase2_in, rtop2_in;
-	vect_t h1, h2, h3, h4;
+	vect_t h1, h3, h4;
 	fastf_t magh3, magh4;
 	int end_code;
 	struct wmember donut_head;
@@ -2911,7 +2882,6 @@ int cnt;
 		}
 
 		/* calculate height vectors for the two basic TRC's */
-		VSUB2( h2, top2, base2 );
 		VSUB2( h1, top1, base1 );
 
 		/* calculate height vectors for the 'end' TRC's
@@ -4046,8 +4016,7 @@ int	npts;
 {
 	register int i;
 	vect_t	ab, ac;
-	vect_t	n,ncent;
-	vect_t	out,tmp;
+	vect_t	n;
 
 	VSUB2( ab, verts[1], verts[0] );
 	VSUB2( ac, verts[2], verts[0] );
@@ -4092,7 +4061,6 @@ proc_label(labelfile)
 char *labelfile;
 {
 	char gname[16+1], mgname[16+1];	/* group, mirrored group names */
-	char *cc;
 	static int cur_series = -1;
 
 	if( cur_series == -1 ) {		/* first time */
