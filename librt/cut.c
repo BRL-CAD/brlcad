@@ -3,8 +3,14 @@
  *  
  *  Cut space into lots of small boxes (RPPs actually).
  *  
- *  Before this can be done, the model max and min must have
- *  been computed -- no incremental cutting.
+ *  Call tree for default path through the code:
+ *	rt_cut_it()
+ *		rt_cut_extend() for all solids in model
+ *		rt_ct_optim()
+ *			rt_ct_old_assess()
+ *			rt_ct_box()
+ *				rt_ck_overlap()
+ *  
  *
  *  Author -
  *	Michael John Muuss
@@ -50,6 +56,10 @@ HIDDEN void		rt_ct_measure BU_ARGS((struct rt_i *rtip,
 HIDDEN union cutter	*rt_ct_get BU_ARGS((struct rt_i *rtip));
 HIDDEN void		rt_plot_cut BU_ARGS((FILE *fp, struct rt_i *rtip,
 					     union cutter *cutp, int lvl));
+
+BU_EXTERN(void		rt_pr_cut_info, (CONST struct rt_i *rtip,
+					CONST char *str));
+
 
 #define AXIS(depth)	((depth)%3)	/* cuts: X, Y, Z, repeat */
 
@@ -817,25 +827,13 @@ int			ncpu;
 	/* Measure the depth of tree, find max # of RPPs in a cut node */
 
 	bu_hist_init( &rtip->rti_hist_cellsize, 0.0, 400.0, 400 );
+	bu_hist_init( &rtip->rti_hist_cell_pieces, 0.0, 400.0, 400 );
 	bu_hist_init( &rtip->rti_hist_cutdepth, 0.0,
 		      (fastf_t)rtip->rti_cutdepth+1, rtip->rti_cutdepth+1 );
 	bzero( rtip->rti_ncut_by_type, sizeof(rtip->rti_ncut_by_type) );
 	rt_ct_measure( rtip, &rtip->rti_CutHead, 0 );
-	if( rt_g.debug&DEBUG_CUT ) {
-		bu_log( "Cut: maxdepth=%d, nbins=%d, maxlen=%d, avg=%g\n",
-			rtip->rti_cut_maxdepth,
-			rtip->rti_ncut_by_type[CUT_BOXNODE],
-			rtip->rti_cut_maxlen,
-			((double)rtip->rti_cut_totobj) /
-			rtip->rti_ncut_by_type[CUT_BOXNODE] );
-		bu_hist_pr( &rtip->rti_hist_cellsize,
-			    "cut_tree: Number of solids per leaf cell");
-		bu_hist_pr( &rtip->rti_hist_cutdepth,
-			    "cut_tree: Depth (height)");
-		bu_log( "Counts: %d nugrid nodes, %d cutnodes, %d boxnodes\n",
-			rtip->rti_ncut_by_type[CUT_NUGRIDNODE],
-			rtip->rti_ncut_by_type[CUT_CUTNODE],
-			rtip->rti_ncut_by_type[CUT_BOXNODE] );
+	if( rt_g.debug&DEBUG_CUT )  {
+		rt_pr_cut_info( rtip, "Cut" );
 	}
 
 	if( rt_g.debug&DEBUG_CUTDETAIL ) {
@@ -1137,6 +1135,7 @@ double			where;
 				continue;
 			lhs->bn.bn_list[lhs->bn.bn_len++] = cutp->bn.bn_list[i];
 		}
+		if( lhs->bn.bn_len < cutp->bn.bn_len )  success = 1;
 	} else {
 		lhs->bn.bn_list = (struct soltab **)NULL;
 	}
@@ -1147,9 +1146,9 @@ double			where;
 			sizeof(struct rt_piecelist) * cutp->bn.bn_piecelen,
 			"rt_ct_box (left piece list)" );
 		for( i = cutp->bn.bn_piecelen-1; i >= 0; i-- )  {
-			struct rt_piecelist *plp = &cutp->bn.bn_piecelist[i];
+			struct rt_piecelist *plp = &cutp->bn.bn_piecelist[i];	/* input */
 			struct soltab *stp = plp->stp;
-			struct rt_piecelist *olp = &lhs->bn.bn_piecelist[lhs->bn.bn_piecelen];
+			struct rt_piecelist *olp = &lhs->bn.bn_piecelist[lhs->bn.bn_piecelen]; /* output */
 			int j;
 
 			RT_CK_PIECELIST(plp);
@@ -1201,6 +1200,7 @@ double			where;
 				continue;
 			rhs->bn.bn_list[rhs->bn.bn_len++] = cutp->bn.bn_list[i];
 		}
+		if( rhs->bn.bn_len < cutp->bn.bn_len )  success = 1;
 	} else {
 		rhs->bn.bn_list = (struct soltab **)NULL;
 	}
@@ -1211,9 +1211,9 @@ double			where;
 			sizeof(struct rt_piecelist) * cutp->bn.bn_piecelen,
 			"rt_ct_box (left piece list)" );
 		for( i = cutp->bn.bn_piecelen-1; i >= 0; i-- )  {
-			struct rt_piecelist *plp = &cutp->bn.bn_piecelist[i];
+			struct rt_piecelist *plp = &cutp->bn.bn_piecelist[i];	/* input */
 			struct soltab *stp = plp->stp;
-			struct rt_piecelist *olp = &rhs->bn.bn_piecelist[rhs->bn.bn_piecelen];
+			struct rt_piecelist *olp = &rhs->bn.bn_piecelist[rhs->bn.bn_piecelen];	/* output */
 			int j;
 
 			RT_CK_PIECELIST(plp);
@@ -1247,19 +1247,15 @@ double			where;
 	}
 
 	/* Check to see if complexity didn't decrease */
-	if( rhs->bn.bn_len == cutp->bn.bn_len &&
-	    lhs->bn.bn_len == cutp->bn.bn_len &&
-	    rhs->bn.bn_piecelen == cutp->bn.bn_piecelen &&
-	    lhs->bn.bn_piecelen == cutp->bn.bn_piecelen &&
-	    success == 0
-	)  {
+	if( success == 0 )  {
 		/*
 		 *  This cut operation did no good, release storage,
 		 *  and let caller attempt something else.
 		 */
 		if(rt_g.debug&DEBUG_CUTDETAIL)  {
-			bu_log("rt_ct_box:  no luck, len=%d\n",
-				cutp->bn.bn_len );
+			static char axis_str[] = "XYZw";
+			bu_log("rt_ct_box:  no luck, len=%d, axis=%c\n",
+				cutp->bn.bn_len, axis_str[axis] );
 		}
 		rt_ct_free( rtip, rhs );
 		rt_ct_free( rtip, lhs );
@@ -1341,6 +1337,8 @@ CONST union cutter *cutp;
 
 	count = cutp->bn.bn_len;
 
+	if( cutp->bn.bn_piecelen <= 0 )  return count;
+
 	for( i = cutp->bn.bn_piecelen-1; i >= 0; i-- )  {
 		count += cutp->bn.bn_piecelist[i].npieces;
 	}
@@ -1362,6 +1360,7 @@ struct rt_i		*rtip;
 register union cutter *cutp;
 int	depth;
 {
+ 	int oldlen;
 
 	if( cutp->cut_type == CUT_CUTNODE )  {
 		rt_ct_optim( rtip, cutp->cn.cn_l, depth+1 );
@@ -1373,18 +1372,19 @@ int	depth;
 		return;
 	}
 
-	if( rt_g.debug&DEBUG_CUTDETAIL )  bu_log("rt_ct_optim( cutp=x%x, depth=%d ) piececount=%d\n", cutp, depth, rt_ct_piececount(cutp));
+	oldlen = rt_ct_piececount(cutp);	/* save before rt_ct_box() */
+	if( rt_g.debug&DEBUG_CUTDETAIL )  bu_log("rt_ct_optim( cutp=x%x, depth=%d ) piececount=%d\n", cutp, depth, oldlen);
 
 	/*
 	 * BOXNODE (leaf)
 	 */
-	if( cutp->bn.bn_len <= 1 && cutp->bn.bn_piecelen <= 0 )
+	if( oldlen <= 1 )
 		return;		/* this box is already optimal */
 	if( depth > rtip->rti_cutdepth )  return;		/* too deep */
 
 	/* Attempt to subdivide finer than rtip->rti_cutlen near treetop */
 	/**** XXX This test can be improved ****/
-	if( depth >= 6 && cutp->bn.bn_len <= rtip->rti_cutlen )
+	if( depth >= 6 && oldlen <= rtip->rti_cutlen )
 		return;				/* Fine enough */
 #if NEW_WAY
  /* New way */
@@ -1399,7 +1399,6 @@ int	depth;
  /* Old (Release 3.7) way */
  {
  	int axis;
- 	int oldlen;
  	double where, offcenter;
 	/*
 	 *  In general, keep subdividing until things don't get any better.
@@ -1411,7 +1410,6 @@ int	depth;
 	axis = AXIS(depth);
 	if( cutp->bn.bn_max[axis]-cutp->bn.bn_min[axis] < 2.0 )
 		return;
-	oldlen = rt_ct_piececount(cutp);	/* save before rt_ct_box() */
  	if( rt_ct_old_assess( cutp, axis, &where, &offcenter ) <= 0 )
  		return;			/* not practical */
 	if( rt_ct_box( rtip, cutp, axis, where ) == 0 )  {
@@ -1421,7 +1419,14 @@ int	depth;
 			return;	/* hopeless */
 	}
 	if( rt_ct_piececount(cutp->cn.cn_l) >= oldlen &&
-	    rt_ct_piececount(cutp->cn.cn_r) >= oldlen )  return; /* hopeless */
+	    rt_ct_piececount(cutp->cn.cn_r) >= oldlen )  {
+/* 		if( rt_g.debug&DEBUG_CUTDETAIL ) */
+	    	bu_log("rt_ct_optim(cutp=x%x, depth=%d) oldlen=%d, lhs=%d, rhs=%d, hopeless\n",
+	    		cutp, depth, oldlen,
+			rt_ct_piececount(cutp->cn.cn_l),
+			rt_ct_piececount(cutp->cn.cn_r) );
+		return; /* hopeless */
+	}
  }
 #endif
 	/* Box node is now a cut node, recurse */
@@ -1492,6 +1497,7 @@ double	*offcenter_p;
 		struct soltab *stp = plp->stp;
 		int	j;
 
+		RT_CK_PIECELIST(plp);
 		for( j = plp->npieces-1; j >= 0; j-- )  {
 			int indx = plp->pieces[j];
 			struct bound_rpp *rpp = &stp->st_piece_rpps[indx];
@@ -1979,6 +1985,8 @@ int			depth;
 		if( rtip->rti_cut_maxdepth < depth )
 			rtip->rti_cut_maxdepth = depth;
 		BU_HIST_TALLY( &rtip->rti_hist_cellsize, len );
+		len = rt_ct_piececount( cutp ) - len;
+		BU_HIST_TALLY( &rtip->rti_hist_cell_pieces, len );
 		BU_HIST_TALLY( &rtip->rti_hist_cutdepth, depth );
 		return;
 	default:
@@ -2049,6 +2057,8 @@ CONST char		*str;
 		rtip->rti_ncut_by_type[CUT_BOXNODE] );
 	bu_hist_pr( &rtip->rti_hist_cellsize,
 		    "cut_tree: Number of solids per leaf cell");
+	bu_hist_pr( &rtip->rti_hist_cell_pieces,
+		    "cut_tree: Number of solid pieces per leaf cell");
 	bu_hist_pr( &rtip->rti_hist_cutdepth,
 		    "cut_tree: Depth (height)");
 
