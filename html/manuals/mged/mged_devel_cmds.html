@@ -1,0 +1,600 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+
+<HEAD>
+<TITLE>MGED Developer Commands</Title>
+</HEAD>
+
+<BODY BGCOLOR="#E0D8c8" TEXT="#000000">
+<CENTER><H1>MGED Developer Commands</H1></CENTER>
+
+<DT><a NAME="aip"><B>aip</B> [<I>f|b</I>]</DT>
+
+<DD> The ``aip'' command advances the <a href="mged_cmds.html#ill">illumination</a> pointer when
+<I>mged</I> is in the <a href="mged_cmds.html#ill">solid illuminate</a> state or the
+<a href="mged_cmds.html#ill">object illuminate</a> state. In either of the <I>illuminate</I>
+states, a single primitive solid is highlighted at one time, and the path to that solid
+is displayed. Moving the mouse vertically in the <I>mged</I> display causes different
+solids to be highlighted and their paths to be displayed. The <I>aip</I> command causes the next solid in
+the list to be highlighted (if used with no arguments or the <I>f</I> argument), or
+it causes the previous solid in the list to be highlighted (if used with the <I>b</I>
+argument). Once the desired solid is highlighted, it is selected by clicking the middle
+mouse button or by using the <a href="mged_cmds.html#M">M</a> command.
+     If <I>mged</I> is in the <a href="mged_cmds.html#ill">object path</a> state, the place
+     along the path where the edit is to take place will advance.
+     Once the desired path position is displayed, it is selected by
+     clicking the middle mouse button or by using the
+     <a href="mged_cmds.html#M">M</a> command.
+     This command was designed to be used within a Tcl script.
+
+     <DL>
+       <DT><big>Examples:</big></DT>
+       <DD>mged> <b><a href="mged_cmds.html#press">press</a> sill</b><br> -- enter solid illuminate mode
+	    <br>mged> <b>aip</b><br> -- hightlight the next solid
+	    <br>mged> <b>aip b</b><br> -- highlight the previous solid
+	    <br>mged> <b><a href="mged_cmds.html#M">M</a> 1 0 0</b><br> -- select the highlighted solid
+       </DD>
+     </DL>
+</DD>
+<HR>
+
+<DT><a NAME="cmd_close"><B>cmd_close</B> <I>id</I></DT>
+<DD>This command releases <I>id</I>'s internal data structures.
+     The parameter, <I>id</I>, refers to a command window.
+
+     <DL>
+       <DT><big>Examples:</big></DT>
+       <DD>mged> <b>cmd_close my_id</b>
+	    <br> -- closes the command window <I>my_id</I>
+       </DD>
+     </DL>
+</DD>
+<HR>
+
+<DT><a NAME="cmd_get"><B>cmd_get</B></DT>
+<DD>This command returns information about the current command
+     window. More specifically, it returns the following:
+     <UL>
+       <LI>the display manager associated with the current command window
+       <LI>the display manager that is sharing its view state with the above display manager
+       <LI>the id of the command window
+       <LI>a list of command window ids associated with the current command window
+	    (Note: a command window is considered to be associated with another
+	    command window if each is being tied to some
+	    display manager and these display managers are sharing their
+	    view state.)
+     </UL>
+     This command was designed to be used within a Tcl script.
+     <DL>
+       <DT><big>Examples:</big></DT>
+       <DD>mged> <b>cmd_get</b>
+	    <br><b>.my_window .their_window me {{them} {me} }</b>
+	    <br> -- the current command window is <I>me</I> and is
+	    <a href="#tie">tied</a> to <I>.my_window</I>.
+	    The display window <I>.their_window</I> is sharing its
+	    view state with <I>.my_window</I>.
+	    Also, <I>.their_window</I> is sharing its view state with the
+	    display manager window that is tied to <I>them</I>.
+       </DD>
+     </DL>
+</DD>
+<HR>
+
+<DT><a NAME="cmd_init"><B>cmd_init</B> <I>id</I></DT>
+<DD>This command is used to create the internal data structures
+     for a new command window.
+     This command was designed to be used within a Tcl script.
+
+     <DL>
+       <DT><big>Examples:</big></DT>
+       <DD>mged> <b>cmd_init my_id</b>
+	    <br> -- create another command window named <I>my_id</I>
+       </DD>
+     </DL>
+</DD>
+<HR>
+
+<DT><a NAME="cmd_set"><B>cmd_set</B> <I>id</I></DT>
+<DD>This command sets the current command window to <I>id</I>. If this
+     command window is associated with a display manager, that display
+     manager becomes the current display manager. This command was
+     designed to be used within a Tcl script.
+     <DL>
+       <DT><big>Examples:</big></DT>
+       <DD>mged> <b>cmd_set my_id</b>
+	    <br> -- <I>my_id</I> becomes the current command window
+       </DD>
+     </DL>
+</DD>
+<HR>
+     
+<DT><a NAME="get_comb"><B>get_comb</B> <I>comb_name</I></DT>
+
+<DD> The ``get_comb'' command returns a Tcl list of information about
+     <I>comb_name</I>. If <I>comb_name</I> is a region,
+     the following information is returned:
+     <center>
+     <br>
+     <I>NAME REGION REGION_ID AIRCODE GIFT_MATERIAL
+     <br>LOS COLOR SHADER INHERIT BOOLEAN_FORMULA</I>
+     </center>
+     <br>Otherwise, the following shorter list is returned: 
+     <center>
+     <br>
+     <I>NAME REGION COLOR SHADER INHERIT BOOLEAN_FORMULA</I>
+     </center>
+     <br>This command was designed to be used within a Tcl/Tk interface script.
+     
+     <DL>
+       <DT><big>Examples:</big></DT>
+       <DD>mged> <b>get_comb some_region</b>
+	    <br> some_region Yes 1000 0 1 100 {0 220 220} plastic No { u box
+	    <br> - ball
+	    <br> }
+	    <br>mged> <b>get_comb some_non_region</b>
+	    <br>some_non_region No {0 220 220} plastic No { u box2
+	    <br> - ball2
+	    <br> }
+       </DD>
+     </DL>
+</DD>
+<HR>
+
+<DT><a NAME="get_dm_list"><B>get_dm_list</B></DT>
+
+<DD> The ``get_dm_list'' returns a list of all display managers.
+</DD>
+<HR>
+
+<DT><a NAME="get_edit_solid"><B>get_edit_solid</B> [<I>-c</I>]</DT>
+
+<DD>Returns a list of keyword/value pairs for the solid currently being edited.
+The first two values are the name and type of the solid followed
+by keyword/value pairs. The solid type determines the keyword/value
+pairs that follow. The <I>-c</I> option returns values that
+have the matrices along the path applied. Note - these values are
+retrieved from MGED's internal copy (i.e. es_int) of the solid being edited.
+
+	<DL>
+	<DT><big>Examples:</big></DT>
+	<DD>mged> <b>get_edit_solid</b><br>
+	sph ell V {0 0 0} A {500 0 0} B {0 500 0} C {0 0 500}
+	</DD>
+	</DL>
+</DD>
+<HR>
+
+<DT><a NAME="get_more_default"><B>get_more_default</B></DT>
+
+<DD>Returns the current default input value.
+</DD>
+<HR>
+
+<DT><a NAME="grid2model_lu"><B>grid2model_lu</B> <I>gx gy</I></DT>
+
+<DD>Given a point in grid coordinates (local units),
+convert it to model coordinates (local units).
+</DD>
+<HR>
+
+<DT><a NAME="grid2view_lu"><B>grid2view_lu</B> <I>gx gy</I></DT>
+
+<DD>Given a point in grid coordinates (local units),
+convert it to view coordinates (local units).
+</DD>
+<HR>
+
+<DT><a NAME="gui_destroy"><B>gui_destroy</B> <I>id</I></DT>
+
+<DD>Destroy the GUI (Graphical User Interface) represented by <I>id</I>.
+</DD>
+<HR>
+
+<DT><a NAME="hist_add"><B>hist_add</B> [<I>command</I>]</DT>
+
+<DD> The ``hist_add'' command adds <I>command</I> to the <I>history</I>
+list of commands executed during the current <I>mged</I> session without actually executing it.
+If <I>command</I> is more than one word, it must be surrounded by ``{'' and ``}''.
+
+	<DL>
+	<DT><big>Examples:</big></DT>
+	<DD>mged> <b>hist_add {ae 35 25}</b><br>
+		-- add the command ``ae 35 25'' to the history list without actually executing it.
+	</DD>
+	</DL>
+</DD>
+<HR>
+
+<DT><a NAME="hist_next"><B>hist_next</B></DT>
+
+<DD> The ``hist_next'' command returns the next command in the command history list.
+This command is used in the implementation of the command line editing available in <I>mged</I>.
+
+	<DL>
+	<DT><big>Examples:</big></DT>
+	<DD>mged> <b>hist_next</b><br>
+		-- return the next command in the command history list.
+	</DD>
+	</DL>
+</DD>
+<HR>
+
+<DT><a NAME="hist_prev"><B>hist_prev</B></DT>
+
+<DD> The ``hist_prev'' command returns the previous command in the command history list.
+This command is used in the implimentation of the command line editing available in <I>mged</I>.
+
+	<DL>
+	<DT><big>Examples:</big></DT>
+	<DD>mged> <b>hist_prev</b><br>
+		-- return the previous command in the command history list.
+	</DD>
+	</DL>
+</DD>
+<HR>
+
+<DT><a NAME="jcs"><B>jcs</B> <I>id</I></DT>
+
+<DD> The ``jcs'' command is a tcl script that takes care of setting up the
+     Tcl/Tk interface windows associated with <I>id</I> (i.e. windows created
+     with <a href="mged_cmds.html#gui">gui</a>) to join the collaborative session.
+
+     <DL>
+       <DT><big>Examples:</big></DT>
+       <DD>mged> <b>jcs its_me</b>
+	    <br> -- its_me joined the collaborative session
+       </DD>
+     </DL>
+</DD>
+<HR>
+
+<DT><a NAME="make_name"><B>make_name</B> <I>template</I></DT>
+
+<DD>Make an object name not occuring in the database.
+</DD>
+<HR>
+
+<DT><a NAME="mged_update"><B>mged_update</B></DT>
+
+<DD>The ``mged_update'' command refreshes the <I>mged</I> display. This is used
+internally in <I>mged</I>. It may be useful in Tcl scripts to get the <I>mged</I>
+display to update.
+
+	<DL>
+	<DT><big>Examples:</big></DT>
+	<DD>mged> <b>mged_update</b><br>
+		-- update the <I>mged</I> display
+	</DD>
+	</DL>
+</DD>
+<HR>
+
+<DT><a NAME="mmenu_get"><B>mmenu_get</B> [<I>i</I>]</DT>
+
+<DD>If <I>i</I> is not specified, then return all three
+of MGED's internal menus. Otherwise return the <I>i'th</I> menu.
+	<DL>
+	<DT><big>Examples:</big></DT>
+	<DD>mged> <b>mmenu_get</b><br>
+		-- return all internal menus
+	<DD>mged> <b>mmenu_get 2</b><br>
+		-- return the 2nd internal menu
+	</DD>
+	</DL>
+</DD>
+<HR>
+
+<DT><a NAME="mmenu_set"><B>mmenu_set</B> <I>w id i menu</I></DT>
+
+<DD>This Tcl proc is used to set/install menu "i". 
+</DD>
+<HR>
+
+<DT><a NAME="model2grid_lu"><B>model2grid_lu</B> <I>mx my mz</I></DT>
+
+<DD>Convert a point in model coords (local units) to a point in
+grid coords (local units).
+</DD>
+<HR>
+
+<DT><a NAME="model2view"><B>model2view</B> <I>x y z</I></DT>
+
+<DD>The ``model2view'' command converts the supplied point (in model coordinates)
+to view coordinates. View coordinates are the coordinates in the viewing cube
+with values between -1.0 and +1.0 being inside the viewing cube.
+
+	<DL>
+	<DT><big>Examples:</big></DT>
+	<DD>mged> <b>model2view 10 20 30</b><br>
+		-- display the view coordinates that correspond to the point (10 20 30)
+		in model space.
+	</DD>
+	</DL>
+</DD>
+<HR>
+
+<DT><a NAME="model2view_lu"><B>model2view_lu</B> <I>mx my mz</I></DT>
+
+<DD>Convert a point in model coordinates (local units) to a point
+in view coordinates (local units).
+</DD>
+<HR>
+
+<DT><a NAME="output_hook"><B>output_hook</B> [<I>hook_cmd</I>]</DT>
+
+<DD>Set up to have output from bu_log sent to <I>hook_cmd</I>.
+If <I>hook_cmd</I> is not specified, the output hook is deleted.
+</DD>
+<HR>
+
+<DT><a NAME="pcs"><B>pcs</B></DT>
+
+<DD>The ``pcs'' command prints a list of the mged players (i.e. the id's
+     associated with the Tcl/Tk interface windows created with
+     <a href="mged_cmds.html#gui">gui</a>)
+     taking part in the collaborative session.
+
+     <DL>
+       <DT><big>Examples:</big></DT>
+       <DD>mged> <b>pcs
+	    <br>lisa joe mike sue</b>
+	    <br> -- shows that lisa, joe, mike, and sue are part of the collaborative session
+       </DD>
+     </DL>
+</DD>
+<HR>
+
+<DT><a NAME="pmp"><B>pmp</B></DT>
+<DD>This command prints a list of the mged players (i.e. the id's
+     associated with the Tcl/Tk interface windows created with
+     <a href="mged_cmds.html#gui">gui</a>).
+
+     <DL>
+       <DT><big>Examples:</big></DT>
+       <DD>mged> <b>pmp
+	    <br>lisa joe mike sue larry moe curly</b>
+	    <br> -- shows the current mged players
+       </DD>
+     </DL>
+</DD>
+<HR>
+     
+<DT><a NAME="put_comb"><B>put_comb</B> <I>comb_name is_Region</I> [<I>id air gift los</I>] color shader inherit boolean_expr</I>
+
+<DD>The ``put_comb'' command defines the combination <I>comb_name</I>.
+     If <I>is_Region</I> is <I>Yes</I>, then
+     <I>id, air, gift</I> and <I>los</I> must be specified. If <I>is_Region</I>
+     is <I>No</I>, then <I>id, air, gift</I> and <I>los</I> must not be
+     specified. This command was designed to be used from within a script.
+
+     <DL>
+       <DT><big>Examples:</big></DT>
+       <DD>mged> <b>put_comb not_region No \"0 220 220\" plastic No \"u box\\n- ball\"</b>
+	    <br> -- defines a combination called <I>not_region</I>
+	    <br>mged> <b>put_comb my_region Yes 1000 0 1 100 \"0 220 220\" plastic No \"u box\\n- ball\"</b>
+	    <br> -- defines a region called <I>my_region</I>
+       </DD>
+     </DL>
+</DD>
+<HR>
+
+<DT><a NAME="put_edit_solid"><B>put_edit_solid</B> <I>solid parameters</I></DT>
+
+<DD>Put <I>solid parameters</I> into the in-memory (i.e. es_int)
+solid currently being edited.
+</DD>
+<HR>
+
+<DT><a NAME="qcs"><B>qcs</B> <I>id</I></DT>
+
+<DD>The ``qcs'' command is used to quit the collaborative session.
+     <DL>
+       <DT><big>Examples:</big></DT>
+       <DD>mged> <b>qcs my_id</b>
+	    <br> -- <I>my_id</I> is removed from the collaborative session.
+       </DD>
+     </DL>
+</DD>
+<HR>
+
+<DT><a NAME="reset_edit_solid"><B>reset_edit_solid</B></DT>
+
+<DD>Reset the parameters for the currently edited solid (i.e. es_int).
+</DD>
+<HR>
+
+<DT><a NAME="rset"><B>rset</B> [<I>res_type</I> [<I>res</I> [<I>vals</I>]]]</DT>
+
+<DD>Provides a mechanism to get/set resource values.
+</DD>
+<HR>
+
+<DT><a NAME="set_more_default"><B>set_more_default</B> <I>more_default</I></DT>
+
+<DD>Set the current default input value.
+</DD>
+<HR>
+
+<DT><a NAME="share"><B>share</B> <I>resource dm1 dm2</I></DT>
+
+<DD>Set things up so that <I>dm1</I> (display manager 1) will share
+its <I>resource</I> with <I>dm2</I>.
+</DD>
+<HR>
+
+<DT><a NAME="solids_on_ray"><B>solids_on_ray</B> <I>h v</I></DT>
+
+<DD>List all displayed solids along a ray.
+</DD>
+<HR>
+
+<DT><a NAME="stuff_str"><B>stuff_str</B> <I>string</I></DT>
+
+<DD>Sends a string to MGED's tty while leaving the current
+command-line alone.
+</DD>
+<HR>
+
+<DT><a NAME="svb"><B>svb</B></DT>
+<DD>The ``svb'' command sets the view reference base variables.
+     These variables
+     are used internally by the <a href="mged_cmds.html#knob">knob</a> command to calculate
+     absolute rotation, translation, and scale.
+
+     <DL>
+       <DT><big>Examples:</big></DT>
+       <DD>mged> <b>svb</b>
+	    <br> -- set the view reference base variables with respect to the current view
+       </DD>
+     </DL>
+</DD>
+<HR>
+
+<DT><a NAME="tie"><B>tie</B> [[<I>-u</I>] <I>command_window</I> [<I>display_window</I>]]</DT>
+
+<DD> The ``tie'' command is used to create (or destroy with the <b>-u</b> option) an association between
+     a command window and a display window. When there exists such an
+     association, all commands entered
+     from the command window will be directed at the
+     display window. The <I>command_window</I> can be specified with <I>mged</I>
+     to refer to the tty MGED was started from, or an id associated with
+     a Tcl/Tk interface window <a href="mged_cmds.html#gui"> created with <I>gui</I> </a>.
+     The <I>display_window</I> is specified with its Tcl/Tk pathname.
+     If no parameters are given, a listing of the current
+     <I>command_window</I>/<I>display_window</I> associations is returned.
+     If only the <I>command_window</I> is given, the <I>command_window</I>/<I>display_window</I>
+     association is returned. If both parameters are given, the
+     <I>command_window</I>/<I>display_window</I> association is created.
+
+     <DL>
+       <DT><big>Examples:</big></DT>
+       <DD>mged> <b>tie my_id .my_window</b>
+	    <br> -- Create the association between my_id and .my_window
+	    <br>mged> <b>tie my_id
+	    <br>my_id ---> .my_window</b>
+	    <br> -- list the command_window/display_window association for my_id
+	    <br>mged> <b>tie
+	    <br>my_id ---> .my_window
+	    <br>mged ---></b>
+	    <br> -- list all of the command_window/display_window associations
+	    <br>
+       </DD>
+     </DL>
+</DD>
+<HR>
+	
+<DT><a NAME="view2grid_lu"><B>view2grid_lu <I>vx vy vz</I></B></DT>
+
+<DD>Given a point in view coordinates (local units),
+convert it to grid coordinates (local units).
+</DD>
+<HR>
+
+<DT><a NAME="view2model"><B>view2model</B> <I>x y z</I></DT>
+
+<DD>The ``view2model'' command converts the specified point (<I>x y z</I>) in
+view coordinates to model coordinates (mm). The part of view space displayed by <I>mged</I>
+is the cube -1.0 <= x,y,z <= +1.0.
+ 
+
+	<DL>
+	<DT><big>Examples:</big></DT>
+	<DD>mged> <b>view2model 1 1 0</b><br>
+		-- list the model coordinates of the upper right corner of the
+		<I>mged</I> display (in a plane at the center of the viewing cube).
+	</DD>
+	</DL>
+</DD>
+<HR>
+
+<DT><a NAME="view2model_lu"><B>view2model_lu</B> <I>vx vy vz</I></DT>
+
+<DD>Given a point in view coordinates (local units),
+convert it to model coordinates (local units).
+</DD>
+<HR>
+
+<DT><a NAME="view2model_vec"><B>view2model_vec</B> <I>vx vy vz</I></DT>
+
+<DD>Given a vector in view coordinates, convert it to model coordinates.
+</DD>
+<HR>
+
+<DT><a NAME="view_ring"><B>view_ring</B> <I>cmd</I> [<I>i</I>]</DT>
+
+<DD>Manipulates the view_ring for the current display manager.
+</DD>
+<HR>
+
+<DT><a NAME="viewget"><B>viewget</B> <I>parameter</I></DT>
+
+<DD>The ``viewget'' command displays various <I>mged</I> view parameters. The
+possible parameters are:
+<ul>
+	<li>aet -- list the <a href="brlcad_glossary.html#AZIMUTH">azimuth</a>,
+		<a href="brlcad_glossary.html#ELEVATION">elevation</a>,
+		and <a href="brlcad_glossary.html#TWIST">twist</a> for the current
+		viewing aspect.</li>
+	<li>center -- list the model coordinates (mm) of the center of the viewing cube.</li>
+	<li>size -- list the size (mm) of a side the current <I>mged</I> display.</li>
+	<li>eye -- list the model coordinates (mm) of the current eye point.</li>
+	<li>ypr -- list the yaw, pitch, and roll angles (degrees) of the current viewing aspect.</li>
+	<li>quat -- list the quaternion for the current viewing aspect.</li>
+</ul>
+ 
+
+	<DL>
+	<DT><big>Examples:</big></DT>
+	<DD>mged> <b>viewget center</b><br>
+		-- list the model coordinates of the center of the
+		<I>mged</I> viewing cube
+	</DD>
+	</DL>
+</DD>
+<HR>
+
+<DT><a NAME="viewset"><B>viewset</B> &lt;<I>parameter value</I>&gt</DT>
+
+<DD>The ``viewset'' command sets various <I>mged</I> view parameters.
+More than one parameter may be set with one command.
+The possible parameters are:
+<ul>
+	<li>aet -- set the <a href="brlcad_glossary.html#AZIMUTH">azimuth</a>,
+		<a href="brlcad_glossary.html#ELEVATION">elevation</a>,
+		and <a href="brlcad_glossary.html#TWIST">twist</a> for the current
+		viewing aspect.</li>
+	<li>center -- set the model coordinates (mm) of the center of the viewing cube.</li>
+	<li>size -- set the size (mm) of a side the current <I>mged</I> display.</li>
+	<li>eye -- set the model coordinates (mm) of the current eye point.</li>
+	<li>ypr -- set the yaw, pitch, and roll angles (degrees) of the current viewing aspect.</li>
+	<li>quat -- set the quaternion for the current viewing aspect.</li>
+</ul>
+ 
+
+	<DL>
+	<DT><big>Examples:</big></DT>
+	<DD>mged> <b>viewset center 1 2 3 size 100</b><br>
+		-- set the model coordinates of the center of the
+		<I>mged</I> viewing cube to the point (1 2 3) and set the size of the viewing cube to 100 mm
+	</DD>
+	</DL>
+</DD>
+<HR>
+
+<DT><a NAME="winset"><B>winset</B> [<I>pathName</I>]
+<DD>The ``winset'' command sets the current display manager to <I>pathName</I>.
+     If <I>pathName</I> is not given, the current display manager is returned.
+
+     <DL>
+       <DT><big>Examples:</big></DT>
+       <DD>mged> <b>winset .my_window</b>
+	    <br> -- .my_window is now the current display manager
+	    <br>mged> <b>winset</b>
+	    <br> -- returns the current display manager (i.e. .my_window)
+       </DD>
+     </DL>
+</DD>
+<HR>
+
+</BODY>
+</HTML>
