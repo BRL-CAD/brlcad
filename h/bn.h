@@ -498,47 +498,141 @@ extern CONST float bn_rand_table[BN_RAND_TABSIZE];
 /* wavelet.c */
 
 
-BU_EXTERN(void	bn_wlt_1d_double_decompose, (double *tbuf, double *buf, \
+BU_EXTERN(void	bn_wlt_haar_1d_double_decompose, (double *tbuf, double *buf, \
 			unsigned long dimen, unsigned long depth, \
 			unsigned long limit ));
-BU_EXTERN(void	bn_wlt_1d_double_reconstruct, (double *tbuf, double *buf, \
+BU_EXTERN(void	bn_wlt_haar_1d_double_reconstruct, (double *tbuf, double *buf, \
 			unsigned long dimen, unsigned long depth, \
 			unsigned long subimage_size, unsigned long limit ));
 
-BU_EXTERN(void	bn_wlt_1d_float_decompose, (float *tbuf, float *buf, \
+BU_EXTERN(void	bn_wlt_haar_1d_float_decompose, (float *tbuf, float *buf, \
 			unsigned long dimen, unsigned long depth, \
 			unsigned long limit ));
-BU_EXTERN(void	bn_wlt_1d_float_reconstruct, (float *tbuf, float *buf, \
+BU_EXTERN(void	bn_wlt_haar_1d_float_reconstruct, (float *tbuf, float *buf, \
 			unsigned long dimen, unsigned long depth, \
 			unsigned long subimage_size, unsigned long limit ));
 
-BU_EXTERN(void	bn_wlt_1d_char_decompose, (char *tbuf, char *buf, \
+BU_EXTERN(void	bn_wlt_haar_1d_char_decompose, (char *tbuf, char *buf, \
 			unsigned long dimen, unsigned long depth, \
 			unsigned long limit ));
-BU_EXTERN(void	bn_wlt_1d_char_reconstruct, (char *tbuf, char *buf, \
+BU_EXTERN(void	bn_wlt_haar_1d_char_reconstruct, (char *tbuf, char *buf, \
 			unsigned long dimen, unsigned long depth, \
 			unsigned long subimage_size, unsigned long limit ));
 
-BU_EXTERN(void	bn_wlt_1d_short_decompose, (short *tbuf, short *buf, \
+BU_EXTERN(void	bn_wlt_haar_1d_short_decompose, (short *tbuf, short *buf, \
 			unsigned long dimen, unsigned long depth, \
 			unsigned long limit ));
-BU_EXTERN(void	bn_wlt_1d_short_reconstruct, (short *tbuf, short *buf, \
+BU_EXTERN(void	bn_wlt_haar_1d_short_reconstruct, (short *tbuf, short *buf, \
 			unsigned long dimen, unsigned long depth, \
 			unsigned long subimage_size, unsigned long limit ));
 
-BU_EXTERN(void	bn_wlt_1d_int_decompose, (int *tbuf, int *buf, \
+BU_EXTERN(void	bn_wlt_haar_1d_int_decompose, (int *tbuf, int *buf, \
 			unsigned long dimen, unsigned long depth, \
 			unsigned long limit ));
-BU_EXTERN(void	bn_wlt_1d_int_reconstruct, (int *tbuf, int *buf, \
+BU_EXTERN(void	bn_wlt_haar_1d_int_reconstruct, (int *tbuf, int *buf, \
 			unsigned long dimen, unsigned long depth, \
 			unsigned long subimage_size, unsigned long limit ));
 
-BU_EXTERN(void	bn_wlt_1d_long_decompose, (long *tbuf, long *buf, \
+BU_EXTERN(void	bn_wlt_haar_1d_long_decompose, (long *tbuf, long *buf, \
 			unsigned long dimen, unsigned long depth, \
 			unsigned long limit ));
-BU_EXTERN(void	bn_wlt_1d_long_reconstruct, (long *tbuf, long *buf, \
+BU_EXTERN(void	bn_wlt_haar_1d_long_reconstruct, (long *tbuf, long *buf, \
 			unsigned long dimen, unsigned long depth, \
 			unsigned long subimage_size, unsigned long limit ));
+
+
+
+BU_EXTERN(void	bn_wlt_haar_2d_double_decompose, (double *tbuf, double *buf, \
+			unsigned long dimen, unsigned long depth, \
+			unsigned long limit ));
+BU_EXTERN(void	bn_wlt_haar_2d_double_reconstruct, (double *tbuf, double *buf, \
+			unsigned long dimen, unsigned long depth, \
+			unsigned long subimage_size, unsigned long limit ));
+
+BU_EXTERN(void	bn_wlt_haar_2d_float_decompose, (float *tbuf, float *buf, \
+			unsigned long dimen, unsigned long depth, \
+			unsigned long limit ));
+BU_EXTERN(void	bn_wlt_haar_2d_float_reconstruct, (float *tbuf, float *buf, \
+			unsigned long dimen, unsigned long depth, \
+			unsigned long subimage_size, unsigned long limit ));
+
+BU_EXTERN(void	bn_wlt_haar_2d_char_decompose, (char *tbuf, char *buf, \
+			unsigned long dimen, unsigned long depth, \
+			unsigned long limit ));
+BU_EXTERN(void	bn_wlt_haar_2d_char_reconstruct, (char *tbuf, char *buf, \
+			unsigned long dimen, unsigned long depth, \
+			unsigned long subimage_size, unsigned long limit ));
+
+BU_EXTERN(void	bn_wlt_haar_2d_short_decompose, (short *tbuf, short *buf, \
+			unsigned long dimen, unsigned long depth, \
+			unsigned long limit ));
+BU_EXTERN(void	bn_wlt_haar_2d_short_reconstruct, (short *tbuf, short *buf, \
+			unsigned long dimen, unsigned long depth, \
+			unsigned long subimage_size, unsigned long limit ));
+
+BU_EXTERN(void	bn_wlt_haar_2d_int_decompose, (int *tbuf, int *buf, \
+			unsigned long dimen, unsigned long depth, \
+			unsigned long limit ));
+BU_EXTERN(void	bn_wlt_haar_2d_int_reconstruct, (int *tbuf, int *buf, \
+			unsigned long dimen, unsigned long depth, \
+			unsigned long subimage_size, unsigned long limit ));
+
+BU_EXTERN(void	bn_wlt_haar_2d_long_decompose, (long *tbuf, long *buf, \
+			unsigned long dimen, unsigned long depth, \
+			unsigned long limit ));
+BU_EXTERN(void	bn_wlt_haar_2d_long_reconstruct, (long *tbuf, long *buf, \
+			unsigned long dimen, unsigned long depth, \
+			unsigned long subimage_size, unsigned long limit ));
+
+
+
+BU_EXTERN(void	bn_wlt_haar_2d_double_decompose2, (double *tbuf, double *buf, \
+			unsigned long dimen, unsigned long width, \
+			unsigned long height, unsigned long limit ));
+BU_EXTERN(void	bn_wlt_haar_2d_double_reconstruct2, (double *tbuf, double *buf, \
+			unsigned long dimen, unsigned long width, \
+			unsigned long height, unsigned long subimage_size, \
+                        unsigned long limit ));
+
+BU_EXTERN(void	bn_wlt_haar_2d_float_decompose2, (float *tbuf, float *buf, \
+			unsigned long dimen, unsigned long width, \
+			unsigned long height, unsigned long limit ));
+BU_EXTERN(void	bn_wlt_haar_2d_float_reconstruct2, (float *tbuf, float *buf, \
+			unsigned long dimen, unsigned long width, \
+			unsigned long height, unsigned long subimage_size, \
+                        unsigned long limit ));
+
+BU_EXTERN(void	bn_wlt_haar_2d_char_decompose2, (char *tbuf, char *buf, \
+			unsigned long dimen, unsigned long width, \
+			unsigned long height, unsigned long limit ));
+BU_EXTERN(void	bn_wlt_haar_2d_char_reconstruct2, (char *tbuf, char *buf, \
+			unsigned long dimen, unsigned long width, \
+			unsigned long height, unsigned long subimage_size, \
+                        unsigned long limit ));
+
+BU_EXTERN(void	bn_wlt_haar_2d_short_decompose2, (short *tbuf, short *buf, \
+			unsigned long dimen, unsigned long width, \
+			unsigned long height, unsigned long limit ));
+BU_EXTERN(void	bn_wlt_haar_2d_short_reconstruct2, (short *tbuf, short *buf, \
+			unsigned long dimen, unsigned long width, \
+			unsigned long height, unsigned long subimage_size, \
+		        unsigned long limit ));
+
+BU_EXTERN(void	bn_wlt_haar_2d_int_decompose2, (int *tbuf, int *buf, \
+			unsigned long dimen, unsigned long width, \
+			unsigned long height, unsigned long limit ));
+BU_EXTERN(void	bn_wlt_haar_2d_int_reconstruct2, (int *tbuf, int *buf, \
+			unsigned long dimen, unsigned long width, \
+			unsigned long height, unsigned long subimage_size, \
+                        unsigned long limit ));
+
+BU_EXTERN(void	bn_wlt_haar_2d_long_decompose2, (long *tbuf, long *buf, \
+			unsigned long dimen, unsigned long width, \
+			unsigned long height, unsigned long limit ));
+BU_EXTERN(void	bn_wlt_haar_2d_long_reconstruct2, (long *tbuf, long *buf, \
+			unsigned long dimen, unsigned long width, \
+			unsigned long height, unsigned long subimage_size, \
+			unsigned long limit ));
 
 
 #define CK_POW_2(dimen) { register unsigned long j; register int ok; \
