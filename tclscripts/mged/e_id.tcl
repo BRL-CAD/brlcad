@@ -12,12 +12,15 @@
 
 #
 #    Preliminary...
-#    If any application besides MGED tries to run this script,
-#    print a warning message
+#    Ensure that all commands used here but not defined herein
+#    are provided by the application
 #
-if {[info exists mged_display] == 0} {
-    set f_name [info script]
-    puts "Warning: script '$f_name' contains MGED(1)-specific macros"
+set extern_commands "whichid e"
+foreach cmd $extern_commands {
+    if {[expr [string compare [info command $cmd] $cmd] != 0]} {
+	puts stderr "[info script]: Application fails to provide command '$cmd'"
+	return
+    }
 }
 
 #
