@@ -78,6 +78,46 @@ int		line;
 }
 
 
+/*
+ *		B U _ S T R U C T P A R S E _ G E T _ T E R S E _ F O R M
+ *
+ *  Convert the "form" of a bu_structparse tabel into a TCL result string,
+ *  with parameter-name data-type pairs:
+ *	V {%f %f %f} A {%f %f %f}
+ *
+ *  A different routine should build a more general 'form', along the
+ *  lines of {V {%f %f %f} default {help}} {A {%f %f %f} default# {help}}
+ */
+void
+bu_structparse_get_terse_form(interp, sp)
+Tcl_Interp *interp;
+register struct bu_structparse *sp;
+{
+	struct bu_vls str;
+	int	i;
+
+	bu_vls_init(&str);
+
+	while (sp->sp_name != NULL) {
+		Tcl_AppendElement(interp, sp->sp_name);
+		bu_vls_trunc(&str, 0);
+		if (strcmp(sp->sp_fmt, "%c") == 0 ||
+		    strcmp(sp->sp_fmt, "%s") == 0) {
+			if (sp->sp_count > 1)
+				bu_vls_printf(&str, "%%%ds", sp->sp_count);
+			else
+				bu_vls_printf(&str, "%%c");
+		} else {
+			bu_vls_printf(&str, "%s", sp->sp_fmt);
+			for (i = 1; i < sp->sp_count; i++)
+				bu_vls_printf(&str, " %s", sp->sp_fmt);
+		}
+		Tcl_AppendElement(interp, bu_vls_addr(&str));
+		++sp;
+	}
+	bu_vls_free(&str);
+}
+
 
 /*
  *			B U _ S T R U C T P A R S E _ A R G V
