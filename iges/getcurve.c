@@ -35,7 +35,9 @@ int Getcurve( curve , curv_pts )
 int curve;
 struct ptlist **curv_pts;
 {
-	int type,npts,i,j;
+	int type;
+	int npts = 0;
+	int i,j;
 	double pi;
 	struct ptlist *ptr,*prev;
 

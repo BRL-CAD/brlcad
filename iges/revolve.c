@@ -71,7 +71,7 @@ int entityno;
 	int		oldarraylen;		/* number of elements in "dir" array before realloc */
 	fastf_t		hmax,hmin;		/* Max and Min distances along axis of rotation */
 	fastf_t		rmax;			/* Max radius */
-	int		cutop;			/* Operator for cutting solid */
+	int		cutop = Intersect;	/* Operator for cutting solid */
 	char		cutname[NAMELEN];	/* Name for cutting solid */
 	struct subtracts *subp;
 	char		*ch;
@@ -167,6 +167,7 @@ int entityno;
 			prev = trcptr;
 			trcptr = trcptr->next;
 		}
+		else  prev = NULL;
 		trcptr->next = NULL;
 		trcptr->prev = prev;
 		trcptr->op = 0;
@@ -338,8 +339,10 @@ int entityno;
 			theta = (-2.0*PI*(1.0-fract));
 			cutop = Subtract;
 		}
-		else if( fract == 0.5 )
+		else
 		{
+			/* XXX fract == 0.5, a dangerous comparison (roundoff) */
+			theta = PI;
 			cutop = Intersect;
 			/* Construct vertices for cutting solid */
 			VJOIN2( pts[0] , pt , hmin , adir , rmax , startdir );
@@ -382,7 +385,7 @@ int entityno;
 		}
 
 		/* Make the BRLCAD solid */
-		if( mk_arb8( fdout , cutname , pts ) < 0 )  {
+		if( mk_arb8( fdout , cutname , (CONST point_t *)pts ) < 0 )  {
 			printf( "Unable to write ARB8 for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
 			return( 0 );
