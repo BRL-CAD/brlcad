@@ -9,8 +9,9 @@
  * a channel to param percent of its orignal value (limited by 0-255)
  *
  *  entry:
- *	-i	integer max value
- *	-p	percentage of fade.
+ *	-m	integer max value
+ *	-f	fraction to fade
+ *	-p	percentage of fade (fraction = percentage/100)
  *	file	a pixture file.
  *	<stdin>	a pixture file if file is not given.
  *
@@ -18,7 +19,7 @@
  *	<stdout>	the faded pixture.
  *
  *  Calls:
- *	none.
+ *	get_args
  *
  *  Method:
  *	straight-forward.
@@ -34,75 +35,92 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 #include "../rt/mathtab.h"
 
-main(argc,argv)
+extern int	getopt();
+extern char	*optarg;
+extern int	optind;
+
+int	max = 255;
+double	multiplier = 1.0;
+FILE	*inp;
+
+static char usage[] = "\
+Usage: pixfade [-m max] [-p percent] [-f fraction] [pix-file]\n";
+
+get_args( argc, argv )
+register char **argv;
+{
+	register int c;
+
+	while ( (c = getopt( argc, argv, "m:p:f:" )) != EOF )  {
+		switch( c )  {
+		case 'm':
+			max = atoi(optarg);
+			if ((max < 0) || (max > 255)) {
+				fprintf(stderr,"pixfade: max out of range");
+				exit(1);
+			}
+			break;
+		case 'p':
+			multiplier = atof(optarg) / 100.0;
+			if (multiplier < 0.0) {
+				fprintf(stderr,"pixfade: percent is negitive");
+				exit(1);
+			}
+			break;
+		case 'f':
+			multiplier = atof(optarg);
+			if (multiplier < 0.0) {
+				fprintf(stderr,"pixfade: fraction is negitive");
+				exit(1);
+			}
+			break;
+
+		default:		/* '?' */
+			return(0);
+		}
+	}
+
+	if( optind >= argc )  {
+		if( isatty(fileno(stdin)) )  {
+			fprintf(stderr,"pixfade: stdin is a tty\n");
+			return(0);
+		}
+		inp = stdin;
+	} else {
+		if( (inp = fopen(argv[optind], "r")) == NULL )  {
+			(void)fprintf( stderr,
+				"pixfade: cannot open \"%s\" for reading\n",
+				argv[optind] );
+			return(0);
+		}
+	}
+
+	if ( argc > ++optind )
+		(void)fprintf( stderr, "pixfade: excess argument(s) ignored\n" );
+
+	if( isatty(fileno(stdout)) )  {
+		fprintf(stderr,"pixfade: stdout is a tty\n");
+		return(0);
+	}
+
+	return(1);		/* OK */
+}
+
+main( argc, argv )
 int argc;
 char *argv[];
 {
-	FILE	*inp;
 	int	i;
-	int	max;
-	double	percent;
 	struct color_rec {
 		unsigned char red,green,blue;
 	} cur_color;
 
-	max = 255;
-	percent = 1.0;
-
-	inp = stdin;
-
-/*
- * if argc .... -i max = param
- * if argc .... -p percent = param
- * if argc .... "" inp = fopen(param)
- */
-	for (i = 1; i < argc; i++) {
-		if (!strcmp(argv[i],"-i")) {
-			if (++i >= argc) {
-				usage("max missing");
-				exit(1);
-			}
-			max = atoi(argv[i]);
-			if ((max < 0) || (max > 255)) {
-				usage("max out of range");
-				exit(1);
-			}
-		} else if (!strcmp(argv[i],"-p")) {
-			if (++i >= argc) {
-				usage("percent missing");
-				exit(1);
-			}
-			percent = atof(argv[i]) / 100.0;
-			if (percent < 0.0) {
-				usage("percent is negitive");
-				exit(1);
-			}
-		} else if (!strcmp(argv[i],"-f")) {
-			if (++i >= argc) {
-				usage("fraction missing");
-				exit(1);
-			}
-			percent = atof(argv[i]);
-			if (percent < 0.0) {
-				usage("fraction is negitive");
-				exit(1);
-			}
-		} else {
-			fclose(stdin);
-			inp = fopen(argv[i],"r");
-			if (inp == NULL) {
-				usage("bad file name?");
-				exit(1);
-			}
-		}
+	if ( !get_args( argc, argv ) )  {
+		(void)fputs(usage, stderr);
+		exit( 1 );
 	}
 
-	if( isatty(fileno(stdout)) )  {
-		usage("stdout is a tty");
-		exit(1);
-	}
-
-/* fprintf(stderr,"max = %d, percent = %f\n",max,percent); */
+/* fprintf(stderr,"pixfade: max = %d, multiplier = %f\n",max,multiplier); */
 
 
 	for(;;)  {
@@ -111,19 +129,19 @@ char *argv[];
 		if( fread(&cur_color,1,3,inp) != 3 )  break;
 		if( feof(inp) )  break;
 
-		t = cur_color.red * percent + rand_half();
+		t = cur_color.red * multiplier + rand_half();
 		if (t > max)
 			cur_color.red   = max;
 		else
 			cur_color.red = t;
 
-		t = cur_color.green * percent + rand_half();
+		t = cur_color.green * multiplier + rand_half();
 		if (t > max)
 			cur_color.green = max;
 		else
 			cur_color.green = t;
 
-		t = cur_color.blue * percent + rand_half();
+		t = cur_color.blue * multiplier + rand_half();
 		if (t > max)
 			cur_color.blue  = max;
 		else
@@ -131,12 +149,4 @@ char *argv[];
 
 		fwrite(&cur_color,1,3,stdout);
 	}
-}
-
-usage(s)
-char *s;
-{
-	fprintf(stderr,"pixfade: %s\n",s);
-	fprintf(stderr,"\
-Usage: pixfade [-i max] [-p percent] [-f fraction] [pix-file]\n");
 }
