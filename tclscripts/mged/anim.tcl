@@ -29,12 +29,21 @@
 proc sketch_init_main {} {
 	# global variable initialisations
 	uplevel #0 set mged_sketch_init_main 1
-	#hack
-	uplevel #0 set mged_sketch_anim_path "/m/cad/.anim.6d/"
-	#hack
-	uplevel #0 set mged_sketch_tab_path "/m/cad/.tab.6d/"
 	uplevel #0 set mged_sketch_temp1 "./_mged_sketch_temp1_"
 	uplevel #0 set mged_sketch_temp2 "./_mged_sketch_temp2_"
+
+	#note - change this variable in production version
+	set version "developement"
+	if { $version == "developement" } {
+		uplevel #0 {set mged_sketch_anim_path "/m/cad/.anim.6d/"}
+		uplevel #0 {set mged_sketch_tab_path "/m/cad/.tab.6d/"}
+	} else {
+		uplevel #0 {set mged_sketch_anim_path ""}
+		uplevel #0 {set mged_sketch_tab_path ""}
+	}
+
+	#variable shared between draw and table
+	uplevel #0 set mged_sketch_fps "30"
 
 	#allow button 2 to activate buttons
 	uplevel #0 { set mged_sketch_bindclasses {Button Radiobutton Checkbutton Menubutton}}
@@ -82,7 +91,7 @@ proc sketch_popup_main { {p .} } {
 	$root.b3.m0 add command -label "Articulated Track" -command "sketch_popup_track_anim $root"
 	button $root.b4 -text "COMBINE SCRIPTS" -command "sketch_popup_sort $root"
 	button $root.b5 -text "SHOW SCRIPT" -command "sketch_popup_preview $root"
-	button $root.b6 -text "QUIT ANIMATOR" -command "sketch_quit $root"
+	button $root.b6 -text "QUIT" -command "sketch_quit $root"
 
 	pack $root.b0 $root.b2 $root.b1 $root.b3 $root.b4 \
 		$root.b5 $root.b6 \
@@ -119,7 +128,6 @@ proc sketch_init_draw {} {
 	uplevel #0 {set mged_sketch_splname ""}
 	uplevel #0 {set mged_sketch_splprefix "spl_"}
 	uplevel #0 {set mged_sketch_color "255 255 0"}
-	uplevel #0 set mged_sketch_fps "10"
 	uplevel #0 set mged_sketch_defname "vdraw"
 	#dependencies
 	foreach dep {main} {
@@ -1646,6 +1654,9 @@ proc sketch_init_table {} {
 	uplevel #0 set mged_sketch_table_index -1
 	uplevel #0 set mged_sketch_table_prefix "_a_txt_"
 	uplevel #0 set mged_sketch_table_interp "quat"
+	uplevel #0 set mged_sketch_table_v0 "100%"
+	uplevel #0 set mged_sketch_table_v1 "100%"
+	uplevel #0 set mged_sketch_table_pcols "1,2,3"
 	#dependencies
 	foreach dep {main } {
 		if { [info globals mged_sketch_init_$dep] == "" } {
@@ -1766,10 +1777,13 @@ proc sketch_popup_table_create { p suffix label {mode table}} {
 }
 
 proc sketch_popup_table_time { w } {
+	global mged_sketch_table_v0 mged_sketch_table_v1 \
+		mged_sketch_table_pcols
+
 	set entries [list \
-		{"Start Speed:" "100%"} \
-		{"End Speed:" "100%"} \
-		{"Path Columns:" "1,2,3"} \
+		[list "Start Speed:" $mged_sketch_table_v0] \
+		[list "End Speed:" $mged_sketch_table_v1] \
+		[list "Path Columns:" $mged_sketch_table_pcols] \
 		]
 	set buttons [list \
 		[list  "OK" "sketch_table_time $w \
@@ -1781,8 +1795,12 @@ proc sketch_popup_table_time { w } {
 }
 
 proc sketch_table_time {w v0 v1 cols } {
-	global mged_sketch_temp1 mged_sketch_temp2 mged_sketch_anim_path
-
+	global mged_sketch_temp1 mged_sketch_temp2 mged_sketch_anim_path \
+		mged_sketch_table_v0 mged_sketch_table_v1 mged_sketch_table_pcols
+	
+	set mged_sketch_table_v0 $v0
+	set mged_sketch_table_v1 $v1
+	set mged_sketch_table_pcols $cols
 	#global mged_sketch_table_lmode
 
 	if { ($v0 == "100%") || ($v0 == "") } {
@@ -2107,9 +2125,8 @@ proc sketch_popup_table_interp {w wbar}	{
 	entry ._sketch_col.fc.e0 -width 10
 	bind ._sketch_col.fc.e0 <Key-Return> {focus ._sketch_col.fd.e0}
 	label ._sketch_col.fd.l0 -text "Frames Per Second:" 
-	entry ._sketch_col.fd.e0 -width 10
+	entry ._sketch_col.fd.e0 -width 10 -textvariable mged_sketch_fps
 	bind ._sketch_col.fd.e0 <Key-Return> {._sketch_col.fa.b0 invoke}
-	._sketch_col.fd.e0 insert end "30"
 	pack ._sketch_col.fa.b2 ._sketch_col.fa.b0 ._sketch_col.fa.b1 \
 		._sketch_col.fe.mb0 ._sketch_col.fe.l0 \
 		-side left -expand yes -fill x
@@ -2216,10 +2233,10 @@ proc sketch_text_interpolate { w start stop fps slist } {
 	close $fd
 
 	set fd [open "| ${mged_sketch_tab_path}tabinterp -q < $mged_sketch_temp2 " r]
-	#set mged_sketch_table_lmode replace	
 	sketch_text_from_fd $w $fd all replace
 	#catch can be removed when -q option added to tabinterp
 	catch {close $fd}
+	catch {exec rm $mged_sketch_temp1 $mged_sketch_temp2}
 	return 0	
 }
 	
@@ -3448,6 +3465,7 @@ proc sketch_init_preview {} {
 	uplevel #0 {set mged_sketch_prev_size [viewget size]}
 	uplevel #0 {set mged_sketch_prev_center [viewget center]}
 	uplevel #0 {set mged_sketch_prev_quat [viewget quat]}
+	uplevel #0 {set mged_sketch_prev_fps "30"}
 	#dependencies
 	foreach dep {main} {
 		if { [info globals mged_sketch_init_$dep] == "" } {
@@ -3481,7 +3499,7 @@ proc sketch_popup_preview { p {filename ""} } {
 	frame $root.f1
 	label $root.f1.l0 -text "Max frames per second:"
 	entry $root.f1.e0 -width 5 \
-		-textvariable mged_sketch_fps
+		-textvariable mged_sketch_prev_fps
 	frame $root.f2
 	label $root.f2.l0 -text "Start frame: "
 	entry $root.f2.e0 -width 5 -textvariable mged_sketch_prevs
@@ -3522,7 +3540,7 @@ proc sketch_popup_preview { p {filename ""} } {
 
 #preview an animation script
 proc sketch_preview { filename } {
-	upvar #0 mged_sketch_fps fps
+	upvar #0 mged_sketch_prev_fps fps
 	upvar #0 mged_sketch_prevp arg0
 	global mged_sketch_prevs mged_sketch_preve mged_sketch_prev_size \
 		mged_sketch_prev_center mged_sketch_prev_quat
@@ -3585,8 +3603,8 @@ proc sketch_prev_restore {} {
 #-----------------------------------------------------------------
 proc sketch_quit { p } {
 	destroy $p
-	foreach var [info globals mged_sketch*] {
-		#uplevel #0 "unset $var"
+	foreach var [info globals mged_sketch_init*] {
+		uplevel #0 "unset $var"
 	}
 	kill -f _VDRW_sketch_hl_
 
@@ -4087,4 +4105,8 @@ proc sketch_text_from_table {tid {needcol -1}} {
 # Uncomment the following command in order to run the animator 
 # automatically when anim.tcl is sourced.
 
-#sketch_popup_main
+proc animmate {} {
+	sketch_popup_main
+}
+
+#animmate
