@@ -1271,8 +1271,10 @@ struct edgeuse *eu;
  *  If the two vertexuses reference distinct vertices, then two new
  *  edges are built to bridge the loops together.
  *  If the two vertexuses share the same vertex, then it is even easier.
+ *
+ *  Returns the replacement for vu2.
  */
-int
+struct vertexuse *
 nmg_join_2loops( vu1, vu2 )
 struct vertexuse	*vu1;
 struct vertexuse	*vu2;
@@ -1316,6 +1318,7 @@ struct vertexuse	*vu2;
 		second_new_eu = RT_LIST_PNEXT_CIRC( edgeuse, &eu1->l );
 		NMG_CK_EDGEUSE(second_new_eu);
 	}
+	vu2 = second_new_eu->vu_p;	/* replacement for original vu2 */
 
 	/*
 	 *  Gobble edges off of loop2, and insert them into loop1,
@@ -1338,6 +1341,7 @@ struct vertexuse	*vu2;
 
 	/* Kill entire (null) loop associated with lu2 */
 	nmg_klu(lu2);
+	return vu2;
 }
 
 /*			N M G _ S I M P L I F Y _ L O O P
@@ -1701,8 +1705,8 @@ char *s;
  *
  *	Divide a loop of edges between two vertexuses
  *
- *	we make a new loop between the two vertexes, and split it and
- *	the loop of the parametric vertexuses at the same time.
+ *	Make a new loop between the two vertexes, and split it and
+ *	the loop of the vertexuses at the same time.
  *
  *	Old Loop      New loop	Resulting loops
  *
@@ -1717,8 +1721,10 @@ char *s;
  *	    |	        |	    |/
  *	   v2		v2	    v2
  *
+ *  Returns the new loopuse pointer.
  */
-void nmg_cut_loop(vu1, vu2)
+struct loopuse *
+nmg_cut_loop(vu1, vu2)
 struct vertexuse *vu1, *vu2;
 {
 	struct loopuse *lu, *oldlu;
@@ -1846,6 +1852,7 @@ struct vertexuse *vu1, *vu2;
 
 	nmg_loop_g(oldlu->l_p);
 	nmg_loop_g(lu->l_p);
+	return lu;
 }
 
 /*
