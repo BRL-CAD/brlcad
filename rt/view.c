@@ -5,7 +5,7 @@
  * RT program proper.
  *
  *  Many varied and wonderous "lighting models" are implemented.
- *  The output format is a .PIX file
+ *  The output format is a .PIX file (a byte stream of R,G,B as u_char's).
  *
  *  The extern "lightmodel" selects which one is being used:
  *	0	model with color, based on Moss's LGT
@@ -48,17 +48,17 @@ char usage[] = "\
 Usage:  rt [options] model.g objects...\n\
 Options:\n\
  -f#		Grid size in pixels, default 512, max 1024\n\
- -aAz		Azimuth in degrees	(conflicts with -M)\n\
- -eElev		Elevation in degrees	(conflicts with -M)\n\
- -M		Read model2view matrix on stdin (conflicts with -a, -e)\n\
- -o model.pix	Specify output file, .pix format (default=framebuffer)\n\
+ -aAz		Azimuth in degrees\n\
+ -eElev		Elevation in degrees\n\
+ -M		Read model2view matrix on stdin\n\
+ -o model.pix	Specify output file, .pix format (default=fb)\n\
  -x#		Set debug flags\n\
  -p[#]		Perspective viewing, focal length scaling\n\
  -l#		Select lighting model\n\
  	0	Two lights, one at eye (default)\n\
-	1	One light, from eye\n\
+	1	One light, from eye (diffuse)\n\
 	2	Surface-normals as colors\n\
-	3	Three light debugging model\n\
+	3	Three light debugging model (diffuse)\n\
 ";
 
 extern int ikfd;		/* defined in iklib.o */
@@ -103,7 +103,10 @@ HIDDEN int	refract();
 double rand0to1()
 {
 	FAST fastf_t f;
-	f = ((double)random()) / (double)017777777777L;
+	/* On BSD, might want to use random() */
+	/* / (double)0x7FFFFFFFL */
+	f = ((double)rand()) *
+		0.00000000046566128752457969241057508271679984532147;
 	if( f > 1.0 || f < 0 )  {
 		rtlog("rand0to1 out of range\n");
 		return(0.42);
