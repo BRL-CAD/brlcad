@@ -63,7 +63,10 @@ register struct mater *mp;
 	col_item( buf );
 	(void)sprintf( buf, "%d,%d,%d", mp->mt_r, mp->mt_g, mp->mt_b);
 	col_item( buf );
-	col_item( mp->mt_handle );
+	if( mp->mt_handle != NULL )
+		col_item( mp->mt_handle );
+	else
+		col_item( "(none)" );
 	(void)sprintf( buf, "dm%d", mp->mt_dm_int );
 	col_item( buf );
 	col_eol();
