@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 11.3  1999/01/12  03:05:25  mike
+ * Recognize file suffixes for C++ code as well as C code.
+ *
  * Revision 11.2  1995/06/21  03:41:51  gwyn
  * Eliminated trailing blanks.
  * TempFile is now an array.
@@ -459,6 +462,14 @@ char	*fname;
 	inode.st_uid = getuid();
 	inode.st_gid = getgid();
 	exists = !stat(fname, &inode);
+	if( !exists )
+	{
+		/* Linux "stat" corrupts its args on failure */
+		inode.st_mode = Dfltmode;
+		inode.st_nlink = 1;
+		inode.st_uid = getuid();
+		inode.st_gid = getgid();
+	}
 	linked = (inode.st_nlink > 1);
 
 	if (IsReadOnly(curbuf) && exists) {
