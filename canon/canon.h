@@ -32,31 +32,39 @@ union ipu_prsc_param {
 	short	s[2];
 };
 
-
 extern int	ipu_debug;
+
 #ifdef __sgi
+#define IPU_FULL_LIB
 #include <dslib.h>
-extern int	ipu_not_ready(struct dsreq *dsp);
-extern char	*ipu_inquire(struct dsreq *dsp);
-extern int	ipu_remote(struct dsreq *dsp);
-extern void	ipu_create_file(struct dsreq *dsp,u_char id,u_char type,int width,int height,char clear);
-extern void	ipu_delete_file(struct dsreq *dsp, u_char id);
-extern u_char	*ipu_get_image(struct dsreq *dsp,char id,int sx,int sy,int w,int h);
-extern void	ipu_put_image(struct dsreq *dsp,char id,int w,int h,u_char *img);
-extern void	ipu_print_config(struct dsreq *dsp,char units,int divisor,u_char conv,u_char mosaic,u_char gamma,int tray);
-extern void	ipu_print_file(struct dsreq *dsp,char id,int copies,int wait,int sx,int sy,int sw,int sh,union ipu_prsc_param *param);
-extern char	*ipu_list_files(struct dsreq *dsp);
-extern int	ipu_stop(struct dsreq *dsp,int halt);
-extern void	ipu_scan_file(struct dsreq *dsp,char id,char wait,int sx,int sy,int w,int h,union ipu_prsc_param *param);
-extern void	ipu_scan_config(struct dsreq *dsp,char units,int divisor,char conv,char field,short rotation);
 #endif
-#if __stdc__
-extern int	parse_args(int ac, char *av[]);
-extern void	usage(char *s);
+
+
+#if __STDC__
+#	define	FUNC_EXTERN(type_and_name,args)	extern type_and_name args
 #else
-extern int	parse_args();
-extern void	usage();
+#	define	FUNC_EXTERN(type_and_name,args)	extern type_and_name()
 #endif
+
+#ifdef IPU_FULL_LIB
+FUNC_EXTERN(int ipu_not_ready, (struct dsreq *dsp));
+FUNC_EXTERN(char *ipu_inquire, (struct dsreq *dsp));
+FUNC_EXTERN(int ipu_remote, (struct dsreq *dsp));
+FUNC_EXTERN(void ipu_create_file, (struct dsreq *dsp,u_char id,u_char type,int width,int height,char clear));
+FUNC_EXTERN(void ipu_delete_file, (struct dsreq *dsp, u_char id));
+FUNC_EXTERN(u_char *ipu_get_image, (struct dsreq *dsp,char id,int sx,int sy,int w,int h));
+FUNC_EXTERN(void ipu_put_image, (struct dsreq *dsp,char id,int w,int h,u_char *img));
+FUNC_EXTERN(void ipu_print_config, (struct dsreq *dsp,char units,int divisor,u_char conv,u_char mosaic,u_char gamma,int tray));
+FUNC_EXTERN(void ipu_print_file, (struct dsreq *dsp,char id,int copies,int wait,int sx,int sy,int sw,int sh,union ipu_prsc_param *param));
+FUNC_EXTERN(char *ipu_list_files, (struct dsreq *dsp));
+FUNC_EXTERN(int ipu_stop, (struct dsreq *dsp,int halt));
+FUNC_EXTERN(void ipu_scan_file, (struct dsreq *dsp,char id,char wait,int sx,int sy,int w,int h,union ipu_prsc_param *param));
+FUNC_EXTERN(void ipu_scan_config, (struct dsreq *dsp,char units,int divisor,char conv,char field,short rotation));
+#endif
+
+FUNC_EXTERN(int parse_args, (int ac, char *av[]));
+FUNC_EXTERN(void usage, (char *s));
+
 extern char *progname;
 extern char *scsi_device;
 extern char gamma;
