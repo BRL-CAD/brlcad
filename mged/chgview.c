@@ -627,7 +627,10 @@ char	**argv;
 		FREE_SOLID( sp );
 		sp = nsp;
 	}
-	mged_freemem();
+
+	/* Keeping freelists improves performance.  When debugging, give mem back */
+	if( rt_g.debug )  mged_freemem();
+
 	(void)chg_state( state, state, "zap" );
 	dmaflag = 1;
 
