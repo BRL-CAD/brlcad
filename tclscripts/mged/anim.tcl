@@ -2694,6 +2694,11 @@ proc sketch_objanim { objorview } {
 	upvar #0 mged_sketch_objsource src
 	upvar #0 mged_sketch_objncols ncols
 
+	# make sure animated object exists (this will create an error if it doesn't)
+	set tmp 0
+	set tmp [db get $mged_sketch_objname]
+	if { $tmp == 0 } return
+
 	#find the source
 	switch $ltype {
 		"curve:" { 
@@ -3241,11 +3246,23 @@ proc sketch_do_track { } {
 		set wcmd ""
 	} else {
 		set wcmd "-w $wname"
+		# make sure wheel names exist
+		set tmp 0
+		for { set count 0 } { $count < $numwheels } { incr count } {
+			set tmp [db get $wname$count]
+			if { $tmp == 0 } return
+		}
 	}
 	if { ($pname == "") || ($numpads == "") } {
 		set pcmd ""
 	} else {
 		set pcmd "-p $numpads $pname"
+		# make sure the pad names exist
+		set tmp 0
+		for { set count 0 } { $count < $numpads } { incr count } {
+			set tmp [db get $pname$count]
+			if { $tmp == 0 } return
+		}
 	}
 	if { ($pcmd == "") && ($wcmd == "") } {
 		tk_dialog ._sketch_msg "AnimMate Track animation error" \
