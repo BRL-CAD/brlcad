@@ -45,6 +45,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"
+#include "db.h"
 
 int
 mk_ebm( fp, name, file, xdim, ydim, tallness, mat )
@@ -54,7 +55,7 @@ char		*file;		/* name of file containing bitmap */
 int		xdim;		/* X dimansion of file (w cells) */
 int		ydim;		/* Y dimension of file (n cells) */
 fastf_t		tallness;	/* Z extrusion height (mm) */
-mat_t		mat;		/* convert local coords to model space */
+CONST matp_t	mat;		/* convert local coords to model space */
 {
 	struct rt_ebm_internal	ebm;
 
@@ -79,7 +80,7 @@ int		zdim;		/* Z dimension of file (d cells) */
 int		lo;		/* Low threshold */
 int		hi;		/* High threshold */
 vect_t		cellsize;	/* ideal coords: size of each cell */
-mat_t		mat;		/* convert local coords to model space */
+CONST matp_t	mat;		/* convert local coords to model space */
 {
 	struct rt_vol_internal	vol;
 
@@ -94,4 +95,31 @@ mat_t		mat;		/* convert local coords to model space */
 	mat_copy( vol.mat , mat );
 
 	return( mk_export_fwrite( fp, name, (genptr_t)&vol, ID_VOL ) );
+}
+
+/*
+ *			M K _ S T R S O L
+ *
+ *  This routine is not intended for general use.
+ *  It exists primarily to support the converter ASC2G and to
+ *  permit the rapid development of new string solids.
+ */
+int
+mk_strsol( fp, name, string_solid, string_arg )
+FILE		*fp;
+CONST char	*name;
+CONST char	*string_solid;
+CONST char	*string_arg;
+{
+	union record	rec[DB_SS_NGRAN];
+
+	bzero( (char *)rec, sizeof(rec) );
+	rec[0].ss.ss_id = DBID_STRSOL;
+	NAMEMOVE( name, rec[0].ss.ss_name );
+	strncpy( rec[0].ss.ss_keyword, string_solid, sizeof(rec[0].ss.ss_keyword)-1 );
+	strncpy( rec[0].ss.ss_args, string_arg, DB_SS_LEN-1 );
+
+	if( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1 )
+		return -1;
+	return 0;
 }
