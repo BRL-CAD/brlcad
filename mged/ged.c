@@ -337,7 +337,7 @@ char **argv;
 
 	/* If this is an argv[] invocation, do it now */
 	if( argc > 2 )  {
-		mged_cmd( argc-2, argv+2 );
+		mged_cmd( argc-2, argv+2, (struct funtab *)NULL );
 		f_quit(0, NULL);
 		/* NOTREACHED */
 	}
