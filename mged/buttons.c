@@ -372,6 +372,7 @@ static void be_accept()  {
 			sp->s_iflag = DOWN;
 
 		illump = SOLID_NULL;
+		dmp->dmr_colorchange();
 		(void)chg_state( ST_S_EDIT, ST_VIEW, "Edit Accept" );
 		dmaflag = 1;		/* show completion */
 	}  else if( state == ST_O_EDIT )  {
@@ -415,6 +416,7 @@ static void be_accept()  {
 		mat_idn( modelchanges );
 
 		illump = SOLID_NULL;
+		dmp->dmr_colorchange();
 		(void)chg_state( ST_O_EDIT, ST_VIEW, "Edit Accept" );
 		dmaflag = 1;		/* show completion */
 	} else {
@@ -471,6 +473,7 @@ static void be_reject()  {
 	/* Clear illumination flags */
 	FOR_ALL_SOLIDS( sp )
 		sp->s_iflag = DOWN;
+	dmp->dmr_colorchange();
 	(void)chg_state( state, ST_VIEW, "Edit Reject" );
 }
 
