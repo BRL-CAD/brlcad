@@ -109,7 +109,7 @@ top:
 		goto top;
 
 	default:
-		rt_log("can't get model for magic=x%x (%s)\n",
+		rt_log("nmg_find_model() can't get model for magic=x%x (%s)\n",
 			*magic_p, rt_identify_magic( *magic_p ) );
 		rt_bomb("nmg_find_model() failure\n");
 	}
@@ -244,7 +244,7 @@ long *upptr;		/* pointer to parent struct */
 	if (*upptr != NMG_SHELL_MAGIC &&
 	    *upptr != NMG_LOOPUSE_MAGIC &&
 	    *upptr != NMG_EDGEUSE_MAGIC) {
-		rt_log("in %s at %d magic not shell, loop, or edge (%d)\n",
+		rt_log("nmg_mvu() in %s at %d magic not shell, loop, or edge (%d)\n",
 		    __FILE__, __LINE__, *upptr);
 		rt_bomb("nmg_mvu() Cannot build vertexuse without parent");
 	}
@@ -393,7 +393,7 @@ struct vertexuse *vu;
 	NMG_CK_VERTEXUSE(vu);
 	if (*vu->up.magic_p != NMG_SHELL_MAGIC &&
 	    *vu->up.magic_p != NMG_LOOPUSE_MAGIC) {
-		rt_log("Error in %s at %d vertexuse not for shell/loop\n", 
+		rt_log("nmg_meonvu() Error in %s at %d vertexuse not for shell/loop\n", 
 		    __FILE__, __LINE__);
 		rt_bomb("nmg_meonvu() cannot make edge, vertexuse not sole element of object");
 	}
@@ -563,7 +563,7 @@ struct shell *s;
 		/* dequeue the first edgeuse */
 		RT_LIST_DEQUEUE( &p1->l );
 		if( RT_LIST_IS_EMPTY( &s->eu_hd ) )  {
-			rt_log("in %s at %d edgeuse mate not in this shell\n",
+			rt_log("nmg_ml() in %s at %d edgeuse mate not in this shell\n",
 			    __FILE__, __LINE__);
 			rt_bomb("nmg_ml");
 		}
@@ -592,9 +592,9 @@ struct shell *s;
 	/*	printf("p2v %x feu %x\n", p2->vu_p->v_p, feu->vu_p->v_p); */
 
 	if( p2 && p2->vu_p->v_p != feu->vu_p->v_p) {
-		rt_log("Edge(use)s do not form proper loop!\n");
+		rt_log("nmg_ml() Edge(use)s do not form proper loop!\n");
 		nmg_pr_s(s, (char *)NULL);
-		rt_log("Edge(use)s do not form proper loop!\n");
+		rt_log("nmg_ml() Edge(use)s do not form proper loop!\n");
 		rt_bomb("nmg_ml\n");
 	}
 
@@ -794,7 +794,7 @@ struct loopuse *lu1;
 		RT_LIST_DEQUEUE( &lu2->l );
 	}
 	else {
-		rt_log("in %s at %d Unknown parent for loopuse\n", __FILE__,
+		rt_log("nmg_klu() in %s at %d Unknown parent for loopuse\n", __FILE__,
 		    __LINE__);
 		rt_bomb("nmg_klu");
 	}
@@ -943,8 +943,8 @@ register struct edgeuse *eu1;
 
 		if( lu1 == lu2 )  rt_bomb("nmg_keu() edgeuses on same loop\n");
 		if (lu1->lumate_p != lu2 || lu1 != lu2->lumate_p ) {
-			rt_log("lu1=x%x, mate=x%x\n", lu1, lu1->lumate_p);
-			rt_log("lu2=x%x, mate=x%x\n", lu2, lu2->lumate_p);
+			rt_log("nmg_keu() lu1=x%x, mate=x%x\n", lu1, lu1->lumate_p);
+			rt_log("nmg_keu() lu2=x%x, mate=x%x\n", lu2, lu2->lumate_p);
 		    	rt_bomb("nmg_keu() edgeuse mates don't belong to loopuse mates\n");
 		}
 
@@ -1399,7 +1399,7 @@ struct shell *s;
 	if( RT_LIST_IS_EMPTY( &s->fu_hd ) &&
 	    RT_LIST_IS_EMPTY( &s->lu_hd ) &&
 	    RT_LIST_IS_EMPTY( &s->eu_hd ) && !s->vu_p )  {
-		rt_log("At %d in %s shell has no children\n",
+		rt_log("nmg_shell_a() at %d in %s. Shell has no children\n",
 		    __LINE__, __FILE__);
 		rt_bomb("nmg_shell_a\n");
 	}
@@ -1570,7 +1570,7 @@ struct loopuse *lu1;
 	NMG_CK_LOOPUSE(lu1);
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-		rt_log("demoting loop\n");
+		rt_log("nmg_demote_lu(x%x)\n", lu1);
 
 	if (RT_LIST_FIRST_MAGIC(&lu1->down_hd) == NMG_VERTEXUSE_MAGIC) {
 		if (rt_g.NMG_debug) {
@@ -1611,7 +1611,7 @@ struct loopuse *lu1;
 	}
 
 	if (RT_LIST_NON_EMPTY(&lu1->lumate_p->down_hd))
-		rt_bomb("loopuse mates don't have same # of edges\n");
+		rt_bomb("nmg_demote_lu: loopuse mates don't have same # of edges\n");
 
 	nmg_klu(lu1);
 
