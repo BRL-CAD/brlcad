@@ -1,0 +1,18 @@
+/*
+ *			libtclcad/Cakefile
+ */
+
+#define SRCDIR	libtclcad
+#define PRODUCTS	libtclcad.ARCH_SUF
+#define	SRCSUFF	.c
+#define MANSECTION	3
+
+#define VERSION_VARIABLE	tcl_version
+#define LIBRARY_TITLE		"BRL-CAD specific routines for Tcl/Tk"
+
+#include "../Cakefile.defs"
+
+#define FILES	tkImgFmtPIX tclcad
+
+#include "../Cakefile.lib"
+#include "../Cakefile.rules"
