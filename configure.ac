@@ -962,6 +962,21 @@ if test "x$fno_common_flag_works" = "xno" ; then
 	LDFLAGS="$PRELDFLAGS"
 fi
 
+dnl check for -fPIC (libtcl needs it on altix)
+fPIC_flag="-fPIC"
+AC_MSG_CHECKING([if the compiler understands $fPIC_flag])
+fPIC_flag_works=yes
+PRECFLAGS="$CFLAGS"
+PRELDFLAGS="$LDFLAGS"
+CFLAGS="$CFLAGS $fPIC_flag"
+LDFLAGS="$LDFLAGS $fPIC_flag"
+AC_TRY_COMPILE( [], [], [], [fPIC_flag_works=no])
+AC_MSG_RESULT($fPIC_flag_works)
+if test "x$fPIC_flag_works" = "xno" ; then
+	CFLAGS="$PRECFLAGS"
+	LDFLAGS="$PRELDFLAGS"
+fi
+
 dnl check for -search_paths_first linker flag when making dylibs
 search_paths_first_flag="-Wl,-search_paths_first -mdynamic-no-pic"
 AC_MSG_CHECKING([if the compiler understands $search_paths_first_flag])
@@ -1077,7 +1092,7 @@ if test "x$use_optimized" != "xno" ; then
 	fi
 
 	dnl check for a slew of gcc optimizations that may or may not be available with -O3
-	extra_optimization_flag="-fno-common -ffast-math -fstrength-reduce -fexpensive-optimizations -fomit-frame-pointer -finline-functions"
+	extra_optimization_flag="-ffast-math -fstrength-reduce -fexpensive-optimizations -fomit-frame-pointer -finline-functions"
 	AC_MSG_CHECKING([if the compiler understands extra optimization flags])
 	extra_optimization_flag_works=yes
 	PRECFLAGS="$CFLAGS"
