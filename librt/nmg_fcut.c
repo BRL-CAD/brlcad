@@ -557,11 +557,11 @@ struct nmg_loop_stuff {
  */
 static int
 nmg_face_vu_compare( a, b )
-genptr_t	a;
-genptr_t	b;
+CONST genptr_t	a;
+CONST genptr_t	b;
 {
-	register struct nmg_vu_stuff	*va = (struct nmg_vu_stuff *)a;
-	register struct nmg_vu_stuff	*vb = (struct nmg_vu_stuff *)b;
+	register CONST struct nmg_vu_stuff *va = (CONST struct nmg_vu_stuff *)a;
+	register CONST struct nmg_vu_stuff *vb = (CONST struct nmg_vu_stuff *)b;
 
 	if( va->loop_index == vb->loop_index )  {
 		/* Sort from larger to smaller vu_angle */
