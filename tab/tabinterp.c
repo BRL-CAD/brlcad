@@ -462,7 +462,6 @@ go()
 
 	for( ch=0; ch < nchans; ch++ )  {
 		chp = &chan[ch];
-fprintf(stderr,"go: ch %d, len=%d\n", ch, chp->c_ilen);
 		if( chp->c_ilen <= 0 )
 			continue;
 
