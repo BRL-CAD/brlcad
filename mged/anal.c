@@ -62,6 +62,9 @@ f_analyze()
 	register struct directory *ndp;
 	mat_t new_mat;
 	register int i;
+	struct rt_vls	v;
+
+	RT_VLS_INIT(&v);
 
 	if( numargs == 1 ) {
 		/* use the solid being edited */
@@ -92,7 +95,8 @@ f_analyze()
 			MAT4X3VEC( &temp_rec.s.s_values[i*3], new_mat,
 					&es_rec.s.s_values[i*3] );
 		}
-		do_anal();
+		do_anal(&v);
+		fputs( rt_vls_addr(&v), stdout );
 		return;
 	}
 
@@ -125,39 +129,41 @@ f_analyze()
 		}
 
 		do_list( stdout, ndp, 1 );
-		do_anal();
+		do_anal(&v);
+		fputs( rt_vls_addr(&v), stdout );
 	}
 }
 
 
 /* Analyze solid in temp_rec */
 static void
-do_anal()
+do_anal(vp)
+struct rt_vls	*vp;
 {
 	switch( temp_rec.s.s_type ) {
 
 	case ARS:
-		ars_anal();
+		ars_anal(vp);
 		break;
 
 	case GENARB8:
-		arb_anal();
+		arb_anal(vp);
 		break;
 
 	case GENTGC:
-		tgc_anal();
+		tgc_anal(vp);
 		break;
 
 	case GENELL:
-		ell_anal();
+		ell_anal(vp);
 		break;
 
 	case TOR:
-		tor_anal();
+		tor_anal(vp);
 		break;
 
 	default:
-		(void)printf("Analyze: unknown solid type\n");
+		rt_vls_printf(vp,"Analyze: unknown solid type\n");
 		break;
 	}
 }
@@ -174,7 +180,8 @@ static int nedge[5][24] = {
 };
 
 static void
-arb_anal()
+arb_anal(vp)
+struct rt_vls	*vp;
 {
 	register int i;
 	static vect_t cpt;
@@ -196,18 +203,18 @@ arb_anal()
 	type -= 4;
 
 	/* analyze each face, use center point of arb for reference */
-	(void)printf("\n------------------------------------------------------------------------------\n");
-	(void)printf("| FACE |   ROT     FB  |        PLANE EQUATION            |   SURFACE AREA   |\n");
-	(void)printf("|------|---------------|----------------------------------|------------------|\n");
+	rt_vls_printf(vp,"\n------------------------------------------------------------------------------\n");
+	rt_vls_printf(vp,"| FACE |   ROT     FB  |        PLANE EQUATION            |   SURFACE AREA   |\n");
+	rt_vls_printf(vp,"|------|---------------|----------------------------------|------------------|\n");
 	arb_center( cpt, temp_rec.s.s_values, type+4 );
 	for(i=0; i<6; i++) 
-		anal_face( i, cpt  );
+		anal_face( vp, i, cpt  );
 
-	(void)printf("------------------------------------------------------------------------------\n");
+	rt_vls_printf(vp,"------------------------------------------------------------------------------\n");
 
 	/* analyze each edge */
-	(void)printf("    | EDGE     LEN   | EDGE     LEN   | EDGE     LEN   | EDGE     LEN   |\n");
-	(void)printf("    |----------------|----------------|----------------|----------------|\n  ");
+	rt_vls_printf(vp,"    | EDGE     LEN   | EDGE     LEN   | EDGE     LEN   | EDGE     LEN   |\n");
+	rt_vls_printf(vp,"    |----------------|----------------|----------------|----------------|\n  ");
 
 	/* set up the records for arb4's and arb6's */
 	if( (type+4) == ARB4 ) {
@@ -217,12 +224,12 @@ arb_anal()
 		VMOVE(&temp_rec.s.s_values[15], &temp_rec.s.s_values[18]);
 	}
 	for(i=0; i<12; i++) {
-		anal_edge( i );
+		anal_edge( vp, i );
 		if( nedge[type][i*2] == -1 )
 			break;
 	}
 
-	(void)printf("  ---------------------------------------------------------------------\n");
+	rt_vls_printf(vp,"  ---------------------------------------------------------------------\n");
 
 	/* put records back */
 	if( (type+4) == ARB4 ) {
@@ -235,11 +242,11 @@ arb_anal()
 	for(i=0; i<6; i++)
 		find_vol( i );
 
-	(void)printf("      | Volume = %18.3f    Surface Area = %15.3f |\n",
+	rt_vls_printf(vp,"      | Volume = %18.3f    Surface Area = %15.3f |\n",
 			tot_vol*base2local*base2local*base2local,
 			tot_area*base2local*base2local);
-	(void)printf("      |          %18.3f gal                               |\n",tot_vol/3787878.79);
-	(void)printf("      -----------------------------------------------------------------\n");
+	rt_vls_printf(vp,"      |          %18.3f gal                               |\n",tot_vol/3787878.79);
+	rt_vls_printf(vp,"      -----------------------------------------------------------------\n");
 
 	return;
 }
@@ -266,7 +273,8 @@ static int farb4[6][4] = {
 /* 	Analyzes an arb face
  */
 static void
-anal_face( face, cpt )
+anal_face( vp, face, cpt )
+struct rt_vls	*vp;
 int face;
 vect_t cpt;				/* reference center point */
 {
@@ -286,7 +294,7 @@ vect_t cpt;				/* reference center point */
 
 	/* find plane eqn for this face */
 	if( planeqn(6, a, b, c, &temp_rec.s) ) {
-		(void)printf("| %d%d%d%d    ***NOT A PLANE***                                          |\n",
+		rt_vls_printf(vp,"| %d%d%d%d    ***NOT A PLANE***                                          |\n",
 				a+1,b+1,c+1,d+1);
 		return;
 	}
@@ -331,18 +339,19 @@ vect_t cpt;				/* reference center point */
 		tot_area += area[i];
 	}
 
-	(void)printf("| %4d |",prface[type][face]);
-	(void)printf(" %6.2f %6.2f | %6.3f %6.3f %6.3f %11.3f |",
+	rt_vls_printf(vp,"| %4d |",prface[type][face]);
+	rt_vls_printf(vp," %6.2f %6.2f | %6.3f %6.3f %6.3f %11.3f |",
 		angles[3], angles[4],
 		es_peqn[6][0],es_peqn[6][1],es_peqn[6][2],
 		es_peqn[6][3]*base2local);
-	(void)printf("   %13.3f  |\n",
+	rt_vls_printf(vp,"   %13.3f  |\n",
 		(area[0]+area[1])*base2local*base2local);
 }
 
 /*	Analyzes arb edges - finds lengths */
 static void
-anal_edge( edge )
+anal_edge( vp, edge )
+struct rt_vls	*vp;
 int edge;
 {
 	register int a, b;
@@ -356,22 +365,22 @@ int edge;
 		if( (a = edge%4) == 0 ) 
 			return;
 		if( a == 1 ) {
-			(void)printf("  |                |                |                |\n  ");
+			rt_vls_printf(vp,"  |                |                |                |\n  ");
 			return;
 		}
 		if( a == 2 ) {
-			(void)printf("  |                |                |\n  ");
+			rt_vls_printf(vp,"  |                |                |\n  ");
 			return;
 		}
-		(void)printf("  |                |\n  ");
+		rt_vls_printf(vp,"  |                |\n  ");
 		return;
 	}
 
 	VSUB2(v_temp, &temp_rec.s.s_values[b*3], &temp_rec.s.s_values[a*3]);
-	(void)printf("  |  %d%d %9.3f",a+1,b+1,MAGNITUDE(v_temp)*base2local);
+	rt_vls_printf(vp,"  |  %d%d %9.3f",a+1,b+1,MAGNITUDE(v_temp)*base2local);
 
 	if( ++edge%4 == 0 )
-		(void)printf("  |\n  ");
+		rt_vls_printf(vp,"  |\n  ");
 
 }
 
@@ -416,7 +425,8 @@ static double pi = 3.1415926535898;
 
 /*	analyze a torus	*/
 static void
-tor_anal()
+tor_anal(vp)
+struct rt_vls	*vp;
 {
 	fastf_t r1, r2, vol, sur_area;
 
@@ -426,7 +436,7 @@ tor_anal()
 	vol = 2.0 * pi * pi * r1 * r2 * r2;
 	sur_area = 4.0 * pi * pi * r1 * r2;
 
-	(void)printf("Vol = %.4f (%.4f gal)   Surface Area = %.4f\n",
+	rt_vls_printf(vp,"Vol = %.4f (%.4f gal)   Surface Area = %.4f\n",
 			vol*base2local*base2local*base2local,vol/3787878.79,
 			sur_area*base2local*base2local);
 
@@ -438,7 +448,8 @@ tor_anal()
 
 /*	analyze an ell	*/
 static void
-ell_anal()
+ell_anal(vp)
+struct rt_vls	*vp;
 {
 	fastf_t ma, mb, mc;
 	fastf_t ecc, major, minor;
@@ -451,12 +462,12 @@ ell_anal()
 	type = 0;
 
 	vol = 4.0 * pi * ma * mb * mc / 3.0;
-	(void)printf("Volume = %.4f (%.4f gal)",vol*base2local*base2local*base2local,vol/3787878.79);
+	rt_vls_printf(vp,"Volume = %.4f (%.4f gal)",vol*base2local*base2local*base2local,vol/3787878.79);
 
 	if( fabs(ma-mb) < .00001 && fabs(mb-mc) < .00001 ) {
 		/* have a sphere */
 		sur_area = 4.0 * pi * ma * ma;
-		(void)printf("   Surface Area = %.4f\n",
+		rt_vls_printf(vp,"   Surface Area = %.4f\n",
 				sur_area*base2local*base2local);
 		return;
 	}
@@ -508,7 +519,7 @@ ell_anal()
 		}
 	}
 	else {
-		(void)printf("   Cannot find surface area\n");
+		rt_vls_printf(vp,"   Cannot find surface area\n");
 		return;
 	}
 	ecc = sqrt(major*major - minor*minor) / major;
@@ -522,14 +533,15 @@ ell_anal()
 		sur_area = 0.0;
 	}
 
-	(void)printf("   Surface Area = %.4f\n",
+	rt_vls_printf(vp,"   Surface Area = %.4f\n",
 			sur_area*base2local*base2local);
 }
 
 
 /*	analyze tgc */
 static void
-tgc_anal()
+tgc_anal(vp)
+struct rt_vls	*vp;
 {
 	fastf_t maxb, ma, mb, mc, md, mh;
 	fastf_t area_base, area_top, area_side, vol;
@@ -571,14 +583,16 @@ tgc_anal()
 			area_top = area_base;
 			area_side = 2.0 * pi * ma * mh;
 			vol = pi * ma * ma * mh;
-		break;
+			rt_vls_printf(vp, "RCC ");
+			break;
 
 		case TRC:
 			area_base = pi * ma * ma;
 			area_top = pi * mc * mc;
 			area_side = pi * (ma+mc) * sqrt((ma-mc)*(ma-mc)+(mh*mh));
 			vol = pi * mh * (ma*ma + mc*mc + ma*mc) / 3.0;
-		break;
+			rt_vls_printf(vp, "TRC ");
+			break;
 
 		case REC:
 			area_base = pi * ma * mb;
@@ -586,24 +600,27 @@ tgc_anal()
 			/* approximate */
 			area_side = 2.0 * pi * mh * sqrt(0.5 * (ma*ma + mb*mb));
 			vol = pi * ma * mb * mh;
-		break;
+			rt_vls_printf(vp, "REC ");
+			break;
 
 		case TEC:
+			rt_vls_printf(vp,"TEC Cannot find areas and volume\n");
+			return;
 		case TGC:
 		default:
-			(void)printf("Cannot find areas and volume\n");
-		return;
+			rt_vls_printf(vp,"TGC Cannot find areas and volume\n");
+			return;
 	}
 
 	/* print the results */
-	(void)printf("Surface Areas:  base(AxB)=%.4f  top(CxD)=%.4f  side=%.4f\n",
+	rt_vls_printf(vp,"Surface Areas:  base(AxB)=%.4f  top(CxD)=%.4f  side=%.4f\n",
 			area_base*base2local*base2local,
 			area_top*base2local*base2local,
 			area_side*base2local*base2local);
-	(void)printf("Total Surface Area=%.4f    Volume=%.4f (%.4f gal)\n",
+	rt_vls_printf(vp,"Total Surface Area=%.4f    Volume=%.4f (%.4f gal)\n",
 			(area_base+area_top+area_side)*base2local*base2local,
 			vol*base2local*base2local*base2local,vol/3787878.79);
-
+	/* Print units? */
 	return;
 
 }
@@ -612,16 +629,18 @@ tgc_anal()
 
 /*	anaylze ars */
 static void
-ars_anal()
+ars_anal(vp)
+struct rt_vls	*vp;
 {
-(void)printf("ARS analyze not implimented\n");
+	rt_vls_printf(vp,"ARS analyze not implimented\n");
 }
 
 /*	anaylze spline */
 static void
-spline_anal()
+spline_anal(vp)
+struct rt_vls	*vp;
 {
-(void)printf("SPLINE analyze not implimented\n");
+	rt_vls_printf(vp,"SPLINE analyze not implimented\n");
 }
 
 /*
