@@ -748,7 +748,36 @@ init_sedit()
 void
 replot_editing_solid()
 {
-	replot_modified_solid( illump, &es_rec, es_mat );
+	int			id;
+	struct rt_external	ext;
+	struct rt_db_internal	intern;
+	struct directory	*dp;
+
+	dp = illump->s_path[illump->s_last];
+
+	/* Fake up an external representation */
+	RT_INIT_EXTERNAL( &ext );
+	ext.ext_buf = (genptr_t)&es_rec;
+	ext.ext_nbytes = sizeof(union record);
+
+	if( (id = rt_id_solid( &ext )) == ID_NULL )  {
+		(void)printf("replot_editing_solid() unable to identify type of solid %s\n",
+			dp->d_namep );
+		return;
+	}
+
+    	RT_INIT_DB_INTERNAL(&intern);
+	if( rt_functab[id].ft_import( &intern, &ext, rt_identity ) < 0 )  {
+		rt_log("%s:  solid import failure\n",
+			dp->d_namep );
+	    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
+	    	return;			/* ERROR */
+	}
+	RT_CK_DB_INTERNAL( &intern );
+
+	(void)replot_modified_solid( illump, &intern, es_mat );
+
+    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
 }
 
 /* put up menu header */

@@ -773,21 +773,46 @@ int
 replot_original_solid( sp )
 struct solid	*sp;
 {
-	union record	*rp;
-	mat_t		mat;
+	struct rt_external	ext;
+	struct rt_db_internal	intern;
+	struct directory	*dp;
+	mat_t			mat;
+	int			id;
 
+	dp = sp->s_path[sp->s_last];
 	if( sp->s_Eflag )  {
 		(void)printf("replot_original_solid(%s): Unable to plot evaluated regions, skipping\n",
-			sp->s_path[sp->s_last]->d_namep );
+			dp->d_namep );
 		return(-1);
 	}
 	pathHmat( sp, mat, sp->s_last-1 );
-	rp = db_getmrec( dbip, sp->s_path[sp->s_last]);
-	if( replot_modified_solid( sp, rp, mat ) < 0 )  {
-		rt_free( (char *)rp, "original solid rec" );
+
+	RT_INIT_EXTERNAL( &ext );
+	if( db_get_external( &ext, dp, dbip ) < 0 )  return(-1);
+
+	if( (id = rt_id_solid( &ext )) == ID_NULL )  {
+		(void)printf("replot_original_solid() unable to identify type of solid %s\n",
+			dp->d_namep );
+		db_free_external( &ext );
 		return(-1);
 	}
-	rt_free( (char *)rp, "original solid rec" );
+
+    	RT_INIT_DB_INTERNAL(&intern);
+	if( rt_functab[id].ft_import( &intern, &ext, mat ) < 0 )  {
+		rt_log("%s:  solid import failure\n", dp->d_namep );
+	    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
+		db_free_external( &ext );
+	    	return(-1);		/* ERROR */
+	}
+	RT_CK_DB_INTERNAL( &intern );
+
+	if( replot_modified_solid( sp, &intern, mat ) < 0 )  {
+	    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
+		db_free_external( &ext );
+		return(-1);
+	}
+    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
+	db_free_external( &ext );
 	return(0);
 }
 
@@ -804,16 +829,13 @@ struct solid	*sp;
  *	 0	OK
  */
 int
-replot_modified_solid( sp, recp, mat )
-struct solid	*sp;
-union record	*recp;
-mat_t		mat;
+replot_modified_solid( sp, ip, mat )
+struct solid			*sp;
+struct rt_db_internal		*ip;
+CONST mat_t			mat;
 {
 	unsigned		addr, bytes;
 	struct rt_list		vhead;
-	int			id;
-	struct rt_external	ext;
-	struct rt_db_internal	intern;
 	struct rt_tess_tol	ttol;
 	struct rt_tol		tol;
 
@@ -827,30 +849,12 @@ mat_t		mat;
 	/* Release existing vlist of this solid */
 	RT_FREE_VLIST( &(sp->s_vlist) );
 
-	RT_INIT_EXTERNAL( &ext );
-	ext.ext_buf = (genptr_t)recp;
-	ext.ext_nbytes = sizeof(union record);
-
-	if( (id = rt_id_solid( &ext )) == ID_NULL )  {
-		(void)printf("replot_modified_solid() unable to identify type of solid %s\n",
-			sp->s_path[sp->s_last]->d_namep );
-		return(-1);
-	}
-
 	/* Remember displaylist location of previous solid */
 	addr = sp->s_addr;
 	bytes = sp->s_bytes;
 
 	/* Draw (plot) a normal solid */
-
-    	RT_INIT_DB_INTERNAL(&intern);
-	if( rt_functab[id].ft_import( &intern, &ext, mat ) < 0 )  {
-		rt_log("%s:  solid import failure\n",
-			sp->s_path[sp->s_last]->d_namep );
-	    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
-	    	return(-1);		/* ERROR */
-	}
-	RT_CK_DB_INTERNAL( &intern );
+	RT_CK_DB_INTERNAL( ip );
 
 	ttol.magic = RT_TESS_TOL_MAGIC;
 	ttol.abs = mged_abs_tol;
@@ -864,14 +868,11 @@ mat_t		mat;
 	tol.perp = 1e-6;
 	tol.para = 1 - tol.perp;
 
-	if( rt_functab[id].ft_plot( &vhead, &intern,
-	    &ttol, &tol ) < 0 )  {
+	if( rt_functab[ip->idb_type].ft_plot( &vhead, ip, &ttol, &tol ) < 0 )  {
 		(void)printf("%s: re-plot failure\n",
 			sp->s_path[sp->s_last]->d_namep );
-	    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
 	    	return(-1);
 	}
-	rt_functab[id].ft_ifree( &intern );
 
 	/* Write new displaylist */
 	drawH_part2( sp->s_soldash, &vhead,
