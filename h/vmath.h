@@ -46,6 +46,14 @@
 #ifndef VMATH_H
 #define VMATH_H seen
 
+#ifndef sqrt
+#	ifdef __STDC__
+		extern double sqrt(double x);
+#	else
+		extern double sqrt();
+#	endif
+#endif
+
 #define NEAR_ZERO(val,epsilon)	( ((val) > -epsilon) && ((val) < epsilon) )
 
 /*
@@ -166,7 +174,6 @@ typedef fastf_t hpoint_t[HPT_LEN];
 
 /* Return scalar magnitude of vector at `a' */
 #define MAGNITUDE(a)	sqrt( MAGSQ( a ) )
-extern double sqrt();
 
 /* Store cross product of vectors at `b' and `c' in vector at `a' */
 #define VCROSS(a,b,c)	(a)[0] = (b)[1] * (c)[2] - (b)[2] * (c)[1];\
