@@ -45,6 +45,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
+#define __EXTENSIONS__
 #include <xview/xview.h>
 #include <xview/panel.h>
 #include <xview/termsw.h>
@@ -54,26 +55,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <xview/cms.h>
 #include <xview/attr.h>
 #include <xview/cursor.h>
+#undef __EXTENSIONS__
 
-static short icon_bits[] = {
+static unsigned short icon_bits[] = {
 #include "./sunicon.h"
-};
-
-
-
-
-/*
- *	Structure declarations
- */
-
-			/* struct obj - describes a ged graphics object	*/
-			/* 	in convenient terms;   used in a doubly	*/
-			/*	linked list of all objects which we 	*/
-			/* 	know about.				*/
-struct obj {
-	struct solid	*sp;			/* ptr to ged solid	*/
-	Xgl_pt_list	pt_list;		/* XGL point list	*/
-	struct obj	*forptr, *backptr;	/* linked list ptrs	*/
 };
 
 			/* struct button - describes one of our panel	*/
@@ -85,9 +70,6 @@ struct button {
 	char		*cmd;			/* associated mged cmd	*/
 	int		(*button_proc)();	/* button procedure	*/
 };
-
-
-
 
 
 /*
@@ -109,12 +91,8 @@ static int		XGL_debug_level = 0;
 #define	SET_WIDTH	'\002'	/* set termsw width   - followed by 1 int  */
 #define	SET_DISPLAY	'\003'	/* set termsw WIN_SHOW to true		   */
 
-
-/*
- *	Gross hack to get true height of frame
- */
-#define SLACK_HACK	31	/* XV_HEIGHT on frame is busted; add this in */
-
+#define XGL_BUF_A	0	/* Used for double buffering */
+#define XGL_BUF_B	1
 
 
 /*
@@ -140,8 +118,6 @@ int	sun_buttons = 0;	/* Which buttons are being held down?	    */
 
 
 
-
-
 /*
  *	NON-dm functions
  */
@@ -158,15 +134,11 @@ static int		init_editor();			/* set EDITOR */
 static int		ok();				/* yes or no? */
 static void		setcolortables();		/* init colortables */
 static int		input_poll();			/* polling select */
-static struct obj	*alloc_obj();			/* alloc obj struct */
-static void		free_obj();			/* free obj struct */
-static struct obj	*find_obj();			/* find obj */ 
 static void		set_termsw_width();		/* set termsw width */
 static void		set_termsw_position();		/* set termsw x y */
 static void		set_termsw_display();		/* WIN_SHOW TRUE */
 
 						/* Parent Xview functions */
-static Notify_value	setfocus_timer_func();		/* delayed set focus */
 static Notify_value	stop_func();			/* notify_stop() */
 static Notify_value	destroy_func();			/* done */
 
@@ -177,16 +149,13 @@ static int		detach_button_proc();		/* detach button */
 static void		repaint_proc();			/* canvas repaint */
 static void		resize_proc();			/* canvas resize */
 static void		frame_event_proc();		/* frame event */
-static void		win_event_proc();		/* canvas event */
+static void		pw_event_proc();		/* canvas event */
 static void		set_sun_buttons();		/* canvas event */
 static void		set_dm_values();		/* canvas event */
 
 						/* Child Xview functions */
 static Notify_value	copy_func();			/* I/O */
 static Notify_value	signal_func();			/* pass signal */
-
-
-
 
 /*
  *	dm (display manager) package interface
@@ -233,9 +202,6 @@ struct dm dm_XGL = {
  *	Global variables
  */
 					/* miscellaneous */
-static struct obj	*obj = (struct obj *)0;	/* begin obj linked list */
-static struct obj	*end_obj = (struct obj *)0; /* end of linked list */
-static struct obj	*lastf_obj = (struct obj *)0; /* last found in list */
 static int		cmd_fd;			/* cmd file descriptor */
 static int		pty_fd;			/* pty file descriptor */
 static int		height, width;		/* canvas width & height */
@@ -258,15 +224,32 @@ static Xv_Cursor	cursor_busyred;		/* Busy cursor */
 static Termsw		termsw;			/* Termsw (command window) */
 
 					/* XGL		*/
-#define MAX_PT_LISTS	500
-static Xgl_sys_st	sys_state;		/* system state */
+static Xgl_sys_state	sys_state;		/* system state */
 static Xgl_X_window	xgl_x_win;		/* x window */
+static Xgl_obj_desc	win_desc;
 static Xgl_win_ras	ras;			/* window raster */
 static Xgl_3d_ctx	ctx_3d;			/* 3d context (for objects) */
 static Xgl_2d_ctx	ctx_2d;			/* 2d context (text & lines) */
 static Xgl_trans	trans;			/* transformation */
+
+/*
+ * Point List Arrays
+ *
+ *	We use on array for solid lines and 1 for dash lines. This allows
+ *	us to batch the polylines into just a few calls to xgl_multipolyline.
+ *	If we reach MAX_PT_LISTS point lists, we simply flush what we have and
+ *	start another batch.
+ */
+#define MAX_PT_LISTS	2000
 static Xgl_usgn32	num_pt_lists = 0;	/* current number in pl[] */
-static Xgl_pt_list	pl[MAX_PT_LISTS];	/* for xgl_multipolyline */
+static Xgl_usgn32	num_pt_dash_lists = 0;	/* current number in pl_dash[]*/
+#define PolyLinesOutstanding (num_pt_lists || num_pt_dash_lists)
+static Xgl_pt_list	pl[MAX_PT_LISTS];    	
+				/* for xgl_multipolyline (solid) */
+static Xgl_pt_list	pl_dash[MAX_PT_LISTS];    
+				/* for xgl_multipolyline (dash) */
+#define FlushPolyLines() if(PolyLinesOutstanding) \
+		XGL_object ((struct solid *)0, (float *)0, 0.0, 0)
 
 					/* XGL - color management */
 static Xgl_cmap		cmap_A, cmap_B;		/* colormaps */
@@ -278,6 +261,9 @@ static int		maxcolors;		/* max number of colors */
 static int		slotsused;		/* used cmap index slots */
 static int		colortablesize;		/* size of cmap index */
 static int		current_buffer_is_A;	/* flag for cmap dbuffering */
+static int		win_visual_class;	/* TrueColor, etc */
+static int		win_depth;		/* 8, 24, etc */
+static Xgl_color_type	color_type;		/* INDEX or RGB */
 
 #define cmap		cmap_A			/* for clarity */
 #define cmap_info	cmap_info_A
@@ -292,6 +278,21 @@ static int		current_buffer_is_A;	/* flag for cmap dbuffering */
 #define OPTION_ONE	'1'			/* no dbuffering option */
 #define OPTION_TWO	'2'			/* 8 color dbuffering */
 #define OPTION_THREE	'3'			/* 16 color dbuffering */
+
+/*
+ * Flags that control the color type, double buffering, etc.
+ *
+ * DO_DOUBLE_BUFF:	If non-0, do hardware double buffering. 
+ *
+ * DO_DASH_LINES:	if non-0, we process dashed lines. This is only turned
+ *			off for determining how much of a performance hit
+ *			dashed lines cause (considerable on DGA!).
+ *
+ * DO_24_BIT:		if non-o, we use 24-bit color if available. 
+ */
+#define DO_DOUBLE_BUFF	1			/* flag to do h/w double buff.*/
+#define DO_DASH_LINES	1			/* flag to do dash lines */							/* Dash lines slow things down*/
+#define DO_24_BIT	1			/* 24-bit color  */
 
 #define DEFAULT_DB	OPTION_TWO		/* default type of dbuffering */
 #define MONOCHROME	(colortablesize == 2)	/* monochrome frame buffer */
@@ -310,7 +311,17 @@ static Xgl_color_rgb WHITE	= {1.0, 1.0, 1.0 };
 
 #define MINSLOTS	5			/* number of DM_ colors */
 #define	DEFAULT_COLOR	DM_YELLOW		/* default color */
+#define SetColor(c, i) if (color_type == XGL_COLOR_INDEX) \
+                                c.index = COLORINDEX(i); \
+                       else \
+                                c.rgb = color_table[i].rgb;
 
+static int get_1_pt_list(struct solid *, Xgl_pt_list *);
+static void free_pts(Xgl_pt_list *, int);
+static void switch_bg_color();
+static void start_ts();
+static int stop_ts();
+static int getms(struct timeval , struct timeval );
 
 
 /*
@@ -325,8 +336,6 @@ static Xgl_color_rgb WHITE	= {1.0, 1.0, 1.0 };
  					/*	xview is 0..width, 0..height */
 #define	SUNPWx_TO_GED(x) (((x)/(double)width-0.5)*4095)
 #define	SUNPWy_TO_GED(x) (-((x)/(double)height-0.5)*4095)
-
-
 
 
 /*
@@ -410,10 +419,24 @@ XGL_open()
 		xv_init(0);		/* init xview */
 		init_create_icons();	/* create icon */
 		init_termsw_child(p0, p1, p3);	/* setup the term subwindow */
-		notify_start(frame);	/* and, go */
+		notify_start(/*frame*/);	/* and, go */
 		exit(0);		/* but, never return */
 
 	} else {		/* PARENT - the canvas and panel */
+		dup2(p0[0], 0);		/* stdin from child */
+		dup2(p1[1], 1);		/* stdout to child */
+		cmd_fd = p3[1];		/* special "command" to child */
+		if(p0[0] != 0) close(p0[0]);
+		if(p1[1] != 1) close(p1[1]);
+		close(p0[1]);
+		close(p1[0]);
+		close(p3[0]);
+		/*
+		 * We must fork BEFORE the call to xgl_open()! Otherwise
+		 * XGL gets very confused (as documented)
+		 */
+		if(fork()) exit(0);	/* "background" us */
+
 		xv_init(0);		/* init xview */
 		init_create_icons();	/* create icon */
 		init_graphics_parent_xview(); /* setup xview stuff */
@@ -424,17 +447,6 @@ XGL_open()
 			CANVAS_REPAINT_PROC,	repaint_proc,
 			CANVAS_RESIZE_PROC,	resize_proc,
 			0);
-
-		dup2(p0[0], 0);		/* stdin from child */
-		dup2(p1[1], 1);		/* stdout to child */
-		cmd_fd = p3[1];		/* special "command" to child */
-		if(p0[0] != 0) close(p0[0]);
-		if(p1[1] != 1) close(p1[1]);
-		close(p0[1]);
-		close(p1[0]);
-		close(p3[0]);
-
-		if(fork()) exit(0);	/* "background" us */
 
 		if(init_editor() < 0)	/* set the EDITOR variable */
 			goto bad_exit;
@@ -475,13 +487,13 @@ void
 XGL_prolog()
 {
 	DPRINTF("XGL_prolog\n");
+start_ts();
 
 	if(!dmaflag || dbuffering)
 		return;
 
     /* If we are NOT doing any double buffering, erase the canvas	*/
     /* BEFORE we begin to do any drawing.				*/
-
 	xgl_context_new_frame(ctx_3d);
 	xgl_context_new_frame(ctx_2d);
 
@@ -496,7 +508,7 @@ XGL_epilog()
 {
 	DPRINTF("XGL_epilog\n");
 
-	if(num_pt_lists) XGL_object(0, 0, 0, 0);
+	FlushPolyLines();
 
     /* If we ARE doing double buffering, it's time to switch		*/
     /* to the buffer we just finished drawing into;   else, don't	*/
@@ -505,31 +517,102 @@ XGL_epilog()
 	switch(dbuffering) {
 	  case NO_DBUFF:
 	  default:
-		xgl_object_set(ras, XGL_RAS_COLOR_MAP, cmap, 0);
+		if (color_type == XGL_COLOR_INDEX)
+			xgl_object_set(ras, XGL_DEV_COLOR_MAP, cmap, 0);
 		return;
 
 	  case CMAP8_DBUFF:
 	  case CMAP16_DBUFF:
 		if(current_buffer_is_A) {
-		    xgl_object_set(ras, XGL_RAS_COLOR_MAP, cmap_A, 0);
+		    xgl_object_set(ras, XGL_DEV_COLOR_MAP, cmap_A, 0);
 		    xgl_object_set(ctx_2d, XGL_CTX_PLANE_MASK, CMAP_MASK_B, 0);
 		    xgl_object_set(ctx_3d, XGL_CTX_PLANE_MASK, CMAP_MASK_B, 0);
 		} else {
-		    xgl_object_set(ras, XGL_RAS_COLOR_MAP, cmap_B, 0);
+		    xgl_object_set(ras, XGL_DEV_COLOR_MAP, cmap_B, 0);
 		    xgl_object_set(ctx_2d, XGL_CTX_PLANE_MASK, CMAP_MASK_A, 0);
 		    xgl_object_set(ctx_3d, XGL_CTX_PLANE_MASK, CMAP_MASK_A, 0);
 		}
 		current_buffer_is_A ^= 1;
-
+		xgl_context_new_frame(ctx_3d);
+		xgl_context_new_frame(ctx_2d);
+		break;
 	  case AB_DBUFF:
 		xgl_context_new_frame(ctx_3d);
 		xgl_context_new_frame(ctx_2d);
 		break;
 	}
+/*fprintf(stderr,"XGL_epilog: %d ms from prolog\n", stop_ts());*/
 
 	return;
 }
 
+static void
+switch_bg_color()
+{
+	Xgl_color	bg;
+
+	bg.index = COLORINDEX(DM_BLACK);
+	xgl_object_set (ctx_2d, XGL_CTX_BACKGROUND_COLOR, &bg, 0);
+	xgl_object_set (ctx_3d, XGL_CTX_BACKGROUND_COLOR, &bg, 0);
+}
+
+static void
+apply_matrix(mat_t mat)
+{
+	int i;
+	static Xgl_matrix_f3d	xgl_mat;
+        Xgl_pt               	pt;
+        Xgl_pt_f3d           	pt_f3d;
+	float			w;
+
+	for (i = 0; i < 16; i++)
+		xgl_mat[i/4][i%4] = (fabs(mat[i]) < 1.0e-15) ? 0.0 : mat[i];
+	/*
+	 * The following matrix is passed in:
+	 *	1.0	0.0	0.0	Tx
+	 *	0.0	1.0	0.0	Ty
+	 *	0.0	0.0	1.0	Tz
+	 *	0.0	0.0	0.0	W
+	 *
+	 * This (for some as yet unknown reason) produces very slow DGA results.
+	 * So, we perform the rotation, translation, and scaling in 3 separate 
+	 * calls. We use the W value for the scale factor.
+	*/
+
+	/*
+	 * First, rotate it
+	 */
+	xgl_transform_identity(trans);
+	xgl_transform_write_specific (trans, xgl_mat, 
+                   		 XGL_TRANS_MEMBER_ROTATION);
+	xgl_transform_transpose(trans, trans);
+
+	/*
+	 * Next, translate it
+	 */
+	pt.pt_type = XGL_PT_F3D;
+	pt.pt.f3d = &pt_f3d;
+	pt_f3d.x = xgl_mat[0][3];
+	pt_f3d.y = xgl_mat[1][3];
+	pt_f3d.z = xgl_mat[2][3];
+	xgl_transform_translate (trans, &pt, XGL_TRANS_POSTCONCAT);
+
+	/*
+	 * Finally, scale it
+	 */
+	w = xgl_mat[3][3];
+        pt.pt_type = XGL_PT_F3D;
+        pt.pt.f3d = &pt_f3d;
+        pt_f3d.x = 1.0/w;
+        pt_f3d.y = 1.0/w;
+        pt_f3d.z = 1.0/w;
+ 
+        xgl_transform_scale (trans, &pt, XGL_TRANS_POSTCONCAT);
+
+	xgl_object_set(ctx_3d,
+		XGL_CTX_LOCAL_MODEL_TRANS, trans,
+		0);
+}
 
 /*
  *	XGL_newrot
@@ -540,6 +623,7 @@ mat_t mat;
 {
 	DPRINTF("XGL_newrot\n");
 
+	apply_matrix(mat);
 	return;
 }
 
@@ -557,87 +641,160 @@ mat_t mat;
  */
 int
 XGL_object(sp, mat, ratio, white)
-register struct solid *sp;
+struct solid *sp;
 mat_t mat;
 double ratio;
 {
-	register int			i;	
-	register struct obj		*objptr;
-	Xgl_matrix_f3d			xgl_mat;
 	Xgl_color			ln_color;
+
 	Xgl_color_index			color_index;
 	float				width_factor;
-	static mat_t			last_mat;
-	static Xgl_color_index		last_color_index;
-	static float			last_width_factor;
+	static Xgl_color_index		last_color_index = DM_YELLOW;
+	static float			last_width_factor = 0.0;
 	int				diff = 0;
+static struct timeval tp1, tp2;
 
-	DPRINTF("XGL_object\n");
+/*	DPRINTF("XGL_object\n");*/
 
-	if(sp != NULL) {
-		if((objptr = find_obj(sp)) == (struct obj *)0) {
-			DPRINTF("mged XGL_object: unknown solid\n");
-			return(0);
-		}
-
-		if(bcmp((char *)mat, (char *)last_mat, sizeof(last_mat))) {
-			++diff;
-			bcopy((char *)mat, (char *)last_mat, sizeof(last_mat));
-
-			for (i = 0; i < 16; i++)
-			xgl_mat[i/4][i%4] =
-			    (fabs(mat[i]) < 1.0e-15) ? 0.0 : mat[i];
-		
-			xgl_transform_write(trans, xgl_mat);
-			xgl_transform_transpose(trans, trans);
-		
-			xgl_object_set(ctx_3d,
-			    XGL_CTX_LOCAL_MODEL_TRANS, trans,
-			    0);
-		}
-
-	    /* Set the line color (s_dmindex was set in XGL_colorchange) */
+	if (sp) {
+		/* Set the line color (s_dmindex was set in XGL_colorchange) */
 		if(MONOCHROME) {
 			color_index = 1;
 		} else if(white) {
-			color_index = COLORINDEX(DM_WHITE);
+			color_index = DM_WHITE;
 		} else {
-			color_index = COLORINDEX(objptr->sp->s_dmindex);
+			color_index = sp->s_dmindex;
 		}
 
-	    /* And, the width. */
+		SetColor(ln_color, color_index);
+
+		/* And, the width. */
 		if(white) {
 			width_factor = 2.0;
 		} else {
 			width_factor = 1.0;
 		}
 
-		if((color_index != last_color_index) ||
-		    (width_factor != last_width_factor))
-			++diff;
+		if (color_index  != last_color_index ||
+	    	    width_factor != last_width_factor) {
+
+			diff = 1;
+		}
 	}
 
-	if(diff || (sp == NULL) || (num_pt_lists == MAX_PT_LISTS)) {
-		if(num_pt_lists) {
-			ln_color.index = last_color_index;
+	if (sp == NULL || 
+	    diff || 
+	    num_pt_lists == MAX_PT_LISTS ||
+	    num_pt_dash_lists == MAX_PT_LISTS) {
+		if (num_pt_lists) {
 			xgl_object_set(ctx_3d,
-			    XGL_CTX_LINE_COLOR,		     &ln_color,
-			    XGL_CTX_LINE_WIDTH_SCALE_FACTOR, last_width_factor,
-			    0);
-			xgl_multipolyline(ctx_3d, NULL, num_pt_lists, pl);
+				XGL_CTX_LINE_STYLE,     XGL_LINE_SOLID,
+				0);
+			xgl_multipolyline(ctx_3d, NULL, 
+					num_pt_lists, pl);
+			free_pts (pl, num_pt_lists);
+			num_pt_lists = 0;
 		}
-		num_pt_lists = 0;
-		if(sp != NULL) {
+		if (num_pt_dash_lists) {
+			xgl_object_set(ctx_3d,
+				XGL_CTX_LINE_STYLE,     XGL_LINE_PATTERNED,
+				0);
+			xgl_multipolyline(ctx_3d, NULL, 
+					num_pt_dash_lists, pl_dash);
+			free_pts (pl_dash, num_pt_dash_lists);
+			num_pt_dash_lists = 0;
+		}
+		if (diff) {
+			xgl_object_set(ctx_3d,
+               			XGL_CTX_LINE_COLOR,    &ln_color,
+/* Don't use Line Width. It's not defined for 3D 
+               	 		XGL_CTX_LINE_WIDTH_SCALE_FACTOR, width_factor,
+*/
+               	 		0);
 			last_color_index = color_index;
 			last_width_factor = width_factor;
 		}
 	}
 
-	if(sp != NULL) pl[num_pt_lists++] = objptr->pt_list;
+	if (sp) {
+#if DO_DASH_LINES
+		if (sp->s_soldash) {
+			if (get_1_pt_list (sp, 
+			    		&pl_dash[num_pt_dash_lists]) == 0) {
+				fprintf(stderr, "mged XGL_object: no memory\n");
+                		return 0;
+        		}
+			num_pt_dash_lists++;
+		} else {
+#endif
+			if (get_1_pt_list (sp, &pl[num_pt_lists]) == 0) {
+				fprintf(stderr, "mged XGL_object: no memory\n");
+                		return 0;
+        		}
+			num_pt_lists++;
+		}
+#if DO_DASH_LINES
+	}
+#endif
 
-    /* Return 1 to say we drew it. */
 	return(1);
 }
+
+static  int
+get_1_pt_list(struct solid *sp, Xgl_pt_list *pt_list)
+{
+
+	struct rt_vlist         *vp;
+	Xgl_pt_flag_f3d		*ptr;
+	
+	pt_list->pt_type = XGL_PT_FLAG_F3D;
+	pt_list->num_pts = sp->s_vlen;
+	if((pt_list->pts.flag_f3d = (Xgl_pt_flag_f3d *)calloc(
+			sp->s_vlen, sizeof(Xgl_pt_flag_f3d)))
+            		== (Xgl_pt_flag_f3d *)0)
+                	return(0);
+	ptr = pt_list->pts.flag_f3d;
+
+	for( RT_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+		int    i;
+		int    nused = vp->nused;
+                int    *cmd = vp->cmd;
+                point_t *pt = vp->pt;
+                for( i = 0; i < nused; i++,cmd++,pt++,ptr++ )  {
+                        switch( *cmd )  {
+                        case RT_VLIST_POLY_START:
+                                continue;
+                        case RT_VLIST_POLY_MOVE:
+                        case RT_VLIST_LINE_MOVE:
+                                /* Move, not draw */
+                                ptr->x = pt[0][0];
+                                ptr->y = pt[0][1];
+                                ptr->z = pt[0][2];
+                                ptr->flag = 0x00;
+                                continue;
+                        case RT_VLIST_POLY_DRAW:
+                        case RT_VLIST_POLY_END:
+                        case RT_VLIST_LINE_DRAW:
+                                /* draw */
+                                ptr->x = pt[0][0];
+                                ptr->y = pt[0][1];
+                                ptr->z = pt[0][2];
+                                ptr->flag = 0x01;
+                                continue;
+                        }
+                }
+	}
+	return (1);
+}
+static void
+free_pts(Xgl_pt_list pt_list[], int num)
+{
+	int	i;
+
+	for (i = 0; i < num; i++) 
+		free (pt_list[i].pts.flag_f3d);
+}
+	
 
 /*
  *	XGL_normal
@@ -682,15 +839,19 @@ int	x, y, size, color;
 	DPRINTF("XGL_puts\n");
 
 	if(no_2d_flag) return;
-	if(num_pt_lists) XGL_object(0, 0, 0, 0);
+	FlushPolyLines();
 
 	pos.x = x;
 	pos.y = y;
-	ln_color.index = MONOCHROME ? 1 : COLORINDEX(color);
+
+	if (MONOCHROME)
+		ln_color.index;
+	else
+		SetColor(ln_color, color);
 
 	xgl_object_set(ctx_2d,
-		XGL_CTX_SFONT_TEXT_COLOR,	&ln_color,
-		XGL_CTX_SFONT_CHAR_HEIGHT,	45.,
+		XGL_CTX_STEXT_COLOR,	&ln_color,
+		XGL_CTX_STEXT_CHAR_HEIGHT,	45.,
 		0);
 
 	xgl_stroke_text_2d(ctx_2d, str, &pos);
@@ -714,7 +875,7 @@ int dashed;
 	DPRINTF("XGL_2d_line\n");
 
 	if(no_2d_flag) return;
-	if(num_pt_lists) XGL_object(0, 0, 0, 0);
+	FlushPolyLines();
 
 	if(dashed) {
 		xgl_object_set(ctx_2d,
@@ -758,8 +919,12 @@ int		noblock;
 {
 	static int		once = 0;
 	struct itimerval	timeout;
+	fd_set          files;
 
 	DPRINTF("XGL_input\n");
+
+	files = *input;         /* save, for restore on each loop */
+        FD_SET( display->fd, &files );      /* check X fd too */
 
 	if(!once++) {
 						/* first time through */
@@ -781,7 +946,9 @@ int		noblock;
     /* If there is a command waiting  to be read, have the notifier call */
     /* stop_func() which will call notify_stop(), so we can get back to ged */
     /*									*/
-	notify_set_input_func(frame, stop_func, input_fd);
+
+	notify_set_input_func(frame, stop_func, fileno(stdin) /* input_fd */);
+	notify_set_input_func(frame, stop_func, display->fd /* input_fd */);
 
 	if(noblock) {
 
@@ -811,7 +978,8 @@ int		noblock;
 	XFlush(display);
 
 	/* XXX This won't work well, do select() here! */
-	(void)input_poll(fileno(stdin));
+	if (!input_poll(fileno(stdin)))
+		FD_CLR(fileno(stdin), input);
 	return;
 }
 
@@ -860,7 +1028,7 @@ void
 XGL_statechange(oldstate, newstate)
 int	oldstate, newstate;
 {
-/*	DPRINTF("XGL_statechange\n");  /* .... found below	*/
+	DPRINTF("XGL_statechange\n");  /* .... found below	*/
 
 	switch(newstate) {
 	case ST_VIEW:
@@ -897,94 +1065,7 @@ XGL_viewchange(cmd, sp)
 register int cmd;
 register struct solid *sp;
 {
-	register struct rt_vlist	*vp;
-	register Xgl_pt_flag_f3d	*ptr;
-	register int			i;
-	struct obj			*objptr;
 
-	DPRINTF("XGL_viewchange ");
-
-	switch(cmd)  {
-	case DM_CHGV_ADD:
-
-    /* Add an object to our list */
-
-		DPRINTF("DM_CHGV_ADD\n");
-
-		objptr = alloc_obj(sp->s_vlen);
-		if(objptr == (struct obj *)0) {
-			fprintf(stderr, "mged XGL_viewchange:  no memory\n");
-			break;
-		}
-
-		objptr->sp           = sp;
-		objptr->pt_list.bbox = NULL;
-
-		ptr = objptr->pt_list.pts.flag_f3d;
-		for( RT_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
-			register int	nused = vp->nused;
-			register int	*cmd = vp->cmd;
-			register point_t *pt = vp->pt;
-			for( i = 0; i < nused; i++,cmd++,pt++,ptr++ )  {
-				switch( *cmd )  {
-				case RT_VLIST_POLY_START:
-					continue;
-				case RT_VLIST_POLY_MOVE:
-				case RT_VLIST_LINE_MOVE:
-					/* Move, not draw */
-					ptr->x = pt[0][0];
-					ptr->y = pt[0][1];
-					ptr->z = pt[0][2];
-					ptr->flag = 0x00;
-					continue;
-				case RT_VLIST_POLY_DRAW:
-				case RT_VLIST_POLY_END:
-				case RT_VLIST_LINE_DRAW:
-					/* draw */
-					ptr->x = pt[0][0];
-					ptr->y = pt[0][1];
-					ptr->z = pt[0][2];
-					ptr->flag = 0x01;
-					continue;
-				}
-			}
-		}
-		break;
-
-	case DM_CHGV_REDO:
-		DPRINTF("DM_CHGV_REDO\n");
-
-    /* not sure what we're supposed to do here */
-
-		break;
-
-	case DM_CHGV_DEL:
-		DPRINTF("DM_CHGV_DEL\n");
-
-		if((objptr = find_obj(sp)) == (struct obj *)0)
-			fprintf(stderr,"mged XGL_viewchange: unknown solid\n");
-
-		free_obj(objptr);
-		break;
-
-	case DM_CHGV_REPL:
-		DPRINTF("DM_CHGV_REPL\n");
-
-    /* not sure what we're supposed to do here */
-
-		break;
-
-	case DM_CHGV_ILLUM:
-		DPRINTF("DM_CHGV_ILLUM\n");
-
-    /* not sure what we're supposed to do here */
-
-		break;
-
-	default:
-		DPRINTF("UNKNOWN COMMAND\n");
-		break;
-	}
 	return;
 }
 
@@ -1043,7 +1124,11 @@ XGL_colorchange()
 	for(i = slotsused; i < maxcolors; i++)
 		color_table[i].rgb = RED;
 		
-	if(CMAPDBUFFERING) setcolortables(color_table_A, color_table_B);
+	if (color_type == XGL_COLOR_RGB) 
+		return;
+
+	if(CMAPDBUFFERING) 
+		setcolortables(color_table_A, color_table_B);
 	xgl_object_set(cmap,
 		XGL_CMAP_COLOR_TABLE,		&cmap_info,
 		0);
@@ -1077,28 +1162,30 @@ void
 XGL_window(windowbounds)
 register int windowbounds[];
 {
-	Xgl_bounds_f3d	bounds_f3d;
+	Xgl_bounds_d3d	bounds_d3d;
+	Xgl_bounds_d2d	bounds_d2d;
 	static int	lastwindowbounds[6];
 
 	DPRINTF("XGL_window\n");
 
-	if(bcmp((char *)windowbounds, (char *)lastwindowbounds,
+	if(memcmp((char *)windowbounds, (char *)lastwindowbounds,
 	    (6 * sizeof(int)))) {
 		bcopy((char *)windowbounds, (char *)lastwindowbounds,
 		    (6 * sizeof(int)));
 
-		bounds_f3d.xmax = windowbounds[0] / 2047.0;
-		bounds_f3d.xmin = windowbounds[1] / 2048.0;
+		bounds_d3d.xmax = windowbounds[0] / 2047.0;
+		bounds_d3d.xmin = windowbounds[1] / 2048.0;
 
-		bounds_f3d.ymax = windowbounds[2] / 2047.0;
-		bounds_f3d.ymin = windowbounds[3] / 2048.0;
+		bounds_d3d.ymax = windowbounds[2] / 2047.0;
+		bounds_d3d.ymin = windowbounds[3] / 2048.0;
 
-		bounds_f3d.zmax = windowbounds[4] / 2047.0;
-		bounds_f3d.zmin = windowbounds[5] / 2048.0;	
+		bounds_d3d.zmax = windowbounds[4] / 2047.0;
+		bounds_d3d.zmin = windowbounds[5] / 2048.0;	
 
 		xgl_object_set(ctx_3d,
-			XGL_CTX_VIEW_CLIP_BOUNDS, &bounds_f3d,
+			XGL_CTX_VIEW_CLIP_BOUNDS, &bounds_d3d,
 			0);
+
 	}
 
 	return;
@@ -1165,7 +1252,7 @@ init_termsw_child()
 	notify_set_input_func(frame, copy_func, pty_fd);
 	notify_set_input_func(frame, copy_func, cmd_fd);
 
-	notify_set_signal_func(frame, signal_func, SIGINT, NOTIFY_SAFE);
+	notify_set_signal_func(frame, signal_func, SIGINT, NOTIFY_SYNC);
 
 	return;
 }
@@ -1177,6 +1264,7 @@ init_graphics_parent_xview()
 	Panel_item		last_button;
 	int			y;
 	Xv_singlecolor		redish;
+	XVisualInfo		visual_info;
 
 	frame = (Frame)xv_create(XV_NULL, FRAME,
 		WIN_DYNAMIC_VISUAL,	TRUE,
@@ -1186,10 +1274,31 @@ init_graphics_parent_xview()
 		WIN_EVENT_PROC,		frame_event_proc,
 		WIN_CONSUME_EVENTS,	WIN_NO_EVENTS,
 					WIN_RESIZE,
+					WIN_REPAINT,
 					0,
 		0);
 	notify_interpose_destroy_func(frame, destroy_func);
 
+        display = (Display *)xv_get(frame, XV_DISPLAY);
+#if DO_24_BIT
+	/*
+	 * Get the visual information
+	 */
+	if (XMatchVisualInfo (display, DefaultScreen(display),
+		24, TrueColor, &visual_info) ||
+	    XMatchVisualInfo (display, DefaultScreen(display),
+		24, DirectColor, &visual_info)) {
+
+		win_visual_class = visual_info.class;
+		win_depth = 24;
+
+	} else {
+		win_visual_class = DefaultVisual(display, 
+				DefaultScreen(display))->class;
+		win_depth = DisplayPlanes (display, DefaultScreen(display));
+	}
+/*fprintf(stderr, "Visual Class is %d, depth = %d\n",win_visual_class,win_depth);*/
+#endif
 	panel = (Panel)xv_create(frame, PANEL,
 		PANEL_LAYOUT,		PANEL_VERTICAL,
 		0);
@@ -1221,15 +1330,19 @@ init_graphics_parent_xview()
 	}
 	window_fit_width(panel);
 
-        display = (Display *)xv_get(frame, XV_DISPLAY);
 
 	canvas = (Canvas)xv_create(frame, CANVAS,
 		WIN_RIGHT_OF,		panel,
-		WIN_DYNAMIC_VISUAL,	TRUE,
 		XV_HEIGHT,		height,
 		XV_WIDTH,		width,
-		CANVAS_RETAINED,	TRUE,
 		XV_HELP_DATA,		"dm-XGL:canvas",
+#if DO_24_BIT
+		XV_DEPTH,		win_depth,
+		XV_VISUAL_CLASS,	win_visual_class,
+#endif
+		CANVAS_AUTO_CLEAR, FALSE,
+		CANVAS_FIXED_IMAGE, FALSE,
+		CANVAS_RETAINED,	FALSE,
 		0);
 	pw = (Xv_Window)canvas_paint_window(canvas);
 
@@ -1248,13 +1361,14 @@ init_graphics_parent_xview()
 		0);
 
 	xv_set(pw,
-		WIN_EVENT_PROC,		win_event_proc,
+		WIN_EVENT_PROC,		pw_event_proc,
 		WIN_CONSUME_EVENTS,	WIN_NO_EVENTS,
 					WIN_TOP_KEYS,
 					WIN_UP_EVENTS,
 					WIN_MOUSE_BUTTONS,
 					LOC_WINENTER,
 					LOC_MOVE,
+					WIN_RESIZE, WIN_REPAINT,
 					0,
 		WIN_CURSOR,		cursor_busyred,
 		0);
@@ -1268,35 +1382,53 @@ static int
 init_graphics_parent_xgl(frame)
 Frame	frame;
 {
-	void		win_event_proc();
         Atom		catom;
 	Window		frame_window;
 	Window		canvas_window;
 	Xgl_color	ln_color;
-	Xgl_bounds_f2d	bounds_f2d;
-	Xgl_bounds_f3d	bounds_f3d;
+	Xgl_bounds_d2d	bounds_d2d;
+	Xgl_bounds_d3d	bounds_d3d;
+	int		bufs;
 	
 	canvas_window = (Window)xv_get(pw, XV_XID);
 	frame_window = (Window)xv_get(frame, XV_XID);
 
+#if 0
+	/* Set the window background */
+	XSetWindowBackground(display, 
+		canvas_window, BlackPixel(display,DefaultScreen(display))); 
+#endif
 	catom = XInternAtom(display, "WM_COLORMAP_WINDOWS", False);
 	XChangeProperty(display, frame_window, catom, XA_WINDOW, 32,
-		PropModeAppend, &canvas_window, 1);
+		PropModeAppend, (unsigned char *)&canvas_window, 1);
 
 	xgl_x_win.X_display = (void *)XV_DISPLAY_FROM_WINDOW(pw);
 	xgl_x_win.X_window = (Xgl_usgn32)canvas_window;
 	xgl_x_win.X_screen = (int)DefaultScreen(display);
 
-	sleep(2);
+	win_desc.win_ras.type = XGL_WIN_X ;
+	win_desc.win_ras.desc = &xgl_x_win;
 
 	sys_state = xgl_open(0);
+{
+       Xgl_inquire          *inq_info;
+       if (!(inq_info = xgl_inquire(sys_state, &win_desc))) {
+          printf("error in getting inquiry\n");
+          exit(1);
+        }
+	bufs = inq_info->maximum_buffer;	/* if double buffering, its 2 */
+}
+    if (win_depth == 24)
+	color_type = XGL_COLOR_RGB;
+    else
+	color_type = XGL_COLOR_INDEX;
 
     /* ras MUST be created before init_check_buffering() is called */
-    	ras = xgl_window_raster_device_create(
-		XGL_WIN_X,		&xgl_x_win,
-		0);
+    	ras = xgl_object_create(sys_state, XGL_WIN_RAS, &win_desc,
+		XGL_RAS_COLOR_TYPE, color_type,
+		NULL);
 
-	if((dbuffering = init_check_buffering()) < 0)
+	if((dbuffering = init_check_buffering(bufs)) < 0)
 		return(-1);
 
 	if(MONOCHROME) {
@@ -1317,97 +1449,98 @@ Frame	frame;
 		color_table[DM_BLUE  ].rgb = BLUE;
 		color_table[DM_YELLOW].rgb = YELLOW;
 		color_table[DM_WHITE ].rgb = WHITE;
-		for(slotsused = MINSLOTS; slotsused < maxcolors; ++slotsused)
+		for(slotsused=MINSLOTS; slotsused < maxcolors; ++slotsused)
 			color_table[slotsused].rgb = RED;
 		slotsused = MINSLOTS;
 		if(CMAPDBUFFERING)
 			setcolortables(color_table_A, color_table_B);
 
-		ln_color.index = COLORINDEX(DM_YELLOW);
-
-		cmap = xgl_color_map_create(
+		SetColor(ln_color, DM_YELLOW);
+		if (color_type == XGL_COLOR_INDEX) {
+		    cmap = xgl_object_create(sys_state, XGL_CMAP, NULL,
 			XGL_CMAP_COLOR_TABLE_SIZE,	colortablesize,
 			XGL_CMAP_COLOR_TABLE,		&cmap_info,
 			0);
 
-		if(CMAPDBUFFERING) {
-			cmap_B = xgl_color_map_create(
+		    if(CMAPDBUFFERING) {
+			cmap_B = xgl_object_create(sys_state, XGL_CMAP, NULL,
 				XGL_CMAP_COLOR_TABLE_SIZE,	colortablesize,
 				XGL_CMAP_COLOR_TABLE,		&cmap_info_B,
 				0);
-
-		xgl_object_set(ras,
-			XGL_RAS_COLOR_MAP,	cmap,
+		    }
+		    xgl_object_set(ras,
+			XGL_DEV_COLOR_MAP,	cmap,
 			0);
 		}
 	}
 
-	bounds_f2d.xmin = -2048.0;
-	bounds_f2d.xmax = 2050.0;	/* I'm not sure why this has to be */
-	bounds_f2d.ymin = -2052.0;	/* hacked with 2050 and 2052;  but, */
-	bounds_f2d.ymax = 2048.0;	/* that's what works */
+	bounds_d2d.xmin = -2048.0;
+	bounds_d2d.xmax = 2050.0;	/* I'm not sure why this has to be */
+	bounds_d2d.ymin = -2052.0;	/* hacked with 2050 and 2052;  but, */
+	bounds_d2d.ymax = 2048.0;	/* that's what works */
 
-	bounds_f3d.xmax = 1.;
-	bounds_f3d.xmin = -1.;
-	bounds_f3d.ymax = 1.;
-	bounds_f3d.ymin = -1.;
-	bounds_f3d.zmax = 1.;
-	bounds_f3d.zmin = -1.;	
+	bounds_d3d.xmax = 1.;
+	bounds_d3d.xmin = -1.;
+	bounds_d3d.ymax = 1.;
+	bounds_d3d.ymin = -1.;
+	bounds_d3d.zmax = 1.;
+	bounds_d3d.zmin = -1.;	
 
-	ctx_3d = xgl_3d_context_create(
+	ctx_3d = xgl_object_create (sys_state, XGL_3D_CTX, NULL,
 			XGL_CTX_DEVICE,		ras,
 			XGL_CTX_LINE_COLOR,	&ln_color,
 			XGL_CTX_VDC_MAP,	XGL_VDC_MAP_ASPECT,
 			XGL_CTX_VDC_ORIENTATION, XGL_Y_UP_Z_TOWARD,
-			XGL_CTX_VDC_WINDOW,	&bounds_f3d,
+			XGL_CTX_VDC_WINDOW,	&bounds_d3d,
 			XGL_CTX_CLIP_PLANES,	XGL_CLIP_XMIN | XGL_CLIP_YMIN,
+                        XGL_CTX_LINE_PATTERN,   xgl_lpat_dashed,
+			XGL_CTX_LINE_STYLE,	XGL_LINE_SOLID,
+			XGL_CTX_DEFERRAL_MODE, XGL_DEFER_ASTI,
 			0);
-
-	ctx_2d = xgl_2d_context_create(
+	ctx_2d = xgl_object_create(sys_state, XGL_2D_CTX, NULL,
 			XGL_CTX_DEVICE,		ras,
 			XGL_CTX_LINE_COLOR,	&ln_color,
 			XGL_CTX_VDC_MAP,	XGL_VDC_MAP_ASPECT,
 			XGL_CTX_VDC_ORIENTATION, XGL_Y_UP_Z_TOWARD,
-			XGL_CTX_VDC_WINDOW,	&bounds_f2d,
+			XGL_CTX_VDC_WINDOW,	&bounds_d2d,
 			0);
-
+	/*switch_bg_color();*/
 	if(CMAPDBUFFERING) {
+		xgl_context_new_frame(ctx_3d);
+		xgl_context_new_frame(ctx_2d);
 		current_buffer_is_A = 0;
 		xgl_object_set(ctx_3d, XGL_CTX_PLANE_MASK, CMAP_MASK_B, 0);
 		xgl_object_set(ctx_2d, XGL_CTX_PLANE_MASK, CMAP_MASK_B, 0);
+		xgl_context_new_frame(ctx_3d);
+		xgl_context_new_frame(ctx_2d);
 	} else if (dbuffering == AB_DBUFF) {
+		xgl_context_new_frame(ctx_3d);
+		xgl_context_new_frame(ctx_2d);
 		xgl_object_set(ras,
-		    XGL_WIN_RAS_BUF_ENABLE,		(XGL_BUF_A | XGL_BUF_B),
 		    XGL_WIN_RAS_BUF_DISPLAY,		XGL_BUF_A,
-		    XGL_WIN_RAS_BUF_WRITE_ENABLE,	XGL_BUF_B,
-		    XGL_WIN_RAS_BUF_READ_ENABLE,	XGL_BUF_B,
+		    XGL_WIN_RAS_BUF_DRAW,		XGL_BUF_B,
 		    0);
+		xgl_context_new_frame(ctx_3d);
+		xgl_context_new_frame(ctx_2d);
 		xgl_object_set(ctx_3d,
 		    XGL_CTX_NEW_FRAME_ACTION,
 			(XGL_CTX_NEW_FRAME_CLEAR
 			    | XGL_CTX_NEW_FRAME_SWITCH_BUFFER),
 		    0);
-		xgl_object_set(ctx_2d,
-		    XGL_CTX_NEW_FRAME_ACTION,
-			(XGL_CTX_NEW_FRAME_CLEAR
-			    | XGL_CTX_NEW_FRAME_SWITCH_BUFFER),
-		    0);
 	}
 
-	trans = xgl_transform_create(0);
+	trans = xgl_object_create(sys_state, XGL_TRANS, NULL, NULL);
 
 	return(0);
 }
 
 
 static int
-init_check_buffering()
+init_check_buffering( int bufs)
 {
 	Xgl_cmap	cmap;
-	Xgl_color_type	color_type;
 	Xgl_usgn32	maxsize;
 	Xgl_usgn32	nbufs;
-	char		line[80];
 	int		type;
 
 	type = NO_DBUFF;
@@ -1415,29 +1548,17 @@ init_check_buffering()
 	colortablesize = 128;
 
 	xgl_object_get(ras, XGL_RAS_COLOR_TYPE, &color_type);
-	xgl_object_get(ras, XGL_WIN_RAS_BUFFERS_SUPPORTED, &nbufs);
-	xgl_object_get(ras, XGL_RAS_COLOR_MAP, &cmap);
+#if DO_DOUBLE_BUFF
+	if (bufs > 1) {
+		/* Let's try double buffering because the H/W says it exists */
+		xgl_object_set(ras, XGL_WIN_RAS_BUFFERS_REQUESTED, bufs, 0);
+	}
+#endif
+	xgl_object_get(ras, XGL_WIN_RAS_BUFFERS_ALLOCATED, &nbufs);
+	xgl_object_get(ras, XGL_DEV_COLOR_MAP, &cmap);
 	xgl_object_get(cmap, XGL_CMAP_MAX_COLOR_TABLE_SIZE, &maxsize);
 
-	if(color_type != XGL_COLOR_INDEX) {
-
-	printf("\nThis hardware does not use an indexed color map.\n");
-	printf("And, this software has not been optimized or tested for\n");
-	printf("this type of frame buffer.    Unpredictable results may\n");
-	printf("occur.\n\n");
-
-		if(ok(NO) == YES) {
-			xgl_object_destroy(ras);
-    			ras = xgl_window_raster_device_create(
-				XGL_WIN_X,		&xgl_x_win,
-				XGL_RAS_COLOR_TYPE,	XGL_COLOR_INDEX,
-				0);
-			return(init_check_buffering());
-		} else {
-			return(-1);
-		}
-
-	} else if(nbufs > 1) {
+	if(nbufs > 1) {
 
 	printf("\nA total of %d buffers are supported by this\n", nbufs);
 	printf("hardware.  Hardware double buffering will be turned on.\n");
@@ -1451,7 +1572,7 @@ init_check_buffering()
 
 		maxcolors = 2;
 		colortablesize = 2;
-		return((ok(YES) == YES) ? NO_DBUFF : -1);
+		return(NO_DBUFF);
 
 	} else if(maxsize != 256) {
 
@@ -1461,84 +1582,38 @@ init_check_buffering()
 
 	} else {
 
-	printf("\nThis is a color frame buffer with a single hardware\n");
-	printf("display buffer.  ");
+		printf("\nUsing colormap double buffering, 8 bit color.\n");
 
-#if   (DEFAULT_DB == OPTION_ZERO)
+		switch(DEFAULT_DB) {
+		case OPTION_ZERO:
+			type = NO_DBUFF;
+			maxcolors = 2;
+			colortablesize = 2;
+			break;
 
-	printf(                 "By default, no double buffering will be\n");
-	printf("used.   And, the display will be treated as a monochrome\n");
-	printf("display.   This option (option \'0\') is more for testing\n");
-	printf("purposes than anything else.   And, as such, option \'0\'\n");
-	printf("is never listed on the menu.\n");
+		 case OPTION_ONE:
+			type = NO_DBUFF;
+			maxcolors = 128;
+			colortablesize = 128;
+			break;
 
-#elif (DEFAULT_DB == OPTION_ONE)
+		  case OPTION_TWO:
+			type = CMAP8_DBUFF;
+			maxcolors = 8;
+			colortablesize = 64;
+			break;
 
-	printf(                 "By default, no double buffering will be\n");
-	printf("used.   As such, 128 colors will be available, and\n");
-	printf("\"colormap flash\" is unlikely.   However, certain\n");
-	printf("operations will appear to be extremely \"jerky\".\n");
-
-#elif (DEFAULT_DB == OPTION_TWO)
-
-	printf(                 "By default, colormap double buffering\n");
-	printf("in 8 colors will be used.   As such, \"colormap flash\"\n");
-	printf("is unlikely, but objects may not be displayed in their\n");
-	printf("correct colors.\n\n");
-
-#elif (DEFAULT_DB == OPTION_THREE)
-
-	printf(                 "By default, colormap double buffering\n");
-	printf("in 16 colors will be used.   As such, \"colormap flash\"\n");
-	printf("may be expected to occur.\n\n");
-
-#endif
-
-		for(*line = DEFAULT_DB;;) {
-			switch(*line) {
-			  case OPTION_ZERO:
-				type = NO_DBUFF;
-				maxcolors = 2;
-				colortablesize = 2;
-				break;
-
-			  case OPTION_ONE:
-				type = NO_DBUFF;
-				maxcolors = 128;
-				colortablesize = 128;
-				break;
-
-			  case OPTION_TWO:
-				type = CMAP8_DBUFF;
-				maxcolors = 8;
-				colortablesize = 64;
-				break;
-
-			  case OPTION_THREE:
-				type = CMAP16_DBUFF;
-				maxcolors = 16;
-				colortablesize = 256;
-				break;
-			  default:
-				goto skip_ok;
-			}
-			if(ok(YES) == YES) break;
-skip_ok:
-		printf("Please choose from the following:\n\n");
-
-		printf("\t1 -\tNo double buffering;  but, with 128 colors\n");
-		printf("\t2 -\tColormap double buffering in 8 colors\n");
-		printf("\t3 -\tColormap double buffering in 16 colors\n\n");
-
-		printf("Option [%c]: ", DEFAULT_DB);
-
-			(void)fgets( line, sizeof(line), stdin ); /* \n, null terminated */
-			line[strlen(line)-1] = '\0';		/* remove newline */
-			if(feof(stdin)) goto skip_ok;
-			if(*line == '\0') *line = DEFAULT_DB;
+		  case OPTION_THREE:
+			type = CMAP16_DBUFF;
+			maxcolors = 16;
+			colortablesize = 256;
+			break;
+		  default:
+			printf("Undefined DEFAULT_DB option, exiting\n");
+			exit(1);
 		}
-		return(type);
 	}
+	return(type);
 }
 
 static int
@@ -1654,71 +1729,6 @@ int	fd;
 	}
 }
 
-static struct obj *
-alloc_obj(num_pts)
-int		num_pts;
-{
-	struct obj	*objptr;
-
-	if((objptr = (struct obj *)calloc(1, sizeof(struct obj)))
-	    == (struct obj *)0)
-		return((struct obj *)0);
-
-	if(obj == (struct obj *)0) {
-		obj = objptr;
-	} else {
-		end_obj->forptr = objptr;
-		objptr->backptr = end_obj;
-	}
-	end_obj = objptr;
-
-	objptr->pt_list.pt_type = XGL_PT_FLAG_F3D;
-	objptr->pt_list.num_pts = num_pts;
-	if((objptr->pt_list.pts.flag_f3d =
-	  (Xgl_pt_flag_f3d *)calloc(num_pts, sizeof(Xgl_pt_flag_f3d)))
-	    == (Xgl_pt_flag_f3d *)0)
-		return((struct obj *)0);
-
-	return(objptr);
-}
-
-static void
-free_obj(objptr)
-struct obj	*objptr;
-{
-	if(objptr->backptr == (struct obj *)0)
-		obj = objptr->forptr;
-	else
-		objptr->backptr->forptr = objptr->forptr;
-
-	if(objptr->forptr == (struct obj *)0)
-		end_obj = objptr->backptr;
-	else
-		objptr->forptr->backptr = objptr->backptr;
-
-	if(lastf_obj == objptr) lastf_obj = (struct obj *)0;
-	free(objptr->pt_list.pts.flag_f3d);
-	free(objptr);
-
-	return;
-}
-
-static struct obj *
-find_obj(sp)
-struct solid	*sp;
-{
-	register struct obj	*objptr;
-
-	objptr = (lastf_obj == (struct obj *)0) ? obj : lastf_obj;
-	for(; objptr != (struct obj *)0; objptr = objptr->forptr)
-		if(objptr->sp == sp) return(lastf_obj = objptr);
-	if(lastf_obj == (struct obj *)0) return((struct obj *)0);
-	for(objptr = obj; objptr != lastf_obj; objptr = objptr->forptr)
-		if(objptr->sp == sp) return(lastf_obj = objptr);
-
-	return(lastf_obj = (struct obj *)0);
-}
-
 static void
 set_termsw_width(w)
 int	w;
@@ -1767,23 +1777,15 @@ set_termsw_display()
  *	Notifier funcs
  */
 
-static Notify_value
-setfocus_timer_func(client, which)
-Notify_client	client;
-int		which;
-{
-	XSetInputFocus(display, (Window)xv_get(pw, XV_XID),
-		RevertToNone, CurrentTime);
-
-	return(NOTIFY_DONE);
-}
 
 static Notify_value
 stop_func(client, fd)
 Notify_client	client;
 int		fd;
 {
+/*fprintf (stderr,"stop_func:calling notify_stop()\n");*/
 	notify_stop();
+/*fprintf (stderr,"stop_func:back from notify_stop()\n");*/
 
 	return(NOTIFY_DONE);
 }
@@ -1828,7 +1830,7 @@ Event		*event;
 	no_2d_flag ^= 0x01;
 
 	dmaflag = 1;
-	stop_func(0, 0);
+	stop_func((Notify_client)0, 0);
 
 	return(0);
 }
@@ -1839,16 +1841,16 @@ Panel_item	item;
 Event		*event;
 {
 	int	h, x, y;
+	Rect	r;
 
 	detached_flag ^= 0x01;
 
-	h = (int)xv_get(frame, XV_HEIGHT);
-	x = (int)xv_get(frame, XV_X);
-	y = (int)xv_get(frame, XV_Y) + h + SLACK_HACK;
-
+	frame_get_rect (frame, &r);
+	h = r.r_height;
+	x = r.r_left;
+	y = r.r_top + h;
 	if(detached_flag) {
 		xv_set(item, PANEL_LABEL_STRING, "attach", 0);
-		y += 20;
 	} else {
 		xv_set(item, PANEL_LABEL_STRING, "detach", 0);
 		set_termsw_width((int)xv_get(frame, XV_WIDTH));
@@ -1872,7 +1874,7 @@ Rectlist	*repaint_area;
 	DPRINTF("repaint_proc\n");
 
 	dmaflag = 1;
-	stop_func(0, 0);
+	stop_func((Notify_client)0, 0);
 
 	return;
 }
@@ -1890,10 +1892,11 @@ int		w, h;
 	if(width < height) height = width;
 	if(height < width) width  = height;
 
-	xgl_window_raster_resize(ras, w, h);
+	XSync (display, 0);
+	xgl_window_raster_resize(ras);
 
 	dmaflag = 1;
-	stop_func(0, 0);
+	stop_func((Notify_client)0, 0);
 
 	return;
 }
@@ -1909,40 +1912,33 @@ Event	*event;
 caddr_t	*arg;
 {
 	int		h, x, y;
-	static int	hack = 0;
+	Rect	r;
 
 	switch(event_id(event)) {
 	case WIN_RESIZE:
-	    /*								*/
-	    /* due to an openwin 2.0 xview bug, this application has	*/
-	    /* to ignore the 6th resize event on startup, or the termsw	*/
-	    /* will start off in the wrong place.  This is a very ugly	*/
-	    /* way to work around this bug;   but, I tried everything,	*/
-	    /* and this is all I could come up with.			*/
-	    /*								*/
 		if(detached_flag) break;
-		if(++hack == 6) break;
 
-		h = (int)xv_get(frame, XV_HEIGHT);
-		y = (int)xv_get(frame, XV_Y) + h + SLACK_HACK;
-		x = (int)xv_get(frame, XV_X);
+		frame_get_rect (frame, &r);
+		h = r.r_height;
+		x = r.r_left;
+		y = r.r_top + h;
 		set_termsw_position(x, y);
 		set_termsw_width((int)xv_get(frame, XV_WIDTH));
 		break;
-
 	default:
 		break;
 	}
 }
 
 static void
-win_event_proc(win, event, arg)
+pw_event_proc(win, event, arg)
 Window	win;
 Event	*event;
 caddr_t	*arg;
 {
 	struct itimerval	timeout;
 	int			x, y;
+
 
 	x = event_x(event);
 	y = event_y(event);
@@ -1954,45 +1950,34 @@ caddr_t	*arg;
 	ypen = SUNPWy_TO_GED(y);
 
 	switch(event_id(event)) {
+	case WIN_RESIZE:
+		break;
+	case WIN_REPAINT:
+		break;
 	case ACTION_SELECT:
 	case MS_LEFT:
 		if (event_is_down(event)) {
-			rt_vls_strcat( &dm_values.dv_string , "zoom 2\n" );
-			stop_func(0, 0);
+			rt_vls_strcat( &dm_values.dv_string , "zoom .5\n" );
+			stop_func((Notify_client)0, 0);
 		}
 		break;
 	case ACTION_ADJUST:
 	case MS_MIDDLE:
 		if (!no_2d_flag && event_is_down(event)) {
-			rt_vls_printf(  &dm_values.dv_string , "M 1 %d %d\n", xpen, ypen );
-			stop_func(0, 0);
+			rt_vls_printf(  &dm_values.dv_string , "M 1 %d %d\n", 
+				xpen, ypen );
+			stop_func((Notify_client)0, 0);
 		}
 	 	break;
 	case ACTION_MENU:
 	case MS_RIGHT:
 		if (event_is_down(event)) {
-			rt_vls_strcat( &dm_values.dv_string , "zoom 0.5\n" );
-			stop_func(0, 0);
+			rt_vls_strcat( &dm_values.dv_string , "zoom 2\n" );
+			stop_func((Notify_client)0, 0);
 		}
 		break;
 
-	/*********************************************************************/
-	/* Catching LOC_WINENTER seems to be necessary here, for some reason,*/
-	/* in order to force keyboard input focus into my canvas.	     */
-	/* And, XSetInputFocus() seems to be about the only thing that gets  */
-	/* it right.   win_set_kbd_focus() doesn't work completely; and,     */
-	/* setting WIN_KBD_FOCUS is hopless.   Even XSetInputFocus doesn't   */
-	/* work all the time;   I think I sometimes get into a race condition*/
-	/* of some sort with the window manager, but it works most of the    */
-	/* time.  Nonetheless, I added a 1/2 second delay with		     */
-	/* notify_set_itimer_func() to force it into working ALL the time.   */
-	/*   ...sigh							     */
-	/*********************************************************************/
 	case LOC_WINENTER:
-		bzero((char *)&timeout, sizeof(timeout));
-		timeout.it_value.tv_usec = 500000L;
-		notify_set_itimer_func(pw, setfocus_timer_func, ITIMER_REAL,
-		    &timeout, NULL);
 		break;
 	case LOC_MOVE:
 		if(sun_buttons)
@@ -2002,6 +1987,8 @@ caddr_t	*arg;
 	/* Delay the effect of mouse tracking to make things smoother.	     */
 	/*********************************************************************/
 		if(mouse_tracking || sun_buttons) {
+			rt_vls_printf( &dm_values.dv_string, "M 0 %d %d\n",
+                                xpen, ypen );
 			bzero((char *)&timeout, sizeof(timeout));
 			timeout.it_value.tv_usec = 500000L;
 			notify_set_itimer_func(pw, stop_func, ITIMER_REAL,
@@ -2056,7 +2043,7 @@ int	button_flag;
 		sun_buttons |= button_flag;
 	}
 	set_dm_values();
-	stop_func();
+	stop_func((Notify_client)0, 0);
 	return;
 }
 
@@ -2220,3 +2207,41 @@ Notify_signal_mode	when;
 
 	return(NOTIFY_DONE);
 }
+
+
+static struct timeval tp1, tp2;
+static void
+start_ts() {
+	gettimeofday(&tp1);
+}
+static int
+stop_ts() {
+	gettimeofday(&tp2);
+	return (((tp2.tv_sec*1000000 + tp2.tv_usec) -
+                 (tp1.tv_sec*1000000 + tp1.tv_usec))/1000 );
+}
+static int
+getms(struct timeval tp1, struct timeval tp2)
+{
+	return (((tp2.tv_sec*1000000 + tp2.tv_usec) - 
+		 (tp1.tv_sec*1000000 + tp1.tv_usec))/1000 );
+}
+
+dump_pl(Xgl_pt_list *pl, int n)
+{
+
+	int i, j;
+
+	for (i = 0; i < n; i++) {
+		fprintf(stderr, "PL[%d]: (%d pts)\n",i, pl[i].num_pts);
+		for (j = 0; j < pl[i].num_pts; j++) {
+			fprintf(stderr, "	pt[%j]: %f,%f,%f, %d\n",
+				pl[i].pts.flag_f3d[j].x,
+				pl[i].pts.flag_f3d[j].y,
+				pl[i].pts.flag_f3d[j].z,
+				pl[i].pts.flag_f3d[j].flag);
+		}
+	}
+}
+
+	
