@@ -220,7 +220,8 @@ X_open(Tcl_Interp *interp, int argc, char **argv)
   int j, k;
   int ndevices;
   int nclass = 0;
-  XDeviceInfoPtr olist, list;
+  int unused;
+  XDeviceInfoPtr olist = NULL, list = NULL;
   XDevice *dev;
   XEventClass e_class[15];
   XInputClassInfo *cip;
@@ -447,9 +448,9 @@ X_open(Tcl_Interp *interp, int argc, char **argv)
    * Take a look at the available input devices. We're looking
    * for "dial+buttons".
    */
-  olist = list =
-    (XDeviceInfoPtr)XListInputDevices(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-				      &ndevices);
+  if (XQueryExtension(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy, "XInputExtension", &unused, &unused, &unused)) {
+      olist = list = (XDeviceInfoPtr)XListInputDevices(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy, &ndevices);
+  }
 
   if( list == (XDeviceInfoPtr)NULL ||
       list == (XDeviceInfoPtr)1 )  goto Done;

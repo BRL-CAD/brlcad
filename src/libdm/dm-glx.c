@@ -203,7 +203,8 @@ char *argv[];
   int ndevices;
   int nclass = 0;
   int make_square = -1;
-  XDeviceInfoPtr olist, list;
+  int unused;
+  XDeviceInfoPtr olist = NULL, list = NULL;
   XDevice *dev;
   XEventClass e_class[15];
   XInputClassInfo *cip;
@@ -499,8 +500,9 @@ char *argv[];
    * Take a look at the available input devices. We're looking
    * for "dial+buttons".
    */
-  olist = list =
-    (XDeviceInfoPtr)XListInputDevices(((struct glx_vars *)dmp->dm_vars)->dpy, &ndevices);
+  if (XQueryExtension(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy, "XInputExtension", &unused, &unused, &unused)) {
+      olist = list = (XDeviceInfoPtr)XListInputDevices(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy, &ndevices);
+  }
 
   /* IRIX 4.0.5 bug workaround */
   if( list == (XDeviceInfoPtr)NULL ||
