@@ -21,12 +21,6 @@
  *  $Header$
  */
 
-/* data for solid editing */
-extern union record es_rec;		/* current solid record */
-
-#define es_type	es_rec.s.s_cgtype	/* COMGEOM solid type */
-
-extern int     es_edflag;		/* type of editing for this solid */
 /* These ECMD_ values go in es_edflag.  Some names not changed yet */
 #define IDLE		0	/* edarb.c */
 #define STRANS		1	/* buttons.c */
@@ -53,6 +47,8 @@ extern fastf_t	es_scale;		/* scale factor */
 extern fastf_t 	es_para[3];		/* keyboard input parameter changes */
 extern fastf_t	es_peqn[7][4];		/* ARBs defining plane equations */
 extern int	es_menu;		/* item/edit_mode selected from menu */
+extern int	es_edflag;		/* type of editing for this solid */
+extern int	es_type;		/* COMGEOM solid type */
 
 extern mat_t	es_mat;			/* accumulated matrix of path */ 
 extern mat_t 	es_invmat;		/* inverse of es_mat   KAA */
