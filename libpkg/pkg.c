@@ -49,6 +49,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #ifdef BSD
 /* 4.2BSD, 4.3BSD network stuff */
+#if defined(__bsdi__)
+# include <sys/param.h>	/* needed to pick up #define for BYTE_ORDER */
+#endif
+
 #include <sys/socket.h>
 #include <sys/ioctl.h>		/* for FIONBIO */
 #include <netinet/in.h>		/* for htons(), etc */
