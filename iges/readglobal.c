@@ -105,8 +105,13 @@ Readglobal()
 	   switch( ++field )
 		{
 		case 3:		Readname( &name , "Product ID: ");
-				mk_id( fdout , name );
-				free( name );
+				if( name != NULL )
+				{
+					mk_id( fdout , name );
+					free( name );
+				}
+				else
+					mk_id( fdout , "Un-named Product" );
 				break;
 		case 4:		Readstrg( "File Name: " );
 				break;
