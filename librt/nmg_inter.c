@@ -596,6 +596,7 @@ struct faceuse	*fu1;
 struct faceuse	*fu2;
 {
 	struct loopuse	*lu, *fu2lu;
+	struct loop_g	*lg;
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
 		rt_log("nmg_isect_2face_loops(, fu1=x%x, fu2=x%x) START ++++++++++\n", fu1, fu2);
@@ -609,26 +610,32 @@ struct faceuse	*fu2;
 		if (lu->up.fu_p != fu1) {
 			rt_bomb("nmg_isect_2face_loops() Child loop doesn't share parent!\n");
 		}
+		NMG_CK_LOOP(lu->l_p);
+		lg = lu->l_p->lg_p;
+		NMG_CK_LOOP_G(lg);
 
 		/* If the bounding box of a loop doesn't intersect the
 		 * bounding box of a loop in the other face, it doesn't need
 		 * to get cut.
 		 */
 		for (RT_LIST_FOR(fu2lu, loopuse, &fu2->lu_hd )){
+			struct loop_g *fu2lg;
+
 			NMG_CK_LOOPUSE(fu2lu);
 			NMG_CK_LOOP(fu2lu->l_p);
-			NMG_CK_LOOP_G(fu2lu->l_p->lg_p);
 
 			/* If this loop is just some drek deposited as part of
 			 * the intersection operation, or it defines a hole
-			 * int the face, it doesn't really count.
+			 * in the face, it doesn't really count.
 			 */
 			if (fu2lu->orientation != OT_SAME)
 			    	continue;
 
-			if (NMG_EXTENT_OVERLAP(
-			   fu2lu->l_p->lg_p->min_pt, fu2lu->l_p->lg_p->max_pt,
-			    lu->l_p->lg_p->min_pt,   lu->l_p->lg_p->max_pt)) {
+			fu2lg = fu2lu->l_p->lg_p;
+			NMG_CK_LOOP_G(fu2lg);
+
+			if (NMG_EXTENT_OVERLAP( fu2lg->min_pt, fu2lg->max_pt,
+			    lg->min_pt, lg->max_pt)) {
 				isect_loop_face(bs, lu, fu2);
 				break;
 			}
