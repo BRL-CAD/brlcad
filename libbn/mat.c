@@ -608,3 +608,77 @@ vect_t dir;
 	mat_angles( second, -90.0, 0.0, 90.0 );
 	mat_mul( rot, second, first );
 }
+
+/*
+ *			V E C _ O R T H O
+ *
+ *  Given a vector, create another vector which is perpendicular to it,
+ *  and with unit length.  This algorithm taken from Gift's arvec.f;
+ *  a faster algorithm may be possible.
+ */
+vec_ortho( out, in )
+register fastf_t *out, *in;
+{
+	register int j, k;
+	FAST fastf_t	f;
+	register int i;
+
+	if( NEAR_ZERO(in[X], 0.0001) && NEAR_ZERO(in[Y], 0.0001) &&
+	    NEAR_ZERO(in[Z], 0.0001) )  {
+		VSETALL( out, 0 );
+		VPRINT("vec_ortho: zero-length input", in);
+		return;
+	}
+
+	/* Find component closest to zero */
+	f = fabs(in[X]);
+	i = X;
+	j = Y;
+	k = Z;
+	if( fabs(in[Y]) < f )  {
+		f = fabs(in[Y]);
+		i = Y;
+		j = Z;
+		k = X;
+	}
+	if( fabs(in[Z]) < f )  {
+		i = Z;
+		j = X;
+		k = Y;
+	}
+	f = hypot( in[j], in[k] );
+	if( NEAR_ZERO( f, SMALL ) ) {
+		VPRINT("vec_ortho: zero hypot on", in);
+		VSETALL( out, 0 );
+		return;
+	}
+	f = 1.0/f;
+	out[i] = 0.0;
+	out[j] = -in[k]*f;
+	out[k] =  in[j]*f;
+}
+
+/*
+ *			V E C _ P E R P
+ *
+ *  Given a vector, create another vector which is perpendicular to it,
+ *  but may not have unit length.
+ */
+void
+vec_perp( new, old )
+vect_t new, old;
+{
+	register int i;
+	LOCAL vect_t another;	/* Another vector, different */
+
+	i = X;
+	if( fabs(old[Y])<fabs(old[i]) )  i=Y;
+	if( fabs(old[Z])<fabs(old[i]) )  i=Z;
+	VSETALL( another, 0 );
+	another[i] = 1.0;
+	if( old[X] == 0 && old[Y] == 0 && old[Z] == 0 )  {
+		VMOVE( new, another );
+	} else {
+		VCROSS( new, another, old );
+	}
+}
