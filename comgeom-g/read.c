@@ -27,6 +27,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
+
+#include "machine.h"
 #include "externs.h"
 
 extern FILE	*infp;
