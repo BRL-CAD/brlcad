@@ -57,7 +57,7 @@ FBIO sgi_interface =
 		"Silicon Graphics IRIS",
 		1024,			/* max width */
 		768,			/* max height */
-		"sgi",
+		"/dev/sgi",
 		512,			/* current/default width  */
 		512,			/* current/default height */
 		-1,			/* file descriptor */

@@ -42,7 +42,7 @@ FBIO debug_interface =
 		"Debugging Interface",
 		1024,			/* max width */
 		1024,			/* max height */
-		"debug",
+		"/dev/debug",
 		0,			/* current width (init 0) */
 		0,			/* current height (init 0) */
 		-1,			/* file descriptor */
