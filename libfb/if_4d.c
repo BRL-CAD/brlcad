@@ -120,6 +120,8 @@ FBIO sgi_interface =
 		fb_null,		/* cscreen_addr */
 		fb_sim_readrect,
 		sgi_writerect,
+		fb_null,		/* flush */
+		sgi_dclose,		/* free - XXX */
 		sgi_help,
 		"Silicon Graphics Iris '4D'",
 		XMAXSCREEN+1,		/* max width */
@@ -253,7 +255,7 @@ struct sgiinfo {
 #define MODE_15NORMAL	(0<<14)
 #define MODE_15ZAP	(1<<14)
 
-struct modeflags {
+static struct modeflags {
 	char	c;
 	long	mask;
 	long	value;
