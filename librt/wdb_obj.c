@@ -781,7 +781,6 @@ wdb_adjust_tcl( clientData, interp, argc, argv )
 		rt_db_free_internal(&intern);
 		return TCL_ERROR;
 	}
-	rt_db_free_internal(&intern);
 
 	/* notify observers */
 	bu_observer_notify(interp, &wdbp->wdb_observers, bu_vls_addr(&wdbp->wdb_name));
