@@ -56,10 +56,10 @@ class Display {
     public method remove {glist}
     public method contents {}
 
-    # methods that override method inherited from View
+    # methods that override methods inherited from View
     public method slew {x y}
 
-    # methods that override method inherited from Dm
+    # methods that override methods inherited from Dm
     public method fb_active {args}
     public method zclip {args}
     public method zbuffer {args}

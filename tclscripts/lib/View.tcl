@@ -46,7 +46,6 @@ class View {
     }
 
     public method get_name {}
-
     public method observer {args}
     public method aet {args}
     public method center {args}
