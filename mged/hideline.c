@@ -115,10 +115,6 @@ f_hideline()
 /*
  * Initialization for librt
  */
-    RES_INIT( &rt_g.res_syscall );
-    RES_INIT( &rt_g.res_worker );
-    RES_INIT( &rt_g.res_stats );
-    RES_INIT( &rt_g.res_results );
 
     if ((rtip = rt_dirbuild(dbip->dbi_filename,title,0)) == RTI_NULL) {
 	printf("f_hideline: unable to open model file \"%s\"\n",

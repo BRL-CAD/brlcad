@@ -37,7 +37,7 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-char MGEDCopyRight_Notice[] = "@(#) Copyright (C) 1985,1987 by the United States Army";
+char MGEDCopyRight_Notice[] = "@(#) Copyright (C) 1985,1987,1990 by the United States Army";
 
 #include <stdio.h>
 #include <fcntl.h>
@@ -146,6 +146,15 @@ char **argv;
 
 	/* Quick -- before he gets away -- write a logfile entry! */
 	log_event( "START", argv[1] );
+
+	/* If multiple processors might be used, initialize for it */
+	if( rt_avail_cpus() > 1 )  {
+		rt_g.rtg_parallel = 1;
+		RES_INIT( &rt_g.res_syscall );
+		RES_INIT( &rt_g.res_worker );
+		RES_INIT( &rt_g.res_stats );
+		RES_INIT( &rt_g.res_results );
+	}
 
 	/* Set up linked lists */
 	HeadSolid.s_forw = &HeadSolid;

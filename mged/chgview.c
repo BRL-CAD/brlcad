@@ -173,9 +173,9 @@ char	**argv;
 	eedit( argc, argv, 1 );
 }
 
-/* Format: enmg objects	*/
+/* Format: ev objects	*/
 void
-f_enmg(argc, argv)
+f_ev(argc, argv)
 int	argc;
 char	**argv;
 {
@@ -280,6 +280,8 @@ int	kind;
 		dmaflag = 1;
 		refresh();
 	}
+
+	(void)signal( SIGINT, sig2 );	/* allow interupts after here */
 
 	nvectors = 0;
 	(void)time( &stime );

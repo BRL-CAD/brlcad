@@ -77,7 +77,7 @@ void	f_rmats(),f_prefix(), f_keep(), f_tree(), f_inside(), f_mvall(), f_amtrack(
 void	f_tabobj(), f_pathsum(), f_copyeval(), f_push(), f_facedef(), f_eqn();
 void	f_overlay(), f_rtcheck(), f_comb();
 void	f_preview();
-void	f_enmg(), f_nmgtest(), f_debugnmg();
+void	f_ev(), f_nmgtest(), f_debugnmg();
 void	f_tol();
 
 static struct funtab {
@@ -145,8 +145,8 @@ static struct funtab {
 	f_edcomb,6,7,
 "edgedir", "[delta_x delta_y delta_z]|[rot fb]", "define direction of ARB edge being moved",
 	f_edgedir, 3, 4,
-"enmg",	"<objects>", "edit objects with NMG conversion (experimental)",
-	f_enmg, 2, MAXARGS,
+"ev",	"[-w] [-n] [-P#] <objects>", "evaluate objects via NMG tessellation",
+	f_ev, 2, MAXARGS,
 "eqn", "A B C", "planar equation coefficients",
 	f_eqn, 4, 4,
 "extrude", "#### distance", "extrude dist from face",
