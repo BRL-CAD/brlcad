@@ -81,6 +81,7 @@ mlib_setup( rp )
 register struct region *rp;
 {
 	register struct mfuncs *mfp;
+	char	param[256];
 
 	if( rp->reg_mfuncs != (char *)0 )  {
 		rt_log("mlib_setup:  region %s already setup\n", rp->reg_name );
@@ -101,7 +102,9 @@ def:
 found:
 	rp->reg_mfuncs = (char *)mfp;
 	rp->reg_udata = (char *)0;
-	if( mfp->mf_setup( rp, rp->reg_mater.ma_matparm, &rp->reg_udata ) < 0 )  {
+	strncpy( param, rp->reg_mater.ma_matparm, sizeof(rp->reg_mater.ma_matparm) );
+	param[sizeof(rp->reg_mater.ma_matparm)+1] = '\0';
+	if( mfp->mf_setup( rp, param, &rp->reg_udata ) < 0 )  {
 		/* What to do if setup fails? */
 		if( mfp != phg_mfuncs )
 			goto def;
