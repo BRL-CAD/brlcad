@@ -1366,6 +1366,81 @@ do_a_frame()
 }
 
 /*
+ *			S C A N _ F R A M E _ F O R _ F I N I S H E D _ P I X E L S
+ *
+ *  The .pix file for this frame already has some pixels stored in it
+ *  from some earlier, aborted run.
+ *  view_pixel() is always careful to write (0,0,1) or some other
+ *  non-zero tripple in all rendered pixels.
+ *  Therefore, if a (0,0,0) tripple is found in the file, it is
+ *  part of some span which was not yet rendered.
+ *
+ *  At the outset, the frame is assumed to be entirely un-rendered.
+ *  For each span of rendered pixels discovered, remove them from the
+ *  list of work to be done.
+ *
+ *  Returns -
+ *	-1	on file I/O error
+ *	 0	on success
+ */
+int
+scan_frame_for_finished_pixels( fr )
+register struct frame	*fr;
+{
+	register FILE	*fp;
+	char		pbuf[8];
+	register int	pno;	/* index of next unread pixel */
+	int		nspans = 0;
+	int		npix = 0;
+
+	CHECK_FRAME(fr);
+
+	rt_log("%s Scanning %s for non-black pixels\n", stamp(),
+		fr->fr_filename );
+	if( (fp = fopen( fr->fr_filename, "r" )) == NULL )  {
+		perror( fr->fr_filename );
+		return(-1);
+	}
+
+	pno = 0;
+	while( !feof( fp ) )  {
+		register int	first, last;
+
+		/* Read and skip over any black pixels */
+		if( (int)fread( pbuf, 3, 1, fp ) < 1 )  break;
+		pno++;
+		if( pbuf[0] == 0 && pbuf[1] == 0 && pbuf[2] == 0 )
+			continue;
+
+		/*
+		 *  Found a non-black pixel at position 'pno-1'.
+		 *  See how many more follow,
+		 *  and delete the batch of them from the work queue.
+		 */
+		first = last = pno-1;
+
+		while( !feof( fp ) )  {
+			/* Read and skip over non-black pixels */
+			if( (int)fread( pbuf, 3, 1, fp ) < 1 )  break;
+			pno++;
+			if( pbuf[0] == 0 && pbuf[1] == 0 && pbuf[2] == 0 )
+				break;		/* black pixel */
+			/* non-black */
+			last = pno-1;
+		}
+		rt_log("%s Deleting non-black pixel range %d to %d inclusive\n",
+			stamp(),
+			first, last );
+		list_remove( &(fr->fr_todo), first, last );
+		nspans++;
+		npix += last-first+1;
+	}
+	rt_log("%s Scanning %s complete, %d non-black spans, %d non-black pixels\n",
+		stamp(), fr->fr_filename, nspans, npix );
+	return 0;
+}
+
+/*
  *			C R E A T E _ O U T P U T F I L E N A M E
  *
  *  Build and save the file name.
@@ -1376,6 +1451,7 @@ do_a_frame()
  *	-1	error, drop this frame
  *	 0	OK
  */
+int
 create_outputfilename( fr )
 register struct frame	*fr;
 {
@@ -1423,50 +1499,8 @@ register struct frame	*fr;
 		/* The file has existing contents, dequeue all non-black
 		 * pixels.
 		 */
-		register FILE	*fp;
-		char		pbuf[4];
-		register int	pno;	/* index of next unread pixel */
-
-		rt_log("%s Scanning %s for non-black pixels\n", stamp(),
-			fr->fr_filename );
-		if( (fp = fopen( fr->fr_filename, "r" )) == NULL )  {
-			perror( fr->fr_filename );
-			return(-1);
-		}
-
-		pno = 0;
-		while( !feof( fp ) )  {
-			register int	first, last;
-
-			/* Read and skip over any black pixels */
-			if( (int)fread( pbuf, 3, 1, fp ) < 1 )  break;
-			pno++;
-			if( pbuf[0] == 0 && pbuf[1] == 0 && pbuf[2] == 0 )
-				continue;
-
-			/*
-			 *  Found a non-black pixel.
-			 *  See how many more follow,
-			 *  and delete the batch of them from the work queue.
-			 */
-			first = last = pno-1;
-
-			while( !feof( fp ) )  {
-				/* Read and skip over non-black pixels */
-				if( (int)fread( pbuf, 3, 1, fp ) < 1 )  break;
-				pno++;
-				if( pbuf[0] == 0 && pbuf[1] == 0 && pbuf[2] == 0 )
-					break;		/* black pixel */
-				/* non-black */
-				last = pno-1;
-			}
-			rt_log("%s Deleting non-black pixel range %d to %d inclusive\n",
-				stamp(),
-				first, last );
-			list_remove( &(fr->fr_todo), first, last );
-		}
-
-		rt_log("%s Scanning complete\n", stamp() );
+		if( scan_frame_for_finished_pixels( fr ) < 0 )
+			return -1;
 	}
 	return(0);				/* OK */
 }
@@ -1982,6 +2016,7 @@ struct timeval		*nowp;
 	b = a+sp->sr_lump-1;	/* work increment */
 	if( b >= lp->li_stop )  {
 		b = lp->li_stop;
+		sp->sr_lump = b-a+1;	/* Indicate short assignment */
 		DEQUEUE_LIST( lp );
 		FREE_LIST( lp );
 		lp = LIST_NULL;
