@@ -1120,6 +1120,28 @@ int			multi;
 		nmg_face_lu_plot(nmg_lu_of_vu(vu), rs);
 	}
 
+	/*
+	 *  Force edge geometry that lies on the intersection line
+	 *  to use the edge_g structure of the intersection line (ray).
+	 */
+	if( NMG_V_ASSESSMENT_PREV(assessment) == NMG_E_ASSESSMENT_ON_REV )  {
+		eu = nmg_eu_with_vu_in_lu( nmg_lu_of_vu(vu), vu );
+		eu = RT_LIST_PLAST_CIRC( edgeuse, eu );
+		NMG_CK_EDGEUSE(eu);
+		if( rs->eg_p && eu->e_p->eg_p != rs->eg_p )  {
+rt_log("force prev eu to ray\n");
+			nmg_edge_geom_isect_line( eu->e_p, rs );
+		}
+	}
+	if( NMG_V_ASSESSMENT_NEXT(assessment) == NMG_E_ASSESSMENT_ON_FORW )  {
+		eu = nmg_eu_with_vu_in_lu( nmg_lu_of_vu(vu), vu );
+		NMG_CK_EDGEUSE(eu);
+		if( rs->eg_p && eu->e_p->eg_p != rs->eg_p )  {
+rt_log("force next eu to ray\n");
+			nmg_edge_geom_isect_line( eu->e_p, rs );
+		}
+	}
+
 	switch( stp->action )  {
 	default:
 	case NMG_ACTION_ERROR:
