@@ -274,8 +274,8 @@ int main(int argc, char **argv)
 		bu_log("\n");
 	}
 
-	if( rt_g.debug )  {
-		bu_printb( "librt RT_G_DEBUG", rt_g.debug, DEBUG_FORMAT );
+	if( RT_G_DEBUG )  {
+		bu_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
 		bu_log("\n");
 	}
 	if( rdebug )  {
