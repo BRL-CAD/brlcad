@@ -166,7 +166,7 @@ char **argv;
 	}
 #endif
 
-	while ((c = bu_getopt(argc, argv, "hinr")) != EOF)
+	while ((c = bu_getopt(argc, argv, "hinrx:X:")) != EOF)
 	{
 		switch( c )
 		{
@@ -178,6 +178,12 @@ char **argv;
 				break;
 			case 'n':
 				classic_mged = 1;
+				break;
+			case 'x':
+				sscanf( bu_optarg, "%x", &rt_g.debug );
+				break;
+			case 'X':
+	                        sscanf( bu_optarg, "%x", &bu_debug );
 				break;
 			case 'h':
 				fprintf(stdout, "Usage:  %s [-h] [-i] [-n] [-r] [database [command]]\n", argv[0]);
