@@ -169,7 +169,6 @@ static struct bu_cmdtab dmo_cmds[] = {
  *
  * Returns: result of DM command.
  */
-#ifndef WIN32
 static int
 dmo_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
@@ -180,8 +179,7 @@ int
 Dmo_Init(Tcl_Interp *interp)
 {
 	BU_LIST_INIT(&HeadDMObj.l);
-	(void)Tcl_CreateCommand(interp, "dm_open", dmo_open_tcl,
-				(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+	(void)Tcl_CreateCommand(interp, "dm_open", (Tcl_CmdProc *)dmo_open_tcl,(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
 	return TCL_OK;
 }
@@ -189,7 +187,6 @@ Dmo_Init(Tcl_Interp *interp)
 /*
  * Called by Tcl when the object is destroyed.
  */
-#ifndef WIN32
 static void
 dmo_deleteProc(ClientData clientData)
 {
@@ -248,7 +245,6 @@ dmo_close_tcl(clientData, interp, argc, argv)
  * Usage:
  *	  dm_open [name type [args]]
  */
-#ifndef WIN32
 static int
 dmo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
