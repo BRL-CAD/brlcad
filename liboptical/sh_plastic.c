@@ -41,6 +41,8 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #if RT_MULTISPECTRAL
 #include "spectrum.h"
 #endif
+#include "plastic.h"
+#include "photonmap.h"
 
 extern int rr_render(struct application	*ap,
 		     struct partition	*pp,
@@ -54,23 +56,6 @@ extern double AmbientIntensity;
 #if RT_MULTISPECTRAL
 extern const struct bn_table	*spectrum;	/* from rttherm/viewtherm.c */
 #endif
-
-/* Local information */
-struct phong_specific {
-	int	magic;
-	int	shine;
-	double	wgt_specular;
-	double	wgt_diffuse;
-	double	transmit;	/* Moss "transparency" */
-	double	reflect;	/* Moss "transmission" */
-	double	refrac_index;
-	double	extinction;
-	double	emission[3];
-	struct mfuncs *mfp;
-};
-#define PL_MAGIC	0xbeef00d
-#define PL_NULL	((struct phong_specific *)0)
-#define PL_O(m)	offsetof(struct phong_specific, m)
 
 struct bu_structparse phong_parse[] = {
 	{"%d",	1, "shine",		PL_O(shine),		BU_STRUCTPARSE_FUNC_NULL },
@@ -339,7 +324,7 @@ char	*dp;
 	register fastf_t *to_light;
 	register int	i;
 	register fastf_t cosine;
-	vect_t	work;
+	vect_t	work,color;
 	vect_t	reflected;
 #if RT_MULTISPECTRAL
 	struct bn_tabdata	*ms_matcolor = BN_TABDATA_NULL;
@@ -375,12 +360,27 @@ char	*dp;
 		return(1);	/* done */
 	}
 
+
 #if RT_MULTISPECTRAL
 	ms_matcolor = bn_tabdata_dup( swp->msw_color );
 #else
 	VMOVE( matcolor, swp->sw_color );
 #endif
 
+/* Photon Mapping */
+#if RT_MULTISPECTRAL
+/*
+color[0]= swp -> msw_color[0];
+color[1]= swp -> msw_color[1];
+color[2]= swp -> msw_color[2];
+*/
+#else
+color[0]= swp -> sw_color[0];
+color[1]= swp -> sw_color[1];
+color[2]= swp -> sw_color[2];
+#endif
+
+#if 1
 	/* Diffuse reflectance from "Ambient" light source (at eye) */
 	if ((cosine = -VDOT( swp->sw_hit.hit_normal, ap->a_ray.r_dir )) > 0.0 )  {
 		if (cosine > 1.00001 )  {
@@ -529,6 +529,36 @@ char	*dp;
 #endif
 		}
 	}
+
+#ifndef RT_MULTISPECTRAL
+#if 1
+  if (PM_Activated) {
+    IrradianceEstimate(ap, work, swp -> sw_hit.hit_point, swp -> sw_hit.hit_normal, 100, 100);
+    VELMUL(work, work, color);
+    VADD2(swp -> sw_color, work, swp -> sw_color);
+    if (swp -> sw_color[0] > 1.0) swp -> sw_color[0]= 1.0;
+    if (swp -> sw_color[1] > 1.0) swp -> sw_color[1]= 1.0;
+    if (swp -> sw_color[2] > 1.0) swp -> sw_color[2]= 1.0;
+  }
+#endif
+#endif
+
+#else
+
+#ifndef RT_MULTISPECTRAL
+  if (PM_Activated) {
+/*  IrradianceEstimate(work, swp -> sw_hit.hit_point, swp -> sw_hit.hit_normal, 100, 100);
+  VELMUL(swp -> sw_color, work, color);*/
+    IrradianceEstimate(ap, swp -> sw_color, swp -> sw_hit.hit_point, swp -> sw_hit.hit_normal, 100, 100);
+    if (swp -> sw_color[0] > 1.0) swp -> sw_color[0]= 1.0;
+    if (swp -> sw_color[1] > 1.0) swp -> sw_color[1]= 1.0;
+    if (swp -> sw_color[2] > 1.0) swp -> sw_color[2]= 1.0;
+  }
+#endif
+
+#endif
+
+
 	if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 		(void)rr_render( ap, pp, swp );
 
