@@ -121,7 +121,7 @@ RGBpixel		*pixelp;
 long		ct;
 	{	static char	ptty_buf[10];
 		register int	scan_ct;
-	y = ifp->if_width-1-y;		/* 1st quadrant */
+/*	y = ifp->if_width-1-y;		/* 1st quadrant */
 	over_sampl = ifp->if_width / MAX_DIMENSION;
 	(void) sprintf( ptty_buf, "%c%04d%04d", PT_SEEK, CVT2DMD( x ), CVT2DMD( y ));
 	if( write( ifp->if_fd, ptty_buf, 9 ) < 9 )
@@ -146,7 +146,7 @@ int	x, y;
 RGBpixel	*pixelp;
 long	ct;
 	{
-	y = ifp->if_width-1-y;		/* 1st quadrant */
+/*	y = ifp->if_width-1-y;		/* 1st quadrant */
 #if 0 /* Not yet implemented. */
 	if( read( ifp->if_fd, (char *) pixelp, (int)(sizeof(RGBpixel)*ct) )
 		< sizeof(RGBpixel)*ct
@@ -185,7 +185,7 @@ ptty_window_set( ifp, x, y )
 FBIO	*ifp;
 int	x, y;
 	{	static char	ptty_buf[10];
-	y = ifp->if_width-1-y;		/* 1st quadrant */
+/*	y = ifp->if_width-1-y;		/* 1st quadrant */
 	(void) sprintf(	ptty_buf, "%c%04d%04d", PT_WINDOW, CVT2DMD( x ),	CVT2DMD( y ) );
 	return	write( ifp->if_fd, ptty_buf, 9 ) == 9 ? 0 : -1;
 	}
@@ -205,7 +205,7 @@ FBIO	*ifp;
 int	mode;
 int	x, y;
 	{	static char	ptty_buf[11];
-	y = ifp->if_width-1-y;		/* 1st quadrant */
+/*	y = ifp->if_width-1-y;		/* 1st quadrant */
 	(void) sprintf(	ptty_buf,
 			"%c%1d%04d%04d",
 			PT_CURSOR, mode, CVT2DMD( x ), CVT2DMD( y )
