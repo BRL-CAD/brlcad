@@ -46,9 +46,11 @@
 #include <ctype.h>
 #if defined(HAVE_STDARG_H)
 # include <stdarg.h>
-#elif defined(HAVE_VARARGS_H)
+#endif
+#if !defined(HAVE_STDARG_H) && defined(HAVE_VARARGS_H)
 # include <varargs.h>
-#else
+#endif
+#if !defined(HAVE_STDARG_H) && !defined(HAVE_VARARGS_H)
 # include "Need stdarg.h or varargs.h"
 #endif
 
