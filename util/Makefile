@@ -1,9 +1,9 @@
 
 #	Makefile -- for Frame buffer utilities
 
-#	last edit:	85/04/03	Gary S. Moss
+#	last edit:	85/06/06	Gary S. Moss
 
-#	SCCS ID:	@(#)Makefile	1.14
+#	SCCS ID:	@(#)Makefile	1.15
 
 PRODUCTS= pp-fb fbclear fbgrid rle-fb fb-rle fbcmap
 HEADERS =
@@ -23,6 +23,7 @@ CFLAGS	= -I${INCDIR} -O
 LDFLAGS = -n
 LIBES	= ${LIBDIR}/librle.a ${LIBDIR}/libfb.a -lm
 INS	= cp
+SHELL	= /bin/sh
 
 .DEFAULT:
 	$(GET) $(GFLAGS) -p s.$@ > $@
