@@ -7,10 +7,18 @@
 #define	SRCSUFF	.c
 #define MANSECTION	3
 
-#define VERSION_VARIABLE	tcl_version
+#define VERSION_VARIABLE	tclcad_version
 #define LIBRARY_TITLE		"BRL-CAD specific routines for Tcl/Tk"
 
 #include "../Cakefile.defs"
+
+/* Add Tcl specific defines */
+#define LIB_FLAGS TCL_DEFS
+
+/* Eliminate the normal BRL-CAD defines */
+#undef CFLAGS
+/* Keep the -64 flag, etc */
+#define CFLAGS  GFLAG -I''INCDIR -I''XINCDIR
 
 #define FILES	tkImgFmtPIX tclcad
 
