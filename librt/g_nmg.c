@@ -2728,7 +2728,6 @@ rt_nmg_export5(
 
 	ecnt[0].byte_offset = subscript; /* implicit arg to rt_nmg_reindex() */
 	tot_size += SIZEOF_NETWORK_LONG*(NMG_N_KINDS + 1); /* one for magic */
-bu_log("total of disk NMG(v5)=%d\n", tot_size);
 	BU_CK_EXTERNAL(ep);
 	ep->ext_nbytes = tot_size;
 	ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "nmg external5");
@@ -2743,8 +2742,6 @@ bu_log("total of disk NMG(v5)=%d\n", tot_size);
 	for (i=0; i< NMG_N_KINDS; i++) {
 		disk_arrays[i] = (genptr_t)dp;
 		dp += kind_counts[i] * rt_nmg_disk_sizes[i];
-bu_log("V5: kind=%d, count=%d, disk_size = %d, total_size=%d\n",
-    i, kind_counts[i], dp-(char *)disk_arrays[i], dp-(char *)disk_arrays[0]);
 	}
 	rt_nmg_fastf_p = (unsigned char*)disk_arrays[NMG_KIND_DOUBLE_ARRAY];
 
