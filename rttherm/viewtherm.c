@@ -93,6 +93,8 @@ Options:\n\
  -R		Do not report overlaps\n\
 ";
 
+extern FBIO	*fbp;			/* Framebuffer handle */
+
 extern int	max_bounces;		/* from refract.c */
 extern int	max_ireflect;		/* from refract.c */
 extern int	curframe;		/* from main.c */
@@ -240,6 +242,52 @@ register struct application *ap;
 		if( count != width )
 			rt_bomb("view_pixel:  fwrite failure\n");
 	}
+#ifdef MSWISS
+	if( fbp != FBIO_NULL ) {
+		/* MSWISS -- real-time multi-spectral case */
+		unsigned char obuf[4096];
+		int i;
+		struct bn_tabdata *line = (struct bn_tabdata *)
+			scanline[ap->a_y].sl_buf;
+		int npix;
+
+		/* Convert from spectral to monochrome image */
+		extern double	filter_bias;	/* MSWISS: values set by rtnode.c */
+		extern double	filter_gain;
+		extern int	filter_freq_index;
+/* Hack, re-equalize per line */
+{
+double lo = INFINITY, hi = -INFINITY;
+	for( i=0; i<width; i++ )  {
+		register double tmp = line[i].y[filter_freq_index];
+		if( tmp < lo ) lo = tmp;
+		if( tmp > hi ) hi = tmp;
+	}
+	filter_bias = lo;
+	filter_gain = 255/(hi-lo);
+fprintf(stderr,"y=%d, freq=%d, lo=%g, hi=%g\n", ap->a_y, filter_freq_index, lo, hi);
+}
+
+		BN_CK_TABDATA(line);
+		BU_ASSERT( width < sizeof(obuf) );
+		/* A variety of filters could be used here, eventually */
+		for( i=0; i<width; i++ )  {
+			register double tmp;
+			tmp = filter_gain *
+				(line[i].y[filter_freq_index] - filter_bias);
+			if( tmp <= 0 )  obuf[i] = 0;
+			else if( tmp >= 255 )  obuf[i] = 255;
+			else obuf[i] = (unsigned char)tmp;
+		}
+		obuf[ap->a_y] = ap->a_y;	/* debug */
+
+		/* Output the scanline */
+		bu_semaphore_acquire(BU_SEM_SYSCALL);
+		npix = fb_bwwriterect(fbp, 0, ap->a_y, width, 1, obuf);
+		bu_semaphore_release(BU_SEM_SYSCALL);
+		BU_ASSERT( npix >= 1 );
+	}
+#endif /* MSWISS */
 	rt_free( scanline[ap->a_y].sl_buf, "sl_buf scanline buffer" );
 	scanline[ap->a_y].sl_buf = (char *)0;
 }
@@ -707,13 +755,20 @@ char *file, *obj;
 	bn_table_write( rt_vls_addr(&name), spectrum );
 	rt_vls_free( &name );
 
-	/* Output is destined for a file */
-	output_is_binary = 1;
-	return(0);		/* don't open framebuffer */
+	if( minus_o )  {
+		/* Output is destined for a file */
+		return(0);		/* don't open framebuffer */
+	}
+	if (rpt_dist)
+	{
+		bu_log("Warning: -d ignored.  Writing to frame buffer\n");
+		rpt_dist = 0;
+	}
+	return(1);		/* open a framebuffer */
 }
 
 /*
- *  			V I E W 2 _ I N I T
+ *  			V I E W _ 2 I N I T
  *
  *  Called each time a new image is about to be done.
  */
