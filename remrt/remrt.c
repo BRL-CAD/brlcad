@@ -1360,7 +1360,7 @@ register struct frame	*fr;
 			register int	first, last;
 
 			/* Read and skip over any black pixels */
-			if( fread( pbuf, 3, 1, fp ) < 1 )  break;
+			if( (int)fread( pbuf, 3, 1, fp ) < 1 )  break;
 			pno++;
 			if( pbuf[0] == 0 && pbuf[1] == 0 && pbuf[2] == 0 )
 				continue;
@@ -1374,7 +1374,7 @@ register struct frame	*fr;
 
 			while( !feof( fp ) )  {
 				/* Read and skip over non-black pixels */
-				if( fread( pbuf, 3, 1, fp ) < 1 )  break;
+				if( (int)fread( pbuf, 3, 1, fp ) < 1 )  break;
 				pno++;
 				if( pbuf[0] == 0 && pbuf[1] == 0 && pbuf[2] == 0 )
 					break;		/* black pixel */
