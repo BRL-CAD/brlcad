@@ -841,6 +841,7 @@ struct directory  {
 #define DIR_COMB	0x2		/* combination */
 #define DIR_REGION	0x4		/* region */
 #define DIR_HIDDEN	0x8		/* object name is hidden */
+#define	DIR_NON_GEOM	0x10		/* object is not geometry (e.g. binary object) */
 #define DIR_USED	0x80		/* One bit, used similar to d_nref */
 #define RT_DIR_INMEM	0x100		/* object is in memory (only) */
 
