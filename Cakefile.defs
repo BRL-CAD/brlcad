@@ -638,7 +638,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	else
 /*		Shared library version support.  Requires ELF for Linux. */
 #		define	CC	gcc
-#		define	CC_OPTS -b i486-linuxelf -fPIC
+#		define	CC_OPTS -fPIC
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sh/sharedlibvers.sh
 #		define	BUILD_LIBRARY	gcc -b i486-linuxelf -shared -o
@@ -650,7 +650,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 
 #	define	LIBRT_TIMER	timer42
 /*	for "ncurses" change "-lcurses" to "-lncurses" (Caldera OpenLinux) */
-#	define	LIBTERMLIB	-lcurses -ltermcap
+#	define	LIBTERMLIB	-lcurses
 #	define	LIBFB_CONFIG	-DIF_REMOTE -I''XINCDIR -DIF_X
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
@@ -661,7 +661,9 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR -DBRLCAD_TCL_LIBRARY='"'TCLSCRIPTSDIR'"'
 #	define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lX11
 #	define	TCL_DEFS	OPTIMIZER -DTCL_LIBRARY='"'TCLLIBDIR'"' -DTCL_PACKAGE_PATH='"'TCLLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_SYS_TIME_H=1 -DTIME_WITH_SYS_TIME=1 -DHAVE_TZNAME=1 -DHAVE_TIMEZONE_VAR=1 -DSTDC_HEADERS=1 -DHAVE_SYS_IOCTL_H=1 
-#	define	TK_DEFS		OPTIMIZER -DTK_LIBRARY='"'TKLIBDIR'"' -DTK_PACKAGE_PATH='"'TKLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_LIMITS_H=1 -DSTDC_HEADERS=1 #	define	LIBDM_SAMPLER_LIBES MGED_LIBES
+#	define	TK_DEFS		OPTIMIZER -DTK_LIBRARY='"'TKLIBDIR'"' -DTK_PACKAGE_PATH='"'TKLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_LIMITS_H=1 -DSTDC_HEADERS=1
+#	define	LIBDM_SAMPLER_LIBES MGED_LIBES
+#	define	LIBBU_LIBES	LIBTCL -ldl
 #endif
 
 #if defined(__CAKE__bsdi)
