@@ -81,7 +81,11 @@ CONST char *rhs;
 	}
 
 	/* The compiled-in path is used next. */
+#ifdef BRLCAD_ROOT
+	lhs = BRLCAD_ROOT;
+#else
 	lhs = "/usr/brlcad";		/* Changed by newbindir.sh */
+#endif
 	if( bu_file_exists(lhs) )
 		goto ok;
 
