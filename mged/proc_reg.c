@@ -33,10 +33,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./ged.h"
 #include "./dm.h"
 
-static void	center(), cpoint(), dwreg(), ellin(), move(), points(),
+static void	center(), dwreg(), ellin(), move(), points(),
 		regin(), solin(), solpl(), tgcin(), tplane(),
 		vectors();
-static int	arb(), cgarbs(), comparvec(), gap(), planeeq(), redoarb(), 
+static int	arb(), cgarbs(), gap(), redoarb(), 
 		region();
 
 static union record input;		/* Holds an object file record */
@@ -229,7 +229,10 @@ register int *svec;	/* array of like points */
 		if(done == NO)
 			svec[si] = i;
 		for(j=i+1; j<8; j++) {
-			if(comparvec(&input.s.s_values[i*3], &input.s.s_values[j*3]) == YES) {
+			vect_t	diff;
+			VSUB2( diff, &input.s.s_values[i*3], &input.s.s_values[j*3] );
+			if( VNEAR_ZERO( diff, 0.0001 ) )  {
+				/* Points are the same */
 				if( done == NO )
 					svec[++si] = j;
 				unique = NO;
@@ -513,21 +516,6 @@ int p0, p1, p2, p3, p4, p5, p6, p7;
 }
 
 
-
-static int
-comparvec( x, y )
-register dbfloat_t *x,*y;
-{
-	register int i;
-
-	for(i=0; i<3; i++) {
-		if( fabs( *x++ - *y++ ) > 0.0001 )
-			return(0);   /* different */
-	}
-	return(1);  /* same */
-}
-
-
 static void
 vectors()
 {
@@ -567,7 +555,6 @@ points()
  * 	Routines used by dwreg():
  *	  1. gap()   	puts gaps in the edges
  *	  2. region()	finds intersection of ray with a region
- *	  4. cpoint()	finds point of intersection of three planes
  *	  5. center()	finds center point of an arb
  *	  6. tplane()	tests if plane is inside enclosing rpp
  *	  7. arb()	finds intersection of ray with an arb
@@ -576,7 +563,6 @@ points()
  *	 10. regin()	process region to planes
  *	 11. solin()	finds enclosing rpp for solids
  *	 12. solpl()	process solids to arbn's
- *	 13. planeeq()	finds normalized plane from 3 points
  *
  *		R E V I S I O N   H I S T O R Y
  *
@@ -611,7 +597,6 @@ struct vlhead	*vhead;
 	static int k,l;
 	static int n,m;
 	static int itemp;
-	static fastf_t c1[3*4]={1.,0.,0.,0.,0.,1.,0.,0.,0.,0.,1.,0.};
 	static int lmemb, umemb;/* lower and upper limit of members of region
 				 * from one OR to the next OR */
 
@@ -639,8 +624,6 @@ orregion:	/* sent here if region has or's */
 	lc = 0;
 	regin(0, lmemb, umemb);
 
-	for(i=0; i<3; i++)
-		c1[(i*4)+3]=reg_min[i];
 	l=0;
 
 	/* id loop processes all member to the next OR */
@@ -688,23 +671,9 @@ orregion:	/* sent here if region has or's */
 						}
 					}
 noskip:
-					if(fabs(VDOT(&peq[i*4],&peq[j*4]))>=.9999)
-						continue; /* planes parallel */
-
-					/* planes not parallel */
-					/* compute direction vector for ray */
-					VCROSS(wb,&peq[i*4],&peq[j*4]);
-					VUNITIZE( wb );
-
-					k=0;
-					if(fabs(wb[1]) > fabs(wb[0])) k=1;
-					if(fabs(wb[2]) > fabs(wb[k])) k=2;
-					if(wb[k] < 0.0)  {
-						VREVERSE( wb, wb );
-					}
-
-					/* starting point for this ray */
-					cpoint(xb,&c1[k*4],&peq[i*4],&peq[j*4]);
+					if( rt_isect_2planes( xb, wb,
+					    &peq[i*4], &peq[j*4], reg_min ) < 0 )
+						continue;
 
 					/* check if ray intersects region */
 					if( (k=region(lmemb,umemb))<=0)
@@ -910,33 +879,6 @@ region(lmemb,umemb)
 }
 
 
-/*
- *			C P O I N T
- *
- * computes point of intersection of three planes, answer in "point".
- */
-static void
-cpoint(point,c1,c2,c3)
-vect_t	point;
-register fastf_t *c1, *c2, *c3;
-{
-	static vect_t	v1, v2, v3;
-	register int i;
-	static fastf_t d;
-
-	VCROSS(v1,c2,c3);
-	if((d=VDOT(c1,v1))==0)  {
-		printf("cpoint failure\n");
-		return;
-	}
-	d = 1.0 / d;
-	VCROSS(v2,c1,c3);
-	VCROSS(v3,c1,c2);
-	for(i=0; i<3; i++)
-		point[i]=d*(c1[3]*v1[i]-c2[3]*v2[i]+c3[3]*v3[i]);
-}
-
-
 /* find center point */
 static void
 center()
@@ -984,7 +926,7 @@ fastf_t *p, *q, *r, *s;
 	/* Do these three points form a valid plane? */
 	/* WARNING!!  Fourth point is never even looked at!! */
 	pp = &peq[lc*4];
-	if(planeeq( pp, p,q,r)==0) return;
+	if( rt_mk_plane_3pts( pp, p, q, r ) < 0 )  return;
 
 	if((pp[3]-VDOT(pp,pcenter)) > 0.)  {
 		VREVERSE( pp, pp );
@@ -1003,30 +945,6 @@ fastf_t *p, *q, *r, *s;
 		return;
 	}
 	lc++;		/* Save plane eqn */
-}
-
-/*
- *			P L A N E E Q
- *
- * computes normalized plane eq from three points.
- *  Returns 0 if plane is degenerate, 1 if plane is good.
- */
-static int
-planeeq(eqn,p1,p2,p3)
-fastf_t *eqn;
-fastf_t *p1, *p2, *p3;
-{
-	static fastf_t vecl;
-	static vect_t	va, vb, vc;
-
-	VSUB2( va, p2, p1 );
-	VSUB2( vb, p3, p1 );
-	VCROSS(vc,va,vb);
-	vecl = MAGNITUDE( vc );
-	if(vecl<.0001) return(0);
-	VSCALE(eqn, vc, 1.0/vecl);
-	eqn[3] = VDOT(eqn, p1);
-	return(1);
 }
 
 /* finds intersection of ray with arbitrary convex polyhedron */
