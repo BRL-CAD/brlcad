@@ -22,6 +22,7 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include <stdio.h>
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
@@ -76,35 +77,35 @@ struct buttons  {
 	char	*bu_name;	/* keyboard string */
 	void	(*bu_func)();	/* function to call */
 }  button_table[] = {
-	BV_TOP,		"top",		bv_top,
-	BV_BOTTOM,	"bottom",	bv_bottom,
-	BV_RIGHT,	"right",	bv_right,
-	BV_LEFT,	"left",		bv_left,
-	BV_FRONT,	"front",	bv_front,
-	BV_REAR,	"rear",		bv_rear,
-	BV_VRESTORE,	"restore",	bv_vrestore,
-	BV_VSAVE,	"save",		bv_vsave,
-	BV_ADCURSOR,	"adc",		bv_adcursor,
-	BV_RESET,	"reset",	bv_reset,
-	BV_45_45,	"45,45",	bv_45_45,
 	BV_35_25,	"35,25",	bv_35_25,
+	BV_45_45,	"45,45",	bv_45_45,
+	BE_ACCEPT,	"accept",	be_accept,
+	BV_ADCURSOR,	"adc",		bv_adcursor,
+	BV_BOTTOM,	"bottom",	bv_bottom,
+	BV_FRONT,	"front",	bv_front,
+	BV_LEFT,	"left",		bv_left,
 	BE_O_ILLUMINATE,"oill",		be_o_illuminate,
-	BE_S_ILLUMINATE,"sill",		be_s_illuminate,
+	BE_O_ROTATE,	"orot",		be_o_rotate,
 	BE_O_SCALE,	"oscale",	be_o_scale,
+	BE_O_X,		"ox",		be_o_x,
+	BE_O_XY,	"oxy",		be_o_xy,
 	BE_O_XSCALE,	"oxscale",	be_o_xscale,
+	BE_O_Y,		"oy",		be_o_y,
 	BE_O_YSCALE,	"oyscale",	be_o_yscale,
 	BE_O_ZSCALE,	"ozscale",	be_o_zscale,
-	BE_O_X,		"ox",		be_o_x,
-	BE_O_Y,		"oy",		be_o_y,
-	BE_O_XY,	"oxy",		be_o_xy,
-	BE_O_ROTATE,	"orot",		be_o_rotate,
-	BE_ACCEPT,	"accept",	be_accept,
+	BV_REAR,	"rear",		bv_rear,
 	BE_REJECT,	"reject",	be_reject,
-	BV_SLICEMODE,	"slice",	bv_slicemode,
+	BV_RESET,	"reset",	bv_reset,
+	BV_VRESTORE,	"restore",	bv_vrestore,
+	BV_RIGHT,	"right",	bv_right,
+	BV_VSAVE,	"save",		bv_vsave,
 	BE_S_EDIT,	"sedit",	be_s_edit,
+	BE_S_ILLUMINATE,"sill",		be_s_illuminate,
+	BV_SLICEMODE,	"slice",	bv_slicemode,
 	BE_S_ROTATE,	"srot",		be_s_rotate,
-	BE_S_TRANS,	"sxy",		be_s_trans,
 	BE_S_SCALE,	"sscale",	be_s_scale,
+	BE_S_TRANS,	"sxy",		be_s_trans,
+	BV_TOP,		"top",		bv_top,
 	-1,		"-end-",	be_reject
 };
 
@@ -191,15 +192,11 @@ char *str;{
 	if( edsol && edobj )
 		(void)printf("WARNING: State error: edsol=%x, edobj=%x\n", edsol, edobj );
 
-	if( str[0] == '?' )  {
+	if(strcmp(str, "help") == 0) {
 		register int i=0;
-		for( bp = button_table; bp->bu_code >= 0; bp++ )  {
-			(void)printf("%s, ", bp->bu_name );
-			if( ++i > 4 )  {
-				(void)putchar('\n');
-				i = 0;
-			}
-		}
+		for( bp = button_table; bp->bu_code >= 0; bp++ )
+			col_item(bp->bu_name);
+		col_eol();
 		return;
 	}
 
