@@ -38,22 +38,25 @@ extern void	predictor_hook();		/* in ged.c */
 extern void	reattach();			/* in attach.c */
 
 struct mged_variables mged_variables = {
-/* autosize */		1,
-/* rateknobs */		1,
-/* sgi_win_size */	0,
-/* sgi_win_origin */	{ 0, 0 },
-/* faceplate */		1,
+/* autosize */			1,
+/* rateknobs */			1,
+/* sgi_win_size */		0,
+/* sgi_win_origin */		{ 0, 0 },
+/* faceplate */			1,
 #ifdef XMGED
-/* w_axis */            0,
-/* v_axis */            0,
-/* e_axis */            0,
+/* w_axis */    	        0,
+/* v_axis */    	        0,
+/* e_axis */            	0,
 #endif
-/* predictor */		0,
-/* predictor_advance */	1.0,
-/* predictor_length */	2.0,
-/* perspective */	-1,
-/* nmg_eu_dist */	0.05,
-/* eye_sep_dist */	0.0
+/* predictor */			0,
+/* predictor_advance */		1.0,
+/* predictor_length */		2.0,
+/* perspective */		-1,
+/* nmg_eu_dist */		0.05,
+/* eye_sep_dist */		0.0,
+/* union lexeme */		"u",
+/* intersection lexeme */	"n",
+/* difference lexeme */		"-"
 };
 
 /*
@@ -92,6 +95,9 @@ struct structparse mged_vparse[] = {
 	{"%f",	1, "perspective",	MV_O(perspective),	refresh_hook },
 	{"%f",  1, "nmg_eu_dist",	MV_O(nmg_eu_dist),	nmg_eu_dist_set },
 	{"%f",  1, "eye_sep_dist",	MV_O(eye_sep_dist),	reattach },
+	{"%s",  MAXLINE, "union_op",	MV_O(union_lexeme),	FUNC_NULL },
+	{"%s",  MAXLINE, "intersection_op",MV_O(intersection_lexeme),	FUNC_NULL },
+	{"%s",  MAXLINE, "difference_op",	MV_O(difference_lexeme),	FUNC_NULL },
 	{"",	0,  (char *)0,		0,			FUNC_NULL }
 };
 
