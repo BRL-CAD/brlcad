@@ -103,7 +103,7 @@ extern fastf_t rt_cline_radius;
 /***** end variables shared with g_cline.c ******/
 
 /***** variables for frame buffer black pixel rendering *****/
-extern FBIO	*pixmap;		/* pixel map for rerendering of black pixels */
+extern unsigned	char	*pixmap;		/* pixel map for rerendering of black pixels */
 
 
 void		def_tree();
