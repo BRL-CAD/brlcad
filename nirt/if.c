@@ -60,7 +60,8 @@ struct partition 	*part_head;
 		    + r_exit(Y) * cos(er) * sin(ar)
 		    + r_exit(Z) * sin(er);
 	ValTab[VTI_LOS].value.fval = r_entry(D) - r_exit(D);
-	ValTab[VTI_PATH_NAME].value.sval = part -> pt_regionp -> reg_name;
+	ValTab[VTI_PATH_NAME].value.sval =
+	    (char *)(part -> pt_regionp -> reg_name);
 	ValTab[VTI_REG_NAME].value.sval =
 	    basename(part -> pt_regionp -> reg_name);
 	ValTab[VTI_REG_ID].value.ival = part -> pt_regionp -> reg_regionid;
@@ -81,9 +82,9 @@ struct partition 	*part_head;
 		basename(ovp -> reg2 -> reg_name);
 	    ValTab[VTI_OV_REG2_ID].value.ival = ovp -> reg2 -> reg_regionid;
 	    ValTab[VTI_OV_SOL_IN].value.sval =
-		part -> pt_inseg -> seg_stp -> st_name;
+		(char *)(part -> pt_inseg -> seg_stp -> st_dp -> d_namep);
 	    ValTab[VTI_OV_SOL_OUT].value.sval =
-		part -> pt_outseg -> seg_stp -> st_name;
+		(char *)(part -> pt_outseg -> seg_stp -> st_dp -> d_namep);
 	    for (i = 0; i < 3; ++i)
 	    {
 		ov_entry(i) = ovp -> in_point[i];
@@ -177,6 +178,7 @@ vect_t	normal;
     {
 	fflush(stdout);
 	fprintf (stderr, "Error:  cos(obliquity) > 1\n");
+    	obliquity = 0;
 	exit(1);
     }
 
