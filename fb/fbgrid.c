@@ -164,7 +164,7 @@ int	spacing;
 		for( y = 0; y < fbheight; y++ )
 			fb_write( fbp, x, y, line[0], 1 );
 #else
-		fb_writerect( fbp, x, 0, x, fbheight-1, line );
+		fb_writerect( fbp, x, 0, 1, fbheight, line );
 #endif
 	}
 }
