@@ -2451,7 +2451,7 @@ struct rt_tol	*tol;
 
 	count = sl_state.split;
 
-	rt_free( (char *)sl_state.flags , "nmg_unbreak_region_edges: flags" );
+	rt_free( (char *)sl_state.flags , "nmg_split_loops_into_faces: flags" );
 
 	return( count );
 }
@@ -3538,7 +3538,7 @@ CONST struct nmg_ptbl *int_faces;
 		rt_log( "\tstart = ( %f %f %f ) , dir = ( %f %f %f )\n" , V3ARGS( i_fus->start ) , V3ARGS( i_fus->dir ) );
 		rt_log( "\tpt = ( %f %f %f )\n" , V3ARGS( i_fus->pt ) );
 		rt_log( "\tfree_edge = %d\n" , i_fus->free_edge );
-		if( i_fus->eu )
+		if( i_fus->eu && i_fus->eu->vu_p )
 		{
 			if( i_fus->eu->eumate_p != i_fus->eu->radial_p &&
 			    i_fus->free_edge )
@@ -3656,14 +3656,32 @@ CONST struct rt_tol *tol;
 
 	if( !eu1 )
 	{
-		/* get the first edgeuse emanating from new_v */
-		vu = RT_LIST_FIRST( vertexuse , &new_v->vu_hd );
-		NMG_CK_VERTEXUSE( vu );
-		eu1 = vu->up.eu_p;
-		NMG_CK_EDGEUSE( eu1 );
-		fu = nmg_find_fu_of_eu( eu1 );
-		if( fu->orientation != OT_SAME )
-			eu1 = eu1->eumate_p;
+		int found_start=0;
+
+		/* get the an edgeuse emanating from new_v */
+		for( RT_LIST_FOR( vu , vertexuse , &new_v->vu_hd ) )
+		{
+			NMG_CK_VERTEXUSE( vu );
+			if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
+				continue;
+
+			eu1 = vu->up.eu_p;
+
+			fu = nmg_find_fu_of_eu( eu1 );
+			NMG_CK_FACEUSE( fu );
+
+			if( fu->orientation == OT_SAME )
+			{
+				found_start = 1;
+				break;
+			}
+		}
+		if( !found_start )
+		{
+			rt_log( "Cannot find edgeuse in OT_SAME faceuse starting at ( %f %f %f )\n",
+				V3ARGS( new_v->vg_p->coord ) );
+			return( 1 );
+		}
 	}
 
 	eu = eu1;
