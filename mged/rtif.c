@@ -48,51 +48,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_solid.h"
 #include "./mged_dm.h"
 #include "./mgedtcl.h"
+#include "./qray.h"
 
 extern void mged_update();
 extern void reset_input_strings();
 extern int event_check();
 extern int mged_svbase();
 void		setup_rt();
-
-/* query ray stuff */
-extern struct bu_vls query_ray_basename;
-
-struct query_ray_fmt {
-    struct bu_vls tclName;
-    struct bu_vls fmt;
-};
-extern struct query_ray_fmt *query_ray_fmts;
-
-struct query_ray_fmt_data {
-  char type;
-  char *fmt;
-};
-extern struct query_ray_fmt_data def_query_ray_fmt_data[];
-
-#define QUERY_RAY_TEXT 't'
-#define QUERY_RAY_GRAPHICS 'g'
-#define QUERY_RAY_BOTH 'b'
-#define DO_QUERY_RAY_TEXT (mged_variables->query_ray_behavior == QUERY_RAY_TEXT ||\
-		      mged_variables->query_ray_behavior == QUERY_RAY_BOTH)
-#define DO_QUERY_RAY_GRAPHICS (mged_variables->query_ray_behavior == QUERY_RAY_GRAPHICS ||\
-			  mged_variables->query_ray_behavior == QUERY_RAY_BOTH)
-#define DO_QUERY_RAY_BOTH (mged_variables->query_ray_behavior == QUERY_RAY_BOTH)
-#define QUERY_RAY_FORMAT_P_CMD "fmt p \"%e %e %e %e\\n\" x_in y_in z_in los"
-#define QUERY_RAY_FORMAT_NULL_CMD "fmt r \"\"; fmt h \"\"; fmt m \"\"; fmt o \"\"; fmt f \"\""
-
-struct query_ray_dataList {
-  struct bu_list l;
-  fastf_t x_in;
-  fastf_t y_in;
-  fastf_t z_in;
-  fastf_t los;
-};
-
-struct query_ray_dataList HeadQuery_RayData;
-void query_ray_data_to_vlist();
-
-/* End query_ray format stuff */
 
 static int	tree_walk_needed;
 
@@ -1274,9 +1236,12 @@ char	**argv;
 	char line[MAXLINE];
 	char *val;
 	struct bu_vls vls;
-	struct bu_vls g_vls;
+	struct bu_vls o_vls;
+	struct bu_vls p_vls;
+	struct bu_vls t_vls;
 	struct rt_vlblock *vbp;
-	struct query_ray_dataList *ndlp;
+	struct qray_dataList *ndlp;
+	struct qray_dataList HeadQRayData;
 
 	if(dbip == DBI_NULL)
 	  return TCL_OK;
@@ -1302,13 +1267,18 @@ char	**argv;
 	    use_input_orig = 1;
 	    argc -= 3;
 	    VSCALE(center_model, center_model, local2base);
-	  }else if(mged_variables->adcflag)
+	  }else if(adc_draw)
 	    *vp++ = "-b";
-	}else if(mged_variables->adcflag)
+	}else if(adc_draw)
 	  *vp++ = "-b";
 
+	if(mged_variables->use_air){
+	  *vp++ = "-u";
+	  *vp++ = "1";
+	}
+
 	/* Calculate point from which to fire ray */
-	if(!use_input_orig && mged_variables->adcflag){
+	if(!use_input_orig && adc_draw){
 	  vect_t  view_ray_orig;
 
 	  VSET(view_ray_orig, (fastf_t)dv_xadc, (fastf_t)dv_yadc, 2047.0);
@@ -1320,7 +1290,7 @@ char	**argv;
 	}
 
 	i = 0;
-	if(DO_QUERY_RAY_GRAPHICS){
+	if(QRAY_GRAPHICS){
 	  vect_t cml;
 
 	  VSCALE(cml, center_model, base2local);
@@ -1328,22 +1298,37 @@ char	**argv;
 	  VSCALE(dir, dir, -1.0);
 
 	  *vp++ = "-e";
-	  *vp++ = QUERY_RAY_FORMAT_NULL_CMD;
-	  *vp++ = "-e";
-	  *vp++ = QUERY_RAY_FORMAT_P_CMD;
+	  *vp++ = QRAY_FORMAT_NULL;
 
-	  if(DO_QUERY_RAY_TEXT){
+	  /* first ray  ---- returns partitions */
+	  *vp++ = "-e";
+	  *vp++ = QRAY_FORMAT_P;
+
+	  bu_vls_init(&p_vls);
+	  bu_vls_printf(&p_vls, "xyz %lf %lf %lf;",
+			cml[X], cml[Y], cml[Z]);
+	  bu_vls_printf(&p_vls, "dir %lf %lf %lf;",
+			dir[X], dir[Y], dir[Z]);
+	  bu_vls_printf(&p_vls, "s; fmt r \"\\n\"");
+	  *vp++ = "-e";
+	  *vp++ = bu_vls_addr(&p_vls);
+
+	  /* second ray  ---- returns overlaps */
+	  *vp++ = "-e";
+	  *vp++ = QRAY_FORMAT_O;
+
+	  if(QRAY_TEXT){
 	    char *cp;
 	    int count;
 
-	    bu_vls_init(&g_vls);
-	    bu_vls_printf(&g_vls, "xyz %lf %lf %lf;",
+	    bu_vls_init(&o_vls);
+	    bu_vls_printf(&o_vls, "xyz %lf %lf %lf;",
 			  cml[X], cml[Y], cml[Z]);
-	    bu_vls_printf(&g_vls, "dir %lf %lf %lf;",
+	    bu_vls_printf(&o_vls, "dir %lf %lf %lf;",
 			  dir[X], dir[Y], dir[Z]);
 
 	    /* get 'r' format now; prepend its' format string with a newline */
-	    val = Tcl_GetVar(interp, bu_vls_addr(&query_ray_fmts[0].tclName), TCL_GLOBAL_ONLY);
+	    val = bu_vls_addr(&qray_fmts[0].fmt);
 
 	    /* find first '"' */
 	    while(*val != '"' && *val != '\0')
@@ -1364,42 +1349,44 @@ char	**argv;
 
 done:
 	    if(*val == '\0')
-	      bu_vls_printf(&g_vls, "s; fmt r \"\\n\" ");
+	      bu_vls_printf(&o_vls, "s; fmt r \"\\n\" ");
 	    else{
-	      bu_vls_printf(&g_vls, "s; fmt r \"\\n%*s\" ", count, val);
+	      bu_vls_printf(&o_vls, "s; fmt r \"\\n%*s\" ", count, val);
 	      if(count)
 		val += count + 1;
-	      bu_vls_printf(&g_vls, "%s", val);
+	      bu_vls_printf(&o_vls, "%s", val);
 	    }
 
 	    i = 1;
 
 	    *vp++ = "-e";
-	    *vp++ = bu_vls_addr(&g_vls);
+	    *vp++ = bu_vls_addr(&o_vls);
 	  }
 	}
 
-	if(DO_QUERY_RAY_TEXT){
-	  /* read Tcl format variables and load into vp here */
-	  for(; def_query_ray_fmt_data[i].fmt != (char *)NULL; ++i){
-	    *vp++ = "-e";
-	    val = Tcl_GetVar(interp, bu_vls_addr(&query_ray_fmts[i].tclName), TCL_GLOBAL_ONLY);
-	    bu_vls_trunc(&query_ray_fmts[i].fmt, 0);
-	    bu_vls_printf(&query_ray_fmts[i].fmt, "fmt %c %s", def_query_ray_fmt_data[i].type, val);
-	    *vp++ = bu_vls_addr(&query_ray_fmts[i].fmt);
-	  }
-	}
+	if(QRAY_TEXT){
+	  int j;
 
-	if(mged_variables->use_air){
-	  *vp++ = "-u";
-	  *vp++ = "1";
+	  bu_vls_init(&t_vls);
+
+	  /* load vp with formats for printing */
+	  for(; qray_fmts[i].type != (char)NULL; ++i)
+	    bu_vls_printf(&t_vls, "fmt %c %s; ",
+			  qray_fmts[i].type,
+			  bu_vls_addr(&qray_fmts[i].fmt));
+
+	  *vp++ = "-e";
+	  *vp++ = bu_vls_addr(&t_vls);
+
+	  /* nirt does not like the trailing ';' */
+	  bu_vls_trunc(&t_vls, -2);
 	}
 
 	for( i=1; i < argc; i++ )
 		*vp++ = argv[i];
 	*vp++ = dbip->dbi_filename;
 
-	setup_rt( vp, mged_variables->query_ray_cmd_echo );
+	setup_rt( vp, qray_cmd_echo );
 
 	if(use_input_orig){
 	  bu_vls_init(&vls);
@@ -1407,7 +1394,7 @@ done:
 			center_model[X], center_model[Y], center_model[Z]);
 	  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	  bu_vls_free(&vls);
-	}else if(mged_variables->adcflag)
+	}else if(adc_draw)
 	  Tcl_AppendResult(interp, "\nFiring through angle/distance cursor...\n",
 			   (char *)NULL);
 	else
@@ -1442,7 +1429,7 @@ done:
 		exit(16);
 	}
 
-	/* use fp_in to feed view info to query_ray */
+	/* use fp_in to feed view info to nirt */
 	(void)close( pipe_in[0] );
 	fp_in = fdopen( pipe_in[1], "w" );
 
@@ -1458,20 +1445,24 @@ done:
 	rt_write(fp_in, center_model );
 	(void)fclose( fp_in );
 
-	if(DO_QUERY_RAY_GRAPHICS){
-	  if(DO_QUERY_RAY_TEXT)
-	    bu_vls_free(&g_vls); /* used to form part of query_ray command above */
+	if(QRAY_GRAPHICS){
+#if 1
+	  bu_vls_free(&p_vls);   /* use to form "partition" part of nirt command above */
+#endif
+	  if(QRAY_TEXT)
+	    bu_vls_free(&o_vls); /* used to form "overlap" part of nirt command above */
 
-	  BU_LIST_INIT(&HeadQuery_RayData.l);
+	  BU_LIST_INIT(&HeadQRayData.l);
 
+	  /* handle partitions */
 	  while(fgets(line, MAXLINE, fp_out) != (char *)NULL){
 	    if(line[0] == '\n'){
 	      Tcl_AppendResult(interp, line+1, (char *)NULL);
 	      break;
 	    }
 
-	    BU_GETSTRUCT(ndlp, query_ray_dataList);
-	    BU_LIST_APPEND(HeadQuery_RayData.l.back, &ndlp->l);
+	    BU_GETSTRUCT(ndlp, qray_dataList);
+	    BU_LIST_APPEND(HeadQRayData.l.back, &ndlp->l);
 
 	    if(sscanf(line, "%le %le %le %le",
 		      &ndlp->x_in, &ndlp->y_in, &ndlp->z_in, &ndlp->los) != 4)
@@ -1479,18 +1470,37 @@ done:
 	  }
 
 	  vbp = rt_vlblock_init();
-	  query_ray_data_to_vlist(vbp, &HeadQuery_RayData, dir);
-	  bu_list_free(&HeadQuery_RayData.l);
-	  val = Tcl_GetVar(interp, bu_vls_addr(&query_ray_basename), TCL_GLOBAL_ONLY);
-	  if(val == NULL) /* user must have unset query_ray_basename */
-	    cvt_vlblock_to_solids(vbp, "query_ray", 0);
-	  else
-	    cvt_vlblock_to_solids(vbp, val, 0);
+	  qray_data_to_vlist(vbp, &HeadQRayData, dir, 0);
+	  bu_list_free(&HeadQRayData.l);
+	  cvt_vlblock_to_solids(vbp, bu_vls_addr(&qray_basename), 0);
 	  rt_vlblock_free(vbp);
+
+	  /* handle overlaps */
+	  while(fgets(line, MAXLINE, fp_out) != (char *)NULL){
+	    if(line[0] == '\n'){
+	      Tcl_AppendResult(interp, line+1, (char *)NULL);
+	      break;
+	    }
+
+	    BU_GETSTRUCT(ndlp, qray_dataList);
+	    BU_LIST_APPEND(HeadQRayData.l.back, &ndlp->l);
+
+	    if(sscanf(line, "%le %le %le %le",
+		      &ndlp->x_in, &ndlp->y_in, &ndlp->z_in, &ndlp->los) != 4)
+	      break;
+	  }
+	  vbp = rt_vlblock_init();
+	  qray_data_to_vlist(vbp, &HeadQRayData, dir, 1);
+	  bu_list_free(&HeadQRayData.l);
+	  cvt_vlblock_to_solids(vbp, bu_vls_addr(&qray_basename), 0);
+	  rt_vlblock_free(vbp);
+
 	  update_views = 1;
 	}
 
-	if(DO_QUERY_RAY_TEXT){
+	if(QRAY_TEXT){
+	  bu_vls_free(&t_vls);
+
 	  while(fgets(line, MAXLINE, fp_out) != (char *)NULL)
 	    Tcl_AppendResult(interp, line, (char *)NULL);
 	}
@@ -1552,8 +1562,8 @@ char    **argv;
    * The last two arguments are expected to be x,y in view coordinates.
    * It is also assumed that view z will be the front of the viewing cube.
    * These coordinates are converted to x,y,z in model coordinates and then
-   * converted to local units before being handed to query_ray. All other
-   * arguments are passed straight through to query_ray.
+   * converted to local units before being handed to nirt. All other
+   * arguments are passed straight through to nirt.
    */
   if(sscanf(argv[argc-2], "%lf", &view_ray_orig[X]) != 1 ||
      sscanf(argv[argc-1], "%lf", &view_ray_orig[Y]) != 1){
@@ -1600,51 +1610,6 @@ char    **argv;
   bu_free((genptr_t)av, "f_vnirt: av");
 
   return status;
-}
-
-void
-query_ray_data_to_vlist(vbp, headp, dir)
-struct rt_vlblock *vbp;
-struct query_ray_dataList *headp;
-vect_t dir;
-{
-  register int i = 0;
-  register struct bu_list *vhead;
-  register struct query_ray_dataList *ndlp;
-  vect_t in, out;
-  vect_t last_out, last_in;
-
-  for(BU_LIST_FOR(ndlp, query_ray_dataList, &headp->l)){
-    if(i % 2)
-      vhead = rt_vlblock_find(vbp,
-			      mged_variables->query_ray_color_odd[0],
-			      mged_variables->query_ray_color_odd[1],
-			      mged_variables->query_ray_color_odd[2]);
-    else
-      vhead = rt_vlblock_find(vbp,
-			      mged_variables->query_ray_color_even[0],
-			      mged_variables->query_ray_color_even[1],
-			      mged_variables->query_ray_color_even[2]);
-
-    VSET(in, ndlp->x_in, ndlp->y_in, ndlp->z_in);
-    VJOIN1(out, in, ndlp->los, dir);
-    VSCALE(in, in, local2base);
-    VSCALE(out, out, local2base);
-    RT_ADD_VLIST( vhead, in, RT_VLIST_LINE_MOVE );
-    RT_ADD_VLIST( vhead, out, RT_VLIST_LINE_DRAW );
-
-    if(i && !VAPPROXEQUAL(last_out,in,SQRT_SMALL_FASTF)){
-      vhead = rt_vlblock_find(vbp,
-			      mged_variables->query_ray_color_void[0],
-			      mged_variables->query_ray_color_void[1],
-			      mged_variables->query_ray_color_void[2]);
-      RT_ADD_VLIST( vhead, last_out, RT_VLIST_LINE_MOVE );
-      RT_ADD_VLIST( vhead, in, RT_VLIST_LINE_DRAW );
-    }
-
-    VMOVE(last_out, out);
-    ++i;
-  }
 }
 
 cm_start(argc, argv)
