@@ -32,8 +32,7 @@ clean&:	Makefile.MTYPE
 noprod&: Makefile.MTYPE
 	make -f Makefile.MTYPE clean
 
-clobber&: Makefile.MTYPE
-	make -f Makefile.MTYPE clean
+clobber&:
 	rm -f *.MTYPE config.log config.status *.tcl
 
 install&: Makefile.MTYPE
