@@ -39,7 +39,6 @@ static char RCSars[] = "@(#)$Header$ (BRL)";
 
 HIDDEN fastf_t	*rt_ars_rd_curve();
 
-HIDDEN void	rt_ars_hitsort();
 extern int	rt_ars_face();
 
 /*
@@ -564,7 +563,7 @@ struct seg		*seghead;
 
 		if(rt_g.debug&DEBUG_ARB8) bu_log("ars: dist k=%g, ds=%g, dn=%g\n", k, ds, dn );
 
-		/* Bug fix: next line was "nhits++".  This caused ars_hitsort
+		/* Bug fix: next line was "nhits++".  This caused rt_hitsort
 			to exceed bounds of "hits" array by one member and
 			clobber some stack variables i.e. "stp" -- GSM */
 		if( ++nhits >= RT_ARS_MAXHITS )  {
@@ -577,7 +576,7 @@ struct seg		*seghead;
 		return(0);		/* MISS */
 
 	/* Sort hits, Near to Far */
-	rt_ars_hitsort( hits, nhits );
+	rt_hitsort( hits, nhits );
 
 	if( nhits&1 )  {
 		register int i;
@@ -653,10 +652,12 @@ struct seg		*seghead;
 }
 
 /*
- *			R T _ A R S _ H I T S O R T
+ *			R T _ H I T S O R T
+ *
+ *  Sort an array of hits into ascending order.
  */
-HIDDEN void
-rt_ars_hitsort( h, nh )
+void
+rt_hitsort( h, nh )
 register struct hit h[];
 register int nh;
 {

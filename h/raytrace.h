@@ -2021,6 +2021,9 @@ BU_EXTERN(void rt_vlblock_free, (struct bn_vlblock *vbp) );
 BU_EXTERN(struct bu_list *rt_vlblock_find, (struct bn_vlblock *vbp,
 	int r, int g, int b) );
 
+/* g_ars.c */
+BU_EXTERN(void rt_hitsort, (struct hit h[], int nh));
+
 /* pr.c */
 BU_EXTERN(void rt_pr_soltab, (CONST struct soltab *stp));
 BU_EXTERN(void rt_pr_region, (CONST struct region *rp));
