@@ -108,8 +108,8 @@ int	ip[3];
 {
 	register int i;
 	point_t dst;
-	static unsigned long max2x = -1;
-	static unsigned long max = (-1) >> 1;
+	static unsigned long max2x = ~((unsigned long)0);
+	static unsigned long max = (~((unsigned long)0)) >> 1;
 
 	for (i=0 ; i < 3 ; i++) {
 		/* assure values are positive */
