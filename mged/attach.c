@@ -52,7 +52,10 @@ void mged_slider_link_vars();
 void mged_slider_unlink_vars();
 static int do_2nd_attach_prompt();
 static void find_new_owner();
+void mged_fb_open();
+void mged_fb_close();
 
+extern void set_port(); /* defined in fbserv.c */
 extern void predictor_init(); /* defined in predictor.c */
 extern void set_scroll();  /* defined in set.c */
 extern void color_soltab();
@@ -63,9 +66,15 @@ extern int Plot_dm_init();
 extern int PS_dm_init();
 #ifdef DM_X
 extern int X_dm_init();
+#ifdef USE_FRAMEBUFFER
+extern void X_fb_open();
+#endif
 #endif
 #ifdef DM_OGL
 extern int Ogl_dm_init();
+#ifdef USE_FRAMEBUFFER
+extern void Ogl_fb_open();
+#endif
 #endif
 #ifdef DM_GLX
 extern int Glx_dm_init();
@@ -165,6 +174,19 @@ int need_close;
     new_mats();
 
     curr_dm_list = sdm;
+  }
+#endif
+
+#ifdef USE_FRAMEBUFFER
+  if(fbp){
+    if(mged_variables->listen){
+      /* drop all clients */
+      mged_variables->listen = 0;
+      set_port();
+    }
+
+    /* release framebuffer resources */
+    mged_fb_close();
   }
 #endif
 
@@ -1221,3 +1243,43 @@ struct dm_list *p;
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_distadc_vls));
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_Viewscale_vls));
 }
+
+int
+f_get_dm_list(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+  struct dm_list *dlp;
+
+  FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
+    Tcl_AppendElement(interp, bu_vls_addr(&dlp->_dmp->dm_pathName));
+
+  return TCL_OK;
+}
+
+#ifdef USE_FRAMEBUFFER
+void
+mged_fb_open()
+{
+  if(dmp->dm_type == DM_TYPE_X)
+    X_fb_open();
+  else if(dmp->dm_type == DM_TYPE_OGL)
+    Ogl_fb_open();
+}
+
+void
+mged_fb_close()
+{
+  int status;
+  struct bu_vls vls;
+
+  bu_vls_init(&vls);
+  bu_vls_printf(&vls, "fb_close_existing %lu", fbp);
+  (void)Tcl_Eval(interp, bu_vls_addr(&vls));
+  bu_vls_free(&vls);
+
+  fbp = (FBIO *)0;
+}
+#endif
