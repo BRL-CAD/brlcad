@@ -23,7 +23,12 @@
 
 /* Set pre-processor switch for getting signal() handler declarations right.
  */
-#if __STDC__ || (defined(SYSV) && ! defined(cray))
+#if defined(sun) && ! defined(SunOS4)
+/* For Suns running older releases, compile with -DSunOS4=0 to suppress
+	bogus warning messages. */
+#define SunOS4	1
+#endif
+#if __STDC__ || (defined(SYSV) && ! defined(cray)) || SunOS4
 #define STD_SIGNAL_DECLS 1
 #else
 #define STD_SIGNAL_DECLS 0
