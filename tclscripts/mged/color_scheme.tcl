@@ -156,6 +156,8 @@ proc color_scheme_build { id primary_title primary_map secondary_title secondary
 
     incr row
     frame $top.csF$row
+    button $top.okB -relief raised -text "Ok"\
+	    -command "color_scheme_ok $id $top"
     button $top.applyB -relief raised -text "Apply"\
 	    -command "color_scheme_apply $id"
     button $top.resetB -relief raised -text "Reset"\
@@ -182,10 +184,10 @@ proc color_scheme_build { id primary_title primary_map secondary_title secondary
     button $top.dismissB -relief raised -text "Dismiss"\
 	    -command "catch { destroy $top }"
 
-    grid $top.applyB x $top.resetB $top.cannedMB x $top.dismissB\
+    grid $top.okB $top.applyB x $top.resetB $top.cannedMB x $top.dismissB\
 	    -sticky "nsew" -in $top.csF$row
-    grid columnconfigure $top.csF$row 1 -weight 1
-    grid columnconfigure $top.csF$row 4 -weight 1
+    grid columnconfigure $top.csF$row 2 -weight 1
+    grid columnconfigure $top.csF$row 5 -weight 1
     grid $top.csF$row -row $row -sticky "nsew" -padx 8 -pady 8
 
     grid columnconfigure $top 0 -weight 1
@@ -268,6 +270,11 @@ proc color_scheme_toggle_secondary { id top container row entry_width } {
 
     # put back container
     eval grid $container $grid_info
+}
+
+proc color_scheme_ok { id top } {
+    color_scheme_apply $id
+    catch { destroy $top }
 }
 
 proc color_scheme_apply { id } {

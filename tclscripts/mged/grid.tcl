@@ -165,6 +165,9 @@ proc init_grid_control { id } {
 	return
     }
 
+    set grid_control($id,padx) 4
+    set grid_control($id,pady) 4
+
     toplevel $top -screen $player_screen($id)
 
     frame $top.gridF1
@@ -336,6 +339,8 @@ user high accuracy with the mouse for transforming
 the view or editing solids/matrices." }
             { see_also "rset" } }
 
+    button $top.okB -relief raised -text "Ok"\
+	    -command "grid_control_ok $id $top"
     button $top.applyB -relief raised -text "Apply"\
 	    -command "grid_control_apply $id"
     hoc_register_data $top.applyB "Apply"\
@@ -355,56 +360,65 @@ The tick spacing will be a power of 10 in local units." } }
     hoc_register_data $top.dismissB "Dismiss"\
 	    { { summary "Dismiss/close the grid control panel." } }
 
-    grid x $top.tickSpacingL x $top.majorSpacingL -in $top.gridFF1 -padx 8 -pady 8
+    grid x $top.tickSpacingL x $top.majorSpacingL -in $top.gridFF1 \
+	    -padx $grid_control($id,padx) -pady $grid_control($id,pady)
     grid $top.hE $top.hMB -sticky ew -in $top.hF
     grid columnconfigure $top.hF 0 -weight 1
     grid $top.maj_hE -sticky ew -in $top.maj_hF
     grid columnconfigure $top.maj_hF 0 -weight 1
-    grid $top.hL $top.hF x $top.maj_hF -sticky "ew" -in $top.gridFF1 -padx 8 -pady 8
+    grid $top.hL $top.hF x $top.maj_hF -sticky "ew" -in $top.gridFF1 \
+	    -padx $grid_control($id,padx) -pady $grid_control($id,pady)
     grid $top.vE $top.vMB -sticky ew -in $top.vF
     grid columnconfigure $top.vF 0 -weight 1
     grid $top.maj_vE -sticky ew -in $top.maj_vF
     grid columnconfigure $top.maj_vF 0 -weight 1
-    grid $top.vL $top.vF x $top.maj_vF -sticky "ew" -in $top.gridFF1 -padx 8 -pady 8
-    grid $top.squareGridCB - - - -in $top.gridFF1 -padx 8 -pady 8
+    grid $top.vL $top.vF x $top.maj_vF -sticky "ew" -in $top.gridFF1 \
+	    -padx $grid_control($id,padx) -pady $grid_control($id,pady)
+    grid $top.squareGridCB - - - -in $top.gridFF1 \
+	    -padx $grid_control($id,padx) -pady $grid_control($id,pady)
 
     grid $top.anchorL -sticky "ew" -in $top.anchorF
     grid $top.anchorE -sticky "ew" -in $top.anchorFF
     grid $top.anchorFF -sticky "ew" -in $top.anchorF
-    grid $top.anchorF x x -sticky "ew" -in $top.gridFF2 -padx 8 -pady 8
+    grid $top.anchorF x x -sticky "ew" -in $top.gridFF2 \
+	    -padx $grid_control($id,padx) -pady $grid_control($id,pady)
     grid columnconfigure $top.anchorF 0 -weight 1
     grid columnconfigure $top.anchorFF 0 -weight 1
 
     grid $top.gridEffectsL x $top.drawCB x $top.snapCB x -sticky "ew" -in $top.gridFF3\
-	    -padx 8 -pady 8
+	    -padx $grid_control($id,padx) -pady $grid_control($id,pady)
 
-    grid $top.applyB x $top.resetB $top.autosizeB x $top.dismissB -sticky "ew" -in $top.gridF4
+    grid $top.okB $top.applyB x $top.resetB $top.autosizeB x $top.dismissB -sticky "ew" -in $top.gridF4
 
     grid columnconfigure $top.gridFF1 1 -weight 1
     grid columnconfigure $top.gridFF1 3 -weight 1
     grid columnconfigure $top.gridF1 0 -weight 1
-    grid $top.gridFF1 -sticky "ew" -in $top.gridF1 -padx 8 -pady 8
-    grid $top.gridF1 -sticky "ew" -padx 8 -pady 8
+    grid $top.gridFF1 -sticky "ew" -in $top.gridF1 \
+	    -padx $grid_control($id,padx) -pady $grid_control($id,pady)
+    grid $top.gridF1 -sticky "ew" \
+	    -padx $grid_control($id,padx) -pady $grid_control($id,pady)
     
-
     grid columnconfigure $top.gridFF2 0 -weight 1
     grid columnconfigure $top.gridFF2 1 -minsize 20
     grid columnconfigure $top.gridFF2 2 -weight 1
     grid columnconfigure $top.gridF2 0 -weight 1
-    grid $top.gridFF2 -sticky "ew" -in $top.gridF2 -padx 8
-    grid $top.gridF2 -sticky "ew" -padx 8 -pady 8
+    grid $top.gridFF2 -sticky "ew" -in $top.gridF2 -padx $grid_control($id,padx)
+    grid $top.gridF2 -sticky "ew" -padx $grid_control($id,padx) -pady $grid_control($id,pady)
 
     grid columnconfigure $top.gridFF3 0 -weight 0
     grid columnconfigure $top.gridFF3 1 -weight 1
     grid columnconfigure $top.gridFF3 3 -minsize 20
     grid columnconfigure $top.gridFF3 5 -weight 1
     grid columnconfigure $top.gridF3 0 -weight 1
-    grid $top.gridFF3 -sticky "ew" -in $top.gridF3 -padx 8 -pady 8
-    grid $top.gridF3 -sticky "ew" -padx 8 -pady 8
+    grid $top.gridFF3 -sticky "ew" -in $top.gridF3 \
+	    -padx $grid_control($id,padx) -pady $grid_control($id,pady)
+    grid $top.gridF3 -sticky "ew" \
+	    -padx $grid_control($id,padx) -pady $grid_control($id,pady)
 
-    grid columnconfigure $top.gridF4 1 -weight 1
-    grid columnconfigure $top.gridF4 4 -weight 1
-    grid $top.gridF4 -sticky "ew" -padx 8 -pady 8
+    grid columnconfigure $top.gridF4 2 -weight 1
+    grid columnconfigure $top.gridF4 5 -weight 1
+    grid $top.gridF4 -sticky "ew" \
+	    -padx $grid_control($id,padx) -pady $grid_control($id,pady)
 
     grid columnconfigure $top 0 -weight 1
     grid columnconfigure $top 0 -minsize 400
@@ -420,6 +434,11 @@ The tick spacing will be a power of 10 in local units." } }
     wm protocol $top WM_DELETE_WINDOW "catch { destroy $top }"
     wm geometry $top +$x+$y
     wm title $top "Grid Control Panel ($id)"
+}
+
+proc grid_control_ok { id top } {
+    grid_control_apply $id
+    catch { destroy $top }
 }
 
 proc grid_control_apply { id } {

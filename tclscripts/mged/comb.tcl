@@ -288,6 +288,8 @@ no effect (i.e. the members of a region
 always take on the characteristics of the
 region)." } }
 
+    button $top.okB -relief raised -text "Ok"\
+	    -command "comb_ok $id $top"
     button $top.applyB -relief raised -text "Apply"\
 	    -command "comb_apply $id"
     hoc_register_data $top.applyB "Apply"\
@@ -360,10 +362,10 @@ from the combination." } }
     grid rowconfigure $top.gridF3 1 -weight 1
     grid columnconfigure $top.gridF3 0 -weight 1
 
-    grid $top.applyB x $top.resetB x $top.dismissB -sticky "ew"\
+    grid $top.okB $top.applyB x $top.resetB x $top.dismissB -sticky "ew"\
 	    -in $top.gridF4 -pady $comb_control($id,pady)
-    grid columnconfigure $top.gridF4 1 -weight 1
-    grid columnconfigure $top.gridF4 3 -weight 1
+    grid columnconfigure $top.gridF4 2 -weight 1
+    grid columnconfigure $top.gridF4 4 -weight 1
 
     grid $top.gridF -sticky "ew" -padx $comb_control($id,padx) -pady $comb_control($id,pady)
     grid $top.gridF2 -sticky "ew" -padx $comb_control($id,padx) -pady $comb_control($id,pady)
@@ -379,6 +381,11 @@ from the combination." } }
     set y [lindex $pxy 1]
     wm geometry $top +$x+$y
     wm title $top "Combination Editor ($id)"
+}
+
+proc comb_ok { id top } {
+    comb_apply $id
+    comb_dismiss $id $top
 }
 
 proc comb_apply { id } {

@@ -205,6 +205,8 @@ point." } }
     grid $top.drawB -in $top.gridF4
 
     frame $top.gridF5
+    button $top.okB -relief raised -text "Ok"\
+	    -command "mged_apply $id \"adc_ok $id $top\""
     button $top.applyB -relief raised -text "Apply"\
 	    -command "mged_apply $id \"adc_apply $id\""
     hoc_register_data $top.applyB "Apply"\
@@ -220,9 +222,9 @@ default values." } }
 	    -command "catch { destroy $top; set mged_adc_control($id) 0 }"
     hoc_register_data $top.dismissB "Dismiss"\
 	    { { summary "Dismiss/close the ADC control panel." } }
-    grid $top.applyB x $top.resetB $top.loadB x $top.dismissB -sticky "ew" -in $top.gridF5
-    grid columnconfigure $top.gridF5 1 -weight 1
-    grid columnconfigure $top.gridF5 4 -weight 1
+    grid $top.okB $top.applyB x $top.resetB $top.loadB x $top.dismissB -sticky "ew" -in $top.gridF5
+    grid columnconfigure $top.gridF5 2 -weight 1
+    grid columnconfigure $top.gridF5 5 -weight 1
 
     grid $top.gridF1 -sticky "ew" -padx $padx -pady $pady
     grid $top.gridF2 -sticky "ew" -padx $padx -pady $pady
@@ -241,6 +243,15 @@ default values." } }
     wm protocol $top WM_DELETE_WINDOW "catch { destroy $top; set mged_adc_control($id) 0 }"
     wm geometry $top +$x+$y
     wm title $top "ADC Control Panel ($id)"
+}
+
+proc adc_ok { id top } {
+    global mged_adc_control
+
+    adc_apply $id
+    catch { destroy $top }
+
+    set mged_adc_control($id) 0
 }
 
 proc adc_apply { id } {
