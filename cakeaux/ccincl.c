@@ -52,11 +52,13 @@ char	**argv;
 			switch (argv[1][i])
 			{
 
-		when 'f':
+		case 'f':
 				fflag = TRUE;
-		when 'r':
+				break;
+		case 'r':
 				rflag = TRUE;
-		when 'i':
+				break;
+		case 'i':
 				if (i != 1)
 					usage();
 
@@ -73,7 +75,7 @@ char	**argv;
 				ino_list[filecount] = statbuf.st_ino;
 				filecount++;
 				goto nextword;
-		when 's':
+		case 's':
 				if (i != 1)
 					usage();
 
@@ -90,19 +92,19 @@ char	**argv;
 				ino_list[filecount] = statbuf.st_ino;
 				filecount++;
 				goto nextword;
-		when 'C':
+		case 'C':
 				if (i != 1)
 					usage();
 
 				currdir = &argv[1][2];
 				goto nextword;
-		when 'I':
+		case 'I':
 				if (i != 1)
 					usage();
 
 				dir_list[dircount++] = &argv[1][2];
 				goto nextword;
-		otherwise:
+		default:
 				usage();
 			}
 		}

@@ -38,23 +38,28 @@ char	**argv;
 			switch (argv[1][i])
 			{
 
-		when 'f':	fast = TRUE;
+		case 'f':	fast = TRUE;
+				break;
 
-		when 'g':	general = TRUE;
+		case 'g':	general = TRUE;
+				break;
 
-		when 'i':	ignore = TRUE;
+		case 'i':	ignore = TRUE;
+				break;
 
-		when 'n':	noexec = TRUE;
+		case 'n':	noexec = TRUE;
+				break;
 
-		when 'v':	if (i != 1)
+		case 'v':	if (i != 1)
 					usage();
 
 				var_char = argv[1][2];
 				goto nextword;
 
-		when 'z':	needzero = FALSE;
+		case 'z':	needzero = FALSE;
+				break;
 
-		otherwise:	usage();
+		default:	usage();
 
 			}
 		}

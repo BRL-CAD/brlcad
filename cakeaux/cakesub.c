@@ -37,23 +37,24 @@ char	**argv;
 			switch (argv[1][i])
 			{
 
-		when 'i':
+		case 'i':
 				ignore = TRUE;
-		when 'o':
+				break;
+		case 'o':
 				old_join = atoi(&argv[1][i+1]);
 				if( old_join <= 0 )  usage();
 				goto nextword;
-		when 'n':
+		case 'n':
 				new_join = atoi(&argv[1][i+1]);
 				if( new_join <= 0 )  usage();
 				goto nextword;
-		when 'v':
+		case 'v':
 				if (argv[1][i+2] != '\0')
 					usage();
 
 				var_char = argv[1][i+1];
 				goto nextword;
-		otherwise:
+		default:
 				usage();
 			}
 		}

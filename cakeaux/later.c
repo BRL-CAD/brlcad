@@ -31,11 +31,13 @@ char	**argv;
 			switch (argv[1][i])
 			{
 
-		when 'c':	count = TRUE;
+		case 'c':	count = TRUE;
+				break;
 
-		when 's':	silent = TRUE;
+		case 's':	silent = TRUE;
+				break;
 
-		otherwise:	usage();
+		default:	usage();
 
 			}
 		}
