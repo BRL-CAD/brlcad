@@ -144,7 +144,7 @@ char	**argv;
  *  
  *  Debugging aid:  dump memory maps
  */
-void
+int
 f_memprint(argc, argv)
 int	argc;
 char	**argv;
@@ -153,6 +153,8 @@ char	**argv;
 	memprint( &(dmp->dmr_map) );
 	(void)printf("Database free granule map:\n");
 	memprint( &(dbip->dbi_freep) );
+
+	return CMD_OK;
 }
 
 /*
@@ -323,7 +325,7 @@ dir_summary(flag)
  *  Find all top level objects.
  *  TODO:  Perhaps print all objects, sorted by use count, as an option?
  */
-void
+int
 f_tops(argc, argv)
 int	argc;
 char	**argv;
@@ -354,6 +356,8 @@ char	**argv;
 			}
 	col_pr4v( dirp0, (int)(dirp - dirp0));
 	rt_free( (char *)dirp0, "dir_getspace" );
+
+	return CMD_OK;
 }
 
 /*
@@ -459,7 +463,7 @@ cmd_glob()
  *  
  *  Find all references to the named objects.
  */
-void
+int
 f_find(argc, argv)
 int	argc;
 char	**argv;
@@ -475,8 +479,10 @@ char	**argv;
 		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )  {
 			if( !(dp->d_flags & DIR_COMB) )
 				continue;
-			if( (rp = db_getmrec( dbip, dp )) == (union record *)0 )
-				READ_ERR_return;
+			if( (rp = db_getmrec( dbip, dp )) == (union record *)0 ) {
+				READ_ERR;
+				return CMD_BAD;
+			}
 			/* [0] is COMB, [1..n] are MEMBERs */
 			for( j=1; j < dp->d_len; j++ )  {
 				if( rp[j].M.m_instname[0] == '\0' )
@@ -493,6 +499,7 @@ char	**argv;
 			rt_free( (char *)rp, "dir_nref recs" );
 		}
 	}
+	return CMD_OK;
 }
 
 /*
@@ -501,7 +508,7 @@ char	**argv;
  *  Prefix each occurence of a specified object name, both
  *  when defining the object, and when referencing it.
  */
-void
+int
 f_prefix(argc, argv)
 int	argc;
 char	**argv;
@@ -538,7 +545,7 @@ char	**argv;
 		if( db_rename( dbip, dp, tempstring ) < 0 )  {
 			printf("error in rename to %s, aborting\n", tempstring );
 			ERROR_RECOVERY_SUGGESTION;
-			return;
+			return CMD_BAD;
 		}
 	}
 
@@ -547,8 +554,10 @@ char	**argv;
 		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )  {
 			if( !(dp->d_flags & DIR_COMB) )
 				continue;
-			if( (rp = db_getmrec( dbip, dp )) == (union record *)0 )
-				READ_ERR_return;
+			if( (rp = db_getmrec( dbip, dp )) == (union record *)0 ) {
+				READ_ERR;
+				return CMD_BAD;
+			}
 			/* [0] is COMB, [1..n] are MEMBERs */
 			for( j=1; j < dp->d_len; j++ )  {
 				if( rp[j].M.m_instname[0] == '\0' )
@@ -561,13 +570,16 @@ char	**argv;
 					(void)strcat( tempstring, argv[k]);
 					(void)strncpy(rp[j].M.m_instname,
 						tempstring, NAMESIZE);
-					if( db_put( dbip, dp, rp, 0, dp->d_len ) < 0 )
-						WRITE_ERR_return;
+					if( db_put( dbip, dp, rp, 0, dp->d_len ) < 0 ) {
+						WRITE_ERR;
+						return CMD_BAD;
+					}
 				}
 			}
 			rt_free( (char *)rp, "dir_nref recs" );
 		}
 	}
+	return CMD_OK;
 }
 
 /*
@@ -597,7 +609,7 @@ register struct directory *dp;
 	rt_free( (char *)rp, "keep rec[]" );
 }
 
-void
+int
 f_keep(argc, argv)
 int	argc;
 char	**argv;
@@ -621,7 +633,7 @@ char	**argv;
 
 	if( (keepfp = fopen( argv[1], "a" ) ) == NULL )  {
 		perror( argv[1] );
-		return;
+		return CMD_BAD;
 	}
 	
 	/* ident record */
@@ -655,7 +667,7 @@ char	**argv;
 		fclose(keepfp);
 		rt_vls_free( &title );
 		rt_vls_free( &units );
-		return;
+		return CMD_BAD;
 	}
 
 	for(i = 2; i < argc; i++) {
@@ -668,6 +680,7 @@ char	**argv;
 	rt_vls_free( &title );
 	rt_vls_free( &units );
 
+	return CMD_OK;
 }
 
 #ifdef OLD
@@ -750,7 +763,7 @@ int cont;		/* non-zero when continuing partly printed line */
  *
  *	Print out a list of all members and submembers of an object.
  */
-void
+int
 f_tree(argc, argv)
 int	argc;
 char	**argv;
@@ -767,6 +780,8 @@ char	**argv;
 			continue;
 		printnode(dp, 0, 0);
 	}
+
+	return CMD_OK;
 }
 
 /*
@@ -826,7 +841,7 @@ char prefix;
  *	format:	mvall oldname newname
  *
  */
-void
+int
 f_mvall(argc, argv)
 int	argc;
 char	**argv;
@@ -839,35 +854,43 @@ char	**argv;
 	if( (int)strlen(argv[2]) > NAMESIZE ) {
 		(void)printf("ERROR: name length limited to %d characters\n",
 				NAMESIZE);
-		return;
+		return CMD_BAD;
 	}
 
 	/* rename the record itself */
 	if( (dp = db_lookup( dbip, argv[1], LOOKUP_NOISY )) == DIR_NULL)
-		return;
+		return CMD_BAD;
 	if( db_lookup( dbip, argv[2], LOOKUP_QUIET ) != DIR_NULL ) {
 		aexists( argv[2]);
-		return;
+		return CMD_BAD;
 	}
 	/*  Change object name in the directory. */
 	if( db_rename( dbip, dp, argv[2] ) < 0 )  {
 		printf("error in rename to %s, aborting\n", argv[2] );
 		ERROR_RECOVERY_SUGGESTION;
-		return;
+		return CMD_BAD;
 	}
 
 	/* Change name in the file */
-	if( db_get( dbip,  dp, &record, 0 , 1) < 0 )  READ_ERR_return;
+	if( db_get( dbip,  dp, &record, 0 , 1) < 0 ) {
+		READ_ERR;
+		return CMD_BAD;
+	}
 	NAMEMOVE( argv[2], record.c.c_name );
-	if( db_put( dbip, dp, &record, 0, 1 ) < 0 )  WRITE_ERR_return;
+	if( db_put( dbip, dp, &record, 0, 1 ) < 0 ) {
+		WRITE_ERR;
+		return CMD_BAD;
+	}
 
 	/* Examine all COMB nodes */
 	for( i = 0; i < RT_DBNHASH; i++ )  {
 		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )  {
 			if( !(dp->d_flags & DIR_COMB) )
 				continue;
-			if( (rp = db_getmrec( dbip, dp )) == (union record *)0 )
-				READ_ERR_return;
+			if( (rp = db_getmrec( dbip, dp )) == (union record *)0 ) {
+				READ_ERR;
+				return CMD_BAD;
+			}
 			/* [0] is COMB, [1..n] are MEMBERs */
 			for( j=1; j < dp->d_len; j++ )  {
 				if( rp[j].M.m_instname[0] == '\0' )
@@ -878,8 +901,10 @@ char	**argv;
 						continue;
 					(void)strncpy(rp[j].M.m_instname,
 						argv[2], NAMESIZE);
-					if( db_put( dbip, dp, rp, 0, dp->d_len ) < 0 )
-						WRITE_ERR_return;
+					if( db_put( dbip, dp, rp, 0, dp->d_len ) < 0 ) {
+						WRITE_ERR;
+						return CMD_BAD;
+					}
 				}
 			}
 			rt_free( (char *)rp, "dir_nref recs" );
@@ -894,7 +919,7 @@ char	**argv;
  *	format:	killall obj1 ... objn
  *
  */
-void
+int
 f_killall(argc, argv)
 int	argc;
 char	**argv;
@@ -913,8 +938,10 @@ char	**argv;
 			if( !(dp->d_flags & DIR_COMB) )
 				continue;
 again:
-			if( (rp = db_getmrec( dbip, dp )) == (union record *)0 )
-				READ_ERR_return;
+			if( (rp = db_getmrec( dbip, dp )) == (union record *)0 ) {
+				READ_ERR;
+				return CMD_BAD;
+			}
 			/* [0] is COMB, [1..n] are MEMBERs */
 			for( j=1; j < dp->d_len; j++ )  {
 				if( rp[j].M.m_instname[0] == '\0' )
@@ -929,7 +956,7 @@ again:
 						printf("error in killing reference to '%s', exit MGED and retry\n",
 							argv[k]);
 						ERROR_RECOVERY_SUGGESTION;
-						return;
+						return CMD_BAD;
 					}
 					rt_free( (char *)rp, "dir_nref recs" );
 					goto again;
@@ -941,7 +968,7 @@ again:
 
 	/* ALL references removed...now KILL the object[s] */
 	/* reuse argv[] */
-	f_kill( argc, argv );
+	return f_kill( argc, argv );
 }
 
 
@@ -950,7 +977,7 @@ again:
  *	Kill ALL paths belonging to an object
  *
  */
-void
+int
 f_killtree(argc, argv)
 int	argc;
 char	**argv;
@@ -965,6 +992,8 @@ char	**argv;
 			continue;
 		db_functree( dbip, dp, killtree, killtree );
 	}
+
+	return CMD_OK;
 }
 
 /*
@@ -983,10 +1012,11 @@ register struct directory *dp;
 		DELETE_ERR_return("");
 }
 
-void
+int
 f_debugdir( argc, argv )
 int	argc;
 char	**argv;
 {
 	db_pr_dir( dbip );
+	return CMD_OK;
 }
