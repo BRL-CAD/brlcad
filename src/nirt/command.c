@@ -40,8 +40,8 @@ extern char			*ocname[];
 extern int			nirt_debug;
 extern int			rt_bot_minpieces;	/* grom g_bot.c */
 
-void		printusage();
-void		do_rt_gettrees();
+extern void printusage(void);
+extern void do_rt_gettrees(struct rt_i *rtip, char **object_name, int nm_objects);
 
 void
 bot_minpieces(char *buffer, com_table *ctp )
@@ -338,7 +338,7 @@ int			ctp;
 
     if (need_prep) {
 	if (rtip) rt_clean(rtip);
-	do_rt_gettrees(rtip, NULL, NULL);
+	do_rt_gettrees(rtip, NULL, 0);
     }
 
 

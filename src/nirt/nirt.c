@@ -311,7 +311,7 @@ main (int argc, char **argv)
     /* FUNCTIONS */
     int                    if_overlap(register struct application *ap, register struct partition *pp, struct region *reg1, struct region *reg2, struct partition *InputHdp);    /* routine if you overlap         */
     int             	   if_hit(struct application *ap, struct partition *part_head, struct seg *finished_segs);        /* routine if you hit target      */
-    int             	   if_miss(void);       /* routine if you miss target     */
+    int             	   if_miss(struct application *ap);       /* routine if you miss target     */
     void                   do_rt_gettrees(struct rt_i *rtip, char **object_name, int nm_objects);
     void                   printusage(void);
     void		   grid2targ(void);
