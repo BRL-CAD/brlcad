@@ -1,5 +1,5 @@
 .\" $Header$
-.\" troff -t -ms README
+.\" troff -t -ms README | catimp -P imt1
 .TL
 README
 .sp
@@ -61,18 +61,18 @@ Models", included in the file papers/solid-models.
 .sp
 .IP "DISTRIBUTION DETAILS"
 .sp
-First, you are reminded of the terms of this limited distribution.
+This software is governed by a limited distribution agreement.
 To obtain a copy of the BRL CAD Package distribution materials, there
 are two options:
 .sp
 1.  Free distribution with no support privileges:  Those users with
 online access to the DARPA InterNet may obtain the BRL-CAD Package via
-FTP file transfer, at no cost, after completing and returning the
-distribution agreement. A blank agreement form is available only via
-anonymous FTP from host ftp.brl.mil (address 128.63.16.158) from file
-"brl-cad/agreement". One printed set of BRL-CAD documentation will be
-mailed to you at no cost. No installation assistance or telephone
-support will be available.
+FTP file transfer, at no cost, after completing and returning a signed
+copy of the printed distribution agreement. A blank agreement form is
+available only via anonymous FTP from host ftp.brl.mil (address
+128.63.16.158) from file "brl-cad/agreement". One printed set of BRL-CAD
+documentation will be mailed to you at no cost. No installation
+assistance or telephone support will be available.
 .sp
 2.  Full service distribution:  The Survivability/Vulnerability
 Information Analysis Center (SURVIAC) administers the supported BRL-CAD
