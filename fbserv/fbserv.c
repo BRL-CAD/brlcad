@@ -106,6 +106,8 @@ int argc; char **argv;
 	while( pkg_block(rem_pcp) > 0 )
 		;
 
+	if( fbp != FBIO_NULL )
+		fb_close(fbp);
 	exit(0);
 }
 
