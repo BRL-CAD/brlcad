@@ -52,7 +52,7 @@ struct dispatch
 
 /* Variables controlling the font itself.				*/
 extern FILE *ffdes;		/* Fontfile file descriptor.		*/
-extern int offset;		/* Offset to data in the file.		*/
+extern long offset;		/* Offset to data in the file.		*/
 extern struct header hdr;	/* Header for font file.		*/
 extern struct dispatch dir[256];/* Directory for character font.	*/
 extern int width, height;	/* Width and height of current char.	*/
