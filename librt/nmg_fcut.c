@@ -320,6 +320,10 @@ rt_log("ang=%g, vec=(%g,%g,%g), x=(%g,%g,%g), y=(%g,%g,%g)\n",
 /*
  *			N M G _ A S S E S S _ E U
  *
+ *  The current vertex (eu->vu_p) is on the line of intersection.
+ *  Assess the indicated edge, to see if it lies on the line of
+ *  intersection, or departs towards the left or right.
+ *
  *  There is no need to look more than one edge forward or backward.
  *  Even if there are edges which loop around to the same vertex
  *  (with a different vertexuse), that (0-length) edge is ON the ray.
@@ -358,15 +362,21 @@ int			pos;
 
 	/*  If the other vertex is mentioned anywhere on the ray's vu list,
 	 *  then the edge is "on" the ray.
-	 *  There is a slight possibility that loop/face orientation might
-	 *  play a factor in choosing the correct scan direction.
-	/* XXX Need to distinguish between OnForw & OnRev.
+	 *  Match against vertex (rather than vertexuse) because cut/join
+	 *  operations may have changed the particular vertexuse pointer.
 	 */
 	for( i=rs->nvu-1; i >= 0; i-- )  {
 		if( rs->vu[i]->v_p != otherv )  continue;
 		/* Edge is on the ray.  Which way does it go? */
 rt_log("ON: vu[%d]=x%x otherv=x%x, i=%d\n", pos, rs->vu[pos], otherv, i );
-		VSUB2( heading, rs->vu[i]->v_p->vg_p->coord, v->vg_p->coord );
+		if( forw )  {
+			/* Edge goes from v to otherv */
+			VSUB2( heading, otherv->vg_p->coord, v->vg_p->coord );
+		} else {
+			/* Edge goes from otherv to v */
+			VSUB2( heading, v->vg_p->coord, otherv->vg_p->coord );
+		}
+		if( MAGSQ(heading) < SMALL_FASTF )  rt_bomb("null heading\n");
 		if( VDOT( heading, rs->dir ) < 0 )  {
 			ret = NMG_E_ASSESSMENT_ON_REV;
 		} else {
@@ -376,13 +386,12 @@ rt_log("ON: vu[%d]=x%x otherv=x%x, i=%d\n", pos, rs->vu[pos], otherv, i );
 	}
 
 	/*
-	 *  The edge must lie to one side or the other of the ray.
+	 *  Since other vertex does not lie anywhere on line of intersection,
+	 *  the edge must lie to one side or the other of the ray.
+	 *  Check vector from v to otherv against "left" vector.
 	 */
-#if 0
-VPRINT("assess_eu from", v->vg_p->coord);
-VPRINT("          to  ", otherv->vg_p->coord);
-#endif
 	VSUB2( heading, otherv->vg_p->coord, v->vg_p->coord );
+	if( MAGSQ(heading) < SMALL_FASTF )  rt_bomb("null heading 2\n");
 	if( VDOT( heading, rs->left ) < 0 )  {
 		ret = NMG_E_ASSESSMENT_RIGHT;
 	} else {
@@ -392,6 +401,8 @@ out:
 	rt_log("nmg_assess_eu(x%x, fw=%d, pos=%d) v=x%x otherv=x%x: %s\n",
 		eu, forw, pos, v, otherv,
 		nmg_e_assessment_names[ret] );
+	rt_log(" v(%g,%g,%g) other(%g,%g,%g)\n",
+		V3ARGS(v->vg_p->coord), V3ARGS(otherv->vg_p->coord) );
 	return ret;
 }
 
@@ -600,11 +611,20 @@ nmg_pr_fu_briefly(fu1,(char *)0);
 	rs.nvu = b->end;
 	VMOVE( rs.pt, pt );
 	VMOVE( rs.dir, dir );
-rt_log("fu->orientation=%d\n", fu1->orientation);
+rt_log("fu->orientation=%s\n", nmg_orientation(fu1->orientation) );
 VPRINT("fg_p->N", fu1->f_p->fg_p->N);
 VPRINT(" pt", pt);
 VPRINT("dir", dir);
 	VCROSS( rs.left, fu1->f_p->fg_p->N, dir );
+	switch( fu1->orientation )  {
+	case OT_SAME:
+		break;
+	case OT_OPPOSITE:
+		VREVERSE(rs.left, rs.left);
+		break;
+	default:
+		rt_bomb("nmg_face_combine: bad orientation\n");
+	}
 VPRINT("left", rs.left);
 	rs.state = NMG_STATE_OUT;
 
@@ -702,7 +722,7 @@ static CONST struct state_transitions nmg_state_is_out[17] = {
 	{ /* LEFT,RIGHT */	NMG_STATE_IN,		NMG_ACTION_VFY_EXT },
 	{ /* LEFT,ON_FORW */	NMG_STATE_ON_L,		NMG_ACTION_VFY_EXT },
 	{ /* LEFT,ON_REV */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
-	{ /* RIGHT,LEFT */	NMG_STATE_IN,		NMG_ACTION_VFY_EXT },
+	{ /* RIGHT,LEFT */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
 	{ /* RIGHT,RIGHT */	NMG_STATE_OUT,		NMG_ACTION_NONE },
 	{ /* RIGHT,ON_FORW */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
 	{ /* RIGHT,ON_REV */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
@@ -778,7 +798,7 @@ static CONST struct state_transitions nmg_state_is_on_B[17] = {
 
 static CONST struct state_transitions nmg_state_is_in[17] = {
 	{ /* LEFT,LEFT */	NMG_STATE_IN,		NMG_ACTION_CUTJOIN },
-	{ /* LEFT,RIGHT */	NMG_STATE_OUT,		NMG_ACTION_CUTJOIN },
+	{ /* LEFT,RIGHT */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
 	{ /* LEFT,ON_FORW */	NMG_STATE_ON_R,		NMG_ACTION_CUTJOIN },
 	{ /* LEFT,ON_REV */	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
 	{ /* RIGHT,LEFT */	NMG_STATE_OUT,		NMG_ACTION_CUTJOIN },
