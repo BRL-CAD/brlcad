@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) rle.h	1.6
-	Last edit: 	5/28/85 at 10:10:45	G S M
-	Retrieved: 	8/13/86 at 10:31:18
+	SCCS id:	@(#) rle.h	1.7
+	Last edit: 	8/15/85 at 10:15:45	G S M
+	Retrieved: 	8/13/86 at 10:31:24
 	SCCS archive:	/m/cad/librle/RCS/s.rle.h
 
 	Modified for by :	Gary S. Moss
@@ -103,3 +103,8 @@ extern Pixel	_bg_pixel;
 /* Global flags for general use.					*/
 extern int	rle_debug;
 extern int	rle_verbose;
+
+/* Entry points.							*/
+void	rle_rlen(), rle_wlen(), rle_rpos(), rle_wpos();
+int	rle_rhdr(), rle_whdr(), rle_rmap(), rle_wmap();
+int	rle_decode_ln(), rle_encode_ln();

@@ -1,6 +1,6 @@
 .TH LIBRLE 3V VMB
-'\"	last edit:	85/05/22	D A Gwyn
-'\"	SCCS ID:	@(#)librle.3	1.6
+'\"	last edit:	85/08/15	G S Moss
+'\"	SCCS ID:	@(#)librle.3	1.7
 .SH NAME
 librle \- run-length encoded image library
 .SH SYNOPSIS
@@ -8,16 +8,26 @@ librle \- run-length encoded image library
 .B #include ``/vld/include/rle.h''
 .B #include ``/vld/include/fb.h''
 .P
-.B "int rle_rhdr( stream, flags, bgpixel, xsize, ysize, xpos, ypos )"
+.B "int rle_rhdr( stream, flags, bgpixel )"
 .B FILE *stream;
 .B int *flags;
 .B Pixel *bgpixel;
-.B int *xsize, *ysize;
-.B int *xpos, *ypos;
 .P
 .B "rle_whdr( stream, ncolors, bgflag, cmflag, bgpixel )"
 .B FILE *stream;
 .B Pixel *bgpixel;
+.P
+.B "rle_rlen( xlen, ylen )
+.B int *xlen, *ylen;
+.P
+.B "rle_rpos( xpos, ypos )
+.B int *xpos, *ypos;
+.P
+.B "rle_wlen( xlen, ylen, mode )
+.B int xlen, ylen, mode;
+.P
+.B "rle_wpos( xpos, ypos, mode )
+.B int xpos, ypos, mode;
 .P
 .B int rle_rmap( stream, cmap )
 .B FILE *stream;
@@ -77,16 +87,6 @@ is not
 the background color stored in the
 RLE
 header will be placed there.
-The horizontal and vertical dimensions of the
-image (in pixels) will be placed in
-.I xsize\^
-and
-.IR ysize\^ ,
-and the coordinates of the lower left corner of the image will be stored
-in
-.I xpos\^
-and
-.IR ypos\^ .
 .I Flags\^
 is a flag word using a combination of single-bit flags
 .BR \s-1NO_BOX_SAVE\s0 ,
@@ -106,13 +106,27 @@ RLE
 file and decode it into the buffer
 pointed to by
 .IR cmap\^ .
+.I Rle_rlen
+and
+.I rle_rpos
+are used after
+.I rle_rhdr
+to retrieve, from the header structure, the length and position of the image
+in the locations specified by
+.IR xlen\^ ,
+.IR ylen\^ ,
+.I xpos\^
+and
+.IR ypos\^ .
 .P
 .I Rle_decode_ln\^
 is used to decode the next scanline (starting at the bottom) and
 should be passed the address of a
 .I scanline_buffer\^
 large enough to store
-.I xsize\^
+.I xlen\^
+plus
+.I xpos\^
 pixels.
 Only foreground pixels are written;
 it is the caller's responsibility
@@ -203,7 +217,7 @@ files must be decoded seqentially from the bottom up, as it is the convention
 that the origin be the lower left corner of the screen.
 .I Rle_decode_ln\^
 should fail if called more than
-.I ysize\^
+.I ylen\^
 times, as it will attempt to read past the end of the input file.
 Encoding an
 RLE
