@@ -119,7 +119,7 @@ long	us;		/* microseconds of extra delay */
  */
 void
 mged_vlblock_anim_upcall_handler( vbp, us )
-struct vlblock	*vbp;
+struct rt_vlblock	*vbp;
 long		us;		/* microseconds of extra delay */
 {
 
@@ -161,9 +161,9 @@ int			id;
 	struct rt_db_internal	intern;
 	union tree	*curtree;
 	int		dashflag;		/* draw with dashed lines */
-	struct vlhead	vhead;
+	struct rt_list	vhead;
 
-	vhead.vh_first = vhead.vh_last = VL_NULL;
+	RT_LIST_INIT( &vhead );
 
 	if(rt_g.debug&DEBUG_TREEWALK)  {
 		char	*sofar = db_path_to_string(pathp);
@@ -194,7 +194,7 @@ int			id;
 	}
 	rt_functab[id].ft_ifree( &intern );
 
-	drawH_part2( dashflag, vhead.vh_first, pathp, tsp, SOLID_NULL );
+	drawH_part2( dashflag, &vhead, pathp, tsp, SOLID_NULL );
 
 	/* Indicate success by returning something other than TREE_NULL */
 	GETUNION( curtree, tree );
@@ -365,9 +365,9 @@ struct db_full_path	*pathp;
 union tree		*curtree;
 {
 	struct nmgregion	*r;
-	struct vlhead	vhead;
+	struct rt_list		vhead;
 
-	vhead.vh_first = vhead.vh_last = VL_NULL;
+	RT_LIST_INIT( &vhead );
 
 	if(rt_g.debug&DEBUG_TREEWALK)  {
 		char	*sofar = db_path_to_string(pathp);
@@ -394,7 +394,7 @@ union tree		*curtree;
 		}
 		nmg_r_to_vlist( &vhead, r, style );
 
-		drawH_part2( 0, vhead.vh_first, pathp, tsp, SOLID_NULL );
+		drawH_part2( 0, &vhead, pathp, tsp, SOLID_NULL );
 
 		/* NMG region is no longer necessary, only vlist remains */
 		nmg_kr( r );
@@ -513,14 +513,59 @@ int	kind;
 }
 
 /*
+ *  Compute the min, max, and center points of the solid.
+ *  Also finds s_vlen;
+ */
+mged_bound_solid( sp )
+register struct solid *sp;
+{
+	register struct rt_vlist	*vp;
+	vect_t				maxvalue;
+	vect_t				minvalue;
+
+	VSETALL( maxvalue, -INFINITY );
+	VSETALL( minvalue,  INFINITY );
+	sp->s_vlen = 0;
+	for( RT_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+		register int	j;
+		register int	nused = vp->nused;
+		register int	*cmd = vp->cmd;
+		register point_t *pt = vp->pt;
+		for( j = 0; j < nused; j++,cmd++,pt++ )  {
+			switch( *cmd )  {
+			case RT_VLIST_POLY_START:
+				/* Has normal vector, not location */
+				break;
+			case RT_VLIST_LINE_MOVE:
+			case RT_VLIST_LINE_DRAW:
+			case RT_VLIST_POLY_MOVE:
+			case RT_VLIST_POLY_DRAW:
+			case RT_VLIST_POLY_END:
+				VMINMAX( minvalue, maxvalue, *pt );
+				break;
+			default:
+				(void)printf("unknown vlist op %d\n", *cmd);
+			}
+		}
+		sp->s_vlen += nused;
+	}
+
+	VADD2SCALE( sp->s_center, minvalue, maxvalue, 0.5 );
+
+	sp->s_size = maxvalue[X] - minvalue[X];
+	MAX( sp->s_size, maxvalue[Y] - minvalue[Y] );
+	MAX( sp->s_size, maxvalue[Z] - minvalue[Z] );
+}
+
+/*
  *			D R A W h _ P A R T 2
  *
  *  Once the vlist has been created, perform the common tasks
  *  in handling the drawn solid.
  */
-drawH_part2( dashflag, vfirst, pathp, tsp, existing_sp )
-int		dashflag;
-struct vlist	*vfirst;
+drawH_part2( dashflag, vhead, pathp, tsp, existing_sp )
+int			dashflag;
+struct rt_list		*vhead;
 struct db_full_path	*pathp;
 struct db_tree_state	*tsp;
 struct solid		*existing_sp;
@@ -528,7 +573,6 @@ struct solid		*existing_sp;
 	register struct solid *sp;
 	register struct vlist *vp;
 	register int	i;
-	vect_t		maxvalue, minvalue;
 
 	if( !existing_sp )  {
 		/* Handling a new solid */
@@ -544,34 +588,9 @@ struct solid		*existing_sp;
 	/*
 	 * Compute the min, max, and center points.
 	 */
-	VSETALL( maxvalue, -INFINITY );
-	VSETALL( minvalue,  INFINITY );
-	sp->s_vlist = vfirst;
-	sp->s_vlen = 0;
-	for( vp = vfirst; vp != VL_NULL; vp = vp->vl_forw )  {
-		switch( vp->vl_draw )  {
-		case VL_CMD_POLY_START:
-			/* Has normal vector, not location */
-			break;
-		case VL_CMD_LINE_MOVE:
-		case VL_CMD_LINE_DRAW:
-		case VL_CMD_POLY_MOVE:
-		case VL_CMD_POLY_DRAW:
-		case VL_CMD_POLY_END:
-			VMINMAX( minvalue, maxvalue, vp->vl_pnt );
-			break;
-		default:
-			(void)printf("unknown vlist op %d\n", vp->vl_draw);
-		}
-		sp->s_vlen++;
-	}
+	RT_LIST_APPEND_LIST( &(sp->s_vlist), vhead );
+	mged_bound_solid( sp );
 	nvectors += sp->s_vlen;
-
-	VADD2SCALE( sp->s_center, minvalue, maxvalue, 0.5 );
-
-	sp->s_size = maxvalue[X] - minvalue[X];
-	MAX( sp->s_size, maxvalue[Y] - minvalue[Y] );
-	MAX( sp->s_size, maxvalue[Z] - minvalue[Z] );
 
 	/*
 	 *  If this solid is new, fill in it's information.
@@ -724,18 +743,21 @@ struct solid	*sp;
 union record	*recp;
 mat_t		mat;
 {
-	unsigned	addr, bytes;
-	struct vlhead	vhead;
-	int		id;
+	unsigned		addr, bytes;
+	struct rt_list		vhead;
+	int			id;
 	struct rt_external	ext;
 	struct rt_db_internal	intern;
 
-	vhead.vh_first = vhead.vh_last = VL_NULL;
+	RT_LIST_INIT( &vhead );
 
 	if( sp == SOLID_NULL )  {
 		(void)printf("replot_modified_solid() sp==NULL?\n");
 		return(-1);
 	}
+
+	/* Release existing vlist of this solid */
+	RT_FREE_VLIST( &(sp->s_vlist) );
 
 	RT_INIT_EXTERNAL( &ext );
 	ext.ext_buf = (genptr_t)recp;
@@ -772,7 +794,7 @@ mat_t		mat;
 	rt_functab[id].ft_ifree( &intern );
 
 	/* Write new displaylist */
-	drawH_part2( sp->s_soldash, vhead.vh_first,
+	drawH_part2( sp->s_soldash, &vhead,
 		(struct db_full_path *)0,
 		(struct db_tree_state *)0, sp );
 
@@ -787,8 +809,8 @@ mat_t		mat;
  *			C V T _ V L B L O C K _ T O _ S O L I D S
  */
 cvt_vlblock_to_solids( vbp, name )
-struct vlblock	*vbp;
-char		*name;
+struct rt_vlblock	*vbp;
+char			*name;
 {
 	int		i;
 	char		shortname[32];
@@ -801,16 +823,16 @@ char		*name;
 	sprintf( cmd_buf, "kill %s*\n", shortname );
 	cmdline(cmd_buf);
 
-	for( i=0; i < vbp->count; i++ )  {
-		if( vbp->cvp[i].rgb == 0 )  continue;
-		if( vbp->cvp[i].head.vh_first == VL_NULL )  continue;
+	for( i=0; i < vbp->nused; i++ )  {
+		if( vbp->rgb[i] == 0 )  continue;
+		if( RT_LIST_IS_EMPTY( &(vbp->head[i]) ) )  continue;
 		if( i== 0 )  {
-			invent_solid( name, &vbp->cvp[0] );
+			invent_solid( name, &vbp->head[0], vbp->rgb[0] );
 			continue;
 		}
 		sprintf( namebuf, "%s%x",
-			shortname, vbp->cvp[i].rgb );
-		invent_solid( namebuf, &vbp->cvp[i] );
+			shortname, vbp->rgb[i] );
+		invent_solid( namebuf, &vbp->head[i], vbp->rgb[i] );
 	}
 }
 
@@ -824,17 +846,13 @@ char		*name;
  *  This parallels much of the code in dodraw.c
  */
 int
-invent_solid( name, cvl )
-char	*name;
-struct color_vlhead	*cvl;
+invent_solid( name, vhead, rgb )
+char		*name;
+struct rt_list	*vhead;
+long		rgb;
 {
-	register struct directory *dp;
-	register struct solid *sp;
-	register struct vlist *vp;
-	struct vlhead	*vhead;
-	vect_t		max, min;
-
-	vhead = &cvl->head;
+	register struct directory	*dp;
+	register struct solid		*sp;
 
 #define PHONY_ADDR	(-1L)
 	if( (dp = db_lookup( dbip,  name, LOOKUP_QUIET )) != DIR_NULL )  {
@@ -854,34 +872,18 @@ struct color_vlhead	*cvl;
 #if 0
 	/* XXX need to get this going. */
 	path.fp_names[0] = dp;
-	state.ts_mater.ma_color[0] = ((cvl->rgb>>16) & 0xFF) / 255.0
-	state.ts_mater.ma_color[1] = ((cvl->rgb>> 8) & 0xFF) / 255.0
-	state.ts_mater.ma_color[2] = ((cvl->rgb    ) & 0xFF) / 255.0
-	drawH_part2( 0, vhead->vh_first, path, &state, SOLID_NULL );
-	vhead->vh_first = vhead->vh_last = VL_NULL;
+	state.ts_mater.ma_color[0] = ((rgb>>16) & 0xFF) / 255.0
+	state.ts_mater.ma_color[1] = ((rgb>> 8) & 0xFF) / 255.0
+	state.ts_mater.ma_color[2] = ((rgb    ) & 0xFF) / 255.0
+	drawH_part2( 0, vhead, path, &state, SOLID_NULL );
 #else
 
 	/* Obtain a fresh solid structure, and fill it in */
 	GET_SOLID(sp);
 
-	VSETALL( max, -INFINITY );
-	VSETALL( min,  INFINITY );
-	sp->s_vlist = vhead->vh_first;
-	vhead->vh_first = vhead->vh_last = VL_NULL;
-	sp->s_vlen = 0;
-	for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
-		/* XXX need to look at types here */
-		VMINMAX( min, max, vp->vl_pnt );
-		sp->s_vlen++;
-	}
-	VSET( sp->s_center,
-		(max[X] + min[X])*0.5,
-		(max[Y] + min[Y])*0.5,
-		(max[Z] + min[Z])*0.5 );
-
-	sp->s_size = max[X] - min[X];
-	MAX( sp->s_size, max[Y] - min[Y] );
-	MAX( sp->s_size, max[Z] - min[Z] );
+	RT_LIST_APPEND_LIST( &(sp->s_vlist), vhead );
+	mged_bound_solid( sp );
+	nvectors += sp->s_vlen;
 
 	/* set path information -- this is a top level node */
 	sp->s_last = 0;
@@ -890,9 +892,9 @@ struct color_vlhead	*cvl;
 	sp->s_iflag = DOWN;
 	sp->s_soldash = 0;
 	sp->s_Eflag = 1;		/* Can't be solid edited! */
-	sp->s_color[0] = sp->s_basecolor[0] = (cvl->rgb>>16) & 0xFF;
-	sp->s_color[1] = sp->s_basecolor[1] = (cvl->rgb>> 8) & 0xFF;
-	sp->s_color[2] = sp->s_basecolor[2] = (cvl->rgb    ) & 0xFF;
+	sp->s_color[0] = sp->s_basecolor[0] = (rgb>>16) & 0xFF;
+	sp->s_color[1] = sp->s_basecolor[1] = (rgb>> 8) & 0xFF;
+	sp->s_color[2] = sp->s_basecolor[2] = (rgb    ) & 0xFF;
 	sp->s_regionid = 0;
 	sp->s_addr = 0;
 	sp->s_bytes = 0;

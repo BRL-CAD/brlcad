@@ -569,7 +569,7 @@ register struct solid *sp;
 register fastf_t *m;
 double ratio;
 {
-	register struct vlist *vp;
+	register struct rt_vlist	*vp;
 	register int nvec;
 	register float	*gtvec;
 	char	gtbuf[16+3*sizeof(double)];
@@ -682,47 +682,51 @@ double ratio;
 
 	/* Viewing region is from -1.0 to +1.0 */
 	first = 1;
-	for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
-		float	norm[3];
-		switch( vp->vl_draw )  {
-		case VL_CMD_LINE_MOVE:
-			/* Move, start line */
-			if( first == 0 )
-				endline();
-			first = 0;
-			bgnline();
-			v3d( vp->vl_pnt );
-			break;
-		case VL_CMD_LINE_DRAW:
-			/* Draw line */
-			v3d( vp->vl_pnt );
-			break;
-		case VL_CMD_POLY_START:
-			/* Start poly marker & normal */
-			if( first == 0 )
-				endline();
-			/* concave(TRUE); */
-			bgnpolygon();
-			/* Set surface normal (vl_pnt points outward) */
-			norm[X] = vp->vl_pnt[X];
-			norm[Y] = vp->vl_pnt[Y];
-			norm[Z] = vp->vl_pnt[Z];
-			n3f(norm);
-			break;
-		case VL_CMD_POLY_MOVE:
-			/* Polygon Move */
-			v3d( vp->vl_pnt );
-			break;
-		case VL_CMD_POLY_DRAW:
-			/* Polygon Draw */
-			v3d( vp->vl_pnt );
-			break;
-		case VL_CMD_POLY_END:
-			/* Draw, End Polygon */
-			v3d( vp->vl_pnt );
-			endpolygon();
-			first = 1;
-			break;
+	for( RT_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+		register int	i;
+		register int	nused = vp->nused;
+		register int	*cmd = vp->cmd;
+		register point_t *pt = vp->pt;
+		for( i = 0; i < nused; i++,cmd++,pt++ )  {
+			float	norm[3];
+			switch( *cmd )  {
+			case RT_VLIST_LINE_MOVE:
+				/* Move, start line */
+				if( first == 0 )
+					endline();
+				first = 0;
+				bgnline();
+				v3d( *pt );
+				break;
+			case RT_VLIST_LINE_DRAW:
+				/* Draw line */
+				v3d( *pt );
+				break;
+			case RT_VLIST_POLY_START:
+				/* Start poly marker & normal */
+				if( first == 0 )
+					endline();
+				/* concave(TRUE); */
+				bgnpolygon();
+				/* Set surface normal (vl_pnt points outward) */
+				VMOVE( norm, *pt );
+				n3f(norm);
+				break;
+			case RT_VLIST_POLY_MOVE:
+				/* Polygon Move */
+				v3d( *pt );
+				break;
+			case RT_VLIST_POLY_DRAW:
+				/* Polygon Draw */
+				v3d( *pt );
+				break;
+			case RT_VLIST_POLY_END:
+				/* Draw, End Polygon */
+				v3d( *pt );
+				endpolygon();
+				first = 1;
+				break;
+			}
 		}
 	}
 	if( first == 0 ) endline();

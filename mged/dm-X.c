@@ -198,8 +198,8 @@ register struct solid *sp;
 mat_t mat;
 double ratio;
 {
-	static vect_t   pt;
-	register struct vlist *vp;
+	static vect_t   pnt;
+	register struct rt_vlist	*vp;
 	int useful = 0;
 	XSegment segbuf[1024];		/* XDrawSegments list */
 	XSegment *segp;			/* current segment */
@@ -217,40 +217,68 @@ double ratio;
 
 	nseg = 0;
 	segp = segbuf;
-	for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
-		MAT4X3PNT( pt, mat, vp->vl_pnt );
+	for( RT_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+		register int	i;
+		register int	nused = vp->nused;
+		register int	*cmd = vp->cmd;
+		register point_t *pt = vp->pt;
+
 		/* Viewing region is from -1.0 to +1.0 */
 		/* 2^31 ~= 2e9 -- dynamic range of a long int */
 		/* 2^(31-11) = 2^20 ~= 1e6 */
-		if( pt[0] < -1e6 || pt[0] > 1e6 ||
-		    pt[1] < -1e6 || pt[1] > 1e6 )
-			continue;		/* omit this point (ugh) */
 		/* Integerize and let the X server do the clipping */
-		/*vclip( start, fin, clipmin, clipmax ) == 0 continue;*/
-		/*XXX Color */
-		gcv.foreground = black;
-		XChangeGC( dpy, gc, GCForeground, &gcv );
+		for( i = 0; i < nused; i++,cmd++,pt++ )  {
+			static vect_t	start, fin;
+			switch( *cmd )  {
+			case RT_VLIST_POLY_START:
+				continue;
+			case RT_VLIST_POLY_MOVE:
+			case RT_VLIST_LINE_MOVE:
+				/* Move, not draw */
+				MAT4X3PNT( pnt, mat, *pt );
+				if( pnt[0] < -1e6 || pnt[0] > 1e6 ||
+				    pnt[1] < -1e6 || pnt[1] > 1e6 )
+					continue; /* omit this point (ugh) */
+				pnt[0] *= 2047;
+				pnt[1] *= 2047;
+				x = GED_TO_Xx(pnt[0]);
+				y = GED_TO_Xy(pnt[1]);
+				lastx = x;
+				lasty = y;
+				continue;
+			case RT_VLIST_POLY_DRAW:
+			case RT_VLIST_POLY_END:
+			case RT_VLIST_LINE_DRAW:
+				/* draw */
+				MAT4X3PNT( pnt, mat, *pt );
+				if( pnt[0] < -1e6 || pnt[0] > 1e6 ||
+				    pnt[1] < -1e6 || pnt[1] > 1e6 )
+					continue; /* omit this point (ugh) */
+				/* Integerize and let the X server do the clipping */
+				/*XXX Color */
+				gcv.foreground = black;
+				XChangeGC( dpy, gc, GCForeground, &gcv );
 
-		pt[0] *= 2047;
-		pt[1] *= 2047;
-		x = GED_TO_Xx(pt[0]);
-		y = GED_TO_Xy(pt[1]);
+				pnt[0] *= 2047;
+				pnt[1] *= 2047;
+				x = GED_TO_Xx(pnt[0]);
+				y = GED_TO_Xy(pnt[1]);
 
-		if( vp->vl_draw ) {
-			segp->x1 = lastx;
-			segp->y1 = lasty;
-			segp->x2 = x;
-			segp->y2 = y;
-			if( ++nseg >= 1024 ) {
-				(void) fprintf(stderr, "dm-X: nseg clipped to 1024\n" );
+				segp->x1 = lastx;
+				segp->y1 = lasty;
+				segp->x2 = x;
+				segp->y2 = y;
+				if( ++nseg >= 1024 ) {
+					(void) fprintf(stderr, "dm-X: nseg clipped to 1024\n" );
+					break;
+				}
+				segp++;
+				lastx = x;
+				lasty = y;
+				useful = 1;
 				break;
 			}
-			segp++;
-			useful = 1;
 		}
-		/* else move... */
-		lastx = x;
-		lasty = y;
 	}
 	XDrawSegments( dpy, win, gc, segbuf, nseg );
 	if( white ) {

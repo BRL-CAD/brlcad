@@ -682,7 +682,9 @@ int		lvl;			/* debug level */
 {
 	register struct solid	*sp;
 	register int		i;
-	register struct vlist	*vp;
+	register struct rt_vlist	*vp;
+	int			nvlist;
+	int			npts;
 
 	for( sp = startp->s_forw; sp != startp; sp = sp->s_forw )  {
 		(void)printf( sp->s_flag == UP ? "VIEW ":"-no- " );
@@ -713,13 +715,25 @@ int		lvl;			/* debug level */
 		if( lvl <= 1 )  continue;
 
 		/* Print the actual vector list */
-		for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
-			printf("  %s (%g, %g, %g)\n",
-				mged_vl_draw_message[vp->vl_draw],
-				vp->vl_pnt[X],
-				vp->vl_pnt[Y],
-				vp->vl_pnt[Z] );
+		nvlist = 0;
+		npts = 0;
+		for( RT_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+			register int	i;
+			register int	nused = vp->nused;
+			register int	*cmd = vp->cmd;
+			register point_t *pt = vp->pt;
+
+			nvlist++;
+			npts += nused;
+			if( lvl <= 2 )  continue;
+
+			for( i = 0; i < nused; i++,cmd++,pt++ )  {
+				printf("  %s (%g, %g, %g)\n",
+					mged_vl_draw_message[*cmd],
+					V3ARGS( *pt ) );
+			}
 		}
+		printf("  %d vlist structures, %d pts\n", nvlist, npts );
 	}
 }
 

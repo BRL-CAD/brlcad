@@ -222,35 +222,42 @@ register struct solid *sp;
 mat_t mat;
 double ratio;
 {
-	static vect_t last;
-	register struct vlist *vp;
-	int useful = 0;
+	static vect_t			last;
+	register struct rt_vlist	*vp;
+	int				useful = 0;
 
 	if(  sp->s_soldash )
 		(void)putc('b',outfp);	/* Dot dash */
 	else
 		(void)putc('`',outfp);	/* Solid */
 
-	for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
-		/* Viewing region is from -1.0 to +1.0 */
-		if( vp->vl_draw == 0 )  {
-			/* Move, not draw */
-			MAT4X3PNT( last, mat, vp->vl_pnt );
-		}  else  {
-			static vect_t fin;
-			static vect_t start;
-			/* draw */
-			MAT4X3PNT( fin, mat, vp->vl_pnt );
-			VMOVE( start, last );
-			VMOVE( last, fin );
+	for( RT_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+		register int	i;
+		register int	nused = vp->nused;
+		register int	*cmd = vp->cmd;
+		register point_t *pt = vp->pt;
+		for( i = 0; i < nused; i++,cmd++,pt++ )  {
+			static vect_t	start, fin;
+			switch( *cmd )  {
+			case RT_VLIST_POLY_START:
+				continue;
+			case RT_VLIST_POLY_MOVE:
+			case RT_VLIST_LINE_MOVE:
+				/* Move, not draw */
+				MAT4X3PNT( last, model2view, *pt );
+				continue;
+			case RT_VLIST_POLY_DRAW:
+			case RT_VLIST_POLY_END:
+			case RT_VLIST_LINE_DRAW:
+				/* draw */
+				MAT4X3PNT( fin, model2view, *pt );
+				VMOVE( start, last );
+				VMOVE( last, fin );
+				break;
+			}
 			if(
-#ifdef later
-				/* sqrt(1+1) */
-				(ratio >= 0.7071)  &&
-#endif
 				vclip( start, fin, clipmin, clipmax ) == 0
 			)  continue;
-
 			tekmove(	(int)( start[0] * 2047 ),
 				(int)( start[1] * 2047 ) );
 			tekcont(	(int)( fin[0] * 2047 ),
