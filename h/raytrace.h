@@ -1194,6 +1194,13 @@ struct rt_functab {
 			mat_t mat, struct directory *dp,
 			double abs_tol, double rel_tol, double norm_tol));
 #endif
+	int	(*ft_import) RT_ARGS((struct rt_db_internal *ip,
+			struct rt_external *ep, mat_t mat));
+	int	(*ft_export) RT_ARGS((struct rt_external *ep,
+			struct rt_db_internal *ip));
+	void	(*ft_ifree) RT_ARGS((struct rt_db_internal *ip));
+	int	(*ft_describe) RT_ARGS((struct rt_vls *str,
+			struct rt_db_internal *ip, int verbose));
 };
 extern struct rt_functab rt_functab[];
 extern int rt_nfunctab;
