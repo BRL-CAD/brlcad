@@ -59,27 +59,32 @@ Tcl_Interp *interp;
 
 HIDDEN int
 dm_validXType_tcl(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int     argc;
-char    **argv;
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
 {
-  struct bu_vls vls;
+	struct bu_vls	vls;
+	Tcl_Obj		*obj;
 
-  bu_vls_init(&vls);
+	bu_vls_init(&vls);
 
-  if(argc != 3){
-    bu_vls_printf(&vls, "helplib dm_validXType");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
+	if(argc != 3){
+		bu_vls_printf(&vls, "helplib dm_validXType");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
 
-  bu_vls_printf(&vls, "%d", dm_validXType(argv[1], argv[2]));
-  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-  bu_vls_free(&vls);
+	bu_vls_printf(&vls, "%d", dm_validXType(argv[1], argv[2]));
+	obj = Tcl_GetObjResult(interp);
+	if (Tcl_IsShared(obj))
+		obj = Tcl_DuplicateObj(obj);
+	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
 
-  return TCL_OK;
+	Tcl_SetObjResult(interp, obj);
+	return TCL_OK;
 }
 
 HIDDEN int
@@ -89,16 +94,23 @@ Tcl_Interp *interp;
 int     argc;
 char    **argv;
 {
-  if (argc != 2) {
-    struct bu_vls vls;
+	Tcl_Obj		*obj;
 
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "helplib dm_bestXType");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
+	if (argc != 2) {
+		struct bu_vls vls;
 
-  Tcl_AppendResult(interp, dm_bestXType(argv[1]), (char *)NULL);
-  return TCL_OK;
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib dm_bestXType");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	obj = Tcl_GetObjResult(interp);
+	if (Tcl_IsShared(obj))
+		obj = Tcl_DuplicateObj(obj);
+	Tcl_AppendStringsToObj(obj, dm_bestXType(argv[1]), (char *)NULL);
+
+	Tcl_SetObjResult(interp, obj);
+	return TCL_OK;
 }
