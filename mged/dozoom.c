@@ -276,8 +276,8 @@ int	which_eye;
 	/*
 	 * Draw all solids not involved in an edit.
 	 */
-	if( mged_variables->perspective <= 0 && eye_pos_scr[Z] == 1.0 )  {
-		mat = model2view;
+	if( mged_variables->mv_perspective <= 0 && eye_pos_scr[Z] == 1.0 )  {
+		mat = view_state->vs_model2view;
 	} else {
 		/*
 		 *  There are two strategies that could be used:
@@ -292,11 +292,11 @@ int	which_eye;
 		point_t	l, h, eye;
 
 		/* Determine where eye should be */
-		to_eye_scr = 1 / tan(mged_variables->perspective * bn_degtorad * 0.5);
+		to_eye_scr = 1 / tan(mged_variables->mv_perspective * bn_degtorad * 0.5);
 
 #define SCR_WIDTH_PHYS	330	/* Assume a 330 mm wide screen */
 
-		eye_delta_scr = mged_variables->eye_sep_dist * 0.5 / SCR_WIDTH_PHYS;
+		eye_delta_scr = mged_variables->mv_eye_sep_dist * 0.5 / SCR_WIDTH_PHYS;
 
 		VSET( l, -1.0, -1.0, -1.0 );
 		VSET( h, 1.0, 1.0, 200.0 );
@@ -309,22 +309,22 @@ VPRINT("h", h);
 #if 0
 		bn_mat_idn(tmat);
 		tmat[11] = -1.0;
-		bn_mat_mul( tvmat, tmat, model2view );
+		bn_mat_mul( tvmat, tmat, view_state->vs_model2view );
 #endif
 		switch(which_eye)  {
 		case 0:
 			/* Non-stereo case */
-			mat = model2view;
+			mat = view_state->vs_model2view;
 /* XXX hack */
 #define HACK 0
 #if !HACK
 if( 1 ) {
 #else
-if( mged_variables->faceplate > 0 )  {
+if( mged_variables->mv_faceplate > 0 )  {
 #endif
 			if( eye_pos_scr[Z] == 1.0 )  {
 				/* This way works, with reasonable Z-clipping */
-				persp_mat( perspective_mat, mged_variables->perspective,
+				persp_mat( perspective_mat, mged_variables->mv_perspective,
 					1.0, 0.01, 1.0e10, 1.0 );
 			} else {
 				/* This way does not have reasonable Z-clipping,
@@ -342,13 +342,13 @@ bn_mat_print("perspective_mat", perspective_mat);
 			break;
 		case 1:
 			/* R */
-			mat = model2view;
+			mat = view_state->vs_model2view;
 			eye[X] = eye_delta_scr;
 			deering_persp_mat( perspective_mat, l, h, eye );
 			break;
 		case 2:
 			/* L */
-			mat = model2view;
+			mat = view_state->vs_model2view;
 			eye[X] = -eye_delta_scr;
 			deering_persp_mat( perspective_mat, l, h, eye );
 			break;
@@ -376,7 +376,7 @@ bn_mat_print("perspective_mat", perspective_mat);
 
 	  if(linestyle != sp->s_soldash){
 	    linestyle = sp->s_soldash;
-	    DM_SET_LINE_ATTR(dmp, mged_variables->linewidth, linestyle);
+	    DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, linestyle);
 	  }
 
 	  if(sp->s_cflag){
@@ -410,7 +410,7 @@ bn_mat_print("perspective_mat", perspective_mat);
 	  }
 
 #ifdef DO_DISPLAY_LISTS
-	  if(displaylist && mged_variables->dlist){
+	  if(displaylist && mged_variables->mv_dlist){
 #ifdef DO_SINGLE_DISPLAY_LIST
 	    /* don't draw anything here --- just update variables */
 #else
@@ -419,13 +419,13 @@ bn_mat_print("perspective_mat", perspective_mat);
 	    sp->s_flag = UP;
 	    ndrawn++;
 	  }else{
-	    if(DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist, mged_variables->perspective ) == TCL_OK){
+	    if(DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist, mged_variables->mv_perspective ) == TCL_OK){
 	      sp->s_flag = UP;
 	      ndrawn++;
 	    }
 	  }
 #else
-	  if(DM_DRAW_VLIST( dmp, (struct rt_vlist *)&sp->s_vlist, mged_variables->perspective ) == TCL_OK) {
+	  if(DM_DRAW_VLIST( dmp, (struct rt_vlist *)&sp->s_vlist, mged_variables->mv_perspective ) == TCL_OK) {
 	    sp->s_flag = UP;
 	    ndrawn++;
 	  }
@@ -433,19 +433,19 @@ bn_mat_print("perspective_mat", perspective_mat);
 	}
 
 #ifdef DO_SINGLE_DISPLAY_LIST
-	if(displaylist && mged_variables->dlist){
+	if(displaylist && mged_variables->mv_dlist){
 	  /* draw single display list containing all solids */
 	  DM_DRAWDLIST(dmp, 1);
 	}
 #endif
 
 	/* draw predictor vlist */
-	if(mged_variables->predictor){
+	if(mged_variables->mv_predictor){
 	  DM_SET_FGCOLOR(dmp,
-			 color_scheme->predictor[0],
-			 color_scheme->predictor[1],
-			 color_scheme->predictor[2], 1);
-	  DM_DRAW_VLIST(dmp, (struct rt_vlist *)&curr_dm_list->p_vlist, mged_variables->perspective);
+			 color_scheme->cs_predictor[0],
+			 color_scheme->cs_predictor[1],
+			 color_scheme->cs_predictor[2], 1);
+	  DM_DRAW_VLIST(dmp, (struct rt_vlist *)&curr_dm_list->dml_p_vlist, mged_variables->mv_perspective);
 	}
 
 	/*
@@ -455,18 +455,18 @@ bn_mat_print("perspective_mat", perspective_mat);
 	if( state == ST_VIEW )
 		return;
 
-	if( mged_variables->perspective <= 0 )  {
-		mat = model2objview;
+	if( mged_variables->mv_perspective <= 0 )  {
+		mat = view_state->vs_model2objview;
 	} else {
-		bn_mat_mul( new, perspective_mat, model2objview );
+		bn_mat_mul( new, perspective_mat, view_state->vs_model2objview );
 		mat = new;
 	}
 	DM_LOADMATRIX( dmp, mat, which_eye );
 	inv_viewsize /= modelchanges[15];
 	DM_SET_FGCOLOR(dmp,
-		       color_scheme->geo_hl[0],
-		       color_scheme->geo_hl[1],
-		       color_scheme->geo_hl[2], 1);
+		       color_scheme->cs_geo_hl[0],
+		       color_scheme->cs_geo_hl[1],
+		       color_scheme->cs_geo_hl[2], 1);
 
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
 	  /* Ignore all objects not being edited */
@@ -484,31 +484,31 @@ bn_mat_print("perspective_mat", perspective_mat);
 
 	  if(linestyle != sp->s_soldash){
 	    linestyle = sp->s_soldash;
-	    DM_SET_LINE_ATTR(dmp, mged_variables->linewidth, linestyle);
+	    DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, linestyle);
 	  }
 
 #ifdef DO_DISPLAY_LISTS
 #ifdef DO_SINGLE_DISPLAY_LIST
 	  /* draw in immediate mode */
-	  if(DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist, mged_variables->perspective) == TCL_OK){
+	  if(DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist, mged_variables->mv_perspective) == TCL_OK){
 	    sp->s_flag = UP;
 	    ndrawn++;
 	  }
 #else
-	  if(displaylist && mged_variables->dlist){
+	  if(displaylist && mged_variables->mv_dlist){
 	    DM_DRAWDLIST(dmp, sp->s_dlist);
 	    sp->s_flag = UP;
 	    ndrawn++;
 	  }else{
 	    /* draw in immediate mode */
-	    if(DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist, mged_variables->perspective) == TCL_OK){
+	    if(DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist, mged_variables->mv_perspective) == TCL_OK){
 	      sp->s_flag = UP;
 	      ndrawn++;
 	    }
 	  }
 #endif
 #else
-	  if( DM_DRAW_VLIST( dmp, (struct rt_vlist *)&sp->s_vlist, mged_variables->perspective ) == TCL_OK){
+	  if( DM_DRAW_VLIST( dmp, (struct rt_vlist *)&sp->s_vlist, mged_variables->mv_perspective ) == TCL_OK){
 	    sp->s_flag = UP;
 	    ndrawn++;
 	  }
@@ -536,7 +536,7 @@ struct solid *hsp;
   FOR_ALL_SOLIDS(sp, &hsp->l){
     if(linestyle != sp->s_soldash){
       linestyle = sp->s_soldash;
-      DM_SET_LINE_ATTR(dmp, mged_variables->linewidth, linestyle);
+      DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, linestyle);
     }
 
     if(!DM_SAME_COLOR(r,g,b,
@@ -553,7 +553,7 @@ struct solid *hsp;
 		    (short)sp->s_color[2]);
     }
 
-    DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist, mged_variables->perspective);
+    DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist, mged_variables->mv_perspective);
   }
 
   DM_ENDDLIST(dmp);
@@ -567,7 +567,7 @@ createDList(sp)
 struct solid *sp;
 {
   DM_BEGINDLIST(dmp, sp->s_dlist);
-  DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist, mged_variables->perspective);
+  DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist, mged_variables->mv_perspective);
   DM_ENDDLIST(dmp);
 }
 
