@@ -113,6 +113,7 @@ char	**dpp;
 	lp->lt_explicit = 1;		/* explicitly modeled */
 	lp->lt_shadows = 1;		/* by default, casts shadows */
 	lp->lt_angle = 90;		/* hemisphere emission by default */
+	lp->lt_name = rt_strdup( rp->reg_name );
 	mlib_parse( matparm, light_parse, (mp_off_ty)lp );
 
 	if( lp->lt_angle > 180 )  lp->lt_angle = 180;
@@ -154,7 +155,8 @@ char	**dpp;
 	} else {
 		VSETALL( lp->lt_color, 1 );
 	}
-	rt_log( "Light at (%g, %g, %g), aimed at (%g, %g, %g), angle=%g\n",
+	rt_log( "%s at (%g, %g, %g), aimed at (%g, %g, %g), angle=%g\n",
+		lp->lt_name,
 		lp->lt_pos[X], lp->lt_pos[Y], lp->lt_pos[Z],
 		lp->lt_aim[X], lp->lt_aim[Y], lp->lt_aim[Z],
 		lp->lt_angle );
@@ -211,6 +213,8 @@ char *cp;
 		rt_log("light_free:  unable to find light in list\n");
 	}
 found:
+	if( ((struct light_specific *)cp)->lt_name )
+		rt_free( cp, "light name" );
 	rt_free( cp, "light_specific" );
 }
 
@@ -227,6 +231,7 @@ mat_t	v2m;
 	register int i;
 	vect_t	temp;
 	vect_t	color;
+	char	name[64];
 
 	/* Determine the Light location(s) in view space */
 	for( i=0; i<num; i++ )  {
@@ -257,6 +262,9 @@ mat_t	v2m;
 		MAT4X3VEC( lp->lt_pos, v2m, temp );
 		VMOVE( lp->lt_vec, lp->lt_pos );
 		VUNITIZE( lp->lt_vec );
+
+		sprintf(name, "Implicit light %d", i);
+		lp->lt_name = rt_strdup(name);
 
 		VSET( lp->lt_aim, 0, 0, -1 );	/* any direction: spherical */
 		lp->lt_intensity = 1000.0;

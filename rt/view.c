@@ -617,7 +617,7 @@ register struct shadework *swp;
 		sub_ap.a_level = 0;
 
 		VSETALL( sub_ap.a_color, 1 );	/* vis intens so far */
-		sub_ap.a_purpose = "light visibility?";
+		sub_ap.a_purpose = lp->lt_name;	/* name of light shot at */
 		if( rt_shootray( &sub_ap ) )  {
 			/* light visible */
 			swp->sw_visible[i] = (char *)lp;
