@@ -4,6 +4,10 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.7  91/08/30  19:14:21  mike
+ * Modified to successfully parse C compiler errors, even on more modern
+ * compilers, and on the oddball CRAYs.
+ * 
  * Revision 2.6  91/08/30  18:59:50  mike
  * Modifications for clean compilation on the XMP
  * 
@@ -307,6 +311,42 @@ MakeErrors()
 	else
 		status = UnixToBuf("make", 1, 1, "make", "Make", what, 0);
 	com_finish(status, "make");
+	if (errorlist)
+		ErrFree();
+
+	if (status)
+		ErrParse(cerrfmt);
+
+	if (thiserror)
+		NextError();
+	else
+		SetWind(old);
+}
+
+/*
+ *			C A K E E R R O R S
+ *
+ *  Run cake, first writing all the modified buffers (if the WtOnMk flag is
+ *  non-zero), parse the errors, and go the first error.
+ *  BRL Addition, Mike Muuss, 30-Aug-91.
+ */
+CakeErrors()
+{
+	WINDOW	*old = curwind;
+	int	status;
+	char	*what;
+	char	*null = "";
+
+	what = ask(null, FuncName());
+	if (what == null)
+		what = 0;
+	if (WtOnMk)
+		WtModBuf();
+	if (MakeAll)
+		status = UnixToBuf("cake", 1, 1, "cake", "cake", "-k", what, 0);
+	else
+		status = UnixToBuf("cake", 1, 1, "cake", "cake", what, 0);
+	com_finish(status, "cake");
 	if (errorlist)
 		ErrFree();
 

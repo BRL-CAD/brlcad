@@ -4,6 +4,10 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.2  91/08/30  17:54:33  mike
+ * Changed #include directives to distinguish between local and system header
+ * files.
+ * 
  * Revision 2.1  91/08/30  17:49:06  mike
  * Paul Stay mods for ANSI C
  * 
@@ -24,6 +28,10 @@ static char RCSid[] = "@(#)$Header$";
  * $Revision$
  *
  * $Log$
+ * Revision 2.2  91/08/30  17:54:33  mike
+ * Changed #include directives to distinguish between local and system header
+ * files.
+ * 
  * Revision 2.1  91/08/30  17:49:06  mike
  * Paul Stay mods for ANSI C
  * 
@@ -134,6 +142,7 @@ extern int
 	ChrToOct(),
 	ClAndRedraw(),
 	MakeErrors(),
+	CakeErrors(),
 	CopyRegion(),
 	CTab(),
 	DelBlnkLines(),
@@ -261,6 +270,7 @@ InitFuncs()
 	DefFunc("char-to-octal-insert", ChrToOct);
 	DefFunc("clear-and-redraw", ClAndRedraw);
 	DefFunc("make", MakeErrors);
+	DefFunc("cake", CakeErrors);
 	DefFunc("copy-region", CopyRegion);
 	DefFunc("c-tab", CTab);
 	DefFunc("delete-blank-lines-around-point", DelBlnkLines);
@@ -561,6 +571,7 @@ InitBindings()
 	BindFunc(pref2map, 'C', StrLength);
 	BindFunc(pref2map, 'D', DelCurWindow);
 	BindFunc(pref2map, 'd', DelCurWindow);
+	BindFunc(pref2map, 'e', CakeErrors);
 	BindFunc(pref2map, 'K', BufKill);
 	BindFunc(pref2map, 'k', BufKill);
 	BindFunc(pref2map, 'N', NextWindow);
