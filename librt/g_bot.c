@@ -430,6 +430,24 @@ struct seg		*seghead;
 				return( 1 );
 			}
 
+			/* Remove duplicate hits */
+			{
+				register int i, j;
+
+				for( i=0 ; i<nhits-1 ; i++ )
+				{
+					fastf_t dist;
+
+					dist = hits[i].hit_dist - hits[i+1].hit_dist;
+					if( NEAR_ZERO( dist, ap->a_rt_i->rti_tol.dist ) )
+					{
+						for( j=i ; j<nhits-1 ; j++ )
+							hits[j] = hits[j+1];
+						nhits--;
+						i--;
+					}
+				}
+			}
 			if( nhits&1 )
 			{
 				bu_log( "rt_bot_shot(%s): WARNING: odd number of hits (%d), last hit ignored\n",
