@@ -156,7 +156,8 @@
 #	define HAVE_STRCHR	1
 #endif
 
-#if defined(unix) || defined(__unix) || defined(__unix__) || defined(BSD)
+#if defined(unix) || defined(__unix) || defined(__unix__) || defined(BSD) || \
+		defined(SUNOS)
 #	define HAVE_SHELL_ESCAPE	1
 #	define HAVE_UNIX_IO		1
 #	define HAVE_SBRK		1
