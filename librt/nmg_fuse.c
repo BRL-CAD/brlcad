@@ -2210,6 +2210,7 @@ CONST struct rt_tol		*tol;
 		nmg_tbl( &edgeuses, TBL_FREE, 0 );
 		edgeuses = new_edgeuses;		/* struct copy */
 	}
+	nmg_tbl( &edgeuses, TBL_FREE, 0 );
 	nmg_tbl( &verts, TBL_FREE, 0 );
 	if (rt_g.NMG_debug & (DEBUG_BOOL|DEBUG_BASIC) )
 		rt_log("nmg_model_break_e_on_v() broke %d edges\n", count);
@@ -3668,6 +3669,13 @@ CONST struct rt_tol	*tol;
 		nmg_pr_fu_around_eu_vecs( eu2ref, xvec, yvec, zvec, tol );
 	}
 	nmg_do_radial_join( &list1, eu1ref, xvec, yvec, zvec, tol );
+
+	/* Clean up */
+	nmg_tbl( &shell_tbl, TBL_FREE, 0 );
+	while( RT_LIST_WHILE( rad, nmg_radial, &list1 ) )  {
+		RT_LIST_DEQUEUE( &rad->l );
+		rt_free( (char *)rad, "nmg_radial" );
+	}
 	return;
 #endif
 
