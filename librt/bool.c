@@ -2133,6 +2133,10 @@ register CONST struct partition	*pp;
 	return 0;
 }
 
+/*
+ * XXX This routine seems to free things more than once.
+ * For a temporary measure, don't free things.
+ */
 void
 rt_rebuild_overlaps( PartHdp, ap, rebuild_fastgen_plates_only )
 struct partition	*PartHdp;
@@ -2155,6 +2159,7 @@ int			rebuild_fastgen_plates_only;
 	pp = PartHdp->pt_forw;
 	while( pp != PartHdp )
 	{
+		RT_CK_PARTITION(pp);
 		next = pp->pt_forw;
 
 		if( rebuild_fastgen_plates_only && pp->pt_regionp->reg_is_fastgen != REGION_FASTGEN_PLATE )
@@ -2174,6 +2179,7 @@ int			rebuild_fastgen_plates_only;
 			pp_open = (struct partition *)BU_PTBL_GET( &open_parts, i );
 			if( !pp_open )
 				continue;
+			RT_CK_PARTITION(pp_open);
 
 			if( pp->pt_overlap_reg )
 			{
@@ -2182,6 +2188,7 @@ int			rebuild_fastgen_plates_only;
 				{
 					if( pp_reg == (struct region *)(-1) )
 						continue;
+					RT_CK_REGION(pp_reg);
 
 					if( pp_reg == pp_open->pt_regionp )
 					{
@@ -2213,7 +2220,10 @@ int			rebuild_fastgen_plates_only;
 
 					/* eliminate this partition */
 					BU_LIST_DEQUEUE( (struct bu_list *)pp )
+					pp->pt_overlap_reg = NULL;	/* sanity */
+#if 0
 					FREE_PT( pp, ap->a_resource )
+#endif
 					pp = (struct partition *)NULL;
 
 					/* keep pp_open open */
@@ -2235,14 +2245,19 @@ int			rebuild_fastgen_plates_only;
 			/* count remaining region claims */
 			j = -1;
 			while( (pp_reg = pp->pt_overlap_reg[++j]) )
-				if( pp_reg != (struct region *)(-1) )
+				if( pp_reg != (struct region *)(-1) )  {
+					RT_CK_REGION(pp_reg);
 					reg_count++;
+				}
 
 			if( !reg_count )
 			{
 				BU_LIST_DEQUEUE( (struct bu_list *)pp )
 				bu_free( (char *)pp->pt_overlap_reg, "overlap list" );
+				pp->pt_overlap_reg = NULL;	/* sanity */
+#if 0
 				FREE_PT( pp, ap->a_resource )
+#endif
 				pp = (struct partition *)NULL;
 			}
 		}
@@ -2260,6 +2275,7 @@ int			rebuild_fastgen_plates_only;
 
 					if( pp_reg == (struct region *)(-1) )
 						continue;
+					RT_CK_REGION(pp_reg);
 
 					if( rebuild_fastgen_plates_only && 
 						pp_reg->reg_is_fastgen != REGION_FASTGEN_PLATE )
