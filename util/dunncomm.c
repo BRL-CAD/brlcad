@@ -27,6 +27,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <signal.h>
 #include <sys/time.h>
 #ifdef __NetBSD__
+#	define USE_OLD_TTY
 #	include <sys/ioctl_compat.h>
 #	define TAB3 (TAB1|TAB2)
 #endif
