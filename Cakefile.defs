@@ -458,19 +458,22 @@ set -S2 "/bin/sh"
 #			define	CC	/bin/ncc
 #		endif
 #	endif
+#	define	RANLIB	echo
 #	define	LIBMALLOC	/* use vendor library */
 #	define	RFBD_LIBES	-lbsd
 #	define	LIBRT_TIMER	timerunix
 #	define	LIBRT_LIBES	-L/lib/multi -lu -lio
 #	define	LGT_CONFIG	-Dcray
 #	define	LIBTERMLIB	-lcurses
-#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB
-#	define	LIBFB_OBJS	if_remote if_ab
-#	define	LIBFB_LIBES	LIBPKG
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_X -I/usr/include/X11
+#	define	LIBFB_OBJS	if_remote if_ab if_X
+#	define	LIBFB_LIBES	LIBPKG -lX11
 #	define	LIBPKG_SETUP	cp /usr/lib/libnet.ARCH_SUF PRODUCTS
 #	define	LIBPKG_CONFIG	-DBSD=43
 #	define	RFBD_CONFIG	-DBSD=43
-#	define	RANLIB	echo
+#	define	MGED_OBJS	dm-X
+#	define	MGED_CONFIG	-DDM_X
+#	define	MGED_LIBES	-lX11 -lnet
 #endif
 
 #if defined(CRAY2)
