@@ -1,9 +1,4 @@
 /*
-	SCCS id:	@(#) font.h	2.1
-	Modified: 	12/9/86 at 15:55:44
-	Retrieved: 	12/26/86 at 21:53:41
-	SCCS archive:	/vld/moss/src/fbed/s.font.h
-
 	Authors:	Paul R. Stay
 			Gary S. Moss
 
@@ -11,10 +6,12 @@
 			Aberdeen Proving Ground
 			Maryland 21005-5066
 			(301)278-6647 or AV-298-6647
+
+	$Header$
 */
 /*	font.h - Header file for putting fonts up.			*/
 #define INCL_FONT
-#if defined(sel) || defined(gould) || defined(sgi)
+#if defined(sel) || defined(gould) || defined(sgi) || defined(alliant) || defined(sun)
 #define BIGENDIAN
 #endif
 #if defined(BIGENDIAN)
