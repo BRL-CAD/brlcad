@@ -258,6 +258,7 @@ err:
 		ap.a_ray_length = 0.0;
 
 	/* Shoot Ray */
+	ap.a_purpose = "main ray";
 	ap.a_hit = hit;
 	ap.a_miss = miss;
 	(void)rt_shootray( &ap );
