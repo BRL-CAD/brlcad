@@ -181,9 +181,11 @@ char **argv;
 
 	beginptr = sbrk(0);
 
-
 	/* Need to set rtg_parallel non_zero here for RES_INIT to work */
+	npsw = rt_avail_cpus();
+#ifdef CRAY
 	npsw = MAX_PSW;
+#endif
 	if( npsw > 1 )  {
 		rt_g.rtg_parallel = 1;
 	} else
