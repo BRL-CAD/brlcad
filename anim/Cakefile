@@ -3,18 +3,20 @@
  */
 
 #define SRCDIR	anim
-#define PRODUCTS	anim_script chan_permute anim_orient anim_fly \
-			anim_lookat anim_keyread anim_track anim_offset \
-			anim_sort anim_hardtrack anim_turn
+#define PRODUCTS	anim_cascade anim_fly anim_hardtrack anim_keyread \
+			anim_lookat anim_offset anim_orient anim_script \
+			anim_sort anim_track anim_turn chan_add chan_mult \
+			chan_permute
+
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
 #include "../Cakefile.defs"
 #include "../Cakefile.prog"
 
-#define FILES	anim anim_script chan_permute anim_orient anim_fly \
-		anim_lookat anim_keyread anim_offset \
-		anim_sort anim_hardtrack anim_turn
+#define FILES	anim anim_cascade anim_fly anim_hardtrack anim_keyread \
+		anim_lookat anim_offset anim_orient anim_script anim_sort \
+		anim_track anim_turn cattrack chan_add chan_mult chan_permute
 
 /* Explicit composition of each product */
 anim_cascade: anim_cascade.o anim.o
