@@ -32,7 +32,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
-#include <stdio.h>
 #include <sgtty.h>
 
 #include "machine.h"
