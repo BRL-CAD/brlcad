@@ -256,24 +256,31 @@ set -S2 "/bin/sh"
 #endif
 
 #if defined(__NetBSD__)
-/* system running NetBSD from Chris Demetriou <cgd@sun-lamp.cs.berkeley.edu> */
+/* system running NetBSD 1.0 from Chris Demetriou <cgd@sun-lamp.cs.berkeley.edu> */
 #	if defined(i386)
-#		define	MTYPE 		nb386
+#		define	MTYPE 		nb86
 #	else
 #		define	MTYPE		nb
 #	endif
 #	define	UNIXTYPE 	BSD
 #	define	HAS_TCP		1
 #	define	HAS_SYMLINKS 	1
-#	define	BSD		44
+#	define	BSD	44
 #	define	LIBRT_TIMER	timer42
-#	define	CC		/usr/bin/gcc
-#	define	CC_OPTS		-pipe -O2
+#	define	CC	/usr/bin/gcc
+#	define	CC_OPTS	-pipe -fpic -DHAVE_UNISTD_H
+#	define	OPTIMIZER	-O2
 #	define	STANDARD_LIBES	-lm
+
+#	define	BUILD_LIBRARY	ld -x -Bshareable -Bforcearchive -o
+#	define	LIBVERS	../sharedlibvers.sh
+#	define	ARCH_SUF	so
+#	define	RANLIB	/**/
+
 	/* i386 users have XFree86, usually */
 #	if defined(i386)
-#		define	XINCDIR		/usr/X386/include
-#		define	XLIBDIR		/usr/X386/lib
+#		define	XINCDIR	/usr/X386/include
+#		define	XLIBDIR	/usr/X386/lib
 #	endif
 
 #	define	LIBFB_CONFIG	-DIF_REMOTE -I''XINCDIR -DIF_X
@@ -517,8 +524,8 @@ set -S2 "/bin/sh"
 #	define	GFLAG		-KPIC
 # if 1
 #	define	ARCH_SUF	so
-/*	should be [[../sharedlibvers.sh]], but LD doesn't grok the version numbers! */
-#	define	LIBVERS	/**/
+/*	should be ../sharedlibvers.sh, but LD doesn't grok the version numbers! */
+#	define	LIBVERS echo
 #	define	BUILD_LIBRARY	ld -shared -o
 #	define	RANLIB		/**/
 /*	Note that /usr/lib MUST go first on -rpath, so that -lmalloc is the system one */
