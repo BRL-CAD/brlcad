@@ -274,6 +274,14 @@ const char		*str;
 	struct memdebug		*mp=NULL;
 	char	*original_ptr = ptr;
 
+	if ( ! ptr ) {
+	    /* This is so we are compatible with system realloc.
+	     * It seems like an odd behaviour, but some non-BRLCAD
+	     * code relies on this.
+	     */
+	    return bu_malloc(cnt, str);
+	}
+
 	if( bu_debug&BU_DEBUG_MEM_CHECK )  {
 		if( ptr && (mp = bu_memdebug_check( ptr, str )) == MEMDEBUG_NULL )  {
 			fprintf(stderr,"%8lx realloc%6d %s ** barrier check failure\n",
