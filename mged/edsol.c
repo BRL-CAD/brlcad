@@ -6,6 +6,7 @@
  *	sedit		Apply Solid Edit transformation(s)
  *	pscale		Partial scaling of a solid
  *	init_objedit	set up for object edit?
+ *	f_dextrude()	extrude a drawing (nmg wire loop) to create a solid
  *	f_eqn		change face of GENARB8 to new equation
  *
  *  Authors -
@@ -65,6 +66,8 @@ static void 	arb6_rot_face(), arb5_rot_face(), arb4_rot_face(), arb_control();
 void pscale();
 void	calc_planes();
 static short int fixv;		/* used in ECMD_ARB_ROTATE_FACE,f_eqn(): fixed vertex */
+
+MGED_EXTERN( fastf_t nmg_loop_plane_area , ( struct loopuse *lu , plane_t pl ) );
 
 /* data for solid editing */
 int			sedraw;	/* apply solid editing changes */
@@ -278,6 +281,7 @@ struct menu_item  nmg_menu[] = {
 	{ "move edge", nmg_ed, ECMD_NMG_EMOVE },
 	{ "debug edge", nmg_ed, ECMD_NMG_EDEBUG },
 	{ "split edge", nmg_ed, ECMD_NMG_ESPLIT },
+	{ "delete edge", nmg_ed, ECMD_NMG_EKILL },
 	{ "next eu", nmg_ed, ECMD_NMG_FORW },
 	{ "prev eu", nmg_ed, ECMD_NMG_BACK },
 	{ "radial eu", nmg_ed, ECMD_NMG_RADIAL },
@@ -796,12 +800,14 @@ int arg;
 	case ECMD_NMG_EPICK:
 	case ECMD_NMG_EMOVE:
 	case ECMD_NMG_ESPLIT:
+	case ECMD_NMG_EKILL:
 		break;
 	case ECMD_NMG_EDEBUG:
 		if( !es_eu )  {
 			(void)printf("nmg_ed: no edge selected yet\n");
 			return;
 		}
+
 		nmg_pr_fu_around_eu( es_eu, &mged_tol );
 		{
 			struct model		*m;
@@ -2096,15 +2102,150 @@ sedit()
 		break;
 
 	case ECMD_NMG_EPICK:
-	case ECMD_NMG_EMOVE:
 		/* XXX Nothing to do here (yet), all done in mouse routine. */
 		break;
+	case ECMD_NMG_EMOVE:
+		{
+			point_t new_pt;
+
+			if( !es_eu )
+			{
+				printf( "No edge selected!\n" );
+				break;
+			}
+			NMG_CK_EDGEUSE( es_eu );
+
+			if( es_mvalid )
+				VMOVE( new_pt , es_mparam )
+			else if( inpara == 3 )
+				VMOVE( new_pt , es_para )
+			else if( inpara && inpara != 3 )
+			{
+				(void)printf( "x y z coordinates required for edge move\n" );
+				break;
+			}
+			else if( !es_mvalid && !inpara )
+				break;
+
+			if( !nmg_find_fu_of_eu( es_eu ) && *es_eu->up.magic_p == NMG_LOOPUSE_MAGIC )
+			{
+				struct loopuse *lu;
+				fastf_t area;
+				plane_t pl;
+
+				/* this edge is in a wire loop
+				 * keep the loop planar
+				 */
+				lu = es_eu->up.lu_p;
+				NMG_CK_LOOPUSE( lu );
+				
+				/* get plane equation for loop */
+				area = nmg_loop_plane_area( lu , pl );
+				if( area > 0.0 )
+				{
+					vect_t view_z_dir;
+					vect_t view_dir;
+					fastf_t dist;
+
+					/* Get view direction vector */
+					VSET( view_z_dir , 0 , 0 , 1 );
+					MAT4X3VEC( view_dir , view2model , view_z_dir );
+
+					/* intersect line through new_pt with plane of loop */
+					if( rt_isect_line3_plane( &dist , new_pt , view_dir , pl , &mged_tol ) < 1)
+					{
+						/* line does not intersect plane, don't do an esplit */
+						(void)printf( "Edge Move: Cannot place new point in plane of loop\n" );
+						break;
+					}
+					VJOIN1( new_pt , new_pt , dist , view_dir );
+				}
+			}
+
+			if( nmg_move_edge_thru_pt( es_eu, new_pt, &mged_tol ) < 0 ) {
+				VPRINT("Unable to hit", new_pt);
+			}
+		}
+		break;
+
+	case ECMD_NMG_EKILL:
+		{
+			struct model *m;
+
+			if( !es_eu )
+			{
+				printf( "No edge selected!\n" );
+				break;
+			}
+			NMG_CK_EDGEUSE( es_eu );
+
+			m = nmg_find_model( &es_eu->l.magic );
+
+			if( *es_eu->up.magic_p == NMG_LOOPUSE_MAGIC )
+			{
+				struct loopuse *lu;
+				struct edgeuse *prev_eu,*next_eu;
+
+				lu = es_eu->up.lu_p;
+				NMG_CK_LOOPUSE( lu );
+
+				if( *lu->up.magic_p != NMG_SHELL_MAGIC )
+				{
+					/* Currently can only kill wire edges or edges in wire loops */
+					(void)printf( "Currently, we can only kill wire edges or edges in wire loops\n" );
+					break;
+				}
+
+				prev_eu = RT_LIST_PPREV_CIRC( edgeuse , &es_eu->l );
+				NMG_CK_EDGEUSE( prev_eu );
+
+				if( prev_eu == es_eu )
+				{
+					/* only one edge left in the loop
+					 * make it an edge to/from same vertex
+					 */
+					if( es_eu->vu_p->v_p == es_eu->eumate_p->vu_p->v_p )
+					{
+						/* refuse to delete last edge that runs
+						 * to/from same vertex
+						 */
+						(void)printf( "Cannot delete last edge running to/from same vertex\n" );
+						break;
+					}
+					NMG_CK_EDGEUSE( es_eu->eumate_p );
+					nmg_movevu( es_eu->eumate_p->vu_p , es_eu->vu_p->v_p );
+					break;
+				}
+
+				next_eu = RT_LIST_PNEXT_CIRC( edgeuse , &es_eu->l );
+				NMG_CK_EDGEUSE( next_eu );
+
+				nmg_movevu( next_eu->vu_p , es_eu->vu_p->v_p );
+				if( nmg_keu( es_eu ) )
+				{
+					/* Should never happen!!! */
+					rt_bomb( "sedit(): killed edge and emptied loop!!\n" );
+				}
+				es_eu = prev_eu;
+				nmg_rebound( m , &mged_tol );
+				break;
+			}
+			else if( *es_eu->up.magic_p == NMG_SHELL_MAGIC )
+			{
+				/* wire edge, just kill it */
+				(void)nmg_keu( es_eu );
+				es_eu = (struct edgeuse *)NULL;
+				nmg_rebound( m , &mged_tol );
+			}
+		}
 
 	case ECMD_NMG_ESPLIT:
 		{
 			struct vertex *v=(struct vertex *)NULL;
 			struct model *m;
 			point_t new_pt;
+			fastf_t area;
+			plane_t pl;
 
 			if( !es_eu )
 			{
@@ -2121,11 +2262,47 @@ sedit()
 			else if( inpara && inpara != 3 )
 			{
 				(void)printf( "x y z coordinates required for edge split\n" );
-				return;
+				break;
 			}
 			else if( !es_mvalid && !inpara )
-				return;
+				break;
 
+			if( *es_eu->up.magic_p == NMG_LOOPUSE_MAGIC )
+			{
+				struct loopuse *lu;
+
+				lu = es_eu->up.lu_p;
+				NMG_CK_LOOPUSE( lu );
+
+				/* Currently, can only split wire edges or edges in wire loops */
+				if( *lu->up.magic_p != NMG_SHELL_MAGIC )
+				{
+					(void)printf( "Currently, we can only split wire edges or edges in wire loops\n" );
+					break;
+				}
+
+				/* get plane equation for loop */
+				area = nmg_loop_plane_area( lu , pl );
+				if( area > 0.0 )
+				{
+					vect_t view_z_dir;
+					vect_t view_dir;
+					fastf_t dist;
+
+					/* Get view direction vector */
+					VSET( view_z_dir , 0 , 0 , 1 );
+					MAT4X3VEC( view_dir , view2model , view_z_dir );
+
+					/* intersect line through new_pt with plane of loop */
+					if( rt_isect_line3_plane( &dist , new_pt , view_dir , pl , &mged_tol ) < 1)
+					{
+						/* line does not intersect plane, don't do an esplit */
+						(void)printf( "Edge Split: Cannot place new point in plane of loop\n" );
+						break;
+					}
+					VJOIN1( new_pt , new_pt , dist , view_dir );
+				}
+			}
 			es_eu = nmg_esplit( v , es_eu , 0 );
 			nmg_vertex_gv( es_eu->vu_p->v_p , new_pt );
 			nmg_rebound( m , &mged_tol );
@@ -2326,20 +2503,11 @@ CONST vect_t	mousevec;
 		}
 		break;
 
-	/* XXX Should just leave desired location in es_mparam for sedit() */
 	case ECMD_NMG_EMOVE:
-		/* move edge, through indicated point */
+	case ECMD_NMG_ESPLIT:
 		MAT4X3PNT( temp, view2model, mousevec );
 		/* apply inverse of es_mat */
-		MAT4X3PNT( pos_model, es_invmat, temp );
-		if( nmg_move_edge_thru_pt( es_eu, pos_model, &mged_tol ) < 0 ) {
-			VPRINT("Unable to hit", pos_model);
-		}
-		sedraw = 1;
-		return;
-
-	case ECMD_NMG_ESPLIT:
-		MAT4X3PNT( es_mparam , view2model, mousevec );
+		MAT4X3PNT( es_mparam, es_invmat, temp );
 		es_mvalid = 1;
 		sedraw = 1;
 		return;
@@ -3319,6 +3487,7 @@ char	**argv;
 		case ECMD_TGC_MV_HH:
 		case PTARB:
 		case ECMD_NMG_ESPLIT:
+		case ECMD_NMG_EMOVE:
 			/* must convert to base units */
 			es_para[0] *= local2base;
 			es_para[1] *= local2base;
@@ -4114,5 +4283,158 @@ char	**argv;
 	}
 
 	dmaflag = 1;
+	return CMD_OK;
+}
+
+int
+f_dextrude( argc, argv )
+int argc;
+char **argv;
+{
+	struct model *m;
+	struct nmgregion *r;
+	struct shell *s;
+	struct faceuse *fu;
+	struct loopuse *lu=(struct loopuse *)NULL;
+	struct loopuse *lu_tmp;
+	int wire_loop_count=0;
+	int shell_has_faces=0;
+	point_t to_pt;
+	fastf_t extrude_dist;
+	vect_t extrude_dir;
+	vect_t extrude_vec;
+	char *new_solid_name=(char *)NULL;
+	fastf_t area;
+	fastf_t dist;
+	plane_t pl;
+
+	if( not_state( ST_S_EDIT, "Dextrude" ) )
+		return CMD_BAD;
+
+	if( es_int.idb_type != ID_NMG )
+	{
+		(void)printf( "Dextrude: can only be applied to an NMG solid\n" );
+		return CMD_BAD;
+	}
+
+	if( argc == 4 )
+	{
+		VSET( to_pt , atof( argv[1] ) , atof( argv[2] ) , atof( argv[3] ) )
+		VSCALE( to_pt , to_pt , local2base );
+	}
+	else if( argc == 5 )
+	{
+		extrude_dist = atof( argv[1] ) * local2base;
+		VSET( extrude_dir , atof( argv[2] ) , atof( argv[3] ) , atof( argv[4] ) )
+		VUNITIZE( extrude_dir );
+	}
+
+	m = (struct model *)es_int.idb_ptr;
+	NMG_CK_MODEL( m );
+
+	/* look for wire loops */
+	for( RT_LIST_FOR( r , nmgregion , &m->r_hd ) )
+	{
+		NMG_CK_REGION( r );
+		for( RT_LIST_FOR( s , shell , &r->s_hd ) )
+		{
+			if( RT_LIST_IS_EMPTY( &s->lu_hd ) )
+				continue;
+
+			for( RT_LIST_FOR( lu_tmp , loopuse , &s->lu_hd ) )
+			{
+				if( !lu )
+					lu = lu_tmp;
+				else if( lu_tmp == lu->lumate_p )
+					continue;
+
+				wire_loop_count++;
+			}
+		}
+	}
+
+	if( !wire_loop_count )
+	{
+		(void)printf( "No sketch (wire loop) to extrude\n" );
+		return CMD_BAD;
+	}
+
+	if( wire_loop_count > 1 )
+	{
+		(void)printf( "Too many wire loops!!! Don't know which to extrude!!\n" );
+		return CMD_BAD;
+	}
+
+	if( !lu | *lu->up.magic_p != NMG_SHELL_MAGIC )
+	{
+		/* This should never happen */
+		rt_bomb( "Cannot find wire loop!!\n" );
+	}
+
+	/* Make sure loop is not a crack */
+	area = nmg_loop_plane_area( lu , pl );
+
+	if( area < 0.0 )
+	{
+		(void)printf( "Cannot extrude loop with no area\n" );
+		return CMD_BAD;
+	}
+
+	if( argc == 4 )
+	{
+		extrude_dist = DIST_PT_PLANE( to_pt , pl );
+		VMOVE( extrude_dir , pl );
+	}
+
+	if( rt_isect_line3_plane( &dist , to_pt , extrude_dir , pl , &mged_tol ) < 1 )
+	{
+		(void)printf( "Cannot extrude parallel to plane of loop\n" );
+		return CMD_BAD;
+	}
+
+	s = lu->up.s_p;
+	
+	if( RT_LIST_NON_EMPTY( &s->fu_hd ) )
+	{
+		long *trans_tbl;
+		struct loopuse *new_lu;
+
+		/* make a new shell to hold the extruded solid */
+
+		r = RT_LIST_FIRST( nmgregion , &m->r_hd );
+		NMG_CK_REGION( r );
+		s = nmg_msv( r );
+
+		/* copy the loop to the new shell */
+		trans_tbl = (long *)rt_calloc( 2*m->maxindex , sizeof( long ) , "Dextrude: trans_tbl" );
+		new_lu = nmg_dup_loop( lu , &s->l.magic , &trans_tbl );
+		rt_free( (char *)trans_tbl , "Dextrude: trans_tbl" );
+		if( nmg_klu( lu ) )
+		{
+			/* this should never happen */
+			rt_bomb( "Killed wire loop emptied shell with faces!!!!\n" );
+		}
+
+		lu = new_lu;
+		nmg_loop_g( lu->l_p , &mged_tol );
+	}
+
+	fu = nmg_mf( lu );
+	NMG_CK_FACEUSE( fu );
+	nmg_face_g( fu , pl );
+
+	VSCALE( extrude_vec , extrude_dir , extrude_dist )
+
+	(void)nmg_extrude_face( fu , extrude_vec , &mged_tol );
+	nmg_fix_normals( fu->s_p , &mged_tol );
+	nmg_rebound( m , &mged_tol );
+
+	es_eu = (struct edgeuse *)NULL;
+
+	replot_editing_solid();
+	dmaflag = 1;
+
+	
+
 	return CMD_OK;
 }
