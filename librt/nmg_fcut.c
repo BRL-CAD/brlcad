@@ -193,8 +193,8 @@ struct nmg_ray_state {
  */
 static void ptbl_vsort(b, fu1, fu2, pt, dir, mag, dist_tol)
 struct nmg_ptbl *b;		/* table of vertexuses on intercept line */
-struct faceuse	*fu1;
-struct faceuse	*fu2;
+struct faceuse	*fu1;		/* unused? */
+struct faceuse	*fu2;		/* unused? */
 point_t		pt;
 vect_t		dir;
 fastf_t		*mag;
@@ -299,6 +299,66 @@ fastf_t		dist_tol;
 			}
 		}
 	}
+}
+
+/*
+ *			N M G _ C K _ V U _ P T B L
+ *
+ *  As an automatic check for the intersector failing to find
+ *  all intersections, check all the vertices on the intersection line.
+ *  For each one, find all the other uses in this faceuse, and
+ *  if they are not also listed on the line, they were overlooked.
+ *
+ *  This does not catch _all_ possible mistakes, but does catch some.
+ */
+int
+nmg_ck_vu_ptbl( p, fu )
+struct nmg_ptbl	*p;
+struct faceuse	*fu;
+{
+	struct vertex		*v;
+	struct vertexuse	*vu;
+	struct vertexuse	*tvu;
+	struct faceuse		*tfu;
+	int			i;
+	int			ret = 0;
+
+	NMG_CK_PTBL(p);
+	NMG_CK_FACEUSE(fu);
+
+top:
+	for( i=0; i < NMG_TBL_END(p); i++ )  {
+		vu = (struct vertexuse *)NMG_TBL_GET(p, i);
+		NMG_CK_VERTEXUSE(vu);
+		v = vu->v_p;
+		NMG_CK_VERTEX(v);
+		tfu = nmg_find_fu_of_vu(vu);
+		if( tfu != fu )  {
+			rt_log("ERROR: vu=x%x v=x%x up_fu=x%x != arg_fu=x%x\n",
+				vu, v, tfu, fu );
+			rt_bomb("nmg_ck_vu_ptbl() intersect list is confused about which face it belongs to.\n");
+		}
+		for( RT_LIST_FOR( tvu, vertexuse, &v->vu_hd ) )  {
+			NMG_CK_VERTEXUSE(tvu);
+			if( tvu == vu )  continue;
+			if( (tfu = nmg_find_fu_of_vu( tvu )) == (struct faceuse *)NULL )
+				continue;
+			if( tfu != fu )  continue;
+			/* tvu is in fu.  Is tvu on the line? */
+			if( nmg_tbl(p, TBL_LOC, &tvu->l.magic ) >= 0 )  continue;
+			/* No, not on list */
+			rt_log("ERROR: vu=x%x v=x%x is on isect line, tvu=x%x isn't.\n",
+				vu, v, tvu );
+			/* XXX bomb here? */
+/* XXXXXXXXXXXXXXXXXXXXXXXX Horrible temporizing measure */
+			/* Another strategy:  add it in! */
+			(void)nmg_tbl( p, TBL_INS, &tvu->l.magic );
+			ret++;
+			goto top;
+		}
+	}
+	if(ret)rt_log("nmg_ck_vu_ptbl() ret=%d\n", ret);
+	return ret;
 }
 
 /*
@@ -1403,6 +1463,7 @@ again_inner:
 		if( class2 == WEDGE2_IDENTICAL &&
 		    NEAR_ZERO( vs[inner_wedge].hi_ang - vs[inner_wedge].lo_ang, WEDGE_ANG_TOL )
 		    )  {
+rt_g.NMG_debug |= DEBUG_VU_SORT|DEBUG_FCUT;
 			if(rt_g.NMG_debug&DEBUG_VU_SORT)
 				rt_log("nmg_special_wedge_processing:  inner and outer wedges from same loop, WEDGE2_IDENTICAL & 0deg spread, already in final form.\n");
 			exclude[inner_wedge] = 1;	/* Don't return this wedge again */
@@ -2049,6 +2110,7 @@ CONST struct rt_tol	*tol;
 		return;
 	}
 
+top:
 	mag1 = (fastf_t *)rt_calloc(b1->end+1, sizeof(fastf_t),
 		"vector magnitudes along ray, for sort");
 	mag2 = (fastf_t *)rt_calloc(b2->end+1, sizeof(fastf_t),
@@ -2140,6 +2202,9 @@ CONST struct rt_tol	*tol;
 			rt_log( "nmg_face_cutjoin: intersection list for face 2 doesn't contain vertexuses from face 2!!!\n" );
 	}
 #endif
+	/* Check to make sure that intersector didn't miss anything */
+	if( nmg_ck_vu_ptbl( b1, fu1 ) || nmg_ck_vu_ptbl( b2, fu2 ) )  goto top;
+
 	nmg_face_rs_init( &rs1, b1, fu1, fu2, pt, dir, tol );
 	nmg_face_rs_init( &rs2, b2, fu2, fu1, pt, dir, tol );
 
