@@ -451,6 +451,10 @@ struct _mged_variables {
         int     hot_key;
         int     context;
 	int	dlist;
+	int	nirt_behavior;
+	int	mouse_nirt;
+	int	use_air;
+	int	echo_nirt_cmd;
 	char	coords;
 	char	ecoords;
 	char	rotate_about;
