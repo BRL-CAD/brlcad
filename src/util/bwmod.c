@@ -32,8 +32,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
-                                                                                                                                                                            
+
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 #include "machine.h"
 
@@ -89,7 +90,7 @@ get_args(int argc, register char **argv)
 		case 'd':
 			op[ numop ] = MULT;
 			d = atof(optarg);
-			/*			printf("d is %f\n", d); */
+
 			if( d == 0.0 ) {
 				(void)fprintf( stderr, "bwmod: divide by zero!\n" );
 				exit( 2 );
