@@ -1,19 +1,27 @@
 The Hacker's Guide to BRL-CAD 
 =============================
 
-Please read this document if you are contributing code to BRL-CAD.
+Please read this document if you are contributing to BRL-CAD.
 
-BRL-CAD is a relatively large package with a long heritage and
-history.  Many people have contributed over the years, and there
+BRL-CAD is a relatively large package with a long history and
+heritage.  Many people have contributed over the years, and there
 continues to be room for involvement and improvement in just about
-every aspect of the code.
+every aspect of the package.  As such, contributions to BRL-CAD are
+very welcome and appreciated.  
 
-Although BRL-CAD was originally developed and supported almost
-entirely by the U.S. Army Research Laboratory and it's affiliates, it
-is now a true Open Source project with contributors around the world.
-The U.S. Army Research Laboratory does continue to support and
-contribute to BRL-CAD, but now the source code is primarily driven by
-a team or core developers and the BRL-CAD open source community.
+For the sake of code consistency and long-term evolution of BRL-CAD,
+there are guidelines for getting involved.  Developers are strongly
+encouraged to follow these guidelines.  There are simply too many
+religious wars over what usually come down to personal preferences and
+familiarity that are distractions from making productive progress.
+
+Although BRL-CAD was originally developed and supported primarily by
+the U.S. Army Research Laboratory and it's affiliates, it is now a
+true Open Source project with contributors partipating to the source
+code from around the world.  The U.S. Army Research Laboratory
+continues to support and contribute to BRL-CAD, but now the source
+code is primarily driven by a team of core developers and the BRL-CAD
+open source community.
 
 Table of Contents
 -----------------
@@ -25,7 +33,7 @@ Table of Contents
   Coding Style
   Documentation
   Testing
-  Patch Submissino Guidelines
+  Patch Submission Guidelines
   Bugs
   Commit Access
   Make a Release
