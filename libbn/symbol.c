@@ -21,8 +21,7 @@
 #include "machine.h"
 #include "vmath.h"
 #include "plot3.h"
-
-#include "./vectfont.h"
+#include "vectfont.h"
 
 /*
  *			T P _ 3 S Y M B O L
