@@ -103,7 +103,7 @@ fastf_t		rt_perp_tol = 0;	/* Value for rti_tol.perp */
 char		*framebuffer;		/* desired framebuffer */
 
 int		space_partition = 	/*space partitioning algorithm to use*/
-			RT_PART_NUGRID;
+			RT_PART_NUBSPT;
 double		nu_gfactor = RT_NU_GFACTOR_DEFAULT;
 		      /* constant factor in NUgrid algorithm, if applicable */
 
