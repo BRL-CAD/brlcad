@@ -37,6 +37,7 @@ struct polygon_header  {
 	int	ident;			/* identification number */
 	int	interior;		/* >0 => interior loop, gives ident # of exterior loop */
 	vect_t	normal;			/* surface normal */
+	unsigned char	color[3];	/* Color from containing region */
 	int	npts;			/* number of points */
 };
 #define POLYGON_HEADER_MAGIC	0x8623bad2
@@ -45,6 +46,7 @@ struct rt_imexport  polygon_desc[] = {
 	"%d",	offsetof(struct polygon_header, ident),		1,
 	"%d",	offsetof(struct polygon_header, interior),	1,
 	"%f",	offsetofarray(struct polygon_header, normal),	3,
+	"%s",	offsetofarray(struct polygon_header, color),	3,
 	"%d",	offsetof(struct polygon_header, npts),		1,
 	"",	0,						0
 };
@@ -101,6 +103,7 @@ char	**argv;
 					ph.magic = POLYGON_HEADER_MAGIC;
 					ph.ident = pno++;
 					ph.interior = 0;
+					bcopy(sp->s_basecolor, ph.color, 3);
 					ph.npts = 0;
 					/* Set surface normal (vl_pnt points outward) */
 					VMOVE( ph.normal, *pt );
