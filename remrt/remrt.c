@@ -370,9 +370,12 @@ extern int	interactive;
 extern int	benchmark;
 int		rdebug;
 extern char	*outputfile;		/* output file name */
-extern char	*framebuffer;
 extern int	desiredframe;
 extern int	finalframe;
+
+extern fastf_t	rt_dist_tol;		/* Value for rti_tol.dist */
+extern fastf_t	rt_perp_tol;		/* Value for rti_tol.perp */
+extern char	*framebuffer;
 
 extern struct rt_g	rt_g;
 
@@ -1307,13 +1310,15 @@ register struct frame *fr;
 	fr->fr_height = height;
 
 	rt_vls_trunc( &fr->fr_cmd, 0 );	/* Start fresh */
-	sprintf(buf, "opt -w%d -n%d -H%d -p%g -U%d -J%x -A%g -l%d -E%g -x%x -X%x",
+	sprintf(buf, "opt -w%d -n%d -H%d -p%g -U%d -J%x -A%g -l%d -E%g -x%x -X%x -T%e/%e",
 		fr->fr_width, fr->fr_height,
 		hypersample, rt_perspective,
 		use_air, jitter,
 		AmbientIntensity, lightmodel,
 		eye_backoff,
-		rdebug, rt_g.debug );
+		rdebug, rt_g.debug,
+		rt_dist_tol, rt_perp_tol
+	);
 	rt_vls_strcat( &fr->fr_cmd, buf );
 	if( interactive )  rt_vls_strcat( &fr->fr_cmd, " -I");
 	if( benchmark )  rt_vls_strcat( &fr->fr_cmd, " -B");
