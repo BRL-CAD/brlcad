@@ -1690,6 +1690,84 @@ for zoom or raytracing, support for color schemes, frame buffer support for disp
 managers, snap to grid for accuracy with the mouse, query rays for interrogating the
 geometry, and improved solid/object/combination selection from among displayed
 geometry." } }
+.$id.menubar.help add command -label "Shift Grips" -underline 0\
+	-command "hoc_dialog .$id.menubar.help \"Help,Shift Grips\""
+hoc_register_menu_data "Help" "Shift Grips" "Shift Grips"\
+	{ { summary "     MGED offers the user a unified mouse-based interface for \"grabbing\"
+things and manipulating them.  Since it was built for compatibility on
+top of the older interface:
+
+	    ----------------------------------------
+	    Mouse button	View operation
+	    ----------------------------------------
+	    Button-1		Zoom out
+	    Button-2		Recenter view at
+				the specified point
+	    Button-3		Zoom in
+	    ----------------------------------------
+
+it uses the modifier keys:  Shift, Control, and Alt.  This use of modified
+mouse clicks to grab things is called the \"shift-grip\" interface.  The Shift
+and Control keys are assigned in combinations to the three basic transformation
+operations as follows:
+
+		-----------------------------------------
+		Modifier key	Transformation operation
+		-----------------------------------------
+		Shift			Translate
+		Ctrl			Rotate
+		Shift & Ctrl		Scale
+		-----------------------------------------
+
+and the Alt key is assigned the meaning \"constrained transformation,\" which
+is described below.  Thus, in general, holding the Shift key and a mouse
+button down and moving the mouse drags things around on the screen.  The
+Control key and a mouse button allow one to rotate things, and the combination
+of Shift, Control, and a mouse button allow one to expand and contract things.
+These general functionalities are consistent throughout MGED, providing a
+unified interface.  The precise meanings of \"drag things around,\" \"rotate
+things,\" and \"expand and contract things\" depends on the operating context.
+     When one is merely viewing geometry the shift grips apply by default to
+the view itself.  Thus they amount to panning, rotating, and zooming the
+eye relative to the geometry being displayed.  When one is in solid-edit
+or matrix-edit mode (what used to be called object-edit mode), the shift
+grips apply by default to the model parameters.  In this case, they modify
+the location, orientation, or size of object features or entire objects in
+the database.
+     The default behaviors in the viewing and editing modes may be overridden
+by the \"Transform\" item in the \"Settings\" menu.  This allows the user to
+specify that the shift grips should transform the view, the model parameters
+(if one is currently editing a solid or matrix) or the angle-distance cursor
+(in which case the mouse may be used to position the ADC, to change its angles,
+and to expand and contract its distance ticks).  The behavior of the shift
+grips may be further changed by the \"Rotate About\" item in the \"Settings\"
+menu, which allows the user to specify the point about which shift-grip
+rotations should be performed.  The choices include the view center, the eye,
+the model origin, and an object's key point.
+
+		    CONSTRAINED TRANSFORMATIONS
+
+When the Alt key is held down along with either of the Shift and Control keys
+the transformations are constrained to a particular axis.  For such
+constrained transformations the mouse buttons have the following meanings:
+
+		    ------------------------
+		    Mouse button	Axis
+		    ------------------------
+		    Button-1		 x
+		    Button-2		 y
+		    Button-3		 z
+		    ------------------------
+
+Thus, if the view is being transformed, Alt-Shift-Button-1 allows one to drag
+the objects being viewed left to right along the view-x axis.  Similarly, if
+the model parameters are being transformed, Alt-Ctrl-Button-2 allows one to
+rotate the object about a line passing through the rotate-about point (as
+described above) and parallel to a y-axis.  The coordinate system to which
+these transformations are constrained may be specified by the \"Constraint
+Coords\" item in the \"Settings\" menu, which allows the selection of any one of
+the model, view, and object coordinate systems.
+" } }
 .$id.menubar.help add command -label "Commands..." -underline 0\
 	-command "command_help $id"
 hoc_register_menu_data "Help" "Commands..." "Commands"\
