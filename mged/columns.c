@@ -32,8 +32,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"			/* for NAMESIZE */
+#include "raytrace.h"
 #include "./ged.h"
-#include "./objdir.h"		/* for directory structure */
 
 static int	col_count;		/* names listed on current line */
 static int	col_len;		/* length of previous name */
