@@ -41,7 +41,6 @@ static const char RCSid[] = "";
 #include <ctype.h>
 /* #define debug 1 */
 
-#if 1
 struct dg_client_data {
 	struct dg_obj		*dgop;
 	Tcl_Interp		*interp;
@@ -56,24 +55,6 @@ struct dg_client_data {
 	int			do_polysolids;
 	int			num_halfs;
 };
-#else
-extern struct bn_tol		mged_tol;
-extern struct rt_tess_tol	mged_ttol;
-extern int			mged_wireframe_color_override;
-extern int			mged_wireframe_color[3];
-static struct application	*ap=(struct application *)NULL;
-static time_t			start_time, etime;
-static struct bu_ptbl		leaf_list;
-static long			nvectors;
-static struct rt_i		*rtip;
-static int			num_halfs;
-static int			do_polysolids; /* if this is non-zero, convert all the solids to polysolids
-						* for the raytracing (otherwise just raytrace the solids
-						* themselves). Raytracing polysolids is slower, but produces
-						* a better plot, since the polysolids exactly match the NMGs
-						* that provide the starting edges.
-						*/
-#endif
 
 union E_tree *build_etree();
 
@@ -2213,13 +2194,9 @@ dgo_E_cmd(struct dg_obj	*dgop,
 
 	dgo_eraseobjpath(dgop, interp, argc, argv, LOOKUP_QUIET, 0);
 
+#if 0
 	dgop->dgo_wdbp->wdb_ttol.magic = RT_TESS_TOL_MAGIC;
-#if 1
 	dgop->dgo_wdbp->wdb_ttol.rel = 0.01;
-#else
-	mged_ttol.abs = mged_abs_tol;
-	mged_ttol.rel = mged_rel_tol;
-	mged_ttol.norm = mged_nrm_tol;
 #endif
 
 	dgcdp->ap = (struct application *)bu_calloc(1, sizeof(struct application), "Big E app");
