@@ -141,6 +141,6 @@ register int i;
 	(void)select( 0, 0, 0, 0, &tv );
 #endif
 #ifdef SYSV
-	(soid)sleep(1);	/* best I can do, sorry */
+	(void)sleep(1);	/* best I can do, sorry */
 #endif
 }
