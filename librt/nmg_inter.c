@@ -2960,7 +2960,7 @@ fixup:
 #else
 		    	/* fuse eg1 with on_eg, handle as colinear */
 		    	rt_log("fusing with on_eg, handling as colinear\n");
-		    	nmg_move_eg( *eg1, is->on_eg );
+		    	nmg_jeg( is->on_eg, *eg1 );
 		    	goto colinear;
 #endif
 		}
@@ -3368,7 +3368,7 @@ CONST struct rt_tol	*tol;
 						rt_log("nmg_find_eg_between_2fg() belatedly fusing e1=x%x, eg1=x%x, e2=x%x, eg2=x%x\n",
 							eur->e_p, eur->g.lseg_p,
 							ret->e_p, ret->g.lseg_p );
-						nmg_move_eg( eur->g.lseg_p, ret->g.lseg_p );
+						nmg_jeg( ret->g.lseg_p, eur->g.lseg_p );
 						/* See if there are any others. */
 						nmg_model_fuse( nmg_find_model(&eur->l.magic), tol );
 					} else {

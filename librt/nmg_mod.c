@@ -4042,56 +4042,6 @@ register struct edgeuse	*eu;
 	}
 }
 
-/*
- *			N M G _ M O V E _ E G
- *
- *  For all edges in the model which refer to 'old_eg',
- *  change them to refer to 'new_eg'.
- *
- *  XXX In keeping with other names, this should probably be called nmg_jeg().
- *  XXX The argument order should be reversed, too.
- *
- *  This algorithm does not make sense if new_eg is an edge_g_cnurb;
- *  those only make sense in the parameter space of their associated face.
- */
-void
-nmg_move_eg( old_eg, new_eg )
-struct edge_g_lseg	*old_eg;
-struct edge_g_lseg	*new_eg;
-{
-	register struct edgeuse		*eu;
-	register struct edge		*e;
-
-	NMG_CK_EDGE_G_LSEG(old_eg);
-	NMG_CK_EDGE_G_LSEG(new_eg);
-	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		rt_log("nmg_move_eg( old_eg=x%x, new_eg=x%x )\n",
-			old_eg, new_eg );
-	}
-
-	while( RT_LIST_NON_EMPTY( &old_eg->eu_hd2 ) )  {
-		struct rt_list	*midway;	/* &eu->l2, midway into edgeuse */
-
-		NMG_CK_EDGE_G_LSEG(old_eg);
-
-		/* Obtain an eu from old_eg */
-		midway = RT_LIST_FIRST(rt_list, &old_eg->eu_hd2 );
-		NMG_CKMAG(midway, NMG_EDGEUSE2_MAGIC, "edgeuse2 [l2]");
-		eu = RT_LIST_MAIN_PTR( edgeuse, midway, l2 );
-		NMG_CK_EDGEUSE(eu);
-
-		if( eu->g.lseg_p != old_eg )  {
-			rt_log("nmg_move_eg() eu=x%x, eu->g=x%x != old_eg=x%x??  new_eg=x%x\n",
-				eu, eu->g.lseg_p, old_eg, new_eg );
-			rt_bomb("nmg_move_eg() edge geometry fumble\n");
-		}
-
-		/* Associate eu and mate with new_eg. old_eg freed when unused. */
-		if( nmg_use_edge_g( eu, &new_eg->magic ) )
-			break;		/* old_eg destroyed */
-	}
-}
-
 /************************************************************************
  *									*
  *				VERTEX Routines				*

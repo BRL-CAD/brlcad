@@ -1181,7 +1181,7 @@ CONST struct rt_tol	*tol;
 								rt_log("nmg_find_edge_between_2fu() belatedly fusing e1=x%x, eg1=x%x, e2=x%x, eg2=x%x\n",
 									eur->e_p, eur->g.lseg_p,
 									ret->e_p, ret->g.lseg_p );
-								nmg_move_eg( eur->g.lseg_p, ret->g.lseg_p );
+								nmg_jeg( ret->g.lseg_p, eur->g.lseg_p );
 								/* See if there are any others. */
 								nmg_model_fuse( nmg_find_model(&eur->l.magic), tol );
 							} else {

@@ -506,7 +506,7 @@ CONST struct rt_tol	*tol;
 			 * XXX against ALL edges using eg2 for coincidence.
 			 */
 		     	total++;
-			nmg_move_eg( eg1, eg2 );
+			nmg_jeg( eg2, eg1 );
 			NMG_TBL_GET(&etab,i) = (long *)NULL;
 			break;
 		}

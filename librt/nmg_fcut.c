@@ -2513,7 +2513,7 @@ struct nmg_ray_state	*rs;
 	 * Force all uses of this edge geom to take on isect line's geometry.
 	 * Everywhere eu->g.lseg_p is seen, replace with rs->eg_p.
 	 */
-	nmg_move_eg( eu->g.lseg_p, rs->eg_p );
+	nmg_jeg( rs->eg_p, eu->g.lseg_p );
 out:
 	if(rt_g.NMG_debug&DEBUG_FCUT)  {
 		rt_log("nmg_edge_geom_isect_line(eu=x%x) g=x%x, rs->eg=x%x at end\n",

@@ -1,7 +1,3 @@
-/* XXX move to vmath.h */
-#define V2MOVE(a,b)	{ \
-			(a)[X] = (b)[X];\
-			(a)[Y] = (b)[Y]; }
 /*
  *			N M G _ M K . C
  *
@@ -1360,7 +1356,8 @@ struct loopuse *lu1;
  *	0	If the old edge geometry (eu->g.magic_p) has other uses.
  *	1	If the old edge geometry has been destroyed. Caller beware!
  *
- *  NOT INTENDED FOR GENERAL USE!  However, nmg_mod.c needs it.  (Drat!)
+ *  NOT INTENDED FOR GENERAL USE!
+ *  However, nmg_mod.c needs it for nmg_eusplit().  (Drat!)
  */
 /**static**/ int
 nmg_keg( eu )
@@ -2557,6 +2554,8 @@ struct edgeuse *eu;
  *
  *	Move a vertexuse from an old vertex to a new vertex.
  *	If this was the last use, the old vertex is destroyed.
+ *
+ * XXX nmg_jvu() as a better name?
  */
 void
 nmg_movevu(vu, v)
@@ -2864,5 +2863,53 @@ struct face	*f2;
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
 		rt_log("nmg_jfg(f1=x%x, f2=x%x)\n", f1 , f2);
+	}
+}
+
+/*
+ *			N M G _ J E G
+ *
+ *  Join two edge geometries.
+ *  For all edges in the model which refer to 'src_eg',
+ *  change them to refer to 'dest_eg'.  The source is destroyed.
+ *
+ *  This algorithm does not make sense if dest_eg is an edge_g_cnurb;
+ *  those only make sense in the parameter space of their associated face.
+ */
+void
+nmg_jeg( dest_eg, src_eg )
+struct edge_g_lseg	*dest_eg;
+struct edge_g_lseg	*src_eg;
+{
+	register struct edgeuse		*eu;
+	register struct edge		*e;
+
+	NMG_CK_EDGE_G_LSEG(src_eg);
+	NMG_CK_EDGE_G_LSEG(dest_eg);
+	if (rt_g.NMG_debug & DEBUG_BASIC)  {
+		rt_log("nmg_jeg( src_eg=x%x, dest_eg=x%x )\n",
+			src_eg, dest_eg );
+	}
+
+	while( RT_LIST_NON_EMPTY( &src_eg->eu_hd2 ) )  {
+		struct rt_list	*midway;	/* &eu->l2, midway into edgeuse */
+
+		NMG_CK_EDGE_G_LSEG(src_eg);
+
+		/* Obtain an eu from src_eg */
+		midway = RT_LIST_FIRST(rt_list, &src_eg->eu_hd2 );
+		NMG_CKMAG(midway, NMG_EDGEUSE2_MAGIC, "edgeuse2 [l2]");
+		eu = RT_LIST_MAIN_PTR( edgeuse, midway, l2 );
+		NMG_CK_EDGEUSE(eu);
+
+		if( eu->g.lseg_p != src_eg )  {
+			rt_log("nmg_jeg() eu=x%x, eu->g=x%x != src_eg=x%x??  dest_eg=x%x\n",
+				eu, eu->g.lseg_p, src_eg, dest_eg );
+			rt_bomb("nmg_jeg() edge geometry fumble\n");
+		}
+
+		/* Associate eu and mate with dest_eg. src_eg freed when unused. */
+		if( nmg_use_edge_g( eu, &dest_eg->magic ) )
+			break;		/* src_eg destroyed */
 	}
 }
