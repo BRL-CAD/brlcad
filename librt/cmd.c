@@ -47,8 +47,7 @@ static const char RCScmd[] = "@(#)$Header$ (BRL)";
  *	char *	On good read
  */
 char *
-rt_read_cmd( fp )
-register FILE	*fp;
+rt_read_cmd( register FILE *fp )
 {
 	register int	c;
 	register char	*buf;
