@@ -2386,7 +2386,6 @@ char **argv;
     static int		i = 0;
     int			len;
 
-    bu_log("make_name %s\n", argv[1]);
     if (dbip == DBI_NULL)
 	return TCL_OK;
 
@@ -2420,10 +2419,8 @@ char **argv;
 	bu_vls_trunc(&obj_name, len);
 	bu_vls_printf(&obj_name, "%d", i++);
 	bu_vls_strcat(&obj_name, tp);
-	bu_log("OK, object_name is '%s'\n", bu_vls_addr(&obj_name));
     }
     while (db_lookup(dbip, bu_vls_addr(&obj_name), LOOKUP_QUIET) != DIR_NULL);
-    bu_log("%s\n", bu_vls_addr(&obj_name));
     Tcl_AppendResult(interp, bu_vls_addr(&obj_name), (char *) NULL);
     return TCL_OK;
 }
