@@ -1,3 +1,4 @@
+#define NEW_IF	0
 /*
  *			G _ A R B N . C
  *  
@@ -30,7 +31,6 @@ static char RCSarbn[] = "@(#)$Header$ (BRL)";
 #include "db.h"
 #include "./debug.h"
 
-void	rt_arbn_print();
 
 #define DIST_TOL	(1.0e-8)
 #define DIST_TOL_SQ	(1.0e-10)
@@ -40,6 +40,9 @@ struct arbn_internal  {
 	plane_t	*eqn;
 };
 
+RT_EXTERN(void rt_arbn_print, (struct soltab *stp) );
+RT_EXTERN(void rt_arbn_ifree, (struct rt_db_internal *ip) );
+
 /*
  *  			R T _ A R B N _ P R E P
  *
@@ -47,13 +50,24 @@ struct arbn_internal  {
  *	 0	OK
  *	!0	failure
  */
+#if NEW_IF
+int
+rt_arbn_prep( stp, ep, rtip )
+struct soltab		*stp;
+struct rt_external	*ep;
+struct rt_i		*rtip;
+{
+#else
 int
 rt_arbn_prep( stp, rec, rtip )
 struct soltab	*stp;
 union record	*rec;
 struct rt_i	*rtip;
 {
+	struct rt_external	ext, *ep;
+#endif
 	struct arbn_internal	*aip;
+	struct rt_db_internal	intern;
 	vect_t		work;
 	fastf_t		f;
 	register int	i;
@@ -61,14 +75,22 @@ struct rt_i	*rtip;
 	int		k;
 	int		*used = (int *)0;	/* plane eqn use count */
 
-	GETSTRUCT( aip, arbn_internal );
-	stp->st_specific = (genptr_t)aip;
+#if NEW_IF
+	/* All set */
+#else
+	ep = &ext;
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_buf = (genptr_t)rec;
+	ep->ext_nbytes = stp->st_dp->d_len*sizeof(union record);
+#endif
 
-	if( rt_arbn_import( aip, rec, stp->st_pathmat ) < 0 )  {
+	if( rt_arbn_import( &intern, ep, stp->st_pathmat ) < 0 )  {
 		rt_log("arbn(%s): db import error\n", stp->st_name );
-		rt_free( (char *)aip, "arbn_internal" );
-		return(1);		/* BAD */
+		return(-1);		/* BAD */
 	}
+	RT_CK_DB_INTERNAL( &intern );
+	aip = (struct arbn_internal *)intern.idb_ptr;
+	stp->st_specific = (genptr_t)aip;
 
 	used = (int *)rt_malloc(aip->neqn*sizeof(int), "arbn used[]");
 
@@ -120,9 +142,8 @@ next_k:				;
 		rt_log("arbn(%s) face %d unused, solid is not convex\n",
 			stp->st_name, i);
 		rt_free( (char *)used, "arbn used[]");
-		rt_free( (char *)aip->eqn, "arbn_internal eqn[]");
-		rt_free( (char *)aip, "arbn_internal" );
-		return(1);		/* BAD */
+		rt_arbn_ifree( &intern );
+		return(-1);		/* BAD */
 	}
 
 	rt_free( (char *)used, "arbn used[]");
@@ -331,6 +352,17 @@ register struct soltab *stp;
  *  plot without requiring extra bookkeeping.
  *  Note that the vectors will be drawn in no special order.
  */
+#if NEW_IF
+int
+rt_arbn_plot( vhead, mat, ip, abs_tol, rel_tol, norm_tol )
+struct vlhead	*vhead;
+mat_t		mat;
+struct rt_db_internal *ip;
+double		abs_tol;
+double		rel_tol;
+double		norm_tol;
+{
+#else
 int
 rt_arbn_plot( rp, mat, vhead, dp )
 union record		*rp;
@@ -338,18 +370,30 @@ mat_t			mat;
 struct vlhead		*vhead;
 struct directory	*dp;
 {
+	struct rt_external	ext, *ep;
+	struct rt_db_internal	intern, *ip;
+#endif
 	register struct arbn_internal	*aip;
 	register int	i;
 	register int	j;
 	register int	k;
 
-	GETSTRUCT( aip, arbn_internal );
-
-	if( rt_arbn_import( aip, rp, mat ) < 0 )  {
-		rt_log("arbn(%s): db import error\n", dp->d_namep );
-		rt_free( (char *)aip, "arbn_internal" );
-		return(-1);
+#if NEW_IF
+	/* All set */
+#else
+	ep = &ext;
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_buf = (genptr_t)rp;
+	ep->ext_nbytes = dp->d_len*sizeof(union record);
+	i = rt_arbn_import( &intern, ep, mat );
+	if( i < 0 )  {
+		rt_log("rt_arbn_plot(): db import failure\n");
+		return(-1);		/* BAD */
 	}
+	ip = &intern;
+#endif
+	RT_CK_DB_INTERNAL(ip);
+	aip = (struct arbn_internal *)ip->idb_ptr;
 
 	for( i=0; i<aip->neqn-1; i++ )  {
 		for( j=i+1; j<aip->neqn; j++ )  {
@@ -420,23 +464,52 @@ rt_arbn_class()
 }
 
 /*
+ *			R T _ A R B N _ T E S S
+ *
+ *  "Tessellate" an ARB into an NMG data structure.
+ *  Purely a mechanical transformation of one faceted object
+ *  into another.
+ */
+int
+rt_arbn_tess( s, rp, mat, dp, abs_tol, rel_tol, norm_tol )
+struct shell		*s;
+register union record	*rp;
+register mat_t		mat;
+struct directory	*dp;
+double			abs_tol;
+double			rel_tol;
+double			norm_tol;
+{
+	return(-1);
+}
+
+/*
  *			R T _ A R B N _ I M P O R T
  *
  *  Convert from "network" doubles to machine specific.
  *  Transform
  */
 int
-rt_arbn_import( aip, rp, mat )
-struct arbn_internal	*aip;
-union record		*rp;
+rt_arbn_import( ip, ep, mat )
+struct rt_db_internal	*ip;
+struct rt_external	*ep;
 register mat_t		mat;
 {
+	union record		*rp;
+	struct arbn_internal	*aip;
 	register int	i;
 
+	RT_CK_EXTERNAL( ep );
+	rp = (union record *)ep->ext_buf;
 	if( rp->u_id != DBID_ARBN )  {
 		rt_log("rt_arbn_import: defective record, id=x%x\n", rp->u_id );
 		return(-1);
 	}
+
+	RT_INIT_DB_INTERNAL( ip );
+	ip->idb_type = ID_PARTICLE;
+	ip->idb_ptr = rt_malloc( sizeof(struct arbn_internal), "arbn_internal");
+	aip = (struct arbn_internal *)ip->idb_ptr;
 
 	aip->neqn = rp->n.n_neqn;
 	if( aip->neqn <= 0 )  return(-1);
@@ -467,21 +540,62 @@ register mat_t		mat;
 }
 
 /*
- *			R T _ A R B N _ T E S S
- *
- *  "Tessellate" an ARB into an NMG data structure.
- *  Purely a mechanical transformation of one faceted object
- *  into another.
+ *			R T _ A R B N _ E X P O R T
  */
 int
-rt_arbn_tess( s, rp, mat, dp, abs_tol, rel_tol, norm_tol )
-struct shell		*s;
-register union record	*rp;
-register mat_t		mat;
-struct directory	*dp;
-double			abs_tol;
-double			rel_tol;
-double			norm_tol;
+rt_arbn_export( ep, ip )
+struct rt_external	*ep;
+struct rt_db_internal	*ip;
 {
 	return(-1);
+}
+
+
+/*
+ *			R T _ A R B N _ D E S C R I B E
+ *
+ *  Make human-readable formatted presentation of this solid.
+ *  First line describes type of solid.
+ *  Additional lines are indented one tab, and give parameter values.
+ */
+int
+rt_arbn_describe( str, ip, verbose )
+struct rt_vls		*str;
+struct rt_db_internal	*ip;
+int			verbose;
+{
+	register struct arbn_internal	*aip =
+		(struct arbn_internal *)ip->idb_ptr;
+	char	buf[256];
+	int	i;
+
+	sprintf(buf, "arbn bounded by %d planes\n", aip->neqn);
+	rt_vls_strcat( str, buf );
+
+	for( i=0; i < aip->neqn; i++ )  {
+		sprintf(buf, "\t%d: (%g, %g, %g) %g\n",
+			i, V4ARGS(aip->eqn[i]) );
+		rt_vls_strcat( str, buf );
+	}
+	return(0);
+}
+
+
+/*
+ *  Free the storage associated with the rt_db_internal version of this solid.
+ *  XXX The suffix of this name is temporary.
+ */
+void
+rt_arbn_ifree( ip )
+struct rt_db_internal	*ip;
+{
+	struct arbn_internal	*aip;
+
+	RT_CK_DB_INTERNAL(ip);
+	aip = (struct arbn_internal *)ip->idb_ptr;
+
+	rt_free( (char *)aip->eqn, "arbn_internal eqn[]");
+	rt_free( (char *)aip, "arbn_internal" );
+
+	ip->idb_ptr = (genptr_t)0;	/* sanity */
 }
