@@ -136,8 +136,6 @@ rt_bot_prep_pieces(struct bot_specific	*bot,
 
     stp->st_npieces = num_rpps;
 
-    bu_log("ntri:%d num_rpps:%d\n", ntri, num_rpps);
-
     fap = bot->bot_facearray = (struct tri_specific **)
 	bu_malloc( sizeof(struct tri_specific *) * ntri,
 		   "bot_facearray" );
@@ -213,17 +211,25 @@ rt_bot_prep_pieces(struct bot_specific	*bot,
 
     }
 
-
+#if 0
     for (surfno=ntri-1 ; surfno >= 0; surfno-- )  {
 	trip = bot->bot_facearray[surfno];
 	if (trip->tri_surfno != surfno) {
-	    bu_log("trip->tri_surfno:%d != piecenum%d", 
+	    bu_log("trip->tri_surfno:%d != piecenum%d\n", 
 		   trip->tri_surfno, surfno);
 	    bu_bomb("");
 	}
     }
 
-
+    trip = bot->bot_facelist;
+    while( trip ) {
+	    if( trip->tri_surfno < 0 || trip->tri_surfno >= ntri ) {
+		    bu_log( "%s:\n", stp->st_dp->d_namep );
+		    bu_log( "\ttrip->tri_surfno = %d\n", trip->tri_surfno );
+	    }
+	    trip = trip->tri_forw;
+    }
+#endif
 }
 
 /*
@@ -292,6 +298,8 @@ struct rt_i		*rtip;
 		bu_log("bot(%s):  no faces\n", stp->st_name);
 		return(-1);             /* BAD */
 	}
+
+	bot->bot_ntri = ntri;
 
 	/* zero thickness will get missed by the raytracer */
 	for( i=0 ; i<3 ; i++ )
@@ -877,6 +885,8 @@ struct seg		*seghead;
 		LOCAL fastf_t	alpha, beta;
 		LOCAL vect_t	wxb;		/* vertex - ray_start */
 		LOCAL vect_t	xp;		/* wxb cross ray_dir */
+		LOCAL int	face_array_index;
+		LOCAL int	tris_in_piece;
 		register struct tri_specific *trip;
 		
 		piecenum = *sol_piece_subscr_p;
@@ -899,13 +909,19 @@ struct seg		*seghead;
 		 * intesecting with each triangle that makes up 
 		 * the piece.
 		 */
-		trip = bot->bot_facearray[piecenum*bot->bot_tri_per_piece];
-		for (trinum=bot->bot_tri_per_piece; trinum ; trinum--, trip++){
+		face_array_index = piecenum*bot->bot_tri_per_piece;
+		trip = bot->bot_facearray[face_array_index];
+		tris_in_piece = bot->bot_ntri - face_array_index;
+		if( tris_in_piece > bot->bot_tri_per_piece ) {
+			tris_in_piece = bot->bot_tri_per_piece;
+		}
+		for( trinum=0 ; trinum<tris_in_piece ;
+		     trinum++, trip=bot->bot_facearray[face_array_index+trinum] ) {
 
 		    if (trip->tri_surfno < (piecenum*bot->bot_tri_per_piece) ||
 			trip->tri_surfno >= 
 			((piecenum + 1) * bot->bot_tri_per_piece )) {
-			    bu_log("trip->tri_surfno:%d != piecenum%d", 
+			    bu_log("trip->tri_surfno:%d != piecenum%d\n", 
 				   trip->tri_surfno, piecenum);
 		    }
 
