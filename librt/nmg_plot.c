@@ -1,3 +1,11 @@
+/* XXX Move to raytrace.h */
+#define RT_CK_LIST(_hd)	RT_CKMAG(_hd, RT_LIST_HEAD_MAGIC, "struct rt_list");
+/* Near definition of RT_GET_VLIST(), note: */
+/*
+ *  Applications that are going to use RT_ADD_VLIST are required to
+ *  first execute this macro:	RT_LIST_INIT( &rt_g.rtg_vlfree );
+ */
+
 /*
  *			N M G _ P L O T . C
  *
@@ -46,6 +54,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
+#include "nurb.h"
 #include "plot3.h"
 #include "rtstring.h"
 
@@ -154,7 +163,7 @@ CONST vectp_t		normal;
 	point_t		centroid;
 	int		npoints;
 
-	RT_CKMAG(vhead, RT_LIST_HEAD_MAGIC, "struct rt_list");
+	RT_CK_LIST(vhead);
 
 	NMG_CK_LOOPUSE(lu);
 	if( RT_LIST_FIRST_MAGIC(&lu->down_hd)==NMG_VERTEXUSE_MAGIC )  {
@@ -246,6 +255,31 @@ CONST vectp_t		normal;
 }
 
 /*
+ *			N M G _ S N U R B _ F U _ T O _ V L I S T
+ */
+void
+nmg_snurb_fu_to_vlist( vhead, fu, poly_markers )
+struct rt_list		*vhead;
+CONST struct faceuse	*fu;
+int			poly_markers;
+{
+	struct face_g_snurb	*fg;
+
+	RT_CK_LIST(vhead);
+
+	NMG_CK_FACEUSE(fu);
+	NMG_CK_FACE(fu->f_p);
+	fg = fu->f_p->g.snurb_p;
+	NMG_CK_FACE_G_SNURB(fg);
+
+	/* First step, draw the surface. */
+	/* XXX For now, draw the whole surface, not just the interior */
+	nmg_snurb_to_vlist( vhead, fg, 10 );
+
+	/* Second step, draw the trimming curves */
+}
+
+/*
  *			N M G _ S _ T O _ V L I S T
  *
  *  Plot the entire contents of a shell.
@@ -274,10 +308,17 @@ int			poly_markers;
 
 		/* Consider this face */
 		NMG_CK_FACEUSE(fu);
+		if (fu->orientation != OT_SAME)  continue;
 		NMG_CK_FACE(fu->f_p);
+
+		if( fu->f_p->g.magic_p && *fu->f_p->g.magic_p == NMG_FACE_G_SNURB_MAGIC )  {
+			nmg_snurb_fu_to_vlist( vhead, fu, poly_markers );
+			continue;
+		}
+
+		/* Handle planar faces directly */
 		fg = fu->f_p->g.plane_p;
 		NMG_CK_FACE_G_PLANE(fg);
-		if (fu->orientation != OT_SAME)  continue;
 		NMG_GET_FU_NORMAL( n, fu );
 		for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
 		   	nmg_lu_to_vlist( vhead, lu, poly_markers, n );
@@ -2372,4 +2413,133 @@ CONST struct rt_tol	*tol;
 	(void)fclose(fp);
 	rt_vlblock_free(vbp);
 	rt_free((char *)tab, "bit vec");
+}
+
+/*
+ *			N M G _ H A C K _ S N U R B
+ *
+ *  Convert a new NMG format snurb to the older LIBNURB format,
+ *  by copying data and pointers.
+ *  Under no circumstances should the output of this routine be freed,
+ *  or it will corrupt the NMG original!  Just discard it.
+ *
+ *  XXX Temporary hack until LIBNURB is updated to new data structures.
+ */
+void
+nmg_hack_snurb( old, fg )
+struct snurb	*old;
+CONST struct face_g_snurb	*fg;
+{
+	bzero( (char *)old, sizeof(struct snurb) );
+
+	RT_LIST_INIT( &old->l );
+	old->l.magic = RT_SNURB_MAGIC;
+
+	old->order[0] = fg->order[0];
+	old->order[1] = fg->order[1];
+	old->u_knots = fg->u;		/* struct copy, including pointers! */
+	old->v_knots = fg->v;
+	old->s_size[0] = fg->s_size[0];
+	old->s_size[1] = fg->s_size[1];
+	old->pt_type = fg->pt_type;
+	old->ctl_points = fg->ctl_points;
+}
+
+/*
+ *			N M G _ S N U R B _ T O _ V L I S T
+ *
+ *  A routine to draw the entire surface of a face_g_snurb.
+ *  No handling of trimming curves is done.
+ */
+int
+nmg_snurb_to_vlist( vhead, fg, n_interior )
+struct rt_list			*vhead;
+CONST struct face_g_snurb	*fg;
+int				n_interior;	/* typ. 10 */
+{
+	register int		i;
+	register int		j;
+	register fastf_t	* vp;
+	int			s;
+	struct knot_vector 	tkv1,
+				tkv2,
+				tau1,
+				tau2;
+	struct snurb		n;	/* XXX hack, don't free! */
+	struct snurb 	*r, *c;
+	int 		coords;
+
+	RT_CK_LIST( vhead );
+	NMG_CK_FACE_G_SNURB(fg);
+
+	rt_nurb_kvgen( &tkv1,
+		fg->u.knots[0],
+		fg->u.knots[fg->u.k_size-1], n_interior);
+
+	rt_nurb_kvgen( &tkv2,
+		fg->v.knots[0],
+		fg->v.knots[fg->v.k_size-1], n_interior);
+		
+	rt_nurb_kvmerge(&tau1, &tkv1, &fg->u);
+	rt_nurb_kvmerge(&tau2, &tkv2, &fg->v);
+
+	nmg_hack_snurb( &n, fg );	/* XXX */
+	NMG_CK_SNURB(&n);
+	r = (struct snurb *) rt_nurb_s_refine( &n, RT_NURB_SPLIT_COL, &tau2);
+	NMG_CK_SNURB(r);
+	c = (struct snurb *) rt_nurb_s_refine( r, RT_NURB_SPLIT_ROW, &tau1);
+	NMG_CK_SNURB(c);
+
+	coords = RT_NURB_EXTRACT_COORDS(c->pt_type);
+	
+	if( RT_NURB_IS_PT_RATIONAL(c->pt_type))
+	{
+		vp = c->ctl_points;
+		for(i= 0; 
+			i < c->s_size[0] * c->s_size[1]; 
+			i++)
+		{
+			FAST fastf_t	div;
+			vp[0] *= (div = 1/vp[3]);
+			vp[1] *= div;
+			vp[2] *= div;
+			vp[3] *= div;
+			vp += coords;
+		}
+	}
+
+	vp = c->ctl_points;
+	for( i = 0; i < c->s_size[0]; i++)
+	{
+		RT_ADD_VLIST( vhead, vp, RT_VLIST_LINE_MOVE );
+		vp += coords;
+		for( j = 1; j < c->s_size[1]; j++)
+		{
+			RT_ADD_VLIST( vhead, vp, RT_VLIST_LINE_DRAW );
+			vp += coords;
+		}
+	}
+
+	for( j = 0; j < c->s_size[1]; j++)
+	{
+		int stride;
+			
+		stride = c->s_size[1] * coords;
+		vp = &c->ctl_points[j * coords];
+		RT_ADD_VLIST( vhead, vp, RT_VLIST_LINE_MOVE );
+		for( i = 0; i < c->s_size[0]; i++)
+		{
+			RT_ADD_VLIST( vhead, vp, RT_VLIST_LINE_DRAW );
+			vp += stride;
+		}
+	}
+	rt_nurb_free_snurb(c);
+	rt_nurb_free_snurb(r);
+
+	rt_free( (char *) tau1.knots, "rt_nurb_plot:tau1.knots");
+	rt_free( (char *) tau2.knots, "rt_nurb_plot:tau2.knots");
+	rt_free( (char *) tkv1.knots, "rt_nurb_plot:tkv1>knots");
+	rt_free( (char *) tkv2.knots, "rt_nurb_plot:tkv2.knots");
+
+	return(0);
 }
