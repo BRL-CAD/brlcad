@@ -57,6 +57,7 @@ proc init_qray_control { id } {
     toplevel $top -screen $player_screen($id)
 
     frame $top.gridF1 -relief groove -bd 2
+    frame $top.gridFF1
     label $top.colorL -text "Query Ray Colors"
     hoc_register_data $top.colorL "Query Ray Colors"\
 	    { { summary "A query ray is a ray that is fired from
@@ -79,7 +80,7 @@ color can be used. Lastly, overlaps can also be
 colored, distinguishing them from everything else." } }
 
     frame $top.oddColorFF
-    label $top.oddColorL -text "odd" -anchor w
+    label $top.oddColorL -text "odd" -anchor e
     hoc_register_data $top.oddColorL "Odd Color"\
 	    { { summary "The odd ray segments encountered along the
 ray have their own color specification. This
@@ -89,12 +90,9 @@ ray enters/leaves an object." } }
 	    "color_entry_chooser $id $top oddColor \"Odd Color\"\
 	    qray_control $id,oddcolor"\
 	    12 $qray_control($id,oddcolor)
-    grid $top.oddColorL -sticky "ew" -in $top.oddColorFF
-    grid $top.oddColorF -sticky "ew" -in $top.oddColorFF
-    grid columnconfigure $top.oddColorFF 0 -weight 1
 
     frame $top.evenColorFF
-    label $top.evenColorL -text "even" -anchor w
+    label $top.evenColorL -text "even" -anchor e
     hoc_register_data $top.evenColorL "Even Color"\
 	    { { summary "The even ray segments encountered along the
 ray have their own color specification. This
@@ -103,13 +101,10 @@ ray enters/leaves an object." } }
     color_entry_build $top evenColor qray_control($id,evencolor)\
 	    "color_entry_chooser $id $top evenColor \"Even Color\"\
 	    qray_control $id,evencolor"\
-	    12 $qray_control($id,evencolor)
-    grid $top.evenColorL -sticky "ew" -in $top.evenColorFF
-    grid $top.evenColorF -sticky "ew" -in $top.evenColorFF
-    grid columnconfigure $top.evenColorFF 0 -weight 1
+	    8 $qray_control($id,evencolor)
 
     frame $top.voidColorFF
-    label $top.voidColorL -text "void" -anchor w
+    label $top.voidColorL -text "void" -anchor e
     hoc_register_data $top.voidColorL "Void Color"\
 	    { { summary "The void ray segments encountered along the
 ray have their own color specification. This
@@ -118,13 +113,10 @@ ray enters/leaves an object." } }
     color_entry_build $top voidColor qray_control($id,voidcolor)\
 	    "color_entry_chooser $id $top voidColor \"Void Color\"\
 	    qray_control $id,voidcolor"\
-	    12 $qray_control($id,voidcolor)
-    grid $top.voidColorL -sticky "ew" -in $top.voidColorFF
-    grid $top.voidColorF -sticky "ew" -in $top.voidColorFF
-    grid columnconfigure $top.voidColorFF 0 -weight 1
+	    8 $qray_control($id,voidcolor)
 
     frame $top.overlapColorFF
-    label $top.overlapColorL -text "overlap" -anchor w
+    label $top.overlapColorL -text "overlap" -anchor e
     hoc_register_data $top.overlapColorL "Overlap Color"\
 	    { { summary "The overlap ray segments encountered along the
 ray have their own color specification. This
@@ -133,36 +125,42 @@ ray enters/leaves an object." } }
     color_entry_build $top overlapColor qray_control($id,overlapcolor)\
 	    "color_entry_chooser $id $top overlapColor \"Overlap Color\"\
 	    qray_control $id,overlapcolor"\
-	    12 $qray_control($id,overlapcolor)
-    grid $top.overlapColorL -sticky "ew" -in $top.overlapColorFF
-    grid $top.overlapColorF -sticky "ew" -in $top.overlapColorFF
-    grid columnconfigure $top.overlapColorFF 0 -weight 1
+	    8 $qray_control($id,overlapcolor)
 
-    grid $top.colorL - -sticky "n" -in $top.gridF1 -padx $qray_control($id,padx) -pady $qray_control($id,pady)
-    grid $top.oddColorFF $top.evenColorFF -sticky "ew" -in $top.gridF1 -padx $qray_control($id,padx) -pady $qray_control($id,pady)
-    grid $top.voidColorFF $top.overlapColorFF -sticky "ew" -in $top.gridF1 -padx $qray_control($id,padx) -pady $qray_control($id,pady)
+    grid $top.colorL - -sticky "ew" -in $top.gridFF1
+    grid $top.oddColorL $top.oddColorF -sticky "nsew" -in $top.gridFF1
+    grid $top.evenColorL $top.evenColorF -sticky "nsew" -in $top.gridFF1
+    grid $top.voidColorL $top.voidColorF -sticky "nsew" -in $top.gridFF1
+    grid $top.overlapColorL $top.overlapColorF -sticky "nsew" -in $top.gridFF1
+    grid columnconfigure $top.gridFF1 1 -weight 1
+    grid rowconfigure $top.gridFF1 1 -weight 1
+    grid rowconfigure $top.gridFF1 2 -weight 1
+    grid rowconfigure $top.gridFF1 3 -weight 1
+    grid rowconfigure $top.gridFF1 4 -weight 1
+    grid $top.gridFF1 -sticky "nsew" -in $top.gridF1 \
+	    -padx $qray_control($id,padx) -pady $qray_control($id,pady)
     grid columnconfigure $top.gridF1 0 -weight 1
-    grid columnconfigure $top.gridF1 1 -weight 1
-    grid $top.gridF1 -sticky "ew" -padx $qray_control($id,padx) -pady $qray_control($id,pady)
+    grid rowconfigure $top.gridF1 0 -weight 1
 
     frame $top.gridF2 -relief groove -bd 2
-    frame $top.bnameF
+    frame $top.gridFF2
     set hoc_data { { summary "The base name is used to build the names
 of fake solids that are created for the ray.
 Specifically, there is one solid created for
 each color used. Note that it is possible to
 create a maximum of four fake solids as a
 result of firing a query ray." } }
-    label $top.bnameL -text "Base Name" -anchor w
+    label $top.bnameL -text "Base Name" -anchor e
     hoc_register_data $top.bnameL "Base Name" $hoc_data
     entry $top.bnameE -relief sunken -bd 2 -textvar qray_control($id,basename)
     hoc_register_data $top.bnameE "Base Name" $hoc_data
-    grid $top.bnameL -sticky "ew" -in $top.bnameF
-    grid $top.bnameE -sticky "ew" -in $top.bnameF
-    grid columnconfigure $top.bnameF 0 -weight 1
-    grid $top.bnameF -sticky "ew" -in $top.gridF2 -padx $qray_control($id,padx) -pady $qray_control($id,pady)
+    grid $top.bnameL $top.bnameE -sticky "nsew" -in $top.gridFF2
+    grid columnconfigure $top.gridFF2 1 -weight 1
+    grid rowconfigure $top.gridFF2 0 -weight 1
+    grid $top.gridFF2 -sticky "nsew" -in $top.gridF2 \
+	    -padx $qray_control($id,padx) -pady $qray_control($id,pady)
     grid columnconfigure $top.gridF2 0 -weight 1
-    grid $top.gridF2 -sticky "ew" -padx $qray_control($id,padx) -pady $qray_control($id,pady)
+    grid rowconfigure $top.gridF2 0 -weight 1
 
     frame $top.gridF3 -relief groove -bd 2
     label $top.effectsL -text "Effects" -anchor w
@@ -208,7 +206,6 @@ query rays being drawn through the geometry." } }
 	    -sticky "ew" -in $top.gridF3 -padx $qray_control($id,padx) -pady $qray_control($id,pady)
     grid columnconfigure $top.gridF3 1 -weight 1
     grid columnconfigure $top.gridF3 3 -weight 1
-    grid $top.gridF3 -sticky "ew" -padx $qray_control($id,padx) -pady $qray_control($id,pady)
 
     frame $top.gridF4
     checkbutton $top.activeCB -relief flat -text "Mouse Active"\
@@ -232,7 +229,6 @@ default air is ignored." } }
 	    { { summary "Pop up the advanced query ray settings
 control panel." } }
     grid $top.activeCB $top.use_airCB x $top.advB -in $top.gridF4 -padx $qray_control($id,padx)
-    grid $top.gridF4 -sticky "ew" -padx $qray_control($id,padx) -pady $qray_control($id,pady)
 
     frame $top.gridF5
     button $top.okB -relief raised -text "Ok"\
@@ -258,9 +254,15 @@ to MGED's internal state." } }
     grid $top.okB $top.applyB x $top.resetB x $top.dismissB -sticky "ew" -in $top.gridF5
     grid columnconfigure $top.gridF5 2 -weight 1
     grid columnconfigure $top.gridF5 4 -weight 1
-    grid $top.gridF5 -sticky "ew" -padx $qray_control($id,padx) -pady $qray_control($id,pady)
 
+    grid $top.gridF1 -sticky "nsew" -padx $qray_control($id,padx) -pady $qray_control($id,pady)
+    grid $top.gridF2 -sticky "nsew" -padx $qray_control($id,padx) -pady $qray_control($id,pady)
+    grid $top.gridF3 -sticky "ew" -padx $qray_control($id,padx) -pady $qray_control($id,pady)
+    grid $top.gridF4 -sticky "ew" -padx $qray_control($id,padx) -pady $qray_control($id,pady)
+    grid $top.gridF5 -sticky "ew" -padx $qray_control($id,padx) -pady $qray_control($id,pady)
     grid columnconfigure $top 0 -weight 1
+    grid rowconfigure $top 0 -weight 4
+    grid rowconfigure $top 1 -weight 1
 
     qray_reset $id
     set qray_control($id,effects) [qray effects]
@@ -386,13 +388,13 @@ proc init_qray_adv { id } {
     qray_reset_fmt $id
 
     frame $top.gridF1 -relief groove -bd 2
+    frame $top.gridFF1
     label $top.fmtL -text "Query Ray Formats"
     hoc_register_data $top.fmtL "Query Ray Formats"\
 	    { { summary "Ask pjt@arl.mil about the six different
 format strings that can be set." } }
-    grid $top.fmtL -in $top.gridF1 -padx $qray_control($id,padx) -pady $qray_control($id,pady)
-    frame $top.rayF
-    label $top.rayL  -text "Ray" -anchor w
+
+    label $top.rayL  -text "Ray" -anchor e
     hoc_register_data $top.rayL "Ray Format String"\
 	    { { summary "Ask pjt@arl.mil about the ray format string." }
               { see_also "nirt" } }
@@ -404,12 +406,8 @@ the entry widget. Also, by default, the
 entry widget supports some emacs style
 bindings." }
               { see_also "nirt" } }
-    grid $top.rayL -sticky "ew" -in $top.rayF
-    grid $top.rayE -sticky "ew" -in $top.rayF
-    grid columnconfigure $top.rayF 0 -weight 1
-    grid $top.rayF -sticky "ew" -in $top.gridF1 -padx $qray_control($id,padx) -pady $qray_control($id,pady)
-    frame $top.headF
-    label $top.headL -text "Head" -anchor w
+
+    label $top.headL -text "Head" -anchor e
     hoc_register_data $top.headL "Head Format String"\
 	    { { summary "Ask pjt@arl.mil about the head format string." }
               { see_also "nirt" } }
@@ -421,12 +419,8 @@ the entry widget. Also, by default, the
 entry widget supports some emacs style
 bindings." }
               { see_also "nirt" } }
-    grid $top.headL -sticky "ew" -in $top.headF
-    grid $top.headE -sticky "ew" -in $top.headF
-    grid columnconfigure $top.headF 0 -weight 1
-    grid $top.headF -sticky "ew" -in $top.gridF1 -padx $qray_control($id,padx) -pady $qray_control($id,pady)
-    frame $top.partitionF
-    label $top.partitionL -text "Partition" -anchor w
+
+    label $top.partitionL -text "Partition" -anchor e
     hoc_register_data $top.partitionL "Partition Format String"\
 	    { { summary "Ask pjt@arl.mil about the partition format string." }
               { see_also "nirt" } }
@@ -438,12 +432,8 @@ the entry widget. Also, by default, the
 entry widget supports some emacs style
 bindings." }
               { see_also "nirt" } }
-    grid $top.partitionL -sticky "ew" -in $top.partitionF
-    grid $top.partitionE -sticky "ew" -in $top.partitionF
-    grid columnconfigure $top.partitionF 0 -weight 1
-    grid $top.partitionF -sticky "ew" -in $top.gridF1 -padx $qray_control($id,padx) -pady $qray_control($id,pady)
-    frame $top.footF
-    label $top.footL -text "Foot" -anchor w
+
+    label $top.footL -text "Foot" -anchor e
     hoc_register_data $top.footL "Foot Format String"\
 	    { { summary "Ask pjt@arl.mil about the foot format string." } 
               { see_also "nirt" } }
@@ -455,12 +445,8 @@ the entry widget. Also, by default, the
 entry widget supports some emacs style
 bindings." }
               { see_also "nirt" } }
-    grid $top.footL -sticky "ew" -in $top.footF
-    grid $top.footE -sticky "ew" -in $top.footF
-    grid columnconfigure $top.footF 0 -weight 1
-    grid $top.footF -sticky "ew" -in $top.gridF1 -padx $qray_control($id,padx) -pady $qray_control($id,pady)
-    frame $top.missF
-    label $top.missL -text "Miss" -anchor w
+
+    label $top.missL -text "Miss" -anchor e
     hoc_register_data $top.missL "Miss Format String"\
 	    { { summary "Ask pjt@arl.mil about the miss format string." }
               { see_also "nirt" } }
@@ -472,12 +458,8 @@ the entry widget. Also, by default, the
 entry widget supports some emacs style
 bindings." }
               { see_also "nirt" } }
-    grid $top.missL -sticky "ew" -in $top.missF
-    grid $top.missE -sticky "ew" -in $top.missF
-    grid columnconfigure $top.missF 0 -weight 1
-    grid $top.missF -sticky "ew" -in $top.gridF1 -padx $qray_control($id,padx) -pady $qray_control($id,pady)
-    frame $top.overlapF
-    label $top.overlapL -text "Overlap" -anchor w
+
+    label $top.overlapL -text "Overlap" -anchor e
     hoc_register_data $top.overlapL "Overlap Format String"\
 	    { { summary "Ask pjt@arl.mil about the overlay format string." }
               { see_also "nirt" } }
@@ -489,12 +471,6 @@ the entry widget. Also, by default, the
 entry widget supports some emacs style
 bindings." }
               { see_also "nirt" } }
-    grid $top.overlapL -sticky "ew" -in $top.overlapF
-    grid $top.overlapE -sticky "ew" -in $top.overlapF
-    grid columnconfigure $top.overlapF 0 -weight 1
-    grid $top.overlapF -sticky "ew" -in $top.gridF1 -padx $qray_control($id,padx) -pady $qray_control($id,pady)
-    grid columnconfigure $top.gridF1 0 -weight 1
-    grid $top.gridF1 -sticky "ew" -padx $qray_control($id,padx) -pady $qray_control($id,pady)
 
     frame $top.gridF2
     button $top.okB -relief raised -text "Ok"\
@@ -517,12 +493,36 @@ panel according to MGED's internal state." } }
 	    -command "catch { destroy $top }"
     hoc_register_data $top.dismissB "Dismiss"\
 	    { { summary "Close the advanced settings control panel." } }
+
+    grid $top.fmtL - -sticky "ew" -in $top.gridFF1
+    grid $top.rayL $top.rayE -sticky "nsew" -in $top.gridFF1
+    grid $top.headL $top.headE -sticky "nsew" -in $top.gridFF1
+    grid $top.partitionL $top.partitionE -sticky "nsew" -in $top.gridFF1
+    grid $top.footL $top.footE -sticky "nsew" -in $top.gridFF1
+    grid $top.missL $top.missE -sticky "nsew" -in $top.gridFF1
+    grid $top.overlapL $top.overlapE -sticky "nsew" -in $top.gridFF1
+    grid columnconfigure $top.gridFF1 1 -weight 1
+    grid rowconfigure $top.gridFF1 1 -weight 1
+    grid rowconfigure $top.gridFF1 2 -weight 1
+    grid rowconfigure $top.gridFF1 3 -weight 1
+    grid rowconfigure $top.gridFF1 4 -weight 1
+    grid rowconfigure $top.gridFF1 5 -weight 1
+    grid rowconfigure $top.gridFF1 6 -weight 1
+    grid $top.gridFF1 -sticky "nsew" -in $top.gridF1 \
+	    -padx $qray_control($id,padx) -pady $qray_control($id,pady)
+    grid columnconfigure $top.gridF1 0 -weight 1
+    grid rowconfigure $top.gridF1 0 -weight 1
+
     grid $top.okB $top.applyB x $top.resetB x $top.dismissB -sticky "ew" -in $top.gridF2
     grid columnconfigure $top.gridF2 2 -weight 1
     grid columnconfigure $top.gridF2 4 -weight 1
-    grid $top.gridF2 -sticky "ew" -padx $qray_control($id,padx) -pady $qray_control($id,pady)
 
+    grid $top.gridF1 -sticky "nsew" \
+	    -padx $qray_control($id,padx) -pady $qray_control($id,pady)
+    grid $top.gridF2 -sticky "ew" \
+	    -padx $qray_control($id,padx) -pady $qray_control($id,pady)
     grid columnconfigure $top 0 -weight 1
+    grid rowconfigure $top 0 -weight 1
 
     set pxy [winfo pointerxy $top]
     set x [lindex $pxy 0]
