@@ -283,7 +283,7 @@ void	*v;
 int	show_origin;
 
 {
-    char		*r1name, *r2name;
+    CONST char		*r1name, *r2name;
     struct g_lint_ovlp	*op = (struct g_lint_ovlp *) v;
     struct g_lint_seg	*sp;
 
