@@ -51,6 +51,7 @@
 #define DEBUG_CUTDETAIL	0x00100000	/* 21 Print space cutting details */
 #define DEBUG_TREEWALK	0x00200000	/* 22 Database tree traversal */
 #define DEBUG_TESTING	0x00400000	/* 23 One-shot debugging flag */
+#define DEBUG_ADVANCE	0x00800000	/* 24 Cell-to-cell space partitioning */
 
 /* These will cause binary debugging output */
 #define DEBUG_PLOTBOX	0x80000000	/* 32 Plot(3) bounding boxes and cuts */
@@ -58,6 +59,7 @@
 /* Format string for rt_printb() */
 #define DEBUG_FORMAT	\
 "\020\040PLOTBOX\
+\030ADVANCE\
 \027TESTING\026TREEWALK\025CUTDETAIL\024PARALLEL\023FDIFF\022MEM_FULL\
 \021MEM\020BOXING\017CUTING\016PARTITION\015ROOTS\014VOL\
 \013EBM\012ANIM\011SPLINE\010ARB8\7REGIONS\6SOLIDS\5DB\
