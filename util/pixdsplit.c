@@ -28,11 +28,12 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <unistd.h>
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
+
+extern int errno;
 
 #define	made_it()	bu_log("%s:%d\n", __FILE__, __LINE__);
 
@@ -183,9 +184,9 @@ char	*argv[];
     cb_size = p_per_b * cwidth;
     db_size = p_per_b * dwidth;
 
-    inbuf = (char *) bu_malloc(inb_size, "char buffer");
-    cbuf = (char *) bu_malloc(cb_size, "char buffer");
-    dbuf = (char *) bu_malloc(db_size, "double buffer");
+    inbuf = (unsigned char *) bu_malloc(inb_size, "char buffer");
+    cbuf = (unsigned char *) bu_malloc(cb_size, "char buffer");
+    dbuf = (unsigned char *) bu_malloc(db_size, "double buffer");
 
     while ((num = read(infd, inbuf, inb_size)) > 0)
     {
