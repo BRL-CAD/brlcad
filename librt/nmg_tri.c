@@ -1051,6 +1051,40 @@ struct vertexuse *vu_p;
 
 
 
+/*
+ *	Given a pointer to a vertexuse in a face and a ray, find the
+ *	"first" and "last" uses of the vertex along the ray in the face.
+ *	Consider the diagram below where 4 OT_SAME loopuses meet at a single
+ *	vertex.  The ray enters from the upper left and proceeds to the lower
+ *	right.  The ray encounters vertexuse 1 first and vertexuse 3 last.
+ *
+ *
+ *		     \  ^ |
+ *		      \ | |
+ *		       1| V2
+ *		------->o o------->
+ *		         .
+ *		<-------o o<------
+ *		       4^ |3
+ *		        | | \
+ *		        | |  \
+ *		        | V   \|
+ *			      -
+ *
+ *	The primary purpose of this routine is to find the vertexuses
+ *	that should be the parameters to nmg_cut_loop() and nmg_join_loop().
+ */
+nmg_first_and_last_vu_in_fu_on_ray(tbl2d, vu, first_vu, last_vu, dir, fu, tol)
+struct rt_list *tbl2d;
+struct vertexuse *vu;
+struct vertexuse **first_vu;
+struct vertexuse **last_vu;
+vect_t 		dir;
+struct faceuse	*fu;
+{
+}
+
+
 static struct pt2d *
 sort_pt(tbl2d, pt1, pt2, tol)
 struct rt_list *tbl2d;
