@@ -917,6 +917,8 @@ CONST struct rt_tol	*tol;
 		NMG_INDEX_SET(classlist[NMG_CLASS_AinB], vu->v_p);
 		status = INSIDE;
 	}  else if( class == NMG_CLASS_AonBshared )  {
+		rt_pr_tol(tol);
+		VPRINT("pt", pt);
 		rt_bomb("class_vu_vs_s:  classifier found point ON, vertex topology should have been shared\n");
 	}  else  {
 		rt_log("class=%s\n", nmg_class_name(class) );
