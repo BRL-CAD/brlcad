@@ -30,7 +30,7 @@ fi
 
 if test "${MANPATH}" = ""
 then
-	MANPATH=/usr/brlcad/bin/man
+	MANPATH=/usr/brlcad/man
 fi
 
 PATH_ELEMENTS=`echo ${MANPATH} | sed 's/^://
