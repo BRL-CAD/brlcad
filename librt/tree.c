@@ -292,8 +292,16 @@ struct rt_i			*rtip;
 	/* Enter the appropriate dual critical-section */
 	ACQUIRE_SEMAPHORE_TREE(hash);
 
-	/* If solid has not been referenced yet, the search can be skipped */
-	if( dp->d_uses > 0 && rtip->rti_dont_instance == 0 )  {
+	/*
+	 *  If solid has not been referenced yet, the search can be skipped.
+	 *  If solid is being referenced a _lot_, it certainly isn't
+	 *  all going to be in the same place, so don't bother searching.
+	 *  Consider the case of a million instances of the same tree
+	 *  submodel solid.
+	 */
+	if( dp->d_uses > 0 && dp->d_uses < 100 &&
+	    rtip->rti_dont_instance == 0
+	)  {
 		struct bu_list	*mid;
 
 		/* Search dp->d_use_hd list for other instances */
