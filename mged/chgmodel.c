@@ -1144,4 +1144,68 @@ char	**argv;
 	return CMD_OK;
 
 }
+/*
+ *			F _ Q O R O T
+ *
+ * Usage: qorot x y z dx dy dz theta
+ *
+ *	rotate an object through a specified angle
+ *	about a specified ray.
+ */
+int
+f_qorot( argc, argv )
+int	argc;
+char	**argv;
+{
+	mat_t temp;
+	vect_t	specified_pt;
+	vect_t s_point, point, v_work, model_pt;
 
+	if( not_state( ST_O_EDIT, "Object Rotation" ) )
+		return CMD_BAD;
+
+	if(movedir != ROTARROW) {
+		/* NOT in object rotate mode - put it in obj rot */
+		dmp->dmr_light( LIGHT_ON, BE_O_ROTATE );
+		dmp->dmr_light( LIGHT_OFF, BE_O_SCALE );
+		dmp->dmr_light( LIGHT_OFF, BE_O_XY );
+		movedir = ROTARROW;
+	}
+	specified_pt[X] = atof(argv[1]);
+	specified_pt[Y] = atof(argv[2]);
+	specified_pt[Z] = atof(argv[3]);
+
+	/* find point for rotation to take place wrt */
+	MAT4X3PNT(model_pt, es_mat, specified_pt);
+	MAT4X3PNT(point, modelchanges, model_pt);
+
+	/* Find absolute translation vector to go from "model_pt" to
+	 * 	"point" without any of the rotations in "modelchanges"
+	 */
+	VSCALE(s_point, point, modelchanges[15]);
+	VSUB2(v_work, s_point, model_pt);
+
+	/* REDO "modelchanges" such that:
+	 *	1. NO rotations (identity)
+	 *	2. trans == v_work
+	 *	3. same scale factor
+	 */
+	mat_idn(temp);
+	MAT_DELTAS(temp, v_work[X], v_work[Y], v_work[Z]);
+	temp[15] = modelchanges[15];
+	mat_copy(modelchanges, temp);
+
+	/* build new rotation matrix */
+	mat_idn(temp);
+	buildHrot(temp, 0.0, atof(argv[7])*degtorad, 0,0);
+
+	/* Record the new rotation matrix into the revised
+	 *	modelchanges matrix wrt "point"
+	 */
+	wrt_point(modelchanges, temp, modelchanges, point);
+
+	new_mats();
+	dmaflag = 1;
+
+	return CMD_OK;
+}
