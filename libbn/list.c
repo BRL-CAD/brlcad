@@ -210,7 +210,7 @@ float	*size;
 		return;
 
 	if( *flag & TP_LINE )
-		F2LIST( fp, x, y, np );
+		PL_FORTRAN(f2list,F2LIST)( fp, x, y, np );
 	if( *flag & TP_MARK )  {
 		tp_2marker( *fp, *mark, *x++, *y++, *size );
 		counter = 1;			/* We already plotted one */
