@@ -809,9 +809,36 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	(a)[W] = (b) * (c)[W] + (d) * (e)[W]; }
 #endif /* SHORT_VECTORS */
 
-/* Compare two extents represented as RPPs. if they overlap, return true */
+/*
+ *  Macros for dealing with 3-D "extents" represented as axis-aligned
+ *  right parallelpipeds (RPPs).
+ *  This is stored as two points:  a min point, and a max point.
+ */
+
+/* Compare two extents represented as RPPs. If they overlap, return true */
 #define V3RPP_OVERLAP(_l1, _h1, _l2, _h2) \
-    (! ((_l1)[0] > (_h2)[0] || (_l1)[1] > (_h2)[1] || (_l1)[2] > (_h2)[2] || \
-	(_l2)[0] > (_h1)[0] || (_l2)[1] > (_h1)[1] || (_l2)[2] > (_h1)[2]) )
+    (! ((_l1)[X] > (_h2)[X] || (_l1)[Y] > (_h2)[Y] || (_l1)[Z] > (_h2)[Z] || \
+	(_l2)[X] > (_h1)[X] || (_l2)[Y] > (_h1)[Y] || (_l2)[Z] > (_h1)[Z]) )
+
+/* If two extents overlap within distance tolerance, return true. */
+#define V3RPP_OVERLAP_TOL(_l1, _h1, _l2, _h2, _t) \
+    (! ((_l1)[X] > (_h2)[X] + (_t)->dist || \
+	(_l1)[Y] > (_h2)[Y] + (_t)->dist || \
+	(_l1)[Z] > (_h2)[Z] + (_t)->dist || \
+	(_l2)[X] > (_h1)[X] + (_t)->dist || \
+	(_l2)[Y] > (_h1)[Y] + (_t)->dist || \
+	(_l2)[Z] > (_h1)[Z] + (_t)->dist ) )
+
+/* Is the point within the RPP? */
+#define V3PT_IN_RPP(_pt, _lo, _hi)	( \
+	(_pt)[X] >= (_lo)[X] && (_pt)[X] <= (_hi)[X] && \
+	(_pt)[Y] >= (_lo)[Y] && (_pt)[Y] <= (_hi)[Y] && \
+	(_pt)[Z] >= (_lo)[Z] && (_pt)[Z] <= (_hi)[Z]  )
+
+/* Within the distance tolerance, is the point within the RPP? */
+#define V3PT_IN_RPP_TOL(_pt, _lo, _hi, _t)	( \
+	(_pt)[X] >= (_lo)[X]-(_t)->dist && (_pt)[X] <= (_hi)[X]+(_t)->dist && \
+	(_pt)[Y] >= (_lo)[Y]-(_t)->dist && (_pt)[Y] <= (_hi)[Y]+(_t)->dist && \
+	(_pt)[Z] >= (_lo)[Z]-(_t)->dist && (_pt)[Z] <= (_hi)[Z]+(_t)->dist  )
 
 #endif /* VMATH_H */
