@@ -387,8 +387,30 @@ char	**argv;
 	rt_clean( ap.a_rt_i );
 
 	if(rdebug&RDEBUG_RTMEM_END)
-		rt_prmem( "After rt_clean" );
+		rt_prmem( "After cm_clean" );
 	return(0);
+}
+
+/*
+ *			C M _ C L O S E D B
+ *
+ *  To be invoked after a "clean" command, to close out the ".g" database.
+ *  Intended for memory debugging, to help chase down memory "leaks".
+ *  This terminates the program, as there is no longer a database.
+ */
+int
+cm_closedb( argc, argv )
+int	argc;
+char	**argv;
+{
+	db_close( ap.a_rt_i->rti_dbip );
+	ap.a_rt_i->rti_dbip = DBI_NULL;
+
+	bu_free( (genptr_t)ap.a_rt_i, "struct rt_i" );
+	ap.a_rt_i = RTI_NULL;
+
+	rt_prmem( "After _closedb" );
+	exit(0);
 }
 
 /* viewing module specific variables */
@@ -1019,6 +1041,8 @@ struct command_tab rt_cmdtab[] = {
 		cm_tree,	1, 999,
 	"clean", "", "clean articulation from previous frame",
 		cm_clean,	1, 1,
+	"_closedb", "", "Close .g database, (for memory debugging)",
+		cm_closedb,	1, 1,
 	"set", 	"", "show or set parameters",
 		cm_set,		1, 999,
 	"ae", "azim elev", "specify view as azim and elev, in degrees",
