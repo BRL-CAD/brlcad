@@ -438,11 +438,12 @@ struct application *ap;
 					i = ((i+1+BITV_MASK)&(~BITV_MASK))-1;
 					continue;
 				}
-				if( !(j & (1<<(i&BITV_MASK))) )  continue;
+				if( !(j & (((bitv_t)1)<<(i&BITV_MASK))) )
+					continue;
 			}
 			regp = ap->a_rt_i->Regions[i];
 			if(rt_g.debug&DEBUG_PARTITION)
-				rt_log("%.8x=%s: ", regp, regp->reg_name );
+				rt_log("%.8x=bit%d, %s: ", regp, i, regp->reg_name );
 			if( rt_booleval( regp->reg_treetop, pp, TrueRg ) == FALSE )  {
 				if(rt_g.debug&DEBUG_PARTITION) rt_log("FALSE\n");
 				continue;
