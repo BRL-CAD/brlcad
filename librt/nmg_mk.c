@@ -1783,11 +1783,15 @@ struct edgeuse *eu;
 	/* Dequeue edgeuses from their current list (should point to themselves), add to new list */
 	RT_LIST_DEQUEUE( &eu->l2 );
 	RT_LIST_DEQUEUE( &eu->eumate_p->l2 );
+
+	/* Associate edgeuse with this geometry */
 	RT_LIST_INSERT( &eg_p->eu_hd2, &eu->l2 );
 	RT_LIST_INSERT( &eg_p->eu_hd2, &eu->eumate_p->l2 );
+	eu->g.lseg_p = eg_p;
+	eu->eumate_p->g.lseg_p = eg_p;
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		rt_log("nmg_edge_g(e=x%x) eg=x%x\n", e, eg_p );
+		rt_log("nmg_edge_g(eu=x%x) eg=x%x\n", eu, eg_p );
 	}
 }
 
