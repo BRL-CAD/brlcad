@@ -65,7 +65,6 @@ static char *unit_str[] = {
 	"NONE"
 };
 
-#define MAXLINE		512	/* Maximum number of chars per line */
 #define ABORTED		-99
 #define MAXSOL 		2000
 #define OLDSOLID	0

@@ -35,8 +35,6 @@ extern char	*cmd_args[];	/* array of pointers to args */
 
 static union record record;
 
-#define MAXLINE		512	/* Maximum number of chars per line */
-
 void		identitize();
 void		trace();
 void		matrix_print();
