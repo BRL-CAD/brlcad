@@ -84,10 +84,11 @@ if [ -z "$USER" ] ; then
 	USER=`whoami`
 fi
 
+BUGEMAIL=bugs@brlcad.org
 
 FAILED=0
 if [ -x /usr/ucb/mail ] ; then
-	/usr/ucb/mail -s "BUG REPORT" cad-bugs@arl.army.mil "$USER" < $BUG_REPORT
+	/usr/ucb/mail -s "BUG REPORT" $BUGEMAIL "$USER" < $BUG_REPORT
 	if [ $? -eq 0 ] ; then
 		rm -f $BUG_REPORT
 		exit
@@ -99,7 +100,7 @@ if [ -x /usr/ucb/mail ] ; then
 fi
 
 if [ -x /usr/bsd/Mail ] ; then
-	/usr/bsd/Mail -s "BUG REPORT" cad-bugs@arl.army.mil "$USER" < $BUG_REPORT
+	/usr/bsd/Mail -s "BUG REPORT" $BUGEMAIL "$USER" < $BUG_REPORT
 	if [ $? -eq 0 ] ; then
 		rm -f $BUG_REPORT
 		exit
@@ -111,7 +112,7 @@ if [ -x /usr/bsd/Mail ] ; then
 fi
 
 if [ -x /bin/mail ] ; then
-	/bin/mail cad-bugs@arl.army.mil "$USER" < $BUG_REPORT
+	/bin/mail $BUGEMAIL "$USER" < $BUG_REPORT
 	if [ $? -eq 0 ] ; then
 		rm -f $BUG_REPORT
 	else
@@ -123,7 +124,7 @@ if [ -x /bin/mail ] ; then
 fi
 
 if [ -x /usr/bin/mail ] ; then
-	/usr/bin/mail cad-bugs@arl.army.mil "$USER" < $BUG_REPORT
+	/usr/bin/mail $BUGEMAIL "$USER" < $BUG_REPORT
 	if [ $? -eq 0 ] ; then
 		rm -f $BUG_REPORT
 	else
@@ -135,9 +136,9 @@ if [ -x /usr/bin/mail ] ; then
 fi
 
 if [ $FAILED -eq 1] ; then
-	/bin/echo "Mail delivery failed.  Send file $BUG_REPORT to cad-bugs@arl.army.mil"
+	/bin/echo "Mail delivery failed.  Send file $BUG_REPORT to $BUGEMAIL"
 else
-	/bin/echo "Mail agent not found.  Send file $BUG_REPORT to cad-bugs@arl.army.mil"
+	/bin/echo "Mail agent not found.  Send file $BUG_REPORT to $BUGEMAIL"
 fi
 
 # Local Variables:
