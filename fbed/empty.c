@@ -53,7 +53,7 @@ typedef	long	fd_set;
 #define FD_ZERO(p)	(p)->fds_bits[0] = 0
 /** typedef	struct fd_set { fd_mask	fds_bits[1]; } fd_set; **/
 #endif
-#endif FD_ZERO
+#endif /* FD_ZERO */
 
 /*	e m p t y ( )
 	Examine file descriptor for input with no time delay.
