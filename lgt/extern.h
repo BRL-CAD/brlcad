@@ -43,9 +43,11 @@
 #if STD_SIGNAL_DECLS
 extern void (*norml_sig)(), (*abort_sig)();
 extern void abort_RT();
+extern void stop_sig();
 #else
 extern int (*norml_sig)(), (*abort_sig)();
 extern int abort_RT();
+extern int stop_sig();
 #endif
 
 /* C library functions. */
@@ -55,11 +57,9 @@ extern int abort_RT();
 #	ifdef BSD
 	extern int exit();
 	extern int free();
-	extern int stop_sig();
 #	else
 	extern void exit();
 	extern void free();
-	extern void stop_sig();
 #	endif
 extern char *getenv();
 extern char *malloc();
