@@ -162,7 +162,7 @@ struct shell *s;
 			if( mk_fpoly( out_fp , count_npts , verts ) )
 			{
 				bu_log( "write_shell_as_polysolid: mk_fpoly failed for object %s\n" , name );
-				rt_bomb( "write_shell_as_polysolid: mk_fpoly failed\n" );
+				bu_bomb( "write_shell_as_polysolid: mk_fpoly failed\n" );
 			}
 		}
 	}
