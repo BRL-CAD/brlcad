@@ -56,9 +56,9 @@ char usage[] = "\
 Usage:  rtrad [options] model.g objects... >file.rad\n\
 Options:\n\
  -s #		Grid size in pixels, default 512\n\
- -a Az		Azimuth in degrees	(conflicts with -M)\n\
- -e Elev	Elevation in degrees	(conflicts with -M)\n\
- -M		Read model2view matrix on stdin (conflicts with -a, -e)\n\
+ -a Az		Azimuth in degrees\n\
+ -e Elev	Elevation in degrees\n\
+ -M		Read matrix, cmds on stdin\n\
  -o file.rad	Output file name, else stdout\n\
  -x #		Set librt debug flags\n\
 ";
@@ -129,8 +129,8 @@ struct application *ap;
 	r.h.cy = aimpt[1];
 	r.h.cz = aimpt[2];
 	r.h.back = 1.414*viewsize/2.0;	/* backoff */
-	r.h.e = - elevation;		/* RT and GIFT/SRIM are backward XXX */
-	r.h.a = - azimuth;
+	r.h.e = elevation;
+	r.h.a = azimuth;
 	r.h.vert = viewsize;
 	r.h.horz = viewsize;
 	r.h.nvert = height;
