@@ -37,7 +37,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/time.h>
 #include <time.h>
 
-#include "tcl.h"
 #include "tk.h"
 
 #include "machine.h"
