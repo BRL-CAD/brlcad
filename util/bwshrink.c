@@ -43,10 +43,10 @@ char *filename = "(stdin)";
  *	
  */
 shrink_image(w, h, buffer, Factor)
-u_char *buffer;
+unsigned char *buffer;
 int Factor, w, h;
 {
-	u_char *finalpixel;	/* output pixel pointer */
+	unsigned char *finalpixel;	/* output pixel pointer */
 	unsigned int p;		/* pixel sum/average */
 	int facsq, x, y, px, py;
 
@@ -76,11 +76,11 @@ int Factor, w, h;
  *	Undersample image pixels
  */
 usample_image(w, h, buffer, Factor)
-u_char *buffer;
+unsigned char *buffer;
 int Factor, w, h;
 {
 	register int x, y;
-	register u_char *p;
+	register unsigned char *p;
 
 	p = buffer;
 
@@ -176,7 +176,7 @@ int main(ac,av)
 int ac;
 char *av[];
 {
-	u_char *buffer = (u_char *)NULL;
+	unsigned char *buffer = (unsigned char *)NULL;
 	int	size;
 	int	c = 0;
 	register int t;
@@ -188,7 +188,7 @@ char *av[];
 
 	/* get buffer for image */
 	size = width * height;
-	if ((buffer = (u_char *)malloc(width*height)) == (u_char *)NULL) {
+	if ((buffer = (unsigned char *)malloc(width*height)) == (unsigned char *)NULL) {
 		(void)fprintf(stderr, "%s: cannot allocate input buffer\n", 
 			progname);
 		exit(-1);
