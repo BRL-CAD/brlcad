@@ -116,15 +116,20 @@ int	argc;
 char	**argv;
 {
 	register struct directory *dp;
-	char line[80];
 	union record record;
 	int r=0, g=0, b=0;
+	int num_params = 0;
+	static int mark = 0;
+	static int skip1 = 0;
+	static int skip2 = 0;
+	static int skip3 = 0;
+	char inherit;
 	char	*nlp;
 
 	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 		return CMD_BAD;
 
-	if( db_get( dbip,  dp, &record, 0 , 1) < 0 ) {
+	if( db_get( dbip, dp, &record, 0 , 1) < 0 ) {
 		READ_ERR;
 		return CMD_BAD;
 	}
@@ -134,65 +139,95 @@ char	**argv;
 		return CMD_BAD;
 	}
 
-#if 0
+	if(skip1)
+	  goto Mark1;
+
 	if( argc >= 3 )  {
-		if( strncmp( argv[2], "del", 3 ) != 0 )  {
-		/* Material */
-			strcpy( record.c.c_matname, argv[2]);
-		}else{
-			(void)rt_log( "Was %s %s\n", record.c.c_matname,
-						record.c.c_matparm);
-			record.c.c_matname[0] = '\0';
-			record.c.c_override = 0;
-			goto out;
-		}
+	  if( strncmp( argv[2], "del", 3 ) != 0 )  {
+	    /* Material */
+	    strcpy( record.c.c_matname, argv[2]);
+	  }else{
+	    (void)rt_log( "Was %s %s\n", record.c.c_matname,
+			  record.c.c_matparm);
+	    record.c.c_matname[0] = '\0';
+	    record.c.c_override = 0;
+	    goto out;
+	  }
 	}else{
-		/* Material */
-		(void)rt_log( "Material = %s\nMaterial?  ('del' to delete, CR to skip) ", record.c.c_matname);
-		return CMD_MORE;
+	  if(mark){
+	    skip1 = 1;
+	    goto Mark1;
+	  }
+
+	  mark = 1;
+	  /* Material */
+	  (void)rt_log( "Material = %s\nMaterial?  ('del' to delete, CR to skip) ", record.c.c_matname);
+	  return CMD_MORE;
 	}
 
-	if(argc >= 4){
-		if( strncmp(argv[3],  "del", 3) == 0  )
-			record.c.c_matparm[0] = '\0';
-		else
-			strcpy( record.c.c_matparm, argv[3]);
+Mark1:
+	if(skip2)
+	  goto Mark2;
+
+	if(argc >= 4 - skip1){
+	  if( strncmp(argv[3 - skip1],  "del", 3) == 0  )
+	    record.c.c_matparm[0] = '\0';
+	  else
+	    strcpy( record.c.c_matparm, argv[3 - skip1]);
 	}else{
-		/* Parameters */
-		(void)rt_log( "Param = %s\nParameter string? ('del' to delete, CR to skip) ", record.c.c_matparm);
-		return CMD_MORE;
+	  if(mark == 2){
+	    skip2 = 1;
+	    goto Mark2;
+	  }
+
+	  mark = 2;
+	  /* Parameters */
+	  (void)rt_log( "Param = %s\nParameter string? ('del' to delete, CR to skip) ", record.c.c_matparm);
+	  return CMD_MORE;
 	}
 
-	if(argc >= 5){
-		if( strncmp(argv[4], "del", 3) == 0 ){
-			/* leave color as is */
-			record.c.c_override = 0;
-			num_params = 6;
-		}else if(argc < 7){	/* prompt for color */
-			goto color_prompt;
-		}else{	/* change color */
-			sscanf(argv[4], "%d", &r);
-			sscanf(argv[5], "%d", &g);
-			sscanf(argv[6], "%d", &b);
-			record.c.c_rgb[0] = r;
-			record.c.c_rgb[1] = g;
-			record.c.c_rgb[2] = b;
-			record.c.c_override = 1;
-		}
+Mark2:
+	if(skip3 == 3)
+	  goto Mark3;
+
+	if(argc >= 5 - skip2 - skip1){
+	  if( strncmp(argv[4 - skip2 - skip1], "del", 3) == 0 ){
+	    /* leave color as is */
+	    record.c.c_override = 0;
+	    skip3 = 2;
+	  }else if(argc < 7 - skip2 - skip1){	/* prompt for color */
+	    goto color_prompt;
+	  }else{	/* change color */
+	    sscanf(argv[4 - skip2 - skip1], "%d", &r);
+	    sscanf(argv[5 - skip2 - skip1], "%d", &g);
+	    sscanf(argv[6 - skip2 - skip1], "%d", &b);
+	    record.c.c_rgb[0] = r;
+	    record.c.c_rgb[1] = g;
+	    record.c.c_rgb[2] = b;
+	    record.c.c_override = 1;
+	  }
 	}else{
 	/* Color */
 color_prompt:
-	if( record.c.c_override )
-		(void)rt_log( "Color = %d %d %d\n", 
-			record.c.c_rgb[0],
-			record.c.c_rgb[1],
-			record.c.c_rgb[2] );
-	else
-		(void)rt_log( "Color = (No color specified)\n");
-	(void)rt_log( "Color R G B (0..255)? ('del' to delete, CR to skip) ");
-	return CMD_MORE;
+	  if(mark == 3 && argc == 5 - skip2 - skip1 - 1){
+	    skip3 = 3;
+	    goto Mark3;
+	  }
+
+	  mark = 3;
+	  if( record.c.c_override )
+	    (void)rt_log( "Color = %d %d %d\n", 
+			  record.c.c_rgb[0],
+			  record.c.c_rgb[1],
+			  record.c.c_rgb[2] );
+	  else
+	    (void)rt_log( "Color = (No color specified)\n");
+
+	  (void)rt_log( "Color R G B (0..255)? ('del' to delete, CR to skip) ");
+	  return CMD_MORE;
 	}
 
+Mark3:
 	/* Inherit */
 	switch( record.c.c_inherit )  {
 	default:
@@ -207,89 +242,21 @@ color_prompt:
 		break;
 	}
 
-	if(argc >= num_params){
-		sscanf(argv[num_params - 1], "%c", &record.c.c_inherit);
-		line[0] = *argv[num_params - 1];
+	if(argc >= 8 - skip3 - skip2 - skip1){
+		sscanf(argv[8 - skip3 - skip2 - skip1 - 1], "%c", &record.c.c_inherit);
+		inherit = *argv[8 - skip3 - skip2 - skip1 - 1];
 	}else{
-		(void)rt_log( "Inheritance (0|1)? (CR to skip) ");
-		return CMD_MORE;
-	}
-#else
-	if( argc >= 3 )  {
-		if( strncmp( argv[2], "del", 3 ) != 0 )  {
-			rt_log("Use 'mater name del' to delete\n");
-			return CMD_BAD;
-		}
-		rt_log("Was %s %s\n", record.c.c_matname, record.c.c_matparm);
-		record.c.c_matname[0] = '\0';
-		record.c.c_override = 0;
-		goto out;
-	}
+	  if(mark == 4){
+	    inherit = '\0';
+	    goto Mark4;
+	  }
 
-	/* Material */
-	rt_log("Material = %s\nMaterial?  ('del' to delete, CR to skip) ", record.c.c_matname);
-	(void)fgets(line,sizeof(line),stdin);
-	nlp = strchr( line, '\n' );
-	if( strncmp(line, "del", 3) == 0 )  {
-		record.c.c_matname[0] = '\0';
-	} else if( line[0] != '\n' && line[0] != '\0' ) {
-		if( nlp != NULL )  *nlp = '\0';
-		strncpy( record.c.c_matname, line,
-			sizeof(record.c.c_matname)-1);
+	  mark = 4;
+	  (void)rt_log( "Inheritance (0|1)? (CR to skip) ");
+	  return CMD_MORE;
 	}
-
-	/* Parameters */
-	rt_log("Param = %s\nParameter string? ('del' to delete, CR to skip) ", record.c.c_matparm);
-	(void)fgets(line,sizeof(line),stdin);
-	nlp = strchr( line, '\n' );
-	if( strncmp(line, "del", 3) == 0  )  {
-		record.c.c_matparm[0] = '\0';
-	} else if( line[0] != '\n' && line[0] != '\0' ) {
-		if( nlp != NULL )  *nlp = '\0';
-		strncpy( record.c.c_matparm, line,
-			sizeof(record.c.c_matparm)-1 );
-	}
-
-	/* Color */
-	if( record.c.c_override )
-		rt_log("Color = %d %d %d\n", 
-			record.c.c_rgb[0],
-			record.c.c_rgb[1],
-			record.c.c_rgb[2] );
-	else
-		rt_log("Color = (No color specified)\n");
-	rt_log("Color R G B (0..255)? ('del' to delete, CR to skip) ");
-	/* XXX This is bad!!!  Should use CMD_MORE return*/
-	(void)fgets(line,sizeof(line),stdin);
-	if( strncmp(line, "del", 3) == 0 ) {
-		record.c.c_override = 0;
-	} else if( sscanf(line, "%d %d %d", &r, &g, &b) >= 3 )  {
-		record.c.c_rgb[0] = r;
-		record.c.c_rgb[1] = g;
-		record.c.c_rgb[2] = b;
-		record.c.c_override = 1;
-	} else {
-		/* Else, leave it unchanged */
-		rt_log(" (color unchanged)\n");
-	}
-
-	/* Inherit */
-	switch( record.c.c_inherit )  {
-	default:
-		/* This is necessary to clean up old databases with grunge here */
-		record.c.c_inherit = DB_INH_LOWER;
-		/* Fall through */
-	case DB_INH_LOWER:
-		rt_log("Inherit = 0:  lower nodes (towards leaves) override\n");
-		break;
-	case DB_INH_HIGHER:
-		rt_log("Inherit = 1:  higher nodes (towards root) override\n");
-		break;
-	}
-	rt_log("Inheritance (0|1)? (CR to skip) ");
-	(void)fgets(line,sizeof(line),stdin);
-#endif
-	switch( line[0] )  {
+Mark4:
+	switch( inherit )  {
 	case '1':
 		record.c.c_inherit = DB_INH_HIGHER;
 		break;
@@ -309,6 +276,8 @@ out:
 		return CMD_BAD;
 	}
 
+	mark = 0;
+	skip1 = skip2 = skip3 = 0;
 	return CMD_OK;
 }
 
