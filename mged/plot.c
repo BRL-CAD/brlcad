@@ -42,7 +42,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  *  potential options might include:
  *	grid, 3d w/color, |filter, infinite Z
  */
-void
+int
 f_plot( argc, argv )
 int	argc;
 char	**argv;
@@ -61,7 +61,7 @@ char	**argv;
 	int	is_pipe = 0;
 
 	if( not_state( ST_VIEW, "UNIX Plot of view" ) )
-		return;
+		return CMD_BAD;
 
 	/* Process any options */
 	Three_D = 1;				/* 3-D w/color, by default */
@@ -96,7 +96,7 @@ char	**argv;
 	}
 	if( argv[1] == (char *)0 )  {
 		printf("no filename or filter specified\n");
-		return;
+		return CMD_BAD;
 	}
 	if( argv[1][0] == '|' )  {
 		struct rt_vls	str;
@@ -108,7 +108,7 @@ char	**argv;
 		}
 		if( (fp = popen( rt_vls_addr( &str ), "w" ) ) == NULL )  {
 			perror( rt_vls_addr( &str ) );
-			return;
+			return CMD_BAD;
 		}
 		(void)printf("piped to %s\n", rt_vls_addr( &str ) );
 		rt_vls_free( &str );
@@ -116,7 +116,7 @@ char	**argv;
 	}  else  {
 		if( (fp = fopen( argv[1], "w" )) == NULL )  {
 			perror( argv[1] );
-			return;
+			return CMD_BAD;
 		}
 		(void)printf("plot stored in %s\n", argv[1] );
 		is_pipe = 0;
@@ -240,9 +240,11 @@ out:
 		(void)pclose( fp );
 	else
 		(void)fclose( fp );
+
+	return CMD_OK;
 }
 
-void
+int
 f_area( argc, argv )
 int	argc;
 char	**argv;
@@ -255,12 +257,12 @@ char	**argv;
 	FILE *fp;
 
 	if( not_state( ST_VIEW, "Presented Area Calculation" ) )
-		return;
+		return CMD_BAD;
 
 	FOR_ALL_SOLIDS( sp )  {
 		if( !sp->s_Eflag && sp->s_soldash != 0 )  {
 			printf("everything in view must be 'E'ed\n");
-			return;
+			return CMD_BAD;
 		}
 	}
 
@@ -276,7 +278,7 @@ char	**argv;
 
 	if( (fp = popen( buf, "w" )) == NULL )  {
 		perror( buf );
-		return;
+		return CMD_BAD;
 	}
 
 	/*
@@ -319,4 +321,6 @@ char	**argv;
 	(void)printf("Presented area from this viewpoint, square %s:\n",
 		rt_units_string(dbip->dbi_local2base) );
 	pclose( fp );
+
+	return CMD_OK;
 }
