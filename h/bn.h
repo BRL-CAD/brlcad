@@ -13,6 +13,8 @@
  *  bu.h macros (e.g. BU_EXTERN) here.
  *
  *  ??Should complex.h and plane.h and polyno.h get absorbed in here??
+ *	??absorbed/included??
+ *
  *
  *  Authors -
  *	Michael John Muuss
@@ -51,9 +53,7 @@ extern "C" {
 #define BN_H_VERSION	"@(#)$Header$ (BRL)"
 
 
-
-
-/*			R T _ T O L
+/*			B N _ T O L
  *
  *  A handy way of passing around the tolerance information needed to
  *  perform approximate floating-point calculations on geometry.
@@ -138,15 +138,25 @@ typedef struct bn_complex {
 
 /*----------------------------------------------------------------------*/
 /* mat.c */
+/*
+ * 4x4 Matrix math
+ */
 
-
+extern CONST mat_t mat_identity;
 
 BU_EXTERN(void		mat_print, (CONST char *title, CONST mat_t m));
 BU_EXTERN(double	mat_atan2, (double x, double y));
+
+#if 0 /* deprecated for macros below */
 BU_EXTERN(void		mat_zero, (mat_t m));
 BU_EXTERN(void		mat_idn, (mat_t m));
-BU_EXTERN(void		mat_copy, (register mat_t dest,
-					register CONST mat_t src));
+BU_EXTERN(void		mat_copy, (register mat_t dest,register CONST mat_t src));
+#else
+#define	mat_zero( _m )	(void)memset( (void *)_m, 0, sizeof(mat_t))
+#define mat_idn( _m )	(void)memcpy( (void *)_m, mat_identity, sizeof(mat_t))
+#define mat_copy(_d,_s)	(void)memcpy( (void *)_d, _s, sizeof(mat_t))
+#endif /* deprecated */
+
 BU_EXTERN(void		mat_mul, (register mat_t o, register CONST mat_t a,
 					register CONST mat_t b));
 BU_EXTERN(void		mat_mul2, (register CONST mat_t i, register mat_t o));
@@ -195,6 +205,123 @@ BU_EXTERN(matp_t	mat_dup, (CONST mat_t	in));
 BU_EXTERN(int		mat_is_equal, (CONST mat_t a, CONST mat_t b, 
 					CONST struct bn_tol *tol));
 
+/*----------------------------------------------------------------------*/
+/* noise.c */
+/*
+ * fractal noise support
+ */
+
+BU_EXTERN(void		bn_noise_init, () );
+BU_EXTERN(double	bn_noise_perlin, (CONST point_t pt) );
+BU_EXTERN(void		bn_noise_vec, (point_t point, point_t result) );
+BU_EXTERN(double	bn_noise_fbm, (point_t point, double h_val,
+				double lacunarity, double octaves) );
+BU_EXTERN(double	bn_noise_turb, (point_t point, double h_val,
+				double lacunarity, double octaves ) );
+
+/*----------------------------------------------------------------------*/
+/* plane.c */
+/*
+ * Plane/line/point calculations
+ */
+
+
+BU_EXTERN(int		bn_dist_pt3_lseg3, (fastf_t *dist, point_t pca,
+				CONST point_t a, CONST point_t b,
+				CONST point_t p, CONST struct bn_tol *tol));
+BU_EXTERN(int		bn_3pts_collinear, ( point_t a, point_t b, point_t c,
+				CONST struct bn_tol *tol));
+BU_EXTERN(int		bn_pt3_pt3_equal, ( CONST point_t a, CONST point_t b,
+				CONST struct bn_tol *tol));
+BU_EXTERN(int		bn_dist_pt2_lseg2, ( fastf_t *dist_sq, 
+				fastf_t pca[2], CONST point_t a,
+				point_t b, point_t p,
+				CONST struct bn_tol *tol));
+BU_EXTERN(int		bn_isect_lseg3_lseg3, ( fastf_t *dist,
+				CONST point_t p, CONST vect_t pdir,
+				CONST point_t q, CONST vect_t qdir,
+				CONST struct bn_tol *tol));
+BU_EXTERN(int		bn_isect_line3_line3, (fastf_t *t, fastf_t *u, 	
+				CONST point_t p, CONST vect_t d,
+				CONST point_t a, CONST vect_t c,
+				CONST struct bn_tol *tol));
+BU_EXTERN(int		bn_2line3_colinear, ( CONST point_t p1,
+				CONST vect_t d1, CONST point_t p2,
+				CONST vect_t d2, double range,
+				CONST struct bn_tol *tol));
+BU_EXTERN(int		bn_isect_pt2_lseg2, ( fastf_t *dist, CONST point_t a,
+				CONST point_t b, CONST point_t p,
+				CONST struct bn_tol *tol));
+BU_EXTERN(int		bn_isect_line2_lseg2, (fastf_t *dist, CONST point_t p,
+				CONST vect_t d, CONST point_t a,
+				CONST vect_t c, CONST struct bn_tol *tol));
+BU_EXTERN(int		bn_isect_lseg2_lseg2, (fastf_t *dist, CONST point_t p,
+				CONST vect_t pdir, CONST point_t q,
+				CONST vect_t qdir, CONST struct bn_tol *tol));
+BU_EXTERN(int		bn_isect_line2_line2, ( fastf_t *dist,
+				CONST point_t p, CONST vect_t d,
+				CONST point_t a, CONST vect_t c,
+				CONST struct bn_tol *tol));
+BU_EXTERN(double	bn_dist_pt3_pt3, (CONST point_t a, CONST point_t b));
+BU_EXTERN(int		bn_3pts_distinct, (CONST point_t a, CONST point_t b,
+				CONST point_t c, CONST struct bn_tol *tol) );
+BU_EXTERN(int		bn_mk_plane_3pts, (plane_t plane, CONST point_t a,
+				CONST point_t b, CONST point_t c,
+				CONST struct bn_tol *tol) );
+BU_EXTERN(int		bn_mkpoint_3planes, (point_t pt, CONST plane_t a,
+				CONST plane_t b, CONST plane_t c) );
+BU_EXTERN(int		bn_isect_line3_plane, (fastf_t *dist,
+				CONST point_t pt,
+				CONST vect_t dir,
+				CONST plane_t plane,
+				CONST struct bn_tol *tol) );
+BU_EXTERN(int		bn_isect_2planes, (point_t pt, vect_t dir,
+				CONST plane_t a, CONST plane_t b,
+				CONST vect_t rpp_min,
+				CONST struct bn_tol *tol) );
+BU_EXTERN(int		bn_isect_2lines, (fastf_t *t, fastf_t *u,
+				CONST point_t p, CONST vect_t d, 
+				CONST point_t a, CONST vect_t c,
+				CONST struct bn_tol *tol) );
+BU_EXTERN(int		bn_isect_line_lseg, (fastf_t *t, CONST point_t p,
+				CONST vect_t d, CONST point_t a,
+				CONST point_t b, CONST struct bn_tol *tol) );
+BU_EXTERN(double	bn_dist_line3_pt3, (CONST point_t pt,
+				CONST vect_t dir, CONST point_t a) );
+BU_EXTERN(double	bn_distsq_line3_pt3, (CONST point_t pt,
+				CONST vect_t dir, CONST point_t a));
+BU_EXTERN(double	bn_dist_line_origin, (CONST point_t pt,
+				CONST vect_t dir) );
+BU_EXTERN(double	bn_dist_line2_point2, (CONST point_t pt,
+				CONST vect_t dir, CONST point_t a));
+BU_EXTERN(double	bn_distsq_line2_point2, (CONST point_t pt,
+				CONST vect_t dir, CONST point_t a));
+BU_EXTERN(double	bn_area_of_triangle, (CONST point_t a,
+				CONST point_t b, CONST point_t c) );
+BU_EXTERN(int		bn_isect_pt_lseg, (fastf_t *dist, CONST point_t a,
+				CONST point_t b, CONST point_t p,
+				CONST struct bn_tol *tol) );
+BU_EXTERN(double	bn_dist_pt_lseg, (point_t pca, CONST point_t a,
+				CONST point_t b, CONST point_t p,
+				CONST struct bn_tol *tol) );
+BU_EXTERN(void		bn_rotate_bbox, (point_t omin, point_t omax,
+				CONST mat_t mat, CONST point_t imin,
+				CONST point_t imax));
+BU_EXTERN(void		bn_rotate_plane, (plane_t oplane, CONST mat_t mat,
+				CONST plane_t iplane));
+BU_EXTERN(int		bn_coplanar, (CONST plane_t a, CONST plane_t b,
+				CONST struct bn_tol *tol));
+BU_EXTERN(double	bn_angle_measure, (vect_t vec, CONST vect_t x_dir,
+				CONST vect_t y_dir));
+BU_EXTERN(double	bn_dist_pt3_along_line3, (CONST point_t	p,
+				CONST vect_t d, CONST point_t x));
+BU_EXTERN(double	bn_dist_pt2_along_line2, (CONST point_t p,
+				CONST vect_t d, CONST point_t x));
+BU_EXTERN(int		bn_between, (double left, double mid,
+				double right, CONST struct bn_tol *tol));
+
+
+
 
 /*----------------------------------------------------------------------*/
 /* poly.c */
@@ -215,6 +342,9 @@ typedef  struct bn_poly {
 
 /*----------------------------------------------------------------------*/
 /* qmath.c */
+/*
+ * Quaternion support 
+ */
 
 BU_EXTERN(void quat_mat2quat, (quat_t quat, mat_t mat));
 BU_EXTERN(void quat_quat2mat, (mat_t mat, quat_t quat));
@@ -246,6 +376,7 @@ BU_EXTERN(void quat_log, (quat_t out, quat_t in));
  *	}
  */
 #define BN_RAND_TABSIZE 4096
+#define BN_RAND_TABMASK 0xfff
 #define BN_RANDSEED( _i, _seed )        _i = _seed % BN_RAND_TABSIZE
 #define BN_RANDOM( _i )	bn_rand_table[ _i = (_i+1) % BN_RAND_TABSIZE ]
 extern CONST float bn_rand_table[BN_RAND_TABSIZE];
