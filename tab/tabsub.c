@@ -352,7 +352,6 @@ int	nwords;
 			twist = 0.0;
 		else
 			twist = atof(words[3]);
-fprintf(stderr,"az=%g, el=%g, twist=%g\n", az, el, twist);
 		mat_idn( mat );
 		/* XXX does not take twist, for now XXX */
 		mat_ae( mat, az, el );
