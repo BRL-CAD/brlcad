@@ -524,7 +524,11 @@ spacend:
 				if ( deltao2 > delta )
 					delta = deltao2;
 				deltao2 = (delta + 1L) / 2L;
-
+				if( debug )
+					fprintf( stderr,"Space: X=(%d,%d) Y=(%d,%d) delta=%d\n",
+						space.left, space.right,
+						space.bottom, space.top,
+						delta );
 				continue;
 
 			case 'C':	/* color */
@@ -638,35 +642,37 @@ STATIC bool
 GetCoords( coop )
 	register coords	*coop;		/* -> input coordinates */
 	{
-	/* read coordinates */
+	register long x,y;
 
+	/* read coordinates */
 	if ( fread( (char *)coop, (int)sizeof (coords), 1, pfin ) != 1 )
 		return false;
 
-	/* limit left, bottom */
+	x = coop->x;	/* get them into longs */
+	y = coop->y;
 
-	if ( (coop->x -= space.left) < 0 )
-		coop->x = 0;
-	if ( (coop->y -= space.bottom) < 0 )
-		coop->y = 0;
+	/* limit left, bottom */
+	if( debug )  fprintf(stderr,"Coord: (%d,%d) ", coop->x, coop->y);
+	if ( (x -= space.left) < 0 )
+		x = 0;
+	if ( (y -= space.bottom) < 0 )
+		y = 0;
 
 	/* convert to device pixels */
-
-	coop->x = (short)(((long)coop->x * Npixels + deltao2) / delta);
-	coop->y = (short)(((long)coop->y * Nscanlines + deltao2) / delta);
+	coop->x = (short)((x * Npixels + deltao2) / delta);
+	coop->y = (short)((y * Nscanlines + deltao2) / delta);
 
 	/* REVERSE the y axis for those of you who like plots origin down */
 	coop->y = Nscanlines - coop->y;
 	
 	/* limit right, top */
-
 	if ( coop->x > XMAX )
 		coop->x = XMAX;
 	if ( coop->y > YMAX )
 		coop->y = YMAX;
 
 	if( debug )
-		fprintf( stderr,"Coord: (%d,%d)\n", coop->x, coop->y);
+		fprintf( stderr,"Pixel: (%d,%d)\n", coop->x, coop->y);
 		
 	return true;
 	}
