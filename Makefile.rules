@@ -171,8 +171,7 @@ noprod:
 #
 #  Automaticly build #include dependencies.
 #
-#  Two versions are supplied.  Comment out the one that does not apply.
-#  The default will work on all systems
+#  This code can't be simply replaced by the 4.3 BSD "cc -M".
 #
 #  The convention for writing #include directives is:
 #	#include "./file"	gives file in current directory
@@ -180,54 +179,39 @@ noprod:
 #	#include "file"		gives file in ${INCDIR}
 #	#include <file>		leaves to CPP
 #
-#  Note that there MUST be a SPACE after the #include in order to
+#  Note that there MUST be a SPACE after the "#include" in order to
 #  be seen;  this allows conditional includes (if needed) to be indicated
 #  by a #include TAB, so as to not cause trouble.
-depend:		${CFILES}
+depend:
 	-@if test -n "${CFILES}" ; \
 	then	$(MAKE) $(MFLAGS) -$(MAKEFLAGS) do-depend ; \
 	fi
 
-#  Default:  For sites without "cc -M".
-do-depend:		${CFILES}
-	@mv -f Makefile.loc Makefile.bak
-	@cp Makefile.bak Makefile.loc
-	@chmod 664 Makefile.loc
-	@for k in ${CFILES}; do \
+do-depend:
+	cd ../${SRCDIR}; \
+	mv -f Makefile.loc Makefile.bak; \
+	cp Makefile.bak Makefile.loc; \
+	chmod 664 Makefile.loc; \
+	for k in ${CFILES}; do \
 		i=`basename $$k .c`; \
-		(echo $$i.o: $$i.c >>makedep; \
-		grep '^#include ' /dev/null $$i.c | sed \
+		echo $$i.o: ../${SRCDIR}/$$k >>makedep; \
+		grep '^#include ' /dev/null ../${SRCDIR}/$$k | sed \
+			-e 's,^../'${SRCDIR}'/,,' \
 			-e 's,c:[^"]*"\./\([^"]*\)".*,o: \1,' \
 			-e 's,c:[^"]*"/\([^"]*\)".*,o: /\1,' \
 			-e 's,c:[^"]*"\([^"]*\)".*,o: '${INCDIR}'/\1,' \
 			-e '/debug.h/d' \
 			-e '/c:[^<]*<\(.*\)>/d' \
-			>>makedep); done
-	@echo '# DO NOT DELETE THIS LINE -- make depend uses it' >>Makefile.loc
-	@echo '# IF YOU PUT STUFF HERE IT WILL GO AWAY' >> Makefile.loc
-	@echo '/^# DO NOT DELETE THIS LINE/+1,$$d' >eddep
-	@echo '$$r makedep' >>eddep
-	@echo 'w' >>eddep
-	@ed - Makefile.loc < eddep
-	@rm eddep makedep
-	@echo '# DEPENDENCIES MUST END AT END OF FILE' >> Makefile.loc
-	@echo '# IF YOU PUT STUFF HERE IT WILL GO AWAY' >> Makefile.loc
-	@echo '# see make depend above' >> Makefile.loc
-
-#  For sites with cc -M (ie, 4.3BSD).
-#do-depend:		${CFILES}
-#	( for i in ${CFILES} ; do \
-#		${CC} -M ${CFLAGS} $$i.c ; done ) | \
-#	awk ' { if ($$1 != prev) { print rec; rec = $$0; prev = $$1; } \
-#		else { if (length(rec $$2) > 78) { print rec; rec = $$0; } \
-#		       else rec = rec " " $$2 } } \
-#	      END { print rec } ' > makedep
-#	echo '/^# DO NOT DELETE THIS LINE/+2,$$d' >eddep
-#	echo '$$r makedep' >>eddep
-#	echo 'w' >>eddep
-#	cp Makefile.loc Makefile.bak
-#	ed - Makefile.loc < eddep
-#	rm eddep makedep
-#	echo '# DEPENDENCIES MUST END AT END OF FILE' >> Makefile.loc
-#	echo '# IF YOU PUT STUFF HERE IT WILL GO AWAY' >> Makefile.loc
-#	echo '# see make depend above' >> Makefile.loc
+			>>makedep; \
+		echo '	$$(CC) $$(CFLAGS) -c ../'${SRCDIR}/$$k >>makedep; \
+	done; \
+	echo '# DO NOT DELETE THIS LINE -- make depend uses it' >>Makefile.loc; \
+	echo '# IF YOU PUT STUFF HERE IT WILL GO AWAY' >> Makefile.loc; \
+	echo '/^# DO NOT DELETE THIS LINE/+1,$$d' >eddep; \
+	echo '$$r makedep' >>eddep; \
+	echo 'w' >>eddep; \
+	ed - Makefile.loc < eddep; \
+	rm eddep makedep; \
+	echo '# DEPENDENCIES MUST END AT END OF FILE' >> Makefile.loc; \
+	echo '# IF YOU PUT STUFF HERE IT WILL GO AWAY' >> Makefile.loc; \
+	echo '# see make depend above' >> Makefile.loc
