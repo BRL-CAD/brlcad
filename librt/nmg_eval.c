@@ -29,6 +29,10 @@ static char RCSnmg_eval[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "raytrace.h"
 
+/* XXX move to raytrace.h, for nmg_info.c entries */
+RT_EXTERN(struct faceuse *nmg_find_fu_with_fg_in_s, (CONST struct shell *s1,
+				CONST struct faceuse *fu2));
+
 struct nmg_bool_state  {
 	struct shell	*bs_dest;
 	struct shell	*bs_src;
@@ -305,8 +309,7 @@ struct nmg_bool_state *bs;
 			/* faceuse is empty, face & mate die */
 			if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
 		    		rt_log("faceuse x%x empty, kill\n", fu);
-			if( RT_LIST_NOT_HEAD(fu, &s->fu_hd) &&
-			    nextfu == fu->fumate_p )
+			if( nextfu == fu->fumate_p )
 				nextfu = RT_LIST_PNEXT(faceuse, nextfu);
 			nmg_kfu( fu );	/* kill face & mate, dequeue from shell */
 			if( rt_g.NMG_debug & DEBUG_VERIFY )
@@ -324,6 +327,10 @@ struct nmg_bool_state *bs;
 				if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
 			    		rt_log("faceuse x%x flipped\n", fu);
 				nmg_reverse_face( fu );
+#if 0
+				/* XXX why doesn't this work? */
+				nmg_reverse_face_and_radials( fu );
+#endif
 			}
 		} else {
 			/* loops_flipped <= 0 */
@@ -335,13 +342,29 @@ struct nmg_bool_state *bs;
 				rt_bomb("nmg_eval_shell() retaining face with no loops?\n");
 			}
 		}
+
 		if( fu->s_p != bs->bs_dest )  {
+			struct faceuse	*fu2;
+
 			if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
 		    		rt_log("faceuse x%x moved to A shell\n", fu);
-			if( RT_LIST_NOT_HEAD(fu, &s->fu_hd) &&
-			    nextfu == fu->fumate_p )
+			if( nextfu == fu->fumate_p )
 				nextfu = RT_LIST_PNEXT(faceuse, nextfu);
-			nmg_mv_fu_between_shells( bs->bs_dest, s, fu );
+
+			/* If there is a face in the destination shell that
+			 * shares face geometry with this face, then
+			 * move all the loops into the other face,
+			 * and eliminate this redundant face.
+			 */
+			fu2 = nmg_find_fu_with_fg_in_s( bs->bs_dest, fu );
+			if( fu2 )  {
+rt_log("retaining face, doing nmg_jf()\n");
+				nmg_jf( fu2, fu );
+				/* fu pointer is invalid here */
+			} else {
+				nmg_mv_fu_between_shells( bs->bs_dest, s, fu );
+			}
+
 			fu = nextfu;
 			continue;
 		}
