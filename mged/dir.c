@@ -1837,11 +1837,9 @@ register struct directory *dp;
 
 
 #ifdef SYSV
+#undef bzero
 bzero( str, n )
 {
 	memset( str, '\0', n );
-}
-bcopy(from, to, count)  {
-	memcpy( to, from, count );
 }
 #endif
