@@ -34,8 +34,11 @@
 #include <strings.h>
 #endif
 
-#include "tcl.h"
+#ifdef BWISH
 #include "tk.h"
+#else
+#include "tcl.h"
+#endif
 
 #include "machine.h"
 #include "externs.h"
