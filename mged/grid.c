@@ -453,7 +453,7 @@ char    **argv;
   }
 
   mged_vls_struct_parse(&vls, "Grid", grid_vparse,
-			(CONST char *)grid_state, argc, argv);
+			(const char *)grid_state, argc, argv);
   Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
   bu_vls_free(&vls);
 

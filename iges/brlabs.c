@@ -21,7 +21,7 @@
 #include "machine.h"
 
 fastf_t brlabs( a )
-register CONST fastf_t a;
+register const fastf_t a;
 {
 	register fastf_t b;
 

@@ -84,10 +84,10 @@ point_t e_axes_pos;
 point_t curr_e_axes_pos;
 short int fixv;		/* used in ECMD_ARB_ROTATE_FACE,f_eqn(): fixed vertex */
 
-MGED_EXTERN( struct wdb_pipept *find_pipept_nearest_pt, (CONST struct bu_list *pipe_hd, CONST point_t pt ) );
+MGED_EXTERN( struct wdb_pipept *find_pipept_nearest_pt, (const struct bu_list *pipe_hd, const point_t pt ) );
 MGED_EXTERN( void split_pipept, (struct bu_list *pipe_hd, struct wdb_pipept *ps, point_t pt ) );
 MGED_EXTERN( struct wdb_pipept *del_pipept, (struct wdb_pipept *ps ) );
-MGED_EXTERN( struct wdb_pipept *add_pipept, (struct rt_pipe_internal *pipe, struct wdb_pipept *pp, CONST point_t new_pt ) );
+MGED_EXTERN( struct wdb_pipept *add_pipept, (struct rt_pipe_internal *pipe, struct wdb_pipept *pp, const point_t new_pt ) );
 
 /* data for solid editing */
 int			sedraw;	/* apply solid editing changes */
@@ -8618,8 +8618,8 @@ nurb_closest3d(surface, uval, vval, spl, ref_pt )
 int				*surface;
 int				*uval;
 int				*vval;
-CONST struct rt_nurb_internal	*spl;
-CONST point_t			ref_pt;
+const struct rt_nurb_internal	*spl;
+const point_t			ref_pt;
 {
 	struct face_g_snurb	*srf;
 	fastf_t		*mesh;
@@ -9044,7 +9044,7 @@ Tcl_Interp *interp;
 int argc;
 char **argv;
 {
-  register CONST struct rt_functab *ftp;
+  register const struct rt_functab *ftp;
   long save_magic;
   int context;
 

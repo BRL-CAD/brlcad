@@ -354,7 +354,7 @@ char	*argv[];
 		/* Walk indicated tree(s).  Each region will be output
 		 * as a single manifold solid BREP object */
 
-		ret = db_walk_tree(dbip, argc-1, (CONST char **)(argv+1),
+		ret = db_walk_tree(dbip, argc-1, (const char **)(argv+1),
 			ncpu,
 			&tree_state,
 			0,			/* take all regions */
@@ -392,7 +392,7 @@ char	*argv[];
 		/* Walk the indicated tree(s). Each region is output as a collection
 		 * of trimmed NURBS */
 
-		ret = db_walk_tree(dbip, argc-1, (CONST char **)(argv+1),
+		ret = db_walk_tree(dbip, argc-1, (const char **)(argv+1),
 			ncpu,
 			&tree_state,
 			0,			/* take all regions */

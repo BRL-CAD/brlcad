@@ -448,7 +448,7 @@ FILE	*fp;
  */
 int
 model_rpp( min, max )
-CONST point_t	min, max;
+const point_t	min, max;
 {
 
 	if( space_set )  {

@@ -1050,7 +1050,7 @@ reproject_splat( ix, iy, ip, new_view_pt )
 int	ix;
 int	iy;
 register struct floatpixel	*ip;
-CONST point_t			new_view_pt;
+const point_t			new_view_pt;
 {
 	register struct floatpixel	*op;
 	int	count = 1;

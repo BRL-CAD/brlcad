@@ -85,7 +85,7 @@ BU_EXTERN( void			rt_spect_make_CIE_XYZ, (
 					struct bn_tabdata **x,
 					struct bn_tabdata **y,
 					struct bn_tabdata **z,
-					CONST struct bn_table *tabp));
+					const struct bn_table *tabp));
 
 BU_EXTERN( void			rt_spect_black_body, (struct bn_tabdata *data,
 					double temp, unsigned int n));
@@ -95,6 +95,6 @@ BU_EXTERN( void			rt_spect_black_body_fast, (
 
 BU_EXTERN(void			rt_spect_reflectance_rgb, 
 	  (struct bn_tabdata	*curve, 
-	   CONST float		rgb[3]));
+	   const float		rgb[3]));
 
 

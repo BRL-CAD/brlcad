@@ -35,7 +35,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  */
 char *
 strdup( cp )
-register CONST char *cp;
+register const char *cp;
 {
 	register char	*base;
 	register int	len;

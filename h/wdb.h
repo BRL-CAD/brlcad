@@ -104,8 +104,8 @@ struct wdb_pipept {
 #define WDB_PIPESEG_MAGIC	0x9723ffef
 
 
-WDB_EXTERN(int mk_id, (struct rt_wdb *fp, CONST char *title) );
-WDB_EXTERN(int mk_id_units, (struct rt_wdb *fp, CONST char *title, CONST char *units) );
+WDB_EXTERN(int mk_id, (struct rt_wdb *fp, const char *title) );
+WDB_EXTERN(int mk_id_units, (struct rt_wdb *fp, const char *title, const char *units) );
 int mk_id_editunits(
 	struct rt_wdb *fp,
 	const char *title,

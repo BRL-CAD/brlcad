@@ -157,9 +157,9 @@ char *argv[];
 
     if( argc < 2 )  {
       /* Bare set command, print out current settings */
-      bu_struct_print("dm_X internal variables", X_vparse, (CONST char *)dmp );
+      bu_struct_print("dm_X internal variables", X_vparse, (const char *)dmp );
     } else if( argc == 2 ) {
-      bu_vls_struct_item_named( &vls, X_vparse, argv[1], (CONST char *)dmp, ',');
+      bu_vls_struct_item_named( &vls, X_vparse, argv[1], (const char *)dmp, ',');
       bu_log( "%s", bu_vls_addr(&vls) );
     } else {
       bu_vls_printf( &vls, "%s=\"", argv[1] );

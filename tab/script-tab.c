@@ -162,7 +162,7 @@ char	**argv;
 int
 cm_tree( argc, argv )
 int		argc;
-CONST char	**argv;
+const char	**argv;
 {
 	/* No-op */
 	return(0);

@@ -53,9 +53,9 @@ extern int	rt_ars_face();
 int
 rt_ars_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-CONST mat_t			mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+const mat_t			mat;
+const struct db_i		*dbip;
 {
 	struct rt_ars_internal *ari;
 	union record	*rp;
@@ -128,9 +128,9 @@ CONST struct db_i		*dbip;
 int
 rt_ars_export( ep, ip, local2mm, dbip )
 struct bu_external	*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double			local2mm;
-CONST struct db_i	*dbip;
+const struct db_i	*dbip;
 {
 	struct rt_ars_internal	*arip;
 	union record		*rec;
@@ -208,9 +208,9 @@ CONST struct db_i	*dbip;
 int
 rt_ars_import5( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-CONST mat_t			mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+const mat_t			mat;
+const struct db_i		*dbip;
 {
 	struct rt_ars_internal *ari;
 	register int		i, j;
@@ -263,9 +263,9 @@ CONST struct db_i		*dbip;
 int
 rt_ars_export5( ep, ip, local2mm, dbip )
 struct bu_external	*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double			local2mm;
-CONST struct db_i	*dbip;
+const struct db_i	*dbip;
 {
 	struct rt_ars_internal	*arip;
 	unsigned char	*cp;
@@ -313,7 +313,7 @@ CONST struct db_i	*dbip;
 int
 rt_ars_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {
@@ -570,7 +570,7 @@ pointp_t ap, bp, cp;
  */
 void
 rt_ars_print( stp )
-register CONST struct soltab *stp;
+register const struct soltab *stp;
 {
 	register struct tri_specific *trip =
 		(struct tri_specific *)stp->st_specific;
@@ -927,8 +927,8 @@ int
 rt_ars_plot( vhead, ip, ttol, tol )
 struct bu_list	*vhead;
 struct rt_db_internal *ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol		*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol		*tol;
 {
 	register int	i;
 	register int	j;
@@ -983,8 +983,8 @@ rt_ars_tess( r, m, ip, ttol, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol	*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol	*tol;
 {
 	register int	i;
 	register int	j;

@@ -366,8 +366,8 @@ struct faceuse {
 
 /* Returns a 3-tuple (vect_t), given faceuse and state of flip flags */
 #define NMG_GET_FU_NORMAL(_N, _fu)	{ \
-	register CONST struct faceuse	*_fu1 = (_fu); \
-	register CONST struct face_g_plane	*_fg; \
+	register const struct faceuse	*_fu1 = (_fu); \
+	register const struct face_g_plane	*_fg; \
 	NMG_CK_FACEUSE(_fu1); \
 	NMG_CK_FACE(_fu1->f_p); \
 	_fg = _fu1->f_p->g.plane_p; \
@@ -380,8 +380,8 @@ struct faceuse {
 
 /* Returns a 4-tuple (plane_t), given faceuse and state of flip flags */
 #define NMG_GET_FU_PLANE(_N, _fu)	{ \
-	register CONST struct faceuse	*_fu1 = (_fu); \
-	register CONST struct face_g_plane	*_fg; \
+	register const struct faceuse	*_fu1 = (_fu); \
+	register const struct face_g_plane	*_fg; \
 	NMG_CK_FACEUSE(_fu1); \
 	NMG_CK_FACE(_fu1->f_p); \
 	_fg = _fu1->f_p->g.plane_p; \
@@ -842,6 +842,6 @@ struct nmg_visit_handlers {
 	void	(*vis_vertex_g) NMG_ARGS((long *, genptr_t, int));
 };
 
-extern CONST struct nmg_visit_handlers nmg_visit_handlers_null;
+extern const struct nmg_visit_handlers nmg_visit_handlers_null;
 
 #endif

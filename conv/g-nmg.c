@@ -305,7 +305,7 @@ genptr_t	ptr;
 
 		name = (&(dp->d_namep));
 
-		(void) db_walk_tree( dbip, 1, (CONST char **)name,
+		(void) db_walk_tree( dbip, 1, (const char **)name,
 			1,
 			&tree_state,
 			0,

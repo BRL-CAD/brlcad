@@ -529,7 +529,7 @@ struct application	*ap;
 char **skewer_solids (argc, argv, ray_orig, ray_dir, full_path)
 
 int		argc;
-CONST char	**argv;
+const char	**argv;
 point_t		ray_orig;
 vect_t		ray_dir;
 int		full_path;

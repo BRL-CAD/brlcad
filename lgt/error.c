@@ -52,7 +52,7 @@ jmp_buf		bu_jmpbuf;		/* for BU_SETJMP() */
 
 void
 bu_bomb(str)
-CONST char *str;
+const char *str;
 	{
 	bu_log( "%s (librt.a) : Fatal error, aborting!\n", str );
 	(void) fflush( stdout );

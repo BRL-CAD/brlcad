@@ -82,8 +82,8 @@ static int	overlap_count;		/* Number of overlap pairs seen */
  */
 struct overlap_list {
 	struct overlap_list *next;	/* next one */
-	CONST char 	*reg1;		/* overlapping region 1 */
-	CONST char	*reg2;		/* overlapping region 2 */
+	const char 	*reg1;		/* overlapping region 1 */
+	const char	*reg2;		/* overlapping region 2 */
 	long	count;			/* number of time reported */
 	double	maxdepth;		/* maximum overlap depth */
 };

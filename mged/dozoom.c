@@ -97,7 +97,7 @@ fastf_t	fovy, aspect, near, far, backoff;
 static void
 mike_persp_mat( pmat, eye )
 mat_t		pmat;
-CONST point_t	eye;
+const point_t	eye;
 {
 	mat_t	shear;
 	mat_t	persp;
@@ -213,9 +213,9 @@ bn_mat_print("pmat",pmat);
 static void
 deering_persp_mat( m, l, h, eye )
 mat_t		m;
-CONST point_t	l;	/* lower left corner of screen */
-CONST point_t	h;	/* upper right (high) corner of screen */
-CONST point_t	eye;	/* eye location.  Traditionally at (0,0,1) */
+const point_t	l;	/* lower left corner of screen */
+const point_t	h;	/* upper right (high) corner of screen */
+const point_t	eye;	/* eye location.  Traditionally at (0,0,1) */
 {
 	vect_t	diff;	/* H - L */
 	vect_t	sum;	/* H + L */

@@ -606,7 +606,7 @@ end:
 
       /* Bare set command, print out current settings */
       bu_struct_print("dm internal X variables", dm_xvars_vparse,
-		      (CONST char *)dmp->dm_vars.pub_vars);
+		      (const char *)dmp->dm_vars.pub_vars);
 
       stop_catching_output(&tmp_vls);
       Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
@@ -614,7 +614,7 @@ end:
     }else if(argc == 2){
       bu_vls_init(&vls);
       bu_vls_struct_item_named(&vls, dm_xvars_vparse, argv[1],
-			       (CONST char *)dmp->dm_vars.pub_vars, ',');
+			       (const char *)dmp->dm_vars.pub_vars, ',');
       Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
       bu_vls_free(&vls);
     }

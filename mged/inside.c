@@ -52,7 +52,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_solid.h"
 #include "./mged_dm.h"
 
-BU_EXTERN( void nmg_invert_shell , ( struct shell *s , CONST struct bn_tol *tol ) );
+BU_EXTERN( void nmg_invert_shell , ( struct shell *s , const struct bn_tol *tol ) );
 
 extern struct rt_db_internal	es_int;	/* from edsol.c */
 extern struct bn_tol		mged_tol;	/* from ged.c */

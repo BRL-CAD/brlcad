@@ -515,7 +515,7 @@ register struct rt_i	*rtip;
 
 	bu_vls_init( &times );
 	rt_prep_timer();
-	if( rt_gettrees(rtip, nobjs, (CONST char **)objtab, npsw) < 0 )
+	if( rt_gettrees(rtip, nobjs, (const char **)objtab, npsw) < 0 )
 		bu_log("rt_gettrees(%s) FAILED\n", objtab[0]);
 	(void)rt_get_timer( &times, NULL );
 

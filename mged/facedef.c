@@ -347,7 +347,7 @@ static int
 get_3pts( plane, argv, tol)
 plane_t		plane;
 char		*argv[];
-CONST struct bn_tol	*tol;
+const struct bn_tol	*tol;
 {
 	int i;
 	point_t	a,b,c;
@@ -380,7 +380,7 @@ static void
 get_rotfb(plane, argv, arb)
 plane_t	plane;
 char	*argv[];
-CONST struct rt_arb_internal	*arb;
+const struct rt_arb_internal	*arb;
 {
 	fastf_t rota, fb;
 	short int i,temp;

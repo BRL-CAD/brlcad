@@ -116,7 +116,7 @@ static int
 select_lights( tsp, pathp, combp, client_data )
 register struct db_tree_state	*tsp;
 struct db_full_path		*pathp;
-CONST struct rt_comb_internal	*combp;
+const struct rt_comb_internal	*combp;
 genptr_t			client_data;
 {
 	struct directory *dp;
@@ -163,7 +163,7 @@ static int
 select_non_lights( tsp, pathp, combp, client_data )
 register struct db_tree_state	*tsp;
 struct db_full_path		*pathp;
-CONST struct rt_comb_internal	*combp;
+const struct rt_comb_internal	*combp;
 genptr_t			client_data;
 {
 	int ret;
@@ -373,7 +373,7 @@ char	*argv[];
 			continue;
 
 		/* walk trees selecting only light source regions */
-		(void)db_walk_tree(dbip, 1, (CONST char **)(&argv[i]),
+		(void)db_walk_tree(dbip, 1, (const char **)(&argv[i]),
 			1,				/* ncpu */
 			&tree_state,
 			select_lights,
@@ -386,7 +386,7 @@ char	*argv[];
 
 
 	/* Walk indicated tree(s).  Each non-light-source region will be output separately */
-	(void)db_walk_tree(dbip, argc-optind, (CONST char **)(&argv[optind]),
+	(void)db_walk_tree(dbip, argc-optind, (const char **)(&argv[optind]),
 		1,				/* ncpu */
 		&tree_state,
 		select_non_lights,

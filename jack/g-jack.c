@@ -223,7 +223,7 @@ RT_CK_TOL(jack_tree_state.ts_tol);
 RT_CK_TESS_TOL(jack_tree_state.ts_ttol);
 
 	/* Walk indicated tree(s).  Each region will be output separately */
-	(void) db_walk_tree(dbip, argc-1, (CONST char **)(argv+1),
+	(void) db_walk_tree(dbip, argc-1, (const char **)(argv+1),
 		1,			/* ncpu */
 		&jack_tree_state,
 		0,			/* take all regions */

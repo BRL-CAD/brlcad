@@ -84,7 +84,7 @@ struct bn_tabdata *data;
  */
 void
 bn_ck_table( tabp )
-CONST struct bn_table	*tabp;
+const struct bn_table	*tabp;
 {
 	register int	i;
 
@@ -143,12 +143,12 @@ double	last;
 void
 bn_tabdata_add( out, in1, in2 )
 struct bn_tabdata		*out;
-CONST struct bn_tabdata	*in1;
-CONST struct bn_tabdata	*in2;
+const struct bn_tabdata	*in1;
+const struct bn_tabdata	*in2;
 {
 	register int		j;
 	register fastf_t	*op;
-	register CONST fastf_t	*i1, *i2;
+	register const fastf_t	*i1, *i2;
 
 	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_add(x%x, x%x, x%x)\n", out, in1, in2);
 
@@ -177,12 +177,12 @@ CONST struct bn_tabdata	*in2;
 void
 bn_tabdata_mul( out, in1, in2 )
 struct bn_tabdata		*out;
-CONST struct bn_tabdata	*in1;
-CONST struct bn_tabdata	*in2;
+const struct bn_tabdata	*in1;
+const struct bn_tabdata	*in2;
 {
 	register int		j;
 	register fastf_t	*op;
-	register CONST fastf_t	*i1, *i2;
+	register const fastf_t	*i1, *i2;
 
 	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_mul(x%x, x%x, x%x)\n", out, in1, in2);
 
@@ -211,13 +211,13 @@ CONST struct bn_tabdata	*in2;
 void
 bn_tabdata_mul3( out, in1, in2, in3 )
 struct bn_tabdata		*out;
-CONST struct bn_tabdata	*in1;
-CONST struct bn_tabdata	*in2;
-CONST struct bn_tabdata	*in3;
+const struct bn_tabdata	*in1;
+const struct bn_tabdata	*in2;
+const struct bn_tabdata	*in3;
 {
 	register int		j;
 	register fastf_t	*op;
-	register CONST fastf_t	*i1, *i2, *i3;
+	register const fastf_t	*i1, *i2, *i3;
 
 	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_mul3(x%x, x%x, x%x, x%x)\n", out, in1, in2, in3);
 
@@ -250,14 +250,14 @@ CONST struct bn_tabdata	*in3;
 void
 bn_tabdata_incr_mul3_scale( out, in1, in2, in3, scale )
 struct bn_tabdata	*out;
-CONST struct bn_tabdata	*in1;
-CONST struct bn_tabdata	*in2;
-CONST struct bn_tabdata	*in3;
+const struct bn_tabdata	*in1;
+const struct bn_tabdata	*in2;
+const struct bn_tabdata	*in3;
 register double		scale;
 {
 	register int		j;
 	register fastf_t	*op;
-	register CONST fastf_t	*i1, *i2, *i3;
+	register const fastf_t	*i1, *i2, *i3;
 
 	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_incr_mul3_scale(x%x, x%x, x%x, x%x, %g)\n", out, in1, in2, in3, scale);
 
@@ -289,13 +289,13 @@ register double		scale;
 void
 bn_tabdata_incr_mul2_scale( out, in1, in2, scale )
 struct bn_tabdata	*out;
-CONST struct bn_tabdata	*in1;
-CONST struct bn_tabdata	*in2;
+const struct bn_tabdata	*in1;
+const struct bn_tabdata	*in2;
 register double		scale;
 {
 	register int		j;
 	register fastf_t	*op;
-	register CONST fastf_t	*i1, *i2;
+	register const fastf_t	*i1, *i2;
 
 	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_incr_mul2_scale(x%x, x%x, x%x, %g)\n", out, in1, in2, scale);
 
@@ -323,12 +323,12 @@ register double		scale;
 void
 bn_tabdata_scale( out, in1, scale )
 struct bn_tabdata		*out;
-CONST struct bn_tabdata	*in1;
+const struct bn_tabdata	*in1;
 register double			scale;
 {
 	register int		j;
 	register fastf_t	*op;
-	register CONST fastf_t	*i1;
+	register const fastf_t	*i1;
 
 	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_scale(x%x, x%x, %g)\n", out, in1, scale);
 
@@ -380,13 +380,13 @@ register double		scale;
 void
 bn_tabdata_join1( out, in1, scale, in2 )
 struct bn_tabdata		*out;
-CONST struct bn_tabdata		*in1;
+const struct bn_tabdata		*in1;
 register double			scale;
-CONST struct bn_tabdata		*in2;
+const struct bn_tabdata		*in2;
 {
 	register int		j;
 	register fastf_t	*op;
-	register CONST fastf_t	*i1, *i2;
+	register const fastf_t	*i1, *i2;
 
 	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_join1(x%x, x%x, %g, x%x)\n", out, in1, scale, in2 );
 
@@ -420,15 +420,15 @@ CONST struct bn_tabdata		*in2;
 void
 bn_tabdata_join2( out, in1, scale2, in2, scale3, in3 )
 struct bn_tabdata		*out;
-CONST struct bn_tabdata		*in1;
+const struct bn_tabdata		*in1;
 register double			scale2;
-CONST struct bn_tabdata		*in2;
+const struct bn_tabdata		*in2;
 register double			scale3;
-CONST struct bn_tabdata		*in3;
+const struct bn_tabdata		*in3;
 {
 	register int		j;
 	register fastf_t	*op;
-	register CONST fastf_t	*i1, *i2, *i3;
+	register const fastf_t	*i1, *i2, *i3;
 
 	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_join2(x%x, x%x, %g, x%x, %g, x%x)\n", out, in1, scale2, in2, scale3, in3 );
 
@@ -461,13 +461,13 @@ void
 bn_tabdata_blend2( out, scale1, in1, scale2, in2 )
 struct bn_tabdata		*out;
 register double			scale1;
-CONST struct bn_tabdata		*in1;
+const struct bn_tabdata		*in1;
 register double			scale2;
-CONST struct bn_tabdata		*in2;
+const struct bn_tabdata		*in2;
 {
 	register int		j;
 	register fastf_t	*op;
-	register CONST fastf_t	*i1, *i2;
+	register const fastf_t	*i1, *i2;
 
 	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_blend2(x%x, %g, x%x, %g, x%x)\n", out, scale1, in1, scale2, in2 );
 
@@ -497,15 +497,15 @@ void
 bn_tabdata_blend3( out, scale1, in1, scale2, in2, scale3, in3 )
 struct bn_tabdata		*out;
 register double			scale1;
-CONST struct bn_tabdata		*in1;
+const struct bn_tabdata		*in1;
 register double			scale2;
-CONST struct bn_tabdata		*in2;
+const struct bn_tabdata		*in2;
 register double			scale3;
-CONST struct bn_tabdata		*in3;
+const struct bn_tabdata		*in3;
 {
 	register int		j;
 	register fastf_t	*op;
-	register CONST fastf_t	*i1, *i2, *i3;
+	register const fastf_t	*i1, *i2, *i3;
 
 	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_blend3(x%x, %g, x%x, %g, x%x, %g, x%x)\n", out, scale1, in1, scale2, in2, scale3, in3 );
 
@@ -541,10 +541,10 @@ CONST struct bn_tabdata		*in3;
  */
 double
 bn_tabdata_area1( in )
-CONST struct bn_tabdata	*in;
+const struct bn_tabdata	*in;
 {
 	FAST fastf_t		area;
-	register CONST fastf_t	*ip;
+	register const fastf_t	*ip;
 	register int		j;
 
 	BN_CK_TABDATA(in);
@@ -569,9 +569,9 @@ CONST struct bn_tabdata	*in;
  */
 double
 bn_tabdata_area2( in )
-CONST struct bn_tabdata	*in;
+const struct bn_tabdata	*in;
 {
-	CONST struct bn_table	*tabp;
+	const struct bn_table	*tabp;
 	FAST fastf_t		area;
 	fastf_t			width;
 	register int		j;
@@ -601,11 +601,11 @@ CONST struct bn_tabdata	*in;
  */
 double
 bn_tabdata_mul_area1( in1, in2 )
-CONST struct bn_tabdata	*in1;
-CONST struct bn_tabdata	*in2;
+const struct bn_tabdata	*in1;
+const struct bn_tabdata	*in2;
 {
 	FAST fastf_t		area;
-	register CONST fastf_t	*i1, *i2;
+	register const fastf_t	*i1, *i2;
 	register int		j;
 
 	BN_CK_TABDATA(in1);
@@ -631,10 +631,10 @@ CONST struct bn_tabdata	*in2;
  */
 double
 bn_tabdata_mul_area2( in1, in2 )
-CONST struct bn_tabdata	*in1;
-CONST struct bn_tabdata	*in2;
+const struct bn_tabdata	*in1;
+const struct bn_tabdata	*in2;
 {
-	CONST struct bn_table	*tabp;
+	const struct bn_table	*tabp;
 	FAST fastf_t		area;
 	fastf_t			width;
 	register int		j;
@@ -671,7 +671,7 @@ CONST struct bn_tabdata	*in2;
  */
 int
 bn_table_find_x( tabp, xval )
-CONST struct bn_table	*tabp;
+const struct bn_table	*tabp;
 double			xval;
 {
 	register int	i;
@@ -699,10 +699,10 @@ double			xval;
  */
 fastf_t
 bn_table_lin_interp( samp, wl )
-CONST struct bn_tabdata	*samp;
+const struct bn_tabdata	*samp;
 register double			wl;
 {
-	CONST struct bn_table	*tabp;
+	const struct bn_table	*tabp;
 	register int		i;
 	register fastf_t	fract;
 	register fastf_t	ret;
@@ -751,10 +751,10 @@ register double			wl;
  */
 struct bn_tabdata *
 bn_tabdata_resample_max( newtable, olddata )
-CONST struct bn_table	*newtable;
-CONST struct bn_tabdata	*olddata;
+const struct bn_table	*newtable;
+const struct bn_tabdata	*olddata;
 {
-	CONST struct bn_table	*oldtable;
+	const struct bn_table	*oldtable;
 	struct bn_tabdata	*newsamp;
 	int			i;
 	int			j, k;
@@ -834,10 +834,10 @@ CONST struct bn_tabdata	*olddata;
  */
 struct bn_tabdata *
 bn_tabdata_resample_avg( newtable, olddata )
-CONST struct bn_table	*newtable;
-CONST struct bn_tabdata	*olddata;
+const struct bn_table	*newtable;
+const struct bn_tabdata	*olddata;
 {
-	CONST struct bn_table	*oldtable;
+	const struct bn_table	*oldtable;
 	struct bn_tabdata	*newsamp;
 	int			i;
 	int			j, k;
@@ -919,8 +919,8 @@ CONST struct bn_tabdata	*olddata;
  */
 int
 bn_table_write( filename, tabp )
-CONST char	*filename;
-CONST struct bn_table	*tabp;
+const char	*filename;
+const struct bn_table	*tabp;
 {
 	FILE	*fp;
 	int	j;
@@ -958,7 +958,7 @@ CONST struct bn_table	*tabp;
  */
 struct bn_table *
 bn_table_read( filename )
-CONST char	*filename;
+const char	*filename;
 {
 	struct bn_table	*tabp;
 	struct bu_vls		line;
@@ -1006,8 +1006,8 @@ CONST char	*filename;
  */
 void
 bn_pr_table( title, tabp )
-CONST char		*title;
-CONST struct bn_table	*tabp;
+const char		*title;
+const struct bn_table	*tabp;
 {
 	int	j;
 
@@ -1024,8 +1024,8 @@ CONST struct bn_table	*tabp;
  */
 void
 bn_pr_tabdata( title, data )
-CONST char		*title;
-CONST struct bn_tabdata	*data;
+const char		*title;
+const struct bn_tabdata	*data;
 {
 	int	j;
 
@@ -1049,11 +1049,11 @@ CONST struct bn_tabdata	*data;
  */
 int
 bn_print_table_and_tabdata( filename, data )
-CONST char			*filename;
-CONST struct bn_tabdata	*data;
+const char			*filename;
+const struct bn_tabdata	*data;
 {
 	FILE	*fp;
-	CONST struct bn_table	*tabp;
+	const struct bn_table	*tabp;
 	int	j;
 
 	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_print_table_and_tabdata(%s, x%x)\n", filename, data);
@@ -1094,7 +1094,7 @@ CONST struct bn_tabdata	*data;
  */
 struct bn_tabdata *
 bn_read_table_and_tabdata( filename )
-CONST char	*filename;
+const char	*filename;
 {
 	struct bn_table	*tabp;
 	struct bn_tabdata	*data;
@@ -1155,9 +1155,9 @@ CONST char	*filename;
  */
 struct bn_tabdata *
 bn_tabdata_binary_read( filename, num, tabp )
-CONST char			*filename;
+const char			*filename;
 int				num;
-CONST struct bn_table	*tabp;
+const struct bn_table	*tabp;
 {
 	struct bn_tabdata	*data;
 	char	*cp;
@@ -1228,7 +1228,7 @@ CONST struct bn_table	*tabp;
  */
 struct bn_tabdata *
 bn_tabdata_malloc_array( tabp, num )
-CONST struct bn_table	*tabp;
+const struct bn_table	*tabp;
 int	num;
 {
 	struct bn_tabdata	*data;
@@ -1265,7 +1265,7 @@ int	num;
 void
 bn_tabdata_copy( out, in )
 struct bn_tabdata	*out;
-CONST struct bn_tabdata	*in;
+const struct bn_tabdata	*in;
 {
 	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_copy(x%x, x%x)\n", out, in);
 
@@ -1277,7 +1277,7 @@ CONST struct bn_tabdata	*in;
 	if( in->ny != out->ny )
 		bu_bomb("bn_tabdata_copy(): different tabdata lengths?\n");
 
-	bcopy( (CONST char *)in->y, (char *)out->y, BN_SIZEOF_TABDATA_Y(in) );
+	bcopy( (const char *)in->y, (char *)out->y, BN_SIZEOF_TABDATA_Y(in) );
 }
 
 /*
@@ -1285,14 +1285,14 @@ CONST struct bn_tabdata	*in;
  */
 struct bn_tabdata *
 bn_tabdata_dup( in )
-CONST struct bn_tabdata	*in;
+const struct bn_tabdata	*in;
 {
 	struct bn_tabdata *data;
 
 	BN_CK_TABDATA( in );
 	BN_GET_TABDATA( data, in->table );
 
-	bcopy( (CONST char *)in->y, (char *)data->y, BN_SIZEOF_TABDATA_Y(in) );
+	bcopy( (const char *)in->y, (char *)data->y, BN_SIZEOF_TABDATA_Y(in) );
 
 	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_dup(x%x) = x%x\n", in, data);
 	return data;
@@ -1307,7 +1307,7 @@ CONST struct bn_tabdata	*in;
 struct bn_tabdata *
 bn_tabdata_get_constval( val, tabp )
 double			val;
-CONST struct bn_table	*tabp;
+const struct bn_table	*tabp;
 {
 	struct bn_tabdata	*data;
 	int			todo;
@@ -1357,9 +1357,9 @@ double			val;
 void
 bn_tabdata_to_tcl( vp, data )
 struct bu_vls		*vp;
-CONST struct bn_tabdata	*data;
+const struct bn_tabdata	*data;
 {
-	CONST struct bn_table	*tabp;
+	const struct bn_table	*tabp;
 	register int i;
 	FAST fastf_t	minval = MAX_FASTF, maxval = -MAX_FASTF;
 
@@ -1396,9 +1396,9 @@ CONST struct bn_tabdata	*data;
  */
 struct bn_tabdata *
 bn_tabdata_from_array( array )
-CONST double *array;
+const double *array;
 {
-	register CONST double	*dp;
+	register const double	*dp;
 	int			len = 0;
 	struct bn_table		*tabp;
 	struct bn_tabdata	*data;
@@ -1434,10 +1434,10 @@ CONST double *array;
 void
 bn_tabdata_freq_shift( out, in, offset )
 struct bn_tabdata		*out;
-CONST struct bn_tabdata		*in;
+const struct bn_tabdata		*in;
 double				offset;
 {
-	CONST struct bn_table	*tabp;
+	const struct bn_table	*tabp;
 	register int 		i;
 
 	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_freq_shift(x%x, x%x, offset=%g)\n", out, in, offset);
@@ -1463,7 +1463,7 @@ double				offset;
  */
 int
 bn_table_interval_num_samples( tabp, low, hi )
-CONST struct bn_table *tabp;
+const struct bn_table *tabp;
 double	low;
 double	hi;
 {
@@ -1523,8 +1523,8 @@ int	j;
  */
 struct bn_table *
 bn_table_merge2( a, b )
-CONST struct bn_table	*a;
-CONST struct bn_table	*b;
+const struct bn_table	*a;
+const struct bn_table	*b;
 {
 	struct bn_table *new;
 	register int i, j, k;
@@ -1580,7 +1580,7 @@ CONST struct bn_table	*b;
  */
 struct bn_tabdata *
 bn_tabdata_mk_linear_filter( spectrum, lower_wavelen, upper_wavelen )
-CONST struct bn_table *spectrum;
+const struct bn_table *spectrum;
 double		lower_wavelen;
 double		upper_wavelen;
 {

@@ -106,7 +106,7 @@ struct bn_tol {
 /* asize.c */
 BU_EXTERN(int			bn_common_file_size, (int *width,
 						      int *height,
-						      CONST char *filename,
+						      const char *filename,
 						      int pixel_size));
 BU_EXTERN(int			bn_common_name_size, (int *width,
 						      int *height,
@@ -204,23 +204,23 @@ typedef struct bn_complex {
 	(ap)->re = (cp)->re * (bp)->re - (cp)->im * (bp)->im; \
 	(ap)->im = (cp)->re * (bp)->im + (cp)->im * (bp)->re; }
 
-BU_EXTERN(void			bn_cx_div, (bn_complex_t *ap, CONST bn_complex_t *bp) );
-BU_EXTERN(void			bn_cx_sqrt, (bn_complex_t *op, CONST bn_complex_t *ip) );
+BU_EXTERN(void			bn_cx_div, (bn_complex_t *ap, const bn_complex_t *bp) );
+BU_EXTERN(void			bn_cx_sqrt, (bn_complex_t *op, const bn_complex_t *ip) );
 
 /*----------------------------------------------------------------------*/
 /* mat.c */
 /*
  * 4x4 Matrix math
  */
-extern CONST mat_t 	bn_mat_identity;
+extern const mat_t 	bn_mat_identity;
 
-BU_EXTERN(void		bn_mat_print, (CONST char *title, CONST mat_t m));
+BU_EXTERN(void		bn_mat_print, (const char *title, const mat_t m));
 BU_EXTERN(double	bn_atan2, (double x, double y));
 
 #if 0 /* deprecated for macros below (which were deprecated for vmath.h) */
 BU_EXTERN(void		bn_mat_zero, (mat_t m));
 BU_EXTERN(void		bn_mat_idn, (mat_t m));
-BU_EXTERN(void		bn_mat_copy, (register mat_t dest,register CONST mat_t src));
+BU_EXTERN(void		bn_mat_copy, (register mat_t dest,register const mat_t src));
 #else
 #define bn_mat_zero( _m )	{ \
 	bu_log("%s:%d bn_mat_zero() is deprecated, use MAT_ZERO()\n", \
@@ -240,7 +240,7 @@ BU_EXTERN(void		bn_mat_copy, (register mat_t dest,register CONST mat_t src));
 	(_m)[11] = (_m)[12] = (_m)[13] = (_m)[14] = 0.0; \
 	(_m)[0] = (_m)[5] = (_m)[10] = (_m)[15] = 1.0; }
   /*
-#define bn_mat_idn( _m )	(void)memcpy( (void *)_m, (CONST void *)bn_mat_identity, sizeof(mat_t))
+#define bn_mat_idn( _m )	(void)memcpy( (void *)_m, (const void *)bn_mat_identity, sizeof(mat_t))
   */
 
 #define bn_mat_copy( _d, _s )	{ \
@@ -263,15 +263,15 @@ BU_EXTERN(void		bn_mat_copy, (register mat_t dest,register CONST mat_t src));
 	(_d)[14] = (_s)[14];\
 	(_d)[15] = (_s)[15]; }
   /*
-#define bn_mat_copy(_d,_s)	(void)memcpy( (void *)_d, (CONST void *)(_s), sizeof(mat_t))
+#define bn_mat_copy(_d,_s)	(void)memcpy( (void *)_d, (const void *)(_s), sizeof(mat_t))
   */
 #endif /* deprecated */
 
-BU_EXTERN(void		bn_mat_mul, (register mat_t o, register CONST mat_t a,
-					register CONST mat_t b));
-BU_EXTERN(void		bn_mat_mul2, (register CONST mat_t i, register mat_t o));
-BU_EXTERN(void		bn_mat_mul3, (mat_t o, CONST mat_t a, CONST mat_t b,
-					CONST mat_t c));
+BU_EXTERN(void		bn_mat_mul, (register mat_t o, register const mat_t a,
+					register const mat_t b));
+BU_EXTERN(void		bn_mat_mul2, (register const mat_t i, register mat_t o));
+BU_EXTERN(void		bn_mat_mul3, (mat_t o, const mat_t a, const mat_t b,
+					const mat_t c));
 void			bn_mat_mul4(
 				mat_t		o,
 				const mat_t	a,
@@ -279,18 +279,18 @@ void			bn_mat_mul4(
 				const mat_t	c,
 				const mat_t	d);
 BU_EXTERN(void		bn_matXvec, (register hvect_t ov,
-					register CONST mat_t im,
-					register CONST hvect_t iv));
-BU_EXTERN(void		bn_mat_inv, (register mat_t output, CONST mat_t input));
+					register const mat_t im,
+					register const hvect_t iv));
+BU_EXTERN(void		bn_mat_inv, (register mat_t output, const mat_t input));
 BU_EXTERN(void		bn_vtoh_move, (register vect_t h, 
-					register CONST vect_t v));
+					register const vect_t v));
 BU_EXTERN(void		bn_htov_move, (register vect_t v, 
-					register CONST vect_t h));
-BU_EXTERN(void		bn_mat_trn, (mat_t om, register CONST mat_t im));
+					register const vect_t h));
+BU_EXTERN(void		bn_mat_trn, (mat_t om, register const mat_t im));
 BU_EXTERN(void		bn_mat_ae, (register mat_t m, double azimuth,
 					double elev));
 BU_EXTERN(void		bn_ae_vec, (fastf_t *azp, fastf_t *elp, 
-					CONST vect_t v));
+					const vect_t v));
 BU_EXTERN(void 		bn_aet_vec, ( fastf_t *az, fastf_t *el, 
 					fastf_t *twist, vect_t vec_ae,
 					vect_t vec_twist, fastf_t accuracy));
@@ -302,29 +302,29 @@ BU_EXTERN(void		bn_eigen2x2, ( fastf_t	*val1, fastf_t *val2,
 					vect_t	vec1, vect_t vec2, fastf_t a,
 					fastf_t b, fastf_t c) );
 
-BU_EXTERN(void		bn_vec_perp, (vect_t new_vec, CONST vect_t old_vec));
-BU_EXTERN(void		bn_mat_fromto, ( mat_t m, CONST vect_t from,
-					CONST vect_t to));
+BU_EXTERN(void		bn_vec_perp, (vect_t new_vec, const vect_t old_vec));
+BU_EXTERN(void		bn_mat_fromto, ( mat_t m, const vect_t from,
+					const vect_t to));
 BU_EXTERN(void		bn_mat_xrot, (mat_t m, double sinx, double cosx));
 BU_EXTERN(void		bn_mat_yrot, (mat_t m, double siny, double cosy));
 BU_EXTERN(void		bn_mat_zrot, (mat_t m, double sinz, double cosz));
-BU_EXTERN(void		bn_mat_lookat, (mat_t rot, CONST vect_t dir, int yflip));
+BU_EXTERN(void		bn_mat_lookat, (mat_t rot, const vect_t dir, int yflip));
 BU_EXTERN(void		bn_vec_ortho, (register vect_t out, 
-					register CONST vect_t in));
-BU_EXTERN(int		bn_mat_scale_about_pt, (mat_t mat, CONST point_t pt,
-					CONST double scale));
+					register const vect_t in));
+BU_EXTERN(int		bn_mat_scale_about_pt, (mat_t mat, const point_t pt,
+					const double scale));
 BU_EXTERN(void		bn_mat_xform_about_pt, (mat_t mat, 
-					CONST mat_t xform,
-					CONST point_t pt));
-BU_EXTERN(int		bn_mat_is_equal, (CONST mat_t a, CONST mat_t b, 
-					CONST struct bn_tol *tol));
-BU_EXTERN(int		bn_mat_is_identity, (CONST mat_t m));
-BU_EXTERN(void		bn_mat_arb_rot, ( mat_t m, CONST point_t pt,
-					CONST vect_t dir, CONST fastf_t ang));
-BU_EXTERN(matp_t	bn_mat_dup, (CONST mat_t in));
-BU_EXTERN(int		bn_mat_ck, (CONST char *title, CONST mat_t m));
-BU_EXTERN(fastf_t	bn_mat_det3, (CONST mat_t m));
-BU_EXTERN(fastf_t	bn_mat_determinant, (CONST mat_t m));
+					const mat_t xform,
+					const point_t pt));
+BU_EXTERN(int		bn_mat_is_equal, (const mat_t a, const mat_t b, 
+					const struct bn_tol *tol));
+BU_EXTERN(int		bn_mat_is_identity, (const mat_t m));
+BU_EXTERN(void		bn_mat_arb_rot, ( mat_t m, const point_t pt,
+					const vect_t dir, const fastf_t ang));
+BU_EXTERN(matp_t	bn_mat_dup, (const mat_t in));
+BU_EXTERN(int		bn_mat_ck, (const char *title, const mat_t m));
+BU_EXTERN(fastf_t	bn_mat_det3, (const mat_t m));
+BU_EXTERN(fastf_t	bn_mat_determinant, (const mat_t m));
 
 /*----------------------------------------------------------------------*/
 /* msr.c */
@@ -408,9 +408,9 @@ BU_EXTERN(double		bn_gauss_fill, (struct bn_gauss *p));
  */
 
 BU_EXTERN(void		bn_noise_init, () );
-BU_EXTERN(double	bn_noise_perlin, (CONST point_t pt) );
+BU_EXTERN(double	bn_noise_perlin, (const point_t pt) );
 /* XXX Why isn't the result listed first? */
-BU_EXTERN(void		bn_noise_vec, (CONST point_t point, point_t result) );
+BU_EXTERN(void		bn_noise_vec, (const point_t point, point_t result) );
 BU_EXTERN(double	bn_noise_fbm, (point_t point, double h_val,
 				double lacunarity, double octaves) );
 BU_EXTERN(double	bn_noise_turb, (point_t point, double h_val,
@@ -438,98 +438,98 @@ extern int bn_distsq_line3_line3(fastf_t dist[3],
 				 point_t pt2);
 
 BU_EXTERN(int		bn_dist_pt3_lseg3, (fastf_t *dist, point_t pca,
-				CONST point_t a, CONST point_t b,
-				CONST point_t p, CONST struct bn_tol *tol));
+				const point_t a, const point_t b,
+				const point_t p, const struct bn_tol *tol));
 BU_EXTERN(int		bn_3pts_collinear, ( point_t a, point_t b, point_t c,
-				CONST struct bn_tol *tol));
-BU_EXTERN(int		bn_pt3_pt3_equal, ( CONST point_t a, CONST point_t b,
-				CONST struct bn_tol *tol));
+				const struct bn_tol *tol));
+BU_EXTERN(int		bn_pt3_pt3_equal, ( const point_t a, const point_t b,
+				const struct bn_tol *tol));
 BU_EXTERN(int		bn_dist_pt2_lseg2, ( fastf_t *dist_sq, 
-				fastf_t pca[2], CONST point_t a,
-				CONST point_t b, CONST point_t p,
-				CONST struct bn_tol *tol));
+				fastf_t pca[2], const point_t a,
+				const point_t b, const point_t p,
+				const struct bn_tol *tol));
 BU_EXTERN(int		bn_isect_lseg3_lseg3, ( fastf_t *dist,
-				CONST point_t p, CONST vect_t pdir,
-				CONST point_t q, CONST vect_t qdir,
-				CONST struct bn_tol *tol));
+				const point_t p, const vect_t pdir,
+				const point_t q, const vect_t qdir,
+				const struct bn_tol *tol));
 BU_EXTERN(int		bn_isect_line3_line3, (fastf_t *t, fastf_t *u, 	
-				CONST point_t p, CONST vect_t d,
-				CONST point_t a, CONST vect_t c,
-				CONST struct bn_tol *tol));
-BU_EXTERN(int		bn_2line3_colinear, ( CONST point_t p1,
-				CONST vect_t d1, CONST point_t p2,
-				CONST vect_t d2, double range,
-				CONST struct bn_tol *tol));
-BU_EXTERN(int		bn_isect_pt2_lseg2, ( fastf_t *dist, CONST point_t a,
-				CONST point_t b, CONST point_t p,
-				CONST struct bn_tol *tol));
-BU_EXTERN(int		bn_isect_line2_lseg2, (fastf_t *dist, CONST point_t p,
-				CONST vect_t d, CONST point_t a,
-				CONST vect_t c, CONST struct bn_tol *tol));
-BU_EXTERN(int		bn_isect_lseg2_lseg2, (fastf_t *dist, CONST point_t p,
-				CONST vect_t pdir, CONST point_t q,
-				CONST vect_t qdir, CONST struct bn_tol *tol));
+				const point_t p, const vect_t d,
+				const point_t a, const vect_t c,
+				const struct bn_tol *tol));
+BU_EXTERN(int		bn_2line3_colinear, ( const point_t p1,
+				const vect_t d1, const point_t p2,
+				const vect_t d2, double range,
+				const struct bn_tol *tol));
+BU_EXTERN(int		bn_isect_pt2_lseg2, ( fastf_t *dist, const point_t a,
+				const point_t b, const point_t p,
+				const struct bn_tol *tol));
+BU_EXTERN(int		bn_isect_line2_lseg2, (fastf_t *dist, const point_t p,
+				const vect_t d, const point_t a,
+				const vect_t c, const struct bn_tol *tol));
+BU_EXTERN(int		bn_isect_lseg2_lseg2, (fastf_t *dist, const point_t p,
+				const vect_t pdir, const point_t q,
+				const vect_t qdir, const struct bn_tol *tol));
 BU_EXTERN(int		bn_isect_line2_line2, ( fastf_t *dist,
-				CONST point_t p, CONST vect_t d,
-				CONST point_t a, CONST vect_t c,
-				CONST struct bn_tol *tol));
-BU_EXTERN(double	bn_dist_pt3_pt3, (CONST point_t a, CONST point_t b));
-BU_EXTERN(int		bn_3pts_distinct, (CONST point_t a, CONST point_t b,
-				CONST point_t c, CONST struct bn_tol *tol) );
-BU_EXTERN(int		bn_mk_plane_3pts, (plane_t plane, CONST point_t a,
-				CONST point_t b, CONST point_t c,
-				CONST struct bn_tol *tol) );
-BU_EXTERN(int		bn_mkpoint_3planes, (point_t pt, CONST plane_t a,
-				CONST plane_t b, CONST plane_t c) );
+				const point_t p, const vect_t d,
+				const point_t a, const vect_t c,
+				const struct bn_tol *tol));
+BU_EXTERN(double	bn_dist_pt3_pt3, (const point_t a, const point_t b));
+BU_EXTERN(int		bn_3pts_distinct, (const point_t a, const point_t b,
+				const point_t c, const struct bn_tol *tol) );
+BU_EXTERN(int		bn_mk_plane_3pts, (plane_t plane, const point_t a,
+				const point_t b, const point_t c,
+				const struct bn_tol *tol) );
+BU_EXTERN(int		bn_mkpoint_3planes, (point_t pt, const plane_t a,
+				const plane_t b, const plane_t c) );
 BU_EXTERN(int		bn_isect_line3_plane, (fastf_t *dist,
-				CONST point_t pt,
-				CONST vect_t dir,
-				CONST plane_t plane,
-				CONST struct bn_tol *tol) );
+				const point_t pt,
+				const vect_t dir,
+				const plane_t plane,
+				const struct bn_tol *tol) );
 BU_EXTERN(int		bn_isect_2planes, (point_t pt, vect_t dir,
-				CONST plane_t a, CONST plane_t b,
-				CONST vect_t rpp_min,
-				CONST struct bn_tol *tol) );
+				const plane_t a, const plane_t b,
+				const vect_t rpp_min,
+				const struct bn_tol *tol) );
 BU_EXTERN(int		bn_isect_2lines, (fastf_t *t, fastf_t *u,
-				CONST point_t p, CONST vect_t d, 
-				CONST point_t a, CONST vect_t c,
-				CONST struct bn_tol *tol) );
-BU_EXTERN(int		bn_isect_line_lseg, (fastf_t *t, CONST point_t p,
-				CONST vect_t d, CONST point_t a,
-				CONST point_t b, CONST struct bn_tol *tol) );
-BU_EXTERN(double	bn_dist_line3_pt3, (CONST point_t pt,
-				CONST vect_t dir, CONST point_t a) );
-BU_EXTERN(double	bn_distsq_line3_pt3, (CONST point_t pt,
-				CONST vect_t dir, CONST point_t a));
-BU_EXTERN(double	bn_dist_line_origin, (CONST point_t pt,
-				CONST vect_t dir) );
-BU_EXTERN(double	bn_dist_line2_point2, (CONST point_t pt,
-				CONST vect_t dir, CONST point_t a));
-BU_EXTERN(double	bn_distsq_line2_point2, (CONST point_t pt,
-				CONST vect_t dir, CONST point_t a));
-BU_EXTERN(double	bn_area_of_triangle, (CONST point_t a,
-				CONST point_t b, CONST point_t c) );
-BU_EXTERN(int		bn_isect_pt_lseg, (fastf_t *dist, CONST point_t a,
-				CONST point_t b, CONST point_t p,
-				CONST struct bn_tol *tol) );
-BU_EXTERN(double	bn_dist_pt_lseg, (point_t pca, CONST point_t a,
-				CONST point_t b, CONST point_t p,
-				CONST struct bn_tol *tol) );
+				const point_t p, const vect_t d, 
+				const point_t a, const vect_t c,
+				const struct bn_tol *tol) );
+BU_EXTERN(int		bn_isect_line_lseg, (fastf_t *t, const point_t p,
+				const vect_t d, const point_t a,
+				const point_t b, const struct bn_tol *tol) );
+BU_EXTERN(double	bn_dist_line3_pt3, (const point_t pt,
+				const vect_t dir, const point_t a) );
+BU_EXTERN(double	bn_distsq_line3_pt3, (const point_t pt,
+				const vect_t dir, const point_t a));
+BU_EXTERN(double	bn_dist_line_origin, (const point_t pt,
+				const vect_t dir) );
+BU_EXTERN(double	bn_dist_line2_point2, (const point_t pt,
+				const vect_t dir, const point_t a));
+BU_EXTERN(double	bn_distsq_line2_point2, (const point_t pt,
+				const vect_t dir, const point_t a));
+BU_EXTERN(double	bn_area_of_triangle, (const point_t a,
+				const point_t b, const point_t c) );
+BU_EXTERN(int		bn_isect_pt_lseg, (fastf_t *dist, const point_t a,
+				const point_t b, const point_t p,
+				const struct bn_tol *tol) );
+BU_EXTERN(double	bn_dist_pt_lseg, (point_t pca, const point_t a,
+				const point_t b, const point_t p,
+				const struct bn_tol *tol) );
 BU_EXTERN(void		bn_rotate_bbox, (point_t omin, point_t omax,
-				CONST mat_t mat, CONST point_t imin,
-				CONST point_t imax));
-BU_EXTERN(void		bn_rotate_plane, (plane_t oplane, CONST mat_t mat,
-				CONST plane_t iplane));
-BU_EXTERN(int		bn_coplanar, (CONST plane_t a, CONST plane_t b,
-				CONST struct bn_tol *tol));
-BU_EXTERN(double	bn_angle_measure, (vect_t vec, CONST vect_t x_dir,
-				CONST vect_t y_dir));
-BU_EXTERN(double	bn_dist_pt3_along_line3, (CONST point_t	p,
-				CONST vect_t d, CONST point_t x));
-BU_EXTERN(double	bn_dist_pt2_along_line2, (CONST point_t p,
-				CONST vect_t d, CONST point_t x));
+				const mat_t mat, const point_t imin,
+				const point_t imax));
+BU_EXTERN(void		bn_rotate_plane, (plane_t oplane, const mat_t mat,
+				const plane_t iplane));
+BU_EXTERN(int		bn_coplanar, (const plane_t a, const plane_t b,
+				const struct bn_tol *tol));
+BU_EXTERN(double	bn_angle_measure, (vect_t vec, const vect_t x_dir,
+				const vect_t y_dir));
+BU_EXTERN(double	bn_dist_pt3_along_line3, (const point_t	p,
+				const vect_t d, const point_t x));
+BU_EXTERN(double	bn_dist_pt2_along_line2, (const point_t p,
+				const vect_t d, const point_t x));
 BU_EXTERN(int		bn_between, (double left, double mid,
-				double right, CONST struct bn_tol *tol));
+				double right, const struct bn_tol *tol));
 int bn_does_ray_isect_tri(
 	const point_t pt,
 	const vect_t dir,
@@ -537,9 +537,9 @@ int bn_does_ray_isect_tri(
 	const point_t A,
 	const point_t B,
 	point_t	inter);
-BU_EXTERN(int		bn_hlf_class, (CONST plane_t half_eqn,
-				       CONST vect_t min, CONST vect_t max,
-				       CONST struct bn_tol *tol));
+BU_EXTERN(int		bn_hlf_class, (const plane_t half_eqn,
+				       const vect_t min, const vect_t max,
+				       const struct bn_tol *tol));
 
 #define BN_CLASSIFY_UNIMPLEMENTED	0x0000
 #define BN_CLASSIFY_OVERLAPPING		0x0002
@@ -547,7 +547,7 @@ BU_EXTERN(int		bn_hlf_class, (CONST plane_t half_eqn,
 #define BN_CLASSIFY_OUTSIDE		0x0003
 
 BU_EXTERN(int			bn_isect_planes, (point_t pt,
-				CONST plane_t planes[], CONST int pl_count));
+				const plane_t planes[], const int pl_count));
 
 /*----------------------------------------------------------------------*/
 /* poly.c */
@@ -567,31 +567,31 @@ typedef  struct bn_poly {
 #define BN_POLY_NULL	((struct bn_poly *)NULL)
 
 BU_EXTERN(struct bn_poly *	bn_poly_mul, (struct bn_poly *product,
-				CONST struct bn_poly *m1, CONST struct bn_poly *m2));
+				const struct bn_poly *m1, const struct bn_poly *m2));
 BU_EXTERN(struct bn_poly *	bn_poly_scale, (struct bn_poly *eqn,
 				double factor));
 BU_EXTERN(struct bn_poly *	bn_poly_add, (struct bn_poly *sum,
-				CONST struct bn_poly *poly1, CONST struct bn_poly *poly2));
+				const struct bn_poly *poly1, const struct bn_poly *poly2));
 BU_EXTERN(struct bn_poly *	bn_poly_sub, (struct bn_poly *diff,
-				CONST struct bn_poly	*poly1,
-				CONST struct bn_poly	*poly2));
+				const struct bn_poly	*poly1,
+				const struct bn_poly	*poly2));
 BU_EXTERN(void			bn_poly_synthetic_division, (
 				struct bn_poly *quo, struct bn_poly *rem,
-				CONST struct bn_poly	*dvdend,
-				CONST struct bn_poly	*dvsor));
+				const struct bn_poly	*dvdend,
+				const struct bn_poly	*dvsor));
 BU_EXTERN(int			bn_poly_quadratic_roots, (
 				struct bn_complex	roots[],
-				CONST struct bn_poly	*quadrat));
+				const struct bn_poly	*quadrat));
 BU_EXTERN(int			bn_poly_cubic_roots, (
 				struct bn_complex	roots[],
-				CONST struct bn_poly	*eqn));
+				const struct bn_poly	*eqn));
 BU_EXTERN(int			bn_poly_quartic_roots, (
 				struct bn_complex	roots[],
-				CONST struct bn_poly	*eqn));
-BU_EXTERN(void			bn_pr_poly, (CONST char *title,
-				CONST struct bn_poly	*eqn));
-BU_EXTERN(void			bn_pr_roots, (CONST char *title,
-				CONST struct bn_complex	roots[], int n));
+				const struct bn_poly	*eqn));
+BU_EXTERN(void			bn_pr_poly, (const char *title,
+				const struct bn_poly	*eqn));
+BU_EXTERN(void			bn_pr_roots, (const char *title,
+				const struct bn_complex	roots[], int n));
 
 /*----------------------------------------------------------------------*/
 /* qmath.c */
@@ -599,18 +599,18 @@ BU_EXTERN(void			bn_pr_roots, (CONST char *title,
  * Quaternion support 
  */
 
-BU_EXTERN(void quat_mat2quat, (quat_t quat, CONST mat_t mat));
-BU_EXTERN(void quat_quat2mat, (mat_t mat, CONST quat_t quat));
-BU_EXTERN(double quat_distance, (CONST quat_t q1, CONST quat_t q2));
-BU_EXTERN(void quat_double, (quat_t qout, CONST quat_t q1, CONST quat_t q2));
-BU_EXTERN(void quat_bisect, (quat_t qout, CONST quat_t q1, CONST quat_t q2));
-BU_EXTERN(void quat_slerp, (quat_t qout, CONST quat_t q1, CONST quat_t q2, double f));
-BU_EXTERN(void quat_sberp, (quat_t qout, CONST quat_t q1, CONST quat_t qa, CONST quat_t qb,
-			    CONST quat_t q2, double f));
-BU_EXTERN(void quat_make_nearest, (quat_t q1, CONST quat_t q2));
-BU_EXTERN(void quat_print, (CONST char *title, CONST quat_t quat));
-BU_EXTERN(void quat_exp, (quat_t out, CONST quat_t in));
-BU_EXTERN(void quat_log, (quat_t out, CONST quat_t in));
+BU_EXTERN(void quat_mat2quat, (quat_t quat, const mat_t mat));
+BU_EXTERN(void quat_quat2mat, (mat_t mat, const quat_t quat));
+BU_EXTERN(double quat_distance, (const quat_t q1, const quat_t q2));
+BU_EXTERN(void quat_double, (quat_t qout, const quat_t q1, const quat_t q2));
+BU_EXTERN(void quat_bisect, (quat_t qout, const quat_t q1, const quat_t q2));
+BU_EXTERN(void quat_slerp, (quat_t qout, const quat_t q1, const quat_t q2, double f));
+BU_EXTERN(void quat_sberp, (quat_t qout, const quat_t q1, const quat_t qa, const quat_t qb,
+			    const quat_t q2, double f));
+BU_EXTERN(void quat_make_nearest, (quat_t q1, const quat_t q2));
+BU_EXTERN(void quat_print, (const char *title, const quat_t quat));
+BU_EXTERN(void quat_exp, (quat_t out, const quat_t in));
+BU_EXTERN(void quat_log, (quat_t out, const quat_t in));
 /*----------------------------------------------------------------------*/
 /* rand.c */
 
@@ -635,7 +635,7 @@ BU_EXTERN(void quat_log, (quat_t out, CONST quat_t in));
 #define BN_RAND_TABSIZE 4096
 #define BN_RAND_TABMASK 0xfff
 #define BN_RANDSEED( _i, _seed )  _i = ((unsigned)_seed) % BN_RAND_TABSIZE
-extern CONST float bn_rand_table[BN_RAND_TABSIZE];
+extern const float bn_rand_table[BN_RAND_TABSIZE];
 
 /* BN_RANDOM always gives numbers between 0.0 and 1.0 */
 #define BN_RANDOM( _i )	bn_rand_table[ _i = (_i+1) % BN_RAND_TABSIZE ]
@@ -675,7 +675,7 @@ extern double bn_sin_scale;
 #define bn_tab_sin(_a)	(((_a) > 0) ? \
 	( bn_sin_table[(int)((0.5+ (_a)*bn_sin_scale))&(BN_SINTABSIZE-1)] ) :\
 	(-bn_sin_table[(int)((0.5- (_a)*bn_sin_scale))&(BN_SINTABSIZE-1)] ) )
-extern CONST float bn_sin_table[BN_SINTABSIZE];
+extern const float bn_sin_table[BN_SINTABSIZE];
 
 extern void bn_mathtab_constant();
 
@@ -833,14 +833,14 @@ BU_EXTERN(void	bn_wlt_haar_2d_long_reconstruct2, (long *tbuf, long *buf, \
 
 /*----------------------------------------------------------------------*/
 /* const.c */
-extern CONST double bn_pi;
-extern CONST double bn_twopi;
-extern CONST double bn_halfpi;
-extern CONST double bn_invpi;
-extern CONST double bn_inv2pi;
-extern CONST double bn_inv255;
-extern CONST double bn_degtorad;
-extern CONST double bn_radtodeg;
+extern const double bn_pi;
+extern const double bn_twopi;
+extern const double bn_halfpi;
+extern const double bn_invpi;
+extern const double bn_inv2pi;
+extern const double bn_inv255;
+extern const double bn_degtorad;
+extern const double bn_radtodeg;
 
 /*----------------------------------------------------------------------*/
 /* tabdata.c */
@@ -906,7 +906,7 @@ struct bn_table {
 struct bn_tabdata {
 	long		magic;
 	int		ny;
-	CONST struct bn_table *table;	/* Up pointer to definition of X axis */
+	const struct bn_table *table;	/* Up pointer to definition of X axis */
 	fastf_t		y[1];		/* array of ny samples, dynamically sized */
 };
 #define BN_TABDATA_MAGIC	0x53736d70
@@ -932,110 +932,110 @@ struct bn_tabdata {
 
 BU_EXTERN( void			bn_table_free, (struct bn_table	*tabp));
 BU_EXTERN( void			bn_tabdata_free, (struct bn_tabdata *data));
-BU_EXTERN( void			bn_ck_table, (CONST struct bn_table *tabp));
+BU_EXTERN( void			bn_ck_table, (const struct bn_table *tabp));
 BU_EXTERN( struct bn_table	*bn_table_make_uniform, (int num, double first,
 					double last));
 BU_EXTERN( void			bn_tabdata_add, (struct bn_tabdata *out,
-					CONST struct bn_tabdata *in1,
-					CONST struct bn_tabdata *in2));
+					const struct bn_tabdata *in1,
+					const struct bn_tabdata *in2));
 BU_EXTERN( void			bn_tabdata_mul, (struct bn_tabdata *out,
-					CONST struct bn_tabdata *in1,
-					CONST struct bn_tabdata *in2));
+					const struct bn_tabdata *in1,
+					const struct bn_tabdata *in2));
 BU_EXTERN( void			bn_tabdata_mul3, (struct bn_tabdata *out,
-					CONST struct bn_tabdata	*in1,
-					CONST struct bn_tabdata	*in2,
-					CONST struct bn_tabdata	*in3));
+					const struct bn_tabdata	*in1,
+					const struct bn_tabdata	*in2,
+					const struct bn_tabdata	*in3));
 BU_EXTERN( void			bn_tabdata_incr_mul3_scale,
 					(struct bn_tabdata *out,
-					CONST struct bn_tabdata	*in1,
-					CONST struct bn_tabdata	*in2,
-					CONST struct bn_tabdata	*in3,
+					const struct bn_tabdata	*in1,
+					const struct bn_tabdata	*in2,
+					const struct bn_tabdata	*in3,
 					double scale));
 BU_EXTERN( void			bn_tabdata_incr_mul2_scale,
 					(struct bn_tabdata *out,
-					CONST struct bn_tabdata	*in1,
-					CONST struct bn_tabdata	*in2,
+					const struct bn_tabdata	*in1,
+					const struct bn_tabdata	*in2,
 					double scale));
 BU_EXTERN( void			bn_tabdata_scale, (struct bn_tabdata *out,
-					CONST struct bn_tabdata *in1,
+					const struct bn_tabdata *in1,
 					double scale));
 BU_EXTERN( void			bn_table_scale, (struct bn_table *tabp,
 					double scale));
 BU_EXTERN( void			bn_tabdata_join1, (struct bn_tabdata *out,
-					CONST struct bn_tabdata *in1,
+					const struct bn_tabdata *in1,
 					double scale,
-					CONST struct bn_tabdata *in2));
+					const struct bn_tabdata *in2));
 BU_EXTERN( void			bn_tabdata_join2, (struct bn_tabdata *out,
-					CONST struct bn_tabdata *in1,
+					const struct bn_tabdata *in1,
 					double scale2,
-					CONST struct bn_tabdata *in2,
+					const struct bn_tabdata *in2,
 					double scale3,
-					CONST struct bn_tabdata *in3));
+					const struct bn_tabdata *in3));
 BU_EXTERN( void			bn_tabdata_blend2, (struct bn_tabdata *out,
 					double scale1,
-					CONST struct bn_tabdata *in1,
+					const struct bn_tabdata *in1,
 					double scale2,
-					CONST struct bn_tabdata *in2));
+					const struct bn_tabdata *in2));
 BU_EXTERN( void			bn_tabdata_blend3, (struct bn_tabdata *out,
 					double scale1,
-					CONST struct bn_tabdata *in1,
+					const struct bn_tabdata *in1,
 					double scale2,
-					CONST struct bn_tabdata *in2,
+					const struct bn_tabdata *in2,
 					double scale3,
-					CONST struct bn_tabdata *in3));
-BU_EXTERN( double		bn_tabdata_area1, (CONST struct bn_tabdata *in));
-BU_EXTERN( double		bn_tabdata_area2, (CONST struct bn_tabdata *in));
-BU_EXTERN( double		bn_tabdata_mul_area1, (CONST struct bn_tabdata *in1,
-					CONST struct bn_tabdata	*in2));
-BU_EXTERN( double		bn_tabdata_mul_area2, (CONST struct bn_tabdata *in1,
-					CONST struct bn_tabdata	*in2));
-BU_EXTERN( fastf_t		bn_table_lin_interp, (CONST struct bn_tabdata *samp,
+					const struct bn_tabdata *in3));
+BU_EXTERN( double		bn_tabdata_area1, (const struct bn_tabdata *in));
+BU_EXTERN( double		bn_tabdata_area2, (const struct bn_tabdata *in));
+BU_EXTERN( double		bn_tabdata_mul_area1, (const struct bn_tabdata *in1,
+					const struct bn_tabdata	*in2));
+BU_EXTERN( double		bn_tabdata_mul_area2, (const struct bn_tabdata *in1,
+					const struct bn_tabdata	*in2));
+BU_EXTERN( fastf_t		bn_table_lin_interp, (const struct bn_tabdata *samp,
 					double wl));
 BU_EXTERN( struct bn_tabdata	*bn_tabdata_resample_max, (
-					CONST struct bn_table *newtable,
-					CONST struct bn_tabdata *olddata));
+					const struct bn_table *newtable,
+					const struct bn_tabdata *olddata));
 BU_EXTERN( struct bn_tabdata	*bn_tabdata_resample_avg, (
-					CONST struct bn_table *newtable,
-					CONST struct bn_tabdata *olddata));
-BU_EXTERN( int			bn_table_write, (CONST char *filename,
-					CONST struct bn_table *tabp));
-BU_EXTERN( struct bn_table	*bn_table_read, (CONST char *filename));
-BU_EXTERN( void			bn_pr_table, (CONST char *title,
-					CONST struct bn_table *tabp));
-BU_EXTERN( void			bn_pr_tabdata, (CONST char *title,
-					CONST struct bn_tabdata	*data));
-BU_EXTERN( int			bn_print_table_and_tabdata, (CONST char *filename,
-					CONST struct bn_tabdata *data));
+					const struct bn_table *newtable,
+					const struct bn_tabdata *olddata));
+BU_EXTERN( int			bn_table_write, (const char *filename,
+					const struct bn_table *tabp));
+BU_EXTERN( struct bn_table	*bn_table_read, (const char *filename));
+BU_EXTERN( void			bn_pr_table, (const char *title,
+					const struct bn_table *tabp));
+BU_EXTERN( void			bn_pr_tabdata, (const char *title,
+					const struct bn_tabdata	*data));
+BU_EXTERN( int			bn_print_table_and_tabdata, (const char *filename,
+					const struct bn_tabdata *data));
 BU_EXTERN( struct bn_tabdata	*bn_read_table_and_tabdata, (
-					CONST char *filename));
-BU_EXTERN( struct bn_tabdata	*bn_tabdata_binary_read, (CONST char *filename,
+					const char *filename));
+BU_EXTERN( struct bn_tabdata	*bn_tabdata_binary_read, (const char *filename,
 					int num,
-					CONST struct bn_table *tabp));
+					const struct bn_table *tabp));
 BU_EXTERN( struct bn_tabdata	*bn_tabdata_malloc_array, (
-					CONST struct bn_table *tabp,
+					const struct bn_table *tabp,
 					int num));
 BU_EXTERN( void			bn_tabdata_copy, (struct bn_tabdata *out,
-					CONST struct bn_tabdata *in));
-BU_EXTERN(struct bn_tabdata	*bn_tabdata_dup, (CONST struct bn_tabdata *in));
+					const struct bn_tabdata *in));
+BU_EXTERN(struct bn_tabdata	*bn_tabdata_dup, (const struct bn_tabdata *in));
 BU_EXTERN(struct bn_tabdata	*bn_tabdata_get_constval, (double val,
-					CONST struct bn_table	*tabp));
+					const struct bn_table	*tabp));
 BU_EXTERN(void			bn_tabdata_constval, (struct bn_tabdata	*data, double val));
 BU_EXTERN( void			bn_tabdata_to_tcl, (struct bu_vls *vp,
-					CONST struct bn_tabdata	*data));
-BU_EXTERN(struct bn_tabdata	*bn_tabdata_from_array, (CONST double *array));
+					const struct bn_tabdata	*data));
+BU_EXTERN(struct bn_tabdata	*bn_tabdata_from_array, (const double *array));
 BU_EXTERN( void			bn_tabdata_freq_shift, (struct bn_tabdata *out,
-					CONST struct bn_tabdata *in,
+					const struct bn_tabdata *in,
 					double offset));
 BU_EXTERN( int			bn_table_interval_num_samples,
-					(CONST struct bn_table *tabp,
+					(const struct bn_table *tabp,
 					double	low, double	hi));
 BU_EXTERN( int			bn_table_delete_sample_pts,
 					(struct bn_table *tabp,
 					int	i, int	j));
-BU_EXTERN(struct bn_table	*bn_table_merge2, (CONST struct bn_table *a,
-				CONST struct bn_table *b));
+BU_EXTERN(struct bn_table	*bn_table_merge2, (const struct bn_table *a,
+				const struct bn_table *b));
 BU_EXTERN(struct bn_tabdata	*bn_tabdata_mk_linear_filter,
-					(CONST struct bn_table *spectrum,
+					(const struct bn_table *spectrum,
 					double lower_wavelen, double upper_wavelen));
 
 /*----------------------------------------------------------------------*/
@@ -1140,11 +1140,11 @@ struct bn_vlblock {
 #define BN_CK_VLBLOCK(_p)	BU_CKMAG((_p), BN_VLBLOCK_MAGIC, "bn_vlblock")
 
 BU_EXTERN(void	bn_vlist_3string, (struct bu_list *vhead,
-				struct bu_list *free_hd, CONST char *string,
-				CONST point_t origin, CONST mat_t rot,
+				struct bu_list *free_hd, const char *string,
+				const point_t origin, const mat_t rot,
 				double scale));
 BU_EXTERN(void	bn_vlist_2string, (struct bu_list *vhead,
-				struct bu_list *free_hd, CONST char *string,
+				struct bu_list *free_hd, const char *string,
 				double x, double y, double scale, double theta));
 
 /*----------------------------------------------------------------------*/
@@ -1154,7 +1154,7 @@ extern void tp_setup();
 
 /*----------------------------------------------------------------------*/
 /* vers.c (created by the Cakefile) */
-extern CONST char		bn_version[];
+extern const char		bn_version[];
 /*----------------------------------------------------------------------*/
 
 #ifdef __cplusplus

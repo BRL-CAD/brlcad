@@ -45,7 +45,7 @@ static const char RCSmaterial[] = "@(#)$Header$ (BRL)";
 #endif
 
 
-static CONST char *mdefault = "default"; /* Name of default material */
+static const char *mdefault = "default"; /* Name of default material */
 
 /*
  *			M L I B _ A D D _ S H A D E R
@@ -217,13 +217,13 @@ mlib_setup( struct mfuncs **headp,
 	register struct region *rp,
 	struct rt_i *rtip )
 {
-	register CONST struct mfuncs *mfp;
+	register const struct mfuncs *mfp;
 #ifdef HAVE_DLOPEN
 	register struct mfuncs *mfp_new;
 #endif
 	int		ret;
 	struct bu_vls	param;
-	CONST char	*material;
+	const char	*material;
 	int		mlen;
 
 	RT_CK_REGION(rp);
@@ -320,7 +320,7 @@ found:
 void
 mlib_free( register struct region *rp )
 {
-	register CONST struct mfuncs *mfp = (struct mfuncs *)rp->reg_mfuncs;
+	register const struct mfuncs *mfp = (struct mfuncs *)rp->reg_mfuncs;
 
 	if( mfp == MF_NULL )  {
 		bu_log("mlib_free(%s):  reg_mfuncs NULL\n", rp->reg_name);

@@ -965,8 +965,8 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	static CONST char sortcmd[] = "sort -n +1 -2 -o /tmp/ord_id ";
-	static CONST char catcmd[] = "cat /tmp/ord_id >> ";
+	static const char sortcmd[] = "sort -n +1 -2 -o /tmp/ord_id ";
+	static const char catcmd[] = "cat /tmp/ord_id >> ";
 	struct bu_vls tmp_vls;
 	struct bu_vls	cmd;
 	struct bu_ptbl	cur_path;

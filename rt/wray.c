@@ -117,7 +117,7 @@ wray( pp, ap, fp, inormal )
 register struct partition *pp;
 register struct application *ap;
 FILE *fp;
-CONST vect_t	inormal;
+const vect_t	inormal;
 {
 	LOCAL struct vldray vldray;
 	register struct hit *hitp= pp->pt_inhit;

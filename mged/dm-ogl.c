@@ -195,9 +195,9 @@ char **argv;
 
     if( argc < 2 )  {
       /* Bare set command, print out current settings */
-      bu_struct_print("dm_ogl internal variables", Ogl_vparse, (CONST char *)&((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars );
+      bu_struct_print("dm_ogl internal variables", Ogl_vparse, (const char *)&((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars );
     } else if( argc == 2 ) {
-      bu_vls_struct_item_named( &vls, Ogl_vparse, argv[1], (CONST char *)&((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars, ',');
+      bu_vls_struct_item_named( &vls, Ogl_vparse, argv[1], (const char *)&((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars, ',');
       bu_log( "%s", bu_vls_addr(&vls) );
     } else {
       bu_vls_printf( &vls, "%s=\"", argv[1] );

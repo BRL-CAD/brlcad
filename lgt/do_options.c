@@ -46,7 +46,7 @@ static char	svkey_file[MAX_LN] = { 0 };
 static char	scratchbuf[TEMPLATE_COLS+1];
 
 /* The strings in this array will be modified as the program runs,
- * so don't point to CONST strings, initialize as character arrays here.
+ * so don't point to const strings, initialize as character arrays here.
  */
 char	template[][TEMPLATE_COLS] = {
 /*         1         2         3         4         5         6         7         8

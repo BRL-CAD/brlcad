@@ -700,7 +700,7 @@ char	**argv;
 			   "'\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
-	if( !(anp = db_parse_1anim( dbip, argc, (CONST char **)argv ) ) )  {
+	if( !(anp = db_parse_1anim( dbip, argc, (const char **)argv ) ) )  {
 	  Tcl_AppendResult(interp, "arced: unable to parse command\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
@@ -832,7 +832,7 @@ char	        **argv;
   mged_initial_tree_state.ts_ttol = &mged_ttol;
   mged_initial_tree_state.ts_tol = &mged_tol;
 
-  if( db_walk_tree( dbip, argc-1, (CONST char **)argv+1, 1,
+  if( db_walk_tree( dbip, argc-1, (const char **)argv+1, 1,
 		    &mged_initial_tree_state,
 		    0, 0, pathlist_leaf_func, (genptr_t)NULL ) < 0 )  {
     Tcl_AppendResult(interp, "db_walk_tree() error", (char *)NULL);

@@ -136,7 +136,7 @@ static int ovec = -1;		/* Old color map entry number */
 static int kblights();
 static double	xlim_view = 1.0;	/* args for ortho() */
 static double	ylim_view = 1.0;
-static CONST char ir_title[] = "BRL MGED";
+static const char ir_title[] = "BRL MGED";
 
 
 void		ir_colorit();

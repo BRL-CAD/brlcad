@@ -18,17 +18,20 @@ static const char RCSid[] = "@(#)$Header$";
 #endif
 
 #define	NULL	0
-#define CONST
+/*
+ * sean - why was const undefined here?
+ * #define CONST
+ */
 static char *scanpoint = NULL;
 
 char *				/* NULL if no token left */
 strtok(s, delim)
 char *s;
-register CONST char *delim;
+register const char *delim;
 {
 	register char *scan;
 	char *tok;
-	register CONST char *dscan;
+	register const char *dscan;
 	if (s == NULL && scanpoint == NULL)
 		return(NULL);
 	if (s != NULL)

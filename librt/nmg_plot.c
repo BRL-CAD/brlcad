@@ -72,7 +72,7 @@ double nmg_eue_dist = 0.05;
 void
 nmg_vu_to_vlist( vhead, vu )
 struct bu_list		*vhead;
-CONST struct vertexuse	*vu;
+const struct vertexuse	*vu;
 {
 	struct vertex	*v;
 	register struct vertex_g *vg;
@@ -97,7 +97,7 @@ CONST struct vertexuse	*vu;
 void
 nmg_eu_to_vlist( vhead, eu_hd )
 struct bu_list		*vhead;
-CONST struct bu_list	*eu_hd;
+const struct bu_list	*eu_hd;
 {
 	struct edgeuse		*eu;
 	struct edgeuse		*eumate;
@@ -144,16 +144,16 @@ CONST struct bu_list	*eu_hd;
 void
 nmg_lu_to_vlist( vhead, lu, poly_markers, normal )
 struct bu_list		*vhead;
-CONST struct loopuse	*lu;
+const struct loopuse	*lu;
 int			poly_markers;		/* bit vector! */
-CONST vectp_t		normal;
+const vectp_t		normal;
 {
-	CONST struct edgeuse		*eu;
-	CONST struct vertexuse		*vu;
-	CONST struct vertex		*v;
-	register CONST struct vertex_g	*vg;
-	CONST struct vertex_g		*first_vg;
-	CONST struct vertexuse		*first_vu;
+	const struct edgeuse		*eu;
+	const struct vertexuse		*vu;
+	const struct vertex		*v;
+	register const struct vertex_g	*vg;
+	const struct vertex_g		*first_vg;
+	const struct vertexuse		*first_vu;
 	int		isfirst;
 	point_t		centroid;
 	int		npoints;
@@ -304,7 +304,7 @@ CONST vectp_t		normal;
 void
 nmg_snurb_fu_to_vlist( vhead, fu, poly_markers )
 struct bu_list		*vhead;
-CONST struct faceuse	*fu;
+const struct faceuse	*fu;
 int			poly_markers;
 {
 	struct face_g_snurb	*fg;
@@ -359,7 +359,7 @@ int			poly_markers;
 void
 nmg_s_to_vlist( vhead, s, poly_markers )
 struct bu_list		*vhead;
-CONST struct shell	*s;
+const struct shell	*s;
 int			poly_markers;
 {
 	struct faceuse	*fu;
@@ -420,7 +420,7 @@ int			poly_markers;
 void
 nmg_r_to_vlist( vhead, r, poly_markers )
 struct bu_list		*vhead;
-CONST struct nmgregion	*r;
+const struct nmgregion	*r;
 int			poly_markers;
 {
 	register struct shell	*s;
@@ -473,12 +473,12 @@ int		poly_markers;
 void
 nmg_offset_eu_vert(base, eu, face_normal, tip)
 point_t			base;
-CONST struct edgeuse	*eu;
-CONST vect_t		face_normal;
+const struct edgeuse	*eu;
+const vect_t		face_normal;
 int			tip;
 {
 	struct edgeuse	*prev_eu;
-	CONST struct edgeuse	*this_eu;
+	const struct edgeuse	*this_eu;
 	vect_t		prev_vec;	/* from cur_pt to prev_pt */
 	vect_t		eu_vec;		/* from cur_pt to next_pt */
 	vect_t		prev_left;
@@ -549,7 +549,7 @@ int			tip;
  *  other end.
  */
 static void nmg_eu_coords(eu, base, tip60)
-CONST struct edgeuse *eu;
+const struct edgeuse *eu;
 point_t base, tip60;
 {
 	point_t	tip;
@@ -590,7 +590,7 @@ point_t base, tip60;
  *  Find location for 80% tip on edgeuse's radial edgeuse.
  */
 static void nmg_eu_radial(eu, tip)
-CONST struct edgeuse *eu;
+const struct edgeuse *eu;
 point_t tip;
 {
 	point_t	b2, t2;
@@ -613,7 +613,7 @@ point_t tip;
  *  Find the tip of the last (previous) edgeuse from 'eu'.
  */
 static void nmg_eu_last( eu, tip_out )
-CONST struct edgeuse	*eu;
+const struct edgeuse	*eu;
 point_t		tip_out;
 {
 	point_t		radial_base;
@@ -649,7 +649,7 @@ point_t		tip_out;
  *  Return the base of the next edgeuse
  */
 static void nmg_eu_next_base( eu, next_base)
-CONST struct edgeuse	*eu;
+const struct edgeuse	*eu;
 point_t		next_base;
 {
 	point_t	t2;
@@ -678,7 +678,7 @@ point_t		next_base;
 void
 nmg_pl_v(fp, v, b)
 FILE			*fp;
-CONST struct vertex	*v;
+const struct vertex	*v;
 long			*b;
 {
 	pointp_t p;
@@ -705,7 +705,7 @@ long			*b;
 void
 nmg_pl_e(fp, e, b, red, green, blue)
 FILE			*fp;
-CONST struct edge	*e;
+const struct edge	*e;
 long			*b;
 int			red, green, blue;
 {
@@ -747,7 +747,7 @@ int			red, green, blue;
 void
 nmg_pl_eu(fp, eu, b, red, green, blue)
 FILE			*fp;
-CONST struct edgeuse	*eu;
+const struct edgeuse	*eu;
 long			*b;
 int			red, green, blue;
 {
@@ -805,7 +805,7 @@ int			red, green, blue;
 void
 nmg_pl_lu(fp, lu, b, red, green, blue)
 FILE			*fp;
-CONST struct loopuse	*lu;
+const struct loopuse	*lu;
 long			*b;
 int			red, green, blue;
 {
@@ -823,7 +823,7 @@ int			red, green, blue;
 void
 nmg_pl_fu(fp, fu, b, red, green, blue)
 FILE			*fp;
-CONST struct faceuse	*fu;
+const struct faceuse	*fu;
 long			*b;
 int			red, green, blue;
 {
@@ -853,7 +853,7 @@ int			red, green, blue;
 void
 nmg_pl_s(fp, s)
 FILE			*fp;
-CONST struct shell	*s;
+const struct shell	*s;
 {
 	struct bn_vlblock	*vbp;
 
@@ -866,7 +866,7 @@ CONST struct shell	*s;
 void
 nmg_pl_shell(fp, s, fancy)
 FILE			*fp;
-CONST struct shell	*s;
+const struct shell	*s;
 int			fancy;
 {
 	struct bn_vlblock	*vbp;
@@ -883,7 +883,7 @@ int			fancy;
 void
 nmg_pl_r(fp, r)
 FILE			*fp;
-CONST struct nmgregion	*r;
+const struct nmgregion	*r;
 {
 	struct bn_vlblock	*vbp;
 
@@ -899,7 +899,7 @@ CONST struct nmgregion	*r;
 void
 nmg_pl_m(fp, m)
 FILE			*fp;
-CONST struct model	*m;
+const struct model	*m;
 {
 	struct bn_vlblock	*vbp;
 
@@ -923,7 +923,7 @@ CONST struct model	*m;
 void
 nmg_vlblock_v(vbp, v, tab)
 struct bn_vlblock		*vbp;
-CONST struct vertex		*v;
+const struct vertex		*v;
 long				*tab;
 {
 	pointp_t p;
@@ -957,7 +957,7 @@ long				*tab;
 void
 nmg_vlblock_e(vbp, e, tab, red, green, blue, fancy)
 struct bn_vlblock	*vbp;
-CONST struct edge	*e;
+const struct edge	*e;
 long			*tab;
 int			red, green, blue;
 int			fancy;
@@ -1004,7 +1004,7 @@ int			fancy;
 void
 nmg_vlblock_eu(vbp, eu, tab, red, green, blue, fancy, loopnum)
 struct bn_vlblock		*vbp;
-CONST struct edgeuse		*eu;
+const struct edgeuse		*eu;
 long				*tab;
 int				red, green, blue;
 int				fancy;
@@ -1131,13 +1131,13 @@ int				loopnum;
 void
 nmg_vlblock_euleft( vh, eu, center, mat, xvec, yvec, len, tol )
 struct bu_list			*vh;
-CONST struct edgeuse		*eu;
-CONST point_t			center;
-CONST mat_t			mat;
-CONST vect_t			xvec;
-CONST vect_t			yvec;
+const struct edgeuse		*eu;
+const point_t			center;
+const mat_t			mat;
+const vect_t			xvec;
+const vect_t			yvec;
 double				len;
-CONST struct bn_tol		*tol;
+const struct bn_tol		*tol;
 {
 	vect_t		left;
 	point_t		tip;
@@ -1179,13 +1179,13 @@ CONST struct bn_tol		*tol;
 void
 nmg_vlblock_around_eu(vbp, arg_eu, tab, fancy, tol )
 struct bn_vlblock		*vbp;
-CONST struct edgeuse		*arg_eu;
+const struct edgeuse		*arg_eu;
 long				*tab;
 int				fancy;
-CONST struct bn_tol		*tol;
+const struct bn_tol		*tol;
 {
-	CONST struct edgeuse		*orig_eu;
-	register CONST struct edgeuse	*eu;
+	const struct edgeuse		*orig_eu;
+	register const struct edgeuse	*eu;
 	vect_t			xvec, yvec, zvec;
 	point_t			center;
 	mat_t			mat;
@@ -1251,7 +1251,7 @@ CONST struct bn_tol		*tol;
 void
 nmg_vlblock_lu(vbp, lu, tab, red, green, blue, fancy, loopnum)
 struct bn_vlblock	*vbp;
-CONST struct loopuse	*lu;
+const struct loopuse	*lu;
 long			*tab;
 int			red, green, blue;
 int			fancy;
@@ -1285,7 +1285,7 @@ int	 		loopnum;
 void
 nmg_vlblock_fu(vbp, fu, tab, fancy)
 struct bn_vlblock	*vbp;
-CONST struct faceuse	*fu;
+const struct faceuse	*fu;
 long			*tab;
 int			fancy;
 {
@@ -1313,7 +1313,7 @@ int			fancy;
 void
 nmg_vlblock_s(vbp, s, fancy)
 struct bn_vlblock	*vbp;
-CONST struct shell	*s;
+const struct shell	*s;
 int			fancy;
 {
 	struct faceuse *fu;
@@ -1371,7 +1371,7 @@ int			fancy;
 void
 nmg_vlblock_r(vbp, r, fancy)
 struct bn_vlblock	*vbp;
-CONST struct nmgregion	*r;
+const struct nmgregion	*r;
 int			fancy;
 {
 	struct shell *s;
@@ -1390,7 +1390,7 @@ int			fancy;
 void
 nmg_vlblock_m(vbp, m, fancy)
 struct bn_vlblock	*vbp;
-CONST struct model	*m;
+const struct model	*m;
 int			fancy;
 {
 	struct nmgregion *r;
@@ -1417,12 +1417,12 @@ void
 nmg_pl_edges_in_2_shells(vbp, b, eu, fancy, tol)
 struct bn_vlblock	*vbp;
 long			*b;
-CONST struct edgeuse	*eu;
+const struct edgeuse	*eu;
 int			fancy;
-CONST struct bn_tol	*tol;
+const struct bn_tol	*tol;
 {
-	CONST struct edgeuse	*eur;
-	CONST struct shell	*s;
+	const struct edgeuse	*eur;
+	const struct shell	*s;
 
 	BN_CK_TOL(tol);
 	eur = eu;
@@ -1453,9 +1453,9 @@ CONST struct bn_tol	*tol;
  */
 void
 nmg_pl_isect(filename, s, tol)
-CONST char		*filename;
-CONST struct shell	*s;
-CONST struct bn_tol	*tol;
+const char		*filename;
+const struct shell	*s;
+const struct bn_tol	*tol;
 {
 	struct faceuse		*fu;
 	struct loopuse		*lu;
@@ -1521,7 +1521,7 @@ void
 nmg_pl_comb_fu( num1, num2, fu1 )
 int	num1;
 int	num2;
-CONST struct faceuse	*fu1;
+const struct faceuse	*fu1;
 {
 	FILE			*fp;
 	char			name[64];
@@ -1582,10 +1582,10 @@ CONST struct faceuse	*fu1;
  */
 void
 nmg_pl_2fu( str, unused, fu1, fu2, show_mates )
-CONST char		*str;
+const char		*str;
 int			unused;
-CONST struct faceuse	*fu1;
-CONST struct faceuse	*fu2;
+const struct faceuse	*fu1;
+const struct faceuse	*fu2;
 int			show_mates;
 {
 	FILE		*fp;
@@ -1678,7 +1678,7 @@ static void
 show_broken_vu(vbp, vu, fancy)
 struct bn_vlblock *vbp;
 int fancy;
-CONST struct vertexuse *vu;
+const struct vertexuse *vu;
 {
 	pointp_t p;
 	struct bu_list	*vh;
@@ -1736,7 +1736,7 @@ static void
 show_broken_e(vbp, eu, fancy)
 struct bn_vlblock *vbp;
 int fancy;
-CONST struct edgeuse *eu;
+const struct edgeuse *eu;
 {
 	pointp_t p0, p1;
 	point_t end0, end1;
@@ -1787,7 +1787,7 @@ static void
 show_broken_eu(vbp, eu, fancy)
 struct bn_vlblock *vbp;
 int fancy;
-CONST struct edgeuse *eu;
+const struct edgeuse *eu;
 {
 	struct bu_list	*vh;
     	int red, green, blue;
@@ -1839,7 +1839,7 @@ static void
 show_broken_lu(vbp, lu, fancy)
 struct bn_vlblock *vbp;
 int fancy;
-CONST struct loopuse *lu;
+const struct loopuse *lu;
 {
 	register struct edgeuse *eu;
 	struct bu_list	*vh;
@@ -1890,7 +1890,7 @@ static void
 show_broken_fu(vbp, fu, fancy)
 struct bn_vlblock *vbp;
 int fancy;
-CONST struct faceuse *fu;
+const struct faceuse *fu;
 {
 	register struct loopuse *lu;
 
@@ -1903,7 +1903,7 @@ CONST struct faceuse *fu;
 static void
 show_broken_s(vbp, s, fancy)
 struct bn_vlblock *vbp;
-CONST struct shell *s;
+const struct shell *s;
 int fancy;
 {
 	struct faceuse *fu;
@@ -1923,7 +1923,7 @@ int fancy;
 static void
 show_broken_r(vbp, r, fancy)
 struct bn_vlblock *vbp;
-CONST struct nmgregion *r;
+const struct nmgregion *r;
 int fancy;
 {
 	register struct shell *s;
@@ -1936,7 +1936,7 @@ int fancy;
 static void
 show_broken_m(vbp, m, fancy)
 struct bn_vlblock *vbp;
-CONST struct model *m;
+const struct model *m;
 int fancy;
 {
 	register struct nmgregion *r;
@@ -1968,7 +1968,7 @@ long	*p;
 long	*classlist[4];
 int	all_new;
 int	fancy;
-CONST char	*a_string;
+const char	*a_string;
 {
 	struct model *m;
 
@@ -2108,7 +2108,7 @@ CONST char	*a_string;
  */
 void
 nmg_face_plot( fu )
-CONST struct faceuse	*fu;
+const struct faceuse	*fu;
 {
 	FILE		*fp;
 	char		name[32];
@@ -2169,7 +2169,7 @@ CONST struct faceuse	*fu;
  */
 void
 nmg_2face_plot( fu1, fu2 )
-CONST struct faceuse	*fu1, *fu2;
+const struct faceuse	*fu1, *fu2;
 {
 	extern void (*nmg_vlblock_anim_upcall)();
 	struct model		*m;
@@ -2216,8 +2216,8 @@ CONST struct faceuse	*fu1, *fu2;
  */
 void
 nmg_face_lu_plot( lu, vu1, vu2 )
-CONST struct loopuse		*lu;
-CONST struct vertexuse		*vu1, *vu2;
+const struct loopuse		*lu;
+const struct vertexuse		*vu1, *vu2;
 {
 	FILE	*fp;
 	struct model	*m;
@@ -2267,10 +2267,10 @@ CONST struct vertexuse		*vu1, *vu2;
  */
 void
 nmg_plot_lu_ray( lu, vu1, vu2, left )
-CONST struct loopuse		*lu;
-CONST struct vertexuse		*vu1;
-CONST struct vertexuse		*vu2;
-CONST vect_t			left;
+const struct loopuse		*lu;
+const struct vertexuse		*vu1;
+const struct vertexuse		*vu2;
+const vect_t			left;
 {
 	FILE	*fp;
 	struct model	*m;
@@ -2324,10 +2324,10 @@ CONST vect_t			left;
  */
 void
 nmg_plot_ray_face(fname, pt, dir, fu)
-CONST char *fname;
+const char *fname;
 point_t pt;
-CONST vect_t dir;
-CONST struct faceuse *fu;
+const vect_t dir;
+const struct faceuse *fu;
 {
 	FILE *fd;
 	long *b;
@@ -2367,16 +2367,16 @@ CONST struct faceuse *fu;
  */
 void
 nmg_plot_lu_around_eu( prefix, eu, tol )
-CONST char		*prefix;
-CONST struct edgeuse	*eu;
-CONST struct bn_tol	*tol;
+const char		*prefix;
+const struct edgeuse	*eu;
+const struct bn_tol	*tol;
 {
 	char			file[256];
 	static int		num=0;
 	struct model		*m;
 	struct bn_vlblock	*vbp;
 	long			*tab;
-	CONST struct edgeuse	*eur;
+	const struct edgeuse	*eur;
 	FILE			*fp;
 
 	NMG_CK_EDGEUSE(eu);
@@ -2424,7 +2424,7 @@ CONST struct bn_tol	*tol;
 int
 nmg_snurb_to_vlist( vhead, fg, n_interior )
 struct bu_list			*vhead;
-CONST struct face_g_snurb	*fg;
+const struct face_g_snurb	*fg;
 int				n_interior;	/* typ. 10 */
 {
 	register int		i;
@@ -2528,16 +2528,16 @@ int				n_interior;	/* typ. 10 */
 void
 nmg_cnurb_to_vlist( vhead, eu, n_interior, cmd )
 struct bu_list			*vhead;
-CONST struct edgeuse		*eu;
+const struct edgeuse		*eu;
 int				n_interior;	/* typ. 10 */
 int				cmd;		/* BN_VLIST_LINE_DRAW, etc */
 {
-	CONST struct edge_g_cnurb	*eg;
-	CONST struct faceuse	*fu;
+	const struct edge_g_cnurb	*eg;
+	const struct faceuse	*fu;
 	register int		i;
 	register fastf_t	*vp = (fastf_t	*)NULL;
 	struct edge_g_cnurb	n;
-	CONST struct edge_g_cnurb	*c;
+	const struct edge_g_cnurb	*c;
 	int 			coords;
 
 	BU_CK_LIST_HEAD( vhead );
@@ -2592,7 +2592,7 @@ int				cmd;		/* BN_VLIST_LINE_DRAW, etc */
 			vp += coords;
 		}
 	} else {
-		CONST struct face_g_snurb	*s;
+		const struct face_g_snurb	*s;
 		fastf_t		final[4];
 		fastf_t		inv_homo;
 		fastf_t		param_delta;

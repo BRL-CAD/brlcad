@@ -415,7 +415,7 @@ struct rt_submodel_internal {
 	/* other option flags (lazy prep, etc.)?? */
 	/* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
 	mat_t		root2leaf;
-	CONST struct db_i *dbip;
+	const struct db_i *dbip;
 };
 #define RT_SUBMODEL_INTERNAL_MAGIC	0x7375626d	/* subm */
 #define RT_SUBMODEL_CK_MAGIC(_p)	BU_CKMAG(_p,RT_SUBMODEL_INTERNAL_MAGIC,"rt_submodel_internal")

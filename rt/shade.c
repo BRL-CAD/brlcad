@@ -58,7 +58,7 @@ static const char RCSview[] = "@(#)$Header$ (BRL)";
 void
 shade_inputs( ap, pp, swp, want )
 struct application *ap;
-register CONST struct partition *pp;
+register const struct partition *pp;
 register struct shadework *swp;
 register int	want;
 {
@@ -157,7 +157,7 @@ hit pt: %g %g %g end pt: %g %g %g\n",
 				ap->a_x, ap->a_y );
 #if RT_MULTISPECTRAL
 		    	{
-		    		static CONST vect_t green = {0,9,0};
+		    		static const vect_t green = {0,9,0};
 				rt_spect_reflectance_rgb( swp->msw_color, green );
 		    	}
 #else
@@ -198,12 +198,12 @@ hit pt: %g %g %g end pt: %g %g %g\n",
 int
 viewshade( ap, pp, swp )
 struct application *ap;
-register CONST struct partition *pp;
+register const struct partition *pp;
 register struct shadework *swp;
 {
-	register CONST struct mfuncs *mfp;
-	register CONST struct region *rp;
-	register CONST struct light_specific *lp;
+	register const struct mfuncs *mfp;
+	register const struct region *rp;
+	register const struct light_specific *lp;
 	register int	want;
 
 	RT_AP_CHECK(ap);
@@ -310,8 +310,8 @@ register struct shadework *swp;
  */
 void
 pr_shadework( str, swp )
-CONST char *str;
-register CONST struct shadework *swp;
+const char *str;
+register const struct shadework *swp;
 {
 	int	i;
 

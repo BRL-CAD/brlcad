@@ -219,7 +219,7 @@ static RGBpixel	colortbl[12] =		/* The map: value --> R, G, B */
 };			
 
 #if 0
-static CONST char   *mon_nam[] =
+static const char   *mon_nam[] =
                         { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
                           "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
 #endif

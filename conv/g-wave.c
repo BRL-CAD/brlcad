@@ -238,7 +238,7 @@ char	*argv[];
 	fprintf( fp, "\n" );
 
 	/* Walk indicated tree(s).  Each region will be output separately */
-	(void) db_walk_tree(dbip, argc-1, (CONST char **)(argv+1),
+	(void) db_walk_tree(dbip, argc-1, (const char **)(argv+1),
 		1,			/* ncpu */
 		&tree_state,
 		0,			/* take all regions */

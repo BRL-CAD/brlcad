@@ -45,10 +45,10 @@ static const char RCScut[] = "@(#)$Header$ (BRL)";
 #include "plot3.h"
 #include "./debug.h"
 
-HIDDEN int		rt_ck_overlap BU_ARGS((CONST vect_t min,
-					       CONST vect_t max,
-					       CONST struct soltab *stp,
-					       CONST struct rt_i *rtip));
+HIDDEN int		rt_ck_overlap BU_ARGS((const vect_t min,
+					       const vect_t max,
+					       const struct soltab *stp,
+					       const struct rt_i *rtip));
 HIDDEN int		rt_ct_box BU_ARGS((struct rt_i *rtip,
 					   union cutter *cutp,
 					   int axis, double where));
@@ -64,8 +64,8 @@ HIDDEN union cutter	*rt_ct_get BU_ARGS((struct rt_i *rtip));
 HIDDEN void		rt_plot_cut BU_ARGS((FILE *fp, struct rt_i *rtip,
 					     union cutter *cutp, int lvl));
 
-BU_EXTERN(void		rt_pr_cut_info, (CONST struct rt_i *rtip,
-					CONST char *str));
+BU_EXTERN(void		rt_pr_cut_info, (const struct rt_i *rtip,
+					const char *str));
 HIDDEN int		rt_ct_old_assess(register union cutter *,
 					 register int,
 					 double *,
@@ -176,64 +176,64 @@ genptr_t	arg;
 }
 
 #define CMP(_p1,_p2,_memb,_ind) \
-	(*(CONST struct soltab **)(_p1))->_memb[_ind] < \
-	(*(CONST struct soltab **)(_p2))->_memb[_ind] ? -1 : \
-	(*(CONST struct soltab **)(_p1))->_memb[_ind] > \
-	(*(CONST struct soltab **)(_p2))->_memb[_ind] ? 1 : 0
+	(*(const struct soltab **)(_p1))->_memb[_ind] < \
+	(*(const struct soltab **)(_p2))->_memb[_ind] ? -1 : \
+	(*(const struct soltab **)(_p1))->_memb[_ind] > \
+	(*(const struct soltab **)(_p2))->_memb[_ind] ? 1 : 0
 	
 /* Functions for use with qsort */
-HIDDEN int rt_projXmin_comp BU_ARGS((CONST void * p1, CONST void * p2));
-HIDDEN int rt_projXmax_comp BU_ARGS((CONST void * p1, CONST void * p2));
-HIDDEN int rt_projYmin_comp BU_ARGS((CONST void * p1, CONST void * p2));
-HIDDEN int rt_projYmax_comp BU_ARGS((CONST void * p1, CONST void * p2));
-HIDDEN int rt_projZmin_comp BU_ARGS((CONST void * p1, CONST void * p2));
-HIDDEN int rt_projZmax_comp BU_ARGS((CONST void * p1, CONST void * p2));
+HIDDEN int rt_projXmin_comp BU_ARGS((const void * p1, const void * p2));
+HIDDEN int rt_projXmax_comp BU_ARGS((const void * p1, const void * p2));
+HIDDEN int rt_projYmin_comp BU_ARGS((const void * p1, const void * p2));
+HIDDEN int rt_projYmax_comp BU_ARGS((const void * p1, const void * p2));
+HIDDEN int rt_projZmin_comp BU_ARGS((const void * p1, const void * p2));
+HIDDEN int rt_projZmax_comp BU_ARGS((const void * p1, const void * p2));
 
 HIDDEN int
 rt_projXmin_comp( p1, p2 )
-CONST void * p1, * p2;
+const void * p1, * p2;
 {
 	return CMP(p1,p2,st_min,X);
 }
 
 HIDDEN int
 rt_projXmax_comp( p1, p2 )
-CONST void * p1, * p2;
+const void * p1, * p2;
 {
 	return CMP(p1,p2,st_max,X);
 }
 
 HIDDEN int
 rt_projYmin_comp( p1, p2 )
-CONST void * p1, * p2;
+const void * p1, * p2;
 {
 	return CMP(p1,p2,st_min,Y);
 }
 
 HIDDEN int
 rt_projYmax_comp( p1, p2 )
-CONST void * p1, * p2;
+const void * p1, * p2;
 {
 	return CMP(p1,p2,st_max,Y);
 }
 
 HIDDEN int
 rt_projZmin_comp( p1, p2 )
-CONST void * p1, * p2;
+const void * p1, * p2;
 {
 	return CMP(p1,p2,st_min,Z);
 }
 
 HIDDEN int
 rt_projZmax_comp( p1, p2 )
-CONST void * p1, * p2;
+const void * p1, * p2;
 {
 	return CMP(p1,p2,st_max,Z);
 }
 
 static struct cmp_pair {
-	HIDDEN int (*cmp_min) BU_ARGS((CONST void *, CONST void *));
-	HIDDEN int (*cmp_max) BU_ARGS((CONST void *, CONST void *));
+	HIDDEN int (*cmp_min) BU_ARGS((const void *, const void *));
+	HIDDEN int (*cmp_max) BU_ARGS((const void *, const void *));
 } pairs[] = {
 	{ rt_projXmin_comp, rt_projXmax_comp },
 	{ rt_projYmin_comp, rt_projYmax_comp },
@@ -875,7 +875,7 @@ void
 rt_cut_extend( cutp, stp, rtip )
 register union cutter	*cutp;
 struct soltab		*stp;
-CONST struct rt_i	*rtip;
+const struct rt_i	*rtip;
 {
 	RT_CK_SOLTAB(stp);
 	RT_CK_RTI(rtip);
@@ -1100,12 +1100,12 @@ double		*offcenter_p;
 HIDDEN int
 rt_ct_populate_box( outp, inp, rtip )
 union cutter		*outp;
-CONST union cutter	*inp;
+const union cutter	*inp;
 struct rt_i		*rtip;
 {
 	register int	i;
 	int success = 0;
-	CONST struct bn_tol *tol = &rtip->rti_tol;
+	const struct bn_tol *tol = &rtip->rti_tol;
 
 	/* Examine the solids */
 	outp->bn.bn_len = 0;
@@ -1272,10 +1272,10 @@ double			where;
  */
 HIDDEN int
 rt_ck_overlap( min, max, stp, rtip )
-register CONST vect_t	min;
-register CONST vect_t	max;
-register CONST struct soltab *stp;
-register CONST struct rt_i *rtip;
+register const vect_t	min;
+register const vect_t	max;
+register const struct soltab *stp;
+register const struct rt_i *rtip;
 {
 	RT_CHECK_SOLTAB(stp);
 	if( rt_g.debug&DEBUG_BOXING )  {
@@ -1312,7 +1312,7 @@ fail:
  */
 HIDDEN int
 rt_ct_piececount( cutp )
-CONST union cutter *cutp;
+const union cutter *cutp;
 {
 	int	i;
 	int	count;
@@ -1632,7 +1632,7 @@ register union cutter	*cutp;
  */
 void
 rt_pr_cut( cutp, lvl )
-register CONST union cutter *cutp;
+register const union cutter *cutp;
 int lvl;			/* recursion level */
 {
 	register int i,j;
@@ -2018,7 +2018,7 @@ struct rt_i	*rtip;
 void
 rt_pr_cut_info(const struct rt_i *rtip, const char *str)
 {
-	CONST struct nugridnode	*nugnp;
+	const struct nugridnode	*nugnp;
 	int			i;
 
 	RT_CK_RTI(rtip);

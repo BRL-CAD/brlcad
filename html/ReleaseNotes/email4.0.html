@@ -6532,7 +6532,7 @@ the comment in the header file:
  *  Therefore, rather than using compile-time structure initialization,
  *  you should create a zeroed-out structure, and then assign the intended
  *  values at runtime.  A zeroed structure can be obtained at compile
- *  time with "static CONST struct application zero_ap;", or at run time
+ *  time with "static const struct application zero_ap;", or at run time
  *  by using "bzero( (char *)ap, sizeof(struct application) );" or
  *  rt_calloc( 1, sizeof(struct application), "application" );
  *  While this practice may not work on machines where "all bits off"

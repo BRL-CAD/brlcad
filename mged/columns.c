@@ -100,8 +100,8 @@ vls_col_eol( struct bu_vls *str )
  */
 int
 cmpdirname(a, b)
-CONST genptr_t a;
-CONST genptr_t b;
+const genptr_t a;
+const genptr_t b;
 {
 	register struct directory **dp1, **dp2;
 
@@ -206,7 +206,7 @@ vls_long_dpp(
   int i;
   int isComb, isRegion;
   int isSolid;
-  CONST char *type;
+  const char *type;
   int max_nam_len = 0;
   int max_type_len = 0;
   struct directory *dp;

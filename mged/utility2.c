@@ -1770,7 +1770,7 @@ char **argv;
 	{
 		vect_t reg_min, reg_max;
 		struct region *regp;
-		CONST char *reg_name;
+		const char *reg_name;
 
 		/* check if input name is a region */
 		for( BU_LIST_FOR( regp, region, &(rtip->HeadRegion) ) )  {

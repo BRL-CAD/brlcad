@@ -3672,7 +3672,7 @@ char **argv;
 		}
 	}
 
-	i = db_walk_tree(dbip, topc, (CONST char **)topv,
+	i = db_walk_tree(dbip, topc, (const char **)topv,
 	    1,			/* Number of cpus */
 	    &mesh_initial_tree_state,
 	    0,			/* Begin region */

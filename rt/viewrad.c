@@ -432,7 +432,7 @@ static int
 isvisible( ap, hitp, norm )
 struct application *ap;
 struct hit *hitp;
-CONST vect_t	norm;
+const vect_t	norm;
 {
 	struct application sub_ap;
 	vect_t	rdir;

@@ -139,7 +139,7 @@ struct rt_i		*rtip;
 {
 	struct rt_bot_internal		*bot_ip;
 	register struct bot_specific	*bot;
-	CONST struct bn_tol		*tol = &rtip->rti_tol;
+	const struct bn_tol		*tol = &rtip->rti_tol;
 	int				tri_index, i;
 	LOCAL fastf_t			dx, dy, dz;
 	LOCAL fastf_t			f;
@@ -231,9 +231,9 @@ struct rt_i		*rtip;
 
 	{
 		struct bound_rpp	*minmax;
-		CONST struct tri_specific **fap =
-			(CONST struct tri_specific **)bot->bot_facearray;
-		register CONST struct tri_specific *trip = bot->bot_facelist;
+		const struct tri_specific **fap =
+			(const struct tri_specific **)bot->bot_facearray;
+		register const struct tri_specific *trip = bot->bot_facelist;
 		int surfno = ntri-1;
 
 		for( ; trip; trip = trip->tri_forw, surfno-- )  {
@@ -301,7 +301,7 @@ struct rt_i		*rtip;
  */
 void
 rt_bot_print( stp )
-register CONST struct soltab *stp;
+register const struct soltab *stp;
 {
 }
 
@@ -747,7 +747,7 @@ struct seg		*seghead;
 	long		piecenum;
 	register struct hit *hp;
 	struct bot_specific *bot;
-	CONST int	debug_shoot = rt_g.debug & DEBUG_SHOOT;
+	const int	debug_shoot = rt_g.debug & DEBUG_SHOOT;
 	int		starting_hits;
 
 	RT_CK_PIECELIST(plp);
@@ -984,9 +984,9 @@ register struct soltab *stp;
  */
 int
 rt_bot_class( stp, min, max, tol )
-CONST struct soltab    *stp;
-CONST vect_t		min, max;
-CONST struct bn_tol    *tol;
+const struct soltab    *stp;
+const vect_t		min, max;
+const struct bn_tol    *tol;
 {
 	return RT_CLASSIFY_UNIMPLEMENTED;
 }
@@ -998,8 +998,8 @@ int
 rt_bot_plot( vhead, ip, ttol, tol )
 struct bu_list		*vhead;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol	*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol	*tol;
 {
 	LOCAL struct rt_bot_internal	*bot_ip;
 	int i;
@@ -1026,8 +1026,8 @@ int
 rt_bot_plot_poly( vhead, ip, ttol, tol )
 struct bu_list		*vhead;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol	*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol	*tol;
 {
 	LOCAL struct rt_bot_internal	*bot_ip;
 	int i;
@@ -1074,8 +1074,8 @@ rt_bot_tess( r, m, ip, ttol, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol	*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol	*tol;
 {
 	LOCAL struct rt_bot_internal	*bot_ip;
 	struct shell *s;
@@ -1174,9 +1174,9 @@ CONST struct bn_tol	*tol;
 int
 rt_bot_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-register CONST mat_t		mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	LOCAL struct rt_bot_internal	*bot_ip;
 	union record			*rp;
@@ -1211,7 +1211,7 @@ CONST struct db_i		*dbip;
 	{
 		point_t tmp;
 
-		ntohd( (unsigned char *)tmp, (CONST unsigned char *)(&rp->bot.bot_data[i*24]), 3 );
+		ntohd( (unsigned char *)tmp, (const unsigned char *)(&rp->bot.bot_data[i*24]), 3 );
 		MAT4X3PNT( &(bot_ip->vertices[i*3]), mat, tmp );
 	}
 
@@ -1221,9 +1221,9 @@ CONST struct db_i		*dbip;
 	{
 		int index=chars_used + i * 12;
 
-		bot_ip->faces[i*3] = bu_glong( (CONST unsigned char *)&rp->bot.bot_data[index] );
-		bot_ip->faces[i*3 + 1] = bu_glong( (CONST unsigned char *)&rp->bot.bot_data[index + 4] );
-		bot_ip->faces[i*3 + 2] = bu_glong( (CONST unsigned char *)&rp->bot.bot_data[index + 8] );
+		bot_ip->faces[i*3] = bu_glong( (const unsigned char *)&rp->bot.bot_data[index] );
+		bot_ip->faces[i*3 + 1] = bu_glong( (const unsigned char *)&rp->bot.bot_data[index + 4] );
+		bot_ip->faces[i*3 + 2] = bu_glong( (const unsigned char *)&rp->bot.bot_data[index + 8] );
 	}
 
 	if( bot_ip->mode == RT_BOT_PLATE || bot_ip->mode == RT_BOT_PLATE_NOCOS )
@@ -1233,8 +1233,8 @@ CONST struct db_i		*dbip;
 		bot_ip->thickness = (fastf_t *)bu_calloc( bot_ip->num_faces, sizeof( fastf_t ), "BOT thickness" );
 		for( i=0 ; i<bot_ip->num_faces ; i++ )
 			ntohd( (unsigned char *)&(bot_ip->thickness[i]),
-				(CONST unsigned char *)(&rp->bot.bot_data[chars_used + i*8]), 1 );
-		bot_ip->face_mode = bu_hex_to_bitv( (CONST char *)(&rp->bot.bot_data[chars_used + bot_ip->num_faces * 8]) );
+				(const unsigned char *)(&rp->bot.bot_data[chars_used + i*8]), 1 );
+		bot_ip->face_mode = bu_hex_to_bitv( (const char *)(&rp->bot.bot_data[chars_used + bot_ip->num_faces * 8]) );
 	}
 	else
 	{
@@ -1253,9 +1253,9 @@ CONST struct db_i		*dbip;
 int
 rt_bot_export( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_bot_internal	*bot_ip;
 	union record		*rec;
@@ -1320,7 +1320,7 @@ CONST struct db_i		*dbip;
 		point_t tmp;
 
 		VSCALE( tmp, &bot_ip->vertices[i*3], local2mm );
-		htond( (unsigned char *)&rec->bot.bot_data[i*24], (CONST unsigned char *)tmp, 3 );
+		htond( (unsigned char *)&rec->bot.bot_data[i*24], (const unsigned char *)tmp, 3 );
 	}
 
 	chars_used = bot_ip->num_vertices * 24;
@@ -1342,7 +1342,7 @@ CONST struct db_i		*dbip;
 		{
 			fastf_t tmp;
 			tmp = bot_ip->thickness[i] * local2mm;
-			htond( (unsigned char *)&rec->bot.bot_data[chars_used], (CONST unsigned char *)&tmp, 1 );
+			htond( (unsigned char *)&rec->bot.bot_data[chars_used], (const unsigned char *)&tmp, 1 );
 			chars_used += 8;
 		}
 		strcpy( (char *)&rec->bot.bot_data[chars_used], bu_vls_addr( &face_mode ) );
@@ -1358,9 +1358,9 @@ CONST struct db_i		*dbip;
 int
 rt_bot_import5( ip, ep, mat, dbip )
 struct rt_db_internal           *ip;
-CONST struct bu_external        *ep;
-register CONST mat_t            mat;
-CONST struct db_i               *dbip;
+const struct bu_external        *ep;
+register const mat_t            mat;
+const struct db_i               *dbip;
 {
 	struct rt_bot_internal		*bip;
 	register unsigned char		*cp;
@@ -1392,7 +1392,7 @@ CONST struct db_i               *dbip;
 	{
 		point_t tmp;
 
-		ntohd( (unsigned char *)tmp, (CONST unsigned char *)cp, 3 );
+		ntohd( (unsigned char *)tmp, (const unsigned char *)cp, 3 );
 		cp += SIZEOF_NETWORK_DOUBLE * 3;
 		MAT4X3PNT( &(bip->vertices[i*3]), mat, tmp );
 	}
@@ -1415,7 +1415,7 @@ CONST struct db_i               *dbip;
 			ntohd( (unsigned char *)&(bip->thickness[i]), cp, 1 );
 			cp += SIZEOF_NETWORK_DOUBLE;
 		}
-		bip->face_mode = bu_hex_to_bitv( (CONST char *)cp );
+		bip->face_mode = bu_hex_to_bitv( (const char *)cp );
 	}
 	else
 	{
@@ -1432,9 +1432,9 @@ CONST struct db_i               *dbip;
 int
 rt_bot_export5( ep, ip, local2mm, dbip )
 struct bu_external              *ep;
-CONST struct rt_db_internal     *ip;
+const struct rt_db_internal     *ip;
 double                          local2mm;
-CONST struct db_i               *dbip;
+const struct db_i               *dbip;
 {
 	struct rt_bot_internal		*bip;
 	struct bu_vls			vls;
@@ -1504,7 +1504,7 @@ CONST struct db_i               *dbip;
 			fastf_t tmp;
 
 			tmp = bip->thickness[i] * local2mm;
-			htond( cp, (CONST unsigned char *)&tmp, 1 );
+			htond( cp, (const unsigned char *)&tmp, 1 );
 			cp += SIZEOF_NETWORK_DOUBLE;
 		}
 		strcpy( (char *)cp, bu_vls_addr( &vls ) );
@@ -1535,7 +1535,7 @@ static char *unknown_mode="\tunknown mode\n";
 int
 rt_bot_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {
@@ -1653,7 +1653,7 @@ rt_bot_tnurb( r, m, ip, tol )
 struct nmgregion        **r;
 struct model            *m;
 struct rt_db_internal   *ip;
-CONST struct bn_tol           *tol;
+const struct bn_tol           *tol;
 {
 	return( 1 );
 }
@@ -1661,8 +1661,8 @@ CONST struct bn_tol           *tol;
 int
 rt_bot_xform( op, mat, ip, free, dbip )
 struct rt_db_internal *op, *ip;
-CONST mat_t	mat;
-CONST int free;
+const mat_t	mat;
+const int free;
 struct db_i	*dbip;
 {
 	struct rt_bot_internal *botip, *botop;
@@ -1949,8 +1949,8 @@ static char *los[]={
 int
 rt_bot_tclget( interp, intern, attr )
 Tcl_Interp			*interp;
-CONST struct rt_db_internal	*intern;
-CONST char			*attr;
+const struct rt_db_internal	*intern;
+const char			*attr;
 {
 	register struct rt_bot_internal *bot=(struct rt_bot_internal *)intern->idb_ptr;
 	Tcl_DString	ds;

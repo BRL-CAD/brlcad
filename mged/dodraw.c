@@ -328,7 +328,7 @@ int
 mged_nmg_region_start( tsp, pathp, combp, client_data )
 struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
-CONST struct rt_comb_internal *combp;
+const struct rt_comb_internal *combp;
 genptr_t client_data;
 {
 	union tree		*tp;
@@ -715,7 +715,7 @@ drawtrees(
 	  Tcl_AppendResult(interp, "ERROR, bad kind\n", (char *)NULL);
 	  return(-1);
 	case 1:		/* Wireframes */
-		ret = db_walk_tree( dbip, argc, (CONST char **)argv,
+		ret = db_walk_tree( dbip, argc, (const char **)argv,
 			ncpu,
 			&mged_initial_tree_state,
 			0,			/* take all regions */
@@ -750,7 +750,7 @@ A production implementation will exist in the maintenance release.\n", (char *)N
 		  mged_draw_edge_uses_vbp = rt_vlblock_init();
 	  	}
 
-		ret = db_walk_tree( dbip, argc, (CONST char **)argv,
+		ret = db_walk_tree( dbip, argc, (const char **)argv,
 			ncpu,
 			&mged_initial_tree_state,
 			mged_enable_fastpath ? mged_nmg_region_start : 0,
@@ -1406,7 +1406,7 @@ char	**argv;
   	mged_nmg_model = nmg_mm();
 	mged_initial_tree_state.ts_m = &mged_nmg_model;
 
-	i = db_walk_tree( dbip, argc, (CONST char **)argv,
+	i = db_walk_tree( dbip, argc, (const char **)argv,
 		ncpu,
 		&mged_initial_tree_state,
 		0,			/* take all regions */
@@ -1649,7 +1649,7 @@ char	**argv;
 
 	while( argc )
 	{
-		i = db_walk_tree( dbip, 1, (CONST char **)argv,
+		i = db_walk_tree( dbip, 1, (const char **)argv,
 			ncpu,
 			&mged_initial_tree_state,
 			0,			/* take all regions */

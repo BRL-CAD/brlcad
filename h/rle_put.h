@@ -42,7 +42,7 @@
 typedef int rle_fn( ARB_ARGS );
 
 struct rle_dispatch_tab {
-    CONST char   *magic;	/* magic type flags */
+    const char   *magic;	/* magic type flags */
     rle_fn *setup,			/* startup function */
 	   *skipBlankLines,
 	   *setColor,

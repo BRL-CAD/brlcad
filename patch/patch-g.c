@@ -1577,7 +1577,7 @@ struct rt_tol *tol;
 	/* Close shell */
 	if( debug )
 		rt_log( "Close shell\n" );
-	if( nmg_open_shells_connect( s , is , (CONST long **)copy_tbl , tol ) )
+	if( nmg_open_shells_connect( s , is , (const long **)copy_tbl , tol ) )
 	{
 		/* debugging: write an NMG of the outer shell named "name.BAD" */
 		char *bad;

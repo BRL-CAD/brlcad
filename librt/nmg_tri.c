@@ -446,7 +446,7 @@ nmg_flatten_face(fu, TformMat)
 struct faceuse *fu;
 mat_t		TformMat;
 {
-	static CONST vect_t twoDspace = { 0.0, 0.0, 1.0 };
+	static const vect_t twoDspace = { 0.0, 0.0, 1.0 };
 	struct bu_list *tbl2d;
 	struct vertexuse *vu;
 	struct loopuse *lu;
@@ -514,7 +514,7 @@ mat_t		TformMat;
 static int
 is_convex(a, b, c, tol)
 struct pt2d *a, *b, *c;
-CONST struct bn_tol *tol;
+const struct bn_tol *tol;
 {
 	vect_t ab, bc, pv, N;
 	double angle;
@@ -573,7 +573,7 @@ static int
 vtype2d(v, tbl2d, tol)
 struct pt2d *v;
 struct bu_list *tbl2d;
-CONST struct bn_tol *tol;
+const struct bn_tol *tol;
 {
 	struct pt2d *p, *n;	/* previous/this edge endpoints */
 	struct loopuse *lu;
@@ -1101,7 +1101,7 @@ gotem:
 static void
 nmg_trap_face(tbl2d, tlist, tol)
 struct bu_list *tbl2d, *tlist;
-CONST struct bn_tol *tol;
+const struct bn_tol *tol;
 {
 	struct pt2d *pt;
 
@@ -1188,7 +1188,7 @@ struct vertex *v;
 struct vertexuse **vu_last, **vu_first;
 struct faceuse *fu;
 int *max_dir, *min_dir;	/* 1: forward -1 reverse */
-CONST struct bn_tol	*tol;
+const struct bn_tol	*tol;
 vect_t dir;
 {
 	struct vertexuse *vu;
@@ -1460,7 +1460,7 @@ struct vertexuse **first_vu;
 struct vertexuse **last_vu;
 vect_t 		dir;
 struct faceuse	*fu;
-CONST struct bn_tol	*tol;
+const struct bn_tol	*tol;
 {
 	struct vertexuse *vu_first, *vu_last;
 	int max_dir, min_dir;	/* 1: forward -1 reverse */
@@ -1624,7 +1624,7 @@ static void
 pick_pt2d_for_cutjoin(tbl2d, p1, p2, tol)
 struct bu_list *tbl2d;
 struct pt2d **p1, **p2;
-CONST struct bn_tol *tol;
+const struct bn_tol *tol;
 {
 	struct vertexuse *cut_vu1, *cut_vu2, *junk_vu;
 	struct faceuse *fu;
@@ -1721,8 +1721,8 @@ static struct pt2d *
 cut_mapped_loop(tbl2d, p1, p2, color, tol, void_ok)
 struct bu_list *tbl2d;
 struct pt2d *p1, *p2;
-CONST int color[3];
-CONST struct bn_tol	*tol;
+const int color[3];
+const struct bn_tol	*tol;
 int void_ok;
 {
 	struct loopuse *new_lu;
@@ -1911,8 +1911,8 @@ static void
 join_mapped_loops(tbl2d, p1, p2, color, tol)
 struct bu_list *tbl2d;
 struct pt2d *p1, *p2;
-CONST int color[3];
-CONST struct bn_tol	*tol;
+const int color[3];
+const struct bn_tol	*tol;
 {
 	struct vertexuse *vu1, *vu2;
 	struct vertexuse *vu;
@@ -2121,14 +2121,14 @@ struct pt2d *top, *bot;
 static void
 cut_diagonals(tbl2d, tlist, fu, tol)
 struct bu_list *tbl2d, *tlist;
-CONST struct faceuse	*fu;
-CONST struct bn_tol	*tol;
+const struct faceuse	*fu;
+const struct bn_tol	*tol;
 {
 	struct trap *tp;
 	int cut_count=0;
 
-	static CONST int cut_color[3] = {255, 80, 80};
-	static CONST int join_color[3] = {80, 80, 255};
+	static const int cut_color[3] = {255, 80, 80};
+	static const int join_color[3] = {80, 80, 255};
 
 	extern struct loopuse *nmg_find_lu_of_vu();
 	struct loopuse *toplu, *botlu;
@@ -2344,14 +2344,14 @@ static void
 cut_unimonotone( tbl2d, tlist, lu, tol )
 struct bu_list *tbl2d, *tlist;
 struct loopuse *lu;
-CONST struct bn_tol *tol;
+const struct bn_tol *tol;
 {
 	struct pt2d *min, *max, *new, *first=NULL, *prev, *next, *current;
 	struct edgeuse *eu;
 	int verts=0;
 	int vert_count_sq;	/* XXXXX Hack for catching infinite loop */
 	int loop_count=0;	/* See above */
-	static CONST int cut_color[3] = { 90, 255, 90};
+	static const int cut_color[3] = { 90, 255, 90};
 
 	NMG_CK_TBL2D(tbl2d);
 	BN_CK_TOL(tol);
@@ -2559,7 +2559,7 @@ struct bu_list *tbl2d;
 void
 nmg_triangulate_fu(fu, tol)
 struct faceuse *fu;
-CONST struct bn_tol	*tol;
+const struct bn_tol	*tol;
 {
 	mat_t TformMat;
 	struct bu_list *tbl2d;
@@ -2752,7 +2752,7 @@ triangulate:
 void
 nmg_triangulate_shell(s, tol)
 struct shell *s;
-CONST struct bn_tol   *tol;
+const struct bn_tol   *tol;
 {
 	struct faceuse *fu;
 
@@ -2769,7 +2769,7 @@ CONST struct bn_tol   *tol;
 void
 nmg_triangulate_model(m, tol)
 struct model *m;
-CONST struct bn_tol   *tol;
+const struct bn_tol   *tol;
 {
 	struct nmgregion *r;
 	struct shell *s;

@@ -631,7 +631,7 @@ com_table	*ctp;
     FILE	*newf;
     static char	*new_dest;
 #if !defined(HAVE_POPEN_DECL) && !defined(CRAY2)
-    RT_EXTERN(FILE *popen, (CONST char *command, CONST char *type) );
+    RT_EXTERN(FILE *popen, (const char *command, const char *type) );
 #endif
     static FILE	*(*openfunc)() = 0;
 

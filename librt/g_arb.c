@@ -108,7 +108,7 @@ struct arb_info {
 	char	*ai_title;
 	int	ai_sub[4];
 };
-static CONST struct arb_info rt_arb_info[6] = {
+static const struct arb_info rt_arb_info[6] = {
 	{ "1234", {3, 2, 1, 0} },		/* "bottom" face */
 	{ "8765", {4, 5, 6, 7} },		/* "top" face */
 	{ "1485", {4, 7, 3, 0} },
@@ -119,7 +119,7 @@ static CONST struct arb_info rt_arb_info[6] = {
 
 RT_EXTERN(void rt_arb_ifree, (struct rt_db_internal *) );
 
-CONST struct bu_structparse rt_arb_parse[] = {
+const struct bu_structparse rt_arb_parse[] = {
     { "%f", 3, "V1", offsetof(struct rt_arb_internal, pt[0][X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "V2", offsetof(struct rt_arb_internal, pt[1][X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "V3", offsetof(struct rt_arb_internal, pt[2][X]), BU_STRUCTPARSE_FUNC_NULL },
@@ -348,10 +348,10 @@ rt_arb_centroid( point_t center_pt, const struct rt_arb_internal *arb, int npoin
 HIDDEN int
 rt_arb_add_pt( point, title, pap, ptno, name )
 register pointp_t point;
-CONST char	*title;
+const char	*title;
 struct prep_arb	*pap;
 int		ptno;	/* current point # on face */
-CONST char	*name;
+const char	*name;
 {
 	LOCAL vect_t	work;
 	LOCAL vect_t	P_A;		/* new point minus A */
@@ -492,7 +492,7 @@ HIDDEN int
 rt_arb_mk_planes( pap, aip, name )
 register struct prep_arb	*pap;
 struct rt_arb_internal		*aip;
-CONST char			*name;
+const char			*name;
 {
 	LOCAL vect_t	sum;		/* Sum of all endpoints */
 	register int	i;
@@ -729,7 +729,7 @@ struct rt_i		*rtip;
  */
 void
 rt_arb_print( stp )
-register CONST struct soltab *stp;
+register const struct soltab *stp;
 {
 	register struct arb_specific *arbp =
 		(struct arb_specific *)stp->st_specific;
@@ -1113,8 +1113,8 @@ int
 rt_arb_plot( vhead, ip, ttol, tol )
 struct bu_list			*vhead;
 struct rt_db_internal		 *ip;
-CONST struct rt_tess_tol	*ttol;
-CONST struct bn_tol		*tol;
+const struct rt_tess_tol	*ttol;
+const struct bn_tol		*tol;
 {
 	struct rt_arb_internal	*aip;
 
@@ -1134,9 +1134,9 @@ CONST struct bn_tol		*tol;
  */
 int
 rt_arb_class( stp, min, max, tol )
-CONST struct soltab    *stp;
-CONST vect_t		min, max;
-CONST struct bn_tol    *tol;
+const struct soltab    *stp;
+const vect_t		min, max;
+const struct bn_tol    *tol;
 {
 	register struct arb_specific *arbp =
 		(struct arb_specific *)stp->st_specific;
@@ -1175,9 +1175,9 @@ CONST struct bn_tol    *tol;
 int
 rt_arb_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-register CONST  mat_t		mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+register const  mat_t		mat;
+const struct db_i		*dbip;
 {
 	struct rt_arb_internal	*aip;
 	union record		*rp;
@@ -1222,9 +1222,9 @@ CONST struct db_i		*dbip;
 int
 rt_arb_export( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_arb_internal	*aip;
 	union record		*rec;
@@ -1261,9 +1261,9 @@ CONST struct db_i		*dbip;
 int
 rt_arb_import5( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-register CONST mat_t		mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	struct rt_arb_internal *aip;
 	register int		i;
@@ -1292,9 +1292,9 @@ CONST struct db_i		*dbip;
 int
 rt_arb_export5( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_arb_internal	*aip;
 	fastf_t			vec[3*8];
@@ -1324,7 +1324,7 @@ CONST struct db_i		*dbip;
 int
 rt_arb_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {
@@ -1468,8 +1468,8 @@ rt_arb_tess( r, m, ip, ttol, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol	*ttol;
-CONST struct bn_tol		*tol;
+const struct rt_tess_tol	*ttol;
+const struct bn_tol		*tol;
 {
 	LOCAL struct rt_arb_internal	*aip;
 	struct shell		*s;
@@ -1553,14 +1553,14 @@ CONST struct bn_tol		*tol;
 	return(0);
 }
 
-static CONST fastf_t rt_arb_uvw[5*3] = {
+static const fastf_t rt_arb_uvw[5*3] = {
 	0, 0, 0,
 	1, 0, 0,
 	1, 1, 0,
 	0, 1, 0,
 	0, 0, 0
 };
-static CONST int rt_arb_vert_index_scramble[4] = { 0, 1, 3, 2 };
+static const int rt_arb_vert_index_scramble[4] = { 0, 1, 3, 2 };
 
 /*
  *			R T _ A R B _ T N U R B
@@ -1582,7 +1582,7 @@ rt_arb_tnurb( r, m, ip, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-CONST struct bn_tol	*tol;
+const struct bn_tol	*tol;
 {
 	LOCAL struct rt_arb_internal	*aip;
 	struct shell		*s;
@@ -1769,7 +1769,7 @@ rt_arb_calc_points(
 }
 
 /* planes to define ARB vertices */
-CONST int rt_arb_planes[5][24] = {
+const int rt_arb_planes[5][24] = {
 	{0,1,3, 0,1,2, 0,2,3, 0,1,3, 1,2,3, 1,2,3, 1,2,3, 1,2,3},	/* ARB4 */
 	{0,1,4, 0,1,2, 0,2,3, 0,3,4, 1,2,4, 1,2,4, 1,2,4, 1,2,4},	/* ARB5 */
 	{0,2,3, 0,1,3, 0,1,4, 0,2,4, 1,2,3, 1,2,3, 1,2,4, 1,2,4},	/* ARB6 */

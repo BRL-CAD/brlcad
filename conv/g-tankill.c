@@ -110,7 +110,7 @@ static int
 select_region( tsp, pathp, combp, client_data )
 register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
-CONST struct rt_comb_internal *combp;
+const struct rt_comb_internal *combp;
 genptr_t		client_data;
 {
 	if( tsp->ts_regionid == curr_id )
@@ -124,7 +124,7 @@ static int
 get_reg_id( tsp, pathp, combp, client_data )
 register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
-CONST struct rt_comb_internal *combp;
+const struct rt_comb_internal *combp;
 genptr_t		client_data;
 {
 	insert_id( tsp->ts_regionid );
@@ -167,8 +167,8 @@ genptr_t		client_data;
  */
 static void
 nmg_find_void_shells( r , flags , ttol )
-CONST struct nmgregion *r;
-CONST struct bn_tol *ttol;
+const struct nmgregion *r;
+const struct bn_tol *ttol;
 long *flags;
 {
 	struct model *m;
@@ -209,7 +209,7 @@ static void
 nmg_assoc_void_shells( r , flags , ttol )
 struct nmgregion *r;
 long *flags;
-CONST struct bn_tol *ttol;
+const struct bn_tol *ttol;
 {
 	struct shell *s;
 	struct faceuse *fu;
@@ -776,7 +776,7 @@ char	*argv[];
 	optind++;
 
 	/* First produce a list of region ident codes */
-	(void)db_walk_tree(dbip, argc-optind, (CONST char **)(&argv[optind]),
+	(void)db_walk_tree(dbip, argc-optind, (const char **)(&argv[optind]),
 		1,				/* ncpu */
 		&tree_state,
 		get_reg_id,			/* put id in table */
@@ -810,7 +810,7 @@ char	*argv[];
 		bu_log( "Processing id %d\n" , curr_id );
 
 		/* Walk indicated tree(s).  Each region will be output separately */
-		(void)db_walk_tree(dbip, argc-optind, (CONST char **)(&argv[optind]),
+		(void)db_walk_tree(dbip, argc-optind, (const char **)(&argv[optind]),
 			1,				/* ncpu */
 			&tree_state,
 			select_region,			/* selects regions with curr_id */

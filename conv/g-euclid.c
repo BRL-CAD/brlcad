@@ -136,7 +136,7 @@ static int
 select_region( tsp, pathp, combp, client_data )
 register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
-CONST struct rt_comb_internal *combp;
+const struct rt_comb_internal *combp;
 genptr_t		client_data;
 {
 	if(verbose )
@@ -152,7 +152,7 @@ static int
 get_reg_id( tsp, pathp, combp, client_data )
 register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
-CONST struct rt_comb_internal *combp;
+const struct rt_comb_internal *combp;
 genptr_t client_data;
 {
 	if( verbose )
@@ -189,10 +189,10 @@ genptr_t		client_data;
 
 static void
 Write_euclid_face( lu , facet_type , regionid , face_number )
-CONST struct loopuse *lu;
-CONST int facet_type;
-CONST int regionid;
-CONST int face_number;
+const struct loopuse *lu;
+const int facet_type;
+const int regionid;
+const int face_number;
 {
 	struct faceuse *fu;
 	struct edgeuse *eu;
@@ -609,7 +609,7 @@ char	*argv[];
 	fprintf( fp_out , "$03" );
 
 	/* First produce an unordered list of region ident codes */
-	(void)db_walk_tree(dbip, argc-optind, (CONST char **)(&argv[optind]),
+	(void)db_walk_tree(dbip, argc-optind, (const char **)(&argv[optind]),
 		1,			/* ncpu */
 		&tree_state,
 		get_reg_id,			/* put id in table */
@@ -643,7 +643,7 @@ char	*argv[];
 		tree_state.ts_tol = &tol;
 		tree_state.ts_ttol = &ttol;
 
-		(void)db_walk_tree(dbip, argc-optind, (CONST char **)(&argv[optind]),
+		(void)db_walk_tree(dbip, argc-optind, (const char **)(&argv[optind]),
 			1,			/* ncpu */
 			&tree_state,
 			select_region,

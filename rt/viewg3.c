@@ -84,7 +84,7 @@ static mat_t	model2hv;		/* model coords to GIFT h,v in inches */
 static FILE	*plotfp;		/* optional plotting file */
 static long	line_num;		/* count of lines output to shotline file */
 
-CONST char usage[] = "\
+const char usage[] = "\
 Usage:  rtg3 [options] model.g objects... >file.ray\n\
 Options:\n\
  -s #		Grid size in pixels, default 512\n\

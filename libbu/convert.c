@@ -410,7 +410,7 @@ bu_cv_itemlen(register int cookie)
  */
 int
 bu_cv_ntohss(out, size, in, count)
-register SIGNED short	*out;
+register signed short	*out;
 int			size;
 register genptr_t	in;
 int			count;
@@ -418,11 +418,11 @@ int			count;
 	int limit;
 	register int i;
 
-	limit = size / sizeof(SIGNED short);
+	limit = size / sizeof(signed short);
 	if (limit < count) count = limit;
 
 	for (i=0; i<count; i++) {
-		*out++ = ((SIGNED char *)in)[0] << 8 | ((unsigned char *)in)[1];
+		*out++ = ((signed char *)in)[0] << 8 | ((unsigned char *)in)[1];
 		/* XXX This needs sign extension here for the case of
 		 * XXX a negative 2-byte input on a 4 or 8 byte machine.
 		 * XXX The "signed char" trick isn't enough.
@@ -454,7 +454,7 @@ int			count;
 }
 int
 bu_cv_ntohsl(out, size, in, count)
-register SIGNED long int	*out;
+register signed long int	*out;
 int				size;
 register genptr_t		in;
 int				count;
@@ -462,11 +462,11 @@ int				count;
 	int limit;
 	register int i;
 
-	limit = size / sizeof(SIGNED long int);
+	limit = size / sizeof(signed long int);
 	if (limit < count) count = limit;
 
 	for (i=0; i<count; i++) {
-		*out++ = ((SIGNED char *)in)[0] << 24 |
+		*out++ = ((signed char *)in)[0] << 24 |
 		    ((unsigned char *)in)[1] << 16 | 
 		    ((unsigned char *)in)[2] << 8  |
 		    ((unsigned char *)in)[3];
@@ -901,7 +901,7 @@ bu_cv_w_cookie(genptr_t out, int outcookie, int	size,
 			switch(incookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
 			case CV_SIGNED_MASK | CV_8:
 				for (i=0; i< work_count; i++) {
-					*((double *)to) = *((SIGNED char *)from);
+					*((double *)to) = *((signed char *)from);
 					to = (genptr_t)(((double *)to) + 1);
 					from = ((char *)from) + 1;
 				}
@@ -915,9 +915,9 @@ bu_cv_w_cookie(genptr_t out, int outcookie, int	size,
 				break;
 			case CV_SIGNED_MASK | CV_16:
 				for (i=0; i < work_count; i++) {
-					*((double *)to) = *((SIGNED short *)from);
+					*((double *)to) = *((signed short *)from);
 					to = (genptr_t)(((double *)to) + 1);
-					from = (genptr_t)(((SIGNED short *)from) + 1);
+					from = (genptr_t)(((signed short *)from) + 1);
 				}
 				break;
 			case CV_16:
@@ -929,9 +929,9 @@ bu_cv_w_cookie(genptr_t out, int outcookie, int	size,
 				break;
 			case CV_SIGNED_MASK | CV_32:
 				for (i=0; i < work_count; i++) {
-					*((double *)to) = *((SIGNED long int *)from);
+					*((double *)to) = *((signed long int *)from);
 					to = (genptr_t)(((double *)to) + 1);
-					from =  (genptr_t)(((SIGNED long int *)from) + 1);
+					from =  (genptr_t)(((signed long int *)from) + 1);
 				}
 				break;
 			case CV_32:
@@ -967,8 +967,8 @@ bu_cv_w_cookie(genptr_t out, int outcookie, int	size,
 			switch (outcookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
 			case CV_SIGNED_MASK | CV_8:
 				for (i=0; i<work_count; i++) {
-					*((SIGNED char *)to) = *((double *)from);
-					to = (genptr_t)(((SIGNED char *)to) + 1);
+					*((signed char *)to) = *((double *)from);
+					to = (genptr_t)(((signed char *)to) + 1);
 					from = (genptr_t)(((double *)from) + 1);
 				}
 				break;
@@ -982,9 +982,9 @@ bu_cv_w_cookie(genptr_t out, int outcookie, int	size,
 				break;
 			case CV_SIGNED_MASK | CV_16:
 				for (i=0; i<work_count; i++) {
-					*((SIGNED short int *)to) =
+					*((signed short int *)to) =
 					    *((double *)from);
-					to = (genptr_t)(((SIGNED short int *)to) + 1);
+					to = (genptr_t)(((signed short int *)to) + 1);
 					from = (genptr_t)(((double *)from) + 1);
 				}
 				break;
@@ -998,9 +998,9 @@ bu_cv_w_cookie(genptr_t out, int outcookie, int	size,
 				break;
 			case CV_SIGNED_MASK | CV_32:
 				for (i=0; i<work_count; i++) {
-					*((SIGNED long int *)to) =
+					*((signed long int *)to) =
 					    *((double *)from);
-					to = (genptr_t)(((SIGNED long int *)to) + 1);
+					to = (genptr_t)(((signed long int *)to) + 1);
 					from = (genptr_t)(((double *)from) + 1);
 				}
 				break;

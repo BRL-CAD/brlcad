@@ -319,10 +319,10 @@ char *argv[];
     if( argc < 2 )  {
       /* Bare set command, print out current settings */
       bu_struct_print("dm_X internal variables", Pex_vparse,
-		     (CONST char *)&((struct pex_vars *)dmp->dm_vars)->mvars );
+		     (const char *)&((struct pex_vars *)dmp->dm_vars)->mvars );
     } else if( argc == 2 ) {
       bu_vls_struct_item_named( &vls, Pex_vparse, argv[1],
-			 (CONST char *)&((struct pex_vars *)dmp->dm_vars)->mvars, ',');
+			 (const char *)&((struct pex_vars *)dmp->dm_vars)->mvars, ',');
       bu_log( "%s\n", bu_vls_addr(&vls) );
     } else {
       bu_vls_printf( &vls, "%s=\"", argv[1] );

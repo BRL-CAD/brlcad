@@ -43,8 +43,8 @@ static const char RCSplane[] = "@(#)$Header$ (BRL)";
  */
 double
 bn_dist_pt3_pt3( a, b )
-CONST point_t	a;
-CONST point_t	b;
+const point_t	a;
+const point_t	b;
 {
 	vect_t	diff;
 
@@ -61,9 +61,9 @@ CONST point_t	b;
  */
 int
 bn_pt3_pt3_equal( a, b, tol )
-CONST point_t		a;
-CONST point_t		b;
-CONST struct bn_tol	*tol;
+const point_t		a;
+const point_t		b;
+const struct bn_tol	*tol;
 {
 	vect_t	diff;
 
@@ -82,9 +82,9 @@ CONST struct bn_tol	*tol;
  */
 int
 bn_pt2_pt2_equal( a, b, tol )
-CONST point_t		a;
-CONST point_t		b;
-CONST struct bn_tol	*tol;
+const point_t		a;
+const point_t		b;
+const struct bn_tol	*tol;
 {
 	vect_t	diff;
 
@@ -109,7 +109,7 @@ CONST struct bn_tol	*tol;
 int
 bn_3pts_collinear(a, b, c, tol)
 point_t	a, b, c;
-CONST struct bn_tol	*tol;
+const struct bn_tol	*tol;
 {
 	fastf_t	mag_ab, mag_bc, mag_ca, max_len, dist_sq;
 	fastf_t cos_a, cos_b, cos_c;
@@ -176,8 +176,8 @@ CONST struct bn_tol	*tol;
  */
 int
 bn_3pts_distinct( a, b, c, tol )
-CONST point_t		a, b, c;
-CONST struct bn_tol	*tol;
+const point_t		a, b, c;
+const struct bn_tol	*tol;
 {
 	vect_t	B_A;
 	vect_t	C_A;
@@ -234,8 +234,8 @@ CONST struct bn_tol	*tol;
 int
 bn_mk_plane_3pts( plane, a, b, c, tol )
 plane_t			plane;
-CONST point_t		a, b, c;
-CONST struct bn_tol	*tol;
+const point_t		a, b, c;
+const struct bn_tol	*tol;
 {
 	vect_t	B_A;
 	vect_t	C_A;
@@ -306,7 +306,7 @@ CONST struct bn_tol	*tol;
 int
 bn_mkpoint_3planes( pt, a, b, c )
 point_t		pt;
-CONST plane_t	a, b, c;
+const plane_t	a, b, c;
 {
 	vect_t	v1, v2, v3;
 	register fastf_t det;
@@ -345,12 +345,12 @@ CONST plane_t	a, b, c;
  */
 int
 bn_2line3_colinear( p1, d1, p2, d2, range, tol )
-CONST point_t		p1;
-CONST vect_t		d1;
-CONST point_t		p2;
-CONST vect_t		d2;
+const point_t		p1;
+const vect_t		d1;
+const point_t		p2;
+const vect_t		d2;
 double			range;
-CONST struct bn_tol	*tol;
+const struct bn_tol	*tol;
 {
 	fastf_t		mag1;
 	fastf_t		mag2;
@@ -407,10 +407,10 @@ fail:
 int
 bn_isect_line3_plane( dist, pt, dir, plane, tol )
 fastf_t		*dist;
-CONST point_t	pt;
-CONST vect_t	dir;
-CONST plane_t	plane;
-CONST struct bn_tol	*tol;
+const point_t	pt;
+const vect_t	dir;
+const plane_t	plane;
+const struct bn_tol	*tol;
 {
 	register fastf_t	slant_factor;
 	register fastf_t	norm_dist;
@@ -470,10 +470,10 @@ int
 bn_isect_2planes( pt, dir, a, b, rpp_min, tol )
 point_t		pt;
 vect_t		dir;
-CONST plane_t	a;
-CONST plane_t	b;
-CONST vect_t	rpp_min;
-CONST struct bn_tol	*tol;
+const plane_t	a;
+const plane_t	b;
+const vect_t	rpp_min;
+const struct bn_tol	*tol;
 {
 	LOCAL vect_t		abs_dir;
 	LOCAL plane_t		pl;
@@ -575,11 +575,11 @@ CONST struct bn_tol	*tol;
 int
 bn_isect_line2_line2( dist, p, d, a, c, tol )
 fastf_t			*dist;			/* dist[2] */
-CONST point_t		p;
-CONST vect_t		d;
-CONST point_t		a;
-CONST vect_t		c;
-CONST struct bn_tol	*tol;
+const point_t		p;
+const vect_t		d;
+const point_t		a;
+const vect_t		c;
+const struct bn_tol	*tol;
 {
 	fastf_t			hx, hy;		/* A - P */
 	register fastf_t	det;
@@ -792,11 +792,11 @@ bu_log("\thx=%g, hy=%g, det=%g, det1=%g, det2=%g\n", hx, hy, det, det1, (d[X] * 
 int
 bn_isect_line2_lseg2( dist, p, d, a, c, tol )
 fastf_t			*dist;		/* dist[2] */
-CONST point_t		p;
-CONST vect_t		d;
-CONST point_t		a;
-CONST vect_t		c;
-CONST struct bn_tol	*tol;
+const point_t		p;
+const vect_t		d;
+const point_t		a;
+const vect_t		c;
+const struct bn_tol	*tol;
 {
 	register fastf_t f;
 	fastf_t		ctol;
@@ -995,11 +995,11 @@ out:
 int
 bn_isect_lseg2_lseg2( dist, p, pdir, q, qdir, tol )
 fastf_t		*dist;
-CONST point_t	p;
-CONST vect_t	pdir;
-CONST point_t	q;
-CONST vect_t	qdir;
-CONST struct bn_tol	*tol;
+const point_t	p;
+const vect_t	pdir;
+const point_t	q;
+const vect_t	qdir;
+const struct bn_tol	*tol;
 {
 	fastf_t	ptol, qtol;	/* length in parameter space == tol->dist */
 	int	status;
@@ -1092,11 +1092,11 @@ CONST struct bn_tol	*tol;
 int
 bn_isect_lseg3_lseg3( dist, p, pdir, q, qdir, tol )
 fastf_t		*dist;
-CONST point_t	p;
-CONST vect_t	pdir;
-CONST point_t	q;
-CONST vect_t	qdir;
-CONST struct bn_tol	*tol;
+const point_t	p;
+const vect_t	pdir;
+const point_t	q;
+const vect_t	qdir;
+const struct bn_tol	*tol;
 {
 	fastf_t	ptol, qtol;	/* length in parameter space == tol->dist */
 	fastf_t	pmag, qmag;
@@ -1201,11 +1201,11 @@ int
 bn_isect_line3_line3( t, u, p, d, a, c, tol )
 fastf_t			*t;
 fastf_t			*u;
-CONST point_t		p;
-CONST vect_t		d;
-CONST point_t		a;
-CONST vect_t		c;
-CONST struct bn_tol	*tol;
+const point_t		p;
+const vect_t		d;
+const point_t		a;
+const vect_t		c;
+const struct bn_tol	*tol;
 {
 	LOCAL vect_t		n;
 	LOCAL vect_t		abs_n;
@@ -1450,11 +1450,11 @@ CONST struct bn_tol	*tol;
 int
 bn_isect_line_lseg( t, p, d, a, b, tol )
 fastf_t			*t;
-CONST point_t		p;
-CONST vect_t		d;
-CONST point_t		a;
-CONST point_t		b;
-CONST struct bn_tol	*tol;
+const point_t		p;
+const vect_t		d;
+const point_t		a;
+const point_t		b;
+const struct bn_tol	*tol;
 {
 	LOCAL vect_t	c;		/* Direction vector from A to B */
 	auto fastf_t	u;		/* As in, A + u * C = X */
@@ -1543,9 +1543,9 @@ CONST struct bn_tol	*tol;
  */
 double
 bn_dist_line3_pt3( pt, dir, a )
-CONST point_t	pt;
-CONST vect_t	dir;
-CONST point_t	a;
+const point_t	pt;
+const vect_t	dir;
+const point_t	a;
 {
 	LOCAL vect_t		f;
 	register fastf_t	FdotD;
@@ -1582,9 +1582,9 @@ out:
  */
 double
 bn_distsq_line3_pt3( pt, dir, a )
-CONST point_t	pt;
-CONST vect_t	dir;
-CONST point_t	a;
+const point_t	pt;
+const vect_t	dir;
+const point_t	a;
 {
 	LOCAL vect_t		f;
 	register fastf_t	FdotD;
@@ -1618,8 +1618,8 @@ out:
  */
 double
 bn_dist_line_origin( pt, dir )
-CONST point_t	pt;
-CONST vect_t	dir;
+const point_t	pt;
+const vect_t	dir;
 {
 	register fastf_t	PTdotD;
 
@@ -1643,9 +1643,9 @@ CONST vect_t	dir;
  */
 double
 bn_dist_line2_point2( pt, dir, a )
-CONST point_t	pt;
-CONST vect_t	dir;
-CONST point_t	a;
+const point_t	pt;
+const vect_t	dir;
+const point_t	a;
 {
 	LOCAL vect_t		f;
 	register fastf_t	FdotD;
@@ -1672,9 +1672,9 @@ CONST point_t	a;
  */
 double
 bn_distsq_line2_point2( pt, dir, a )
-CONST point_t	pt;
-CONST vect_t	dir;
-CONST point_t	a;
+const point_t	pt;
+const vect_t	dir;
+const point_t	a;
 {
 	LOCAL vect_t		f;
 	register fastf_t	FdotD;
@@ -1696,7 +1696,7 @@ CONST point_t	a;
  */
 double
 bn_area_of_triangle( a, b, c )
-register CONST point_t a, b, c;
+register const point_t a, b, c;
 {
 	register double	t;
 	register double	area;
@@ -1747,8 +1747,8 @@ register CONST point_t a, b, c;
  */
 int bn_isect_pt_lseg(dist, a, b, p, tol)
 fastf_t			*dist;		/* distance along line from A to P */
-CONST point_t		a, b, p;	/* points for line and intersect */
-CONST struct bn_tol	*tol;
+const point_t		a, b, p;	/* points for line and intersect */
+const struct bn_tol	*tol;
 {
 	vect_t	AtoP,
 		BtoP,
@@ -1828,8 +1828,8 @@ CONST struct bn_tol	*tol;
 int
 bn_isect_pt2_lseg2(dist, a, b, p, tol)
 fastf_t			*dist;		/* distance along line from A to P */
-CONST point_t		a, b, p;	/* points for line and intersect */
-CONST struct bn_tol	*tol;
+const point_t		a, b, p;	/* points for line and intersect */
+const struct bn_tol	*tol;
 {
 	vect_t	AtoP,
 		BtoP,
@@ -1923,8 +1923,8 @@ int
 bn_dist_pt3_lseg3( dist, pca, a, b, p, tol )
 fastf_t		*dist;
 point_t		pca;
-CONST point_t	a, b, p;
-CONST struct bn_tol *tol;
+const point_t	a, b, p;
+const struct bn_tol *tol;
 {
 	vect_t	PtoA;		/* P-A */
 	vect_t	PtoB;		/* P-B */
@@ -2043,8 +2043,8 @@ int
 bn_dist_pt2_lseg2( dist_sq, pca, a, b, p, tol )
 fastf_t		*dist_sq;
 fastf_t		pca[2];
-CONST point_t	a, b, p;
-CONST struct bn_tol *tol;
+const point_t	a, b, p;
+const struct bn_tol *tol;
 {
 	vect_t	PtoA;		/* P-A */
 	vect_t	PtoB;		/* P-B */
@@ -2144,9 +2144,9 @@ void
 bn_rotate_bbox( omin, omax, mat, imin, imax )
 point_t		omin;
 point_t		omax;
-CONST mat_t	mat;
-CONST point_t	imin;
-CONST point_t	imax;
+const mat_t	mat;
+const point_t	imin;
+const point_t	imax;
 {
 	point_t	local;		/* vertex point in local coordinates */
 	point_t	model;		/* vertex point in model coordinates */
@@ -2175,8 +2175,8 @@ CONST point_t	imax;
 void
 bn_rotate_plane( oplane, mat, iplane )
 plane_t		oplane;
-CONST mat_t	mat;
-CONST plane_t	iplane;
+const mat_t	mat;
+const plane_t	iplane;
 {
 	point_t		orig_pt;
 	point_t		new_pt;
@@ -2211,9 +2211,9 @@ CONST plane_t	iplane;
  */
 int
 bn_coplanar( a, b, tol )
-CONST plane_t		a;
-CONST plane_t		b;
-CONST struct bn_tol	*tol;
+const plane_t		a;
+const plane_t		b;
+const struct bn_tol	*tol;
 {
 	register fastf_t	f;
 	register fastf_t	dot;
@@ -2280,8 +2280,8 @@ CONST struct bn_tol	*tol;
 double
 bn_angle_measure( vec, x_dir, y_dir )
 vect_t	vec;
-CONST vect_t	x_dir;
-CONST vect_t	y_dir;
+const vect_t	x_dir;
+const vect_t	y_dir;
 {
 	fastf_t		xproj, yproj;
 	fastf_t		gamma;
@@ -2314,9 +2314,9 @@ CONST vect_t	y_dir;
  */
 double
 bn_dist_pt3_along_line3( p, d, x )
-CONST point_t	p;
-CONST vect_t	d;
-CONST point_t	x;
+const point_t	p;
+const vect_t	d;
+const point_t	x;
 {
 	vect_t	x_p;
 
@@ -2335,9 +2335,9 @@ CONST point_t	x;
  */
 double
 bn_dist_pt2_along_line2( p, d, x )
-CONST point_t	p;
-CONST vect_t	d;
-CONST point_t	x;
+const point_t	p;
+const vect_t	d;
+const point_t	x;
 {
 	vect_t	x_p;
 	double	ret;
@@ -2364,7 +2364,7 @@ bn_between( left, mid, right, tol )
 double	left;
 double	mid;
 double	right;
-CONST struct bn_tol	*tol;
+const struct bn_tol	*tol;
 {
 	BN_CK_TOL(tol);
 
@@ -2495,11 +2495,11 @@ fastf_t *dist_p;
 fastf_t *N_p;
 fastf_t *Alpha_p;
 fastf_t *Beta_p;
-CONST point_t pt;
-CONST vect_t dir;
-CONST point_t V;
-CONST point_t A;
-CONST point_t B;
+const point_t pt;
+const vect_t dir;
+const point_t V;
+const point_t A;
+const point_t B;
 {
 	vect_t VA;	/* V -> A vector */
 	vect_t VB;	/* V -> B vector */
@@ -2568,9 +2568,9 @@ CONST point_t B;
  */
 int
 bn_hlf_class( half_eqn, min, max, tol )
-CONST plane_t		half_eqn;
-CONST vect_t		min, max;
-CONST struct bn_tol    *tol;
+const plane_t		half_eqn;
+const vect_t		min, max;
+const struct bn_tol    *tol;
 {
 	int	class;	/* current classification */
 	fastf_t d;
@@ -2715,8 +2715,8 @@ point_t pt1, pt2;
 int
 bn_isect_planes( pt , planes , pl_count )
 point_t pt;
-CONST plane_t planes[];
-CONST int pl_count;
+const plane_t planes[];
+const int pl_count;
 {
 	mat_t matrix;
 	mat_t inverse;

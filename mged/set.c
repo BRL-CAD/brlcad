@@ -171,7 +171,7 @@ int flags;
     /* Ask the libbu structparser for the value of the variable */
 
     bu_vls_init( &str );
-    bu_vls_struct_item( &str, sp, (CONST char *)mged_variables, ' ');
+    bu_vls_struct_item( &str, sp, (const char *)mged_variables, ' ');
 
     /* Next, set the Tcl variable to this value */
     (void)Tcl_SetVar(interp, sp->sp_name, bu_vls_addr(&str),

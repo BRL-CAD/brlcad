@@ -192,7 +192,7 @@ void mk_trans_tbl()
 void mk_char_trans_tbl()
 {
 	register int j, i;
-	register SIGNED char d;
+	register signed char d;
 
 	/* create translation map */
 	for (j = 0; j < MAPBUFLEN ; ++j) {

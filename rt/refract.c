@@ -50,7 +50,7 @@ HIDDEN int	rr_hit(), rr_miss();
 HIDDEN int	rr_refract();
 
 #if RT_MULTISPECTRAL
-extern CONST struct bn_table	*spectrum;
+extern const struct bn_table	*spectrum;
 extern struct bn_tabdata	*background; /* from rttherm/viewtherm.c */
 #else
 extern vect_t background;

@@ -114,10 +114,10 @@ int code;
 
 static void
 Write_euclid_face( lu , facet_type , regionid , face_number , fp_out )
-CONST struct loopuse *lu;
-CONST int facet_type;
-CONST int regionid;
-CONST int face_number;
+const struct loopuse *lu;
+const int facet_type;
+const int regionid;
+const int face_number;
 FILE *fp_out;
 {
 	struct faceuse *fu;
@@ -523,7 +523,7 @@ char	*argv[];
 	tree_state.ts_tol = &tol;
 	tree_state.ts_ttol = &ttol;
 
-	(void)db_walk_tree(dbip, argc-optind, (CONST char **)(&argv[optind]),
+	(void)db_walk_tree(dbip, argc-optind, (const char **)(&argv[optind]),
 		1,			/* ncpu */
 		&tree_state,
 		0,

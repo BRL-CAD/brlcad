@@ -72,7 +72,7 @@ static const char bn_RCSmat[] = "@(#)$Header$ (ARL)";
 #include "vmath.h"
 #include "bn.h"
 
-CONST mat_t	bn_mat_identity = {
+const mat_t	bn_mat_identity = {
 		1.0, 0.0, 0.0, 0.0,
 		0.0, 1.0, 0.0, 0.0,
 		0.0, 0.0, 1.0, 0.0,
@@ -84,8 +84,8 @@ CONST mat_t	bn_mat_identity = {
  */
 void
 bn_mat_print( title, m )
-CONST char	*title;
-CONST mat_t	m;
+const char	*title;
+const mat_t	m;
 {
 	register int	i;
 	char		obuf[1024];	/* sprintf may be non-PARALLEL */
@@ -173,7 +173,7 @@ register mat_t	m;
 void
 bn_mat_copy( dest, src )
 register mat_t		dest;
-register CONST mat_t	src;
+register const mat_t	src;
 {
 	register int i;
 
@@ -197,8 +197,8 @@ register CONST mat_t	src;
 void
 bn_mat_mul( o, a, b )
 register mat_t		o;
-register CONST mat_t	a;
-register CONST mat_t	b;
+register const mat_t	a;
+register const mat_t	b;
 {
 	o[ 0] = a[ 0]*b[ 0] + a[ 1]*b[ 4] + a[ 2]*b[ 8] + a[ 3]*b[12];
 	o[ 1] = a[ 0]*b[ 1] + a[ 1]*b[ 5] + a[ 2]*b[ 9] + a[ 3]*b[13];
@@ -231,7 +231,7 @@ register CONST mat_t	b;
  */
 void
 bn_mat_mul2( i, o )
-register CONST mat_t	i;
+register const mat_t	i;
 register mat_t		o;
 {
 	mat_t	temp;
@@ -250,9 +250,9 @@ register mat_t		o;
 void
 bn_mat_mul3( o, a, b, c )
 mat_t		o;
-CONST mat_t	a;
-CONST mat_t	b;
-CONST mat_t	c;
+const mat_t	a;
+const mat_t	b;
+const mat_t	c;
 {
 	mat_t	t;
 
@@ -270,10 +270,10 @@ CONST mat_t	c;
 void
 bn_mat_mul4( o, a, b, c, d )
 mat_t		o;
-CONST mat_t	a;
-CONST mat_t	b;
-CONST mat_t	c;
-CONST mat_t	d;
+const mat_t	a;
+const mat_t	b;
+const mat_t	c;
+const mat_t	d;
 {
 	mat_t	t, u;
 
@@ -292,8 +292,8 @@ CONST mat_t	d;
 void
 bn_matXvec(ov, im, iv)
 register hvect_t ov;
-register CONST mat_t im;
-register CONST hvect_t iv;
+register const mat_t im;
+register const hvect_t iv;
 {
 	register int eo = 0;		/* Position in output vector */
 	register int em = 0;		/* Position in input matrix */
@@ -324,7 +324,7 @@ register CONST hvect_t iv;
 void
 bn_mat_inv( output, input )
 register mat_t	output;
-CONST mat_t	input;
+const mat_t	input;
 {
 	register int i, j;			/* Indices */
 	LOCAL int k;				/* Indices */
@@ -415,7 +415,7 @@ CONST mat_t	input;
 void
 bn_vtoh_move( h, v )
 register vect_t		h;
-register CONST vect_t	v;
+register const vect_t	v;
 {
 	h[X] = v[X];
 	h[Y] = v[Y];
@@ -433,7 +433,7 @@ register CONST vect_t	v;
 void
 bn_htov_move( v, h )
 register vect_t		v;
-register CONST vect_t	h;
+register const vect_t	h;
 {
 	register fastf_t inv;
 
@@ -460,7 +460,7 @@ register CONST vect_t	h;
 void
 bn_mat_trn( om, im )
 mat_t			om;
-register CONST mat_t	im;
+register const mat_t	im;
 {
 	register matp_t op = om;
 
@@ -540,7 +540,7 @@ void
 bn_ae_vec( azp, elp, v )
 fastf_t		*azp;
 fastf_t		*elp;
-CONST vect_t	v;
+const vect_t	v;
 {
 	register fastf_t	az;
 
@@ -740,7 +740,7 @@ fastf_t	a, b, c;
 void
 bn_vec_perp( new, old )
 vect_t		new;
-CONST vect_t	old;
+const vect_t	old;
 {
 	register int i;
 	LOCAL vect_t another;	/* Another vector, different */
@@ -770,8 +770,8 @@ CONST vect_t	old;
 void
 bn_mat_fromto( m, from, to )
 mat_t		m;
-CONST vect_t	from;
-CONST vect_t	to;
+const vect_t	from;
+const vect_t	to;
 {
 	vect_t	test_to;
 	vect_t	unit_from, unit_to;
@@ -954,7 +954,7 @@ double	sinz, cosz;
 void
 bn_mat_lookat( rot, dir, yflip )
 mat_t		rot;
-CONST vect_t	dir;
+const vect_t	dir;
 int		yflip;
 {
 	mat_t	first;
@@ -1018,7 +1018,7 @@ int		yflip;
 void
 bn_vec_ortho( out, in )
 register vect_t	out;
-register CONST vect_t	in;
+register const vect_t	in;
 {
 	register int j, k;
 	FAST fastf_t	f;
@@ -1072,8 +1072,8 @@ register CONST vect_t	in;
 int
 bn_mat_scale_about_pt( mat, pt, scale )
 mat_t		mat;
-CONST point_t	pt;
-CONST double	scale;
+const point_t	pt;
+const double	scale;
 {
 	mat_t	xlate;
 	mat_t	s;
@@ -1104,8 +1104,8 @@ CONST double	scale;
 void
 bn_mat_xform_about_pt( mat, xform, pt )
 mat_t		mat;
-CONST mat_t	xform;
-CONST point_t	pt;
+const mat_t	xform;
+const point_t	pt;
 {
 	mat_t	xlate;
 	mat_t	tmp;
@@ -1128,9 +1128,9 @@ CONST point_t	pt;
  */
 int
 bn_mat_is_equal(a, b, tol)
-CONST mat_t	a;
-CONST mat_t	b;
-CONST struct bn_tol	*tol;
+const mat_t	a;
+const mat_t	b;
+const struct bn_tol	*tol;
 {
 	register int i;
 	register double f;
@@ -1191,7 +1191,7 @@ CONST struct bn_tol	*tol;
  */
 int
 bn_mat_is_identity( m )
-CONST mat_t	m;
+const mat_t	m;
 {
 	return (! memcmp(m, bn_mat_identity, sizeof(mat_t)));
 }
@@ -1206,9 +1206,9 @@ CONST mat_t	m;
 void
 bn_mat_arb_rot( m, pt, dir, ang)
 mat_t m;
-CONST point_t pt;
-CONST vect_t dir;
-CONST fastf_t ang;
+const point_t pt;
+const vect_t dir;
+const fastf_t ang;
 {
 	mat_t tran1,tran2,rot;
 	double cos_ang, sin_ang, one_m_cosang;
@@ -1270,12 +1270,12 @@ CONST fastf_t ang;
  */
 matp_t
 bn_mat_dup( in )
-CONST mat_t	in;
+const mat_t	in;
 {
 	matp_t	out;
 
 	out = (matp_t) bu_malloc( sizeof(mat_t), "bn_mat_dup" );
-	bcopy( (CONST char *)in, (char *)out, sizeof(mat_t) );
+	bcopy( (const char *)in, (char *)out, sizeof(mat_t) );
 	return out;
 }
 
@@ -1291,8 +1291,8 @@ CONST mat_t	in;
  */
 int
 bn_mat_ck( title, m )
-CONST char *title;
-CONST mat_t m;
+const char *title;
+const mat_t m;
 {
 	vect_t	A, B, C;
 	fastf_t	fx, fy, fz;
@@ -1342,7 +1342,7 @@ CONST mat_t m;
  */
 fastf_t
 bn_mat_det3( m )
-CONST mat_t m;
+const mat_t m;
 {
 	FAST fastf_t sum;
 
@@ -1361,7 +1361,7 @@ CONST mat_t m;
  */
 fastf_t
 bn_mat_determinant( m )
-CONST mat_t m;
+const mat_t m;
 {
 	fastf_t det[4];
 	fastf_t sum;

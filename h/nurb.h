@@ -133,8 +133,8 @@ BU_EXTERN(fastf_t rt_nurb_basis_eval, (struct knot_vector *knts, int interval,
 
 /* nurb_bezier.c */
 BU_EXTERN(int rt_nurb_bezier, (struct bu_list *bezier_hd,
-			CONST struct face_g_snurb * srf, struct resource *res));
-BU_EXTERN(int rt_bez_check, (CONST struct face_g_snurb * srf));
+			const struct face_g_snurb * srf, struct resource *res));
+BU_EXTERN(int rt_bez_check, (const struct face_g_snurb * srf));
 
 /* nurb_bound.c */
 BU_EXTERN(int rt_nurb_s_bound, (struct face_g_snurb *srf, point_t bmin, point_t bmax));
@@ -143,22 +143,22 @@ BU_EXTERN(int rt_nurb_s_check, (struct face_g_snurb *srf));
 BU_EXTERN(int rt_nurb_c_check, (struct edge_g_cnurb *crv));
 
 /* nurb_copy.c */
-BU_EXTERN(struct face_g_snurb *rt_nurb_scopy, (CONST struct face_g_snurb *srf, struct resource *res));
+BU_EXTERN(struct face_g_snurb *rt_nurb_scopy, (const struct face_g_snurb *srf, struct resource *res));
 
 /* nurb_diff.c */
-BU_EXTERN(struct face_g_snurb *rt_nurb_s_diff, (CONST struct face_g_snurb *srf, int dir));
-BU_EXTERN(struct edge_g_cnurb *rt_nurb_c_diff, (CONST struct edge_g_cnurb *crv));
-BU_EXTERN(void rt_nurb_mesh_diff, (int order, CONST fastf_t *o_pts,
+BU_EXTERN(struct face_g_snurb *rt_nurb_s_diff, (const struct face_g_snurb *srf, int dir));
+BU_EXTERN(struct edge_g_cnurb *rt_nurb_c_diff, (const struct edge_g_cnurb *crv));
+BU_EXTERN(void rt_nurb_mesh_diff, (int order, const fastf_t *o_pts,
 			fastf_t *n_pts,
-			CONST fastf_t *knots, int o_stride, int n_stride,
+			const fastf_t *knots, int o_stride, int n_stride,
 			int o_size, int pt_type));
 
 /* nurb_eval.c */
-BU_EXTERN(void rt_nurb_s_eval, (CONST struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t * final_value));
-BU_EXTERN(void rt_nurb_c_eval, (CONST struct edge_g_cnurb *crv, fastf_t param, fastf_t * final_value));
+BU_EXTERN(void rt_nurb_s_eval, (const struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t * final_value));
+BU_EXTERN(void rt_nurb_c_eval, (const struct edge_g_cnurb *crv, fastf_t param, fastf_t * final_value));
 BU_EXTERN(fastf_t *rt_nurb_eval_crv, (fastf_t *crv, int order,
 			fastf_t param,
-			CONST struct knot_vector *k_vec, int k_index, int coords));
+			const struct knot_vector *k_vec, int k_index, int coords));
 BU_EXTERN(void rt_nurb_pr_crv, (fastf_t *crv, int c_size, int coords));
 
 /* nurb_flat.c */
@@ -169,21 +169,21 @@ BU_EXTERN(fastf_t rt_nurb_crv_flat, (fastf_t *crv, int	size, int pt_type));
 BU_EXTERN(void rt_nurb_kvknot, (struct knot_vector *new_knots, int order,
 			fastf_t lower, fastf_t upper, int num, struct resource *res));
 BU_EXTERN(void rt_nurb_kvmult, (struct knot_vector *new_kv,
-			CONST struct knot_vector *kv,
+			const struct knot_vector *kv,
 			int num, fastf_t val, struct resource *res));
 BU_EXTERN(void rt_nurb_kvgen, (struct knot_vector *kv,
 			fastf_t lower, fastf_t upper, int num, struct resource *res));
 BU_EXTERN(void rt_nurb_kvmerge, (struct knot_vector *new_knots,
-			CONST struct knot_vector *kv1,
-			CONST struct knot_vector *kv2, struct resource *res));
-BU_EXTERN(int rt_nurb_kvcheck, (fastf_t val, CONST struct knot_vector *kv));
+			const struct knot_vector *kv1,
+			const struct knot_vector *kv2, struct resource *res));
+BU_EXTERN(int rt_nurb_kvcheck, (fastf_t val, const struct knot_vector *kv));
 BU_EXTERN(void rt_nurb_kvextract, (struct knot_vector *new_kv,
-			CONST struct knot_vector *kv,
+			const struct knot_vector *kv,
 			int lower, int upper, struct resource *res));
 BU_EXTERN(void rt_nurb_kvcopy, (struct knot_vector *new_kv,
-			CONST struct knot_vector *old_kv, struct resource *res));
+			const struct knot_vector *old_kv, struct resource *res));
 BU_EXTERN(void rt_nurb_kvnorm, (struct knot_vector *kv));
-BU_EXTERN(int rt_knot_index, (CONST struct knot_vector *kv, fastf_t k_value,
+BU_EXTERN(int rt_knot_index, (const struct knot_vector *kv, fastf_t k_value,
 			int order));
 BU_EXTERN(void rt_nurb_gen_knot_vector, (struct knot_vector *new_knots,
 			int order, fastf_t lower, fastf_t upper, struct resource *res));
@@ -193,18 +193,18 @@ BU_EXTERN(void rt_nurb_s_norm, (struct face_g_snurb *srf, fastf_t u, fastf_t v, 
 
 /* nurb_c2.c */
 BU_EXTERN(void rt_nurb_curvature, (struct curvature *cvp,
-			CONST struct face_g_snurb *srf, fastf_t u, fastf_t v));
+			const struct face_g_snurb *srf, fastf_t u, fastf_t v));
 
 /* nurb_plot.c */
-BU_EXTERN(void rt_nurb_plot_snurb, (FILE *fp, CONST struct face_g_snurb *srf));
-BU_EXTERN(void rt_nurb_plot_cnurb, (FILE *fp, CONST struct edge_g_cnurb *crv));
-BU_EXTERN(void rt_nurb_s_plot, (CONST struct face_g_snurb *srf) );
+BU_EXTERN(void rt_nurb_plot_snurb, (FILE *fp, const struct face_g_snurb *srf));
+BU_EXTERN(void rt_nurb_plot_cnurb, (FILE *fp, const struct edge_g_cnurb *crv));
+BU_EXTERN(void rt_nurb_s_plot, (const struct face_g_snurb *srf) );
 
 /* nurb_interp.c */
 BU_EXTERN(void rt_nurb_cinterp, (struct edge_g_cnurb *crv, int order,
-			CONST fastf_t *data, int n));
+			const fastf_t *data, int n));
 BU_EXTERN(void rt_nurb_sinterp, (struct face_g_snurb *srf, int order,
-			CONST fastf_t *data, int ymax, int xmax));
+			const fastf_t *data, int ymax, int xmax));
 
 /* nurb_poly.c */
 BU_EXTERN(struct rt_nurb_poly *rt_nurb_to_poly, (struct face_g_snurb *srf));
@@ -213,19 +213,19 @@ BU_EXTERN(struct rt_nurb_poly *rt_nurb_mk_poly,
 			fastf_t uv1[2], fastf_t uv2[2], fastf_t uv3[2]));
 
 /* nurb_ray.c */
-BU_EXTERN(struct face_g_snurb *rt_nurb_project_srf, (CONST struct face_g_snurb *srf,
+BU_EXTERN(struct face_g_snurb *rt_nurb_project_srf, (const struct face_g_snurb *srf,
 			plane_t plane1, plane_t plane2, struct resource *res));
-BU_EXTERN(void rt_nurb_clip_srf, (CONST struct face_g_snurb *srf,
+BU_EXTERN(void rt_nurb_clip_srf, (const struct face_g_snurb *srf,
 			int dir, fastf_t *min, fastf_t *max));
-BU_EXTERN(struct face_g_snurb *rt_nurb_region_from_srf, (CONST struct face_g_snurb *srf,
+BU_EXTERN(struct face_g_snurb *rt_nurb_region_from_srf, (const struct face_g_snurb *srf,
 			int dir, fastf_t param1, fastf_t param2, struct resource *res));
-BU_EXTERN(struct rt_nurb_uv_hit *rt_nurb_intersect, (CONST struct face_g_snurb * srf,
+BU_EXTERN(struct rt_nurb_uv_hit *rt_nurb_intersect, (const struct face_g_snurb * srf,
 			plane_t plane1, plane_t plane2, double uv_tol, struct resource *res));
 
 /* nurb_refine.c */
-BU_EXTERN(struct face_g_snurb *rt_nurb_s_refine, (CONST struct face_g_snurb *srf,
+BU_EXTERN(struct face_g_snurb *rt_nurb_s_refine, (const struct face_g_snurb *srf,
 			int dir, struct knot_vector *kv, struct resource *res));
-BU_EXTERN(struct edge_g_cnurb *rt_nurb_c_refine, (CONST struct edge_g_cnurb * crv,
+BU_EXTERN(struct edge_g_cnurb *rt_nurb_c_refine, (const struct edge_g_cnurb * crv,
 			struct knot_vector *kv));
 
 /* nurb_solve.c */
@@ -233,16 +233,16 @@ BU_EXTERN(void rt_nurb_solve, (fastf_t *mat_1, fastf_t *mat_2,
 			fastf_t *solution, int dim, int coords));
 BU_EXTERN(void rt_nurb_doolittle, (fastf_t *mat_1, fastf_t *mat_2,
 			int row, int coords));
-BU_EXTERN(void rt_nurb_forw_solve, (CONST fastf_t *lu, CONST fastf_t *b,
+BU_EXTERN(void rt_nurb_forw_solve, (const fastf_t *lu, const fastf_t *b,
 			fastf_t *y, int n));
-BU_EXTERN(void rt_nurb_back_solve, (CONST fastf_t *lu, CONST fastf_t *y,
+BU_EXTERN(void rt_nurb_back_solve, (const fastf_t *lu, const fastf_t *y,
 			fastf_t *x, int n));
-BU_EXTERN(void rt_nurb_p_mat, (CONST fastf_t * mat, int dim));
+BU_EXTERN(void rt_nurb_p_mat, (const fastf_t * mat, int dim));
 
 /* nurb_split.c */
-BU_EXTERN(void rt_nurb_s_split, (struct bu_list *split_hd, CONST struct face_g_snurb *srf,
+BU_EXTERN(void rt_nurb_s_split, (struct bu_list *split_hd, const struct face_g_snurb *srf,
 			int dir, struct resource *res));
-BU_EXTERN(void rt_nurb_c_split, (struct bu_list *split_hd, CONST struct edge_g_cnurb *crv));
+BU_EXTERN(void rt_nurb_c_split, (struct bu_list *split_hd, const struct edge_g_cnurb *crv));
 
 /* nurb_util.c */
 BU_EXTERN(struct face_g_snurb *rt_nurb_new_snurb, (int u_order, int v_order,
@@ -252,10 +252,10 @@ BU_EXTERN(struct edge_g_cnurb *rt_nurb_new_cnurb, (int order, int n_knots,
 			int n_pts, int pt_type));
 BU_EXTERN(void rt_nurb_free_snurb, (struct face_g_snurb *srf, struct resource *res));
 BU_EXTERN(void rt_nurb_free_cnurb, (struct edge_g_cnurb * crv));
-BU_EXTERN(void rt_nurb_c_print, (CONST struct edge_g_cnurb *crv));
-BU_EXTERN(void rt_nurb_s_print, (char *c, CONST struct face_g_snurb *srf));
-BU_EXTERN(void rt_nurb_pr_kv, (CONST struct knot_vector *kv));
-BU_EXTERN(void rt_nurb_pr_mesh, (CONST struct face_g_snurb *m));
+BU_EXTERN(void rt_nurb_c_print, (const struct edge_g_cnurb *crv));
+BU_EXTERN(void rt_nurb_s_print, (char *c, const struct face_g_snurb *srf));
+BU_EXTERN(void rt_nurb_pr_kv, (const struct knot_vector *kv));
+BU_EXTERN(void rt_nurb_pr_mesh, (const struct face_g_snurb *m));
 BU_EXTERN(void rt_nurb_print_pt_type, (int c));
 
 /* nurb_xsplit.c */
@@ -265,7 +265,7 @@ BU_EXTERN(struct edge_g_cnurb *rt_nurb_c_xsplit, (struct edge_g_cnurb *crv, fast
 
 /* oslo_calc.c */
 BU_EXTERN(struct oslo_mat *rt_nurb_calc_oslo, (int order,
-			CONST struct knot_vector *tau_kv,
+			const struct knot_vector *tau_kv,
 			struct knot_vector *t_kv, struct resource *res));
 BU_EXTERN(void rt_nurb_pr_oslo, (struct oslo_mat *om));
 BU_EXTERN(void rt_nurb_free_oslo, (struct oslo_mat *om, struct resource *res));

@@ -4292,7 +4292,7 @@ double	xangle, yangle, zangle;
  */
 void
 absview_v( ang )
-CONST point_t	ang;
+const point_t	ang;
 {
 	point_t	rad;
 

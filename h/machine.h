@@ -37,7 +37,7 @@
  *		pointers to data bytes, so a declaration of "char *"
  *		isn't generic enough.
  *
- *	SIGNED -
+ *	SIGNED - deprecated -
  *		A portable way of declaring a signed variable, since
  *		the "signed" keyword is not known in K&R compilers.  e.g.:
  *			register SIGNED int twoway;
@@ -585,6 +585,8 @@ typedef long	bitv_t;		/* largest integer type */
 #	define	CONST	/**/
 # endif
 #endif
+#undef CONST
+#define CONST const
 
 /* Even in C++ not all compilers know the "bool" keyword yet */
 #if !defined(BOOL_T)
@@ -599,6 +601,8 @@ typedef long	bitv_t;		/* largest integer type */
 #	define SIGNED	/**/
 # endif
 #endif
+#undef SIGNED
+#define SIGNED deprecated
 
 /*
  *  Some very common BSD --> SYSV conversion aids

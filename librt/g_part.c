@@ -202,7 +202,7 @@ struct part_specific {
 #define RT_PARTICLE_SURF_BODY		2
 #define RT_PARTICLE_SURF_HSPHERE	3
 
-CONST struct bu_structparse rt_part_parse[] = {
+const struct bu_structparse rt_part_parse[] = {
     { "%f", 3, "V",  offsetof(struct rt_part_internal, part_V[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "H",  offsetof(struct rt_part_internal, part_H[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 1, "r_v",offsetof(struct rt_part_internal, part_vrad), BU_STRUCTPARSE_FUNC_NULL },
@@ -391,9 +391,9 @@ struct rt_i		*rtip;
  */
 void
 rt_part_print( stp )
-register CONST struct soltab *stp;
+register const struct soltab *stp;
 {
-	register CONST struct part_specific *part =
+	register const struct part_specific *part =
 		(struct part_specific *)stp->st_specific;
 
 	VPRINT("part_V", part->part_int.part_V );
@@ -860,7 +860,7 @@ struct soltab		*stp;
 register struct hit	*hitp;
 register struct uvcoord	*uvp;
 {
-	register CONST struct part_specific *part =
+	register const struct part_specific *part =
 		(struct part_specific *)stp->st_specific;
 	point_t	hit_local;	/* hit_point, with V as origin */
 	point_t	hit_unit;	/* hit_poit in unit coords, +Z along H */
@@ -966,8 +966,8 @@ int
 rt_part_plot( vhead, ip, ttol, tol )
 struct bu_list	*vhead;
 struct rt_db_internal *ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol		*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol		*tol;
 {
 	struct rt_part_internal	*pip;
 	point_t		tail;
@@ -1103,8 +1103,8 @@ rt_part_tess( r, m, ip, ttol, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol		*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol		*tol;
 {
 	struct rt_part_internal	*pip;
 	LOCAL mat_t	R;
@@ -1489,9 +1489,9 @@ fail:
 int
 rt_part_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-register CONST mat_t		mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	point_t		v;
 	vect_t		h;
@@ -1571,9 +1571,9 @@ CONST struct db_i		*dbip;
 int
 rt_part_export( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_part_internal	*pip;
 	union record		*rec;
@@ -1614,9 +1614,9 @@ CONST struct db_i		*dbip;
 int
 rt_part_import5( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-register CONST mat_t		mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	fastf_t			maxrad, minrad;
 	struct rt_part_internal	*part;
@@ -1686,9 +1686,9 @@ CONST struct db_i		*dbip;
 int
 rt_part_export5( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_part_internal	*pip;
 	fastf_t			vec[8];
@@ -1724,7 +1724,7 @@ CONST struct db_i		*dbip;
 int
 rt_part_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {

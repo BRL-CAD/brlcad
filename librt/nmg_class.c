@@ -61,8 +61,8 @@ extern int nmg_class_nothing_broken;
  */
 struct neighbor {
 	union {
-		CONST struct vertexuse *vu;
-		CONST struct edgeuse *eu;
+		const struct vertexuse *vu;
+		const struct edgeuse *eu;
 	} p;
 	/* XXX For efficiency, this should have been dist_sq */
 	fastf_t	dist;	/* distance from point to neighbor */
@@ -70,29 +70,29 @@ struct neighbor {
 };
 
 static void	joint_hitmiss2 RT_ARGS( (struct neighbor *closest,
-			CONST struct edgeuse *eu, CONST point_t pt,
+			const struct edgeuse *eu, const point_t pt,
 			int code) );
 static void	nmg_class_pt_e RT_ARGS( (struct neighbor *closest,
-			CONST point_t pt, CONST struct edgeuse *eu,
-			CONST struct bn_tol *tol) );
+			const point_t pt, const struct edgeuse *eu,
+			const struct bn_tol *tol) );
 static void	nmg_class_pt_l RT_ARGS( (struct neighbor *closest, 
-			CONST point_t pt, CONST struct loopuse *lu,
-			CONST struct bn_tol *tol) );
+			const point_t pt, const struct loopuse *lu,
+			const struct bn_tol *tol) );
 static int	class_vu_vs_s RT_ARGS( (struct vertexuse *vu, struct shell *sB,
-			long *classlist[4], CONST struct bn_tol	*tol) );
+			long *classlist[4], const struct bn_tol	*tol) );
 static int	class_eu_vs_s RT_ARGS( (struct edgeuse *eu, struct shell *s,
-			long *classlist[4], CONST struct bn_tol	*tol) );
+			long *classlist[4], const struct bn_tol	*tol) );
 static int	class_lu_vs_s RT_ARGS( (struct loopuse *lu, struct shell *s,
-			long *classlist[4], CONST struct bn_tol	*tol) );
+			long *classlist[4], const struct bn_tol	*tol) );
 static void	class_fu_vs_s RT_ARGS( (struct faceuse *fu, struct shell *s,
-			long *classlist[4], CONST struct bn_tol	*tol) );
+			long *classlist[4], const struct bn_tol	*tol) );
 
 /*
  *			N M G _ C L A S S _ S T A T U S
  *
  *  Convert classification status to string.
  */
-CONST char *
+const char *
 nmg_class_status(status)
 int	status;
 {
@@ -133,11 +133,11 @@ int	status;
 static void 
 joint_hitmiss2(closest, eu, pt, code)
 struct neighbor		*closest;
-CONST struct edgeuse	*eu;
-CONST point_t		pt;
+const struct edgeuse	*eu;
+const point_t		pt;
 int			code;
 {
-	CONST struct edgeuse *eu_rinf;
+	const struct edgeuse *eu_rinf;
 
 	eu_rinf = nmg_faceradial(eu);
 
@@ -214,14 +214,14 @@ int			code;
 static void
 nmg_class_pt_e(closest, pt, eu, tol)
 struct neighbor		*closest;
-CONST point_t		pt;
-CONST struct edgeuse	*eu;
-CONST struct bn_tol	*tol;
+const point_t		pt;
+const struct edgeuse	*eu;
+const struct bn_tol	*tol;
 {
 	vect_t	ptvec;	/* vector from lseg to pt */
 	vect_t	left;	/* vector left of edge -- into inside of loop */
-	CONST fastf_t	*eupt;
-	CONST fastf_t	*matept;
+	const fastf_t	*eupt;
+	const fastf_t	*matept;
 	point_t pca;	/* point of closest approach from pt to edge lseg */
 	fastf_t dist;	/* distance from pca to pt */
 	fastf_t dot;
@@ -420,9 +420,9 @@ out:
 static void
 nmg_class_pt_l(closest, pt, lu, tol)
 struct neighbor		*closest;
-CONST point_t		pt;
-CONST struct loopuse	*lu;
-CONST struct bn_tol	*tol;
+const point_t		pt;
+const struct loopuse	*lu;
+const struct bn_tol	*tol;
 {
 	vect_t		delta;
 	pointp_t	lu_pt;
@@ -514,12 +514,12 @@ CONST struct bn_tol	*tol;
  */
 int
 nmg_class_lu_fu(lu, tol)
-CONST struct loopuse	*lu;
-CONST struct bn_tol	*tol;
+const struct loopuse	*lu;
+const struct bn_tol	*tol;
 {
-	CONST struct faceuse	*fu;
+	const struct faceuse	*fu;
 	struct vertexuse	*vu;
-	CONST struct vertex_g	*vg;
+	const struct vertex_g	*vg;
 	struct edgeuse		*eu;
 	struct edgeuse		*eu_first;
 	fastf_t			dist;
@@ -591,7 +591,7 @@ again:
 }
 
 /* Ray direction vectors for Jordan curve algorithm */
-static CONST point_t nmg_good_dirs[10] = {
+static const point_t nmg_good_dirs[10] = {
 #if 1
 	{3, 2, 1},	/* Normally the first dir */
 #else
@@ -631,12 +631,12 @@ static CONST point_t nmg_good_dirs[10] = {
  */
 int
 nmg_class_pt_s(pt, s, in_or_out_only, tol)
-CONST point_t		pt;
-CONST struct shell	*s;
-CONST int		in_or_out_only;
-CONST struct bn_tol	*tol;
+const point_t		pt;
+const struct shell	*s;
+const int		in_or_out_only;
+const struct bn_tol	*tol;
 {
-	CONST struct faceuse	*fu;
+	const struct faceuse	*fu;
 	struct model	*m;
 	long		*faces_seen = NULL;
 	vect_t		region_diagonal;
@@ -758,7 +758,7 @@ class_vu_vs_s(vu, sB, classlist, tol)
 struct vertexuse	*vu;
 struct shell		*sB;
 long			*classlist[4];
-CONST struct bn_tol	*tol;
+const struct bn_tol	*tol;
 {
 	struct vertexuse *vup;
 	pointp_t pt;
@@ -881,7 +881,7 @@ class_eu_vs_s(eu, s, classlist, tol)
 struct edgeuse	*eu;
 struct shell	*s;
 long		*classlist[4];
-CONST struct bn_tol	*tol;
+const struct bn_tol	*tol;
 {
 	int euv_cl, matev_cl;
 	int	status = 0;
@@ -1301,14 +1301,14 @@ out:
  */
 int
 nmg_2lu_identical( eu1, eu2 )
-CONST struct edgeuse	*eu1;
-CONST struct edgeuse	*eu2;
+const struct edgeuse	*eu1;
+const struct edgeuse	*eu2;
 {
-	CONST struct loopuse	*lu1;
-	CONST struct loopuse	*lu2;
-	CONST struct edgeuse	*eu1_first;
-	CONST struct faceuse	*fu1;
-	CONST struct faceuse	*fu2;
+	const struct loopuse	*lu1;
+	const struct loopuse	*lu2;
+	const struct edgeuse	*eu1_first;
+	const struct faceuse	*fu1;
+	const struct faceuse	*fu2;
 	int			ret;
 
 	NMG_CK_EDGEUSE(eu1);
@@ -1516,9 +1516,9 @@ int		newclass;
  */
 static int
 class_shared_lu( lu, lu_ref, tol )
-CONST struct loopuse *lu;
-CONST struct loopuse *lu_ref;
-CONST struct bn_tol *tol;
+const struct loopuse *lu;
+const struct loopuse *lu_ref;
+const struct bn_tol *tol;
 {
 	struct shell *s_ref;
 	struct edgeuse *eu;
@@ -1683,7 +1683,7 @@ class_lu_vs_s(lu, s, classlist, tol)
 struct loopuse		*lu;
 struct shell		*s;
 long			*classlist[4];
-CONST struct bn_tol	*tol;
+const struct bn_tol	*tol;
 {
 	int class;
 	unsigned int	in, outside, on;
@@ -2151,7 +2151,7 @@ class_fu_vs_s(fu, s, classlist, tol)
 struct faceuse		*fu;
 struct shell		*s;
 long			*classlist[4];
-CONST struct bn_tol	*tol;
+const struct bn_tol	*tol;
 {
 	struct loopuse *lu;
 	plane_t		n;
@@ -2188,7 +2188,7 @@ nmg_class_shells(sA, sB, classlist, tol)
 struct shell	*sA;
 struct shell	*sB;
 long		*classlist[4];
-CONST struct bn_tol	*tol;
+const struct bn_tol	*tol;
 {
 	struct faceuse *fu;
 	struct loopuse *lu;
@@ -2429,8 +2429,8 @@ const struct bn_tol *tol;
  */
 int
 nmg_classify_lu_lu( lu1 , lu2 , tol )
-CONST struct loopuse *lu1,*lu2;
-CONST struct bn_tol *tol;
+const struct loopuse *lu1,*lu2;
+const struct bn_tol *tol;
 {
 	struct faceuse *fu1,*fu2;
 	struct edgeuse *eu;

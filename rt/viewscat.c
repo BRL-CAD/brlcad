@@ -400,7 +400,7 @@ static int
 isvisible( ap, hitp, norm )
 struct application *ap;
 struct hit *hitp;
-CONST vect_t	norm;
+const vect_t	norm;
 {
 	LOCAL int cpu_num;
 	LOCAL struct application sub_ap;

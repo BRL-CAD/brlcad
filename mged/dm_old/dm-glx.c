@@ -1497,9 +1497,9 @@ char	**argv;
 
     if( argc < 2 )  {
       /* Bare set command, print out current settings */
-      bu_struct_print("dm_4d internal variables", Glx_vparse, (CONST char *)&((struct glx_vars *)dmp->dm_vars)->mvars );
+      bu_struct_print("dm_4d internal variables", Glx_vparse, (const char *)&((struct glx_vars *)dmp->dm_vars)->mvars );
     } else if( argc == 2 ) {
-      bu_vls_struct_item_named( &vls, Glx_vparse, argv[1], (CONST char *)&((struct glx_vars *)dmp->dm_vars)->mvars, ',');
+      bu_vls_struct_item_named( &vls, Glx_vparse, argv[1], (const char *)&((struct glx_vars *)dmp->dm_vars)->mvars, ',');
       bu_log( "%s\n", bu_vls_addr(&vls) );
     } else {
       bu_vls_printf( &vls, "%s=\"", argv[1] );
