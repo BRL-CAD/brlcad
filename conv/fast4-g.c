@@ -44,6 +44,7 @@ static const char RCSid[] = "$Header$";
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"
+#include "plot3.h"
 #include "../librt/debug.h"
 
 #define		NAMESIZE	16	/* from db.h */
