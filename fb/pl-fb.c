@@ -1,7 +1,7 @@
 /*
- *			I K P L O T . C
+ *			F B P L O T . C
  *
- *	Program to take UNIX plot data and output on IKONAS display.
+ *	Program to take 3-D UNIX plot data and output on a framebuffer.
  *
  *	Joseph C. Pistritto JCP@BRL
  *	US Army Ballistic Research Laboratory
@@ -48,8 +48,9 @@ Acknowledgment:
 
 #define STATIC	/* nothing, for debugging */
 
-#include	<signal.h>
-#include	<stdio.h>
+#include <signal.h>
+#include <stdio.h>
+#include "fb.h"
 
 /*
 	Raster device model and image terminology as used herein:
@@ -77,16 +78,15 @@ like:
 
 Each plot-mode scan line consists of exactly BYTES bytes of plot data.
 
-Each scan line is composed of four bytes of color data, for the Red,
-Green, and Blue DACS, (the fourth byte is unused here, and is set to 0)
-for each pixels, times the number of pixels desired (512 in LORES,
-1024 in HIRES)
+Each scan line is composed of bytes of color data, for the Red,
+Green, and Blue for each pixel, times the number of pixels desired
+(512 in LORES, 1024 in HIRES)
 
 */
 
-/*	IKONAS Device Parameters				 */
+/*	Device Parameters				 */
 
-#define	PIXELSIZE	4		/* # bytes per pixel */
+#define	PIXELSIZE	sizeof(RGBpixel) /* # bytes per pixel */
 
 /* the following parameter should be tweaked for fine-tuning */
 #define SPB		16		/* scan lines per band */
@@ -115,7 +115,7 @@ typedef int	bool;			/* boolean data type */
 #define false	0
 #define true	1
 
-char	color[PIXELSIZE] = { 255, 255, 255, 0 };
+RGBpixel	color = { 255, 255, 255 };
 
 typedef struct
 	{
@@ -134,7 +134,7 @@ typedef struct descr
 	short		minor;		/* minor dir delta (nonneg) */
 	short		e;		/* DDA error accumulator */
 	short		de;		/* increment for `e' */
-	char		col[PIXELSIZE];	/* COLOR of this vector */
+	RGBpixel	col;		/* COLOR of this vector */
 	}	stroke; 		/* rasterization descriptor */
 
 /*	Global data allocations:	*/
@@ -260,15 +260,14 @@ extern char	*malloc();
 extern int	close(), creat(), getpid(), kill(), open(), read(),
 		write();
 
-extern int	ikhires;		/* for ik library */
-extern int	ikfd;			/* from ik library */
+FBIO	*fbp;			/* Current framebuffer */
 
 /*	Local subroutines:	*/
 
 STATIC int	DoFile(), Foo();
 STATIC stroke	*Allocate(), *Dequeue();
 STATIC bool	BuildStr(), GetCoords(),
-		OutBuild(), RdBand(), WrBand();
+		OutBuild();
 STATIC void	Catch(), FreeUp(), InitDesc(), Queue(),
 		Requeue(),
 		Raster(), SetSigs();
@@ -280,8 +279,7 @@ STATIC void	Catch(), FreeUp(), InitDesc(), Queue(),
  *		name of file to plot (instead of STDIN)
  *		-d for debugging statements
  *
- *	Default (no arguments) action is to plot STDIN on STDOUT
- *	as an IKONAS
+ *	Default (no arguments) action is to plot STDIN on current FB.
  */
 main(argc, argv)
 int argc;
@@ -306,7 +304,6 @@ char **argv;
 				break;
 
 			case 'h':
-				ikhires = 1;
 				Nscanlines = Npixels = 1024;
 				break;
 
@@ -332,19 +329,19 @@ char **argv;
 
 	buffersize = SPB*Npixels*PIXELSIZE;
 	if( (buffer = malloc(buffersize)) == (char *)0)  {
-		fprintf(stderr,"ikplot:  malloc error\n");
+		fprintf(stderr,"fbplot:  malloc error\n");
 		exit(1);
 	}
 	band = (struct band *)malloc(BANDS*sizeof(struct band));
 	if( band == (struct band *)0 )  {
-		fprintf(stderr,"ikplot: malloc error2\n");
+		fprintf(stderr,"fbplot: malloc error2\n");
 		exit(1);
 	}
 	bzero( (char *)band, BANDS*sizeof(struct band) );
 	bandEnd = &band[BANDS];
 
-	if( ikopen() < 0 )  {
-		fprintf(stderr,"ikplot: ikopen failed\n");
+	if( (fbp = fb_open( NULL, Npixels, Nscanlines )) == FBIO_NULL )  {
+		fprintf(stderr,"fbplot: fb_open failed\n");
 		exit(1);
 	}
 
@@ -353,7 +350,7 @@ char **argv;
 	 *  with no arguments, we plot STDIN.
 	 */
 	if( debug )
-		fprintf(stderr, "ikplot output of %s\n", filename);
+		fprintf(stderr, "fbplot output of %s\n", filename);
 		
 	if ( filename == NULL || filename[0] == 0 )
 		pfin = stdin;
@@ -416,7 +413,6 @@ DoFile( )	/* returns vpl status code */
 				if ( c == EOF )
 					return Foo( 0 );/* success */
 
-				(void)lseek( ikfd, 0L, 0 );	/* top */
 				break;	/* next frame */
 
 			case 'f':	/* linemod */
@@ -765,44 +761,6 @@ FreeUp()
 	}
 
 /*
-	RdBand - Read in next band from output image file,
-		for overlay purposes.  Reposition back.
-*/
-STATIC bool
-RdBand()
-{
-	register char	*bp = buffer;
-	register int	size;
-
-	size = 32768;	/* default DMA size */
-	for( bp = buffer; buffersize - (bp - buffer) > 0; bp += size)  {
-		size = min( size, buffersize - (bp - buffer) );
-		if( read(ikfd, bp, size) != size )
-			return false;
-	}
-	lseek( ikfd, -buffersize, 1);
-	return true;
-}
-
-/*
-	WrBand - Write out next band to output image file
-*/
-STATIC bool
-WrBand()
-{
-	register char	*bp = buffer;
-	register int	size;
-
-	size = 32768;	/* default DMA size */
-	for( bp = buffer; buffersize - (bp - buffer) > 0; bp += size)  {
-		size = min( size, buffersize - (bp - buffer) );
-		if( write(ikfd, bp, size) != size )
-			return false;
-	}
-	return true;
-}
-
-/*
 	BuildStr - set up DDA parameters and queue stroke
 */
 
@@ -900,7 +858,8 @@ OutBuild()				/* returns true if successful */
 	    )	{
 	    	if( overlay )  {
 	    		/* Read in current band */
-	    		RdBand();
+		    	if( fb_write( fbp, 0, ystart, buffer, buffersize/sizeof(RGBpixel) ) <= 0 )
+	    			fprintf(stderr,"fbplot:  band read error\n");
 	    	} else {
 			/* clear pixels in the band */
 			bzero( buffer, buffersize );
@@ -912,7 +871,7 @@ OutBuild()				/* returns true if successful */
 		/* Raster() either re-queued the descriptor onto the
 		   next band list or else it freed the descriptor */
 
-		if( !WrBand() )
+	    	if( fb_write( fbp, 0, ystart, buffer, buffersize/sizeof(RGBpixel) ) <= 0 )
 			return false;	/* can't write image file */
 	}
 
@@ -981,7 +940,7 @@ STATIC int
 Foo( code )				/* returns status code */
 	int	code;			/* status code */
 	{
-	(void)close( ikfd );		/* close open files */
+	fb_close( fbp );		/* release framebuffer */
 
 	FreeUp();			/* deallocate descriptors */
 
