@@ -23,7 +23,7 @@
 extern dt ducks[DUCK_COUNT];		/* Vertex data of teapot */
 extern pt patches[PATCH_COUNT];		/* Patch data of teapot */
 
-struct face_g_snurb *surfaces[PATCH_COUNT+2];
+struct face_g_snurb **surfaces;
 
 char *Usage = "This program ordinarily generates a database on stdout.\n\
 	Your terminal probably wouldn't like it.";
@@ -67,6 +67,9 @@ int argc; char *argv[];
 	/* Step through each patch and create a B_SPLINE surface
 	 * representing the patch then dump them out.
 	 */
+
+	surfaces = (struct face_g_snurb **)bu_calloc( PATCH_COUNT+2,
+			       sizeof( struct face_g_snurb *), "surfaces" );
 
 	for( i = 0; i < PATCH_COUNT; i++)
 	{
