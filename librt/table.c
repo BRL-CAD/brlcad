@@ -313,6 +313,7 @@ BU_EXTERN(int rt_binunif_export5, (struct bu_external *ep,
 			struct resource *resp,
 			const int minor_type));
 
+BU_EXTERN(void rt_binunif_free, (struct rt_db_internal *ip));
 BU_EXTERN(void rt_binunif_ifree, (struct rt_db_internal *ip,
 		struct resource *resp));
 BU_EXTERN(int rt_binunif_describe, (struct bu_vls *str,
