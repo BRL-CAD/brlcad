@@ -426,6 +426,7 @@ struct disk_model {
 	struct disk_rt_list	r_hd;
 };
 
+/* XXX This is another unused structure! */
 #define DISK_MODEL_A_MAGIC	0x4e6d5f61	/* Nm_a */
 struct disk_model_a {
 	unsigned char		magic[4];
@@ -934,6 +935,8 @@ int			pt_type;
 /*
  *			R T _ N M G _ R E I N D E X
  *
+ *  Depends on ecnt[0].byte_offset having been set to maxindex.
+ *
  *  There are some special values for the disk index returned here:
  *	>0	normal structure index.
  *	 0	substitute a null pointer when imported.
@@ -959,9 +962,21 @@ struct nmg_exp_counts	*ecnt;
 			rt_bomb("rt_nmg_reindex(): unable to obtain struct index\n");
 		} else {
 			ret = ecnt[index].new_subscript;
+			if( ecnt[index].kind <= 0 )  {
+				rt_log("rt_nmg_reindex(p=x%x), p->index=%d, ret=%d, kind=%d\n", p, index, ret, ecnt[index].kind);
+				rt_bomb("rt_nmg_reindex() This index not found in ecnt[]\n");
+			}
+			/* ret == 0 on supressed loop_g ptrs, etc */
+			if( ret < 0 || ret > ecnt[0].byte_offset )  {
+				rt_log("rt_nmg_reindex(p=x%x) %s, p->index=%d, ret=%d, maxindex=%d\n",
+					p,
+					rt_identify_magic(*(long *)p),
+					index, ret, ecnt[0].byte_offset);
+				rt_bomb("rt_nmg_reindex() subscript out of range\n");
+			}
 		}
 	}
-/*rt_log("rt_nmg_reindex(p=x%x), index=%d, newindex=%d\n", p, index, ret);*/
+/*rt_log("rt_nmg_reindex(p=x%x), p->index=%d, ret=%d\n", p, index, ret);*/
 	return( ret );
 }
 
@@ -1274,9 +1289,12 @@ double		local2mm;
 			NMG_CK_VERTEXUSE(vu);
 			PUTMAGIC( DISK_VERTEXUSE_MAGIC );
 			INDEXL( d, vu, l );
-			rt_plong( d->up, rt_nmg_reindex((genptr_t)(vu->up.magic_p), ecnt) );
+			rt_plong( d->up,
+				rt_nmg_reindex((genptr_t)(vu->up.magic_p), ecnt) );
 			INDEX( d, vu, v_p );
-			rt_plong( d->a, rt_nmg_reindex((genptr_t)(vu->a.magic_p), ecnt) );
+			if(vu->a.magic_p)NMG_CK_VERTEXUSE_A_EITHER(vu->a.magic_p);
+			rt_plong( d->a,
+				rt_nmg_reindex((genptr_t)(vu->a.magic_p), ecnt) );
 		}
 		return;
 	case NMG_KIND_VERTEXUSE_A_PLANE:
@@ -1287,6 +1305,7 @@ double		local2mm;
 			NMG_CK_VERTEXUSE_A_PLANE(vua);
 			PUTMAGIC( DISK_VERTEXUSE_A_PLANE_MAGIC );
 			/* Normal vectors don't scale */
+			/* This is not a plane equation here */
 			htond( d->N, vua->N, 3 );
 		}
 		return;
@@ -1693,6 +1712,7 @@ CONST unsigned char	*basep;	/* base of whole import record */
 			INDEX( d, vu, vertex, v_p );
 			vu->a.magic_p = (long *)ptrs[rt_glong(d->a)];
 			NMG_CK_VERTEX(vu->v_p);
+			if(vu->a.magic_p)NMG_CK_VERTEXUSE_A_EITHER(vu->a.magic_p);
 			INDEXL_HD( d, vu, l, vu->v_p->vu_hd );
 		}
 		return 0;
@@ -1767,11 +1787,11 @@ int				kind_counts[NMG_N_KINDS];
 	int			j;
 
 	subscript = 1;
-	/* Specifically avoid the last kind, fastf_t arrays */
-	for( kind = 0; kind < NMG_N_KINDS-1; kind++ )  {
+	for( kind = 0; kind < NMG_N_KINDS; kind++ )  {
 #if DEBUG
 rt_log("%d  %s\n", kind_counts[kind], rt_nmg_kind_names[kind] );
 #endif
+		if( kind == NMG_KIND_DOUBLE_ARRAY )  continue;
 		for( j = 0; j < kind_counts[kind]; j++ )  {
 			ecnt[subscript].kind = kind;
 			ecnt[subscript].per_struct_index = 0; /* unused on import */
@@ -2104,6 +2124,7 @@ CONST struct rt_tol		*tol;
 	ptrs[-1] = &bad_magic;		/* [-1] gives bad magic */
 	ptrs[0] = (long *)0;		/* [0] gives NULL */
 	ptrs[maxindex] = &bad_magic;	/* [maxindex] gives bad magic */
+	ptrs[maxindex+1] = &bad_magic;	/* [maxindex+1] gives bad magic */
 
 	/* Allocate storage for all the NMG structs, in ptrs[] */
 	m = rt_nmg_ialloc( ptrs, ecnt, kind_counts );
@@ -2341,6 +2362,8 @@ rt_log("Mapping of old index to new index, and kind\n");
 	tot_size += kind_counts[NMG_KIND_DOUBLE_ARRAY] * (4+4) +
 			double_count * 8;
 
+	ecnt[0].byte_offset = subscript; /* implicit arg to rt_nmg_reindex() */
+
 	additional_grans = (tot_size + sizeof(union record)-1) / sizeof(union record);
 	RT_INIT_EXTERNAL(ep);
 	ep->ext_nbytes = (1 + additional_grans) * sizeof(union record);
@@ -2444,8 +2467,8 @@ double				local2mm;
 	m = (struct model *)ip->idb_ptr;
 	NMG_CK_MODEL(m);
 
-	if( rt_g.debug || rt_g.NMG_debug )
-		nmg_vmodel(m);
+	/* To ensure that a decent database is written, verify source first */
+	nmg_vmodel(m);
 
 	/* The "compact" flag is used to save space in the database */
 	return  rt_nmg_export_internal( ep, ip, local2mm, 1 );
