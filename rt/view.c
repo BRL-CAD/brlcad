@@ -837,6 +837,7 @@ char *file, *obj;
 		extern struct mfuncs paint_mfuncs[];
 		extern struct mfuncs gravel_mfuncs[];
 		extern struct mfuncs prj_mfuncs[];
+		extern struct mfuncs grass_mfuncs[];
 
 		mlib_add( phg_mfuncs );
 		mlib_add( light_mfuncs );
@@ -860,6 +861,7 @@ char *file, *obj;
 		mlib_add( paint_mfuncs );
 		mlib_add( gravel_mfuncs );
 		mlib_add( prj_mfuncs );
+		mlib_add( grass_mfuncs );
 	}
 
 	if( minus_o )  {
