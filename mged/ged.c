@@ -1102,7 +1102,6 @@ int	non_blocking;
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
       }
-
       if( edit_rateflag_tran ) {
 	struct bu_vls vls;
 
@@ -1116,7 +1115,6 @@ int	non_blocking;
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
       }
-
       if( edit_rateflag_scale ) {
 	struct bu_vls vls;
 
@@ -1127,13 +1125,40 @@ int	non_blocking;
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
       }
+      if( rateflag_model_rotate ) {
+	struct bu_vls vls;
 
+	non_blocking++;
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "knob -o %c -i -m ax %f ay %f az %f\n",
+		      rate_model_origin,
+		      rate_model_rotate[X],
+		      rate_model_rotate[Y],
+		      rate_model_rotate[Z]);
+	
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+      }
+      if( rateflag_model_tran ) {
+	struct bu_vls vls;
+
+	non_blocking++;
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "knob -i -m aX %f aY %f aZ %f\n",
+		      rate_model_tran[X] * 0.1,
+		      rate_model_tran[Y] * 0.1,
+		      rate_model_tran[Z] * 0.1);
+
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+      }
       if( rateflag_rotate )  {
 	struct bu_vls vls;
 
 	non_blocking++;
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "knob -i -v ax %f ay %f az %f\n",
+	bu_vls_printf(&vls, "knob -o %c -i -v ax %f ay %f az %f\n",
+		      rate_origin,
 		      rate_rotate[X],
 		      rate_rotate[Y],
 		      rate_rotate[Z]);
@@ -1141,16 +1166,17 @@ int	non_blocking;
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
       }
-      if( rateflag_slew )  {
+      if( rateflag_tran )  {
 #if 1
 	struct bu_vls vls;
 
 	non_blocking++;
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "knob -i -v aX %f aY %f aZ %f",
-		      rate_slew[X] * 0.1,
-		      rate_slew[Y] * 0.1,
-		      rate_slew[Z] * 0.1);
+		      rate_tran[X] * 0.1,
+		      rate_tran[Y] * 0.1,
+		      rate_tran[Z] * 0.1);
+
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 #else
