@@ -185,7 +185,7 @@ mk_memb( fp, name, mat, op )
 FILE	*fp;
 char	*name;
 mat_t	mat;
-int	op;
+char	op;
 {
 	static union record rec;
 	register int i;
@@ -280,25 +280,47 @@ int	inherit;
 	}
 
 	/* Output combination record and member records */
-	mk_comb( fp, name, len, region, matname, matparm, rgb, inherit );
+	if( mk_comb( fp, name, len, region, matname, matparm, rgb, inherit ) < 0 )  {
+		(void)mk_freemembers( headp );
+		return(-1);
+	}
 	for( wp = headp->wm_forw; wp != headp; wp = wp->wm_forw )  {
 		if( mk_memb( fp, wp->wm_name, wp->wm_mat, wp->wm_op ) < 0 )  {
-			fprintf(stderr,"mk_wmcomb: mk_memb() failure\n");
+			(void)mk_freemembers( headp );
 			return(-1);
 		}
 	}
 
 	/* Release the member structure dynamic storage */
+	return( mk_freemembers( headp ) );
+}
+
+/*
+ *			M K _ F R E E M E M B E R S
+ *
+ *  Returns -
+ *	 0	All OK
+ *	<0	List was corrupted
+ */
+int
+mk_freemembers( headp )
+register struct wmember *headp;
+{
+	register struct wmember *wp;
+	register int	ret = 0;
+
 	for( wp = headp->wm_forw; wp != headp; )  {
 		register struct wmember *next;
 
+		if( wp->wm_magic != WMEMBER_MAGIC )
+			ret--;
 		wp->wm_magic = -1;	/* Sanity */
 		next = wp->wm_forw;
 		free( (char *)wp );
 		wp = next;
 	}
 	headp->wm_forw = headp->wm_back = headp;
-	return(0);
+	return(ret);
 }
 
 /*
@@ -326,7 +348,7 @@ int	id;
 int	air;
 int	material;
 int	los;
-char	inherit;
+int	inherit;
 {
 	register struct wmember *wp;
 	register int len = 0;
@@ -342,23 +364,17 @@ char	inherit;
 
 	/* Output combination record and member records */
 
-	mk_rcomb( fp, name, len, region, matname, matparm, rgb, id, air, material, los, inherit );
+	if( mk_rcomb( fp, name, len, region, matname, matparm, rgb, id, air, material, los, inherit ) < 0 )  {
+		(void)mk_freemembers( headp );
+		return(-1);
+	}
 	for( wp = headp->wm_forw; wp != headp; wp = wp->wm_forw )  {
 		if( mk_memb( fp, wp->wm_name, wp->wm_mat, wp->wm_op ) < 0 )  {
-			fprintf(stderr,"mk_lrcomb: mk_memb() failure\n");
+			(void)mk_freemembers( headp );
 			return(-1);
 		}
 	}
 
 	/* Release the member structure dynamic storage */
-	for( wp = headp->wm_forw; wp != headp; )  {
-		register struct wmember *next;
-
-		wp->wm_magic = -1;	/* Sanity */
-		next = wp->wm_forw;
-		free( (char *)wp );
-		wp = next;
-	}
-	headp->wm_forw = headp->wm_back = headp;
-	return(0);
+	return( mk_freemembers( headp ) );
 }
