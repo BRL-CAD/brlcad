@@ -1,3 +1,4 @@
+#define PLOT_BOTH_FACES	0
 /*
  *			N M G _ F C U T . C
  *
@@ -40,13 +41,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
-
-/* XXX move to raytrace.h */
-RT_EXTERN(double		rt_angle_measure, (vect_t vec, vect_t x_dir,
-				vect_t	y_dir));
-RT_EXTERN(struct edgeuse	*nmg_eu_with_vu_in_lu, (struct loopuse *lu,
-				struct vertexuse *vu));
-
 
 /* States of the state machine */
 #define NMG_STATE_ERROR		0
@@ -118,6 +112,7 @@ struct nmg_ray_state {
 	int			state;
 	vect_t			ang_x_dir;	/* x axis for angle measure */
 	vect_t			ang_y_dir;	/* y axis for angle measure */
+	CONST struct rt_tol	*tol;
 };
 
 RT_EXTERN(void			nmg_face_lu_plot, ( struct loopuse *lu, struct vertexuse *vu1, struct vertexuse *vu2) );
@@ -850,7 +845,11 @@ int		other_rs_state;
 		if(rt_g.NMG_debug&DEBUG_COMBINE)
 			rt_log("single vertexuse at index %d\n", cur);
 		nmg_face_state_transition( rs, cur, 0, other_rs_state );
+#if PLOT_BOTH_FACES
 		nmg_2face_plot( rs->fu1, rs->fu2 );
+#else
+		nmg_face_plot( rs->fu1 );
+#endif
 		return cur+1;
 	}
 
@@ -874,7 +873,11 @@ int		other_rs_state;
 	/* Process vu list, up to cutoff index 'm', which can be less than j */
 	for( k = cur; k < m; k++ )  {
 		nmg_face_state_transition( rs, k, 1, other_rs_state );
+#if PLOT_BOTH_FACES
 		nmg_2face_plot( rs->fu1, rs->fu2 );
+#else
+		nmg_face_plot( rs->fu1 );
+#endif
 	}
 	rs->vu[j-1] = rs->vu[m-1]; /* for next iteration's lookback */
 	if(rt_g.NMG_debug&DEBUG_COMBINE)
@@ -898,7 +901,12 @@ fastf_t			*mag2;
 	register int	cur1, cur2;
 	register int	nxt1, nxt2;
 
+#if PLOT_BOTH_FACES
 	nmg_2face_plot( rs1->fu1, rs1->fu2 );
+#else
+	nmg_face_plot( rs1->fu1 );
+	nmg_face_plot( rs1->fu2 );
+#endif
 
 	/*  Handle next block of coincident vertexuses.
 	 *  Sometimes only one list has a block in it.
@@ -968,6 +976,9 @@ CONST struct rt_tol	*tol;
 	if(rt_g.NMG_debug&DEBUG_COMBINE)  {
 		rt_log("\nnmg_face_cutjoin(fu1=x%x, fu2=x%x)\n", fu1, fu2);
 	}
+
+	RT_CK_TOL(tol);
+	rs1.tol = rs2.tol = tol;
 
 	mag1 = (fastf_t *)rt_calloc(b1->end+1, sizeof(fastf_t),
 		"vector magnitudes along ray, for sort");
@@ -1159,7 +1170,6 @@ rt_log("nmg_join_2singvu_loops( x%x, x%x )\n", vu1, vu2 );
 
 	lu1 = vu1->up.eu_p->up.lu_p;
 	NMG_CK_LOOPUSE(lu1);
-nmg_pr_lu( lu1, "  ");
 
 	return second_new_eu->vu_p;
 }
@@ -1309,6 +1319,7 @@ int			other_rs_state;
 	struct vertexuse	*prev_vu;
 	struct edgeuse		*eu;
 	struct loopuse		*lu;
+	struct faceuse		*fu;
 	struct loopuse		*prev_lu;
 	struct edgeuse	*first_new_eu;
 	struct edgeuse	*second_new_eu;
@@ -1564,16 +1575,26 @@ rt_log("force next eu to ray\n");
 		 */
 		lu = nmg_lu_of_vu( vu );
 		NMG_CK_LOOPUSE(lu);
+		fu = lu->up.fu_p;
+		NMG_CK_FACEUSE(fu);
 		prev_vu = rs->vu[pos-1];
 		NMG_CK_VERTEXUSE(prev_vu);
 		prev_lu = nmg_lu_of_vu( prev_vu );
 		NMG_CK_LOOPUSE(prev_lu);
 
 		if( lu->l_p == prev_lu->l_p )  {
+			int is_crack;
 			/* Same loop, cut into two */
 			if(rt_g.NMG_debug&DEBUG_COMBINE)
 				rt_log("nmg_cut_loop(prev_vu=x%x, vu=x%x)\n", prev_vu, vu);
-			nmg_cut_loop( prev_vu, vu );
+			if(is_crack = nmg_loop_is_a_crack(lu))  {
+				rt_log("ABOUT TO CUT A CRACK!\n");
+			} else rt_log("About to cut a non-crack\n");
+			prev_lu = nmg_cut_loop( prev_vu, vu );
+			if(is_crack)  {
+				nmg_loop_is_ccw( lu, fu->f_p->fg_p->N, rs->tol );
+				nmg_loop_is_ccw( prev_lu, fu->f_p->fg_p->N, rs->tol );
+			}
 			if(rt_g.NMG_debug&DEBUG_COMBINE)  {
 				rt_log("After CUT, the final loop:\n");
 				nmg_pr_lu_briefly(nmg_lu_of_vu(rs->vu[pos]), (char *)0);
@@ -1611,20 +1632,19 @@ rt_log("force next eu to ray\n");
 			    	/* Set orientation */
 				lu = nmg_lu_of_vu(vu);
 				NMG_CK_LOOPUSE(lu);
+				NMG_CK_LOOPUSE(lu->lumate_p);
 				if( old_state == NMG_STATE_IN )  {
 					/* Interior (crack) loop */
 					lu->orientation = OT_OPPOSITE;
+					lu->lumate_p->orientation = OT_OPPOSITE;
 				} else {
 					/* Exterior loop */
 					lu->orientation = OT_SAME;
+					lu->lumate_p->orientation = OT_SAME;
 				}
 			}
 		} else {
-			nmg_join_2loops( prev_vu, vu );
-			/* update vu[pos], as it will have changed. */
-			/* Must be all on one line for SGI 3d compiler */
-			rs->vu[pos] = RT_LIST_PNEXT_CIRC(edgeuse,prev_vu->up.eu_p)->vu_p;
-			/* XXX This should be the return from nmg_join_2loops */
+			rs->vu[pos] = nmg_join_2loops( prev_vu, vu );
 		}
 
 		/* XXX If an edge has been built between prev_vu and vu,
@@ -1653,5 +1673,113 @@ rt_log("force next eu to ray\n");
 	}
 
 	rs->state = new_state;
+}
+
+/*
+ *			N M G _ L O O P _ I S _ A _ C R A C K
+ *
+ *  Returns -
+ *	 0	Loop is not a "crack"
+ *	!0	Loop *is* a "crack"
+ */
+int
+nmg_loop_is_a_crack( lu )
+struct loopuse	*lu;
+{
+	struct edgeuse	*cur_eu;
+	struct edgeuse	*cur_eumate;
+	struct vertexuse *cur_vu;
+	struct vertex	*cur_v;
+	struct vertexuse *next_vu;
+	struct vertex	*next_v;
+	struct faceuse	*fu;
+	struct vertexuse *test_vu;
+	struct edgeuse	*test_eu;
+	struct loopuse	*test_lu;
+
+	NMG_CK_LOOPUSE(lu);
+	if( *lu->up.magic_p != NMG_FACEUSE_MAGIC )  return 0;
+	fu = lu->up.fu_p;
+	NMG_CK_FACEUSE(fu);
+
+	if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )  return 0;
+
+	for( RT_LIST_FOR( cur_eu, edgeuse, &lu->down_hd ) )  {
+		NMG_CK_EDGEUSE(cur_eu);
+		cur_eumate = cur_eu->eumate_p;
+		NMG_CK_EDGEUSE(cur_eumate);
+		cur_vu = cur_eu->vu_p;
+		NMG_CK_VERTEXUSE(cur_vu);
+		cur_v = cur_vu->v_p;
+		NMG_CK_VERTEX(cur_v);
+
+		next_vu = cur_eumate->vu_p;
+		NMG_CK_VERTEXUSE(next_vu);
+		next_v = next_vu->v_p;
+		NMG_CK_VERTEX(next_v);
+		/* XXX It might be more efficient to walk the radial list */
+		/* See if the next vertex has an edge pointing back to cur_v */
+		for( RT_LIST_FOR( test_vu, vertexuse, &next_v->vu_hd ) )  {
+			if( *test_vu->up.magic_p != NMG_EDGEUSE_MAGIC )  continue;
+			test_eu = test_vu->up.eu_p;
+			NMG_CK_EDGEUSE(test_eu);
+			if( test_eu == cur_eu )  continue;	/* skip self */
+			if( test_eu == cur_eumate )  continue;	/* skip mates */
+			if( *test_eu->up.magic_p != NMG_LOOPUSE_MAGIC )  continue;
+			test_lu = test_eu->up.lu_p;
+			if( test_lu != lu )  continue;
+			/* Check departing edgeuse's NEXT vertex */
+			if( test_eu->eumate_p->vu_p->v_p == cur_v )  goto match;
+		}
+		/* No path back, this can't be a crack, abort */
+		return 0;
+		
+		/* One edgeuse matched, all the others have to as well */
+match:		;
+	}
+	return 1;
+}
+
+int
+nmg_loop_is_ccw( lu, norm, tol )
+struct loopuse	*lu;
+CONST vect_t	norm;
+CONST struct rt_tol	*tol;
+{
+	vect_t		edge1, edge2;
+	vect_t		left;
+	struct edgeuse	*eu;
+	struct edgeuse	*next_eu;
+	struct vertexuse *this_vu, *next_vu, *third_vu;
+	fastf_t		theta = 0;
+
+	NMG_CK_LOOPUSE(lu);
+	RT_CK_TOL(tol);
+	if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )  return 0;
+
+	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
+		next_eu = RT_LIST_PNEXT_CIRC( edgeuse, eu );
+		this_vu = eu->vu_p;
+		next_vu = eu->eumate_p->vu_p;
+		third_vu = next_eu->eumate_p->vu_p;
+
+		/* Skip topological 0-length edges */
+		if( this_vu->v_p == next_vu->v_p )  continue;
+		if( next_vu->v_p == third_vu->v_p )  continue;
+
+		/* Skip edges with calculated edge lengths near 0 */
+		VSUB2( edge1, next_vu->v_p->vg_p->coord, this_vu->v_p->vg_p->coord );
+		if( MAGSQ(edge1) < tol->dist_sq )  continue;
+		VSUB2( edge2, third_vu->v_p->vg_p->coord, next_vu->v_p->vg_p->coord );
+		if( MAGSQ(edge2) < tol->dist_sq )  continue;
+		VUNITIZE(edge1);
+		VUNITIZE(edge2);
+
+		/* Compute (loop)inward pointing "left" vector */
+		VCROSS( left, norm, edge1 );
+		theta += atan2( VDOT( edge2, edge1 ), VDOT( edge2, left ) );
+	}
+	rt_log(" theta = %g (%g)\n", theta, theta / rt_twopi );
+	return 1;
 }
                                                                                                                                       
