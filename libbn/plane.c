@@ -1739,7 +1739,7 @@ register CONST point_t a, b, c;
  *    A *   /
  *	
  *	tol = distance limit from line to pt P;
- *	dist = distance from A to P'
+ *	dist = parametric distance from A to P' (in terms of A to B)
  */
 int bn_isect_pt_lseg(dist, a, b, p, tol)
 fastf_t			*dist;		/* distance along line from A to P */
