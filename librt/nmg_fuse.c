@@ -505,8 +505,9 @@ if(total>0)rt_log("nmg_model_edge_g_fuse(): %d edge_g's fused\n", total);
  *  Topology may have become inappropriately shared.
  *
  *  Returns -
- *	0	All is well.
- *	count	Number of verts *not* on fu2's surface.
+ *	0	All is well, or all verts are within 10*tol->dist of fu2
+ *	count	Number of verts *not* on fu2's surface when at least one is
+ *		more than 10*tol->dist from fu2.
  *
  *  XXX It would be more efficient to use nmg_vist() for this.
  */
@@ -565,7 +566,11 @@ CONST struct rt_tol	*tol;
 			fu1, f2, tol->dist, fu1->f_p,
 			count, worst, worst );
 	}
-	return count;
+
+	if( worst > 10.0*tol->dist )
+		return count;
+	else
+		return( 0 );
 }
 
 /*			N M G _ C K _ F G _ V E R T S
