@@ -1,8 +1,10 @@
 #!/bin/sh
+# -X100 just for coredumps
+# -x08000000 for tabdata debug
 
 rm -f ./moss.ssamp*
 
-./rttherm -P1 -o moss.ssamp -M -s64 $* \
+./rttherm -P1 -o moss.ssamp -M -s64 -X100 -x08000000 $* \
   ../.db.m4i64/moss.g all.g \
 	<< EOF
 viewsize 1.572026215e+02;
