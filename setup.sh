@@ -13,11 +13,8 @@
 SHELL=/bin/sh
 export SHELL
 
-# Confirm that the installation directory is correct,
-# or change it in:
-# Cakefile.defs, cake/Makefile, cakeaux/Makefile, setup.sh, cray.sh
-# This is unfortunate, and needs to come from some file, somehow.
-# Script newbindir.sh can be run to change them all.
+# Confirm that the installation directory is correct.
+# newbindir.sh can be run to edit all relevant files (including this one).
 
 BINDIR=/usr/brlcad/bin
 BASEDIR=`echo $BINDIR | sed -e 's/\/bin$//' `
@@ -26,7 +23,9 @@ echo "  BINDIR = ${BINDIR},  BASEDIR = ${BASEDIR}"
 
 # Create all the necessary directories
 
-for LAST in bin include lib vfont man man/man1 man/man3 man/man5 etc
+for LAST in \
+	bin include include/brlcad lib vfont \
+	man man/man1 man/man3 man/man5 etc
 do
 	if test ! -d $BASEDIR/$LAST
 	then
@@ -84,7 +83,7 @@ eval `sh machinetype.sh -b`
 #
 ############################################################################
 SCRIPTS="machinetype.sh cakeinclude.sh cray.sh ranlib5.sh \
-	sgisnap.sh cadbug.sh"
+	pixinfo.sh sgisnap.sh cadbug.sh"
 
 for i in ${SCRIPTS}
 do
