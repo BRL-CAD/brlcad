@@ -86,7 +86,7 @@ void set_e_axis_pos();
 /* Carl Nuzman experimental */
 #if 1
 extern int cmd_vdraw();
-extern int cmd_vget();
+extern int cmd_viewget();
 extern int cmd_viewset();
 #endif
 
@@ -101,6 +101,7 @@ int output_as_return = 1;
 int mged_cmd();
 struct rt_vls tcl_output_hook;
 
+int gui_not_initialized = 1;
 Tcl_Interp *interp = NULL;
 Tk_Window tkwin;
 
@@ -507,8 +508,8 @@ static struct funtab funtab[] = {
 #if 1
 "vdraw", "write|insert|delete|read|length|show [args]", "Expermental drawing (cnuzman)",
 	cmd_vdraw, 2, 7, TRUE,
-"vget", "center|size|eye|ypr|quat", "Experimental - return high-precision view parameters.",
-	cmd_vget, 2, 2, TRUE,
+"viewget", "center|size|eye|ypr|quat", "Experimental - return high-precision view parameters.",
+	cmd_viewget, 2, 2, TRUE,
 "viewset","center|eye|size|ypr|quat|aet","Experimental - set several view parameters at once.",
 	cmd_viewset, 3, MAXARGS, TRUE,
 #endif
@@ -726,6 +727,9 @@ Tcl_Interp *interp;
 int argc;
 char **argv;
 {
+#if 1
+  gui_setup();
+#else
     if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
       return TCL_ERROR;
 
@@ -755,7 +759,7 @@ char **argv;
     /* Handle any delayed events which result */
     while (Tk_DoOneEvent(TK_DONT_WAIT | TK_ALL_EVENTS))
 	;
-
+#endif
     return TCL_OK;
 }    
 
@@ -980,6 +984,8 @@ char **argv;
 void
 mged_setup()
 {
+  struct rt_vls str;
+
   /* The following is for GUI output hooks: contains name of function to
      run with output */
   rt_vls_init(&tcl_output_hook);
@@ -1001,103 +1007,49 @@ mged_setup()
   history_setup();
   mged_variable_setup(interp);
 
-  gui_setup();
+#ifdef MGED_LIBRARY
+  rt_vls_init(&str);
+  rt_vls_printf(&str, "set auto_path \\[linsert $auto_path 0 %s\\];\
+set junk \"\"", MGED_LIBRARY);
+  (void)cmdline(&str, False);
+  rt_vls_free(&str);
+  Tcl_ResetResult(interp);
+#endif
 }
 
 void
 gui_setup()
 {
-  FILE    *fp;
-  struct rt_vls str;
-  char *path;
   char *filename;
-  int     found;
+  int status;
+  static int gui_initialized = 0;
 
-#define MGED_GUIRC "mged2.tcl"
-#include "./mgedGui.h"
-#include "./menuGui.h"
-#include "./slidersGui.h"
-#include "./editobjGui.h"
-#include "./icreateGui.h"
-#include "./solclickGui.h"
-#include "./solcreateGui.h"
-#include "./vmathUi.h"
-#include "./htmlLibraryUi.h"
+  if(gui_initialized)
+    return;
 
   if((tkwin = Tk_CreateMainWindow(interp, (char *)NULL, "MGED", "MGED")) == NULL){
-    rt_log("mged_setup: Failed to create main window.\n");
+    rt_log("gui_setup: Failed to create main window.\n");
+#if 1
+    return;
+#else
     exit(1);
+#endif
   }
 
   /* This runs the tk.tcl script */
   if (Tk_Init(interp) == TCL_ERROR)
     rt_log("Tk_Init error %s\n", interp->result);
 
-  /* Load default GUI */
-  Tcl_Eval( interp, vmath_ui_str );
-  Tcl_Eval( interp, vmath_ui_str2 );
-  Tcl_Eval( interp, html_library_ui_str );
-  Tcl_Eval( interp, mged_gui_str );
-  Tcl_Eval( interp, mged_gui_str2 );
-  Tcl_Eval( interp, menu_gui_str );
-  Tcl_Eval( interp, sliders_gui_str );
-  Tcl_Eval( interp, editobj_gui_str );
-  Tcl_Eval( interp, icreate_gui_str );
-  Tcl_Eval( interp, solclick_gui_str );
-  Tcl_Eval( interp, solcreate_gui_str );
+  gui_initialized = 1;
+  Tcl_Eval( interp, "wm withdraw .");
 
-  found = 0;
-  rt_vls_init( &str );
-
+  /* Check to see if user specified MGED_GUIRC */
   if((filename = getenv("MGED_GUIRC")) == (char *)NULL )
-    /* Use default file name */
-    filename = MGED_GUIRC;
+    return;
 
-  if((path = getenv("MGED_LIBRARY")) != (char *)NULL ){
-    /* Use MGED_LIBRARY path */
-    rt_vls_strcpy( &str, path );
-    rt_vls_strcat( &str, "/" );
-    rt_vls_strcat( &str, filename );
+  if(Tcl_EvalFile( interp, filename ) == TCL_ERROR)
+    rt_log("gui_setup: %s\n", interp->result);
 
-    if ((fp = fopen(rt_vls_addr(&str), "r")) != NULL ){
-      found = 1;
-      fclose( fp );
-      (void)Tcl_EvalFile( interp, rt_vls_addr(&str) );
-    }
-  }
-
-  if( (path = getenv("HOME")) != (char *)NULL )  {
-    /* Use HOME path */
-    rt_vls_strcpy( &str, path );
-    rt_vls_strcat( &str, "/" );
-    rt_vls_strcat( &str, filename );
-
-    if( (fp = fopen(rt_vls_addr(&str), "r")) != NULL ){
-      found = 1;
-      fclose( fp );
-      (void)Tcl_EvalFile( interp, rt_vls_addr(&str) );
-    }
-  }
-
-  /* Check current directory */
-  if( (fp = fopen( filename, "r" )) != NULL )  {
-    rt_vls_strcpy( &str, filename );
-    found = 1;
-    fclose( fp );
-    (void)Tcl_EvalFile( interp, rt_vls_addr(&str) );
-  }
-
-  /* Didn't find a startup file, so warn user */
-  if(!found){
-    rt_log("gui_setup: user interface startup file was not found.\n");
-    rt_log("         - Using default interface.\n\n");
-    rt_log("Note: there are three environment variables that can be set.\n");
-    rt_log("\tMGED_GUIRC - user interface startup file.\n");
-    rt_log("\tMGED_LIBRARY - search path for Tcl files.\n");
-    rt_log("\tMGED_HTML_DIR - search path for html files.\n\n");
-  }
-
-  rt_vls_free(&str);
   return;
 }
 
@@ -1547,7 +1499,7 @@ int record;
 
 	/* A user typed this command so let everybody see, then record
 	   it in the history. */
-	if (record){
+	if (record && tkwin != NULL) {
 	  struct rt_vls tmp_vls;
 
 	  rt_vls_init(&tmp_vls);
