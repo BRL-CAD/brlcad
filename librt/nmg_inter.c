@@ -4,8 +4,9 @@
  *	Routines to intersect two NMG regions.
  *	There are no "user interface" routines in here.
  *
- *  Author -
+ *  Authors -
  *	Lee A. Butler
+ *	Michael John Muuss
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -13,7 +14,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1989 by the United States Army.
+ *	This software is Copyright (C) 1990 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -44,12 +45,13 @@ struct nmg_boolstruct {
  *	and structure of an nmg_ptbl list!  If I could figure a way of folding
  *	this into the nmg_tbl routine, I would do it.
  */
-static void tbl_vsort(b, fu1, fu2)
+static void tbl_vsort(b, fu1, fu2, pt)
 struct nmg_ptbl *b;		/* table of vertexuses on intercept line */
-struct faceuse *fu1, *fu2;
+struct faceuse	*fu1, *fu2;
+point_t		pt;
 {
-	point_t pt, min_pt;
-	vect_t	dir, vect;
+	point_t		min_pt;
+	vect_t		vect;
 	union {
 		struct vertexuse **vu;
 		long **magic_p;
@@ -58,9 +60,6 @@ struct faceuse *fu1, *fu2;
 	fastf_t *mag, tmag;
 	int i, j;
 
-	VMOVE(min_pt, fu1->f_p->fg_p->min_pt);
-	VMIN(min_pt, fu2->f_p->fg_p->min_pt);
-	rt_isect_2planes(pt, dir, fu1->f_p->fg_p->N, fu2->f_p->fg_p->N, min_pt);
 	mag = (fastf_t *)rt_calloc(b->end, sizeof(fastf_t),
 					"vector magnitudes for sort");
 
@@ -614,10 +613,14 @@ fastf_t tol;
 	fastf_t		*pl1, *pl2;
 	struct face	*f1;
 	struct face	*f2;
+	point_t		pt;
+	vect_t		dir;
+	point_t		min_pt;
 	union {
 		struct vertexuse **vu;
 		long **magic_p;
 	} p;
+	int		status;
 
 	NMG_CK_FACEUSE(fu1);
 	f1 = fu1->f_p;
@@ -642,6 +645,26 @@ fastf_t tol;
 	    f1->fg_p->min_pt, f1->fg_p->max_pt) )  return;
 
 	/* Extents of face1 overlap face2 */
+	VMOVE(min_pt, f1->fg_p->min_pt);
+	VMIN(min_pt, f2->fg_p->min_pt);
+	status = rt_isect_2planes( pt, dir, f1->fg_p->N, f2->fg_p->N, min_pt );
+	switch( status )  {
+	case 0:
+		/* All is well */
+		break;
+	case -1:
+		/* co-planar */
+		rt_log("co-planar faces?\n");
+		return;
+	case -2:
+		/* parallel and distinct */
+		return;
+	default:
+		/* internal error */
+		rt_log("ERROR nmg_isect_2faces() unable to find plane intersection\n");
+		return;
+	}
+
 	(void)nmg_tbl(&vert_list1, TBL_INIT,(long *)NULL);
 	(void)nmg_tbl(&vert_list2, TBL_INIT,(long *)NULL);
 
@@ -701,10 +724,10 @@ fastf_t tol;
 		(void)nmg_tbl(&vert_list2, TBL_FREE, (long *)NULL);
     		return;
     	}
-	tbl_vsort(&vert_list1, fu1, fu2);
+	tbl_vsort(&vert_list1, fu1, fu2, pt);
 	nmg_face_combine(&vert_list1, fu1, fu2);
 
-	tbl_vsort(&vert_list2, fu2, fu1);
+	tbl_vsort(&vert_list2, fu2, fu1, pt);
 	nmg_face_combine(&vert_list2, fu2, fu1);
 
 	/* When two faces are intersected
