@@ -651,6 +651,34 @@ extern char *rt_calloc();
 # define MINVAL(_a, _b) ((_a) < (_b) ? (_a) : (_b))
 #endif
 
+#define EUPRINT(_s, _eu)	euprint( (_s), (_eu) )
+#define PLPRINT(_s, _pl) rt_log("%s %gx + %gy + %gz = %g\n", (_s), \
+	(_pl)[0], (_pl)[1], (_pl)[2], (_pl)[3])
+
+
+struct nmg_boolstruct {
+	struct nmg_ptbl	ilist;		/* vertexuses on intersection line */
+	fastf_t		tol;
+	point_t		pt;		/* line of intersection */
+	vect_t		dir;
+	int		coplanar;
+	char		*vertlist;
+	int		vlsize;
+	struct model	*model;
+};
+
+#define PREEXIST 1
+#define NEWEXIST 2
+
+
+#define VU_PREEXISTS(_bs, _vu) { chkidxlist((_bs), (_vu)); \
+	(_bs)->vertlist[(_vu)->index] = PREEXIST; }
+
+#define VU_NEW(_bs, _vu) { chkidxlist((_bs), (_vu)); \
+	(_bs)->vertlist[(_vu)->index] = NEWEXIST; }
+
+
+
 /************************************************************************
  *									*
  *			Support Function Declarations			*
