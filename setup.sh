@@ -169,11 +169,14 @@ fi
 inst_dirs=" bin etc html include itcl3.2 itk3.2 lib man pro-engineer \
 	sample_applications tcl8.3 tclscripts tk8.3 vfont"
 
-echo "Is it OK to delete the following directories:"
-for dir in $inst_dirs ; do
-    echo "   ${BRLCAD_ROOT}/$dir"
-done
-echo "(yes|no)[no]"
+if [ X${SILENT} = X ] ; then
+    echo "Is it OK to delete the following directories:"
+
+    for dir in $inst_dirs ; do
+        echo "   ${BRLCAD_ROOT}/$dir"
+    done
+    echo "(yes|no)[no]"
+fi
 
 read ANS
 if test "$ANS" != "yes"
@@ -217,8 +220,9 @@ done
 # Make our permissions track those in Cakefile.defs
 BINPERM=`grep BINPERM Cakefile.defs | head -1| awk '{print $3}' `
 MANPERM=`grep MANPERM Cakefile.defs | head -1| awk '{print $3}' `
-echo BINPERM=${BINPERM}, MANPERM=${MANPERM}
-
+if [ X${SILENT} = X ] ; then
+    echo BINPERM=${BINPERM}, MANPERM=${MANPERM}
+fi
 
 ############################################################################
 #
@@ -334,13 +338,13 @@ sh gen.sh ${SILENT} mkdir		# Won't have any effect unless NFS is set.
 
 # Congratulations.  Everything is fine.
 if [ X${SILENT} = X ] ; then
-	echo "BRL-CAD initial setup is complete."
+    echo "BRL-CAD initial setup is complete."
 # Just doing "make install" isn't good enough, it doesn't
 # compile things in bench, db, or proc-db.  You may want db.
-echo "Next, run:"
-echo " "
-echo "	make; make install"
-echo " "
-echo "(It is vitally important that you run both of these commands"
-echo "as this is a two-step operation.)"
+    echo "Next, run:"
+    echo " "
+    echo "	make; make install"
+    echo " "
+    echo "(It is vitally important that you run both of these commands"
+    echo "as this is a two-step operation.)"
 fi
