@@ -135,21 +135,7 @@ err:
 		exit(1);
 	}
 
-	/* Compute r_dir and r_pt from the inputs */
 	if( set_dir + set_pt + set_at != 2 )  goto err;
-	if( set_at )  {
-		if( set_dir ) {
-			VJOIN1( ap.a_ray.r_pt, at_vect,
-				-1000, ap.a_ray.r_dir );
-		} else {
-			/* set_pt */
-			VSUB2( ap.a_ray.r_dir, at_vect, ap.a_ray.r_pt );
-		}
-	}
-	VUNITIZE( ap.a_ray.r_dir );
-
-	VPRINT( "Pnt", ap.a_ray.r_pt );
-	VPRINT( "Dir", ap.a_ray.r_dir );
 
 	/* Load database */
 	title_file = argv[0];
@@ -169,6 +155,25 @@ err:
 		argc--;
 		argv++;
 	}
+
+	/* Compute r_dir and r_pt from the inputs */
+	if( set_at )  {
+		if( set_dir ) {
+			vect_t	diag;
+			fastf_t	viewsize;
+			VSUB2( diag, rtip->mdl_max, rtip->mdl_min );
+			viewsize = MAGNITUDE( diag );
+			VJOIN1( ap.a_ray.r_pt, at_vect,
+				-viewsize/2.0, ap.a_ray.r_dir );
+		} else {
+			/* set_pt */
+			VSUB2( ap.a_ray.r_dir, at_vect, ap.a_ray.r_pt );
+		}
+	}
+	VUNITIZE( ap.a_ray.r_dir );
+
+	VPRINT( "Pnt", ap.a_ray.r_pt );
+	VPRINT( "Dir", ap.a_ray.r_dir );
 
 	/* Shoot Ray */
 	ap.a_hit = hit;
@@ -190,18 +195,25 @@ struct partition *PartHeadp;
 
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )  {
 		stp = pp->pt_inseg->seg_stp;
-		rt_log("\n--- Hit %s\n", stp->st_name);
+		rt_log("\n--- Hit %s of region %s\n",
+			stp->st_name, pp->pt_regionp->reg_name );
 
 		hitp = pp->pt_inhit;
 		RT_HIT_NORM( hitp, stp, &(ap->a_ray) );
+		if( pp->pt_inflip )
+			VREVERSE( hitp->hit_normal, hitp->hit_normal );
 		rt_pr_hit( "  In", hitp );
 		RT_CURVE( &cur, hitp, stp );
 		VPRINT("PDir", cur.crv_pdir );
 		rt_log(" c1=%g\n", cur.crv_c1);
 		rt_log(" c2=%g\n", cur.crv_c2);
 
+		/* outhit - no solid name, no curvature? */
+		stp = pp->pt_outseg->seg_stp;
 		hitp = pp->pt_outhit;
 		RT_HIT_NORM( hitp, stp, &(ap->a_ray) );
+		if( pp->pt_outflip )
+			VREVERSE( hitp->hit_normal, hitp->hit_normal );
 		rt_pr_hit( " Out", hitp );
 	}
 }
