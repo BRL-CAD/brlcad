@@ -46,6 +46,7 @@ Acknowledgment:
 	Based very loosely on Mike Muuss's Versatec TIGpack interpreter.
 */
 
+#define STATIC	/* nothing, for debugging */
 
 #include	<signal.h>
 #include	<stdio.h>
@@ -83,48 +84,24 @@ for each pixels, times the number of pixels desired (512 in LORES,
 
 */
 
-
 /*	IKONAS Device Parameters				 */
 
-#define	LORESPIX	512		/* # pixels/scan line LORES */
-#define	HIRESPIX	1024		/* # pixels/scan line HIRES */
 #define	PIXELSIZE	4		/* # bytes per pixel */
-
-#ifdef	HIRES
-#define	SCANS	HIRESPIX
-#define	PIXELS	HIRESPIX
-#define	CHARSZ	2
-#else
-#define	SCANS	LORESPIX
-#define	PIXELS	LORESPIX
-#define	CHARSZ	1
-#endif
 
 /* the following parameter should be tweaked for fine-tuning */
 #define SPB		16		/* scan lines per band */
-#ifdef HIRES
-#define	X_CHAR_SIZE	((PIXELS/73)-1)
-#else
-#define	X_CHAR_SIZE	PIXELS/73	/* pixels per char horizontal */
-#endif	HIRES
-#define	Y_CHAR_SIZE	SCANS/46	/* pixels per char vertical */
-
-#if	SCANS % SPB != 0
-#include	"SCANS % SPB != 0"	/* (just for ERROR message) */
-#endif
+#define	X_CHAR_SIZE	((Npixels/73)-1) /* pixels per char horizontal */
+#define	Y_CHAR_SIZE	Nscanlines/46	/* pixels per char vertical */
 
 #define	CLEAR	0			/* value for no intensity */
 
 
 /*	Program constants computed from device parameters:	*/
 
-#define BANDS	(SCANS / SPB)		/* # of "bands" */
-#define BYTES	(PIXELS * PIXELSIZE)	/* max data bytes per scan */
-#define XMAX	(SCANS - 1)		/* frame boundary */
-#define YMAX	(PIXELS - 1)		/* scan boundary */
-
-#define	XSCA	PIXELS
-#define	YSCA	SCANS
+#define BANDS	(Nscanlines / SPB)		/* # of "bands" */
+#define BYTES	(Npixels * PIXELSIZE)	/* max data bytes per scan */
+#define XMAX	(Npixels - 1)
+#define YMAX	(Nscanlines - 1)
 
 /*	Data structure definitions:	*/
 
@@ -162,16 +139,15 @@ typedef struct descr
 
 /*	Global data allocations:	*/
 
-static struct
+STATIC struct
 	{
 	short		left;		/* window edges */
 	short		bottom;
 	short		right;
 	short		top;
-	}	space =	 		/* plot scale data */
-	{ 0, 0, YSCA, XSCA };		/* default unity scaling */
+	}	space;	 		/* plot scale data */
 
-static struct
+STATIC struct
 	{
 	short		left;		/* 3d window edges */
 	short		bottom;
@@ -192,7 +168,7 @@ struct	relvect {
  *  These character sets are taken from the Motorola MC6575 Pattern Generator,
  *  page 5-119 of 'The Complete Motorola Microcomputer Data Library'
  */
-static struct vectorchar {
+STATIC struct vectorchar {
 	char		ascii;		/* ASCII character emulated */
 	struct	relvect	r[10];		/* maximum # of vectors 1 char */
 } charset[] = {
@@ -244,22 +220,27 @@ static struct vectorchar {
    NULL
 };
 
-static long	delta = YSCA;		/* larger window dimension */
-static long	deltao2 = YSCA / 2;	/* delta / 2 */
+STATIC int	Nscanlines = 512;
+STATIC int	Npixels = 512;
+STATIC int	charsz = 1;
+
+STATIC long	delta;			/* larger window dimension */
+STATIC long	deltao2;		/* delta / 2 */
 
 struct band  {
 	stroke	*first;
 	stroke	*last;
 };
-static struct band	band[BANDS] = { NULL };	/* descriptor lists */
+STATIC struct band	*band;		/* array of descriptor lists */
+STATIC struct band	*bandEnd;
 
-/* active band buffer: */
-static char	buffer[SPB][PIXELS][PIXELSIZE] = { 0 };
-static short	ystart = 0;		/* active band starting scan */
-static short	debug  = 0;
-static int	ifd    = 1;	/* for image file Output */
+STATIC char	*buffer;		/* ptr to active band buffer */
+STATIC long	buffersize;		/* active band buffer bytes */
+STATIC short	ystart = 0;		/* active band starting scan */
+STATIC short	debug  = 0;
+STATIC short	overlay = 0;		/* !0 to overlay on existing image */
 
-static int	sigs[] =		/* signals to be caught */
+STATIC int	sigs[] =		/* signals to be caught */
 	{
 	SIGHUP,
 	SIGINT,
@@ -270,25 +251,22 @@ static int	sigs[] =		/* signals to be caught */
  
 /*	Externals:	*/
 
-#ifdef	BRL
-#define open	_open		/* System V emulation not needed */
-#endif
-
-static FILE	*pfin;		/* input file FIO block ptr */
+STATIC FILE	*pfin;		/* input file FIO block ptr */
 extern void	free();
 extern char	*malloc();
 extern int	close(), creat(), getpid(), kill(), open(), read(),
 		write();
+
 extern int	ikhires;		/* for ik library */
 extern int	ikfd;			/* from ik library */
 
 /*	Local subroutines:	*/
 
-static int	DoFile(), Foo();
-static stroke	*Allocate(), *Dequeue();
-static bool	BuildStr(), GetCoords(),
-		OutBuild(), WrBand();
-static void	Catch(), FreeUp(), InitDesc(), Queue(),
+STATIC int	DoFile(), Foo();
+STATIC stroke	*Allocate(), *Dequeue();
+STATIC bool	BuildStr(), GetCoords(),
+		OutBuild(), RdBand(), WrBand();
+STATIC void	Catch(), FreeUp(), InitDesc(), Queue(),
 		Requeue(),
 		Raster(), SetSigs();
 
@@ -310,12 +288,23 @@ char **argv;
 	register char	*filename = NULL;
 	char		*cp;
 	
+	Nscanlines = Npixels = 512;
 	for(i = 1; i < argc; i++)
 		if( argv[i][0] == '-' )
 			switch( argv[i][1] )  {
 				
 			case 'd':
 				debug = 1;
+				break;
+
+			case 'o':
+				overlay = 1;
+				break;
+
+			case 'h':
+				ikhires = 1;
+				Nscanlines = Npixels = 1024;
+				charsz = 2;
 				break;
 
 			default:
@@ -325,27 +314,43 @@ char **argv;
 		else
 			filename = argv[i];
 
-#ifdef	HIRES
-	ikhires = 1;
-#else
-	ikhires = 0;
-#endif	HIRES
-	ikopen();
 	/*
-	 * Since the stupid ikopen routine DOESN'T return a file
-	 * descriptor (well, it does in a global variable...)
-	 * hence the next line of kludgey code.  YUCKO!!!
+	 * Handle image-size specific initializations
 	 */
-	if( (ifd = ikfd) < 0 )  {
-		perror("Ikonas");
-		exit(-1);
+	if( (Nscanlines % SPB) != 0 )  {
+		fprintf(stderr, "Nscanlines % SPB != 0\n");
+		exit(1);
 	}
+	space.left = space.right = 0;
+	space.right = Npixels;
+	space.top = Nscanlines;
+	delta = Nscanlines;
+	deltao2 = Nscanlines/2;
+
+	buffersize = SPB*Npixels*PIXELSIZE;
+	if( (buffer = malloc(buffersize)) == (char *)0)  {
+		fprintf(stderr,"ikplot:  malloc error\n");
+		exit(1);
+	}
+	band = (struct band *)malloc(BANDS*sizeof(struct band));
+	if( band == (struct band *)0 )  {
+		fprintf(stderr,"ikplot: malloc error2\n");
+		exit(1);
+	}
+	bzero( (char *)band, BANDS*sizeof(struct band) );
+	bandEnd = &band[BANDS];
+
+	if( ikopen() < 0 )  {
+		fprintf(stderr,"ikplot: ikopen failed\n");
+		exit(1);
+	}
+
 	/*
-	 *  Plot the selected filename on STDOUT (as an IKONAS) - note
-	 *  with no arguments, we plot STDIN on STDOUT (filter mode)
+	 *  Plot the selected filename -- note
+	 *  with no arguments, we plot STDIN.
 	 */
 	if( debug )
-		fprintf(stderr, "IKONAS plot output of %s\n", filename);
+		fprintf(stderr, "ikplot output of %s\n", filename);
 		
 	vik( filename );
 }
@@ -384,7 +389,7 @@ char	*pname; 		/* name of plot data file */
 	DoFile - process UNIX plot file onto IKONAS
 */
 
-static int
+STATIC int
 DoFile( )	/* returns vpl status code */
 {
 	register bool	plotted;	/* false => empty frame image */
@@ -592,19 +597,19 @@ coords		pos;
 		return;
 
 	/* have the correct character entry - start plotting */
-	start.x = vc->r[0].x*CHARSZ + pos.x;
-	start.y = vc->r[0].y*CHARSZ + pos.y - Y_CHAR_SIZE;
+	start.x = vc->r[0].x*charsz + pos.x;
+	start.y = vc->r[0].y*charsz + pos.y - Y_CHAR_SIZE;
 
 	for( rv = &vc->r[1]; (rv < &vc->r[10]) && rv->x >= 0; rv++ )  {
-		end.x = rv->x*CHARSZ + pos.x;
-		end.y = rv->y*CHARSZ + pos.y - Y_CHAR_SIZE;
+		end.x = rv->x*charsz + pos.x;
+		end.y = rv->y*charsz + pos.y - Y_CHAR_SIZE;
 		edgelimit( &start );
 		edgelimit( &end );
 		BuildStr( &start, &end );
 		start = end;
 	}
 }
-
+
 /*
  *	E D G E L I M I T
  *
@@ -613,17 +618,17 @@ coords		pos;
 edgelimit( ppos )
 register coords *ppos;
 {
-	if( ppos->x >= PIXELS )
-		ppos->x = PIXELS -1;
+	if( ppos->x >= Npixels )
+		ppos->x = Npixels -1;
 
-	if( ppos->y >= SCANS )
-		ppos->y = SCANS -1;
+	if( ppos->y >= Nscanlines )
+		ppos->y = Nscanlines -1;
 }
 
 /*
 	GetCoords - input x,y coordinates and scale into pixels
 */
-static bool Get3Coords( coop )
+STATIC bool Get3Coords( coop )
 register coords	*coop;
 {
 	short	trash;
@@ -634,7 +639,7 @@ register coords	*coop;
 	return( ret );
 }
 
-static bool
+STATIC bool
 GetCoords( coop )
 	register coords	*coop;		/* -> input coordinates */
 	{
@@ -652,11 +657,11 @@ GetCoords( coop )
 
 	/* convert to device pixels */
 
-	coop->x = (short)(((long)coop->x * XSCA + deltao2) / delta);
-	coop->y = (short)(((long)coop->y * YSCA + deltao2) / delta);
+	coop->x = (short)(((long)coop->x * Npixels + deltao2) / delta);
+	coop->y = (short)(((long)coop->y * Nscanlines + deltao2) / delta);
 
 	/* REVERSE the y axis for those of you who like plots origin down */
-	coop->y = SCANS - coop->y;
+	coop->y = Nscanlines - coop->y;
 	
 	/* limit right, top */
 
@@ -670,18 +675,17 @@ GetCoords( coop )
 		
 	return true;
 	}
-
-
+
 /*
 	InitDesc - initialize stroke descriptor lists
 */
 
-static void
+STATIC void
 InitDesc()
 	{
 	register struct band *bp;	/* *bp -> start of descr list */
 
-	for ( bp = &band[0]; bp < &band[BANDS]; ++bp )
+	for ( bp = &band[0]; bp < bandEnd; ++bp )
 		bp->first = NULL;		/* nothing in band yet */
 		bp->last  = NULL;
 	}
@@ -693,7 +697,7 @@ InitDesc()
 	Note that descriptor order is not important.
 */
 
-static void
+STATIC void
 Queue( bp, hp, vp )
 	register struct band *bp;
 	register stroke **hp;		/* *hp -> first descr in list */
@@ -708,7 +712,7 @@ Queue( bp, hp, vp )
 /*
  * 	Requeue - enqueue descriptor at END of band list
  */
-static void
+STATIC void
 Requeue( bp, vp )
 register struct band *bp;
 register stroke	     *vp;
@@ -726,7 +730,7 @@ register stroke	     *vp;
 	Dequeue - remove descriptor from band list (do not free space)
 */
 
-static stroke *
+STATIC stroke *
 Dequeue( bp, hp )				/* returns addr of descriptor,
 					   or NULL if none left */
 	register struct band *bp;
@@ -748,33 +752,50 @@ Dequeue( bp, hp )				/* returns addr of descriptor,
 	FreeUp - deallocate descriptors
 */
 
-static void
+STATIC void
 FreeUp()
 	{
 	register struct band *bp;
 	register stroke *vp;		/* -> rasterization descr */
 
-	for ( bp = &band[0]; bp < &band[BANDS]; ++bp )
+	for ( bp = &band[0]; bp < bandEnd; ++bp )
 		while ( (vp = Dequeue( bp, &bp->first )) != NULL )
 			free( (char *)vp );	/* free storage */
 	}
 
+/*
+	RdBand - Read in next band from output image file,
+		for overlay purposes.  Reposition back.
+*/
+STATIC bool
+RdBand()
+{
+	register char	*bp = buffer;
+	register int	size;
+
+	size = 32768;	/* default DMA size */
+	for( bp = buffer; buffersize - (bp - buffer) > 0; bp += size)  {
+		size = min( size, buffersize - (bp - buffer) );
+		if( read(ikfd, bp, size) != size )
+			return false;
+	}
+	lseek( ikfd, -buffersize, 1);
+	return true;
+}
 
 /*
 	WrBand - Write out next band to output image file
 */
-static bool
+STATIC bool
 WrBand()
 {
-	register char	*bp = &buffer[0][0][0];
+	register char	*bp = buffer;
 	register int	size;
 
 	size = 32768;	/* default DMA size */
-	for( bp = &buffer[0][0][0];
-	     sizeof buffer - (bp - &buffer[0][0][0]) > 0; bp += size)
-	{
-		size = min( size, sizeof buffer - (bp - &buffer[0][0][0]) );
-		if( write(ifd, bp, size) != size )
+	for( bp = buffer; buffersize - (bp - buffer) > 0; bp += size)  {
+		size = min( size, buffersize - (bp - buffer) );
+		if( write(ikfd, bp, size) != size )
 			return false;
 	}
 	return true;
@@ -784,7 +805,7 @@ WrBand()
 	BuildStr - set up DDA parameters and queue stroke
 */
 
-static bool
+STATIC bool
 BuildStr( pt1, pt2 )			/* returns true unless bug */
 	coords		*pt1, *pt2;	/* endpoints */
 	{
@@ -840,7 +861,7 @@ BuildStr( pt1, pt2 )			/* returns true unless bug */
 	Allocate - allocate a descriptor (possibly updating image file)
 */
 
-static stroke *
+STATIC stroke *
 Allocate()				/* returns addr of descriptor
 					   or NULL if something wrong */
 	{
@@ -858,26 +879,31 @@ Allocate()				/* returns addr of descriptor
 	OutBuild - rasterize all strokes into raster frame image
 */
 
-static bool
+STATIC bool
 OutBuild()				/* returns true if successful */
 {
 	register struct band *hp;	/* *hp -> head of descr list */
 	register struct band *np;	/* `hp' for next band */
 	register stroke *vp;		/* -> rasterization descr */
 
-	for ( hp = &band[0]; hp < &band[BANDS]; ++hp )
+	for ( hp = &band[0]; hp < bandEnd; ++hp )
 		if ( hp->first != NULL )
 			break;
 
-	if ( hp == &band[BANDS] )
+	if ( hp == bandEnd )
 		return true;		/* nothing to do */
 
 	for ( hp = &band[0], np = &band[1], ystart = 0;
-	      hp < &band[BANDS];
+	      hp < bandEnd;
 	      hp = np++, ystart += SPB
 	    )	{
-		/* clear pixels in the band */
-		bzero( buffer, sizeof(buffer) );
+	    	if( overlay )  {
+	    		/* Read in current band */
+	    		RdBand();
+	    	} else {
+			/* clear pixels in the band */
+			bzero( buffer, buffersize );
+	    	}
 
 		while ( (vp = Dequeue( hp, &hp->first )) != NULL )
 			Raster( vp, np );      /* rasterize stroke */
@@ -902,7 +928,7 @@ Method:
 	as it is extremely hard to get all aspects just right.
 */
 
-static void
+STATIC void
 Raster( vp, np )
 	register stroke *vp;		/* -> rasterization descr */
 	register struct band *np;	/* *np -> next band 1st descr */
@@ -916,7 +942,9 @@ Raster( vp, np )
 		{
 
 		/* set the appropriate pixel in the buffer */
-		*((long *)buffer[dy][vp->pixel.x]) = *((long *)vp->col);
+/**		*((long *)buffer[dy][vp->pixel.x]) = *((long *)vp->col); **/
+		*((long *)(buffer+(((dy*Npixels)+vp->pixel.x)*PIXELSIZE))) =
+			*((long *)vp->col);
 
 		if ( vp->major-- == 0 ) /* done! */
 			{
@@ -948,11 +976,11 @@ Raster( vp, np )
 	Foo - clean up before return from rasterizer
 */
 
-static int
+STATIC int
 Foo( code )				/* returns status code */
 	int	code;			/* status code */
 	{
-	(void)close( ifd );		/* close open files */
+	(void)close( ikfd );		/* close open files */
 
 	FreeUp();			/* deallocate descriptors */
 
@@ -962,7 +990,7 @@ Foo( code )				/* returns status code */
 /*
 	SetSigs - set up signal catchers
 */
-static void
+STATIC void
 SetSigs()
 	{
 	register int	*psig;		/* -> sigs[.] */
@@ -980,7 +1008,7 @@ SetSigs()
 	Catch - invoked on interrupt
 */
 
-static void
+STATIC void
 Catch( sig )
 	register int	sig;		/* signal number */
 	{
