@@ -1,5 +1,10 @@
 # $Id$
 
+LIBZ=
+if NEED_ZLIB
+	LIBZ=libz
+endif
+
 if ONLY_BENCHMARK
 SUBDIRS = libtcl
 
@@ -20,7 +25,7 @@ SUBDIRS = \
 	libtk \
 	libtkGLX \
 	libutahrle \
-	libz
+	${LIBZ}
 
 endif
 # end ONLY_RTS

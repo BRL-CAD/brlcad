@@ -389,7 +389,20 @@ AC_SUBST(ITCL_LIBS)
 AC_SUBST(ITCL_VERSION)
 AC_SUBST(ITK_LIBS)
 
-PNG_LIBS='${top_builddir}/src/other/libpng/libpng.la ${top_builddir}/src/other/libz/libz.la'
+have_zlib=no
+build_zlib=no
+AC_CHECK_LIB(z, deflate, have_zlib=yes)
+if test "$have_zlib" == yes
+then
+	build_zlib="no (use native)"
+	Z="-lz"
+else
+	build_zlib=yes
+	Z='${top_builddir}/src/other/libz/libz.la'
+fi
+AM_CONDITIONAL(NEED_ZLIB, [test "$have_zlib" == no])
+
+PNG_LIBS='${top_builddir}/src/other/libpng/libpng.la ${Z}'
 AC_SUBST(PNG_LIBS)
 
 
@@ -910,7 +923,7 @@ echo Build Itcl/Itk .......................: yes
 echo Build IWidgets .......................: yes
 echo Build libregex .......................: yes
 echo Build libpng .........................: yes
-echo Build libz ...........................: yes
+echo Build libz ...........................: ${build_zlib}
 echo 
 echo Java Developer Kit support ...........: $with_java
 echo X11 support ..........................: yes
