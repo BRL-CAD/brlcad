@@ -19,8 +19,7 @@ extern "C" {
 /* Inaccessible static: class_00024java_00024rmi_00024server_00024RMIClientSocketFactory */
 /* Inaccessible static: class_00024java_00024rmi_00024server_00024RMIServerSocketFactory */
 /* Inaccessible static: class_00024java_00024rmi_00024server_00024ServerRef */
-/* Inaccessible static: title */
-/* Inaccessible static: logger */
+/* Inaccessible static: usage */
 /*
  * Class:     mil_army_arl_muves_rtserver_RtServerImpl
  * Method:    rtsInit
@@ -28,6 +27,14 @@ extern "C" {
  */
 JNIEXPORT jboolean JNICALL Java_mil_army_arl_muves_rtserver_RtServerImpl_rtsInit
   (JNIEnv *, jobject, jobjectArray);
+
+/*
+ * Class:     mil_army_arl_muves_rtserver_RtServerImpl
+ * Method:    getDbTitle
+ * Signature: ()Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_mil_army_arl_muves_rtserver_RtServerImpl_getDbTitle
+  (JNIEnv *, jobject);
 
 /*
  * Class:     mil_army_arl_muves_rtserver_RtServerImpl
