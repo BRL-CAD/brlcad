@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 1.2  83/12/16  00:09:50  dpk
+ * Added distinctive RCS header
+ * 
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$";
@@ -22,7 +25,7 @@ static char RCSid[] = "@(#)$Header$";
 
 /* Termcap definitions */
 
-char	*UP,	/* Scroll reverse, or up */
+char	*UP,	/* Move cursor up */
 	*CS,	/* Change scrolling */
 	*SO,	/* Start standout */
 	*SE,	/* End standout */
@@ -30,23 +33,33 @@ char	*UP,	/* Scroll reverse, or up */
 	*CL,	/* Clear screen */
 	*CE,	/* Clear to end of line */
 	*HO,	/* Home cursor */
-	*AL,	/* Addline (insert line) */
+	*AL,	/* Add line (insert line) */
 	*DL,	/* Delete line */
-	*IS,	/* Initial start */
 	*VS,	/* Visual start */
 	*VE,	/* Visual end */
+	*KS,	/* Keypad transmit start */
+	*KE,	/* Keypad transmit end */
+	*TI,	/* Cursor addressing start */
+	*TE,	/* Cursor addressing end */
 	*IC,	/* Insert char	*/
 	*DC,	/* Delete char	*/
 	*IM,	/* Insert mode */
 	*EI,	/* End insert mode */
 	*LL,	/* Move to last line, first column of screen */
 	*BC,	/* Back space */
-	*SR,
-	*VB;
+	*M_AL,	/* Meta Add line (takes arg) */
+	*M_DL,	/* Meta Delete line (takes arg) */
+	*M_IC,	/* Meta Insert Char (takes arg) */
+	*M_DC,	/* Meta Delete Char (takes arg) */
+	*SF,	/* Scroll forward (up, for scrolling regions) */
+	*SR,	/* Scroll reverse (down, for scrolling regions) */
+	*VB;	/* Visual bell (e.g. a flash) */
 
 int	LI,		/* Number of lines */
 	CO,		/* Number of columns */
 	TABS,		/* Whether we are in tabs mode */
+	SG,		/* Number of magic cookies left by SO and SE */
+	XS,		/* Wether standout is braindamaged */
 	UpLen,		/* Length of the UP string */
 	HomeLen,	/* Length of Home string */
 	LowerLen;	/* Length of lower string */
@@ -55,20 +68,16 @@ int	BG;		/* Are we on a bitgraph? */
 
 int ospeed;
 
-char	tspace[128];
+char	tspace[256];
 
-char **meas[] = {
-	&VS, &VE, &IS, &AL, &DL, &CS, &SO, &SE,
+/* The ordering of ts and meas must agree !! */
+char	*ts="vsvealdlcssosecmclcehoupbcicimdceillsfsrvbksketiteALDLICDC";
+char	**meas[] = {
+	&VS, &VE, &AL, &DL, &CS, &SO, &SE,
 	&CM, &CL, &CE, &HO, &UP, &BC, &IC, &IM,
-	&DC, &EI, &LL, &SR, &VB, 0
+	&DC, &EI, &LL, &SF, &SR, &VB, &KS, &KE,
+	&TI, &TE, &M_AL, &M_DL, &M_IC, &M_DC, 0
 };
-
-gets(buf)
-char	*buf;
-{
-	buf[read(0, buf, 12) - 1] = 0;
-}	
-
 char	*sprint();
 
 TermError(str)
@@ -76,7 +85,7 @@ char	*str;
 {
 	char	*cp;
 
-	cp = sprint("Termcap error: %s\n", str);
+	cp = sprint("Termcap error: %s.\n", str);
 	if (write(1, cp, strlen(cp)));
 	exit(1);
 }
@@ -85,11 +94,10 @@ getTERM()
 {
 	char	*getenv();
 	struct sgttyb tty;
-	char	*ts="vsveisaldlcssosecmclcehoupbcicimdceillsrvb";
-	char	termbuf[13],
-		*termname = 0,
+	char	termbuf[32],
+		*termname,
 		*termp = tspace,
-		tbuff[BUFSIZ];
+		tbuff[1024];
 	int	i;
 
 	if (gtty(0, &tty))
@@ -98,9 +106,13 @@ getTERM()
 	ospeed = tty.sg_ospeed;
 
 	termname = getenv("TERM");
-	if (termname == 0) {
-		putstr("Enter terminal name: ");
-		gets(termbuf);
+	if (termname == 0 || *termname == 0) {
+		static char *msg = "Enter terminal name: ";
+
+		write(1, msg, strlen(msg));	/* Buffered IO not setup yet */
+		if ((i = read(0, termbuf, sizeof(termbuf))) < 0)
+			TermError("");
+		termbuf[i-1] = 0;	/* Zonk the newline */
 		if (termbuf[0] == 0)
 			TermError("");
 
@@ -110,7 +122,7 @@ getTERM()
 	BG = strcmp(termname, "bg") == 0;	/* Kludge to help out bg scroll */
 
 	if (tgetent(tbuff, termname) < 1)
-		TermError("terminal type?");
+		TermError("terminal type unknown");
 
 	if ((CO = tgetnum("co")) == -1)
 		TermError("columns?");
@@ -118,21 +130,26 @@ getTERM()
 	if ((LI = tgetnum("li")) == -1)
 		TermError("lines?");
 
+	if ((SG = tgetnum("sg")) == -1)
+		SG = 0;			/* Used for mode line only */
+
+	if ((XS = tgetflag("xs")) == -1)
+		XS = 0;			/* Used for mode line only */
+
 	for (i = 0; meas[i]; i++) {
 		*(meas[i]) = (char *)tgetstr(ts,&termp);
 		ts += 2;
 	}
-#ifdef Lossage
-/* You can decide whether you want this ... */
-	if (!CE || !UP)
-		TermError("Your terminal sucks!");
-#endif
+	if (XS)
+		SO = SE = 0;
+	disp_opt_init();
 }
 
 /*
    Deals with output to the terminal, setting up the amount of characters
    to be buffered depending on the output baud rate.  Why it's in a 
-   separate file I don't know ... */
+   separate file I don't know ...
+ */
 
 IOBUF	termout;
 
@@ -166,7 +183,7 @@ IOBUF	*p;
 			CheckTime = BufSize;
 			p->io_cnt = BufSize;
 		} else
-			p->io_cnt = BUFSIZ;
+			p->io_cnt = BSIZ;
 		p->io_ptr = p->io_base;
 	}
 	if (x >= 0)
@@ -195,11 +212,11 @@ settout()
 		1,	/* 600	*/
 		5,	/* 1200 */
 		15,	/* 1800	*/
-		30,	/* 2400	*/
-		60,	/* 4800	*/
-		120,	/* 9600	*/
-		100,	/* EXTA	(7200?) */
-		120	/* EXT	(19.2?) */
+		35,	/* 2400	*/
+		100,	/* 4800	*/
+		200,	/* 9600	*/
+		150,	/* EXTA	(7200?) */
+		200	/* EXT	(19.2?) */
 	};
 
 	termout.io_cnt = BufSize = CheckTime = speeds[ospeed] * max(LI / 24, 1);
