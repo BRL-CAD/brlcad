@@ -2581,7 +2581,6 @@ int				cmd;		/* RT_VLIST_LINE_DRAW, etc */
 	CONST struct faceuse	*fu;
 	register int		i;
 	register fastf_t	*vp;
-	struct knot_vector 	tau;
 	struct cnurb		n;		/* XXX hack, don't free */
 	struct cnurb		*c;
 	int 			coords;
@@ -2618,35 +2617,14 @@ int				cmd;		/* RT_VLIST_LINE_DRAW, etc */
 		n.ctl_points[1] = eu->vu_p->a.cnurb_p->param[1];
 		n.ctl_points[2] = eu->eumate_p->vu_p->a.cnurb_p->param[0];
 		n.ctl_points[3] = eu->eumate_p->vu_p->a.cnurb_p->param[1];
-
-		rt_nurb_kvknot( &tau, 1, 0.0, 1.0, n_interior );
-	} else {
-		struct knot_vector 	tkv;
-
+	} else
 		nmg_hack_cnurb( &n, eg );	/* don't free it! */
-		rt_nurb_kvgen( &tkv, eg->k.knots[0],
-			eg->k.knots[eg->k.k_size-1], n_interior );
-		rt_nurb_kvmerge( &tau, &tkv, &eg->k );
-		rt_free( (char *) tkv.knots, "nmg_cnurb_to_vlist() tkv.knots");
-	}
+
 	NMG_CK_CNURB( &n );
-	c = rt_nurb_c_refine( &n, &tau );
-	NMG_CK_CNURB( c );
+	c = &n;
 
-	coords = RT_NURB_EXTRACT_COORDS(c->pt_type);
+	coords = RT_NURB_EXTRACT_COORDS( c->pt_type );
 	
-	if( RT_NURB_IS_PT_RATIONAL(c->pt_type))  {
-		vp = c->ctl_points;
-		for(i= 0; i < c->c_size; i++)  {
-			FAST fastf_t	div;
-			register int	j;
-			div = 1/vp[coords-1];
-			for( j=0; j < coords; j++ )  {
-				*vp++ *= div;
-			}
-		}
-	}
-
 	if( *fu->f_p->g.magic_p == NMG_FACE_G_PLANE_MAGIC )  {
 		/* cnurb on planar face -- ctl points are XYZ */
 
@@ -2660,31 +2638,42 @@ int				cmd;		/* RT_VLIST_LINE_DRAW, etc */
 		struct snurb	s;	/* XXX hack, don't free! */
 		fastf_t		final[4];
 		fastf_t		inv_homo;
+		fastf_t		param_delta;
+		fastf_t		crv_param;
 
-		/* cnurb on spline face -- ctl points are UV */
-		if( coords != 2 ) rt_log("nmg_cnurb_to_vlist() coords=%d\n", coords);
+		/* cnurb on spline face -- ctl points are UV or UVW */
+		if( coords != 2 && !RT_NURB_IS_PT_RATIONAL(c->pt_type) ) rt_log("nmg_cnurb_to_vlist() coords=%d\n", coords);
 		nmg_hack_snurb( &s, fu->f_p->g.snurb_p );
 
-		vp = c->ctl_points;
-		/* Skip first and last points */
-		vp += coords;		/* skip i=0 */
-		for( i = 1; i < c->c_size-1; i++)  {
+		param_delta = (c->knot.knots[c->knot.k_size-1] - c->knot.knots[0])/(fastf_t)(n_interior+1);
+		crv_param = c->knot.knots[0];
+		for( i = 0; i < n_interior; i++)  {
+			point_t uvw;
 
-			/* convert 'vp' from UV coord to XYZ coord via surf! */
-			rt_nurb_s_eval( &s, vp[0], vp[1], final );
+			/* evaluate curve at parameter values */
+			crv_param += param_delta; 
+			rt_nurb_c_eval( c, crv_param, uvw );
+
+			if( RT_NURB_IS_PT_RATIONAL( c->pt_type ) )
+			{
+				uvw[0] = uvw[0]/uvw[2];
+				uvw[1] = uvw[1]/uvw[2];
+			}
+
+			/* convert 'uvw' from UV coord to XYZ coord via surf! */
+			rt_nurb_s_eval( &s, uvw[0], uvw[1], final );
 			if( RT_NURB_IS_PT_RATIONAL( s.pt_type ) )
 			{
 				/* divide out homogeneous coordinate */
 				inv_homo = 1.0/final[3];
 				VSCALE( final, final, inv_homo );
 			}
+
 			RT_ADD_VLIST( vhead, final, cmd );
 			vp += coords;
 		}
 	}
 
-	rt_nurb_free_cnurb(c);
-	rt_free( (char *)tau.knots, "nmg_cnurb_to_vlist() tau.knots");
 	if( eg->order <= 0 )  {
 		rt_free( (char *)n.knot.knots, "nmg_cnurb_to_vlist() n.knot.knots");
 		rt_free( (char *)n.ctl_points, "nmg_cnurb_to_vlist() ctl_points");
