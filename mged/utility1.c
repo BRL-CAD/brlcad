@@ -427,191 +427,34 @@ struct id_to_names {
  */
 int
 f_which(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int	argc;
+     char	**argv;
 {
-	register int	i,j;
-	register struct directory *dp;
-	struct rt_db_internal intern;
-	struct rt_comb_internal *comb;
-	register int sflag;
-	struct id_to_names headIdName;
-	struct id_to_names *itnp;
-	struct id_names *inp;
-	int isAir;
-	int myArgc;
-	char **myArgv;
+	register int i;
+	int ret;
+	struct bu_vls vls;
 
 	CHECK_DBI_NULL;
-	if( setjmp( jmp_env ) == 0 )
-	  (void)signal( SIGINT, sig3);  /* allow interupts */
-        else
-	  return TCL_OK;
 
-	/*
-	 * To avoid gcc -Wall: argument 'X' might be clobbered by `longjmp'
-	 * or `vfork'
-	 */
-	myArgc = argc;
-	myArgv = argv;
+	bu_vls_init(&vls);
+	bu_vls_strcpy(&vls, "db");
+	for (i = 0; i < argc; ++i)
+		bu_vls_printf(&vls, " %s", argv[i]);
 
-	if(myArgc < 2){
-	  struct bu_vls vls;
-
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help %s", argv[0]);
-	  Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	  (void)signal( SIGINT, SIG_IGN );
-	  return TCL_ERROR;
+	if (setjmp(jmp_env) == 0)
+		(void)signal(SIGINT, sig3);  /* allow interupts */
+        else {
+		bu_vls_free(&vls);
+		return TCL_OK;
 	}
 
-	if (!strcmp(myArgv[0], "whichair"))
-	  isAir = 1;
-	else
-	  isAir = 0;
+	ret = Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
 
-	if(strcmp(myArgv[1], "-s") == 0){
-	  --myArgc;
-	  ++myArgv;
-
-	  if(myArgc < 2){
-	    struct bu_vls vls;
-
-	    bu_vls_init(&vls);
-	    bu_vls_printf(&vls, "help %s", myArgv[-1]);
-	    Tcl_Eval(interp, bu_vls_addr(&vls));
-	    bu_vls_free(&vls);
-	    (void)signal( SIGINT, SIG_IGN );
-	    return TCL_ERROR;
-	  }
-
-	  sflag = 1;
-	} else {
-	  sflag = 0;
-	}
-
-	BU_LIST_INIT(&headIdName.l);
-
-	/* Build list of id_to_names */
-	for ( j=1; j<myArgc; j++ ) {
-		int n;
-		int start, end;
-		int range;
-		int k;
-
-		n = sscanf(myArgv[j], "%d%*[:-]%d", &start, &end);
-		switch(n) {
-		case 1:
-			for ( BU_LIST_FOR(itnp,id_to_names,&headIdName.l) )
-				if (itnp->id == start)
-					break;
-
-			/* id not found */
-			if (BU_LIST_IS_HEAD(itnp,&headIdName.l)) {
-				BU_GETSTRUCT(itnp,id_to_names);
-				itnp->id = start;
-				BU_LIST_INSERT(&headIdName.l,&itnp->l);
-				BU_LIST_INIT(&itnp->headName.l);
-			}
-
-			break;
-		case 2:
-			if (start < end)
-				range = end - start + 1;
-			else if (end < start) {
-				range = start - end + 1;
-				start = end;
-			} else
-				range = 1;
-
-			for ( k = 0; k < range; ++k ) {
-				int id = start + k;
-
-				for ( BU_LIST_FOR(itnp,id_to_names,&headIdName.l) )
-					if (itnp->id == id)
-						break;
-
-				/* id not found */
-				if (BU_LIST_IS_HEAD(itnp,&headIdName.l)) {
-					BU_GETSTRUCT(itnp,id_to_names);
-					itnp->id = id;
-					BU_LIST_INSERT(&headIdName.l,&itnp->l);
-					BU_LIST_INIT(&itnp->headName.l);
-				}
-			}
-
-			break;
-		}
-	}
-
-	/* Examine all COMB nodes */
-	for ( i = 0; i < RT_DBNHASH; i++ )  {
-		for ( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )  {
-			if ( !(dp->d_flags & DIR_REGION) )
-				continue;
-
-			if ( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
-			{
-				(void)signal( SIGINT, SIG_IGN );
-				TCL_READ_ERR_return;
-			}
-			comb = (struct rt_comb_internal *)intern.idb_ptr;
-			if (comb->region_id != 0 && comb->aircode != 0 && !sflag) {
-				Tcl_AppendResult(interp, "ERROR: ", dp->d_namep,
-					" has id and aircode!!!\n", (char *)NULL );
-				continue;
-			}
-
-			/* check to see if the region id or air code matches one in our list */
-			for ( BU_LIST_FOR(itnp,id_to_names,&headIdName.l) ) {
-				if ( (!isAir && comb->region_id == itnp->id) ||
-				     (isAir && comb->aircode == itnp->id) ) {
-					/* add region name to our name list for this region */
-					BU_GETSTRUCT(inp,id_names);
-					bu_vls_init(&inp->name);
-					bu_vls_strcpy(&inp->name, dp->d_namep);
-					BU_LIST_INSERT(&itnp->headName.l,&inp->l);
-					break;
-				}
-			}
-
-			rt_comb_ifree( &intern, &rt_uniresource );
-		}
-	}
-
-	/* place data in interp and free memory */
-	 while ( BU_LIST_WHILE(itnp,id_to_names,&headIdName.l) ) {
-		if (!sflag) {
-			struct bu_vls vls;
-
-			bu_vls_init(&vls);
-			bu_vls_printf(&vls, "Region[s] with %s %d:\n",
-				      isAir ? "air code" : "ident", itnp->id);
-			Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-			bu_vls_free(&vls);
-		}
-
-		while ( BU_LIST_WHILE(inp,id_names,&itnp->headName.l) ) {
-			if (sflag)
-				Tcl_AppendElement(interp, bu_vls_addr(&inp->name));
-			else
-				Tcl_AppendResult(interp, "   ", bu_vls_addr(&inp->name),
-							"\n", (char *)NULL);
-
-			BU_LIST_DEQUEUE(&inp->l);
-			bu_vls_free(&inp->name);
-			bu_free((genptr_t)inp, "f_which: inp");
-		}
-
-		BU_LIST_DEQUEUE(&itnp->l);
-		bu_free((genptr_t)itnp, "f_which: itnp");
-	}
-
-	(void)signal( SIGINT, SIG_IGN );
-	return TCL_OK;
+	(void)signal(SIGINT, SIG_IGN);
+	return ret;
 }
 
 /*		F _ W H I C H _ S H A D E R
