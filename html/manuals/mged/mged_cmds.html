@@ -631,6 +631,33 @@ or <a href="#ev">ev</a> comands.
 </DD>
 <HR>
 
+<DT><a NAME="build_region"><B>build_region</B> [<I>-a region_num</I>] <I>tag start_num end_num</I></DT>
+
+<DD> The ``build_region'' command builds a region from existing solids that have specifically
+formated names based on the provided tags and numbers. The created region will be named ``tag.rx'',
+where ``x'' is the first number (starting from 1) that produces an unused region name.  If the
+<I>-a</I> option is used, then the specified ``region_num'' will be used for ``x''. If that region
+already exists, this operation will append to it. If that region does not exist, a new one will be
+created.  The solids that will be involved in this operation are those with names of the form
+``tag.s#'' or ``tag.s#o@'', where # is a number between <I>start_num</I> and <I>end_num</I>
+inclusive, ``o'' is either ``u'', ``-'', or ``+'', and ``@'' is any number.  The operators
+and numbers coded into the solid names are used to build the region.
+
+         <DL>
+	 <DT><big>Examples:</big></DT>
+	 <DD><kbd>
+	 mged></kbd> <b>build_region abc 1 2</b><br>
+	 -- Creates a region named ``abc.r1'' consisting of:<br>
+		u abc.s1<br>
+		u abc.s2<br>
+		+ abc.s2+1<br>
+		- abc.s2-1<br>
+	 provided that the above solids already exist in the database.<br>
+	 </DD>
+	 </DL>
+</DD>
+<HR>
+
 <DT><a NAME="c"><B>c</B> [<I>-g|r</I>] <I>combination_name</I> [<I>Boolean_expression</I>]</DT>
 
 <DD> The ``c'' command creates a <I>BRL&#173CAD</I> <a href="brlcad_glossary.html#COMBINATION">combination</a>
