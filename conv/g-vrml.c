@@ -93,7 +93,7 @@ static char	usage[] = "Usage: %s [-v] [-xX lvl] [-d tolerance_distance (mm) ] [-
 
 static char	*tok_sep = " \t";
 static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
-static int	verbose;
+static int	verbose=0;
 static int	ncpu = 1;		/* Number of processors */
 static int	nmg_count=0;		/* Count of nmgregions written to output */
 static char	*out_file = NULL;	/* Output filename */
