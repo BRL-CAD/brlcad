@@ -106,13 +106,19 @@ register struct bu_structparse *sp;
 	while (sp->sp_name != NULL) {
 		Tcl_AppendElement(interp, sp->sp_name);
 		bu_vls_trunc(&str, 0);
+		/* These types are specified by lengths, e.g. %80s */
 		if (strcmp(sp->sp_fmt, "%c") == 0 ||
-		    strcmp(sp->sp_fmt, "%s") == 0) {
-			if (sp->sp_count > 1)
+		    strcmp(sp->sp_fmt, "%s") == 0 ||
+		    strcmp(sp->sp_fmt, "%S") == 0) {
+			if (sp->sp_count > 1)  {
+				/* Make them all look like %###s */
 				bu_vls_printf(&str, "%%%ds", sp->sp_count);
-			else
+			} else {
+				/* Singletons are specified by their actual character */
 				bu_vls_printf(&str, "%%c");
+			}
 		} else {
+			/* Vectors are specified by repetition, e.g. {%f %f %f} */
 			bu_vls_printf(&str, "%s", sp->sp_fmt);
 			for (i = 1; i < sp->sp_count; i++)
 				bu_vls_printf(&str, " %s", sp->sp_fmt);
