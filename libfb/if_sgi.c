@@ -215,7 +215,7 @@ struct sgiinfo {
 };
 #define	SGI(ptr) ((struct sgiinfo *)((ptr)->u1.p))
 #define	SGIL(ptr) ((ptr)->u1.p)		/* left hand side version */
-#define if_mem	u2.p		/* shared memory pointer */
+#define if_mem	u2.p			/* shared memory pointer */
 
 /* Define current display operating mode */
 #define MODE_RGB	0		/* 24-bit mode */
@@ -290,30 +290,42 @@ register FBIO	*ifp;
 	short ymin, ymax;
 	register short i;
 	register unsigned char *ip;
-	short x, y;
+	short y;
+	short xscroff, yscroff;
 
 	if( SGI(ifp)->si_curs_on )
-		cursoff();		/* Cursor interferes with reading! */
+		cursoff();		/* Cursor interferes with drawing */
 
+	xscroff = yscroff = 0;
 	i = (ifp->if_width/2)/SGI(ifp)->si_xzoom;
 	xmin = SGI(ifp)->si_xcenter - i;
 	xmax = SGI(ifp)->si_xcenter + i + 1;
 	i = (ifp->if_height/2)/SGI(ifp)->si_yzoom;
 	ymin = SGI(ifp)->si_ycenter - i;
 	ymax = SGI(ifp)->si_ycenter + i + 1;
-	if( xmin < 0 )  xmin = 0;
-	if( ymin < 0 )  ymin = 0;
-	if( xmax > ifp->if_max_width-1 )  xmax = ifp->if_max_width-1;
-	if( ymax > ifp->if_max_height-1 )  ymax = ifp->if_max_height-1;
+	if( xmin < 0 )  {
+		xscroff = -xmin * SGI(ifp)->si_xzoom;
+		xmin = 0;
+	}
+	if( ymin < 0 )  {
+		yscroff = -ymin * SGI(ifp)->si_yzoom;
+		ymin = 0;
+	}
+	if( xmax > ifp->if_width-1 )  xmax = ifp->if_width-1;
+	if( ymax > ifp->if_height-1 )  ymax = ifp->if_height-1;
 
 	for( y = ymin; y <= ymax; y++ )  {
-		x = xmin;
 
-		ip = (unsigned char *)&ifp->if_mem[(y*1024+x)*sizeof(RGBpixel)];
+		ip = (unsigned char *)
+			&ifp->if_mem[(y*1024+xmin)*sizeof(RGBpixel)];
 
 		if( SGI(ifp)->si_zoomflag )  {
-			for( i=xmax-xmin; i > 0; i--, x++)  {
-				register Coord l, b, r, t;
+			register Scoord l, b, r, t;
+
+			l = xscroff;
+			b = yscroff + (y-ymin)*SGI(ifp)->si_yzoom;
+			t = b + SGI(ifp)->si_yzoom;
+			for( i=xmax-xmin; i > 0; i--)  {
 				switch( SGI(ifp)->si_mode ) {
 				case MODE_RGB:
 					RGBcolor( (short)(ip[RED]),
@@ -330,12 +342,22 @@ register FBIO	*ifp;
 						(ip[BLU]/26) * 100 );
 					break;
 				}
-				l = (x-xmin) * SGI(ifp)->si_xzoom;
-				b = (y-ymin) * SGI(ifp)->si_yzoom;
 				r = l + SGI(ifp)->si_xzoom;
-				t = b + SGI(ifp)->si_yzoom;
-				/* left bottom right top */
-				im_rectf( l, b, r, t );
+				/* left bottom right top: im_rectfs( l, b, r, t ); */
+				hole->s = GEmovepoly | GEPA_2S;
+				hole->s = l;
+				hole->s = b;
+				hole->s = GEdrawpoly | GEPA_2S;
+				hole->s = r;
+				hole->s = b;
+				hole->s = GEdrawpoly | GEPA_2S;
+				hole->s = r;
+				hole->s = t;
+				hole->s = GEdrawpoly | GEPA_2S;
+				hole->s = l;
+				hole->s = t;
+				hole->s = GEclosepoly;	/* Last? */
+				l = r;
 				ip += sizeof(RGBpixel);
 			}
 			continue;
@@ -344,8 +366,8 @@ register FBIO	*ifp;
 		/* Non-zoomed case */
 		hole->l = 0x0008001A;	/* passthru, */
 		hole->s = 0x0912;		/* cmov2s */
-		hole->s = x;
-		hole->s = y;
+		hole->s = xscroff + xmin;
+		hole->s = yscroff + y;
 		switch( SGI(ifp)->si_mode )  {
 		case MODE_RGB:
 			for( i=xmax-xmin; i > 0; )  {
@@ -528,7 +550,7 @@ sgi_dclear( ifp, pp )
 FBIO	*ifp;
 register RGBpixel	*pp;
 {
-	if ( pp != NULL)  {
+	if ( pp != RGBPIXEL_NULL)  {
 		register char *op = ifp->if_mem;
 		register int cnt;
 		/* Slightly simplistic -- runover to right border */
@@ -556,6 +578,10 @@ int	x, y;
 
 	if( SGI(ifp)->si_xcenter == x && SGI(ifp)->si_ycenter == y )
 		return(0);
+	if( x < 0 || x >= ifp->if_width )
+		return(-1);
+	if( y < 0 || y >= ifp->if_height )
+		return(-1);
 	SGI(ifp)->si_xcenter = x;
 	SGI(ifp)->si_ycenter = y;
 	sgi_repaint( ifp );
@@ -576,6 +602,8 @@ int	x, y;
 	if( y < 1 ) y = 1;
 	if( SGI(ifp)->si_xzoom == x && SGI(ifp)->si_yzoom == y )
 		return(0);
+	if( x >= ifp->if_width || y >= ifp->if_height )
+		return(-1);
 
 	SGI(ifp)->si_xzoom = x;
 	SGI(ifp)->si_yzoom = y;
@@ -603,7 +631,7 @@ int	count;
 	if( qtest() )
 		sgw_inqueue(ifp);
 
-	ret = count;	/* save count */
+	ret = 0;
 	xpos = x;
 	ypos = y;
 
@@ -624,8 +652,11 @@ int	count;
 
 		pixelp += scan_count;
 		count -= scan_count;
+		ret += scan_count;
 		xpos = 0;
-		ypos++;		/* Advance upwards */
+		/* Advance upwards */
+		if( ++ypos >= ifp->if_height )
+			break;
 	}
 	return(ret);
 }
@@ -646,18 +677,17 @@ int	count;
 	int ret;
 
 	if( SGI(ifp)->si_curs_on )
-		cursoff();		/* Cursor interferes with reading! */
-	ret = count;	/* save count */
+		cursoff();		/* Cursor interferes with writing */
+	ret = 0;
 	xpos = x;
 	ypos = y;
 	cp = (unsigned char *)(*pixelp);
 	while( count > 0 )  {
-		if( ypos >= ifp->if_max_width )  return(0);
-		if ( count >= ifp->if_width )  {
-			scan_count = ifp->if_width;
-		} else	{
+		if( ypos >= ifp->if_height )
+			break;
+		scan_count = ifp->if_width / SGI(ifp)->si_xzoom;
+		if( count < scan_count )
 			scan_count = count;
-		}
 
 		hole->l = 0x0008001A;	/* passthru, */
 		hole->s = 0x0912;		/* cmov2s */
@@ -669,7 +699,7 @@ int	count;
 			register short chunk;
 
 			if( SGI(ifp)->si_zoomflag )  {
-				Coord l, b, r, t;
+				Scoord l, b, r, t;
 
 				RGBcolor( (short)(cp[RED]),
 					(short)(cp[GRN]),
@@ -679,8 +709,21 @@ int	count;
 				r = l + SGI(ifp)->si_xzoom;
 				t = b + SGI(ifp)->si_yzoom;
 
-				/* left bottom right top */
-				im_rectf( l, b, r, t );
+				/* left bottom right top: im_rectfs( l, b, r, t ); */
+				hole->s = GEmovepoly | GEPA_2S;
+				hole->s = l;
+				hole->s = b;
+				hole->s = GEdrawpoly | GEPA_2S;
+				hole->s = r;
+				hole->s = b;
+				hole->s = GEdrawpoly | GEPA_2S;
+				hole->s = r;
+				hole->s = t;
+				hole->s = GEdrawpoly | GEPA_2S;
+				hole->s = l;
+				hole->s = t;
+				hole->s = GEclosepoly;	/* Last? */
+
 				*op++ = *cp++;
 				*op++ = *cp++;
 				*op++ = *cp++;
@@ -712,11 +755,13 @@ int	count;
 
 		count -= scan_count;
 		xpos = 0;
-		ypos++;		/* 1st quadrant */
+		/* Advance upwards */
+		if( ++ypos >= ifp->if_height )
+			break;
 	}
 	GEP_END(hole)->s = (0xFF<<8)|8;	/* im_last_passthru(0) */
 	if( SGI(ifp)->si_curs_on )
-		curson();		/* Cursor interferes with reading! */
+		curson();		/* Cursor interferes with writing */
 	return(ret);
 }
 
@@ -927,8 +972,8 @@ int	width, height;
 		width = ifp->if_width;
 	if( height <= 0 )
 		height = ifp->if_height;
-	if ( width > ifp->if_max_width - 2 * MARGIN) 
-		width = ifp->if_max_width - 2 * MARGIN;
+	if ( width > ifp->if_max_width)
+		width = ifp->if_max_width;
 	if ( height > ifp->if_max_height - 2 * MARGIN - BANNER)
 		height = ifp->if_max_height - 2 * MARGIN - BANNER;
 
@@ -1067,29 +1112,35 @@ FBIO	*ifp;
 int	x, y;
 register RGBpixel	*pixelp;
 int	count;
-	{	register union gepipe *hole = GEPIPE;
-		int scan_count;
-		register int i;
+{	
+	register union gepipe *hole = GEPIPE;
+	int scan_count;
+	register int i;
 	register unsigned char *op;
+	int ret;
 
 	if( qtest() )
 		sgw_inqueue(ifp);
 	writemask( 0x3FF );
-	while( count > 0 )
-		{
-			register short	ypos = y*SGI(ifp)->si_yzoom;
-			register short	xpos = x*SGI(ifp)->si_xzoom;
-		if ( count >= ifp->if_width )
-			scan_count = ifp->if_width;
-		else
+	ret = 0;
+	while( count > 0 )  {
+		register short	ypos = y*SGI(ifp)->si_yzoom;
+		register short	xpos = x*SGI(ifp)->si_xzoom;
+
+		if( ypos >= ifp->if_height )
+			break;
+		scan_count = ifp->if_width / SGI(ifp)->si_xzoom;
+		if( count < scan_count )
 			scan_count = count;
+
 		op = (unsigned char *)&ifp->if_mem[(y*1024+x)*sizeof(RGBpixel)];
 
-		if( !(SGI(ifp)->si_zoomflag) )
-			{	register Colorindex	colori;
+		if( !(SGI(ifp)->si_zoomflag) )  {	
+			register Colorindex	colori;
+
 			CMOV2S( hole, xpos, ypos );
-			for( i = scan_count; i > 0; )
-				{	register short	chunk;
+			for( i = scan_count; i > 0; )  {	
+				register short	chunk;
 				if( i <= 127 )
 					chunk = i;
 				else
@@ -1097,8 +1148,7 @@ int	count;
 				hole->s = (chunk<<8)|8; /* GEpassthru */
 				hole->s = 0xD;		 /* FBCdrawpixels */
 				i -= chunk;
-				for( ; chunk > 0; chunk--, pixelp++ )
-					{
+				for( ; chunk > 0; chunk--, pixelp++ )  {
 					if( SGI(ifp)->si_mode == MODE_FIT ) {
 						colori = get_Color_Index( ifp, pixelp );
 						*op++ = (*pixelp)[RED];
@@ -1108,19 +1158,19 @@ int	count;
 						continue;
 					}
 					colori =  MAP_RESERVED +
-						((*op++=(*pixelp)[RED])/26);
+					    ((*op++=(*pixelp)[RED])/26);
 					colori += ((*op++=(*pixelp)[GRN])/26) * 10;
 					colori += ((*op++=(*pixelp)[BLU])/26) * 100;
 					hole->s = colori;
-					}
 				}
-			GEP_END(hole)->s = (0xFF<<8)|8;	/* im_last_passthru(0) */
 			}
-		else
-			for( i = 0; i < scan_count; i++, pixelp++ )
-				{	register Colorindex	col;
-					register Coord	r = xpos + SGI(ifp)->si_xzoom - 1,
-							t = ypos + SGI(ifp)->si_yzoom - 1;
+			GEP_END(hole)->s = (0xFF<<8)|8;	/* im_last_passthru(0) */
+		} else {
+			for( i = 0; i < scan_count; i++, pixelp++ )  {	
+				register Colorindex	col;
+				register Scoord	r = xpos + SGI(ifp)->si_xzoom - 1;
+				register Scoord t = ypos + SGI(ifp)->si_yzoom - 1;
+
 				CMOV2S( hole, xpos, ypos );
 				if( SGI(ifp)->si_mode == MODE_FIT ) {
 					col = get_Color_Index( ifp, pixelp );
@@ -1129,21 +1179,23 @@ int	count;
 					*op++ = (*pixelp)[BLU];
 				} else {
 					col =  MAP_RESERVED +
-						((*op++=(*pixelp)[RED])/26);
+					    ((*op++=(*pixelp)[RED])/26);
 					col += ((*op++=(*pixelp)[GRN])/26) * 10;
 					col += ((*op++=(*pixelp)[BLU])/26) * 100;
 				}
 
 				color( col );
-				im_rectf( (Coord)xpos, (Coord)ypos, r, t );
+				im_rectfs( (Scoord)xpos, (Scoord)ypos, r, t );
 				xpos += SGI(ifp)->si_xzoom;
-				}
+			}
+		}
 		count -= scan_count;
+		ret += scan_count;
 		x = 0;
 		y++;
-		}
-	return	0;
 	}
+	return(ret);
+}
 
 _LOCAL_ int
 sgw_viewport_set( ifp, left, top, right, bottom )
