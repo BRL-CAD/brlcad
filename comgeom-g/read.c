@@ -1,13 +1,32 @@
-/*			R E A D . C
+/*
+ *			R E A D . C
+ *
  * This module contains all of the routines necessary to read in
  * a COMGEOM input file, and put the information into internal form.
- * Ballistic Research Laboratory
- * U. S. Army
- * March 17, 1980
+ *
+ *  Author -
+ *	Michael John Muuss
+ *
+ *  Original Version -
+ *	March 17, 1980
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1989 by the United States Army.
+ *	All rights reserved.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
+
 
 #include <stdio.h>
 #include <math.h>
+#include "externs.h"
 
 extern FILE	*infp;
 
