@@ -207,6 +207,15 @@ register struct soltab *stp;
  *  Intersect a ray with a sphere.
  *  If an intersection occurs, a struct seg will be acquired
  *  and filled in.
+ *  Notes: In the quadratic equation,
+ *   A is MAGSQ(r_dir) which is always equal to 1, so it does not appear.
+ *   The sign of B is reversed (vector is reversed) to save negation.
+ *   We have factored out the 2 and 4 constants.
+ *  Claim: The straight quadratic formula leads to precision problems
+ *   if either A or C are small.  In our case A is always 1.  C is a
+ *   radial distance of the ray origin from the sphere surface.  Thus
+ *   if we are shooting from near the surface we may have problems.
+ *   XXX - investigate this.
  *  
  *  Returns -
  *  	0	MISS
@@ -221,30 +230,37 @@ struct application	*ap;
 	register struct sph_specific *sph =
 		(struct sph_specific *)stp->st_specific;
 	register struct seg *segp;
-	LOCAL vect_t	delta;		/* P - V */
-	LOCAL fastf_t	t1, t2;		/* distances in solution */
-	FAST fastf_t	a, b;		/* two terms of radical */
+	LOCAL vect_t	ov;		/* ray orgin to center (V - P) */
+	FAST fastf_t	magsq_ov;	/* length squared of ov */
+	FAST fastf_t	b;		/* second term of quadratic eqn */
 	FAST fastf_t	root;		/* root of radical */
 
-	VSUB2( delta, rp->r_pt, sph->sph_V );
-	a = MAGSQ( rp->r_dir );
-	b = VDOT( rp->r_dir, delta );
+	VSUB2( ov, sph->sph_V, rp->r_pt );
+	b = VDOT( rp->r_dir, ov );
+	magsq_ov = MAGSQ(ov);
 
-	if( (root = b*b - a * (MAGSQ(delta)-sph->sph_radsq)) < 0 )
-		return(SEG_NULL);		/* No hit */
+	if( magsq_ov >= sph->sph_radsq ) {
+		/* ray origin is outside of sphere */
+		if( b < 0 ) {
+			/* ray direction is away from sphere */
+			return(SEG_NULL);		/* No hit */
+		}
+		root = b*b - magsq_ov + sph->sph_radsq;
+		if( root <= 0 ) {
+			/* no real roots */
+			return(SEG_NULL);		/* No hit */
+		}
+	} else {
+		root = b*b - magsq_ov + sph->sph_radsq;
+	}
 	root = sqrt(root);
 
 	GET_SEG(segp, ap->a_resource);
 	segp->seg_stp = stp;
-	if( (t1=(-b+root)/a) <= (t2=(-b-root)/a) )  {
-		/* t1 is entry, t2 is exit */
-		segp->seg_in.hit_dist = t1;
-		segp->seg_out.hit_dist = t2;
-	} else {
-		/* t2 is entry, t1 is exit */
-		segp->seg_in.hit_dist = t2;
-		segp->seg_out.hit_dist = t1;
-	}
+
+	/* we know root is positive, so we know the smaller t */
+	segp->seg_in.hit_dist = b - root;
+	segp->seg_out.hit_dist = b + root;
 	return(segp);			/* HIT */
 }
 
