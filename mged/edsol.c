@@ -79,6 +79,7 @@ fastf_t	es_m[3];		/* edge(line) slope */
 mat_t	es_mat;			/* accumulated matrix of path */ 
 mat_t 	es_invmat;		/* inverse of es_mat   KAA */
 static point_t	es_keypoint;	/* center of editing xforms */
+static char	*es_keytag;	/* string identifying the keypoint */
 
 /*  These values end up in es_menu, as do ARB vertex numbers */
 int	es_menu;		/* item selected from menu */
@@ -778,23 +779,21 @@ init_sedit()
 			/* find the plane equations */
 			calc_planes( &es_rec.s, type );
 		}
-#if 1
-		/* XXX strictly experimental! */
-		if( es_rec.s.s_type == GENELL )  {
-			char	*str = "V";
-
-			rt_log("Experimental:  new_way=1\n");
-			new_way = 1;
-			rt_log("es_int.idb_magic=x%x\n", es_int.idb_magic);
-			rt_log("es_int.idb_type=%d.\n", es_int.idb_type);
-			rt_log("es_int.idb_ptr=x%x\n", es_int.idb_ptr);
-
-			get_solid_keypoint( es_keypoint, &str, &es_int );
-			VPRINT("es_keypoint", es_keypoint);
-		}
-#endif
-
 	}
+#if 1
+	/* Experimental, but working. */
+	switch( id )  {
+	case ID_ELL:
+	case ID_TGC:
+		rt_log("Experimental:  new_way=1\n");
+		new_way = 1;
+
+		es_keytag = "";
+		get_solid_keypoint( es_keypoint, &es_keytag, &es_int );
+		printf("es_keypoint (%s) (%g, %g, %g)\n", es_keytag,
+			V3ARGS(es_keypoint) );
+	}
+#endif
 
 	/* Save aggregate path matrix */
 	pathHmat( illump, es_mat, illump->s_last-1 );
@@ -1206,6 +1205,43 @@ sedit()
 		 * Move end of H of tgc, keeping plates perpendicular
 		 * to H vector.
 		 */
+		if( new_way )  {
+			struct rt_tgc_internal	*tgc = 
+				(struct rt_tgc_internal *)es_int.idb_ptr;
+			RT_TGC_CK_MAGIC(tgc);
+			if( inpara ) {
+				/* apply es_invmat to convert to real model coordinates */
+				MAT4X3PNT( work, es_invmat, es_para );
+				VSUB2(tgc->h, work, tgc->v);
+			}
+
+			/* check for zero H vector */
+			if( MAGNITUDE( tgc->h ) <= SQRT_SMALL_FASTF ) {
+				(void)printf("Zero H vector not allowed, resetting to +Z\n");
+				VSET(tgc->h, 0, 0, 1 );
+				break;
+			}
+
+			/* have new height vector --  redefine rest of tgc */
+			la = MAGNITUDE( tgc->a );
+			lb = MAGNITUDE( tgc->b );
+			lc = MAGNITUDE( tgc->c );
+			ld = MAGNITUDE( tgc->d );
+
+			/* find 2 perpendicular vectors normal to H for new A,B */
+			mat_vec_perp( tgc->b, tgc->h );
+			VCROSS(tgc->a, tgc->b, tgc->h);
+			VUNITIZE(tgc->a);
+			VUNITIZE(tgc->b);
+
+			/* Create new C,D from unit length A,B, with previous len */
+			VSCALE(tgc->c, tgc->a, lc);
+			VSCALE(tgc->d, tgc->b, ld);
+
+			/* Restore original vector lengths to A,B */
+			VSCALE(tgc->a, tgc->a, la);
+			VSCALE(tgc->b, tgc->b, lb);
+		} else {
 		if( inpara ) {
 			/* apply es_invmat to convert to real model coordinates */
 			MAT4X3PNT( work, es_invmat, es_para );
@@ -1247,10 +1283,28 @@ sedit()
 		/* Restore original vector lengths to A,B */
 		VSCALE(&es_rec.s.s_tgc_A, &es_rec.s.s_tgc_A, la);
 		VSCALE(&es_rec.s.s_tgc_B, &es_rec.s.s_tgc_B, lb);
+		}
 		break;
 
 	case ECMD_TGC_MV_HH:
 		/* Move end of H of tgc - leave ends alone */
+		if( new_way )  {
+			struct rt_tgc_internal	*tgc = 
+				(struct rt_tgc_internal *)es_int.idb_ptr;
+			RT_TGC_CK_MAGIC(tgc);
+			if( inpara ) {
+				/* apply es_invmat to convert to real model coordinates */
+				MAT4X3PNT( work, es_invmat, es_para );
+				VSUB2(tgc->h, work, tgc->v);
+			}
+
+			/* check for zero H vector */
+			if( MAGNITUDE( tgc->h ) <= SQRT_SMALL_FASTF ) {
+				(void)printf("Zero H vector not allowed, resetting to +Z\n");
+				VSET(tgc->h, 0, 0, 1 );
+				break;
+			}
+		} else {
 		if( inpara ) {
 			/* apply es_invmat to convert to real model coordinates */
 			MAT4X3PNT( work, es_invmat, es_para );
@@ -1264,7 +1318,7 @@ sedit()
 			VMOVE(&es_rec.s.s_tgc_H, &es_orig.s.s_tgc_H);
 			break;
 		}
-
+		}
 		break;
 
 	case PSCALE:
@@ -1325,17 +1379,40 @@ sedit()
 
 	case ECMD_TGC_ROT_H:
 		/* rotate height vector */
-		MAT4X3VEC(work, incr_change, &es_rec.s.s_tgc_H);
-		VMOVE(&es_rec.s.s_tgc_H, work);
+		if( new_way )  {
+			struct rt_tgc_internal	*tgc = 
+				(struct rt_tgc_internal *)es_int.idb_ptr;
+			RT_TGC_CK_MAGIC(tgc);
+			MAT4X3VEC(work, incr_change, tgc->h);
+			VMOVE(tgc->h, work);
+		} else {
+			MAT4X3VEC(work, incr_change, &es_rec.s.s_tgc_H);
+			VMOVE(&es_rec.s.s_tgc_H, work);
+		}
 		mat_idn( incr_change );
 		break;
 
 	case ECMD_TGC_ROT_AB:
 		/* rotate surfaces AxB and CxD (tgc) */
-		for(i=2; i<6; i++) {
-			op = &es_rec.s.s_values[i*3];
-			MAT4X3VEC( work, incr_change, op );
-			VMOVE( op, work );
+		if( new_way )  {
+			struct rt_tgc_internal	*tgc = 
+				(struct rt_tgc_internal *)es_int.idb_ptr;
+			RT_TGC_CK_MAGIC(tgc);
+
+			MAT4X3VEC(work, incr_change, tgc->a);
+			VMOVE(tgc->a, work);
+			MAT4X3VEC(work, incr_change, tgc->b);
+			VMOVE(tgc->b, work);
+			MAT4X3VEC(work, incr_change, tgc->c);
+			VMOVE(tgc->c, work);
+			MAT4X3VEC(work, incr_change, tgc->d);
+			VMOVE(tgc->d, work);
+		} else {
+			for(i=2; i<6; i++) {
+				op = &es_rec.s.s_values[i*3];
+				MAT4X3VEC( work, incr_change, op );
+				VMOVE( op, work );
+			}
 		}
 		mat_idn( incr_change );
 		break;
@@ -1350,8 +1427,7 @@ sedit()
 
 	/* If the keypoint changed location, find about it here */
 	if( new_way )  {
-		char	*str = "V";
-		get_solid_keypoint( es_keypoint, &str, &es_int );
+		get_solid_keypoint( es_keypoint, &es_keytag, &es_int );
 	}
 
 	replot_editing_solid();
@@ -1431,15 +1507,31 @@ CONST vect_t	mousevec;
 	case ECMD_TGC_MV_H:
 	case ECMD_TGC_MV_HH:
 		/* Use mouse to change location of point V+H */
-		VADD2( temp, &es_rec.s.s_tgc_V, &es_rec.s.s_tgc_H );
-		MAT4X3PNT(pos_model, es_mat, temp);
-		MAT4X3PNT( pos_view, model2view, pos_model );
-		pos_view[X] = mousevec[X];
-		pos_view[Y] = mousevec[Y];
-		/* Do NOT change pos_view[Z] ! */
-		MAT4X3PNT( temp, view2model, pos_view );
-		MAT4X3PNT( tr_temp, es_invmat, temp );
-		VSUB2( &es_rec.s.s_tgc_H, tr_temp, &es_rec.s.s_tgc_V );
+		if( new_way )  {
+			struct rt_tgc_internal	*tgc = 
+				(struct rt_tgc_internal *)es_int.idb_ptr;
+			RT_TGC_CK_MAGIC(tgc);
+
+			VADD2( temp, tgc->v, tgc->h );
+			MAT4X3PNT(pos_model, es_mat, temp);
+			MAT4X3PNT( pos_view, model2view, pos_model );
+			pos_view[X] = mousevec[X];
+			pos_view[Y] = mousevec[Y];
+			/* Do NOT change pos_view[Z] ! */
+			MAT4X3PNT( temp, view2model, pos_view );
+			MAT4X3PNT( tr_temp, es_invmat, temp );
+			VSUB2( tgc->h, tr_temp, tgc->v );
+		} else {
+			VADD2( temp, &es_rec.s.s_tgc_V, &es_rec.s.s_tgc_H );
+			MAT4X3PNT(pos_model, es_mat, temp);
+			MAT4X3PNT( pos_view, model2view, pos_model );
+			pos_view[X] = mousevec[X];
+			pos_view[Y] = mousevec[Y];
+			/* Do NOT change pos_view[Z] ! */
+			MAT4X3PNT( temp, view2model, pos_view );
+			MAT4X3PNT( tr_temp, es_invmat, temp );
+			VSUB2( &es_rec.s.s_tgc_H, tr_temp, &es_rec.s.s_tgc_V );
+		}
 		sedraw = 1;
 		return;
 	case PTARB:
@@ -1675,14 +1767,25 @@ pscale()
 	switch( es_menu ) {
 
 	case MENU_TGC_SCALE_H:	/* scale height vector */
-		op = &es_rec.s.s_tgc_H;
-		if( inpara ) {
-			/* take es_mat[15] (path scaling) into account */
-			es_para[0] *= es_mat[15];
-			es_scale = es_para[0] / MAGNITUDE(op);
+		if( new_way )  {
+			struct rt_tgc_internal	*tgc = 
+				(struct rt_tgc_internal *)es_int.idb_ptr;
+			RT_TGC_CK_MAGIC(tgc);
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / MAGNITUDE(tgc->h);
+			}
+			VSCALE(tgc->h, tgc->h, es_scale);
+		} else {
+			op = &es_rec.s.s_tgc_H;
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / MAGNITUDE(op);
+			}
+			VSCALE(op, op, es_scale);
 		}
-
-		VSCALE(op, op, es_scale);
 		break;
 
 	case MENU_TOR_R1:
@@ -1744,24 +1847,50 @@ torcom:
 
 	case MENU_TGC_SCALE_A:
 		/* scale vector A */
-		op = &es_rec.s.s_tgc_A;
-		if( inpara ) {
-			/* take es_mat[15] (path scaling) into account */
-			es_para[0] *= es_mat[15];
-			es_scale = es_para[0] / MAGNITUDE(op);
+		if( new_way )  {
+			struct rt_tgc_internal	*tgc = 
+				(struct rt_tgc_internal *)es_int.idb_ptr;
+			RT_TGC_CK_MAGIC(tgc);
+
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / MAGNITUDE(tgc->a);
+			}
+			VSCALE(tgc->a, tgc->a, es_scale);
+		} else {
+			op = &es_rec.s.s_tgc_A;
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / MAGNITUDE(op);
+			}
+			VSCALE(op, op, es_scale);
 		}
-		VSCALE(op, op, es_scale);
 		break;
 
 	case MENU_TGC_SCALE_B:
 		/* scale vector B */
-		op = &es_rec.s.s_tgc_B;
-		if( inpara ) {
-			/* take es_mat[15] (path scaling) into account */
-			es_para[0] *= es_mat[15];
-			es_scale = es_para[0] / MAGNITUDE(op);
+		if( new_way )  {
+			struct rt_tgc_internal	*tgc = 
+				(struct rt_tgc_internal *)es_int.idb_ptr;
+			RT_TGC_CK_MAGIC(tgc);
+
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / MAGNITUDE(tgc->b);
+			}
+			VSCALE(tgc->b, tgc->b, es_scale);
+		} else {
+			op = &es_rec.s.s_tgc_B;
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / MAGNITUDE(op);
+			}
+			VSCALE(op, op, es_scale);
 		}
-		VSCALE(op, op, es_scale);
 		break;
 
 	case MENU_ELL_SCALE_A:
@@ -1835,71 +1964,149 @@ torcom:
 
 	case MENU_TGC_SCALE_C:
 		/* TGC: scale ratio "c" */
-		op = &es_rec.s.s_tgc_C;
-		if( inpara ) {
-			/* take es_mat[15] (path scaling) into account */
-			es_para[0] *= es_mat[15];
-			es_scale = es_para[0] / MAGNITUDE(op);
+		if( new_way )  {
+			struct rt_tgc_internal	*tgc = 
+				(struct rt_tgc_internal *)es_int.idb_ptr;
+			RT_TGC_CK_MAGIC(tgc);
+
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / MAGNITUDE(tgc->c);
+			}
+			VSCALE(tgc->c, tgc->c, es_scale);
+		} else {
+			op = &es_rec.s.s_tgc_C;
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / MAGNITUDE(op);
+			}
+			VSCALE(op, op, es_scale);
 		}
-		VSCALE(op, op, es_scale);
 		break;
 
 	case MENU_TGC_SCALE_D:   /* scale  d for tgc */
-		op = &es_rec.s.s_tgc_D;
-		if( inpara ) {
-			/* take es_mat[15] (path scaling) into account */
-			es_para[0] *= es_mat[15];
-			es_scale = es_para[0] / MAGNITUDE(op);
+		if( new_way )  {
+			struct rt_tgc_internal	*tgc = 
+				(struct rt_tgc_internal *)es_int.idb_ptr;
+			RT_TGC_CK_MAGIC(tgc);
+
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / MAGNITUDE(tgc->d);
+			}
+			VSCALE(tgc->d, tgc->d, es_scale);
+		} else {
+			op = &es_rec.s.s_tgc_D;
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / MAGNITUDE(op);
+			}
+			VSCALE(op, op, es_scale);
 		}
-		VSCALE(op, op, es_scale);
 		break;
 
 	case MENU_TGC_SCALE_AB:
-		op = &es_rec.s.s_tgc_A;
-		if( inpara ) {
-			/* take es_mat[15] (path scaling) into account */
-			es_para[0] *= es_mat[15];
-			es_scale = es_para[0] / MAGNITUDE(op);
+		if( new_way )  {
+			struct rt_tgc_internal	*tgc = 
+				(struct rt_tgc_internal *)es_int.idb_ptr;
+			RT_TGC_CK_MAGIC(tgc);
+
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / MAGNITUDE(tgc->a);
+			}
+			VSCALE(tgc->a, tgc->a, es_scale);
+			ma = MAGNITUDE( tgc->a );
+			mb = MAGNITUDE( tgc->b );
+			VSCALE(tgc->b, tgc->b, ma/mb);
+		} else {
+			op = &es_rec.s.s_tgc_A;
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / MAGNITUDE(op);
+			}
+			VSCALE(op, op, es_scale);
+			ma = MAGNITUDE( op );
+			op = &es_rec.s.s_tgc_B;
+			mb = MAGNITUDE( op );
+			VSCALE(op, op, ma/mb);
 		}
-		VSCALE(op, op, es_scale);
-		ma = MAGNITUDE( op );
-		op = &es_rec.s.s_tgc_B;
-		mb = MAGNITUDE( op );
-		VSCALE(op, op, ma/mb);
 		break;
 
 	case MENU_TGC_SCALE_CD:	/* scale C and D of tgc */
-		op = &es_rec.s.s_tgc_C;
-		if( inpara ) {
-			/* take es_mat[15] (path scaling) into account */
-			es_para[0] *= es_mat[15];
-			es_scale = es_para[0] / MAGNITUDE(op);
+		if( new_way )  {
+			struct rt_tgc_internal	*tgc = 
+				(struct rt_tgc_internal *)es_int.idb_ptr;
+			RT_TGC_CK_MAGIC(tgc);
+
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / MAGNITUDE(tgc->c);
+			}
+			VSCALE(tgc->c, tgc->c, es_scale);
+			ma = MAGNITUDE( tgc->c );
+			mb = MAGNITUDE( tgc->d );
+			VSCALE(tgc->d, tgc->d, ma/mb);
+		} else {
+			op = &es_rec.s.s_tgc_C;
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / MAGNITUDE(op);
+			}
+			VSCALE(op, op, es_scale);
+			ma = MAGNITUDE( op );
+			op = &es_rec.s.s_tgc_D;
+			mb = MAGNITUDE( op );
+			VSCALE(op, op, ma/mb);
 		}
-		VSCALE(op, op, es_scale);
-		ma = MAGNITUDE( op );
-		op = &es_rec.s.s_tgc_D;
-		mb = MAGNITUDE( op );
-		VSCALE(op, op, ma/mb);
 		break;
 
 	case MENU_TGC_SCALE_ABCD: 		/* scale A,B,C, and D of tgc */
-		op = &es_rec.s.s_tgc_A;
-		if( inpara ) {
-			/* take es_mat[15] (path scaling) into account */
-			es_para[0] *= es_mat[15];
-			es_scale = es_para[0] / MAGNITUDE(op);
+		if( new_way )  {
+			struct rt_tgc_internal	*tgc = 
+				(struct rt_tgc_internal *)es_int.idb_ptr;
+			RT_TGC_CK_MAGIC(tgc);
+
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / MAGNITUDE(tgc->a);
+			}
+			VSCALE(tgc->a, tgc->a, es_scale);
+			ma = MAGNITUDE( tgc->a );
+			mb = MAGNITUDE( tgc->b );
+			VSCALE(tgc->b, tgc->b, ma/mb);
+			mb = MAGNITUDE( tgc->c );
+			VSCALE(tgc->c, tgc->c, ma/mb);
+			mb = MAGNITUDE( tgc->d );
+			VSCALE(tgc->d, tgc->d, ma/mb);
+		} else {
+			op = &es_rec.s.s_tgc_A;
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / MAGNITUDE(op);
+			}
+			VSCALE(op, op, es_scale);
+			ma = MAGNITUDE( op );
+			op = &es_rec.s.s_tgc_B;
+			mb = MAGNITUDE( op );
+			VSCALE(op, op, ma/mb);
+			op = &es_rec.s.s_tgc_C;
+			mb = MAGNITUDE( op );
+			VSCALE(op, op, ma/mb);
+			op = &es_rec.s.s_tgc_D;
+			mb = MAGNITUDE( op );
+			VSCALE(op, op, ma/mb);
 		}
-		VSCALE(op, op, es_scale);
-		ma = MAGNITUDE( op );
-		op = &es_rec.s.s_tgc_B;
-		mb = MAGNITUDE( op );
-		VSCALE(op, op, ma/mb);
-		op = &es_rec.s.s_tgc_C;
-		mb = MAGNITUDE( op );
-		VSCALE(op, op, ma/mb);
-		op = &es_rec.s.s_tgc_D;
-		mb = MAGNITUDE( op );
-		VSCALE(op, op, ma/mb);
 		break;
 
 	case MENU_ELL_SCALE_ABC:	/* set A,B, and C length the same */
@@ -2350,6 +2557,29 @@ struct rt_db_internal	*ip;
 		}
 		break;
 	case ID_TGC:
+		if( new_way )  {
+			struct rt_tgc_internal	*tgc = 
+				(struct rt_tgc_internal *)es_int.idb_ptr;
+			RT_TGC_CK_MAGIC(tgc);
+			MAT4X3PNT( pos_view, xform, tgc->v );
+			POINT_LABEL( pos_view, 'V' );
+
+			VADD2( work, tgc->v, tgc->a );
+			MAT4X3PNT(pos_view, xform, work);
+			POINT_LABEL( pos_view, 'A' );
+
+			VADD2( work, tgc->v, tgc->b );
+			MAT4X3PNT(pos_view, xform, work);
+			POINT_LABEL( pos_view, 'B' );
+
+			VADD3( work, tgc->v, tgc->h, tgc->c );
+			MAT4X3PNT(pos_view, xform, work);
+			POINT_LABEL( pos_view, 'C' );
+
+			VADD3( work, tgc->v, tgc->h, tgc->d );
+			MAT4X3PNT(pos_view, xform, work);
+			POINT_LABEL( pos_view, 'D' );
+		} else {
 		MAT4X3PNT( pos_view, xform, &es_rec.s.s_tgc_V );
 		POINT_LABEL( pos_view, 'V' );
 
@@ -2368,6 +2598,7 @@ struct rt_db_internal	*ip;
 		VADD3( work, &es_rec.s.s_tgc_V, &es_rec.s.s_tgc_H, &es_rec.s.s_tgc_D );
 		MAT4X3PNT(pos_view, xform, work);
 		POINT_LABEL( pos_view, 'D' );
+		}
 		break;
 
 	case ID_ELL:
@@ -2487,6 +2718,47 @@ struct rt_db_internal	*ip;
 			}
 			/* Default */
 			VMOVE( pt, ell->v );
+			*strp = "V";
+			return;
+		}
+	case ID_TGC:
+		{
+			struct rt_tgc_internal	*tgc = 
+				(struct rt_tgc_internal *)ip->idb_ptr;
+			RT_TGC_CK_MAGIC(tgc);
+
+			if( strcmp( cp, "V" ) == 0 )  {
+				VMOVE( pt, tgc->v );
+				*strp = "V";
+				return;
+			}
+			if( strcmp( cp, "H" ) == 0 )  {
+				VMOVE( pt, tgc->h );
+				*strp = "H";
+				return;
+			}
+			if( strcmp( cp, "A" ) == 0 )  {
+				VMOVE( pt, tgc->a );
+				*strp = "A";
+				return;
+			}
+			if( strcmp( cp, "B" ) == 0 )  {
+				VMOVE( pt, tgc->b );
+				*strp = "B";
+				return;
+			}
+			if( strcmp( cp, "C" ) == 0 )  {
+				VMOVE( pt, tgc->c );
+				*strp = "C";
+				return;
+			}
+			if( strcmp( cp, "D" ) == 0 )  {
+				VMOVE( pt, tgc->d );
+				*strp = "D";
+				return;
+			}
+			/* Default */
+			VMOVE( pt, tgc->v );
 			*strp = "V";
 			return;
 		}
