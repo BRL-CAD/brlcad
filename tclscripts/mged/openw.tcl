@@ -1522,7 +1522,7 @@ hoc_register_menu_data "Misc" "Z Clipping" "Z Clipping"\
 	{ { summary "Toggle zclipping. When zclipping is active, the Z value
 of each point is checked against the min and max Z values
 of the viewing cube. If the Z value of the point is found
-outside this range, it is clipped (i.e. not drawn).
+to be outside this range, it is clipped (i.e. not drawn).
 Zclipping can be used to remove geometric detail that may
 be occluding geometry of greater interest." }
           { see_also "dm" } }
@@ -1595,7 +1595,7 @@ hoc_register_menu_data "Tools" "Query Ray Control Panel..." "Query Ray Control P
 .$id.menubar.tools add command -label "Raytrace Control Panel..." -underline 0\
 	-command "init_Raytrace $id"
 hoc_register_menu_data "Tools" "Raytrace Control Panel..." "Raytrace Control Panel"\
-	{ { summary "Tool for raytracing the current view." }
+	{ { summary "Tool for raytracing." }
           { see_also rt } }
 .$id.menubar.tools add command -label "Animmate Control Panel..." -underline 1\
 	-command "animmate .$id"
@@ -1824,10 +1824,11 @@ hoc_register_menu_data "Help" "Manual..." "Manual"\
 The web browser that gets started is dependent, first, on the
 WEB_BROWSER environment variable. If this variable exists and
 the browser identified by this variable exists, then that browser
-is used. Otherwise, the existence of /usr/X11/bin/netscape is
-checked. Failing that, the existence of /usr/X11/bin/Mosaic is
-checked. If a browser has still not been located, the built in
-Tcl browser is used." } }
+is used. Failing that the browser specified by the
+mged_default(web_browser) Tcl variable is tried. As a last
+resort the existence of /usr/bin/netscape, /usr/local/bin/netscape
+and /usr/X11/bin/netscape is checked. If a browser has still not
+been located, the built-in Tcl browser is used." } }
 
 #==============================================================================
 # PHASE 3: Bottom-row display
