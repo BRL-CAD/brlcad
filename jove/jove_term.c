@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 11.4  1997/07/16  02:31:25  mike
+ * Changed from HAS_TERMIOS to HAVE_TERMIOS_H
+ *
  * Revision 11.3  1997/01/03  17:42:17  jra
  * Mods for Irix 6.2
  *
@@ -241,7 +244,12 @@ getTERM()
 		XS = 0;			/* Used for mode line only */
 
 	for (i = 0; meas[i]; i++) {
-		*(meas[i]) = (char *)tgetstr(ts,&termp);
+		char	str[8];
+
+		str[0] = ts[0];
+		str[1] = ts[1];
+		str[2] = '\0';
+		*(meas[i]) = (char *)tgetstr(str, &termp);
 		ts += 2;
 	}
 
