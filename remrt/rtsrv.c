@@ -149,7 +149,7 @@ char		*tcp_port;	/* TCP port on control_host */
 
 int debug = 0;		/* 0=off, 1=debug, 2=verbose */
 
-char srv_usage[] = "Usage: rtsrv [-d] control-host tcp-port\n";
+char srv_usage[] = "Usage: rtsrv [-d] control-host tcp-port [cmd]\n";
 
 /*
  *			M A I N
@@ -169,7 +169,7 @@ char **argv;
 		argc--; argv++;
 		debug++;
 	}
-	if( argc != 3 )  {
+	if( argc != 3 && argc != 4 )  {
 		fprintf(stderr, srv_usage);
 		exit(2);
 	}
@@ -198,6 +198,13 @@ char **argv;
 			control_host, tcp_port);
 		exit(1);
 	}
+
+	if( argc == 4 )  {
+		/* Slip one command to dispatcher */
+		(void)pkg_send( MSG_CMD, argv[3], strlen(argv[3])+1, pcsrv );
+		exit(0);
+	}
+
 	if( !debug )  {
 		/* A fresh process */
 		if (fork())
@@ -235,6 +242,13 @@ char **argv;
 			(void)close(n);
 		}
 #endif SYSV
+	}
+
+	/* Send our version string */
+	if( pkg_send( MSG_VERSION,
+	    PROTOCOL_VERSION, strlen(PROTOCOL_VERSION)+1, pcsrv ) < 0 )  {
+		fprintf(stderr,"MSG_VERSION error\n");
+		exit(1);
 	}
 
 	WorkHead.li_forw = WorkHead.li_back = &WorkHead;
