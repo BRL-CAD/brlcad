@@ -742,6 +742,7 @@ extern int	cm_anim();
 extern int	cm_tree();
 extern int	cm_clean();
 extern int	cm_set();
+extern int	cm_orientation();
 
 static struct command_tab cmdtab[] = {
 	"start", "frame number", "start a new frame",
@@ -752,6 +753,8 @@ static struct command_tab cmdtab[] = {
 		cm_eyept,	4, 4,
 	"lookat_pt", "x y z [yflip]", "set eye look direction, in X-Y plane",
 		cm_lookat_pt,	4, 5,
+	"orientation", "quaturnion", "set view direction from quaturnion",
+		cm_orientation,	5, 5,
 	"viewrot", "4x4 matrix", "set view direction from matrix",
 		cm_vrot,	17,17,
 	"end", 	"", "end of frame setup, begin raytrace",
@@ -1029,6 +1032,19 @@ int	argc;
 	for( i=0; i<16; i++ )
 		rtif_viewrot[i] = atof(argv[i+1]);
 	/* Processing is deferred until cm_end() */
+	return(0);
+}
+
+cm_orientation( argc, argv )
+int	argc;
+char	**argv;
+{
+	register int	i;
+	quat_t		quat;
+
+	for( i=0; i<4; i++ )
+		quat[i] = atof( argv[i+1] );
+	quat_quat2mat( rtif_viewrot, quat );
 	return(0);
 }
 
