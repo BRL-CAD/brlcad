@@ -492,10 +492,10 @@ set -S2 "/bin/sh"
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sh/sharedlibvers.sh
 #		ifdef M4I64_USE_64_BIT
-#			define	BUILD_LIBRARY	ld -64 -mips4 -shared -Wl,-multigot -o
+#			define	BUILD_LIBRARY	ld -64 -mips4 -shared -multigot -o
 #			define	STANDARD_LIBES	-lm -lmalloc -lc -rpath LIBDIR:/usr/lib64
 #		else
-#			define	BUILD_LIBRARY	ld -n32 -mips4 -shared -Wl,-multigot -o
+#			define	BUILD_LIBRARY	ld -n32 -mips4 -shared -multigot -o
 #			define	STANDARD_LIBES	-lm -lmalloc -lc -rpath LIBDIR:/usr/lib32
 #		endif
 #		define	RANLIB	true
