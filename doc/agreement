@@ -25,8 +25,9 @@ and information exchange programs on behalf of ARL.
 The corporation or private individual requesting BRL-CAD as identified
 on page two is hereinafter the "RECIPIENT".
 
-Changes to any files provided with BRL-CAD are hereinafter "MODIFICATIONS".
-New files entirely created by RECIPIENT are hereinafter "EXTENSIONS".
+Changes made to any files provided with BRL-CAD are hereinafter
+"MODIFICATIONS". New files entirely created by RECIPIENT are hereinafter
+"EXTENSIONS".
 
 1.  BRL-CAD is an unpublished work that is not generally available to
 the public, except through the terms of this limited distribution. ARL
@@ -44,35 +45,44 @@ for sale to THE GOVERNMENT. BRL-CAD may be used in contracts with THE
 GOVERNMENT but no development charge may be made as part of its use.
 
 4. If RECIPIENT makes MODIFICATIONS to BRL-CAD, then RECIPIENT agrees to
-transfer ownership of all such MODIFICATIONS to ARL in source code form so
-that the MODIFICATIONS can be shared with the entire BRL-CAD user community.
+provide a copy of all such MODIFICATIONS to ARL in source code form.
+RECIPIENT agrees that such MODIFICATIONS can be used by ARL and shared
+with the entire BRL-CAD user community.
 
 5.  RECIPIENT will own full rights to any EXTENSIONS to BRL-CAD they create.
 
 6.  RECIPIENT will own full rights to any data files, databases or
 images created using BRL-CAD.
 
-7.  BRL-CAD is provided "as is", without warranty. Neither ARL or
-SURVIAC is liable or responsible for maintenance, updating, or
-correcting any errors in any materials provided. In no event shall ARL
-or SURVIAC be liable for any loss or for any indirect, special,
-punitive, exemplary, incidental, or consequential damages arising from
-use, possession, or performance of BRL-CAD.
+7.  BRL-CAD is provided "as is", without warranty. Neither THE
+GOVERNMENT or SURVIAC is liable or responsible for maintenance,
+updating, or correcting any errors in any materials provided. In no
+event shall THE GOVERNMENT or SURVIAC be liable for any loss or for any
+indirect, special, punitive, exemplary, incidental, or consequential
+damages arising from use, possession, or performance of BRL-CAD.
 
                                                                  Page 2 of 4
 
-8.  ARL will be credited should BRL-CAD be used in a product or written
-about in any publication.  ARL will be referenced as the original source
-in any advertisements.
+8.  The RECIPIENT shall indemnify and hold harmless THE GOVERNMENT for
+any loss, claim, damage, expense, or liability of any kind occuring as a
+result of the making, using, or selling of a product, process, or
+service by or on behalf of RECIPIENT, its assignees and licensees, which
+was derived from BRL-CAD.
 
-9.  RECIPIENT agrees that when bugs or problems are found with BRL-CAD,
+9.  ARL will be credited should BRL-CAD be used in a product or written
+about in any publication.  ARL will be referenced as the original source
+for BRL-CAD, however, the RECIPIENT shall not in any way imply that THE
+GOVERNMENT endorses any product or service of the RECIPIENT.
+
+10.  RECIPIENT agrees that when bugs or problems are found with BRL-CAD,
 a reasonable attempt will be made to report them to SURVIAC or ARL.
 
-10.  RECIPIENT agrees to complete and return the "Recipient Survey Form"
+11.  RECIPIENT agrees to complete and return the "Recipient Survey Form"
 attached below.
 
 By signing here, RECIPIENT signifies agreement to these terms and
-conditions of the BRL-CAD distribution as detailed above.
+conditions of the BRL-CAD distribution license agreement as detailed
+above.
 
 
 
