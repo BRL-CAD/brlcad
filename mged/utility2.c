@@ -522,6 +522,7 @@ int			id;
 			}
 			RES_RELEASE(&rt_g.res_worker);
 			GETUNION(curtree, tree);
+			curtree->magic = RT_TREE_MAGIC;
 			curtree->tr_op = OP_NOP;
 			return curtree;
 		}
@@ -540,6 +541,7 @@ int			id;
 	pip->back->forw = pip;
 	RES_RELEASE(&rt_g.res_worker);
 	GETUNION(curtree, tree);
+	curtree->magic = RT_TREE_MAGIC;
 	curtree->tr_op = OP_NOP;
 	return curtree;
 }

@@ -294,6 +294,7 @@ int			id;
 
 	/* Indicate success by returning something other than TREE_NULL */
 	GETUNION( curtree, tree );
+	curtree->magic = RT_TREE_MAGIC;
 	curtree->tr_op = OP_NOP;
 
 	return( curtree );
@@ -976,6 +977,7 @@ union tree		*curtree;
 	if( mged_facetize_tree )  {
 		union tree	*tr;
 		tr = (union tree *)rt_calloc(1, sizeof(union tree), "union tree");
+		tr->magic = RT_TREE_MAGIC;
 		tr->tr_op = OP_UNION;
 		tr->tr_b.tb_regionp = REGION_NULL;
 		tr->tr_b.tb_left = mged_facetize_tree;
