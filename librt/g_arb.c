@@ -44,7 +44,7 @@ struct plane_specific  {
 	char	pl_code[MAXPTS+1];	/* Face code string.  Decorative. */
 };
 
-#define MINMAX(a,b,c)	{ register float ftemp;\
+#define MINMAX(a,b,c)	{ static float ftemp;\
 			if( (ftemp = (c)) < (a) )  a = ftemp;\
 			if( ftemp > (b) )  b = ftemp; }
 
@@ -62,7 +62,6 @@ matp_t mat;
 	static int	faces;		/* # of faces produced */
 	static fastf_t	scale;		/* width across widest axis */
 	static int	i;
-	static vect_t	V;		/* vertex */
 
 	/* init maxima and minima */
 	xmax = ymax = zmax = -INFINITY;
@@ -73,18 +72,19 @@ matp_t mat;
 	 * from the origin to the first point, and 7 vectors
 	 * from the first point to the remaining points.
 	 *
-	 * Convert from vector to point notation in place
+	 * Convert from vector to point notation IN PLACE in s_values[]
 	 * by rotating vectors and adding base vector.
 	 */
-	VMOVE( V, sp->s_values );	/* cvt to fastf_t */
-	vtoh_move( homog, V );
-	matXvec( work, mat, homog );
-	htov_move( V, work );		/* divide out W */
+	VMOVE( homog, &sp->s_values[0] );		/* cvt to fastf_t */
+	homog[3] = 1;					/* & to homog vec */
+	matXvec( work, mat, homog );			/* 4x4: xlate, too */
+	htov_move( homog, work );			/* divide out W */
+	VMOVE( &sp->s_values[0], homog );		/* cvt to float */
 
 	op = &sp->s_values[1*3];
 	for( i=1; i<8; i++ )  {
-		MAT3XVEC( homog, mat, op );
-		VADD2( op, V, homog );
+		MAT3XVEC( homog, mat, op );		/* 3x3: rot only */
+		VADD2( op, &sp->s_values[0], homog );
 		op += 3;
 	}
 
