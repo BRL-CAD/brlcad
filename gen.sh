@@ -209,6 +209,8 @@ BDIRS="bench \
 	jove \
 	canon \
 	burst \
+	tcl \
+	tk \
 "			# This ends the list.
 
 TSDIRS="mged nirt pl-dm"
