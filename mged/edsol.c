@@ -7869,16 +7869,7 @@ char **argv;
   return TCL_OK;
 }
 
-struct rt_solid_type_lookup {
-  char			id;
-  size_t		db_internal_size;
-  long			magic;
-  char			*label;
-  struct bu_structparse	*parsetab;
-};
-
-extern int rt_db_report();
-extern struct rt_solid_type_lookup *rt_get_parsetab_by_name();
+extern int rt_db_report();		/* XXX internal to librt/tcl.c */
 
 int
 f_get_edit_solid(clientData, interp, argc, argv)
@@ -7959,7 +7950,7 @@ Tcl_Interp *interp;
 int argc;
 char **argv;
 {
-  register struct rt_solid_type_lookup *stlp;
+  register CONST struct rt_functab *ftp;
   long save_magic;
   int context;
 
@@ -7987,24 +7978,25 @@ char **argv;
   } else
     context = 0;
 
-  stlp = rt_get_parsetab_by_name( argv[1] );
-  if( stlp == NULL ||
-      stlp->parsetab == (struct bu_structparse *)NULL) {
-    Tcl_AppendResult( interp, "put_edit_solid: ", stlp->label,
-		      "object type is not supported",
+  ftp = rt_get_functab_by_label( argv[1] );
+  if( ftp == NULL ||
+      ftp->ft_parsetab == (struct bu_structparse *)NULL) {
+    Tcl_AppendResult( interp, "put_edit_solid: ", argv[1],
+		      " object type is not supported for db get",
 		      (char *)0 );
     return TCL_ERROR;
   }
 
-  if( es_int.idb_type != stlp->id ) {
+  RT_CK_FUNCTAB(es_int.idb_meth);
+  if( es_int.idb_meth != ftp ) {
     Tcl_AppendResult( interp,
-		      "put_edit_solid: type mismatch",
+		      "put_edit_solid: idb_meth type mismatch",
 		      (char *)0 );
   }
 
   save_magic = *((long *)es_int.idb_ptr);
-  *((long *)es_int.idb_ptr) = stlp->magic;
-  if( bu_structparse_argv(interp, argc-2, argv+2, stlp->parsetab,
+  *((long *)es_int.idb_ptr) = ftp->ft_internal_magic;
+  if( bu_structparse_argv(interp, argc-2, argv+2, ftp->ft_parsetab,
 			  (char *)es_int.idb_ptr )==TCL_ERROR ) {
     return TCL_ERROR;
   }
