@@ -68,19 +68,19 @@ CONST unsigned char *hp;
 	    != DB5HDR_WIDTHCODE_8BIT )  return 0;
 
 	/* aflags */
-	if( (odp->db5h_aflags & DB5HDR_AFLAGS_ZZZ_MASK) != DB5HDR_ZZZ_UNCOMPRESSED )  return 0;
+	if( (odp->db5h_aflags & DB5HDR_AFLAGS_ZZZ_MASK) != DB5_ZZZ_UNCOMPRESSED )  return 0;
 	if( odp->db5h_aflags & DB5HDR_AFLAGS_PRESENT )  return 0;
 	if( ((odp->db5h_aflags & DB5HDR_AFLAGS_WIDTH_MASK) >> DB5HDR_AFLAGS_WIDTH_SHIFT)
 	    != DB5HDR_WIDTHCODE_8BIT )  return 0;
 
 	/* bflags */
-	if( (odp->db5h_bflags & DB5HDR_BFLAGS_ZZZ_MASK) != DB5HDR_ZZZ_UNCOMPRESSED )  return 0;
+	if( (odp->db5h_bflags & DB5HDR_BFLAGS_ZZZ_MASK) != DB5_ZZZ_UNCOMPRESSED )  return 0;
 	if( odp->db5h_bflags & DB5HDR_BFLAGS_PRESENT )  return 0;
 	if( ((odp->db5h_bflags & DB5HDR_BFLAGS_WIDTH_MASK) >> DB5HDR_BFLAGS_WIDTH_SHIFT)
 	    != DB5HDR_WIDTHCODE_8BIT )  return 0;
 
 	/* major and minor type */
-	if( odp->db5h_major_type != DB5HDR_MAJORTYPE_RESERVED )  return 0;
+	if( odp->db5h_major_type != DB5_MAJORTYPE_RESERVED )  return 0;
 	if( odp->db5h_minor_type != 0 )  return 0;
 
 	/* Check length, known to be 8-bit.  Header len=1 8-byte chunk. */
@@ -761,8 +761,8 @@ double		local2mm;
 	/* First, write the header object */
 	db5_export_object3( &out, DB5HDR_HFLAGS_DLI_HEADER_OBJECT,
 		NULL, NULL, NULL,
-		DB5HDR_MAJORTYPE_RESERVED, 0,
-		DB5HDR_ZZZ_UNCOMPRESSED );
+		DB5_MAJORTYPE_RESERVED, 0,
+		DB5_ZZZ_UNCOMPRESSED );
 	bu_fwrite_external( fp, &out );
 	bu_free_external( &out );
 
@@ -777,8 +777,8 @@ double		local2mm;
 	db5_export_attributes( &attr, &avs );
 	db5_export_object3( &out, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
 		"_GLOBAL", &attr, NULL,
-		DB5HDR_MAJORTYPE_ATTRIBUTE_ONLY, 0,
-		DB5HDR_ZZZ_UNCOMPRESSED);
+		DB5_MAJORTYPE_ATTRIBUTE_ONLY, 0,
+		DB5_ZZZ_UNCOMPRESSED);
 	bu_fwrite_external( fp, &out );
 	bu_free_external( &out );
 	bu_free_external( &attr );
@@ -842,13 +842,13 @@ rt_db_cvt_to_external5(
 		BU_INIT_EXTERNAL(&attributes);
 	}
 
-	major = DB5HDR_MAJORTYPE_BRLCAD;
+	major = DB5_MAJORTYPE_BRLCAD;
 	minor = ip->idb_type;	/* XXX not necessarily v5 numbers. */
 
 	db5_export_object3( ext, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
 		name, &attributes, &body,
 		major, minor,
-		DB5HDR_ZZZ_UNCOMPRESSED);
+		DB5_ZZZ_UNCOMPRESSED);
 	BU_CK_EXTERNAL( ext );
 	bu_free_external( &body );
 	bu_free_external( &attributes );
@@ -993,7 +993,7 @@ CONST mat_t		mat;
 		return -3;
 	}
 
-	if( raw.major_type == DB5HDR_MAJORTYPE_BRLCAD )  {
+	if( raw.major_type == DB5_MAJORTYPE_BRLCAD )  {
 		id = raw.minor_type;
 		/* As a convenience to older ft_import routines */
 		if( mat == NULL )  mat = bn_mat_identity;
