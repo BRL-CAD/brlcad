@@ -1,13 +1,4 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
-<HTML>
-
-<HEAD>
-<TITLE>MGED Developer Commands</Title>
-</HEAD>
-
-<BODY BGCOLOR="#E0D8c8" TEXT="#000000">
-<CENTER><H1>MGED Developer Commands</H1></CENTER>
-
+<DL>
 <DT><a NAME="aip"><B>aip</B> [<I>f|b</I>]</DT>
 
 <DD> The ``aip'' command advances the <a href="mged_cmds.html#ill">illumination</a> pointer when
@@ -343,7 +334,7 @@ If <I>hook_cmd</I> is not specified, the output hook is deleted.
 </DD>
 <HR>
      
-<DT><a NAME="put_comb"><B>put_comb</B> <I>comb_name is_Region</I> [<I>id air gift los</I>] color shader inherit boolean_expr</I>
+<DT><a NAME="put_comb"><B>put_comb</B> <I>comb_name is_Region</I> [<I>id air gift los</I>] color shader inherit boolean_expr</I></DT>
 
 <DD>The ``put_comb'' command defines the combination <I>comb_name</I>.
      If <I>is_Region</I> is <I>Yes</I>, then
@@ -467,7 +458,7 @@ command-line alone.
 </DD>
 <HR>
 	
-<DT><a NAME="view2grid_lu"><B>view2grid_lu <I>vx vy vz</I></B></DT>
+<DT><a NAME="view2grid_lu"><B>view2grid_lu</B> <I>vx vy vz</I></DT>
 
 <DD>Given a point in view coordinates (local units),
 convert it to grid coordinates (local units).
@@ -565,7 +556,7 @@ The possible parameters are:
 </DD>
 <HR>
 
-<DT><a NAME="winset"><B>winset</B> [<I>pathName</I>]
+<DT><a NAME="winset"><B>winset</B> [<I>pathName</I>]</DT>
 <DD>The ``winset'' command sets the current display manager to <I>pathName</I>.
      If <I>pathName</I> is not given, the current display manager is returned.
 
@@ -579,6 +570,4 @@ The possible parameters are:
      </DL>
 </DD>
 <HR>
-
-</BODY>
-</HTML>
+</DL>

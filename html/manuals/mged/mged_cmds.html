@@ -1,13 +1,4 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
-<HTML>
-
-<HEAD>
-<TITLE>MGED Commands</Title>
-</HEAD>
-
-<BODY BGCOLOR="#E0D8c8" TEXT="#000000">
-<CENTER><H1>MGED Commands</H1></CENTER>
-
+<DL>
 <DT><a NAME="%"><B>%</B></DT>
 
 <DD> Start a ``/bin/sh'' shell process for the user.
@@ -430,9 +421,8 @@ minimum bounding polygon of the region and ignores holes.
 <HR>
 
 <DT><a NAME="attach"><B>attach</B> [<I>-d display_string</I>]
-     [<I>-i init_script</I>] [<I>-n name</I>] [<I>-t is_toplevel</I>]
-     [<I>-W width</I>] [<I>-N height</I>] [<I>-S square_size</I>] win_type
-</DT>
+	[<I>-i init_script</I>] [<I>-n name</I>] [<I>-t is_toplevel</I>]
+	[<I>-W width</I>] [<I>-N height</I>] [<I>-S square_size</I>] win_type </DT>
 
 <DD>The ``attach'' command is used to open a display window. The set of
      supported window types includes X and ogl.
@@ -1180,7 +1170,8 @@ If <I>EDITOR</I> is not set, then <I>/bin/ed</I> is used.
 </DD>
 <HR>
 
-<DT><a NAME="edcomb"><B>edcomb</B> <I>combname R|G regionid air_code los</I> [<I>material_code</I>]</DT>
+<DT><a NAME="edcomb"><B>edcomb</B> <I>combname R|G regionid air_code los</I>
+	[<I>material_code</I>]</DT>
 
 <DD> The ``edcomb'' command allows the user to modify the attributes of a
 <a href="brlcad_glossary.html#COMBINATION">combination</a>. The <I>combname</I>
@@ -1541,7 +1532,7 @@ Other commands to build
 
 <DT><a NAME="gui"><B>gui</B> [<I>-config b|c|g</I>] [<I>-d display string</I>]
 	[<I>-gd graphics display string</I>] [<I>-dt graphics type</I>]
-	[<I>-id name</I>] [<I>-c -h -j -s</I>]
+	[<I>-id name</I>] [<I>-c -h -j -s</I>]</DT>
 </DD>Create display/command window pair.
 <HR>
 
@@ -1693,7 +1684,8 @@ either using the mouse to make the selection, or using <a href="mged_devel_cmds.
 </DD>
 <HR>
 
-<DT><a NAME="in"><B>in</B> [<I>-f</I>] [<I>-s</I>] <I>new_solid_name solid_type</I> &lt;<I>parameters</I>&gt</DT>
+<DT><a NAME="in"><B>in</B> [<I>-f</I>] [<I>-s</I>]
+	<I>new_solid_name solid_type</I> &lt;<I>parameters</I>&gt</DT>
 
 <DD> The ``in'' command allows the user to type in the arguments needed to create a solid
 with the name <I>new_solid_name</I> of the type <I>solid_type</I>. The command may be invoked
@@ -1737,7 +1729,8 @@ values for <I>solid_type</I> are:
 </DD>
 <HR>
 
-<DT><a NAME="inside"><B>inside</B> [<I>outside_solid_name new_inside_solid_name</I> &lt;<I>parameters</I>&gt]</DT>
+<DT><a NAME="inside"><B>inside</B>
+	[<I>outside_solid_name new_inside_solid_name</I> &lt;<I>parameters</I>&gt]</DT>
 
 <DD> The ``inside'' command creates a new solid that is <I>inside</I> an existing solid.
 This command is typically used to create an <I>inside</I> solid that can be subtracted
@@ -1754,7 +1747,8 @@ no arguments and it prompts the user for all needed information.
 </DD>
 <HR>
 
-<DT><a NAME="item"><B>item</B> <I>region_name ident_number</I> [<I>air_code</I> [<I>material_code</I> [<I>LOS</I>]]]</DT>
+<DT><a NAME="item"><B>item</B> <I>region_name ident_number</I>
+	[<I>air_code</I> [<I>material_code</I> [<I>LOS</I>]]]</DT>
 
 <DD> The ``item'' command sets the values of <a href="brlcad_glossary.html#IDENT">ident_number</a>,
 <a href="brlcad_glossary.html#SPACE">air_code</a>,
@@ -1771,7 +1765,7 @@ for the specified <a href="brlcad_glossary.html#REGION">region</a>.
 </DD>
 <HR>
 
-<DT><a NAME="joint"><B>joint</B> <I>command</I> [<I>options</I>]
+<DT><a NAME="joint"><B>joint</B> <I>command</I> [<I>options</I>]</DT>
 
 <DD> articulation/animation commands
      <DL><DL>
@@ -2191,7 +2185,8 @@ command may be used to see the effect of transformation matrices along a path.
 </DD>
 <HR>
 
-<DT><a NAME="mater"><B>mater</B> <I>combination</I> [<I>shader_parameters</I>[<I>RGB</I> [<I>inheritance</I>]]]</DT>
+<DT><a NAME="mater"><B>mater</B> <I>combination</I>
+	[<I>shader_parameters</I>[<I>RGB</I> [<I>inheritance</I>]]]</DT>
 
 <DD>The ``mater'' command assigns
 <a href="brlcad_glossary.html#SHADER">shader</a> parameters,
@@ -2373,7 +2368,8 @@ command line. See the <I>man</I> page of <I>nirt</I> for more details.
 </DD>
 <HR>
 
-<DT><a NAME="nmg_collapse"><B>nmg_collapse</B> <I>old_nmg_solid new_nmg_solid maximum_error_dist [minimum_angle] </I></DT>
+<DT><a NAME="nmg_collapse"><B>nmg_collapse</B>
+	<I>old_nmg_solid new_nmg_solid maximum_error_dist [minimum_angle] </I></DT>
 
 <DD>The ``nmg_collapse'' command simplifies an existing <a
 href="brlcad_solids.html#NMG">nmg_solid</a> by a process of edge
@@ -2399,7 +2395,8 @@ The resulting solid consists of all triangular faces.
 </DD>
 <HR>
 
-<DT><a NAME="nmg_simplify"><B>nmg_simplify</B> [<I>arb</I>|<I>tgc</I>|<I>poly</I>] <I>new_solid nmg_solid</I></DT>
+<DT><a NAME="nmg_simplify"><B>nmg_simplify</B>
+	[<I>arb</I>|<I>tgc</I>|<I>poly</I>] <I>new_solid nmg_solid</I></DT>
 
 <DD>The ``nmg_simplify'' command attepts to convert an existing
 <a href="brlcad_solids.html#NMG">nmg_solid</a> to a simpler
@@ -2613,7 +2610,8 @@ geometry of the <I>ARB</I>, but may affect any texture mapping involving this so
 </DD>
 <HR>
 
-<DT><a NAME="pl"><B>pl</B> [<I>-float</I>] [<I>-zclip</I>] [<I>-2d</I>] [<I>-grid</I>] <I>out_file</I> | ``|'' <I>filter</I></DT>
+<DT><a NAME="pl"><B>pl</B> [<I>-float</I>] [<I>-zclip</I>]
+	[<I>-2d</I>] [<I>-grid</I>] <I>out_file</I> | ``|'' <I>filter</I></DT>
 
 <DD>The ``pl'' command creates a UNIX plot of the current <I>mged</I> display.
 If an <I>output_file</I> is specified, the plot is stored in that file. If a
@@ -2636,7 +2634,8 @@ the <I>dm-plot</I> display manager.
 </DD>
 <HR>
 
-<DT><a NAME="plot"><B>plot</B> [<I>-float</I>] [<I>-zclip</I>] [<I>-2d</I>] [<I>-grid</I>] <I>out_file</I> | ``|'' <I>filter</I></DT>
+<DT><a NAME="plot"><B>plot</B> [<I>-float</I>] [<I>-zclip</I>]
+	[<I>-2d</I>] [<I>-grid</I>] <I>out_file</I> | ``|'' <I>filter</I></DT>
 
 <DD>The ``plot'' command creates a UNIX plot of the current <I>mged</I> display.
 If an <I>output_file</I> is specified, the plot is stored in that file. If a
@@ -2772,7 +2771,9 @@ The available buttons are:
 </DD>
 <HR>
 
-<DT><a NAME="preview"><B>preview</B> [<I>-v</I>] [<I>-d delay</I>] [<I>-D start_frame_number</I>] [<I>-K end_frame_number</I>]  <I>rt_script_file</I></DT>
+<DT><a NAME="preview"><B>preview</B> [<I>-v</I>] [<I>-d delay</I>]
+	[<I>-D start_frame_number</I>] [<I>-K end_frame_number</I>]
+	<I>rt_script_file</I></DT>
 
 <DD>The ``preview'' command allows the user to <I>preview</I> animation scripts in <I>mged</I>.
 The <I>-d</I> option provides a delay in seconds to be applied between each frame (the
@@ -2792,7 +2793,8 @@ Note that this may significantly slow the <I>preview</I>.
 </DD>
 <HR>
 
-<DT><a NAME="ps"><B>ps</B> [<I>-f font</I>] [<I>-t title</I>] [<I>-c creator</I>] [<I>-s size_in_inches</I>] [<I>-l line_width</I>] <I>output_file</I></DT>
+<DT><a NAME="ps"><B>ps</B> [<I>-f font</I>] [<I>-t title</I>] [<I>-c creator</I>]
+	[<I>-s size_in_inches</I>] [<I>-l line_width</I>] <I>output_file</I></DT>
 
 <DD>The ``ps'' command temporarily attaches the <I>Postscript</I> display manager and outputs
 the current <I>mged</I> display to the specified <I>output_file</I> in <I>PostScript</I>
@@ -2838,7 +2840,8 @@ similar function, even if some solids are multiply referenced.
 </DD>
 <HR>
 
-<DT><a NAME="putmat"><B>putmat</B> <I>comb_name/member_name</I> {<I>I</I> | <I>m0 m1 m2 m3 ... m16</I>}</DT>
+<DT><a NAME="putmat"><B>putmat</B> <I>comb_name/member_name</I>
+	{<I>I</I> | <I>m0 m1 m2 m3 ... m16</I>}</DT>
 
 <DD>The ``putmat'' command replaces the existing transformation matrix in the
 <a href="brlcad_glossary.html#COMBINATION">combination</a> specified that corresponds
@@ -3403,7 +3406,7 @@ page on <I>rt</I> for details on available options.
 </DD>
 <HR>
 
-<DT><a NAME="sca"><B>sca</B> <I>sfactor</I>
+<DT><a NAME="sca"><B>sca</B> <I>sfactor</I></DT>
 <DD>The ``sca'' command is used to scale the view or to scale an object. Exactly
      what is done is determined by MGED's state as well as the state of
      the display manager.
@@ -3680,7 +3683,8 @@ the new title string for the current database. Quote marks must be doubly escape
 </DD>
 <HR>
 
-<DT><a NAME="tol"><B>tol</B> [<I>abs #</I>] [<I>rel #</I>] [<I>norm #</I>] [<I>dist #</I>] [<I>perp #</I>]</DT>
+<DT><a NAME="tol"><B>tol</B> [<I>abs #</I>] [<I>rel #</I>] [<I>norm #</I>]
+	[<I>dist #</I>] [<I>perp #</I>]</DT>
 
 <DD>The ``tol'' command, with no arguments, lists the current tolerance settings.
 If the command line includes any of the keywords followed by a number,
@@ -4344,6 +4348,4 @@ of less than one increases the size of the viewing cube (``zoom out'').
 	</DL>
 </DD>
 <HR>
-
-</BODY>
-</HTML>
+</DL>
