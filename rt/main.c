@@ -48,8 +48,8 @@ mat_t model2view;
 
 /***** variables shared with worker() */
 static int	perspective=0;	/* perspective view -vs- parallel view */
-static vect_t	dx_model;	/* view delta-X as model-space vector */
-static vect_t	dy_model;	/* view delta-Y as model-space vector */
+vect_t	dx_model;	/* view delta-X as model-space vector */
+vect_t	dy_model;	/* view delta-Y as model-space vector */
 static point_t	eye_model;	/* model-space location of eye */
 static point_t	viewbase_model;	/* model-space location of viewplane corner */
 static int npts;	/* # of points to shoot: x,y */
@@ -312,7 +312,7 @@ do_more:
 	VSET( temp, 0, 2.0/npts, 0 );
 	MAT4X3VEC( dy_model, view2model, temp );
 
-	/* "Upper left" corner of viewing plane */
+	/* "Lower left" corner of viewing plane */
 	if( perspective )  {
 		VSET( temp, -1, -1, -zoomout );	/* viewing plane */
 	}  else  {
