@@ -2332,16 +2332,16 @@ char	*argv[];
     if(incr)
       z = 0.0;
     else
-      z = absolute_slew[Z] * 2047.0;
+      z = absolute_slew[Z];
   }
 
   if(incr){
     point_t tpoint;
 
-    VSET(tpoint, x/2047.0, y/2047.0, z/2047.0);
+    VSET(tpoint, x, y, z)
     VADD2(tranvec, absolute_slew, tpoint);
   }else{
-    VSET(tranvec, x/2047.0, y/2047.0, z/2047.0);
+    VSET(tranvec, x, y, z);
   }
 
   return mged_tran(interp, tranvec);
