@@ -722,7 +722,6 @@ VPRINT("left", rs.left);
 		if( i == b->end-1 || mag[i+1] != mag[i] )  {
 			/* Single vertexuse at this dist */
 rt_log("single vertexuse at index %d\n", i);
-(void)nmg_vu_angle_measure( vu[i], rs.ang_x_dir, rs.ang_y_dir );
 			nmg_face_state_transition( vu[i], &rs, i, 0 );
 			nmg_face_plot( fu1 );
 			j = i+1;
