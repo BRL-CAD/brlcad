@@ -21,6 +21,8 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <errno.h>
 #include <math.h>
@@ -32,10 +34,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/socket.h>
 #include <netinet/in.h>
 
-#ifdef BSD
-#include <strings.h>
-#else
+#ifdef USE_STRING_H
 #include <string.h>
+#else
+#include <strings.h>
 #endif
 
 #include "fb.h"

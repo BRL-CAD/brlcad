@@ -45,6 +45,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define class	inv_class	/* Map Irix 4 name into Irix 5 name */
 #define type	inv_type	/* Map Irix 4 name into Irix 5 name */
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <ctype.h>
 #include <gl.h>
@@ -85,7 +87,7 @@ static int	sgi_nwindows = 0;
 
 /* Internal routines */
 _LOCAL_ void	sgi_cminit();
-#if __STDC__
+#ifdef USE_PROTOTYPES
 _LOCAL_ void	gt_zbuf_to_screen(FBIO	*ifp, int one_y);
 #else
 _LOCAL_ void	gt_zbuf_to_screen();

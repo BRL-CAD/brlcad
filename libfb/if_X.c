@@ -21,7 +21,7 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#include "machine.h"
+#include "conf.h"
 
 #include <stdio.h>
 #include <ctype.h>
@@ -31,6 +31,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <X11/Xutil.h>
 #include <X11/cursorfont.h>
 #include <X11/Xatom.h>		/* for XA_RGB_BEST_MAP */
+
+#include "machine.h"
 #include "externs.h"
 #include "fb.h"
 #include "./fblocal.h"
@@ -63,7 +65,7 @@ _LOCAL_ int	X_open(),
 		X_flush(),
 		X_help();
 
-#if __STDC__
+#ifdef USE_PROTOTYPES
 static int	do_event( FBIO	*ifp );
 #else
 static int	do_event();

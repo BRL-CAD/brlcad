@@ -35,26 +35,21 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  * the user is responsible for changing them (zooming, etc),
  * and writing them to the FBC.
  */
+#include "conf.h"
+
 #include <stdio.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#include <ctype.h>
+#if defined( VLDSYSV )
+#	include	<sys/_ioctl.h> /* GSM : _ needed for Sys V emulation */
+#else
+#	include	<sys/ioctl.h>
+#endif
+
 #include "fb.h"
 #include "./fblocal.h"
 #include "./adage.h"
-
-#if defined( BSD )
-#include	<sys/ioctl.h>
-#endif
-
-#if defined( SYSV )
-#if defined( VLDSYSV )
-#include	<sys/_ioctl.h> /* GSM : _ needed for Sys V emulation */
-#else
-#include	<sys/ioctl.h>
-#endif
-#endif
-
-#include <ctype.h>
 
 _LOCAL_ int	adage_open(),
 		adage_close(),
@@ -308,7 +303,7 @@ int	width, height;
 	 * which is unhappy if the frame clock is shut off.
 	 */
 	if( !noinit )  {
-		if( lseek( ifp->if_fd, FBC*4L, 0 ) == -1 ) {
+		if( lseek( ifp->if_fd, (off_t)FBC*4L, 0 ) == -1 ) {
 			fb_log( "adage_open : lseek failed.\n" );
 			return	-1;
 		}
@@ -322,7 +317,7 @@ int	width, height;
 		/* Build an identity for the crossbar switch */
 		for( i=0; i < 34; i++ )
 			xbsval[i] = (long)i;
-		if( lseek( ifp->if_fd, XBS*4L, 0 ) == -1 ) {
+		if( lseek( ifp->if_fd, (off_t)XBS*4L, 0 ) == -1 ) {
 			fb_log( "adage_open : lseek failed.\n" );
 			return	-1;
 		}
@@ -334,7 +329,7 @@ int	width, height;
 
 		/* Initialize the LUVO crossbar switch, too */
 		xbsval[0] = 0x24L;		/* 1:1 mapping, magic number */
-		if( lseek( ifp->if_fd, LUVOXBS*4L, 0 ) == -1 ) {
+		if( lseek( ifp->if_fd, (off_t)LUVOXBS*4L, 0 ) == -1 ) {
 			fb_log( "adage_open : lseek failed.\n" );
 			return	-1;
 		}
@@ -352,7 +347,7 @@ int	width, height;
 	}
 
 	/* seek to start of pixels */
-	if( lseek( ifp->if_fd, 0L, 0 ) == -1 ) {
+	if( lseek( ifp->if_fd, (off_t)0L, 0 ) == -1 ) {
 		fb_log( "adage_open : lseek failed.\n" );
 		return	-1;
 	}
@@ -401,7 +396,7 @@ RGBpixel	*bgpp;
 
 	IKI(ifp)->ikfbcmem.fbc_Lcontrol |= FBC_AUTOCLEAR;
 
-	if( lseek( ifp->if_fd, FBC*4L, 0 ) == -1 ) {
+	if( lseek( ifp->if_fd, (off_t)FBC*4L, 0 ) == -1 ) {
 		fb_log( "adage_clear : lseek failed.\n" );
 		return	-1;
 	}
@@ -413,7 +408,7 @@ RGBpixel	*bgpp;
 
 	sleep( 1 );	/* Give the FBC a chance to act */
 	IKI(ifp)->ikfbcmem.fbc_Lcontrol &= ~FBC_AUTOCLEAR;
-	if( lseek( ifp->if_fd, FBC*4L, 0 ) == -1 ) {
+	if( lseek( ifp->if_fd, (off_t)FBC*4L, 0 ) == -1 ) {
 		fb_log( "adage_clear : lseek failed.\n" );
 		return	-1;
 	}
@@ -439,7 +434,7 @@ RGBpixel	*bgpp;
  *		      + start of pixelp buffer.
  */
 
-#define	IKSEEK(x,y)	if(lseek(ifp->if_fd,((y)*ifp->if_width+(x))\
+#define	IKSEEK(x,y)	if(lseek(ifp->if_fd,(off_t)((y)*ifp->if_width+(x))\
 	    		*sizeof(IKONASpixel),0) == -1) return -1;
 
 _LOCAL_ int
@@ -831,13 +826,13 @@ register int	x, y;
 				ikfbc_setup[2].fbc_xsizeview;
 		}
 		/* set pixel clock */
-		if( lseek( ifp->if_fd, FBCVC*4L, 0 ) == -1 ||
+		if( lseek( ifp->if_fd, (off_t)FBCVC*4L, 0 ) == -1 ||
 		    write( ifp->if_fd, &(IKI(ifp)->ikfbcmem.fbc_Lcontrol), 4 ) != 4 ) {
 			fb_log( "adage_zoom_set : FBCVC write failed.\n" );
 			return	-1;
 		}
 		/* set x viewport size */
-		if( lseek( ifp->if_fd, FBCVPS*4L, 0 ) == -1 ||
+		if( lseek( ifp->if_fd, (off_t)FBCVPS*4L, 0 ) == -1 ||
 		    write( ifp->if_fd, &(IKI(ifp)->ikfbcmem.fbc_xsizeview), 4 ) != 4 ) {
 			fb_log( "adage_zoom_set : FBCVPS write failed.\n" );
 			return	-1;
@@ -848,7 +843,7 @@ register int	x, y;
 	}
 	IKI(ifp)->ikfbcmem.fbc_yzoom = y-1;	/* replication count */
 
-	if( lseek( ifp->if_fd, FBCZOOM*4L, 0 ) == -1 ) {
+	if( lseek( ifp->if_fd, (off_t)FBCZOOM*4L, 0 ) == -1 ) {
 		fb_log( "adage_zoom_set : lseek failed.\n" );
 		return	-1;
 	}
@@ -942,7 +937,7 @@ int	x, y;
 
 	IKI(ifp)->ikfbcmem.fbc_ywindow = iky + y_window;
 
-	if( lseek( ifp->if_fd, FBCWL*4L, 0 ) == -1 ) {
+	if( lseek( ifp->if_fd, (off_t)FBCWL*4L, 0 ) == -1 ) {
 		fb_log( "adage_window_set : lseek failed.\n" );
 		return	-1;
 	}
@@ -994,7 +989,7 @@ int	x, y;
 	IKI(ifp)->ikfbcmem.fbc_xcursor = x&01777;
 	IKI(ifp)->ikfbcmem.fbc_ycursor = y&01777;
 
-	if( lseek( ifp->if_fd, FBCVC*4L, 0 ) == -1 ) {
+	if( lseek( ifp->if_fd, (off_t)FBCVC*4L, 0 ) == -1 ) {
 		fb_log( "adage_cursor : lseek failed.\n" );
 		return	-1;
 	}
@@ -1024,7 +1019,7 @@ int	x, y;
 	IKI(ifp)->ikfbcmem.fbc_xcursor = x&01777;
 	IKI(ifp)->ikfbcmem.fbc_ycursor = y&01777;
 
-	if( lseek( ifp->if_fd, FBCVC*4L, 0 ) == -1 ) {
+	if( lseek( ifp->if_fd, (off_t)FBCVC*4L, 0 ) == -1 ) {
 		fb_log( "adage_cscreen_addr : lseek failed.\n" );
 		return	-1;
 	}
@@ -1085,7 +1080,7 @@ int	xorig, yorig;
 		}
 	}
 
-	if( lseek( ifp->if_fd, FBCCD*4L, 0 ) == -1 ) {
+	if( lseek( ifp->if_fd, (off_t)FBCCD*4L, 0 ) == -1 ) {
 		fb_log( "adage_setcursor : lseek failed.\n" );
 		return	-1;
 	}
@@ -1115,7 +1110,7 @@ long	page, offset;
 	long	lp;
 
 	lp = RGB10( (*cp)[RED]>>6, (*cp)[GRN]>>6, (*cp)[BLU]>>6 );
-	lseek( ifp->if_fd, (LUVO + page*256 + offset)*4L, 0);
+	lseek( ifp->if_fd, (off_t)(LUVO + page*256 + offset)*4L, 0);
 	if( write( ifp->if_fd, (char *) &lp, 4 ) != 4 ) {
 		fb_log( "adage_wmap_entry : write failed.\n" );
 		return	-1;
@@ -1158,7 +1153,7 @@ register ColorMap	*cp;
 	for( i=0; i < 256*2; i++ ) {
 		cmap[i+512] = cmap[i];
 	}
-	if( lseek( ifp->if_fd, LUVO*4L, 0) == -1 ) {
+	if( lseek( ifp->if_fd, (off_t)LUVO*4L, 0) == -1 ) {
 		fb_log( "adage_wmap : lseek failed.\n" );
 		return	-1;
 	}
@@ -1177,7 +1172,7 @@ register ColorMap	*cp;
 	register int i;
 	long cmap[1024];
 
-	if( lseek( ifp->if_fd, LUVO*4L, 0) == -1 ) {
+	if( lseek( ifp->if_fd, (off_t)LUVO*4L, 0) == -1 ) {
 		fb_log( "adage_rmap : lseek failed.\n" );
 		return	-1;
 	}
@@ -1217,7 +1212,7 @@ register RGBpixel	*bpp;
 
 	/* Set start of framebuffer */
 	fd = ifp->if_fd;
-	if( lseek( fd, 0L, 0 ) == -1 ) {
+	if( lseek( fd, (off_t)0L, 0 ) == -1 ) {
 		fb_log( "adage_color_clear : seek failed.\n" );
 		return	-1;
 	}
