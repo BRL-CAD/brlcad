@@ -2509,7 +2509,7 @@ CONST struct bn_tol	*tol;
 		rt_nurb_s_bound( fu->f_p->g.snurb_p, fu->f_p->g.snurb_p->min_pt,
 			fu->f_p->g.snurb_p->max_pt);
 		VMIN(f->min_pt, fu->f_p->g.snurb_p->min_pt );
-		VMIN(f->max_pt, fu->f_p->g.snurb_p->max_pt );
+		VMAX(f->max_pt, fu->f_p->g.snurb_p->max_pt );
 	}
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
