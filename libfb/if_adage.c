@@ -111,7 +111,7 @@ static struct ik_fbc ikfbc_setup[3] = {
 	/* 1 - LORES, 60 hz, non-interlaced */
 	0,	68,		/* viewport */
 	511,	1023,		/* sizeview */
-	0,	4063,		/* window */
+	0,	4063,		/* window, -33 */
 	0,	0,		/* zoom */
 	144,	1143,		/* horiztime, nlines (was 144, 1167) */
 	FBC_RS343 | FBC_NOINTERLACE, FBCH_PIXELCLOCK(18) | FBCH_DRIVEBPCK,
@@ -120,7 +120,7 @@ static struct ik_fbc ikfbc_setup[3] = {
 	/* 2 - HIRES, 30 hz, interlaced */
 	0,	64,
 	1023,	1023,
-	0,	4033,
+	0,	4033,		/* -63 */
 	0,	0,
 	144,	1144,		/* was 144, 1166 */
 	FBC_HIRES | FBC_RS343, FBCH_PIXELCLOCK(19) | FBCH_DRIVEBPCK,
@@ -135,9 +135,9 @@ struct	ikinfo {
 	struct	ik_fbc	ikfbcmem;	/* Current FBC state */
 	short	*_ikUBaddr;		/* Mapped-in Ikonas address */
 	/* Current values initialized in adage_init() */
-	int	x_origin, y_origin;
 	int	x_zoom, y_zoom;
 	int	x_window, y_window;
+	int	mode;			/* 0,1,2 */
 };
 #define	IKI(ptr) ((struct ikinfo *)((ptr)->u1.p))
 #define	IKIL(ptr) ((ptr)->u1.p)		/* left hand side version */
@@ -165,7 +165,6 @@ char	*file;
 int	width, height;
 {
 	register int	i;
-	int	dev_mode;
 	char	ourfile[16];
 	long	xbsval[34];
 
@@ -205,10 +204,10 @@ int	width, height;
 	ifp->if_height = height;
 	switch( ifp->if_width ) {
 	case 512:
-		dev_mode = 1;
+		IKI(ifp)->mode = 1;
 		break;
 	case 1024:
-		dev_mode = 2;
+		IKI(ifp)->mode = 2;
 		break;
 	default:
 		fb_log( "Bad fbsize %d.\n", ifp->if_width );
@@ -218,12 +217,12 @@ int	width, height;
 		fb_log( "adage_device_open : lseek failed.\n" );
 		return	-1;
 	}
-	if( write( ifp->if_fd, (char *)&ikfbc_setup[dev_mode],
+	if( write( ifp->if_fd, (char *)&ikfbc_setup[IKI(ifp)->mode],
 	    sizeof(struct ik_fbc) ) != sizeof(struct ik_fbc) ) {
 		fb_log( "adage_device_open : write failed.\n" );
 		return	-1;
 	}
-	IKI(ifp)->ikfbcmem = ikfbc_setup[dev_mode];
+	IKI(ifp)->ikfbcmem = ikfbc_setup[IKI(ifp)->mode];/* struct copy */
 
 	/* Build an identity for the crossbar switch */
 	for( i=0; i < 34; i++ )
@@ -275,8 +274,6 @@ int	width, height;
 	}
 	IKI(ifp)->x_zoom = 1;
 	IKI(ifp)->y_zoom = 1;
-	IKI(ifp)->x_origin = ifp->if_width / 2;
-	IKI(ifp)->y_origin = ifp->if_height / 2;
 	IKI(ifp)->x_window = IKI(ifp)->y_window = 0;
 	return	ifp->if_fd;
 }
@@ -297,7 +294,6 @@ adage_device_clear( ifp, bgpp )
 FBIO	*ifp;
 RGBpixel	*bgpp;
 {
-	int dev_mode = 1;
 
 	/* If adage_device_clear() was called with non-black color, must
 	 *  use DMAs to fill the frame buffer since there is no
@@ -306,27 +302,25 @@ RGBpixel	*bgpp;
 	if( bgpp != NULL && ((*bgpp)[RED] != 0 || (*bgpp)[GRN] != 0 || (*bgpp)[BLU] != 0) )
 		return	adage_color_clear( ifp, bgpp );
 
-	if( ifp->if_width == 1024 )
-		dev_mode = 2;
-	ikfbc_setup[dev_mode].fbc_Lcontrol |= FBC_AUTOCLEAR;
+	IKI(ifp)->ikfbcmem.fbc_Lcontrol |= FBC_AUTOCLEAR;
 
 	if( lseek( ifp->if_fd, FBC*4L, 0 ) == -1 ) {
 		fb_log( "adage_device_clear : lseek failed.\n" );
 		return	-1;
 	}
-	if( write( ifp->if_fd, &ikfbc_setup[dev_mode], sizeof(struct ik_fbc) )
+	if( write( ifp->if_fd, &(IKI(ifp)->ikfbcmem), sizeof(struct ik_fbc) )
 	    != sizeof(struct ik_fbc) ) {
 		fb_log( "adage_device_clear : write failed.\n" );
 		return	-1;
 	}
 
 	sleep( 1 );	/* Give the FBC a chance to act */
-	ikfbc_setup[dev_mode].fbc_Lcontrol &= ~FBC_AUTOCLEAR;
+	IKI(ifp)->ikfbcmem.fbc_Lcontrol &= ~FBC_AUTOCLEAR;
 	if( lseek( ifp->if_fd, FBC*4L, 0 ) == -1 ) {
 		fb_log( "adage_device_clear : lseek failed.\n" );
 		return	-1;
 	}
-	if( write( ifp->if_fd, &ikfbc_setup[dev_mode], sizeof(struct ik_fbc) )
+	if( write( ifp->if_fd, &(IKI(ifp)->ikfbcmem), sizeof(struct ik_fbc) )
 	    !=	sizeof(struct ik_fbc) ) {
 		fb_log( "adage_device_clear : write failed.\n" );
 		return	-1;
@@ -559,18 +553,22 @@ _LOCAL_ int
 adage_zoom_set( ifp, x, y )
 FBIO	*ifp;
 register int	x, y;
-	{
+{
 	/* From RDS 3000 Programming Reference Manual, June 1982, section
-		5.3 Notes, page 5-12.
-		In HIRES mode, horizontal zoom must be accomplished as follows:
-		1.   To go from a ratio of 1:1 to 2:1 you must double the
-			pixel clock rate, rather than use the zoom register.
-		2.   Thereafter you can increment the zoom register, whicle
-			leaving the pixel clock rate doubled.
+	 * 5.3 Notes, page 5-12.
+	 * In HIRES mode, horizontal zoom must be accomplished as follows:
+	 * 1.   To go from a ratio of 1:1 to 2:1 you must double the
+	 * 	pixel clock rate, rather than use the zoom register.
+	 * 2.   Thereafter you can increment the zoom register, while
+	 * 	leaving the pixel clock rate doubled.
 	  ----------
 	  Actually, life is not that simple..., and this doesn't work.
-	*/
+	 */
 
+	/*
+	 *  While page 5-6 claims that the zoom range is 1..256:1,
+	 *  testing demonstrates that the actual range is 1..16:1.
+	 */
 	if( x < 1 )  x=1;
 	if( y < 1 )  y=1;
 	if( x > 16 )  x=16;
@@ -579,7 +577,7 @@ register int	x, y;
 	IKI(ifp)->x_zoom = x;
 	IKI(ifp)->y_zoom = y;
 
-	/* Ikonas zoom factor is actually (factor - 1)! (replication count) */
+	/* Ikonas zoom factor is actually a replication count */
 	IKI(ifp)->ikfbcmem.fbc_xzoom = x-1;
 	IKI(ifp)->ikfbcmem.fbc_yzoom = y-1;
 	if( lseek( ifp->if_fd, FBCZOOM*4L, 0 ) == -1 ) {
@@ -593,107 +591,79 @@ register int	x, y;
 	return	0;
 }
 
-static short ikXwinLo[17] = {
-	0,	/* [0] */
-	0,
-	511,	/* [2] */
-	511,
-	768,	/* 4 */
-	768,
-	768,
-	768,
-	896,	/* 8 */
-	900,
-	904,
-	910,
-	920,
-	930,
-	940,
-	950,
-	960	/* 16 */
-};
-static short ikXwinHi[17] = {
-	0,	/* [0] */
-	256,
-	256,	/* 2 */
-	382,
-	382,	/* 4 */
-	382,
-	382,
-	382,
-	446,	/* 8 */
-	478,
-	478,
-	478,
-	478,
-	478,
-	478,
-	478,
-	478	/* 16 */
-};
-static short ikYwinLo[17] = {
-	4064,	/* [0] */
-	4064,
-	4208,	/* 2 */
-	4208,
-	4280,	/* 4 */
-	4280,
-	4280,
-	4280,
-	4316,	/* 8 */
-	4316,
-	4316,
-	4316,
-	4316,
-	4316,
-	4316,
-	4316,
-	4434	/* 16 */
-};
-static short ikYwinHi[17] = {
-	4033,	/* [0] */
-	4033,
-	4321,	/* 2 */
-	4321,
-	4465,	/* 4 */
-	4465,
-	4465,
-	4465,
-	4537,	/* 8 */
-	4537,
-	4537,
-	4537,
-	4537,
-	4537,
-	4537,
-	4537,
-	4573	/* 16 */
-};
+static int
+imax( a, b )
+{
+	if( a > b )
+		return(a);
+	return(b);
+}
 
 /*			a d a g e _ w i n d o w _ s e t ( )
  *
  *	Set FBC window location to specified values so that <x,y> are
- *	at screen center.
+ *	at screen center given current zoom.
  */
 _LOCAL_ int
 adage_window_set( ifp, x, y )
 register FBIO	*ifp;
-register int	x, y;
+int	x, y;
 {
-	y = ifp->if_width-1-y;		/* 1st quadrant */
-	/* Window relative to image center. */
-	IKI(ifp)->x_window = x -= IKI(ifp)->x_origin;
-	IKI(ifp)->y_window = y -= IKI(ifp)->y_origin;
+	int ikx, iky;		/* upper left corner of view rectangle */
+	int y_viewport;
+	int y_window;
+	int first_line;
+	int top_margin;
 
-	if( ifp->if_width != 1024 )
-		x *= 4;			/* Lores */
-	IKI(ifp)->ikfbcmem.fbc_xwindow = x + ((ifp->if_width == 1024) ?
-		ikXwinHi[IKI(ifp)->x_zoom] :
-		ikXwinLo[IKI(ifp)->x_zoom] );
+	/* for the cursor routines, save q4 window parameters (??) */
+	IKI(ifp)->x_window = x;
+	IKI(ifp)->y_window = ifp->if_height-1-y;	/* q1 -> q4 */
 
-	IKI(ifp)->ikfbcmem.fbc_ywindow = y + ((ifp->if_width == 1024) ?
-		ikYwinHi[IKI(ifp)->y_zoom] :
-		ikYwinLo[IKI(ifp)->y_zoom] );
+	/*
+	 *  To start with, we are given the 1st quadrant coordinates
+	 *  of the CENTER of the region we wish to view.  Since the
+	 *  Ikonas window is specified in terms of the upper left
+	 *  corner, first find the upper left corner of the rectangle
+	 *  to window in on, accounting for the zoom factor too.
+	 *  Then convert from first to fourth for the Ikonas.
+	 *  The order of these conversions is significant.
+	 */
+	ikx = x - (ifp->if_width / IKI(ifp)->x_zoom)/2;
+	iky = y + (ifp->if_height / IKI(ifp)->y_zoom)/2 - 1;
+	iky = ifp->if_height-1-iky;		/* q1 -> q4 */
+fprintf(stderr,"window(%d,%d), ikx,y=%d,%d\n", x, y, ikx, iky);
+
+	/*
+ 	 *  These formulas are taken from section 5.2.3.2.4 (page 5-5)
+	 *  of the Adage RDS-3000 programming reference manual, June 1982.
+	 *  Note that the published magic numbers are off by one.
+	 */
+	first_line = 0;
+	y_viewport = IKI(ifp)->ikfbcmem.fbc_yviewport;
+
+	switch( IKI(ifp)->mode )  {
+	case 0:
+		top_margin = imax( 35, y_viewport+4 );
+		y_window = first_line - top_margin + 7;
+		break;
+	case 1:
+		top_margin = imax( 34, (y_viewport+4)/2 );
+		y_window = first_line - top_margin + 3;		/* was 4 */
+		break;
+	case 2:
+		top_margin = imax( 69, y_viewport+4 );
+		y_window = first_line - top_margin + 6;		/* was 9 */
+		break;
+	}
+	y_window /= IKI(ifp)->y_zoom;
+fprintf(stderr,"y_viewport=%d, top_margin=%d, y_window=%d+%d\n", y_viewport, top_margin, y_window, iky);
+
+	if( IKI(ifp)->mode != 2 )
+		IKI(ifp)->ikfbcmem.fbc_xwindow = ikx << 2;	/* lores */
+	else
+		IKI(ifp)->ikfbcmem.fbc_xwindow = ikx;		/* hires */
+
+	IKI(ifp)->ikfbcmem.fbc_ywindow = iky + y_window;
 
 	if( lseek( ifp->if_fd, FBCWL*4L, 0 ) == -1 ) {
 		fb_log( "adage_window_set : lseek failed.\n" );
@@ -718,6 +688,9 @@ int	mode;
 int	x, y;
 {
 	register int	x_cursor_offset, y_cursor_offset;
+	int x_origin = ifp->if_width / 2;	/* Odd formulas */
+	int y_origin = ifp->if_height / 2;
+
 	y = ifp->if_width-1-y;		/* 1st quadrant */
 	/* Map image coordinates to screen space.			*/
 	if( ifp->if_width == 1024 ) {
@@ -747,9 +720,9 @@ int	x, y;
 		x_cursor_offset = X_CURSOR_OFFSET;
 		y_cursor_offset = Y_CURSOR_OFFSET;
 	}
-	x = IKI(ifp)->x_origin + ((x - IKI(ifp)->x_origin)
+	x = x_origin + ((x - x_origin)
 		- IKI(ifp)->x_window)*IKI(ifp)->x_zoom + x_cursor_offset;
-	y = IKI(ifp)->y_origin + ((y - IKI(ifp)->y_origin)
+	y = y_origin + ((y - y_origin)
 		- IKI(ifp)->y_window)*IKI(ifp)->y_zoom + y_cursor_offset;
 
 	if( mode )
