@@ -725,6 +725,8 @@ struct directory  {
 };
 #define DIR_NULL	((struct directory *)0)
 
+#define RT_DIR_PHONY_ADDR	(-1L)	/* Special marker for d_addr field */
+
 #define DIR_SOLID	0x1		/* this name is a solid */
 #define DIR_COMB	0x2		/* combination */
 #define DIR_REGION	0x4		/* region */
@@ -1433,10 +1435,6 @@ RT_EXTERN(double rt_read_timer, (char *str, int len) );
 RT_EXTERN(int rt_plot_solid, (FILE *fp, struct rt_i *rtip, struct soltab *stp) );
 					/* Release storage assoc with rt_i */
 RT_EXTERN(void rt_clean, (struct rt_i *rtip) );
-RT_EXTERN(int rt_struct_export, (struct rt_external *ext, genptr_t base, struct rt_imexport *imp) );
-RT_EXTERN(int rt_struct_import, (genptr_t base, struct rt_imexport *imp, struct rt_external *ext) );
-RT_EXTERN(int rt_struct_put, (FILE *fp, struct rt_external *ext) );
-RT_EXTERN(int rt_struct_get, (struct rt_external *ext, FILE *fp) );
 RT_EXTERN(void rt_add_res_stats, (struct rt_i *rtip, struct resource *resp) );
 					/* Tally stats into struct rt_i */
 
@@ -1750,6 +1748,24 @@ RT_EXTERN(void rt_vlist_to_uplot, (FILE *fp, struct rt_list *vhead));
 /* bomb.c */
 RT_EXTERN(void rt_badmagic, (long *ptr, long magic, char *str,
 	char *file, int line));
+
+/* inout.c */
+RT_EXTERN( unsigned char *rt_plong, (unsigned char *msgp, unsigned long l) );
+RT_EXTERN( unsigned char *rt_pshort, (unsigned char *msgp, int s));
+RT_EXTERN( unsigned long rt_glong, (CONST char *msgp));
+RT_EXTERN( unsigned short rt_gshort, (CONST unsigned char *msgp));
+RT_EXTERN( int rt_struct_get, (struct rt_external *ext, FILE *fp));
+RT_EXTERN( int rt_struct_put, (FILE *fp, CONST struct rt_external *ext));
+RT_EXTERN( int rt_struct_import, (genptr_t base, CONST struct rt_imexport *imp,
+				CONST struct rt_external *ext));
+RT_EXTERN( int rt_struct_export, (struct rt_external *ext, CONST genptr_t base,
+				CONST struct rt_imexport *imp));
+
+/* vlist.c */
+RT_EXTERN(void rt_vlist_export, (struct rt_vls *vls, struct rt_list *hp,
+				CONST char *name));
+RT_EXTERN(void rt_vlist_import, (struct rt_list *hp, struct rt_vls *namevls,
+				CONST unsigned char *buf));
 
 /************************************************************************
  *									*
