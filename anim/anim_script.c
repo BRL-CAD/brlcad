@@ -115,6 +115,7 @@ char **argv;
 		/* print one frame of script */
 		if (go && view){
 	                printf("start %d;\n", first_frame + frame);
+			printf("clean\n");
 			if (readview)
 		                printf("viewsize %f;\n", viewsize);
 	                printf("eye_pt %f %f %f;\n",a[3],a[7],a[11]);
@@ -126,6 +127,7 @@ char **argv;
 		}
 		else if (go){
 			printf("start %d;\n", first_frame + frame);
+			printf("clean;\n");
 			printf("anim %s matrix rmul\n", *(argv+optind));
 			an_mat_print(a,1);
 			printf("end;\n");
