@@ -46,6 +46,7 @@ struct rt_spect_sample	*cie_x;
 struct rt_spect_sample	*cie_y;
 struct rt_spect_sample	*cie_z;
 int			use_cie_xyz = 0;	/* Linked with TCL */
+mat_t			xyz2rgb;
 
 char	*pixels;		/* en-route to framebuffer */
 
@@ -284,6 +285,8 @@ char	**argv;
 
 	rt_g.debug = 1;
 
+	rt_make_ntsc_xyz2rgb( xyz2rgb );
+
 	if( (fbp = fb_open( NULL, width, height )) == FBIO_NULL )  {
 		rt_bomb("Unable to open fb\n");
 	}
@@ -484,35 +487,38 @@ int	off;
 
 	for( todo = width * height; todo > 0; todo--, cp += nbytes, pp += 3 )  {
 		struct rt_spect_sample	*sp;
-		fastf_t			x, y, z;
+		point_t			xyz;
+		point_t			rgb;
 		register int		val;
 
 		sp = (struct rt_spect_sample *)cp;
 		RT_CK_SPECT_SAMPLE(sp);
 
 		rt_spect_mul( xyzsamp, sp, cie_x );
-		x = rt_spect_area1( xyzsamp );
+		xyz[X] = rt_spect_area1( xyzsamp );
 
 		rt_spect_mul( xyzsamp, sp, cie_y );
-		y = rt_spect_area1( xyzsamp );
+		xyz[Y] = rt_spect_area1( xyzsamp );
 
 		rt_spect_mul( xyzsamp, sp, cie_z );
-		z = rt_spect_area1( xyzsamp );
+		xyz[Z] = rt_spect_area1( xyzsamp );
 
-		val = (x - minval) * scale;
+		MAT3X3VEC( rgb, xyz2rgb, xyz );
+
+		val = (rgb[RED] - minval) * scale;
 		if( val > 255 )  val = 255;
 		else if( val < 0 ) val = 0;
-		pp[0] = val;
+		pp[RED] = val;
 
-		val = (y - minval) * scale;
+		val = (rgb[GRN] - minval) * scale;
 		if( val > 255 )  val = 255;
 		else if( val < 0 ) val = 0;
-		pp[1] = val;
+		pp[GRN] = val;
 
-		val = (z - minval) * scale;
+		val = (rgb[BLU] - minval) * scale;
 		if( val > 255 )  val = 255;
 		else if( val < 0 ) val = 0;
-		pp[2] = val;
+		pp[BLU] = val;
 	}
 	rt_free( (char *)xyzsamp, "xyz sample");
 }
