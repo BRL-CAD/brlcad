@@ -583,7 +583,7 @@ union cutter  {
 		int	nu_type;
 		fastf_t	nu_min[3];
 		fastf_t	nu_max[3];
-		struct cutnode *first_cut;
+		union cutter *first_cut;
 	} nubn;
 	struct nugridnode {
 		int	nu_type;
@@ -1145,7 +1145,7 @@ struct rt_i {
 	struct bu_ptbl	rti_busy_cutter_nodes; /* List of "cutter" mallocs */
 	struct bu_ptbl	rti_cuts_waiting;
 	int		rti_cut_maxlen;	/* max len RPP list in 1 cut bin */
-	int		rti_cut_nbins;	/* number of cut bins (leaves) */
+	int		rti_ncut_by_type[5];	/* number of cuts by type */
 	int		rti_cut_totobj;	/* # objs in all bins, total */
 	int		rti_cut_maxdepth;/* max depth of cut tree */
 	struct soltab	**rti_sol_by_type[ID_MAXIMUM+1];
@@ -1403,10 +1403,10 @@ struct rt_functab {
 extern struct rt_functab rt_functab[];
 extern int rt_nfunctab;
 
-#define RT_CLASSIFY_UNIMPLEMENTED	0
-#define RT_CLASSIFY_INSIDE		1
-#define RT_CLASSIFY_OVERLAPPING		2
-#define RT_CLASSIFY_OUTSIDE		3
+#define RT_CLASSIFY_UNIMPLEMENTED	BN_CLASSIFY_UNIMPLEMENTED
+#define RT_CLASSIFY_INSIDE		BN_CLASSIFY_INSIDE
+#define RT_CLASSIFY_OVERLAPPING		BN_CLASSIFY_OVERLAPPING
+#define RT_CLASSIFY_OUTSIDE		BN_CLASSIFY_OUTSIDE
 
 /*********************************************************************************
  *	The following section is an exact copy of what was previously "nmg_rt.h" *
