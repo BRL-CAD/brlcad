@@ -1,6 +1,9 @@
 #ifndef SEEN_DM_H
 #define SEEN_DM_H
 
+#define DM_NULL (struct dm *)NULL
+#define DM_EVENT_HANDLER_NULL (int (*)())NULL
+
 #if IR_KNOBS
 #define NOISE 32		/* Size of dead spot on knob */
 #endif
@@ -92,16 +95,16 @@
 
 /* Interface to a specific Display Manager */
 struct dm {
-  int (*dm_open)();
+  struct dm *(*dm_open)();
   int (*dm_close)();
-  int (*dm_drawBegin)();	/* was dmr_prolog */
-  int (*dm_drawEnd)();		/* was dmr_epilog */
+  int (*dm_drawBegin)();	/* formerly dmr_prolog */
+  int (*dm_drawEnd)();		/* formerly dmr_epilog */
   int (*dm_normal)();
   int (*dm_newrot)();
-  int (*dm_drawString2D)();	/* was dmr_puts */
-  int (*dm_drawLine2D)();	/* was dmr_2d_line */
+  int (*dm_drawString2D)();	/* formerly dmr_puts */
+  int (*dm_drawLine2D)();	/* formerly dmr_2d_line */
   int (*dm_drawVertex2D)();
-  int (*dm_drawVList)();	/* was dmr_object */
+  int (*dm_drawVList)();	/* formerly dmr_object */
   int (*dm_setColor)();
   int (*dm_setLineAttr)();	/* currently - linewidth, (not-)dashed */
   unsigned (*dm_cvtvecs)();	/* returns size requirement of subr */
@@ -113,12 +116,17 @@ struct dm {
   double dm_bound;		/* zoom-in limit */
   char *dm_name;		/* short name of device */
   char *dm_lname;		/* long name of device */
-  struct mem_map *dm_map;	/* displaylist mem map */
-  genptr_t dm_vars;		/* pointer to display manager dependant variables */
-  struct bu_vls dm_pathName;	/* full Tcl/Tk name of drawing window */
-  struct bu_vls dm_initWinProc; /* Tcl/Tk procedure for initializing the drawing window */
-  struct bu_vls dm_dname;	/* Display name */
+  int dm_top;                   /* !0 means toplevel window */
+  int dm_width;
+  int dm_height;
+  fastf_t dm_aspect;
   fastf_t *dm_vp;		/* XXX--ogl still depends on this--Viewscale pointer */
+  genptr_t dm_vars;		/* pointer to display manager dependant variables */
+  struct mem_map *dm_map;	/* displaylist mem map */
+  struct bu_vls dm_pathName;	/* full Tcl/Tk name of drawing window */
+  struct bu_vls dm_tkName;	/* short Tcl/Tk name of drawing window */
+  struct bu_vls dm_initWinProc; /* XXX--Tcl/Tk procedure for initializing the drawing window */
+  struct bu_vls dm_dName;	/* Display name */
 };
 
 extern int dm_process_options();
