@@ -5,9 +5,9 @@ README
 .sp
 The BRL-CAD Package
 .br
-Release 4.4
+Release 6.0
 .br
-(October-1994)
+(October-2002)
 .RT
 .IP "VERSION"
 .sp
@@ -21,9 +21,8 @@ versions actually contained on the distribution tape.
 .IP CONTENTS
 .sp
 This README file exists only to provide you a brief roadmap to
-the contents of the BRL-CAD distribution tape.
-The information on how to read the tape,
-install and operate the software,
+the contents of the BRL-CAD distribution.
+The information on how to install and operate the software,
 and perform the benchmark tests have become sufficiently large
 that they are now each a standalone document.
 .sp
@@ -33,15 +32,14 @@ the various military-specific model
 analysis tools such as MUVES, GIFT, SAR, SLAVE, VAST, etc., nor does it
 include any military databases.
 If you desire to have access to this material,
-please contact Keith Applin at (410)-278-6647.
+please contact Sean Morrison at (410)-278-6678.
 .sp
 .IP "INSTALLATION"
 .sp
 To install the BRL-CAD Package see the instructions in doc/install.doc.
-This file includes directions on the best way to read the distribution
-tape,
-as well as details on how to configure and install the software.
-This file also includes directions on how to compile and run
+This file includes directions on the best way to get started with the 
+distribution, as well as details on how to configure and install the 
+software. This file also includes directions on how to compile and run
 the benchmark tests.
 .sp
 .IP "BENCHMARK"
@@ -69,9 +67,8 @@ are two options:
 online access to the InterNet may obtain the BRL-CAD Package via
 FTP file transfer, at no cost, after completing and returning a signed
 copy of the printed distribution agreement. A blank agreement form is
-available only via anonymous FTP from host ftp.arl.mil (address
-128.63.16.158) from file "brl-cad/agreement". One printed set of BRL-CAD
-documentation will be mailed to you at no cost. No installation
+available only via anonymous FTP from host ftp.arl.army.mil (address
+192.12.65.24) from file "brl-cad/agreement".  No installation
 assistance or telephone support will be available.
 .sp
 2.  Full service distribution:  The Survivability/Vulnerability
@@ -90,13 +87,12 @@ For further details, contact:
 .sp .5
 	BRL-CAD Distribution
 	SURVIAC Aberdeen Satellite Office
-	1003 Old Philadelphia Road
-	Suite 103
-	Aberdeen MD  21001  USA
+	4695 Millennium Drive
+	Belcamp, MD  210017-1505  USA
 .fi
 .sp .5
-or call Ms. Carla Moyer at USA (410)-273-7794, send
-E-mail to <cad-dist@arl.mil>, FAX your letter to USA (410)-272-6763,
+or call USA telephone (410)-273-7794, send
+E-mail to <cad-dist@arl.army.mil>, FAX your letter to USA (410)-272-6763,
 or write to the above address.
 .fi
 .sp
@@ -107,7 +103,7 @@ You are invited to participate in the InterNet (aka "ARPANET")
 electronic mailing list on the BRL-CAD software, which is called
 .sp .5
 .ti +1i
-<CAD @ ARL.MIL>.
+<CAD @ ARL.ARMY.MIL>.
 .sp .5
 Bug reports and discussions of new features
 are the main topics;  volume of messages has been light (so far).
@@ -115,20 +111,15 @@ Direct your bug reports to this address.  Request a subscription by
 sending to
 .sp .5
 .ti +1i
-<CAD-REQUEST @ ARL.MIL>.
+<CAD-REQUEST @ ARL.ARMY.MIL>.
 .sp .5
 If you find bugs, please report your experiences via E-mail.
 .sp
 A variety of information on BRL-CAD is available via the World-Wide-Web.
-Papers and documentation can be found at
+Papers, documentation, and the software repository may be found at
 .sp .5
 .ti +1i
-http://web.arl.mil/software/brl-cad/
-.sp .5
-The software repository can be found at
-.sp .5
-.ti +1i
-http://ftp.arl.mil/ftp/brl-cad/
+http://ftp.arl.army.mil/brlcad/
 .sp
 .IP "FUTURE EVENTS"
 .sp
@@ -143,12 +134,13 @@ know, so we can update our records.
 .KS
 .nf
 Best Wishes,
- -Mike Muuss
+ -Lee Butler
 .sp
 Leader, Advanced Computer Systems Team
-The US Army Research Laboratory
+AMSRL-SL-BE
+U.S. Army Research Laboratory
 APG, MD  21005-5068  USA
 .sp
-E-mail:  <Mike @ ARL.MIL>
+E-mail:  <BUTLER @ ARL.ARMY.MIL>
 .KE
 .fi
