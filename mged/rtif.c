@@ -49,6 +49,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_dm.h"
 #include "./mgedtcl.h"
 
+extern void mged_update();
 extern void reset_input_strings();
 extern int event_check();
 extern int mged_svbase();
@@ -321,6 +322,28 @@ int printcmd;
   }
 }
 
+static void
+rt_output_handler(clientData, mask)
+ClientData clientData;
+int mask;
+{
+  int fd = (int)clientData;
+  int count;
+  char line[MAXLINE];
+
+  /* Get data from rt */
+  if((count = read((int)fd, line, MAXLINE)) == 0){
+    Tcl_DeleteFileHandler(Tcl_GetFile((ClientData)fd, TCL_UNIX_FD));
+    Tcl_FreeFile(Tcl_GetFile((ClientData)fd, TCL_UNIX_FD));
+    return;
+  }
+
+  line[count] = '\0';
+
+  /*XXX For now just blather to stderr */
+  bu_log("%s", line);
+}
+
 /*
  *			R U N _ R T
  */
@@ -330,34 +353,26 @@ run_rt()
 	register int i;
 	int pid, rpid;
 	int retcode;
-	int o_pipe[2];
 	FILE *fp_in;
-	FILE *fp_out, *fp_err;
 	int pipe_in[2];
-	int pipe_out[2];
 	int pipe_err[2];
 	char line[MAXLINE];
 	struct bu_vls vls;
 	vect_t eye_model;
 
 	(void)pipe( pipe_in );
-	(void)pipe( pipe_out );
 	(void)pipe( pipe_err );
 	(void)signal( SIGINT, SIG_IGN );
 	if ( ( pid = fork()) == 0 )  {
 	  /* Redirect stdin, stdout, stderr */
 	  (void)close(0);
 	  (void)dup( pipe_in[0] );
-	  (void)close(1);
-	  (void)dup( pipe_out[1] );
 	  (void)close(2);
 	  (void)dup ( pipe_err[1] );
 
 	  /* close pipes */
 	  (void)close(pipe_in[0]);
 	  (void)close(pipe_in[1]);
-	  (void)close(pipe_out[0]);
-	  (void)close(pipe_out[1]);
 	  (void)close(pipe_err[0]);
 	  (void)close(pipe_err[1]);
 
@@ -374,13 +389,7 @@ run_rt()
 	(void)close( pipe_in[0] );
 	fp_in = fdopen( pipe_in[1], "w" );
 
-	/* use fp_out to read back anything that might be here */
-	(void)close( pipe_out[1] );
-	fp_out = fdopen( pipe_out[0], "r" );
-
-	/* use fp_err to read any error messages */
 	(void)close( pipe_err[1] );
-	fp_err = fdopen( pipe_err[0], "r" );
 
 	if(*zclip_ptr){
 	  vect_t temp;
@@ -435,64 +444,16 @@ run_rt()
 	    VJOIN1(eye_model, eye_model, t_in, direction);
 	  }
 	}
-	rt_write(fp_in, eye_model );
+	rt_write(fp_in, eye_model);
 	(void)fclose( fp_in );
 
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)
 		sp->s_iflag = DOWN;
 
-#ifdef USE_FRAMEBUFFER
-	{
-	  struct dm_list *dlp;
+	Tcl_CreateFileHandler(Tcl_GetFile((ClientData)pipe_err[0], TCL_UNIX_FD),
+			      TCL_READABLE, rt_output_handler, (ClientData)pipe_err[0]);
 
-	  dlp = curr_dm_list;
-	  reset_input_strings();
-
-	  /* loop until fb_busy_flag gets incremented */
-	  i = fb_busy_flag + 1;
-	  while(fb_busy_flag < i){
-	    event_check(1);  /* non-blocking */
-
-	    if(sedraw > 0)
-	      sedit();
-
-	    refresh();
-	  }
-
-	  while(fb_busy_flag){
-	    event_check(1);  /* non-blocking */
-
-	    if(sedraw > 0)
-	      sedit();
-
-	    if(dlp->_mged_variables->fb)
-	      dlp->_dirty = 1;  /* redraw display manager window contents */
-
-	    refresh();
-	  }
-	}
-#endif
-
-	while(fgets(line, MAXLINE, fp_out) != (char *)NULL)
-	  Tcl_AppendResult(interp, line, (char *)NULL);
-	(void)fclose(fp_out);
-
-	while(fgets(line, MAXLINE, fp_err) != (char *)NULL)
-	  Tcl_AppendResult(interp, line, (char *)NULL);
-	(void)fclose(fp_err);
-
-	/* Wait for program to finish */
-	while ((rpid = wait(&retcode)) != pid && rpid != -1)
-	  ; /* Null */
-
-	if( retcode != 0 )
-		pr_wait_status( retcode );
-
-#if 0
-	(void)signal(SIGINT, cur_sigint);
-#endif
-
-	return(retcode);
+	return 0;
 }
 
 /*
