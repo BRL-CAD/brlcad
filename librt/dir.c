@@ -186,6 +186,7 @@ rt_fwrite_internal(
 
 	RT_CK_DB_INTERNAL(ip);
 	RT_CK_FUNCTAB( ip->idb_meth );
+	BU_INIT_EXTERNAL( &ext );
 
 	if( ip->idb_meth->ft_export( &ext, ip, conv2mm, NULL /*dbip*/ ) < 0 )  {
 		bu_log("rt_file_put_internal(%s): solid export failure\n",
