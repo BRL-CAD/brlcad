@@ -103,20 +103,7 @@ proc cad_dialog { w screen title text bitmap default args } {
 	bind $w <Return> "$w.bot.button$default flash ; set button$w $default"
     }
 
-    set pxy [winfo pointerxy $w]
-    set x [lindex $pxy 0]
-    set y [lindex $pxy 1]
-    set width [winfo reqwidth $w]
-    set dx [expr $width / 2]
-    set x [expr $x - $dx]
-    set y [expr $y - 70]
-    if {$x < 0} {
-	set x 0
-    }
-    if {$y < 0} {
-	set y 0
-    }
-    wm geometry $w +$x+$y
+    place_near_mouse $w
 
     tkwait variable button$w
     catch { destroy $w }
@@ -184,20 +171,7 @@ actions as indicated by the button label."}}
 	bind $w <Return> "$w.bot.button$default flash ; set button$w $default"
     }
 
-    set pxy [winfo pointerxy $w]
-    set x [lindex $pxy 0]
-    set y [lindex $pxy 1]
-    set width [winfo reqwidth $w]
-    set dx [expr $width / 2]
-    set x [expr $x - $dx]
-    set y [expr $y - 70]
-    if {$x < 0} {
-	set x 0
-    }
-    if {$y < 0} {
-	set y 0
-    }
-    wm geometry $w +$x+$y
+    place_near_mouse $w
 
     tkwait variable button$w
     set entrylocal [set entry$w]
