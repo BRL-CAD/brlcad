@@ -318,9 +318,6 @@ struct partition *pp;
 struct region *reg1, *reg2;
 struct partition *pheadp;
 	{	fastf_t depth;
-#ifdef BRLCAD4_0
-	RT_CHECK_PT(pp);
-#endif
 	depth = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
 	if( depth >= OVERLAP_TOL )
 		noverlaps++;
@@ -366,9 +363,6 @@ struct region *reg1, *reg2;
 struct partition *pheadp;
 	{	fastf_t depth;
 		point_t pt;
-#ifdef BRLCAD4_0
-	RT_CHECK_PT(pp);
-#endif
 	depth = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
 	if( depth >= OVERLAP_TOL )
 		{
