@@ -100,8 +100,6 @@ char **argv;
 			nmg_m_reindex( m_tmp, 0 );
 			nmg_m_reindex( m, 0 );
 
-			(void)nmg_model_fuse( m_tmp, &mged_tol );
-
 			sprintf( shell_name, "shell.%d", shell_count );
 			while( db_lookup( dbip, shell_name, 0 ) != DIR_NULL )
 			{
