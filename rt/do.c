@@ -20,7 +20,7 @@
 static char RCSrt[] = "@(#)$Header$ (BRL)";
 #endif
 
-#ifdef unix
+#if defined(unix) || defined(__unix)
 # include <sys/types.h>
 # include <sys/stat.h>
 #endif
@@ -700,7 +700,7 @@ int framenumber;
 		}  else  {
 			sprintf( framename, "%s.%d", outputfile, framenumber );
 		}
-#ifdef unix
+#if defined(unix) || defined(__unix)
 		/*
 		 *  This code allows the computation of a particular frame
 		 *  to a disk file to be resumed automaticly.

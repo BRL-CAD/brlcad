@@ -38,7 +38,7 @@ static char RCSview[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <math.h>
 
-#ifdef unix
+#if defined(unix) || defined(__unix)
 # include <sys/types.h>
 # include <sys/stat.h>
 #endif
@@ -793,7 +793,7 @@ char	*framename;
 {
 	register int i;
 	extern int hit_nothing();
-#ifdef unix
+#if defined(unix) || defined(__unix)
 	struct stat sb;
 #endif
 
@@ -857,7 +857,7 @@ char	*framename;
 		for( i=0; i<height; i++ )
 			scanline[i].sl_left = width;
 
-#ifdef unix
+#if defined(unix) || defined(__unix)
 		/*
 		 *  This code allows the computation of a particular frame
 		 *  to a disk file to be resumed automaticly.
