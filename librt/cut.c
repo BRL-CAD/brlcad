@@ -1087,6 +1087,8 @@ double		*offcenter_p;
 	return(1);		/* OK */
 }
 
+#define PIECE_BLOCK	512
+
 /*
  *			R T _ C T _ P O P U L A T E _ B O X
  *
@@ -1136,6 +1138,7 @@ struct rt_i		*rtip;
 	outp->bn.bn_piecelist = (struct rt_piecelist *) bu_malloc(
 		sizeof(struct rt_piecelist) * inp->bn.bn_piecelen,
 		"rt_piecelist" );
+#if 0
 	for( i = inp->bn.bn_piecelen-1; i >= 0; i-- )  {
 		struct rt_piecelist *plp = &inp->bn.bn_piecelist[i];	/* input */
 		struct soltab *stp = plp->stp;
@@ -1170,6 +1173,65 @@ struct rt_i		*rtip;
 			olp->pieces = NULL;
 		}
 	}
+
+#else
+	for( i = inp->bn.bn_piecelen-1; i >= 0; i-- )  {
+		struct rt_piecelist *plp = &inp->bn.bn_piecelist[i];	/* input */
+		struct soltab *stp = plp->stp;
+		struct rt_piecelist *olp = &outp->bn.bn_piecelist[outp->bn.bn_piecelen]; /* output */
+		int j,k;
+		long piece_list[PIECE_BLOCK];	/* array of pieces */
+		long piece_count=0;		/* count of used slots in above array */
+		long *more_pieces=NULL;		/* dynamically allocated array for overflow of above array */
+		long more_piece_count=0;	/* number of slots used in dynamic array */
+		long more_piece_len=0;		/* allocated length of dynamic array */
+
+		RT_CK_PIECELIST(plp);
+		RT_CK_SOLTAB(stp);
+
+		/* Loop for every piece of this solid */
+		for( j = plp->npieces-1; j >= 0; j-- )  {
+			long indx = plp->pieces[j];
+			struct bound_rpp *rpp = &stp->st_piece_rpps[indx];
+			if( !V3RPP_OVERLAP_TOL(
+			    outp->bn.bn_min, outp->bn.bn_max,
+			    rpp->min, rpp->max, tol) )
+				continue;
+			if( piece_count < PIECE_BLOCK ) {
+				piece_list[piece_count++] = indx;
+			} else if( more_piece_count >= more_piece_len ) {
+				/* this should be an extemely rare occurrence */
+				more_piece_len += PIECE_BLOCK;
+				more_pieces = (long *)bu_realloc( more_pieces, more_piece_len * sizeof( long ),
+								  "more_pieces" );
+				more_pieces[more_piece_count++] = indx;
+			} else {
+				more_pieces[more_piece_count++] = indx;
+			}
+		}
+		olp->npieces = piece_count + more_piece_count;
+		if( olp->npieces > 0 )  {
+			/* This solid contributed pieces to the output box */
+			olp->magic = RT_PIECELIST_MAGIC;
+			olp->stp = stp;
+			outp->bn.bn_piecelen++;
+			olp->pieces = (long *)bu_malloc( sizeof(long) * olp->npieces, "olp->pieces[]" );
+			for( j=0 ; j<piece_count ; j++ ) {
+				olp->pieces[j] = piece_list[j];
+			}
+			k = piece_count;
+			for( j=0 ; j<more_piece_count ; j++ ) {
+				olp->pieces[k++] = more_pieces[j];
+			}
+			if( more_pieces ) {
+				bu_free( (char *)more_pieces, "more_pieces" );
+			}
+			if( olp->npieces < plp->npieces ) success = 1;
+		} else {
+			olp->pieces = NULL;
+		}
+	}
+#endif
 
 	return success;
 }
