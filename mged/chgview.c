@@ -864,10 +864,13 @@ struct solid *startp;
 			sp->s_center[Z]*base2local,
 			sp->s_size*base2local );
 		(void)printf("reg=%d",sp->s_regionid );
-		if( sp->s_materp )
-			(void)printf(" matrl=%s (dm%d)",
-			    ((struct mater *)sp->s_materp)->mt_handle,
-			    ((struct mater *)sp->s_materp)->mt_dm_int );
+		if( sp->s_materp )  {
+			register struct mater *mp;
+			if( (mp = (struct mater *)sp->s_materp) != MATER_NULL)
+				(void)printf(" matrl=%s (dm%d)",
+					mp->mt_handle,
+					mp->mt_dm_int );
+		}
 		(void)printf("\n");
 		sp = sp->s_forw;
 	}

@@ -253,8 +253,10 @@ f_edcolor()
 	for( mp = MaterHead; mp != MATER_NULL; mp = mp->mt_forw )  {
 		(void)fprintf( fp, "%d\t%d\t%d\t%d\t%d\t%s\n",
 			mp->mt_low, mp->mt_high,
-			mp->mt_r, mp->mt_g, mp->mt_b,
-			mp->mt_handle );
+			mp->mt_r, mp->mt_g, mp->mt_b );
+		if( mp->mt_handle != NULL )
+			(void)fprintf( fp, "%s", mp->mt_handle );
+		(void)fprintf( fp, "\n" );
 	}
 	(void)fclose(fp);
 
@@ -283,16 +285,25 @@ f_edcolor()
 	}
 
 	while( fgets(line, sizeof (line), fp) != NULL )  {
+		int cnt;
 		int low, hi, r, g, b;
-		GETSTRUCT( mp, mater );
-		(void)sscanf( line, "%d %d %d %d %d %s",
+
+		cnt = sscanf( line, "%d %d %d %d %d %s",
 			&low, &hi, &r, &g, &b, hbuf );
+		if( cnt != 5 && cnt != 6 )  {
+			(void)printf("Discarding %s\n", line );
+			continue;
+		}
+		GETSTRUCT( mp, mater );
 		mp->mt_low = low;
 		mp->mt_high = hi;
 		mp->mt_r = r;
 		mp->mt_g = g;
 		mp->mt_b = b;
-		mp->mt_handle = strdup( hbuf );
+		if( cnt == 6 )
+			mp->mt_handle = strdup( hbuf );
+		else
+			mp->mt_handle = (char *)NULL;
 		mp->mt_daddr = MATER_NO_ADDR;
 		insert_color( mp );
 		color_putrec( mp );
