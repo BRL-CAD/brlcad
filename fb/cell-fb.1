@@ -73,6 +73,15 @@ See the discussion of autosizing below.
 Set the local debug flag to the hexadecimal value
 .I n.
 .TP
+.BI \-a "``h v''"\^
+Do not display the data,
+simply print out the frame-buffer coordinates of the grid-plane point
+.RI ( "h, v" ).
+This option is useful for outboard manipulation of the
+.IR pix\^ (5)
+data created by
+.I cell-fb.
+.TP
 .BI \-b n\^
 Ignore values not equal to
 .I n.
@@ -341,7 +350,7 @@ grid of cells, and the display will be erased before each view is drawn.
 $ \|\fIcell-fb \|\-F \|viva.brl.mil: \|\-gek \|\-p \|``20 30'' \|inputs
 .RE
 .SH "SEE ALSO"
-fb-rle(1), rtregis(1), libfb(3)
+fb-rle(1), rtregis(1), libfb(3), pix(5)
 .SH AUTHORS
 .TP
 Gary S. Moss, BRL/VLD-VMB
