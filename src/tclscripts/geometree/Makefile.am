@@ -6,9 +6,11 @@ dist_tcl_SCRIPTS = \
 	GeometryBrowser.tcl \
 	geometree.tcl
 
+TCLSH=${top_builddir}/src/other/libtcl/tclsh
+
 install-data-hook:
-	${top_builddir}/src/bwish/btclsh $(top_srcdir)/src/tclscripts/ami.tcl $(tcldir)
-	${top_builddir}/src/bwish/btclsh $(top_srcdir)/src/tclscripts/ampi.tcl $(tcldir)
+	${TCLSH} $(top_srcdir)/src/tclscripts/ami.tcl $(tcldir)
+	${TCLSH} $(top_srcdir)/src/tclscripts/ampi.tcl $(tcldir)
 
 uninstall-hook:
 	${RM} -f $(tcldir)/tclIndex
