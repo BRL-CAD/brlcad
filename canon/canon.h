@@ -67,7 +67,7 @@ FUNC_EXTERN(void usage, (char *s));
 
 extern char *progname;
 extern char scsi_device[];
-extern char gamma;
+extern char ipu_gamma;
 extern char tray;
 extern char conv;
 extern char clear;
