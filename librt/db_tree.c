@@ -45,7 +45,7 @@ struct tree_list {
 };
 #define TREE_LIST_NULL	((struct tree_list *)0)
 
-struct tree_state {
+struct db_tree_state {
 	struct db_i	*ts_dbip;
 	int		ts_sofar;		/* Flag bits */
 
@@ -60,16 +60,13 @@ struct tree_state {
 	int		(*ts_region_start_func)();
 	union tree *	(*ts_region_end_func)();
 	union tree *	(*ts_leaf_func)();
-
-/**	vect_t		ts_min;		/* RPP minimum */
-/**	vect_t		ts_max;		/* RPP maximum */
 };
 #define TS_SOFAR_MINUS	1		/* Subtraction encountered above */
 #define TS_SOFAR_INTER	2		/* Intersection encountered above */
 #define TS_SOFAR_REGION	4		/* Region encountered above */
 
 struct combined_tree_state {
-	struct tree_state	cts_s;
+	struct db_tree_state	cts_s;
 	struct db_full_path	cts_p;
 };
 
@@ -86,7 +83,7 @@ register struct combined_tree_state	*ctsp;
 
 void
 db_pr_tree_state( tsp )
-register struct tree_state	*tsp;
+register struct db_tree_state	*tsp;
 {
 	rt_log("db_pr_tree_state(x%x):\n", tsp);
 	rt_log(" ts_dbip=x%x\n", tsp->ts_dbip);
@@ -163,7 +160,7 @@ register struct region	*regionp;
  */
 int
 db_apply_state_from_comb( tsp, pathp, rp )
-struct tree_state	*tsp;
+struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 union record		*rp;
 {
@@ -241,7 +238,7 @@ union record		*rp;
  */
 int
 db_apply_state_from_memb( tsp, pathp, mp )
-struct tree_state	*tsp;
+struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 struct member		*mp;
 {
@@ -324,7 +321,7 @@ next_one:	;
  */
 int
 db_follow_path_for_state( tsp, pathp, orig_str, noisy )
-struct tree_state	*tsp;
+struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 char			*orig_str;
 int			noisy;
@@ -492,7 +489,7 @@ union tree *
 rt_mkgift_tree( trees, subtreecount, tsp )
 struct tree_list	*trees;
 int			subtreecount;
-struct tree_state	*tsp;
+struct db_tree_state	*tsp;
 {
 	extern int	rt_pure_boolean_expressions;
 	register struct tree_list *tstart;
@@ -572,7 +569,7 @@ static vect_t zaxis = { 0, 0, 1.0 };
  */
 union tree *
 db_recurse( tsp, pathp, region_start_statepp )
-struct tree_state	*tsp;
+struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 struct combined_tree_state	**region_start_statepp;
 {
@@ -604,7 +601,7 @@ struct combined_tree_state	**region_start_statepp;
 		return(TREE_NULL);		/* FAIL */
 
 	if( dp->d_flags & DIR_COMB )  {
-		struct tree_state	nts;
+		struct db_tree_state	nts;
 		int			is_region;
 
 		if( dp->d_len <= 1 )  {
@@ -656,7 +653,7 @@ struct combined_tree_state	**region_start_statepp;
 
 		for( i=1; i < dp->d_len; i++ )  {
 			register struct member *mp;
-			struct tree_state	memb_state;
+			struct db_tree_state	memb_state;
 
 			memb_state = nts;	/* struct copy */
 
@@ -783,7 +780,7 @@ union tree	*tp;
 {
 	union tree	*new;
 
-	new = (union tree *)rt_malloc( sizeof(union tree), "db_dup_subtree");
+	GETUNION( new, tree );
 	*new = *tp;		/* struct copy */
 
 	switch( tp->tr_op )  {
@@ -796,9 +793,7 @@ union tree	*tp;
 			struct combined_tree_state	*cts;
 			struct combined_tree_state	*ots;
 			ots = (struct combined_tree_state *)tp->tr_a.tu_stp;
-			cts=(struct combined_tree_state *)rt_malloc(
-				sizeof(struct combined_tree_state),
-				"combined region state");
+			GETSTRUCT( cts, combined_tree_state );
 			cts->cts_s = ots->cts_s;	/* struct copy */
 			db_dup_full_path( &(cts->cts_p), &(ots->cts_p) );
 			new->tr_a.tu_stp = (struct soltab *)cts;
@@ -868,8 +863,7 @@ top:
 		 *	 / \
 		 *	A   B
 		 */
-		rhs = (union tree *)rt_malloc( sizeof(union tree),
-			"non_union_push new rhs" );
+		GETUNION( rhs, tree );
 
 		/* duplicate top node into rhs */
 		*rhs = *tp;		/* struct copy */
@@ -1002,18 +996,17 @@ static union tree *	(*db_reg_end_func)();
 static union tree *	(*db_reg_leaf_func)();
 
 HIDDEN union tree *db_gettree_region_end( tsp, pathp, curtree )
-register struct tree_state	*tsp;
+register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 union tree		*curtree;
 {
 	register struct combined_tree_state	*cts;
 
-	cts=(struct combined_tree_state *)rt_malloc(
-		sizeof(struct combined_tree_state), "combined region state");
+	GETSTRUCT( cts, combined_tree_state );
 	cts->cts_s = *tsp;	/* struct copy */
 	db_dup_full_path( &(cts->cts_p), pathp );
 
-	curtree=(union tree *)rt_malloc(sizeof(union tree), "solid tree");
+	GETUNION( curtree, tree );
 	curtree->tr_op = OP_REGION;
 	curtree->tr_a.tu_stp = (struct soltab *)cts;
 	curtree->tr_a.tu_name = (char *)0;
@@ -1023,7 +1016,7 @@ union tree		*curtree;
 }
 
 HIDDEN union tree *db_gettree_leaf( tsp, pathp, rp, id )
-struct tree_state	*tsp;
+struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 union record		*rp;
 int			id;
@@ -1031,12 +1024,11 @@ int			id;
 	register struct combined_tree_state	*cts;
 	union tree	*curtree;
 
-	cts=(struct combined_tree_state *)rt_malloc(
-		sizeof(struct combined_tree_state), "combined region state");
+	GETSTRUCT( cts, combined_tree_state );
 	cts->cts_s = *tsp;	/* struct copy */
 	db_dup_full_path( &(cts->cts_p), pathp );
 
-	curtree=(union tree *)rt_malloc(sizeof(union tree), "solid tree");
+	GETUNION( curtree, tree );
 	curtree->tr_op = OP_REGION;
 	curtree->tr_a.tu_stp = (struct soltab *)cts;
 	curtree->tr_a.tu_name = (char *)0;
@@ -1157,7 +1149,7 @@ struct db_i	*dbip;
 int		argc;
 char		**argv;
 int		ncpu;
-struct tree_state *init_state;
+struct db_tree_state *init_state;
 int		(*reg_start_func)();
 union tree *	(*reg_end_func)();
 union tree *	(*leaf_func)();
@@ -1174,7 +1166,7 @@ union tree *	(*leaf_func)();
 	/* Walk each of the given path strings */
 	for( i=0; i < argc; i++ )  {
 		register union tree	*curtree;
-		struct tree_state	ts;
+		struct db_tree_state	ts;
 		struct db_full_path	path;
 		struct combined_tree_state	*region_start_statep;
 
@@ -1214,7 +1206,7 @@ union tree *	(*leaf_func)();
 		} else {
 			union tree	*new;
 
-			new = (union tree *)rt_malloc( sizeof(union tree), "new tree top");
+			GETUNION( new, tree );
 			new->tr_op = OP_UNION;
 			new->tr_b.tb_left = whole_tree;
 			new->tr_b.tb_right = curtree;
@@ -1275,7 +1267,7 @@ union tree *	(*leaf_func)();
 
 /* ============================== */
 
-static struct tree_state	rt_initial_tree_state = {
+static struct db_tree_state	rt_initial_tree_state = {
 	0,			/* ts_dbip */
 	0,			/* ts_sofar */
 	0, 0, 0,		/* region, air, gmater */
@@ -1294,7 +1286,7 @@ static struct tree_state	rt_initial_tree_state = {
 static struct rt_i	*db_rtip;
 
 HIDDEN int rt_gettree_region_start( tsp, pathp )
-struct tree_state	*tsp;
+struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 {
 
@@ -1307,7 +1299,7 @@ struct db_full_path	*pathp;
 }
 
 HIDDEN union tree *rt_gettree_region_end( tsp, pathp, curtree )
-register struct tree_state	*tsp;
+register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 union tree		*curtree;
 {
@@ -1340,7 +1332,7 @@ union tree		*curtree;
 }
 
 HIDDEN union tree *rt_gettree_leaf( tsp, pathp, rp, id )
-struct tree_state	*tsp;
+struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 union record		*rp;
 int			id;
@@ -1355,7 +1347,7 @@ int			id;
 	if( (stp = rt_add_solid( db_rtip, rp, dp, tsp->ts_mat )) == SOLTAB_NULL )
 		return(TREE_NULL);
 
-	curtree=(union tree *)rt_malloc(sizeof(union tree), "solid tree");
+	GETUNION( curtree, tree );
 	curtree->tr_op = OP_SOLID;
 	curtree->tr_a.tu_stp = stp;
 	curtree->tr_a.tu_name = db_path_to_string( pathp );
