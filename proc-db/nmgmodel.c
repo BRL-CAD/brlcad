@@ -4,6 +4,11 @@
  *	h	help
  */
 #include <stdio.h>
+#ifdef BSD
+#include <strings.h>
+#else
+#include <string.h>
+#endif
 #include "machine.h"
 #include "vmath.h"
 #include "rtlist.h"
@@ -63,7 +68,6 @@ int ac;
 char *av[];
 {
 	int  c;
-	char *strrchr();
 
 	if (  ! (progname=strrchr(*av, '/'))  )
 		progname = *av;
