@@ -207,7 +207,9 @@ struct partition *PartHeadp;
 	register struct soltab *stp;
 	struct curvature cur;
 	fastf_t out;
-	vect_t inhit, outhit;
+	vect_t inpt, outpt;
+	struct hit	inhit;
+	struct hit	outhit;
 
 	if( (pp=PartHeadp->pt_forw) == PartHeadp )
 		return(0);		/* Nothing hit?? */
@@ -215,10 +217,10 @@ struct partition *PartHeadp;
 	/* First, plot ray start to inhit */
 	if( rdebug&RDEBUG_RAYPLOT )  {
 		if( pp->pt_inhit->hit_dist > 0.0001 )  {
-			VJOIN1( inhit, ap->a_ray.r_pt,
+			VJOIN1( inpt, ap->a_ray.r_pt,
 				pp->pt_inhit->hit_dist, ap->a_ray.r_dir );
 			pl_color( plotfp, 0, 0, 255 );
-			pdv_3line( plotfp, ap->a_ray.r_pt, inhit );
+			pdv_3line( plotfp, ap->a_ray.r_pt, inpt );
 		}
 	}
 	for( ; pp != PartHeadp; pp = pp->pt_forw )  {
@@ -228,40 +230,41 @@ struct partition *PartHeadp;
 			pp->pt_outseg->seg_stp->st_name );
 
 		/* inhit info */
-		hitp = pp->pt_inhit;
 		stp = pp->pt_inseg->seg_stp;
-		RT_HIT_NORM( hitp, stp, &(ap->a_ray) );
+		inhit = *pp->pt_inhit;		/* struct copy */
+		RT_HIT_NORM( &inhit, stp, &(ap->a_ray) );
 		if( pp->pt_inflip ) {
-			VREVERSE( hitp->hit_normal, hitp->hit_normal );
-			pp->pt_inflip = 0;
+			VREVERSE( inhit.hit_normal, inhit.hit_normal );
 		}
-		rt_pr_hit( "  In", hitp );
-		RT_CURVE( &cur, hitp, stp );
+		rt_pr_hit( "  In", &inhit );
+		RT_CURVE( &cur, &inhit, stp );
 		rt_log("    PDir (%g, %g, %g) c1=%g, c2=%g\n",
 			V3ARGS(cur.crv_pdir), cur.crv_c1, cur.crv_c2);
 
-		/* outhit info - out curvature? */
-		hitp = pp->pt_outhit;
+		/* outhit info */
+		outhit = *pp->pt_outhit;	/* struct copy */
 		stp = pp->pt_outseg->seg_stp;
-		RT_HIT_NORM( hitp, stp, &(ap->a_ray) );
+		RT_HIT_NORM( &outhit, stp, &(ap->a_ray) );
 		if( pp->pt_outflip ) {
-			VREVERSE( hitp->hit_normal, hitp->hit_normal );
-			pp->pt_outflip = 0;
+			VREVERSE( outhit.hit_normal, outhit.hit_normal );
 		}
-		rt_pr_hit( " Out", hitp );
+		rt_pr_hit( " Out", &outhit );
+		RT_CURVE( &cur, &outhit, stp );
+		rt_log("    PDir (%g, %g, %g) c1=%g, c2=%g\n",
+			V3ARGS(cur.crv_pdir), cur.crv_c1, cur.crv_c2);
 
 		/* Plot inhit to outhit */
 		if( rdebug&RDEBUG_RAYPLOT )  {
 			if( (out = pp->pt_outhit->hit_dist) >= INFINITY )
 				out = 10000;	/* to imply the direction */
 
-			VJOIN1( inhit, ap->a_ray.r_pt,
-				hitp->hit_dist, ap->a_ray.r_dir );
-			VJOIN1( outhit,
+			VJOIN1( inpt, ap->a_ray.r_pt,
+				inhit.hit_dist, ap->a_ray.r_dir );
+			VJOIN1( outpt,
 				ap->a_ray.r_pt, out,
 				ap->a_ray.r_dir );
 			pl_color( plotfp, 0, 255, 255 );
-			pdv_3line( plotfp, inhit, outhit );
+			pdv_3line( plotfp, inpt, outpt );
 		}
 	}
 	return(1);
