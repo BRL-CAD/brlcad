@@ -89,7 +89,7 @@
 #	define HAVE_TERMIOS_H	1
 #endif
 
-#if defined(_MSC_VER) && defined(_M_IX86) && defined(_WIN32)
+#if defined(_WIN32) && defined(_MSC_VER) && defined(_M_IX86)
 #	define USE_PROTOTYPES 1
 #	define HAVE_STRING_H 1
 #	define HAVE_STDLIB_H 1

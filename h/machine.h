@@ -205,7 +205,7 @@
  *				  *
  **********************************/
 
-#if defined(_MSC_VER) && defined(_M_IX86) && defined(_WIN32)
+#if defined(_WIN32) && defined(_MSC_VER) && defined(_M_IX86)
 #define CONST const
 #endif
 
