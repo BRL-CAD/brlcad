@@ -408,6 +408,8 @@ Usage: wdb_open\n\
 	bu_vls_init(&wdbp->wdb_name);
 	bu_vls_strcpy(&wdbp->wdb_name, argv[1]);
 
+#if 0
+	/*XXXX already initialize by wdb_dbopen */
 	/* initilize tolerance structures */
 	wdbp->wdb_ttol.magic = RT_TESS_TOL_MAGIC;
 	wdbp->wdb_ttol.abs = 0.0;		/* disabled */
@@ -419,6 +421,7 @@ Usage: wdb_open\n\
 	wdbp->wdb_tol.dist_sq = wdbp->wdb_tol.dist * wdbp->wdb_tol.dist;
 	wdbp->wdb_tol.perp = 1e-6;
 	wdbp->wdb_tol.para = 1 - wdbp->wdb_tol.perp;
+#endif
 
 	/* initialize tree state */
 	wdbp->wdb_initial_tree_state = rt_initial_tree_state;  /* struct copy */
