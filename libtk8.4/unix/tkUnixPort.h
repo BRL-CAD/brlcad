@@ -17,6 +17,10 @@
 #ifndef _UNIXPORT
 #define _UNIXPORT
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
 #define __UNIX__ 1
 
 /*
