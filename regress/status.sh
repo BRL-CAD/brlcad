@@ -77,7 +77,7 @@ for i in $* ; do
 	-w)
 	    NO_WARNINGS="1"; shift 1;;
 	-a)
-	    MAIL_TO="$2"; shift 2;;
+	    MAIL_TO="$2"; MAIL_RESULTS="1"; shift 2;;
 	-h | -H)
 	    echo $USAGE; exit;;
 	# dash question should never be reached
@@ -223,6 +223,7 @@ if [ "x$MAIL_RESULTS" = "x1" ] ; then
     $REGRESS_LOG
     EOF`
     if [ `echo $WC | awk '{print $2}'` -ne 0 ] ; then
+        REGRESS_LOG="\n${REGRESS_LOG}\nSee $REGRESS_DIR/.regress.[ARCH]/MAKE_LOG for details\n"
 	mail $MAIL_TO "Regression Errors" "$REGRESS_LOG"
     fi
     log "Results have been mailed to [$MAIL_TO]."

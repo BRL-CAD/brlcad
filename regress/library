@@ -225,7 +225,7 @@ mail ( ) {
 	ADDRESS="$1"
     fi
     if [ "x$2" = x ] ; then SUBJECT="" ; else SUBJECT="$2" ; fi
-    if [ "x$3" = x ] ; then BODY="" ; else BODY=`echo -e $3` ; fi
+    if [ "x$3" = x ] ; then BODY="" ; else BODY=`echo $3` ; fi
     if [ "x$MAILER" = x ] ; then 
 	MAILER=""
 	for MAILER in /bin/mail /usr/bin/mail ; do
