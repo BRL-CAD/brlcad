@@ -3,7 +3,7 @@
 
 #	last edit:	86/02/12	Gary S. Moss
 
-#	SCCS ID:	@(#)Makefile	1.16
+#	SCCS ID:	@(#)Makefile	1.17
 
 PRODUCTS= pp-fb fbclear fbgrid rle-fb fb-rle fbcmap
 HEADERS =
@@ -64,21 +64,21 @@ compare:	all
 	done
 
 install:	all
-	for i in ${PRODUCTS} fbzoom ; \
-	do	@if cmp -s ${BINDIR}/$$i $$i; \
+	@for i in ${PRODUCTS} fbzoom ; \
+	do	if cmp -s ${BINDIR}/$$i $$i; \
 		then	echo $$i unchanged; \
 		else	${INS} $$i ${BINDIR}; \
 			-chmod ${BINPERM} ${BINDIR}/$$i ; \
 			echo $$i installed; \
-		fi
+		fi \
 	done
-	for i in ${MANUALS} ; \
-	do	@if cmp -s ${MANDIR}/$$i $$i; \
+	@for i in ${MANUALS} ; \
+	do	if cmp -s ${MANDIR}/$$i $$i; \
 		then	echo $$i unchanged; \
 		else	${INS} $$i ${MANDIR}; \
 			-chmod ${MANPERM} ${MANDIR}/$$i ; \
 			echo $$i installed; \
-		fi
+		fi \
 	done
 
 clean:
