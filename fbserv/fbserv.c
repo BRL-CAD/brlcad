@@ -478,7 +478,7 @@ int	fd;
 #if defined(SO_KEEPALIVE)
 	if( setsockopt( fd, SOL_SOCKET, SO_KEEPALIVE, (char *)&on, sizeof(on)) < 0 ) {
 #if		defined(BSD) && !defined(CRAY2)
-		syslog( LOG_WARNING, "setsockopt (SO_KEEPALIVE): %m" );
+		syslog( LOG_WARNING, "setsockopt (SO_KEEPALIVE): %s", strerror(errno) );
 #		endif
 	}
 #endif
