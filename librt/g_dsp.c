@@ -154,7 +154,8 @@ struct isect_stuff {
 	if (rt_g.debug & DEBUG_HF) { \
 		point_t out; \
 		VJOIN1(out, isp->r.r_pt, dist, isp->r.r_dir); \
-		bu_log("line %d New out pt(%g %g %g) dist %g surf:%d\n", __LINE__, V3ARGS(out), dist, surf); \
+		bu_log("line %d New out pt(%g %g %g) dist %g surf:%d\n", \
+			__LINE__, V3ARGS(out), dist, surf); \
 	} \
 }
 
@@ -494,7 +495,7 @@ register struct isect_stuff *isect;
 
 
 
-#if 1
+#if 0
 #define CELL_MIN(_c) c_min(isect, _c)
 #define CELL_MAX(_c) c_max(isect, _c)
 
@@ -591,8 +592,6 @@ CONST register int *cell;
 		VSUB2(A_B, _B, _A); \
 		VSUB2(A_C, _C, _A); \
  \
-		bu_log("alpha:%g beta:%g NdotD:%g\n", alpha, beta, NdotD); \
- \
 		RES_ACQUIRE( &rt_g.res_model); \
 		sprintf(buf, "dsp%d_1.pl", plot_file_num++); \
 		RES_RELEASE( &rt_g.res_model); \
@@ -686,9 +685,20 @@ CONST register int *cell;
 			VJOIN1(tmp, tmp, beta, A_B); \
 			pdv_3cont(fd, tmp); \
  \
-			fclose(fd); \
 		} \
 		RES_RELEASE( &rt_g.res_syscall); \
+	}
+
+#define DEBUG_PLOT_CLOSE(dist) \
+	if (rt_g.debug & DEBUG_HF) { \
+		if ( dist != 0.0) { \
+ 			/* plot the dist */ \
+ 			pl_color(fd, 20, 20, 140); \
+			pdv_3move(fd, isect->r.r_pt); \
+ 			VJOIN1(tmp, isect->r.r_pt, dist, isect->r.r_dir); \
+			pdv_3cont(fd, tmp); \
+		} \
+		fclose(fd); \
 	}
 
 void
@@ -753,9 +763,9 @@ int *inside;
 
 }
 
-#define DO_HIT do_hit
+
 static void
-do_hit(dist, inside, NdotD, isect, TR, ts, cell)
+do_hit(dist, inside, NdotD, isect, TR, ts, cell, line)
 double dist;
 int *inside;
 double NdotD;
@@ -763,6 +773,7 @@ struct isect_stuff *isect;
 int TR;
 char *ts;
 int cell[3];
+int line;
 {
 	if (NdotD < 0.0) {
 		/* Entering Solid */
@@ -884,16 +895,19 @@ int *inside;
 	/* project PAxD onto AD giving the distance along *AB* */
 	beta = VDOT( AD, PAxD );
 
+	dist = 0.0;
+
 	if (NdotD > 0.0) alpha = -alpha;
 	if ( NdotD < 0.0 ) beta = -beta;
 
+	if (rt_g.debug & DEBUG_HF)
+		bu_log("alpha:%g beta:%g NdotD:%g\n", alpha, beta, NdotD);
 	DEBUG_PLOT_TRI(A, B, D);
 
 
 	if (alpha < 0.0 || alpha > abs_NdotD ) {
 		if (rt_g.debug & DEBUG_HF)
 			bu_log("miss tri1 (alpha)\n");
-
 		goto tri2;
 	}
 	if( beta < 0.0 || beta > abs_NdotD ) {
@@ -908,17 +922,17 @@ int *inside;
 		goto tri2;
 	}
 
-	dist = VDOT( PA, N );
+	dist = VDOT( PA, N ) / NdotD;
+
 	if (rt_g.debug & DEBUG_HF)
-		bu_log("hit tri1 dist %g\n", dist);
+		bu_log("hit tri1 dist %g (inv:%g)\n", dist, VDOT( N, PA));
 
 
-	/* */
-
-	DO_HIT(dist, inside, NdotD, isect, TRI1, "tri1", cell);
+	do_hit(dist, inside, NdotD, isect, TRI1, "tri1", cell, __LINE__);
 
 
 tri2:
+	DEBUG_PLOT_CLOSE(dist);
 
 	VCROSS(N, AD, AC);
 	NdotD = VDOT( N, isect->r.r_dir);
@@ -941,14 +955,16 @@ tri2:
 	if (NdotD > 0.0) alpha = -alpha;
 	if ( NdotD < 0.0 ) beta = -beta;
 
+
+	if (rt_g.debug & DEBUG_HF)
+		bu_log("alpha:%g beta:%g NdotD:%g\n", alpha, beta, NdotD);
+
+	dist = 0.0;
 	DEBUG_PLOT_TRI(A, D, C);
-
-
 
 	if (alpha < 0.0 || alpha > abs_NdotD ) {
 		if (rt_g.debug & DEBUG_HF)
 			bu_log("miss tri2 (alpha)\n");
-
 		goto bail_out;
 	}
 	if( beta < 0.0 || beta > abs_NdotD ) {
@@ -960,17 +976,20 @@ tri2:
 		/* miss triangle */
 		if (rt_g.debug & DEBUG_HF)
 			bu_log("miss tri2 (alpha+beta > NdotD)\n");
+
 		goto bail_out;
 	}
 
-	dist = VDOT( PA, N );
+	dist = VDOT( PA, N ) / NdotD;
+
 	if (rt_g.debug & DEBUG_HF)
 		bu_log("hit tri2 dist %g\n", dist);
 
-	DO_HIT(dist, inside, NdotD, isect, TRI2, "tri2", cell);
+	do_hit(dist, inside, NdotD, isect, TRI2, "tri2", cell, __LINE__);
 
 bail_out:
-	;
+	DEBUG_PLOT_CLOSE(dist);
+
 }
 
 
@@ -979,209 +998,125 @@ bail_out:
  * pay the overhead of the subroutine call.
  */
 
-#define IN_BASEX(_i, _inside)                                               \
-	if (!_inside) {							    \
-        /* if (grid_cell[X] != 0 && grid_cell[X] != XCNT) bu_log("Oops, inside DSP without crossing boundary\n"); */ \
-		INHIT( (_i), tX, insurfX, grid_cell ); \
- \
-		_inside = 1;						    \
-	}								    \
- \
-	OUTHIT( (_i), tX + tDX, outsurfX, grid_cell);
+
+/*
+ *	Finds the minimum and maximum values in a cell
+ */
+void
+cell_minmax(dsp, x, y, cell_min, cell_max)
+register struct dsp_specific *dsp;
+register int x, y;
+short *cell_min;
+short *cell_max;
+{
+	register short cmin, cmax, v;
+
+	cmin = cmax = DSP(dsp, x, y);
+
+	v = DSP(dsp, x+1, y);
+	if (v < cmin) cmin = v;
+	if (v > cmax) cmax = v;
+	
+	v = DSP(dsp, x+1, y+1);
+	if (v < cmin) cmin = v;
+	if (v > cmax) cmax = v;
+	
+	v = DSP(dsp, x, y+1);
+	if (v < cmin) cmin = v;
+	if (v > cmax) cmax = v;
+
+	*cell_min = cmin;
+	*cell_max = cmax;
+}
 
 
-#define IN_BASEY(_i, _inside)						    \
-	if (!_inside) {							    \
-									    \
-/* bu_log("Oops, inside DSP without crossing boundary\n"); */		    \
-		INHIT( (_i), tY, insurfY, grid_cell); \
- \
-		_inside = 1;						    \
-	}								    \
-	OUTHIT( (_i), tY + tDY, outsurfY, grid_cell);
 
-#define MISS_ABOVE(_i, _inside)                                     	    \
-	if (_inside) {                                     		    \
-		HIT_COMMIT( (_i) ); \
- \
-		_inside = 0;                                     	    \
+
+int
+isect_cell_x_wall(isect, cell, surf, dist, pt)
+struct isect_stuff *isect;
+int cell[3];
+int surf;
+double dist;
+point_t pt;
+{
+	short a, b;	/* points on cell wall */
+	double wall_top_slope;
+	double wall_top;	/* wall height at Y of curr_pt */
+	double pt_dy;
+
+	if (rt_g.debug & DEBUG_HF)
+		bu_log("isect_cell_x_wall() cell(%d,%d) surf:%d dist:%g pt(%g %g %g)\n",
+			V2ARGS(cell), surf, dist, V3ARGS(pt));
+
+	if (surf == BBSURF(XMIN)) {
+		a = DSP(isect->dsp, cell[X],   cell[Y]);
+		b = DSP(isect->dsp, cell[X],   cell[Y]+1);
+	} else if (surf == BBSURF(XMAX)) {
+		a = DSP(isect->dsp, cell[X]+1, cell[Y]);
+		b = DSP(isect->dsp, cell[X]+1, cell[Y]+1);
+	} else {
+		bu_log("bad surface %d, isect_cell_x_entry_wall()\n", surf);
+		bu_bomb("");
 	}
 
-#define ISECT_ENTRY_WALL()                                     		    \
-{	register double slope;                                     	    \
-	/* determine if we are starting out "under/inside" the surface      \
-	 * or "above/outside" the surface.                                  \
-	 */                                     			    \
-	switch (curr_surf) {                                     	    \
-	case BBSURF(XMIN):                                     		    \
-		h = grid_cell[X];                                     	    \
-                                     					    \
-		i = DSP(isect->dsp, h, grid_cell[Y]);                       \
-		slope = (next_pt[Z] - i) / (next_pt[Y] - grid_cell[Y]);     \
-                                     					    \
-		i = DSP(isect->dsp, h, grid_cell[Y]+1) - i;                 \
-                                     					    \
-		if (slope < i) {                                     	    \
-			/* Entering cell under DSP top */                   \
-			if (rt_g.debug & DEBUG_HF) \
-				bu_log("slope: %g, i: %d\n", slope, i); \
-			if (!inside) {                                      \
-				if (rt_g.debug & DEBUG_HF) \
-					bu_log("entering XMIN wall\n"); \
- \
-				INHIT(isect, curr_dist, \
-					BBSURF(XMIN), grid_cell); \
- \
-				inside = 1;                                 \
-			}                           		            \
-		} else { \
-			if (rt_g.debug & DEBUG_HF) \
-				bu_log("entering cell above DSP at XMIN wall\n"); \
-		}			                                    \
-		break;                  		                    \
-	case BBSURF(XMAX):                                		    \
-		h = grid_cell[X]+1;                                         \
-					                                    \
-		i = DSP(isect->dsp, h, grid_cell[Y]);                       \
-		slope = (next_pt[Z] - i) / (next_pt[Y] - grid_cell[Y]);     \
-		i = (DSP(isect->dsp, h, grid_cell[Y]+1) - i) /* / 1.0 */;   \
-		if (slope < i ) {                                 	    \
-			/* Entering cell under DSP top */                   \
-			if (rt_g.debug & DEBUG_HF) \
-				bu_log("slope: %g, i: %d\n", slope, i); \
-			if (!inside) {                                      \
-				if (rt_g.debug & DEBUG_HF) \
-					bu_log("entering XMAX wall\n"); \
-				INHIT(isect, curr_dist, \
-					BBSURF(XMAX), grid_cell); \
-				inside = 1;                    		    \
-			}                                 		    \
-		} else {                               			    \
-			if (rt_g.debug & DEBUG_HF) \
-				bu_log("entering cell above DSP at XMAX wall\n"); \
-		}			                                    \
-		break;                               			    \
-	case BBSURF(YMIN):                                		    \
-		h = grid_cell[Y];                                	    \
-					                                    \
-		i = DSP(isect->dsp, grid_cell[X], h);                       \
-		slope = (next_pt[Z] - i) / (next_pt[X] - grid_cell[X]);     \
-		i = (DSP(isect->dsp, grid_cell[X]+1, h) - i) /* / 1.0 */;   \
-		if (slope < i ) {                                 	    \
-			if (rt_g.debug & DEBUG_HF) \
-				bu_log("slope: %g, i: %d\n", slope, i); \
-			/* Entering cell under DSP top */                   \
-			if (!inside) {                                      \
-				if (rt_g.debug & DEBUG_HF) \
-					bu_log("entering @ YMIN wall\n"); \
-				INHIT(isect, curr_dist, \
-					BBSURF(YMIN), grid_cell); \
-				inside = 1;				    \
-			}                                  		    \
-		} else { \
-			if (rt_g.debug & DEBUG_HF) \
-				bu_log("entering cell above DSP @ YMIN wall\n"); \
-		}                                			    \
-		break;                                 			    \
-	case BBSURF(YMAX):                                		    \
-		h = grid_cell[Y]+1;                                 	    \
-					                                    \
-		i = DSP(isect->dsp, grid_cell[X], h);			    \
-		slope = (next_pt[Z] - i) / (next_pt[X] - grid_cell[X]);     \
-		i = DSP(isect->dsp, grid_cell[X]+1, h) - i;                 \
-		if (slope < i ) {                                 	    \
-			/* Entering cell under DSP top */                   \
-			if (rt_g.debug & DEBUG_HF) \
-				bu_log("slope: %g, i: %d\n", slope, i); \
-			if (!inside) {                                      \
-				if (rt_g.debug & DEBUG_HF) \
-					bu_log("entering @ YMAX wall\n"); \
- \
-				INHIT(isect, curr_dist, \
-					BBSURF(YMAX), grid_cell); \
-				inside = 1;                                 \
-			}                                 		    \
-		} else { \
-			if (rt_g.debug & DEBUG_HF) \
-				bu_log("entering cell above DSP @ YMIN wall\n"); \
-		}                                 			    \
-		break;                                			    \
-	case BBSURF(ZMIN):                                 		    \
-		/* Entering cell under DSP top if rising */                 \
-		if (!rising)                                 		    \
-			bu_bomb("How can I be sinking and entering a cell at ZMIN?\n"); \
-                                					    \
-		if (!inside) {                                		    \
-			if (rt_g.debug & DEBUG_HF) \
-				bu_log("hit bottom risinging\n"); \
-			INHIT(isect, curr_dist, \
-					BBSURF(YMAX), grid_cell); \
-			inside = 1;				    \
-		}                                 			    \
-                                  					    \
-		break;                                			    \
-	case BBSURF(ZMAX):                                 		    \
-		/* entering from above */                                   \
-		if (rising)                                 		    \
-			bu_bomb("How can I be rising and entering a cell at ZMAX?\n"); \
-\
-		if (rt_g.debug & DEBUG_HF) \
-			bu_log("hit top descending\n"); \
-                                					    \
-		/* do nothing because we haven't entered through a          \
-		 * real surface                                 	    \
-		 */                                 			    \
-		break;                                			    \
-	}                                 				    \
-}
+	wall_top_slope = b - a;
+	pt_dy = pt[Y] - cell[Y];
 
+	/* compute the height of the wall top at the Y location of curr_pt */
+	wall_top = a + pt_dy * wall_top_slope;
 
-#define ISECT_X_EXIT_WALL(isect, grid_cell)                                 \
-{	register short h, i;                                 		    \
-	register double slope;                                  	    \
-                                 					    \
-	if (next_surf == BBSURF(XMIN) ) h = grid_cell[X];                \
-	else h = grid_cell[X]+1;                                	    \
-                                					    \
-	i = DSP(isect->dsp, h, grid_cell[Y]);                               \
-	slope = (next_pt[Z] - i) / (next_pt[Y] - grid_cell[Y]);             \
-	if (slope < DSP(isect->dsp, h, grid_cell[Y]+1) - i) {               \
-	    	/* exiting cell while inside solid */                       \
-		if (inside) {                                 		    \
-			if (rt_g.debug & DEBUG_HF) \
-				bu_log("exiting cell X dir inside DSP\n"); \
- \
-			OUTHIT(isect, tX, outsurfX, grid_cell); \
-		} else {                                 		    \
-		    bu_log("exiting DSP cell in solid without existing seg\n"); \
-		}                                 			    \
-	}                                 				    \
+	if (rt_g.debug & DEBUG_HF)
+		bu_log("\ta:%d b:%d wall slope:%g top:%g dy:%g pt[Z]:%g\n",
+			a, b, wall_top_slope, wall_top, pt_dy, pt[Z]);
+
+	return (wall_top > pt[Z]);
 }
 
 
 
-#define ISECT_Y_EXIT_WALL(isect, grid_cell)                                 \
-{	register short h, i;                                 		    \
-	register double slope;                                 		    \
-                                 					    \
-	if (next_surf == BBSURF(YMIN) ) h = grid_cell[Y];                \
-	else h = grid_cell[Y]+1;                                 	    \
-                                 					    \
-	i = DSP(isect->dsp, grid_cell[X], h);                               \
-	slope = (next_pt[Z] - i) / (next_pt[X] - grid_cell[X]);             \
-	if (slope < DSP(isect->dsp, grid_cell[X]+1, h) - i) {               \
-	    	/* exiting cell while inside solid */                       \
-		if (inside) {                                  		    \
-			if (rt_g.debug & DEBUG_HF) \
-				bu_log("exiting cell Y dir inside DSP\n"); \
-			OUTHIT(isect, tY, outsurfY, grid_cell); \
-		} else {                                  		    \
-		    bu_log("exiting DSP cell in solid without existing seg\n"); \
-		}                                 			    \
-	}                                 				    \
+
+int
+isect_cell_y_wall(isect, cell, surf, dist, pt)
+struct isect_stuff *isect;
+int cell[3];
+int surf;
+double dist;
+point_t pt;
+{
+	short a, b;	/* points on cell wall */
+	double wall_top_slope;
+	double wall_top;	/* wall height at Y of pt */
+	double pt_dx;
+
+	if (rt_g.debug & DEBUG_HF)
+		bu_log("isect_cell_y_wall() cell(%d,%d) surf:%d dist:%d pt(%g %g %g)\n",
+			V2ARGS(cell), surf, dist, V3ARGS(pt));
+
+	if (surf == BBSURF(YMIN)) {
+		a = DSP(isect->dsp, cell[X],   cell[Y]);
+		b = DSP(isect->dsp, cell[X]+1, cell[Y]);
+	} else if (surf == BBSURF(YMAX)) {
+		a = DSP(isect->dsp, cell[X],   cell[Y]+1);
+		b = DSP(isect->dsp, cell[X]+1, cell[Y]+1);
+	} else {
+		bu_log("bad surface %d, isect_cell_y_entry_wall()\n", surf);
+		bu_bomb("");
+	}
+
+	wall_top_slope = b - a;
+	pt_dx = pt[X] - cell[X];
+
+	/* compute the height of the wall top at the X location of pt */
+	wall_top = a + pt_dx * wall_top_slope;
+
+	if (rt_g.debug & DEBUG_HF)
+		bu_log("\ta:%d b:%d wall slope:%g top:%g dx:%g pt[Z]:%g\n",
+			a, b, wall_top_slope, wall_top, pt_dx, pt[Z]);
+
+
+	return (wall_top > pt[Z]);
 }
-
-
 
 
 static void
@@ -1193,6 +1128,7 @@ struct isect_stuff *isect;
 	double	bbin_dist;
 	point_t	bbout_pt;	/* DSP Bounding Box exit point */
 	int	bbout_cell[3];	/* grid cell of last point in bbox */
+	int	cell_bbox[4];
 
 	point_t curr_pt;	/* entry pt into a cell */
 	int	curr_surf;	/* surface of cell bbox for curr_pt */
@@ -1200,17 +1136,18 @@ struct isect_stuff *isect;
 	point_t next_pt;	/* exit pt from cell */
 	int	next_surf;	/* surface of cel bbox for next_pt */
 
-	int	inside = 0;	/* currently have a valid seg we're building */
+	short	cell_min;
+	short	cell_max;
 	int	grid_cell[3];	/* grid cell of current point */
-
+	int	inside = 0;
 	int	rising;		/* boolean:  Ray Z dir sign is positive */
 	int	stepX, stepY;	/* signed step delta for grid cell marching */
-	int	outX, outY;	/* cell index which idicates we're outside */
 	int	insurfX, outsurfX;
 	int	insurfY, outsurfY;
 /*	vect_t	pDX, pDY;	/* vector for 1 cell change in x, y */
 	double	tDX;		/* dist along ray to span 1 cell in X dir */
 	double	tDY;		/* dist along ray to span 1 cell in Y dir */
+	int hit;		/* boolean */
 
 	/* tmp values for various macros including:
 	 *	CELL_MIN, CELL_MAX
@@ -1219,7 +1156,7 @@ struct isect_stuff *isect;
 	 */
 	short	h, i;		
 
-	double	out_dist = isect->bbox.out_dist;
+	double	out_dist;
 	double	dsp_max = isect->dsp->dsp_pl_dist[ZMAX];
 				
 	double	tX, tY;	/* dist along ray from hit pt. to next cell boundary */
@@ -1242,17 +1179,44 @@ struct isect_stuff *isect;
 	if (grid_cell[X] >= XSIZ(isect->dsp)) grid_cell[X]--;
 	if (grid_cell[Y] >= YSIZ(isect->dsp)) grid_cell[Y]--;
 	
-	VJOIN1(bbout_pt, isect->r.r_pt, isect->bbox.out_dist, isect->r.r_dir);
+	out_dist = isect->bbox.out_dist;
+	VJOIN1(bbout_pt, isect->r.r_pt, out_dist, isect->r.r_dir);
+
 	VMOVE(bbout_cell, bbout_pt);	/* int/float conversion */
+	if (bbout_cell[X] >= XSIZ(isect->dsp)) bbout_cell[X]--;
+	if (bbout_cell[Y] >= YSIZ(isect->dsp)) bbout_cell[Y]--;
+
+
+	/* compute min/max cell values in X and Y for extent of 
+	 * ray overlap with bounding box
+	 */
+	if (bbout_cell[X] < grid_cell[X]) {
+		cell_bbox[XMIN] = bbout_cell[X];
+		cell_bbox[XMAX] = grid_cell[X];
+	} else {
+		cell_bbox[XMIN] = grid_cell[X];
+		cell_bbox[XMAX] = bbout_cell[X];
+	}
+	if (bbout_cell[Y] < grid_cell[Y]) {
+		cell_bbox[YMIN] = bbout_cell[Y];
+		cell_bbox[YMAX] = grid_cell[Y];
+	} else {
+		cell_bbox[YMIN] = grid_cell[Y];
+		cell_bbox[YMAX] = bbout_cell[Y];
+	}
+
 
 	VMOVE(curr_pt, bbin_pt);
 	curr_dist = bbin_dist;
+	curr_surf = BBSURF(bbin_surf);
 
 	if (rt_g.debug & DEBUG_HF) {
-		bu_log(" in cell(%d,%d)  pt(%g %g %g)\n",
-			grid_cell[X], grid_cell[Y], V3ARGS(curr_pt));
-		bu_log("out cell(%d,%d)  pt(%g %g %g)\n",
-			bbout_cell[X], bbout_cell[Y], V3ARGS(bbout_pt));
+		bu_log(" in cell(%d,%d)  pt(%g %g %g) dist:%g\n",
+			grid_cell[X], grid_cell[Y], V3ARGS(curr_pt),
+			bbin_dist);
+		bu_log("out cell(%d,%d)  pt(%g %g %g) dist:%g\n",
+			bbout_cell[X], bbout_cell[Y], V3ARGS(bbout_pt),
+			out_dist);
 	}
 
 	rising = (isect->r.r_dir[Z] > 0.); /* compute Z direction */
@@ -1260,7 +1224,6 @@ struct isect_stuff *isect;
 
 	if (isect->r.r_dir[X] < 0.0) {
 		stepX = -1;	/* cell delta for stepping X dir on ray */
-		outX = -1;	/* cell beyond last valid in X direction */
 		insurfX = BBSURF(XMAX);
 		outsurfX = BBSURF(XMIN);
 
@@ -1278,7 +1241,6 @@ struct isect_stuff *isect;
 
 	} else {
 		stepX = 1;
-		outX = isect->dsp->dsp_i.dsp_xcnt;
 		insurfX = BBSURF(XMIN);
 		outsurfX = BBSURF(XMAX);
 
@@ -1291,7 +1253,6 @@ struct isect_stuff *isect;
 	}
 	if (isect->r.r_dir[Y] < 0) {
 		stepY = -1;
-		outY = -1;
 		insurfY = BBSURF(YMAX);
 		outsurfY = BBSURF(YMIN);
 
@@ -1300,7 +1261,6 @@ struct isect_stuff *isect;
 		tY = (grid_cell[Y] - curr_pt[Y]) / isect->r.r_dir[Y];
 	} else {
 		stepY = 1;
-		outY = isect->dsp->dsp_i.dsp_ycnt;
 		insurfY = BBSURF(YMIN);
 		outsurfY = BBSURF(YMAX);
 
@@ -1315,17 +1275,17 @@ struct isect_stuff *isect;
 
 
 	if (rt_g.debug & DEBUG_HF) {
-		bu_log("stepX:%d outX:%d  tDX:%g tX:%g\n",
-			stepX, outX, tDX, tX);
-		bu_log("stepY:%d outY:%d  tDY:%g tY:%g\n",
-			stepY, outY, tDY, tY);
+		bu_log("stepX:%d tDX:%g tX:%g\n",
+			stepX, tDX, tX);
+		bu_log("stepY:%d tDY:%g tY:%g\n",
+			stepY,  tDY, tY);
 	}
 
 
 	do {
 		if (rt_g.debug & DEBUG_HF)
-bu_log("cell(%d,%d) tX:%g tY:%g  inside=%d\n\t  curr_pt (%g %g %g)\n\t",
-	grid_cell[X], grid_cell[Y], tX, tY, inside, V3ARGS(curr_pt));
+bu_log("cell(%d,%d) tX:%g tY:%g  inside=%d\n\t  curr_pt (%g %g %g) surf:%d  dist:%g\n\t",
+grid_cell[X], grid_cell[Y], tX, tY, inside, V3ARGS(curr_pt), curr_surf, curr_dist);
 
 		if (tX < tY) {
 			/* dist along ray to next X cell boundary is closer
@@ -1334,62 +1294,109 @@ bu_log("cell(%d,%d) tX:%g tY:%g  inside=%d\n\t  curr_pt (%g %g %g)\n\t",
 			VJOIN1(next_pt, bbin_pt, tX, isect->r.r_dir);
 			next_surf = outsurfX;
 
+			if (rt_g.debug & DEBUG_HF)
+				bu_log("X next_pt(%g %g %g) surf:%d  dist:%g\n",
+					V3ARGS(next_pt), next_surf, tX);
 
-			if (rt_g.debug & DEBUG_HF) {
-				VPRINT("X next_pt", next_pt);
-			}
+			cell_minmax(isect->dsp, grid_cell[X], grid_cell[Y],
+				&cell_min, &cell_max);
 
-			if (rising) {
-				if (next_pt[Z] < CELL_MIN(grid_cell)) {
-					/* in base */
-					if (rt_g.debug & DEBUG_HF) bu_log("in base\n");
+			if (( rising && next_pt[Z] < cell_min) ||
+			    (!rising && curr_pt[Z] < cell_min) ) {
+				/* in base */
+				if (rt_g.debug & DEBUG_HF) bu_log("in base\n");
+			    	if (!inside) {
+			    		INHIT(isect, curr_dist, curr_surf,
+			    			grid_cell);
+			    		inside = 1;
+			    	}
+			    	OUTHIT(isect, (bbin_dist+tX), outsurfX, grid_cell);
 
-					IN_BASEX(isect, inside);
+			} else if (
+			    ( rising && curr_pt[Z] > cell_max) ||
+			    (!rising && next_pt[Z] > cell_max) ) {
+				/* miss above */
+				if (rt_g.debug & DEBUG_HF) bu_log("miss above\n");
+			    	if (inside) {
+			    		HIT_COMMIT(isect);
+			    		inside = 0;
+			    	}
 
-				} else if (curr_pt[Z] > CELL_MAX(grid_cell)) {
-					/* miss above */
-					if (rt_g.debug & DEBUG_HF) bu_log("miss above\n");
-					MISS_ABOVE(isect, inside);
-				} else {
-					/* intersect */
-					if (rt_g.debug & DEBUG_HF) bu_log("intersect %d %d X rising\n", CELL_MIN(grid_cell), CELL_MAX(grid_cell));
-
-					ISECT_ENTRY_WALL();
-					isect_ray_triangles(isect, grid_cell,
-						curr_pt, next_pt,
-						curr_surf, next_surf,
-						&inside);
-
-					ISECT_X_EXIT_WALL(isect, grid_cell);
-				}
 			} else {
-				if (next_pt[Z] > CELL_MAX(grid_cell)) {
-					/* miss above */
-					if (rt_g.debug & DEBUG_HF) bu_log("miss above\n");
-					MISS_ABOVE(isect, inside);
-				} else if (curr_pt[Z] < CELL_MIN(grid_cell)){
-					/* in base */
-					if (rt_g.debug & DEBUG_HF) bu_log("in base\n");
-					IN_BASEX(isect, inside);
-				} else {
-					/* intersect */
-					if (rt_g.debug & DEBUG_HF) bu_log("intersect %d %d X falling\n",
-							 CELL_MIN(grid_cell), CELL_MAX(grid_cell));
+				/* intersect */
+				if (rt_g.debug & DEBUG_HF)
+					bu_log("intersect %d %d X %s\n",
+						cell_min, cell_max, 
+						(rising?"rising":"falling") );
 
-					ISECT_ENTRY_WALL();
-					isect_ray_triangles(isect, grid_cell,
-						curr_pt, next_pt,
-						curr_surf, next_surf,
-						&inside);
-
-					ISECT_X_EXIT_WALL(isect, grid_cell);
+				switch (curr_surf) {
+				case BBSURF(XMIN) :
+				case BBSURF(XMAX) :
+					hit = isect_cell_x_wall(
+						isect, grid_cell, curr_surf,
+						curr_dist, curr_pt);
+					if (rt_g.debug & DEBUG_HF) {
+						if (hit)
+							bu_log("hit X in-wall\n");
+						else
+							bu_log("miss X in-wall\n");
+					}
+					break;
+				case BBSURF(YMIN) :
+				case BBSURF(YMAX) :
+					hit = isect_cell_y_wall(
+						isect, grid_cell, curr_surf,
+						curr_dist, curr_pt);
+					if (rt_g.debug & DEBUG_HF) {
+						if (hit)
+							bu_log("hit Y in-wall\n");
+						else
+							bu_log("miss Y in-wall\n");
+					}
+					break;
 				}
-			}
+
+				if (hit && !inside) {
+					INHIT(isect, curr_dist,
+						curr_surf, grid_cell);
+					inside = 1;
+				}
+
+				isect_ray_triangles(isect, grid_cell,
+					curr_pt, next_pt,
+					curr_surf, next_surf,
+					&inside);
+
+
+				hit = isect_cell_x_wall(
+					isect, grid_cell, outsurfX,
+					tX, next_pt);
+
+				if (hit) {
+					if (!inside) {
+						bu_log("hit dsp and not inside g_dsp.c line:%d", __LINE__);
+						bu_bomb("");
+					}
+					if (rt_g.debug & DEBUG_HF)
+						bu_log("hit X out-wall\n");
+					OUTHIT(isect, (bbin_dist+tX), next_surf, grid_cell);
+					inside = 1;
+				} else {
+					if (rt_g.debug & DEBUG_HF)
+						bu_log("miss X out-wall\n");
+				}
+			} 
 
 			/* step to next cell in X direction */
 			VMOVE(curr_pt, next_pt);
 			grid_cell[X] += stepX;
 			curr_surf = insurfX;
+
+			
+
+
+
+
 			curr_dist = tX;
 			
 			/* update dist along ray to next X cell boundary */
@@ -1401,52 +1408,94 @@ bu_log("cell(%d,%d) tX:%g tY:%g  inside=%d\n\t  curr_pt (%g %g %g)\n\t",
 			VJOIN1(next_pt, bbin_pt, tY, isect->r.r_dir);
 			next_surf = outsurfY;
 
-			if (rt_g.debug & DEBUG_HF) {
-				VPRINT("Y next_pt", next_pt);
-			}
-			if (rising) {
-				if (next_pt[Z] < CELL_MIN(grid_cell)) {
-					/* in base */
-					if (rt_g.debug & DEBUG_HF) bu_log("in base\n");
-					IN_BASEY(isect, inside);
+			if (rt_g.debug & DEBUG_HF)
+				bu_log("Y next_pt(%g %g %g) surf:%d dist:%g\n", V3ARGS(next_pt), next_surf, tY);
 
-				} else if (curr_pt[Z] > CELL_MAX(grid_cell)) {
-					/* miss above */
-					if (rt_g.debug & DEBUG_HF) bu_log("miss above\n");
-					MISS_ABOVE(isect, inside);
-				} else {
-					/* intersect */
-					if (rt_g.debug & DEBUG_HF) bu_log("intersect %d %d Y rising\n", CELL_MIN(grid_cell), CELL_MAX(grid_cell));
 
-					ISECT_ENTRY_WALL();
-					isect_ray_triangles(isect, grid_cell,
-						curr_pt, next_pt,
-						curr_surf, next_surf,
-						&inside);
-					ISECT_Y_EXIT_WALL(isect, grid_cell);
-				}
+			cell_minmax(isect->dsp, grid_cell[X], grid_cell[Y],
+				&cell_min, &cell_max);
+
+			if (( rising && next_pt[Z] < cell_min) || 
+			    (!rising && curr_pt[Z] < cell_min) ) {
+				/* in base */
+				if (rt_g.debug & DEBUG_HF) bu_log("in base\n");
+			    	if (!inside) {
+			    		INHIT(isect, curr_dist, curr_surf,
+			    			grid_cell);
+			    		inside = 1;
+			    	}
+			    	OUTHIT(isect, (bbin_dist+tY), outsurfY, grid_cell);
+			} else if (
+			    ( rising && curr_pt[Z] > cell_max) ||
+			    (!rising && next_pt[Z] > cell_max) ) {
+				/* miss above */
+				if (rt_g.debug & DEBUG_HF) bu_log("miss above\n");
+			    	if (inside) {
+			    		HIT_COMMIT(isect);
+			    		inside = 0;
+			    	}
 			} else {
-				if (next_pt[Z] > CELL_MAX(grid_cell)) {
-					/* miss above */
-					if (rt_g.debug & DEBUG_HF) bu_log("miss above\n");
-					MISS_ABOVE(isect, inside);
-				} else if (curr_pt[Z] < CELL_MIN(grid_cell)){
-					/* in base */
-					if (rt_g.debug & DEBUG_HF) bu_log("in base\n");
-					IN_BASEY(isect, inside);
-				} else {
-					/* intersect */
-					if (rt_g.debug & DEBUG_HF)
-						bu_log("intersect %d %d Y falling\n",
-							CELL_MIN(grid_cell),
-							CELL_MAX(grid_cell));
+				/* intersect */
+				if (rt_g.debug & DEBUG_HF)
+					bu_log("intersect %d %d Y %s\n",
+						cell_min, cell_max, 
+						(rising?"rising":"falling") );
 
-					ISECT_ENTRY_WALL();
-					isect_ray_triangles(isect, grid_cell,
-						curr_pt, next_pt,
-						curr_surf, next_surf,
-						&inside);
-					ISECT_Y_EXIT_WALL(isect, grid_cell);
+				switch (curr_surf) {
+				case BBSURF(XMIN) :
+				case BBSURF(XMAX) :
+					hit = isect_cell_x_wall(
+						isect, grid_cell, curr_surf,
+						curr_dist, curr_pt);
+					if (rt_g.debug & DEBUG_HF) {
+						if (hit)
+							bu_log("hit X in-wall\n");
+						else
+							bu_log("miss X in-wall\n");
+					}
+					break;
+				case BBSURF(YMIN) :
+				case BBSURF(YMAX) :
+					hit = isect_cell_y_wall(
+						isect, grid_cell, curr_surf,
+						curr_dist, curr_pt);
+					if (rt_g.debug & DEBUG_HF) {
+						if (hit)
+							bu_log("hit Y in-wall\n");
+						else
+							bu_log("miss Y in-wall\n");
+					}
+					break;
+				}
+
+				if (hit && !inside) {
+					INHIT(isect, curr_dist,
+						curr_surf, grid_cell);
+					inside = 1;
+				}
+
+				isect_ray_triangles(isect, grid_cell,
+					curr_pt, next_pt,
+					curr_surf, next_surf,
+					&inside);
+
+
+				hit = isect_cell_y_wall(
+					isect, grid_cell, outsurfY,
+					tY, next_pt);
+
+				if (hit) {
+					if (!inside) {
+						bu_log("line:%d", __LINE__);
+						bu_bomb("");
+					}
+					if (rt_g.debug & DEBUG_HF)
+						bu_log("hit Y out-wall\n");
+					OUTHIT(isect, (bbin_dist+tY), next_surf, grid_cell);
+					inside = 1;
+				} else {
+					if (rt_g.debug & DEBUG_HF)
+						bu_log("miss Y out-wall\n");
 				}
 			}
 
@@ -1461,11 +1510,12 @@ bu_log("cell(%d,%d) tX:%g tY:%g  inside=%d\n\t  curr_pt (%g %g %g)\n\t",
 		}
 
 
-	} while ( grid_cell[X] != outX && grid_cell[Y] != outY &&
-		  (tX < out_dist+tDX || tY < out_dist+tDY) ||
-		  (rising && curr_pt[Z] < dsp_max) ||
-		 (!rising && curr_pt[Z] > 0.0) );
-		
+
+	} while ( grid_cell[X] >= cell_bbox[XMIN] &&
+		grid_cell[X] <= cell_bbox[XMAX] &&
+		grid_cell[Y] >= cell_bbox[YMIN] &&
+		grid_cell[Y] <= cell_bbox[YMAX] );
+
 
 	if (inside) {
 		HIT_COMMIT( isect );
@@ -1505,10 +1555,11 @@ struct seg		*seghead;
 	struct isect_stuff isect;
 
 	if (rt_g.debug & DEBUG_HF)
-		bu_log("rt_dsp_shot(pt:(%g %g %g)\n\tdir[%g]:(%g %g %g))\n",
+		bu_log("rt_dsp_shot(pt:(%g %g %g)\n\tdir[%g]:(%g %g %g))\n    pixel(%d,%d)\n",
 			V3ARGS(rp->r_pt),
 			MAGNITUDE(rp->r_dir),
-			V3ARGS(rp->r_dir));
+			V3ARGS(rp->r_dir),
+			ap->a_x, ap->a_y);
 
 	RT_DSP_CK_MAGIC(dsp);
 	BU_CK_MAPPED_FILE(dsp->dsp_i.dsp_mp);
@@ -1677,7 +1728,8 @@ register struct xray	*rp;
 		MAT4X3VEC(N, dsp->dsp_i.dsp_stom, T);
 
 	} else {
-		bu_bomb("bogus surface of DSP\n");
+		bu_log("bogus surface of DSP %d\n", hitp->hit_surfno);
+		bu_bomb("");
 	}
 
 	VUNITIZE(N);
