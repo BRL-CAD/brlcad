@@ -50,7 +50,7 @@ void	rgbhsv(), hsvrgb();
 
 char usage[] = "\
 Usage:  pixbackgnd [-h -i] [-s squaresize] [-w width] [-n height]\n\
-	[-t title_height]\n\
+	[-t title_height] [-a top_inten] [-b bottom_inten]\n\
 	hue saturation\n\
 or	r g b\n";
 
@@ -59,7 +59,7 @@ register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "his:w:n:t:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "his:w:n:t:a:b:" )) != EOF )  {
 		switch( c )  {
 		case 'i':
 			invert = 1;
@@ -82,6 +82,12 @@ register char **argv;
 		case 't':
 			/* Title area size */
 			title_height = atoi( optarg );
+			break;
+		case 'a':
+			h_start = atoi(optarg);
+			break;
+		case 'b':
+			h_end = atoi(optarg);
 			break;
 
 		default:		/* '?' */

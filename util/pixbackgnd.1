@@ -9,6 +9,8 @@ pixbackgnd \- generate a pix(5) shaded background
 .RB [ \-w\  width]
 .RB [ \-n\  height]
 .RB [ \-t\  title_height]
+.RB [ \-a\  top_inten]
+.RB [ \-b\  bottom_inten]
 hue saturation
 \>
 file.pix
@@ -62,6 +64,14 @@ flag, the scanlines will be written out in inverted order
 (ie, top to bottom).
 This is mostly useful with programs like
 .IR cat-fb (1)
+.PP
+The
+.B \-a
+and
+.B \-b
+options can be used to set the top and bottom intensity,
+in the range of 0 to 255.
+By default, the top intensity is 240, and the bottom is 50.
 .SH EXAMPLES
 .ft I
 pixbackgnd 160 200\| | \| pixmerge fg.pix \(em | pix-fb
