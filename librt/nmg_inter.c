@@ -55,6 +55,7 @@ struct ee_2d_state {
 };
 
 RT_EXTERN(void		nmg_isect2d_prep, (struct nmg_inter_struct *is, struct face *f1));
+RT_EXTERN(CONST struct vertexuse *nmg_touchingloops, (CONST struct loopuse *lu));
 
 
 /*
@@ -1898,11 +1899,25 @@ nmg_fu_touchingloops(fu)
 CONST struct faceuse	*fu;
 {
 	CONST struct loopuse	*lu;
+	CONST struct vertexuse	*vu;
 
 	NMG_CK_FACEUSE(fu);
 	for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
 		NMG_CK_LOOPUSE(lu);
-		if( nmg_touchingloops( lu ) )  return 1;
+		if( vu = nmg_touchingloops( lu ) )  {
+#if 0
+			/* Right now, this routine is used for debugging ONLY,
+			 * so if this condition exists, die.
+			 * However, note that this condition happens a lot
+			 * for valid reasons, too.
+			 */
+			rt_log("nmg_fu_touchingloops(lu=x%x, vu=x%x, v=x%x)\n",
+				lu, vu, vu->v_p );
+			nmg_pr_lu_briefly(lu,0);
+			rt_bomb("nmg_touchingloops()\n");
+#endif
+			return 1;
+		}
 	}
 	return 0;
 }
@@ -1920,10 +1935,10 @@ CONST struct faceuse	*fu;
  *  Derrived from nmg_split_touchingloops().
  *
  *  Returns -
- *	1	Yes, the loop touches itself at least once.
+ *	vu	Yes, the loop touches itself at least once, at this vu.
  *	0	No, the loop does not touch itself.
  */
-int
+CONST struct vertexuse *
 nmg_touchingloops( lu )
 CONST struct loopuse	*lu;
 {
@@ -1932,7 +1947,7 @@ CONST struct loopuse	*lu;
 	CONST struct vertex	*v;
 
 	if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
-		return 0;
+		return (CONST struct vertexuse *)0;
 
 	/* For each edgeuse, get vertexuse and vertex */
 	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
@@ -1967,14 +1982,8 @@ CONST struct loopuse	*lu;
 			/*
 			 *  Repeated vertex exists.
 			 */
-#if 0
-nmg_pr_lu_briefly(lu,0);
-rt_bomb("nmg_touchingloops()\n");
-#else
-rt_log("nmg_touchingloops(lu=x%x, vu1=x%x, vu2=x%x, v=x%x\n", lu, vu, tvu, v );
-#endif
-			return 1;
+			return vu;
 		}
 	}
-	return 0;
+	return (CONST struct vertexuse *)0;
 }
