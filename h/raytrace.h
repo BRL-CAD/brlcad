@@ -973,6 +973,14 @@ struct vlhead {
 	struct vlist	*vh_last;
 };
 
+/* Values for vl_draw */
+#define VL_CMD_LINE_MOVE	0
+#define VL_CMD_LINE_DRAW	1
+#define VL_CMD_POLY_START	2	/* vl_pnt has surface normal */
+#define VL_CMD_POLY_MOVE	3	/* move to first poly vertex */
+#define VL_CMD_POLY_DRAW	4	/* subsequent poly vertex */
+#define VL_CMD_POLY_END		5	/* last vert (repeats 1st), draw poly */
+
 #define GET_VL(p)	{ \
 			if( ((p) = rt_g.rtg_vlFree) == VL_NULL )  { \
 				(p) = (struct vlist *)rt_malloc(sizeof(struct vlist), "vlist"); \
