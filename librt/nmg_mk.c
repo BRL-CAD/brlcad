@@ -1117,15 +1117,16 @@ register struct vertexuse *vu;
 
 	NMG_CK_VERTEXUSE(vu);
 
-	if (vu->a.magic_p) switch(*vu->a.magic_p)  {
-	case NMG_VERTEXUSE_A_PLANE_MAGIC:
-		FREE_VERTEXUSE_A_PLANE(vu->a.plane_p);
-		break;
-	case NMG_VERTEXUSE_A_CNURB_MAGIC:
-		FREE_VERTEXUSE_A_CNURB(vu->a.cnurb_p);
-		break;
-	default:
-		rt_bomb("nmg_kvu() illegal vua\n");
+	if (vu->a.magic_p)  {
+		NMG_CK_VERTEXUSE_A_EITHER(vu->a.magic_p);
+		switch(*vu->a.magic_p)  {
+		case NMG_VERTEXUSE_A_PLANE_MAGIC:
+			FREE_VERTEXUSE_A_PLANE(vu->a.plane_p);
+			break;
+		case NMG_VERTEXUSE_A_CNURB_MAGIC:
+			FREE_VERTEXUSE_A_CNURB(vu->a.cnurb_p);
+			break;
+		}
 	}
 
 	v = vu->v_p;
