@@ -389,6 +389,26 @@ copy_geometry( int dest, int src )
 		rts_geometry[src]->rts_comp_names;
 }
 
+int
+isLastUseOfRti( struct rt_i *rtip, int sessionid )
+{
+	int i, j;
+
+	for( i=0 ; i<num_geometries ; i++ ) {
+		if( i == sessionid )
+			continue;
+		if( !rts_geometry[i] )
+			continue;
+		for( j=0 ; j<rts_geometry[i]->rts_number_of_rtis ; j++ ) {
+			struct rtserver_rti *rtsrtip = rts_geometry[i]->rts_rtis[j];
+			if( rtsrtip->rtrti_rtip == rtip )
+				return 0;
+		}
+	}
+
+	return 1;
+}
+
 
 /* routine to free memory associated with the rtserver_geometry */
 void
@@ -404,23 +424,32 @@ rts_clean( int sessionid)
 			rtsrtip = rts_geometry[sessionid]->rts_rtis[i];
 			if( rtsrtip->rtrti_name ) {
 				bu_free( rtsrtip->rtrti_name, "rtserver assembly name" );
+				rtsrtip->rtrti_name = NULL;
 			}
 			if( rtsrtip->rtrti_xform ) {
 				bu_free( rtsrtip->rtrti_xform, "rtserver xform matrix" );
+				rtsrtip->rtrti_xform = NULL;
 			}
 			if( rtsrtip->rtrti_inv_xform ) {
 				bu_free( rtsrtip->rtrti_inv_xform, "rtserver inverse xform matrix" );
+				rtsrtip->rtrti_inv_xform = NULL;
 			}
 
 			for( j=0 ; j<rtsrtip->rtrti_num_trees ; j++ ) {
 				bu_free( rtsrtip->rtrti_trees[j], "rtserver tree name" );
+				rtsrtip->rtrti_trees[j] = NULL;
 			}
+			rtsrtip->rtrti_num_trees =  0;
 			if( rtsrtip->rtrti_trees ) {
 				bu_free( rtsrtip->rtrti_trees, "rtserver tree names" );
+				rtsrtip->rtrti_trees = NULL;
 			}
 
 			if( rtsrtip->rtrti_rtip ) {
-				rt_clean( rtsrtip->rtrti_rtip );
+				if( isLastUseOfRti( rtsrtip->rtrti_rtip, i ) ) {
+					rt_clean( rtsrtip->rtrti_rtip );
+					rtsrtip->rtrti_rtip = NULL;
+				}
 			}
 		}
 		if( rts_geometry[sessionid]->rts_comp_names ) {
@@ -1434,7 +1463,7 @@ rts_shutdown()
 	threads = NULL;
 	num_threads = 0;
 
-	for( i=0 ; i<num_geometries ; i++ ) {
+	for( i=num_geometries-1 ; i>=0 ; i-- ) {
 		rts_clean( i );
 	}
 
