@@ -1751,7 +1751,7 @@ register unsigned short	maxdist;
 	{	short distance;
 	distance = hl_dstmap[y0*a_gridsz+x0] - hl_dstmap[y1*a_gridsz+x1];
 	distance = Abs( distance );
-	return distance > maxdist;
+	return (unsigned short)(distance) > maxdist;
 	}
 
 hl_Reg_Diff( x0, y0, x1, y1 )
