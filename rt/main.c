@@ -110,6 +110,10 @@ char **argv;
 	azimuth = 35.0;			/* GIFT defaults */
 	elevation = 25.0;
 
+	/* Before option processing, get default number of processors */
+	npsw = rt_avail_cpus();		/* Use all that are present */
+
+	/* Process command line options */
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
 		exit(1);
