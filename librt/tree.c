@@ -193,17 +193,28 @@ matp_t old_xlate;
 		(void)lseek( ged_fd, savepos, 0);	/* restore pos */
 		if( stp == SOLTAB_NULL )
 			return( TREE_NULL );
-		if( argregion != REGION_NULL )  {
-		/**	GETSTRUCT( curtree, union tree ); **/
-			curtree = (union tree *)malloc(sizeof(union tree));
-			if( curtree == TREE_NULL )
-				bomb("drawHobj: curtree malloc failed\n");
-			bzero( (char *)curtree, sizeof(union tree) );
-			curtree->tr_op = OP_SOLID;
-			curtree->tr_stp = stp;
-			return( curtree );
-		}
-		return( TREE_NULL );
+		/**GETSTRUCT( curtree, union tree ); **/
+		curtree = (union tree *)malloc(sizeof(union tree));
+		if( curtree == TREE_NULL )
+			bomb("drawHobj: curtree malloc failed\n");
+		bzero( (char *)curtree, sizeof(union tree) );
+		curtree->tr_op = OP_SOLID;
+		curtree->tr_stp = stp;
+		if( argregion != REGION_NULL )
+			return( curtree );	/* Leaf node within region */
+
+		/* Found solid that is not in a region;  invent a region */
+		GETSTRUCT( regionp, region );
+		regionp->reg_active = REGION_NULL;
+		regionp->reg_treetop = curtree;
+		regionp->reg_name = strdup(path_str(pathpos));
+		regionp->reg_forw = HeadRegion;
+		HeadRegion = regionp;
+		nregions++;
+		stp->st_regionp = regionp;
+		/** if( debug&DEBUG_REGIONS) */
+		printf("Warning:  Created dummy region %s\n", regionp->reg_name);
+		return( TREE_NULL );	/* No proper leaf encountered */
 	}
 
 	if( rec.u_id != COMB )  {
@@ -215,7 +226,7 @@ matp_t old_xlate;
 	regionp = argregion;
 	if( rec.c.c_flags == 'R' )  {
 		if( argregion != REGION_NULL )  {
-			printf("Warning: region %s within region\n",
+			printf("Warning: region %s within region (ignored)\n",
 				path_str(pathpos) );
 		} else {
 			/* Start a new region here */
@@ -252,28 +263,34 @@ matp_t old_xlate;
 
 		/* Recursive call */
 		subtree = drawHobj( nextdp, regionp, pathpos+1, new_xlate );
-		if( subtree != TREE_NULL && regionp != REGION_NULL )  {
-			if( curtree == TREE_NULL )  {
-				curtree = subtree;
-			} else {
-				register union tree *xtp;	/* XXX */
-			/**	GETSTRUCT( xtp, union tree ); **/
-				xtp=(union tree *)malloc(sizeof(union tree));
-				if( xtp == TREE_NULL )
-					bomb("drawHobj: xtp malloc failed\n");
-				bzero( (char *)xtp, sizeof(union tree) );
-				xtp->tr_left = curtree;
-				xtp->tr_right = subtree;
-				switch( rec.M.m_relation )  {
-				case SUBTRACT:
-					xtp->tr_op = OP_SUBTRACT; break;
-				case INTERSECT:
-					xtp->tr_op = OP_INTERSECT; break;
-				case UNION:
-					xtp->tr_op = OP_UNION; break;
-				}
-				curtree = xtp;
+		if( subtree == TREE_NULL )
+			continue;	/* no valid subtree, keep on going */
+		if( regionp == REGION_NULL )
+			continue; /* ignore subtree, we are ABOVE a region */
+		if( curtree == TREE_NULL )  {
+			curtree = subtree;
+		} else {
+			register union tree *xtp;	/* XXX */
+			/** GETSTRUCT( xtp, union tree ); **/
+			xtp=(union tree *)malloc(sizeof(union tree));
+			if( xtp == TREE_NULL )
+				bomb("drawHobj: xtp malloc failed\n");
+			bzero( (char *)xtp, sizeof(union tree) );
+			xtp->tr_left = curtree;
+			xtp->tr_right = subtree;
+			switch( rec.M.m_relation )  {
+			default:
+				printf("(%s) bad m_relation '%c'\n",
+					path_str(pathpos), rec.M.m_relation );
+				/* FALL THROUGH */
+			case UNION:
+				xtp->tr_op = OP_UNION; break;
+			case SUBTRACT:
+				xtp->tr_op = OP_SUBTRACT; break;
+			case INTERSECT:
+				xtp->tr_op = OP_INTERSECT; break;
 			}
+			curtree = xtp;
 		}
 	}
 	if( curtree != TREE_NULL )  {

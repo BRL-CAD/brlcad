@@ -21,9 +21,6 @@
  *	U. S. Army Ballistic Research Laboratory
  *	April 13, 1984
  *
- * TODO:
- *	Flip normals after subtraction!!
- *
  * $Revision$
  */
 #ifndef lint
@@ -232,8 +229,10 @@ done_weave:	;
 		if(debug&DEBUG_PARTITION)
 			pr_partitions( &PartHd, "After weave" );
 	}
-	if(debug&DEBUG_PARTITION)
+	if(debug&DEBUG_PARTITION)  {
 		pr_act_regions( &ActRegHd );
+		pr_bins();
+	}
 
 	/*
 	 * For each partition, evaluate the boolean expression for
@@ -252,10 +251,8 @@ done_weave:	;
 		hitcnt = 0;
 		if(debug&DEBUG_PARTITION)
 			printf("considering partition %.8x\n", pp );
-		if( (regp=ActRegHd.reg_active) == &ActRegHd )  {
-			lastregion = REGION_NULL;
-			goto add_partition;
-		}
+
+		regp = ActRegHd.reg_active;
 		for( ; regp != &ActRegHd; regp = regp->reg_active )  {
 			if(debug&DEBUG_PARTITION)  {
 				printf("%.8x: %s\n", regp, regp->reg_name );
@@ -278,7 +275,8 @@ done_weave:	;
 			pp=pp->pt_forw;			/* onwards! */
 			continue;
 		}
-add_partition:	/* Add this partition to the result queue */
+
+		/* Add this partition to the result queue */
 		{
 			register struct partition *newpp;	/* XXX */
 
@@ -288,7 +286,7 @@ add_partition:	/* Add this partition to the result queue */
 			newpp->pt_regionp = lastregion;
 			APPEND_PART( newpp, FinalHd.pt_back );
 			/* Shameless efficiency hack */
-			if( view_only )  break;
+			if( !debug && view_only )  break;
 		}
 	}
 	if( debug&DEBUG_PARTITION )
@@ -464,4 +462,17 @@ double	a, b;
 
 	d = Max( Abs( a ), Abs( b ) );	/* NOTE: not efficient */
 	return( d == 0.0 ? 0.0 : Abs( a - b ) / d );
+}
+
+pr_bins()
+{
+	register struct soltab *stp;
+	extern struct soltab *HeadSolid;
+
+	printf("Bins:\n");
+	for( stp=HeadSolid; stp != 0; stp=stp->st_forw ) {
+		if( stp->st_bin == 0 )
+			continue;
+		printf("%d: %s\n", stp->st_bin, stp->st_name );
+	}
 }
