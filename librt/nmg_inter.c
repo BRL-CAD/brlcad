@@ -28,6 +28,30 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "raytrace.h"
 
+/* XXX move to vmath.h, incorporate in librt/shoot.c */
+/* Given a direction vector, compute the inverses of each element. */
+/* When division by zero would have occured, mark inverse as INFINITY. */
+#define VINVDIR( _inv, _dir )	{ \
+	if( (_dir)[X] < -SQRT_SMALL_FASTF || (_dir)[X] > SQRT_SMALL_FASTF )  { \
+		(_inv)[X]=1.0/(_dir)[X]; \
+	} else { \
+		(_dir)[X] = 0.0; \
+		(_inv)[X] = INFINITY; \
+	} \
+	if( (_dir)[Y] < -SQRT_SMALL_FASTF || (_dir)[Y] > SQRT_SMALL_FASTF )  { \
+		(_inv)[Y]=1.0/(_dir)[Y]; \
+	} else { \
+		(_dir)[Y] = 0.0; \
+		(_inv)[Y] = INFINITY; \
+	} \
+	if( (_dir)[Z] < -SQRT_SMALL_FASTF || (_dir)[Z] > SQRT_SMALL_FASTF )  { \
+		(_inv)[Z]=1.0/(_dir)[Z]; \
+	} else { \
+		(_dir)[Z] = 0.0; \
+		(_inv)[Z] = INFINITY; \
+	} \
+    }
+
 /* Was nmg_boolstruct, but that name has appeared in nmg.h */
 struct nmg_inter_struct {
 	long		magic;
@@ -695,7 +719,7 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 	point_t		eu2_start;
 	point_t		eu2_end;
 	vect_t		eu2_dir;
-	vect_t	dir;
+	vect_t		dir3d;
 	fastf_t	dist[2];
 	int	status;
 	point_t		hit_pt;
@@ -738,15 +762,15 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 	}
 
 	/*
-	 *  Construct the ray which contains the line of intersection.
-	 *  This needs to be done every pass:  it changes as edges are cut
-XXX which edge to use?  Or at least, which direction?
-	 *  This needs to be done BEFORE any topology checking,
-	 *  to establish is->pt for later use.
+	 *  The 3D line in is->pt and is->dir is prepared by the caller.
+	 *  is->pt is *not* one of the endpoints of this edge.
+	 *
+	 *  IMPORTANT NOTE:  The edge-ray used for the edge intersection
+	 *  calculations is colinear with the "intersection line",
+	 *  but the edge-ray starts at vu1a and points to vu1b,
+	 *  while the intersection line has to satisfy different constraints.
+	 *  Don't confuse the two!
 	 */
-	VMOVE( is->pt, vu1a->v_p->vg_p->coord );		/* 3D line */
-	VSUB2( is->dir, vu1b->v_p->vg_p->coord, is->pt );
-
 	nmg_get_2d_vertex( eu1_start, vu1a->v_p, is, fu2 );	/* 2D line */
 	nmg_get_2d_vertex( eu1_end, vu1b->v_p, is, fu2 );
 	VSUB2( eu1_dir, eu1_end, eu1_start );
@@ -767,7 +791,7 @@ XXX which edge to use?  Or at least, which direction?
 			eu2_start, eu2_dir, &is->tol );
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-		rt_log("\trt_isect_lseg2_lseg2()=%d, dist: %g, %g\n",
+		rt_log("\trt_isect_line2_lseg2()=%d, dist: %g, %g\n",
 			status, dist[0], dist[1] );
 	}
 
@@ -822,7 +846,7 @@ XXX which edge to use?  Or at least, which direction?
 		else if( eu2dist[1] > 1-ptol && eu2dist[1] < 1+ptol ) eu2dist[1] = 1;
 
 		if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-			rt_log("\trt_isect_lseg2_lseg2()=%d, eu2dist: %g, %g\n",
+			rt_log("\trt_isect_line2_lseg2()=%d, eu2dist: %g, %g\n",
 				status, eu2dist[0], eu2dist[1] );
 rt_log("ptol = %g, eu2dist=%g, %g\n", ptol, eu2dist[0], eu2dist[1]);
 		}
@@ -841,7 +865,8 @@ rt_log("ptol = %g, eu2dist=%g, %g\n", ptol, eu2dist[0], eu2dist[1]);
 	 * Tolerances have already been factored in.
 	 * The edge exists over values of 0 <= dist <= 1.
 	 */
-	VJOIN1( hit_pt, is->pt, dist[0], is->dir );	/* 3d */
+	VSUB2( dir3d, vu1b->v_p->vg_p->coord, vu1a->v_p->vg_p->coord );
+	VJOIN1( hit_pt, vu1a->v_p->vg_p->coord, dist[0], dir3d );
 
 	if ( dist[0] == 0 )  {
 		/* First point of eu1 is on eu2, by geometry */
@@ -1127,7 +1152,6 @@ struct faceuse *fu;
 	if( fu->orientation != OT_SAME )  rt_bomb("nmg_isect_3edge_3face() fu not OT_SAME\n");
 
 	/*
-	 *  Starting vertex does not lie on the face according to topology.
 	 *  Form a ray that starts at one vertex of the edgeuse
 	 *  and points to the other vertex.
 	 */
@@ -1482,6 +1506,8 @@ struct faceuse		*eu_fu;		/* fu that eu is from */
 	struct vertexuse	*vu1;
 	struct vertexuse	*vu2;
 	struct edgeuse		*otherf_eu;
+	struct xray		line;
+	vect_t			invdir;
 
 	NMG_CK_INTER_STRUCT(is);
 	NMG_CK_EDGEUSE(eu);
@@ -1520,6 +1546,44 @@ struct faceuse		*eu_fu;		/* fu that eu is from */
     		static int fno=1;
     	    	nmg_pl_2fu( "Isect_2d_faces%d.pl", fno++, fu, eu_fu, 0 );
     	}
+
+	/*
+	 *  Construct the ray which contains the line of intersection,
+	 *  i.e. the line that contains the edge "eu".
+	 *
+	 *  See the comment in nmg_isect_two_generic_faces() for details
+	 *  on the constraints on this ray, and the algorithm.
+	 */
+	vu1 = eu->vu_p;
+	vu2 = RT_LIST_PNEXT_CIRC( edgeuse, eu )->vu_p;
+	if( vu1->v_p == vu2->v_p )  {
+		if (rt_g.NMG_debug & DEBUG_POLYSECT)
+			rt_log("nmg_isect_edge2p_face2p(eu=x%x) skipping 0-len edge (topology)\n", eu);
+		goto out;
+	}
+	VMOVE( line.r_pt, vu1->v_p->vg_p->coord );		/* 3D line */
+	VSUB2( line.r_dir, vu2->v_p->vg_p->coord, line.r_pt );
+	VUNITIZE( line.r_dir );
+	VINVDIR( invdir, line.r_dir );
+VPRINT("fu min", fu->f_p->fg_p->min_pt);
+VPRINT("fu max", fu->f_p->fg_p->max_pt);
+	if( !rt_in_rpp( &line, invdir, fu->f_p->fg_p->min_pt, fu->f_p->fg_p->max_pt ) )  {
+		rt_bomb("nmg_isect_edge2p_face2p() edge ray missed face bounding RPP\n");
+	}
+rt_log("r_min=%g, r_max=%g\n", line.r_min, line.r_max);
+	/* Start point will line on min side of face RPP */
+	VJOIN1( is->pt, line.r_pt, line.r_min, line.r_dir );
+	if( line.r_min > line.r_max )  {
+		/* Direction is heading the wrong way, flip it */
+		VREVERSE( is->dir, line.r_dir );
+rt_log("flipping dir\n");
+	} else {
+		VMOVE( is->dir, line.r_dir );
+	}
+VPRINT("r_pt ", line.r_pt);
+VPRINT("r_dir", line.r_dir);
+VPRINT("->pt ", is->pt);
+VPRINT("->dir", is->dir);
 
 nmg_fu_touchingloops(fu);
 nmg_fu_touchingloops(eu_fu);
