@@ -15,10 +15,21 @@ static
 char sccsTag[] = "@(#) sgi_dep.c 2.3, modified 1/5/87 at 16:57:35, archive /vld/moss/src/fbed/s.sgi_dep.c";
 #endif
 
+#include "conf.h"
+
 #if defined(sgi) || defined(__sgi)
+
 #include <stdio.h>
 #include <device.h>
+
+#include "machine.h"
+#include "externs.h"
 #include "fb.h"
+
+#include "./std.h"
+#include "./ascii.h"
+#include "./font.h"
+#include "./try.h"
 #include "./extern.h"
 
 int

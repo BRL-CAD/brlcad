@@ -10,11 +10,21 @@ static
 char sccsTag[] = "@(#) try.c 2.1, modified 12/9/86 at 15:54:34, archive /vld/moss/src/fbed/s.try.c";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <assert.h>
+
 #include "machine.h"
 #include "externs.h"
+#include "fb.h"
+
+#include "./std.h"
+#include "./ascii.h"
+#include "./font.h"
+#include "./try.h"
 #include "./extern.h"
+
 #define NewTry( p ) \
 		if( ((p) = (Try *) malloc( sizeof(Try) )) == TRY_NULL ) \
 			{ \

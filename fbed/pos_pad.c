@@ -16,10 +16,21 @@ static
 char sccsTag[] = "@(#) pos_pad.c 2.1, modified 12/9/86 at 15:54:52, archive /vld/moss/src/fbed/s.pos_pad.c";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
-#ifdef SYS5
+#ifdef SYSV
 #include <termio.h>
 #endif
+
+#include "machine.h"
+#include "externs.h"
+#include "fb.h"
+
+#include "./std.h"
+#include "./ascii.h"
+#include "./font.h"
+#include "./try.h"
 #include "./extern.h"
 
 #define	P_FLAG		0100
