@@ -428,7 +428,7 @@ rt_comb_export4(
 		db_non_union_push( comb->tree, resp );
 		if( db_ck_v4gift_tree( comb->tree ) < 0 )  {
 			/* Need to further modify tree */
-			bu_log("rt_comb_export4() Unfinished: need to V4-ify tree\n");
+			bu_log("rt_comb_export4() Unable to V4-ify tree, aborting.\n");
 			rt_pr_tree( comb->tree, 0 );
 			return -1;
 		}
@@ -519,11 +519,11 @@ rt_comb_export4(
 	/* convert TCL list format shader to keyword=value format */
 	if( bu_shader_to_key_eq( bu_vls_addr(&comb->shader), &tmp_vls ) )
 	{
-		bu_log( "rt_comb_export4: Error in combination!\n" );
-		bu_log( "\tCannot convert following shader string to keyword=value format:\n" );
+		bu_log( "rt_comb_export4: Cannot convert following shader string to keyword=value format:\n" );
 		bu_log( "\t%s\n", bu_vls_addr(&comb->shader) );
 		rp[0].c.c_matparm[0] = '\0';
 		rp[0].c.c_matname[0] = '\0';
+		return -1;
 	}
 	else
 	{
@@ -535,11 +535,25 @@ rt_comb_export4(
 				bu_log("WARNING: leading spaces on shader '%s' implies NULL shader\n",
 					bu_vls_addr(&tmp_vls) );
 			}
-			if( len > 32 ) len = 32;
-			strncpy( rp[0].c.c_matname, bu_vls_addr(&tmp_vls), len );
-			strncpy( rp[0].c.c_matparm, endp+1, 60 );
+			if( bu_vls_strlen(&tmp_vls) >= sizeof(rp[0].c.c_matname) )  {
+				bu_log("ERROR:  Shader name '%s' exceeds v4 database field, aborting.\n",
+					bu_vls_addr(&tmp_vls) );
+				return -1;
+			}
+			if( strlen(endp+1) >= sizeof(rp[0].c.c_matparm) )  {
+				bu_log("ERROR:  Shader parameters '%s' exceed v4 database field, aborting.\nUpgrade to v5 database to store unlimited length strings.\n",
+					endp+1);
+				return -1;
+			}
+			strncpy( rp[0].c.c_matname, bu_vls_addr(&tmp_vls), sizeof(rp[0].c.c_matname) );
+			strncpy( rp[0].c.c_matparm, endp+1, sizeof(rp[0].c.c_matparm) );
 		} else {
-			strncpy( rp[0].c.c_matname, bu_vls_addr(&tmp_vls), 32 );
+			if( bu_vls_strlen(&tmp_vls) >= sizeof(rp[0].c.c_matname) )  {
+				bu_log("ERROR:  Shader name '%s' exceeds v4 database field, aborting.\n",
+					bu_vls_addr(&tmp_vls) );
+				return -1;
+			}
+			strncpy( rp[0].c.c_matname, bu_vls_addr(&tmp_vls), sizeof(rp[0].c.c_matname) );
 			rp[0].c.c_matparm[0] = '\0';
 		}
 	}
