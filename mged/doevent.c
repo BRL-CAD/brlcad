@@ -301,31 +301,29 @@ XMotionEvent *xmotion;
 
 	if(mged_variables->mv_rateknobs)
 	  bu_vls_printf(&cmd, "knob -i X %lf Y %lf\n", fx, fy);
-	else{
-	  if(grid_state->gr_snap){
-	    point_t view_pt;
-	    point_t model_pt;
-	    point_t vcenter, diff;
+	else if(grid_state->gr_snap){
+	  point_t view_pt;
+	  point_t model_pt;
+	  point_t vcenter, diff;
 
-	    /* accumulate distance mouse moved since starting to translate */
-	    dml_mouse_dx += dx;
-	    dml_mouse_dy += dy;
+	  /* accumulate distance mouse moved since starting to translate */
+	  dml_mouse_dx += dx;
+	  dml_mouse_dy += dy;
 
-	    view_pt[X] = dml_mouse_dx / (fastf_t)dmp->dm_width * 2.0;
-	    view_pt[Y] = -dml_mouse_dy / (fastf_t)dmp->dm_height / dmp->dm_aspect * 2.0;
-	    view_pt[Z] = 0.0;
-	    round_to_grid(&view_pt[X], &view_pt[Y]);
+	  view_pt[X] = dml_mouse_dx / (fastf_t)dmp->dm_width * 2.0;
+	  view_pt[Y] = -dml_mouse_dy / (fastf_t)dmp->dm_height / dmp->dm_aspect * 2.0;
+	  view_pt[Z] = 0.0;
+	  round_to_grid(&view_pt[X], &view_pt[Y]);
 
-	    MAT4X3PNT(model_pt, view_state->vs_view2model, view_pt);
-	    MAT_DELTAS_GET_NEG(vcenter, view_state->vs_toViewcenter);
-	    VSUB2(diff, model_pt, vcenter);
-	    VSCALE(diff, diff, base2local);
-	    VADD2(model_pt, dml_work_pt, diff);
-	    bu_vls_printf(&cmd, "p %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
-	  }else
-	    bu_vls_printf(&cmd, "knob -i aX %lf aY %lf\n",
-			  fx*view_state->vs_Viewscale*base2local, fy*view_state->vs_Viewscale*base2local);
-	}
+	  MAT4X3PNT(model_pt, view_state->vs_view2model, view_pt);
+	  MAT_DELTAS_GET_NEG(vcenter, view_state->vs_toViewcenter);
+	  VSUB2(diff, model_pt, vcenter);
+	  VSCALE(diff, diff, base2local);
+	  VADD2(model_pt, dml_work_pt, diff);
+	  bu_vls_printf(&cmd, "p %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
+	}else
+	  bu_vls_printf(&cmd, "knob -i aX %lf aY %lf\n",
+			fx*view_state->vs_Viewscale*base2local, fy*view_state->vs_Viewscale*base2local);
       }else{
 	if(mged_variables->mv_rateknobs)      /* otherwise, drag to translate the view */
 	  bu_vls_printf( &cmd, "knob -i -v X %lf Y %lf\n", fx, fy );
