@@ -50,6 +50,7 @@ matp_t old_xlate;
 	static union record rec;	/* local record buffer */
 	auto mat_t new_xlate;		/* Accumulated xlation matrix */
 	auto int i;
+	union record *members;		/* ptr to array of member recs */
 
 	if( pathpos >= MAX_PATH )  {
 		(void)printf("nesting exceeds %d levels\n", MAX_PATH );
@@ -115,16 +116,29 @@ matp_t old_xlate;
 
 	}
 
-	for( i=1; i < dp->d_len; i++ )  {
+	/* Read all the member records */
+	i = sizeof(union record) * (dp->d_len-1);
+	if( (members = (union record *)malloc(i)) == (union record *)0  )  {
+		fprintf(stderr,"drawHobj:  %s malloc failure\n", dp->d_namep);
+	    	return;
+	}
+	db_getmany( dp, members, 1, dp->d_len-1 );
+
+	for( i=0; i < dp->d_len-1; i++ )  {
 		register struct member *mp;		/* XXX */
 		register struct directory *nextdp;	/* temporary */
 
-		db_getrec( dp, &rec, i );
-		mp = &rec.M;
+		mp = &(members[i].M);
+		if( mp->m_id != ID_MEMB )  {
+			fprintf(stderr,"drawHobj:  %s bad member rec\n",
+				dp->d_namep);
+			free( (char *)members );
+			return;
+		}
 		cur_path[pathpos] = dp;
 		if( regmemb > 0  ) { 
 			regmemb--;
-			memb_oper = rec.M.m_relation;
+			memb_oper = mp->m_relation;
 		}
 		if( (nextdp = lookup( mp->m_instname, LOOKUP_NOISY )) == DIR_NULL )
 			continue;
@@ -132,7 +146,14 @@ matp_t old_xlate;
 		/* s' = M3 . M2 . M1 . s
 		 * Here, we start at M3 and descend the tree.
 		 */
-		mat_mul(new_xlate, old_xlate, mp->m_mat);
+		/* convert matrix to fastf_t from disk format */
+		{
+			register int k;
+			static mat_t xmat;	/* temporary fastf_t matrix */
+			for( k=0; k<4*4; k++ )
+				xmat[k] = mp->m_mat[k];
+			mat_mul(new_xlate, old_xlate, xmat);
+		}
 
 		/* Recursive call */
 		drawHobj(
@@ -143,6 +164,7 @@ matp_t old_xlate;
 			regionid
 		);
 	}
+	free( (char *)members );
 }
 
 /*
