@@ -27,11 +27,15 @@ char	buf[2048];
 
 int	debug = 0;
 
-main()
+main( argc, argv )
+int	argc;
+char	*argv[];
 {
 	double	t, xyz[3];
 	int	i;
 	int	first = 1;
+
+	if( argc > 1 )  debug = 1;
 
 	for(;;)  {
 		t = xyz[0] = xyz[1] = xyz[2] = 0.0;
@@ -39,6 +43,9 @@ main()
 		buf[0] = '\0';
 		fgets( buf, sizeof(buf), stdin );
 		if( feof(stdin) )  break;
+
+		if( buf[0] == '#' )  continue;
+
 		i = sscanf( buf, "%lf %lf %lf %lf",
 			&t, &xyz[0], &xyz[1], &xyz[2] );
 		if(debug)  {
