@@ -40,10 +40,6 @@
  *  $Header$
  */
 
-#ifndef SEEN_COMPAT4_H
-# include "compat4.h"
-#endif
-
 #ifndef SEEN_BU_H
 #define SEEN_BU_H seen
 #ifdef __cplusplus
