@@ -252,7 +252,7 @@ dotitles()
 	 * Prepare the numerical display of the currently edited solid/object.
 	 */
 	create_text_overlay( &vls );
-	screen_vls( SOLID_XBASE, SOLID_YBASE+scroll_ybot, &vls );
+	screen_vls( SOLID_XBASE, scroll_ybot+TEXT0_DY, &vls );
 	rt_vls_free( &vls );
 
 	/*
