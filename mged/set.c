@@ -125,7 +125,7 @@ struct bu_structparse mged_vparse[] = {
 
 char *
 read_var(clientData, interp, name1, name2, flags)
-ClientData clientData;       /* Contains pointer to bu_structparse entry */
+ClientData clientData;       /* Contains pointer to bu_struct_parse entry */
 Tcl_Interp *interp;
 char *name1, *name2;
 int flags;
@@ -136,7 +136,7 @@ int flags;
     /* Ask the libbu structparser for the value of the variable */
 
     bu_vls_init( &str );
-    bu_vls_item_print( &str, sp, (CONST char *)&mged_variables );
+    bu_vls_struct_item( &str, sp, (CONST char *)&mged_variables, ' ');
 
     /* Next, set the Tcl variable to this value */
 
@@ -167,7 +167,7 @@ int flags;
 			  (flags&TCL_GLOBAL_ONLY)|TCL_LEAVE_ERR_MSG);
     bu_vls_init( &str );
     bu_vls_printf( &str, "%s=\"%s\"", name1, newvalue );
-    if( bu_structparse( &str, mged_vparse, (char *)&mged_variables ) < 0) {
+    if( bu_struct_parse( &str, mged_vparse, (char *)&mged_variables ) < 0) {
       Tcl_AppendResult(interp, "ERROR OCCURED WHEN SETTING ", name1,
 		       " TO ", newvalue, "\n", (char *)NULL);
     }
@@ -252,14 +252,14 @@ char *argv[];
 
 	  bu_vls_init(&tmp_vls);
 	  start_catching_output(&tmp_vls);
-	  bu_structprint("mged variables", mged_vparse, (CONST char *)&mged_variables);
+	  bu_struct_print("mged variables", mged_vparse, (CONST char *)&mged_variables);
 	  bu_log("%s", bu_vls_addr(&vls) );
 	  stop_catching_output(&tmp_vls);
 	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	  bu_vls_free(&tmp_vls);
 	} else if (argc == 2) {
 		bu_vls_strcpy(&vls, argv[1]);
-		bu_structparse(&vls, mged_vparse, (char *)&mged_variables);
+		bu_struct_parse(&vls, mged_vparse, (char *)&mged_variables);
 	}
 
 	bu_vls_free(&vls);
