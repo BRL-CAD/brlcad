@@ -28,7 +28,7 @@ proc init_comb { id } {
     set comb_control($id,isRegion) "Yes"
     set comb_control($id,id) ""
     set comb_control($id,air) ""
-    set comb_control($id,gift) ""
+    set comb_control($id,material) ""
     set comb_control($id,los) ""
     set comb_control($id,color) ""
     set comb_control($id,inherit) ""
@@ -48,12 +48,11 @@ proc init_comb { id } {
     frame $top.idFF -relief sunken -bd 2
     frame $top.airF
     frame $top.airFF -relief sunken -bd 2
-    frame $top.giftF
-    frame $top.giftFF -relief sunken -bd 2
+    frame $top.materialF
+    frame $top.materialFF -relief sunken -bd 2
     frame $top.losF
     frame $top.losFF -relief sunken -bd 2
-    frame $top.colorF
-    frame $top.colorFF -relief sunken -bd 2
+    frame $top.color_F
     frame $top.shaderF -relief groove -bd 2
     frame $top.shaderFF -relief sunken -bd 2
     frame $top.combF
@@ -62,90 +61,243 @@ proc init_comb { id } {
     set comb_control($id,shader_frame) $top.shaderF
 
     label $top.nameL -text "Name" -anchor w
+    hoc_register_data $top.nameL "Combination Name"\
+	    { { summary "The combination name is the name of a
+region or a group. The region flag must be set
+in order for the combination to be a region.
+Note that a region defines a space containing
+homogeneous material. In contrast, a group can
+contain many different materials." } }
     entry $top.nameE -relief flat -width 12 -textvar comb_control($id,name)
+    hoc_register_data $top.nameE "Combination Name"\
+	    { { summary "Enter a combination name." } }
     menubutton $top.nameMB -relief raised -bd 2\
 	    -menu $top.nameMB.m -indicatoron 1
-    menu $top.nameMB.m -tearoff 0
+    hoc_register_data $top.nameMB "Combination Selection"\
+	    { { summary "This pops up a menu of methods for selecting
+a combination. At the moment there are two methods.
+The first brings up a listbox containing the combinations
+currently being displayed in the geometry window. The
+user can select from among the combinations listed here.
+The second selection method allows the user to use the
+mouse to fire a ray at the combination of interest. If
+only one combination is hit, that combination is selected.
+If nothing is hit the user can simply fire another ray,
+perhaps taking better aim :-). If more than one combination
+is hit, a listbox of the hit combinations is presented
+as with the first selection method. Note - When selecting
+items from a listbox, a left buttonpress highlights the combination
+in question until the button is released. To select a combination,
+double click with the left mouse button." } }
+    menu $top.nameMB.m -title "Combination Selection Method" -tearoff 0
     $top.nameMB.m add command -label "Select from all displayed"\
 	    -command "winset \$mged_active_dm($id); build_comb_menu_all"
+    hoc_register_menu_data "Combination Selection Method" "Select from all displayed"\
+	    "Select Combination From All Displayed"\
+	    { { summary "This pops up a listbox containing the combinations
+currently being displayed in the geometry window. The
+user can select from among the combinations listed here.
+Note - When selecting items from a listbox, a left buttonpress
+highlights the combination in question until the button is
+released. To select a combination, double click with the left
+mouse button." } }
     $top.nameMB.m add command -label "Select along ray"\
 	    -command "winset \$mged_active_dm($id); set mouse_behavior c"
+    hoc_register_menu_data "Combination Selection Method" "Select along ray"\
+	    "Select Combination Along Ray"\
+	    { { summary "This method allows the user to use the
+mouse to fire a ray at the combination of interest.
+If only one combination is hit, that combination is
+selected. If nothing is hit the user can simply fire
+another ray, perhaps taking better aim :-). If more
+than one combination is hit, a listbox of the hit
+combinations is presented. Note - When selecting
+items from a listbox, a left buttonpress highlights
+the combination in question until the button is
+released. To select a combination, double click with
+the left mouse button." } }
 
     label $top.idL -text "Region Id" -anchor w
+    hoc_register_data $top.idL "Region Id"\
+	    { { summary "The region id (i.e. item code) is a number
+that is typically used for grouping regions
+belonging to a particular component. If the
+region id is non-zero it is considered to be
+a model component. Otherwise, it is considered
+to be air. The air code is then used to designate
+the kind of air." } }
     entry $top.idE -relief flat -width 12 -textvar comb_control($id,id)
+    hoc_register_data $top.idE "Region Id"\
+	    { { summary "Enter region id." } }
 
     label $top.airL -text "Air Code" -anchor w
+    hoc_register_data $top.airL "Air Code"\
+	    { { summary "The air code is a number that is typically
+used to designate the kind of air a region
+represents. An air code of \"1\" signifies
+universal air. An air code that is greater
+than \"1\" signifies some other kind of air.
+While an air code of \"0\" means that the
+region represents a component." } }
     entry $top.airE -relief flat -width 12 -textvar comb_control($id,air)
+    hoc_register_data $top.airE "Air Code"\
+	    { { summary "Enter air code." } }
 
-    label $top.giftL -text "Gift Material" -anchor w
-    entry $top.giftE -relief flat -width 12 -textvar comb_control($id,gift)
+    label $top.materialL -text "Material Id" -anchor w
+    hoc_register_data $top.materialL "Material Id"\
+	    { { summary "The material id represents a particular
+material type as identified by a material database.
+In the past, the gift material database was used to
+identify the material type." } }
+    entry $top.materialE -relief flat -width 12 -textvar comb_control($id,material)
+    hoc_register_data $top.materialE "Material Id"\
+	    { { summary "Enter material id." } }
 
     label $top.losL -text "LOS" -anchor w
+    hoc_register_data $top.losL "LOS"\
+	    { { summary "LOS is a number that represents the
+percentage of material a component region
+is composed of. For example, if some component
+region is defined to be made of \"mild steel\", as
+designated by its material id, with an LOS of 20
+then the region is considered to be composed of
+20% \"mild steel\"."  } }
     entry $top.losE -relief flat -width 12 -textvar comb_control($id,los)
+    hoc_register_data $top.losE "LOS"\
+	    { { summary "Enter los." } }
 
     label $top.colorL -text "Color" -anchor w
-    entry $top.colorE -relief flat -width 12 -textvar comb_control($id,color)
-    menubutton $top.colorMB -relief raised -bd 2\
-	    -menu $top.colorMB.m -indicatoron 1
-    menu $top.colorMB.m -tearoff 0
-    $top.colorMB.m add command -label black\
-	     -command "set comb_control($id,color) \"0 0 0\"; comb_set_colorMB $id"
-    $top.colorMB.m add command -label white\
-	     -command "set comb_control($id,color) \"220 220 220\"; comb_set_colorMB $id"
-    $top.colorMB.m add command -label red\
-	     -command "set comb_control($id,color) \"220 0 0\"; comb_set_colorMB $id"
-    $top.colorMB.m add command -label green\
-	     -command "set comb_control($id,color) \"0 220 0\"; comb_set_colorMB $id"
-    $top.colorMB.m add command -label blue\
-	     -command "set comb_control($id,color) \"0 0 220\"; comb_set_colorMB $id"
-    $top.colorMB.m add command -label yellow\
-	     -command "set comb_control($id,color) \"220 220 0\"; comb_set_colorMB $id"
-    $top.colorMB.m add command -label cyan\
-	    -command "set comb_control($id,color) \"0 220 220\"; comb_set_colorMB $id"
-    $top.colorMB.m add command -label magenta\
-	    -command "set comb_control($id,color) \"220 0 220\"; comb_set_colorMB $id"
-    $top.colorMB.m add separator
-    $top.colorMB.m add command -label "Color Tool..."\
-	    -command "comb_choose_color $id $top"
+    hoc_register_data $top.colorL "Color"\
+	    { { summary "Material color is used by the ray tracer
+when rendering. It is also used by MGED
+when determining what color to use when
+drawing an object" } }
+    # $top.colorF is the name of the container created by color_entry_build
+    # that contains the entry and menubutton for specifying a color
+    color_entry_build $top color comb_control($id,color)\
+	    "color_entry_chooser $id $top color \"Combination Color\"\
+	    comb_control $id,color"\
+	    12 $comb_control($id,color)
+    hoc_register_data $top.colorE "Color"\
+	    { { summary "Enter a color specification. The color
+is specified using three integers (i.e. r g b)
+in the range 0 to 255. For example:
+
+\tblack\t\t0 0 0
+\twhite\t\t255 255 255
+\tred\t\t255 0 0
+\tgreen\t\t0 255 0
+\tblue\t\t0 0 255
+\tyellow\t\t255 255 0
+\tcyan\t\t0 255 255
+\tmagenta\t\t255 0 255
+
+Note - when entering colors directly,
+pressing \"Enter\" will update the color
+of the menubutton." } }
 
     label $top.shaderL -text "Shader" -anchor w
+    hoc_register_data $top.shaderL "Shader"\
+	    { { summary "The shader is used by the raytracer
+when rendering. The shader specification
+greatly influences the resulting image." } }
     entry $top.shaderE -relief flat -width 12 -textvar comb_control($id,shader)
+    hoc_register_data $top.shaderE "Shader"\
+	    { { summary "Use this to manually enter the shader
+parameters. Note - when entering the
+shader parameters directly, pressing \"Enter\"
+will update the rest of the shader GUI." } }
+
     bind $top.shaderE <Return> "set_shader_params comb_control($id,shader) $id"
 
     menubutton $top.shaderMB -relief raised -bd 2\
 	    -menu $top.shaderMB.m -indicatoron 1
-    menu $top.shaderMB.m -tearoff 0
+    hoc_register_data $top.shaderMB "Menu of Shaders"\
+	    { { summary "This pops up a menu of shader types.
+Selecting a shader from the menu will
+reconfigure the shader's GUI to take on
+the form of the selected shader type." } }
+    menu $top.shaderMB.m -title "Shader" -tearoff 0
     $top.shaderMB.m add command -label plastic\
 	    -command "comb_shader_gui $id plastic $top.shaderF"
+    hoc_register_menu_data "Shader" plastic "Shader - Plastic"\
+	    { { summary "See jra for info on plastic." } }
     $top.shaderMB.m add command -label mirror\
 	    -command "comb_shader_gui $id mirror $top.shaderF"
+    hoc_register_menu_data "Shader" mirror "Shader - Mirror"\
+	    { { summary "See jra for info on mirror." } }
     $top.shaderMB.m add command -label glass\
 	    -command "comb_shader_gui $id glass $top.shaderF"
+    hoc_register_menu_data "Shader" glass "Shader - Glass"\
+	    { { summary "See jra for info on glass." } }
     $top.shaderMB.m add command -label "texture (color)"\
 	    -command "comb_shader_gui $id texture $top.shaderF"
+    hoc_register_menu_data "Shader" "texture (color)" "Shader - Texture (color)"\
+	    { { summary "See jra for info on texture (color)." } }
     $top.shaderMB.m add command -label "texture (b/w)"\
 	    -command "comb_shader_gui $id bwtexture $top.shaderF"
+    hoc_register_menu_data "Shader" "texture (b/w)" "Shader - Texture (b/w)"\
+	    { { summary "See jra for info on texture (b/w)." } }
 
     label $top.combL -text "Boolean Expression:" -anchor w
+    hoc_register_data $top.combL "Boolean Expression"\
+	    { { summary "A boolean expression is used to combine
+objects to form a region or group. This expression
+can consist of three kinds of operators. The 'u'
+operator represents union. The union of two objects
+is defined as the volume in both objects. The '-'
+operator represents difference. The difference of two
+objects is defined as the volume of the first object
+minus the volume of the second object. Lastly, the
+'+' operator represents intersection. The intersection
+of two objects is defined as the volume common to
+both objects. Note - an object can be a solid, region
+or group." } }
     text $top.combT -relief sunken -bd 2 -width 40 -height 10\
 	    -yscrollcommand "$top.gridF3.s set" -setgrid true
+    hoc_register_data $top.combT "Edit Boolean Expression"\
+	    { { summary "Edit the boolean expression." } }
     scrollbar $top.gridF3.s -relief flat -command "$top.combT yview"
-
-#    button $top.selectGiftB -relief raised -text "Select Gift Material"\
-#	    -command "comb_select_gift $id"
 
     checkbutton $top.isRegionCB -relief raised -text "Is Region"\
 	    -offvalue No -onvalue Yes -variable comb_control($id,isRegion)\
 	    -command "comb_toggle_isRegion $id"
+    hoc_register_data $top.isRegionCB "Is Region"\
+	    { { summary "Toggle the region flag on/off. If the
+region flag is toggled on (i.e. checkbutton
+is highligted) the GUI reconfigures itself to
+handle regions. If the region flag is toggled
+off the GUI reconfigures itself to handle
+groups. Note - both regions and groups are
+combinations. However, a region is special
+in that it has its region flag set. It is
+also required to be homogeneous (i.e. consisting
+of the same material)." } }
     checkbutton $top.inheritCB -relief raised -text "Inherit"\
 	    -offvalue No -onvalue Yes -variable comb_control($id,inherit)
+    hoc_register_data $top.inheritCB "Inherit"\
+	    { { summary "Toggle inheritance on/off. If inheritance
+is on, everything in the group takes on
+the characteristics of the group. Note -
+setting the inheritance for a region has
+no effect (i.e. the members of a region
+always take on the characteristics of the
+region)." } }
 
     button $top.applyB -relief raised -text "Apply"\
 	    -command "comb_apply $id"
+    hoc_register_data $top.applyB "Apply"\
+	    { { summary "Apply the data in the \"Combination Editor\"
+to the combination." } }
     button $top.resetB -relief raised -text "Reset"\
 	    -command "comb_reset $id"
+    hoc_register_data $top.resetB "Reset"\
+	    { { summary "Reset the \"Combination Editor\" with data
+from the combination." } }
     button $top.dismissB -relief raised -text "Dismiss"\
 	    -command "comb_dismiss $id $top"
+    hoc_register_data $top.dismissB "Dismiss"\
+	    { { summary "Dismiss (close) the \"Combination Editor\"." } }
 
     grid $top.nameL -sticky "ew" -in $top.nameF
     grid $top.nameE $top.nameMB -sticky "ew" -in $top.nameFF
@@ -159,27 +311,25 @@ proc init_comb { id } {
     grid columnconfigure $top.idF 0 -weight 1
     grid columnconfigure $top.idFF 0 -weight 1
 
-    grid $top.colorL -sticky "ew" -in $top.colorF
-    grid $top.colorE $top.colorMB -sticky "ew" -in $top.colorFF
-    grid $top.colorFF -sticky "ew" -in $top.colorF
+    grid $top.colorL -sticky "ew" -in $top.color_F
+    grid $top.colorF -sticky "ew" -in $top.color_F
     grid $top.airL -sticky "ew" -in $top.airF
     grid $top.airE -sticky "ew" -in $top.airFF
     grid $top.airFF -sticky "ew" -in $top.airF
-    grid $top.colorF x $top.airF -sticky "ew" -in $top.gridF -pady $comb_control($id,pady)
-    grid columnconfigure $top.colorF 0 -weight 1
-    grid columnconfigure $top.colorFF 0 -weight 1
+    grid $top.color_F x $top.airF -sticky "ew" -in $top.gridF -pady $comb_control($id,pady)
+    grid columnconfigure $top.color_F 0 -weight 1
     grid columnconfigure $top.airF 0 -weight 1
     grid columnconfigure $top.airFF 0 -weight 1
 
-    grid $top.giftL -sticky "ew" -in $top.giftF
-    grid $top.giftE -sticky "ew" -in $top.giftFF
-    grid $top.giftFF -sticky "ew" -in $top.giftF
+    grid $top.materialL -sticky "ew" -in $top.materialF
+    grid $top.materialE -sticky "ew" -in $top.materialFF
+    grid $top.materialFF -sticky "ew" -in $top.materialF
     grid $top.losL -sticky "ew" -in $top.losF
     grid $top.losE -sticky "ew" -in $top.losFF
     grid $top.losFF -sticky "ew" -in $top.losF
-    grid $top.giftF x $top.losF -sticky "ew" -in $top.gridF -pady $comb_control($id,pady)
-    grid columnconfigure $top.giftF 0 -weight 1
-    grid columnconfigure $top.giftFF 0 -weight 1
+    grid $top.materialF x $top.losF -sticky "ew" -in $top.gridF -pady $comb_control($id,pady)
+    grid columnconfigure $top.materialF 0 -weight 1
+    grid columnconfigure $top.materialFF 0 -weight 1
     grid columnconfigure $top.losF 0 -weight 1
     grid columnconfigure $top.losFF 0 -weight 1
 
@@ -189,7 +339,7 @@ proc init_comb { id } {
     grid $top.shaderFF -sticky "ew" -in $top.shaderF\
 	    -padx $comb_control($id,padx) -pady $comb_control($id,pady)
     grid $top.shaderF - - -sticky "ew" -in $top.gridF -pady [expr $comb_control($id,pady) + 4]
-#    grid $top.selectGiftB -row 3 -column 2 -sticky "sw" -in $top.gridF -pady $comb_control($id,pady)
+#    grid $top.selectMaterialB -row 3 -column 2 -sticky "sw" -in $top.gridF -pady $comb_control($id,pady)
     grid columnconfigure $top.shaderF 0 -weight 1
     grid columnconfigure $top.shaderFF 0 -weight 1
 
@@ -265,7 +415,7 @@ proc comb_apply { id } {
 	}
 
 	set result [catch {put_comb $comb_control($id,name) $comb_control($id,isRegion)\
-		$comb_control($id,id) $comb_control($id,air) $comb_control($id,gift) $comb_control($id,los)\
+		$comb_control($id,id) $comb_control($id,air) $comb_control($id,material) $comb_control($id,los)\
 		$comb_control($id,color) $comb_control($id,shader) $comb_control($id,inherit)\
 		$comb_control($id,comb)} comb_error]
 
@@ -314,7 +464,7 @@ proc comb_reset { id } {
     if {$comb_control($id,isRegion) == "Yes"} {
 	set comb_control($id,id) [lindex $comb_defs 2]
 	set comb_control($id,air) [lindex $comb_defs 3]
-	set comb_control($id,gift) [lindex $comb_defs 4]
+	set comb_control($id,material) [lindex $comb_defs 4]
 	set comb_control($id,los) [lindex $comb_defs 5]
 	set comb_control($id,color) [lindex $comb_defs 6]
 	set comb_control($id,shader) [lindex $comb_defs 7]
@@ -356,14 +506,14 @@ proc comb_toggle_isRegion { id } {
     grid remove $top.gridF
 
     if {$comb_control($id,isRegion) == "Yes"} {
-	grid forget $top.nameF $top.colorF $top.shaderF
+	grid forget $top.nameF $top.color_F $top.shaderF
 
 	frame $top.idF
 	frame $top.idFF -relief sunken -bd 2
 	frame $top.airF
 	frame $top.airFF -relief sunken -bd 2
-	frame $top.giftF
-	frame $top.giftFF -relief sunken -bd 2
+	frame $top.materialF
+	frame $top.materialFF -relief sunken -bd 2
 	frame $top.losF
 	frame $top.losFF -relief sunken -bd 2
 
@@ -373,14 +523,11 @@ proc comb_toggle_isRegion { id } {
 	label $top.airL -text "Air Code" -anchor w
 	entry $top.airE -relief flat -width 12 -textvar comb_control($id,air)
 
-	label $top.giftL -text "Gift Material" -anchor w
-	entry $top.giftE -relief flat -width 12 -textvar comb_control($id,gift)
+	label $top.materialL -text "Material" -anchor w
+	entry $top.materialE -relief flat -width 12 -textvar comb_control($id,material)
 
 	label $top.losL -text "LOS" -anchor w
 	entry $top.losE -relief flat -width 12 -textvar comb_control($id,los)
-
-#	button $top.selectGiftB -relief raised -text "Select Gift Material"\
-#		-command "comb_select_gift $id"
 
 	grid $top.idL -sticky "ew" -in $top.idF
 	grid $top.idE -sticky "ew" -in $top.idFF
@@ -392,43 +539,39 @@ proc comb_toggle_isRegion { id } {
 	grid $top.airL -sticky "ew" -in $top.airF
 	grid $top.airE -sticky "ew" -in $top.airFF
 	grid $top.airFF -sticky "ew" -in $top.airF
-	grid $top.colorF x $top.airF -sticky "ew" -in $top.gridF -pady $comb_control($id,pady)
+	grid $top.color_F x $top.airF -sticky "ew" -in $top.gridF -pady $comb_control($id,pady)
 	grid columnconfigure $top.airF 0 -weight 1
 	grid columnconfigure $top.airFF 0 -weight 1
 
-	grid $top.giftL -sticky "ew" -in $top.giftF
-	grid $top.giftE -sticky "ew" -in $top.giftFF
-	grid $top.giftFF -sticky "ew" -in $top.giftF
+	grid $top.materialL -sticky "ew" -in $top.materialF
+	grid $top.materialE -sticky "ew" -in $top.materialFF
+	grid $top.materialFF -sticky "ew" -in $top.materialF
 	grid $top.losL -sticky "ew" -in $top.losF
 	grid $top.losE -sticky "ew" -in $top.losFF
 	grid $top.losFF -sticky "ew" -in $top.losF
-	grid $top.giftF x $top.losF -sticky "ew" -in $top.gridF -pady $comb_control($id,pady)
+	grid $top.materialF x $top.losF -sticky "ew" -in $top.gridF -pady $comb_control($id,pady)
 
 	grid $top.shaderF - - -sticky "ew" -in $top.gridF -pady [expr $comb_control($id,pady) + 4]
 	grid columnconfigure $top.losF 0 -weight 1
 	grid columnconfigure $top.losFF 0 -weight 1
 
-#	grid $top.selectGiftB -row 3 -column 2 -sticky "sw" -in $top.gridF -pady $comb_control($id,pady)
-	grid columnconfigure $top.giftF 0 -weight 1
-	grid columnconfigure $top.giftFF 0 -weight 1
+	grid columnconfigure $top.materialF 0 -weight 1
+	grid columnconfigure $top.materialFF 0 -weight 1
     } else {
-	grid forget $top.nameF $top.idF $top.airF $top.giftF $top.losF\
-		$top.colorF $top.shaderF
-#	grid forget $top.nameF $top.idF $top.airF $top.giftF $top.losF\
-#		$top.colorF $top.shaderF $top.selectGiftB
+	grid forget $top.nameF $top.idF $top.airF $top.materialF $top.losF\
+		$top.color_F $top.shaderF
 
 	destroy $top.idL $top.idE
 	destroy $top.airL $top.airE
-	destroy $top.giftL $top.giftE
+	destroy $top.materialL $top.materialE
 	destroy $top.losL $top.losE
-#	destroy $top.selectGiftB
 	destroy $top.idF $top.idFF
 	destroy $top.airF $top.airFF
-	destroy $top.giftF $top.giftFF
+	destroy $top.materialF $top.materialFF
 	destroy $top.losF $top.losFF
 
 	grid $top.nameF - - -sticky "ew" -row 0 -in $top.gridF -pady $comb_control($id,pady)
-	grid $top.colorF - - -sticky "ew" -in $top.gridF -pady $comb_control($id,pady)
+	grid $top.color_F - - -sticky "ew" -in $top.gridF -pady $comb_control($id,pady)
 	grid $top.shaderF - - -sticky "ew" -in $top.gridF -pady $comb_control($id,pady)
     }
 
@@ -478,11 +621,11 @@ proc comb_shader_gui { id shader_type shader_frame } {
     set comb_control($id,shader_gui) [do_shader comb_control($id,shader) $id $shader_frame]
 }
 
-#proc comb_select_gift { id } {
+#proc comb_select_material { id } {
 #    global player_screen
 #    global comb_control
 #
-#    set top .$id.sel_gift
+#    set top .$id.sel_material
 #
 #    if [winfo exists $top] {
 #	raise $top
@@ -495,23 +638,23 @@ proc comb_shader_gui { id shader_type shader_frame } {
 #    frame $top.gridF2
 #    frame $top.gridF3 -relief groove -bd 2
 #
-#    listbox $top.giftLB -selectmode single -yscrollcommand "$top.giftS set"
-#    scrollbar $top.giftS -relief flat -command "$top.giftLB yview"
+#    listbox $top.materialLB -selectmode single -yscrollcommand "$top.materialS set"
+#    scrollbar $top.materialS -relief flat -command "$top.materialLB yview"
 #
-#    label $top.giftL -text "Gift List:" -anchor w
-#    entry $top.giftE -width 12 -textvar comb_control($id,gift_list)
+#    label $top.materialL -text "Material List:" -anchor w
+#    entry $top.materialE -width 12 -textvar comb_control($id,material_list)
 #
 #    button $top.resetB -relief raised -text "Reset"\
-#	    -command "load_gift_material $id"
+#	    -command "load_material $id"
 #    button $top.dismissB -relief raised -text "Dismiss"\
 #	    -command "catch { destroy $top }"
 #
-#    grid $top.giftLB $top.giftS -sticky "nsew" -in $top.gridF
+#    grid $top.materialLB $top.materialS -sticky "nsew" -in $top.gridF
 #    grid rowconfigure $top.gridF 0 -weight 1
 #    grid columnconfigure $top.gridF 0 -weight 1
 #
-#    grid $top.giftL x -sticky "ew" -in $top.gridF2
-#    grid $top.giftE $top.resetB -sticky "nsew" -in $top.gridF2
+#    grid $top.materialL x -sticky "ew" -in $top.gridF2
+#    grid $top.materialE $top.resetB -sticky "nsew" -in $top.gridF2
 #    grid columnconfigure $top.gridF2 0 -weight 1
 #
 #    grid $top.dismissB -in $top.gridF3 -pady $comb_control($id,pady)
@@ -522,9 +665,9 @@ proc comb_shader_gui { id shader_type shader_frame } {
 #    grid rowconfigure $top 0 -weight 1
 #    grid columnconfigure $top 0 -weight 1
 #
-#    wm title $top "Select Gift Material"
+#    wm title $top "Select Material"
 #}
 #
-#proc load_gift_material { id } {
+#proc load_material { id } {
 #    global comb_control
 #}
