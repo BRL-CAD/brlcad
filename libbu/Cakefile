@@ -14,7 +14,7 @@
 	log magic malloc mappedfile memset \
 	parallel parse printb ptbl semaphore \
 	vfont \
-	vls htond units
+	vls htond units bu_tcl
 
 #define VERSION_VARIABLE	bu_version
 #define LIBRARY_TITLE		"The BRL-CAD Utility Library"
