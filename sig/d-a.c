@@ -1,5 +1,16 @@
 /* double to ascii */
+#include "conf.h"
+
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+
 #include <stdio.h>
+#include <ctype.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 int	nflag = 0;
 
