@@ -3,13 +3,15 @@ noinst_LIBRARIES = libregex.a
 endif
 
 libregex_a_SOURCES  =	\
-	cclass.h	\
-	cname.h		\
 	regcomp.c	\
 	regerror.c	\
-	regex2.h	\
 	regexec.c	\
-	regfree.c	\
+	regfree.c
+
+noinst_HEADERS = \
+	cclass.h	\
+	cname.h		\
+	regex2.h	\
 	utils.h
 
 EXTRA_DIST =		\
