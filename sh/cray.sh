@@ -57,7 +57,6 @@ set -- `getopt SH:F:D:MA:x:X:s:f:a:e:l:O:o:p:P:Bb:n:w:iI "$@"`
 if test x$COMPUTE_SERVER -eq x
 then
 	COMPUTE_SERVER=patton.brl.mil
-	COMPUTE_SERVER=bob.brl.mil
 fi
 
 # If no framebuffer is specified in the users environment,
@@ -80,7 +79,7 @@ do
 	case $1 in
 	-S|-M|-B|-i|-I)
 		ARGS="$ARGS $1";;
-	-H|-F|-D|-A|-x|-X|-s|-f|-a|-e|-l|-O|-o|-p|-P|-b|-n|-w)
+	-H|-D|-A|-x|-X|-s|-f|-a|-e|-l|-O|-o|-p|-P|-b|-n|-w)
 		ARGS="$ARGS $1 $2"; shift;;
 	-F)
 		FB_FILE="$2"; shift;;
