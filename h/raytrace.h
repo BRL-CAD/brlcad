@@ -231,8 +231,9 @@ struct hit {
 	fastf_t		hit_dist;	/* dist from r_pt to hit_point */
 	point_t		hit_point;	/* Intersection point */
 	vect_t		hit_normal;	/* Surface Normal at hit_point */
-	vect_t		hit_vpriv;	/* private vector for xxx_*() */
-	genptr_t	hit_private;	/* private handle for xxx_shot() */
+	vect_t		hit_vpriv;	/* PRIVATE vector for xxx_*() */
+	genptr_t	hit_private;	/* PRIVATE handle for xxx_shot() */
+	int		hit_surfno;	/* solid-specific surface indicator */
 };
 #define HIT_NULL	((struct hit *)0)
 
