@@ -69,7 +69,7 @@ double *dx;
 {
 	double xmax, xmin, x, workdx;
 	register int i;			/* Index variable */
-	static double log10;		/* Saved value for log base-2(10) */
+	static double log_10;		/* Saved value for log base-2(10) */
 	float *ifloatp;			/* Used to convert pointer-to-int to float */
 	double *idoublep;		/* Used to convert pointer-to-int to double */
 	double fractional;		/* Fractional part of DX */
@@ -94,10 +94,10 @@ double *dx;
 	}
 
 	/* Split initial DX into integral and fractional exponents of 10 */
-	if( log10 <= 0.0 )
-		log10 = log(10.0);
+	if( log_10 <= 0.0 )
+		log_10 = log(10.0);
 
-	fractional = log( (xmax-xmin)/length ) / log10;	/* LOG10(DX) */
+	fractional = log( (xmax-xmin)/length ) / log_10;	/* LOG10(DX) */
 	integral = fractional;			/* truncate! */
 	fractional -= integral;			/* leave only fract */
 
