@@ -607,6 +607,9 @@ CONST vect_t	to;
 	double	az, el;
 	LOCAL double sin_az, sin_el;
 	LOCAL double cos_az, cos_el;
+	vect_t	test_to;
+	vect_t	unit_from, unit_to;
+	fastf_t	dot;
 
 	az = mat_atan2( to[Y], to[X] ) - mat_atan2( from[Y], from[X] );
 	el = mat_atan2( to[Z], hypot( to[X], to[Y] ) ) -
@@ -634,6 +637,20 @@ CONST vect_t	to;
 
 	m[12] = m[13] = m[14] = 0;
 	m[15] = 1.0;
+
+	/* Verify that it worked */
+	VMOVE( unit_from, from );
+	VUNITIZE( unit_from );
+	VMOVE( unit_to, to );
+	VUNITIZE( unit_to );
+	MAT4X3VEC( test_to, m, unit_from );
+	dot = VDOT( unit_to, test_to );
+	if( dot < 0.98 || dot > 1.02 )  {
+		rt_log("mat_fromto() ERROR!  from (%g,%g,%g) to (%g,%g,%g) went to (%g,%g,%g), dot=%g, az=%g, el=%g?\n",
+			V3ARGS(from),
+			V3ARGS(to),
+			V3ARGS( test_to ), dot, az, el );
+	}
 }
 
 /*
