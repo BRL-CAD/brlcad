@@ -1178,7 +1178,7 @@ BU_EXPORT extern int	bu_debug;
 #define BU_DEBUG_DB		0x00000008	/* 004 Database debugging */
 	
 #define BU_DEBUG_PARALLEL	0x00000010	/* 005 parallel support */
-
+#define BU_DEBUG_MEM_QCHECK	0x00000020	/* 006 Fast mem leak checking (won't work with corruption) */
 #define BU_DEBUG_MATH		0x00000100	/* 011 Fundamental math routines (plane.c, mat.c) */
 #define BU_DEBUG_PTBL		0x00000200	/* 012 bu_ptbl_*() logging */
 #define BU_DEBUG_AVS		0x00000400	/* 013 bu_avs_*() logging */
@@ -1191,7 +1191,7 @@ BU_EXPORT extern int	bu_debug;
 "\020\
 \025TABDATA\
 \015?\
-\014MAPPED_FILE\013AVS\012PTBL\011MATH\010?\7?\6?\5PARALLEL\
+\014MAPPED_FILE\013AVS\012PTBL\011MATH\010?\7?\6MEM_QCHECK\5PARALLEL\
 \4?\3MEM_LOG\2MEM_CHECK\1COREDUMP"
 
 /*----------------------------------------------------------------------*/
