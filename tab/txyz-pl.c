@@ -25,7 +25,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 char	buf[2048];
 
-int	debug = 1;
+int	debug = 0;
 
 main()
 {
