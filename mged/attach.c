@@ -388,7 +388,6 @@ char *argv[];
   Tcl_LinkVar(interp, bu_vls_addr(&curr_dm_list->_scroll_edit_vls),
 	      (char *)&curr_dm_list->_scroll_edit, TCL_LINK_INT);
   mged_slider_link_vars(curr_dm_list);
-  (void)f_load_dv((ClientData)NULL, interp, 0, NULL);
   mmenu_init();
   btn_head_menu(0,0,0);
 
@@ -415,6 +414,7 @@ char *argv[];
 
   color_soltab();
   ++dmaflag;
+  (void)f_load_dv((ClientData)NULL, interp, 1, NULL);
   return TCL_OK;
 
 Bad:
