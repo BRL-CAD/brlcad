@@ -133,10 +133,12 @@ if [ X${SILENT} = X ] ; then
 	echo Creating the necessary directories
 fi
 for LAST in \
-	bin include include/brlcad html lib vfont \
+	bin include include/brlcad lib vfont \
 	man man/man1 man/man3 man/man5 etc tcl tk \
 	tclscripts tclscripts/mged tclscripts/nirt \
-	tclscripts/pl-dm
+	tclscripts/pl-dm html html/manuals html/manuals/mged \
+	html/manuals/mged/animmate html/manuals/libdm \
+	html/manuals/shaders html/manuals/Anim_Tutorial
 do
 	if test ! -d $BASEDIR/$LAST
 	then
