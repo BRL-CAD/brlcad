@@ -35,7 +35,7 @@ main(int ac, char *av[])
 	point_t p1, p2;
 	fastf_t radius;
 	int is_region;
-	char rgb[3];
+	unsigned char rgb[3];
 	struct wmember wm_hd, *wm; /* defined in wdb.h */
 
 	progname = *av;
@@ -91,7 +91,7 @@ main(int ac, char *av[])
 	 */
 
 	/* add the second member to the database
-	/*   Note that there is nothing which checks to make
+	 *   Note that there is nothing which checks to make
 	 * sure that "ball.s" exists in the database when you create the
 	 * wmember structure OR when you create the combination.  So
 	 * mis-typing the name of a sub-element for a region/combination
