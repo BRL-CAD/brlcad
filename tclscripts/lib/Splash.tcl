@@ -42,14 +42,15 @@ body Splash::constructor {args} {
 	label $itk_interior.message
     } {
 	usual
+	keep -image -bitmap
 	rename -width -labelwidth labelwidth Labelwidth
 	rename -height -labelheight labelheight Labelheight
 	rename -text -message message Text
     }
 
-    pack $itk_component(message) -expand yes -fill both
-    center
-
     # process options
     eval itk_initialize $args
+
+    pack $itk_component(message) -expand yes -fill both
+    center
 }
