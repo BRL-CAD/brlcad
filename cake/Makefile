@@ -6,6 +6,7 @@ SHELL=/bin/sh
 # -DATT for SystemV, -DBSD for Berkeley, done by machinetype.sh
 #
 # For Apollo, may need to add -Tbsd4.3
+# For SunOS 5 (Solaris 2), need to add -Xc
 COPTS = -DCAKEDEBUG -DYYDEBUG -DCAREFUL -D`machinetype.sh -a`
 
 BINDIR=/usr/brlcad/bin
