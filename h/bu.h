@@ -661,7 +661,7 @@ struct bu_mapped_file {
 	char		*appl;		/* bu_strdup() of tag for application using 'apbuf' */
 	genptr_t	apbuf;		/* opt: application-specific buffer */
 	long		apbuflen;	/* opt: application-specific buflen */
-	/* XXX Needs date stamp, in case file is modified */
+	time_t		modtime;	/* date stamp, in case file is modified */
 	int		uses;		/* # ptrs to this struct handed out */
 };
 #define BU_MAPPED_FILE_MAGIC	0x4d617066	/* Mapf */
