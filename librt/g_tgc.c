@@ -83,15 +83,16 @@ matp_t			mat;
 struct rt_i		*rtip;
 {
 	register struct tgc_specific *tgc;
+	register fastf_t	f;
+	LOCAL fastf_t	prod_ab, prod_cd;
 	LOCAL fastf_t	magsq_h, magsq_a, magsq_b, magsq_c, magsq_d;
 	LOCAL fastf_t	mag_h, mag_a, mag_b, mag_c, mag_d;
 	LOCAL mat_t	Rot, Shr, Scl;
 	LOCAL mat_t	iRot, tShr, iShr, iScl;
 	LOCAL mat_t	tmp;
-	LOCAL vect_t	Hv, A, B, C, D;
+	LOCAL vect_t	V, Hv, A, B, C, D;
 	LOCAL vect_t	nH;
 	LOCAL vect_t	work;
-	FAST fastf_t	f;
 
 	/*
 	 *  For a fast way out, hand this solid off to the REC routine.
@@ -108,6 +109,9 @@ struct rt_i		*rtip;
 #define TGC_C	&vec[4*ELEMENTS_PER_VECT]
 #define TGC_D	&vec[5*ELEMENTS_PER_VECT]
 
+	/* Apply full 4X4mat to V */
+	MAT4X3PNT( V, mat, TGC_V );
+
 	/* Apply rotation to Hv, A,B,C,D */
 	MAT4X3VEC( Hv, mat, TGC_H );
 	MAT4X3VEC( A, mat, TGC_A );
@@ -121,67 +125,111 @@ struct rt_i		*rtip;
 	mag_b = sqrt( magsq_b = MAGSQ( B ) );
 	mag_c = sqrt( magsq_c = MAGSQ( C ) );
 	mag_d = sqrt( magsq_d = MAGSQ( D ) );
+	prod_ab = mag_a * mag_b;
+	prod_cd = mag_c * mag_d;
 
-	if( NEAR_ZERO( magsq_h, 0.0001 ) ) {
+	/*
+	 *  Unfortunately, to prevent divide-by-zero, some tolerancing
+	 *  needs to be introduced.
+	 *  TGC_LEN_TOL is the shortest length, in mm, that can be stood.
+	 *  Can probably become at least SMALL.
+	 *  Dot products smaller than TGC_DOT_TOL are considered to have
+	 *  a dot product of zero, ie, the angle is effectively zero.
+	 *  asin(0.1   ) = 5.73917 degrees
+	 *  asin(0.01  ) = 0.572967
+	 *  asin(0.001 ) = 0.0572958 degrees
+	 *  asin(0.0001) = 0.00572958 degrees
+	 *
+	 *  sin(0.01 degrees) = sin(0.000174 radians) = 0.000174533
+	 *
+	 *  Many TGCs will fail if DOT_TOL is much smaller than 0.001,
+	 *  which establishes a 1/20th degree tolerance.
+	 *  The intent is to eliminate grossly bad TGCs, not pick nits.
+	 */
+#define TGC_LEN_TOL	(1.0e-8)
+#define TGC_DOT_TOL	(0.001)
+	if( NEAR_ZERO( magsq_h, TGC_LEN_TOL ) ) {
 		rt_log("tgc(%s):  zero length H vector\n", stp->st_name );
 		return(1);		/* BAD */
 	}
 
-	/* Ascertain whether H lies in A-B plane 			*/
-	VCROSS( work, A, B );
-	f = VDOT( Hv, work )/ ( mag_a*mag_b*mag_h );
-	if ( NEAR_ZERO(f, 0.0001) ) {
-		rt_log("tgc(%s):  H lies in A-B plane\n",stp->st_name);
-		return(1);		/* BAD */
-	}
-
 	/* Validate that figure is not two-dimensional			*/
-	if ( NEAR_ZERO( magsq_a, 0.0001 ) && NEAR_ZERO( magsq_c, 0.0001 ) ) {
+	if( NEAR_ZERO( magsq_a, TGC_LEN_TOL ) &&
+	     NEAR_ZERO( magsq_c, TGC_LEN_TOL ) ) {
 		rt_log("tgc(%s):  vectors A, C zero length\n", stp->st_name );
 		return (1);
 	}
-	if ( NEAR_ZERO( magsq_b, 0.0001 ) && NEAR_ZERO( magsq_d, 0.0001 ) ) {
+	if( NEAR_ZERO( magsq_b, TGC_LEN_TOL ) &&
+	    NEAR_ZERO( magsq_d, TGC_LEN_TOL ) ) {
 		rt_log("tgc(%s):  vectors B, D zero length\n", stp->st_name );
 		return (1);
 	}
 
 	/* Validate that both ends are not degenerate */
-	if( mag_a * mag_b <= 0.001 && mag_c*mag_d <= 0.001 )  {
-		rt_log("tgc(%s):  Both ends degenerate\n", stp->st_name);
+	if( prod_ab <= TGC_LEN_TOL )  {
+		/* AB end is degenerate */
+		if( prod_cd <= TGC_LEN_TOL )  {
+			rt_log("tgc(%s):  Both ends degenerate\n", stp->st_name);
+			return(1);		/* BAD */
+		}
+		/* Exchange ends, so that in solids with one degenerate end,
+		 * the CD end always is always the degenerate one
+		 */
+		VADD2( V, V, Hv );
+		VREVERSE( Hv, Hv );
+#define VXCH( a, b, tmp )	{ VMOVE(tmp,a); VMOVE(a,b); VMOVE(b,tmp); }
+		VXCH( A, C, work );
+		VXCH( B, D, work );
+		rt_log("NOTE: tgc(%s): degenerate end exchanged\n", stp->st_name);
+	}
+
+	/* Ascertain whether H lies in A-B plane 			*/
+	VCROSS( work, A, B );
+	f = VDOT( Hv, work ) / ( prod_ab*mag_h );
+	if ( NEAR_ZERO(f, TGC_DOT_TOL) ) {
+		rt_log("tgc(%s):  H lies in A-B plane\n",stp->st_name);
 		return(1);		/* BAD */
 	}
 
-	if( mag_a * mag_b > 0.001 )  {
+	if( prod_ab > SMALL )  {
 		/* Validate that A.B == 0 */
-		f = VDOT( A, B ) / (mag_a * mag_b);
-		if( ! NEAR_ZERO(f, 0.0001) ) {
-			rt_log("tgc(%s):  A not perpendicular to B\n",stp->st_name);
+		f = VDOT( A, B ) / prod_ab;
+		if( ! NEAR_ZERO(f, TGC_DOT_TOL) ) {
+			rt_log("tgc(%s):  A not perpendicular to B, f=%g\n",
+				stp->st_name, f);
+			rt_log("tgc: dot=%g / a*b=%g\n",
+				VDOT( A, B ),  prod_ab );
 			return(1);		/* BAD */
 		}
 	}
-	if( mag_c * mag_d > 0.001 )  {
+	if( prod_cd > SMALL )  {
 		/* Validate that C.D == 0 */
-		f = VDOT( C, D ) / (mag_c * mag_d);
-		if( ! NEAR_ZERO(f, 0.0001) ) {
-			rt_log("tgc(%s):  C not perpendicular to D\n",stp->st_name);
+		f = VDOT( C, D ) / prod_cd;
+		if( ! NEAR_ZERO(f, TGC_DOT_TOL) ) {
+			rt_log("tgc(%s):  C not perpendicular to D, f=%g\n",
+				stp->st_name, f);
+			rt_log("tgc: dot=%g / c*d=%g\n",
+				VDOT( C, D ), prod_cd );
 			return(1);		/* BAD */
 		}
 	}
 
-	if( mag_a * mag_c > 0.001 )  {
+	if( mag_a * mag_c > SMALL )  {
 		/* Validate that  A || C */
 		f = 1.0 - VDOT( A, C ) / (mag_a * mag_c);
-		if( ! NEAR_ZERO(f, 0.0001) ) {
-			rt_log("tgc(%s):  A not parallel to C\n",stp->st_name);
+		if( ! NEAR_ZERO(f, TGC_DOT_TOL) ) {
+			rt_log("tgc(%s):  A not parallel to C, f=%g\n",
+				stp->st_name, f);
 			return(1);		/* BAD */
 		}
 	}
 
-	if( mag_b * mag_d > 0.001 )  {
+	if( mag_b * mag_d > SMALL )  {
 		/* Validate that  B || D, for parallel planes	*/
 		f = 1.0 - VDOT( B, D ) / (mag_b * mag_d);
-		if( ! NEAR_ZERO(f, 0.0001) ) {
-			rt_log("tgc(%s):  B not parallel to D\n",stp->st_name);
+		if( ! NEAR_ZERO(f, TGC_DOT_TOL) ) {
+			rt_log("tgc(%s):  B not parallel to D, f=%g\n",
+				stp->st_name, f);
 			return(1);		/* BAD */
 		}
 	}
@@ -190,23 +238,18 @@ struct rt_i		*rtip;
 	GETSTRUCT( tgc, tgc_specific );
 	stp->st_specific = (int *)tgc;
 
-	/* Apply full 4X4mat to V */
-	{
-		register fastf_t *p = TGC_V;
-		MAT4X3PNT( tgc->tgc_V, mat, p );
-	}
-
+	VMOVE( tgc->tgc_V, V );
 	tgc->tgc_A = mag_a;
 	tgc->tgc_B = mag_b;
 	tgc->tgc_C = mag_c;
 	tgc->tgc_D = mag_d;
 
 	/* Part of computing ALPHA() */
-	if( NEAR_ZERO(magsq_c, 0.0001) )
+	if( NEAR_ZERO(magsq_c, SMALL) )
 		tgc->tgc_AAdCC = VLARGE;
 	else
 		tgc->tgc_AAdCC = magsq_a / magsq_c;
-	if( NEAR_ZERO(magsq_d, 0.0001) )
+	if( NEAR_ZERO(magsq_d, SMALL) )
 		tgc->tgc_BBdDD = VLARGE;
 	else
 		tgc->tgc_BBdDD = magsq_b / magsq_d;
@@ -223,9 +266,9 @@ struct rt_i		*rtip;
 
 	tgc->tgc_CdAm1 = tgc->tgc_C/tgc->tgc_A - 1.0;
 	tgc->tgc_DdBm1 = tgc->tgc_D/tgc->tgc_B - 1.0;
-	if( NEAR_ZERO( tgc->tgc_CdAm1, 0.0001 ) )
+	if( NEAR_ZERO( tgc->tgc_CdAm1, SMALL ) )
 		tgc->tgc_CdAm1 = 0.0;
-	if( NEAR_ZERO( tgc->tgc_DdBm1, 0.0001 ) )
+	if( NEAR_ZERO( tgc->tgc_DdBm1, SMALL ) )
 		tgc->tgc_DdBm1 = 0.0;
 
 	/*
@@ -508,7 +551,7 @@ struct application	*ap;
 	t_scale = 1/MAGNITUDE( dprime );
 	VSCALE( dprime, dprime, t_scale );	/* VUNITIZE( dprime ); */
 
-	if( NEAR_ZERO( dprime[Z], 0.0001 ) )
+	if( NEAR_ZERO( dprime[Z], 1.0e-10 ) )
 		dprime[Z] = 0.0;	/* prevent rootfinder heartburn */
 
 	VSUB2( work, rp->r_pt, tgc->tgc_V );
@@ -751,7 +794,7 @@ struct application	*ap;
 		return(SEG_NULL);
 
 	dir = VDOT( tgc->tgc_N, rp->r_dir );	/* direc */
-	if ( NEAR_ZERO( dir, 0.0001 ) )
+	if ( NEAR_ZERO( dir, TGC_DOT_TOL ) )
 		return( SEG_NULL );
 
 	b = ( -pprime[Z] )/dprime[Z];
