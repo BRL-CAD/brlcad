@@ -314,7 +314,7 @@ set -S2 "/bin/sh"
 #endif
 
 #if defined(sgi) && defined(mips)
-/*	Silicon Graphics 4D, which uses the MIPS chip */
+/*	Silicon Graphics 4D, which uses the MIPS chip.
  *	NOTE:  "IRIX 3.3 and 3.3.1" are the ONLY software releases supported.
  *	NOTE:  If the shared library is used, then all machine types can
  *	use the same binary programs, and no type discrimination is
