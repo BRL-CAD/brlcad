@@ -5,9 +5,10 @@
  */
 
 #define SRCDIR	conv
-#define PRODUCTS	asc2g g2asc conv-vg2g pix2asc asc2pix euclid-g g-euclid \
-			euclid_format tankill-g g-tankill viewpoint-g dxf-g g-nmg \
-			g-euclid1 fast4-g proe-g
+#define PRODUCTS	asc2g g2asc conv-vg2g pix2asc asc2pix euclid-g \
+			g-euclid euclid_format tankill-g g-tankill \
+			viewpoint-g dxf-g g-nmg g-euclid1 fast4-g proe-g \
+			asc-nmg
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
@@ -65,5 +66,8 @@ dxf-g:	dxf-g.o
 
 g-nmg:	g-nmg.o
 	CC LDFLAGS g-nmg.o LIBWDB LIBRT LIBRT_LIBES LIBES -o g-nmg
+
+asc-nmg: asc-nmg.o
+	CC LDFLAGS asc-nmg.o LIBWDB LIBRT LIBRT_LIBES LIBES -o asc-nmg
 
 #include "../Cakefile.rules"
