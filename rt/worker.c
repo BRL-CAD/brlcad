@@ -29,7 +29,7 @@ static char RCSworker[] = "@(#)$Header$ (BRL)";
 #include "./mathtab.h"
 #include "./rdebug.h"
 
-fastf_t		gift_grid_rounding = 25.4;	/* set to 25.4 for inches */
+fastf_t		gift_grid_rounding = 0;		/* set to 25.4 for inches */
 
 point_t		viewbase_model;	/* model-space location of viewplane corner */
 
