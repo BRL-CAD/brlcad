@@ -26,6 +26,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #ifdef sgi
 # include "gl.h"
 # include "device.h"
+#ifdef mips
+# include "gl/addrs.h"
+# include "gl/cg2vme.h"
+#endif
 
 #define	HUGE	1.0e10	/* for near/far clipping */
 
@@ -231,6 +235,7 @@ char	**argv;
 
 #define	ORTHO	SW0
 #define	PERSP	SW1
+#undef RESET
 #define	RESET	SW2
 
 #define	BOTTOM	SW23
@@ -910,6 +915,9 @@ int	n;
 	long	x, y;
 	double	fx, fy;
 	int	ret;
+#ifdef mips
+	long	video;
+#endif
 
 	switch( n ) {
 	case MENU_CENTER:
@@ -936,9 +944,18 @@ int	n;
 		break;
 	case MENU_SNAP:
 		cursoff();
+#ifdef mips
+		video = getvideo(DE_R1);
+		setvideo( DE_R1, DER1_30HZ|DER1_UNBLANK );
+#else
 		system("Set30");
+#endif
 		ret = system("dunnsnap");
+#ifdef mips
+		setvideo( DE_R1, video );
+#else
 		system("Set60");
+#endif
 		curson();
 		if( ret ) {
 			fprintf( stderr, "pl-sgi: Snap failed. Out of film?\n" );
