@@ -47,6 +47,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mgedtcl.h"
 #include "./dm.h"
 
+/* Used to ignore the old scrollbars and menus */
+int ignore_scroll_and_menu = 0;
+
 int	state;
 char	*state_str[] = {
 	"-ZOT-",
@@ -289,42 +292,33 @@ int call_dm;
 	    return;
 	}
 
-#if USE_OLD_MENUS	
-#ifdef XMGED
-	if(dotitles_hook){
-	    (*dotitles_hook)();
-	    rt_vls_free(&vls);
-	    return;
-	}
-#endif
-	/* Enclose window in decorative box.  Mostly for alignment. */
-	dmp->dmr_2d_line( XMIN, YMIN, XMAX, YMIN, 0 );
-	dmp->dmr_2d_line( XMAX, YMIN, XMAX, YMAX, 0 );
-	dmp->dmr_2d_line( XMAX, YMAX, XMIN, YMAX, 0 );
-	dmp->dmr_2d_line( XMIN, YMAX, XMIN, YMIN, 0 );
-#endif
-
 	/* Line across the bottom, above two bottom status lines */
 	dmp->dmr_2d_line( XMIN, TITLE_YBASE-TEXT1_DY, XMAX,
 			  TITLE_YBASE-TEXT1_DY, 0 );
 
-#if USE_OLD_MENUS
-	/* Display scroll bars */
-	scroll_ybot = scroll_display( SCROLLY ); 
-	y = MENUY;
-	x = MENUX;
+	if(!ignore_scroll_and_menu){
+	  /* Enclose window in decorative box.  Mostly for alignment. */
+	  dmp->dmr_2d_line( XMIN, YMIN, XMAX, YMIN, 0 );
+	  dmp->dmr_2d_line( XMAX, YMIN, XMAX, YMAX, 0 );
+	  dmp->dmr_2d_line( XMAX, YMAX, XMIN, YMAX, 0 );
+	  dmp->dmr_2d_line( XMIN, YMAX, XMIN, YMIN, 0 );
 
-	/* Display state and local unit in upper right corner, boxed */
+	  /* Display scroll bars */
+	  scroll_ybot = scroll_display( SCROLLY ); 
+	  y = MENUY;
+	  x = MENUX;
 
-	dmp->dmr_puts(state_str[state], MENUX, MENUY - MENU_DY, 1, DM_WHITE );
+	  /* Display state and local unit in upper right corner, boxed */
+
+	  dmp->dmr_puts(state_str[state], MENUX, MENUY - MENU_DY, 1, DM_WHITE );
 #define YPOS	(MENUY - MENU_DY - 75 )
-	dmp->dmr_2d_line(MENUXLIM, YPOS, MENUXLIM, YMAX, 0);	/* vert. */
+	  dmp->dmr_2d_line(MENUXLIM, YPOS, MENUXLIM, YMAX, 0);	/* vert. */
 #undef YPOS
-#else
-	scroll_ybot = SCROLLY;
-	x = XMIN + 20;
-	y = YMAX+TEXT0_DY;
-#endif
+	}else{
+	  scroll_ybot = SCROLLY;
+	  x = XMIN + 20;
+	  y = YMAX+TEXT0_DY;
+	}
 
 	/*
 	 * Print information about object illuminated
@@ -343,14 +337,14 @@ int call_dm;
 		}
 	}
 
-#if USE_OLD_MENUS
-	/*
-	 * The top of the menu (if any) begins at the Y value specified.
-	 */
-	mmenu_display( y );
+	if(!ignore_scroll_and_menu){
+	  /*
+	   * The top of the menu (if any) begins at the Y value specified.
+	   */
+	  mmenu_display( y );
 
-	/* print parameter locations on screen */
-	if( state == ST_O_EDIT && illump->s_Eflag ) {
+	  /* print parameter locations on screen */
+	  if( state == ST_O_EDIT && illump->s_Eflag ) {
 		/* region is a processed region */
 		MAT4X3PNT(temp, model2objview, es_keypoint);
 		xloc = (int)(temp[X]*2048);
@@ -367,19 +361,19 @@ int call_dm;
 				 yloc-TEXT0_DY, 0);
 		dmp->dmr_2d_line(xloc-TEXT0_DY, yloc+TEXT0_DY, xloc-TEXT0_DY,
 				 yloc-TEXT0_DY, 0);
+	      }
 	}
-#endif
 
 	/*
 	 * Prepare the numerical display of the currently edited solid/object.
 	 */
 	create_text_overlay( &vls );
 
-#if USE_OLD_MENUS
-	screen_vls( SOLID_XBASE, scroll_ybot+TEXT0_DY, &vls );
-#else
-	screen_vls( x, y, &vls );
-#endif
+	if(!ignore_scroll_and_menu){
+	  screen_vls( SOLID_XBASE, scroll_ybot+TEXT0_DY, &vls );
+	}else{
+	  screen_vls( x, y, &vls );
+	}
 
 	/*
 	 * General status information on the next to last line
