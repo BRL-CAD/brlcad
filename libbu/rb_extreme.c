@@ -69,7 +69,10 @@ void *rb_extreme (rb_tree *tree, int order, int sense)
     /* Wade throught the tree */
     node = _rb_extreme(rb_root(tree, order), order, sense, rb_null(tree));
 
-    return (rb_data(node, order));
+    if (node == rb_null(tree))
+	return (NULL);
+    else
+	return (rb_data(node, order));
 }
 
 /*		    _ R B _ N E I G H B O R ( )
@@ -93,12 +96,12 @@ struct rb_node *_rb_neighbor (struct rb_node *node, int order, int sense)
     RB_CKMAG(node, RB_NODE_MAGIC, "red-black node");
     RB_CKORDER(node -> rbn_tree, order);
 
-    printf("_rb_neighbor(<%d>, %d, %d)...\n", (int) node, order, sense);
-    fflush(stdout);
+    fprintf(stderr,
+	"_rb_neighbor(<%x>, %d, %d)...\n", (int) node, order, sense);
     child = (sense == SENSE_MIN) ? rb_left_child(node, order) :
 				   rb_right_child(node, order);
     if (child != empty_node)
-	return (_rb_extreme(child, order, sense, empty_node));
+	return (_rb_extreme(child, order, 1 - sense, empty_node));
     parent = rb_parent(node, order);
     while ((parent != empty_node) &&
 	   (node == rb_child(parent, order, sense)))
@@ -142,9 +145,12 @@ void *rb_neighbor (int order, int sense)
     /* Wade throught the tree */
     node = _rb_neighbor(current_node, order, sense);
 
-    /* Record the node with which we've been working */
-    if (node != rb_null(tree))
+    if (node == rb_null(tree))
+	return (NULL);
+    else
+    {
+	/* Record the node with which we've been working */
 	current_node = node;
-
-    return (rb_data(node, order));
+	return (rb_data(node, order));
+    }
 }
