@@ -332,9 +332,9 @@ typedef long	bitv_t;		/* largest integer type */
 #	define bcopy(from,to,count)	memcpy( to, from, count )
 #endif
 
-#if defined(BSD) && !defined(SYSV) && BSD < 43
-#	define strrchr		rindex
-#	define strchr		index
+#if defined(BSD) && !defined(SYSV) && (BSD < 43)
+#	define strrchr(sp,c)	rindex(sp,c)
+#	define strchr(sp,c)	index(sp,c)
 #endif
 
 
