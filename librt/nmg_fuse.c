@@ -2472,7 +2472,7 @@ fastf_t amax;
 
 	/* if we don't have more than 3 entries, it doesn't matter */
 
-	if( rt_list_len( hd ) < 3 )
+	if( bu_list_len( hd ) < 3 )
 		return;
 
 	for( BU_LIST_FOR( rad, nmg_radial, hd ) )
@@ -2505,7 +2505,7 @@ fastf_t amax;
 		return;
 
 	/* reverse order of the list */
-	rt_list_reverse( hd );
+	bu_list_reverse( hd );
 
 	/* Need to exchange eu with eu->eumate_p for each eu on the list */
 	for( BU_LIST_FOR( rad, nmg_radial, hd ) )
