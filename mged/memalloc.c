@@ -73,7 +73,7 @@ register unsigned size;
 	unsigned long	addr;
 
 	if( size == 0 )
-		return( 1L );	/* Anything non-zero */
+		return( 0L );	/* fail */
 
 	for( curp = *pp; curp; curp = (prevp=curp)->m_nxtp )  {
 		if( curp->m_size >= size )
