@@ -42,6 +42,479 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "db.h"		/* for debugging stuff at bottom */
 
+/*
+ *	N M G _ F I N D _ T O P _ F A C E
+ *
+ *	Finds the topmost face in a shell (in z-direction).
+ *	Expects to have a translation table (variable "flags") for
+ *	the model, and will ignore face structures that have their
+ *	flag set in the table.
+ */
+
+struct face *
+nmg_find_top_face( s , flags )
+struct shell *s;
+long *flags;
+{
+	fastf_t max_z=(-MAX_FASTF);
+	fastf_t max_slope=(-MAX_FASTF);
+	vect_t edge;
+	struct face *f_top=(struct face *)NULL;
+	struct edge *e_top=(struct edge *)NULL;
+	struct vertex *vp_top=(struct vertex *)NULL;
+	struct loopuse *lu;
+	struct faceuse *fu;
+	struct edgeuse *eu,*eu1,*eu2;
+	struct vertexuse *vu;
+	int done;
+
+	if( rt_g.NMG_debug & DEBUG_BASIC )
+		rt_log( "nmg_find_top_face( s = x%x , flags = x%x )\n" , s , flags );
+
+	NMG_CK_SHELL( s );
+
+	/* find vertex with greatest z coordinate */
+	for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+	{
+		NMG_CK_FACEUSE( fu );
+		if( NMG_INDEX_TEST( flags , fu->f_p ) )
+			continue;
+		for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+		{
+			NMG_CK_LOOPUSE( lu );
+			if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_EDGEUSE_MAGIC )
+			{
+				for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+				{
+					NMG_CK_EDGEUSE( eu );
+					if( eu->vu_p->v_p->vg_p->coord[Z] > max_z )
+					{
+						max_z = eu->vu_p->v_p->vg_p->coord[Z];
+						vp_top = eu->vu_p->v_p;
+					}
+				}
+			}
+		}
+	}
+	if( vp_top == (struct vertex *)NULL )
+	{
+		rt_log( "Fix_normals: Could not find uppermost vertex" );
+		return( (struct face *)NULL );
+	}
+
+	/* find edge from vp_top with largest slope in +z direction */
+	for( RT_LIST_FOR( vu , vertexuse , &vp_top->vu_hd ) )
+	{
+		NMG_CK_VERTEXUSE( vu );
+		if( *vu->up.magic_p == NMG_EDGEUSE_MAGIC )
+		{
+			struct vertexuse *vu1;
+
+			eu = vu->up.eu_p;
+			NMG_CK_EDGEUSE( eu );
+
+			/* skip wire edges */
+			if( *eu->up.magic_p != NMG_LOOPUSE_MAGIC )
+				continue;
+
+			/* skip wire loops */
+			if( *eu->up.lu_p->up.magic_p != NMG_FACEUSE_MAGIC )
+				continue;
+
+			/* skip finished faces */
+			if( NMG_INDEX_TEST( flags , eu->up.lu_p->up.fu_p->f_p ) )
+				continue;
+
+			/* skip edges from other shells */
+			if( nmg_find_s_of_eu( eu ) != s )
+				continue;
+
+			/* get vertex at other end of this edge */
+			vu1 = eu->eumate_p->vu_p;
+			NMG_CK_VERTEXUSE( vu1 );
+
+			/* make a unit vector in direction of edgeuse */
+			VSUB2( edge , vu1->v_p->vg_p->coord , vu->v_p->vg_p->coord );
+			VUNITIZE( edge );
+
+			/* check against current maximum slope */
+			if( edge[Z] > max_slope )
+			{
+				max_slope = edge[Z];
+				e_top = eu->e_p;
+			}
+		}
+	}
+	if( e_top == (struct edge *)NULL )
+	{
+		rt_log( "Fix_normals: Could not find uppermost edge" );
+		return( (struct face *)NULL );
+	}
+
+	/* now find the face containing e_top with "left-pointing vector" having the greatest slope */
+	max_slope = (-MAX_FASTF);
+	eu = e_top->eu_p;
+	eu1 = eu;
+	done = 0;
+	while( !done )
+	{
+		/* don't bother with anything but faces */
+		if( *eu1->up.magic_p == NMG_LOOPUSE_MAGIC )
+		{
+			lu = eu1->up.lu_p;
+			NMG_CK_LOOPUSE( lu );
+			if( *lu->up.magic_p == NMG_FACEUSE_MAGIC && lu->orientation == OT_SAME )
+			{
+				vect_t left;
+				vect_t edge_dir;
+				vect_t normal;
+
+				/* fu is a faceuse containing "eu1" */
+				fu = lu->up.fu_p;
+				NMG_CK_FACEUSE( fu );
+
+				/* skip faces from other shells */
+				if( fu->s_p != s )
+				{
+					/* go on to next radial face */
+					eu1 = eu1->eumate_p->radial_p;
+
+					/* check if we are back where we started */
+					if( eu1 == eu )
+						done = 1;
+
+					continue;
+				}
+
+				/* make a vector in the direction of "eu1" */
+				VSUB2( edge_dir , eu1->vu_p->v_p->vg_p->coord , eu1->eumate_p->vu_p->v_p->vg_p->coord );
+
+				/* find the normal for this faceuse */
+				NMG_GET_FU_NORMAL( normal, fu );
+
+				/* edge direction cross normal gives vetor in face */
+				VCROSS( left , edge_dir , normal );
+
+				/* unitize to get slope */
+				VUNITIZE( left );
+
+				/* check against current max slope */
+				if( left[Z] > max_slope )
+				{
+					max_slope = left[Z];
+					f_top = fu->f_p;
+				}
+			}
+		}
+		/* go on to next radial face */
+		eu1 = eu1->eumate_p->radial_p;
+
+		/* check if we are back where we started */
+		if( eu1 == eu )
+			done = 1;
+	}
+
+	if( f_top == (struct face *)NULL )
+	{
+		rt_log( "Nmg_find_top_face: Could not find uppermost face" );
+		return( (struct face *)NULL );
+	}
+
+	return( f_top );
+}
+
+/*	N M G _ A S S O C _ V O I D _ S H E L L S
+ *
+ * Passed an nmg_ptbl structure containing one shell, this routine
+ * examines the other shells in the region to determine if any are void shells
+ * within the shell on the nmg_ptbl list. Any such void shells found are added
+ * to the nmg_ptbl list. The final result is a ptbl list of shells where the
+ * first shell on the list is the outer shell, and any additional shells one
+ * the list are void shells within that outer shell. This is a support routine
+ * for "nmg_find_outer_and_void_shells" and gets called for every outer shell
+ * in the region
+ */
+struct top_face
+{
+	struct shell *s;
+	struct face *f;
+	vect_t normal;
+};
+
+static void
+nmg_assoc_void_shells( r , shells , ttol )
+CONST struct nmgregion *r;
+struct nmg_ptbl *shells;
+CONST struct rt_tol *ttol;
+{
+	struct shell *outer_shell,*void_s,*s;
+	struct faceuse *fu;
+	struct loopuse *lu;
+	struct edgeuse *eu;
+	struct face *ext_f;
+	long *flags;
+	struct top_face *top_faces;
+	int total_shells=0;
+	int i;
+
+	NMG_CK_REGION( r );
+	NMG_CK_PTBL( shells );
+	RT_CK_TOL( ttol );
+
+	outer_shell = (struct shell *)NMG_TBL_GET( shells , 0 );
+	NMG_CK_SHELL( outer_shell );
+
+	/* count shells in region */
+	for( RT_LIST_FOR( s , shell , &r->s_hd ) )
+		total_shells++;
+
+	/* make an array of shells and top faces */
+	top_faces = (struct top_face *)rt_calloc( total_shells , sizeof( struct top_face ) , "nmg_assoc_void_shells: top_faces" );
+
+	/* make flags array for use by "nmg_find_top_face" */
+	flags = (long *)rt_calloc( r->m_p->maxindex , sizeof( long ) , "nmg_find_outer_and_void_shells: flags" );
+
+	top_faces[0].s = outer_shell;
+	top_faces[0].f = nmg_find_top_face( outer_shell , flags );
+	ext_f = top_faces[0].f;
+	fu = top_faces[0].f->fu_p;
+	if( fu->orientation != OT_SAME )
+		fu = fu->fumate_p;
+	NMG_GET_FU_NORMAL( top_faces[0].normal , fu );
+
+	/* fill in top_faces array */
+	i = 0;
+	for( RT_LIST_FOR( s , shell , &r->s_hd ) )
+	{
+		if( s == outer_shell )
+			continue;
+
+		top_faces[++i].s = s;
+		top_faces[i].f = nmg_find_top_face( s , flags );
+		fu = top_faces[i].f->fu_p;
+		if( fu->orientation != OT_SAME )
+			fu = fu->fumate_p;
+		NMG_GET_FU_NORMAL( top_faces[i].normal , fu );
+	}
+
+	/* look for voids */
+	for( RT_LIST_FOR( void_s , shell , &r->s_hd ) )
+	{
+		struct face *void_f;
+		int wrong_void=0;
+		vect_t normal;
+
+		if( void_s == outer_shell )
+			continue;
+
+		NMG_CK_SHELL( void_s );
+
+		void_f = (struct face *)NULL;
+		for( i=0 ; i<total_shells ; i++ )
+		{
+			if( top_faces[i].s == void_s )
+			{
+				void_f = top_faces[i].f;
+				VMOVE( normal , top_faces[i].normal );
+				break;
+			}
+		}
+		if( void_f == (struct face *)NULL )
+			rt_bomb( "nmg_assoc_void_shells: no top face for a shell\n" );
+
+		if( normal[Z] < 0.0  )
+		{
+			/* this is a void shell */
+			struct face *int_f;
+			struct shell *test_s;
+			int breakout=0;
+			int not_in_this_shell=0;
+
+			/* this is a void shell
+			 * but does it belong with outer_shell */
+			if( !V3RPP1_IN_RPP2( void_s->sa_p->min_pt , void_s->sa_p->max_pt , outer_shell->sa_p->min_pt , outer_shell->sa_p->max_pt ) )
+			{
+				continue;
+			}
+
+			for( RT_LIST_FOR( fu , faceuse , &void_s->fu_hd ) )
+			{
+				for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+				{
+					if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+						continue;
+					for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+					{
+						int class;
+
+						class = nmg_class_pt_s( eu->vu_p->v_p->vg_p->coord , outer_shell , ttol );
+
+						if( class == NMG_CLASS_AoutB )
+						{
+							breakout = 1;
+							not_in_this_shell = 1;
+							break;
+						}
+					}
+					if( breakout )
+						break;
+				}
+				if( breakout )
+					break;
+			}
+
+			if( not_in_this_shell )
+				continue;
+
+			int_f = (struct face *)NULL;
+			for( i=0 ; i<total_shells ; i++ )
+			{
+				if( top_faces[i].s == void_s )
+				{
+					int_f = top_faces[i].f;
+					break;
+				}
+			}
+			if( int_f == (struct face *)NULL )
+				rt_bomb( "nmg_assoc_void_shells: no top face for a shell\n" );
+
+			/* Make sure there are no other external shells between these two */
+			for( RT_LIST_FOR( test_s , shell , &r->s_hd ) )
+			{
+				vect_t test_norm;
+				struct face *test_f;
+
+				test_f = (struct face *)NULL;
+				for( i=0 ; i<total_shells ; i++ )
+				{
+					if( top_faces[i].s == test_s )
+					{
+						test_f = top_faces[i].f;
+						VMOVE( test_norm , top_faces[i].normal );
+						break;
+					}
+				}
+				if( test_f == (struct face *)NULL )
+					rt_bomb( "nmg_assoc_void_shells: no top face for a shell\n" );
+
+				if( test_norm[Z] > 0.0 )
+				{
+					if( !V3RPP1_IN_RPP2( void_s->sa_p->min_pt , void_s->sa_p->max_pt , test_s->sa_p->min_pt , test_s->sa_p->max_pt ) )
+						continue;
+
+					if( test_f->max_pt[Z] > int_f->max_pt[Z]
+					    && test_f->max_pt[Z] < ext_f->max_pt[Z] )
+					{
+						wrong_void = 1;
+						break;
+					}
+				}
+			}
+			if( wrong_void )
+			{
+				continue;
+			}
+
+			/* This void shell belongs with shell outer_s 
+			 * add it to the list of shells */
+			nmg_tbl( shells , TBL_INS , (long *)void_s );
+		}
+	}
+	rt_free( (char *)flags , "nmg_assoc_void_shells: flags" );
+}
+
+/*	N M G _ F I N D _ O U T E R _ A N D _ V O I D _ S H E L L S
+ *
+ * This routine takes a region and constructs an array of nmg_ptbl lists.
+ * A list is created for each outer shell, and that shell is the first item
+ * on the list. Additional shells on any list are void shells within that
+ * lists outer shell. This routine calls "nmg_decompose_shell" for every
+ * shell in the region, so the original region topology may be changed
+ * to accomplish this. No geometry is altered.
+ */
+int
+nmg_find_outer_and_void_shells( r , shells , tol )
+struct nmgregion *r;
+struct nmg_ptbl ***shells;
+CONST struct rt_tol *tol;
+{
+	struct nmg_ptbl *outer_shells;
+	struct shell *s;
+	int i;
+	int total_shells=0;
+	int outer_shell_count;
+	int re_bound=0;
+	long *flags;
+
+	NMG_CK_REGION( r );
+	RT_CK_TOL( tol );
+
+	/* Decompose shells */
+	outer_shells = (struct nmg_ptbl *)rt_malloc( sizeof( struct nmg_ptbl ) , "nmg_find_outer_and_void_shells: outer_shells" );
+	nmg_tbl( outer_shells , TBL_INIT , NULL );
+	for (RT_LIST_FOR(s, shell, &r->s_hd))
+	{
+		NMG_CK_SHELL( s );
+		nmg_tbl( outer_shells , TBL_INS , (long *)s );
+	}
+	for( i=0 ; i<NMG_TBL_END( outer_shells ) ; i++ )
+	{
+		s = (struct shell *)NMG_TBL_GET( outer_shells , i );
+		if( nmg_decompose_shell( s , tol ) > 1 )
+			re_bound = 1;
+	}
+	nmg_tbl( outer_shells , TBL_RST , NULL );
+
+	if( re_bound )
+		nmg_region_a( r , tol );
+
+	for (RT_LIST_FOR(s, shell, &r->s_hd))
+		total_shells++;
+
+	flags = (long *)rt_calloc( r->m_p->maxindex , sizeof( long ) , "nmg_find_outer_and_void_shells: flags" );
+
+	for( RT_LIST_FOR( s , shell , &r->s_hd ) )
+	{
+		struct face *f;
+		struct faceuse *fu;
+		vect_t normal;
+
+		f = nmg_find_top_face( s , flags );
+		fu = f->fu_p;
+		if( fu->orientation != OT_SAME )
+			fu = fu->fumate_p;
+		if( fu->orientation != OT_SAME )
+			rt_bomb( "nmg_find_outer_and_void_shells: Neither faceuse nor mate have OT_SAME orient\n" );
+
+		NMG_GET_FU_NORMAL( normal , fu );
+		if( normal[Z] > 0.0 )
+		{
+			nmg_tbl( outer_shells , TBL_INS , (long *)s );	/* outer shell */
+		}
+	}
+
+	/* outer_shells is now a list of all the outer shells in the region */
+	outer_shell_count = NMG_TBL_END( outer_shells );
+
+	*shells = (struct nmg_ptbl **)rt_calloc( NMG_TBL_END( outer_shells ) , sizeof( struct nmg_ptbl *) ,
+			"nmg_find_outer_and_void_shells: shells" );
+	for( i=0 ; i<NMG_TBL_END( outer_shells ) ; i++ )
+	{
+		(*shells)[i] = (struct nmg_ptbl *)rt_malloc( sizeof( struct nmg_ptbl ) , 
+			"nmg_find_outer_and_void_shells: shells[]" );
+
+		nmg_tbl( (*shells)[i] , TBL_INIT , NULL );
+		NMG_CK_PTBL( (*shells)[i] );
+		nmg_tbl( (*shells)[i] , TBL_INS , (long *)NMG_TBL_GET( outer_shells , i ) );
+		if( outer_shell_count != total_shells ) /* must be some void shells */
+			nmg_assoc_void_shells( r , (*shells)[i] , tol );
+	}
+
+	rt_free( (char *)flags , "nmg_find_outer_and_void_shells: flags" );
+	nmg_tbl( outer_shells , TBL_FREE , NULL );
+	return( outer_shell_count );
+}
+
 fastf_t
 mat_determinant( m )
 CONST mat_t m;
@@ -2214,187 +2687,6 @@ CONST struct rt_tol *tol;
 	nmg_reverse_face( fu );
 
 	(void)nmg_face_fix_radial_parity( fu , tol );
-}
-
-/*
- *	N M G _ F I N D _ T O P _ F A C E
- *
- *	Finds the topmost face in a shell (in z-direction).
- *	Expects to have a translation table (variable "flags") for
- *	the model, and will ignore face structures that have their
- *	flag set in the table.
- */
-
-struct face *
-nmg_find_top_face( s , flags )
-struct shell *s;
-long *flags;
-{
-	fastf_t max_z=(-MAX_FASTF);
-	fastf_t max_slope=(-MAX_FASTF);
-	vect_t edge;
-	struct face *f_top=(struct face *)NULL;
-	struct edge *e_top=(struct edge *)NULL;
-	struct vertex *vp_top=(struct vertex *)NULL;
-	struct loopuse *lu;
-	struct faceuse *fu;
-	struct edgeuse *eu,*eu1,*eu2;
-	struct vertexuse *vu;
-	int done;
-
-	if( rt_g.NMG_debug & DEBUG_BASIC )
-		rt_log( "nmg_find_top_face( s = x%x , flags = x%x )\n" , s , flags );
-
-	NMG_CK_SHELL( s );
-
-	/* find vertex with greatest z coordinate */
-	for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
-	{
-		NMG_CK_FACEUSE( fu );
-		if( NMG_INDEX_TEST( flags , fu->f_p ) )
-			continue;
-		for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
-		{
-			NMG_CK_LOOPUSE( lu );
-			if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_EDGEUSE_MAGIC )
-			{
-				for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
-				{
-					NMG_CK_EDGEUSE( eu );
-					if( eu->vu_p->v_p->vg_p->coord[Z] > max_z )
-					{
-						max_z = eu->vu_p->v_p->vg_p->coord[Z];
-						vp_top = eu->vu_p->v_p;
-					}
-				}
-			}
-		}
-	}
-	if( vp_top == (struct vertex *)NULL )
-	{
-		rt_log( "Fix_normals: Could not find uppermost vertex" );
-		return( (struct face *)NULL );
-	}
-
-	/* find edge from vp_top with largest slope in +z direction */
-	for( RT_LIST_FOR( vu , vertexuse , &vp_top->vu_hd ) )
-	{
-		NMG_CK_VERTEXUSE( vu );
-		if( *vu->up.magic_p == NMG_EDGEUSE_MAGIC )
-		{
-			struct vertexuse *vu1;
-
-			eu = vu->up.eu_p;
-			NMG_CK_EDGEUSE( eu );
-
-			/* skip wire edges */
-			if( *eu->up.magic_p != NMG_LOOPUSE_MAGIC )
-				continue;
-
-			/* skip wire loops */
-			if( *eu->up.lu_p->up.magic_p != NMG_FACEUSE_MAGIC )
-				continue;
-
-			/* skip finished faces */
-			if( NMG_INDEX_TEST( flags , eu->up.lu_p->up.fu_p->f_p ) )
-				continue;
-
-			/* skip edges from other shells */
-			if( nmg_find_s_of_eu( eu ) != s )
-				continue;
-
-			/* get vertex at other end of this edge */
-			vu1 = eu->eumate_p->vu_p;
-			NMG_CK_VERTEXUSE( vu1 );
-
-			/* make a unit vector in direction of edgeuse */
-			VSUB2( edge , vu1->v_p->vg_p->coord , vu->v_p->vg_p->coord );
-			VUNITIZE( edge );
-
-			/* check against current maximum slope */
-			if( edge[Z] > max_slope )
-			{
-				max_slope = edge[Z];
-				e_top = eu->e_p;
-			}
-		}
-	}
-	if( e_top == (struct edge *)NULL )
-	{
-		rt_log( "Fix_normals: Could not find uppermost edge" );
-		return( (struct face *)NULL );
-	}
-
-	/* now find the face containing e_top with "left-pointing vector" having the greatest slope */
-	max_slope = (-MAX_FASTF);
-	eu = e_top->eu_p;
-	eu1 = eu;
-	done = 0;
-	while( !done )
-	{
-		/* don't bother with anything but faces */
-		if( *eu1->up.magic_p == NMG_LOOPUSE_MAGIC )
-		{
-			lu = eu1->up.lu_p;
-			NMG_CK_LOOPUSE( lu );
-			if( *lu->up.magic_p == NMG_FACEUSE_MAGIC && lu->orientation == OT_SAME )
-			{
-				vect_t left;
-				vect_t edge_dir;
-				vect_t normal;
-
-				/* fu is a faceuse containing "eu1" */
-				fu = lu->up.fu_p;
-				NMG_CK_FACEUSE( fu );
-
-				/* skip faces from other shells */
-				if( fu->s_p != s )
-				{
-					/* go on to next radial face */
-					eu1 = eu1->eumate_p->radial_p;
-
-					/* check if we are back where we started */
-					if( eu1 == eu )
-						done = 1;
-
-					continue;
-				}
-
-				/* make a vector in the direction of "eu1" */
-				VSUB2( edge_dir , eu1->vu_p->v_p->vg_p->coord , eu1->eumate_p->vu_p->v_p->vg_p->coord );
-
-				/* find the normal for this faceuse */
-				NMG_GET_FU_NORMAL( normal, fu );
-
-				/* edge direction cross normal gives vetor in face */
-				VCROSS( left , edge_dir , normal );
-
-				/* unitize to get slope */
-				VUNITIZE( left );
-
-				/* check against current max slope */
-				if( left[Z] > max_slope )
-				{
-					max_slope = left[Z];
-					f_top = fu->f_p;
-				}
-			}
-		}
-		/* go on to next radial face */
-		eu1 = eu1->eumate_p->radial_p;
-
-		/* check if we are back where we started */
-		if( eu1 == eu )
-			done = 1;
-	}
-
-	if( f_top == (struct face *)NULL )
-	{
-		rt_log( "Fix_normals: Could not find uppermost face" );
-		return( (struct face *)NULL );
-	}
-
-	return( f_top );
 }
 
 /*	N M G _ S H E L L _ I S _ V O I D
