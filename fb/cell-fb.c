@@ -40,7 +40,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define	SNUG_FIT	1
 #define	LOOSE_FIT	2
 #define MAX_LINE	133
-#define PI		3.14159265358979323846264338327950288419716939937511
+#if !defined(PI)	/* sometimes found in math.h */
+# define PI		3.14159265358979323846264338327950288419716939937511
+#endif
 #define HFPI		(PI/2.0)
 #define NEG_INFINITY	-10000000.0
 #define POS_INFINITY	10000000.0
