@@ -23,11 +23,12 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include <math.h>
 #include <string.h>
 #include "machine.h"
+#include "bu.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
 #include "rtgeom.h"
-#include "rtlist.h"
+#include "wdb.h"
 
 static int ascii_to_brlcad();
 static void descr_to_nmg();
@@ -41,6 +42,7 @@ extern int	optind;
  *
  *	Get ascii input file and output file names.
  */
+int
 main(argc, argv)
 int	argc;
 char	*argv[];
