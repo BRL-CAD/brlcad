@@ -99,7 +99,7 @@ of objects to be raytraced." } }
 	    { { summary "Raytrace all displayed objects." } }
     $top.menubar.obj add separator
     $top.menubar.obj add command -label "edit list"\
-	    -command "rt_edit_olist $id"
+	    -command "rt_olist_edit $id"
     hoc_register_menu_data "Objects" "edit list" "Edit List"\
 	    { { summary "Pop up a tool to edit the list
 of objects to be raytraced." } }
@@ -738,16 +738,96 @@ proc update_Raytrace { id } {
 	    [list $tmplist]
 }
 
-proc rt_edit_olist { id } {
+proc rt_olist_edit { id } {
     global mged_gui
     global rt_control
 
-    set top $rt_control($id,topEOL)
+    set top $rt_control($id,topOLE)
 
-#    toplevel $top
-#    text $top.olistT -relief sunken -bd 2 -width 40 -height 10\
-#	    -yscrollcommand "$top.olistS set" -set grid true
-    return
+    if [winfo exists $top] {
+	raise $top
+	return
+    }
+
+    toplevel $top
+
+    frame $top.olistF
+    text $top.olistT -relief sunken -bd 2 -width 40 -height 10\
+	    -yscrollcommand "$top.olistS set" -setgrid true
+    scrollbar $top.olistS -relief flat -command "$top.olistT yview"
+    grid $top.olistT $top.olistS -sticky nsew -in $top.olistF
+    grid columnconfigure $top.olistF 0 -weight 1
+    grid rowconfigure $top.olistF 0 -weight 1
+
+    frame $top.buttonF
+    button $top.okB -relief raised -text "Ok"\
+	    -command "rt_olist_ok $id"
+    button $top.applyB -relief raised -text "Apply"\
+	    -command "rt_olist_apply $id"
+    button $top.resetB -relief raised -text "Reset"\
+	    -command "rt_olist_reset $id"
+    button $top.dismissB -relief raised -text "Dismiss"\
+	    -command "rt_olist_dismiss $id"
+    grid $top.okB $top.applyB x $top.resetB x $top.dismissB\
+	    -sticky nsew -in $top.buttonF
+    grid columnconfigure $top.buttonF 2 -weight 1
+    grid columnconfigure $top.buttonF 4 -weight 1
+
+    grid $top.olistF -sticky nsew
+    grid $top.buttonF -sticky nsew
+    grid columnconfigure $top 0 -weight 1
+    grid rowconfigure $top 0 -weight 1
+
+    rt_olist_reset $id
+    place_near_mouse $top
+    wm title $top "Object List Editor ($id)"
+}
+
+proc rt_olist_ok { id } {
+    rt_olist_apply $id
+    rt_olist_dismiss $id
+}
+
+proc rt_olist_apply { id } {
+    global rt_control
+
+    set rt_control($id,olist) {}
+    foreach obj  [$rt_control($id,topOLE).olistT get 0.0 end] {
+	lappend rt_control($id,olist) $obj
+    }
+}
+
+proc rt_olist_reset { id } {
+    global rt_control
+
+    rt_olist_clear $id
+    foreach obj $rt_control($id,olist) {
+	rt_olist_add $id $obj
+    }
+}
+
+proc rt_olist_dismiss { id } {
+    global rt_control
+
+    destroy $rt_control($id,topOLE)
+}
+
+proc rt_olist_add { id obj } {
+    global rt_control
+
+    set top $rt_control($id,topOLE)
+
+    if [winfo exists $top] {
+	$top.olistT insert end $obj\n
+    } else {
+	lappend rt_control($id,olist) $obj
+    }
+}
+
+proc rt_olist_clear { id } {
+    global rt_control
+
+    $rt_control($id,topOLE).olistT delete 0.0 end
 }
 
 proc rt_set_mouse_behavior { id } {
@@ -1000,7 +1080,7 @@ proc rt_init_vars { id win } {
     if ![info exists rt_control($id,top)] {
 	set rt_control($id,top) .$id.rt
 	set rt_control($id,topAS) .$id.rtAS
-	set rt_control($id,topEOL) .$id.rtEOL
+	set rt_control($id,topOLE) .$id.rtOLE
 	set rt_control($id,olist) {}
 	set rt_control($id,nproc) 1
 	set rt_control($id,hsample) 0
