@@ -22,15 +22,43 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 
+int lmap[256];		/* Map HEX ASCII to binary in left nybble */
+int rmap[256];		/* Map HEX ASCII to binary in right nybble */
+
+unsigned char line[256];
+
 main()
 {
-	static int r,g,b;
+	register unsigned char *cp;
+	register int i;
 
-	while( !feof( stdin )  &&
-	    scanf( "%x %x %x", &r, &g, &b ) == 3 )  {
-		putc( r, stdout );
-		putc( g, stdout );
-		putc( b, stdout );
+	/* Init map */
+	for(i=0; i<10; i++)  rmap['0'+i] = i;
+	for(i=10; i<16; i++)  rmap['A'-10+i] = i;
+	for(i=10; i<16; i++)  rmap['a'-10+i] = i;
+	for(i=0;i<256;i++) lmap[i] = rmap[i]<<4;
+
+	for(;;)  {
+		(void)fgets((char *)line, sizeof(line), stdin);
+		if( feof(stdin) )  break;
+		cp = line;
+
+		/* R */
+		i = lmap[*cp++];
+		i |= rmap[*cp++];
+		putc( i, stdout );
+
+		/* G */
+		i = lmap[*cp++];
+		i |= rmap[*cp++];
+		putc( i, stdout );
+
+		/* B */
+		i = lmap[*cp++];
+		i |= rmap[*cp++];
+		putc( i, stdout );
+
+		/* Ignore rest of line, for now */
 	}
 	fflush(stdout);
 	exit(0);
