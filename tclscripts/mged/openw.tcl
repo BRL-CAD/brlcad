@@ -1725,6 +1725,13 @@ hoc_register_menu_data "Tools" "Overlap Tool" "Overlap Tool"\
 hoc_register_menu_data "Tools" "AnimMate Control Panel" "AnimMate Control Panel"\
 	{ { summary "Tool for building animation scripts." }
           { see_also animmate } }
+
+.$id.menubar.tools add command -label "Upgrade Database..." -underline 1\
+	-command "dbupgrade"
+hoc_register_menu_data "Tools" "Upgrade Database..." "Upgrade Database..."\
+	{ { summary "Upgrade to the current database format." }
+          { see_also dbupgrade } }
+
 .$id.menubar.tools add separator
 .$id.menubar.tools add command -label "Prim Editor" -underline 0\
 	-command "init_edit_solid $id"
