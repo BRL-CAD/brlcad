@@ -248,7 +248,7 @@ int argc; char **argv;
 		sprintf(portname,"%s","remotefb");
 	}
 
-	/*init_syslog();/*XXX*/
+	init_syslog();
 printf("permserver start\n");fflush(stdout);
 	while( (netfd = pkg_permserver(portname, 0, 0, comm_error)) < 0 ) {
 		sleep(5);
@@ -258,16 +258,17 @@ printf("permserver start\n");fflush(stdout);
 
 	while(1) {
 		int stat;
-printf("awaiting client\n");fflush(stdout);
+printf("awaiting client, netfd=%d\n",netfd);fflush(stdout);
 		rem_pcp = pkg_getclient( netfd, pkg_switch, comm_error, 0 );
-printf("got client\n");fflush(stdout);
+printf("got client on fd=%d\n", rem_pcp->pkc_fd);fflush(stdout);
 		if( rem_pcp == PKC_ERROR )  {
 			exit(2);	/* continue?! */
 		}
 printf("forking\n");fflush(stdout);
 		if( fork() == 0 )  {
-			/* Child Process */
+			/* 1st level child process */
 			(void)close(netfd);	/* Child is not listener */
+printf("child closing netfd %d\n", netfd);fflush(stdout);
 
 			/* Create 2nd level child process, "double detatch" */
 			if( fork() == 0 )  {
@@ -281,6 +282,7 @@ printf("2nd child back from do1, exiting\n");fflush(stdout);
 			}
 		} else {
 			/* Parent: lingering server daemon */
+printf("Parent closing client on fd=%d\n", rem_pcp->pkc_fd);fflush(stdout);
 			pkg_close(rem_pcp);	/* Daemon is not the server */
 			/* Collect status from 1st level child */
 			(void)wait( &stat );
@@ -302,13 +304,13 @@ init_syslog()
 }
 
 static void
-do1(netfd)
-int netfd;
+do1()
 {
 	int	on = 1;
 
 #ifdef BSD
-	if( setsockopt( netfd, SOL_SOCKET, SO_KEEPALIVE, &on, sizeof(on)) < 0 ) {
+	if( setsockopt( rem_pcp->pkc_fd, SOL_SOCKET, SO_KEEPALIVE, &on, sizeof(on)) < 0 ) {
+printf("setsockopt KEEPALIVE error\n");fflush(stdout);
 #		ifndef CRAY2
 		syslog( LOG_WARNING, "setsockopt (SO_KEEPALIVE): %m" );
 #		endif
