@@ -190,6 +190,15 @@ union tree {
 
 #define TREE_NULL	((union tree *)0)
 
+/*
+ *			M A T E R I A L
+ */
+struct material {
+	char	ma_override;		/* non-0 ==> c_rgb is color */
+	unsigned char ma_rgb[3];	/* explicit color:  0..255  */
+	char	ma_matname[32];		/* Material name */
+	char	ma_matparm[60];		/* String Material parms */
+};
 
 /*
  *			R E G I O N
@@ -202,10 +211,12 @@ struct region  {
 	short		reg_bit;	/* constant index into Regions[] */
 	short		reg_regionid;	/* Region ID code;  index to ? */
 	short		reg_aircode;	/* ?? */
-	short		reg_material;	/* Material */
+	short		reg_material;	/* GIFT Material code */
 	short		reg_los;	/* equivalent LOS estimate ?? */
 	struct region	*reg_forw;	/* linked list of all regions */
-	char		*reg_materp;	/* material structure */
+	struct material	reg_mater;	/* Real material information */
+	int		(*reg_ufunc)();	/* User appl. func for material */
+	char		*reg_udata;	/* User appl. data for material */
 };
 #define REGION_NULL	((struct region *)0)
 
@@ -366,6 +377,7 @@ struct rt_i {
 	union bitv_elem *FreeBitv;	/* head of freelist */
 	int		needprep;	/* needs rt_prep */
 	char		*file;		/* name of file */
+	int		useair;		/* "air" regions are used */
 };
 extern struct rt_i rt_i;	/* Eventually, will be a return value */
 
@@ -421,6 +433,8 @@ extern void rt_bitv_or();		/* logical OR on bit vectors */
 extern void rt_cut_it();		/* space partitioning */
 extern void rt_pr_cut();		/* print cut node */
 extern void rt_draw_box();		/* unix-plot an RPP */
+extern void rt_region_color_map();	/* regionid-driven color override */
+extern void rt_color_addrec();		/* process ID_MATERIAL record */
 
 /* CxDiv, CxSqrt */
 extern void rt_pr_roots();		/* print complex roots */
