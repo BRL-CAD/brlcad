@@ -1999,6 +1999,7 @@ RT_EXTERN(char *rt_identify_magic, (long magic));
 /* units.c */
 RT_EXTERN(double rt_units_conversion, (CONST char *str) );
 RT_EXTERN(CONST char *rt_units_string, (CONST double mm) );
+RT_EXTERN(double rt_mm_value, (CONST char *s) );
 
 /* prep.c */
 RT_EXTERN(void rt_plot_all_bboxes, (FILE *fp, struct rt_i *rtip));
