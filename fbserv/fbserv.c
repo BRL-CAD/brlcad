@@ -209,7 +209,7 @@ va_dcl
 /*
  * This is where we go for message types we don't understand.
  */
-int
+void
 pkgfoo(pcp, buf)
 struct pkg_conn *pcp;
 char *buf;
@@ -226,6 +226,7 @@ char *buf;
 
 /******** Here's where the hooks lead *********/
 
+void
 rfbopen(pcp, buf)
 struct pkg_conn *pcp;
 char *buf;
@@ -263,6 +264,7 @@ fb_log(s);
 	if( buf ) (void)free(buf);
 }
 
+void
 rfbclose(pcp, buf)
 struct pkg_conn *pcp;
 char *buf;
@@ -275,6 +277,7 @@ char *buf;
 	fbp = FBIO_NULL;
 }
 
+void
 rfbclear(pcp, buf)
 struct pkg_conn *pcp;
 char *buf;
@@ -291,6 +294,7 @@ char *buf;
 	if( buf ) (void)free(buf);
 }
 
+void
 rfbread(pcp, buf)
 struct pkg_conn *pcp;
 char *buf;
@@ -329,6 +333,7 @@ char *buf;
 	if( buf ) (void)free(buf);
 }
 
+void
 rfbwrite(pcp, buf)
 struct pkg_conn *pcp;
 char *buf;
@@ -351,6 +356,7 @@ char *buf;
 	if( buf ) (void)free(buf);
 }
 
+void
 rfbcursor(pcp, buf)
 struct pkg_conn *pcp;
 char *buf;
@@ -367,6 +373,7 @@ char *buf;
 	if( buf ) (void)free(buf);
 }
 
+void
 rfbwindow(pcp, buf)
 struct pkg_conn *pcp;
 char *buf;
@@ -382,6 +389,7 @@ char *buf;
 	if( buf ) (void)free(buf);
 }
 
+void
 rfbzoom(pcp, buf)
 struct pkg_conn *pcp;
 char *buf;
@@ -397,6 +405,7 @@ char *buf;
 	if( buf ) (void)free(buf);
 }
 
+void
 rfbrmap(pcp, buf)
 struct pkg_conn *pcp;
 char *buf;
@@ -425,6 +434,7 @@ char *buf;
  *  short, 256 red shorts, followed by 256 green and 256 blue, for a total
  *  of 3*256*2 bytes.
  */
+void
 rfbwmap(pcp, buf)
 struct pkg_conn *pcp;
 char *buf;
