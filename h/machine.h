@@ -405,7 +405,7 @@ typedef long	bitv_t;		/* largest integer type */
 #define CONST	const
 
 /* RES_INIT, RES_ACQUIRE, RES_RELEASE are subroutines */
-#define MAX_PSW		8
+#define MAX_PSW		32
 #define DEFAULT_PSW	MAX_PSW
 #define PARALLEL	1
 #define USE_PROTOTYPES	1	/* not ANSI, but prototypes supported */
