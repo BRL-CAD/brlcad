@@ -43,13 +43,16 @@ static int vo_scale_tcl();
 static int vo_size_tcl();
 static int vo_invSize_tcl();
 static int vo_aet_tcl();
-static int vo_rot_tcl();
+static int vo_rmat_tcl();
 static int vo_center_tcl();
 static int vo_model2view_tcl();
 static int vo_pmodel2view_tcl();
 static int vo_view2model_tcl();
 static int vo_perspective_tcl();
 static int vo_pmat_tcl();
+static int vo_rot_tcl();
+static int vo_tra_tcl();
+static int vo_slew_tcl();
 
 static int vo_eye_tcl();
 static int vo_eye_pos_tcl();
@@ -84,10 +87,13 @@ static struct bu_cmdtab vo_cmds[] =
 	"perspective",		vo_perspective_tcl,
 	"pmat",			vo_pmat_tcl,
 	"pmodel2view",		vo_pmodel2view_tcl,
-	"pov",			vo_pov_tcl,
+	"rmat",			vo_rmat_tcl,
 	"rot",			vo_rot_tcl,
+	"pov",			vo_pov_tcl,
 	"scale",		vo_scale_tcl,
 	"size",			vo_size_tcl,
+	"slew",			vo_slew_tcl,
+	"tra",			vo_tra_tcl,
 	"units",		vo_units_tcl,
 	"view2model",		vo_view2model_tcl,
 	"zoom",			vo_zoom_tcl,
@@ -389,7 +395,7 @@ vo_aet_tcl(clientData, interp, argc, argv)
  * Get or set the rotation matrix.
  */
 static int
-vo_rot_tcl(clientData, interp, argc, argv)
+vo_rmat_tcl(clientData, interp, argc, argv)
      ClientData clientData;
      Tcl_Interp *interp;
      int     argc;
@@ -418,7 +424,7 @@ vo_rot_tcl(clientData, interp, argc, argv)
 
 	/* compose error message */
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib vo_rot");
+	bu_vls_printf(&vls, "helplib vo_rmat");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
@@ -1143,7 +1149,7 @@ vo_base2local_tcl(clientData, interp, argc, argv)
  * Get local2base conversion factor.
  *
  * Usage:
- *	procname 
+ *	procname local2base
  */
 static int
 vo_local2base_tcl(clientData, interp, argc, argv)
@@ -1168,6 +1174,124 @@ vo_local2base_tcl(clientData, interp, argc, argv)
 	bu_vls_printf(&vls, "%g", vop->vo_local2base);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
+
+	return TCL_OK;
+}
+
+/*
+ * Rotate the view according to xyz.
+ *
+ * Usage:
+ *	procname rot xyz
+ */
+static int
+vo_rot_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
+{
+	struct view_obj *vop = (struct view_obj *)clientData;
+	struct bu_vls vls;
+	vect_t rvec;
+	mat_t rmat;
+
+	bu_vls_init(&vls);
+
+	if (argc != 3) {
+		bu_vls_printf(&vls, "helplib vo_rot");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+
+		return TCL_ERROR;
+	}
+
+	if (bn_decode_vect(rvec, argv[2]) != 3) {
+		Tcl_AppendResult(interp, "vo_rot: bad xyz - ", argv[2], (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	VSCALE(rvec, rvec, -1.0);
+	bn_mat_angles(rmat, rvec[X], rvec[Y], rvec[Z]);
+	bn_mat_mul2(rmat, vop->vo_rotation); /* pure rotation */
+	vo_update(vop);
+
+	return TCL_OK;
+}
+
+/*
+ * Translate the view according to xyz.
+ *
+ * Usage:
+ *	procname tra xyz
+ */
+static int
+vo_tra_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
+{
+	struct view_obj *vop = (struct view_obj *)clientData;
+	struct bu_vls vls;
+	vect_t tvec;
+	point_t delta;
+	point_t work;
+	point_t vc, nvc;
+
+	bu_vls_init(&vls);
+
+	if (argc != 3) {
+		bu_vls_printf(&vls, "helplib vo_tra");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+
+		return TCL_ERROR;
+	}
+
+	if (bn_decode_vect(tvec, argv[2]) != 3) {
+		Tcl_AppendResult(interp, "vo_tra: bad xyz - ", argv[2], (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	VSCALE(tvec, tvec, -2.0*vop->vo_local2base*vop->vo_invSize);
+	MAT4X3PNT(work, vop->vo_view2model, tvec);
+	MAT_DELTAS_GET_NEG(vc, vop->vo_center);
+	VSUB2(delta, work, vc);
+	VSUB2(nvc, vc, delta);
+	MAT_DELTAS_VEC_NEG(vop->vo_center, nvc);
+	vo_update(vop);
+
+	return TCL_OK;
+}
+
+/*
+ * Make xyz the new view center.
+ *
+ * Usage:
+ *	procname slew xy
+ */
+static int
+vo_slew_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
+{
+	struct view_obj *vop = (struct view_obj *)clientData;
+	struct bu_vls vls;
+	vect_t slewvec;
+	point_t model_center;
+
+	if (sscanf(argv[2], "%lf %lf", &slewvec[X], &slewvec[Y]) != 2) {
+		Tcl_AppendResult(interp, "vo_slew: bad xy - ", argv[2], (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	slewvec[Z] = 0.0;
+	MAT4X3PNT(model_center, vop->vo_view2model, slewvec);
+	MAT_DELTAS_VEC_NEG(vop->vo_center, model_center);
+	vo_update(vop);
 
 	return TCL_OK;
 }
