@@ -456,14 +456,8 @@ typedef struct bu_list bu_list_t;
 	else							\
 	     (p) = (struct structure *) 0
 
-#define BU_LIST_POP_T(type, hp, p )				\
-	if (BU_LIST_NON_EMPTY(hp))				\
-	{							\
-	    (p) = ((type *)((hp)->forw));		\
-	    BU_LIST_DEQUEUE((struct bu_list *)(p));		\
-	}							\
-	else							\
-	     (p) = (type *) 0
+#define BU_LIST_POP_T(hp, type )				\
+	((type *)bu_list_pop( hp )
 
 /*
  *  "Bulk transfer" all elements from the list headed by src_hd
@@ -548,6 +542,21 @@ typedef struct bu_list bu_list_t;
 	(((struct bu_list *)(p))->forw == (hp))
 #define BU_LIST_NEXT_NOT_HEAD(p,hp)	\
 	(((struct bu_list *)(p))->forw != (hp))
+
+#define BU_LIST_EACH( hp, p, type ) \
+	 for( (p)=((type) *)BU_LIST_FIRST(bu_list,hp); \
+	      BU_LIST_NOT_HEAD(p,hp); \
+	      (p)=((type) *)BU_LIST_PNEXT(bu_list,p) ) \
+
+#define BU_LIST_REVEACH( hp, p, type ) \
+	 for( (p)=((type) *)BU_LIST_LAST(bu_list,hp); \
+	      BU_LIST_NOT_HEAD(p,hp); \
+	      (p)=((type) *)BU_LIST_PPREV(bu_list,(p)) ) \
+
+#define BU_LIST_TAIL( hp, start, p, type ) \
+	 for( (p)=((type) *)start ; \
+	      BU_LIST_NOT_HEAD(p,hp); \
+	      (p)=((type) *)BU_LIST_PNEXT(bu_list,(p)) )
 
 /*
  *  Intended as innards for a for() loop to visit all nodes on list, e.g.:
