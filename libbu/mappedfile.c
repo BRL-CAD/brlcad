@@ -143,7 +143,8 @@ dont_reuse:
 	bu_semaphore_release(BU_SEM_SYSCALL);
 
 	if( fd < 0 )  {
-		perror(name);
+		if (bu_debug&BU_DEBUG_DB)
+			perror(name);
 		goto fail;
 	}
 
@@ -269,7 +270,8 @@ fail:
 		/* Don't free mp->buf here, it might not be bu_malloced but mmaped */
 		bu_free( mp, "mp from bu_open_mapped_file fail");
 	}
-	bu_log("bu_open_mapped_file(%s) can't open file\n", name);
+	if (bu_debug&BU_DEBUG_DB)
+		bu_log("bu_open_mapped_file(%s) can't open file\n", name);
 	return (struct bu_mapped_file *)NULL;
 }
 
