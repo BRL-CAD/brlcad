@@ -36,8 +36,6 @@ static char RCSshoot[] = "@(#)$Header$ (BRL)";
 
 char rt_CopyRight_Notice[] = "@(#) Copyright (C) 1985,1991 by the United States Army";
 
-extern char rt_version[];	/* Refer to compilation version in vers.c */
-
 #include "conf.h"
 
 #include <stdio.h>
