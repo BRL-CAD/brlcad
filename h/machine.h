@@ -332,6 +332,13 @@ typedef long	bitv_t;		/* largest integer type */
 #	define bcopy(from,to,count)	memcpy( to, from, count )
 #endif
 
+#if defined(BSD) && !defined(SYSV) && BSD < 43
+#	define strrchr(a, b)		rindex(a, b)
+#	define strchr(a, b)		rindex(a, b)
+#endif
+
+
+
 /* Functions local to one file should be declared HIDDEN:  (nil)|static */
 /* To aid in using ADB, generally leave this as nil. */
 #if !defined(HIDDEN)
