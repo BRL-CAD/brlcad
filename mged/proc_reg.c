@@ -31,9 +31,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "dm.h"
 
 static void	center(), cpoint(), dwreg(), ellin(), move(), points(),
-		regin(), solin(), solpl(), tgcin(), tplane(),
+		solin(), solpl(), tgcin(), tplane(),
 		vectors();
-static int	arb(), cgarbs(), comparvec(), gap(), planeeq(), redoarb(), 
+static int	arbn_shot(), cgarbs(), comparvec(), gap(), planeeq(), redoarb(), 
 		region();
 
 static union record input;		/* Holds an object file record */
@@ -566,10 +566,9 @@ points()
  *	  4. cpoint()	finds point of intersection of three planes
  *	  5. center()	finds center point of an arb
  *	  6. tplane()	tests if plane is inside enclosing rpp
- *	  7. arb()	finds intersection of ray with an arb
+ *	  7. arbn_shot()	finds intersection of ray with an arb
  *	  8. tgcin()	converts tgc to arbn
  *	  9. ellin()	converts ellg to arbn
- *	 10. regin()	process region to planes
  *	 11. solin()	finds enclosing rpp for solids
  *	 12. solpl()	process solids to arbn's
  *	 13. planeeq()	finds normalized plane from 3 points
@@ -592,7 +591,7 @@ static float	wb[3];			/* direction cosines of ray */
 static float	rin, rout;		/* location where ray enters and leaves a solid */
 static float	ri, ro;			/* location where ray enters and leaves a region */
 static float	tol;			/* tolerance */
-static float	*sp, *savesp;		/* pointers to the solid parameter array m_param[] */
+static float	*sp;			/* pointers to the solid parameter array m_param[] */
 static int	mlc[NMEMB];		/* location of last plane for each member */
 static int	la, lb, lc, id, jd, ngaps;
 static float	pinf = 1000000.0;
@@ -606,23 +605,13 @@ dwreg()
 	static int k,l;
 	static int n,m;
 	static int itemp;
-	static float c1[3*4]={1.,0.,0.,0.,0.,1.,0.,0.,0.,0.,1.,0.};
+	static float c1[3*4]={
+		1.,0.,0.,0.,
+		0.,1.,0.,0.,
+		0.,0.,1.,0.};
 	static int lmemb, umemb;/* lower and upper limit of members of region
 				 * from one OR to the next OR */
-
-	/* calculate center and scale for COMPLETE REGION since may have ORs */
-	lmemb = umemb = 0;
-	savesp = &m_param[0];
-	while( 1 ) {
-		/* Perhaps this can be eliminated?  Side effects? */
-		for(umemb = lmemb+1; (umemb < nmemb && m_op[umemb] != 'u'); umemb++)
-			;
-		lc = 0;
-		regin(1, lmemb, umemb);
-		lmemb = umemb;
-		if(umemb >= nmemb)
-			break;
-	}
+	static float *savesp;
 
 	lmemb = 0;
 	savesp = &m_param[0];
@@ -632,8 +621,33 @@ orregion:	/* sent here if region has or's */
 		;
 
 	lc = 0;
-	regin(0, lmemb, umemb);
+	tol=reg_min[0]=reg_min[1]=reg_min[2] = -pinf;
+	reg_max[0]=reg_max[1]=reg_max[2]=pinf;
+	sp = savesp;
 
+	/* find min max's */
+	for(i=lmemb;i<umemb;i++){
+		solin(i);
+		if(m_op[i] != '-') {
+			for(j=0;j<3;j++){
+				MAX(reg_min[j],sol_min[j]);
+				MIN(reg_max[j],sol_max[j]);
+			}
+		}
+	}
+	for(i=0;i<3;i++){
+		MAX(tol,fabs(reg_min[i]));
+		MAX(tol,fabs(reg_max[i]));
+	}
+	tol=tol*0.00001;
+
+	/* find planes for each solid */
+	sp = savesp;
+	solpl(lmemb,umemb);
+	/* save the parameter pointer in case region has ORs */
+	savesp = sp;
+
+	/* Make 3 basic plane eqns of min bounds */
 	for(i=0; i<3; i++)
 		c1[(i*4)+3]=reg_min[i];
 	l=0;
@@ -687,7 +701,8 @@ noskip:
 						continue; /* planes parallel */
 
 					/* planes not parallel */
-					/* compute direction vector for ray */
+					/* compute direction vector for ray
+					 * perpendicular to both plane normals */
 					VCROSS(wb,&peq[i*4],&peq[j*4]);
 					VUNITIZE( wb );
 
@@ -698,7 +713,10 @@ noskip:
 						VREVERSE( wb, wb );
 					}
 
-					/* starting point for this ray */
+					/* starting point for this ray:
+					 * intersection of two planes (line),
+					 * and closest min RPP bound plane.
+					 */
 					cpoint(xb,&c1[k*4],&peq[i*4],&peq[j*4]);
 
 					/* check if ray intersects region */
@@ -861,7 +879,7 @@ region(lmemb,umemb)
 		}
 	}
 
-	/* ray intersects region - find intersection with each member */
+	/* ray intersects region - find intersection with each arbn solid */
 	la=0;
 	for(kd=lmemb;kd<umemb;kd++){
 		oper=m_op[kd];
@@ -874,7 +892,7 @@ region(lmemb,umemb)
 		if(kd==id || kd==jd) oper='+';
 		if(oper!='-'){
 			/* positive solid  recalculate end points of ray */
-			if( arb() == 0 )
+			if( arbn_shot() == 0 )
 				return(0);
 			if(ngaps==0){
 				MAX(ri,rin);
@@ -888,7 +906,7 @@ region(lmemb,umemb)
 		}
 		if(oper == '-') {
 			/* negative solid  look for gaps in ray */
-			if(arb() != 0) {
+			if(arbn_shot() != 0) {
 				if(gap(rin, rout) <= 0)
 					return(0);
 			}
@@ -903,6 +921,45 @@ region(lmemb,umemb)
 	return(ngaps+1);
 }
 
+/*
+ *			A R B N _ S H O T
+ *
+ *  finds intersection of ray with an arbitrary convex polyhedron
+ *  defined by enclosing half-spaces.
+ */
+static int
+arbn_shot()
+{
+	static float s,*pp,dxbdn,wbdn,te;
+
+	rin = ri;
+	rout = ro;
+
+	te = tol;
+	if(oper == '-' && negpos)
+		te = -1.0 * tol;
+
+	for(pp = &peq[la*4];pp <= &peq[lb*4];pp+=4){
+		dxbdn = *(pp+3)-VDOT(xb,pp);
+		wbdn=VDOT(wb,pp);
+		if(fabs(wbdn)>.001){
+			s=dxbdn/wbdn;
+			if(wbdn > 0.0) {
+				MAX(rin, s);
+			}
+			else {
+				MIN(rout,s);
+			}
+		}
+		else{
+			if(dxbdn>te) return(0);
+		}
+		if((rin+tol)>=rout || rout<=tol) return(0);
+	}
+	/* ray starts inside */
+	MAX(rin,0);
+	return(1);
+}
 
 /*
  *			C P O I N T
@@ -1023,43 +1080,6 @@ float *p1, *p2, *p3;
 	return(1);
 }
 
-/* finds intersection of ray with arbitrary convex polyhedron */
-static int
-arb()
-{
-	static float s,*pp,dxbdn,wbdn,te;
-
-	rin = ri;
-	rout = ro;
-
-	te = tol;
-	if(oper == '-' && negpos)
-		te = -1.0 * tol;
-
-	for(pp = &peq[la*4];pp <= &peq[lb*4];pp+=4){
-		dxbdn = *(pp+3)-VDOT(xb,pp);
-		wbdn=VDOT(wb,pp);
-		if(fabs(wbdn)>.001){
-			s=dxbdn/wbdn;
-			if(wbdn > 0.0) {
-				MAX(rin, s);
-			}
-			else {
-				MIN(rout,s);
-			}
-		}
-		else{
-			if(dxbdn>te) return(0);
-		}
-		if((rin+tol)>=rout || rout<=tol) return(0);
-	}
-	/* ray starts inside */
-	MAX(rin,0);
-	return(1);
-}
-
-
-
 /* convert tgc to an arbn */
 static void
 tgcin()
@@ -1168,45 +1188,6 @@ ellin()
 	}
 }
 
-
-/* process region into planes */
-static void
-regin(flag, lmemb, umemb)
-int flag;	/* 1 if only calculating min,maxs   NO PLANE EQUATIONS */
-{
-	register int i,j;
-
-	tol=reg_min[0]=reg_min[1]=reg_min[2] = -pinf;
-	reg_max[0]=reg_max[1]=reg_max[2]=pinf;
-	sp = savesp;
-
-	/* find min max's */
-	for(i=lmemb;i<umemb;i++){
-		solin(i);
-		if(m_op[i] != '-') {
-			for(j=0;j<3;j++){
-				MAX(reg_min[j],sol_min[j]);
-				MIN(reg_max[j],sol_max[j]);
-			}
-		}
-	}
-	for(i=0;i<3;i++){
-		MAX(tol,fabs(reg_min[i]));
-		MAX(tol,fabs(reg_max[i]));
-	}
-	tol=tol*0.00001;
-
-	if(flag == 0 ) {
-		/* find planes for each solid */
-		sp = savesp;
-		solpl(lmemb,umemb);
-	}
-
-	/* save the parameter pointer in case region has ORs */
-	savesp = sp;
-}
-
-
 /* finds enclosing RPP for a solid using the solid's parameters */
 static void
 solin(num)
@@ -1280,7 +1261,6 @@ int num;
 
 
 /* converts all solids to ARBNs */
-/* Called only from regin() */
 static void
 solpl(lmemb,umemb)
 {
