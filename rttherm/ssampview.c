@@ -33,6 +33,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 int	width = 64;				/* Linked with TCL */
 int	height = 64;				/* Linked with TCL */
+int	nwave = 2;				/* Linked with TCL */
 
 char	*basename = "mtherm";
 char	spectrum_name[100];
@@ -429,6 +430,7 @@ Tcl_Interp	*inter;
 
 	Tcl_LinkVar( interp, "width", (char *)&width, TCL_LINK_INT );
 	Tcl_LinkVar( interp, "height", (char *)&height, TCL_LINK_INT );
+	Tcl_LinkVar( interp, "nwave", (char *)&nwave, TCL_LINK_INT );
 	Tcl_LinkVar( interp, "use_atmosphere", (char *)&use_atmosphere, TCL_LINK_INT );
 	Tcl_LinkVar( interp, "use_cie_xyz", (char *)&use_cie_xyz, TCL_LINK_INT );
 
@@ -609,6 +611,9 @@ char	**argv;
 	if( spectrum == NULL )  {
 		rt_bomb("Unable to read spectrum\n");
 	}
+	BN_CK_TABLE(spectrum);
+	bu_log("spectrum has %d samples\n", spectrum->nx);
+	nwave = spectrum->nx;	/* shared with Tcl */
 
 	/* Read atmosphere curve -- input is in microns, not nm */
 	atmosphere_orig = bn_read_table_and_tabdata( "../rttherm/std_day_1km.dat" );

@@ -24,8 +24,7 @@ set rescale_spectral 0
 
 set initial_maxval $maxval
 
-# This should be imported from the C code.
-set nwave 100
+# This is linked to value from the C code.
 global nwave
 
 #frame .buttons
