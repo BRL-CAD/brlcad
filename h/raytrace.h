@@ -995,6 +995,7 @@ struct application  {
 	int		a_user;		/* application-specific value */
 	genptr_t	a_uptr;		/* application-specific pointer */
 	fastf_t		a_color[3];	/* application-specific color */
+	fastf_t		a_dist;		/* application-specific distance */
 	vect_t		a_uvec;		/* application-specific vector */
 	vect_t		a_vvec;		/* application-specific vector */
 	fastf_t		a_refrac_index;	/* current index of refraction */
