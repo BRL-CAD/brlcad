@@ -44,7 +44,7 @@ cp nightly.sh ../..
 if [ "x$TASK" = "xmaster" ] ; then
     ./master.sh -d /c/regress -r /c/CVS
     echo "DONE RUNNING MASTER"
-elif [ "x#TASK" = "xstatus" ] ; then
+elif [ "x$TASK" = "xstatus" ] ; then
     ./status.sh -d /c/regress -a morrison@arl.army.mil
     echo "DONE CHECKING STATUS"
 else
