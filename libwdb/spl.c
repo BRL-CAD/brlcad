@@ -125,7 +125,7 @@ struct b_spline *bp;
 	i = bp->ctl_mesh->mesh_size[ROW] * bp->ctl_mesh->mesh_size[COL] *
 	    bp->ctl_mesh->pt_type;	/* # floats/point */
 	for( ; i>0; i-- )
-		*dbp++ = *fp++;
+		*dbp++ = *fp++ * mk_conv2mm;
 
 	fwrite( (char *)&rec, sizeof(rec), 1, filep );
 	fwrite( (char *)kp, sizeof(rec), rec.d.d_nknots, filep );

@@ -24,6 +24,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "db.h"
 #include "vmath.h"
+#include "wdb.h"
 
 #ifdef SYSV
 #define bzero(str,n)		memset( str, '\0', n )
@@ -94,7 +95,7 @@ fastf_t	**curves;
 			lim = (left > 8 ) ? 8 : left;
 			for( el=0; el < lim; el++ )  {
 				vect_t	diff;
-				VSUB2( diff, fp, base_pt );
+				VSUB2SCALE( diff, fp, base_pt, mk_conv2mm );
 				/* XXX converts to dbfloat_t */
 				VMOVE( &(rec.b.b_values[el*3]), diff );
 				fp += ELEMENTS_PER_VECT;
