@@ -347,15 +347,6 @@ int flag;
 	}
 
 	/* not a combination  -  should have a solid */
-	/*
-	 *
-	 *	TO DO ..... include splines and polygons 
-	 *
-	 */
-	if(record.u_id != ID_SOLID && record.u_id != ID_ARS_A) {
-		(void)printf("bad record type '%c' should be 'S' or 'A'\n",record.u_id);
-		return;
-	}
 
 	/* last (bottom) position */
 	path[pathpos] = dp;
@@ -439,117 +430,19 @@ int flag;
 		(void)fprintf(tabptr,"\n\n***** NO REGION for the following solid:\n");
 	}
 
-	/*
-	 *
-	 *	TO DO ..... include splines and polygons 
-	 *
-	 */
-
-	if(record.u_id == ID_SOLID) {
-		(void)fprintf(tabptr,"   %c [%d] %s",operate,nsoltemp,record.s.s_name);
-		if(lastmemb) {
-			regflag = 0;
-			lastmemb = 0;
-		}
-
-		if(flag == REG_TABLE || old_or_new == OLDSOLID) {
-			(void)fprintf(tabptr,"\n");
-			return;
-		}
-
-		if( old_or_new == NEWSOLID ) {
-			MAT4X3PNT(vec, old_xlate, &record.s.s_values[0]);
-			VMOVE( &record.s.s_values[0], vec );
-			for(i=3; i<=21; i+=3) {
-				MAT4X3VEC(	vec,
-						old_xlate,
-						&record.s.s_values[i]	);
-				VMOVE( &record.s.s_values[i], vec );
-			}
-			(void)fprintf(tabptr,": %s",
-				record.s.s_type==GENARB8 ? "GENARB8" :
-				record.s.s_type==GENTGC ? "GENTGC" :
-				record.s.s_type==GENELL ? "GENELL": "TOR" );
-
-			if(record.s.s_type == GENARB8) {
-				if( (i=record.s.s_cgtype) < 0 )
-					i *= -1;
-				(void)fprintf(tabptr," (%s)",i==ARB4 ? "ARB4" :
-					i==ARB5 ? "ARB5" : i==ARB6 ? "ARB6" :
-					i==ARB7 ? "ARB7" : i==RAW ? "ARB6" : "ARB8");
-			}
-			(void)fprintf(tabptr,"\n");
-
-			/* put parameters in "nice" format and print */
-			pr_solid( &record.s );
-			for( i=0; i < es_nlines; i++ ) 
-				(void)fprintf(tabptr,"%s\n",&es_display[ES_LINELEN*i]);
-
-			/* If in solid edit, re-compute solid params */
-			if(state == ST_S_EDIT)
-				pr_solid(&es_rec.s);
-
-		}
-
+	(void)fprintf(tabptr,"   %c [%d] ",
+		operate,nsoltemp);
+	if(lastmemb) {
+		regflag = 0;
+		lastmemb = 0;
+	}
+	if(flag == REG_TABLE || old_or_new == OLDSOLID) {
+		(void)fprintf(tabptr,"%s\n", dp->d_namep);
 		return;
 	}
 
-	if(record.u_id == ID_ARS_A) {
-		n = record.a.a_n;
-		(void)fprintf(tabptr,"   %c [%d] %s",operate,nsoltemp,record.a.a_name);
-		if(flag == REG_TABLE || old_or_new == OLDSOLID) {
-			if(lastmemb)
-				regflag = lastmemb = 0;
-			(void)fprintf(tabptr,"\n");
-			return;
-		}
-
-		if(lastmemb) {
-			regflag = lastmemb = 0;
-		}
-
-		if(old_or_new == OLDSOLID) 
-			return;
-
-		(void)fprintf(tabptr," ARS %7d curves%7d points/curve",record.a.a_m,n);
-		arslen = record.a.a_totlen;
-		for(i=1; i<=arslen; i++) {
-			if( db_get( dbip, dp, &record, i, 1) < 0 )  READ_ERR_return;
-			if( (npt = (n - ((record.b.b_ngranule-1)*8))) > 8 )
-				npt = 8;
-			if(i == 1) {
-				/* vertex */
-				MAT4X3PNT(	vertex,
-						old_xlate,
-						&record.b.b_values[0]	);
-				VMOVE( &record.b.b_values[0], vertex );
-				kk =1;
-			}
-			/* rest of vectors */
-			for(k=kk; k<npt; k++) {
-				MAT4X3VEC(	vec,
-						old_xlate,
-						&record.b.b_values[k*3]	);
-				VADD2(	&record.b.b_values[k*3],
-					vertex,
-					vec );
-			}
-			kk = 0;
-			/* print this granule */
-			for(k=0; k<npt; k+=2) {
-				(void)fprintf(tabptr,"\n              ");
-				for(j=k*3; (j<(k+2)*3 && j<npt*3); j++) 
-					(void)fprintf(tabptr," %10.4f",record.b.b_values[j]*base2local);
-			}
-
-		}
-		(void)fprintf(tabptr,"\n");
-		if(lastmemb)
-			regflag = lastmemb = 0;
-
-		return;
-	}
-
+	/* Pretty-print the solid */
+	do_list( tabptr, dp, 1 );		/* verbose */
 }
 
 
