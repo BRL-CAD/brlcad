@@ -2802,6 +2802,14 @@ BU_EXTERN(struct directory *db_lookup,( const struct db_i *, const char *name, i
 					/* add entry to directory */
 BU_EXTERN(struct directory *db_diradd, ( struct db_i *, const char *name, long laddr,
 	int len, int flags, genptr_t ptr ) );
+BU_EXTERN(struct directory *db_diradd5, (struct db_i *dbip, const char *name,
+	   long					laddr,
+	   unsigned char			major_type,
+	   unsigned char 			minor_type,
+	   unsigned char			name_hidden,
+	   long					object_length,
+	   struct bu_attribute_value_set	*avs));
+
 					/* delete entry from directory */
 BU_EXTERN(int db_dirdelete, ( struct db_i *, struct directory *dp ) );
 BU_EXTERN(int db_fwrite_ident, (FILE *, const char *, double));

@@ -120,6 +120,77 @@ fatal:
 }
 
 struct directory *
+db_diradd5(
+	   struct db_i				*dbip,
+	   const char				*name,
+	   long					laddr,
+	   unsigned char			major_type,
+	   unsigned char 			minor_type,
+	   unsigned char			name_hidden,
+	   long					object_length,
+	   struct bu_attribute_value_set	*avs)
+{
+	struct directory **headp;
+	register struct directory *dp;
+	struct bu_vls local;
+
+	RT_CK_DBI( dbip );
+
+	bu_vls_init(&local);
+	bu_vls_strcpy(&local, name);
+	if (db_dircheck(dbip, &local, 0, &headp) < 0) {
+		bu_vls_free(&local);
+		return DIR_NULL;
+	}
+
+	/* Duplicates the guts of db_diradd() */
+	RT_GET_DIRECTORY( dp, &rt_uniresource );
+	RT_CK_DIR(dp);
+	BU_LIST_INIT( &dp->d_use_hd );
+	RT_DIR_SET_NAMEP(dp, bu_vls_addr( &local ));	/* sets d_namep */
+	bu_vls_free( &local );
+	dp->d_un.ptr = NULL;
+	dp->d_un.file_offset = laddr;
+	dp->d_major_type = major_type;
+	dp->d_minor_type = minor_type;
+	switch( major_type )  {
+	case DB5_MAJORTYPE_BRLCAD:
+		if( minor_type == ID_COMBINATION )  {
+
+			dp->d_flags = DIR_COMB;
+			if( avs->count == 0 )  break;
+			/*
+			 *  check for the "region=" attribute.
+			 */
+			if( bu_avs_get( avs, "region" ) != NULL )
+				dp->d_flags = DIR_COMB|DIR_REGION;
+		} else {
+			dp->d_flags = DIR_SOLID;
+		}
+		break;
+	case DB5_MAJORTYPE_BINARY_EXPM:
+	case DB5_MAJORTYPE_BINARY_UNIF:
+	case DB5_MAJORTYPE_BINARY_MIME:
+		/* XXX Do we want to define extra flags for this? */
+		dp->d_flags = 0;
+		break;
+	case DB5_MAJORTYPE_ATTRIBUTE_ONLY:
+		dp->d_flags = 0;
+	}
+	if( name_hidden )
+		dp->d_flags |= DIR_HIDDEN;
+	dp->d_len = object_length;		/* in bytes */
+	BU_LIST_INIT( &dp->d_use_hd );
+	dp->d_animate = NULL;
+	dp->d_nref = 0;
+	dp->d_uses = 0;
+	dp->d_forw = *headp;
+	*headp = dp;
+
+	return( dp );
+}
+
+struct directory *
 db5_diradd(
 	   struct db_i			*dbip,
 	   const struct db5_raw_internal *rip,

@@ -283,6 +283,8 @@ rt_bin_import5( struct rt_db_internal		*ip,
 
 /*
  *			R T _ B I N U N I F _ E X P O R T 5
+ *
+ *	Create the "body" portion of external form
  */
 int
 rt_binunif_export5( struct bu_external		*ep,
@@ -298,8 +300,6 @@ rt_binunif_export5( struct bu_external		*ep,
 	unsigned long			*lsrcp;
 	int				in_cookie, out_cookie;
 	int				gotten;
-
-	bu_log("rt_binunif_export5\n");
 
 	RT_CK_DB_INTERNAL(ip);
 	if( ip->idb_minor_type != minor_type ) {
