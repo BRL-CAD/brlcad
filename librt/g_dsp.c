@@ -1086,6 +1086,7 @@ add_seg(struct isect_stuff *isect,
 {
     struct seg *seg;
     double tt = isect->tol->dist;
+    double delta;
 #ifndef ORDERED_ISECT
     struct bu_list *spot;
 #endif
@@ -1104,7 +1105,7 @@ add_seg(struct isect_stuff *isect,
 
 	    seg->seg_out = *out_hit; /* struct copy  most expensive line */
 	    seg->seg_out.hit_magic = RT_HIT_MAGIC;
-	    seg->seg_out.hit_vpriv[Z] = 1; /* flag as out-hit */
+	    seg->seg_out.hit_vpriv[Z] = 1.0; /* flag as out-hit */
 
 	    if (RT_G_DEBUG & DEBUG_HF) {
 		bu_log("extending previous seg to %g\n", out_hit->hit_dist);
@@ -1126,7 +1127,7 @@ add_seg(struct isect_stuff *isect,
 	if ( fabs(seg->seg_out.hit_dist - in_hit->hit_dist) <= tt ) {
 	    seg->seg_out = *out_hit; /* struct copy */
 	    seg->seg_out.hit_magic = RT_HIT_MAGIC;
-	    seg->seg_out.hit_vpriv[Z] = 1; /* flag as out-hit */
+	    seg->seg_out.hit_vpriv[Z] = 1.0; /* flag as out-hit */
 
 	    if (RT_G_DEBUG & DEBUG_HF) {
 		bu_log("extending previous seg to %g\n",
@@ -1147,17 +1148,47 @@ add_seg(struct isect_stuff *isect,
  found_spot:
 #endif
 
+
+    /* if both points are on the "floor" of the DSP, then we
+     * don't have a hit segment
+     */
+    if (NEAR_ZERO(in_hit->hit_point[Z], isect->tol->dist) &&
+	NEAR_ZERO(out_hit->hit_point[Z], isect->tol->dist) ) {
+	return 0;
+    }
+
+    /* throw away any zero length segments, 
+     * mostly to avoid seeing inside-out segments 
+     */
+    delta = out_hit->hit_dist - in_hit->hit_dist;
+    if (NEAR_ZERO(delta, isect->tol->dist)) {
+	return 0;
+    }
+
+    if (delta < 0.0) {
+
+	bu_log(" %s:%dDSP:  Adding inside-out seg in:%g out:%g\n",
+	       __FILE__, __LINE__,
+	       in_hit->hit_dist, out_hit->hit_dist);
+
+	VPRINT("\tin_pt", in_hit->hit_point);
+	VPRINT("\tout_pt", out_hit->hit_point);
+    }
+
+
+
+
     RT_GET_SEG(seg, isect->ap->a_resource);
 
     seg->seg_in = *in_hit; /* struct copy */
 
     seg->seg_in.hit_magic = RT_HIT_MAGIC;
-    seg->seg_in.hit_vpriv[Z] = 0; /* flag as in-hit */
+    seg->seg_in.hit_vpriv[Z] = 0.0; /* flag as in-hit */
 
 
     seg->seg_out = *out_hit; /* struct copy */
     seg->seg_out.hit_magic = RT_HIT_MAGIC;
-    seg->seg_out.hit_vpriv[Z] = 1; /* flag as out-hit */
+    seg->seg_out.hit_vpriv[Z] = 1.0; /* flag as out-hit */
 
 
     seg->seg_stp = isect->stp;
@@ -1185,9 +1216,8 @@ add_seg(struct isect_stuff *isect,
     BU_LIST_INSERT(spot, &seg->l);
 #endif
 
-    if (seg->seg_in.hit_dist > seg->seg_out.hit_dist) {
-	bu_log("DSP:  Adding inside-out seg\n");
-    }
+
+
 
     if (RT_G_DEBUG & DEBUG_HF)
 	plot_seg(isect, in_hit, out_hit, bbmin, bbmax, r, g, b);
@@ -1743,8 +1773,10 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
     }
 
 
+    /* make sure the point P is below the cell top */
     VJOIN1(P, isect->r.r_pt, isect->r.r_max, isect->r.r_dir);
     if (check_bbpt_hit_elev(isect->dmax, A, B, C, D, P) ) {
+	/* P is at or below the top surface */
 	hits[3].hit_dist = isect->r.r_max;
 	VMOVE(hits[3].hit_point, P);
 	VMOVE(hits[3].hit_normal, dsp_pl[isect->dmax]);
@@ -2433,6 +2465,7 @@ rt_dsp_shot( stp, rp, ap, seghead )
     vect_t	dir;	/* temp storage */
     vect_t	v;
     struct isect_stuff isect;
+    double	delta;
 
     RT_DSP_CK_MAGIC(dsp);
     BU_CK_VLS(&dsp->dsp_i.dsp_name);
@@ -2516,11 +2549,13 @@ rt_dsp_shot( stp, rp, ap, seghead )
 	    segp->seg_out.hit_dist = MAGNITUDE(v);
 	if (VDOT(v, rp->r_dir) < 0.0) segp->seg_out.hit_dist *= -1.0;
 
-	if (segp->seg_in.hit_dist > segp->seg_out.hit_dist) {
-	    bu_log("Pixel %d %d seg inside out %g %g\n",
-		   ap->a_x, ap->a_y,
-		   segp->seg_in.hit_dist,
-		   segp->seg_out.hit_dist);
+
+	delta = segp->seg_out.hit_dist - segp->seg_in.hit_dist;
+
+	if (delta < 0.0 && !NEAR_ZERO(delta, ap->a_rt_i->rti_tol.dist)) {
+	    bu_log("Pixel %d %d seg inside out in:%g out:%g seg_len:%g\n",
+		   ap->a_x, ap->a_y, segp->seg_in.hit_dist, segp->seg_out.hit_dist,
+		   delta);
 	}
 
 	MAT4X3VEC(v, dsp->dsp_i.dsp_mtos, segp->seg_in.hit_normal);
@@ -2977,8 +3012,12 @@ rt_dsp_free( stp )
     switch (dsp->dsp_i.dsp_datasrc) {
     case RT_DSP_SRC_V4_FILE: 
     case RT_DSP_SRC_FILE:
-	BU_CK_MAPPED_FILE(dsp->dsp_i.dsp_mp);
-	bu_close_mapped_file(dsp->dsp_i.dsp_mp);
+	if (dsp->dsp_i.dsp_mp) {
+	    BU_CK_MAPPED_FILE(dsp->dsp_i.dsp_mp);
+	    bu_close_mapped_file(dsp->dsp_i.dsp_mp);
+	} else if (dsp->dsp_i.dsp_buf) {
+	    bu_free(dsp->dsp_i.dsp_buf, "dsp fake data");
+	}
 	break;
     case RT_DSP_SRC_OBJ:
 	break;
@@ -3222,7 +3261,8 @@ get_file_data(struct rt_dsp_internal	*dsp_ip,
     }
 
     if (dsp_ip->dsp_mp->buflen != dsp_ip->dsp_xcnt*dsp_ip->dsp_ycnt*2) {
-	bu_log("DSP buffer wrong size");
+	bu_log("DSP buffer wrong size: %d s/b %d ",
+	       dsp_ip->dsp_mp->buflen, dsp_ip->dsp_xcnt*dsp_ip->dsp_ycnt*2);
 	return -1;
     }
 
@@ -3515,9 +3555,20 @@ rt_dsp_import5( ip, ep, mat, dbip )
 
     dsp_ip->dsp_xcnt = (unsigned) bu_glong( cp );
     cp += SIZEOF_NETWORK_LONG;
+    if (dsp_ip->dsp_xcnt < 2) {
+	bu_log("%s:%d DSP X dimension (%d) < 2 \n", 
+	       __FILE__, __LINE__, 
+	       dsp_ip->dsp_xcnt);
+    }
+
 
     dsp_ip->dsp_ycnt = (unsigned) bu_glong( cp );
     cp += SIZEOF_NETWORK_LONG;
+    if (dsp_ip->dsp_ycnt < 2) {
+	bu_log("%s:%d DSP X dimension (%d) < 2 \n",
+	       __FILE__, __LINE__, 
+	       dsp_ip->dsp_ycnt);
+    }
 
     /* convert matrix */
     ntohd((unsigned char *)dsp_ip->dsp_stom, cp, 16);
@@ -3530,16 +3581,50 @@ rt_dsp_import5( ip, ep, mat, dbip )
 
     dsp_ip->dsp_datasrc = *cp;
     cp++;
+    switch (dsp_ip->dsp_datasrc) {
+    case RT_DSP_SRC_V4_FILE:
+    case RT_DSP_SRC_FILE:
+    case RT_DSP_SRC_OBJ:
+	break;
+    default:
+	bu_log("%s:%d bogus DSP cut type '%c' (%d)\n",
+	       __FILE__, __LINE__, 
+	       dsp_ip->dsp_datasrc, dsp_ip->dsp_datasrc);
+	break;
+    }
+
 
     dsp_ip->dsp_cuttype = *cp;
     cp++;
+    switch (dsp_ip->dsp_cuttype) {
+    case DSP_CUT_DIR_ADAPT:
+    case DSP_CUT_DIR_llUR:
+    case DSP_CUT_DIR_ULlr:
+	break;
+    default:
+	bu_log("%s:%d bogus DSP data source '%c' (%d)\n", 
+	       __FILE__, __LINE__, 
+	       dsp_ip->dsp_cuttype, dsp_ip->dsp_cuttype);
+	break;
+    }
+
 
     /* convert name of data location */
     bu_vls_init( &dsp_ip->dsp_name );
-    bu_vls_strcpy( &dsp_ip->dsp_name, (char *)cp );
+    bu_vls_strncpy( &dsp_ip->dsp_name, (char *)cp,
+		    ep->ext_nbytes - (cp - (unsigned char *)ep->ext_buf) );
 
     if (dsp_get_data(dsp_ip, ip, ep, mat, dbip)) {
-	IMPORT_FAIL("unable to read DSP data");
+	/* We didn't get the file.  Instead of returning a full error
+	 * we invent some data.  This allows the user to edit a DSP which
+	 * is missing the data
+	 */
+
+	dsp_ip->dsp_mp = (struct bu_mapped_file *)NULL;
+	dsp_ip->dsp_buf = bu_calloc(sizeof(short),
+				    dsp_ip->dsp_xcnt*dsp_ip->dsp_ycnt,
+				    "dsp fake data");
+
     }
 
     return 0; /* OK */
@@ -3610,7 +3695,7 @@ rt_dsp_export5( ep, ip, local2mm, dbip )
     *cp = dsp_ip->dsp_cuttype;
     cp++;
 
-    strncpy((char *)cp, bu_vls_addr(&dsp_ip->dsp_name), name_len);
+    strcpy((char *)cp, bu_vls_addr(&dsp_ip->dsp_name));
 
     return 0; /* OK */
 }
