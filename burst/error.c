@@ -21,7 +21,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  */
 
 #include <stdio.h>
+#if __STDC__
+#include <stdarg.h>
+#else
 #include <varargs.h>
+#endif
 #include "./Sc.h"
 #include "./extern.h"
 
@@ -47,12 +51,23 @@ char *str;
  */
 /* VARARGS */
 void
+#if __STDC__
+rt_log( char *fmt, ... )
+#else
 rt_log( va_alist )
 va_dcl
-	{	register char *format; /* picked up by va_arg() */
-		va_list	ap;
+#endif
+	{
+#if ! __STDC__
+	register char *fmt; /* picked up by va_arg() */
+#endif
+	va_list	ap;
+#if __STDC__
+	va_start( ap, fmt );
+#else
 	va_start( ap );
-	format  = va_arg( ap, char * );
+	fmt  = va_arg( ap, char * );
+#endif
 	if( tty && (errfile[0] == '\0' || ! strcmp( errfile, "/dev/tty" )) )
 		{
 		TcClrTabs( HmTtyFd );
@@ -62,7 +77,7 @@ va_dcl
 			(void) ScDeleteLn();
 			(void) ScMvCursor( 1, SCROLL_BTM );
 			(void) ScClrEOL();
-			(void) vprintf( format, ap );
+			(void) vprintf( fmt, ap );
 			}			
 		else
 		if( ScSetScrlReg( SCROLL_TOP, SCROLL_BTM+1 ) )
@@ -72,13 +87,13 @@ va_dcl
 			(void) ScClrEOL();
 			/* Work around for problem with vprintf(): it doesn't
 				cause the screen to scroll, don't know why. */
-			(void) vsprintf( buf, format, ap );
+			(void) vsprintf( buf, fmt, ap );
 			/* Newline will cause double scroll. */
 			p = buf+strlen(buf)-1;
 			if( *p == '\n' )
 				*p = '\0'; /* clobber newline */
 			(void) puts( buf );
-			/*(void) vprintf( format, ap );*/
+			/*(void) vprintf( fmt, ap );*/
 			(void) ScMvCursor( 1, SCROLL_BTM+1 );
 			(void) ScClrScrlReg();
 			}
@@ -97,7 +112,7 @@ va_dcl
 		}
 	else
 		{
-		(void) vfprintf( stderr, format, ap );
+		(void) vfprintf( stderr, fmt, ap );
 		}
 	va_end( ap );
 	}
@@ -107,11 +122,25 @@ va_dcl
  *  
  *  Log an FB library event
  */
-/* VARARGS */
+/*VARARGS*/
 void
+#if __STDC__
+fb_log(char *fmt, ...)
+#else
 fb_log( va_alist )
 va_dcl
+#endif
 	{
-	(void) rt_log( va_alist );
-	return;
+#if ! __STDC__
+	register char *fmt;
+#endif
+	va_list ap;
+#if __STDC__
+	va_start( ap, fmt );
+#else
+	va_start( ap );
+	fmt = va_arg( ap, char * );
+#endif
+	(void) rt_log( fmt, ap );
+	va_end( ap );
 	}

@@ -42,19 +42,6 @@ static RGBpixel	pixbuf[MAXDEVWID];
 static int	gridxmargin;
 static int	gridymargin;
 
-/*
-	fastf_t abs( fastf_t a )
-
-	Returns the absolute value of 'a'.  Useful when a macro would
-	cause side-effects or redundant computation.
- */
-STATIC fastf_t
-abs( a )
-fastf_t	a;
-	{
-	return	Abs( a );
-	}
-
 void
 gridToFb( gx, gy, fxp, fyp )
 int	gx, gy;

@@ -8,8 +8,10 @@
 
 	$Header$ (BRL)
 
+	For BRLCAD 4.0, add LIBFB_LIBES after LIBFB in list of libraries under
+	PRODUCTS rule below.
  */
-#define CONFIGDEFS	LGT_CONFIG -I. /* -DDEBUG */
+#define CONFIGDEFS	LGT_CONFIG -I. /*-DDEBUG*/
 
 #define SRCDIR	burst
 #define PRODUCTS	burst
@@ -23,7 +25,7 @@
 
 /* Explicit composition of each product */
 PRODUCTS:	OBJ
-	CC LDFLAGS -o burst OBJ LIB_PRE''LIBRT RT_LIBES LIB_PRE''LIBFB LIBTERMLIB LIBES -ltermlib -lm
+	CC LDFLAGS -o burst OBJ LIB_PRE''LIBRT RT_LIBES LIB_PRE''LIBFB LIBTERMLIB LIBES -lm
 
 all&: PRODUCTS
 

@@ -770,30 +770,6 @@ HmRedraw()
 	return;
 	}
 
-#if ! defined( BSD ) && ! defined( sun ) && ! defined( sgi )
-#include <sys/jioctl.h>
-#endif
-#include <signal.h>
-
-/*
-	void	alarmfunc( int sig )
-
-	Do nothing on receipt of SIGALRM.  NOTE: this is not the same
-	as setting SIGALRM to SIG_IGN.
- */
-/*ARGSUSED*/
-void
-#if __STDC__
-alarmfunc( int sig )
-#else
-alarmfunc( sig )
-int	sig;
-#endif
-	{
-	(void) signal( SIGALRM, alarmfunc );
-	return;
-	}
-
 /*
 	void	HmTtySet( void )
 
@@ -873,45 +849,7 @@ int	maxvis;
 	HmLftMenu = x;
 	HmTopMenu = y;
 	HmMaxVis = maxvis;
-#if ! defined( BSD ) && ! defined( sun ) && ! defined( sgi )
-	/* In case we are running MPX and MYX on a DMD, use "editor ptr"
-		to make menu selections. */ 
-	if( term != (char *) NULL && strncmp( term, "tty5620", 7 ) == 0 )
-		{ /* We have a DMD. */
-#ifdef XT_JMPX	/* DAG -- temporary dual mpx/layers support */
-		if(	ioctl( HmTtyFd, JMPX, 0 ) != -1
-		    ||	ioctl( HmTtyFd, XT_JMPX, 0 ) != -1
-			)
-			{
-#else
-		if(	ioctl( HmTtyFd, JMPX, 0 ) != -1 )
-			{
-#endif
-			/* We are running MPX. */
-				char		input[12];
-				register int	i;
-				void		(*oalarmfunc)();
-			TcClrEcho( HmTtyFd );
-			TcSetCbreak( HmTtyFd );
-			(void) ScMvCursor( HmLftMenu, HmTopMenu );
-			(void) fputs( "\033[?1Z", stdout );
-			(void) fflush( stdout );
-			oalarmfunc = signal( SIGALRM, alarmfunc );
-			(void) alarm( 1 );
-			(void) fgets( input, 12, stdin );
-			(void) alarm( 0 );
-			(void) signal( SIGALRM, oalarmfunc );
-			HmMyxflag = true;
-			for( i = 0; i < 11; i++ )
-				if( input[i] != '0' && input[i] != '1' )
-					{
-					HmMyxflag = false;
-					break;
-					}
-			TcResetTty( HmTtyFd );
-			}
-		}
-#endif /* sun */
+
 	return	true;
 	}
 

@@ -24,24 +24,24 @@ static char sccsTag[] = "%Z% %M% %I%, modified %G% at %U%, archive %P%";
 #include <memory.h>
 #ifndef _NFILE
 #define _NFILE	32
-#endif _NFILE
+#endif /* _NFILE */
 static struct termio	save_tio[_NFILE], curr_tio[_NFILE];
-#endif SYSV
+#endif /* SYSV */
 
 #ifdef BSD
 #include <sys/ioctl.h>
 #ifndef _NFILE
 #define _NFILE	32
-#endif _NFILE
+#endif /* _NFILE */
 /****#ifdef	TANDEM	/* 7th Edition derivatives */
 #define TCSETA	TIOCSETP
 #define TCGETA	TIOCGETP
 #ifndef	XTABS
 #define	XTABS	(TAB1 | TAB2)
-#endif XTABS
+#endif /* XTABS */
 
 static struct sgttyb	save_tio[_NFILE], curr_tio[_NFILE];
-#endif BSD
+#endif /* BSD */
 
 void			TcSaveTty(), TcResetTty();
 void			TcSetCbreak(), TcClrCbreak();

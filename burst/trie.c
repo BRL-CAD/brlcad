@@ -78,7 +78,9 @@ Func	*
 getTrie( name, triep )
 register char	*name;
 register Trie	*triep;
-	{	register Trie	*curp;
+	{	register Trie *curp = NULL;
+	assert( triep != TRIE_NULL );
+
 	/* Traverse next links to end of region name. */
 	for( ; triep != TRIE_NULL; triep = triep->n.t_next )
 		{
@@ -120,6 +122,7 @@ register Trie	*triep;
 	/* Clobber key-stroke, and return it. */
 	--name;
 	*name = NUL;
+	assert( curp != TRIE_NULL );
 	return	curp->l.t_func;
 	}
 

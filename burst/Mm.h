@@ -8,8 +8,8 @@
  */
 /* Emulate MUVES Mm package using malloc. */
 #if __STDC__
-extern char	*malloc( unsigned n );
-extern char	*strcpy( char *s1, char *s2 );
+#include <stdlib.h>
+#include <string.h>
 #else
 extern char	*malloc();
 extern char	*strcpy();

@@ -21,12 +21,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <time.h>
 #include <string.h>
 
-#include "./Sc.h"
-
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
 
+#include "./Sc.h"
 #include "./vecmath.h"
 #include "./ascii.h"
 #include "./extern.h"
@@ -319,6 +318,9 @@ int space;
 fixed_entry_normal:
 	/* This *should* give negative of desired result, but make sure. */
 	icosobliquity = Dot( ap->a_ray.r_dir, ihitp->hit_normal );
+	if( NearZero( icosobliquity ) )
+		icosobliquity = 0.0;
+	else
 	if( icosobliquity < 0.0 )
 		icosobliquity = -icosobliquity;
 	else 
@@ -348,6 +350,9 @@ fixed_entry_normal:
 fixed_exit_normal:
 	/* This *should* give negative of desired result, but make sure. */
 	ocosobliquity = Dot( ap->a_ray.r_dir, ohitp->hit_normal );
+	if( NearZero( ocosobliquity ) )
+		ocosobliquity = 0.0;
+	else
 	if( ocosobliquity < 0.0 )
 		ocosobliquity = -ocosobliquity;
 	else 
@@ -518,6 +523,9 @@ struct partition *pp;
 	/* calculate cosine of obliquity angle */
 fixed_normal:
 	cosobliquity = Dot( ap->a_ray.r_dir, ihitp->hit_normal );
+	if( NearZero( cosobliquity ) )
+		cosobliquity = 0.0;
+	else
 	if( cosobliquity < 0.0 )
 		cosobliquity = -cosobliquity;
 	else

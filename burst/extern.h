@@ -16,7 +16,7 @@
 #include "./Hm.h"
 
 /* External functions from C library. */
-#ifdef __STDC__
+#if (__STDC__ && ! apollo) || (sgi && mips && BRLCAD4_0)
 #include <stdlib.h>
 extern pointer sbrk( int );
 #else
@@ -79,7 +79,11 @@ extern void prntScr();
 extern void prntTimer();
 extern void prompt();
 extern void readCmdFile();
+#if __STDC__
+extern void rt_log( char *, ... );
+#else
 extern void rt_log();
+#endif
 extern void warning();
 
 #if STD_SIGNAL_DECLS
