@@ -99,6 +99,7 @@ typedef struct
 #define RB_DEBUG_INSERT	0x00000001	/* Insertion process */
 #define RB_DEBUG_UNIQ	0x00000002	/* Uniqueness of inserts */
 #define RB_DEBUG_ROTATE	0x00000004	/* Rotation process */
+#define RB_DEBUG_OS	0x00000008	/* Order-statistic operations */
 
 /*
  *			R B _ P A C K A G E
@@ -140,6 +141,7 @@ struct rb_node
     struct rb_node	**rbn_left;	/* Left subtrees */
     struct rb_node	**rbn_right;	/* Right subtrees */
     char		*rbn_color;	/* Colors of this node */
+    int			*rbn_size;	/* Sizes of subtrees rooted here */
     struct rb_package	**rbn_package;	/* Contents of this node */
     int			rbn_pkg_refs;	/* How many orders are being used? */
     struct rb_list	*rbn_list_pos;	/* Place in the list of all nodes */
@@ -200,6 +202,11 @@ RB_EXTERN(void rb_free,		(rb_tree	*tree,
 				"red-black order function");		\
 		    rb_free(t,f);					\
 		}
+RB_EXTERN(void *rb_select,	(rb_tree	*tree,
+				 int		order,
+				 int		k
+				));
+#define		rb_select1(t,k)	rb_select1((t), 0, (k))
 RB_EXTERN(int rb_insert,	(rb_tree	*tree,
 				 void		*data
 				));
@@ -211,6 +218,10 @@ RB_EXTERN(void *rb_neighbor,	(rb_tree	*tree,
 				 int		order,
 				 int		sense
 				));
+RB_EXTERN(void *rb_rank,	(rb_tree	*tree,
+				 int		order,
+				));
+#define		rb_rank1(t)	rb_rank1((t), 0)
 RB_EXTERN(void *rb_search,	(rb_tree	*tree,
 				 int		order,
 				 void	*data
