@@ -132,7 +132,7 @@ char	**argv;
 		mat_inv(view2model, mod2view1);
 		mat_print("mod2view1-plot.log", mod2view1);
 		mat_print("mod2view2-pix.log", mod2view2);
-		fprintf(stderr, "mod2view1[0, 1, 2, 3, 15]: %g, %g, %g, %g, %g\n",
+		fprintf(stderr, "mod2view1[0, 1, 2, 3, 15]: %.6f, %.6f, %.6f, %.6f, %.6f\n",
 		mod2view1[0], mod2view1[1], mod2view1[2], mod2view1[3], mod2view1[15]);
 	}
 
@@ -187,7 +187,7 @@ mat_t	regismat;
 	scale = mat1[15]/mat2[15];
 
 	VPRINT("delta", delta);
-	fprintf(stderr, "scale: %g\n", scale);	
+	fprintf(stderr, "scale: %.6f\n", scale);	
 
 	/* If the first log corresponds to a UNIX-Plot file, following
 	 * applies.  Since UNIX-Plot files are in model coordinates, the 
@@ -223,7 +223,7 @@ mat_t	mat;
 
 	fprintf(stdout, "plrot -m\"");
 	for( i = 0; i < 15; i++ )  {
-		fprintf(stdout, "%g ", mat[i]);
+		fprintf(stdout, "%.6f ", mat[i]);
 	}
 	fprintf(stdout, "%g\" -S\"-1 -1 -1 1 1 1\"\n", mat[15]);
 	return;
