@@ -294,7 +294,8 @@ char ** argv;
 	}
 	if( sv_globals.sv_ncmap > 0 && !crunch )
 		(void)fb_wmap( fbp, &cmap );
-
+	else
+		(void)fb_wmap( fbp, COLORMAP_NULL );
 
 	/* Handle any lines below zero in y.  Decode and discard. */
 	for( i = sv_globals.sv_ymin; i < 0; i++ )
