@@ -60,10 +60,9 @@ extern vect_t background;
  *			R R _ R E N D E R
  */
 int
-rr_render( ap, pp, swp )
-register struct application *ap;
-struct partition	*pp;
-struct shadework	*swp;
+rr_render(register struct application *ap,
+	  struct partition	*pp,
+	  struct shadework	*swp)
 {
 	struct application sub_ap;
 	vect_t	work;
