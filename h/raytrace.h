@@ -70,6 +70,7 @@ struct seg {
 	struct hit	seg_in;		/* IN information */
 	struct hit	seg_out;	/* OUT information */
 	struct soltab	*seg_stp;	/* pointer back to soltab */
+	union tree	*seg_tp;	/* pointer to solid leaf node */
 	struct seg	*seg_next;	/* non-zero if more segments */
 };
 #define SEG_NULL	((struct seg *)0)
@@ -96,11 +97,9 @@ struct soltab {
 	int		*st_specific;	/* -> ID-specific (private) struct */
 	struct soltab	*st_forw;	/* Linked list of solids */
 	char		*st_name;	/* Leaf name of solid */
-	struct region	*st_regionp;	/* Pointer to containing region */
 	vect_t		st_min;		/* min X, Y, Z of bounding RPP */
 	vect_t		st_max;		/* max X, Y, Z of bounding RPP */
 	int		st_bin;		/* Temporary for boolean processing */
-	char		*st_materp;	/* (struct mater *) */
 	int		st_uses;	/* # of refs by tr_stp leaves */
 	mat_t		st_pathmat;	/* Xform matrix on path */
 };
@@ -146,10 +145,13 @@ extern struct functab functab[];
 #define OP_INTERSECT	MKOP(3)|OP_BINARY	/* Binary: L intersect R */
 #define OP_SUBTRACT	MKOP(4)|OP_BINARY	/* Binary: L subtract R */
 
+#define TFLAG_NOBOUND	1			/* skip bounding RPP check */
+
 union tree {
 	int	tr_op;		/* Operation */
 	struct tree_binary {
 		int		tb_op;		/* | OP_BINARY */
+		int		tb_flags;
 		vect_t		tb_min;		/* subtree min pt of RPP */
 		vect_t		tb_max;		/* subtree max pt of RPP */
 		union tree	*tb_left;
@@ -157,18 +159,24 @@ union tree {
 	} tr_b;
 	struct tree_unary {
 		int		tu_op;		/* leaf, OP_SOLID */
+		int		tu_flags;
 		vect_t		tu_min;		/* subtree min pt of RPP */
 		vect_t		tu_max;		/* subtree max pt of RPP */
 		struct soltab	*tu_stp;
+		struct region	*tu_regionp;	/* ptr to containing region */
 		char		*tu_name;	/* full path name of leaf */
+		char		*tu_materp;	/* (struct mater *) */
 	} tr_a;
 };
 #define tr_left		tr_b.tb_left
 #define tr_right	tr_b.tb_right
+#define tr_flags	tr_b.tb_flags
 #define tr_min		tr_b.tb_min
 #define tr_max		tr_b.tb_max
 #define tr_stp		tr_a.tu_stp
+#define tr_regionp	tr_a.tu_regionp
 #define tr_name		tr_a.tu_name
+#define tr_materp	tr_a.tu_materp
 #define TREE_NULL	((union tree *)0)
 
 

@@ -7,7 +7,7 @@
  *
  *  Functions -
  *	color_addrec	Called by dir_build on startup
- *	color_soltab	Apply colors to the solid table
+ *	color_map	Map one region reference to a material
  *
  *  Author -
  *	Michael John Muuss
@@ -190,29 +190,24 @@ static struct mater default_mater = {
 };
 
 /*
- *  			C O L O R _ S O L T A B
+ *  			C O L O R _ M A P
  *
- *  Pass through the solid table and set pointer to appropriate
+ *  Map one region description into a material description
  *  mater structure.
- *  Called by the display manager anytime the color mappings change.
  */
-void
-color_soltab()
+char *
+color_map( regp )
+register struct region *regp;
 {
-	register struct soltab *sp;
 	register struct mater *mp;
 
-	for( sp = HeadSolid; sp != SOLTAB_NULL; sp = sp->st_forw )  {
-		if( sp->st_regionp == REGION_NULL )
-			continue;
-		for( mp = MaterHead; mp != MATER_NULL; mp = mp->mt_forw )  {
-			if( sp->st_regionp->reg_regionid <= mp->mt_high &&
-			    sp->st_regionp->reg_regionid >= mp->mt_low ) {
-				sp->st_materp = (char *)mp;
-				goto done;
-			}
+	if( regp == REGION_NULL )
+		return( (char *)&default_mater );
+	for( mp = MaterHead; mp != MATER_NULL; mp = mp->mt_forw )  {
+		if( regp->reg_regionid <= mp->mt_high &&
+		    regp->reg_regionid >= mp->mt_low ) {
+			return( (char *)mp );
 		}
-		sp->st_materp = (char *)&default_mater;
-done: ;
 	}
+	return( (char *)&default_mater );
 }

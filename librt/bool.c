@@ -65,14 +65,13 @@ struct partition *FinalHdp;	/* Heads final circ list */
 	register struct seg *segp;
 	register struct partition *pp;
 	LOCAL struct region ActRegHd;	/* Heads active circular forw list */
-	LOCAL int curbin;
 	LOCAL struct partition PartHd;	/* Heads active circular list */
 
 	/* We assume that the region active chains are REGION_NULL */
 	/* We assume that the solid bins st_bin are zero */
+	/* bin 0 is always FALSE */
 
 	ActRegHd.reg_active = &ActRegHd;	/* Circular forw list */
-	curbin = 1;				/* bin 0 is always FALSE */
 	PartHd.pt_forw = PartHd.pt_back = &PartHd;
 
 	if(debug&DEBUG_PARTITION) fprintf(stderr,"-------------------BOOL_REGIONS\n");
@@ -82,13 +81,14 @@ struct partition *FinalHdp;	/* Heads final circ list */
 		register struct hit *lasthit;
 		LOCAL lastflip;
 
+		if( segp->seg_stp->st_bin == 0 )
+			rtbomb("zero bin in bool_regions");
 		/* Make sure seg's solid's region is on active list */
-		if( segp->seg_stp->st_bin == 0 )  {
+		if( segp->seg_stp->st_bin < 0 )  {
 			register struct region *regp;		/* XXX */
 
-			if( (segp->seg_stp->st_bin = curbin++) >= NBINS )
-				rtbomb("bool_regions:  need > NBINS bins");
-			regp = segp->seg_stp->st_regionp;
+			segp->seg_stp->st_bin = -(segp->seg_stp->st_bin);
+			regp = segp->seg_tp->tr_regionp;
 			if( (regp != REGION_NULL) &&
 			   (regp->reg_active == REGION_NULL) )  {
 				regp->reg_active = ActRegHd.reg_active;
@@ -394,12 +394,8 @@ done_weave:	; /* Sorry about the goto's, but they give clarity */
 		pr_partitions( FinalHdp, "Final Partitions" );
 
 	/*
-	 * Cleanup:  Put zeros in the bin#s of all the solids that were used,
-	 * and zap the reg_active chain.
+	 * Cleanup:  zap the reg_active chain.
 	 */
-	for( segp = segp_in; segp != SEG_NULL; segp = segp->seg_next )  {
-		segp->seg_stp->st_bin = 0;
-	}
 	{
 		register struct region *regp;			/* XXX */
 		for( regp=ActRegHd.reg_active; regp != &ActRegHd; )  {

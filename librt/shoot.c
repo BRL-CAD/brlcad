@@ -69,6 +69,8 @@ struct seg *FreeSeg = SEG_NULL;		/* Head of freelist */
  *
  *  NOTE:  The appliction functions may call shootray() recursively.
  */
+static int curbin;	/* NOT PARALLEL;  needs fixing */
+
 int
 shootray( ap )
 register struct application *ap;
@@ -98,6 +100,7 @@ register struct application *ap;
 	}
 
 	HeadSeg = SEG_NULL;
+	curbin = 0;				/* bin 0 is always FALSE */
 
 	/* For now, consider every region in the model */
 	for( rp=HeadRegion; rp != REGION_NULL; rp = rp->reg_forw )  {
@@ -139,14 +142,20 @@ register struct application *ap;
 		}
 
 		/*
-		 * Processing of this ray is complete, so release resources.
+		 * Processing of this ray is complete.
+		 * Put zeros in the bin #s of all solids used,
+		 * and release resources.
 		 */
-		while( HeadSeg != SEG_NULL )  {
-			register struct seg *hsp;	/* XXX */
+		{
+			register struct seg *segp;	/* XXX */
+			for( segp = HeadSeg; segp != SEG_NULL; segp = segp->seg_next )
+				segp->seg_stp->st_bin = 0;
 
-			hsp = HeadSeg->seg_next;
-			FREE_SEG( HeadSeg );
-			HeadSeg = hsp;
+			while( HeadSeg != SEG_NULL )  {
+				segp = HeadSeg->seg_next;
+				FREE_SEG( HeadSeg );
+				HeadSeg = segp;
+			}
 		}
 	}
 	if( debug )  fflush(stderr);
@@ -238,6 +247,9 @@ struct seg **HeadSegp;
 	if( tp->tr_op == OP_SOLID )  {
 		register struct seg *newseg;
 
+		if( tp->tr_stp->st_bin )
+			return( TRUE );		/* sol has already been hit */
+
 		/* If ray does not strike the bounding RPP, skip on */
 		if( !in_rpp( &ap->a_ray, tp->tr_min, tp->tr_max )  ||
 		    ap->a_ray.r_max <= 0.0 )  {
@@ -264,6 +276,9 @@ struct seg **HeadSegp;
 			return( FALSE );	/* MISS */
 		}
 
+		/* Expunge this line of code when regions die */
+		newseg->seg_tp = tp;	/* associate seg with this tree */
+
 		/* First, some checking */
 		if( newseg->seg_in.hit_dist > newseg->seg_out.hit_dist )  {
 			LOCAL struct hit temp;		/* XXX */
@@ -289,6 +304,13 @@ struct seg **HeadSegp;
 				seg2 = seg2->seg_next;
 			seg2->seg_next = (*HeadSegp);
 			(*HeadSegp) = newseg;
+		}
+
+		if( newseg->seg_stp->st_bin == 0 )  {
+			if( curbin++ >= NBINS )
+				rtbomb("shoot_tree:  need > NBINS bins");
+			/* The negative bin number is flag to bool_regions */
+			newseg->seg_stp->st_bin = -curbin;
 		}
 		nhits++;
 		return( TRUE );		/* HIT, solid added */

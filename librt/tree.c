@@ -102,6 +102,9 @@ static char idmap[] = {
 
 HIDDEN char *path_str();
 
+extern char *color_map();
+
+
 /*
  *  			G E T _ T R E E
  *
@@ -132,7 +135,6 @@ char *node;
 		 *  is encountered.  Build a special region for it.
 		 */
 		register struct region *regionp;	/* XXX */
-		register struct soltab *stp;
 
 		GETSTRUCT( regionp, region );
 		regionp->reg_active = REGION_NULL;
@@ -140,15 +142,14 @@ char *node;
 			path_str(0) );
 		if( curtree->tr_op != OP_SOLID )
 			rtbomb("root subtree not Solid");
-		stp = curtree->tr_stp;
-		stp->st_regionp = regionp;
+		curtree->tr_regionp = regionp;
+		curtree->tr_materp = color_map(regionp);
 		regionp->reg_treetop = curtree;
 		regionp->reg_name = strdup(path_str(0));
 		regionp->reg_forw = HeadRegion;
 		HeadRegion = regionp;
 		nregions++;
 	}
-	color_soltab();			/* associate soltab w/material */
 
 	if( debug & DEBUG_REGIONS )  {
 		register struct region *rp = HeadRegion;	/* XXX */
@@ -168,17 +169,17 @@ static vect_t zaxis = { 0, 0, 1.0, 0 };
 
 HIDDEN
 struct soltab *
-add_solid( rec, name, mat, regp )
+add_solid( rec, name, mat )
 union record *rec;
 char	*name;
 matp_t	mat;
-struct region *regp;
 {
 	register struct soltab *stp;
 	static vect_t v[8];
 	static vect_t A, B, C;
 	static fastf_t fx, fy, fz;
 	FAST fastf_t f;
+	register struct soltab *nsp;
 
 	/* Validate that matrix preserves perpendicularity of axis */
 	/* by checking that A.B == 0, B.C == 0, A.C == 0 */
@@ -195,6 +196,27 @@ struct region *regp;
 		return( SOLTAB_NULL );		/* BAD */
 	}
 
+	/*
+	 *  Check to see if this exact solid has already been processed.
+	 *  Match on leaf name and matrix.
+	 */
+	for( nsp = HeadSolid; nsp != SOLTAB_NULL; nsp = nsp->st_forw )  {
+		register int i;
+
+		if( strcmp( name, nsp->st_name ) != 0 )
+			continue;
+		for( i=0; i<16; i++ )  {
+			f = mat[i] - nsp->st_pathmat[i];
+			if( !NEAR_ZERO(f) )
+				goto next_one;
+		}
+		/* Success, we have a match! */
+		nsp->st_uses++;
+		fprintf(stderr,"add_solid:  use %d of %s!!\n", nsp->st_uses, name );
+		return(nsp);
+next_one: ;
+	}
+
 	/* Convert from database (float) to fastf_t */
 	fastf_float( v, rec->s.s_values, 8 );
 
@@ -202,7 +224,6 @@ struct region *regp;
 	stp->st_id = idmap[rec->s.s_type];	/* PUN for a.a_type, too */
 	stp->st_name = name;
 	stp->st_specific = (int *)0;
-	stp->st_regionp = regp;
 
 	/* init solid's maxima and minima */
 	stp->st_max[X] = stp->st_max[Y] = stp->st_max[Z] = -INFINITY;
@@ -218,6 +239,9 @@ struct region *regp;
 	stp->st_forw = HeadSolid;
 	HeadSolid = stp;
 
+	mat_copy( stp->st_pathmat, mat );
+	stp->st_uses = 1;
+
 	/* Update the model maxima and minima */
 #define MMM(v)		MINMAX( model_min[X], model_max[X], v[X] ); \
 			MINMAX( model_min[Y], model_max[Y], v[Y] ); \
@@ -231,8 +255,6 @@ struct region *regp;
 		fprintf(stderr,"Bound Sph Rad**2 = %f\n", stp->st_radsq);
 		VPRINT("Bound RPP min", stp->st_min);
 		VPRINT("Bound RPP max", stp->st_max);
-		if( regp != REGION_NULL )
-			fprintf(stderr,"Member of region %s\n", regp->reg_name );
 		functab[stp->st_id].ft_print( stp );
 	}
 	nsolids++;
@@ -288,7 +310,7 @@ matp_t old_xlate;
 		register struct soltab *stp;		/* XXX */
 
 		/* Draw a solid */
-		stp = add_solid( &rec, strdup(path_str(pathpos)), old_xlate, argregion );
+		stp = add_solid( &rec, dp->d_namep, old_xlate );
 		(void)lseek( ged_fd, savepos, 0);	/* restore pos */
 		if( stp == SOLTAB_NULL )
 			return( TREE_NULL );
@@ -300,6 +322,9 @@ matp_t old_xlate;
 		bzero( (char *)curtree, sizeof(union tree) );
 		curtree->tr_op = OP_SOLID;
 		curtree->tr_stp = stp;
+		curtree->tr_name = strdup(path_str(pathpos));
+		curtree->tr_regionp = argregion;
+		curtree->tr_materp = color_map(argregion);
 		VMOVE( curtree->tr_min, stp->st_min );
 		VMOVE( curtree->tr_max, stp->st_max );
 		return( curtree );
@@ -365,8 +390,9 @@ matp_t old_xlate;
 			stp = subtree->tr_stp;
 			GETSTRUCT( xrp, region );
 			xrp->reg_treetop = subtree;
-			stp->st_regionp = xrp;
-			xrp->reg_name = stp->st_name;
+			subtree->tr_regionp = xrp;
+			subtree->tr_materp = color_map(xrp);
+			xrp->reg_name = strdup(path_str(pathpos+1));
 			xrp->reg_forw = HeadRegion;
 			HeadRegion = xrp;
 			xrp->reg_active = REGION_NULL;
@@ -443,6 +469,7 @@ int pos;
 	register char *cp = &line[0];
 	register int i;
 
+	if( pos >= MAXLEVELS )  pos = MAXLEVELS-1;
 	line[0] = '/';
 	line[1] = '\0';
 	for( i=0; i<=pos; i++ )  {

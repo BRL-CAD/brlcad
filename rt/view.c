@@ -101,7 +101,7 @@ struct partition *PartHeadp;
 	register struct partition *pp = PartHeadp->pt_forw;
 
 	/* Check to see if we hit the light source */
-	if( strcmp( pp->pt_inseg->seg_stp->st_name, "/LIGHT" )==0 )
+	if( strncmp( pp->pt_inseg->seg_stp->st_name, "LIGHT", 5 )==0 )
 		return(1);		/* light_visible = 1 */
 	return(0);	/* light_visible = 0 */
 }
@@ -368,7 +368,7 @@ struct partition *PartHeadp;
 	static vect_t	to_eye;
 
 	/* Check to see if we hit the light source */
-	if( strcmp( pp->pt_inseg->seg_stp->st_name, "/LIGHT" )==0 )  {
+	if( strncmp( pp->pt_inseg->seg_stp->st_name, "LIGHT", 5 )==0 )  {
 		inten = 0x00FFFFFF;	/* white */
 		goto done;
 	}
@@ -412,7 +412,7 @@ struct partition *PartHeadp;
 	/* Get default color-by-ident for region.			*/
 	{
 		register struct mater *mp;
-		mp = ((struct mater *)pp->pt_inseg->seg_stp->st_materp);
+		mp = ((struct mater *)pp->pt_inseg->seg_tp->tr_materp);
 		red = mp->mt_r;
 		grn = mp->mt_g;
 		blu = mp->mt_b;
