@@ -150,7 +150,7 @@ else
   if [ "x$HAVE_SED" = "xyes" ] ; then
     _maj_version="`echo $_version_line | sed 's/.* \([0-9]\)\.[0-9].*/\1/'`"
     _min_version="`echo $_version_line | sed 's/.* [0-9]\.\([0-9]\).*/\1/'`"
-    _pat_version="`echo $_version_line | sed 's/.* [0-9]\.[0-9][\.-]p\?\([0-9]*\).*/\1/'`"
+    _pat_version="`echo $_version_line | sed 's/.* [0-9]\.[0-9][\.-]p*\([0-9]*\).*/\1/'`"
     [ "x$_maj_version" = "x" ] && _maj_version=0
     [ "x$_min_version" = "x" ] && _min_version=0
     [ "x$_pat_version" = "x" ] && _pat_version=0
@@ -250,7 +250,7 @@ else
   if [ "x$HAVE_SED" = "xyes" ] ; then
     _maj_version="`echo $_version_line | sed 's/.* \([0-9]\)\.[0-9].*/\1/'`"
     _min_version="`echo $_version_line | sed 's/.* [0-9]\.\([0-9]\).*/\1/'`"
-    _pat_version="`echo $_version_line | sed 's/.* [0-9]\.[0-9][\.-]p\?\([0-9]*\).*/\1/'`"
+    _pat_version="`echo $_version_line | sed 's/.* [0-9]\.[0-9][\.-]p*\([0-9]*\).*/\1/'`"
     [ "x$_maj_version" = "x" ] && _maj_version=0
     [ "x$_min_version" = "x" ] && _min_version=0
     [ "x$_pat_version" = "x" ] && _pat_version=0
