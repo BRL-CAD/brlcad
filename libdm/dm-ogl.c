@@ -52,7 +52,7 @@
 #include "vmath.h"
 #include "mater.h"
 #include "raytrace.h"
-#include "_dm.h"
+#include "dm.h"
 #include "dm-ogl.h"
 
 /*XXX This is just temporary!!! */
@@ -95,7 +95,6 @@ static void     print_cmap();
  */
 char  ogl_ogl_used = 0;
 char  ogl_sgi_used = 0;
-char  is_direct = 0;
 
 /* Display Manager package interface */
 #define IRBOUND	4095.9	/* Max magnification in Rot matrix */
@@ -1144,8 +1143,8 @@ struct dm *dmp;
   ((struct ogl_vars *)dmp->dmr_vars)->is_direct =
     (char) glXIsDirect(((struct ogl_vars *)dmp->dmr_vars)->dpy,
 		       ((struct ogl_vars *)dmp->dmr_vars)->glxc);
-  Tcl_AppendResult(interp, "Using ", is_direct ? "a direct" : "an indirect",
-		   " OpenGL rendering context.\n", (char *)NULL);
+  Tcl_AppendResult(interp, "Using ", ((struct ogl_vars *)dmp->dmr_vars)->is_direct ?
+		   "a direct" : "an indirect", " OpenGL rendering context.\n", (char *)NULL);
   /* set ogl_ogl_used if the context was ever direct */
   ogl_ogl_used = (((struct ogl_vars *)dmp->dmr_vars)->is_direct || ogl_ogl_used);
 
