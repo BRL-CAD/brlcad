@@ -57,6 +57,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #define MORE_ARGS_STR    "more arguments needed::"
 
+int cmd_sig2();
+int cmd_mged_glob();
+int cmd_init();
+int cmd_set();
 int f_tran(), f_irot();
 void set_tran();
 
@@ -73,6 +77,8 @@ extern short earb8[12][18];
 extern struct rt_db_internal es_int;
 extern short int fixv; /* used in ECMD_ARB_ROTATE_FACE,f_eqn(): fixed vertex */
 
+struct cmd_list head_cmd_list;
+struct cmd_list *curr_cmd_list;
 point_t e_axis_pos;
 void set_e_axis_pos();
 
@@ -947,6 +953,17 @@ int interactive;
 	}
     }
 
+#if 1
+    (void)Tcl_CreateCommand(interp, "sigint", cmd_sig2, (ClientData)NULL,
+			    (Tcl_CmdDeleteProc *)NULL);
+    (void)Tcl_CreateCommand(interp, "mged_glob", cmd_mged_glob, (ClientData)NULL,
+			    (Tcl_CmdDeleteProc *)NULL);
+    (void)Tcl_CreateCommand(interp, "cmd_init", cmd_init, (ClientData)NULL,
+			    (Tcl_CmdDeleteProc *)NULL);
+    (void)Tcl_CreateCommand(interp, "cmd_set", cmd_set, (ClientData)NULL,
+			    (Tcl_CmdDeleteProc *)NULL);
+#endif
+
 #if 0
     /* Link to some internal variables */
     Tcl_LinkVar(interp, "mged_center_x", (char *)&toViewcenter[MDX],
@@ -970,6 +987,99 @@ int interactive;
 
     history_setup();
     mged_variable_setup(interp);
+}
+
+
+int
+cmd_init(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+  struct cmd_list *clp;
+
+  if(argc != 2){
+    Tcl_SetResult(interp, "Usage: cmd_init id", TCL_STATIC);
+    return TCL_ERROR;
+  }
+
+  clp = (struct cmd_list *)rt_malloc(sizeof(struct cmd_list), "cmd_list");
+  bzero((void *)clp, sizeof(struct cmd_list));
+  RT_LIST_APPEND(&head_cmd_list.l, &clp->l);
+  strcpy((char *)clp->name, argv[1]);
+  clp->cur_hist = head_cmd_list.cur_hist;
+
+  return TCL_OK;
+}
+
+
+int
+cmd_set(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+  struct cmd_list *p;
+
+  if(argc != 2){
+    Tcl_SetResult(interp, "Usage: cmd_set id", TCL_STATIC);
+    return TCL_ERROR;
+  }
+
+  for( RT_LIST_FOR(p, cmd_list, &head_cmd_list.l) ){
+    if(strcmp((char *)p->name, argv[1]))
+      continue;
+
+    curr_cmd_list = p;
+    break;
+  }
+
+  if(p == &head_cmd_list)
+    curr_cmd_list = &head_cmd_list;
+
+  if(curr_cmd_list->aim)
+    curr_dm_list = curr_cmd_list->aim;
+
+  return TCL_OK;
+}
+
+
+int
+cmd_sig2(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+  sig2();
+}
+
+
+int
+cmd_mged_glob(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+  struct rt_vls dest, src;
+
+  if(argc != 2){
+    Tcl_SetResult(interp, "cmd_mged_glob: There must be only one argument.", TCL_STATIC);
+    return TCL_ERROR;
+  }
+
+  rt_vls_init(&src);
+  rt_vls_init(&dest);
+  rt_vls_strcpy(&src, argv[1]);
+  mged_compat( &dest, &src );
+  Tcl_SetResult(interp, rt_vls_addr(&dest), TCL_VOLATILE);
+  rt_vls_free(&src);
+  rt_vls_free(&dest);
+
+  return TCL_OK;
 }
 
 
