@@ -109,8 +109,8 @@ char	**argv;
 	}
 
 	/* Build floating point mouse vector, -1 to +1 */
-	mousevec[X] =  xpos / 2047.0;
-	mousevec[Y] =  ypos / 2047.0;
+	mousevec[X] =  xpos * INV_GED;
+	mousevec[Y] =  ypos * INV_GED;
 	mousevec[Z] = 0;
 
 	if (mged_variables->faceplate && mged_variables->orig_gui && up) {

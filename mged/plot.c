@@ -234,18 +234,18 @@ char	**argv;
 						sp->s_color[1],
 						sp->s_color[2] );
 					pl_3line( fp,
-						(int)( start[X] * 2047 ),
-						(int)( start[Y] * 2047 ),
-						(int)( start[Z] * 2047 ),
-						(int)( fin[X] * 2047 ),
-						(int)( fin[Y] * 2047 ),
-						(int)( fin[Z] * 2047 ) );
+						(int)( start[X] * GED_MAX ),
+						(int)( start[Y] * GED_MAX ),
+						(int)( start[Z] * GED_MAX ),
+						(int)( fin[X] * GED_MAX ),
+						(int)( fin[Y] * GED_MAX ),
+						(int)( fin[Z] * GED_MAX ) );
 				}  else  {
 					pl_line( fp,
-						(int)( start[0] * 2047 ),
-						(int)( start[1] * 2047 ),
-						(int)( fin[0] * 2047 ),
-						(int)( fin[1] * 2047 ) );
+						(int)( start[0] * GED_MAX ),
+						(int)( start[1] * GED_MAX ),
+						(int)( fin[0] * GED_MAX ),
+						(int)( fin[1] * GED_MAX ) );
 				}
 			}
 		}

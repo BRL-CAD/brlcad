@@ -1281,7 +1281,7 @@ char	**argv;
 	if(!use_input_orig && adc_draw){
 	  vect_t  view_ray_orig;
 
-	  VSET(view_ray_orig, (fastf_t)dv_xadc, (fastf_t)dv_yadc, 2047.0);
+	  VSET(view_ray_orig, (fastf_t)dv_xadc, (fastf_t)dv_yadc, GED_MAX);
 	  VSCALE(view_ray_orig, view_ray_orig, INV_GED);
 	  MAT4X3PNT(center_model, view2model, view_ray_orig);
 	}else if(!use_input_orig){
@@ -1537,7 +1537,7 @@ char    **argv;
 {
   register int i;
   int status;
-  fastf_t sf = 1.0/2047.0;
+  fastf_t sf = 1.0 * INV_GED;
   vect_t view_ray_orig;
   vect_t center_model;
   struct bu_vls vls;
@@ -1574,7 +1574,7 @@ char    **argv;
 
     return TCL_ERROR;
   }
-  view_ray_orig[Z] = 2047.0;
+  view_ray_orig[Z] = GED_MAX;
   argc -= 2;
 
   av = (char **)bu_malloc(sizeof(char *) * (argc + 4), "f_vnirt: av");
@@ -1922,7 +1922,7 @@ char		**argv;
 	return (TCL_ERROR);
     }
 
-    if ((-2047 > h)  || (h > 2047) || (-2047 > v)  || (v > 2047))
+    if (((int)GED_MIN > h)  || (h > (int)GED_MAX) || ((int)GED_MIN > v)  || (v > (int)GED_MAX))
     {
 	Tcl_AppendResult(interp, "Screen coordinates out of range\n",
 	    "Must be between +/-2048", NULL);
@@ -1978,8 +1978,8 @@ char		**argv;
 
     VMOVEN(unit_H, model2view, 3);
     VMOVEN(unit_V, model2view + 4, 3);
-    VJOIN1(ray_orig, ray_orig, h * Viewscale / 2047.0, unit_H);
-    VJOIN1(ray_orig, ray_orig, v * Viewscale / 2047.0, unit_V);
+    VJOIN1(ray_orig, ray_orig, h * Viewscale * INV_GED, unit_H);
+    VJOIN1(ray_orig, ray_orig, v * Viewscale * INV_GED, unit_V);
 
     /*
      *	Build a list of all the top-level objects currently displayed
