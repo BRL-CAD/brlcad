@@ -103,20 +103,20 @@ struct rt_spectrum {
 struct rt_spect_sample {
 	long	magic;
 	int	nwave;
-	/* Next item is dubious, it might force keeping use counts in rt_spectrum */
 	CONST struct rt_spectrum *spectrum;	/* Up pointer to "struct spectrum" */
 	fastf_t	val[1];		/* array of nwave samples, dynamically sized */
 };
 #define RT_SPECT_SAMPLE_MAGIC	0x53736d70
 #define RT_CK_SPECT_SAMPLE(_p)	RT_CKMAG(_p, RT_SPECT_SAMPLE_MAGIC, "rt_spect_sample")
 
+#define RT_SIZEOF_SPECT_SAMPLE(_spect)	( sizeof(struct rt_spect_sample) + \
+			sizeof(fastf_t)*((_spect)->nwave-1) )
+
 /* Gets an rt_spect_sample, with val[] having size _nwave */
 #define RT_GET_SPECT_SAMPLE(_ssamp, _spect)  { \
 	RT_CK_SPECTRUM(_spect);\
 	_ssamp = (struct rt_spect_sample *)rt_calloc( 1, \
-		sizeof(struct rt_spect_sample) + \
-			sizeof(fastf_t)*((_spect)->nwave-1), \
-		"struct rt_spect_sample" ); \
+		RT_SIZEOF_SPECT_SAMPLE(_spect), "struct rt_spect_sample" ); \
 	_ssamp->magic = RT_SPECT_SAMPLE_MAGIC; \
 	_ssamp->nwave = (_spect)->nwave; \
 	_ssamp->spectrum = (_spect); }
@@ -139,10 +139,13 @@ RT_EXTERN( void			rt_spect_make_CIE_XYZ, (
 					struct rt_spect_sample **y,
 					struct rt_spect_sample **z,
 					CONST struct rt_spectrum *spect));
-RT_EXTERN( void			rt_write_spect_sample, (CONST char *filename,
+RT_EXTERN( int			rt_write_spect_sample, (CONST char *filename,
 					CONST struct rt_spect_sample *ss));
 RT_EXTERN( void			rt_spect_black_body, (struct rt_spect_sample *ss,
 					double temp, unsigned int n));
 RT_EXTERN( void			rt_spect_black_body_fast, (
 					struct rt_spect_sample *ss,
 					double temp));
+RT_EXTERN( struct rt_spect_sample *rt_get_spect_sample_array, (
+					CONST struct rt_spectrum *spect,
+					int num));
