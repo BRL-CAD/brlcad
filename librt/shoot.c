@@ -996,7 +996,7 @@ start_cell:
 					psp->ray_seqno = resp->re_nshootray;
 					rt_htbl_reset( &psp->htab );
 
-					/* Compute ray entry and exit */
+					/* Compute ray entry and exit to entire solid's bounding box */
 					if( !rt_in_rpp( &ss.newray, ss.inv_dir,
 					    stp->st_min, stp->st_max ) )  {
 						if(debug_shoot)bu_log("rpp miss %s (all pieces)\n", stp->st_name);
@@ -1040,6 +1040,7 @@ start_cell:
 
 				/*  See if this solid has been fully processed yet.
 				 *  If ray has passed through bounding volume, we're done.
+				 *  ft_piece_hitsegs() will only be called once per ray.
 				 */
 				if( ss.box_end > psp->maxdist && psp->htab.end > 0 ) {
 					/* Convert hits into segs */
