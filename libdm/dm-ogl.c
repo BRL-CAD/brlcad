@@ -258,7 +258,7 @@ char *argv[];
     (void)ogl_close(dmp);
     return DM_NULL;
   }
-
+#if !defined(linux )
   {
     int return_val;
 
@@ -268,7 +268,7 @@ char *argv[];
       return DM_NULL;
     }
   }
-
+#endif
   if(dmp->dm_width == 0){
     dmp->dm_width =
       DisplayWidth(tmp_dpy, DefaultScreen(tmp_dpy)) - 30;
