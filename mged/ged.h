@@ -459,7 +459,9 @@ struct _mged_variables {
 	int	predictor;
 	double	predictor_advance;
 	double	predictor_length;
-	double	perspective;	/* >0 implies perspective viewing is on. */
+	double	perspective;	/* used to directly set the perspective angle */
+        int     perspective_mode; /* used to toggle perspective viewing on/off */
+        int     toggle_perspective; /* used to toggle through values in perspective_table[] */
 	double	nmg_eu_dist;
 	double	eye_sep_dist;	/* >0 implies stereo.  units = "room" mm */
 	char	union_lexeme[1024];
