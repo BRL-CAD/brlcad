@@ -177,6 +177,8 @@ equal_start:			/*
 					/* Seg ends before partition starts */
 					goto done_weave;
 				}
+				newpp->pt_outstp = pp->pt_instp;
+				newpp->pt_outhit = pp->pt_inhit;
 				/* dist = pp->pt_indist; */
 				goto equal_start;
 			}
@@ -221,7 +223,11 @@ done_weave:	;
 		hitcnt = 0;
 		if(debug&DEBUG_PARTITION)
 			printf("considering partition x%x\n", pp );
-		for( regp=ActRegHd.reg_active; regp != &ActRegHd; regp = regp->reg_active )  {
+		if( (regp=ActRegHd.reg_active) == &ActRegHd )  {
+			lastregion = REGION_NULL;
+			goto add_partition;
+		}
+		for( ; regp != &ActRegHd; regp = regp->reg_active )  {
 			if(debug&DEBUG_PARTITION)
 				printf("considering region x%x\n", regp );
 			if( bool_eval( regp->reg_treetop, pp ) == FALSE )
@@ -241,8 +247,10 @@ done_weave:	;
 		}
 		if( hitcnt == 0 )  {
 			pp=pp->pt_forw;			/* onwards! */
-		} else {
-			/* Add this partition to the result queue */
+			continue;
+		}
+add_partition:	/* Add this partition to the result queue */
+		{
 			register struct partition *newpp;	/* XXX */
 
 			newpp = pp;
@@ -311,8 +319,14 @@ register struct partition *partp;
 	case OP_SUBTRACT:
 		if( bool_eval( treep->tr_left, partp ) == FALSE )
 			ret = FALSE;
-		else
+		else  {
 			ret = !bool_eval( treep->tr_right, partp );
+			if( ret == FALSE )  {
+				/* Was subtracted, flip exit normal */
+				VREVERSE( partp->pt_outhit->hit_normal,
+					  partp->pt_outhit->hit_normal );
+			}
+		}
 		break;
 
 	default:
@@ -338,6 +352,13 @@ char *title;
 		printf("%.8x: forw=%.8x back=%.8x (%f,%f)\n",
 			pp, pp->pt_forw, pp->pt_back,
 			pp->pt_indist, pp->pt_outdist );
+		printf("\t Nin=[%f,%f,%f] Nout=[%f,%f,%f]\n",
+			pp->pt_inhit->hit_normal[0],
+			pp->pt_inhit->hit_normal[1],
+			pp->pt_inhit->hit_normal[2],
+			pp->pt_outhit->hit_normal[0],
+			pp->pt_outhit->hit_normal[1],
+			pp->pt_outhit->hit_normal[2] );
 	}
 	printf("----\n");
 }
