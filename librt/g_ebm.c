@@ -283,7 +283,6 @@ if(rt_g.debug&DEBUG_EBM)bu_log("g[X] = %d, g[Y] = %d\n", igrid[X], igrid[Y]);
 
 	if( rp->r_dir[X] == 0.0 && rp->r_dir[Y] == 0.0 )  {
 		register struct seg	*segp;
-		register struct ebm_hit_private *hp;
 
 		/*  Ray is traveling exactly along Z axis.
 		 *  Just check the one cell hit.
