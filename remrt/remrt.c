@@ -70,11 +70,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "pkg.h"
 #include "externs.h"
 
-#if !defined(SYSV) && BSD < 44
-# define strchr(s, c)	index(s, c)
-# define strrchr(s, c)	rindex(s, c)
-#endif
-
 #include "./list.h"
 #include "./protocol.h"
 
