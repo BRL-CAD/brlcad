@@ -793,12 +793,12 @@ between two views." }
           { see_also "view_ring" } }
 
 menu .$id.menubar.viewring.select -title "Select View" -tearoff $do_tearoffs\
-	-postcommand "do_view_ring_labels $id"
-do_view_ring_entries $id s
+	-postcommand "update_view_ring_labels $id"
+update_view_ring_entries $id s
 set view_ring($id) 1
 menu .$id.menubar.viewring.delete -title "Delete View" -tearoff $do_tearoffs\
-	-postcommand "do_view_ring_labels $id"
-do_view_ring_entries $id d
+	-postcommand "update_view_ring_labels $id"
+update_view_ring_entries $id d
 
 menu .$id.menubar.settings -title "Settings" -tearoff $do_tearoffs
 .$id.menubar.settings add cascade -label "Mouse Behavior" -underline 0\
@@ -1935,8 +1935,8 @@ proc reconfig_gui_default { id } {
     .$id.status.aet configure -textvar mged_display($shared_id,aet)
     .$id.status.ang configure -textvar mged_display($shared_id,ang)
 
-    do_view_ring_entries $id s
-    do_view_ring_entries $id d
+    update_view_ring_entries $id s
+    update_view_ring_entries $id d
 #    reconfig_mmenu $id
 }
 
@@ -2200,10 +2200,10 @@ proc set_active_dm { id } {
 
     set vloc [string range $mged_dm_loc($id) 0 0]
     set hloc [string range $mged_dm_loc($id) 1 1]
-    set tmp_dm $mged_top($id).$mged_dm_loc($id)
+    set new_dm $mged_top($id).$mged_dm_loc($id)
 
 # Nothing to do
-    if { $tmp_dm == $mged_active_dm($id) } {
+    if { $new_dm == $mged_active_dm($id) } {
 	return
     }
 
@@ -2213,7 +2213,7 @@ proc set_active_dm { id } {
     winset $mged_active_dm($id)
     rset cs mode 0
 
-    set mged_active_dm($id) $tmp_dm
+    set mged_active_dm($id) $new_dm
     set mged_small_dmc($id) $mged_dmc($id).$vloc.$hloc
 
     # make active
@@ -2251,9 +2251,20 @@ proc set_active_dm { id } {
     set save_dm_loc($id) $mged_dm_loc($id)
     set save_small_dmc($id) $mged_small_dmc($id)
 
-    do_view_ring_entries $id s
-    do_view_ring_entries $id d
+    # update view_ring entries
+    update_view_ring_entries $id s
+    update_view_ring_entries $id d
 
+    # update adc control panel
+    adc_load $id
+
+    # update grid control panel
+    grid_control_reset $id
+
+    # update query ray control panel
+    qray_reset $id
+
+    # update raytrace control panel
     update_Raytrace $id
 
     set dbname [_mged_opendb]
@@ -2407,15 +2418,15 @@ proc view_ring_add { id } {
     if {$i != -1 && "$mged_top($id).ur" == "$mged_active_dm($id)"} {
 	foreach cid $mged_collaborators {
 	    if {"$mged_top($cid).ur" == "$mged_active_dm($cid)"} {
-		do_view_ring_entries $cid s
-		do_view_ring_entries $cid d
+		update_view_ring_entries $cid s
+		update_view_ring_entries $cid d
 		winset $mged_active_dm($cid)
 		set view_ring($cid) [view_ring get]
 	    }
 	}
     } else {
-	do_view_ring_entries $id s
-	do_view_ring_entries $id d
+	update_view_ring_entries $id s
+	update_view_ring_entries $id d
 	set view_ring($id) [view_ring get]
     }
 }
@@ -2438,15 +2449,15 @@ proc view_ring_delete { id vid } {
     if { $i != -1 && "$mged_top($id).ur" == "$mged_active_dm($id)"} {
 	foreach cid $mged_collaborators {
 	    if {"$mged_top($cid).ur" == "$mged_active_dm($cid)"} {
-		do_view_ring_entries $cid s
-		do_view_ring_entries $cid d
+		update_view_ring_entries $cid s
+		update_view_ring_entries $cid d
 		winset $mged_active_dm($cid)
 		set view_ring($cid) [view_ring get]
 	    }
 	}
     } else {
-	do_view_ring_entries $id s
-	do_view_ring_entries $id d
+	update_view_ring_entries $id s
+	update_view_ring_entries $id d
 	set view_ring($id) [view_ring get]
     }
 }
@@ -2558,7 +2569,7 @@ proc view_ring_toggle { id } {
     }
 }
 
-proc do_view_ring_entries { id m } {
+proc update_view_ring_entries { id m } {
     global view_ring
 
     set views [view_ring get -a]
@@ -2579,16 +2590,16 @@ proc do_view_ring_entries { id m } {
 		    -command "view_ring_delete $id [lindex $views $i]"
 	}
     } else {
-	puts "Usage: do_view_ring_entries w s|d"
+	puts "Usage: update_view_ring_entries w s|d"
     }
 }
 
-proc do_view_ring_labels { id } {
+proc update_view_ring_labels { id } {
     global mged_active_dm
     global view_ring
 
     winset $mged_active_dm($id)
-    set save_view [view_ring get]
+    set view_ring($id) [view_ring get]
     set views [view_ring get -a]
     set llen [llength $views]
 
@@ -2607,7 +2618,7 @@ proc do_view_ring_labels { id } {
 	$wd entryconfigure $i -label "$center $size $aet"
     }
 
-    view_ring goto $save_view
+    view_ring goto $view_ring($id)
 }
 
 proc toggle_status_bar { id } {
