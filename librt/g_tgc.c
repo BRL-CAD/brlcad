@@ -886,14 +886,14 @@ struct resource         *resp; /* pointer to a list of free segs */
 	if( NEAR_ZERO( dprime[Z], RT_PCOEF_TOL ) )
 		dprime[Z] = 0.0;	/* prevent rootfinder heartburn */
 
-	/* Use segp[i].seg_in.hit_normal as tmp to hold dprime */
-	VMOVE( segp[i].seg_in.hit_normal, dprime );
+	/* Use segp[ix].seg_in.hit_normal as tmp to hold dprime */
+	VMOVE( segp[ix].seg_in.hit_normal, dprime );
  
 	VSUB2( work, rp[ix]->r_pt, tgc->tgc_V );
 	MAT4X3VEC( pprime, tgc->tgc_ScShR, work );
 
-	/* Use segp[i].seg_out.hit_normal as tmp to hold pprime */
-	VMOVE( segp[i].seg_out.hit_normal, pprime );
+	/* Use segp[ix].seg_out.hit_normal as tmp to hold pprime */
+	VMOVE( segp[ix].seg_out.hit_normal, pprime );
 
 	/* Translating ray origin along direction of ray to closest
 	 * pt. to origin of solids coordinate system, new ray origin
@@ -1172,7 +1172,7 @@ struct resource         *resp; /* pointer to a list of free segs */
 		} else {
 			/* intersection apparently invalid  */
 #if 0
-			rt_log("tgc(%s):  only 1 intersect\n", stp->st_name);
+			rt_log("tgc(%s):  only 1 intersect\n", stp[ix]->st_name);
 #endif
 			SEG_MISS(segp[ix]);
 			continue;
@@ -1211,7 +1211,7 @@ struct resource         *resp; /* pointer to a list of free segs */
 		continue;
 	}
 
-	dir = VDOT( tgc->tgc_N, rp[i]->r_dir );	/* direc */
+	dir = VDOT( tgc->tgc_N, rp[ix]->r_dir );	/* direc */
 	if ( NEAR_ZERO( dir, RT_DOT_TOL ) ) {
 		SEG_MISS(segp[ix]);
 		continue;
@@ -1258,6 +1258,7 @@ struct resource         *resp; /* pointer to a list of free segs */
 	}
 	}
     } /* end for each ray/cone pair */
+    rt_free( (char *)C, "tor poly" );
 }
 
 /*
