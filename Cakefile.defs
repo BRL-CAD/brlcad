@@ -122,11 +122,11 @@ set -S2 "/bin/sh"
 /* 1==YES, 0==NO */
 
 /* Read above for the meaning and implications of each flag! */
-#define BUILD_OPTIMIZED		1
-#define BUILD_SHARED			1
-#define BUILD_XWINDOWS		1
-#define BUILD_OPENGL			0
-#define BUILD_PRODUCTION	0
+#define BUILD_OPTIMIZED         1
+#define BUILD_SHARED            1
+#define BUILD_XWINDOWS          1
+#define BUILD_OPENGL            0
+#define BUILD_PRODUCTION        0
 
 
 /* This is the version of Tcl/Tk distributed with BRL-CAD */
