@@ -367,8 +367,9 @@ CONST struct rt_tol	*tol;
 	NMG_CK_MODEL(lm);
 
 	if( RT_LIST_IS_EMPTY( &(lm->r_hd) ) )  {
-		/* No regions in imported geometry, that is OK */
-		return(0);
+		/* No regions in imported geometry, can't give valid 'r' */
+		*r = (struct nmgregion *)NULL;
+		return -1;
 	}
 
 	/* XXX A big hack, just for testing ***/
