@@ -55,9 +55,9 @@ int		len;
 	    	return( RTI_NULL );		/* FAIL */
 	RT_CK_DBI(dbip);
 
-	if( db_scan( dbip, (int (*)())db_diradd, 1, NULL ) < 0 )  {
+	if( db_dirbuild( dbip ) < 0 )  {
 		db_close( dbip );
-	    	return( RTI_NULL );		/* FAIL */
+	    	return RTI_NULL;		/* FAIL */
 	}
 
 	rtip = rt_new_rti( dbip );		/* clones dbip */
