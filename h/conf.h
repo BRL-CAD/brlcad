@@ -188,6 +188,11 @@
 #	define HAVE_SBRK_DECL	1
 #endif
 
+#if SUNOS >= 55
+#	define HAVE_GETOPT_DECL	1
+#	define HAVE_MEMORY_H	1
+#endif
+
 #if defined(WIN32)
 /* Microsoft VisualC++ 6.0 on WinNT 4.0 */
 /*
