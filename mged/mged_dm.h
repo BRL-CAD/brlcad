@@ -22,6 +22,18 @@ struct device_values  {
 };
 extern struct device_values dm_values;
 
+#ifdef SEND_KEY_DOWN_PIPE
+extern int dm_pipe[];
+#endif
+
+#ifdef VIRTUAL_TRACKBALL
+#define VIRTUAL_TRACKBALL_OFF 0
+#define VIRTUAL_TRACKBALL_IGNORE 1 /* Ignore motion events */
+#define VIRTUAL_TRACKBALL_ROTATE 2 
+#define VIRTUAL_TRACKBALL_TRANSLATE 3
+#define VIRTUAL_TRACKBALL_ZOOM 4
+#endif
+
 /* Interface to a specific Display Manager */
 struct dm {
 	int	(*dmr_open)();
