@@ -55,6 +55,13 @@ bw)
 	else
 		bw-fb -w$WIDTH -n$HEIGHT $FLAGS $FILE
 	fi;;
+yuv)
+	if test $WIDTH -gt $FB_WIDTH -o $HEIGHT -gt $FB_HEIGHT
+	then
+		decimate 2 $WIDTH $HEIGHT $FB_WIDTH $FB_HEIGHT <$FILE | yuv-pix -w$WIDTH -n$HEIGHT | pix-fb -w$FB_WIDTH -n$FB_HEIGHT
+	else
+		yuv-pix -w$WIDTH -n$HEIGHT $FILE | pix-fb -w$WIDTH -n$HEIGHT
+	fi;;
 rle)
 	if test $WIDTH -gt $FB_WIDTH -o $HEIGHT -gt $FB_HEIGHT
 	then
