@@ -1011,6 +1011,8 @@ extern int db_put( struct db_i *, struct directory *dp, union record *where,
 /* scan.c */
 					/* read db (to build directory) */
 extern int db_scan( struct db_i *, int (*handler)() );
+					/* update db unit conversions */
+extern void db_conversions( struct db_i *, int units );
 /* lookup.c */
 					/* convert name to directory ptr */
 extern struct directory *db_lookup( struct db_i *, char *name, int noisy );
@@ -1099,6 +1101,7 @@ extern union record *db_getmrec();	/* malloc & read records */
 extern int db_get();			/* get several records from db */
 extern int db_put();			/* put several records into db */
 extern int db_scan();			/* read db (to build directory) */
+extern void db_conversions();		/* update db unit conversions */
 extern struct directory *db_lookup();	/* convert name to directory ptr */
 extern struct directory *db_diradd();	/* add entry to directory */
 extern int db_dirdelete();		/* delete entry from directory */
