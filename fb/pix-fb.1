@@ -10,12 +10,18 @@ pix-fb \- display a .pix format RGB image file on a framebuffer
 ] [
 .B \-c
 ] [
-.B width
-] <
+.B \-s\ squaresize
+] [
+.B \-W\ width
+] [
+.B \-H\ height
+] [
 .B file.pix
+]
 .SH DESCRIPTION
 .I pix-fb
-reads a .pix format file from standard input, and displays the
+reads a .pix format file from the named file, or from
+standard input if no file is specified, and displays the
 image on the currently selected framebuffer.
 The environment variable FB_FILE specifies
 the current framebuffer, see
@@ -29,18 +35,22 @@ flag, the default is changed to 1024x1024.
 If the
 .B \-i
 flag is specified, the image is output from top to bottom.
-Customarily, .pix files are stored bottom to top, so this
+Customarily, .pix files are stored bottom to top, so this flag
 inverts the image.
 .P
 The
 .B \-c
-flag causes the screen to be cleared before the image is displayed;
-otherwise, the default behavior is to overwrite the current image
-with the new image.
+flag causes the screen to be cleared before the image is displayed.
+The default behavior is to overwrite the current image
+with the new image without clearing the screen.
 .P
-An optional line
-.B width
-can be specified to indicate other size images.
+The
+.B \-W\ width
+flag specifies the width of each scanline in the input file, in pixels.
+.P
+The
+.B \-H\ height
+flag specifies the height of the input file, in scanlines.
 .SH "FORMAT"
 A .pix file contains sequences of pixels.
 Each pixel is stored as three \fBunsigned char\fRs,
@@ -63,7 +73,7 @@ Michael John Muuss
 This software is Copyright (C) 1985 by the United States Army.
 All rights reserved.
 .SH BUGS
-The upper limit of 1024x1024 is pointless, and should be removed.
+The upper limit of 2048x2048 is pointless, and should be removed.
 However, it's a rare framebuffer that is that big.
 .SH "BUG REPORTS"
 Reports of bugs or problems should be submitted via electronic
