@@ -30,6 +30,7 @@ static char RCStorus[] = "@(#)$Header$ (BRL)";
 #include "db.h"
 #include "raytrace.h"
 #include "nmg.h"
+#include "rtgeom.h"
 #include "./debug.h"
 #include "./complex.h"
 #include "./polyno.h"
@@ -140,19 +141,6 @@ struct tor_specific {
 	mat_t	tor_SoR;	/* Scale(Rot(vect)) */
 	mat_t	tor_invR;	/* invRot(vect') */
 };
-
-struct tor_internal {
-	long	magic;
-	point_t	v;
-	vect_t	h;		/* r_h length */
-	vect_t	a;		/* r_a length */
-	vect_t	b;		/* r_b length */
-	fastf_t	r_h;		/* radius in H direction */
-	fastf_t	r_a;		/* radius in A direction */
-	fastf_t	r_b;		/* radius in B direction (typ == r_a) */
-};
-#define RT_TOR_INTERNAL_MAGIC	0x9bffed887
-#define RT_TOR_CK_MAGIC(_p)	RT_CKMAG(_p,RT_TOR_INTERNAL_MAGIC,"tor_internal")
 
 /*
  *  			R T _ T O R _ P R E P
