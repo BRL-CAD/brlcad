@@ -310,16 +310,16 @@ $c SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
     LGPL)
         block="${block}
 $c This library is free software; you can redistribute it and/or
-$c modify it under the terms of the GNU Library General Public License
+$c modify it under the terms of the GNU Lesser General Public License
 $c as published by the Free Software Foundation; either version 2 of
 $c the License, or (at your option) any later version.
 $c
 $c This library is distributed in the hope that it will be useful, but
 $c WITHOUT ANY WARRANTY; without even the implied warranty of
 $c MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-$c Library General Public License for more details.
+$c Lesser General Public License for more details.
 $c
-$c You should have received a copy of the GNU Library General Public
+$c You should have received a copy of the GNU Lesser General Public
 $c License along with this file; see the file named COPYING for more
 $c information.
 "
