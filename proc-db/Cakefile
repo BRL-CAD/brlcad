@@ -38,9 +38,6 @@ bottest:	bottest.o
 pipe:	pipe.o
 	CC LDFLAGS  pipe.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o pipe
 
-platetest:	platetest.o
-	CC LDFLAGS  platetest.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o platetest
-
 tube:	tube.o 
 	CC LDFLAGS  tube.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o tube
 
