@@ -1605,6 +1605,14 @@ mat_t		mat;
 			rt_db_free_internal( &in );
 			break;
 		}
+	case ID_BOT:
+		{
+			struct rt_bot_internal *bot =
+				(struct rt_bot_internal *)ip->idb_ptr;
+
+			VMOVE( mpt, bot->vertices );
+			break;
+		}
 	case ID_DSP:
 		{
 			struct rt_dsp_internal *dsp =
