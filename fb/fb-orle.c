@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) fb-rle.c	1.5
-	Last edit: 	5/29/85 at 13:10:26
-	Retrieved: 	8/13/86 at 03:10:53
+	SCCS id:	@(#) fb-rle.c	1.6
+	Last edit: 	6/6/85 at 13:21:05
+	Retrieved: 	8/13/86 at 03:11:00
 	SCCS archive:	/m/cad/fb_utils/RCS/s.fb-rle.c
 
 	Author:		Gary S. Moss
@@ -12,7 +12,7 @@
  */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) fb-rle.c	1.5	last edit 5/29/85 at 13:10:26";
+char	sccsTag[] = "@(#) fb-rle.c	1.6	last edit 6/6/85 at 13:21:05";
 #endif
 #include <stdio.h>
 #include <fb.h>
@@ -27,7 +27,7 @@ char	sccsTag[] = "@(#) fb-rle.c	1.5	last edit 5/29/85 at 13:10:26";
 #define PIXEL_OFFSET	((scan_ln%dma_scans)*_fbsize)
 static char	*usage[] = {
 "",
-"fb-rle (1.5)",
+"fb-rle (1.6)",
 "",
 "Usage: fb-rle [-CScdhvw][-l X Y][-p X Y][file.rle]",
 "",
@@ -44,6 +44,7 @@ static int	cmflag = 1;
 static int	crunch = 0;
 static int	xpos = 0, ypos = 0, xlen = 0, ylen = 0;
 static int	parsArgv();
+static void	do_Crunch();
 static void	prntUsage();
 
 /*	m a i n ( )							*/
@@ -95,6 +96,12 @@ char	*argv[];
 					"Color map saved.\n"
 					);
 		}
+	else
+	if( crunch && fb_rmap( &cmap ) == -1 )
+		{
+		(void) fprintf( stderr, "Could not read colormap!\n" );
+		crunch = 0;
+		}
 	if( ncolors == 0 )
 		/* Only save colormap, so we are finished.		*/
 		return	0;
@@ -105,8 +112,12 @@ char	*argv[];
 	for( scan_ln = ypos + (ylen-1); scan_ln >= ypos; --scan_ln )
 		{
 		if( page_fault )
+			{
 			if( fbread( 0, y_buffer, scan_buf, dma_pixels ) == -1)
 				return	1;
+			if( crunch )
+				do_Crunch( scan_buf, dma_pixels, &cmap );
+			}
 		if( rle_encode_ln( fp, scan_buf+PIXEL_OFFSET ) == -1 )
 			return	1;
 		if( page_fault = ! (scan_ln%dma_scans) )
@@ -232,6 +243,22 @@ prntUsage()
 	while( *p )
 		{
 		(void) fprintf( stderr, "%s\n", *p++ );
+		}
+	return;
+	}
+
+/*	d o _ C r u n c h ( )						*/
+static void
+do_Crunch( scan_buf, pixel_ct, cmap )
+register Pixel		*scan_buf;
+register int		pixel_ct;
+register ColorMap	*cmap;
+	{
+	for( ; pixel_ct > 0; pixel_ct--, scan_buf++ )
+		{
+		scan_buf->red = cmap->cm_red[scan_buf->red];
+		scan_buf->green = cmap->cm_green[scan_buf->green];
+		scan_buf->blue = cmap->cm_blue[scan_buf->blue];
 		}
 	return;
 	}
