@@ -151,7 +151,7 @@ Mat_Db_Entry	*entry;
 		register struct fb_texture	*fbp;
 		RGBpixel	*fbmap;
 		int		wid = entry->df_rgb[0] << 2;
-		int		hgt = entry->df_rgb[0] << 2;
+		int		hgt = entry->df_rgb[1] << 2;
 	if( (txfbiop = fb_open( file, wid, hgt )) == FBIO_NULL )
 		return	NULL;
 	if(	(fbmap =
