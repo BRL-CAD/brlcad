@@ -315,26 +315,26 @@ char	*argv[];
 				else if (Aalph == 255)
 				    int_result = *Ascan;
 				else
-				    int_result = ( *Ascan * 255 +
-						   *Bscan * (255 - Aalph))/255;
+				    int_result = ( (int)*Ascan * 255 +
+						   (int)*Bscan * (255 - (int)Aalph))/255;
 				break;
 
 			    case IN_OP:	/* cA * alphaB + cB * 0.0 */
-				int_result = ( *Ascan * Balph ) /255;
+				int_result = ( (int)*Ascan * (int)Balph ) /255;
 				break;
 
 			    case OUT_OP:	/* cA * (1-alphaB) + cB * 0.0 */
-				int_result = ( *Ascan * (255 - Balph) ) /255;
+				int_result = ( (int)*Ascan * (255 - (int)Balph) ) /255;
 				break;
 
 			    case ATOP_OP:	/* cA * alphaB + cB * (1-alphaA) */
-				int_result = ( *Ascan * Balph +
-					       *Bscan * (255 - Aalph) )/255;
+				int_result = ( (int)*Ascan * (int)Balph +
+					       (int)*Bscan * (255 - (int)Aalph) )/255;
 				break;
 
 			    case XOR_OP:	/* cA * (1-alphaB) + cB * (1-alphaA) */
-				int_result = (*Ascan * (255 - Balph) + *Bscan *
-					      (255 - Aalph) )/255;
+				int_result = ((int)*Ascan * (255 - (int)Balph) + (int)*Bscan *
+					      (255 - (int)Aalph) )/255;
 				break;
 
 			    case PLUS_OP:
