@@ -20,7 +20,8 @@
 	rb_free rb_insert rb_order_stats	\
 	rb_rotate rb_search rb_walk		\
 	vfont brlcad_path xdr \
-	vls htond units bu_tcl color cmd
+	vls htond units bu_tcl color cmd \
+	cmdhist cmdhist_obj
 
 #define VERSION_VARIABLE	bu_version
 #define LIBRARY_TITLE		"The BRL-CAD Utility Library"
