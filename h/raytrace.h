@@ -1765,8 +1765,8 @@ RT_EXTERN(void rt_rotate_plane, (plane_t oplane, CONST mat_t mat,
 	CONST plane_t iplane));
 RT_EXTERN(int rt_coplanar, (CONST plane_t a, CONST plane_t b,
 	CONST struct rt_tol *tol));
-RT_EXTERN(double		rt_angle_measure, (vect_t vec, vect_t x_dir,
-				vect_t	y_dir));
+RT_EXTERN(double		rt_angle_measure, (vect_t vec, CONST vect_t x_dir,
+				CONST vect_t y_dir));
 
 
 /* CxDiv, CxSqrt */
