@@ -124,7 +124,7 @@ FILE *fgeom;
 	if (fail) return (-1);
 
 	nmg_gluefaces(outfaceuses, nfaces);
-	nmg_region_a(r);
+	nmg_region_a(r, &tol);
 
 	rt_free((char *)pts, "points list");
 	return (0);
