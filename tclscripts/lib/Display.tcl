@@ -61,11 +61,12 @@ class Display {
 
     # methods that override methods inherited from View
     public method slew {x y}
+    public method perspective_angle {args}
 
     # methods that override methods inherited from Dm
+    public method perspective {args}
     public method fb_active {args}
     public method light {args}
-    public method perspective {args}
     public method zbuffer {args}
     public method zclip {args}
 
@@ -274,26 +275,36 @@ body Display::slew {x1 y1} {
     View::slew $_x $_y
 }
 
-body Display::zclip {args} {
-    eval Dm::zclip $args
-    refresh
-    return $itk_option(-zclip)
-}
+body Display::perspective_angle {args} {
+    if {$args == ""} {
+	# get perspective angle
+	return $perspective_angle
+    } else {
+	# set perspective angle
+	View::perspective $args
+    }
 
-body Display::zbuffer {args} {
-    eval Dm::zbuffer $args
-    refresh
-    return $itk_option(-zbuffer)
-}
+    if {$perspective_angle > 0} {
+	# turn perspective mode on
+	Dm::perspective 1
+    } else {
+	# turn perspective mode off
+	Dm::perspective 0
+    }
 
-body Display::light {args} {
-    eval Dm::light $args
     refresh
-    return $itk_option(-light)
+    return $perspective_angle
 }
 
 body Display::perspective {args} {
     eval Dm::perspective $args
+
+    if {$itk_option(-perspective)} {
+	View::perspective [lindex $perspective_angles $perspective_angle_index]
+    } else {
+	View::perspective -1
+    }
+
     refresh
     return $itk_option(-perspective)
 }
@@ -305,6 +316,24 @@ body Display::fb_active {args} {
 	eval Dm::fb_active $args
 	refresh
     }
+}
+
+body Display::light {args} {
+    eval Dm::light $args
+    refresh
+    return $itk_option(-light)
+}
+
+body Display::zbuffer {args} {
+    eval Dm::zbuffer $args
+    refresh
+    return $itk_option(-zbuffer)
+}
+
+body Display::zclip {args} {
+    eval Dm::zclip $args
+    refresh
+    return $itk_option(-zclip)
 }
 
 ########################### Protected Methods ###########################
@@ -328,6 +357,13 @@ body Display::toggle_light {} {
 
 body Display::toggle_perspective {} {
     Dm::toggle_perspective
+
+    if {$itk_option(-perspective)} {
+	View::perspective [lindex $perspective_angles $perspective_angle_index]
+    } else {
+	View::perspective -1
+    }
+
     refresh
     return $itk_option(-perspective)
 }
@@ -339,7 +375,9 @@ body Display::toggle_perspective_angle {} {
 	incr perspective_angle_index
     }
 
-    View::perspective [lindex $perspective_angles $perspective_angle_index]
+    if {$itk_option(-perspective)} {
+	View::perspective [lindex $perspective_angles $perspective_angle_index]
+    }
 }
 
 body Display::idle_mode {} {

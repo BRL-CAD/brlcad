@@ -69,6 +69,7 @@ class QuadDisplay {
     public method linewidth {args}
     public method listen {args}
     public method perspective {args}
+    public method perspective_angle {args}
     public method rt {args}
     public method rtabort {{gi 0}}
     public method rtcheck {args}
@@ -431,6 +432,10 @@ body QuadDisplay::light {args} {
 
 body QuadDisplay::perspective {args} {
     eval $itk_component($itk_option(-pane)) perspective $args
+}
+
+body QuadDisplay::perspective_angle {args} {
+    eval $itk_component($itk_option(-pane)) perspective_angle $args
 }
 
 body QuadDisplay::bg {args} {
