@@ -34,7 +34,7 @@ static int	Nu_int0();
 static unsigned Nu_unsign();
 
 struct dm dm_Null = {
-	Nu_int0, Nu_void, Nu_void,
+	Nu_int0, Nu_void,
 	Nu_input,
 	Nu_void, Nu_void,
 	Nu_void, Nu_void,
@@ -46,6 +46,7 @@ struct dm dm_Null = {
 	Nu_void,
 	Nu_void,
 	Nu_void,
+	Nu_void, Nu_void,
 	0,
 	0.0,
 	"nu", "Null Display"
