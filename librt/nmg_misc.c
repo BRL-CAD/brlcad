@@ -482,120 +482,6 @@ unsigned char R, G, B;
 
 
 
-
-#if 0
-/*	N M G _ O F F S E T _ V E R T E X U S E
- *
- *	Compute new coordinates for vertex as if all adjoining faces
- *	of vertexuse were offset by some scalar distance "s".  The result
- *	is returned in "pt".
- *
- *
- *	Return
- *		-2	Offset faces do not intersect in single pt within tol
- *		-1	Vertexuse not child of edgeuse
- *		0	Success
- *
- *
- */
-int nmg_offset_vertexuse(vu, s, pt, tol)
-struct vertex *vu;
-fastf_t s, tol;
-point_t pt;
-{
-	struct edgeuse *eu, *euprev;
-	struct nmg_ptbl planes;
-	struct faceuse *fu;
-	int i;
-	union {
-		char *c;
-		fastf_t *f;
-		long *l;
-	} pl;
-
-	NMG_CK_VERTEXUSE(vu);
-	if (*vu->up.magic_p != NMG_EDGEUSE_MAGIC)
-		return(-1)
-
-
-	(void)nmg_tbl(&planes, TBL_INIT, (long *)NULL);
-
-	/* collect up all the (perturbed) plane equations */
-	eu = vu->up.eu_p;
-	do {
-		NMG_CK_EDGEUSE(eu);
-		NMG_CK_LOOPUSE(eu->up.lu_p);
-		fu = eu->up.lu_p->up.fu_p;
-		NMG_CK_FACEUSE(fu);
-
-		NMG_CK_FACE(fu->f_p);
-		NMG_CK_FACE_G(fu->f_p->fg_p);
-
-		pl.c = rt_calloc(1, sizeof(plane_t), "plane equation");
-		VMOVE(pl.f, fu->f_p->fg_p->N, 4);
-
-		if (fu->orientation == OT_OPPOSITE) {
-			VREVERSE(pl.f, pl.f);
-			pl.f[3] = -pl.f[3];
-		} else 
-			pl.f[3] = fu->f_p->fg_p->N[3];
-
-		pl.f[3] += s;	/* perturbation */
-
-		(void)nmg_tbl(&planes, TBL_INS, (long *)pl.l);
-
-		NMG_CK_EDGEUSE(eu->last);
-		euprev = eu->last->radial_p;
-		NMG_CK_EDGEUSE(euprev);
-		NMG_CK_VERTEXUSE(euprev->vu_p);
-
-		if (euprev->vu_p->v_p != vu->v_p) {
-			rt_bomb("there's something wrong with this model\n");
-		}
-
-		eu = euprev;
-	} while (eu != vu->up.eu_p);
-
-	/* sort and "uniq" the list of plane equations */
-
-
-
-	if (plane.end == 1) {
-		pl.l = planes.buffer;
-		VADD2SCALE(pt, pl.f, s);
-	} else if (plane.end == 2) {
-
-	} else if (rt_mk_pt_nplanes(planes.buffer, planes.end, pt, tol))
-		return(-2);
-
-	/* free dynamic memory */
-	for (i=0 ; i < planes.end ; ++i) {
-		pl.l = planes.buffer[i];
-		rt_free(pl.c);
-	}
-
-	(void)nmg_tbl(&planes, TBL_FREE, (long *)NULL);
-	return(0);
-}
-
-/*
- *			N M G _ E U _ C O O R D S
- */
-static nmg_eu_coords(eu, base, tip)
-struct edgeuse *eu;
-point_t base, tip;
-{
-	vect_t veu;
-
-	nmg_offset_vertexuse(eu->vu_p, 2, base, 0.001);
-	nmg_offset_vertexuse(eu->vu_p, 2, tip, 0.001);
-	
-	VSUB2SCALE(veu, tip, base, 0.6);
-	VADD2(tip, base, veu);
-}
-
-#endif
-
 #define LEE_DIVIDE_TOL	(1.0e-5)	/* sloppy tolerance */
 
 static void nmg_eu_coord(eu, base)
@@ -610,6 +496,47 @@ point_t base;
 		N;		/* normal vector for this edgeuse's face */
 	pointp_t pt_other, pt_eu;
 
+	NMG_CK_EDGEUSE(eu);
+	NMG_CK_VERTEXUSE(eu->vu_p);
+	NMG_CK_VERTEX(eu->vu_p->v_p);
+	NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p);
+
+	NMG_CK_EDGEUSE(eu->eumate_p);
+	NMG_CK_VERTEXUSE(eu->eumate_p->vu_p);
+	NMG_CK_VERTEX(eu->eumate_p->vu_p->v_p);
+	NMG_CK_VERTEX_G(eu->eumate_p->vu_p->v_p->vg_p);
+
+	pt_eu = eu->vu_p->v_p->vg_p->coord;
+	pt_other = eu->eumate_p->vu_p->v_p->vg_p->coord;
+
+	/* v_eu is the vector of the edgeuse
+	 * mag is the magnitude of the edge vector
+	 */
+	VSUB2(v_eu, pt_other, pt_eu); 
+
+	if (*eu->up.magic_p == NMG_SHELL_MAGIC || 
+	    (*eu->up.magic_p == NMG_LOOPUSE_MAGIC &&
+	     *eu->up.lu_p->up.magic_p != NMG_FACEUSE_MAGIC) ) {
+
+		VMOVE(base, pt_eu);
+	     	dist1 = MAGNITUDE(v_eu);
+	     	/* whichever component of the edge is the least significant,
+	     	 * we perturb 
+	     	if (base[0] <= base[1] && base[0] <= base[2])
+	     		base[0] += dist1 * 0.1;
+	     	else if (base[1] <= base[0] && base[1] <= base[2])
+	     		base[1] += dist1 * 0.1;
+	     	else if (base[2] <= base[1] && base[2] <= base[0])
+	     		base[2] += dist1 * 0.1;
+	     	*/
+		return;
+	}
+
+	if (*eu->up.magic_p != NMG_LOOPUSE_MAGIC ||
+	    *eu->up.lu_p->up.magic_p != NMG_FACEUSE_MAGIC) {
+		rt_log("in %s at %d edgeuse has bad parent\n", __FILE__, __LINE__);
+		rt_bomb("nmg_eu_coord\n");
+	}
 
 	lu = eu->up.lu_p;
 
@@ -628,13 +555,6 @@ point_t base;
 	VPRINT("Adjusted Normal", N);
 #endif
 
-	pt_eu = eu->vu_p->v_p->vg_p->coord;
-	pt_other = eu->eumate_p->vu_p->v_p->vg_p->coord;
-
-	/* v_eu is the vector of the edgeuse
-	 * mag is the magnitude of the edge vector
-	 */
-	VSUB2(v_eu, pt_other, pt_eu); 
 	VUNITIZE(v_eu);
 
 	/* find a point not on the edge */
@@ -671,8 +591,24 @@ point_t base, tip;
 {
 	vect_t eu_vec;
 
+	NMG_CK_EDGEUSE(eu);
+
 	nmg_eu_coord(eu, base);
-	nmg_eu_coord( NMG_LIST_PNEXT_CIRC(edgeuse, eu), tip );
+	if (*eu->up.magic_p == NMG_SHELL_MAGIC ||
+	    (*eu->up.magic_p == NMG_LOOPUSE_MAGIC &&
+	    *eu->up.lu_p->up.magic_p == NMG_SHELL_MAGIC) ) {
+
+		NMG_CK_EDGEUSE(eu->eumate_p);
+		nmg_eu_coord( eu->eumate_p, tip );
+	}
+	else if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC &&
+	    *eu->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC) {
+	    	register struct edgeuse *eutmp;
+		eutmp = NMG_LIST_PNEXT_CIRC(edgeuse, eu);
+		NMG_CK_EDGEUSE(eutmp);
+		nmg_eu_coord( eutmp, tip );
+	} else
+		rt_bomb("nmg_eu_coords: What's going on?\n");
 
 	/* compute edgeuse vector */
 	VSUB2SCALE(eu_vec, tip, base, 0.6);
@@ -941,12 +877,11 @@ struct shell *s;
 	}
 
 	for( NMG_LIST( eu, edgeuse, &s->eu_hd ) )  {
-		pl_color(fp, 0, 255, 0);	/* XXX ? */
 		NMG_CK_EDGEUSE(eu);
 		NMG_CK_EDGE(eu->e_p);
 
-		nmg_pl_e(fp, eu->e_p, &b, (unsigned char)255, 
-			(unsigned char)255, 
+		nmg_pl_eu(fp, eu, &b, (unsigned char)200, 
+			(unsigned char)200, 
 			(unsigned char)0);
 	}
 	if (s->vu_p) {
@@ -958,7 +893,7 @@ struct shell *s;
 	    NMG_LIST_IS_EMPTY( &s->eu_hd ) && !s->vu_p) {
 		rt_log("At %d in %s shell has no children\n",
 			__LINE__, __FILE__);
-		rt_bomb("exiting\n");
+		/* rt_bomb("exiting\n"); */
 	}
 
 	(void)nmg_tbl(&b, TBL_FREE, (long *)NULL);
