@@ -29,6 +29,7 @@
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
+#include "bu.h"
 #include "anim.h"
 
 extern int bu_optind;
@@ -37,6 +38,11 @@ extern char *bu_optarg;
 int full_print = 0;
 vect_t offset;
 
+int get_args();
+extern void anim_dy_p_r2mat();
+extern void anim_add_trans();
+
+int
 main(argc,argv)
 int argc;
 char **argv;
@@ -71,7 +77,7 @@ char **argv;
 			printf("\t%.10g\t%.10g\t%.10g", yaw, pitch, roll);
 		printf("\n");
 	}
-
+	return( 0 );
 }
 
 #define OPT_STR "ro:"

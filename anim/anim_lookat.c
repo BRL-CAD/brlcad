@@ -29,6 +29,7 @@
 #include "machine.h"
 #include "vmath.h"
 #include "anim.h"
+#include "bu.h"
 
 #ifndef M_PI
 #define M_PI	3.14159265358979323846
@@ -50,11 +51,17 @@ int frame = 0;
 int print_mode = LOOKAT_SCRIPT;
 int print_viewsize = 0;
 
+int get_args();
+extern void anim_dirn2mat();
+extern int anim_mat2ypr();
+extern int anim_mat2quat();
+
+int
 main(argc,argv)
 int argc;
 char **argv;
 {
-	fastf_t time, vsize;
+	fastf_t time, vsize=0.0;
 	vect_t eye,look,dir, angles, norm, temp;
 	quat_t quat;
 	mat_t mat;
@@ -118,6 +125,7 @@ char **argv;
 
 
 	}
+	return( 0 );
 }
 
 #define OPT_STR "f:yqv"
