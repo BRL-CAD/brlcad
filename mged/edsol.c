@@ -6378,9 +6378,7 @@ char	*argv[];
 	vect_t tempvec;
 	struct rt_arb_internal *arb;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
+	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
 	if(argc < 4 || 4 < argc){
@@ -6550,8 +6548,7 @@ vect_t argvect;
 {
   register int i;
 
-  if(dbip == DBI_NULL)
-    return TCL_OK;
+  CHECK_DBI_NULL;
 
   if( es_edflag <= 0 )  {
     Tcl_AppendResult(interp,
@@ -6666,9 +6663,7 @@ char	**argv;
   register int i;
   vect_t argvect;
 
-  if(dbip == DBI_NULL)
-    return TCL_OK;
-
+  CHECK_DBI_NULL;
   CHECK_READ_ONLY;
 
   if(argc < 2 || 4 < argc){
@@ -7494,8 +7489,7 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-  if(dbip == DBI_NULL)
-    return TCL_OK;
+  CHECK_DBI_NULL;
 
   if(argc < 1 || 4 < argc){
     struct bu_vls vls;

@@ -284,8 +284,7 @@ char	**argv;
 	char tol_str[32];
 	char *tol_ptr;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
+	CHECK_DBI_NULL;
 
 	if(argc < 1 || 2 < argc){
 	  struct bu_vls vls;

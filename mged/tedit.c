@@ -67,9 +67,7 @@ char **argv;
 {
 	register int i;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
+	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
 	if(argc < 1 || 1 < argc){
@@ -126,8 +124,7 @@ writesolid()
 	register int i;
 	FILE *fp;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
+	CHECK_DBI_NULL;
 
 	fp = fopen(tmpfil, "w");
 
@@ -274,8 +271,7 @@ readsolid()
 	FILE *fp;
 	int ret_val=0;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
+	CHECK_DBI_NULL;
 
 	fp = fopen(tmpfil, "r");
 	if( fp == NULL )  {

@@ -484,8 +484,7 @@ char **argv;
 	register struct hold *hp;
 	int joints, holds;
 
-	if(dbip == DBI_NULL)
-	  return CMD_OK;
+	CHECK_DBI_NULL;
 
 	db_free_anim(dbip);
 	holds = 0;
@@ -1968,8 +1967,7 @@ char **argv;
 	struct	joint *jp;
 	struct	hold *hp;
 
-	if(dbip == DBI_NULL)
-	  return CMD_OK;
+	CHECK_DBI_NULL;
 
 	bu_optind = 1;
 	while ((c=bu_getopt(argc,argv,"uam")) != EOF ) {
@@ -2125,8 +2123,7 @@ char **argv;
 	register int i;
 	FILE *fop;
 
-	if(dbip == DBI_NULL)
-	  return CMD_OK;
+	CHECK_DBI_NULL;
 
 	--argc;
 	++argv;

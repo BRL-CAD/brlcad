@@ -506,9 +506,7 @@ char	**argv;
 	int				i;
 	union tree			*final_tree;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
+	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
 	if(argc < 3 || MAXARGS < argc){

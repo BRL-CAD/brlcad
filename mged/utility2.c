@@ -60,9 +60,7 @@ char **argv;
 	char shell_name[NAMESIZE];
 	long **trans_tbl;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
+	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
 	if(argc < 2 || 2 < argc){
@@ -175,8 +173,7 @@ char	**argv;
 {
 	int i, flag, pos_in;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
+	CHECK_DBI_NULL;
 
 	if(argc < 1 || MAXARGS < argc){
 	  struct bu_vls vls;
@@ -290,9 +287,7 @@ char **argv;
 	int	endpos;
 	int status = TCL_OK;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
+	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
 	if(argc < 1 || 27 < argc){
@@ -781,9 +776,7 @@ char **argv;
 	struct bu_external	es_ext;
 	struct rt_db_internal	es_int;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
+	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
 	if(argc < 2 || MAXARGS < argc){
@@ -1406,9 +1399,7 @@ char **argv;
 	mat_t xform;
 	int i,j;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
+	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
 	if(argc < 2 || 2 < argc){
@@ -1555,8 +1546,7 @@ char **argv;
 	mat_t acc_matrix;
 	struct bu_vls tmp_vls;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
+	CHECK_DBI_NULL;
 
 	if(argc < 2 || 2 < argc){
 	  struct bu_vls vls;
@@ -1657,9 +1647,7 @@ char *argv[];
 	int success = 0;
 	int shell_count=0;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
+	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
 	if(argc < 3 || 4 < argc){
@@ -1902,9 +1890,7 @@ char **argv;
 	struct region		*regp;
 	char			*new_name;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
+	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
 	if(argc < 3 || MAXARGS < argc){
@@ -2114,8 +2100,7 @@ char **argv;
 	struct rt_comb_internal *comb;
 	char id[10];
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
+	CHECK_DBI_NULL;
 
 	if(argc < 2 || MAXARGS < argc){
 	  struct bu_vls vls;
@@ -2160,8 +2145,7 @@ char **argv;
 	int new_argc;
 	int lim;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
+	CHECK_DBI_NULL;
 
 	if(argc < 2 || MAXARGS < argc){
 	  struct bu_vls vls;
@@ -2257,9 +2241,7 @@ char **argv;
 	fastf_t tol_coll;
 	fastf_t min_angle;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
+	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
 	if(argc < 5 || MAXARGS < argc){
@@ -2386,8 +2368,7 @@ char **argv;
     static int		i = 0;
     int			len;
 
-    if (dbip == DBI_NULL)
-	return TCL_OK;
+    CHECK_DBI_NULL;
 
     switch (argc)
     {

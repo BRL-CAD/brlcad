@@ -74,8 +74,7 @@ char	*argv[];
 	struct bu_vls		v;
 	struct rt_db_internal	intern;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
+	CHECK_DBI_NULL;
 
 	if(argc < 1 || MAXARGS < argc){
 	  struct bu_vls vls;

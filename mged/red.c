@@ -66,9 +66,7 @@ char **argv;
 	struct rt_comb_internal	*comb;
 	int node_count;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
+	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
 	if(argc != 2){
@@ -622,9 +620,7 @@ char **argv;
   int actual_count;
   struct bu_vls vls;
 
-  if(dbip == DBI_NULL)
-    return TCL_OK;
-
+  CHECK_DBI_NULL;
   CHECK_READ_ONLY;
 
   bu_vls_init(&vls);
@@ -780,9 +776,7 @@ char **argv;
   int offset;
   int save_comb_flag = 0;
 
-  if(dbip == DBI_NULL)
-    return TCL_OK;
-
+  CHECK_DBI_NULL;
   CHECK_READ_ONLY;
 
   if(argc < 7 || 11 < argc){

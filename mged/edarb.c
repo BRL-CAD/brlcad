@@ -472,8 +472,7 @@ char	**argv;
 	static fastf_t dist;
 	struct rt_arb_internal larb;	/* local copy of arb for new way */
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
+	CHECK_DBI_NULL;
 
 	if(argc < 3 || 3 < argc){
 	  struct bu_vls vls;
@@ -684,9 +683,7 @@ char	**argv;
 	fastf_t rota, fb;
 	vect_t norm1,norm2,norm3;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
+	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
 	if(argc < 4 || 4 < argc){
@@ -1181,9 +1178,7 @@ char	**argv;
     };
 #define		ARB_VERT_LOC(n,v)	vert_loc[((n) - 4) * 8 + (v) - 1]
 
-    if(dbip == DBI_NULL)
-      return TCL_OK;
-
+    CHECK_DBI_NULL;
     CHECK_READ_ONLY;
 
     if(argc < 2 || 2 < argc){

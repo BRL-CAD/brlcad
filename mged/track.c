@@ -82,9 +82,7 @@ char **argv;
 	int arg;
 	int edit_result;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
+	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
 	if(argc < 1 || 27 < argc){

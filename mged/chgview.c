@@ -179,8 +179,7 @@ char    **argv;
   register struct dm_list *dmlp;
   register struct dm_list *save_dmlp;
 
-  if(dbip == DBI_NULL)
-    return TCL_OK;
+  CHECK_DBI_NULL;
 
   if(argc < 2 || MAXARGS < argc){
     struct bu_vls vls;
@@ -213,8 +212,7 @@ char    **argv;
   register struct dm_list *dmlp;
   register struct dm_list *save_dmlp;
 
-  if(dbip == DBI_NULL)
-    return TCL_OK;
+  CHECK_DBI_NULL;
 
   if(argc < 2 || MAXARGS < argc){
     struct bu_vls vls;
@@ -248,8 +246,7 @@ char	**argv;
   struct bu_vls str;
   point_t center;
 
-  if(dbip == DBI_NULL)
-    return TCL_OK;
+  CHECK_DBI_NULL;
 
   if(argc != 1 && argc != 4){
     struct bu_vls vls;
@@ -303,8 +300,7 @@ char	**argv;
 {
   fastf_t f;
 
-  if(dbip == DBI_NULL)
-    return TCL_OK;
+  CHECK_DBI_NULL;
 
   if(argc < 2 || 2 < argc){
     struct bu_vls vls;
@@ -511,8 +507,7 @@ int	catch_sigint;
   int		initial_blank_screen;
   struct bu_vls vls;
 
-  if(dbip == DBI_NULL)
-    return TCL_OK;
+  CHECK_DBI_NULL;
 
   bu_vls_init(&vls);
   initial_blank_screen = BU_LIST_IS_EMPTY(&HeadSolid.l);
@@ -888,8 +883,7 @@ char	**argv;
   int id;
   struct rt_db_internal intern;
 
-  if(dbip == DBI_NULL)
-    return TCL_OK;
+  CHECK_DBI_NULL;
 
   if(argc < 2 || MAXARGS < argc){
     struct bu_vls vls;
@@ -987,8 +981,7 @@ char	**argv;
   register int arg;
   struct bu_vls str;
 
-  if(dbip == DBI_NULL)
-    return TCL_OK;
+  CHECK_DBI_NULL;
 
   if(argc < 2 || MAXARGS < argc){
     struct bu_vls vls;
@@ -1063,8 +1056,7 @@ char	**argv;
 	register struct dm_list *dmlp;
 	struct directory	*dp;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
+	CHECK_DBI_NULL;
 
 	if(argc < 1 || 1 < argc){
 	  struct bu_vls vls;
@@ -1123,8 +1115,7 @@ char	**argv;
 {
   struct bu_vls vls;
 
-  if(dbip == DBI_NULL)
-    return TCL_OK;
+  CHECK_DBI_NULL;
 
   if(argc < 1 || 2 < argc){
     struct bu_vls vls;
@@ -1909,8 +1900,7 @@ char	**argv;
 	char	*basename;
 	char	*sname;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
+	CHECK_DBI_NULL;
 
 	if(argc < 2 || 3 < argc){
 	  struct bu_vls vls;
@@ -2050,9 +2040,7 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-  if(dbip == DBI_NULL)
-    return TCL_OK;
-
+  CHECK_DBI_NULL;
   CHECK_READ_ONLY;
 
   if(argc < 2 || 2 < argc){
@@ -2264,8 +2252,7 @@ char	**argv;
   int edit_flag = 0;  /* force edit interpretation */
   struct bu_vls vls;
 
-  if(dbip == DBI_NULL)
-    return TCL_OK;
+  CHECK_DBI_NULL;
 
   if(argc < 1 || MAXARGS < argc){
     struct bu_vls vls;
@@ -3453,8 +3440,7 @@ char	**argv;
 	double	f;
 	int argind=1;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
+	CHECK_DBI_NULL;
 
 	if(argc < 1 || 11 < argc){
 	  struct bu_vls vls;
@@ -4550,8 +4536,7 @@ char	**argv;
   int status;
   struct bu_vls vls;
 
-  if(dbip == DBI_NULL)
-    return TCL_OK;
+  CHECK_DBI_NULL;
 
   if(argc < 4 || 4 < argc){
     struct bu_vls vls;

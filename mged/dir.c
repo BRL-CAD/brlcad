@@ -119,8 +119,7 @@ char	**argv;
   struct directory **dirp0 = (struct directory **)NULL;
   struct bu_vls vls;
 
-  if(dbip == DBI_NULL)
-    return TCL_OK;
+  CHECK_DBI_NULL;
 
   if(argc < 1 || MAXARGS < argc){
     struct bu_vls vls;
@@ -189,8 +188,7 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-  if(dbip == DBI_NULL)
-    return TCL_OK;
+  CHECK_DBI_NULL;
 
   if(argc < 1 || 1 < argc){
     struct bu_vls vls;
@@ -305,8 +303,7 @@ char	**argv;
 	struct directory **dirp0 = (struct directory **)NULL;
 	struct bu_vls vls;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
+	CHECK_DBI_NULL;
 
 	if(argc < 1 || 1 < argc){
 	  struct bu_vls vls;
@@ -499,8 +496,7 @@ char **argv;
     register int i, whicharg;
     int regexp, nummatch, thismatch, backslashed;
 
-    if(dbip == DBI_NULL)
-      return TCL_OK;
+    CHECK_DBI_NULL;
 
     if(argc < 1 || MAXARGS < argc){
       struct bu_vls vls;
@@ -616,8 +612,7 @@ char	**argv;
   struct rt_db_internal intern;
   register struct rt_comb_internal *comb=(struct rt_comb_internal *)NULL;
 
-  if(dbip == DBI_NULL)
-    return TCL_OK;
+  CHECK_DBI_NULL;
 
   if(argc < 2 || MAXARGS < argc){
     struct bu_vls vls;
@@ -721,9 +716,7 @@ char	**argv;
 	struct rt_comb_internal *comb;
 	char		tempstring[NAMESIZE+2];
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
+	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
 	if(argc < 3 || MAXARGS < argc){
@@ -830,8 +823,7 @@ char	**argv;
 	struct bu_vls		units;
 	register int		i;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
+	CHECK_DBI_NULL;
 
 	if(argc < 3 || MAXARGS < argc){
 	  struct bu_vls vls;
@@ -929,8 +921,7 @@ char	**argv;
   register struct directory *dp;
   register int j;
 
-  if(dbip == DBI_NULL)
-    return TCL_OK;
+  CHECK_DBI_NULL;
 
   if(argc < 2 || MAXARGS < argc){
     struct bu_vls vls;
@@ -1119,9 +1110,7 @@ char	**argv;
 	struct rt_comb_internal *comb;
 	struct bu_ptbl		stack;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
+	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
 	if(argc < 3 || 3 < argc){
@@ -1252,9 +1241,7 @@ char	**argv;
 	struct rt_comb_internal	*comb;
 	int			ret;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
+	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
 	if(argc < 2 || MAXARGS < argc){
@@ -1345,9 +1332,7 @@ char	**argv;
 	register struct directory *dp;
 	register int i;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
+	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
 	if(argc < 2 || MAXARGS < argc){
@@ -1407,8 +1392,7 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-  if(dbip == DBI_NULL)
-    return TCL_OK;
+  CHECK_DBI_NULL;
 
   if(argc < 1 || 1 < argc){
     struct bu_vls vls;

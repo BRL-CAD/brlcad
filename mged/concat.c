@@ -108,8 +108,7 @@ char	**argv;
   int status = TCL_OK;
   struct bu_vls vls;
 
-  if(dbip == DBI_NULL)
-    return TCL_OK;
+  CHECK_DBI_NULL;
 
   if(argc < 2 || 3 < argc){
     struct bu_vls vls;
@@ -241,8 +240,7 @@ int			flags;
 	struct rt_comb_internal *comb;
 	char			local[NAMESIZE+2+2];
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
+	CHECK_DBI_NULL;
 
 	if( input_dbip->dbi_magic != DBI_MAGIC )  bu_bomb("mged_dir_add:  bad dbip\n");
 
@@ -365,9 +363,7 @@ char	**argv;
 	struct db_i		*newdbp;
 	int bad = 0;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
+	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
 	if(argc < 2 || 3 < argc){

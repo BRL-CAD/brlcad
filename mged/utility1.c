@@ -106,9 +106,7 @@ char	*argv[];
   char tmpfil[128];
   char **av;
 
-  if(dbip == DBI_NULL)
-    return TCL_OK;
-
+  CHECK_DBI_NULL;
   CHECK_READ_ONLY;
 
   if(argc < 2 || MAXARGS < argc){
@@ -180,8 +178,7 @@ char	*argv[];
   FILE *fp;
   register struct directory *dp;
 
-  if(dbip == DBI_NULL)
-    return TCL_OK;
+  CHECK_DBI_NULL;
 
   if(argc < 3 || MAXARGS < argc){
     struct bu_vls vls;
@@ -231,9 +228,7 @@ char		*argv[];
   struct rt_db_internal intern;
   struct rt_comb_internal *comb;
 
-  if(dbip == DBI_NULL)
-    return TCL_OK;
-
+  CHECK_DBI_NULL;
   CHECK_READ_ONLY;
 
   if(argc < 2 || 2 < argc){
@@ -343,8 +338,7 @@ int pathpos;
 	struct rt_comb_internal *comb;
 	int id;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
+	CHECK_DBI_NULL;
 
 	if(pathpos >= MAX_LEVELS)
 	{
@@ -440,8 +434,7 @@ char	**argv;
 	struct id_names *inp;
 	int isAir;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
+	CHECK_DBI_NULL;
 
 	if(argc < 2 || MAXARGS < argc){
 	  struct bu_vls vls;
@@ -620,8 +613,7 @@ char	**argv;
 	int item;
 	int sflag = 0;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
+	CHECK_DBI_NULL;
 
 	if(argc < 2 || MAXARGS < argc){
 	  struct bu_vls vls;
@@ -722,9 +714,7 @@ char	**argv;
 	struct directory *dp;
 	struct rt_db_internal nmg_intern;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
+	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
 	if(argc < 2 || 3 < argc){
@@ -1128,8 +1118,7 @@ char	**argv;
 	time_t now;
 	int i;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
+	CHECK_DBI_NULL;
 
 	if(argc < 3 || MAXARGS < argc){
 	  struct bu_vls vls;

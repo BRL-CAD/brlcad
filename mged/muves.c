@@ -150,8 +150,7 @@ char    *argv[];
 	int i;
 	long reg_count=0;
 
-	if(dbip == DBI_NULL)
-		return TCL_OK;
+	CHECK_DBI_NULL;
 
 	if( argc < 2 || argc > 3 )
 	{

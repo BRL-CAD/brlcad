@@ -410,8 +410,7 @@ char	**argv;
   int incr_flag;
   int i;
 
-  if(dbip == DBI_NULL)
-    return TCL_OK;
+  CHECK_DBI_NULL;
 
   if(6 < argc){
     bu_vls_init(&vls);

@@ -352,8 +352,7 @@ CONST struct bn_tol	*tol;
 	int i;
 	point_t	a,b,c;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
+	CHECK_DBI_NULL;
 
 	for(i=0; i<3; i++)
 		a[i] = atof(argv[0+i]) * local2base;

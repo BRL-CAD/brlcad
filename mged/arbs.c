@@ -86,9 +86,7 @@ char	**argv;
 	struct rt_db_internal	internal;
 	struct rt_arb_internal	*aip;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
+	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
         if(argc < 1 || 27 < argc){
@@ -352,9 +350,7 @@ char	**argv;
 	struct rt_db_internal	internal;
 	struct rt_arb_internal	*aip;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
+	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
 	if(argc < 1 || 27 < argc){

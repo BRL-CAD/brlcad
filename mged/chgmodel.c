@@ -85,9 +85,7 @@ char	**argv;
 	struct rt_db_internal	intern;
 	struct rt_comb_internal	*comb;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
+	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
 	if(argc < 3 || 6 < argc){
@@ -167,9 +165,7 @@ char	**argv;
 	struct rt_db_internal	intern;
 	struct rt_comb_internal	*comb;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
+	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
 	if(argc < 2 || 8 < argc){
@@ -344,9 +340,7 @@ char    *argv[];
 
   char **av;
   
-  if(dbip == DBI_NULL)
-    return TCL_OK;
-
+  CHECK_DBI_NULL;
   CHECK_READ_ONLY;
 
   if(argc < 2 || MAXARGS < argc){
@@ -409,8 +403,7 @@ char    *argv[];
   struct rt_db_internal	intern;
   struct rt_comb_internal	*comb;
 
-  if(dbip == DBI_NULL)
-    return TCL_OK;
+  CHECK_DBI_NULL;
 
   if(argc < 3 || MAXARGS < argc){
     struct bu_vls vls;
@@ -481,9 +474,7 @@ char    *argv[];
   int override;
   int inherit;
 
-  if(dbip == DBI_NULL)
-    return TCL_OK;
-
+  CHECK_DBI_NULL;
   CHECK_READ_ONLY;
 
   if(argc < 2 || 2 < argc){
@@ -610,9 +601,7 @@ char	**argv;
     struct rt_db_internal	intern;
     struct rt_comb_internal	*comb;
 
-    if(dbip == DBI_NULL)
-      return TCL_OK;
-
+    CHECK_DBI_NULL;
     CHECK_READ_ONLY;
 
     if(argc < 5 || 5 < argc){
@@ -675,8 +664,7 @@ char	**argv;
 	struct rt_comb_internal	*comb;
 	struct bu_vls		args;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
+	CHECK_DBI_NULL;
 
 	if(argc < 2 || MAXARGS < argc){
 	  struct bu_vls vls;
@@ -687,7 +675,6 @@ char	**argv;
 	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
-
 
 	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 	  return TCL_ERROR;
@@ -741,9 +728,7 @@ char	**argv;
 	mat_t mirmat;
 	mat_t temp;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
+	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
 	if(argc < 4 || 4 < argc){
@@ -1268,9 +1253,7 @@ char	**argv;
 	struct rt_db_internal	intern;
 	struct rt_comb_internal	*comb;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
+	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
 	if(argc < 6 || 7 < argc){
@@ -1336,8 +1319,7 @@ char	**argv;
 	fastf_t sf;
 	int sflag = 0;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
+	CHECK_DBI_NULL;
 
 	bu_vls_init(&vls);
 	if(argc < 1 || 2 < argc){
@@ -1451,9 +1433,7 @@ char	**argv;
 	struct bu_vls	title;
 	int bad = 0;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
+	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
 	if(argc < 1 || MAXARGS < argc){
@@ -1568,9 +1548,7 @@ char	**argv;
 	  return TCL_ERROR;
 	}
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
+	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
 	if(argc != 3){
@@ -2101,9 +2079,7 @@ char	**argv;
   mat_t temp;
   vect_t s_point, point, v_work, model_pt;
 
-  if(dbip == DBI_NULL)
-    return TCL_OK;
-
+  CHECK_DBI_NULL;
   CHECK_READ_ONLY;
 
   if(argc < 4 || 5 < argc){
@@ -2147,9 +2123,7 @@ char	**argv;
 	mat_t incr;
 	vect_t point, temp;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
+	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
 	if(argc < 2 || 2 < argc){
@@ -2235,9 +2209,7 @@ char	**argv;
 	mat_t incr, old;
 	vect_t model_sol_pt, model_incr, ed_sol_pt, new_vertex;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
+	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
 	if(argc < 4 || 4 < argc){
@@ -2411,9 +2383,7 @@ char	**argv;
 	struct vertex *v_new, *v;
 	unsigned long tw, tf, tp;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
+	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
 	if(argc < 2 || 3 < argc){
@@ -2574,9 +2544,7 @@ char	**argv;
 	vect_t s_point, point, v_work, model_pt;
 	vect_t	specified_pt, direc;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
+	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
 	if(argc < 8 || 8 < argc){

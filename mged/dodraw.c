@@ -1429,8 +1429,7 @@ char	**argv;
 	int			failed;
 	int			mged_nmg_use_tnurbs = 0;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
+	CHECK_DBI_NULL;
 
 	if(argc < 3 || MAXARGS < argc){
 	  struct bu_vls vls;
@@ -1647,9 +1646,7 @@ char	**argv;
 	char			op;
 	int			failed;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
+	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
 	if(argc < 2 || MAXARGS < argc){
@@ -1947,8 +1944,7 @@ char	**argv;
 	register struct dm_list *dmlp;
 	register struct dm_list *save_dmlp;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
+	CHECK_DBI_NULL;
 
 	if( argc < 2 )  {
 		struct bu_vls vls;

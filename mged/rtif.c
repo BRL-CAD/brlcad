@@ -446,8 +446,7 @@ char	**argv;
 	char	pstring[32];
 	struct bu_vls cmd;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
+	CHECK_DBI_NULL;
 
 	if(argc < 1 || MAXARGS < argc){
 	  struct bu_vls vls;
@@ -522,8 +521,7 @@ char	**argv;
 	char	*dm;
 	struct bu_vls cmd;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
+	CHECK_DBI_NULL;
 
 	if(argc < 2 || MAXARGS < argc){
 	  struct bu_vls vls;
@@ -633,8 +631,7 @@ char	**argv;
 	FILE	*fp;
 	struct rtcheck *rtcp;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
+	CHECK_DBI_NULL;
 
 	if(argc < 1 || MAXARGS < argc){
 	  struct bu_vls vls;
@@ -767,8 +764,7 @@ char	**argv;
 	register FILE *fp;
 	char *base;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
+	CHECK_DBI_NULL;
 
 	if(argc < 2 || MAXARGS < argc){
 	  struct bu_vls vls;
@@ -861,8 +857,7 @@ char	**argv;
 	mat_t	rot;
 	register struct bn_vlist *vp;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
+	CHECK_DBI_NULL;
 
 	if(argc < 2 || MAXARGS < argc){
 	  struct bu_vls vls;
@@ -1170,8 +1165,7 @@ char	**argv;
 	int	c;
 	vect_t	temp;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
+	CHECK_DBI_NULL;
 
 	if(argc < 2 || MAXARGS < argc){
 	  struct bu_vls vls;
@@ -1329,8 +1323,7 @@ char	**argv;
 	struct qray_dataList *ndlp;
 	struct qray_dataList HeadQRayData;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
+	CHECK_DBI_NULL;
 
 	if(argc < 1 || MAXARGS < argc){
 	  bu_vls_init(&vls);
@@ -1638,8 +1631,7 @@ char    **argv;
   struct bu_vls z_vls;
   char **av;
 
-  if(dbip == DBI_NULL)
-    return TCL_OK;
+  CHECK_DBI_NULL;
 
   if(argc < 3 || MAXARGS < argc){
     bu_vls_init(&vls);

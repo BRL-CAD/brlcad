@@ -553,8 +553,7 @@ char	**argv;
 	register int		j;
 	int			illum_only = 0;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
+	CHECK_DBI_NULL;
 
 	if(argc < 2 || 3 < argc){
 	  struct bu_vls vls;

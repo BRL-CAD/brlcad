@@ -116,9 +116,7 @@ char	**argv;
 {
 	register struct mater *newp,*next_mater;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
+	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
 	if(argc < 7 || 7 < argc){
@@ -188,9 +186,7 @@ char	**argv;
 	char line[128];
 	static char hdr[] = "LOW\tHIGH\tRed\tGreen\tBlue\n";
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
+	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
 
 	if(argc < 1 || 1 < argc){
