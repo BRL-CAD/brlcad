@@ -234,14 +234,14 @@ proc do_rt_script { id } {
 
 proc do_About_MGED { id } {
     global player_screen
+    global version
 
     cad_dialog .$id.about $player_screen($id) "About MGED..." \
-	    "MGED: Multi-device Geometry EDitor\n\
-\n\
-MGED is a part of the BRL-CAD(TM) package.\n\n\
-Developed by The U. S. Army Research Laboratory\n\
-Aberdeen Proving Ground, Maryland  21005-5068  USA\n\
-" \
+	    "$version
+MGED (Multi-device Geometry EDitor) is part
+of the BRL-CAD(TM) package.
+Developed by the U. S. Army Research Laboratory
+Aberdeen Proving Ground, Maryland  21005-5068  USA" \
 	    {} 0 OK
 }
 
