@@ -41,12 +41,6 @@ vdraw	send			- send the current curve to the display
 				  returns 0 on success, -1 if the name
 				  conflicts with an existing true solid
 
-DEBUGGING COMMAND
-vdraw	help	1		- returns the number of vlist chunks
-		2	i	- prints the nused param of the i-th chunk
-
-vdraw verbose 			-toggle verbose thing
-
 All textual arguments can be replaced by their first letter.
 (e.g. "vdraw d a" instead of "vdraw delete all"
 
@@ -96,10 +90,10 @@ author - Carl Nuzman
 #endif
 
 
-#define PREFIX		"_VDRW"
-#define PREFIX_LEN	6
-#define MAX_NAME	31
-#define DEF_COLOR	0xffff00
+#define VDRW_PREFIX		"_VDRW"
+#define VDRW_PREFIX_LEN	6
+#define VDRW_MAXNAME	31
+#define VDRW_DEF_COLOR	0xffff00
 #define REV_RT_LIST_FOR(p,structure,hp)	\
 	(p)=RT_LIST_LAST(structure,hp);	\
 	RT_LIST_NOT_HEAD(p,hp);		\
@@ -108,7 +102,7 @@ author - Carl Nuzman
 static struct rt_list vdraw_head;
 struct rt_curve {
 	struct rt_list	l;
-	char		name[MAX_NAME+1]; 	/* name array */
+	char		name[VDRW_MAXNAME+1]; 	/* name array */
 	long		rgb;	/* color */
 	struct rt_list	vhd;	/* head of list of vertices */
 };
@@ -137,7 +131,6 @@ char **argv;
 	char *str;
 	static struct rt_curve *curhead;
 	static initialized = 0;
-	static int verbose = 0;
 	struct rt_curve *rcp, *rcp2;
 	struct rt_vlist *vp, *cp, *wp;
 	int i, index, uind, blocks, change;
@@ -149,10 +142,10 @@ char **argv;
 	struct solid *sp, *sp2;
 	struct directory *dp;
 	char result_string[90]; /* make sure there's room */
-	static char vdraw_name[MAX_NAME+1];
-	static char temp_name[MAX_NAME+1];
+	static char vdraw_name[VDRW_MAXNAME+1];
+	static char temp_name[VDRW_MAXNAME+1];
 	static char def_name[] = "_vdraw_sol_";
-	char solid_name [MAX_NAME+PREFIX_LEN+1];
+	char solid_name [VDRW_MAXNAME+VDRW_PREFIX_LEN+1];
 	static int real_flag;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
@@ -461,8 +454,8 @@ char **argv;
 			Tcl_AppendResult(interp, "vdraw: no curve is currently open.", (char *)NULL);
 			return TCL_ERROR;
 		}
-		sprintf(solid_name, PREFIX);
-		strncat(solid_name, curhead->name, MAX_NAME);
+		sprintf(solid_name, VDRW_PREFIX);
+		strncat(solid_name, curhead->name, VDRW_MAXNAME);
 		if (( dp = db_lookup( dbip, solid_name, LOOKUP_QUIET )) == DIR_NULL ) {
 			real_flag = 0;
 		} else {
@@ -501,42 +494,15 @@ char **argv;
 		if (argv[2][0] == 'n'){
 			/* check for conflicts with existing curves*/
 			for ( RT_LIST_FOR( rcp, rt_curve, &vdraw_head) ) {
-				if (!strncmp( rcp->name, argv[3], MAX_NAME)) {
+				if (!strncmp( rcp->name, argv[3], VDRW_MAXNAME)) {
 					Tcl_AppendResult(interp,"-1",(char *)NULL);
 					return TCL_OK;
 				}
 			}
 			/* otherwise name not yet used */
-			strncpy(curhead->name, argv[3], MAX_NAME);
-			curhead->name[MAX_NAME] = (char) NULL;
+			strncpy(curhead->name, argv[3], VDRW_MAXNAME);
+			curhead->name[VDRW_MAXNAME] = (char) NULL;
 			Tcl_AppendResult(interp,"0",(char *)NULL);
-			return TCL_OK;
-		}
-		break;
-	case 'h': /* help */
-		if (!curhead) {
-			Tcl_AppendResult(interp, "vdraw: no curve is currently open.", (char *)NULL);
-			return TCL_ERROR;
-		}
-		if (argv[2][0]=='1'){
-			uind = 0;
-			for ( RT_LIST_FOR( vp, rt_vlist, &(curhead->vhd))){
-				uind++;
-			}
-			sprintf(result_string, "%d", uind);
-			Tcl_AppendResult(interp, result_string, (char *)NULL);
-			return TCL_OK;
-		}
-		if (argv[2][0]=='2'){
-			uind = 0;
-			sscanf(argv[3], "%d", &index);
-			for ( RT_LIST_FOR( vp, rt_vlist, &(curhead->vhd))){
-				if (index==uind)
-					break;
-				uind ++;
-			}
-			sprintf(result_string, "chunk %d nused %d", index, vp->nused);
-			Tcl_AppendResult(interp, result_string, (char *)NULL);
 			return TCL_OK;
 		}
 		break;
@@ -550,11 +516,11 @@ char **argv;
 				return TCL_OK;
 			}
 		}
-		strncpy(temp_name, argv[2], MAX_NAME);
-		temp_name[MAX_NAME] = (char) NULL;
+		strncpy(temp_name, argv[2], VDRW_MAXNAME);
+		temp_name[VDRW_MAXNAME] = (char) NULL;
 		curhead = (struct rt_curve *) NULL;
 		for ( RT_LIST_FOR( rcp, rt_curve, &vdraw_head) ) {
-			if (!strncmp( rcp->name, temp_name, MAX_NAME)) {
+			if (!strncmp( rcp->name, temp_name, VDRW_MAXNAME)) {
 				curhead = rcp;
 				break;
 			}
@@ -563,8 +529,8 @@ char **argv;
 			GETSTRUCT( rcp, rt_curve );
 			RT_LIST_APPEND( &vdraw_head, &(rcp->l) );
 			strcpy( rcp->name, temp_name);
-			rcp->name[MAX_NAME] = (char) NULL;
-			rcp->rgb = DEF_COLOR;
+			rcp->name[VDRW_MAXNAME] = (char) NULL;
+			rcp->rgb = VDRW_DEF_COLOR;
 			RT_LIST_INIT(&(rcp->vhd));
 			RT_GET_VLIST(vp);
 			RT_LIST_APPEND( &(rcp->vhd), &(vp->l) );
@@ -577,7 +543,7 @@ char **argv;
 				RT_GET_VLIST(vp);
 				RT_LIST_APPEND( &(curhead->vhd), &(vp->l) );
 			}
-			curhead->name[MAX_NAME] = (char) NULL; /*safety*/
+			curhead->name[VDRW_MAXNAME] = (char) NULL; /*safety*/
 			/* 0 means new entry */
 			Tcl_AppendResult(interp, "0", (char *)NULL);
 			return TCL_OK;
@@ -607,7 +573,7 @@ char **argv;
 			}
 			rcp2 = (struct rt_curve *)NULL;
 			for ( RT_LIST_FOR( rcp, rt_curve, &vdraw_head) ) {
-				if (!strncmp(rcp->name,argv[3],MAX_NAME)){
+				if (!strncmp(rcp->name,argv[3],VDRW_MAXNAME)){
 					rcp2 = rcp;
 					break;
 				}
@@ -634,11 +600,8 @@ char **argv;
 			return TCL_ERROR;
 		}
 		break;
-	case 'v':
-		verbose = (verbose + 1)%2;
-		break;
 	default:
-		Tcl_AppendResult(interp, "vdraw: see drawline.c for help\n", (char *)NULL);
+		Tcl_AppendResult(interp, "vdraw: see vdraw.c for help\n", (char *)NULL);
 		return TCL_ERROR;
 		break;
 	}
@@ -729,7 +692,7 @@ char **argv;
 			Tcl_AppendResult(interp, "mat2ypr - matrix is not a rotation matrix", (char *)NULL);
 			return TCL_ERROR;
 		}
-		VSCALE(temp, temp, 180.0/rt_pi);	
+		VSCALE(temp, temp, rt_radtodeg);	
 		sprintf(result_string,"%.12g %.12g %.12g",temp[0],temp[1],temp[2]);
 		Tcl_AppendResult(interp, result_string, (char *)NULL);
 		return TCL_OK;
@@ -741,7 +704,7 @@ char **argv;
 			Tcl_AppendResult(interp, "mat2ypr - matrix is not a rotation matrix", (char *)NULL);
 			return TCL_ERROR;
 		}
-		VSCALE(temp, temp, 180.0/rt_pi);	
+		VSCALE(temp, temp, rt_radtodeg);	
 		if (temp[0] >= 180.0 ) temp[0] -= 180;
 		if (temp[0] < 180.0 ) temp[0] += 180;
 		temp[1] = -temp[1];
