@@ -647,7 +647,6 @@ fastf_t tol;
 		long **magic_p;
 	} p;
 	int		status;
-	extern void nmg_face_combine();
 
 	NMG_CK_FACEUSE(fu1);
 	f1 = fu1->f_p;
