@@ -1022,12 +1022,10 @@ int		filled;
 
 
 static int
-build_segs(hl, ap, nmg_spec, seghead, rp, stp)
-struct hitmiss		*hl;
+nmg_build_segs(rd, ap, seghead, stp)
+struct ray_data		*rd;
 struct application	*ap;
-struct nmg_specific	*nmg_spec;
 struct seg		*seghead;	/* intersection w/ ray */
-register struct xray	*rp;	/* info about the ray */
 struct soltab		*stp;
 {
 
@@ -1037,12 +1035,12 @@ struct soltab		*stp;
 	char *tbl;
 	int hits_filled;
 
-	tbl = nmg_spec->nmg_model->manifolds;
+	tbl = rd->rd_m->manifolds;
 
 	/* build up the list of segments based upon the hit points.
 	 */
 
-	while (RT_LIST_NON_EMPTY(&hl->l) ) {
+	while (RT_LIST_NON_EMPTY(&rd->rd_hit) ) {
 	    RT_GET_SEG(seg_p, ap->a_resource);
 	    RT_CK_SEG(seg_p);
 	    seg_p->seg_stp = stp;
@@ -1050,12 +1048,12 @@ struct soltab		*stp;
 	    hits_filled = 0;
 
 	    while (hits_filled < 2 ) {
-	    	if (RT_LIST_IS_EMPTY(&hl->l) && hits_filled > 0) {
+	    	if (RT_LIST_IS_EMPTY(&rd->rd_hit) && hits_filled > 0) {
 	    		rt_log("empty list?\n");
 	    		print_seg_list(seghead);
 	    		rt_bomb("Infinite NMG?");
 	    	}
-		a_hit = RT_LIST_FIRST(hitmiss, &hl->l);
+		a_hit = RT_LIST_FIRST(hitmiss, &rd->rd_hit);
 
 		if (rt_g.NMG_debug & DEBUG_NMGRT) {
 			rt_log("build_seg w/ ray_hit_distance %g (%g %g %g)",
@@ -1077,17 +1075,17 @@ struct soltab		*stp;
 		case NMG_VERTEX_MAGIC:
 			hits_filled = vertex_hit(
 			(struct vertex *)a_hit->hit.hit_private,
-			seg_p, rp, tbl, a_hit, hits_filled);
+			seg_p, rd->rp, tbl, a_hit, hits_filled);
 			break;
 		case NMG_EDGE_MAGIC:
 			hits_filled = edge_hit(
 			(struct edge *)a_hit->hit.hit_private,
-			seg_p, rp, tbl, a_hit, hits_filled);
+			seg_p, rd->rp, tbl, a_hit, hits_filled);
 			break;
 		case NMG_FACE_MAGIC:
 			hits_filled = face_hit(
 			(struct face *)a_hit->hit.hit_private,
-			seg_p, rp, tbl, a_hit, hits_filled);
+			seg_p, rd->rp, tbl, a_hit, hits_filled);
 			break;
 		default: rt_log("bogus topology hit?\n"); abort();
 			break;
@@ -1108,60 +1106,27 @@ struct soltab		*stp;
 }
 
 
-/*	N M G _ R A Y _ I S E C T _ S E G S
+/*	N M G _ R A Y _ S E G S
  *
  *	Obtain the list of ray segments which intersect with the nmg.
  *	This routine does all of the "work" for rt_nmg_shot()
  */
 int
-nmg_ray_isect_segs(stp, rp, ap, seghead, nmg_spec)
-struct soltab		*stp;
-register struct xray	*rp;	/* info about the ray */
-struct application	*ap;	
-struct seg		*seghead;	/* intersection w/ ray */
-struct nmg_specific	*nmg_spec;
+nmg_ray_segs(rd)
+struct ray_data	*rd;
 {
-
-	struct hitmiss *hl, *a_hit;
-	struct seg *seg_p;
-	struct ray_data rd;
+	struct hitmiss *a_hit;
 	int seg_count=0;
 
-	rt_g.NMG_debug = rt_g.NMG_debug | DEBUG_NMGRT;
-	rt_log("============================ New Ray ===================================\n");
-	rt_log("Screen pos(%d %d)\n", ap->a_x, ap->a_y);
-
-	rd.rp = rp;
-	rd.tol = &ap->a_rt_i->rti_tol;
-	VMOVE(rd.invdir, nmg_spec->nmg_invdir);
-
-	/* create a table to keep track of which elements have been
-	 * processed before and which haven't.  Elements in this table
-	 * will either be:
-	 *		(NULL)		item not previously processed
-	 *		hitmiss ptr	item previously processed
-	 *
-	 */
-	rd.hitmiss = (struct hitmiss **)rt_calloc( m->maxindex, sizeof(struct hitmiss *),
-		"nmg geom hit list");
-
-	/* initialize the lists of things that have been hit/missed */
-	RT_LIST_INIT(&rd.nmg_hits);
-	RT_LIST_INIT(&rd.nmg_misses);
-
-	/* Shoot the ray */
-	nmg_isect_ray_model(rd, nmg_spec->nmg_model);
-
-	rt_g.NMG_debug = rt_g.NMG_debug & ~DEBUG_NMGRT;
-
-	if (RT_LIST_IS_EMPTY(&rd.nmg_hits)) {
+	if (RT_LIST_IS_EMPTY(&rd->rd_hit)) {
 		if (rt_g.NMG_debug & DEBUG_NMGRT)
 			rt_log("ray missed NMG\n");
 		return(0);			/* MISS */
 	} else /* if (rt_g.NMG_debug & DEBUG_NMGRT) */{
 
 		rt_log("\nsorted nmg/ray hit list\n");
-		for (RT_LIST_FOR(a_hit, hitmiss, &rd.nmg_hits) {
+
+		for (RT_LIST_FOR(a_hit, hitmiss, &rd->rd_hit)) {
 			rt_log("ray_hit_distance %g (%g %g %g)",
 				a_hit->hit.hit_dist,
 				a_hit->hit.hit_point[0],
@@ -1178,18 +1143,15 @@ struct nmg_specific	*nmg_spec;
 		}
 	}
 
-#if 0
-	seg_count = build_segs(&, ap, nmg_spec, seghead, rp, stp);
+
+	seg_count = nmg_build_segs(rd, rd->ap, rd->seghead, rd->stp);
 	
 	if (!(rt_g.NMG_debug & DEBUG_NMGRT))
 		return(seg_count);
 
 	/* print debugging data before returning */
-	print_seg_list(seghead);
+	print_seg_list(rd->seghead);
 
 	return(seg_count);
-#else
-	return(0);
-#endif
 }
 

@@ -41,9 +41,14 @@ struct hitmiss {
 #define NMG_PCA_EDGE_VERTEX 2
 #define NMG_PCA_VERTEX 3
 struct ray_data {
-	struct xray	*rp;
-	struct rt_tol	*tol;
-	vect_t		invdir;
+	long magic;
+	struct model		*rd_m;
+	vect_t			rd_invdir;
+	struct xray		*rp;
+	struct application	*ap;
+	struct seg		*seghead;
+	struct soltab 		*stp;
+	struct rt_tol		*tol;
 	struct hitmiss	**hitmiss;	/* 1 struct hitmiss ptr per elem. */
 	struct rt_list	rd_hit;		/* list of hit elements */
 	struct rt_list	rd_miss;	/* list of missed/sub-hit elements */
@@ -64,4 +69,5 @@ struct ray_data {
 
 #define HIT 1	/* a hit on a face */
 #define MISS 0	/* a miss on the face */
+
 

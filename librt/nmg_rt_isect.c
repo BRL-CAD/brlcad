@@ -65,7 +65,7 @@ struct hitmiss *newhit;
 	if (rt_g.NMG_debug & DEBUG_NMGRT)
 		rt_log("hit_ins()\n");
 
-	for (RT_LIST_FOR(a_hit, hitmiss, &rd->rd_hit.l)) {
+	for (RT_LIST_FOR(a_hit, hitmiss, &rd->rd_hit)) {
 		if (newhit->hit.hit_dist < a_hit->hit.hit_dist)
 			break;
 		if (rt_g.NMG_debug & DEBUG_NMGRT)
@@ -81,7 +81,7 @@ struct hitmiss *newhit;
 	 * hit in the hit list.
 	 */
 	 
-	if (RT_LIST_NOT_HEAD(a_hit, &rd->rd_hit.l)) {
+	if (RT_LIST_NOT_HEAD(a_hit, &rd->rd_hit)) {
 		if (rt_g.NMG_debug & DEBUG_NMGRT)
 		    rt_log ("\tinserting newhit 0x%08x dist:%g pt:(%g %g %g)\n\tprior to 0x%08x dist:%g pt:(%g %g %g)\n",
 			newhit,
@@ -154,7 +154,7 @@ struct vertexuse *vu_p;
 
 	/* add myhit to the list of misses */
 	RT_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
-	RT_LIST_INSERT(&rd->rd_miss.l, &myhit->l);
+	RT_LIST_INSERT(&rd->rd_miss, &myhit->l);
 
 	return myhit;
 }
@@ -312,7 +312,7 @@ struct edgeuse *eu_p;
 	GET_HITMISS(myhit);
 	NMG_INDEX_ASSIGN(rd->hitmiss, eu_p->e_p, myhit);
 	RT_LIST_MAGIC_SET(&myhit->l, NMG_RT_HIT_SUB_MAGIC);
-	RT_LIST_INSERT(&rd->rd_miss.l, &myhit->l);
+	RT_LIST_INSERT(&rd->rd_miss, &myhit->l);
 	return;
 }
 
@@ -326,7 +326,7 @@ struct edgeuse *eu_p;
 	GET_HITMISS(myhit); \
 	NMG_INDEX_ASSIGN(rd->hitmiss, eu_p->e_p, myhit); \
 	RT_LIST_MAGIC_SET(&myhit->l, NMG_RT_HIT_SUB_MAGIC); \
-	RT_LIST_INSERT(&rd->rd_miss.l, &myhit->l); }
+	RT_LIST_INSERT(&rd->rd_miss, &myhit->l); }
 
 
 /*	I S E C T _ R A Y _ E D G E U S E
@@ -418,7 +418,7 @@ struct edgeuse *eu_p;
 			/* both vertecies were missed, so edge is missed */
 			RT_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
 		}
-		RT_LIST_INSERT(&rd->rd_miss.l, &myhit->l);
+		RT_LIST_INSERT(&rd->rd_miss, &myhit->l);
 		break;
 	case -3 :	/* fallthrough */
 	case -2 :
@@ -438,7 +438,7 @@ struct edgeuse *eu_p;
 		NMG_INDEX_ASSIGN(rd->hitmiss, eu_p->e_p, myhit);
 
 		RT_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
-		RT_LIST_INSERT(&rd->rd_miss.l, &myhit->l);
+		RT_LIST_INSERT(&rd->rd_miss, &myhit->l);
 
 		break;
 	case -1 : /* just plain missed the edge/line */
@@ -452,7 +452,7 @@ struct edgeuse *eu_p;
 		NMG_INDEX_ASSIGN(rd->hitmiss, eu_p->e_p, myhit);
 
 		RT_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
-		RT_LIST_INSERT(&rd->rd_miss.l, &myhit->l);
+		RT_LIST_INSERT(&rd->rd_miss, &myhit->l);
 
 		break;
 	case 0 :  /* oh joy.  Lines are co-linear */
@@ -723,7 +723,7 @@ struct loopuse *lu_p;
 	GET_HITMISS(myhit); \
 	NMG_INDEX_ASSIGN(rd->hitmiss, f_p, myhit); \
 	RT_LIST_MAGIC_SET(&myhit->l, NMG_RT_HIT_SUB_MAGIC); \
-	RT_LIST_INSERT(&rd->rd_miss.l, &myhit->l); }
+	RT_LIST_INSERT(&rd->rd_miss, &myhit->l); }
 
 static void
 face_closest_is_eu(rd, fu_p, eu)
@@ -896,7 +896,7 @@ struct edgeuse *eu;
 		if (rt_g.NMG_debug & DEBUG_NMGRT)
 			rt_log("face_closest_is_eu( plane hit outside face )\n");
 		RT_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
-		RT_LIST_INSERT(&rd->rd_miss.l, &myhit->l);
+		RT_LIST_INSERT(&rd->rd_miss, &myhit->l);
 		return;
 	}
 
@@ -925,14 +925,14 @@ struct vertexuse *vu;
 {
 	struct vertexuse *vu_p;
 	struct faceuse *nmg_find_fu_of_vu();
-	struct hitmiss *hit;
+	struct hitmiss *myhit;
 	struct faceuse *fu;
 
 	if (rt_g.NMG_debug & DEBUG_NMGRT)
 		rt_log("face_closest_is_vu\n");
 
-	if (hit = NMG_INDEX_GET(rd->hitmiss, vu->v_p)) {
-		if (RT_LIST_MAGIC_OK((struct rt_list *)hit, NMG_RT_HIT_MAGIC)) {
+	if (myhit = NMG_INDEX_GET(rd->hitmiss, vu->v_p)) {
+		if (RT_LIST_MAGIC_OK((struct rt_list *)myhit, NMG_RT_HIT_MAGIC)) {
 			if (rt_g.NMG_debug & DEBUG_NMGRT)
 				rt_log("\tvertex hit, no face hit here\n");
 			FACE_MISS(rd, fu_p->f_p);
@@ -962,16 +962,16 @@ struct vertexuse *vu;
 		struct loopuse *lu = vu->up.lu_p;
 		if (lu->orientation == OT_OPPOSITE) {
 			/* if parent is OT_OPPOSITE loopuse, we've hit face */
-		} else if lu->orientation == OT_SAME) {
+		} else if (lu->orientation == OT_SAME) {
 			/* if parent is OT_SAME loopuse, we've missed face */
 			RT_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
-			RT_LIST_INSERT(&rd->rd_miss.l, &myhit->l);
+			RT_LIST_INSERT(&rd->rd_miss, &myhit->l);
 		} else {
 			rt_log("non-oriented loopuse parent at: %s %d\n",
 				__FILE__, __LINE__);
 			rt_bomb("goodnight\n");
 		}
-	} else if *vu->up.magic_p == NMG_EDGEUSE_MAGIC) {
+	} else if (*vu->up.magic_p == NMG_EDGEUSE_MAGIC) {
 		/* if parent is edgeuse, do left/right computation */
 	} else {
 		rt_log("vertexuse has strange parent at: %s %d\n",
@@ -1023,12 +1023,12 @@ struct faceuse *fu_p;
 
 
 	/* bounding box intersection */
-	if (!rt_in_rpp(rd->rp, rd->invdir,
+	if (!rt_in_rpp(rd->rp, rd->rd_invdir,
 	    fu_p->f_p->fg_p->min_pt, fu_p->f_p->fg_p->max_pt) ) {
 		GET_HITMISS(myhit);
 		NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);
 		RT_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
-		RT_LIST_INSERT(&rd->rd_miss.l, &myhit->l);
+		RT_LIST_INSERT(&rd->rd_miss, &myhit->l);
 		if (rt_g.NMG_debug & DEBUG_NMGRT)
 			rt_log("missed bounding box\n");
 		return;
@@ -1049,7 +1049,7 @@ struct faceuse *fu_p;
 		GET_HITMISS(myhit);
 		NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);
 		RT_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
-		RT_LIST_INSERT(&rd->rd_miss.l, &myhit->l);
+		RT_LIST_INSERT(&rd->rd_miss, &myhit->l);
 		return;
 	} else if (code == 0) {
 		/* XXX gack!  ray lies in plane.  
@@ -1061,7 +1061,7 @@ struct faceuse *fu_p;
 		GET_HITMISS(myhit);
 		NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);
 		RT_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);
-		RT_LIST_INSERT(&rd->rd_miss.l, &myhit->l);
+		RT_LIST_INSERT(&rd->rd_miss, &myhit->l);
 		return;
 	}
 
@@ -1145,7 +1145,7 @@ struct shell *s_p;
 	 * if not, we can just return.  there is no need to record the
 	 * miss for the shell, as there is only one "use" of a shell.
 	 */
-	if (!rt_in_rpp(rd->rp, rd->invdir,
+	if (!rt_in_rpp(rd->rp, rd->rd_invdir,
 	    s_p->sa_p->min_pt, s_p->sa_p->max_pt) ) {
 		if (rt_g.NMG_debug & DEBUG_NMGRT)
 			rt_log("nmg_isect_ray_shell( no RPP overlap)\n",
@@ -1176,9 +1176,8 @@ struct shell *s_p;
  *
  */
 void
-nmg_isect_ray_model(rd, m)
+nmg_isect_ray_model(rd)
 struct ray_data *rd;
-struct model *m;
 {
 	struct nmgregion *r_p;
 	struct shell *s_p;
@@ -1187,32 +1186,30 @@ struct model *m;
 
 	if (rt_g.NMG_debug & DEBUG_NMGRT)
 		rt_log("isect_ray_nmg: Pnt(%g %g %g) Dir(%g %g %g)\n", 
-			rp->r_pt[0],
-			rp->r_pt[1],
-			rp->r_pt[2],
-			rp->r_dir[0],
-			rp->r_dir[1],
-			rp->r_dir[2]);
+			rd->rp->r_pt[0],
+			rd->rp->r_pt[1],
+			rd->rp->r_pt[2],
+			rd->rp->r_dir[0],
+			rd->rp->r_dir[1],
+			rd->rp->r_dir[2]);
 
-	NMG_CK_MODEL(m);
+	NMG_CK_MODEL(rd->rd_m);
 
 	/* Caller has assured us that the ray intersects the nmg model,
 	 * check ray for intersecion with rpp's of nmgregion's
 	 */
-	for ( RT_LIST_FOR(r_p, nmgregion, &m->r_hd) ) {
+	for ( RT_LIST_FOR(r_p, nmgregion, &rd->rd_m->r_hd) ) {
 		NMG_CK_REGION(r_p);
 		NMG_CK_REGION_A(r_p->ra_p);
 
 		/* does ray intersect nmgregion rpp? */
-		if (! rt_in_rpp(rd->rp, rd->invdir,
-		    rd->r_p->ra_p->min_pt, rd->r_p->ra_p->max_pt) )
+		if (! rt_in_rpp(rd->rp, rd->rd_invdir,
+		    r_p->ra_p->min_pt, r_p->ra_p->max_pt) )
 			continue;
 
 		/* ray intersects region, check shell intersection */
-		for (RT_LIST_FOR(s_p, shell, &rd->r_p->s_hd)) {
+		for (RT_LIST_FOR(s_p, shell, &r_p->s_hd)) {
 			nmg_isect_ray_shell(&rd, s_p);
 		}
 	}
-
-	return(hm);
 }
