@@ -73,6 +73,13 @@ static Cursor	cursor =  {
 #include "./sgicursor.h"
  };
 
+/*
+ *  One global state variable to record number of different windows
+ *  that *this process* has opened.
+ *  Needed to prevent re-running ginit(), and avoiding prefposition().
+ */
+static int	sgi_nwindows = 0;
+
 extern int	fb_sim_readrect();
 
 /* Internal routines */
@@ -114,7 +121,7 @@ FBIO sgi_interface =
 		fb_sim_readrect,
 		sgi_writerect,
 		sgi_help,
-		"SiliconGraphics Iris '4D'",
+		"Silicon Graphics Iris '4D'",
 		XMAXSCREEN+1,		/* max width */
 		YMAXSCREEN+1,		/* max height */
 		"/dev/sgi",
@@ -148,6 +155,17 @@ struct sgi_cmap {
 };
 
 /*
+ *  This is the format of the buffer for lrectwrite(),
+ *  and thus defines the format of the in-memory framebuffer copy.
+ */
+struct sgi_pixel {
+	unsigned char alpha;	/* this will always be zero */
+	unsigned char blue;
+	unsigned char green;
+	unsigned char red;
+};
+
+/*
  *  Per window state information, overflow area.
  *  Too much for just the if_u[1-6] area now.
  */
@@ -166,6 +184,8 @@ struct sgiinfo {
 	short	mi_yoff;		/* Y viewport offset, rel. window */
 	short	mi_is_gt;		/* !0 when using GT hardware */
 	int	mi_pid;			/* for multi-cpu check */
+	int	mi_parent;		/* PID of linger-mode process */
+	struct sgi_pixel mi_scanline[XMAXSCREEN+1];	/* one scanline */
 };
 #define	SGI(ptr)	((struct sgiinfo *)((ptr)->u1.p))
 #define	SGIL(ptr)	((ptr)->u1.p)		/* left hand side version */
@@ -254,21 +274,6 @@ struct modeflags {
 		"Zap (free) shared memory" },
 	{ '\0', 0, 0, "" }
 };
-
-static int fb_parent;
-
-/*
- *  This is the format of the buffer for lrectwrite(),
- *  and thus defines the format of the in-memory framebuffer copy.
- */
-struct sgi_pixel {
-	unsigned char alpha;	/* this will always be zero */
-	unsigned char blue;
-	unsigned char green;
-	unsigned char red;
-};
-
-static struct sgi_pixel	one_scan[XMAXSCREEN+1];	/* one scanline */
 
 /* Clipping structure, for zoom/pan operations on non-GT systems */
 struct sgi_clip {
@@ -462,6 +467,8 @@ int		nlines;
 	int		sw_cmap;	/* !0 => needs software color map */
 	int		sw_zoom;	/* !0 => needs software zoom/pan */
 
+	winset(ifp->if_fd);
+
 	if( SGI(ifp)->mi_is_gt )  {
 		/* Enable writing pixels into the Z buffer */
 		/* Always send full unzoomed image into Z buffer */
@@ -531,23 +538,25 @@ int		nlines;
 	if( !sw_zoom && sw_cmap )  {
 		register int	x;
 		register struct sgi_pixel	*sgip;
+		register struct sgi_pixel	*op;
 
 		/* Perform software color mapping into temp scanline */
+		op = SGI(ifp)->mi_scanline;
 		for( n=nlines; n>0; n--, y++ )  {
 			sgip = (struct sgi_pixel *)&ifp->if_mem[
 				(y*SGI(ifp)->mi_memwidth)*
 				sizeof(struct sgi_pixel) ];
 			for( x=ifp->if_width-1; x>=0; x-- )  {
-				one_scan[x].red   = CMR(ifp)[sgip[x].red];
-				one_scan[x].green = CMG(ifp)[sgip[x].green];
-				one_scan[x].blue  = CMB(ifp)[sgip[x].blue];
+				op[x].red   = CMR(ifp)[sgip[x].red];
+				op[x].green = CMG(ifp)[sgip[x].green];
+				op[x].blue  = CMB(ifp)[sgip[x].blue];
 			}
 			lrectwrite(
 				SGI(ifp)->mi_xoff+0,
 				SGI(ifp)->mi_yoff+y,
 				SGI(ifp)->mi_xoff+0+ifp->if_width-1,
 				SGI(ifp)->mi_yoff+y,
-				one_scan );
+				op );
 		}
 		return;
 	}
@@ -611,7 +620,7 @@ int		nlines;
 			sgip = (struct sgi_pixel *)&ifp->if_mem[
 				(y*SGI(ifp)->mi_memwidth+clip.xmin)*
 				sizeof(struct sgi_pixel)];
-			op = one_scan;
+			op = SGI(ifp)->mi_scanline;
 			for( x=clip.xmin; x<=clip.xmax; x++ )  {
 				for( rep=0; rep<SGI(ifp)->mi_xzoom; rep++ )  {
 					*op++ = *sgip;	/* struct copy */
@@ -620,10 +629,11 @@ int		nlines;
 			}
 			if( sw_cmap )  {
 				x=(clip.xmax-clip.xmin)*SGI(ifp)->mi_xzoom;
+				op = SGI(ifp)->mi_scanline;
 				for( ; x>=0; x-- )  {
-					one_scan[x].red   = CMR(ifp)[one_scan[x].red];
-					one_scan[x].green = CMG(ifp)[one_scan[x].green];
-					one_scan[x].blue  = CMB(ifp)[one_scan[x].blue];
+					op[x].red   = CMR(ifp)[op[x].red];
+					op[x].green = CMG(ifp)[op[x].green];
+					op[x].blue  = CMB(ifp)[op[x].blue];
 				}
 			}
 			/* X direction replication is handled above,
@@ -633,7 +643,7 @@ int		nlines;
 				lrectwrite(
 					xscrmin, yscr,
 					xscrmax, yscr,
-					one_scan );
+					SGI(ifp)->mi_scanline );
 				yscr++;
 			}
 		}
@@ -769,7 +779,8 @@ int	width, height;
 	 * until killed by the menu subsystem.
     	 */
 	if( (ifp->if_mode & MODE_2MASK) == MODE_2LINGERING )  {
-		fb_parent = getpid();		/* save parent pid */
+		/* save parent pid for later signalling */
+		SGI(ifp)->mi_parent = getpid();
 
 		signal( SIGUSR1, sigkid);
 
@@ -837,7 +848,11 @@ int	width, height;
 		prefposition( 0, XMAX170, 0, YMAX170 );
 		SGI(ifp)->mi_curs_on = 0;	/* cursoff() happens below */
 	} else if( (ifp->if_mode & MODE_3MASK) == MODE_3WINDOW )  {
-		prefposition( WIN_L, WIN_R, WIN_B, WIN_T );
+		if( sgi_nwindows == 0 ) {
+			prefposition( WIN_L, WIN_R, WIN_B, WIN_T );
+		} else {
+			prefsize( (long)width, (long)height );
+		}
 		SGI(ifp)->mi_curs_on = 1;	/* Mex usually has it on */
 	}  else  {
 		/* MODE_3MASK == MODE_3FULLSCR */
@@ -845,11 +860,17 @@ int	width, height;
 		SGI(ifp)->mi_curs_on = 0;	/* cursoff() happens below */
 	}
 
-	if( (ifp->if_fd = winopen( "Frame buffer" )) == -1 )
-	{
-		fb_log( "No more graphics ports available.\n" );
-		return	-1;
+	/*
+	 *  This is where the window constraints specified above
+	 *  are bound to a new window.  The return code is
+	 *  the "graphics id" that identifies this window.
+	 *  winset(gr_id) is used to select a window for drawing in.
+	 */
+	if( (ifp->if_fd = winopen( "Frame buffer" )) == -1 )  {
+		fb_log( "winopen() failed, no more windows available.\n" );
+		return(-1);
 	}
+	sgi_nwindows++;		/* track # of simultaneous windows */
 
 	/*  Establish operating mode (Hz, GENLOCK).
 	 *  The assumption is that the device is always in the
@@ -942,19 +963,18 @@ int	width, height;
 			"Shared Mem" );
 	wintitle( title );
 	
-	/* Free window of position constraint.		*/
-	prefsize( (long)ifp->if_width, (long)ifp->if_height );
-	winconstraints();
-
+	/*
+	 *  Set the operating mode for the newly created window.
+	 */
 	if( SGI(ifp)->mi_is_gt )  {
 		doublebuffer();
 	} else {
 		singlebuffer();
 	}
 	RGBmode();
-	gconfig();	/* Must be called after singlebuffer().	*/
+	gconfig();	/* Must be called after singlebuffer() & RGBmode() */
 
-	/* Need to clean out images from windows below */
+	/* Clean out images that might remain from windows underneath */
 	RGBcolor( (short)0, (short)0, (short)0 );
 	clear();
 	if( SGI(ifp)->mi_is_gt )  {
@@ -1028,13 +1048,15 @@ int	width, height;
 		cursoff();
 	}
 
-	if( (ifp->if_mode & MODE_1MASK) == MODE_1SHARED )  {
-		/* Display the existing contents of shared memory */
-		sgi_xmit_scanlines( ifp, 0, ifp->if_height );
-		if( SGI(ifp)->mi_is_gt )  {
-			gt_zbuf_to_screen( ifp );
-		}
+	/*
+	 *  Display the existing contents of the memory segment.
+	 *  Make no assumptions about the state of the window.
+	 */
+	sgi_xmit_scanlines( ifp, 0, ifp->if_height );
+	if( SGI(ifp)->mi_is_gt )  {
+		gt_zbuf_to_screen( ifp );
 	}
+
 	return	0;
 }
 
@@ -1050,9 +1072,11 @@ FBIO	*ifp;
 	int k;
 	FILE *fp = NULL;
 
-	if( SGI(ifp)->mi_pid != getpid() )  {fb_log("libfb/sgi call from wrong process!\n");return(-1);}
+	if(sgi_mpfail(ifp, "close", 0)) return(-1);
+	winset(ifp->if_fd);
 
-	if( (ifp->if_mode & MODE_2MASK) == MODE_2TRANSIENT )
+	if( sgi_nwindows > 0 ||
+	    (ifp->if_mode & MODE_2MASK) == MODE_2TRANSIENT )
 		goto out;
 
 	/*
@@ -1090,7 +1114,7 @@ FBIO	*ifp;
 	/* Line up at the "complaints window", just in case... */
 	fp = fopen("/dev/console", "w");
 
-	kill(fb_parent, SIGUSR1);	/* zap the lurking parent */
+	kill(SGI(ifp)->mi_parent, SIGUSR1);	/* zap the lurking parent */
 
 	menu = defpup("close");
 	qdevice(RIGHTMOUSE);
@@ -1175,11 +1199,16 @@ out:
 		curson();
 	}
 
-	gexit();			/* mandatory finish */
+	winclose( ifp->if_fd );		/* close window */
+	if( sgi_nwindows <= 1 )  {
+		gexit();		/* mandatory finish */
+	}
 	if( fp )  fclose(fp);
 
 	if( SGIL(ifp) != NULL )
 		(void)free( (char *)SGI(ifp) );
+
+	sgi_nwindows--;
 	return(0);
 }
 
@@ -1196,7 +1225,8 @@ register RGBpixel	*pp;
 	register int	cnt;
 	register int	y;
 
-	if( SGI(ifp)->mi_pid != getpid() )  {fb_log("libfb/sgi call from wrong process!\n");return(-1);}
+	if(sgi_mpfail(ifp, "clear", 0)) return(-1);
+	winset(ifp->if_fd);
 
 	if( qtest() )
 		sgi_inqueue(ifp);
@@ -1242,7 +1272,8 @@ FBIO	*ifp;
 int	x, y;
 {
 
-	if( SGI(ifp)->mi_pid != getpid() )  {fb_log("libfb/sgi call from wrong process!\n");return(-1);}
+	if(sgi_mpfail(ifp, "window_set", y)) return(-1);
+	winset(ifp->if_fd);
 
 	if( qtest() )
 		sgi_inqueue(ifp);
@@ -1273,7 +1304,8 @@ FBIO	*ifp;
 int	x, y;
 {
 
-	if( SGI(ifp)->mi_pid != getpid() )  {fb_log("libfb/sgi call from wrong process!\n");return(-1);}
+	if(sgi_mpfail(ifp, "zoom_set", y)) return(-1);
+	winset(ifp->if_fd);
 
 	if( qtest() )
 		sgi_inqueue(ifp);
@@ -1303,6 +1335,9 @@ int	x, y;
 
 /*
  *			S G I _ B R E A D
+ *
+ *  Makes no reference to the graphics library at all.
+ *  Data is copied from the memory segment.
  */
 _LOCAL_ int
 sgi_bread( ifp, x, y, pixelp, count )
@@ -1444,7 +1479,8 @@ register int	count;
 	 * Handle events after updating the memory, and
 	 * before updating the screen
 	 */
-	if( SGI(ifp)->mi_pid != getpid() )  {fb_log("libfb/sgi call from wrong process!\n");return(-1);}
+	if(sgi_mpfail(ifp, "bwrite", y)) return(-1);
+	winset(ifp->if_fd);
 
 	if( qtest() )
 		sgi_inqueue(ifp);
@@ -1500,7 +1536,8 @@ RGBpixel	*pp;
 	 * Handle events after updating the memory, and
 	 * before updating the screen
 	 */
-	if( SGI(ifp)->mi_pid != getpid() )  {fb_log("libfb/sgi call from wrong process!\n");return(-1);}
+	if(sgi_mpfail(ifp, "writerect", y)) return(-1);
+	winset(ifp->if_fd);
 
 	if( qtest() )
 		sgi_inqueue(ifp);
@@ -1526,6 +1563,8 @@ int	left, top, right, bottom;
 
 /*
  *			S G I _ C M R E A D
+ *
+ *  Make no access to the graphics system at all.
  */
 _LOCAL_ int
 sgi_cmread( ifp, cmp )
@@ -1591,7 +1630,8 @@ register ColorMap	*cmp;
 	register int	i;
 	int		prev;	/* !0 = previous cmap was non-linear */
 
-	if( SGI(ifp)->mi_pid != getpid() )  {fb_log("libfb/sgi call from wrong process!\n");return(-1);}
+	if(sgi_mpfail(ifp, "cmwrite", 0)) return(-1);
+	winset(ifp->if_fd);
 
 	if( qtest() )
 		sgi_inqueue(ifp);
@@ -1636,7 +1676,8 @@ int		xorig, yorig;
 	register int	xbytes;
 	Cursor		newcursor;
 
-	if( SGI(ifp)->mi_pid != getpid() )  {fb_log("libfb/sgi call from wrong process!\n");return(-1);}
+	if(sgi_mpfail(ifp, "curs_set", yorig)) return(-1);
+	winset(ifp->if_fd);
 
 	if( qtest() )
 		sgi_inqueue(ifp);
@@ -1677,7 +1718,8 @@ int	x, y;
 	short	xwidth;
 	long left, bottom, x_size, y_size;
 
-	if( SGI(ifp)->mi_pid != getpid() )  {fb_log("libfb/sgi call from wrong process!\n");return(-1);}
+	if(sgi_mpfail(ifp, "cmemory_addr", y)) return(-1);
+	winset(ifp->if_fd);
 
 	if( qtest() )
 		sgi_inqueue(ifp);
@@ -1724,9 +1766,12 @@ register FBIO *ifp;
 	int redraw = 0;
 	register int ev;
 
+	winset(ifp->if_fd);
+
 	while( qtest() )  {
 		switch( ev = qread(&val) )  {
 		case REDRAW:
+			/* should check val -vs- ifp->if_fd !! */
 			redraw = 1;
 			break;
 		case INPUTCHANGE:
@@ -1801,14 +1846,9 @@ _LOCAL_ int
 gt_zbuf_to_screen( ifp )
 register FBIO	*ifp;
 {
-	register short xmin, xmax;
-	register short ymin, ymax;
-	register short	i;
-	short		xscroff, yscroff;
-	register unsigned char *ip;
-	short		y;
-	short		xwidth;
 	struct sgi_clip	clip;
+
+	winset(ifp->if_fd);
 
 	zbuffer(FALSE);
 	readsource(SRC_ZBUFFER);	/* source for rectcopy() */
@@ -1821,8 +1861,12 @@ register FBIO	*ifp;
 	/* rectzoom only works on GT and PI machines */
 	rectzoom( (double) SGI(ifp)->mi_xzoom, (double) SGI(ifp)->mi_yzoom);
 
+	/*
+	 *  This clear could be somewhat of a performance problem,
+	 *  but it prevents having crud on the borders when
+	 *  panning the image.
+	 */
 	cpack(0x00000000);	/* clear to black first */
-	/* XXX why is this done -- could be performance problem */
 	clear();		/* takes ~1 frame time */
 
 	/* All coordinates are window-relative, not viewport-relative */
@@ -1881,4 +1925,48 @@ register struct sgi_clip	*clp;
 		clp->yscrpad = (clp->ymax - (ifp->if_height-1)) * SGI(ifp)->mi_yzoom;
 		clp->ymax = ifp->if_height-1;
 	}
+}
+
+/*
+ *			S G I _ M P F A I L
+ *
+ *  The IRIX 3.1 version of the Graphics Library (libgl) will HANG
+ *  the machine if it is used from a child process (thread) in a multi-tasking
+ *  process.  If this condition exists, express our displeasure,
+ *  and prevent any attempt to access the graphics library routines.
+ *
+ *  Returns -
+ *	 0	OK
+ *	-1	Failure
+ */
+static int
+sgi_mpfail(ifp, str, y)
+FBIO	*ifp;
+char	*str;
+int	y;
+{
+	static int	count = 0;
+
+	if( SGI(ifp)->mi_pid == getpid() )
+		return(0);		/* OK */
+
+	if( count == 0 )  {
+		count = 1;
+		fb_log("A multi-tasking program has attempted to display graphics\n");
+		fb_log("from a child thread.  The SGI-provided GL library is not\n");
+		fb_log("presently capable of performing this operation, and no\n");
+		fb_log("recovery is possible.  Please call the SGI hotline, and\n");
+		fb_log("voice your displeasure about companies that build multi-\n");
+		fb_log("processor graphics systems which can't display graphics\n");
+		fb_log("from all processors, simultaneously.  This problem is claimed\n");
+		fb_log("by SGI to be fixed in the October-1989 IRIX release.\n");
+
+		if( (ifp->if_mode & MODE_1MASK) == MODE_1SHARED )  {
+			fb_log("If it is any consolation, the shared memory segment\n");
+			fb_log("is being correctly updated and contains your image,\n");
+			fb_log("which 'fb-pix' can save into a disk file.\n");
+		}
+	}
+	fb_log("libfb/sgi_%s mp error y=%d\n", str, y);
+	return(-1);			/* BAD */
 }
