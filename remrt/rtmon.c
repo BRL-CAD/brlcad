@@ -167,7 +167,7 @@ int	fd;
 
 	bu_vls_init(&str);
 
-	bu_vls_printf( &str, "hostname %s", our_hostname );
+	bu_vls_printf( &str, "host %s", our_hostname );
 	bu_vls_printf( &str, " type %s", machinetype );
 	bu_vls_printf( &str, " ncpu %d", bu_avail_cpus() );
 	bu_vls_printf( &str, " pub %d", bu_get_public_cpus() );
