@@ -29,6 +29,8 @@ static char RCSplane[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "bn.h"
 
+#define		UNIT_SQ_TOL	1.0e-13
+
 /*
  *			B N _ D I S T _ P T 3 _ P T 3
  *
@@ -385,6 +387,7 @@ fail:
  *  Intersect an infinite line (specified in point and direction vector form)
  *  with a plane that has an outward pointing normal.
  *  The direction vector need not have unit length.
+ *  The first three elements of the plane equation must form a unit lengh vector.
  *
  *  Explicit Return -
  *	-2	missed (ray is outside halfspace)
@@ -406,16 +409,21 @@ CONST struct bn_tol	*tol;
 {
 	register fastf_t	slant_factor;
 	register fastf_t	norm_dist;
+	register fastf_t	dot;
+	register vect_t		local_dir;
 
 	BN_CK_TOL(tol);
 
 	norm_dist = plane[3] - VDOT( plane, pt );
 	slant_factor = VDOT( plane, dir );
+	VMOVE( local_dir, dir )
+	VUNITIZE( local_dir )
+	dot = VDOT( plane, local_dir );
 
-	if( slant_factor < -SMALL_FASTF )  {
+	if( slant_factor < -SMALL_FASTF && dot < -tol->perp  )  {
 		*dist = norm_dist/slant_factor;
 		return 1;			/* HIT, entering */
-	} else if( slant_factor > SMALL_FASTF )  {
+	} else if( slant_factor > SMALL_FASTF && dot > tol->perp )  {
 		*dist = norm_dist/slant_factor;
 		return 2;			/* HIT, leaving */
 	}
