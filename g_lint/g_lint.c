@@ -1,12 +1,27 @@
 /*
  *			G _ L I N T . C
  *
- *	Sample some MGED(1) geometry, reporting overlaps
+ *	Sample some BRL-CAD geometry, reporting overlaps
  *	and potential problems with air regions.
+ *
+ *  Author -
+ *	Paul Tanenbaum
+ *  
+ *  Source -
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  
+ *  Distribution Notice -
+ *	Re-distribution of this software is restricted, as described in
+ *	your "Statement of Terms and Conditions for the Release of
+ *	The BRL-CAD Package" agreement.
+ *
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1995 by the United States Army
+ *	in all countries except the USA.  All rights reserved.
  */
-
 #ifndef lint
-static char	RCSid[] = "@(#)$Header$";
+static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include <stdio.h>
@@ -16,25 +31,73 @@ static char	RCSid[] = "@(#)$Header$";
 #include "vmath.h"
 #include "raytrace.h"
 
-#define		OPT_STRING		"a:ce:g:t:u?"
-#define		RAND_NUM		((fastf_t)random()/MAXINT)
-#define		RAND_OFFSET		((1 - cell_center) *		\
-					 (RAND_NUM * celsiz - celsiz / 2))
-#define		TITLE_LEN		80
+#define made_it()	rt_log("Made it to %s:%d\n", __FILE__, __LINE__);
 
+#define	OPT_STRING	"a:ce:g:pr:t:u?"
+#define	RAND_NUM	((fastf_t)random()/MAXINT)
+#define	RAND_OFFSET	((1 - cell_center) *		\
+			 (RAND_NUM * celsiz - celsiz / 2))
+#define	TITLE_LEN	80
+
+struct g_lint_ctrl
+{
+    long		glc_magic;	/* Magic no. for integrity check */
+    struct application	*glc_ap;	/* To obtain ray orig. point */
+    fastf_t		glc_tol;	/* Overlap/void tolerance */
+    unsigned long	glc_what_to_report;	/* Bits to tailor the output */
+};
+#define G_LINT_CTRL_NULL	((struct g_lint_ctrl *) 0)
+#define G_LINT_CTRL_MAGIC	0x676c6374
+/*
+ *	The meanings of the bits in the what-to-report
+ *	member of the g_lint_ctrl structure
+ */
+#define	G_LINT_OVLP	0x001
+#define	G_LINT_A_CONT	0x002
+#define	G_LINT_A_UNCONF	0x004
+#define	G_LINT_A_1ST	0x008
+#define	G_LINT_A_LAST	0x010
+#define	G_LINT_A_ANY	(G_LINT_A_CONT | G_LINT_A_UNCONF |	\
+			 G_LINT_A_1ST  | G_LINT_A_LAST)
+#define	G_LINT_VAC	0x020
+#define	G_LINT_ALL	(G_LINT_OVLP | G_LINT_A_ANY | G_LINT_VAC)
+
+/*
+ *	The usage message -- it's a long 'un
+ */
 static char	*usage[] = {
     "Usage: 'g_lint [options] model.g object ...'\n",
     "Options:\n",
     "  -a azim      View target from azimuth of azim (0.0 degrees)\n",
-    "  -e elev      View target from elevation of elev (0.0 degrees)\n",
     "  -c           Fire rays from center of grid cell (random point)\n",
+    "  -e elev      View target from elevation of elev (0.0 degrees)\n",
     "  -g gridsize  Use grid-cell spacing of gridsize (100.0 mm)\n",
+    "  -p           Include ray-origin on each line\n",
+    "  -r bits      Set report-specification flag=bits...\n",
+    "                  1  overlaps\n",
+    "                  2  contiguous unlike airs\n",
+    "                  4  unconfined airs\n",
+    "                  8  air first on shotlines\n",
+    "                 16  air last on shotlines\n",
+    "                 32  vacuums\n",
     "  -t tol       Ignore overlaps/voids of length < tol (0.0 mm)\n",
     "  -u           Report on air (overlaps only)\n",
     0
 };
 
-/*			C H E C K _ A I R
+/*			P R I N T U S A G E ( )
+ *
+ *	Reports a usage message on stderr.
+ */
+void printusage ()
+{
+    char	**u;
+
+    for (u = usage; *u != 0; ++u)
+	fputs(*u, stderr);
+}
+
+/*			R P T _ H I T
  *
  *	Ray-hit handler for use by rt_shootray().
  *
@@ -46,11 +109,15 @@ static char	*usage[] = {
  *	    - Last partition along a ray with a non-zero air code, and
  *	    - Void between successive partitions (exit point from one
  *		not equal to entry point of next), if it is longer
+ *		than tolerance, and either of the partitions is air;
+ *		and
+ *	    - Void between successive partitions (exit point from one
+ *		not equal to entry point of next), if it is longer
  *		than tolerance.
  *	The function returns the number of possible problems it
  *	discovers.
  */
-static int check_air (ap, ph)
+static int rpt_hit (ap, ph)
 
 struct application	*ap;
 struct partition	*ph;
@@ -61,58 +128,151 @@ struct partition	*ph;
     fastf_t		mag_del;
     int			problems = 0;
     int			last_air = 0;
-    fastf_t		tolerance = *((fastf_t *) ap -> a_uptr);
+    struct g_lint_ctrl	*cp = (struct g_lint_ctrl *) ap -> a_uptr;
+    int			show_origin;
+    fastf_t		tolerance;
+    unsigned long	what_to_report;
+
+    RT_CKMAG(ph, PT_MAGIC, "partition structure");
+    RT_CKMAG(cp, G_LINT_CTRL_MAGIC, "g_lint control structure");
+
+    show_origin = (cp -> glc_ap != 0);
+    tolerance = cp -> glc_tol;
+    what_to_report = cp -> glc_what_to_report;
 
     for (pp = ph -> pt_forw; pp != ph; pp = pp -> pt_forw)
     {
+	RT_CKMAG(pp, PT_MAGIC, "partition structure");
+
 	RT_HIT_NORM(pp -> pt_inhit, pp -> pt_inseg -> seg_stp,
 	    &ap -> a_ray);
 	RT_HIT_NORM(pp -> pt_outhit, pp -> pt_outseg -> seg_stp,
 	    &ap -> a_ray);
 
 	/* Check air partitions */
-	if (pp -> pt_regionp -> reg_regionid <= 0)
-	{
-	    if (last_air && (pp -> pt_regionp -> reg_aircode != last_air))
+	if (what_to_report & G_LINT_A_ANY)
+	    if (pp -> pt_regionp -> reg_regionid <= 0)
 	    {
-		printf("air_contiguity %d %d %g %g %g\n",
-		    last_air, pp -> pt_regionp -> reg_aircode,
-		    pp -> pt_inhit -> hit_point[X],
-		    pp -> pt_inhit -> hit_point[Y],
-		    pp -> pt_inhit -> hit_point[Z]);
-		++problems;
+		if ((what_to_report & G_LINT_A_CONT)
+		 && last_air && (pp -> pt_regionp -> reg_aircode != last_air))
+		{
+		    VSUB2(delta, pp -> pt_inhit -> hit_point,
+			pp -> pt_back -> pt_outhit -> hit_point);
+		    if ((mag_del = MAGNITUDE(delta)) > tolerance)
+		    {
+			printf("air_contiguous ");
+			if (show_origin)
+			    printf("%g %g %g ",
+				V3ARGS((cp -> glc_ap -> a_ray).r_pt));
+			printf("%d %d %g %g %g\n",
+			    last_air, pp -> pt_regionp -> reg_aircode,
+			    pp -> pt_inhit -> hit_point[X],
+			    pp -> pt_inhit -> hit_point[Y],
+			    pp -> pt_inhit -> hit_point[Z]);
+			++problems;
+		    }
+		}
+
+		if (pp -> pt_back == ph)
+		{
+		    if (what_to_report & G_LINT_A_1ST)
+		    {
+			printf("air_first ");
+			if (show_origin)
+			    printf("%g %g %g ",
+				V3ARGS(cp -> glc_ap -> a_ray.r_pt));
+			printf("%d %g %g %g\n",
+			    pp -> pt_regionp -> reg_aircode,
+			    pp -> pt_inhit -> hit_point[X],
+			    pp -> pt_inhit -> hit_point[Y],
+			    pp -> pt_inhit -> hit_point[Z]);
+			++problems;
+		    }
+		}
+		else if (what_to_report & G_LINT_A_UNCONF)
+		{
+		    VSUB2(delta, pp -> pt_inhit -> hit_point,
+			pp -> pt_back -> pt_outhit -> hit_point);
+		    if ((mag_del = MAGNITUDE(delta)) > tolerance)
+		    {
+			printf("air_unconfined ");
+			if (show_origin)
+			    printf("%g %g %g ",
+				V3ARGS(cp -> glc_ap -> a_ray.r_pt));
+			printf("%s (%s) %s (%s) %g    %g %g %g    %g %g %g\n",
+			    pp -> pt_back -> pt_regionp -> reg_name,
+			    pp -> pt_back -> pt_outseg -> seg_stp -> st_name,
+			    pp -> pt_regionp -> reg_name,
+			    pp -> pt_inseg -> seg_stp -> st_name,
+			    mag_del,
+			    pp -> pt_back -> pt_outhit -> hit_point[X],
+			    pp -> pt_back -> pt_outhit -> hit_point[Y],
+			    pp -> pt_back -> pt_outhit -> hit_point[Z],
+			    pp -> pt_inhit -> hit_point[X],
+			    pp -> pt_inhit -> hit_point[Y],
+			    pp -> pt_inhit -> hit_point[Z]);
+			++problems;
+		    }
+		}
+
+		if (pp -> pt_forw == ph)
+		{
+		    if (what_to_report & G_LINT_A_LAST)
+		    {
+			printf("air_last ");
+			if (show_origin)
+			    printf("%g %g %g ",
+				V3ARGS(cp -> glc_ap -> a_ray.r_pt));
+			printf("%d %g %g %g\n",
+			    pp -> pt_regionp -> reg_aircode,
+			    pp -> pt_outhit -> hit_point[X],
+			    pp -> pt_outhit -> hit_point[Y],
+			    pp -> pt_outhit -> hit_point[Z]);
+			++problems;
+		    }
+		}
+		else if (what_to_report & G_LINT_A_UNCONF)
+		{
+		    VSUB2(delta, pp -> pt_forw -> pt_inhit -> hit_point,
+			pp -> pt_outhit -> hit_point);
+		    if ((mag_del = MAGNITUDE(delta)) > tolerance)
+		    {
+			printf("air_unconfined ");
+			if (show_origin)
+			    printf("%g %g %g ",
+				V3ARGS(cp -> glc_ap -> a_ray.r_pt));
+			printf("%s (%s) %s (%s) %g    %g %g %g    %g %g %g\n",
+			    pp -> pt_regionp -> reg_name,
+			    pp -> pt_outseg -> seg_stp -> st_name,
+			    pp -> pt_forw -> pt_regionp -> reg_name,
+			    pp -> pt_forw -> pt_inseg -> seg_stp -> st_name,
+			    mag_del,
+			    pp -> pt_outhit -> hit_point[X],
+			    pp -> pt_outhit -> hit_point[Y],
+			    pp -> pt_outhit -> hit_point[Z],
+			    pp -> pt_forw -> pt_inhit -> hit_point[X],
+			    pp -> pt_forw -> pt_inhit -> hit_point[Y],
+			    pp -> pt_forw -> pt_inhit -> hit_point[Z]);
+			++problems;
+		    }
+		}
+		last_air = pp -> pt_regionp -> reg_aircode;
 	    }
-	    else if (pp -> pt_back == ph)
-	    {
-		printf("air_first %d %g %g %g\n",
-		    pp -> pt_regionp -> reg_aircode,
-		    pp -> pt_inhit -> hit_point[X],
-		    pp -> pt_inhit -> hit_point[Y],
-		    pp -> pt_inhit -> hit_point[Z]);
-		++problems;
-	    }
-	    if (pp -> pt_forw == ph)
-	    {
-		printf("air_last %d %g %g %g\n",
-		    pp -> pt_regionp -> reg_aircode,
-		    pp -> pt_outhit -> hit_point[X],
-		    pp -> pt_outhit -> hit_point[Y],
-		    pp -> pt_outhit -> hit_point[Z]);
-		++problems;
-	    }
-	    last_air = pp -> pt_regionp -> reg_aircode;
-	}
-	else
-	    last_air = 0;
+	    else
+		last_air = 0;
 	
 	/* Look for vacuum */
-	if (pp -> pt_back != ph)
+	if ((what_to_report & G_LINT_VAC) && (pp -> pt_back != ph))
 	{
 	    VSUB2(delta, pp -> pt_inhit -> hit_point,
 		pp -> pt_back -> pt_outhit -> hit_point);
 	    if ((mag_del = MAGNITUDE(delta)) > tolerance)
 	    {
-		printf("vacuum %s (%s) %s (%s) %g    %g %g %g    %g %g %g\n",
+		printf("vacuum ");
+		if (show_origin)
+		    printf("%g %g %g ",
+			V3ARGS(cp -> glc_ap -> a_ray.r_pt));
+		printf("%s (%s) %s (%s) %g    %g %g %g    %g %g %g\n",
 		    pp -> pt_back -> pt_regionp -> reg_name,
 		    pp -> pt_back -> pt_outseg -> seg_stp -> st_name,
 		    pp -> pt_regionp -> reg_name,
@@ -163,9 +323,19 @@ struct region		*r1;
 struct region		*r2;
 
 {
-    vect_t	delta;
-    fastf_t	mag_del;
-    fastf_t	tolerance = *((fastf_t *) ap -> a_uptr);
+    vect_t		delta;
+    fastf_t		mag_del;
+    struct g_lint_ctrl	*cp = (struct g_lint_ctrl *) ap -> a_uptr;
+    int			show_origin;
+    fastf_t		tolerance;
+
+    RT_CKMAG(pp, PT_MAGIC, "partition structure");
+    RT_CKMAG(r1, RT_REGION_MAGIC, "region structure");
+    RT_CKMAG(r2, RT_REGION_MAGIC, "region structure");
+    RT_CKMAG(cp, G_LINT_CTRL_MAGIC, "g_lint control structure");
+
+    show_origin = (cp -> glc_ap != 0);
+    tolerance = cp -> glc_tol;
 
     /* Compute entry and exit points, and the vector between them */
     RT_HIT_NORM(pp -> pt_inhit, pp -> pt_inseg -> seg_stp, &ap -> a_ray);
@@ -174,7 +344,11 @@ struct region		*r2;
 
     if ((mag_del = MAGNITUDE(delta)) > tolerance)
     {
-	printf("overlap %s %s %g    %g %g %g    %g %g %g\n",
+	printf("overlap ");
+	if (show_origin)
+	    printf("%g %g %g ",
+		V3ARGS(cp -> glc_ap -> a_ray.r_pt));
+	printf("%s %s %g    %g %g %g    %g %g %g\n",
 	    r1 -> reg_name, r2 -> reg_name,
 	    mag_del,
 	    pp -> pt_inhit -> hit_point[X],
@@ -195,12 +369,14 @@ char	**argv;
 {
     struct application	ap;
     char		db_title[TITLE_LEN+1];	/* Title of database */
+    char		*sp;			/* String from strtoul(3) */
     fastf_t		azimuth = 0.0;
     fastf_t		celsiz = 100.0;		/* Spatial sampling rate */
     fastf_t		elevation = 0.0;
-    fastf_t		tolerance = 0.0;	/* Overlap/void tolerance */
+    struct g_lint_ctrl	control;		/* Info handed to librt(3) */
     int			cell_center = 0;	/* Fire from center of cell? */
-    int			ch;			/* Character from getopt() */
+    int			ch;			/* Character from getopt(3) */
+    int			complement_bits;	/* Used by -r option */
     int			i;			/* Dummy loop index */
     int			use_air = 0;		/* Does air count? */
     mat_t		model2view;		/* Model-to-view matrix */
@@ -223,8 +399,12 @@ char	**argv;
     extern int		opterr;
     extern char		*optarg;
 
-    int			getopt();
-    void		printusage();
+    extern int		getopt();
+
+    control.glc_magic = G_LINT_CTRL_MAGIC;
+    control.glc_ap = 0;
+    control.glc_tol = 0.0;
+    control.glc_what_to_report = G_LINT_OVLP;
 
     /* Handle command-line options */
     while ((ch = getopt(argc, argv, OPT_STRING)) != EOF)
@@ -233,8 +413,7 @@ char	**argv;
 	    case 'a':
 		if (sscanf(optarg, "%lf", &azimuth) != 1)
 		{
-		    fprintf(stderr, "Invalid azimuth specification: '%s'\n",
-			    optarg);
+		    rt_log("Invalid azimuth specification: '%s'\n", optarg);
 		    printusage();
 		    exit (1);
 		}
@@ -245,49 +424,71 @@ char	**argv;
 	    case 'e':
 		if (sscanf(optarg, "%lf", &elevation) != 1)
 		{
-		    fprintf(stderr, "Invalid elevation specification: '%s'\n",
-			    optarg);
+		    rt_log("Invalid elevation specification: '%s'\n", optarg);
 		    printusage();
 		    exit (1);
 		}
 		if ((elevation < -90.0) || (elevation > 90.0))
 		{
-		    fprintf(stderr, "Illegal elevation: '%g'\n", elevation);
+		    rt_log("Illegal elevation: '%g'\n", elevation);
 		    exit (1);
 		}
 		break;
 	    case 'g':
 		if (sscanf(optarg, "%lf", &celsiz) != 1)
 		{
-		    fprintf(stderr, "Invalid grid-size specification: '%s'\n",
-			    optarg);
+		    rt_log("Invalid grid-size specification: '%s'\n", optarg);
 		    printusage();
 		    exit (1);
 		}
 		if (celsiz < 0.0)
 		{
-		    fprintf(stderr, "Illegal grid size: '%g'\n", celsiz);
+		    rt_log("Illegal grid size: '%g'\n", celsiz);
 		    exit (1);
 		}
 		break;
-	    case 't':
-		if (sscanf(optarg, "%lf", &tolerance) != 1)
+	    case 'p':
+		control.glc_ap = &ap;
+		break;
+	    case 'r':
+		if (*optarg == '-')
 		{
-		    fprintf(stderr,
-			"Invalid tolerance specification: '%s'\n",
+		    complement_bits = 1;
+		    ++optarg;
+		}
+		else
+		    complement_bits = 0;
+		control.glc_what_to_report = strtoul(optarg, &sp, 0);
+		if (sp == optarg)
+		{
+		    rt_log("Invalid report specification: '%s'\n", optarg);
+		    printusage();
+		    exit (1);
+		}
+		if (complement_bits)
+		{
+		    control.glc_what_to_report = ~(control.glc_what_to_report);
+		    control.glc_what_to_report &= G_LINT_ALL;
+		}
+		use_air = control.glc_what_to_report & G_LINT_A_ANY;
+		break;
+	    case 't':
+		if (sscanf(optarg, "%lf", &(control.glc_tol)) != 1)
+		{
+		    rt_log("Invalid tolerance specification: '%s'\n",
 			optarg);
 		    printusage();
 		    exit (1);
 		}
-		if (tolerance < 0.0)
+		if (control.glc_tol < 0.0)
 		{
-		    fprintf(stderr, "Illegal tolerance: '%g'\n",
-			tolerance);
+		    rt_log("Illegal tolerance: '%g'\n", control.glc_tol);
 		    exit (1);
 		}
 		break;
 	    case 'u':
 		use_air = 1;
+		control.glc_what_to_report |= G_LINT_A_ANY;
 		break;
 	    default:
 		printusage();
@@ -299,14 +500,17 @@ char	**argv;
 	printusage();
 	exit (1);
     }
+    rt_log("OK, use_air=%d, what_to_report=0x%x\n",
+	use_air, control.glc_what_to_report);
+    if (control.glc_what_to_report & ~G_LINT_ALL)
+	rt_log("WARNING: Ignoring high bits of report specification\n");
 
     /* Read in the geometry model */
-    fprintf(stderr, "Database file:  '%s'\n", argv[optind]);
+    rt_log("Database file:  '%s'\n", argv[optind]);
     fputs("Building the directory... ", stderr);
     if ((rtip = rt_dirbuild(argv[optind] , db_title, TITLE_LEN)) == RTI_NULL)
     {
-	fprintf(stderr, "Could not build directory for file '%s'\n",
-	    argv[optind]);
+	rt_log("Could not build directory for file '%s'\n", argv[optind]);
 	exit(1);
     }
     rtip -> useair = use_air;
@@ -316,7 +520,7 @@ char	**argv;
     {
 	if (rt_gettree(rtip, argv[optind]) == -1)
 	    exit (1);
-	fprintf(stderr, "\nObject '%s' processed", argv[optind]);
+	rt_log("\nObject '%s' processed", argv[optind]);
     }
     fputs("\n", stderr);
     fputs("Prepping the geometry... ", stderr);
@@ -324,11 +528,16 @@ char	**argv;
     fputs("\n", stderr);
 
     /* Initialize the application structure */
-    ap.a_hit = use_air ? check_air : no_op;
+    ap.a_hit =
+	(control.glc_what_to_report & ~G_LINT_OVLP) ? rpt_hit
+						    : no_op;
     ap.a_miss = no_op;
-    ap.a_overlap = rpt_ovlp;	/* Report any overlaps */
+    ap.a_resource = RESOURCE_NULL;
+    ap.a_overlap =
+	(control.glc_what_to_report & G_LINT_OVLP) ? rpt_ovlp
+						   : no_op;
     ap.a_onehit = 0;		/* Don't stop at first partition */
-    ap.a_uptr = (char *) &tolerance;
+    ap.a_uptr = (char *) &control;
     ap.a_rt_i = rtip;
     ap.a_zero1 = 0;		/* Sanity checks for LIBRT(3) */
     ap.a_zero2 = 0;
@@ -390,16 +599,4 @@ char	**argv;
 	    (void) rt_shootray(&ap);
 	}
     }
-}
-
-/*			P R I N T U S A G E ( )
- *
- *	Reports a usage message on stderr.
- */
-void printusage ()
-{
-    char	**u;
-
-    for (u = usage; *u != 0; ++u)
-	fputs(*u, stderr);
 }
