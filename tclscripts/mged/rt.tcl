@@ -9,8 +9,7 @@
 check_externs "_mged_opendb _mged_rt"
 
 proc init_Raytrace { id } {
-    global player_screen
-    global mged_active_dm
+    global mged_gui
     global fb
     global rt_control
 
@@ -21,7 +20,7 @@ proc init_Raytrace { id } {
 	return
     }
 
-    winset $mged_active_dm($id)
+    winset $mged_gui($id,active_dm)
 
     if ![info exists rt_control($id,padx)] {
 
@@ -54,7 +53,7 @@ proc init_Raytrace { id } {
 	set file_state normal
     }
 
-    toplevel $top -screen $player_screen($id) -menu $top.menubar
+    toplevel $top -screen $mged_gui($id,screen) -menu $top.menubar
 
     frame $top.gridF2 -relief groove -bd 2
     frame $top.gridF3 -relief groove -bd 2
@@ -67,47 +66,47 @@ proc init_Raytrace { id } {
     $top.menubar add cascade -label "Framebuffer" -underline 0 -menu $top.menubar.fb
 
     menu $top.menubar.active -title "Active Pane" -tearoff 0
-    $top.menubar.active add radiobutton -value ul -variable mged_dm_loc($id)\
+    $top.menubar.active add radiobutton -value ul -variable mged_gui($id,dm_loc)\
 	    -label "Upper Left" -underline 6\
 	    -command "set_active_dm $id"
     hoc_register_menu_data "Active Pane" "Upper Left" "Active Pane - Upper Left"\
 	    { { summary "Set the active pane to \"Upper Left\"." } }
-    $top.menubar.active add radiobutton -value ur -variable mged_dm_loc($id)\
+    $top.menubar.active add radiobutton -value ur -variable mged_gui($id,dm_loc)\
 	    -label "Upper Right" -underline 6\
 	    -command "set_active_dm $id"
     hoc_register_menu_data "Active Pane" "Upper Right" "Active Pane - Upper Right"\
 	    { { summary "Set the active pane to \"Upper Right\"." } }
-    $top.menubar.active add radiobutton -value ll -variable mged_dm_loc($id)\
+    $top.menubar.active add radiobutton -value ll -variable mged_gui($id,dm_loc)\
 	    -label "Lower Left" -underline 2\
 	    -command "set_active_dm $id"
     hoc_register_menu_data "Active Pane" "Lower Left" "Active Pane - Lower Left"\
 	    { { summary "Set the active pane to \"Lower Left\"." } }
-    $top.menubar.active add radiobutton -value lr -variable mged_dm_loc($id)\
+    $top.menubar.active add radiobutton -value lr -variable mged_gui($id,dm_loc)\
 	    -label "Lower Right" -underline 3\
 	    -command "set_active_dm $id"
     hoc_register_menu_data "Active Pane" "Lower Right" "Active Pane - Lower Right"\
 	    { { summary "Set the active pane to \"Lower Right\"." } }
 
     menu $top.menubar.fb -title "Framebuffer" -tearoff 0
-    $top.menubar.fb add radiobutton -value 1 -variable mged_fb_all($id)\
+    $top.menubar.fb add radiobutton -value 1 -variable mged_gui($id,fb_all)\
 	    -label "All" -underline 0\
-	    -command "mged_apply $id \"set fb_all \$mged_fb_all($id)\""
+	    -command "mged_apply $id \"set fb_all \$mged_gui($id,fb_all)\""
     hoc_register_menu_data "Framebuffer" "All" "Framebuffer - All"\
 	    { { summary "Use the entire pane as a framebuffer." } }
-    $top.menubar.fb add radiobutton -value 0 -variable mged_fb_all($id)\
+    $top.menubar.fb add radiobutton -value 0 -variable mged_gui($id,fb_all)\
 	    -label "Rectangle Area" -underline 0\
-	    -command "mged_apply $id \"set fb_all \$mged_fb_all($id)\""
+	    -command "mged_apply $id \"set fb_all \$mged_gui($id,fb_all)\""
     hoc_register_menu_data "Framebuffer" "Rectangle Area" "Framebuffer - Rectangle Area"\
 	    { { summary "Use only the rectangular area for the framebuffer." } }
     $top.menubar.fb add separator
-    $top.menubar.fb add radiobutton -value 1 -variable mged_fb_overlay($id)\
+    $top.menubar.fb add radiobutton -value 1 -variable mged_gui($id,fb_overlay)\
 	    -label "Overlay" -underline 0\
-	    -command "mged_apply $id \"set fb_overlay \$mged_fb_overlay($id)\""
+	    -command "mged_apply $id \"set fb_overlay \$mged_gui($id,fb_overlay)\""
     hoc_register_menu_data "Framebuffer" "Overlay" "Framebuffer - Overlay"\
 	    { { summary "Draw the framebuffer on top of the geometry." } }
-    $top.menubar.fb add radiobutton -value 0 -variable mged_fb_overlay($id)\
+    $top.menubar.fb add radiobutton -value 0 -variable mged_gui($id,fb_overlay)\
 	    -label "Underlay" -underline 0\
-	    -command "mged_apply $id \"set fb_overlay \$mged_fb_overlay($id)\""
+	    -command "mged_apply $id \"set fb_overlay \$mged_gui($id,fb_overlay)\""
     hoc_register_menu_data "Framebuffer" "Underlay" "Framebuffer - Underlay"\
 	    { { summary "Draw the framebuffer under the geometry." } }
 
@@ -267,20 +266,18 @@ proc rt_ok { id top } {
 }
 
 proc do_Raytrace { id } {
-    global player_screen
-    global mged_active_dm
-    global mged_dm_loc
+    global mged_gui
     global port
     global fb_all
     global rt_control
 
-    winset $mged_active_dm($id)
+    winset $mged_gui($id,active_dm)
     set rt_cmd "_mged_rt"
 
     if {$rt_control($id,fb_or_file) == "filename"} {
 	if {$rt_control($id,file) != ""} {
 	    if {[file exists $rt_control($id,file)]} {
-		set result [cad_dialog .$id.rtDialog $player_screen($id)\
+		set result [cad_dialog .$id.rtDialog $mged_gui($id,screen)\
 			"Overwrite $rt_control($id,file)?"\
 			"Overwrite $rt_control($id,file)?"\
 			"" 0 OK CANCEL]
@@ -292,7 +289,7 @@ proc do_Raytrace { id } {
 
 	    append rt_cmd " -o $rt_control($id,file)"
 	} else {
-	    cad_dialog .$id.rtDialog $player_screen($id)\
+	    cad_dialog .$id.rtDialog $mged_gui($id,screen)\
 		    "No file name specified!"\
 		    "No file name specified!"\
 		    "" 0 OK
@@ -320,7 +317,7 @@ proc do_Raytrace { id } {
 		append rt_cmd " -s $width"
 	    }
 	} else {
-	    cad_dialog .$id.rtDialog $player_screen($id)\
+	    cad_dialog .$id.rtDialog $mged_gui($id,screen)\
 		    "Improper size specification!"\
 		    "Improper size specification: $rt_control($id,size)"\
 		    "" 0 OK
@@ -336,7 +333,7 @@ proc do_Raytrace { id } {
 	if {$result} {
 	    append rt_cmd " -C$red/$green/$blue"
 	} else {
-	    cad_dialog .$id.rtDialog $player_screen($id)\
+	    cad_dialog .$id.rtDialog $mged_gui($id,screen)\
 		    "Improper color specification!"\
 		    "Improper color specification: $rt_control($id,color)"\
 		    "" 0 OK
@@ -392,18 +389,17 @@ proc do_Raytrace { id } {
 }
 
 proc do_fbclear { id } {
-    global player_screen
-    global mged_active_dm
+    global mged_gui
     global port
     global rt_control
 
-    winset $mged_active_dm($id)
+    winset $mged_gui($id,active_dm)
 
     if {$rt_control($id,color) != ""} {
 	set result [regexp "^(\[0-9\]+)\[ \]+(\[0-9\]+)\[ \]+(\[0-9\]+)$" \
 		$rt_control($id,color) cmatch red green blue]
 	if {!$result} {
-	    cad_dialog .$id.rtDialog $player_screen($id)\
+	    cad_dialog .$id.rtDialog $mged_gui($id,screen)\
 		    "Improper color specification!"\
 		    "Improper color specification: $rt_control($id,color)"\
 		    "" 0 OK
@@ -422,15 +418,15 @@ proc do_fbclear { id } {
     }
 
     if {$result != 0} {
-	cad_dialog .$id.rtDialog $player_screen($id)\
+	cad_dialog .$id.rtDialog $mged_gui($id,screen)\
 		"RT Error!" "Rt Error: $rt_error" "" 0 OK
     }
 }
 
 proc rt_set_fb_state { id } {
-    global mged_fb
+    global mged_gui
 
-    set mged_fb($id) 1
+    set mged_gui($id,fb) 1
     set_fb $id
 
     set top .$id.do_rt
@@ -442,9 +438,9 @@ proc rt_set_fb_state { id } {
 }
 
 proc rt_set_file_state { id } {
-    global mged_fb
+    global mged_gui
 
-    set mged_fb($id) 0
+    set mged_gui($id,fb) 0
     set_fb $id
 
     set top .$id.do_rt
@@ -455,11 +451,10 @@ proc rt_set_file_state { id } {
 }
 
 proc rt_set_fb_size { id } {
-    global mged_top
-    global mged_dm_loc
+    global mged_gui
     global rt_control
 
-    winset $mged_top($id).$mged_dm_loc($id)
+    winset $mged_gui($id,top).$mged_gui($id,dm_loc)
     set size [dm size]
     set rt_control($id,size) "[lindex $size 0]x[lindex $size 1]"
 }
@@ -477,7 +472,7 @@ proc rt_dismiss { id } {
 }
 
 proc do_Advanced_Settings { id } {
-    global player_screen
+    global mged_gui
     global rt_control
 
     set top .$id.do_rtAS
@@ -486,7 +481,7 @@ proc do_Advanced_Settings { id } {
 	return
     }
 
-    toplevel $top -screen $player_screen($id)
+    toplevel $top -screen $mged_gui($id,screen)
 
     frame $top.gridF1 -relief groove -bd 2
     frame $top.gridF2
@@ -658,10 +653,7 @@ showing the principal direction vector." } }
 }
 
 proc update_Raytrace { id } {
-    global mged_active_dm
-    global mged_dm_loc
-    global mged_fb
-    global mged_listen
+    global mged_gui
     global fb
     global listen
     global port
@@ -672,8 +664,8 @@ proc update_Raytrace { id } {
 	return
     }
 
-    winset $mged_active_dm($id)
-    switch $mged_dm_loc($id) {
+    winset $mged_gui($id,active_dm)
+    switch $mged_gui($id,dm_loc) {
 	ul {
 	    set rt_control($id,fb) "Upper Left"
 	}
@@ -688,7 +680,7 @@ proc update_Raytrace { id } {
 	}
     }
 
-    if {$mged_fb($id)} {
+    if {$mged_gui($id,fb)} {
 	set rt_control($id,fb_or_file) "framebuffer"
 	set fb_state normal
 	set file_state disabled
