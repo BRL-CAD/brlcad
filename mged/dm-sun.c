@@ -245,6 +245,10 @@ SunPw_open()
  */
 void	SunPw_close()
 {
+	/* Disable the asynchronous notifications before closing FDs */
+	notify_set_signal_func(SunPw_open,
+		NOTIFY_FUNC_NULL, SIGWINCH, NOTIFY_ASYNC);
+
 	pw_close(sun_pw);
 	pw_close(sun_master_pw);
 	(void)close(sun_win_fd);
