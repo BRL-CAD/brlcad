@@ -159,7 +159,7 @@ double *dx;
  *	FORTRAN-FOUR PLUS User Interface
  */
 
-fscale( idata, elements, mode, length, odata, min, dx )
+FSCALE( idata, elements, mode, length, odata, min, dx )
 int idata[];
 int *elements;
 char *mode;
@@ -168,5 +168,5 @@ int odata[];
 double *min;
 double *dx;
 {
-	scale( idata, *elements, *mode, *length, odata, min, dx );
+	tp_scale( idata, *elements, *mode, *length, odata, min, dx );
 }
