@@ -47,11 +47,12 @@ mk_write_color_table( struct rt_wdb *ofp )
 	RT_CK_WDB(ofp);
 	if( ofp->dbip->dbi_version <= 4 )  {
 		register struct mater *mp;
-		union record	record;
 
 		BU_ASSERT_LONG( mk_version, ==, 4 );
 
 		for( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
+#if 0
+			union record	record;
 			record.md.md_id = ID_MATERIAL;
 			record.md.md_flags = 0;
 			record.md.md_low = mp->mt_low;
@@ -64,7 +65,6 @@ mk_write_color_table( struct rt_wdb *ofp )
 
 /* XXX examine mged/mater.c: color_putrec() */
 
-#if 0
 			/* Write out the record */
 			(void)fwrite( (char *)&record, sizeof record, 1, ofpxx );
 #else
