@@ -66,4 +66,5 @@ struct shadework {
 	fastf_t		sw_intensity[3*SW_NLIGHTS]; /* light intensities */
 	char		*sw_visible[SW_NLIGHTS]; /* visibility flags/ptrs */
 	int		sw_xmitonly;	/* flag: need sw_transmit only */
+	int		sw_inputs;	/* fields from mf_inputs actually filled */
 };
