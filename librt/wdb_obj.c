@@ -6726,7 +6726,7 @@ int wdb_attr_rm_cmd(struct rt_wdb	*wdbp,
 
 	/* this is only valid for v5 databases */
 	if( wdbp->dbip->dbi_version < 5 ) {
-		Tcl_AppendResult(interp, "Attributes are only available in database version 5 and later\n", (char *)NULL );
+		Tcl_AppendResult(interp, "Attributes are not available for this database format.\nPlease upgrade your database format using \"dbupgrade\" to enable attributes.", (char *)NULL );
 		return TCL_ERROR;
 	}
 
@@ -6783,7 +6783,7 @@ wdb_attr_cmd(struct rt_wdb	*wdbp,
 
 	/* this is only valid for v5 databases */
 	if( wdbp->dbip->dbi_version < 5 ) {
-		Tcl_AppendResult(interp, "Attributes are only available in database version 5 and later\n", (char *)NULL );
+		Tcl_AppendResult(interp, "Attributes are not available for this database format.\nPlease upgrade your database format using \"dbupgrade\" to enable attributes.", (char *)NULL );
 		return TCL_ERROR;
 	}
 
