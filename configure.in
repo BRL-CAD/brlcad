@@ -19,6 +19,8 @@ dnl AC_PROG_YACC
 
 AM_C_PROTOTYPES
 
+CFLAGS="$CFLAGS "'-I$(top_srcdir)/h'
+
 case "$target" in
 	*-*-linux*)
 		PTHREAD_LIBS="-lpthread"
