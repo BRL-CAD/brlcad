@@ -210,11 +210,29 @@ unsigned char	*rgb;
     
     if (*str == '#')
     {
-	if (strlen(++str) != 7)
+	if (strlen(++str) != 6)
 	    return 0;
 	num = sscanf(str, "%02x%02x%02x", &r, &g, &b);
-	printf("I read %d of %d, %d, %d\n", num, r, g, b);
+	printf("# notation: I read %d of %d, %d, %d\n", num, r, g, b);
     }
+    else if (isdigit(*str))
+    {
+	num = sscanf(str, "%d/%d/%d", &r, &g, &b);
+	printf("slash separation: I read %d of %d, %d, %d\n", num, r, g, b);
+	if (num == 1)
+	{
+	    num = sscanf(str, "%d %d %d", &r, &g, &b);
+	    printf("blank separation: I read %d of %d, %d, %d\n", num, r, g, b);
+	}
+	VSET(rgb, r, g, b);
+	if ((r < 0) || (r > 255)
+	 || (g < 0) || (g > 255)
+	 || (b < 0) || (b > 255))
+	    return 0;
+    }
+    else
+	return 0;
 
+    VSET(rgb, r, g, b);
     return 1;
 }
