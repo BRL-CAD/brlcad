@@ -50,6 +50,8 @@ static char	usage[] = "Usage: %s [-r region] [-g group] [jack_db] [brlcad_db]\n"
 
 RT_EXTERN( fastf_t nmg_loop_plane_area, (const struct loopuse *lu, plane_t pl ) );
 
+int	psurf_to_nmg();
+int	create_brlcad_db();
 void	jack_to_brlcad();
 
 int
