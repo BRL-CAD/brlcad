@@ -83,6 +83,7 @@ typedef struct  {
 	int	(*if_curs_set)();
 	int	(*if_cmemory_addr)();
 	int	(*if_cscreen_addr)();
+	int	(*if_help)();	/* prints useful information */
 	char	*if_type;	/* what "open" claims it is. */
 	int	if_max_width;
 	int	if_max_height;
@@ -123,6 +124,7 @@ typedef struct  {
 #define fb_gettype(_ifp)		(_ifp->if_type)
 #define fb_getwidth(_ifp)		(_ifp->if_width)
 #define fb_getheight(_ifp)		(_ifp->if_height)
+#define fb_help(_ifp)			(*_ifp->if_help)(_ifp)
 #define fb_reset(_ifp)			(*_ifp->if_dreset)(_ifp)
 #define fb_clear(_ifp,_pp)		(*_ifp->if_dclear)(_ifp,_pp)
 #define fb_read(_ifp,_x,_y,_pp,_ct)	(*_ifp->if_bread)(_ifp,_x,_y,_pp,_ct)
@@ -139,6 +141,7 @@ typedef struct  {
 /* Library entry points which are true functions.			*/
 extern FBIO	*fb_open();
 extern int	fb_close();
+extern int	fb_genhelp();
 extern int	fb_ioinit();
 extern int	fb_seek();
 extern int	fb_tell();
