@@ -213,7 +213,9 @@ f_inside()
 	}
 	if( intern.idb_type == ID_ARB8 )  {
 		/* find the comgeom arb type, & reorganize */
-		if( (cgtype = rt_arb_get_cgtype( &intern, &tol )) <= 0 ) {
+		int uvec[8],svec[8];
+
+		if( rt_arb_get_cgtype( &cgtype , intern.idb_ptr, &tol , uvec , svec ) == 0 ) {
 			rt_log("%s: BAD ARB\n",outdp->d_namep);
 			return;
 		}
@@ -454,7 +456,7 @@ plane_t	planes[6];
 
 	/* find the new vertices by intersecting the new face planes */
 	for(i=0; i<8; i++) {
-		if( rt_arb_3face_intersect( arb->pt[i], planes, cgtype, i ) < 0 )  {
+		if( rt_arb_3face_intersect( arb->pt[i], planes, cgtype, i*3 ) < 0 )  {
 			(void)printf("cannot find inside arb\n");
 			return(1);
 		}
