@@ -112,7 +112,7 @@ register struct region *rp;
 	pp->wgt_diffuse = 0.3;
 	pp->transmit = 0.0;
 	pp->reflect = 0.0;
-	pp->refrac_index = 0.0;
+	pp->refrac_index = RI_AIR;
 
 	mlib_parse( rp->reg_mater.ma_matparm, phong_parse, (mp_off_ty)pp );
 	return(1);
@@ -135,7 +135,7 @@ register struct region *rp;
 	pp->wgt_diffuse = 0.4;
 	pp->transmit = 0.0;
 	pp->reflect = 0.75;
-	pp->refrac_index = 0.0;
+	pp->refrac_index = 1.65;
 
 	mlib_parse( rp->reg_mater.ma_matparm, phong_parse, (mp_off_ty)pp );
 	if(rdebug&RDEBUG_MATERIAL)
