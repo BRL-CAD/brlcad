@@ -237,6 +237,11 @@ MGED_EXTERN(void do_list, (struct rt_vls *outstrp, struct directory *dp, int ver
 extern int cmd_prev(), cmd_next();
 extern void history_record();
 
+
+/* cmd.c */
+
+extern void start_catching_output(), stop_catching_output();
+
 #ifndef	NULL
 #define	NULL		0
 #endif
@@ -432,6 +437,8 @@ extern struct mged_variables mged_variables;
 #define	MAXARGS		9000	/* Maximum number of args per line */
 
 /* Command return codes */
+
+#define MGED_PROMPT "mged> "
 
 #define CMD_OK		919
 #define CMD_BAD		920
