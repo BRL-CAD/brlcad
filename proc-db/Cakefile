@@ -7,7 +7,7 @@
 #define SRCDIR	proc-db
 #define PRODUCTS	pyramid molecule clutter kurt room tube teapot \
 			pipetest nmgmodel brickwall wall tea_nmg \
-			pipe terrain sphflake fence platetest
+			pipe terrain sphflake fence platetest bottest
 /* pickett_fence */
 
 #define STATIC_PRODUCTS		\
@@ -28,6 +28,9 @@
 #define AFTERINSTALL	rm
 
 /* Explicit composition of each product */
+
+bottest:	bottest.o
+	CC LDFLAGS  bottest.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o bottest
 
 pipe:	pipe.o
 	CC LDFLAGS  pipe.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o pipe
