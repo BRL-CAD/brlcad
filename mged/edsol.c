@@ -1490,7 +1490,8 @@ sedit()
 				}
 				printf(") [%d]: ",arb_vertices[type][loc]);
 
-				(void)gets( line );		/* Null terminated */
+				(void)fgets( line, sizeof(line), stdin );
+				line[strlen(line)-1] = '\0';		/* remove newline */
 				if( feof(stdin) )  quit();
 				if( line[0] == '\0' )
 					fixv = arb_vertices[type][loc]; 	/* default */
