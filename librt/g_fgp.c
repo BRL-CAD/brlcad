@@ -725,14 +725,29 @@ CONST int	free;
 {
 	struct rt_fgp_internal *fgp_ip, *fgp_op;
 
+	if( op == ip )
+		return( 0 );
+
 	RT_CK_DB_INTERNAL( ip );
 	fgp_ip = (struct rt_fgp_internal *)ip->idb_ptr;
 	RT_FGP_CK_MAGIC( fgp_ip );
-	RT_CK_DB_INTERNAL( op );
-	fgp_op = (struct rt_fgp_internal *)op->idb_ptr;
-	RT_FGP_CK_MAGIC( fgp_op );
 
-	bn_mat_mul( fgp_op->xform, mat, fgp_ip->xform );
+	/*
+	 * We are done with the input solid so free it if required.
+	 */
+	if (free) {
+		RT_INIT_DB_INTERNAL( op );
+		*op = *ip;
+		ip->idb_ptr = (genptr_t) 0;
+	}
+	else
+	{
+		RT_INIT_DB_INTERNAL( op );
+		BU_GETSTRUCT( fgp_op, rt_fgp_internal );
+		*fgp_op = *fgp_ip;
+		*op = *ip;
+		op->idb_ptr = (genptr_t)fgp_op;
+	}
 
 	return( 0 );
 }
