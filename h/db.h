@@ -3,9 +3,19 @@
  *
  *		GED Database Format
  *
- *	U. S. Army Ballistic Research Laboratory
+ *  Author -
+ *	Michael John Muuss
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1985 by the United States Army.
+ *	All rights reserved.
  *
- * This header file describes the object file structure.
+ *  $Header$
  */
 
 #define NAMESIZE		16
@@ -15,7 +25,7 @@ extern char *strncpy();
 /*
  *		FILE FORMAT
  *
- * All records are of fixed length, and are composed of one of several formats:
+ * All records are of fixed length, and have one of these formats:
  *	An ID record
  *	A SOLID description
  *	A COMBINATION description (1 header, 1 member)
@@ -25,6 +35,9 @@ extern char *strncpy();
  *	A free record
  *	A Polygon header record
  *	A Polygon data record
+ *      A B-spline header record
+ *      A B-spline knot vector record
+ *      A B-spline control mesh record
  *
  * The records are stored as binary records corresponding to PDP-11 and
  * VAX C structs, so padding must be supplied explicitly for alignment.
@@ -33,14 +46,55 @@ union record  {
 	char	u_id;		/* To differentiate record types */
 #define ID_IDENT	'I'
 #define ID_SOLID	'S'
-#define ID_COMB	'C'
-#define ID_MEMB	'M'
+#define ID_COMB		'C'
+#define ID_MEMB		'M'
 #define ID_ARS_A	'A'
 #define ID_ARS_B	'B'
 #define ID_FREE		'F'	/* Free record -- ignore */
 #define ID_P_HEAD	'P'	/* Polygon header */
 #define ID_P_DATA	'Q'	/* Polygon data record */
+#define ID_B_SPL_HEAD   'D'     /* B-spline header. (d is for d_spline) */
+#define ID_B_SPL_KV     'K'     /* B-spline knot vector */
+#define ID_B_SPL_CTL    'L'     /* B-spline control mesh */
+#define ID_MATERIAL	'm'	/* Material description record */
 	char	u_size[128];	/* Total record size */
+	struct material_rec {
+		char	md_id;		/* = ID_MATERIAL */
+		char	md_flags;
+		short	md_low;		/* lower end of this material ID */
+		short	md_hi;		/* upper end of this material ID */
+		char	md_r;		/* color of this material */
+		char	md_g;
+		char	md_b;
+		char	md_material[100]; /* "handle" in material database */
+	} md;
+	struct b_spline_head {
+		char    d_id;		/* = B_SPLINE_HEAD */
+		char    d_pad1;
+		char    d_name[NAMESIZE];
+		short   d_order[2];	/* order of u and v directions */
+		short   d_kv_size[2];	/* knot vector size  (u and v) */
+		short   d_ctl_size[2];  /* control mesh size ( u and v) */
+		float   d_resolution;	/* resolution of flatness */
+		short   d_geom_type;	/* geom type 3 or 4 */
+		int     d_totlen;	/* number of total records */
+		float   d_minx;		/* bounding box values */
+		float   d_miny;
+		float   d_minz;
+		float   d_maxx;
+		float   d_maxy;
+		float   d_maxz;
+	} d;
+	struct b_spline_kv {
+		char    k_id;		/* = B_SPLINE_KV */
+#define SPLINE   22
+		char    k_dir;		/* direction of knots */
+		float   k_values[30];   /* knot vector values */
+	} k;
+	struct b_spline_ctl {
+		char    l_id;		/* = B_SPLINE_CTL */
+		float   l_pts[ 8 * 3 ];    /* homogeneous points */
+	} l; 
 	struct polyhead  {
 		char	p_id;		/* = POLY_HEAD */
 		char	p_pad1;
