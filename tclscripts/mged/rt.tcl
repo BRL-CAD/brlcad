@@ -129,12 +129,12 @@ framebuffer to a file." } }
     hoc_register_data $top.filenameRB "File Name"\
 	    { { summary "This activates the file and deactivates
 the framebuffer (i.e. the results of raytracing
-will end up in the file." } }
+will end up in the file)." } }
     entry $top.filenameE -relief flat -width 12 -textvar rt_control($id,file)\
 	    -state $file_state
     hoc_register_data $top.filenameE "File Name"\
 	    { { summary "Enter a file name. If the \"File Name\"
-radiobutton is selected. The results of
+radiobutton is selected, the results of
 raytracing will go to the specified file." } }
 
     label $top.sizeL -text "Size" -anchor w
