@@ -1555,6 +1555,16 @@ It is safe to ignore the self-laudatory messages of the form:
 Various remarks from CFT77 regarding the Whetstone tests
 can also be ingored.
 .NH 2
+CONVEX Warnings
+When compiling on the Convex it is safe to ignore messages of the forms:
+.nf
+.sp .5
+cc: Warning on line 849 of machine.c: saw asm statement in 'RES_ACQUIRE',
+optimization level reduced to -O0.
+.sp .25
+cc: Warning on line X of fbstretch.c: expression statement has no effect
+.fi
+.NH 2
 SUN PROBLEMS
 .PP
 A problem with keyboard command input to \fBmged\fR being ignored
