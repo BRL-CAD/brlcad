@@ -1472,6 +1472,7 @@ char	      **argv;
 		}
 
 		id = intern.idb_type = stlp->id;
+		intern.idb_meth = &rt_functab[id];
 		intern.idb_ptr = bu_calloc( stlp->db_internal_size, 1,
 					    "rt_db_put" );
 		*((long *)intern.idb_ptr) = stlp->magic;
