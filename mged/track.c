@@ -262,7 +262,7 @@ tryagain:	/* sent here to try next set of names */
 	(void)strcpy(record.s.s_name, solname);
 	record.s.s_type = GENARB8;
 	record.s.s_cgtype = BOX;		/* BOX */
-	if( wrobj(solname) ) 
+	if( wrobj(solname, DIR_SOLID) ) 
 		return CMD_BAD;
 
 	solname[8] = '\0';
@@ -275,7 +275,7 @@ tryagain:	/* sent here to try next set of names */
 	trcurve(iw, tr);
 	crname(solname, 2);
 	(void)strcpy(record.s.s_name, solname);
-	if( wrobj( solname ) )
+	if( wrobj( solname , DIR_SOLID ) )
 		return CMD_BAD;
 	solname[8] = '\0';
 	/* idler dummy rcc */
@@ -285,7 +285,7 @@ tryagain:	/* sent here to try next set of names */
 	VMOVE(&record.s.s_values[15], &record.s.s_values[9]);
 	crname(solname, 3);
 	(void)strcpy(record.s.s_name, solname);
-	if( wrobj( solname ) )
+	if( wrobj( solname , DIR_SOLID ) )
 		return CMD_BAD;
 	solname[8] = '\0';
 
@@ -297,7 +297,7 @@ tryagain:	/* sent here to try next set of names */
 	record.s.s_type = GENARB8;
 	record.s.s_cgtype = ARB8;		/* arb8 */
 	crdummy(iw, tr, 1);
-	if( wrobj(solname) )
+	if( wrobj(solname,DIR_SOLID) )
 		return CMD_BAD;
 	solname[8] = '\0';
 
@@ -309,7 +309,7 @@ tryagain:	/* sent here to try next set of names */
 	crname(solname, 5);
 	(void)strcpy(record.s.s_name, solname);
 	record.s.s_cgtype = BOX;		/* box */
-	if(wrobj(solname))
+	if(wrobj(solname,DIR_SOLID))
 		return CMD_BAD;
 	solname[8] = '\0';
 
@@ -321,7 +321,7 @@ tryagain:	/* sent here to try next set of names */
 	trcurve(dw, tr);
 	crname(solname, 6);
 	(void)strcpy(record.s.s_name, solname);
-	if( wrobj(solname) )
+	if( wrobj(solname,DIR_SOLID) )
 		return CMD_BAD;
 	solname[8] = '\0';
 
@@ -332,7 +332,7 @@ tryagain:	/* sent here to try next set of names */
 	VMOVE(&record.s.s_values[15], &record.s.s_values[9]);
 	crname(solname, 7);
 	(void)strcpy(record.s.s_name, solname);
-	if( wrobj(solname) )
+	if( wrobj(solname,DIR_SOLID) )
 		return CMD_BAD;
 	solname[8] = '\0';
 
@@ -344,7 +344,7 @@ tryagain:	/* sent here to try next set of names */
 	record.s.s_type = GENARB8;
 	record.s.s_cgtype = ARB8;		/* arb8 */
 	crdummy(dw, tr, 2);
-	if( wrobj(solname) )
+	if( wrobj(solname,DIR_SOLID) )
 		return CMD_BAD;
 	solname[8] = '\0';
 	
@@ -354,7 +354,7 @@ tryagain:	/* sent here to try next set of names */
 	bottom(temp1, temp2, tr);
 	crname(solname, 9);
 	(void)strcpy(record.s.s_name, solname);
-	if( wrobj(solname) )
+	if( wrobj(solname,DIR_SOLID) )
 		return CMD_BAD;
 	solname[8] = '\0';
 
@@ -367,11 +367,12 @@ tryagain:	/* sent here to try next set of names */
 	top(temp1, temp2, tr);
 	crname(solname, 10);
 	(void)strcpy(record.s.s_name, solname);
-	if( wrobj(solname) )
+	if( wrobj(solname,DIR_SOLID) )
 		return CMD_BAD;
 	solname[8] = '\0';
 
 	/* add the regions */
+	bzero( (char *)&record , sizeof( union record ) );
 	record.c.c_id = ID_COMB;
 	record.c.c_flags = 'R';
 	record.c.c_aircode = 0;
@@ -384,12 +385,12 @@ tryagain:	/* sent here to try next set of names */
 		regname[8] = '\0';
 		crname(regname, i);
 		(void)strcpy(record.c.c_name, regname);
-		if( wrobj(regname) )
+		if( wrobj(regname,DIR_REGION|DIR_COMB) )
 			return CMD_BAD;
 		regname[8] = '\0';
 		crname(regname, i+4);
 		(void)strcpy(record.c.c_name, regname);
-		if( wrobj(regname) )
+		if( wrobj(regname,DIR_REGION|DIR_COMB) )
 			return CMD_BAD;
 	}
 	regname[8] = '\0';
@@ -501,9 +502,9 @@ int pos;
 }
 
 
-
-wrobj( name )
+wrobj( name, flags )
 char name[];
+int flags;
 {
 	struct directory *tdp;
 
@@ -511,7 +512,7 @@ char name[];
 		(void)printf("amtrack naming error: %s already exists\n",name);
 		return(-1);
 	}
-	if( (tdp = db_diradd( dbip, name, -1, 1, DIR_SOLID)) == DIR_NULL ||
+	if( (tdp = db_diradd( dbip, name, -1, 1, flags)) == DIR_NULL ||
 	    db_alloc( dbip, tdp, 1) < 0 ||
 	    db_put( dbip, tdp, &record, 0, 1 ) < 0 )  {
 	    	(void)printf("wrobj(%s):  write error\n", name);
