@@ -323,6 +323,12 @@ static struct funtab funtab[] = {
 };
 
 
+void
+cmd_setup()
+{
+	return;
+}
+
 /* wrapper for sync() */
 
 int
