@@ -79,8 +79,8 @@ for PRIM in $PRIMITIVES ; do
     # 
     # in args =>
     #
-    set ehy_IN_ARGS ""
-    set ehy_DB_ARGS ""
+    set ehy_IN_ARGS "0 0 0 0 0 180 75 0 0 50 80"
+    set ehy_DB_ARGS "V {0 0 0} H {0 0 180} A {1 0 0} r_1 75 r_2 50 c 80"
 
     #
     # Ellipsoid (ell) Arguments
