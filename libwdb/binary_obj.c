@@ -118,8 +118,8 @@ mk_binunif(
 	bu_free_external( &body );
 
 	/* add this object to the directory */
-	if( (dp=db_diradd5( wdbp->dbip, obj_name, -1, intern.idb_major_type,
-			   intern.idb_minor_type, 0, 0, NULL )) == DIR_NULL ) {
+	if( (dp=db_diradd5( wdbp->dbip, obj_name, -1, major_type,
+			   minor_type, 0, 0, NULL )) == DIR_NULL ) {
 		bu_log( "Error while attemptimg to add new name (%s) to the database",
 			obj_name );
 		bu_free_external( &bin_ext );
