@@ -6204,14 +6204,13 @@ init_objedit_guts()
 		es_type = rt_arb_std_type( &es_int , &mged_tol );
 	}
 
-	get_solid_keypoint( es_keypoint , &strp , &es_int , es_mat );
-
 	/* Save aggregate path matrix */
 	pathHmat( illump, es_mat, illump->s_last-1 );
 
 	/* get the inverse matrix */
 	bn_mat_inv( es_invmat, es_mat );
 
+	get_solid_keypoint( es_keypoint , &strp , &es_int , es_mat );
 	set_e_axes_pos(1);
 
 	VSETALL( edit_absolute_model_rotate, 0.0 );
