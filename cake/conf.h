@@ -112,7 +112,6 @@ typedef	int	Cast;
 
 #include		"port.h"
 
-#define	vfork()		fork()
 #define	index(s, c)	strchr(s, c)
 #define	rindex(s, c)	strrchr(s, c)
 #endif

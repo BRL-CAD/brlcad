@@ -7,7 +7,7 @@ rcs_id[] = "$Header$";
 
 #include	"cake.h"
 
-extern	time_t	pick_time();
+time_t	pick_time();		/* Defined further down */
 
 /*
 **	The main chasing function. It checks all entries to see
@@ -32,17 +32,6 @@ do_chase(node, picked)
 reg	Node	*node;
 reg	Entry	*picked;
 {
-	extern		get_utime();
-	extern	time_t	cake_gettime();
-	extern	Node	*chase();
-	extern	Node	*chase_node();
-	extern	bool	match();
-	extern	bool	eval();
-	extern	Entry	*ground_entry();
-	extern	Test	*deref_test();
-	extern		deref_entry();
-	extern	List	*entries;
-	extern	char	*list_names();
 	Env		env;
 	reg	List	*ptr, *ptr1, *ptr2;
 	reg	Node	*newnode, *onode;

@@ -11,7 +11,7 @@ rcs_id[] = "$Header$";
 List	*entries;
 Entry	*main_entry;
 
-extern	Test	*ground_test();
+Test	*ground_test();		/* defined further down */
 
 #define	ground_pat(env, pat)	make_pat(ground(env, pat->p_str), pat->p_cmd, pat->p_flag);
 #define	ground_act(env, act)	make_act(ground(env, act->a_str), act->a_flag);
@@ -54,7 +54,6 @@ reg	List	*acts;				/* of Pat	*/
 
 prep_entries()
 {
-	extern	List	*break_pat();
 	reg	List	*ptr, *ptr1;
 	reg	Entry	*entry;
 	reg	Pat	*pat;
@@ -125,7 +124,6 @@ final_entry(argc, argv)
 reg	int	argc;
 reg	char	*argv[];
 {
-	extern	bool	hasvars();
 	reg	List	*ptr, *ptr1;
 	reg	Entry	*entry, *foundentry;
 	reg	Pat	*pat;
@@ -207,9 +205,6 @@ ground_entry(env, entry)
 Env		env;
 reg	Entry	*entry;
 {
-	extern		do_when();
-	extern	List	*break_pat();
-	extern	char	*ground();
 	reg	List	*ptr;
 	reg	Entry	*newentry;
 	reg	Pat	*pat, *newpat;
@@ -276,7 +271,6 @@ ground_test(env, test)
 Env		env;
 reg	Test	*test;
 {
-	extern	char	*ground();
 	reg	List	*ptr;
 	reg	Pat	*pat, *newpat;
 	reg	Test	*newtest;
@@ -356,7 +350,6 @@ deref_entry(env, entry)
 Env		env;
 reg	Entry	*entry;
 {
-	extern	List	*break_pat();
 	reg	List	*ptr, *ptr1;
 	reg	List	*newlist;
 	reg	List	*patlist;
@@ -393,7 +386,6 @@ Test *
 deref_test(test)
 reg	Test	*test;
 {
-	extern	char	*expand_cmds();
 	reg	List	*ptr;
 	reg	List	*newlist;
 	reg	Pat	*pat;

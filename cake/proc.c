@@ -30,11 +30,6 @@ reg	Node	*node;
 reg	int	(*func)();
 reg	List	*args;
 {
-	extern	bool	has_meta();
-	extern	char	*strip_backslash();
-	extern	char	*shell_path[2];
-	extern	char	*shell_cmd[2];
-	extern	char	*shell_opt[2];
 	char		*argv[MAXARGS];
 	reg	Proc	*proc;
 	reg	int	pid;
@@ -79,7 +74,7 @@ reg	List	*args;
 	}
 
 	mutex_lock();
-	if ((pid = vfork()) == 0)
+	if ((pid = fork()) == 0)
 	{
 		reg	int	fd;
 
@@ -191,7 +186,6 @@ int
 cake_wait(pid)
 reg	int	pid;
 {
-	extern	List	*find_process();
 	reg	int	exitpid;
 	reg	List	*ptr;
 	reg	Proc	*proc;
@@ -313,7 +307,7 @@ reg	char	*mode;
 
 	fflush(stdout);
 	mutex_lock();
-	if ((pid = vfork()) == 0)
+	if ((pid = fork()) == 0)
 	{
 		close(parent_end);
 		close(replaced);

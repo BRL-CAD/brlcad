@@ -6,12 +6,20 @@ static	char
 rcs_id[] = "$Header$";
 
 #include	"cake.h"
-#if defined(__sgi) && defined(__mips)
+#if __STDC__
 # include <unistd.h>
+#else
+# if defined(__sgi) && defined(__mips)
+	extern	unsigned short	geteuid();
+# endif
 #endif
 #include	<pwd.h>
 #include	<signal.h>
 #include	<sys/stat.h>
+
+#if !defined(__convex__) && !__STDC__ && !__EXTENSIONS__
+extern	Pwent	*getpwuid();
+#endif
 
 typedef	struct	passwd	Pwent;
 typedef	struct	stat	Stat;
@@ -319,20 +327,6 @@ main(argc, argv)
 int	argc;
 char	**argv;
 {
-	extern	int	parse_args();
-	extern	Node	*chase();
-	extern	char	*getenv();
-	extern	char	*dir_setup();
-#if !defined(__convex__) && !__STDC__ && !__EXTENSIONS__
-	extern	Pwent	*getpwuid();
-#endif
-#if defined(__sgi) && defined(__mips)
-	extern	unsigned short	geteuid();
-#else
-	extern	int	geteuid();
-#endif
-	extern	FILE	*cake_popen();
-	extern	FILE	*yyin;
 	Stat		statbuf;
 	int		envc;
 	char		*envv[MAXARGS];
@@ -453,9 +447,7 @@ char	**argv;
 #endif
 	cppargv[cppargc]   = NULL;
 
-#if 0
 	if (cakedebug)
-#endif
 	{
 		reg	int	i;
 
