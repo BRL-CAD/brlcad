@@ -74,5 +74,6 @@ struct mfuncs	**headp;
 	MFUNCS( noise_mfuncs );
 	MFUNCS( prj_mfuncs );
 	MFUNCS( grass_mfuncs );
+	MFUNCS( tthrm_mfuncs );
 
 }
