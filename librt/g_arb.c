@@ -1152,6 +1152,10 @@ struct rt_tol		*tol;
 
 	/* Compute "geometry" for region and shell */
 	nmg_region_a( *r, tol );
+
+	/* Some arbs may not be within tolerance, so triangulate faces where needed */
+	nmg_make_faces_within_tol( s, tol );
+
 	return(0);
 }
 
