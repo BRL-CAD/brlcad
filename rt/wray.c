@@ -54,18 +54,46 @@ struct vldray
 	long	rt;			/* ray tag */
 };
 
+/* The normal is expected to be pointing out from the object */
+#define WRAY_NORMAL(_ray, _norm)	\
+	_ray.na = atan2( _norm[Y], _norm[X] ); \
+	_ray.ne = asin( _norm[Z] );
+
+/*
+ *  The 32-bit ray tag field (rt) is encoded as follows:
+ *	13 bits for screen X,
+ *	13 bits for screen Y,
+ *	 6 bits for ray level.
+ *
+ *  This admits of different ray tags for every ray in a raytrace
+ *  up to 4096x4096 pixels, with up to 64 levels of recursion.
+ *  It is not clear just why this had to be encoded; it would have
+ *  been more useful for the file to have several fields for this.
+ *
+ *  0                   1                   2                   3 3
+ *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ * |         Screen Y        |          Screen X       |    Level  |
+ * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ */
+#define WRAY_TAG(_ray, _ap)	{ \
+		if( (_ray.rt = _ap->a_level) > 0x3F || _ray.rt < 0 ) \
+			_ray.rt = 0x3F; \
+		_ray.rt |= ((_ap->a_x & 0x1FFF) << 6 ) | \
+			   ((_ap->a_y & 0x1FFF) << (6+13) ); \
+	}
+
 /*
  *  			W R A Y
  */
 void
 wray( pp, ap, fp )
 register struct partition *pp;
-struct application *ap;
+register struct application *ap;
 FILE *fp;
 {
 	LOCAL struct vldray vldray;
 	register struct hit *hitp= pp->pt_inhit;
-	register int i;
 
 	VMOVE( &(vldray.ox), hitp->hit_point );
 	VSUB2( &(vldray.rx), pp->pt_outhit->hit_point,
@@ -73,35 +101,16 @@ FILE *fp;
 
 	if( pp->pt_inflip )  {
 		VREVERSE( hitp->hit_normal, hitp->hit_normal );
+		pp->pt_inflip = 0;
 	}
-	vldray.na = atan2( hitp->hit_normal[Y], hitp->hit_normal[X] );
-	vldray.ne = asin( hitp->hit_normal[Z] );
+	WRAY_NORMAL( vldray, hitp->hit_normal );
 
 	vldray.pa = vldray.pe = vldray.pc = vldray.sc = 0;	/* no curv */
 
+	/* Air is marked by negative region IDs */
 	vldray.ob = pp->pt_regionp->reg_regionid;
 
-	/*
-	 *  The 32-bit ray tag field (rt) is encoded as follows:
-	 *	13 bits for screen X,
-	 *	13 bits for screen Y,
-	 *	 6 bits for ray level.
-	 *
-	 *  This admits of different ray tags for every ray in a raytrace
-	 *  up to 4096x4096 pixels, with up to 64 levels of recursion.
-	 *  It is not clear just why this is useful.
-	 *
-	 *  0                   1                   2                   3 3
-	 *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-	 * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-	 * |         Screen Y        |          Screen X       |    Level  |
-	 * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-	 */
-	if( (i = ap->a_level) > 0x3F || i < 0 )
-		i = 0x3F;
-	vldray.rt = (i << 0 ) |
-		((ap->a_x & 0x1FFF) << 6 ) |
-		((ap->a_y & 0x1FFF) << (6+13) );
+	WRAY_TAG( vldray, ap );
 
 	if( fwrite( &vldray, sizeof(struct vldray), 1, fp ) != 1 )
 		rt_bomb("rway:  write error");
@@ -113,25 +122,60 @@ FILE *fp;
  *  Write a VLD-standard ray for a section of a ray specified
  *  by the "in" and "out" distances along the ray.  This is usually
  *  used for logging passage through "air" (ie, no solid).
+ *  The "inorm" flag holds an inward pointing normal (typ. a r_dir value)
+ *  that will be flipped on output, so that the "air solid"
+ *  has a proper outward pointing normal.
  */
 void
-wraypts( in, out, ap, fp )
-vect_t in, out;
+wraypts( in, inorm, out, id, ap, fp )
+vect_t	in;
+vect_t	inorm;
+vect_t	out;
+int	id;
+struct application *ap;
+FILE	*fp;
+{
+	LOCAL struct vldray vldray;
+	vect_t	norm;
+
+	VMOVE( &(vldray.ox), in );
+	VSUB2( &(vldray.rx), out, in );
+
+	VREVERSE( norm, inorm );
+	WRAY_NORMAL( vldray, norm );
+
+	vldray.pa = vldray.pe = vldray.pc = vldray.sc = 0;	/* no curv */
+
+	vldray.ob = id;
+
+	WRAY_TAG( vldray, ap );
+
+	fwrite( &vldray, sizeof(struct vldray), 1, fp );
+}
+
+/*
+ *			W R A Y P A I N T
+ *
+ *  Write "paint" into a VLD standard rayfile.
+ */
+void
+wraypaint( start, norm, paint, ap, fp )
+vect_t start, norm;
 struct application *ap;
 FILE *fp;
 {
 	LOCAL struct vldray vldray;
 
-	VMOVE( &(vldray.ox), in );
-	VSUB2( &(vldray.rx), out, in );
+	VMOVE( &(vldray.ox), start );
+	VSETALL( &(vldray.rx), 0 );
 
-	vldray.na = atan2( ap->a_ray.r_dir[Y], ap->a_ray.r_dir[X] );
-	vldray.ne = asin( ap->a_ray.r_dir[Z] );
+	WRAY_NORMAL( vldray, norm );
 
 	vldray.pa = vldray.pe = vldray.pc = vldray.sc = 0;	/* no curv */
 
-	vldray.ob = 0;		/* might want to be something special */
+	vldray.ob = paint;
 
-	vldray.rt = (ap->a_y << 16) | (ap->a_level & 0xFFFF);
+	WRAY_TAG( vldray, ap );
+
 	fwrite( &vldray, sizeof(struct vldray), 1, fp );
 }
