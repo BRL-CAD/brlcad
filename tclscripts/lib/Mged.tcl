@@ -83,6 +83,7 @@ class Mged {
     public method tol {args}
     public method tops {args}
     public method tree {args}
+    public method units {args}
     public method vdraw {args}
     public method whatid {args}
     public method whichair {args}
@@ -278,6 +279,10 @@ body Mged::make_bb {name args} {
 
 body Mged::make_name {args} {
     eval $db make_name $args
+}
+
+body Mged::units {args} {
+    eval $db units $args
 }
 
 body Mged::draw {args} {
