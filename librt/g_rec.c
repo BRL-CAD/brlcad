@@ -526,7 +526,7 @@ register struct uvcoord *uvp;
 	VSUB2( work, hitp->hit_point, rec->rec_V );
 	MAT4X3VEC( pprime, rec->rec_SoR, work );
 
-	switch( (int)hitp->hit_private )  {
+	switch( hitp->hit_private-rec_compute )  {
 	case 0:
 		/* Skin.  x,y coordinates define rotation.  radius = 1 */
 		uvp->uv_u = acos(pprime[Y]) * rt_inv2pi;
