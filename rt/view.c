@@ -95,6 +95,10 @@ HIDDEN int	refract();
 #define RI_AIR		1.0    /* Refractive index of air.		*/
 #define RI_GLASS	1.3    /* Refractive index of glass.		*/
 
+#ifdef BENCHMARK
+#define rand0to1()	(0.5)
+#define rand_half()	(0)
+#else BENCHMARK
 /*
  *  			R A N D 0 T O 1
  *
@@ -121,6 +125,7 @@ double rand0to1()
  */
 #define rand_half()	(rand0to1()-0.5)
 
+#endif BENCHMARK
 
 /*
  *  			I P O W
