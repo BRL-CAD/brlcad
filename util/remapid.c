@@ -38,7 +38,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "redblack.h"
 
-rb_tree		*assignment;	/* Relabeling assignment */
+rb_tree		*assignment;	/* Remapping assignment */
 struct db_i	*dbip;		/* Instance of BRL-CAD database */
 
 /************************************************************************
@@ -619,9 +619,9 @@ int	depth;
  */
 void print_usage (void)
 {
-#define OPT_STRING	"t?"
+#define OPT_STRING	"gt?"
 
-    bu_log("Usage: 'remapid [-t] file.g [spec_file]'\n");
+    bu_log("Usage: 'remapid [-{g|t}] file.g [spec_file]'\n");
 }
 
 /*
@@ -646,6 +646,9 @@ char	*argv[];
     while ((ch = getopt(argc, argv, OPT_STRING)) != EOF)
 	switch (ch)
 	{
+	    case 'g':
+		tankill = 0;
+		break;
 	    case 't':
 		tankill = 1;
 		break;
@@ -655,6 +658,13 @@ char	*argv[];
 		exit (ch != '?');
 		return(0);
 	}
+
+    if (tankill)
+    {
+	bu_log("Sorry, the TANKILL option is not yet implemented\n");
+	print_usage();
+	exit (1);
+    }
 
     switch (argc - optind)
     {
@@ -679,7 +689,7 @@ char	*argv[];
     /*
      *	Initialize the assignment
      */
-    assignment = rb_create1("Relabeling assignment", compare_curr_ids);
+    assignment = rb_create1("Remapping assignment", compare_curr_ids);
     rb_uniq_on1(assignment);
 
     /*
