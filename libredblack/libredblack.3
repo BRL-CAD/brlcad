@@ -273,6 +273,12 @@ which indicates the block of data
 (in the current node) to be removed.
 .I rb_delete
 removes this block of data from every order.
+The macro
+.I rb_delete1(tree),
+available in
+\fI"redblack.h"\fR,
+is similar,
+except that it removes the block of data in the first (perhaps only) order.
 .PP
 .I rb_neighbor
 finds the node adjacent (in \fIorder\fR) to
