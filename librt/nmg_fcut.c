@@ -1410,12 +1410,8 @@ got_loop:
 	}
 
 	/* Sort the vertexuse table into appropriate order */
-#if defined(__convexc__)
-	qsort( (genptr_t)vs, nvu, sizeof(*vs),
-		(int (*)())nmg_face_vu_compare);
-#else
-	qsort( (genptr_t)vs, nvu, sizeof(*vs), nmg_face_vu_compare );
-#endif
+	qsort( (genptr_t)vs, (unsigned)nvu, (unsigned)sizeof(*vs),
+		nmg_face_vu_compare );
 
 	if(rt_g.NMG_debug&DEBUG_VU_SORT)
 	{
