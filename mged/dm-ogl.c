@@ -380,10 +380,6 @@ XEvent *eventPtr;
 	}else if(state == ST_O_EDIT && !OEDIT_SCALE){
 	  save_edflag = edobj;
 	  edobj = BE_O_SCALE;
-#if 0
-	  save_movedir = movedir;
-	  movedir = SARROW;
-#endif
 	}
       }
 
@@ -540,10 +536,6 @@ XEvent *eventPtr;
 	}else if(state == ST_O_EDIT && !OEDIT_TRAN){
 	  save_edflag = edobj;
 	  edobj = BE_O_X;
-#if 0
-	  save_movedir = movedir;
-	  movedir = RARROW;
-#endif
 	}
       }
 
@@ -567,10 +559,6 @@ XEvent *eventPtr;
 	}else if(state == ST_O_EDIT && !OEDIT_TRAN){
 	  save_edflag = edobj;
 	  edobj = BE_O_Y;
-#if 0
-	  save_movedir = movedir;
-	  movedir = UARROW;
-#endif
 	}
       }
 
@@ -594,10 +582,6 @@ XEvent *eventPtr;
 	}else if(state == ST_O_EDIT && !OEDIT_TRAN){
 	  save_edflag = edobj;
 	  edobj = BE_O_XY;
-#if 0
-	  save_movedir = movedir;
-	  movedir = UARROW | RARROW;
-#endif
 	}
       }
 
@@ -621,10 +605,6 @@ XEvent *eventPtr;
 	}else if(state == ST_O_EDIT && !OEDIT_SCALE){
 	  save_edflag = edobj;
 	  edobj = BE_O_XSCALE;
-#if 0
-	  save_movedir = movedir;
-	  movedir = SARROW;
-#endif
 	}
       }
 
@@ -648,10 +628,6 @@ XEvent *eventPtr;
 	}else if(state == ST_O_EDIT && !OEDIT_SCALE){
 	  save_edflag = edobj;
 	  edobj = BE_O_YSCALE;
-#if 0
-	  save_movedir = movedir;
-	  movedir = SARROW;
-#endif
 	}
       }
 
@@ -675,10 +651,6 @@ XEvent *eventPtr;
 	}else if(state == ST_O_EDIT && !OEDIT_SCALE){
 	  save_edflag = edobj;
 	  edobj = BE_O_ZSCALE;
-#if 0
-	  save_movedir = movedir;
-	  movedir = SARROW;
-#endif
 	}
       }
 
@@ -886,10 +858,6 @@ XEvent *eventPtr;
 	    }else if(state == ST_O_EDIT && !OEDIT_ROTATE){
 	      save_edflag = edobj;
 	      edobj = BE_O_ROTATE;
-#if 0
-	      save_movedir = movedir;
-	      movedir = ROTARROW;
-#endif
 	    }
 	  }else if(mged_variables.coords == 'm')
 	    f = rate_model_rotate[Z];
@@ -930,10 +898,6 @@ XEvent *eventPtr;
 	    }else if(state == ST_O_EDIT && !OEDIT_ROTATE){
 	      save_edflag = edobj;
 	      edobj = BE_O_ROTATE;
-#if 0
-	      save_movedir = movedir;
-	      movedir = ROTARROW;
-#endif
 	    }
 	  }else if(mged_variables.coords == 'm')
 	    f = absolute_model_rotate[Z];
@@ -989,10 +953,6 @@ XEvent *eventPtr;
 	    }else if(state == ST_O_EDIT && !OEDIT_TRAN){
 	      save_edflag = edobj;
 	      edobj = BE_O_XY;
-#if 0
-	      save_movedir = movedir;
-	      movedir = UARROW | RARROW;
-#endif
 	    }
 	  }else if(mged_variables.coords == 'm')
 	    f = rate_model_tran[Z];
@@ -1031,10 +991,6 @@ XEvent *eventPtr;
 	    }else if(state == ST_O_EDIT && !OEDIT_TRAN){
 	      save_edflag = edobj;
 	      edobj = BE_O_XY;
-#if 0
-	      save_movedir = movedir;
-	      movedir = UARROW | RARROW;
-#endif
 	    }
 	  }else if(mged_variables.coords == 'm')
 	    f = absolute_model_tran[Z];
@@ -1092,10 +1048,6 @@ XEvent *eventPtr;
 	    }else if(state == ST_O_EDIT && !OEDIT_ROTATE){
 	      save_edflag = edobj;
 	      edobj = BE_O_ROTATE;
-#if 0
-	      save_movedir = movedir;
-	      movedir = ROTARROW;
-#endif
 	    }
 	  }else if(mged_variables.coords == 'm')
 	    f = rate_model_rotate[Y];
@@ -1136,10 +1088,6 @@ XEvent *eventPtr;
 	    }else if(state == ST_O_EDIT && !OEDIT_ROTATE){
 	      save_edflag = edobj;
 	      edobj = BE_O_ROTATE;
-#if 0
-	      save_movedir = movedir;
-	      movedir = ROTARROW;
-#endif
 	    }
 	  }else if(mged_variables.coords == 'm')
 	    f = absolute_model_rotate[Y];
@@ -1182,10 +1130,6 @@ XEvent *eventPtr;
 	    }else if(state == ST_O_EDIT && !OEDIT_TRAN){
 	      save_edflag = edobj;
 	      edobj = BE_O_XY;
-#if 0
-	      save_movedir = movedir;
-	      movedir = UARROW | RARROW;
-#endif
 	    }
 	  }else if(mged_variables.coords == 'm')
 	    f = rate_model_tran[Y];
@@ -1224,10 +1168,6 @@ XEvent *eventPtr;
 	  }else if(state == ST_O_EDIT && !OEDIT_TRAN){
 	    save_edflag = edobj;
 	    edobj = BE_O_XY;
-#if 0
-	    save_movedir = movedir;
-	    movedir = UARROW | RARROW;
-#endif
 	  }
 	}else if(mged_variables.coords == 'm')
 	  f = absolute_model_tran[Y];
@@ -1285,10 +1225,6 @@ XEvent *eventPtr;
 	    }else if(state == ST_O_EDIT && !OEDIT_ROTATE){
 	      save_edflag = edobj;
 	      edobj = BE_O_ROTATE;
-#if 0
-	      save_movedir = movedir;
-	      movedir = ROTARROW;
-#endif
 	    }
 	  }else if(mged_variables.coords == 'm')
 	    f = rate_model_rotate[X];
@@ -1329,10 +1265,6 @@ XEvent *eventPtr;
 	    }else if(state == ST_O_EDIT && !OEDIT_ROTATE){
 	      save_edflag = edobj;
 	      edobj = BE_O_ROTATE;
-#if 0
-	      save_movedir = movedir;
-	      movedir = ROTARROW;
-#endif
 	    }
 	  }else if(mged_variables.coords == 'm')
 	    f = absolute_model_rotate[X];
@@ -1375,10 +1307,6 @@ XEvent *eventPtr;
 	  }else if(state == ST_O_EDIT && !OEDIT_TRAN){
 	    save_edflag = edobj;
 	    edobj = BE_O_XY;
-#if 0
-	    save_movedir = movedir;
-	    movedir = UARROW | RARROW;
-#endif
 	  }
 	}else if(mged_variables.coords == 'm')
 	  f = rate_model_tran[X];
@@ -1417,10 +1345,6 @@ XEvent *eventPtr;
 	  }else if(state == ST_O_EDIT && !OEDIT_TRAN){
 	    save_edflag = edobj;
 	    edobj = BE_O_XY;
-#if 0
-	    save_movedir = movedir;
-	    movedir = UARROW | RARROW;
-#endif
 	  }
 	}else if(mged_variables.coords == 'm')
 	  f = absolute_model_tran[X];
@@ -1504,12 +1428,8 @@ XEvent *eventPtr;
   if(save_edflag != -1){
     if(SEDIT_TRAN || SEDIT_ROTATE || SEDIT_SCALE)
       es_edflag = save_edflag;
-    else if(OEDIT_TRAN || OEDIT_ROTATE || OEDIT_SCALE){
+    else if(OEDIT_TRAN || OEDIT_ROTATE || OEDIT_SCALE)
       edobj = save_edflag;
-#if 0
-      movedir = save_movedir;
-#endif
-    }
   }
 end:
   bu_vls_free(&cmd);
