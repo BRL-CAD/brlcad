@@ -64,7 +64,7 @@ register struct rt_i *rtip;
 	rtip->rti_CutHead.bn.bn_list = (struct soltab **)rt_malloc(
 		rtip->rti_CutHead.bn.bn_maxlen * sizeof(struct soltab *),
 		"rt_cut_it: root list" );
-	for(stp=rtip->HeadSolid; stp != SOLTAB_NULL; stp=stp->st_forw)  {
+	for( RT_LIST( stp, soltab, &(rtip->rti_headsolid) ) )  {
 		if( stp->st_aradius >= INFINITY )  {
 			/* Add to infinite solids list for special handling */
 			rt_cut_extend( &rtip->rti_inf_box, stp );

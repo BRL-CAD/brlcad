@@ -4,9 +4,9 @@
  *  Ray Tracing library database tree walker.
  *  Collect and prepare regions and solids for subsequent ray-tracing.
  *
- *  Parallel Note -
- *	res_model	used for interlocking HeadSolid list
- *	res_results	used for interlocking HeadRegion list
+ *  PARALLEL lock usage note -
+ *	res_model	used for interlocking rti_headsolid list (PARALLEL)
+ *	res_results	used for interlocking HeadRegion list (PARALLEL)
  *
  *  Author -
  *	Michael John Muuss
@@ -175,21 +175,22 @@ struct db_full_path	*pathp;
 union record		*rp;
 int			id;
 {
-	struct soltab	*stp;
-	union tree	*curtree;
+	register fastf_t	f;
+	register struct soltab	*stp;
+	union tree		*curtree;
 	struct directory	*dp;
-	FAST fastf_t	f;
 
 	dp = DB_FULL_PATH_CUR_DIR(pathp);
 
 	/*
 	 *  Check to see if this exact solid has already been processed.
 	 *  Match on leaf name and matrix.
-	 *  XXX There is a race on reading HeadSolid here, prob. not harmful.
+	 *  XXX There is a race on reading rti_headsolid here, prob. not harmful.
 	 */
-	for( stp = rt_tree_rtip->HeadSolid; stp != SOLTAB_NULL; stp = stp->st_forw )  {
+	for( RT_LIST( stp, soltab, &(rt_tree_rtip->rti_headsolid) ) )  {
 		register int i;
 
+		RT_CHECK_SOLTAB(stp);				/* debug */
 		if(	dp->d_namep[0] != stp->st_name[0]  ||	/* speed */
 			dp->d_namep[1] != stp->st_name[1]  ||	/* speed */
 			strcmp( dp->d_namep, stp->st_name ) != 0
@@ -209,9 +210,9 @@ next_one: ;
 	}
 
 	GETSTRUCT(stp, soltab);
+	stp->l.magic = RT_SOLTAB_MAGIC;
 	stp->st_id = id;
 	stp->st_dp = dp;
-	stp->st_name = dp->d_namep;	/* st_name could be eliminated */
 	mat_copy( stp->st_pathmat, tsp->ts_mat );
 	stp->st_specific = (genptr_t)0;
 
@@ -234,8 +235,7 @@ next_one: ;
 
 	/* For now, just link them all onto the same list */
 	RES_ACQUIRE( &rt_g.res_model );	/* enter critical section */
-	stp->st_forw = rt_tree_rtip->HeadSolid;
-	rt_tree_rtip->HeadSolid = stp;
+	RT_LIST_INSERT( &(rt_tree_rtip->rti_headsolid), &(stp->l) );
 	stp->st_bit = rt_tree_rtip->nsolids++;
 	RES_RELEASE( &rt_g.res_model );	/* leave critical section */
 
@@ -587,25 +587,25 @@ register fastf_t *ff;
  *  
  *  Given the (leaf) name of a solid, find the first occurance of it
  *  in the solid list.  Used mostly to find the light source.
- *  Returns soltab pointer, or SOLTAB_NULL.
+ *  Returns soltab pointer, or RT_SOLTAB_NULL.
  */
 struct soltab *
 rt_find_solid( rtip, name )
 struct rt_i *rtip;
 register char *name;
 {
-	register struct soltab *stp;
-	register char *cp;
+	register struct soltab	*stp;
+	register char		*cp;
 
 	RT_CHECK_RTI(rtip);
 
-	for( stp=rtip->HeadSolid; stp != SOLTAB_NULL; stp = stp->st_forw )  {
+	for( RT_LIST( stp, soltab, &(rtip->rti_headsolid) ) )  {
 		if( *(cp = stp->st_name) == *name  &&
 		    strcmp( cp, name ) == 0 )  {
 			return(stp);
 		}
 	}
-	return(SOLTAB_NULL);
+	return(RT_SOLTAB_NULL);
 }
 
 

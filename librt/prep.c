@@ -35,7 +35,6 @@ static char RCSprep[] = "@(#)$Header$ (BRL)";
 #include "./debug.h"
 
 HIDDEN void	rt_fr_tree();
-HIDDEN void	rt_plot_solids();
 HIDDEN void	rt_solid_bitfinder();
 
 extern struct resource	rt_uniresource;		/* from shoot.c */
@@ -78,7 +77,7 @@ register struct rt_i *rtip;
 	/*
 	 *  Allocate space for a per-solid bit of rtip->nregions length.
 	 */
-	for( stp=rtip->HeadSolid; stp != SOLTAB_NULL; stp=stp->st_forw )  {
+	for( RT_LIST( stp, soltab, &(rtip->rti_headsolid) ) )  {
 		stp->st_regions = (bitv_t *)rt_calloc(
 			RT_BITV_BITS2WORDS(rtip->nregions),
 			sizeof(bitv_t), "st_regions bitv" );
@@ -126,7 +125,7 @@ register struct rt_i *rtip;
 		}
 	}
 	if(rt_g.debug&DEBUG_REGIONS)  {
-		for( stp=rtip->HeadSolid; stp != SOLTAB_NULL; stp=stp->st_forw )  {
+		for( RT_LIST( stp, soltab, &(rtip->rti_headsolid) ) )  {
 			rt_log("solid %s ", stp->st_name);
 			rt_pr_bitv( "regions ref", stp->st_regions,
 				stp->st_maxreg);
@@ -145,7 +144,7 @@ register struct rt_i *rtip;
 	 *  Last element for each kind will be found in
 	 *	rti_sol_by_type[id][rti_nsol_by_type[id]-1]
 	 */
-	for( stp=rtip->HeadSolid; stp != SOLTAB_NULL; stp = stp->st_forw )  {
+	for( RT_LIST( stp, soltab, &(rtip->rti_headsolid) ) )  {
 		rtip->rti_Solids[stp->st_bit] = stp;
 		rtip->rti_nsol_by_type[stp->st_id]++;
 	}
@@ -165,7 +164,7 @@ register struct rt_i *rtip;
 		rtip->rti_nsol_by_type[i] = 0;
 	}
 	/* Fill in the array and rebuild the count (aka index) */
-	for( stp=rtip->HeadSolid; stp != SOLTAB_NULL; stp = stp->st_forw )  {
+	for( RT_LIST( stp, soltab, &(rtip->rti_headsolid) ) )  {
 		register int	id;
 		id = stp->st_id;
 		rtip->rti_sol_by_type[id][rtip->rti_nsol_by_type[id]++] = stp;
@@ -190,7 +189,8 @@ register struct rt_i *rtip;
 			/* Plot solid bounding boxes, in white */
 			pdv_3space( plotfp, rtip->rti_pmin, rtip->rti_pmax );
 			pl_color( plotfp, 255, 255, 255 );
-			for(stp=rtip->HeadSolid; stp != SOLTAB_NULL; stp=stp->st_forw)  {
+			for( RT_LIST( stp, soltab, &(rtip->rti_headsolid) ) )  {
+				/* Don't draw infinite solids */
 				if( stp->st_aradius >= INFINITY )
 					continue;
 				pdv_3box( plotfp, stp->st_min, stp->st_max );
@@ -201,71 +201,87 @@ register struct rt_i *rtip;
 
 	/* Plot solid outlines */
 	if( (rt_g.debug&DEBUG_PLOTBOX) )  {
-		rt_plot_solids( rtip );
+		FILE		*plotfp;
+		register struct soltab	*stp;
+
+		if( (plotfp=fopen("rtsolids.pl", "w")) == NULL)  return;
+
+		pdv_3space( plotfp, rtip->rti_pmin, rtip->rti_pmax );
+
+		for( RT_LIST( stp, soltab, &(rtip->rti_headsolid) ) )  {
+			/* Don't draw infinite solids */
+			if( stp->st_aradius >= INFINITY )
+				continue;
+
+			(void)rt_plot_solid( plotfp, rtip, stp );
+		}
+		(void)fclose(plotfp);
 	}
 }
 
 /*
- *			R T _ P L O T _ S O L I D S
+ *			R T _ P L O T _ S O L I D
  *
- *  Plot all the solids, with the same kind of wireframes that MGED
- *  would display.  Another useful debugging tool.
+ *  Plot a solid with the same kind of wireframes that MGED would display,
+ *  in UNIX-plot form, on the indicated file descriptor.
+ *  The caller is responsible for calling pdv_3space().
+ *
+ *  Returns -
+ *	<0	failure
+ *	 0	OK
  */
-HIDDEN void
-rt_plot_solids( rtip )
-struct rt_i	*rtip;
+int
+rt_plot_solid( fp, rtip, stp )
+register FILE		*fp;
+struct rt_i		*rtip;
+register struct soltab	*stp;
 {
-	FILE		*plotfp;
 	union record	*recp;
 	struct vlhead	vhead;
 	struct region	*regp;
-	register struct soltab	*stp;
 	register struct vlist	*vp;
 	int		rnum;
 
-	if( (plotfp=fopen("rtsolids.pl", "w")) == NULL)  return;
-
-	pdv_3space( plotfp, rtip->rti_pmin, rtip->rti_pmax );
-
-	for(stp=rtip->HeadSolid; stp != SOLTAB_NULL; stp=stp->st_forw)  {
-		if( stp->st_aradius >= INFINITY )
-			continue;
-
-		vhead.vh_first = vhead.vh_last = VL_NULL;
-		if( (recp = db_getmrec( rtip->rti_dbip, stp->st_dp )) == (union record *)0 )  {
-			rt_log("NOTE: db_getmrec() failure on %s\n", stp->st_name);
-			continue;
-		}
-		rt_functab[stp->st_id].ft_plot(
-			recp, stp->st_pathmat, &vhead,
-			stp->st_dp,
-			0.0,		/* absolute tolerance */
-			0.01		/* relative tolerance */
-		);
-		rt_free( (char *)recp, "db record" );
-
-		/* Take color from one region */
-		if( (rnum = stp->st_maxreg-1) < 0 ) rnum = 0;
-		if( (regp = rtip->Regions[rnum]) != REGION_NULL )  {
-			pl_color( plotfp,
-				(int)(255*regp->reg_mater.ma_color[0]),
-				(int)(255*regp->reg_mater.ma_color[1]),
-				(int)(255*regp->reg_mater.ma_color[2]) );
-		}
-
-		for( vp = vhead.vh_first; vp != VL_NULL; vp = vp->vl_forw )  {
-			if( vp->vl_draw )
-				pdv_3cont( plotfp, vp->vl_pnt );
-			else
-				pdv_3move( plotfp, vp->vl_pnt );
-		}
-		if( vhead.vh_first == VL_NULL )  {
-			rt_log("NOTE: unable to plot %s\n", stp->st_name );
-		} else {
-			FREE_VL( vhead.vh_first );
-		}
+	vhead.vh_first = vhead.vh_last = VL_NULL;
+	if( (recp = db_getmrec( rtip->rti_dbip, stp->st_dp )) == (union record *)0 )  {
+		rt_log("rt_plot_solid(%s): db_getmrec() failure\n", stp->st_name);
+		return(-1);		/* FAIL */
 	}
-	(void)fclose(plotfp);
+	if( rt_functab[stp->st_id].ft_plot(
+		recp, stp->st_pathmat, &vhead,
+		stp->st_dp,
+		0.0,		/* absolute tolerance */
+		0.01,		/* relative tolerance */
+		0.0		/* normal tolerance */
+	    ) < 0 )  {
+		rt_log("rt_plot_solid(%s): ft_plot() failure\n", stp->st_name);
+		rt_free( (char *)recp, "db record" );
+	    	return(-2);
+	}
+	rt_free( (char *)recp, "db record" );
+
+	/* Take color from one region */
+	if( (rnum = stp->st_maxreg-1) < 0 ) rnum = 0;
+	if( (regp = rtip->Regions[rnum]) != REGION_NULL )  {
+		pl_color( fp,
+			(int)(255*regp->reg_mater.ma_color[0]),
+			(int)(255*regp->reg_mater.ma_color[1]),
+			(int)(255*regp->reg_mater.ma_color[2]) );
+	}
+
+	for( vp = vhead.vh_first; vp != VL_NULL; vp = vp->vl_forw )  {
+		if( vp->vl_draw )
+			pdv_3cont( fp, vp->vl_pnt );
+		else
+			pdv_3move( fp, vp->vl_pnt );
+	}
+	if( vhead.vh_first == VL_NULL )  {
+		rt_log("rt_plot_solid(%s): no vectors to plot?\n", stp->st_name);
+		return(-3);		/* FAIL */
+	} else {
+		FREE_VL( vhead.vh_first );
+	}
+	return(0);			/* OK */
 }
 
 /*
@@ -287,18 +303,16 @@ register struct rt_i *rtip;
 	/*
 	 *  Clear out the solid table
 	 */
-	for( stp=rtip->HeadSolid; stp != SOLTAB_NULL; )  {
-		register struct soltab *nextstp = stp->st_forw;
-
-		rt_free( (char *)stp->st_regions, "st_regions bitv" );
+	while( RT_LIST_LOOP( stp, soltab, &(rtip->rti_headsolid) ) )  {
+		RT_CHECK_SOLTAB(stp);
+		RT_LIST_DEQUEUE( &(stp->l) );
 		if( stp->st_id < 0 || stp->st_id >= rt_nfunctab )
 			rt_bomb("rt_clean:  bad st_id");
 		rt_functab[stp->st_id].ft_free( stp );
-		stp->st_name = (char *)0;	/* was ptr to directory */
+		rt_free( (char *)stp->st_regions, "st_regions bitv" );
+		stp->st_dp = DIR_NULL;		/* was ptr to directory */
 		rt_free( (char *)stp, "struct soltab");
-		stp = nextstp;			/* advance to next one */
 	}
-	rtip->HeadSolid = SOLTAB_NULL;
 	rtip->nsolids = 0;
 
 	/*  
@@ -432,7 +446,7 @@ register union tree *tp;
 
 	switch( tp->tr_op )  {
 	case OP_SOLID:
-		rt_free( tp->tr_a.tu_name );
+		rt_free( tp->tr_a.tu_name, "leaf name" );
 		rt_free( (char *)tp, "leaf tree union");
 		return;
 	case OP_SUBTRACT:

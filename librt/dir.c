@@ -58,6 +58,7 @@ int	len;
 
 	GETSTRUCT( rtip, rt_i );
 	rtip->rti_magic = RTI_MAGIC;
+	RT_LIST_INIT( &(rtip->rti_headsolid) );
 	rtip->rti_dbip = dbip;
 	rtip->needprep = 1;
 

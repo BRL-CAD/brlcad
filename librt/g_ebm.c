@@ -893,6 +893,7 @@ register struct vlhead	*vhead;
 FILE			*plotfp;
 
 struct soltab		Tsolid;
+struct directory	Tdir;
 struct application	Tappl;
 struct ebm_specific	*bmsp;
 struct resource		resource;
@@ -918,7 +919,8 @@ char	**argv;
 
 	plotfp = fopen( "ebm.pl", "w" );
 
-	Tsolid.st_name = "Tsolid";
+	Tdir.d_namep = "Tsolid";
+	Tsolid.st_dp = &Tdir;
 	Tappl.a_purpose = "testing";
 	Tappl.a_resource = &resource;
 	mat_idn( Tsolid.st_pathmat );
