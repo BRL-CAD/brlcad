@@ -2863,6 +2863,8 @@ CONST struct rt_tol	*tol;
 		NMG_CK_LOOPUSE(lu);
 		fu = lu->up.fu_p;
 		NMG_CK_FACEUSE(fu);
+		if (rt_g.NMG_debug & DEBUG_BASIC)
+			rt_log("nmg_lu_reorient() selecting other fu=x%x, lu=x%x\n", fu, lu);
 		if( fu->orientation != OT_SAME )
 			rt_bomb("nmg_lu_reorient() no OT_SAME fu?\n");
 	}
@@ -2870,7 +2872,9 @@ CONST struct rt_tol	*tol;
 
 	/* Get OT_SAME faceuse's normal */
 	NMG_GET_FU_PLANE( norm, fu );
-
+	if (rt_g.NMG_debug & DEBUG_BASIC)  {
+		PLPRINT("\tfu peqn", norm);
+	}
 	ccw = nmg_loop_is_ccw( lu, norm, tol );
 	if( ccw == 0 )  {
 		int	class;
