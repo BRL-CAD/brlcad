@@ -25,6 +25,7 @@ static char RCSnmg[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
+#include "externs.h"
 #include "vmath.h"
 #include "db.h"
 #include "rtstring.h"
@@ -395,16 +396,16 @@ CONST struct rt_tol	*tol;
  *  Definitions for the binary, machine-independent format of
  *  the NMG data structures.
  *
- *  There are two special values that may be assigned to an index_t
+ *  There are two special values that may be assigned to an disk_index_t
  *  to signal special processing when the structure is re-imported.
  */
 #define DISK_INDEX_NULL		0
 #define DISK_INDEX_LISTHEAD	-1
 
-typedef	unsigned char	index_t[4];
+typedef	unsigned char	disk_index_t[4];
 struct disk_rt_list  {
-	index_t		forw;
-	index_t		back;
+	disk_index_t		forw;
+	disk_index_t		back;
 };
 
 #define DISK_MODEL_MAGIC	0x4e6d6f64	/* Nmod */
@@ -412,7 +413,7 @@ struct disk_rt_list  {
 struct disk_model {
 	unsigned char		magic[4];
 	unsigned char		version[4];
-	index_t			ma_p;
+	disk_index_t		ma_p;
 	struct disk_rt_list	r_hd;
 };
 
@@ -425,8 +426,8 @@ struct disk_model_a {
 struct disk_nmgregion {
 	unsigned char		magic[4];
 	struct disk_rt_list	l;
-	index_t   		m_p;
-	index_t			ra_p;
+	disk_index_t   		m_p;
+	disk_index_t		ra_p;
 	struct disk_rt_list	s_hd;
 };
 
@@ -441,12 +442,12 @@ struct disk_nmgregion_a {
 struct disk_shell {
 	unsigned char		magic[4];
 	struct disk_rt_list	l;
-	index_t			r_p;
-	index_t			sa_p;
+	disk_index_t		r_p;
+	disk_index_t		sa_p;
 	struct disk_rt_list	fu_hd;
 	struct disk_rt_list	lu_hd;
 	struct disk_rt_list	eu_hd;
-	index_t			vu_p;
+	disk_index_t			vu_p;
 };
 
 #define DISK_SHELL_A_MAGIC	0x4e735f61	/* Ns_a */
@@ -460,8 +461,8 @@ struct disk_shell_a {
 struct disk_face {
 	unsigned char		magic[4];
 	struct disk_rt_list	l;
-	index_t			fu_p;
-	index_t			fg_p;
+	disk_index_t		fu_p;
+	disk_index_t		fg_p;
 	unsigned char		flip[4];
 };
 
@@ -480,11 +481,11 @@ struct disk_face_g {
 struct disk_faceuse {
 	unsigned char		magic[4];
 	struct disk_rt_list	l;
-	index_t			s_p;
-	index_t			fumate_p;
+	disk_index_t		s_p;
+	disk_index_t		fumate_p;
 	unsigned char		orientation[4];
-	index_t			f_p;
-	index_t			fua_p;
+	disk_index_t		f_p;
+	disk_index_t		fua_p;
 	struct disk_rt_list	lu_hd;
 };
 
@@ -496,8 +497,8 @@ struct disk_faceuse_a {
 #define DISK_LOOP_MAGIC		0x4e6c6f70	/* Nlop */
 struct disk_loop {
 	unsigned char		magic[4];
-	index_t			lu_p;
-	index_t			lg_p;
+	disk_index_t		lu_p;
+	disk_index_t		lg_p;
 };
 
 #define DISK_LOOP_G_MAGIC	0x4e6c5f67	/* Nl_g */
@@ -511,11 +512,11 @@ struct disk_loop_g {
 struct disk_loopuse {
 	unsigned char		magic[4];
 	struct disk_rt_list	l;
-	index_t			up;
-	index_t			lumate_p;
+	disk_index_t		up;
+	disk_index_t		lumate_p;
 	unsigned char		orientation[4];
-	index_t			l_p;
-	index_t			lua_p;
+	disk_index_t		l_p;
+	disk_index_t		lua_p;
 	struct disk_rt_list	down_hd;
 };
 
@@ -527,8 +528,8 @@ struct disk_loopuse_a {
 #define DISK_EDGE_MAGIC		0x4e656467	/* Nedg */
 struct disk_edge {
 	unsigned char		magic[4];
-	index_t			eu_p;
-	index_t			eg_p;
+	disk_index_t		eu_p;
+	disk_index_t		eg_p;
 	unsigned char		is_real[4];
 };
 
@@ -544,13 +545,13 @@ struct disk_edge_g {
 struct disk_edgeuse {
 	unsigned char		magic[4];
 	struct disk_rt_list	l;
-	index_t			up;
-	index_t			eumate_p;
-	index_t			radial_p;
-	index_t			e_p;
-	index_t			eua_p;
+	disk_index_t		up;
+	disk_index_t		eumate_p;
+	disk_index_t		radial_p;
+	disk_index_t		e_p;
+	disk_index_t		eua_p;
 	unsigned char  		orientation[4];
-	index_t			vu_p;
+	disk_index_t		vu_p;
 };
 
 #define DISK_EDGEUSE_A_MAGIC	0x4e657561	/* Neua */
@@ -562,7 +563,7 @@ struct disk_edgeuse_a {
 struct disk_vertex {
 	unsigned char		magic[4];
 	struct disk_rt_list	vu_hd;
-	index_t			vg_p;
+	disk_index_t			vg_p;
 };
 
 #define DISK_VERTEX_G_MAGIC	0x4e765f67	/* Nv_g */
@@ -575,9 +576,9 @@ struct disk_vertex_g {
 struct disk_vertexuse {
 	unsigned char		magic[4];
 	struct disk_rt_list	l;
-	index_t			up;
-	index_t			v_p;
-	index_t			vua_p;
+	disk_index_t		up;
+	disk_index_t		v_p;
+	disk_index_t		vua_p;
 };
 
 #define DISK_VERTEXUSE_A_MAGIC	0x4e767561	/* Nvua */
