@@ -59,6 +59,7 @@ int		id;
 
 	RT_INIT_DB_INTERNAL( &intern );
 	intern.idb_type = id;
+	intern.idb_meth = &rt_functab[id];
 	intern.idb_ptr = gp;
 
 	/* Scale change on export is from global "mk_conv2mm" */
