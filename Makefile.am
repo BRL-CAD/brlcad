@@ -92,9 +92,9 @@ all-local:
 	@@ECHO@
 	@@ECHO@ "Done."
 	@@ECHO@
-	@@ECHO@ @ECHO_N@ "Elapsed compilation time: @ECHO_C@"
+	@@ECHO@ @ECHO_N@ "Elapsed compilation time: "
 	@sh $(top_srcdir)/sh/elapsed.sh `cat $(top_builddir)/include/build_date.h | grep Compilation`
-	@@ECHO@ @ECHO_N@ "Elapsed time since configuration: @ECHO_C@"
+	@@ECHO@ @ECHO_N@ "Elapsed time since configuration: "
 	@sh $(top_srcdir)/sh/elapsed.sh @CONFIG_TIME@
 	@@ECHO@ "---"
 	@@ECHO@ "Run 'make install' to begin installation into $(prefix)"
