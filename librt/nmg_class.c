@@ -638,7 +638,7 @@ CONST struct bn_tol	*tol;
 {
 	CONST struct faceuse	*fu;
 	struct model	*m;
-	long		*faces_seen;
+	long		*faces_seen = NULL;
 	vect_t		region_diagonal;
 	fastf_t		region_diameter;
 	int		class;
@@ -763,7 +763,7 @@ CONST struct bn_tol	*tol;
 	struct vertexuse *vup;
 	pointp_t pt;
 	char	*reason;
-	int	status;
+	int	status = 0;
 	int	class;
 
 	NMG_CK_VERTEXUSE(vu);
@@ -884,7 +884,7 @@ long		*classlist[4];
 CONST struct bn_tol	*tol;
 {
 	int euv_cl, matev_cl;
-	int	status;
+	int	status = 0;
 	struct edgeuse *eup;
 	point_t pt;
 	pointp_t eupt, matept;
@@ -2024,7 +2024,7 @@ retry:
 
 		if( found_match )
 		{
-			int test_class;
+			int test_class = NMG_CLASS_Unknown;
 
 			if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 				bu_log( "\tFound a matching LU's x%x and x%x\n", lu, q_lu );
@@ -2379,6 +2379,9 @@ const struct bn_tol *tol;
 				break;
 			case 2:
 				tol_mult = 1.005 * tol->dist;
+				break;
+			default:			/* sanity / lint */
+				tol_mult = 1;
 				break;
 		}
 		for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
