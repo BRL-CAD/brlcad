@@ -68,12 +68,11 @@ extern char	*scanbuf;		/* For optional output buffering */
 extern int	incr_mode;		/* !0 for incremental resolution */
 extern int	incr_level;		/* current incremental level */
 extern int	incr_nlevel;		/* number of levels */
-extern int	parallel;		/* Trying to use multi CPUs */
 extern int	npsw;
 extern struct resource resource[];
 /***** end variables shared with worker() */
 
-/***** variables shared with do.c *****/
+/***** variables shared with rt.c *****/
 extern int	pix_start;		/* pixel to start at */
 extern int	pix_end;		/* pixel to end at */
 extern int	nobjs;			/* Number of cmd-line treetops */
@@ -83,7 +82,8 @@ extern int	matflag;		/* read matrix from stdin */
 extern int	desiredframe;		/* frame to start at */
 extern int	curframe;		/* current frame number */
 extern char	*outputfile;		/* name of base of output file */
-/***** end variables shared with do.c *****/
+extern int	interactive;		/* human is watching results */
+/***** end variables shared with rt.c *****/
 
 /*
  *			O L D _ W A Y
@@ -396,10 +396,39 @@ int framenumber;
 	struct rt_i *rtip = ap.a_rt_i;
 	static double utime;
 	register struct region *regp;
+	int	npix;			/* # of pixel values to be done */
+	int	lim;
 
 	fprintf(stderr, "\n...................Frame %5d...................\n",
 		framenumber);
-	set_priority( width*height*(hypersample+1) );
+
+	/*
+	 *  Deal with CPU limits and priorities, where appropriate.
+	 *  Because limits exist, they better be adequate.
+	 *  We assume that the Cray can produce MINRATE pixels/sec
+	 *  on images with extreme amounts of glass & mirrors.
+	 */
+#ifdef CRAY2
+#define MINRATE	35
+#else
+#define MINRATE	65
+#endif
+	npix = width*height*(hypersample+1);
+	if( (lim = rt_cpuget()) > 0 )  {
+		rt_cpuset( lim + npix / MINRATE + 100 );
+	}
+
+	/*
+	 *  If this image is unlikely to be for debugging,
+	 *  be gentle to the machine.
+	 */
+	if( !interactive )  {
+		if( npix > 256*256 )
+			rt_pri_set(10);
+		else if( npix > 512*512 )
+			rt_pri_set(14);
+	}
+
 	if( rtip->needprep )  {
 
 		/*
@@ -445,7 +474,7 @@ int framenumber;
 		fprintf(stderr, "PREP: %s\n", outbuf );
 	}
 
-	if( parallel && resource[0].re_seg == SEG_NULL )  {
+	if( rt_g.rtg_parallel && resource[0].re_seg == SEG_NULL )  {
 		register int x;
 		/* 
 		 *  Get dynamic memory to keep from having to call
@@ -681,4 +710,26 @@ double azim, elev;
 	mat_inv( view2model, model2view );
 	VSET( temp, 0, 0, eye_backoff );
 	MAT4X3PNT( eye_model, view2model, temp );
+}
+
+/*
+ *			R E S _ P R
+ */
+res_pr()
+{
+	register struct resource *res;
+	register int i;
+
+	res = &resource[0];
+	for( i=0; i<npsw; i++, res++ )  {
+		fprintf(stderr,"cpu%d seg  len=%10d get=%10d free=%10d\n",
+			i,
+			res->re_seglen, res->re_segget, res->re_segfree );
+		fprintf(stderr,"cpu%d part len=%10d get=%10d free=%10d\n",
+			i,
+			res->re_partlen, res->re_partget, res->re_partfree );
+		fprintf(stderr,"cpu%d bitv len=%10d get=%10d free=%10d\n",
+			i,
+			res->re_bitvlen, res->re_bitvget, res->re_bitvfree );
+	}
 }
