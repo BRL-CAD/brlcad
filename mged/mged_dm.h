@@ -19,6 +19,8 @@
  */
 
 #include "dm.h"	/* struct dm */
+#include "./menu.h" /* struct menu_item */
+#define TRY_NEW_MGED_VARS 0
 
 struct device_values  {
 	struct bu_vls	dv_string;	/* newline-separated "commands" from dm */
@@ -35,16 +37,14 @@ extern int dm_pipe[];
 #define ALT_MOUSE_MODE_TRANSLATE 2
 #define ALT_MOUSE_MODE_ZOOM 3
 
-#define VIEW_TABLE_SIZE 5    /* enough to hold the view selections in the menu */
+#define VIEW_TABLE_SIZE 5    /* enough to hold the menu's view selections */
 
 struct shared_info {
   fastf_t _Viewscale;
   fastf_t _i_Viewscale;
-#if 1
   fastf_t azimuth;
   fastf_t elevation;
   fastf_t twist;
-#endif
   mat_t   _Viewrot;
   mat_t   _toViewcenter;
   mat_t   _model2view;
@@ -55,7 +55,9 @@ struct shared_info {
   mat_t	  _viewrot_table[VIEW_TABLE_SIZE];
   fastf_t _viewscale_table[VIEW_TABLE_SIZE];
   int	  _current_view;
+#if 0
   struct  _mged_variables _mged_variables;
+#endif
 
 /* Angle/distance cursor stuff */
   int	  _dv_xadc;
@@ -90,18 +92,30 @@ struct shared_info {
 /* Virtual trackball stuff */
   point_t _orig_pos;
 
+#if 0
 /* Slider stuff */
   int _scroll_top;
   int _scroll_active;
   int _scroll_y;
   int _scroll_edit;
   struct scroll_item *_scroll_array[6];
+#endif
 
   int _dmaflag;
   int _rc;         /* reference count */
 
-  /* Tcl variable names for use with sliders */
-  struct bu_vls _scroll_edit_vls;
+#if TRY_NEW_MGED_VARS
+  /* Tcl variable names for mged_variables */
+  struct bu_vls mged_variable_names[27];
+#endif
+
+  /* Tcl variable names for display info */
+  struct bu_vls aet_name;
+  struct bu_vls ang_name;
+  struct bu_vls center_name;
+  struct bu_vls size_name;
+
+  /* Tcl variable names for sliders */
   struct bu_vls _rate_tran_vls[3];
   struct bu_vls _rate_rotate_vls[3];
   struct bu_vls _rate_scale_vls;
@@ -131,6 +145,21 @@ struct dm_list {
   int _ndrawn;
   double _frametime;/* time needed to draw last frame */
   struct cmd_list *aim;
+  struct  _mged_variables _mged_variables;
+  struct menu_item *_menu_array[NMENU];    /* base of array of menu items */
+  int _menuflag;
+  int _menu_top;
+  int _cur_menu;
+  int _cur_menu_item;
+
+/* Slider stuff */
+  int _scroll_top;
+  int _scroll_active;
+  int _scroll_y;
+  int _scroll_edit;
+  struct scroll_item *_scroll_array[6];
+  struct bu_vls _scroll_edit_vls;
+
   void (*_knob_hook)();
   void (*_axes_color_hook)();
   int (*_cmd_hook)();
@@ -146,7 +175,8 @@ extern struct dm_list *curr_dm_list;
 #define DM_LIST_NULL ((struct dm_list *)NULL)
 #define dmp curr_dm_list->_dmp
 #define pathName dmp->dm_pathName
-#define dname dmp->dm_dname
+#define tkName dmp->dm_tkName
+#define dName dmp->dm_dName
 #define dirty curr_dm_list->_dirty
 #define owner curr_dm_list->_owner
 #define am_mode curr_dm_list->_am_mode
@@ -158,7 +188,17 @@ extern struct dm_list *curr_dm_list;
 #define state_hook curr_dm_list->_state_hook
 #define viewpoint_hook curr_dm_list->_viewpoint_hook
 
+#if 0
 #define mged_variables curr_dm_list->s_info->_mged_variables
+#else
+#define mged_variables curr_dm_list->_mged_variables
+#endif
+
+#define menu_array curr_dm_list->_menu_array
+#define menuflag curr_dm_list->_menuflag
+#define menu_top curr_dm_list->_menu_top
+#define cur_menu curr_dm_list->_cur_menu
+#define cur_item curr_dm_list->_cur_menu_item
 
 #define curs_x curr_dm_list->s_info->_curs_x
 #define curs_y curr_dm_list->s_info->_curs_y
@@ -210,7 +250,9 @@ extern struct dm_list *curr_dm_list;
 #define dmaflag curr_dm_list->s_info->_dmaflag
 #define rc curr_dm_list->s_info->_rc
 
+#if 0
 #define scroll_edit_vls curr_dm_list->s_info->_scroll_edit_vls
+#endif
 #define rate_tran_vls curr_dm_list->s_info->_rate_tran_vls
 #define rate_rotate_vls curr_dm_list->s_info->_rate_rotate_vls
 #define rate_scale_vls curr_dm_list->s_info->_rate_scale_vls
@@ -223,11 +265,20 @@ extern struct dm_list *curr_dm_list;
 #define ang2_vls curr_dm_list->s_info->_ang2_vls
 #define distadc_vls curr_dm_list->s_info->_distadc_vls
 
+#if 0
 #define scroll_top curr_dm_list->s_info->_scroll_top
 #define scroll_active curr_dm_list->s_info->_scroll_active
 #define scroll_y curr_dm_list->s_info->_scroll_y
 #define scroll_edit curr_dm_list->s_info->_scroll_edit
 #define scroll_array curr_dm_list->s_info->_scroll_array
+#else
+#define scroll_top curr_dm_list->_scroll_top
+#define scroll_active curr_dm_list->_scroll_active
+#define scroll_y curr_dm_list->_scroll_y
+#define scroll_edit curr_dm_list->_scroll_edit
+#define scroll_array curr_dm_list->_scroll_array
+#define scroll_edit_vls curr_dm_list->_scroll_edit_vls
+#endif
 
 #define MINVIEW		0.001				
 #define VIEWSIZE	(2.0*Viewscale)	/* Width of viewing cube */
