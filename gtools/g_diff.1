@@ -7,7 +7,7 @@
 .SH NAME
 g_diff \- a BRL-CAD differential geometry comparator
 .SH SYNOPSIS
-.BR "g_diff " "[-m] model1.g model2.g"
+.BR "g_diff " "[-m] [-f] [-v] model1.g model2.g"
 .SH DESCRIPTION
 .I G_diff
 compares the two BRL-CAD models specified on the comand line. The results of this comparison
@@ -22,6 +22,14 @@ and
 .I db adjust
 commands in mged(1). A few solid types are not supported by these commands, and changes involving these
 solids are merely noted (the script will not actually be capable of performing all the changes in this case).
+The
+.I -f
+option requests that all floating point numerical comparisons be done in single precision rather
+than the default double precision. This may be useful when comparing different format databases.
+The
+.I -v
+option requests that the default attributes of each region in both files be checked for
+consistency. Any inconsistencies are written to stderr.
 .SH EXAMPLE
 The command
 .sp

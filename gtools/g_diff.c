@@ -68,6 +68,7 @@ static int mode=HUMAN;
 static Tcl_Interp *interp = NULL;
 static int pre_5_vers=0;
 static int use_floats=0;	/* flag to use floats for comparisons */
+static int verify_region_attribs=0;	/* flag to verify region attributes */
 static struct db_i *dbip1, *dbip2;
 static int version2;
 
@@ -723,7 +724,7 @@ compare_attrs( struct directory *dp1, struct directory *dp2 )
 
 		obj1 = Tcl_DuplicateObj( Tcl_GetObjResult( interp ) );
 		Tcl_ResetResult( interp );
-		if( dp1->d_flags & DIR_REGION ) {
+		if( dp1->d_flags & DIR_REGION && verify_region_attribs ) {
 			verify_region_attrs( dp1, dbip1, obj1 );
 		}
 	} else {
@@ -741,7 +742,7 @@ compare_attrs( struct directory *dp1, struct directory *dp2 )
 
 		obj2 = Tcl_DuplicateObj( Tcl_GetObjResult( interp ) );
 		Tcl_ResetResult( interp );
-		if( dp1->d_flags & DIR_REGION ) {
+		if( dp1->d_flags & DIR_REGION && verify_region_attribs ) {
 			verify_region_attrs( dp2, dbip2, obj2 );
 		}
 	} else {
@@ -930,7 +931,7 @@ char *argv[];
 
 	invoked_as = argv[0];
 
-	while ((c = getopt(argc, argv, "mf")) != EOF)
+	while ((c = getopt(argc, argv, "mfv")) != EOF)
 	{
 	 	switch( c )
 		{
@@ -939,6 +940,9 @@ char *argv[];
 				break;
 			case 'f':
 				use_floats = 1;
+				break;
+			case 'v':	/* verify region attributes */
+				verify_region_attribs = 1;
 				break;
 		}
 	}
