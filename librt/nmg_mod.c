@@ -727,7 +727,6 @@ CONST struct rt_tol	*tol;
 		for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
 			if( lu->orientation != OT_UNSPEC )  continue;
 			nmg_lu_reorient( lu );
-rt_log( "Reoriented lu x%x to %s\n", lu, nmg_orientation( lu->orientation ) );
 		}
 	}
 
@@ -2233,16 +2232,6 @@ struct vertexuse	*vu2;
 	if( lu1->up.fu_p != lu2->up.fu_p )
 		rt_bomb("nmg_join_2loops: can't join loops in different faces\n");
 
-	/* Joining same & opp gives same.  */
-	if( lu1->orientation != lu2->orientation )  {
-		if( lu1->orientation == OT_SAME || lu2->orientation == OT_SAME )
-			new_orient = OT_SAME;
-		else
-			new_orient = OT_UNSPEC;
-	} else {
-		new_orient = lu1->orientation;
-	}
-
 	if( vu1->v_p != vu2->v_p )  {
 		/*
 		 *  Start by taking a jaunt from vu1 to vu2 and back.
@@ -2289,7 +2278,7 @@ struct vertexuse	*vu2;
 		eu2->eumate_p->up.lu_p = lu1->lumate_p;
 	}
 
-	lu1->orientation = lu1->lumate_p->orientation = new_orient;
+	nmg_lu_reorient( lu1 );
 
 	/* Kill entire (null) loop associated with lu2 */
 	nmg_klu(lu2);
@@ -2766,6 +2755,8 @@ CONST struct rt_tol	*tol;
 {
 	struct edgeuse		*eu;
 	struct vertexuse	*vu;
+	struct loopuse		*newlu;
+	struct vertexuse	*vu_save;
 
 	NMG_CK_LOOPUSE(lu);
 	RT_CK_TOL(tol);
@@ -2776,15 +2767,40 @@ top:
 	if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 		return;
 
+	vu_save = (struct vertexuse *)NULL;
+
 	/* For each edgeuse, get vertexuse and vertex */
 	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
-		struct loopuse		*newlu;
+
+		struct edgeuse *other_eu;
+		struct vertexuse *other_vu;
+		int vu_is_part_of_crack=0;
 
 		vu = eu->vu_p;
 		NMG_CK_VERTEXUSE(vu);
 
 #if 1
 		if( !nmg_find_repeated_v_in_lu( vu ) )  continue;
+
+		/* avoid splitting a crack if possible */
+		for( RT_LIST_FOR( other_vu, vertexuse, &vu->v_p->vu_hd ) )
+		{
+			if( nmg_find_lu_of_vu( other_vu ) != lu )
+				continue;
+			if( *other_vu->up.magic_p != NMG_EDGEUSE_MAGIC )
+				continue;
+			other_eu = other_vu->up.eu_p;
+			if( nmg_eu_is_part_of_crack( other_eu ) )
+			{
+				vu_save = other_vu;
+				vu_is_part_of_crack = 1;
+				break;
+			}
+		}
+
+		if( vu_is_part_of_crack )
+			continue;
+
 		/*
 		 *  Repeated vertex exists,
 		 *  Split loop into two loops
@@ -2801,6 +2817,25 @@ top:
 		 * remainder of original loop, check 'em all.
 		 */
 		goto top;
+	}
+
+	if( vu_save )
+	{
+		/* split loop at crack */
+		newlu = nmg_split_lu_at_vu( lu, vu_save );
+		NMG_CK_LOOPUSE(newlu);
+		NMG_CK_LOOP(newlu->l_p);
+		nmg_loop_g(newlu->l_p, tol);
+
+		/* Ensure there are no duplications in new loop */
+		nmg_split_touchingloops(newlu, tol);
+
+		/* There is no telling where we will be in the
+		 * remainder of original loop, check 'em all.
+		 */
+		goto top;
+	}
+
 #else
 		v = vu->v_p;
 		NMG_CK_VERTEX(v);
@@ -2842,8 +2877,8 @@ top:
 			 */
 			goto top;
 		}
-#endif
 	}
+#endif
 }
 
 /*
@@ -3950,6 +3985,9 @@ struct loopuse		*lu;
 	}
 
 	nmg_loop_plane_newell( lu, lu_pl );
+
+	if( lu->orientation == OT_OPPOSITE )
+		HREVERSE( lu_pl, lu_pl );
 
 	if( VDOT( lu_pl, norm ) < 0.0 )
 		geom_orient = OT_OPPOSITE;
