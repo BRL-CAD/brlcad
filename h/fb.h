@@ -100,10 +100,11 @@ typedef struct  {
 	long	if_pixcur;	/* Current pixel number in framebuffer. */
 	long	if_ppixels;	/* Sizeof page buffer (pixels).		*/
 	int	if_debug;	/* Buffered IO debug flag.		*/
-	union	{		/* State variables for interface modules */
+	/* State variables for individual interface modules */
+	union	{
 		char	*p;
 		long	l;
-	} u1, u2;
+	} u1, u2, u3, u4, u5, u6;
 } FBIO;
 
 #ifdef NULL
