@@ -5175,6 +5175,7 @@ CONST struct rt_tol *tol;
 		/* only one intersect point is left, move new_v to it
 		 * and don't make any faces
 		 */
+		i_fus = (struct intersect_fus *)NMG_TBL_GET( int_faces , 0 );
 		if( i_fus->vp )
 		{
 			i_fus = (struct intersect_fus *)NMG_TBL_GET( int_faces , 0 );
@@ -5193,7 +5194,6 @@ CONST struct rt_tol *tol;
 		/* only two intersect points left, if they are not on free edges,
 		 *  move new_v to the center of the connecting line. No new faces needed
 		 */
-
 		i_fus = (struct intersect_fus *)NMG_TBL_GET( int_faces , 0 );
 		j_fus = (struct intersect_fus *)NMG_TBL_GET( int_faces , 1 );
 
