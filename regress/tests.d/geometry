@@ -1,0 +1,123 @@
+
+PRIMITIVES="tor arb arbn arg bot cline dsp ebm ehy ell epa eto extrude grip half hf nmg nurb part pg pipe rec rhc rpc sketch sph submodel tgc torus vol xxx"
+VER="4 5"
+
+for PRIM in $PRIMITIVES ; do
+
+    echo ""
+    echo "Evaluating $PRIM"
+    echo "===================="
+
+    rm -f ${PRIM}.*
+
+    mged -c <<EOF
+
+    set glob_compat_mode 0
+     
+    #
+    # Torus Arguments
+    #
+    # in args => name type xvertex yvertex zvertex xnormal ynormal znormal radius1 radius2
+    # db args => 
+    #
+    set tor_IN_ARGS "0 0 0 0 0 1 30 20"
+    set tor_DB_ARGS "V { 0 0 0 } H { 1 0 0 } r_a 50 r_h 25"
+
+
+    if { ! [ info exists ${PRIM}_IN_ARGS ] } {
+        puts "Error: Primitive ${PRIM}_IN_ARGS has no arguments set, skipping"
+    } else {
+
+    puts "starting version"
+        foreach version { 4 5 } { 
+
+            puts "Creating v\$version database"
+
+            set mged_default(db_version) \$version
+
+            opendb ${PRIM}.\$version.g
+
+            set autosize 0
+            units mm
+
+            Z
+            viewsize 100 
+            ae 35 25
+
+            #
+            # Edit 'in' args 
+            #
+            set inval "in ${PRIM}.in.s $PRIM \$${PRIM}_IN_ARGS"
+            eval \$inval
+            saveview ${PRIM}.\$version.in.rt
+
+            Z
+            viewsize 100 
+            ae 35 25
+            make ${PRIM}.make.s $PRIM
+            saveview ${PRIM}.\$version.make.rt
+
+            Z
+            viewsize 100 
+            ae 35 25
+                
+            #
+            # Edit 'db put' args 
+            #
+            set dbput "db put ${PRIM}.dbput.s $PRIM \$${PRIM}_DB_ARGS"
+            eval \$dbput
+            saveview ${PRIM}.\$version.dbput.rt
+
+            Z
+            viewsize 100 
+            ae 35 25
+            r ${PRIM}.in.r u ${PRIM}.in.s
+            # sca .5, rot 10 10 -10, tra 20 -20 20
+            set putmatval "putmat ${PRIM}.in.r/${PRIM}.in.s { 0.969846 -0.17101 -0.173648 19.3442  0.200706 0.96461 0.17101 -11.8579  0.138258 -0.200706 0.969846 26.1762  0 0 0 1 }"
+            eval \$putmatval
+
+            push ${PRIM}.in.r
+            shader ${PRIM}.in.r {checker {s 4}}
+
+            Z
+            viewsize 100 
+            ae 35 25
+            e ${PRIM}.in.r
+            saveview ${PRIM}.\$version.trans.rt
+        } 
+    } 
+
+    q
+EOF
+
+    for version in $VER ; do
+        echo "Testing v$version database"
+        if [ -f ${PRIM}.${version}.g ] ; then
+
+            [ -f ./${PRIM}.${version}.in.rt ] && ./${PRIM}.${version}.in.rt
+            [ -f ./${PRIM}.${version}.make.rt ] && ./${PRIM}.${version}.make.rt
+            [ -f ./${PRIM}.${version}.dbput.rt ] && ./${PRIM}.${version}.dbput.rt
+            [ -f ./${PRIM}.${version}.trans.rt ] && ./${PRIM}.${version}.trans.rt
+            echo "	Done raytracing"
+        
+            echo "	Converting to ascii (g2asc)"
+            g2asc ${PRIM}.${version}.g ${PRIM}.asc
+            echo "	Converting to binary (asc2g)"
+            asc2g ${PRIM}.asc ${PRIM}.${version}.asc2g.g
+            echo "	Database diffing (g_diff)"
+            g_diff -f ${PRIM}.${version}.asc2g.g ${PRIM}.5.g
+        else
+            echo "ERROR: No v$version database was created"
+        fi
+        echo "Done testing $version database"
+
+    done  
+    # end loop over vers
+
+done  
+# end loop over primitives
+
+
+
+exit
+
