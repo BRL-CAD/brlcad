@@ -493,17 +493,6 @@ sol_com:
 		printf("Unknown solid type, id=%d\n", id);
 		break;
 
-	case ID_ARS:
-		(void)printf("%s:  ARS\n", dp->d_namep );
-		(void)printf(" num curves  %d\n", rp[0].a.a_m );
-		(void)printf(" pts/curve   %d\n", rp[0].a.a_n );
-		/* convert vertex from base unit to the local unit */
-		(void)printf(" vertex      %.4f %.4f %.4f\n",
-			rp[1].b.b_values[0]*base2local,
-			rp[1].b.b_values[1]*base2local,
-			rp[1].b.b_values[2]*base2local );
-		break;
-
 	case ID_BSPLINE:
 		dbpr_spline( dp );
 		break;
@@ -518,6 +507,7 @@ sol_com:
 	case ID_VOL:
 		(void)printf("%s: %s\n", dp->d_namep, rp->ss.ss_str );
 		break;
+	case ID_ARS:
 	case ID_HALF:
 	case ID_PARTICLE:
 	case ID_PIPE:
@@ -531,15 +521,20 @@ sol_com:
 
 			printf("%s:  ", dp->d_namep);
 			RT_INIT_EXTERNAL(&ext);
-			ext.ext_buf = (genptr_t)rp;
-			ext.ext_nbytes = dp->d_len*sizeof(union record);
+			if( db_get_external( &ext, dp, dbip ) < 0 )  {
+				printf("db_get_external failure\n");
+				break;
+			}
 			mat_idn( ident );
-			if( rt_functab[id].ft_import( &intern, &ext, ident ) < 0 )
-				printf("import error\n");
+			if( rt_functab[id].ft_import( &intern, &ext, ident ) < 0 )  {
+				printf("database import error\n");
+				db_free_external( &ext );
+				break;
+			}
 			db_free_external( &ext );
-			rp = (union record *)0;
 			rt_vls_init( &str );
-			if( rt_functab[id].ft_describe( &str, &intern, 1 ) < 0 )
+			if( rt_functab[id].ft_describe( &str, &intern,
+			    verbose, base2local ) < 0 )
 				printf("describe error\n");
 			rt_functab[id].ft_ifree( &intern );
 			fputs( rt_vls_addr( &str ), stdout );
