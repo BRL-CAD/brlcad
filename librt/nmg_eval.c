@@ -35,6 +35,7 @@ struct nmg_bool_state  {
 	int		bs_isA;		/* true if A, else doing B */
 	long		**bs_classtab;
 	CONST int	*bs_actions;
+	CONST struct rt_tol	*bs_tol;
 };
 
 static void nmg_eval_shell RT_ARGS( (struct shell *s,
@@ -199,17 +200,22 @@ static CONST int		intersect_actions[8] = {
  *
  */
 void
-nmg_evaluate_boolean( sA, sB, op, classlist )
+nmg_evaluate_boolean( sA, sB, op, classlist, tol )
 struct shell	*sA;
 struct shell	*sB;
 int		op;
 long		*classlist[8];
+CONST struct rt_tol	*tol;
 {
 	struct loopuse	*lu;
 	struct faceuse	*fu;
 	int CONST	*actions;
 	int		i;
 	struct nmg_bool_state	bool_state;
+
+	NMG_CK_SHELL(sA);
+	NMG_CK_SHELL(sB);
+	RT_CK_TOL(tol);
 
 	if (rt_g.NMG_debug & DEBUG_BOOLEVAL) {
 		rt_log("nmg_evaluate_boolean(sA=x%x, sB=x%x, op=%d) START\n",
@@ -236,6 +242,7 @@ long		*classlist[8];
 	bool_state.bs_src = sB;
 	bool_state.bs_classtab = classlist;
 	bool_state.bs_actions = actions;
+	bool_state.bs_tol = tol;
 
 	bool_state.bs_isA = 1;
 	nmg_eval_shell( sA, &bool_state );
@@ -344,12 +351,11 @@ struct nmg_bool_state *bs;
 
 			NMG_CK_LOOPUSE(lu);
 			NMG_CK_LOOP( lu->l_p );
-			/* XXX It would be handy to have a user 'tol' here */
 #if 0
 			if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
 #endif
 			{
-				nmg_ck_lu_orientation( lu, (struct rt_tol *)0 );
+				nmg_ck_lu_orientation( lu, bs->bs_tol );
 			}
 			switch( nmg_eval_action( (genptr_t)lu->l_p, bs ) )  {
 			case BACTION_KILL:
@@ -407,7 +413,7 @@ struct nmg_bool_state *bs;
 				if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
 			    		rt_log("faceuse x%x flipped\n", fu);
 				if( fu->s_p != bs->bs_dest )  {
-#if 1
+#if 0
 rt_log("nmg_reverse_face_and_radials(fu=x%x)\n", fu);
 					nmg_reverse_face_and_radials( fu );
 #else
@@ -446,6 +452,7 @@ rt_log("nmg_reverse_face_and_radials(fu=x%x)\n", fu);
 rt_log("retaining face, doing nmg_jf()\n");
 				nmg_jf( fu2, fu );
 				/* fu pointer is invalid here */
+				fu = fu2;
 			} else {
 				nmg_mv_fu_between_shells( bs->bs_dest, s, fu );
 			}
