@@ -53,6 +53,7 @@ AM_CONFIG_HEADER(include/config.h)
 
 AC_PREFIX_DEFAULT(/usr/brlcad)
 
+
 dnl ***********************
 dnl *** Check arguments ***
 dnl ***********************
@@ -275,11 +276,11 @@ dnl *** Check for programs ***
 dnl **************************
 
 AC_PROG_CC
+AM_PROG_CC_STDC
 AC_PROG_CPP
 AC_PROG_INSTALL
 AC_PROG_LIBTOOL
 AM_PROG_LEX
-AM_PROG_CC_STDC
 
 AC_DEFINE(EXTERN_STDOUT,,[Stdout is extern])
 
@@ -711,6 +712,11 @@ AC_SUBST(TERMIO)
 WDB='${top_builddir}/src/libwdb/libwdb.la'
 AC_SUBST(WDB)
 
+
+AC_CONFIG_SUBDIRS([misc/enigma])
+#	src/other/libtcl8.4/unix
+#	src/other/libtk8.4/unix
+
 AC_CONFIG_FILES([
 	Makefile
 	bench/Makefile
@@ -733,7 +739,6 @@ AC_CONFIG_FILES([
 	doc/html/manuals/shaders/Makefile
 	include/Makefile
 	misc/Makefile
-	misc/enigma/Makefile
 	misc/macosx/Makefile
 	misc/macosx/Resources/Makefile
 	misc/macosx/Resources/ReadMe.rtfd/Makefile
@@ -843,10 +848,7 @@ AC_CONFIG_FILES([
 	src/vdeck/Makefile
  	brlcad.spec
 ])
-#AC_CONFIG_SUBDIRS([
-#	src/other/libtcl8.4/unix
-#	src/other/libtk8.4/unix
-#])
+
 AC_OUTPUT
 
 dnl
