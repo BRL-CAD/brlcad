@@ -878,6 +878,7 @@ struct bn_vlist  {
 #define BN_VLIST_NULL	((struct bn_vlist *)0)
 #define BN_VLIST_MAGIC	0x98237474
 #define BN_CK_VLIST(_p) BU_CKMAG((_p), BN_VLIST_MAGIC, "bn_vlist")
+#define BN_CK_VLIST_TCL(_interp,_p) BU_CKMAG_TCL(_interp,(_p), BN_VLIST_MAGIC, "bn_vlist")
 
 /* Values for cmd[] */
 #define BN_VLIST_LINE_MOVE	0
