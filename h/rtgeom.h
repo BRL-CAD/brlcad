@@ -121,7 +121,7 @@ struct rt_pg_internal {
 	/* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
 	int	max_npts;		/* maximum value of npts in poly[] */
 };
-#define RT_PG_INTERNAL_MAGIC	0x9bffed887
+#define RT_PG_INTERNAL_MAGIC	0x9bfed887
 #define RT_PG_CK_MAGIC(_p)	RT_CKMAG(_p,RT_PG_INTERNAL_MAGIC,"rt_pg_internal")
 
 /* ID_BSPLINE */
