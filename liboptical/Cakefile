@@ -13,6 +13,7 @@
 	photonmap \
 	sh_air \
 	sh_brdf \
+	sh_billboard \
 	sh_camo \
 	sh_cloud \
 	sh_cook \

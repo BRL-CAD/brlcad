@@ -76,4 +76,5 @@ optical_shader_init(struct mfuncs	**headp)
 	MFUNCS( grass_mfuncs );
 	MFUNCS( tthrm_mfuncs );
 	MFUNCS( flat_mfuncs );
+	MFUNCS( bbd_mfuncs );
 }
