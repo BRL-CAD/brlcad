@@ -87,6 +87,7 @@ RT_EXTERN( struct shell *nmg_dup_shell , ( struct shell *s , long ***copy_tbl ) 
 RT_EXTERN( struct shell *nmg_extrude_shell , ( struct shell *s1 , fastf_t thick , int normal_ward , int approximate , struct rt_tol *tol ) );
 RT_EXTERN( struct edgeuse *nmg_next_radial_eu , ( CONST struct edgeuse *eu , CONST struct shell *s , int wires ) );
 RT_EXTERN( struct faceuse *nmg_mk_new_face_from_loop , ( struct loopuse *lu ) );
+RT_EXTERN( fastf_t mat_determinant , (mat_t matrix ) );
 
 static char	*mode_str[3]=		/* mode strings */
 {
@@ -349,105 +350,6 @@ CONST int		simplify;
 			s, tmp_tol, simplify);
 	}
 }
-
-#if 0
-void
-Rm_doubly_defined_faces( new_s )
-struct shell *new_s;
-{
-	struct faceuse *fu1;
-
-	NMG_CK_SHELL( new_s );
-
-	fu1 = RT_LIST_FIRST( faceuse , &new_s->fu_hd ) );
-	while( RT_LIST_NOT_HEAD( fu1 , &new_s->fu_hd ) )
-	{
-		plane_t pl1;
-		struct faceuse *next_fu1;
-		struct faceuse *fu2;
-
-		NMG_CK_FACEUSE( fu1 );
-
-		if( fu1->orientation != OT_SAME )
-		{
-			fu1 = RT_LIST_PNEXT( faceuse , fu1 );
-			continue;
-		}
-
-		next_fu1 = RT_LIST_PNEXT( faceuse , fu1 );
-
-		NMG_GET_FU_PLANE( pl1 , fu1 );
-		fu2 = next_fu1;
-		while(  RT_LIST_NOT_HEAD( fu2 , &new_s->fu_hd ) )
-		{
-			plane_t pl2;
-			struct faceuse *next_fu2;
-			fastf_t dot;
-
-			NMG_CK_FACEUSE( fu2 );
-
-			if( fu2->orientation != OT_SAME )
-			{
-				fu2 = RT_LIST_PNEXT( faceuse , fu2 );
-				continue;
-			}
-
-			next_fu2 = RT_LIST_PNEXT( fu2 );
-
-			NMG_GET_FU_PLANE( pl2 , fu2 );
-
-			dot = VDOT( pl1 , pl2 );
-			if( !RT_VECT_ARE_PARALLEL( dot , &tol )
-			{
-				fu2 = next_fu2;
-				continue;
-			}
-
-			if( dot > 0.0 && !NEAR_ZERO( pl1[3] - pl2[3] , tol.dist ) ||
-			    dot < 0.0 && !NEAR_ZERO( pl1[3] + pl2[3] , tol.dist ) )
-			{
-				fu2 = next_fu2;
-				continue;
-			}
-
-			/* fu1 and fu2 are coplanar
-			 * now check if any loops are doubly defined
-			 */
-
-			for( RT_LIST_FOR( lu , loopuse , &fu2->lu_hd ) )
-			{
-				struct fu_pt_info *pt_info;
-				int in_fu1=1;
-
-				if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
-					continue;
-
-				for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
-				{
-					if( nmg_class_pt_f( eu->vu_p->v_p->vg_p->coord , fu1 , &tol == NMG_CLASS_AoutB )
-					{
-						in_fu1 = 0;
-						break;
-					}
-				}
-
-				if( in_fu1 )
-				{
-					/* This loop in fu2 is also in fu1
-					 * this occurs where two solid objects have
-					 * been described adjacent to each other, with
-					 * the intervening face described twice
-					 */
-				}
-			}
-
-			fu2 = next_fu2;
-		}
-
-		fu1 = next_fu1;
-	}
-}
-#endif
 
 void
 Subtract_holes( head , comp_id , group_id )
@@ -1845,11 +1747,6 @@ struct shell *new_s;
 	{
 		struct face *f;
 		struct face_g *fg;
-		struct loopuse *lu;
-		plane_t pl;
-		vect_t norm;
-		fastf_t dist=0.0;
-		int pl_count=0;
 
 		NMG_CK_FACEUSE( fu );
 
@@ -1862,89 +1759,10 @@ struct shell *new_s;
 		NMG_CK_FACE_G( fg );
 
 		if( NMG_INDEX_TEST_AND_SET( flags , fg ) )
-		{
-			struct faceuse *fu1;
-			struct face *f1;
-			int first=1;
-
-			VSET( norm , 0.0 , 0.0 , 0.0 );
-
-			for( RT_LIST_FOR( f1 , face , &fg->f_hd ) )
-			{
-				fu1 = f1->fu_p;
-				if( fu1->orientation != OT_SAME )
-					fu1 = fu1->fumate_p;
-				if( fu1->orientation != OT_SAME )
-					rt_bomb( "Recalc_face_g: face has no OT_SAME use\n" );
-
-				for( RT_LIST_FOR( lu , loopuse , &fu1->lu_hd ) )
-				{
-					fastf_t area;
-
-					if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
-						continue;
-
-					area = nmg_loop_plane_area( lu , pl );
-
-					if( area > 0.0 )
-					{
-						if( lu->orientation != OT_SAME )
-							HREVERSE( pl , pl );
-
-						if( first )
-							first = 0;
-						else
-						{
-							if( VDOT( norm , pl ) < 0.0 )
-								HREVERSE( pl , pl );
-						}
-
-						VADD2( norm , norm , pl );
-						dist += pl[3];
-						pl_count++;
-					}
-				}
-			}
-			if( !pl_count )
-			{
-				rt_log( "Recalc_face_g: Cannot recalculate plane for faceuse (x%x):\n" , fu );
-				nmg_pr_fu_briefly( fu , (char *)NULL );
-				continue;
-			}
-			else if( pl_count == 1 )
-			{
-				VMOVE( pl , norm );
-				pl[3] = dist;
-			}
-			else if( pl_count > 1 )
-			{
-				VUNITIZE( norm );
-				VMOVE( pl , norm );
-				pl[3] = dist/(fastf_t)pl_count;
-			}
-
-			if( debug )
-				rt_log( "Recalc_face_g: fu x%x fg x%x was ( %f %f %f %f )\n\tnow ( %f %f %f %f )\n",
-					fu , fg , V4ARGS( fu->f_p->fg_p->N ) , V4ARGS( pl ) );
-
-			nmg_face_g( fu , pl );
-
-			if( nmg_ck_fg_verts( fu , fu->f_p , &tol ) )
-			{
-				for( RT_LIST_FOR( f1 , face , &fg->f_hd ) )
-				{
-					fu1 = f1->fu_p;
-					if( fu1->orientation != OT_SAME )
-						fu1 = fu1->fumate_p;
-
-					rt_log( "fu x%x, mate=x%x\n" , fu1 , fu1->fumate_p );
-					nmg_pr_fu_briefly( fu1 , (char *)NULL );
-				}
-				rt_bomb( "Recalc_face_g: made a bad face\n" );
-			}
-
-		}
+			(void)nmg_calc_face_g( fu );
 	}
+
+	rt_free( (char *)flags , "Recalc_face_g: flags" );
 }
 
 int
