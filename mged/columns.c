@@ -38,14 +38,15 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 static int	col_count;		/* names listed on current line */
 static int	col_len;		/* length of previous name */
-#define	COLUMNS	((80 + NAMESIZE - 1) / NAMESIZE)
+#define TERMINAL_WIDTH	80
+#define	COLUMNS	((TERMINAL_WIDTH + NAMESIZE - 1) / NAMESIZE)
 
 void
 col_item(cp)
 register char *cp;
 {
 	/* Output newline if last column printed. */
-	if ( (col_count+NAMESIZE-1) >= COLUMNS )  {
+	if( col_count >= COLUMNS || (col_len+NAMESIZE-1) >= TERMINAL_WIDTH )  {
 		/* line now full */
 		(void)putchar( '\n' );
 		col_count = 0;
