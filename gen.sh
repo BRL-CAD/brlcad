@@ -251,7 +251,7 @@ esac
 case "${MACHINE}" in
 	li|fbsd)
 		BDIRS=`echo ${BDIRS} | \
-			sed -e  's/libtcl//' -e 's/libtk//' -e 's/libz//' -e 's/libpng//'`
+			sed -e 's/libz//' -e 's/libpng//'`
 		;;
 	m4i65)
 		# Be sure to look in /usr/lib64, not /usr/lib!
