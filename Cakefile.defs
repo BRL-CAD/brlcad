@@ -987,9 +987,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	XINCDIR	/usr/X11R6/include
 #	define	XLIBDIR	/usr/X11R6/lib
 #	define	CC	gcc
-#	define	OPTIMIZER	-O2
 #	define	LEX_OPTS	-l
-
 #	if 1	/* PRODUCTION=1 */
 /*		Shared library version support.  */
 #		define	CC_DEFS -pipe -fPIC
@@ -997,9 +995,11 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define	LIBVERS ../sh/sharedlibvers.sh
 #		define	BUILD_LIBRARY	ld -Bshareable -o
 #		define	STANDARD_LIBES	-lm -Wl,-R -Wl,LIBDIR
+#		define	OPTIMIZER	-O2
 #	else
 /*		Static linked executables */
 #		define	CC_DEFS -pipe
+#		define	OPTIMIZER	-g
 #	endif
 
 #	define	LIBRT_TIMER	timer42
