@@ -66,7 +66,7 @@ struct xxx_specific xxx_defaults = {
 	{	0.0, 0.0, 0.0, 0.0,	/* xxx_m_to_sh */
 		0.0, 0.0, 0.0, 0.0,
 		0.0, 0.0, 0.0, 0.0,
-		0.0, 0.0, 0.0, 0.0 }
+		0.0, 0.0, 0.0, 0.0 },
 	{	0.0, 0.0, 0.0, 0.0,	/* xxx_m_to_r */
 		0.0, 0.0, 0.0, 0.0,
 		0.0, 0.0, 0.0, 0.0,
@@ -239,13 +239,13 @@ char			*dp;	/* ptr to the shader-specific struct */
 	 * See the call to db_region_mat in xxx_setup().
 	MAT4X3PNT(pt, xxx_sp->xxx_m_to_sh, swp->sw_hit.hit_point);
 	MAT4X3PNT(pt, xxx_sp->xxx_m_to_r, swp->sw_hit.hit_point);
-	 */
 
 	if (rdebug&RDEBUG_SHADE) {
 		bu_log("xxx_render()  model:(%g %g %g) shader:(%g %g %g)\n", 
-		V3ARGS(swp->sw_hit.hit_point),
-		V3ARGS(pt) );
+			V3ARGS(swp->sw_hit.hit_point),
+			V3ARGS(pt) );
 	}
+	 */
 
 	/* XXX perform shading operations here */
 	VMOVE(swp->sw_color, pt);
