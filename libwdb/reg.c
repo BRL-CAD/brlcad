@@ -156,7 +156,7 @@ int	op;
  */
 int
 mk_lcomb( fp, name, headp, region, matname, matparm, rgb, inherit )
-FILE		*fp;
+struct rt_wdb		*fp;
 CONST char	*name;
 register struct wmember *headp;
 int		region;
@@ -227,7 +227,7 @@ register struct wmember *headp;
  */
 int
 mk_lrcomb( fp, name, headp, region, matname, matparm, rgb, id, air, material, los, inherit )
-FILE		*fp;
+struct rt_wdb		*fp;
 CONST char	*name;
 register struct wmember *headp;
 int		region;
@@ -276,7 +276,7 @@ int	inherit;
  *  Convenience interface to make a combination with a single member.
  */
 int
-mk_comb1( FILE *fp,
+mk_comb1( struct rt_wdb *fp,
 	CONST char *combname,
 	CONST char *membname,
 	int regflag )
@@ -297,7 +297,7 @@ mk_comb1( FILE *fp,
  */
 int
 mk_region1(
-	FILE *fp,
+	struct rt_wdb *fp,
 	const char *combname,
 	const char *membname,
 	const char *matname,
@@ -319,19 +319,19 @@ mk_region1(
  *	flags set
  */
 int
-mk_fastgen_region( fp, name, headp, mode, matname, matparm, rgb, id, air, material, los, inherit )
-FILE		*fp;
-CONST char	*name;
-register struct wmember *headp;
-char		mode;
-CONST char	*matname;
-CONST char	*matparm;
-CONST unsigned char	*rgb;
-int	id;
-int	air;
-int	material;
-int	los;
-int	inherit;
+mk_fastgen_region(
+	struct rt_wdb *fp,
+	const char *name,
+	struct wmember *headp,
+	char mode,
+	const char *matname,
+	const char *matparm,
+	const unsigned char *rgb,
+	int id,
+	int air,
+	int material,
+	int los,
+	int inherit )
 {
 	struct rt_comb_internal *comb;
 

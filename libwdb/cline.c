@@ -36,13 +36,13 @@ static const char part_RCSid[] = "@(#)$Header$ (BRL)";
 #include "wdb.h"
 
 int
-mk_cline( fp, name, V, height, radius, thickness )
-FILE *fp;
-char *name;
-point_t V;
-vect_t height;
-fastf_t radius;
-fastf_t thickness;
+mk_cline(
+	struct rt_wdb *fp,
+	const char *name,
+	const point_t V,
+	const vect_t height,
+	fastf_t radius,
+	fastf_t thickness )
 {
 	struct rt_cline_internal *cli;
 
@@ -53,5 +53,5 @@ fastf_t thickness;
 	cli->thickness = thickness;
 	cli->radius = radius;
 
-	return mk_export_fwrite( fp, name, (genptr_t)cli, ID_CLINE );
+	return wdb_export( fp, name, (genptr_t)cli, ID_CLINE, mk_conv2mm );
 }

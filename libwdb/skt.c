@@ -36,18 +36,12 @@ static const char skt_RCSid[] = "@(#)$Header$ (BRL)";
 #include "wdb.h"
 
 int
-mk_sketch( fp, name, skt )
-FILE *fp;
-char *name;
-struct rt_sketch_internal *skt;
+mk_sketch(
+	struct rt_wdb *fp,
+	const char *name,
+	struct rt_sketch_internal *skt )
 {
-	struct rt_db_internal intern;
-
 	RT_SKETCH_CK_MAGIC( skt );
 
-	RT_INIT_DB_INTERNAL( &intern );
-	intern.idb_ptr = (genptr_t)skt;
-	intern.idb_type = ID_SKETCH;
-	intern.idb_meth = &rt_functab[ID_SKETCH];
-	return mk_fwrite_internal( fp, name, &intern );
+	return wdb_export( fp, name, (genptr_t)skt, ID_SKETCH, mk_conv2mm );
 }

@@ -36,20 +36,20 @@ static const char part_RCSid[] = "@(#)$Header$ (BRL)";
 #include "wdb.h"
 
 int
-mk_bot( fp, name, mode, orientation, error_mode, num_vertices, num_faces, vertices, faces, thickness, face_mode )
-FILE *fp;
-char *name;
-unsigned char	mode;
-unsigned char	orientation;
-unsigned char	error_mode;		/* may be used to indicate error handling (ignored for now) */
-int		num_vertices;
-int		num_faces;
-fastf_t		*vertices;		/* array of floats for vertices [num_vertices*3] */
-int		*faces;			/* array of ints for faces [num_faces*3] */
-fastf_t		*thickness;		/* array of plate mode thicknesses (corresponds to array of faces)
+mk_bot(
+	struct rt_wdb *fp,
+	const char *name,
+	unsigned char	mode,
+	unsigned char	orientation,
+	unsigned char	error_mode,	/* may be used to indicate error handling (ignored for now) */
+	int		num_vertices,
+	int		num_faces,
+	fastf_t		*vertices,	/* array of floats for vertices [num_vertices*3] */
+	int		*faces,		/* array of ints for faces [num_faces*3] */
+	fastf_t		*thickness,	/* array of plate mode thicknesses (corresponds to array of faces)
 					 * NULL for modes RT_BOT_SURFACE and RT_BOT_SOLID.
 					 */
-struct bu_bitv	*face_mode;		/* a flag for each face indicating thickness is appended to hit point,
+	struct bu_bitv	*face_mode )	/* a flag for each face indicating thickness is appended to hit point,
 					 * otherwise thickness is centered about hit point
 					 */
 {
@@ -83,5 +83,5 @@ struct bu_bitv	*face_mode;		/* a flag for each face indicating thickness is appe
 	}
 	
 
-	return mk_export_fwrite( fp, name, (genptr_t)bot, ID_BOT );
+	return wdb_export( fp, name, (genptr_t)bot, ID_BOT, mk_conv2mm );
 }

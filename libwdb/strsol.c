@@ -55,7 +55,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 int
 mk_dsp( fp, name, file, xdim, ydim, mat )
-FILE		*fp;
+struct rt_wdb		*fp;
 CONST char	*name;
 CONST char	*file;		/* name of file containing elevation data */
 int		xdim;		/* X dimension of file (w cells) */
@@ -73,7 +73,7 @@ CONST matp_t	mat;		/* convert solid coords to model space */
 	dsp->dsp_ycnt = ydim;
 	mat_copy( dsp->dsp_stom, mat );
 
-	return( mk_export_fwrite( fp, name, (genptr_t)dsp, ID_DSP ) );
+	return wdb_export( fp, name, (genptr_t)dsp, ID_DSP, mk_conv2mm );
 }
 
 /*
@@ -81,7 +81,7 @@ CONST matp_t	mat;		/* convert solid coords to model space */
  */
 int
 mk_ebm( fp, name, file, xdim, ydim, tallness, mat )
-FILE		*fp;
+struct rt_wdb		*fp;
 CONST char	*name;
 CONST char	*file;		/* name of file containing bitmap */
 int		xdim;		/* X dimansion of file (w cells) */
@@ -99,7 +99,7 @@ CONST matp_t	mat;		/* convert local coords to model space */
 	ebm->tallness = tallness;
 	mat_copy( ebm->mat , mat );
 
-	return( mk_export_fwrite( fp, name, (genptr_t)ebm, ID_EBM ) );
+	return wdb_export( fp, name, (genptr_t)ebm, ID_EBM, mk_conv2mm );
 }
 
 /*
@@ -107,7 +107,7 @@ CONST matp_t	mat;		/* convert local coords to model space */
  */
 int
 mk_vol( fp, name, file, xdim, ydim, zdim, lo, hi, cellsize, mat )
-FILE		*fp;
+struct rt_wdb		*fp;
 CONST char	*name;
 CONST char	*file;		/* name of file containing bitmap */
 int		xdim;		/* X dimansion of file (w cells) */
@@ -131,9 +131,10 @@ CONST matp_t	mat;		/* convert local coords to model space */
 	VMOVE( vol->cellsize , cellsize );
 	mat_copy( vol->mat , mat );
 
-	return( mk_export_fwrite( fp, name, (genptr_t)vol, ID_VOL ) );
+	return wdb_export( fp, name, (genptr_t)vol, ID_VOL, mk_conv2mm );
 }
 
+#if 0
 /*
  *			M K _ S T R S O L
  *
@@ -162,6 +163,7 @@ CONST char	*string_arg;
 		return -1;
 	return 0;
 }
+#endif
 
 /*
  *			M K _ S U B M O D E L
@@ -174,7 +176,7 @@ CONST char	*string_arg;
  */
 int
 mk_submodel( fp, name, file, treetop, meth )
-FILE		*fp;
+struct rt_wdb		*fp;
 CONST char	*name;
 CONST char	*file;
 CONST char	*treetop;
@@ -188,5 +190,5 @@ int		meth;
 	strncpy( in->treetop, treetop, sizeof(in->treetop)-1 );
 	in->meth = meth;
 
-	return mk_export_fwrite( fp, name, (genptr_t)in, ID_SUBMODEL );
+	return wdb_export( fp, name, (genptr_t)in, ID_SUBMODEL, mk_conv2mm );
 }

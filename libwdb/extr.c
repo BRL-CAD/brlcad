@@ -42,13 +42,16 @@ static const char extr_RCSid[] = "@(#)$Header$ (BRL)";
 #include "wdb.h"
 
 int
-mk_extrusion( fp, name, sketch_name, V, h, u_vec, v_vec, keypoint )
-FILE *fp;
-char *name, *sketch_name;
-point_t V;
-vect_t h, u_vec, v_vec;
+mk_extrusion(
+	struct rt_wdb *fp,
+	const char *name,
+	const char *sketch_name,
+	const point_t V,
+	const vect_t h,
+	const vect_t u_vec,
+	const vect_t v_vec,
+	int keypoint )
 {
-	struct rt_db_internal intern;
 	struct rt_extrude_internal *extr;
 
 	BU_GETSTRUCT( extr, rt_extrude_internal );
@@ -61,10 +64,5 @@ vect_t h, u_vec, v_vec;
 	extr->keypoint = keypoint;
 	extr->skt = (struct rt_sketch_internal *)NULL;
 
-	RT_INIT_DB_INTERNAL( &intern );
-	intern.idb_ptr = (genptr_t)extr;
-	intern.idb_type = ID_EXTRUDE;
-	intern.idb_meth = &rt_functab[ID_EXTRUDE];
-
-	return mk_fwrite_internal( fp, name, &intern );
+	return wdb_export( fp, name, (genptr_t)extr, ID_EXTRUDE, mk_conv2mm );
 }

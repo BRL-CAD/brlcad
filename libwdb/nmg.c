@@ -42,14 +42,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  *	 0	OK
  */
 int
-mk_nmg( filep, name, m )
-FILE		*filep;
-char		*name;
-struct model	*m;
+mk_nmg( struct rt_wdb *filep, const char *name, struct model *m )
 {
 	NMG_CK_MODEL( m );
 
-	return mk_export_fwrite( filep, name, (genptr_t)m, ID_NMG );
+	return wdb_export( filep, name, (genptr_t)m, ID_NMG, mk_conv2mm );
 }
 
 /*	W R I T E _ S H E L L _ A S _ P O L Y S O L I D
@@ -81,6 +78,9 @@ struct shell *s;
 	int i;
 	struct bn_tol tol;
 
+bu_bomb("write_shell_as_polysolid -- use nmg_to_bot converter routine\n");
+
+#if 0
 	NMG_CK_SHELL( s );
 
 	/* XXX Need support for v5 here */
@@ -171,4 +171,5 @@ struct shell *s;
 			}
 		}
 	}
+#endif
 }

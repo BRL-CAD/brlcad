@@ -42,7 +42,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  */
 int
 mk_arbn( filep, name, neqn, eqn )
-FILE	*filep;
+struct rt_wdb	*filep;
 char	*name;
 int	neqn;
 plane_t	*eqn;
@@ -56,5 +56,5 @@ plane_t	*eqn;
 	arbn->neqn = neqn;
 	arbn->eqn = eqn;
 
-	return mk_export_fwrite( filep, name, (genptr_t)arbn, ID_ARBN );
+	return wdb_export( filep, name, (genptr_t)arbn, ID_ARBN, mk_conv2mm );
 }

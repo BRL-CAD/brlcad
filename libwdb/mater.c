@@ -42,8 +42,9 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
  *  to rt_color_addrec(),  write it into the database.
  */
 void
-mk_write_color_table( FILE *ofp )
+mk_write_color_table( struct rt_wdb *ofp )
 {
+#if 0
 	register struct mater *mp;
 	union record	record;
 
@@ -58,7 +59,14 @@ mk_write_color_table( FILE *ofp )
 		record.md.md_g = mp->mt_g;
 		record.md.md_b = mp->mt_b;
 
+		/* This record has no name field! */
+
+/* XXX examine mged/mater.c: color_putrec() */
+
 		/* Write out the record */
-		(void)fwrite( (char *)&record, sizeof record, 1, ofp );
+		(void)fwrite( (char *)&record, sizeof record, 1, ofpxx );
 	}
+#else
+	bu_bomb("mk_write_color_tale() not yet implemented\n");
+#endif
 }

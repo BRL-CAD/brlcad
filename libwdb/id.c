@@ -42,12 +42,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  */
 int
 mk_id( fp, title )
-FILE		*fp;
+struct rt_wdb		*fp;
 CONST char	*title;
 {
-	if( mk_version <= 4 )
-		return db_fwrite_ident( fp, title, 1.0 );
-	return db5_fwrite_ident( fp, title, 1.0 );
+	return mk_id_editunits( fp, title, 1.0 );
 }
 
 /*
@@ -62,13 +60,11 @@ CONST char	*title;
  */
 int
 mk_id_units( fp, title, units )
-FILE		*fp;
+struct rt_wdb		*fp;
 CONST char	*title;
 register CONST char	*units;
 {
-	if( mk_version <= 4 )
-		return db_fwrite_ident( fp, title, bu_units_conversion(units) );
-	return db5_fwrite_ident( fp, title, bu_units_conversion(units) );
+	return mk_id_editunits( fp, title, bu_units_conversion(units) );
 }
 
 /*
@@ -89,10 +85,10 @@ register CONST char	*units;
  *	0	success
  */
 int
-mk_id_editunits( fp, title, local2mm )
-FILE		*fp;
-CONST char	*title;
-double		local2mm;
+mk_id_editunits(
+	struct rt_wdb *fp,
+	const char *title,
+	double local2mm )
 {
 	if( mk_version <= 4 )
 		return db_fwrite_ident( fp, title, local2mm );
