@@ -93,7 +93,7 @@ FILE *fd;
  */
 void usage()
 {
-	(void) fprintf(stderr,"Usage: %s [ -o offset ] file [file...]\n", progname);
+	(void) fprintf(stderr,"Usage: %s [-o offset] [file...]\n", progname);
 	exit(1);
 }
 

@@ -26,7 +26,7 @@ static char RCSid[] = "@(#)$Id$ (BRL)";
 typedef unsigned char	u_char;
 static char	*usage[] =
 	{
-"Usage: rle-fb [-Otdv] [-b (rgbwBG)] [-F Frame_buffer] [-p X Y] [file.rle]",
+"Usage: orle-fb [-Otdv] [-b (rgbwBG)] [-F Frame_buffer] [-p X Y] [file.rle]",
 "",
 "If no rle file is specifed, rle-fb will read its standard input.",
 "If the environment variable FB_FILE is set, its value will be used",
