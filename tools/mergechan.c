@@ -115,7 +115,7 @@ char ** argv;
 		    exit( 1 );
 		}
 		else if ( rle_err == RLE_EOF || rle_err == RLE_EMPTY )
-		    exit( 0 );
+		    goto out;
 
 
 	    /* Check that the channel's really there */
@@ -261,5 +261,6 @@ char ** argv;
 	for ( i = 0; i < nfiles; i++ )
 	    rle_raw_free( &in_hdr[i], in_rows[i], in_counts[i] );
     }
-    /* NOTREACHED */
+out:
+    exit(0);
 }
