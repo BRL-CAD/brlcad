@@ -169,6 +169,7 @@ char **argv;
 		  stop_catching_output(&tmp_vls);
 		  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		  bu_vls_free(&tmp_vls);
+		  (void)signal( SIGINT, SIG_IGN );
 		  TCL_READ_ERR_return;
 		}
 		if(record.u_id == ID_ARS_A) {
@@ -182,6 +183,7 @@ char **argv;
 				  stop_catching_output(&tmp_vls);
 				  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 				  bu_vls_free(&tmp_vls);
+				  (void)signal( SIGINT, SIG_IGN );
 				  TCL_READ_ERR_return;
 				}
 				bu_log("%c %d %d %d\n",record.b.b_id,record.b.b_type,record.b.b_n,record.b.b_ngranule);
@@ -217,6 +219,7 @@ char **argv;
 				  stop_catching_output(&tmp_vls);
 				  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 				  bu_vls_free(&tmp_vls);
+				  (void)signal( SIGINT, SIG_IGN );
 				  TCL_READ_ERR_return;
 				}
 				bu_log("%c %c %s\n",
@@ -240,6 +243,8 @@ char **argv;
 	stop_catching_output(&tmp_vls);
 	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	bu_vls_free(&tmp_vls);
+
+	(void)signal( SIGINT, SIG_IGN );
 	return TCL_OK;
 }
 

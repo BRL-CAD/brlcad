@@ -98,6 +98,7 @@ char	**argv;
 	time_t now;
 	static CONST char sortcmd[] = "sort -n +1 -2 -o /tmp/ord_id ";
 	static CONST char catcmd[] = "cat /tmp/ord_id >> ";
+	int status = TCL_OK;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
@@ -123,7 +124,8 @@ char	**argv;
 	else {
 		/* should never reach here */
 	  Tcl_AppendResult(interp, "tables:  input error\n", (char *)NULL);
-	  return TCL_ERROR;
+	  status = TCL_ERROR;
+	  goto end;
 	}
 
 	regflag = numreg = lastmemb = numsol = 0;
@@ -132,14 +134,16 @@ char	**argv;
 	/* open the file */
 	if( (tabptr=fopen(argv[1], "w+")) == NULL ) {
 	  Tcl_AppendResult(interp, "Can't open ", argv[1], "\n", (char *)NULL);
-	  return TCL_ERROR;
+	  status = TCL_ERROR;
+	  goto end;
 	}
 
 	if( flag == SOL_TABLE || flag == REG_TABLE ) {
 		/* temp file for discrimination of solids */
 		if( (idfd = creat("/tmp/mged_discr", 0600)) < 0 ) {
 			perror( "/tmp/mged_discr" );
-			return TCL_ERROR;
+			status = TCL_ERROR;
+			goto end;
 		}
 		rd_idfd = open( "/tmp/mged_discr", 2 );
 	}
@@ -226,7 +230,9 @@ char	**argv;
 		(void)unlink( "/tmp/ord_id\0" );
 	}
 
-	return TCL_OK;
+end:
+	(void)signal( SIGINT, SIG_IGN );
+	return status;
 }
 
 
@@ -995,6 +1001,7 @@ char	**argv;
 				    (DIR_COMB|DIR_REGION) )
 					continue;
 				if( db_get( dbip, dp, &rec, 0, 1 ) < 0 ) {
+				  (void)signal( SIGINT, SIG_IGN );
 				  TCL_READ_ERR_return;
 				}
 				if( rec.c.c_regionid != item )
@@ -1005,6 +1012,8 @@ char	**argv;
 			}
 		}
 	}
+
+	(void)signal( SIGINT, SIG_IGN );
 	return TCL_OK;
 }
 /*
@@ -1042,6 +1051,7 @@ char	**argv;
 				    (DIR_COMB|DIR_REGION) )
 					continue;
 				if( db_get( dbip, dp, &rec, 0, 1 ) < 0 ) {
+				  (void)signal( SIGINT, SIG_IGN );
 				  TCL_READ_ERR_return;
 				}
 				if( rec.c.c_regionid != 0 || rec.c.c_aircode != item )
@@ -1052,5 +1062,7 @@ char	**argv;
 			}
 		}
 	}
+
+	(void)signal( SIGINT, SIG_IGN );
 	return TCL_OK;
 }

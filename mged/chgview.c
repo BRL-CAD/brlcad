@@ -420,6 +420,7 @@ int	catch_sigint;
 	  curr_dm_list = save_dm_list;
 	}
 
+	(void)signal( SIGINT, SIG_IGN );
 	return TCL_OK;
 }
 

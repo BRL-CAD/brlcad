@@ -1473,6 +1473,8 @@ int record;
 	  Tcl_SetResult(interp, "", TCL_STATIC);
 	  bu_vls_free(&tmp_vls);
 	}
+
+	(void)signal( SIGINT, SIG_IGN );
       }else
 	bu_log("\n");
       

@@ -103,6 +103,7 @@ char	**argv;
 {
 	struct db_i		*newdbp;
 	struct directory	**dirp0;
+	int status = TCL_OK;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
@@ -128,7 +129,8 @@ char	**argv;
 	if( (newdbp = db_open( argv[1], "r" )) == DBI_NULL )  {
 	  perror( argv[1] );
 	  Tcl_AppendResult(interp, "dup: Can't open ", argv[1], "\n", (char *)NULL);
-	  return TCL_ERROR;
+	  status = TCL_ERROR;
+	  goto end;
 	}
 
 	Tcl_AppendResult(interp, "\n*** Comparing ", dbip->dbi_filename,
@@ -141,14 +143,16 @@ char	**argv;
 	/* Get array to hold names of duplicates */
 	if( (dup_dirp = dir_getspace(0)) == (struct directory **) 0) {
 	  Tcl_AppendResult(interp, "f_dup: unable to get memory\n", (char *)NULL);
-	  return TCL_ERROR;
+	  status = TCL_ERROR;
+	  goto end;
 	}
 	dirp0 = dup_dirp;
 
 	/* Scan new database for overlaps */
 	if( db_scan( newdbp, mged_dir_check, 0 ) < 0 )  {
 	  Tcl_AppendResult(interp, "dup: db_scan failure\n", (char *)NULL);
-	  return TCL_ERROR;
+	  status = TCL_ERROR;
+	  goto end;
 	}
 
 	col_pr4v( dirp0, (int)(dup_dirp - dirp0));
@@ -164,8 +168,9 @@ char	**argv;
 	}
 
 	db_close( newdbp );
-
-	return TCL_OK;
+end:
+	(void)signal( SIGINT, SIG_IGN );
+	return status;
 }
 
 

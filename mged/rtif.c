@@ -512,6 +512,7 @@ char	**argv;
 	rt_vlblock_free(vbp);
 	dmaflag = 1;
 
+	(void)signal( SIGINT, SIG_IGN );
 	return TCL_OK;
 }
 
@@ -783,6 +784,7 @@ work:
 	dmaflag = 1;
 	fclose(fp);
 
+	(void)signal( SIGINT, SIG_IGN );
 	return TCL_OK;
 }
 
@@ -1036,6 +1038,7 @@ char	**argv;
 	/* Restore state variables */
 	mged_variables = rtif_saved_state;	/* struct copy */
 
+	(void)signal( SIGINT, SIG_IGN );
 	return TCL_OK;
 }
 

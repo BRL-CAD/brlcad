@@ -155,6 +155,7 @@ char	**argv;
 	bu_free( (char *)dirp0, "dir_getspace dp[]" );
 
 	Tcl_AppendResult(interp, bu_vls_strgrab(&str), (char *)NULL);
+	(void)signal( SIGINT, SIG_IGN );
 	return TCL_OK;
 }
 
@@ -380,6 +381,7 @@ dir_summary(flag)
 				*dirp++ = dp;
 	col_pr4v( dirp0, (int)(dirp - dirp0));
 	bu_free( (char *)dirp0, "dir_getspace" );
+	(void)signal( SIGINT, SIG_IGN );
 }
 
 /*
@@ -428,6 +430,7 @@ char	**argv;
 	col_pr4v( dirp0, (int)(dirp - dirp0));
 	bu_free( (char *)dirp0, "dir_getspace" );
 
+	(void)signal( SIGINT, SIG_IGN );
 	return TCL_OK;
 }
 
@@ -681,6 +684,8 @@ char	**argv;
 			bu_free( (char *)rp, "dir_nref recs" );
 		}
 	}
+
+	(void)signal( SIGINT, SIG_IGN );
 	return TCL_OK;
 }
 
@@ -910,6 +915,8 @@ char	**argv;
 			continue;
 		printnode(dp, 0, 0);
 	}
+
+	(void)signal( SIGINT, SIG_IGN );
 }
 
 /*
@@ -991,6 +998,7 @@ char	**argv;
 		printnode(dp, 0, 0);
 	}
 
+	(void)signal( SIGINT, SIG_IGN );
 	return TCL_OK;
 }
 
@@ -1170,6 +1178,7 @@ char	**argv;
 				continue;
 again:
 			if( (rp = db_getmrec( dbip, dp )) == (union record *)0 ) {
+			  (void)signal( SIGINT, SIG_IGN );
 			  TCL_READ_ERR_return;
 			}
 			/* [0] is COMB, [1..n] are MEMBERs */
@@ -1185,6 +1194,7 @@ again:
 					if( db_delrec( dbip, dp, j ) < 0 )  {
 					  Tcl_AppendResult(interp, "error in killing reference to '", argv[k], "', exit MGED and retry\n", (char *)NULL);
 					  TCL_ERROR_RECOVERY_SUGGESTION;
+					  (void)signal( SIGINT, SIG_IGN );
 					  return TCL_ERROR;
 					}
 					bu_free( (char *)rp, "dir_nref recs" );
@@ -1198,6 +1208,7 @@ again:
 	/* ALL references removed...now KILL the object[s] */
 	/* reuse argv[] */
 	argv[0] = "kill";
+	(void)signal( SIGINT, SIG_IGN );
 	return f_kill( clientData, interp, argc, argv );
 }
 
@@ -1231,6 +1242,7 @@ char	**argv;
 		db_functree( dbip, dp, killtree, killtree );
 	}
 
+	(void)signal( SIGINT, SIG_IGN );
 	return TCL_OK;
 }
 

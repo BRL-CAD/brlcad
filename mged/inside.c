@@ -159,6 +159,7 @@ char **argv;
 	struct rt_db_internal	intern;
 	char	*newname;
 	int arg = 1;
+	int status = TCL_OK;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
@@ -190,7 +191,8 @@ char **argv;
 	  if( illump->s_Eflag ) {
 	     Tcl_AppendResult(interp, "Cannot find inside of a processed (E'd) region\n",
 			      (char *)NULL);
-	     return TCL_ERROR;
+	     status = TCL_ERROR;
+	     goto end;
 	  }
 	  /* use the solid at bottom of path (key solid) */
 	  /* apply es_mat and modelchanges editing to parameters */
@@ -208,13 +210,17 @@ char **argv;
 	  if( argc < arg+1 ) {
 	    Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter name of outside solid: ",
 			     (char *)NULL);
-	    return TCL_ERROR;
+	    status = TCL_ERROR;
+	    goto end;
 	  }
-	  if( (outdp = db_lookup( dbip,  argv[arg], LOOKUP_NOISY )) == DIR_NULL )  
-	    return TCL_ERROR;
+	  if( (outdp = db_lookup( dbip,  argv[arg], LOOKUP_NOISY )) == DIR_NULL ){
+	    status = TCL_ERROR;
+	    goto end;
+	  }
 	  ++arg;
 
 	  if( rt_db_get_internal( &intern, outdp, dbip, rt_identity ) < 0 ) {
+	    (void)signal( SIGINT, SIG_IGN );
 	    TCL_READ_ERR_return;
 	  }
 	}
@@ -225,7 +231,8 @@ char **argv;
 
 	  if( rt_arb_get_cgtype( &cgtype , intern.idb_ptr, &mged_tol , uvec , svec ) == 0 ) {
 	    Tcl_AppendResult(interp, outdp->d_namep, ": BAD ARB\n", (char *)NULL);
-	    return TCL_ERROR;
+	    status = TCL_ERROR;
+	    goto end;
 	  }
 
 	  /* must find new plane equations to account for
@@ -234,7 +241,8 @@ char **argv;
 	  if( rt_arb_calc_planes( planes, intern.idb_ptr, cgtype, &mged_tol ) < 0 )  {
 	    Tcl_AppendResult(interp, "rt_arb_calc_planes(", outdp->d_namep,
 			     "): failed\n", (char *)NULL);
-	    return TCL_ERROR;
+	    status = TCL_ERROR;
+	    goto end;
 	  }
 	}
 	/* "intern" is now loaded with the outside solid data */
@@ -243,11 +251,13 @@ char **argv;
 	if( argc < arg+1 ) {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter name of the inside solid: ",
 			   (char *)NULL);
-	  return TCL_ERROR;
+	  status = TCL_ERROR;
+	  goto end;
 	}
 	if( db_lookup( dbip, argv[arg], LOOKUP_QUIET ) != DIR_NULL ) {
 	  aexists( argv[arg] );
-	  return TCL_ERROR;
+	  status = TCL_ERROR;
+	  goto end;
 	}
 	if( (int)strlen(argv[arg]) >= NAMESIZE )  {
 	  struct bu_vls tmp_vls;
@@ -256,7 +266,8 @@ char **argv;
 	  bu_vls_printf(&tmp_vls, "Names are limited to %d characters\n", NAMESIZE-1);
 	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	  bu_vls_free(&tmp_vls);
-	  return TCL_ERROR;
+	  status = TCL_ERROR;
+	  goto end;
 	}
 	newname = argv[arg];
 	++arg;
@@ -301,14 +312,17 @@ char **argv;
 		for(i=0; i<nface; i++) {
 		  if( argc < arg+1 ) {
 		    Tcl_AppendResult(interp, MORE_ARGS_STR, promp[i], (char *)NULL);
-		    return TCL_ERROR;
+		    status = TCL_ERROR;
+		    goto end;
 		  }
 		  thick[i] = atof(argv[arg]) * local2base;
 		  ++arg;
 		}
 
-		if( arbin(&intern, thick, nface, cgtype, planes) )
-		  return TCL_ERROR;
+		if( arbin(&intern, thick, nface, cgtype, planes) ){
+		  status = TCL_ERROR;
+		  goto end;
+		}
 		break;
 	    }
 
@@ -317,38 +331,47 @@ char **argv;
 	  for(i=0; i<3; i++) {
 	    if( argc < arg+1 ) {
 	      Tcl_AppendResult(interp, MORE_ARGS_STR, promp[i], (char *)NULL);
-	      return TCL_ERROR;
+	      status = TCL_ERROR;
+	      goto end;
 	    }
 	    thick[i] = atof( argv[arg] ) * local2base;
 	    ++arg;
 	  }
 
-	  if( tgcin(&intern, thick) )
-	    return TCL_ERROR;
+	  if( tgcin(&intern, thick) ){
+	    status = TCL_ERROR;
+	    goto end;
+	  }
 	  break;
 
 	case ID_ELL:
 	  if( argc < arg+1 ) {
 	    Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter desired thickness: ", (char *)NULL);
-	    return TCL_ERROR;
+	    status = TCL_ERROR;
+	    goto end;
 	  }
 	  thick[0] = atof( argv[arg] ) * local2base;
 	  ++arg;
 
-	  if( ellgin(&intern, thick) )
-	    return TCL_ERROR;
+	  if( ellgin(&intern, thick) ){
+	    status = TCL_ERROR;
+	    goto end;
+	  }
 	  break;
 
 	case ID_TOR:
 	  if( argc < arg+1 ) {
 	    Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter desired thickness: ", (char *)NULL);
-	    return TCL_ERROR;
+	    status = TCL_ERROR;
+	    goto end;
 	  }
 	  thick[0] = atof( argv[arg] ) * local2base;
 	  ++arg;
 
-	  if( torin(&intern, thick) )
-	    return TCL_ERROR;
+	  if( torin(&intern, thick) ){
+	    status = TCL_ERROR;
+	    goto end;
+	  }
 	  break;
 
 	case ID_RPC:
@@ -356,14 +379,17 @@ char **argv;
 	  for (i = 0; i < 4; i++) {
 	    if( argc < arg+1 ) {
 	      Tcl_AppendResult(interp, MORE_ARGS_STR, promp[i], (char *)NULL);
-	      return TCL_ERROR;
+	      status = TCL_ERROR;
+	      goto end;
 	    }
 	    thick[i] = atof( argv[arg] ) * local2base;
 	    ++arg;
 	  }
 
-	  if( rpcin(&intern, thick) )
-	    return TCL_ERROR;
+	  if( rpcin(&intern, thick) ){
+	    status = TCL_ERROR;
+	    goto end;
+	  }
 	  break;
 
 	case ID_RHC:
@@ -371,14 +397,17 @@ char **argv;
 	  for (i = 0; i < 4; i++) {
 	    if( argc < arg+1 ) {
 	      Tcl_AppendResult(interp, MORE_ARGS_STR, promp[i], (char *)NULL);
-	      return TCL_ERROR;
+	      status = TCL_ERROR;
+	      goto end;
 	    }
 	    thick[i] = atof( argv[arg] ) * local2base;
 	    ++arg;
 	  }
 
-	  if( rhcin(&intern, thick) )
-	    return TCL_ERROR;
+	  if( rhcin(&intern, thick) ){
+	    status = TCL_ERROR;
+	    goto end;
+	  }
 	  break;
 
 	case ID_EPA:
@@ -386,14 +415,17 @@ char **argv;
 	  for (i = 0; i < 2; i++) {
 	    if( argc < arg+1 ) {
 	      Tcl_AppendResult(interp, MORE_ARGS_STR, promp[i], (char *)NULL);
-	      return TCL_ERROR;
+	      status = TCL_ERROR;
+	      goto end;
 	    }
 	    thick[i] = atof( argv[arg] ) * local2base;
 	    ++arg;
 	  }
 
-	  if( epain(&intern, thick) )
-	    return TCL_ERROR;
+	  if( epain(&intern, thick) ){
+	    status = TCL_ERROR;
+	    goto end;
+	  }
 	  break;
 
 	case ID_EHY:
@@ -401,14 +433,17 @@ char **argv;
 	  for (i = 0; i < 2; i++) {
 	    if( argc < arg+1 ) {
 	      Tcl_AppendResult(interp, MORE_ARGS_STR, promp[i], (char *)NULL);
-	      return TCL_ERROR;
+	      status = TCL_ERROR;
+	      goto end;
 	    }
 	    thick[i] = atof( argv[arg] ) * local2base;
 	    ++arg;
 	  }
 	  
-	  if( ehyin(&intern, thick) )
-	    return TCL_ERROR;
+	  if( ehyin(&intern, thick) ){
+	    status = TCL_ERROR;
+	    goto end;
+	  }
 	  break;
 
 	case ID_ETO:
@@ -416,32 +451,39 @@ char **argv;
 	  for (i = 0; i < 1; i++) {
 	    if( argc < arg+1 ) {
 	      Tcl_AppendResult(interp, MORE_ARGS_STR, promp[i], (char *)NULL);
-	      return TCL_ERROR;
+	      status = TCL_ERROR;
+	      goto end;
 	    }
 	    thick[i] = atof( argv[arg] ) * local2base;
 	    ++arg;
 	  }
 
-	  if( etoin(&intern, thick) )
-	    return TCL_ERROR;
+	  if( etoin(&intern, thick) ){
+	    status = TCL_ERROR;
+	    goto end;
+	  }
 	  break;
 
 	case ID_NMG:
 	  promp = p_nmgin;
 	  if( argc < arg+1 ) {
 	    Tcl_AppendResult(interp, MORE_ARGS_STR, promp[0], (char *)NULL);
-	    return TCL_ERROR;
+	    status = TCL_ERROR;
+	    goto end;
 	  }
 	  thick[0] = atof( argv[arg] ) * local2base;
 	  ++arg;
-	  if( nmgin( &intern , thick[0] ) )
-	    return TCL_ERROR;
+	  if( nmgin( &intern , thick[0] ) ){
+	    status = TCL_ERROR;
+	    goto end;
+	  }
 	  break;
 
 	default:
 	  Tcl_AppendResult(interp, "Cannot find inside for '",
 			   rt_functab[intern.idb_type].ft_name, "' solid\n", (char *)NULL);
-	  return TCL_ERROR;
+	  status = TCL_ERROR;
+	  goto end;
 	}
 
 	/* don't allow interrupts while we update the database! */
@@ -449,9 +491,11 @@ char **argv;
  
 	/* Add to in-core directory */
 	if( (dp = db_diradd( dbip,  newname, -1, 0, DIR_SOLID )) == DIR_NULL )  {
+	  (void)signal( SIGINT, SIG_IGN );
 	  TCL_ALLOC_ERR_return;
 	}
 	if( rt_db_put_internal( dp, dbip, &intern ) < 0 ) {
+	  (void)signal( SIGINT, SIG_IGN );
 	  TCL_WRITE_ERR_return;
 	}
 
@@ -463,6 +507,9 @@ char **argv;
 		arglist[2] = NULL;
 		return f_edit(clientData, interp, 2, arglist );
 	}
+end:
+	(void)signal( SIGINT, SIG_IGN );
+	return status;
 }
 
 

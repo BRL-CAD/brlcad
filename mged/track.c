@@ -94,7 +94,8 @@ char **argv;
 	if ( argc < arg+1 ) {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter X of the FIRST roadwheel: ",
 			   (char *)NULL);
-	  return TCL_ERROR;
+	  edit_result = TCL_ERROR;
+	  goto end;
 	}
 	fw[0] = atof( argv[arg] ) * local2base;
 	++arg;
@@ -102,20 +103,23 @@ char **argv;
 	if( argc < arg+1 ) {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter X of the LAST roadwheel: ",
 			   (char *)NULL);
-	  return TCL_ERROR;
+	  edit_result = TCL_ERROR;
+	  goto end;
 	}
 	lw[0] = atof( argv[arg] ) * local2base;
 	++arg;
 
 	if( fw[0] <= lw[0] ) {
 	  Tcl_AppendResult(interp, "First wheel after last wheel - STOP\n", (char *)NULL);
-	  return TCL_ERROR;
+	  edit_result = TCL_ERROR;
+	  goto end;
 	}
 
 	if( argc < arg+1 ) {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter Z of the roadwheels: ",
 			   (char *)NULL);
-	  return TCL_ERROR;
+	  edit_result = TCL_ERROR;
+	  goto end;
 	}
 	fw[1] = lw[1] = atof( argv[arg] ) * local2base;
 	++arg;
@@ -123,32 +127,37 @@ char **argv;
 	if( argc < arg+1 ) {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter radius of the roadwheels: ",
 			   (char *)NULL);
-	  return TCL_ERROR;
+	  edit_result = TCL_ERROR;
+	  goto end;
 	}
 	fw[2] = lw[2] = atof( argv[arg] ) * local2base;
 	++arg;
 	if( fw[2] <= 0 ) {
 	  Tcl_AppendResult(interp, "Radius <= 0 - STOP\n", (char *)NULL);
-	  return TCL_ERROR;
+	  edit_result = TCL_ERROR;
+	  goto end;
 	}
 
 	if ( argc < arg+1 ) {
 	  /* get the drive wheel info */
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter X of the drive (REAR) wheel: ",
 			   (char *)NULL);
-	  return TCL_ERROR;
+	  edit_result = TCL_ERROR;
+	  goto end;
 	}
 	dw[0] = atof( argv[arg] ) * local2base;
 	++arg;
 	if( dw[0] >= lw[0] ) {
 	  Tcl_AppendResult(interp, "DRIVE wheel not in the rear - STOP \n", (char *)NULL);
-	  return TCL_ERROR;
+	  edit_result = TCL_ERROR;
+	  goto end;
 	}
 
 	if( argc < arg+1 ) {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter Z of the drive (REAR) wheel: ",
 			   (char *)NULL);
-	  return TCL_ERROR;
+	  edit_result = TCL_ERROR;
+	  goto end;
 	}
 	dw[1] = atof( argv[arg] ) * local2base;
 	++arg;
@@ -156,32 +165,37 @@ char **argv;
 	if( argc < arg+1 ) {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter radius of the drive (REAR) wheel: ",
 			   (char *)NULL);
-	  return TCL_ERROR;
+	  edit_result = TCL_ERROR;
+	  goto end;
 	}
 	dw[2] = atof( argv[arg] ) * local2base;
 	++arg;
 	if( dw[2] <= 0 ) {
 	  Tcl_AppendResult(interp, "Radius <= 0 - STOP\n", (char *)NULL);
-	  return TCL_ERROR;
+	  edit_result = TCL_ERROR;
+	  goto end;
 	}
 	
 	/* get the idler wheel info */
 	if( argc < arg+1 ) {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter X of the idler (FRONT) wheel: ",
 			   (char *)NULL);
-	  return TCL_ERROR;
+	  edit_result = TCL_ERROR;
+	  goto end;
 	}
 	iw[0] = atof( argv[arg] ) * local2base;
 	++arg;
 	if( iw[0] <= fw[0] ) {
 	  Tcl_AppendResult(interp, "IDLER wheel not in the front - STOP \n", (char *)NULL);
-	  return TCL_ERROR;
+	  edit_result = TCL_ERROR;
+	  goto end;
 	}
 
 	if( argc < arg+1 ) {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter Z of the idler (FRONT) wheel: ",
 			   (char *)NULL);
-	  return TCL_ERROR;
+	  edit_result = TCL_ERROR;
+	  goto end;
 	}
 	iw[1] = atof( argv[arg] ) * local2base;
 	++arg;
@@ -189,20 +203,23 @@ char **argv;
 	if( argc < arg+1 ) {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter radius of the idler (FRONT) wheel: ",
 			   (char *)NULL);
-	  return TCL_ERROR;
+	  edit_result = TCL_ERROR;
+	  goto end;
 	}
 	iw[2] = atof( argv[arg] ) * local2base;
 	++arg;
 	if( iw[2] <= 0 ) {
 	  Tcl_AppendResult(interp, "Radius <= 0 - STOP\n", (char *)NULL);
-	  return TCL_ERROR;
+	  edit_result = TCL_ERROR;
+	  goto end;
 	}
 
 	/* get track info */
 	if( argc < arg+1 ) {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter Y-MIN of the track: ",
 			   (char *)NULL);
-	  return TCL_ERROR;
+	  edit_result = TCL_ERROR;
+	  goto end;
 	}
 	tr[2] = tr[0] = atof( argv[arg] ) * local2base;
 	++arg;
@@ -210,13 +227,15 @@ char **argv;
 	if( argc < arg+1 ) {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter Y-MAX of the track: ",
 			   (char *)NULL);
-	  return TCL_ERROR;
+	  edit_result = TCL_ERROR;
+	  goto end;
 	}
 	tr[1] = atof( argv[arg] ) * local2base;
 	++arg;
 	if( tr[0] == tr[1] ) {
 	  Tcl_AppendResult(interp, "MIN == MAX ... STOP\n", (char *)NULL);
-	  return TCL_ERROR;
+	  edit_result = TCL_ERROR;
+	  goto end;
 	}
 	if( tr[0] > tr[1] ) {
 	  Tcl_AppendResult(interp, "MIN > MAX .... will switch\n", (char *)NULL);
@@ -227,13 +246,15 @@ char **argv;
 	if( argc < arg+1 ) {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter track thickness: ",
 			   (char *)NULL);
-	  return TCL_ERROR;
+	  edit_result = TCL_ERROR;
+	  goto end;
 	}
 	tr[2] = atof( argv[arg] ) * local2base;
 	++arg;
 	if( tr[2] <= 0 ) {
 	  Tcl_AppendResult(interp, "Track thickness <= 0 - STOP\n", (char *)NULL);
-	  return TCL_ERROR;
+	  edit_result = TCL_ERROR;
+	  goto end;
 	}
 
 	solname[0] = regname[0] = grpname[0] = 't';
@@ -523,6 +544,9 @@ tryagain:	/* sent here to try next set of names */
 	los_default = los;
 	grpname[5] = solname[8] = regname[8] = '\0';
 
+	return edit_result;
+end:
+	(void)signal( SIGINT, SIG_IGN );
 	return edit_result;
 }
 
