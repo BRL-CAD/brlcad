@@ -1565,6 +1565,115 @@ CONST struct db_i		*dbip;
 }
 
 /*
+ *			R T _ E P A _ I M P O R T 5
+ *
+ *  Import an EPA from the database format to the internal format.
+ *  Apply modeling transformations as well.
+ */
+int
+rt_epa_import5( ip, ep, mat, dbip )
+struct rt_db_internal		*ip;
+CONST struct bu_external	*ep;
+register CONST mat_t		mat;
+CONST struct db_i		*dbip;
+{
+	LOCAL struct rt_epa_internal	*xip;
+	fastf_t				vec[11];
+
+	BU_CK_EXTERNAL( ep );
+
+	RT_INIT_DB_INTERNAL( ip );
+	ip->idb_type = ID_EPA;
+	ip->idb_meth = &rt_functab[ID_EPA];
+	ip->idb_ptr = bu_malloc( sizeof(struct rt_epa_internal), "rt_epa_internal");
+
+	xip = (struct rt_epa_internal *)ip->idb_ptr;
+	xip->epa_magic = RT_EPA_INTERNAL_MAGIC;
+
+	/* Convert from database (network) to internal (host) format */
+	ntohd( (unsigned char *)vec, ep->ext_buf, 11 );
+
+	/* Apply modeling transformations */
+	MAT4X3PNT( xip->epa_V, mat, &vec[0*3] );
+	MAT4X3VEC( xip->epa_H, mat, &vec[1*3] );
+	MAT4X3VEC( xip->epa_Au, mat, &vec[2*3] );
+	VUNITIZE( xip->epa_Au );
+	xip->epa_r1 = vec[3*3] / mat[15];
+	xip->epa_r2 = vec[3*3+1] / mat[15];
+
+	if( xip->epa_r1 < SMALL_FASTF || xip->epa_r2 < SMALL_FASTF )
+	{
+		bu_log( "rt_epa_import: r1 or r2 are zero\n" );
+		bu_free( (char *)ip->idb_ptr , "rt_epa_import: ip->idb_ptr" );
+		return( -1 );
+	}
+
+	return(0);			/* OK */
+}
+
+/*
+ *			R T _ E P A _ E X P O R T 5
+ *
+ *  The name is added by the caller, in the usual place.
+ */
+int
+rt_epa_export5( ep, ip, local2mm, dbip )
+struct bu_external		*ep;
+CONST struct rt_db_internal	*ip;
+double				local2mm;
+CONST struct db_i		*dbip;
+{
+	struct rt_epa_internal	*xip;
+	fastf_t			vec[11];
+	fastf_t			mag_h;
+
+	RT_CK_DB_INTERNAL(ip);
+	if( ip->idb_type != ID_EPA )  return(-1);
+	xip = (struct rt_epa_internal *)ip->idb_ptr;
+	RT_EPA_CK_MAGIC(xip);
+
+	BU_INIT_EXTERNAL(ep);
+	ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 11;
+	ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes, "epa external");
+
+	if (!NEAR_ZERO( MAGNITUDE(xip->epa_Au) - 1., RT_LEN_TOL)) {
+		bu_log("rt_epa_export: Au not a unit vector!\n");
+		return(-1);
+	}
+
+	mag_h = MAGNITUDE(xip->epa_H);
+	
+	if ( mag_h < RT_LEN_TOL
+		|| xip->epa_r1 < RT_LEN_TOL
+		|| xip->epa_r2 < RT_LEN_TOL) {
+		bu_log("rt_epa_export: not all dimensions positive!\n");
+		return(-1);
+	}
+	
+	if ( !NEAR_ZERO( VDOT(xip->epa_Au, xip->epa_H)/mag_h, RT_DOT_TOL) ) {
+		bu_log("rt_epa_export: Au and H are not perpendicular!\n");
+		return(-1);
+	}
+	
+	if (xip->epa_r2 > xip->epa_r1) {
+		bu_log("rt_epa_export: semi-minor axis cannot be longer than semi-major axis!\n");
+		return(-1);
+	}
+
+	/* scale 'em into local buffer */
+	VSCALE( &vec[0*3], xip->epa_V, local2mm );
+	VSCALE( &vec[1*3], xip->epa_H, local2mm );
+	VMOVE( &vec[2*3], xip->epa_Au ); /* don't scale a unit vector */
+	vec[3*3] = xip->epa_r1 * local2mm;
+	vec[3*3+1] = xip->epa_r2 * local2mm;
+
+	/* Convert from internal (host) to database (network) format */
+	htond( ep->ext_buf, (unsigned char *)vec, 11 );
+
+	return(0);
+}
+
+/*
  *			R T _ E P A _ D E S C R I B E
  *
  *  Make human-readable formatted presentation of this solid.
