@@ -50,8 +50,8 @@ static void
 rt_pr_mater( mp )
 register struct mater *mp;
 {
-	(void)fprintf(stderr, "%5d..%d\t", mp->mt_low, mp->mt_high );
-	(void)fprintf(stderr, "%d,%d,%d\t", mp->mt_r, mp->mt_g, mp->mt_b);
+	(void)rt_log( "%5d..%d\t", mp->mt_low, mp->mt_high );
+	(void)rt_log( "%d,%d,%d\t", mp->mt_r, mp->mt_g, mp->mt_b);
 }
 
 /*
@@ -105,7 +105,7 @@ register struct mater *newp;
 	for( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
 		if( mp->mt_low == newp->mt_low  &&
 		    mp->mt_high <= newp->mt_high )  {
-			(void)fprintf(stderr,"dropping overwritten region-id based material property entry:\n");
+			rt_log("dropping overwritten region-id based material property entry:\n");
 			newp->mt_forw = mp->mt_forw;
 			rt_pr_mater( mp );
 			*mp = *newp;		/* struct copy */
@@ -116,7 +116,7 @@ register struct mater *newp;
 		if( mp->mt_low  < newp->mt_low  &&
 		    mp->mt_high > newp->mt_high )  {
 			/* New range entirely contained in old range; split */
-			(void)fprintf(stderr,"Splitting region-id based material property entry into 3 ranges\n");
+			rt_log("Splitting region-id based material property entry into 3 ranges\n");
 			GETSTRUCT( zot, mater );
 			*zot = *mp;		/* struct copy */
 			zot->mt_daddr = MATER_NO_ADDR;
@@ -134,9 +134,9 @@ register struct mater *newp;
 		}
 		if( mp->mt_high > newp->mt_low )  {
 			/* Overlap to the left: Shorten preceeding entry */
-			(void)fprintf(stderr,"Shortening region-id based material property entry lhs range, from:\n");
+			rt_log("Shortening region-id based material property entry lhs range, from:\n");
 			rt_pr_mater( mp );
-			(void)fprintf(stderr,"to:\n");
+			rt_log("to:\n");
 			mp->mt_high = newp->mt_low-1;
 			rt_pr_mater( mp );
 			/* Now append */
@@ -152,7 +152,7 @@ register struct mater *newp;
 			goto check_overlap;
 		}
 	}
-	(void)fprintf(stderr,"fell out of rt_insert_color loop, append region-id based material property entry to end of list\n");
+	rt_log("fell out of rt_insert_color loop, append region-id based material property entry to end of list\n");
 	/* Append at end */
 	newp->mt_forw = MATER_NULL;
 	mp->mt_forw = newp;
@@ -166,16 +166,16 @@ check_overlap:
 			/* Drop this mater struct */
 			zot = newp->mt_forw;
 			newp->mt_forw = zot->mt_forw;
-			(void)fprintf(stderr,"dropping overlaping region-id based material property entry:\n");
+			rt_log("dropping overlaping region-id based material property entry:\n");
 			rt_pr_mater( zot );
 			free( zot );
 			continue;
 		}
 		if( newp->mt_high >= newp->mt_forw->mt_low )  {
 			/* Shorten this mater struct, then done */
-			(void)fprintf(stderr,"Shortening region-id based material property entry rhs range, from:\n");
+			rt_log("Shortening region-id based material property entry rhs range, from:\n");
 			rt_pr_mater( newp->mt_forw );
-			(void)fprintf(stderr,"to:\n");
+			rt_log("to:\n");
 			newp->mt_forw->mt_low = newp->mt_high+1;
 			rt_pr_mater( newp->mt_forw );
 			continue;	/* more conservative than returning */
@@ -196,7 +196,7 @@ register struct region *regp;
 	register struct mater *mp;
 
 	if( regp == REGION_NULL )  {
-		fprintf(stderr,"color_map(NULL)\n");
+		rt_log("color_map(NULL)\n");
 		return;
 	}
 	for( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
