@@ -870,7 +870,7 @@ int	non_blocking;
 
 	non_blocking++;
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "knob -i ax %f ay %f az %f\n",
+	bu_vls_printf(&vls, "knob -i -e ax %f ay %f az %f\n",
 		      edit_rate_rotate[X] * 6,
 		      edit_rate_rotate[Y] * 6,
 		      edit_rate_rotate[Z] * 6);
@@ -884,7 +884,7 @@ int	non_blocking;
 
 	non_blocking++;
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "knob -i aX %f aY %f aZ %f\n",
+	bu_vls_printf(&vls, "knob -i -e aX %f aY %f aZ %f\n",
 		      -edit_rate_tran[X] / 10,
 		      -edit_rate_tran[Y] / 10,
 		      -edit_rate_tran[Z] / 10);
@@ -898,7 +898,7 @@ int	non_blocking;
 
 	non_blocking++;
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "knob -i aS %f\n", edit_rate_scale);
+	bu_vls_printf(&vls, "knob -i -e aS %f\n", edit_rate_scale);
 	
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);

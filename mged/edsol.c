@@ -3595,6 +3595,10 @@ CONST vect_t	mousevec;
 		/* accumulate scale factor */
 		acc_sc_sol *= es_scale;
 
+		edit_absolute_scale = acc_sc_sol - 1.0;
+		if(edit_absolute_scale > 0)
+		  edit_absolute_scale /= 3.0;
+
 		sedraw = 1;
 		return;
 	case STRANS:
@@ -4067,21 +4071,23 @@ vect_t tvec;
 void
 sedit_scale()
 {
-#if 0
-	case SSCALE:
-	case PSCALE:
-		/* use mouse to get a scale factor */
-		es_scale = 1.0 + 0.25 * ((fastf_t)
-			(mousevec[Y] > 0 ? mousevec[Y] : -mousevec[Y]));
-		if ( mousevec[Y] <= 0 )
-			es_scale = 1.0 / es_scale;
+  fastf_t old_acc_sc_sol;
 
-		/* accumulate scale factor */
-		acc_sc_sol *= es_scale;
+  if( es_edflag != SSCALE && es_edflag != PSCALE )
+    return;
 
-		sedraw = 1;
-		return;
-#endif
+  old_acc_sc_sol = acc_sc_sol;
+
+  if(-SMALL_FASTF < edit_absolute_scale && edit_absolute_scale < SMALL_FASTF)
+    acc_sc_sol = 1.0;
+  else if(edit_absolute_scale > 0.0)
+    acc_sc_sol = 1.0 + edit_absolute_scale * 3.0;
+  else
+    acc_sc_sol = 1.0 + edit_absolute_scale;
+
+  es_scale = acc_sc_sol / old_acc_sc_sol;
+
+  sedit();
 }
 
 

@@ -1535,11 +1535,10 @@ char	**argv;
   int	i;
   fastf_t f;
   char	*cmd;/* = argv[1];*/
-  static int aslewflag = 0;
-  int view_flag = 0;  /* force view interpretation */
-  vect_t	aslew;
-  int iknob = 0;
   int do_tran = 0;
+  int incr_flag = 0;  /* interpret values as increments */
+  int view_flag = 0;  /* force view interpretation */
+  int edit_flag = 0;  /* force edit interpretation */
 
   if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
     return TCL_ERROR;
@@ -1588,10 +1587,13 @@ char	**argv;
     int c;
 
     bu_optind = 1;
-    while((c = bu_getopt(argc, argv, "iv")) != EOF){
+    while((c = bu_getopt(argc, argv, "eiv")) != EOF){
       switch(c){
+      case 'e':
+	edit_flag = 1;
+	break;
       case 'i':
-	iknob = 1;
+	incr_flag = 1;
 	break;
       case 'v':
 	view_flag = 1;
@@ -1655,88 +1657,95 @@ char	**argv;
 
       switch( cmd[0] )  {
       case 'x':
-	if(iknob){
-	  if(EDIT_ROTATE && mged_variables.edit && !view_flag)
+	if(incr_flag){
+	  if(EDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag))
 	    edit_rate_rotate[X] += f;
 	  else
 	    rate_rotate[X] += f;
 	}else{
-	  if(EDIT_ROTATE && mged_variables.edit && !view_flag)
+	  if(EDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag))
 	    edit_rate_rotate[X] = f;
 	  else
 	    rate_rotate[X] = f;
 	}
 	break;
       case 'y':
-	if(iknob){
-	  if(EDIT_ROTATE && mged_variables.edit && !view_flag)
+	if(incr_flag){
+	  if(EDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag))
 	    edit_rate_rotate[Y] += f;
 	  else
 	    rate_rotate[Y] += f;
 	}else{
-	  if(EDIT_ROTATE && mged_variables.edit && !view_flag)
+	  if(EDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag))
 	    edit_rate_rotate[Y] = f;
 	  else
 	    rate_rotate[Y] = f;
 	}
 	break;
       case 'z':
-	if(iknob){
-	  if(EDIT_ROTATE && mged_variables.edit && !view_flag)
+	if(incr_flag){
+	  if(EDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag))
 	    edit_rate_rotate[Z] += f;
 	  else
 	    rate_rotate[Z] += f;
 	}else{
-	  if(EDIT_ROTATE && mged_variables.edit && !view_flag)
+	  if(EDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag))
 	    edit_rate_rotate[Z] = f;
 	  else
 	    rate_rotate[Z] = f;
 	}
       break;
     case 'X':
-      if(iknob){
-	if(EDIT_TRAN && mged_variables.edit && !view_flag)
+      if(incr_flag){
+	if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag))
 	  edit_rate_tran[X] += f;
 	else
 	  rate_slew[X] += f;
       }else{
-	if(EDIT_TRAN && mged_variables.edit && !view_flag)
+	if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag))
 	  edit_rate_tran[X] = f;
 	else
 	  rate_slew[X] = f;
       }
       break;
     case 'Y':
-      if(iknob){
-	if(EDIT_TRAN && mged_variables.edit && !view_flag)
+      if(incr_flag){
+	if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag))
 	  edit_rate_tran[Y] += f;
 	else
 	  rate_slew[Y] += f;
       }else{
-	if(EDIT_TRAN && mged_variables.edit && !view_flag)
+	if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag))
 	  edit_rate_tran[Y] = f;
 	else
 	  rate_slew[Y] = f;
       }
       break;
     case 'Z':
-      if(iknob){
-	if(EDIT_TRAN && mged_variables.edit && !view_flag)
+      if(incr_flag){
+	if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag))
 	  edit_rate_tran[Z] += f;
 	else
 	  rate_slew[Z] += f;
       }else{
-	if(EDIT_TRAN && mged_variables.edit && !view_flag)
+	if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag))
 	  edit_rate_tran[Z] = f;
 	else
 	  rate_slew[Z] = f;
       }
       break;
     case 'S':
-      if(iknob)
-	rate_zoom += f;
-      else
-	rate_zoom = f;
+      if(incr_flag){
+	if(EDIT_SCALE && ((mged_variables.edit && !view_flag) || edit_flag))
+	  edit_rate_scale += f;
+	else
+	  rate_zoom += f;
+      }else{
+	if(EDIT_SCALE && ((mged_variables.edit && !view_flag) || edit_flag))
+	  edit_rate_scale = f;
+	else
+	  rate_zoom = f;
+      }
       break;
     default:
       goto usage;
@@ -1744,14 +1753,14 @@ char	**argv;
   } else if( cmd[0] == 'a' && cmd[1] != '\0' && cmd[2] == '\0' ) {
     switch( cmd[1] ) {
     case 'x':
-      if(iknob){
-	if(SEDIT_ROTATE && mged_variables.edit && !view_flag){
+      if(incr_flag){
+	if(SEDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
 	  edit_absolute_rotate[X] += f;
 	  (void)irot(edit_absolute_rotate[X],
 		     edit_absolute_rotate[Y],
 		     edit_absolute_rotate[Z], 0);
 	}else {
-	  if(OEDIT_ROTATE && mged_variables.edit && !view_flag){
+	  if(OEDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
 	    (void)irot(f, 0.0, 0.0, 1);
 	    edit_absolute_rotate[X] += f;
 	  }else{
@@ -1760,25 +1769,24 @@ char	**argv;
 	  }
 	}
       }else{
-	  if(SEDIT_ROTATE && mged_variables.edit && !view_flag){
+	  if(SEDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
 	    edit_absolute_rotate[X] = f;
 	    (void)irot(edit_absolute_rotate[X],
 		       edit_absolute_rotate[Y],
 		       edit_absolute_rotate[Z], 0);
 	  }else {
-	    if(OEDIT_ROTATE && mged_variables.edit && !view_flag){
+	    if(OEDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
 	      (void)irot(f - edit_absolute_rotate[X], 0.0, 0.0, 1);
 	      edit_absolute_rotate[X] = f;
 	    }else{
 	      mged_vrot(f - absolute_rotate[X], 0.0, 0.0);
 	      absolute_rotate[X] = f;
 	    }
-	    
 	  }
       }
 	  
 	  /* wrap around */
-      if(EDIT_ROTATE && mged_variables.edit && !view_flag){
+      if(EDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
 	if(edit_absolute_rotate[X] < -180.0)
 	  edit_absolute_rotate[X] = edit_absolute_rotate[X] + 360.0;
 	else if(edit_absolute_rotate[X] > 180.0)
@@ -1792,14 +1800,14 @@ char	**argv;
 
       break;
     case 'y':
-      if(iknob){
-	if(SEDIT_ROTATE && mged_variables.edit && !view_flag){
+      if(incr_flag){
+	if(SEDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
 	  edit_absolute_rotate[Y] += f;
 	  (void)irot(edit_absolute_rotate[X],
 		     edit_absolute_rotate[Y],
 		     edit_absolute_rotate[Z], 0);
 	}else {
-	  if(OEDIT_ROTATE && mged_variables.edit && !view_flag){
+	  if(OEDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
 	    (void)irot(0.0, f, 0.0, 1);
 	    edit_absolute_rotate[Y] += f;
 	  }else{
@@ -1808,13 +1816,13 @@ char	**argv;
 	  }
 	}
       }else{
-	  if(SEDIT_ROTATE && mged_variables.edit && !view_flag){
+	  if(SEDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
 	    edit_absolute_rotate[Y] = f;
 	    (void)irot(edit_absolute_rotate[X],
 		       edit_absolute_rotate[Y],
 		       edit_absolute_rotate[Z], 0);
 	  }else {
-	    if(OEDIT_ROTATE && mged_variables.edit && !view_flag){
+	    if(OEDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
 	      (void)irot(0.0, f - edit_absolute_rotate[Y], 0.0, 1);
 	      edit_absolute_rotate[Y] = f;
 	    }else{
@@ -1826,7 +1834,7 @@ char	**argv;
       }
 	  
 	  /* wrap around */
-      if(EDIT_ROTATE && mged_variables.edit && !view_flag){
+      if(EDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
 	if(edit_absolute_rotate[Y] < -180.0)
 	  edit_absolute_rotate[Y] = edit_absolute_rotate[Y] + 360.0;
 	else if(edit_absolute_rotate[Y] > 180.0)
@@ -1840,14 +1848,14 @@ char	**argv;
 
       break;
     case 'z':
-      if(iknob){
-	if(SEDIT_ROTATE && mged_variables.edit && !view_flag){
+      if(incr_flag){
+	if(SEDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
 	  edit_absolute_rotate[Z] += f;
 	  (void)irot(edit_absolute_rotate[X],
 		     edit_absolute_rotate[Y],
 		     edit_absolute_rotate[Z], 0);
 	}else {
-	  if(OEDIT_ROTATE && mged_variables.edit && !view_flag){
+	  if(OEDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
 	    (void)irot(0.0, 0.0, f, 1);
 	    edit_absolute_rotate[Z] += f;
 	  }else{
@@ -1856,13 +1864,13 @@ char	**argv;
 	  }
 	}
       }else{
-	  if(SEDIT_ROTATE && mged_variables.edit && !view_flag){
+	  if(SEDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
 	    edit_absolute_rotate[Z] = f;
 	    (void)irot(edit_absolute_rotate[X],
 		       edit_absolute_rotate[Y],
 		       edit_absolute_rotate[Z], 0);
 	  }else {
-	    if(OEDIT_ROTATE && mged_variables.edit && !view_flag){
+	    if(OEDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
 	      (void)irot(0.0, 0.0, f - edit_absolute_rotate[Z], 1);
 	      edit_absolute_rotate[Z] = f;
 	    }else{
@@ -1874,7 +1882,7 @@ char	**argv;
       }
 	  
 	  /* wrap around */
-      if(EDIT_ROTATE && mged_variables.edit && !view_flag){
+      if(EDIT_ROTATE && ((mged_variables.edit && !view_flag) || edit_flag)){
 	if(edit_absolute_rotate[Z] < -180.0)
 	  edit_absolute_rotate[Z] = edit_absolute_rotate[Z] + 360.0;
 	else if(edit_absolute_rotate[Z] > 180.0)
@@ -1888,13 +1896,13 @@ char	**argv;
 
       break;
     case 'X':
-      if(iknob){
-	if(EDIT_TRAN && mged_variables.edit && !view_flag)
+      if(incr_flag){
+	if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag))
 	  edit_absolute_tran[X] += f;
 	else
 	  absolute_slew[X] += f;
       }else{
-	if(EDIT_TRAN && mged_variables.edit && !view_flag)
+	if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag))
 	  edit_absolute_tran[X] = f;
 	else
 	  absolute_slew[X] = f;
@@ -1903,13 +1911,13 @@ char	**argv;
       do_tran = 1;
       break;
     case 'Y':
-      if(iknob){
-	if(EDIT_TRAN && mged_variables.edit && !view_flag)
+      if(incr_flag){
+	if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag))
 	  edit_absolute_tran[Y] += f;
 	else
 	  absolute_slew[Y] += f;
       }else{
-	if(EDIT_TRAN && mged_variables.edit && !view_flag)
+	if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag))
 	  edit_absolute_tran[Y] = f;
 	else
 	  absolute_slew[Y] = f;
@@ -1918,13 +1926,13 @@ char	**argv;
       do_tran = 1;
       break;
     case 'Z':
-      if(iknob){
-	if(EDIT_TRAN && mged_variables.edit && !view_flag)
+      if(incr_flag){
+	if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag))
 	  edit_absolute_tran[Z] += f;
 	else
 	  absolute_slew[Z] += f;
       }else{
-	if(EDIT_TRAN && mged_variables.edit && !view_flag)
+	if(EDIT_TRAN && ((mged_variables.edit && !view_flag) || edit_flag))
 	  edit_absolute_tran[Z] = f;
 	else
 	  absolute_slew[Z] = f;
@@ -1933,19 +1941,26 @@ char	**argv;
       do_tran = 1;
       break;
     case 'S':
-      if(iknob){
-	if(EDIT_SCALE)
+      if(incr_flag){
+	if(EDIT_SCALE && ((mged_variables.edit && !view_flag) || edit_flag)){
 	  edit_absolute_scale += f;
-	else
+	  if(state = ST_S_EDIT)
+	    sedit_scale();
+	}else{
 	  absolute_zoom += f;
+	  abs_zoom();
+	}
       }else{
-	if(EDIT_SCALE)
+	if(EDIT_SCALE && ((mged_variables.edit && !view_flag) || edit_flag)){
 	  edit_absolute_scale = f;
-	else
+	  if(state = ST_S_EDIT)
+	    sedit_scale();
+	}else{
 	  absolute_zoom = f;
+	  abs_zoom();
+	}
       }
 
-      abs_zoom();
       break;
     default:
       goto usage;
@@ -1957,7 +1972,7 @@ char	**argv;
 	  av[1] = "x";
 	  av[3] = NULL;
 
-	  if(iknob)
+	  if(incr_flag)
 	    av[0] = "iadc";
 	  else
 	    av[0] = "adc";
@@ -1972,7 +1987,7 @@ char	**argv;
 	  av[1] = "y";
 	  av[3] = NULL;
 
-	  if(iknob)
+	  if(incr_flag)
 	    av[0] = "iadc";
 	  else
 	    av[0] = "adc";
@@ -1987,7 +2002,7 @@ char	**argv;
 	  av[1] = "a1";
 	  av[3] = NULL;
 
-	  if(iknob)
+	  if(incr_flag)
 	    av[0] = "iadc";
 	  else
 	    av[0] = "adc";
@@ -2002,7 +2017,7 @@ char	**argv;
 	  av[1] = "a2";
 	  av[3] = NULL;
 
-	  if(iknob)
+	  if(incr_flag)
 	    av[0] = "iadc";
 	  else
 	    av[0] = "adc";
@@ -2017,7 +2032,7 @@ char	**argv;
 	  av[1] = "dst";
 	  av[3] = NULL;
 
-	  if(iknob)
+	  if(incr_flag)
 	    av[0] = "iadc";
 	  else
 	    av[0] = "adc";
@@ -2190,11 +2205,7 @@ char	**argv;
 static void
 abs_zoom()
 {
-  char *av[3];
-
-  av[0] = "zoom";
-  av[1] = "1";
-  av[2] = NULL;
+  vect_t new_pos;
 
   /* Use initial Viewscale */
   if(-SMALL_FASTF < absolute_zoom && absolute_zoom < SMALL_FASTF)
@@ -2209,7 +2220,13 @@ abs_zoom()
       Viewscale = i_Viewscale * (1.0 + (absolute_zoom * -9.0));
   }
 
-  (void)f_zoom((ClientData)NULL, interp, 2, av);
+  new_mats();
+
+  VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
+  MAT4X3PNT(absolute_slew, model2view, new_pos);
+
+  if(BU_LIST_NON_EMPTY(&head_cmd_list.l))
+    (void)Tcl_Eval(interp, "set_sliders");
 }
 
 
@@ -2226,18 +2243,12 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-  double	val;
-  point_t new_pos;
-  point_t old_pos;
-  point_t diff;
-  point_t model_pos;
+  double val;
+  vect_t new_pos;
 
   if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
     return TCL_ERROR;
-#if 0
-  if(EDIT_TRAN)
-    MAT4X3PNT(model_pos, view2model, absolute_slew);
-#endif
+
   val = atof(argv[1]);
   if( val < SMALL_FASTF || val > INFINITY )  {
     Tcl_AppendResult(interp, "zoom: scale factor out of range\n", (char *)NULL);
@@ -2253,12 +2264,12 @@ char	**argv;
   absolute_zoom = 1.0 - Viewscale / i_Viewscale;
   if(absolute_zoom < 0.0)
     absolute_zoom /= 9.0;
-#if 0
-  if(EDIT_TRAN)
-    MAT4X3PNT(absolute_slew, model2view, model_pos);
-#endif
+
   VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
   MAT4X3PNT(absolute_slew, model2view, new_pos);
+
+  if(BU_LIST_NON_EMPTY(&head_cmd_list.l))
+        (void)Tcl_Eval(interp, "set_sliders");
 
   return TCL_OK;
 }

@@ -62,13 +62,13 @@ struct scroll_item scr_menu[] = {
 	{ "yrot",	sl_tol,		5,	"y" },
 	{ "zrot",	sl_tol,		6,	"z" },
 	{ "",		(void (*)())NULL, 0,	"" }
-      };
+};
 
 struct scroll_item sl_abs_menu[] = {
-	{ "Xslew",	sl_tol,	0,	"aX" },
-	{ "Yslew",	sl_tol,	1,	"aY" },
-	{ "Zslew",	sl_tol,	2,	"aZ" },
-	{ "Zoom",	sl_tol,	3,	"aS" },
+	{ "Xslew",	sl_tol,		0,	"aX" },
+	{ "Yslew",	sl_tol,		1,	"aY" },
+	{ "Zslew",	sl_tol,		2,	"aZ" },
+	{ "Zoom",	sl_tol,		3,	"aS" },
 	{ "Xrot",	sl_artol,	4,	"ax" },
 	{ "Yrot",	sl_artol,	5,	"ay" },
 	{ "Zrot",	sl_artol,	6,	"az" },
@@ -99,17 +99,7 @@ struct scroll_item sl_adc_menu[] = {
 void
 sl_halt_scroll()
 {
-#if 0
-  char *av[3];
-
-  av[0] = "knob";
-  av[1] = "zero";
-  av[2] = NULL;
-
-  (void)f_knob((ClientData)NULL, interp, 2, av);
-#else
   Tcl_Eval( interp, "knob zero");
-#endif
 }
 
 /*
@@ -118,24 +108,10 @@ sl_halt_scroll()
 void
 sl_toggle_scroll()
 {
-#if 0
-  char *av[3];
-
-  av[0] = "sliders";
-  av[2] = NULL;
-
-  if( mged_variables.scroll_enabled == 0 )
-    av[1] = "on";
-  else
-    av[1] = "off";
-
-  (void)cmd_sliders((ClientData)NULL, interp, 2, av);
-#else
   if( mged_variables.scroll_enabled == 0 )
     Tcl_Eval( interp, "sliders on");
   else
     Tcl_Eval( interp, "sliders off");
-#endif
 }
 
 /*
@@ -207,24 +183,8 @@ double				val;
   }
 
   bu_vls_init(&vls);
-
-#if 0
-  {
-    char *av[4];
-
-    av[0] = "knob";
-    av[1] = mptr->scroll_cmd;
-    av[3] = NULL;
-
-    bu_vls_printf(&vls, "%f", val);
-    av[2] = bu_vls_addr(&vls);
-    (void)f_knob((ClientData)NULL, interp, 3, av);
-  }
-#else
   bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, val);
   Tcl_Eval(interp, bu_vls_addr(&vls));
-#endif
-
   bu_vls_free(&vls);
 }
 

@@ -324,7 +324,7 @@ static struct funtab funtab[] = {
 	f_killall, 2, MAXARGS,TRUE,
 "killtree", "<object>", "kill complete tree[s] - BE CAREFUL",
 	f_killtree, 2, MAXARGS, TRUE,
-"knob", "[-i] [id [val]]", "emulate knob twist",
+"knob", "[-e -i -v] [id [val]]", "emulate knob twist",
 	f_knob,1,MAXARGS, TRUE,
 "l", "<objects>", "list attributes (verbose)",
 	cmd_list,2,MAXARGS, TRUE,
@@ -2511,6 +2511,8 @@ set_e_axes_pos()
     VSETALL( edit_absolute_rotate, 0.0 )
   else if(EDIT_TRAN)
     VSETALL( edit_absolute_tran, 0.0 )
+  else if(EDIT_SCALE)
+    edit_absolute_scale = 0;
 
   mat_idn(acc_rot_sol);
 #endif
@@ -2599,12 +2601,6 @@ int view_flag;
     VADD2(new_pos, orig_pos, diff)
     MAT_DELTAS_VEC( toViewcenter, new_pos)
     new_mats();
-
-    VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
-    MAT4X3PNT(absolute_slew, model2view, new_pos);
-
-    if(tkwin != NULL)
-      (void)Tcl_Eval(interp, "set_sliders");
   }
 
   return CMD_OK;
@@ -2618,44 +2614,39 @@ int iflag;
   point_t model_pos;
   point_t new_pos;
   int status;
+  char *av[6];
+  struct bu_vls xval, yval, zval;
 
-  if(state == ST_VIEW || !EDIT_ROTATE || !mged_variables.edit){
-    status = mged_vrot(x, y, z);
-  }else{
-    char *av[6];
-    struct bu_vls xval, yval, zval;
+  bu_vls_init(&xval);
+  bu_vls_init(&yval);
+  bu_vls_init(&zval);
+  bu_vls_printf(&xval, "%f", x);
+  bu_vls_printf(&yval, "%f", y);
+  bu_vls_printf(&zval, "%f", z);
+  av[1] = bu_vls_addr(&xval);
+  av[2] = bu_vls_addr(&yval);
+  av[3] = bu_vls_addr(&zval);
+  av[4] = NULL;
 
-    bu_vls_init(&xval);
-    bu_vls_init(&yval);
-    bu_vls_init(&zval);
-    bu_vls_printf(&xval, "%f", x);
-    bu_vls_printf(&yval, "%f", y);
-    bu_vls_printf(&zval, "%f", z);
-    av[1] = bu_vls_addr(&xval);
-    av[2] = bu_vls_addr(&yval);
-    av[3] = bu_vls_addr(&zval);
-    av[4] = NULL;
-
-    if(state == ST_S_EDIT){
-      av[0] = "p";
-      status = f_param((ClientData)NULL, interp, 4, av);
-    }else if(state == ST_O_EDIT){
-      av[0] = "orot";
-      if(iflag){
-	av[1] = "-i";
-	av[2] = bu_vls_addr(&xval);
-	av[3] = bu_vls_addr(&yval);
-	av[4] = bu_vls_addr(&zval);
-	av[5] = NULL;
-	status = f_rot_obj((ClientData)NULL, interp, 5, av);
-      }else
-	status = f_rot_obj((ClientData)NULL, interp, 4, av);
-    }
-
-    bu_vls_free(&xval);
-    bu_vls_free(&yval);
-    bu_vls_free(&zval);
+  if(state == ST_S_EDIT){
+    av[0] = "p";
+    status = f_param((ClientData)NULL, interp, 4, av);
+  }else if(state == ST_O_EDIT){
+    av[0] = "orot";
+    if(iflag){
+      av[1] = "-i";
+      av[2] = bu_vls_addr(&xval);
+      av[3] = bu_vls_addr(&yval);
+      av[4] = bu_vls_addr(&zval);
+      av[5] = NULL;
+      status = f_rot_obj((ClientData)NULL, interp, 5, av);
+    }else
+      status = f_rot_obj((ClientData)NULL, interp, 4, av);
   }
+
+  bu_vls_free(&xval);
+  bu_vls_free(&yval);
+  bu_vls_free(&zval);
 
   return status;
 }

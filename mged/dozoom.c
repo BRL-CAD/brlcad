@@ -535,6 +535,7 @@ int axes;
 
     for(j = 0; j < 3; ++j){
       if(i == j){
+#if 0
 	if(axes == V_AXES && mged_variables.v_axes > 1){
 	  a1[j] = -0.125;
 	  a2[j] = 0.125;
@@ -542,6 +543,10 @@ int axes;
 	  a1[j] = -0.25;
 	  a2[j] = 0.25;
 	}
+#else
+	a1[j] = -0.125;
+	a2[j] = 0.125;
+#endif
       }else{
 	a1[j] = 0.0;
 	a2[j] = 0.0;
@@ -567,7 +572,7 @@ int axes;
 	switch(mged_variables.v_axes){
 	case 2:     /* lower left */
 	  ox = -0.8;
-	  oy = -0.7;
+	  oy = -0.8;
 	  break;
 	case 3:     /* upper left */
 	  ox = -0.425;
@@ -579,7 +584,7 @@ int axes;
 	  break;
 	case 5:     /* lower right */
 	  ox = 0.8;
-	  oy = -0.7;
+	  oy = -0.8;
 	  break;
 	default:    /* center */
 	  ox = 0;
