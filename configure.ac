@@ -168,7 +168,7 @@ AC_MSG_CHECKING(whether to build the regular expression library)
 build_regex=auto
 AC_ARG_ENABLE(regex-build,
 	AC_HELP_STRING(--enable-regex-build,
-		[Build and use BRL-CAD's regular expression library (default=auto)]),
+		[Build and use the included regular expression library (default=auto)]),
 	[if test "x$enableval" = "xno" ; then
 		build_regex=no
 	elif test "x$enableval" = "xyes" ; then
@@ -182,7 +182,7 @@ AC_MSG_CHECKING(whether to build the PNG library)
 build_png=auto
 AC_ARG_ENABLE(png-build,
 	AC_HELP_STRING(--enable-png-build,
-		[Build and use BRL-CAD's Portable Network Graphics library (default=auto)]),
+		[Build and use the included Portable Network Graphics library (default=auto)]),
 	[if test "x$enableval" = "xno" ; then
 		build_png=no
 	elif test "x$enableval" = "xyes" ; then
@@ -196,7 +196,7 @@ AC_MSG_CHECKING(whether to build the data compression library)
 build_zlib=auto
 AC_ARG_ENABLE(zlib-build,
 	AC_HELP_STRING(--enable-zlib-build,
-		[Build and use BRL-CAD's zlib compression library (default=auto)]),
+		[Build and use the included zlib compression library (default=auto)]),
 	[if test "x$enableval" = "xno" ; then
 		build_zlib=no
 	elif test "x$enableval" = "xyes" ; then
@@ -456,31 +456,12 @@ if test "x$regex_link_works" = "xno" ; then
 fi
 
 dnl detect a useable system zlib
-have_zlib=no
-build_zlib=no
-AC_CHECK_LIB(z, deflate, have_zlib=yes)
-if test "x$have_zlib" == "xyes" ; then
-	build_zlib="no (use native)"
-	Z="-lz"
-else
-	build_zlib=yes
-	Z='${top_builddir}/src/other/libz/libz.la'
-fi
-AM_CONDITIONAL(BUILD_ZLIB, [test "$have_zlib" == no])
+zlib_link_works=no
+AC_CHECK_LIB(z, deflate, zlib_link_works=yes)
 
 dnl detect a useable system png library
-have_png=no
-build_png=no
-AC_CHECK_LIB(png, png_check_sig, have_png=yes,,'-lz')
-if test "x$have_png" = "xno" ; then
-	build_png="no (use native)"
-	PNG_LIBS='-lpng ${Z}'
-else
-	build_png=yes
-	PNG_LIBS='${top_builddir}/src/other/libpng/libpng.la ${Z}'
-fi
-AM_CONDITIONAL(BUILD_PNG, [test "$have_png" == no])
-AC_SUBST(PNG_LIBS)
+png_link_works=no
+AC_CHECK_LIB(png, png_check_sig, png_link_works=yes)
 
 
 dnl *************************
@@ -726,7 +707,53 @@ if ! test "x$only_rts" = "xno" ; then
 fi
 AM_CONDITIONAL(JAVA, [! test "x$with_java" = "xno"])
 
-dnl See if regular expression support is available
+dnl *** libpng ***
+
+dnl See if png library support works
+png_works=no
+AC_MSG_CHECKING(for portable network graphics functionality)
+AC_TRY_RUN([
+#include <png.h>
+int main () {
+  char *pngver = PNG_LIBPNG_VER_STRING;
+  return 0;
+}
+	],
+	[png_works=yes]
+)
+AC_MSG_RESULT($png_works)
+
+dnl figure out whether we need to build libz
+build_brlcad_png="no (using system)"
+if test "x$build_png" = "xyes" ; then
+	build_brlcad_png=yes
+else
+	if test "x$build_png" = "xno" ; then
+		if ! test "x$png_works" = "xyes" ; then
+			AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
+			AC_MSG_NOTICE([Try adding --enable-png-build])
+			AC_MSG_ERROR([*** Building libpng was disabled, yet no system png library was found ***])
+		fi
+	else
+		dnl automatic detection
+		if test "x$png_works" = "xno" ; then
+			build_brlcad_png=yes
+		fi
+	fi
+fi
+AC_MSG_CHECKING(whether to build the included portable network graphics library)
+if test "x$build_brlcad_png" = "xyes" ; then
+	PNG_LIBS='${top_builddir}/src/other/libpng/libpng.la'
+	AC_MSG_RESULT(yes)
+else
+	AC_MSG_RESULT(no)
+fi
+AC_SUBST(PNG_LIBS)
+AM_CONDITIONAL(BUILD_PNG, [test "x$build_brlcad_png" = "xyes"])
+
+dnl *** libregex ***
+
+dnl See if regular expression support works
 regex_works=no
 AC_MSG_CHECKING(for regular expression functionality)
 AC_TRY_RUN([
@@ -744,14 +771,14 @@ int main() {
 AC_MSG_RESULT($regex_works)
 
 dnl figure out whether we need to build libregex
-build_brlcad_regex=no
+build_brlcad_regex="no (using system)"
 if test "x$build_regex" = "xyes" ; then
 	build_brlcad_bregex=yes
 else
 	if test "x$build_regex" = "xno" ; then
 		if ! test "x$regex_works" = "xyes" ; then
 			AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
-			AC_MSG_NOTICE([Try adding --enable-build-regex])
+			AC_MSG_NOTICE([Try adding --enable-regex-build])
 			AC_MSG_ERROR([*** Building libregex was disabled, yet no system regex was found ***])
 		fi
 	else
@@ -761,9 +788,59 @@ else
 		fi
 	fi
 fi
-AC_MSG_CHECKING(whether to build BRL-CAD's included regular expression library)
+AC_MSG_CHECKING(whether to build the included regular expression library)
+if test "x$build_brlcad_regex" = "xyes" ; then
+	REGEX_LIBS='${top_builddir}/src/other/libregex/libregex.la'
+	AC_MSG_RESULT(yes)
+else
+	AC_MSG_RESULT(no)
+fi
+AC_SUBST(REGEX_LIBS)
 AM_CONDITIONAL(BUILD_REGEX, [test "x$build_brlcad_regex" = "xyes"])
-AC_MSG_RESULT($build_brlcad_regex)
+
+dnl *** libz ***
+
+dnl See if zlib library support works
+zlib_works=no
+AC_MSG_CHECKING(for portable network graphics functionality)
+AC_TRY_RUN([
+#include <zlib.h>
+int main () {
+  char *zlibver = ZLIB_VERSION;
+  return 0;
+}
+	],
+	[zlib_works=yes]
+)
+AC_MSG_RESULT($zlib_works)
+
+dnl figure out whether we need to build libz
+build_brlcad_zlib="no (using system)"
+if test "x$build_zlib" = "xyes" ; then
+	build_brlcad_zlib=yes
+else
+	if test "x$build_zlib" = "xno" ; then
+		if ! test "x$zlib_works" = "xyes" ; then
+			AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
+			AC_MSG_NOTICE([Try adding --enable-zlib-build])
+			AC_MSG_ERROR([*** Building libz was disabled, yet no system zlib compression was found ***])
+		fi
+	else
+		dnl automatic detection
+		if test "x$zlib_works" = "xno" ; then
+			build_brlcad_zlib=yes
+		fi
+	fi
+fi
+AC_MSG_CHECKING(whether to build the included zlib compression library)
+if test "x$build_brlcad_zlib" = "xyes" ; then
+	ZLIB_LIBS='${top_builddir}/src/other/libz/libz.la'
+	AC_MSG_RESULT(yes)
+else
+	AC_MSG_RESULT(no)
+fi
+AC_SUBST(ZLIB_LIBS)
+AM_CONDITIONAL(BUILD_ZLIB, [test "x$build_brlcad_zlib" = "xyes"])
 
 
 dnl ***************************
@@ -824,7 +901,7 @@ AC_SUBST(PKG)
 RLE='${top_builddir}/src/other/libutahrle/libutahrle.la -lm'
 AC_SUBST(RLE)
 
-RT='${top_builddir}/src/librt/librt.la ${BN} ${REGEX_LIB}'
+RT='${top_builddir}/src/librt/librt.la ${BN} ${REGEX_LIBS}'
 AC_SUBST(RT)
 
 SYSV='${top_builddir}/src/libsysv/libsysv.la'
@@ -1014,13 +1091,13 @@ echo "CPPFLAGS = ${CPPFLAGS}"
 echo "LDFLAGS  = ${LDFLAGS}"
 echo "LIBS     = ${LIBS}"
 echo
+echo Build IWidgets .......................: yes
+echo Build Itcl/Itk .......................: yes
 echo Build Tcl ............................: yes
 echo Build Tk .............................: yes
-echo Build Itcl/Itk .......................: yes
-echo Build IWidgets .......................: yes
-echo Build libregex .......................: ${build_regex}
-echo Build libpng .........................: ${build_png}
-echo Build libz ...........................: ${build_zlib}
+echo Build libpng .........................: ${build_brlcad_png}
+echo Build libregex .......................: ${build_brlcad_regex}
+echo Build libz ...........................: ${build_brlcad_zlib}
 echo 
 echo Java Developer Kit support ...........: $with_java
 echo X11 support ..........................: yes
