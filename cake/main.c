@@ -97,91 +97,117 @@ reg	int	base;
 			{
 
 #ifdef	CAKEDEBUG
-		when 'C':	cdebug(" -C");
+		case 'C':	cdebug(" -C");
 				cakedebug  = ! cakedebug;
+				break;
 		
-		when 'E':	cdebug(" -E");
+		case 'E':	cdebug(" -E");
 				entrydebug = ! entrydebug;
+				break;
 		
-		when 'P':	cdebug(" -P");
+		case 'P':	cdebug(" -P");
 				patdebug   = ! patdebug;
+				break;
 		
-		when 'W':	cdebug(" -W");
+		case 'W':	cdebug(" -W");
 				lexdebug   = TRUE;
+				break;
 		
-		when 'Y':	cdebug(" -Y");
+		case 'Y':	cdebug(" -Y");
 				yydebug    = TRUE;
+				break;
 #endif
-		when 'G':	cdebug(" -G");
+		case 'G':	cdebug(" -G");
 				Gflag = TRUE;
+				break;
 		
-		when 'L':	cdebug(" -L");
+		case 'L':	cdebug(" -L");
 				Lflag = TRUE;
+				break;
 		
-		when 'R':	cdebug(" -R");
+		case 'R':	cdebug(" -R");
 				Rflag = TRUE;
+				break;
 		
-		when 'X':	cdebug(" -X");
+		case 'X':	cdebug(" -X");
 				Xflag = TRUE;
+				break;
 		
-		when 'Z':	cdebug(" -Z");
+		case 'Z':	cdebug(" -Z");
 				Zflag = TRUE;
+				break;
 		
-		when 'a':	cdebug(" -a");
+		case 'a':	cdebug(" -a");
 				kflag = FALSE;
+				break;
 		
-		when 'b':	cdebug(" -b");
+		case 'b':	cdebug(" -b");
 				bflag = TRUE;
+				break;
 		
-		when 'c':	cdebug(" -c");
+		case 'c':	cdebug(" -c");
 				cflag = TRUE;
+				break;
 		
-		when 'd':	cdebug(" -d");
+		case 'd':	cdebug(" -d");
 				dflag = TRUE;
+				break;
 		
-		when 'g':	cdebug(" -g");
+		case 'g':	cdebug(" -g");
 				gflag = TRUE;
+				break;
 		
-		when 'i':	cdebug(" -i");
+		case 'i':	cdebug(" -i");
 				iflag = TRUE;
+				break;
 		
-		when 'k':	cdebug(" -k");
+		case 'k':	cdebug(" -k");
 				kflag = TRUE;
+				break;
 		
-		when 'n':	cdebug(" -n");
+		case 'n':	cdebug(" -n");
 				nflag = TRUE;
 				tflag = FALSE;
 				qflag = FALSE;
+				break;
 		
-		when 'q':	cdebug(" -q");
+		case 'q':	cdebug(" -q");
 				qflag = TRUE;
 				nflag = FALSE;
 				tflag = FALSE;
+				break;
 		
-		when 'r':	cdebug(" -r");
+		case 'r':	cdebug(" -r");
 				rflag = TRUE;
+				break;
 		
-		when 's':	cdebug(" -s");
+		case 's':	cdebug(" -s");
 				sflag = TRUE;
+				break;
 		
-		when 't':	cdebug(" -t");
+		case 't':	cdebug(" -t");
 				tflag = TRUE;
 				nflag = FALSE;
 				qflag = FALSE;
+				break;
 		
-		when 'v':	cdebug(" -v");
+		case 'v':	cdebug(" -v");
 				vflag = TRUE;
+				break;
 		
-		when 'w':	cdebug(" -w");
+		case 'w':	cdebug(" -w");
 				wflag = TRUE;
+				break;
 		
-		when 'x':	cdebug(" -x");
+		case 'x':	cdebug(" -x");
 				xflag = TRUE;
+				break;
 		
-		when 'z':	cdebug(" -z");
+		case 'z':	cdebug(" -z");
 				zflag = TRUE;
+				break;
 		
-		when 'D':
+		case 'D':
 		case 'I':
 		case 'U':	if (i != 1)
 					usage();
@@ -190,7 +216,7 @@ reg	int	base;
 				cppargv[cppargc++] = new_name(vector[base]);
 				goto nextword;
 		
-		when 'N':	putflag(base, vector[base+1]);
+		case 'N':	putflag(base, vector[base+1]);
 				sscanf(vector[base+1], "%d", &maxprocs);
 				if (vector[base][i+1] != '\0')
 					usage();
@@ -200,7 +226,7 @@ reg	int	base;
 				vector++, j++;
 				goto nextword;
 		
-		when 'S':	putflag(base, vector[base+1]);
+		case 'S':	putflag(base, vector[base+1]);
 				if (vector[base][i+1] == '1')
 					shellfile[0] = new_name(vector[base+1]);
 				or (vector[base][i+1] == '2')
@@ -216,7 +242,7 @@ reg	int	base;
 				vector++, j++;
 				goto nextword;
 		
-		when 'T':	putflag(base, vector[base+1]);
+		case 'T':	putflag(base, vector[base+1]);
 				metachars = new_name(vector[base+1]);
 				if (vector[base][i+1] != '\0')
 					usage();
@@ -226,7 +252,7 @@ reg	int	base;
 				vector++, j++;
 				goto nextword;
 		
-		when 'f':	putflag(base, vector[base+1]);
+		case 'f':	putflag(base, vector[base+1]);
 				cakefile = new_name(vector[base+1]);
 				if (vector[base][i+1] != '\0')
 					usage();
@@ -236,7 +262,7 @@ reg	int	base;
 				vector++, j++;
 				goto nextword;
 
-		otherwise:	usage();
+		default:	usage();
 			}
 		}
 
