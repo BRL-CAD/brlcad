@@ -321,6 +321,35 @@ fastf_t x,y;
 	}
 }
 
+int
+nmg_eu_is_part_of_crack( eu )
+CONST struct edgeuse *eu;
+{
+	struct loopuse *lu;
+	struct edgeuse *eu_test;
+
+	NMG_CK_EDGEUSE( eu );
+
+	/* must be part of a loop to be a crack */
+	if( *eu->up.magic_p != NMG_LOOPUSE_MAGIC )
+		return( 0 );
+
+	lu = eu->up.lu_p;
+	NMG_CK_LOOPUSE( lu );
+
+	for( RT_LIST_FOR( eu_test, edgeuse, &lu->down_hd ) )
+	{
+		if( eu_test == eu )
+			continue;
+
+		if( eu_test->vu_p->v_p == eu->eumate_p->vu_p->v_p &&
+		    eu_test->eumate_p->vu_p->v_p == eu->vu_p->v_p )
+				return( 1 );
+	}
+
+	return( 0 );
+}
+
 /*		N M G _ C L A S S _ P T _ E U V U
  *
  *	Classify a point with respect to an EU where the VU is the
@@ -338,12 +367,14 @@ fastf_t x,y;
  */
 
 int
-nmg_class_pt_euvu( pt, eu, tol )
+nmg_class_pt_euvu( pt, eu_in, tol )
 CONST point_t pt;
-CONST struct edgeuse *eu;
+struct edgeuse *eu_in;
 CONST struct rt_tol *tol;
 {
+	struct loopuse *lu;
 	struct edgeuse *prev_eu;
+	struct edgeuse *eu;
 	struct vertex *v0,*v1,*v2;
 	vect_t left;
 	vect_t eu_dir;
@@ -354,12 +385,102 @@ CONST struct rt_tol *tol;
 	fastf_t len;
 	int quado,quadpt;
 	int class;
+	int eu_is_crack=0;
+	int prev_eu_is_crack=0;
 
-	NMG_CK_EDGEUSE( eu );
+	NMG_CK_EDGEUSE( eu_in );
 	RT_CK_TOL( tol );
+
+	eu = eu_in;
 
 	if(rt_g.NMG_debug & DEBUG_PT_FU )
 		rt_log( "nmg_class_pt_euvu( (%g %g %g), eu=x%x )\n", V3ARGS( pt ), eu );
+
+	if( *eu->up.magic_p != NMG_LOOPUSE_MAGIC )
+	{
+		rt_log( "nmg_class_pt_euvu() called with eu (x%x) that isn't part of a loop\n", eu );
+		rt_bomb( "nmg_class_pt_euvu() called with eu that isn't part of a loop" );
+	}
+	lu = eu->up.lu_p;
+	NMG_CK_LOOPUSE( lu );
+
+	eu_is_crack = nmg_eu_is_part_of_crack( eu );
+
+	prev_eu = RT_LIST_PPREV_CIRC( edgeuse, &eu->l );
+
+	prev_eu_is_crack = nmg_eu_is_part_of_crack( prev_eu );
+
+	/* if both EU's are cracks, we cannot classify */
+	if( eu_is_crack && prev_eu_is_crack )
+		return( NMG_CLASS_Unknown );
+
+	if( eu_is_crack )
+	{
+		struct edgeuse *eu_test;
+		int done=0;
+
+		if(rt_g.NMG_debug & DEBUG_PT_FU )
+			rt_log( "nmg_class_pt_euvu: eu x%x is a crack\n", eu );
+
+		/* find next eu from this vertex that is not a crack */
+		eu_test = RT_LIST_PNEXT_CIRC( edgeuse, &eu->l );
+		while( !done )
+		{
+			while( eu_test->vu_p->v_p != eu->vu_p->v_p && eu_test != eu )
+				eu_test = RT_LIST_PNEXT_CIRC( edgeuse, &eu_test->l );
+
+			if( eu_test == eu )
+				done = 1;
+
+			if( !nmg_eu_is_part_of_crack( eu_test ) )
+				done = 1;
+
+			if( !done )
+				eu_test = RT_LIST_PNEXT_CIRC( edgeuse, &eu_test->l );
+		}
+
+		if( eu_test == eu ) /* can't get away from crack */
+			return( NMG_CLASS_Unknown );
+		else
+			eu = eu_test;
+
+		if(rt_g.NMG_debug & DEBUG_PT_FU )
+			rt_log( "\tUsing eu x%x instead\n", eu );
+	}
+
+	if( prev_eu_is_crack )
+	{
+		struct edgeuse *eu_test;
+		int done=0;
+
+		if(rt_g.NMG_debug & DEBUG_PT_FU )
+			rt_log( "nmg_class_pt_euvu: prev_eu (x%x) is a crack\n" );
+
+		/* find previous eu ending at this vertex that is not a crack */
+		eu_test = RT_LIST_PPREV_CIRC( edgeuse, &prev_eu->l );
+		while( !done )
+		{
+			while( eu_test->eumate_p->vu_p->v_p != eu->vu_p->v_p && eu_test != prev_eu )
+				eu_test = RT_LIST_PPREV_CIRC( edgeuse, &eu_test->l );
+
+			if( eu_test == prev_eu )
+				done = 1;
+
+			if( !nmg_eu_is_part_of_crack( eu_test ) )
+				done = 1;
+
+			if( !done )
+				eu_test = RT_LIST_PPREV_CIRC( edgeuse, &eu_test->l );
+		}
+
+		if( eu_test == prev_eu ) /* can't get away from crack */
+			return( NMG_CLASS_Unknown );
+		else
+			prev_eu = eu_test;
+
+		if(rt_g.NMG_debug & DEBUG_PT_FU )
+			rt_log( "\tUsing prev_eu x%x instead\n", prev_eu );
+	}
 
 	/* left is the Y-axis of our XY-coordinate system */
 	if( nmg_find_eu_leftvec( left,  eu ) )
@@ -367,7 +488,6 @@ CONST struct rt_tol *tol;
 		rt_log( "nmg_class_pt_euvu: nmg_find_eu_leftvec() for eu=x%x failed!\n",eu );
 		rt_bomb( "nmg_class_pt_euvu: nmg_find_eu_leftvec() failed!" );
 	}
-	prev_eu = RT_LIST_PPREV_CIRC( edgeuse, &eu->l );
 
 	if(rt_g.NMG_debug & DEBUG_PT_FU )
 		rt_log( "\tprev_eu = x%x, left = (%g %g %g)\n", prev_eu, V3ARGS( left ) );
@@ -559,6 +679,15 @@ struct edge_info	*edge_list;
 	RT_LIST_MAGIC_SET(&ved->l, NMG_VE_DIST_MAGIC);
 	RT_LIST_APPEND(&fpi->ve_dh, &ved->l);
 
+	if (rt_g.NMG_debug & DEBUG_PT_FU )
+	{
+		rt_log( "nmg_class_pt_eu: status for eu x%x (%g %g %g)<->(%g %g %g) vs pt (%g %g %g) is %d\n",
+			eu, V3ARGS( eu->vu_p->v_p->vg_p->coord ),
+			V3ARGS( eu->eumate_p->vu_p->v_p->vg_p->coord ),
+			V3ARGS( fpi->pt ), ved->status );
+		rt_log( "\tdist = %g\n", ved->dist );
+	}
+
 found:
 
 	/* Add a struct for this edgeuse to the loop's list of dist-sorted
@@ -618,16 +747,20 @@ found:
 		if (fpi->vu_func &&
 		    (fpi->hits == NMG_FPI_PERUSE ||
 		     (fpi->hits == NMG_FPI_PERGEOM && !found_data) ) ) {
-			fpi->vu_func(eu->vu_p, fpi->pt, fpi->priv);
+			fpi->vu_func(eu->eumate_p->vu_p, fpi->pt, fpi->priv);
 		}
 		break;
 
 	case 3: /* PCA of pt on line is within tolerance of ved->v1 of segment */
 		ei->class = nmg_class_pt_euvu( fpi->pt, eu, fpi->tol );
+		if( ei->class == NMG_CLASS_Unknown )
+			ei->ved_p->dist = MAX_FASTF;
 		break;
 	case 4: /* PCA of pt on line is within tolerance of ved->v2 of segment */
 		next_eu = RT_LIST_PNEXT_CIRC( edgeuse, &eu->l);
 		ei->class = nmg_class_pt_euvu( fpi->pt, next_eu, fpi->tol );
+		if( ei->class == NMG_CLASS_Unknown )
+			ei->ved_p->dist = MAX_FASTF;
 		break;
 
 	case 5: /* PCA is along length of edge, but point is NOT on edge. */
