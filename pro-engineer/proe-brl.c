@@ -6,6 +6,8 @@
 extern int errno;
 
 static int quality;
+static int curr_win_id;
+static int win_id=(-1);
 
 static	wchar_t		  msgfil[PRODEV_NAME_SIZE];
 #define MSGFIL		  pro_str_to_wstr(msgfil,"usermsg.txt")
@@ -73,6 +75,10 @@ char *name;
 	int copy_len;
 	int i,name_len;
 	int c;
+	char *tmp_obj;
+	Pro_object_info obj_info;
+	int status;
+	char *attrib;
 
 	/* Create a temporary file to store the render format for this part */
 	tmpnam_return = tempnam( NULL , "proe_brl" );
@@ -94,12 +100,28 @@ char *name;
 	pro_str_to_wstr( wtmp_file_name , tmp_file_name );
 
 	/* Output the part in render format to the temporary file */
-	if( !pro_export_file_from_pro( wtmp_file_name , obj , PRO_RENDER_FILE , NULL , &quality , NULL , NULL ) )
+	pro_str_to_wstr( obj_info.name , name );
+	pro_str_to_wstr( obj_info.type , "PRT" );
+	tmp_obj = prodb_retrieve_object( &obj_info , &status );
+	if( status )
+	{
+		fprintf( stderr, "Failed to retrieve object (%s)\n" , name );
+		promsg_print( MSGFIL , "USER_EXPORT_FAILED" , tmp_file_name , name );
+		return;
+	}
+
+	if( win_id == (-1) )
+		win_id = pro_open_object_window( obj_info.name , obj_info.type , attrib );
+	pro_set_current_window( win_id );
+	progr_display_object( tmp_obj );
+	if( !pro_export_file_from_pro( wtmp_file_name , tmp_obj , PRO_RENDER_FILE , NULL , &quality , NULL , NULL ) )
 	{
 		fprintf( stderr , "Failed to export part (%s) to file (%s)\n" , name , tmp_file_name );
 		promsg_print( MSGFIL , "USER_EXPORT_FAILED" , tmp_file_name , name );
 		return;
 	}
+
+	pro_clear_window( win_id );
 
 	if( (fd_tmp = fopen( tmp_file_name , "r" )) == NULL )
 	{
@@ -218,6 +240,13 @@ proe_brl()
 	range[0] = 1;
 	range[1] = 10;
 
+	curr_win_id = pro_get_current_window();
+	if( curr_win_id == (-1) )
+	{
+		fprintf( stderr , "Cannot get current window id\n" );
+		return( 1 );
+	}
+
 	obj_root = (struct object_list *)NULL;
 
 	obj = pro_get_current_object();
@@ -253,6 +282,10 @@ proe_brl()
 	}
 
 	Output_object( fd_out , obj );
+
+	pro_set_current_window( curr_win_id );
+	if( win_id != (-1) )
+		pro_close_object_window( win_id );
 
 	fclose( fd_out );
 
