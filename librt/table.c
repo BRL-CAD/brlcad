@@ -27,8 +27,6 @@ static char RCStree[] = "@(#)$Header$ (BRL)";
 #include "db.h"
 #include "./debug.h"
 
-struct rt_g rt_g;				/* All global state */
-
 extern int	rt_nul_prep(), rt_nul_class();
 extern int	rt_tor_prep(), rt_tor_class();
 extern int	rt_tgc_prep(), rt_tgc_class();
@@ -40,8 +38,8 @@ extern int	rt_rec_prep(), rt_rec_class();
 extern int	rt_pg_prep(), rt_pg_class();
 extern int	rt_spl_prep(), rt_spl_class();
 extern int	rt_sph_prep(), rt_sph_class();
-extern int	ebm_prep(), ebm_class();
-extern int	vol_prep(), vol_class();
+extern int	rt_ebm_prep(), rt_ebm_class();
+extern int	rt_vol_prep(), rt_vol_class();
 extern int	rt_arbn_prep(), rt_arbn_class();
 extern int	rt_part_prep(), rt_part_class();
 extern int	rt_pipe_prep(), rt_pipe_class();
@@ -57,8 +55,8 @@ extern void	rt_rec_print(), rt_rec_norm(), rt_rec_uv();
 extern void	rt_pg_print(),  rt_pg_norm(),  rt_pg_uv();
 extern void	rt_spl_print(), rt_spl_norm(), rt_spl_uv();
 extern void	rt_sph_print(), rt_sph_norm(), rt_sph_uv();
-extern void	ebm_print(), ebm_norm(), ebm_uv();
-extern void	vol_print(), vol_norm(), vol_uv();
+extern void	rt_ebm_print(), rt_ebm_norm(), rt_ebm_uv();
+extern void	rt_vol_print(), rt_vol_norm(), rt_vol_uv();
 extern void	rt_arbn_print(), rt_arbn_norm(), rt_arbn_uv();
 extern void	rt_part_print(), rt_part_norm(), rt_part_uv();
 extern void	rt_pipe_print(), rt_pipe_norm(), rt_pipe_uv();
@@ -74,8 +72,8 @@ extern void	rt_rec_curve(), rt_rec_free();
 extern void	rt_pg_curve(),  rt_pg_free();
 extern void	rt_spl_curve(), rt_spl_free();
 extern void	rt_sph_curve(), rt_sph_free();
-extern void	ebm_curve(), ebm_free();
-extern void	vol_curve(), vol_free();
+extern void	rt_ebm_curve(), rt_ebm_free();
+extern void	rt_vol_curve(), rt_vol_free();
 extern void	rt_arbn_curve(), rt_arbn_free();
 extern void	rt_part_curve(), rt_part_free();
 extern void	rt_pipe_curve(), rt_pipe_free();
@@ -89,8 +87,8 @@ extern int	rt_hlf_plot();
 extern int	rt_ars_plot();
 extern int	rt_pg_plot();
 extern int	rt_spl_plot();
-extern int	ebm_plot();
-extern int	vol_plot();
+extern int	rt_ebm_plot();
+extern int	rt_vol_plot();
 extern int	rt_arbn_plot();
 extern int	rt_part_plot();
 extern int	rt_pipe_plot();
@@ -106,8 +104,8 @@ extern int	rt_rec_shot();
 extern int	rt_pg_shot();
 extern int	rt_spl_shot();
 extern int	rt_sph_shot();
-extern int	ebm_shot();
-extern int	vol_shot();
+extern int	rt_ebm_shot();
+extern int	rt_vol_shot();
 extern int	rt_arbn_shot();
 extern int	rt_part_shot();
 extern int	rt_pipe_shot();
@@ -135,8 +133,8 @@ extern int	rt_hlf_tess();
 extern int	rt_ars_tess();
 extern int	rt_spl_tess();
 #if 0
-extern int	ebm_tess();
-extern int	vol_tess();
+extern int	rt_ebm_tess();
+extern int	rt_vol_tess();
 #endif
 extern int	rt_arbn_tess();
 extern int	rt_part_tess();
@@ -204,14 +202,14 @@ struct rt_functab rt_functab[ID_MAXIMUM+2] = {
 		rt_nul_plot,	rt_nul_vshot,	rt_nul_tess,
 
 	"ID_EBM",	0,
-		ebm_prep,	ebm_shot,	ebm_print,	ebm_norm,
-		ebm_uv,		ebm_curve,	ebm_class,	ebm_free,
-		ebm_plot,	rt_vstub,	rt_nul_tess,
+		rt_ebm_prep,	rt_ebm_shot,	rt_ebm_print,	rt_ebm_norm,
+		rt_ebm_uv,	rt_ebm_curve,	rt_ebm_class,	rt_ebm_free,
+		rt_ebm_plot,	rt_vstub,	rt_nul_tess,
 
 	"ID_VOL",	0,
-		vol_prep,	vol_shot,	vol_print,	vol_norm,
-		vol_uv,		vol_curve,	vol_class,	vol_free,
-		vol_plot,	rt_vstub,	rt_nul_tess,
+		rt_vol_prep,	rt_vol_shot,	rt_vol_print,	rt_vol_norm,
+		rt_vol_uv,	rt_vol_curve,	rt_vol_class,	rt_vol_free,
+		rt_vol_plot,	rt_vstub,	rt_nul_tess,
 
 	"ID_ARBN",	0,
 		rt_arbn_prep,	rt_arbn_shot,	rt_arbn_print,	rt_arbn_norm,
