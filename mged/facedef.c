@@ -32,11 +32,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern struct rt_db_internal	es_int;	/* from edsol.c */
 
-extern int numargs;   			/* number of arguments */
-extern int args;       			/* total number of args available */
-extern int argcnt;     			/* holder for number of args added later */
-extern char *cmd_args[];    		/* array of pointers to args */
-
 char *p_rotfb[] = {
 	"Enter rot, fb angles: ",
 	"Enter fb angle: ",
@@ -75,7 +70,9 @@ static int	get_3pts();
  * one of four functions before calculating new vertices.
  */
 int
-f_facedef()
+f_facedef(argc, argv)
+int argc;
+char **argv;
 {
 	short int 	i;
 	int		face,prod,plane;
@@ -115,9 +112,7 @@ f_facedef()
 	}
 
 	/* get face, initialize args and argcnt */
-	face = atoi( cmd_args[1] );
-	args = numargs;
-	argcnt = 0;
+	face = atoi( argv[1] );
 	
 	/* use product of vertices to distinguish faces */
 	for(i=0,prod=1;i<4;i++)  {
@@ -169,7 +164,7 @@ f_facedef()
 			  return CMD_BAD;
 	}
 
-	while( args < 3 ){
+	if( argc < 3 ){
 
 		/* menu of choices for plane equation definition */
 		(void)printf("\ta   planar equation\n");
@@ -179,11 +174,10 @@ f_facedef()
 		(void)printf("\tq   quit\n\n");
 
 		(void)printf("Enter form of new face definition: ");
-		argcnt = getcmd(args);
-		args += argcnt;
+		return CMD_MORE;
 	}
 
-	switch( cmd_args[2][0] ){
+	switch( argv[2][0] ){
 	case 'a': 
 		/* special case for arb7, because of 2 4-pt planes meeting */
 		if( es_type == 7 )
@@ -191,15 +185,11 @@ f_facedef()
 				(void)printf("Facedef: can't redefine that arb7 plane\n");
 				return CMD_BAD;
 			}
-		while( args < 7 ){  	/* total # of args under this option */
-			(void)printf("%s",p_pleqn[args-3]);
-			if( (argcnt = getcmd(args)) < 0 ){
-				(void)printf("Facedef: input bad\n");
-				return CMD_BAD;
-			}
-			args += argcnt;
+		if( argc < 7 ){  	/* total # of args under this option */
+			(void)printf("%s",p_pleqn[argc-3]);
+			return CMD_MORE;
 		}
-		get_pleqn( planes[plane], &cmd_args[3] );
+		get_pleqn( planes[plane], &argv[3] );
 		break;
 	case 'b': 
 		/* special case for arb7, because of 2 4-pt planes meeting */
@@ -208,43 +198,30 @@ f_facedef()
 				(void)printf("Facedef: can't redefine that arb7 plane\n");
 				return CMD_BAD;
 			}
-		while( args < 12 ){           /* total # of args under this option */
-			(void)printf("%s %d: ", p_3pts[(args-3)%3] ,args/3);
-			if( (argcnt = getcmd(args)) < 0 ){
-				(void)printf("Facedef: input bad\n");
-				return CMD_BAD;
-			}
-			args += argcnt;
+		if( argc < 12 ){           /* total # of args under this option */
+			(void)printf("%s %d: ", p_3pts[(argc-3)%3], argc/3);
+			return CMD_MORE;
 		}
-		if( get_3pts( planes[plane], &cmd_args[3], &tol) ){
+		if( get_3pts( planes[plane], &argv[3], &tol) ){
 			return CMD_BAD;			/* failure */
 		}
 		break;
 	case 'c': 
 		/* special case for arb7, because of 2 4-pt planes meeting */
 		if( es_type == 7 && (plane != 0 && plane != 3) ) {
-			while( args < 5 ){ 	/* total # of args under this option */
-				(void)printf("%s",p_rotfb[args-3]);
-				if( (argcnt = getcmd(args)) < 0){
-					(void)printf("Facedef: input bad\n");
-					return CMD_BAD;
-				}
-				args += argcnt;
+			if( argc < 5 ){ 	/* total # of args under this option */
+				(void)printf("%s",p_rotfb[argc-3]);
+				return CMD_MORE;
 			}
-			cmd_args[5] = "v5";
+			argv[5] = "v5";
 			(void)printf("Fixed point is vertex five.\n");
 		}
-		else while( args < 8 ){         /* total # of args under this option */	
-			if( args > 5 && cmd_args[5][0] == 'v' )       /* vertex point given,stop */
-				break;
-			(void)printf("%s",p_rotfb[args-3]);
-			if( (argcnt = getcmd(args)) < 0 ){
-				(void)printf("Facedef: input bad\n");
-				return CMD_BAD;
-			}
-			args += argcnt;
+                                    /* total # of args under this option */
+		else if( argc < 8 && (argc >= 5 ? argv[5][0] != 'v' : 1)) { 
+			(void)printf("%s",p_rotfb[argc-3]);
+			return CMD_MORE;
 		}
-		get_rotfb(planes[plane], &cmd_args[3], arb);
+		get_rotfb(planes[plane], &argv[3], arb);
 		break;
 	case 'd': 
 		/* special case for arb7, because of 2 4-pt planes meeting */
@@ -253,20 +230,16 @@ f_facedef()
 				(void)printf("Facedef: can't redefine that arb7 plane\n");
 				return CMD_BAD;
 			}
-		while( args < 6 ){  	/* total # of args under this option */
-			(void)printf("%s",p_nupnt[args-3]);
-			if( (argcnt = getcmd(args)) < 0 ){
-				(void)printf("Facedef: input bad\n");
-				return CMD_BAD;
-			}
-			args += argcnt;
+		if( argc < 6 ){  	/* total # of args under this option */
+			(void)printf("%s",p_nupnt[argc-3]);
+			return CMD_MORE;
 		}
-		get_nupnt(planes[plane], &cmd_args[3]);
+		get_nupnt(planes[plane], &argv[3]);
 		break;
 	case 'q': 
 		return CMD_OK;
 	default:  
-		(void)printf("Facedef: '%s' is not an option\n", cmd_args[2]);
+		(void)printf("Facedef: '%s' is not an option\n", argv[2]);
 		return CMD_BAD;
 	}
 
