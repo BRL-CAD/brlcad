@@ -115,7 +115,7 @@ fastf_t				high;
  */
 void
 bu_hist_pr_suppress( histp, title, zero_suppress )
-register struct bu_hist	*histp;
+register CONST struct bu_hist	*histp;
 CONST char		*title;
 int			zero_suppress;
 {
@@ -191,7 +191,7 @@ int			zero_suppress;
  */
 void
 bu_hist_pr( histp, title )
-register struct bu_hist	*histp;
+register CONST struct bu_hist	*histp;
 CONST char			*title;
 {
 	bu_hist_pr_suppress( histp, title, 1 );

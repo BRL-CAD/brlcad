@@ -1151,7 +1151,7 @@ BU_EXTERN(void			bu_hist_init, (struct bu_hist *histp,
 				fastf_t min, fastf_t max, int nbins));
 BU_EXTERN(void			bu_hist_range, (struct bu_hist *hp,
 				fastf_t low, fastf_t high));
-BU_EXTERN(void			bu_hist_pr, (struct bu_hist *histp,
+BU_EXTERN(void			bu_hist_pr, (CONST struct bu_hist *histp,
 				CONST char *title));
 
 /* htond.c */
