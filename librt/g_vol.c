@@ -33,8 +33,9 @@ static char RCSvol[] = "@(#)$Header$ (BRL)";
 #include "./debug.h"
 #include "./fixpt.h"
 
+#define VOL_NAME_LEN 128
 struct vol_specific {
-	char		vol_file[128];
+	char		vol_file[VOL_NAME_LEN];
 	unsigned char	*vol_map;
 	int		vol_xdim;	/* X dimension */
 	int		vol_ydim;	/* Y dimension */
@@ -54,18 +55,18 @@ struct vol_specific {
 
 struct structparse vol_parse[] = {
 #if CRAY && !__STDC__
-	"%s",	"file",		0,			FUNC_NULL,
+	"%s",	VOL_NAME_LEN, "file",	0,		FUNC_NULL,
 #else
-	"%s",	"file",	offsetofarray(struct vol_specific, vol_file),	FUNC_NULL,
+	"%s",	VOL_NAME_LEN, "file",	offsetofarray(struct vol_specific, vol_file), FUNC_NULL,
 #endif
-	"%d",	"w",		VOL_O(vol_xdim),	FUNC_NULL,
-	"%d",	"n",		VOL_O(vol_ydim),	FUNC_NULL,
-	"%d",	"d",		VOL_O(vol_zdim),	FUNC_NULL,
-	"%d",	"lo",		VOL_O(vol_lo),		FUNC_NULL,
-	"%d",	"hi",		VOL_O(vol_hi),		FUNC_NULL,
-	"%V",	"size",	offsetofarray(struct vol_specific, vol_cellsize), FUNC_NULL,
+	"%d",	1, "w",		VOL_O(vol_xdim),	FUNC_NULL,
+	"%d",	1, "n",		VOL_O(vol_ydim),	FUNC_NULL,
+	"%d",	1, "d",		VOL_O(vol_zdim),	FUNC_NULL,
+	"%d",	1, "lo",	VOL_O(vol_lo),		FUNC_NULL,
+	"%d",	1, "hi",	VOL_O(vol_hi),		FUNC_NULL,
+	"%f",	ELEMENTS_PER_VECT, "size",offsetofarray(struct vol_specific, vol_cellsize), FUNC_NULL,
 	/* XXX might have option for vol_origin */
-	(char *)0,(char *)0,	0,			FUNC_NULL
+	(char *)0, 0, (char *)0,	0,		FUNC_NULL
 };
 
 struct vol_specific	*vol_import();
@@ -402,12 +403,13 @@ union record	*rp;
 	register int	z;
 	char	*str;
 	char	*cp;
+	struct rt_vls vls;
 
 	GETSTRUCT( volp, vol_specific );
 
-	str = rt_strdup( rp->ss.ss_str );
-	/* First word is name of solid type (eg, "vol") -- skip over it */
-	cp = str;
+	rt_vls_init( &vls );
+
+	cp = rp->ss.ss_str;
 	while( *cp && !isspace(*cp) )  cp++;
 	/* Skip all white space */
 	while( *cp && isspace(*cp) )  cp++;
@@ -419,8 +421,9 @@ union record	*rp;
 	/* Default VOL cell size in ideal coordinates is one unit/cell */
 	VSETALL( volp->vol_cellsize, 1 );
 
-	rt_structparse( cp, vol_parse, (char *)volp );
-	rt_free( str, "ss_str" );
+	rt_vls_strcpy( &vls, cp);
+	rt_structparse( &vls, vol_parse, (char *)volp );
+	rt_vls_free( &vls );
 
 	/* Check for reasonable values */
 	if( volp->vol_file[0] == '\0' || volp->vol_xdim < 1 ||

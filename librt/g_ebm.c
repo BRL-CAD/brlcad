@@ -31,8 +31,9 @@ static char RCSebm[] = "@(#)$Header$ (BRL)";
 #include "./debug.h"
 #include "./fixpt.h"
 
+#define EBM_NAME_LEN 128
 struct ebm_specific {
-	char		ebm_file[128];
+	char		ebm_file[EBM_NAME_LEN];
 	unsigned char	*ebm_map;
 	int		ebm_xdim;	/* X dimension */
 	int		ebm_ydim;	/* Y dimension */
@@ -50,15 +51,15 @@ struct ebm_specific {
 
 struct structparse ebm_parse[] = {
 #if CRAY && !__STDC__
-	"%s",	"file",		0,			FUNC_NULL,
+	"%s",	EBM_NAME_LEN, "file",	0,		FUNC_NULL,
 #else
-	"%s",	"file",	offsetofarray(struct ebm_specific, ebm_file),	FUNC_NULL,
+	"%s",	EBM_NAME_LEN, "file",	offsetofarray(struct ebm_specific, ebm_file), FUNC_NULL,
 #endif
-	"%d",	"w",		EBM_O(ebm_xdim),	FUNC_NULL,
-	"%d",	"n",		EBM_O(ebm_ydim),	FUNC_NULL,
-	"%f",	"d",		EBM_O(ebm_tallness),	FUNC_NULL,
+	"%d",	1, "w",		EBM_O(ebm_xdim),	FUNC_NULL,
+	"%d",	1, "n",		EBM_O(ebm_ydim),	FUNC_NULL,
+	"%f",	1, "d",		EBM_O(ebm_tallness),	FUNC_NULL,
 	/* XXX might have option for ebm_origin */
-	(char *)0,(char *)0,	0,			FUNC_NULL
+	(char *)0, 0, (char *)0, 0,			FUNC_NULL
 };
 
 struct ebm_specific	*ebm_import();
