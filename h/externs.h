@@ -33,22 +33,14 @@ extern int	getopt( int argc, char **argv, char *optstr );
 #endif
 extern char	*re_comp( char *s );
 extern int	re_exec( char *s );
-extern char	*strchr( CONST char *sp, int c );
-#if defined(vax) && !defined(SYSV) && (BSD < 44)
-extern char	*strrchr( CONST char *sp, int c );
-#endif
 
 #else
 extern int	bsdselect();
 extern int	getopt();
 extern char	*re_comp();
 extern int	re_exec();
-extern char	*strchr();
-#if defined(vax) && !defined(SYSV) && (BSD < 44)
-extern char	*strrchr();
 #endif
 
-#endif
 extern char	*optarg;
 extern int	optind;
 extern int	opterr;
