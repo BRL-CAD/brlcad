@@ -102,7 +102,8 @@ main(argc,argv)
 int argc;
 char **argv;
 {
-	char c,*cp,*fbfile=NULL,*cmap=NULL,cs[4];
+	int	c;
+	char *cp,*fbfile=NULL,*cmap=NULL,cs[4];
 	int i,j,k,lclr,iquit=0,ichg=0,gclr(),cclr();
 	int il,iu,iclr,iskp,jclr,bsp();
 	int scr_w=512,scr_h=512,scr_set=0;
@@ -203,8 +204,12 @@ view:	printf("Title: ");
 	loce=loct;
 	while(1){
 		printf("Option (?=menu)? ");
-		while((c=getchar())=='\n');
+
+		if( (c=getchar()) == EOF )  break;
+
 		switch(c){
+		case '\n':
+			continue;
 
 		case '?':
 			printf("Options\n");
