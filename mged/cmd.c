@@ -150,7 +150,6 @@ int     f_bindkey();
 
 extern void	sync();
 
-#define	MAXARGS		2000	/* Maximum number of args per line */
 int	inpara;			/* parameter input from keyboard */
 
 extern int	cmd_glob();

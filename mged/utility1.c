@@ -63,7 +63,6 @@ static union record record;
 #endif
 
 #define ABORTED		-99
-#define MAXSOL 		2000
 #define OLDSOLID	0
 #define NEWSOLID	1
 #define SOL_TABLE	1
@@ -79,7 +78,7 @@ static union record record;
 
 char operate;
 int regflag, numreg, lastmemb, numsol, old_or_new, oper_ok;
-int discr[MAXSOL], idfd, rd_idfd;
+int discr[MAXARGS], idfd, rd_idfd;
 int flag;	/* which type of table to make */
 FILE	*tabptr;
 
@@ -447,8 +446,8 @@ int flag;
 	old_or_new = NEWSOLID;
 	discr[numsol++] = dchar;
 	identt.i_index = numsol;
-	if(numsol > MAXSOL) {
-		rt_log("tables: number of solids > max (%d)\n",MAXSOL);
+	if(numsol > MAXARGS) {
+		rt_log("tables: number of solids > max (%d)\n",MAXARGS);
 		exit(10);
 	}
 	(void)lseek(idfd, (off_t)0L, 2);

@@ -37,7 +37,7 @@ static char RCSid[] = "@(#)$Header$";
 #include "raytrace.h"
 #include "rtgeom.h"
 #include "rtlex.h"
-#include "./ged.h"	/* ??? */
+#include "./ged.h"
 #include "./solid.h"
 #include "./sedit.h"	/* ??? */
 #include "./dm.h"	/* ??? */
@@ -77,7 +77,6 @@ int f_jhold();
 int f_jsolve();
 int f_jtest();
 
-#define MAXARGS	2000
 static struct funtab {
 	char *ft_name;
 	char *ft_parms;

@@ -250,17 +250,16 @@ register char **end;
  *  Set up command line for one of the RT family of programs,
  *  with all objects in view enumerated.
  */
-#define LEN	2000
-static char	*rt_cmd_vec[LEN];
+static char	*rt_cmd_vec[MAXARGS];
 static int	rt_cmd_vec_len;
-static char	rt_cmd_storage[LEN*9];
+static char	rt_cmd_storage[MAXARGS*9];
 
 void
 setup_rt( vp )
 register char	**vp;
 {
 	rt_cmd_vec_len = vp - rt_cmd_vec;
-	rt_cmd_vec_len += build_tops(vp, &rt_cmd_vec[LEN]);
+	rt_cmd_vec_len += build_tops(vp, &rt_cmd_vec[MAXARGS]);
 
 	/* Print out the command we are about to run */
 	vp = &rt_cmd_vec[0];
@@ -1383,7 +1382,7 @@ int	argc;
 	register int	i = 1;
 	char *cp = rt_cmd_storage;
 
-	for( i = 1;  i < argc && i < LEN; i++ )  {
+	for( i = 1;  i < argc && i < MAXARGS; i++ )  {
 		strcpy(cp, argv[i]);
 		rt_cmd_vec[i] = cp;
 		cp += strlen(cp) + 1;
