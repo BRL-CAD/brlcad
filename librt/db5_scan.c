@@ -196,6 +196,16 @@ CONST unsigned char		*cp;
 	rip->major_type = cp[3];
 	rip->minor_type = cp[4];
 
+	if(rt_g.debug&DEBUG_DB) bu_log("db5_crack_disk_header() h_object_width=%d, h_name_present=%d, i_object_width=%d, i_attributes_present=%d, i_body_present=%d, i_zzz=%d, major=%d, minor=%d\n",
+		rip->h_object_width,
+		rip->h_name_present,
+		rip->i_object_width,
+		rip->i_attributes_present,
+		rip->i_body_present,
+		rip->i_zzz,
+		rip->major_type,
+		rip->minor_type );
+
 	return 0;
 }
 
@@ -309,7 +319,7 @@ FILE			*fp;
 	cp = rip->buf+used;
 	want = rip->object_length-used;
 	BU_ASSERT_LONG( want, >, 0 );
-	if( (got = fread( cp, want, 1, fp )) != want ) {
+	if( (got = fread( cp, 1, want, fp )) != want ) {
 		bu_log("db5_get_raw_internal_fp(), want=%ld, got=%ld, database is too short\n",
 			want, got );
 		return -2;
@@ -374,8 +384,12 @@ genptr_t		client_data;	/* argument for handler */
 	nrec = 0L;
 
 	/* Fast-path when file is already memory-mapped */
-	if( dbip->dbi_inmem )  {
+	if( dbip->dbi_mf )  {
 		CONST unsigned char	*cp = (CONST unsigned char *)dbip->dbi_inmem;
+		long	eof;
+
+		BU_CK_MAPPED_FILE(dbip->dbi_mf);
+		eof = dbip->dbi_mf->buflen;
 
 		if( db5_header_is_valid( cp ) == 0 )  {
 			bu_log("db5_scan ERROR:  %s is lacking a proper BRL-CAD v5 database header\n", dbip->dbi_filename);
@@ -383,7 +397,7 @@ genptr_t		client_data;	/* argument for handler */
 		}
 		cp += sizeof(header);
 		addr = sizeof(header);
-		for(;;)  {
+		while( addr < eof )  {
 			if( (cp = db5_get_raw_internal_ptr( &raw, cp )) == NULL )  {
 				return -1;			/* fatal error */
 			}
@@ -392,6 +406,7 @@ genptr_t		client_data;	/* argument for handler */
 			addr += raw.object_length;
 		}
 		dbip->dbi_eof = addr;
+		BU_ASSERT_LONG( dbip->dbi_eof, ==, dbip->dbi_mf->buflen );
 	}  else  {
 		/* In a totally portable way, read the database with stdio */
 		rewind( dbip->dbi_fp );
@@ -545,7 +560,7 @@ struct db_i	*dbip;
 
 	if( db5_header_is_valid( header ) )  {
 		/* File is v5 format */
-bu_log("WARNING:  %s is BRL-CAD v5 format, you need a newer version of this program to read it.\n", dbip->dbi_filename);
+bu_log("WARNING:  %s is BRL-CAD v5 format.\nWARNING:  You probably need a newer version of this program to read it.\n", dbip->dbi_filename);
 		dbip->dbi_version = 5;
 		return db5_scan( dbip, db5_diradd_handler, NULL );
 	}
@@ -681,6 +696,7 @@ int				zzz;		/* compression, someday */
 	cp = ((unsigned char *)out->ext_buf) + sizeof(struct db5_ondisk_header);
 	cp = db5_encode_length( cp, togo>>3, h_width );
 
+	out->ext_nbytes = togo;
 }
 
 /*
@@ -779,7 +795,7 @@ double		local2mm;
 	header[6] = 0;		/* pad */
 	header[7] = DB5HDR_MAGIC2;
 
-	if( fwrite( header, sizeof(header), 1, fp ) != 0 )  {
+	if( fwrite( header, sizeof(header), 1, fp ) != 1 )  {
 		bu_log("db5_write_ident() write error\n");
 		return -1;
 	}
