@@ -436,7 +436,15 @@ extern struct mged_variables mged_variables;
 
 #define	MAXARGS		9000	/* Maximum number of args per line */
 
-#define MGED_PROMPT "mged> "
+#define MGED_PROMPT "\rmged> "
+
+/* Flags indicating whether the ogl and sgi display managers have been
+ * attached. Defined in dm-ogl.c. 
+ * These are necessary to decide whether or not to use direct rendering
+ * with ogl.
+ */
+extern	char	ogl_ogl_used;
+extern	char	ogl_sgi_used;
 
 /* Command return codes */
 
