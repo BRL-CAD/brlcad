@@ -28,7 +28,7 @@
  */
 #if USE_PROTOTYPES
 extern int	bsdselect( long readfds, int sec, int us );
-#if !defined(__stardent)
+#if !defined(__stardent) && !defined(__bsdi__)
 extern int	getopt( int argc, char **argv, char *optstr );
 #endif
 extern char	*re_comp( char *s );
