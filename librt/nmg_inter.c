@@ -109,8 +109,9 @@ struct faceuse *fu1, *fu2;
 
 /*	V E R T E X _ O N _ F A C E
  *
- *	determine if the given vertex can be found in the given faceuse
- *	if it can, return a pointer to the vertexuse which was found in the
+ *	Perform a topological check to
+ *	determine if the given vertex can be found in the given faceuse.
+ *	If it can, return a pointer to the vertexuse which was found in the
  *	faceuse.
  */
 static struct vertexuse *vertex_on_face(v, fu)
@@ -202,7 +203,8 @@ struct edgeuse *eu;
 struct faceuse *fu;
 {
 	struct vertexuse *vu;
-	point_t pt;
+	point_t		hit_pt;
+	fastf_t		vect_len;	/* MAGNITUDE(vect) */
 	pointp_t p1, p2, p3;
 	vect_t vect, delta;
 	fastf_t dist, mag;
@@ -236,12 +238,14 @@ VPRINT("\t\t (next): ", eu->next->vu_p->v_p->vg_p->coord);
 	 * First we check the topology.  If the topology says that the start
 	 * vertex of this edgeuse is on the other face, we enter the
 	 * vertexuses in the list and it's all over.
-	 * If the vertex on the other end of this edgeuse is on the face, then
-	 * we give up on this edge, knowing that we'll pick up the
+	 *
+	 * If the vertex on the other end of this edgeuse is on the face,
+	 * then make a linkage to an existing face vertex (if found),
+	 * and give up on this edge, knowing that we'll pick up the
 	 * intersection of the next edgeuse with the face later.
 	 *
 	 * This all assumes that an edge can only intersect a face at one
-	 * point.  This is probbably a bad assumption for the future
+	 * point.  This is probably a bad assumption for the future
 	 */
 	if (vu=vertex_on_face(eu->vu_p->v_p, fu)) {
 
@@ -275,14 +279,13 @@ VPRINT("\t\t (next): ", eu->next->vu_p->v_p->vg_p->coord);
 				p1[0], p1[1], p1[2], p2[0], p2[1], p2[2]);
 			rt_log("\tMATE vertex topologically on intersection plane. skipping edgeuse\n");
 		}
-
 		return;
 	}
 
-
-	/* Since the topology didn't tell us about any intersections, 
-	 * we need to check the geometry.  First we form the vector for the
-	 * edgeuse.
+	/*
+	 *  Neither vertex lies on the face according to topology.
+	 *  Form a ray that starts at one vertex of the edgeuse
+	 *  and points to the other vertex.
 	 */
 	p1 = eu->vu_p->v_p->vg_p->coord;
 	p2 = eu->eumate_p->vu_p->v_p->vg_p->coord;
@@ -294,7 +297,6 @@ VPRINT("\t\t (next): ", eu->next->vu_p->v_p->vg_p->coord);
 
 
 	status = rt_isect_ray_plane(&dist, p1, vect, fu->f_p->fg_p->N);
-
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 		if (status >= 0)
@@ -316,6 +318,8 @@ VPRINT("\t\t (next): ", eu->next->vu_p->v_p->vg_p->coord);
          * intersection is between limits of the endpoints of
 	 * this edge(use).
 	 */
+	VJOIN1( hit_pt, p1, dist, vect );
+	vect_len = MAGNITUDE(vect);
 	VSCALE(delta, vect, dist);
 	mag = MAGNITUDE(delta);
 
@@ -323,42 +327,38 @@ VPRINT("\t\t (next): ", eu->next->vu_p->v_p->vg_p->coord);
 		rt_log("\tmag of vect:%g  Dist to plane:%g\n",
 			MAGNITUDE(vect), mag);
 
+	if( mag < -(bs->tol) )  {
+		/* Hit is behind first point */
+		if (rt_g.NMG_debug & DEBUG_POLYSECT)
+			rt_log("\tplane behind first point\n");
+		return;
+	}
 
-	if (NEAR_ZERO(mag, bs->tol) ) {
-		/* the starting vertex of this edgeuse is
-		 * geometrically on the other face.
-		 */
-
+	if( mag < bs->tol )  {
+		/* First point is on plane of face, by geometry */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\tedge starts at plane intersect\n");
 
-		/* if this vertex is not already in our list of vertices
-		 * on the intersection line, we add it to the list
-		 */
+		/* Add to list of verts on intersection line */
 		if (nmg_tbl(bs->l1, TBL_LOC, &eu->vu_p->magic) < 0)
 			(void)nmg_tbl(bs->l1, TBL_INS, &eu->vu_p->magic);
 
-		/* if the other face doesn't already have a very similar
-		 * point, we give it one
-		 */
-		/* check to see if the other face has a point which is very
-		 * similar
-		 */
+		/* If face doesn't have a "very similar" point, give it one */
 		vu = nmg_find_vu_in_face(p1, fu, bs->tol);
 		if (vu) {
-			/* the other face has a vertex very similar to this
-			 * one.  We should make sure the use in the other
-			 * face is in that face's list of verticies on the
-			 * intersection, and combine the two verticies.
+			/* Face has a vertex very similar to this one.
+			 * Add vertex to face's list of vertices on
+			 * intersection line.
 			 */
 			if (nmg_tbl(bs->l2, TBL_LOC, &vu->magic) < 0)
 				(void)nmg_tbl(bs->l2, TBL_INS, &vu->magic);
 
-			/* compute the new coordinate as the midpoint between
+			/* new coordinates are the midpoint between
 			 * the two existing coordinates
 			 */
 			p3 = vu->v_p->vg_p->coord;
 			VADD2SCALE(p1, p1, p3, 0.5);
+			/* Combine the two vertices */
 			nmg_jv(eu->vu_p->v_p, vu->v_p);
 		} else {
 			/* Since the other face doesn't have a vertex quite
@@ -378,29 +378,23 @@ VPRINT("\t\t (next): ", eu->next->vu_p->v_p->vg_p->coord);
 			 */
 			(void)nmg_tbl(bs->l2, TBL_INS, &plu->down.vu_p->magic);
 		}
+		return;
 	}
-	else if (dist > 0.0 && mag < MAGNITUDE(vect)-bs->tol) {
-		/* the line segment defined by this edge(use)
-		 * crosses the other face/plane.  We insert a new
-		 * vertex at the point of intersection.
+	if ( mag < vect_len - bs->tol) {
+		/* Intersection is between first and second vertex points.
+		 * Insert new vertex at intersection point.
 		 */
-
-		if (rt_g.NMG_debug & DEBUG_POLYSECT)
+		if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
 			rt_log("Splitting %g, %g, %g <-> %g, %g, %g\n",
 			p1[X], p1[Y], p1[Z], p2[X], p2[Y], p2[Z]);
-
-		/* compute the point of intersection of this edge
-		 * with the face
-		 */
-		VADD2(pt, p1, delta);
-		if (rt_g.NMG_debug & DEBUG_POLYSECT)
-			VPRINT("\tPoint of intersection", pt);
+			VPRINT("\tPoint of intersection", hit_pt);
+		}
 
 		/* if we can't find the appropriate vertex in the
 		 * other face, we'll build a new vertex.  Otherwise
 		 * we re-use an old one.
 		 */
-		vu = nmg_find_vu_in_face(pt, fu, bs->tol);
+		vu = nmg_find_vu_in_face(hit_pt, fu, bs->tol);
 		if (vu) {
 			/* the other face has a convenient vertex for us */
 
@@ -443,7 +437,7 @@ VPRINT("\t\t (next): ", eu->next->vu_p->v_p->vg_p->coord);
 				VPRINT("where'd this geometry come from?",
 					eu->eumate_p->vu_p->v_p->vg_p->coord);
 			}
-			nmg_vertex_gv(eu->eumate_p->vu_p->v_p, pt);
+			nmg_vertex_gv(eu->eumate_p->vu_p->v_p, hit_pt);
 
 			NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p);
 			NMG_CK_VERTEX_G(eu->eumate_p->vu_p->v_p->vg_p);
@@ -495,10 +489,35 @@ VPRINT("\t\t (next): ", eu->next->vu_p->v_p->vg_p->coord);
 		}
 
 		(void)nmg_tbl(bs->l1, TBL_INS, &eu->next->vu_p->magic);
+		return;
 	}
-	else
+	if ( mag < vect_len + bs->tol) {
+		/* Second point is on plane of face, by geometry */
+		/* Make no entries in intersection lists,
+		 * because it will be handled on the next call.
+		 */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
-		rt_log("\tdist to plane X: X < 0.0 or X > MAGNITUDE(edge)\n");
+			rt_log("\tedge ends at plane intersect\n");
+
+		if( eu->next->vu_p->v_p != eu->eumate_p->vu_p->v_p )
+			rt_bomb("isect_edge_face: discontinuous eu loop\n");
+
+		/* If face has a "very similar" point, connect up with it */
+		vu = nmg_find_vu_in_face(p2, fu, bs->tol);
+		if (vu) {
+			/* new coordinates are the midpoint between
+			 * the two existing coordinates
+			 */
+			p3 = vu->v_p->vg_p->coord;
+			VADD2SCALE(p2, p2, p3, 0.5);
+			/* Combine the two vertices */
+			nmg_jv(eu->eumate_p->vu_p->v_p, vu->v_p);
+		}
+		return;
+	}
+
+	if (rt_g.NMG_debug & DEBUG_POLYSECT)
+		rt_log("\tdist to plane X: X > MAGNITUDE(edge)\n");
 
 
 }
