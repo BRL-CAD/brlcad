@@ -67,7 +67,7 @@ static int big_txt = 0;		/* Text window size flag - hack for Ir_puts */
 static int cueing_on = 1;	/* Depth cueing flag - for colormap work */
 static int zclipping_on = 1;	/* Z Clipping flag */
 static int zbuffer_on = 1;	/* Hardware Z buffer is on */
-static int perspective_on = 0;	/* Perspective flag */
+static int perspective_mode = 0;	/* Perspective flag */
 static int lighting_on = 0;	/* Lighting model on */
 static int ovec = -1;		/* Old color map entry number */
 static mat_t perspect_mat;
@@ -432,7 +432,7 @@ Ir_open()
 	/* Compute some viewing matricies */
 	mat_idn( nozclip_mat );
 	nozclip_mat[10] = 1.0e-20;
-	persp_mat( perspect_mat, 90.0, 1.0, 0.01, 1.0e10, 1.0 );
+/*	persp_mat( perspect_mat, 90.0, 1.0, 0.01, 1.0e10, 1.0 ); */
 
 	return(0);
 }
@@ -603,7 +603,7 @@ double ratio;
 	 * matrix is loaded for each object. Even though its the same
 	 * matrix.
 	 */
-	if( perspective_on ) {
+	if( perspective_mode ) {
 		mat_mul( newm, perspect_mat, m );
 		m = newm;
 	} else if( ! zclipping_on ) {
@@ -1007,7 +1007,27 @@ checkevents()  {
 					continue;
 				}
 				/* toggle perspective viewing */
-				perspective_on = perspective_on ? 0 : 1;
+				if (--perspective_mode < 0) perspective_mode = 4;
+				switch (perspective_mode) {
+				case 4:
+					persp_mat( perspect_mat, 90.0,
+					    1.0, 0.01, 1.0e10, 1.0 );
+					break;
+				case 3:
+					persp_mat( perspect_mat, 60.0,
+					    1.0, 0.01, 1.0e10, 1.0 );
+					break;
+				case 2:
+					persp_mat( perspect_mat, 45.0,
+					    1.0, 0.01, 1.0e10, 1.0 );
+					break;
+				case 1:
+					persp_mat( perspect_mat, 30.0,
+					    1.0, 0.01, 1.0e10, 1.0 );
+					break;
+				case 0:
+					break;
+				}
 				dmaflag = 1;
 				kblights();
 				continue;
@@ -1562,7 +1582,7 @@ kblights()
 
 	lights = (cueing_on)
 		| (zclipping_on << 1)
-		| (perspective_on << 2)
+		| ((perspective_mode ? 1 : 0) << 2)
 		| (zbuffer_on << 3);
 
 	lampon(lights);
