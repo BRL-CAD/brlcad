@@ -39,12 +39,26 @@ int argc; char *argv[];
 	struct nmgregion *r;
 	char * id_name = "NMG TNURB Example";
 	char * tea_name = "UtahTeapot";
+	char * uplot_name = "teapot.upl";
+	struct rt_list vhead;
+	struct rt_tol tol;
+	FILE *fp;
 	int i;
+
+        tol.magic = RT_TOL_MAGIC;
+        tol.dist = 0.005;
+        tol.dist_sq = tol.dist * tol.dist;
+        tol.perp = 1e-6;
+        tol.para = 1 - tol.perp;
+
+	RT_LIST_INIT( &rt_g.rtg_vlfree );
 
 	if (isatty(fileno(stdout))) {
 		(void)fprintf(stderr, "%s: %s\n", *argv, Usage);
 		return(-1);
 	}
+
+	rt_g.debug |= DEBUG_ALLRAYS;	/* Cause core dumps on rt_bomb(), but no extra messages */
 
 	while ((i=getopt(argc, argv, "d")) != EOF) {
 		switch (i) {
@@ -75,7 +89,23 @@ int argc; char *argv[];
 		dump_patch( patches[i] );
 	}
 
-	(void)mk_nmg( stdout , "teapot" , m );
+/*	(void)nmg_model_fuse( m , &tol );	*/
+
+	/* Make a vlist for the model */
+	RT_LIST_INIT( &vhead );
+	nmg_m_to_vlist( &vhead , m , 0 );
+
+	/* Make a UNIX plot file from this vlist */
+	if( (fp=fopen( uplot_name , "w" )) == NULL )
+	{
+		rt_log( "Cannot open plot file: %s\n" , uplot_name );
+		perror( "teapot_nmg" );
+	}
+	else
+		rt_vlist_to_uplot( fp , &vhead );
+
+	/* write NMG to output file */
+	(void)mk_nmg( stdout , tea_name , m );
 
 	return(0);
 }
