@@ -380,6 +380,8 @@ FBIO	*ifp;
 	int	pixsize;
 	int	size;
 	int	i;
+	char	*old_brk;
+	char	*new_brk;
 	char	*sp;
 	int	new = 0;
 
