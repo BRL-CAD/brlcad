@@ -615,11 +615,8 @@ struct partition *PartHeadp;
 	if (rdebug&RDEBUG_SHADE)
 		rt_log("colorview calling viewshade\n");
 
+	/* individual shaders must handle reflection & refraction */
 	(void)viewshade( ap, pp, &sw );
-
-	/* As a special case for now, handle reflection & refraction */
-	if( sw.sw_reflect > 0 || sw.sw_transmit > 0 )
-		(void)rr_render( ap, pp, &sw );
 
 	VMOVE( ap->a_color, sw.sw_color );
 	ap->a_user = 1;		/* Signal view_pixel:  HIT */
