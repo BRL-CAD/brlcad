@@ -401,6 +401,194 @@ CONST char		*cp;
 }
 
 /*
+ *			D B _ F I N D _ N A M E D _ L E A F S _ P A R E N T
+ *
+ *  Returns -
+ *	TREE_NULL	if not found in this tree
+ *	tp		if found
+ *			*side == 1 if leaf is on lhs.
+ *			*side == 2 if leaf is on rhs.
+ *
+ */
+union tree *
+db_find_named_leafs_parent( side, tp, cp )
+int			*side;
+union tree		*tp;
+CONST char		*cp;
+{
+	union tree	*ret;
+
+	RT_CK_TREE(tp);
+
+	switch( tp->tr_op )  {
+
+	case OP_DB_LEAF:
+		/* Always return NULL -- we are seeking parent, not leaf */
+		return TREE_NULL;
+
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+		if( tp->tr_b.tb_left->tr_op == OP_DB_LEAF )  {
+			if( strcmp( cp, tp->tr_b.tb_left->tr_l.tl_name ) == 0 )  {
+				*side = 1;
+				return tp;
+			}
+		}
+		if( tp->tr_b.tb_right->tr_op == OP_DB_LEAF )  {
+			if( strcmp( cp, tp->tr_b.tb_right->tr_l.tl_name ) == 0 )  {
+				*side = 2;
+				return tp;
+			}
+		}
+
+		/* If target not on immediate children, descend down. */
+		ret = db_find_named_leafs_parent( side, tp->tr_b.tb_left, cp );
+		if( ret != TREE_NULL )  return ret;
+		return db_find_named_leafs_parent( side, tp->tr_b.tb_right, cp );
+
+	default:
+		bu_log("db_find_named_leafs_parent: bad op %d\n", tp->tr_op);
+		bu_bomb("db_find_named_leafs_parent\n");
+	}
+	return TREE_NULL;
+}
+
+/*
+ *			D B _ T R E E _ D E L _ L H S
+ */
+void
+db_tree_del_lhs( tp )
+union tree		*tp;
+{
+	union tree	*subtree;
+
+	RT_CK_TREE(tp);
+
+	switch( tp->tr_op )  {
+
+	default:
+		bu_bomb("db_tree_del_lhs() called with leaf node as parameter\n");
+
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+		switch( tp->tr_b.tb_left->tr_op )  {
+		case OP_NOP:
+		case OP_SOLID:
+		case OP_REGION:
+		case OP_NMG_TESS:
+		case OP_DB_LEAF:
+			/* lhs is indeed a leaf node */
+			db_free_tree( tp->tr_b.tb_left );
+			tp->tr_b.tb_left = TREE_NULL;	/* sanity */
+			subtree = tp->tr_b.tb_right;
+			/*
+			 *  Since we don't know what node has the downpointer
+			 *  to 'tp', replicate 'subtree' data in 'tp' node,
+			 *  then release memory of 'subtree' node
+			 *  (but not the actual subtree).
+			 */
+			*tp = *subtree;			/* struct copy */
+			bu_free( (genptr_t)subtree, "union tree (subtree)" );
+			return;
+		default:
+			bu_bomb("db_tree_del_lhs()  lhs is not a leaf node\n");
+		}
+	}
+}
+
+/*
+ *			D B _ T R E E _ D E L _ R H S
+ */
+void
+db_tree_del_rhs( tp )
+union tree		*tp;
+{
+	union tree	*subtree;
+
+	RT_CK_TREE(tp);
+
+	switch( tp->tr_op )  {
+
+	default:
+		bu_bomb("db_tree_del_rhs() called with leaf node as parameter\n");
+
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+		switch( tp->tr_b.tb_right->tr_op )  {
+		case OP_NOP:
+		case OP_SOLID:
+		case OP_REGION:
+		case OP_NMG_TESS:
+		case OP_DB_LEAF:
+			/* rhs is indeed a leaf node */
+			db_free_tree( tp->tr_b.tb_right );
+			tp->tr_b.tb_right = TREE_NULL;	/* sanity */
+			subtree = tp->tr_b.tb_left;
+			/*
+			 *  Since we don't know what node has the downpointer
+			 *  to 'tp', replicate 'subtree' data in 'tp' node,
+			 *  then release memory of 'subtree' node
+			 *  (but not the actual subtree).
+			 */
+			*tp = *subtree;			/* struct copy */
+			bu_free( (genptr_t)subtree, "union tree (subtree)" );
+			return;
+		default:
+			bu_bomb("db_tree_del_rhs()  rhs is not a leaf node\n");
+		}
+	}
+}
+
+/*
+ *			D B _ T R E E _ D E L _ D B L E A F
+ *
+ *  Given a name presumably referenced in a OP_DBLEAF node,
+ *  delete that node, and the operation node that references it.
+ *  Not that this may not produce an equivalant tree,
+ *  for example when rewriting A-subtree as "subtree",
+ *  but that will be up to the caller/user to adjust.
+ *  This routine gets rid of exactly two nodes in the tree: leaf, and op.
+ *  Use some other routine if you wish to kill the rhs of - and intersect nodes.
+ *
+ *  The two nodes deleted will have their memory freed.
+ *
+ *  Returns -
+ *	-2	Internal error
+ *	-1	Unable to find OP_DBLEAF node specified by 'cp'.
+ *	 0	OK
+ */
+db_tree_del_dbleaf( tp, cp )
+union tree		*tp;
+CONST char		*cp;
+{
+	union tree	*parent;
+	int		side = 0;
+
+	RT_CK_TREE(tp);
+
+	if( (parent = db_find_named_leafs_parent( &side, tp, cp )) == TREE_NULL )
+		return -1;
+
+	switch( side )  {
+	case 1:
+		db_tree_del_lhs( parent );
+		return 0;
+	case 2:
+		db_tree_del_rhs( parent );
+		return 0;
+	}
+	bu_log("db_tree_del_dbleaf() unknown side=%d?\n", side);
+	return -2;
+}
+
+
+/*
  *			D B _ F O L L O W _ P A T H _ F O R _ S T A T E
  *
  *  Follow the slash-separated path given by "cp", and update
