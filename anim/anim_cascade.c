@@ -54,41 +54,96 @@
 #define RTOD	180.000/M_PI
 #endif
 
+#define	CASCADE_A	0
+#define CASCADE_R	1
+#define CASCADE_F	2
+
 extern int optind;
 extern char *optarg;
 
-vect_t wcenter, wypr, rcenter, rypr;
-int cmd_wcen, cmd_wypr, cmd_rcen, cmd_rypr;
-int inverse_mode, read_time, print_time;
+vect_t fcenter, fypr, rcenter, rypr, acenter, aypr;
+int cmd_fcen, cmd_fypr, cmd_rcen, cmd_rypr, cmd_acen, cmd_aypr;
+int output_mode, read_time, print_time;
 
 main (argc,argv)
 int argc;
 char **argv;
 {
 	int i, val;
-	fastf_t time, yaw, pitch, roll, ryaw, rpitch, rroll;
-	vect_t mainv, relative, absolute, angles, rad_angles, rotated;
-	mat_t m_main, m_rel, m_abs;
+	fastf_t time, yaw1, pitch1, roll1, yaw2, pitch2, roll2;
+	vect_t cen1, cen2, cen_ans, ang_ans, rad_ang_ans, rotated;
+	mat_t m_rot1, m_rot2, m_ans;
 	FILE	*fp;
-	int one_time;
+	int one_time, read_cen1, read_cen2, read_rot1, read_rot2;
+
+	read_cen1 = read_cen2 = read_rot1 = read_rot2 = 1;
 
 	if (!get_args(argc,argv))
 		fprintf(stderr,"anim_cascade: Argument error.");
 
-	one_time = (cmd_wcen&&cmd_rcen&&cmd_wypr&&cmd_rypr);
+	switch (output_mode) {
+	case CASCADE_A:
+		if (cmd_fcen) {
+			VMOVE(cen1, fcenter);
+			read_cen1 = 0;
+		}
+		if (cmd_rcen) {
+			VMOVE(cen2, rcenter);
+			read_cen2 = 0;
+		}
+		if (cmd_fypr){
+			anim_dy_p_r2mat(m_rot1, fypr[0], fypr[1], fypr[2]);
+			read_rot1 = 0;
+		}
+		if (cmd_rypr){
+			anim_dy_p_r2mat(m_rot2, rypr[0], rypr[1], rypr[2]);
+			read_rot2 = 0;
+		}
+		break;
+	case CASCADE_R:
+		if (cmd_fcen) {
+			VMOVE(cen1, fcenter);
+			read_cen1 = 0;
+		}
+		if (cmd_acen) {
+			VMOVE(cen2, acenter);
+			read_cen2 = 0;
+		}
+		if (cmd_fypr){
+			anim_dy_p_r2mat(m_rot1, fypr[0], fypr[1], fypr[2]);
+			read_rot1 = 0;
+		}
+		if (cmd_aypr){
+			anim_dy_p_r2mat(m_rot2, aypr[0], aypr[1], aypr[2]);
+			read_rot2 = 0;
+		}
+		break;
+	case CASCADE_F:
+		if (cmd_acen) {
+			VMOVE(cen1, acenter);
+			read_cen1 = 0;
+		}
+		if (cmd_rcen) {
+			VMOVE(cen2, rcenter);
+			read_cen2 = 0;
+		}
+		if (cmd_aypr){
+			anim_dy_p_r2mat(m_rot1, aypr[0], aypr[1], aypr[2]);
+			read_rot1 = 0;
+		}
+		if (cmd_rypr){
+			anim_dy_p_r2mat(m_rot2, rypr[0], rypr[1], rypr[2]);
+			read_rot2 = 0;
+		}
+		break;
+	default:
+		break;
+	}
+
+
+	one_time = (!(read_cen1||read_cen2||read_rot1||read_rot2));
 	read_time = one_time ? 0 : print_time;
 	time = 0.0;
-
-	if (cmd_wcen)
-		VMOVE(mainv, wcenter);
-	if (cmd_rcen)
-		VMOVE(relative, rcenter);
-	if (cmd_wypr){
-		anim_dy_p_r2mat(m_main, wypr[0], wypr[1], wypr[2]);
-	}
-	if (cmd_rypr){
-		anim_dy_p_r2mat(m_rel, rypr[0], rypr[1], rypr[2]);
-	}
 
 	val = 3;
 	while(1){
@@ -96,38 +151,44 @@ char **argv;
 			val=scanf("%lf",&time);
 			if (val < 1) break;
 		}
-		if (!cmd_wcen) 
-			val =scanf("%lf %lf %lf",mainv, mainv+1, mainv+2);
-		if (!cmd_wypr) {
-			val=scanf("%lf %lf %lf", &yaw, &pitch, &roll);
-			anim_dy_p_r2mat(m_main, yaw, pitch, roll);
+		if (read_cen1) 
+			val =scanf("%lf %lf %lf",cen1, cen1+1, cen1+2);
+		if (read_rot1) {
+			val=scanf("%lf %lf %lf", &yaw1, &pitch1, &roll1);
+			anim_dy_p_r2mat(m_rot1, yaw1, pitch1, roll1);
 		}
-		if (!cmd_rcen) {
-			val=scanf("%lf %lf %lf", relative, relative+1,relative+2);
+		if (read_cen2) {
+			val=scanf("%lf %lf %lf", cen2, cen2+1,cen2+2);
 		}
-		if (!cmd_rypr) {
-			val=scanf("%lf %lf %lf", &ryaw, &rpitch, &rroll);
-			anim_dy_p_r2mat(m_rel, ryaw, rpitch, rroll);
+		if (read_rot2) {
+			val=scanf("%lf %lf %lf", &yaw2, &pitch2, &roll2);
+			anim_dy_p_r2mat(m_rot2, yaw2, pitch2, roll2);
 		}
 		if (val<3) break;
 		
-		if (inverse_mode) {
-			anim_tran(m_main);
-			VSUB2(rotated,relative,mainv);
-			MAT4X3PNT(absolute, m_main, rotated);
+		if (output_mode==CASCADE_R) {
+			anim_tran(m_rot1);
+			VSUB2(rotated,cen2,cen1);
+			MAT4X3PNT(cen_ans, m_rot1, rotated);
+			mat_mul(m_ans, m_rot1, m_rot2);
+		} else if (output_mode==CASCADE_F) {
+			anim_tran(m_rot2);
+			mat_mul(m_ans, m_rot1, m_rot2);
+			MAT4X3PNT(rotated, m_ans, cen2);
+			VSUB2(cen_ans, cen1, rotated);
 		} else {
-			MAT4X3PNT(rotated, m_main, relative);
-			VADD2(absolute, rotated, mainv);
+			MAT4X3PNT(rotated, m_rot1, cen2);
+			VADD2(cen_ans, rotated, cen1);
+			mat_mul(m_ans, m_rot1, m_rot2);
 		}
-		mat_mul(m_abs, m_main, m_rel);
-		anim_mat2ypr(rad_angles, m_abs);
-		VSCALE(angles, rad_angles, RTOD);
+		anim_mat2ypr(rad_ang_ans, m_ans);
+		VSCALE(ang_ans, rad_ang_ans, RTOD);
 
 		if (print_time){
 			printf("%g",time);
 		}
-		printf("\t%g\t%g\t%g", absolute[0], absolute[1], absolute[2]);
-		printf("\t%g\t%g\t%g", angles[0], angles[1], angles[2]);
+		printf("\t%.12g\t%.12g\t%.12g", cen_ans[0], cen_ans[1], cen_ans[2]);
+		printf("\t%.12g\t%.12g\t%.12g", ang_ans[0], ang_ans[1], ang_ans[2]);
 		printf("\n");
 		
 		if (one_time) break;
@@ -135,7 +196,7 @@ char **argv;
 
 }
 
-#define OPT_STR "siw:r:"
+#define OPT_STR "so:f:r:a:"
 
 int get_args(argc,argv)
 int argc;
@@ -143,28 +204,29 @@ char **argv;
 {
 	int c,d;
 
-	inverse_mode = cmd_wcen = cmd_wypr = cmd_rcen = cmd_rypr = 0;
+	output_mode = CASCADE_A;
+	cmd_fcen = cmd_fypr = cmd_rcen = cmd_rypr = cmd_acen = cmd_aypr = 0;
 	print_time = 1;
 	while ( (c=getopt(argc,argv,OPT_STR)) != EOF) {
 		switch(c){
-		case 'w':
+		case 'f':
 			d = *(optarg);
 			if (d == 'c'){
-				sscanf(argv[optind],"%lf",wcenter+0);
-				sscanf(argv[optind+1],"%lf",wcenter+1);
-				sscanf(argv[optind+2],"%lf",wcenter+2);
+				sscanf(argv[optind],"%lf",fcenter+0);
+				sscanf(argv[optind+1],"%lf",fcenter+1);
+				sscanf(argv[optind+2],"%lf",fcenter+2);
 				optind += 3;
-				cmd_wcen = 1;
+				cmd_fcen = 1;
 				break;
 			} else if ( d =='y'){
-				sscanf(argv[optind],"%lf",wypr+0);
-				sscanf(argv[optind+1],"%lf",wypr+1);
-				sscanf(argv[optind+2],"%lf",wypr+2);
+				sscanf(argv[optind],"%lf",fypr+0);
+				sscanf(argv[optind+1],"%lf",fypr+1);
+				sscanf(argv[optind+2],"%lf",fypr+2);
 				optind += 3;
-				cmd_wypr = 1;
+				cmd_fypr = 1;
 				break;
 			} else {
-				fprintf(stderr,"anim_cascade: unknown option -w%c\n", d);
+				fprintf(stderr,"anim_cascade: unknown option -f%c\n", d);
 			}
 			break;
 		case 'r':
@@ -187,8 +249,37 @@ char **argv;
 				fprintf(stderr,"anim_cascade: unknown option -r%c\n", d);
 			}
 			break;
-		case 'i':
-			inverse_mode = 1;
+		case 'a':
+			d = *(optarg);
+			if (d == 'c'){
+				sscanf(argv[optind],"%lf",acenter+0);
+				sscanf(argv[optind+1],"%lf",acenter+1);
+				sscanf(argv[optind+2],"%lf",acenter+2);
+				optind += 3;
+				cmd_acen = 1;
+				break;
+			} else if ( d =='y'){
+				sscanf(argv[optind],"%lf",aypr+0);
+				sscanf(argv[optind+1],"%lf",aypr+1);
+				sscanf(argv[optind+2],"%lf",aypr+2);
+				optind += 3;
+				cmd_aypr = 1;
+				break;
+			} else {
+				fprintf(stderr,"anim_cascade: unknown option -a%c\n", d);
+			}
+			break;
+		case 'o':
+			d = *(optarg);
+			if (d == 'r'){
+				output_mode = CASCADE_R;
+			} else if (d == 'f') {
+				output_mode = CASCADE_F;
+			} else if (d == 'a') { /* default */
+				output_mode = CASCADE_A;
+			} else {
+				fprintf(stderr,"anim_cascade: unknown option -i%c\n",d);
+			}
 			break;
 		case 's':
 			print_time = 0;
