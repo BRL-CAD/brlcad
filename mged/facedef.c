@@ -101,7 +101,7 @@ char **argv;
 		return CMD_BAD;
 	}	
 
-	/* apply es_mat editing to parameters */
+	/* apply es_mat editing to parameters.  "new way" */
 	transform_editing_solid( &intern, es_mat, &es_int, 0 );
 
 	arb = (struct rt_arb_internal *)intern.idb_ptr;
@@ -162,7 +162,7 @@ char **argv;
 		case  672:plane=5;		/* face 4378 of arb8 */
 			  break;
 		default:
-			  (void)printf("bad face\n");
+			  (void)printf("bad face (product=%d)\n", prod);
 			  return CMD_BAD;
 	}
 
@@ -250,16 +250,25 @@ char **argv;
 		rt_log("facedef:  unable to find points\n");
 		return CMD_BAD;
 	}
+	/* Now have 8 points, which is the internal form of an ARB8. */
 
-	/* Transform points back to before es_mat changes */
+	/* Transform points back before es_mat changes */
+	/* This is the "new way" */
 	arbo = (struct rt_arb_internal *)es_int.idb_ptr;
 	RT_ARB_CK_MAGIC(arbo);
 
-	MAT4X3PNT( arbo->pt[0], es_invmat, arb->pt[0] );
-	for(i=1; i<8; i++){
-		MAT4X3VEC( arbo->pt[i], es_invmat, arb->pt[i] );
+	for(i=0; i<8; i++){
+		MAT4X3PNT( arbo->pt[i], es_invmat, arb->pt[i] );
 	}
 	rt_db_free_internal(&intern);
+
+	/* For compatability, here is the "old way" */
+	MAT4X3PNT( &es_rec.s.s_values[3*0], es_invmat, arb->pt[0] );
+	for(i=1; i<8; i++){
+		vect_t	diff;
+		VSUB2( diff, arb->pt[i], arb->pt[0] );
+		MAT4X3VEC( &es_rec.s.s_values[3*i], es_invmat, diff );
+	}
 
 	/* draw the new solid */
 	replot_editing_solid();
