@@ -1,7 +1,6 @@
 /*
  *			F A C E D E F . C
  *  Authors -
- *	Keith A. Applin
  *	Daniel C. Dender
  *
  *  Source -
