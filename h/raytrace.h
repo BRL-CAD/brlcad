@@ -982,6 +982,35 @@ extern double	rt_invpi, rt_inv2pi;
 extern double	rt_inv255;
 
 /*
+ *  Unfortunately, to prevent divide-by-zero, some tolerancing
+ *  needs to be introduced.
+ *
+ *  RT_LEN_TOL is the shortest length, in mm, that can be stood
+ *  as the dimensions of a primitive.
+ *  Can probably become at least SMALL.
+ *  Dot products smaller than RT_DOT_TOL are considered to have
+ *  a dot product of zero, i.e., the angle is effectively zero.
+ *  This is used to check vectors that should be perpendicular.
+ *  asin(0.1   ) = 5.73917 degrees
+ *  asin(0.01  ) = 0.572967
+ *  asin(0.001 ) = 0.0572958 degrees
+ *  asin(0.0001) = 0.00572958 degrees
+ *
+ *  sin(0.01 degrees) = sin(0.000174 radians) = 0.000174533
+ *
+ *  Many TGCs at least, in existing databases, will fail the
+ *  perpendicularity test if DOT_TOL is much smaller than 0.001,
+ *  which establishes a 1/20th degree tolerance.
+ *  The intent is to eliminate grossly bad primitives, not pick nits.
+ *
+ *  RT_PCOEF_TOL is a tolerance on polynomial coefficients to prevent
+ *  the root finder from having heartburn.
+ */
+#define RT_LEN_TOL	(1.0e-8)
+#define RT_DOT_TOL	(0.001)
+#define RT_PCOEF_TOL	(1.0e-10)
+
+/*
  *  System library routines used by the RT library.
  */
 extern char	*malloc();
