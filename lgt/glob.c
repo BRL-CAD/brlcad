@@ -125,7 +125,6 @@ int	user_interrupt = FALSE;	/* User-level interrupt of raytrace.	*/
 int	fatal_error = FALSE;	/* Fatal error, must abort raytrace.	*/
 int	lgt_db_size = 0;	/* Current size of light data base.	*/
 int	max_bounce = 0;		/* Recursion level for raytracer.	*/
-int	nprocessors = 1;	/* Number of processors (parallel cpus).*/
 int	pix_buffered = B_LINE;	/* Scan line buffering is default.	*/
 int	tty;		/* Is input attached to a terminal.		*/
 int	grid_sz = 32;	/* Default resolution 32x32 pixels.		*/
@@ -135,6 +134,7 @@ int	grid_x_cur = 0; /* Grid x current position.			*/
 int	grid_y_cur = 0; /* Grid y current position.			*/
 int	grid_y_org = 0;	/* Grid y position to begin ray-tracing.	*/
 int	grid_y_fin = 32;/* Grid y position to end ray-tracing.		*/
+int	query_region = FALSE;	/* If (true) spit out region info.	*/
 int	report_overlaps = TRUE;	/* If (false) shut-up about overlaps.	*/
 int	x_fb_origin = 0;/* Display origin left-most pixel to display.	*/
 int	y_fb_origin = 0;/* Display origin top-most pixel to display.	*/
