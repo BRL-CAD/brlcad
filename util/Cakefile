@@ -31,7 +31,7 @@
 	plcolor pldebug plgetframe plline2 plrot plstat \
 	query rle-pix sgi-pix sun-pix xyz-pl msrandom pixblend pixmorph \
 	pixborder mst texturescale pixclump pixcount imgdims remapid \
-	wavelet
+	wavelet pixsubst
 
 /* SGI specific goodies: pix-ci */
 /* X11 specific program:  pl-X */
@@ -44,6 +44,9 @@
 #include "../Cakefile.prog"
 
 /* Explicit composition of each product */
+
+pixsubst: pixsubst.o
+	CC LDFLAGS -o pixsubst pixsubst.o
 
 wavelet: wavelet.o LIBFB_DEP LIBBU_DEP
 	CC LDFLAGS -o wavelet wavelet.o LIBFB LIBFB_LIBES LIBBN LIBBU LIBBU_LIBES LIBES
