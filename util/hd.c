@@ -48,7 +48,13 @@ FILE *fd;
 	long		addr = 0L;
 	static char	buf[DUMPLEN];    /* input buffer */
 
-	if (offset != 0) {	/* skip over "offset" bytes first */
+	if (offset != 0)  {	/* skip over "offset" bytes first */
+	    if (fseek(fd, offset, 0)) {	
+
+	    	/* If fseek fails, try reading our way to the desired offset.
+	    	 * The fseek will fail if we're reading from a pipe.
+		 */
+
 		addr=0;
 		while (addr < offset) {
 			if ((i=fread(buf, 1, sizeof(buf), fd)) == 0) {
@@ -57,6 +63,7 @@ FILE *fd;
 			}
 			else addr += i;
 		}
+	    } else addr = offset;
 	}
 
 	/* dump address, Hex of buffer and ASCII of buffer */
