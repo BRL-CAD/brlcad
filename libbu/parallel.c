@@ -32,6 +32,14 @@ static const char RCSparallel[] = "@(#)$Header$ (ARL)";
 #include "externs.h"
 #include "bu.h"
 
+#ifdef linux
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/resource.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
+#endif
+
 #ifdef __FreeBSD__
 #include <sys/types.h>
 #include <sys/time.h>
@@ -141,7 +149,9 @@ int	newnice;
 	int opri, npri;
 
 #ifdef BSD
+#ifndef PRIO_PROCESS	/* necessary for linux */
 #define	PRIO_PROCESS	0	/* From /usr/include/sys/resource.h */
+#endif
 	opri = getpriority( PRIO_PROCESS, 0 );
 	setpriority( PRIO_PROCESS, 0, newnice );
 	npri = getpriority( PRIO_PROCESS, 0 );
