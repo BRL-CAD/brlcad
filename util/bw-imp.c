@@ -25,7 +25,8 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#include	<stdio.h>
+#include <stdio.h>
+#include "externs.h"
 
 typedef int bool;
 #define true 1
@@ -33,8 +34,6 @@ typedef int bool;
 
 extern char	*optarg;
 extern int	optind;
-
-extern void	exit();
 extern int	getopt();
 
 typedef unsigned char u_char;
@@ -287,11 +286,12 @@ int y;
 		for ( x = 0; x < im_wpatches; ++x )  {
 			for ( y = 0; y < 32; ++y )  {
 				register long	b = swath[y][x];
+				register c;
 
-				(void)putchar( (int)(b >> 24) & 0xFF );
-				(void)putchar( (int)(b >> 16) & 0xFF );
-				(void)putchar( (int)(b >> 8) & 0xFF );
-				(void)putchar( (int)b & 0xFF );
+				c = (int)(b >> 24) & 0xFF; (void)putchar( c );
+				c = (int)(b >> 16) & 0xFF; (void)putchar( c );
+				c = (int)(b >>  8) & 0xFF; (void)putchar( c );
+				c = (int)(b      ) & 0xFF; (void)putchar( c );
 			}
 		}
 	}
