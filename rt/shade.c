@@ -35,6 +35,9 @@ static char RCSview[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "shadefuncs.h"
 #include "shadework.h"
+#if RT_MULTISPECTRAL
+# include "tabdata.h"
+#endif
 #include "./ext.h"
 #include "./rdebug.h"
 #include "./mathtab.h"
@@ -85,11 +88,21 @@ register struct shadework *swp;
 	rp = pp->pt_regionp;
 	RT_CK_REGION(rp);
 
+#if RT_MULTISPECTRAL
+	/* XXX where does region get reflectance?  Default temperature? */
+	RT_CK_TABDATA(swp->msw_color);
+	RT_CK_TABDATA(swp->msw_basecolor);
+	if( rp->reg_mater.ma_override )  {
+		rt_spect_reflectance_rgb( swp->msw_color, rp->reg_mater.ma_color );
+	}
+	rt_tabdata_copy(swp->msw_basecolor, swp->msw_color);
+#else
 	/* Default color is white (uncolored) */
 	if( rp->reg_mater.ma_override )  {
 		VMOVE( swp->sw_color, rp->reg_mater.ma_color );
 	}
 	VMOVE( swp->sw_basecolor, swp->sw_color );
+#endif
 
 	if( swp->sw_hit.hit_dist < 0.0 )
 		swp->sw_hit.hit_dist = 0.0;	/* Eye inside solid */
@@ -243,7 +256,15 @@ register int	want;
 		    		rt_functab[pp->pt_inseg->seg_stp->st_id].ft_name,
 		    		pp->pt_inhit->hit_surfno,
 				ap->a_x, ap->a_y );
-			VSET( swp->sw_color, 0, 9, 0 );	/* Green */
+#if RT_MULTISPECTRAL
+		    	{
+		    		static CONST vect_t green = {0,9,0};
+				rt_spect_reflectance_rgb( swp->msw_color, green );
+		    	}
+#else
+			VSET( swp->sw_color, 0, 9, 0 );	/* Hyper-Green */
+#endif
+
 			return;
 		}
 		have |= MFI_UV;
@@ -289,8 +310,13 @@ register CONST struct shadework *swp;
 	rt_log( " sw_reflect %f\n", swp->sw_reflect );
 	rt_log( " sw_refract_index %f\n", swp->sw_refrac_index );
 	rt_log( " sw_extinction %f\n", swp->sw_extinction );
+#if RT_MULTISPECTRAL
+	rt_pr_tabdata( "msw_color", swp->msw_color );
+	rt_pr_tabdata( "msw_basecolor", swp->msw_basecolor );
+#else
 	VPRINT( " sw_color", swp->sw_color );
 	VPRINT( " sw_basecolor", swp->sw_basecolor );
+#endif
 	rt_log( " sw_uv  %f %f\n", swp->sw_uv.uv_u, swp->sw_uv.uv_v );
 	rt_log( " sw_dudv  %f %f\n", swp->sw_uv.uv_du, swp->sw_uv.uv_dv );
 	rt_log( " sw_xmitonly %d\n", swp->sw_xmitonly );
@@ -299,9 +325,18 @@ register CONST struct shadework *swp;
 	rt_log( "\n");
 	for( i=0; i < SW_NLIGHTS; i++ )  {
 		if( swp->sw_visible[i] == (char *)0 )  continue;
+#if RT_MULTISPECTRAL
+		RT_CK_TABDATA(swp->msw_intensity[i]);
+		bu_log("   light %d visible, dir=(%g,%g,%g)\n",
+			i,
+			V3ARGS(&swp->sw_tolight[i*3]) );
+		rt_pr_tabdata("light intensity", swp->msw_intensity[i] );
+
+#else
 		rt_log("   light %d visible, intensity=%g, dir=(%g,%g,%g)\n",
 			i,
 			swp->sw_intensity[i],
 			V3ARGS(&swp->sw_tolight[i*3]) );
+#endif
 	}
 }

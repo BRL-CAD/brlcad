@@ -26,7 +26,11 @@ struct light_specific {
 	int	lt_invisible;	/* !0 if implicitly modeled or invisible */
 	int	lt_exaim;	/* !0 if explicit aim in lt_dir */
 	/* Internal fields */
+#if RT_MULTISPECTRAL
+	struct rt_tabdata *lt_spectrum;	/* Units?  mw*sr ? */
+#else
 	vect_t	lt_color;	/* RGB, as 0..1 */
+#endif
 	fastf_t	lt_radius;	/* approximate radius of spherical light */
 	fastf_t	lt_cosangle;	/* cos of lt_angle */
 	vect_t	lt_pos;		/* location in space of light */
