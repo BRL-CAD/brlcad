@@ -39,14 +39,15 @@ struct nmg_inter_struct {
 	int		coplanar;
 };
 
-/*	V E R T E X _ O N _ F A C E
+/*	F I N D _ V E R T E X _ O N _ F A C E
  *
  *	Perform a topological check to
  *	determine if the given vertex can be found in the given faceuse.
  *	If it can, return a pointer to the vertexuse which was found in the
  *	faceuse.
  */
-static struct vertexuse *vertex_on_face(v, fu)
+static struct vertexuse *
+find_vertex_on_face(v, fu)
 struct vertex *v;
 struct faceuse *fu;
 {
@@ -96,7 +97,7 @@ struct faceuse *fu;
 		rt_log("isect_vertex_face(, vu=x%x, fu=x%x)\n", vu, fu);
 
 	/* check the topology first */	
-	if (vup=vertex_on_face(vu->v_p, fu)) {
+	if (vup=find_vertex_on_face(vu->v_p, fu)) {
 		(void)nmg_tbl(bs->l1, TBL_INS_UNIQUE, &vu->l.magic);
 		(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vup->l.magic);
 		return;
@@ -146,6 +147,8 @@ struct faceuse *fu;
 	struct loopuse	*plu;
 	fastf_t		dist1, dist2;
 	vect_t		start_pt;
+	struct edgeuse	*eunext;
+	struct edgeuse	*eulast;
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
 		rt_log("isect_edge_face(, eu=x%x, fu=x%x)\n", eu, fu);
@@ -163,8 +166,6 @@ struct faceuse *fu;
 	NMG_CK_VERTEX_G(v1mate->vg_p);
 
 	if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC) {
-		struct edgeuse	*eunext;
-		struct edgeuse	*eulast;
 		/* some edge sanity checking */
 		eunext = RT_LIST_PNEXT_CIRC(edgeuse, &eu->l);
 		eulast = RT_LIST_PLAST_CIRC(edgeuse, &eu->l);
@@ -191,7 +192,7 @@ struct faceuse *fu;
 	 * vertex of this edgeuse is on the other face, enter the
 	 * two vertexuses of it in the list and return.
 	 */
-	if (vu_other=vertex_on_face(v1, fu)) {
+	if (vu_other=find_vertex_on_face(v1, fu)) {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 			register pointp_t	p1, p2;
 			p1 = v1->vg_p->coord;
@@ -215,6 +216,9 @@ struct faceuse *fu;
 	 */
 	VSUB2(edge_vect, v1mate->vg_p->coord, v1->vg_p->coord);
 	edge_len = MAGNITUDE(edge_vect);
+
+
+
 #define USE_EDGE_GEOMETRY	0
 #if USE_EDGE_GEOMETRY
 	if( eu->e_p->eg_p )
@@ -245,18 +249,23 @@ struct faceuse *fu;
 			}
 		}
 		VMOVE( start_pt, eg->e_pt );
+
 #define VSUBDOT(_pt2, _pt, _dir)	( \
 	((_pt2)[X] - (_pt)[X]) * (_dir)[X] + \
 	((_pt2)[Y] - (_pt)[Y]) * (_dir)[Y] + \
 	((_pt2)[Z] - (_pt)[Z]) * (_dir)[Z] )
+
 		dist1 = VSUBDOT( v1->vg_p->coord, start_pt, edge_vect ) / edge_len;
 		dist2 = VSUBDOT( v1mate->vg_p->coord, start_pt, edge_vect ) / edge_len;
+
 rt_log("A dist1=%g, dist2=%g\n", dist1, dist2);
+
 	} else {
 calc:
 		VMOVE( start_pt, v1->vg_p->coord );
 		dist1 = 0;
 		dist2 = edge_len;
+
 #if USE_EDGE_GEOMETRY
 rt_log("B dist1=%g, dist2=%g\n", dist1, dist2);
 #endif
@@ -315,6 +324,20 @@ rt_log("B dist1=%g, dist2=%g\n", dist1, dist2);
 			rt_log("\tplane behind first point\n");
 		return;
 	}
+
+
+	/* If the hit point is outside the bounding box of the other face,
+	 * this edge can't really be intersecting the face.
+	 */
+	if ( !(NMG_EXTENT_OVERLAP(hit_pt, hit_pt,
+	   fu->f_p->fg_p->min_pt, fu->f_p->fg_p->max_pt)) ) {
+		if (rt_g.NMG_debug & DEBUG_POLYSECT) {
+			VPRINT("\thit_pt is outside of face bounding box\n",
+				hit_pt);
+		}
+		return;
+	}
+
 
 	/*
 	 * If the vertex on the other end of this edgeuse is on the face,
@@ -375,14 +398,12 @@ rt_log("B dist1=%g, dist2=%g\n", dist1, dist2);
 			if (rt_g.NMG_debug & DEBUG_POLYSECT)
 				rt_log("re-using vertex from other face\n");
 
-/*			(void)nmg_esplit(vu_other->v_p, eu->e_p); */
 			(void)nmg_ebreak(vu_other->v_p, eu->e_p);
 			(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vu_other->l.magic);
 		} else {
 			if (rt_g.NMG_debug & DEBUG_POLYSECT)
 				rt_log("Making new vertex\n");
 
-/*			(void)nmg_esplit((struct vertex *)NULL, eu->e_p); */
 			(void)nmg_ebreak((struct vertex *)NULL, eu->e_p);
 
 			/* given the trouble that nmg_ebreak (nmg_esplit)
@@ -445,6 +466,8 @@ rt_log("B dist1=%g, dist2=%g\n", dist1, dist2);
 			/* stick this vertex in the other shell
 			 * and make sure it is in the other shell's
 			 * list of vertices on the instersect line
+			 *
+			 * XXX Is this really a good idea?
 			 */
 			plu = nmg_mlv(&fu->l.magic,
 				eu->eumate_p->vu_p->v_p, OT_SAME);
@@ -535,7 +558,6 @@ struct faceuse *fu;
 	struct edgeuse	*eu;
 	long		magic1;
 	struct loopuse	*fulu;
-	int		no_overlaps;
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 		rt_log("isect_loop_face(, lu=x%x, fu=x%x)\n", lu, fu);
@@ -556,53 +578,33 @@ struct faceuse *fu;
 		 */
 		isect_vertex_face(bs,
 			RT_LIST_FIRST(vertexuse,&lu->down_hd), fu);
-	} else if (magic1 == NMG_EDGEUSE_MAGIC) {
-		/*
-		 * If the bounding box of a loop doesn't intersect the
-		 * bounding box of a loop in the other face, it doesn't need
-		 * to get cut.
-		 */
-		no_overlaps = 1;
-		for (RT_LIST_FOR(fulu, loopuse, &fu->lu_hd )){
-			NMG_CK_LOOPUSE(fulu);
-			NMG_CK_LOOP(fulu->l_p);
-			NMG_CK_LOOP_G(fulu->l_p->lg_p);
-
-			if (NMG_EXTENT_OVERLAP(
-			    fulu->l_p->lg_p->min_pt,fulu->l_p->lg_p->max_pt,
-			    lu->l_p->lg_p->min_pt,lu->l_p->lg_p->max_pt)) {
-				no_overlaps = 0;
-				break;
-			}
-		}
-		if (no_overlaps)
-			return;
-
-		/*
-		 *  Process a loop consisting of a list of edgeuses.
-		 *
-		 * By going backwards around the list we avoid
-		 * re-processing an edgeuse that was just created
-		 * by isect_edge_face.  This is because the edgeuses
-		 * point in the "next" direction, and when one of
-		 * them is split, it inserts a new edge AHEAD or
-		 * "nextward" of the current edgeuse.
-		 */ 
-		for( eu = RT_LIST_LAST(edgeuse, &lu->down_hd );
-		     RT_LIST_NOT_HEAD(eu,&lu->down_hd);
-		     eu = RT_LIST_PLAST(edgeuse,eu) )  {
-			NMG_CK_EDGEUSE(eu);
-
-			if (eu->up.magic_p != &lu->l.magic) {
-				rt_bomb("edge does not share loop\n");
-			}
-
-			isect_edge_face(bs, eu, fu);
-			nmg_ck_lueu(lu, "isect_loop_face");
-		 }
-	} else {
+		return;
+	} else if (magic1 != NMG_EDGEUSE_MAGIC) {
 		rt_bomb("isect_loop_face() Unknown type of NMG loopuse\n");
 	}
+
+	/*  Process loop consisting of a list of edgeuses.
+	 *
+	 * By going backwards around the list we avoid
+	 * re-processing an edgeuse that was just created
+	 * by isect_edge_face.  This is because the edgeuses
+	 * point in the "next" direction, and when one of
+	 * them is split, it inserts a new edge AHEAD or
+	 * "nextward" of the current edgeuse.
+	 */ 
+	for( eu = RT_LIST_LAST(edgeuse, &lu->down_hd );
+	     RT_LIST_NOT_HEAD(eu,&lu->down_hd);
+	     eu = RT_LIST_PLAST(edgeuse,eu) )  {
+		NMG_CK_EDGEUSE(eu);
+
+		if (eu->up.magic_p != &lu->l.magic) {
+			rt_bomb("edge does not share loop\n");
+		}
+
+		isect_edge_face(bs, eu, fu);
+		nmg_ck_lueu(lu, "isect_loop_face");
+	}
+
 }
 
 /*
@@ -615,7 +617,7 @@ struct nmg_inter_struct *bs;
 struct faceuse	*fu1;
 struct faceuse	*fu2;
 {
-	struct loopuse	*lu;
+	struct loopuse	*lu, *fu2lu;
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
 		rt_log("nmg_isect_2face_loops(, fu1=x%x, fu2=x%x) START ++++++++++\n", fu1, fu2);
@@ -629,7 +631,23 @@ struct faceuse	*fu2;
 		if (lu->up.fu_p != fu1) {
 			rt_bomb("nmg_isect_2face_loops() Child loop doesn't share parent!\n");
 		}
-		isect_loop_face(bs, lu, fu2);
+
+		/* If the bounding box of a loop doesn't intersect the
+		 * bounding box of a loop in the other face, it doesn't need
+		 * to get cut.
+		 */
+		for (RT_LIST_FOR(fu2lu, loopuse, &fu2->lu_hd )){
+			NMG_CK_LOOPUSE(fu2lu);
+			NMG_CK_LOOP(fu2lu->l_p);
+			NMG_CK_LOOP_G(fu2lu->l_p->lg_p);
+
+			if (NMG_EXTENT_OVERLAP(
+			   fu2lu->l_p->lg_p->min_pt, fu2lu->l_p->lg_p->max_pt,
+			    lu->l_p->lg_p->min_pt,   lu->l_p->lg_p->max_pt)) {
+				isect_loop_face(bs, lu, fu2);
+				break;
+			}
+		}
 	}
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
 		rt_log("nmg_isect_2face_loops(, fu1=x%x, fu2=x%x) RETURN ++++++++++\n\n", fu1, fu2);
