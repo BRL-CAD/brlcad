@@ -359,10 +359,17 @@ register struct partition	*pp;
 char				*name1;
 char				*name2;
 {
-	rt_log("OVERLAP: %s %s (x%d y%d lvl%d)\n",
-		name1, name2,
+	point_t	pt;
+
+	VJOIN1( pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist,
+		ap->a_ray.r_dir );
+	rt_log("OVERLAP: reg=%s sol=%s, reg=%s sol=%s (x%d y%d lvl%d)\n",
+		name1, pp->pt_inseg->seg_stp->st_name,
+		name2, pp->pt_outseg->seg_stp->st_name,
 		ap->a_x, ap->a_y, ap->a_level );
-	rt_pr_pt( ap->a_rt_i, pp );
+	rt_log("OVERLAP depth %gmm at (%g,%g,%g)\n",
+		pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist,
+		pt[X], pt[Y], pt[Z] );
 	return(1);
 }
 
@@ -462,8 +469,10 @@ struct application *ap;
 				lastregion = regp;
 				continue;
 			}
-#define OVERLAP_TOL	0.5	/* 1/2 of a milimeter */
-			/* Two regions claim this partition */
+
+			/*
+			 * Two or more regions claim this partition
+			 */
 			if((	(	regp->reg_aircode == 0
 				    &&	lastregion->reg_aircode == 0 
 				) /* Neither are air */
@@ -471,10 +480,6 @@ struct application *ap;
 				   &&	lastregion->reg_aircode != 0
 				   &&	regp->reg_aircode != lastregion->reg_aircode
 				) /* Both are air, but different types */
-			   ) &&
-			   (	pp->pt_outhit->hit_dist -
-				pp->pt_inhit->hit_dist
-				> OVERLAP_TOL /* Permissable overlap */
 			   ) )  {
 			   	/*
 			   	 *  Hand overlap to application-specific
@@ -484,7 +489,9 @@ struct application *ap;
 			   		ap->a_overlap = rt_defoverlap;
 				if( ap->a_overlap( ap, pp,
 				    regp->reg_name, lastregion->reg_name ) )  {
-				    	/* non-zero => retain partition */
+				    	/* non-zero => retain last partition */
+					if( lastregion->reg_aircode != 0 )
+						lastregion = regp;
 				    	hitcnt--;	/* now = 1 */
 				}
 			} else {
