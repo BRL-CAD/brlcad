@@ -607,7 +607,7 @@ int		xorig, yorig;
 
 	ret = pkg_2send( MSG_FBSETCURSOR+MSG_NORETURN,
 		buf, 4*NET_LONG_LEN,
-		(char *)bits, (xbits+ybits+7)>>3,
+		(char *)bits, (xbits*ybits+7)>>3,
 		PCP(ifp) );
 	ret -= 4*NET_LONG_LEN;
 	if( ret < 0 )
