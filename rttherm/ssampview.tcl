@@ -196,5 +196,45 @@ proc pixelplot { {foo 0} } {
 }
 
 
+#			P L O T _ T A B D A T A
+#
+# Draw spectral curve from one Tcl-ified rt_tabdata structure.  Form is:
+#	x {...} y {...} nx # ymin # ymax #
+#
+# Remember: 4th quadrant addressing!
+#
+proc plot_tabdata { data minval maxval {ymax 256} }
+{
+
+	set nx [bu_get_value_by_keyword nx $data]
+
+	set x  [bu_get_value_by_keyword x $data]
+	set y  [bu_get_value_by_keyword y $data]
+
+	set wavel [lindex $x 0]
+
+	.canvas_pixel delete T
+	.canvas_pixel create line $wavel 0 $wavel $ymax -tags T -fill grey
+
+	set x0 0
+	set y0 [expr $ymax - 1]
+	set scale [expr 255 / ($maxval - $minval) ]
+
+	for {set x1 0} {$x1 < $nx} {incr x1} {
+		set y1 [expr $ymax - 1 - \
+			( [getspectval $x $y $x1] - $minval ) * $scale]
+		if {$y1 < 0} {
+			set y1 0
+		} elseif {$y1 > 255} {
+			set y1 255
+		}
+		.canvas_pixel create line $x0 $y0 $x1 $y1 -tags T
+		set x0 $x1
+		set y0 $y1
+##		puts "$x0 $y0 $x1 $y1"
+	}
+}
+
+
 ### XXX Hack:  Last thing:
 doit1 42
