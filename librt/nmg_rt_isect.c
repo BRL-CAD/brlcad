@@ -27,10 +27,12 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include <stdio.h>
 #include <math.h>
+#include <sys/time.h>
 #include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
+#include "nurb.h"
 
 static void 	vertex_neighborhood RT_ARGS((struct ray_data *rd, struct vertexuse *vu_p, struct hitmiss *myhit));
 RT_EXTERN(void	nmg_isect_ray_model, (struct ray_data *rd));
@@ -1958,13 +1960,294 @@ plane_t norm;
 
 }
 
+/* this is the UV-space tolerance for the NURB intersector, a larger number will
+ * improve speed, but too large will produce errors. Perhaps a routine to calculate
+ * an appropriate UV_TOL could be constructed.
+ */
+#define UV_TOL  1.0e-6
+
 void
-isect_ray_snurb_face(rd, fu_p, fg_p)
+isect_ray_snurb_face(rd, fu, fg)
 struct ray_data *rd;
-struct faceuse *fu_p;
-struct face_g_snurb *fg_p;
+struct faceuse *fu;
+struct face_g_snurb *fg;
 {
-	rt_bomb("isect_ray_snurb_face()\n");
+	plane_t pl, pl1, pl2;
+	struct rt_nurb_uv_hit *hp;
+	struct bu_list bezier;
+	struct bu_list hit_list;
+	struct face_g_snurb *srf;
+	struct face *f;
+
+	NMG_CK_RD( rd );
+	NMG_CK_FACE_G_SNURB( fg );
+	NMG_CK_FACEUSE( fu );
+
+	f = fu->f_p;
+
+	/* calculate two orthogonal planes that intersect along ray */
+	bn_vec_ortho( pl2, rd->rp->r_dir );
+	VCROSS( pl1, pl2, rd->rp->r_dir );
+	pl1[3] = VDOT( rd->rp->r_pt, pl1 );
+	pl2[3] = VDOT( rd->rp->r_pt, pl2 );
+
+	BU_LIST_INIT( &bezier );
+	BU_LIST_INIT( &hit_list );
+
+	rt_nurb_bezier( &bezier, fg );
+
+	while( BU_LIST_NON_EMPTY( &bezier ) )
+	{
+		point_t srf_min, srf_max;
+		int planar;
+		point_t hit;
+		fastf_t dist;
+
+		srf = BU_LIST_FIRST( face_g_snurb,  &bezier );
+		BU_LIST_DEQUEUE( &srf->l );
+
+		/* calculate intersection points on NURB surface (in uv space) */
+		/* check if NURB surface is a simple planar surface */
+		if( srf->order[0] == 2 && srf->order[1] ==2 && srf->s_size[0] ==2 && srf->s_size[1] == 2 )
+			planar = 1;
+		else
+			planar = 0;
+
+		if( planar )
+		{
+			vect_t u_dir, v_dir;
+			point_t ctl_pt[4];
+			vect_t hit_dir;
+			int i,j;
+			int rational;
+			int coords;
+			fastf_t *pt;
+			fastf_t u, v;
+
+			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+				bu_log( "isect_ray_snurb_face: face is planar\n" );
+
+			rational = RT_NURB_IS_PT_RATIONAL( srf->pt_type );
+			coords = RT_NURB_EXTRACT_COORDS( srf->pt_type );
+
+			pt = srf->ctl_points;
+			for( i=0 ; i<4 ; i++ )
+			{
+				for( j=0 ; j<coords ; j++ )
+				{
+					ctl_pt[i][j] = *pt;
+					pt++;
+				}
+				if( rational )
+				{
+					for( j=0 ; j<coords-1 ; j++ )
+						ctl_pt[i][j] = ctl_pt[i][j]/ctl_pt[i][coords-1];
+				}
+			}
+			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+			{
+				for( i=0 ; i<4 ; i++ )
+					bu_log( "\tctl_point[%d] = (%g %g %g)\n", i, V3ARGS( ctl_pt[i] ) );
+				bu_log( "uv range (%g %g) <-> (%g %g)\n", srf->u.knots[0], srf->v.knots[0], srf->u.knots[srf->u.k_size-1], srf->v.knots[srf->v.k_size-1] );
+			}
+
+			VSUB2( u_dir, ctl_pt[1], ctl_pt[0] );
+			VSUB2( v_dir, ctl_pt[2], ctl_pt[0] );
+			VCROSS( pl, u_dir, v_dir );
+			VUNITIZE( pl );
+			pl[3] = VDOT( pl, ctl_pt[0] );
+			hp = (struct rt_nurb_uv_hit *)NULL;
+			if( bn_isect_line3_plane( &dist,  rd->rp->r_pt,  rd->rp->r_dir, pl, rd->tol ) <= 0 )
+			{
+				if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+					bu_log( "\tNo intersection\n" );
+
+				rt_nurb_free_snurb( srf );
+				continue;
+			}
+
+			VJOIN1( hit, rd->rp->r_pt, dist, rd->rp->r_dir )
+			VSUB2( hit_dir, hit, ctl_pt[0] )
+			u = srf->u.knots[0] + (srf->u.knots[srf->u.k_size-1] - srf->u.knots[0]) * VDOT( hit_dir, u_dir ) / MAGSQ( u_dir );
+			v = srf->v.knots[0] + (srf->v.knots[srf->v.k_size-1] - srf->v.knots[0]) * VDOT( hit_dir, v_dir ) / MAGSQ( v_dir );
+
+			if( u >= srf->u.knots[0] && u <= srf->u.knots[srf->u.k_size-1] &&
+			    v >= srf->v.knots[0] && v <= srf->v.knots[srf->v.k_size-1] )
+			{
+				hp = (struct rt_nurb_uv_hit *)bu_malloc( sizeof( struct rt_nurb_uv_hit ), "hp" );
+				hp->next = (struct rt_nurb_uv_hit *)NULL;
+				hp->sub = 0;
+				hp->u = u;
+				hp->v = v;
+
+				if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+					bu_log( "\thit at uv=(%g %g), xyz=(%g %g %g)\n", hp->u, hp->v, V3ARGS( hit ) );
+			}
+		}
+		else
+		{
+
+			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+				bu_log( "isect_ray_snurb_face: using planes (%g %g %g %g) (%g %g %g %g)\n",
+					V4ARGS( pl1 ), V4ARGS( pl2 ) );
+			(void)rt_nurb_s_bound( srf, srf_min, srf_max );
+			if( !rt_in_rpp( rd->rp, rd->rd_invdir, srf_min, srf_max ) )
+			{
+				rt_nurb_free_snurb( srf );
+				continue;
+			}
+			hp = rt_nurb_intersect( srf, pl1, pl2, UV_TOL );
+		}
+
+		/* process each hit point */
+		while( hp != (struct rt_nurb_uv_hit *)NULL )
+		{
+			struct rt_nurb_uv_hit *next;
+			struct hitmiss *myhit;
+			vect_t to_hit;
+			fastf_t dot;
+			fastf_t homo_hit[4];
+			int ot_sames, ot_opps;
+			struct loopuse *lu;
+
+			next = hp->next;
+
+			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+				bu_log( "\tintersect snurb surface at uv=(%g %g)\n", hp->u, hp->v );
+
+			/* check if point is in face (trimming curves) */
+			ot_sames = 0;
+			ot_opps = 0;
+
+			for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+			{
+				if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+					continue;
+
+				if( lu->orientation == OT_SAME )
+					ot_sames += nmg_uv_in_lu( hp->u, hp->v, lu );
+				else if( lu->orientation == OT_OPPOSITE )
+					ot_opps += nmg_uv_in_lu( hp->u, hp->v, lu );
+				else
+				{
+					bu_log( "isect_ray_snurb_face: lu orientation = %s!!\n",
+						nmg_orientation( lu->orientation ) );
+					bu_bomb( "isect_ray_snurb_face: bad lu orientation\n" );
+				}
+			}
+
+			if( ot_sames == 0 || ot_opps == ot_sames )
+			{
+				/* not a hit */
+
+				if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+					bu_log( "\tNot a hit\n" );
+
+				bu_free( (char *)hp, "nurb_uv_hit" );
+				hp = next;
+				continue;
+			}
+
+			GET_HITMISS(myhit, rd->ap);
+			NMG_INDEX_ASSIGN(rd->hitmiss, fu->f_p, myhit);
+			myhit->hit.hit_private = (genptr_t)fu->f_p;
+			myhit->inbound_use = myhit->outbound_use = &fu->l.magic;
+
+			/* calculate actual hit point (x y z) */
+			if( planar )
+			{
+				VMOVE( myhit->hit.hit_point, hit )
+				myhit->hit.hit_dist = dist;
+				VMOVE( myhit->hit.hit_normal, pl )
+			}
+			else
+			{
+				rt_nurb_s_eval( srf, hp->u, hp->v, homo_hit );
+				if( RT_NURB_IS_PT_RATIONAL( srf->pt_type ) )
+				{
+					fastf_t inv_homo;
+
+					inv_homo = 1.0/homo_hit[3];
+					VSCALE( myhit->hit.hit_point, homo_hit, inv_homo )
+				}
+				else
+					VMOVE( myhit->hit.hit_point, homo_hit )
+
+				VSUB2( to_hit, myhit->hit.hit_point, rd->rp->r_pt );
+				myhit->hit.hit_dist = VDOT( to_hit, rd->rp->r_dir );
+
+				/* get surface normal */
+				rt_nurb_s_norm( srf, hp->u, hp->v, myhit->hit.hit_normal );
+			}
+
+			/* may need to reverse it */
+			if( f->flip )
+				VREVERSE( myhit->hit.hit_normal, myhit->hit.hit_normal )
+
+			dot = VDOT( myhit->hit.hit_normal, rd->rp->r_dir );
+
+			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+			{
+				bu_log( "\thit at dist = %g (%g %g %g), norm = (%g %g %g)\n",
+					myhit->hit.hit_dist,
+					V3ARGS( myhit->hit.hit_point ),
+					V3ARGS( myhit->hit.hit_normal ) );
+				if( dot > 0.0 )
+					bu_log( "\t\tdot = %g (exit point)\n", dot );
+				else
+					bu_log( "\t\tdot = %g (entrance point)\n", dot );
+			}
+
+			switch (fu->orientation) {
+			case OT_SAME:
+				if (BN_VECT_ARE_PERP(dot, rd->tol)) {
+					/* perpendicular? */
+					bu_log("%s[%d]: Ray is in plane of face?\n",
+						__FILE__, __LINE__);
+						rt_bomb("record_face_hit() I quit\n");
+				} else if (dot > 0.0) {
+					myhit->in_out = HMG_HIT_IN_OUT;
+					VMOVE(myhit->outbound_norm, myhit->hit.hit_normal);
+					myhit->outbound_use = (long *)fu;
+					myhit->inbound_use = (long *)fu;
+				} else {
+					myhit->in_out = HMG_HIT_OUT_IN;
+					VMOVE(myhit->inbound_norm, myhit->hit.hit_normal);
+					myhit->inbound_use = (long *)fu;
+					myhit->outbound_use = (long *)fu;
+				}
+				break;
+			case OT_OPPOSITE:
+				if (BN_VECT_ARE_PERP(dot, rd->tol)) {
+					/* perpendicular? */
+					bu_log("%s[%d]: Ray is in plane of face?\n",
+						__FILE__, __LINE__);
+						rt_bomb("record_face_hit() I quit\n");
+				} else if (dot > 0.0) {
+					myhit->in_out = HMG_HIT_OUT_IN;
+					VREVERSE(myhit->inbound_norm, myhit->hit.hit_normal);
+					myhit->inbound_use = (long *)fu;
+					myhit->outbound_use = (long *)fu;
+				} else {
+					myhit->in_out = HMG_HIT_IN_OUT;
+					VREVERSE(myhit->outbound_norm, myhit->hit.hit_normal);
+					myhit->inbound_use = (long *)fu;
+					myhit->outbound_use = (long *)fu;
+				}
+				break;
+			default:
+				bu_log("%s %d:face orientation not SAME/OPPOSITE\n",
+					__FILE__, __LINE__);
+				rt_bomb("record_face_hit() Crash and burn\n");
+			}
+
+			hit_ins( rd, myhit );
+
+			bu_free( (char *)hp, "nurb_uv_hit" );
+			hp = next;
+		}
+		rt_nurb_free_snurb( srf );
+	}
 }
 
 void
