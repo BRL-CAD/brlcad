@@ -179,7 +179,7 @@ double		*dir;
 	register int	i;
 
 	if( *nloc <= 0 )  {
-		rt_log("ERROR frshot: nloc=%d\n", *nloc);
+		bu_log("ERROR frshot: nloc=%d\n", *nloc);
 		*nloc = 0;
 		return;
 	}
@@ -360,8 +360,8 @@ int		fbuflen;
 
 	rnum = *region_num-1;
 	if( rnum < 0 || rnum > (*rtip)->nregions )  {
-		sprintf( buf, "Region id %d out of range, max=%d",
-			*region_num, (*rtip)->nregions );
+		sprintf( buf, "Region id %d out of range, max=%ld",
+			*region_num, (long)((*rtip)->nregions) );
 		string_c2f( fbuf, buf, fbuflen );
 		return;
 	}

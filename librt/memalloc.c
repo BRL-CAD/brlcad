@@ -206,13 +206,13 @@ unsigned long addr;
 	}
 
 	if( type & (M_TOVFL|M_BOVFL) )  {
-		rt_log("mfree(addr=%d,size=%d)  error type=0%o\n",
+		bu_log("mfree(addr=%d,size=%d)  error type=0%o\n",
 			addr, size, type );
 		if( prevp )
-			rt_log("prevp: m_addr=%d, m_size=%d\n",
+			bu_log("prevp: m_addr=%d, m_size=%d\n",
 				prevp->m_addr, prevp->m_size );
 		if( curp )
-			rt_log("curp: m_addr=%d, m_size=%d\n",
+			bu_log("curp: m_addr=%d, m_size=%d\n",
 				curp->m_addr, curp->m_size );
 		return;
 	}
@@ -243,7 +243,7 @@ unsigned long addr;
 
 	default:		/* No matches; allocate and insert */
 		if( (tmap=rt_mem_freemap) == MAP_NULL )
-			tmap = (struct mem_map *)rt_malloc(sizeof(struct mem_map), "struct mem_map");
+			tmap = (struct mem_map *)bu_malloc(sizeof(struct mem_map), "struct mem_map");
 		else
 			rt_mem_freemap = rt_mem_freemap->m_nxtp;	/* Click one off */
 
@@ -296,9 +296,9 @@ struct mem_map **pp;
 {
 	register struct mem_map *curp;
 
-	rt_log("rt_memprint(x%x)\n", *pp);
+	bu_log("rt_memprint(x%x)\n", *pp);
 	for( curp = *pp; curp; curp = curp->m_nxtp )
-		rt_log(" a=x%lx, l=%d\n", curp->m_addr, curp->m_size );
+		bu_log(" a=x%lx, l=%d\n", curp->m_addr, curp->m_size );
 }
 
 /*
@@ -313,6 +313,6 @@ rt_memclose()
 
 	while( (mp = rt_mem_freemap) != MAP_NULL )  {
 		rt_mem_freemap = mp->m_nxtp;
-		rt_free( (char *)mp, "struct mem_map" );
+		bu_free( (char *)mp, "struct mem_map" );
 	}
 }
