@@ -30,9 +30,12 @@ extern int Debug;
  *	Christopher T. Johnson	- 90/03/21
  *
  * $Log$
+ * Revision 1.1  90/04/09  16:16:37  cjohnson
+ * Initial revision
+ * 
  */
 tone_simple(Pix,X,Y,NX,NY,New)
-Pixel	Pix;
+int	Pix;
 int	X, Y, NX, NY;
 int	New;
 {
