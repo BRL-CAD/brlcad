@@ -1,0 +1,36 @@
+.EV
+.T1 dbcp 1
+.SH NAME
+dbcp \- double buffered copy
+.SH SYNTAX
+.B dbcp
+\fIblocksize\fR
+.SH DESCRIPTION
+.I Dbcp
+is a program for copying data primarily between raw devices such as
+tape and disk.
+.I Dbcp
+forks into two processes which use a token passing scheme to
+synchronize their reading and writing activities.  They continue
+copying until an end of file or error is detected.
+.I Dbcp
+reads from the standard input and copies to the standard output.
+The argument
+.I blocksize
+specifies the number of 512 byte "blocks" to be per record
+read or written.
+The number of records processed is printed upon exit.
+.SH EXAMPLES
+.if t .ft L
+.if t \{
+$ \f(LBdbcp 16 < /dev/rdk1a > /dev/rmt0\fR
+.\}
+.if n \{
+$ \fBdbcp 16 < /dev/rdk1a > /dev/rmt0\fR
+.\}
+.SP
+.I dbcp
+copies the filesystem on dk1a to tape
+with a record size of 8K bytes (16 * 512).
+.SH SEE ALSO
+cp(1), dd(1)
