@@ -231,8 +231,9 @@ CONST char	*str;
 	if( rt_g.debug&DEBUG_MEM_FULL )  {
 		struct memdebug	*mp;
 		if( (mp = rt_memdebug_check( ptr, str )) == MEMDEBUG_NULL )  {
-			rt_log("ERROR rt_free(x%x, %s) pointer bad, or not allocated with rt_malloc!\n",
+			rt_log("ERROR rt_free(x%x, %s) pointer bad, or not allocated with rt_malloc!  Ignored.\n",
 				ptr, str);
+			return;
 		} else {
 			mp->mdb_len = 0;	/* successful delete */
 		}
