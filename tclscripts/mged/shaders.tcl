@@ -975,6 +975,7 @@ proc stack_add { shader shade_var id } {
 
 	grid $shader_params($id,window).fr.stk_$index -columnspan 2 -sticky ew
 	grid columnconfigure $shader_params($id,window).fr.stk_$index 0 -minsize 400
+	do_stack_apply $shade_var $id
 }
 
 proc set_stack_values { shade_str id } {
