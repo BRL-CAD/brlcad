@@ -27,9 +27,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "../h/db.h"
 
 extern void	exit();
-extern int	close(), creat(), open(), read(), write();
 extern int	printf(), fprintf();
-extern long	lseek();
 
 void	idendump(), polyhead(), polydata();
 void	soldump(), combdump(), membdump(), arsadump(), arsbdump();
@@ -37,11 +35,14 @@ void	materdump(), bspldump(), bsurfdump();
 
 union record	record;		/* GED database record */
 
-main()
+main(argc, argv)
+char **argv;
 {
 	/* Read database file */
-	while( read( 0, (char*)&record, sizeof record ) > 0 )  {
-
+	while( fread( (char *)&record, sizeof record, 1, stdin ) == 1  &&
+	    !feof(stdin) )  {
+	    	if( argc > 1 )
+	    		fprintf(stderr,"0%o (%c)\n", record.u_id, record.u_id);
 		/* Check record type and skip deleted records */
 		if( record.u_id == ID_FREE )  {
 			continue;
@@ -191,8 +192,7 @@ membdump()	/* Print out Member record information */
 	register int i;
 
 	/* Read in a member record for processing */
-	(void)read( 0, (char*)&record, sizeof record );
-
+	(void)fread( (char *)&record, sizeof record, 1, stdin );
 	(void)printf("%c ", record.M.m_id );		/* M */
 	(void)printf("%c ", record.M.m_relation );	/* Boolean oper. */
 	(void)printf("%s ", record.M.m_instname );	/* referred-to obj. */
@@ -236,8 +236,7 @@ arsbdump()	/* Print out ARS B record information */
 	register int i;
 	
 	/* Read in a member record for processing */
-	(void)read( 0, (char*)&record, sizeof record );
-
+	(void)fread( (char *)&record, sizeof record, 1, stdin );
 	(void)printf("%c ", record.b.b_id );		/* B */
 	(void)printf("%d ", record.b.b_type );		/* primitive type */
 	(void)printf("%d ", record.b.b_n );		/* current curve # */
@@ -314,8 +313,8 @@ bsurfdump()	/* Print d-spline surface description record information */
 	}
 	fp = vp;
 	(void)bzero( (char *)fp, nbytes );
-	count =	read( 0, (char*)fp, nbytes );
-	if( count != nbytes )  {
+	count = fread( (char *)fp, 1, nbytes, stdin );
+	if( count != 1 )  {
 		(void)fprintf(stderr, "G2ASC: spline knot read failure\n");
 		exit(1);
 	}
@@ -335,7 +334,7 @@ bsurfdump()	/* Print d-spline surface description record information */
 	}
 	fp = vp;
 	(void)bzero( (char *)fp, nbytes );
-	count =	read( 0, (char*)fp, nbytes );
+	count = fread( (char *)fp, 1, nbytes, stdin );
 	if( count != nbytes )  {
 		(void)fprintf(stderr, "G2ASC: control mesh read failure\n");
 		exit(1);
