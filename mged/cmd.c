@@ -360,7 +360,7 @@ void
 start_catching_output(vp)
 	struct bu_vls *vp;
 {
-	bu_add_hook(output_catch, (genptr_t)vp);
+	bu_log_add_hook(output_catch, (genptr_t)vp);
 }
 
 /*
@@ -373,7 +373,7 @@ void
 stop_catching_output(vp)
 	struct bu_vls *vp;
 {
-	bu_delete_hook(output_catch, (genptr_t)vp);
+	bu_log_delete_hook(output_catch, (genptr_t)vp);
 }
 
 /*
@@ -486,7 +486,7 @@ gui_output(clientData, str)
 	static int level = 0;
 
 	if (level > 50) {
-		bu_delete_hook(gui_output, clientData);
+		bu_log_delete_hook(gui_output, clientData);
 		/* Now safe to run bu_log? */
 		bu_log("Ack! Something horrible just happened recursively.\n");
 		return 0;
@@ -565,7 +565,7 @@ cmd_output_hook(clientData, interp, argc, argv)
 		return TCL_ERROR;
 	}
 
-	bu_delete_hook(gui_output, (genptr_t)interp);/* Delete the existing hook */
+	bu_log_delete_hook(gui_output, (genptr_t)interp);/* Delete the existing hook */
 
 	if (argc < 2)
 		return TCL_OK;
@@ -593,7 +593,7 @@ cmd_output_hook(clientData, interp, argc, argv)
 	/* Set up the hook! */
 
 	bu_vls_strcpy(&tcl_output_hook, argv[1]);
-	bu_add_hook(gui_output, (genptr_t)interp);
+	bu_log_add_hook(gui_output, (genptr_t)interp);
     
 	Tcl_ResetResult(interp);
 	return TCL_OK;
