@@ -11,6 +11,7 @@
  *  Authors -
  *	Keith A. Applin
  *	Bob Suckling
+ *	Michael John Muuss
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -32,6 +33,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #else
 #include <string.h>
 #endif
+
+#define RT_NURB_GET_CONTROL_POINT(_s,_u,_v)	((_s)->ctl_points[ \
+	((_v)*(_s)->s_size[1]+(_u))*RT_NURB_EXTRACT_COORDS((_s)->pt_type)])
+
 
 #include "machine.h"
 #include "vmath.h"
@@ -320,6 +325,7 @@ struct menu_item  ars_menu[] = {
 
 struct menu_item  spline_menu[] = {
 	{ "SPLINE MENU", (void (*)())NULL, 0 },
+	{ "pick vertex", spline_ed, -1 },
 	{ "move vertex", spline_ed, ECMD_VTRANS },
 	{ "", (void (*)())NULL, 0 }
 };
@@ -806,6 +812,11 @@ static void
 spline_ed( arg )
 int arg;
 {
+	if( arg < 0 )  {
+		/* Enter picking state */
+		chg_state( ST_S_EDIT, ST_S_VPICK, "Vertex Pick" );
+		return;
+	}
 	/* For example, this will set es_edflag = ECMD_VTRANS */
 	es_edflag = arg;
 	sedraw = 1;
@@ -935,7 +946,7 @@ mat_t		mat;
 			RT_NURB_CK_MAGIC(sip);
 			surf = sip->srfs[spl_surfno];
 			NMG_CK_SNURB(surf);
-			fp = &surf->ctl_points[(spl_vi*surf->s_size[1]+spl_ui)*RT_NURB_EXTRACT_COORDS(surf->pt_type)];
+			fp = &RT_NURB_GET_CONTROL_POINT( surf, spl_ui, spl_vi );
 			VMOVE( mpt, fp );
 			sprintf(buf, "Surf %d, index %d,%d",
 				spl_surfno, spl_ui, spl_vi );
@@ -1094,11 +1105,8 @@ init_sedit()
 			spl_surfno = sip->nsrf/2;
 			surf = sip->srfs[spl_surfno];
 			NMG_CK_SNURB(surf);
-			spl_ui = surf->s_size[0]/2;
-			spl_vi = surf->s_size[1]/2;
-rt_log("Spline edit.  Surface %d, ctl point %d,%d out of %d,%d\n",
-			spl_surfno, spl_ui, spl_vi,
-			surf->s_size[0], surf->s_size[1] );
+			spl_ui = surf->s_size[1]/2;
+			spl_vi = surf->s_size[0]/2;
 		}
 		break;
 	}
@@ -1570,10 +1578,8 @@ sedit()
 			RT_NURB_CK_MAGIC(sip);
 			surf = sip->srfs[spl_surfno];
 			NMG_CK_SNURB(surf);
-			fp = &surf->ctl_points[spl_vi*surf->s_size[1]+spl_ui];
-			VPRINT("old ctl point value", fp);
+			fp = &RT_NURB_GET_CONTROL_POINT( surf, spl_ui, spl_vi );
 			VMOVE( fp, es_para );
-			VPRINT("new ctl point value", fp);
 		}
 		break;
 
@@ -1903,13 +1909,9 @@ CONST vect_t	mousevec;
 		 */
 		MAT4X3PNT( temp, es_mat, es_keypoint );
 		MAT4X3PNT( pos_view, model2view, temp );
-VPRINT("keypoint_view", pos_view);
-VPRINT("mousevec", mousevec);
 		pos_view[X] = mousevec[X];
 		pos_view[Y] = mousevec[Y];
-VPRINT("'3d' mouse position", pos_view);
 		MAT4X3PNT( temp, view2model, pos_view );
-VPRINT("model mouse pos", temp);
 		MAT4X3PNT( es_mparam, es_invmat, temp );
 		es_mvalid = 1;	/* es_mparam is valid */
 		/* Leave the rest to code in sedit() */
@@ -3294,6 +3296,10 @@ struct rt_db_internal	*ip;
 	pl[npl].str[0] = _char; \
 	pl[npl++].str[1] = '\0'; }
 
+#define	POINT_LABEL_STR( _pt, _str )	{ \
+	VMOVE( pl[npl].pt, _pt ); \
+	strncpy( pl[npl++].str, _str, sizeof(pl[0].str)-1 ); }
+
 	case ID_ARB8:
 		MAT4X3PNT( pos_view, xform, es_rec.s.s_values );
 		POINT_LABEL( pos_view, '1' );
@@ -3621,12 +3627,24 @@ struct rt_db_internal	*ip;
 			register fastf_t	*fp;
 
 			RT_NURB_CK_MAGIC(sip);
-			spl_surfno = sip->nsrf/2;
 			surf = sip->srfs[spl_surfno];
 			NMG_CK_SNURB(surf);
-			fp = &surf->ctl_points[spl_vi*surf->s_size[1]+spl_ui];
+			fp = &RT_NURB_GET_CONTROL_POINT( surf, spl_ui, spl_vi );
 			MAT4X3PNT(pos_view, xform, fp);
 			POINT_LABEL( pos_view, 'V' );
+
+			fp = &RT_NURB_GET_CONTROL_POINT( surf, 0, 0 );
+			MAT4X3PNT(pos_view, xform, fp);
+			POINT_LABEL_STR( pos_view, " 0,0" );
+			fp = &RT_NURB_GET_CONTROL_POINT( surf, 0, surf->s_size[1]-1 );
+			MAT4X3PNT(pos_view, xform, fp);
+			POINT_LABEL_STR( pos_view, " 0,u" );
+			fp = &RT_NURB_GET_CONTROL_POINT( surf, surf->s_size[0]-1, 0 );
+			MAT4X3PNT(pos_view, xform, fp);
+			POINT_LABEL_STR( pos_view, " v,0" );
+			fp = &RT_NURB_GET_CONTROL_POINT( surf, surf->s_size[0]-1, surf->s_size[1]-1 );
+			MAT4X3PNT(pos_view, xform, fp);
+			POINT_LABEL_STR( pos_view, " u,v" );
 		}
 		break;
 	}
@@ -3727,7 +3745,249 @@ char			*name;
 
 /* -------------------------------- */
 void
-sedit_vpick( pos )
-point_t	pos;
+sedit_vpick( v_pos )
+point_t	v_pos;
 {
+	point_t	m_pos;
+	int	surfno, u, v;
+
+	MAT4X3PNT( m_pos, objview2model, v_pos );
+
+	if( nurb_closest2d( &surfno, &u, &v,
+	    (struct rt_nurb_internal *)es_int.idb_ptr,
+	    m_pos, model2objview ) >= 0 )  {
+		spl_surfno = surfno;
+		spl_ui = u;
+		spl_vi = v;
+		get_solid_keypoint( es_keypoint, &es_keytag, &es_int, es_mat );
+	}
+	chg_state( ST_S_VPICK, ST_S_EDIT, "Vertex Pick Complete");
+	dmaflag = 1;
+}
+
+#define DIST2D(P0, P1)	sqrt(	((P1)[X] - (P0)[X])*((P1)[X] - (P0)[X]) + \
+				((P1)[Y] - (P0)[Y])*((P1)[Y] - (P0)[Y]) )
+
+#define DIST3D(P0, P1)	sqrt(	((P1)[X] - (P0)[X])*((P1)[X] - (P0)[X]) + \
+				((P1)[Y] - (P0)[Y])*((P1)[Y] - (P0)[Y]) + \
+				((P1)[Z] - (P0)[Z])*((P1)[Z] - (P0)[Z]) )
+
+/*
+ *	C L O S E S T 3 D
+ *
+ *	Given a vlist pointer (vhead) to point coordinates and a reference
+ *	point (ref_pt), pass back in "closest_pt" the coordinates of the
+ *	point nearest the reference point in 3 space.
+ *
+ */
+int
+rt_vl_closest3d(vhead, ref_pt, closest_pt)
+struct rt_list	*vhead;
+point_t		ref_pt, closest_pt;
+{
+	fastf_t		dist, cur_dist;
+	pointp_t	c_pt;
+	struct rt_vlist	*cur_vp;
+	
+	if (vhead == RT_LIST_NULL || RT_LIST_IS_EMPTY(vhead))
+		return(1);	/* fail */
+
+	/* initialize smallest distance using 1st point in list */
+	cur_vp = RT_LIST_FIRST(rt_vlist, vhead);
+	dist = DIST3D(ref_pt, cur_vp->pt[0]);
+	c_pt = cur_vp->pt[0];
+
+	for (RT_LIST_FOR(cur_vp, rt_vlist, vhead)) {
+		register int	i;
+		register int	nused = cur_vp->nused;
+		register point_t *cur_pt = cur_vp->pt;
+		
+		for (i = 0; i < nused; i++) {
+			cur_dist = DIST3D(ref_pt, cur_pt[i]);
+			if (cur_dist < dist) {
+				dist = cur_dist;
+				c_pt = cur_pt[i];
+			}
+		}
+	}
+	VMOVE(closest_pt, c_pt);
+	return(0);	/* success */
+}
+
+/*
+ *	C L O S E S T 2 D
+ *
+ *	Given a pointer (vhead) to vlist point coordinates, a reference
+ *	point (ref_pt), and a transformation matrix (mat), pass back in
+ *	"closest_pt" the original, untransformed 3 space coordinates of
+ *	the point nearest the reference point after all points have been
+ *	transformed into 2 space projection plane coordinates.
+ */
+int
+rt_vl_closest2d(vhead, ref_pt, mat, closest_pt)
+struct rt_list	*vhead;
+point_t		ref_pt, closest_pt;
+mat_t		mat;
+{
+	fastf_t		dist, cur_dist;
+	point_t		cur_pt2d, ref_pt2d;
+	pointp_t	c_pt;
+	struct rt_vlist	*cur_vp;
+	
+	if (vhead == RT_LIST_NULL || RT_LIST_IS_EMPTY(vhead))
+		return(1);	/* fail */
+
+	/* transform reference point to 2d */
+	MAT4X3PNT(ref_pt2d, mat, ref_pt);
+
+	/* initialize smallest distance using 1st point in list */
+	cur_vp = RT_LIST_FIRST(rt_vlist, vhead);
+	MAT4X3PNT(cur_pt2d, mat, cur_vp->pt[0]);
+	dist = DIST2D(ref_pt2d, cur_pt2d);
+	c_pt = cur_vp->pt[0];
+
+	for (RT_LIST_FOR(cur_vp, rt_vlist, vhead)) {
+		register int	i;
+		register int	nused = cur_vp->nused;
+		register point_t *cur_pt = cur_vp->pt;
+		
+		for (i = 0; i < nused; i++) {
+			MAT4X3PNT(cur_pt2d, mat, cur_pt[i]);
+			cur_dist = DIST2D(ref_pt2d, cur_pt2d);
+			if (cur_dist < dist) {
+				dist = cur_dist;
+				c_pt = cur_pt[i];
+			}
+		}
+	}
+	VMOVE(closest_pt, c_pt);
+	return(0);	/* success */
+}
+
+/*
+ *				N U R B _ C L O S E S T 3 D
+ *
+ *	Given a vlist pointer (vhead) to point coordinates and a reference
+ *	point (ref_pt), pass back in "closest_pt" the coordinates of the
+ *	point nearest the reference point in 3 space.
+ *
+ */
+int
+nurb_closest3d(surface, uval, vval, spl, ref_pt )
+int				*surface;
+int				*uval;
+int				*vval;
+CONST struct rt_nurb_internal	*spl;
+CONST point_t			ref_pt;
+{
+	struct snurb	*srf;
+	fastf_t		*mesh;
+	fastf_t		d;
+	fastf_t		c_dist;		/* closest dist so far */
+	int		c_surfno;
+	int		c_u, c_v;
+	int		u, v;
+	int		i;
+
+	RT_NURB_CK_MAGIC(spl);
+
+	c_dist = INFINITY;
+	c_surfno = c_u = c_v = -1;
+
+	for( i = 0; i < spl->nsrf; i++ )  {
+		int	advance;
+
+		srf = spl->srfs[i];
+		NMG_CK_SNURB(srf);
+		mesh = srf->ctl_points;
+		advance = RT_NURB_EXTRACT_COORDS(srf->pt_type);
+
+		for( v = 0; v < srf->s_size[0]; v++ )  {
+			for( u = 0; u < srf->s_size[1]; u++ )  {
+				/* XXX 4-tuples? */
+				d = DIST3D(ref_pt, mesh);
+				if (d < c_dist)  {
+					c_dist = d;
+					c_surfno = i;
+					c_u = u;
+					c_v = v;
+				}
+				mesh += advance;
+			}
+		}
+	}
+	if( c_surfno < 0 )  return  -1;		/* FAIL */
+	*surface = c_surfno;
+	*uval = c_u;
+	*vval = c_v;
+
+	return(0);				/* success */
+}
+
+/*
+ *				N U R B _ C L O S E S T 2 D
+ *
+ *	Given a pointer (vhead) to vlist point coordinates, a reference
+ *	point (ref_pt), and a transformation matrix (mat), pass back in
+ *	"closest_pt" the original, untransformed 3 space coordinates of
+ *	the point nearest the reference point after all points have been
+ *	transformed into 2 space projection plane coordinates.
+ */
+int
+nurb_closest2d(surface, uval, vval, spl, ref_pt, mat )
+int				*surface;
+int				*uval;
+int				*vval;
+CONST struct rt_nurb_internal	*spl;
+CONST point_t			ref_pt;
+CONST mat_t			mat;
+{
+	struct snurb	*srf;
+	point_t		ref_2d;
+	fastf_t		*mesh;
+	fastf_t		d;
+	fastf_t		c_dist;		/* closest dist so far */
+	int		c_surfno;
+	int		c_u, c_v;
+	int		u, v;
+	int		i;
+
+	RT_NURB_CK_MAGIC(spl);
+
+	c_dist = INFINITY;
+	c_surfno = c_u = c_v = -1;
+
+	/* transform reference point to 2d */
+	MAT4X3PNT(ref_2d, mat, ref_pt);
+
+	for( i = 0; i < spl->nsrf; i++ )  {
+		int	advance;
+
+		srf = spl->srfs[i];
+		NMG_CK_SNURB(srf);
+		mesh = srf->ctl_points;
+		advance = RT_NURB_EXTRACT_COORDS(srf->pt_type);
+
+		for( v = 0; v < srf->s_size[0]; v++ )  {
+			for( u = 0; u < srf->s_size[1]; u++ )  {
+				point_t	cur;
+				/* XXX 4-tuples? */
+				MAT4X3PNT( cur, mat, mesh );
+				d = DIST2D(ref_2d, cur);
+				if (d < c_dist)  {
+					c_dist = d;
+					c_surfno = i;
+					c_u = u;
+					c_v = v;
+				}
+				mesh += advance;
+			}
+		}
+	}
+	if( c_surfno < 0 )  return  -1;		/* FAIL */
+	*surface = c_surfno;
+	*uval = c_u;
+	*vval = c_v;
+
+	return(0);				/* success */
 }
