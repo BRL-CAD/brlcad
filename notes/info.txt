@@ -132,6 +132,8 @@ a-d
   desc: an ascii to double datafile conversion tool
   notes: truncates ascii double input to float
 alias-pix sean
+  status:
+  desc: an Alias (Wavefront?) pix datafile to raw datafile converter
 all_sf
 anim_cascade
 anim_fly
@@ -272,6 +274,8 @@ files-tape
 findcom
 firpass
 font.c
+  status: bad
+  desc: c source file ???  shouldn't be installed into bin dir
 g-acad
 g-euclid
 g-euclid1
@@ -407,7 +411,9 @@ png-bw sean
 png-fb
   status: ok
 png-pix sean
+  status: bad
 png_info
+  status: ok
 polar-fb
 poly-bot
 pp-fb
