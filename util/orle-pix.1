@@ -3,10 +3,10 @@
 rle-pix \- restore run-length encoded image and convert to RGB pixel format
 .SH SYNOPSIS
 .B rle-pix
-.RB [ \-v ]
+.RB [ \-dv ]
 .RB [ \-b
 {
-.B rgbBG
+.B rgbwBG
 }] [file.rle]
 .SH DESCRIPTION
 .I Rle-fb\^
@@ -28,6 +28,9 @@ and acts accordingly.
 If a non-linear colormap is stored in the RLE file,
 is is applied to the pixels as they are output.
 .TP
+.B \-d
+Debug option, provides various diagnostics.
+.TP
 .B \-v
 Provides a verbose description of the parameters of the saved image
 on standard error.
@@ -47,6 +50,8 @@ can be any of
 (green),
 .B b
 (blue),
+.B w
+(white),
 .B B
 (black), or
 .B G
