@@ -403,7 +403,6 @@ char	**argv;
 {
 	register struct directory *proto;
 	register struct directory *dp;
-	register int i;
 	struct rt_external external;
 	struct rt_db_internal internal;
 	struct rt_tgc_internal *tgc_ip;
