@@ -143,12 +143,15 @@ then
 
 	cd ../cakeaux
 	make clobber
-	make cakesub			# XXX, should do "install"
-	if test -f ${BINDIR}/cakesub
-	then
-		mv -f ${BINDIR}/cakesub ${BINDIR}/cakesub.bak
-	fi
-	cp cakesub ${BINDIR}/.
+	for i in cakesub cakeinclude
+	do
+		make $i			# XXX, should do "install"
+		if test -f ${BINDIR}/$i
+		then
+			mv -f ${BINDIR}/$i ${BINDIR}/$i.bak
+		fi
+		cp $i ${BINDIR}/.
+	done
 	make clobber
 	cd ..
 fi
