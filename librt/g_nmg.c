@@ -1113,7 +1113,7 @@ mat_t		mat;
 			NMG_CK_MODEL(m);
 			RT_CK_DISKMAGIC( d->magic, DISK_MODEL_MAGIC );
 			INDEX( d, m, model_a, ma_p );
-			INDEXL( d, m, r_hd );
+			INDEXL_HD( d, m, r_hd, m->r_hd );
 rt_log("model ma_p index=%d\n", rt_glong(d->ma_p) );
 rt_log("model r_hd.forw=%d\n", rt_glong(d->r_hd.forw) );
 rt_log("model r_hd.back=%d\n", rt_glong(d->r_hd.back) );
@@ -1137,7 +1137,7 @@ rt_log("model r_hd.back=%d\n", rt_glong(d->r_hd.back) );
 			RT_CK_DISKMAGIC( d->magic, DISK_REGION_MAGIC );
 			INDEX( d, r, model, m_p );
 			INDEX( d, r, nmgregion_a, ra_p );
-			INDEXL( d, r, s_hd );
+			INDEXL_HD( d, r, s_hd, r->s_hd );
 			INDEXL_HD( d, r, l, r->m_p->r_hd ); /* do after m_p */
 			NMG_CK_MODEL(r->m_p);
 		}
@@ -1164,9 +1164,9 @@ rt_log("model r_hd.back=%d\n", rt_glong(d->r_hd.back) );
 			RT_CK_DISKMAGIC( d->magic, DISK_SHELL_MAGIC );
 			INDEX( d, s, nmgregion, r_p );
 			INDEX( d, s, shell_a, sa_p );
-			INDEXL( d, s, fu_hd );
-			INDEXL( d, s, lu_hd );
-			INDEXL( d, s, eu_hd );
+			INDEXL_HD( d, s, fu_hd, s->fu_hd );
+			INDEXL_HD( d, s, lu_hd, s->lu_hd );
+			INDEXL_HD( d, s, eu_hd, s->eu_hd );
 			INDEX( d, s, vertexuse, vu_p );
 			INDEXL_HD( d, s, l, s->r_p->s_hd ); /* after s->r_p */
 			NMG_CK_REGION(s->r_p);
@@ -1197,7 +1197,7 @@ rt_log("model r_hd.back=%d\n", rt_glong(d->r_hd.back) );
 			fu->orientation = rt_glong( d->orientation );
 			INDEX( d, fu, face, f_p );
 			INDEX( d, fu, faceuse_a, fua_p );
-			INDEXL( d, fu, lu_hd );
+			INDEXL_HD( d, fu, lu_hd, fu->lu_hd );
 			INDEXL_HD( d, fu, l, fu->s_p->fu_hd ); /* after fu->s_p */
 			NMG_CK_FACE(fu->f_p);
 		}
@@ -1255,7 +1255,7 @@ rt_log("model r_hd.back=%d\n", rt_glong(d->r_hd.back) );
 			lu->orientation = rt_glong( d->orientation );
 			INDEX( d, lu, loop, l_p );
 			INDEX( d, lu, loopuse_a, lua_p );
-			INDEXL( d, lu, down_hd );
+			INDEXL_HD( d, lu, down_hd, lu->down_hd );
 			up_kind = ecnt[up_index].kind;
 			if( up_kind == NMG_KIND_FACEUSE )  {
 				INDEXL_HD( d, lu, l, lu->up.fu_p->lu_hd );
@@ -1390,7 +1390,7 @@ rt_log("model r_hd.back=%d\n", rt_glong(d->r_hd.back) );
 			d = &((struct disk_vertex *)ip)[iindex];
 			NMG_CK_VERTEX(v);
 			RT_CK_DISKMAGIC( d->magic, DISK_VERTEX_MAGIC );
-			INDEXL( d, v, vu_hd );
+			INDEXL_HD( d, v, vu_hd, v->vu_hd );
 			INDEX( d, v, vertex_g, vg_p );
 		}
 		return;
