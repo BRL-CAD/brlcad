@@ -124,7 +124,7 @@ fastf_t u,v;
 	if( rat )
 		for( i = 0; i < trim->c_size; i++)
 		{
-			if(pts[0]/pts[2] >= u )
+			if(pts[0]/pts[2] > u )
 				quadrant = (pts[1]/pts[2] >= v)? QUAD1:QUAD4;
 			else
 				quadrant = (pts[1]/pts[2] >= v)? QUAD2:QUAD3;
@@ -135,7 +135,7 @@ fastf_t u,v;
 	else 
 		for( i = 0; i < trim->c_size; i++)
 		{
-			if(pts[0] >= u )
+			if(pts[0] > u )
 				quadrant = (pts[1] >= v)? QUAD1:QUAD4;
 			else
 				quadrant = (pts[1] >= v)? QUAD2:QUAD3;
@@ -169,25 +169,25 @@ fastf_t u, v;
 
 	if( rat)
 	{
-		if( pts[0]/pts[2] >= u) q1 = (pts[1]/pts[2] >= v)?QUAD1:QUAD4;
+		if( pts[0]/pts[2] > u) q1 = (pts[1]/pts[2] >= v)?QUAD1:QUAD4;
 		else 		 q1 = (pts[1]/pts[2] >= v)?QUAD2:QUAD3;
 
 
 		pts = trim->ctl_points + RT_NURB_EXTRACT_COORDS(trim->pt_type) *
 			(trim->c_size -1);
-		if( pts[0]/pts[2] >= u) q2 = (pts[1]/pts[2] >= v)?QUAD1:QUAD4;
+		if( pts[0]/pts[2] > u) q2 = (pts[1]/pts[2] >= v)?QUAD1:QUAD4;
 		else 		 q2 = (pts[1]/pts[2] >= v)?QUAD2:QUAD3;
 
 	} else
 	{
-		if( pts[0] >= u) q1 = (pts[1] >= v)?QUAD1:QUAD4;
+		if( pts[0] > u) q1 = (pts[1] >= v)?QUAD1:QUAD4;
 		else 		 q1 = (pts[1] >= v)?QUAD2:QUAD3;
 
 
 		pts = trim->ctl_points + 
 			RT_NURB_EXTRACT_COORDS(trim->pt_type) 	*
 			(trim->c_size -1);
-		if( pts[0] >= u) q2 = (pts[1] >= v)?QUAD1:QUAD4;
+		if( pts[0] > u) q2 = (pts[1] >= v)?QUAD1:QUAD4;
 		else 		 q2 = (pts[1] >= v)?QUAD2:QUAD3;
 	}
 
@@ -225,13 +225,16 @@ fastf_t u, v;
 
 	/* determine if the the u,v values are on the curve */
 
-	if( rt_nurb_uv_dist(trim, u, v)  == TRIM_ON) return TRIM_ON;
+	if( rt_nurb_uv_dist(trim, u, v)  == TRIM_ON) return TRIM_IN;
 
 	jordan_hit = 0;
 
 	BU_LIST_INIT(&plist);
 
-	rt_clip_cnurb(&plist, trim, u, v);
+	if( nurb_crv_is_bezier( trim ) )
+		rt_clip_cnurb(&plist, trim, u, v);
+	else
+		nurb_c_to_bezier( &plist, trim );
 
 	while( BU_LIST_WHILE( clip, edge_g_cnurb, &plist ) )
 	{
@@ -270,6 +273,8 @@ fastf_t u, v;
 
 /* This routines is used to determine how far a point is 
  * from the u,v quadrant axes.
+ *
+ *	Equations 3, 4, 5 in Sederberg '90 paper 
  */
 
 fastf_t
@@ -285,7 +290,7 @@ int pt_type;
 
 	if( l->axis == 0)
 	{
-		if( h_flag) h = (pt[1] / pt[2] - l->o_dist) * pt[2];
+		if( h_flag) h = (pt[1] / pt[2] - l->o_dist) * pt[2]; /* pt[2] is weight */
 		else h = pt[1] - l->o_dist;
 
 	} else
@@ -503,4 +508,108 @@ fastf_t u, v;
 
 	return TRIM_OUT;
 
+}
+
+int
+nmg_uv_in_lu( u, v, lu )
+CONST fastf_t u, v;
+CONST struct loopuse *lu;
+{
+	struct edgeuse *eu;
+	int crossings=0;
+
+	NMG_CK_LOOPUSE( lu );
+
+	if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+		return( 0 );
+
+	for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+	{
+		struct edge_g_cnurb *eg;
+
+		if( !eu->g.magic_p )
+		{
+			bu_log( "nmg_uv_in_lu: eu (x%x) has no geometry!!!\n", eu );
+			bu_bomb( "nmg_uv_in_lu: eu has no geometry!!!\n" );
+		}
+
+		if( *eu->g.magic_p != NMG_EDGE_G_CNURB_MAGIC )
+		{
+			bu_log( "nmg_uv_in_lu: Called with lu (x%x) containing eu (x%x) that is not CNURB!!!!\n",
+				lu, eu );
+			bu_bomb( "nmg_uv_in_lu: Called with lu containing eu that is not CNURB!!!\n" );
+		}
+
+		eg = eu->g.cnurb_p;
+
+		if( eg->order <= 0 )
+		{
+			struct vertexuse *vu1, *vu2;
+			struct vertexuse_a_cnurb *vua1, *vua2;
+			point_t uv1, uv2;
+			fastf_t slope, intersept;
+			fastf_t u_on_curve;
+
+			vu1 = eu->vu_p;
+			vu2 = eu->eumate_p->vu_p;
+
+			if( !vu1->a.magic_p || !vu2->a.magic_p )
+			{
+				bu_log( "nmg_uv_in_lu: Called with lu (x%x) containing vu with no attribute!!!!\n",
+					lu );
+				bu_bomb( "nmg_uv_in_lu: Called with lu containing vu with no attribute!!!\n" );
+			}
+
+			if( *vu1->a.magic_p != NMG_VERTEXUSE_A_CNURB_MAGIC ||
+			    *vu2->a.magic_p != NMG_VERTEXUSE_A_CNURB_MAGIC )
+			{
+				bu_log( "nmg_uv_in_lu: Called with lu (x%x) containing vu that is not CNURB!!!!\n",
+					lu );
+				bu_bomb( "nmg_uv_in_lu: Called with lu containing vu that is not CNURB!!!\n" );
+			}
+
+			vua1 = vu1->a.cnurb_p;
+			vua2 = vu2->a.cnurb_p;
+
+			VMOVE( uv1, vua1->param );
+			VMOVE( uv2, vua2->param );
+
+			if( RT_NURB_IS_PT_RATIONAL( eg->pt_type ) )
+			{
+				uv1[0] /= uv1[2];
+				uv1[1] /= uv1[2];
+				uv2[0] /= uv2[2];
+				uv2[1] /= uv2[2];
+			}
+
+			if( uv1[1] < v && uv2[1] < v )
+				continue;
+			if( uv1[1] > v && uv2[1] > v )
+				continue;
+			if( uv1[0] <= u && uv2[0] <= u )
+				continue;
+			if( uv1[0] == uv2[0] )
+			{
+				if( (uv1[1] <= v && uv2[1] >= v) ||
+				    (uv2[1] <= v && uv1[1] >= v) )
+					crossings++;
+
+				continue;
+			}
+
+			/* need to calculate intersection */
+			slope = (uv1[1] - uv2[1])/(uv1[0] - uv2[0]);
+			intersept = uv1[1] - slope * uv1[0];
+			u_on_curve = (v - intersept)/slope;
+			if( u_on_curve > u )
+				crossings++;
+		}
+		else
+			crossings += rt_uv_in_trim( eg, u, v );
+	}
+
+	if( crossings & 01 )
+		return( 1 );
+	else
+		return( 0 );
 }
