@@ -80,8 +80,31 @@ FILE *fp;
 	vldray.pa = vldray.pe = vldray.pc = vldray.sc = 0;	/* no curv */
 
 	vldray.ob = pp->pt_regionp->reg_regionid;
-	vldray.rt = (ap->a_y << 16) | (ap->a_level & 0xFFFF);
-	fwrite( &vldray, sizeof(struct vldray), 1, fp );
+
+	/*
+	 *  The 32-bit ray tag field (rt) is encoded as follows:
+	 *	13 bits for screen X,
+	 *	13 bits for screen Y,
+	 *	 6 bits for ray level.
+	 *
+	 *  This admits of different ray tags for every ray in a raytrace
+	 *  up to 4096x4096 pixels, with up to 64 levels of recursion.
+	 *  It is not clear just why this is useful.
+	 *
+	 *  0                   1                   2                   3 3
+	 *  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+	 * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	 * |         Screen Y        |          Screen X       |    Level  |
+	 * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+	 */
+	if( (i = ap->a_level) > 0x3F || i < 0 )
+		i = 0x3F;
+	vldray.rt = (i << 0 ) |
+		((ap->a_x & 0x1FFF) << 6 ) |
+		((ap->a_y & 0x1FFF) << (6+13) );
+
+	if( fwrite( &vldray, sizeof(struct vldray), 1, fp ) != 1 )
+		rt_bomb("rway:  write error");
 }
 
 /*
