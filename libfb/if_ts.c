@@ -141,6 +141,8 @@ int	width, height;
 {
 	struct point	viewmax;
 	int mode;
+	char curs_bitmap[512];
+	int i;
 
 	FB_CK_FBIO(ifp);
 
@@ -223,6 +225,24 @@ printf("Overlay Off\n");
 	ifp->if_width = viewmax.x + 1;
 	ifp->if_height = viewmax.y + 1;
 
+	/* Initialize the hardware cursor bitmap */
+	for (i = 0; i < 512; i++) {
+		/* start with black */
+		curs_bitmap[i] = 0;
+	}
+	for (i = 0; i < 8; i++) {
+		/* fill in top and bottom rows */
+		curs_bitmap[i] = 255;
+		curs_bitmap[i+504] = 255;
+	}
+	for (i = 0; i < 64; i++) {
+		/* then three columns */
+		curs_bitmap[i*8] |= 0x80;
+		curs_bitmap[i*8+7] |= 0x01;
+		curs_bitmap[i*8+4] |= 0x80;
+	}
+	f_hwcset(GDS_HWC_BITMAP, curs_bitmap, 0);
+
 	return(0);
 }
 
@@ -255,6 +275,7 @@ RGBpixel	*pp;
 		fb_log("error 3 %d\n", f_geterror());
 		exit(1);
 	}
+	/* XXX - Note that this may not flush the display list */
 
 	return(0);
 }
@@ -306,7 +327,7 @@ int	count;
 		f_pixar_ff(&dest,&size,3,lbuf);
 		size.width = count-800;
 		dest.x = 800;
-		f_pixar_ff(&dest,&size,3,&lbuf[800]);
+		f_pixar_ff(&dest,&size,3,&lbuf[800][0]);
 	} else {
 		f_pixar_ff(&dest,&size,3,lbuf);
 	}
@@ -391,12 +412,12 @@ int	xzoom, yzoom;
 	panorigin.x = xcenter - ifp->if_width/(2*xzoom);
 	panorigin.y = ycenter - ifp->if_height/(2*yzoom);
 	f_pan(panorigin.x, panorigin.y);
-	f_exec_wr_dl();		/* flush display list */
+	f_exec_wr_dl(0);	/* flush display list, no wait */
 
 	factor.x = xzoom;
 	factor.y = yzoom;
 	f_zoom(factor.x, factor.y);
-	f_exec_wr_dl();		/* flush display list */
+	f_exec_wr_dl(0);	/* flush display list, no wait */
 
 	return(0);
 }
@@ -494,7 +515,7 @@ int	x, y;
 			GDS_HWC_WINDOW, &rect,
 			GDS_HWC_POSITION, &pos, 0);
 	}
-	f_exec_wr_dl();		/* flush display list */
+	f_exec_wr_dl(0);	/* flush display list, no wait */
 
 #if 0
 {
@@ -571,6 +592,7 @@ _LOCAL_ int
 ts_flush( ifp )
 FBIO	*ifp;
 {
+	f_exec_wr_dl(0);	/* flush display list, no wait */
 	return(0);
 }
 
@@ -578,6 +600,7 @@ _LOCAL_ int
 ts_free( ifp )
 FBIO	*ifp;
 {
+	/* XXX - should reset everything to sane mode */
 	return(0);
 }
 
