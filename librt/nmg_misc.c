@@ -1888,6 +1888,7 @@ struct shell *s;
  *			N M G _ S T A S H _ M O D E L _ T O _ F I L E
  *
  *  Store an NMG model as a separate .g file, for later examination.
+ *  Don't free the model, as the caller may still have uses for it.
  */
 void
 nmg_stash_model_to_file( filename, m, title )
@@ -1917,11 +1918,9 @@ CONST char		*title;
 	/* Scale change on export is 1.0 -- no change */
 	if( rt_functab[ID_NMG].ft_export( &ext, &intern, 1.0 ) < 0 )  {
 		rt_log("nmg_stash_model_to_file: solid export failure\n");
-		if( intern.idb_ptr )  rt_functab[ID_NMG].ft_ifree( &intern );
 		db_free_external( &ext );
 		rt_bomb("nmg_stash_model_to_file() ft_export() error\n");
 	}
-	rt_functab[ID_NMG].ft_ifree( &intern );
 	NAMEMOVE( "error", ((union record *)ext.ext_buf)->s.s_name );
 
 	bzero( (char *)&rec, sizeof(rec) );
