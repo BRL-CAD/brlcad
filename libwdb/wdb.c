@@ -44,18 +44,20 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 /*
  * Input Vector Fields
  */
-#define F(i)	rec.s.s_values+(i-1)*3
-#define F1	rec.s.s_values+(1-1)*3
-#define F2	rec.s.s_values+(2-1)*3
-#define F3	rec.s.s_values+(3-1)*3
-#define F4	rec.s.s_values+(4-1)*3
-#define F5	rec.s.s_values+(5-1)*3
-#define F6	rec.s.s_values+(6-1)*3
-#define F7	rec.s.s_values+(7-1)*3
-#define F8	rec.s.s_values+(8-1)*3
+#define F(i)	(rec.s.s_values+(i-1)*3)
+#define F1	(rec.s.s_values+(1-1)*3)
+#define F2	(rec.s.s_values+(2-1)*3)
+#define F3	(rec.s.s_values+(3-1)*3)
+#define F4	(rec.s.s_values+(4-1)*3)
+#define F5	(rec.s.s_values+(5-1)*3)
+#define F6	(rec.s.s_values+(6-1)*3)
+#define F7	(rec.s.s_values+(7-1)*3)
+#define F8	(rec.s.s_values+(8-1)*3)
 
 /*
  *			M K _ I D
+ *
+ *  Make a database header (ID) record.
  */
 int
 mk_id( fp, title )
@@ -155,7 +157,7 @@ point_t	pts[];
  *			M K _ A R B 8
  *
  *  All plates with 4 points must be co-planar.
- *  If there are degeneracies (ie, all 8 vertices are not distinct),
+ *  If there are degeneracies (i.e., all 8 vertices are not distinct),
  *  then certain requirements must be met.
  *  If we think of the ARB8 as having a top and a bottom plate,
  *  the first four points listed must lie on one plate, and
@@ -185,14 +187,14 @@ point_t	pts[];
 /*
  *			M K _ S P H
  *
- * Make a sphere centered at point with radius r.
+ *  Make a sphere with the given center point and radius.
  */
 int
-mk_sph( fp, name, point, r)
+mk_sph( fp, name, center, radius )
 FILE	*fp;
 char	*name;
-point_t	point;
-fastf_t	r;
+point_t	center;
+fastf_t	radius;
 {
 	register int i;
 	static union record rec;
@@ -203,10 +205,10 @@ fastf_t	r;
 	rec.s.s_cgtype = SPH;
 	NAMEMOVE(name,rec.s.s_name);
 
-	VMOVE( &rec.s.s_values[0], point );
-	VSET( &rec.s.s_values[3], r, 0, 0 );
-	VSET( &rec.s.s_values[6], 0, r, 0 );
-	VSET( &rec.s.s_values[9], 0, 0, r );
+	VMOVE( &rec.s.s_values[0], center );
+	VSET( &rec.s.s_values[3], radius, 0, 0 );
+	VSET( &rec.s.s_values[6], 0, radius, 0 );
+	VSET( &rec.s.s_values[9], 0, 0, radius );
 	
 	fwrite( (char *) &rec, sizeof(rec), 1, fp);
 	return(0);
@@ -215,15 +217,15 @@ fastf_t	r;
 /*
  *			M K _ E L L
  *
- * Make an ellipsoid centered at point with 3 perp. radius vectors.
- * The eccentricity of the ellipsoid is controlled by the relative
- * lengths of the three radius vectors.
+ *  Make an ellipsoid at the given center point with 3 perp. radius vectors.
+ *  The eccentricity of the ellipsoid is controlled by the relative
+ *  lengths of the three radius vectors.
  */
 int
-mk_ell( fp, name, point, a, b, c)
+mk_ell( fp, name, center, a, b, c )
 FILE	*fp;
 char	*name;
-point_t	point;
+point_t	center;
 vect_t	a, b, c;
 {
 	register int i;
@@ -234,7 +236,7 @@ vect_t	a, b, c;
 	rec.s.s_type = GENELL;
 	NAMEMOVE(name,rec.s.s_name);
 
-	VMOVE( &rec.s.s_values[0], point );
+	VMOVE( &rec.s.s_values[0], center );
 	VMOVE( &rec.s.s_values[3], a );
 	VMOVE( &rec.s.s_values[6], b );
 	VMOVE( &rec.s.s_values[9], c );
@@ -246,16 +248,16 @@ vect_t	a, b, c;
 /*
  *			M K _ T O R
  *
- * Make a torus.  Specify center, normal,
- * r1:  distance from center point to center of solid part,
- * and r2: radius of solid part.
+ *  Make a torus.  Specify center, normal,
+ *  r1: distance from center point to center of solid part,
+ *  r2: radius of solid part.
  */
 int
-mk_tor( fp, name, center, n, r1, r2 )
+mk_tor( fp, name, center, norm, r1, r2 )
 FILE	*fp;
 char	*name;
 point_t	center;
-vect_t	n;
+vect_t	norm;
 double	r1, r2;
 {
 	register int i;
@@ -279,7 +281,7 @@ double	r1, r2;
 	r4=r1+r2;	/* Radius to outer circular edge */
 
 	VMOVE( F1, center );
-	VMOVE( F2, n );
+	VMOVE( F2, norm );
 
 	/*
 	 * To allow for V being (0,0,0), for VCROSS purposes only,
@@ -344,7 +346,7 @@ double	r1, r2;
 /*
  *			M K _ R C C
  *
- * Make a Right Circular Cylinder into a generalized truncated cyinder
+ *  Make a Right Circular Cylinder (special case of the TGC).
  */
 int
 mk_rcc( fp, name, base, height, radius )
@@ -400,14 +402,14 @@ fastf_t	radius;
 /*
  *			M K _ T G C
  *
- * Make truncated general cylinder
+ *  Make a Truncated General Cylinder.
  */
 int
-mk_tgc( fp, name, v, h, a, b, c, d )
+mk_tgc( fp, name, base, height, a, b, c, d )
 FILE	*fp;
 char	*name;
-point_t	v;
-vect_t	h;
+point_t	base;
+vect_t	height;
 vect_t	a, b;
 vect_t	c, d;
 {
@@ -421,8 +423,8 @@ vect_t	c, d;
 	NAMEMOVE(name, rec.s.s_name);
 
 	/* Really, converting from fastf_t to dbfloat_t here */
-	VMOVE( F1, v );
-	VMOVE( F2, h );
+	VMOVE( F1, base );
+	VMOVE( F2, height );
 	VMOVE( F3, a );
 	VMOVE( F4, b );
 	VMOVE( F5, c );
