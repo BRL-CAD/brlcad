@@ -171,6 +171,9 @@ char_type magic_header[] = { "\037\235" };	/* 1F 9D */
  *
  * $Header$
  * $Log$
+ * Revision 1.1  1991/10/12  06:48:44  cjohnson
+ * Initial revision
+ *
  * Revision 4.0  85/07/30  12:50:00  joe
  * Removed ferror() calls in output routine on every output except first.
  * Prepared for release to the world.
@@ -283,15 +286,6 @@ char_type magic_header[] = { "\037\235" };	/* 1F 9D */
  */
 static char rcs_ident[] = "$Header$";
 
-#include <stdio.h>
-#include <ctype.h>
-#include <signal.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#ifdef notdef
-#include <sys/ioctl.h>
-#endif
-
 #define ARGVAL() (*++(*argv) || (--argc && *++argv))
 
 int n_bits;				/* number of bits/code */
@@ -370,20 +364,6 @@ int perm_stat = 0;			/* permanent status */
 
 code_int getcode();
 
-Usage() {
-#ifdef DEBUG
-fprintf(stderr,"Usage: compress [-dDVfc] [-b maxbits] [file ...]\n");
-}
-int debug = 0;
-#else
-fprintf(stderr,"Usage: compress [-fvc] [-b maxbits] [file ...]\n");
-}
-#endif /* DEBUG */
-int nomagic = 0;	/* Use a 3-byte magic number header, unless old file */
-int zcat_flg = 0;	/* Write output on stdout, suppress messages */
-int precious = 1;	/* Don't unlink output file on interrupt */
-int quiet = 1;		/* don't tell me about compression */
-
 /*
  * block compression parameters -- after all codes are used up,
  * and compression rate changes, start over.
@@ -402,295 +382,12 @@ count_int checkpoint = CHECK_GAP;
 
 int force = 0;
 char ofname [100];
-#ifdef DEBUG
-int verbose = 0;
-#endif /* DEBUG */
 int (*oldint)();
 int bgnd_flag;
 
 int do_decomp = 0;
 
-/*****************************************************************
- * TAG( main )
- *
- * Algorithm from "A Technique for High Performance Data Compression",
- * Terry A. Welch, IEEE Computer Vol 17, No 6 (June 1984), pp 8-19.
- *
- * Usage: compress [-dfvc] [-b bits] [file ...]
- * Inputs:
- *	-d:	    If given, decompression is done instead.
- *
- *      -c:         Write output on stdout, don't remove original.
- *
- *      -b:         Parameter limits the max number of bits/code.
- *
- *	-f:	    Forces output file to be generated, even if one already
- *		    exists, and even if no space is saved by compressing.
- *		    If -f is not used, the user will be prompted if stdin is
- *		    a tty, otherwise, the output file will not be overwritten.
- *
- *      -v:	    Write compression statistics
- *
- * 	file ...:   Files to be compressed.  If none specified, stdin
- *		    is used.
- * Outputs:
- *	file.Z:	    Compressed form of file with same mode, owner, and utimes
- * 	or stdout   (if stdin used as input)
- *
- * Assumptions:
- *	When filenames are given, replaces with the compressed version
- *	(.Z suffix) only if the file decreases in size.
- * Algorithm:
- * 	Modified Lempel-Ziv method (LZW).  Basically finds common
- * substrings and replaces them with a variable size code.  This is
- * deterministic, and can be done on the fly.  Thus, the decompression
- * procedure needs no input table, but tracks the way the table was built.
- */
-
-main( argc, argv )
-register int argc; char **argv;
-{
-    int overwrite = 0;	/* Do not overwrite unless given -f flag */
-    char tempname[100];
-    char **filelist, **fileptr;
-    char *cp, *rindex(), *malloc();
-    struct stat statbuf;
-    extern onintr(), oops();
-
-    /* This bg check only works for sh. */
-    if ( (oldint = signal ( SIGINT, SIG_IGN )) != SIG_IGN ) {
-	signal ( SIGINT, onintr );
-	signal ( SIGSEGV, oops );
-    }
-    bgnd_flag = oldint != SIG_DFL;
-#ifdef notdef     /* This works for csh but we don't want it. */
-    { int tgrp;
-    if (bgnd_flag == 0 && ioctl(2, TIOCGPGRP, (char *)&tgrp) == 0 &&
-      getpgrp(0) != tgrp)
-	bgnd_flag = 1;
-    }
-#endif
-    
-#ifdef COMPATIBLE
-    nomagic = 1;	/* Original didn't have a magic number */
-#endif /* COMPATIBLE */
-
-    filelist = fileptr = (char **)(malloc(argc * sizeof(*argv)));
-    *filelist = NULL;
-
-    if((cp = rindex(argv[0], '/')) != 0) {
-	cp++;
-    } else {
-	cp = argv[0];
-    }
-    if(strcmp(cp, "uncompress") == 0) {
-	do_decomp = 1;
-    } else if(strcmp(cp, "zcat") == 0) {
-	do_decomp = 1;
-	zcat_flg = 1;
-    }
-
-#ifdef BSD4_2
-    /* 4.2BSD dependent - take it out if not */
-    setlinebuf( stderr );
-#endif /* BSD4_2 */
-
-    /* Argument Processing
-     * All flags are optional.
-     * -D => debug
-     * -V => print Version; debug verbose
-     * -d => do_decomp
-     * -v => unquiet
-     * -f => force overwrite of output file
-     * -n => no header: useful to uncompress old files
-     * -b maxbits => maxbits.  If -b is specified, then maxbits MUST be
-     *	    given also.
-     * -c => cat all output to stdout
-     * -C => generate output compatible with compress 2.0.
-     * if a string is left, must be an input filename.
-     */
-    for (argc--, argv++; argc > 0; argc--, argv++) {
-	if (**argv == '-') {	/* A flag argument */
-	    while (*++(*argv)) {	/* Process all flags in this arg */
-		switch (**argv) {
-#ifdef DEBUG
-		    case 'D':
-			debug = 1;
-			break;
-		    case 'V':
-			verbose = 1;
-			version();
-			break;
-#else
-		    case 'V':
-			version();
-			break;
-#endif /* DEBUG */
-		    case 'v':
-			quiet = 0;
-			break;
-		    case 'd':
-			do_decomp = 1;
-			break;
-		    case 'f':
-		    case 'F':
-			overwrite = 1;
-			force = 1;
-			break;
-		    case 'n':
-			nomagic = 1;
-			break;
-		    case 'C':
-			block_compress = 0;
-			break;
-		    case 'b':
-			if (!ARGVAL()) {
-			    fprintf(stderr, "Missing maxbits\n");
-			    Usage();
-			    exit(1);
-			}
-			maxbits = atoi(*argv);
-			goto nextarg;
-		    case 'c':
-			zcat_flg = 1;
-			break;
-		    case 'q':
-			quiet = 1;
-			break;
-		    default:
-			fprintf(stderr, "Unknown flag: '%c'; ", **argv);
-			Usage();
-			exit(1);
-		}
-	    }
-	}
-	else {		/* Input file name */
-	    *fileptr++ = *argv;	/* Build input file list */
-	    *fileptr = NULL;
-	    /* process nextarg; */
-	}
-	nextarg: continue;
-    }
-
-    if(maxbits < INIT_BITS) maxbits = INIT_BITS;
-    if (maxbits > BITS) maxbits = BITS;
-    maxmaxcode = 1 << maxbits;
-
-    if (*filelist != NULL) {
-	for (fileptr = filelist; *fileptr; fileptr++) {
-	    exit_stat = 0;
-	    if (do_decomp) {			/* DECOMPRESSION */
-		/* Check for .Z suffix */
-		if (strcmp(*fileptr + strlen(*fileptr) - 2, ".Z") != 0) {
-		    /* No .Z: tack one on */
-		    strcpy(tempname, *fileptr);
-		    strcat(tempname, ".Z");
-		    *fileptr = tempname;
-		}
-		/* Open input file */
-		if ((freopen(*fileptr, "r", stdin)) == NULL) {
-		    perror(*fileptr);
-		    perm_stat = 1;
-		    continue;
-		}
-		/* Check the magic number */
-		if (nomagic == 0) {
-		    if ((getchar() != (magic_header[0] & 0xFF))
-		     || (getchar() != (magic_header[1] & 0xFF))) {
-			fprintf(stderr, "%s: not in compressed format\n",
-			    *fileptr);
-		    continue;
-		    }
-		    maxbits = getchar();	/* set -b from file */
-		    block_compress = maxbits & BLOCK_MASK;
-		    maxbits &= BIT_MASK;
-		    maxmaxcode = 1 << maxbits;
-		    if(maxbits > BITS) {
-			fprintf(stderr,
-			"%s: compressed with %d bits, can only handle %d bits\n",
-			*fileptr, maxbits, BITS);
-			continue;
-		    }
-		}
-		/* Generate output filename */
-		strcpy(ofname, *fileptr);
-		ofname[strlen(*fileptr) - 2] = '\0';  /* Strip off .Z */
-	    } else {					/* COMPRESSION */
-		if (strcmp(*fileptr + strlen(*fileptr) - 2, ".Z") == 0) {
-		    	fprintf(stderr, "%s: already has .Z suffix -- no change\n",
-			    *fileptr);
-		    continue;
-		}
-		/* Open input file */
-		if ((freopen(*fileptr, "r", stdin)) == NULL) {
-		    perror(*fileptr);
-		    perm_stat = 1;
-		    continue;
-		}
-		stat ( *fileptr, &statbuf );
-		fsize = (long) statbuf.st_size;
-		/*
-		 * tune hash table size for small files -- ad hoc,
-		 * but the sizes match earlier #defines, which
-		 * serve as upper bounds on the number of output codes. 
-		 */
-		hsize = HSIZE;
-		if ( fsize < (1 << 12) )
-		    hsize = min ( 5003, HSIZE );
-		else if ( fsize < (1 << 13) )
-		    hsize = min ( 9001, HSIZE );
-		else if ( fsize < (1 << 14) )
-		    hsize = min ( 18013, HSIZE );
-		else if ( fsize < (1 << 15) )
-		    hsize = min ( 35023, HSIZE );
-		else if ( fsize < 47000 )
 		    hsize = min ( 50021, HSIZE );
-
-		/* Generate output filename */
-		strcpy(ofname, *fileptr);
-#ifndef BSD4_2		/* Short filenames */
-		if ((cp=rindex(ofname,'/')) != NULL)	cp++;
-		else					cp = ofname;
-		if (strlen(cp) > 12) {
-		    fprintf(stderr,"%s: filename too long to tack on .Z\n",cp);
-		    continue;
-		}
-#endif  /* BSD4_2		Long filenames allowed */
-		strcat(ofname, ".Z");
-	    }
-	    /* Check for overwrite of existing file */
-	    if (overwrite == 0 && zcat_flg == 0) {
-		if (stat(ofname, &statbuf) == 0) {
-		    char response[2];
-		    response[0] = 'n';
-		    fprintf(stderr, "%s already exists;", ofname);
-		    if (bgnd_flag == 0 && isatty(2)) {
-			fprintf(stderr, " do you wish to overwrite %s (y or n)? ",
-			ofname);
-			fflush(stderr);
-			read(2, response, 2);
-			while (response[1] != '\n') {
-			    if (read(2, response+1, 1) < 0) {	/* Ack! */
-				perror("stderr"); break;
-			    }
-			}
-		    }
-		    if (response[0] != 'y') {
-			fprintf(stderr, "\tnot overwritten\n");
-			continue;
-		    }
-		}
-	    }
-	    if(zcat_flg == 0) {		/* Open output file */
-		if (freopen(ofname, "w", stdout) == NULL) {
-		    perror(ofname);
-		    perm_stat = 1;
-		    continue;
-		}
-		precious = 0;
-		if(!quiet)
-			fprintf(stderr, "%s: ", *fileptr);
-	    }
 
 	    /* Actually do the compression/decompression */
 	    if (do_decomp == 0)	compress();
