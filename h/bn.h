@@ -126,6 +126,10 @@ void bn_encode_quat(struct bu_vls *vp, const quat_t q);
 void bn_encode_vect(struct bu_vls *vp, const vect_t v);
 void bn_encode_hvect(struct bu_vls *vp, const hvect_t v);
 
+/* The presence of Tcl_Interp as an arg prevents giving arg list */
+extern void bn_tcl_setup();
+extern int Bn_Init();
+
 
 /*----------------------------------------------------------------------*/
 /* complex.c */
