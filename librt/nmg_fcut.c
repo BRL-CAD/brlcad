@@ -2219,7 +2219,7 @@ nmg_face_lu_plot( lu->lumate_p, this_vu, this_vu );
 void
 nmg_lu_reorient( lu, norm, tol )
 struct loopuse	*lu;
-plane_t		norm;
+CONST plane_t		norm;
 CONST struct rt_tol	*tol;
 {
 	int	ccw;
