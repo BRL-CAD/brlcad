@@ -502,7 +502,7 @@ char *dstr;
   }
 
   bu_vls_init(&vls);
-  bu_vls_printf(&vls, "wm withdraw .");
+  bu_vls_printf(&vls, "wm withdraw . ; tk appname mged");
   Tcl_Eval(interp, bu_vls_addr(&vls));
   bu_vls_free(&vls);
 
