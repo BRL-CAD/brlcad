@@ -5117,7 +5117,11 @@ CONST vect_t	mousevec;
     wrt_point(modelchanges, incr_change, modelchanges, pos_model);
 
     bn_mat_idn( incr_change );
+#ifdef DO_NEW_EDIT_MATS
+    new_edit_mats();
+#else
     new_mats();
+#endif
     Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_scale_vls));
   }  else if( movedir & (RARROW|UARROW) )  {
     mat_t oldchanges;	/* temporary matrix */
@@ -5139,7 +5143,11 @@ CONST vect_t	mousevec;
     bn_mat_mul( modelchanges, incr_change, oldchanges );
 
     bn_mat_idn( incr_change );
+#ifdef DO_NEW_EDIT_MATS
+    new_edit_mats();
+#else
     new_mats();
+#endif
 
     update_edit_absolute_tran(pos_view);
   }  else  {
@@ -5169,7 +5177,11 @@ vect_t tvec;
   bn_mat_copy( oldchanges, modelchanges );
   bn_mat_mul( modelchanges, incr_mat, oldchanges );
 
+#ifdef DO_NEW_EDIT_MATS
+  new_edit_mats();
+#else
   new_mats();
+#endif
 
   Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_tran_vls[X]));
   Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_tran_vls[Y]));
@@ -5236,7 +5248,12 @@ oedit_abs_scale()
   MAT4X3PNT(pos_model, modelchanges, temp);
   wrt_point(modelchanges, incr_mat, modelchanges, pos_model);
 
+#ifdef DO_NEW_EDIT_MATS
+  new_edit_mats();
+#else
   new_mats();
+#endif
+
   Tcl_UpdateLinkedVar(interp, bu_vls_addr(&edit_absolute_scale_vls));
 }
 
@@ -6496,7 +6513,11 @@ double	xangle, yangle, zangle;
 	MAT4X3PNT(point, tempp, es_keypoint);
 	wrt_point(modelchanges, incr_change, modelchanges, point);
 
+#ifdef DO_NEW_EDIT_MATS
+	new_edit_mats();
+#else
 	new_mats();
+#endif
 
 	return 1;
 }

@@ -1733,7 +1733,11 @@ vect_t argvect;
    */
   wrt_point(modelchanges, temp, modelchanges, point);
 
+#ifdef DO_NEW_EDIT_MATS
+  new_edit_mats();
+#else
   new_mats();
+#endif
 
   return TCL_OK;
 }
@@ -1848,7 +1852,11 @@ char	**argv;
 	MAT4X3PNT(point, modelchanges, temp);
 
 	wrt_point(modelchanges, incr, modelchanges, point);
+#ifdef DO_NEW_EDIT_MATS
+	new_edit_mats();
+#else
 	new_mats();
+#endif
 
 	return TCL_OK;
 }
@@ -1895,7 +1903,11 @@ char	**argv;
 	MAT_DELTAS(incr, model_incr[0], model_incr[1], model_incr[2]);
 	bn_mat_copy(old,modelchanges);
 	bn_mat_mul(modelchanges, incr, old);
+#ifdef DO_NEW_EDIT_MATS
+	new_edit_mats();
+#else
 	new_mats();
+#endif
 
 	return TCL_OK;
 }
@@ -2198,7 +2210,11 @@ char	**argv;
 	 */
 	wrt_point_direc(modelchanges, temp, modelchanges, point, direc);
 
+#ifdef DO_NEW_EDIT_MATS
+	new_edit_mats();
+#else
 	new_mats();
+#endif
 
 	return TCL_OK;
 }
