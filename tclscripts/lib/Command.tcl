@@ -89,6 +89,7 @@ class Command {
     private method doRight {}
 
     private variable hist ""
+    private variable cmdlist ""
     private variable scratchline ""
     private variable moveView 0
     private variable freshline 1
@@ -112,6 +113,25 @@ configbody Command::edit_style {
 	}
     }
 
+}
+
+configbody Command::cmd_prefix {
+    if {$itk_option(-cmd_prefix) == ""} {
+	set cmdlist ""
+	return
+    }
+
+    set bad [catch {$itk_option(-cmd_prefix) info function} cmdlist]
+    if {$bad} {
+	return -code error "Bad command prefix: no related functions"
+    }
+
+    set bad [catch {$itk_option(-cmd_prefix) info class} class]
+    if {$bad} {
+	return -code error "Bad command prefix: no class"
+    }
+    # strip off class
+    set cmdlist [string map "$class\:: \"\"" $cmdlist]
 }
 
 configbody Command::selection_color {
@@ -163,7 +183,20 @@ body Command::destructor {} {
 body Command::invoke {} {
     set w $itk_component(text)
 
-    set cmd [concat $itk_option(-cmd_prefix) [$w get promptEnd insert]]
+    set cmd [$w get promptEnd insert]
+
+    if {$itk_option(-cmd_prefix) == ""} {
+	set hcmd $cmd
+    } else {
+	set hcmd $cmd
+
+	set cname [lindex $cmd 0]
+	set cindex [lsearch $cmdlist $cname]
+	if {$cindex != -1} {
+	    set cmd [concat $itk_option(-cmd_prefix) $cmd]
+	}
+    }
+
 
     if [info complete $cmd] {
 	set result [catch {uplevel #0 $cmd} msg]
@@ -179,7 +212,7 @@ body Command::invoke {} {
 	    }
 	}
 
-	$hist add $cmd
+	$hist add $hcmd
 	print_prompt
     }
     $w see insert
