@@ -942,3 +942,54 @@ CONST struct rt_tol	*tol;
 	}
 	return(-1);			/* Parallel but distinct */
 }
+
+/*
+ *			R T _ A N G L E _ M E A S U R E
+ *
+ *  Using two perpendicular vectors (x_dir and y_dir) which lie
+ *  in the same plane as 'vec', return the angle (in radians) of 'vec'
+ *  from x_dir, going CCW around the perpendicular x_dir CROSS y_dir.
+ *
+ *  Trig note -
+ *
+ *  theta = atan2(x,y) returns an angle in the range -pi to +pi.
+ *  Here, we need an angle in the range of 0 to 2pi.
+ *  This could be implemented by adding 2pi to theta when theta is negative,
+ *  but this could have nasty numeric ambiguity right in the vicinity
+ *  of theta = +pi, which is a very critical angle for the applications using
+ *  this routine.
+ *  So, an alternative formulation is to compute gamma = atan2(-x,-y),
+ *  and then theta = gamma + pi.  Now, any error will occur in the
+ *  vicinity of theta = 0, which can be handled much more readily.
+ *
+ *  If theta is negative, or greater than two pi,
+ *  wrap it around.
+ *  These conditions only occur if there are problems in atan2().
+ *
+ *  Returns -
+ *	vec == x_dir returns 0,
+ *	vec == y_dir returns pi/2,
+ *	vec == -x_dir returns pi,
+ *	vec == -y_dir returns 3*pi/2.
+ */
+double
+rt_angle_measure( vec, x_dir, y_dir )
+vect_t	vec;
+vect_t	x_dir;
+vect_t	y_dir;
+{
+	fastf_t		xproj, yproj;
+	fastf_t		gamma;
+	fastf_t		ang;
+
+	xproj = -VDOT( vec, x_dir );
+	yproj = -VDOT( vec, y_dir );
+	gamma = atan2( yproj, xproj );	/* -pi..+pi */
+	ang = rt_pi + gamma;		/* 0..+2pi */
+	if( ang < 0 )  {
+		return rt_twopi + ang;
+	} else if( ang > rt_twopi )  {
+		return ang - rt_twopi;
+	}
+	return ang;
+}
