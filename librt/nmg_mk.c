@@ -1702,7 +1702,7 @@ CONST struct rt_tol	*tol;
 
 /*			N M G _ F A C E _ G
  *
- *	Assign plane equation to face and compute bounding box
+ *	Assign plane equation to face.
  *
  *  In the interest of modularity this no longer calls nmg_face_bb().
  */
@@ -1755,7 +1755,6 @@ nmg_face_bb(f, tol)
 struct face		*f;
 CONST struct rt_tol	*tol;
 {
-	struct face_g	*fg;
 	struct loopuse	*lu;
 	struct faceuse	*fu;
 
@@ -1764,15 +1763,8 @@ CONST struct rt_tol	*tol;
 	fu = f->fu_p;
 	NMG_CK_FACEUSE(fu);
 
-	if ( fg = f->fg_p ) {
-		NMG_CK_FACE_G(fg);
-	} else {
-		/* We have no idea what surface normal to use here */
-		rt_bomb("nmg_face_bb() called on face with no face geometry\n");
-	}
-
-	fg->max_pt[X] = fg->max_pt[Y] = fg->max_pt[Z] = -MAX_FASTF;
-	fg->min_pt[X] = fg->min_pt[Y] = fg->min_pt[Z] = MAX_FASTF;
+	f->max_pt[X] = f->max_pt[Y] = f->max_pt[Z] = -MAX_FASTF;
+	f->min_pt[X] = f->min_pt[Y] = f->min_pt[Z] = MAX_FASTF;
 
 	/* compute the extent of the face by looking at the extent of
 	 * each of the loop children.
@@ -1781,8 +1773,8 @@ CONST struct rt_tol	*tol;
 		nmg_loop_g(lu->l_p, tol);
 
 		if (lu->orientation != OT_BOOLPLACE) {
-			VMIN(fg->min_pt, lu->l_p->lg_p->min_pt);
-			VMAX(fg->max_pt, lu->l_p->lg_p->max_pt);
+			VMIN(f->min_pt, lu->l_p->lg_p->min_pt);
+			VMAX(f->max_pt, lu->l_p->lg_p->max_pt);
 		}
 	}
 }
@@ -1817,18 +1809,18 @@ CONST struct rt_tol	*tol;
 	sa = s->sa_p;
 
 	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
-		struct face_g *fg;
+		struct face	*f;
 
-		nmg_face_bb(fu->f_p, tol);
+		f = fu->f_p;
+		NMG_CK_FACE(f);
+		nmg_face_bb(f, tol);
 
-		fg = fu->f_p->fg_p;
-		NMG_CK_FACE_G(fg);
-		VMIN(sa->min_pt, fg->min_pt);
-		VMAX(sa->max_pt, fg->max_pt);
+		VMIN(sa->min_pt, f->min_pt);
+		VMAX(sa->max_pt, f->max_pt);
 
 		/* If next faceuse shares this face, skip it */
 		if( RT_LIST_NOT_HEAD(fu, &fu->l) &&
-		    ( RT_LIST_NEXT(faceuse, &fu->l)->f_p == fu->f_p ) )  {
+		    ( RT_LIST_NEXT(faceuse, &fu->l)->f_p == f ) )  {
 			fu = RT_LIST_PNEXT(faceuse,fu);
 		}
 	}

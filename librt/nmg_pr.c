@@ -209,11 +209,6 @@ char *h;
 
 	rt_log("%sFACE_G %8x\n", h, fg);
 	NMG_CK_FACE_G(fg);
-	
-	rt_log("%s%f %f %f Min\n", h, fg->min_pt[X], fg->min_pt[Y],
-		fg->min_pt[Z]);
-	rt_log("%s%f %f %f Max\n", h, fg->max_pt[X], fg->max_pt[Y],
-		fg->max_pt[Z]);
 
 	rt_log("%s%fX + %fY + %fZ = %f\n", h, fg->N[0], fg->N[1],
 		fg->N[2], fg->N[3]);
@@ -316,6 +311,12 @@ char *h;
 	rt_log("%sFACE %8x\n", h, f);
 	rt_log("%s%8x fu_p\n", h, f->fu_p);
 	rt_log("%s%8x fg_p\n", h, f->fg_p);
+	
+	rt_log("%s%f %f %f Min\n", h, f->min_pt[X], f->min_pt[Y],
+		f->min_pt[Z]);
+	rt_log("%s%f %f %f Max\n", h, f->max_pt[X], f->max_pt[Y],
+		f->max_pt[Z]);
+
 	if (f->fg_p)
 		nmg_pr_fg(f->fg_p, h);
 

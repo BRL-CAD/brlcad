@@ -368,7 +368,7 @@ struct face		*f1;
 	 */
 	VSET( to, 0, 0, 1 );
 	mat_fromto( is->proj, n, to );
-	VADD2SCALE( centroid, fg->max_pt, fg->min_pt, 0.5 );
+	VADD2SCALE( centroid, f1->max_pt, f1->min_pt, 0.5 );
 	MAT4X3PNT( centroid_proj, is->proj, centroid );
 	centroid_proj[Z] = n[3];	/* pull dist from origin off newZ */
 	MAT_DELTAS_VEC_NEG( is->proj, centroid_proj );
@@ -2008,22 +2008,17 @@ struct faceuse		*fu1;		/* fu that eu1 is from */
 	VUNITIZE( line.r_dir );
 	VINVDIR( invdir, line.r_dir );
 
-	/* XXX Prevent ray from missing 0-thickness face */
-	/* XXX should be done in nmg_loop_g() for real */
-	min_pt[X] = fu2->f_p->fg_p->min_pt[X] - 10*is->tol.dist;
-	min_pt[Y] = fu2->f_p->fg_p->min_pt[Y] - 10*is->tol.dist;
-	min_pt[Z] = fu2->f_p->fg_p->min_pt[Z] - 10*is->tol.dist;
-	max_pt[X] = fu2->f_p->fg_p->max_pt[X] + 10*is->tol.dist;
-	max_pt[Y] = fu2->f_p->fg_p->max_pt[Y] + 10*is->tol.dist;
-	max_pt[Z] = fu2->f_p->fg_p->max_pt[Z] + 10*is->tol.dist;
+	/* nmg_loop_g() makes sure there are no 0-thickness faces */
+	VMOVE( min_pt, fu2->f_p->min_pt );
+	VMOVE( max_pt, fu2->f_p->max_pt );
 
 	if( !rt_in_rpp( &line, invdir, min_pt, max_pt ) )  {
 		/* The edge ray missed the face RPP, nothing to do. */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
 			VPRINT("r_pt ", line.r_pt);
 			VPRINT("r_dir", line.r_dir);
-			VPRINT("fu2 min", fu2->f_p->fg_p->min_pt);
-			VPRINT("fu2 max", fu2->f_p->fg_p->max_pt);
+			VPRINT("fu2 min", fu2->f_p->min_pt);
+			VPRINT("fu2 max", fu2->f_p->max_pt);
 			VPRINT("min_pt", min_pt);
 			VPRINT("max_pt", max_pt);
 			rt_log("r_min=%g, r_max=%g\n", line.r_min, line.r_max);
@@ -2032,8 +2027,8 @@ struct faceuse		*fu1;		/* fu that eu1 is from */
 		goto out;
 	}
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
-		VPRINT("fu2 min", fu2->f_p->fg_p->min_pt);
-		VPRINT("fu2 max", fu2->f_p->fg_p->max_pt);
+		VPRINT("fu2 min", fu2->f_p->min_pt);
+		VPRINT("fu2 max", fu2->f_p->max_pt);
 		rt_log("r_min=%g, r_max=%g\n", line.r_min, line.r_max);
 	}
 	/* Start point will line on min side of face RPP */
@@ -2842,8 +2837,8 @@ nmg_fu_touchingloops(fu2);
 		goto coplanar;
 	}
 
-	if ( !V3RPP_OVERLAP_TOL(f2->fg_p->min_pt, f2->fg_p->max_pt,
-	    f1->fg_p->min_pt, f1->fg_p->max_pt, &bs.tol) )  return;
+	if ( !V3RPP_OVERLAP_TOL(f2->min_pt, f2->max_pt,
+	    f1->min_pt, f1->max_pt, &bs.tol) )  return;
 
 	/*
 	 *  The extents of face1 overlap the extents of face2.
@@ -2864,8 +2859,8 @@ nmg_fu_touchingloops(fu2);
 	 *
 	 *  NOTE:  These conditions must be enforced in the 2D code, also.
 	 */
-	VMOVE(min_pt, f1->fg_p->min_pt);
-	VMIN(min_pt, f2->fg_p->min_pt);
+	VMOVE(min_pt, f1->min_pt);
+	VMIN(min_pt, f2->min_pt);
 	status = rt_isect_2planes( bs.pt, bs.dir, pl1, pl2,
 		min_pt, tol );
 
@@ -3169,7 +3164,7 @@ nmg_ck_vs_in_region( s2->r_p, tol );
 
 		/* See if face f1 overlaps shell2 */
 		if( ! V3RPP_OVERLAP_TOL(sa2->min_pt, sa2->max_pt,
-		    f1->fg_p->min_pt, f1->fg_p->max_pt, tol) )
+		    f1->min_pt, f1->max_pt, tol) )
 			continue;
 
 		/*

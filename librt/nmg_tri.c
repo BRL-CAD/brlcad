@@ -205,12 +205,12 @@ struct rt_list *tbl2d;
 
 	pl_erase(fd);
 	pd_3space(fd,
-		fu->f_p->fg_p->min_pt[0]-1.0,
-		fu->f_p->fg_p->min_pt[1]-1.0,
-		fu->f_p->fg_p->min_pt[2]-1.0,
-		fu->f_p->fg_p->max_pt[0]+1.0,
-		fu->f_p->fg_p->max_pt[1]+1.0,
-		fu->f_p->fg_p->max_pt[2]+1.0);
+		fu->f_p->min_pt[0]-1.0,
+		fu->f_p->min_pt[1]-1.0,
+		fu->f_p->min_pt[2]-1.0,
+		fu->f_p->max_pt[0]+1.0,
+		fu->f_p->max_pt[1]+1.0,
+		fu->f_p->max_pt[2]+1.0);
 	
 	nmg_pl_fu(fd, fu, b, 255, 255, 255);
 
@@ -1689,12 +1689,12 @@ struct rt_list *tbl2d;
 
 	pl_erase(plot_fd);
 	pd_3space(plot_fd,
-		fu->f_p->fg_p->min_pt[0]-1.0,
-		fu->f_p->fg_p->min_pt[1]-1.0,
-		fu->f_p->fg_p->min_pt[2]-1.0,
-		fu->f_p->fg_p->max_pt[0]+1.0,
-		fu->f_p->fg_p->max_pt[1]+1.0,
-		fu->f_p->fg_p->max_pt[2]+1.0);
+		fu->f_p->min_pt[0]-1.0,
+		fu->f_p->min_pt[1]-1.0,
+		fu->f_p->min_pt[2]-1.0,
+		fu->f_p->max_pt[0]+1.0,
+		fu->f_p->max_pt[1]+1.0,
+		fu->f_p->max_pt[2]+1.0);
 
 	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 		if (RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC) {

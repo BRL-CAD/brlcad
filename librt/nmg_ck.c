@@ -37,9 +37,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "nmg.h"
 #include "raytrace.h"
 
-/* XXX move to raytrace.h This duplicates the extern from nmg_mesh.c */
-RT_EXTERN(double nmg_measure_fu_angle, (CONST struct edgeuse *eu, CONST vect_t xvec, CONST vect_t yvec, CONST vect_t zvec));
-
 /************************************************************************
  *									*
  *			Validator Routines				*
@@ -418,13 +415,7 @@ void
 nmg_vfg(fg)
 struct face_g *fg;
 {
-	int i;
-
 	NMG_CK_FACE_G(fg);
-
-	for (i=0 ; i < ELEMENTS_PER_PT ; ++i)
-		if (fg->min_pt[i] > fg->max_pt[i])
-			rt_bomb("nmg_vfg() face geom min_pt greater than max_pt\n");
 
 	if (fg->N[X]==0.0 && fg->N[Y]==0.0 && fg->N[Z]==0.0 &&
 	    fg->N[H]!=0.0) {
@@ -445,6 +436,7 @@ struct face *f;
 struct faceuse *fup;
 {
 	struct faceuse *fu;
+	int		i;
 
 	NMG_CK_FACE(f);
 	NMG_CK_FACEUSE(fup);
@@ -457,6 +449,10 @@ struct faceuse *fup;
 
 	if (f->fu_p != fu) rt_bomb("nmg_vface() can't get to parent faceuse from face\n");
 #endif
+
+	for (i=0 ; i < ELEMENTS_PER_PT ; ++i)
+		if (f->min_pt[i] >= f->max_pt[i])
+			rt_bomb("nmg_vface() face min_pt greater than max_pt\n");
 	
 	if (f->fg_p) nmg_vfg(f->fg_p);
 }

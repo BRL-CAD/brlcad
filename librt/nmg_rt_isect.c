@@ -1136,7 +1136,7 @@ struct faceuse *fu_p;
 
 	/* bounding box intersection */
 	if (!rt_in_rpp(rd->rp, rd->rd_invdir,
-	    fu_p->f_p->fg_p->min_pt, fu_p->f_p->fg_p->max_pt) ) {
+	    fu_p->f_p->min_pt, fu_p->f_p->max_pt) ) {
 		GET_HITMISS(myhit);
 		NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);
 		RT_LIST_MAGIC_SET(&myhit->l, NMG_RT_MISS_MAGIC);

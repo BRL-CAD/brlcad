@@ -329,6 +329,10 @@ struct face {
 	struct faceuse		*fu_p;	/* Ptr up to one use of this face */
 	struct face_g		*fg_p;	/* geometry */
 	int			flip;	/* !0 ==> flip normal of fg */
+	/* These might be better stored in a face_a (not faceuse_a!) */
+	/* These are not stored on disk */
+	point_t			min_pt;	/* minimums of bounding box */
+	point_t			max_pt;	/* maximums of bounding box */
 	long			index;	/* struct # in this model */
 };
 
@@ -336,8 +340,8 @@ struct face_g {
 	long			magic;
 	struct rt_list		f_hd;	/* list of faces sharing this surface */
 	plane_t			N;	/* Plane equation (incl normal) */
-#if 1
-/* XXX This moves to faceuse_a */
+#if 0
+/* XXX This moves to struct face */
 	point_t			min_pt;	/* minimums of bounding box */
 	point_t			max_pt;	/* maximums of bounding box */
 #endif
@@ -357,8 +361,6 @@ struct faceuse {
 
 struct faceuse_a {
 	long			magic;
-	point_t			min_pt;	/* minimums of bounding box */
-	point_t			max_pt;	/* maximums of bounding box */
 	long			index;	/* struct # in this model */
 };
 
