@@ -1,8 +1,9 @@
+
 #	Makefile -- for Frame buffer utilities
 
 #	last edit:	85/04/03	Gary S. Moss
 
-#	SCCS ID:	@(#)Makefile	1.13
+#	SCCS ID:	@(#)Makefile	1.14
 
 PRODUCTS= pp-fb fbclear fbgrid rle-fb fb-rle fbcmap
 HEADERS =
@@ -14,7 +15,7 @@ OBJS	= pp-fb.o fbclear.o fbgrid.o rle-fb.o fb-rle.o fbcmap.o fbzoom.o\
 BINDIR	= /vld/bin
 LIBDIR	= /vld/lib
 INCDIR	= /vld/include
-MANDIR	= /usr/man/man1
+MANDIR	= /usr/5lib/man/local/man1
 MANUALS	= pp-fb.1 fbclear.1 fbgrid.1 rle-fb.1 fb-rle.1 fbcmap.1 fbzoom.1
 BINPERM	= 755
 MANPERM	= 664
