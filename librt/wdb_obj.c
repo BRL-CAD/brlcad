@@ -102,6 +102,9 @@ static int wdb_prcolor_tcl();
 static int wdb_tol_tcl();
 static int wdb_push_tcl();
 static int wdb_whatid_tcl();
+static int wdb_keep_tcl();
+static int wdb_cat_tcl();
+static int wdb_instance_tcl();
 
 static void wdb_deleteProc();
 static void wdb_deleteProc_rt();
@@ -156,11 +159,11 @@ static struct bu_cmdtab wdb_cmds[] = {
 	"tol",		wdb_tol_tcl,
 	"push",		wdb_push_tcl,
 	"whatid",	wdb_whatid_tcl,
-#if 0
 	"keep",		wdb_keep_tcl,
 	"cat",		wdb_cat_tcl,
-	"units",	wdb_units_tcl,
 	"i",		wdb_instance_tcl,
+#if 0
+	"units",	wdb_units_tcl,
 	"comb_color",	wdb_comb_color_tcl,
 	"copymat",	wdb_copymat_tcl,
 	"copyeval",	wdb_copyeval_tcl,
@@ -1222,16 +1225,16 @@ wdb_trace(interp, dbip, old_xlate, flag, wdb_xform, des_path)
 		goto out;
 	}
 
-	BU_ASSERT( flag == WDB_LISTEVAL );
+	BU_ASSERT(flag == WDB_LISTEVAL);
 	bu_vls_init( &str );
-	dp = DB_FULL_PATH_CUR_DIR( &accumulated_path );
+	dp = DB_FULL_PATH_CUR_DIR(&accumulated_path);
 	RT_CK_DIR(dp);
-	wdb_do_list( dbip, interp, &str, dp, 1 );
+	wdb_do_list(dbip, interp, &str, dp, 1);
 	Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
 	bu_vls_free(&str);
 	ret = 1;
 out:
-	db_free_full_path( &accumulated_path );
+	db_free_full_path(&accumulated_path);
 	db_free_db_tree_state( &ts );
 	return ret;
 }
@@ -3753,8 +3756,6 @@ wdb_whatid_tcl(clientData, interp, argc, argv)
 	struct bu_vls vls;
 
 	if (argc != 3) {
-		struct bu_vls vls;
-
 		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "helplib wdb_whatid");
 		Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -3779,6 +3780,212 @@ wdb_whatid_tcl(clientData, interp, argc, argv)
 	rt_comb_ifree(&intern);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
+
+	return TCL_OK;
+}
+
+struct wdb_node_data {
+	FILE	     *fp;
+	Tcl_Interp   *interp;
+};
+
+#if 0
+/*XXX need to modify the Cakefiles so that LIBRT comes before LIBWDB */
+void
+wdb_node_write(dbip, dp, client_data)
+     struct db_i		*dbip;
+     register struct directory	*dp;
+     genptr_t			client_data;
+{
+	struct rt_db_internal	intern;
+	struct wdb_node_data *wndp = (struct wdb_node_data *)client_data;
+	
+
+	if (dp->d_nref++ > 0)
+		return;		/* already written */
+
+	if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL) < 0) {
+		Tcl_AppendResult(wndp->interp, "Database read error, aborting", (char *)NULL);
+		return;
+	}
+
+	if (mk_export_fwrite(wndp->fp, dp->d_namep, intern.idb_ptr, intern.idb_type)) {
+		Tcl_AppendResult(wndp->interp, "Database write error, aborting", (char *)NULL);
+		return;
+	}
+}
+#endif
+
+/*
+ * Usage:
+ *        procname keep file object(s)
+ */
+static int
+wdb_keep_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
+{
+	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+	FILE			*keepfp;
+	register struct directory *dp;
+	struct bu_vls		title;
+	register int		i;
+	struct wdb_node_data *wndp;
+
+#if 0
+	if (argc < 4 || MAXARGS < argc) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib wdb_keep");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	/* First, clear any existing counts */
+	for (i = 0; i < RT_DBNHASH; i++) {
+		for (dp = wdbp->dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw)
+			dp->d_nref = 0;
+	}
+
+	/* Alert user if named file already exists */
+	if ((keepfp = fopen(argv[2], "r")) != NULL) {
+		Tcl_AppendResult(interp, "keep:  appending to '", argv[2],
+				 "'\n", (char *)NULL);
+		fclose(keepfp);
+	}
+
+	if ((keepfp = fopen(argv[2], "a")) == NULL) {
+		perror(argv[2]);
+		return TCL_ERROR;
+	}
+	
+	/* ident record */
+	bu_vls_init(&title);
+	bu_vls_strcat(&title, "Parts of: ");
+	bu_vls_strcat(&title, wdbp->dbip->dbi_title);
+
+	if (mk_id_units2(keepfp, bu_vls_addr(&title), wdbp->dbip->dbi_localunit) < 0) {
+		perror("fwrite");
+		Tcl_AppendResult(interp, "mk_id_units() failed\n", (char *)NULL);
+		fclose(keepfp);
+		bu_vls_free(&title);
+		return TCL_ERROR;
+	}
+
+	GETSTRUCT(wndp,wdb_node_data);
+	wndp->fp = keepfp;
+	wndp->interp = interp;
+
+	for (i = 3; i < argc; i++) {
+		if ((dp = db_lookup(wdbp->dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL)
+			continue;
+		db_functree(wdbp->dbip, dp, wdb_node_write, wdb_node_write, (genptr_t)wndp);
+	}
+
+	bu_free(wndp, "wdb_keep: wndp");
+	fclose(keepfp);
+	bu_vls_free(&title);
+#endif
+	return TCL_OK;
+}
+
+/*
+ * Usage:
+ *        procname cat object(s)
+ */
+static int
+wdb_cat_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
+{
+	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+	register struct directory *dp;
+	register int arg;
+	struct bu_vls str;
+
+	if (argc < 3 || MAXARGS < argc) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib wdb_cat");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	bu_vls_init(&str);
+	for (arg = 2; arg < argc; arg++) {
+		if ((dp = db_lookup(wdbp->dbip, argv[arg], LOOKUP_NOISY)) == DIR_NULL)
+			continue;
+
+		bu_vls_trunc(&str, 0);
+		wdb_do_list(wdbp->dbip, interp, &str, dp, 0);	/* non-verbose */
+		Tcl_AppendResult(interp, bu_vls_addr(&str), "\n", (char *)NULL);
+	}
+	bu_vls_free(&str);
+
+	return TCL_OK;
+}
+
+/*
+ * Add instance of obj to comb.
+ *
+ * Usage:
+ *        procname i obj comb [op]
+ */
+static int
+wdb_instance_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
+{
+	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+	register struct directory *dp;
+	char oper;
+
+	if (wdbp->dbip->dbi_read_only) {
+		Tcl_AppendResult(interp, "Database is read-only!", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	if (argc < 4 || 5 < argc) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib wdb_instance");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	if ((dp = db_lookup(wdbp->dbip,  argv[2], LOOKUP_NOISY)) == DIR_NULL)
+		return TCL_ERROR;
+
+	oper = WMOP_UNION;
+	if (argc == 5)
+		oper = argv[4][0];
+
+	if (oper != WMOP_UNION &&
+	    oper != WMOP_SUBTRACT &&
+	    oper != WMOP_INTERSECT) {
+		struct bu_vls tmp_vls;
+
+		bu_vls_init(&tmp_vls);
+		bu_vls_printf(&tmp_vls, "bad operation: %c\n", oper);
+		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		bu_vls_free(&tmp_vls);
+		return TCL_ERROR;
+	}
+
+	if (wdb_combadd(interp, wdbp->dbip, dp, argv[3], 0, oper, 0, 0, wdbp) == DIR_NULL)
+		return TCL_ERROR;
 
 	return TCL_OK;
 }
