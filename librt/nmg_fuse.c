@@ -413,6 +413,7 @@ again:
 		NMG_CK_EDGEUSE(eu1);
 		e1 = eu1->e_p;
 		NMG_CK_EDGE(e1);
+		NMG_CK_EDGE_G_EITHER(eu1->g.magic_p);
 
 		v1a = eu1->vu_p->v_p;
 		v1b = eu1->eumate_p->vu_p->v_p;
@@ -420,15 +421,18 @@ again:
 		NMG_CK_VERTEX(v1b);
 
 		if( v1a == v1b )  {
-			/* 0-length edge.  Eliminate. */
-			/* These should't happen, but need fixing. */
-			if( nmg_keu( eu1 ) )  {
-				rt_log("nmg_model_edge_fuse() WARNING:  deletion of 0-length edgeuse=x%x caused parent to go empty.\n", eu1);
+			if( *eu1->g.magic_p == NMG_EDGE_G_LSEG_MAGIC )  {
+				/* 0-length lseg edge.  Eliminate. */
+				/* These should't happen, but need fixing. */
+				if( nmg_keu( eu1 ) )  {
+					rt_log("nmg_model_edge_fuse() WARNING:  deletion of 0-length edgeuse=x%x caused parent to go empty.\n", eu1);
+				}
+				rt_log("nmg_model_edge_fuse() 0-length edgeuse=x%x deleted\n", eu1);
+				/* XXX no way to know where edgeuse mate will be */
+				nmg_tbl( &eutab, TBL_FREE, 0 );
+				goto again;
 			}
-			rt_log("nmg_model_edge_fuse() 0-length edgeuse=x%x deleted\n", eu1);
-			/* XXX no way to know where edgeuse mate will be */
-			nmg_tbl( &eutab, TBL_FREE, 0 );
-			goto again;
+			/* For g_cnurb edges, could check for distinct param values on either end of edge */
 		}
 
 		/* For performance, don't recheck pointers here */
