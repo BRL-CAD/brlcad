@@ -38,6 +38,15 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 /* #define DEBUG_PLEU */
 
+NMG_EXTERN(void			nmg_pr_fu_briefly, (struct faceuse *fu,
+				char *h) );
+NMG_EXTERN(void			nmg_pr_lu_briefly, (struct loopuse *lu,
+				char *h) );
+NMG_EXTERN(void			nmg_pr_eu_briefly, (struct edgeuse *eu,
+				char *h) );
+NMG_EXTERN(void			nmg_pr_vu_briefly, (struct vertexuse *vu,
+				char *h) );
+
 
 /*	N M G _ T B L
  *	maintain a table of pointers (to magic numbers/structs)
@@ -186,14 +195,23 @@ struct nmg_ptbl *b;
 	return(0);
 }
 
-
-
-
-
-
-
-
-
+char *nmg_orientation(orientation)
+int	orientation;
+{
+	switch (orientation) {
+	case OT_SAME:
+		return "OT_SAME";
+	case OT_OPPOSITE:
+		return "OT_OPPOSITE";
+	case OT_NONE:
+		return "OT_NONE";
+	case OT_UNSPEC:
+		return "OT_UNSPEC";
+	case OT_BOOLPLACE:
+		return "OT_BOOLPLACE";
+	}
+	return "OT_IS_BOGUS!!";
+}
 
 /*	Print the orientation in a nice, english form
  */
@@ -404,6 +422,23 @@ char *h;
 	Return;
 }
 
+void nmg_pr_fu_briefly(fu, h)
+struct faceuse *fu;
+char *h;
+{
+	struct loopuse *lu;
+	MKPAD(h);
+	NMG_CK_FACEUSE(fu);
+
+	rt_log("%sFACEUSE %8x (%s)\n",
+		h, fu, nmg_orientation(fu->orientation));
+
+	for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
+		nmg_pr_lu_briefly(lu, h);
+	}
+	Return;
+}
+
 void nmg_pr_l(l, h)
 struct loop *l;
 char *h;
@@ -435,10 +470,6 @@ char *h;
 	NMG_CK_LOOPUSE(lu);
 
 	rt_log("%sLOOPUSE %8x\n", h, lu);
-	if (!lu || lu->l.magic != NMG_LOOPUSE_MAGIC) {
-		rt_log("bad loopuse magic\n");
-		Return;
-	}
 
 	switch (*lu->up.magic_p) {
 	case NMG_SHELL_MAGIC	: rt_log("%s%8x up.s_p\n", h, lu->up.s_p);
@@ -480,6 +511,37 @@ char *h;
 	Return;
 }
 
+void nmg_pr_lu_briefly(lu, h)
+struct loopuse *lu;
+char *h;
+{
+	struct edgeuse	*eu;
+	struct vertexuse *vu;
+	long		magic1;
+	
+	MKPAD(h);
+	NMG_CK_LOOPUSE(lu);
+
+	rt_log("%sLOOPUSE %8x, lumate_p=x%x (%s)\n",
+		h, lu, lu->lumate_p, nmg_orientation(lu->orientation) );
+
+	magic1 = RT_LIST_FIRST_MAGIC( &lu->down_hd );
+	if (magic1 == NMG_VERTEXUSE_MAGIC) {
+		vu = RT_LIST_PNEXT( vertexuse, &lu->down_hd );
+		rt_log("%s%8x down_hd->forw (vu)\n", h, vu);
+		nmg_pr_vu_briefly(vu, h);
+	}
+	else if (magic1 == NMG_EDGEUSE_MAGIC) {
+		for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
+			nmg_pr_eu_briefly(eu, h);
+		}
+	}
+	else
+		rt_log("bad loopuse child magic\n");
+
+	Return;
+}
+
 void nmg_pr_e(e, h)
 struct edge *e;
 char *h;
@@ -506,10 +568,6 @@ char *h;
 	NMG_CK_EDGEUSE(eu);
 
 	rt_log("%sEDGEUSE %8x\n", h, eu);
-	if (!eu || eu->l.magic != NMG_EDGEUSE_MAGIC) {
-		rt_log("bad edgeuse magic\n");
-		Return;
-	}
 
 	switch (*eu->up.magic_p) {
 	case NMG_SHELL_MAGIC	: rt_log("%s%8x up.s_p\n", h, eu->up.s_p);
@@ -529,6 +587,19 @@ char *h;
 	rt_log("%s%8x vu_p\n", h, eu->vu_p);
 	nmg_pr_e(eu->e_p, h);
 	nmg_pr_vu(eu->vu_p, h);
+
+	Return;
+}
+
+void nmg_pr_eu_briefly(eu, h)
+struct edgeuse *eu;
+char *h;
+{
+	MKPAD(h);
+	NMG_CK_EDGEUSE(eu);
+
+	rt_log("%sEDGEUSE %8x\n", h, eu);
+	nmg_pr_vu_briefly(eu->vu_p, h);
 
 	Return;
 }
@@ -596,6 +667,27 @@ char *h;
 	rt_log("%s%8x v_p\n", h, vu->v_p);
 	nmg_pr_v(vu->v_p, h);
 	
+	Return;
+}
+
+void nmg_pr_vu_briefly(vu, h)
+struct vertexuse *vu;
+char *h;
+{
+	struct vertex_g	*vg;
+
+	MKPAD(h);
+	NMG_CK_VERTEXUSE(vu);
+	NMG_CK_VERTEX(vu->v_p);
+
+	if( vg = vu->v_p->vg_p )  {
+		NMG_CK_VERTEX_G(vg);
+		rt_log("%sVERTEXUSE %8x, v=x%x, %f %f %f\n", h, vu, vu->v_p,
+			V3ARGS(vg->coord) );
+	} else {
+		rt_log("%sVERTEXUSE %8x, v=x%x\n", h, vu, vu->v_p);
+	}
+
 	Return;
 }
 
