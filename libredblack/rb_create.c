@@ -16,6 +16,7 @@ static char RCSid[] = "@(#) $Header$";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "rtlist.h"
 #include "redblack.h"
 #include "./rb_internals.h"
 
@@ -79,6 +80,8 @@ int	(**order_funcs)();
     tree -> rbt_current = rb_null(tree);
     for (order = 0; order < nm_orders; ++order)
 	rb_root(tree, order) = rb_null(tree);
+    RT_LIST_INIT(&(tree -> rbt_nodes.l));
+    RT_LIST_INIT(&(tree -> rbt_packages.l));
 
     /*
      *	Initialize the nil sentinel
@@ -106,6 +109,10 @@ int	(**order_funcs)();
  *	an array of one function pointer and passes it to rb_create().
  *	rb_create1() returns a pointer to the red-black tree header
  *	record.
+ *
+ *	N.B. - Since this function allocates storage for the array of
+ *	function pointers, in order to avoid memory leaks on freeing
+ *	the tree, applications should call rb_free1(), NOT rb_free().
  */
 rb_tree *rb_create1 (description, order_func)
 
