@@ -31,6 +31,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "rtlist.h"
 #include "bu.h"
 #include "bn.h"
+#include "raytrace.h"
 
 /************************************************************************
  *									*
@@ -44,20 +45,20 @@ rt_vlblock_init()
 	struct rt_vlblock *vbp;
 	int	i;
 
-	if (RT_LIST_UNINITIALIZED( &rt_g.rtg_vlfree ))
-		RT_LIST_INIT( &rt_g.rtg_vlfree );
+	if (BU_LIST_UNINITIALIZED( &rt_g.rtg_vlfree ))
+		BU_LIST_INIT( &rt_g.rtg_vlfree );
 
-	GETSTRUCT( vbp, rt_vlblock );
+	BU_GETSTRUCT( vbp, rt_vlblock );
 	vbp->magic = RT_VLBLOCK_MAGIC;
 	vbp->max = 32;
-	vbp->head = (struct rt_list *)rt_calloc( vbp->max,
-		sizeof(struct rt_list), "head[]" );
+	vbp->head = (struct bu_list *)rt_calloc( vbp->max,
+		sizeof(struct bu_list), "head[]" );
 	vbp->rgb = (long *)rt_calloc( vbp->max,
 		sizeof(long), "rgb[]" );
 
 	for( i=0; i < vbp->max; i++ )  {
 		vbp->rgb[i] = 0;	/* black, unused */
-		RT_LIST_INIT( &(vbp->head[i]) );
+		BU_LIST_INIT( &(vbp->head[i]) );
 	}
 	vbp->rgb[0] = 0xFFFF00L;	/* Yellow, default */
 	vbp->rgb[1] = 0xFFFFFFL;	/* White */
@@ -76,7 +77,7 @@ struct rt_vlblock *vbp;
 	for( i=0; i < vbp->nused; i++ )  {
 		/* Release any remaining vlist storage */
 		if( vbp->rgb[i] == 0 )  continue;
-		if( RT_LIST_IS_EMPTY( &(vbp->head[i]) ) )  continue;
+		if( BU_LIST_IS_EMPTY( &(vbp->head[i]) ) )  continue;
 		RT_FREE_VLIST( &(vbp->head[i]) );
 	}
 
@@ -85,7 +86,7 @@ struct rt_vlblock *vbp;
 	rt_free( (char *)vbp, "rt_vlblock" );
 }
 
-struct rt_list *
+struct bu_list *
 rt_vlblock_find( vbp, r, g, b )
 struct rt_vlblock *vbp;
 int	r, g, b;
@@ -144,13 +145,13 @@ CONST char *rt_vlist_cmd_descriptions[] = {
  */
 int
 rt_ck_vlist( vhead )
-CONST struct rt_list	*vhead;
+CONST struct bu_list	*vhead;
 {
 	register int		i;
 	register struct rt_vlist	*vp;
 	int			npts = 0;
 
-	for( RT_LIST_FOR( vp, rt_vlist, vhead ) )  {
+	for( BU_LIST_FOR( vp, rt_vlist, vhead ) )  {
 		register int	i;
 		register int	nused = vp->nused;
 		register int	*cmd = vp->cmd;
@@ -172,14 +173,14 @@ CONST struct rt_list	*vhead;
 				if( (*pt)[j] > -INFINITY && (*pt)[j] < INFINITY )  {
 					/* Number is good */
 				} else {
-					rt_log("  %s (%g, %g, %g)\n",
+					bu_log("  %s (%g, %g, %g)\n",
 						rt_vlist_cmd_descriptions[*cmd],
 						V3ARGS( *pt ) );
 					bu_bomb("rt_ck_vlist() bad coordinate value\n");
 				}
 				/* XXX Need a define for largest command number */
 				if( *cmd < 0 || *cmd > RT_VLIST_POLY_VERTNORM )  {
-					rt_log("cmd = x%x (%d.)\n", *cmd, *cmd);
+					bu_log("cmd = x%x (%d.)\n", *cmd, *cmd);
 					bu_bomb("rt_ck_vlist() bad vlist command\n");
 				}
 			}
@@ -196,12 +197,12 @@ CONST struct rt_list	*vhead;
  */
 void
 rt_vlist_copy( dest, src )
-struct rt_list	*dest;
-CONST struct rt_list	*src;
+struct bu_list	*dest;
+CONST struct bu_list	*src;
 {
 	struct rt_vlist	*vp;
 
-	for( RT_LIST_FOR( vp, rt_vlist, src ) )  {
+	for( BU_LIST_FOR( vp, rt_vlist, src ) )  {
 		register int	i;
 		register int	nused = vp->nused;
 		register int	*cmd = vp->cmd;
@@ -223,14 +224,14 @@ rt_vlist_cleanup()
 {
 	register struct rt_vlist	*vp;
 
-	if (RT_LIST_UNINITIALIZED( &rt_g.rtg_vlfree ))  {
-		RT_LIST_INIT( &rt_g.rtg_vlfree );
+	if (BU_LIST_UNINITIALIZED( &rt_g.rtg_vlfree ))  {
+		BU_LIST_INIT( &rt_g.rtg_vlfree );
 		return;
 	}
 
-	while( RT_LIST_WHILE( vp, rt_vlist, &rt_g.rtg_vlfree ) )  {
+	while( BU_LIST_WHILE( vp, rt_vlist, &rt_g.rtg_vlfree ) )  {
 		RT_CK_VLIST( vp );
-		RT_LIST_DEQUEUE( &(vp->l) );
+		BU_LIST_DEQUEUE( &(vp->l) );
 		rt_free( (char *)vp, "rt_vlist" );
 	}
 }
@@ -251,8 +252,8 @@ rt_vlist_cleanup()
  */
 void
 rt_vlist_export( vls, hp, name )
-struct rt_vls	*vls;
-struct rt_list	*hp;
+struct bu_vls	*vls;
+struct bu_list	*hp;
 CONST char	*name;
 {
 	register struct rt_vlist	*vp;
@@ -262,11 +263,11 @@ CONST char	*name;
 	unsigned char	*buf;
 	unsigned char	*bp;
 
-	RT_VLS_CHECK(vls);
+	BU_CK_VLS(vls);
 
 	/* Count number of element in the vlist */
 	nelem = 0;
-	for( RT_LIST_FOR( vp, rt_vlist, hp ) )  {
+	for( BU_LIST_FOR( vp, rt_vlist, hp ) )  {
 		nelem += vp->nused;
 	}
 
@@ -276,14 +277,14 @@ CONST char	*name;
 	namelen = strlen(name)+1;
 	nbytes = namelen + 4 + nelem * (1+3*8) + 2;
 
-	rt_vls_setlen( vls, nbytes );
-	buf = (unsigned char *)rt_vls_addr(vls);
-	bp = rt_plong( buf, nelem );
+	bu_vls_setlen( vls, nbytes );
+	buf = (unsigned char *)bu_vls_addr(vls);
+	bp = bu_plong( buf, nelem );
 	strncpy( (char *)bp, name, namelen );
 	bp += namelen;
 
 	/* Output cmds, as bytes */
-	for( RT_LIST_FOR( vp, rt_vlist, hp ) )  {
+	for( BU_LIST_FOR( vp, rt_vlist, hp ) )  {
 		register int	i;
 		register int	nused = vp->nused;
 		register int	*cmd = vp->cmd;
@@ -293,7 +294,7 @@ CONST char	*name;
 	}
 
 	/* Output points, as three 8-byte doubles */
-	for( RT_LIST_FOR( vp, rt_vlist, hp ) )  {
+	for( BU_LIST_FOR( vp, rt_vlist, hp ) )  {
 		register int	i;
 		register int	nused = vp->nused;
 		register point_t *pt = vp->pt;
@@ -312,8 +313,8 @@ CONST char	*name;
  */
 void
 rt_vlist_import( hp, namevls, buf )
-struct rt_list	*hp;
-struct rt_vls	*namevls;
+struct bu_list	*hp;
+struct bu_vls	*namevls;
 CONST unsigned char	*buf;
 {
 	register CONST unsigned char	*bp;
@@ -323,13 +324,13 @@ CONST unsigned char	*buf;
 	int		i;
 	point_t		point;
 
-	RT_VLS_CHECK(namevls);
+	BU_CK_VLS(namevls);
 
-	nelem = rt_glong( buf );
+	nelem = bu_glong( buf );
 	bp = buf+4;
 
 	namelen = strlen((char *)bp)+1;
-	rt_vls_strncpy( namevls, (char *)bp, namelen );
+	bu_vls_strncpy( namevls, (char *)bp, namelen );
 	bp += namelen;
 
 	pp = bp + nelem*1;
@@ -368,7 +369,7 @@ CONST struct rt_vlblock	*vbp;
 
 	for( i=0; i < vbp->nused; i++ )  {
 		if( vbp->rgb[i] == 0 )  continue;
-		if( RT_LIST_IS_EMPTY( &(vbp->head[i]) ) )  continue;
+		if( BU_LIST_IS_EMPTY( &(vbp->head[i]) ) )  continue;
 		pl_color( fp,
 			(vbp->rgb[i]>>16) & 0xFF,
 			(vbp->rgb[i]>> 8) & 0xFF,
@@ -387,11 +388,11 @@ CONST struct rt_vlblock	*vbp;
 void
 rt_vlist_to_uplot( fp, vhead )
 FILE			*fp;
-CONST struct rt_list	*vhead;
+CONST struct bu_list	*vhead;
 {
 	register struct rt_vlist	*vp;
 
-	for( RT_LIST_FOR( vp, rt_vlist, vhead ) )  {
+	for( BU_LIST_FOR( vp, rt_vlist, vhead ) )  {
 		register int		i;
 		register int		nused = vp->nused;
 		register CONST int	*cmd = vp->cmd;
@@ -411,7 +412,7 @@ CONST struct rt_list	*vhead;
 				pdv_3cont( fp, *pt );
 				break;
 			default:
-				rt_log("rt_vlist_to_uplot: unknown vlist cmd x%x\n",
+				bu_log("rt_vlist_to_uplot: unknown vlist cmd x%x\n",
 					*cmd );
 			}
 		}
@@ -525,7 +526,7 @@ struct rt_vlblock	*vbp;
 register FILE		*fp;
 double			char_size;
 {
-	register struct rt_list	*vhead;
+	register struct bu_list	*vhead;
 	register int	c;
 	mat_t	mat;
 	CONST struct uplot	*up;
@@ -647,11 +648,11 @@ double			char_size;
 			break;
 		case 't':
 			/* Text string */
-			mat_idn(mat);
-			if( RT_LIST_NON_EMPTY( vhead ) )  {
+			bn_mat_idn(mat);
+			if( BU_LIST_NON_EMPTY( vhead ) )  {
 				struct rt_vlist *vlp;
 				/* Use coordinates of last op */
-				vlp = RT_LIST_LAST( rt_vlist, vhead );
+				vlp = BU_LIST_LAST( rt_vlist, vhead );
 				VMOVE( last_pos, vlp->pt[vlp->nused-1] );
 			} else {
 				VSETALL( last_pos, 0 );
@@ -671,18 +672,18 @@ double			char_size;
 void
 rt_label_vlist_verts( vbp, src, mat, sz, mm2local )
 struct rt_vlblock	*vbp;
-struct rt_list		*src;
+struct bu_list		*src;
 mat_t			mat;
 double			sz;
 double			mm2local;
 {
 	struct rt_vlist	*vp;
-	struct rt_list	*vhead;
+	struct bu_list	*vhead;
 	char		label[256];
 
 	vhead = rt_vlblock_find( vbp, 255, 255, 255 );	/* white */
 
-	for( RT_LIST_FOR( vp, rt_vlist, src ) )  {
+	for( BU_LIST_FOR( vp, rt_vlist, src ) )  {
 		register int	i;
 		register int	nused = vp->nused;
 		register int	*cmd = vp->cmd;
