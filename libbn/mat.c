@@ -13,6 +13,7 @@
  *	mat_trn( &o, &i )		Transpose matrix i into matrix o
  *	mat_ae( &o, azimuth, elev)	Make rot matrix from azimuth+elevation
  *	mat_angles( &o, alpha, beta, gama )	Make rot matrix from angles
+ *	eigen2x2()			Eigen values and vectors
  *
  *
  * Matrix array elements have the following positions in the matrix:
@@ -46,10 +47,11 @@ static char RCSmat[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
+#include "raytrace.h"
 
 extern double	sin(), cos();
 
-static double degtorad = 0.0174532925;
+static double degtorad = 0.0174532925199433;
 
 
 /*
@@ -107,36 +109,36 @@ register matp_t im;
 /*
  *			M A T _ M U L
  *
- * Multiply matrix "im1" by "im2" and store the result in "om".
- * NOTE:  This is different from multiplying "im2" by "im1" (most
- * of the time!)
- * NOTE: "om" must not be the same as either of the inputs.
+ * Multiply matrix "a" by "b" and store the result in "o".
+ * NOTE:  This is different from multiplying "b" by "a"
+ * (most of the time!)
+ * NOTE: "o" must not be the same as either of the inputs.
  */
 void
-mat_mul( om, im1, im2 )
-register matp_t om;
-register matp_t im1;
-register matp_t im2;
+mat_mul( o, a, b )
+register matp_t o;
+register matp_t a;
+register matp_t b;
 {
-	register int em1;		/* Element subscript for im1 */
-	register int em2;		/* Element subscript for im2 */
-	register int el = 0;		/* Element subscript for om */
-	register int i;			/* For counting */
+	o[ 0] = a[ 0]*b[ 0] + a[ 1]*b[ 4] + a[ 2]*b[ 8] + a[ 3]*b[12];
+	o[ 1] = a[ 0]*b[ 1] + a[ 1]*b[ 5] + a[ 2]*b[ 9] + a[ 3]*b[13];
+	o[ 2] = a[ 0]*b[ 2] + a[ 1]*b[ 6] + a[ 2]*b[10] + a[ 3]*b[14];
+	o[ 3] = a[ 0]*b[ 3] + a[ 1]*b[ 7] + a[ 2]*b[11] + a[ 3]*b[15];
 
-	/* For each element in the output matrix... */
-	for(; el<16; el++) {
+	o[ 4] = a[ 4]*b[ 0] + a[ 5]*b[ 4] + a[ 6]*b[ 8] + a[ 7]*b[12];
+	o[ 5] = a[ 4]*b[ 1] + a[ 5]*b[ 5] + a[ 6]*b[ 9] + a[ 7]*b[13];
+	o[ 6] = a[ 4]*b[ 2] + a[ 5]*b[ 6] + a[ 6]*b[10] + a[ 7]*b[14];
+	o[ 7] = a[ 4]*b[ 3] + a[ 5]*b[ 7] + a[ 6]*b[11] + a[ 7]*b[15];
 
-		om[el] = 0.0;		/* Start with zero in output */
-		em1 = (el/4)*4;		/* Element at right of row in im1 */
-		em2 = el%4;		/* Element at top of column in im2 */
+	o[ 8] = a[ 8]*b[ 0] + a[ 9]*b[ 4] + a[10]*b[ 8] + a[11]*b[12];
+	o[ 9] = a[ 8]*b[ 1] + a[ 9]*b[ 5] + a[10]*b[ 9] + a[11]*b[13];
+	o[10] = a[ 8]*b[ 2] + a[ 9]*b[ 6] + a[10]*b[10] + a[11]*b[14];
+	o[11] = a[ 8]*b[ 3] + a[ 9]*b[ 7] + a[10]*b[11] + a[11]*b[15];
 
-		for(i=0; i<4; i++) {
-			om[el] += im1[em1] * im2[em2];
-
-			em1++;		/* Next row element in m1 */
-			em2 += 4;	/* Next column element in m2 */
-		}
-	}
+	o[12] = a[12]*b[ 0] + a[13]*b[ 4] + a[14]*b[ 8] + a[15]*b[12];
+	o[13] = a[12]*b[ 1] + a[13]*b[ 5] + a[14]*b[ 9] + a[15]*b[13];
+	o[14] = a[12]*b[ 2] + a[13]*b[ 6] + a[14]*b[10] + a[15]*b[14];
+	o[15] = a[12]*b[ 3] + a[13]*b[ 7] + a[14]*b[11] + a[15]*b[15];
 }
 
 
@@ -451,4 +453,58 @@ double alpha, beta, ggamma;
 	mat[11] = 0.0;
 	mat[12] = mat[13] = mat[14] = 0.0;
 	mat[15] = 1.0;
+}
+
+/*
+ *  Find the eigenvalues and eigenvectors of a
+ *  symmetric 2x2 matrix.
+ *	( a b )
+ *	( b c )
+ *
+ *  The eigenvalue with the smallest absolute value is
+ *  returned in val1, with its eigenvector in vec1.
+ */
+eigen2x2( val1, val2, vec1, vec2, a, b, c )
+fastf_t	*val1, *val2;
+vect_t	vec1, vec2;
+fastf_t	a, b, c;
+{
+	fastf_t	d, root;
+	fastf_t	v1, v2;
+
+	d = 0.5 * (c - a);
+
+	/* Check for diagonal matrix */
+	if( NEAR_ZERO(b, 1.0e-10) ) {
+		/* smaller mag first */
+		if( fabs(c) < fabs(a) ) {
+			*val1 = c;
+			VSET( vec1, 0.0, 1.0, 0.0 );
+			*val2 = a;
+			VSET( vec2, -1.0, 0.0, 0.0 );
+		} else {
+			*val1 = a;
+			VSET( vec1, 1.0, 0.0, 0.0 );
+			*val2 = c;
+			VSET( vec2, 0.0, 1.0, 0.0 );
+		}
+		return;
+	}
+
+	root = sqrt( d*d + b*b );
+	v1 = 0.5 * (c + a) - root;
+	v2 = 0.5 * (c + a) + root;
+
+	/* smaller mag first */
+	if( fabs(v1) < fabs(v2) ) {
+		*val1 = v1;
+		*val2 = v2;
+		VSET( vec1, b, d - root, 0.0 );
+	} else {
+		*val1 = v2;
+		*val2 = v1;
+		VSET( vec1, root - d, b, 0.0 );
+	}
+	VUNITIZE( vec1 );
+	VSET( vec2, -vec1[Y], vec1[X], 0.0 );	/* vec1 X vec2 = +Z */
 }
