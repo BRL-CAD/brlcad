@@ -987,6 +987,7 @@ Convtrimsurfs()
 			}
 		}
 	}
+	Orient_loops( r );
 	rt_log( "Converted %d Trimmed Sufaces successfully out of %d total Trimmed Sufaces\n" , convsurf , totsurfs );
 
 	(void)nmg_model_vertex_fuse( m, &tol );
