@@ -22,7 +22,7 @@
  */
 #if defined(__CAKE__irix4) || defined(__CAKE__irix5)
 # undef CFLAGS
-# define CFLAGS -O -I../h -DHAVE_STDLIB_H -DHAVE_UNISTD_H
+# define CFLAGS -O -I../h
 #endif
 
 #include "../Cakefile.prog"
