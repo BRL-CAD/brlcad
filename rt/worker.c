@@ -204,12 +204,12 @@ do_run( a, b )
 		 * SERIAL case -- one CPU does all the work.
 		 */
 		npsw = 1;
-		worker(0);
+		worker(0, NULL);
 	} else {
 		/*
 		 *  Parallel case.
 		 */
-		bu_parallel( worker, npsw );
+		bu_parallel( worker, npsw, NULL );
 	}
 
 	/* Tally up the statistics */
@@ -238,8 +238,9 @@ int	stop_worker = 0;
  *  a multiple pixel block may be removed from the work queue at once.
  */
 void
-worker(cpu)
-int	cpu;
+worker(cpu, arg)
+int		cpu;
+genptr_t	arg;
 {
 	LOCAL struct application a;
 	LOCAL vect_t point;		/* Ref point on eye or view plane */
