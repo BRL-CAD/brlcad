@@ -34,6 +34,7 @@ class Mged {
     private method add {geo}
     private method remove {geo}
     private method contents {}
+    private method open {}
     public method opendb {args}
     public method draw {args}
 }
@@ -47,7 +48,7 @@ body Mged::add {geo} {
 
 body Mged::opendb {args} {
     set len [llength $args]
-    set result [catch {eval open $args} msg]
+    set result [catch {eval Database::open $args} msg]
 
     if {$len} {
 	add $dg
