@@ -504,7 +504,6 @@ struct partition {
 
 #define FREE_PT(p,res)  { \
 			RT_CHECK_PT(p); \
-			(p)->pt_magic = 0; /* sanity */ \
 			APPEND_PT( (p), &(res->re_parthead) ); \
 			res->re_partfree++; }
 
