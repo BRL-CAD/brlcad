@@ -438,7 +438,7 @@ register struct resource *res;
 	RT_CHECK_RTI(rtip);
 	RT_RESOURCE_CHECK(res);
 
-	if( res->re_parthead.forw == PT_NULL )  {
+	if( RT_LIST_FIRST(partition, &res->re_parthead) == PT_NULL )  {
 		RT_LIST_INIT( &res->re_parthead );
 		res->re_partlen = 0;
 	}
