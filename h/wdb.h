@@ -159,5 +159,6 @@ extern double	mk_conv2mm;		/* Conversion factor to mm */
  *  Internal routines
  */
 WDB_EXTERN(int mk_freemembers, (struct wmember *headp) );
+WDB_EXTERN(int mk_export_fwrite, (FILE *fp, char *name, genptr_t gp, int id));
 
 #endif /* WDB_H */
