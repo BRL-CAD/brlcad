@@ -8,7 +8,7 @@
  *  a pointer to an optional "hooked" function that is called whenever
  *  that structure element is changed.
  *
- *  Author -
+ *  Authors -
  *	Michael John Muuss
  *	Lee A. Butler
  *
@@ -46,10 +46,10 @@ static char RCSparse[] = "@(#)$Header$ (BRL)";
  *  Parse an array of one or more doubles.
  */
 HIDDEN void
-rt_parse_double(value, count, loc)
-char *value;
-int count;
-double *loc;
+rt_parse_double(str, count, loc)
+char	*str;
+int	count;
+double	*loc;
 {
 	register int i;
 	register char *cp;
@@ -58,11 +58,11 @@ double *loc;
 	double tmp_double;
 	
 
-	for (i=0 ; i < count && *value ; ++i){
-		tmp_double = atof( value );
+	for (i=0 ; i < count && *str ; ++i){
+		tmp_double = atof( str );
 
 		/* skip text of float # */
-		numstart = value;
+		numstart = str;
 
 		/* skip sign */
 		if (*numstart == '-' || *numstart == '+') numstart++;
@@ -80,13 +80,12 @@ double *loc;
 			
 		}
 
-		/* no mantissa, no float value */
+		/* no mantissa, no float str */
 		if (cp == numstart + dot_seen)
 			return;
 
-		*((double *)loc) = tmp_double;
-		loc += sizeof(double);
-		value = cp;
+		*loc++ = tmp_double;
+		str = cp;
 
 		/* there was a mantissa, so we may have an exponent */
 		if  (*cp == 'E' || *cp == 'e') {
@@ -99,11 +98,11 @@ double *loc;
 
 			/* if there was a mantissa, skip over it */
 			if (cp != numstart)
-				value = cp;
+				str = cp;
 		}
 
 		/* skip the separator */
-		if (*value) value++;
+		if (*str) str++;
 	}
 }
 
@@ -262,7 +261,8 @@ char				*value;		/* string containing value */
 
 /*
  *			R T _ S T R U C T P A R S E
- *	parse the structure element description in the vls string "vls"
+ *
+ *	Parse the structure element description in the vls string "vls"
  *	according to the structure description in "parsetab"
  *
  *  Returns -
@@ -545,7 +545,8 @@ register double *dp;
 	}
 }
 
-/*	R T _ V L S _ S T R U C T P R I N T
+/*
+ *			R T _ V L S _ S T R U C T P R I N T
  *
  *	This differs from rt_structprint in that this output is less readable
  *	by humans, but easier to parse with the computer.
