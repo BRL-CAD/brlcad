@@ -1820,9 +1820,9 @@ register ColorMap	*cmp;
 		}
 	}
 	SGI(ifp)->mi_cmap_flag = !is_linear_cmap(ifp);
-	if( SGI(ifp)->mi_cmap_flag == 0 && prev == 0 )  return(0);
 
 	if( (ifp->if_mode & MODE_7MASK) == MODE_7SWCMAP )  {
+		if( SGI(ifp)->mi_cmap_flag == 0 && prev == 0 )  return(0);
 		/* Software color mapping, trigger a repaint */
 		sgi_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
 		if( SGI(ifp)->mi_is_gt )  {
