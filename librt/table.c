@@ -752,7 +752,7 @@ CONST struct rt_functab rt_functab[] = {
 		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_grp_uv,	rt_grp_curve,	rt_grp_class,	rt_grp_free,
 		rt_grp_plot,	rt_grp_vshot,	rt_grp_tess,	rt_nul_tnurb,
-		rt_nul_import5, rt_nul_export5,
+		rt_grp_import5, rt_grp_export5,
 		rt_grp_import,	rt_grp_export,	rt_grp_ifree,
 		rt_grp_describe,rt_grp_xform,	NULL,
 		sizeof(struct rt_grip_internal), RT_GRIP_INTERNAL_MAGIC,

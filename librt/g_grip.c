@@ -355,6 +355,88 @@ CONST struct db_i		*dbip;
 	return(0);
 }
 
+int
+rt_grp_import5( ip, ep, mat, dbip )
+struct rt_db_internal		*ip;
+CONST struct bu_external	*ep;
+register CONST mat_t		mat;
+CONST struct db_i		*dbip;
+{
+	struct rt_grip_internal *gip;
+	fastf_t			vec[7];
+	register double		f,t;
+
+	RT_CK_DB_INTERNAL( ip );
+	BU_CK_EXTERNAL( ep );
+
+	BU_ASSERT_LONG( ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 7 );
+
+	ip->idb_type = ID_GRIP;
+	ip->idb_meth = &rt_functab[ID_GRIP];
+	ip->idb_ptr = bu_malloc( sizeof(struct rt_grip_internal), "rt_grip_internal");
+
+	gip = (struct rt_grip_internal *)ip->idb_ptr;
+	gip->magic = RT_GRIP_INTERNAL_MAGIC;
+
+	/* Convert from database (network) to internal (host) format */
+	ntohd( (unsigned char *)vec, ep->ext_buf, 7 );
+
+	/* Transform the point, and the normal */
+	MAT4X3PNT( gip->center, mat, &vec[0] );
+	MAT4X3VEC( gip->normal, mat, &vec[3] );
+	if ( NEAR_ZERO(mat[15], 0.001) ) {
+		rt_bomb("rt_grip_import5, scale factor near zero.");
+	}
+	gip->mag = vec[6]/mat[15];
+
+	/* Verify that normal has unit length */
+	f = MAGNITUDE( gip->normal );
+	if( f < SMALL )  {
+		bu_log("rt_grp_import:  bad normal, len=%g\n", f );
+		return(-1);		/* BAD */
+	}
+	t = f - 1.0;
+	if( !NEAR_ZERO( t, 0.001 ) )  {
+		/* Restore normal to unit length */
+		f = 1/f;
+		VSCALE( gip->normal, gip->normal, f );
+	}
+	return 0;		/* OK */
+}
+
+/*
+ *			R T _ G R I P _ E X P O R T 5
+ *
+ */
+int
+rt_grp_export5( ep, ip, local2mm, dbip )
+struct bu_external		*ep;
+CONST struct rt_db_internal	*ip;
+double				local2mm;
+CONST struct db_i		*dbip;
+{
+	struct rt_grip_internal *gip;
+	fastf_t			vec[7];
+
+	RT_CK_DB_INTERNAL(ip);
+	if( ip->idb_type != ID_GRIP )  return(-1);
+	gip = (struct rt_grip_internal *)ip->idb_ptr;
+	RT_GRIP_CK_MAGIC(gip);
+
+	BU_CK_EXTERNAL(ep);
+	ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 7;
+	ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes, "grip external");
+
+	VSCALE( &vec[0], gip->center, local2mm );
+	VMOVE( &vec[3], gip->normal );
+	vec[6] = gip->mag * local2mm;
+
+	/* Convert from internal (host) to database (network) format */
+	htond( ep->ext_buf, (unsigned char *)vec, 7 );
+
+	return 0;
+}
+
 /*
  *			R T _ G R P _ D E S C R I B E
  *
