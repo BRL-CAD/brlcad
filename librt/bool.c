@@ -177,8 +177,8 @@ struct application	*ap;
 	register struct partition *pp;
 	struct resource		*res = ap->a_resource;
 	struct rt_i		*rtip = ap->a_rt_i;
-	FAST fastf_t		diff;
-	FAST fastf_t	tol_dist;
+	FAST fastf_t		diff, diff_se;
+	FAST fastf_t		tol_dist;
 
 	RT_CK_PT_HD(PartHdp);
 
@@ -189,6 +189,7 @@ struct application	*ap;
 	RT_CK_RTI(rtip);
 
 	if(rt_g.debug&DEBUG_PARTITION)  {
+		bu_log( "In rt_boolweave, tol_dist = %g\n", tol_dist );
 		rt_pr_partitions( rtip, PartHdp, "-----------------BOOL_WEAVE" );
 	}
 
@@ -207,6 +208,7 @@ struct application	*ap;
 		if(rt_g.debug&DEBUG_PARTITION)  {
 			point_t		pt;
 
+			bu_log( "************ Input segment:\n" );
 			rt_pr_seg(segp);
 			rt_pr_hit(" In", &segp->seg_in );
 			VJOIN1( pt, ap->a_ray.r_pt, segp->seg_in.hit_dist, ap->a_ray.r_dir );
@@ -217,6 +219,7 @@ struct application	*ap;
 			VJOIN1( pt, ap->a_ray.r_pt, segp->seg_out.hit_dist, ap->a_ray.r_dir );
 			/* XXX needs indentation added here */
 			VPRINT(" OPoint", pt );
+			bu_log( "***********\n" );
 		}
 		if( segp->seg_stp->st_bit >= rtip->nsolids) rt_bomb("rt_boolweave: st_bit");
 
@@ -333,13 +336,27 @@ struct application	*ap;
 			goto done_weave;
 		}
 
+		/* Loop through current partition list weaving the current input segment
+		 * into the list. The following three variables keep track of the current
+		 * starting point of the input segment. The starting point of the segment
+		 * moves to higher hit_dist values (as it is woven in) until it is entirely consumed.
+		 */
 		lastseg = segp;
 		lasthit = &segp->seg_in;
 		lastflip = 0;
 		for( pp=PartHdp->pt_forw; pp != PartHdp; pp=pp->pt_forw ) {
 
-			diff = lasthit->hit_dist - pp->pt_outhit->hit_dist;
-			if( diff > tol_dist )  {
+			if(rt_g.debug&DEBUG_PARTITION) {
+				bu_log( "At start of loop:\n" );
+				bu_log( "	remaining input segment: (%g - %g)\n",
+					lasthit->hit_dist, segp->seg_out.hit_dist );
+				bu_log( "	current partition: (%g - %g)\n",
+					pp->pt_inhit->hit_dist, pp->pt_outhit->hit_dist );
+				rt_pr_partitions( rtip, PartHdp, "At start of loop" );
+			}
+
+			diff_se = lasthit->hit_dist - pp->pt_outhit->hit_dist;
+			if( diff_se > tol_dist )  {
 				/* Seg starts beyond the END of the
 				 * current partition.
 				 *	PPPP
@@ -354,7 +371,8 @@ struct application	*ap;
 				continue;
 			}
 			if(rt_g.debug&DEBUG_PARTITION)  rt_pr_pt(rtip, pp);
-			if( diff > -(tol_dist) )  {
+			diff = lasthit->hit_dist - pp->pt_inhit->hit_dist;
+			if( diff_se > -(tol_dist) && diff > tol_dist )  {
 				/*
 				 * Seg starts almost "precisely" at the
 				 * end of the current partition.
@@ -376,7 +394,6 @@ struct application	*ap;
 			 *	PPPPPPPPPPP
 			 *	  SSSS...
 			 */
-			diff = lasthit->hit_dist - pp->pt_inhit->hit_dist;
 			if( diff > tol_dist )  {
 				/*
 				 * lasthit->hit_dist > pp->pt_inhit->hit_dist
