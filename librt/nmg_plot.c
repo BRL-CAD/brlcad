@@ -38,6 +38,7 @@
 static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
+#include "conf.h"
 #include <stdio.h>
 #include <fcntl.h>
 #include <signal.h>

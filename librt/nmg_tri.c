@@ -1,8 +1,12 @@
 /*	N M G _ T R I . C --- Triangulate the faces of a polygonal NMG
  * 
  */
+#include "conf.h"
 #include <stdio.h>
+#if !defined(convex) && !defined(__convex__)
+/* XXX What on earth is this? */
 #include <values.h>
+#endif
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"

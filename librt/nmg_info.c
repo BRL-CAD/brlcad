@@ -26,6 +26,7 @@
 static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
+#include "conf.h"
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"

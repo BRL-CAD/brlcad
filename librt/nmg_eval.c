@@ -20,6 +20,7 @@
 static char RCSnmg_eval[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
 #include <stdio.h>
 #include <math.h>
 #include "externs.h"

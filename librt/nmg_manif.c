@@ -1,3 +1,4 @@
+#include "conf.h"
 #include <stdio.h>
 #ifdef BSD
 #include <strings.h>
