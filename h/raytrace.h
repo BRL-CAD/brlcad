@@ -1900,7 +1900,7 @@ RT_EXTERN(void			nmg_rebound, (struct model *m) );
 RT_EXTERN(void			nmg_count_shell_kids, (struct model *m, unsigned long *total_wires, unsigned long *total_faces, unsigned long *total_points));
 
 /* nmg_manif.c */
-RT_EXTERN(int			nmg_dangling_face, (struct faceuse *fu, char *tblXXX));
+RT_EXTERN(int			nmg_dangling_face, (struct faceuse *fu));
 /* static paint_face */
 /* static set_edge_sub_manifold */
 /* static set_loop_sub_manifold */
