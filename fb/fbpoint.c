@@ -36,6 +36,7 @@ int	Run = 1;	/* Tells when to stop the main loop.	*/
 int	xflag, yflag;
 char	*xprefix = NULL;
 char	*yprefix = NULL;
+char	null_str = '\0';
 
 char usage[] = "\
 Usage: fbpoint [-h] [-x[prefix]] [-y[prefix]]\n";
@@ -142,6 +143,12 @@ char **argv;
 		fprintf( stderr, usage );
 		exit( 1 );
 	}
+
+	/* fix up pointers for printf */
+	if( xprefix == NULL )
+		xprefix = &null_str;
+	if( yprefix == NULL )
+		yprefix = &null_str;
 
 	if( (fbp = fb_open( NULL, width, height )) == NULL )
 		exit(12);
