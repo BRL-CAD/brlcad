@@ -28,8 +28,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 #include "machine.h"
 #include "vmath.h"
-#include "raytrace.h"
 #include "nmg.h"
+#include "raytrace.h"
 
 /************************************************************************
  *									*
@@ -1060,6 +1060,43 @@ char *s;
 }
 
 /*
+ *			N M G _ P R _ F U _ A R O U N D _ E U
+ *
+ *  A debugging routine to print all the faceuses around a given edge,
+ *  starting with the given edgeuse.
+ */
+void
+nmg_pr_fu_around_eu( eu )
+CONST struct edgeuse *eu;
+{
+	CONST struct edgeuse	*eu1;
+	CONST struct faceuse	*fu;
+
+	NMG_CK_EDGEUSE(eu);
+
+	eu1 = eu;
+	do {
+		/* First, the edgeuse */
+		NMG_CK_EDGEUSE(eu1);
+		fu = eu1->up.lu_p->up.fu_p;
+		NMG_CK_FACEUSE(fu);
+		rt_log("%8.8x EDGEUSE, %8.8x FACEUSE, %8.8x FACE, %s\n",
+			eu1, fu, fu->f_p, nmg_orientation(fu->orientation) );
+
+		/* Second, the edgeuse mate */
+		eu1 = eu1->eumate_p;
+		NMG_CK_EDGEUSE(eu1);
+		fu = eu1->up.lu_p->up.fu_p;
+		NMG_CK_FACEUSE(fu);
+		rt_log("%8.8x  EUMATE, %8.8x FACEUSE, %8.8x FACE, %s\n",
+			eu1, fu, fu->f_p, nmg_orientation(fu->orientation) );
+
+		/* Now back around to the radial edgeuse */
+		eu1 = eu1->radial_p;
+	} while( eu1 != eu );
+}
+
+/*
  *			N M G _ C H E C K _ R A D I A L
  *
  *	check to see if all radial uses of an edge (within a shell) are
@@ -1114,13 +1151,17 @@ struct edgeuse *eu;
 					p[0], p[1], p[2], q[0], q[1], q[2]);
 				nmg_pr_lu(eu->up.lu_p, (char *)NULL);
 				nmg_pr_lu(eu->eumate_p->up.lu_p, (char *)NULL);
-				rt_log("nmg_check_radial: bad edgeuse mate\n");
-				return(1);
+				rt_bomb("nmg_check_radial: bad edgeuse mate\n");
+				/*return(1);*/
 			}
 			eur = eur->eumate_p->radial_p;
 			NMG_CK_EDGEUSE(eur);
 			NMG_CK_LOOPUSE(eur->up.lu_p);
 			NMG_CK_FACEUSE(eur->up.lu_p->up.fu_p);
+
+			if (eur->up.lu_p->up.fu_p->orientation != curr_orient) {
+				rt_bomb("nmg_check_radial: orient error while skipping to edge on this shell\n");
+			}
 		}
 
 		/* if that radial edgeuse doesn't have the
@@ -1138,6 +1179,21 @@ struct edgeuse *eu;
 				nmg_pr_fu(eur->up.lu_p->up.fu_p, 0);
 			}
 			rt_log("nmg_check_radial: unclosed space\n");
+			{
+				/* Plot the edge in yellow, & the loops */
+				rt_g.NMG_debug |= DEBUG_PLOTEM;
+				nmg_face_lu_plot( eu1->up.lu_p, eu1->vu_p,
+					eu1->eumate_p->vu_p );
+				nmg_face_lu_plot( eur->up.lu_p, eur->vu_p,
+					eur->eumate_p->vu_p );
+				nmg_pr_fu_around_eu( eu1 );
+				eur= nmg_findeu( eu1->vu_p->v_p, eu1->eumate_p->vu_p->v_p,
+					(struct shell *)0,  eu1, 0 );
+				if( eur )  {
+					rt_log("nmg_findeu found another eu\n");
+					nmg_pr_eu(eur, 0 );
+				}
+			}
 			return(2);
 		}
 
@@ -1161,7 +1217,7 @@ struct edgeuse *eu;
  *
  *  Returns -
  *	 0	OK
- *	!0	status code from nmg_check_radial()
+ *	!0	Problem.
  */
 int
 nmg_ck_closed_surf(s)
@@ -1170,7 +1226,7 @@ struct shell *s;
 	struct faceuse *fu;
 	struct loopuse *lu;
 	struct edgeuse *eu;
-	int		status;
+	int		status = 0;
 	long		magic1;
 
 	NMG_CK_SHELL(s);
@@ -1180,9 +1236,14 @@ struct shell *s;
 			NMG_CK_LOOPUSE(lu);
 			magic1 = RT_LIST_FIRST_MAGIC( &lu->down_hd );
 			if (magic1 == NMG_EDGEUSE_MAGIC) {
+				/* Check status on all the edgeuses before quitting */
 				for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
-					if (status=nmg_check_radial(eu))
-						return(status);
+					if (nmg_check_radial(eu))
+						status = 1;
+				}
+				if( status )  {
+					rt_log("nmg_ck_closed_surf(x%x), problem with loopuse x%x\n", s, lu);
+					return 1;
 				}
 			} else if (magic1 == NMG_VERTEXUSE_MAGIC) {
 				register struct vertexuse	*vu;
