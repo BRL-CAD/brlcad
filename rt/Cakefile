@@ -4,7 +4,7 @@
 #define CONFIGDEFS	RT_CONFIG
 
 #define SRCDIR	rt
-#define PRODUCTS	rt rtrad rtpp rtray rtshot rtwalk rtcheck rtg3
+#define PRODUCTS	rt rtrad rtpp rtray rtshot rtwalk rtcheck rtg3 rtxray
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
@@ -57,6 +57,12 @@ rtray:	RTRAY_OBJ LIBRT
 
 rtpp:	RTPP_OBJ LIBRT
 	CC LDFLAGS RTPP_OBJ LIB_PRE''LIBRT LIB_PRE''LIBFB LIBFB_LIBES LIBRT_LIBES LIBMALLOC LIBES -o rtpp
+
+#define RTXRAY_OBJ	rt.o opt.o do.o worker.o mathtab.o \
+			material.o viewxray.o
+
+rtxray:	RTXRAY_OBJ LIBRT
+	CC LDFLAGS RTXRAY_OBJ LIB_PRE''LIBRT LIB_PRE''LIBFB LIBFB_LIBES LIBRT_LIBES LIBMALLOC LIBES -o rtxray
 
 #define RTRAD_OBJ	rt.o opt.o do.o worker.o mathtab.o \
 			material.o viewrad.o
