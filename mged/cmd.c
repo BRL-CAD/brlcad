@@ -165,8 +165,10 @@ static struct cmdtab cmdtab[] = {
 	{"autoview", cmd_autoview},
 	{"B", cmd_blast},
 	{"bev", f_bev},
+#if 0
 	{"import_body", cmd_import_body},
 	{"export_body", cmd_export_body},
+#endif
 	{"dbbinary", f_binary},
 	{"bot_face_fuse", f_bot_face_fuse},
 	{"bot_face_sort", cmd_bot_face_sort},
