@@ -9,21 +9,23 @@
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "msr.h"
 #include "./material.h"
 #include "./mathtab.h"
 #include "./rdebug.h"
-
 
 #define RTRANS_MAGIC 0x4a6f686e
 struct rtrans_specific {
 	long	magic;
 	double	threshold;
+	struct msr_unif	*msr;
 };
 #define CK_RTRANS_SP(_p) RT_CKMAG(_p, RTRANS_MAGIC, "rtrans_specific")
 
 static struct rtrans_specific rtrans_defaults = {
 	RTRANS_MAGIC,
-	0.5	};
+	0.5,
+	(struct msr_unif *)NULL	};
 
 #define SHDR_NULL	((struct rtrans_specific *)0)
 #define SHDR_O(m)	offsetof(struct rtrans_specific, m)
@@ -37,7 +39,6 @@ struct structparse rtrans_parse[] = {
 
 HIDDEN int	rtrans_setup(), rtrans_render();
 HIDDEN void	rtrans_print(), rtrans_free();
-double		drand48();
 
 struct mfuncs rtrans_mfuncs[] = {
 	{"rtrans",	0,	0,		0,	0,
@@ -76,7 +77,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	if( rt_structparse( matparm, rtrans_parse, (char *)rtrans_sp ) < 0 )
 		return(-1);
 
-	srand48( (long)137 );
+	rtrans_sp->msr = msr_unif_init( 0, 0 );
 
 	if( rdebug&RDEBUG_SHADE)
 		rt_structprint( rp->reg_name, rtrans_parse, (char *)rtrans_sp );
@@ -129,7 +130,8 @@ char	*dp;
 	if( rdebug&RDEBUG_SHADE)
 		rt_structprint( "random transparency", rtrans_parse, (char *)rtrans_sp );
 
-	if( rtrans_sp->threshold >= 1.0 || drand48() < rtrans_sp->threshold )
+	if( rtrans_sp->threshold >= 1.0 ||
+	    0.5 + MSR_UNIF_DOUBLE( rtrans_sp->msr ) < rtrans_sp->threshold )
 	{
 		swp->sw_transmit = 1.0;
 		swp->sw_reflect = 0.0;
