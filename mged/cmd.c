@@ -66,7 +66,7 @@ void	f_analyze(), f_sed();
 void	f_ill(), f_knob(), f_tops(), f_summary();
 void	f_prcolor(), f_color(), f_edcolor();
 void	f_plot(), f_area(), f_find(), f_edgedir();
-void	f_regdef(), f_aeview();
+void	f_regdef(), f_aeview(), f_in();
 
 static struct funtab {
 	char *ft_name;
@@ -197,8 +197,10 @@ static struct funtab {
 	f_regdef, 2, 5,
 "edgedir", "edgedir delta_x delta_y delta_z", "define direction of ARB edge being moved",
 	f_edgedir, 3, 4,
+"in", "", "keyboard entry of solids",
+	f_in, 1, 27,
 "memprint", "", "print memory maps",
-	f_memprint,1,1
+	f_memprint, 1, 1
 };
 #define NFUNC	( (sizeof(funtab)) / (sizeof(struct funtab)) )
 
@@ -229,7 +231,7 @@ cmdline()
 int
 parse_line()
 {
-#define MAXLINE		128		/* Maximum number of chars per line */
+#define MAXLINE		512		/* Maximum number of chars per line */
 	register char *lp;
 	register char *lp1;
 	static char line[MAXLINE];
@@ -395,7 +397,7 @@ f_comm()
 
 /* Quit and exit gracefully */
 /* Format: q	*/
-static void
+void
 f_quit()
 {
 	if( state != ST_VIEW )
