@@ -12,8 +12,8 @@ int	argc;
 char	**argv;
 {
 	extern	char	*match();
-	reg	FILE	*fp;
-	reg	char	*rest;
+	register	FILE	*fp;
+	register	char	*rest;
 	char		line[MAXLINE];
 
 	if (argc != 2)
@@ -40,11 +40,11 @@ char	**argv;
 
 int
 getline(fp, s, lim)
-reg	FILE	*fp;
+register	FILE	*fp;
 char		s[];
-reg	int	lim;
+register	int	lim;
 {
-	reg	int	c, i;
+	register	int	c, i;
 
 	i = 0;
 	while (--lim > 0 && (c = getc(fp)) != EOF && c != '\n')
@@ -59,10 +59,10 @@ reg	int	lim;
 
 char *
 match(s, t)
-reg	char	*s;
-reg	char	*t;
+register	char	*s;
+register	char	*t;
 {
-	reg	int	i, j;
+	register	int	i, j;
 
 	for (; *s != '\0'; s++)
 	{

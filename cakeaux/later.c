@@ -19,10 +19,10 @@ int	argc;
 char	**argv;
 {
 	Stat		statbuf;
-	reg	time_t	reftime;
-	reg	int	i, n;
-	reg	bool	count  = FALSE;
-	reg	bool	silent = FALSE;
+	register	time_t	reftime;
+	register	int	i, n;
+	register	bool	count  = FALSE;
+	register	bool	silent = FALSE;
 
 	while (argc > 1 && argv[1][0] == '-')
 	{

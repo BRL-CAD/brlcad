@@ -42,7 +42,7 @@ int	argc;
 char	**argv;
 {
 	extern	FILE	*yyin;
-	reg	int	i;
+	register	int	i;
 
 	dir_list[dircount++] = ".";
 	while (argc > 1 && argv[1][0] == '-')
@@ -160,16 +160,16 @@ nextword:
 }
 
 process(line)
-reg	char	*line;
+register	char	*line;
 {
 	extern	char	*malloc();
 	extern	int	yylineno;
 	char		buf[MAXBUF];
-	reg	char	*s, *start;
-	reg	int	i, startdir;
-	reg	bool	index;
-	reg	char	endchar;
-	reg	bool	found;
+	register	char	*s, *start;
+	register	int	i, startdir;
+	register	bool	index;
+	register	char	endchar;
+	register	bool	found;
 
 	for (s = line+1; *s != '\0' && isspace(*s); s++)
 		;

@@ -11,7 +11,7 @@ main(argc, argv)
 int	argc;
 char	**argv;
 {
-	reg	FILE	*fp;
+	register	FILE	*fp;
 	char		line[MAXLINE];
 
 	if (argc != 2 && argc != 3)
@@ -40,11 +40,11 @@ char	**argv;
 
 int
 getline(fp, s, lim)
-reg	FILE	*fp;
+register	FILE	*fp;
 char		s[];
-reg	int	lim;
+register	int	lim;
 {
-	reg	int	c, i;
+	register	int	c, i;
 
 	i = 0;
 	while (--lim > 0 && (c = getc(fp)) != EOF && c != '\n')
@@ -59,10 +59,10 @@ reg	int	lim;
 
 int
 match(s, t)
-reg	char	*s;
-reg	char	*t;
+register	char	*s;
+register	char	*t;
 {
-	reg	int	i, j;
+	register	int	i, j;
 
 	for (; *s != '\0'; s++)
 	{

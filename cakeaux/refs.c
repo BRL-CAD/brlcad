@@ -10,9 +10,9 @@ int	more = TRUE;
 main()
 {
 	extern	char	yytext[];
-	reg	FILE	*out;
-	reg	int	code;
-	reg	bool	init, ignore;
+	register	FILE	*out;
+	register	int	code;
+	register	bool	init, ignore;
 
 	out = popen("sed -e 's/[ 	]*$//'", "w");
 

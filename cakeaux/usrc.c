@@ -13,9 +13,9 @@ char	**argv;
 {
 	char		buf[80];
 	struct	stat	statbuf;
-	reg	int	i, j, errcnt;
-	reg	int	lastsuf, firstfile;
-	reg	bool	found;
+	register	int	i, j, errcnt;
+	register	int	lastsuf, firstfile;
+	register	bool	found;
 
 	lastsuf = 0;
 	firstfile = argc;

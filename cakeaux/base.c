@@ -25,7 +25,7 @@ int	more = TRUE;
 main()
 {
 	extern	char	yytext[];
-	reg	int	code;
+	register	int	code;
 
 	code = yylex();
 	while (more)
@@ -34,8 +34,8 @@ main()
 			fputs(yytext, stdout);
 		else
 		{
-			reg	int	oldcode;
-			reg	int	newcode;
+			register	int	oldcode;
+			register	int	newcode;
 
 			oldcode = code;
 			newcode = table[code].reflexive? code: -code;
