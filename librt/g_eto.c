@@ -185,7 +185,7 @@ struct rt_i		*rtip;
 	VMOVE( eto->eto_C, tip->eto_C );
 	VMOVE( Nu, tip->eto_N );
 	VUNITIZE( Nu );		/* z axis of coord sys */
-	vec_ortho( Bu, Nu );	/* x axis */
+	bn_vec_ortho( Bu, Nu );	/* x axis */
 	VUNITIZE( Bu );
 	VCROSS( Au, Nu, Bu );	/* y axis */
 	VMOVE( Cu, tip->eto_C );
@@ -808,7 +808,7 @@ CONST struct bn_tol	*tol;
 	/* generate coordinate axes */
 	VMOVE( Nu, tip->eto_N );
 	VUNITIZE( Nu );			/* z axis of coord sys */
-	vec_ortho( Bu, Nu );		/* x axis */
+	bn_vec_ortho( Bu, Nu );		/* x axis */
 	VUNITIZE( Bu );
 	VCROSS( Au, Nu, Bu );		/* y axis */
 
@@ -1071,7 +1071,7 @@ CONST struct bn_tol	*tol;
 	/* generate coordinate axes */
 	VMOVE( Nu, tip->eto_N );
 	VUNITIZE( Nu );			/* z axis of coord sys */
-	vec_ortho( Bu, Nu );		/* x axis */
+	bn_vec_ortho( Bu, Nu );		/* x axis */
 	VUNITIZE( Bu );
 	VCROSS( Au, Nu, Bu );		/* y axis */
 

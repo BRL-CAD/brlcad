@@ -488,7 +488,7 @@ struct soltab *stp;
 	 * choose a tangent plane coordinate system
 	 *  (u, v, normal) form a right-handed triple
 	 */
-	vec_ortho( u, hitp->hit_normal );
+	bn_vec_ortho( u, hitp->hit_normal );
 	VCROSS( v, hitp->hit_normal, u );
 
 	/* get the saved away scale factor */
@@ -501,7 +501,7 @@ struct soltab *stp;
 	MAT4X3VEC( tmp, ell->ell_invRSSR, v );
 	c = VDOT(v, tmp) * scale;
 
-	eigen2x2( &cvp->crv_c1, &cvp->crv_c2, vec1, vec2, a, b, c );
+	bn_eigen2x2( &cvp->crv_c1, &cvp->crv_c2, vec1, vec2, a, b, c );
 	VCOMB2( cvp->crv_pdir, vec1[X], u, vec1[Y], v );
 	VUNITIZE( cvp->crv_pdir );
 }
@@ -892,7 +892,7 @@ CONST struct bn_tol	*tol;
 	state.s = BU_LIST_FIRST(shell, &(*r)->s_hd);
 
 	/* Find the number of segments to divide 90 degrees worth into */
-	nsegs = bn_halfpi / state.theta_tol + 0.999;
+	nsegs = (int)(bn_halfpi / state.theta_tol + 0.999);
 	if( nsegs < 2 )  nsegs = 2;
 
 	/*  Find total number of strips of vertices that will be needed.

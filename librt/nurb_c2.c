@@ -117,7 +117,7 @@ fastf_t v;
 	if( srf->order[0] <= 2 && srf->order[1] <= 2)
 	{
 		cvp->crv_c1 = cvp->crv_c2 = 0;
-		vec_ortho(cvp->crv_pdir, norm);
+		bn_vec_ortho(cvp->crv_pdir, norm);
 		return;
 	}
 
@@ -133,7 +133,7 @@ fastf_t v;
 	{
 		bu_log("rt_nurb_curvature: first fundamental form is singular E = %g F= %g G = %g\n",
 			E,F,G);
-		vec_ortho(cvp->crv_pdir, norm);	/* sanity */
+		bn_vec_ortho(cvp->crv_pdir, norm);	/* sanity */
 		return;
 	}
 

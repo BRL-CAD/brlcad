@@ -277,7 +277,7 @@ struct rt_i		*rtip;
 	hlen = sqrt(hlen_sq);
 	inv_hlen = 1/hlen;
 	VSCALE( Hunit, pip->part_H, inv_hlen );
-	vec_ortho( a, Hunit );
+	bn_vec_ortho( a, Hunit );
 	VCROSS( b, Hunit, a );
 
 	/*
@@ -812,11 +812,11 @@ struct soltab		*stp;
 
 	switch( hitp->hit_surfno )  {
 	case RT_PARTICLE_SURF_VSPHERE:
-	 	vec_ortho( cvp->crv_pdir, hitp->hit_normal );
+	 	bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 	 	cvp->crv_c1 = cvp->crv_c2 = -part->part_int.part_vrad;
 		break;
 	case RT_PARTICLE_SURF_HSPHERE:
-	 	vec_ortho( cvp->crv_pdir, hitp->hit_normal );
+	 	bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 	 	cvp->crv_c1 = cvp->crv_c2 = -part->part_int.part_hrad;
 		break;
 	case RT_PARTICLE_SURF_BODY:
@@ -1007,7 +1007,7 @@ CONST struct bn_tol		*tol;
 
 	VMOVE( Hunit, pip->part_H );
 	VUNITIZE( Hunit );
-	vec_perp( a, Hunit );
+	bn_vec_perp( a, Hunit );
 	VUNITIZE(a);
 	VCROSS( b, Hunit, a );
 	VUNITIZE(b);

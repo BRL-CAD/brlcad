@@ -232,7 +232,7 @@ CONST struct bn_tol		*tol;
 	RT_GRIP_CK_MAGIC(gip);
 
 	/* The use of "x" and "y" here is not related to the axis */
-	vec_perp( xbase, gip->normal );
+	bn_vec_perp( xbase, gip->normal );
 	VCROSS( ybase, xbase, gip->normal );
 
 	/* Arrange for the cross to be 2 meters across */

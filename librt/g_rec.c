@@ -743,7 +743,7 @@ struct soltab *stp;
 		break;
 	case REC_NORM_TOP:
 	case REC_NORM_BOT:
-		vec_ortho( cvp->crv_pdir, hitp->hit_normal );
+		bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 		cvp->crv_c1 = cvp->crv_c2 = 0;
 		break;
 	default:

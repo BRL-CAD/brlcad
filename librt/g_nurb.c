@@ -198,7 +198,7 @@ struct seg		*seghead;
 	 * so we can project the surface into a 2 dimensional problem
 	 */
 
-	vec_ortho(dir1, rp->r_dir);
+	bn_vec_ortho(dir1, rp->r_dir);
 	VCROSS( dir2, rp->r_dir, dir1);
 
 	VMOVE(p1, rp->r_pt);
@@ -480,7 +480,8 @@ CONST struct bn_tol		*tol;
 		fastf_t 	rel;
 		struct knot_vector 	tkv1,
 					tkv2;
-		fastf_t		tess, num_knots;
+		fastf_t		tess;
+		int		num_knots;
 		fastf_t		rt_nurb_par_edge();
 
 		n = (struct face_g_snurb *) sip->srfs[s];
@@ -512,9 +513,9 @@ CONST struct bn_tol		*tol;
 
                 tess = (fastf_t) rt_nurb_par_edge(n, rel);
 
-                num_knots = floor(1.0/((M_SQRT1_2 / 2.0) * tess));
+                num_knots = (int)floor(1.0/((M_SQRT1_2 / 2.0) * tess));
 
-                if( num_knots < 2.0) num_knots = 2.0;
+                if( num_knots < 2) num_knots = 2;
 
                 rt_nurb_kvknot( &tkv1, n->order[0],
                         n->u.knots[0],

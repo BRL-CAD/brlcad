@@ -1786,7 +1786,7 @@ struct soltab *stp;
 
 	if( hitp->hit_surfno != TGC_NORM_BODY ) {
 		/* We hit an end plate.  Choose any tangent vector. */
-		vec_ortho( cvp->crv_pdir, hitp->hit_normal );
+		bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 		cvp->crv_c1 = cvp->crv_c2 = 0;
 		return;
 	}
@@ -1829,7 +1829,7 @@ struct soltab *stp;
 	 * choose a tangent plane coordinate system
 	 *  (u, v, normal) form a right-handed triple
 	 */
-	vec_ortho( u, hitp->hit_normal );
+	bn_vec_ortho( u, hitp->hit_normal );
 	VCROSS( v, hitp->hit_normal, u );
 
 	/* find the second fundamental form */
@@ -1839,7 +1839,7 @@ struct soltab *stp;
 	MAT4X3VEC( tmp, M, v );
 	c = VDOT(v, tmp) * scale;
 
-	eigen2x2( &cvp->crv_c1, &cvp->crv_c2, vec1, vec2, a, b, c );
+	bn_eigen2x2( &cvp->crv_c1, &cvp->crv_c2, vec1, vec2, a, b, c );
 	VCOMB2( cvp->crv_pdir, vec1[X], u, vec1[Y], v );
 	VUNITIZE( cvp->crv_pdir );
 }
@@ -2036,7 +2036,7 @@ CONST struct bn_tol	*tol;
 	}
 
 	/* get number of segments per quadrant */
-	nsegs = bn_halfpi / alpha_tol + 0.9999;
+	nsegs = (int)(bn_halfpi / alpha_tol + 0.9999);
 	if( nsegs < 2 )
 		nsegs = 2;
 
@@ -2204,9 +2204,9 @@ CONST struct bn_tol	*tol;
 			}
 
 			nells++;
-			factors = (fastf_t *)rt_realloc( factors, nells*sizeof( fastf_t ), "factors" );
-			A = (vect_t *)rt_realloc( A, nells*sizeof( vect_t ), "A vectors" );
-			B = (vect_t *)rt_realloc( B, nells*sizeof( vect_t ), "B vectors" );
+			factors = (fastf_t *)bu_realloc( factors, nells*sizeof( fastf_t ), "factors" );
+			A = (vect_t *)bu_realloc( A, nells*sizeof( vect_t ), "A vectors" );
+			B = (vect_t *)bu_realloc( B, nells*sizeof( vect_t ), "B vectors" );
 
 			for( i=nells-1 ; i>top_ell ; i-- )
 			{

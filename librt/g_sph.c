@@ -356,7 +356,7 @@ struct soltab *stp;
  	cvp->crv_c1 = cvp->crv_c2 = - sph->sph_invrad;
 
 	/* any tangent direction */
- 	vec_ortho( cvp->crv_pdir, hitp->hit_normal );
+	bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 }
 
 /*

@@ -89,7 +89,7 @@ struct rt_i		*rtip;
 	VSCALE( stp->st_center, halfp->half_eqn, halfp->half_eqn[3] );
 
 	/* X and Y basis for uv map */
-	vec_perp( halfp->half_Xbase, stp->st_center );
+	bn_vec_perp( halfp->half_Xbase, stp->st_center );
 	VCROSS( halfp->half_Ybase, halfp->half_Xbase, halfp->half_eqn );
 	VUNITIZE( halfp->half_Xbase );
 	VUNITIZE( halfp->half_Ybase );
@@ -297,7 +297,7 @@ struct soltab *stp;
 	register struct half_specific *halfp =
 		(struct half_specific *)stp->st_specific;
 
-	vec_ortho( cvp->crv_pdir, halfp->half_eqn );
+	bn_vec_ortho( cvp->crv_pdir, halfp->half_eqn );
 	cvp->crv_c1 = cvp->crv_c2 = 0;
 }
 
@@ -443,7 +443,7 @@ CONST struct bn_tol		*tol;
 	VSCALE( cent, hip->eqn, hip->eqn[3] );
 
 	/* The use of "x" and "y" here is not related to the axis */
-	vec_perp( xbase, cent );
+	bn_vec_perp( xbase, cent );
 	VCROSS( ybase, xbase, hip->eqn );
 
 	/* Arrange for the cross to be 2 meters across */
@@ -484,7 +484,7 @@ rt_hlf_xform(op, mat, ip, free, dbip)
 struct rt_db_internal	*op;
 CONST mat_t		mat;
 struct rt_db_internal *ip;
-CONST int	free;
+int	free;
 struct db_i	*dbip;
 {
 	struct rt_half_internal *hip, *hop;

@@ -282,7 +282,7 @@ register struct hit *hitp;
 struct soltab *stp;
 {
 
-	vec_ortho( cvp->crv_pdir, hitp->hit_normal );
+	bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 	cvp->crv_c1 = cvp->crv_c2 = 0;
 }
 

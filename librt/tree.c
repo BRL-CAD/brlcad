@@ -1167,25 +1167,25 @@ register dbfloat_t *dbp;
 register CONST fastf_t *ff;
 {
 
-	*dbp++ = *ff++;
-	*dbp++ = *ff++;
-	*dbp++ = *ff++;
-	*dbp++ = *ff++;
+	*dbp++ = (dbfloat_t) *ff++;
+	*dbp++ = (dbfloat_t) *ff++;
+	*dbp++ = (dbfloat_t) *ff++;
+	*dbp++ = (dbfloat_t) *ff++;
 
-	*dbp++ = *ff++;
-	*dbp++ = *ff++;
-	*dbp++ = *ff++;
-	*dbp++ = *ff++;
+	*dbp++ = (dbfloat_t) *ff++;
+	*dbp++ = (dbfloat_t) *ff++;
+	*dbp++ = (dbfloat_t) *ff++;
+	*dbp++ = (dbfloat_t) *ff++;
 
-	*dbp++ = *ff++;
-	*dbp++ = *ff++;
-	*dbp++ = *ff++;
-	*dbp++ = *ff++;
+	*dbp++ = (dbfloat_t) *ff++;
+	*dbp++ = (dbfloat_t) *ff++;
+	*dbp++ = (dbfloat_t) *ff++;
+	*dbp++ = (dbfloat_t) *ff++;
 
-	*dbp++ = *ff++;
-	*dbp++ = *ff++;
-	*dbp++ = *ff++;
-	*dbp++ = *ff++;
+	*dbp++ = (dbfloat_t) *ff++;
+	*dbp++ = (dbfloat_t) *ff++;
+	*dbp++ = (dbfloat_t) *ff++;
+	*dbp++ = (dbfloat_t) *ff++;
 }
 
 /*

@@ -559,7 +559,7 @@ struct soltab		*stp;
  	cvp->crv_c1 = cvp->crv_c2 = 0;
 
 	/* any tangent direction */
- 	vec_ortho( cvp->crv_pdir, hitp->hit_normal );
+ 	bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 
 	/* XXX This will never be called */
 	bu_log("rt_submodel_curve() not implemented, need extra fields in 'struct hit'\n");
