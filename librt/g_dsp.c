@@ -336,8 +336,8 @@ struct rt_i		*rtip;
 	VSUB2SCALE( work, stp->st_max, stp->st_min, 0.5 );
 
 	f = work[X];
-	if( work[Y] > f )  f = work[Y];
-	if( work[Z] > f )  f = work[Z];
+	if (work[Y] > f )  f = work[Y];
+	if (work[Z] > f )  f = work[Z];
 	stp->st_aradius = f;
 	stp->st_bradius = MAGNITUDE(work);
 
@@ -1068,7 +1068,7 @@ point_t curr_pt, next_pt;
 
 	if ( NdotD1 < 0.0 ) beta = -beta;
 
-	if( beta < 0.0 || beta > abs_NdotD ) {
+	if (beta < 0.0 || beta > abs_NdotD ) {
 		dlog("\tmiss tri1 %s\n", reason1 = "(beta)");
 		goto tri2;
 	}
@@ -1106,7 +1106,7 @@ tri2:
 	/* project PAxD onto AC giving scaled distance along *AD* */
 	beta = VDOT( AC, PAxD );
 	if ( NdotD2 < 0.0 ) beta = -beta;
-	if( beta < 0.0 || beta > abs_NdotD ) {
+	if (beta < 0.0 || beta > abs_NdotD ) {
 		dlog("miss tri2 %s\n", reason2 = "(beta)");
 		goto done;
 	}
@@ -2365,16 +2365,21 @@ register struct uvcoord	*uvp;
 
 	MAT4X3PNT(pt, dsp->dsp_i.dsp_mtos, hitp->hit_point);
 
+	/* compute U, V */
 	uvp->uv_u = pt[X] / (double)XSIZ(dsp);
-	if( uvp->uv_u > 1.0 )
-		uvp->uv_u = 1.0;
-	if( uvp->uv_u < 0.0 )
-		uvp->uv_u = 0.0;
+	CLAMP(uvp->uv_u, 0.0, 1.0);
+
 	uvp->uv_v = pt[Y] / (double)YSIZ(dsp);
-	if( uvp->uv_v > 1.0 )
-		uvp->uv_v = 1.0;
-	if(  uvp->uv_v < 0.0 )
-		uvp->uv_v = 0.0;
+	CLAMP(uvp->uv_v, 0.0, 1.0);
+
+
+	/* du, dv indicate the extent of the ray radius in UV coordinates.
+	 * To compute this, transform unit vectors from solid space to model
+	 * space.  We remember the length of the resultant vectors and then
+	 * unitize them to get u,v directions in model coordinate space.
+	 * 
+
+	 */
 	VSET( tmp, XSIZ(dsp), 0.0, 0.0 )
 	MAT4X3VEC( U_dir,  dsp->dsp_i.dsp_stom, tmp )
 	U_len = MAGNITUDE( U_dir );
@@ -2387,34 +2392,38 @@ register struct uvcoord	*uvp;
 	one_over_len = 1.0/V_len;
 	VSCALE( V_dir, V_dir, one_over_len )
 
+	/* divide the hit-point radius by the U/V unit length distance */
 	r = ap->a_rbeam + ap->a_diverge * hitp->hit_dist;
 	min_r_U = r / U_len;
 	min_r_V = r / V_len;
 
+	/* compute UV_dir, a vector in the plane of the hit point (surface)
+	 * which points in the anti-rayward direction
+	 */
 	VREVERSE( rev_dir, ap->a_ray.r_dir )
 	VMOVE( norm, hitp->hit_normal )
 	dot_N = VDOT( rev_dir, norm );
 	VJOIN1( UV_dir, rev_dir, -dot_N, norm )
 	VUNITIZE( UV_dir )
-	if( NEAR_ZERO( dot_N, SMALL_FASTF ) )
-	{
+
+	if (NEAR_ZERO( dot_N, SMALL_FASTF ) ) {
+		/* ray almost perfectly 90 degrees to surface */
 		uvp->uv_du = 0.5;
 		uvp->uv_dv = 0.5;
-	}
-	else
-	{
+	} else {
+		/* somehow this computes the extent of U and V in the radius */
 		uvp->uv_du = (r / U_len) * VDOT( UV_dir, U_dir ) / dot_N;
 		uvp->uv_dv = (r / V_len) * VDOT( UV_dir, V_dir ) / dot_N;
 	}
 
-	if( uvp->uv_du < 0.0 )
+	if (uvp->uv_du < 0.0 )
 		uvp->uv_du = -uvp->uv_du;
-	if( uvp->uv_du < min_r_U )
+	if (uvp->uv_du < min_r_U )
 		uvp->uv_du = min_r_U;
 
-	if( uvp->uv_dv < 0.0 )
+	if (uvp->uv_dv < 0.0 )
 		uvp->uv_dv = -uvp->uv_dv;
-	if( uvp->uv_dv < min_r_V )
+	if (uvp->uv_dv < min_r_V )
 		uvp->uv_dv = min_r_V;
 
 	if (rt_g.debug & DEBUG_HF)
@@ -2560,7 +2569,7 @@ struct bn_tol		*tol;
 	}
 
 	/* now draw the body of the top */
-	if( ttol->rel )  {
+	if (ttol->rel )  {
 		int	rstep;
 		rstep = dsp_ip->dsp_xcnt;
 		V_MAX( rstep, dsp_ip->dsp_ycnt );
@@ -2578,7 +2587,7 @@ struct bn_tol		*tol;
 				(double)goal )
 			);
 	}
-	if( step < 1 )  step = 1;
+	if (step < 1 )  step = 1;
 
 
 	xfudge = (dsp_ip->dsp_xcnt % step + step) / 2 ;
@@ -2684,7 +2693,7 @@ register CONST mat_t		mat;
 
 
 	/* Check record type */
-	if( rp->u_id != DBID_STRSOL )  {
+	if (rp->u_id != DBID_STRSOL )  {
 		bu_log("rt_dsp_import: defective record\n");
 		return(-1);
 	}
@@ -2725,7 +2734,7 @@ register CONST mat_t		mat;
 	bn_mat_inv(dsp_ip->dsp_mtos, dsp_ip->dsp_stom);
 
 	/* get file */
-	if( !(dsp_ip->dsp_mp = bu_open_mapped_file( dsp_ip->dsp_file, "dsp"))) {
+	if (!(dsp_ip->dsp_mp = bu_open_mapped_file( dsp_ip->dsp_file, "dsp"))) {
 		IMPORT_FAIL("unable to open");
 	}
 	if (dsp_ip->dsp_mp->buflen != dsp_ip->dsp_xcnt*dsp_ip->dsp_ycnt*2) {
@@ -2760,7 +2769,7 @@ double				local2mm;
 
 
 	RT_CK_DB_INTERNAL(ip);
-	if( ip->idb_type != ID_DSP )  return(-1);
+	if (ip->idb_type != ID_DSP )  return(-1);
 	dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
 	RT_DSP_CK_MAGIC(dsp_ip);
 
