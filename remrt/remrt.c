@@ -168,16 +168,17 @@ int argc; char **argv;
 	/* Listen for our PKG connections */
 	if( (tcp_listen_fd = pkg_initserver("rtsrv", 8, errlog)) < 0 )
 		exit(1);
-	printf("CTL listening\n");
+	printf("REMRT listening\n");
 	(void)signal( SIGPIPE, SIG_IGN );
 	clients = (1<<0);
 
 	while(clients)  {
+		(void)signal( SIGINT, SIG_IGN );
 		check_input( 30 );	/* delay 30 secs */
 	}
 	/* Might want to see if any work remains, and if so,
 	 * record it somewhere */
-	printf("CTL out of clients\n");
+	printf("REMRT out of clients\n");
 	exit(0);
 }
 
@@ -274,7 +275,7 @@ register struct pkg_conn *pc;
 
 	fd = pc->pkc_fd;
 	sp = &servers[fd];
-	printf("CTL closing fd %d %s\n", fd, sp->sr_name);
+	printf("REMRT closing fd %d %s\n", fd, sp->sr_name);
 	if( fd <= 3 || fd >= NFD )  {
 		printf("That's unreasonable, forget it!\n");
 		return;
@@ -859,7 +860,7 @@ next_frame: ;
 			return;
 		/* Nothing to do, and nobody still working */
 		running = 0;
-		printf("CTL:  All work done!\n");
+		printf("REMRT:  All work done!\n");
 		if( detached )  exit(0);
 		return;
 	}
