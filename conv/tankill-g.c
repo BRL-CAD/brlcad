@@ -485,7 +485,7 @@ char *argv[];
 
 		/* make the region */
 		if (mk_lrcomb( out_fp , name , &reg_head , 1 , (char *)NULL ,
-			(char *)NULL , (char *)NULL , ptr->ident , 0 ,
+			(char *)NULL , (unsigned char *)NULL , ptr->ident , 0 ,
 			1 , 100 , 0 ) )
 		{
 			rt_bomb( "tankill: Error in freeing region memory" );
@@ -521,7 +521,9 @@ char *argv[];
 			sprintf( name , "%02dXX_codes" , i );
 
 			/* make the group */
-			if( mk_lcomb( out_fp , name , &reg_head , 0, (char *)0, (char *)0, (char *)0, 0 ) )
+			if( mk_lcomb( out_fp , name , &reg_head , 0,
+				(char *)NULL, (char *)NULL,
+				(unsigned char *)NULL, 0 ) )
 			{
 				rt_bomb( "tankill: Error in freeing region memory" );
 			}
@@ -553,7 +555,8 @@ char *argv[];
 		{
 			/* make the group */
 			sprintf( name , "%dXXX_codes" , i );
-			if( mk_lcomb( out_fp , name , &reg_head , 0, (char *)0, (char *)0, (char *)0, 0 ) )
+			if( mk_lcomb( out_fp , name , &reg_head , 0,
+			(char *)NULL, (char *)NULL, (unsigned char *)0, 0 ) )
 			{
 				rt_bomb( "tankill: Error in freeing region memory" );
 			}
@@ -591,7 +594,8 @@ char *argv[];
 	}
 	if( all_len )
 	{
-		if( mk_lcomb( out_fp , "all" , &reg_head , 0, (char *)0, (char *)0, (char *)0, 0 ) )
+		if( mk_lcomb( out_fp , "all" , &reg_head , 0,
+		    (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0 ) )
 			rt_bomb( "tankill: Error in freeing region memory" );
 	}
 	return 0;
