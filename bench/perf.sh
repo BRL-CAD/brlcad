@@ -20,11 +20,14 @@ HOST="$1"
 NOTE1="$2"
 NOTE2="$3"
 
-INFILES="moss.log world.log star.log bldg391.log"
-VAXREF="122.64 59.33 46.28 45.95"
+NEW_FILES="moss.log world.log star.log bldg391.log"
+REF_FILES="../pix/moss.log ../pix/world.log ../pix/star.log ../pix/bldg391.log"
 
 # Use TR to convert newlines to tabs.
-CURVALS=`grep RTFM $INFILES | \
+VGRREF=`grep RTFM $REF_FILES | \
+	sed -n -e 's/^.*= *//' -e 's/ rays.*//p' | \
+	tr '\012' '\011' `
+CURVALS=`grep RTFM $NEW_FILES | \
 	sed -n -e 's/^.*= *//' -e 's/ rays.*//p' | \
 	tr '\012' '\011' `
 
@@ -35,7 +38,7 @@ RATIO_LIST=""
 # and CURVALS are all positive (ie, no leading dashes), so this is safe.
 set $CURVALS
 
-for ref in $VAXREF
+for ref in $VGRREF
 do
 	cur=$1
 	shift
