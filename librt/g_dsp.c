@@ -630,10 +630,10 @@ void
 cell_minmax(dsp, x, y, cell_min, cell_max)
 register struct dsp_specific *dsp;
 register int x, y;
-short *cell_min;
-short *cell_max;
+unsigned short *cell_min;
+unsigned short *cell_max;
 {
-	register short cmin, cmax, v;
+	register unsigned short cmin, cmax, v;
 
 	RT_DSP_CK_MAGIC(dsp);
 
@@ -679,8 +679,8 @@ double dist2;		  /* distance to second cell hit */
 	point_t tmp, pt, in_pt, out_pt;
 	vect_t	A_B;
 	vect_t	A_C;
-	short	min_val;
-	short	max_val;
+	unsigned short	min_val;
+	unsigned short	max_val;
 	int	outside;
 
 
@@ -1264,7 +1264,7 @@ int surf;	/* wall of cell to intersect */
 double dist;	/* in-hit distance to cell along ray */
 point_t pt;	/* point on cell wall */
 {
-	short a, b;	/* Elevation values on cell wall */
+	unsigned short a, b;	/* Elevation values on cell wall */
 	double wall_top_slope;
 	double wall_top;	/* wall height at Y of curr_pt */
 	double pt_dy;
@@ -1338,7 +1338,7 @@ int surf;
 double dist;
 point_t pt;
 {
-	short a, b;	/* points on cell wall */
+	unsigned short a, b;	/* points on cell wall */
 	double wall_top_slope;
 	double wall_top;	/* wall height at Y of pt */
 	double pt_dx;
@@ -1527,8 +1527,8 @@ isect_ray_cell(isect, cs)
 struct isect_stuff *isect;
 struct cell_stuff *cs;
 {
-	short	cell_min;
-	short	cell_max;
+	unsigned short	cell_min;
+	unsigned short	cell_max;
 	int hit;
 
 	RT_DSP_CK_MAGIC(isect->dsp);
