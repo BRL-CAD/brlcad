@@ -23,17 +23,17 @@
 			 --exec-prefix=BASEDIR --prefix=BASEDIR \
 			 --with-tcl=[[pwd]]/[[echo LIBTCL_DIR]] \
 			 --with-tk=[[pwd]]/[[echo LIBTK_DIR]]
-#define PRODUCTS	libitcl3.2.so& libitk3.2.so&
-#define SHARED_PRODUCT	libitcl3.2.so''[[LIBVERS]] libitk3.2.so''[[LIBVERS]]
-#define	AFTER_MAKE	/* mv -f libitcl3.2.so libitcl3.2.so''[[LIBVERS]] ; \
-			mv -f libitk3.2.so libitk3.2.so''[[LIBVERS]] ; \
-			sharedliblink.sh libitcl3.2.so''[[LIBVERS]] ; \
-			sharedliblink.sh libitk3.2.so''[[LIBVERS]] ; */ \
-			rm -f libitcl.so libitk.so ; \
-			cp [[pwd]]/itcl/libitcl3.2.so . ; \
-			cp [[pwd]]/itk/libitk3.2.so . ; \
-			ln -s libitk3.2.so libitk.so ; \
-			ln -s libitcl3.2.so libitcl.so
+#define PRODUCTS	libitcl3.2.so libitk3.2.so
+#define SHARED_PRODUCT	libitcl3.2.[[echo ARCH_SUF]]''[[LIBVERS]] libitk3.2.[[echo ARCH_SUF]]''[[LIBVERS]]
+#define	AFTER_MAKE	/* mv -f libitcl3.2.ARCH_SUF libitcl3.2.ARCH_SUF''[[LIBVERS]] ; \
+			mv -f libitk3.2.ARCH_SUF libitk3.2.ARCH_SUF''[[LIBVERS]] ; \
+			sharedliblink.sh libitcl3.2.ARCH_SUF''[[LIBVERS]] ; \
+			sharedliblink.sh libitk3.2.ARCH_SUF''[[LIBVERS]] ; */ \
+			rm -f libitcl.ARCH_SUF libitk.ARCH_SUF ; \
+			cp [[pwd]]/itcl/libitcl3.2.[[echo ARCH_SUF]] [[pwd]] ; \
+			cp [[pwd]]/itk/libitk3.2.[[echo ARCH_SUF]] [[pwd]] ; \
+			ln -s libitk3.2.[[echo ARCH_SUF]] libitk.ARCH_SUF ; \
+			ln -s libitcl3.2.[[echo ARCH_SUF]] libitcl.ARCH_SUF
 #endif
 
 /* Rule to see if cake is running with -s flag */
@@ -70,11 +70,11 @@ noprod&:
 
 #ifdef NFS
 clobber&:
-	rm -f *.MTYPE *.o config.log config.status Makefile lib* *.a *.so
+	rm -f *.MTYPE *.o confdefs.h config.log config.status Makefile lib* *.a *.so *.ARCH_SUF
 	rm -rf itcl itk iwidgets*
 #else
 clobber&:
-	rm -f *.MTYPE *.o config.log config.status Makefile lib* *.a *.so
+	rm -f *.MTYPE *.o confdefs.h config.log config.status Makefile lib* *.a *.so *.ARCH_SUF
 #endif
 
 install&: Makefile.MTYPE
