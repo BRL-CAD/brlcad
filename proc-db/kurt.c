@@ -24,11 +24,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
-#include "db.h"
+#include "bu.h"
 #include "vmath.h"
+#include "bn.h"
 #include "raytrace.h"
+#include "wdb.h"
 
-#include "../librt/complex.h"
 #include "../librt/polyno.h"
 
 mat_t	identity;
@@ -332,5 +333,5 @@ char	*rgb;
 	mat_mul( both, xlate, rot );
 
 	mk_comb( stdout, name, 1, 1, "light", "shadows=1", rgb, 0 );
-	mk_memb( stdout, nbuf, both, UNION );
+	mk_memb( stdout, nbuf, both, WMOP_UNION );
 }
