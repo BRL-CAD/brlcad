@@ -630,6 +630,7 @@ CONST struct rt_tol	*tol;
 	 *  shared.
 	 */
 	if( fabs(VDOT(fg1->N, fg2->N)) >= 0.99  &&
+	    fabs(fg1->N[3]) - fabs(fg2->N[3]) < 100 * tol->dist  &&
 	    nmg_is_common_bigloop( f1, f2 ) )  {
 		if( VDOT( fg1->N, fg2->N ) < 0 )  flip2 = 1;
 		if (rt_g.NMG_debug & DEBUG_MESH)  {
