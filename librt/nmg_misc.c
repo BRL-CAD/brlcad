@@ -1232,7 +1232,7 @@ struct edgeuse *eu;
 {
 	NMG_CK_EDGEUSE(eu);
 
-	if (*eu->up.magic_p == NMG_LOOP_MAGIC &&
+	if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC &&
 		*eu->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC)
 			return eu->up.lu_p->up.fu_p;
 
