@@ -52,8 +52,16 @@ typedef double	fastf_t;	/* double|float, "Fastest" float type */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 
+
+#ifndef PARALLEL
+#define RES_INIT(ptr)		;
+#define RES_ACQUIRE(ptr)	;
+#define RES_RELEASE(ptr)	;
+#else
+#define RES_INIT(ptr)		RES_RELEASE(ptr)
 /* RES_ACQUIRE is a function in rt.c, using tas instruction */
 #define RES_RELEASE(ptr)	*(ptr)=0;
+#endif
 
 #endif alliant
 
