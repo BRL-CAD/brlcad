@@ -1044,7 +1044,12 @@ struct solidrec *in;
 		return(0);
 
 	case TEC:
-		r1 = iv[12];	/* P */
+		/* r1 is a ratio, hence "unitless".  However, during input
+		 *	it was converted to base units along with the other
+		 *	parameters, so this must be "undone".
+		 */
+		r1 = iv[12] * base2local;
+
 		if( r1 == 0.0 )  {
 			(void)printf("ERROR, magnitude is zero!\n");
 			return(-1);
