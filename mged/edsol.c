@@ -2850,9 +2850,18 @@ CONST vect_t	mousevec;
 			struct model	*m = 
 				(struct model *)es_int.idb_ptr;
 			struct edge	*e;
+			struct rt_tol	tmp_tol;
 			NMG_CK_MODEL(m);
+
+			/* Picking an edge should not depend on tolerances! */
+			tmp_tol.magic = RT_TOL_MAGIC;
+			tmp_tol.dist = 0.0;
+			tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
+			tmp_tol.perp = 0.0;
+			tmp_tol.para = 1 - tmp_tol.perp;
+
 			if( (e = nmg_find_e_nearest_pt2( &m->magic, mousevec,
-			    model2view, &mged_tol )) == (struct edge *)NULL )  {
+			    model2view, &tmp_tol )) == (struct edge *)NULL )  {
 				rt_log("ECMD_NMG_EPICK: unable to find an edge\n");
 				return;
 			}
