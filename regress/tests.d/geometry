@@ -143,7 +143,7 @@ for PRIM in $PRIMITIVES ; do
     set extrude_DB_ARGS ""
 
     #
-    # () Arguments
+    # (grip) Arguments
     # 
     # in args =>
     # db args =>
@@ -152,7 +152,7 @@ for PRIM in $PRIMITIVES ; do
     set grip_DB_ARGS ""
 
     #
-    # () Arguments
+    # (half) Arguments
     # 
     # in args =>
     # db args =>
@@ -161,7 +161,7 @@ for PRIM in $PRIMITIVES ; do
     set half_DB_ARGS ""
 
     #
-    # () Arguments
+    # (hf) Arguments
     # 
     # in args =>
     # db args =>
@@ -170,7 +170,7 @@ for PRIM in $PRIMITIVES ; do
     set hf_DB_ARGS ""
 
     #
-    # () Arguments
+    # (nmg) Arguments
     # 
     # in args =>
     # db args =>
@@ -179,7 +179,7 @@ for PRIM in $PRIMITIVES ; do
     set nmg_DB_ARGS ""
 
     #
-    # () Arguments
+    # (nurb) Arguments
     # 
     # in args =>
     # db args =>
