@@ -1,15 +1,30 @@
 /*
- *	dbcp.c
+ *			D B C P . C
  *
- *	Double-buffered copy program for V7
+ *	Double-buffered copy program for UNIX
  *
- *	Doug Kingston @ DPW
- *
- *	Compile:  cc dbcp.c -o dbcp -i -O -7
  *	Usage:    dbcp {nblocks} < inputfile > outputfile
+ *
+ *  Author -
+ *	Doug Kingston
+ *  
+ *  Source -
+ *	Davis, Polk, and Wardwell
+ *	Chase Manhattan Building
+ *	New York, NY
+ *  
+ *  Distribution Status -
+ *	Public Domain, Distribution Unlimitied.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
 
 #include	<stdio.h>
+
+extern int	getopt();
+extern char	*optarg;
+extern int	optind;
 
 #define	STOP	0170
 #define	GO	0017
@@ -22,11 +37,20 @@ struct pipefds {
 int	pid;
 long	count;
 
+int	verbose;
+
 char	errbuf[BUFSIZ];
 
 extern char *malloc();
 extern int errno;
 
+static char	usage[] = "\
+Usage:  dbcp [-v] blocksize < input > output\n\
+	(blocksize = number of 512 byte 'blocks' per record)\n";
+
+/*
+ *			M A I N
+ */
 main (argc, argv)
 int	argc;
 char	**argv;
@@ -38,15 +62,27 @@ char	**argv;
 	int	wfd;		/* pipe to write message to */
 	int	exitval;
 	int	saverrno;
+	int	waitcode;
 	char	msgchar;
 	struct pipefds par2chld, chld2par;
+	int	c;
 
-	if (argc != 2) {
-		fprintf(stderr, "Usage:  %s blocksize < input > output\n", argv[0]);
-		fprintf(stderr, "        (blocksize = number of 512 byte sectors)\n");
-		exit(1);
+	while ( (c = getopt( argc, argv, "v" )) != EOF )  {
+		switch( c )  {
+		case 'v':
+			verbose = 1;
+			break;
+		default:
+			(void)fputs(usage, stderr);
+			exit(1);
+		}
 	}
-	size = 512 * atoi(argv[1]);
+
+	if( optind >= argc )  {
+		(void)fputs(usage, stderr);
+		exit(2);
+	}
+	size = 512 * atoi(argv[optind]);
 
 	setbuf (stderr, errbuf);
 	if ((buffer = malloc(size)) == NULL) {
@@ -84,7 +120,7 @@ char	**argv;
 	exitval = 0;
 	count = 0L;
 	while (1) {
-		if ((nread = read (0, buffer, size)) != size) {
+		if ((nread = mread (0, buffer, size)) != size) {
 			saverrno = errno;
 			msgchar = STOP;
 		} else
@@ -100,7 +136,7 @@ char	**argv;
 			break;
 		}
 		if(nread == 0) {
-			prs("EOF on input\n");
+			if(verbose) prs("EOF on input\n");
 			break;
 		}
 		if(nread != size)
@@ -143,7 +179,7 @@ childstart:
 			break;
 		}
 		if (msgchar == STOP) {
-			prs("Got STOP READ\n");
+			if(verbose) prs("Got STOP READ\n");
 			break;
 		} else if (msgchar != GO) {
 			prs("Got bad READ message 0%o\n", msgchar&0377);
@@ -152,9 +188,9 @@ childstart:
 		}
 	}
 
-	prs ("%ld records copied\n", count);
+	if(verbose) prs ("%ld records copied\n", count);
 	if(pid)
-		while (wait(&saverrno) > 0);	/* rip off saverrno */
+		while (wait(&waitcode) > 0);
 	exit(exitval);
 }
 
@@ -164,4 +200,37 @@ char	*fmt, *a, *b, *c;
 	fprintf(stderr, "dbcp: (%s) ", pid ? "PARENT" : "CHILD");
 	fprintf(stderr, fmt, a, b, c);
 	fflush(stderr);
+}
+
+/*
+ *			M R E A D
+ *
+ * This function performs the function of a read(II) but will
+ * call read(II) multiple times in order to get the requested
+ * number of characters.  This can be necessary because pipes
+ * and network connections don't deliver data with the same
+ * grouping as it is written with.  Written by Robert S. Miles, BRL.
+ */
+int
+mread(fd, bufp, n)
+int	fd;
+register char	*bufp;
+int	n;
+{
+	register int	count = 0;
+	register int	nread;
+
+	do {
+		nread = read(fd, bufp, (unsigned)n-count);
+		if(nread < 0)  {
+			perror("dbcp: mread");
+			return(-1);
+		}
+		if(nread == 0)
+			return((int)count);
+		count += (unsigned)nread;
+		bufp += nread;
+	 } while(count < n);
+
+	return((int)count);
 }
