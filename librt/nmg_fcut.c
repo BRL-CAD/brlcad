@@ -2483,6 +2483,11 @@ struct nmg_ray_state	*rs;
 
 	NMG_CK_EDGE(e);
 	NMG_CK_RAYSTATE(rs);
+
+	if(rt_g.NMG_debug&DEBUG_FCUT)  {
+		rt_log("nmg_edge_geom_isect_line(e=x%x) eg=x%x, rs->eg=x%x at start\n",
+			e, e->eg_p, rs->eg_p);
+	}
 	if( !e->eg_p )  {
 		/* No edge geometry so far */
 		if( !rs->eg_p )  {
@@ -2495,10 +2500,10 @@ struct nmg_ray_state	*rs;
 		} else {
 			nmg_use_edge_g( e, rs->eg_p );
 		}
-		return;
+		goto out;
 	}
 	/* Edge has edge geometry */
-	if( e->eg_p == rs->eg_p )  return;
+	if( e->eg_p == rs->eg_p )  return;	/* nothing changes */
 	if( !rs->eg_p )  {
 		/* Smash edge geom with isect line geom, and remember it */
 		eg = e->eg_p;
@@ -2506,7 +2511,7 @@ struct nmg_ray_state	*rs;
 		VMOVE( eg->e_pt, rs->pt );
 		VMOVE( eg->e_dir, rs->dir );
 		rs->eg_p = eg;
-		return;
+		goto out;
 	}
 	/*
 	 * Edge has an edge geometry struct, different from that of isect line.
@@ -2519,6 +2524,11 @@ struct nmg_ray_state	*rs;
 	/* Only need one call to do whole model, with new routine */
 	nmg_move_eg( e->eg_p, rs->eg_p, rs->sB );
 #endif
+out:
+	if(rt_g.NMG_debug&DEBUG_FCUT)  {
+		rt_log("nmg_edge_geom_isect_line(e=x%x) eg=x%x, rs->eg=x%x at end\n",
+			e, e->eg_p, rs->eg_p);
+	}
 }
 
 /*
