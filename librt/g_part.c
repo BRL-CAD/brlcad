@@ -7,8 +7,9 @@
  *	and hemisphere-tipped cone.
  *	This code draws on the examples of g_rec (Davisson) & g_sph (Dykstra).
  *
- *  Author -
+ *  Authors -
  *	Michael John Muuss
+ *	Paul Tanenbaum
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -154,6 +155,15 @@
  *
  *  THE HEMISPHERES.
  *
+ *  THE "EQUIVALENT CONE":
+ *
+ *  In order to have exact matching of the surface normals at the join
+ *  between the conical body of the particle and the hemispherical end,
+ *  it is necessary to alter the cone to form an "equivalent cone",
+ *  where the end caps of the cone are both shifted away from the
+ *  large hemisphere and towards the smaller one.
+ *  This makes the cone end where it is tangent to the hemisphere.
+ *  The calculation for theta come from a diagram drawn by PJT on 18-Nov-99.
  */
 #ifndef lint
 static char RCSpart[] = "@(#)$Header$ (BRL)";
@@ -175,6 +185,13 @@ struct part_specific {
 	struct rt_part_internal	part_int;
 	mat_t			part_SoR;	/* Scale(Rot(vect)) */
 	mat_t			part_invRoS;	/* invRot(Scale(vect)) */
+	fastf_t			part_vrad_prime;
+	fastf_t			part_hrad_prime;
+	/* For the "equivalent cone" */
+	fastf_t			part_v_hdist;	/* dist of base plate on unit cone */
+	fastf_t			part_h_hdist;
+	fastf_t			part_v_erad;	/* radius of equiv. particle */
+	fastf_t			part_h_erad;
 };
 
 /* hit_surfno flags for which end was hit */
@@ -220,6 +237,12 @@ struct rt_i		*rtip;
 	mat_t		S;
 	vect_t		max, min;
 	vect_t		tip;
+	fastf_t		inv_hlen;
+	fastf_t		hlen;
+	fastf_t		hlen_sq;
+	fastf_t		r_diff;
+	fastf_t		sin_theta;
+	fastf_t		cos_theta;
 
 	RT_CK_DB_INTERNAL( ip );
 	pip = (struct rt_part_internal *)ip->idb_ptr;
@@ -244,10 +267,40 @@ struct rt_i		*rtip;
 		return(0);		/* OK */
 	}
 
-	VMOVE( Hunit, pip->part_H );
-	VUNITIZE( Hunit );
+	/* Compute some essential terms */
+	hlen_sq = MAGSQ(pip->part_H );
+	hlen = sqrt(hlen_sq);
+	inv_hlen = 1/hlen;
+	VSCALE( Hunit, pip->part_H, inv_hlen );
 	vec_ortho( a, Hunit );
 	VCROSS( b, Hunit, a );
+
+	/*
+	 *  Compute parameters for the "equivalent cone"
+	 */
+	r_diff = (pip->part_vrad - pip->part_hrad) * inv_hlen;
+	sin_theta = sqrt( 1 - r_diff * r_diff );
+	cos_theta = fabs( r_diff );
+
+	/* This makes them larger */
+	part->part_v_erad = pip->part_vrad / sin_theta;
+	part->part_h_erad = pip->part_hrad / sin_theta;
+
+	/* Calculate changes in terms of the "unit particle" */
+	if( pip->part_vrad > pip->part_hrad )  {
+		/* Move both plates towards H hemisphere */
+		part->part_v_hdist = cos_theta * pip->part_vrad * inv_hlen;
+		part->part_h_hdist = 1 + cos_theta * pip->part_hrad * inv_hlen;
+	} else {
+		/* Move both plates towards V hemisphere */
+		part->part_v_hdist = -cos_theta * pip->part_vrad * inv_hlen;
+		part->part_h_hdist = 1 - cos_theta * pip->part_hrad * inv_hlen;
+	}
+	/* Thanks to matrix S, vrad_prime is always 1 */
+/*#define VRAD_PRIME	1 */
+/*#define HRAD_PRIME	(part->part_int.part_hrad / part->part_int.part_vrad) */
+	part->part_vrad_prime = 1;
+	part->part_hrad_prime = part->part_h_erad / part->part_v_erad;
 
 	/* Compute R and Rinv */
 	bn_mat_idn( R );
@@ -256,11 +309,11 @@ struct rt_i		*rtip;
 	VMOVE( &R[8], Hunit );
 	bn_mat_trn( Rinv, R );
 
-	/* Compute scale matrix S */
+	/* Compute scale matrix S, where |A| = |B| = equiv_Vradius */ 
 	bn_mat_idn( S );
-	S[ 0] = 1.0 / pip->part_vrad;	/* |A| = |B| */
+	S[ 0] = 1.0 / part->part_v_erad;
 	S[ 5] = S[0];
-	S[10] = 1.0 / MAGNITUDE( pip->part_H );
+	S[10] = inv_hlen;
 
 	bn_mat_mul( part->part_SoR, S, R );
 	bn_mat_mul( part->part_invRoS, Rinv, S );
@@ -440,9 +493,7 @@ struct seg		*seghead;
 		FAST fastf_t	root;		/* root of radical */
 		FAST fastf_t	m, msq;
 
-#define VRAD_PRIME	1
-#define HRAD_PRIME	(part->part_int.part_hrad / part->part_int.part_vrad)
-		m = HRAD_PRIME - VRAD_PRIME;
+		m = part->part_hrad_prime - part->part_vrad_prime;
 
 		/* This quadratic has had a factor of 2 divided out of "b"
 		 * throughout.  More efficient, but the same answers.
@@ -451,7 +502,7 @@ struct seg		*seghead;
 			(msq = m*m) * dprime[Z]*dprime[Z];
 		b = dprime[X]*pprime[X] + dprime[Y]*pprime[Y] -
 			msq * dprime[Z]*pprime[Z] -
-			m * dprime[Z];		/* * VRAD_PRIME */
+			m * dprime[Z];		/* * part->part_vrad_prime */
 		c = pprime[X]*pprime[X] + pprime[Y]*pprime[Y] -
 			msq * pprime[Z]*pprime[Z] -
 			2 * m * pprime[Z] - 1;
@@ -469,9 +520,9 @@ struct seg		*seghead;
 	 *  t1 and t2 are potential solutions to intersection with side.
 	 *  Find hit' point, see if Z values fall in range.
 	 */
-	if( (f = pprime[Z] + t1 * dprime[Z]) >= 0.0 )  {
+	if( (f = pprime[Z] + t1 * dprime[Z]) >= part->part_v_hdist )  {
 		check_h = 1;		/* may also hit off end */
-		if( f <= 1.0 )  {
+		if( f <= part->part_h_hdist )  {
 			hitp->hit_magic = RT_HIT_MAGIC;
 			/** VJOIN1( hitp->hit_vpriv, pprime, t1, dprime ); **/
 			hitp->hit_vpriv[X] = pprime[X] + t1 * dprime[X];
@@ -485,9 +536,9 @@ struct seg		*seghead;
 		check_v = 1;
 	}
 
-	if( (f = pprime[Z] + t2 * dprime[Z]) >= 0.0 )  {
+	if( (f = pprime[Z] + t2 * dprime[Z]) >= part->part_v_hdist )  {
 		check_h = 1;		/* may also hit off end */
-		if( f <= 1.0 )  {
+		if( f <= part->part_h_hdist )  {
 			hitp->hit_magic = RT_HIT_MAGIC;
 			/** VJOIN1( hitp->hit_vpriv, pprime, t2, dprime ); **/
 			hitp->hit_vpriv[X] = pprime[X] + t2 * dprime[X];
@@ -536,14 +587,14 @@ check_hemispheres:
 		root = sqrt(root);
 		t1 = b - root;
 		/* see if hit'[Z] is below V end of cylinder */
-		if( pprime[Z] + t1 * dprime[Z] <= 0.0 )  {
+		if( pprime[Z] + t1 * dprime[Z] <= part->part_v_hdist )  {
 			hitp->hit_magic = RT_HIT_MAGIC;
 			hitp->hit_dist = t1;
 			hitp->hit_surfno = RT_PARTICLE_SURF_VSPHERE;
 			hitp++;
 		}
 		t2 = b + root;
-		if( pprime[Z] + t2 * dprime[Z] <= 0.0 )  {
+		if( pprime[Z] + t2 * dprime[Z] <= part->part_v_hdist )  {
 			hitp->hit_magic = RT_HIT_MAGIC;
 			hitp->hit_dist = t2;
 			hitp->hit_surfno = RT_PARTICLE_SURF_VSPHERE;
@@ -584,14 +635,14 @@ do_check_h:
 		root = sqrt(root);
 		t1 = b - root;
 		/* see if hit'[Z] is above H end of cylinder */
-		if( pprime[Z] + t1 * dprime[Z] >= 1.0 )  {
+		if( pprime[Z] + t1 * dprime[Z] >= part->part_h_hdist )  {
 			hitp->hit_magic = RT_HIT_MAGIC;
 			hitp->hit_dist = t1;
 			hitp->hit_surfno = RT_PARTICLE_SURF_HSPHERE;
 			hitp++;
 		}
 		t2 = b + root;
-		if( pprime[Z] + t2 * dprime[Z] >= 1.0 )  {
+		if( pprime[Z] + t2 * dprime[Z] >= part->part_h_hdist )  {
 			hitp->hit_magic = RT_HIT_MAGIC;
 			hitp->hit_dist = t2;
 			hitp->hit_surfno = RT_PARTICLE_SURF_HSPHERE;
@@ -698,15 +749,16 @@ register struct xray	*rp;
 		} else {
 			/* The cone case */
 			FAST fastf_t	s, m;
+			vect_t unorm;
+			/* vpriv[Z] ranges from 0 to 1 (roughly) */
 			/* Rescale X' and Y' into unit circle */
-			s = 1 / ( VRAD_PRIME + (m = HRAD_PRIME-VRAD_PRIME) *
-				hitp->hit_vpriv[Z] );
-			hitp->hit_vpriv[X] *= s;
-			hitp->hit_vpriv[Y] *= s;
+			m = part->part_hrad_prime - part->part_vrad_prime;
+			s = 1/(part->part_vrad_prime + m * hitp->hit_vpriv[Z]);
+			unorm[X] = hitp->hit_vpriv[X] * s;
+			unorm[Y] = hitp->hit_vpriv[Y] * s;
 			/* Z' is constant, from slope of cylinder wall*/
-			hitp->hit_vpriv[Z] = -m / sqrt(m*m+1);
-			MAT4X3VEC( hitp->hit_normal, part->part_invRoS,
-				hitp->hit_vpriv );
+			unorm[Z] = -m / sqrt(m*m+1);
+			MAT4X3VEC( hitp->hit_normal, part->part_invRoS, unorm );
 			VUNITIZE( hitp->hit_normal );
 		}
 		break;
@@ -748,8 +800,8 @@ struct soltab		*stp;
 		MAT4X3VEC( hit_unit, part->part_SoR, hit_local );
 		/* hit_unit[Z] ranges from 0 at V to 1 at H, interpolate */
 	 	cvp->crv_c1 = -(
-			part->part_int.part_vrad * hit_unit[Z] +
-			part->part_int.part_hrad * (1 - hit_unit[Z]) );
+			part->part_v_erad * hit_unit[Z] +
+			part->part_h_erad * (1 - hit_unit[Z]) );
 		cvp->crv_c2 = 0;
 		break;
 	}
@@ -787,8 +839,8 @@ register struct uvcoord	*uvp;
 	fastf_t minrad;
 
 	hmag_inv = 1.0/MAGNITUDE(part->part_int.part_H);
-	hsize = 1 + (vrad_unit = part->part_int.part_vrad*hmag_inv) +
-		part->part_int.part_hrad*hmag_inv;
+	hsize = 1 + (vrad_unit = part->part_v_erad*hmag_inv) +
+		part->part_h_erad*hmag_inv;
 
 	/* Transform hit point into unit particle coords */
 	VSUB2( hit_local, hitp->hit_point, part->part_int.part_V );
@@ -802,8 +854,8 @@ register struct uvcoord	*uvp;
 		uvp->uv_u += 1.0;
 
 	/* approximation: beam_r / (solid_circumference = 2 * pi * radius) */
-	minrad = part->part_int.part_vrad;
-	V_MIN(minrad, part->part_int.part_hrad);
+	minrad = part->part_v_erad;
+	V_MIN(minrad, part->part_h_erad);
 	r = ap->a_rbeam + ap->a_diverge * hitp->hit_dist;
 	uvp->uv_du = uvp->uv_dv =
 		bn_inv2pi * r / minrad;
