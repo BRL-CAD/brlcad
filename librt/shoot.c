@@ -946,6 +946,7 @@ start_cell:
 				struct rt_piecestate *psp;
 				struct soltab	*stp;
 				int piecenum;
+				int ret;
 
 				RT_CK_PIECELIST(plp);
 
@@ -966,13 +967,12 @@ start_cell:
 				}
 
 				/* Allow solid to shoot all pieces at once */
-				if(debug_shoot)bu_log("shooting %s pieces\n", stp->st_name);
 				resp->re_piece_shots++;
 				BU_LIST_INIT( &(new_segs.l) );
 
-				if( rt_functab[stp->st_id].ft_piece_shot(
+				if( (ret = rt_functab[stp->st_id].ft_piece_shot(
 				    psp, plp,
-				    &ss.newray, ap, &new_segs, resp ) <= 0 )  {
+				    &ss.newray, ap, &new_segs, resp )) <= 0 )  {
 				    	/* No hits at all */
 					resp->re_piece_shot_miss++;
 				} else {
@@ -988,6 +988,7 @@ start_cell:
 					}
 					resp->re_piece_shot_hit++;
 				}
+				if(debug_shoot)bu_log("shooting %s pieces, hit %d\n", stp->st_name, ret);
 				/* There may still be an odd hit left over */
 				if( psp->oddhit.hit_dist < INFINITY )  {
 					/* Restore to proper (absolute) distance */
