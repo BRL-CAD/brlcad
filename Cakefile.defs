@@ -190,7 +190,7 @@ set -S2 "/bin/sh"
 #		define	STANDARD_LIBES	-lm -lmalloc -lc''SHARED -rpath LIBDIR:/usr/lib
 /*		When debugging libraries, -m and -v are helpful LD_OPTS */
 #		define	LD_OPTS		GFLAG
-#		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11''SHARED -lgl''SHARED -lGL''SHARED
+#		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11''SHARED -lgl''SHARED -lGL
 #		define	LIBDM_LIBES	LIBTK LIBTCL LIBTCL_LIBES
 #		define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi''SHARED -lXext''SHARED -lX11''SHARED -lgl''SHARED -lGL''SHARED
 #		define  LIBDM_SAMPLER_LIBES 	MGED_LIBES
