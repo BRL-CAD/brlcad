@@ -87,140 +87,56 @@ int entityno;
 		case 112:	/* parametric spline */
 		case 126:	/* B-spline */
 		{
-			int npts,done,nverts;
-			/* normal_order indicates how to calculate
-			   outward normals:
-				1 => (pt->next - pt) X extrude_vector
-				2 => opposite direction		*/
-			int normal_order;
-			struct ptlist *ptr,*ptr2;
-			vect_t v1,v2,v3;
-			point_t verts[4],tmpv[4];
+			int npts;
+			struct model *m;
+			struct nmgregion *r;
+			struct shell *s;
+			struct faceuse *fu;
+			struct loopuse *lu;
+			struct edgeuse *eu;
+			struct ptlist *pt_ptr;
 
 			npts = Getcurve( curve , &curv_pts );
-			if( npts == 0 )
+			if( npts < 3 )
 				return( 0 );
 
-			/* Find bounding box for curve */
-			crvmin[X] = INFINITY;
-			crvmin[Y] = INFINITY;
-			crvmin[Z] = INFINITY;
-			for( i=0 ; i<3 ; i++ )
-				crvmax[i] = (-crvmin[i]);
-			ptr = curv_pts;
-			while( ptr != NULL )
+
+			m = nmg_mm();
+			r = nmg_mrsv( m );
+			s = BU_LIST_FIRST( shell, &r->s_hd );
+
+			fu = nmg_cface( s, (struct vertex **)NULL, npts-1 );
+			pt_ptr = curv_pts;
+			lu = BU_LIST_FIRST( loopuse, &fu->lu_hd );
+			for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 			{
-				VMINMAX( crvmin , crvmax , ptr->pt );
-				ptr = ptr->next;
+				struct vertex *v;
+
+				v = eu->vu_p->v_p;
+				nmg_vertex_gv( v, pt_ptr->pt );
+				pt_ptr = pt_ptr->next;
 			}
 
-			ptr = curv_pts;
-			while( ptr->pt[X] != crvmin[X] )
-				ptr = ptr->next;
-			if( ptr->next != NULL )
+			if( nmg_calc_face_g( fu ) )
 			{
-				VSUB2( v1 , ptr->pt , ptr->next->pt );
-			}
-			else
-			{
-				VSUB2( v1 , ptr->pt , curv_pts->pt );
-			}
-			VCROSS( v2 , v1 , edir );
-			if( v2[X] < 0.0 )
-				normal_order = 1;
-			else
-				normal_order = 2;
-
-			/* Make polysolid header */
-			mk_polysolid( fdout , dir[entityno]->name );
-
-			/* loop through curve constructing sides
-				each piece will be a 4 sided rectangle */
-			ptr = curv_pts;
-			while( ptr->next != NULL )
-			{
-				if( normal_order == 2 )
-				{
-					VMOVE( verts[0] , ptr->pt );
-					VMOVE( verts[1] , ptr->next->pt );
-					VADD2( verts[2] , verts[1] , evect );
-					VADD2( verts[3] , verts[0] , evect );
-				}
-				else
-				{
-					VMOVE( verts[0] , ptr->next->pt );
-					VMOVE( verts[1] , ptr->pt );
-					VADD2( verts[2] , verts[1] , evect );
-					VADD2( verts[3] , verts[0] , evect );
-				}
-				mk_fpoly( fdout , 4 , verts );
-				ptr = ptr->next;
+				rt_log( "Extrude: Failed to calculate face geometry\n" );
+				nmg_km( m );
+				rt_free( (char *)curv_pts, "curve_pts" );
+				return( 0 );
 			}
 
-			/* make top and bottom polygons */
-
-			ptr = curv_pts;
-			ptr2 = ptr;
-			while( ptr2->next != NULL )
-				ptr2 = ptr2->next;
-			if( SAMEPT( ptr2->pt , ptr->pt ) )
-				ptr2 = ptr2->prev;
-			done = 0;
-			while( !done )
+			if( nmg_extrude_face( fu, evect , &tol ) )
 			{
-				nverts = 4;
-				/* Make Bottom polygon */
-				VMOVE( verts[0] , ptr->pt );
-				VMOVE( verts[1] , ptr2->pt );
-				if( SAMEPT( ptr->next->pt , ptr2->prev->pt ) )
-				{
-					nverts = 3;
-					VMOVE( verts[2] , ptr->next->pt );
-					done = 1;
-				}
-				else
-				{
-					VMOVE( verts[2] , ptr2->prev->pt );
-					VMOVE( verts[3] , ptr->next->pt );
-				}
-
-				VSUB2( v1 , verts[1] , verts[0] );
-				VSUB2( v2 , verts[2] , verts[1] );
-				VCROSS( v3 , v1 , v2 );
-				if( VDOT( v3 , edir ) > 0.0 )
-				{
-					for( i=0 ; i<nverts ; i++ )
-					{
-						VMOVE( tmpv[i] , verts[nverts-1-i] );
-					}
-					for( i=0 ; i<nverts ; i++ )
-					{
-						VMOVE( verts[i] , tmpv[i] );
-					}
-				}
-				mk_fpoly( fdout , nverts , verts );
-
-				/* Make corresponding top polygon */
-				for( i=0 ; i<nverts ; i++ )
-				{
-					VADD2( verts[i] , verts[i] , evect );
-				}
-				for( i=0 ; i<nverts ; i++ )
-				{
-					VMOVE( tmpv[i] , verts[nverts-1-i] );
-				}
-				for( i=0 ; i<nverts ; i++ )
-				{
-					VMOVE( verts[i] , tmpv[i] );
-				}
-				mk_fpoly( fdout , nverts , verts );
-				ptr = ptr->next;
-				ptr2 = ptr2->prev;
-				if( SAMEPT( ptr->pt , ptr2->pt ) )
-					done = 1;
-				if( SAMEPT( ptr->next->pt , ptr2->pt ) )
-					done = 1;
+				rt_log( "Extrude: extrusion failed\n" );
+				nmg_km( m );
+				rt_free( (char *)curv_pts, "curve_pts" );
+				return( 0 );
 			}
+
+			write_shell_as_polysolid( fdout, dir[entityno]->name, s );
+			nmg_km( m );
+			rt_free( (char *)curv_pts, "curve_pts" );
+
 			return( 1 );
 		}
 		default:
