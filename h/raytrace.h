@@ -1862,7 +1862,9 @@ RT_EXTERN(void			nmg_move_eg, (struct edge_g *old_eg, struct edge_g *new_eg, str
 
 /* From nmg_misc.c */
 RT_EXTERN(int			nmg_tbl, (struct nmg_ptbl *b, int func, long *p) );
+RT_EXTERN(void			nmg_purge_unwanted_intersection_points, (struct nmg_ptbl *vert_list, struct faceuse *fu));
 RT_EXTERN(int			nmg_in_or_ref, (struct vertexuse *vu, struct nmg_ptbl *b) );
+RT_EXTERN(char *		nmg_orientation, (int orientation) );
 RT_EXTERN(void			nmg_pr_orient, (int orientation, char *h) );
 RT_EXTERN(void			nmg_pr_m, (struct model *m) );
 RT_EXTERN(void			nmg_pr_r, (struct nmgregion *r, char *h) );
@@ -1872,14 +1874,19 @@ RT_EXTERN(void			nmg_pr_fg, (struct face_g *fg, char *h) );
 RT_EXTERN(void			nmg_pr_s, (struct shell *s, char *h) );
 RT_EXTERN(void			nmg_pr_f, (struct face *f, char *h) );
 RT_EXTERN(void			nmg_pr_fu, (struct faceuse *fu, char *h) );
+RT_EXTERN(void			nmg_pr_fu_briefly, (struct faceuse *fu,	char *h) );
 RT_EXTERN(void			nmg_pr_l, (struct loop *l, char *h) );
 RT_EXTERN(void			nmg_pr_lu, (struct loopuse *lu, char *h) );
+RT_EXTERN(void			nmg_pr_lu_briefly, (struct loopuse *lu, char *h) );
+RT_EXTERN(void			nmg_pr_eg, (struct edge_g *eg, char *h) );
 RT_EXTERN(void			nmg_pr_e, (struct edge *e, char *h) );
 RT_EXTERN(void			nmg_pr_eu, (struct edgeuse *eu, char *h) );
+RT_EXTERN(void			nmg_pr_eu_briefly, (struct edgeuse *eu, char *h) );
 RT_EXTERN(void			nmg_pr_vg, (struct vertex_g *vg, char *h) );
 RT_EXTERN(void			nmg_pr_v, (struct vertex *v, char *h) );
 RT_EXTERN(void			nmg_pr_vu, (struct vertexuse *vu, char *h) );
-/* static nmg_check_radial */
+RT_EXTERN(void			nmg_pr_vu_briefly, (struct vertexuse *vu, char *h) );
+RT_EXTERN(int			nmg_check_radial, (struct edgeuse *eu));
 RT_EXTERN(int			nmg_ck_closed_surf, (struct shell *s) );
 RT_EXTERN(int			nmg_ck_closed_region, (struct nmgregion *r) );
 RT_EXTERN(struct shell		*nmg_polytonmg, (FILE *fp, struct nmgregion *r, CONST struct rt_tol *tol) );
@@ -1887,11 +1894,20 @@ RT_EXTERN(struct loopuse	*nmg_lu_of_vu, (struct vertexuse *vu) );
 RT_EXTERN(struct shell		*nmg_lups, (struct loopuse *lu) );
 RT_EXTERN(struct shell		*nmg_eups, (struct edgeuse *eu) );
 RT_EXTERN(struct edgeuse	*nmg_faceradial, (struct edgeuse *eu) );
-RT_EXTERN(int			nmg_manifold_face, (struct faceuse *fu) );
-RT_EXTERN(void			nmg_euprint, (char *str, struct edgeuse *eu) );
-RT_EXTERN(char 		*nmg_manifolds, (struct model *m) );
-RT_EXTERN(char 		*nmg_shell_manifolds, (struct shell *sp, char *tbl) );
 RT_EXTERN(struct edgeuse	*nmg_radial_face_edge_in_shell, (struct edgeuse *eu) );
+RT_EXTERN(void			nmg_euprint, (char *str, struct edgeuse *eu) );
+RT_EXTERN(void			nmg_rebound, (struct model *m) );
+RT_EXTERN(void			nmg_count_shell_kids, (struct model *m, unsigned long *total_wires, unsigned long *total_faces, unsigned long *total_points));
+
+/* nmg_manif.c */
+RT_EXTERN(int			nmg_dangling_face, (struct faceuse *fu, char *tblXXX));
+/* static paint_face */
+/* static set_edge_sub_manifold */
+/* static set_loop_sub_manifold */
+/* static set_face_sub_manifold */
+RT_EXTERN(char 			*nmg_shell_manifolds, (struct shell *sp, char *tbl) );
+RT_EXTERN(char	 		*nmg_manifolds, (struct model *m) );
+
 /* g_nmg.c */
 
 /* nmg_class.c */
