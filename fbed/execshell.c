@@ -1,18 +1,12 @@
 /*
-	SCCS id:	@(#) execshell.c	2.1
-	Modified: 	12/9/86 at 15:55:07
-	Retrieved: 	12/26/86 at 21:54:03
-	SCCS archive:	/vld/moss/src/fbed/s.execshell.c
-
 	Author:		Gary S. Moss
 			U. S. Army Ballistic Research Laboratory
 			Aberdeen Proving Ground
 			Maryland 21005-5066
-			(301)278-6647 or AV-298-6647
+			(301)278-6651 or AV-298-6651
 */
-#if ! defined( lint )
-static
-char	sccsTag[] = "@(#) execshell.c 2.1, modified 12/9/86 at 15:55:07, archive /vld/moss/src/fbed/s.execshell.c";
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
@@ -61,13 +55,13 @@ char	*args[];
 		default :
 			{	register int	pid;
 				int		stat_loc;
-#if defined( BSD ) || (defined( sgi ) && ! defined( mips )) || defined( CRAY )
+#if __STDC__ || defined( SYSV )
+				register void	(*istat)(), (*qstat)(), (*cstat)();
+#else
 #ifndef SIGCLD
 #define SIGCLD	SIGCHLD
 #endif
 				register int	(*istat)(), (*qstat)(), (*cstat)();
-#else
-				register void	(*istat)(), (*qstat)(), (*cstat)();
 #endif
 			istat = signal(SIGINT, SIG_IGN);
 			qstat = signal(SIGQUIT, SIG_IGN);
