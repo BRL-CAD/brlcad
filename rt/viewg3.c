@@ -48,11 +48,10 @@ static char RCSrayg3[] = "@(#)$Header$ (BRL)";
 #include "rdebug.h"
 
 #define	MM2IN	0.03937008		/* mm times MM2IN gives inches */
-#ifdef
 #define TOL 0.01/MM2IN			/* GIFT has a 0.01 inch tolerance */
 
- void	part_compact();
-#endif
+void	part_compact();
+
 
 extern double	mat_radtodeg;
 extern int	npsw;			/* number of worker PSWs to run */
@@ -252,13 +251,13 @@ register struct partition *PartHeadp;
 	if( pp == PartHeadp )
 		return(0);		/* nothing was actually hit?? */
 
-/*	part_compacter(ap, Partheadp, TOL);
- *
- */
+	part_compact(ap, PartHeadp, TOL);
+
 	/*  comp components in partitions */
 	comp_count = 0;
-	for( pp=PartHeadp->pt_forw; pp!=PartHeadp; pp=pp->pt_forw )
+	for( pp=PartHeadp->pt_forw; pp!=PartHeadp; pp=pp->pt_forw )  {
 		comp_count++;
+	}
 
 	/* Set up variable length string, to buffer this shotline in.
 	 * Note that there is one component per card, and that each card
@@ -624,7 +623,7 @@ void view_cleanup() {}
  */
 
 void
-part_compacter(ap, PartHeadp, tolerance)
+part_compact(ap, PartHeadp, tolerance)
 register struct application		*ap;
 register struct partition		*PartHeadp;
 fastf_t					tolerance;
@@ -634,32 +633,44 @@ fastf_t					tolerance;
 	struct partition		*pp;
 	struct partition		*nextpp;
 
-	for(pp = PartHeadp; pp != PartHeadp; pp = pp->pt_forw)  {
+
+	for(pp = PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw)  {
 top:		nextpp = pp->pt_forw;
-		if(nextpp == PartHeadp)
+		if(nextpp == PartHeadp)  {
 			break;
-		if(pp->pt_regionp->reg_regionid != nextpp->pt_regionp->reg_regionid)
+		}
+		if(pp->pt_regionp->reg_regionid != nextpp->pt_regionp->reg_regionid)  {
 			continue;
-		gap = nextpp->pt_inhit->hit_dist - pp->pt_inhit->hit_dist;
-		if(gap > tolerance)
+		}
+		gap = nextpp->pt_inhit->hit_dist - pp->pt_outhit->hit_dist;
+
+		/* The following line is a diagnostic that is worth reusing:
+		 * fprintf(stderr, "gap=%g \n", gap);
+		 */
+
+		if(gap > tolerance)  {
 			continue;
+		}
 		if(pp->pt_regionp->reg_regionid == nextpp->pt_regionp->reg_regionid)  {
 			/* librt problem */
-			rt_log("WARNING: region_id's are identical %d\n");
+			rt_log("WARNING: part_comp: region_id's are identical %d\n",
+				pp->pt_regionp->reg_regionid);
 		}
 
 		/* Eliminate the gap by collapsing the two partitions
 		 * into one.
 		 */
-
+		fprintf(stderr, "part_comp: collapsing gap of %gmm between id=%d and id=%d\n",
+			gap, pp->pt_regionp->reg_regionid, 
+			nextpp->pt_regionp->reg_regionid);
 		pp->pt_outhit->hit_dist = nextpp->pt_outhit->hit_dist;
 		pp->pt_outflip = nextpp->pt_outflip;
 		
 
 		/* Now dequeue and free the nextpp */
-/*		DEQUEUE_PT(nextpp);
- *		FREE_PT(nextpp, ap->a_resource);
- */
+		DEQUEUE_PT(nextpp);
+		FREE_PT(nextpp, ap->a_resource);
+
 		goto top;
 	}
 
