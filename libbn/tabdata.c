@@ -772,3 +772,28 @@ CONST struct rt_tabdata	*in;
 
 	bcopy( (char *)in->y, (char *)out->y, in->ny * sizeof(fastf_t) );
 }
+
+/*
+ *			R T _ T A B D A T A _ C O N S T V A L
+ *
+ *  For a given table, return a tabdata structure with all elements
+ *  initialized to 'val'.
+ */
+struct rt_tabdata *
+rt_tabdata_get_constval( val, tabp )
+double			val;
+CONST struct rt_table	*tabp;
+{
+	struct rt_tabdata	*data;
+	int			todo;
+	register fastf_t	*op;
+
+	RT_CK_TABLE(tabp);
+	RT_GET_TABDATA( data, tabp );
+
+	op = data->y;
+	for( todo = data->ny-1; todo >= 0; todo-- )
+		*op++ = val;
+
+	return data;
+}
