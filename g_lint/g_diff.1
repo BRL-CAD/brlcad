@@ -26,10 +26,11 @@ solids are merely noted (the script will not actually be capable of performing a
 The command
 .sp
 .in +5
-\fIg_diff -m uncle.g aunt.g | mged -c uncle.g\fR
+\fIg_diff -m uncle.g aunt.g > mged.script\fR
 .in -5
 .sp
-will convert uncle.g into a copy of aunt.g.
+will create a file named "mged.script" that may be sourced in mged(1) to change
+uncle.g into aunt.g.
 
 .SH SEE ALSO
 mged(1)
