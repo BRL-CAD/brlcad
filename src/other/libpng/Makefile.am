@@ -27,7 +27,10 @@ libpng_la_LDFLAGS = -version-info 3:5:2
 
 ansi2knr_SOURCES = ansi2knr.c
 pngtest_SOURCES = pngtest.c
-pngtest_LDADD = libpng.la -lz -lm
+pngtest_LDADD = \
+	${LIBPNG} \
+	${LIBZ} \
+	${LIBM}
 
 include_HEADERS = png.h pngconf.h
 dist_man_MANS = ansi2knr.1 libpng.3 libpngpf.3 png.5

@@ -7,9 +7,9 @@ REGEX=
 endif
 
 if BUILD_ZLIB
-LIBZ=libz
+Z=libz
 else !BUILD_ZLIB
-LIBZ=
+Z=
 endif
 
 if BUILD_PNG
@@ -41,7 +41,7 @@ SUBDIRS = libtcl
 
 else !ONLY_RTS
 SUBDIRS = \
-	${LIBZ} \
+	${Z} \
 	${PNG} \
 	${REGEX} \
 	${TKGLX} \

@@ -13,7 +13,7 @@ noinst_HEADERS = \
 	tkGLX.h
 
 libtkGLX_la_LDFLAGS = -version-info 19:1 
-AM_CFLAGS = @GL_CFLAGS@
+AM_CFLAGS = ${GL_CFLAGS}
 
 descnames.h: 
 	sh makedescnames.sh
