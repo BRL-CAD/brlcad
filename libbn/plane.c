@@ -44,6 +44,11 @@ static char RCSplane[] = "@(#)$Header$ (BRL)";
 #define VJOIN1_2D(a,b,c,d) 	{ \
 			(a)[X] = (b)[X] + (c) * (d)[X];\
 			(a)[Y] = (b)[Y] + (c) * (d)[Y]; }
+#define VUNITIZE_RET(a,ret)	{ \
+			register double _f; _f = MAGNITUDE(a); \
+			if( _f < VDIVIDE_TOL ) return(ret); \
+			_f = 1.0/_f; \
+			(a)[X] *= _f; (a)[Y] *= _f; (a)[Z] *= _f; }
 
 
 #define PI      3.14159265358979323
@@ -720,7 +725,7 @@ CONST struct rt_tol	*tol;
 		fastf_t	dtol;
 		/*  Lines are colinear */
 		/*  If P within tol of either endpoint (0, 1), make exact. */
-		dtol = tol->dist / sqrt( d[X]*d[X] + d[Y]*d[Y] );
+		dtol = tol->dist / sqrt(MAGSQ_2D(d));
 		if( rt_g.debug & DEBUG_MATH )  {
 			rt_log("rt_isect_line2_lseg2() dtol=%g, dist[0]=%g, dist[1]=%g\n",
 				dtol, dist[0], dist[1]);
@@ -877,7 +882,7 @@ struct rt_tol	*tol;
 		int	nogood = 0;
 		/* Lines are colinear */
 		/*  If P within tol of either endpoint (0, 1), make exact. */
-		ptol = tol->dist / sqrt( pdir[X]*pdir[X] + pdir[Y]*pdir[Y] );
+		ptol = tol->dist / sqrt( MAGSQ_2D(pdir) );
 		if( rt_g.debug & DEBUG_MATH )  {
 			rt_log("ptol=%g\n", ptol);
 		}
@@ -898,11 +903,11 @@ struct rt_tol	*tol;
 	}
 	/* Lines intersect */
 	/*  If within tolerance of an endpoint (0, 1), make exact. */
-	ptol = tol->dist / sqrt( pdir[X]*pdir[X] + pdir[Y]*pdir[Y] );
+	ptol = tol->dist / sqrt( MAGSQ_2D(pdir) );
 	if( dist[0] > -ptol && dist[0] < ptol )  dist[0] = 0;
 	else if( dist[0] > 1-ptol && dist[0] < 1+ptol ) dist[0] = 1;
 
-	qtol = tol->dist / sqrt( qdir[X]*qdir[X] + qdir[Y]*qdir[Y] );
+	qtol = tol->dist / sqrt( MAGSQ_2D(qdir) );
 	if( dist[1] > -qtol && dist[1] < qtol )  dist[1] = 0;
 	else if( dist[1] > 1-qtol && dist[1] < 1+qtol ) dist[1] = 1;
 
