@@ -1243,7 +1243,7 @@ RT_EXTERN(void rt_printb, (char *s, unsigned long v, char *bits) );
 					/* Print a bit vector */
 RT_EXTERN(struct soltab *rt_find_solid, (struct rt_i *rtip, char *name) );
 					/* Parse arbitrary data structure */
-RT_EXTERN(void rt_structparse, (struct rt_vls *vls, struct structparse *tab, char *base ) );
+RT_EXTERN(int rt_structparse, (struct rt_vls *vls, struct structparse *tab, char *base ) );
 		/* Print arbitrary data structure for human consuption*/
 RT_EXTERN(void rt_structprint, (char *title, struct structparse *tab, char *base ) );
 		/* Print arbitrary data structure to vls for rt_structparse */
