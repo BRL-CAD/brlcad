@@ -1452,13 +1452,24 @@ register struct edgeuse *eu1;
 		eu2->e_p = e;
 	}
 
-	/* Dequeue edgeuse from geometry's list of users */
-	RT_LIST_DEQUEUE( &eu1->l2 );
-	RT_LIST_DEQUEUE( &eu2->l2 );
+	/* handle geometry, if any */
+	if( eu1->g.magic_p )
+	{
+		/* Dequeue edgeuse from geometry's list of users */
+		RT_LIST_DEQUEUE( &eu1->l2 );
 
-	/* Release the edgeuse's geometry pointer */
-	nmg_keg( eu1 );
-	nmg_keg( eu2 );
+		/* Release the edgeuse's geometry pointer */
+		nmg_keg( eu1 );
+	}
+
+	if( eu1->g.magic_p )
+	{
+		/* Dequeue edgeuse from geometry's list of users */
+		RT_LIST_DEQUEUE( &eu2->l2 );
+
+		/* Release the edgeuse's geometry pointer */
+		nmg_keg( eu2 );
+	}
 
 	/* remove the edgeuses from their parents */
 	if (*eu1->up.magic_p == NMG_LOOPUSE_MAGIC) {
