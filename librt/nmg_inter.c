@@ -2872,24 +2872,29 @@ struct nmg_ptbl		*eu2_list;
 		rt_log("nmg_isect_line2_face2pNEW(, fu1=x%x, fu2=x%x) on_eg=x%x\n", fu1, fu2, is->on_eg);
 
 	if( is->on_eg )  {
-		if( !rt_2line3_colinear(
+	    	fastf_t	dot;
+	    	vect_t	unit_e_dir;
+
+	    	VMOVE( unit_e_dir, is->on_eg->e_dir );
+	    	VUNITIZE( unit_e_dir );
+	    	dot = VDOT(is->dir, unit_e_dir);
+
+		if( fabs(dot) < is->tol.para &&	/* not parallel */
+		    !rt_2line3_colinear(
 		    is->pt, is->dir,
-		    is->on_eg->e_pt, is->on_eg->e_dir, 1000.0, &(is->tol) ) )  {
-		    	vect_t	unit_e_dir;
-		    	fastf_t	dot;
+		    is->on_eg->e_pt, unit_e_dir, 1000.0, &(is->tol) ) )  {
 
-		    	VMOVE( unit_e_dir, is->on_eg->e_dir );
-		    	VUNITIZE( unit_e_dir );
-
+#if 0
 			VPRINT("   is->pt   ", is->pt);
 			VPRINT("   is->dir  ", is->dir);
 			VPRINT("unit  e_dir ", unit_e_dir);
 			VPRINT("on_eg->e_pt ", is->on_eg->e_pt);
 			VPRINT("on_eg->e_dir", is->on_eg->e_dir);
-		    	dot = VDOT(is->dir, unit_e_dir);
 		    	rt_log(" dot=%g, ang=%g deg\n", dot,
 				acos(fabs(dot)) * rt_radtodeg );
-			rt_log("WARNING nmg_isect_line2_face2pNEW() is->pt and on_eg lines differ.  Using on_eg line.\n");
+#endif
+			rt_log("WARNING nmg_isect_line2_face2pNEW() is->pt and on_eg lines differ by %g deg.  Using on_eg line.\n",
+				acos(fabs(dot)) * rt_radtodeg );
 		}
 		/* Ensure absolute consistency between the two versions of the line! */
 		VMOVE( is->pt, is->on_eg->e_pt );
