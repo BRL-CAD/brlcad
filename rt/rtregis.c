@@ -61,6 +61,7 @@ int	read_rt_file();
 void	print_info();
 
 static FILE	*fp;
+int		verbose;		/* to be used for debugging */
 
 /*
  *
@@ -127,13 +128,13 @@ char	**argv;
 
 	fclose(fp);
 
-/*	mat_inv(view2model, model2view);
- */
-mat_print("mod2view1-plot.log", mod2view1);
-mat_print("mod2view2-pix.log", mod2view2);
-/* fprintf(stderr, "mod2view1[0, 1, 2, 3, 15]: %g, %g, %g, %g, %g\n",
- *	mod2view1[0], mod2view1[1], mod2view1[2], mod2view1[3], mod2view1[15]);
- */
+	if(verbose)  {
+		mat_inv(view2model, model2view);
+		mat_print("mod2view1-plot.log", mod2view1);
+		mat_print("mod2view2-pix.log", mod2view2);
+		fprintf(stderr, "mod2view1[0, 1, 2, 3, 15]: %g, %g, %g, %g, %g\n",
+		mod2view1[0], mod2view1[1], mod2view1[2], mod2view1[3], mod2view1[15]);
+	}
 
 	/* Now build the registration matrix for the two files. */
 
