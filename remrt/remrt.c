@@ -99,7 +99,8 @@ void		list_remove();
 void		write_fb();
 void		repaint_fb();
 void		size_display();
-void		send_start();
+void		send_dirbuild();
+void		send_gettrees();
 void		send_restart();
 void		send_loglvl();
 void		send_matrix();
@@ -128,11 +129,13 @@ int detached = 0;		/* continue after EOF */
 void	ph_default();	/* foobar message handler */
 void	ph_pixels();
 void	ph_print();
-void	ph_start();
+void	ph_dirbuild_reply();
+void	ph_gettrees_reply();
 void	ph_version();
 void	ph_cmd();
 struct pkg_switch pkgswitch[] = {
-	{ MSG_START,	ph_start,	"Startup ACK" },
+	{ MSG_DIRBUILD_REPLY,	ph_dirbuild_reply,	"Dirbuild ACK" },
+	{ MSG_GETTREES_REPLY,	ph_gettrees_reply,	"gettrees ACK" },
 	{ MSG_MATRIX,	ph_default,	"Set Matrix" },
 	{ MSG_LINES,	ph_default,	"Compute lines" },
 	{ MSG_END,	ph_default,	"End" },
@@ -253,10 +256,11 @@ struct frame *FreeFrame;
  *	UNUSED		NEW		connection rcvd
  *	NEW		VERSOK		ph_version pkg rcvd.
  *					Optionally send loglvl & "cd" cmds.
- *	VERSOK		LOADING		send "start" command.
- *	LOADING		READY		ph_start pkg rcvd.
+ *	VERSOK		DOING_DIRBUILD	MSG_DIRBUILD sent
+ *	DOING_DIRBUILD	READY		MSG_DIRBUILD_REPLY rcvd
  *
- * --	READY		READY		new frame:  call send_matrix()
+ * --	READY		DOING_GETTREES	new frame:  send_gettrees(), send_matrix()
+ *	DOING_GETTREES	READY		MSG_GETTREES_REPLY rcvd
  *
  * --	READY		READY		call send_do_lines(),
  *					receive ph_pixels pkg.
@@ -267,7 +271,6 @@ struct frame *FreeFrame;
  * XXX need to split sending of db name & the treetops.
  * XXX treetops need to be resent at start of each frame.
  * XXX should probably re-vamp send_matrix routine.
- * XXX LOADING --> NEEDFRAME, NEEDFRAME --> READY
  */
 
 struct servers {
@@ -276,13 +279,14 @@ struct servers {
 	struct ihost	*sr_host;	/* description of this host */
 	int		sr_lump;	/* # lines to send at once */
 	int		sr_state;	/* Server state, SRST_xxx */
-#define SRST_UNUSED	0		/* unused slot */
-#define SRST_NEW	1		/* connected, awaiting vers check */
-#define SRST_VERSOK	2		/* version OK, no model loaded yet */
-#define SRST_LOADING	3		/* loading, awaiting ready response */
-#define SRST_READY	4		/* loaded, ready */
-#define SRST_RESTART	5		/* about to restart */
-#define SRST_CLOSING	6		/* Needs to be closed */
+#define SRST_UNUSED		0	/* unused slot */
+#define SRST_NEW		1	/* connected, awaiting vers check */
+#define SRST_VERSOK		2	/* version OK, no model loaded yet */
+#define SRST_DOING_DIRBUILD	3	/* doing dirbuild, awaiting response */
+#define SRST_READY		4	/* loaded, ready */
+#define SRST_RESTART		5	/* about to restart */
+#define SRST_CLOSING		6	/* Needs to be closed */
+#define SRST_DOING_GETTREES	7	/* doing gettrees */
 	struct frame	*sr_curframe;	/* ptr to current frame */
 	/* Timings */
 	struct timeval	sr_sendtime;	/* time of last sending */
@@ -414,6 +418,35 @@ stamp()
 		tmp->tm_mon+1, tmp->tm_mday,
 		tmp->tm_hour, tmp->tm_min, tmp->tm_sec );
 
+	return(buf);
+}
+
+/*
+ *			S T A T E _ T O _ S T R I N G
+ */
+char *
+state_to_string( state )
+int	state;
+{
+	static char	buf[128];
+
+	switch( state )  {
+	case SRST_NEW:
+		return("New");
+	case SRST_VERSOK:
+		return("Vers_OK");
+	case SRST_DOING_DIRBUILD:
+		return("Doing_DIRBUILD");
+	case SRST_READY:
+		return("READY");
+	case SRST_RESTART:
+		return("--about to restart--");
+	case SRST_CLOSING:
+		return("*closing*");
+	case SRST_DOING_GETTREES:
+		return("Doing_GETTREES");
+	}
+	sprintf(buf, "Unknown_state_x%x", state);
 	return(buf);
 }
 
@@ -1222,8 +1255,7 @@ register struct frame	*fr;
 	if( outputfile )  {
 		sprintf( name, "%s.%d", outputfile, fr->fr_number );
 	} else {
-		sprintf( name, "/usr/tmp/remrt%d.pix", getpid() );
-		(void)unlink(name);	/* remove any previous one */
+		sprintf( name, "remrt.pix.%d", fr->fr_number );
 	}
 	fr->fr_filename = rt_strdup( name );
 
@@ -1502,12 +1534,12 @@ struct timeval	*nowp;
 
 		switch( sp->sr_state )  {
 		case SRST_VERSOK:
-			/* advance this server to SRST_LOADING */
+			/* advance this server to SRST_DOING_DIRBUILD */
 			send_loglvl(sp);
 
 			/* An error may have caused connection to drop */
 			if( sp->sr_pc != PKC_NULL )
-				send_start(sp);
+				send_dirbuild(sp);
 			break;
 
 		case SRST_CLOSING:
@@ -1664,6 +1696,10 @@ struct timeval		*nowp;
 	if( sp->sr_curframe != fr )  {
 		sp->sr_curframe = fr;
 		send_matrix( sp, fr );
+		/* XXX should see if this is necessary... */
+		send_gettrees( sp, fr );
+		/* Now in state SRST_DOING_GETTREES */
+		return(1);	/* need more work */
 	}
 
 	/* Special handling for the first assignment of each frame */
@@ -1801,36 +1837,64 @@ char *buf;
 }
 
 /*
- *			P H _ S T A R T
+ *			P H _ D I R B U I L D _ R E P L Y
  *
- *  The server answers our MSG_START with various prints, etc,
- *  and then responds with a MSG_START in return, which indicates
+ *  The server answers our MSG_DIRBUILD with various prints, etc,
+ *  and then responds with a MSG_DIRBUILD_REPLY in return, which indicates
  *  that he is ready to accept work now.
  */
 void
-ph_start(pc, buf)
+ph_dirbuild_reply(pc, buf)
 register struct pkg_conn *pc;
 char *buf;
 {
 	register struct servers *sp;
 
 	sp = &servers[pc->pkc_fd];
-	if( strcmp( PROTOCOL_VERSION, buf ) != 0 )  {
-		rt_log("ERROR %s: protocol version mis-match\n",
-			sp->sr_host->ht_name);
-		rt_log(" local='%s'\n", PROTOCOL_VERSION );
-		rt_log("remote='%s'\n", buf );
-		drop_server( sp, "protocol mis-match" );
-		if(buf) (void)free(buf);
-		return;
-	}
+	rt_log("%s %s dirbuild OK (%s)\n",
+		stamp(),
+		sp->sr_host->ht_name,
+		buf );
 	if(buf) (void)free(buf);
 	if( sp->sr_pc != pc )  {
-		rt_log("unexpected MSG_START from fd %d\n", pc->pkc_fd);
+		rt_log("unexpected MSG_DIRBUILD_REPLY from fd %d\n", pc->pkc_fd);
 		return;
 	}
-	if( sp->sr_state != SRST_LOADING )  {
-		rt_log("MSG_START in state %d?\n", sp->sr_state);
+	if( sp->sr_state != SRST_DOING_DIRBUILD )  {
+		rt_log("MSG_DIRBUILD_REPLY in state %d?\n", sp->sr_state);
+		drop_server( sp, "wrong state" );
+		return;
+	}
+	sp->sr_state = SRST_READY;
+}
+
+/*
+ *			P H _ G E T T R E E S _ R E P L Y
+ *
+ *  The server answers our MSG_GETTREES with various prints, etc,
+ *  and then responds with a MSG_GETTREES_REPLY in return, which indicates
+ *  that he is ready to accept work now.
+ */
+void
+ph_gettrees_reply(pc, buf)
+register struct pkg_conn *pc;
+char *buf;
+{
+	register struct servers *sp;
+
+	sp = &servers[pc->pkc_fd];
+	rt_log("%s %s gettrees OK (%s)\n",
+		stamp(),
+		sp->sr_host->ht_name,
+		buf );
+	if(buf) (void)free(buf);
+	if( sp->sr_pc != pc )  {
+		rt_log("unexpected MSG_GETTREES_REPLY from fd %d\n", pc->pkc_fd);
+		return;
+	}
+	if( sp->sr_state != SRST_DOING_GETTREES )  {
+		rt_log("MSG_GETTREES_REPLY in state %s?\n",
+			state_to_string(sp->sr_state) );
 		drop_server( sp, "wrong state" );
 		return;
 	}
@@ -1850,6 +1914,8 @@ char *buf;
 			stamp(),
 			servers[pc->pkc_fd].sr_host->ht_name,
 			buf );
+		if( buf[strlen(buf)-1] != '\n' )
+			rt_log("\n");
 	}
 	if(buf) (void)free(buf);
 }
@@ -1921,8 +1987,9 @@ char *buf;
 	(void)gettimeofday( &tvnow, (struct timezone *)0 );
 
 	sp = &servers[pc->pkc_fd];
-	if( sp->sr_state != SRST_READY )  {
-		rt_log("%s Ignoring package from %s\n",
+	if( sp->sr_state != SRST_READY &&
+	    sp->sr_state != SRST_DOING_GETTREES )  {
+		rt_log("%s Ignoring MSG_PIXELS from %s\n",
 			stamp(), sp->sr_host->ht_name);
 		goto out;
 	}
@@ -2311,10 +2378,10 @@ register struct frame	*fr;
 }
 
 /*
- *			S E N D _ S T A R T
+ *			S E N D _ D I R B U I L D
  */
 void
-send_start(sp)
+send_dirbuild(sp)
 register struct servers *sp;
 {
 	register struct ihost	*ihp;
@@ -2328,21 +2395,23 @@ register struct servers *sp;
 	case HT_CD:
 		if( pkg_send( MSG_CD, ihp->ht_path, strlen(ihp->ht_path)+1, sp->sr_pc ) < 0 )
 			drop_server(sp, "MSG_CD send error");
-		sprintf( cmd, "%s %s", file_basename, object_list );
 		break;
 	case HT_CONVERT:
-		/* Conversion was done when server was started */
-		sprintf( cmd, "%s %s", file_basename, object_list );
+		/* Conversion into current dir was done when server was started */
 		break;
 	default:
-		rt_log("send_start: ht_where=%d unimplemented\n", ihp->ht_where);
+		rt_log("send_dirbuild: ht_where=%d unimplemented\n", ihp->ht_where);
 		drop_server(sp, "bad ht_where");
 		return;
 	}
 
-	if( pkg_send( MSG_START, cmd, strlen(cmd)+1, sp->sr_pc ) < 0 )
-		drop_server(sp, "MSG_START pkg_send error");
-	sp->sr_state = SRST_LOADING;
+	if( pkg_send( MSG_DIRBUILD, file_basename, strlen(file_basename)+1,
+	    sp->sr_pc ) < 0
+	)  {
+		drop_server(sp, "MSG_DIRBUILD pkg_send error");
+		return;
+	}
+	sp->sr_state = SRST_DOING_DIRBUILD;
 }
 
 /*
@@ -2388,6 +2457,27 @@ register struct frame *fr;
 	    RT_VLS_ADDR(&fr->fr_cmd), rt_vls_strlen(&fr->fr_cmd)+1, sp->sr_pc
 	    ) < 0 )
 		drop_server(sp, "MSG_MATRIX pkg_send error");
+}
+
+/*
+ *			S E N D _ G E T T R E E S
+ *
+ *  Send args for rt_gettrees.
+ */
+void
+send_gettrees(sp, fr)
+struct servers		*sp;
+register struct frame	*fr;
+{
+	CHECK_FRAME(fr);
+	if( sp->sr_pc == PKC_NULL )  return;
+	if( pkg_send( MSG_GETTREES,
+	    object_list, strlen(object_list)+1, sp->sr_pc
+	    ) < 0 )  {
+		drop_server(sp, "MSG_GETTREES pkg_send error");
+		return;
+	}
+	sp->sr_state = SRST_DOING_GETTREES;
 }
 
 /*
@@ -3209,6 +3299,9 @@ char	**argv;
 	}
 }
 
+/*
+ *			C D _ S T A T U S
+ */
 cd_status( argc, argv )
 int	argc;
 char	**argv;
@@ -3219,13 +3312,15 @@ char	**argv;
 
 	s = stamp();
 
-	if( file_fullname[0] == '\0' )
+	if( file_fullname[0] == '\0' )  {
 		rt_log("No model loaded yet\n");
-	else
-		rt_log("\n%s %s %s %s\n",
+	} else {
+		rt_log("\n%s %s\n",
 			s,
-			running ? "RUNNING" : "loaded",
-			file_fullname, object_list );
+			running ? "RUNNING" : "Halted" );
+		rt_log("%s %s objects=%s\n",
+			s, file_fullname, object_list );
+	}
 
 	if( fbp != FBIO_NULL )
 		rt_log("%s Framebuffer is %s\n", s, fbp->if_name);
@@ -3242,23 +3337,9 @@ char	**argv;
 	rt_log("%s Servers:\n", s);
 	for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 		if( sp->sr_pc == PKC_NULL )  continue;
-		rt_log("  %2d  %s ", sp->sr_pc->pkc_fd, sp->sr_host->ht_name );
-		switch( sp->sr_state )  {
-		case SRST_NEW:
-			rt_log("New"); break;
-		case SRST_VERSOK:
-			rt_log("Vers_OK"); break;
-		case SRST_LOADING:
-			rt_log("(Loading)"); break;
-		case SRST_READY:
-			rt_log("READY"); break;
-		case SRST_RESTART:
-			rt_log("--about to restart--"); break;
-		case SRST_CLOSING:
-			rt_log("*closing*"); break;
-		default:
-			rt_log("Unknown"); break;
-		}
+		rt_log("  %2d  %s %s",
+			sp->sr_pc->pkc_fd, sp->sr_host->ht_name,
+			state_to_string(sp->sr_state) );
 		if( sp->sr_curframe != FRAME_NULL )  {
 			CHECK_FRAME(sp->sr_curframe);
 			rt_log(" frame %d, assignments=%d\n",

@@ -19,10 +19,9 @@
 #define PROTOCOL_VERSION	\
 	"$Header$"
 
-#define MSG_START	1
 #define MSG_MATRIX	2
 #define MSG_OPTIONS	3
-#define MSG_LINES	4
+#define MSG_LINES	4	/* request pixel interval be computed */
 #define MSG_END		5
 #define MSG_PRINT	6
 #define MSG_PIXELS	7	/* response to server MSG_LINES */
@@ -33,6 +32,10 @@
 #define MSG_VERSION	12	/* server sends version to dispatcher */
 #define MSG_DB		13	/* request/send database lines 16k max */
 #define MSG_CHECK	14	/* check database files for match */
+#define MSG_DIRBUILD		15	/* request rt_dirbuild() be called */
+#define MSG_DIRBUILD_REPLY	16	/* response to MSG_DIRBUILD */
+#define MSG_GETTREES		17	/* request rt_gettrees() be called */
+#define MSG_GETTREES_REPLY	18	/* response to MSG_GETTREES */
 
 /*
  *  This structure is used for MSG_PIXELS messages
