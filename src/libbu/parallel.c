@@ -20,140 +20,138 @@ static const char RCSparallel[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #include "machine.h"
 #include "bu.h"
 
 #ifdef linux
-#include <sys/time.h>
-#include <sys/types.h>
-#include <sys/resource.h>
-#include <sys/wait.h>
-#include <sys/stat.h>
-#include <sys/sysinfo.h>
+#  include <sys/time.h>
+#  include <sys/types.h>
+#  include <sys/resource.h>
+#  include <sys/wait.h>
+#  include <sys/stat.h>
+#  include <sys/sysinfo.h>
 #endif
 
 #ifdef __FreeBSD__
-#include <sys/types.h>
-#include <sys/time.h>
-#include <sys/resource.h>
-#include <sys/wait.h>
-#include <sys/stat.h>
-#include <signal.h>
+#  include <sys/types.h>
+#  include <sys/time.h>
+#  include <sys/resource.h>
+#  include <sys/wait.h>
+#  include <sys/stat.h>
+#  include <signal.h>
 #endif
 
 #ifdef __ppc__
-#include <sys/types.h>
-#include <sys/time.h>
-#include <sys/resource.h>
-#include <sys/wait.h>
-#include <sys/stat.h>
-#include <signal.h>
-#ifdef BSD
-#  define __BSDbackup BSD
-#  undef BSD
-#  include <sys/param.h>
-#  undef BSD
-#  define BSD __BSDbackup
-#endif
-#include <sys/sysctl.h>
+#  include <sys/types.h>
+#  include <sys/time.h>
+#  include <sys/resource.h>
+#  include <sys/wait.h>
+#  include <sys/stat.h>
+#  include <signal.h>
+#  ifdef BSD
+#    define __BSDbackup BSD
+#    undef BSD
+#    include <sys/param.h>
+#    undef BSD
+#    define BSD __BSDbackup
+#  endif
+#  include <sys/sysctl.h>
 #endif
 
 #ifdef __sp3__
-#include <sys/types.h>
-#include <sys/sysconfig.h>
-#include <sys/var.h>
+#  include <sys/types.h>
+#  include <sys/sysconfig.h>
+#  include <sys/var.h>
 #endif
 
 #ifdef CRAY
-# include <sys/category.h>
-# include <sys/resource.h>
-# include <sys/types.h>
-# ifdef CRAY1
-#  include <sys/machd.h>	/* For HZ */
-# endif
+#  include <sys/category.h>
+#  include <sys/resource.h>
+#  include <sys/types.h>
+#  ifdef CRAY1
+#    include <sys/machd.h>	/* For HZ */
+#  endif
 #endif
 
 #ifdef CRAY2
-#undef MAXINT
-# include <sys/param.h>
+#  undef MAXINT
+#  include <sys/param.h>
 #endif
 
 #ifdef HEP
-# include <synch.h>
-# undef stderr
-# define stderr stdout
+#  include <synch.h>
+#  undef stderr
+#  define stderr stdout
 #endif /* HEP */
 
 #if defined(alliant) && !defined(i860)
 /* Alliant FX/8 */
-# include <cncall.h>
+#  include <cncall.h>
 #endif
 
 #if (defined(sgi) && defined(mips)) || (defined(__sgi) && defined(__mips))
-# define SGI_4D	1
-# define _SGI_SOURCE	1	/* IRIX 5.0.1 needs this to def M_BLKSZ */
-# define _BSD_TYPES	1	/* IRIX 5.0.1 botch in sys/prctl.h */
-# include <sys/types.h>
-# include <ulocks.h>
-# include <sys/sysmp.h> /* for sysmp() */
+#  define SGI_4D	1
+#  define _SGI_SOURCE	1	/* IRIX 5.0.1 needs this to def M_BLKSZ */
+#  define _BSD_TYPES	1	/* IRIX 5.0.1 botch in sys/prctl.h */
+#  include <sys/types.h>
+#  include <ulocks.h>
+#  include <sys/sysmp.h> /* for sysmp() */
 /* ulocks.h #include's <limits.h> and <malloc.h> */
 /* ulocks.h #include's <task.h> for getpid stuff */
 /* task.h #include's <sys/prctl.h> */
-# include <malloc.h>
+#  include <malloc.h>
 /* <malloc.h> #include's <stddef.h> */
 
-#include <sys/wait.h>
-#if IRIX64 >= 64
-# include <sys/sched.h>
+#  include <sys/wait.h>
+#  if IRIX64 >= 64
+#    include <sys/sched.h>
 static struct sched_param bu_param;
-#endif
+#  endif
 
 #endif /* SGI_4D */
 
 /* XXX Probably need to set _SGI_MP_SOURCE in machine.h */
 
 #ifdef ardent
-#	include <thread.h>
+#  include <thread.h>
 #endif
 
 #if defined(n16)
-#	include <parallel.h>
-#	include <sys/sysadmin.h>
+#  include <parallel.h>
+#  include <sys/sysadmin.h>
 #endif
 
 /*
  * multithreading support for SunOS 5.X / Solaris 2.x
  */
 #if defined(SUNOS) && SUNOS >= 52
-#	include <sys/unistd.h>
-#	include <thread.h>
-#	include <synch.h>
-#define rt_thread_t	thread_t
+#  include <sys/unistd.h>
+#  include <thread.h>
+#  include <synch.h>
+#  define rt_thread_t	thread_t
 #endif	/* SUNOS */
 
 /*
  * multithread support built on POSIX Threads (pthread) library.
  */
 #ifdef HAVE_UNISTD_H
-#	include	<unistd.h>
+#  include <unistd.h>
 #else
 #  ifdef HAVE_SYS_UNISTD_H
-#	include <sys/unistd.h>
+#    include <sys/unistd.h>
 #  endif
 #endif
 #ifdef HAVE_PTHREAD_H
-#	include <pthread.h>
-#	define rt_thread_t	pthread_t
+#  include <pthread.h>
+#  define rt_thread_t	pthread_t
 #endif
 
 #ifdef CRAY
@@ -171,44 +169,45 @@ struct taskcontrol {
  *  change to a new absolute "nice" value.
  *  (The system routine makes a relative change).
  */
-#ifndef WIN32
 void
 bu_nice_set(int newnice)
 {
-	int opri, npri;
+#ifdef WIN32
+  if (bu_debug)
+    bu_log("bu_nice_set() Priority NOT changed\n");
+  
+  return;
 
-#ifdef BSD
-#ifndef PRIO_PROCESS	/* necessary for linux */
-#define	PRIO_PROCESS	0	/* From /usr/include/sys/resource.h */
-#endif
-	opri = getpriority( PRIO_PROCESS, 0 );
-	setpriority( PRIO_PROCESS, 0, newnice );
-	npri = getpriority( PRIO_PROCESS, 0 );
-#else
-	int bias, chg;
+#else  /* not WIN32 */
+  int opri, npri;
 
-	/* " nice adds the value of incr to the nice value of the process" */
-	/* "The default nice value is 20" */
-	/* "Upon completion, nice returns the new nice value minus 20" */
-	bias = 0;
-	opri = nice(0) - bias;
-	chg = newnice - opri;
-	(void)nice(chg);
-	npri = nice(0) - bias;
-	if( npri != newnice )  bu_log("bu_nice_set() SysV error:  wanted nice %d! check bias=%d\n", newnice, bias );
-#endif
-	if( bu_debug ) bu_log("bu_nice_set() Priority changed from %d to %d\n", opri, npri);
+#  ifdef BSD
+#    ifndef PRIO_PROCESS  /* necessary for linux */
+#      define PRIO_PROCESS  0	/* From /usr/include/sys/resource.h */
+#    endif
+  opri = getpriority( PRIO_PROCESS, 0 );
+  setpriority( PRIO_PROCESS, 0, newnice );
+  npri = getpriority( PRIO_PROCESS, 0 );
+  
+#  else  /* not BSD */
+  int bias, chg;
+
+  /* " nice adds the value of incr to the nice value of the process" */
+  /* "The default nice value is 20" */
+  /* "Upon completion, nice returns the new nice value minus 20" */
+  bias = 0;
+  opri = nice(0) - bias;
+  chg = newnice - opri;
+  (void)nice(chg);
+  npri = nice(0) - bias;
+  if( npri != newnice )  bu_log("bu_nice_set() SysV error:  wanted nice %d! check bias=%d\n", newnice, bias );
+#  endif  /* BSD */
+
+  if( bu_debug ) bu_log("bu_nice_set() Priority changed from %d to %d\n", opri, npri);
+
+#endif  /* WIN32 */
 }
-#else
-void
-bu_nice_set(int newnice)
-{
-    if (bu_debug)
-	bu_log("bu_nice_set() Priority NOT changed\n");
 
-    return;
-}
-#endif
 
 /*
  *			B U _ C P U L I M I T _ G E T
@@ -1126,8 +1125,8 @@ genptr_t	arg;
 
 		if (pthread_create(&thread, &attrs,
 		    (void *(*)(void *))bu_parallel_interface, NULL)) {
-			fprintf(stderr, "ERROR parallel.c/bu_parallel(): thr_create(0x0, 0x0, 0x%x, 0x0, 0, 0x%x) failed on processor %d\n",
-				(unsigned int)bu_parallel_interface, (unsigned int)&thread, x);
+			fprintf(stderr, "ERROR parallel.c/bu_parallel(): thr_create(0x0, 0x0, 0x%lx, 0x0, 0, 0x%lx) failed on processor %d\n",
+				(unsigned long int)bu_parallel_interface, (unsigned long int)&thread, x);
 			bu_log("ERROR parallel.c/bu_parallel(): thr_create(0x0, 0x0, 0x%x, 0x0, 0, 0x%x) failed on processor %d\n",
 				bu_parallel_interface, &thread, x);
 			/* Not much to do, lump it */
