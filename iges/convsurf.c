@@ -26,6 +26,7 @@ Convsurfs()
 {
 
 	int i,totsurfs=0,convsurf=0;
+	struct face_g_snurb **surfs;
 
 	bu_log( "\n\nConverting NURB entities:\n" );
 
@@ -36,20 +37,22 @@ Convsurfs()
 			totsurfs ++;
 	}
 
-	if( totsurfs )
-	{
-		/* Make the spline solid header record */
-		if( curr_file->obj_name )
-			mk_bsolid( fdout , curr_file->obj_name , totsurfs , (double)1.0 );
-		else
-			mk_bsolid( fdout , "nurb.s" , totsurfs , (double)1.0 );
-	}
+	surfs = (struct face_g_snurb **)bu_calloc( totsurfs+1, sizeof( struct face_g_snurb *), "surfs" );
 
 	for( i=0 ; i<totentities ; i++ )
 	{
 		if( dir[i]->type == 128 )
-			convsurf += spline( i );
+			convsurf += spline( i, surfs[convsurf] );
 	}
+
+        if( totsurfs )
+        {
+                if( curr_file->obj_name )
+                        mk_bspline( fdout , curr_file->obj_name , surfs );
+                else
+                        mk_bspline( fdout , "nurb.s" , surfs );
+        }
+
 	bu_log( "Converted %d NURBS successfully out of %d total NURBS\n" , convsurf , totsurfs );
 	if( convsurf )
 		bu_log( "\tCaution: All NURBS are assumed to be part of the same solid\n" );

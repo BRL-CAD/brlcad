@@ -30,7 +30,8 @@ int do_projection=1;
 char eor,eof,card[256];
 fastf_t scale,inv_scale,conv_factor;
 int units,counter,pstart,dstart,totentities,dirarraylen;
-FILE *fd,*fdout;
+FILE *fd;
+struct rt_wdb *fdout;
 char brlcad_file[256];
 int reclen,currec,ntypes;
 int brlcad_att_de=0;
@@ -213,7 +214,7 @@ char *argv[];
 			(*identity)[i] = 0.0;
 	}
 
-	if( (fdout = fopen( output_file , "w" )) == NULL )
+	if( (fdout = wdb_fopen( output_file )) == NULL )
 	{
 		bu_log( "Cannot open %s\n" , output_file );
 		perror( "iges-g" );
