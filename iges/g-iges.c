@@ -674,7 +674,7 @@ int *de_pointers;
 				return( 1 );
 			}
 
-			if( !bn_mat_is_identity( tp->tr_l.tl_mat ) )
+			if( tp->tr_l.tl_mat && !bn_mat_is_identity( tp->tr_l.tl_mat ) )
 			{
 				/* write a solid instance entity for this member
 					with a pointer to the new matrix */

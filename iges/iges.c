@@ -286,14 +286,16 @@ struct rt_comb_internal *comb;
 	RT_CK_COMB( comb );
 
 	endp = strchr( bu_vls_addr(&comb->shader), ' ' );
+	bzero( props->material_name, 32 );
+	bzero( props->material_params, 60 );
 	if( endp )  {
 		int	len;
 		len = endp - bu_vls_addr(&comb->shader);
-		if( len > 32 ) len = 32;
+		if( len > 31 ) len = 31;
 		strncpy( props->material_name, bu_vls_addr(&comb->shader), len );
-		strncpy( props->material_params, endp+1, 60 );
+		strncpy( props->material_params, endp+1, 59 );
 	} else {
-		strncpy( props->material_name, bu_vls_addr(&comb->shader), 32 );
+		strncpy( props->material_name, bu_vls_addr(&comb->shader), 31 );
 		props->material_params[0] = '\0';
 	}
 	if( comb->region_flag )
@@ -798,8 +800,8 @@ char *version;
 
 	(void)time( &now );
 	timep = localtime( &now );
-	rt_vls_printf( &str , ",13H%02d%02d%02d.%02d%02d%02d",
-		timep->tm_year,
+	rt_vls_printf( &str , ",15H%04d%02d%02d.%02d%02d%02d",
+		timep->tm_year+1900,
 		timep->tm_mon + 1,
 		timep->tm_mday,
 		timep->tm_hour,
@@ -813,13 +815,13 @@ char *version;
 	{
 		rt_log( "Cannot stat %s\n" , db_name );
 		perror( prog_name );
-		rt_vls_strcat( &str , ",13H000101.000000;" );
+		rt_vls_strcat( &str , ",15H00000101.000000;" );
 	}
 	else
 	{
 		timep = localtime( &db_stat.st_mtime );
-		rt_vls_printf( &str , ",13H%02d%02d%02d.%02d%02d%02d;",
-			timep->tm_year,
+		rt_vls_printf( &str , ",15H%04d%02d%02d.%02d%02d%02d;",
+			timep->tm_year+1900,
 			timep->tm_mon + 1,
 			timep->tm_mday,
 			timep->tm_hour,

@@ -16,9 +16,9 @@
 
 /* This routine reads the next field in "card" buffer
 	It expects the field to contain a string of the form:
-		13HYYMMDD.HHNNSS
+		13HYYMMDD.HHNNSS or 15YYYYMMDD.HHNNSS
 		where:
-			YY is the year (last 2 digits)
+			YY is the year (last 2 digits) or YYYY is the year (all 4 digits)
 			MM is the month (01 - 12)
 			DD is the day (01 - 31)
 			HH is the hour (00 -23 )
@@ -26,9 +26,6 @@
 			SS is the second (00 - 59)
 	The string is read and printed out in the form:
 		/MM/DD/YYYY at HH:NN:SS
-
-	If the year is less than 50, 2000 is added to it, otherwise 1900
-	is added (Y2K compliancy??)
 
 	"eof" is the "end-of-field" delimiter
 	"eor" is the "end-of-record" delimiter	*/
@@ -41,7 +38,8 @@ Readtime( id )
 char *id;
 {
 	int i=(-1),length=0,lencard,done=0,year;
-	char num[80],year_str[3];
+	char num[80];
+	char year_str[5];
 
 	if( card[counter] == eof ) /* This is an empty field */
 	{
@@ -74,10 +72,10 @@ char *id;
 
 	num[++i] = '\0';
 	length = atoi( num );
-	if( length != 13 )
+	if( length != 13 && length != 15 )
 	{
 		rt_log( "\tError in time stamp\n" );
-		rt_log( "\tlength of string=%s (should be 13)\n" , num );
+		rt_log( "\tlength of string=%s (should be 13 or 15)\n" , num );
 	}
 
 	for( i=0 ; i<length ; i++ )
@@ -87,29 +85,31 @@ char *id;
 		num[i] = card[counter++];
 	}
 
-	if( length > 5 && length < 16 )
+	year_str[0] = num[0];
+	year_str[1] = num[1];
+	if( length == 13 )
 	{
-		char year_str[3];
-		int year;
-
-		year_str[0] = num[0];
-		year_str[1] = num[1];
 		year_str[2] = '\0';
 		year = atoi( year_str );
-		if( year < 50 )
-			year += 2000;
-		else
-			year += 1900;
+		year += 1900;
 		rt_log( "%c%c/%c%c/%d" , num[2],num[3],num[4],num[5],
 			year );
-	}
-
-	if( length > 12 && length < 16 )
+		if( length > 12 && length < 16 )
 		rt_log( " at %c%c:%c%c:%c%c\n" , num[7],num[8],num[9],
 			num[10],num[11],num[12] );
 
-	if( length > 15 )
-		rt_log( "%s\n" , num );
+	}
+	else
+	{
+		year_str[2] = num[2];
+		year_str[3] = num[3];
+		year_str[4] = '\0';
+		year = atoi( year_str );
+		rt_log( "%c%c/%c%c/%d" , num[4],num[5],num[6],num[7],
+			year );
+		rt_log( " at %c%c:%c%c:%c%c\n" , num[9],num[10],num[11],
+			num[12],num[13],num[14] );
+	}
 
 	while( card[counter] != eof && card[counter] != eor )
 	{
