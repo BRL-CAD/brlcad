@@ -2802,7 +2802,7 @@ int				rebound;
 	/* Obtain counts of each kind of structure */
 	maxindex = 1;
 	for( kind = 0; kind < NMG_N_KINDS; kind++ )  {
-		kind_counts[kind] = rt_glong( (unsigned char *) rp->nmg.N_structs+4*kind );
+		kind_counts[kind] = rt_glong( rp->nmg.N_structs+4*kind );
 		maxindex += kind_counts[kind];
 	}
 #if DEBUG
@@ -2985,11 +2985,11 @@ rt_log("Mapping of old index to new index, and kind\n");
 	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "nmg external");
 	rp = (union record *)ep->ext_buf;
 	rp->nmg.N_id = DBID_NMG;
-	(void)rt_plong( (unsigned char *)rp->nmg.N_count, additional_grans );
+	(void)rt_plong( rp->nmg.N_count, additional_grans );
 
 	/* Record counts of each kind of structure */
 	for( kind = 0; kind < NMG_N_KINDS; kind++ )  {
-		(void)rt_plong( (unsigned char *)rp->nmg.N_structs+4*kind, kind_counts[kind] );
+		(void)rt_plong( rp->nmg.N_structs+4*kind, kind_counts[kind] );
 	}
 
 	cp = (char *)(rp+1);	/* advance one granule */
