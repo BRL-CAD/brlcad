@@ -18,7 +18,7 @@
 #	
 #
 
-## - new_db_callback
+## - opendb_callback
 #
 # This is called upon opening a database.
 #
@@ -101,7 +101,7 @@ proc end_edit_callback {} {
     }
 }
 
-##- output_callback
+## - output_callback
 #
 # This is called when things need to be printed to the command window(s)
 #
@@ -110,6 +110,10 @@ proc output_callback { str } {
     mged_update 1
 }
 
+## - solid_list_callback
+#
+# This is called whenever MGED's internal solid list changes.
+#
 proc solid_list_callback {} {
     global mged_players
 
