@@ -629,22 +629,18 @@ struct resource {
  *  Definitions and data structures needed for routines that assign values
  *  to elements of arbitrary data structures, the layout of which is
  *  described by tables of "structparse" structures.
+ *
+ *  The general problem of word-addressed hardware
+ *  where (int *) and (char *) have different representations
+ *  is handled in the parsing routines that use sp_offset,
+ *  because of the limitations placed on compile-time initializers.
  */
 #if __STDC__
 #	define offsetofarray(_t, _m)	offsetof(_t, _m)
 #else
-#	if CRAY
-		/* General problem of word-addressed hardware
-		 * where (int *) and (char *) have different representations.
-		 */
-#		define offsetof(_t, _m)		((int)(&(((_t *)0)->_m))*sizeof(int))
-#		define offsetofarray(_t, _m)	((int)( (((_t *)0)->_m))*sizeof(int))
-#	else
-#		define offsetof(_t, _m)		(int)(&(((_t *)0)->_m))
-#		define offsetofarray(_t, _m)	(int)( (((_t *)0)->_m))
-#	endif
+#	define offsetof(_t, _m)		(int)(&(((_t *)0)->_m))
+#	define offsetofarray(_t, _m)	(int)( (((_t *)0)->_m))
 #endif
-
 
 struct structparse {
 	char		*sp_fmt;		/* "indir" or "%f", etc */
