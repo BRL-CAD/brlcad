@@ -168,6 +168,47 @@ mat_t	mat;
 	return(0);
 }
 
+/*			B U I L D _ T O P S
+ *
+ *  Build a command line vector of the tops of all objects in view.
+ */
+int
+build_tops(start, end)
+char **start;
+register char **end;
+{
+	register char **vp = start;
+	register struct solid *sp;
+	register int i;
+	/*
+	 * Find all unique top-level entrys.
+	 *  Mark ones already done with s_iflag == UP
+	 */
+	FOR_ALL_SOLIDS( sp )
+		sp->s_iflag = DOWN;
+	FOR_ALL_SOLIDS( sp )  {
+		register struct solid *forw;
+
+		if( sp->s_iflag == UP )
+			continue;
+		if( sp->s_path[0]->d_addr == RT_DIR_PHONY_ADDR )
+			continue;	/* Ignore overlays, predictor, etc */
+		if( vp < end )
+			*vp++ = sp->s_path[0]->d_namep;
+		else  {
+			rt_log("mged: ran out of comand vector space  at %s\n",
+				sp->s_path[0]->d_namep );
+			break;
+		}
+		sp->s_iflag = UP;
+		for( forw=sp->s_forw; forw != &HeadSolid; forw=forw->s_forw) {
+			if( forw->s_path[0] == sp->s_path[0] )
+				forw->s_iflag = UP;
+		}
+	}
+	*vp = (char *) 0;
+	return vp-start;
+}
 /*
  *			S E T U P _ R T
  *
@@ -186,34 +227,7 @@ register char	**vp;
 	register struct solid *sp;
 	register int i;
 
-	/*
-	 * Find all unique top-level entrys.
-	 *  Mark ones already done with s_iflag == UP
-	 */
-	FOR_ALL_SOLIDS( sp )
-		sp->s_iflag = DOWN;
-	FOR_ALL_SOLIDS( sp )  {
-		register struct solid *forw;
-
-		if( sp->s_iflag == UP )
-			continue;
-		if( sp->s_path[0]->d_addr == RT_DIR_PHONY_ADDR )
-			continue;	/* Ignore overlays, predictor, etc */
-		if( vp < &rt_cmd_vec[LEN] )
-			*vp++ = sp->s_path[0]->d_namep;
-		else  {
-			(void)printf("mged: ran out of rt_cmd_vec at %s\n",
-				sp->s_path[0]->d_namep );
-			break;
-		}
-		sp->s_iflag = UP;
-		for( forw=sp->s_forw; forw != &HeadSolid; forw=forw->s_forw) {
-			if( forw->s_path[0] == sp->s_path[0] )
-				forw->s_iflag = UP;
-		}
-	}
-	*vp = (char *)0;
-	rt_cmd_vec_len = vp - rt_cmd_vec;
+	rt_cmd_vec_len = build_tops(vp, &rt_cmd_vec[LEN]);
 
 	/* Print out the command we are about to run */
 	vp = &rt_cmd_vec[0];
