@@ -70,6 +70,10 @@ AC_SUBST(MAJOR_VERSION)
 AC_SUBST(MINOR_VERSION)
 AC_SUBST(PATCH_VERSION)
 
+dnl just in case
+PACKAGE_NAME="BRL-CAD"
+AC_SUBST(PACKAGE_NAME)
+
 # force locale setting to C so things like date output as expected
 LC_ALL=C
 
