@@ -484,22 +484,38 @@ int				zzz;		/* compression, someday */
 	need += 8;	/* for object_length */
 	if( name )  {
 		namelen = strlen(name) + 1;	/* includes null */
-		n_width = db5_select_length_encoding(namelen);
-		need += namelen + db5_enc_len[n_width];
+		if( namelen > 1 )  {
+			n_width = db5_select_length_encoding(namelen);
+			need += namelen + db5_enc_len[n_width];
+		} else {
+			name = NULL;
+			namelen = 0;
+			n_width = 0;
+		}
 	} else {
 		n_width = 0;
 	}
 	if( attrib )  {
 		BU_CK_EXTERNAL(attrib);
-		a_width = db5_select_length_encoding(attrib->ext_nbytes);
-		need += attrib->ext_nbytes + db5_enc_len[a_width];
+		if( attrib->ext_nbytes > 0 )  {
+			a_width = db5_select_length_encoding(attrib->ext_nbytes);
+			need += attrib->ext_nbytes + db5_enc_len[a_width];
+		} else {
+			attrib = NULL;
+			a_width = 0;
+		}
 	} else {
 		a_width = 0;
 	}
 	if( body )  {
 		BU_CK_EXTERNAL(body);
-		b_width = db5_select_length_encoding(body->ext_nbytes);
-		need += body->ext_nbytes + db5_enc_len[b_width];
+		if( body->ext_nbytes > 0 )  {
+			b_width = db5_select_length_encoding(body->ext_nbytes);
+			need += body->ext_nbytes + db5_enc_len[b_width];
+		} else {
+			body = NULL;
+			b_width = 0;
+		}
 	} else {
 		b_width = 0;
 	}
@@ -553,6 +569,7 @@ int				zzz;		/* compression, someday */
 	}
 
 	if( attrib )  {
+BU_ASSERT_PTR( attrib->ext_nbytes, >=, 5 );
 		cp = db5_encode_length( cp, attrib->ext_nbytes, a_width );
 		bcopy( attrib->ext_buf, cp, attrib->ext_nbytes );
 		cp += attrib->ext_nbytes;
@@ -673,27 +690,31 @@ db5_import_attributes( struct bu_attribute_value_set *avs, const struct bu_exter
  *	aname1 NULL value1 NULL ... anameN NULL valueN NULL NULL
  */
 void
-db5_export_attributes( ext, avp )
-struct bu_external		*ext;
-CONST struct bu_attribute_value_pair	*avp;
+db5_export_attributes( struct bu_external *ext, const struct bu_attribute_value_set *avs )
 {
 	int	need = 0;
 	CONST struct bu_attribute_value_pair	*avpp;
 	char	*cp;
 
+	BU_CK_AVS( avs );
+	avpp = avs->avp;
+
+	BU_INIT_EXTERNAL(ext);
+	if( avs->count <= 0 )  return;
+
 	/* First pass -- determine how much space is required */
-	for( avpp = avp; avpp->name != NULL; avpp++ )  {
+	for( avpp = avs->avp; avpp->name != NULL; avpp++ )  {
 		need += strlen( avpp->name ) + strlen( avpp->value ) + 2;
 	}
+	if( need <= 0 )  return;
 	need += 1;		/* for final null */
 
-	ext->ext_magic = BU_EXTERNAL_MAGIC;
 	ext->ext_nbytes = need;
 	ext->ext_buf = bu_malloc( need, "external attributes" );
 
 	/* Second pass -- store in external form */
 	cp = (char *)ext->ext_buf;
-	for( avpp = avp; avpp->name != NULL; avpp++ )  {
+	for( avpp = avs->avp; avpp->name != NULL; avpp++ )  {
 		need = strlen( avpp->name ) + 1;
 		bcopy( avpp->name, cp, need );
 		cp += need;
@@ -732,7 +753,7 @@ FILE		*fp;
 CONST char	*title;
 double		local2mm;
 {
-	struct bu_attribute_value_pair avp[3];
+	struct bu_attribute_value_set avs;
 	struct bu_vls		units;
 	struct bu_external	out;
 	struct bu_external	attr;
@@ -749,14 +770,11 @@ double		local2mm;
 	bu_vls_init( &units );
 	bu_vls_printf( &units, "%.25f", local2mm );
 
-	avp[0].name = "title";
-	avp[0].value = (char *)title;		/* un-CONST */
-	avp[1].name = "units";
-	avp[1].value = bu_vls_addr(&units);
-	avp[2].name = NULL;
-	avp[2].value = NULL;
+	bu_avs_init( &avs, 4, "db5_fwrite_ident" );
+	bu_avs_add( &avs, "title", title );
+	bu_avs_add( &avs, "units", bu_vls_addr(&units) );
 
-	db5_export_attributes( &attr, avp );
+	db5_export_attributes( &attr, &avs );
 	db5_export_object3( &out, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
 		"_GLOBAL", &attr, NULL,
 		DB5HDR_MAJORTYPE_ATTRIBUTE_ONLY, 0,
@@ -764,6 +782,7 @@ double		local2mm;
 	bu_fwrite_external( fp, &out );
 	bu_free_external( &out );
 	bu_free_external( &attr );
+	bu_avs_free( &avs );
 
 	bu_vls_free( &units );
 
@@ -817,7 +836,7 @@ rt_db_cvt_to_external5(
 
 	/* If present, convert attributes to on-disk format. */
 	if( ip->idb_avs.magic == BU_AVS_MAGIC )  {
-		db5_export_attributes( &attributes, ip->idb_avs.avp );
+		db5_export_attributes( &attributes, &ip->idb_avs );
 		BU_CK_EXTERNAL( &attributes );
 	} else {
 		BU_INIT_EXTERNAL(&attributes);
@@ -977,6 +996,17 @@ CONST mat_t		mat;
 			dp->d_namep, raw.major_type );
 		bu_free_external( &ext );
 		return -1;		/* FAIL */
+	}
+
+	/* If attributes are present in the object, make them available
+	 * in the internal form.
+	 */
+	if( raw.attributes.ext_buf )  {
+		if( db5_import_attributes( &ip->idb_avs, &raw.attributes ) < 0 )  {
+			bu_log("rt_db_get_internal5(%s):  mal-formed attributes in database\n",
+				dp->d_namep );
+			return -8;
+		}
 	}
 
 	if( !raw.body.ext_buf )  {

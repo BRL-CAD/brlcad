@@ -424,6 +424,7 @@ const struct db_i	*dbip;
 #define MAX_V5_STACK	8000
 	union tree	*stack[MAX_V5_STACK];
 	union tree	**sp;			/* stack pointer */
+	const char	*ap;
 	int		i;
 
 	BU_CK_EXTERNAL(ep);
@@ -492,7 +493,7 @@ bu_log("nmat=%d, nleaf=%d, rpn_len=%d, max_stack_depth=%d\n", nmat, nleaf, rpn_l
 			}
 		}
 		BU_ASSERT_PTR( leafp, ==, leafp_end );
-		return 0;
+		goto finish;
 	}
 
 	/*
@@ -586,6 +587,20 @@ bu_log("nmat=%d, nleaf=%d, rpn_len=%d, max_stack_depth=%d\n", nmat, nleaf, rpn_l
 
 	comb->tree = stack[0];
 	RT_CK_TREE(comb->tree);
+
+finish:
+	if( ip->idb_avs.magic != BU_AVS_MAGIC )  return 0;	/* OK */
+bu_avs_print( &ip->idb_avs, "comb5" );
+
+	/* Unpack the attributes */
+	if( (ap == bu_avs_get( &ip->idb_avs, "rgb" )) != NULL )  {
+		int	ibuf[3];
+		if( sscanf( ap, "%d/%d/%d", V3ARGS(ibuf) ) == 3 )  {
+			VMOVE( comb->rgb, ibuf );
+			comb->rgb_valid = 1;
+		}
+		bu_log("unable to parse rgb attribute\n");
+	}
 
 	return 0;			/* OK */
 }

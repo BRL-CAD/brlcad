@@ -186,8 +186,22 @@ genptr_t		client_data;	/* unused client_data from db_scan() */
 	switch( rip->major_type )  {
 	case DB5HDR_MAJORTYPE_BRLCAD:
 		if( rip->minor_type == ID_COMBINATION )  {
+			struct bu_attribute_value_set	avs;
+
 			dp->d_flags = DIR_COMB;
-			/* XXX How to check for region attribute here? */
+			if( rip->attributes.ext_nbytes == 0 )  break;
+			/*
+			 *  Crack open the attributes to
+			 *  check for the "region=" attribute.
+			 */
+			if( db5_import_attributes( &avs, &rip->attributes ) < 0 )  {
+				bu_log("db5_diradd_handler: Bad attributes on combination '%s'\n",
+					rip->name);
+				break;
+			}
+			if( bu_avs_get( &avs, "region" ) != NULL )
+				dp->d_flags = DIR_COMB|DIR_REGION;
+			bu_avs_free( &avs );
 		} else {
 			dp->d_flags = DIR_SOLID;
 		}
