@@ -20,7 +20,7 @@
 			facedef arb set animedit db comb_std \
 			comb_bool_parse bool_rewrite solids_on_ray history \
 			TCP_FILES attach dm-plot dm-ps \
-			MGED_OBJS vdraw anim
+			MGED_OBJS vdraw
 
 /*#define USING_NEW_SO*/
 #include "../Cakefile.defs"
@@ -46,13 +46,5 @@ cad_boundp: cad_boundp.o
 
 cad_parea: cad_parea.o
 	CC -o cad_parea LDFLAGS cad_parea.o LIBES
-
-#if NFS
-%.o:	../anim/%.c			if exist ../.anim.MTYPE/%.o
-	cp ../.anim.MTYPE/%.o %.o
-#else
-%.o:	../anim/%.c			if exist ../anim/%.o
-	cp ../anim/%.o %.o
-#endif
 
 #include "../Cakefile.rules"
