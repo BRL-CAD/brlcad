@@ -28,7 +28,7 @@ static const char RCSregionfix[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <ctype.h>
-#if USE_REGCOMP
+#if HAVE_REGEX_H
 #include <regex.h>
 #endif
 #ifdef USE_STRING_H
@@ -95,9 +95,7 @@ rt_regionfix(struct rt_i *rtip)
 	bu_log("librt/rt_regionfix(%s):  Modifying instanced region-ids.\n", file);
 
 	while( (line = rt_read_cmd( fp )) != (char *) 0 )  {
-#if USE_REGCOMP
 		regex_t	re_space;
-#endif
 		linenum++;
 		/*  For now, establish a simple format:
 		 *  regexp TAB [more_white_space] formula SEMICOLON
@@ -108,27 +106,13 @@ rt_regionfix(struct rt_i *rtip)
 		}
 		*tabp++ = '\0';
 		while( *tabp && isspace( *tabp ) )  tabp++;
-#if USE_REGCOMP
 		if( (ret = regcomp(&re_space,line,0)) != 0 )  {
 			bu_log("%s: line %d, regcomp error '%d'\n", file, line, ret );
 			continue;		/* just ignore it */
 		}
-#else
-		{
-			char	*err;
-			if( (err = re_comp(line)) != (char *)0 )  {
-				bu_log("%s: line %d, re_comp error '%s'\n", file, line, err );
-				continue;		/* just ignore it */
-			}
-		}
-#endif
 		
 		for( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) )  {
-#if USE_REGCOMP
 			ret = regexec(&re_space, (char *)rp->reg_name, 0, 0,0);
-#else				      
-			ret = re_exec((char *)rp->reg_name);
-#endif
 			if(RT_G_DEBUG&DEBUG_INSTANCE)  {
 				bu_log("'%s' %s '%s'\n", line,
 					ret==1 ? "==" : "!=",
@@ -166,7 +150,7 @@ rt_regionfix(struct rt_i *rtip)
 			}
 			rp->reg_regionid = newid;
 		}
-#if USE_REGCOMP
+#if HAVE_REGFREE
 		regfree(&re_space);
 #endif
 		bu_free( line, "reg_expr line");
