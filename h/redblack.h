@@ -1,19 +1,17 @@
 /*			R E D B L A C K . H
  *
- *	The data structures, constants, and applications interface
- *	to LIBREDBLACK(3), the BRL-CAD red-black tree library.
+ *	The data structures and constants for red-black trees.
  *
- *	Many of the routines in LIBREDBLACK(3) are based on the algorithms
- *	in chapter 13 of T. H. Cormen, C. E. Leiserson, and R. L. Rivest,
+ *	Many of these routines are based on the algorithms in chapter 13
+ *	of T. H. Cormen, C. E. Leiserson, and R. L. Rivest,
  *	_Introduction to algorithms_, MIT Press, Cambridge, MA, 1990.
  *
  *	Author:	Paul Tanenbaum
  *
- *  $Header$
  */
 
-#ifndef REDBLACK_H
-#define REDBLACK_H seen
+#include "bu.h"
+#if 0
 
 /*
  *			    R B _ L I S T
@@ -238,4 +236,4 @@ BU_EXTERN(void rb_walk,		(rb_tree	*tree,
 				));
 #define		rb_walk1(t,v,d)	rb_walk((t), 0, (v), (d))
 
-#endif /* REDBLACK_H */
+#endif
