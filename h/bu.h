@@ -638,6 +638,25 @@ extern int	bu_debug;
 #	define bu_offsetofarray(_t, _m)	(int)( (((_t *)0)->_m))
 #endif
 
+/*
+ *  Convert address of global data object into byte "offset" from address 0.
+ */
+#if CRAY
+#	define bu_byteoffset(_i)	(((int)&(_i)))	/* actually a word offset */
+#else
+#  if IRIX > 5
+#	define bu_byteoffset(_i)	((size_t)__INTADDR__(&(_i)))
+#  else
+#    if sgi || __convexc__ || ultrix || _HPUX_SOURCE
+	/* "Lazy" way.  Works on reasonable machines with byte addressing */
+#	define bu_byteoffset(_i)	((int)((char *)&(_i)))
+#    else
+	/* "Conservative" way of finding # bytes as diff of 2 char ptrs */
+#	define bu_byteoffset(_i)	((int)(((char *)&(_i))-((char *)0)))
+#    endif
+#  endif
+#endif
+
 /* The "bu_structparse" struct describes one element of a structure.
  * Collections of these are combined to describe entire structures (or at
  * least those portions for which parse/print/import/export support is
