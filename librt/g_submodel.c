@@ -215,6 +215,7 @@ register CONST struct soltab *stp;
 
 /*
  */
+void
 rt_submodel_normal_hook( hitp, stp, rp )
 register struct hit	*hitp;
 struct soltab		*stp;
