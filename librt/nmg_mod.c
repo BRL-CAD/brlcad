@@ -1194,7 +1194,8 @@ struct edgeuse *eup;
  *  Join two loops together which share a common edge,
  *  such that both occurances of the common edge are deleted.
  */
-void nmg_jl(lu, eu)
+void
+nmg_jl(lu, eu)
 struct loopuse *lu;
 struct edgeuse *eu;
 {
@@ -1358,7 +1359,8 @@ struct vertexuse	*vu2;
  *
  *	combine adjacent loops within the same parent
  */
-void nmg_simplify_loop(lu)
+void
+nmg_simplify_loop(lu)
 struct loopuse *lu;
 {
 	struct edgeuse *eu, *eu_r, *tmpeu;
@@ -1420,7 +1422,8 @@ struct loopuse *lu;
  *			N M G _ K I L L _ S N A K E S
  *
  */
-void nmg_kill_snakes(lu)
+void
+nmg_kill_snakes(lu)
 struct loopuse *lu;
 {
 	struct edgeuse *eu, *eu_r;
@@ -1490,7 +1493,8 @@ struct loopuse *lu;
  *	combine adjacent loops within a face which serve no apparent purpose
  *	by remaining separate and distinct.  Kill "wire-snakes" in face.
  */
-void nmg_simplify_face(fu)
+void
+nmg_simplify_face(fu)
 struct faceuse *fu;
 {
 	struct loopuse *lu, *lu2;
@@ -1639,7 +1643,8 @@ struct rt_list *head;
 /*
  *			N M G _ S I M P L I F Y _ S H E L L
  */
-void nmg_simplify_shell(s)
+void
+nmg_simplify_shell(s)
 struct shell *s;
 {
 	struct faceuse *fu;
@@ -2411,3 +2416,5 @@ nmg_end_dup()
 	rt_free((char *)trans_tbl, "nmg_dup_face trans_tbl");
 	trans_tbl = (long **)NULL;
 }
+
+
