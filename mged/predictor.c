@@ -176,33 +176,35 @@ static struct trail	tE, tF, tG, tH;
 void
 predictor_kill()
 {
-	struct bu_vls	str;
+  char *av[3];
 
-	bu_vls_init( &str );
-	bu_vls_printf( &str, "d %s\n", PREDICTOR_NAME );
+  av[0] = "d";
+  av[2] = NULL;
 
-	(void)cmdline( &str, FALSE );
+  av[1] = PREDICTOR_NAME;
+  (void)f_delobj((ClientData)NULL, interp, 2, av);
 
-	bu_vls_trunc( &str, 0 );
+  av[1] = "d _PREDIC_TRAIL_LL_";
+  (void)f_delobj((ClientData)NULL, interp, 2, av);
 
-	bu_vls_strcat( &str, "d _PREDIC_TRAIL_LL_\n" );
-	bu_vls_strcat( &str, "d _PREDIC_TRAIL_LR_\n" );
-	bu_vls_strcat( &str, "d _PREDIC_TRAIL_UR_\n" );
-	bu_vls_strcat( &str, "d _PREDIC_TRAIL_UL_\n" );
+  av[1] = "d _PREDIC_TRAIL_LR_";
+  (void)f_delobj((ClientData)NULL, interp, 2, av);
 
-        (void)cmdline( &str, FALSE );
+  av[1] = "d _PREDIC_TRAIL_UR_";
+  (void)f_delobj((ClientData)NULL, interp, 2, av);
 
-	bu_vls_free( &str );
+  av[1] = "d _PREDIC_TRAIL_UL_";
+  (void)f_delobj((ClientData)NULL, interp, 2, av);
 
-	init_trail( &tA );
-	init_trail( &tB );
-	init_trail( &tC );
-	init_trail( &tD );
+  init_trail( &tA );
+  init_trail( &tB );
+  init_trail( &tC );
+  init_trail( &tD );
 
-	init_trail( &tE );
-	init_trail( &tF );
-	init_trail( &tG );
-	init_trail( &tH );
+  init_trail( &tE );
+  init_trail( &tF );
+  init_trail( &tG );
+  init_trail( &tH );
 }
 
 #define TF_BORD	0.01

@@ -463,10 +463,16 @@ char **argv;
 			Tcl_AppendResult(interp, "-1", (char *)NULL);
 			return TCL_OK;
 		}
-		bu_vls_init(&killstr);
-		bu_vls_printf( &killstr, "kill -f %s\n", solid_name );
-		(void)cmdline( &killstr, FALSE );
-		bu_vls_free(&killstr);
+		{
+		  char *av[4];
+
+		  av[0] = "kill";
+		  av[1] = "-f";
+		  av[2] = solid_name;
+		  av[3] = NULL;
+
+		  (void)f_kill(clientData, interp, 3, av);
+		}
 		index = 0;
 		index = invent_solid( solid_name, &(curhead->vhd), curhead->rgb, 1);
 		sprintf(result_string,"%d",index);
@@ -558,9 +564,9 @@ char **argv;
 				bu_vls_strcat( &killstr, rcp->name);
 				bu_vls_strcat( &killstr, " ");
 			}
-			/* also does free */
-			str = bu_vls_strgrab(&killstr);
-			Tcl_AppendResult(interp, str, (char *)NULL);
+
+			Tcl_AppendResult(interp, bu_vls_addr(&killstr), (char *)NULL);
+			bu_vls_free(&killstr);
 			return TCL_OK;
 		case 'd':
 			if (argc<4) {

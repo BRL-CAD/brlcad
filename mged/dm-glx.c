@@ -647,10 +647,9 @@ char	**argv;
 {
   struct bu_vls	vls;
   int status;
-  char *av[4];
+  char *av[6];
   char xstr[32];
   char ystr[32];
-  char zstr[32];
 
   if( !strcmp( argv[0], "set" )){
     struct bu_vls tmp_vls;
@@ -705,16 +704,17 @@ char	**argv;
       return TCL_ERROR;
     }
 
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "M %s %d %d\n", argv[2],
-		  Glx_irisX2ged(dmp, atoi(argv[3])), Glx_irisY2ged(dmp, atoi(argv[4])));
-    status = cmdline(&vls, FALSE);
-    bu_vls_free(&vls);
+    av[0] = "M";
+    av[1] = argv[2];
+    av[2] = xstr;
+    av[3] = ystr;
+    av[4] = NULL;
 
-    if(status == CMD_OK)
-      return TCL_OK;
+    sprintf(xstr, "%d", Glx_irisX2ged(dmp, atoi(argv[3])));
+    sprintf(ystr, "%d", Glx_irisY2ged(dmp, atoi(argv[4])));
+    status = f_mouse((ClientData)NULL, interp, 4, av);
 
-    return TCL_ERROR;
+    return status;
   }
 
   status = TCL_OK;
@@ -742,14 +742,19 @@ char	**argv;
 	am_mode = ALT_MOUSE_MODE_TRANSLATE;
 	if((state == ST_S_EDIT || state == ST_O_EDIT) && !EDIT_ROTATE &&
 	   (edobj || es_edflag > 0)){
-	  fastf_t fx, fy;
 
-	  bu_vls_init(&vls);
-	  fx = (((struct glx_vars *)dm_vars)->omx/(fastf_t)((struct glx_vars *)dm_vars)->width - 0.5) * 2;
-	  fy = (0.5 - ((struct glx_vars *)dm_vars)->omy/(fastf_t)((struct glx_vars *)dm_vars)->height) * 2;
-	  bu_vls_printf( &vls, "knob aX %f aY %f\n", fx, fy);
-	  (void)cmdline(&vls, FALSE);
-	  bu_vls_free(&vls);
+	  av[0] = "knob";
+	  av[1] = "aX";
+	  av[2] = xstr;
+	  av[3] = "aY";
+	  av[4] = ystr;
+	  av[5] = NULL;
+
+	  sprintf(xstr, "%f", (((struct glx_vars *)dm_vars)->omx/
+			       (fastf_t)((struct glx_vars *)dm_vars)->width - 0.5) * 2);
+	  sprintf(ystr, "%f", (0.5 - ((struct glx_vars *)dm_vars)->omy/
+			       (fastf_t)((struct glx_vars *)dm_vars)->height) * 2);
+	  status = f_knob((ClientData)NULL, interp, 5, av);
 	}
 
 	break;

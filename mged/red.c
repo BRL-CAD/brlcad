@@ -124,16 +124,12 @@ char **argv;
 	    (void)unlink( red_tmpfil );
 	    return TCL_ERROR;
 	  }else{ /* eliminate the temporary combination */
-	    struct bu_vls	v;
+	    char *av[3];
 
-	    bu_vls_init( &v );
-	    bu_vls_strcat( &v, "kill " );
-	    bu_vls_strcat( &v , red_tmpcomb );
-	    bu_vls_strcat( &v , "\n" );
-
-	    cmdline( &v, FALSE );
-
-	    bu_vls_free( &v );
+	    av[0] = "kill";
+	    av[1] = "red_tmpcomb";
+	    av[2] = NULL;
+	    (void)f_kill(clientData, interp, 2, av);
 	  }
 	}
 
@@ -515,35 +511,26 @@ struct directory *dpold;
 	return( 0 );
 }
 
+/* restore a combination that was saved in "red_tmpcomb" */
 void
 restore_comb( dp )
 struct directory *dp;
 {
-/* restore a combination that was saved in "red_tmpcomb" */
-	struct bu_vls	v;
-	char name[NAMESIZE];
+  char *av[4];
+  char name[NAMESIZE];
 
-	/* Save name of original combo */
-	strcpy( name , dp->d_namep );
+  /* Save name of original combo */
+  strcpy( name , dp->d_namep );
 
-	/* Kill original combination */
-	bu_vls_init(&v);
-	bu_vls_strcat( &v , "kill " );
-	bu_vls_strcat( &v , dp->d_namep );
-	bu_vls_strcat( &v , "\n" );
+  av[0] = "kill";
+  av[1] = name;
+  av[2] = NULL;
+  av[3] = NULL;
+  (void)f_kill((ClientData)NULL, interp, 2, av);
 
-	cmdline( &v, FALSE );
+  av[0] = "mv";
+  av[1] = red_tmpcomb;
+  av[2] = name;
 
-	bu_vls_free( &v );
-
-	/* Move temp to original */
-	bu_vls_strcat( &v , "mv " );
-	bu_vls_strcat( &v , red_tmpcomb );
-	bu_vls_strcat( &v , " " );
-	bu_vls_strcat( &v , name );
-	bu_vls_strcat( &v , "\n" );
-
-	cmdline( &v, FALSE );
-
-	bu_vls_free( &v );
+  (void)f_name((ClientData)NULL, interp, 3, av);
 }
