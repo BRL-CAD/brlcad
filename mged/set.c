@@ -52,6 +52,10 @@ struct _mged_variables default_mged_variables = {
 /* hot_key */                   0,
 /* context */                   1,
 /* dlist */                     1,
+/* nirt_behavior */             0,
+/* mouse_nirt */                0,
+/* use_air */			0,
+/* echo_nirt_cmd */		0,
 /* coords */                    'v',
 /* ecoords */                   'o',
 /* rotate_about */              'v',
@@ -135,6 +139,10 @@ struct bu_structparse mged_vparse[] = {
 	{"%d",  1, "hot_key",           MV_O(hot_key),          BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "context",           MV_O(context),          BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "dlist",             MV_O(dlist),            set_dlist },
+	{"%d",  1, "nirt_behavior",     MV_O(nirt_behavior),    BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",  1, "mouse_nirt",        MV_O(mouse_nirt),       BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",  1, "use_air",		MV_O(use_air),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",  1, "echo_nirt_cmd",	MV_O(echo_nirt_cmd),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%c",  1, "coords",            MV_O(coords),           BU_STRUCTPARSE_FUNC_NULL },
 	{"%c",  1, "ecoords",           MV_O(ecoords),          BU_STRUCTPARSE_FUNC_NULL },
 	{"%c",  1, "rotate_about",      MV_O(rotate_about),     BU_STRUCTPARSE_FUNC_NULL },
@@ -316,11 +324,6 @@ set_scroll()
   struct bu_vls vls;
   struct bu_vls save_result1_vls;
   struct bu_vls save_result2_vls;
-
-  if(es_edclass && mged_variables->transform == 'e')
-    scroll_edit = es_edclass;
-  else
-    scroll_edit = EDIT_CLASS_NULL;
 
   if(!strcmp("nu", bu_vls_addr(&pathName)))
     return;
