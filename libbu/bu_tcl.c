@@ -160,6 +160,8 @@ char				*base;		/* base addr of users struct */
 				     j < sdp->sp_count && argv[0][i] != '\0';
 				     loc[j++] = argv[0][i++] )
 					;
+				if( i < sdp->sp_count )
+					loc[i] = '\0';
 				if( sdp->sp_count > 1 ) {
 					loc[sdp->sp_count-1] = '\0';
 					Tcl_AppendResult( interp,
