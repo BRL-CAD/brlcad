@@ -90,6 +90,7 @@ MGED_EXTERN(int cmd_killtree, (ClientData clientData, Tcl_Interp *interp, int ar
 MGED_EXTERN(int f_knob, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_labelvert, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 /* MGED_EXTERN(int f_list, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv)); */
+MGED_EXTERN(int f_loadview, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int cmd_lookat, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_l_muves, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_make, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));

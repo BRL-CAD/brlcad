@@ -277,6 +277,7 @@ static struct cmdtab cmdtab[] = {
 #ifdef DM_X
 	{"loadtk", cmd_tk},
 #endif
+	{"loadview", f_loadview},
 	{"lookat", cmd_lookat},
 	{"ls", cmd_ls},
 	{"M", f_mouse},
