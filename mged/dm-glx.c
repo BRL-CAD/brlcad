@@ -67,8 +67,6 @@ static void     Glx_statechange();
 static void     Glx_dbtext();
 static void     establish_zbuffer();
 static void     establish_lighting();
-static void     establish_perspective();
-static void     set_perspective();
 static void     dirty_hook();
 static void     set_knob_offset();
 
@@ -77,8 +75,6 @@ struct bu_structparse Glx_vparse[] = {
 	{"%d",  1, "zclip",		Glx_MV_O(zclipping_on),	dirty_hook },
 	{"%d",  1, "zbuffer",		Glx_MV_O(zbuffer_on),	establish_zbuffer },
 	{"%d",  1, "lighting",		Glx_MV_O(lighting_on),	establish_lighting },
-	{"%d",  1, "perspective",       Glx_MV_O(perspective_mode), establish_perspective },
-	{"%d",  1, "set_perspective",Glx_MV_O(dummy_perspective),  set_perspective },
 	{"%d",  1, "debug",		Glx_MV_O(debug),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "has_zbuf",		Glx_MV_O(zbuf),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "has_rgb",		Glx_MV_O(rgb),		BU_STRUCTPARSE_FUNC_NULL },
@@ -168,7 +164,7 @@ char *argv[];
   eventHandler = Glx_doevent;
   curr_dm_list->s_info->opp = &pathName;
   Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
-  glx_configure_window_shape(dmp);
+  dm_configureWindowShape(dmp);
 
   return TCL_OK;
 }
@@ -214,12 +210,12 @@ XEvent *eventPtr;
 
   bu_vls_init(&cmd);
   if ( eventPtr->type == Expose && eventPtr->xexpose.count == 0 ) {
-    glx_clear_to_black(dmp);
+    glx_clearToBlack(dmp);
     dirty = 1;
 
     goto handled;
   } else if( eventPtr->type == ConfigureNotify ) {
-    glx_configure_window_shape(dmp);
+    dm_configureWindowShape(dmp);
     dirty = 1;
 
     goto handled;
@@ -1917,29 +1913,14 @@ Glx_colorchange()
 static void
 establish_zbuffer()
 {
-  glx_establish_zbuffer(dmp);
+  dm_zbuffer(dmp);
   ++dmaflag;
 }
 
 static void
 establish_lighting()
 {
-  glx_establish_lighting(dmp);
-  color_soltab();
-  ++dmaflag;
-}
-
-static void
-establish_perspective()
-{
-  glx_establish_perspective(dmp);
-  ++dmaflag;
-}
-
-static void
-set_perspective()
-{
-  glx_set_perspective(dmp);
+  dm_lighting(dmp);
   ++dmaflag;
 }
 
