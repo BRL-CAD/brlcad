@@ -164,6 +164,7 @@ static struct cmdtab cmdtab[] = {
 	"arb", f_arbdef,
 	"arced", f_arced,
 	"area", f_area,
+	"arot", f_arot,
 	"attach", f_attach,
 	"B", f_blast,
 	"bev", f_bev,
