@@ -620,6 +620,7 @@ int			seg_no;
 			{
 				BU_GETSTRUCT( hitp, hit_list );
 				BU_GETSTRUCT( hitp->hitp, hit );
+				hitp->hitp->hit_magic = RT_HIT_MAGIC;
 				hitp->hitp->hit_dist = dist;
 				VJOIN1( hitp->hitp->hit_vpriv, pprime, normalized_dist, dprime );
 				hitp->hitp->hit_surfno = seg_no*10 + PIPE_BEND_OUTER_BODY;
@@ -695,6 +696,7 @@ int			seg_no;
 			{
 				BU_GETSTRUCT( hitp, hit_list );
 				BU_GETSTRUCT( hitp->hitp, hit );
+				hitp->hitp->hit_magic = RT_HIT_MAGIC;
 				hitp->hitp->hit_dist = dist;
 				VJOIN1( hitp->hitp->hit_vpriv, pprime, normalized_dist, dprime );
 				hitp->hitp->hit_surfno = seg_no*10 + PIPE_BEND_INNER_BODY;
@@ -775,6 +777,7 @@ int			seg_no;
 		{
 			BU_GETSTRUCT( hitp, hit_list );
 			BU_GETSTRUCT( hitp->hitp, hit );
+			hitp->hitp->hit_magic = RT_HIT_MAGIC;
 			hitp->hitp->hit_dist = t_tmp;
 			hitp->hitp->hit_surfno = seg_no*10 + PIPE_LINEAR_OUTER_BODY;
 			VMOVE( hitp->hitp->hit_vpriv, hit_pt );
@@ -790,6 +793,7 @@ int			seg_no;
 		{
 			BU_GETSTRUCT( hitp, hit_list );
 			BU_GETSTRUCT( hitp->hitp, hit );
+			hitp->hitp->hit_magic = RT_HIT_MAGIC;
 			hitp->hitp->hit_dist = t_tmp;
 			hitp->hitp->hit_surfno = seg_no*10 + PIPE_LINEAR_OUTER_BODY;
 			VMOVE( hitp->hitp->hit_vpriv, hit_pt );
@@ -832,6 +836,7 @@ int			seg_no;
 			{
 				BU_GETSTRUCT( hitp, hit_list );
 				BU_GETSTRUCT( hitp->hitp, hit );
+				hitp->hitp->hit_magic = RT_HIT_MAGIC;
 				hitp->hitp->hit_dist = t_tmp;
 				hitp->hitp->hit_surfno = seg_no*10 + PIPE_LINEAR_INNER_BODY;
 				VMOVE( hitp->hitp->hit_vpriv, hit_pt );
@@ -847,6 +852,7 @@ int			seg_no;
 			{
 				BU_GETSTRUCT( hitp, hit_list );
 				BU_GETSTRUCT( hitp->hitp, hit );
+				hitp->hitp->hit_magic = RT_HIT_MAGIC;
 				hitp->hitp->hit_dist = t_tmp;
 				hitp->hitp->hit_surfno = seg_no*10 + PIPE_LINEAR_INNER_BODY;
 				VMOVE( hitp->hitp->hit_vpriv, hit_pt );
@@ -903,6 +909,7 @@ int			seg_no;
 			{
 				BU_GETSTRUCT( hitp, hit_list );
 				BU_GETSTRUCT( hitp->hitp, hit );
+				hitp->hitp->hit_magic = RT_HIT_MAGIC;
 				hitp->hitp->hit_dist = t_tmp;
 				hitp->hitp->hit_surfno = seg_no*10 + PIPE_LINEAR_BASE;
 				(*hit_count)++;
@@ -933,6 +940,7 @@ int			seg_no;
 			{
 				BU_GETSTRUCT( hitp, hit_list );
 				BU_GETSTRUCT( hitp->hitp, hit );
+				hitp->hitp->hit_magic = RT_HIT_MAGIC;
 				hitp->hitp->hit_dist = t_tmp;
 				hitp->hitp->hit_surfno = seg_no*10 + PIPE_BEND_BASE;
 				(*hit_count)++;
@@ -987,6 +995,7 @@ int			seg_no;
 			{
 				BU_GETSTRUCT( hitp, hit_list );
 				BU_GETSTRUCT( hitp->hitp, hit );
+				hitp->hitp->hit_magic = RT_HIT_MAGIC;
 				hitp->hitp->hit_dist = t_tmp;
 				hitp->hitp->hit_surfno = seg_no*10 + PIPE_LINEAR_TOP;
 				(*hit_count)++;
@@ -1023,6 +1032,7 @@ int			seg_no;
 			{
 				BU_GETSTRUCT( hitp, hit_list );
 				BU_GETSTRUCT( hitp->hitp, hit );
+				hitp->hitp->hit_magic = RT_HIT_MAGIC;
 				hitp->hitp->hit_dist = t_tmp;
 				hitp->hitp->hit_surfno = seg_no*10 + PIPE_BEND_TOP;
 				(*hit_count)++;

@@ -68,6 +68,8 @@ register struct shadework *swp;
 
 	RT_AP_CHECK(ap);
 	RT_CK_RTI(ap->a_rt_i);
+	RT_CK_PT(pp);
+	RT_CK_HIT(pp->pt_inhit);
 
 	swp->sw_hit = *(pp->pt_inhit);		/* struct copy */
 

@@ -617,9 +617,12 @@ register struct application *ap;
 		bzero( (char *)&u, sizeof(u) );
 		/* Make "miss" hit the environment map */
 		/* Build up the fakery */
+		u.part.pt_magic = PT_MAGIC;
 		u.part.pt_inhit = u.part.pt_outhit = &u.hit;
 		u.part.pt_regionp = &env_region;
+		u.hit.hit_magic = RT_HIT_MAGIC;
 		u.hit.hit_dist = ap->a_rt_i->rti_radius * 2;	/* model diam */
+		u.hit.hit_rayp = &ap->a_ray;
 
 		u.sw.sw_transmit = u.sw.sw_reflect = 0.0;
 		u.sw.sw_refrac_index = 1.0;
@@ -685,7 +688,9 @@ struct seg *finished_segs;
 		bu_log("colorview:  no hit out front?\n");
 		return(0);
 	}
+	RT_CK_PT(pp);
 	hitp = pp->pt_inhit;
+	RT_CK_HIT(hitp);
 	ap->a_uptr = (genptr_t)pp->pt_regionp;	/* note which region was shaded */
 
 	if(rdebug&RDEBUG_HITS)  {

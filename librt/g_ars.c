@@ -554,6 +554,7 @@ struct seg		*seghead;
 		/*  If dn < 0, we should be entering the solid.
 		 *  However, we just assume in/out sorting later will work.
 		 */
+		hp->hit_magic = RT_HIT_MAGIC;
 		hp->hit_dist = k;
 		hp->hit_private = (char *)trip;
 		hp->hit_vpriv[X] = dn;

@@ -200,6 +200,8 @@ struct application	*ap;
 
 		segp = BU_LIST_FIRST( seg, &(in_hd->l) );
 		RT_CHECK_SEG(segp);
+		RT_CK_HIT(&(segp->seg_in));
+		RT_CK_HIT(&(segp->seg_out));
 		if(rt_g.debug&DEBUG_PARTITION)  {
 			point_t		pt;
 

@@ -396,6 +396,7 @@ struct seg		*seghead;
 				&& hitp->hit_vpriv[X] <= 0.0
 				&& hitp->hit_vpriv[Z] >= -1.0
 				&& hitp->hit_vpriv[Z] <= 0.0 ) {
+				hitp->hit_magic = RT_HIT_MAGIC;
 				hitp->hit_dist = k1;
 				hitp->hit_surfno = RHC_NORM_BODY;	/* compute N */
 				hitp++;
@@ -406,6 +407,7 @@ struct seg		*seghead;
 				&& hitp->hit_vpriv[X] <= 0.0
 				&& hitp->hit_vpriv[Z] >= -1.0
 				&& hitp->hit_vpriv[Z] <= 0.0 ) {
+				hitp->hit_magic = RT_HIT_MAGIC;
 				hitp->hit_dist = k2;
 				hitp->hit_surfno = RHC_NORM_BODY;	/* compute N */
 				hitp++;
@@ -417,6 +419,7 @@ struct seg		*seghead;
 				&& hitp->hit_vpriv[X] <= 0.0
 				&& hitp->hit_vpriv[Z] >= -1.0
 				&& hitp->hit_vpriv[Z] <= 0.0 ) {
+				hitp->hit_magic = RT_HIT_MAGIC;
 				hitp->hit_dist = k1;
 				hitp->hit_surfno = RHC_NORM_BODY;	/* compute N */
 				hitp++;
@@ -442,6 +445,7 @@ check_plates:
 			* (1.0 + 2*x) >= x*x
 			&& hitp->hit_vpriv[Z] >= -1.0
 			&& hitp->hit_vpriv[Z] <= 0.0)  {
+			hitp->hit_magic = RT_HIT_MAGIC;
 			hitp->hit_dist = k1;
 			hitp->hit_surfno = RHC_NORM_FRT;	/* -H */
 			hitp++;
@@ -454,6 +458,7 @@ check_plates:
 			* (1.0 + 2*x) >= x*x
 			&& hitp->hit_vpriv[Z] >= -1.0
 			&& hitp->hit_vpriv[Z] <= 0.0)  {
+			hitp->hit_magic = RT_HIT_MAGIC;
 			hitp->hit_dist = k2;
 			hitp->hit_surfno = RHC_NORM_BACK;	/* +H */
 			hitp++;
@@ -469,6 +474,7 @@ check_plates:
 		if( hitp->hit_vpriv[X] >= -1.0 &&  hitp->hit_vpriv[X] <= 0.0
 			&& hitp->hit_vpriv[Y] >= -1.0
 			&& hitp->hit_vpriv[Y] <= 1.0 ) {
+			hitp->hit_magic = RT_HIT_MAGIC;
 			hitp->hit_dist = k1;
 			hitp->hit_surfno = RHC_NORM_TOP;	/* -B */
 			hitp++;

@@ -501,6 +501,7 @@ leave:
 /* bu_log("cell: k1st=%g, k2nd=%g\n", k1st,k2nd); */
 
 	if (!fnd2 ) {
+		hitp->hit_magic = RT_HIT_MAGIC;
 		hitp->hit_dist = k1st;
 		VMOVE(hitp->hit_normal, tri_wn1st);
 		VUNITIZE(hitp->hit_normal);
@@ -508,6 +509,7 @@ leave:
 		return 1;
 	}
 	if (!fnd1) {
+		hitp->hit_magic = RT_HIT_MAGIC;
 		hitp->hit_dist = k2nd;
 		VMOVE(hitp->hit_normal, tri_wn2nd);
 		VUNITIZE(hitp->hit_normal);
@@ -516,12 +518,14 @@ leave:
 	}
 #if 0
 	if (abs(k1st) < abs(k2nd)) {
+		hitp->hit_magic = RT_HIT_MAGIC;
 		hitp->hit_dist = k1st;
 		VMOVE(hitp->hit_normal, tri_wn1st);
 		VUNITIZE(hitp->hit_normal);
 		hitp->hit_surfno = yCell*hfp->hf_w+xCell;
 		return 1;
 	} else {
+		hitp->hit_magic = RT_HIT_MAGIC;
 		hitp->hit_dist = k2nd;
 		VMOVE(hitp->hit_normal, tri_wn2nd);
 		VUNITIZE(hitp->hit_normal);
@@ -529,11 +533,14 @@ leave:
 		return 1;
 	}
 #else
+	hitp->hit_magic = RT_HIT_MAGIC;
 	hitp->hit_dist = k1st;
 	VMOVE(hitp->hit_normal, tri_wn1st);
 	VUNITIZE(hitp->hit_normal);
 	hitp->hit_surfno = yCell*hfp->hf_w+xCell;
 	hitp++;
+
+	hitp->hit_magic = RT_HIT_MAGIC;
 	hitp->hit_dist = k2nd;
 	VMOVE(hitp->hit_normal, tri_wn2nd);
 	VUNITIZE(hitp->hit_normal);
@@ -568,6 +575,7 @@ int *nhits;
 	if (plane == -6) return;
 
 	if (plane == -3) { 
+		(*hp)->hit_magic = RT_HIT_MAGIC;
 		(*hp)->hit_dist = inout;
 		(*hp)->hit_surfno = plane;
 		(*hp)++;
@@ -641,6 +649,7 @@ bu_log("inout: loc[Z]=%g, answer=%g, left=%g, right=%g, xright=%g, xx=%g\n",
 #endif
 
 	if (loc[Z]-SQRT_SMALL_FASTF < answer) {
+		(*hp)->hit_magic = RT_HIT_MAGIC;
 		(*hp)->hit_dist = inout;
 		(*hp)->hit_surfno = plane;
 		VJOIN1((*hp)->hit_point, rp->r_pt, inout, rp->r_dir);

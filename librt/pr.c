@@ -223,6 +223,8 @@ register CONST struct hit	*hitp;
 {
 	struct bu_vls		v;
 
+	RT_CK_HIT(hitp);
+
 	bu_vls_init( &v );
 	rt_pr_hit_vls( &v, str, hitp );
 	bu_log("%s", bu_vls_addr( &v ) );
@@ -239,6 +241,7 @@ CONST char			*str;
 register CONST struct hit	*hitp;
 {
 	BU_CK_VLS( v );
+	RT_CK_HIT(hitp);
 
 	bu_log_indent_vls( v );
 	bu_vls_strcat( v, str );

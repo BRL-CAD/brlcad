@@ -265,6 +265,7 @@ struct seg		*seghead;
 		VJOIN1( hp->hit_point, rp->r_pt, k, rp->r_dir );
 
 		/* HIT is within planar face */
+		hp->hit_magic = RT_HIT_MAGIC;
 		hp->hit_dist = k;
 		VMOVE( hp->hit_normal, trip->tri_N );
 		if( ++nhits >= MAXHITS )  {

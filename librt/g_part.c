@@ -409,8 +409,10 @@ struct seg		*seghead;
 		segp->seg_stp = stp;
 
 		/* we know root is positive, so we know the smaller t */
+		segp->seg_in.hit_magic = RT_HIT_MAGIC;
 		segp->seg_in.hit_dist = b - root;
 		segp->seg_in.hit_surfno = RT_PARTICLE_SURF_VSPHERE;
+		segp->seg_out.hit_magic = RT_HIT_MAGIC;
 		segp->seg_out.hit_dist = b + root;
 		segp->seg_out.hit_surfno = RT_PARTICLE_SURF_VSPHERE;
 		BU_LIST_INSERT( &(seghead->l), &(segp->l) );
@@ -481,6 +483,7 @@ struct seg		*seghead;
 	if( (f = pprime[Z] + t1 * dprime[Z]) >= 0.0 )  {
 		check_h = 1;		/* may also hit off end */
 		if( f <= 1.0 )  {
+			hitp->hit_magic = RT_HIT_MAGIC;
 			/** VJOIN1( hitp->hit_vpriv, pprime, t1, dprime ); **/
 			hitp->hit_vpriv[X] = pprime[X] + t1 * dprime[X];
 			hitp->hit_vpriv[Y] = pprime[Y] + t1 * dprime[Y];
@@ -496,6 +499,7 @@ struct seg		*seghead;
 	if( (f = pprime[Z] + t2 * dprime[Z]) >= 0.0 )  {
 		check_h = 1;		/* may also hit off end */
 		if( f <= 1.0 )  {
+			hitp->hit_magic = RT_HIT_MAGIC;
 			/** VJOIN1( hitp->hit_vpriv, pprime, t2, dprime ); **/
 			hitp->hit_vpriv[X] = pprime[X] + t2 * dprime[X];
 			hitp->hit_vpriv[Y] = pprime[Y] + t2 * dprime[Y];
@@ -544,12 +548,14 @@ check_hemispheres:
 		t1 = b - root;
 		/* see if hit'[Z] is below end of cylinder */
 		if( pprime[Z] + t1 * dprime[Z] <= 0.0 )  {
+			hitp->hit_magic = RT_HIT_MAGIC;
 			hitp->hit_dist = t1;
 			hitp->hit_surfno = RT_PARTICLE_SURF_VSPHERE;
 			hitp++;
 		}
 		t2 = b + root;
 		if( pprime[Z] + t2 * dprime[Z] <= 0.0 )  {
+			hitp->hit_magic = RT_HIT_MAGIC;
 			hitp->hit_dist = t2;
 			hitp->hit_surfno = RT_PARTICLE_SURF_VSPHERE;
 			hitp++;
@@ -589,12 +595,14 @@ do_check_h:
 		root = sqrt(root);
 		t1 = b - root;
 		if( pprime[Z] + t1 * dprime[Z] >= 1.0 )  {
+			hitp->hit_magic = RT_HIT_MAGIC;
 			hitp->hit_dist = t1;
 			hitp->hit_surfno = RT_PARTICLE_SURF_HSPHERE;
 			hitp++;
 		}
 		t2 = b + root;
 		if( pprime[Z] + t2 * dprime[Z] >= 1.0 )  {
+			hitp->hit_magic = RT_HIT_MAGIC;
 			hitp->hit_dist = t2;
 			hitp->hit_surfno = RT_PARTICLE_SURF_HSPHERE;
 			hitp++;

@@ -286,6 +286,8 @@ struct seg		*segHeadp;
 		segp->seg_out.hit_dist = oap->a_ray.r_min +
 			segp->seg_out.hit_dist * ap->a_dist;
 
+		/* XXX seg_in->seg_rayp needs to be changed! */
+
 		/* Need to set hook to catch norm and curve ops,
 		 * and to revector them here, so that xforms can be done.
 		 */

@@ -437,6 +437,7 @@ struct seg		*seghead;
 	 */
 	VJOIN1( hitp->hit_vpriv, pprime, k1, dprime );		/* hit' */
 	if( hitp->hit_vpriv[Z] >= 0.0 && hitp->hit_vpriv[Z] <= 1.0 ) {
+		hitp->hit_magic = RT_HIT_MAGIC;
 		hitp->hit_dist = k1;
 		hitp->hit_surfno = REC_NORM_BODY;	/* compute N */
 		hitp++; nhits++;
@@ -444,6 +445,7 @@ struct seg		*seghead;
 
 	VJOIN1( hitp->hit_vpriv, pprime, k2, dprime );		/* hit' */
 	if( hitp->hit_vpriv[Z] >= 0.0 && hitp->hit_vpriv[Z] <= 1.0 )  {
+		hitp->hit_magic = RT_HIT_MAGIC;
 		hitp->hit_dist = k2;
 		hitp->hit_surfno = REC_NORM_BODY;	/* compute N */
 		hitp++; nhits++;
@@ -461,6 +463,7 @@ check_plates:
 		VJOIN1( hitp->hit_vpriv, pprime, k1, dprime );	/* hit' */
 		if( hitp->hit_vpriv[X] * hitp->hit_vpriv[X] +
 		    hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] <= 1.0 )  {
+			hitp->hit_magic = RT_HIT_MAGIC;
 			hitp->hit_dist = k1;
 			hitp->hit_surfno = REC_NORM_BOT;	/* -H */
 			hitp++; nhits++;
@@ -469,6 +472,7 @@ check_plates:
 		VJOIN1( hitp->hit_vpriv, pprime, k2, dprime );	/* hit' */
 		if( hitp->hit_vpriv[X] * hitp->hit_vpriv[X] +
 		    hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] <= 1.0 )  {
+			hitp->hit_magic = RT_HIT_MAGIC;
 			hitp->hit_dist = k2;
 			hitp->hit_surfno = REC_NORM_TOP;	/* +H */
 			hitp++; nhits++;
