@@ -635,9 +635,8 @@ union tree		*tp;
  *	-1	Unable to find OP_DB_LEAF node specified by 'cp'.
  *	 0	OK
  */
-db_tree_del_dbleaf( tp, cp )
-union tree		**tp;
-CONST char		*cp;
+int
+db_tree_del_dbleaf(union tree **tp, const char *cp)
 {
 	union tree	*parent;
 	int		side = 0;

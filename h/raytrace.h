@@ -2307,6 +2307,9 @@ BU_EXTERN(int db_do_anim, (struct animate *anp, mat_t stack, mat_t arc,
 	struct mater_info *materp) );
 BU_EXTERN(void db_free_anim, (struct db_i *dbip) );
 BU_EXTERN(void db_write_anim, (FILE *fop, struct animate *anp));
+BU_EXTERN(struct animate	*db_parse_1anim, (struct db_i *dbip,
+				int argc, CONST char **argv));
+void			db_free_1anim( struct animate *anp );
 
 /* db_path.c */
 BU_EXTERN(void db_add_node_to_full_path, (struct db_full_path *pp,
@@ -2320,6 +2323,10 @@ BU_EXTERN(int db_region_mat, (mat_t m, CONST struct db_i *dbip,
 BU_EXTERN(int db_shader_mat, (mat_t model_to_shader, CONST struct rt_i *rtip,
 				CONST struct region *rp, point_t p_min,
 				point_t p_max) );
+int db_string_to_path(struct db_full_path *pp, struct db_i *dbip, CONST char *str);
+void db_full_path_init( struct db_full_path *pathp );
+void db_append_full_path( struct db_full_path *dest, const struct db_full_path *src );
+
 /* db_open.c */
 					/* open an existing model database */
 BU_EXTERN(struct db_i *db_open, ( CONST char *name, CONST char *mode ) );
@@ -2450,6 +2457,9 @@ BU_EXTERN(int db_path_to_mat, (struct db_i *dbip, struct db_full_path *pathp,
 BU_EXTERN(void db_apply_anims, (struct db_full_path *pathp,
 	struct directory *dp, mat_t stck, mat_t arc,
 	struct mater_info *materp));
+BU_EXTERN(union tree		*db_find_named_leaf, (union tree *tp,
+				CONST char *cp));
+int db_tree_del_dbleaf(union tree **tp, const char *cp);
 
 /* dir.c */
 extern struct rt_i *rt_dirbuild( const char *filename, char *buf, int len );

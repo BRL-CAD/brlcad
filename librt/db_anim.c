@@ -225,8 +225,7 @@ struct mater_info	*materp;
  *  Free one animation structure
  */
 void
-db_free_1anim( anp )
-struct animate		*anp;
+db_free_1anim( struct animate *anp )
 {
 	RT_CK_ANIMATE( anp );
 
