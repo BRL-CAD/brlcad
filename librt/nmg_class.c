@@ -2187,6 +2187,8 @@ CONST struct rt_tol *tol;
 	fastf_t point_count=0.0;
 	double one_over_count;
 	point_t test_pt;
+	point_t average_pt;
+	int i;
 
 	NMG_CK_LOOPUSE( lu );
 	RT_CK_TOL( tol );
@@ -2201,7 +2203,7 @@ CONST struct rt_tol *tol;
 		return( 3 );
 
 	/* first try just averaging all the vertices */
-	VSETALL( test_pt, 0.0 );
+	VSETALL( average_pt, 0.0 );
 	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 	{
 		struct vertex_g *vg;
@@ -2210,12 +2212,13 @@ CONST struct rt_tol *tol;
 		vg = eu->vu_p->v_p->vg_p;
 		NMG_CK_VERTEX_G( vg );
 
-		VADD2( test_pt, test_pt, vg->coord );
+		VADD2( average_pt, average_pt, vg->coord );
 		point_count++;
 	}
 
 	one_over_count = 1.0/point_count;
-	VSCALE( test_pt, test_pt, one_over_count );
+	VSCALE( average_pt, average_pt, one_over_count );
+	VMOVE( test_pt, average_pt );
 
 	if( nmg_class_pt_lu_except( test_pt, lu, (struct edge *)NULL, tol ) == NMG_CLASS_AinB )
 	{
@@ -2223,25 +2226,43 @@ CONST struct rt_tol *tol;
 		return( 0 );
 	}
 
-	/* Try moving just a little left of an edge */
-	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+	for( i=0 ; i<3 ; i++ )
 	{
-		vect_t left;
-		struct vertex_g *vg1,*vg2;
 
-		(void)nmg_find_eu_leftvec( left, eu );
+		double tol_mult;
 
-		vg1 = eu->vu_p->v_p->vg_p;
-		vg2 = eu->eumate_p->vu_p->v_p->vg_p;
-
-		VADD2( test_pt, vg1->coord, vg2->coord );
-		VSCALE( test_pt, test_pt, 0.5 );
-
-		VJOIN1( test_pt, test_pt, 3.0*tol->dist, left );
-		if( nmg_class_pt_lu_except( test_pt, lu, (struct edge *)NULL, tol ) == NMG_CLASS_AinB )
+		/* Try moving just a little left of an edge */
+		switch( i )
 		{
-			VMOVE( pt, test_pt );
-			return( 0 );
+			case 0:
+				tol_mult = 5.0 * tol->dist;
+				break;
+			case 1:
+				tol_mult = 1.5 * tol->dist;
+				break;
+			case 2:
+				tol_mult = 1.005 * tol->dist;
+				break;
+		}
+		for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+		{
+			vect_t left;
+			struct vertex_g *vg1,*vg2;
+
+			(void)nmg_find_eu_leftvec( left, eu );
+
+			vg1 = eu->vu_p->v_p->vg_p;
+			vg2 = eu->eumate_p->vu_p->v_p->vg_p;
+
+			VADD2( test_pt, vg1->coord, vg2->coord );
+			VSCALE( test_pt, test_pt, 0.5 );
+
+			VJOIN1( test_pt, test_pt, tol_mult, left );
+			if( nmg_class_pt_lu_except( test_pt, lu, (struct edge *)NULL, tol ) == NMG_CLASS_AinB )
+			{
+				VMOVE( pt, test_pt );
+				return( 0 );
+			}
 		}
 	}
 
@@ -2251,6 +2272,7 @@ CONST struct rt_tol *tol;
 		nmg_pr_lu_briefly( lu, "" );
 	}
 
+	VMOVE( pt, average_pt );
 	return( 4 );
 }
 
@@ -2332,14 +2354,14 @@ CONST struct rt_tol *tol;
 		eu2_start = RT_LIST_FIRST( edgeuse , &lu2->down_hd );
 		NMG_CK_EDGEUSE( eu2_start );
 		while( RT_LIST_NOT_HEAD( eu2_start , &lu2->down_hd ) &&
-			eu2_start->vu_p->v_p != eu1_start->vu_p->v_p )
+			eu2_start->e_p != eu1_start->e_p )
 		{
 			NMG_CK_EDGEUSE( eu2_start );
 			eu2_start = RT_LIST_PNEXT( edgeuse , &eu2_start->l );
 		}
 
 		if( RT_LIST_NOT_HEAD( eu2_start , &lu2->down_hd ) &&
-			eu1_start->vu_p->v_p == eu2_start->vu_p->v_p )
+			eu1_start->e_p == eu2_start->e_p )
 		{
 			/* check the rest of the loop */
 			share_edges = 1;
@@ -2347,7 +2369,7 @@ CONST struct rt_tol *tol;
 			eu2 = eu2_start;
 			do
 			{
-				if( eu1->vu_p->v_p != eu2->vu_p->v_p )
+				if( eu1->e_p != eu2->e_p )
 				{
 					share_edges = 0;
 					break;
@@ -2364,7 +2386,7 @@ CONST struct rt_tol *tol;
 				eu2 = eu2_start;
 				do
 				{
-					if( eu1->vu_p->v_p != eu2->vu_p->v_p )
+					if( eu1->e_p != eu2->e_p )
 					{
 						share_edges = 0;
 						break;
@@ -2374,34 +2396,167 @@ CONST struct rt_tol *tol;
 				} while( eu1 != eu1_start );
 			}
 
-			if( share_edges )
+			if( share_edges && lu1_eu_count == lu2_eu_count )
 			{
-				if( lu1_eu_count == lu2_eu_count )
+				if( rt_g.NMG_debug & DEBUG_CLASSIFY )
+					rt_log( "nmg_classify_lu_lu returning NMG_CLASS_AonBshared\n" );
+				return( NMG_CLASS_AonBshared );
+			}
+			else
+			{
+				vect_t inward1,inward2;
+
+				/* not all edges are shared,
+				 * try to fnd a vertex in lu1
+				 * that is not in lu2
+				 */
+				for( RT_LIST_FOR( eu , edgeuse , &lu1->down_hd ) )
 				{
-					if( rt_g.NMG_debug & DEBUG_CLASSIFY )
-						rt_log( "nmg_classify_lu_lu returning NMG_CLASS_AonBshared\n" );
-					return( NMG_CLASS_AonBshared );
+					struct vertex_g *vg;
+					int class;
+
+					NMG_CK_EDGEUSE( eu );
+
+					vg = eu->vu_p->v_p->vg_p;
+					NMG_CK_VERTEX_G( vg );
+
+					if( nmg_find_vertex_in_lu( eu->vu_p->v_p, lu2 ) != NULL )
+						continue;
+
+					class = nmg_class_pt_lu_except( vg->coord, lu2, (struct edgeuse *)NULL, tol);
+					if( class != NMG_CLASS_AonBshared && class != NMG_CLASS_AonBanti )
+					{
+						if( lu2->orientation == OT_SAME )
+						{
+							if( rt_g.NMG_debug & DEBUG_CLASSIFY )
+								rt_log( "nmg_classify_lu_lu returning %s\n", nmg_class_name( class ) );
+							return( class );
+						}
+						else
+						{
+							if( class == NMG_CLASS_AinB )
+							{
+								if( rt_g.NMG_debug & DEBUG_CLASSIFY )
+									rt_log( "nmg_classify_lu_lu returning NMG_CLASS_AoutB\n" );
+								return( NMG_CLASS_AoutB );
+							}
+							if( class == NMG_CLASS_AoutB )
+							{
+								if( rt_g.NMG_debug & DEBUG_CLASSIFY )
+									rt_log( "nmg_classify_lu_lu returning NMG_CLASS_AinB\n" );
+								return( NMG_CLASS_AinB );
+							}
+						}
+					}
 				}
 
-				/* All of lu1 edges are on lu2, but lu2 must have more
-				 * edges. Need to compare in interior point of lu1
-				 * to lu2
+				/* Some of lu1 edges are on lu2, but loops are not shared.
+				 * Compare inward vectors of a shared edge.
 				 */
 
-				/* Get an interior point of lu1 */
-				if( (ret=nmg_get_interior_pt( pt, lu1, tol )) )
-				{
-					rt_log( "nmg_classify_lu_lu: Couldn't get an interior point for lu x%x, nmg_get_interior_pt() returns %d\n", lu1, ret );
-					rt_bomb( "nmg_classify_lu_lu: Couldn't get an interior point\n" );
-				}
+				nmg_find_eu_leftvec( inward1, eu1_start );
+				if( lu1->orientation == OT_OPPOSITE )
+					VREVERSE( inward1, inward1 );
 
-				if( rt_g.NMG_debug & DEBUG_CLASSIFY )
-					rt_log( "Classifying lu x%x w.r.t. lu x%x using point (%f %f %f) (inside lu x%x)\n",
-						lu1, lu2, V3ARGS( pt ), lu1 );
+				nmg_find_eu_leftvec( inward2, eu2_start );
+				if( lu2->orientation == OT_OPPOSITE )
+					VREVERSE( inward2, inward2 );
 
-				/* classify this point w.r.t. lu2 */
-				return( nmg_class_pt_lu_except( pt, lu2, (struct edge *)NULL, tol ) );
+				if( VDOT( inward1, inward2 ) < 0.0 )
+					return( NMG_CLASS_AoutB );
+				else
+					return( NMG_CLASS_AinB );
 			}
+		}
+		else
+		{
+			/* no matching edges, classify by vertices */
+			for( RT_LIST_FOR( eu , edgeuse , &lu1->down_hd ) )
+			{
+				struct vertex_g *vg;
+				int class;
+
+				NMG_CK_EDGEUSE( eu );
+
+				vg = eu->vu_p->v_p->vg_p;
+				NMG_CK_VERTEX_G( vg );
+
+				if( nmg_find_vertex_in_lu( eu->vu_p->v_p, lu2 ) != NULL )
+					continue;
+
+				class = nmg_class_pt_lu_except( vg->coord, lu2, (struct edgeuse *)NULL, tol);
+				if( class != NMG_CLASS_AonBshared && class != NMG_CLASS_AonBanti )
+				{
+					if( lu2->orientation == OT_SAME )
+					{
+						if( rt_g.NMG_debug & DEBUG_CLASSIFY )
+							rt_log( "nmg_classify_lu_lu returning %s\n", nmg_class_name( class ) );
+						return( class );
+					}
+					else
+					{
+						if( class == NMG_CLASS_AinB )
+						{
+							if( rt_g.NMG_debug & DEBUG_CLASSIFY )
+								rt_log( "nmg_classify_lu_lu returning NMG_CLASS_AoutB\n" );
+							return( NMG_CLASS_AoutB );
+						}
+						if( class == NMG_CLASS_AoutB )
+						{
+							if( rt_g.NMG_debug & DEBUG_CLASSIFY )
+								rt_log( "nmg_classify_lu_lu returning NMG_CLASS_AinB\n" );
+							return( NMG_CLASS_AinB );
+						}
+					}
+				}
+			}
+
+			/* if we get here, all vertices are shared,
+			 * but no edges are!!!!! Check the midpoint of edges.
+			 */
+			for( RT_LIST_FOR( eu , edgeuse , &lu1->down_hd ) )
+			{
+				struct vertex_g *vg1,*vg2;
+				int class;
+				point_t mid_pt;
+
+				vg1 = eu->vu_p->v_p->vg_p;
+				vg2 = eu->eumate_p->vu_p->v_p->vg_p;
+
+				VADD2( mid_pt, vg1->coord, vg2->coord );
+				VSCALE( mid_pt, mid_pt, 0.5 );
+
+				class = nmg_class_pt_lu_except( mid_pt, lu2, (struct edgeuse *)NULL, tol);
+				if( class != NMG_CLASS_AonBshared && class != NMG_CLASS_AonBanti )
+				{
+					if( lu2->orientation == OT_SAME )
+					{
+						if( rt_g.NMG_debug & DEBUG_CLASSIFY )
+							rt_log( "nmg_classify_lu_lu returning %s\n", nmg_class_name( class ) );
+						return( class );
+					}
+					else
+					{
+						if( class == NMG_CLASS_AinB )
+						{
+							if( rt_g.NMG_debug & DEBUG_CLASSIFY )
+								rt_log( "nmg_classify_lu_lu returning NMG_CLASS_AoutB\n" );
+							return( NMG_CLASS_AoutB );
+						}
+						if( class == NMG_CLASS_AoutB )
+						{
+							if( rt_g.NMG_debug & DEBUG_CLASSIFY )
+								rt_log( "nmg_classify_lu_lu returning NMG_CLASS_AinB\n" );
+							return( NMG_CLASS_AinB );
+						}
+					}
+				}
+			}
+
+			/* Should never get here */
+			rt_log( "nmg_classify_lu_lu: Cannot classify lu x%x w.r.t. lu x%x\n",
+					lu1, lu2 );
+			return( NMG_CLASS_Unknown );
 		}
 	}
 	else if( RT_LIST_FIRST_MAGIC( &lu1->down_hd ) == NMG_VERTEXUSE_MAGIC &&
@@ -2450,69 +2605,4 @@ CONST struct rt_tol *tol;
 			rt_log( "nmg_classify_lu_lu returning %s\n", nmg_class_name( class ) );
 		return( class );
 	}
-
-	for( RT_LIST_FOR( eu , edgeuse , &lu1->down_hd ) )
-	{
-		struct vertex_g *vg;
-		int class;
-
-		NMG_CK_EDGEUSE( eu );
-
-		vg = eu->vu_p->v_p->vg_p;
-		NMG_CK_VERTEX_G( vg );
-
-		class = nmg_class_pt_lu_except( vg->coord, lu2, (struct edgeuse *)NULL, tol);
-		if( class != NMG_CLASS_AonBshared && class != NMG_CLASS_AonBanti )
-		{
-			if( lu2->orientation == OT_SAME )
-			{
-				if( rt_g.NMG_debug & DEBUG_CLASSIFY )
-					rt_log( "nmg_classify_lu_lu returning %s\n", nmg_class_name( class ) );
-				return( class );
-			}
-			else
-			{
-				if( class == NMG_CLASS_AinB )
-				{
-					if( rt_g.NMG_debug & DEBUG_CLASSIFY )
-						rt_log( "nmg_classify_lu_lu returning NMG_CLASS_AoutB\n" );
-					return( NMG_CLASS_AoutB );
-				}
-				if( class == NMG_CLASS_AoutB )
-				{
-					if( rt_g.NMG_debug & DEBUG_CLASSIFY )
-						rt_log( "nmg_classify_lu_lu returning NMG_CLASS_AinB\n" );
-					return( NMG_CLASS_AinB );
-				}
-			}
-		}
-	}
-
-	/* If we get here, all vertices are shared, but the loops are not
-	 * And neither loop is a single vertexuse
-	 * Get an interior point of lu1 */
-	if( (ret=nmg_get_interior_pt( pt, lu1, tol )) )
-	{
-		if( ret == 3 )
-		{
-			/* lu1 is a crack that is entirely shared with some portion
-			 * of lu2, but not all of it. Return Unknown?????
-			 */
-				return( NMG_CLASS_Unknown );
-			 
-		}
-		else
-		{
-			rt_log( "nmg_classify_lu_lu: Couldn't get an interior point for lu x%x (last chance nmg_get_interior_pt() returned %d\n", lu1, ret );
-			rt_bomb( "nmg_classify_lu_lu: Couldn't get an interior point\n" );
-		}
-	}
-
-	if( rt_g.NMG_debug & DEBUG_CLASSIFY )
-		rt_log( "Classifying lu x%x w.r.t. lu x%x using point (%f %f %f) (inside lu x%x)\n",
-			lu1, lu2, V3ARGS( pt ), lu1 );
-
-	/* classify this point w.r.t. lu2 */
-	return( nmg_class_pt_lu_except( pt, lu2, (struct edge *)NULL, tol ) );
-
 }
