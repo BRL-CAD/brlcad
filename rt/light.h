@@ -35,5 +35,6 @@ struct light_specific {
 };
 #define LIGHT_NULL	((struct light_specific *)0)
 #define LIGHT_MAGIC	0xdbddbdb7
+#define RT_CK_LIGHT(_p)	RT_CKMAG((_p), LIGHT_MAGIC, "light_specific")
 
 extern struct light_specific	LightHead;
