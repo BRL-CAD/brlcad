@@ -31,6 +31,7 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 #include <ctype.h>
 #include <signal.h>
 #include <math.h>
+#include <unistd.h>
 
 #include "machine.h"
 #include "externs.h"
@@ -40,7 +41,7 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "fb.h"
 #include "./ext.h"
-#include "./rdebug.h"
+#include "rtprivate.h"
 #include "../librt/debug.h"
 
 extern char	usage[];
@@ -114,9 +115,7 @@ int	arg;
 /*
  *			M A I N
  */
-main(argc, argv)
-int argc;
-char **argv;
+int main(int argc, char **argv)
 {
 	static struct rt_i *rtip;
 	char *title_file, *title_obj;	/* name of file and first object */

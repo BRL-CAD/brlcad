@@ -30,7 +30,7 @@ static char RCSworker[] = "@(#)$Header$ (BRL)";
 #include "bn.h"
 #include "raytrace.h"
 #include "./ext.h"
-#include "./rdebug.h"
+#include "rtprivate.h"
 
 int		per_processor_chunk = 0;	/* how many pixels to do at once */
 
@@ -199,8 +199,7 @@ grid_setup()
  *
  *  For a general-purpose version, see LIBRT rt_shoot_many_rays()
  */
-void
-do_run( a, b )
+void do_run( int a, int b )
 {
 	int		cpu;
 
@@ -329,7 +328,6 @@ genptr_t	arg;
 	int	pixel_start;
 	int	pixelnum;
 	int	samplenum;
-	FAST fastf_t dx, dy;
 	int	pat_num = -1;
 
 	/* The more CPUs at work, the bigger the bites we take */

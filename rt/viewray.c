@@ -36,7 +36,7 @@ static char RCSrayview[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 
-#include "rdebug.h"
+#include "rtprivate.h"
 
 int		use_air = 1;		/* Handling of air in librt */
 

@@ -29,7 +29,7 @@
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "./rdebug.h"
+#include "rtprivate.h"
 
 #include "db.h"  /* Yes, I know I shouldn't be peeking, put I am only
 			looking to see what units we prefer... */

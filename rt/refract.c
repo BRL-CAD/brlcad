@@ -25,7 +25,7 @@ static char RCSrefract[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "mater.h"
 #include "raytrace.h"
-#include "./rdebug.h"
+#include "rtprivate.h"
 #include "shadefuncs.h"
 #include "shadework.h"
 
@@ -61,29 +61,22 @@ struct shadework	*swp;
 	struct application sub_ap;
 	vect_t	work;
 	vect_t	incident_dir;
+	fastf_t	shader_fract;
+	fastf_t	reflect;
+	fastf_t	transmit;
+
 #if RT_MULTISPECTRAL
 	struct bn_tabdata	*ms_filter_color = BN_TABDATA_NULL;
-#else
-	vect_t	filter_color;
-#endif
-	fastf_t	shader_fract;
-#if RT_MULTISPECTRAL
 	struct bn_tabdata	*ms_shader_color = BN_TABDATA_NULL;
-#else
-	vect_t	shader_color;
-#endif
-	fastf_t	reflect;
-#if RT_MULTISPECTRAL
 	struct bn_tabdata	*ms_reflect_color = BN_TABDATA_NULL;
-#else
-	vect_t	reflect_color;
-#endif
-	fastf_t	transmit;
-#if RT_MULTISPECTRAL
 	struct bn_tabdata	*ms_transmit_color = BN_TABDATA_NULL;
 #else
+	vect_t	filter_color;
+	vect_t	shader_color;
+	vect_t	reflect_color;
 	vect_t	transmit_color;
 #endif
+
 	fastf_t	attenuation;
 	vect_t	to_eye;
 	int	code;

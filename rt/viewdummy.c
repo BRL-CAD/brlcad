@@ -27,7 +27,7 @@ static char RCSview[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 
-#include "./rdebug.h"
+#include "rtprivate.h"
 
 /*
  *  If this variable is set to zero, then "air" solids in the model

@@ -28,10 +28,11 @@ static char RCSppview[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#include <string.h>
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "./rdebug.h"
+#include "rtprivate.h"
 #include "./rad.h"
 
 #define	MAXREFLECT	16
@@ -102,9 +103,10 @@ static int radmiss();
  *  Called at the start of a run.
  *  Returns 1 if framebuffer should be opened, else 0.
  */
-view_init( ap, file, obj, minus_o )
-register struct application *ap;
-char *file, *obj;
+int view_init( register struct application *ap,
+	       char *file, 
+	       char *obj,
+	       int minus_o)
 {
 	ap->a_hit = radhit;
 	ap->a_miss = radmiss;

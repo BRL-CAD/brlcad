@@ -23,11 +23,13 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#include <string.h>
 #include <ctype.h>
 #include <math.h>
 #ifdef HAVE_UNIX_IO
 # include <sys/types.h>
 # include <sys/stat.h>
+# include <fcntl.h>
 #endif
 
 #include "machine.h"
@@ -35,7 +37,7 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "fb.h"
 #include "externs.h"
-#include "./rdebug.h"
+#include "rtprivate.h"
 #include "../librt/debug.h"
 
 extern int	rdebug;			/* RT program debugging (not library) */
@@ -97,6 +99,37 @@ void		do_ae();
 void		res_pr();
 
 /*
+ *			O L D _ F R A M E
+ *
+ *  Acquire particulars about a frame, in the old format.
+ *  Returns -1 if unable to acquire info, 0 if successful.
+ */
+int
+old_frame( fp )
+FILE *fp;
+{
+	register int i;
+	char number[128];
+
+	/* Visible part is from -1 to +1 in view space */
+	if( fscanf( fp, "%s", number ) != 1 )  return(-1);
+	viewsize = atof(number);
+	if( fscanf( fp, "%s", number ) != 1 )  return(-1);
+	eye_model[X] = atof(number);
+	if( fscanf( fp, "%s", number ) != 1 )  return(-1);
+	eye_model[Y] = atof(number);
+	if( fscanf( fp, "%s", number ) != 1 )  return(-1);
+	eye_model[Z] = atof(number);
+	for( i=0; i < 16; i++ )  {
+		if( fscanf( fp, "%s", number ) != 1 )
+			return(-1);
+		Viewrotscale[i] = atof(number);
+	}
+	return(0);		/* OK */
+}
+
+
+/*
  *			O L D _ W A Y
  * 
  *  Determine if input file is old or new format, and if
@@ -146,44 +179,13 @@ FILE *fp;
 	return(1);			/* old way, all done */
 }
 
-/*
- *			O L D _ F R A M E
- *
- *  Acquire particulars about a frame, in the old format.
- *  Returns -1 if unable to acquire info, 0 if successful.
- */
-int
-old_frame( fp )
-FILE *fp;
-{
-	register int i;
-	char number[128];
-
-	/* Visible part is from -1 to +1 in view space */
-	if( fscanf( fp, "%s", number ) != 1 )  return(-1);
-	viewsize = atof(number);
-	if( fscanf( fp, "%s", number ) != 1 )  return(-1);
-	eye_model[X] = atof(number);
-	if( fscanf( fp, "%s", number ) != 1 )  return(-1);
-	eye_model[Y] = atof(number);
-	if( fscanf( fp, "%s", number ) != 1 )  return(-1);
-	eye_model[Z] = atof(number);
-	for( i=0; i < 16; i++ )  {
-		if( fscanf( fp, "%s", number ) != 1 )
-			return(-1);
-		Viewrotscale[i] = atof(number);
-	}
-	return(0);		/* OK */
-}
 
 /*
  *			C M _ S T A R T
  *
  *  Process "start" command in new format input stream
  */
-cm_start( argc, argv )
-int	argc;
-char	**argv;
+int cm_start( int argc, char **argv)
 {
 	char	*buf;
 	int	frame;
@@ -217,17 +219,13 @@ char	**argv;
 	return(-1);		/* EOF */
 }
 
-cm_vsize( argc, argv )
-int	argc;
-char	**argv;
+int cm_vsize( int argc, char **argv)
 {
 	viewsize = atof( argv[1] );
 	return(0);
 }
 
-cm_eyept( argc, argv )
-int	argc;
-char	**argv;
+int cm_eyept(int argc, char **argv)
 {
 	register int i;
 
@@ -236,9 +234,7 @@ char	**argv;
 	return(0);
 }
 
-cm_lookat_pt( argc, argv )
-int	argc;
-char	**argv;
+int cm_lookat_pt(int argc, char **argv)
 {
 	point_t	pt;
 	vect_t	dir;
@@ -261,9 +257,7 @@ char	**argv;
 	return(0);
 }
 
-cm_vrot( argc, argv )
-int	argc;
-char	**argv;
+int cm_vrot( int argc, char **argv)
 {
 	register int i;
 
@@ -272,9 +266,7 @@ char	**argv;
 	return(0);
 }
 
-cm_orientation( argc, argv )
-int	argc;
-char	**argv;
+int cm_orientation(int argc, char **argv)
 {
 	register int	i;
 	quat_t		quat;
@@ -285,9 +277,7 @@ char	**argv;
 	return(0);
 }
 
-cm_end( argc, argv )
-int	argc;
-char	**argv;
+int cm_end(int argc, char **argv)
 {
 	struct rt_i *rtip = ap.a_rt_i;
 
@@ -303,9 +293,7 @@ char	**argv;
 	return(0);
 }
 
-cm_tree( argc, argv )
-int		argc;
-CONST char	**argv;
+int cm_tree( int argc, const char **argv)
 {
 	register struct rt_i *rtip = ap.a_rt_i;
 	struct bu_vls	times;
@@ -327,9 +315,7 @@ CONST char	**argv;
 	return(0);
 }
 
-cm_multiview( argc, argv )
-int	argc;
-char	**argv;
+int cm_multiview( int argc, char **argv)
 {
 	register struct rt_i *rtip = ap.a_rt_i;
 	int i;
@@ -361,9 +347,7 @@ char	**argv;
  *
  *  Usage:  anim <path> <type> args
  */
-cm_anim( argc, argv )
-int	argc;
-char	**argv;
+int cm_anim(int argc, const char **argv)
 {
 
 	if( db_parse_anim( ap.a_rt_i->rti_dbip, argc, argv ) < 0 )  {
@@ -378,9 +362,7 @@ char	**argv;
  *
  *  Clean out results of last rt_prep(), and start anew.
  */
-cm_clean( argc, argv )
-int	argc;
-char	**argv;
+int cm_clean(int argc, char **argv)
 {
 	/* Allow lighting model to clean up (e.g. lights, materials, etc) */
 	view_cleanup( ap.a_rt_i );
@@ -399,10 +381,7 @@ char	**argv;
  *  Intended for memory debugging, to help chase down memory "leaks".
  *  This terminates the program, as there is no longer a database.
  */
-int
-cm_closedb( argc, argv )
-int	argc;
-char	**argv;
+int cm_closedb(int argc, char **argv)
 {
 	db_close( ap.a_rt_i->rti_dbip );
 	ap.a_rt_i->rti_dbip = DBI_NULL;
@@ -465,9 +444,7 @@ struct bu_structparse set_parse[] = {
  *
  *  Allow variable values to be set or examined.
  */
-cm_set( argc, argv )
-int	argc;
-char	**argv;
+int cm_set(int argc, char **argv)
 {
 	struct bu_vls	str;
 
@@ -489,9 +466,7 @@ char	**argv;
 /* 
  *			C M _ A E
  */
-cm_ae( argc, argv )
-int	argc;
-char	**argv;
+int cm_ae( int argc, char **argv)
 {
 	azimuth = atof(argv[1]);	/* set elevation and azimuth */
 	elevation = atof(argv[2]);
@@ -504,9 +479,7 @@ char	**argv;
 /*
  *			C M _ O P T
  */
-cm_opt( argc, argv )
-int	argc;
-char	**argv;
+int cm_opt(int argc, char **argv)
 {
 	if( get_args( argc, argv ) <= 0 )
 		return(-1);
@@ -602,6 +575,7 @@ rt_pr_cut_info( rtip, "main" );
  *
  *  Returns -1 on error, 0 if OK.
  */
+int
 do_frame( framenumber )
 int framenumber;
 {
@@ -841,7 +815,7 @@ int framenumber;
 	if( incr_mode )  {
 		for( incr_level = 1; incr_level <= incr_nlevel; incr_level++ )  {
 			if( incr_level > 1 )
-				view_2init( &ap );
+				view_2init( &ap, framename );
 			do_run( 0, (1<<incr_level)*(1<<incr_level)-1 );
 		}
 	} else {
@@ -1057,36 +1031,36 @@ res_pr()
  */
 
 struct command_tab rt_cmdtab[] = {
-	"start", "frame number", "start a new frame",
-		cm_start,	2, 2,
-	"viewsize", "size in mm", "set view size",
-		cm_vsize,	2, 2,
-	"eye_pt", "xyz of eye", "set eye point",
-		cm_eyept,	4, 4,
-	"lookat_pt", "x y z [yflip]", "set eye look direction, in X-Y plane",
-		cm_lookat_pt,	4, 5,
-	"viewrot", "4x4 matrix", "set view direction from matrix",
-		cm_vrot,	17,17,
-	"orientation", "quaturnion", "set view direction from quaturnion",
-		cm_orientation,	5, 5,
-	"end", 	"", "end of frame setup, begin raytrace",
-		cm_end,		1, 1,
-	"multiview", "", "produce stock set of views",
-		cm_multiview,	1, 1,
-	"anim", 	"path type args", "specify articulation animation",
-		cm_anim,	4, 999,
-	"tree", 	"treetop(s)", "specify alternate list of tree tops",
-		cm_tree,	1, 999,
-	"clean", "", "clean articulation from previous frame",
-		cm_clean,	1, 1,
-	"_closedb", "", "Close .g database, (for memory debugging)",
-		cm_closedb,	1, 1,
-	"set", 	"", "show or set parameters",
-		cm_set,		1, 999,
-	"ae", "azim elev", "specify view as azim and elev, in degrees",
-		cm_ae,		3, 3,
-	"opt", "-flags", "set flags, like on command line",
-		cm_opt,		2, 999,
-	(char *)0, (char *)0, (char *)0,
-		0,		0, 0	/* END */
+	{"start", "frame number", "start a new frame",
+		cm_start,	2, 2},
+	{"viewsize", "size in mm", "set view size",
+		cm_vsize,	2, 2},
+	{"eye_pt", "xyz of eye", "set eye point",
+		cm_eyept,	4, 4},
+	{"lookat_pt", "x y z [yflip]", "set eye look direction, in X-Y plane",
+		cm_lookat_pt,	4, 5},
+	{"viewrot", "4x4 matrix", "set view direction from matrix",
+		cm_vrot,	17,17},
+	{"orientation", "quaturnion", "set view direction from quaturnion",
+		cm_orientation,	5, 5},
+	{"end", 	"", "end of frame setup, begin raytrace",
+		cm_end,		1, 1},
+	{"multiview", "", "produce stock set of views",
+		cm_multiview,	1, 1},
+	{"anim", 	"path type args", "specify articulation animation",
+		cm_anim,	4, 999},
+	{"tree", 	"treetop(s)", "specify alternate list of tree tops",
+		cm_tree,	1, 999},
+	{"clean", "", "clean articulation from previous frame",
+		cm_clean,	1, 1},
+	{"_closedb", "", "Close .g database, (for memory debugging)",
+		cm_closedb,	1, 1},
+	{"set", 	"", "show or set parameters",
+		cm_set,		1, 999},
+	{"ae", "azim elev", "specify view as azim and elev, in degrees",
+		cm_ae,		3, 3},
+	{"opt", "-flags", "set flags, like on command line",
+		cm_opt,		2, 999},
+	{(char *)0, (char *)0, (char *)0,
+	        0,		0, 0	/* END */}
 };

@@ -32,7 +32,7 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "./rdebug.h"
+#include "rtprivate.h"
 #include "../librt/debug.h"
 
 char	usage[] = "\

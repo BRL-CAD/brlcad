@@ -37,7 +37,7 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 #include "./ext.h"
 
-#include "./rdebug.h"
+#include "rtprivate.h"
 #include "../librt/debug.h"
 
 extern int	rdebug;			/* RT program debugging (not library) */
@@ -124,8 +124,7 @@ extern struct command_tab	rt_cmdtab[];
 /*
  *			G E T _ A R G S
  */
-get_args( argc, argv )
-register char **argv;
+int get_args( int argc, register char **argv )
 {
 	register int c;
 	register int i;

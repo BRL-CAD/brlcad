@@ -41,7 +41,7 @@ static char RCSmaterial[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "shadefuncs.h"
-#include "./rdebug.h"
+#include "rtprivate.h"
 
 static CONST char *mdefault = "default"; /* Name of default material */
 
@@ -141,7 +141,7 @@ load_dynamic_shader(const char *material,
 {
 	struct mfuncs *shader_mfuncs = (struct mfuncs *)NULL;
 	char libname[MAXPATHLEN];
-	char cwd[MAXPATHLEN];
+	char *cwd = (char *)NULL;
 	int old_rdebug = rdebug;
 
 	/* rdebug |= RDEBUG_MATERIAL; */
@@ -149,7 +149,9 @@ load_dynamic_shader(const char *material,
 	if (rdebug&RDEBUG_MATERIAL)
 		bu_log("load_dynamic_shader( \"%s\", %d )\n", material, mlen);
 
-	if (getcwd(cwd, MAXPATHLEN)) {
+	cwd = getcwd((char *)NULL, (size_t)0);
+
+	if ( cwd ) {
 		/* Look in the current working directory for {material}.so */
 		sprintf(libname, "%s/%s.so", cwd, material);
 		if ( (shader_mfuncs = try_load(libname, material)) )
@@ -182,10 +184,16 @@ load_dynamic_shader(const char *material,
 
 done:
 
+	/* clean up memory allocated */
+	if (cwd) free(cwd);
+
+	/* print appropriate log messages */
 	if (shader_mfuncs)
 		bu_log("loaded from %s\n", libname);
 	else
 		bu_log("Not found\n");
+
+
 
 	rdebug = old_rdebug;
 

@@ -35,7 +35,7 @@ static char RCSview[] = "@(#)$Header$ (BRL)";
 #include "shadefuncs.h"
 #include "shadework.h"
 #include "./ext.h"
-#include "./rdebug.h"
+#include "rtprivate.h"
 #include "./light.h"
 
 HIDDEN void	shade_inputs();
@@ -247,7 +247,7 @@ register int	want;
 				f, swp->sw_hit.hit_normal );
 			if(rdebug&RDEBUG_RAYPLOT) pdv_3line( stdout, swp->sw_hit.hit_point, endpt );
 			bu_log("Surface normal for shader:\n\
-vdraw o norm;vdraw p c 00ffff;vdraw w n 0 %g %g %g;vdraw w n 1 %g %g %g;vdraw s\n",
+hit pt: %g %g %g end pt: %g %g %g\n",
 				V3ARGS(swp->sw_hit.hit_point),
 				V3ARGS(endpt) );
 

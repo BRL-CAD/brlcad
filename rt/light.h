@@ -47,9 +47,11 @@ struct light_specific {
 
 extern struct light_specific	LightHead;
 
-RT_EXTERN(void light_visibility, (struct application *ap,
-				  struct shadework *swp, int have) );
+extern void light_cleanup(void);
+extern void light_maker(int num, mat_t v2m);
+extern int light_init(void);
 
 RT_EXTERN(void light_obs, (struct application *ap,
 				  struct shadework *swp, int have) );
+
 

@@ -29,7 +29,7 @@ static char RCScell[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./ext.h"
 
-#include "rdebug.h"
+#include "rtprivate.h"
 
 #define	MM2IN	0.03937008		/* mm times MM2IN gives inches */
 

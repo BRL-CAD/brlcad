@@ -45,7 +45,7 @@ static char RCSrayhide[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "./ext.h"
-#include "rdebug.h"
+#include "rtprivate.h"
 
 #define SEEKING_START_PT 0
 #define FOUND_START_PT 1

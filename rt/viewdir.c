@@ -34,7 +34,7 @@ static char RCSraydir[] = "@(#)$Header$";
 #include "vmath.h"
 #include "raytrace.h"
 #include "./ext.h"
-#include "./rdebug.h"
+#include "rtprivate.h"
 
 
 extern	int	width;			/* # of pixels in X; picture width */

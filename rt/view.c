@@ -38,6 +38,7 @@ static char RCSview[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
 
 #ifdef HAVE_UNIX_IO
@@ -54,8 +55,9 @@ static char RCSview[] = "@(#)$Header$ (BRL)";
 #include "shadefuncs.h"
 #include "shadework.h"
 #include "./ext.h"
-#include "./rdebug.h"
+#include "rtprivate.h"
 #include "./light.h"
+#include "plot3.h"
 
 int		use_air = 0;		/* Handling of air in librt */
 
@@ -494,8 +496,8 @@ register struct application *ap;
 /*
  *			V I E W _ E N D
  */
-view_end(ap)
-struct application *ap;
+void
+view_end(struct application *ap)
 {
 	if( fullfloat_mode )  {
 		struct floatpixel	*tmp;
@@ -509,7 +511,6 @@ struct application *ap;
 	}
 
 	if( scanline )  free_scanlines();
-	return(0);		/* OK */
 }
 
 /*
@@ -568,9 +569,7 @@ struct rt_i	*rtip;
  *
  *  Called before rt_clean() in do.c
  */
-void
-view_cleanup(rtip)
-struct rt_i	*rtip;
+void view_cleanup(struct rt_i	*rtip)
 {
 	register struct region	*regp;
 
@@ -849,10 +848,9 @@ out:
  *
  *  a_hit() routine for simple lighting model.
  */
-viewit( ap, PartHeadp, segHeadp )
-register struct application *ap;
-struct partition *PartHeadp;
-struct seg	*segHeadp;
+int viewit(register struct application *ap,
+	   struct partition *PartHeadp,
+	   struct seg	*segHeadp)
 {
 	register struct partition *pp;
 	register struct hit *hitp;
@@ -972,9 +970,11 @@ free_scanlines()
  *
  *  Called once, early on in RT setup, before view size is set.
  */
+int
 view_init( ap, file, obj, minus_o )
 register struct application *ap;
 char *file, *obj;
+int minus_o;
 {
 	extern char	liboptical_version[];
 

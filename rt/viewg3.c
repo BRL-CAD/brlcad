@@ -46,7 +46,7 @@ static char RCSrayg3[] = "@(#)$Header$ (BRL)";
 #include "./ext.h"
 #include "../librt/debug.h"
 
-#include "rdebug.h"
+#include "rtprivate.h"
 
 #define	MM2IN	0.03937008		/* mm times MM2IN gives inches */
 #define TOL 0.01/MM2IN			/* GIFT has a 0.01 inch tolerance */
