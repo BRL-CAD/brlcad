@@ -125,8 +125,30 @@ mat_t m;
 {
 	int i;
 	fastf_t store;
+#if 1
+	/* The sun4's complain about no automatic aggregate initialization,
+	 * so we'll do it another way. :-(
+	 */
+	int src[6];
+	int dst[6];
+
+	src[0] = 1;
+	src[1] = 2;
+	src[2] = 3;
+	src[3] = 6;
+	src[4] = 7;
+	src[5] = 11;
+
+	dst[0] = 4;
+	dst[1] = 8;
+	dst[2] = 12;
+	dst[3] = 9;
+	dst[4] = 13;
+	dst[5] = 14;
+#else
 	int src[] = { 1, 2, 3, 6, 7, 11 };
 	int dst[] = { 4, 8, 12, 9, 13, 14};
+#endif
 
 	for (i=0; i<6; i++) {
 		store = m[dst[i]];
