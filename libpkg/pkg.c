@@ -51,7 +51,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <netinet/in.h>		/* for htons(), etc */
 #include <netdb.h>
 #include <netinet/tcp.h>	/* for TCP_NODELAY sockopt */
-#include <sys/un.h>		/* UNIX Domain sockets */
+
+/* Not all systems with "BSD Networking" include UNIX Domain sockets */
+#  ifndef sgi
+#	define HAS_UNIX_DOMAIN_SOCKETS
+#	include <sys/un.h>		/* UNIX Domain sockets */
+#  endif
 #endif
 
 /*
@@ -222,7 +227,7 @@ void (*errlog)();
 {
 	struct sockaddr_in sinme;		/* Client */
 	struct sockaddr_in sinhim;		/* Server */
-#ifdef BSD
+#ifdef HAS_UNIX_DOMAIN_SOCKETS
 	struct sockaddr_un sunhim;		/* Server, UNIX Domain */
 #endif
 	register struct hostent *hp;
@@ -248,7 +253,7 @@ void (*errlog)();
 	bzero((char *)&sinhim, sizeof(sinhim));
 	bzero((char *)&sinme, sizeof(sinme));
 
-#ifdef BSD
+#ifdef HAS_UNIX_DOMAIN_SOCKETS
 	if( host == NULL || strlen(host) == 0 || strcmp(host,"unix") == 0 ) {
 		/* UNIX Domain socket, port = pathname */
 		sunhim.sun_family = AF_UNIX;
@@ -409,7 +414,7 @@ int backlog;
 void (*errlog)();
 {
 	struct sockaddr_in sinme;
-#ifdef BSD
+#ifdef HAS_UNIX_DOMAIN_SOCKETS
 	struct sockaddr_un sunme;		/* UNIX Domain */
 #endif
 #ifdef SGI_EXCELAN
@@ -436,7 +441,7 @@ void (*errlog)();
 
 	bzero((char *)&sinme, sizeof(sinme));
 
-#ifdef BSD
+#ifdef HAS_UNIX_DOMAIN_SOCKETS
 	if( service != NULL && service[0] == '/' ) {
 		/* UNIX Domain socket */
 		strncpy( sunme.sun_path, service, sizeof(sunme.sun_path) );
