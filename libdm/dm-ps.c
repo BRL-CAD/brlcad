@@ -32,6 +32,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "bu.h"
 #include "vmath.h"
+#include "bn.h"
 #include "mater.h"
 #include "raytrace.h"
 #include "dm.h"
@@ -52,7 +53,6 @@ static int      ps_drawVertex2D();
 static int	ps_drawVList();
 static int      ps_setColor();
 static int      ps_setLineAttr();
-static unsigned ps_cvtvecs(), ps_load();
 static int	ps_setWinBounds(), ps_debug();
 
 struct dm dm_ps = {
@@ -67,12 +67,15 @@ struct dm dm_ps = {
   ps_drawVList,
   ps_setColor,
   ps_setLineAttr,
-  ps_cvtvecs,
-  ps_load,
   ps_setWinBounds,
   ps_debug,
   Nu_int0,
+  Nu_int0,
+  Nu_int0,
+  Nu_int0,
+  Nu_int0,
   0,				/* no displaylist */
+  0,                            /* no stereo */
   PLOTBOUND,
   "ps",
   "Screen to PostScript",
@@ -87,7 +90,6 @@ struct dm dm_ps = {
   0,
   0,
   0,
-  0,
   0
 };
 
@@ -95,6 +97,7 @@ char ps_usage[] = "Usage: ps [-f font] [-t title] [-c creator] [-s size in inche
  [-l linewidth] file";
 
 struct ps_vars head_ps_vars;
+static mat_t psmat;
 
 /*
  *			P S _ O P E N
@@ -140,6 +143,7 @@ char *argv[];
   bu_vls_strcpy(&((struct ps_vars *)dmp->dm_vars)->creator, "LIBDM dm-ps");
   ((struct ps_vars *)dmp->dm_vars)->scale = 0.0791;
   ((struct ps_vars *)dmp->dm_vars)->linewidth = 4;
+  ((struct ps_vars *)dmp->dm_vars)->zclip = 0;
 
   /* skip first argument */
   --argc; ++argv;
@@ -218,6 +222,9 @@ char *argv[];
 	  sscanf(&argv[0][0], "%d", &((struct ps_vars *)dmp->dm_vars)->linewidth);
       }
       break;
+    case 'z':
+      ((struct ps_vars *)dmp->dm_vars)->zclip = 1;
+      break;
     default:
       Tcl_AppendResult(interp, ps_usage, (char *)0);
       (void)ps_close(dmp);
@@ -289,6 +296,8 @@ NEWPG\n\
 	  ((struct ps_vars *)dmp->dm_vars)->scale,
 	  ((struct ps_vars *)dmp->dm_vars)->scale);
 
+  bn_mat_idn(psmat);
+
   return dmp;
 }
 
@@ -354,10 +363,12 @@ struct dm *dmp;
  */
 /* ARGSUSED */
 static int
-ps_newrot(dmp, mat)
+ps_newrot(dmp, mat, which_eye)
 struct dm *dmp;
 mat_t mat;
+int which_eye;
 {
+  bn_mat_copy(psmat, mat);
   return TCL_OK;
 }
 
@@ -372,10 +383,9 @@ mat_t mat;
  */
 /* ARGSUSED */
 static int
-ps_drawVList( dmp, vp, mat )
+ps_drawVList( dmp, vp )
 struct dm *dmp;
 register struct rt_vlist *vp;
-mat_t mat;
 {
   static vect_t			last;
   register struct rt_vlist	*tvp;
@@ -405,13 +415,13 @@ mat_t mat;
       case RT_VLIST_POLY_MOVE:
       case RT_VLIST_LINE_MOVE:
 	/* Move, not draw */
-	MAT4X3PNT( last, mat, *pt );
+	MAT4X3PNT( last, psmat, *pt );
 	continue;
       case RT_VLIST_POLY_DRAW:
       case RT_VLIST_POLY_END:
       case RT_VLIST_LINE_DRAW:
 	/* draw */
-	MAT4X3PNT( fin, mat, *pt );
+	MAT4X3PNT( fin, psmat, *pt );
 	VMOVE( start, last );
 	VMOVE( last, fin );
 	break;
@@ -555,29 +565,6 @@ int style;
 }
 
 /* ARGSUSED */
-static unsigned
-ps_cvtvecs( dmp, sp )
-struct dm *dmp;
-struct solid *sp;
-{
-	return( 0 );
-}
-
-/*
- * Loads displaylist
- */
-static unsigned
-ps_load( dmp, addr, count )
-struct dm *dmp;
-unsigned addr, count;
-{
-#if 0
-	bu_log("ps_load(x%x, %d.)\n", addr, count );
-#endif
-	return( 0 );
-}
-
-/* ARGSUSED */
 static int
 ps_debug(dmp, lvl)
 struct dm *dmp;
@@ -592,11 +579,17 @@ register int w[];
 {
   /* Compute the clipping bounds */
   ((struct ps_vars *)dmp->dm_vars)->clipmin[0] = w[1] / 2048.;
-  ((struct ps_vars *)dmp->dm_vars)->clipmin[1] = w[3] / 2048.;
-  ((struct ps_vars *)dmp->dm_vars)->clipmin[2] = w[5] / 2048.;
   ((struct ps_vars *)dmp->dm_vars)->clipmax[0] = w[0] / 2047.;
+  ((struct ps_vars *)dmp->dm_vars)->clipmin[1] = w[3] / 2048.;
   ((struct ps_vars *)dmp->dm_vars)->clipmax[1] = w[2] / 2047.;
-  ((struct ps_vars *)dmp->dm_vars)->clipmax[2] = w[4] / 2047.;
+
+  if(((struct ps_vars *)dmp->dm_vars)->zclip){
+    ((struct ps_vars *)dmp->dm_vars)->clipmin[2] = w[5] / 2048.;
+    ((struct ps_vars *)dmp->dm_vars)->clipmax[2] = w[4] / 2047.;
+  }else{
+    ((struct ps_vars *)dmp->dm_vars)->clipmin[2] = -1.0e20;
+    ((struct ps_vars *)dmp->dm_vars)->clipmax[2] = 1.0e20;
+  }
 
   return TCL_OK;
 }
