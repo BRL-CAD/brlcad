@@ -161,7 +161,7 @@ fastf_t * norm;
 		VCROSS(norm, uvec, ve);
 		VUNITIZE(norm);
 
-		rt_nurb_free_snurb(vsrf);
+		rt_nurb_free_snurb(vsrf, (struct resource *)NULL);
 		return;
 	}
 	if( srf->order[1] == 2 && srf->order[0] > 2 )
@@ -219,7 +219,7 @@ fastf_t * norm;
 		VCROSS(norm, ue, vvec);
 		VUNITIZE(norm);		
 
-		rt_nurb_free_snurb(usrf);
+		rt_nurb_free_snurb(usrf, (struct resource *)NULL);
 		return;
 	}
 	
@@ -236,8 +236,8 @@ fastf_t * norm;
 		VCROSS( norm, ue, ve);
 		VUNITIZE( norm);
 
-		rt_nurb_free_snurb(usrf);
-		rt_nurb_free_snurb(vsrf);
+		rt_nurb_free_snurb(usrf, (struct resource *)NULL);
+		rt_nurb_free_snurb(vsrf, (struct resource *)NULL);
 		
 		return;
 	}
@@ -272,8 +272,8 @@ fastf_t * norm;
 		VCROSS( norm, unorm, vnorm);
 		VUNITIZE( norm);
 
-		rt_nurb_free_snurb(usrf);
-		rt_nurb_free_snurb(vsrf);
+		rt_nurb_free_snurb(usrf, (struct resource *)NULL);
+		rt_nurb_free_snurb(vsrf, (struct resource *)NULL);
 		
 		return;
 	}

@@ -114,11 +114,11 @@ fastf_t epsilon;
 
 	/* free up storage */
 
-        rt_nurb_free_snurb( us);
-        rt_nurb_free_snurb( vs);
-        rt_nurb_free_snurb( uus);
-        rt_nurb_free_snurb( vvs);
-        rt_nurb_free_snurb( uvs);
+        rt_nurb_free_snurb( us, (struct resource *)NULL);
+        rt_nurb_free_snurb( vs, (struct resource *)NULL);
+        rt_nurb_free_snurb( uus, (struct resource *)NULL);
+        rt_nurb_free_snurb( vvs, (struct resource *)NULL);
+        rt_nurb_free_snurb( uvs, (struct resource *)NULL);
 
 
 	/* The paper uses the following to calculate the longest edge size

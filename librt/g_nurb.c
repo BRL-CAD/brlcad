@@ -92,7 +92,7 @@ struct rt_i		*rtip;
 		GETSTRUCT( n, nurb_specific);
 
 		/* Store off the original face_g_snurb */
-		s = rt_nurb_scopy (sip->srfs[i]);
+		s = rt_nurb_scopy (sip->srfs[i], (struct resource *)NULL);
 		NMG_CK_SNURB(s);
 		rt_nurb_s_bound(s, s->min_pt, s->max_pt);
 
@@ -100,7 +100,7 @@ struct rt_i		*rtip;
 		RT_LIST_INIT( &n->bez_hd );
 
 		/* Grind up the original surf into a list of Bezier face_g_snurbs */
-		(void)rt_nurb_bezier( &n->bez_hd, sip->srfs[i] );
+		(void)rt_nurb_bezier( &n->bez_hd, sip->srfs[i], (struct resource *)NULL );
 		
 		/* Compute bounds of each Bezier face_g_snurb */
 		for( RT_LIST_FOR( s, face_g_snurb, &n->bez_hd ) )  {
@@ -233,7 +233,7 @@ struct seg		*seghead;
 
 #define UV_TOL	1.0e-6	/* Paper says 1.0e-4 is reasonable for 1k images, not close up */
 			hp = rt_nurb_intersect(
-				s, plane1, plane2, UV_TOL );
+				s, plane1, plane2, UV_TOL, (struct resource *)NULL );
 			while( hp != (struct rt_nurb_uv_hit *)0)
 			{
 				struct rt_nurb_uv_hit * o;
@@ -434,9 +434,9 @@ register struct soltab *stp;
 		while( RT_LIST_WHILE( s, face_g_snurb, &nurb->bez_hd ) )  {
 			NMG_CK_SNURB( s );
 			RT_LIST_DEQUEUE( &(s->l) );
-			rt_nurb_free_snurb( s );
+			rt_nurb_free_snurb( s, (struct resource *)NULL );
 		}
-		rt_nurb_free_snurb( nurb->srf );	/* original surf */
+		rt_nurb_free_snurb( nurb->srf, (struct resource *)NULL );	/* original surf */
 		rt_free( (char *)nurb, "nurb_specific" );
 	}
 }
@@ -518,15 +518,15 @@ struct rt_tol		*tol;
 
                 rt_nurb_kvknot( &tkv1, n->order[0],
                         n->u.knots[0],
-                        n->u.knots[n->u.k_size-1], num_knots);
+                        n->u.knots[n->u.k_size-1], num_knots, (struct resource *)NULL);
 
                 rt_nurb_kvknot( &tkv2, n->order[1],
                         n->v.knots[0],
-                        n->v.knots[n->v.k_size-1], num_knots);
+                        n->v.knots[n->v.k_size-1], num_knots, (struct resource *)NULL);
 
 
-		r = (struct face_g_snurb *) rt_nurb_s_refine( n, RT_NURB_SPLIT_COL, &tkv2);
-		c = (struct face_g_snurb *) rt_nurb_s_refine( r, RT_NURB_SPLIT_ROW, &tkv1);
+		r = (struct face_g_snurb *) rt_nurb_s_refine( n, RT_NURB_SPLIT_COL, &tkv2, (struct resource *)NULL);
+		c = (struct face_g_snurb *) rt_nurb_s_refine( r, RT_NURB_SPLIT_ROW, &tkv1, (struct resource *)NULL);
 
 		coords = RT_NURB_EXTRACT_COORDS(n->pt_type);
 	
@@ -571,8 +571,8 @@ struct rt_tol		*tol;
 				vp += stride;
 			}
 		}
-		rt_nurb_free_snurb(c);
-		rt_nurb_free_snurb(r);
+		rt_nurb_free_snurb(c, (struct resource *)NULL);
+		rt_nurb_free_snurb(r, (struct resource *)NULL);
 
 		rt_free( (char *) tkv1.knots, "rt_nurb_plot:tkv1>knots");
 		rt_free( (char *) tkv2.knots, "rt_nurb_plot:tkv2.knots");
@@ -650,7 +650,7 @@ register CONST mat_t		mat;
 			rp->d.d_order[0],rp->d.d_order[1],
 			rp->d.d_kv_size[0],rp->d.d_kv_size[1],
 			rp->d.d_ctl_size[0],rp->d.d_ctl_size[1],
-			pt_type);
+			pt_type, (struct resource *)NULL);
 
 		vp = (dbfloat_t *) &rp[1];
 		
@@ -951,7 +951,7 @@ struct rt_db_internal 	*ip;
 	/* Free up storage for the nurb surfaces */
 	for( i = 0; i < sip->nsrf; i++)
 	{
-		rt_nurb_free_snurb( sip->srfs[i] );
+		rt_nurb_free_snurb( sip->srfs[i], (struct resource *)NULL );
 	}
 	rt_free( (char *)sip->srfs, "nurb surfs[]" );
 	sip->magic = 0;

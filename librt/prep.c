@@ -379,6 +379,8 @@ rt_init_resource( resp, cpu_num )
 struct resource *resp;
 int		cpu_num;
 {
+	int i;
+
 	resp->re_magic = RESOURCE_MAGIC;
 	resp->re_cpu = cpu_num;
 
@@ -401,6 +403,17 @@ int		cpu_num;
 
 	if( !BU_LIST_UNINITIALIZED( &resp->re_nmgfree ) )
 		BU_LIST_INIT( &resp->re_nmgfree )
+
+	if( !resp->re_pmem.buckets[0].q_forw )
+	{
+		for( i=0 ; i<NBUCKETS ; i++ )
+		{
+			resp->re_pmem.buckets[i].q_forw = &resp->re_pmem.buckets[i];
+			resp->re_pmem.buckets[i].q_back = &resp->re_pmem.buckets[i];
+		}
+		resp->re_pmem.adjhead.q_forw = &resp->re_pmem.adjhead;
+		resp->re_pmem.adjhead.q_back = &resp->re_pmem.adjhead;
+	}
 
 	resp->re_boolstack = NULL;
 	resp->re_boolslen = 0;

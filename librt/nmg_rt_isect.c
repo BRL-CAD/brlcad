@@ -1994,7 +1994,7 @@ struct face_g_snurb *fg;
 	BU_LIST_INIT( &bezier );
 	BU_LIST_INIT( &hit_list );
 
-	rt_nurb_bezier( &bezier, fg );
+	rt_nurb_bezier( &bezier, fg, rd->ap->a_resource );
 
 	while( BU_LIST_NON_EMPTY( &bezier ) )
 	{
@@ -2062,7 +2062,7 @@ struct face_g_snurb *fg;
 				if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 					bu_log( "\tNo intersection\n" );
 
-				rt_nurb_free_snurb( srf );
+				rt_nurb_free_snurb( srf, rd->ap->a_resource );
 				continue;
 			}
 
@@ -2074,7 +2074,7 @@ struct face_g_snurb *fg;
 			if( u >= srf->u.knots[0] && u <= srf->u.knots[srf->u.k_size-1] &&
 			    v >= srf->v.knots[0] && v <= srf->v.knots[srf->v.k_size-1] )
 			{
-				hp = (struct rt_nurb_uv_hit *)bu_malloc( sizeof( struct rt_nurb_uv_hit ), "hp" );
+				hp = (struct rt_nurb_uv_hit *)pmalloc( sizeof( struct rt_nurb_uv_hit ), &rd->ap->a_resource->re_pmem );
 				hp->next = (struct rt_nurb_uv_hit *)NULL;
 				hp->sub = 0;
 				hp->u = u;
@@ -2093,10 +2093,10 @@ struct face_g_snurb *fg;
 			(void)rt_nurb_s_bound( srf, srf_min, srf_max );
 			if( !rt_in_rpp( rd->rp, rd->rd_invdir, srf_min, srf_max ) )
 			{
-				rt_nurb_free_snurb( srf );
+				rt_nurb_free_snurb( srf, rd->ap->a_resource );
 				continue;
 			}
-			hp = rt_nurb_intersect( srf, pl1, pl2, UV_TOL );
+			hp = rt_nurb_intersect( srf, pl1, pl2, UV_TOL, rd->ap->a_resource );
 		}
 
 		/* process each hit point */
@@ -2143,7 +2143,7 @@ struct face_g_snurb *fg;
 				if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 					bu_log( "\tNot a hit\n" );
 
-				bu_free( (char *)hp, "nurb_uv_hit" );
+				pfree( (char *)hp, &rd->ap->a_resource->re_pmem );
 				hp = next;
 				continue;
 			}
@@ -2243,10 +2243,10 @@ struct face_g_snurb *fg;
 
 			hit_ins( rd, myhit );
 
-			bu_free( (char *)hp, "nurb_uv_hit" );
+			pfree( (char *)hp, &rd->ap->a_resource->re_pmem );
 			hp = next;
 		}
-		rt_nurb_free_snurb( srf );
+		rt_nurb_free_snurb( srf, rd->ap->a_resource );
 	}
 }
 

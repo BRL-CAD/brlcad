@@ -38,7 +38,7 @@
         nurb_knot nurb_norm nurb_poly nurb_ray nurb_refine \
         nurb_solve nurb_split nurb_util nurb_xsplit nurb_copy \
         nurb_c2 oslo_calc oslo_map nurb_plot nurb_bezier nurb_trim \
-	nurb_interp nurb_reverse nurb_tess nurb_trim_util
+	nurb_interp nurb_reverse nurb_tess nurb_trim_util pmalloc
 
 /* Oddly, this line needs to be present to keep IBM AIX cpp happy. */
 #ifdef FAST_SQRT

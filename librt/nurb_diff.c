@@ -55,7 +55,7 @@ int	dir;
 		rt_nurb_new_snurb( srf->order[0] - 1, srf->order[1], 
 		    srf->u.k_size - 2, srf->v.k_size,
 		    srf->s_size[0], srf->s_size[1] - 1, 
-		    srf->pt_type );
+		    srf->pt_type, (struct resource *)NULL );
 
 		for ( i = 0; i < srf->s_size[0]; i++) {
 			fastf_t * old_points, *new_points;
@@ -85,7 +85,7 @@ int	dir;
 		    srf->order[0], srf->order[1] - 1, 
 		    srf->u.k_size, srf->v.k_size - 2,
 		    srf->s_size[0] - 1, srf->s_size[1], 
-		    srf->pt_type );
+		    srf->pt_type, (struct resource *)NULL );
 
 		for ( i = 0; i < srf->s_size[1]; i++) {
 			fastf_t * old_points, *new_points;

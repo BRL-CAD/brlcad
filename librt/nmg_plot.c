@@ -2472,20 +2472,20 @@ int				n_interior;	/* typ. 10 */
 
 	rt_nurb_kvgen( &tkv1,
 		fg->u.knots[0],
-		fg->u.knots[fg->u.k_size-1], n_interior);
+		fg->u.knots[fg->u.k_size-1], n_interior, (struct resource *)NULL);
 
 	rt_nurb_kvgen( &tkv2,
 		fg->v.knots[0],
-		fg->v.knots[fg->v.k_size-1], n_interior);
+		fg->v.knots[fg->v.k_size-1], n_interior, (struct resource *)NULL);
 		
-	rt_nurb_kvmerge(&tau1, &tkv1, &fg->u);
-	rt_nurb_kvmerge(&tau2, &tkv2, &fg->v);
+	rt_nurb_kvmerge(&tau1, &tkv1, &fg->u, (struct resource *)NULL);
+	rt_nurb_kvmerge(&tau2, &tkv2, &fg->v, (struct resource *)NULL);
 
 /**	nmg_hack_snurb( &n, fg );	/ XXX */
 
-	r = rt_nurb_s_refine( fg, RT_NURB_SPLIT_COL, &tau2);
+	r = rt_nurb_s_refine( fg, RT_NURB_SPLIT_COL, &tau2, (struct resource *)NULL);
 	NMG_CK_SNURB(r);
-	c = rt_nurb_s_refine( r, RT_NURB_SPLIT_ROW, &tau1);
+	c = rt_nurb_s_refine( r, RT_NURB_SPLIT_ROW, &tau1, (struct resource *)NULL);
 	NMG_CK_SNURB(c);
 
 	coords = RT_NURB_EXTRACT_COORDS(c->pt_type);
@@ -2532,8 +2532,8 @@ int				n_interior;	/* typ. 10 */
 			vp += stride;
 		}
 	}
-	rt_nurb_free_snurb(c);
-	rt_nurb_free_snurb(r);
+	rt_nurb_free_snurb(c, (struct resource *)NULL);
+	rt_nurb_free_snurb(r, (struct resource *)NULL);
 
 	rt_free( (char *) tau1.knots, "rt_nurb_plot:tau1.knots");
 	rt_free( (char *) tau2.knots, "rt_nurb_plot:tau2.knots");
@@ -2590,7 +2590,7 @@ int				cmd;		/* RT_VLIST_LINE_DRAW, etc */
 		/* linear cnurb on snurb face -- cnurb ctl pts are UV */
 		n.order = 2;
 		n.l.magic = RT_CNURB_MAGIC;
-		rt_nurb_gen_knot_vector( &n.k, n.order, 0.0, 1.0 );
+		rt_nurb_gen_knot_vector( &n.k, n.order, 0.0, 1.0, (struct resource *)NULL );
 		n.c_size = 2;
 		n.pt_type = RT_NURB_MAKE_PT_TYPE(2, RT_NURB_PT_UV, RT_NURB_PT_NONRAT );
 		n.ctl_points = (fastf_t *)rt_malloc(

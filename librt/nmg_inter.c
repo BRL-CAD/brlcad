@@ -2620,7 +2620,7 @@ struct faceuse		*fu1, *fu2;
 					VJOIN1( hit_pt, vg1a->coord , dist[hit_no], vt1_3d )
 
 				if (rt_g.NMG_debug & DEBUG_POLYSECT)
-					bu_log( "eus x%x and x%x intersect #%d at (%g %g %g)\n",
+					bu_log( "eus x%x and x%x intersect #%d at (%f %f %f)\n",
 						eu1, eu2, hit_no, V3ARGS( hit_pt ) );
 
 				if( !hit_vu )
@@ -2649,7 +2649,14 @@ struct faceuse		*fu1, *fu2;
 				if( code == 1 && hitv != eu2->vu_p->v_p && hitv != eu2->eumate_p->vu_p->v_p )
 				{
 					if (rt_g.NMG_debug & DEBUG_POLYSECT)
+					{
+						vect_t tmp1, tmp2;
+						VSUB2( tmp1, hit_pt, eu2->vu_p->v_p->vg_p->coord )
+						VSUB2( tmp2, hit_pt, eu2->eumate_p->vu_p->v_p->vg_p->coord )
 						bu_log( "Splitting eu2 x%x\n",  eu2 );
+						bu_log( "Distance to hit_pt = %g from vu1, %g from vu2\n",
+							MAGNITUDE( tmp1 ), MAGNITUDE( tmp2 ) );
+					}
 					new_eu = nmg_esplit( hitv, eu2, 1 );
 					hitv = new_eu->vu_p->v_p;
 					if( !hitv->vg_p )
@@ -6269,7 +6276,7 @@ struct bu_ptbl *eu2_list;
 				if( code == 0 && hitv != eu2->vu_p->v_p && hitv != eu2->eumate_p->vu_p->v_p )
 				{
 					if (rt_g.NMG_debug & DEBUG_POLYSECT)
-						bu_log( "Splitting eu2 x%x\n",  eu2 );
+						bu_log( "Splitting eu2 x%x at hitv = x%x\n",  eu2, hitv );
 					new_eu = nmg_esplit( hitv, eu2, 1 );
 					hitv = new_eu->vu_p->v_p;
 					if( !hitv->vg_p )

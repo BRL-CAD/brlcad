@@ -114,7 +114,7 @@ int		n;
 	/* First set up Curve data structs */
 	/* For now we will assume that all paramerizations are uniform */
 
-	rt_nurb_kvknot( &crv->k, order, 0.0, 1.0, (n - order));
+	rt_nurb_kvknot( &crv->k, order, 0.0, 1.0, (n - order), (struct resource *)NULL);
 	
 	/* Calculate Nodes at which the data points will be
 	 * evaluated in the curve
@@ -186,8 +186,8 @@ int		xmax;		/* ncol = max X */
 	 * similar for the V knot vector
 	 */
 
-	rt_nurb_kvknot(&srf->u, order, 0.0, 1.0, ymax - order);
-	rt_nurb_kvknot(&srf->v, order, 0.0, 1.0, xmax - order);
+	rt_nurb_kvknot(&srf->u, order, 0.0, 1.0, ymax - order, (struct resource *)NULL);
+	rt_nurb_kvknot(&srf->v, order, 0.0, 1.0, xmax - order, (struct resource *)NULL);
 
 	srf->ctl_points = (fastf_t *) rt_malloc(
 		sizeof(fastf_t) * xmax * ymax * 3,

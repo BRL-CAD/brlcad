@@ -1934,7 +1934,7 @@ fastf_t		*points;
 		eg->k.knots = kv;
 	} else {
 		/* Give a default curve, no interior knots */
-		rt_nurb_kvknot( &eg->k, order, 0.0, 1.0, n_knots - (2 * order) );
+		rt_nurb_kvknot( &eg->k, order, 0.0, 1.0, n_knots - (2 * order), (struct resource *)NULL );
 	}
 
 	if( n_pts < 2 )  rt_bomb("nmg_edge_g_cnurb() n_pts < 2\n");

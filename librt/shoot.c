@@ -699,6 +699,8 @@ register struct application *ap;
 	BU_LIST_INIT( &finished_segs.l );
 
 	if( BU_LIST_UNINITIALIZED( &resp->re_parthead ) )  {
+		int i;
+
 		BU_LIST_INIT( &resp->re_parthead );
 
 		/* If one is, they all probably are.  Runs once per processor. */
@@ -708,6 +710,14 @@ register struct application *ap;
 			BU_LIST_INIT(  &resp->re_region_ptbl );
 		if( BU_LIST_UNINITIALIZED( &resp->re_nmgfree ) )
 			BU_LIST_INIT(  &resp->re_nmgfree );
+
+		for( i=0 ; i<NBUCKETS ; i++ )
+		{
+			resp->re_pmem.buckets[i].q_forw = &resp->re_pmem.buckets[i];
+			resp->re_pmem.buckets[i].q_back = &resp->re_pmem.buckets[i];
+		}
+		resp->re_pmem.adjhead.q_forw = &resp->re_pmem.adjhead;
+		resp->re_pmem.adjhead.q_back = &resp->re_pmem.adjhead;
 
 		/*
 		 *  Add this resource structure to the table.

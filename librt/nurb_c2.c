@@ -58,11 +58,11 @@ fastf_t v;
 	rt_nurb_s_eval(vvs, u,v, uve);
 	rt_nurb_s_eval(uvs, u,v, uve);
 
-	rt_nurb_free_snurb( us);
-	rt_nurb_free_snurb( vs);
-	rt_nurb_free_snurb( uus);
-	rt_nurb_free_snurb( vvs);
-	rt_nurb_free_snurb( uvs);
+	rt_nurb_free_snurb( us, (struct resource *)NULL);
+	rt_nurb_free_snurb( vs, (struct resource *)NULL);
+	rt_nurb_free_snurb( uus, (struct resource *)NULL);
+	rt_nurb_free_snurb( vvs, (struct resource *)NULL);
+	rt_nurb_free_snurb( uvs, (struct resource *)NULL);
 
 	if( RT_NURB_IS_PT_RATIONAL( srf->pt_type ))
 	{
