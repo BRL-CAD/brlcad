@@ -102,15 +102,15 @@ if [ ! "x$_acfound" = "xyes" ] ; then
 else
   _version_line="`$AUTOCONF --version | head -${TAIL_N}1`"
   if [ "x$HAVE_SED" = "xyes" ] ; then
-    _maj_version="`echo $_version_line | sed 's/.*\([0-9]\)\.[0-9][0-9].*/\1/'`"
-    _min_version="`echo $_version_line | sed 's/.*[0-9]\.\([0-9][0-9]\).*/\1/'`"
-
-    if [ $? = 0 ] ; then
-      if [ $_maj_version -lt $AUTOCONF_MAJOR_VERSION ] ; then
+    [ "x$_maj_version" = "x" ] && _maj_version=0
+    _maj_version="`echo $_version_line | sed 's/.* \([0-9]\)\.[0-9][0-9].*/\1/'`"
+    _min_version="`echo $_version_line | sed 's/.* [0-9]\.\([0-9][0-9]\).*/\1/'`"
+    [ "x$_maj_version" = "x" ] && _max_version=0
+    [ "x$_min_version" = "x" ] && _min_version=0
+    if [ $_maj_version -lt $AUTOCONF_MAJOR_VERSION ] ; then
 	_report_error=yes
-      elif [ $_min_version -lt $AUTOCONF_MINOR_VERSION ] ; then
+    elif [ $_min_version -lt $AUTOCONF_MINOR_VERSION ] ; then
 	_report_error=yes
-      fi
     fi
     $ECHO "Found GNU Autoconf version $_maj_version.$_min_version"
   fi
@@ -149,17 +149,18 @@ if [ ! "x$_amfound" = "xyes" ] ; then
 else
   _version_line="`$AUTOMAKE --version | head -${TAIL_N}1`"
   if [ "x$HAVE_SED" = "xyes" ] ; then
-    _maj_version="`echo $_version_line | sed 's/.*\([0-9]\)\.[0-9]\.[0-9].*/\1/'`"
-    _min_version="`echo $_version_line | sed 's/.*[0-9]\.\([0-9]\)\.[0-9].*/\1/'`"
-    _pat_version="`echo $_version_line | sed 's/.*[0-9]\.[0-9]\.\([0-9]\).*/\1/'`"
-    if [ $? = 0 ] ; then
-      if [ $_maj_version -lt $AUTOMAKE_MAJOR_VERSION ] ; then
+    _maj_version="`echo $_version_line | sed 's/.* \([0-9]\)\.[0-9].*/\1/'`"
+    _min_version="`echo $_version_line | sed 's/.* [0-9]\.\([0-9]\).*/\1/'`"
+    _pat_version="`echo $_version_line | sed 's/.* [0-9]\.[0-9][\.-]p\?\([0-9]*\).*/\1/'`"
+    [ "x$_maj_version" = "x" ] && _maj_version=0
+    [ "x$_min_version" = "x" ] && _min_version=0
+    [ "x$_pat_version" = "x" ] && _pat_version=0
+    if [ $_maj_version -lt $AUTOMAKE_MAJOR_VERSION ] ; then
 	_report_error=yes
-      elif [ $_min_version -lt $AUTOMAKE_MINOR_VERSION ] ; then
+    elif [ $_min_version -lt $AUTOMAKE_MINOR_VERSION ] ; then
 	_report_error=yes
-      elif [ $_pat_version -lt $AUTOMAKE_PATCH_VERSION ] ; then
+    elif [ $_pat_version -lt $AUTOMAKE_PATCH_VERSION ] ; then
 	_report_error=yes
-      fi
     fi
     $ECHO "Found GNU Automake version $_maj_version.$_min_version.$_pat_version"
   fi
@@ -248,17 +249,18 @@ if [ ! "x$_ltfound" = "xyes" ] ; then
 else
   _version_line="`$LIBTOOLIZE --version | head -${TAIL_N}1`"
   if [ "x$HAVE_SED" = "xyes" ] ; then
-    _maj_version="`echo $_version_line | sed 's/.*\([0-9]\)\.[0-9]\.[0-9].*/\1/'`"
-    _min_version="`echo $_version_line | sed 's/.*[0-9]\.\([0-9]\)\.[0-9].*/\1/'`"
-    _pat_version="`echo $_version_line | sed 's/.*[0-9]\.[0-9]\.\([0-9]\).*/\1/'`"
-    if [ $? = 0 ] ; then
-      if [ $_maj_version -lt $LIBTOOL_MAJOR_VERSION ] ; then
+    _maj_version="`echo $_version_line | sed 's/.* \([0-9]\)\.[0-9].*/\1/'`"
+    _min_version="`echo $_version_line | sed 's/.* [0-9]\.\([0-9]\).*/\1/'`"
+    _pat_version="`echo $_version_line | sed 's/.* [0-9]\.[0-9][\.-]p\?\([0-9]*\).*/\1/'`"
+    [ "x$_maj_version" = "x" ] && _maj_version=0
+    [ "x$_min_version" = "x" ] && _min_version=0
+    [ "x$_pat_version" = "x" ] && _pat_version=0
+    if [ $_maj_version -lt $LIBTOOL_MAJOR_VERSION ] ; then
 	_report_error=yes
-      elif [ $_min_version -lt $LIBTOOL_MINOR_VERSION ] ; then
+    elif [ $_min_version -lt $LIBTOOL_MINOR_VERSION ] ; then
 	_report_error=yes
-      elif [ $_pat_version -lt $LIBTOOL_PATCH_VERSION ] ; then
+    elif [ $_pat_version -lt $LIBTOOL_PATCH_VERSION ] ; then
 	_report_error=yes
-      fi
     fi
     $ECHO "Found GNU Libtool version $_maj_version.$_min_version.$_pat_version"
   fi
