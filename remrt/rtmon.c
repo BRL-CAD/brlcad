@@ -142,8 +142,6 @@ int	fd;
 
 	bu_vls_init(&str);
 
-	our_hostname = get_our_hostname();	/* ihost.c */
-
 	bu_vls_printf( &str, "hostname %s", our_hostname );
 	bu_vls_printf( &str, " ncpu %d", bu_avail_cpus() );
 	bu_vls_printf( &str, " pub_cpu %d", bu_get_public_cpus() );
@@ -314,12 +312,29 @@ int	fd;
 	struct bu_vls	str;
 #define MAX_ARGS	50
 	char	*argv[MAX_ARGS+2];
+	struct ihost	*him;
 
 	ifp = fdopen( fd, "r" );
 	ofp = fdopen( fd, "w" );
 	bu_setlinebuf( ifp );
 	bu_setlinebuf( ofp );
 
+	our_hostname = get_our_hostname();	/* ihost.c */
+
+	/* First step, ensure access from proper machine.
+	 * XXX For now, just use DNS.  Later, require a "user" command.
+	 */
+	if( (him = host_lookup_of_fd(fd)) == IHOST_NULL )  {
+		fprintf( ofp, "FAIL unable to obtain your hostname\n");
+		exit(0);
+	}
+	if( strcmp( &him->ht_name[strlen(him->ht_name)-4], ".mil" ) != 0 )  {
+		fprintf( ofp, "FAIL connection from unauthorized host %s\n",
+			him->ht_name);
+		exit(0);
+	}
+
+	/* Main loop:  process commands. */
 	bu_vls_init(&str);
 	while( !feof(ifp ) )  {
 		bu_vls_trunc( &str, 0 );
