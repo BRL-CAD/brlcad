@@ -67,6 +67,7 @@ void	f_ill(), f_knob(), f_tops(), f_summary();
 void	f_prcolor(), f_color(), f_edcolor();
 void	f_plot(), f_area(), f_find(), f_edgedir();
 void	f_regdef(), f_aeview(), f_in();
+void	f_rmats();
 
 static struct funtab {
 	char *ft_name;
@@ -169,6 +170,8 @@ static struct funtab {
 	f_rt,1,MAXARGS,
 "saveview", "file [args]", "save view in file for RT",
 	f_saveview,2,MAXARGS,
+"rmats", "file", "load views from file",
+	f_rmats,2,2,
 "attach", "<device>", "attach to a display processor, or NU",
 	f_attach,2,2,
 "release", "", "release current display processor [attach NU]",

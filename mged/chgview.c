@@ -25,6 +25,7 @@
  *	f_ill		illuminate the named object
  *	f_sed		simulate pressing "solid edit" then illuminate
  *	f_knob		simulate knob twist
+ *	f_rmats		load views from a file
  *
  *  Author -
  *	Michael John Muuss
@@ -741,4 +742,35 @@ f_knob()
 		(void)printf("x,y,z for joystick, Z for zoom, X,Y for slew\n");
 		return;
 	}
+}
+
+/* Load view matrixes from a file.  rmats filename */
+void
+f_rmats()
+{
+	register FILE *fp;
+	register int i;
+	double ovscale;		/* old Viewscale */
+
+	if( (fp = fopen(cmd_args[1], "r")) == NULL )  {
+		perror(cmd_args[1]);
+		return;
+	}
+	ovscale = Viewscale;
+	/* If user hits ^C, this will stop, but will leave hanging filedes */
+	(void)signal(SIGINT, cur_sigint);
+	while( !feof( fp ) )  {
+		for( i=0; i < 16; i++ )
+			fscanf(fp, "%f", &model2view[i] );
+		Viewscale = model2view[15];
+		mat_inv( view2model, model2view );
+		if( state != ST_VIEW )  {
+			mat_mul( model2objview, model2view, modelchanges );
+			mat_inv( objview2model, model2objview );
+		}
+		dmaflag = 1;
+		refresh();	/* Draw new display */
+	}
+	fclose(fp);
+	Viewscale = ovscale;
 }
