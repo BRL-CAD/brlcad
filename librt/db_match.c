@@ -5,6 +5,8 @@
  *	db_regexp_match		Determine if a string matches a regexp pattern
  *	db_regexp_match_all	Return a vls filled with all names matching
  *				the given pattern
+ *	db_update_nref		Updates the d_nref fields of each member of
+ *				the directory in the given database.
  *
  *  Author -
  *	Michael John Muuss
@@ -30,6 +32,8 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "conf.h"
 
+#include <stdio.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
@@ -52,7 +56,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
  */
 int
 db_regexp_match( pattern, string )
-register char *pattern, *string;
+register CONST char *pattern, *string;
 {
 	do {
 		switch( *pattern ) {
@@ -114,15 +118,13 @@ register char *pattern, *string;
  * Appends a list of all database matches to the given vls, or the pattern
  * itself if no matches are found.
  * Returns the number of matches.
- *
- * XXX need to extern this guy for mged
  */
  
 int
 db_regexp_match_all( dest, dbip, pattern )
 struct bu_vls	*dest;
 struct db_i	*dbip;
-char		*pattern;
+CONST char	*pattern;
 {
 	register int i, num;
 	register struct directory *dp;
@@ -142,4 +144,62 @@ char		*pattern;
 	}
 
 	return num;
+}
+
+
+HIDDEN void
+db_count_refs( dbip, comb, comb_leaf, dummy1, dummy2, dummy3 )
+struct db_i		*dbip;
+struct rt_comb_internal *comb;
+union tree		*comb_leaf;
+genptr_t		 dummy1, dummy2, dummy3;
+{
+	struct directory	*dp;
+
+	RT_CK_TREE( comb_leaf );
+
+	if( (dp=db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_QUIET)) != DIR_NULL )
+		++dp->d_nref;
+}
+
+
+/*
+ *			D B _ U P D A T E _ N R E F
+ *
+ * Updates the d_nref fields (which count the number of times a given entry
+ * is referenced by a COMBination in the database).
+ *
+ */
+
+void
+db_update_nref( dbip )
+struct db_i    *dbip;
+{
+	register int			i, j;
+	register struct directory      *dp;
+	struct rt_db_internal		intern;
+	struct rt_comb_internal	       *comb;
+
+	RT_CK_DBI( dbip );
+
+	/* First, clear any existing counts */
+	for( i = 0; i < RT_DBNHASH; i++ )
+		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )
+			dp->d_nref = 0;
+
+	/* Examine all COMB nodes */
+	for( i = 0; i < RT_DBNHASH; i++ )
+		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw ){
+			if( !(dp->d_flags & DIR_COMB) )
+				continue;
+			if( rt_db_get_internal(&intern, dp, dbip, (matp_t *)NULL) < 0 )
+				continue;
+			if( intern.idb_type != ID_COMBINATION )
+				continue;
+			comb = (struct rt_comb_internal *)intern.idb_ptr;
+			db_tree_funcleaf( dbip, comb, comb->tree,
+					  db_count_refs, (genptr_t)NULL,
+					  (genptr_t)NULL, (genptr_t)NULL );
+			rt_db_free_internal( &intern );
+		}
 }
