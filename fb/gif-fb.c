@@ -751,11 +751,11 @@ main( argc, argv )
 
 		for ( i = 0; i < entries; ++i )
 			{
-			g_cmap[i][RED] = (g_cmap[i][RED] & cr_mask) * expand
+			g_cmap[i][RED] = (((int)g_cmap[i][RED]) & cr_mask) * expand
 				       + 0.5;
-			g_cmap[i][GRN] = (g_cmap[i][GRN] & cr_mask) * expand
+			g_cmap[i][GRN] = (((int)g_cmap[i][GRN]) & cr_mask) * expand
 				       + 0.5;
-			g_cmap[i][BLU] = (g_cmap[i][BLU] & cr_mask) * expand
+			g_cmap[i][BLU] = (((int)g_cmap[i][BLU]) & cr_mask) * expand
 				       + 0.5;
 			}
 		}
@@ -965,11 +965,11 @@ main( argc, argv )
 
 				for ( i = 0; i < entries; ++i )
 					{
-					cmap[i][RED] = (cmap[i][RED] & cr_mask)
+					cmap[i][RED] = (((int)cmap[i][RED]) & cr_mask)
 						     * expand + 0.5;
-					cmap[i][GRN] = (cmap[i][GRN] & cr_mask)
+					cmap[i][GRN] = (((int)cmap[i][GRN]) & cr_mask)
 						     * expand + 0.5;
-					cmap[i][BLU] = (cmap[i][BLU] & cr_mask)
+					cmap[i][BLU] = (((int)cmap[i][BLU]) & cr_mask)
 						     * expand + 0.5;
 					}
 				}
