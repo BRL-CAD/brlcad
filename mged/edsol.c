@@ -6210,7 +6210,7 @@ init_objedit()
 	VSETALL( edit_rate_view_tran, 0.0 );
 
 	bu_vls_init(&vls);
-	bu_vls_strcpy(&vls, "do_edit_menu {}");
+	bu_vls_strcpy(&vls, "do_edit_menu {} {}");
 	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 }
@@ -7555,7 +7555,7 @@ build_tcl_edit_menu()
 
   switch( es_int.idb_type ) {
   case ID_ARB8:
-    bu_vls_printf(&vls, "do_arb_edit_menu {");
+    bu_vls_printf(&vls, "do_arb_edit_menu arb8 {");
 
     /* build "move edge" menu */
     mip = which_menu[es_type-4];
@@ -7582,7 +7582,7 @@ build_tcl_edit_menu()
     bu_vls_printf(&vls, " }\n");
     break;
   case ID_TGC:
-    bu_vls_printf(&vls, "do_edit_menu {");
+    bu_vls_printf(&vls, "do_edit_menu tgc {");
     mip = tgc_menu;
     for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
       bu_vls_printf(&vls, " {%s}", mip->menu_string);
@@ -7590,7 +7590,7 @@ build_tcl_edit_menu()
     bu_vls_printf(&vls, " }\n");
     break;
   case ID_TOR:
-    bu_vls_printf(&vls, "do_edit_menu {");
+    bu_vls_printf(&vls, "do_edit_menu tor {");
     mip = tor_menu;
     for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
       bu_vls_printf(&vls, " {%s}", mip->menu_string);
@@ -7598,7 +7598,7 @@ build_tcl_edit_menu()
     bu_vls_printf(&vls, " }\n");
     break;
   case ID_ELL:
-    bu_vls_printf(&vls, "do_edit_menu {");
+    bu_vls_printf(&vls, "do_edit_menu ell {");
     mip = ell_menu;
     for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
       bu_vls_printf(&vls, " {%s}", mip->menu_string);
@@ -7606,7 +7606,7 @@ build_tcl_edit_menu()
     bu_vls_printf(&vls, " }\n");
     break;
   case ID_ARS:
-    bu_vls_printf(&vls, "do_edit_menu {");
+    bu_vls_printf(&vls, "do_edit_menu ars {");
     mip = ars_menu;
     for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
       bu_vls_printf(&vls, " {%s}", mip->menu_string);
@@ -7614,7 +7614,7 @@ build_tcl_edit_menu()
     bu_vls_printf(&vls, " }\n");
     break;
   case ID_BSPLINE:
-    bu_vls_printf(&vls, "do_edit_menu {");
+    bu_vls_printf(&vls, "do_edit_menu spline {");
     mip = spline_menu;
     for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
       bu_vls_printf(&vls, " {%s}", mip->menu_string);
@@ -7622,7 +7622,7 @@ build_tcl_edit_menu()
     bu_vls_printf(&vls, " }\n");
     break;
   case ID_RPC:
-    bu_vls_printf(&vls, "do_edit_menu {");
+    bu_vls_printf(&vls, "do_edit_menu rpc {");
     mip = rpc_menu;
     for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
       bu_vls_printf(&vls, " {%s}", mip->menu_string);
@@ -7630,7 +7630,7 @@ build_tcl_edit_menu()
     bu_vls_printf(&vls, " }\n");
     break;
   case ID_RHC:
-    bu_vls_printf(&vls, "do_edit_menu {");
+    bu_vls_printf(&vls, "do_edit_menu rhc {");
     mip = rhc_menu;
     for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
       bu_vls_printf(&vls, " {%s}", mip->menu_string);
@@ -7638,7 +7638,7 @@ build_tcl_edit_menu()
     bu_vls_printf(&vls, " }\n");
     break;
   case ID_EPA:
-    bu_vls_printf(&vls, "do_edit_menu {");
+    bu_vls_printf(&vls, "do_edit_menu epa {");
     mip = epa_menu;
     for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
       bu_vls_printf(&vls, " {%s}", mip->menu_string);
@@ -7646,7 +7646,7 @@ build_tcl_edit_menu()
     bu_vls_printf(&vls, " }\n");
     break;
   case ID_EHY:
-    bu_vls_printf(&vls, "do_edit_menu {");
+    bu_vls_printf(&vls, "do_edit_menu ehy {");
     mip = ehy_menu;
     for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
       bu_vls_printf(&vls, " {%s}", mip->menu_string);
@@ -7654,7 +7654,7 @@ build_tcl_edit_menu()
     bu_vls_printf(&vls, " }\n");
     break;
   case ID_ETO:
-    bu_vls_printf(&vls, "do_edit_menu {");
+    bu_vls_printf(&vls, "do_edit_menu eto {");
     mip = eto_menu;
     for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
       bu_vls_printf(&vls, " {%s}", mip->menu_string);
@@ -7662,7 +7662,7 @@ build_tcl_edit_menu()
     bu_vls_printf(&vls, " }\n");
     break;
   case ID_NMG:
-    bu_vls_printf(&vls, "do_edit_menu {");
+    bu_vls_printf(&vls, "do_edit_menu nmg {");
     mip = nmg_menu;
     for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
       bu_vls_printf(&vls, " {%s}", mip->menu_string);
@@ -7670,7 +7670,7 @@ build_tcl_edit_menu()
     bu_vls_printf(&vls, " }\n");
     break;
   case ID_PIPE:
-    bu_vls_printf(&vls, "do_edit_menu {");
+    bu_vls_printf(&vls, "do_edit_menu pipe {");
     mip = pipe_menu;
     for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
       bu_vls_printf(&vls, " {%s}", mip->menu_string);
@@ -7678,7 +7678,7 @@ build_tcl_edit_menu()
     bu_vls_printf(&vls, " }\n");
     break;
   case ID_VOL:
-    bu_vls_printf(&vls, "do_edit_menu {");
+    bu_vls_printf(&vls, "do_edit_menu vol {");
     mip = vol_menu;
     for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
       bu_vls_printf(&vls, " {%s}", mip->menu_string);
@@ -7686,7 +7686,7 @@ build_tcl_edit_menu()
     bu_vls_printf(&vls, " }\n");
     break;
   case ID_EBM:
-    bu_vls_printf(&vls, "do_edit_menu {");
+    bu_vls_printf(&vls, "do_edit_menu ebm {");
     mip = ebm_menu;
     for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
       bu_vls_printf(&vls, " {%s}", mip->menu_string);
@@ -7694,7 +7694,7 @@ build_tcl_edit_menu()
     bu_vls_printf(&vls, " }\n");
     break;
   case ID_DSP:
-    bu_vls_printf(&vls, "do_edit_menu {");
+    bu_vls_printf(&vls, "do_edit_menu dsp {");
     mip = dsp_menu;
     for(++mip; mip->menu_func != (void (*)())NULL; ++mip)
       bu_vls_printf(&vls, " {%s}", mip->menu_string);
