@@ -111,7 +111,6 @@ register struct soltab *stp;
 {
 	register struct half_specific *halfp =
 		(struct half_specific *)stp->st_specific;
-	register int i;
 
 	if( halfp == HALF_NULL )  {
 		rt_log("half(%s):  no data?\n", stp->st_name);
@@ -406,7 +405,6 @@ mat_t		mat;
 struct vlhead	*vhead;
 struct directory *dp;
 {
-	register int i, j;
 	vect_t cent;		/* some point on the plane */
 	vect_t xbase, ybase;	/* perpendiculars to normal */
 	vect_t x1, x2;
