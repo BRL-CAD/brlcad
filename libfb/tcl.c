@@ -254,15 +254,15 @@ fb_configureWindow(ifp, width, height)
      FBIO *ifp;
      int width, height;
 {
-	char *X_name = "/dev/X";
+	const char *X_name = "/dev/X";
 #ifdef IF_OGL
-	char *ogl_name = "/dev/ogl";
+	const char *ogl_name = "/dev/ogl";
 #endif
 
-	if(!strcmp(ifp->if_name, X_name))
+	if (!strncmp(ifp->if_name, X_name, strlen(X_name)))
 		X24_configureWindow(ifp, width, height);
 #ifdef IF_OGL
-	else if(!strcmp(ifp->if_name, ogl_name))
+	else if (!strncmp(ifp->if_name, ogl_name, strlen(ogl_name)))
 		ogl_configureWindow(ifp, width, height);
 #endif
 }
