@@ -31,6 +31,12 @@ static	int	Xleft, Yleft, Xright, Yright;		/* XXX */
 
 FBIO	*fbp;	/* XXX - debug */
 
+void	Efill();
+void	Horizon();
+void	Intersect();
+void	Draw();
+
+void
 fhinit()
 {
 	int	i;
@@ -48,6 +54,7 @@ fhinit()
  * Add another Z cut to the display.
  *  This one goes "behind" the last one.
  */
+void
 fhnewz( f, num )
 int	f[], num;
 {
@@ -165,6 +172,7 @@ int x, y;
  * INTERNAL Edge fill routine.
  * NOT DONE YET.
  */
+void
 Efill()
 {
 }
@@ -173,6 +181,7 @@ Efill()
  * Fill the upper and lower horizon arrays from x1 to x2
  *  with a line spanning (x1,y1) to (x2,y2).
  */
+void
 Horizon( x1, y1, x2, y2 )
 int	x1, y1, x2, y2;
 {
@@ -198,6 +207,7 @@ int	x1, y1, x2, y2;
  * Find the intersection (xi,yi) between the line (x1,y1)->(x2,y2)
  *  and the horizon hor[].
  */
+void
 Intersect( x1, y1, x2, y2, hor, xi, yi )
 int	x1, y1, x2, y2;
 int	hor[];
@@ -268,6 +278,7 @@ int	i;
  * DRAW - plot a line from (x1,y1) to (x2,y2)
  *  An integer Bresenham algorithm for any quadrant.
  */
+void
 Draw( x1, y1, x2, y2 )
 int	x1, y1, x2, y2;
 {

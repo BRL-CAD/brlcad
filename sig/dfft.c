@@ -28,6 +28,9 @@ int	normalize_output = 0;
 
 double	cbfilter[27];
 double	cbsum;
+void	fftdisp();
+void	fftmag2();
+void	fftphase();
 
 char usage[] = "\
 Usage: dfft [options] [width (1024)] < doubles > 512logmags\n\
@@ -106,6 +109,7 @@ char **argv;
 	}
 }
 
+void
 fftdisp( dat, N )
 double	dat[];
 int	N;
@@ -181,6 +185,7 @@ int	N;
 	}
 }
 
+void
 fftmag2( mags, dat, N )
 double	*mags, *dat;
 int	N;
@@ -220,6 +225,7 @@ int	N;
 	}
 }
 
+void
 fftphase( dat, N )
 double	dat[];
 int	N;

@@ -23,6 +23,8 @@ double	savebuffer[MAXM-1];
 double	xbuf[2*MAXM];
 double	ibuf[2*MAXM];		/* impulse response */
 
+void	mult();
+
 static char usage[] = "\
 Usage: dconv filter < doubles > doubles\n\
  XXX Warning: kernal size must be 2^i - 1\n";
@@ -114,6 +116,7 @@ M += 1;
  *  The order is: [Re(0),Re(1)...Re(N/2),Im(N/2-1),...,Im(1)]
  *    so for: 0 < i < n/2, (x[i],x[n-i]) is a complex pair.
  */
+void
 mult( o, b, n )
 double	o[], b[];
 int	n;

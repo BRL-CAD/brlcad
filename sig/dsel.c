@@ -12,6 +12,9 @@ Usage: dsel num\n\
 
 #define INTEGER_MAX ( ((int) ~0) >> 1 )
 
+void	skip();
+void	keep();
+
 main( argc, argv )
 int	argc;
 char	**argv;
@@ -50,6 +53,7 @@ char	**argv;
 	}
 }
 
+void
 skip( num )
 register int num;
 {
@@ -63,6 +67,7 @@ register int num;
 	}
 }
 
+void
 keep( num )
 register int num;
 {

@@ -14,6 +14,7 @@
 
 #define	MAX	1024
 
+void
 LintoLog( in, out, num )
 double in[], out[];
 int num;

@@ -11,6 +11,8 @@ double	sintab[TABSIZE];
 static char usage[] = "\
 Usage: syn samples_per_set [ratio] > doubles\n";
 
+void makesintab();
+
 main( argc, argv )
 int	argc;
 char	**argv;
@@ -46,6 +48,7 @@ char	**argv;
 	}
 }
 
+void
 makesintab()
 {
 	int	i;

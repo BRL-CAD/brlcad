@@ -38,6 +38,9 @@ int	endwin = 0;
 int	midwin = 0;
 
 void	fill_buffer();
+void	seek_sample();
+void	biaswin();
+void	bartwin();
 
 static char usage[] = "\
 Usage: dwin [options] [width (1024)] [step (width)] [start]\n\
@@ -170,6 +173,7 @@ char **argv;
  * read and discard the samples.
  * Can only seek forward.
  */
+void
 seek_sample( n )
 {
 	double	foo;
@@ -216,6 +220,7 @@ buf_start, buf_num, num_to_read, buf_index );
 }
 
 /* Bias window (half triangle) */
+void
 biaswin( data, L )
 double data[];
 int L;
@@ -228,6 +233,7 @@ int L;
 }
 
 /* Bartlett window (triangle) */
+void
 bartwin( data, L )
 double data[];
 int L;

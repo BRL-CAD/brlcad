@@ -22,6 +22,10 @@ int	mode = 0;
 FBIO	*fbp;
 int	fbsize = 512;
 
+void	lineout();
+void	disp_inten();
+void	disp_bars();
+
 static char usage[] = "\
 Usage: ddisp [-v -b -p -c -h] [width (512)]\n";
 
@@ -79,6 +83,7 @@ char	**argv;
 	fb_close(fbp);
 }
 
+void
 lineout( dat, n )
 double dat[];
 int n;
@@ -106,6 +111,7 @@ int n;
  *  Display doubles.
  *  +/- 1.0 in, becomes +/- 128 from center Y.
  */
+void
 disp_inten( buf, size )
 double	buf[];
 int size;
@@ -133,6 +139,7 @@ int size;
  *  Display doubles.
  *  +/- 1.0 in, becomes +/- 128 from center Y.
  */
+void
 disp_bars( buf, size )
 double	buf[];
 int size;

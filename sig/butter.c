@@ -48,6 +48,7 @@ double	w;	/* relative frequency (1.0 = center freq) */
 /*
  * Compute weights for a log point spaces critical band filter.
  */
+void
 cbweights( filter, window, points )
 double	filter[];
 int	window;		/* Length of FFT to compute relative freq for */
