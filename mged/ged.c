@@ -332,7 +332,7 @@ char **argv;
 	  /* NOTREACHED */
 	}
 
-#if 0
+#if 1
 	refresh();			/* Put up faceplate */
 #else
 	/* Force mged_display variables to be initialized */
@@ -1231,7 +1231,11 @@ refresh()
 	adcursor();
 
       /* Display titles, etc., if desired */
+#if 0
       dotitles(mged_variables.faceplate);
+#else
+      dotitles();
+#endif
 
       /* Draw center dot */
       dmp->dm_setColor(dmp, DM_YELLOW, 1);
