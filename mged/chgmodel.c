@@ -1360,24 +1360,12 @@ char	**argv;
 		return TCL_ERROR;
 	}
 
-	/* See if this is a known v4 database unit */
-	if( (new_unit = db_v4_get_units_code(bu_units_string(loc2mm))) >= 0 ) {
-		/* One of the recognized db.h units */
-		/* change database to remember the new local unit */
-		if( dbip->dbi_read_only ||
-		 db_ident( dbip, dbip->dbi_title, new_unit ) < 0 )
+	if( db_update_ident( dbip, dbip->dbi_title, loc2mm ) < 0 )  {
 		  Tcl_AppendResult(interp,
 			   "Warning: unable to stash working units into database\n",
 			   (char *)NULL);
-	} else {
-		/*
-		 *  Can't stash requested units into the database for next session,
-		 *  but there is no problem with the user editing in these units.
-		 */
-		Tcl_AppendResult(interp, "\
-Due to a database restriction in the current format of .g files,\n\
-this choice of units will not be remembered on your next editing session.\n", (char *)NULL);
 	}
+
 	dbip->dbi_local2base = loc2mm;
 	dbip->dbi_base2local = 1.0 / loc2mm;
 
@@ -1432,8 +1420,7 @@ char	**argv;
 	bu_vls_init( &title );
 	bu_vls_from_argv( &title, argc-1, argv+1 );
 
-	code = db_v4_get_units_code(bu_units_string(dbip->dbi_base2local));
-	if( db_ident( dbip, bu_vls_addr(&title), code ) < 0 ) {
+	if( db_update_ident( dbip, bu_vls_addr(&title), dbip->dbi_base2local ) < 0 )  {
 	  Tcl_AppendResult(interp, "Error: unable to change database title\n");
 	  bad = 1;
 	}
