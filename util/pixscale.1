@@ -3,20 +3,36 @@
 pixscale \- change the size of a color pix file
 .SH SYNOPSIS
 .B pixscale
-file.pix inx iny outx outy \>\ newfile.pix
+.RB [ \-r ]
+.RB [ \-s\  squareinsize]
+.RB [ \-w\  in_width]
+.RB [ \-n\  in_height]
+.RB [ \-S\  squareoutsize]
+.RB [ \-W\  out_width]
+.RB [ \-N\  out_height]
+[infile.pix] \>\ outfile.pix
 .SH DESCRIPTION
 .I Pixscale
 will take a color
 .IR pix (5)
-format file with dimensions
-.I inx
-by
-.I iny
-pixels, and produce a file with
-.I outx
-by
-.I outy
-pixels on stdout.
+format file of given dimensions and produce a larger or smaller
+scaled version.
+The
+.I \-w
+and
+.I \-n
+flags specify the input file width and number of scan lines in pixels.
+They can both be set to same same value via
+.I \-s.
+Similarly, the
+.I \-W
+and
+.I \-N
+flags specify the desired output file width and number of scan lines in
+pixels.  They can both be set to same same value via
+.I \-S.
+Defaults of 512 are assumed for any unspecified dimensions.
+.PP
 The algorithm used is bilinear interpolation if scaling up, and
 a box filter of arbitrary size if scaling down.  For the box filter a
 "square pixel" assumption is made; that is, all whole and fractional
@@ -26,6 +42,12 @@ When interpolating, the edge pixels are preserved, i.e. all of the
 interpolated pixels fall inside of the edges.  This can be a bit surprising
 when say doubling the size of a file as only the edge pixels will fall
 at exactly the location of an output pixel.
+.PP
+Specifying the
+.B \-r
+flag changes from bilinear interpolation to
+nearest neighbor interpolation, i.e. it enlarges the image by
+pixel replication.
 .PP
 For 2X interpolation, a much faster alternative is
 .IR pixinterp2x (1).
