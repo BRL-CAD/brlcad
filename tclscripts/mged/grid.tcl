@@ -229,6 +229,12 @@ proc init_grid_control { id } {
 	return
     }
 
+    if ![info exists grid_control($id,rh)] {
+	set init_grid_vars 1
+    } else {
+	set init_grid_vars 0
+    }
+
     set grid_control($id,padx) 4
     set grid_control($id,pady) 4
 
@@ -512,9 +518,13 @@ The tick spacing will be a power of 10 in local units." } }
     grid rowconfigure $top 0 -weight 2
     grid rowconfigure $top 1 -weight 1
 
-    grid_control_reset $id
-    grid_control_autosize $id
-    set grid_control($id,square) 1
+    if {$init_grid_vars} {
+	grid_control_reset $id
+	grid_control_autosize $id
+	set grid_control($id,square) 1
+    } else {
+	grid_control_reset $id
+    }
     set_grid_square $id
 
     place_near_mouse $top
