@@ -78,9 +78,17 @@ in all countries except the USA.  All rights reserved.";
 #define LOGFILE	"/vld/lib/gedlog"	/* usage log */
 #endif
 
+extern void draw_e_axes();
+extern void draw_m_axes();
+extern void draw_v_axes();
+
 #ifdef USE_FRAMEBUFFER
 extern void fb_tclInit();  /* from in libfb/tcl.c */
 extern int fb_refresh();
+#endif
+
+#ifdef DO_SNAP_TO_GRID
+extern void draw_grid();		/* grid.c */
 #endif
 
 #ifdef DO_RUBBER_BAND
@@ -1605,13 +1613,18 @@ refresh()
 	}
 #endif
 
+	/* Restore to non-rotated, full brightness */
+	DM_NORMAL(dmp);
+
 #ifdef DO_RUBBER_BAND
 	if(rubber_band_active || mged_variables->rubber_band)
 	  draw_rect();
 #endif
 
-	/* Restore to non-rotated, full brightness */
-	DM_NORMAL(dmp);
+#ifdef DO_SNAP_TO_GRID
+	if(mged_variables->grid_draw)
+	  draw_grid();
+#endif
 
 	/* Compute and display angle/distance cursor */
 	if (mged_variables->adcflag)
@@ -1622,6 +1635,16 @@ refresh()
 	dotitles(&tmp_vls);
 	bu_vls_trunc(&tmp_vls, 0);
       }
+
+      if(mged_variables->v_axes)
+	draw_v_axes();
+
+      if(mged_variables->m_axes)
+	draw_m_axes();
+
+      if(mged_variables->e_axes &&
+	 (state == ST_S_EDIT || state == ST_O_EDIT))
+	draw_e_axes();
 
       /* Draw center dot */
       DM_SET_COLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
