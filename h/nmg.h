@@ -814,7 +814,8 @@ NMG_EXTERN(void			nmg_ensure_vertex, (struct vertex *v,
 /* from nmg_comb.c */
 NMG_EXTERN(void			nmg_ck_lueu, (struct loopuse *cklu, char *s) );
 NMG_EXTERN(void			nmg_face_combine, (struct nmg_ptbl *b,
-				struct faceuse *fu1, struct faceuse *fu2) );
+				struct faceuse *fu1, struct faceuse *fu2,
+				point_t pt, vect_t dir) );
 
 #define nmg_mev(_v, _u)	nmg_me((_v), (struct vertex *)NULL, (_u))
 
