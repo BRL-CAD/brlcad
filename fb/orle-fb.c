@@ -66,7 +66,7 @@ char	*argv[];
 		int		get_flags;
 		int		pixels_per_buffer;
 
-	if( ! pars_Argv( argc, argv ) )
+	if( ! pars_Argv( argc, argv ) || isatty(fileno(fp)) )
 		{
 		prnt_Usage();
 		return	1;
