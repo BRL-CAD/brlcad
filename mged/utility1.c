@@ -445,7 +445,7 @@ f_which(clientData, interp, argc, argv)
         else
 		return TCL_OK;
 
-	ret = invoke_db_wrapper(interp, argc, argv);
+	ret = wdb_which_cmd(wdbp, interp, argc, argv);
 
 	(void)signal(SIGINT, SIG_IGN);
 	return ret;
