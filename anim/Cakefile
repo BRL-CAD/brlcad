@@ -17,4 +17,8 @@
 qinterp: qinterp.o 
 	CC LDFLAGS qinterp.o LIBES -o qinterp
 
+keyread: keyread.o anim.o
+	CC LDFLAGS keyread.o anim.o LIBES -o keyread
+
+
 #include "../Cakefile.rules"
