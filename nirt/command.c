@@ -559,6 +559,7 @@ int			ctp;
 
     double	dist_default();  /* computes grid[DIST] default val*/
 
+    targ2grid();
     grid(DIST) = bsphere_diameter;
     grid2targ();
 }
