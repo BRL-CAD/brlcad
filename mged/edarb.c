@@ -9,7 +9,7 @@
  *	f_extrude	"extrude" command -- project an ARB face
  *	f_arbdef	define ARB8 using rot fb angles to define face
  *	f_mirface	mirror an ARB face
- *	f_permute	permute ARB8 vertex labels
+ *	f_permute	permute ARB vertex labels
  *
  *  Author -
  *	Keith A. Applin
@@ -1160,20 +1160,20 @@ register struct solidrec *sp;
 }
 
 /* Permute command - permute the vertex labels of an ARB
-/* Format: permute jkl	*/
+/* Format: permute tuple	*/
 
 /*
- *     --------------------------------------------
- *		# vertices	# vertices needed
- *	Solid	in THE face	 to disambiguate
- *	type	(face_size)	      (mts)
- *     --------------------------------------------
- *	ARB4	    3			3
- *	ARB5	    4			2
- *	ARB6	    4			2
- *	ARB7	    4			1
- *	ARB8	    4			3
- *     --------------------------------------------
+ *	     Minimum and maximum tuple lengths
+ *     ------------------------------------------------
+ *	Solid	# vertices needed	# vertices
+ *	type	 to disambiguate	in THE face
+ *     ------------------------------------------------
+ *	ARB4		3		    3
+ *	ARB5		2		    4
+ *	ARB6		2		    4
+ *	ARB7		1		    4
+ *	ARB8		3		    4
+ *     ------------------------------------------------
  */
 void
 f_permute( argc, argv )
@@ -1188,48 +1188,57 @@ char	**argv;
      */
     register int 	vertex, i, k;
     int			arglen;
-    int 		number;		/* integer argument */
-    int			min_nm;		/* smallest legal value for number */
-    int			mts;
     int			face_size;	/* # vertices in THE face */
     char		**p;
     struct solidrec	lsolid;		/* local copy of solid */
     struct solidrec	tsolid;		/* temporary copy of solid */
-    static int		min_tuple_size[9] =
-	{0, 0, 0, 0, 3, 2, 2, 1, 3};	/* # vertices needed to disambiguate */
+    static int		min_tuple_size[9] = {0, 0, 0, 0, 3, 2, 2, 1, 3};
+    /*
+     *			The Permutations
+     *
+     *	     Each permutation is encoded as an 8-character string,
+     *	where the ith character specifies which of the current vertices
+     *	(1 through n for an ARBn) should assume the role of vertex i.
+     *	Wherever the internal representation of the ARB as an ARB8
+     *	stores a redundant copy of a vertex, the string contains a '*'.
+     */
     static char 	*perm4[4][7] =
     {
-	{"1234", "1243", "1324", "1342", "1423", "1432", 0},
-	{"2134", "2143", "2314", "2341", "2413", "2431", 0},
-	{"3124", "3142", "3214", "3241", "3412", "3421", 0},
-	{"4123", "4132", "4213", "4231", "4312", "4321", 0}
+	{"123*4***", "124*3***", "132*4***", "134*2***", "142*3***",
+	 "143*2***", 0},
+	{"213*4***", "214*3***", "231*4***", "234*1***", "241*3***",
+	 "243*1***", 0},
+	{"312*4***", "314*2***", "321*4***", "324*1***", "341*2***",
+	 "342*1***", 0},
+	{"412*3***", "413*2***", "421*3***", "423*1***", "431*2***",
+	 "432*1***", 0}
     };
     static char 	*perm5[5][3] =
     {
-	{"12345", "14325", 0},
-	{"21435", "23415", 0},
-	{"32145", "34125", 0},
-	{"41235", "43215", 0},
+	{"12345***", "14325***", 0},
+	{"21435***", "23415***", 0},
+	{"32145***", "34125***", 0},
+	{"41235***", "43215***", 0},
 	{0, 0, 0}
     };
     static char 	*perm6[6][3] =
     {
-	{"123456", "156423", 0},
-	{"214356", "256314", 0},
-	{"341265", "365241", 0},
-	{"432165", "465132", 0},
-	{"514623", "523614", 0},
-	{"632541", "641532", 0}
+	{"12345*6*", "15642*3*", 0},
+	{"21435*6*", "25631*4*", 0},
+	{"34126*5*", "36524*1*", 0},
+	{"43216*5*", "46513*2*", 0},
+	{"51462*3*", "52361*4*", 0},
+	{"63254*1*", "64153*2*", 0}
     };
     static char		*perm7[7][2] =
     {
-	{"1234567", 0},
+	{"1234567*", 0},
 	{0, 0},
 	{0, 0},
-	{"4321576", 0},
+	{"4321576*", 0},
 	{0, 0},
-	{"6237514", 0},
-	{"7326541", 0}
+	{"6237514*", 0},
+	{"7326541*", 0}
     };
     static char		*perm8[8][7] =
     {
@@ -1250,6 +1259,21 @@ char	**argv;
 	{"84157326", "84375126", "85147623", "85674123",
 	 "87345621", "87654321", 0}
     };
+    static int	vert_loc[] =
+    {
+	/*		-----------------------------
+	 *		   Array locations in which
+	 *		   the vertices are stored
+	 *		-----------------------------
+	 *		1   2   3   4   5   6   7   8
+	 *		-----------------------------
+	 * ARB4 */	0,  1,  2,  4, -1, -1, -1, -1,
+	/* ARB5 */	0,  1,  2,  3,  4, -1, -1, -1,
+	/* ARB6 */	0,  1,  2,  3,  4,  6, -1, -1,
+	/* ARB7 */	0,  1,  2,  3,  4,  5,  6, -1,
+	/* ARB8 */	0,  1,  2,  3,  4,  5,  6,  7
+    };
+#define		ARB_VERT_LOC(n,v)	vert_loc[((n) - 4) * 8 + (v) - 1]
 
     if (not_state(ST_S_EDIT, "Permute"))
 	return;
@@ -1260,45 +1284,50 @@ char	**argv;
     }
     if ((es_type < 4) || (es_type > 8))
     {
-	(void) printf("Permute: es_type=%d\nThis shouldn't happen\n", es_type);
+	(void) printf("Permute: es_type=%d\nThis shouldn't happen\n",
+	es_type);
 	return;
     }
-    face_size = (es_type == 4) ? 3 : 4;
-    mts = min_tuple_size[es_type];
 
     /*
      *	Find the encoded form of the specified permutation,
      *	if it exists
      */
-    number = atoi(argv[1]);
-    for (i = 0, min_nm = 0; i < mts; ++i)
+    arglen = strlen(argv[1]);
+    if (arglen < min_tuple_size[es_type])
     {
-	min_nm *= 10;
-	min_nm += i + 1;
-    }
-    if (number < min_nm)
-    {
-	(void) printf("ERROR: bad vertex tuple: %d\n", argv[1]);
+	char *s;
+	
+	s = "ERROR: tuple '%s' too short to disambiguate ARB%d face\n";
+	(void) printf(s, argv[1], es_type);
+	(void) printf("Need at least %d vertices\n",
+	min_tuple_size[es_type]);
 	return;
     }
-
-    arglen = strlen(argv[1]);
+    face_size = (es_type == 4) ? 3 : 4;
     if (arglen > face_size)
     {
-	(void) printf("ERROR: bad vertex tuple: %d\n", argv[1]);
+	char *s;
+	
+	s = "ERROR: tuple '%s' length exceeds ARB%d face size of %d\n";
+	(void) printf(s, argv[1], es_type, face_size);
 	return;
     }
-
     vertex = argv[1][0] - '1';
+    if ((vertex < 0) || (vertex >= es_type))
+    {
+	(void) printf("ERROR: invalid vertex %c\n", argv[1][0]);
+	return;
+    }
     p = (es_type == 4) ? perm4[vertex] :
 	(es_type == 5) ? perm5[vertex] :
 	(es_type == 6) ? perm6[vertex] :
 	(es_type == 7) ? perm7[vertex] : perm8[vertex];
     for ( ;; ++p)
     {
-	if (p == 0)
+	if (*p == 0)
 	{
-	    (void) printf("ERROR: bad vertex tuple: %d\n", argv[1]);
+	    (void) printf("ERROR: invalid vertex tuple: '%s'\n", argv[1]);
 	    return;
 	}
 	if (strncmp(*p, argv[1], arglen) == 0)
@@ -1313,94 +1342,72 @@ char	**argv;
 		&es_rec.s.s_values[i], &lsolid.s_values[0]);
     }
 
-    for (i = 0; i <= 21; i += 3)
-    {
-	char	string[1024];
-
-	sprintf(string, "vertex %d", i / 3 + 1);
-	VPRINT(string, &lsolid.s_values[i]);
-    }
-
     /*
      *	Collect the vertices in the specified order
      */
-    for (i = 0; i < es_type; ++i)
+    for (i = 0; i < 8; ++i)
     {
-	char	buf[1024];
+	char	buf[2];
+	int	a, b;
 
+	if ((*p)[i] == '*')
+	    continue;
 	sprintf(buf, "%c", (*p)[i]);
-	k = atoi(buf) - 1;
-	printf("vertex %d going to %d\n", i + 1, k + 1);
-	VMOVE(&tsolid.s_values[3 * i], &lsolid.s_values[3 * k]);
+	k = atoi(buf);
+	a = 3 * i;
+	b = 3 * ARB_VERT_LOC(es_type, k);
+	VMOVE(&tsolid.s_values[a], &lsolid.s_values[b]);
     }
 
+#if 0
+    printf("After collection...\n");
     for (i = 0; i <= 21; i += 3)
     {
 	char	string[1024];
 
 	sprintf(string, "vertex %d", i / 3 + 1);
-	VPRINT(string, &lsolid.s_values[i]);
+	VPRINT(string, &tsolid.s_values[i]);
     }
+    printf("...\n");
+#endif
 
     /*
-     *	Reinstall the permuted vertices back into the temporary buffer
+     *	Reinstall the permuted vertices back into the temporary buffer,
+     *	copying redundant vertices as necessay
      *
-     *	------+---------------------------+----------------------------
-     *	      | Array locations in which  |	   Redundant storage
-     *	      | to store the vertices	  |	of some of the vertices
-     *	------+---------------------------+----------------------------
-     *	      | 1 2 3 4 5 6 7 8		  |
-     *	      +---------------------------+
-     *	ARB4  |	0 1 2 4			  |	3=0, 5=6=7=4
-     *	ARB5  |	0 1 2 3 4		  |	5=6=7=4
-     *	ARB6  |	0 1 2 3 4 6		  |	5=4, 7=6
-     *	ARB7  |	0 1 2 3 4 5 6		  |	7=4
-     *	ARB8  |	0 1 2 3 4 5 6 7		  |
-     *	------+---------------------------+----------------------------
+     *		-------+-------------------------
+     *		 Solid |    Redundant storage
+     *		  Type | of some of the vertices
+     *		-------+-------------------------
+     *		 ARB4  |    3=0, 5=6=7=4
+     *		 ARB5  |    5=6=7=4
+     *		 ARB6  |    5=4, 7=6
+     *		 ARB7  |    7=4
+     *		 ARB8  |
+     *		-------+-------------------------
      */
+    for (i = 0; i <= 21; i += 3)
+    {
+	VMOVE(&lsolid.s_values[i], &tsolid.s_values[i]);
+    }
     switch (es_type)
     {
 	case ARB4:
-	    for (i = 0; i <= 6; i += 3)
-	    {
-		VMOVE(&lsolid.s_values[i], &tsolid.s_values[i]);
-	    }
 	    VMOVE(&lsolid.s_values[9], &lsolid.s_values[0]);
-	    VMOVE(&lsolid.s_values[12], &tsolid.s_values[9]);
-	    for (i = 15; i <= 21; i += 3)
-	    {
-		VMOVE(&lsolid.s_values[i], &lsolid.s_values[12]);
-	    }
-	    break;
+	    /* break intentionally left out */
 	case ARB5:
-	case ARB6:
-	    for (i = 0; i <= 12; i += 3)
-	    {
-		VMOVE(&lsolid.s_values[i], &tsolid.s_values[i]);
-	    }
 	    VMOVE(&lsolid.s_values[15], &lsolid.s_values[12]);
-	    if (es_type == ARB5)
-	    {
-		VMOVE(&lsolid.s_values[18], &lsolid.s_values[12]);
-	    }
-	    else
-	    {
-		VMOVE(&lsolid.s_values[18], &tsolid.s_values[15]);
-	    }
+	    VMOVE(&lsolid.s_values[18], &lsolid.s_values[12]);
+	    VMOVE(&lsolid.s_values[21], &lsolid.s_values[12]);
+	    break;
+	case ARB6:
+	    VMOVE(&lsolid.s_values[15], &lsolid.s_values[12]);
 	    VMOVE(&lsolid.s_values[21], &lsolid.s_values[18]);
 	    break;
 	case ARB7:
-	    for (i = 0; i <= 18; i += 3)
-	    {
-		VMOVE(&lsolid.s_values[i], &tsolid.s_values[i]);
-	    }
 	    VMOVE(&lsolid.s_values[21], &lsolid.s_values[12]);
 	    break;
 	case ARB8:
-	    for (i = 0; i <= 21; i += 3)
-	    {
-		VMOVE(&lsolid.s_values[i], &tsolid.s_values[i]);
-	    }
 	    break;
 	default:
 	    (void) printf("%s: %d: This shouldn't happen\n",
