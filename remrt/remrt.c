@@ -302,6 +302,9 @@ char	**argv;
 		printf("Interactive REMRT listening at port %d\n", pkg_permport);
 		clients = (1<<0);
 
+		/* Read .remrtrc file to acquire server info */
+		read_rc_file();
+
 		while(clients)  {
 			check_input( 30 );	/* delay up to 30 secs */
 		}
@@ -309,8 +312,6 @@ char	**argv;
 		 * record it somewhere */
 		printf("REMRT out of clients\n");
 	} else {
-		FILE	*fp;
-
 		printf("Automatic REMRT listening at port %d\n", pkg_permport);
 		clients = 0;
 		clients = (1<<0);	/* for testing only */
@@ -329,19 +330,7 @@ char	**argv;
 		build_start_cmd( argc, argv, optind );
 
 		/* Read .remrtrc file to acquire servers */
-		if( (fp = fopen(".remrtrc", "r")) == NULL )  {
-			char	*home;
-			char	path[128];
-
-			if( (home = getenv("HOME")) == NULL )
-				home = "/usr/brlcad/etc";
-			sprintf( path, "%s/.remrtrc", home );
-			fp = fopen( path, "r" );
-		}
-		if( fp != NULL )  {
-			source(fp);
-			fclose(fp);
-		}
+		read_rc_file();
 
 		/* Collect up results of arg parsing */
 		/* automatic: outputfile, width, height */
@@ -375,6 +364,41 @@ char	**argv;
 		printf("REMRT:  task accomplished\n");
 	}
 	exit(0);
+}
+
+/*
+ *			R E A D _ R C _ F I L E
+ *
+ *  Read a .remrt file.  While this file can contain any valid commands,
+ *  the intention is primarily to permit "automatic" registration of
+ *  server hosts via "host" commands.
+ */
+read_rc_file()
+{
+	FILE	*fp;
+	char	*home;
+	char	path[128];
+
+	if( (fp = fopen(".remrtrc", "r")) != NULL )  {
+		source(fp);
+		fclose(fp);
+		return;
+	}
+
+	if( (home = getenv("HOME")) != NULL )  {
+		sprintf( path, "%s/.remrtrc", home );
+		if( (fp = fopen( path, "r" )) != NULL )  {
+			source(fp);
+			fclose(fp);
+			return;
+		}
+	}
+
+	if( (fp = fopen("/usr/brlcad/etc/.remrtrc", "r")) != NULL )  {
+		source(fp);
+		fclose(fp);
+		return;
+	}
 }
 
 /*
