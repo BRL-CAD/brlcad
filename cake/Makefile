@@ -43,7 +43,7 @@ install:	cake
 			mv -f $(BINDIR)/cake $(BINDIR)/cake.bak; fi
 		mv cake $(BINDIR)/cake
 		rm -f $(BINDIR)/fake
-		ln -f $(BINDIR)/cake $(BINDIR)/fake
+		ln $(BINDIR)/cake $(BINDIR)/fake
 
 $(OBJ):		$(HDR)
 $(GOBJ):	$(HDR)
