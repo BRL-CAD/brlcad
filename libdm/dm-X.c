@@ -654,8 +654,8 @@ int style;
   dmp->dm_lineWidth = width;
   dmp->dm_lineStyle = style;
 
-  if(width < 1)
-    width = 1;
+  if(width <= 1)
+    width = 0;
 
   if(style == DM_DASHED_LINE)
     linestyle = LineOnOffDash;
