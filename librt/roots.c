@@ -3,12 +3,9 @@
 #include  <math.h>
 #include  <stdio.h>
 
-#define	SMALL		0.000001
-#define	Abs( a )	((a) >= 0 ? (a) : -(a))
-
 int		polyRoots();
-static void	findRoot(), synthetic(), deflate();
-
+static void	synthetic(), deflate();
+static int	findRoot(), evalpoly();
 
 /*	>>>  p o l y R o o t s ( )  <<<
  *	
@@ -22,8 +19,8 @@ static void	findRoot(), synthetic(), deflate();
  */
 int
 polyRoots( eqn, roots )
-register  poly	*eqn;		/* equation to be solved	*/
-register complex roots[];	/* space to put roots found	*/
+register poly		*eqn;		/* equation to be solved	*/
+register complex	roots[];	/* space to put roots found	*/
 {
 	register int	n;		/* number of roots found	*/
 	static double	factor;		/* scaling factor for copy	*/
@@ -52,20 +49,35 @@ register complex roots[];	/* space to put roots found	*/
 	 */
 	factor = 1.0 / eqn->cf[0];
 	(void) polyScal( eqn, factor );
-
 	n = 0;		/* Number of roots found */
+
+	/* A trailing coefficient of zero indicates that zero
+	 * is a root of the equation.
+	 */
+	while ( eqn->cf[eqn->dgr] == 0.0 ){
+		roots[n].im = 0.0;
+		--eqn->dgr;
+		++n;
+	}
+
 	while ( eqn->dgr > 2 ){
-		/* A trailing coefficient of zero indicates that zero
-		 * is a root of the equation.
-		 */
-		if ( eqn->cf[eqn->dgr] == 0.0 ){
-			roots[n].im = 0.0;
-			--eqn->dgr;
-			++n;
-			continue;	/* go to next loop		*/
+
+		if ( eqn->dgr == 4 ){
+			quartic( eqn, &roots[n] );
+			if ( evalpoly( eqn, &roots[n], 4 ) == 0 ){
+				return ( n+=4 );
+			}
 		}
 
-		findRoot( eqn, &(roots[n]) );
+		if ( eqn->dgr == 3 ){
+			cubic( eqn, &roots[n] );
+			if ( evalpoly( eqn, &roots[n], 3 ) == 0 ){
+				return ( n+=3 );
+			}
+		}
+
+		if ( (findRoot( eqn, &roots[n] )) < 0 )
+			return -1;
 
 		if ( Abs(roots[n].im) > SMALL* Abs(roots[n].re) ){
 			/* If root is complex, its complex conjugate is
@@ -92,7 +104,7 @@ register complex roots[];	/* space to put roots found	*/
 		roots[n].im = 0.0;
 		++n;
 	} else {
-		quadratic( eqn, &roots[n], &roots[n+1] );
+		quadratic( eqn, &roots[n] );
 		n += 2;
 	}
 	return n;
@@ -118,7 +130,7 @@ register complex roots[];	/* space to put roots found	*/
  *	possible.
  *
  */
-static void
+static int
 findRoot( eqn, nxZ )
 register poly		*eqn;	/* polynomial			*/
 register complex	*nxZ;	/* initial guess for root	*/
@@ -127,8 +139,8 @@ register complex	*nxZ;	/* initial guess for root	*/
 	static complex	p1_H;		/* p1 - H, temporary */
 	static complex  Z, H;		/* 'Z' and H(Z) in comment	*/
 	static complex  T;		/* temporary for making H */
-	static double	diff, dist;	/* test values for convergence	*/
-	static double	a,b;		/* floating temps */
+	static double	diff;		/* test values for convergence	*/
+	static double	b;		/* floating temps */
 	static int	n;
 	register int	i;		/* iteration counter		*/
 
@@ -139,7 +151,7 @@ register complex	*nxZ;	/* initial guess for root	*/
 		 */
 		if (++i > 20)  {
 			printf("findRoot:  didn't converge in 20 iterations\n");
-			return;
+			return -1;
 		}
 
 		Z = *nxZ;
@@ -181,17 +193,13 @@ register complex	*nxZ;	/* initial guess for root	*/
 		 * not by vast amounts.
 		 */
 		b = CxAmplSq( nxZ );		/* Was CxAmpl() */
-		a = CxAmplSq( &Z );		/* Was CxAmpl() */
-		diff = a - b;
-		diff = Abs( diff );
-		if ( b < diff ){
-			dist = 0;
-		} else {
-			dist = (b - diff) * SMALL;
-		}
-		if( diff > dist )
+		diff = CxAmplSq( &p0 );		/* nxZ - Z = -p0 */
+
+		if ( b < diff )
 			continue;
-		return;
+		else if ( diff > (b - diff)*SMALL ) 
+			continue;
+		return i;
 	}
 }
 
@@ -240,6 +248,44 @@ register complex	*Z, *b, *c, *d;
 		}
 	}
 }
+
+
+/*	>>>  e v a l p o l y ( )  <<<
+ *
+ *	Evaluates p(Z) for any Z (real or complex).
+ *	Given an equation of the form
+ *
+ *		p(Z) = a0*Z^n + a1*Z^(n-1) +... an != 0,
+ *
+ *	the function value can be computed using the formula
+ *
+ *		p(Z) = bn,	where
+ *
+ *		b0 = a0,	bi = b(i-1)*Z + ai,	i = 1,2,...n
+ *
+ */
+static int
+evalpoly( eqn, roots, nroots )
+register poly		*eqn;
+register complex	roots[];
+register int		nroots;
+{
+	static complex	epoly;
+	register int	n, m;
+
+	for ( m=0; m < nroots; m+=2 ){
+		CxCons( &epoly, eqn->cf[0], 0.0 );
+
+		for ( n=1; n <= eqn->dgr; ++n){
+			CxMul( &epoly, &roots[m] );
+			epoly.re += eqn->cf[n];
+			}
+		if ( Abs( epoly.re ) > SMALL || Abs( epoly.im ) > SMALL )
+			return 1;
+	}
+	return 0;
+}
+
 
 /*	>>>  d e f l a t e ( )  <<<
  *
