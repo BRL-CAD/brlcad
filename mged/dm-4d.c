@@ -38,6 +38,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <gl/gl.h>		/* SGI IRIS library */
 #include <gl/device.h>		/* SGI IRIS library */
+#include <sys/types.h>
+#include <sys/invent.h>
+
+extern inventory_t	*getinvent();
 
 /* Display Manager package interface */
 
@@ -135,6 +139,7 @@ extern struct device_values dm_values;	/* values read from devices */
 
 static int	ir_debug;		/* 2 for basic, 3 for full */
 static int	ir_buffer;
+static int	ir_is_gt;		/* 0 for non-GT machines */
 
 long gr_id;
 long win_l, win_b, win_r, win_t;
@@ -189,6 +194,20 @@ Ir_open()
 {
 	register int i;
 	Matrix	m;
+	inventory_t	*inv;
+
+	/*
+	 *  Take inventory of the hardware
+	 */
+	while( (inv = getinvent()) != (inventory_t *)0 )  {
+		if( inv->class != INV_GRAPHICS )  continue;
+		switch( inv->type )  {
+		case INV_GMDEV:
+			ir_is_gt = 1;
+			break;
+		}
+	}
+	endinvent();		/* frees internal inventory memory */
 
 	foreground();
 	prefposition( 276, 1276, 12, 1012 );
@@ -435,6 +454,8 @@ double ratio;
 		ovec = nvec = MAP_ENTRY(DM_WHITE);
 		/* Use the *next* to the brightest white entry */
 		if(cueing_on) shaderange(nvec+1, nvec+1, 0, 768);
+
+		color( nvec );
 	} else {
 		if( (nvec = MAP_ENTRY( sp->s_dmindex )) != ovec) {
 			/* Use only the middle 14 to allow for roundoff...
@@ -443,40 +464,39 @@ double ratio;
 			 * to display it when in depthcued mode.
 			 */
 		  	if(cueing_on) shaderange(nvec+1, nvec+14, 0, 768);
+			color( nvec );
 		  	ovec = nvec;
 		  }
 	}
 
-	color( nvec );
-
-#ifdef SGI4D_GT
-	first = 1;
-	for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
-		/* Viewing region is from -1.0 to +1.0 */
-		if( vp->vl_draw == 0 )  {
-			/* Move, not draw */
-			if ( first )
-				first = 0;
-			else
-				endline();
-			bgnline();
+	if( ir_is_gt )  {
+		first = 1;
+		for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
+			/* Viewing region is from -1.0 to +1.0 */
+			if( vp->vl_draw == 0 )  {
+				/* Move, not draw */
+				if ( first )
+					first = 0;
+				else
+					endline();
+				bgnline();
+			}
+			mptr = &(vp->vl_pnt[0]);
+			gtvec[0] = *mptr;
+			gtvec[1] = *(mptr+1);
+			gtvec[2] = *(mptr+2); 
+			v3f( gtvec ); 
 		}
-		mptr = &(vp->vl_pnt[0]);
-		gtvec[0] = *mptr;
-		gtvec[1] = *(mptr+1);
-		gtvec[2] = *(mptr+2); 
-		v3f( gtvec ); 
+		endline();
+	} else {
+		for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
+			/* Viewing region is from -1.0 to +1.0 */
+			if( vp->vl_draw == 0 )
+				move( vp->vl_pnt[X], vp->vl_pnt[Y], vp->vl_pnt[Z] );
+			else
+				draw( vp->vl_pnt[X], vp->vl_pnt[Y], vp->vl_pnt[Z] );
+		}
 	}
-	endline();
-#else
-	for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
-		/* Viewing region is from -1.0 to +1.0 */
-		if( vp->vl_draw == 0 )
-			move( vp->vl_pnt[X], vp->vl_pnt[Y], vp->vl_pnt[Z] );
-		else
-			draw( vp->vl_pnt[X], vp->vl_pnt[Y], vp->vl_pnt[Z] );
-	}
-#endif
 
 	if (sp->s_soldash)
 		setlinestyle(0);		/* restore solid lines */
@@ -526,10 +546,9 @@ int dashed;
 	register int nvec;
 	if((nvec = MAP_ENTRY(DM_YELLOW)) != ovec) {
 	  	if(cueing_on) shaderange(nvec, nvec, 0, 768);
+		color( nvec );
 	  	ovec = nvec;
 	}
-	
-	color( nvec );
 
 	if( dashed )
 		setlinestyle(1);	/* into dot-dash */
