@@ -110,6 +110,10 @@ char *filename;
 			dir_add( record.s.s_name, addr );
 			continue;
 		}
+		if( record.u_id == ID_MATERIAL )  {
+			color_addrec( &record, addr );
+			continue;
+		}
 		if( record.u_id == ID_P_HEAD )  {
 			union record rec;
 			register int nrec;
