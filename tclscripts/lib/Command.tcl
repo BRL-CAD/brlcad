@@ -38,6 +38,7 @@ class Command {
 
     public method history {}
     public method edit_style {args}
+    public method putstring {str}
 
     private method invoke {}
     private method first_char_in_line {}
@@ -206,6 +207,30 @@ body Command::edit_style {args} {
     }
 }
 
+body Command::putstring {str} {
+    set w $itk_component(text)
+    set promptBegin [$w index {end - 1 l}]
+    $w mark set curr insert
+    $w mark set insert $promptBegin
+
+    if {$str != ""} {
+	if {[string index $str end] == "\n"} {
+	    print_tag $str result
+	} else {
+	    print_tag $str\n result
+	}
+    }
+
+    $w mark set insert curr
+    $w see insert
+
+    # get rid of oldest output
+    set nlines [expr int([$w index end])]
+    if {$nlines > $itk_option(-maxlines)} {
+	$w delete 1.0 [expr $nlines - $itk_option(-maxlines)].end
+    }
+}
+
 ############################## Protected/Private Methods  ##############################
 body Command::invoke {} {
     set w $itk_component(text)
@@ -215,7 +240,7 @@ body Command::invoke {} {
 
     if {$itk_option(-cmd_prefix) != ""} {
 	set cname [lindex $cmd 0]
-	set cindex [lsearch $cmdlist $cname]
+	set cindex [lsearch -exact $cmdlist $cname]
 	if {$cindex != -1} {
 	    set cmd [concat $itk_option(-cmd_prefix) $cmd]
 	}
