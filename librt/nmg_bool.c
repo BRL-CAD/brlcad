@@ -1420,10 +1420,7 @@ nmg_r_radial_check( tl->tr_d.td_r, tol );
  *  typically with db_free_tree(tp);
  */
 int
-nmg_boolean( tp, m, tol )
-register union tree		*tp;
-struct model			*m;
-CONST struct bn_tol		*tol;
+nmg_boolean( union tree *tp, struct model *m, const struct bn_tol *tol )
 {
 	union tree	*result;
 	int		ret;

@@ -3720,8 +3720,7 @@ BU_EXTERN(union tree		*nmg_booltree_leaf_tnurb, (struct db_tree_state *tsp,
 				struct rt_db_internal *ip, genptr_t client_data));
 BU_EXTERN(union tree		*nmg_booltree_evaluate, (union tree *tp,
 				CONST struct bn_tol *tol));
-BU_EXTERN(void			nmg_region_v_unique, (struct nmgregion *r1,
-				CONST struct bn_tol *tol));
+int nmg_boolean( union tree *tp, struct model *m, const struct bn_tol *tol );
 
 /* from nmg_class.c */
 BU_EXTERN(void			nmg_class_shells, (struct shell *sA,
