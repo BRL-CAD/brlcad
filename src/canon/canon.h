@@ -61,9 +61,9 @@
 #define	IPU_MAX_FILES	17	/* 16 image/palette + 1 bit-mapped */
 
 union ipu_prsc_param {
-	char	c[4];
-	int	i;
-	short	s[2];
+    char	c[4];
+    int	i;
+    short	s[2];
 };
 
 extern int	ipu_debug;

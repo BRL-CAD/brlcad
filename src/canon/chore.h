@@ -35,12 +35,12 @@
  */
 
 struct chore {
-	int		todo;
-	int		buflen;
-	int		pix_y;
-	int		canon_y;
-	unsigned char	*cbuf;			/* ptr to canon buffer */
-	unsigned char	obuf[255*1024];
+    int		todo;
+    int		buflen;
+    int		pix_y;
+    int		canon_y;
+    unsigned char	*cbuf;			/* ptr to canon buffer */
+    unsigned char	obuf[255*1024];
 };
 
 

@@ -48,43 +48,43 @@
  *	process input.
  */
 int main(ac,av)
-int ac;
-char *av[];
+     int ac;
+     char *av[];
 {
 #if defined(IRIX) && (IRIX == 4 || IRIX == 5)
-	struct dsreq *dsp;
-	char *p;
+    struct dsreq *dsp;
+    char *p;
 
-	if ((parse_args(ac, av)) < ac)
-		fprintf(stderr,
-			"%s: Excess command line arguments ignored\n",
-			progname);
-
-	
-	if ((dsp = dsopen(scsi_device, O_RDWR)) == NULL) {
-		perror(scsi_device);
-		fprintf(stderr, "%s: Cannot open device \"%s\"\n", progname, scsi_device);
-		usage(NULL);
-	}
-
-	
-	printf("%s\n", ipu_inquire(dsp));
-	ipu_get_conf(dsp);
-
-	ipu_remote(dsp);
-
-	printf("%s\n", p=ipu_list_files(dsp));
-
-	free(p);
-
-	dsclose(dsp);
-
-	return(0);
-#else
+    if ((parse_args(ac, av)) < ac)
 	fprintf(stderr,
-		"%s only works on SGI(tm) systems with dslib support\n",
-		*av);
-	return(-1);
+		"%s: Excess command line arguments ignored\n",
+		progname);
+
+	
+    if ((dsp = dsopen(scsi_device, O_RDWR)) == NULL) {
+	perror(scsi_device);
+	fprintf(stderr, "%s: Cannot open device \"%s\"\n", progname, scsi_device);
+	usage(NULL);
+    }
+
+	
+    printf("%s\n", ipu_inquire(dsp));
+    ipu_get_conf(dsp);
+
+    ipu_remote(dsp);
+
+    printf("%s\n", p=ipu_list_files(dsp));
+
+    free(p);
+
+    dsclose(dsp);
+
+    return(0);
+#else
+    fprintf(stderr,
+	    "%s only works on SGI(tm) systems with dslib support\n",
+	    *av);
+    return(-1);
 #endif
 }
 

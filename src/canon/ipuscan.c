@@ -77,100 +77,100 @@ struct chore	*await2;
 struct chore	*await3;
 
 void step1(aa)
-void	*aa;
+     void	*aa;
 {
-	struct chore	*chorep;
-	int		pix_y;
-	int		canon_y;
-	static int	nstarted = 0;
+    struct chore	*chorep;
+    int		pix_y;
+    int		canon_y;
+    static int	nstarted = 0;
 
-	pix_y = 0;
-	for(;;)  {
-		if( nstarted < 3 )  {
-			chorep = &chores[nstarted++];
-		} else {
-			GET( chorep, await1 );
-		}
-
-		if( pix_y >= height )  {
-			/* Send through a "done" chore and exit */
-			chorep->pix_y = -1;
-			PUT( await2, chorep );
-			/* Wait for them to percolate through */
-			GET( chorep, await1 );
-			GET( chorep, await1 );
-			break;
-		}
-
-		chorep->pix_y = pix_y;
-		chorep->todo = 255*1024 / (ipu_bytes_per_pixel*width);	/* Limit 255 Kbytes */
-		if( height - pix_y < chorep->todo )  chorep->todo = height - pix_y;
-		chorep->buflen = chorep->todo * ipu_bytes_per_pixel * width;
-
-		canon_y = height - (pix_y+chorep->todo);
-
-		chorep->cbuf = ipu_get_image(dsp, 1, 0, canon_y, width, chorep->todo);
-		pix_y += chorep->todo;
-
-		/* Pass this chore off to next process */
-		PUT( await2, chorep );
+    pix_y = 0;
+    for(;;)  {
+	if( nstarted < 3 )  {
+	    chorep = &chores[nstarted++];
+	} else {
+	    GET( chorep, await1 );
 	}
-	exit(0);	/* exit this thread */
+
+	if( pix_y >= height )  {
+	    /* Send through a "done" chore and exit */
+	    chorep->pix_y = -1;
+	    PUT( await2, chorep );
+	    /* Wait for them to percolate through */
+	    GET( chorep, await1 );
+	    GET( chorep, await1 );
+	    break;
+	}
+
+	chorep->pix_y = pix_y;
+	chorep->todo = 255*1024 / (ipu_bytes_per_pixel*width);	/* Limit 255 Kbytes */
+	if( height - pix_y < chorep->todo )  chorep->todo = height - pix_y;
+	chorep->buflen = chorep->todo * ipu_bytes_per_pixel * width;
+
+	canon_y = height - (pix_y+chorep->todo);
+
+	chorep->cbuf = ipu_get_image(dsp, 1, 0, canon_y, width, chorep->todo);
+	pix_y += chorep->todo;
+
+	/* Pass this chore off to next process */
+	PUT( await2, chorep );
+    }
+    exit(0);	/* exit this thread */
 }
 
 void step2(aa)
-void	*aa;
+     void	*aa;
 {
-	struct chore	*chorep;
-	register unsigned char	*cp;
-	unsigned char *green, *blue;
-	int	buf_y;
+    struct chore	*chorep;
+    register unsigned char	*cp;
+    unsigned char *green, *blue;
+    int	buf_y;
 
-	for(;;)  {
-		GET(chorep, await2);
-		if( chorep->pix_y < 0 )  {
-			/* Pass on "done" token and exit */
-			PUT( await3, chorep );
-			break;
-		}
-
-		cp = chorep->obuf;
-
-		if( ipu_bytes_per_pixel == 3 )  {
-			green = &chorep->cbuf[width*chorep->todo];
-			blue = &chorep->cbuf[width*chorep->todo*2];
-
-			for( buf_y = chorep->todo-1; buf_y >= 0; buf_y-- )  {
-				int	offset;
-				register unsigned char	*rp, *gp, *bp;
-				register int		x;
-
-				offset = buf_y * width;
-				rp = &chorep->cbuf[offset];
-				gp = &green[offset];
-				bp = &blue[offset];
-				for( x = width-1; x >= 0; x-- )  {
-					*cp++ = *rp++;
-					*cp++ = *gp++;
-					*cp++ = *bp++;
-				}
-				chorep->pix_y++;	/* Record our progress */
-			}
-		} else {
-			/* Monochrome */
-			for( buf_y = chorep->todo-1; buf_y >= 0; buf_y-- )  {
-				int	offset;
-				register unsigned char	*rp;
-					offset = buf_y * width;
-				rp = &chorep->cbuf[offset];
-				bcopy( rp, cp, width );
-				cp += width;
-				chorep->pix_y++;	/* Record our progress */
-			}
-		}
-		PUT( await3, chorep );
+    for(;;)  {
+	GET(chorep, await2);
+	if( chorep->pix_y < 0 )  {
+	    /* Pass on "done" token and exit */
+	    PUT( await3, chorep );
+	    break;
 	}
-	exit(0);
+
+	cp = chorep->obuf;
+
+	if( ipu_bytes_per_pixel == 3 )  {
+	    green = &chorep->cbuf[width*chorep->todo];
+	    blue = &chorep->cbuf[width*chorep->todo*2];
+
+	    for( buf_y = chorep->todo-1; buf_y >= 0; buf_y-- )  {
+		int	offset;
+		register unsigned char	*rp, *gp, *bp;
+		register int		x;
+
+		offset = buf_y * width;
+		rp = &chorep->cbuf[offset];
+		gp = &green[offset];
+		bp = &blue[offset];
+		for( x = width-1; x >= 0; x-- )  {
+		    *cp++ = *rp++;
+		    *cp++ = *gp++;
+		    *cp++ = *bp++;
+		}
+		chorep->pix_y++;	/* Record our progress */
+	    }
+	} else {
+	    /* Monochrome */
+	    for( buf_y = chorep->todo-1; buf_y >= 0; buf_y-- )  {
+		int	offset;
+		register unsigned char	*rp;
+		offset = buf_y * width;
+		rp = &chorep->cbuf[offset];
+		bcopy( rp, cp, width );
+		cp += width;
+		chorep->pix_y++;	/* Record our progress */
+	    }
+	}
+	PUT( await3, chorep );
+    }
+    exit(0);
 }
 
 /*
@@ -179,26 +179,26 @@ void	*aa;
  *  this can take a long time.
  */
 void step3(aa)
-void	*aa;
+     void	*aa;
 {
-	struct chore	*chorep;
+    struct chore	*chorep;
 
-	for(;;)  {
-		GET( chorep, await3 );
-		if( chorep->pix_y < 0 )  {
-			break;	/* "done" token */
-		}
-
-		if( write( fd, chorep->obuf, chorep->buflen ) != chorep->buflen )  {
-			perror("ipuscan write");
-			fprintf(stderr, "buffer write error, line %d\n", chorep->pix_y);
-			exit(2);
-		}
-		(void)free(chorep->cbuf);
-		chorep->cbuf = NULL;
-		PUT( await1, chorep );
+    for(;;)  {
+	GET( chorep, await3 );
+	if( chorep->pix_y < 0 )  {
+	    break;	/* "done" token */
 	}
-	exit(0);
+
+	if( write( fd, chorep->obuf, chorep->buflen ) != chorep->buflen )  {
+	    perror("ipuscan write");
+	    fprintf(stderr, "buffer write error, line %d\n", chorep->pix_y);
+	    exit(2);
+	}
+	(void)free(chorep->cbuf);
+	chorep->cbuf = NULL;
+	PUT( await1, chorep );
+    }
+    exit(0);
 }
 
 
@@ -209,99 +209,99 @@ void	*aa;
  *	process input.
  */
 int main(ac,av)
-int ac;
-char *av[];
+     int ac;
+     char *av[];
 {
-	int arg_index;
-	int i;
-	int	pid[3];
+    int arg_index;
+    int i;
+    int	pid[3];
 
-	/* pick the LUN for the scanner this time */
-	(void)strncpy( scsi_device, "/dev/scsi/sc0d6l0", 1024 );
+    /* pick the LUN for the scanner this time */
+    (void)strncpy( scsi_device, "/dev/scsi/sc0d6l0", 1024 );
 
-	/* parse command flags, and make sure there are arguments
-	 * left over for processing.
-	 */
-	if ((arg_index = parse_args(ac, av)) < ac) {
-		if ((fd=creat(av[arg_index], 0444)) == -1) {
-			perror(av[arg_index]);
-			(void)fprintf(stderr, "%s: ", progname);
-			return(-1);
-		}
-	} else if (isatty(fileno(stdout))) {
-		usage("Cannot scan to tty\n");
-	} else
-		fd = fileno(stdout);
-
-	if ((dsp = dsopen(scsi_device, O_RDWR)) == NULL) {
-		perror(scsi_device);
-		usage("Cannot open SCSI device\n");
+    /* parse command flags, and make sure there are arguments
+     * left over for processing.
+     */
+    if ((arg_index = parse_args(ac, av)) < ac) {
+	if ((fd=creat(av[arg_index], 0444)) == -1) {
+	    perror(av[arg_index]);
+	    (void)fprintf(stderr, "%s: ", progname);
+	    return(-1);
 	}
+    } else if (isatty(fileno(stdout))) {
+	usage("Cannot scan to tty\n");
+    } else
+	fd = fileno(stdout);
 
-	if (ipu_debug)
-		fprintf(stderr, "%s\n", ipu_inquire(dsp));
+    if ((dsp = dsopen(scsi_device, O_RDWR)) == NULL) {
+	perror(scsi_device);
+	usage("Cannot open SCSI device\n");
+    }
 
-	ipu_remote(dsp);
-	ipu_delete_file(dsp, 1);
-	/* Don't bother clearing memory, it takes too long */
-	ipu_create_file(dsp, 1, ipu_filetype, width, height, 0);
-	ipu_scan_config(dsp,units,divisor,conv,0,0);
+    if (ipu_debug)
+	fprintf(stderr, "%s\n", ipu_inquire(dsp));
 
-	if (conv == IPU_AUTOSCALE)
-		ipu_scan_file(dsp,1/*id*/,
-				0/*wait*/,0,0,0,0,&param);
-	else
-		ipu_scan_file(dsp,1/*id*/,
-				0/*wait*/,scr_xoff,scr_yoff,
-				width,height,&param);
+    ipu_remote(dsp);
+    ipu_delete_file(dsp, 1);
+    /* Don't bother clearing memory, it takes too long */
+    ipu_create_file(dsp, 1, ipu_filetype, width, height, 0);
+    ipu_scan_config(dsp,units,divisor,conv,0,0);
 
-	ipu_acquire(dsp, 30);
+    if (conv == IPU_AUTOSCALE)
+	ipu_scan_file(dsp,1/*id*/,
+		      0/*wait*/,0,0,0,0,&param);
+    else
+	ipu_scan_file(dsp,1/*id*/,
+		      0/*wait*/,scr_xoff,scr_yoff,
+		      width,height,&param);
 
-	if (ipu_debug)
-		fprintf(stderr, "%s\n", ipu_list_files(dsp));
+    ipu_acquire(dsp, 30);
+
+    if (ipu_debug)
+	fprintf(stderr, "%s\n", ipu_list_files(dsp));
 
 
 
-	/* Start three threads, then wait for them to finish */
-	pid[0] = sproc( step1, PR_SALL|PR_SFDS );
-	pid[1] = sproc( step2, PR_SALL|PR_SFDS );
-	pid[2] = sproc( step3, PR_SALL|PR_SFDS );
+    /* Start three threads, then wait for them to finish */
+    pid[0] = sproc( step1, PR_SALL|PR_SFDS );
+    pid[1] = sproc( step2, PR_SALL|PR_SFDS );
+    pid[2] = sproc( step3, PR_SALL|PR_SFDS );
 
-	for( i=0; i<3; i++ )  {
-		int	this_pid;
-		int	pstat;
-		int	j;
+    for( i=0; i<3; i++ )  {
+	int	this_pid;
+	int	pstat;
+	int	j;
 
-		pstat = 0;
-		if( (this_pid = wait(&pstat)) <= 0  )  {
-			perror("wait");
-			fprintf(stderr, "wait returned %d\n", this_pid);
-			for( j=0; j<3; j++) kill(pid[j], 9);
-			exit(3);
-		}
-		if( (pstat & 0xFF) != 0 )  {
-			fprintf(stderr, "*** child pid %d blew out with error x%x\n", this_pid, pstat);
-			for( j=0; j<3; j++) kill(pid[j], 9);
-			exit(4);
-		}
+	pstat = 0;
+	if( (this_pid = wait(&pstat)) <= 0  )  {
+	    perror("wait");
+	    fprintf(stderr, "wait returned %d\n", this_pid);
+	    for( j=0; j<3; j++) kill(pid[j], 9);
+	    exit(3);
 	}
-	/* All children are finished */
+	if( (pstat & 0xFF) != 0 )  {
+	    fprintf(stderr, "*** child pid %d blew out with error x%x\n", this_pid, pstat);
+	    for( j=0; j<3; j++) kill(pid[j], 9);
+	    exit(4);
+	}
+    }
+    /* All children are finished */
 
-	close(fd);
-	(void)dsclose(dsp);
-	(void)close(fd);
-	(void)chmod(av[arg_index], 0444);
-	return(0);
+    close(fd);
+    (void)dsclose(dsp);
+    (void)close(fd);
+    (void)chmod(av[arg_index], 0444);
+    return(0);
 }
 #else
 int
 main(ac, av)
-int ac;
-char *av[];
+     int ac;
+     char *av[];
 {
-	fprintf(stderr,
-		"%s only works on SGI(tm) systems with dslib support\n", *av);
-	return(-1);
+    fprintf(stderr,
+	    "%s only works on SGI(tm) systems with dslib support\n", *av);
+    return(-1);
 }
 #endif
 
