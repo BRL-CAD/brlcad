@@ -186,6 +186,90 @@ vls_col_pr4v(struct bu_vls *vls, struct directory **list_of_names, int num_in_li
   }
 }
 
+void
+vls_long_dpp( 
+	struct bu_vls *vls,
+	struct directory **list_of_names,
+	int num_in_list,
+	int aflag,	/* print all objects */
+	int cflag,	/* print combinations */
+	int rflag,	/* print regions */
+	int sflag)	/* print solids */
+{
+  int i;
+  int isComb, isRegion;
+  int isSolid;
+  CONST char *type;
+  int max_nam_len = 0;
+  int max_type_len = 0;
+  struct directory *dp;
+
+  qsort( (genptr_t)list_of_names,
+	 (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
+	 (int (*)())cmpdirname);
+
+  for( i=0 ; i<num_in_list ; i++ ) {
+	  int len;
+
+	  dp = list_of_names[i];
+	  len = strlen( dp->d_namep );
+	  if( len > max_nam_len )
+		  max_nam_len = len;
+
+	  if( dp->d_flags & DIR_REGION )
+		  len = 6;
+	  else if( dp->d_flags & DIR_COMB )
+		  len = 4;
+	  else if( dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY )
+		  len = 6;
+	  else
+		  len = strlen( rt_functab[dp->d_minor_type].ft_label );
+
+	  if( len > max_type_len )
+		  max_type_len = len;
+  }
+  /*
+   * i - tracks the list item
+   */
+  for (i=0; i < num_in_list; ++i) {
+    if (list_of_names[i]->d_flags & DIR_COMB) {
+      isComb = 1;
+      isSolid = 0;
+      type = "comb";
+
+      if (list_of_names[i]->d_flags & DIR_REGION) {
+	isRegion = 1;
+        type = "region";
+      }
+      else
+	isRegion = 0;
+    } else {
+      isComb = isRegion = 0;
+      isSolid = 1;
+      type = rt_functab[list_of_names[i]->d_minor_type].ft_label;
+    }
+
+    if( list_of_names[i]->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY ) {
+	    isSolid = 0;
+	    type = "global";
+    }
+
+    /* print list item i */
+    dp = list_of_names[i];
+    if (aflag ||
+	(!cflag && !rflag && !sflag) ||
+	(cflag && isComb) ||
+	(rflag && isRegion) ||
+	(sflag && isSolid)) {
+	    bu_vls_printf(vls, "%s", dp->d_namep );
+	    bu_vls_spaces(vls, max_nam_len - strlen( dp->d_namep ) );
+	    bu_vls_printf(vls, " %s", type );
+	    bu_vls_spaces(vls, max_type_len - strlen( type ) );
+	    bu_vls_printf(vls,  " %2d %2d %d\n",
+		    dp->d_major_type, dp->d_minor_type, dp->d_len);
+    }
+  }
+}
 /*
  *				V L S _ L I N E _ D P P
  *

@@ -2178,6 +2178,7 @@ dgo_invent_solid(dgop, interp, name, vhead, rgb, copy)
 	register struct directory	*dp;
 	struct directory		*dpp[2] = {DIR_NULL, DIR_NULL};
 	register struct solid		*sp;
+	unsigned char			type='0';
 
 	if (dgop->dgo_wdbp->dbip == DBI_NULL)
 		return 0;
@@ -2197,7 +2198,7 @@ dgo_invent_solid(dgop, interp, name, vhead, rgb, copy)
 		dgo_eraseobjall(dgop, interp, dpp);
 	}
 	/* Need to enter phony name in directory structure */
-	dp = db_diradd(dgop->dgo_wdbp->dbip,  name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, NULL);
+	dp = db_diradd(dgop->dgo_wdbp->dbip,  name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, (genptr_t)&type);
 
 	/* Obtain a fresh solid structure, and fill it in */
 	GET_SOLID(sp,&FreeSolid.l);

@@ -2446,7 +2446,8 @@ int wdb_export_external(
 	struct rt_wdb *wdbp,
 	struct bu_external *ep,
 	const char *name,
-	int flags );
+	int flags,
+	unsigned char minor_type);
 int wdb_put_internal(
 	struct rt_wdb *wdbp,
 	const char *name,

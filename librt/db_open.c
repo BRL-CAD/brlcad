@@ -355,7 +355,7 @@ struct db_i	*dbip;		/* input */
 				bu_log("db_dump() read failed on %s, skipping\n", dp->d_namep );
 				continue;
 			}
-			if( wdb_export_external( wdbp, &ext, dp->d_namep, dp->d_flags ) < 0 )  {
+			if( wdb_export_external( wdbp, &ext, dp->d_namep, dp->d_flags, dp->d_minor_type ) < 0 )  {
 				bu_log("db_dump() write failed on %s, aborting\n", dp->d_namep);
 				bu_free_external( &ext );
 				return -1;

@@ -682,16 +682,16 @@ char	**argv;
 				}
 
 				/* write this model as a seperate nmg solid */
-				if( (new_dp=db_diradd( dbip, solid_name, -1, 0, DIR_SOLID, NULL)) == DIR_NULL )
-				{
-					TCL_ALLOC_ERR;
-					return TCL_ERROR;;
-				}
-
 				RT_INIT_DB_INTERNAL( &new_intern );
 				new_intern.idb_type = ID_NMG;
 				new_intern.idb_meth = &rt_functab[ID_NMG];
 				new_intern.idb_ptr = (genptr_t)new_m;
+
+				if( (new_dp=db_diradd( dbip, solid_name, -1, 0, DIR_SOLID, (genptr_t)&new_intern.idb_type)) == DIR_NULL )
+				{
+					TCL_ALLOC_ERR;
+					return TCL_ERROR;;
+				}
 
 				if( rt_db_put_internal( new_dp, dbip, &new_intern, &rt_uniresource ) < 0 )
 				{

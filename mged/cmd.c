@@ -2167,7 +2167,7 @@ f_bot_face_fuse( clientData, interp, argc, argv)
 
 	(void) rt_bot_face_fuse( bot );
 
-	if( (new_dp=db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID, NULL)) == DIR_NULL )
+	if( (new_dp=db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type)) == DIR_NULL )
 	{
 		Tcl_AppendResult(interp, "Cannot add ", argv[1], " to directory\n", (char *)NULL );
 		return TCL_ERROR;
@@ -2223,7 +2223,7 @@ f_bot_fuse(clientData, interp, argc, argv)
 	if( count1 )
 		(void)rt_bot_condense( bot );
 
-	if( (new_dp=db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID, NULL)) == DIR_NULL )
+	if( (new_dp=db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type)) == DIR_NULL )
 	{
 		Tcl_AppendResult(interp, "Cannot add ", argv[1], " to directory\n", (char *)NULL );
 		return TCL_ERROR;
@@ -2280,7 +2280,7 @@ f_bot_condense(clientData, interp, argc, argv)
 	sprintf( count_str, "%d", count2 );
 	Tcl_AppendResult(interp, count_str, " dead vertices eliminated\n", (char *)NULL );
 
-	if( (new_dp=db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID, NULL)) == DIR_NULL )
+	if( (new_dp=db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type)) == DIR_NULL )
 	{
 		Tcl_AppendResult(interp, "Cannot add ", argv[1], " to directory\n", (char *)NULL );
 		return TCL_ERROR;

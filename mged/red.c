@@ -1299,7 +1299,7 @@ make_tree(comb, dp, node_count, old_name, new_name, rt_tree_array, tree_index)
 			}
 		}
 
-		if ((dp=db_diradd(dbip, new_name, -1L, 0, flags, NULL)) == DIR_NULL) {
+		if ((dp=db_diradd(dbip, new_name, -1L, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
 			Tcl_AppendResult(interp, "Cannot add ", new_name,
 					 " to directory, no changes made\n", (char *)NULL);
 			rt_comb_ifree(&intern, &rt_uniresource);
@@ -1313,7 +1313,7 @@ make_tree(comb, dp, node_count, old_name, new_name, rt_tree_array, tree_index)
 		else
 			flags = DIR_COMB;
 
-		if ((dp=db_diradd(dbip, new_name, -1L, 0, flags, NULL)) == DIR_NULL) {
+		if ((dp=db_diradd(dbip, new_name, -1L, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
 			Tcl_AppendResult(interp, "Cannot add ", new_name,
 					 " to directory, no changes made\n", (char *)NULL);
 			rt_comb_ifree( &intern, &rt_uniresource );
@@ -1728,7 +1728,7 @@ struct directory *dpold;
 	if( rt_db_get_internal( &intern, dpold, dbip, (fastf_t *)NULL, &rt_uniresource ) < 0 )
 		TCL_READ_ERR_return;
 
-	if( (dp=db_diradd( dbip, red_tmpcomb, -1L, 0, dpold->d_flags, NULL)) == DIR_NULL )  {
+	if( (dp=db_diradd( dbip, red_tmpcomb, -1L, 0, dpold->d_flags, (genptr_t)&intern.idb_type)) == DIR_NULL )  {
 	  Tcl_AppendResult(interp, "Cannot save copy of ", dpold->d_namep,
 			   ", no changes made\n", (char *)NULL);
 	  return( 1 );

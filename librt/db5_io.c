@@ -965,6 +965,7 @@ int db5_update_ident( struct db_i *dbip, const char *title, double local2mm )
 
 	if( (dp = db_lookup( dbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_QUIET )) == DIR_NULL )  {
 		struct bu_external	global;
+		unsigned char		minor_type='0';
 
 		bu_log("db5_update_ident() WARNING: %s object is missing, creating new one.\nYou may have lost important global state when you deleted this object.\n",
 			DB5_GLOBAL_OBJECT_NAME );
@@ -976,7 +977,7 @@ int db5_update_ident( struct db_i *dbip, const char *title, double local2mm )
 			DB5_MAJORTYPE_ATTRIBUTE_ONLY, 0,
 			DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED );
 
-		dp = db_diradd( dbip, DB5_GLOBAL_OBJECT_NAME, -1L, 0, 0, NULL );
+		dp = db_diradd( dbip, DB5_GLOBAL_OBJECT_NAME, -1L, 0, 0, (genptr_t)&minor_type);
 		if( db_put_external( &global, dp, dbip ) < 0 )  {
 			bu_log("db5_update_ident() unable to create replacement %s object!\n", DB5_GLOBAL_OBJECT_NAME );
 			bu_free_external(&global);

@@ -160,7 +160,8 @@ wdb_export_external(
 	struct rt_wdb *wdbp,
 	struct bu_external *ep,
 	const char *name,
-	int flags )
+	int flags,
+	unsigned char type)
 {
 	struct directory	*dp;
 
@@ -191,7 +192,7 @@ wdb_export_external(
 		}
 		/* If name already exists, that object will be updated. */
 		if( (dp = db_lookup( wdbp->dbip, name, LOOKUP_QUIET )) == DIR_NULL &&
-		    (dp = db_diradd( wdbp->dbip, name, -1L, 0, flags, NULL )) == DIR_NULL )  {
+		    (dp = db_diradd( wdbp->dbip, name, -1L, 0, flags, (genptr_t)&type )) == DIR_NULL )  {
 			bu_log("wdb_export_external(%s): db_diradd error\n",
 				name );
 			return -3;
@@ -210,7 +211,7 @@ wdb_export_external(
 			return -5;
 		}
 		/* If name already exists, new non-conflicting name will be generated */
-		if( (dp = db_diradd( wdbp->dbip, name, -1L, 0, flags, NULL )) == DIR_NULL )  {
+		if( (dp = db_diradd( wdbp->dbip, name, -1L, 0, flags, (genptr_t)&type )) == DIR_NULL )  {
 			bu_log("wdb_export_external(%s): db_diradd error\n",
 				name );
 			return -3;
@@ -228,7 +229,7 @@ wdb_export_external(
 				name );
 			return -3;
 		}
-		if( (dp = db_diradd( wdbp->dbip, name, -1L, 0, flags, NULL )) == DIR_NULL )  {
+		if( (dp = db_diradd( wdbp->dbip, name, -1L, 0, flags, (genptr_t)&type )) == DIR_NULL )  {
 			bu_log("wdb_export_external(%s): db_diradd error\n",
 				name );
 			return -3;
@@ -240,7 +241,7 @@ wdb_export_external(
 
 	case RT_WDB_TYPE_DB_INMEM:
 		if( (dp = db_lookup( wdbp->dbip, name, 0 )) == DIR_NULL )  {
-			if( (dp = db_diradd( wdbp->dbip, name, -1L, 0, flags, NULL )) == DIR_NULL )  {
+			if( (dp = db_diradd( wdbp->dbip, name, -1L, 0, flags, (genptr_t)&type )) == DIR_NULL )  {
 				bu_log("wdb_export_external(%s): db_diradd error\n",
 					name );
 				bu_free_external( ep );
@@ -309,7 +310,7 @@ wdb_put_internal(
 	BU_CK_EXTERNAL( &ext );
 
 	flags = db_flags_internal( ip );
-	ret = wdb_export_external( wdbp, &ext, name, flags );
+	ret = wdb_export_external( wdbp, &ext, name, flags, ip->idb_type );
 out:
 	bu_free_external( &ext );
 	rt_db_free_internal( ip, &rt_uniresource );

@@ -116,19 +116,19 @@ char **argv;
 				bu_vls_printf( &shell_name, "shell.%d", shell_count );
 			}
 
-			if( (new_dp=db_diradd( dbip, bu_vls_addr( &shell_name ), -1, 0, DIR_SOLID, NULL)) == DIR_NULL )  {
+			/* Export NMG as a new solid */
+			RT_INIT_DB_INTERNAL(&new_intern);
+			new_intern.idb_type = ID_NMG;
+			new_intern.idb_meth = &rt_functab[ID_NMG];
+			new_intern.idb_ptr = (genptr_t)m_tmp;
+
+			if( (new_dp=db_diradd( dbip, bu_vls_addr( &shell_name ), -1, 0, DIR_SOLID, (genptr_t)&new_intern.idb_type)) == DIR_NULL )  {
 			  TCL_ALLOC_ERR_return;
 			}
 
 			/* make sure the geometry/bounding boxes are up to date */
 			nmg_rebound(m_tmp, &mged_tol);
 
-
-			/* Export NMG as a new solid */
-			RT_INIT_DB_INTERNAL(&new_intern);
-			new_intern.idb_type = ID_NMG;
-			new_intern.idb_meth = &rt_functab[ID_NMG];
-			new_intern.idb_ptr = (genptr_t)m_tmp;
 
 			if( rt_db_put_internal( new_dp, dbip, &new_intern, &rt_uniresource ) < 0 )  {
 				/* Free memory */
@@ -422,7 +422,7 @@ char **argv;
 	  return TCL_ERROR;
 	}
 
-	if( (dp=db_diradd( dbip, argv[1], -1L, 0, obj[endpos-1]->d_flags, NULL)) == DIR_NULL )  {
+	if( (dp=db_diradd( dbip, argv[1], -1L, 0, obj[endpos-1]->d_flags, (genptr_t)&new_int.idb_type)) == DIR_NULL )  {
 	  db_free_external( &new_ext );
 	  db_free_external( &external );
 	  (void)signal( SIGINT, SIG_IGN );
@@ -988,7 +988,7 @@ genptr_t	ptr;
 			}
 
 			/* Add new name to directory */
-			if( (use->dp = db_diradd( dbip, name, -1, 0, dp->d_flags, NULL )) == DIR_NULL )
+			if( (use->dp = db_diradd( dbip, name, -1, 0, dp->d_flags, (genptr_t)&dp->d_minor_type )) == DIR_NULL )
 			{
 				ALLOC_ERR;
 				return;
@@ -1754,7 +1754,7 @@ char *argv[];
 
 		rt_db_free_internal( &nmg_intern, &rt_uniresource );
 
-		if( (dp=db_diradd( dbip, new_name, -1L, 0, DIR_SOLID, NULL)) == DIR_NULL )
+		if( (dp=db_diradd( dbip, new_name, -1L, 0, DIR_SOLID, (genptr_t)&new_intern.idb_type)) == DIR_NULL )
 		{
 			Tcl_AppendResult(interp, "Cannot add ", new_name, " to directory\n", (char *)NULL );
 			return TCL_ERROR;
@@ -2162,7 +2162,7 @@ char **argv;
 
 	count = nmg_edge_collapse( m, &mged_tol, tol_coll, min_angle );
 
-	if( (dp=db_diradd( dbip, new_name, -1L, 0, DIR_SOLID, NULL)) == DIR_NULL )
+	if( (dp=db_diradd( dbip, new_name, -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type)) == DIR_NULL )
 	{
 		Tcl_AppendResult(interp, "Cannot add ", new_name, " to directory\n", (char *)NULL );
 		rt_db_free_internal( &intern, &rt_uniresource );

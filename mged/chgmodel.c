@@ -1221,7 +1221,7 @@ char	**argv;
 	/* no interuprts */
 	(void)signal( SIGINT, SIG_IGN );
 
-	if( (dp = db_diradd( dbip, argv[2], -1L, 0, proto->d_flags, NULL)) == DIR_NULL )  {
+	if( (dp = db_diradd( dbip, argv[2], -1L, 0, proto->d_flags, (genptr_t)&internal.idb_type)) == DIR_NULL )  {
 	    	TCL_ALLOC_ERR_return;
 	}
 	if( rt_db_put_internal( dp, dbip, &internal, &rt_uniresource ) < 0 )  {
@@ -1931,7 +1931,7 @@ char	**argv;
 	/* no interuprts */
 	(void)signal( SIGINT, SIG_IGN );
 
-	if( (dp = db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID, NULL)) == DIR_NULL )  {
+	if( (dp = db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&internal.idb_type)) == DIR_NULL )  {
 	    	TCL_ALLOC_ERR_return;
 	}
 	if( rt_db_put_internal( dp, dbip, &internal, &rt_uniresource ) < 0 )  {
@@ -2306,7 +2306,7 @@ struct model *m;
 		return;
 	}
 
-	if( (new_dp=db_diradd( dbip, newname, -1, 0, DIR_SOLID, NULL)) == DIR_NULL )  {
+	if( (new_dp=db_diradd( dbip, newname, -1, 0, DIR_SOLID, (genptr_t)&new_intern.idb_type)) == DIR_NULL )  {
 	    	TCL_ALLOC_ERR;
 		return;
 	}

@@ -1827,7 +1827,7 @@ wdb_copy_tcl(clientData, interp, argc, argv)
 		return TCL_ERROR;
 	}
 
-	if ((dp=db_diradd(wdbp->dbip, argv[3], -1, proto->d_len, proto->d_flags, NULL)) == DIR_NULL ) {
+	if ((dp=db_diradd(wdbp->dbip, argv[3], -1, proto->d_len, proto->d_flags, (genptr_t)&proto->d_minor_type)) == DIR_NULL ) {
 		Tcl_AppendResult(interp,
 				 "An error has occured while adding a new object to the database.",
 				 (char *)NULL);
@@ -2296,6 +2296,7 @@ wdb_dir_add(input_dbip, name, laddr, len, flags, ptr)
 	struct bu_vls		local5;
 	char			*local;
 	char			local4[RT_NAMESIZE+2+2];
+	unsigned char		type='0';
 	struct dir_add_stuff	*dasp = (struct dir_add_stuff *)ptr;
 
 	RT_CK_DBI(input_dbip);
@@ -2367,14 +2368,8 @@ wdb_dir_add(input_dbip, name, laddr, len, flags, ptr)
 	}
 
 	/* First, register this object in input database */
-	if ((input_dp = db_diradd(input_dbip, name, laddr, len, flags, NULL)) == DIR_NULL) {
-		if( dasp->main_dbip->dbi_version >= 5 )
-			bu_vls_free( &local5 );
-		return(-1);
-	}
-
-	/* Then, register a new object in the main database */
-	if ((dp = db_diradd(dasp->main_dbip, local, -1L, 0, flags, NULL)) == DIR_NULL) {
+	/* use bogus type here (since we don't know it) */
+	if ((input_dp = db_diradd(input_dbip, name, laddr, len, flags, (genptr_t)&type)) == DIR_NULL) {
 		if( dasp->main_dbip->dbi_version >= 5 )
 			bu_vls_free( &local5 );
 		return(-1);
@@ -2390,6 +2385,13 @@ wdb_dir_add(input_dbip, name, laddr, len, flags, ptr)
 			bu_vls_free( &local5 );
 	    	/* Abort processing on first error */
 		return -1;
+	}
+
+	/* Then, register a new object in the main database */
+	if ((dp = db_diradd(dasp->main_dbip, local, -1L, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
+		if( dasp->main_dbip->dbi_version >= 5 )
+			bu_vls_free( &local5 );
+		return(-1);
 	}
 
 	/* Update any references.  Name is already correct. */
@@ -4754,7 +4756,7 @@ not_found:
 	new_intern.idb_meth = &rt_functab[ID_ARB8];
 	new_intern.idb_ptr = (genptr_t)arb;
 
-	if ((dp=db_diradd( wdbp->dbip, new_name, -1L, 0, DIR_SOLID, NULL)) == DIR_NULL) {
+	if ((dp=db_diradd( wdbp->dbip, new_name, -1L, 0, DIR_SOLID, (genptr_t)&new_intern.idb_type)) == DIR_NULL) {
 		Tcl_AppendResult(interp, "Cannot add ", new_name, " to directory\n", (char *)NULL);
 		return TCL_ERROR;
 	}
@@ -5245,8 +5247,13 @@ wdb_combadd(interp, dbip, objp, combname, region_flag, relation, ident, air, wdb
 		else
 			flags = DIR_COMB;
 
+		RT_INIT_DB_INTERNAL(&intern);
+		intern.idb_type = ID_COMBINATION;
+		intern.idb_meth = &rt_functab[ID_COMBINATION];
+		intern.idb_ptr = (genptr_t)comb;
+
 		/* Update the in-core directory */
-		if ((dp = db_diradd(dbip, combname, -1, 2, flags, NULL)) == DIR_NULL )  {
+		if ((dp = db_diradd(dbip, combname, -1, 2, flags, (genptr_t)&intern.idb_type)) == DIR_NULL )  {
 			Tcl_AppendResult(interp, "An error has occured while adding '",
 					 combname, "' to the database.\n", (char *)NULL);
 			return DIR_NULL;
@@ -5258,11 +5265,6 @@ wdb_combadd(interp, dbip, objp, combname, region_flag, relation, ident, air, wdb
 		bu_vls_init(&comb->material);
 		comb->region_id = -1;
 		comb->tree = TREE_NULL;
-
-		RT_INIT_DB_INTERNAL(&intern);
-		intern.idb_type = ID_COMBINATION;
-		intern.idb_meth = &rt_functab[ID_COMBINATION];
-		intern.idb_ptr = (genptr_t)comb;
 
 		if (region_flag) {
 			struct bu_vls tmp_vls;

@@ -258,6 +258,8 @@ genptr_t		ptr;		/* unused client_data from db_scan() */
 	dp->d_animate = NULL;
 	dp->d_nref = 0;
 	dp->d_uses = 0;
+	dp->d_major_type = DB5_MAJORTYPE_BRLCAD;
+	dp->d_minor_type = *(unsigned char *)ptr;
 	return( dp );
 }
 

@@ -702,7 +702,7 @@ char **argv;
 do_new_update:
 	/* The function may have already written via LIBWDB */
 	if( internal.idb_ptr != NULL )  {
-		if( (dp=db_diradd( dbip, name, -1L, 0, DIR_SOLID, NULL)) == DIR_NULL )  {
+		if( (dp=db_diradd( dbip, name, -1L, 0, DIR_SOLID, (genptr_t)&internal.idb_type)) == DIR_NULL )  {
 			rt_db_free_internal( &internal, &rt_uniresource );
 			Tcl_AppendResult(interp, "Cannot add '", name, "' to directory\n", (char *)NULL );
 			return TCL_ERROR;
