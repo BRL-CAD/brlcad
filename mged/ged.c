@@ -158,7 +158,7 @@ char **argv;
 
 	/* init rotation matrix */
 	mat_idn( identity );		/* Handy to have around */
-	Viewscale = 0.5;		/* => viewsize of 1 */
+	Viewscale = 500;		/* => viewsize of 1000mm (1m) */
 	mat_idn( Viewrot );
 	mat_idn( toViewcenter );
 	mat_idn( modelchanges );
