@@ -344,8 +344,18 @@ plot_ray_img(struct application	*ap,
     /* red line from ray origin to hit point */
     VJOIN1(pp->pt_inhit->hit_point, ap->a_ray.r_pt, pp->pt_inhit->hit_dist,
 	   ap->a_ray.r_dir);
-    pl_color(pfd, 255, 0, 0);
-    pdv_3line(pfd, ap->a_ray.r_pt, pp->pt_inhit->hit_point);
+    if (VAPPROXEQUAL(ap->a_ray.r_pt, pp->pt_inhit->hit_point, 0.125)) {
+	/* start and hit point identical, make special allowance */
+	vect_t vtmp;
+
+	pl_color(pfd, 255, 0, 128);
+	VREVERSE(vtmp, ap->a_ray.r_dir);
+	VJOIN1(vtmp, ap->a_ray.r_pt, 5.0, vtmp);
+	pdv_3line(pfd, vtmp, pp->pt_inhit->hit_point);
+    } else {
+	pl_color(pfd, 255, 0, 0);
+	pdv_3line(pfd, ap->a_ray.r_pt, pp->pt_inhit->hit_point);
+    }
 
     /* yellow line from hit point to plane point */
     VJOIN1(pt, ap->a_ray.r_pt, dist, ap->a_ray.r_dir); /* point on plane */
@@ -398,7 +408,13 @@ do_ray_image(struct application	*ap,
     y = VDOT(vpt, bi->img_y);
 
     if (x < 0.0 || x > bi->img_xlen ||
-	y < 0.0 || y > bi->img_ylen) return;
+	y < 0.0 || y > bi->img_ylen) {
+	if (rdebug&RDEBUG_SHADE) {
+	    bu_log("hit outside bounds, leaving color %g %g %g\n",
+		   V3ARGS(swp->sw_color));
+	}
+	return;
+    }
 
 
     /* get the radius of the beam at the image plane */
@@ -451,18 +467,18 @@ do_ray_image(struct application	*ap,
 		    bu_log("%d %d %d\n", V3ARGS(color));
 		    VPRINT("cum_color", cum_color);
 		}
-	    } else {
-		if (rdebug&RDEBUG_SHADE) {
-		    bu_log("%d=%d+%d+%d < %d\n", val, V3ARGS(color), bbd_sp->img_threshold);
-		}
 	    }
 	}
     }
     if (rdebug&RDEBUG_SHADE) 
 	bu_log("tot:%d color_count: %d\n", tot, color_count);
 
-    if (color_count == 0)  return;
-
+    if (color_count == 0)  {
+	if (rdebug&RDEBUG_SHADE) 
+	    bu_log("no color contribution, leaving color as %g %g %g\n",
+		   V3ARGS(swp->sw_color));
+	return;
+    }
     /* get average color: scale color by the # of contributions */
     t = 1.0 / (double)color_count;
     VSCALE(cum_color, cum_color, t);
@@ -527,6 +543,7 @@ bbd_render( ap, pp, swp, dp )
 	bu_struct_print( "bbd_render Parameters:", 
 			 bbd_print_tab, (char *)bbd_sp );
 	bu_log("pixel %d %d\n", ap->a_x, ap->a_y);
+	bu_log("bbd region: %s\n", pp->pt_regionp->reg_name);
     }
     tp = pp->pt_regionp->reg_treetop;
     if (tp->tr_a.tu_op != OP_SOLID) {
@@ -538,6 +555,7 @@ bbd_render( ap, pp, swp, dp )
 
     swp->sw_transmit = 1.0;
     VSETALL(swp->sw_color, 0.0);
+    VSETALL(swp->sw_basecolor, 1.0);
 
     i = 0;
     for (BU_LIST_FOR(bi, bbd_img, &bbd_sp->imgs)) {
@@ -555,15 +573,22 @@ bbd_render( ap, pp, swp, dp )
     for (i=0 ; i < bbd_sp->img_count && swp->sw_transmit > 0.0 ; i++) {
 	if (id[i].status > 0) do_ray_image(ap, pp, swp, bbd_sp, id[i].bi, id[i].dist);
     }
-
-
+    if (rdebug&RDEBUG_SHADE) {
+	bu_log("color %g %g %g\n", V3ARGS(swp->sw_color));
+    }
     /* shader must perform transmission/reflection calculations
      *
      * 0 < swp->sw_transmit <= 1 causes transmission computations
      * 0 < swp->sw_reflect <= 1 causes reflection computations
      */
-    if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
+    if (swp->sw_reflect > 0 || swp->sw_transmit > 0 ) {
+	int level = ap->a_level;
+	ap->a_level = 0; /* Bogus hack to keep rr_render from giving up */
 	(void)rr_render( ap, pp, swp );
-
+	ap->a_level = level;
+    }
+    if (rdebug&RDEBUG_SHADE) {
+	bu_log("color %g %g %g\n", V3ARGS(swp->sw_color));
+    }
     return(1);
 }
