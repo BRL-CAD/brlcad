@@ -496,6 +496,17 @@ double mm2local;
 		case WDB_PIPESEG_TYPE_END:
 			sprintf( buf, "End Pipe Segment\n" );
 			rt_vls_strcat( vp, buf );
+			VSCALE( p1, pipe->ps_start, mm2local );
+			sprintf( buf, "\tat (%g %g %g)\n", V3ARGS( p1 ) );
+			rt_vls_strcat( vp, buf );
+			if( pipe->ps_id > 0.0 )
+				sprintf( buf, "\tat end: od=%g, id=%g\n",
+					pipe->ps_od*mm2local,
+					pipe->ps_id*mm2local );
+			else
+				sprintf( buf, "\tat end: od=%g\n",
+					pipe->ps_od*mm2local );
+			rt_vls_strcat( vp, buf );
 			break;
 	}
 
