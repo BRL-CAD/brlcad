@@ -14,7 +14,7 @@ typedef struct outitem_tag
     struct outitem_tag	*next;
 } 					outitem;
 
-typedef struct
+typedef struct outval_tag
 {
     char		*name;
     int			code_nm;
