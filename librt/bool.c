@@ -877,7 +877,7 @@ struct application *ap;
 				reason = "a_onehit=0, more partitions to go";
 				goto out;
 			}
-			if( HITS_TODO > 1 )  {
+			if( HITS_TODO > 0 )  {
 				ret = 0;
 				reason = "a_onehit not satisfied yet";
 				goto out;
@@ -886,6 +886,8 @@ struct application *ap;
 			 *  even though it probably is not.
 			 *  Application asked for this behavior, and it
 			 *  saves having to do more ray-tracing.
+			 * XXX Note that this moves partitions onto final list
+			 * XXX if they evaluate to TRUE!
 			 */
 		}
 
