@@ -73,7 +73,6 @@ extern int hit_nothing();
 extern double ipow();
 
 #define RI_AIR		1.0    /* Refractive index of air.		*/
-#define RI_GLASS	1.3    /* Refractive index of glass.		*/
 
 #ifdef BENCHMARK
 #define rand0to1()	(0.5)
@@ -120,8 +119,8 @@ register struct region *rp;
 	rp->reg_ufunc = phong_render;
 	rp->reg_udata = (char *)pp;
 
-	pp->shine = 7;
-	pp->wgt_specular = 0.6;
+	pp->shine = 10;
+	pp->wgt_specular = 0.7;
 	pp->wgt_diffuse = 0.3;
 	pp->transmit = 0.0;
 	pp->reflect = 0.0;
@@ -171,8 +170,8 @@ register struct region *rp;
 	pp->shine = 4;
 	pp->wgt_specular = 0.7;
 	pp->wgt_diffuse = 0.3;
-	pp->transmit = 0.8;
-	pp->reflect = 0.4;
+	pp->transmit = 0.7;
+	pp->reflect = 0.3;
 	pp->refrac_index = 1.65;
 
 	mlib_parse( rp->reg_mater.ma_matparm, phong_parse, (char *)pp );
@@ -384,7 +383,10 @@ register struct partition *pp;
 		goto finish;
 	}
 
-	/* Add in contributions from mirror reflection & transparency */
+	/*
+	 *  Diminish base color appropriately, and add in
+	 *  contributions from mirror reflection & transparency
+	 */
 	f = 1 - (ps->reflect + ps->transmit);
 	if( f > 0 )  {
 		VSCALE( ap->a_color, ap->a_color, f );
@@ -402,8 +404,7 @@ register struct partition *pp;
 		/* I have been told this has unit length */
 		VSUB2( sub_ap.a_ray.r_dir, work, to_eye );
 		(void)rt_shootray( &sub_ap );
-		VJOIN1( ap->a_color, ap->a_color,
-			ps->reflect, sub_ap.a_color );
+		VJOIN1(ap->a_color, ap->a_color, ps->reflect, sub_ap.a_color);
 	}
 	if( ps->transmit > 0 )  {
 		/* Calculate refraction at entrance. */
@@ -425,9 +426,12 @@ register struct partition *pp;
 do_inside:
 		sub_ap.a_hit =  phg_rhit;
 		sub_ap.a_miss = phg_rmiss;
-		(void) rt_shootray( &sub_ap );
-		/* NOTE: phg_rhit returns EXIT point in sub_ap.a_uvec,
-		 *  and returns EXIT normal in sub_ap.a_color.
+		if( rt_shootray( &sub_ap ) == 0 )  {
+			rt_log("phong: Refracted ray missed, lvl=%d\n",sub_ap.a_level );
+			goto finish;		/* abandon hope */
+		}
+		/* NOTE: phg_rhit returns EXIT Point in sub_ap.a_uvec,
+		 *  and returns EXIT Normal in sub_ap.a_color.
 		 */
 		if( rt_g.debug&DEBUG_RAYWRITE )  {
 			wraypts( sub_ap.a_ray.r_pt, sub_ap.a_uvec,
@@ -442,7 +446,7 @@ do_inside:
 			sub_ap.a_ray.r_dir		/* output direction */
 		) )  {
 			/* Reflected internally -- keep going */
-			if( ++sub_ap.a_level > 100+MAX_IREFLECT )  {
+			if( (++sub_ap.a_level)%100 > MAX_IREFLECT )  {
 				rt_log("Excessive internal reflection (x%d,y%d, lvl%d)\n",
 					sub_ap.a_x, sub_ap.a_y, sub_ap.a_level );
 				if(rt_g.debug) {
@@ -476,28 +480,49 @@ phg_rmiss( ap, PartHeadp )
 register struct application *ap;
 struct partition *PartHeadp;
 {
-	rt_log("phg_rmiss: Refracted ray missed!\n" );
-	/* Return entry point as exit point */
-	VREVERSE( ap->a_color, ap->a_ray.r_dir );	/* inward pointing */
-	VMOVE( ap->a_uvec, ap->a_ray.r_pt );
 	return(0);
 }
 
 /*
  *			R F R _ H I T
+ *
+ *  Implicit Returns -
+ *	a_uvec	exit Point
+ *	a_color	exit Normal
  */
 HIDDEN int
 phg_rhit( ap, PartHeadp )
 register struct application *ap;
 struct partition *PartHeadp;
 {
-	register struct hit	*hitp = PartHeadp->pt_forw->pt_outhit;
+	register struct hit	*hitp;
 	register struct soltab *stp;
+	register struct partition *pp;
 
-	stp = PartHeadp->pt_forw->pt_outseg->seg_stp;
+	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
+		if( pp->pt_outhit->hit_dist >= 0.0 )  break;
+	if( pp == PartHeadp )  {
+		rt_log("phg_rhit:  no hit out front?\n");
+		return(0);
+	}
+	hitp = pp->pt_outhit;
+	if( hitp->hit_dist >= INFINITY )  {
+		rt_log("phg_rhit:  (%g,%g) bad!\n", pp->pt_inhit->hit_dist, hitp->hit_dist);
+		return(0);
+	}
+
+	stp = pp->pt_outseg->seg_stp;
 	rt_functab[stp->st_id].ft_norm(
 		hitp, stp, &(ap->a_ray) );
 	VMOVE( ap->a_uvec, hitp->hit_point );
+	/* Safety check */
+	if( rt_g.debug && (!NEAR_ZERO(hitp->hit_normal[X], 1) ||
+	    !NEAR_ZERO(hitp->hit_normal[Y], 1) ||
+	    !NEAR_ZERO(hitp->hit_normal[Z], 1) ) )  {
+	    	rt_log("phg_rhit: TROUBLE refracting in %s\n", stp->st_name);
+	    	VPRINT("hit_normal", hitp->hit_normal);
+	    	return(0);
+	}
 	/* For refraction, want exit normal to point inward. */
 	VREVERSE( ap->a_color, hitp->hit_normal );
 	return(1);
@@ -536,13 +561,18 @@ register vect_t	v_2;
 	FAST fastf_t	beta;
 
 	if( NEAR_ZERO(ri_1, 0.0001) || NEAR_ZERO( ri_2, 0.0001 ) )  {
-		rt_log("phg_refract:ri1=%f, ri2=%f\n", ri_1, ri_2 );
+		rt_log("phg_refract:ri1=%g, ri2=%g\n", ri_1, ri_2 );
 		beta = 1;
 	} else {
 		beta = ri_1/ri_2;		/* temp */
+		if( beta > 10000 )  {
+			rt_log("phg_refract:  beta=%g\n", beta);
+			beta = 1000;
+		}
 	}
 	VSCALE( w, v_1, beta );
 	VCROSS( u, w, norml );
+	    	
 	/*
 	 *	|w X norml| = |w||norml| * sin( theta_1 )
 	 *	        |u| = ri_1/ri_2 * sin( theta_1 ) = sin( theta_2 )
@@ -594,8 +624,17 @@ light_hit(ap, PartHeadp)
 struct application *ap;
 struct partition *PartHeadp;
 {
+	register struct partition *pp;
+
+	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
+		if( pp->pt_outhit->hit_dist >= 0.0 )  break;
+	if( pp == PartHeadp )  {
+		rt_log("light_hit:  no hit out front?\n");
+		return(0);
+	}
+
 	/* Check to see if we hit the light source */
-	if( PartHeadp->pt_forw->pt_inseg->seg_stp == l0stp )
+	if( pp->pt_inseg->seg_stp == l0stp )
 		return(1);		/* light_visible = 1 */
 	return(0);			/* light_visible = 0 */
 }
@@ -624,8 +663,9 @@ nullf() { ; }
  *  Background texture mapping could be done here.
  *  For now, return a pleasant dark blue.
  */
-hit_nothing( ap )
+hit_nothing( ap, PartHeadp )
 register struct application *ap;
+struct partition *PartHeadp;
 {
 	if( lightmodel == 2 )  {
 		VSET( ap->a_color, 0, 0, 0 );
