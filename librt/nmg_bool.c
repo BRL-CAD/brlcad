@@ -183,7 +183,6 @@ struct shell *sB;
 {
 	struct faceuse *fu;
 	struct faceuse *fu_next;
-	int empty_shell=0;
 
 	if( rt_g.NMG_debug & DEBUG_BASIC )
 		bu_log( "nmg_kill_non_common_cracks( s=%x and %x )\n" , sA, sB );
@@ -264,7 +263,6 @@ crack_topA:
 		{
 			if( nmg_kfu( fu ) )
 			{
-				empty_shell = 1;
 				break;
 			}
 		}
@@ -342,7 +340,6 @@ crack_top:
 		{
 			if( nmg_kfu( fu ) )
 			{
-				empty_shell = 1;
 				break;
 			}
 		}
@@ -449,7 +446,6 @@ CONST struct bn_tol *tol;
 	struct bu_ptbl loops;
 	struct faceuse *fu;
 	struct loopuse *lu;
-	int empty_fu;
 	int i,j;
 
 	NMG_CK_SHELL( s );

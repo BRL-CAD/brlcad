@@ -100,7 +100,7 @@ struct loopuse *lu;
 	{
 		struct edge_g_cnurb *eg;
 		struct vertexuse *vu;
-		struct vertexuse_a_cnurb *vg1,*vg2;
+		struct vertexuse_a_cnurb *vg1;
 
 		eg = eu->g.cnurb_p;
 
@@ -245,9 +245,7 @@ CONST struct faceuse *fu;
 CONST struct vertexuse *vu;
 vect_t norm;
 {
-	struct face *f;
 	struct vertexuse_a_cnurb *va;
-	point_t uvw;
 
 	NMG_CK_FACEUSE( fu );
 	NMG_CK_VERTEXUSE( vu );
@@ -338,7 +336,6 @@ long *flags;
 	struct edgeuse *eu,*eu1;
 	struct vertexuse *vu;
 	struct vertex *v1,*v2;
-	int done;
 	int bottommost=0;
 
 	if( rt_g.NMG_debug & DEBUG_BASIC )
@@ -2722,7 +2719,6 @@ struct bn_tol *tol;
 
 	while( BU_PTBL_END( &eu_tbl ) )
 	{
-		vect_t	normal;
 		int give_up_on_face=0;
 
 		/* Create an index into the table that orders the edgeuses into a loop */
@@ -2738,9 +2734,7 @@ struct bn_tol *tol;
 		/* Create new faces to close the shell */
 		while( loop_size > 3 )
 		{
-			vect_t inside;			/* vector pointing to left of edge (inside face) */
 			struct edgeuse **eu_used;	/* array of edgueses used, for deletion */
-			vect_t v1,v2;			/* edge vectors */
 			int edges_used;			/* number of edges used in making a face */
 			int found_face=0;		/* flag - indicates that a face with the correct normal will be created */
 			int start_index,end_index;	/* start and stop index for loop */
@@ -2903,9 +2897,6 @@ struct bn_tol *tol;
 			end_index = -1;
 			while( !found_face )
 			{
-				struct vertex *vfirst, *vlast;
-				struct edgeuse *eu_tmp;
-
 				/* refresh the vertex list */
 				(void)bu_ptbl_reset( &vert_tbl );
 
@@ -3611,9 +3602,6 @@ CONST struct bn_tol *tol;
 
 	while( (eu1 = nmg_pop_eu( &stack )) != (struct edgeuse *)NULL )
 	{
-		struct edgeuse *eu2;
-		int radial_count=0;
-
 		/* eu1 is an edgeuse on an OT_SAME face, so its radial
 		 * should be in an OT_SAME also */
 
@@ -4000,7 +3988,6 @@ struct nmgregion *r;
 int reindex;
 {
 	struct model *m;
-	struct model *old_m;
 	struct bu_ptbl tbl;
 	int i;
 	int other_uses=0;
@@ -4101,7 +4088,7 @@ CONST struct bn_tol *tol;
 	struct model *m;
 	struct shell *dup_s;
 	struct shell *s1;
-	struct nmgregion *tmp_r, *tmp_r2;
+	struct nmgregion *tmp_r;
 	struct faceuse *fu;
 	struct bu_ptbl reverse;
 	int shell_count;
@@ -7708,7 +7695,6 @@ CONST struct bn_tol *tol;
 		if( free_edges )
 		{
 			int free_edge_count=0;
-			struct loopuse *lu;
 			struct vertexuse *vu;
 			struct faceuse *fu_free=(struct faceuse *)NULL;
 			struct edgeuse *eu_free=(struct edgeuse *)NULL;
@@ -7727,7 +7713,6 @@ CONST struct bn_tol *tol;
 				if( eu->radial_p == eu->eumate_p )
 				{
 					vect_t fu_norm;
-					vect_t eu_dir;
 
 					/* this is a free edges */
 					eu_free = eu;
@@ -8713,7 +8698,7 @@ struct bu_ptbl *verts;
 CONST struct bn_tol *tol;
 {
 	int done=0;
-	int i,j,k;
+	int i,j;
 	int verts_in_face=0;
 	struct vertex *face_verts[20];
 	struct vertex *v;
@@ -8893,9 +8878,6 @@ CONST struct bn_tol *tol;
 	if( !made_face )
 	{
 		int found;
-		fastf_t dist;
-		point_t pca;
-		struct edgeuse *new_eu;
 
 		if( !faces_made )
 		{
@@ -9495,7 +9477,6 @@ struct shell *s;
 	for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
 	{
 		struct loopuse *lu;
-		int empty_face=0;
 		NMG_CK_FACEUSE( fu );
 
 		if( fu->orientation != OT_SAME )
@@ -9804,16 +9785,7 @@ CONST struct bn_tol *tol;
 
 	for (i = 0; i < BU_PTBL_END( &faceuses ); i++)
 	{
-		plane_t pl;
-		struct loopuse *lu;
-		struct edgeuse *eu;
-		struct vertexuse *vu;
-		fastf_t dist_to_plane;
-		int triangulate=0;
-
 		fu = (struct faceuse *)BU_PTBL_GET( &faceuses, i );
-
-		NMG_GET_FU_PLANE( pl, fu );
 
 		/* check if all the vertices for this face lie on the plane */
 		if( nmg_ck_fu_verts( fu, fu->f_p, tol ) )
@@ -9983,7 +9955,6 @@ struct bu_list	*crv_head;
 {
 	struct edge_g_cnurb *crv,*next_crv;
 	struct edge_g_cnurb *new_crv=(struct edge_g_cnurb *)NULL;
-	struct edge_g_cnurb *linear_crv;
 	fastf_t knot_delta=0.0;
 	fastf_t last_knot;
 	int ncoords;
@@ -10274,7 +10245,7 @@ struct bn_tol *tol;
 	if( angle < 150.0*bn_pi/180.0 ) /* angle is reasonable to do in one segment */
 	{
 		fastf_t dist1, dist2;
-		vect_t t1, t2, t3;
+		vect_t t1, t2;
 		int ret_val;
 
 		/* second control point is intersection of tangent lines */
@@ -10469,7 +10440,6 @@ struct bu_ptbl *tab;
 {
 	struct faceuse *fu;
 	struct face *f;
-	int arb;
 	int four_verts=0;
 	int three_verts=0;
 	int face_count=0;
@@ -10928,7 +10898,6 @@ CONST struct bn_tol *tol;
 	int many_vert_faces=0;
 	int base_vert_count=0;
 	int top_vert_count=0;
-	int ret=0;
 	point_t sum;
 	fastf_t vert_count=0.0;
 	fastf_t one_over_vert_count;
@@ -11238,7 +11207,6 @@ CONST struct bn_tol *tol;
 	int max_count;
 	int count_npts;
 	int face_count=0;
-	int i;
 #if 0
 	struct rt_pg_face_internal *_poly;
 #endif
@@ -11681,18 +11649,13 @@ CONST fastf_t min_angle;
 			struct vertex *v1, *v2;
 			struct vertexuse *vu;
 			int real_count1, real_count2;
-			plane_t perp_pl, pl, pl2;
 			vect_t edge_dir;
-			fastf_t min_dist1, min_dist2;
 			fastf_t max_dist1, max_dist2;
 			fastf_t max_dot1, max_dot2;
-			fastf_t dot;
 			int flip1, flip2;
 			int no_collapse;
 			int free_edge;
 
-			min_dist1 = MAX_FASTF;
-			min_dist2 = MAX_FASTF;
 			max_dist1 = -1.0;
 			max_dist2 = -1.0;
 			max_dot1 = -1.0;
@@ -11827,7 +11790,6 @@ CONST fastf_t min_angle;
 				bu_log( "nmg_edge_collapse: fu (x%x) has no OT_SAME use!!!\n", fu );
 				continue;
 			}
-			NMG_GET_FU_PLANE( pl, fu )
 			eu2 = eu->radial_p;
 			NMG_CK_EDGEUSE( eu2 );
 			fu2 = nmg_find_fu_of_eu( eu2 );
@@ -12146,7 +12108,6 @@ CONST fastf_t min_angle;
 					struct faceuse *fu;
 					struct edge_g_lseg *eg;
 					struct vertex_g *v1a;
-					vect_t edge_dir;
 
 					if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
 						continue;
@@ -12226,7 +12187,6 @@ CONST fastf_t min_angle;
 					struct faceuse *fu;
 					struct edge_g_lseg *eg;
 					struct vertex_g *v1a;
-					vect_t edge_dir;
 
 					if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
 						continue;
