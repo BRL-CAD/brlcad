@@ -1028,8 +1028,8 @@ printnode(dp, pathpos, prefix, cflag)
 
 	if (comb->tree) {
 		int			node_count;
-		int			actual_count;
-		struct rt_tree_array	*rt_tree_array;
+		int			actual_count = 0;
+		struct rt_tree_array	*rt_tree_array = NULL;
 
 		if (comb->tree && db_ck_v4gift_tree(comb->tree) < 0) {
 			db_non_union_push( comb->tree, &rt_uniresource );
