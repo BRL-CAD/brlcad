@@ -11,7 +11,6 @@ cake \
  mathtab.o \
  opt.o \
  refract.o \
- sh_Nfbm.o \
  sh_air.o \
  sh_fire.o &
 
@@ -29,6 +28,9 @@ cake \
 cake \
  sh_stack.o \
  sh_stxt.o \
+ sh_gauss.o \
+ sh_paint.o \
+ sh_noise.o \
  sh_text.o &
 
 cake \
