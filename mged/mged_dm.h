@@ -31,34 +31,41 @@ extern struct device_values dm_values;
 /* defined in ged.c */
 extern int dm_pipe[];
 
+#define DEGRAD  57.2957795130823208767981548141051703324054724665642
 #define SL_TOL 0.031265266  /* size of dead spot - 64/2047 */
 
-#define ALT_IDLE 0
-#define ALT_ROT 1 
-#define ALT_TRAN 2
-#define ALT_ZOOM 3
-#define ALT_ADC 4
-#define ALT_CON_ROT_X 5
-#define ALT_CON_ROT_Y 6
-#define ALT_CON_ROT_Z 7
-#define ALT_CON_TRAN_X 8
-#define ALT_CON_TRAN_Y 9
-#define ALT_CON_TRAN_Z 10
-#define ALT_CON_XADC 11
-#define ALT_CON_YADC 12
-#define ALT_CON_ANG1 13
-#define ALT_CON_ANG2 14
-#define ALT_CON_TICK 15
+#define AMM_IDLE 0
+#define AMM_ROT 1 
+#define AMM_TRAN 2
+#define AMM_SCALE 3
+#define AMM_ADC_ANG1 4
+#define AMM_ADC_ANG2 5
+#define AMM_ADC_TRAN 6
+#define AMM_ADC_DIST 7
+#define AMM_CON_ROT_X 8
+#define AMM_CON_ROT_Y 9
+#define AMM_CON_ROT_Z 10
+#define AMM_CON_TRAN_X 11
+#define AMM_CON_TRAN_Y 12
+#define AMM_CON_TRAN_Z 13
+#define AMM_CON_SCALE_X 14
+#define AMM_CON_SCALE_Y 15
+#define AMM_CON_SCALE_Z 16 
+#define AMM_CON_XADC 17
+#define AMM_CON_YADC 18
+#define AMM_CON_ANG1 19
+#define AMM_CON_ANG2 20
+#define AMM_CON_DIST 21
 
 #define IS_CONSTRAINED_ROT(_mode) ( \
-	(_mode) == ALT_CON_ROT_X || \
-	(_mode) == ALT_CON_ROT_Y || \
-	(_mode) == ALT_CON_ROT_Z )
+	(_mode) == AMM_CON_ROT_X || \
+	(_mode) == AMM_CON_ROT_Y || \
+	(_mode) == AMM_CON_ROT_Z )
 
 #define IS_CONSTRAINED_TRAN(_mode) ( \
-	(_mode) == ALT_CON_TRAN_X || \
-	(_mode) == ALT_CON_TRAN_Y || \
-	(_mode) == ALT_CON_TRAN_Z )
+	(_mode) == AMM_CON_TRAN_X || \
+	(_mode) == AMM_CON_TRAN_Y || \
+	(_mode) == AMM_CON_TRAN_Z )
 
 struct view_list {
   struct bu_list l;
@@ -116,14 +123,15 @@ struct shared_info {
   int	  _rateflag_scale;
   fastf_t _rate_scale;
 
-  int     _rateflag_azimuth;
-  fastf_t _rate_azimuth;
-
 /* Absolute stuff */
-  vect_t  _absolute_model_tran;
   vect_t  _absolute_tran;
+  vect_t  _absolute_model_tran;
+  vect_t  _last_absolute_tran;
+  vect_t  _last_absolute_model_tran;
   vect_t  _absolute_rotate;
+  vect_t  _absolute_model_rotate;
   vect_t  _last_absolute_rotate;
+  vect_t  _last_absolute_model_rotate;
   fastf_t _absolute_scale;
 
 /* Virtual trackball stuff */
@@ -143,16 +151,16 @@ struct shared_info {
   struct bu_vls _rate_tran_vls[3];
   struct bu_vls _rate_rotate_vls[3];
   struct bu_vls _rate_scale_vls;
-  struct bu_vls _rate_azimuth_vls;
   struct bu_vls _absolute_tran_vls[3];
   struct bu_vls _absolute_rotate_vls[3];
   struct bu_vls _absolute_scale_vls;
-  struct bu_vls _absolute_azimuth_vls;
   struct bu_vls _xadc_vls;
   struct bu_vls _yadc_vls;
   struct bu_vls _ang1_vls;
   struct bu_vls _ang2_vls;
   struct bu_vls _distadc_vls;
+
+  struct bu_vls _Viewscale_vls;
 
   /* Convenient pointer to the owner's (of the shared_info) dm_pathName */
   struct bu_vls *opp;
@@ -250,29 +258,31 @@ extern struct dm_list *curr_dm_list;
 #define dv_2adc curr_dm_list->s_info->_dv_2adc
 #define dv_distadc curr_dm_list->s_info->_dv_distadc
 
-#define rate_model_tran curr_dm_list->s_info->_rate_model_tran
-#define rate_model_rotate curr_dm_list->s_info->_rate_model_rotate
-#define rate_model_origin curr_dm_list->s_info->_rate_model_origin
 #define rateflag_model_tran curr_dm_list->s_info->_rateflag_model_tran
 #define rateflag_model_rotate curr_dm_list->s_info->_rateflag_model_rotate
-#define absolute_model_tran curr_dm_list->s_info->_absolute_model_tran
-
-#define rateflag_slew curr_dm_list->s_info->_rateflag_tran
 #define rateflag_tran curr_dm_list->s_info->_rateflag_tran
-#define rate_slew curr_dm_list->s_info->_rate_tran
-#define rate_tran curr_dm_list->s_info->_rate_tran
-#define absolute_slew curr_dm_list->s_info->_absolute_tran
-#define absolute_tran curr_dm_list->s_info->_absolute_tran
 #define rateflag_rotate curr_dm_list->s_info->_rateflag_rotate
+#define rateflag_scale curr_dm_list->s_info->_rateflag_scale
+
+#define rate_model_tran curr_dm_list->s_info->_rate_model_tran
+#define rate_model_rotate curr_dm_list->s_info->_rate_model_rotate
+#define rate_tran curr_dm_list->s_info->_rate_tran
 #define rate_rotate curr_dm_list->s_info->_rate_rotate
-#define rate_origin curr_dm_list->s_info->_rate_origin
+#define rate_scale curr_dm_list->s_info->_rate_scale
+
+#define absolute_tran curr_dm_list->s_info->_absolute_tran
+#define absolute_model_tran curr_dm_list->s_info->_absolute_model_tran
+#define last_absolute_tran curr_dm_list->s_info->_last_absolute_tran
+#define last_absolute_model_tran curr_dm_list->s_info->_last_absolute_model_tran
 #define absolute_rotate curr_dm_list->s_info->_absolute_rotate
+#define absolute_model_rotate curr_dm_list->s_info->_absolute_model_rotate
 #define last_absolute_rotate curr_dm_list->s_info->_last_absolute_rotate
-#define rateflag_zoom curr_dm_list->s_info->_rateflag_scale
-#define rate_zoom curr_dm_list->s_info->_rate_scale
-#define absolute_zoom curr_dm_list->s_info->_absolute_scale
-#define rate_azimuth curr_dm_list->s_info->_rate_azimuth
-#define rateflag_azimuth curr_dm_list->s_info->_rateflag_azimuth
+#define last_absolute_model_rotate curr_dm_list->s_info->_last_absolute_model_rotate
+#define absolute_scale curr_dm_list->s_info->_absolute_scale
+
+#define rate_model_origin curr_dm_list->s_info->_rate_model_origin
+#define rate_origin curr_dm_list->s_info->_rate_origin
+
 
 #define Viewscale curr_dm_list->s_info->_Viewscale
 #define i_Viewscale curr_dm_list->s_info->_i_Viewscale
@@ -306,16 +316,15 @@ extern struct dm_list *curr_dm_list;
 #define rate_tran_vls curr_dm_list->s_info->_rate_tran_vls
 #define rate_rotate_vls curr_dm_list->s_info->_rate_rotate_vls
 #define rate_scale_vls curr_dm_list->s_info->_rate_scale_vls
-#define rate_azimuth_vls curr_dm_list->s_info->_rate_azimuth_vls
 #define absolute_tran_vls curr_dm_list->s_info->_absolute_tran_vls
 #define absolute_rotate_vls curr_dm_list->s_info->_absolute_rotate_vls
 #define absolute_scale_vls curr_dm_list->s_info->_absolute_scale_vls
-#define absolute_azimuth_vls curr_dm_list->s_info->_absolute_azimuth_vls
 #define xadc_vls curr_dm_list->s_info->_xadc_vls
 #define yadc_vls curr_dm_list->s_info->_yadc_vls
 #define ang1_vls curr_dm_list->s_info->_ang1_vls
 #define ang2_vls curr_dm_list->s_info->_ang2_vls
 #define distadc_vls curr_dm_list->s_info->_distadc_vls
+#define Viewscale_vls curr_dm_list->s_info->_Viewscale_vls
 
 #define scroll_top curr_dm_list->_scroll_top
 #define scroll_active curr_dm_list->_scroll_active
@@ -333,10 +342,6 @@ extern struct dm_list *curr_dm_list;
 #define RATE_ROT_FACTOR 6.0
 #define ABS_ROT_FACTOR 180.0
 #define ADC_ANGLE_FACTOR 45.0
-
-#define ALT_MOUSE_MODE_NOT_ACTIVE(_type,_name)\
-  ((_type)dm_vars)->_name == ALT_MOUSE_MODE_OFF ||\
-  ((_type)dm_vars)->_name == ALT_MOUSE_MODE_ON
 
 /*
  * Definitions for dealing with the buttons and lights.
