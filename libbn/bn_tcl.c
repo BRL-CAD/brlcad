@@ -41,7 +41,6 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "vmath.h"
 #include "bn.h"
 
-
 /* Support routines for the math functions */
 
 /* XXX Really need a decode_array function that uses atof(),

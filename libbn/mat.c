@@ -683,6 +683,56 @@ double alpha_in, beta_in, ggamma_in;
 }
 
 /*
+ *			B N _ M A T _ A N G L E S _ R A D
+ *
+ * This routine builds a Homogeneous rotation matrix, given
+ * alpha, beta, and gamma as angles of rotation, in radians.
+ *
+ * Alpha is angle of rotation about the X axis, and is done third.
+ * Beta is angle of rotation about the Y axis, and is done second.
+ * Gamma is angle of rotation about Z axis, and is done first.
+ */
+void
+bn_mat_angles_rad(register mat_t	mat,
+		  double		alpha,
+		  double		beta,
+		  double		ggamma)
+{
+	LOCAL double calpha, cbeta, cgamma;
+	LOCAL double salpha, sbeta, sgamma;
+
+	if (alpha == 0.0 && beta == 0.0 && ggamma == 0.0) {
+		MAT_IDN( mat );
+		return;
+	}
+
+	calpha = cos( alpha );
+	cbeta = cos( beta );
+	cgamma = cos( ggamma );
+
+	salpha = sin( alpha );
+	sbeta = sin( beta );
+	sgamma = sin( ggamma );
+
+	mat[0] = cbeta * cgamma;
+	mat[1] = -cbeta * sgamma;
+	mat[2] = sbeta;
+	mat[3] = 0.0;
+
+	mat[4] = salpha * sbeta * cgamma + calpha * sgamma;
+	mat[5] = -salpha * sbeta * sgamma + calpha * cgamma;
+	mat[6] = -salpha * cbeta;
+	mat[7] = 0.0;
+
+	mat[8] = salpha * sgamma - calpha * sbeta * cgamma;
+	mat[9] = salpha * cgamma + calpha * sbeta * sgamma;
+	mat[10] = calpha * cbeta;
+	mat[11] = 0.0;
+	mat[12] = mat[13] = mat[14] = 0.0;
+	mat[15] = 1.0;
+}
+
+/*
  *			B N _ E I G E N 2 X 2
  *
  *  Find the eigenvalues and eigenvectors of a
