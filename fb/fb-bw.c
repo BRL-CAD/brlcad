@@ -138,8 +138,8 @@ int argc; char **argv;
 		else
 			fb_read( fbp, scr_xoff, y, inbuf, xin );
 		for( x = 0; x < xin; x++ ) {
-			obuf[x] = (inbuf[x][RED] + inbuf[x][GRN]
-				+ inbuf[x][BLU]) / 3;
+			obuf[x] = (((int)inbuf[x][RED]) + ((int)inbuf[x][GRN])
+				+ ((int)inbuf[x][BLU])) / 3;
 		}
 		fwrite( &obuf[0], sizeof( char ), xin, outfp );
 	}
