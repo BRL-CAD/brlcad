@@ -548,6 +548,9 @@ int			free;
 		rt_log("rt_generic_xform():  solid import failure\n");
 		return -1;			/* FAIL */
 	}
+
+	db_free_external( &ext );
+
 	RT_CK_DB_INTERNAL( op );
 	return 0;				/* OK */
 }
