@@ -1,20 +1,7 @@
 /*
  *			I F _ O G L . C
  *
- *  BRL Frame Buffer Library interface for SGI Iris-5D.
- *  This code is basically a port of if_4d.c from IRIS GL to OpenGL.
- *  
- *  In order to use a large chunk of memory with the shared memory 
- *  system it is necessary to increase the shmmax and shmall paramaters
- *  of the system. You can do this by changing the defaults in the
- *  /usr/sysgen/master.d/shm to
- *
- * 	#define SHMMAX	5131072
- *	#define SHMALL	4000
- *
- *  and rebooting your system twice.
- *
- *  Refer to the SGI Users Manuals when reconfiguring your kernel.
+ *  BRL Frame Buffer Library interface for OpenGL.
  *
  *  There are several different Frame Buffer modes supported.
  *  Set your environment FB_FILE to the appropriate type.
@@ -23,19 +10,22 @@
  *  (see the modeflag definitions below).
  *	/dev/ogl[options]
  *
- *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  This code is basically a port of if_4d.c from IRIS GL to OpenGL.
+ *
+ *  Authors -
+ *	Carl Nuzman
+ *	Bob Parker
  *  
- *  Porting done by Carl Nuzman
+ *  Source -
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  
+ *  Distribution Status -
+ *	Public Domain, Distribution Unlimited.
  */
-
-/* 	$Id$	 */
-
 #ifndef lint
-static char RCSid[] = "(#)$Header$";
-#endif /* lint */
+static char RCSid[] = "@(#)$Header$ (ARL)";
+#endif
 
 #include "conf.h"
 
@@ -862,7 +852,7 @@ int	width, height;
 	}
 
 	/* Build a descriptive window title bar */
-	(void)sprintf( title, "BRL libfb /dev/ogl %s, %s",
+	(void)sprintf( title, "BRL-CAD /dev/ogl %s, %s",
 		((ifp->if_mode & MODE_2MASK) == MODE_2TRANSIENT) ?
 			"Transient Win":
 			"Lingering Win",
