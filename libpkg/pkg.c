@@ -50,6 +50,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <netinet/in.h>		/* for htons(), etc */
 #include <netdb.h>
 #include <netinet/tcp.h>	/* for TCP_NODELAY sockopt */
+#undef LITTLE_ENDIAN		/* defined in netinet/{ip.h,tcp.h} */
 
 #include "machine.h"		/* Can safely be removed for non-BRLCAD use */
 #include "externs.h"		/* Can safely be removed for non-BRLCAD use */
