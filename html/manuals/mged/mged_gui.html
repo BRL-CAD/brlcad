@@ -17,19 +17,19 @@
 <LI><A HREF="mged_gui.html#Shift Grips">Shift Grips (Default Mouse Bindings)</A>
 <LI><A HREF="mged_gui.html#Default Key Bindings">Default Key Bindings</A>
 </UL>
-<LI>Control Panels
+<LI><A HREF="mged_gui.html#Control Panels">Control Panels</A>
 <UL>
-<LI>ADC Control Panel
-<LI>Grid Control Panel
-<LI>Query Ray Control Panel
-<LI>Raytrace Control Panel
-<LI>Animmate Control Panel
-<LI>Solid Editor
-<LI>Solid Editor (Internal)
-<LI>Combination Editor
-<LI>Color Editor
+<LI><A HREF="mged_gui.html#ADC Control Panel">ADC Control Panel</A>
+<LI><A HREF="mged_gui.html#Grid Control Panel">Grid Control Panel</A>
+<LI><A HREF="mged_gui.html#Query Ray Control Panel">Query Ray Control Panel</A>
+<LI><A HREF="mged_gui.html#Raytrace Control Panel">Raytrace Control Panel</A>
+<LI><A HREF="mged_gui.html#Animmate Control Panel">Animmate Control Panel</A>
+<LI><A HREF="mged_gui.html#Solid Editor">Solid Editor</A>
+<LI><A HREF="mged_gui.html#Solid Editor (Internal)">Solid Editor (Internal)
+<LI><A HREF="mged_gui.html#Tools Combination Editor">Combination Editor</A>
+<LI><A HREF="mged_gui.html#Color Editor">Color Editor</A>
 </UL>
-<LI>Status Bar
+<LI><A HREF="mged_gui.html#Status Bar">Status Bar</A>
 <LI><A HREF="mged_gui.html#Menubar">Menubar</A>
 <UL>
 <LI><A HREF="mged_gui.html#File">File</A>
@@ -90,8 +90,8 @@ sph, grip, ell, ellg, tor,
 tgc, tec, rec, trc, rcc, half,
 rpc, rhc, epa, ehy, eto, part,
 nmg, pipe
-<LI><A HREF="mged_gui.html#Create Solid Editor">Solid Editor</A>
-<LI><A HREF="mged_gui.html#Create Combination Editor">Combination Editor</A>
+<LI><A HREF="mged_gui.html#Solid Editor">Solid Editor</A>
+<LI><A HREF="mged_gui.html#Combination Editor">Combination Editor</A>
 </UL>
 <LI><A HREF="mged_gui.html#View">View</A>
 <UL>
@@ -231,7 +231,7 @@ nmg, pipe
 </UL>
 <LI><A HREF="mged_gui.html#Multipane">Multipane</A>
 <LI><A HREF="mged_gui.html#Edit Info">Edit Info</A>
-<LI><A HREF="mged_gui.html#Status Bar">Status Bar</A>
+<LI><A HREF="mged_gui.html#Toggle Status Bar">Status Bar</A>
 <LI><A HREF="mged_gui.html#Collaborate">Collaborate</A>
 <LI><A HREF="mged_gui.html#Rateknobs">Rateknobs</A>
 <LI><A HREF="mged_gui.html#Display Lists">Display Lists</A>
@@ -243,6 +243,9 @@ nmg, pipe
 <LI><A HREF="mged_gui.html#Faceplate">Faceplate</A>
 <LI><A HREF="mged_gui.html#Faceplate GUI">Faceplate GUI</A>
 <LI><A HREF="mged_gui.html#Keystroke Forwarding">Keystroke Forwarding</A>
+<LI><A HREF="mged_gui.html#Depth Cueing">Depth Cueing</A>
+<LI><A HREF="mged_gui.html#Z Buffer">Z Buffer</A>
+<LI><A HREF="mged_gui.html#Lighting">Lighting</A>
 </UL>
 <LI><A HREF="mged_gui.html#Tools">Tools</A>
 <UL>
@@ -251,8 +254,8 @@ nmg, pipe
 <LI><A HREF="mged_gui.html#Query Ray Control Panel">Query Ray Control Panel</A>
 <LI><A HREF="mged_gui.html#Raytrace Control Panel">Raytrace Control Panel</A>
 <LI><A HREF="mged_gui.html#Animmate Control Panel">Animmate Control Panel</A>
-<LI><A HREF="mged_gui.html#Tools Solid Editor">Solid Editor</A>
-<LI><A HREF="mged_gui.html#Tools Combination Editor">Combination Editor</A>
+<LI><A HREF="mged_gui.html#Solid Editor">Solid Editor</A>
+<LI><A HREF="mged_gui.html#Combination Editor">Combination Editor</A>
 <LI><A HREF="mged_gui.html#Color Editor">Color Editor</A>
 </UL>
 <LI><A HREF="mged_gui.html#Help">Help</A>
@@ -406,13 +409,17 @@ Of course, the user can also scroll the window using the scrollbar.
 <A NAME="Panes">
 <CENTER><H3>Panes (Display Manager Windows)</H3></CENTER>
 <P>
-XXX Cover general information about ''panes'' here.
+A pane is a place wherein solids/objects are drawn. Here the user
+can interact, via the mouse and/or keyboard,
+with the panes view or with solids/objects that are being edited.
+The user can also <A HREF="mged_gui.html#Access Menu Bar">access menus</A>
+from the menu bar from within the pane.
 </P>
 
 <A NAME="Shift Grips">
 <CENTER><H4>Shift Grips</H4></CENTER>
 <P>
- MGED offers the user a unified mouse-based interface for "grabbing"
+MGED offers the user a unified mouse-based interface for "grabbing"
 things and manipulating them.  Since it was built for compatibility on
 top of the older interface:
 <BR>
@@ -523,9 +530,9 @@ The table below lists the default key bindings:
 <TR><TD>x</TD><TD>rate rotate about x axis</TD></TR>
 <TR><TD>y</TD><TD>rate rotate about y axis</TD></TR>
 <TR><TD>z</TD><TD>rate rotate about z axis</TD></TR>
-<TR><TD>X</TD><TD>rate translate in X direction</TD></TR>
-<TR><TD>Y</TD><TD>rate translate in Y direction</TD></TR>
-<TR><TD>Z</TD><TD>rate translate in Z direction</TD></TR>
+<TR><TD>X</TD><TD>rate rotate about x axis</TD></TR>
+<TR><TD>Y</TD><TD>rate rotate about y axis</TD></TR>
+<TR><TD>Z</TD><TD>rate rotate about z axis</TD></TR>
 <TR><TD>3</TD><TD>view - ae 35 25</TD></TR>
 <TR><TD>4</TD><TD>view - ae 45 45</TD></TR>
 <TR><TD>f</TD><TD>front view</TD></TR>
@@ -539,43 +546,34 @@ The table below lists the default key bindings:
 <TR><TD>q</TD><TD>reject edit</TD></TR>
 <TR><TD>u</TD><TD>zero knobs and sliders</TD></TR>
 <TR><TD>&lt F1 &gt</TD><TD>toggle depthcue</TD></TR>
-<TR><TD>&lt F2 &gt</TD><TD>toggle zclip</TD></TR>
+<TR><TD>&lt F2 &gt</TD><TD>toggle <A HREF="mged_gui.html#Z Clipping">zclipping</A></TD></TR>
 <TR><TD>&lt F3 &gt</TD><TD>toggle perspective</TD></TR>
 <TR><TD>&lt F4 &gt</TD><TD>toggle zbuffer</TD></TR>
 <TR><TD>&lt F5 &gt</TD><TD>toggle lighting</TD></TR>
 <TR><TD>&lt F6 &gt</TD><TD>toggle perspective angle</TD></TR>
-<TR><TD>&lt F7 &gt</TD><TD>toggle faceplate</TD></TR>
-<TR><TD>&lt F8 &gt</TD><TD>toggle faceplate GUI</TD></TR>
-<TR><TD>&lt F9 &gt</TD><TD>toggle keystroke forwarding</TD></TR>
+<TR><TD>&lt F7 &gt</TD><TD>toggle <A HREF="mged_gui.html#Faceplate">faceplate</A></TD></TR>
+<TR><TD>&lt F8 &gt</TD><TD>toggle <A HREF="mged_gui.html#Faceplate GUI">Faceplate GUI</A></TD></TR>
+<TR><TD>&lt F9 &gt</TD><TD>toggle <A HREF="mged_gui.html#Keystroke Forwarding">keystroke forwarding</A></TD></TR>
 <TR><TD>&lt F12 &gt</TD><TD>zero knobs</TD></TR>
-<TR><TD>&lt Left &gt</TD><TD>absolute rotate about y axis</TD></TR>
-<TR><TD>&lt Right &gt</TD><TD>absolute rotate about y axis</TD></TR>
-<TR><TD>&lt Down &gt</TD><TD>absolute rotate about x axis</TD></TR>
-<TR><TD>&lt Up &gt</TD><TD>absolute rotate about x axis</TD></TR>
-<TR><TD>&lt Shift-Left &gt</TD><TD>absolute translate in X direction</TD></TR>
-<TR><TD>&lt Shift-Right &gt</TD><TD>absolute translate in X direction</TD></TR>
-<TR><TD>&lt Shift-Down &gt</TD><TD>absolute translate in Z direction</TD></TR>
-<TR><TD>&lt Shift-Up &gt</TD><TD>absolute translate in Z direction</TD></TR>
-<TR><TD>&lt Control-Shift-Left &gt</TD><TD>absolute rotate about z axis</TD></TR>
-<TR><TD>&lt Control-Shift-Right &gt</TD><TD>absolute rotate about z axis</TD></TR>
-<TR><TD>&lt Control-Shift-Down &gt</TD><TD>absolute translate in Y direction</TD></TR>
-<TR><TD>&lt Control-Shift-Up &gt</TD><TD>tabsolute translate in Y direction</TD></TR>
+<TR><TD>&lt Left &gt</TD><TD>rotate about y axis</TD></TR>
+<TR><TD>&lt Right &gt</TD><TD>rotate about y axis</TD></TR>
+<TR><TD>&lt Down &gt</TD><TD>rotate about x axis</TD></TR>
+<TR><TD>&lt Up &gt</TD><TD>rotate about x axis</TD></TR>
+<TR><TD>&lt Shift-Left &gt</TD><TD>translate in X direction</TD></TR>
+<TR><TD>&lt Shift-Right &gt</TD><TD>translate in X direction</TD></TR>
+<TR><TD>&lt Shift-Down &gt</TD><TD>translate in Z direction</TD></TR>
+<TR><TD>&lt Shift-Up &gt</TD><TD>translate in Z direction</TD></TR>
+<TR><TD>&lt Control-Shift-Left &gt</TD><TD>rotate about z axis</TD></TR>
+<TR><TD>&lt Control-Shift-Right &gt</TD><TD>rotate about z axis</TD></TR>
+<TR><TD>&lt Control-Shift-Down &gt</TD><TD>translate in Y direction</TD></TR>
+<TR><TD>&lt Control-Shift-Up &gt</TD><TD>translate in Y direction</TD></TR>
 <TR><TD>&lt Control-n &gt</TD><TD>goto next view</TD></TR>
 <TR><TD>&lt Control-p &gt</TD><TD>goto previous view</TD></TR>
 <TR><TD>&lt Control-t &gt</TD><TD>toggle between the current view and the last view</TD></TR>
 </TABLE>
 </P>
 <P>
-The binding for the F9 key needs special mentioning. As specified
-above, this key sequence is bound to an action called
-''toggle keystroke forwarding''. When keystroke forwarding
-is active, any key events get forwarded to the command
-window for processing as if the user was typing directly into
-the command window. This behavior can often save the user
-time by not having to move the mouse out of the geometry
-window in order to type commands.
-</P>
-<P>
+<A NAME="Access Menu Bar">
 Besides the default key bindings listed above, the user can access
 menu items with ''alt-key'' sequences. For example, the ''File'' menu
 can be popped up with alt-f. The raytrace control panel can then
@@ -583,7 +581,50 @@ be popped up by typing ''r''
 (i.e. ''R'' is underlined in the ''Raytrace..." menu item).
 </P>
 
-<BR><BR>
+<BR>
+<HR>
+<BR>
+
+<A NAME="Control Panels">
+<CENTER><H3>Control Panels</H3></CENTER>
+<UL>
+<A NAME="ADC Control Panel"><LI><B>ADC Control Panel</B>
+<A NAME="Grid Control Panel"><LI><B>Grid Control Panel</B>
+<A NAME="Query Ray Control Panel"><LI><B>Query Ray Control Panel</B>
+<A NAME="Raytrace Control Panel"><LI><B>Raytrace Control Panel</B>
+<A NAME="Animmate Control Panel"><LI><B>Animmate Control Panel</B>
+<A NAME="Solid Editor"><LI><B>Solid Editor</B>
+<A NAME="Solid Editor (Internal)"><LI><B>Solid Editor (Internal)</B>
+<A NAME="Combination Editor"><LI><B>Combination Editor</B>
+<A NAME="Color Editor"><LI><B>Color Editor</B>
+</UL>
+
+<BR>
+<HR>
+<BR>
+
+<A NAME="Status Bar">
+<CENTER><H3>Status Bar</H3></CENTER>
+<P>
+The <I>status bar</I> contains two lines for displaying information
+about the state of the active pane. The first line contains information
+about the view center, view size, local units, azimuth, elevation, twist,
+and rate of rotation about the x, y and z axes. The second line can contain
+several different things depending on the state. If the angle distance
+cursor is being drawn, information about its parameters are displayed.
+Specifically, angle 1, angle 2, tick distance, center and delta are
+displayed. Otherwise, if in the <I>VIEWING</I> state, the frames per
+second is displayed.
+If in <I>SOL PICK</I> or <I>OBJ PICK</I> state,
+the full path of the illuminated solid is displayed.
+If in <I>OBJ PATH</I> state,
+the full path of the previously selected solid is displayed
+along with an indication of which matrix along the path will
+be edited. And finally, if in either <I>SOL EDIT</I> or
+<I>OBJ EDIT</I> state the keypoint is displayed.
+</P>
+
+<BR>
 <HR>
 <BR>
 
@@ -659,9 +700,9 @@ be popped up by typing ''r''
 	tool for selecting a solid to edit.
 <A NAME="Matrix Selection"><LI><B>Matrix Selection</B> - pops up a
 	tool for selecting a matrix to edit.
-<A NAME="Solid Editor"><LI><B>Solid Editor</B> - pops up a
+<A HREF="mged_gui.html#Solid Editor">Solid Editor</A> - pops up a
 	tool for creating and editing solids.
-<A NAME="Combination Editor"><LI><B>Combination Editor</B> - pops up a
+<A HREF="mged_gui.html#Combination Editor">Combination Editor</A> - pops up a
 	tool for creating and editing combinations.
 </UL>
 <A NAME="Create"><LI><B>Create</B>
@@ -675,9 +716,9 @@ be popped up by typing ''r''
 	tgc, tec, rec, trc, rcc, half,
 	rpc, rhc, epa, ehy, eto, part,
 	nmg, pipe.
-<A NAME="Create Solid Editor"><LI><B>Solid Editor</B> - pops up a
+<LI><A HREF="mged_gui.html#Solid Editor">Solid Editor</A> - pops up a
 	tool for creating and editing solids.
-<A NAME="Create Combination Editor"><LI><B>Combination Editor</B> - pops up a
+<LI><A HREF="mged_gui.html#Combination Editor">Combination Editor</A> - pops up a
 	tool for creating and editing combinations.
 </UL>
 <A NAME="View"><LI><B>View</B>
@@ -943,7 +984,7 @@ the left mouse button.
 	that is the target for actions that affect panes. In other words,
 	if the user types the command, ''ae 35 25'' in the command window,
 	and the active pane is the upper left pane, then its'
-	view orientation will be azimuth=35 and elevation=25.
+	view orientation will become azimuth=35 and elevation=25.
 	Similarly, if the user selects Settings/Grid/Draw_Grid from
 	the pulldown menus the drawing of the grid will be toggled
 	in the active pane.
@@ -1189,7 +1230,7 @@ the left mouse button.
      edit the solid as well as to view its contents.
      If in object edit state, the object information
      is displayed in a dialog box.
-<A NAME="Status Bar"><LI><B>Status Bar</B> -
+<A NAME="Toggle Status Bar"><LI><A HREF="mged_gui.html#Status Bar">Status Bar</A> -
      toggle display of the command window's status bar.
 <A NAME="Collaborate"><LI><B>Collaborate</B> -
      toggle collaborate mode. When in collaborate
@@ -1218,32 +1259,83 @@ the left mouse button.
 </UL>
 <A NAME="Misc"><LI><B>Misc</B>
 <UL>
-<A NAME="Z Clipping"><LI><B>Z Clipping</B>
-<A NAME="Perspective"><LI><B>Perspective</B>
-<A NAME="Faceplate"><LI><B>Faceplate</B>
-<A NAME="Faceplate GUI"><LI><B>Faceplate GUI</B>
-<A NAME="Keystroke Forwarding"><LI><B>Keystroke Forwarding</B>
+<A NAME="Z Clipping"><LI><B>Z Clipping</B> -
+     toggles zclipping. When zclipping is active, the Z value
+     of each point is checked against the min and max Z values
+     of the viewing cube. If the Z value of the point is found
+     to be outside this range, it is clipped (i.e. not drawn).
+     Zclipping can be used to remove geometric detail that may
+     be occluding geometry of greater interest.
+<A NAME="Perspective"><LI><B>Perspective</B> -
+     toggles perspective_mode.
+<A NAME="Faceplate"><LI><B>Faceplate</B> -
+     toggles drawing the ''Classic MGED'' faceplate.
+<A NAME="Faceplate GUI"><LI><B>Faceplate GUI</B> -
+     toggles drawing the ''Classic MGED'' user interface
+     (i.e. faceplate menu and scrollbars)
+<A NAME="Keystroke Forwarding"><LI><B>Keystroke Forwarding</B> -
+     toggles keystroke forwarding. When keystroke forwarding
+     is active, any key events get forwarded to the command
+     window for processing as if the user was typing directly into
+     the command window. This behavior can often save the user
+     time by not having to move the mouse out of the geometry
+     window in order to type commands. The effects of any
+     commands apply to the pane wherein the command was entered,
+     regardless of whether or not this pane is the active pane.
+<A NAME="Depth Cueing"><LI><B>Depth Cueing</B> -
+     toggles depth cueing. When depth cueing is active,
+     lines that are farther away appear more faint.
+<A NAME="Z Buffer"><LI><B>Z Buffer</B> -
+     toggles Z buffer.
+<A NAME="Lighting"><LI><B>Lighting</B> -
+     toggles lighting.
 </UL>
 <A NAME="Tools"><LI><B>Tools</B>
 <UL>
-<A NAME="ADC Control Panel"><LI><B>ADC Control Panel</B>
-<A NAME="Grid Control Panel"><LI><B>Grid Control Panel</B>
-<A NAME="Query Ray Control Panel"><LI><B>Query Ray Control Panel</B>
-<A NAME="Raytrace Control Panel"><LI><B>Raytrace Control Panel</B>
-<A NAME="Animmate Control Panel"><LI><B>Animmate Control Panel</B>
-<A NAME="Tools Solid Editor"><LI><B>Solid Editor</B>
-<A NAME="Tools Combination Editor"><LI><B>Combination Editor</B>
-<A NAME="Color Editor"><LI><B>Color Editor</B>
+<LI><A HREF="mged_gui.html#ADC Control Panel">ADC Control Panel</A> -
+     pops up a tool for controlling the angle distance cursor.
+<LI><A HREF="mged_gui.html#Grid Control Panel">Grid Control Panel</A> -
+     pops up a tool for setting grid parameters.
+<LI><A HREF="mged_gui.html#Query Ray Control Panel">Query Ray Control Panel</A>
+     - pops up a tool for setting query ray parameters.
+<LI><A HREF="mged_gui.html#Raytrace Control Panel">Raytrace Control Panel</A> -
+     pops up a tool for raytracing.
+<LI><A HREF="mged_gui.html#Animmate Control Panel">Animmate Control Panel</A> -
+     pops up for building animation scripts.
+<LI><A HREF="mged_gui.html#Solid Editor">Solid Editor</A> - pops up a
+     tool for creating and editing solids.
+<LI><A HREF="mged_gui.html#Combination Editor">Combination Editor</A> - pops up a
+     tool for creating and editing combinations.
+<LI><A HREF="mged_gui.html#Color Editor">Color Editor</A> - pops up a
+     tool for defining a color
 </UL>
 <A NAME="Help"><LI><B>Help</B>
 <UL>
 <A NAME="About MGED"><LI><B>About MGED</B>
-<A NAME="Help on context"><LI><B>Help on context</B>
-<A NAME="Getting Started"><LI><B>Getting Started</B>
-<A NAME="Shift Grips"><LI><B>Shift Grips</B>
-<A NAME="Commands"><LI><B>Commands</B>
-<A NAME="Apropos"><LI><B>Apropos</B>
-<A NAME="Manual"><LI><B>Manual</B>
+<A NAME="Help on context"><LI><B>Help on context</B> -
+     The new GUI provides ''Help on Context''. This is always available via
+     the right mouse button (i.e. button 3). The user can right mouse click
+     on some feature of the GUI and a message window pops up with information
+     about the feature. This behavior works everywhere except in the drawing
+     panes (i.e. display manager windows) where a right mouse button is bound
+     to ''zoom 2.0''.
+<LI><A HREF="mged_gui.html#Getting Started">Getting Started</A>
+<LI><A HREF="mged_gui.html#Shift Grips">Shift Grips</A>
+<A NAME="Commands"><LI><B>Commands</B> -
+     pops up a tool for getting information on MGED's commands.
+<A NAME="Apropos"><LI><B>Apropos</B> -
+     pops up a tool for searching for information about MGED's commands.
+<A NAME="Manual"><LI><B>Manual</B> -
+     start a tool for browsing the online MGED manual.
+     The web browser that gets started is dependent, first, on the
+     WEB_BROWSER environment variable. If this variable exists and
+     the browser identified by this variable exists, then that browser
+     is used. Failing that the browser specified by the
+     mged_default(web_browser) Tcl variable is tried.
+     As a last resort, the existence of /usr/bin/netscape,
+     /usr/local/bin/netscape and /usr/X11/bin/netscape
+     is checked. If a browser has still not been located,
+     the built-in Tcl browser is used.
 </UL>
 </UL>
 
