@@ -35,7 +35,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1990 by the United States Army.
+ *	This software is Copyright (C) 1998 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -60,16 +60,25 @@ static char RCSsubmodel[] = "@(#)$Header$ (BRL)";
 /* parameters for solid, internal representation */
 struct rt_submodel_internal {
 	long	magic;
-	char	gfile[128];	/* .g filename, 0-len --> this database. */
-	int	ntrees;
-	char	*trees[8];	/* GAK, want variable sized array */
-	int	partition_meth;	/* space partitioning method */
+	char	file[128];	/* .g filename, 0-len --> this database. */
+	char	treetop[128];	/* one treetop only */
+	int	meth;		/* space partitioning method */
 	/* other option flags (lazy prep, etc.)?? */
 	/* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
 	mat_t	root2leaf;
 };
 #define RT_SUBMODEL_INTERNAL_MAGIC	0x7375626d	/* subm */
 #define RT_SUBMODEL_CK_MAGIC(_p)	RT_CKMAG(_p,RT_SUBMODEL_INTERNAL_MAGIC,"rt_submodel_internal")
+
+#define RT_SUBMODEL_O(m)	offsetof(struct rt_submodel_internal, m)
+
+struct bu_structparse rt_submodel_parse[] = {
+	{"%s",	128, "file",	offsetofarray(struct rt_submodel_internal, file), FUNC_NULL },
+	{"%s",	128, "treetop", offsetofarray(struct rt_submodel_internal, treetop), FUNC_NULL },
+	{"%d",	1, "meth",	RT_SUBMODEL_O(meth),		FUNC_NULL },
+	{"",	0, (char *)0, 0,			FUNC_NULL }
+};
+
 
 
 /* ray tracing form of solid, including precomputed terms */
@@ -108,17 +117,18 @@ struct rt_i		*rtip;
 	struct rt_i			*sub_rtip;
 	vect_t	radvec;
 	vect_t	diam;
+	char	*argv[2];
 
 	RT_CK_DB_INTERNAL(ip);
 	sip = (struct rt_submodel_internal *)ip->idb_ptr;
 	RT_SUBMODEL_CK_MAGIC(sip);
 
-	if( sip->gname[0] == '\0' )  {
+	if( sip->file[0] == '\0' )  {
 		/* No .g file name given, tree is in current .g file */
 		sub_rtip = rt_new_rti( rtip->rti_dbip );
 	} else {
 		/* XXX Might want to cache & reuse dbip's, to save dirbuilds */
-		sub_rtip = rt_dirbuild( sip->gname, NULL, 0 );
+		sub_rtip = rt_dirbuild( sip->file, NULL, 0 );
 	}
 	if( sub_rtip == RTI_NULL )  return -1;
 
@@ -129,21 +139,23 @@ struct rt_i		*rtip;
 	sub_rtip->rti_tol = rtip->rti_tol;	/* struct copy */
 	sub_rtip->rti_ttol = rtip->rti_ttol;	/* struct copy */
 
-	if( sip->partition_meth )  {
-		sub_rtip->rti_space_partition = sip->partition_meth;
+	if( sip->meth )  {
+		sub_rtip->rti_space_partition = sip->meth;
 	} else {
 		sub_rtip->rti_space_partition = rtip->rti_space_partition;
 	}
 
 	rt_bomb("XXX Gak, rt_gettrees can't be used recursively\n");
-	if( rt_gettrees( sub_rtip, sip->ntrees, sip->trees, 1 ) < 0 )  {
+	argv[0] = sip->treetop;
+	argv[1] = NULL;
+	if( rt_gettrees( sub_rtip, 1, (CONST char **)argv, 1 ) < 0 )  {
 		rt_free_rti( rtip );
 		return -2;
 	}
 
 	if( sub_rtip->nsolids <= 0 )  {
 		bu_log("rt_submodel_prep(%s): %s No solids found\n",
-			stp->st_namep, sip->gname );
+			stp->st_dp->d_namep, sip->file );
 		return -3;
 	}
 
@@ -152,8 +164,10 @@ struct rt_i		*rtip;
 	/* Register ourselves with containing rtip, for linked
 	 * preps, frees, etc.
 	 */
+#if 0
 	bu_ptbl_insert_unique( &rtip->rti_sub_rtip, (long *)sub_rtip );
 	sub_rtip->rti_up = (genptr_t)stp;
+#endif
 	
 	BU_GETSTRUCT( submodel, submodel_specific );
 	stp->st_specific = (genptr_t)submodel;
@@ -163,8 +177,9 @@ struct rt_i		*rtip;
 	submodel->rtip = sub_rtip;
 
 	/* Propagage submodel bounding box back upwards, rotated&scaled. */
-	rt_rotate_bbox( stp->st_min, sub_rtip->mdl_min,
-		stp->st_max, sub_rtip->mdl_max );
+	bn_rotate_bbox( stp->st_min, stp->st_max,
+		submodel->subm2m,
+		sub_rtip->mdl_min, sub_rtip->mdl_max );
 
 	VSUB2( diam, stp->st_max, stp->st_min );
 	VADD2SCALE( stp->st_center, stp->st_min, stp->st_max, 0.5 );
@@ -199,6 +214,7 @@ register struct xray	*rp;
 	struct soltab	*up_stp;
 	vect_t		norm;
 
+#if 0
 	sub_rtip = stp->st_rtip;
 	up_stp = (struct soltab *)sub_rtip->rti_up;
 	RT_CK_SOLTAB(up_stp);
@@ -213,10 +229,22 @@ register struct xray	*rp;
 	 */
 	VMOVE( norm, hitp->hit_normal );
 	MAT4X3VEC( hitp->hit_normal, submodel->subm2m, norm );
+#endif
 
 }
 
 /*
+ *			R T _ S U B M O D E L _ A _ M I S S
+ */
+int
+rt_submodel_a_miss( ap )
+struct application	*ap;
+{
+	return 0;
+}
+
+/*
+ *			R T _ S U B M O D E L _ A _ H I T
  */
 int
 rt_submodel_a_hit( ap, PartHeadp, segHeadp )
@@ -227,6 +255,7 @@ struct seg		*segHeadp;
 	register struct partition *pp;
 	register struct application	*oap =
 		(struct application *)ap->a_uptr;
+	struct seg		*segp;
 
 	RT_CK_PT_HD(PartHeadp);
 	RT_AP_CK(oap);
@@ -234,10 +263,12 @@ struct seg		*segHeadp;
 
 	/* Steal & xform the segment list */
 	while( BU_LIST_NON_EMPTY( &(segHeadp->l) ) ) {
-		segp = BU_LIST_FIRST( seg, &(in_hd->l) );
+		segp = BU_LIST_FIRST( seg, &(segHeadp->l) );
 		RT_CHECK_SEG(segp);
 		BU_LIST_DEQUEUE( &(segp->l) );
+#if 0
 		BU_LIST_INSERT( oap->a_finished_segs_p, &(segp->l) );
+#endif
 
 		/* Adjust for new start point & matrix scaling */
 		segp->seg_in.hit_dist = oap->a_ray.r_min +
@@ -256,7 +287,9 @@ struct seg		*segHeadp;
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )  {
 		RT_CK_PT(pp);
 		DEQUEUE_PT(pp);
+#if 0
 		INSERT_PT( pp, oap->a_Final_Part_p );
+#endif
 	}
 	return 1;
 }
@@ -290,9 +323,9 @@ struct seg		*seghead;
 
 	nap = *ap;		/* struct copy */
 	nap.a_rt_i = submodel->rtip;
-	nap.a_hit = rt_submodel_hit;
-	nap.a_miss = rt_submodel_miss;
-	nap.a_user = (genptr)ap;
+	nap.a_hit = rt_submodel_a_hit;
+	nap.a_miss = rt_submodel_a_miss;
+	nap.a_uptr = (genptr_t)ap;
 	nap.a_dist = submodel->m2subm[15];	/* scale, local to world */
 
 	/* shootray already computed a_ray.r_min & r_max for us */
@@ -400,7 +433,9 @@ register struct soltab *stp;
 	register struct submodel_specific *submodel =
 		(struct submodel_specific *)stp->st_specific;
 
-	rt_free( (char *)submodel, "submodel_specific" );
+	rt_free_rti( submodel->rtip );
+
+	bu_free( (genptr_t)submodel, "submodel_specific" );
 }
 
 /*
@@ -415,23 +450,128 @@ CONST struct bn_tol    *tol;
 	return RT_CLASSIFY_UNIMPLEMENTED;
 }
 
+struct goodies {
+	struct db_i	*dbip;
+	struct bu_list	*vheadp;
+};
+
+/*
+ *			R T _ S U B M O D E L _ W I R E F R A M E _ L E A F
+ *
+ *  This routine must be prepared to run in parallel.
+ *  This routine should be generally exported for other uses.
+ */
+HIDDEN union tree *rt_submodel_wireframe_leaf( tsp, pathp, ep, id )
+struct db_tree_state	*tsp;
+struct db_full_path	*pathp;
+struct bu_external	*ep;
+int			id;
+{
+	struct rt_db_internal	intern;
+	union tree	*curtree;
+	struct goodies	*gp;
+
+	RT_CK_TESS_TOL(tsp->ts_ttol);
+	BN_CK_TOL(tsp->ts_tol);
+
+	gp = (struct goodies *)tsp->ts_m;	/* hack */
+	RT_CK_DBI(gp->dbip);
+
+	/* NON-PARALLEL access to vlist pointed to by vheadp is not semaphored */
+	if(bu_is_parallel()) bu_bomb("rt_submodel_wireframe_leaf() non-parallel code\n");
+
+	if(rt_g.debug&DEBUG_TREEWALK)  {
+		char	*sofar = db_path_to_string(pathp);
+
+		bu_log("rt_submodel_wireframe_leaf(%s) path=%s\n",
+			rt_functab[id].ft_name, sofar );
+		bu_free((genptr_t)sofar, "path string");
+	}
+
+    	RT_INIT_DB_INTERNAL(&intern);
+	if( rt_functab[id].ft_import( &intern, ep, tsp->ts_mat, gp->dbip ) < 0 )  {
+		bu_log("rt_submodel_wireframe_leaf(%s): %s solid import failure\n",
+			rt_functab[id].ft_name,
+			DB_FULL_PATH_CUR_DIR(pathp)->d_namep );
+
+		if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
+		return(TREE_NULL);		/* ERROR */
+	}
+	RT_CK_DB_INTERNAL( &intern );
+
+	if( rt_functab[id].ft_plot(
+	    gp->vheadp,
+	    &intern,
+	    tsp->ts_ttol, tsp->ts_tol ) < 0 )  {
+		bu_log("rt_submodel_wireframe_leaf(%s): %s plot failure\n",
+			rt_functab[id].ft_name,
+			DB_FULL_PATH_CUR_DIR(pathp)->d_namep );
+
+		rt_functab[id].ft_ifree( &intern );
+		return(TREE_NULL);		/* ERROR */
+	}
+
+	rt_functab[id].ft_ifree( &intern );
+
+	/* Indicate success by returning something other than TREE_NULL */
+	BU_GETUNION( curtree, tree );
+	curtree->magic = RT_TREE_MAGIC;
+	curtree->tr_op = OP_NOP;
+
+	return( curtree );
+}
+
 /*
  *			R T _ S U B M O D E L _ P L O T
+ *
+ *  Not unlike mged/dodraw.c drawtrees()
  */
 int
 rt_submodel_plot( vhead, ip, ttol, tol )
-struct rt_list		*vhead;
+struct bu_list		*vhead;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-CONST struct rt_tol	*tol;
+CONST struct bn_tol	*tol;
 {
 	LOCAL struct rt_submodel_internal	*sip;
+	struct db_tree_state	state;
+	struct db_i		*dbip;
+	int			ret;
+	char			*argv[2];
+	struct goodies		good;
 
 	RT_CK_DB_INTERNAL(ip);
 	sip = (struct rt_submodel_internal *)ip->idb_ptr;
 	RT_SUBMODEL_CK_MAGIC(sip);
 
-	return(-1);
+	BU_LIST_INIT( vhead );
+
+	state = rt_initial_tree_state;	/* struct copy */
+	state.ts_ttol = ttol;
+	state.ts_tol = tol;
+
+	state.ts_m = (struct model **)&good;	/* hack */
+	good.vheadp = vhead;
+
+	/* Any good way to cache good.dbip's ? */
+	if( (good.dbip = db_open( sip->file, "r" )) == DBI_NULL )
+		return -1;
+	if( db_scan( good.dbip, (int (*)())db_diradd, 1 ) < 0 )  {
+		db_close(good.dbip);
+		return -1;
+	}
+
+	argv[0] = sip->treetop;
+	argv[1] = NULL;
+	ret = db_walk_tree( good.dbip, 1, (CONST char **)argv,
+		1,
+		&state,
+		0,			/* take all regions */
+		NULL,			/* rt_submodel_wireframe_region_end */
+		rt_submodel_wireframe_leaf );
+
+	db_close(good.dbip);
+	return ret;
 }
 
 /*
@@ -473,22 +613,39 @@ CONST struct db_i		*dbip;
 {
 	LOCAL struct rt_submodel_internal	*sip;
 	union record			*rp;
+	struct bu_vls		str;
 
 	RT_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
 	/* Check record type */
-	if( rp->u_id != ID_SOLID )  {
-		rt_log("rt_submodel_import: defective record\n");
+	if( rp->u_id != DBID_STRSOL )  {
+		rt_log("rt_submodel_import: defective strsol record\n");
 		return(-1);
 	}
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_SUBMODEL;
-	ip->idb_ptr = rt_malloc( sizeof(struct rt_submodel_internal), "rt_submodel_internal");
+	ip->idb_ptr = bu_malloc( sizeof(struct rt_submodel_internal), "rt_submodel_internal");
 	sip = (struct rt_submodel_internal *)ip->idb_ptr;
 	sip->magic = RT_SUBMODEL_INTERNAL_MAGIC;
 
-	MAT4X3PNT( sip->submodel_V, mat, &rp->s.s_values[0] );
+	bu_vls_init( &str );
+	bu_vls_strcpy( &str, rp->ss.ss_args );
+	if( bu_struct_parse( &str, rt_submodel_parse, (char *)sip ) < 0 )  {
+		bu_vls_free( &str );
+fail:
+		rt_free( (char *)sip , "rt_submodel_import: sip" );
+		ip->idb_type = ID_NULL;
+		ip->idb_ptr = (genptr_t)NULL;
+		return -2;
+	}
+	bu_vls_free( &str );
+
+	/* Check for reasonable values */
+	if( sip->treetop[0] == '\0' )  {
+		bu_log("rt_submodel_import() treetop= must be specified\n");
+		goto fail;
+	}
 
 	return(0);			/* OK */
 }
@@ -513,6 +670,9 @@ CONST struct db_i		*dbip;
 	sip = (struct rt_submodel_internal *)ip->idb_ptr;
 	RT_SUBMODEL_CK_MAGIC(sip);
 
+bu_bomb("rt_submodel_export()\n");
+
+#if 0
 	RT_INIT_EXTERNAL(ep);
 	ep->ext_nbytes = sizeof(union record);
 	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "submodel external");
@@ -534,6 +694,7 @@ CONST struct db_i		*dbip;
 	 */
 	VSCALE( &rec->s.s_values[0], sip->submodel_V, local2mm );
 	rec->s.s_values[3] = sip->submodel_radius * local2mm;
+#endif
 
 	return(0);
 }
@@ -547,23 +708,21 @@ CONST struct db_i		*dbip;
  */
 int
 rt_submodel_describe( str, ip, verbose, mm2local )
-struct rt_vls		*str;
+struct bu_vls		*str;
 CONST struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {
 	register struct rt_submodel_internal	*sip =
 		(struct rt_submodel_internal *)ip->idb_ptr;
-	char	buf[256];
 
 	RT_SUBMODEL_CK_MAGIC(sip);
-	rt_vls_strcat( str, "truncated general submodel (SUBMODEL)\n");
+	rt_vls_strcat( str, "instanced submodel (SUBMODEL)\n");
 
-	sprintf(buf, "\tV (%g, %g, %g)\n",
-		sip->v[X] * mm2local,
-		sip->v[Y] * mm2local,
-		sip->v[Z] * mm2local );
-	rt_vls_strcat( str, buf );
+	bu_vls_printf(str, "\tfile='%s', treetop='%s', meth=%d\n",
+		sip->file,
+		sip->treetop,
+		sip->meth );
 
 	return(0);
 }
@@ -584,6 +743,6 @@ struct rt_db_internal	*ip;
 	RT_SUBMODEL_CK_MAGIC(sip);
 	sip->magic = 0;			/* sanity */
 
-	rt_free( (char *)sip, "submodel ifree" );
+	bu_free( (genptr_t)sip, "submodel ifree" );
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
