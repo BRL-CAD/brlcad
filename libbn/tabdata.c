@@ -380,6 +380,8 @@ CONST struct rt_tabdata	*in2;
 
 	RT_CK_TABDATA(in1);
 	RT_CK_TABDATA(in2);
+	tabp = in1->table;
+	RT_CK_TABLE(tabp);
 
 	area = 0;
 	for( j = in1->ny-1; j >= 0; j-- )  {
