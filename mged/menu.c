@@ -26,25 +26,79 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "conf.h"
 
+#include "tcl.h"
+
 #include <stdio.h>
 #include "machine.h"
 #include "externs.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "rtstring.h"
 #include "./ged.h"
 #include "./titles.h"
 #include "./menu.h"
 #include "./dm.h"
 
+#include "./mgedtcl.h"
+
 int	menuflag;	/* flag indicating if a menu item is selected */
 struct menu_item *menu_array[NMENU];	/* base of array of menu items */
 
 static int	menu_top;	/* screen loc of the first menu item */
-static int	cur_menu;	/* index of selected menu in list */
-static int	cur_item;	/* index of selected item in menu */
+int	cur_menu;	/* index of selected menu in list */
+int	cur_item;	/* index of selected item in menu */
 
 void set_menucurrent();
 int set_arrowloc();
+
+
+int
+cmd_mmenu_get(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+    int index;
+    
+    if (argc > 2) {
+	Tcl_SetResult(interp, "wrong # args: must be \"mmenu_get ?index?\"",
+		      TCL_STATIC);
+	return TCL_ERROR;
+    }
+
+    if (argc == 2) {
+	register struct menu_item **m, *mptr;
+
+	if (Tcl_GetInt(interp, argv[1], &index) != TCL_OK)
+	    return TCL_ERROR;
+
+	if (index < 0 || index > NMENU) {
+	    Tcl_SetResult(interp, "index out of range", TCL_STATIC);
+	    return TCL_ERROR;
+	}
+
+	m = menu_array+index;
+	if (*m == MENU_NULL)
+	    return TCL_OK;
+
+	for (mptr = *m; mptr->menu_string[0] != '\0'; mptr++)
+	    Tcl_AppendElement(interp, mptr->menu_string);
+    } else {
+	register struct menu_item **m;
+	struct rt_vls result;
+
+	rt_vls_init(&result);
+	rt_vls_strcat(&result, "list");
+	for (m = menu_array; m - menu_array < NMENU; m++)
+	    rt_vls_printf(&result, " [%s %d]", argv[0], m-menu_array);
+
+	return Tcl_Eval(interp, rt_vls_addr(&result));
+    }
+
+    return TCL_OK;
+}
+
 
 /*
  *			M M E N U _ I N I T
@@ -58,7 +112,12 @@ mmenu_init()
 	menu_array[MENU_L1] = MENU_NULL;
 	menu_array[MENU_L2] = MENU_NULL;
 	menu_array[MENU_GEN] = MENU_NULL;
+	(void)Tcl_CreateCommand(interp, "mmenu_set", cmd_nop, (ClientData)NULL,
+				(Tcl_CmdDeleteProc *)NULL);
+	(void)Tcl_CreateCommand(interp, "mmenu_get", cmd_mmenu_get,
+				(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 }
+
 
 /*
  *			M M E N U _ S E T
@@ -69,7 +128,28 @@ mmenu_set( index, value )
 int index;
 struct menu_item *value;
 {
-	menu_array[index] = value;
+    Tcl_DString ds_menu;
+    struct rt_vls menu_string;
+
+    menu_array[index] = value;  /* Change the menu internally */
+
+    rt_vls_init(&menu_string);
+    Tcl_DStringInit(&ds_menu);
+
+    rt_vls_printf(&menu_string, "mmenu_set %d ", index);
+
+    Tcl_DStringStartSublist(&ds_menu);
+    if (value != MENU_NULL)
+	for (; value->menu_string[0] != '\0'; value++)
+	    (void)Tcl_DStringAppendElement(&ds_menu, value->menu_string);
+    Tcl_DStringEndSublist(&ds_menu);
+
+    rt_vls_strcat(&menu_string, Tcl_DStringValue(&ds_menu));
+    (void)Tcl_Eval(interp, rt_vls_addr(&menu_string));
+
+    Tcl_DStringFree(&ds_menu);
+    rt_vls_free(&menu_string);
+
 }
 
 /*
