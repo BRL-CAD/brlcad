@@ -239,7 +239,7 @@ bu_alloc(alloc_t type, unsigned int cnt, unsigned int sz, const char *str)
 	    ptr = calloc(cnt, sz);
 #else
 	    ptr = malloc(size);
-	    bzero(ptr);
+	    bzero(ptr, size);
 #endif
 	    break;
 	  default:
