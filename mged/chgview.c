@@ -317,12 +317,23 @@ register struct directory *dp;
 	/* Combination */
 	(void)printf("%s (len %d) ", dp->d_namep, dp->d_len-1 );
 	if( record.c.c_flags == 'R' )
-		(void)printf("REGION id=%d (air=%d, mat=%d, los=%d) ",
+		(void)printf("REGION id=%d  (air=%d, los=%d, GIFTmater=%d) ",
 			record.c.c_regionid,
 			record.c.c_aircode,
-			record.c.c_material,
-			record.c.c_los );
+			record.c.c_los,
+			record.c.c_material );
 	(void)printf("--\n");
+	if( record.c.c_matname[0] )  {
+		(void)printf("MATERIAL: %s", record.c.c_matname);
+		if( record.c.c_matparm[0] )
+			(void)printf(" %s", record.c.c_matparm);
+		if( record.c.c_override )
+			(void)printf(" color=%d %d %d",
+				record.c.c_rgb[0],
+				record.c.c_rgb[1],
+				record.c.c_rgb[2]);
+		(void)printf("\n");
+	}
 
 	for( i=1; i < dp->d_len; i++ )  {
 		db_getrec( dp, &record, i );
