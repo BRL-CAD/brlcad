@@ -969,11 +969,22 @@ struct faceuse	*fu;
 	if (rt_mk_plane_3pts(plane,
 	    eu->vu_p->v_p->vg_p->coord,
 	    eu->last->vu_p->v_p->vg_p->coord,
-	    eu->next->vu_p->v_p->vg_p->coord)) {
-		rt_log("rt_mk_nmg_planeeqn(): rt_mk_plane_3pts failed\n");
+	    eu->next->vu_p->v_p->vg_p->coord) < 0 ) {
+		rt_log("rt_mk_nmg_planeeqn(): rt_mk_plane_3pts failed on (%g,%g,%g) (%g,%g,%g) (%g,%g,%g)\n",
+		    eu->vu_p->v_p->vg_p->coord[X],
+		    eu->vu_p->v_p->vg_p->coord[Y],
+		    eu->vu_p->v_p->vg_p->coord[Z],
+		    eu->last->vu_p->v_p->vg_p->coord[X],
+		    eu->last->vu_p->v_p->vg_p->coord[Y],
+		    eu->last->vu_p->v_p->vg_p->coord[Z],
+		    eu->next->vu_p->v_p->vg_p->coord[X],
+		    eu->next->vu_p->v_p->vg_p->coord[Y],
+		    eu->next->vu_p->v_p->vg_p->coord[Z] );
+	    	HPRINT("plane", plane);
 	}
 	else if (plane[0] == 0.0 && plane[1] == 0.0 && plane[2] == 0.0) {
 		rt_log("rt_mk_nmg_planeeqn():  Bad plane equation from rt_mk_plane_3pts\n" );
+	    	HPRINT("plane", plane);
 	}
 	else nmg_face_g( fu, plane);
 }
