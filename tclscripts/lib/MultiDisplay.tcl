@@ -26,13 +26,14 @@ class MultiDisplay {
     private variable dm_big_size ""
     private variable dm_small_size ""
     private variable initializing 1
+    private variable priv_multi_mode 0
     protected variable ul ""
     protected variable ur ""
     protected variable ll ""
     protected variable lr ""
     public variable pane ur
     public variable parent ""
-    public variable multi_mode 1
+    public variable multi_mode 0
     public variable size ""
     public variable type X
 
@@ -72,10 +73,10 @@ class MultiDisplay {
 	}
 
 	# create Display objects
-	set ul [Display #auto -type $type -dm_size $dmsize -dm_name $parent.ul -istoplevel 0]
-	set ur [Display #auto -type $type -dm_size $dmsize -dm_name $parent.ur -istoplevel 0]
-	set ll [Display #auto -type $type -dm_size $dmsize -dm_name $parent.ll -istoplevel 0]
-	set lr [Display #auto -type $type -dm_size $dmsize -dm_name $parent.lr -istoplevel 0]
+	set ul [Display #auto {} [list -type $type -Dm::size $dmsize -name $parent.ul -istoplevel 0]]
+	set ur [Display #auto {} [list -type $type -Dm::size $dmsize -name $parent.ur -istoplevel 0]]
+	set ll [Display #auto {} [list -type $type -Dm::size $dmsize -name $parent.ll -istoplevel 0]]
+	set lr [Display #auto {} [list -type $type -Dm::size $dmsize -name $parent.lr -istoplevel 0]]
 
 	# put each display manager window in a frame 
 	grid $parent.ul -in $parent.ulf -sticky nsew
@@ -96,14 +97,17 @@ class MultiDisplay {
 	    grid $parent.urf -row 0 -col 1 -sticky nsew
 	    grid $parent.llf -row 1 -col 0 -sticky nsew
 	    grid $parent.lrf -row 1 -col 1 -sticky nsew
+	    grid rowconfigure $parent 0 -weight 1
+	    grid columnconfigure $parent 0 -weight 1
+	    grid rowconfigure $parent 1 -weight 1
+	    grid columnconfigure $parent 1 -weight 1
 	} else {
 	    grid $parent.[subst $pane]f -row 0 -col 0 -sticky nsew
+	    grid rowconfigure $parent 0 -weight 1
+	    grid columnconfigure $parent 0 -weight 1
+	    grid rowconfigure $parent 1 -weight 0
+	    grid columnconfigure $parent 1 -weight 0
 	}
-
-	grid rowconfigure $parent 0 -weight 1
-	grid rowconfigure $parent 1 -weight 1
-	grid columnconfigure $parent 0 -weight 1
-	grid columnconfigure $parent 1 -weight 1
 
 	# initialize the views
 	$ul aet 0 90 0
@@ -128,32 +132,32 @@ class MultiDisplay {
 	}
     }
 
-    method pane {args}
-    method multi_mode {val}
-    method toggle_multi_mode {}
+    public method pane {args}
+    public method multi_mode {val}
+    public method toggle_multi_mode {}
 
     # methods for controlling the view object
-    method aet {args}
-    method center {args}
-    method rot {args}
-    method slew {args}
-    method tra {args}
-    method size {args}
-    method scale {args}
-    method zoom {sf}
-    method autoview {}
+    public method aet {args}
+    public method center {args}
+    public method rot {args}
+    public method slew {args}
+    public method tra {args}
+    public method size {args}
+    public method scale {args}
+    public method zoom {sf}
+    public method autoview {}
 
-    method add {glist}
-    method remove {glist}
-    method contents {}
+    public method add {glist}
+    public method remove {glist}
+    public method contents {}
 
-    method listen {args}
-    method fb_active {args}
-    method fb_update {args}
-    method rt {args}
+    public method listen {args}
+    public method fb_active {args}
+    public method fb_update {args}
+    public method rt {args}
 
-    method dm_size {args}
-    method dm_name {}
+    public method dm_size {args}
+    public method dm_name {}
 
     private method doBindings {}
     private method handle_configure {}
@@ -170,7 +174,11 @@ configbody MultiDisplay::parent {
 }
 
 configbody MultiDisplay::multi_mode {
-    multi_mode $multi_mode
+    if {$initializing} {
+	set priv_multi_mode $multi_mode
+    } else {
+	multi_mode $multi_mode
+    }
 }
 
 configbody MultiDisplay::size {
@@ -206,6 +214,8 @@ body MultiDisplay::pane {args} {
 	return -code error "pane: too many arguments"
     }
 
+    set prev_pane $pane
+
     # set the active pane
     switch $args {
 	ul -
@@ -218,11 +228,24 @@ body MultiDisplay::pane {args} {
 	    return -code error "pane: bad value - $args"
 	}
     }
+
+    if {!$initializing && $multi_mode == 0} {
+	# remove previous pane
+	grid forget $parent.[subst $prev_pane]f
+
+	# size current pane
+	eval [subst $[subst $pane]] Dm::size $dm_big_size
+
+	# reduces flashing by resizing before being packed
+	update
+
+	grid $parent.[subst $pane]f -row 0 -col 0 -sticky nsew
+    }
 }
 
 body MultiDisplay::multi_mode {val} {
     # nothing to do
-    if {$val == $multi_mode} {
+    if {$val == $priv_multi_mode} {
 	return
     }
 
@@ -238,22 +261,26 @@ body MultiDisplay::multi_mode {val} {
 }
 
 body MultiDisplay::toggle_multi_mode {} {
-    if {$multi_mode} {
+    if {$priv_multi_mode} {
 	set multi_mode 0
+	set priv_multi_mode 0
 	grid forget $parent.ulf $parent.urf $parent.llf $parent.lrf
-	eval [subst $[subst $pane]] dm_size $dm_big_size
+	eval [subst $[subst $pane]] Dm::size $dm_big_size
 
 	# reduces flashing by resizing before being packed
 	update
 
 	grid $parent.[subst $pane]f -row 0 -col 0 -sticky nsew
+	grid rowconfigure $parent 1 -weight 0
+	grid columnconfigure $parent 1 -weight 0
     } else {
 	set multi_mode 1
+	set priv_multi_mode 1
 	grid forget $parent.[subst $pane]f
-	eval $ul dm_size $dm_small_size
-	eval $ur dm_size $dm_small_size
-	eval $ll dm_size $dm_small_size
-	eval $lr dm_size $dm_small_size
+	eval $ul Dm::size $dm_small_size
+	eval $ur Dm::size $dm_small_size
+	eval $ll Dm::size $dm_small_size
+	eval $lr Dm::size $dm_small_size
 
 	# reduces flashing by resizing before being packed
 	update
@@ -262,6 +289,8 @@ body MultiDisplay::toggle_multi_mode {} {
 	grid $parent.urf -row 0 -col 1 -sticky nsew
 	grid $parent.llf -row 1 -col 0 -sticky nsew
 	grid $parent.lrf -row 1 -col 1 -sticky nsew
+	grid rowconfigure $parent 1 -weight 1
+	grid columnconfigure $parent 1 -weight 1
     }
 }
 
@@ -330,11 +359,11 @@ body MultiDisplay::rt {args} {
 }
 
 body MultiDisplay::dm_size {args} {
-    eval [subst $[subst $pane]] dm_size $args
+    eval [subst $[subst $pane]] Dm::size $args
 }
 
 body MultiDisplay::dm_name {} {
-    eval [subst $[subst $pane]] dm_name
+    eval [subst $[subst $pane]] Dm::name
 }
 
 body MultiDisplay::doBindings {} {
