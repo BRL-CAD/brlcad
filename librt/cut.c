@@ -768,8 +768,9 @@ double			where;
  */
 HIDDEN int
 rt_ck_overlap( min, max, stp )
-register vect_t min, max;
-register struct soltab *stp;
+register CONST vect_t	min;
+register CONST vect_t	max;
+register CONST struct soltab *stp;
 {
 	RT_CHECK_SOLTAB(stp);
 	if( rt_g.debug&DEBUG_BOXING )  {
