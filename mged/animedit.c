@@ -36,7 +36,6 @@ static const char RCSid[] = "@(#)$Header$";
 #include "bn.h"
 #include "raytrace.h"
 #include "rtgeom.h"
-#include "rtlex.h"
 #include "./ged.h"
 #include "./mged_solid.h"
 #include "./joints.h"
@@ -102,7 +101,7 @@ static struct funtab joint_tab[] = {
 	f_jsave, 2, 2, FALSE},
 {"solve", "constraint", "Solve a or all constraints",
 	f_jsolve, 1, MAXARGS, FALSE},
-{"test", "file_name", "test use of rtlex routine.",
+{"test", "file_name", "test use of bu_lex routine.",
 	f_jtest, 2, 2, FALSE},
 {"unload", "", "Unload any joint/constrants that have been loaded",
 	f_junload, 1,1, FALSE},
@@ -528,7 +527,7 @@ char **argv;
 #define KEY_INF		22
 #define KEY_VERTEX	23
 
-static struct rt_lex_key keys[] = {
+static struct bu_lex_key keys[] = {
 	{KEY_JOINT, "joint"},
 	{KEY_CON,   "constraint"},
 	{KEY_ARC,   "arc"},
@@ -560,7 +559,7 @@ static struct rt_lex_key keys[] = {
 #define UNIT_CM		4
 #define UNIT_MM		5
 
-static struct rt_lex_key units[] = {
+static struct bu_lex_key units[] = {
 	{UNIT_INCH,	"inches"},
 	{UNIT_INCH,	"in"},
 	{UNIT_METER,	"m"},
@@ -572,7 +571,7 @@ static struct rt_lex_key units[] = {
 	{0,0}};
 
 #define ID_FIXED	-1
-static struct rt_lex_key lex_solids[] = {
+static struct bu_lex_key lex_solids[] = {
 	{ID_FIXED,	"fixed"},
 	{ID_GRIP,	"grip"},
 	{ID_SPH,	"sphere"},
@@ -590,7 +589,7 @@ static struct rt_lex_key lex_solids[] = {
 #define SYM_MINUS	9
 #define SYM_PLUS	10
 
-static struct rt_lex_key syms[] = {
+static struct bu_lex_key syms[] = {
 	{SYM_OP_GROUP,	"{"},
 	{SYM_CL_GROUP,	"}"},
 	{SYM_OP_PT,	"("},
@@ -645,15 +644,15 @@ char *error;
 
 int
 get_token(token, fip, str, keys, syms)
-union rt_lex_token *token;
+union bu_lex_token *token;
 FILE *fip;
 struct bu_vls *str;
-struct rt_lex_key *keys;
-struct rt_lex_key *syms;
+struct bu_lex_key *keys;
+struct bu_lex_key *syms;
 {
   int	used;
   for (;;) {
-    used = rt_lex(token, str, keys, syms);
+    used = bu_lex(token, str, keys, syms);
     if (used) break;
     bu_vls_free(str);
     lex_line++;
@@ -670,23 +669,23 @@ struct rt_lex_key *syms;
     if (joint_debug & DEBUG_J_LEX) {
 		register int i;
 		switch (token->type) {
-		case RT_LEX_KEYWORD:
+		case BU_LEX_KEYWORD:
 			for (i=0; keys[i].tok_val != token->t_key.value; i++);
 			bu_vls_printf(&tmp_vls,"lex: key(%d)='%s'\n", token->t_key.value,
 			    keys[i].string);
 			break;
-		case RT_LEX_SYMBOL:
+		case BU_LEX_SYMBOL:
 			for (i=0; syms[i].tok_val != token->t_key.value; i++);
 			bu_vls_printf(&tmp_vls,"lex: symbol(%d)='%c'\n", token->t_key.value,
 			    *(syms[i].string));
 			break;
-		case RT_LEX_DOUBLE:
+		case BU_LEX_DOUBLE:
 			bu_vls_printf(&tmp_vls,"lex: double(%g)\n", token->t_dbl.value);
 			break;
-		case RT_LEX_INT:
+		case BU_LEX_INT:
 			bu_vls_printf(&tmp_vls,"lex: int(%d)\n", token->t_int.value);
 			break;
-		case RT_LEX_IDENT:
+		case BU_LEX_IDENT:
 			bu_vls_printf(&tmp_vls,"lex: id(%s)\n", token->t_id.value);
 			break;
 		}
@@ -713,7 +712,7 @@ struct bu_vls *str;
 		"keyword",
 		"identifier",
 		"number"};
-	union rt_lex_token token;
+	union bu_lex_token token;
 	char error[160];
 
 	if (get_token(&token, fip, str, keys, syms) == EOF) {
@@ -723,25 +722,25 @@ struct bu_vls *str;
 		return 0;
 	}
 
-	if (token.type == RT_LEX_IDENT) bu_free(token.t_id.value, "unit token");
+	if (token.type == BU_LEX_IDENT) bu_free(token.t_id.value, "unit token");
 
 	switch (type_wanted) {
-	case RT_LEX_ANY:
+	case BU_LEX_ANY:
 		 return 1;
-	case RT_LEX_INT:
-		return (token.type == RT_LEX_INT);
-	case RT_LEX_DOUBLE:
-		return (token.type == RT_LEX_DOUBLE);
-	case RT_LEX_NUMBER:
-		return (token.type == RT_LEX_INT || token.type == RT_LEX_DOUBLE);
-	case RT_LEX_SYMBOL:
-		return (token.type == RT_LEX_SYMBOL &&
+	case BU_LEX_INT:
+		return (token.type == BU_LEX_INT);
+	case BU_LEX_DOUBLE:
+		return (token.type == BU_LEX_DOUBLE);
+	case BU_LEX_NUMBER:
+		return (token.type == BU_LEX_INT || token.type == BU_LEX_DOUBLE);
+	case BU_LEX_SYMBOL:
+		return (token.type == BU_LEX_SYMBOL &&
 		    value_wanted == token.t_key.value);
-	case RT_LEX_KEYWORD:
-		return (token.type == RT_LEX_KEYWORD &&
+	case BU_LEX_KEYWORD:
+		return (token.type == BU_LEX_KEYWORD &&
 		    value_wanted == token.t_key.value);
-	case RT_LEX_IDENT:
-		return (token.type == RT_LEX_IDENT);
+	case BU_LEX_IDENT:
+		return (token.type == BU_LEX_IDENT);
 	}
 	return 0;
 }
@@ -750,7 +749,7 @@ skip_group(fip, str)
 FILE * fip;
 struct bu_vls *str;
 {
-	union rt_lex_token tok;
+	union bu_lex_token tok;
 	int count = 1;
 	if (joint_debug & DEBUG_J_PARSE) {
 	  Tcl_AppendResult(interp, "skip_group: Skipping....\n", (char *)NULL);
@@ -761,8 +760,8 @@ struct bu_vls *str;
 			parse_error(str,"skip_group: Unexpect EOF while searching for group end.");
 			return;
 		}
-		if (tok.type == RT_LEX_IDENT) bu_free(tok.t_id.value, "unit token");
-		if (tok.type != RT_LEX_SYMBOL) continue;
+		if (tok.type == BU_LEX_IDENT) bu_free(tok.t_id.value, "unit token");
+		if (tok.type != BU_LEX_SYMBOL) continue;
 		if (tok.t_key.value == SYM_OP_GROUP) {
 			count++;
 		} else if (tok.t_key.value == SYM_CL_GROUP) {
@@ -779,14 +778,14 @@ parse_units(fip, str)
 FILE *fip;
 struct bu_vls *str;
 {
-	union rt_lex_token token;
+	union bu_lex_token token;
 
 	if (get_token(&token,fip, str, units, syms) == EOF) {
 		parse_error(str, "parse_units: Unexpect EOF reading units.");
 		return 0;
 	}
-	if (token.type == RT_LEX_IDENT) bu_free(token.t_id.value, "unit token");
-	if (token.type != RT_LEX_KEYWORD) {
+	if (token.type == BU_LEX_IDENT) bu_free(token.t_id.value, "unit token");
+	if (token.type != BU_LEX_KEYWORD) {
 		parse_error(str, "parse_units: syntax error getting unit type.");
 		return 0;
 	}
@@ -804,7 +803,7 @@ struct bu_vls *str;
 		base2mm = 1; break;
 	}
 	mm2base = 1.0 / base2mm;
-	(void) gobble_token(RT_LEX_SYMBOL, SYM_END, fip,str);
+	(void) gobble_token(BU_LEX_SYMBOL, SYM_END, fip,str);
 	return 1;
 }
 static int
@@ -813,7 +812,7 @@ struct arc *ap;
 FILE *fip;
 struct bu_vls *str;
 {
-	union rt_lex_token token;
+	union bu_lex_token token;
 	int max;
 
 	if (joint_debug & DEBUG_J_PARSE) {
@@ -823,18 +822,18 @@ struct bu_vls *str;
  	 * clear the arc if there is anything there.
 	 */
 	free_arc(ap);
-	if (!gobble_token(RT_LEX_SYMBOL, SYM_EQ, fip, str)) return 0;
+	if (!gobble_token(BU_LEX_SYMBOL, SYM_EQ, fip, str)) return 0;
 	max = 32;
 	ap->arc = (char **)bu_malloc(sizeof(char *)*max, "arc table");
 	ap->arc_last = -1;
 	ap->type = ARC_PATH;
 	for (;;) {
-		if (get_token(&token, fip, str, (struct rt_lex_key *)NULL, syms) == EOF) {
+		if (get_token(&token, fip, str, (struct bu_lex_key *)NULL, syms) == EOF) {
 			parse_error(str,"parse_path: Unexpect EOF.");
 			free_arc(ap);
 			return 0;
 		}
-		if (token.type != RT_LEX_IDENT) {
+		if (token.type != BU_LEX_IDENT) {
 			parse_error(str,"parse_path: syntax error. Missing identifier.");
 			free_arc(ap);
 			return 0;
@@ -845,13 +844,13 @@ struct bu_vls *str;
 			    sizeof(char *)*max, "arc table");
 		}
 		ap->arc[ap->arc_last] = token.t_id.value;
-		if (get_token(&token, fip, str, (struct rt_lex_key *)NULL, syms) == EOF) {
+		if (get_token(&token, fip, str, (struct bu_lex_key *)NULL, syms) == EOF) {
 			parse_error(str, "parse_path: Unexpect EOF while getting '/' or '-'");
 			free_arc(ap);
 			return 0;
 		}
-		if (token.type == RT_LEX_IDENT) bu_free(token.t_id.value, "unit token");
-		if (token.type != RT_LEX_SYMBOL) {
+		if (token.type == BU_LEX_IDENT) bu_free(token.t_id.value, "unit token");
+		if (token.type != BU_LEX_SYMBOL) {
 			parse_error(str, "parse_path: syntax error.");
 			free_arc(ap);
 			return 0;
@@ -869,17 +868,17 @@ struct bu_vls *str;
 	/*
 	 * Just got the '-' so this is the "destination" part.
 	 */
-	if (get_token(&token, fip, str, (struct rt_lex_key *)NULL, syms) == EOF) {
+	if (get_token(&token, fip, str, (struct bu_lex_key *)NULL, syms) == EOF) {
 		parse_error(str,"parse_path: Unexpected EOF while getting destination.");
 		free_arc(ap);
 		return 0;
 	}
-	if (token.type != RT_LEX_IDENT) {
+	if (token.type != BU_LEX_IDENT) {
 		parse_error(str,"parse_path: syntax error, expecting destination.");
 		free_arc(ap);
 		return 0;
 	}
-	if (!gobble_token(RT_LEX_SYMBOL, SYM_END, fip, str)) {
+	if (!gobble_token(BU_LEX_SYMBOL, SYM_END, fip, str)) {
 		free_arc(ap);
 		return 0;
 	}
@@ -891,7 +890,7 @@ struct arc *ap;
 FILE *fip;
 struct bu_vls *str;
 {
-	union rt_lex_token token;
+	union bu_lex_token token;
 	int max;
 
 	if (joint_debug & DEBUG_J_PARSE) {
@@ -902,18 +901,18 @@ struct bu_vls *str;
 	 */
 	free_arc(ap);
 
-	if (!gobble_token(RT_LEX_SYMBOL, SYM_EQ, fip, str)) return 0;
+	if (!gobble_token(BU_LEX_SYMBOL, SYM_EQ, fip, str)) return 0;
 	max = 32;
 	ap->arc = (char **)bu_malloc(sizeof(char *)*max, "arc table");
 	ap->arc_last = -1;
 	ap->type = ARC_LIST;
 	for (;;) {
-		if (get_token(&token, fip, str, (struct rt_lex_key *)NULL, syms) == EOF) {
+		if (get_token(&token, fip, str, (struct bu_lex_key *)NULL, syms) == EOF) {
 			parse_error(str,"parse_path: Unexpect EOF.");
 			free_arc(ap);
 			return 0;
 		}
-		if (token.type != RT_LEX_IDENT) {
+		if (token.type != BU_LEX_IDENT) {
 			parse_error(str,"parse_path: syntax error. Missing identifier.");
 			free_arc(ap);
 			return 0;
@@ -924,13 +923,13 @@ struct bu_vls *str;
 			    sizeof(char *)*max, "arc table");
 		}
 		ap->arc[ap->arc_last] = token.t_id.value;
-		if (get_token(&token, fip, str, (struct rt_lex_key *)NULL, syms) == EOF) {
+		if (get_token(&token, fip, str, (struct bu_lex_key *)NULL, syms) == EOF) {
 			parse_error(str, "parse_path: Unexpect EOF while getting ',' or ';'");
 			free_arc(ap);
 			return 0;
 		}
-		if (token.type == RT_LEX_IDENT) bu_free(token.t_id.value, "unit token");
-		if (token.type != RT_LEX_SYMBOL) {
+		if (token.type == BU_LEX_IDENT) bu_free(token.t_id.value, "unit token");
+		if (token.type != BU_LEX_SYMBOL) {
 			parse_error(str, "parse_path: syntax error.");
 			free_arc(ap);
 			return 0;
@@ -953,7 +952,7 @@ struct arc *ap;
 FILE *fip;
 struct bu_vls *str;
 {
-	union rt_lex_token token;
+	union bu_lex_token token;
 	int max;
 	char *error;
 
@@ -963,14 +962,14 @@ struct bu_vls *str;
 
 	free_arc(ap);
 	max = 32;
-	if (!gobble_token(RT_LEX_SYMBOL, SYM_EQ, fip, str)) return 0;
+	if (!gobble_token(BU_LEX_SYMBOL, SYM_EQ, fip, str)) return 0;
 
 	ap->arc = (char **) bu_malloc(sizeof(char *)*max, "arc table");
 	ap->arc_last = -1;
 
 	error = "parse_ARC: Unexpected EOF while getting arc.";
-	while (get_token(&token, fip, str, (struct rt_lex_key *)NULL, syms) != EOF) {
-		if (token.type != RT_LEX_IDENT) {
+	while (get_token(&token, fip, str, (struct bu_lex_key *)NULL, syms) != EOF) {
+		if (token.type != BU_LEX_IDENT) {
 			error = "parse_ARC: syntax error. Missing identifier.";
 			break;
 		}
@@ -980,12 +979,12 @@ struct bu_vls *str;
 			    sizeof(char *)*max, "arc table");
 		}
 		ap->arc[ap->arc_last] = token.t_id.value;
-		if (get_token(&token, fip, str, (struct rt_lex_key *)NULL, syms) == EOF) {
+		if (get_token(&token, fip, str, (struct bu_lex_key *)NULL, syms) == EOF) {
 			error = "parse_ARC: Unexpected EOF while getting '/' or ';'.";
 			break;
 		}
-		if (token.type != RT_LEX_SYMBOL) {
-			if (token.type == RT_LEX_IDENT) {
+		if (token.type != BU_LEX_SYMBOL) {
+			if (token.type == BU_LEX_IDENT) {
 				bu_free(token.t_id.value, "unit token");
 			}
 			error = "parse_ARC: syntax error.  Expected '/' or ';'";
@@ -1014,7 +1013,7 @@ double *dbl;
 FILE *fip;
 struct bu_vls *str;
 {
-	union rt_lex_token token;
+	union bu_lex_token token;
 	double sign;
 	sign = 1.0;
 
@@ -1026,20 +1025,20 @@ struct bu_vls *str;
 		parse_error(str, "parse_double: Unexpect EOF while getting number.");
 		return 0;
 	}
-	if (token.type == RT_LEX_SYMBOL && token.t_key.value == SYM_MINUS) {
+	if (token.type == BU_LEX_SYMBOL && token.t_key.value == SYM_MINUS) {
 		sign = -1;
 		if (get_token(&token, fip, str, keys, syms) == EOF) {
 			parse_error(str,"parse_double: Unexpect EOF while getting number.");
 			return 0;
 		}
 	}
-	if (token.type == RT_LEX_IDENT) bu_free(token.t_id.value, "unit token");
+	if (token.type == BU_LEX_IDENT) bu_free(token.t_id.value, "unit token");
 
-	if (token.type == RT_LEX_INT) {
+	if (token.type == BU_LEX_INT) {
 		*dbl = token.t_int.value * sign;
-	} else if (token.type == RT_LEX_DOUBLE) {
+	} else if (token.type == BU_LEX_DOUBLE) {
 		*dbl = token.t_dbl.value * sign;
-	} else if (token.type == RT_LEX_KEYWORD && token.t_key.value == KEY_INF) {
+	} else if (token.type == BU_LEX_KEYWORD && token.t_key.value == KEY_INF) {
 		*dbl = MAX_FASTF * sign;
 	} else {
 		parse_error(str,"parse_double: syntax error.  Expecting number.");
@@ -1054,7 +1053,7 @@ double *dbl;
 FILE *fip;
 struct bu_vls *str;
 {
-	if (!gobble_token(RT_LEX_SYMBOL, SYM_EQ, fip, str)) {
+	if (!gobble_token(BU_LEX_SYMBOL, SYM_EQ, fip, str)) {
 		skip_group(fip, str);
 		return 0;
 	}
@@ -1062,7 +1061,7 @@ struct bu_vls *str;
 		skip_group(fip, str);
 		return 0;
 	}
-	if (!gobble_token(RT_LEX_SYMBOL, SYM_END, fip, str)) {
+	if (!gobble_token(BU_LEX_SYMBOL, SYM_END, fip, str)) {
 		skip_group(fip, str);
 		return 0;
 	}
@@ -1080,13 +1079,13 @@ struct bu_vls *str;
 	  Tcl_AppendResult(interp, "parse_vect: open.\n", (char *)NULL);
 	}
 
-	if (!gobble_token(RT_LEX_SYMBOL, SYM_OP_PT, fip, str)) return 0;
+	if (!gobble_token(BU_LEX_SYMBOL, SYM_OP_PT, fip, str)) return 0;
 	for (i=0; i < 3; i++) {
 		if (!parse_double(&vect[i], fip, str)) return 0;
 		if (i < 2) {
-			if (!gobble_token(RT_LEX_SYMBOL, SYM_COMMA, fip, str)) return 0;
+			if (!gobble_token(BU_LEX_SYMBOL, SYM_COMMA, fip, str)) return 0;
 		} else {
-			if (!gobble_token(RT_LEX_SYMBOL, SYM_CL_PT, fip, str)) return 0;
+			if (!gobble_token(BU_LEX_SYMBOL, SYM_CL_PT, fip, str)) return 0;
 		}
 	}
 	return 1;
@@ -1098,7 +1097,7 @@ int index;
 FILE *fip;
 struct bu_vls *str;
 {
-	union rt_lex_token token;
+	union bu_lex_token token;
 	int dirfound=0, upfound = 0, lowfound=0, curfound=0, accfound=0;
 
 	if (joint_debug & DEBUG_J_PARSE) {
@@ -1107,17 +1106,17 @@ struct bu_vls *str;
 
 	if (index >= 3) {
 		parse_error(str,"parse_trans: To many translations for this joint.");
-		if (!gobble_token(RT_LEX_SYMBOL, SYM_OP_GROUP, fip, str)) return 0 ;
+		if (!gobble_token(BU_LEX_SYMBOL, SYM_OP_GROUP, fip, str)) return 0 ;
 		skip_group(fip,str);
 		return 0;
 	}
-	if (!gobble_token(RT_LEX_SYMBOL, SYM_OP_GROUP, fip, str)) return 0;
+	if (!gobble_token(BU_LEX_SYMBOL, SYM_OP_GROUP, fip, str)) return 0;
 
 	while (get_token(&token, fip, str, keys, syms) != EOF) {
-		if (token.type == RT_LEX_IDENT) {
+		if (token.type == BU_LEX_IDENT) {
 			bu_free(token.t_id.value, "unit token");
 		}
-		if (token.type == RT_LEX_SYMBOL && 
+		if (token.type == BU_LEX_SYMBOL && 
 		    token.t_key.value == SYM_CL_GROUP ) {
 		    	if (joint_debug & DEBUG_J_PARSE) {
 			  Tcl_AppendResult(interp, "parse_trans: closing.\n", (char *)NULL);
@@ -1165,14 +1164,14 @@ struct bu_vls *str;
 		    	return 1;
 		}
 
-		if (token.type != RT_LEX_KEYWORD) {
+		if (token.type != BU_LEX_KEYWORD) {
 			parse_error(str,"parse_trans: Syntax error.");
 			skip_group(fip,str);
 			return 0;
 		}
 		switch (token.t_key.value) {
 		case KEY_LIMIT:
-			if (!gobble_token(RT_LEX_SYMBOL, SYM_EQ, fip, str)) {
+			if (!gobble_token(BU_LEX_SYMBOL, SYM_EQ, fip, str)) {
 				skip_group(fip, str);
 				return 0;
 			}
@@ -1181,7 +1180,7 @@ struct bu_vls *str;
 				return 0;
 			}
 			lowfound = 1;
-			if (!gobble_token(RT_LEX_SYMBOL, SYM_COMMA, fip, str)) {
+			if (!gobble_token(BU_LEX_SYMBOL, SYM_COMMA, fip, str)) {
 				skip_group(fip, str);
 				return 0;
 			}
@@ -1190,7 +1189,7 @@ struct bu_vls *str;
 				return 0;
 			}
 			upfound = 1;
-			if (!gobble_token(RT_LEX_SYMBOL, SYM_COMMA, fip, str)) {
+			if (!gobble_token(BU_LEX_SYMBOL, SYM_COMMA, fip, str)) {
 				skip_group(fip, str);
 				return 0;
 			}
@@ -1199,7 +1198,7 @@ struct bu_vls *str;
 				return 0;
 			}
 			curfound = 1;
-			(void) gobble_token(RT_LEX_SYMBOL, SYM_END, fip, str);
+			(void) gobble_token(BU_LEX_SYMBOL, SYM_END, fip, str);
 			break;
 		case KEY_UP:
 			if (!parse_assign(&jp->dirs[index].upper, fip, str)) {
@@ -1230,7 +1229,7 @@ struct bu_vls *str;
 			curfound = 1;
 			break;
 		case KEY_DIR:
-			if (!gobble_token(RT_LEX_SYMBOL, SYM_EQ, fip, str)) {
+			if (!gobble_token(BU_LEX_SYMBOL, SYM_EQ, fip, str)) {
 				skip_group(fip, str);
 				return 0;
 			}
@@ -1238,7 +1237,7 @@ struct bu_vls *str;
 				skip_group(fip, str);
 				return 0;
 			}
-			if (!gobble_token(RT_LEX_SYMBOL, SYM_END, fip, str)) {
+			if (!gobble_token(BU_LEX_SYMBOL, SYM_END, fip, str)) {
 				skip_group(fip, str);
 				return 0;
 			}
@@ -1260,7 +1259,7 @@ int index;
 FILE *fip;
 struct bu_vls *str;
 {
-	union rt_lex_token token;
+	union bu_lex_token token;
 	int dirfound=0, upfound = 0, lowfound=0, curfound=0, accfound=0;
 
 	if (joint_debug & DEBUG_J_PARSE) {
@@ -1269,17 +1268,17 @@ struct bu_vls *str;
 
 	if (index >= 3) {
 		parse_error(str,"parse_rot: To many rotations for this joint.");
-		if (!gobble_token(RT_LEX_SYMBOL, SYM_OP_GROUP, fip, str)) return 0 ;
+		if (!gobble_token(BU_LEX_SYMBOL, SYM_OP_GROUP, fip, str)) return 0 ;
 		skip_group(fip,str);
 		return 0;
 	}
-	if (!gobble_token(RT_LEX_SYMBOL, SYM_OP_GROUP, fip, str)) return 0;
+	if (!gobble_token(BU_LEX_SYMBOL, SYM_OP_GROUP, fip, str)) return 0;
 
 	while (get_token(&token, fip, str, keys, syms) != EOF) {
-		if (token.type == RT_LEX_IDENT) {
+		if (token.type == BU_LEX_IDENT) {
 			bu_free(token.t_id.value, "unit token");
 		}
-		if (token.type == RT_LEX_SYMBOL && 
+		if (token.type == BU_LEX_SYMBOL && 
 		    token.t_key.value == SYM_CL_GROUP ) {
 		    	if (joint_debug & DEBUG_J_PARSE) {
 			  Tcl_AppendResult(interp, "parse_rots: closing.\n", (char *)NULL);
@@ -1327,14 +1326,14 @@ struct bu_vls *str;
 		    	return 1;
 		}
 
-		if (token.type != RT_LEX_KEYWORD) {
+		if (token.type != BU_LEX_KEYWORD) {
 			parse_error(str,"parse_rots: Syntax error.");
 			skip_group(fip,str);
 			return 0;
 		}
 		switch (token.t_key.value) {
 		case KEY_LIMIT:
-			if (!gobble_token(RT_LEX_SYMBOL, SYM_EQ, fip, str)) {
+			if (!gobble_token(BU_LEX_SYMBOL, SYM_EQ, fip, str)) {
 				skip_group(fip, str);
 				return 0;
 			}
@@ -1343,7 +1342,7 @@ struct bu_vls *str;
 				return 0;
 			}
 			lowfound = 1;
-			if (!gobble_token(RT_LEX_SYMBOL, SYM_COMMA, fip, str)) {
+			if (!gobble_token(BU_LEX_SYMBOL, SYM_COMMA, fip, str)) {
 				skip_group(fip, str);
 				return 0;
 			}
@@ -1352,7 +1351,7 @@ struct bu_vls *str;
 				return 0;
 			}
 			upfound = 1;
-			if (!gobble_token(RT_LEX_SYMBOL, SYM_COMMA, fip, str)) {
+			if (!gobble_token(BU_LEX_SYMBOL, SYM_COMMA, fip, str)) {
 				skip_group(fip, str);
 				return 0;
 			}
@@ -1361,7 +1360,7 @@ struct bu_vls *str;
 				return 0;
 			}
 			curfound = 1;
-			(void) gobble_token(RT_LEX_SYMBOL, SYM_END, fip, str);
+			(void) gobble_token(BU_LEX_SYMBOL, SYM_END, fip, str);
 			break;
 		case KEY_UP:
 			if (!parse_assign(&jp->rots[index].upper, fip, str)) {
@@ -1392,7 +1391,7 @@ struct bu_vls *str;
 			curfound = 1;
 			break;
 		case KEY_DIR:
-			if (!gobble_token(RT_LEX_SYMBOL, SYM_EQ, fip, str)) {
+			if (!gobble_token(BU_LEX_SYMBOL, SYM_EQ, fip, str)) {
 				skip_group(fip, str);
 				return 0;
 			}
@@ -1400,7 +1399,7 @@ struct bu_vls *str;
 				skip_group(fip, str);
 				return 0;
 			}
-			if (!gobble_token(RT_LEX_SYMBOL, SYM_END, fip, str)) {
+			if (!gobble_token(BU_LEX_SYMBOL, SYM_END, fip, str)) {
 				skip_group(fip, str);
 				return 0;
 			}
@@ -1420,7 +1419,7 @@ parse_joint(fip, str)
 FILE *fip;
 struct bu_vls *str;
 {
-	union rt_lex_token token;
+	union bu_lex_token token;
 	struct joint *jp;
 	int trans;
 	int rots;
@@ -1436,13 +1435,13 @@ struct bu_vls *str;
 	jp->path.type = ARC_UNSET;
 	jp->name = NULL;
 
-	if (get_token(&token, fip, str, (struct rt_lex_key *)NULL, syms) == EOF) {
+	if (get_token(&token, fip, str, (struct bu_lex_key *)NULL, syms) == EOF) {
 		parse_error(str,"parse_joint: Unexpected EOF getting name.");
 		free_joint(jp);
 		return 0;
 	}
 	jp->name = token.t_id.value;	/* Name */
-	if (!gobble_token(RT_LEX_SYMBOL, SYM_OP_GROUP, fip, str)) {
+	if (!gobble_token(BU_LEX_SYMBOL, SYM_OP_GROUP, fip, str)) {
 		free_joint(jp);
 		return 0;
 	}
@@ -1460,7 +1459,7 @@ struct bu_vls *str;
 			free_joint(jp);
 			return 0;
 		}
-		if (token.type == RT_LEX_SYMBOL &&
+		if (token.type == BU_LEX_SYMBOL &&
 		    token.t_key.value == SYM_CL_GROUP) {
 		    	if (joint_debug & DEBUG_J_PARSE) {
 			  Tcl_AppendResult(interp, "parse_joint: closing.\n", (char *)NULL);
@@ -1495,12 +1494,12 @@ struct bu_vls *str;
 		    	jp->location[Z] *= base2mm;
 
 		    	BU_LIST_INSERT(&joint_head, &(jp->l));
-		    	gobble_token(RT_LEX_SYMBOL, SYM_END, fip, str);
+		    	gobble_token(BU_LEX_SYMBOL, SYM_END, fip, str);
 		    	return 1;
 		}
-		if (token.type == RT_LEX_IDENT) bu_free(token.t_id.value, "unit token");
+		if (token.type == BU_LEX_IDENT) bu_free(token.t_id.value, "unit token");
 
-		if (token.type != RT_LEX_KEYWORD) {
+		if (token.type != BU_LEX_KEYWORD) {
 			parse_error(str,"parse_joint: syntax error.");
 			skip_group(fip, str);
 			free_joint(jp);
@@ -1533,7 +1532,7 @@ struct bu_vls *str;
 			if (locfound) {
 				parse_error(str,"parse_joint: more than one location given.");
 			}
-			if (!gobble_token(RT_LEX_SYMBOL, SYM_EQ, fip, str)) {
+			if (!gobble_token(BU_LEX_SYMBOL, SYM_EQ, fip, str)) {
 				skip_group(fip,str);
 				free_joint(jp);
 				return 0;
@@ -1543,7 +1542,7 @@ struct bu_vls *str;
 				free_joint(jp);
 				return 0;
 			}
-			if (!gobble_token(RT_LEX_SYMBOL, SYM_END, fip, str)) {
+			if (!gobble_token(BU_LEX_SYMBOL, SYM_END, fip, str)) {
 				skip_group(fip,str);
 				free_joint(jp);
 				return 0;
@@ -1581,22 +1580,22 @@ struct hold *hp;
 FILE *fip;
 struct bu_vls *str;
 {
-	union rt_lex_token token;
+	union bu_lex_token token;
 	int jointfound=0, listfound=0, arcfound=0, pathfound=0;
 
 	if(joint_debug & DEBUG_J_PARSE) {
 	  Tcl_AppendResult(interp, "parse_jset: open\n", (char *)NULL);
 	}
 
-	if (!gobble_token(RT_LEX_SYMBOL, SYM_OP_GROUP, fip, str)) return 0;
+	if (!gobble_token(BU_LEX_SYMBOL, SYM_OP_GROUP, fip, str)) return 0;
 
 	for (;;) {
 		if (get_token(&token, fip, str, keys, syms) == EOF) {
 			parse_error(str, "parse_jset: Unexpect EOF getting contents of joint set");
 			return 0;
 		}
-		if (token.type == RT_LEX_IDENT) bu_free(token.t_id.value, "unit token");
-		if (token.type == RT_LEX_SYMBOL && token.t_key.value == SYM_CL_GROUP) {
+		if (token.type == BU_LEX_IDENT) bu_free(token.t_id.value, "unit token");
+		if (token.type == BU_LEX_SYMBOL && token.t_key.value == SYM_CL_GROUP) {
 			if (!jointfound) hp->j_set.joint = 0;
 			if (!listfound && !arcfound && !pathfound) {
 				parse_error(str, "parse_jset: no list/arc/path given.");
@@ -1607,13 +1606,13 @@ struct bu_vls *str;
 			}
  			return 1;
 		}
-		if (token.type != RT_LEX_KEYWORD) {
+		if (token.type != BU_LEX_KEYWORD) {
 			parse_error(str, "parse_jset: syntax error.");
 			return 0;
 		}
 		switch (token.t_key.value) {
 		case KEY_START:
-			if (!gobble_token(RT_LEX_SYMBOL, SYM_EQ, fip, str)) {
+			if (!gobble_token(BU_LEX_SYMBOL, SYM_EQ, fip, str)) {
 				skip_group(fip,str);
 				return 0;
 			}
@@ -1621,13 +1620,13 @@ struct bu_vls *str;
 				parse_error(str,"parse_jset: Unexpect EOF getting '='");
 				return 0;
 			}
-			if (token.type != RT_LEX_IDENT) {
+			if (token.type != BU_LEX_IDENT) {
 				parse_error(str,"parse_jset: syntax error, expecting joint name.");
 				skip_group(fip,str);
 				return 0;
 			}
 			hp->j_set.joint = token.t_id.value;
-			if (!gobble_token(RT_LEX_SYMBOL, SYM_END, fip,str)) {
+			if (!gobble_token(BU_LEX_SYMBOL, SYM_END, fip,str)) {
 				skip_group(fip,str);
 				return 0;
 			}
@@ -1673,7 +1672,7 @@ struct hold_point *pp;
 FILE *fip;
 struct bu_vls *str;
 {
-	union rt_lex_token token;
+	union bu_lex_token token;
 	int vertexfound = 0, arcfound = 0;
 	double vertex;
 
@@ -1681,15 +1680,15 @@ struct bu_vls *str;
 	  Tcl_AppendResult(interp, "parse_solid: open\n", (char *)NULL);
 	}
 
-	if (!gobble_token(RT_LEX_SYMBOL, SYM_OP_GROUP, fip, str)) return 0;
+	if (!gobble_token(BU_LEX_SYMBOL, SYM_OP_GROUP, fip, str)) return 0;
 
 	for (;;) {
 		if (get_token(&token, fip, str, keys, syms) == EOF) {
 			parse_error(str, "parse_solid: Unexpect EOF.");
 			return 0;
 		}
-		if (token.type == RT_LEX_IDENT) bu_free(token.t_id.value, "unit token");
-		if (token.type == RT_LEX_SYMBOL && token.t_key.value == SYM_CL_GROUP) {
+		if (token.type == BU_LEX_IDENT) bu_free(token.t_id.value, "unit token");
+		if (token.type == BU_LEX_SYMBOL && token.t_key.value == SYM_CL_GROUP) {
 			if (!arcfound) {
 				parse_error(str,"parse_solid: path/arc missing.");
 				return 0;
@@ -1701,7 +1700,7 @@ struct bu_vls *str;
 
 			return 1;
 		}
-		if (token.type != RT_LEX_KEYWORD) {
+		if (token.type != BU_LEX_KEYWORD) {
 			parse_error(str, "parse_solid: syntax error getting solid information.");
 			skip_group(fip,str);
 			return 0;
@@ -1740,14 +1739,14 @@ struct hold_point *pp;
 FILE *fip;
 struct bu_vls *str;
 {
-	union rt_lex_token token;
+	union bu_lex_token token;
 
 	if (get_token(&token, fip, str, lex_solids, syms) == EOF) {
 		parse_error(str, "parse_point: Unexpect EOF getting solid type.");
 		return 0;
 	}
-	if (token.type == RT_LEX_IDENT) bu_free(token.t_id.value, "unit token");
-	if (token.type != RT_LEX_KEYWORD) {
+	if (token.type == BU_LEX_IDENT) bu_free(token.t_id.value, "unit token");
+	if (token.type != BU_LEX_KEYWORD) {
 		parse_error(str,"parse_point: syntax error getting solid type.");
 		return 0;
 	}
@@ -1755,7 +1754,7 @@ struct bu_vls *str;
 	case ID_FIXED:
 		pp->type = ID_FIXED;
 		if (!parse_vect(&pp->point[0], fip, str)) return 0;
-		return gobble_token(RT_LEX_SYMBOL, SYM_END, fip, str);
+		return gobble_token(BU_LEX_SYMBOL, SYM_END, fip, str);
 	case ID_SPH:
 		pp->type = ID_SPH;
 		break;
@@ -1785,7 +1784,7 @@ FILE *fip;
 struct bu_vls *str;
 {
 	struct hold *hp;
-	union rt_lex_token token;
+	union bu_lex_token token;
 	int jsetfound = 0, efffound=0, goalfound=0, weightfound=0, prifound=0;
 
 	if (joint_debug & DEBUG_J_PARSE) {
@@ -1808,21 +1807,21 @@ struct bu_vls *str;
 	hp->j_set.path.type = ARC_UNSET;
 	hp->j_set.exclude.type = ARC_UNSET;
 
-	if ( get_token(&token, fip, str, (struct rt_lex_key *)NULL, syms) == EOF) {
+	if ( get_token(&token, fip, str, (struct bu_lex_key *)NULL, syms) == EOF) {
 		parse_error(str, "parse_hold: Unexpected EOF getting name.");
 		free_hold(hp);
 		return 0;
 	}
-	if (token.type == RT_LEX_IDENT) {
+	if (token.type == BU_LEX_IDENT) {
 		hp->name = token.t_id.value;
-		if ( get_token(&token, fip, str, (struct rt_lex_key *)NULL, syms) == EOF) {
+		if ( get_token(&token, fip, str, (struct bu_lex_key *)NULL, syms) == EOF) {
 			parse_error(str, "parse_hold: Unexpected EOF getting open group.");
 			free_hold(hp);
 			return 0;
 		}
 	}
-	if (token.type == RT_LEX_IDENT) bu_free(token.t_id.value, "unit token");
-	if (token.type != RT_LEX_SYMBOL || token.t_key.value != SYM_OP_GROUP) {
+	if (token.type == BU_LEX_IDENT) bu_free(token.t_id.value, "unit token");
+	if (token.type != BU_LEX_SYMBOL || token.t_key.value != SYM_OP_GROUP) {
 		parse_error(str, "parse_hold: syntax error, expecting open group.");
 		free_hold(hp);
 		return 0;
@@ -1834,9 +1833,9 @@ struct bu_vls *str;
 			skip_group( fip, str);
 			free_hold(hp);
 		}
-		if (token.type == RT_LEX_IDENT) bu_free(token.t_id.value, "unit token");
+		if (token.type == BU_LEX_IDENT) bu_free(token.t_id.value, "unit token");
 
-		if (token.type == RT_LEX_SYMBOL && token.t_key.value == SYM_CL_GROUP) {
+		if (token.type == BU_LEX_SYMBOL && token.t_key.value == SYM_CL_GROUP) {
 			if (joint_debug & DEBUG_J_PARSE) {
 			  Tcl_AppendResult(interp, "parse_hold: closing.\n", (char *)NULL);
 			}
@@ -1867,10 +1866,10 @@ struct bu_vls *str;
 			}
 			BU_LIST_INSERT(&hold_head, &(hp->l));
 
-			gobble_token(RT_LEX_SYMBOL, SYM_END, fip, str);
+			gobble_token(BU_LEX_SYMBOL, SYM_END, fip, str);
 			return 1;
 		}
-		if (token.type != RT_LEX_KEYWORD) {
+		if (token.type != BU_LEX_KEYWORD) {
 			parse_error(str, "parse_hold: syntax error");
 			skip_group(fip, str);
 			free_hold(hp);
@@ -1910,7 +1909,7 @@ struct bu_vls *str;
 			jsetfound = 1;
 			break;
 		case KEY_EFF:
-			if (!gobble_token(RT_LEX_SYMBOL, SYM_EQ, fip, str)) {
+			if (!gobble_token(BU_LEX_SYMBOL, SYM_EQ, fip, str)) {
 				skip_group(fip,str);
 				free_hold(hp);
 				return 0;
@@ -1923,7 +1922,7 @@ struct bu_vls *str;
 			efffound = 1;
 			break;
 		case KEY_POINT:
-			if (!gobble_token(RT_LEX_SYMBOL, SYM_EQ, fip, str)) {
+			if (!gobble_token(BU_LEX_SYMBOL, SYM_EQ, fip, str)) {
 				skip_group(fip,str);
 				free_hold(hp);
 				return 0;
@@ -1950,7 +1949,7 @@ char **argv;
 {
 	FILE *fip;
 	struct bu_vls	*instring;
-	union rt_lex_token token;
+	union bu_lex_token token;
 	int	no_unload = 0, no_apply=0, no_mesh=0;
 	int	c;
 	struct	joint *jp;
@@ -1996,7 +1995,7 @@ char **argv;
 		lex_name = *argv;
 
 		while (get_token(&token, fip, instring, keys, syms) != EOF ) {
-			if (token.type == RT_LEX_KEYWORD) {
+			if (token.type == BU_LEX_KEYWORD) {
 				if (token.t_key.value == KEY_JOINT ) {
 					if (parse_joint(fip,instring)) {
 						jp = BU_LIST_LAST(joint, &joint_head);
@@ -2012,7 +2011,7 @@ char **argv;
 			} else {
 				parse_error(instring,"joint load: syntax error.");
 			}
-			if (token.type == RT_LEX_IDENT) {
+			if (token.type == BU_LEX_IDENT) {
 				bu_free(token.t_id.value, "unit token");
 			}
 		}
