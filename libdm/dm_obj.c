@@ -1555,7 +1555,7 @@ dmo_get_aspect_tcl(clientData, interp, argc, argv)
 
 	if (argc != 2) {
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib dm_aspect");
+		bu_vls_printf(&vls, "helplib dm_getaspect");
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
