@@ -108,12 +108,10 @@ struct db5_raw_internal {
 	unsigned char	major_type;
 	unsigned char	minor_type;
 	long		object_length;		/* in bytes, on disk */
-	long		name_length;
-	long		attribute_length;
-	long		body_length;
-	char		*name;
-	unsigned char	*attributes;
-	unsigned char	*body;
+	/* These three MUST NOT be passed to bu_free_external()! */
+	struct bu_external name;
+	struct bu_external body;
+	struct bu_external attributes;
 	unsigned char	*buf;		/* if non-null needs to be bu_free()ed */
 };
 #define DB5_RAW_INTERNAL_MAGIC	0x64357269	/* "d5ri" */
