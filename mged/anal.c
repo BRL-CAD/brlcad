@@ -273,6 +273,59 @@ static CONST int farb4[6][4] = {
 };
 
 
+/*
+ *			F I N D A N G
+ *
+ * finds direction cosines and rotation, fallback angles of a unit vector
+ * angles = pointer to 5 fastf_t's to store angles
+ * unitv = pointer to the unit vector (previously computed)
+ */
+void
+findang( angles, unitv )
+register fastf_t	*angles;
+register vect_t		unitv;
+{
+	FAST fastf_t f;
+
+	/* convert direction cosines into axis angles */
+	if( unitv[X] <= -1.0 )  angles[X] = -90.0;
+	else if( unitv[X] >= 1.0 )  angles[X] = 90.0;
+	else angles[X] = acos( unitv[X] ) * radtodeg;
+
+	if( unitv[Y] <= -1.0 )  angles[Y] = -90.0;
+	else if( unitv[Y] >= 1.0 )  angles[Y] = 90.0;
+	else angles[Y] = acos( unitv[Y] ) * radtodeg;
+
+	if( unitv[Z] <= -1.0 )  angles[Z] = -90.0;
+	else if( unitv[Z] >= 1.0 )  angles[Z] = 90.0;
+	else angles[Z] = acos( unitv[Z] ) * radtodeg;
+
+	/* fallback angle */
+	if( unitv[Z] <= -1.0 )  unitv[Z] = -1.0;
+	else if( unitv[Z] >= 1.0 )  unitv[Z] = 1.0;
+	angles[4] = asin(unitv[Z]);
+
+	/* rotation angle */
+	/* For the tolerance below, on an SGI 4D/70, cos(asin(1.0)) != 0.0
+	 * with an epsilon of +/- 1.0e-17, so the tolerance below was
+	 * substituted for the original +/- 1.0e-20.
+	 */
+	if((f = cos(angles[4])) > 1.0e-16 || f < -1.0e-16 )  {
+		f = unitv[X]/f;
+		if( f <= -1.0 )
+			angles[3] = 180;
+		else if( f >= 1.0 )
+			angles[3] = 0;
+		else
+			angles[3] = radtodeg * acos( f );
+	}  else
+		angles[3] = 0.0;
+	if( unitv[Y] < 0 )
+		angles[3] = 360.0 - angles[3];
+
+	angles[4] *= radtodeg;
+}
+
 /* 	Analyzes an arb face
  */
 static double
@@ -757,58 +810,6 @@ struct rt_db_internal	*ip;
 			vol_hyperb/3787878.79);
 }
 
-/*
- *			F I N D A N G
- *
- * finds direction cosines and rotation, fallback angles of a unit vector
- * angles = pointer to 5 fastf_t's to store angles
- * unitv = pointer to the unit vector (previously computed)
- */
-void
-findang( angles, unitv )
-register fastf_t	*angles;
-register vect_t		unitv;
-{
-	FAST fastf_t f;
-
-	/* convert direction cosines into axis angles */
-	if( unitv[X] <= -1.0 )  angles[X] = -90.0;
-	else if( unitv[X] >= 1.0 )  angles[X] = 90.0;
-	else angles[X] = acos( unitv[X] ) * radtodeg;
-
-	if( unitv[Y] <= -1.0 )  angles[Y] = -90.0;
-	else if( unitv[Y] >= 1.0 )  angles[Y] = 90.0;
-	else angles[Y] = acos( unitv[Y] ) * radtodeg;
-
-	if( unitv[Z] <= -1.0 )  angles[Z] = -90.0;
-	else if( unitv[Z] >= 1.0 )  angles[Z] = 90.0;
-	else angles[Z] = acos( unitv[Z] ) * radtodeg;
-
-	/* fallback angle */
-	if( unitv[Z] <= -1.0 )  unitv[Z] = -1.0;
-	else if( unitv[Z] >= 1.0 )  unitv[Z] = 1.0;
-	angles[4] = asin(unitv[Z]);
-
-	/* rotation angle */
-	/* For the tolerance below, on an SGI 4D/70, cos(asin(1.0)) != 0.0
-	 * with an epsilon of +/- 1.0e-17, so the tolerance below was
-	 * substituted for the original +/- 1.0e-20.
-	 */
-	if((f = cos(angles[4])) > 1.0e-16 || f < -1.0e-16 )  {
-		f = unitv[X]/f;
-		if( f <= -1.0 )
-			angles[3] = 180;
-		else if( f >= 1.0 )
-			angles[3] = 0;
-		else
-			angles[3] = radtodeg * acos( f );
-	}  else
-		angles[3] = 0.0;
-	if( unitv[Y] < 0 )
-		angles[3] = 360.0 - angles[3];
-
-	angles[4] *= radtodeg;
-}
 
 /*
  *  		M A T H E R R

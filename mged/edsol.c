@@ -797,6 +797,161 @@ int arg;
 }
 
 /*
+ *  Keypoint in model space is established in "pt".
+ *  If "str" is set, then that point is used, else default
+ *  for this solid is selected and set.
+ *  "str" may be a constant string, in either upper or lower case,
+ *  or it may be something complex like "(3,4)" for an ARS or spline
+ *  to select a particular vertex or control point.
+ *
+ *  XXX Perhaps this should be done via solid-specific parse tables,
+ *  so that solids could be pretty-printed & structprint/structparse
+ *  processed as well?
+ */
+void
+get_solid_keypoint( pt, strp, ip, mat )
+point_t		pt;
+char		**strp;
+struct rt_db_internal	*ip;
+mat_t		mat;
+{
+	char	*cp = *strp;
+	point_t	mpt;
+
+	RT_CK_DB_INTERNAL( ip );
+
+	switch( ip->idb_type )  {
+	case ID_ELL:
+		{
+			struct rt_ell_internal	*ell = 
+				(struct rt_ell_internal *)ip->idb_ptr;
+			RT_ELL_CK_MAGIC(ell);
+
+			if( strcmp( cp, "V" ) == 0 )  {
+				VMOVE( mpt, ell->v );
+				*strp = "V";
+				break;
+			}
+			if( strcmp( cp, "A" ) == 0 )  {
+				VMOVE( mpt, ell->a );
+				*strp = "A";
+				break;
+			}
+			if( strcmp( cp, "B" ) == 0 )  {
+				VMOVE( mpt, ell->b );
+				*strp = "B";
+				break;
+			}
+			if( strcmp( cp, "C" ) == 0 )  {
+				VMOVE( mpt, ell->c );
+				*strp = "C";
+				break;
+			}
+			/* Default */
+			VMOVE( mpt, ell->v );
+			*strp = "V";
+			break;
+		}
+	case ID_TOR:
+		{
+			struct rt_tor_internal	*tor = 
+				(struct rt_tor_internal *)ip->idb_ptr;
+			RT_TOR_CK_MAGIC(tor);
+
+			if( strcmp( cp, "V" ) == 0 )  {
+				VMOVE( mpt, tor->v );
+				*strp = "V";
+				break;
+			}
+			/* Default */
+			VMOVE( mpt, tor->v );
+			*strp = "V";
+			break;
+		}
+	case ID_TGC:
+		{
+			struct rt_tgc_internal	*tgc = 
+				(struct rt_tgc_internal *)ip->idb_ptr;
+			RT_TGC_CK_MAGIC(tgc);
+
+			if( strcmp( cp, "V" ) == 0 )  {
+				VMOVE( mpt, tgc->v );
+				*strp = "V";
+				break;
+			}
+			if( strcmp( cp, "H" ) == 0 )  {
+				VMOVE( mpt, tgc->h );
+				*strp = "H";
+				break;
+			}
+			if( strcmp( cp, "A" ) == 0 )  {
+				VMOVE( mpt, tgc->a );
+				*strp = "A";
+				break;
+			}
+			if( strcmp( cp, "B" ) == 0 )  {
+				VMOVE( mpt, tgc->b );
+				*strp = "B";
+				break;
+			}
+			if( strcmp( cp, "C" ) == 0 )  {
+				VMOVE( mpt, tgc->c );
+				*strp = "C";
+				break;
+			}
+			if( strcmp( cp, "D" ) == 0 )  {
+				VMOVE( mpt, tgc->d );
+				*strp = "D";
+				break;
+			}
+			/* Default */
+			VMOVE( mpt, tgc->v );
+			*strp = "V";
+			break;
+		}
+	default:
+		VSETALL( mpt, 0 );
+		*strp = "(origin)";
+		break;
+	}
+	MAT4X3PNT( pt, mat, mpt );
+}
+
+/* 	CALC_PLANES()
+ *		calculate the plane (face) equations for an arb
+ *		in solidrec pointed at by sp
+ * XXX replaced by rt_arb_calc_planes()
+ */
+void
+calc_planes( sp, type )
+struct solidrec *sp;
+int type;
+{
+	struct solidrec temprec;
+	register int i, p1, p2, p3;
+
+	/* find the plane equations */
+	/* point notation - use temprec record */
+	VMOVE( &temprec.s_values[0], &sp->s_values[0] );
+	for(i=3; i<=21; i+=3) {
+		VADD2( &temprec.s_values[i], &sp->s_values[i], &sp->s_values[0] );
+	}
+	type -= 4;	/* ARB4 at location 0, ARB5 at 1, etc */
+	for(i=0; i<6; i++) {
+		if(arb_faces[type][i*4] == -1)
+			break;	/* faces are done */
+		p1 = arb_faces[type][i*4];
+		p2 = arb_faces[type][i*4+1];
+		p3 = arb_faces[type][i*4+2];
+		if(planeqn(i, p1, p2, p3, &temprec)) {
+			(void)printf("No eqn for face %d%d%d%d\n",
+				p1+1,p2+1,p3+1,arb_faces[type][i*4+3]+1);
+			return;
+		}
+	}
+}
+
+/*
  *			I N I T _ S E D I T
  *
  *  First time in for this solid, set things up.
@@ -1036,6 +1191,45 @@ sedit_menu()  {
 	}
 	es_edflag = IDLE;	/* Drop out of previous edit mode */
 	es_menu = 0;
+}
+
+/* 			C A L C _ P N T S (  )
+ * XXX replaced by rt_arb_calc_points() in facedef.c
+ *
+ * Takes the array es_peqn[] and intersects the planes to find the vertices
+ * of a GENARB8.  The vertices are stored in the solid record 'old_srec' which
+ * is of type 'type'.  If intersect fails, the points (in vector notation) of
+ * 'old_srec' are used to clean up the array es_peqn[] for anyone else. The
+ * vertices are put in 'old_srec' in vector notation.  This is an analog to
+ * calc_planes().
+ */
+void
+calc_pnts( old_srec, type )
+struct solidrec *old_srec;
+int type;
+{
+	struct solidrec temp_srec;
+	short int i;
+
+	/* find new points for entire solid */
+	for(i=0; i<8; i++){
+		/* use temp_srec until we know intersect doesn't fail */
+		if( intersect(type,i*3,i,&temp_srec) ){
+			(void)printf("Intersection of planes fails\n");
+			/* clean up array es_peqn for anyone else */
+			calc_planes( old_srec, type );
+			return;				/* failure */
+		}
+	}
+
+	/* back to vector notation */
+	VMOVE( &old_srec->s_values[0], &temp_srec.s_values[0] );
+	for(i=3; i<=21; i+=3){
+		VSUB2(	&old_srec->s_values[i],
+			&temp_srec.s_values[i],
+			&temp_srec.s_values[0]  );
+	}
+	return;						/* success */
 }
 
 /*
@@ -3316,161 +3510,6 @@ struct rt_db_internal	*ip;
 	pl[npl].str[0] = '\0';	/* Mark ending */
 }
 
-/*
- *  Keypoint in model space is established in "pt".
- *  If "str" is set, then that point is used, else default
- *  for this solid is selected and set.
- *  "str" may be a constant string, in either upper or lower case,
- *  or it may be something complex like "(3,4)" for an ARS or spline
- *  to select a particular vertex or control point.
- *
- *  XXX Perhaps this should be done via solid-specific parse tables,
- *  so that solids could be pretty-printed & structprint/structparse
- *  processed as well?
- */
-void
-get_solid_keypoint( pt, strp, ip, mat )
-point_t		pt;
-char		**strp;
-struct rt_db_internal	*ip;
-mat_t		mat;
-{
-	char	*cp = *strp;
-	point_t	mpt;
-
-	RT_CK_DB_INTERNAL( ip );
-
-	switch( ip->idb_type )  {
-	case ID_ELL:
-		{
-			struct rt_ell_internal	*ell = 
-				(struct rt_ell_internal *)ip->idb_ptr;
-			RT_ELL_CK_MAGIC(ell);
-
-			if( strcmp( cp, "V" ) == 0 )  {
-				VMOVE( mpt, ell->v );
-				*strp = "V";
-				break;
-			}
-			if( strcmp( cp, "A" ) == 0 )  {
-				VMOVE( mpt, ell->a );
-				*strp = "A";
-				break;
-			}
-			if( strcmp( cp, "B" ) == 0 )  {
-				VMOVE( mpt, ell->b );
-				*strp = "B";
-				break;
-			}
-			if( strcmp( cp, "C" ) == 0 )  {
-				VMOVE( mpt, ell->c );
-				*strp = "C";
-				break;
-			}
-			/* Default */
-			VMOVE( mpt, ell->v );
-			*strp = "V";
-			break;
-		}
-	case ID_TOR:
-		{
-			struct rt_tor_internal	*tor = 
-				(struct rt_tor_internal *)ip->idb_ptr;
-			RT_TOR_CK_MAGIC(tor);
-
-			if( strcmp( cp, "V" ) == 0 )  {
-				VMOVE( mpt, tor->v );
-				*strp = "V";
-				break;
-			}
-			/* Default */
-			VMOVE( mpt, tor->v );
-			*strp = "V";
-			break;
-		}
-	case ID_TGC:
-		{
-			struct rt_tgc_internal	*tgc = 
-				(struct rt_tgc_internal *)ip->idb_ptr;
-			RT_TGC_CK_MAGIC(tgc);
-
-			if( strcmp( cp, "V" ) == 0 )  {
-				VMOVE( mpt, tgc->v );
-				*strp = "V";
-				break;
-			}
-			if( strcmp( cp, "H" ) == 0 )  {
-				VMOVE( mpt, tgc->h );
-				*strp = "H";
-				break;
-			}
-			if( strcmp( cp, "A" ) == 0 )  {
-				VMOVE( mpt, tgc->a );
-				*strp = "A";
-				break;
-			}
-			if( strcmp( cp, "B" ) == 0 )  {
-				VMOVE( mpt, tgc->b );
-				*strp = "B";
-				break;
-			}
-			if( strcmp( cp, "C" ) == 0 )  {
-				VMOVE( mpt, tgc->c );
-				*strp = "C";
-				break;
-			}
-			if( strcmp( cp, "D" ) == 0 )  {
-				VMOVE( mpt, tgc->d );
-				*strp = "D";
-				break;
-			}
-			/* Default */
-			VMOVE( mpt, tgc->v );
-			*strp = "V";
-			break;
-		}
-	default:
-		VSETALL( mpt, 0 );
-		*strp = "(origin)";
-		break;
-	}
-	MAT4X3PNT( pt, mat, mpt );
-}
-
-/* 	CALC_PLANES()
- *		calculate the plane (face) equations for an arb
- *		in solidrec pointed at by sp
- * XXX replaced by rt_arb_calc_planes()
- */
-void
-calc_planes( sp, type )
-struct solidrec *sp;
-int type;
-{
-	struct solidrec temprec;
-	register int i, p1, p2, p3;
-
-	/* find the plane equations */
-	/* point notation - use temprec record */
-	VMOVE( &temprec.s_values[0], &sp->s_values[0] );
-	for(i=3; i<=21; i+=3) {
-		VADD2( &temprec.s_values[i], &sp->s_values[i], &sp->s_values[0] );
-	}
-	type -= 4;	/* ARB4 at location 0, ARB5 at 1, etc */
-	for(i=0; i<6; i++) {
-		if(arb_faces[type][i*4] == -1)
-			break;	/* faces are done */
-		p1 = arb_faces[type][i*4];
-		p2 = arb_faces[type][i*4+1];
-		p3 = arb_faces[type][i*4+2];
-		if(planeqn(i, p1, p2, p3, &temprec)) {
-			(void)printf("No eqn for face %d%d%d%d\n",
-				p1+1,p2+1,p3+1,arb_faces[type][i*4+3]+1);
-			return;
-		}
-	}
-}
-
 /* -------------------------------- */
 /*
  *			R T _ A R B _ C A L C _ P L A N E S
@@ -3561,41 +3600,3 @@ char			*name;
 	return 0;				/* OK */
 }
 
-/* 			C A L C _ P N T S (  )
- * XXX replaced by rt_arb_calc_points() in facedef.c
- *
- * Takes the array es_peqn[] and intersects the planes to find the vertices
- * of a GENARB8.  The vertices are stored in the solid record 'old_srec' which
- * is of type 'type'.  If intersect fails, the points (in vector notation) of
- * 'old_srec' are used to clean up the array es_peqn[] for anyone else. The
- * vertices are put in 'old_srec' in vector notation.  This is an analog to
- * calc_planes().
- */
-void
-calc_pnts( old_srec, type )
-struct solidrec *old_srec;
-int type;
-{
-	struct solidrec temp_srec;
-	short int i;
-
-	/* find new points for entire solid */
-	for(i=0; i<8; i++){
-		/* use temp_srec until we know intersect doesn't fail */
-		if( intersect(type,i*3,i,&temp_srec) ){
-			(void)printf("Intersection of planes fails\n");
-			/* clean up array es_peqn for anyone else */
-			calc_planes( old_srec, type );
-			return;				/* failure */
-		}
-	}
-
-	/* back to vector notation */
-	VMOVE( &old_srec->s_values[0], &temp_srec.s_values[0] );
-	for(i=3; i<=21; i+=3){
-		VSUB2(	&old_srec->s_values[i],
-			&temp_srec.s_values[i],
-			&temp_srec.s_values[0]  );
-	}
-	return;						/* success */
-}
