@@ -156,6 +156,7 @@ int		sgw_dopen();
 
 _LOCAL_ Colorindex get_Color_Index();
 _LOCAL_ void	sgw_inqueue();
+_LOCAL_ void	sgi_rectf_pix();
 static int	is_linear_cmap();
 
 struct sgi_cmap {
@@ -352,13 +353,15 @@ register FBIO	*ifp;
 	register short i;
 	register unsigned char *ip;
 	short y;
-	short xscroff, yscroff;
+	short xscroff, yscroff, xscrpad, yscrpad;
 	short xwidth;
+	static RGBpixel black = { 0, 0, 0 };
 
 	if( SGI(ifp)->si_curs_on )
 		cursoff();		/* Cursor interferes with drawing */
 
 	xscroff = yscroff = 0;
+	xscrpad = yscrpad = 0;
 	xwidth = ifp->if_width/SGI(ifp)->si_xzoom;
 	i = xwidth/2;
 	xmin = SGI(ifp)->si_xcenter - i;
@@ -374,9 +377,47 @@ register FBIO	*ifp;
 		yscroff = -ymin * SGI(ifp)->si_yzoom;
 		ymin = 0;
 	}
-	if( xmax > ifp->if_width-1 )  xmax = ifp->if_width-1;
-	if( ymax > ifp->if_height-1 )  ymax = ifp->if_height-1;
+	if( xmax > ifp->if_width-1 )  {
+		xscrpad = (xmax-(ifp->if_width-1))*SGI(ifp)->si_xzoom;
+		xmax = ifp->if_width-1;
+	}
+	if( ymax > ifp->if_height-1 )  {
+		yscrpad = (ymax-(ifp->if_height-1))*SGI(ifp)->si_yzoom;
+		ymax = ifp->if_height-1;
+	}
 
+	/* Blank out area left of image.			*/
+	if( xscroff > 0 )
+		sgi_rectf_pix(	ifp,
+				0, 0,
+				(Scoord) xscroff-1, (Scoord) ifp->if_height-1,
+				(RGBpixel *) black
+				);
+	/* Blank out area below image.			*/
+	if( yscroff > 0 )
+		sgi_rectf_pix(	ifp,
+				0, 0,
+				(Scoord) ifp->if_width-1, (Scoord) yscroff-1,
+				(RGBpixel *) black
+				);
+	/* Blank out area right of image.			*/
+	if( xscrpad > 0 )
+		sgi_rectf_pix(	ifp,
+				(Scoord) ifp->if_width-xscrpad,
+				0,
+				(Scoord) ifp->if_width-1,
+				(Scoord) ifp->if_height-1,
+				(RGBpixel *) black
+				);
+	/* Blank out area above image.			*/
+	if( yscrpad > 0 )
+		sgi_rectf_pix(	ifp,
+				0,
+				(Scoord) ifp->if_height-yscrpad,
+				(Scoord) ifp->if_width-1,
+				(Scoord) ifp->if_height-1,
+				(RGBpixel *) black
+				);
 	for( y = ymin; y <= ymax; y++ )  {
 
 		ip = (unsigned char *)
@@ -474,7 +515,7 @@ register FBIO	*ifp;
 		}
 
 		/* Non-zoomed case */
-		CMOV2S( hole, xscroff + xmin, yscroff + y );
+		CMOV2S( hole, xscroff, yscroff + (y-ymin) );
 
 		switch( ifp->if_mode )  {
 		case MODE_RGB:
@@ -897,19 +938,22 @@ int	count;
 	while( count > 0 )  {
 		if( yscr >= ifp->if_height )
 			break;
-		scan_count = ifp->if_width / SGI(ifp)->si_xzoom;
-		if( count < scan_count )
+		if ( count >= ifp->if_width-xmem )
+			scan_count = ifp->if_width-xmem;
+		else
 			scan_count = count;
 
 		op = (unsigned char *)&ifp->if_mem[(ymem*1024+xmem)*sizeof(RGBpixel)];
 
 		if( ifp->if_zoomflag )  {
 			register Scoord l, b, r, t;
+			int todraw = (ifp->if_width-xscr)/SGI(ifp)->si_xzoom;
+			int tocopy = scan_count - todraw;
 
 			l = xscr;
 			b = yscr;
 			t = b + SGI(ifp)->si_yzoom - 1;
-			for( i=scan_count; i > 0; i-- )  {
+			for( i = todraw; i > 0; i-- )  {
 
 				switch( ifp->if_mode )  {
 				case MODE_RGB:
@@ -949,15 +993,20 @@ int	count;
 				*op++ = *cp++;
 				*op++ = *cp++;
 			}
+			for( i = tocopy; i > 0; i-- )  {
+				*op++ = *cp++;
+				*op++ = *cp++;
+				*op++ = *cp++;
+			}				
 			count -= scan_count;
 			ret += scan_count;
 			xmem = 0;
 			ymem++;
-			xscr = SGI(ifp)->si_xcenter - hfwidth;
+			xscr = (hfwidth-SGI(ifp)->si_xcenter) *
+				SGI(ifp)->si_xzoom;
 			yscr += SGI(ifp)->si_yzoom;
 			continue;
 		}
-
 		/* Non-zoomed case */
 		CMOV2S( hole, xscr, yscr );
 
@@ -1510,4 +1559,45 @@ register FBIO *ifp;
 		sgi_repaint( ifp );
 		redraw = 0;
 	}
+}
+
+_LOCAL_ void
+sgi_rectf_pix( ifp, l, b, r, t, pixelp )
+FBIO		*ifp;
+Scoord		l, b, r, t;
+RGBpixel	*pixelp;
+{
+	register union gepipe *hole = GEPIPE;
+
+	switch( ifp->if_mode ) {
+	case MODE_RGB:
+		PASSCMD(hole,3,FBCrgbcolor);
+		hole->s = (*pixelp)[RED];
+		hole->s = (*pixelp)[GRN];
+		hole->s = (*pixelp)[BLU];
+		break;
+	case MODE_FIT:
+		PASSCMD(hole,1,FBCcolor);
+		hole->s = get_Color_Index( ifp, pixelp );
+		break;
+	case MODE_APPROX:
+		PASSCMD(hole,1,FBCcolor);
+		hole->s = COLOR_APPROX(*pixelp);
+		break;
+	}
+	/* left bottom right top: rectfs( l, b, r, t ); */
+	hole->s = GEmovepoly | GEPA_2S;
+	hole->s = l;
+	hole->s = b;
+	hole->s = GEdrawpoly | GEPA_2S;
+	hole->s = r;
+	hole->s = b;
+	hole->s = GEdrawpoly | GEPA_2S;
+	hole->s = r;
+	hole->s = t;
+	hole->s = GEdrawpoly | GEPA_2S;
+	hole->s = l;
+	hole->s = t;
+	hole->s = GEclosepoly;	/* Last? */
+	return;
 }
