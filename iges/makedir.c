@@ -89,7 +89,11 @@ Makedir()
 		else
 			counter += 8;
 
-		counter += 24;	/* skip 24 columns */
+		counter += 16;	/* skip 16 columns */
+
+		Readcols( str , 8 );    /* read pointer to view entity */
+		dir[entcount]->view = atoi( str );
+
 		Readcols( str , 8 );	/* read pointer to transformation entity */
 
 		/* convert it to a "dir" index */
