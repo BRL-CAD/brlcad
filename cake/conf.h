@@ -49,6 +49,7 @@ typedef	long	Cast;
 	/* CPP is necessary on the Convex, cc -E needs .c suffix */
 #	define	CPP		"/lib/cpp"
 #	define	CPP_OPTIONS	"-D__CAKE__c1"
+#	define	CPP_OPTIONS2	"-pcc"
 #endif
 
 #if __MACHINETYPE__cr2
