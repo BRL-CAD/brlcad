@@ -84,7 +84,7 @@ int		using_mlib = 0;		/* Material routines NOT used */
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
-	{"",	0, (char *)0,	0,	FUNC_NULL }
+	{"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL }
 };
 
 
@@ -155,7 +155,7 @@ struct application	*ap;
 	 *  tree walking and database prepping to still be done in parallel.
 	 */
 	if( npsw >= 1 )  {
-		rt_log("Note: changing from %d cpus to 1 cpu\n", npsw );
+		bu_log("Note: changing from %d cpus to 1 cpu\n", npsw );
 		npsw = 1;		/* Disable parallel processing */
 	}
 
@@ -196,9 +196,9 @@ struct application	*ap;
 	 */
 
 	if( AmbientIntensity <= 0.5 )  {
-		maxangle = cos( 5.0 * mat_degtorad);
+		maxangle = cos( 5.0 * bn_degtorad);
 	} else {
-		maxangle = cos( AmbientIntensity * mat_degtorad);
+		maxangle = cos( AmbientIntensity * bn_degtorad);
 	}
 
 	/* Obtain the bounding boxes for the model from the rt_i(stance)
@@ -312,7 +312,7 @@ register struct partition *PartHeadp;
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 		if( pp->pt_inhit->hit_dist >= 0.0 )  break;
 	if( pp == PartHeadp )  {
-		rt_log("rthide/rayhit:  no hit out front? x%d y%d lvl%d\n",
+		bu_log("rthide/rayhit:  no hit out front? x%d y%d lvl%d\n",
 			ap->a_x, ap->a_y, ap->a_level);
 		return(0);
 	}
