@@ -1,0 +1,77 @@
+From ken@turtlevax.UUCP (Ken Turkowski) Sun Nov 18 15:41:29 1984
+Date: 18 Nov 84 20:41:29 GMT
+
+> >> 	It would also be nice if sin( x ) and cos( x ) could be
+> >> 	computed simultaneously with reduced cost.  I doubt if this is
+> >> 	possible but would like to know if it is.
+> 
+> > 	sine = sin(x);
+> > 	cosine = sqrt(1.0 - sine*sine);
+> 
+> I wish people would check things out before posting them.  On our
+> 4.2BSD system, the sqrt() approach is actually SLOWER than using
+> cos().  (Under UNIX System V it is very slightly faster.)  Now,
+> if I wanted cos(x)^2, I would certainly use 1 - sin(x)^2, which
+> I already knew about (I too went to high school).
+> 
+> What I had in mind was more along the lines of a CORDIC algorithm
+> or some other obscure but useful approach.
+
+In Tom Duff's SIGGRAPH '84 tutorial on Numerical Methods for Computer
+Graphics, he writes (quote until end of article):
+
+Calculating Euclidean distance probably accounts for 90% of the square
+roots expended in computer graphics applications.  Aside from the
+obvious geometric uses, most illumination models require that the unit
+normal to each surface be computed at each pixel.
+
+[Moler-Morrison, "Replacing Square Roots by Pythagorean Sums", IBM
+Journal of Research and Development", vol. 27, no. 6, pp. 577-581, Nov.
+1983] describes an algorithm for computing sqrt(a^2+b^2) which is fast,
+robust and portable.  The naive approach to this problem (just writing
+sqrt(a*a+b*b) ) has the problem that for many cases when the result is
+a representable floating point number, the intermediate results may
+overflow or underflow.  This seriously restricts the usable range of a
+and b.  Moler and Morrison's method never causes harmful overflow or
+underflow when the result is in range.  The algorithm has _____cubic
+convergence, and depending on implementation details may be even faster
+than sqrt(a*a+b*b).  Here is a C function that implements their
+algorithm:
+
+double hypot(p,q)
+double p,q;
+{
+    double r, s;
+    if (p < 0) p = -p;
+    if (q < 0) q = -q;
+    if (p < q) { r = p; p = q; q = r; }
+    if (p == 0) return 0;
+    for (;;) {
+	r = q / p;
+	r *= r;
+	s = r + 4;
+	if (s == 4)
+	    return p;
+	r /= s;
+	p += 2 * r * p;
+	q *= r;
+    }
+}
+
+This routine produces a result good to 6.5 digits after 2 iterations,
+to 20 digits after 3 iterations, and to 62 digits after 4 iterations.
+In normal use you would probably unwind the loop as many times as you
+need and omit the test altogether.  Moler and Morrison's paper
+describes the generalization of this algorithm to n dimensions, and
+exhibits a related square root algorithm which also has cubic
+convergence.  [Dubrelle, "A Class of Numerical Methods for the
+Computation of Pythagorean Sums", IBM Journal of Research and
+Development, vol. 27, no. 6, pp. 582-589, Nov. 1983] gives a geometric
+justification of the algorithm and presents a set of generalizations
+that have arbitrarily large order of convergence.
+-- 
+Ken Turkowski @ CADLINC, Palo Alto (soon Menlo Park), CA
+UUCP: {amd,decwrl,flairvax,nsc}!turtlevax!ken
+ARPA: turtlevax!ken@DECWRL.ARPA
+
+
