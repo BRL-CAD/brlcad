@@ -39,3 +39,14 @@ proc create_listbox { top screen type items abort_cmd } {
 proc bind_listbox { top event action } {
     bind $top.listbox $event $action
 }
+
+proc get_listbox_entry { w x y } {
+    if ![winfo exists $w] {
+	return
+    }
+
+    $w selection clear 0 end
+    $w selection set @$x,$y
+
+    return [$w get @$x,$y]
+}
