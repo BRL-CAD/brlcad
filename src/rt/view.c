@@ -1481,7 +1481,7 @@ bu_log("mallocing curr_float_frame\n");
 		if( BU_LIST_IS_EMPTY( &(LightHead.l) )  ||
 		    BU_LIST_UNINITIALIZED( &(LightHead.l ) ) )  {
 			if(R_DEBUG&RDEBUG_SHOWERR)bu_log("No explicit light\n");
-			light_maker(3, view2model);
+			light_maker(1, view2model);
 		}
 		break;
 	case 2:
