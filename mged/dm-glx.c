@@ -152,7 +152,6 @@ struct modifiable_glx_vars {
   int max_scr_z;       /* based on getgdesc(GD_ZMAX) */
   int debug;
   int linewidth;
-  int alt_mouse_mode;
 };
 
 struct glx_vars {
@@ -308,7 +307,6 @@ struct structparse Glx_vparse[] = {
 	{"%d",  1, "max_scr_z",		GLX_MV_O(max_scr_z),	refresh_hook },
 	{"%d",  1, "debug",		GLX_MV_O(debug),	FUNC_NULL },
 	{"%d",  1, "linewidth",		GLX_MV_O(linewidth),	refresh_hook },
-	{"%d",  1, "alt_mouse_mode",	GLX_MV_O(alt_mouse_mode),establish_am },
 	{"",	0,  (char *)0,		0,			FUNC_NULL }
 };
 
@@ -1212,9 +1210,8 @@ XEvent *eventPtr;
     mx = eventPtr->xmotion.x;
     my = eventPtr->xmotion.y;
 
-    switch(mvars.alt_mouse_mode){
-    case ALT_MOUSE_MODE_OFF:
-    case ALT_MOUSE_MODE_ON:
+    switch(am_mode){
+    case ALT_MOUSE_MODE_IDLE:
       if(scroll_active && eventPtr->xmotion.state & mb_mask)
 	bu_vls_printf( &cmd, "M 1 %d %d\n", irisX2ged(mx), irisY2ged(my));
       else if(GLXdoMotion)
@@ -2561,10 +2558,10 @@ char	**argv;
     if(buttonpress){
       switch(*argv[1]){
       case 'r':
-	mvars.alt_mouse_mode = ALT_MOUSE_MODE_ROTATE;
+	am_mode = ALT_MOUSE_MODE_ROTATE;
 	break;
       case 't':
-	mvars.alt_mouse_mode = ALT_MOUSE_MODE_TRANSLATE;
+	am_mode = ALT_MOUSE_MODE_TRANSLATE;
 	if((state == ST_S_EDIT || state == ST_O_EDIT) && !EDIT_ROTATE &&
 	   (edobj || es_edflag > 0)){
 	  fastf_t fx, fy;
@@ -2579,7 +2576,7 @@ char	**argv;
 
 	break;
       case 'z':
-	mvars.alt_mouse_mode = ALT_MOUSE_MODE_ZOOM;
+	am_mode = ALT_MOUSE_MODE_ZOOM;
 	break;
       default:
 	Tcl_AppendResult(interp, "dm am: need more parameters\n",
@@ -2587,7 +2584,7 @@ char	**argv;
 	return TCL_ERROR;
       }
     }else
-      mvars.alt_mouse_mode = ALT_MOUSE_MODE_ON;
+      am_mode = ALT_MOUSE_MODE_IDLE;
 
     return status;
   }
@@ -2622,7 +2619,6 @@ glx_var_init()
   mvars.zbuffer_on = 1;         /* Hardware Z buffer is on */
   mvars.linewidth = 1;      /* Line drawing width */
   mvars.dummy_perspective = 1;
-  mvars.alt_mouse_mode = 1;
 }
 
 

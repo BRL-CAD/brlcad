@@ -119,7 +119,6 @@ extern Tk_Window tkwin;
 struct modifiable_x_vars {
   int perspective_mode;
   int dummy_perspective;
-  int alt_mouse_mode;
   int debug;
 };
 
@@ -151,7 +150,6 @@ struct x_vars {
 struct structparse X_vparse[] = {
   {"%d",  1, "perspective",       X_MV_O(perspective_mode), establish_perspective },
   {"%d",  1, "set_perspective",   X_MV_O(dummy_perspective),set_perspective },
-  {"%d",  1, "alt_mouse_mode", X_MV_O(alt_mouse_mode),establish_am },
   {"%d",  1, "debug",             X_MV_O(debug),            FUNC_NULL },
   {"",    0, (char *)0,           0,                        FUNC_NULL }
 };
@@ -556,9 +554,8 @@ XEvent *eventPtr;
     mx = eventPtr->xmotion.x;
     my = eventPtr->xmotion.y;
 
-    switch(((struct x_vars *)dm_vars)->mvars.alt_mouse_mode){
-    case ALT_MOUSE_MODE_OFF:
-    case ALT_MOUSE_MODE_ON:
+    switch(am_mode){
+    case ALT_MOUSE_MODE_IDLE:
       if(scroll_active && eventPtr->xmotion.state & ((struct x_vars *)dm_vars)->mb_mask)
 	bu_vls_printf( &cmd, "M 1 %d %d\n", Xx_TO_GED(mx), Xy_TO_GED(my));
       else if(XdoMotion)
@@ -1217,10 +1214,10 @@ char *argv[];
     if(buttonpress){
       switch(*argv[1]){
       case 'r':
-	((struct x_vars *)dm_vars)->mvars.alt_mouse_mode = ALT_MOUSE_MODE_ROTATE;
+	am_mode = ALT_MOUSE_MODE_ROTATE;
 	break;
       case 't':
-	((struct x_vars *)dm_vars)->mvars.alt_mouse_mode = ALT_MOUSE_MODE_TRANSLATE;
+	am_mode = ALT_MOUSE_MODE_TRANSLATE;
 
 	if((state == ST_S_EDIT || state == ST_O_EDIT) && !EDIT_ROTATE &&
 	   (edobj || es_edflag > 0)){
@@ -1238,7 +1235,7 @@ char *argv[];
 
 	break;
       case 'z':
-	((struct x_vars *)dm_vars)->mvars.alt_mouse_mode = ALT_MOUSE_MODE_ZOOM;
+	am_mode = ALT_MOUSE_MODE_ZOOM;
 	break;
       default:
 	Tcl_AppendResult(interp, "dm am: need more parameters\n",
@@ -1246,7 +1243,7 @@ char *argv[];
 	return TCL_ERROR;
       }
     }else{
-      ((struct x_vars *)dm_vars)->mvars.alt_mouse_mode = ALT_MOUSE_MODE_ON;
+      am_mode = ALT_MOUSE_MODE_IDLE;
     }
 
     return status;
@@ -1266,7 +1263,6 @@ x_var_init()
 
   /* initialize the modifiable variables */
   ((struct x_vars *)dm_vars)->mvars.dummy_perspective = 1;
-  ((struct x_vars *)dm_vars)->mvars.alt_mouse_mode = 1;
 }
 
 static void

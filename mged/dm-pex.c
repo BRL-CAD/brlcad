@@ -134,7 +134,6 @@ struct modifiable_pex_vars {
 #endif
   int perspective_mode;
   int dummy_perspective;
-  int alt_mouse_mode;
 };
 
 struct pex_vars {
@@ -169,7 +168,6 @@ struct structparse Pex_vparse[] = {
 #endif
   {"%d",  1, "perspective",     Pex_MV_O(perspective_mode), establish_perspective },
   {"%d",  1, "set_perspective", Pex_MV_O(dummy_perspective),  set_perspective },
-  {"%d",  1, "alt_mouse_mode", Pex_MV_O(alt_mouse_mode),establish_am },
   {"",    0,  (char *)0,          0,                      FUNC_NULL }
 };
 
@@ -680,9 +678,8 @@ XEvent *eventPtr;
     mx = eventPtr->xmotion.x;
     my = eventPtr->xmotion.y;
 
-    switch(((struct pex_vars *)dm_vars)->mvars.alt_mouse_mode){
-    case ALT_MOUSE_MODE_OFF:
-    case ALT_MOUSE_MODE_ON:
+    switch(am_mode){
+    case ALT_MOUSE_MODE_IDLE:
       if(scroll_active && eventPtr->xmotion.state & ((struct pex_vars *)dm_vars)->mb_mask)
 	bu_vls_printf( &cmd, "M 1 %d %d\n", Xx_TO_GED(mx), Xy_TO_GED(my));
       else if(XdoMotion)
@@ -1258,7 +1255,7 @@ set_perspective()
 static void
 establish_am()
 {
-  if(((struct pex_vars *)dm_vars)->mvars.alt_mouse_mode){
+  if(am_mode){
     if(state != ST_S_PICK && state != ST_O_PICK &&
        state != ST_O_PATH && state != ST_S_VPICK){
 
@@ -1376,10 +1373,10 @@ char *argv[];
     if(buttonpress){
       switch(*argv[1]){
       case 'r':
-	((struct pex_vars *)dm_vars)->mvars.alt_mouse_mode = ALT_MOUSE_MODE_ROTATE;
+	am_mode = ALT_MOUSE_MODE_ROTATE;
 	break;
       case 't':
-	((struct pex_vars *)dm_vars)->mvars.alt_mouse_mode = ALT_MOUSE_MODE_TRANSLATE;
+	am_mode = ALT_MOUSE_MODE_TRANSLATE;
 	if((state == ST_S_EDIT || state == ST_O_EDIT) && !EDIT_ROTATE &&
 	              (edobj || es_edflag > 0)){
 	  fastf_t fx, fy;
@@ -1397,7 +1394,7 @@ char *argv[];
 
 	break;
       case 'z':
-	((struct pex_vars *)dm_vars)->mvars.alt_mouse_mode = ALT_MOUSE_MODE_ZOOM;
+	am_mode = ALT_MOUSE_MODE_ZOOM;
 	break;
       default:
 	Tcl_AppendResult(interp, "dm am: need more parameters\n",
@@ -1405,7 +1402,7 @@ char *argv[];
 	return TCL_ERROR;
       }
     }else{
-      ((struct pex_vars *)dm_vars)->mvars.alt_mouse_mode = ALT_MOUSE_MODE_ON;
+      am_mode = ALT_MOUSE_MODE_IDLE;
     }
 
     return status;
@@ -1426,7 +1423,6 @@ Pex_var_init()
   /* initialize the modifiable variables */
 
   ((struct pex_vars *)dm_vars)->mvars.dummy_perspective = 1;
-  ((struct pex_vars *)dm_vars)->mvars.alt_mouse_mode = 1;
 }
 
 

@@ -172,7 +172,6 @@ struct modifiable_ogl_vars {
   int linewidth;
   int fastfog;
   double fogdensity;
-  int alt_mouse_mode;
 };
 
 struct ogl_vars {
@@ -313,7 +312,6 @@ struct structparse Ogl_vparse[] = {
 	{"%d",  1, "linewidth",		Ogl_MV_O(linewidth),	do_linewidth },
 	{"%d",  1, "fastfog",		Ogl_MV_O(fastfog),	do_fog },
 	{"%f",  1, "density",		Ogl_MV_O(fogdensity),	refresh_hook },
-	{"%d",  1, "alt_mouse_mode",	Ogl_MV_O(alt_mouse_mode),FUNC_NULL },
 	{"",	0,  (char *)0,		0,			FUNC_NULL }
 };
 
@@ -972,9 +970,8 @@ XEvent *eventPtr;
     mx = eventPtr->xmotion.x;
     my = eventPtr->xmotion.y;
 
-    switch(((struct ogl_vars *)dm_vars)->mvars.alt_mouse_mode){
-    case ALT_MOUSE_MODE_OFF:
-    case ALT_MOUSE_MODE_ON:
+    switch(am_mode){
+    case ALT_MOUSE_MODE_IDLE:
       if(scroll_active && eventPtr->xmotion.state & mb_mask)
 	bu_vls_printf( &cmd, "M 1 %d %d\n", irisX2ged(mx), irisY2ged(my));
       else if(OgldoMotion)
@@ -2087,10 +2084,10 @@ char	**argv;
     if(buttonpress){
       switch(*argv[1]){
       case 'r':
-	((struct ogl_vars *)dm_vars)->mvars.alt_mouse_mode = ALT_MOUSE_MODE_ROTATE;
+	am_mode = ALT_MOUSE_MODE_ROTATE;
 	break;
       case 't':
-	((struct ogl_vars *)dm_vars)->mvars.alt_mouse_mode = ALT_MOUSE_MODE_TRANSLATE;
+	am_mode = ALT_MOUSE_MODE_TRANSLATE;
 
 	if((state == ST_S_EDIT || state == ST_O_EDIT) && !EDIT_ROTATE &&
 	   (edobj || es_edflag > 0)){
@@ -2106,7 +2103,7 @@ char	**argv;
 
 	break;
       case 'z':
-	((struct ogl_vars *)dm_vars)->mvars.alt_mouse_mode = ALT_MOUSE_MODE_ZOOM;
+	am_mode = ALT_MOUSE_MODE_ZOOM;
 	break;
       default:
 	Tcl_AppendResult(interp, "dm am: need more parameters\n",
@@ -2114,7 +2111,7 @@ char	**argv;
 	return TCL_ERROR;
       }
     }else{
-      ((struct ogl_vars *)dm_vars)->mvars.alt_mouse_mode = ALT_MOUSE_MODE_ON;
+      am_mode = ALT_MOUSE_MODE_IDLE;
     }
 
     return status;
@@ -2430,7 +2427,6 @@ ogl_var_init()
   ((struct ogl_vars *)dm_vars)->mvars.zbuffer_on = 1;         /* Hardware Z buffer is on */
   ((struct ogl_vars *)dm_vars)->mvars.linewidth = 1;      /* Line drawing width */
   ((struct ogl_vars *)dm_vars)->mvars.dummy_perspective = 1;
-  ((struct ogl_vars *)dm_vars)->mvars.alt_mouse_mode = 1;
   ((struct ogl_vars *)dm_vars)->mvars.fastfog = 1;
   ((struct ogl_vars *)dm_vars)->mvars.fogdensity = 1.0;
 }
