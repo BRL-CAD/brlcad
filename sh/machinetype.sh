@@ -82,6 +82,15 @@ cat << EOF > ${IN_FILE}
 	HAS_SYMLINKS=1;
 #endif
 
+#if !defined(alliant) && defined(i860) && defined(unix) && __STDC__ == 0
+/*	Stardent VISTRA i860 machine.  No vendor symbols found in cpp */
+/*	The network code is not tested yet */
+	MACHINE=stad;
+	UNIXTYPE=SYSV;
+	HAS_TCP=0;
+	HAS_SYMLINKS=1;
+#endif
+
 #ifdef gould
 #	undef	sel
 	MACHINE=sel;

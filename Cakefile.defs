@@ -272,6 +272,21 @@ set -S2 "/bin/sh"
 #	define	LIBFB_LIBES	LIBPKG
 #endif
 
+#if !defined(alliant) && defined(i860) && defined(unix) && __STDC__ == 0
+/*	Stardent VISTRA i860 machine.  No vendor symbols found in cpp */
+/*	The network code is not tested yet */
+#	undef	stad
+#	define	MTYPE	stad
+/*	The network code is not tested with BRL-CAD yet */
+#	define	HAS_TCP	0
+#	define	LIBRT_TIMER	timerunix
+#	define	HAS_TCP	0
+/*	There is a /usr/bsd/cc as well */
+#	define	CC	/bin/cc
+/*	-Xc for ANSI, otherwise non-ANSI */
+#	define	CC_OPTS	-D__stardent=1 -Xc -D_POSIX_SOURCE=1
+#endif
+
 #ifdef gould
 /*	Gould SEL, PowerNode.  Obtain more stack space with -m */
 /*	Tested with UTX/32 2.0 */
