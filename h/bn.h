@@ -152,8 +152,8 @@ BU_EXTERN(void		bn_mat_idn, (mat_t m));
 BU_EXTERN(void		bn_mat_copy, (register mat_t dest,register CONST mat_t src));
 #else
 #define	bn_mat_zero( _m )	(void)memset( (void *)_m, 0, sizeof(mat_t))
-#define bn_mat_idn( _m )	(void)memcpy( (void *)_m, mat_identity, sizeof(mat_t))
-#define bn_mat_copy(_d,_s)	(void)memcpy( (void *)_d, _s, sizeof(mat_t))
+#define bn_mat_idn( _m )	(void)memcpy( (void *)_m, (CONST void *)bn_mat_identity, sizeof(mat_t))
+#define bn_mat_copy(_d,_s)	(void)memcpy( (void *)_d, (CONST void *)(_s), sizeof(mat_t))
 #endif /* deprecated */
 
 BU_EXTERN(void		bn_mat_mul, (register mat_t o, register CONST mat_t a,
