@@ -67,7 +67,7 @@ static char errbuf[80];
  *
  *  We are a client.  Make a connection to the server.
  *
- *  Returns PKC_NULL on error.
+ *  Returns PKC_ERROR on error.
  */
 struct pkg_conn *
 pkg_open( host, service, switchp, errlog )
@@ -80,7 +80,6 @@ void (*errlog)();
 	struct sockaddr_in sinhim;		/* Server */
 	register struct hostent *hp;
 	register int netfd;
-	register struct pkg_conn *pc;
 
 	/* Check for default error handler */
 	if( errlog == NULL )
@@ -98,7 +97,7 @@ void (*errlog)();
 			sprintf(errbuf,"pkg_open(%s,%s): unknown service\n",
 				host, service );
 			errlog(errbuf);
-			return(PKC_NULL);
+			return(PKC_ERROR);
 		}
 		sinhim.sin_port = sp->s_port;
 	}
@@ -113,7 +112,7 @@ void (*errlog)();
 			sprintf(errbuf,"pkg_open(%s,%s): unknown host\n",
 				host, service );
 			errlog(errbuf);
-			return(PKC_NULL);
+			return(PKC_ERROR);
 		}
 		sinhim.sin_family = hp->h_addrtype;
 		bcopy(hp->h_addr, (char *)&sinhim.sin_addr, hp->h_length);
@@ -121,32 +120,21 @@ void (*errlog)();
 
 	if( (netfd = socket(sinhim.sin_family, SOCK_STREAM, 0)) < 0 )  {
 		pkg_perror( errlog, "pkg_open:  client socket" );
-		return(PKC_NULL);
+		return(PKC_ERROR);
 	}
 	sinme.sin_port = 0;		/* let kernel pick it */
 
 	if( bind(netfd, (char *)&sinme, sizeof(sinme)) < 0 )  {
 		pkg_perror( errlog, "pkg_open: bind" );
-		return(PKC_NULL);
+		return(PKC_ERROR);
 	}
 
 	if( connect(netfd, (char *)&sinhim, sizeof(sinhim)) < 0 )  {
 		pkg_perror( errlog, "pkg_open: client connect" );
-		return(PKC_NULL);
+		return(PKC_ERROR);
 	}
-	if( (pc = (struct pkg_conn *)malloc(sizeof(struct pkg_conn)))==PKC_NULL )  {
-		errlog( "pkg_open: malloc failure\n" );
-		return(PKC_NULL);
-	}
-	pc->pkc_magic = PKG_MAGIC;
-	pc->pkc_fd = netfd;
-	pc->pkc_switch = switchp;
-	pc->pkc_errlog = errlog;
-	pc->pkc_left = -1;
-	pc->pkc_buf = (char *)0;
-	pc->pkc_curpos = (char *)0;
 
-	return(pc);
+	return( pkg_makeconn(netfd, switchp, errlog) );
 }
 
 /*
@@ -264,7 +252,6 @@ void (*errlog)();
  *
  *  Returns -
  *	>0		ptr to pkg_conn block of new connection
- *	PKC_NULL	accept would block, try again later
  *	PKC_ERROR	fatal error
  */
 struct pkg_conn *
