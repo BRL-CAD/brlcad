@@ -2948,6 +2948,15 @@ struct nmg_ray_state *rs;
 		if( class == NMG_CLASS_AoutB )
 			continue;
 
+		/* Check if mid-point is in fu2. If fu2 is disjoint loops, this point
+		 * may be outside fu2, and we don't want to cut fu1 here.
+		 */
+		class = nmg_class_pt_fu_except( mid_pt, rs->fu2, (struct loopuse *)NULL,
+			(void (*)())NULL, (void (*)())NULL, (char *)NULL, 0, 0, rs->tol );
+
+		if( class == NMG_CLASS_AoutB )
+			continue;
+
 		/* See if there is an edge joining the 2 vertices already, this
 		 * will be used for radial join later */
 		old_eu = nmg_findeu( vu1->v_p, vu2->v_p, (struct shell *)NULL,
