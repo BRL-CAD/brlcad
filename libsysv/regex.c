@@ -81,7 +81,9 @@ re_error( n )
 #define	step	re_step
 #define	advance	re_advance
 #define getrnge	re_getrnge
-#define ecmp	re_ecmp
+#if !sgi
+#	define ecmp	re_ecmp
+#endif
 
 #include	<regexp.h>
 
