@@ -765,18 +765,29 @@ register struct db_full_path	*pathp;
 {
 	register struct solid	*sp;
 	int			count = 0;
+	int			i;
 	struct solid		*ret = (struct solid *)NULL;
 
 	RT_CK_FULL_PATH(pathp);
 
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
+		int not_this_solid=0;
+
 		if( pathp->fp_len != sp->s_last+1 )
 			continue;
 
-		if( bcmp( (char *)&pathp->fp_names[0],
-			  (char *)&sp->s_path[0],
-			  pathp->fp_len * sizeof(struct directory *)
-		        ) != 0 )  continue;
+		for( i=0 ; i<pathp->fp_len ; i++ )
+		{
+			if( pathp->fp_names[i] != sp->s_path[i] )
+			{
+				not_this_solid = 1;
+				break;
+			}
+		}
+
+		if( not_this_solid )
+			continue;
+
 		/* Paths are the same */
 		ret = sp;
 		count++;
