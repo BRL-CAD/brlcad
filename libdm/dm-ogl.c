@@ -89,9 +89,9 @@ struct dm	*ogl_open();
 static int	ogl_close();
 static int	ogl_drawBegin();
 static int      ogl_drawEnd();
-static int	ogl_normal(), ogl_newrot();
+static int	ogl_normal(), ogl_loadMatrix();
 static int	ogl_drawString2D(), ogl_drawLine2D();
-static int      ogl_drawVertex2D();
+static int      ogl_drawPoint2D();
 static int	ogl_drawVList();
 static int      ogl_setColor(), ogl_setLineAttr();
 static int	ogl_setWinBounds(), ogl_debug();
@@ -104,10 +104,10 @@ struct dm dm_ogl = {
   ogl_drawBegin,
   ogl_drawEnd,
   ogl_normal,
-  ogl_newrot,
+  ogl_loadMatrix,
   ogl_drawString2D,
   ogl_drawLine2D,
-  ogl_drawVertex2D,
+  ogl_drawPoint2D,
   ogl_drawVList,
   ogl_setColor,
   ogl_setLineAttr,
@@ -269,12 +269,12 @@ char *argv[];
 
   if(dmp->dm_width == 0){
     dmp->dm_width =
-      DisplayWidth(tmp_dpy, DefaultScreen(tmp_dpy)) - 20;
+      DisplayWidth(tmp_dpy, DefaultScreen(tmp_dpy)) - 30;
      ++make_square;
   }
   if(dmp->dm_height == 0){
     dmp->dm_height =
-      DisplayHeight(tmp_dpy, DefaultScreen(tmp_dpy)) - 20;
+      DisplayHeight(tmp_dpy, DefaultScreen(tmp_dpy)) - 30;
      ++make_square;
   }
 
@@ -474,7 +474,7 @@ Done:
   }
 
   /* This is the applications display list offset */
-  dmp->dm_displaylist = ((struct ogl_vars *)dmp->dm_vars)->fontOffset + 127;
+  dmp->dm_displaylist = ((struct ogl_vars *)dmp->dm_vars)->fontOffset + 128;
 
   glDrawBuffer(GL_FRONT_AND_BACK);
   glClearColor(0.0, 0.0, 0.0, 0.0);
@@ -587,13 +587,6 @@ struct dm *dmp;
     return TCL_ERROR;
   }
 
-#if 0
-  if (!((struct ogl_vars *)dmp->dm_vars)->mvars.doublebuffer){
-    glClearColor(0.0, 0.0, 0.0, 0.0);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  }
-#endif
-
   if (((struct ogl_vars *)dmp->dm_vars)->face_flag){
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
@@ -662,10 +655,12 @@ struct dm *dmp;
 
 /*
  *  			O G L _ N E W R O T
- *  load new rotation matrix onto top of stack
+ *
+ *  Load a new transformation matrix.  This will be followed by
+ *  many calls to ogl_drawVList().
  */
 static int
-ogl_newrot(dmp, mat, which_eye)
+ogl_loadMatrix(dmp, mat, which_eye)
 struct dm *dmp;
 mat_t mat;
 int which_eye;
@@ -679,11 +674,11 @@ int which_eye;
   if(((struct ogl_vars *)dmp->dm_vars)->mvars.debug){
     struct bu_vls tmp_vls;
 
-    Tcl_AppendResult(interp, "ogl_newrot()\n", (char *)NULL);
+    Tcl_AppendResult(interp, "ogl_loadMatrix()\n", (char *)NULL);
 
     bu_vls_init(&tmp_vls);
     bu_vls_printf(&tmp_vls, "which eye = %d\t", which_eye);
-    bu_vls_printf(&tmp_vls, "newrot matrix = \n");
+    bu_vls_printf(&tmp_vls, "transformation matrix = \n");
     bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[0], mat[4], mat[8],mat[12]);
     bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[1], mat[5], mat[9],mat[13]);
     bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[2], mat[6], mat[10],mat[14]);
@@ -728,17 +723,10 @@ int which_eye;
   gtmat[8] = *(mptr++) * dmp->dm_aspect;
   gtmat[12] = *(mptr++) * dmp->dm_aspect;
 
-#if 0
-  gtmat[1] = *(mptr++) * dmp->dm_aspect;
-  gtmat[5] = *(mptr++) * dmp->dm_aspect;
-  gtmat[9] = *(mptr++) * dmp->dm_aspect;
-  gtmat[13] = *(mptr++) * dmp->dm_aspect;
-#else
   gtmat[1] = *(mptr++);
   gtmat[5] = *(mptr++);
   gtmat[9] = *(mptr++);
   gtmat[13] = *(mptr++);
-#endif
 
   gtmat[2] = *(mptr++);
   gtmat[6] = *(mptr++);
@@ -769,13 +757,8 @@ int which_eye;
 
 
 /*
- *  			O G L _ O B J E C T
+ *  			O G L _ D R A W V L I S T
  *  
- *  Set up for an object, transformed as indicated, and with an
- *  object center as specified.  The ratio of object to screen size
- *  is passed in as a convienience.
- *
- *  Returns 0 if object could be drawn, !0 if object was omitted.
  */
 
 /* ARGSUSED */
@@ -845,7 +828,6 @@ register struct rt_vlist *vp;
  *
  * Restore the display processor to a normal mode of operation
  * (ie, not scaled, rotated, displaced, etc).
- * Turns off windowing.
  */
 static int
 ogl_normal(dmp)
@@ -948,7 +930,7 @@ int x2, y2;
 }
 
 static int
-ogl_drawVertex2D(dmp, x, y)
+ogl_drawPoint2D(dmp, x, y)
 struct dm *dmp;
 int x, y;
 {
@@ -1019,6 +1001,7 @@ int style;
 static int
 ogl_debug(dmp, lvl)
 struct dm *dmp;
+int lvl;
 {
   ((struct ogl_vars *)dmp->dm_vars)->mvars.debug = lvl;
   XFlush(((struct ogl_vars *)dmp->dm_vars)->dpy);
@@ -1028,8 +1011,9 @@ struct dm *dmp;
 }
 
 static int
-ogl_setWinBounds(w)
-register int w[];
+ogl_setWinBounds(dmp, w)
+struct dm *dmp;
+int w[6];
 {
   return TCL_OK;
 }
@@ -1420,7 +1404,7 @@ struct dm *dmp;
 int
 ogl_beginDList(dmp, list)
 struct dm *dmp;
-GLuint list;
+unsigned int list;
 {
   if (!glXMakeCurrent(((struct ogl_vars *)dmp->dm_vars)->dpy,
 		      ((struct ogl_vars *)dmp->dm_vars)->win,
@@ -1430,7 +1414,7 @@ GLuint list;
     return TCL_ERROR;
   }
 
-  glNewList(list, GL_COMPILE);
+  glNewList(dmp->dm_displaylist + list, GL_COMPILE);
   return TCL_OK;
 }
 
@@ -1445,18 +1429,18 @@ struct dm *dmp;
 int
 ogl_drawDList(dmp, list)
 struct dm *dmp;
-GLuint list;
+unsigned int list;
 {
-  glCallList(list);
+  glCallList(dmp->dm_displaylist + list);
   return TCL_OK;
 }
 
 int
 ogl_freeDLists(dmp, list, range)
 struct dm *dmp;
-GLuint list;
-GLsizei range;
+unsigned int list;
+int range;
 {
-  glDeleteLists(list, range);
+  glDeleteLists(dmp->dm_displaylist + list, (GLsizei)range);
   return TCL_OK;
 }
