@@ -302,16 +302,6 @@ register struct partition *PartHeadp;
 	if( pp == PartHeadp )
 		return(0);		/* nothing was actually hit?? */
 
-	/*
-	 * Output the ray data: screen plane (pixel) coordinates
-	 * for x and y positions of a ray, region_id, and hit_distance.
-	 * The x and y positions are represented by ap->a_x and ap->a_y.
-	 *
-	 *  Assume all rays are parallel.
-	 */
-
-	dist = pp->pt_inhit->hit_dist;
-	region_id = pp->pt_regionp->reg_regionid;
 
 	/* Getting defensive.... just in case. */
 	if(ap->a_x > width)  {
@@ -343,8 +333,16 @@ register struct partition *PartHeadp;
 	 * to vitiate the need to recompute this value repeatedly. LATER.
 	 */
 
-	posp->c_id = region_id;
-	posp->c_dist = dist;
+	/*
+	 * Output the ray data: screen plane (pixel) coordinates
+	 * for x and y positions of a ray, region_id, and hit_distance.
+	 * The x and y positions are represented by ap->a_x and ap->a_y.
+	 *
+	 *  Assume all rays are parallel.
+	 */
+
+	posp->c_id = pp->pt_regionp->reg_regionid;
+	posp->c_dist = pp->pt_inhit->hit_dist;
 	VMOVE(posp->c_hit, pp->pt_inhit->hit_point);
 	VMOVE(posp->c_normal, pp->pt_inhit->hit_normal);
 	VMOVE(posp->c_rdir, ap->a_ray.r_dir);
@@ -434,8 +432,6 @@ int		y;
 {
 	int		x;
 	struct	cell	*cellp;
-	point_t		beg;		/* beginning point of line */
-	point_t		end;		/* end point of line */
 	vect_t		start;		/* start of vector */
 	vect_t		stop;		/* end of vector */
 
@@ -493,18 +489,12 @@ int		y;
 		   	 */
 
 		   	if(botp == cellp)  {
-		   		VJOIN2(beg, cellp->c_hit, 0.5, dx_model, -0.5, dy_model);
-		   		VJOIN2(end, cellp->c_hit, 0.5, dx_model, 0.5, dy_model);
+		   		VJOIN2(start, cellp->c_hit, 0.5, dx_model, -0.5, dy_model);
+		   		VJOIN2(stop, cellp->c_hit, 0.5, dx_model, 0.5, dy_model);
 		   	} else {
-			   	VJOIN2(beg, cellp->c_hit, -0.5, dx_model, -0.5, dy_model);
-		   		VJOIN2(end, cellp->c_hit, -0.5, dx_model, 0.5, dy_model);
+			   	VJOIN2(start, cellp->c_hit, -0.5, dx_model, -0.5, dy_model);
+		   		VJOIN2(stop, cellp->c_hit, -0.5, dx_model, 0.5, dy_model);
 		   	}
-
-
-		   	/* Now fashion the starting and stopping vectors. */
-
-		   	VJOIN1(start, beg, cellp->c_dist, cellp->c_rdir);
-		   	VJOIN1(stop, end, cellp->c_dist, cellp->c_rdir);
 
 			pdv_3line(plotfp, start, stop);
 				
@@ -541,11 +531,8 @@ int		y;
 	int		state;
 	vect_t		start;
 	vect_t		stop;
-	point_t		beg;
-	point_t		end;
 	
-	VSET(beg, 0, 0, 0);
-
+	VSET(start, 0, 0, 0);	/* cleans out start point... a safety */
 
 	state = SEEKING_START_PT;
 
@@ -578,12 +565,11 @@ int		y;
 				 */
 
 				if(botp == start_cellp)  {
-					VJOIN2(beg, start_cellp->c_hit, -0.5, dx_model, 0.5, dy_model);
+					VJOIN2(start, start_cellp->c_hit, -0.5, dx_model, 0.5, dy_model);
 				} else  {
-					VJOIN2(beg, start_cellp->c_hit, -0.5, dx_model, -0.5, dy_model);
+					VJOIN2(start, start_cellp->c_hit, -0.5, dx_model, -0.5, dy_model);
 				}
 
-				VJOIN1(start, beg, start_cellp->c_dist, start_cellp->c_rdir);
 				state = FOUND_START_PT;
 			}
 		} else {
@@ -610,12 +596,11 @@ int		y;
 				 */
 
 				if( (botp-1) == cellp)  {
-					VJOIN2(end, cellp->c_hit, 0.5, dx_model, 0.5, dy_model);
+					VJOIN2(stop, cellp->c_hit, 0.5, dx_model, 0.5, dy_model);
 				} else {
-					VJOIN2(end, cellp->c_hit, 0.5, dx_model, -0.5, dy_model);
+					VJOIN2(stop, cellp->c_hit, 0.5, dx_model, -0.5, dy_model);
 				}
 
-				VJOIN1(stop, end, cellp->c_dist, cellp->c_rdir);
 				pdv_3line(plotfp, start, stop);
 				state = SEEKING_START_PT;
 			} else {
@@ -645,12 +630,10 @@ int		y;
 			 */
 
 		if( (botp-1) == cellp)  {
-			VJOIN2(end, cellp->c_hit, 0.5, dx_model, 0.5, dy_model);
+			VJOIN2(stop, cellp->c_hit, 0.5, dx_model, 0.5, dy_model);
 		} else {
-			VJOIN2(end, cellp->c_hit, 0.5, dx_model, -0.5, dy_model);
+			VJOIN2(stop, cellp->c_hit, 0.5, dx_model, -0.5, dy_model);
 		}
-
-		VJOIN1(stop, end, cellp->c_dist, cellp->c_rdir);
 
 		pdv_3line(plotfp, start, stop);
 		state = SEEKING_START_PT;
