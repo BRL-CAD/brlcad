@@ -61,6 +61,8 @@ struct cell {
 extern	int	width;			/* # of pixels in X; picture width */
 extern	double	AmbientIntensity;	/* angle bet. surface normals; default of 5deg */
 extern	double	mat_degtorad;		/* converts degrees to radians used by rt */
+extern int	npsw;			/* number of worker PSWs to run */
+
 fastf_t		pit_depth;		/* min. distance for drawing pits/mountains */
 fastf_t		maxangle;		/* value of the cosine of the angle bet. surface normals that triggers shading */
 
@@ -114,6 +116,8 @@ view_init( ap, file, obj, minus_o )
 register struct application *ap;
 char *file, *obj;
 {
+
+	npsw = 1;			/* Disable parallel processing */
 
 	ap->a_hit = rayhit;
 	ap->a_miss = raymiss;
