@@ -1011,6 +1011,15 @@ mat_t		mat;
 			*strp = buf;
 			break;
 		}
+	case ID_GRIP:
+		{
+			struct rt_grip_internal *gip =
+				(struct rt_grip_internal *)ip->idb_ptr;
+			RT_GRIP_CK_MAGIC(gip);
+			VMOVE( mpt, gip->center);
+			*strp = "C";
+			break;
+		}
 	case ID_NMG:
 		{
 			register struct model *m =
@@ -1158,6 +1167,7 @@ init_sedit()
 	case ID_ETO:
 	case ID_BSPLINE:
 	case ID_NMG:
+	case ID_GRIP:
 		rt_log("Experimental:  new_way=1\n");
 		new_way = 1;
 
@@ -1188,7 +1198,6 @@ init_sedit()
 	/* Establish initial keypoint */
 	es_keytag = "";
 	get_solid_keypoint( es_keypoint, &es_keytag, &es_int, es_mat );
-printf("es_keypoint (%s) (%g, %g, %g)\n", es_keytag, V3ARGS(es_keypoint) );
 
 	es_eu = (struct edgeuse *)NULL;
 
@@ -1608,7 +1617,6 @@ sedit()
 		}
 		if( new_way )  {
 			mat_t	scalemat;
-		printf("%d: %s (%g, %g, %g)\n", __LINE__, es_keytag, V3ARGS(es_keypoint));
 			mat_scale_about_pt( scalemat, es_keypoint, es_scale );
 			transform_editing_solid(&es_int, scalemat, &es_int, 1);
 		} else {
@@ -1638,9 +1646,9 @@ sedit()
 				/* Need vector from current vertex/keypoint
 				 * to desired new location.
 				 */
-				VSUB2( delta, work, es_keypoint );
+				VSUB2( delta, es_para, es_keypoint );
 				mat_idn( xlatemat );
-				MAT_DELTAS_VEC_NEG( xlatemat, delta );
+				MAT_DELTAS_VEC( xlatemat, delta );
 				transform_editing_solid(&es_int, xlatemat, &es_int, 1);
 			} else {
 				VMOVE(es_rec.s.s_values, work);
@@ -1913,11 +1921,8 @@ sedit()
 
 	/* If the keypoint changed location, find about it here */
 	if( new_way )  {
-		if (! es_keyfixed)
-		{
-		printf("%d %s (%g, %g, %g)\n", __LINE__, es_keytag, V3ARGS(es_keypoint));
-		get_solid_keypoint( es_keypoint, &es_keytag, &es_int, es_mat );
-		printf("%d %s (%g, %g, %g)\n", __LINE__, es_keytag, V3ARGS(es_keypoint));
+		if (! es_keyfixed) {
+			get_solid_keypoint( es_keypoint, &es_keytag, &es_int, es_mat );
 		}
 	}
 
