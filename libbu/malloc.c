@@ -239,6 +239,12 @@ CONST char	*str;
 
 /*
  *			B U _ R E A L L O C
+ *
+ *  bu_malloc()/bu_free() compatible wrapper for realloc().
+ *
+ *  While the string 'str' is provided for the log messages, don't
+ *  disturb the mdb_str value, so that this storage allocation can be
+ *  tracked back to it's original creator.
  */
 genptr_t
 bu_realloc(ptr, cnt, str)
@@ -277,7 +283,6 @@ CONST char		*str;
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
 		mp->mdb_addr = ptr;
 		mp->mdb_len = cnt;
-		mp->mdb_str = str;
 
 		/* Install a barrier word at the new end of the dynamic arena */
 		/* Correct location depends on 'cnt' being rounded up, above */
