@@ -346,7 +346,6 @@ register CONST mat_t		mat;
 	if (dsp_ip->dsp_mp->buflen != dsp_ip->dsp_xcnt*dsp_ip->dsp_ycnt*2) {
 		IMPORT_FAIL("buffer wrong size");
 	}
-	
 
 
 	return(0);			/* OK */
@@ -364,7 +363,9 @@ CONST struct rt_db_internal	*ip;
 double				local2mm;
 {
 	struct rt_dsp_internal	*dsp_ip;
+	struct rt_dsp_internal	dsp;
 	union record		*rec;
+	struct bu_vls		str;
 
 	RT_CK_DB_INTERNAL(ip);
 	if( ip->idb_type != ID_DSP )  return(-1);
@@ -376,25 +377,23 @@ double				local2mm;
 	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "dsp external");
 	rec = (union record *)ep->ext_buf;
 
-	rec->s.s_id = ID_SOLID;
-#if 0
-	rec->s.s_type = DSP;	/* GED primitive type from db.h */
-#endif
+	dsp = *dsp_ip;	/* struct copy */
+
 	/* Since libwdb users may want to operate in units other
 	 * than mm, we offer the opportunity to scale the solid
 	 * (to get it into mm) on the way out.
 	 */
+	dsp.dsp_mtos[15] /= local2mm;
+
+	rec->ss.ss_id = DBID_STRSOL;
+	strncpy( rec->ss.ss_keyword, "dsp", NAMESIZE-1 );
+
+	bu_vls_init( &str );
+	bu_vls_struct_print( &str, rt_dsp_parse, (char *)&dsp);
+	strncpy( rec->ss.ss_args, bu_vls_addr(&str), DB_SS_LEN-1 );
+	bu_vls_free( &str );
 
 
-	/* convert from local editing units to mm and export
-	 * to database record format
-	 *
-	 * Warning: type conversion: double to float
-	 */
-#if 0
-	VSCALE( &rec->s.s_values[0], dsp_ip->dsp_V, local2mm );
-	rec->s.s_values[3] = dsp_ip->dsp_radius * local2mm;
-#endif
 	return(0);
 }
 
