@@ -902,6 +902,12 @@ vect_t		dir;
 	if( rs.state != NMG_STATE_OUT )  {
 		rt_log("ERROR nmg_face_combine() ended in state '%s'?\n",
 			nmg_state_names[rs.state] );
+
+		/* Drop a plot file */
+		rt_g.NMG_debug |= DEBUG_COMBINE|DEBUG_PLOTEM;
+		nmg_pl_comb_fu( 0, 1, fu1 );
+		nmg_pl_comb_fu( 0, 2, fu2 );
+
 		rt_bomb("nmg_face_combine() bad ending state\n");
 	}
 
@@ -1104,6 +1110,7 @@ int			multi;
 	struct loopuse		*prev_lu;
 	struct edgeuse	*first_new_eu;
 	struct edgeuse	*second_new_eu;
+	int			e_assessment;
 
 	NMG_CK_VERTEXUSE(vu);
 	assessment = nmg_assess_vu( rs, pos );
@@ -1250,8 +1257,10 @@ rt_log("force next eu to ray\n");
 	case NMG_ACTION_LONE_V_ESPLIT:
 		/*
 		 *  Split edge to include vertex from this lone vert loop.
-		 *  This only happens in an "ON" state, so split edge that
-		 *  starts with previously seen vertex.
+		 *  This only happens in an "ON" state, so split the edge that
+		 *  starts (or ends) with the previously seen vertex.
+		 *  Note that the forward going edge may point the wrong way,
+		 *  i.e., not lie on the ray at all.
 		 */
 		lu = nmg_lu_of_vu( vu );
 		NMG_CK_LOOPUSE(lu);
@@ -1259,7 +1268,20 @@ rt_log("force next eu to ray\n");
 		NMG_CK_VERTEXUSE(prev_vu);
 		eu = prev_vu->up.eu_p;
 		NMG_CK_EDGEUSE(eu);
-/*		(void)nmg_esplit( vu->v_p, eu->e_p ); */
+		e_assessment = nmg_assess_eu( eu, 1, rs, pos-1 );	/* forw */
+		if( e_assessment == NMG_E_ASSESSMENT_ON_FORW )  {
+			/* "eu" (forw) is the right edge to split */
+		} else {
+			e_assessment = nmg_assess_eu( eu, 0, rs, pos-1 ); /*rev*/
+			if( e_assessment == NMG_E_ASSESSMENT_ON_REV )  {
+				/* (reverse) "eu" is the right one */
+				eu = RT_LIST_PLAST_CIRC( edgeuse, eu );
+			} else {
+				/* What went wrong? */
+				rt_log("LONE_V_ESPLIT:  rev e_assessment = %s\n", nmg_e_assessment_names[e_assessment]);
+				rt_bomb("nmg_face_state_transition: LONE_V_ESPLIT could not find ON edge to split\n");
+			}
+		}
 		(void)nmg_ebreak( vu->v_p, eu->e_p );
 		/* Update vu table with new value */
 		rs->vu[pos] = RT_LIST_PNEXT_CIRC(edgeuse, eu)->vu_p;
@@ -1267,6 +1289,7 @@ rt_log("force next eu to ray\n");
 		nmg_klu(lu);
 		if(rt_g.NMG_debug&DEBUG_COMBINE)  {
 			rt_log("After LONE_V_ESPLIT, the final loop:\n");
+			nmg_pr_lu(nmg_lu_of_vu(rs->vu[pos]), "   ");
 			nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]), rs);
 		}
 		break;
