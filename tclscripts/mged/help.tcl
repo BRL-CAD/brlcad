@@ -53,7 +53,7 @@ set help_data(echo)		{{[text]}	{echo arguments back}}
 set help_data(edcodes)		{{object(s)}	{edit region ident codes}}
 set help_data(edmater)		{{comb(s)}	{edit combination materials}}
 set help_data(edcolor)		{{}	{text edit color table}}
-set help_data(edcomb)		{{combname Regionflag regionid air los [GIFTmater]}	{edit combination record info}}
+set help_data(edcomb)		{{combname Regionflag regionid air los [material]}	{edit combination record info}}
 set help_data(edgedir)		{{[delta_x delta_y delta_z]|[rot fb]}	{define direction of ARB edge being moved}}
 set help_data(erase)		{{<objects>}	{remove objects from the screen}}
 set help_data(erase_all)	{{<objects>}	{remove all occurrences of object(s) from the screen}}
@@ -88,7 +88,7 @@ set help_data(idents)		{{file object(s)}	{make ascii summary of region idents}}
 set help_data(ill)		{{name}	{illuminate object}}
 set help_data(in)		{{[-f] [-s] parameters...}	{keyboard entry of solids.  -f for no drawing, -s to enter solid edit}}
 set help_data(inside)		{{}	{finds inside solid per specified thicknesses}}
-set help_data(item)		{{region ident [air [GIFTmater [los]]]}	{set region ident codes}}
+set help_data(item)		{{region ident [air [material [los]]]}	{set region ident codes}}
 set help_data(jcs)		{{id}	{join collaborative session}}
 set help_data(joint)		{{command [options]}	{articulation/animation commands}}
 set help_data(journal)		{{[-d] fileName}	{record all commands and timings to journal}}
@@ -145,7 +145,7 @@ set help_data(press)		{{button_label}	{emulate button press}}
 set help_data(preview)		{{[-v] [-d sec_delay] [-D start frame] [-K last frame] rt_script_file}	{preview new style RT animation script}}
 set help_data(ps)		{{[-f font] [-t title] [-c creator] [-s size in inches] [-l linewidth] file}	{creates a postscript file of the current view}}
 set help_data(push)		{{object[s]}	{pushes object's path transformations to solids}}
-set help_data(put_comb)		{{comb_name is_Region id air gift los color shader inherit boolean_expr} {set combination}}
+set help_data(put_comb)		{{comb_name is_Region id air material los color shader inherit boolean_expr} {set combination}}
 set help_data(putmat)		{{a/b {I | m0 m1 ... m16}}	{replace matrix on combination's arc}}
 set help_data(q)		{{}	{quit}}
 set help_data(qcs)		{{id}	{quit collaborative session}}
@@ -160,7 +160,7 @@ set help_data(read_muves)	{{MUVES_regionmap_file [sysdef_file]}	{read the MUVES 
 set help_data(red)		{{object}	{edit a group or region using a text editor}}
 set help_data(refresh)		{{}	{send new control list}}
 set help_data(regdebug)		{{[number]}	{toggle display manager debugging or set debug level}}
-set help_data(regdef)		{{ident [air [los [GIFTmaterial]]]}	{change next region default codes}}
+set help_data(regdef)		{{ident [air [los [material]]]}	{change next region default codes}}
 set help_data(regions)		{{file object(s)}	{make ascii summary of regions}}
 set help_data(release)		{{[name]}	{release display processor}}
 set help_data(rfarb)		{{}	{makes arb given point, 2 coord of 3 pts, rot, fb, thickness}}
