@@ -74,6 +74,8 @@ rle_hdr *the_hdr;
      */
     for (;;)
     {
+    	register int code;
+
         inst[0] = getc( infile );
 	inst[1] = getc( infile );
 	if ( feof(infile) )
@@ -82,7 +84,8 @@ rle_hdr *the_hdr;
 	    break;		/* <--- one of the exits */
 	}
 
-	switch( OPCODE(inst) )
+    	code = OPCODE(inst);
+	switch( code )
 	{
 	case RSkipLinesOp:
 	    if ( LONGP(inst) )
