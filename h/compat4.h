@@ -452,6 +452,11 @@ extern "C" {
 #define RT_VLBLOCK_MAGIC	BN_VLBLOCK_MAGIC
 #define RT_CK_VLBLOCK(_p)	BN_CK_VLBLOCK(_p)
 
+/* font.c */
+#define rt_vlist_3string( vhead, string, origin, rot, scale )	\
+	bn_vlist_3string( vhead, &rt_g.rtg_vlfree, string, origin, rot, scale )
+#define rt_vlist_2string( vhead, string, x, y, scale, theta )	\
+	bn_vlist_2string( vhead, &rt_g.rtg_vlfree, string, x, y, scale, theta )
 
 #ifdef __cplusplus
 }

@@ -903,9 +903,19 @@ struct bn_vlblock {
 	int		max;
 	long		*rgb;		/* rgb[max] variable size array */
 	struct bu_list	*head;		/* head[max] variable size array */
+	struct bu_list	*free_vlist_hd;	/* where to get/put free vlists */
 };
 #define BN_VLBLOCK_MAGIC	0x981bd112
 #define BN_CK_VLBLOCK(_p)	BU_CKMAG((_p), BN_VLBLOCK_MAGIC, "bn_vlblock")
+
+BU_EXTERN(void	bn_vlist_3string, (struct bu_list *vhead,
+				struct bu_list *free_hd, CONST char *string,
+				CONST point_t origin, CONST mat_t rot,
+				double scale));
+BU_EXTERN(void	bn_vlist_2string, (struct bu_list *vhead,
+				struct bu_list *free_hd, CONST char *string,
+				double x, double y, double scale, double theta));
+
 
 
 /*----------------------------------------------------------------------*/
