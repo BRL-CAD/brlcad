@@ -184,7 +184,9 @@ char	*argv[];
 	}
 
 	/* Open g-acad error log file */
-
+	if( !error_file)
+		fpe = stderr;
+	else
 	if( (fpe=fopen( error_file, "w" )) == NULL )
 	{
 	rt_log( "Cannot open output file (%s) for writing\n", error_file );
@@ -222,16 +224,18 @@ char	*argv[];
 		nmg_booltree_leaf_tess);	/* in librt/nmg_bool.c */
 
 	percent = 0;
-	if(regions_tried>0)
-		  percent = ((double)regions_converted * 100) / regions_tried;
-	printf("Tried %d regions, %d converted to NMG's successfully.  %g%%\n",
-		regions_tried, regions_converted, percent);
+	if(regions_tried>0){
+		percent = ((double)regions_converted * 100) / regions_tried;
+		printf("Tried %d regions, %d converted to NMG's successfully.  %g%%\n",
+			regions_tried, regions_converted, percent);
+	}
 	percent = 0;
 
-	if( regions_tried > 0 )
+	if( regions_tried > 0 ){
 		percent = ((double)regions_written * 100) / regions_tried;
 	printf( "                  %d triangulated successfully. %g%%\n",
 		regions_written, percent );
+	}
 /* XXX Write out number of facet entities to .facet file */
 
 	rewind(fp);
@@ -267,8 +271,8 @@ int material_id;
 	int numtri   = 0;		/* Number of triangles to output */
 	int tricount = 0;		/* Triangle number */
 	int i;
-	double npercent;
-	double tpercent;
+	float npercent;
+	float tpercent;
 
 	NMG_CK_REGION( r );
 	RT_CK_FULL_PATH(pathp);
@@ -279,9 +283,9 @@ int material_id;
 	fflush(stdout);
 /* XXX */
 	if(regions_tried>0){
-		npercent = ((double)regions_converted * 100) / regions_tried;
-		tpercent = ((double)regions_written * 100) / regions_tried;
-		printf("Tried %d regions, %d conv. to NMG's %d conv. to tri. nmgper = %g%% triper = %g%% \n",
+		npercent = (float)(regions_converted * 100) / regions_tried;
+		tpercent = (float)(regions_written * 100) / regions_tried;
+		printf("Tried %d regions, %d conv. to NMG's %d conv. to tri. nmgper = %.2f%% triper = %.2f%% \n",
 		regions_tried, regions_converted, regions_written, npercent,tpercent);
 	}
 /* XXX */
