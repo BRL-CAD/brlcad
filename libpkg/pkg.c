@@ -11,6 +11,7 @@
  *	pkg_makeconn	Make a pkg_conn structure
  *	pkg_close	Close a network connection
  *	pkg_send	Send a message on the connection
+ *	pkg_2send	Send a message combined from two buffers
  *	pkg_stream	Send a message that doesn't need a push
  *	pkg_flush	Empty the stream buffer of any queued messages
  *	pkg_waitfor	Wait for a specific msg, user buf, processing others
@@ -313,6 +314,7 @@ void (*errlog)();
 	return( pkg_makeconn(s2, switchp, errlog) );
 #endif
 #ifdef SGI_EXCELAN
+	struct sockaddr_in from;
 
 	/* block until someone tries to connect */
 	if(accept(fd, &from) < 0){
@@ -607,16 +609,9 @@ register struct pkg_conn *pc;
 		return(i-sizeof(hdr));	/* amount of user data sent */
 	}
 #else
+	/* Assume all succeed if last one does */
 	(void)write( pc->pkc_fd, (char *)&hdr, sizeof(hdr) );
-	if( (i = write( pc->pkc_fd, buf1, len1 )) != len1 )  {
-		if( i < 0 )  {
-			pkg_perror(pc->pkc_errlog, "pkg_2send: write");
-			return(-1);
-		}
-		sprintf(errbuf,"pkg_2send of %d, wrote %d\n", len, i);
-		(pc->pkc_errlog)(errbuf);
-		return(i);		/* amount of user data sent */
-	}
+	(void)write( pc->pkc_fd, buf1, len1 );
 	if( (i = write( pc->pkc_fd, buf2, len2 )) != len2 )  {
 		if( i < 0 )  {
 			pkg_perror(pc->pkc_errlog, "pkg_2send: write2");
