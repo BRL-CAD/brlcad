@@ -78,7 +78,7 @@ fastf_t v;
 			*crv_ptr++ = *mesh_ptr++;
 		}
 
-		rtr_pt =  (fastf_t * ) internal_eval_crv( curves, srf->order[ROW], u, 
+		rtr_pt =  (fastf_t * ) rt_nurb_eval_crv( curves, srf->order[ROW], u, 
 		    srf->u_knots, k_index, coords );
 
 		for (k = 0; k < coords; k++)
@@ -90,7 +90,7 @@ fastf_t v;
 
 	k_index = rt_nurb_knot_index( srf->v_knots, v, srf->order[COL] );
 
-	ev_pt = (fastf_t * ) internal_eval_crv( diff_curve, srf->order[COL], 
+	ev_pt = (fastf_t * ) rt_nurb_eval_crv( diff_curve, srf->order[COL], 
 		v, srf->v_knots, k_index, coords);
 
 	for ( k = 0; k < coords; k++)
@@ -127,7 +127,7 @@ fastf_t param;
 	for ( i = 0; i < coords * crv->mesh->c_size; i++)
 		pnts[i] = crv->mesh->ctl_points[i];
 
-	ev_pt = (fastf_t * ) internal_eval_crv(
+	ev_pt = (fastf_t * ) rt_nurb_eval_crv(
 	    pnts, crv->order, param, crv->knot, k_index, coords);
 
 	for ( i = 0; i < coords; i++)
@@ -140,7 +140,7 @@ fastf_t param;
 
 
 fastf_t *
-internal_eval_crv( crv, order, param, k_vec, k_index, coords )
+rt_nurb_eval_crv( crv, order, param, k_vec, k_index, coords )
 register fastf_t *crv;
 int	order;
 fastf_t	param;
@@ -175,13 +175,13 @@ int	coords;
 		} 		
 		j--;
 	} 	
-	return internal_eval_crv( crv, order - 1, param, k_vec, 
+	return rt_nurb_eval_crv( crv, order - 1, param, k_vec, 
 		k_index, coords ); 
 }
 
 
 void
-internal_pr_crv( crv, c_size, coords )
+rt_nurb_pr_crv( crv, c_size, coords )
 fastf_t *crv;
 int	c_size;
 int	coords;
@@ -203,5 +203,3 @@ int	coords;
 			    *((crv + ((i) * coords)) + 2),
 			    *((crv + ((i) * coords)) + 3));
 }
-
-

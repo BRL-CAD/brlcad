@@ -49,7 +49,7 @@ fastf_t epsilon;		/* Epsilon value for flatness testing */
 
 	otherdir = (dir == ROW) ? COL : ROW;
 
-	max_row_dist = max_col_dist = -SPL_INFINIT;
+	max_row_dist = max_col_dist = -INFINITY;
 
 	crv = (fastf_t * ) rt_malloc( sizeof(fastf_t) * 
 	    EXTRACT_COORDS(srf->mesh->pt_type) * srf->mesh->s_size[1], 
@@ -68,7 +68,7 @@ fastf_t epsilon;		/* Epsilon value for flatness testing */
 		    j++)
 			crv[j] = *mesh_ptr++;
 
-		rdist = internal_crv_flat(crv, srf->mesh->s_size[1], 
+		rdist = rt_nurb_crv_flat(crv, srf->mesh->s_size[1], 
 		    srf->mesh->pt_type);
 		max_row_dist = MAX(max_row_dist, rdist);
 	}
@@ -91,7 +91,7 @@ fastf_t epsilon;		/* Epsilon value for flatness testing */
 				    srf->mesh->ctl_points[mesh_elt + k];
 		}
 
-		rdist = internal_crv_flat(crv, 
+		rdist = rt_nurb_crv_flat(crv, 
 		    srf->mesh->s_size[0], srf->mesh->pt_type);
 
 		max_col_dist = MAX( max_col_dist, rdist);
@@ -181,7 +181,7 @@ fastf_t epsilon;		/* Epsilon value for flatness testing */
 
 
 fastf_t 
-internal_crv_flat( crv, size, pt_type )
+rt_nurb_crv_flat( crv, size, pt_type )
 fastf_t *crv;
 int	size;
 int	pt_type;
@@ -200,7 +200,7 @@ int	pt_type;
 
 	coords = EXTRACT_COORDS( pt_type);
 	rational = EXTRACT_RAT( pt_type);
-	max_dist = -SPL_INFINIT;
+	max_dist = -INFINITY;
 
 	if ( !rational) {
 		VMOVE(p1, crv);

@@ -62,7 +62,7 @@ int	dir;
 			    i * EXTRACT_COORDS(nsrf->mesh->pt_type)
 			*nsrf->mesh->s_size[1];
 
-			internal_mesh_diff( srf->order[0], 
+			rt_nurb_mesh_diff( srf->order[0], 
 			    old_points, new_points, srf->u_knots->knots,
 			    EXTRACT_COORDS(srf->mesh->pt_type),
 			    EXTRACT_COORDS(nsrf->mesh->pt_type),
@@ -90,7 +90,7 @@ int	dir;
 			new_points = nsrf->mesh->ctl_points + 
 			    i * EXTRACT_COORDS(nsrf->mesh->pt_type);
 
-			internal_mesh_diff( srf->order[1], 
+			rt_nurb_mesh_diff( srf->order[1], 
 			    old_points, new_points, srf->v_knots->knots,
 			    EXTRACT_COORDS(srf->mesh->pt_type) * 
 			    srf->mesh->s_size[1],
@@ -126,7 +126,7 @@ struct cnurb *crv;
 	opts = (fastf_t * ) crv->mesh->ctl_points;
 	npts = (fastf_t * ) ncrv->mesh->ctl_points;
 
-	internal_mesh_diff( crv->order, opts, npts, crv->knot->knots, 
+	rt_nurb_mesh_diff( crv->order, opts, npts, crv->knot->knots, 
 	    EXTRACT_COORDS( crv->mesh->pt_type),
 	    EXTRACT_COORDS( ncrv->mesh->pt_type),
 	    crv->mesh->c_size, crv->mesh->pt_type );
@@ -138,8 +138,8 @@ struct cnurb *crv;
 
 }
 
-
-internal_mesh_diff( order, o_pts, n_pts, knots, o_stride, n_stride, o_size, pt_type)
+void
+rt_nurb_mesh_diff( order, o_pts, n_pts, knots, o_stride, n_stride, o_size, pt_type)
 int	order;
 fastf_t *o_pts;
 fastf_t *n_pts;
