@@ -23,7 +23,7 @@
 #
 # Modifications -
 #        (Bob Parker):
-#             Generalized the code to accommodate multiple instances of the
+#             Generalized the code to accommodate multiple instances of this
 #             user interface.
 
 if {[info exists env(DISPLAY)] == 0} {
@@ -31,6 +31,7 @@ if {[info exists env(DISPLAY)] == 0} {
     puts "Setting the DISPLAY environment variable to :0\n"
     set env(DISPLAY) ":0"
 }
+
 
 #==============================================================================
 # Ensure that tk.tcl has been loaded already via mged command 'loadtk'.
@@ -40,7 +41,7 @@ if { [info exists tk_strictMotif] == 0 } {
 }
 
 #==============================================================================
-# PHASE 0: Support routines: MGED dialog boxes
+# Support routines: MGED dialog boxes
 #------------------------------------------------------------------------------
 # "mged_dialog" and "mged_input_dialog" are based off of the "tk_dialog" that
 # comes with Tk 4.0.
@@ -147,7 +148,7 @@ proc mged_input_dialog { w screen title text entryvar defaultentry default args 
 }
 
 #==============================================================================
-# PHASE 0.5: Loading MGED support routines from other files:
+# Loading MGED support routines from other files:
 #------------------------------------------------------------------------------
 #        vmath.tcl  :  The vector math library
 #         menu.tcl  :  The Tk menu replacement
@@ -166,12 +167,14 @@ while { [file exists $mged_html_dir/index.html]==0 } {
 	    mged_html_dir $mged_html_dir 0 OK
 }
 
-catch { source [lindex $auto_path 0]/sliders.tcl }
-trace variable mged_display(state)    w ia_changestate
-trace variable mged_display(path_lhs) w ia_changestate
-trace variable mged_display(path_rhs) w ia_changestate
-trace variable mged_display(keypoint) w ia_changestate
-trace variable mged_display(adc)      w ia_changestate
+#catch { source [lindex $auto_path 0]/sliders.tcl }
+# The new_sliders are not quite ready ---- need to test
+catch { source [lindex $auto_path 0]/new_sliders.tcl }
+#trace variable mged_display(state)    w ia_changestate
+#trace variable mged_display(path_lhs) w ia_changestate
+#trace variable mged_display(path_rhs) w ia_changestate
+#trace variable mged_display(keypoint) w ia_changestate
+#trace variable mged_display(adc)      w ia_changestate
 
 proc ia_help { parent screen cmds } {
     set w $parent.help
@@ -192,7 +195,8 @@ proc ia_help { parent screen cmds } {
 	$w.l insert end $cmd
     }
 
-    bind $w.l <Double-Button-1> "doit_help %W $w.u $screen"
+#    bind $w.l <Button-1> "doit_help %W $w.u $screen"
+    bind $w.l <Button-1> "handle_select %W %y; doit_help %W $w.u $screen"
     bind $w.l <Button-2> "handle_select %W %y; doit_help %W $w.u $screen"
     bind $w.l <Return> "doit_help %W $w.u $screen"
 }
@@ -227,23 +231,17 @@ proc ia_apropos { parent screen } {
 proc ia_changestate args {
     global mged_display ia_illum_label
 
-    if { [string compare $mged_display(state) VIEWING]==0 } {
-	set ia_illum_label "No objects illuminated"
+    set id [lindex $args 0]
+
+    if { [string length $mged_display(keypoint)]>0 } {
+	set ia_illum_label($id) $mged_display(keypoint)
+    } elseif { [string compare $mged_display(state) VIEWING]==0 } {
+#	set ia_illum_label($id) "No objects illuminated"
+	set ia_illum_label($id) $mged_display($id,fps)
     } else {
-	set ia_illum_label [format "Illuminated path:    %s    %s" \
+	set ia_illum_label($id) [format "Illuminated path:    %s    %s" \
 		$mged_display(path_lhs) $mged_display(path_rhs)]
     }
-    
-#    if { [string length $mged_display(adc)]>0 } {
-#	set ia_illum_label $mged_display(adc)
-#    } elseif { [string length $mged_display(keypoint)]>0 } {
-#	set ia_illum_label $mged_display(keypoint)
-#    } elseif { [string compare $mged_display(state) VIEWING]==0 } {
-#	set ia_illum_label "No objects illuminated"
-#    } else {
-#	set ia_illum_label [format "Illuminated path:    %s    %s" \
-#		$mged_display(path_lhs) $mged_display(path_rhs)]
-#    }
 }
 
 proc tkTextInsert {w s} {
@@ -285,13 +283,12 @@ proc ia_print_prompt { w str } {
 }
 
 proc get_player_id_t { w } {
-    global player_count
-    global player_ids
+    global mged_players
     
-    for { set j 0 } { $j < $player_count } { incr j } {
-	set _w .ia$player_ids($j).t
+    foreach id $mged_players {
+	set _w .ia$id.t
 	if { $w == $_w } {
-	    return $player_ids($j)
+	    return $id
 	}
     }
 
@@ -299,19 +296,17 @@ proc get_player_id_t { w } {
 }
 
 proc distribute_text { w cmd str} {
-    global player_count
-    global player_ids
+    global mged_players
 
-    set id [get_player_id_t $w]
-    for { set j 0 } { $j < $player_count } { incr j } {
-	set _w .ia$player_ids($j).t
-
+    set src_id [get_player_id_t $w]
+    foreach id $mged_players {
+	set _w .ia$id.t
 	if [winfo exists $_w] {
 	    if {$w != $_w} {
 		set _promptBegin [$_w index {end - 1 l}]
 		$_w mark set curr insert
 		$_w mark set insert $_promptBegin
-		ia_rtlog_bold $_w "mged:$id> "
+		ia_rtlog_bold $_w "mged:$src_id> "
 		ia_rtlog_bold $_w $cmd\n
 
 		if {$str != ""} {
@@ -325,12 +320,14 @@ proc distribute_text { w cmd str} {
     }
 }
 
+#    if { [mged_input_dialog .ia$id.open $player_screen($id) "Open New File" \
+#	    "Enter filename of database you wish to open:" \
+#	    ia_filename "" 0 Open Cancel] == 0 } {
 proc do_Open { id } {
     global player_screen
 
-    if { [mged_input_dialog .ia$id.open $player_screen($id) "Open New File" \
-	    "Enter filename of database you wish to open:" \
-	    ia_filename "" 0 Open Cancel] == 0 } {
+    set ia_filename [fs_dialog .ia$id.open .ia$id "./*.g"]
+    if {[string length $ia_filename] > 0} {
 	if [file exists $ia_filename] {
 	    opendb $ia_filename
 	    mged_dialog .ia$id.cool $player_screen($id) "File loaded" \
@@ -380,6 +377,14 @@ proc ia_invoke { w } {
 	cmd_set $id
 	catch [list mged_glob $cmd] globbed_cmd
 	set result [catch [list uplevel #0 $globbed_cmd] ia_msg]
+
+	if { ![winfo exists $w] } {
+	    distribute_text $w $cmd $ia_msg
+	    stuff_str "\nmged:$id> $cmd\n$ia_msg"
+	    hist_add $cmd
+	    return 
+	}
+
 	if {$result != 0} {
             set i [string first "more arguments needed::" $ia_msg]
             if { $i > -1 } {
@@ -416,7 +421,7 @@ proc echo args {
 }
 
 #==============================================================================
-# PHASE 5: HTML support
+# HTML support
 #==============================================================================
 proc man_goto { w screen } {
     global ia_url
@@ -488,12 +493,15 @@ proc HMlink_callback { w href } {
     if {[string match /* $href]} {
 	set new_url $href
     } else {
-	set new_url [file dirname $ia_url(current)]/$href
+	if { [file isdirectory $ia_url(current)] } {
+	    set new_url $ia_url(current)$href
+	} else {
+	    set new_url [file dirname $ia_url(current)]/$href
+	}
     }
 
     # Remove tags
     regsub {#[0-9a-zA-Z]*} $new_url {} ia_url(current)
-    
     lappend ia_url(last) $ia_url(current)
     set ia_url(backtrack) [lrange $ia_url(last) 0 \
 	    [expr [llength $ia_url(last)]-2]]
@@ -565,227 +573,5 @@ proc ia_get_html {file} {
 }
 
 #==============================================================================
-# Spit out message about the openw command
+# Other Support Routines
 #==============================================================================
-#puts "\nNote: use the openw command to open mged interface windows"
-#puts "Usage: openw id host:0\n"
-
-set player_count 0
-proc openw { id screen } {
-    global ia_filename
-    global ia_cmd_prefix
-    global ia_more_default
-    global output_as_return
-    global faceplate
-    global ia_font
-    global player_ids
-    global player_count
-    global player_screen
-
-#==============================================================================
-# PHASE 1: Creation of main window
-#==============================================================================
-
-catch { destroy .ia$id }
-	
-toplevel .ia$id -screen $screen
-wm title .ia$id "MGED Interaction Window"
-
-set player_ids($player_count) $id
-set player_screen($id) $screen
-incr player_count
-    
-#==============================================================================
-# PHASE 2: Construction of menu bar
-#==============================================================================
-
-frame .ia$id.m -relief raised -bd 1
-pack .ia$id.m -side top -fill x
-
-menubutton .ia$id.m.file -text "File" -menu .ia$id.m.file.m -underline 0
-menu .ia$id.m.file.m
-.ia$id.m.file.m add command -label "Open" -underline 0 -command "do_Open $id"
-
-.ia$id.m.file.m add command -label "Quit" -command quit -underline 0
-
-menubutton .ia$id.m.tools -text "Tools" -menu .ia$id.m.tools.m -underline 0
-menu .ia$id.m.tools.m
-.ia$id.m.tools.m add command -label "Place new solid" -underline 10 -command "solcreate $id"
-.ia$id.m.tools.m add command -label "Place new instance" -underline 10 -command "icreate $id"
-.ia$id.m.tools.m add command -label "Solid Click" -underline 6 -command "init_solclick $id"
-
-menubutton .ia$id.m.help -text "Help" -menu .ia$id.m.help.m -underline 0
-menu .ia$id.m.help.m
-.ia$id.m.help.m add command -label "About MGED" -underline 6 -command "do_About_MGED $id"
-.ia$id.m.help.m add command -label "On command..." -underline 0 \
-	-command "do_On_command $id"
-.ia$id.m.help.m add command -label "Apropos" -underline 0 -command "ia_apropos .ia$id $screen"
-.ia$id.m.help.m add command -label "MGED Manual" -underline 0 -command "ia_man .ia$id $screen"
-
-pack .ia$id.m.file .ia$id.m.tools -side left
-pack .ia$id.m.help -side right
-
-#==============================================================================
-# PHASE 3: Bottom-row display
-#==============================================================================
-
-frame .ia$id.dpy
-pack .ia$id.dpy -side bottom -anchor w -fill x
-
-label .ia$id.dpy.cent -text "Center: " -anchor w
-label .ia$id.dpy.centvar -textvar mged_display(center) -anchor w
-label .ia$id.dpy.size -text "Size: " -anchor w
-label .ia$id.dpy.sizevar -textvar mged_display(size) -anchor w
-label .ia$id.dpy.unitsvar -textvar mged_display(units) -anchor w
-label .ia$id.dpy.azim -text "Azim: " -anchor w
-label .ia$id.dpy.azimvar -textvar mged_display(azimuth) -anchor w
-label .ia$id.dpy.elev -text "Elev: " -anchor w
-label .ia$id.dpy.elevvar -textvar mged_display(elevation) -anchor w
-label .ia$id.dpy.twist -text "Twist: " -anchor w
-label .ia$id.dpy.twistvar -textvar mged_display(twist) -anchor w
-
-pack .ia$id.dpy.cent .ia$id.dpy.cent .ia$id.dpy.centvar .ia$id.dpy.size .ia$id.dpy.sizevar \
-	.ia$id.dpy.unitsvar -side left -anchor w
-
-pack .ia$id.dpy.twistvar .ia$id.dpy.twist .ia$id.dpy.elevvar .ia$id.dpy.elev \
-	.ia$id.dpy.azimvar .ia$id.dpy.azim -side right -anchor w
-
-frame .ia$id.illum
-pack .ia$id.illum -side bottom -before .ia$id.dpy -anchor w -fill x
-
-ia_changestate
-
-label .ia$id.illum.label -textvar ia_illum_label
-pack .ia$id.illum.label -side left -anchor w
-
-#==============================================================================
-# PHASE 4: Text widget for interaction
-#==============================================================================
-
-text .ia$id.t -relief sunken -bd 2 -yscrollcommand ".ia$id.s set" -setgrid true
-scrollbar .ia$id.s -relief flat -command ".ia$id.t yview"
-pack .ia$id.s -side right -fill y
-pack .ia$id.t -side top -fill both -expand yes
-
-bind .ia$id.t <Return> {
-    %W mark set insert {end - 1c};
-    %W insert insert \n;
-    ia_invoke %W;
-    break;
-}
-
-bind .ia$id.t <Delete> {
-    catch {%W tag remove sel sel.first promptEnd}
-    if {[%W tag nextrange sel 1.0 end] == ""} {
-	if [%W compare insert < promptEnd] {
-	    break
-	}
-    }
-}
-
-bind .ia$id.t <BackSpace> {
-    catch {%W tag remove sel sel.first promptEnd}
-    if {[%W tag nextrange sel 1.0 end] == ""} {
-	if [%W compare insert <= promptEnd] {
-	    break
-	}
-    }
-}
-
-bind .ia$id.t <Control-a> {
-    %W mark set insert promptEnd
-    break
-}
-
-bind .ia$id.t <Control-u> {
-    %W delete promptEnd {promptEnd lineend}
-    %W mark set insert promptEnd
-}
-
-bind .ia$id.t <Control-p> {
-    %W delete promptEnd {promptEnd lineend}
-    %W mark set insert promptEnd
-    set id [get_player_id_t %W]
-    cmd_set $id
-    set result [catch hist_prev msg]
-    if {$result==0} {
-	%W insert insert [string range $msg 0 \
-		[expr [string length $msg]-2]]
-    }
-    break
-}
-
-bind .ia$id.t <Control-n> {
-    %W delete promptEnd {promptEnd lineend}
-    %W mark set insert promptEnd
-    set id [get_player_id_t %W]
-    cmd_set $id
-    set result [catch hist_next msg]
-    if {$result==0} {
-	%W insert insert [string range $msg 0 \
-		[expr [string length $msg]-2]]
-    }
-    break
-}
-
-bind .ia$id.t <Control-c> {
-    %W mark set insert {end - 1c};
-    %W insert insert \n;
-    ia_print_prompt %W "mged> "
-    %W see insert
-    set id [get_player_id_t %W]
-    set ia_cmd_prefix($id) ""
-    set ia_more_default($id) ""
-}
-
-bind .ia$id.t <Control-d> {
-    if [%W compare insert < promptEnd] {
-	break
-    }
-}
-
-bind .ia$id.t <Control-k> {
-    if [%W compare insert < promptEnd] {
-	break
-    }
-}
-
-bind .ia$id.t <Control-t> {
-    if [%W compare insert < promptEnd] {
-	break
-    }
-}
-
-bind .ia$id.t <Meta-d> {
-    if [%W compare insert < promptEnd] {
-	break
-    }
-}
-
-bind .ia$id.t <Meta-BackSpace> {
-    if [%W compare insert <= promptEnd] {
-	break
-    }
-}
-
-bind .ia$id.t <Control-h> {
-    if [%W compare insert <= promptEnd] {
-	break
-    }
-}
-
-set ia_cmd_prefix($id) ""
-set ia_more_default($id) ""
-ia_print_prompt .ia$id.t "mged> "
-
-.ia$id.t tag configure bold -font -*-Courier-Bold-R-Normal-*-120-*-*-*-*-*-*
-set ia_font -*-Courier-Medium-R-Normal-*-120-*-*-*-*-*-*
-.ia$id.t configure -font $ia_font
-
-#==============================================================================
-# PHASE 5: Creation of other auxilary windows
-#==============================================================================
-
-mmenu_init $id
-cmd_init $id .ia$id.t
-}
