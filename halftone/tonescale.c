@@ -39,6 +39,9 @@ typedef struct Cubic {
  *	tone scale.  If eqptr is null then Set EqCubic to evaluate to a line.
  *
  * $Log$
+ * Revision 1.1  90/04/09  16:18:47  cjohnson
+ * Initial revision
+ * 
  */
 extern struct Cubic *EqCubics;
 int eq_cubic();
@@ -51,8 +54,9 @@ int 		(*eqptr)();
 {
 	int i,result;
 
-	if (!eqptr) {
-		eqptr=eq_cubic;
+	if (!eqptr ) eqptr=eq_cubic;
+
+	if (!EqCubics) {
 		EqCubics = (struct Cubic *)malloc(2*sizeof(struct Cubic));
 		EqCubics[0].x = 0.0;
 		EqCubics[0].A = B;
@@ -81,7 +85,7 @@ int 		(*eqptr)();
 		map[i] = result;
 	}
 }
-static struct Cubic	*EqCubics;
+static struct Cubic	*EqCubics=0;
 /* eq_cubic	default tone scale alorithm
  *
  * impliment
@@ -198,4 +202,11 @@ int *x,*y;
 	free(mi);
 	free(z);
 	free(l);
+	if (Debug>1) {
+		for(i=0;i<n;i++) {
+			fprintf(stderr,"x=%g, A=%g, B=%g, C=%g, D=%g\n",
+			EqCubics[i].x,EqCubics[i].A,EqCubics[i].B,
+			EqCubics[i].C,EqCubics[i].D);
+		}
+	}
 }
