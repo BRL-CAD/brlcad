@@ -97,6 +97,10 @@ register long	magic;
 		return "bn_unif";
 	case BN_GAUSS_MAGIC:
 		return "bn_gauss";
+	case BN_VLIST_MAGIC:
+		return("bn_vlist");
+	case BN_VLBLOCK_MAGIC:
+		return("bn_vlblock");
 
 	/*
 	 *  nmg.h:  NMG magic numbers
@@ -180,10 +184,7 @@ register long	magic;
 		return("rt resource");
 	case RTI_MAGIC:
 		return("rt_i");
-	case RT_VLIST_MAGIC:
-		return("rt_vlist");
-	case RT_VLBLOCK_MAGIC:
-		return("rt_vlblock");
+
 	/*
 	 *  rtgeom.h
 	 */
