@@ -55,7 +55,7 @@ typedef	int	Cast;
 #	define	CPP_OPTIONS	"-D__stardent=1"
 #endif
 
-#if defined(sun) && defined(sparc) && defined(ATT)
+#if ((defined(sun) && defined(sparc)) || defined(__sparc)) && defined(ATT)
 	/* SunOS 5 with unbundled compilers */
 #	undef __STDC__
 #	define __STDC__ 1	/* hack! */
