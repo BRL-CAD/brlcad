@@ -18,11 +18,16 @@
  *	Public Domain, Distribution Unlimitied.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"
 
+#if HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
+#include <stdlib.h>
 #include <stdio.h>
 #include <fcntl.h>
 

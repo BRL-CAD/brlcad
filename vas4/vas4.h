@@ -70,3 +70,20 @@
 
 #define TRUE 1
 #define FALSE 0
+
+extern void	vas_open();
+extern int	get_vas_status();
+extern int	vas_putc();
+extern int	vas_await();
+extern int	get_vtr_status();
+extern int	get_frame_code();
+extern int	str2frames();
+extern void	record_seq();
+extern int	search_frame();
+extern int	time0();
+extern int	reset_tape_time();
+extern void	vas_close();
+extern void	vas_putnum();
+extern int	vas_getc();
+extern void	vas_response();
+extern int	vas_rawputc();

@@ -19,12 +19,18 @@
  *	Public Domain, Distribution Unlimitied.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"
 
 #include <stdio.h>
+
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 
 #include "machine.h"
 #include "externs.h"		/* For getopt */
@@ -44,6 +50,7 @@ void	get_tape_position();
 /*
  *			G E T _ A R G S
  */
+int
 get_args( argc, argv )
 register char **argv;
 {
@@ -90,6 +97,7 @@ register char **argv;
 /*
  *			M A I N
  */
+int
 main(argc, argv)
 int argc;
 char **argv;
@@ -97,9 +105,9 @@ char **argv;
 	register FBIO	*fbp = FBIO_NULL;
 	int scene_number = 1;
 	int start_frame = 1;
-	int number_of_frames;
-	int number_of_images;
-	int start_seq_number;
+	int number_of_frames=0;
+	int number_of_images=0;
+	int start_seq_number=0;
 	int	exit_code;
 
 	exit_code = 0;
