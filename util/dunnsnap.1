@@ -7,6 +7,7 @@ dunnsnap \- expose film in a Dunn Model 631 camera
 .RB [ \-{sS}\  squarescrsize]
 .RB [ \-{wW}\  scr_width]
 .RB [ \-{nN}\  scr_height]
+.RB [ \-h ]
 [num_frames]
 .SH DESCRIPTION
 .I Dunnsnap
@@ -54,6 +55,15 @@ flags specifies the height of each scanline for the display device.
 and
 .BI \-S\  squarescrsize
 set both the height and width to the size given.
+.PP
+The
+.B \-h
+flag causes the frame buffer to be
+used in high resolution mode (1024x1024).
+This is important for frame buffers such as the Adage which operate
+differently depending on the display size.  Without this flag
+the default size for the selected device will be used (usually
+the entire screen).
 .PP
 The Dunn camera has been successfully operated while attached to
 an Adage (Ikonas) RDS-3000 frambuffer in both low-res (512\u2\d 60 Hz)
