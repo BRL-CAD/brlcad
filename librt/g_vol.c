@@ -91,9 +91,9 @@ struct vol_specific	*vol_import();
 #define	VOL_YWIDEN	2
 #define	VOL_ZWIDEN	2
 #define VOL(xx,yy,zz)	volp->vol_map[ \
-	((zz)+VOL_ZWIDEN)*(volp->vol_dim[Y] + VOL_YWIDEN*2)+ \
-	((yy)+VOL_YWIDEN)*(volp->vol_dim[X] + VOL_XWIDEN*2)+ \
-	(xx)+VOL_XWIDEN ]
+	(((zz)+VOL_ZWIDEN) * (volp->vol_dim[Y] + VOL_YWIDEN*2)+ \
+	 ((yy)+VOL_YWIDEN))* (volp->vol_dim[X] + VOL_XWIDEN*2)+ \
+	  (xx)+VOL_XWIDEN ]
 
 #define OK(v)	( (v) >= volp->vol_lo && (v) <= volp->vol_hi )
 
