@@ -48,7 +48,7 @@ typedef	int	Cast;
 
 #if __MACHINETYPE__bsdi
 	/* BSDI from Rob Colstad */
-#	define	CPP		"/usr/bin/cpp"
+#	define	CPP		"/usr/ucb/cpp"
 #	define	CPP_OPTIONS	"-D__CAKE__bsdi"
 #endif
 
