@@ -30,12 +30,16 @@ set helplib_data(dm_getaspect)		{{} {Get window's aspect ratio }}
 set helplib_data(dm_observer)		{{cmd [args]} {Attach/detach observer to/from list}}
 
 set helplib_data(wdb_adjust)		{{object attr value ?attr value?} {adjust object's attribute(s)}}
-set helplib_data(wdb_attr)        {{ {set|get|rm|append} object [args]}
-	      {set, get, remove or append to attribute values for the specified object.
-         for the "set" subcommand, the arguments are attribute name/value pairs
-         for the "get" subcommand, the arguments are attribute names
-         for the "rm" subcommand, the arguments are attribute names
-         for the "append" subcommand, the arguments are attribute name/value pairs } }
+set helplib_data(wdb_attr)        {{ {set|get|show|rm|append} object [args]}
+	      {set, get, show, remove or append to attribute values for the specified object.
+         The arguments for "set" and "append" subcommands are attribute name/value pairs.
+         The arguments for "get", "rm", and "show" subcommands are attribute names.
+         The "set" subcommand sets the specified attributes for the object.
+         The "append" subcommand appends the provided value to an existing attribute,
+                 or creates a new attribute if it does not already exist.
+         The "get" subcommand retrieves and displays the specified attributes.
+         The "rm" subcommand deletes the specified attributes.
+         The "show" subcommand does a "get" and displays the results in a user readable format.}   }
 set helplib_data(wdb_binary)		{{(-i|-o) major_type minor_type dest source}
                 {manipulate opaque objects.
                  Must specify one of -i (for creating or adjusting objects (input))
