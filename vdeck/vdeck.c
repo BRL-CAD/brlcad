@@ -646,22 +646,6 @@ found_it:
 	return(curtree);
 }
 
-/*
- *  Called from deck().
- */
-void
-treewalk( str )
-char	*str;
-{
-	if( !sol_hd.l.magic )  RT_LIST_INIT( &sol_hd.l );
-
-	if( db_walk_tree( dbip, 1, &str, 1, &rt_initial_tree_state,
-	    0, region_end, gettree_leaf ) < 0 )  {
-		fprintf(stderr,"Unable to treewalk '%s'\n", str );
-	}
-}
-
-
 void
 swap_vec( v1, v2 )
 vect_t	v1, v2;
@@ -1257,19 +1241,17 @@ register char *prefix;
 	/* Initialize matrices.						*/
 	mat_idn( identity );
 
-	/* Check integrity of list against directory and build card deck.	*/
-	for( i = 0; i < curr_ct; i++ )
-	{	
-		struct directory	*dirp;
-		if( (dirp = db_lookup( dbip, curr_list[i], LOOKUP_NOISY )) != DIR_NULL )  {
-#if 1
-			treewalk( curr_list[i] );
-#else
-			cgobj( dirp, 0, identity );
-#endif
-		}
+	if( !sol_hd.l.magic )  RT_LIST_INIT( &sol_hd.l );
+
+	/*  Build the whole card deck.	*/
+	/*  '1' indicates one CPU.  This code isn't ready for parallelism */
+	if( db_walk_tree( dbip, curr_ct, curr_list, 1, &rt_initial_tree_state,
+	    0, region_end, gettree_leaf ) < 0 )  {
+		fprintf(stderr,"Unable to treewalk any trees!\n");
+	    	exit(11);
 	}
-	/* Add number of solids and regions on second card.		*/
+
+	/* Go back, and add number of solids and regions on second card. */
 	(void) lseek( solfd, savsol, 0 );
 	itoa( nns, buff, 5 );
 	ewrite( solfd, buff, 5 );
