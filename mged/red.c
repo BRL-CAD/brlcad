@@ -1378,6 +1378,7 @@ char *old_name;
 	int tree_index=0;
 	union tree *tp;
 	matp_t matrix;
+	int ret=0;
 
 	if(dbip == DBI_NULL)
 	  return 0;
@@ -1684,13 +1685,15 @@ char *old_name;
 
 	fclose( fp );
 
-	return make_tree(comb, dp, node_count, old_name, new_name, rt_tree_array, tree_index);
+	ret = make_tree(comb, dp, node_count, old_name, new_name, rt_tree_array, tree_index);
 
 	if( dbip->dbi_version >= 5 ) {
 		if( name )
 			bu_free( name, "name " );
 		bu_free( new_name, "new_name" );
 	}
+
+	return( ret );
 }
 
 void
