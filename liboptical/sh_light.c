@@ -1043,11 +1043,11 @@ struct light_obs_stuff *los;
 			bu_log("light visible: %s\n", los->lp->lt_name);
 
 #if RT_MULTISPECTRAL
-		if (los->swp->msw_intensity[i] == BN_TABDATA_NULL) {
-			los->swp->msw_intensity[i] = sub_ap.a_spectrum;
+		if (los->inten == BN_TABDATA_NULL) {
+			los->inten = sub_ap.a_spectrum;
 		} else {
-			bn_tabdata_add(los->swp->msw_intensity[i],
-				       los->swp->msw_intensity[i],
+			bn_tabdata_add(los->inten,
+				       los->inten,
 				       sub_ap.a_spectrum);
 
 			bn_tabdata_free(sub_ap.a_spectrum);
@@ -1182,7 +1182,8 @@ int have;
 		/* Advance to next light */
 #if RT_MULTISPECTRAL
 		/* Release sub_ap? */
-		bn_tabdata_scale(swp->msw_intensity[i], swp->sw_lightfract[i]);
+		bn_tabdata_scale(swp->msw_intensity[i], swp->msw_intensity[i],
+			swp->sw_lightfract[i]);
 #else
 		intensity += 3;
 #endif
@@ -1352,12 +1353,13 @@ int have;
 			if (swp->msw_intensity[i] == BN_TABDATA_NULL) {
 				swp->msw_intensity[i] = sub_ap.a_spectrum;
 			} else {
+				bu_bomb("Why are we multisampling?");
+
 				bn_tabdata_add(swp->msw_intensity[i],
 					       swp->msw_intensity[i],
 					       sub_ap.a_spectrum);
 
 				bn_tabdata_free(sub_ap.a_spectrum);
-				bn_tabdata_scale(swp->msw_intensity[i], iter);
 			}
 			sub_ap.a_spectrum = BN_TABDATA_NULL;
 
