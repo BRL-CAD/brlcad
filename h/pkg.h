@@ -57,4 +57,9 @@ extern char *pkg_bwaitfor();
 extern int pkg_get();
 extern int pkg_block();
 
+/* Data conversion routines */
+extern unsigned short pkg_gshort();
+extern unsigned long pkg_glong();
+extern char *pkg_pshort(), *pkg_plong();
+
 #endif PKG_H_SEENYET
