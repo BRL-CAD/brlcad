@@ -1492,6 +1492,7 @@ body pattern_control::apply_rect {} {
 }
 
 body pattern_control::apply_sph {} {
+    set total 0
     $itk_component(fb_progress) reset
 
     set cmd [list pattern_sph -$combovar_s]
@@ -1517,16 +1518,22 @@ body pattern_control::apply_sph {} {
     }
 
     if { $azel_s == 1 } {
-	lappend cmd -naz [string trim $numaz_s] -daz [string trim $delaz_s] -nel [string trim $numel_s] -del [string trim $delel_s] 
+	lappend cmd -naz [string trim $numaz_s] -daz [string trim $delaz_s] -nel [string trim $numel_s] -del [string trim $delel_s]
+	set total [expr $numaz_s * $numel_s]
     } else {
+	set total [expr [llength $lsaz_s] * [llength $lsel_s]]
 	lappend cmd -laz [string trim $lsaz_s] -lel [string trim $lsel_s]
     }
 
     if { $radii_s == 1 } {
+	set total [expr $total * $radnum_s]
 	lappend cmd -nr [string trim $radnum_s] -dr [string trim $raddel_s]
     } else {
+	set total [expr $total * [llength $radlist_s]]
 	lappend cmd -lr [string trim $radlist_s]
     }
+
+    $itk_component(fb_progress) configure -steps $total
 
     lappend cmd -start_az [string trim $startaz_s] -start_el [string trim $startel_s] -start_r [string trim $startr_s]
     lappend cmd -feed_name $itk_component(fb_progress)
@@ -1561,32 +1568,40 @@ body pattern_control::apply_cyl {} {
     
     if { $azel_c == 1 } {
 	lappend cmd -naz [string trim $numaz_c] -daz [string trim $delaz_c]
+	set total $numaz_c
     } else {
 	lappend cmd -laz [string trim $lsaz_c]
+	set total [llength $lsaz_c]
     }
 
     lappend cmd -sr [string trim $e_startr_c]
 
     if { $radii_c == 1 } {
+	set total [expr $total * $radnum_c]
 	lappend cmd -nr [string trim $radnum_c] -dr [string trim $raddel_c]
     } else {
+	set total [expr $total * [llength $radlist_c]]
 	lappend cmd -lr [string trim $radlist_c]
     }
 
     lappend cmd -sh [string trim $starth_c]
 
     if { $height_c == 1 } {
+	set total [expr $total * $hnum_c]
 	lappend cmd -nh [string trim $hnum_c] -dh [string trim $dnum_c]
     } else {
+	set total [expr $total * [llength $lnum_c]]
 	lappend cmd -lh [string trim $lnum_c]
     }
     
+    $itk_component(fb_progress) configure -steps $total
+
     lappend cmd -feed_name $itk_component(fb_progress)
 
     foreach obj $obj_c {
 	lappend cmd $obj
     }
-    
+
     eval $cmd
 }
     
