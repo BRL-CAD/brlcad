@@ -1673,7 +1673,7 @@ CONST long		*magic_p;
 
 	handlers = nmg_visit_handlers_null;		/* struct copy */
 	handlers.vis_vertex = nmg_2rvf_handler;
-	nmg_visit( &m->magic, &handlers, (genptr_t)&st );
+	nmg_visit( magic_p, &handlers, (genptr_t)&st );
 
 	rt_free( (char *)st.visited, "visited[]");
 }
@@ -1727,7 +1727,7 @@ CONST long		*magic_p;
 
 	handlers = nmg_visit_handlers_null;		/* struct copy */
 	handlers.bef_edgeuse = nmg_2edgeuse_handler;
-	nmg_visit( &m->magic, &handlers, (genptr_t)&st );
+	nmg_visit( magic_p, &handlers, (genptr_t)&st );
 
 	rt_free( (char *)st.visited, "visited[]");
 }
@@ -1781,7 +1781,7 @@ CONST long		*magic_p;
 
 	handlers = nmg_visit_handlers_null;		/* struct copy */
 	handlers.vis_face = nmg_2face_handler;
-	nmg_visit( &m->magic, &handlers, (genptr_t)&st );
+	nmg_visit( magic_p, &handlers, (genptr_t)&st );
 
 	rt_free( (char *)st.visited, "visited[]");
 }
