@@ -36,39 +36,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "./debug.h"
 
-/* XXX for raytrace.h */
-
-
 struct tree_list {
 	union tree *tl_tree;
 	int	tl_op;
 };
 #define TREE_LIST_NULL	((struct tree_list *)0)
 
-struct db_tree_state {
-	struct db_i	*ts_dbip;
-	int		ts_sofar;		/* Flag bits */
-
-	int		ts_regionid;	/* GIFT compat region ID code*/
-	int		ts_aircode;	/* GIFT compat air code */
-	int		ts_gmater;	/* GIFT compat material code */
-	struct mater_info ts_mater;	/* material properties */
-
-	mat_t		ts_mat;		/* transform matrix */
-
-	int		ts_stop_at_regions;	/* else stop at solids */
-	int		(*ts_region_start_func)();
-	union tree *	(*ts_region_end_func)();
-	union tree *	(*ts_leaf_func)();
-};
-#define TS_SOFAR_MINUS	1		/* Subtraction encountered above */
-#define TS_SOFAR_INTER	2		/* Intersection encountered above */
-#define TS_SOFAR_REGION	4		/* Region encountered above */
-
-struct combined_tree_state {
-	struct db_tree_state	cts_s;
-	struct db_full_path	cts_p;
-};
 
 /*
  *			D B _ F R E E _ C O M B I N E D _ T R E E _ S T A T E
