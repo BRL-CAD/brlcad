@@ -1557,6 +1557,7 @@ int	width, height;
 	XWMHints	xwmh;		/* size guidelines for window mngr */
 	XSetWindowAttributes xswa;
 	XRectangle rect;
+	char		*xname;
 
 #if X_DBG
 printf("xsetup(ifp:0x%x, width:%d, height:%d) entered\n", ifp, width, height);
@@ -1568,9 +1569,12 @@ printf("xsetup(ifp:0x%x, width:%d, height:%d) entered\n", ifp, width, height);
 	xi->xi_xheight = height;
 
 	/* Open the display - use the env variable DISPLAY */
-	if ((xi->xi_dpy = XOpenDisplay(NULL)) == NULL) {
-		fb_log("if_X: Can't open X display \"%s\"\n",
-			XDisplayName(NULL));
+	xname = XDisplayName(NULL);
+	/* Attempt one level of fallback, esp. for fbserv daemon */
+	if( !xname || *xname == '\0' )  xname = ":0";
+
+	if ((xi->xi_dpy = XOpenDisplay(xname)) == NULL) {
+		fb_log("if_X: Can't open X display \"%s\"\n", xname);
 		return	-1;
 	}
 
