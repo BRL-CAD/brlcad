@@ -42,7 +42,8 @@ log "$HOSTNAME regression complete at `date`" >> $REGRESS_DIR/.regress.${ARCH}/M
 #
 if [ -f $REGRESS_DIR/brlcad/regress/ref_${ARCH} ] ; then
 
-	diff -c	-w -B -d $REGRESS_DIR/brlcad/regress/ref_${ARCH} \
+	# not all diffs are the same :) no -B or -d 
+	diff -c	-w $REGRESS_DIR/brlcad/regress/ref_${ARCH} \
 		$REGRESS_DIR/.regress.${ARCH}/MAKE_LOG \
 		> $REGRESS_DIR/.regress.${ARCH}/DIFFS
 else
