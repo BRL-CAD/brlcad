@@ -42,8 +42,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "raytrace.h"
 
-#include "db.h"		/* for debugging stuff at bottom */
-
 /* States of the state machine */
 #define NMG_STATE_ERROR		0
 #define NMG_STATE_OUT		1
@@ -214,7 +212,9 @@ fastf_t		dist_tol;
 				rt_bomb("ptbl_vsort()\n");
 			}
 			if( dist > dist_tol )  {
-				rt_log("WARNING ptbl_vsort() vu=x%x point off line by %e, tol=%e\n", vu[i], dist, dist_tol);
+				rt_log("WARNING ptbl_vsort() vu=x%x point off line by %e %g*tol, tol=%e\n",
+					vu[i], dist,
+					dist/dist_tol, dist_tol);
 			}
 		}
 	}
@@ -993,8 +993,13 @@ out:
 #define B_WINS		{ret = 1; goto out;}
 static int
 nmg_face_vu_compare( aa, bb )
-CONST genptr_t	aa;
-CONST genptr_t	bb;
+#if __STDC__
+ const void	*aa;
+ const void	*bb;
+#else
+ CONST genptr_t	aa;
+ CONST genptr_t	bb;
+#endif
 {
 	register CONST struct nmg_vu_stuff *a = (CONST struct nmg_vu_stuff *)aa;
 	register CONST struct nmg_vu_stuff *b = (CONST struct nmg_vu_stuff *)bb;
@@ -2609,56 +2614,5 @@ rt_log("force next eu to ray\n");
 nmg_fu_touchingloops(rs->fu1);
 nmg_fu_touchingloops(rs->fu2);
 	}
-}
-
-/*
- *			N M G _ S T A S H _ M O D E L _ T O _ F I L E
- *
- *  Store an NMG model as a separate .g file, for later examination.
- * XXX Move this to nmg_misc.c
- */
-void
-nmg_stash_model_to_file( filename, m, title )
-CONST char		*filename;
-CONST struct model	*m;
-CONST char		*title;
-{
-	FILE	*fp;
-	struct rt_external	ext;
-	struct rt_db_internal	intern;
-	union record		rec;
-
-	rt_log("nmg_stash_model_to_file('%s', x%x, %s)\n", filename, m, title);
-
-	NMG_CK_MODEL(m);
-
-	if( (fp = fopen(filename, "w")) == NULL )  {
-		perror(filename);
-		return;
-	}
-
-	RT_INIT_DB_INTERNAL(&intern);
-	intern.idb_type = ID_NMG;
-	intern.idb_ptr = (genptr_t)m;
-	RT_INIT_EXTERNAL( &ext );
-
-	/* Scale change on export is 1.0 -- no change */
-	if( rt_functab[ID_NMG].ft_export( &ext, &intern, 1.0 ) < 0 )  {
-		rt_log("nmg_stash_model_to_file: solid export failure\n");
-		if( intern.idb_ptr )  rt_functab[ID_NMG].ft_ifree( &intern );
-		db_free_external( &ext );
-		rt_bomb("nmg_stash_model_to_file() ft_export() error\n");
-	}
-	rt_functab[ID_NMG].ft_ifree( &intern );
-	NAMEMOVE( "error", ((union record *)ext.ext_buf)->s.s_name );
-
-	bzero( (char *)&rec, sizeof(rec) );
-	rec.u_id = ID_IDENT;
-	strcpy( rec.i.i_version, ID_VERSION );
-	strncpy( rec.i.i_title, title, sizeof(rec.i.i_title)-1 );
-	fwrite( (char *)&rec, sizeof(rec), 1, fp );
-	fwrite( ext.ext_buf, ext.ext_nbytes, 1, fp );
-	fclose(fp);
-	rt_log("nmg_stash_model_to_file(): wrote '%s' in %d bytes\n", filename, ext.ext_nbytes);
 }
                                                                                                                                       

@@ -39,8 +39,8 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "nmg.h"
 #include "raytrace.h"
 
-/* XXX move to raytrace.h */
-NMG_EXTERN( struct faceuse *nmg_find_fu_of_eu , (struct edgeuse *eu) );
+#include "db.h"		/* for debugging stuff at bottom */
+
 
 /*	N M G _ T B L
  *	maintain a table of pointers (to magic numbers/structs)
@@ -1831,4 +1831,54 @@ struct shell *s;
 	}
 	rt_free( (char *)flags , "nmg_decompose_shell: flags " );
 	return( no_of_shells );
+}
+
+/*
+ *			N M G _ S T A S H _ M O D E L _ T O _ F I L E
+ *
+ *  Store an NMG model as a separate .g file, for later examination.
+ */
+void
+nmg_stash_model_to_file( filename, m, title )
+CONST char		*filename;
+CONST struct model	*m;
+CONST char		*title;
+{
+	FILE	*fp;
+	struct rt_external	ext;
+	struct rt_db_internal	intern;
+	union record		rec;
+
+	rt_log("nmg_stash_model_to_file('%s', x%x, %s)\n", filename, m, title);
+
+	NMG_CK_MODEL(m);
+
+	if( (fp = fopen(filename, "w")) == NULL )  {
+		perror(filename);
+		return;
+	}
+
+	RT_INIT_DB_INTERNAL(&intern);
+	intern.idb_type = ID_NMG;
+	intern.idb_ptr = (genptr_t)m;
+	RT_INIT_EXTERNAL( &ext );
+
+	/* Scale change on export is 1.0 -- no change */
+	if( rt_functab[ID_NMG].ft_export( &ext, &intern, 1.0 ) < 0 )  {
+		rt_log("nmg_stash_model_to_file: solid export failure\n");
+		if( intern.idb_ptr )  rt_functab[ID_NMG].ft_ifree( &intern );
+		db_free_external( &ext );
+		rt_bomb("nmg_stash_model_to_file() ft_export() error\n");
+	}
+	rt_functab[ID_NMG].ft_ifree( &intern );
+	NAMEMOVE( "error", ((union record *)ext.ext_buf)->s.s_name );
+
+	bzero( (char *)&rec, sizeof(rec) );
+	rec.u_id = ID_IDENT;
+	strcpy( rec.i.i_version, ID_VERSION );
+	strncpy( rec.i.i_title, title, sizeof(rec.i.i_title)-1 );
+	fwrite( (char *)&rec, sizeof(rec), 1, fp );
+	fwrite( ext.ext_buf, ext.ext_nbytes, 1, fp );
+	fclose(fp);
+	rt_log("nmg_stash_model_to_file(): wrote '%s' in %d bytes\n", filename, ext.ext_nbytes);
 }
