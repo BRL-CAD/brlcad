@@ -37,8 +37,8 @@ ssampview_LDADD = \
 	${FB} \
 	${LIBRT} \
 	${OPTICAL} \
-	${TCL} \
-	$(TK)
+	$(TK) \
+	${TCL}
 
 
 ssamp_bw_SOURCES = \
