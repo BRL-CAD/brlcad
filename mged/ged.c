@@ -78,6 +78,8 @@ int		dmaflag;		/* Set to 1 to force new screen DMA */
 double		frametime = 1.0;	/* time needed to draw last frame */
 mat_t		ModelDelta;		/* Changes to Viewrot this frame */
 
+void		(*viewpoint_hook)() = NULL;
+
 static int	windowbounds[6];	/* X hi,lo;  Y hi,lo;  Z hi,lo */
 
 static jmp_buf	jmp_env;		/* For non-local gotos */
@@ -581,6 +583,9 @@ refresh()
 	 */
 	if( dmaflag )  {
 		double	elapsed_time;
+
+		/* XXX VR hack */
+		if( viewpoint_hook )  (*viewpoint_hook)();
 
 		rt_prep_timer();
 
