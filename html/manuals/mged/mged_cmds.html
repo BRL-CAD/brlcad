@@ -1996,24 +1996,41 @@ The available <I>knob ids</I> are:
 </DD>
 <HR>
 
-<DT><a NAME="l"><B>l</B> &lt;<I>objects</I>&gt</DT>
+<DT><a NAME="l"><B>l</B> [-<I>r</I>] &lt;<I>objects</I>&gt</DT>
 
-<DD> The ``l'' command displays a verbose description about the specified <I>objects</I>.
-For a <a href="brlcad_glossary.html#COMBINATION">combination</a>, the <I>l</I> command
-will list the <a href="brlcad_glossary.html#BOOLEAN">Boolean</a> formula for the <I>combination</I>
-and will indicate any member transformations. If a <a href="brlcad_glossary.html#SHADER">
-shader</a> and/or color has been assigned, the details will be listed. For a
-<a href="brlcad_glossary.html#REGION">region</a>, its <a href="brlcad_glossary.html#IDENT">ident</a>,
-<a href="brlcad_glossary.html#SPACE">air code</a>,
-<a href="brlcad_glossary.html#GIFTMAT">material code</a>, and
-<a href="brlcad_glossary.html#LOS">LOS</a> will also be listed.
-For <a href="brlcad_glossary.html#SOLID">primitive solids</a>, detailed solid
-parameters will be displayed.
+<DD> The ``l'' command displays a verbose description about the
+specified list of <a href="brlcad_glossary.html#OBJECT">objects</a>. If a specified <I>object</I> is a
+<a href="brlcad_glossary.html#PATH">path</a>, then any transformation
+matrices along that <I>path</I> are applied. If the final <I>path</I> component is a
+<a href="brlcad_glossary.html#COMBINATION">combination</a>,
+the command will list the <a href="brlcad_glossary.html#BOOLEAN">Boolean</a>
+formula for the <I>combination</I> and will indicate any accumulated
+transformations (including any in that <I>combination</I>). If a <a href="brlcad_glossary.html#SHADER"> shader</a>
+and/or color has been assigned to the <I>combination</I>, the details will be listed. For a
+<a href="brlcad_glossary.html#REGION">region</a>, its <a
+href="brlcad_glossary.html#IDENT">ident</a>, <a
+href="brlcad_glossary.html#SPACE">air code</a>, <a
+href="brlcad_glossary.html#GIFTMAT">material code</a>, and <a
+href="brlcad_glossary.html#LOS">LOS</a> will also be listed. For <a
+href="brlcad_glossary.html#SOLID">primitive solids</a>, detailed <I>solid</I>
+parameters will be displayed with the accumulated transformation applied.
+If the <I>-r</I> (recursive) option is used, then each <I>object</I> on the command line
+will be treated as a <I>path</I>. If the <I>path</I> does not end at a primitive <I>solid</I>,
+then all possible <I>paths</I> from that point down to individual <I>solids</I> will be considered.
+The <I>solid</I> at the end of each possible <I>path</I> will be listed with its
+parameters adjusted by the accumulated transformation.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
 	<DD>mged> <b>l region1</b><br>
 		-- display details about region1
+	</DD>
+	<DD>mged> <b>l group1/group2/region1/solid3</b><br>
+		-- display solid parameters for <I>solid3</I> with matrices applied from the <I>path</I>
+	</DD>
+	<DD>mged> <b>l -r a/b</b><br>
+		-- display all possible paths that start with <I>a/b</I> and end in a primitive <I>solid</I><br>
+		-- the solid parameters with the accumulated transformation applied will be displayed.
 	</DD>
 	</DL>
 </DD>
