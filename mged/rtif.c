@@ -793,19 +793,59 @@ static struct command_tab cmdtab[] = {
 static vect_t	rtif_eye_model;
 static mat_t	rtif_viewrot;
 static struct rt_vlblock	*rtif_vbp;
+static FILE	*rtif_fp;
+static double	rtif_delay;
 
+/*
+ *  Called on SIGINT from within preview.
+ *  Close things down and abort.
+ */
+static void
+rtif_sigint()
+{
+	if(rtif_fp)  fclose(rtif_fp);
+	rtif_fp = NULL;
+
+	/* Draw what path was accomplished */
+	cvt_vlblock_to_solids( rtif_vbp, "EYE_PATH", 0 );
+	rt_vlblock_free(rtif_vbp);
+	db_free_anim(dbip);	/* Forget any anim commands */
+	sig2();			/* Call main SIGINT handler */
+	/* NOTREACHED */
+}
+
+/*
+ *			F _ P R E V I E W
+ */
 void
 f_preview( argc, argv )
 int	argc;
 char	**argv;
 {
-	register FILE	*fp;
-	char		*cmd;
+	char	*cmd;
+	int	c;
 
 	if( not_state( ST_VIEW, "animate viewpoint from new RT file") )
 		return;
 
-	if( (fp = fopen(argv[1], "r")) == NULL )  {
+	rtif_delay = 0;			/* Full speed, by default */
+
+	/* Parse options */
+	optind = 1;			/* re-init getopt() */
+	while( (c=getopt(argc,argv,"d:")) != EOF )  {
+		switch(c)  {
+		case 'd':
+			rtif_delay = atof(optarg);
+			break;
+		default:
+			printf("option '%c' unknown\n", c);
+			break;
+		}
+	}
+	argc -= optind-1;
+	argv += optind-1;
+
+	if( (rtif_fp = fopen(argv[1], "r")) == NULL )  {
 		perror(argv[1]);
 		return;
 	}
@@ -814,22 +854,24 @@ char	**argv;
 	rt_cmd_vec[0] = "tree";
 	setup_rt( &rt_cmd_vec[1] );
 
-	printf("eyepoint at (0,0,1) viewspace\n");
-
-	/* If user hits ^C, this will stop, but will leave hanging filedes */
-	(void)signal(SIGINT, cur_sigint);
-
 	rtif_vbp = rt_vlblock_init();
 
-	while( ( cmd = rt_read_cmd( fp )) != NULL )  {
+	printf("eyepoint at (0,0,1) viewspace\n");
+
+	/* If user hits ^C, preview will stop, and clean up */
+	(void)signal(SIGINT, rtif_sigint);
+
+	while( ( cmd = rt_read_cmd( rtif_fp )) != NULL )  {
 		if( rt_do_cmd( (struct rt_i *)0, cmd, cmdtab ) < 0 )
 			rt_log("command failed: %s\n", cmd);
 		rt_free( cmd, "preview cmd" );
 	}
-	fclose(fp);
+	fclose(rtif_fp);
+	rtif_fp = NULL;
 
 	cvt_vlblock_to_solids( rtif_vbp, "EYE_PATH", 0 );
 	rt_vlblock_free(rtif_vbp);
+	db_free_anim(dbip);	/* Forget any anim commands */
 }
 
 /*
@@ -1119,6 +1161,11 @@ int	argc;
 	dmaflag = 1;
 	refresh();	/* Draw new display */
 	dmaflag = 1;
+	if( rtif_delay > 0 )  {
+		int	sec = (int)rtif_delay;
+		int	us = (int)((rtif_delay - sec) * 1000000);
+		(void)bsdselect( 1<<fileno(stdin), sec, us );
+	}
 	return(0);
 }
 
