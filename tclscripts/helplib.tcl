@@ -40,10 +40,11 @@ set helplib_data(wdb_attr)        {{ {set|get|show|rm|append} object [args]}
          The "get" subcommand retrieves and displays the specified attributes.
          The "rm" subcommand deletes the specified attributes.
          The "show" subcommand does a "get" and displays the results in a user readable format.}   }
-set helplib_data(dbbinary)		{{(-i|-o) major_type minor_type dest source}
+set helplib_data(dbbinary)		{{(-i major_type minor_type | -o) dest source}
                 {manipulate opaque objects.
                  Must specify one of -i (for creating or adjusting objects (input))
                  or -o for extracting objects (output).
+                 For input, the major and minor types must also be specified.
                  If the major type is "u" the minor type must be one of:
                       "f" -> float
                       "d" -> double
