@@ -525,50 +525,71 @@ int		npix;
 	/* Simplest case, nothing fancy */
 	y = ybase;
 	if( !sw_zoom && !sw_cmap )  {
-		if( ifp->if_width == SGI(ifp)->mi_memwidth )  {
-			if( nlines == 1 )  {
-				/* This is the partial-line case */
-				if( SGI(ifp)->mi_is_gt)
-					lrectwrite(
-						SGI(ifp)->mi_xoff+xbase,
-						SGI(ifp)->mi_yoff+y,
-						SGI(ifp)->mi_xoff+xbase+npix-1,
-						SGI(ifp)->mi_yoff+y,
-						&ifp->if_mem[(y*SGI(ifp)->mi_memwidth+xbase)*
-						    sizeof(struct sgi_pixel)] );
-				else
-					fake_rectwrite(
-						xbase,
-						y,
-						xbase+npix-1,
-						y,
-						&ifp->if_mem[(y*SGI(ifp)->mi_memwidth+xbase)*
-						    sizeof(struct sgi_pixel)] );
-				return;
-			} else {
-				/* Multiple line case, do full lines */
-				if( SGI(ifp)->mi_is_gt)
-					lrectwrite(
-						SGI(ifp)->mi_xoff+0,
-						SGI(ifp)->mi_yoff+y,
-						SGI(ifp)->mi_xoff+0+ifp->if_width-1,
-						SGI(ifp)->mi_yoff+y+nlines-1,
-						&ifp->if_mem[(y*SGI(ifp)->mi_memwidth)*
-						    sizeof(struct sgi_pixel)] );
-				else
-					fake_rectwrite(
-						0,
-						y,
-						0+ifp->if_width-1,
-						y+nlines-1,
-						&ifp->if_mem[(y*SGI(ifp)->mi_memwidth)*
-						    sizeof(struct sgi_pixel)] );
-				return;
-			}
+		if( nlines == 1 )  {
+			/*
+			 *  Only a single line is being written,
+			 *  and perhaps only part of the line width.
+			 *  Just send it off.
+			 */
+			if( SGI(ifp)->mi_is_gt)
+				lrectwrite(
+					SGI(ifp)->mi_xoff+xbase,
+					SGI(ifp)->mi_yoff+y,
+					SGI(ifp)->mi_xoff+xbase+npix-1,
+					SGI(ifp)->mi_yoff+y,
+					&ifp->if_mem[(y*SGI(ifp)->mi_memwidth+xbase)*
+					    sizeof(struct sgi_pixel)] );
+			else
+				fake_rectwrite(
+					xbase,
+					y,
+					xbase+npix-1,
+					y,
+					&ifp->if_mem[(y*SGI(ifp)->mi_memwidth+xbase)*
+					    sizeof(struct sgi_pixel)] );
+			return;
 		}
+		/*
+		 *  If lrectwrite() is asked to write scanlines wider
+		 *  than a certain amount, it uses a sys-write call,
+		 *  otherwise, it sends the pixels via programmed I/O.
+		 *  Thus, if the width being sent is more than this
+		 *  threshold, it is better just to make one call to
+		 *  lrectwrite, and let the DMA send more data.
+		 *  But, if a thin vertical strip of pixels is being
+		 *  written, it makes more sense to call lrectwrite
+		 *  once for each scanline, and the the PIO zap it off.
+		 *  Alas, SGI never documents the threshold value;
+		 *  the one here is pure guesswork.
+		 *  Also note that on a VGX machine this might be
+		 *  better accomplished with pixmode(PM_STRIDE,wds/scanline),
+		 *  but no earlier models have this subroutine, sigh.
+		 */
+		if( npix > 32 )  {
+			/* Multiple line case, wide lines, send full lines */
+			if( SGI(ifp)->mi_is_gt)
+				lrectwrite(
+					SGI(ifp)->mi_xoff+0,
+					SGI(ifp)->mi_yoff+y,
+					SGI(ifp)->mi_xoff+0+ifp->if_width-1,
+					SGI(ifp)->mi_yoff+y+nlines-1,
+					&ifp->if_mem[(y*SGI(ifp)->mi_memwidth)*
+					    sizeof(struct sgi_pixel)] );
+			else
+				fake_rectwrite(
+					0,
+					y,
+					0+ifp->if_width-1,
+					y+nlines-1,
+					&ifp->if_mem[(y*SGI(ifp)->mi_memwidth)*
+					    sizeof(struct sgi_pixel)] );
+			return;
+		}
+		/* Narrow width lines case */
 		for( n=nlines; n>0; n--, y++ )  {
 			/*
 			 *  GTX is limited to about 1000 lrectwrites/sec,
+			 *  when sending wide spans,
 			 *  due to the fact that 1-scanline lrectwrites
 			 *  are done with DMA.  The sys-call & interrupt
 			 *  processing burns 60% of the CPU in sys-time!
