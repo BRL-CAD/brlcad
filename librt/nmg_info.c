@@ -1394,6 +1394,8 @@ CONST struct edgeuse	*eu;
 			eu_next = BU_LIST_PNEXT_CIRC( edgeuse, &eu_next->l );
 			if( eu_next == eu )
 				break;
+			if( NMG_ARE_EUS_ADJACENT( eu, eu_next ) )
+				continue;
 			VSUB2( other_edge, eu_next->eumate_p->vu_p->v_p->vg_p->coord,
 		                eu_next->vu_p->v_p->vg_p->coord );
 			VUNITIZE( other_edge );
@@ -1412,11 +1414,14 @@ CONST struct edgeuse	*eu;
 		VUNITIZE( next_left );
 
 		eu_prev = eu;
+		other_edge_is_parallel = 1;
 		while( other_edge_is_parallel )
 		{
 			eu_prev = BU_LIST_PPREV_CIRC( edgeuse, &eu_prev->l );
 			if( eu_prev == eu )
 				break;
+			if( NMG_ARE_EUS_ADJACENT( eu, eu_prev ) )
+				continue;
 			VSUB2( other_edge, eu_prev->eumate_p->vu_p->v_p->vg_p->coord,
 		                eu_prev->vu_p->v_p->vg_p->coord );
 			VUNITIZE( other_edge );
@@ -1436,9 +1441,18 @@ CONST struct edgeuse	*eu;
 
 		VBLEND2( left, 0.5, next_left, 0.5, prev_left );
 		VUNITIZE( left );
-
+#if 0
+		bu_log( "\t eu_prev (%g %g %g)<->(%g %g %g)\n",
+			V3ARGS( eu_prev->vu_p->v_p->vg_p->coord ),
+			V3ARGS( eu_prev->eumate_p->vu_p->v_p->vg_p->coord ) );
+		bu_log( "\t eu_next (%g %g %g)<->(%g %g %g)\n",
+			V3ARGS( eu_next->vu_p->v_p->vg_p->coord ),
+			V3ARGS( eu_next->eumate_p->vu_p->v_p->vg_p->coord ) );
+		bu_log( "\tprev_left=(%g %g %g), next_left=(%g %g %g)\n", V3ARGS( prev_left ), V3ARGS( next_left ) );
 		bu_log( "\tUnitized left=(%f %f %f)\n", V3ARGS( left ) );
 
+		nmg_pr_fu_briefly( fu, "" );
+#endif
 		return 0;
 	}
 
