@@ -39,6 +39,7 @@ static const char RCSsh_light[] = "@(#)$Header$ (ARL)";
 #include "plot3.h"
 #include "rtprivate.h"
 #include "light.h"
+#include "photonmap.h"
 
 #if RT_MULTISPECTRAL
 #include "spectrum.h"
@@ -276,7 +277,9 @@ char	*dp;
 		bn_tabdata_scale( swp->msw_color, lsp->lt_spectrum, f );
 	}
 #else
-	VSCALE( swp->sw_color, lsp->lt_color, f );
+	if (!PM_Activated) {
+	  VSCALE( swp->sw_color, lsp->lt_color, f );
+	}
 #endif
 	return(1);
 }
@@ -832,7 +835,7 @@ light_maker(int num, mat_t v2m)
 
 		/* XXX Is it bogus to set lt_aim? */
 		VSET( lsp->lt_aim, 0, 0, -1 );	/* any direction: spherical */
-		lsp->lt_intensity = 1000.0;
+		lsp->lt_intensity = 1.0;
 		lsp->lt_radius = 0.1;		/* mm, "point" source */
 		lsp->lt_visible = 0;		/* NOT explicitly modeled */
 		lsp->lt_invisible = 1;		/* NOT explicitly modeled */
