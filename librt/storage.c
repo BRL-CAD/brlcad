@@ -23,7 +23,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1987 by the United States Army.
+ *	This software is Copyright (C) 1990 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -42,17 +42,130 @@ static char RCSstorage[] = "@(#)$Header$";
 # include <string.h>
 #endif
 
-/** #define MEMDEBUG 1 **/
-
-#ifdef MEMDEBUG
-#define MDB_SIZE	500
 #define MDB_MAGIC	0x12348969
 struct memdebug {
 	char	*mdb_addr;
 	char	*mdb_str;
 	int	mdb_len;
-} rt_mdb[MDB_SIZE];
-#endif /* MEMDEBUG */
+};
+static struct memdebug	*rt_memdebug;
+static int		rt_memdebug_len = 0;
+
+/*
+ *			R T _ M E M D E B U G _ A D D
+ *
+ *  Add another entry to the memory debug table
+ */
+HIDDEN void
+rt_memdebug_add( ptr, cnt, str )
+char	*ptr;
+unsigned int cnt;
+char	*str;
+{
+	register struct memdebug *mp;
+top:
+	if( rt_memdebug )  {
+		mp = &rt_memdebug[rt_memdebug_len-1];
+		for( ; mp >= rt_memdebug; mp-- )  {
+			/* Search for an empty slot */
+			if( mp->mdb_len > 0 )  continue;
+			mp->mdb_addr = ptr;
+			mp->mdb_len = cnt;
+			mp->mdb_str = str;
+			return;
+		}
+	}
+
+	/* Need to make more slots */
+	if( rt_g.rtg_parallel )  {
+		RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+	}
+	if( rt_memdebug_len <= 0 )  {
+		rt_memdebug_len = 510;
+		rt_memdebug = (struct memdebug *)calloc(
+			rt_memdebug_len, sizeof(struct memdebug) );
+	} else {
+		int	old_len;
+		rt_memdebug_len *= 4;
+		rt_memdebug = (struct memdebug *)realloc(
+			(char *)rt_memdebug,
+			sizeof(struct memdebug) * rt_memdebug_len );
+		bzero( (char *)&rt_memdebug[old_len],
+			(rt_memdebug_len-old_len) * sizeof(struct memdebug) );
+	}
+	if( rt_g.rtg_parallel ) {
+		RES_RELEASE( &rt_g.res_syscall );		/* unlock */
+	}
+	if( rt_memdebug == (struct memdebug *)0 )
+		rt_bomb("rt_memdebug_add() malloc failure\n");
+	goto top;
+}
+
+/*
+ *			R T _ M E M D E B U G _ D E L E T E
+ *
+ *  Delete an entry from the memory debug table, based upon it's address.
+ */
+HIDDEN int
+rt_memdebug_delete( ptr, str )
+register char	*ptr;
+char		*str;
+{
+	register struct memdebug *mp = &rt_memdebug[rt_memdebug_len-1];
+	register long	*ip;
+
+	if( rt_memdebug == (struct memdebug *)0 )  {
+		rt_log("rt_memdebug_delete(x%x, %s)  no memdebug table yet\n",
+			ptr, str);
+		return(-3);
+	}
+	for( ; mp >= rt_memdebug; mp-- )  {
+		if( mp->mdb_len <= 0 )  continue;
+		if( mp->mdb_addr != ptr )  continue;
+		ip = (long *)(ptr+mp->mdb_len-sizeof(long));
+		mp->mdb_len = 0;	/* successful free */
+		if( *ip != MDB_MAGIC )  {
+			rt_log("ERROR rt_memdebug_delete(x%x, %s) corrupted! was=x%x s/b=x%x\n",
+				ptr, str, *ip, MDB_MAGIC);
+			return(-2);
+		}
+		return(0);		/* OK */
+	}
+	return(-1);
+}
+
+/*
+ *			R T _ M E M D E B U G _ M O V E
+ *
+ *  realloc() has moved to a new memory block.
+ *  Update our notion as well.
+ */
+HIDDEN void
+rt_memdebug_move( old_ptr, new_ptr, new_cnt, new_str )
+char	*old_ptr;
+char	*new_ptr;
+int	new_cnt;
+char	*new_str;
+{
+	register struct memdebug *mp = &rt_memdebug[rt_memdebug_len-1];
+
+	if( rt_memdebug == (struct memdebug *)0 )  {
+		rt_log("rt_memdebug_move(x%x, x%x, %d., %s)  no memdebug table yet\n",
+			old_ptr, new_ptr, new_cnt, new_str);
+		return;
+	}
+	for( ; mp >= rt_memdebug; mp-- )  {
+		if( mp->mdb_len > 0 && (mp->mdb_addr == old_ptr) ) {
+			mp->mdb_addr = new_ptr;
+			mp->mdb_len = new_cnt;
+			mp->mdb_str = new_str;
+			return;
+		}
+	}
+	rt_log("rt_memdebug_move(): old memdebug entry not found!\n");
+	rt_log(" old_ptr=x%x, new_ptr=x%x, new_cnt=%d., new_str=%s\n",
+		old_ptr, new_ptr, new_cnt, new_str );
+}
 
 /*
  *			R T _ M A L L O C
@@ -63,7 +176,7 @@ struct memdebug {
 char *
 rt_malloc(cnt, str)
 unsigned int cnt;
-char *str;
+char	*str;
 {
 	register char *ptr;
 
@@ -71,9 +184,10 @@ char *str;
 		rt_log("ERROR: rt_malloc count=0 %s\n", str );
 		rt_bomb("ERROR: rt_malloc(0)\n");
 	}
-#ifdef MEMDEBUG
-	cnt = (cnt+2*sizeof(int)-1)&(~(sizeof(int)-1));
-#endif /* MEMDEBUG */
+	if( rt_g.debug&DEBUG_MEM_FULL )  {
+		/* Pad, plus full int for magic number */
+		cnt = (cnt+2*sizeof(long)-1)&(~(sizeof(long)-1));
+	}
 	if( rt_g.rtg_parallel )  {
 		RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
 	}
@@ -88,24 +202,12 @@ char *str;
 		rt_log("rt_malloc: Insufficient memory available, sbrk(0)=x%x\n", sbrk(0));
 		rt_bomb("rt_malloc: malloc failure");
 	}
-#ifdef MEMDEBUG
-	{
-		register struct memdebug *mp = rt_mdb;
-		for( ; mp < &rt_mdb[MDB_SIZE]; mp++ )  {
-			if( mp->mdb_len > 0 )  continue;
-			mp->mdb_addr = ptr;
-			mp->mdb_len = cnt;
-			mp->mdb_str = str;
-			goto ok;
-		}
-		rt_log("rt_malloc:  memdebug overflow\n");
+	if( rt_g.debug&DEBUG_MEM_FULL )  {
+		rt_memdebug_add( ptr, cnt, str );
+
+		/* This depends on 'cnt' being rounded up, above */
+		*((long *)(ptr+cnt-sizeof(long))) = MDB_MAGIC;
 	}
-ok:	;
-	{
-		register int *ip = (int *)(ptr+cnt-sizeof(int));
-		*ip = MDB_MAGIC;
-	}
-#endif /* MEMDEBUG */
 	return(ptr);
 }
 
@@ -117,32 +219,16 @@ rt_free(ptr,str)
 char	*ptr;
 char	*str;
 {
-#ifdef MEMDEBUG
-	{
-		register struct memdebug *mp = rt_mdb;
-		for( ; mp < &rt_mdb[MDB_SIZE]; mp++ )  {
-			if( mp->mdb_len <= 0 )  continue;
-			if( mp->mdb_addr != ptr )  continue;
-			{
-				register int *ip = (int *)(ptr+mp->mdb_len-sizeof(int));
-				if( *ip != MDB_MAGIC )  {
-					rt_log("ERROR rt_free(x%x, %s) corrupted! x%x!=x%x\n", ptr, str, *ip, MDB_MAGIC);
-					return;
-				}
-			}
-			mp->mdb_len = 0;	/* successful free */
-			goto ok;
-		}
-		rt_log("ERROR rt_free(x%x, %s) bad pointer!\n", ptr, str);
-		return;
-	}
-ok:	;
-#endif /* MEMDEBUG */
-
 	if(rt_g.debug&DEBUG_MEM) rt_log("%7x free %s\n", ptr, str);
 	if(ptr == (char *)0)  {
 		rt_log("%7x free ERROR %s\n", ptr, str);
 		return;
+	}
+	if( rt_g.debug&DEBUG_MEM_FULL )  {
+		if( rt_memdebug_delete( ptr, str ) < 0 )  {
+			rt_log("ERROR rt_free(x%x, %s) bad pointer!\n",
+				ptr, str);
+		}
 	}
 	if( rt_g.rtg_parallel ) {
 		RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
@@ -163,12 +249,12 @@ register char *ptr;
 unsigned int cnt;
 char *str;
 {
-#ifdef MEMDEBUG
-	register char *savedptr;
+	char	*original_ptr = ptr;
 
-	savedptr = ptr;
-	cnt = (cnt+2*sizeof(int)-1)&(~(sizeof(int)-1));
-#endif /* MEMDEBUG */
+	if( rt_g.debug&DEBUG_MEM_FULL )  {
+		/* Pad, plus full int for magic number */
+		cnt = (cnt+2*sizeof(long)-1)&(~(sizeof(long)-1));
+	}
 
 	if( rt_g.rtg_parallel ) {
 		RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
@@ -178,33 +264,20 @@ char *str;
 		RES_RELEASE( &rt_g.res_syscall );		/* unlock */
 	}
 
-	if( ptr==(char *)0 || rt_g.debug&DEBUG_MEM )
-		rt_log("%7x realloc%6d %s\n", ptr, cnt, str);
+	if( ptr==(char *)0 || rt_g.debug&DEBUG_MEM )  {
+		rt_log("%7x realloc%6d %s %s\n", ptr, cnt, str,
+			ptr == original_ptr ? "[grew in place]" : "[moved]" );
+	}
 	if( ptr==(char *)0 )  {
-		rt_log("rt_realloc: Insufficient memory available, using %d\n", sbrk(0));
+		rt_log("rt_realloc: Insufficient memory available, sbrk(0)=x%x\n", sbrk(0));
 		rt_bomb("rt_realloc: malloc failure");
 	}
-#ifdef MEMDEBUG
-	if( ptr != savedptr )
-	{
-		/* replace old entry with new one */
-		register struct memdebug *mp = rt_mdb;
-		for( ; mp < &rt_mdb[MDB_SIZE]; mp++ )  {
-			if( mp->mdb_len > 0 && (mp->mdb_addr == savedptr) ) {
-				mp->mdb_addr = ptr;
-				mp->mdb_len = cnt;
-				mp->mdb_str = str;
-				goto ok;
-			}
-		}
-		rt_log("rt_realloc: old entry not found!\n");
-	}
-ok:	;
-	{
-		register int *ip = (int *)(ptr+cnt-sizeof(int));
+	if( ptr != original_ptr && rt_g.debug&DEBUG_MEM_FULL )  {
+		register long *ip = (long *)(ptr+cnt-sizeof(long));
+
+		rt_memdebug_move( original_ptr, ptr, cnt, str );
 		*ip = MDB_MAGIC;
 	}
-#endif /* MEMDEBUG */
 	return(ptr);
 }
 
@@ -238,12 +311,16 @@ void
 rt_prmem(str)
 char *str;
 {
-#ifdef MEMDEBUG
-	register struct memdebug *mp = rt_mdb;
+	register struct memdebug *mp = &rt_memdebug[rt_memdebug_len-1];
 	register int *ip;
 
-	rt_log("\nRT memory use\t\t%s\n", str);
-	for( ; mp < &rt_mdb[MDB_SIZE]; mp++ )  {
+	rt_log("\nLIBRT memory use\t\t%s\n", str);
+	if( rt_g.debug&DEBUG_MEM_FULL == 0 )  {
+		rt_log("\tMemory debugging is off\n");
+		return;
+	}
+	rt_log("\t%d elements in memdebug table\n", rt_memdebug_len);
+	for( ; mp >= rt_memdebug; mp-- )  {
 		if( mp->mdb_len <= 0 )  continue;
 		ip = (int *)(mp->mdb_addr+mp->mdb_len-sizeof(int));
 		rt_log("%7x %5x %s %s\n",
@@ -252,7 +329,6 @@ char *str;
 		if( *ip != MDB_MAGIC )
 			rt_log("\t%x\t%x\n", *ip, MDB_MAGIC);
 	}
-#endif /* MEMDEBUG */
 }
 
 /*
