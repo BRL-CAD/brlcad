@@ -200,6 +200,8 @@ Tk_Window	tkwin;
 CONST char	*database;
 struct bu_vls	treetops;
 
+char		*node_search_path;
+
 struct timeval	frame_start;
 
 BU_EXTERN(void dispatcher, (ClientData clientData));
@@ -834,6 +836,14 @@ char	*argv[];
 
 	Tcl_LinkVar( interp, "database", (char *)&database, TCL_LINK_STRING | TCL_LINK_READ_ONLY );
 
+	/* This string may be supplemented by the Tcl runtime */
+	Tcl_LinkVar( interp, "node_search_path", (char *)&node_search_path, TCL_LINK_STRING );
+	Tcl_SetVar( interp, "node_search_path",
+"/m/cad /m/cad/db /n/vapor/m/cad /n/vapor/m/cad/db \
+~/mike ~mike/cad/db ~/butler ~butler/cad/db \
+/home/army/mike/SGI/cad /var/tmp /tmp",
+		TCL_GLOBAL_ONLY );
+
 	/* This runs the tk.tcl script */
 	if(Tk_Init(interp) == TCL_ERROR)  bu_bomb("Try setting TK_LIBRARY environment variable\n");
 	if((tkwin = Tk_MainWindow(interp)) == NULL)
@@ -1117,6 +1127,8 @@ int	sub;
 		rtnodes[sub].fd = 0;
 	}
 	Tcl_DeleteFileHandler( rtnodes[sub].tcl_file );
+
+	Tcl_Eval( interp, "update_cpu_status" );
 }
 
 /*
@@ -1355,6 +1367,17 @@ char			*buf;
 			return;
 
 		bu_vls_init( &cmd );
+
+		/* Send across some initial state, via TCL commands. */
+		bu_vls_printf( &cmd, "set node_search_path {%s}\n",
+			node_search_path );
+		if( pkg_send_vls( RTSYNCMSG_CMD, &cmd, rtnodes[i].pkg ) < 0 )  {
+			drop_rtnode(i);
+			continue;
+		}
+
+		/* Now try to get framebuffer open.  Reply message advances state, later. */
+		bu_vls_trunc( &cmd, 0 );
 		bu_vls_printf( &cmd, "%d %d %s", width, height, framebuffer );
 
 		if( pkg_send_vls( RTSYNCMSG_OPENFB, &cmd, rtnodes[i].pkg ) < 0 )  {
