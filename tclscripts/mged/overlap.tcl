@@ -655,8 +655,6 @@ proc overlap_tool { id } {
 	vdraw open overlaps
 	vdraw params color ff0000
 	
-	set over_cont($id,tmp_obj1) [make_name _obj1_]
-	set over_cont($id,tmp_obj2) [make_name _obj2_]
 	set over_cont($id,fd) -1
 	set over_cont($id,pid) ""
 	set over_cont($id,length) 0
