@@ -49,7 +49,7 @@ extern int	read_only;	/* database is read-only */
  *  in strictly ascending order, with no overlaps (ie, monotonicly
  * increasing).
  */
-struct mater *MaterHead = MATER_NULL;
+extern struct mater *MaterHead;	/* now defined in librt/mater.c */
 
 void color_addrec(), color_putrec(), color_zaprec();
 
