@@ -231,21 +231,24 @@ Ogl_colorchange()
 static void
 establish_zbuffer()
 {
-  dm_zbuffer(dmp);
+  dm_zbuffer(dmp,
+	     ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on);
   ++view_state->vs_flag;
 }
 
 static void
 establish_lighting()
 {
-  dm_lighting(dmp);
+  dm_lighting(dmp,
+	      ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.lighting_on);
   ++view_state->vs_flag;
 }
 
 static void
 do_fogHint()
 {
-  ogl_fogHint(dmp);
+  dm_fogHint(dmp,
+	      ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.fastfog);
   ++view_state->vs_flag;
 }
 
