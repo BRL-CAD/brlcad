@@ -4345,9 +4345,11 @@ struct shell		*s2;
 		neu1 = nmg_meonvu( RT_LIST_FIRST( vertexuse, &lu2->down_hd ) );
 		neu2 = nmg_eusplit( eu1->eumate_p->vu_p->v_p, neu1, 0 );
 		NMG_CK_EDGEUSE(eu1);
-		/* Attach new edge in s2 to original edge in s1 */
-		nmg_je( eu1, neu2 );	/* join new wire edge to existing edge */
-		nmg_je( eu1, neu1 );	/* join new wire edge to existing edge */
+		/* Attach both new edges in s2 to original edge in s1 */
+		nmg_use_edge_g( neu1, eu1->g.magic_p );
+		nmg_use_edge_g( neu2, eu1->g.magic_p );
+		nmg_radial_join_eu( eu1, neu2, &is->tol );
+		nmg_radial_join_eu( eu1, neu1, &is->tol );
 }
 	nmg_loop_g(lu2->l_p, &is->tol);
 	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
