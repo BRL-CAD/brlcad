@@ -205,24 +205,35 @@ register struct application *ap;
 		goto out;
 	}
 
-	/* Push ray starting point to edge of model RPP */
-	box_start = ap->a_ray.r_min - 1.0;	/* to compensate for 0.99 below */
-	box_end = model_end = ap->a_ray.r_max;
-	/* If we are very near the edge, step back just a little
-	 * so we don't miss coming out of something.
+	/*
+	 *  The interesting part of the ray starts at distance 0.
+	 *  If the ray enters the model at a negative distance,
+	 *  (ie, the ray starts within the model RPP),
+	 *  we only look at little bit behind to see if we are just
+	 *  coming out of something, but never further back than dist 0.
+	 *  If the ray enters the model at a positive distance,
+	 *  we always start there.
+	 *  It is vital that we never pick a start point outside the
+	 *  model RPP, or the space partitioning tree will pick the
+	 *  wrong box and the ray will miss it.
 	 */
-	if( box_start <= 0.0 )
-		box_start = -10.0;
+	box_start = ap->a_ray.r_min;
+	if( box_start < 0.0 )
+		box_start = 0.0;
+	box_start -= 0.99;	/* Compensate for 0.99 below on 1st loop */
+	box_end = model_end = ap->a_ray.r_max;
 	lastcut = CUTTER_NULL;
 	last_bool_start = -10.0;
 	trybool = 0;
 	newray = ap->a_ray;		/* struct copy */
-odist_corr = obox_start = obox_end = -99;
+	odist_corr = obox_start = obox_end = -99;
 
 	/*
 	 *  While the ray remains inside model space,
 	 *  push from box to box until ray emerges from
 	 *  model space again (or first hit is found, if user is impatient).
+	 *  It is vitally important to always stay within the model RPP, or
+	 *  the space partitoning tree will pick wrong boxes & miss them.
 	 */
 	for(;;)  {
 		/*
@@ -277,12 +288,17 @@ odist_corr = obox_start = obox_end = -99;
 
 		if( !rt_in_rpp(&newray, inv_dir,
 		     cutp->bn.bn_min, cutp->bn.bn_max) )  {
-			rt_log("\nrt_shootray:  ray misses box? (%g,%g) (%g,%g) \n",newray.r_min, newray.r_max, box_start, box_end);
+rt_log("\nrt_shootray:  missed box: rmin,rmax(%g,%g) box(%g,%g)\n",
+				newray.r_min, newray.r_max,
+				box_start, box_end);
 /**		     	if(rt_g.debug&DEBUG_SHOOT)  { ***/ {
 				VPRINT("a_ray.r_pt", ap->a_ray.r_pt);
 			     	VPRINT("Point", newray.r_pt);
 				VPRINT("Dir", newray.r_dir);
+				VPRINT("inv_dir", inv_dir);
 			     	rt_pr_cut( cutp, 0 );
+				(void)rt_DB_rpp(&newray, inv_dir,
+				     cutp->bn.bn_min, cutp->bn.bn_max);
 		     	}
 		     	if( box_end >= INFINITY )  break;
 			box_start = box_end;
@@ -663,4 +679,140 @@ rt_get_bitv()  {
 		cp += size;
 		bytes -= size;
 	}
+}
+
+/* For debugging */
+rt_DB_rpp( rp, invdir, min, max )
+register struct xray *rp;
+register fastf_t *invdir;	/* inverses of rp->r_dir[] */
+register fastf_t *min;
+register fastf_t *max;
+{
+	register fastf_t *pt = &rp->r_pt[0];
+	FAST fastf_t sv;
+
+	/* Start with infinite ray, and trim it down */
+	rp->r_min = -INFINITY;
+	rp->r_max = INFINITY;
+
+	/* X axis */
+rt_log("r_dir[X] = %g\n", rp->r_dir[X]);
+	if( rp->r_dir[X] < 0.0 )  {
+		/* Heading towards smaller numbers */
+		/* if( *min > *pt )  miss */
+		sv = (*min - *pt) * *invdir;
+rt_log("sv=%g, r_max=%g\n", sv, rp->r_max);
+		if( sv < 0.0 )
+			goto miss;
+		if(rp->r_max > sv)
+			rp->r_max = sv;
+		st = (*max - *pt) * *invdir;
+rt_log("st=%g, r_min=%g\n", st, rp->r_min);
+		if( rp->r_min < st )
+			rp->r_min = st;
+rt_log("r_min=%g, r_max=%g\n", rp->r_min, rp->r_max);
+	}  else if( rp->r_dir[X] > 0.0 )  {
+		/* Heading towards larger numbers */
+		/* if( *max < *pt )  miss */
+		st = (*max - *pt) * *invdir;
+rt_log("st=%g, r_max=%g\n", st, rp->r_max);
+		if( st < 0.0 )
+			goto miss;
+		if(rp->r_max > st)
+			rp->r_max = st;
+		sv = (*min - *pt) * *invdir;
+rt_log("sv=%g, r_min=%g\n", sv, rp->r_min);
+		if( rp->r_min < sv )
+			rp->r_min = sv;
+rt_log("r_min=%g, r_max=%g\n", rp->r_min, rp->r_max);
+	}  else  {
+		/*
+		 *  Direction cosines along this axis is NEAR 0,
+		 *  which implies that the ray is perpendicular to the axis,
+		 *  so merely check position against the boundaries.
+		 */
+		if( (*min > *pt) || (*max < *pt) )
+			goto miss;
+	}
+
+	/* Y axis */
+	pt++; invdir++; max++; min++;
+rt_log("r_dir[Y] = %g\n", rp->r_dir[Y]);
+	if( rp->r_dir[Y] < 0.0 )  {
+		/* Heading towards smaller numbers */
+		/* if( *min > *pt )  miss */
+		sv = (*min - *pt) * *invdir;
+rt_log("sv=%g, r_max=%g\n", sv, rp->r_max);
+		if( sv < 0.0 )
+			goto miss;
+		if(rp->r_max > sv)
+			rp->r_max = sv;
+		st = (*max - *pt) * *invdir;
+rt_log("st=%g, r_min=%g\n", st, rp->r_min);
+		if( rp->r_min < st )
+			rp->r_min = st;
+rt_log("r_min=%g, r_max=%g\n", rp->r_min, rp->r_max);
+	}  else if( rp->r_dir[Y] > 0.0 )  {
+		/* Heading towards larger numbers */
+		/* if( *max < *pt )  miss */
+		st = (*max - *pt) * *invdir;
+rt_log("st=%g, r_max=%g\n", st, rp->r_max);
+		if( st < 0.0 )
+			goto miss;
+		if(rp->r_max > st)
+			rp->r_max = st;
+		sv = (*min - *pt) * *invdir;
+rt_log("sv=%g, r_min=%g\n", sv, rp->r_min);
+		if( rp->r_min < sv )
+			rp->r_min = sv;
+rt_log("r_min=%g, r_max=%g\n", rp->r_min, rp->r_max);
+	}  else  {
+		if( (*min > *pt) || (*max < *pt) )
+			goto miss;
+	}
+
+	/* Z axis */
+	pt++; invdir++; max++; min++;
+rt_log("r_dir[Z] = %g\n", rp->r_dir[Z]);
+	if( rp->r_dir[Z] < 0.0 )  {
+		/* Heading towards smaller numbers */
+		/* if( *min > *pt )  miss */
+		sv = (*min - *pt) * *invdir;
+rt_log("sv=%g, r_max=%g\n", sv, rp->r_max);
+		if( sv < 0.0 )
+			goto miss;
+		if(rp->r_max > sv)
+			rp->r_max = sv;
+		st = (*max - *pt) * *invdir;
+rt_log("st=%g, r_min=%g\n", st, rp->r_min);
+		if( rp->r_min < st )
+			rp->r_min = st;
+rt_log("r_min=%g, r_max=%g\n", rp->r_min, rp->r_max);
+	}  else if( rp->r_dir[Z] > 0.0 )  {
+		/* Heading towards larger numbers */
+		/* if( *max < *pt )  miss */
+		st = (*max - *pt) * *invdir;
+rt_log("st=%g, r_max=%g\n", st, rp->r_max);
+		if( st < 0.0 )
+			goto miss;
+		if(rp->r_max > st)
+			rp->r_max = st;
+		sv = (*min - *pt) * *invdir;
+rt_log("sv=%g, r_min=%g\n", sv, rp->r_min);
+		if( rp->r_min < sv )
+			rp->r_min = sv;
+rt_log("r_min=%g, r_max=%g\n", rp->r_min, rp->r_max);
+	}  else  {
+		if( (*min > *pt) || (*max < *pt) )
+			goto miss;
+	}
+
+	/* If equal, RPP is actually a plane */
+	if( rp->r_min > rp->r_max )
+		goto miss;
+	rt_log("HIT:  %g..%g\n", rp->r_min, rp->r_max );
+	return(1);		/* HIT */
+miss:
+	rt_log("MISS\n");
+	return(0);		/* MISS */
 }
