@@ -716,8 +716,8 @@ struct rt_comb_internal  {
 	char		rgb_valid;	/* !0 ==> rgb[] has valid color */
 	unsigned char	rgb[3];
 	float		temperature;	/* > 0 ==> region temperature */
-	struct rt_vls	shader;
-	struct rt_vls	material;
+	struct bu_vls	shader;
+	struct bu_vls	material;
 	char		inherit;
 };
 #define RT_COMB_MAGIC	0x436f6d49	/* "ComI" */
@@ -1078,7 +1078,7 @@ struct pixel_ext {
  *  values at runtime.  A zeroed structure can be obtained at compile
  *  time with "static CONST struct application zero_ap;", or at run time
  *  by using "bzero( (char *)ap, sizeof(struct application) );" or
- *  rt_calloc( 1, sizeof(struct application), "application" );
+ *  bu_calloc( 1, sizeof(struct application), "application" );
  *  While this practice may not work on machines where "all bits off"
  *  does not signify a floating point zero, BRL-CAD does not support any
  *  such machines, so this is a moot issue.
@@ -1139,7 +1139,7 @@ struct rt_g {
 	int		debug;		/* !0 for debug, see librt/debug.h */
 	/* XXX rtg_parallel is not used by LIBRT any longer */
 	int		rtg_parallel;	/* !0 = trying to use multi CPUs */
-	struct bu_list	rtg_vlfree;	/* head of rt_vlist freelist */
+	struct bu_list	rtg_vlfree;	/* head of bn_vlist freelist */
 	int		NMG_debug;	/* debug bits for NMG's see h/nmg.h */
 };
 extern struct rt_g rt_g;
@@ -1513,7 +1513,7 @@ extern int rt_nfunctab;
 #define NMG_HITMISS_SEG_OUT 0x6f757400	/* "out" */
 
 struct hitmiss {
-	struct rt_list	l;
+	struct bu_list	l;
 	struct hit	hit;
 	fastf_t		dist_in_plane;	/* distance from plane intersect */
 	int		in_out;		/* status of ray as it transitions
@@ -1537,28 +1537,28 @@ struct hitmiss {
 	case NMG_RT_MISS_MAGIC: \
 		break; \
 	case NMG_MISS_LIST: \
-		rt_log("%s[%d]: struct hitmiss has  NMG_MISS_LIST magic #\n",\
+		bu_log("%s[%d]: struct hitmiss has  NMG_MISS_LIST magic #\n",\
 			__FILE__, __LINE__); \
 		rt_bomb("going down in flames\n"); \
 	case NMG_HIT_LIST: \
-		rt_log("%s[%d]: struct hitmiss has  NMG_MISS_LIST magic #\n",\
+		bu_log("%s[%d]: struct hitmiss has  NMG_MISS_LIST magic #\n",\
 			__FILE__, __LINE__); \
 		rt_bomb("going down in flames\n"); \
 	default: \
-		rt_log("%s[%d]: bad struct hitmiss magic: %d:(0x%08x)\n", \
+		bu_log("%s[%d]: bad struct hitmiss magic: %d:(0x%08x)\n", \
 			__FILE__, __LINE__, hm->l.magic, hm->l.magic); \
 		rt_bomb("going down in flames\n"); \
 	}\
 	if (!hm->hit.hit_private) { \
-		rt_log("%s[%d]: NULL hit_private in hitmiss struct\n", \
+		bu_log("%s[%d]: NULL hit_private in hitmiss struct\n", \
 			__FILE__, __LINE__); \
 		rt_bomb("going down in flames\n"); \
 	} \
 }
 
 #define NMG_CK_HITMISS_LISTS(a_hit, rd) { \
-    for (RT_LIST_FOR(a_hit, hitmiss, &rd->rd_hit)){NMG_CK_HITMISS(a_hit);} \
-    for (RT_LIST_FOR(a_hit, hitmiss, &rd->rd_miss)){NMG_CK_HITMISS(a_hit);} }
+    for (BU_LIST_FOR(a_hit, hitmiss, &rd->rd_hit)){NMG_CK_HITMISS(a_hit);} \
+    for (BU_LIST_FOR(a_hit, hitmiss, &rd->rd_miss)){NMG_CK_HITMISS(a_hit);} }
 
 
 /*	Ray Data structure
@@ -1594,10 +1594,10 @@ struct ray_data {
 	struct application	*ap;
 	struct seg		*seghead;
 	struct soltab 		*stp;
-	struct rt_tol		*tol;
+	struct bn_tol		*tol;
 	struct hitmiss	**hitmiss;	/* 1 struct hitmiss ptr per elem. */
-	struct rt_list	rd_hit;		/* list of hit elements */
-	struct rt_list	rd_miss;	/* list of missed/sub-hit elements */
+	struct bu_list	rd_hit;		/* list of hit elements */
+	struct bu_list	rd_miss;	/* list of missed/sub-hit elements */
 
 /* The following are to support isect_ray_face() */
 
@@ -1632,7 +1632,7 @@ struct ray_data {
 #define GET_HITMISS(_p, _ap) { \
 	(_p) = BU_LIST_FIRST( hitmiss, &((_ap)->a_resource->re_nmgfree) ); \
 	if( BU_LIST_IS_HEAD( (_p), &((_ap)->a_resource->re_nmgfree ) ) ) \
-		(_p) = (struct hitmiss *)rt_calloc(1, sizeof( struct hitmiss ), "hitmiss" ); \
+		(_p) = (struct hitmiss *)bu_calloc(1, sizeof( struct hitmiss ), "hitmiss" ); \
 	else \
 		BU_LIST_DEQUEUE( &((_p)->l) ); \
 	}
@@ -1645,20 +1645,20 @@ struct ray_data {
 #define GET_HITMISS(_p) { \
 	char str[64]; \
 	(void)sprintf(str, "GET_HITMISS %s %d", __FILE__, __LINE__); \
-	(_p) = (struct hitmiss *)rt_calloc(1, sizeof(struct hitmiss), str); \
+	(_p) = (struct hitmiss *)bu_calloc(1, sizeof(struct hitmiss), str); \
 	}
 
 #define FREE_HITMISS(_p) { \
 	char str[64]; \
 	(void)sprintf(str, "FREE_HITMISS %s %d", __FILE__, __LINE__); \
-	(void)rt_free( (char *)_p,  str); \
+	(void)bu_free( (char *)_p,  str); \
 	}
 
 #define NMG_FREE_HITLIST(_p) { \
 	struct hitmiss *_hit; \
-	while ( RT_LIST_WHILE(_hit, hitmiss, _p)) { \
+	while ( BU_LIST_WHILE(_hit, hitmiss, _p)) { \
 		NMG_CK_HITMISS(_hit); \
-		RT_LIST_DEQUEUE( &_hit->l ); \
+		BU_LIST_DEQUEUE( &_hit->l ); \
 		FREE_HITMISS( _hit ); \
 	} }
 
@@ -1669,10 +1669,10 @@ struct ray_data {
 
 
 #define nmg_rt_bomb(rd, str) { \
-	rt_log("%s", str); \
+	bu_log("%s", str); \
 	if (rt_g.NMG_debug & DEBUG_NMGRT) rt_bomb("End of diagnostics"); \
-	RT_LIST_INIT(&rd->rd_hit); \
-	RT_LIST_INIT(&rd->rd_miss); \
+	BU_LIST_INIT(&rd->rd_hit); \
+	BU_LIST_INIT(&rd->rd_miss); \
 	rt_g.NMG_debug |= DEBUG_NMGRT; \
 	nmg_isect_ray_model(rd); \
 	(void) nmg_ray_segs(rd); \
