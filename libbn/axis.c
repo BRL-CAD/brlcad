@@ -35,7 +35,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "plot3.h"
-#include "./tig.h"
 
 #define	TICK_YLEN	(char_width)	/* tick is 1 character height */
 #define	NUM_YOFF	(3*char_width)	/* numbers offset from line */

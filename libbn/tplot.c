@@ -41,7 +41,6 @@
 #include "machine.h"
 #include "vmath.h"
 #include "plot3.h"
-#include "./tig.h"
 
 #define TIC		100
 #define REF_WIDTH	0.857143

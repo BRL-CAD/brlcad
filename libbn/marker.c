@@ -35,7 +35,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "plot3.h"
-#include "./tig.h"
 
 void
 tp_2marker( fp, c, x, y, scale )

@@ -21,8 +21,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include "machine.h"
+#include "vmath.h"
 #include "plot3.h"
-#include "./tig.h"
 
 /* Modes for internal flag */
 #define	TP_MARK		1		/* Draw marks */

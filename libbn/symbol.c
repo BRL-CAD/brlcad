@@ -21,7 +21,6 @@
 #include "machine.h"
 #include "vmath.h"
 #include "plot3.h"
-#include "./tig.h"
 
 /*
  *	Motion encoding macros
