@@ -323,26 +323,29 @@ struct mater_info *materp;
 		}
 
 		if( use_nmg_flag )  {
-			struct model	*m;
+			struct model		*m;
+			struct nmgregion	*r;
 
-			m = nmg_mmr();		/* Make model & region */
-			nmg_msv( m->r_p );	/* Make empty shell (& vertex) */
-
-			/* Tessellate Solid to NMG */
-			rt_functab[id].ft_tessellate(
-				m->r_p->s_p,
-				recordp, xform,
-				cur_path[pathpos] );
-
-			/* Convert NMG to vlist */
-			/* 0 = vectors, 1 = w/polygon markers */
-			nmg_s_to_vlist( &vhead, m->r_p->s_p, 1 );
+			/* Tessellate Solid to NMG region */
+			m = nmg_mm();		/* Make model */
+			if( rt_functab[id].ft_tessellate( &r, m,
+			    recordp, xform, cur_path[pathpos] ) < 0 )  {
+				printf("%s: tessellate failure\n", cur_path[pathpos]->d_namep );
+			} else {
+				/* Convert NMG to vlist */
+				NMG_CK_REGION(r);
+				/* 0 = vectors, 1 = w/polygon markers */
+				nmg_s_to_vlist( &vhead, r->s_p, 1 );
+			}
 
 			/* Destroy NMG */
 			nmg_km( m );
 		} else {
-			rt_functab[id].ft_plot( recordp, xform, &vhead,
-				cur_path[pathpos] );
+			if( rt_functab[id].ft_plot( recordp, xform, &vhead,
+			    cur_path[pathpos] ) < 0 )  {
+				printf("%s: vector conversion failure\n",
+					cur_path[pathpos]->d_namep);
+			}
 		}
 	}
 
