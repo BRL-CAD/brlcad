@@ -36,6 +36,7 @@ void Polar2Euclidian(vect_t Dir, vect_t Normal, double Theta, double Phi);
 
 
 int			PM_Activated;
+double			PM_Intensity;
 
 struct	PhotonMap	*PMap[3];		/* Photon Map (KD-TREE) */
 struct	Photon		*Emit[3];		/* Emitted Photons */
@@ -45,8 +46,8 @@ vect_t			BBMax;			/* Max Bounding Box */
 int			Depth;			/* Used to determine how many times the photon has propogated */
 int			PType;			/* Used to determine the type of Photon: Direct,Indirect,Specular,Caustic */
 int			PInit;
-int			EPL;			/* Emitted Photons Per Light Source */
-int			EPS[3];			/* Emitted Photons Seperate, one for each map */
+int			EPL;			/* Emitted Photons For the Light */
+int			EPS[3];			/* Emitted Photons For the Light */
 int			ICSize;
 double			ScaleFactor;
 struct	IrradCache	*IC;			/* Irradiance Cache for Hypersampling */
@@ -180,12 +181,10 @@ void Store(point_t Pos, vect_t Dir, vect_t Normal, int Map) {
 
 /* bu_log("Map: %d, Size: %d\n",Map,PMap[Map] -> StoredPhotons);*/
   }
-
 /*
   if (!EPS[Map] && PMap[Map] -> StoredPhotons == PMap[Map] -> MaxPhotons)
     EPS[Map]= EPM;
 */
-
 /*
   bu_log("[%d][%d][%.3f,%.3f,%.3f]\n",Map,PMap[Map] -> StoredPhotons,CurPh.Power[0],CurPh.Power[1],CurPh.Power[2]);
   if (!(PMap[Map] -> StoredPhotons % 64))
@@ -605,7 +604,7 @@ void ScalePhotonPower(fastf_t Scale, int Map) {
 
 
 /* Emit a photons in a random direction based on a point light */
-void EmitPhotonsRandom(struct application *ap, struct light_specific *lp) {
+void EmitPhotonsRandom(struct application *ap, struct light_specific *lp, double LightIntensity) {
   vect_t	ldir;
 
   ldir[0]= 0;
@@ -621,8 +620,8 @@ void EmitPhotonsRandom(struct application *ap, struct light_specific *lp) {
     if (PMap[PM_GLOBAL] -> StoredPhotons == PMap[PM_GLOBAL] -> MaxPhotons && (!PMap[PM_CAUSTIC] -> StoredPhotons || PMap[PM_CAUSTIC] -> StoredPhotons == PMap[PM_CAUSTIC] -> MaxPhotons))
       return;
 
-/*    do {*/
     do {
+/*    do {*/
       /* Set Ray Direction to application ptr */
 /*
       ap -> a_ray.r_dir[0]= 2.0*rand()/RAND_MAX-1.0;
@@ -636,7 +635,7 @@ void EmitPhotonsRandom(struct application *ap, struct light_specific *lp) {
     } while (ap -> a_ray.r_dir[0]*ap -> a_ray.r_dir[0] + ap -> a_ray.r_dir[1]*ap -> a_ray.r_dir[1] + ap -> a_ray.r_dir[2]*ap -> a_ray.r_dir[2] > 1);
       /* Normalize Ray Direction */
       VUNITIZE(ap -> a_ray.r_dir);
-/*    } while (drand48() > VDOT(ap -> a_ray.r_dir,ldir)); */ /* we want this to terminate when a rnd# is less than the angle */
+/*    } while (drand48() > VDOT(ap -> a_ray.r_dir,ldir));*/ /* we want this to terminate when a rnd# is less than the angle */
 
     /* Set Ray Position to application ptr */
     ap -> a_ray.r_pt[0]= lp -> lt_pos[0];
@@ -648,7 +647,7 @@ void EmitPhotonsRandom(struct application *ap, struct light_specific *lp) {
 /*bu_log("Shooting Ray: [%.3f,%.3f,%.3f] [%.3f,%.3f,%.3f]\n",lp -> lt_pos[0], lp -> lt_pos[1], lp -> lt_pos[2], x,y,z);*/
     CurPh.Power[0]=
     CurPh.Power[1]=
-    CurPh.Power[2]= 1000.0 * 1000.0 * 20.0;
+    CurPh.Power[2]= 1000.0 * 1000.0 * 4.0 * LightIntensity * lp -> lt_fraction;
 
     Depth= 0;
     PType= PM_GLOBAL;
@@ -809,11 +808,13 @@ void IrradianceThread(int pid, genptr_t arg) {
 /*
  *  Main Photon Mapping Function
  */
-void BuildPhotonMap(struct application *ap, int cpus, int width, int height, int Hypersample, int GlobalPhotons, double CausticsPercent, int Rays, double AngularTolerance, int RandomSeed, int IrradianceHypersampling) {
+void BuildPhotonMap(struct application *ap, int cpus, int width, int height, int Hypersample, int GlobalPhotons, double CausticsPercent, int Rays, double AngularTolerance, int RandomSeed, int IrradianceHypersampling, double LightIntensity) {
   struct	light_specific	*lp;
   int				i,MapSize[3];
 
 
+  PM_Intensity= LightIntensity;
+  bu_log("I: %.3f\n",LightIntensity);
   temp1= temp2= temp3= 0;
   bu_log("Building Photon Map:\n");
 
@@ -870,19 +871,18 @@ void BuildPhotonMap(struct application *ap, int cpus, int width, int height, int
   bu_log("  Emitting Photons...\n");
 
   for (BU_LIST_FOR(lp, light_specific, &(LightHead.l))) {
-    EmitPhotonsRandom(ap, lp);
+    EmitPhotonsRandom(ap, lp, LightIntensity);
   }
 
   /* Generate Scale Factor */
   ScaleFactor= max(BBMax[0]-BBMin[0],BBMax[1]-BBMin[1],BBMax[2]-BBMin[2]);
-/*  bu_log("Scale Factor: %.3f\n",ScaleFactor);*/
+  bu_log("Scale Factor: %.3f\n",ScaleFactor);
 
   /* Scale Photon Power */
   for (i= 0; i < 3; i++)
     if (PMap[i] -> StoredPhotons)
       ScalePhotonPower(1.0/(double)EPL,i);
-
-  bu_log("EPL: %d\n",EPL);
+bu_log("EPL: %d\n",EPL);
 
 /*
   for (i= 0; i < PMap -> StoredPhotons; i++)
@@ -936,13 +936,11 @@ void BuildPhotonMap(struct application *ap, int cpus, int width, int height, int
   SanityCheck(PMap[PM_GLOBAL] -> Root,0);
 */
 
-
 /*
   for (i= 0; i < 3; i++)
     if (PMap[i] -> StoredPhotons)
       bu_log("  Results:  Map: %d, Total Emitted: %d, Local Emitted: %d, Map Size: %d\n",i, EPM, EPS[i], PMap[i] -> MaxPhotons);
 */
-
 bu_log("Max.Avg: %.3f.... Gen.Avg: %.3f\n",temp1/temp2,temp3/temp2);
   for (i= 0; i < 3; i++)
     free(Emit[i]);
