@@ -54,6 +54,9 @@ f_name()
 {
 	register struct directory *dp;
 	union record record;
+	char *name;
+	long laddr;
+	int flags, len;
 
 	if( (dp = lookup( cmd_args[1], LOOKUP_NOISY )) == DIR_NULL )
 		return;
@@ -63,7 +66,13 @@ f_name()
 		return;
 	}
 
-	dp->d_namep = strdup( cmd_args[2] );
+	/* Due to hashing, need to delete and add it back */
+	laddr = dp->d_addr;
+	flags = dp->d_flags;
+	len = dp->d_len;
+	dir_delete( dp );
+
+	dp = dir_add( cmd_args[2], laddr, flags, len );
 	db_getrec( dp, &record, 0 );
 
 	NAMEMOVE( cmd_args[2], record.c.c_name );
