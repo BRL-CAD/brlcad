@@ -62,9 +62,9 @@ cho_hist(clientData, interp, argc, argv)
 
 static struct bu_cmdtab cho_cmds[] = 
 {
-	"history",	bu_cmdhist_history,
 	"add",		bu_cmdhist_add,
 	"curr",		bu_cmdhist_curr,
+	"history",	bu_cmdhist_history,
 	"next",		bu_cmdhist_next,
 	"prev",		bu_cmdhist_prev,
 	(char *)NULL,	CMD_NULL

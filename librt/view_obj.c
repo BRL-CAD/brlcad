@@ -39,7 +39,9 @@ int Vo_Init();
 
 static int vo_open_tcl();
 static int vo_close_tcl();
+#if 0
 static int vo_scale_tcl();
+#endif
 static int vo_size_tcl();
 static int vo_invSize_tcl();
 static int vo_aet_tcl();
@@ -85,21 +87,23 @@ static struct bu_cmdtab vo_cmds[] =
 	"local2base",		vo_local2base_tcl,
 	"lookat",		vo_lookat_tcl,
 	"model2view",		vo_model2view_tcl,
+	"observer",		vo_observer_tcl,
 	"orientation",		vo_orientation_tcl,
 	"perspective",		vo_perspective_tcl,
 	"pmat",			vo_pmat_tcl,
 	"pmodel2view",		vo_pmodel2view_tcl,
+	"pov",			vo_pov_tcl,
 	"rmat",			vo_rmat_tcl,
 	"rot",			vo_rot_tcl,
-	"pov",			vo_pov_tcl,
+#if 0
 	"scale",		vo_scale_tcl,
+#endif
 	"size",			vo_size_tcl,
 	"slew",			vo_slew_tcl,
 	"tra",			vo_tra_tcl,
 	"units",		vo_units_tcl,
 	"view2model",		vo_view2model_tcl,
 	"zoom",			vo_zoom_tcl,
-	"observer",		vo_observer_tcl,
 	(char *)0,		(int (*)())0
 };
 
@@ -171,7 +175,7 @@ vo_close_tcl(clientData, interp, argc, argv)
 /*
  * Open a view object.
  *
- * USAGE: v_open [name [args]]
+ * USAGE: v_open [name]
  */
 vo_open_tcl(clientData, interp, argc, argv)
      ClientData      clientData;
@@ -228,6 +232,7 @@ vo_open_tcl(clientData, interp, argc, argv)
 	return TCL_OK;
 }
 
+#if 0
 /*
  * Get or set the view scale.
  */
@@ -276,6 +281,7 @@ vo_scale_tcl(clientData, interp, argc, argv)
 
 	return TCL_ERROR;
 }
+#endif
 
 /*
  * Get or set the view size.

@@ -111,13 +111,14 @@ static struct bu_cmdtab dgo_cmds[] = {
 	"clear",		dgo_zap_tcl,
 	"close",		dgo_close_tcl,
 	"draw",			dgo_draw_tcl,
-	"ev",			dgo_draw_tcl,
 	"erase",		dgo_erase_tcl,
 	"erase_all",		dgo_erase_all_tcl,
+	"ev",			dgo_draw_tcl,
 	"get_autoview",		dgo_get_autoview_tcl,
 	"headSolid",		dgo_headSolid_tcl,
 	"illum",		dgo_illum_tcl,
 	"label",		dgo_label_tcl,
+	"observer",		dgo_observer_tcl,
 	"overlay",		dgo_overlay_tcl,
 	"rt",			dgo_rt_tcl,
 	"rtcheck",		dgo_rtcheck_tcl,
@@ -127,7 +128,6 @@ static struct bu_cmdtab dgo_cmds[] = {
 	"vdraw",		dgo_vdraw_tcl,
 	"who",			dgo_who_tcl,
 	"zap",			dgo_zap_tcl,
-	"observer",		dgo_observer_tcl,
 	(char *)0,		(int (*)())0
 };
 
@@ -835,7 +835,7 @@ char	**argv;
 		VSETALL(radial , 1.0);
 
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "center {%g %g %g} scale %g", V3ARGS(center), radial[X]);
+	bu_vls_printf(&vls, "center {%g %g %g} size %g", V3ARGS(center), radial[X] * 2.0);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
