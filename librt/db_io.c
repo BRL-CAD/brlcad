@@ -310,7 +310,12 @@ struct db_i			*dbip;
  *
  *			D B _ P U T _ E X T E R N A L
  *
- *  Caller is responsible for freeing memory, using db_free_external().
+ *  Add name from dp->d_namep to external representation of solid,
+ *  and write it into the database, obtaining different storage if
+ *  the size has changed since last write.
+ *
+ *  Caller is responsible for freeing memory of external representation,
+ *  using db_free_external().
  */
 int
 db_put_external( ep, dp, dbip )
@@ -318,6 +323,7 @@ struct rt_external	*ep;
 struct directory	*dp;
 struct db_i		*dbip;
 {
+	union record		*rec;
 	int	ngran;
 
 	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_put_external:  bad dbip\n");
@@ -344,6 +350,10 @@ struct db_i		*dbip;
 			dp->d_namep, ngran, dp->d_len );
 		rt_bomb("db_io.c: db_put_external()");
 	}
+
+	/* Add name.  Depends on solid names always being in the same place */
+	rec = (union record *)ep->ext_buf;
+	NAMEMOVE( dp->d_namep, rec->s.s_name );
 
 	if( db_put( dbip, dp, (union record *)(ep->ext_buf), 0, ngran ) < 0 )
 		return(-1);
