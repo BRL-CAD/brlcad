@@ -136,22 +136,25 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 #define MDX	3
 #define MDY	7
 #define MDZ	11
-#define MAT_DELTAS(m,x,y,z)	(m)[MDX] = x; \
-				(m)[MDY] = y; \
-				(m)[MDZ] = z;
+#define MAT_DELTAS(m,x,y,z)	{ \
+			(m)[MDX] = x; \
+			(m)[MDY] = y; \
+			(m)[MDZ] = z; }
 
 /* Set vector at `a' to have coordinates `b', `c', `d' */
-#define VSET(a,b,c,d)	(a)[X] = (b);\
+#define VSET(a,b,c,d)	{ \
+			(a)[X] = (b);\
 			(a)[Y] = (c);\
-			(a)[Z] = (d)
+			(a)[Z] = (d); }
 
 /* Set all elements of vector to same scalar value */
-#define VSETALL(a,s)	(a)[X] = (a)[Y] = (a)[Z] = (s);
+#define VSETALL(a,s)	{ (a)[X] = (a)[Y] = (a)[Z] = (s); }
 
 /* Transfer vector at `b' to vector at `a' */
-#define VMOVE(a,b)	(a)[X] = (b)[X];\
+#define VMOVE(a,b)	{ \
+			(a)[X] = (b)[X];\
 			(a)[Y] = (b)[Y];\
-			(a)[Z] = (b)[Z]
+			(a)[Z] = (b)[Z]; }
 
 /* Transfer vector of length `n' at `b' to vector at `a' */
 #define VMOVEN(a,b,n) \
@@ -161,19 +164,19 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	}
 
 /* Reverse the direction of b and store it in a */
-#define VREVERSE(a,b)	\
-		{	(a)[X] = -(b)[X]; \
+#define VREVERSE(a,b)	{ \
+			(a)[X] = -(b)[X]; \
 			(a)[Y] = -(b)[Y]; \
-			(a)[Z] = -(b)[Z]; \
-		}
+			(a)[Z] = -(b)[Z]; }
 
 /* Add vectors at `b' and `c', store result at `a' */
 #ifdef SHORT_VECTORS
 #define VADD2(a,b,c) VADD2N(a,b,c, 3)
 #else
-#define VADD2(a,b,c)	(a)[X] = (b)[X] + (c)[X];\
+#define VADD2(a,b,c)	{ \
+			(a)[X] = (b)[X] + (c)[X];\
 			(a)[Y] = (b)[Y] + (c)[Y];\
-			(a)[Z] = (b)[Z] + (c)[Z]
+			(a)[Z] = (b)[Z] + (c)[Z]; }
 #endif /* SHORT_VECTORS */
 
 /* Add vectors of length `n' at `b' and `c', store result at `a' */
@@ -187,9 +190,10 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 #ifdef SHORT_VECTORS
 #define VSUB2(a,b,c) 	VSUB2N(a,b,c, 3)
 #else
-#define VSUB2(a,b,c)	(a)[X] = (b)[X] - (c)[X];\
+#define VSUB2(a,b,c)	{ \
+			(a)[X] = (b)[X] - (c)[X];\
 			(a)[Y] = (b)[Y] - (c)[Y];\
-			(a)[Z] = (b)[Z] - (c)[Z]
+			(a)[Z] = (b)[Z] - (c)[Z]; }
 #endif /* SHORT_VECTORS */
 
 /* Subtract `n' length vector at `c' from vector at `b', store result at `a' */
@@ -203,9 +207,10 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 #ifdef SHORT_VECTORS
 #define VSUB3(a,b,c,d) VSUB3(a,b,c,d, 3)
 #else
-#define VSUB3(a,b,c,d)	(a)[X] = (b)[X] - (c)[X] - (d)[X];\
+#define VSUB3(a,b,c,d)	{ \
+			(a)[X] = (b)[X] - (c)[X] - (d)[X];\
 			(a)[Y] = (b)[Y] - (c)[Y] - (d)[Y];\
-			(a)[Z] = (b)[Z] - (c)[Z] - (d)[Z]
+			(a)[Z] = (b)[Z] - (c)[Z] - (d)[Z]; }
 #endif /* SHORT_VECTORS */
 
 /* Vectors:  A = B - C - D for vectors of length `n' */
@@ -219,9 +224,10 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 #ifdef SHORT_VECTORS
 #define VADD3(a,b,c,d) VADD3N(a,b,c,d, 3)
 #else
-#define VADD3(a,b,c,d)	(a)[X] = (b)[X] + (c)[X] + (d)[X];\
+#define VADD3(a,b,c,d)	{ \
+			(a)[X] = (b)[X] + (c)[X] + (d)[X];\
 			(a)[Y] = (b)[Y] + (c)[Y] + (d)[Y];\
-			(a)[Z] = (b)[Z] + (c)[Z] + (d)[Z]
+			(a)[Z] = (b)[Z] + (c)[Z] + (d)[Z]; }
 #endif /* SHORT_VECTORS */
 
 /* Add 3 vectors of length `n' at `b', `c', and `d', store result at `a' */
@@ -235,9 +241,10 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 #ifdef SHORT_VECTORS
 #define VADD4(a,b,c,d,e) VADD4N(a,b,c,d,e, 3)
 #else
-#define VADD4(a,b,c,d,e) (a)[X] = (b)[X] + (c)[X] + (d)[X] + (e)[X];\
+#define VADD4(a,b,c,d,e) { \
+			(a)[X] = (b)[X] + (c)[X] + (d)[X] + (e)[X];\
 			(a)[Y] = (b)[Y] + (c)[Y] + (d)[Y] + (e)[Y];\
-			(a)[Z] = (b)[Z] + (c)[Z] + (d)[Z] + (e)[Z]
+			(a)[Z] = (b)[Z] + (c)[Z] + (d)[Z] + (e)[Z]; }
 #endif /* SHORT_VECTORS */
 
 /* Add 4 `n' length vectors at `b', `c', `d', and `e', store result at `a' */
@@ -251,9 +258,10 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 #ifdef SHORT_VECTORS
 #define VSCALE(a,b,c) VSCALEN(a,b,c, 3)
 #else
-#define VSCALE(a,b,c)	(a)[X] = (b)[X] * (c);\
+#define VSCALE(a,b,c)	{ \
+			(a)[X] = (b)[X] * (c);\
 			(a)[Y] = (b)[Y] * (c);\
-			(a)[Z] = (b)[Z] * (c)
+			(a)[Z] = (b)[Z] * (c); }
 #endif /* SHORT_VECTORS */
 
 /* Scale vector of length `n' at `b' by scalar `c', store result at `a' */
@@ -285,9 +293,10 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 #ifdef SHORT_VECTORS
 #define VADD2SCALE( o, a, b, s )	VADD2SCALEN( o, a, b, s, 3 )
 #else
-#define VADD2SCALE( o, a, b, s )	(o)[X] = ((a)[X] + (b)[X]) * (s); \
+#define VADD2SCALE( o, a, b, s )	{ \
+					(o)[X] = ((a)[X] + (b)[X]) * (s); \
 					(o)[Y] = ((a)[Y] + (b)[Y]) * (s); \
-					(o)[Z] = ((a)[Z] + (b)[Z]) * (s);
+					(o)[Z] = ((a)[Z] + (b)[Z]) * (s); }
 #endif
 
 #define VADD2SCALEN( o, a, b, n ) \
@@ -303,9 +312,10 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 #ifdef SHORT_VECTORS
 #define VSUB2SCALE( o, a, b, s )	VSUB2SCALEN( o, a, b, s, 3 )
 #else
-#define VSUB2SCALE( o, a, b, s )	(o)[X] = ((a)[X] - (b)[X]) * (s); \
+#define VSUB2SCALE( o, a, b, s )	{ \
+					(o)[X] = ((a)[X] - (b)[X]) * (s); \
 					(o)[Y] = ((a)[Y] - (b)[Y]) * (s); \
-					(o)[Z] = ((a)[Z] - (b)[Z]) * (s);
+					(o)[Z] = ((a)[Z] - (b)[Z]) * (s); }
 #endif
 
 #define VSUB2SCALEN( o, a, b, n ) \
@@ -348,15 +358,15 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 		(o)[_vcomb2] = (a) * (b)[_vcomb2] + (c) * (d)[_vcomb2]; \
 	} }
 
-#define VJOIN4(a,b,c,d,e,f,g,h,i,j)	\
+#define VJOIN4(a,b,c,d,e,f,g,h,i,j)	{ \
 	(a)[X] = (b)[X] + (c)*(d)[X] + (e)*(f)[X] + (g)*(h)[X] + (i)*(j)[X];\
 	(a)[Y] = (b)[Y] + (c)*(d)[Y] + (e)*(f)[Y] + (g)*(h)[Y] + (i)*(j)[Y];\
-	(a)[Z] = (b)[Z] + (c)*(d)[Z] + (e)*(f)[Z] + (g)*(h)[Z] + (i)*(j)[Z]
+	(a)[Z] = (b)[Z] + (c)*(d)[Z] + (e)*(f)[Z] + (g)*(h)[Z] + (i)*(j)[Z]; }
 
-#define VJOIN3(a,b,c,d,e,f,g,h)	\
+#define VJOIN3(a,b,c,d,e,f,g,h)		{ \
 	(a)[X] = (b)[X] + (c)*(d)[X] + (e)*(f)[X] + (g)*(h)[X];\
 	(a)[Y] = (b)[Y] + (c)*(d)[Y] + (e)*(f)[Y] + (g)*(h)[Y];\
-	(a)[Z] = (b)[Z] + (c)*(d)[Z] + (e)*(f)[Z] + (g)*(h)[Z]
+	(a)[Z] = (b)[Z] + (c)*(d)[Z] + (e)*(f)[Z] + (g)*(h)[Z]; }
 
 /* Compose vector at `a' of:
  *	Vector at `b' plus
@@ -366,10 +376,10 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 #ifdef SHORT_VECTORS
 #define VJOIN2(a,b,c,d,e,f)	VJOIN2N(a,b,c,d,e,f,3)
 #else
-#define VJOIN2(a,b,c,d,e,f)	\
+#define VJOIN2(a,b,c,d,e,f)	{ \
 	(a)[X] = (b)[X] + (c) * (d)[X] + (e) * (f)[X];\
 	(a)[Y] = (b)[Y] + (c) * (d)[Y] + (e) * (f)[Y];\
-	(a)[Z] = (b)[Z] + (c) * (d)[Z] + (e) * (f)[Z]
+	(a)[Z] = (b)[Z] + (c) * (d)[Z] + (e) * (f)[Z]; }
 #endif /* SHORT_VECTORS */
 
 #define VJOIN2N(a,b,c,d,e,f,n)	\
@@ -381,10 +391,10 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 #ifdef SHORT_VECTORS
 #define VJOIN1(a,b,c,d)		VJOIN1N(a,b,c,d,3)
 #else
-#define VJOIN1(a,b,c,d) \
+#define VJOIN1(a,b,c,d) 	{ \
 	(a)[X] = (b)[X] + (c) * (d)[X];\
 	(a)[Y] = (b)[Y] + (c) * (d)[Y];\
-	(a)[Z] = (b)[Z] + (c) * (d)[Z];
+	(a)[Z] = (b)[Z] + (c) * (d)[Z]; }
 #endif /* SHORT_VECTORS */
 
 #define VJOIN1N(a,b,c,d,n) \
@@ -401,10 +411,10 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 #ifdef SHORT_VECTORS
 #define VBLEND2(a,b,c,d,e)	VBLEND2N(a,b,c,d,e,3)
 #else
-#define VBLEND2(a,b,c,d,e)	\
+#define VBLEND2(a,b,c,d,e)	{ \
 	(a)[X] = (b) * (c)[X] + (d) * (e)[X];\
 	(a)[Y] = (b) * (c)[Y] + (d) * (e)[Y];\
-	(a)[Z] = (b) * (c)[Z] + (d) * (e)[Z];
+	(a)[Z] = (b) * (c)[Z] + (d) * (e)[Z]; }
 #endif /* SHORT_VECTORS */
 
 #define VBLEND2N(a,b,c,d,e,n)	\
@@ -433,9 +443,10 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
  *  the result vector points "out" of the plane.
  *  This outward pointing normal is the BRL convention.
  */
-#define VCROSS(a,b,c)	(a)[X] = (b)[Y] * (c)[Z] - (b)[Z] * (c)[Y];\
+#define VCROSS(a,b,c)	{ \
+			(a)[X] = (b)[Y] * (c)[Z] - (b)[Z] * (c)[Y];\
 			(a)[Y] = (b)[Z] * (c)[X] - (b)[X] * (c)[Z];\
-			(a)[Z] = (b)[X] * (c)[Y] - (b)[Y] * (c)[X]
+			(a)[Z] = (b)[X] * (c)[Y] - (b)[Y] * (c)[X]; }
 
 /* Compute dot product of vectors at `a' and `b' */
 #define VDOT(a,b)	( (a)[X]*(b)[X] + (a)[Y]*(b)[Y] + (a)[Z]*(b)[Z] )
@@ -458,10 +469,10 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 		(a)[_velmul] = (b)[_velmul] * (c)[_velmul]; \
 	}
 #else
-#define VELMUL(a,b,c) \
+#define VELMUL(a,b,c) 	{ \
 	(a)[X] = (b)[X] * (c)[X];\
 	(a)[Y] = (b)[Y] * (c)[Y];\
-	(a)[Z] = (b)[Z] * (c)[Z];
+	(a)[Z] = (b)[Z] * (c)[Z]; }
 #endif /* SHORT_VECTORS */
 
 /* Apply the 3x3 part of a mat_t to a 3-tuple. */
@@ -474,10 +485,10 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 			  (mat)[4*_m3x3v+2]*(vec)[Z]; \
 	}
 #else
-#define MAT3X3VEC(o,mat,vec) \
+#define MAT3X3VEC(o,mat,vec) 	{ \
 	(o)[X] = (mat)[X]*(vec)[X]+(mat)[Y]*(vec)[Y] + (mat)[ 2]*(vec)[Z]; \
 	(o)[Y] = (mat)[4]*(vec)[X]+(mat)[5]*(vec)[Y] + (mat)[ 6]*(vec)[Z]; \
-	(o)[Z] = (mat)[8]*(vec)[X]+(mat)[9]*(vec)[Y] + (mat)[10]*(vec)[Z];
+	(o)[Z] = (mat)[8]*(vec)[X]+(mat)[9]*(vec)[Y] + (mat)[10]*(vec)[Z]; }
 #endif /* SHORT_VECTORS */
 
 /* Multiply a 3-tuple by the 3x3 part of a mat_t. */
@@ -490,10 +501,10 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 			(i)[Z]*(m)[_v3x3m+8]; \
 	}
 #else
-#define VEC3X3MAT(o,i,m) \
+#define VEC3X3MAT(o,i,m) 	{ \
 	(o)[X] = (i)[X]*(m)[X] + (i)[Y]*(m)[4] + (i)[Z]*(m)[8]; \
 	(o)[Y] = (i)[X]*(m)[1] + (i)[Y]*(m)[5] + (i)[Z]*(m)[9]; \
-	(o)[Z] = (i)[X]*(m)[2] + (i)[Y]*(m)[6] + (i)[Z]*(m)[10];
+	(o)[Z] = (i)[X]*(m)[2] + (i)[Y]*(m)[6] + (i)[Z]*(m)[10]; }
 #endif /* SHORT_VECTORS */
 
 /* Apply the 3x3 part of a mat_t to a 2-tuple (Z part=0). */
@@ -505,10 +516,10 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 			(mat)[4*_m3x2v+1]*(vec)[Y]; \
 	}
 #else
-#define MAT3X2VEC(o,mat,vec) \
+#define MAT3X2VEC(o,mat,vec) 	{ \
 	(o)[X] = (mat)[0]*(vec)[X] + (mat)[Y]*(vec)[Y]; \
 	(o)[Y] = (mat)[4]*(vec)[X] + (mat)[5]*(vec)[Y]; \
-	(o)[Z] = (mat)[8]*(vec)[X] + (mat)[9]*(vec)[Y];
+	(o)[Z] = (mat)[8]*(vec)[X] + (mat)[9]*(vec)[Y]; }
 #endif /* SHORT_VECTORS */
 
 /* Multiply a 2-tuple (Z=0) by the 3x3 part of a mat_t. */
@@ -519,10 +530,10 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 		(o)[_v2x3m] = (i)[X]*(m)[_v2x3m] + (i)[Y]*(m)[2*_v2x3m]; \
 	}
 #else
-#define VEC2X3MAT(o,i,m) \
+#define VEC2X3MAT(o,i,m) 	{ \
 	(o)[X] = (i)[X]*(m)[0] + (i)[Y]*(m)[4]; \
 	(o)[Y] = (i)[X]*(m)[1] + (i)[Y]*(m)[5]; \
-	(o)[Z] = (i)[X]*(m)[2] + (i)[Y]*(m)[6];
+	(o)[Z] = (i)[X]*(m)[2] + (i)[Y]*(m)[6]; }
 #endif /* SHORT_VECTORS */
 
 /* Apply a 4x4 matrix to a 3-tuple which is an absolute Point in space */
@@ -571,11 +582,11 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 			(o)[_i_m4x4p] += (m)[_j_m4x4p+4*_i_m4x4p] * (i)[_j_m4x4p]; \
 	}
 #else
-#define MAT4X4PNT(o,m,i) \
+#define MAT4X4PNT(o,m,i) 	{ \
 	(o)[X]=(m)[ 0]*(i)[X] + (m)[ 1]*(i)[Y] + (m)[ 2]*(i)[Z] + (m)[ 3]*(i)[H];\
 	(o)[Y]=(m)[ 4]*(i)[X] + (m)[ 5]*(i)[Y] + (m)[ 6]*(i)[Z] + (m)[ 7]*(i)[H];\
 	(o)[Z]=(m)[ 8]*(i)[X] + (m)[ 9]*(i)[Y] + (m)[10]*(i)[Z] + (m)[11]*(i)[H];\
-	(o)[H]=(m)[12]*(i)[X] + (m)[13]*(i)[Y] + (m)[14]*(i)[Z] + (m)[15]*(i)[H];
+	(o)[H]=(m)[12]*(i)[X] + (m)[13]*(i)[Y] + (m)[14]*(i)[Z] + (m)[15]*(i)[H]; }
 #endif /* SHORT_VECTORS */
 
 /* Apply a 4x4 matrix to a 3-tuple which is a relative Vector in space */
@@ -646,10 +657,10 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 		(a)[_hdivide] = (b)[_hdivide] / (b)[H]; \
 	}
 #else
-#define HDIVIDE(a,b)  \
+#define HDIVIDE(a,b)  { \
 	(a)[X] = (b)[X] / (b)[H];\
 	(a)[Y] = (b)[Y] / (b)[H];\
-	(a)[Z] = (b)[Z] / (b)[H];
+	(a)[Z] = (b)[Z] / (b)[H]; }
 #endif /* SHORT_VECTORS */
 
 /*
@@ -664,34 +675,39 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
  */
 
 /* Set quaternion at `a' to have coordinates `b', `c', `d', `e' */
-#define QSET(a,b,c,d,e)	(a)[X] = (b);\
+#define QSET(a,b,c,d,e)	{ \
+			(a)[X] = (b);\
 			(a)[Y] = (c);\
 			(a)[Z] = (d);\
-			(a)[W] = (e)
+			(a)[W] = (e); }
 
 /* Transfer quaternion at `b' to quaternion at `a' */
-#define QMOVE(a,b)	(a)[X] = (b)[X];\
+#define QMOVE(a,b)	{ \
+			(a)[X] = (b)[X];\
 			(a)[Y] = (b)[Y];\
 			(a)[Z] = (b)[Z];\
-			(a)[W] = (b)[W]
+			(a)[W] = (b)[W]; }
 
 /* Add quaternions at `b' and `c', store result at `a' */
-#define QADD2(a,b,c)	(a)[X] = (b)[X] + (c)[X];\
+#define QADD2(a,b,c)	{ \
+			(a)[X] = (b)[X] + (c)[X];\
 			(a)[Y] = (b)[Y] + (c)[Y];\
 			(a)[Z] = (b)[Z] + (c)[Z];\
-			(a)[W] = (b)[W] + (c)[W]
+			(a)[W] = (b)[W] + (c)[W]; }
 
 /* Subtract quaternion at `c' from quaternion at `b', store result at `a' */
-#define QSUB2(a,b,c)	(a)[X] = (b)[X] - (c)[X];\
+#define QSUB2(a,b,c)	{ \
+			(a)[X] = (b)[X] - (c)[X];\
 			(a)[Y] = (b)[Y] - (c)[Y];\
 			(a)[Z] = (b)[Z] - (c)[Z];\
-			(a)[W] = (b)[W] - (c)[W]
+			(a)[W] = (b)[W] - (c)[W]; }
 
 /* Scale quaternion at `b' by scalar `c', store result at `a' */
-#define QSCALE(a,b,c)	(a)[X] = (b)[X] * (c);\
+#define QSCALE(a,b,c)	{ \
+			(a)[X] = (b)[X] * (c);\
 			(a)[Y] = (b)[Y] * (c);\
 			(a)[Z] = (b)[Z] * (c);\
-			(a)[W] = (b)[W] * (c)
+			(a)[W] = (b)[W] * (c); }
 
 /* Normalize quaternion 'a' to be a unit quaternion */
 #define QUNITIZE(a)	{register double _f; _f = QMAGNITUDE(a); \
@@ -744,11 +760,11 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 #ifdef SHORT_VECTORS
 #define QBLEND2(a,b,c,d,e)	VBLEND2N(a,b,c,d,e,4)
 #else
-#define QBLEND2(a,b,c,d,e)	\
+#define QBLEND2(a,b,c,d,e)	{ \
 	(a)[X] = (b) * (c)[X] + (d) * (e)[X];\
 	(a)[Y] = (b) * (c)[Y] + (d) * (e)[Y];\
 	(a)[Z] = (b) * (c)[Z] + (d) * (e)[Z];\
-	(a)[W] = (b) * (c)[W] + (d) * (e)[W];
+	(a)[W] = (b) * (c)[W] + (d) * (e)[W]; }
 #endif /* SHORT_VECTORS */
 
 #endif /* VMATH_H */
