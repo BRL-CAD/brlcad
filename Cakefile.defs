@@ -935,19 +935,11 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBBU_LIBES	LIBTCL LIBTCL_LIBES -ldl
 #	if 0	/* Use MESA  and GLX */
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X -DIF_OGL
-#		if 0
-#			define	LIBFB_LIBES	LIBPKG -lMesaGL -lMesaGLU -lglut -L''XLIBDIR -lX11  -lXi -lXmu
-#		else
-#			define	LIBFB_LIBES	LIBPKG -lGL -lGLU -L''XLIBDIR -lX11  -lXi -lXmu -lpthread
-#		endif
+#		define	LIBFB_LIBES	LIBPKG -lGL -L''XLIBDIR -lX11  -lXi -lXmu -lpthread
 #		define	LIBFB_OBJS	if_remote if_ab if_X if_X24 if_ogl
 #		define	LIBDM_OBJS	dm-X dm-ogl
 #		define	LIBDM_CONFIG	-DUSE_MESA_GL -DDM_X -I''XINCDIR -DDM_OGL
-#		if 0
-#			define 	LIBDM_LIBES	LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES -ldl -lMesaGL -lMesaGLU -lglut -L''XLIBDIR -lXi -lXmu
-#		else
-#			define 	LIBDM_LIBES	LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES -ldl -lGL -lGLU -L''XLIBDIR -lXi -lXmu -lpthread
-#		endif
+#		define 	LIBDM_LIBES	LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES -ldl -lGL -L''XLIBDIR -lXi -lXmu -lpthread
 #		define	MGED_OBJS	dm-ogl dm-X dm-generic
 #		define	MGED_CONFIG	-DUSE_MESA_GL -DDM_X -DDM_OGL -I''XINCDIR
 #		define	LIBTCLHOOKS_LIBES	-L/usr/X11R6/lib -lGL
@@ -1008,14 +1000,27 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	endif
 
 #	define	LIBRT_TIMER	timer42
-#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X
-#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
-#	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
-#	define	LIBDM_OBJS	dm-X
-#	define	LIBDM_CONFIG	-DDM_X -I''XINCDIR
-#       define  LIBDM_LIBES     LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES
-#	define	MGED_OBJS	dm-X dm-generic
-#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#	define	LIBBU_LIBES	LIBTCL LIBTCL_LIBES
+#	if 0	/* Use MESA  and GLX */
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X -DIF_OGL
+#		define	LIBFB_LIBES	LIBPKG -lGL -L''XLIBDIR -lX11  -lXi -lXmu
+#		define	LIBFB_OBJS	if_remote if_ab if_X if_X24 if_ogl
+#		define	LIBDM_OBJS	dm-X dm-ogl
+#		define	LIBDM_CONFIG	-DUSE_MESA_GL -DDM_X -I''XINCDIR -DDM_OGL
+#		define 	LIBDM_LIBES	LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES -lGL -L''XLIBDIR -lXi -lXmu
+#		define	MGED_OBJS	dm-ogl dm-X dm-generic
+#		define	MGED_CONFIG	-DUSE_MESA_GL -DDM_X -DDM_OGL -I''XINCDIR
+#		define	LIBTCLHOOKS_LIBES	-L/usr/X11R6/lib -lGL
+#	else	/* just use X */
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X
+#		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
+#		define	LIBFB_OBJS	if_remote if_ab if_X if_X24
+#		define	LIBDM_OBJS	dm-X
+#		define	LIBDM_CONFIG	-DDM_X -I''XINCDIR
+#		define 	LIBDM_LIBES	LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES -L''XLIBDIR -lXi
+#		define	MGED_OBJS	dm-X dm-generic
+#		define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#	endif
 #	define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext
 #	define	BWISH_LIBES	MGED_LIBES
 #	define	BWISH_CONFIG	-I''XINCDIR
