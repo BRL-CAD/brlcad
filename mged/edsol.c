@@ -1934,6 +1934,7 @@ init_sedit()
 void
 replot_editing_solid()
 {
+#if 0
 	struct rt_db_internal	*ip;
 
 	(void)illump->s_path[illump->s_last];
@@ -1942,7 +1943,9 @@ replot_editing_solid()
 	RT_CK_DB_INTERNAL( ip );
 
 	(void)replot_modified_solid( illump, ip, es_mat );
-
+#else
+	(void)replot_modified_solid( illump, &es_int, es_mat );
+#endif
 }
 
 /*
@@ -1959,18 +1962,6 @@ int			free;
 	RT_CK_DB_INTERNAL( is );
 	if( rt_functab[is->idb_type].ft_xform( os, mat, is, free ) < 0 )
 		bu_bomb("transform_editing_solid");
-#if 0
-/*
- * this is the old way.  rt_db_xform_internal was transfered and
- * modified into rt_generic_xform() in librt/table.c
- * rt_generic_xform is normally called via rt_functab[id].ft_xform()
- */
-	struct directory	*dp;
-
-	dp = illump->s_path[illump->s_last];
-	if( rt_db_xform_internal( os, mat, is, free, dp->d_namep ) < 0 )
-		bu_bomb("transform_editing_solid");		/* FAIL */
-#endif
 }
 
 /*
@@ -4766,6 +4757,7 @@ oedit_accept()
 		sp->s_iflag = DOWN;
 	}
 	mat_idn( modelchanges );
+	mat_idn( acc_rot_sol );
 
     	if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
 	es_int.idb_ptr = (genptr_t)NULL;
@@ -4778,6 +4770,8 @@ oedit_reject()
     	if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
 	es_int.idb_ptr = (genptr_t)NULL;
 	db_free_external( &es_ext );
+
+	mat_idn( acc_rot_sol );
 }
 
 /* 			F _ E Q N ( )
