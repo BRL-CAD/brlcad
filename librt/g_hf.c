@@ -583,7 +583,7 @@ err1:
 		out_cookie = cv_cookie("hf");
 	}
 
-	if( in_cookie == out_cookie )  {
+	if( cv_optimize(in_cookie) == cv_optimize(out_cookie) )  {
 		/* Don't replicate the data, just re-use the pointer */
 		mp->apbuf = mp->buf;
 		return 0;		/* OK */
