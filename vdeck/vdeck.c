@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) vdeck.c	2.8
-	Last edit: 	1/31/85 at 14:59:28
-	Retrieved: 	8/13/86 at 08:12:21
+	SCCS id:	@(#) vdeck.c	2.9
+	Last edit: 	3/18/85 at 14:25:28
+	Retrieved: 	8/13/86 at 08:12:49
 	SCCS archive:	/m/cad/vdeck/RCS/s.vdeck.c
 
 	Author:		Gary S. Moss
@@ -11,7 +11,7 @@
 			(301)278-6647 or AV-283-6647
  */
 static
-char	sccsTag[] = "@(#) vdeck.c	2.8	last edit 1/31/85 at 14:59:28";
+char	sccsTag[] = "@(#) vdeck.c	2.9	last edit 3/18/85 at 14:25:28";
 
 /*
 	Derived from KARDS, written by Keith Applin.
@@ -54,7 +54,6 @@ char	sccsTag[] = "@(#) vdeck.c	2.8	last edit 1/31/85 at 14:59:28";
 #include <signal.h>
 #include <setjmp.h>
 #include "./vextern.h"
-
 extern Directory	*diradd();
 extern double		fabs();
 extern long		lseek();
@@ -420,10 +419,11 @@ matp_t	old_xlate;
 		if orflag = 1   this region has or's
 		if orflag = 0   no
 	*/
-	if( old_xlate[15] < .0001 ) { /* Do not add solid.		*/
+	if( old_xlate[15] < EPSILON )
+		{ /* Do not add solid.		*/
 		lseek( objfd, savepos, 0 );
 		return;
-	}
+		}
 
 	/* Fill ident struct.						*/
 	mat_copy( d_ident.i_mat, old_xlate );
@@ -542,7 +542,7 @@ notnew:	/* Sent here if solid already in solid table.			*/
 			putSpaces( regBufPtr, n );
 			endRegion( buff );
 		}
-	} else if( old_xlate[15] > 0.0001 ) {
+	} else if( old_xlate[15] > EPSILON ) {
 		/* Solid not part of a region, make solid into region
 			if scale > 0
 		 */
@@ -776,11 +776,11 @@ Record *rec;
 
 	/* check for ell1 or sph
 	 */
-	if( fabs( MAGNITUDE(SV1) - MAGNITUDE(SV2) ) < .0001 ) {
+	if( fabs( MAGNITUDE(SV1) - MAGNITUDE(SV2) ) < CONV_EPSILON ) {
 		/* vector A == vector B */
 		rec->s.s_cgtype = ELL1;
 		/* SPH if vector B == vector C also */
-		if(fabs(MAGNITUDE(SV2) - MAGNITUDE(SV3)) < .0001)
+		if(fabs(MAGNITUDE(SV2) - MAGNITUDE(SV3)) < CONV_EPSILON)
 			rec->s.s_cgtype = SPH;
 		if(rec->s.s_cgtype != SPH) {
 			/* switch A and C */
@@ -791,7 +791,7 @@ Record *rec;
 	}
 
 	else
-	if(fabs(MAGNITUDE(SV1) - MAGNITUDE(SV3)) < .0001) {
+	if(fabs(MAGNITUDE(SV1) - MAGNITUDE(SV3)) < CONV_EPSILON) {
 		/* vector A == vector C */
 		rec->s.s_cgtype = ELL1;
 		/* switch vector A and vector B */
@@ -801,7 +801,7 @@ Record *rec;
 	}
 
 	else
-	if(fabs(MAGNITUDE(SV2) - MAGNITUDE(SV3)) < .0001) 
+	if(fabs(MAGNITUDE(SV2) - MAGNITUDE(SV3)) < CONV_EPSILON) 
 		rec->s.s_cgtype = ELL1;
 
 	else
@@ -883,19 +883,26 @@ Record *rec;
 		fprintf( stderr, "Error in TGC, D vector has zero magnitude!\n" );
 		return;
 	}
-	if(	fabs( (mb/md)-(ma/mc) ) < .0001
-	    &&  fabs( fabs(DOT(axb,cxd)) - (maxb*mcxd) ) < .0001
-	)	rec->s.s_cgtype = TEC;
+	if(	fabs( (mb/md)-(ma/mc) ) < CONV_EPSILON
+	    &&  fabs( fabs(DOT(axb,cxd)) - (maxb*mcxd) ) < CONV_EPSILON
+		)
+		rec->s.s_cgtype = TEC;
 
 	/* check for right cylinder
 	 */
-	if( fabs( fabs(DOT(SV1,axb)) - (mh*maxb) ) < .0001 ) {
-		if( fabs( ma-mb ) < .0001 ) {
-			if( fabs( ma-mc ) < .0001 )	rec->s.s_cgtype = RCC;
-			else				rec->s.s_cgtype = TRC;
-		} else    /* elliptical */
-		if( fabs( ma-mc ) < .0001 )		rec->s.s_cgtype = REC;
-	}
+	if( fabs( fabs(DOT(SV1,axb)) - (mh*maxb) ) < CONV_EPSILON )
+		{
+		if( fabs( ma-mb ) < CONV_EPSILON )
+			{
+			if( fabs( ma-mc ) < CONV_EPSILON )
+				rec->s.s_cgtype = RCC;
+			else
+				rec->s.s_cgtype = TRC;
+			}
+		else    /* elliptical */
+		if( fabs( ma-mc ) < CONV_EPSILON )
+			rec->s.s_cgtype = REC;
+		}
 
 	/* print the solid parameters
 	 */
