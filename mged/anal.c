@@ -53,7 +53,7 @@ static void	rhc_anal();
  *		if 'name' is missing use solid being edited
  */
 
-void
+int
 f_analyze(argc, argv)
 int	argc;
 char	*argv[];
@@ -70,13 +70,13 @@ char	*argv[];
 		/* use the solid being edited */
 		if (illump == SOLID_NULL) {
 			state_err( "Default SOLID Analyze" );
-			return;
+			return CMD_BAD;
 		}
 		ndp = illump->s_path[illump->s_last];
 		if(illump->s_Eflag) {
 			(void)printf("analyze: cannot analyze evaluated region containing %s\n",
 				ndp->d_namep);
-			return;
+			return CMD_BAD;
 		}
 		switch( state ) {
 		case ST_S_EDIT:
@@ -89,19 +89,19 @@ char	*argv[];
 
 		default:
 			state_err( "Default SOLID Analyze" );
-			return;
+			return CMD_BAD;
 		}
 		mat_mul(new_mat, modelchanges, es_mat);
 
 		if( rt_db_get_internal( &intern, ndp, dbip, new_mat ) < 0 )  {
 			(void)printf("rt_db_get_internal() error\n");
-			return;
+			return CMD_BAD;
 		}
 
 		do_anal(&v, &intern);
 		fputs( rt_vls_addr(&v), stdout );
 		rt_db_free_internal( &intern );
-		return;
+		return CMD_BAD;
 	}
 
 	/* use the names that were input */
@@ -111,7 +111,7 @@ char	*argv[];
 
 		if( rt_db_get_internal( &intern, ndp, dbip, rt_identity ) < 0 )  {
 			(void)printf("rt_db_get_internal() error\n");
-			return;
+			return CMD_BAD;
 		}
 
 		do_list( stdout, ndp, 1 );
@@ -120,6 +120,8 @@ char	*argv[];
 		rt_vls_free(&v);
 		rt_db_free_internal( &intern );
 	}
+
+	return CMD_OK;
 }
 
 
