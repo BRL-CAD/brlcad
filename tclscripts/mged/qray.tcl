@@ -236,7 +236,7 @@ proc init_qray_control { id } {
     grid $top.gridF3 -sticky "ew" -padx 8 -pady 8
 
     frame $top.gridF4
-    checkbutton $top.activeCB -relief flat -text "Active Mouse"\
+    checkbutton $top.activeCB -relief flat -text "Mouse Active"\
 	    -offvalue 0 -onvalue 1 -variable qray_active_mouse($id)
     checkbutton $top.use_airCB -relief flat -text "Use Air"\
 	    -offvalue 0 -onvalue 1 -variable qray_use_air($id)
