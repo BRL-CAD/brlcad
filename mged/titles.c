@@ -21,6 +21,7 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include <stdio.h>
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
@@ -30,8 +31,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./objdir.h"
 #include "./sedit.h"
 #include "./dm.h"
-
-extern int	printf(), sprintf();
 
 int	state;
 char	*state_str[] = {
