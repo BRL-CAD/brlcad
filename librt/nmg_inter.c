@@ -1320,9 +1320,11 @@ struct faceuse *fu;
 			register pointp_t	p3;
 			/* Face has a very similar vertex.  Add to list */
 			(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vu_other->l.magic);
+#if 0
 			/* Make new coordinates be the midpoint */
 			p3 = vu_other->v_p->vg_p->coord;
 			VADD2SCALE(v1->vg_p->coord, v1->vg_p->coord, p3, 0.5);
+#endif
 			/* Combine the two vertices */
 			nmg_jv(v1, vu_other->v_p);
 		} else {
@@ -1365,9 +1367,11 @@ struct faceuse *fu;
 			register pointp_t	p3;
 			/* Face has a very similar vertex.  Add to list */
 			(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vu_other->l.magic);
+#if 0
 			/* Make new coordinates be the midpoint */
 			p3 = vu_other->v_p->vg_p->coord;
 			VADD2SCALE(v1mate->vg_p->coord, v1mate->vg_p->coord, p3, 0.5);
+#endif
 			/* Combine the two vertices */
 			nmg_jv(v1mate, vu_other->v_p);
 		} else {
