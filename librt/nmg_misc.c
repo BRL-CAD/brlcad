@@ -39,9 +39,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
+#include "raytrace.h"
 
 /* #define DEBUG_PLEU */
-/* #define DEBUG_POLYTO */
+
+
+
 /*	Print the orientation in a nice, english form
  */
 void nmg_pr_orient(o, h)
@@ -52,6 +55,7 @@ char o, *h;
 	case OT_OPPOSITE : rt_log("%s%8s orientation\n", h, "OPPOSITE"); break;
 	case OT_NONE : rt_log("%s%8s orientation\n", h, "NONE"); break;
 	case OT_UNSPEC : rt_log("%s%8s orientation\n", h, "UNSPEC"); break;
+	case OT_BOOLPLACE : rt_log("%s%8s orientation\n", h, "BOOLPLACE"); break;
 	default : rt_log("%s%8s orientation\n", h, "BOGUS!!!"); break;
 	}
 }
@@ -471,29 +475,144 @@ unsigned char R, G, B;
 	p = v->vg_p->coord;
 	pl_color(fp, 255, 255, 255);
 
-	(void)sprintf(label, "%g %g %g", p[0], p[1], p[2]);
 	pd_3move(fp, p[0], p[1], p[2]);
-	pl_label(fp, label);
+	if (rt_g.NMG_debug & DEBUG_LABEL_PTS) {
+		(void)sprintf(label, "%g %g %g", p[0], p[1], p[2]);
+		pl_label(fp, label);
+	}
 	pd_3point(fp, p[0], p[1], p[2]);
 
 
 	pl_color(fp, R, G, B);
 }
-/*	E U _ C O O R D S
+
+
+
+
+#if 0
+/*	N M G _ O F F S E T _ V E R T E X U S E
  *
- *	compute a pair of coordinates for representing an edgeuse
+ *	Compute new coordinates for vertex as if all adjoining faces
+ *	of vertexuse were offset by some scalar distance "s".  The result
+ *	is returned in "pt".
+ *
+ *
+ *	Return
+ *		-2	Offset faces do not intersect in single pt within tol
+ *		-1	Vertexuse not child of edgeuse
+ *		0	Success
+ *
+ *
  */
+int nmg_offset_vertexuse(vu, s, pt, tol)
+struct vertex *vu;
+fastf_t s, tol;
+point_t pt;
+{
+	struct edgeuse *eu, *euprev;
+	struct nmg_ptbl planes;
+	struct faceuse *fu;
+	int i;
+	union {
+		char *c;
+		fastf_t *f;
+		long *l;
+	} pl;
+
+	NMG_CK_VERTEXUSE(vu);
+	if (*vu->up.magic_p != NMG_EDGEUSE_MAGIC)
+		return(-1)
+
+
+	(void)nmg_tbl(&planes, TBL_INIT, (long *)NULL);
+
+	/* collect up all the (perturbed) plane equations */
+	eu = vu->up.eu_p;
+	do {
+		NMG_CK_EDGEUSE(eu);
+		NMG_CK_LOOPUSE(eu->up.lu_p);
+		fu = eu->up.lu_p->up.fu_p;
+		NMG_CK_FACEUSE(fu);
+
+		NMG_CK_FACE(fu->f_p);
+		NMG_CK_FACE_G(fu->f_p->fg_p);
+
+		pl.c = rt_calloc(1, sizeof(plane_t), "plane equation");
+		VMOVE(pl.f, fu->f_p->fg_p->N, 4);
+
+		if (fu->orientation == OT_OPPOSITE) {
+			VREVERSE(pl.f, pl.f);
+			pl.f[3] = -pl.f[3];
+		} else 
+			pl.f[3] = fu->f_p->fg_p->N[3];
+
+		pl.f[3] += s;	/* perturbation */
+
+		(void)nmg_tbl(&planes, TBL_INS, (long *)pl.l);
+
+		NMG_CK_EDGEUSE(eu->last);
+		euprev = eu->last->radial_p;
+		NMG_CK_EDGEUSE(euprev);
+		NMG_CK_VERTEXUSE(euprev->vu_p);
+
+		if (euprev->vu_p->v_p != vu->v_p) {
+			rt_bomb("there's something wrong with this model\n");
+		}
+
+		eu = euprev;
+	} while (eu != vu->up.eu_p);
+
+	/* sort and "uniq" the list of plane equations */
+
+
+
+	if (plane.end == 1) {
+		pl.l = planes.buffer;
+		VADD2SCALE(pt, pl.f, s);
+	} else if (plane.end == 2) {
+
+	} else if (rt_mk_pt_nplanes(planes.buffer, planes.end, pt, tol))
+		return(-2);
+
+	/* free dynamic memory */
+	for (i=0 ; i < planes.end ; ++i) {
+		pl.l = planes.buffer[i];
+		rt_free(pl.c);
+	}
+
+	(void)nmg_tbl(&planes, TBL_FREE, (long *)NULL);
+	return(0);
+}
+
+
 static eu_coords(eu, base, tip)
 struct edgeuse *eu;
 point_t base, tip;
 {
-	fastf_t mag, dist1, rt_dist_line_point();
+	vect_t veu;
+
+	nmg_offset_vertexuse(eu->vu_p, 2, base, 0.001);
+	nmg_offset_vertexuse(eu->vu_p, 2, tip, 0.001);
+	
+	VSUB2SCALE(veu, tip, base, 0.6);
+	VADD2(tip, base, veu);
+}
+
+#endif
+
+#define LEE_DIVIDE_TOL	(1.0e-5)	/* sloppy tolerance */
+
+static void eu_coord(eu, base)
+struct edgeuse *eu;
+point_t base;
+{
+	fastf_t dist1, rt_dist_line_point();
 	struct edgeuse *peu;
 	struct loopuse *lu;
-	vect_t v1,		/* vector of edgeuse */
-		v2,		/* vector of last edgeuse/start of edgeuse plot */
+	vect_t v_eu,		/* vector of edgeuse */
+		v_other,	/* vector of last edgeuse */
 		N;		/* normal vector for this edgeuse's face */
-	pointp_t p1, p0;
+	pointp_t pt_other, pt_eu;
 
 
 	lu = eu->up.lu_p;
@@ -513,45 +632,62 @@ point_t base, tip;
 	VPRINT("Adjusted Normal", N);
 #endif
 
-	p0 = eu->vu_p->v_p->vg_p->coord;
-	p1 = eu->eumate_p->vu_p->v_p->vg_p->coord;
+	pt_eu = eu->vu_p->v_p->vg_p->coord;
+	pt_other = eu->eumate_p->vu_p->v_p->vg_p->coord;
 
-	/* v1 is the vector of the edgeuse
+	/* v_eu is the vector of the edgeuse
 	 * mag is the magnitude of the edge vector
 	 */
-	VSUB2(v1, p1, p0); 
-	mag = MAGNITUDE(v1);
-	VUNITIZE(v1);
+	VSUB2(v_eu, pt_other, pt_eu); 
+	VUNITIZE(v_eu);
 
 	/* find a point not on the edge */
 	peu = eu->last;
-	p1 = peu->vu_p->v_p->vg_p->coord;
-	dist1 = rt_dist_line_point(p0, v1, p1);
-	while (dist1 == 0.0 && peu != eu) {
+	pt_other = peu->vu_p->v_p->vg_p->coord;
+	dist1 = rt_dist_line_point(pt_eu, v_eu, pt_other);
+	while (NEAR_ZERO(dist1, LEE_DIVIDE_TOL) && peu != eu) {
 		peu = peu->last;
-		p1 = peu->vu_p->v_p->vg_p->coord;
-		dist1 = rt_dist_line_point(p0, v1, p1);
+		pt_other = peu->vu_p->v_p->vg_p->coord;
+		dist1 = rt_dist_line_point(pt_eu, v_eu, pt_other);
 	}
 
-	/* make a vector from the "last" edge */
-	VSUB2(v2, p1, p0); VUNITIZE(v2);
+	/* make a vector from the "last" edgeuse (reversed) */
+	VSUB2(v_other, pt_other, pt_eu); VUNITIZE(v_other);
 
 	/* combine the two vectors to get a vector
 	 * pointing to the location where the edgeuse
 	 * should start
 	 */
-	VADD2(v2, v2, v1); VUNITIZE(v2);
+	VADD2(v_other, v_other, v_eu); VUNITIZE(v_other);
 	
 	/* compute the start of the edgeuse */
-	VJOIN2(base, p0, 0.125,v2, 0.01,N);
+	VJOIN2(base, pt_eu, 0.125,v_other, 0.05,N);
+}
 
-	mag *= 0.6;
-	VJOIN1(tip, base, mag, v1);
+
+/*	E U _ C O O R D S
+ *
+ *	compute a pair of coordinates for representing an edgeuse
+ */
+static eu_coords(eu, base, tip)
+struct edgeuse *eu;
+point_t base, tip;
+{
+	vect_t eu_vec;
+
+	eu_coord(eu, base);
+	eu_coord(eu->next, tip);
+
+	/* compute edgeuse vector */
+	VSUB2SCALE(eu_vec, tip, base, 0.6);
+
+	/* compute tip location from edgeuse vector */
+	VADD2(tip, base, eu_vec);
 }
 
 
 
-static void eu_radial(fp, eu, tip)
+static void eu_radial(fp, eu, tip, R, G, B)
 FILE *fp;
 struct edgeuse *eu;
 point_t tip;
@@ -566,10 +702,55 @@ point_t tip;
 
 	eu_coords(eu->radial_p, b2, t2);
 
+	/* form vector of other edgeuse and scale down */
 	VSUB2SCALE(v, t2, b2, 0.8);
+
+	/* find point along other edgeuse where radial pointer should touch */
 	VADD2(p, b2, v);
+
+	pl_color(fp, R, G-20, B);
 	pd_3line(fp, tip[0], tip[1], tip[2], p[0], p[1], p[2]);
+	pl_color(fp, R, G, B);
 }
+
+static void eu_last(fp, eu, base)
+FILE *fp;
+struct edgeuse *eu;
+point_t base;
+{
+	point_t b2, t2, p;
+	vect_t v;
+
+	NMG_CK_EDGEUSE(eu->last);
+	NMG_CK_VERTEXUSE(eu->last->vu_p);
+	NMG_CK_VERTEX(eu->last->vu_p->v_p);
+	NMG_CK_VERTEX_G(eu->last->vu_p->v_p->vg_p);
+
+	eu_coords(eu->last->radial_p, b2, t2);
+
+	/* form vector of last edgeuse's radial edgeuse and scale down */
+	VSUB2SCALE(v, t2, b2, 0.8);
+
+	/* find point along last edgeuse's radial edgeuse
+	 * where radial pointer should touch 
+	 */
+	VADD2(p, b2, v);
+
+	/* get coordinates of last edgeuse */
+	eu_coords(eu->last, b2, t2);
+
+	/* form vector of last edgeuse's radial pointer and scale down */
+	VSUB2SCALE(v, p, t2, 0.2);
+
+	/* find point along other edgeuse's radial pointer where 
+	 * last pointer should touch
+	 */
+	VADD2(p, t2, v);
+
+	pl_color(fp, 0, 200, 0);
+	pd_3line(fp, base[0], base[1], base[2], p[0], p[1], p[2]);
+}
+
 static void eu_next(fp, eu, tip)
 FILE *fp;
 struct edgeuse *eu;
@@ -583,6 +764,7 @@ point_t tip;
 	NMG_CK_VERTEX_G(eu->next->vu_p->v_p->vg_p);
 
 	eu_coords(eu->next, b2, t2);
+
 	pl_color(fp, 0, 100, 0);
 	pd_3line(fp, tip[0], tip[1], tip[2], b2[0], b2[1], b2[2]);
 }
@@ -595,6 +777,8 @@ struct nmg_ptbl *b;
 unsigned char R, G, B;
 {
 	pointp_t p0, p1;
+	point_t end0, end1;
+	vect_t v;
 
 	if (nmg_tbl(b, TBL_LOC, &e->magic) >= 0) return;
 
@@ -611,8 +795,18 @@ unsigned char R, G, B;
 	NMG_CK_VERTEX_G(e->eu_p->eumate_p->vu_p->v_p->vg_p);
 	p1 = e->eu_p->eumate_p->vu_p->v_p->vg_p->coord;
 
+	/* leave a little room between the edge endpoints and the vertex
+	 * compute endpoints by forming a vector between verets, scale vector
+	 * and modify points
+	 */
+	VSUB2SCALE(v, p1, p0, 0.95);
+	VADD2(end0, p0, v);
+	VREVERSE(v, v);
+
+	VADD2(end1, p1, v);
+
 	pl_color(fp, R, G, B);
-	pd_3line(fp, p0[0], p0[1], p0[2], p1[0], p1[1], p1[2]);
+	pd_3line(fp, end0[0], end0[1], end0[2], end1[0], end1[1], end1[2]);
 	nmg_pl_v(fp, e->eu_p->vu_p->v_p, b, R, G, B);
 	nmg_pl_v(fp, e->eu_p->eumate_p->vu_p->v_p, b, R, G, B);
 }
@@ -660,9 +854,9 @@ unsigned char R, G, B;
 			tip[0], tip[1], tip[2]);
 
 
-	    	eu_radial(fp, eu, tip);
+	    	eu_radial(fp, eu, tip, R, G, B);
 	    	eu_next(fp, eu, tip);
-
+/*	    	eu_last(fp, eu, base); */
 	    }
 }
 
@@ -679,7 +873,8 @@ unsigned char R, G, B;
 
 	(void)nmg_tbl(b, TBL_INS, &lu->magic);
 
-	if (*lu->down.magic_p == NMG_VERTEXUSE_MAGIC) {
+	if (*lu->down.magic_p == NMG_VERTEXUSE_MAGIC &&
+	    lu->orientation != OT_BOOLPLACE) {
 		nmg_pl_v(fp, lu->down.vu_p->v_p, b, R, G, B);
 	} else if (*lu->down.magic_p == NMG_EDGEUSE_MAGIC) {
 		eu = lu->down.eu_p;
@@ -813,8 +1008,13 @@ struct model *m;
 /*	C H E C K _ R A D I A L
  *	check to see if all radial uses of an edge (within a shell) are
  *	properly oriented with respect to each other.
+ *
+ *	Return
+ *	0	OK
+ *	1	bad edgeuse mate
+ *	2	unclosed space
  */
-static void check_radial(eu)
+static int check_radial(eu)
 struct edgeuse *eu;
 {
 	char curr_orient;
@@ -848,7 +1048,8 @@ struct edgeuse *eu;
 					p[0], p[1], p[2], q[0], q[1], q[2]);
 				nmg_pr_lu(eu->up.lu_p, (char *)NULL);
 				nmg_pr_lu(eu->eumate_p->up.lu_p, (char *)NULL);
-				rt_bomb("bad edgeuse mate\n");
+				rt_log("bad edgeuse mate\n");
+				return(1);
 			}
 			eur = eur->eumate_p->radial_p;
 			NMG_CK_EDGEUSE(eur);
@@ -865,28 +1066,32 @@ struct edgeuse *eu;
 			rt_log("Radial orientation problem at edge %g %g %g -> %g %g %g\n",
 				p[0], p[1], p[2], q[0], q[1], q[2]);
 			rt_log("Problem Edgeuses: %8x, %8x\n", eu1, eur);
-			nmg_pr_fu(eu1->up.lu_p->up.fu_p, 0);
-			rt_log("Radial loop:\n");
-			nmg_pr_fu(eur->up.lu_p->up.fu_p, 0);
-			rt_bomb("unclosed space\n");
+			if (rt_g.NMG_debug) {
+				nmg_pr_fu(eu1->up.lu_p->up.fu_p, 0);
+				rt_log("Radial loop:\n");
+				nmg_pr_fu(eur->up.lu_p->up.fu_p, 0);
+			}
+			rt_log("unclosed space\n");
+			return(2);
 		}
 
 		eu1 = eur->eumate_p;
 		curr_orient = eu1->up.lu_p->up.fu_p->orientation;
 		eur = eu1->radial_p;
 	} while (eur != eu->radial_p);
-
+	return(0);
 }
 
 /* 	N M G _ C K _ C L O S E D _ S U R F
  *	Verify that we have a closed object in shell s1
  */
-void nmg_ck_closed_surf(s)
+int nmg_ck_closed_surf(s)
 struct shell *s;
 {
 	struct faceuse *fu;
 	struct loopuse *lu;
 	struct edgeuse *eu;
+	int status;
 
 	fu = s->fu_p;
 	lu = fu->lu_p;
@@ -896,7 +1101,8 @@ struct shell *s;
 			eu = lu->down.eu_p;
 			do {
 
-				check_radial(eu);
+				if (status=check_radial(eu))
+					return(status);
 
 				eu = eu->next;
 			} while (eu != lu->down.eu_p);
@@ -906,6 +1112,7 @@ struct shell *s;
 		}
 		lu = lu->next;
 	} while (lu != fu->lu_p);
+	return(0);
 }
 
 /*	P O L Y T O N M G
@@ -949,10 +1156,11 @@ struct nmgregion *r;
 	/* get number of points & number of facets in file */
 	if (fscanf(fd, "%d %d", &num_pts, &num_facets) != 2)
 		rt_bomb("Error in first line of poly file\n");
-#ifdef DEBUG_POLYTO
 	else
-		rt_log("points: %d  facets: %d\n", num_pts, num_facets);
-#endif	
+		if (rt_g.NMG_debug & DEBUG_POLYTO)
+			rt_log("points: %d  facets: %d\n",
+				num_pts, num_facets);
+
 
 	v = (struct vertex **) rt_calloc(num_pts, sizeof (struct vertex *),
 			"vertices");
@@ -967,11 +1175,11 @@ struct nmgregion *r;
 	for (i=0 ; i < num_pts ; ++i) {
 		if (fscanf(fd, "%lg %lg %lg", &p[0], &p[1], &p[2]) != 3)
 			rt_bomb("Error reading point");
-#ifdef DEBUG_POLYTO
 		else
-			rt_log("read vertex #%d (%g %g %g)\n",
-				i, p[0], p[1], p[2]);
-#endif	
+			if (rt_g.NMG_debug & DEBUG_POLYTO)
+				rt_log("read vertex #%d (%g %g %g)\n",
+					i, p[0], p[1], p[2]);
+
 		nmg_vertex_gv(v[i], p);
 	}
 
@@ -981,9 +1189,11 @@ struct nmgregion *r;
 	for (facet = 0 ; facet < num_facets ; ++facet) {
 		if (fscanf(fd, "%d", &pts_this_face) != 1)
 			rt_bomb("error getting pt count for this face");
-#ifdef DEBUG_POLYTO
-		rt_log("facet %d pts in face %d\n", facet, pts_this_face);
-#endif
+
+		if (rt_g.NMG_debug & DEBUG_POLYTO)
+			rt_log("facet %d pts in face %d\n",
+				facet, pts_this_face);
+
 		if (pts_this_face > vl_len) {
 			while (vl_len < pts_this_face) vl_len *= 2;
 			rt_realloc(vl, vl_len*sizeof(struct vertex *),
