@@ -144,10 +144,26 @@ register struct application *ap;
 		}
 	}
 
-	inv_dir[X] = inv_dir[Y] = inv_dir[Z] = INFINITY;
-	if(!NEAR_ZERO(ap->a_ray.r_dir[X])) inv_dir[X]=1.0/ap->a_ray.r_dir[X];
-	if(!NEAR_ZERO(ap->a_ray.r_dir[Y])) inv_dir[Y]=1.0/ap->a_ray.r_dir[Y];
-	if(!NEAR_ZERO(ap->a_ray.r_dir[Z])) inv_dir[Z]=1.0/ap->a_ray.r_dir[Z];
+	/* Compute the inverse of the direction cosines */
+#define ZERO_COS	1.0e-10
+	if(ap->a_ray.r_dir[X] > ZERO_COS || ap->a_ray.r_dir[X] < -ZERO_COS) {
+		inv_dir[X]=1.0/ap->a_ray.r_dir[X];
+	} else {
+		inv_dir[X] = INFINITY;
+		ap->a_ray.r_dir[X] = 0.0;
+	}
+	if(ap->a_ray.r_dir[Y] > ZERO_COS || ap->a_ray.r_dir[Y] < -ZERO_COS) {
+		inv_dir[Y]=1.0/ap->a_ray.r_dir[Y];
+	} else {
+		inv_dir[Y] = INFINITY;
+		ap->a_ray.r_dir[Y] = 0.0;
+	}
+	if(ap->a_ray.r_dir[Z] > ZERO_COS || ap->a_ray.r_dir[Z] < -ZERO_COS) {
+		inv_dir[Z]=1.0/ap->a_ray.r_dir[Z];
+	} else {
+		inv_dir[Z] = INFINITY;
+		ap->a_ray.r_dir[Z] = 0.0;
+	}
 
 	/*
 	 *  If ray does not enter the model RPP, skip on.
@@ -248,7 +264,7 @@ register struct application *ap;
 			     /*  stp->st_id != ID_ARB8 && */
 			   ( !in_rpp( &ap->a_ray, inv_dir,
 			      stp->st_min, stp->st_max ) ||
-			      ap->a_ray.r_max <= 0.0 )
+			      ap->a_ray.r_max < -EPSILON )
 			)  {
 				nmiss_solid++;
 				continue;	/* MISS */
@@ -464,7 +480,7 @@ register fastf_t *max;
 	rp->r_max = INFINITY;
 
 	/* X axis */
-	if( rp->r_dir[X] < -EPSILON )  {
+	if( rp->r_dir[X] < 0.0 )  {
 		/* Heading towards smaller numbers */
 		/* if( *min > *pt )  miss */
 		if( (sv = (*min - *pt) * *invdir) < 0.0 )
@@ -473,7 +489,7 @@ register fastf_t *max;
 			rp->r_max = sv;
 		if( rp->r_min < (st = (*max - *pt) * *invdir) )
 			rp->r_min = st;
-	}  else if( rp->r_dir[X] > EPSILON )  {
+	}  else if( rp->r_dir[X] > 0.0 )  {
 		/* Heading towards larger numbers */
 		/* if( *max < *pt )  miss */
 		if( (st = (*max - *pt) * *invdir) < 0.0 )
@@ -489,19 +505,19 @@ register fastf_t *max;
 		 *  so merely check position against the boundaries.
 		 */
 		if( (*min > *pt) || (*max < *pt) )
-			return(0);	/* MISS */;
+			return(0);	/* MISS */
 	}
 
 	/* Y axis */
 	pt++; invdir++; max++; min++;
-	if( rp->r_dir[Y] < -EPSILON )  {
+	if( rp->r_dir[Y] < 0.0 )  {
 		if( (sv = (*min - *pt) * *invdir) < 0.0 )
 			return(0);	/* MISS */
 		if(rp->r_max > sv)
 			rp->r_max = sv;
 		if( rp->r_min < (st = (*max - *pt) * *invdir) )
 			rp->r_min = st;
-	}  else if( rp->r_dir[Y] > EPSILON )  {
+	}  else if( rp->r_dir[Y] > 0.0 )  {
 		if( (st = (*max - *pt) * *invdir) < 0.0 )
 			return(0);	/* MISS */
 		if(rp->r_max > st)
@@ -510,19 +526,19 @@ register fastf_t *max;
 			rp->r_min = sv;
 	}  else  {
 		if( (*min > *pt) || (*max < *pt) )
-			return(0);	/* MISS */;
+			return(0);	/* MISS */
 	}
 
 	/* Z axis */
 	pt++; invdir++; max++; min++;
-	if( rp->r_dir[Z] < -EPSILON )  {
+	if( rp->r_dir[Z] < 0.0 )  {
 		if( (sv = (*min - *pt) * *invdir) < 0.0 )
 			return(0);	/* MISS */
 		if(rp->r_max > sv)
 			rp->r_max = sv;
 		if( rp->r_min < (st = (*max - *pt) * *invdir) )
 			rp->r_min = st;
-	}  else if( rp->r_dir[Z] > EPSILON )  {
+	}  else if( rp->r_dir[Z] > 0.0 )  {
 		if( (st = (*max - *pt) * *invdir) < 0.0 )
 			return(0);	/* MISS */
 		if(rp->r_max > st)
@@ -531,7 +547,7 @@ register fastf_t *max;
 			rp->r_min = sv;
 	}  else  {
 		if( (*min > *pt) || (*max < *pt) )
-			return(0);	/* MISS */;
+			return(0);	/* MISS */
 	}
 
 	/* If equal, RPP is actually a plane */
