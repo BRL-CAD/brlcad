@@ -1709,7 +1709,7 @@ int index;
 
 	if( *start == '{' )
 	{
-		if( *end != '}' )
+		if( !end || *end != '}' )
 		{
 			bu_log( "Error in list (uneven braces??): %s\n", in );
 			return( (char *)NULL );
