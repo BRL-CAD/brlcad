@@ -91,7 +91,8 @@ body Mged::constructor {file {type X} args} {
     set db [Database #auto $file]
     set dg [$db Drawable::get_name]
     addall $dg
-    eval itk_initialize $args
+
+    catch {eval itk_initialize $args}
 }
 
 body Mged::destructor {} {
