@@ -5,7 +5,7 @@ Installing the BRL-CAD Package
 .br
 Release 3.0
 .sp
-22-Sept-1988
+04-Oct-1988
 .AU
 Michael John Muuss
 .AI
@@ -1399,6 +1399,18 @@ and then recompiling.
 .NH 1
 KNOWN PROBLEMS
 .NH 2
+CAKE Warning Messages
+.PP
+Occasionally, CAKE will print the message
+.sp .5
+.ft B
+.nf
+NOTE:  Null action skipped
+.fi
+.ft R
+.sp .5
+This warning message is not harmful, and may safely be ignored.
+.NH 2
 C to FORTRAN Linkage
 .PP
 The Whetstone benchmark is written in FORTRAN, with a subroutine
@@ -1449,6 +1461,17 @@ uopt: Warning: main: parts of procedure have no exit point
 .sp .5
 represent an error on SGI's part, and should be ignored.
 .PP
+On an SGI 3-D, warning messages from the compiler of the form:
+.sp .5
+.nf
+.ft B
+"../h/rle.h", line 88: warning: field 'opcode' - bitfields are inherently unsigned.
+"../h/rle.h", line 88: warning: field 'datum' - bitfields are inherently unsigned.
+.ft R
+.fi
+.sp .5
+may safely be ignored.
+.PP
 Currently there are no good solutions to these problems.  Voice your
 opinions to the vendor.
 .PP
@@ -1468,9 +1491,98 @@ gclear::4:5::/tmp:/usr/bin/gclear
 .NH 2
 CRAY WARNINGS
 .PP
-The \fBrfbd\fR program will no longer compile on Cray UNICOS.
+Under C 3.0, which is /bin/cc on XMP UNICOS 3.0 and on Cray-2
+UNICOS 4.0, the \fBlgt\fR program will not compile due to
+a compiler bug:
+.sp .5
+.ft B
+.nf
+ * F * :../lgt/hmenu.c: 207: CC058 - Invalid Initialization
+.fi
+.ft R
+Also, \fBpl-fb\fR will not compile:
+.sp .5
+.ft B
+.nf
+ * F * :../util/pl-fb.c: 724: CC001 - Internal Compiler Error  67 .
+	Debug: icons: Constant Expected
+.fi
+.ft R
+Get your site analyst to request the necessary compiler fixes,
+or get C 4.0.
+.PP
+The \fBrfbd\fR program will no longer compile on Cray UNICOS,
+either the XMP or on the Cray-2.
 For now, this is not much of a problem, because most Crays
 do not have direct attached framebuffers.
+Ignore these error messags:
+.sp .5
+.ft B
+.nf
+ * W * :../rfbd/rfbd.c: 31: CP007 - Cannot Find 'Include' File syslog.h
+ * W * :../librle/scanargs.c: 246: CC121 - Unused Expression Ignored
+.fi
+.ft R
+.PP
+Programs which link with \fBlibfb\fR will get these error messages,
+which should be ignored:
+.sp .5
+.ft B
+.nf
+ *CAUTION* DUPLICATE ENTRY- dup2 DISCOVERED IN MODULE-$dup2 FROM FILE-/lib/libc.o;IGNORED
+     ENTRY WAS PREVIOUSLY FOUND IN MODULE-dup2$c FROM FILE-../libfb/libfb.o
+ *CAUTION* DUPLICATE ENTRY- mkdir DISCOVERED IN MODULE-$mkdir FROM FILE-/lib/libc.o;IGNORED
+     ENTRY WAS PREVIOUSLY FOUND IN MODULE-mkdir$c FROM FILE-../libfb/libfb.o
+ *CAUTION* DUPLICATE ENTRY- rmdir DISCOVERED IN MODULE-$rmdir FROM FILE-/lib/libc.o;IGNORED
+     ENTRY WAS PREVIOUSLY FOUND IN MODULE-rmdir$c FROM FILE-../libfb/libfb.o
+.fi
+.ft R
+.PP
+In \fBrt\fR, ignore these errors from the multi-tasking library:
+.sp .5
+.nf
+ *CAUTION* DUPLICATE ENTRY- mkdir DISCOVERED IN MODULE-$mkdir FROM FILE-/lib/multi/libc.o;IGNORED
+     ENTRY WAS PREVIOUSLY FOUND IN MODULE-mkdir$c FROM FILE-../libfb/libfb.o
+ *CAUTION* DUPLICATE ENTRY- rmdir DISCOVERED IN MODULE-$rmdir FROM FILE-/lib/multi/libc.o;IGNORED
+     ENTRY WAS PREVIOUSLY FOUND IN MODULE-rmdir$c FROM FILE-../libfb/libfb.o
+ *CAUTION* REFERENCE TO EXTERNAL-TSKSTART IN MODULE-TSKSTART
+ FROM MODULE-$TSKENTR IS NOT COMPATIBLE WITH ITS DEFINITION
+  --- DEFINITION IS PARCEL -- REFERENCE IS WORD
+.fi
+.ft R
+.PP
+In \fBremrt\fR, ignore the error messages:
+.sp .5
+.ft B
+.nf
+second definition of rt@bomb in error$c
+second definition of rt@log in error$c
+.fi
+.ft R
+.PP
+In the \fButil\fR directory, ignore these error messages:
+.sp .5
+.ft B
+.nf
+second definition of bzero in bstring$c
+second definition of bcopy in bstring$c
+.fi
+.ft R
+Similar messages in other directories can also safely be ingored.
+.PP
+It is safe to ignore the self-lauditory messages of the form:
+.sp .5
+.ft B
+.nf
+* Loop Vectorized at 181 in foo$c
+.fi
+.ft R
+.PP
+Various remarks from CFT77 regarding the Whetstone tests
+can also be ingored.
+.PP
+Please join with BRL in urging Cray to stomp out SEGLDR,
+and thereby eliminate all these foolish error messages.
 .NH 1
 ENHANCEMENTS
 .PP
