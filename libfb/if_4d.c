@@ -538,10 +538,10 @@ int		npix;
 						    sizeof(struct sgi_pixel)] );
 				else
 					fake_rectwrite(
-						SGI(ifp)->mi_xoff+xbase,
-						SGI(ifp)->mi_yoff+y,
-						SGI(ifp)->mi_xoff+xbase+npix-1,
-						SGI(ifp)->mi_yoff+y,
+						xbase,
+						y,
+						xbase+npix-1,
+						y,
 						&ifp->if_mem[(y*SGI(ifp)->mi_memwidth+xbase)*
 						    sizeof(struct sgi_pixel)] );
 				return;
@@ -557,10 +557,10 @@ int		npix;
 						    sizeof(struct sgi_pixel)] );
 				else
 					fake_rectwrite(
-						SGI(ifp)->mi_xoff+0,
-						SGI(ifp)->mi_yoff+y,
-						SGI(ifp)->mi_xoff+0+ifp->if_width-1,
-						SGI(ifp)->mi_yoff+y+nlines-1,
+						0,
+						y,
+						0+ifp->if_width-1,
+						y+nlines-1,
 						&ifp->if_mem[(y*SGI(ifp)->mi_memwidth)*
 						    sizeof(struct sgi_pixel)] );
 				return;
@@ -583,10 +583,10 @@ int		npix;
 					    sizeof(struct sgi_pixel)] );
 			else
 				fake_rectwrite(
-					SGI(ifp)->mi_xoff+xbase,
-					SGI(ifp)->mi_yoff+y,
-					SGI(ifp)->mi_xoff+xbase+npix-1,
-					SGI(ifp)->mi_yoff+y,
+					xbase,
+					y,
+					xbase+npix-1,
+					y,
 					&ifp->if_mem[(y*SGI(ifp)->mi_memwidth+xbase)*
 					    sizeof(struct sgi_pixel)] );
 			xbase = 0;
@@ -620,10 +620,10 @@ int		npix;
 					op );
 			else
 				fake_rectwrite(
-					SGI(ifp)->mi_xoff+0,
-					SGI(ifp)->mi_yoff+y,
-					SGI(ifp)->mi_xoff+0+ifp->if_width-1,
-					SGI(ifp)->mi_yoff+y,
+					0,
+					y,
+					0+ifp->if_width-1,
+					y,
 					op );
 		}
 		return;
@@ -715,8 +715,10 @@ int		npix;
 						SGI(ifp)->mi_scanline );
 				else
 					fake_rectwrite(
-						xscrmin, yscr,
-						xscrmax, yscr,
+						xscrmin - SGI(ifp)->mi_xoff,
+						yscr - SGI(ifp)->mi_yoff,
+						xscrmax - SGI(ifp)->mi_xoff,
+						yscr - SGI(ifp)->mi_yoff,
 						SGI(ifp)->mi_scanline );
 				yscr++;
 			}
@@ -2134,24 +2136,29 @@ int	y;
  * shared libraries and have the same executables across the
  * 4D series of workstations, if the system does not contain
  * the GT hardware upgrade then this fake routine is used.
- * This routine will eventually go away as
- * IRIX 3.2 will implement lrectwrite the same as below.
+ *
+ * Note that the real lrectwrite() subroutine operates in the pixel
+ * coordinates of the WINDOW, not the current viewport.
+ * To simplify things, this fake_rectwrite() subroutine operates in
+ * the coordinates of the VIEWPORT, because cmov2i() and writeRGB() do.
+ * Having the callers convert to window, and then to convert back in here,
+ * is more inefficient than is necessary.  However, this required the
+ * calling sequences to be somewhat altered -vs- the lrectwrite() replaced.
  */
-
-static unsigned char Red_pixels[1280];
-static unsigned char Green_pixels[1280];
-static unsigned char Blue_pixels[1280];
-
 fake_rectwrite( x1, y1, x2, y2, pixels)
 short	x1, y1;
 short	x2, y2;
 register struct sgi_pixel * pixels;
 {
 	register struct sgi_pixel * p;
-	short n, scan, i;
+	register short	n;
+	register short	scan;
+	register short	i;
+	static unsigned char Red_pixels[1280];
+	static unsigned char Green_pixels[1280];
+	static unsigned char Blue_pixels[1280];
 
 	p = pixels;
- 
 	n = x2  - x1 + 1;
 	for( scan = y1; scan <= y2; scan++)  {
 		for ( i = 0; i < n; i++)  {
