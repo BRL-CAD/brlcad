@@ -8,6 +8,9 @@ proc garbage_collect {} {
 
 	# get the name of the current database
 	set cur_file [opendb]
+        set cur_dir [file dirname $cur_file]
+        set cur_tail [file tail $cur_file]
+        set old_size [file size $cur_file]
 
 	# save the current setting of autosize
 	set save_autosize $autosize
@@ -26,7 +29,7 @@ proc garbage_collect {} {
 	set save_title [string range $tmp_title 0 [expr [string length $tmp_title] - 2]]
 
 	# create a temporary file
-	set tmp_file /usr/tmp/[pid]_$cur_file
+	set tmp_file /usr/tmp/[pid]_$cur_tail
 	exec /bin/rm -f $tmp_file
 
 	# massage list of top level objects to eliminate suffixes ("/" and "/R")
@@ -49,7 +52,10 @@ proc garbage_collect {} {
 	# make sure the new copy is correct (first make sure we have the same number
 	# of top level ovjects
 	puts "verifying $tmp_file"
-	catch {[exec /m/cad/.mged.6d/mged -c $tmp_file tops]} new_tops
+	catch {[exec mged -c $tmp_file tops]} new_tops
+	if { [regexp "\(NOTICE:.*is BRL-CAD v5 format.\)\(.*\)" $new_tops matchvar notice real_tops] } {
+	    set new_tops $real_tops
+	}
 	set new_list_len [llength $new_tops]
 	if { $new_list_len != $old_list_len } {
 		puts "$tmp_file is corrupt, garbage collection aborted!!!!!"
@@ -58,7 +64,6 @@ proc garbage_collect {} {
 		exec /bin/rm -f $tmp_file
 		return
 	}
-
 	# now compare the name of each top level object
 	for { set index 0 } { $index < $new_list_len } { incr index } {
 		if { [string compare [lindex $new_tops $index] [lindex $top_list $index] ] } {
@@ -93,4 +98,15 @@ proc garbage_collect {} {
 
 	# restore the autosize setting
 	set autosize $save_autosize
+
+	set new_size [file size $cur_file]
+
+	if { $new_size < $old_size } {
+	    puts "Database was $old_size bytes, is now $new_size bytes (saved [expr $old_size - $new_size] bytes) "
+	} elseif { $new_size == $old_size } {
+	    puts "Database size did not change ($old_size bytes)"
+	} else {
+	    puts "Database got bigger!!! this should not happen"
+	    puts "was $old_size bytes, is now $new_size bytes (difference is [expr $new_size - $old_size] bytes)"
+	}
 }
