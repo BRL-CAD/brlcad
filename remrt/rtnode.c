@@ -162,6 +162,27 @@ char	*framebuffer_name;
 char srv_usage[] = "Usage: rtnode [-d] control-host tcp-port [cmd]\n";
 
 /*
+ *			C M D _ G E T _ P T R
+ *
+ *  Returns an appropriately-formatted string that can later be reinterpreted
+ *  (using atol() and a cast) as a a pointer.
+ */
+
+int
+cmd_get_ptr(clientData, interp, argc, argv)
+ClientData	clientData;
+Tcl_Interp     *interp;
+int		argc;
+char	      **argv;
+{
+	char buf[128];
+
+	sprintf( buf, "%ld", (long)(*((void **)clientData)) );
+	Tcl_AppendResult( interp, buf, (char *)NULL );
+	return TCL_OK;
+}
+
+/*
  *			M A I N
  */
 int
@@ -562,20 +583,15 @@ char *buf;
 	    rtip->rti_dbip->dbi_title, strlen(rtip->rti_dbip->dbi_title)+1, pcsrv ) < 0 )
 		fprintf(stderr,"RTSYNCMSG_DIRBUILD reply error\n");
 
-
-	/* Can't use Tcl_LinkVar, it doesn't have a (void*) or (long) type */
-	{
-		char	str[64];
-		sprintf(str, "%ld", (long)ap.a_rt_i->rti_dbip );
-		Tcl_SetVar(interp, "dbip", str, TCL_GLOBAL_ONLY);
-		sprintf(str, "%ld", (long)ap.a_rt_i );
-		Tcl_SetVar(interp, "rtip", str, TCL_GLOBAL_ONLY);
-	}
+	(void)Tcl_CreateCommand(interp, "get_dbip", cmd_get_ptr,
+		(ClientData)&ap.a_rt_i->rti_dbip, (Tcl_CmdDeleteProc *)NULL);
+	(void)Tcl_CreateCommand(interp, "get_rtip", cmd_get_ptr,
+		(ClientData)&ap.a_rt_i, (Tcl_CmdDeleteProc *)NULL);
 
 	{
 		struct bu_vls	cmd;
 		bu_vls_init(&cmd);
-		bu_vls_strcpy(&cmd, "set wdbp [wdb_open .inmem inmem $dbip]");
+		bu_vls_strcpy(&cmd, "wdb_open .inmem inmem [get_dbip]]");
 		/* Tcl interpreter will write nulls into cmd string */
 		if( Tcl_Eval(interp, bu_vls_addr(&cmd) ) != TCL_OK )  {
 			bu_log("%s\n%s\n",
