@@ -40,7 +40,7 @@ to put the acsii converted database."}} OK Cancel]
 		}
 	    }
 
-	    catch {exec g2asc < $db_name > $ascii_filename} msg
+	    catch {exec g2asc $db_name $ascii_filename} msg
 	}
     } else {
 	if { $ret == 0 } {
