@@ -850,7 +850,6 @@ STATIC void prnt_Usage()
 STATIC void log_Run()
 {
     long                clock;
-    struct tm           *tempus;
     static char         *mon_nam[] =
                         { "Jan", "Feb", "Mar", "Apr", "May", "Jun",
                           "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
@@ -864,7 +863,6 @@ STATIC void log_Run()
 
     /* Current date and time get printed in header comment */
     (void) time(&clock);
-    tempus = localtime(&clock);
 
     (void) printf("# Log information produced by cell-fb %s\n",
 	ctime((CONST long *)&clock) );
