@@ -176,6 +176,7 @@ char **argv;
 
 
 	/* Need to set rtg_parallel non_zero here for RES_INIT to work */
+	npsw = MAX_PSW;
 	if( npsw > 1 )  {
 		rt_g.rtg_parallel = 1;
 	} else
