@@ -1,5 +1,5 @@
 /*
-  *			fb/Cakefile
+ *			canon/Cakefile
  */
 
 #define SRCDIR	canon
@@ -29,12 +29,12 @@
 /* Explicit composition of each product */
 
 canonize : canonize.o canonlib.o asize.o
-	cc -O2 -o canonize canonize.o canonlib.o asize.o DSLIB
+	cc -O2 -o canonize canonize.o canonlib.o asize.o DSLIB LIBES
 
 pix-ipu : pix-ipu.o canonlib.o asize.o
-	cc -O2 -o pix-ipu pix-ipu.o canonlib.o asize.o DSLIB
+	cc -O2 -o pix-ipu pix-ipu.o canonlib.o asize.o DSLIB LIBES
 
 ipustat : ipustat.o canonlib.o
-	cc -O2 -o ipustat ipustat.o canonlib.o DSLIB
+	cc -O2 -o ipustat ipustat.o canonlib.o DSLIB LIBES
 
 #include "../Cakefile.rules"
