@@ -18,7 +18,7 @@ PTCLIBS_DLL = $(PTLIB_DLL) $(PDLIB_DLL)
 BRLLIBS     = $(BU) $(BN) $(TCL)
 SYSLIBS     = -lc -lm -lw
 
-AM_LDFLAGS = $(BRLLIBS) $(SYSLIBS)
+#AM_LDFLAGS = $(BRLLIBS) $(SYSLIBS)
 AM_CPPFLAGS = \
 	-DPRO_MACHINE=23 -DPRO_OS=3 \
 	-I$(PROTOOL_SRC)/protk_appls/includes \
