@@ -296,7 +296,7 @@ int a;
 		f = VDOT( arbp->arb_N, P_A );
 		if( ! NEAR_ZERO(f,0.005) )  {
 			/* Non-planar face */
-			rt_log("arb(%s): face %s non-planar, dot=%f\n",
+			rt_log("arb(%s): face %s non-planar, dot=%g\n",
 				stp->st_name, arb_code, f );
 #ifdef CONSERVATIVE
 			arb_npts--;
@@ -326,10 +326,10 @@ register struct soltab *stp;
 		VPRINT( "A", arbp->arb_A );
 		VPRINT( "Xbasis", arbp->arb_Xbasis );
 		VPRINT( "Ybasis", arbp->arb_Ybasis );
-		rt_log("XX fact =%f, YY fact = %f\n",
+		rt_log("XXlen = %g, YYlen = %g\n",
 			arbp->arb_XXlen, arbp->arb_YYlen);
 		VPRINT( "Normal", arbp->arb_N );
-		rt_log( "N.A = %f\n", arbp->arb_NdotA );
+		rt_log( "N.A = %g\n", arbp->arb_NdotA );
 	} while( arbp = arbp->arb_forw );
 }
 
@@ -389,7 +389,7 @@ struct application	*ap;
 				return( SEG_NULL );	/* MISS */
 		}
 		if( rt_g.debug & DEBUG_ARB8 )
-			rt_log("arb: in=%f, out=%f\n", in, out);
+			rt_log("arb: in=%g, out=%g\n", in, out);
 		if( in > out )
 			return( SEG_NULL );	/* MISS */
 	}
@@ -478,7 +478,7 @@ register struct uvcoord *uvp;
 	uvp->uv_v = 1.0 - ( VDOT( P_A, arbp->arb_Ybasis ) * arbp->arb_YYlen );
 	if( uvp->uv_u < 0 || uvp->uv_v < 0 )  {
 		if( rt_g.debug )
-			rt_log("arb_uv: bad uv=%f,%f\n", uvp->uv_u, uvp->uv_v);
+			rt_log("arb_uv: bad uv=%g,%g\n", uvp->uv_u, uvp->uv_v);
 		/* Fix it up */
 		if( uvp->uv_u < 0 )  uvp->uv_u = (-uvp->uv_u);
 		if( uvp->uv_v < 0 )  uvp->uv_v = (-uvp->uv_v);
