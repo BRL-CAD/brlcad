@@ -11,11 +11,13 @@
  *	that will display the appropriate image on the framebuffer.
  */
 
+#include "conf.h"
+
 #include <stdio.h>
-#ifdef BSD
-#include <strings.h>
-#else
+#ifdef USE_STRING_H
 #include <string.h>
+#else
+#include <strings.h>
 #endif
 
 /* #define DEBUG 1 /* Define to only print system commands */

@@ -21,20 +21,19 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <fcntl.h>
 
-#if defined(_POSIX_SOURCE)
-#  if !defined(_XOPEN_SOURCE)
-#	define _XOPEN_SOURCE 1	/* to get TAB3, etc */
-#  endif
+#if defined(HAVE_XOPEN)
 #  undef SYSV
 #  undef BSD
 #  include <termios.h>
 
 static struct termios	vtty;
 
-#else	/* !defined(_POSIX_SOURCE) */
+#else	/* !defined(HAVE_XOPEN) */
 
 #ifdef SYSV
 #  include <termio.h>
@@ -111,7 +110,7 @@ vas_open()
 		exit(2);
 	}
 #endif
-#ifdef _POSIX_SOURCE
+#ifdef HAVE_XOPEN
 	vtty.c_cflag = BAUD | CS8;      /* Character size = 8 bits */
 	vtty.c_cflag &= ~CSTOPB;         /* One stop bit */
 	vtty.c_cflag |= CREAD;           /* Enable the reader */
