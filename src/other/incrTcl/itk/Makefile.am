@@ -34,3 +34,5 @@ install-data-hook:
 	$(INSTALL_DATA) $(top_srcdir)/src/other/incrTcl/itk/pkgIndex.tcl $(DESTDIR)$(pkglibdir)/. 
 	$(INSTALL_DATA) $(top_srcdir)/src/other/incrTcl/itk/library/itk.tcl $(DESTDIR)$(pkglibdir)/. 
 	$(INSTALL_DATA) $(top_srcdir)/src/other/incrTcl/itk/library/tclIndex $(DESTDIR)$(pkglibdir)/.
+
+EXTRA_DIST = pkgIndex.tcl
