@@ -1,6 +1,6 @@
 /*
- *	@(#) cgarbs.c			retrieved: 8/13/86 at 07:59:54,
- *	@(#) version 1.7		last edit: 10/11/83 at 10:57:16., G S Moss.
+ *	@(#) cgarbs.c			retrieved: 8/13/86 at 08:00:06,
+ *	@(#) version 2.1		last edit: 6/1/84 at 14:04:40., G S Moss.
  *
  *	Written by Keith Applin.
  */
