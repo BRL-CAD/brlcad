@@ -34,7 +34,6 @@ static const char RCSprep[] = "@(#)$Header$ (BRL)";
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "db.h"
 #include "raytrace.h"
 #include "./debug.h"
 
