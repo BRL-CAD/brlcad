@@ -1773,7 +1773,11 @@ int	exitcode;
 	}
 
 	/* Be certain to close the database cleanly before exiting */
+#if 0
 	Tcl_Eval(interp, "db close; .inmem close");
+#else
+	Tcl_Eval(interp, "rename db \"\"; rename .inmem \"\"");
+#endif
 
 #if 0
 	if (wdbp)
@@ -2160,7 +2164,11 @@ f_opendb(
 		cmd_zap(clientData, interp, 1, av);
 
 		/* Close the Tcl database objects */
+#if 0
 		Tcl_Eval(interp, "db close; .inmem close");
+#else
+		Tcl_Eval(interp, "rename db \"\"; rename .inmem \"\"");
+#endif
 
 		dbip = new_dbip;
 		rt_material_head = new_materp;
