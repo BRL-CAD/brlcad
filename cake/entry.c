@@ -539,7 +539,7 @@ reg	List	*middle_act;
 		strcat(buf, s);
 
 	/* check for overflow */
-	if (strlen(buf) > MAXSCRIPT)
+	if (strlen(buf) > (unsigned)MAXSCRIPT)
 	{
 		printf("cake: script too long\n");
 		printf("%s", buf);
