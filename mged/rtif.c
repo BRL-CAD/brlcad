@@ -44,6 +44,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 void		setup_rt();
 
+static int	tree_walk_needed;
+
 /*
  *			P R _ W A I T _ S T A T U S
  *
@@ -173,6 +175,7 @@ mat_t	mat;
  */
 #define LEN	2000
 static char	*rt_cmd_vec[LEN];
+static int	rt_cmd_vec_len;
 
 void
 setup_rt( vp )
@@ -206,6 +209,7 @@ register char	**vp;
 		}
 	}
 	*vp = (char *)0;
+	rt_cmd_vec_len = vp - rt_cmd_vec;
 
 	/* Print out the command we are about to run */
 	vp = &rt_cmd_vec[0];
@@ -805,6 +809,11 @@ char	**argv;
 		perror(argv[1]);
 		return;
 	}
+
+	/* Build list of top-level objects in view, in rt_cmd_vec[] */
+	rt_cmd_vec[0] = "tree";
+	setup_rt( &rt_cmd_vec[1] );
+
 	printf("eyepoint at (0,0,1) viewspace\n");
 
 	/* If user hits ^C, this will stop, but will leave hanging filedes */
@@ -1048,6 +1057,10 @@ char	**argv;
 	return(0);
 }
 
+/*
+ *			C M _ E N D
+ */
+int
 cm_end(argc, argv)
 char	**argv;
 int	argc;
@@ -1098,6 +1111,11 @@ int	argc;
 		-new_cent[Z] );
 	new_mats();
 
+	/* If new treewalk is needed, get new objects into view. */
+	if( tree_walk_needed )  {
+		f_edit( rt_cmd_vec_len, rt_cmd_vec );
+	}
+
 	dmaflag = 1;
 	refresh();	/* Draw new display */
 	dmaflag = 1;
@@ -1110,6 +1128,13 @@ int	argc;
 {
 	return(-1);
 }
+
+/*
+ *			C M _ A N I M
+ *
+ *  Parse any "anim" commands, and lodge their info in the directory structs.
+ */
+int
 cm_anim(argc, argv)
 int	argc;
 char	**argv;
@@ -1119,20 +1144,49 @@ char	**argv;
 		rt_log("cm_anim:  %s %s failed\n", argv[1], argv[2]);
 		return(-1);		/* BAD */
 	}
+
+	tree_walk_needed = 1;
+
 	return(0);
 }
+
+/*
+ *			C M _ T R E E
+ *
+ *  Replace list of top-level objects in rt_cmd_vec[].
+ */
+int
 cm_tree(argc, argv)
 char	**argv;
 int	argc;
 {
-	return(-1);
+	register int	i = 1;
+
+	for( i = 1;  i < argc && i < LEN; i++ )  {
+		rt_cmd_vec[i] = argv[i];
+	}
+	rt_cmd_vec[i] = (char *)0;
+	rt_cmd_vec_len = i;
+
+	tree_walk_needed = 1;
+
+	return(0);
 }
+
+/*
+ *			C M _ C L E A N
+ *
+ *  Clear current view.
+ */
 cm_clean(argc, argv)
 char	**argv;
 int	argc;
 {
-	return(-1);
+	f_zap( 0, (char *)0 );
+	tree_walk_needed = 1;
+	return 0;
 }
+
 cm_set(argc, argv)
 char	**argv;
 int	argc;
