@@ -3448,6 +3448,7 @@ colinear:
 		)  {
 			struct vertexuse	*vu1a, *vu1b;
 			struct vertexuse	*vu1_midpt;
+			struct edgeuse		*new_eu;
 			fastf_t			ldist;
 			point_t			eu1_pt2d;	/* 2D */
 			point_t			eu1_end2d;	/* 2D */
@@ -3526,7 +3527,9 @@ hit_b:
 					if( hit_v == vu1a->v_p || hit_v == vu1b->v_p )
 						rt_bomb("About to make 0-length edge!\n");
 				}
-				vu1_midpt = nmg_ebreak(hit_v, *eu1)->vu_p;
+				new_eu = nmg_ebreak(hit_v, *eu1);
+				nmg_tbl( &eu_list, TBL_INS_UNIQUE, &new_eu->l.magic );
+				vu1_midpt = new_eu->vu_p;
 				if( !hit_v )  {
 					hit_v = vu1_midpt->v_p;
 					nmg_vertex_gv( hit_v, hit3d );
@@ -3558,6 +3561,8 @@ hit_b:
 		nmg_isect_line2_vertex2( is, vu1, fu1 );
 		/* Only potential result is a use of vu1 added to the other face */
 	}
+	nmg_tbl( &eu_list, TBL_FREE, (long *)0 );
+	nmg_tbl( &eg_list, TBL_FREE, (long *)0 );
 }
 
 /*
