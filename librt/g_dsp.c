@@ -197,7 +197,6 @@ struct isect_stuff {
     struct bbox_isect	minbox;
 
     int			num_segs;
-
     int			dmin, dmax;	/* for dsp_in_rpp , {X,Y,Z}MIN/MAX */
 };
 
@@ -1269,7 +1268,11 @@ add_seg(struct isect_stuff *isect,
     if (RT_G_DEBUG & DEBUG_HF)
 	plot_seg(isect, in_hit, out_hit, bbmin, bbmax, r, g, b);
 
-    return (++isect->num_segs > isect->ap->a_onehit);
+
+    if (seg->seg_in.hit_dist > 0.0 || seg->seg_out.hit_dist > 0.0) {
+	return (++isect->num_segs > isect->ap->a_onehit);
+    }
+    return 0;
 }
 
 
@@ -2559,6 +2562,8 @@ rt_dsp_shot( stp, rp, ap, seghead )
     isect.stp = stp;
     isect.dsp = (struct dsp_specific *)stp->st_specific;
     isect.tol = &ap->a_rt_i->rti_tol;
+    isect.num_segs = 0;
+
     VINVDIR(isect.inv_dir, isect.r.r_dir);
     BU_LIST_INIT(&isect.seglist);
 
