@@ -3036,45 +3036,44 @@ rt_dsp_uv( ap, stp, hitp, uvp )
      * To compute this, transform unit vectors from solid space to model
      * space.  We remember the length of the resultant vectors and then
      * unitize them to get u,v directions in model coordinate space.
-     * 
-     * XXX There is a bug in this code, which shows up in odd diagonals
-     * when raytracing straight down on a DSP
      */
-    VSET( tmp, XSIZ(dsp), 0.0, 0.0 )
-	MAT4X3VEC( U_dir,  dsp->dsp_i.dsp_stom, tmp )
-	U_len = MAGNITUDE( U_dir );
+    VSET( tmp, XSIZ(dsp), 0.0, 0.0 );	/* X direction vector */
+    MAT4X3VEC( U_dir,  dsp->dsp_i.dsp_stom, tmp ); /* into model space */
+    U_len = MAGNITUDE( U_dir );		/* remember model space length */
     one_over_len = 1.0/U_len;
-    VSCALE( U_dir, U_dir, one_over_len )
+    VSCALE( U_dir, U_dir, one_over_len ); /* scale to unit length in model space */
 
-	VSET( tmp, 0.0, YSIZ(dsp), 0.0 )
-	MAT4X3VEC( V_dir,  dsp->dsp_i.dsp_stom, tmp )
-	V_len = MAGNITUDE( V_dir );
+    VSET( tmp, 0.0, YSIZ(dsp), 0.0 );	/* Y direction vector */
+    MAT4X3VEC( V_dir,  dsp->dsp_i.dsp_stom, tmp );
+    V_len = MAGNITUDE( V_dir );
     one_over_len = 1.0/V_len;
-    VSCALE( V_dir, V_dir, one_over_len )
+    VSCALE( V_dir, V_dir, one_over_len ); /* scale to unit length in model space */
 
-	/* divide the hit-point radius by the U/V unit length distance */
-	r = ap->a_rbeam + ap->a_diverge * hitp->hit_dist;
+    /* divide the hit-point radius by the U/V unit length distance */
+    r = ap->a_rbeam + ap->a_diverge * hitp->hit_dist;
     min_r_U = r / U_len;
     min_r_V = r / V_len;
 
     /* compute UV_dir, a vector in the plane of the hit point (surface)
      * which points in the anti-rayward direction
      */
-    VREVERSE( rev_dir, ap->a_ray.r_dir )
-	VMOVE( norm, hitp->hit_normal )
-	dot_N = VDOT( rev_dir, norm );
-    VJOIN1( UV_dir, rev_dir, -dot_N, norm )
-	VUNITIZE( UV_dir )
+    VREVERSE( rev_dir, ap->a_ray.r_dir );
+    VMOVE( norm, hitp->hit_normal );
+    dot_N = VDOT( rev_dir, norm );
+    VJOIN1( UV_dir, rev_dir, -dot_N, norm );
+    VUNITIZE( UV_dir );
 
-	if (NEAR_ZERO( dot_N, SMALL_FASTF ) ) {
-	    /* ray almost perfectly 90 degrees to surface */
-	    uvp->uv_du = 0.5;
-	    uvp->uv_dv = 0.5;
-	} else {
-	    /* somehow this computes the extent of U and V in the radius */
-	    uvp->uv_du = (r / U_len) * VDOT( UV_dir, U_dir ) / dot_N;
-	    uvp->uv_dv = (r / V_len) * VDOT( UV_dir, V_dir ) / dot_N;
-	}
+    if (NEAR_ZERO( dot_N, SMALL_FASTF ) ) {
+	/* ray almost perfectly 90 degrees to surface */
+	uvp->uv_du = min_r_U;
+	uvp->uv_dv = min_r_V;
+    } else {
+	/* somehow this computes the extent of U and V in the radius */
+	uvp->uv_du = (r / U_len) * VDOT( UV_dir, U_dir ) / dot_N;
+	uvp->uv_dv = (r / V_len) * VDOT( UV_dir, V_dir ) / dot_N;
+    }
+
+
 
     if (uvp->uv_du < 0.0 )
 	uvp->uv_du = -uvp->uv_du;
