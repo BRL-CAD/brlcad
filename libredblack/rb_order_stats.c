@@ -28,7 +28,7 @@ static char RCSid[] = "@(#) $Header$";
  *	the discovered node.  Otherwise, it returns NULL.  _rb_select() is
  *	an implementation of the routine OS-SELECT on p. 282 of Cormen et al.
  */
-static void *_rb_select (root, order, k)
+static struct rb_node *_rb_select (root, order, k)
 
 struct rb_node	*root;
 int		order;
@@ -45,7 +45,7 @@ int		k;
 	    root, order, k, rank);
     
     if (rank == k)
-	return (rb_data(root, order));
+	return (root);
     else if (rank > k)
 	return (_rb_select(rb_left_child(root, order), order, k));
     else
@@ -73,11 +73,20 @@ int	k;
     RB_CKMAG(tree, RB_TREE_MAGIC, "red-black tree");
     RB_CKORDER(tree, order);
 
+    if ((k < 1) || (k > tree -> rbt_nm_nodes))
+    {
+	if (tree -> rbt_debug & RB_DEBUG_OS)
+	    rt_log("rb_select(<%x>, %d, %d): k out of bounds [1, %d]\n",
+		tree, order, k, tree -> rbt_nm_nodes);
+	rb_current(tree) = rb_null(tree);
+	return (NULL);
+    }
     if (tree -> rbt_debug & RB_DEBUG_OS)
 	rt_log("rb_select(<%x>, %d, %d): root=<%x>\n",
 	    tree, order, k, rb_root(tree, order));
 
-    return (_rb_select(rb_root(tree, order), order, k));
+    rb_current(tree) = node = _rb_select(rb_root(tree, order), order, k);
+    return (rb_data(node, order));
 }
 
 /*		        R B _ R A N K ( )
