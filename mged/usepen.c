@@ -362,9 +362,6 @@ char *argv[];
     }
 
     sp->s_iflag = UP;
-#if 0
-    dmp->dm_viewchange( dmp, DM_CHGV_ILLUM, sp );
-#endif
     illump = sp;
   }
 
@@ -588,12 +585,6 @@ char	**argv;
 		else if( ipathpos > illump->s_last )  ipathpos = illump->s_last;
 	}
 got:
-#if 0
-	dmp->dm_light( dmp, LIGHT_ON, BE_ACCEPT );
-	dmp->dm_light( dmp, LIGHT_ON, BE_REJECT );
-	dmp->dm_light( dmp, LIGHT_OFF, BE_O_ILLUMINATE );
-#endif
-
 	/* Include all solids with same tree top */
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
 		for( j = 0; j <= ipathpos; j++ )  {
