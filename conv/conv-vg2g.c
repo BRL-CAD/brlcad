@@ -134,6 +134,7 @@ char *argv[];
 
 top:
 	while( read( ifd, &rec, sizeof rec ) == sizeof rec )  {
+after_read:
 		switch( rec.u_id )  {
 
 		case ID_IDENT:
@@ -150,10 +151,12 @@ top:
 			break;
 		case ID_COMB:
 			if( rec.c.c_name[0] == '\0' )  {
-				/* Skip deleted junk */
-				lseek( ifd, (long)rec.c.c_length *
-					(long)(sizeof rec), 1 );
-				goto top;
+				/* This is an old-style flag for a deleted combination */
+				/* Skip any folowing member records */
+				do  {
+					(void)read( ifd, &rec, sizeof(rec) );
+				} while( rec.u_id == ID_MEMB );
+				goto after_read;
 			}
 			break;
 		case ID_ARS_B:
