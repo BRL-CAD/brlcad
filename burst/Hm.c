@@ -841,7 +841,7 @@ int	maxvis;
 #endif
 	{	extern char	*getenv();
 		char		*term = getenv( "TERM" );
-	if(	(HmTtyFd = open( "/dev/tty", O_RDONLY )) == NULL
+	if(	(HmTtyFd = open( "/dev/tty", O_RDONLY )) == (-1)
 	    ||	(HmTtyFp = fdopen( HmTtyFd, "r" )) == NULL
 		)
 		{
