@@ -65,8 +65,7 @@ char			regBuffer[BUFSIZ], *regBufPtr;
 
 char			getcmd();
 void			prompt();
-void			mat_copy(), mat_mul(), matXvec();
-void			vtoh_move(), htov_move();
+void			mat_copy(), mat_mul();
 void			eread(), ewrite();
 
 #define endRegion( buff ) \
@@ -712,18 +711,16 @@ register Record	*rec;
 	ewrite( solfd, "tor  ", 5 );
 
 	/* Operate on vertex.						*/
-	vtoh_move( v_workk, &(rec->s.s_values[0]) );
-	matXvec( v_work, xform, v_workk );
-	htov_move( &(rec->s.s_values[0]), v_work );
-	VMOVE( &(rec->s.s_values[0]) , v_work );
+	VMOVE( v_workk, &(rec->s.s_values[0]) );
+	MAT4X3VEC( v_work, xform, v_workk );
+	VMOVE( &(rec->s.s_values[0]), v_work );
 
 	/* Rest of vectors.						*/
-	for( i = 3; i <= 21; i += 3 )
-		{
-		vtoh_move( v_workk, &(rec->s.s_values[i]) );
-		matXvec( v_work, notrans, v_workk );
-		htov_move( &(rec->s.s_values[i]), v_work );
-		}
+	for( i = 3; i <= 21; i += 3 )  {
+		VMOVE( v_workk, &(rec->s.s_values[i]) );
+		MAT4X3VEC( v_work, notrans, v_workk );
+		VMOVE( &(rec->s.s_values[i]), v_work );
+	}
 	rr1 = MAGNITUDE( SV2 );	/* r1 */
 	rr2 = MAGNITUDE( SV1 );	/* r2 */    
 
@@ -749,16 +746,16 @@ register Record	*rec;
 		int	univecs[8], samevecs[11];
 	
 	/* Operate on vertex.						*/
-	vtoh_move( v_workk, &(rec->s.s_values[0]) );
-	matXvec( v_work, xform, v_workk );
-	htov_move( &(rec->s.s_values[0]), v_work );
+	VMOVE( v_workk, &(rec->s.s_values[0]) );
+	MAT4X3VEC( v_work, xform, v_workk );
+	VMOVE( &(rec->s.s_values[0]), v_work );
 
 	/* Rest of vectors.						*/
 	for( i = 3; i <= 21; i += 3 )
 		{
-		vtoh_move( v_workk, &(rec->s.s_values[i]) );
-		matXvec( v_work, notrans, v_workk );
-		htov_move( v_workk, v_work );
+		VMOVE( v_workk, &(rec->s.s_values[i]) );
+		MAT4X3VEC( v_work, notrans, v_workk );
+		VMOVE( v_workk, v_work );
 
 		/* Point notation.					*/
 		VADD2(	&(rec->s.s_values[i]),
@@ -851,16 +848,16 @@ register Record	*rec;
 		double	ma, mb, mc;
 	
 	/* Operate on vertex.						*/
-	vtoh_move( v_workk, &(rec->s.s_values[0]) );
-	matXvec( v_work, xform, v_workk);
-	htov_move( &(rec->s.s_values[0]), v_work );
+	VMOVE( v_workk, &(rec->s.s_values[0]) );
+	MAT4X3VEC( v_work, xform, v_workk);
+	VMOVE( &(rec->s.s_values[0]), v_work );
 
 	/* Rest of vectors.						*/
 	for( i = 3; i <= 9; i += 3 )
 		{
-		vtoh_move( v_workk, &(rec->s.s_values[i]) );
-		matXvec( v_work, notrans, v_workk );
-		htov_move( &(rec->s.s_values[i]), v_work );
+		VMOVE( v_workk, &(rec->s.s_values[i]) );
+		MAT4X3VEC( v_work, notrans, v_workk );
+		VMOVE( &(rec->s.s_values[i]), v_work );
 		}
 
 	/* Check for ell1 or sph.					*/
@@ -935,15 +932,15 @@ register Record *rec;
 		double	ma, mb, mc, md, maxb, mcxd, mh;
 
 	/* Operate on vertex.						*/
-	vtoh_move( v_workk, &(rec->s.s_values[0]) );
-	matXvec( v_work, xform, v_workk );
-	htov_move( &(rec->s.s_values[0]), v_work );
+	VMOVE( v_workk, &(rec->s.s_values[0]) );
+	MAT4X3VEC( v_work, xform, v_workk );
+	VMOVE( &(rec->s.s_values[0]), v_work );
 
 	for( i = 3; i <= 15; i += 3 )
 		{
-		vtoh_move( v_workk, &(rec->s.s_values[i]) );
-		matXvec( v_work, notrans, v_workk );
-		htov_move( &(rec->s.s_values[i]), v_work );
+		VMOVE( v_workk, &(rec->s.s_values[i]) );
+		MAT4X3VEC( v_work, notrans, v_workk );
+		VMOVE( &(rec->s.s_values[i]), v_work );
 		}
 
 	/* Check for tec rec trc rcc.					*/
@@ -1099,9 +1096,9 @@ register Record *rec;
 		/* Operate on vertex.					*/
 		if( granule == 1 )
 			{
-			vtoh_move( v_workk, &(rec->b.b_values[0]) );
-			matXvec( v_work, xform, v_workk );
-			htov_move( &(rec->b.b_values[0]), v_work );
+			VMOVE( v_workk, &(rec->b.b_values[0]) );
+			MAT4X3VEC( v_work, xform, v_workk );
+			VMOVE( &(rec->b.b_values[0]), v_work );
 			VMOVE( vertex, &(rec->b.b_values[0]) );
 			vec = 1;
 			}
@@ -1111,9 +1108,9 @@ register Record *rec;
 		/* Rest of vectors.					*/
 		for( i = vec; i < npt; i++, vec++ )
 			{
-			vtoh_move( v_workk, &(rec->b.b_values[vec*3]) );
-			matXvec( v_work, notrans, v_workk );
-			htov_move( work, v_work );
+			VMOVE( v_workk, &(rec->b.b_values[vec*3]) );
+			MAT4X3VEC( v_work, notrans, v_workk );
+			VMOVE( work, v_work );
 			VADD2( &(rec->b.b_values[vec*3]), vertex, work );
 			}
 
@@ -1277,64 +1274,6 @@ register matp_t	om, im1, im2;
 			em1++;		/* Next row element in m1.	*/
 			em2 += 4;	/* Next column element in m2.	*/
 			}
-		}
-	return;
-	}
-
-/*	m a t X v e c ( )
-	Multiply the vector "iv" by the matrix "im" and store the result
-	in the vector "ov".
- */
-void
-matXvec( op, mp, vp )
-register vectp_t	op;
-register matp_t		mp;
-register vectp_t	vp;
-	{	register int io;	/* Position in output vector.	*/
-		register int im = 0;	/* Position in input matrix.	*/
-		register int iv;	/* Position in input vector.	*/
-	/* Fill each element of output vector with.			*/
-	for( io = 0; io < 4; io++ )
-		{ /* Dot prod. of each row w/ each element of input vec.*/
-		op[io] = 0.;
-		for( iv = 0; iv < 4; iv++ )
-			op[io] += mp[im++] * vp[iv];
-		}
-	return;
-	}
-
-/*	v t o h _ m o v e ( )						*/
-void
-vtoh_move( h, v)
-register float	*h, *v;
-	{
-	*h++ = *v++;
-	*h++ = *v++;
-	*h++ = *v;
-	*h++ = 1.0;
-	return;
-	}
-
-/*	h t o v _ m o v e ( )						*/
-void
-htov_move( v, h )
-register float	*v, *h;
-	{	static double	inv;
-	if( h[3] == 1.0 )
-		{
-		*v++ = *h++;
-		*v++ = *h++;
-		*v   = *h;
-		}
-	else
-		{
-		if( h[3] == 0.0 )
-			inv = 1.0;
-		else
-			inv = 1.0 / h[3];
-		*v++ = *h++ * inv;
-		*v++ = *h++ * inv;
-		*v = *h * inv;
 		}
 	return;
 	}
