@@ -11,7 +11,7 @@
 #define FILES	ged dodraw dozoom titles scroll \
 			usepen dir columns mover tedit \
 			cmd chgview chgmodel chgtree \
-			rtif anal typein \
+			rtif anal typein predictor \
 			buttons clip menu adc edsol edarb \
 			proc_reg hideline polyif \
 			mater plot overlay inside \
