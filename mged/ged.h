@@ -159,6 +159,7 @@ extern jmp_buf jmp_env;
 /*
  *	GED functions referenced in more than one source file:
  */
+extern int              tran(), irot();
 extern void             mged_setup();
 extern void		dir_build(), buildHrot(), dozoom(),
 			pr_schain(), itoa();
