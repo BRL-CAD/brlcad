@@ -270,6 +270,434 @@ rt_sketch_class()
 	return(0);
 }
 
+int
+seg_to_vlist( vhead, ttol, V, u_vec, v_vec, sketch_ip, seg )
+struct bu_list          *vhead;
+const struct rt_tess_tol *ttol;
+point_t			V;
+vect_t			u_vec, v_vec;
+struct rt_sketch_internal *sketch_ip;
+genptr_t seg;
+{
+	int		ret=0;
+	int		i;
+	long		*lng;
+	struct line_seg *lsg;
+	struct carc_seg *csg;
+	struct nurb_seg *nsg;
+	struct bezier_seg *bsg;
+	fastf_t delta;
+	point_t center, start_pt, end_pt;
+	fastf_t pt[4];
+	vect_t semi_a, semi_b;
+	fastf_t radius;
+	vect_t norm;
+
+	lng = (long *)seg;
+	switch( *lng )
+	{
+		case CURVE_LSEG_MAGIC:
+			lsg = (struct line_seg *)lng;
+			if( lsg->start >= sketch_ip->vert_count ||
+			    lsg->end >= sketch_ip->vert_count )
+			{
+				ret++;
+				break;
+			}
+			VJOIN2( pt, V, sketch_ip->verts[lsg->start][0], u_vec, sketch_ip->verts[lsg->start][1], v_vec);
+			RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_MOVE )
+			VJOIN2( pt, V, sketch_ip->verts[lsg->end][0], u_vec, sketch_ip->verts[lsg->end][1], v_vec);
+			RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_DRAW );
+			break;
+		case CURVE_CARC_MAGIC:
+		{
+			point2d_t mid_pt, start2d, end2d, center2d, s2m, dir;
+			fastf_t s2m_len_sq, len_sq, tmp_len, cross_z;
+			fastf_t start_ang, end_ang, tot_ang, cosdel, sindel;
+			fastf_t oldu, oldv, newu, newv;
+			int nsegs;
+
+			csg = (struct carc_seg *)lng;
+			if( csg->start >= sketch_ip->vert_count ||
+			    csg->end >= sketch_ip->vert_count )
+			{
+				ret++;
+				break;
+			}
+
+			delta = M_PI/4.0;
+			if( csg->radius <= 0.0 )
+			{
+				VJOIN2( center, V, sketch_ip->verts[csg->end][0], u_vec, sketch_ip->verts[csg->end][1], v_vec);
+				VJOIN2( pt, V, sketch_ip->verts[csg->start][0], u_vec, sketch_ip->verts[csg->start][1], v_vec);
+				VSUB2( semi_a, pt, center );
+				VCROSS( norm, u_vec, v_vec );
+				VCROSS( semi_b, norm, semi_a );
+				VUNITIZE( semi_b );
+				radius = MAGNITUDE( semi_a );
+				VSCALE( semi_b, semi_b, radius );
+			}
+			else if( csg->radius < SMALL_FASTF )
+			{
+				bu_log( "Radius too small in sketch!!\n" );
+				break;
+			}
+			else
+				radius = csg->radius;
+
+			if( ttol->abs > 0.0 )
+			{
+				fastf_t tmp_delta, ratio;
+
+				ratio = ttol->abs / radius;
+				if( ratio < 1.0 )
+				{
+					tmp_delta = 2.0 * acos( 1.0 - ratio);
+					if( tmp_delta < delta )
+						delta = tmp_delta;
+				}
+			}
+			if( ttol->rel > 0.0 && ttol->rel < 1.0 )
+			{
+				fastf_t tmp_delta;
+
+				tmp_delta = 2.0 * acos( 1.0 - ttol->rel );
+				if( tmp_delta < delta )
+					delta = tmp_delta;
+			}
+			if( ttol->norm > 0.0 )
+			{
+				fastf_t norm;
+
+				norm = ttol->norm * M_PI / 180.0;
+				if( norm < delta )
+					delta = norm;
+			}
+			if( csg->radius <= 0.0 )
+			{
+				/* this is a full circle */
+				nsegs = ceil( 2.0 * M_PI / delta );
+				delta = 2.0 * M_PI / (double)nsegs;
+				cosdel = cos( delta );
+				sindel = sin( delta );
+				oldu = 1.0;
+				oldv = 0.0;
+				VJOIN2( start_pt, center, oldu, semi_a, oldv, semi_b );
+				RT_ADD_VLIST( vhead, start_pt, BN_VLIST_LINE_MOVE );
+				for( i=1 ; i<nsegs ; i++ )
+				{
+					newu = oldu * cosdel - oldv * sindel;
+					newv = oldu * sindel + oldv * cosdel;
+					VJOIN2( pt, center, newu, semi_a, newv, semi_b );
+					RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_DRAW );
+					oldu = newu;
+					oldv = newv;
+				}
+				RT_ADD_VLIST( vhead, start_pt, BN_VLIST_LINE_DRAW );
+				break;
+			}
+
+			/* this is an arc (not a full circle) */
+			V2MOVE( start2d, sketch_ip->verts[csg->start] );
+			V2MOVE( end2d, sketch_ip->verts[csg->end] );
+			mid_pt[0] = (start2d[0] + end2d[0]) * 0.5;
+			mid_pt[1] = (start2d[1] + end2d[1]) * 0.5;
+			V2SUB2( s2m, mid_pt, start2d )
+			dir[0] = -s2m[1];
+			dir[1] = s2m[0];
+			s2m_len_sq =  s2m[0]*s2m[0] + s2m[1]*s2m[1];
+			if( s2m_len_sq < SMALL_FASTF )
+			{
+				bu_log( "start and end points are too close together in circular arc of sketch\n" );
+				break;
+			}
+			len_sq = radius*radius - s2m_len_sq;
+			if( len_sq < 0.0 )
+			{
+				bu_log( "Impossible radius for specified start and end points in circular arc\n");
+				break;
+			}
+			tmp_len = sqrt( dir[0]*dir[0] + dir[1]*dir[1] );
+			dir[0] = dir[0] / tmp_len;
+			dir[1] = dir[1] / tmp_len;
+			tmp_len = sqrt( len_sq );
+			V2JOIN1( center2d, mid_pt, tmp_len, dir )
+
+			/* check center location */
+			cross_z = ( end2d[X] - start2d[X] )*( center2d[Y] - start2d[Y] ) -
+				( end2d[Y] - start2d[Y] )*( center2d[X] - start2d[X] );
+			if( !(cross_z > 0.0 && csg->center_is_left) )
+				V2JOIN1( center2d, mid_pt, -tmp_len, dir );
+			start_ang = atan2( start2d[Y]-center2d[Y], start2d[X]-center2d[X] );
+			end_ang = atan2( end2d[Y]-center2d[Y], end2d[X]-center2d[X] );
+			if( csg->orientation ) /* clock-wise */
+			{
+				while( end_ang > start_ang )
+					end_ang -= 2.0 * M_PI;
+			}
+			else /* counter-clock-wise */
+			{
+				while( end_ang < start_ang )
+					end_ang += 2.0 * M_PI;
+			}
+			tot_ang = end_ang - start_ang;
+			nsegs = ceil( tot_ang / delta );
+			if( nsegs < 0 )
+				nsegs = -nsegs;
+			if( nsegs < 3 )
+				nsegs = 3;
+			delta = tot_ang / nsegs;
+			cosdel = cos( delta );
+			sindel = sin( delta );
+			VJOIN2( center, V, center2d[0], u_vec, center2d[1], v_vec );
+			VJOIN2( start_pt, V, start2d[0], u_vec, start2d[1], v_vec );
+			VJOIN2( end_pt, V, end2d[0], u_vec, end2d[1], v_vec );
+			oldu = (start2d[0] - center2d[0]);
+			oldv = (start2d[1] - center2d[1]);
+			RT_ADD_VLIST( vhead, start_pt, BN_VLIST_LINE_MOVE );
+			for( i=0 ; i<nsegs ; i++ )
+			{
+				newu = oldu * cosdel - oldv * sindel;
+				newv = oldu * sindel + oldv * cosdel;
+				VJOIN2( pt, center, newu, u_vec, newv, v_vec );
+				RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_DRAW );
+				oldu = newu;
+				oldv = newv;
+			}
+			RT_ADD_VLIST( vhead, end_pt, BN_VLIST_LINE_DRAW );
+			break;
+		}
+		case CURVE_NURB_MAGIC:
+		{
+			struct edge_g_cnurb eg;
+			int coords;
+			fastf_t inv_weight;
+			int num_intervals;
+			fastf_t param_delta, epsilon;
+
+			nsg = (struct nurb_seg *)lng;
+			for( i=0 ; i<nsg->c_size ; i++ )
+			{
+				if( nsg->ctl_points[i] >= sketch_ip->vert_count )
+				{
+					ret++;
+					break;
+				}
+			}
+			if( nsg->order < 3 )
+			{
+				/* just straight lines */
+				VJOIN2( start_pt, V, sketch_ip->verts[nsg->ctl_points[0]][0], u_vec, sketch_ip->verts[nsg->ctl_points[0]][1], v_vec );
+				if( RT_NURB_IS_PT_RATIONAL( nsg->pt_type ) )
+				{
+					inv_weight = 1.0/nsg->weights[0];
+					VSCALE( start_pt, start_pt, inv_weight );
+				}
+				RT_ADD_VLIST( vhead, start_pt, BN_VLIST_LINE_MOVE );
+				for( i=1 ; i<nsg->c_size ; i++ )
+				{
+					VJOIN2( pt, V, sketch_ip->verts[nsg->ctl_points[i]][0], u_vec, sketch_ip->verts[nsg->ctl_points[i]][1], v_vec );
+					if( RT_NURB_IS_PT_RATIONAL( nsg->pt_type ) )
+					{
+						inv_weight = 1.0/nsg->weights[i];
+						VSCALE( pt, pt, inv_weight );
+					}
+					RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_DRAW );
+				}
+				break;
+			}
+			eg.l.magic = NMG_EDGE_G_CNURB_MAGIC;
+			eg.order = nsg->order;
+			eg.k.k_size = nsg->k.k_size;
+			eg.k.knots = nsg->k.knots;
+			eg.c_size = nsg->c_size;
+			coords = 3 + RT_NURB_IS_PT_RATIONAL( nsg->pt_type );
+			eg.pt_type = RT_NURB_MAKE_PT_TYPE( coords, 2, RT_NURB_IS_PT_RATIONAL( nsg->pt_type ) );
+			eg.ctl_points = (fastf_t *)bu_malloc( nsg->c_size * coords * sizeof( fastf_t ), "eg.ctl_points" );
+			if( RT_NURB_IS_PT_RATIONAL( nsg->pt_type ) )
+			{
+				for( i=0 ; i<nsg->c_size ; i++ )
+				{
+					VJOIN2( &eg.ctl_points[i*coords], V, sketch_ip->verts[nsg->ctl_points[i]][0], u_vec, sketch_ip->verts[nsg->ctl_points[i]][1], v_vec );
+					eg.ctl_points[(i+1)*coords - 1] = nsg->weights[i];
+				}
+			}
+			else
+			{
+				for( i=0 ; i<nsg->c_size ; i++ )
+					VJOIN2( &eg.ctl_points[i*coords], V, sketch_ip->verts[nsg->ctl_points[i]][0], u_vec, sketch_ip->verts[nsg->ctl_points[i]][1], v_vec );
+			}
+			epsilon = MAX_FASTF;
+			if( ttol->abs > 0.0 && ttol->abs < epsilon )
+				epsilon = ttol->abs;
+			if( ttol->rel > 0.0 )
+			{
+				point2d_t min_pt, max_pt, tmp_pt;
+				point2d_t diff;
+				fastf_t tmp_epsilon;
+
+				min_pt[0] = MAX_FASTF;
+				min_pt[1] = MAX_FASTF;
+				max_pt[0] = -MAX_FASTF;
+				max_pt[1] = -MAX_FASTF;
+
+				for( i=0 ; i<nsg->c_size ; i++ )
+				{
+					V2MOVE( tmp_pt, sketch_ip->verts[nsg->ctl_points[i]] );
+					if( tmp_pt[0] > max_pt[0] )
+						max_pt[0] = tmp_pt[0];
+					if( tmp_pt[1] > max_pt[1] )
+						max_pt[1] = tmp_pt[1];
+					if( tmp_pt[0] < min_pt[0] )
+						min_pt[0] = tmp_pt[0];
+					if( tmp_pt[1] < min_pt[1] )
+						min_pt[1] = tmp_pt[1];
+				}
+
+				V2SUB2( diff, max_pt, min_pt )
+				tmp_epsilon = ttol->rel * sqrt( MAG2SQ( diff ) );
+				if( tmp_epsilon < epsilon )
+					epsilon = tmp_epsilon;
+				
+			}
+			param_delta = rt_cnurb_par_edge( &eg, epsilon );
+			num_intervals = ceil( (nsg->k.knots[nsg->k.k_size-1] - nsg->k.knots[0])/param_delta );
+			if( num_intervals < 3 )
+				num_intervals = 3;
+			if( num_intervals > 500 )
+			{
+				bu_log( "num_intervals was %d\n", num_intervals );
+				num_intervals = 500;
+			}
+			param_delta = (nsg->k.knots[nsg->k.k_size-1] - nsg->k.knots[0])/(double)num_intervals;
+			for( i=0 ; i<=num_intervals ; i++ )
+			{
+				fastf_t t;
+				int j;
+
+				t = nsg->k.knots[0] + i*param_delta;
+				rt_nurb_c_eval( &eg, t, pt );
+				if( RT_NURB_IS_PT_RATIONAL( nsg->pt_type ) )
+				{
+					for( j=0 ; j<coords-1 ; j++ )
+						pt[j] /= pt[coords-1];
+				}
+				if( i == 0 )
+					RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_MOVE )
+				else
+					RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_DRAW );
+			}
+			bu_free( (char *)eg.ctl_points, "eg.ctl_points" );
+			break;
+		}
+		case CURVE_BEZIER_MAGIC: {
+			struct bezier_2d_list *bezier_hd, *bz;
+			fastf_t epsilon;
+
+			bsg = (struct bezier_seg *)lng;
+
+			for( i=0 ; i<=bsg->degree ; i++ ) {
+				if( bsg->ctl_points[i] >= sketch_ip->vert_count ) {
+					ret++;
+					break;
+				}
+			}
+
+			if( bsg->degree < 1 ) {
+				bu_log( "g_sketch: ERROR: Bezier curve with illegal degree (%d)\n",
+					bsg->degree );
+				ret++;
+				break;
+			}
+
+			if( bsg->degree == 1 ) {
+				/* straight line */
+				VJOIN2( start_pt, V, sketch_ip->verts[bsg->ctl_points[0]][0],
+					u_vec, sketch_ip->verts[bsg->ctl_points[0]][1], v_vec );
+				RT_ADD_VLIST( vhead, start_pt, BN_VLIST_LINE_MOVE );
+				for( i=1 ; i<=bsg->degree ; i++ ) {
+					VJOIN2( pt, V, sketch_ip->verts[bsg->ctl_points[i]][0],
+						u_vec, sketch_ip->verts[bsg->ctl_points[i]][1], v_vec );
+					RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_DRAW );
+				}
+				break;
+			}
+
+			/* use tolerance to determine coarseness of plot */
+			epsilon = MAX_FASTF;
+			if( ttol->abs > 0.0 && ttol->abs < epsilon )
+				epsilon = ttol->abs;
+			if( ttol->rel > 0.0 )
+			{
+				point2d_t min_pt, max_pt, tmp_pt;
+				point2d_t diff;
+				fastf_t tmp_epsilon;
+
+				min_pt[0] = MAX_FASTF;
+				min_pt[1] = MAX_FASTF;
+				max_pt[0] = -MAX_FASTF;
+				max_pt[1] = -MAX_FASTF;
+
+				for( i=0 ; i<=bsg->degree ; i++ )
+				{
+					V2MOVE( tmp_pt, sketch_ip->verts[bsg->ctl_points[i]] );
+					if( tmp_pt[0] > max_pt[0] )
+						max_pt[0] = tmp_pt[0];
+					if( tmp_pt[1] > max_pt[1] )
+						max_pt[1] = tmp_pt[1];
+					if( tmp_pt[0] < min_pt[0] )
+						min_pt[0] = tmp_pt[0];
+					if( tmp_pt[1] < min_pt[1] )
+						min_pt[1] = tmp_pt[1];
+				}
+
+				V2SUB2( diff, max_pt, min_pt )
+				tmp_epsilon = ttol->rel * sqrt( MAG2SQ( diff ) );
+				if( tmp_epsilon < epsilon )
+					epsilon = tmp_epsilon;
+				
+			}
+			
+
+			/* Create an initial bezier_2d_list */
+			bezier_hd = (struct bezier_2d_list *)bu_malloc( sizeof( struct bezier_2d_list ),
+								     "g_sketch.c: bezier_hd" );
+			BU_LIST_INIT( &bezier_hd->l );
+			bezier_hd->ctl = (point2d_t *)bu_calloc( bsg->degree + 1, sizeof( point2d_t ),
+								 "g_sketch.c: bezier_hd->ctl" );
+			for( i=0 ; i<=bsg->degree ; i++ ) {
+				V2MOVE( bezier_hd->ctl[i], sketch_ip->verts[bsg->ctl_points[i]] );
+			}
+
+			/* now do subdivision as necessary */
+			bezier_hd = subdivide_bezier( bezier_hd, bsg->degree, epsilon, 0 );
+
+			/* plot the results */
+			bz = BU_LIST_FIRST( bezier_2d_list, &bezier_hd->l );
+			VJOIN2( pt, V, bz->ctl[0][0], u_vec, bz->ctl[0][1], v_vec);
+			RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_MOVE );
+
+			while( BU_LIST_WHILE( bz, bezier_2d_list, &(bezier_hd->l) ) ) {
+				BU_LIST_DEQUEUE( &bz->l );
+				for( i=1 ; i<=bsg->degree ; i++ ) {
+					VJOIN2( pt, V, bz->ctl[i][0], u_vec,
+						bz->ctl[i][1], v_vec);
+					RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_DRAW );
+				}
+				bu_free( (char *)bz->ctl, "g_sketch.c: bz->ctl" );
+				bu_free( (char *)bz, "g_sketch.c: bz" );
+			}
+			bu_free( (char *)bezier_hd, "g_sketch.c: bezier_hd" );
+			break;
+		}
+		default:
+			bu_log( "seg_to_vlist: ERROR: unrecognized segment type!!!!\n" );
+			break;
+	}
+
+	return( ret );
+}
+
 /*
  *			C U R V E _ T O _ V L I S T
  */
@@ -282,18 +710,7 @@ vect_t			u_vec, v_vec;
 struct rt_sketch_internal *sketch_ip;
 struct curve                    *crv;
 {
-	long *lng;
-	int seg_no, i;
-	struct line_seg *lsg;
-	struct carc_seg *csg;
-	struct nurb_seg *nsg;
-	struct bezier_seg *bsg;
-	fastf_t delta;
-	point_t center, start_pt, end_pt;
-	fastf_t pt[4];
-	vect_t semi_a, semi_b;
-	fastf_t radius;
-	vect_t norm;
+	int seg_no;
 	int ret=0;
 
 	if( bu_debug&BU_DEBUG_MEM_CHECK )
@@ -304,409 +721,7 @@ struct curve                    *crv;
 
 	for( seg_no=0 ; seg_no < crv->seg_count ; seg_no++ )
 	{
-		lng = (long *)crv->segments[seg_no];
-		switch( *lng )
-		{
-			case CURVE_LSEG_MAGIC:
-				lsg = (struct line_seg *)lng;
-				if( lsg->start >= sketch_ip->vert_count ||
-				    lsg->end >= sketch_ip->vert_count )
-				{
-					ret++;
-					break;
-				}
-				VJOIN2( pt, V, sketch_ip->verts[lsg->start][0], u_vec, sketch_ip->verts[lsg->start][1], v_vec);
-				RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_MOVE )
-				VJOIN2( pt, V, sketch_ip->verts[lsg->end][0], u_vec, sketch_ip->verts[lsg->end][1], v_vec);
-				RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_DRAW );
-				break;
-			case CURVE_CARC_MAGIC:
-			{
-				point2d_t mid_pt, start2d, end2d, center2d, s2m, dir;
-				fastf_t s2m_len_sq, len_sq, tmp_len, cross_z;
-				fastf_t start_ang, end_ang, tot_ang, cosdel, sindel;
-				fastf_t oldu, oldv, newu, newv;
-				int nsegs;
-
-				csg = (struct carc_seg *)lng;
-				if( csg->start >= sketch_ip->vert_count ||
-				    csg->end >= sketch_ip->vert_count )
-				{
-					ret++;
-					break;
-				}
-
-				delta = M_PI/4.0;
-				if( csg->radius <= 0.0 )
-				{
-					VJOIN2( center, V, sketch_ip->verts[csg->end][0], u_vec, sketch_ip->verts[csg->end][1], v_vec);
-					VJOIN2( pt, V, sketch_ip->verts[csg->start][0], u_vec, sketch_ip->verts[csg->start][1], v_vec);
-					VSUB2( semi_a, pt, center );
-					VCROSS( norm, u_vec, v_vec );
-					VCROSS( semi_b, norm, semi_a );
-					VUNITIZE( semi_b );
-					radius = MAGNITUDE( semi_a );
-					VSCALE( semi_b, semi_b, radius );
-				}
-				else if( csg->radius < SMALL_FASTF )
-				{
-					bu_log( "Radius too small in sketch!!\n" );
-					break;
-				}
-				else
-					radius = csg->radius;
-
-				if( ttol->abs > 0.0 )
-				{
-					fastf_t tmp_delta, ratio;
-
-					ratio = ttol->abs / radius;
-					if( ratio < 1.0 )
-					{
-						tmp_delta = 2.0 * acos( 1.0 - ratio);
-						if( tmp_delta < delta )
-							delta = tmp_delta;
-					}
-				}
-				if( ttol->rel > 0.0 && ttol->rel < 1.0 )
-				{
-					fastf_t tmp_delta;
-
-					tmp_delta = 2.0 * acos( 1.0 - ttol->rel );
-					if( tmp_delta < delta )
-						delta = tmp_delta;
-				}
-				if( ttol->norm > 0.0 )
-				{
-					fastf_t norm;
-
-					norm = ttol->norm * M_PI / 180.0;
-					if( norm < delta )
-						delta = norm;
-				}
-				if( csg->radius <= 0.0 )
-				{
-					/* this is a full circle */
-					nsegs = ceil( 2.0 * M_PI / delta );
-					delta = 2.0 * M_PI / (double)nsegs;
-					cosdel = cos( delta );
-					sindel = sin( delta );
-					oldu = 1.0;
-					oldv = 0.0;
-					VJOIN2( start_pt, center, oldu, semi_a, oldv, semi_b );
-					RT_ADD_VLIST( vhead, start_pt, BN_VLIST_LINE_MOVE );
-					for( i=1 ; i<nsegs ; i++ )
-					{
-						newu = oldu * cosdel - oldv * sindel;
-						newv = oldu * sindel + oldv * cosdel;
-						VJOIN2( pt, center, newu, semi_a, newv, semi_b );
-						RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_DRAW );
-						oldu = newu;
-						oldv = newv;
-					}
-					RT_ADD_VLIST( vhead, start_pt, BN_VLIST_LINE_DRAW );
-					break;
-				}
-
-				/* this is an arc (not a full circle) */
-				V2MOVE( start2d, sketch_ip->verts[csg->start] );
-				V2MOVE( end2d, sketch_ip->verts[csg->end] );
-				mid_pt[0] = (start2d[0] + end2d[0]) * 0.5;
-				mid_pt[1] = (start2d[1] + end2d[1]) * 0.5;
-				V2SUB2( s2m, mid_pt, start2d )
-				dir[0] = -s2m[1];
-				dir[1] = s2m[0];
-				s2m_len_sq =  s2m[0]*s2m[0] + s2m[1]*s2m[1];
-				if( s2m_len_sq < SMALL_FASTF )
-				{
-					bu_log( "start and end points are too close together in circular arc (segment #%d)\n\
-						of sketch\n", seg_no );
-					break;
-				}
-				len_sq = radius*radius - s2m_len_sq;
-				if( len_sq < 0.0 )
-				{
-					bu_log( "Impossible radius for specified start and end points in circular arc\n\
-						(segment #%d) of sketch\n", seg_no);
-					break;
-				}
-				tmp_len = sqrt( dir[0]*dir[0] + dir[1]*dir[1] );
-				dir[0] = dir[0] / tmp_len;
-				dir[1] = dir[1] / tmp_len;
-				tmp_len = sqrt( len_sq );
-				V2JOIN1( center2d, mid_pt, tmp_len, dir )
-
-				/* check center location */
-				cross_z = ( end2d[X] - start2d[X] )*( center2d[Y] - start2d[Y] ) -
-					( end2d[Y] - start2d[Y] )*( center2d[X] - start2d[X] );
-				if( !(cross_z > 0.0 && csg->center_is_left) )
-					V2JOIN1( center2d, mid_pt, -tmp_len, dir );
-				start_ang = atan2( start2d[Y]-center2d[Y], start2d[X]-center2d[X] );
-				end_ang = atan2( end2d[Y]-center2d[Y], end2d[X]-center2d[X] );
-				if( csg->orientation ) /* clock-wise */
-				{
-					while( end_ang > start_ang )
-						end_ang -= 2.0 * M_PI;
-				}
-				else /* counter-clock-wise */
-				{
-					while( end_ang < start_ang )
-						end_ang += 2.0 * M_PI;
-				}
-				tot_ang = end_ang - start_ang;
-				nsegs = ceil( tot_ang / delta );
-				if( nsegs < 0 )
-					nsegs = -nsegs;
-				if( nsegs < 3 )
-					nsegs = 3;
-				delta = tot_ang / nsegs;
-				cosdel = cos( delta );
-				sindel = sin( delta );
-				VJOIN2( center, V, center2d[0], u_vec, center2d[1], v_vec );
-				VJOIN2( start_pt, V, start2d[0], u_vec, start2d[1], v_vec );
-				VJOIN2( end_pt, V, end2d[0], u_vec, end2d[1], v_vec );
-				oldu = (start2d[0] - center2d[0]);
-				oldv = (start2d[1] - center2d[1]);
-				RT_ADD_VLIST( vhead, start_pt, BN_VLIST_LINE_MOVE );
-				for( i=0 ; i<nsegs ; i++ )
-				{
-					newu = oldu * cosdel - oldv * sindel;
-					newv = oldu * sindel + oldv * cosdel;
-					VJOIN2( pt, center, newu, u_vec, newv, v_vec );
-					RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_DRAW );
-					oldu = newu;
-					oldv = newv;
-				}
-				RT_ADD_VLIST( vhead, end_pt, BN_VLIST_LINE_DRAW );
-				break;
-			}
-			case CURVE_NURB_MAGIC:
-			{
-				struct edge_g_cnurb eg;
-				int coords;
-				fastf_t inv_weight;
-				int num_intervals;
-				fastf_t param_delta, epsilon;
-
-				nsg = (struct nurb_seg *)lng;
-				for( i=0 ; i<nsg->c_size ; i++ )
-				{
-					if( nsg->ctl_points[i] >= sketch_ip->vert_count )
-					{
-						ret++;
-						break;
-					}
-				}
-				if( nsg->order < 3 )
-				{
-					/* just straight lines */
-					VJOIN2( start_pt, V, sketch_ip->verts[nsg->ctl_points[0]][0], u_vec, sketch_ip->verts[nsg->ctl_points[0]][1], v_vec );
-					if( RT_NURB_IS_PT_RATIONAL( nsg->pt_type ) )
-					{
-						inv_weight = 1.0/nsg->weights[0];
-						VSCALE( start_pt, start_pt, inv_weight );
-					}
-					RT_ADD_VLIST( vhead, start_pt, BN_VLIST_LINE_MOVE );
-					for( i=1 ; i<nsg->c_size ; i++ )
-					{
-						VJOIN2( pt, V, sketch_ip->verts[nsg->ctl_points[i]][0], u_vec, sketch_ip->verts[nsg->ctl_points[i]][1], v_vec );
-						if( RT_NURB_IS_PT_RATIONAL( nsg->pt_type ) )
-						{
-							inv_weight = 1.0/nsg->weights[i];
-							VSCALE( pt, pt, inv_weight );
-						}
-						RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_DRAW );
-					}
-					break;
-				}
-				eg.l.magic = NMG_EDGE_G_CNURB_MAGIC;
-				eg.order = nsg->order;
-				eg.k.k_size = nsg->k.k_size;
-				eg.k.knots = nsg->k.knots;
-				eg.c_size = nsg->c_size;
-				coords = 3 + RT_NURB_IS_PT_RATIONAL( nsg->pt_type );
-				eg.pt_type = RT_NURB_MAKE_PT_TYPE( coords, 2, RT_NURB_IS_PT_RATIONAL( nsg->pt_type ) );
-				eg.ctl_points = (fastf_t *)bu_malloc( nsg->c_size * coords * sizeof( fastf_t ), "eg.ctl_points" );
-				if( RT_NURB_IS_PT_RATIONAL( nsg->pt_type ) )
-				{
-					for( i=0 ; i<nsg->c_size ; i++ )
-					{
-						VJOIN2( &eg.ctl_points[i*coords], V, sketch_ip->verts[nsg->ctl_points[i]][0], u_vec, sketch_ip->verts[nsg->ctl_points[i]][1], v_vec );
-						eg.ctl_points[(i+1)*coords - 1] = nsg->weights[i];
-					}
-				}
-				else
-				{
-					for( i=0 ; i<nsg->c_size ; i++ )
-						VJOIN2( &eg.ctl_points[i*coords], V, sketch_ip->verts[nsg->ctl_points[i]][0], u_vec, sketch_ip->verts[nsg->ctl_points[i]][1], v_vec );
-				}
-				epsilon = MAX_FASTF;
-				if( ttol->abs > 0.0 && ttol->abs < epsilon )
-					epsilon = ttol->abs;
-				if( ttol->rel > 0.0 )
-				{
-					point2d_t min_pt, max_pt, tmp_pt;
-					point2d_t diff;
-					fastf_t tmp_epsilon;
-
-					min_pt[0] = MAX_FASTF;
-					min_pt[1] = MAX_FASTF;
-					max_pt[0] = -MAX_FASTF;
-					max_pt[1] = -MAX_FASTF;
-
-					for( i=0 ; i<nsg->c_size ; i++ )
-					{
-						V2MOVE( tmp_pt, sketch_ip->verts[nsg->ctl_points[i]] );
-						if( tmp_pt[0] > max_pt[0] )
-							max_pt[0] = tmp_pt[0];
-						if( tmp_pt[1] > max_pt[1] )
-							max_pt[1] = tmp_pt[1];
-						if( tmp_pt[0] < min_pt[0] )
-							min_pt[0] = tmp_pt[0];
-						if( tmp_pt[1] < min_pt[1] )
-							min_pt[1] = tmp_pt[1];
-					}
-
-					V2SUB2( diff, max_pt, min_pt )
-					tmp_epsilon = ttol->rel * sqrt( MAG2SQ( diff ) );
-					if( tmp_epsilon < epsilon )
-						epsilon = tmp_epsilon;
-					
-				}
-				param_delta = rt_cnurb_par_edge( &eg, epsilon );
-				num_intervals = ceil( (nsg->k.knots[nsg->k.k_size-1] - nsg->k.knots[0])/param_delta );
-				if( num_intervals < 3 )
-					num_intervals = 3;
-				if( num_intervals > 500 )
-				{
-					bu_log( "num_intervals was %d\n", num_intervals );
-					num_intervals = 500;
-				}
-				param_delta = (nsg->k.knots[nsg->k.k_size-1] - nsg->k.knots[0])/(double)num_intervals;
-				for( i=0 ; i<=num_intervals ; i++ )
-				{
-					fastf_t t;
-					int j;
-
-					t = nsg->k.knots[0] + i*param_delta;
-					rt_nurb_c_eval( &eg, t, pt );
-					if( RT_NURB_IS_PT_RATIONAL( nsg->pt_type ) )
-					{
-						for( j=0 ; j<coords-1 ; j++ )
-							pt[j] /= pt[coords-1];
-					}
-					if( i == 0 )
-						RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_MOVE )
-					else
-						RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_DRAW );
-				}
-				bu_free( (char *)eg.ctl_points, "eg.ctl_points" );
-				break;
-			}
-			case CURVE_BEZIER_MAGIC: {
-				struct bezier_2d_list *bezier_hd, *bz;
-				fastf_t epsilon;
-
-				bsg = (struct bezier_seg *)lng;
-
-				for( i=0 ; i<=bsg->degree ; i++ ) {
-					if( bsg->ctl_points[i] >= sketch_ip->vert_count ) {
-						ret++;
-						break;
-					}
-				}
-
-				if( bsg->degree < 1 ) {
-					bu_log( "g_sketch: ERROR: Bezier curve with illegal degree (%d)\n",
-						bsg->degree );
-					ret++;
-					break;
-				}
-
-				if( bsg->degree == 1 ) {
-					/* straight line */
-					VJOIN2( start_pt, V, sketch_ip->verts[bsg->ctl_points[0]][0],
-						u_vec, sketch_ip->verts[bsg->ctl_points[0]][1], v_vec );
-					RT_ADD_VLIST( vhead, start_pt, BN_VLIST_LINE_MOVE );
-					for( i=1 ; i<=bsg->degree ; i++ ) {
-						VJOIN2( pt, V, sketch_ip->verts[bsg->ctl_points[i]][0],
-							u_vec, sketch_ip->verts[bsg->ctl_points[i]][1], v_vec );
-						RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_DRAW );
-					}
-					break;
-				}
-
-				/* use tolerance to determine coarseness of plot */
-				epsilon = MAX_FASTF;
-				if( ttol->abs > 0.0 && ttol->abs < epsilon )
-					epsilon = ttol->abs;
-				if( ttol->rel > 0.0 )
-				{
-					point2d_t min_pt, max_pt, tmp_pt;
-					point2d_t diff;
-					fastf_t tmp_epsilon;
-
-					min_pt[0] = MAX_FASTF;
-					min_pt[1] = MAX_FASTF;
-					max_pt[0] = -MAX_FASTF;
-					max_pt[1] = -MAX_FASTF;
-
-					for( i=0 ; i<=bsg->degree ; i++ )
-					{
-						V2MOVE( tmp_pt, sketch_ip->verts[bsg->ctl_points[i]] );
-						if( tmp_pt[0] > max_pt[0] )
-							max_pt[0] = tmp_pt[0];
-						if( tmp_pt[1] > max_pt[1] )
-							max_pt[1] = tmp_pt[1];
-						if( tmp_pt[0] < min_pt[0] )
-							min_pt[0] = tmp_pt[0];
-						if( tmp_pt[1] < min_pt[1] )
-							min_pt[1] = tmp_pt[1];
-					}
-
-					V2SUB2( diff, max_pt, min_pt )
-					tmp_epsilon = ttol->rel * sqrt( MAG2SQ( diff ) );
-					if( tmp_epsilon < epsilon )
-						epsilon = tmp_epsilon;
-					
-				}
-				
-
-				/* Create an initial bezier_2d_list */
-				bezier_hd = (struct bezier_2d_list *)bu_malloc( sizeof( struct bezier_2d_list ),
-									     "g_sketch.c: bezier_hd" );
-				BU_LIST_INIT( &bezier_hd->l );
-				bezier_hd->ctl = (point2d_t *)bu_calloc( bsg->degree + 1, sizeof( point2d_t ),
-									 "g_sketch.c: bezier_hd->ctl" );
-				for( i=0 ; i<=bsg->degree ; i++ ) {
-					V2MOVE( bezier_hd->ctl[i], sketch_ip->verts[bsg->ctl_points[i]] );
-				}
-
-				/* now do subdivision as necessary */
-				bezier_hd = subdivide_bezier( bezier_hd, bsg->degree, epsilon, 0 );
-
-				/* plot the results */
-				bz = BU_LIST_FIRST( bezier_2d_list, &bezier_hd->l );
-				VJOIN2( pt, V, bz->ctl[0][0], u_vec, bz->ctl[0][1], v_vec);
-				RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_MOVE );
-
-				while( BU_LIST_WHILE( bz, bezier_2d_list, &(bezier_hd->l) ) ) {
-					BU_LIST_DEQUEUE( &bz->l );
-					for( i=1 ; i<=bsg->degree ; i++ ) {
-						VJOIN2( pt, V, bz->ctl[i][0], u_vec,
-							bz->ctl[i][1], v_vec);
-						RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_DRAW );
-					}
-					bu_free( (char *)bz->ctl, "g_sketch.c: bz->ctl" );
-					bu_free( (char *)bz, "g_sketch.c: bz" );
-				}
-				bu_free( (char *)bezier_hd, "g_sketch.c: bezier_hd" );
-				break;
-			}
-			default:
-				bu_log( "curve_to_vlist: ERROR: unrecognized segment type!!!!\n" );
-				break;
-		}
+		ret += seg_to_vlist( vhead, ttol, V, u_vec, v_vec, sketch_ip, crv->segments[seg_no] );
 	}
 
 	if( bu_debug&BU_DEBUG_MEM_CHECK )
