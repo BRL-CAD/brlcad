@@ -28,8 +28,8 @@ static char RCSnurb[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "db.h"
 #include "raytrace.h"
+#include "nurb.h"		/* before nmg.h */
 #include "nmg.h"
-#include "nurb.h"
 #include "rtgeom.h"
 #include "./debug.h"
 
