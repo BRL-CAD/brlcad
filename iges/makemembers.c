@@ -18,6 +18,8 @@
 	to a BRLCAD acceptable format, and creates the member records
 	for the region.  The tree is traversed in LNR order.	*/
 
+#include "conf.h"
+
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
