@@ -1,3 +1,23 @@
+#
+#			H E L P C O M M . T C L
+#
+# Authors -
+#	Lee Butler
+#	Robert G. Parker
+#
+# Source -
+#	The U. S. Army Research Laboratory
+#	Aberdeen Proving Ground, Maryland  21005
+#
+# Distribution Notice -
+#	Re-distribution of this software is restricted, as described in
+#       your "Statement of Terms and Conditions for the Release of
+#       The BRL-CAD Package" agreement.
+#
+# Description -
+#	Routines common to the BRL-CAD help system.
+#
+
 proc help_comm {data args} {
 	global $data
 
