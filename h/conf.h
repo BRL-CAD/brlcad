@@ -61,6 +61,8 @@
  *
  *	HAVE_POSIX_REGEXEC	POSIX regexec(), regcomp(), regfree(), regerror(), and regex.h
  *
+ *	USE_REGCOMP             Use system regcomp() and regexec()
+ *
  *	HAVE_STRCHR		Usually for folks who have strings.h
  *
  *	HAVE_VFORK		BSD, non-SYSV systems.
@@ -152,6 +154,7 @@
 #	define HAVE_SBRK_DECL		1
 #	define HAVE_REGEX_DECL		1
 #	define HAVE_POSIX_REGEXEC	1
+#	define USE_REGCOMP		1
 #	define HAVE_DLOPEN		1
 #endif
 
@@ -185,6 +188,7 @@
 /* #	define HAVE_GETOPT_DECL	1 -- is not available if __STDC__ */
 #	define HAVE_MEMORY_H	1
 #	define HAVE_LIMITS_H	1
+#	define USE_STRING_H	1
 #	undef _KERNEL  /* make sure the kernel calls are not used */
 #endif
 
@@ -273,6 +277,7 @@
 #	define HAVE_XOSDEFS_H	1
 #	define HAVE_SYS_ERRLIST_DECL	1
 #	define HAVE_POSIX_REGEXEC	1
+#	define USE_REGCOMP	1
 #	define HAVE_UNISTD_H	1
 #	define HAVE_STDLIB_H	1
 #	define HAVE_GETOPT_H	1
