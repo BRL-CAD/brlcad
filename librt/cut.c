@@ -231,9 +231,9 @@ const void * p1, * p2;
 	return CMP(p1,p2,st_max,Z);
 }
 
-static struct cmp_pair {
-	HIDDEN int (*cmp_min) BU_ARGS((const void *, const void *));
-	HIDDEN int (*cmp_max) BU_ARGS((const void *, const void *));
+HIDDEN struct cmp_pair {
+	int (*cmp_min) BU_ARGS((const void *, const void *));
+	int (*cmp_max) BU_ARGS((const void *, const void *));
 } pairs[] = {
 	{ rt_projXmin_comp, rt_projXmax_comp },
 	{ rt_projYmin_comp, rt_projYmax_comp },
