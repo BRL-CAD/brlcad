@@ -256,7 +256,7 @@ struct faceuse *fu;
 			NMG_CK_EDGEUSE( eu );
 
 			if( *eu->g.magic_p != NMG_EDGE_G_CNURB_MAGIC )
-				rt_bomb( "EU on NURB face does not have cnurb geometry\n" );
+				rt_bomb( "EU on NURB face does not have edge_g_cnurb geometry\n" );
 
 			eg = eu->g.cnurb_p;
 			NMG_CK_EDGE_G_CNURB( eg );
@@ -285,7 +285,7 @@ struct faceuse *fu;
 				vu = eu->vu_p;
 				NMG_CK_VERTEXUSE( vu );
 				if( *vu->a.magic_p != NMG_VERTEXUSE_A_CNURB_MAGIC )
-					rt_bomb( "Orient_nurb_face_loops: vertexuse in snurb faceuse doesn't have cnurb attribute\n" );
+					rt_bomb( "Orient_nurb_face_loops: vertexuse in face_g_snurb faceuse doesn't have edge_g_cnurb attribute\n" );
 				vg1 = vu->a.cnurb_p;
 				VMOVE( pts[edge_no], vg1->param )
 				edge_no++;
@@ -293,15 +293,13 @@ struct faceuse *fu;
 			else
 			{
 				fastf_t t1,t2;
-				struct cnurb crv;
 				hpoint_t crv_pt;
 				int coords;
 				int i;
 
-				nmg_hack_cnurb( &crv, eg );
-				t1 = crv.knot.knots[0];
-				t2 = crv.knot.knots[crv.knot.k_size-1];
-				coords = RT_NURB_EXTRACT_COORDS( crv.pt_type );
+				t1 = eg->k.knots[0];
+				t2 = eg->k.knots[eg->k.k_size-1];
+				coords = RT_NURB_EXTRACT_COORDS( eg->pt_type );
 
 				for( i=0 ; i<5 ; i++ )
 				{
@@ -310,8 +308,8 @@ struct faceuse *fu;
 					t = t1 + (t2 - t1)*0.2*(fastf_t)i;
 
 					VSETALLN( crv_pt, 0.0, coords )
-					rt_nurb_c_eval( &crv, t, crv_pt );
-					if( RT_NURB_IS_PT_RATIONAL( crv.pt_type ) )
+					rt_nurb_c_eval( eg, t, crv_pt );
+					if( RT_NURB_IS_PT_RATIONAL( eg->pt_type ) )
 						VSCALE( pts[edge_no], crv_pt, crv_pt[coords-1] )
 					else
 						VMOVE( pts[edge_no], crv_pt )

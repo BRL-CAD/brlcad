@@ -18,14 +18,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./iges_struct.h"
 #include "./iges_extern.h"
 
-struct cnurb *
+struct edge_g_cnurb *
 Get_cnurb_curve( curve_de, linear )
 int curve_de;
 int *linear;
 {
 	int i;
 	int curve;
-	struct cnurb *crv;
+	struct edge_g_cnurb *crv;
 
 	*linear = 0;
 
@@ -33,7 +33,7 @@ int *linear;
 	if( curve >= dirarraylen )
 	{
 		rt_log( "Get_cnurb_curve: DE=%d is too large, dirarraylen = %d\n", curve_de, dirarraylen );
-		return( (struct cnurb *)NULL );
+		return( (struct edge_g_cnurb *)NULL );
 	}
 
 	switch( dir[curve]->type )
@@ -51,7 +51,7 @@ int *linear;
 			{
 				rt_log( "Error in Get_cnurb_curve, looking for curve type %d, found %d\n" ,
 					dir[curve]->type , type );
-				return( (struct cnurb *)NULL );
+				return( (struct edge_g_cnurb *)NULL );
 
 			}
 			/* Read first point */
@@ -67,7 +67,7 @@ int *linear;
 			/* pt_type for rational UVW coords */
 			pt_type = RT_NURB_MAKE_PT_TYPE( 3, 3, 1 );
 
-			/* make a linear cnurb (order=2) */
+			/* make a linear edge_g_cnurb (order=2) */
 			crv = rt_nurb_new_cnurb( 2, 4, 2, pt_type );
 
 			/* insert control mesh */
@@ -75,10 +75,10 @@ int *linear;
 			VMOVE( &crv->ctl_points[3], end_pt );
 
 			/* insert knot values */
-			crv->knot.knots[0] = 0.0;
-			crv->knot.knots[1] = 0.0;
-			crv->knot.knots[2] = 1.0;
-			crv->knot.knots[3] = 1.0;
+			crv->k.knots[0] = 0.0;
+			crv->k.knots[1] = 0.0;
+			crv->k.knots[2] = 1.0;
+			crv->k.knots[3] = 1.0;
 
 			*linear = 1;
 
@@ -94,5 +94,5 @@ int *linear;
 			break;
 	}
 
-	return( (struct cnurb *)NULL );
+	return( (struct edge_g_cnurb *)NULL );
 }

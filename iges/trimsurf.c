@@ -29,11 +29,11 @@ static fastf_t v_translation=0.0;
 
 #define CTL_INDEX(_i,_j)	((_i * n_cols + _j) * ncoords)
 
-struct snurb *
+struct face_g_snurb *
 Get_nurb_surf( entityno )
 int entityno;
 {
-	struct snurb *srf;
+	struct face_g_snurb *srf;
 	point_t pt;
 	int entity_type;
 	int i,j;
@@ -42,7 +42,7 @@ int entityno;
 	int rational;
 	int ncoords;
 	int n_rows,n_cols,u_order,v_order;
-	int n_u_knots,n_v_knots;
+	int n_u,n_v;
 	int pt_type;
 	fastf_t u_min,u_max;
 	fastf_t v_min,v_max;
@@ -54,7 +54,7 @@ int entityno;
 	{
 		rt_log( "Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entityno]->direct , dir[entityno]->name );
-		return( (struct snurb *)NULL );
+		return( (struct face_g_snurb *)NULL );
 	}
 
 	Readrec( dir[entityno]->param );
@@ -62,7 +62,7 @@ int entityno;
 	if( entity_type != 128 )
 	{
 		rt_log( "Only B-Spline surfaces allowed for faces (found type %d)\n", entity_type );
-		return( (struct snurb *)NULL );
+		return( (struct face_g_snurb *)NULL );
 	}
 	Readint( &i , "" );
 	n_cols = i+1;
@@ -82,37 +82,37 @@ int entityno;
 	Readint( &i , "" );
 	Readint( &i , "" );
 
-	n_u_knots = n_cols+u_order;
-	n_v_knots = n_rows+v_order;
-	srf = rt_nurb_new_snurb( u_order, v_order, n_u_knots, n_v_knots, n_rows, n_cols, pt_type );
+	n_u = n_cols+u_order;
+	n_v = n_rows+v_order;
+	srf = rt_nurb_new_snurb( u_order, v_order, n_u, n_v, n_rows, n_cols, pt_type );
 
 	/* Read knot vectors */
-	for( i=0 ; i<n_u_knots ; i++ )
+	for( i=0 ; i<n_u ; i++ )
 	{
 		Readdbl( &a , "" );
-		srf->u_knots.knots[i] = a;
+		srf->u.knots[i] = a;
 	}
-	for( i=0 ; i<n_v_knots ; i++ )
+	for( i=0 ; i<n_v ; i++ )
 	{
 		Readdbl( &a , "" );
-		srf->v_knots.knots[i] = a;
+		srf->v.knots[i] = a;
 	}
 
 	/* Insure that knot values are non-negative */
-	if( srf->v_knots.knots[0] < 0.0 )
+	if( srf->v.knots[0] < 0.0 )
 	{
-		v_translation = (-srf->v_knots.knots[0]);
-		for( i=0 ; i<n_v_knots ; i++ )
-			srf->v_knots.knots[i] += v_translation;
+		v_translation = (-srf->v.knots[0]);
+		for( i=0 ; i<n_v ; i++ )
+			srf->v.knots[i] += v_translation;
 	}
 	else
 		v_translation = 0.0;
 
-	if( srf->u_knots.knots[0] < 0.0 )
+	if( srf->u.knots[0] < 0.0 )
 	{
-		u_translation = (-srf->u_knots.knots[0]);
-		for( i=0 ; i<n_u_knots ; i++ )
-			srf->u_knots.knots[i] += u_translation;
+		u_translation = (-srf->u.knots[0]);
+		for( i=0 ; i<n_u ; i++ )
+			srf->u.knots[i] += u_translation;
 	}
 	else
 		u_translation = 0.0;
@@ -163,7 +163,7 @@ int entityno;
 void
 Assign_cnurb_to_eu( eu, crv )
 struct edgeuse *eu;
-struct cnurb *crv;
+struct edge_g_cnurb *crv;
 {
 	fastf_t *ctl_points;
 	fastf_t *knots;
@@ -181,21 +181,21 @@ struct cnurb *crv;
 	for( i=0 ; i<crv->c_size ; i++ )
 		VMOVEN( &ctl_points[i*ncoords], &crv->ctl_points[i*ncoords], ncoords )
 
-	knots = (fastf_t *)rt_calloc( crv->knot.k_size, sizeof( fastf_t ),
+	knots = (fastf_t *)rt_calloc( crv->k.k_size, sizeof( fastf_t ),
 			"Assign_cnurb_to_eu: knots" );
 
-	for( i=0 ; i<crv->knot.k_size; i++ )
-		knots[i] = crv->knot.knots[i];
+	for( i=0 ; i<crv->k.k_size; i++ )
+		knots[i] = crv->k.knots[i];
 
-	nmg_edge_g_cnurb( eu, crv->order, crv->knot.k_size, knots, crv->c_size,
+	nmg_edge_g_cnurb( eu, crv->order, crv->k.k_size, knots, crv->c_size,
 			crv->pt_type, ctl_points );
 }
 
-struct cnurb *
+struct edge_g_cnurb *
 Get_cnurb( entity_no )
 int entity_no;
 {
-	struct cnurb *crv;
+	struct edge_g_cnurb *crv;
 	point_t pt,pt2;
 	int entity_type;
 	int num_pts;
@@ -212,7 +212,7 @@ int entity_no;
 	{
 		rt_log( "Get_cnurb: Illegal parameter pointer for entity D%07d (%s)\n" ,
 				dir[entity_no]->direct , dir[entity_no]->name );
-		return( (struct cnurb *)NULL );
+		return( (struct edge_g_cnurb *)NULL );
 	}
 
 	Readrec( dir[entity_no]->param );
@@ -221,7 +221,7 @@ int entity_no;
 	if( entity_type != 126 )
 	{
 		rt_log( "Get_cnurb: Was expecting spline curve, got type %d\n" , entity_type );
-		return( (struct cnurb *)NULL );
+		return( (struct edge_g_cnurb *)NULL );
 	}
 
 	Readint( &i , "" );
@@ -252,7 +252,7 @@ int entity_no;
 	for( i=0 ; i<num_pts+degree+1 ; i++ )
 	{
 		Readdbl( &a , "" );
-		crv->knot.knots[i] = a;
+		crv->k.knots[i] = a;
 	}
 
 	/* weights */
@@ -303,7 +303,7 @@ void
 Assign_vu_geom( vu, u, v, srf )
 struct vertexuse *vu;
 fastf_t u,v;
-struct snurb *srf;
+struct face_g_snurb *srf;
 {
 	point_t uvw;
 	hpoint_t pt_on_srf;
@@ -334,10 +334,10 @@ void
 Add_trim_curve( entity_no, lu, srf )
 int entity_no;
 struct loopuse *lu;
-struct snurb *srf;
+struct face_g_snurb *srf;
 {
 	int entity_type;
-	struct cnurb *crv;
+	struct edge_g_cnurb *crv;
 	struct edgeuse *eu;
 	struct edgeuse *new_eu;
 	struct vertex *vp;
@@ -417,7 +417,7 @@ struct snurb *srf;
 			break;
 		case 100:	/* circular arc */
 			{
-				struct cnurb *crv;
+				struct edge_g_cnurb *crv;
 				point_t center, start, end;
 
 				/* read Arc center start and end points */
@@ -434,7 +434,7 @@ struct snurb *srf;
 				Readcnv( &y , "" );	/* end */
 				VSET( end, y+u_translation, x+v_translation, z )
 
-				/* build cnurb arc */
+				/* build edge_g_cnurb arc */
 				crv = rt_arc2d_to_cnurb( center, start, end, RT_NURB_PT_UV, &tol );
 
 				/* apply transformation to control points */
@@ -511,10 +511,10 @@ struct loopuse *
 Make_trim_loop( entity_no, orientation, srf, fu )
 int entity_no;
 int orientation;
-struct snurb *srf;
+struct face_g_snurb *srf;
 struct faceuse *fu;
 {
-	struct cnurb *crv;
+	struct edge_g_cnurb *crv;
 	struct loopuse *lu;
 	struct edgeuse *eu;
 	struct edgeuse *new_eu;
@@ -569,8 +569,8 @@ struct faceuse *fu;
 			break;
 		case 100:	/* circular arc (must be full cirle here) */
 			{
-				struct cnurb *crv;
-				struct cnurb *crv1,*crv2;
+				struct edge_g_cnurb *crv;
+				struct edge_g_cnurb *crv1,*crv2;
 				point_t center, start, end;
 				struct rt_list curv_hd;
 rt_log( "Full circle\n" );
@@ -589,14 +589,14 @@ rt_log( "Full circle\n" );
 				Readcnv( &y , "" );	/* end */
 				VSET( end, x+u_translation, y+v_translation, z )
 
-				/* build cnurb circle */
+				/* build edge_g_cnurb circle */
 				crv = rt_arc2d_to_cnurb( center, start, end, RT_NURB_PT_UV, &tol );
 
 				/* split circle into two pieces */
 				RT_LIST_INIT( &curv_hd );
 				rt_nurb_c_split( &curv_hd, crv );
-				crv1 = RT_LIST_FIRST( cnurb, &curv_hd );
-				crv2 = RT_LIST_LAST( cnurb, &curv_hd );
+				crv1 = RT_LIST_FIRST( edge_g_cnurb, &curv_hd );
+				crv2 = RT_LIST_LAST( edge_g_cnurb, &curv_hd );
 
 				/* Split last edge in loop */
 				eu = RT_LIST_LAST( edgeuse, &lu->down_hd );
@@ -636,8 +636,8 @@ rt_log( "Full circle\n" );
 
 		case 126:	/* spline curve (must be closed loop) */
 			{
-				struct cnurb *crv;
-				struct cnurb *crv1,*crv2;
+				struct edge_g_cnurb *crv;
+				struct edge_g_cnurb *crv1,*crv2;
 				struct rt_list curv_hd;
 
 				/* Get spline curve */
@@ -649,8 +649,8 @@ rt_log( "CLosed loop spline curve\n" );
 				/* split circle into two pieces */
 				RT_LIST_INIT( &curv_hd );
 				rt_nurb_c_split( &curv_hd, crv );
-				crv1 = RT_LIST_FIRST( cnurb, &curv_hd );
-				crv2 = RT_LIST_LAST( cnurb, &curv_hd );
+				crv1 = RT_LIST_FIRST( edge_g_cnurb, &curv_hd );
+				crv2 = RT_LIST_LAST( edge_g_cnurb, &curv_hd );
 				/* Split last edge in loop */
 				eu = RT_LIST_LAST( edgeuse, &lu->down_hd );
 				new_eu = nmg_eusplit( (struct vertex *)NULL, eu, 0 );
@@ -710,7 +710,7 @@ Make_loop( entity_no, orientation, on_surf_de, srf, fu )
 int entity_no;
 int orientation;
 int on_surf_de;
-struct snurb *srf;
+struct face_g_snurb *srf;
 struct faceuse *fu;
 {
 	struct loopuse *lu;
@@ -751,7 +751,7 @@ struct faceuse *fu;
 
 struct loopuse *
 Make_default_loop( srf, fu )
-struct snurb *srf;
+struct face_g_snurb *srf;
 struct faceuse *fu;
 {
 	struct shell *s;
@@ -842,7 +842,7 @@ struct faceuse *fu;
 void
 Assign_surface_to_fu( fu, srf )
 struct faceuse *fu;
-struct snurb *srf;
+struct face_g_snurb *srf;
 {
 	fastf_t *ukv;
 	fastf_t *vkv;
@@ -855,13 +855,13 @@ struct snurb *srf;
 
 	ncoords = RT_NURB_EXTRACT_COORDS( srf->pt_type );
 
-	ukv = (fastf_t *)rt_calloc( srf->u_knots.k_size, sizeof( fastf_t ), "Assign_surface_to_fu: ukv" );
-	for( i=0 ; i<srf->u_knots.k_size ; i++ )
-		ukv[i] = srf->u_knots.knots[i];
+	ukv = (fastf_t *)rt_calloc( srf->u.k_size, sizeof( fastf_t ), "Assign_surface_to_fu: ukv" );
+	for( i=0 ; i<srf->u.k_size ; i++ )
+		ukv[i] = srf->u.knots[i];
 
-	vkv = (fastf_t *)rt_calloc( srf->v_knots.k_size, sizeof( fastf_t ), "Assign_surface_to_fu: vkv" );
-	for( i=0 ; i<srf->v_knots.k_size ; i++ )
-		vkv[i] = srf->v_knots.knots[i];
+	vkv = (fastf_t *)rt_calloc( srf->v.k_size, sizeof( fastf_t ), "Assign_surface_to_fu: vkv" );
+	for( i=0 ; i<srf->v.k_size ; i++ )
+		vkv[i] = srf->v.knots[i];
 
 	mesh = (fastf_t *)rt_calloc( srf->s_size[0]*srf->s_size[1]*ncoords, sizeof( fastf_t ),
 		"Assign_surface_to_fu: mesh" );
@@ -869,7 +869,7 @@ struct snurb *srf;
 	for( i=0 ; i<srf->s_size[0]*srf->s_size[1]*ncoords ; i++ )
 		mesh[i] = srf->ctl_points[i];
 
-	nmg_face_g_snurb( fu, srf->order[0], srf->order[1], srf->u_knots.k_size, srf->v_knots.k_size,
+	nmg_face_g_snurb( fu, srf->order[0], srf->order[1], srf->u.k_size, srf->v.k_size,
 			ukv, vkv, srf->s_size[0], srf->s_size[1], srf->pt_type, mesh );
 }
 
@@ -878,7 +878,7 @@ trim_surf( entityno , s )
 int entityno;
 struct shell *s;
 {
-	struct snurb *srf;
+	struct face_g_snurb *srf;
 	struct faceuse *fu;
 	struct loopuse *lu;
 	struct loopuse *lumate;
@@ -888,7 +888,7 @@ struct shell *s;
 	int entity_type;
 	int surf_de;
 	int nverts;
-	int u_order,v_order,n_u_knots,n_v_knots,n_rows,n_cols,pt_type;
+	int u_order,v_order,n_u,n_v,n_rows,n_cols,pt_type;
 	fastf_t *ukv,*vkv,*mesh,u_min,u_max,v_min,v_max;
 	int coords;
 	int has_outer_boundary,inner_loop_count,outer_loop;
@@ -923,7 +923,7 @@ struct shell *s;
 			Readint( &inner_loop[i] , "" );
 	}
 
-	if( (srf=Get_nurb_surf( (surf_de-1)/2 )) == (struct snurb *)NULL )
+	if( (srf=Get_nurb_surf( (surf_de-1)/2 )) == (struct face_g_snurb *)NULL )
 	{
 		rt_free( (char *)inner_loop , "trim_surf: inner_loop" );
 		return( (struct faceuse *)NULL );

@@ -22,7 +22,7 @@ int
 Add_nurb_loop_to_face( s, fu, srf, loop_entityno , face_orient )
 struct shell *s;
 struct faceuse *fu;
-struct snurb *srf;
+struct face_g_snurb *srf;
 int loop_entityno;
 int face_orient;
 { 
@@ -194,7 +194,7 @@ int face_orient;
 		{
 			int linear;
 			int coords;
-			struct cnurb *crv;
+			struct edge_g_cnurb *crv;
 			struct vertex *v1,*v2;
 			struct edgeuse *new_eu;
 			point_t start_uv;
@@ -247,7 +247,7 @@ int face_orient;
 			{
 				/* this edge runs to/from one vertex, need to split */
 				struct rt_list split_hd;
-				struct cnurb *crv1,*crv2;
+				struct edge_g_cnurb *crv1,*crv2;
 				point_t start_uv, end_uv;
 				hpoint_t pt_on_srf;
 
@@ -259,8 +259,8 @@ int face_orient;
 
 				/* split the curve */
 				rt_nurb_c_split( &split_hd, crv );
-				crv1 = RT_LIST_FIRST( cnurb, &split_hd );
-				crv2 = RT_LIST_LAST( cnurb, &split_hd );
+				crv1 = RT_LIST_FIRST( edge_g_cnurb, &split_hd );
+				crv2 = RT_LIST_LAST( edge_g_cnurb, &split_hd );
 
 				/* get geometry for new vertex */
 				coords = RT_NURB_EXTRACT_COORDS( crv1->pt_type );
@@ -332,9 +332,9 @@ int face_orient;
 				/* free memory */
 				while( RT_LIST_NON_EMPTY( &split_hd ) )
 				{
-					struct cnurb *tmp_crv;
+					struct edge_g_cnurb *tmp_crv;
 
-					tmp_crv = RT_LIST_FIRST( cnurb, &split_hd );
+					tmp_crv = RT_LIST_FIRST( edge_g_cnurb, &split_hd );
 					RT_LIST_DEQUEUE( &tmp_crv->l );
 					rt_free( (char *)tmp_crv, "Add_nurb_loop_to_face: tmp_crv" );
 				}
@@ -350,7 +350,7 @@ int face_orient;
 					Assign_cnurb_to_eu( eu, crv );
 			}
 
-			rt_free( (char *)crv->knot.knots, "Add_nurb_loop_to_face: crv->knot.knots" );
+			rt_free( (char *)crv->k.knots, "Add_nurb_loop_to_face: crv->k.knots" );
 			rt_free( (char *)crv->ctl_points, "Add_nurb_loop_to_face: crv->ctl_points" );
 			rt_free( (char *)crv, "Add_nurb_loop_to_face: crv" );
 
@@ -388,7 +388,7 @@ err:
 
 struct faceuse *
 Make_nurb_face( srf, s, surf_entityno )
-struct snurb **srf;
+struct face_g_snurb **srf;
 struct shell *s;
 int surf_entityno;
 {
@@ -404,7 +404,7 @@ int surf_entityno;
 		return( (struct faceuse *)NULL );
 	}
 
-	if( ((*srf) = Get_nurb_surf( surf_entityno )) == (struct snurb *)NULL )
+	if( ((*srf) = Get_nurb_surf( surf_entityno )) == (struct face_g_snurb *)NULL )
 	{
 		rt_log( "Make_nurb_face: Get_nurb_surf failed for surface entity (%d), face ignored\n",	 surf_entityno );
 		return( (struct faceuse *)NULL );

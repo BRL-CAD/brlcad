@@ -35,7 +35,7 @@ int entityno;
 	int	count=0;
 	fastf_t	min_knot;
 	fastf_t max_wt;
-	struct snurb *b_patch;
+	struct face_g_snurb *b_patch;
 
 	/* Acquiring Data */
 
@@ -64,8 +64,8 @@ int entityno;
 	/*  spl_new: Creates a spline surface data structure
 	 *	u_order		(e.g. cubic = order 4)
 	 *	v_order
-	 *	num_u_knots	(e.g. num control points + order)
-	 *	num_v_knots
+	 *	num_u	(e.g. num control points + order)
+	 *	num_v
 	 *	num_rows	num control points in V direction
 	 *	num_cols	num control points in U direction
 	 *	point_size	number of values in a point (e.g. 3 or 4)
@@ -79,16 +79,16 @@ int entityno;
 	min_knot = 0.0;
 	for (i = 0; i <= n1+2*m1; i++)
 	{
-		Readdbl( &b_patch->u_knots.knots[i] , "" );
-		if( b_patch->u_knots.knots[i] < min_knot )
-			min_knot = b_patch->u_knots.knots[i];
+		Readdbl( &b_patch->u.knots[i] , "" );
+		if( b_patch->u.knots[i] < min_knot )
+			min_knot = b_patch->u.knots[i];
 	}
 
 	if( min_knot < 0.0 )
 	{
 		for (i = 0; i <= n1+2*m1; i++)
 		{
-			b_patch->u_knots.knots[i] -= min_knot;
+			b_patch->u.knots[i] -= min_knot;
 		}
 	}
 
@@ -96,15 +96,15 @@ int entityno;
 	/* V knot vector */
 	for (i = 0; i <= n2+2*m2; i++)
 	{
-		Readdbl( &b_patch->v_knots.knots[i] , "" );
-		if( b_patch->v_knots.knots[i] < min_knot )
-			min_knot = b_patch->v_knots.knots[i];
+		Readdbl( &b_patch->v.knots[i] , "" );
+		if( b_patch->v.knots[i] < min_knot )
+			min_knot = b_patch->v.knots[i];
 	}
 	if( min_knot < 0.0 )
 	{
 		for (i = 0; i <= n1+2*m1; i++)
 		{
-			b_patch->v_knots.knots[i] -= min_knot;
+			b_patch->v.knots[i] -= min_knot;
 		}
 	}
 

@@ -15,8 +15,8 @@
 #include "./b_spline.h"
 
 struct b_spline *
-spl_new(u_order, v_order, n_u_knots, n_v_knots, n_rows, n_cols, evp)
-int u_order, v_order, n_u_knots, n_v_knots, n_rows, n_cols, evp;
+spl_new(u_order, v_order, n_u, n_v, n_rows, n_cols, evp)
+int u_order, v_order, n_u, n_v, n_rows, n_cols, evp;
 {
 	struct b_spline *srf;
 
@@ -29,11 +29,11 @@ int u_order, v_order, n_u_knots, n_v_knots, n_rows, n_cols, evp;
 	srf->u_kv = (struct knot_vec *) rt_malloc(sizeof(struct knot_vec), "spl_new: srf->u_kv");
 	srf->v_kv = (struct knot_vec *) rt_malloc(sizeof(struct knot_vec), "spl_new: srf->v_kv");
 
-	srf->u_kv->k_size = n_u_knots;
-	srf->v_kv->k_size = n_v_knots;
+	srf->u_kv->k_size = n_u;
+	srf->v_kv->k_size = n_v;
 
-	srf->u_kv->knots = (fastf_t *) rt_calloc(n_u_knots, sizeof(fastf_t), "spl_new: srf->u_kv->knots");
-	srf->v_kv->knots = (fastf_t *) rt_calloc(n_v_knots, sizeof(fastf_t), "spl_new: srf->v_kv->knots");
+	srf->u_kv->knots = (fastf_t *) rt_calloc(n_u, sizeof(fastf_t), "spl_new: srf->u_kv->knots");
+	srf->v_kv->knots = (fastf_t *) rt_calloc(n_v, sizeof(fastf_t), "spl_new: srf->v_kv->knots");
 
 	srf->ctl_mesh = (struct b_mesh *) rt_malloc(sizeof(struct b_mesh), "spl_new: srf->ctl_mesh");
 

@@ -30,7 +30,7 @@ int face_orient;
 	int		loop;
 	int		planar=0;
 	struct faceuse	*fu;			/* NMG face use */
-	struct snurb	*srf;			/* NURB Surface */
+	struct face_g_snurb	*srf;			/* NURB Surface */
 
 	/* Acquiring Data */
 
