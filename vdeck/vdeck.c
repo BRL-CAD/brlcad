@@ -1,7 +1,7 @@
 /*
- *	SCCS id:	@(#) vdeck.c	2.2
- *	Last edit: 	6/20/84 at 12:22:26
- *	Retrieved: 	8/13/86 at 08:09:39
+ *	SCCS id:	@(#) vdeck.c	2.3
+ *	Last edit: 	7/11/84 at 15:38:55
+ *	Retrieved: 	8/13/86 at 08:10:10
  *	SCCS archive:	/m/cad/vdeck/RCS/s.vdeck.c
  *
  *	Author:		Gary S. Moss
@@ -11,7 +11,7 @@
  *			(301)278-6647 or AV-283-6647
  */
 static
-char	sccsTag[] = "@(#) vdeck.c	2.2	last edit 6/20/84 at 12:22:26";
+char	sccsTag[] = "@(#) vdeck.c	2.3	last edit 7/11/84 at 15:38:55";
 
 /*
  *	Derived from KARDS, written by Keith Applin.
@@ -183,7 +183,7 @@ matp_t	old_xlate;
 	Record		rec;
 	Directory	*nextdp, *tdp;
 	mat_t			new_xlate;
-	long	savepos;
+	long	savepos, RgOffset;
 	int	nparts;
 	int	i, j;
 	int	length;
@@ -228,6 +228,7 @@ matp_t	old_xlate;
 			}
 			sprintf( regBufPtr, "rg%c", operate );
 			regBufPtr += 3;
+			RgOffset = (long)(regBufPtr - regBuffer);
 
 			/* check if this region is in desc yet
 			 */
@@ -254,7 +255,8 @@ matp_t	old_xlate;
 				 */
 				findrr[numrr].rr_pos = lseek(	regfd,
 								0L,
-								1 );
+								1
+								) + RgOffset;
 				for( i = 0; i < 16; i++ )
 					findrr[numrr].rr_name[i] =
 						   rec.c.c_name[i];
