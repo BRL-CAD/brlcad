@@ -1,0 +1,174 @@
+'\"	last edit:	91/02/15	P J Tanenbaum
+.\" Set the interparagraph spacing to 1 (default is 0.4)
+.PD 1v
+.\"
+.\" The man page begins...
+.\"
+.TH NIRT 1
+.SH NAME
+nirt \- interactively ray trace an MGED model
+.SH SYNOPSIS
+.BR "nirt  [ -u " n " ] " "model.g objects ..."
+.SH DESCRIPTION
+.I Nirt
+operates on the specified
+.I objects
+in the database
+.I model.g,
+tracing rays according to commands read from the standard input
+and producing an ASCII report of the results.
+The user can interact with
+.I nirt,
+repeatedly specifying origination points and directions from which to fire rays
+and the format and destination for the reports.
+Locations may be input and output in either
+model coordinates (\fIx\fR, \fIy\fR, \fIz\fR)
+or view (a.k.a. grid-plane) coordinates (\fIh\fR, \fIv\fR, \fId\fR).
+Similarly, directions may be input and output either as
+vectors expressed in model coordinates or as
+angles of azimuth and elevation.
+.SS Commands
+The commands and their meanings are given below.
+.TP 12
+.BI "xyz [" "x y z" "]"
+Causes future rays to be fired from the point
+(\fIx\fR, \fIy\fR, \fIz\fR).
+Without arguments, this command causes
+.I nirt
+to print the current ray origination point in model coordinates.
+Default is (0, 0, 0).
+Changing (\fIx\fR, \fIy\fR, \fIz\fR) will change
+(\fIh\fR, \fIv\fR, \fId\fR),
+according to the current direction vector.
+.TP 12
+.BI "hv [" "h v" "[" d "]]"
+Causes future rays to be fired from the point
+(\fIh\fR, \fIv\fR, \fId\fR).
+If this command is given with only two arguments,
+.I nirt
+interprets them as \fIh\fR and \fIv\fR,
+and \fId\fR retains its previous value.
+Without arguments, the command causes
+.I nirt
+to print the current ray origination point in view coordinates.
+Default is (0, 0, 0).
+Changing (\fIh\fR, \fIv\fR, \fId\fR) will change
+(\fIx\fR, \fIy\fR, \fIz\fR),
+according to the current direction vector.
+.TP 12
+.BI "dir [" "dx dy dz" "]"
+Causes future rays to be fired in the direction aligned with
+(\fIdx\fR, \fIdy\fR, \fIdz\fR).
+Without arguments, this command causes
+.I nirt
+to print the current (unit-length) direction vector.
+Default is (-1, 0, 0).
+Changing (\fIdx\fR, \fIdy\fR, \fIdz\fR) will change
+the azimuth and elevation angles.
+.TP 12
+.BI "ae [" " az el" "]"
+Causes future rays to be fired from
+azimuth = \fIaz\fR and elevation = \fIel\fR.
+Without arguments, this command causes
+.I nirt
+to print the current values of the azimuth and elevation angles.
+Default is (0, 0).
+Changing azimuth and elevation will change the direction vector.
+.TP 12
+.B s
+Causes
+.I nirt
+to fire a ray from the current origination point in the current direction.
+.TP 12
+.BI "useair [" n "]"
+Sets the
+.I useair
+member of the
+.I rt_i
+structure to \fIn\fR.
+If \fIn\fR is 0, then
+.I nirt
+ignores any air in the geometry.
+Without arguments, this command causes
+.I nirt
+to print the current value of
+.I useair.
+Default is 0.
+.TP 12
+.BI "units [" u "]"
+Causes
+.I nirt
+to read and write all distances and locations in units of \fIu\fR.
+Valid choices for \fIu\fR are ``mm,'' ``cm,'' ``m,'' ``in,'' and ``ft.''
+Without arguments, this command causes
+.I nirt
+to print the current choice of I/O units.
+Default is the units of
+.I model.g.
+.TP 12
+.BI "fmt [" "t format item item ..." "]"
+Sets the action for output statements of type \fIt\fR.
+See the discussion of output statements below.
+.TP 12
+.BI "dest [" d "]"
+Sets the destination for subsequent output actions to \fId\fR.
+If the first character of \fId\fR is `|',
+then
+\fId\fR is interpreted as a pipeline to which to write its output.
+Otherwise if \fId\fR is the string ``default,''
+.I nirt
+sets the destination to the standard output.
+Otherwise \fId\fR is interpreted as a file.
+In any event, \fId\fR is not closed until the user quits
+.I nirt
+or resets the destination by another invocation of the
+.I dest
+command.
+Without arguments, this command causes
+.I nirt
+to print the current value of \fId\fR.
+Default is ``default,'' that is, the standard output.
+.TP 12
+.BI "statefile [" f "]"
+Sets the name of the state file to which to dump
+and from which to load state information.
+See the
+.IR dump " and " load
+commands below.
+Without arguments, this command causes
+.I nirt
+to print the current name of the state file.
+Default is ``nirt_state.''
+.TP 12
+.B dump
+Writes state information to the state file.
+The ray origination point and direction vector,
+useair, units, destination, and all the output actions are dumped.
+.TP 12
+.B load
+Reads state information from the state file.
+The state file loaded may contain any
+.I nirt
+commands.
+.SS Output Statements
+.I Nirt
+allows the user a high degree of control of
+what information gets printed out for each ray and in what format.
+This control is exercised via the
+.I fmt
+command.
+.SH DIAGNOSTICS
+If
+\fIname\fR.s
+is longer than the fifteen-character limit imposed by
+.IR mged (1)
+or the input stream does not conform to the expected format,
+then
+.IR showshot
+complains and exits with status 1.
+.SH SEE ALSO
+mged(1), nirt(1)
+.SH AUTHOR
+Natalie Eberius
+.br
+Paul Tanenbaum
