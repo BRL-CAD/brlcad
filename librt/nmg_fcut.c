@@ -73,7 +73,7 @@ static char *nmg_state_names[] = {
 #define NMG_V_ASSESSMENT_PREV(_a)	(((_a)>>2)&3)
 #define NMG_V_ASSESSMENT_NEXT(_a)	((_a)&3)
 
-static char *nmg_v_assessment_names[17] = {
+static CONST char *nmg_v_assessment_names[32] = {
 	"Left,Left",
 	"Left,Right",
 	"Left,On_Forw",
@@ -90,10 +90,25 @@ static char *nmg_v_assessment_names[17] = {
 	"On_Rev,Right",
 	"On_Rev,On_Forw",
 	"On_Rev,On_Rev",
-	"LONE_V"
+	"LONE_V",		/* 16 */
+	"?17",
+	"?18",
+	"?19",
+	"?20",
+	"?21",
+	"?22",
+	"?23",
+	"?24",
+	"?25",
+	"?26",
+	"?27",
+	"?28",
+	"?29",
+	"?30",
+	"?31"
 };
 
-static char *nmg_e_assessment_names[4] = {
+static CONST char *nmg_e_assessment_names[4] = {
 	"LEFT",
 	"RIGHT",
 	"ON_FORW",
