@@ -125,6 +125,7 @@ struct nmg_ptbl {
 #define NMG_VERTEX_G_MAGIC	727737707
 #define NMG_VERTEXUSE_MAGIC	12341234
 #define NMG_VERTEXUSE_A_MAGIC	0x69676874
+#define NMG_LIST_MAGIC		0x8d45a6c8
 
 /* macros to check/validate a structure pointer
  */
@@ -133,11 +134,11 @@ struct nmg_ptbl {
 		rt_log("ERROR: NMG null %s ptr, file %s, line %d\n", \
 			_str, __FILE__, __LINE__ ); \
 		rt_bomb("NULL NMG pointer"); \
-	} else if( (_ptr)->magic != (_magic) )  { \
+	} else if( *((long *)(_ptr)) != (_magic) )  { \
 		rt_log("ERROR: NMG bad %s ptr x%x, s/b x%x, was %s(x%x), file %s, line %d\n", \
 			_str, _ptr, _magic, \
-			nmg_identify_magic( (_ptr)->magic ), \
-			 (_ptr)->magic, __FILE__, __LINE__ ); \
+			nmg_identify_magic( *((long *)(_ptr)) ), \
+			*((long *)(_ptr)), __FILE__, __LINE__ ); \
 		rt_bomb("Bad NMG pointer"); \
 	}
 
@@ -175,16 +176,17 @@ rt_bomb("Bad NMG geometry\n"); \
 #define NMG_CK_VERTEX_G(_p)	NMG_CKMAG(_p, NMG_VERTEX_G_MAGIC, "vertex_g")
 #define NMG_CK_VERTEXUSE(_p)	NMG_CKMAG(_p, NMG_VERTEXUSE_MAGIC, "vertexuse")
 #define NMG_CK_VERTEXUSE_A(_p)	NMG_CKMAG(_p, NMG_VERTEXUSE_A_MAGIC, "vertexuse_a")
+#define NMG_CK_LIST(_p)		NMG_CKMAG(_p, NMG_LIST_MAGIC, "nmg_list")
 
 #define NMG_TEST_LOOPUSE(_p) \
-	if (!(_p)->up.magic_p || !(_p)->next || !(_p)->last || \
+	if (!(_p)->up.magic_p || !(_p)->l.forw || !(_p)->l.back || \
 	    !(_p)->l_p || !(_p)->lumate_p || !(_p)->down.magic_p) { \
 		rt_log("at %d in %s BAD loopuse member pointer\n", \
 			__LINE__, __FILE__); nmg_pr_lu(_p, (char *)NULL); \
 			rt_bomb("Null pointer\n"); }
 
 #define NMG_TEST_EDGEUSE(_p) \
-	if (!(_p)->next || !(_p)->last || !(_p)->eumate_p || \
+	if (!(_p)->l.forw || !(_p)->l.back || !(_p)->eumate_p || \
 	    !(_p)->radial_p || !(_p)->e_p || !(_p)->vu_p || \
 	    !(_p)->up.magic_p ) { \
 		rt_log("in %s at %d Bad edgeuse member pointer\n",\
@@ -195,211 +197,328 @@ rt_bomb("Bad NMG geometry\n"); \
 	    	rt_log("in %s at %d edgeuse lost vertexuse\n",\
 	    		 __FILE__, __LINE__); rt_bomb("bye");}
 
+
+/************************************************************************
+ *									*
+ *			Doubly-linked list support			*
+ *									*
+ ************************************************************************/
+
+struct nmg_list  {
+	long		magic;
+	struct nmg_list	*forw;		/* "forward", "next" */
+	struct nmg_list	*back;		/* "back", "last" */
+};
+
+/* These macros all expect pointers to nmg_list structures */
+
+/* Insert "new" item in front of "old" item.  Often, "old" is the head. */
+/* To put the new item at the tail of the list, insert before the head */
+#define NMG_LIST_INSERT(old,new)	{ \
+	(new)->back = (old)->back; \
+	(old)->back = (new); \
+	(new)->forw = (old); \
+	(new)->back->forw = (new);  }
+
+/* Append "new" item after "old" item.  Often, "old" is the head. */
+/* To put the new item at the head of the list, append after the head */
+#define NMG_LIST_APPEND(old,new)	{ \
+	(new)->forw = (old)->forw; \
+	(new)->back = (old); \
+	(old)->forw = (new); \
+	(new)->forw->back = (new);  }
+
+/* Dequeue "cur" item from anywhere in doubly-linked list */
+#define NMG_LIST_DEQUEUE(cur)	{ \
+	(cur)->forw->back = (cur)->back; \
+	(cur)->back->forw = (cur)->forw; \
+	(cur)->forw = (cur)->back = (struct nmg_list *)NULL; }
+
+/* Test if a doubly linked list is empty, given head pointer */
+#define NMG_LIST_IS_EMPTY(hp)	((hp)->forw == (hp))
+#define NMG_LIST_NON_EMPTY(hp)	((hp)->forw != (hp))
+
+#define NMG_LIST_INIT(hp)	{ \
+	(hp)->forw = (hp)->back = (hp); \
+	(hp)->magic = NMG_LIST_MAGIC;	/* sanity */ }
+
+/*
+ *  Macros for walking a linked list, where the first element of
+ *  some application structure is an nmg_list structure.
+ *  Thus, the pointer to the nmg_list struct is a "pun" for the
+ *  application structure as well.
+ */
+/* Return re-cast pointer to first element on list.
+ * No checking is performed to see if list is empty.
+ */
+#define NMG_LIST_LAST(structure,hp)	\
+	((struct structure *)((hp)->back))
+#define NMG_LIST_FIRST(structure,hp)	\
+	((struct structure *)((hp)->forw))
+#define NMG_LIST_NEXT(structure,hp)	\
+	((struct structure *)((hp)->forw))
+#define NMG_LIST_MORE(p,structure,hp)	\
+	((p) != (struct structure *)(hp))
+#define NMG_LIST_PNEXT(structure,p)	\
+	((struct structure *)(((struct nmg_list *)(p))->forw))
+#define NMG_LIST_PLAST(structure,p)	\
+	((struct structure *)(((struct nmg_list *)(p))->back))
+
+#define NMG_LIST_PNEXT_PNEXT(structure,p)	\
+	((struct structure *)(((struct nmg_list *)(p))->forw->forw))
+#define NMG_LIST_PNEXT_PLAST(structure,p)	\
+	((struct structure *)(((struct nmg_list *)(p))->forw->back))
+#define NMG_LIST_PLAST_PNEXT(structure,p)	\
+	((struct structure *)(((struct nmg_list *)(p))->back->forw))
+#define NMG_LIST_PLAST_PLAST(structure,p)	\
+	((struct structure *)(((struct nmg_list *)(p))->back->back))
+
+/* Intended as innards for a for() loop to visit all nodes on list */
+#define NMG_LIST(p,structure,hp)	\
+	(p)=NMG_LIST_FIRST(structure,hp); \
+	NMG_LIST_MORE(p,structure,hp); \
+	(p)=NMG_LIST_PNEXT(structure,p)
+
+/* Return the magic number of the first (or last) item on a list */
+#define NMG_LIST_FIRST_MAGIC(hp)	((hp)->forw->magic)
+#define NMG_LIST_LAST_MAGIC(hp)		((hp)->back->magic)
+
+/* Return pointer to circular next element; ie, ignoring the list head */
+#define NMG_LIST_PNEXT_CIRC(structure,p)	\
+	((NMG_LIST_FIRST_MAGIC((struct nmg_list *)(p)) == NMG_LIST_MAGIC) ? \
+		NMG_LIST_FIRST(structure,(struct nmg_list *)(p)) : \
+		NMG_LIST_PNEXT(structure,p) )
+
+/* Return pointer to circular last element; ie, ignoring the list head */
+#define NMG_LIST_PLAST_CIRC(structure,p)	\
+	((NMG_LIST_LAST_MAGIC((struct nmg_list *)(p)) == NMG_LIST_MAGIC) ? \
+		NMG_LIST_LAST(structure,(struct nmg_list *)(p)) : \
+		NMG_LIST_PLAST(structure,p) )
+
 /*	W A R N I N G !
  *
- *	We rely on the fact that the first object in a struct is the magic
- *	number (which we use to identify the struct type).  It is also
- *	important that the next/last fields have the same offset in all
- *	structs that have them.
+ *	We rely on the fact that the first long in a struct is the magic
+ *	number (which is used to identify the struct type).
+ *	This may be either a long, or an nmg_list structure, which
+ *	starts with a magic number.
  *
  *	To these ends, there is a standard ordering for fields in "object-use"
  *	structures.  That ordering is:
- *		1) magic number
+ *		1) magic number, or nmg_list structure
  *		2) pointer to parent
- *		3) pointer to next
- *		4) pointer to last
  *		5) pointer to mate
  *		6) pointer to geometry
  *		7) pointer to attributes
  *		8) pointer to child(ren)
  */
 
-/*  M O D E L
+
+/*
+ *			M O D E L
  */
 struct model {
-    long		magic;
-    struct model_a	*ma_p;
-    struct nmgregion	*r_p;		/* list of regions in model space */
+	long			magic;
+	struct model_a		*ma_p;
+	struct nmg_list		r_hd;	/* list of regions */
 };
 
 struct model_a {
-	long magic;
+	long			magic;
 };
 
-/*  R E G I O N
+/*
+ *			R E G I O N
  */
 struct nmgregion {
-    long	    magic;
-    struct model    *m_p;	/* owning model */
-    struct nmgregion *next,
-		    *last;	/* regions in model list of regions */
-    struct nmgregion_a *ra_p;	/* attributes */
-    struct shell    *s_p;	/* list of shells in region */
+	struct nmg_list		l;	/* regions, in model's r_hd list */
+	struct model   		*m_p;	/* owning model */
+	struct nmgregion_a	*ra_p;	/* attributes */
+	struct nmg_list		s_hd;	/* list of shells in region */
 };
 
 struct nmgregion_a {
-	long	magic;
-	point_t	min_pt;	/* minimums of bounding box */
-	point_t	max_pt;	/* maximums of bounding box */
+	long			magic;
+	point_t			min_pt;	/* minimums of bounding box */
+	point_t			max_pt;	/* maximums of bounding box */
 };
 
-/*  S H E L L
+/*
+ *			S H E L L
  */
 struct shell {
-    long	    magic;
-    struct nmgregion   *r_p;	    /* owning region */
-    struct shell    *next,
-		    *last;	    /* shells in region's list of shells */
-    struct shell_a  *sa_p;	    /* attribs */
+	struct nmg_list		l;	/* shells, in region's s_hd list */
+	struct nmgregion	*r_p;	/* owning region */
+	struct shell_a		*sa_p;	/* attribs */
 
-    struct faceuse	    *fu_p;  /* list of face uses in shell */
-    struct loopuse	    *lu_p;  /* loop uses (edge groups) in shell */
-    struct edgeuse	    *eu_p;  /* wire list (shell has wires) */
-    struct vertexuse    *vu_p;  /* shell is single vertex */
+	struct nmg_list		fu_hd;	/* list of face uses in shell */
+	struct nmg_list		lu_hd;	/* loop uses (edge groups) in shell */
+	struct nmg_list		eu_hd;	/* wire list (shell has wires) */
+	struct vertexuse	*vu_p;	/* internal ptr to single vertexuse */
 };
 
 struct shell_a {
-    long	magic;
-    point_t	min_pt;	/* minimums of bounding box */
-    point_t	max_pt;	/* maximums of bounding box */
+	long			magic;
+	point_t			min_pt;	/* minimums of bounding box */
+	point_t			max_pt;	/* maximums of bounding box */
 };
 
-/*  F A C E
+/*
+ *			F A C E
+ *
+ *  Note: there will always be exactly two faceuse's using a face.
+ *  To find them, go up fu_p for one, then across fumate_p to other.
  */
 struct face {
-    long	    magic;
-    struct faceuse  *fu_p;  /* list of uses of this face. use fu mate field */
-    struct face_g   *fg_p;  /* geometry */
+	long	   		magic;
+	struct faceuse		*fu_p;	/* Ptr up to one use of this face */
+	struct face_g		*fg_p;	/* geometry */
 };
 
 struct face_g {
-    long	magic;
-    unsigned	ref_cnt;
-    plane_t	N;	/* Surface Normal (N[0]x + N[1]y + N[2]z + N[3] = 0)*/
-    point_t	min_pt;	/* minimums of bounding box */
-    point_t	max_pt;	/* maximums of bounding box */
+	long			magic;
+	unsigned		ref_cnt;
+	plane_t			N;	/* Plane equation (incl normal) */
+	point_t			min_pt;	/* minimums of bounding box */
+	point_t			max_pt;	/* maximums of bounding box */
 };
 
-struct faceuse { /* Note: there will always be exactly two uses of a face */
-    long	    magic;
-    struct shell    *s_p;	    /* owning shell */
-    struct faceuse  *next,
-		    *last,	    /* fu's in shell's list of fu's */
-		    *fumate_p;	    /* opposite side of face */
-    char	    orientation;    /* compared to face geom definition */
-    struct face     *f_p;	    /* face definition and attributes */
-    struct faceuse_a *fua_p;	    /* attributess */
-    struct loopuse  *lu_p;	    /* list of loops in face-use */
+struct faceuse {
+	struct nmg_list		l;	/* fu's, in shell's fu_hd list */
+	struct shell		*s_p;	/* owning shell */
+	struct faceuse		*fumate_p;    /* opposite side of face */
+	char			orientation;  /* rel to face geom defn */
+	struct face		*f_p;	/* face definition and attributes */
+	struct faceuse_a	*fua_p;	/* attributess */
+	struct nmg_list		lu_hd;	/* list of loops in face-use */
 };
 
 struct faceuse_a {
-    long    magic;
+	long			magic;
 };
 
-/*  L O O P
+/*
+ *			L O O P
+ *
+ *  To find all the uses of this loop, use lu_p for one loopuse,
+ *  then go down and find an edge,
+ *  then wander around either eumate_p or radial_p from there.
+ *
+ *  Normally, down_hd heads a doubly linked list of edgeuses.
+ *  But, before using it, check NMG_LIST_FIRST_MAGIC(&lu->down_hd)
+ *  for the magic number type.
+ *  If this is a self-loop on a single vertexuse, then get the vertex pointer
+ *  with vu = NMG_LIST_FIRST(vertexuse, &lu->down_hd)
+ *
+ *  This is an especially dangerous storage efficiency measure ("hack"),
+ *  because the list that the vertexuse structure belongs to is headed,
+ *  not by a superior element type, but by the vertex structure.
+ *  When a loopuse needs to point down to a vertexuse, rip off the
+ *  forw pointer.  Take careful note that this is just a pointer,
+ *  **not** the head of a linked list (single, double, or otherwise)!
+ *  Exercise great care!
  */
+#define NMG_LIST_SET_DOWN_TO_VERT(_hp,_vu)	{ \
+	(_hp)->forw = &((_vu)->l); (_hp)->back = (struct nmg_list *)NULL; }
+
 struct loop {
-    long	    magic;
-    struct loopuse  *lu_p;  /* list of uses of this loop. -
-					use eu_mate eulu fields */
-    struct loop_g   *lg_p;  /* Geoometry */
+	long			magic;
+	struct loopuse		*lu_p;	/* Ptr to one use of this loop */
+	struct loop_g		*lg_p;  /* Geometry */
 };
 
 struct loop_g {
-    long    magic;
-    point_t	min_pt;	/* minimums of bounding box */
-    point_t	max_pt;	/* maximums of bounding box */
+	long			magic;
+	point_t			min_pt;	/* minimums of bounding box */
+	point_t			max_pt;	/* maximums of bounding box */
 };
 
 struct loopuse {
-    long	    magic;
-    union {
-	struct faceuse  *fu_p;	    /* owning face-use */
-	struct shell	*s_p;
-	long		*magic_p;
-    } up;
-    struct loopuse  *next,
-		    *last,	    /* lu's in fu's list of lu's */
-		    *lumate_p;	    /* loopuse on other side of face */
-    char	    orientation;    /* OT_SAME=outside loop */
-    struct loop     *l_p;	    /* loop definition and attributes */
-    struct loopuse_a *lua_p;	    /* attributes */
-    union {
-	struct edgeuse	    *eu_p;  /* list of eu's in lu */
-	struct vertexuse    *vu_p; /* loop is a single vertex */
-	long		    *magic_p; /* for those times when we're not sure */
-    } down;
+	struct nmg_list		l;	/* lu's, in fu's lu_hd, or shell's lu_hd */
+	union {
+		struct faceuse  *fu_p;	/* owning face-use */
+		struct shell	*s_p;
+		long		*magic_p;
+	} up;
+	struct loopuse		*lumate_p; /* loopuse on other side of face */
+	char			orientation;  /* OT_SAME=outside loop */
+	struct loop		*l_p;	/* loop definition and attributes */
+	struct loopuse_a	*lua_p;	/* attributes */
+	struct nmg_list		down_hd; /* eu list or vu pointer */
 };
 
 struct loopuse_a {
-    long    magic;
+	long			magic;
 };
 
-/*  E D G E
+/*
+ *			E D G E
+ *
+ *  To find all the uses of this edge, use eu_p for one edge,
+ *  then wander around either eumate_p or radial_p from there.
  */
 struct edge {
-    long	    magic;
-    struct edgeuse  *eu_p;  /* list of uses of this edge -
-				    use eu radial/mate fields */
-    struct edge_g   *eg_p;  /* geometry */
+	long			magic;
+	struct edgeuse		*eu_p;	/* Ptr to one use of this edge */
+	struct edge_g		*eg_p;  /* geometry */
 };
 
 struct edge_g {
-    long    magic;
+	long			magic;
 };
 
 struct edgeuse {
-    long		magic;
-    union {
-	struct loopuse	*lu_p;
-	struct shell	*s_p;
-	long	        *magic_p; /* for those times when we're not sure */
-    } up;
-    struct edgeuse	*next,	    /* either clockwise/ccw edges in loop */
-    			*last,	    /* or list of edges/faces in shell */
-    			*eumate_p,  /* eu on other face or other end of wire*/
-		  	*radial_p;  /* eu on radially adj. fu (null if wire)*/
-    struct edge 	*e_p;	    /* edge definition and attributes */
-    struct edgeuse_a	*eua_p;	    /* parametric space geom */
-    char	  	orientation;/* compared to geom (null if wire) */
-    struct vertexuse	*vu_p;	    /* starting vu of eu in this orient */
+	struct nmg_list		l;	/* cw/ccw edges in loop or wire edges in shell */
+	union {
+		struct loopuse	*lu_p;
+		struct shell	*s_p;
+		long	        *magic_p; /* for those times when we're not sure */
+	} up;
+	struct edgeuse		*eumate_p;  /* eu on other face or other end of wire*/
+	struct edgeuse		*radial_p;  /* eu on radially adj. fu (null if wire)*/
+	struct edge		*e_p;	    /* edge definition and attributes */
+	struct edgeuse_a	*eua_p;	    /* parametric space geom */
+	char	  		orientation;/* compared to geom (null if wire) */
+	struct vertexuse	*vu_p;	    /* first vu of eu in this orient */
 };
 
 struct edgeuse_a {
-    long    magic;
+	long			magic;
 };
 
-/*  V E R T E X
+/*
+ *			V E R T E X
+ *
+ *  The vertex and vertexuse structures are connected in a way different
+ *  from the superior kinds of topology elements.
+ *  The vertex structure heads a linked list that all vertexuse's
+ *  that use the vertex are linked onto.
  */
 struct vertex {
-    long		magic;
-    struct vertexuse	*vu_p;	/* list of uses of this vertex - 
-					    use vu_next fields */
-    struct vertex_g	*vg_p;	/* geometry */
+	long			magic;
+	struct nmg_list		vu_hd;	/* heads list of vu's of this vertex */
+	struct vertex_g		*vg_p;	/* geometry */
 };
 
 struct vertex_g {
-    long	magic;
-    point_t	coord;	/* coordinates of vertex in space */
+	long			magic;
+	point_t			coord;	/* coordinates of vertex in space */
 };
 
 struct vertexuse {
-    long		magic;
-    union {
-	struct shell	*s_p;	/* no fu's or eu's on shell */
-	struct loopuse	*lu_p;	/* loopuse contains single vertex */
-	struct edgeuse	*eu_p;	/* eu causing this vu */
-	long		*magic_p; /* for those times when we're not sure */
-    } up;
-    struct vertexuse	*next,   /* list of all vu's of vertex */
-			*last;
-    struct vertex	*v_p;	    /* vertex definition and attributes */
-    struct vertexuse_a	*vua_p;     /* Attributes */
+	struct nmg_list		l;	/* list of all vu's on a vertex */
+	union {
+		struct shell	*s_p;	/* no fu's or eu's on shell */
+		struct loopuse	*lu_p;	/* loopuse contains single vertex */
+		struct edgeuse	*eu_p;	/* eu causing this vu */
+		long		*magic_p; /* for those times when we're not sure */
+	} up;
+	struct vertex		*v_p;	/* vertex definition and attributes */
+	struct vertexuse_a	*vua_p;	/* Attributes */
 };
 
 struct vertexuse_a {
-    long	magic;
-    vect_t	N;	/* optional surface Normal at vertexuse */
+	long			magic;
+	vect_t			N;	/* (opt) surface Normal at vertexuse */
 };
 
 
@@ -476,28 +595,6 @@ extern char *rt_calloc();
 #	define bzero(str,n)		memset( str, '\0', n )
 #	define bcopy(from,to,count)	memcpy( to, from, count )
 #endif
-
-/* insert a node into the head of a doubly linked list */
-#define DLLINS(_listp, _nodep) {\
-	if (_listp) { /* link node into existing list */ \
-		_nodep->next = _listp; _nodep->last = _listp->last; \
-		_listp->last->next = _nodep; _listp->last = _nodep; \
-	} else { /* make node the entire list */\
-		_nodep->next = _nodep->last = _nodep; \
-	} \
-	_listp = _nodep; }
-
-/* remove a node from a doubly linked list and put it's pointer in nodep.
- * we leave the next and last pointers of the extracted node pointing to the
- * node.  If it was the last node in the list, we don't actually remove it, 
- * but we do still copy the pointer.
- */
-#define DLLRM(_listp, _nodep) if (( (_nodep)=(_listp) ) != (_listp)->next) { \
-				(_listp) = (_listp)->next; \
-				(_nodep)->next->last = (_nodep)->last; \
-				(_nodep)->last->next = (_nodep)->next; \
-				(_nodep)->next = (_nodep)->last = (_nodep); }
-
 
 /* compare value to min/max and do appropriate assignments */
 #define MINMAX(_a, _b, _c) { if (_a < _b) _b = _a; if (_a > _c) _c = _a; }
