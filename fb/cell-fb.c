@@ -22,6 +22,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
+#include "raytrace.h"
 #include "fb.h"
 
 /* Macros without arguments */
@@ -46,7 +47,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define MAX_COLORTBL	11
 #define WHITE		colortbl[0]
 #define BACKGROUND	colortbl[MAX_COLORTBL]
-#define	OPT_STRING	"CF:N:S:W:X:b:c:d:ef:ghikl:m:p:s:v:?"
+#define	OPT_STRING	"CF:N:S:W:X:b:c:d:ef:ghikl:m:p:s:v:x:?"
 
 
 /* Macros with arguments */
@@ -100,7 +101,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 /* Debug flags */
 #define		CFB_DBG_MINMAX		0x01
 #define		CFB_DBG_GRID		0x02
-
+#define		CFB_DBG_MEM		0x010000	/* a la librt(3) */
+
 /* Data structure definitions */
 typedef int		bool;
 typedef union
@@ -129,7 +131,7 @@ static char	*usage[] = {
 	" -N n          Set frame-buffer height to `n' pixels",
 	" -S n          Set frame-buffer height and width to `n' pixels",
 	" -W n          Set frame-buffer width to `n' pixels",
-	" -X n          Set debug flag to hexadecimal value `n' (default is 0)",
+	" -X n          Set local debug flag to hex value `n' (default is 0)",
 	" -b n          Ignore values not equal to `n'",
 	" -c n          Assume cell size of `n' user units (default is 100)",
 	" -d \"m n\"      Expect input in interval [m, n] (default is [0, 1])",
@@ -144,6 +146,7 @@ static char	*usage[] = {
 	" -p \"x y\"      Offset picture from bottom-left corner of display",
 	" -s \"w h\"      Set cell width and height in pixels",
 	" -v n          Display view number `n' (default is all views)",
+	" -x n          Set LIBRT(3) debug flag to hex value `n' (default is 0)",
 	0
 };
 static char	fbfile[MAX_LINE] = { 0 };/* Name of frame-buffer device */
@@ -169,7 +172,7 @@ static bool	grid_flag = false;	/* Leave space between cells? */
 static bool	interp_flag = true;	/* Ramp between colortbl entries? */
 static bool	key_flag = false;	/* Display color-mapping key? */
 static bool	log_flag = false;	/* Make a log file? */
-
+
 static int	compute_fb_height;	/* User supplied height?  Else what? */
 static int	compute_fb_width;	/* User supplied width?  Else what? */
 static int	debug_flag = 0;		/* Control diagnostic prints */
@@ -224,12 +227,13 @@ char	**argv;
 	prnt_Usage();
 	exit (1);
     }
-    if ((grid = (Cell *) malloc(sizeof(Cell) * maxcells)) == NULL)
+    grid = (Cell *) rt_malloc(sizeof(Cell) * maxcells, "grid");
+    if (debug_flag & CFB_DBG_MEM)
     {
-	fb_log("cell-fb: couldn't allocate space for %d cells\n", maxcells);
-	exit (1);
+	fb_log("grid = 0x%x... %ld cells @ %d bytes/cell\n",
+	    grid, maxcells, sizeof(Cell));
+	fflush(stderr);
     }
-
     do
     {
 	init_Globs();
@@ -246,6 +250,10 @@ char	**argv;
 	}
 	if (log_flag)
 	    log_Run();
+	/*
+	fb_log("view_flag = %d, feof(filep) = %d, get_OK() = %d\n",
+	    view_flag, feof(filep), get_OK());
+	 */
     } while ((view_flag == 0) && ! feof(filep) && get_OK());
 }
 
@@ -287,18 +295,15 @@ STATIC long read_Cell_Data()
 	    long	ncells = gp - grid;
 
 	    maxcells *= 2;
-	    if ((grid = (Cell *) realloc(grid, sizeof(Cell) * maxcells))
-		== NULL)
+	    grid = (Cell *) rt_realloc((char *) grid,
+					sizeof(Cell) * maxcells, "grid");
+	    if (debug_flag & CFB_DBG_MEM)
 	    {
-		fb_log("Cannot allocate space for %d cells\n", maxcells);
-		return (0); /* failure */
+		fb_log("maxcells increased to %ld\n", maxcells);
+		fflush(stderr);
 	    }
 	    gp = grid + ncells;
-#ifdef DEBUG
-	    fb_log("maxcells increased to %ld\n", maxcells);
-#endif
 	}
-
 	/* Read in a line of input */
 	while ((color_flag &&
 		(sscanf(linebuf, format, &x, &y, &r, &g, &b) != 5))
@@ -333,7 +338,7 @@ STATIC long read_Cell_Data()
 	    MinMax(ymin, ymax, y);
 	    if (debug_flag & CFB_DBG_MINMAX)
 	    {
-		fprintf(stderr, "xmin=%g, xmax=%g, ymin=%g, ymax=%g\n",
+		fb_log("xmin=%g, xmax=%g, ymin=%g, ymax=%g\n",
 		    xmin, xmax, ymin, ymax);
 		fflush(stderr);
 	    }
@@ -361,8 +366,8 @@ STATIC bool get_OK()
 	fb_log("Cannot open /dev/tty for reading\n");
 	return (false);
     }
-    (void) fputs("Another view follows.  Display ? [y/n](y) ", stderr);
-    (void) fflush(stdout);
+    fb_log("Another view follows.  Display ? [y/n](y) ");
+    (void) fflush(stderr);
     switch ((c = getc(infp)))
     {
 	case '\n':
@@ -377,7 +382,6 @@ STATIC bool get_OK()
 	return (false);
     return (true);
 }
-
 STATIC void init_Globs()
 {
     xmin = POS_INFINITY;
@@ -394,7 +398,7 @@ long	ncells;
 {	
     register Cell	*gp, *ep = &grid[ncells];
     static int		zoom;
-    static unsigned char *buf = 0;
+    unsigned char	*buf;
     static RGBpixel	pixel;
     double		lasty = NEG_INFINITY;
     double		dx, dy;
@@ -426,10 +430,10 @@ long	ncells;
 	== FBIO_NULL)
 	return (false);
     if (compute_fb_height || compute_fb_width)  {
-	(void) fprintf(stderr, "fb_size requested: %d %d\n", fb_width, fb_height);
+	fb_log("fb_size requested: %d %d\n", fb_width, fb_height);
     	fb_width = fb_getwidth(fbiop);
     	fb_height = fb_getheight(fbiop);
-	(void) fprintf(stderr, "fb_size  obtained: %d %d\n", fb_width, fb_height);
+	fb_log("fb_size  obtained: %d %d\n", fb_width, fb_height);
     }
     if (fb_wmap(fbiop, COLORMAP_NULL) == -1)
 	fb_log("Cannot initialize color map\n");
@@ -438,10 +442,13 @@ long	ncells;
     if (erase_flag && fb_clear(fbiop, BACKGROUND) == -1)
 	fb_log("Cannot clear frame buffer\n");
 
-    if ((buf = (unsigned char *) malloc(sizeof(RGBpixel) * fb_width)) == NULL)
+    buf = (unsigned char *) rt_malloc(sizeof(RGBpixel) * fb_width,
+						"line of frame buffer");
+    if (debug_flag & CFB_DBG_MEM)
     {
-	fb_log("cell-fb: couldn't allocate space for %d pixels\n", fb_width);
-	exit (1);
+	fb_log("buf = 0x%x... %d pixels @ %d bytes/pixel\n",
+	    buf, fb_width, sizeof(RGBpixel));
+	fflush(stderr);
     }
 
     for (gp = grid; gp < ep; gp++)
@@ -456,7 +463,7 @@ long	ncells;
 	    {
 		if (debug_flag & CFB_DBG_GRID)
 		{
-		    fprintf(stderr, "%d = V2SCRY(%g)\n", V2SCRY(lasty), lasty);
+		    fb_log("%d = V2SCRY(%g)\n", V2SCRY(lasty), lasty);
 		    fflush(stderr);
 		}
 		y0 = V2SCRY(lasty);
@@ -470,7 +477,6 @@ long	ncells;
 			    }
 	    	}
 	    }
-
 	    /* Clear buffer. */
 	    for (x0 = 0; x0 < fb_width; x0++)
 	    {
@@ -488,7 +494,7 @@ long	ncells;
 		}
 		if (debug_flag & CFB_DBG_GRID)
 		{
-		    fprintf(stderr, "Writing grid row at %d\n", y0);
+		    fb_log("Writing grid row at %d\n", y0);
 		    fflush(stderr);
 		}
 	    }
@@ -497,7 +503,7 @@ long	ncells;
 	val_To_RGB(gp->c_val, pixel);
     	/* Be careful only to write color within bounds of the screen */
     	x0 = H2SCRX(gp->c_x);
-    	if( x0 >= 0 && x0 < fb_width )  {
+    	if( x0 >= 0 && x0 <= fb_width - wid )  {
 		for (x1 = x0 + wid; x0 < x1;  x0++)
 		{
 		    COPYRGB(&buf[3*x0], pixel);
@@ -513,9 +519,11 @@ long	ncells;
 	    (void) fb_close(fbiop);
 	    return (false);
 	}
-
     /* Draw color key. */
-    if (key_flag)
+    if (key_flag && (fb_width < (10 + 1) * wid))
+	fb_log("Width of key (%d) would exceed frame-buffer width (%d)\n",
+		(10 + 1) * wid, fb_width);
+    else if (key_flag)
     {	
 	register int	i, j;
 	double		base;
@@ -566,6 +574,12 @@ long	ncells;
 	    }
     }
     (void) fb_close(fbiop);
+    rt_free((char *) buf, "line of frame buffer");
+    if (debug_flag & CFB_DBG_MEM)
+    {
+	fb_log("freed buf, which is now 0x%x\n", buf);
+	fflush(stderr);
+    }
     return (true);
 }
 
@@ -619,7 +633,6 @@ RGBpixel	rgb;
     }
     return;
 }
-
 STATIC bool pars_Argv (argc, argv)
 
 register int	argc;
@@ -753,7 +766,6 @@ register char	**argv;
 		if (view_flag == 0)
 		    view_flag = 1;
 		break;
-
 	    case 'm':
 		{	
 		    double	value;
@@ -810,6 +822,13 @@ register char	**argv;
 		if (view_flag == 0)
 		    log_flag = false;
 		break;
+            case 'x':
+		if (sscanf(optarg, "%x", &rt_g.debug) < 1)
+		{
+		    fb_log("Invalid debug flag: '%s'\n", optarg);
+		    return (false);
+		}
+		break;
 	    case '?':
 		return (false);
 	}
@@ -841,7 +860,6 @@ register char	**argv;
 			(fb_width == 0) ? LOOSE_FIT : false;
     return (true);
 }
-
 /*	prnt_Usage() --	Print usage message. */
 STATIC void prnt_Usage()
 {	
