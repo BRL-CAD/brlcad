@@ -120,6 +120,9 @@ register struct faceuse	*fu;
 	/* Add fu and fumate to dest shell */
 	NMG_LIST_APPEND( &dest->fu_hd, &fu->l );
 	NMG_LIST_APPEND( &fu->l, &fumate->l );
+
+	fu->s_p = dest;
+	fumate->s_p = dest;
 }
 
 /*
