@@ -1,5 +1,9 @@
 # $Id$
 
+SUBDIRS = \
+	html \
+	legal
+
 data_DATA = \
 	anim.txt \
 	benchmark.tr \
@@ -30,4 +34,8 @@ man_MANS = \
 	pix.5 \
 	plot3.5
 
-EXTRA_DIST = $(man_MANS) $(data_DATA)
+EXTRA_DIST = \
+	$(data_DATA) \
+	$(man_MANS)
+
+MAINTAINERCLEANFILES = Makefile.in
