@@ -857,11 +857,12 @@ long		*tab;
 /*
  *			N M G _ V L B L O C K _ E
  */
-static nmg_vlblock_e(vbp, e, tab, red, green, blue)
+static nmg_vlblock_e(vbp, e, tab, red, green, blue, fancy)
 struct vlblock	*vbp;
 struct edge	*e;
 long		*tab;
 int		red, green, blue;
+int		fancy;
 {
 	pointp_t p0, p1;
 	point_t end0, end1;
@@ -901,11 +902,12 @@ int		red, green, blue;
 /*
  *			M N G _ V L B L O C K _ E U
  */
-void nmg_vlblock_eu(vbp, eu, tab, red, green, blue)
+void nmg_vlblock_eu(vbp, eu, tab, red, green, blue, fancy)
 struct vlblock	*vbp;
 struct edgeuse	*eu;
 long		*tab;
 int		red, green, blue;
+int		fancy;
 {
 	point_t base, tip;
 	point_t	radial_tip;
@@ -925,7 +927,9 @@ int		red, green, blue;
 	NMG_CK_VERTEX(eu->eumate_p->vu_p->v_p);
 	NMG_CK_VERTEX_G(eu->eumate_p->vu_p->v_p->vg_p);
 
-	nmg_vlblock_e(vbp, eu->e_p, tab, red, green, blue);
+	nmg_vlblock_e(vbp, eu->e_p, tab, red, green, blue, fancy);
+
+	if( !fancy )  return;
 
 	if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC &&
 	    *eu->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC) {
@@ -957,11 +961,12 @@ int		red, green, blue;
 /*
  *			N M G _ V L B L O C K _ L U
  */
-void nmg_vlblock_lu(vbp, lu, tab, red, green, blue)
+void nmg_vlblock_lu(vbp, lu, tab, red, green, blue, fancy)
 struct vlblock	*vbp;
 struct loopuse	*lu;
 long		*tab;
 int		red, green, blue;
+int		fancy;
 {
 	struct edgeuse	*eu;
 	long		magic1;
@@ -975,7 +980,7 @@ int		red, green, blue;
 	    	nmg_vlblock_v(vbp, NMG_LIST_PNEXT(vertexuse, &lu->down_hd)->v_p, tab);
 	} else if (magic1 == NMG_EDGEUSE_MAGIC) {
 		for( NMG_LIST( eu, edgeuse, &lu->down_hd ) )  {
-			nmg_vlblock_eu(vbp, eu, tab, red, green, blue);
+			nmg_vlblock_eu(vbp, eu, tab, red, green, blue, fancy);
 		}
 	}
 }
@@ -983,10 +988,11 @@ int		red, green, blue;
 /*
  *			M N G _ V L B L O C K _ F U
  */
-void nmg_vlblock_fu(vbp, fu, tab)
+void nmg_vlblock_fu(vbp, fu, tab, fancy)
 struct vlblock	*vbp;
 struct faceuse *fu;
 long		*tab;
+int		fancy;
 {
 	struct loopuse *lu;
 
@@ -994,16 +1000,23 @@ long		*tab;
 	NMG_TAB_RETURN_IF_SET_ELSE_SET( tab, fu->index );
 
 	for( NMG_LIST( lu, loopuse, &fu->lu_hd ) )  {
-		nmg_vlblock_lu(vbp, lu, tab, 80, 100, 170 );
+		/* Draw in pale blue / purple */
+		if( fancy )  {
+			nmg_vlblock_lu(vbp, lu, tab, 80, 100, 170, fancy );
+		} else {
+			/* Non-fancy */
+			nmg_vlblock_lu(vbp, lu, tab, 80, 100, 170, 0 );
+		}
 	}
 }
 
 /*
  *			N M G _ V L B L O C K _ S
  */
-void nmg_vlblock_s(vbp, s)
+void nmg_vlblock_s(vbp, s, fancy)
 struct vlblock	*vbp;
-struct shell *s;
+struct shell	*s;
+int		fancy;
 {
 	struct faceuse *fu;
 	struct loopuse *lu;
@@ -1021,19 +1034,29 @@ struct shell *s;
 
 	for( NMG_LIST( fu, faceuse, &s->fu_hd ) )  {
 		NMG_CK_FACEUSE(fu);
-		nmg_vlblock_fu(vbp, fu, tab );
+		nmg_vlblock_fu(vbp, fu, tab, fancy );
 	}
 
 	for( NMG_LIST( lu, loopuse, &s->lu_hd ) )  {
 		NMG_CK_LOOPUSE(lu);
-		nmg_vlblock_lu(vbp, lu, tab, 255, 0, 0);
+		if( fancy ) {
+			nmg_vlblock_lu(vbp, lu, tab, 255, 0, 0, fancy);
+		} else {
+			/* non-fancy, wire loops in red */
+			nmg_vlblock_lu(vbp, lu, tab, 200, 0, 0, 0);
+		}
 	}
 
 	for( NMG_LIST( eu, edgeuse, &s->eu_hd ) )  {
 		NMG_CK_EDGEUSE(eu);
 		NMG_CK_EDGE(eu->e_p);
 
-		nmg_vlblock_eu(vbp, eu, tab, 200, 200, 0 );
+		if( fancy )  {
+			nmg_vlblock_eu(vbp, eu, tab, 200, 200, 0, fancy );
+		} else {
+			/* non-fancy, wire edges in yellow */
+			nmg_vlblock_eu(vbp, eu, tab, 200, 200, 0, 0 );
+		}
 	}
 	if (s->vu_p) {
 		nmg_vlblock_v(vbp, s->vu_p->v_p, tab );
@@ -1045,28 +1068,30 @@ struct shell *s;
 /*
  *			N M G _ V L B L O C K _ R
  */
-void nmg_vlblock_r(vbp, r)
+void nmg_vlblock_r(vbp, r, fancy)
 struct vlblock	*vbp;
 struct nmgregion *r;
+int		fancy;
 {
 	struct shell *s;
 
 	for( NMG_LIST( s, shell, &r->s_hd ) )  {
-		nmg_vlblock_s(vbp, s);
+		nmg_vlblock_s(vbp, s, fancy);
 	}
 }
 
 /*
  *			N M G _ V L B L O C K _ M
  */
-void nmg_vlblock_m(vbp, m)
+void nmg_vlblock_m(vbp, m, fancy)
 struct vlblock	*vbp;
-struct model *m;
+struct model	*m;
+int		fancy;
 {
 	struct nmgregion *r;
 
 	for( NMG_LIST( r, nmgregion, &m->r_hd ) )  {
-		nmg_vlblock_r(vbp, r);
+		nmg_vlblock_r(vbp, r, fancy);
 	}
 }
 
@@ -1222,7 +1247,7 @@ struct faceuse	*fu1;
 			"nmg_pl_comb_fu tab[]");
 		vbp = rt_vlblock_init();
 
-		nmg_vlblock_fu(vbp, fu1, tab, 200, 200, 200);
+		nmg_vlblock_fu(vbp, fu1, tab, 200, 200, 200, 1);
 
 		rt_free( (char *)tab, "nmg_pl_comb_fu tab[]" );
 
@@ -1288,13 +1313,13 @@ int		show_mates;
 			"nmg_pl_2fu tab[]");
 		vbp = rt_vlblock_init();
 
-		nmg_vlblock_fu( vbp, fu1, tab, 100, 100, 180);
+		nmg_vlblock_fu( vbp, fu1, tab, 100, 100, 180, 1);
 		if( show_mates )
-			nmg_vlblock_fu( vbp, fu1->fumate_p, tab, 100, 100, 180);
+			nmg_vlblock_fu( vbp, fu1->fumate_p, tab, 100, 100, 180, 1);
 
-		nmg_vlblock_fu( vbp, fu2, tab, 100, 100, 180);
+		nmg_vlblock_fu( vbp, fu2, tab, 100, 100, 180, 1);
 		if( show_mates )
-			nmg_vlblock_fu( vbp, fu2->fumate_p, tab, 100, 100, 180);
+			nmg_vlblock_fu( vbp, fu2->fumate_p, tab, 100, 100, 180, 1);
 
 		rt_free( (char *)tab, "nmg_pl_2fu tab[]" );
 

@@ -1141,8 +1141,8 @@ int		delay;
 		(void)nmg_tbl(&b, TBL_INIT, (long *)0);	
 		vbp = rt_vlblock_init();
 
-		nmg_vlblock_s( vbp, bs->bs_dest );
-		nmg_vlblock_s( vbp, bs->bs_src );
+		nmg_vlblock_s( vbp, bs->bs_dest, 0 );
+		nmg_vlblock_s( vbp, bs->bs_src, 0 );
 
 		(void)nmg_tbl(&b, TBL_FREE, (long *)NULL);
 
