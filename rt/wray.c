@@ -54,10 +54,29 @@ struct vldray
 	long	rt;			/* ray tag */
 };
 
-/* The normal is expected to be pointing out from the object */
+/*
+ *  Convert the normal vector into an azimuth angle (from +X axis)
+ *  and an elevation angle (up from XY plane).
+ *  The normal is expected to be pointing out from the object.
+ *  The elevation is most readily computed as:
+ *
+ *	_ray.ne = asin( _norm[Z] );
+ *
+ *  but the asin() function can't deal with floating point noize that
+ *  might make _norm[Z] slightly outside of the range -1.0 to +1.0.
+ *  A completely stable formulation is:
+ *
+ *	_ray.ne = mat_atan2( _norm[Z], hypot( _norm[X], _norm[Y] ) );
+ *
+ *  Because the normal vector has unit length (in 3-space, not necessarily
+ *  in the XY plane), the hypot() function can safely be expanded inline
+ *  using a sqrt() call.  This will often be more efficient, especially
+ *  on machines with hardware sqrt().
+ */
 #define WRAY_NORMAL(_ray, _norm)	\
 	_ray.na = mat_atan2( _norm[Y], _norm[X] ); \
-	_ray.ne = asin( _norm[Z] );
+	_ray.ne = mat_atan2( _norm[Z], \
+		sqrt( _norm[X] * _norm[X] + _norm[Y] * _norm[Y]) );
 
 /*
  *  The 32-bit ray tag field (rt) is encoded as follows:
