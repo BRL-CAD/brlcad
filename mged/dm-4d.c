@@ -1010,6 +1010,8 @@ Ir_input( cmd_fd, rateflg )
 	struct timeval	tv;
 	fd_set		files;
 	int		width;
+/*XXX*/	extern void		(*extrapoll_hook)();	/* ged.c */
+/*XXX*/	extern int		extrapoll_fd;
 
 	if( (width = getdtablesize()) <= 0 )
 		width = 32;
@@ -1034,6 +1036,7 @@ Ir_input( cmd_fd, rateflg )
 			break;		/* There is device input */
 		FD_ZERO( &files );
 		FD_SET( cmd_fd, &files );
+/*XXX*/		if(extrapoll_fd) FD_SET( extrapoll_fd, &files );
 		tv.tv_sec = 0;
 
 		if( rateflg )  {
@@ -1047,6 +1050,11 @@ Ir_input( cmd_fd, rateflg )
 			perror("dm-4d.c/select");
 			break;
 		}
+/*XXX*/		if(extrapoll_fd&&FD_ISSET(extrapoll_fd,&files)&&extrapoll_hook)  {
+/*XXX*/			(*extrapoll_hook)();
+/*XXX*/			cnt = FD_ISSET(cmd_fd, &files);
+/*XXX*/			break;
+/*XXX*/		}
 		cnt = FD_ISSET(cmd_fd, &files);
 		if( cnt != 0 )
 			break;		/* There is keyboard input */
