@@ -773,7 +773,7 @@ check_input(int waittime)
 
 	/* Third, accept any pending connections */
 	if( FD_ISSET(tcp_listen_fd, &ifdset) )  {
-		pc = pkg_getclient(tcp_listen_fd, pkgswitch, bu_log, 1);
+		pc = pkg_getclient(tcp_listen_fd, pkgswitch, (void(*)())bu_log, 1);
 		if( pc != PKC_NULL && pc != PKC_ERROR )
 			addclient(pc);
 		FD_CLR( tcp_listen_fd, &ifdset );

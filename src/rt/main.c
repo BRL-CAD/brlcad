@@ -27,17 +27,17 @@ static const char RCSrt[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
+#else
+#  include <strings.h>
 #endif
 #include <ctype.h>
 #include <signal.h>
 #include <math.h>
 #ifndef WIN32
-#include <unistd.h>
+#  include <unistd.h>
 #endif
 
 #include "machine.h"
@@ -51,8 +51,9 @@ static const char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "../librt/debug.h"
 
 #ifdef WIN32
-#include <fcntl.h>
+#  include <fcntl.h>
 #endif
+
 
 extern char	usage[];
 
@@ -107,6 +108,7 @@ extern char	version[];		/* From vers.c */
 extern struct resource	resource[];	/* from opt.c */
 
 int	save_overlaps=0;	/* flag for setting rti_save_overlaps */
+
 
 /*
  *			S I G I N F O _ H A N D L E R
@@ -316,13 +318,13 @@ int main(int argc, char **argv)
 	if (rt_verbosity & VERBOSE_MODELTITLE) {
 		struct bu_vls str;
 		bu_vls_init(&str);
-		bu_vls_from_argv( &str, bu_optind, argv );
+		bu_vls_from_argv( &str, bu_optind, (const char **)argv );
 		bu_vls_strcat( &str, "\nopendb "  );
 		bu_vls_strcat( &str, title_file );
 		bu_vls_strcat( &str, ";\ntree " );
 		bu_vls_from_argv( &str,
 			nobjs <= 16 ? nobjs : 16,
-			argv+bu_optind+1 );
+			(const char **)argv+bu_optind+1 );
 		if( nobjs > 16 )
 			bu_vls_strcat( &str, " ...");
 		else

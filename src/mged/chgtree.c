@@ -33,12 +33,14 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <signal.h>
 #include <stdio.h>
 #include <math.h>
-#include <string.h>
+#ifdef HAVE_STRING_H
+#  include <string.h>
+#else
+#  include <strings.h>
+#endif
 
 #ifdef DM_X
 #  include "tk.h"
@@ -60,6 +62,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mgedtcl.h"
 #include "./cmd.h"
 
+
 extern void solid_list_callback(void); /* chgview.c */
 extern struct db_tree_state	mged_initial_tree_state;	/* dodraw.c */
 extern struct bn_tol		mged_tol;	/* from ged.c */
@@ -77,6 +80,7 @@ static char *really_delete="tk_messageBox -icon question -title {Are you sure?}\
  such as your preferred units and the title of the database. Do you really want to do this?}";
 
 void	aexists(char *name);
+
 
 /* Remove an object or several from the description */
 /* Format: kill [-f] object1 object2 .... objectn	*/
@@ -600,7 +604,7 @@ f_putmat (ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     {
 	case 18:
 	    avp = bu_vls_vlsinit();
-	    bu_vls_from_argv(avp, 16, argv + 2);
+	    bu_vls_from_argv(avp, 16, (const char **)argv + 2);
 	    break;
 	case 3:
 	    if ((argv[2][0] == 'I') && (argv[2][1] == '\0'))

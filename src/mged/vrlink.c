@@ -256,7 +256,7 @@ f_vrmgr(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	  return TCL_ERROR;
 	}
 
-	bu_vls_from_argv( &str, argc-2, argv+2 );
+	bu_vls_from_argv( &str, argc-2, (const char **)argv+2 );
 
 	/* Send initial message declaring our role */
 	if( pkg_send_vls( VRMSG_ROLE, &str, vrmgr ) < 0 )  {

@@ -37,16 +37,14 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 
 #include "machine.h"
@@ -58,11 +56,13 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "rtgeom.h"
 #include "wdb.h"
+
 #include "./ged.h"
 #include "./mged_solid.h"
 #include "./mged_dm.h"
 #include "./sedit.h"
 #include "./cmd.h"
+
 
 extern struct bn_tol mged_tol;
 
@@ -690,7 +690,7 @@ f_shader(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		bu_vls_free( &comb->shader );
 
 		/* Bunch up the rest of the args, space separated */
-		bu_vls_from_argv( &comb->shader, argc-2, argv+2 );
+		bu_vls_from_argv( &comb->shader, argc-2, (const char **)argv+2 );
 
 		if( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )  {
 			TCL_WRITE_ERR_return;

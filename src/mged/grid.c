@@ -452,7 +452,7 @@ f_grid_set (ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
   }
 
   mged_vls_struct_parse(&vls, "Grid", grid_vparse,
-			(const char *)grid_state, argc, argv);
+			(char *)grid_state, argc, argv);
   Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
   bu_vls_free(&vls);
 

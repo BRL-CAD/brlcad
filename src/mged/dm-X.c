@@ -160,7 +160,7 @@ X_dm(int	argc,
 
 			  bu_vls_init(&tmp_vls);
 			  bu_vls_printf(&tmp_vls, "%s=\"", argv[1]);
-			  bu_vls_from_argv(&tmp_vls, argc-2, argv+2);
+			  bu_vls_from_argv(&tmp_vls, argc-2, (const char **)argv+2);
 			  bu_vls_putc(&tmp_vls, '\"');
 			  bu_struct_parse(&tmp_vls, X_vparse, (char *)dmp);
 			  bu_vls_free(&tmp_vls);
