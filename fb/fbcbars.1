@@ -3,6 +3,8 @@
 cbars-fb \- display standard color bars on a framebuffer
 .SH SYNOPSIS
 .B cbars-fb
+.RB [ \-f ]
+.RB [ \-s ]
 .RB [ \-h ]
 .RB [ \-F\  framebuffer]
 .RB [ \-S\  squarescrsize]
@@ -11,6 +13,29 @@ cbars-fb \- display standard color bars on a framebuffer
 .SH DESCRIPTION
 .I cbars-fb
 displays a color bar scale on the currently selected framebuffer.
+.PP
+The default pattern is the standard EIA color bars,
+arranged horizontally on screen.
+The bottom quarter of the screen will be
+-I, 100% white, Q, black.
+The upper portion of the screen will be
+seven colors at 75% intensity:
+grey, yellow, cyan, green, magenta, red, blue.
+.PP
+By specifying the
+.B \-s
+flag, SMPTE color bars are displayed.  This is the EIA pattern
+with the upper quarter of the bottom quarter of the screen containing
+a reversed and shifted version of the upper pattern, which is claimed
+to be useful for aligning color demodulators.
+.PP
+With the
+.B \-f
+flag, FCC/EBU color bars are made.
+The entire screen will contain 8 colors:
+100% white, 75% yellow, 75% cyan, 75% green, 75% magenta, 75% red, 75% blue,
+and black.
+.PP
 The environment variable FB_FILE specifies
 the current framebuffer, see
 .IR brlcad (1).
@@ -34,18 +59,12 @@ flag specifies the desired height in scanlines of the display device.
 .PP
 .BI \-S\  squarescrsize
 set both the height and width to the size given.
-.PP
-The color scale is arranged
-arranged horizontally on screen.
-The bottom quarter of the screen will be
-black, white, dark gray (31%), black.
-The upper portion of the screen will be
-75% gray, yellow, cyan, green, magenta, red, blue,
-with pixel channel intensities of 255 (100%).
-.SH AUTHORS
+.SH AUTHOR
 Michael John Muuss
+.SH INSPIRATIONS
+Mike Pique, University of North Carolina
 .br
-Mike Pique, University of North Carolina.
+Doris Kochanek, National Film Board of Canada
 .SH SOURCE
 SECAD/VLD Computing Consortium, Bldg 394
 .br

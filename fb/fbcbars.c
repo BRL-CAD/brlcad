@@ -2,10 +2,24 @@
  *  			C B A R S - F B . C
  *  
  *  Program to make vertical color scales arranged horizontally on screen.
+ *  The wonderful thing about standards is that there are so many to
+ *  choose from:
+ *	FCC/EBU		Full screen is FCC pattern
+ *	EIA		Uses lower and upper patterns (default)
+ *	SMPTE		Uses three patterns
+ *
  *  The lower portion of the screen will contain:
- *	black, white, dark gray (31%), black
+ *	-I, 100% white, Q, black
+ *
+ *  In SMPTE mode, the middle portion of the screen will contain:
+ *	blue, black, magenta, black, cyan, black, 75% grey
+ *
  *  The upper portion of the screen will contain:
  *	75% gray, yellow, cyan, green, magenta, red, blue
+ *
+ *  In EBU/FCC mode, the whole screen will contain:
+ *	100% white, yellow, cyan, green, magenta, red, blue, black
+ *
  *
  *  The reason for this program running directly to the framebuffer, rather
  *  than generating a pix(5) format file (like pixbackgnd(1)) is twofold:
@@ -20,16 +34,19 @@
  *  Author -
  *	Michael John Muuss
  *
- *  Inspired by "ikcolorbars" by Mike Pique, University of North Carolina.
- *  
+ *  Original inspiration -
+ *	"ikcolorbars" by Mike Pique, University of North Carolina.
+ *
+ *  Details on SMPTE and FCC patterns -
+ *	"bars" by Doris Kochanek, National Film Board of Canada
+ *
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
- *  Copyright Notice -
- *	This software is Copyright (C) 1987 by the United States Army.
- *	All rights reserved.
+ *  Distribution Status -
+ *	Public Domain, Distribution Unlimitied.
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
@@ -51,35 +68,96 @@ static char	*framebuffer = NULL;
 static int	scr_width = 0;
 static int	scr_height = 0;
 
-static  RGBpixel toppart[7] = {
-	/* gray */ 	{190, 190, 190},
-	/* yel */	{255, 255, 0},
-	/* cyan */	{0, 255, 255},
-	/* green */	{0, 255, 0},
-	/* magenta */	{255, 0, 255},
-	/* red */	{255, 0, 0},
-	/* blue */	{0, 0, 255}
+/*
+ * "Since the relationship between RGB and the amplitude of YIQ in
+ * the encoded signal depends on the encoder's setup value,
+ * this must be defined below.  SETUP is normally 7.5 for NTSC.
+ * The full luminance range is encoded into the range between
+ * the setup level and 100 IRE, so Y values are effectively scaled
+ * by (1-setup) when being converted to voltages.  I and Q are
+ * scaled by the same amount to retain their relationship with Y.
+ * To get -I and Q signals that are 40 IRE after encoding, we must
+ * scale them by 1/(1-setup) before encoding."
+ *
+ *  "The -I and Q signals are not quite standard, since there is
+ *  necessarily some luminance present when RGB is positive.
+ *  They are designed to be 40 IRE P-P after encoding."
+ *
+ *	-- Doris Kochanek, National Film Board of Canada
+ */
+
+#define	SETUP		7.5			/* black setup; 7.5 IRE */
+#define	COMP(x)		\
+	(unsigned char)(((x) * 255.) / (1.0 - SETUP/100.0))	/* setup compensation */
+
+static  RGBpixel fcc_all[8] = {
+	/* 100% white */{255, 255, 255},
+	/* yellow */	{191, 191, 0},
+	/* cyan */	{0, 191, 191},
+	/* green */	{0, 191, 0},
+	/* magenta */	{191, 0, 191},
+	/* red */	{191, 0, 0},
+	/* blue */	{0, 0, 191},
+	/* black */	{0, 0, 0}
+};
+
+/*
+ *  SMPTE bars can be useful for aligning color demodulators
+ */
+static	RGBpixel smpte_middle[7] = {
+	/* All bars at 75%, no blue, reversed side-to-side from eia_top */
+	/* blue */	{0, 0, 191},
+	/* black(red)*/	{0, 0, 0},
+	/* magenta */	{191, 0, 191},
+	/* black(green)*/{0, 0, 0},
+	/* cyan */	{0, 191, 191},
+	/* black(yellow)*/{0, 0, 0},
+	/* 75% grey */ 	{191, 191, 191},
+};
+
+static  RGBpixel eia_top[7] = {
+	/* All bars at 75% */
+	/* grey */ 	{191, 191, 191},
+	/* yel */	{191, 191, 0},
+	/* cyan */	{0, 191, 191},
+	/* green */	{0, 191, 0},
+	/* magenta */	{191, 0, 191},
+	/* red */	{191, 0, 0},
+	/* blue */	{0, 0, 191}
 };
 
 static RGBpixel botpart[5] = {
-	/* black */ {0, 0, 0},
-	/* white */ {255, 255, 255},
-	/* dark gray */ {80, 80, 80},
-	/* black */ {0, 0, 0},
-	/* black */ {0, 0, 0}
+	{ 0,		COMP(0.2472),	COMP(0.4123) },	/* 40 IRE -I */
+	{ 255,		255,		255 },		/* 100% white */
+	{ COMP(0.2508),	0,		COMP(0.4670) },	/* 40 IRE Q */
+	{ 0,		0,		0 },		/* black */
+	{ 0,		0,		0 }		/* black */
 };
 
 static char usage[] = "\
-Usage: cbars-fb [-h] [-F framebuffer]\n\
-	[-S squarescrsize] [-W scr_width] [-N scr_height]\n";
+Usage: cbars-fb [-fs] [-h] [-F framebuffer]\n\
+	[-S squarescrsize] [-W scr_width] [-N scr_height]\n\
+	-f	FCC/EBU bars\n\
+	-s	SMPTE bars\n";
+
+#define	M_EIA	0
+#define M_FCC	1
+#define M_SMPTE	2
+int	mode = M_EIA;
 
 get_args( argc, argv )
 register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "hF:S:W:N:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "fshF:S:W:N:" )) != EOF )  {
 		switch( c )  {
+		case 's':
+			mode = M_SMPTE;
+			break;
+		case 'f':
+			mode = M_FCC;
+			break;
 		case 'h':
 			/* high-res */
 			scr_height = scr_width = 1024;
@@ -129,21 +207,59 @@ char **argv;
 
 	/*
 	 *  Operation is bottom-to-top.
-	 *  Build bottom line, and send it for 1/4th of the screen,
-	 *  then build the top line, and fill the rest of the screen.
 	 */
-	for( x=0; x<scr_width; x++) {
-		/* build bottom part */
-		COPYRGB( scanline[x], botpart[x*5/scr_width] );
-	}
-	for( y=0; y<(scr_height/4); y++)
-		fb_write( fbp, 0, y, scanline, scr_width );
+	switch(mode)  {
+	case M_FCC:
+		for( x=0; x<scr_width; x++) {
+			COPYRGB( scanline[x], fcc_all[x*8/scr_width] );
+		}
+		for( y=0; y<scr_height; y++)
+			fb_write( fbp, 0, y, scanline, scr_width );
+		break;
 
-	for( x=0; x<scr_width; x++)  {
-		/* build top line */
-		COPYRGB( scanline[x], toppart[x*7/scr_width] );
+	case M_EIA:
+		/*
+		 *  Build bottom line, and send it for 1/4th of the screen,
+		 *  then build the top line, and fill the rest of the screen.
+		 */
+		for( x=0; x<scr_width; x++) {
+			COPYRGB( scanline[x], botpart[x*5/scr_width] );
+		}
+		for( y=0; y<(scr_height/4); y++)
+			fb_write( fbp, 0, y, scanline, scr_width );
+
+		for( x=0; x<scr_width; x++)  {
+			COPYRGB( scanline[x], eia_top[x*7/scr_width] );
+		}
+		for( ; y<scr_height; y++)
+			fb_write( fbp, 0, y, scanline, scr_width );
+		break;
+
+	case M_SMPTE:
+		/*
+		 *  Build bottom line, and send it for 3/16th of the screen,
+		 *  then send the SMPTE middle for 1/16th of the screen,
+		 *  then build the top line, and fill the rest of the screen.
+		 *  (Convert upper 1/4 of EIA -I white Q black to smpte)
+		 */
+		for( x=0; x<scr_width; x++) {
+			COPYRGB( scanline[x], botpart[x*5/scr_width] );
+		}
+		for( y=0; y<(scr_height*3/16); y++)
+			fb_write( fbp, 0, y, scanline, scr_width );
+
+		for( x=0; x<scr_width; x++) {
+			COPYRGB( scanline[x], smpte_middle[x*7/scr_width] );
+		}
+		for( ; y<(scr_height*4/16); y++)
+			fb_write( fbp, 0, y, scanline, scr_width );
+
+		for( x=0; x<scr_width; x++)  {
+			COPYRGB( scanline[x], eia_top[x*7/scr_width] );
+		}
+		for( ; y<scr_height; y++)
+			fb_write( fbp, 0, y, scanline, scr_width );
+		break;
 	}
-	for( ; y<scr_height; y++)
-		fb_write( fbp, 0, y, scanline, scr_width );
 	fb_close(fbp);
 }
