@@ -36,6 +36,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "tk.h"
 #include "machine.h"
 #include "vmath.h"
+#include "bu.h"
 #include "db.h"
 #include "rtstring.h"
 #include "rtlist.h"
