@@ -3,10 +3,8 @@
 anim_orient - convert between orientation formats
 .SH SYNOPSIS
 .B anim_orient 
-.B [-i{yzvo}] 
-.B [-o{yzvo}] 
-.B [-p] 
-.B [-r] 
+.B [qyazmt][vr]
+.B [qyazmt][vr]
 .B < in.table 
 .B > out.table
 .SH DESCRIPTION
@@ -14,119 +12,143 @@ anim_orient - convert between orientation formats
 is a filter which translates a table of orientation
 information from one format to another. The method used is to convert
 the input format to a matrix, then convert the matrix to the desired
-output format. The input format is specified by a one or two letter code
-following the 
-.B -i 
-option. Similarly, the output format is specified by
-the 
-.B -o 
-option. The possible formats are:
+output format. The input format is specified in the first argument, and
+the output format is specified in the second. The orientation formats
+must be one of the following: 
+.B q 
+(quaternion), 
+.B y
+(yaw,pitch, and roll), 
+.B a
+(azimuth, elevation, and twist), 
+.B z 
+(x-y-z angles), 
+.B m 
+(rotation matrix), or 
+.B t 
+(transposed matrix). These are described in greater detail below. 
+
+In addition, the input and output formats may be modified by the 
+.B r 
+or
+.B v
+options. The 
+.B r 
+option specifies that angles are read or written in radians, rather
+than degrees. 
+.sp
+The 
+.B v
+option specifies an alternate starting point for the orientation
+transformation. By default, the object being oriented is assumed
+initially to face the positive x direction, with the y-axis to the left 
+and the z-axis leading upwards. All of the orientation formats define
+transformations which are applied to this initial object to achieve the
+desired orientation.  This is the convention for vehicles modeled
+in 
+.IR brlcad .
+The 
+.B v 
+option facilitates animating the virtual camera in 
+.IR brlcad .
+In this case, the object is assumed to initially face the negative z
+direction, with the x-axis to the right and the y-axis going up (the
+default position of the virtual camera). 
+See the Examples section for more information.
+
+The input and output format codes are:
 .TP
-.BR default : 
-quaternions. These are in the order x,y,z,w. The output will
+.BR q : 
+Quaternions, in the order x,y,z,w. This is the default input and
+output format. The output will
 always be unit quaternions. For a unit quaternion, the
-xyz-vector represents an axis and and w represents cos(omega/2), where
+xyz-vector represents an axis of rotation and and w represents 
+cos(omega/2), where
 omega is the angle to be rotated about the given axis.
 .TP
-.B z
-or 
-.BR zr : 
-xyz angles, in the order x, y, z. They represent a rotation
+.BR z : 
+x-y-z angles, in the order x, y, z. They represent a rotation
 of z degrees around the z-axis, followed by y degrees around the y-axis,
 followed by x degrees around the x-axis. If the code 
 .B zr 
 is used
-instead of 
-.B z, 
 then the angles will be read or written in radians
 rather than degrees.
 .TP
-.B y
-or 
-.BR yr : 
+.BR y : 
 yaw-pitch-roll format, in that order. They represent
 a rotation of +roll degrees about the x-axis, -pitch degrees about
 the y-axis, followed by +yaw degrees about the z-axis. If the code
 .B yr 
-is used, angles are in radians rather than degrees. If used in
-conjuction with the 
-.B \-p 
-permutation option, then the definition of the
-yaw-pitch-roll format is that the virtual camera on the z-axis is rotated
-down to face the positive x-direction before applying the above
-mentioned rotations. This should be used when the yaw, pitch, and roll 
-are supposed to refer to the virtual camera.
+is used, angles are in radians rather than degrees. 
 .TP
-.BR o : 
-pre-multiplication matrix (used for animating "objects"). Sixteen
-numbers form a 4x4 matrix. This is the format used at the interior of
-the conversion routine.
+.BR a :
+azimuth, elevation, twist, in that order. They represent a rotation of
+-twist degrees about the x-axis, +elevation degrees about the y-axis,
+and +azimuth + 180 degrees about the z-axis. Alternatively, they can
+be thought of as a 180 degree rotation about the z-axis followed by a
+rotation of +twist degrees about the x-axis, -elevation degrees about
+the y-axis, and +azimuth degrees about the z-axis.
 .TP
-.BR v : 
-post-multiplication matrix (used by 
-.I rt 
-for animating the virtual camera,
-with the "viewrot" command). Sixteen numbers form a 4x4 matrix, which is
-the transpose of a pre-multiplication matrix. 
+.BR m : 
+pre-multiplication rotation matrix. Sixteen
+numbers form a 4x4 matrix, although only the nine elements in the upper
+left corner are actually used. This is the format used at the interior of
+the conversion routine. It is a transformation from initial orientation to 
+a new orientation.
+.TP
+.BR t : 
+Transposed matrix. A matrix which is the transpose of the 
+.B m
+matrix. Because these are rotation matrices, the transposed matrix is
+also the inverse of the 
+.B m 
+matrix, and can be though of the transformation from the new orientation
+back into the initial orientation space. The
+.B t 
+and
+.B v
+options together represent the "Viewrot" transformation used by 
+.I mged
+and 
+.IR rt.
+See the examples below.
 
-OPTIONS:
-.TP
-.B \-r 
-Input and output in radians, if they are angle formats.
-.TP
-.B \-p 
-Permute the interior matrix, in situations where yaw, pitch, and roll 
-are being
-used to control the virtual camera. The virtual camera is normally
-facing the negative z-direction, with the x-axis to the right and the
-y-axis going up. The permutation moves the virtual camera to the position
-in which vehicles are usually modelled (facing the positive x
-direction, with the y-axis to the left and the z-axis going up). The
-yaw, pitch, and roll would be applied from this point.
-In a word, the 
-.B \-p 
-option should be used whevever yaw, pitch, and roll are
-involved and the orientation refers to the virtual camera.
 .SH EXAMPLES
 .sp
-Unitize a table of quaternions.
+Normalize a table of quaternions to unit magnitude.
 .sp
 	anim_orient < in.table > out.table 
 .sp
-change xyz-angles to view matrix format
+change xyz angles to a rotation matrix
 .sp
-	anim_orient -iz -ov < in.table > out.table
+	anim_orient z m < in.table > out.table
+.sp
+change azimuth,elevation, and twist to a matrix suitable for the 
+.I rt
+viewrot command
+.sp
+	anim_orient a tv < in.table > out.table
 .sp
 transpose matrices
 .sp
-	anim_orient -iv -oo < in.table > out.table
+	anim_orient m t < in.table > out.table
 .sp
 change radian xyz angles to yaw-pitch-roll in degrees
 .sp
-	anim_orient -izr -oy < in.table > out.table
+	anim_orient zr y < in.table > out.table
 .sp
-change yaw, pitch, roll to an object matrix
+given quaternion being applied to an object, find the quaternion needed
+to turn the virtual camera in the same direction
 .sp
-	anim_orient -iy -oo < in.table > out.table
-.sp
-change yaw, pitch, and roll to a view matrix, including a permutation which 
-brings
-the camera from the z-axis to the negative x-axis before beginning the
-specified rotations.
-.sp
-	anim_orient -iy -ov -p < in.table > out.table
-.sp
-change a quaternion representation of the view orientation to an
-yaw, pitch, roll form
-.sp
-	anim_orient -oy -p < in.table > out.table
+	anim_orient q qv < in.table > out.table
 .SH BUGS
-There are built in trouble spots which occur, in ypr or xyz
-formats, when the pitch or the y-rotation is an odd multiple of 90
+There are built in trouble spots which occur, in ypr, xyz, or aet
+formats, when the pitch, y-rotation, or elevation is an odd multiple of 90
 degrees, because at this point the other two angles become
 indistinguishable. The program makes the arbitrary assumption that the
 roll is zero or that the x-rotation is zero, depending on the format,
-and gives a warning to that effect.
+and gives a warning to that effect on stderr.
 .SH AUTHOR
 Carl J. Nuzman
 .SH COPYRIGHT
@@ -135,3 +157,4 @@ in all countries except the USA.  All rights reserved.
 .SH "BUG REPORTS"
 Reports of bugs or problems should be submitted via electronic
 mail to <CAD@BRL.MIL>.
+
