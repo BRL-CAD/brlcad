@@ -122,7 +122,7 @@ set -S2 "/bin/sh"
 /* 1==YES, 0==NO */
 
 /* Read above for the meaning and implications of each flag! */
-#define BUILD_OPTIMIZED         0
+#define BUILD_OPTIMIZED         1
 #define BUILD_SHARED            1
 #define BUILD_XWINDOWS          1
 #define BUILD_OPENGL            0
@@ -326,15 +326,19 @@ set -S2 "/bin/sh"
 #	endif
 #	define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85 -Wl,-woff,134
 /* -ansiposix	ANSI+POSIX mode is used over ANSI, to get fdopen(), etc, defined. */
+
+
 /*	Set the following five defines if you want to compile the Unigraphics
  *	to BRL-CAD converter and you have the unigraphics ugopen module installed.
  *	This probably will not work if you are compiling 64 bit
  */
+#if 0
 #	define	UGOPEN_DIR	/p/ugs180
 #	define	UGOPEN_LIB_DIR	UGOPEN_DIR/ugii/uglibs
 #	define	UGOPEN_LIBES	-L UGOPEN_LIB_DIR -lufun
 #	define	UGOPEN_INC	-I''UGOPEN_DIR/ugopen -I''UGOPEN_DIR/ugopenpp
 #	define	LIBUGOPEN_DEP	UGOPEN_LIB_DIR/libufun.so
+#endif
 
 #	define  CC_OPTS		GFLAG -xansi -DIRIX=6 UGOPEN_INC
 #	define	LGT_CONFIG	GFLAG
@@ -716,7 +720,7 @@ set -S2 "/bin/sh"
  *	This will not work if you are compiling 64 bit
  */
 
-#	ifdef M4I65_USE_N32
+#	if defined( M4I65_USE_N32 ) && 0
 #		define	UGOPEN_DIR	/p/ugs180
 #		define	UGOPEN_LIB_DIR	UGOPEN_DIR/ugii/uglibs
 #		define	UGOPEN_LIBES	-L UGOPEN_LIB_DIR -lufun
