@@ -509,7 +509,7 @@ union record *where;
 {
 	register int i;
 
-	if( offset < 0 || offset+len >= dp->d_len )  {
+	if( offset < 0 || offset+len > dp->d_len )  {
 		(void)printf("db_getmany(%s):  xfer %d..%x exceeds 0..%d\n",
 			dp->d_namep, offset, offset+len, dp->d_len );
 		where->u_id = '\0';	/* undefined id */
