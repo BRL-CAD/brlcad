@@ -9,13 +9,16 @@
 
 #include "../Cakefile.defs"
 
+#undef unix
+
 /* Eliminate the normal BRL-CAD defines */
 #undef CFLAGS
 /* Keep the -64 flag, etc */
 #define CFLAGS TK_DEFS  GFLAG -I''INCDIR -I''XINCDIR
 
-#define HEADER_FILES ../libtk/tkInt.h ../libtk/tkPort.h ../libtk/tkUnixPort.h \
-			../libtcl/limits.h ../libtcl/stdlib.h ../libtcl/unistd.h
+#define HEADER_FILES ../libtk/generic/tkInt.h ../libtk/generic/tkPort.h \
+	../libtk/unix/tkUnixPort.h \
+	../libtcl/compat/limits.h ../libtcl/compat/stdlib.h ../libtcl/compat/unistd.h
 
 /* Explicit composition of each product */
 
@@ -25,10 +28,10 @@ wish: tkAppInit.o LIBTCL_DEP LIBTK_DEP
 	CC LDFLAGS -o wish tkAppInit.o LIBTK LIBTCL LIBTCL_LIBES -L''XLIBDIR -lX11 LIBES
 
 bwish: bwish.o LIBTCLCAD_DEP LIBTCL_DEP LIBTK_DEP LIBBN_DEP LIBBU_DEP
-	CC LDFLAGS -o bwish bwish.o LIBTCLCAD LIBTK LIBTCL LIBTCL_LIBES LIBRT LIBBN LIBBU LIBBU_LIBES -L''XLIBDIR -lX11 LIBES
+	CC LDFLAGS -o bwish tkAppInit.o bwish.o LIBTCLCAD LIBTK LIBTCL LIBTCL_LIBES LIBRT LIBBN LIBBU LIBBU_LIBES -L''XLIBDIR -lX11 LIBES
 
 tktest: tkTest.o tkSquare.o LIBTCL_DEP LIBTK_DEP LIBBU_DEP LIBBN_DEP LIBRT_DEP
-	CC LDFLAGS -o tktest tkTest.o tkSquare.o LIBTK LIBTCL LIBTCL_LIBES LIBRT LIBBU LIBBU_LIBES LIBBN -L''XLIBDIR -lX11 LIBES
+	CC LDFLAGS -o tktest tkAppInit.o tkTest.o tkSquare.o LIBTK LIBTCL LIBTCL_LIBES LIBRT LIBBU LIBBU_LIBES LIBBN -L''XLIBDIR -lX11 LIBES
 
 tkAppInit.o: ../SRCDIR/tkAppInit.c HEADER_FILES
 	CC CFLAGS -c ../SRCDIR/tkAppInit.c
@@ -41,8 +44,5 @@ tkTest.o: ../SRCDIR/tkTest.c HEADER_FILES
 
 tkSquare.o: ../SRCDIR/tkSquare.c HEADER_FILES
 	CC CFLAGS -c ../SRCDIR/tkSquare.c
-/*
-%.h:
-        cp ../libtk/%.h %.h */
 
 #include "../Cakefile.rules"

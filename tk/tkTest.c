@@ -15,8 +15,11 @@
  * SCCS: @(#) tkTest.c 1.35 96/10/03 11:22:26
  */
 
-#include "../libtk/tkInt.h"
-#include "../libtk/tkPort.h"	
+#include "tcl.h"
+#include "tk.h"
+
+#include "../libtk/generic/tkPort.h"	
+#include "../libtk/generic/tkInt.h"
 
 #ifdef __WIN32__
 #include "../libtk/tkWinInt.h"

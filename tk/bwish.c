@@ -109,8 +109,11 @@ Tcl_AppInit(interp)
      *
      * where "Mod" is the name of the module.
      */
+	if( bu_tcl_setup(interp) == TCL_ERROR )  return TCL_ERROR;
+	if( bn_tcl_setup(interp) == TCL_ERROR )  return TCL_ERROR;
+	if( rt_tcl_setup(interp) == TCL_ERROR )  return TCL_ERROR;
 
-    if (TclCad_Init(interp) == TCL_ERROR) {
+    if (tclcad_tk_setup(interp) == TCL_ERROR) {
 	return TCL_ERROR;
     }
 

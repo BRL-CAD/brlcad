@@ -15,8 +15,6 @@
  *
  * SCCS: @(#) tkSquare.c 1.17 96/07/23 16:54:29
  */
-
-#include "../libtk/tkPort.h"
 #include "tk.h"
 
 /*
