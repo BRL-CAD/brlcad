@@ -1258,7 +1258,7 @@ char	**argv;
 		/* return the view size */
 		if (argc == 2) {
 			bu_vls_init(&vls);
-			bu_vls_printf(&vls, "%.12g", view_state->vs_vop->vo_scale * 2.0 * base2local);
+			bu_vls_printf(&vls, "%.12g", view_state->vs_vop->vo_size * base2local);
 			Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 			bu_vls_free(&vls);
 
