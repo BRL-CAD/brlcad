@@ -95,14 +95,6 @@ static int wdb_comb_tcl();
 static void wdb_deleteProc();
 static void wdb_deleteProc_rt();
 
-struct do_trace_state {
-	Tcl_Interp *interp;
-	int	pathpos;
-	matp_t	old_xlate;
-	int	flag;
-	CONST struct db_full_path *des_path;
-};
-static void wdb_do_trace();
 static int wdb_trace();
 
 int wdb_cmpdirname();
@@ -114,12 +106,6 @@ struct directory *wdb_combadd();
 
 /* XXX move this to rt_g */
 struct wdb_obj HeadWDBObj;	/* head of BRLCAD database object list */
-
-/* ==== BEGIN evil stuff ==== */
-
-struct db_full_path	wdb_accumulated_path;
-
-/* ==== END evil stuff ==== */
 
 static struct bu_cmdtab wdb_cmds[] = {
 	"match",	wdb_match_tcl,
@@ -1166,124 +1152,75 @@ wdb_list_tcl(clientData, interp, argc, argv)
 }
 
 /*
- * This is a callback invoked by db_tree_funcleaf(), which
- * recursively invokes wdb_trace()
- */
-static void
-wdb_do_trace(dbip, comb, comb_leaf, user_ptr1, user_ptr2, user_ptr3)
-     struct db_i		*dbip;
-     struct rt_comb_internal *comb;
-     union tree		*comb_leaf;
-     genptr_t		user_ptr1, user_ptr2, user_ptr3;
-{
-	mat_t			new_xlate;
-	struct directory	*nextdp;
-	struct do_trace_state	*dtsp = (struct do_trace_state *)user_ptr1;
-
-	RT_CK_DBI(dbip);
-	RT_CK_TREE(comb_leaf);
-
-	if (comb_leaf->tr_l.tl_mat)  {
-		bn_mat_mul(new_xlate, dtsp->old_xlate, comb_leaf->tr_l.tl_mat);
-	} else {
-		bn_mat_copy(new_xlate, dtsp->old_xlate);
-	}
-	if ((nextdp = db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_NOISY)) == DIR_NULL)
-		return;
-
-	wdb_trace(dtsp->interp, dbip, nextdp, dtsp->pathpos+1,
-		new_xlate, dtsp->flag, dtsp->des_path);
-}
-
-/*
  *			W D B _ T R A C E
  *
- *  XXX Why are we not using db_follow_path()?
+ *  Follow a given path.  What happens next depends on setting of 'flag'.
  *
  *  Return -
  *	0	path not found
  *	1	OK
  */
 static int
-wdb_trace(interp, dbip, dp, pathpos, old_xlate, flag, wdb_xform, des_path)
+wdb_trace(interp, dbip, old_xlate, flag, wdb_xform, des_path)
      Tcl_Interp			*interp;
      struct db_i		*dbip;
-     register struct directory *dp;
-     int pathpos;	/* subscript to wdb_accumulated_path[] */
      mat_t old_xlate;
      int flag;
      mat_t wdb_xform;
      CONST struct db_full_path *des_path;
 {
-	struct directory *nextdp;
-	struct rt_db_internal intern;
-	struct rt_comb_internal *comb;
-	mat_t new_xlate;
-	int nparts, i, k;
-	int id;
 	struct bu_vls str;
-	
-	if (dp->d_flags & DIR_COMB) {
-		if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL) < 0) {
-			Tcl_AppendResult(interp, "Database read error, aborting\n", (char *)NULL);
-			return 0;
-		}
+	struct db_tree_state ts;
+	struct db_full_path accumulated_path;
+	struct directory *dp;
+	int ret = 0;
 
-		/* XXX Should check to make sure this comb is on desired_path */
-		/* otherwise, why bother recursing into it? */
+	RT_CK_DBI(dbip);
+	RT_CK_FULL_PATH(des_path);
 
-		db_add_node_to_full_path( &wdb_accumulated_path, dp );
-		comb = (struct rt_comb_internal *)intern.idb_ptr;
-		if (comb->tree)  {
-			struct do_trace_state	dts;
-			dts.interp = interp;
-			dts.pathpos = pathpos;
-			dts.old_xlate = old_xlate;
-			dts.flag = flag;
-			dts.des_path = des_path;
-			/* Recursively invoke wdb_trace() via wdb_do_trace () */
-			db_tree_funcleaf(dbip, comb, comb->tree, wdb_do_trace,
-				(genptr_t)&dts, NULL, NULL );
-		}
-		rt_comb_ifree(&intern);
-		DB_FULL_PATH_POP( &wdb_accumulated_path );
-		return 0;
+	db_full_path_init(&accumulated_path);
+	db_init_db_tree_state( &ts, dbip );
+	bn_mat_copy( ts.ts_mat, old_xlate );
+	if( db_follow_path( &ts, &accumulated_path, des_path, LOOKUP_NOISY, 0 ) < 0 )  {
+		ret = 0;
+		goto out;
 	}
+	bn_mat_copy( wdb_xform, ts.ts_mat );
 
-	/* not a combination  -  should have a solid */
-
-	db_add_node_to_full_path( &wdb_accumulated_path, dp );
-
-	/* check for desired path */
-	for (k=0; k<des_path->fp_len; k++) {
-		if (wdb_accumulated_path.fp_names[k] != des_path->fp_names[k]) {
-			/* not the desired path */
-			return 0;
-		}
+	if (flag == WDB_CPEVAL)  {
+		/* all they wanted was the matrix */
+		ret = 1;
+		goto out;
 	}
-
-	/* have followed the desired path, all they wanted was the matrix. */
-	bn_mat_copy(wdb_xform, old_xlate);
-
-	if (flag == WDB_CPEVAL)
-		return 1;
 
 	/* print the path */
-	db_full_path_appendresult( interp, &wdb_accumulated_path );
+	db_full_path_appendresult( interp, &accumulated_path );
 
 	if (flag == WDB_LISTPATH) {
-		return 1;
+		ret = 1;
+		goto out;
 	}
 
 	BU_ASSERT( flag == WDB_LISTEVAL );
 	bu_vls_init( &str );
+	dp = DB_FULL_PATH_CUR_DIR( &accumulated_path );
+	RT_CK_DIR(dp);
 	wdb_do_list( dbip, interp, &str, dp, 1 );
 	Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
 	bu_vls_free(&str);
-	return 1;
+	ret = 1;
+out:
+	db_free_full_path( &accumulated_path );
+	db_free_db_tree_state( &ts );
+	return ret;
 }
 
 /*
+ *			W D B _ P A T H S U M _ T C L
+ *
+ *  Common code for several direct db methods: listeval, paths
+ *  Also used as support routine for "l" (list) command.
+ *
  *  1.  produces path for purposes of matching
  *  2.  gives all paths matching the input path OR
  *  3.  gives a summary of all paths matching the input path
@@ -1344,7 +1281,6 @@ wdb_pathsum_tcl(clientData, interp, argc, argv)
 	bn_mat_idn( wdb_xform );
 
 	if( wdb_trace(interp, wdbop->wdb_wp->dbip,
-	    desired_path.fp_names[0], 0,
 	    bn_mat_identity, flag, wdb_xform, &desired_path) != 0
 	)  {
 		db_free_full_path( &desired_path );
