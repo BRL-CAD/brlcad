@@ -629,66 +629,158 @@ struct rt_piecestate	*psp;
 		} else if( (k - i) > 2 ) {
 			int keep1=-1, keep2=-1;
 			int enters=0, exits=0;
+			int reorder=0;
+			int reorder_failed=0;
+
 			/* more than two hits at the same distance, likely a vertex hit
 			 * try to keep just two, one entrance and one exit.
 			 * unless they are all entrances or all exits, then just keep one */
 
-			if( i == 0 ) {
-				dn = 1,0;
-			} else {
-				dn = hits[i-1].hit_vpriv[X];
-			}
-			for( j=i ; j<k ; j++ ) {
+			/* first check if we need to do anything */
+			for( j=0 ; j<k ; j++ ) {
 				if( hits[j].hit_vpriv[X] > 0 )
 					exits++;
 				else
 					enters++;
-				if( dn * hits[j].hit_vpriv[X] < 0 ) {
-					if( keep1 < 0 ) {
-						keep1 = j;
-						dn = hits[j].hit_vpriv[X];
-					} else if( keep2 < 0 ) {
-						keep2 = j;
-						dn = hits[j].hit_vpriv[X];
-						break;
-					}
+			}
+
+			if( k%2 ) {
+				if( exits == (enters - 1) ) {
+					reorder = 1;
+				}
+			} else {
+				if( exits == enters ) {
+					reorder = 1;
 				}
 			}
 
-			if( keep2 == -1 ) {
-				/* did not find two keepers, perhaps they were all entrances or all exits */
-				if( exits == k - i || enters == k - i ) {
-					/* eliminate all but one entrance or exit */
-					for( j=k-1 ; j>i ; j-- ) {
-						/* delete this hit */
-						for( l=j ; l<nhits-1 ; l++ )
-							hits[l] = hits[l+1];
-						if( psp ) {
-							psp->htab.end--;
+			if( reorder ) {
+				struct hit tmp_hit;
+				int changed=0;
+
+				for( j=i ; j<k ; j++ ) {
+					int l;
+
+					if( j%2 ) {
+						if( hits[j].hit_vpriv[X] > 0 ) {
+							continue;
 						}
-						nhits--;
+						/* should be an exit here */
+						l = j+1;
+						while( l < k ) {
+							if( hits[l].hit_vpriv[X] > 0 ) {
+								/* swap with this exit */
+								tmp_hit = hits[j];
+								hits[j] = hits[l];
+								hits[l] = tmp_hit;
+								changed = 1;
+								break;
+							}
+							l++;
+						}
+						if( hits[j].hit_vpriv[X] < 0 ) {
+							reorder_failed = 1;
+							break;
+						}
+					} else {
+						if( hits[j].hit_vpriv[X] < 0 ) {
+							continue;
+						}
+						/* should be an entrance here */
+						l = j+1;
+						while( l < k ) {
+							if( hits[l].hit_vpriv[X] < 0 ) {
+								/* swap with this entrance */
+								tmp_hit = hits[j];
+								hits[j] = hits[l];
+								hits[l] = tmp_hit;
+								changed = 1;
+								break;
+							}
+							l++;
+						}
+						if( hits[j].hit_vpriv[X] > 0 ) {
+							reorder_failed = 1;
+							break;
+						}
+					}
+				}
+				if( changed ) {
+					/* if we have re-ordered these hits, make sure they are really
+					 *  at the same distance.
+					 */
+					for( j=i+1 ; j<k ; j++ ) {
+						hits[j].hit_dist = hits[i].hit_dist;
+					}
+				}
+			} 
+			if( !reorder || reorder_failed ) {
+
+				exits = 0;
+				enters = 0;
+				if( i == 0 ) {
+					dn = 1.0;
+				} else {
+					dn = hits[i-1].hit_vpriv[X];
+				}
+				for( j=i ; j<k ; j++ ) {
+					if( hits[j].hit_vpriv[X] > 0 )
+						exits++;
+					else
+						enters++;
+					if( dn * hits[j].hit_vpriv[X] < 0 ) {
+						if( keep1 < 0 ) {
+							keep1 = j;
+							dn = hits[j].hit_vpriv[X];
+						} else if( keep2 < 0 ) {
+							keep2 = j;
+							dn = hits[j].hit_vpriv[X];
+							break;
+						}
+					}
+				}
+
+				if( keep2 == -1 ) {
+				/* did not find two keepers, perhaps they were all entrances or all exits */
+					if( exits == k - i || enters == k - i ) {
+						/* eliminate all but one entrance or exit */
+						for( j=k-1 ; j>i ; j-- ) {
+							/* delete this hit */
+							for( l=j ; l<nhits-1 ; l++ )
+								hits[l] = hits[l+1];
+							if( psp ) {
+								psp->htab.end--;
+							}
+							nhits--;
+						}
+						i--;
+					}
+				} else if( keep2 >= 0 ) {
+				/* found an entrance and an exit to keep */
+					for( j=k-1 ; j>=i ; j-- ) {
+						if( j != keep1 && j != keep2 ) {
+							/* delete this hit */
+							for( l=j ; l<nhits-1 ; l++ )
+								hits[l] = hits[l+1];
+							if( psp ) {
+								psp->htab.end--;
+							}
+							nhits--;
+						}
 					}
 					i--;
 				}
-			} else if( keep2 >= 0 ) {
-				/* found an entrance and an exit to keep */
-				for( j=k-1 ; j>=i ; j-- ) {
-					if( j != keep1 && j != keep2 ) {
-						/* delete this hit */
-						for( l=j ; l<nhits-1 ; l++ )
-							hits[l] = hits[l+1];
-						if( psp ) {
-							psp->htab.end--;
-						}
-						nhits--;
-					}
-				}
-				i--;
 			}
 		}
 	    }
     }
-
+#if 0
+    bu_log( "nhits = %d\n", nhits );
+    for( i=0 ; i<nhits ; i++ ) {
+	    rt_bot_norm( &hits[i], stp, rp );
+	    bu_log( "dist=%g, normal = (%g %g %g), %s\n", hits[i].hit_dist, V3ARGS( hits[i].hit_normal), hits[i].hit_vpriv[X] > 0 ? "exit" : "entrance" );
+    }
+#endif
     if( (nhits&1) )  {
 	register int i;
 	/*
