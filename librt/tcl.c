@@ -324,12 +324,69 @@ char **argv;
 	return TCL_OK;
 }
 
+/*
+ *			R T _ T C L _ R T _ P R E P
+ *  Usage -
+ *	widgetname prep
+ *	widgetname prep use_air [hasty_prep [dont_instance]]
+ */
+int
+rt_tcl_rt_prep( clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	struct application	*ap = (struct application *)clientData;
+	struct rt_i		*rtip;
+	struct bu_vls		str;
+
+	if( argc < 2 || argc > 5 )  {
+		Tcl_AppendResult( interp,
+				"wrong # args: should be \"",
+				argv[0], " ", argv[1],
+				" [use_air [hasty_prep [dont_instance]]]\"",
+				(char *)NULL );
+		return TCL_ERROR;
+	}
+
+	/* Could core dump */
+	RT_AP_CHECK(ap);
+	rtip = ap->a_rt_i;
+	RT_CK_RTI_TCL(rtip);
+
+	if( argc >= 3 && !rtip->needprep )  {
+		Tcl_AppendResult( interp,
+			argv[0], " ", argv[1],
+			" invoked when model has already been prepped.\n",
+			(char *)NULL );
+		return TCL_ERROR;
+	}
+
+	if( argc >= 3 )  rtip->useair = atoi(argv[2]);
+	if( argc >= 4 )  rtip->rti_hasty_prep = atoi(argv[3]);
+	if( argc >= 5 )  rtip->rti_dont_instance = atoi(argv[4]);
+
+	/* If args were given, prep now. */
+	if( argc >= 3 )  rt_prep_parallel( rtip, 1 );
+
+	/* Now, describe the current state */
+	bu_vls_init( &str );
+	bu_vls_printf( &str, "needprep %d useair %d hasty_prep %d dont_instance %d",
+		rtip->needprep,
+		rtip->useair,
+		rtip->rti_hasty_prep,
+		rtip->rti_dont_instance );
+
+	Tcl_AppendResult( interp, bu_vls_addr(&str), (char *)NULL );
+	bu_vls_free( &str );
+	return TCL_OK;
+}
+
 static struct dbcmdstruct rt_tcl_rt_cmds[] = {
 	"shootray",	rt_tcl_rt_shootray,
 	"onehit",	rt_tcl_rt_onehit,
-#if 0
-	"prep",		rt_tcl_rt_prep,		/* haste | efficient, useair, elaborate_instances */
-#endif
+	"prep",		rt_tcl_rt_prep,
 	(char *)0,	(int (*)())0
 };
 
