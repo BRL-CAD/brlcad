@@ -155,7 +155,7 @@ FileReadPIX(interp, chan, fileName, formatString, imageHandle, destX, destY,
 				 * in image being read. */
 {
     int fileWidth, fileHeight;
-    int nBytes, h, type, count;
+    int nBytes, h, count;
     unsigned char *pixelPtr;
     Tk_PhotoImageBlock block;
 
@@ -251,7 +251,7 @@ FileWritePIX(interp, fileName, formatString, blockPtr)
 {
     FILE *f;
     int w, h;
-    int greenOffset, blueOffset, nBytes;
+    int greenOffset, blueOffset;
     unsigned char *pixelPtr, *pixLinePtr;
 
     if ((f = fopen(fileName, "wb")) == NULL) {
