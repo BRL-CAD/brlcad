@@ -686,17 +686,16 @@ GC gc;
   rect.height = xi->xi_xheight;
   XUnionRectWithRegion(&rect, xi->xi_reg, xi->xi_reg);
 
-  /* Allocate image buffer, and make our X11 Image */
-  if ((xi->xi_pix = (unsigned char *) calloc(sizeof(unsigned int),
-					     width*height)) == NULL) {
-    fb_log("X24_open: pix32 malloc failed\n");
+  /* this will be reallocated in the call to X24_configureWindow */
+  if ((xi->xi_pix = (unsigned char *) calloc(1, 1)) == NULL) {
+    fb_log("X24_open: calloc failed\n");
     return -1;
   }
 
+  /* this will be destroyed in the call to X24_configureWindow */
   xi->xi_image = XCreateImage(xi->xi_dpy,
 			      xi->xi_visual, xi->xi_depth, ZPixmap, 0,
-			      (char *) xi->xi_pix, width, height,
-			      sizeof(unsigned int) * 8, 0);
+			      (char *) xi->xi_pix, 1, 1, 8, 0);
 
   /* Update state for blits */
   X24_updstate(ifp);
@@ -704,19 +703,13 @@ GC gc;
   /* Make the Display connection available for selecting on */
   ifp->if_selfd = ConnectionNumber(xi->xi_dpy);
 
-#if 0
-  /* If we already have data, display it */
-  if (getmem_stat == 0) {
-    X24_wmap(ifp, xi->xi_rgb_cmap);
-    X24_blit(ifp, 0, 0, xi->xi_iwidth, xi->xi_iheight, BLIT_DISP);
-  } else {
-    /* Set up default linear colormap */
-    X24_wmap(ifp, NULL);
-  }
-#endif
-
   /* Mark display ready */
   xi->xi_flags |= FLG_INIT;
+
+  /* force reconfiguration */
+  xi->xi_xwidth = 0;
+  xi->xi_xheight = 0;
+  X24_configureWindow(ifp, width, height);
 
   return 0;
 }
