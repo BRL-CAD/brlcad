@@ -1029,8 +1029,17 @@ int	non_blocking;
 void
 refresh()
 {
-  register struct dm_list *p;
+  struct dm_list *p;
   struct dm_list *save_dm_list;
+  double	elapsed_time = 0;
+
+  if(update_views || dmaflag || dirty) {
+    /* XXX VR hack */
+    if( viewpoint_hook )  (*viewpoint_hook)();
+
+    rt_prep_timer();
+    elapsed_time = -1;		/* timer running */
+  }
 
   save_dm_list = curr_dm_list;
   for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
@@ -1043,12 +1052,6 @@ refresh()
     dmp->dm_setWinBounds(dmp, windowbounds);
 
     if(update_views || dmaflag || dirty) {
-      double	elapsed_time;
-
-      /* XXX VR hack */
-      if( viewpoint_hook )  (*viewpoint_hook)();
-
-      rt_prep_timer();
 
       if( mged_variables.predictor )
 	predictor_frame();
@@ -1084,14 +1087,15 @@ refresh()
 
       dmp->dm_drawEnd(dmp);
 
-      (void)rt_get_timer( (struct bu_vls *)0, &elapsed_time );
-      /* Only use reasonable measurements */
-      if( elapsed_time > 1.0e-5 && elapsed_time < 30 )  {
-	/* Smoothly transition to new speed */
-	frametime = 0.9 * frametime + 0.1 * elapsed_time;
-      }
-
       dirty = 0;
+    }
+  }
+  if (elapsed_time < 0)  {
+    (void)rt_get_timer( (struct bu_vls *)0, &elapsed_time );
+    /* Only use reasonable measurements */
+    if( elapsed_time > 1.0e-5 && elapsed_time < 30 )  {
+      /* Smoothly transition to new speed */
+      frametime = 0.9 * frametime + 0.1 * elapsed_time;
     }
   }
 
