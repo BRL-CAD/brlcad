@@ -1967,7 +1967,7 @@ CONST struct faceuse	*fu;
 }
 
 /*
- *			N M G _ F A C E _ P L O T
+ *			N M G _ 2 F A C E _ P L O T
  *
  *  Just like nmg_face_plot, except it draws two faces each iteration.
  */
@@ -2047,3 +2047,40 @@ CONST struct vertexuse		*vu1, *vu2;
 	rt_log("wrote %s\n", buf);
 	rt_free( (char *)b, "nmg_face_lu_plot flag[]" );
 }
+
+/*
+ *			N M G _ P L O T _ R A Y _ F A C E
+ */
+void
+nmg_plot_ray_face(fname, pt, dir, fu)
+CONST char *fname;
+point_t pt;
+CONST vect_t dir;
+CONST struct faceuse *fu;
+{
+	FILE *fd;
+	long *b;
+	point_t pp;
+	static int i=0;
+	char name[1024];
+
+	if ( ! (rt_g.NMG_debug & DEBUG_NMGRT) )
+		return;
+
+	sprintf(name, "%s%0d.pl", fname, i++);
+	if ((fd = fopen(name, "w")) == (FILE *)NULL) {
+		rt_log("plot_ray_face cannot open %s", name);
+		rt_bomb("aborting");
+	}
+
+	b = (long *)rt_calloc( fu->s_p->r_p->m_p->maxindex, sizeof(long), "bit vec");
+
+	nmg_pl_fu(fd, fu, b, 200, 200, 200);
+
+	rt_free((char *)b, "bit vec");
+
+	VSCALE(pp, dir, 1000.0);
+	VADD2(pp, pt, pp);
+	pdv_3line( fd, pt, pp );
+}
+
