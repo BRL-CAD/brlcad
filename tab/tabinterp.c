@@ -163,9 +163,7 @@ char	**argv;
 {
 	register struct command_tab	*ctp;
 
-#if 0
 	if( argc <= 1 )
-#endif
 	{
 		rt_log("The following commands are available:\n\n");
 		for( ctp = cmdtab; ctp->ct_cmd != (char *)0; ctp++ )  {
@@ -175,7 +173,7 @@ char	**argv;
 		}
 		return 0;
 	}
-	/* XXX What here? */
+	rt_log("Detailed help is not yet available.\n");
 	return -1;
 }
 
