@@ -25,7 +25,7 @@
 	sh_plastic sh_cook wray sh_spm sh_light \
 	turb sh_marble sh_wood sh_stxt sh_points sh_toyota \
 	sh_camo sh_scloud sh_air sh_fire sh_cs sh_rtrans sh_brdf \
-	sh_gauss sh_paint sh_noise sh_prj sh_grass
+	sh_gauss sh_noise sh_prj sh_grass
 
 
 /*  The "top-half" (user interface) for the RT family of programs */
@@ -39,7 +39,7 @@
 		sh_stxt.o sh_points.o sh_toyota.o \
 		sh_camo.o sh_scloud.o sh_air.o \
 		sh_fire.o sh_cs.o sh_rtrans.o sh_brdf.o \
-		sh_gauss.o sh_paint.o sh_noise.o sh_prj.o sh_grass.o
+		sh_gauss.o sh_noise.o sh_prj.o sh_grass.o
 
 rt:	RT_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
 	newvers.sh version "The BRL-CAD Ray-Tracer RT"
