@@ -424,26 +424,30 @@ DoFile( )	/* returns vpl status code */
 		virpos.x = virpos.y = 0;
 		plotted = false;
 
-		for ( ; ; )		/* read until EOF or erase */
+		for ( ; ; )		/* read until EOF*/
 		{
 			switch ( c = getc( pfin ) )
 			{	/* record type */
 			case EOF:
-			case 'e':	/* erase */
-				if( debug )
-					fprintf( stderr,"Erase or EOF\n");
+				if( debug ) fprintf( stderr,"EOF\n");
 					
-				if ( plotted )
-				{
+				if ( plotted )  {
 					/* flush strokes */
+					if( debug ) fprintf( stderr,"flushing\n");
 					if ( !OutBuild() )
 						return Foo( -6 );
-
 				}
+				return Foo( 0 );/* success */
 
-				if ( c == EOF )
-					return Foo( 0 );/* success */
-
+			case 'e':	/* erase */
+				if( debug )  fprintf( stderr,"Erase\n");
+					
+				if ( plotted )  {
+					/* flush strokes */
+					if( debug ) fprintf( stderr,"flushing\n");
+					if ( !OutBuild() )
+						return Foo( -6 );
+				}
 				break;	/* next frame */
 
 			case 'f':	/* linemod */
@@ -997,6 +1001,7 @@ STATIC int
 Foo( code )				/* returns status code */
 	int	code;			/* status code */
 	{
+	if( debug ) fprintf(stderr,"Foo(%d)\n", code);
 	fb_close( fbp );		/* release framebuffer */
 
 	FreeUp();			/* deallocate descriptors */
