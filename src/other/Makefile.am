@@ -1,19 +1,28 @@
 # $Id$
 
+if BUILD_REGEX
+REGEX=libregex
+else !BUILD_REGEX
+REGEX=
+fi
+
+if BUILD_ZLIB
+LIBZ=libz
+else !BUILD_ZLIB
 LIBZ=
-if NEED_ZLIB
-	LIBZ=libz
 endif
 
+if BUILD_PNG
+PNG=libpng
+else !BUILD_PNG
 PNG=
-if NEED_PNG
-	PNG=libpng
 endif
 
 # this seems to have serious breakage for linux and fbsd
-TKGLX=
 if IRIX
-	TKGLX=libtkGLX
+TKGLX=libtkGLX
+else !IRIX
+TKGLX=
 endif
 
 if ONLY_BENCHMARK
@@ -26,17 +35,18 @@ SUBDIRS = libtcl
 
 else !ONLY_RTS
 SUBDIRS = \
+	${LIBZ} \
+	${PNG} \
+	${REGEX} \
+	${TKGLX} \
 	awf \
 	iwidgets \
 	jove \
 	libitcl \
 	liborle \
-	${PNG} \
 	libtcl \
 	libtk \
-	${TKGLX} \
-	libutahrle \
-	${LIBZ}
+	libutahrle
 
 endif
 # end ONLY_RTS
