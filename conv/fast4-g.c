@@ -1003,7 +1003,7 @@ struct faceuse *fu;
 	while( dup_count > dup_size-1 )
 	{
 		dup_size += DUP_BLOCK;
-		dup_fu = (struct faceuse **)bu_realloc( dup_fu, dup_size, "realloc dup_fu" );
+		dup_fu = (struct faceuse **)bu_realloc( (char *)dup_fu, dup_size, "realloc dup_fu" );
 	}
 
 	dup_fu[dup_count] = fu;
