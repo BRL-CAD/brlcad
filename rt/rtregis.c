@@ -48,6 +48,8 @@ static char RCSregis[] = "@(#)$Header$";
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
+#include "bu.h"
+#include "raytrace.h"
 
 #define NAMELEN 40
 #define BUFF_LEN 256
