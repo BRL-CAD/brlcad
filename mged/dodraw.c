@@ -546,6 +546,9 @@ int	kind;
 	case 3:
 	  {
 		/* NMG */
+	  	(void)printf("\
+Please note that the NMG library used by this command is experimental.\n\
+A production implementation will exist in the maintenance release.\n");
 	  	mged_nmg_model = nmg_mm();
 		i = db_walk_tree( dbip, argc, argv,
 			ncpu,
