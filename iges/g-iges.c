@@ -50,8 +50,11 @@ extern char	version[];
 #include "rtgeom.h"
 #include "../iges/iges.h"
 #include "../librt/debug.h"
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #define	CP_BUF_SIZE	1024	/* size of buffer for file copy */
+#define SUFFIX_LEN	10	/* max size of suffix for 'part' files (-m option) */
 
 RT_EXTERN( union tree *do_nmg_region_end , (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree));
 RT_EXTERN( void w_start_global , (FILE *fp_dir , FILE *fp_param , char *db_name , char *prog_name , char *output_file , char *id , char *version ));
@@ -66,22 +69,28 @@ RT_EXTERN( void csg_leaf_func , ( struct db_i *dbip , struct directory *dp ) );
 RT_EXTERN( void set_iges_tolerances , ( struct rt_tol *set_tol , struct rt_tess_tol *set_ttol ) );
 RT_EXTERN( void count_refs , ( struct db_i *dbip , struct directory *dp ) );
 
-static char usage[] = "Usage: %s [-f|t] [-v] [-s] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o output_file] brlcad_db.g object(s)\n\
+static char usage[] = "Usage: %s [-f|t|m] [-v] [-s] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-d dist_tol] [-o output_file] brlcad_db.g object(s)\n\
 	options:\n\
 		f - convert each region to facetted BREP before output\n\
 		t - produce a file of trimmed surfaces (experimental)\n\
+		m - produces a seperate IGES file for each region,\n\
+			implies -t, -o gives directory for output IGES file\n\
 		s - produce NURBS for faces of any BREP objects\n\
 		v - verbose\n\
-		a - absolute tolerance for tessellation\n\
+		a - absolute tolerance for tessellation (mm)\n\
 		r - relative tolerance for tessellation\n\
 		n - normal tolerance for tessellation\n\
+		d - distance tolerance (mm) (minimum distance between distinct points)\n\
 		x - librt debug flag\n\
 		X - nmg debug flag\n\
-		o - file to receive IGES output\n\
+		o - file to receive IGES output (or directory when '-m' option is used)\n\
 	The f and t options are mutually exclusive. If neither is specified,\n\
 	the default output is a CSG file to the maximum extent possible\n";
 
 int		verbose=0;
+static char	*db_name;	/* name of the BRL-CAD database */
+static char	*prog_name;	/* name of this program as it was invoked */
+static int	multi_file=0;	/* Flag to indicate output of seperate IGES file for each region */
 static int	NMG_debug;	/* saved arg of -X, for longjmp handling */
 static int	scale_error=0;	/* Count indicating how many scaled objects were encountered */
 static int	solid_error=0;	/* Count indicating how many solids were not converted */
@@ -156,7 +165,6 @@ char	*argv[];
 	int			i, ret;
 	register int		c;
 	double			percent;
-	char			*prog_name;
 	char			copy_buffer[CP_BUF_SIZE];
 	struct directory	*dp;
 
@@ -191,13 +199,15 @@ char	*argv[];
 	prog_name = argv[0];
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "ftsa:n:o:p:r:vx:P:X:")) != EOF) {
+	while ((c = getopt(argc, argv, "ftsmd:a:n:o:p:r:vx:P:X:")) != EOF) {
 		switch (c) {
 		case 'f':		/* Select facetized output */
 			mode = FACET_MODE;
+			multi_file = 0;
 			break;
 		case 't':
 			mode = TRIMMED_SURF_MODE;
+			multi_file = 0;
 			break;
 		case 's':		/* Select NURB output */
 			do_nurbs = 1;
@@ -213,6 +223,14 @@ char	*argv[];
 			break;
 		case 'r':		/* Relative tolerance. */
 			ttol.rel = atof(optarg);
+			break;
+		case 'd':		/* distance tolerance */
+			tol.dist = atof( optarg );
+			tol.dist_sq = tol.dist * tol.dist;
+			break;
+		case 'm':		/* multi-file mode */
+			multi_file = 1;
+			mode = TRIMMED_SURF_MODE;
 			break;
 		case 'v':
 			verbose++;
@@ -243,37 +261,58 @@ char	*argv[];
 	/* Open brl-cad database */
 	argc -= optind;
 	argv += optind;
-	if ((dbip = db_open(argv[0], "r")) == DBI_NULL) {
+	db_name = argv[0];
+	if ((dbip = db_open(db_name, "r")) == DBI_NULL) {
 		perror("g-iges");
 		exit(1);
-	}
-
-	/* Open the output file */
-	if( output_file == NULL )
-		fp_dir = stdout;
-	else {
-		if( (fp_dir=fopen( output_file , "w" )) == NULL ) {
-			rt_log( "Cannot open output file: %s\n" , output_file );
-			perror( "g-iges" );
-			exit( 1 );
-		}
-	}
-
-	/* Open the temporary file for the parameter section */
-	if( (fp_param=tmpfile()) == NULL ) {
-		rt_log( "Cannot open temporary file\n" );
-		perror( "g-iges" );
-		exit( 1 );
 	}
 
 	/* Scan the database */
 	db_scan(dbip, (int (*)())db_diradd, 1);
 
-	/* let the IGES routines know the selected tolerances and the database pointer */
-	iges_init( &tol , &ttol , verbose , dbip );
+	if( !multi_file )
+	{
+		/* let the IGES routines know the selected tolerances and the database pointer */
+		iges_init( &tol , &ttol , verbose , dbip );
 
-	/* Write start and global sections of the IGES file */
-	w_start_global( fp_dir , fp_param , argv[0] , prog_name , output_file , RCSid , RCSrev );
+		/* Open the output file */
+		if( output_file == NULL )
+			fp_dir = stdout;
+		else {
+			if( (fp_dir=fopen( output_file , "w" )) == NULL ) {
+				rt_log( "Cannot open output file: %s\n" , output_file );
+				perror( output_file );
+				exit( 1 );
+			}
+		}
+
+		/* Open the temporary file for the parameter section */
+		if( (fp_param=tmpfile()) == NULL ) {
+			rt_log( "Cannot open temporary file\n" );
+			perror( "g-iges" );
+			exit( 1 );
+		}
+
+		/* Write start and global sections of the IGES file */
+		w_start_global( fp_dir , fp_param , argv[0] , prog_name , output_file , RCSid , RCSrev );
+	}
+	else
+	{
+		struct stat stat_ptr;
+
+		if( stat( output_file, &stat_ptr ) )
+		{
+			rt_log( "Cannot determine status of %s\n", output_file );
+			perror( prog_name );
+			exit( 1 );
+		}
+
+		if( !(stat_ptr.st_mode & S_IFDIR) )
+		{
+			rt_log( "-o option must provide a directory, %s is not a directory\n", output_file );
+			exit( 1 );
+		}
+	}
 
 	/* Count object references */
 /*	for( i=1 ; i<argc ; i++ )
@@ -301,11 +340,14 @@ char	*argv[];
 		if( ret )
 			rt_bomb( "g-iges: Could not facetize anything!!!" );
 
-		/* Now walk the same trees again, but only output groups */
-		for( i=1 ; i<argc ; i++ )
+		if( !multi_file )
 		{
-			dp = db_lookup( dbip , argv[i] , 1 );
-			db_functree( dbip , dp , csg_comb_func , 0 );
+			/* Now walk the same trees again, but only output groups */
+			for( i=1 ; i<argc ; i++ )
+			{
+				dp = db_lookup( dbip , argv[i] , 1 );
+				db_functree( dbip , dp , csg_comb_func , 0 );
+			}
 		}
 	}
 	else if( mode == CSG_MODE )
@@ -337,22 +379,25 @@ char	*argv[];
 
 	}
 
-	/* Copy the parameter section from the temporary file to the output file */
-	if( (fseek( fp_param , (long) 0 , 0 )) ) {
-		rt_log( "Cannot seek to start of temporary file\n" );
-		perror( "g-iges" );
-		exit( 1 );
-	}
-
-	while( (i=fread( copy_buffer , 1 , CP_BUF_SIZE , fp_param )) )
-		if( fwrite( copy_buffer , 1 , i , fp_dir ) != i ) {
-			rt_log( "Error in copying parameter data to %s\n" , output_file );
+	if( !multi_file )
+	{
+		/* Copy the parameter section from the temporary file to the output file */
+		if( (fseek( fp_param , (long) 0 , 0 )) ) {
+			rt_log( "Cannot seek to start of temporary file\n" );
 			perror( "g-iges" );
 			exit( 1 );
 		}
 
-	/* Write the terminate section */
-	w_terminate( fp_dir );
+		while( (i=fread( copy_buffer , 1 , CP_BUF_SIZE , fp_param )) )
+			if( fwrite( copy_buffer , 1 , i , fp_dir ) != i ) {
+				rt_log( "Error in copying parameter data to %s\n" , output_file );
+				perror( "g-iges" );
+				exit( 1 );
+			}
+
+		/* Write the terminate section */
+		w_terminate( fp_dir );
+	}
 
 	/* Print some statistics */
 	Print_stats( stdout );
@@ -455,6 +500,86 @@ union tree		*curtree;
 
 		dp = DB_FULL_PATH_CUR_DIR(pathp);
 
+		if( multi_file )
+		{
+			/* Open the output file */
+			if( output_file == NULL )
+				fp_dir = stdout;
+			else {
+				char *multi_name;
+				int len;
+				int unique=0;
+				struct stat stat_ptr;
+				char suffix[SUFFIX_LEN+1];
+
+				/* construct a unique file name */
+				len = strlen( output_file ) + strlen( dp->d_namep ) + 6 + SUFFIX_LEN;
+				multi_name = rt_malloc( sizeof( char )*len, "multi_name" );
+				strcpy( multi_name, output_file );
+				strcat( multi_name, "/" );
+				strcat( multi_name, dp->d_namep );
+				strcat( multi_name, ".igs" );
+				strcpy( suffix, "a" );
+				suffix[0]--;
+				while( !unique )
+				{
+					int i;
+
+					if( stat( multi_name, &stat_ptr ) )
+					{
+						unique = 1;
+						break;
+					}
+
+					/* not unique, try adding a suffix */
+					len = strlen( suffix );
+					i = len - 1;;
+					suffix[i]++;
+					while( suffix[i] > 'z' && i > 0 )
+					{
+						suffix[i] = 'a';
+						i--;
+						suffix[i]++;
+					}
+
+					if( suffix[0] > 'z' && len < SUFFIX_LEN )
+					{
+						for( i=0 ; i<=len ; i++ )
+							suffix[i] = 'a';
+					}
+					else if( suffix[0] > 'z' && len >= SUFFIX_LEN )
+					{
+						rt_log( "Cannot create a unique filename,\n" );
+						rt_log( "too many files with the same name (%s)\n", dp->d_namep );
+						exit( 1 );
+					}
+					strcpy( multi_name, output_file );
+					strcat( multi_name, "/" );
+					strcat( multi_name, dp->d_namep );
+					strcat( multi_name, suffix );
+					strcat( multi_name, ".igs" );
+				}
+				if( (fp_dir=fopen( multi_name , "w" )) == NULL ) {
+					rt_log( "Cannot open output file: %s\n" , multi_name );
+					perror( "g-iges" );
+					exit( 1 );
+				}
+			}
+
+			/* Open the temporary file for the parameter section */
+			if( (fp_param=tmpfile()) == NULL ) {
+				rt_log( "Cannot open temporary file\n" );
+				perror( "g-iges" );
+				exit( 1 );
+			}
+
+			/* let the IGES routines know the selected tolerances and the database pointer */
+			iges_init( &tol , &ttol , verbose , dbip );
+
+			/* Write start and global sections of the IGES file */
+			w_start_global( fp_dir , fp_param , db_name , prog_name , output_file , RCSid , RCSrev );
+		}
+
 		if( mode == FACET_MODE )
 		{
 			dependent = 1;
@@ -474,6 +599,30 @@ union tree		*curtree;
 
 		/* NMG region is no longer necessary */
 		nmg_kr(r);
+
+		if( multi_file )
+		{
+			char copy_buffer[CP_BUF_SIZE];
+
+			/* Copy the parameter section from the temporary file to the output file */
+			if( (fseek( fp_param , (long) 0 , 0 )) ) {
+				rt_log( "Cannot seek to start of temporary file\n" );
+				perror( "g-iges" );
+				exit( 1 );
+			}
+
+			while( (i=fread( copy_buffer , 1 , CP_BUF_SIZE , fp_param )) )
+				if( fwrite( copy_buffer , 1 , i , fp_dir ) != i ) {
+					rt_log( "Error in copying parameter data to %s\n" , output_file );
+					perror( "g-iges" );
+					exit( 1 );
+				}
+
+			/* Write the terminate section */
+			w_terminate( fp_dir );
+			fclose( fp_dir );
+			fclose( fp_param );
+		}
 	}
 
 	/*
