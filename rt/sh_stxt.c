@@ -246,15 +246,11 @@ char	*dp;
 {
 	register struct stxt_specific *stp =
 		(struct stxt_specific *)dp;
-	register struct soltab *sp;
 	vect_t  lx, ly, lz;	/* local coordinate axis */
 	fastf_t f;
 	double iptr;
 	fastf_t sx, sy, sz;
 	int	tx, ty, tz;
-	int line;
-	int dx, dy;
-	int x,y;
 	register long r,g,b;
 	int u1, u2, u3;
 	register unsigned char *cp;
@@ -348,13 +344,8 @@ char	*dp;
 {
 	register struct stxt_specific *stp =
 		(struct stxt_specific *)dp;
-	register struct soltab *sp;
-	fastf_t xmin, xmax, ymin, ymax;
 	fastf_t sx, sy, sz;
 	int	tx, ty, tz;
-	int line;
-	int dx, dy;
-	int x,y;
 	register long r,g,b;
 
 	int u1, u2, u3;
@@ -428,13 +419,8 @@ char	*dp;
 {
 	register struct stxt_specific *stp =
 		(struct stxt_specific *)dp;
-	register struct soltab *sp;
-	fastf_t xmin, xmax, ymin, ymax;
 	fastf_t sx, sy, sz;
 	int	tx, ty, tz;
-	int line;
-	int dx, dy;
-	int x,y;
 	register long r,g,b;
 	int u1, u2, u3;
 	register unsigned char *cp;

@@ -235,7 +235,6 @@ static	int	wood_done = 0;
 
 HIDDEN int wood_init ()
 {
-	register int	i,j,k;
 
 	/*
 	 *	Initialize the wood chain
@@ -291,10 +290,6 @@ char			**dpp;
 {
 	register int i;
 	register struct wood_specific *wd;
-	register double c,A,B,C;
-	mat_t	xlate;
-	vect_t	g, h, a_vertex, a_dir, corner, max_V;
-	double	rt_45 = 45 * rt_degtorad;
 
 	extern struct resource		rt_uniresource;
 	register struct resource	*resp = &rt_uniresource;
@@ -415,7 +410,7 @@ char			**dpp;
 
 	   else {
 		register struct wood_specific	*wc;
-		register vect_t			c_min, c_max;
+		vect_t			c_min, c_max;
 
 		/*
 		 *	First, process the accumulated chain of wood regions and
@@ -498,10 +493,11 @@ struct wood_specific *wd;
 				a_vertex[i] = wd->b_min[i];
 				a_dir[i] = wd->b_max[i];
 				}
-			a_vertex[3] = ((wd->b_max[3] - wd->b_min[3]) * 
-					(rand0to1(resp->re_randptr) * wd->dz)) + wd->b_min[3];
-			a_dir[3]    = ((wd->b_max[3] - wd->b_min[3]) * 
-					(rand0to1(resp->re_randptr) * wd->dz)) + wd->b_min[3];
+			/* Z component is [2] */
+			a_vertex[2] = ((wd->b_max[2] - wd->b_min[2]) * 
+					(rand0to1(resp->re_randptr) * wd->dz)) + wd->b_min[2];
+			a_dir[2]    = ((wd->b_max[2] - wd->b_min[2]) * 
+					(rand0to1(resp->re_randptr) * wd->dz)) + wd->b_min[2];
 			}
 		   else {
 			for (i=0; i<3; i++) {
@@ -654,7 +650,7 @@ char			*dp;
 
 	vect_t	g, h;
 	point_t	dprod, lprod;
-	double	a, c, A, B, C;
+	double	c, A, B, C;
 	double	x, y, z, xd, yd, zd;
 	double	mixture, pp, pq, wt;
 
