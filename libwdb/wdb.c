@@ -215,18 +215,21 @@ fastf_t		x_top_len;
 	vect_t		zvec;		/* z-axix vector */
 	vect_t		x_unitv;	/* x-axis unit vector*/
 	vect_t		z_unitv;	/* z-axis unit vector */
+	vect_t		y_unitv;
 
+	VMOVE( x_unitv, xdirv);
 	VUNITIZE(x_unitv);
+	VMOVE( z_unitv, zdirv );
 	VUNITIZE(z_unitv);
 	
-	/* Make ydirv */
-	VCROSS(ydirv, x_unitv, z_unitv);
+	/* Make y_unitv */
+	VCROSS(y_unitv, x_unitv, z_unitv);
 
 	/* Scale all vectors. */
 	VSCALE(xvec, x_unitv, xlen);
 	VSCALE(txvec, x_unitv, x_top_len);
 	VSCALE(zvec, z_unitv, zlen);
-	VSCALE(yvec, ydiv, ylen);
+	VSCALE(yvec, y_unitv, ylen);
 
 	/* Make bottom face */
 
