@@ -197,7 +197,7 @@ in the panes (geometry windows)." } }
 	    { { summary "Apply the control panel settings to the
 database solid, then dismiss/close the
 control panel." } }
-    button $w.applyB -text "Apply" -command "esol_do_cmd $id $w $w.sformF"
+    button $w.applyB -text "Apply" -command "esol_apply $id $w $w.sformF"
     hoc_register_data $w.applyB "Apply"\
 	    { { summary "Apply the control panel settings
 to the database solid." } }
@@ -353,13 +353,13 @@ proc esol_build_form { id w type vals do_gui do_cmd do_entries } {
 }
 
 proc esol_ok { id w sform } {
-    esol_do_cmd $id $w $sform
+    esol_apply $id $w $sform
     catch { destroy $w }
 }
 
-## - esol_do_cmd
+## - esol_apply
 #
-proc esol_do_cmd { id w sform } {
+proc esol_apply { id w sform } {
     global esol_db_cmd
     global esol_name
     global esol_type
