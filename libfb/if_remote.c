@@ -6,6 +6,10 @@
  *  Duplicates the functions in libfb via communication
  *  with a remote server (fbserv).
  *
+ *  Note that internal errors are returned as -2 and below, because
+ *  most remote errors (unpacked by fbgetlong) will be -1
+ *  (although they could be anything).
+ *
  *  Authors -
  *	Phillip Dykstra
  *	Gary S. Moss
@@ -137,11 +141,11 @@ register char *s;
 
 	while( *s ) {
 		if( *s < '0' || *s > '9' )
-			return 0;
+			return	0;
 		s++;
 	}
 
-	return 1;
+	return	1;
 }
 
 /*
@@ -221,7 +225,7 @@ char *device;	/* device part */
 		}
 	}
 	/* bad file spec */
-	return -1;
+	return	-1;
 
 done:
 	/* Default hostname */
@@ -230,7 +234,7 @@ done:
 	}
 	/* Magic port number mapping */
 	if( port < 0 )
-		return -1;
+		return	-1;
 	if( port < 1024 )
 		port += 5559;
 	/*
@@ -275,7 +279,7 @@ int	width, height;
 		/* too wild for our tastes */
 		fb_log( "rem_open: bad device name \"%s\"\n",
 			file == NULL ? "(null)" : file );
-		return	-1;
+		return	-2;
 	}
 	/*printf("hostname = \"%s\", port = %d, device = \"%s\"\n", hostname, port, device );*/
 
@@ -284,14 +288,14 @@ int	width, height;
 		if( (pc = pkg_open( hostname, portname, 0, 0, 0, pkgswitch, fb_log )) == PKC_ERROR ) {
 			fb_log(	"rem_open: can't connect to fb server on host \"%s\", port \"%s\".\n",
 				hostname, portname );
-			return	-1;
+			return	-3;
 		}
 	} else
 	if( (pc = pkg_open( hostname, "remotefb", 0, 0, 0, pkgswitch, fb_log )) == PKC_ERROR &&
 	    (pc = pkg_open( hostname, "5558", 0, 0, 0, pkgswitch, fb_log )) == PKC_ERROR ) {
 		fb_log(	"rem_open: can't connect to remotefb server on host \"%s\".\n",
 			hostname );
-		return	-1;
+		return	-4;
 	}
 	PCPL(ifp) = (char *)pc;			/* stash in u1 */
 	ifp->if_fd = pc->pkc_fd;		/* unused */
@@ -309,16 +313,19 @@ int	width, height;
 	(void)fbputlong( width, &buf[0*NET_LONG_LEN] );
 	(void)fbputlong( height, &buf[1*NET_LONG_LEN] );
 	(void) strcpy( &buf[2*NET_LONG_LEN], device );
-	pkg_send( MSG_FBOPEN, buf, strlen(device)+2*NET_LONG_LEN, pc );
+	i = strlen(device)+2*NET_LONG_LEN;
+	if( pkg_send( MSG_FBOPEN, buf, i, pc ) != i )
+		return	-5;
 
 	/* return code, max_width, max_height, width, height as longs */
-	pkg_waitfor( MSG_RETURN, buf, sizeof(buf), pc );
+	if( pkg_waitfor( MSG_RETURN, buf, sizeof(buf), pc ) < 5*NET_LONG_LEN )
+		return	-6;
 	ifp->if_max_width = fbgetlong( &buf[1*NET_LONG_LEN] );
 	ifp->if_max_height = fbgetlong( &buf[2*NET_LONG_LEN] );
 	ifp->if_width = fbgetlong( &buf[3*NET_LONG_LEN] );
 	ifp->if_height = fbgetlong( &buf[4*NET_LONG_LEN] );
 	if( fbgetlong( &buf[0*NET_LONG_LEN] ) != 0 )
-		return(-1);		/* fail */
+		return	-7;		/* fail */
 	return( 0 );			/* OK */
 }
 
@@ -329,8 +336,10 @@ FBIO	*ifp;
 	char	buf[NET_LONG_LEN+1];
 
 	/* send a close package to remote */
-	pkg_send( MSG_FBCLOSE, (char *)0, 0, PCP(ifp) );
-	pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) );
+	if( pkg_send( MSG_FBCLOSE, (char *)0, 0, PCP(ifp) ) < 0 )
+		return	-2;
+	if( pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) ) < 1*NET_LONG_LEN )
+		return	-3;
 	pkg_close( PCP(ifp) );
 	return( fbgetlong( &buf[0*NET_LONG_LEN] ) );
 }
@@ -342,8 +351,10 @@ FBIO	*ifp;
 	char	buf[NET_LONG_LEN+1];
 
 	/* send a free package to remote */
-	pkg_send( MSG_FBFREE, (char *)0, 0, PCP(ifp) );
-	pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) );
+	if( pkg_send( MSG_FBFREE, (char *)0, 0, PCP(ifp) ) < 0 )
+		return	-2;
+	if( pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) ) < 1*NET_LONG_LEN )
+		return	-3;
 	pkg_close( PCP(ifp) );
 	return( fbgetlong( &buf[0*NET_LONG_LEN] ) );
 }
@@ -363,8 +374,10 @@ RGBpixel	*bgpp;
 		buf[1] = (*bgpp)[GRN];
 		buf[2] = (*bgpp)[BLU];
 	}
-	pkg_send( MSG_FBCLEAR, buf, 3, PCP(ifp) );
-	pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) );
+	if( pkg_send( MSG_FBCLEAR, buf, 3, PCP(ifp) ) < 3 )
+		return	-2;
+	if( pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) ) < 1*NET_LONG_LEN )
+		return	-3;
 	return( fbgetlong( buf ) );
 }
 
@@ -387,15 +400,16 @@ int		num;
 	(void)fbputlong( x, &buf[0*NET_LONG_LEN] );
 	(void)fbputlong( y, &buf[1*NET_LONG_LEN] );
 	(void)fbputlong( num, &buf[2*NET_LONG_LEN] );
-	pkg_send( MSG_FBREAD, buf, 3*NET_LONG_LEN, PCP(ifp) );
+	if( pkg_send( MSG_FBREAD, buf, 3*NET_LONG_LEN, PCP(ifp) ) < 3*NET_LONG_LEN )
+		return	-2;
 
 	/* Get response;  0 len means failure */
-	pkg_waitfor( MSG_RETURN, (char *)pixelp,
-			num*sizeof(RGBpixel), PCP(ifp) );
-	if( (ret=PCP(ifp)->pkc_len) == 0 )  {
-		fb_log( "rem_read: read %d at <%d,%d> failed.\n",
-			num, x, y );
-		return(-1);
+	ret = pkg_waitfor( MSG_RETURN, (char *)pixelp,
+		num*sizeof(RGBpixel), PCP(ifp) );
+	if( ret <= 0 )  {
+		fb_log( "rem_read: read %d at <%d,%d> failed, ret=%d.\n",
+			num, x, y, ret );
+		return	-3;
 	}
 	return( ret/sizeof(RGBpixel) );
 }
@@ -413,16 +427,21 @@ int		num;
 	int	ret;
 	char	buf[3*NET_LONG_LEN+1];
 
+	if( num <= 0 )  return	num;
+
 	/* Send Write Command */
 	(void)fbputlong( x, &buf[0*NET_LONG_LEN] );
 	(void)fbputlong( y, &buf[1*NET_LONG_LEN] );
 	(void)fbputlong( num, &buf[2*NET_LONG_LEN] );
-	pkg_2send( MSG_FBWRITE+MSG_NORETURN,
+	ret = pkg_2send( MSG_FBWRITE+MSG_NORETURN,
 		buf, 3*NET_LONG_LEN,
 		(char *)pixelp, num*sizeof(RGBpixel),
 		PCP(ifp) );
-
-	return	num;	/* No error return, sacrificed for speed. */
+	ret -= 3*NET_LONG_LEN;
+	if( ret < 0 )
+		return	-1;	/* Error from libpkg */
+	return	ret/sizeof(RGBpixel);
+	/* No reading an error return package, sacrificed for speed. */
 }
 
 /*
@@ -447,15 +466,16 @@ RGBpixel	*pp;
 	(void)fbputlong( ymin, &buf[1*NET_LONG_LEN] );
 	(void)fbputlong( width, &buf[2*NET_LONG_LEN] );
 	(void)fbputlong( height, &buf[3*NET_LONG_LEN] );
-	pkg_send( MSG_FBREADRECT, buf, 4*NET_LONG_LEN, PCP(ifp) );
+	if( pkg_send( MSG_FBREADRECT, buf, 4*NET_LONG_LEN, PCP(ifp) ) < 4*NET_LONG_LEN )
+		return	-2;
 
 	/* Get response;  0 len means failure */
-	pkg_waitfor( MSG_RETURN, (char *)pp,
+	ret = pkg_waitfor( MSG_RETURN, (char *)pp,
 			num*sizeof(RGBpixel), PCP(ifp) );
-	if( (ret=PCP(ifp)->pkc_len) == 0 )  {
-		fb_log( "rem_rectread: read %d at <%d,%d> failed.\n",
-			num, xmin, ymin );
-		return(-1);
+	if( ret <= 0 )  {
+		fb_log( "rem_rectread: read %d at <%d,%d> failed, ret=%d.\n",
+			num, xmin, ymin, ret );
+		return	-3;
 	}
 	return( ret/sizeof(RGBpixel) );
 }
@@ -483,12 +503,15 @@ RGBpixel	*pp;
 	(void)fbputlong( ymin, &buf[1*NET_LONG_LEN] );
 	(void)fbputlong( width, &buf[2*NET_LONG_LEN] );
 	(void)fbputlong( height, &buf[3*NET_LONG_LEN] );
-	pkg_2send( MSG_FBWRITERECT+MSG_NORETURN,
+	ret = pkg_2send( MSG_FBWRITERECT+MSG_NORETURN,
 		buf, 4*NET_LONG_LEN,
 		(char *)pp, num*sizeof(RGBpixel),
 		PCP(ifp) );
-
-	return(num);	/* No error return, sacrificed for speed. */
+	ret -= 4*NET_LONG_LEN;
+	if( ret < 0 )
+		return	-4;	/* Error from libpkg */
+	return	ret/sizeof(RGBpixel);
+	/* No reading an error return package, sacrificed for speed. */
 }
 
 /*
@@ -506,8 +529,10 @@ int	x, y;
 	(void)fbputlong( mode, &buf[0*NET_LONG_LEN] );
 	(void)fbputlong( x, &buf[1*NET_LONG_LEN] );
 	(void)fbputlong( y, &buf[2*NET_LONG_LEN] );
-	pkg_send( MSG_FBCURSOR, buf, 3*NET_LONG_LEN, PCP(ifp) );
-	pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) );
+	if( pkg_send( MSG_FBCURSOR, buf, 3*NET_LONG_LEN, PCP(ifp) ) < 3*NET_LONG_LEN )
+		return	-2;
+	if( pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) ) < 1*NET_LONG_LEN )
+		return	-3;
 	return( fbgetlong( buf ) );
 }
 
@@ -522,15 +547,17 @@ int	*x, *y;
 	char	buf[4*NET_LONG_LEN+1];
 
 	/* Send Command */
-	pkg_send( MSG_FBGETCURSOR, (char *)0, 0, PCP(ifp) );
+	if( pkg_send( MSG_FBGETCURSOR, (char *)0, 0, PCP(ifp) ) < 0 )
+		return	-2;
 
 	/* return code, xcenter, ycenter, xzoom, yzoom as longs */
-	pkg_waitfor( MSG_RETURN, buf, sizeof(buf), PCP(ifp) );
+	if( pkg_waitfor( MSG_RETURN, buf, sizeof(buf), PCP(ifp) ) < 4*NET_LONG_LEN )
+		return	-3;
 	*mode = fbgetlong( &buf[1*NET_LONG_LEN] );
 	*x = fbgetlong( &buf[2*NET_LONG_LEN] );
 	*y = fbgetlong( &buf[3*NET_LONG_LEN] );
 	if( fbgetlong( &buf[0*NET_LONG_LEN] ) != 0 )
-		return(-1);		/* fail */
+		return	-4;		/* fail */
 	return( 0 );			/* OK */
 }
 
@@ -549,8 +576,10 @@ int	xzoom, yzoom;
 	(void)fbputlong( ycenter, &buf[1*NET_LONG_LEN] );
 	(void)fbputlong( xzoom, &buf[2*NET_LONG_LEN] );
 	(void)fbputlong( yzoom, &buf[3*NET_LONG_LEN] );
-	pkg_send( MSG_FBVIEW, buf, 4*NET_LONG_LEN, PCP(ifp) );
-	pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) );
+	if( pkg_send( MSG_FBVIEW, buf, 4*NET_LONG_LEN, PCP(ifp) ) < 4*NET_LONG_LEN )
+		return	-2;
+	if( pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) ) < 1*NET_LONG_LEN )
+		return	-3;
 	return( fbgetlong( buf ) );
 }
 
@@ -565,16 +594,18 @@ int	*xzoom, *yzoom;
 	char	buf[5*NET_LONG_LEN+1];
 
 	/* Send Command */
-	pkg_send( MSG_FBGETVIEW, (char *)0, 0, PCP(ifp) );
+	if( pkg_send( MSG_FBGETVIEW, (char *)0, 0, PCP(ifp) ) < 0 )
+		return	-2;
 
 	/* return code, xcenter, ycenter, xzoom, yzoom as longs */
-	pkg_waitfor( MSG_RETURN, buf, sizeof(buf), PCP(ifp) );
+	if( pkg_waitfor( MSG_RETURN, buf, sizeof(buf), PCP(ifp) ) < 5*NET_LONG_LEN )
+		return	-3;
 	*xcenter = fbgetlong( &buf[1*NET_LONG_LEN] );
 	*ycenter = fbgetlong( &buf[2*NET_LONG_LEN] );
 	*xzoom = fbgetlong( &buf[3*NET_LONG_LEN] );
 	*yzoom = fbgetlong( &buf[4*NET_LONG_LEN] );
 	if( fbgetlong( &buf[0*NET_LONG_LEN] ) != 0 )
-		return(-1);		/* fail */
+		return	-4;		/* fail */
 	return( 0 );			/* OK */
 }
 
@@ -625,14 +656,17 @@ register ColorMap	*cmap;
 	char	buf[NET_LONG_LEN+1];
 	char	cm[REM_CMAP_BYTES+4];
 
-	pkg_send( MSG_FBRMAP, (char *)0, 0, PCP(ifp) );
-	pkg_waitfor( MSG_DATA, cm, REM_CMAP_BYTES, PCP(ifp) );
+	if( pkg_send( MSG_FBRMAP, (char *)0, 0, PCP(ifp) ) < 0 )
+		return	-2;
+	if( pkg_waitfor( MSG_DATA, cm, REM_CMAP_BYTES, PCP(ifp) ) < REM_CMAP_BYTES )
+		return	-3;
 	for( i = 0; i < 256; i++ ) {
 		cmap->cm_red[i] = fbgetshort( cm+2*(0+i) );
 		cmap->cm_green[i] = fbgetshort( cm+2*(256+i) );
 		cmap->cm_blue[i] = fbgetshort( cm+2*(512+i) );
 	}
-	pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) );
+	if( pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) ) < 1*NET_LONG_LEN )
+		return	-4;
 	return( fbgetlong( &buf[0*NET_LONG_LEN] ) );
 }
 
@@ -646,16 +680,19 @@ register ColorMap	*cmap;
 	char	cm[REM_CMAP_BYTES+4];
 
 	if( cmap == COLORMAP_NULL )
-		pkg_send( MSG_FBWMAP, (char *)0, 0, PCP(ifp) );
+		if( pkg_send( MSG_FBWMAP, (char *)0, 0, PCP(ifp) ) < 0 )
+			return	-2;
 	else {
 		for( i = 0; i < 256; i++ ) {
 			(void)fbputshort( cmap->cm_red[i], cm+2*(0+i) );
 			(void)fbputshort( cmap->cm_green[i], cm+2*(256+i) );
 			(void)fbputshort( cmap->cm_blue[i], cm+2*(512+i) );
 		}
-		pkg_send( MSG_FBWMAP, cm, REM_CMAP_BYTES, PCP(ifp) );
+		if( pkg_send( MSG_FBWMAP, cm, REM_CMAP_BYTES, PCP(ifp) ) < REM_CMAP_BYTES )
+			return	-3;
 	}
-	pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) );
+	if( pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) ) < 1*NET_LONG_LEN )
+		return	-4;
 	return( fbgetlong( &buf[0*NET_LONG_LEN] ) );
 }
 
@@ -670,7 +707,8 @@ rem_poll( ifp )
 FBIO	*ifp;
 {
 	/* send a poll package to remote */
-	pkg_send( MSG_FBPOLL, (char *)0, 0, PCP(ifp) );
+	if( pkg_send( MSG_FBPOLL, (char *)0, 0, PCP(ifp) ) < 0 )
+		return	-1;
 	return( 0 );
 }
 
@@ -681,8 +719,10 @@ FBIO	*ifp;
 	char	buf[NET_LONG_LEN+1];
 
 	/* send a flush package to remote */
-	pkg_send( MSG_FBFLUSH, (char *)0, 0, PCP(ifp) );
-	pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) );
+	if( pkg_send( MSG_FBFLUSH, (char *)0, 0, PCP(ifp) ) < 0 )
+		return	-2;
+	if( pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) ) < 1*NET_LONG_LEN )
+		return	-3;
 	return( fbgetlong( &buf[0*NET_LONG_LEN] ) );
 }
 
@@ -699,8 +739,10 @@ FBIO	*ifp;
 
 	/* Send Command */
 	(void)fbputlong( 0L, &buf[0*NET_LONG_LEN] );
-	pkg_send( MSG_FBHELP, buf, 1*NET_LONG_LEN, PCP(ifp) );
-	pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) );
+	if( pkg_send( MSG_FBHELP, buf, 1*NET_LONG_LEN, PCP(ifp) ) < 1*NET_LONG_LEN )
+		return	-2;
+	if( pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) ) < 1*NET_LONG_LEN )
+		return	-3;
 	return( fbgetlong( &buf[0*NET_LONG_LEN] ) );
 }
 
