@@ -299,6 +299,16 @@ struct partition *PartHeadp;
 			pp->pt_inseg->seg_stp->st_name,
 			pp->pt_outseg->seg_stp->st_name );
 
+		if( pp->pt_overlap_reg )
+		{
+			struct region *pp_reg;
+			int j=-1;
+
+			bu_log( "    Claiming regions:\n" );
+			while( (pp_reg=pp->pt_overlap_reg[++j]) )
+				bu_log( "        %s\n", pp_reg->reg_name );
+		}
+
 		/* inhit info */
 		stp = pp->pt_inseg->seg_stp;
 		VJOIN1( inpt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir );
