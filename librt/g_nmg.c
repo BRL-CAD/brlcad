@@ -300,117 +300,22 @@ double			norm_tol;
 }
 
 /*
- *  Transform a bounding box (RPP) by the given 4x4 matrix.
- *  There are 8 corners to the bounding RPP.
- *  Each one needs to be transformed and min/max'ed.
- *  This is not minimal, but does fully contain any internal object,
- *  using an axis-aligned RPP.
+ * ----------------------------------------------------------------------
+ *
+ *  Definitions for the binary, machine-independent format of
+ *  the NMG data structures.
+ *
+ *  There are two special values that may be assigned to an index_t
+ *  to signal special processing when the structure is re-imported.
  */
-void
-rt_rotate_bbox( omin, omax, mat, imin, imax )
-point_t		omin;
-point_t		omax;
-mat_t		mat;
-point_t		imin;
-point_t		imax;
-{
-	point_t		rmin, rmax;
-	point_t		pt;
-
-	MAT4X3PNT( rmin, mat, imin );
-	MAT4X3PNT( rmax, mat, imax );
-
-	VSET( omin, rmin[X], rmin[Y], rmin[Z] );
-	VMOVE( omax, omin );
-
-	VSET( pt, rmax[X], rmin[Y], rmin[Z] );
-	VMINMAX( omin, omax, pt );
-
-	VSET( pt, rmin[X], rmax[Y], rmin[Z] );
-	VMINMAX( omin, omax, pt );
-
-	VSET( pt, rmax[X], rmax[Y], rmin[Z] );
-	VMINMAX( omin, omax, pt );
-
-	VSET( pt, rmin[X], rmin[Y], rmax[Z] );
-	VMINMAX( omin, omax, pt );
-
-	VSET( pt, rmax[X], rmin[Y], rmax[Z] );
-	VMINMAX( omin, omax, pt );
-
-	VSET( pt, rmin[X], rmax[Y], rmax[Z] );
-	VMINMAX( omin, omax, pt );
-
-	VSET( pt, rmax[X], rmax[Y], rmax[Z] );
-	VMINMAX( omin, omax, pt );
-}
-
-/*
- *  Transform a plane equation by the given 4x4 matrix.
- */
-void
-rt_rotate_plane( oplane, mat, iplane )
-plane_t		oplane;
-mat_t		mat;
-plane_t		iplane;
-{
-	point_t		orig_pt;
-	point_t		new_pt;
-
-	/* First, pick a point that lies on the original halfspace */
-	VSCALE( orig_pt, iplane, iplane[3] );
-
-	/* Transform the surface normal */
-	MAT4X3VEC( oplane, mat, iplane );
-
-	/* Transform the point from original to new halfspace */
-	MAT4X3PNT( new_pt, mat, orig_pt );
-
-	/*
-	 *  The transformed normal is all that is required.
-	 *  The new distance is found from the transformed point on the plane.
-	 */
-	oplane[3] = VDOT( new_pt, oplane );
-}
-
-/* Format of db.h nmg.N_nstructs info, sucked straight from nmg_struct_counts */
-#define NMG_O(m)	offsetof(struct nmg_struct_counts, m)
-
-struct rt_imexport rt_nmg_structs_fmt[] = {
-	"%d",	NMG_O(model),		1,
-	"%d",	NMG_O(model_a),		1,
-	"%d",	NMG_O(region),		1,
-	"%d",	NMG_O(region_a),	1,
-	"%d",	NMG_O(shell),		1,
-	"%d",	NMG_O(shell_a),		1,
-	"%d",	NMG_O(faceuse),		1,
-	"%d",	NMG_O(faceuse_a),	1,
-	"%d",	NMG_O(face),		1,
-	"%d",	NMG_O(face_g),		1,
-	"%d",	NMG_O(loopuse),		1,
-	"%d",	NMG_O(loopuse_a),	1,
-	"%d",	NMG_O(loop),		1,
-	"%d",	NMG_O(loop_g),		1,
-	"%d",	NMG_O(edgeuse),		1,
-	"%d",	NMG_O(edgeuse_a),	1,
-	"%d",	NMG_O(edge),		1,
-	"%d",	NMG_O(edge_g),		1,
-	"%d",	NMG_O(vertexuse),	1,
-	"%d",	NMG_O(vertexuse_a),	1,
-	"%d",	NMG_O(vertex),		1,
-	"%d",	NMG_O(vertex_g),	1,
-	"",	0,			0
-};
-
-/* ---------------------------------------------------------------------- */
+#define DISK_INDEX_NULL		0
+#define DISK_INDEX_LISTHEAD	-1
 
 typedef	char		index_t[4];
 struct disk_rt_list  {
 	index_t		forw;
 	index_t		back;
 };
-
-/* ---------------------------------------------------------------------- */
 
 #define DISK_MODEL_MAGIC	0x4e6d6f64	/* Nmod */
 struct disk_model {
@@ -605,8 +510,9 @@ struct disk_vertexuse_a {
 #define NMG_KIND_VERTEX		20
 #define NMG_KIND_VERTEX_G	21
 
-#define NMG_N_KINDS	22
-int	rt_disk_sizes[NMG_N_KINDS] = {
+#define NMG_N_KINDS		22		/* number of kinds */
+
+int	rt_nmg_disk_sizes[NMG_N_KINDS] = {
 	sizeof(struct disk_model),
 	sizeof(struct disk_model_a),
 	sizeof(struct disk_nmgregion),
@@ -654,8 +560,13 @@ char	rt_nmg_kind_names[NMG_N_KINDS][12] = {
 	"vertex",
 	"vertex_g"
 };
-/* ---------------------------------------------------------------------- */
 
+/*
+ *			R T _ N M G _ M A G I C _ T O _ K I N D
+ *
+ *  Given the magic number for an NMG structure, return the
+ *  manifest constant which identifies that structure kind.
+ */
 int
 rt_nmg_magic_to_kind( magic )
 register long	magic;
@@ -712,6 +623,8 @@ register long	magic;
 	return -1;
 }
 
+/* ---------------------------------------------------------------------- */
+
 struct nmg_exp_counts {
 	long	new_subscript;
 	long	per_struct_index;
@@ -720,6 +633,11 @@ struct nmg_exp_counts {
 
 /*
  *			R T _ N M G _ R E I N D E X
+ *
+ *  There are some special values for the disk index returned here:
+ *	>0	normal structure index.
+ *	 0	substitute a null pointer when imported.
+ *	-1	substitute pointer to within-struct list head when imported.
  */
 int
 rt_nmg_reindex(p, ecnt)
@@ -736,9 +654,9 @@ struct nmg_exp_counts	*ecnt;
 	} else {
 		index = nmg_index_of_struct((long *)(p));
 		if( index == -1 )  {
-			ret = -1;	/* FLAG:  special list head */
+			ret = DISK_INDEX_LISTHEAD; /* FLAG:  special list head */
 		} else if( index < -1 ) {
-			ret = 0;	/* ERROR. Use null ptr on import */
+			ret = DISK_INDEX_NULL;	/* ERROR. Use null ptr on import */
 		} else {
 			ret = ecnt[index].new_subscript;
 		}
@@ -1064,6 +982,8 @@ double		local2mm;
 /*
  *  For symmetry with export, use same macro names and arg ordering,
  *  but here take from "o" (outboard) variable and put in "i" (internal).
+ *
+ *  NOTE that the "< 0" test here is a comparison with DISK_INDEX_LISTHEAD.
  */
 #define INDEX(o,i,ty,elem)	(i)->elem = (struct ty *)ptrs[rt_glong((o)->elem)]
 #define INDEXL_HD(oo,ii,elem,hd)	{ \
@@ -1691,7 +1611,7 @@ register mat_t		mat;
 	for( i=1; i < maxindex; i++ )  {
 		rt_nmg_idisk( (genptr_t)(ptrs[i]), (genptr_t)cp,
 			ecnt, i, ptrs, mat );
-		cp += rt_disk_sizes[ecnt[i].kind];
+		cp += rt_nmg_disk_sizes[ecnt[i].kind];
 	}
 
 	/* XXX Perhaps bounding boxes should be recomputed here? */
@@ -1797,7 +1717,7 @@ rt_log("Mapping of old index to new index, and kind\n");
 			disk_arrays[i] = GENPTR_NULL;
 			continue;
 		}
-		tot_size += kind_counts[i] * rt_disk_sizes[i];
+		tot_size += kind_counts[i] * rt_nmg_disk_sizes[i];
 	}
 	additional_grans = (tot_size + sizeof(union record)-1) / sizeof(union record);
 	RT_INIT_EXTERNAL(ep);
@@ -1807,10 +1727,15 @@ rt_log("Mapping of old index to new index, and kind\n");
 	rp->nmg.N_id = DBID_NMG;
 	(void)rt_plong( rp->nmg.N_count, additional_grans );
 
+	/* Record counts of each kind of structure */
+	for( kind = 0; kind < NMG_N_KINDS; kind++ )  {
+		(void)rt_plong( rp->nmg.N_structs+4*kind, kind_counts[kind] );
+	}
+
 	cp = (char *)(rp+1);	/* advance one granule */
 	for( i=0; i < NMG_N_KINDS; i++ )  {
 		disk_arrays[i] = (genptr_t)cp;
-		cp += kind_counts[i] * rt_disk_sizes[i];
+		cp += kind_counts[i] * rt_nmg_disk_sizes[i];
 	}
 
 	/* Convert all the structures to their disk versions */
@@ -1821,10 +1746,8 @@ rt_log("Mapping of old index to new index, and kind\n");
 			(genptr_t)(ptrs[i]), ecnt, i, local2mm );
 	}
 
-	/* Record counts of each kind of structure */
-	for( kind = 0; kind < NMG_N_KINDS; kind++ )  {
-		(void)rt_plong( rp->nmg.N_structs+4*kind, kind_counts[kind] );
-	}
+	rt_free( (char *)ptrs, "ptrs[]" );
+	rt_free( (char *)ecnt, "ecnt[]" );
 
 	return(0);
 }
@@ -1848,18 +1771,12 @@ double			mm2local;
 	char	buf[256];
 
 	NMG_CK_MODEL(m);
-	rt_vls_strcat( str, "truncated general nmg (NMG)\n");
+	rt_vls_strcat( str, "n-Manifold Geometry solid (NMG)\n");
+
+	if( !verbose )  return(0);
 
 	/* Should print out # of database granules used */
 	/* If verbose, should print out structure counts */
-
-#if 0
-	sprintf(buf, "\tV (%g, %g, %g)\n",
-		m->v[X] * mm2local,
-		m->v[Y] * mm2local,
-		m->v[Z] * mm2local );
-	rt_vls_strcat( str, buf );
-#endif
 
 	return(0);
 }
