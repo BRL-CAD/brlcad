@@ -300,6 +300,7 @@ CONST struct db_i		*dbip;
 	comb->tree = tree;
 	comb->temperature = -1;
 	switch( rp[0].c.c_flags )  {
+	case DBV4_NON_REGION_NULL:
 	case DBV4_NON_REGION:
 		comb->region_flag = 0;
 		break;
