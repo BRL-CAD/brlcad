@@ -475,7 +475,7 @@ typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
 #define MAX_PSW		256	/* need to increase this for Super Dragon? */
-#define DEFAULT_PSW	bu_avail_cpu()
+#define DEFAULT_PSW	bu_avail_cpus()
 #define PARALLEL	1
 
 #endif
