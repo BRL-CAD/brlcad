@@ -294,6 +294,19 @@ AC_ARG_ENABLE(doxygen,
 )
 AC_MSG_RESULT($use_doxygen)
 
+# jove
+AC_MSG_CHECKING(whether to compile jove or not)
+use_jove=no
+AC_ARG_ENABLE(jove,
+	AC_HELP_STRING(--enable-jove,
+		[enable compilation of jove (default=no)]),
+	[if test "x$enable_jove" != "xno" ; then
+		use_jove=yes
+	fi]
+)
+AC_MSG_RESULT($use_jove)
+AM_CONDITIONAL(BUILD_JOVE, [test "x$use_jove" = "xyes"])
+
 # optimized
 AC_MSG_CHECKING(whether to enable optimized compilation)
 use_optimized=no
@@ -307,7 +320,6 @@ AC_ARG_ENABLE(optimized,
 AC_MSG_RESULT($use_optimized)
 
 # warnings
-AC_MSG_CHECKING(whether to enable verbose compilation warnings)
 use_warnings=no
 AC_ARG_ENABLE(warnings,
 	AC_HELP_STRING(--enable-warnings,
@@ -316,7 +328,6 @@ AC_ARG_ENABLE(warnings,
 		use_warnings=yes
 	fi]
 )
-AC_MSG_RESULT($use_warnings)
 
 # debugging
 AC_MSG_CHECKING(whether to disable debug mode compilation)
@@ -334,8 +345,7 @@ else
 	AC_MSG_RESULT(yes)
 fi
 
-# profile
-AC_MSG_CHECKING(whether to enable profile mode compilation)
+# profiling
 use_profiling=no
 AC_ARG_ENABLE(profiling,
 	AC_HELP_STRING(--enable-profiling,
@@ -344,24 +354,27 @@ AC_ARG_ENABLE(profiling,
 		use_profiling=yes
 	fi]
 )
+
+# argument aliases go below here (they should all become a single blank line)
+
+# profiling alias
 AC_ARG_ENABLE(profile,,
 	[if test "x$enable_profile" != "xno" ; then
 		use_profiling=yes
 	fi]
 )
+AC_MSG_CHECKING(whether to enable profile mode compilation)
 AC_MSG_RESULT($use_profiling)
 
-AC_MSG_CHECKING(whether to compile jove or not)
-use_jove=no
-AC_ARG_ENABLE(jove,
-	AC_HELP_STRING(--enable-jove,
-		[enable compilation of jove (default=no)]),
-	[if test "x$enable_jove" != "xno" ; then
-		use_jove=yes
+# verbose warnings alias
+AC_ARG_ENABLE(verbose-warnings,,
+	[if test "x$enable_verbose_warnings" != "xno" ; then
+		use_warnings=yes
 	fi]
 )
-AC_MSG_RESULT($use_jove)
-AM_CONDITIONAL(BUILD_JOVE, [test "x$use_jove" = "xyes"])
+AC_MSG_CHECKING(whether to enable verbose compilation warnings)
+AC_MSG_RESULT($use_warnings)
+
 
 # XXX pthread lib stuff should go away (and be made proper lib check)
 case "$target" in
