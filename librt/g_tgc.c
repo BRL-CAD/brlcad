@@ -1355,13 +1355,13 @@ register struct xray *rp;
 
 	/* Hits on the end plates are easy */
 	switch( hitp->hit_surfno )  {
-	case 1:	/* TGC_NORM_TOP */
+	case TGC_NORM_TOP:
 		VMOVE( hitp->hit_normal, tgc->tgc_N );
 		break;
-	case 2:	/* TGC_NORM_BOT */
+	case TGC_NORM_BOT:
 		VREVERSE( hitp->hit_normal, tgc->tgc_N );
 		break;
-	case 0:	/* TGC_NORM_BODY */
+	case TGC_NORM_BODY:
 		/* Compute normal, given hit point on standard (unit) cone */
 		R = 1 + tgc->tgc_CdAm1 * hitp->hit_vpriv[Z];
 		Q = 1 + tgc->tgc_DdBm1 * hitp->hit_vpriv[Z];
@@ -1404,18 +1404,18 @@ register struct uvcoord	*uvp;
 	MAT4X3VEC( pprime, tgc->tgc_ScShR, work );
 
 	switch( hitp->hit_surfno )  {
-	case 0:	/* TGC_NORM_BODY */
+	case TGC_NORM_BODY:
 		/* Skin.  x,y coordinates define rotation.  radius = 1 */
 		uvp->uv_u = acos(pprime[Y]) * rt_inv2pi;
 		uvp->uv_v = pprime[Z];		/* height */
 		break;
-	case 1:	/* TGC_NORM_TOP */
+	case TGC_NORM_TOP:
 		/* top plate */
 		len = sqrt(pprime[X]*pprime[X]+pprime[Y]*pprime[Y]);
 		uvp->uv_u = acos(pprime[Y]/len) * rt_inv2pi;
 		uvp->uv_v = len;		/* rim v = 1 */
 		break;
-	case 2:	/* TGC_NORM_BOT */
+	case TGC_NORM_BOT:
 		/* bottom plate */
 		len = sqrt(pprime[X]*pprime[X]+pprime[Y]*pprime[Y]);
 		uvp->uv_u = acos(pprime[Y]/len) * rt_inv2pi;
