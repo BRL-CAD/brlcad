@@ -1,21 +1,24 @@
 /*
- *			F I N D C O M . C 
+ *			F I N D C O M . C
  *
  * $Revision$
  *
  * $Log$
+ * Revision 11.1  95/01/04  10:35:04  mike
+ * Release_4.4
+ *
  * Revision 10.1  91/10/12  06:53:51  mike
  * Release_4.0
- * 
+ *
  * Revision 2.1  87/05/05  21:08:18  dpk
  * Removed reference to _sobuf.
- * 
+ *
  * Revision 2.0  84/12/26  16:44:29  dpk
  * System as distributed to Berkeley 26 Dec 84
- * 
+ *
  * Revision 1.2  83/12/16  00:07:05  dpk
  * Added distinctive RCS header
- * 
+ *
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$";
@@ -23,7 +26,7 @@ static char RCSid[] = "@(#)$Header$";
 
 #include <stdio.h>
 
-extern char	*Describe;
+extern char	Describe[];
 
 main(argc, argv)
 int	argc;
@@ -60,4 +63,5 @@ char	*argv[];
 		break;
 	}
 	fclose(fp);
+	return 0;
 }
