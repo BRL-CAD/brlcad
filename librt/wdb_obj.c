@@ -2487,25 +2487,11 @@ wdb_copy_cmd(struct rt_wdb	*wdbp,
 		return TCL_ERROR;
 	}
 
-	if( wdbp->dbip->dbi_version < 5 ) {
-		if ((dp=db_diradd(wdbp->dbip, argv[2], -1, 0, proto->d_flags, (genptr_t)&proto->d_minor_type)) == DIR_NULL ) {
-			Tcl_AppendResult(interp,
-					 "An error has occured while adding a new object to the database.",
-					 (char *)NULL);
-			return TCL_ERROR;
-		}
-	} else {
-		struct bu_attribute_value_set avs;
-
-		bu_avs_init( &avs, 1, "avs" );
-		if ((dp = db_diradd5(wdbp->dbip, argv[2], -1L, proto->d_major_type, proto->d_minor_type,
-				     (unsigned char)'\0', 0, &avs )) == DIR_NULL)  {
-			bu_avs_free( &avs );
-			Tcl_AppendResult(interp, "An error has occured while adding '",
-					 argv[2], "' to the database.\n", (char *)NULL);
-			WDB_TCL_ALLOC_ERR_return;
-		}
-		bu_avs_free( &avs );
+	if ((dp=db_diradd(wdbp->dbip, argv[2], -1, 0, proto->d_flags, (genptr_t)&proto->d_minor_type)) == DIR_NULL ) {
+		Tcl_AppendResult(interp,
+				 "An error has occured while adding a new object to the database.",
+				 (char *)NULL);
+		return TCL_ERROR;
 	}
 
 	if (db_put_external(&external, dp, wdbp->dbip) < 0) {
@@ -3339,28 +3325,12 @@ wdb_copyeval_cmd(struct rt_wdb	*wdbp,
 		return TCL_ERROR;
 	}
 
-	if( wdbp->dbip->dbi_version < 5 ) {
-		if ((dp=db_diradd(wdbp->dbip, argv[1], -1L, 0,
-				  wtd.wtd_obj[endpos-1]->d_flags,
-				  (genptr_t)&new_int.idb_type)) == DIR_NULL) {
-			rt_db_free_internal(&internal, &rt_uniresource);
-			rt_db_free_internal(&new_int, &rt_uniresource);
-			WDB_TCL_ALLOC_ERR_return;
-		}
-	} else {
-		struct bu_attribute_value_set avs;
-
-		bu_avs_init( &avs, 1, "avs" );
-		if ((dp = db_diradd5(wdbp->dbip, argv[1], -1L, new_int.idb_major_type, new_int.idb_type,
-				     (unsigned char)'\0', 0, &avs )) == DIR_NULL)  {
-			bu_avs_free( &avs );
-			rt_db_free_internal(&internal, &rt_uniresource);
-			rt_db_free_internal(&new_int, &rt_uniresource);
-			Tcl_AppendResult(interp, "An error has occured while adding '",
-					 argv[1], "' to the database.\n", (char *)NULL);
-			WDB_TCL_ALLOC_ERR_return;
-		}
-		bu_avs_free( &avs );
+	if ((dp=db_diradd(wdbp->dbip, argv[1], -1L, 0,
+			  wtd.wtd_obj[endpos-1]->d_flags,
+			  (genptr_t)&new_int.idb_type)) == DIR_NULL) {
+		rt_db_free_internal(&internal, &rt_uniresource);
+		rt_db_free_internal(&new_int, &rt_uniresource);
+		WDB_TCL_ALLOC_ERR_return;
 	}
 
 	if (rt_db_put_internal(dp, wdbp->dbip, &new_int, &rt_uniresource) < 0) {
@@ -7115,10 +7085,12 @@ wdb_nmg_simplify_cmd(struct rt_wdb	*wdbp,
 	}
 
 	if ((do_arb || do_all) && shell_count == 1) {
-		struct rt_arb_internal arb_int;
+		struct rt_arb_internal *arb_int;
 
-		if (nmg_to_arb(m, &arb_int)) {
-			new_intern.idb_ptr = (genptr_t)(&arb_int);
+		BU_GETSTRUCT( arb_int, rt_arb_internal );
+
+		if (nmg_to_arb(m, arb_int)) {
+			new_intern.idb_ptr = (genptr_t)(arb_int);
 			new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 			new_intern.idb_type = ID_ARB8;
 			new_intern.idb_meth = &rt_functab[ID_ARB8];
@@ -7133,8 +7105,8 @@ wdb_nmg_simplify_cmd(struct rt_wdb	*wdbp,
 				(void) nmg_model_edge_fuse( m, &wdbp->wdb_tol );
 				(void) nmg_model_edge_g_fuse( m, &wdbp->wdb_tol );
 				(void) nmg_unbreak_region_edges( &r->l.magic );
-				if (nmg_to_arb(m, &arb_int)) {
-					new_intern.idb_ptr = (genptr_t)(&arb_int);
+				if (nmg_to_arb(m, arb_int)) {
+					new_intern.idb_ptr = (genptr_t)(arb_int);
 					new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 					new_intern.idb_type = ID_ARB8;
 					new_intern.idb_meth = &rt_functab[ID_ARB8];
@@ -7151,10 +7123,12 @@ wdb_nmg_simplify_cmd(struct rt_wdb	*wdbp,
 	}
 
 	if ((do_tgc || do_all) && !success && shell_count == 1) {
-		struct rt_tgc_internal tgc_int;
+		struct rt_tgc_internal *tgc_int;
 
-		if (nmg_to_tgc(m, &tgc_int, &wdbp->wdb_tol)) {
-			new_intern.idb_ptr = (genptr_t)(&tgc_int);
+		BU_GETSTRUCT( tgc_int, rt_tgc_internal );
+
+		if (nmg_to_tgc(m, tgc_int, &wdbp->wdb_tol)) {
+			new_intern.idb_ptr = (genptr_t)(tgc_int);
 			new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 			new_intern.idb_type = ID_TGC;
 			new_intern.idb_meth = &rt_functab[ID_TGC];
@@ -7169,7 +7143,9 @@ wdb_nmg_simplify_cmd(struct rt_wdb	*wdbp,
 
 	/* see if we can get an arb by simplifying the NMG */
 	if ((do_arb || do_all) && !success && shell_count == 1) {
-		struct rt_arb_internal arb_int;
+		struct rt_arb_internal *arb_int;
+
+		BU_GETSTRUCT( arb_int, rt_arb_internal );
 
 		r = BU_LIST_FIRST( nmgregion, &m->r_hd );
 		s = BU_LIST_FIRST( shell, &r->s_hd );
@@ -7178,8 +7154,8 @@ wdb_nmg_simplify_cmd(struct rt_wdb	*wdbp,
 			(void) nmg_model_edge_fuse( m, &wdbp->wdb_tol );
 			(void) nmg_model_edge_g_fuse( m, &wdbp->wdb_tol );
 			(void) nmg_unbreak_region_edges( &r->l.magic );
-			if (nmg_to_arb(m, &arb_int )) {
-				new_intern.idb_ptr = (genptr_t)(&arb_int);
+			if (nmg_to_arb(m, arb_int )) {
+				new_intern.idb_ptr = (genptr_t)(arb_int);
 				new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 				new_intern.idb_type = ID_ARB8;
 				new_intern.idb_meth = &rt_functab[ID_ARB8];
@@ -8354,7 +8330,6 @@ wdb_combadd(Tcl_Interp			*interp,
 	 * Check to see if we have to create a new combination
 	 */
 	if ((dp = db_lookup(dbip,  combname, LOOKUP_QUIET)) == DIR_NULL) {
-		struct bu_attribute_value_set avs;
 		int flags;
 
 		if (region_flag)
@@ -8368,21 +8343,10 @@ wdb_combadd(Tcl_Interp			*interp,
 		intern.idb_meth = &rt_functab[ID_COMBINATION];
 
 		/* Update the in-core directory */
-		if( dbip->dbi_version < 5 ) {
-			if ((dp = db_diradd(dbip, combname, -1, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL)  {
-				Tcl_AppendResult(interp, "An error has occured while adding '",
-						 combname, "' to the database.\n", (char *)NULL);
-				return DIR_NULL;
-			}
-		} else {
-			bu_avs_init( &avs, 1, "avs" );
-			if ((dp = db_diradd5(dbip, combname, -1, intern.idb_major_type, intern.idb_type, (unsigned char)'\0', 0, &avs )) == DIR_NULL)  {
-				bu_avs_free( &avs );
-				Tcl_AppendResult(interp, "An error has occured while adding '",
-						 combname, "' to the database.\n", (char *)NULL);
-				return DIR_NULL;
-			}
-			bu_avs_free( &avs );
+		if ((dp = db_diradd(dbip, combname, -1, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL)  {
+			Tcl_AppendResult(interp, "An error has occured while adding '",
+					 combname, "' to the database.\n", (char *)NULL);
+			return DIR_NULL;
 		}
 
 		BU_GETSTRUCT(comb, rt_comb_internal);
