@@ -66,8 +66,10 @@ char *str;
 
 	if( ptr==(char *)0 || rt_g.debug&DEBUG_MEM )
 		rt_log("%7x malloc%5d %s\n", ptr, cnt, str);
-	if( ptr==(char *)0 )
+	if( ptr==(char *)0 )  {
+		rt_log("rt_malloc: Insufficient memory available, using %d\n", sbrk(0));
 		rt_bomb("rt_malloc: malloc failure");
+	}
 #ifdef MEMDEBUG
 	{
 		register struct memdebug *mp = rt_mdb;
