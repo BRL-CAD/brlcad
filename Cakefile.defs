@@ -535,8 +535,7 @@ set -S2 "/bin/sh"
 #	if 1	/* PRODUCTION=1 */
 /*		Shared library version support */
 #		define	ARCH_SUF	so
-/*		should be ../sharedlibvers.sh, but LD doesn't grok the version numbers! */
-#		define	LIBVERS echo
+#		define	LIBVERS ../sharedlibvers.sh
 #		define	BUILD_LIBRARY	ld -shared -o
 #		define	RANLIB	true
 /*		Note that /usr/lib MUST go first on -rpath, so that -lmalloc is the system one */
