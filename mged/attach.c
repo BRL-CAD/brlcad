@@ -42,6 +42,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 int gui_setup();
 void dm_var_init();
+void mged_slider_init_vls();
+void mged_slider_free_vls();
+void mged_slider_link_vars();
+void mged_slider_unlink_vars();
 static int do_2nd_attach_prompt();
 static void find_new_owner();
 
@@ -248,7 +252,7 @@ char	**argv;
     bu_vls_free(&vls1);
     return status;
   }else
-    return release(NULL, 1);
+    return release((char *)NULL, 1);
 }
 
 
@@ -325,8 +329,12 @@ char    **argv;
   BU_LIST_APPEND(&head_dm_list.l, &curr_dm_list->l);
   /* Only need to do this once */
   if(tkwin == NULL && NEED_GUI(wp->dp)){
-    if(gui_setup() == TCL_ERROR)
-      goto Bad;
+    if(gui_setup() == TCL_ERROR){
+      BU_LIST_DEQUEUE( &curr_dm_list->l );
+      bu_free( (genptr_t)curr_dm_list, "f_attach: dm_list" );
+      curr_dm_list = o_dm_list;
+      return TCL_ERROR;
+    }
   }
 
   if(wp->init(o_dm_list, argc, argv) == TCL_ERROR)
@@ -690,6 +698,7 @@ struct dm_list *initial_dm_list;
   last_v_axes = 2; /* center location */
 }
 
+void
 mged_slider_init_vls(p)
 struct dm_list *p;
 {
@@ -719,6 +728,7 @@ struct dm_list *p;
   bu_vls_init(&p->s_info->_distadc_vls);
 }
 
+void
 mged_slider_free_vls(p)
 struct dm_list *p;
 {
@@ -748,6 +758,7 @@ struct dm_list *p;
   bu_vls_free(&p->s_info->_distadc_vls);
 }
 
+void
 mged_slider_link_vars(p)
 struct dm_list *p;
 {
@@ -842,7 +853,7 @@ struct dm_list *p;
 	      (char *)&p->s_info->_dv_distadc, TCL_LINK_INT);
 }
 
-
+void
 mged_slider_unlink_vars(p)
 struct dm_list *p;
 {
