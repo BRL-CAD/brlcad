@@ -586,8 +586,9 @@ LIBDIR, MANDIR, INCDIR, and ETCDIR in the files "Cakefile.defs", "setup.sh",
 "cray.sh", "cake/Makefile", "cakeaux/Makefile",
 "brlman/awf", and "brlman/brlman".
 The shell script "newbindir.sh" can be used to simplify this process
-for you;  just run it with the first argument being
-the full path name of the new BINDIR.
+for you, if BINDIR, LIBDIR, MANDIR, INCDIR, and ETCDIR are all
+subdirectories with the same parent directory.  Just run it with the
+first argument being the full path name of the new parent directory.
 .NH 2
 INSTALLATION DIRECTORIES \(em PRODUCTION USE
 .PP
@@ -618,7 +619,9 @@ update the definitions for BINDIR,
 LIBDIR, and ETCDIR in the files "Cakefile.defs", "setup.sh",
 "cray.sh", "cake/Makefile", and "cakeaux/Makefile".
 Then, add your choice for BINDIR to your search path. 
-XXX newbindir.sh will do this.
+Note that the script "newbindir.sh", as described above, will
+update the required files for you, if the BINDIR, LIBDIR, MANDIR, INCDIR,
+and ETCDIR all have the same parent directory.
 .PP
 Running setup.sh will cause all the necessary directories to be
 created.
