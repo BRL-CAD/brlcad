@@ -921,7 +921,7 @@ struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct rt_tol		*tol;
+CONST struct rt_tol	*tol;
 {
 	fastf_t		c, dtol, f, mag_a, mag_h, ntol, r1, r2, cprime;
 	fastf_t		**ellipses, theta_prev, theta_new, rt_ell_ang();
@@ -1322,7 +1322,7 @@ struct rt_tol		*tol;
 	}
 
 	/* Glue the edges of different outward pointing face uses together */
-	nmg_gluefaces( outfaceuses, face );
+	nmg_gluefaces( outfaceuses, face, tol );
 
 	/* Compute "geometry" for region and shell */
 	nmg_region_a( *r, tol );

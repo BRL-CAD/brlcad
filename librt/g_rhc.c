@@ -1154,7 +1154,7 @@ struct rt_tol		*tol;
 	}
 
 	/* Glue the edges of different outward pointing face uses together */
-	nmg_gluefaces( outfaceuses, n+2 );
+	nmg_gluefaces( outfaceuses, n+2, tol );
 
 	/* Compute "geometry" for region and shell */
 	nmg_region_a( *r, tol );

@@ -1848,7 +1848,7 @@ struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
-struct rt_tol		*tol;
+CONST struct rt_tol	*tol;
 {
 	struct shell		*s;		/* shell to hold facetted TGC */
 	struct faceuse		*fu,*fu_top,*fu_base;
@@ -2564,7 +2564,7 @@ struct rt_tol		*tol;
 	nmg_region_a( *r , tol );
 
 	/* glue faces together */
-	nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
+	nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ), tol );
 	nmg_tbl( &faces , TBL_FREE , (long *)NULL );
 
 	return( 0 );

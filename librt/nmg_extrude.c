@@ -35,7 +35,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "rtlist.h"
 #include "./debug.h"
 
-RT_EXTERN( struct shell *nmg_dup_shell , ( struct shell *s , long ***copy_tbl ) );
+RT_EXTERN( struct shell *nmg_dup_shell , ( struct shell *s , long ***copy_tbl, CONST struct bn_tol *tol ) );
 RT_EXTERN( void nmg_isect_shell_self , ( struct shell *s , CONST struct bn_tol *tol ) );
 RT_EXTERN( fastf_t nmg_loop_plane_area , ( struct loopuse *lu , plane_t pl ) );
 
@@ -192,7 +192,7 @@ int
 nmg_extrude_face(fu, Vec, tol)
 struct faceuse	*fu;	/* Face to extrude. */
 vect_t		Vec;	/* Magnitude and direction of extrusion. */
-struct bn_tol	*tol;	/* NMG tolerances. */
+CONST struct bn_tol	*tol;	/* NMG tolerances. */
 {
 	fastf_t		cosang;
 	int		nfaces;
@@ -265,7 +265,7 @@ struct bn_tol	*tol;	/* NMG tolerances. */
 
 	}
 
-	nmg_gluefaces( outfaces , face_count );
+	nmg_gluefaces( outfaces , face_count, tol );
 
 	rt_free( (char *)outfaces , "nmg_extrude_face: outfaces" );
 
@@ -1116,7 +1116,7 @@ CONST struct bn_tol *tol;
 		s_tmp = (struct shell *)BU_PTBL_GET( &shells , shell_no );
 
 		/* first make a copy of this shell */
-		is = nmg_dup_shell( s_tmp , &copy_tbl );
+		is = nmg_dup_shell( s_tmp , &copy_tbl, tol );
 
 		/* make a translation table for this model */
 		flags = (long *)rt_calloc( m->maxindex , sizeof( long ) , "nmg_extrude_shell flags" );
