@@ -209,7 +209,7 @@ fastf_t u, v;
 	point_t max_uv, min_uv;
 	int jordan_hit;
 	struct rt_list	plist;
-	int trim_flag;
+	int trim_flag = 0;
 	int caset;
 
 	/* determine if the the u,v values are on the curve */
