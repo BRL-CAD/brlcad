@@ -264,8 +264,12 @@ char				*value;		/* string containing value */
  *			R T _ S T R U C T P A R S E
  *	parse the structure element description in the vls string "vls"
  *	according to the structure description in "parsetab"
+ *
+ *  Returns -
+ *	<0	failure
+ *	 0	OK
  */
-void
+int
 rt_structparse( vls, desc, base )
 struct rt_vls		*vls;		/* string to parse through */
 struct structparse	*desc;		/* structure description */
@@ -278,7 +282,7 @@ char			*base;		/* base address of users structure */
 	RT_VLS_CHECK(vls);
 	if (desc == (struct structparse *)NULL) {
 		rt_log( "Null \"struct structparse\" pointer\n");
-		return;
+		return(-1);
 	}
 
 
@@ -302,7 +306,7 @@ char			*base;		/* base address of users structure */
 			/* end of string in middle of arg */
 			rt_log("rt_structparse: name '%s' without '='\n",
 				name );
-			break;
+			return(-2);
 		}
 
 		*cp++ = '\0';
@@ -321,7 +325,7 @@ char			*base;		/* base address of users structure */
 			if (*cp != '"') {
 				rt_log("rt_structparse: name '%s'=\" without closing \"\n",
 					name);
-				break;
+				return(-3);
 			}
 		} else {
 			/* non-strings are white-space delimited */
@@ -340,7 +344,7 @@ char			*base;		/* base address of users structure */
 			rt_structprint( "troublesome one", desc, base );
 		}
 	}
-
+	return(0);
 }
 
 /*
