@@ -1112,63 +1112,63 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-  register int	i,j,k;
-  register union record *rp = (union record *)NULL;
-  register struct directory *dp;
+	register int	i,j,k;
+	register union record *rp = (union record *)NULL;
+	register struct directory *dp;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-    return TCL_ERROR;
+	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+		return TCL_ERROR;
 
-  if( setjmp( jmp_env ) == 0 )
-    (void)signal( SIGINT, sig3);  /* allow interupts */
-  else{
-    if(rp)
-      bu_free( (genptr_t)rp, "dir_nref recs" );
+	if( setjmp( jmp_env ) == 0 )
+		(void)signal( SIGINT, sig3);  /* allow interupts */
+	else{
+		if(rp)
+			bu_free( (genptr_t)rp, "dir_nref recs" );
 
-    return TCL_OK;
-  }
-
-  /* Examine all COMB nodes */
-  for( i = 0; i < RT_DBNHASH; i++ )  {
-    for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )  {
-      if( !(dp->d_flags & DIR_COMB) )
-	continue;
-again:
-      if( (rp = db_getmrec( dbip, dp )) == (union record *)0 ) {
-	(void)signal( SIGINT, SIG_IGN );
-	TCL_READ_ERR_return;
-      }
-      /* [0] is COMB, [1..n] are MEMBERs */
-      for( j=1; j < dp->d_len; j++ )  {
-	if( rp[j].M.m_instname[0] == '\0' )
-	  continue;
-	for( k=1; k<argc; k++ )  {
-	  if( strncmp( rp[j].M.m_instname,
-		       argv[k], NAMESIZE) != 0 )
-	    continue;
-
-	  /* Remove this reference */
-	  if( db_delrec( dbip, dp, j ) < 0 )  {
-	    Tcl_AppendResult(interp, "error in killing reference to '",
-			     argv[k], "', exit MGED and retry\n", (char *)NULL);
-	    TCL_ERROR_RECOVERY_SUGGESTION;
-	    (void)signal( SIGINT, SIG_IGN );
-	    bu_free( (genptr_t)rp, "dir_nref recs" );
-	    return TCL_ERROR;
-	  }
-	  bu_free( (genptr_t)rp, "dir_nref recs" );
-	  goto again;
+		return TCL_OK;
 	}
-      }
-      bu_free( (genptr_t)rp, "dir_nref recs" );
-    }
-  }
 
-  /* ALL references removed...now KILL the object[s] */
-  /* reuse argv[] */
-  argv[0] = "kill";
-  (void)signal( SIGINT, SIG_IGN );
-  return f_kill( clientData, interp, argc, argv );
+	/* Examine all COMB nodes */
+	for( i = 0; i < RT_DBNHASH; i++ )  {
+		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )  {
+			if( !(dp->d_flags & DIR_COMB) )
+				continue;
+again:
+			if( (rp = db_getmrec( dbip, dp )) == (union record *)0 ) {
+				(void)signal( SIGINT, SIG_IGN );
+				TCL_READ_ERR_return;
+			}
+			/* [0] is COMB, [1..n] are MEMBERs */
+			for( j=1; j < dp->d_len; j++ )  {
+				if( rp[j].M.m_instname[0] == '\0' )
+					continue;
+				for( k=1; k<argc; k++ )  {
+					if( strncmp( rp[j].M.m_instname,
+					    argv[k], NAMESIZE) != 0 )
+						continue;
+
+					/* Remove this reference */
+					if( db_delrec( dbip, dp, j ) < 0 )  {
+						Tcl_AppendResult(interp, "error in killing reference to '",
+						    argv[k], "', exit MGED and retry\n", (char *)NULL);
+						TCL_ERROR_RECOVERY_SUGGESTION;
+						(void)signal( SIGINT, SIG_IGN );
+						bu_free( (genptr_t)rp, "dir_nref recs" );
+						return TCL_ERROR;
+					}
+					bu_free( (genptr_t)rp, "dir_nref recs" );
+					goto again;
+				}
+			}
+			bu_free( (genptr_t)rp, "dir_nref recs" );
+		}
+	}
+
+	/* ALL references removed...now KILL the object[s] */
+	/* reuse argv[] */
+	argv[0] = "kill";
+	(void)signal( SIGINT, SIG_IGN );
+	return f_kill( clientData, interp, argc, argv );
 }
 
 
