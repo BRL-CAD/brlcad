@@ -33,7 +33,7 @@ extern double	atof();
 
 void	identbld(), polyhbld(), polydbld();
 void	solbld(), combbld(), membbld(), arsabld(), arsbbld();
-void	materbld(), bsplbld(), bsurfbld();
+void	materbld(), bsplbld(), bsurfbld(), zap_nl();
 char	*nxt_spc();
 
 static union record	record;		/* GED database record */
@@ -384,6 +384,7 @@ arsbbld()	/* Build ARS B record */
 	(void)fwrite( (char *)&record, sizeof record, 1, stdout );
 }
 
+void
 zap_nl()
 {
 	register char *bp;

@@ -51,7 +51,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define	PCPL(ptr)	((ptr)->u1.p)	/* left hand side version */
 
 /* Package Handlers. */
-static int pkgerror();	/* error message handler */
+static void	pkgerror();	/* error message handler */
 static struct pkg_switch pkgswitch[] = {
 	{ MSG_ERROR, pkgerror, "Error Message" },
 	{ 0, NULL, NULL }
@@ -357,12 +357,11 @@ ColorMap	*cmap;
  * This is where we come on
  * asynchronous error messages.
  */
-static int
+static void
 pkgerror(pcp, buf)
 struct pkg_conn *pcp;
 char *buf;
 {
 	fb_log( "remote: %s", buf );
 	free(buf);
-	return	0;	/* Declared as integer function in pkg_switch. */
 }
