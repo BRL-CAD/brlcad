@@ -91,7 +91,7 @@ char	*argv[];
 	if( ! pars_Argv( argc, argv ) )
 		{
 		prnt_Usage();
-		exit( 1 );
+		return	1;
 		}
 
 #ifdef sgi
