@@ -7,7 +7,7 @@
  *		1 - triangle (< 1.99" thick but > 0.99")
  *		2 - triangle (< 2.99" thick but > 1.99")
  *		3 - triangle (< 3.99" thick but > 2.99")
- *		4 - donut / torus (not supported - new type 3)
+ *		4 - donut / torus (changed from type 3 by rpatch)
  *		5 - wedge
  *		6 - sphere
  *		7 - box
@@ -69,6 +69,9 @@ void	proc_cylin();
 void	proc_rod();
 void	set_color();
 void	mk_cyladdmember();
+void	proc_donut();
+
+static struct bn_tol	tol;
 
 static char usage[] = "\
 Usage: patch-g [options] > model.g\n\
@@ -76,7 +79,7 @@ Usage: patch-g [options] > model.g\n\
 	-a		process phantom armor?\n\
 	-n		process volume mode as plate mode?\n\
 	-u #		number of union operations per region (default 5)\n\
-	-c \"x y z\"	center of object (for some surface normal calculations)\n\
+	-c \"x y z\"	center of object in inches (for some surface normal calculations)\n\
 	-t title	optional title (default \"Untitled MGED database\")\n\
 	-o object_name	optional top-level name (no spaces)(default \"all\")\n\
 	-p		write volume and plate mode components as polysolids\n\
@@ -86,6 +89,8 @@ Usage: patch-g [options] > model.g\n\
 	-d #		debug level\n\
 	-x #		librt debug flag\n\
 	-X #		librt NMG debug flags\n\
+	-T #		distance tolerance (inches) (two points within this distance are the same point )\n\
+	-A #		parallel tolerance (if A dot B (unit vectors) is less than this value, they are perpendicular )\n\
 Note: fastgen.rp is the pre-processed (through rpatch) fastgen file\n";
 
 main(argc,argv)
@@ -120,6 +125,15 @@ char	*argv[];
 
 	bzero( (char *)list,sizeof(list));
 
+        /* initialize tolerance structure */
+        tol.magic = RT_TOL_MAGIC;
+        tol.dist = 0.01;
+        tol.dist_sq = tol.dist * tol.dist;
+        tol.perp = 0.001;
+        tol.para = 1 - tol.perp;
+
+	conv_mm2in = 1.0/25.4; /* convert mm to inches */
+
 	if ( isatty(fileno(stdout)) ){
 		(void)fputs("attempting to send binary output to tty, aborting!\n",stderr);
 		(void)fputs(usage, stderr);
@@ -129,10 +143,35 @@ char	*argv[];
 	/*     This section checks usage options given at run command time.   */
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "x:X:pf:i:m:anu:t:o:rc:d:")) != EOF)
+	while ((c = getopt(argc, argv, "A:T:x:X:pf:i:m:anu:t:o:rc:d:")) != EOF)
 	{
 		switch (c)
 		{
+			case 'T':  /* tolerance distance */
+
+				tol.dist = atof( optarg );
+				if( tol.dist < 0.0 )
+				{
+					bu_log( "Illegal tolerance distance (%g inches) (must be non-negative).\n", tol.dist );
+					bu_log(usage);
+					exit( 1 );
+				}
+				tol.dist *= mmtin;
+				tol.dist_sq = tol.dist * tol.dist;
+				break;
+
+			case 'A':  /* angular tolerance */
+
+				tol.perp = atof( optarg );
+				if( tol.perp < 0.0 || tol.perp > 1.0 )
+				{
+					bu_log( "Illegal angular tolerance (%g) (must be non-negative between 0 and 1).\n", tol.perp );
+					bu_log(usage);
+					exit( 1 );
+				}
+				tol.para = 1 - tol.perp;
+				break;
+
 			case 'x':  /* librt debug flags */
 
 				sscanf( optarg , "%x" , &rt_g.debug );
@@ -268,7 +307,8 @@ char	*argv[];
 
 	mat_idn(m);
 
-	mk_id(stdout,title);
+	/* FASTGEN targets are always in inches */
+	mk_id_units(stdout, title, "in");
 
  /*
   *      This section loads the label file into an array
@@ -413,8 +453,8 @@ char	*argv[];
 				}
 				break;
 
-			case 4: 	/* new "donut/torus" (not processed) */
-				rt_log( "component %.4d: donut / torus not implemented\n",in[i-1].cc);
+			case 4: 	/* new "donut/torus" */
+				proc_donut(i);
 				break;
 
 			case 5:		/* wedge */
@@ -576,6 +616,107 @@ char	*argv[];
  *   For regions:		solid name with "s cnt" replaced by "r cnt"
  *   For groups:		text nomenclature identification from labelfile
  */
+
+int
+make_inside_trc( base, top, rbase, rtop, new_base, new_top, new_rbase, new_rtop, do_base, do_top, do_sides, thick )
+point_t base, top, new_base, new_top;
+fastf_t rbase, rtop;
+fastf_t *new_rbase, *new_rtop;
+int do_base, do_top, do_sides;
+fastf_t thick;
+{
+	fastf_t delta_r;
+	fastf_t sin_ang;
+	vect_t h;
+	fastf_t magh, inv_magh;
+	fastf_t l;
+	vect_t unit_h;
+	vect_t new_h;
+
+	VMOVE( new_base, base )
+	VMOVE( new_top, top )
+	*new_rtop = rtop;
+	*new_rbase = rbase;
+
+	if( (!do_base && !do_top && !do_sides) || thick == 0.0 )
+		return( 0 );
+
+	VSUB2( h, new_top, new_base )
+	magh = MAGNITUDE( h );
+	inv_magh = 1.0/magh;
+	VSCALE( unit_h, h, inv_magh )
+
+	VMOVE( new_h, h )
+	l = hypot( (double)magh, (rbase - rtop ) );
+	sin_ang = fabs( magh / l );
+	delta_r = thick / sin_ang;
+
+	if( do_base )
+	{
+		/* move base up by thickness */
+		VJOIN1( new_base, new_base, thick, unit_h )
+
+		/* adjust radius at new base */
+		*new_rbase = *new_rbase + (thick/magh) * (*new_rtop - *new_rbase);
+
+		/* recalculate height */
+		VSUB2( new_h, new_top, new_base )
+		magh = MAGNITUDE( new_h );
+	}
+
+	if( do_top )
+	{
+		/* move top down by thickness */
+		VJOIN1( new_top, top, -thick, unit_h )
+
+		/* adjust radius at new top */
+		*new_rtop = *new_rtop + (thick/magh) * (*new_rbase - *new_rtop);
+
+		/* recalculate height */
+		VSUB2( new_h, new_top, new_base )
+		magh = MAGNITUDE( new_h );
+	}
+
+	/* if height has reversed direction, we can't make an inside solid */
+	if( VDOT( new_h, h ) <= 0.0 )
+		return( 1 );
+
+	if(  do_sides )
+	{
+		*new_rbase = (*new_rbase) - delta_r;
+		*new_rtop = (*new_rtop) - delta_r;
+
+		/* if radii are greater than zero, we're fine */
+		if( *new_rtop > 0.0 && *new_rbase > 0.0 )
+			return( 0 );
+
+		/* if both radii are less then zero, we're toast */
+		if( *new_rtop <= 0.0 && *new_rbase <= 0.0 )
+			return( 1 );
+
+		if( *new_rtop <= 0.0 )
+		{
+			/* adjust height (move top towards base) */
+			magh = magh * (*new_rbase) / (*new_rbase - *new_rtop);
+			VJOIN1( new_top, new_base, magh, unit_h )
+			VSUB2( new_h, new_top , new_base )
+
+			/* set new top radius to approximate zero */
+			*new_rtop = 0.00001;
+		}
+		else if( *new_rbase <= 0.0 )
+		{
+			/* adjust base (move towards top) */
+			magh = magh * (*new_rtop) / (*new_rtop - *new_rbase);
+			VJOIN1( new_base, new_top, -magh, unit_h )
+			VSUB2( new_h, new_top, new_base )
+
+			/* set new bottom radius to approximate zero */
+			*new_rbase = 0.00001;
+		}
+	}
+	return( 0 );
+}
 
 /*
  *     This subroutine generates solid names with annotations for sidedness as
@@ -918,20 +1059,31 @@ struct rt_tol *tol;
 
 			if( found_verts == 3 )
 			{
+				point_t tmp_pt;
+
 				rt_log( "Component #%d:\n\tduplicate faces:\n" , in[0].cc );
-				rt_log( "\t\t (%g , %g , %g) (%g , %g , %g) (%g , %g , %g)\n",
-					V3ARGS( verts[k].coord ),
-					V3ARGS( verts[k+1].coord ),
-					V3ARGS( verts[k+2].coord ));
+				VSCALE( tmp_pt, verts[k].coord, conv_mm2in );
+				rt_log( "\t\t (%g , %g , %g)", V3ARGS( tmp_pt ) );
+				VSCALE( tmp_pt, verts[k+1].coord, conv_mm2in );
+				rt_log( " (%g , %g , %g)", V3ARGS( tmp_pt ) );
+				VSCALE( tmp_pt, verts[k+2].coord, conv_mm2in );
+				rt_log( " (%g , %g , %g)\n", V3ARGS( tmp_pt ) );
 
 				continue;
 			}
 
 			if( debug > 2 )
-				rt_log( "Make face: (%f %f %f) (%f %f %f) (%f %f %f)\n",
-					V3ARGS( verts[k].coord ),
-					V3ARGS( verts[k+1].coord ),
-					V3ARGS( verts[k+2].coord ));
+			{
+				point_t tmp_pt;
+
+				rt_log( "Make face: " );
+				VSCALE( tmp_pt, verts[k].coord, conv_mm2in );
+				rt_log( "\t\t (%g , %g , %g)", V3ARGS( tmp_pt ) );
+				VSCALE( tmp_pt, verts[k+1].coord, conv_mm2in );
+				rt_log( " (%g , %g , %g)", V3ARGS( tmp_pt ) );
+				VSCALE( tmp_pt, verts[k+2].coord, conv_mm2in );
+				rt_log( " (%g , %g , %g)\n", V3ARGS( tmp_pt ) );
+			}
 
 			/* Assign the three vertices for this face */
 			for( i=0 ; i<3 ; i++ )
@@ -1559,15 +1711,6 @@ int cnt;
 	char 	name[17],mirror_name[17];
 	plane_t pl;
 	point_t last;
-	struct rt_tol tol;
-
-        /* XXX These need to be improved */
-        tol.magic = RT_TOL_MAGIC;
-        tol.dist = 0.01;
-        tol.dist_sq = tol.dist * tol.dist;
-        tol.perp = 0.001;
-        tol.para = 1 - tol.perp;
-
 
 	if( in[cnt-1].cc != last_cc )
 	{
@@ -1718,8 +1861,6 @@ fastf_t *x,*y,*z;
 	/* Check that we don't have a singular matrix */
 	det = mat_determinant( matrix );
 
-	rt_log( "determinant = %g\n", det );
-
 	if( !NEAR_ZERO( det , SMALL_FASTF ) )
 	{
 		fastf_t inv_len_pl;
@@ -1847,14 +1988,6 @@ int cnt;
 	char	name[17],mirror_name[17];
 	plane_t pl;
 	point_t last;
-	struct rt_tol tol;
-
-        /* XXX These need to be improved */
-        tol.magic = RT_TOL_MAGIC;
-        tol.dist = 0.005;
-        tol.dist_sq = tol.dist * tol.dist;
-        tol.perp = 1e-6;
-        tol.para = 1.0 - tol.perp;
 
 	if( in[cnt-1].cc != last_cc )
 	{
@@ -1876,8 +2009,8 @@ int cnt;
 					list[index].z = in[k].z;
 					if( in[k].rsurf_thick < tol.dist )
 					{
-						rt_log( "Warning: thickness of component #%d at sequence #%d is %gmm\n" , in[0].cc , index , in[k].rsurf_thick );
-						rt_log( "\tsetting thickness to %gmm\n", 3.0*tol.dist );
+						rt_log( "Warning: thickness of component #%d at sequence #%d is %g inches\n" , in[0].cc , index , in[k].rsurf_thick*conv_mm2in );
+						rt_log( "\tsetting thickness to %g inches\n", 3.0*tol.dist*conv_mm2in );
 						list[index].thick = 3.0*tol.dist;
 					}
 					else
@@ -1955,7 +2088,7 @@ int cnt;
 				rt_log( "Compressed: %f %f %f\n",x[k],y[k],z[k]);
 			rt_log( "%d unique plate thicknesses:\n", nthicks );
 			for( thick_no=0 ; thick_no < nthicks ; thick_no++ )
-				rt_log( "\t%g\n" , thicks[thick_no] );
+				rt_log( "\t%g inches\n" , thicks[thick_no]*conv_mm2in );
 		}
 
 		Get_ave_plane( pl, l, x,y,z );
@@ -2045,15 +2178,7 @@ int cnt;
 	char	shflg,mrflg,ctflg;
 	char	name[17];
 	int ret = 0;
-	static struct rt_tol tol;
 	static struct rt_tol *tols = &tol;
-
-
-        tol.magic = RT_TOL_MAGIC;
-        tol.dist = 0.01;
-        tol.dist_sq = tol.dist * tol.dist;
-        tol.perp = 0.001;
-        tol.para = 1 - tol.perp;
 
 
 	if( in[cnt-1].cc != last_cc )
@@ -2131,11 +2256,11 @@ int cnt;
 			if( ret == 0 ) { /* valid record */
 				
 				mk_arb8( stdout, name, &inpt8[0][X] );
-				mk_addmember(name,&head,WMOP_SUBTRACT);
+				(void)mk_addmember(name,&head,WMOP_SUBTRACT);
 			}
 			else {
 				/* add to check group */
-				mk_addmember(name,&headf,WMOP_UNION);
+				(void)mk_addmember(name,&headf,WMOP_UNION);
 			}
 		}
 
@@ -2216,11 +2341,11 @@ int cnt;
 			if( ret == 0 ) { /* valid record */
 
 				mk_arb8( stdout, name, &pt8[0][X] );
-				mk_addmember(name,&head,WMOP_SUBTRACT);
+				(void)mk_addmember(name,&head,WMOP_SUBTRACT);
 			}
 			else {
 				/* add to check group */
-				mk_addmember(name,&headf,WMOP_UNION);
+				(void)mk_addmember(name,&headf,WMOP_UNION);
 			}
 		}
 
@@ -2290,11 +2415,11 @@ int cnt;
 
 				if( (rad = in[i+1].x - in[i].rsurf_thick) > 0.0 ) {
 					mk_sph(stdout,name,center,rad);
-					mk_addmember(name, &head,WMOP_SUBTRACT);
+					(void)mk_addmember(name, &head,WMOP_SUBTRACT);
 				}
 				else {
 					/* add to check group */
-					mk_addmember(name, &headf,WMOP_UNION);
+					(void)mk_addmember(name, &headf,WMOP_UNION);
 				}
 			}
 
@@ -2338,11 +2463,11 @@ int cnt;
 
 				if( (rad = in[i+1].x - in[i].rsurf_thick) > 0.0 ) {
 					mk_sph(stdout,name,center,rad);
-					mk_addmember(name, &head,WMOP_SUBTRACT);
+					(void)mk_addmember(name, &head,WMOP_SUBTRACT);
 				}
 				else {
 					/* add to check group */
-					mk_addmember(name, &headf,WMOP_UNION);
+					(void)mk_addmember(name, &headf,WMOP_UNION);
 				}
 			}
 
@@ -2462,11 +2587,11 @@ int cnt;
 				VADD4(pt8[6],abi,aci,adi,pt8[0]);
 
 				mk_arb8( stdout, name, &pt8[0][X] );
-				mk_addmember(name,&head,WMOP_SUBTRACT);
+				(void)mk_addmember(name,&head,WMOP_SUBTRACT);
 			}
 			else {
 				/* add to check group */
-				mk_addmember(name,&headf,WMOP_UNION);
+				(void)mk_addmember(name,&headf,WMOP_UNION);
 			}
 		}
 
@@ -2553,11 +2678,11 @@ int cnt;
 				VADD4(pt8[6],abi,aci,adi,pt8[0]);
 
 				mk_arb8( stdout, name, &pt8[0][X] );
-				mk_addmember(name,&head,WMOP_SUBTRACT);
+				(void)mk_addmember(name,&head,WMOP_SUBTRACT);
 			}
 			else {
 				/* add to check group */
-				mk_addmember(name,&headf,WMOP_UNION);
+				(void)mk_addmember(name,&headf,WMOP_UNION);
 			}
 		}
 
@@ -2569,6 +2694,384 @@ int cnt;
 	last_cc = in[cnt-1].cc;
 }
 
+/*
+ *	Donuts
+ *
+ *	These are specific combinations of two sort of "cones".
+ *	Handled by creating two to eight TGC's and combining appropriately.
+ *	In order to use "donuts", rpatch must have been invoked with the "-D" option.
+ */
+void
+proc_donut(cnt)
+int cnt;
+{
+	int k;
+	point_t base1, top1, base2, top2;
+	point_t base1_in, top1_in, base2_in, top2_in;
+	fastf_t rbase1, rtop1, rbase2, rtop2;
+	fastf_t rbase1_in, rtop1_in, rbase2_in, rtop2_in;
+	vect_t h1, h2, h3, h4;
+	fastf_t magh3, magh4;
+	int end_code;
+	struct wmember donut_head;
+	char name[17];
+	char shflg,mrflg,ctflg;
+	int count=0;
+	int make_basic_solids;
+	char scratch_name1[17];
+	char scratch_name2[17];
+	char scratch_name3[17];
+	char scratch_name4[17];
+
+	for( k=0 ; k<cnt-1 ; k += 6 )	/* for each donut */
+	{
+		if( (in[k].x==in[k+1].x)&&(in[k].y==in[k+1].y)&&(in[k].z==in[k+1].z) )
+		{
+			bu_log( "Bad Donut Length for component #%d",in[k].cc);
+			continue;
+		}
+		if( (in[k+3].x==in[k+4].x)&&(in[k+3].y==in[k+4].y)&&(in[k+3].z==in[k+4].z) )
+		{
+			bu_log( "Bad Donut Length for component #%d\n",in[k].cc);
+			continue;
+		}
+
+		/* get base and top location of each of the two TRC's */
+		VSET( base1, in[k].x, in[k].y, in[k].z );
+		VSET( top1, in[k+1].x, in[k+1].y, in[k+1].z );
+		VSET( base2, in[k+3].x, in[k+3].y, in[k+3].z );
+		VSET( top2, in[k+4].x, in[k+4].y, in[k+4].z );
+
+		/* get radii and bottom and top of each TRC
+		 * BRL-CAD insists on non-zero radii
+		 */
+		rbase1 = in[k+2].x;
+		if( rbase1 < tol.dist )
+			rbase1 = tol.dist;
+		rtop1 = in[k+2].y;
+		if( rtop1 < tol.dist )
+			rtop1 = tol.dist;
+
+		rbase2 = in[k+5].x;
+		if( rbase2 < tol.dist )
+			rbase2 = tol.dist;
+		rtop2 = in[k+5].y;
+		if( rtop2 < tol.dist )
+			rtop2 = tol.dist;
+
+		if( rbase2 > rbase1 )
+		{
+			bu_log( "Bad Donut: inner base radius bigger than outer for component #%d\n", in[k].cc );
+			continue;
+		}
+
+		if( rtop2 > rtop1 )
+		{
+			bu_log( "Bad Donut: inner top radius bigger than outer for component #%d\n", in[k].cc );
+			continue;
+		}
+
+		/* calculate height vectors for the two basic TRC's */
+		VSUB2( h2, top2, base2 );
+		VSUB2( h1, top1, base1 );
+
+		/* calculate height vectors for the 'end' TRC's
+		 * (when inner and outer TRC ends are not the same)
+		 */
+		VSUB2( h3, base1, base2 );
+		magh3 = MAGNITUDE( h3 );
+		VSUB2( h4, top1, top2 );
+		magh4 = MAGNITUDE( h4 );
+
+		/* If inner and outer TRC ends are nearly the same, make them the same */
+		if( magh3 < tol.dist )
+		{
+			magh3 = 0.0;
+			VMOVE( base1, base2 )
+		}
+
+		if( magh4 < tol.dist )
+		{
+			magh4 = 0.0;
+			VMOVE( top1, top2 )
+		}
+
+		/* get end code */
+		end_code = (int)(in[k+5].z/mmtin);
+
+		/* make name of this component */
+		shflg = 'd';
+		mrflg = 'n';
+		ctflg = 'n';
+		strcpy( name , proc_sname (shflg,mrflg,count+1,ctflg) );
+		count++;
+
+		BU_LIST_INIT( &donut_head.l );
+
+		/* in some cases we won't even need the two basic TRC's */
+		make_basic_solids = 1;
+		if( in[k].surf_mode == '-' ) /* plate mode */
+		{
+			if( magh3 > 0.0 && end_code == 4 )
+				make_basic_solids = 0;
+			else if( magh4 > 0.0 && end_code == 5 )
+				make_basic_solids = 0;
+			else if( magh3 > 0.0 && magh4 > 0.0 && end_code == 6 )
+				make_basic_solids = 0;
+		}
+
+		/* make the two basic TRC's */
+		if( make_basic_solids )
+		{
+			sprintf( scratch_name1, "tmp.%d", scratch_num );
+			scratch_num++;
+			mk_trc_top( stdout, scratch_name1, base1, top1, rbase1, rtop1 );
+
+			sprintf( scratch_name2, "tmp.%d", scratch_num );
+			scratch_num++;
+			mk_trc_top( stdout, scratch_name2, base2, top2, rbase2, rtop2 );
+		}
+
+		/* make the end TRC's if needed */
+		if( magh3 > 0.0 )
+		{
+			if( in[k].surf_mode != '-' ||
+			    end_code == 2 || end_code == 3 || end_code == 4 || end_code == 6 )
+			{
+				sprintf( scratch_name3, "tmp.%d", scratch_num );
+				scratch_num++;
+				mk_trc_top( stdout, scratch_name3, base2, base1, rbase2, rbase1 );
+			}
+		}
+
+		if( magh4 > 0.0 )
+		{
+			if( in[k].surf_mode != '-' ||
+			    end_code == 1 || end_code == 3 || end_code == 5 || end_code == 6 )
+			{
+				sprintf( scratch_name4, "tmp.%d", scratch_num );
+				scratch_num++;
+				mk_trc_top( stdout, scratch_name4, top2, top1, rtop2, rtop1 );
+			}
+		}
+
+		if( in[k].surf_mode != '-' )	/* volume mode */
+		{
+			fastf_t dot3, dot4;
+
+			dot3 = VDOT( h3, h1 );
+			dot4 = VDOT( h4, h1 );
+
+			if( magh3 > 0.0 && magh4 > 0.0 )
+			{
+				/* both ends have TRC's built */
+				if( dot3 > 0.0 && dot4 < 0.0 )
+				{
+					/* union in both ends */
+					(void)mk_addmember( scratch_name1, &donut_head, WMOP_UNION );
+					(void)mk_addmember( scratch_name2, &donut_head, WMOP_SUBTRACT );
+					(void)mk_addmember( scratch_name3, &donut_head, WMOP_UNION );
+					(void)mk_addmember( scratch_name2, &donut_head, WMOP_SUBTRACT );
+					(void)mk_addmember( scratch_name4, &donut_head, WMOP_UNION );
+					(void)mk_addmember( scratch_name2, &donut_head, WMOP_SUBTRACT );
+				}
+				else if( dot3 < 0.0 && dot4 > 0.0 )
+				{
+					/* subtract both ends */
+					(void)mk_addmember( scratch_name1, &donut_head, WMOP_UNION );
+					(void)mk_addmember( scratch_name2, &donut_head, WMOP_SUBTRACT );
+					(void)mk_addmember( scratch_name3, &donut_head, WMOP_SUBTRACT );
+					(void)mk_addmember( scratch_name4, &donut_head, WMOP_SUBTRACT );
+				}
+				else if( dot3 > 0.0 && dot4 > 0.0 )
+				{
+					/* union #3 subtract #4 */
+					(void)mk_addmember( scratch_name1, &donut_head, WMOP_UNION );
+					(void)mk_addmember( scratch_name2, &donut_head, WMOP_SUBTRACT );
+					(void)mk_addmember( scratch_name4, &donut_head, WMOP_SUBTRACT );
+					(void)mk_addmember( scratch_name3, &donut_head, WMOP_UNION );
+					(void)mk_addmember( scratch_name2, &donut_head, WMOP_SUBTRACT );
+				}
+				else
+				{
+					/* union #4 subtract #3 */
+					(void)mk_addmember( scratch_name1, &donut_head, WMOP_UNION );
+					(void)mk_addmember( scratch_name2, &donut_head, WMOP_SUBTRACT );
+					(void)mk_addmember( scratch_name3, &donut_head, WMOP_SUBTRACT );
+					(void)mk_addmember( scratch_name4, &donut_head, WMOP_UNION );
+					(void)mk_addmember( scratch_name2, &donut_head, WMOP_SUBTRACT );
+				}
+			}
+			else if( magh3 > 0.0 )
+			{
+				/* only first end has a TRC */
+				if( dot3 > 0.0 )
+				{
+					(void)mk_addmember( scratch_name1, &donut_head, WMOP_UNION );
+					(void)mk_addmember( scratch_name2, &donut_head, WMOP_SUBTRACT );
+					(void)mk_addmember( scratch_name3, &donut_head, WMOP_UNION );
+				}
+				else
+				{
+					(void)mk_addmember( scratch_name1, &donut_head, WMOP_UNION );
+					(void)mk_addmember( scratch_name2, &donut_head, WMOP_SUBTRACT );
+					(void)mk_addmember( scratch_name3, &donut_head, WMOP_SUBTRACT );
+				}
+			}
+			else if( magh4 > 0.0 )
+			{
+				/* only second end has a TRC */
+				if( dot4 < 0.0 )
+				{
+					(void)mk_addmember( scratch_name1, &donut_head, WMOP_UNION );
+					(void)mk_addmember( scratch_name2, &donut_head, WMOP_SUBTRACT );
+					(void)mk_addmember( scratch_name4, &donut_head, WMOP_UNION );
+				}
+				else
+				{
+					(void)mk_addmember( scratch_name1, &donut_head, WMOP_UNION );
+					(void)mk_addmember( scratch_name2, &donut_head, WMOP_SUBTRACT );
+					(void)mk_addmember( scratch_name4, &donut_head, WMOP_SUBTRACT );
+				}
+			}
+			else
+			{
+				/* no end TRC's */
+				(void)mk_addmember( scratch_name1, &donut_head, WMOP_UNION );
+				(void)mk_addmember( scratch_name2, &donut_head, WMOP_SUBTRACT );
+			}
+
+			if( BU_LIST_NON_EMPTY( &donut_head.l ) )
+			{
+				mk_lfcomb( stdout, name, &donut_head, 0 );
+				(void)mk_addmember( name, &head, WMOP_UNION );
+			}
+
+			continue;
+		}
+		else	/* plate mode */
+		{
+			char scratch_name1_in[17];
+			char scratch_name2_in[17];
+			char scratch_name3_in[17];
+			char scratch_name4_in[17];
+
+			if( end_code == 0 || end_code == 1 || end_code == 2 || end_code ==3 )
+			{
+				/* Need sides */
+				if( make_inside_trc( base1, top1, rbase1, rtop1, base1_in, top1_in, &rbase1_in, &rtop1_in, 0, 0, 1, in[k+4].rsurf_thick ) )
+				{
+					bu_log( "ERROR: Unable to create plate thickness of %g inches for component #%d\n",
+						in[k+4].rsurf_thick*conv_mm2in, in[k].cc );
+					continue;
+				}
+
+				sprintf( scratch_name1_in, "tmp.%d", scratch_num );
+				scratch_num++;
+				mk_trc_top(stdout,scratch_name1_in,base1_in,top1_in,rbase1_in,rtop1_in);
+				(void)mk_addmember( scratch_name1, &donut_head, WMOP_UNION );
+				(void)mk_addmember(scratch_name1_in,&donut_head,WMOP_SUBTRACT);
+
+				if( make_inside_trc( base2, top2, rbase2, rtop2, base2_in, top2_in, &rbase2_in, &rtop2_in, 0, 0, 1, in[k+4].rsurf_thick ) )
+				{
+					bu_log( "ERROR: Unable to create plate thickness of %g inches for component #%d\n",
+						in[k+4].rsurf_thick*conv_mm2in, in[k].cc );
+					continue;
+				}
+
+				sprintf( scratch_name2_in, "tmp.%d", scratch_num );
+				scratch_num++;
+				mk_trc_top(stdout,scratch_name2_in,base2_in,top2_in,rbase2_in,rtop2_in);
+				(void)mk_addmember( scratch_name2, &donut_head, WMOP_UNION );
+				(void)mk_addmember(scratch_name2_in,&donut_head,WMOP_SUBTRACT);
+			}
+
+			if( end_code == 1 || end_code == 3 || end_code == 5 || end_code == 6 )
+			{
+				vect_t base_in, top_in;
+				fastf_t rbase_in, rtop_in;
+
+				/* close end B (top) */
+				if( magh4 > 0.0 )
+				{
+					if( make_inside_trc( top2, top1, rtop2, rtop1, base_in, top_in, &rbase_in, &rtop_in, 0, 0, 1, in[k+4].rsurf_thick ) )
+					{
+						bu_log( "ERROR: Unable to create plate thickness of %g inches for component #%d\n",
+							in[k+4].rsurf_thick*conv_mm2in, in[k].cc );
+						continue;
+					}
+					sprintf( scratch_name4_in, "tmp.%d", scratch_num );
+					scratch_num++;
+					mk_trc_top(stdout,scratch_name4_in,base_in,top_in,rbase_in,rtop_in);
+					(void)mk_addmember( scratch_name4, &donut_head, WMOP_UNION );
+					(void)mk_addmember(scratch_name4_in,&donut_head,WMOP_SUBTRACT);
+				}
+				else
+				{
+					if( make_inside_trc( base1, top1, rbase1, rtop1, base_in, top_in, &rbase_in, &rtop_in, 0, 1, 0, in[k+4].rsurf_thick ) )
+					{
+						bu_log( "ERROR: Unable to create plate thickness of %g inches for component #%d\n",
+							in[k+4].rsurf_thick*conv_mm2in, in[k].cc );
+						continue;
+					}
+					sprintf( scratch_name4_in, "tmp.%d", scratch_num );
+					scratch_num++;
+					mk_trc_top(stdout,scratch_name4_in,base_in,top_in,rbase_in,rtop_in);
+					(void)mk_addmember( scratch_name1, &donut_head, WMOP_UNION );
+					(void)mk_addmember(scratch_name4_in,&donut_head,WMOP_SUBTRACT);
+					(void)mk_addmember(scratch_name2,&donut_head,WMOP_SUBTRACT);
+				}
+			}
+			if( end_code == 2 || end_code == 3 || end_code == 4 || end_code == 6 )
+			{
+				vect_t base_in, top_in;
+				fastf_t rbase_in, rtop_in;
+
+				/* close end A (base) */
+				if( magh3 > 0.0 )
+				{
+					if( make_inside_trc( base2, base1, rbase2, rbase1, base_in, top_in, &rbase_in, &rtop_in, 0, 0, 1, in[k+4].rsurf_thick ) )
+					{
+						bu_log( "ERROR: Unable to create plate thickness of %g inches for component #%d\n",
+							in[k+4].rsurf_thick*conv_mm2in, in[k].cc );
+						continue;
+					}
+					sprintf( scratch_name3_in, "tmp.%d", scratch_num );
+					scratch_num++;
+					mk_trc_top(stdout,scratch_name3_in,base_in,top_in,rbase_in,rtop_in);
+					(void)mk_addmember( scratch_name3, &donut_head, WMOP_UNION );
+					(void)mk_addmember(scratch_name3_in,&donut_head,WMOP_SUBTRACT);
+				}
+				else
+				{
+					if( make_inside_trc( base1, top1, rbase1, rtop1, base_in, top_in, &rbase_in, &rtop_in, 1, 0, 0, in[k+4].rsurf_thick ) )
+					{
+						bu_log( "ERROR: Unable to create plate thickness of %g inches for component #%d\n",
+							in[k+4].rsurf_thick*conv_mm2in, in[k].cc );
+						continue;
+					}
+					sprintf( scratch_name3_in, "tmp.%d", scratch_num );
+					scratch_num++;
+					mk_trc_top(stdout,scratch_name3_in,base_in,top_in,rbase_in,rtop_in);
+					(void)mk_addmember( scratch_name1, &donut_head, WMOP_UNION );
+					(void)mk_addmember(scratch_name3_in,&donut_head,WMOP_SUBTRACT);
+					(void)mk_addmember(scratch_name2,&donut_head,WMOP_SUBTRACT);
+				}
+			}
+
+			if( BU_LIST_NON_EMPTY( &donut_head.l ) )
+			{
+				mk_lfcomb( stdout, name, &donut_head, 0 );
+				(void)mk_addmember( name, &head, WMOP_UNION );
+			}
+
+			continue;
+		}
+	}
+
+	if( BU_LIST_NON_EMPTY( &head.l ) )
+		proc_region( name );
+}
 
 /* 
  *	Cylinder Fastgen Support:
@@ -2681,7 +3184,7 @@ int cnt;
 					srad2 = rad2 - thick;
 
 					if( srad1 <= 0.0 && srad2 <= 0.0 )
-						mk_addmember(name,&headf,WMOP_UNION);
+						(void)mk_addmember(name,&headf,WMOP_UNION);
 					else if( srad1 <= 0.0 )
 					{
 						fastf_t new_h_factor;
@@ -2695,7 +3198,7 @@ int cnt;
 						/* base radius should really be zero, get close */
 						srad1 = .00001;
 						mk_trc_top(stdout,name,sbase,top,srad1,srad2);
-						mk_addmember(name,&head,WMOP_SUBTRACT);
+						(void)mk_addmember(name,&head,WMOP_SUBTRACT);
 					}
 					else if( srad2 <= 0.0 )
 					{
@@ -2710,12 +3213,12 @@ int cnt;
 						/* top radius should really be zero, get close */
 						srad2 = .00001;
 						mk_trc_top(stdout,name,base,stop,srad1,srad2);
-						mk_addmember(name,&head,WMOP_SUBTRACT);
+						(void)mk_addmember(name,&head,WMOP_SUBTRACT);
 					}
 					else
 					{
 						mk_trc_top(stdout,name,base,top,srad1,srad2);
-						mk_addmember(name,&head,WMOP_SUBTRACT);
+						(void)mk_addmember(name,&head,WMOP_SUBTRACT);
 					}
 					break;
 
@@ -2739,20 +3242,20 @@ int cnt;
 					srad2 = rad2 - thick;
 
 					if( srad1 <= 0.0 && srad2 <= 0.0 )
-						mk_addmember(name,&headf,WMOP_UNION);
+						(void)mk_addmember(name,&headf,WMOP_UNION);
 					else if( srad1 <= 0.0 )
 					{
 						fastf_t new_ht;
 
 						new_ht = ht*(thick - rad1)/(rad2-rad1);
 						if( new_ht >= ht )
-							mk_addmember(name,&headf,WMOP_UNION);
+							(void)mk_addmember(name,&headf,WMOP_UNION);
 						else
 						{
 							VJOIN1( sbase, base, new_ht, unit_h );
 							srad1 = 0.00001;
 							mk_trc_top(stdout,name,sbase,top,srad1,srad2);
-							mk_addmember(name,&head,WMOP_SUBTRACT);
+							(void)mk_addmember(name,&head,WMOP_SUBTRACT);
 						}
 					}
 					else if( srad2 <= 0.0 )
@@ -2761,19 +3264,19 @@ int cnt;
 
 						new_ht = sht + ht*srad2/(rad1-rad2);
 						if( new_ht <= 0.0 )
-							mk_addmember(name,&headf,WMOP_UNION);
+							(void)mk_addmember(name,&headf,WMOP_UNION);
 						else
 						{
 							VJOIN1( stop, sbase, new_ht, unit_h );
 							srad2 = 0.00001;
 							mk_trc_top(stdout,name,sbase,stop,srad1,srad2);
-							mk_addmember(name,&head,WMOP_SUBTRACT);
+							(void)mk_addmember(name,&head,WMOP_SUBTRACT);
 						}
 					}
 					else
 					{
 						mk_trc_top(stdout,name,sbase,top,srad1,srad2);
-						mk_addmember(name,&head,WMOP_SUBTRACT);
+						(void)mk_addmember(name,&head,WMOP_SUBTRACT);
 					}
 					break;
 				case 2: /* Base open, top closed */
@@ -2796,20 +3299,20 @@ int cnt;
 					srad2 = srad2 - thick;
 
 					if( srad1 <= 0.0 && srad2 <= 0.0 )
-						mk_addmember(name,&headf,WMOP_UNION);
+						(void)mk_addmember(name,&headf,WMOP_UNION);
 					else if( srad1 <= 0.0 )
 					{
 						fastf_t new_ht;
 
 						new_ht = sht + ht*srad1/(rad2-rad1);
 						if( new_ht <= 0.0 )
-							mk_addmember(name,&headf,WMOP_UNION);
+							(void)mk_addmember(name,&headf,WMOP_UNION);
 						else
 						{
 							VJOIN1( sbase, stop, new_ht, unit_h )
 							srad1 = 0.00001;
 							mk_trc_top(stdout,name,sbase,stop,srad1,srad2);
-							mk_addmember(name,&head,WMOP_SUBTRACT);
+							(void)mk_addmember(name,&head,WMOP_SUBTRACT);
 						}
 					}
 					else if( srad2 <= 0.0 )
@@ -2818,19 +3321,19 @@ int cnt;
 
 						new_ht = ht*(thick - rad2)/(rad1-rad2);
 						if( new_ht >= ht )
-							mk_addmember(name,&headf,WMOP_UNION);
+							(void)mk_addmember(name,&headf,WMOP_UNION);
 						else
 						{
 							VJOIN1( stop, top, new_ht, unit_h )
 							srad2 = 0.00001;
 							mk_trc_top(stdout,name,base,stop,srad1,srad2);
-							mk_addmember(name,&head,WMOP_SUBTRACT);
+							(void)mk_addmember(name,&head,WMOP_SUBTRACT);
 						}
 					}
 					else
 					{
 						mk_trc_top(stdout,name,base,stop,srad1,srad2);
-						mk_addmember(name,&head,WMOP_SUBTRACT);
+						(void)mk_addmember(name,&head,WMOP_SUBTRACT);
 					}
 					break;
 
@@ -2859,20 +3362,20 @@ int cnt;
 					srad2 = rad2_tmp - thick;
 
 					if( (srad1 <= 0.0 && srad2 <= 0.0) || sht <= 0.0)
-						mk_addmember(name,&headf,WMOP_UNION);
+						(void)mk_addmember(name,&headf,WMOP_UNION);
 					else if( srad1 < 0.0 )
 					{
 						fastf_t new_ht;
 
 						new_ht = ht*(thick-rad1_tmp)/(rad2_tmp-rad1_tmp);
 						if( new_ht >= sht )
-							mk_addmember(name,&headf,WMOP_UNION);
+							(void)mk_addmember(name,&headf,WMOP_UNION);
 						else
 						{
 							VJOIN1( sbase, sbase, new_ht, unit_h )
 							srad1 = 0.00001;
 							mk_trc_top(stdout,name,sbase,stop,srad1,srad2);
-							mk_addmember(name,&head,WMOP_SUBTRACT);
+							(void)mk_addmember(name,&head,WMOP_SUBTRACT);
 						}
 					}
 					else if( srad2 <= 0.0 )
@@ -2883,20 +3386,20 @@ int cnt;
 
 						new_ht = (-ht*srad2/(rad1-rad2));
 						if( new_ht <= 0.0 )
-							mk_addmember(name,&headf,WMOP_UNION);
+							(void)mk_addmember(name,&headf,WMOP_UNION);
 						else
 						{
 							VREVERSE( rev_h, unit_h )
 							VJOIN1( stop, stop, new_ht, rev_h )
 							srad2 = 0.00001;
 							mk_trc_top(stdout,name,sbase,stop,srad1,srad2);
-							mk_addmember(name,&head,WMOP_SUBTRACT);
+							(void)mk_addmember(name,&head,WMOP_SUBTRACT);
 						}
 					}
 					else
 					{
 						mk_trc_top(stdout,name,sbase,stop,srad1,srad2);
-						mk_addmember(name,&head,WMOP_SUBTRACT);
+						(void)mk_addmember(name,&head,WMOP_SUBTRACT);
 					}
 					break;
 
@@ -2982,7 +3485,7 @@ int cnt;
 					srad2 = rad2 - thick;
 
 					if( srad1 <= 0.0 && srad2 <= 0.0 )
-						mk_addmember(name,&headf,WMOP_UNION);
+						(void)mk_addmember(name,&headf,WMOP_UNION);
 					else if( srad1 <= 0.0 )
 					{
 						fastf_t new_h_factor;
@@ -2996,7 +3499,7 @@ int cnt;
 						/* base radius should really be zero, get close */
 						srad1 = .00001;
 						mk_trc_top(stdout,name,sbase,top,srad1,srad2);
-						mk_addmember(name,&head,WMOP_SUBTRACT);
+						(void)mk_addmember(name,&head,WMOP_SUBTRACT);
 					}
 					else if( srad2 <= 0.0 )
 					{
@@ -3011,12 +3514,12 @@ int cnt;
 						/* top radius should really be zero, get close */
 						srad2 = .00001;
 						mk_trc_top(stdout,name,base,stop,srad1,srad2);
-						mk_addmember(name,&head,WMOP_SUBTRACT);
+						(void)mk_addmember(name,&head,WMOP_SUBTRACT);
 					}
 					else
 					{
 						mk_trc_top(stdout,name,base,top,srad1,srad2);
-						mk_addmember(name,&head,WMOP_SUBTRACT);
+						(void)mk_addmember(name,&head,WMOP_SUBTRACT);
 					}
 					break;
 
@@ -3040,20 +3543,20 @@ int cnt;
 					srad2 = rad2 - thick;
 
 					if( srad1 <= 0.0 && srad2 <= 0.0 )
-						mk_addmember(name,&headf,WMOP_UNION);
+						(void)mk_addmember(name,&headf,WMOP_UNION);
 					else if( srad1 <= 0.0 )
 					{
 						fastf_t new_ht;
 
 						new_ht = ht*(thick - rad1)/(rad2-rad1);
 						if( new_ht >= ht )
-							mk_addmember(name,&headf,WMOP_UNION);
+							(void)mk_addmember(name,&headf,WMOP_UNION);
 						else
 						{
 							VJOIN1( sbase, base, new_ht, unit_h );
 							srad1 = 0.00001;
 							mk_trc_top(stdout,name,sbase,top,srad1,srad2);
-							mk_addmember(name,&head,WMOP_SUBTRACT);
+							(void)mk_addmember(name,&head,WMOP_SUBTRACT);
 						}
 					}
 					else if( srad2 <= 0.0 )
@@ -3062,19 +3565,19 @@ int cnt;
 
 						new_ht = sht + ht*srad2/(rad1-rad2);
 						if( new_ht <= 0.0 )
-							mk_addmember(name,&headf,WMOP_UNION);
+							(void)mk_addmember(name,&headf,WMOP_UNION);
 						else
 						{
 							VJOIN1( stop, sbase, new_ht, unit_h );
 							srad2 = 0.00001;
 							mk_trc_top(stdout,name,sbase,stop,srad1,srad2);
-							mk_addmember(name,&head,WMOP_SUBTRACT);
+							(void)mk_addmember(name,&head,WMOP_SUBTRACT);
 						}
 					}
 					else
 					{
 						mk_trc_top(stdout,name,sbase,top,srad1,srad2);
-						mk_addmember(name,&head,WMOP_SUBTRACT);
+						(void)mk_addmember(name,&head,WMOP_SUBTRACT);
 					}
 					break;
 				case 2: /* Base open, top closed */
@@ -3097,20 +3600,20 @@ int cnt;
 					srad2 = srad2 - thick;
 
 					if( srad1 <= 0.0 && srad2 <= 0.0 )
-						mk_addmember(name,&headf,WMOP_UNION);
+						(void)mk_addmember(name,&headf,WMOP_UNION);
 					else if( srad1 <= 0.0 )
 					{
 						fastf_t new_ht;
 
 						new_ht = sht + ht*srad1/(rad2-rad1);
 						if( new_ht <= 0.0 )
-							mk_addmember(name,&headf,WMOP_UNION);
+							(void)mk_addmember(name,&headf,WMOP_UNION);
 						else
 						{
 							VJOIN1( sbase, stop, new_ht, unit_h )
 							srad1 = 0.00001;
 							mk_trc_top(stdout,name,sbase,stop,srad1,srad2);
-							mk_addmember(name,&head,WMOP_SUBTRACT);
+							(void)mk_addmember(name,&head,WMOP_SUBTRACT);
 						}
 					}
 					else if( srad2 <= 0.0 )
@@ -3119,19 +3622,19 @@ int cnt;
 
 						new_ht = ht*(thick - rad2)/(rad1-rad2);
 						if( new_ht >= ht )
-							mk_addmember(name,&headf,WMOP_UNION);
+							(void)mk_addmember(name,&headf,WMOP_UNION);
 						else
 						{
 							VJOIN1( stop, top, new_ht, unit_h )
 							srad2 = 0.00001;
 							mk_trc_top(stdout,name,base,stop,srad1,srad2);
-							mk_addmember(name,&head,WMOP_SUBTRACT);
+							(void)mk_addmember(name,&head,WMOP_SUBTRACT);
 						}
 					}
 					else
 					{
 						mk_trc_top(stdout,name,base,stop,srad1,srad2);
-						mk_addmember(name,&head,WMOP_SUBTRACT);
+						(void)mk_addmember(name,&head,WMOP_SUBTRACT);
 					}
 					break;
 
@@ -3160,20 +3663,20 @@ int cnt;
 					srad2 = rad2_tmp - thick;
 
 					if( (srad1 <= 0.0 && srad2 <= 0.0) || sht <= 0.0)
-						mk_addmember(name,&headf,WMOP_UNION);
+						(void)mk_addmember(name,&headf,WMOP_UNION);
 					else if( srad1 < 0.0 )
 					{
 						fastf_t new_ht;
 
 						new_ht = ht*(thick-rad1_tmp)/(rad2_tmp-rad1_tmp);
 						if( new_ht >= sht )
-							mk_addmember(name,&headf,WMOP_UNION);
+							(void)mk_addmember(name,&headf,WMOP_UNION);
 						else
 						{
 							VJOIN1( sbase, sbase, new_ht, unit_h )
 							srad1 = 0.00001;
 							mk_trc_top(stdout,name,sbase,stop,srad1,srad2);
-							mk_addmember(name,&head,WMOP_SUBTRACT);
+							(void)mk_addmember(name,&head,WMOP_SUBTRACT);
 						}
 					}
 					else if( srad2 <= 0.0 )
@@ -3184,20 +3687,20 @@ int cnt;
 
 						new_ht = (-ht*srad2/(rad1-rad2));
 						if( new_ht <= 0.0 )
-							mk_addmember(name,&headf,WMOP_UNION);
+							(void)mk_addmember(name,&headf,WMOP_UNION);
 						else
 						{
 							VREVERSE( rev_h, unit_h )
 							VJOIN1( stop, stop, new_ht, rev_h )
 							srad2 = 0.00001;
 							mk_trc_top(stdout,name,sbase,stop,srad1,srad2);
-							mk_addmember(name,&head,WMOP_SUBTRACT);
+							(void)mk_addmember(name,&head,WMOP_SUBTRACT);
 						}
 					}
 					else
 					{
 						mk_trc_top(stdout,name,sbase,stop,srad1,srad2);
-						mk_addmember(name,&head,WMOP_SUBTRACT);
+						(void)mk_addmember(name,&head,WMOP_SUBTRACT);
 					}
 					break;
 
@@ -3327,9 +3830,9 @@ int cnt;
 		}
 
 		if( count > 1 && (count % num_unions) == 0 ){
-			mk_addmember(name,&head,WMOP_SUBTRACT);
+			(void)mk_addmember(name,&head,WMOP_SUBTRACT);
 			proc_region( name );
-			mk_addmember(name,&head,WMOP_UNION);
+			(void)mk_addmember(name,&head,WMOP_UNION);
 		} else {
 			(void) mk_addmember(name,&head,WMOP_UNION);
 		}
@@ -3373,9 +3876,9 @@ int cnt;
 		}
 
 		if( mir_count > 1 && (mir_count % num_unions) == 0 ) {
-			mk_addmember(name,&head,WMOP_SUBTRACT);
+			(void)mk_addmember(name,&head,WMOP_SUBTRACT);
 			proc_region( name );
-			mk_addmember(name,&head,WMOP_UNION);
+			(void)mk_addmember(name,&head,WMOP_UNION);
 		}
 		else {
 			(void) mk_addmember(name,&head,WMOP_UNION);
@@ -3650,13 +4153,13 @@ fastf_t rad1,rad2;
 	VUNITIZE( bt );
 
 	dist = VDOT( bt,ba );
-	if( dist < 0.0  || dist > mag_bt )
+	if( dist < -tol.dist  || dist - mag_bt > tol.dist )
 		return( 0 );
 
-	radius = ((rad2 - rad1)*dist)/mag_bt + rad2;
+	radius = ((rad2 - rad1)*dist)/mag_bt + rad1;
 
 	pt_radsq = MAGSQ(ba) - (dist*dist);
-	if( debug>2 && pt_radsq < (radius*radius)  ){
+	if( debug>2 && pt_radsq - (radius*radius) < tol.dist_sq  ){
 		rt_log( "pt_inside: point (%.4f,%.4f,%.4f) inside cylinder endpoints (%.4f,%.4f,%.4f) and (%.4f,%.4f,%.4f)\n",
 		    a[0]/mmtin,a[1]/mmtin,a[2]/mmtin,
 		    base[0]/mmtin,base[1]/mmtin,base[2]/mmtin,
@@ -3667,7 +4170,7 @@ fastf_t rad1,rad2;
 		rt_log( "pt_inside: dist to base to point is %f\n",MAGSQ(ba)/mmtin );
 		rt_log( "pt_inside: dist to normal between axis and point is %f\n",dist/mmtin);
 	}
-	if( pt_radsq < (radius*radius) )
+	if( pt_radsq - (radius*radius) < tol.dist_sq )
 		return( 1 );
 	else
 		return( 0 );
@@ -3698,7 +4201,7 @@ int mirflag;
 	struct subtract_list	*hold;
 
 	if( !slist ) {
-		mk_addmember( name1, head, WMOP_UNION );
+		(void)mk_addmember( name1, head, WMOP_UNION );
 		return;
 	}
 
@@ -3713,12 +4216,12 @@ int mirflag;
 	if( slist->insolid == solnum )
 		return;
 
-	mk_addmember( name1, head, WMOP_UNION );
+	(void)mk_addmember( name1, head, WMOP_UNION );
 
 	for( slist = hold; slist; slist = slist->next ) {
 		if( slist->outsolid == solnum ){
 			sprintf(tmpname,"c.%.4d.s%.2d",cc,slist->insolid );
-			mk_addmember( tmpname, head, WMOP_SUBTRACT );
+			(void)mk_addmember( tmpname, head, WMOP_SUBTRACT );
 		}
 	}
 }
