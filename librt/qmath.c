@@ -26,10 +26,12 @@
  *
  *   bisect(P,Q) = (P + Q) / |P + Q|	Great circle bisector
  *
- *  Note: We may wish to make a quat_t synonymous with hvect_t for clarity.
  *
  *  Author -
  *	Phil Dykstra, 25 Sep 1985
+ *
+ *  Additions inspired by "Quaternion Calculus For Animation" by Ken Shoemake,
+ *  SIGGRAPH '89 course notes for "Math for SIGGRAPH", May 1989.
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -48,16 +50,18 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 
-#define	RTODEG	(180.0/3.1415925635898)
+#define PI	3.14159265358979323264
+#define	RTODEG	(180.0/PI)
 
 /*
  *			Q U A T _ M A T 2 Q U A T
  *
  *  Convert Matrix to Quaternion.
  */
+void
 quat_mat2quat( quat, mat )
-quat_t	quat;
-mat_t	mat;
+register quat_t	quat;
+register mat_t	mat;
 {
 	fastf_t	w2, x2, y2;
 	FAST fastf_t	s;
@@ -73,15 +77,16 @@ mat_t	mat;
 	}
 
 	quat[W] = 0.0;
-	x2 = (-1.0 / 2.0) * (mat[5] + mat[10]);
+	x2 = -0.5 * (mat[5] + mat[10]);
 	if( x2 > VDIVIDE_TOL ) {
+		s = 0.5 / quat[X];
 		quat[X] = sqrt( x2 );
-		quat[Y] = mat[1] / (2.0 * quat[X]);
-		quat[Z] = mat[2] / (2.0 * quat[X]);
+		quat[Y] = mat[1] * s;
+		quat[Z] = mat[2] * s;
 		return;
 	}
 	quat[X] = 0.0;
-	y2 = (1.0 / 2.0) * (1.0 - mat[10]);
+	y2 = 0.5 * (1.0 - mat[10]);
 	if( y2 > VDIVIDE_TOL ) {
 		quat[Y] = sqrt( y2 );
 		quat[Z] = mat[6] / (2.0 * quat[Y]);
@@ -100,9 +105,10 @@ mat_t	mat;
  * NB: This only works for UNIT quaternions.  We may get imaginary results
  *   otherwise.  We should normalize first (still yields same rotation).
  */
+void
 quat_quat2mat( mat, q )
-mat_t	mat;
-quat_t	q;
+register mat_t	mat;
+register quat_t	q;
 {
 	QUNITIZE( q );
 
@@ -147,6 +153,7 @@ quat_t	q1, q2;
  *   Needed for patching Bezier curves together.
  *   A rather poor name admittedly.
  */
+void
 quat_double( qout, q1, q2 )
 quat_t	qout, q1, q2;
 {
@@ -163,54 +170,70 @@ quat_t	qout, q1, q2;
  *			Q U A T _ B I S E C T
  *
  * Gives the bisector of quaternions q1 and q2.
- * (Could be done with qslerp and factor 0.5)
+ * (Could be done with quat_slerp and factor 0.5)
  * [I believe they must be unit quaternions this to work]
  */
+void
 quat_bisect( qout, q1, q2 )
 quat_t	qout, q1, q2;
 {
-	quat_t	qtemp;
-	double	scale;
-
-	QADD2( qtemp, q1, q2 );
-	scale = QMAGNITUDE( qtemp );
-	QSCALE( qout, qtemp, scale );
+	QADD2( qout, q1, q2 );
 	QUNITIZE( qout );
 }
 
 /*
  *			Q U A T _ S L E R P
  *
- * Do Spherical Linear Interpolation between two quaternion
+ * Do Spherical Linear Interpolation between two unit quaternions
  *  by the given factor.
  *
- * I'm SURE this can be done better.
+ * As f goes from 0 to 1, qout goes from q1 to q2.
+ * Code based on code by Ken Shoemake
  */
 void
 quat_slerp( qout, q1, q2, f )
 quat_t	qout, q1, q2;
 double	f;
 {
-	double	theta, factor;
-	quat_t	qtemp1, qtemp2;
+	double		omega;
+	double		cos_omega;
+	double		invsin;
+	register double	s1, s2;
 
-	QUNITIZE( q1 );
-	QUNITIZE( q2 );
-	theta = acos( QDOT( q1, q2 ) );
-
-	if( fabs(theta) < VDIVIDE_TOL )
-		factor = 1.0;
-	else
-		factor = sin( theta * (1.0 - f) ) / sin( theta );
-	QSCALE( qtemp1, q1, factor );
-
-	if( fabs(theta) < VDIVIDE_TOL )
-		factor = 0.0;
-	else
-		factor = sin( theta * f ) / sin( theta );
-	QSCALE( qtemp2, q2, factor );
-
-	QADD2( qout, qtemp1, qtemp2 );
+	cos_omega = QDOT( q1, q2 );
+	if( (1.0 + cos_omega) > 1.0e-5 )  {
+		/* cos_omega > -0.99999 */
+		if( (1.0 - cos_omega) > 1.0e-5 )  {
+			/* usual case */
+			omega = acos(cos_omega);	/* XXX atan2? */
+			invsin = 1.0 / sin(omega);
+			s1 = sin( (1.0-f)*omega ) * invsin;
+			s2 = sin( f*omega ) * invsin;
+		} else {
+			/*
+			 *  cos_omega > 0.99999
+			 * The ends are very close to each other,
+			 * use linear interpolation, to avoid divide-by-zero
+			 */
+			s1 = 1.0 - f;
+			s2 = f;
+		}
+		QBLEND2( qout, s1, q1, s2, q2 );
+	} else {
+		/*
+		 *  cos_omega == -1, omega = PI.
+		 *  The ends are nearly opposite, 180 degrees (PI) apart.
+		 */
+		/* (I have no idea what permuting the elements accomplishes,
+		 * perhaps it creates a perpendicular? */
+		qout[X] = -q1[Y];
+		qout[Y] =  q1[X];
+		qout[Z] = -q1[W];
+		s1 = sin( (0.5-f) * PI );
+		s2 = sin( f * PI );
+		VBLEND2( qout, s1, q1, s2, qout );
+		qout[W] =  q1[Z];
+	}
 }
 
 /*
@@ -223,6 +246,7 @@ double	f;
  *
  *  Uses the method of successive bisection.
  */
+void
 quat_sberp( qout, q1, qa, qb, q2, f )
 quat_t	qout, q1, qa, qb, q2;
 double	f;
@@ -245,7 +269,7 @@ double	f;
 /*
  *			Q U A T _ M A K E _ N E A R E S T
  *
- * Test routine to set the quaternion q1 to that which yields the
+ *  Set the quaternion q1 to the quaternion which yields the
  *   smallest rotation from q2 (of the two versions of q1 which
  *   produce the same orientation).
  *
@@ -258,8 +282,8 @@ quat_t	q1, q2;
 	quat_t	qtemp;
 	double	d1, d2;
 
-	d1 = quat_distance( q1, q2 );
 	QSCALE( qtemp, q1, -1.0 );
+	d1 = quat_distance( q1, q2 );
 	d2 = quat_distance( qtemp, q2 );
 
 	/* Choose smallest distance */
@@ -272,6 +296,7 @@ quat_t	q1, q2;
  *			Q U A T _ P R I N T
  */
 /* DEBUG ROUTINE */
+void
 quat_print( title, quat )
 char	*title;
 quat_t	quat;
@@ -284,9 +309,53 @@ quat_t	quat;
 		fprintf( stderr, "%8f  ", quat[i] );
 	fprintf( stderr, "\n" );
 
-	fprintf( stderr, "rot_angle = %8f deg", RTODEG * 2.0 * acos( quat[3] ) );
+	fprintf( stderr, "rot_angle = %8f deg", RTODEG * 2.0 * acos( quat[W] ) );
 	VMOVE( axis, quat );
 	VUNITIZE( axis );
 	fprintf( stderr, ", Axis = (%f, %f, %f)\n",
 		axis[X], axis[Y], axis[Z] );
+}
+
+/*
+ *			Q U A T _ E X P
+ *
+ *  Exponentiate a quaternion, assuming that the scalar part is 0.
+ *  Code by Ken Shoemake.
+ */
+void
+quat_exp( out, in )
+quat_t	out, in;
+{
+	FAST fastf_t	theta;
+	FAST fastf_t	scale;
+
+	if( (theta = MAGNITUDE( in )) > VDIVIDE_TOL )
+		scale = sin(theta)/theta;
+	else
+		scale = 1.0;
+
+	VSCALE( out, in, scale );
+	out[W] = cos(theta);
+}
+
+/*
+ *			Q U A T _ L O G
+ *
+ *  Take the natural logarithm of a unit quaternion.
+ *  Code by Ken Shoemake.
+ */
+void
+quat_log( out, in )
+quat_t	out, in;
+{
+	FAST fastf_t	theta;
+	FAST fastf_t	scale;
+
+	if( (scale = MAGNITUDE(in)) > VDIVIDE_TOL )  {
+		theta = atan2( scale, in[W] );
+		scale = theta/scale;
+	}
+
+	VSCALE( out, in, scale );
+	out[W] = 0.0;
 }
