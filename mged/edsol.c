@@ -7228,9 +7228,12 @@ char	**argv;
   case 0:
     {
       struct bu_vls tmp_vls;
+    	point_t key;
 
+
+    	VSCALE( key, es_keypoint, base2local );
       bu_vls_init(&tmp_vls);
-      bu_vls_printf(&tmp_vls, "%s (%g, %g, %g)\n", es_keytag, V3ARGS(es_keypoint));
+      bu_vls_printf(&tmp_vls, "%s (%g, %g, %g)\n", es_keytag, V3ARGS(key));
       Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
       bu_vls_free(&tmp_vls);
     }
