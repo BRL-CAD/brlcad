@@ -40,7 +40,7 @@ static char RCSlog[] = "@(#)$Header$ (ARL)";
 #include "externs.h"
 #include "bu.h"
 
-static int	bu_indent_cur_level;	/* formerly rt_g.rtg_logindent */
+static int	bu_indent_cur_level = 0; /* formerly rt_g.rtg_logindent */
 /*
  *			B U _ L O G _ I N D E N T _ D E L T A
  *

@@ -31,8 +31,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 int	bu_opterr = 1;		/* set to zero to suppress errors */
 int	bu_optind = 1;		/* index into parent argv vector */
-int	bu_optopt;		/* character checked for validity */
-char	*bu_optarg;		/* argument associated with option */
+int	bu_optopt = 0;		/* character checked for validity */
+char	*bu_optarg = NULL;	/* argument associated with option */
 
 #define BADCH	(int)'?'
 #define EMSG	""

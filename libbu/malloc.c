@@ -52,8 +52,8 @@ struct memdebug {
 	CONST char	*mdb_str;
 	int		mdb_len;
 };
-static struct memdebug	*bu_memdebug;
-static struct memdebug	*bu_memdebug_lowat;
+static struct memdebug	*bu_memdebug = (struct memdebug *)NULL;
+static struct memdebug	*bu_memdebug_lowat = (struct memdebug *)NULL;
 static size_t		bu_memdebug_len = 0;
 #define MEMDEBUG_NULL	((struct memdebug *)0)
 

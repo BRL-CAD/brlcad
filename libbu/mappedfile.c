@@ -55,7 +55,11 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "bu.h"
 
-static struct rt_list	bu_mapped_file_list;	/* list of currently open mapped files */
+static struct bu_list	bu_mapped_file_list = {
+	0,
+	(struct bu_list *)NULL,
+	(struct bu_list *)NULL
+};	/* list of currently open mapped files */
 
 #define FILE_LIST_SEMAPHORE_NUM	1	/* Anything but BU_SEM_SYSCALL */
 
@@ -81,10 +85,10 @@ CONST char	*appl;		/* non-null only when app. will use 'apbuf' */
 #endif
 
 	bu_semaphore_acquire(FILE_LIST_SEMAPHORE_NUM);
-	if( RT_LIST_UNINITIALIZED( &bu_mapped_file_list ) )  {
-		RT_LIST_INIT( &bu_mapped_file_list );
+	if( BU_LIST_UNINITIALIZED( &bu_mapped_file_list ) )  {
+		BU_LIST_INIT( &bu_mapped_file_list );
 	}
-	for( RT_LIST_FOR( mp, bu_mapped_file, &bu_mapped_file_list ) )  {
+	for( BU_LIST_FOR( mp, bu_mapped_file, &bu_mapped_file_list ) )  {
 		BU_CK_MAPPED_FILE(mp);
 		if( strcmp( name, mp->name ) )  continue;
 		if( appl && strcmp( appl, mp->appl ) )
@@ -214,7 +218,7 @@ CONST char	*appl;		/* non-null only when app. will use 'apbuf' */
 	mp->l.magic = BU_MAPPED_FILE_MAGIC;
 
 	bu_semaphore_acquire(FILE_LIST_SEMAPHORE_NUM);
-	RT_LIST_APPEND( &bu_mapped_file_list, &mp->l );
+	BU_LIST_APPEND( &bu_mapped_file_list, &mp->l );
 	bu_semaphore_release(FILE_LIST_SEMAPHORE_NUM);
 
 	return mp;
@@ -240,7 +244,7 @@ struct bu_mapped_file	*mp;
 		bu_semaphore_release(FILE_LIST_SEMAPHORE_NUM);
 		return;
 	}
-	RT_LIST_DEQUEUE( &mp->l );
+	BU_LIST_DEQUEUE( &mp->l );
 	bu_semaphore_release(FILE_LIST_SEMAPHORE_NUM);
 
 	/* If application pointed mp->apbuf at mp->buf, break that

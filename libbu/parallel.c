@@ -400,8 +400,8 @@ int tbl[MAX_PSW];
 
 extern int	bu_pid_of_initiating_thread;	/* From ispar.c */
 
-static int	bu_nthreads_started;		/* # threads started */
-static int	bu_nthreads_finished;		/* # threads properly finished */
+static int	bu_nthreads_started = 0;	/* # threads started */
+static int	bu_nthreads_finished = 0;	/* # threads properly finished */
 static void	(*bu_parallel_func) BU_ARGS((int));	/* user function to run in parallel */
 
 /*

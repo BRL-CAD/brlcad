@@ -30,7 +30,7 @@ static char RCSispar[] = "@(#)$Header$ (ARL)";
 #include "bu.h"
 
 
-int	bu_pid_of_initiating_thread;	/* don't declare in h/bu.h */
+int	bu_pid_of_initiating_thread = 0;	/* don't declare in h/bu.h */
 
 /*
  *			B U _ I S _ P A R A L L E L

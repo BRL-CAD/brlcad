@@ -187,8 +187,8 @@ register long *p;
 }
 #endif /* convex */
 
-static unsigned int		bu_nsemaphores;
-static struct bu_semaphores	*bu_semaphores;
+static unsigned int		bu_nsemaphores = 0;
+static struct bu_semaphores	*bu_semaphores = (struct bu_semaphores *)NULL;
 
 /*
  *			B U _ S E M A P H O R E _ I N I T
