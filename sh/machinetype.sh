@@ -55,6 +55,16 @@ cat << EOF > ${IN_FILE}
 	HAS_SYMLINKS=1;
 #endif
 
+#ifdef ipsc860
+/*	iPSC/860 Hypercube */
+#	undef	i386
+#	undef	i860
+	MACHINE=ipsc;
+	UNIXTYPE=SYSV;
+	HAS_TCP=0;
+	HAS_SYMLINKS=0;
+#endif
+
 #if defined(unix) && defined(i386)
 /* PC/AT with Interactive Systems Unix V/386 3.2 */
 #	undef	at
