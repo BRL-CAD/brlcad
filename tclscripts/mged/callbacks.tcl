@@ -43,6 +43,10 @@ proc begin_edit_callback {} {
     global mged_display
     global mged_players
 
+    if ![info exists mged_players] {
+	return
+    }
+
     if {$mged_display(state) == "SOL EDIT"} {
 	foreach id $mged_players {
 	    if {$mged_gui($id,show_edit_info)} {
@@ -86,8 +90,13 @@ proc active_edit_callback {} {
 proc end_edit_callback {} {
     global mged_players
 
+    if ![info exists mged_players] {
+	return
+    }
+
     undo_edit_menu
     foreach id $mged_players {
 	esolint_destroy $id
     }
 }
+
