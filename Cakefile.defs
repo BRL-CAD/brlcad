@@ -197,7 +197,6 @@ set -S2 "/bin/sh"
 #		define	BWISH_CONFIG	-I''XINCDIR
 #		define	BWISH_LIBES	MGED_LIBES
 #		define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11 -lGL
-#		define	LIBTCLHOOKS_LIBES	-lmalloc -lXi -lXext -lgl -lGL
 #	else
 /*		Static linked executables */
 #		define	GFLAG		
@@ -274,7 +273,6 @@ set -S2 "/bin/sh"
 /*		Warning 84:  library not used for resolving any symbol */
 /*		Warning 85: definition in one library preempts that in another */
 /*		Warning 134: weak definition in one library preempts that in another */
-#		define	LIBTCLHOOKS_LIBES	-lGL -lXi -lXext
 #	else
 /*		Static linked executables */
 #		define	RANLIB	ranlib5.sh
@@ -350,7 +348,6 @@ set -S2 "/bin/sh"
 #		define	STANDARD_LIBES	-lm -lmalloc -lc -rpath LIBDIR:/usr/lib64
 /*		When debugging libraries, -m and -v are helpful LD_OPTS */
 #		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85
-#		define	LIBTCLHOOKS_LIBES	-lmalloc -lGL -lXi -lXext
 #	else
 /*		Static linked executables */
 #		define	RANLIB	ranlib5.sh
@@ -419,7 +416,6 @@ set -S2 "/bin/sh"
 #		define	STANDARD_LIBES	-lm -lmalloc -lc -rpath LIBDIR:/usr/lib64
 /*		When debugging libraries, -m and -v are helpful LD_OPTS */
 #		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85
-#		define	LIBTCLHOOKS_LIBES	-lmalloc -lGL -lXi -lXext
 #	else
 /*		Static linked executables */
 #		define	RANLIB	ranlib5.sh
@@ -451,7 +447,7 @@ set -S2 "/bin/sh"
 #if defined(__CAKE__m4i64)
 /*	Silicon Graphics 4D, running IRIX64 6.4 (on a MIPS4 machine) */
 #	undef	sgi
-#	if 1 /*	PRODUCTION=1 */
+#	if 1
 #		define M4I64_USE_64_BIT
 #	else
 /*		Old versions of MUVES can't use the 64-bit compiler */
@@ -535,7 +531,6 @@ set -S2 "/bin/sh"
 /*		When debugging libraries, -m and -v are helpful LD_OPTS */
 #		define	LD_OPTS		GFLAG -Wl,-multigot -Wl,-woff,84 -Wl,-woff,85 -Wl,-woff,134
 #		define  CC_OPTS		GFLAG -xansi -DIRIX=6 -DIRIX64=64
-#		define	LIBTCLHOOKS_LIBES	-lmalloc -lGL -lXi -lXext
 #	else
 /*		Static linked executables */
 #		define	RANLIB	ranlib5.sh
@@ -569,8 +564,19 @@ set -S2 "/bin/sh"
 #if defined(__CAKE__m4i65)
 /*	Silicon Graphics 4D, running IRIX64 6.5 (on a MIPS4 machine) */
 #	undef	sgi
+#	if 1
+#		define M4I65_USE_64_BIT
+#	else
+/*		Old versions of MUVES can't use the 64-bit compiler */
+#		if 1 /* Use n32 */
+#			define M4I65_USE_N32
+#		endif /* else use 32 (o32) */
+#	endif
+#	if 1 /*	PRODUCTION=1	*/
+#		define	M4I65_PRODUCTION
+#	endif
 #	define	MTYPE	m4i65
-#	if 1	/* PRODUCTION=1 */
+#	ifdef M4I65_PRODUCTION
 /*		This version for production: optimization & shared libraries */
 /*		Warning 1174 is "variable declared but never referenced". */
 /*		Warning 1032 is "expression must have arithmetic type". */
@@ -582,31 +588,67 @@ set -S2 "/bin/sh"
 /*		Warning 1167 is "pointer points outside of underlying object" (tab/script.l) */
 /*		Warning 1174 is "The variable "X" is declared but never referenced" */
 /*		Warning 1552 is "The variable "X" is set but never used" */
-#		define	OPTIMIZER	-O3 -r10000 \
+#		ifdef M4I65_USE_64_BIT
+#			define	OPTIMIZER	-O3 -r10000 \
 			-OPT:const_copy_limit=20000:Olimit=0 \
 			-use_readonly_const \
 			-woff 1429,1203,1110,1412,1167,1209,1174,1552 \
 			-Wl,-w
-/*		-Wl,-S doesn't work! use -Wl,-w.  SGI case #0390575. */
+/*			-Wl,-S doesn't work! use -Wl,-w.  SGI case #0390575. */
+#		else
+#			ifdef M4I65_USE_N32
+#				define	OPTIMIZER	-O3 -r10000 \
+				-OPT:const_copy_limit=20000:Olimit=0 \
+				-use_readonly_const \
+				-woff 1429,1203,1110,1412,1167,1209,1174,1552 \
+				-Wl,-w
+#			else
+#				define	OPTIMIZER	-O2 -Olimit 2000 \
+				-use_readonly_const \
+				-woff 1429,1203,1110,1412,1167,1209,1174,1552 \
+				-Wl,-w
+#			endif
+#		endif
 #	else
 /*		This version for debugging with DBX */
 /*		-fullwarn is pretty verbose */
 #		define	OPTIMIZER	-g -use_readonly_const \
 			-woff 1174
 #	endif
-#	define	GFLAG		-64 -mips4 -KPIC -G 7
-#	define  XINCDIR /usr/include/X11
-#	define	XLIBDIR /usr/lib64
-#	if 1	/* PRODUCTION=1 */
+#	ifdef M4I65_USE_64_BIT
+#		define	GFLAG		-64 -mips4 -KPIC -G 7
+#		define  XINCDIR /usr/include/X11
+#		define	XLIBDIR /usr/lib64
+#	else
+#		ifdef M4I65_USE_N32
+#			define	GFLAG		-n32 -mips4
+#			define	XLIBDIR /usr/lib32
+#		else
+#			define	GFLAG		-32 -mips2
+#			define	XLIBDIR /usr/lib
+#		endif
+#	endif
+#	ifdef M4I65_PRODUCTION
 /*		Shared library version support */
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sh/sharedlibvers.sh
-#		define	BUILD_LIBRARY	ld -64 -mips4 -shared -o
+#		ifdef M4I65_USE_64_BIT
+#			define	BUILD_LIBRARY	ld -64 -mips4 -shared -o
+#			define	STANDARD_LIBES	-lm -lmalloc -lc -rpath LIBDIR:/usr/lib64
+#		else
+#			ifdef M4I65_USE_N32
+#				define	BUILD_LIBRARY	ld -n32 -mips4 -shared -multigot -o
+#				define	STANDARD_LIBES	-lm -lmalloc -lc -rpath LIBDIR:/usr/lib32
+#				define	LDSHARED	CC -n32 -shared
+#			else
+#				define	BUILD_LIBRARY	ld -32 -mips2 -shared -multigot -o
+#				define	STANDARD_LIBES	-lm -lmalloc -lc -rpath LIBDIR:/usr/lib
+#				define	LDSHARED	CC -32 -shared
+#			endif
+#		endif
 #		define	RANLIB	true
-#		define	STANDARD_LIBES	-lm -lmalloc -lc -rpath LIBDIR:/usr/lib64
 /*		When debugging libraries, -m and -v are helpful LD_OPTS */
 #		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85 -Wl,-woff,134
-#		define	LIBTCLHOOKS_LIBES	-lmalloc -lGL -lXi -lXext
 #	else
 /*		Static linked executables */
 #		define	RANLIB	ranlib5.sh
@@ -918,11 +960,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define	LIBVERS ../sh/sharedlibvers.sh
 #		define	BUILD_LIBRARY	gcc -shared -o
 #		define	RANLIB	true
-#		if 0
-#			define	STANDARD_LIBES	-lm -lc -Wl,-rpath -Wl,LIBDIR:/usr/lib
-#		else
-#			define	STANDARD_LIBES	-lm -lc -Wl,-rpath -Wl,LIBDIR
-#		endif
+#		define	STANDARD_LIBES	-lm -lc -Wl,-rpath -Wl,LIBDIR
 #	else
 /*		Static linked executables */
 #		define	CC	gcc
@@ -946,7 +984,6 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define 	LIBDM_LIBES	LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES -ldl -lGL -L''XLIBDIR -lXi -lXmu -lpthread
 #		define	MGED_OBJS	dm-ogl dm-X dm-generic
 #		define	MGED_CONFIG	-DUSE_MESA_GL -DDM_X -DDM_OGL -I''XINCDIR
-#		define	LIBTCLHOOKS_LIBES	-L/usr/X11R6/lib -lGL
 #	else	/* just use X */
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X
 #		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
@@ -1014,7 +1051,6 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define 	LIBDM_LIBES	LIBTK LIBTCL LIBTK_LIBES LIBTCL_LIBES -lGL -L''XLIBDIR -lXi -lXmu
 #		define	MGED_OBJS	dm-ogl dm-X dm-generic
 #		define	MGED_CONFIG	-DUSE_MESA_GL -DDM_X -DDM_OGL -I''XINCDIR
-#		define	LIBTCLHOOKS_LIBES	-L/usr/X11R6/lib -lGL
 #	else	/* just use X */
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X
 #		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
@@ -1915,10 +1951,6 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 
 #ifndef LIBPKG_LIBES
 #	define	LIBPKG_LIBES	/**/
-#endif
-
-#ifndef LIBTCLHOOKS_CONFIG
-#	define	LIBTCLHOOKS_CONFIG	/**/
 #endif
 
 #ifndef MGED_CONFIG
