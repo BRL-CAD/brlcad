@@ -372,7 +372,7 @@ char	ourname[128];
 int	tcp_listen_fd;
 extern int	pkg_permport;	/* libpkg/pkg_permserver() listen port */
 
-int		debug;		/* dispatcher debugging flag */
+int		rem_debug;		/* dispatcher debugging flag */
 
 extern int	version[];	/* From vers.c */
 
@@ -569,7 +569,7 @@ char	**argv;
 			clients = 0;
 			eat_script( stdin );
 		}
-		if(debug>1) cd_frames( 0, (char **)0 );
+		if(rem_debug>1) cd_frames( 0, (char **)0 );
 
 		/* Compute until no work remains */
 		running = 1;
@@ -693,7 +693,7 @@ int waittime;
 	}
 	if( val==0 )  {
 		/* At this point, ibits==0 */
-		if(debug>1) rt_log("%s select timed out after %d seconds\n", stamp(), waittime);
+		if(rem_debug>1) rt_log("%s select timed out after %d seconds\n", stamp(), waittime);
 		return;
 	}
 
@@ -772,7 +772,7 @@ struct pkg_conn *pc;
 		/* Maybe free the pkg struct? */
 		return;
 	}
-	if( debug )  rt_log("%s addclient(%s)\n", stamp(), ihp->ht_name);
+	if( rem_debug )  rt_log("%s addclient(%s)\n", stamp(), ihp->ht_name);
 
 	clients |= 1<<fd;
 
@@ -1447,7 +1447,7 @@ register struct frame *fr;
 		    20); /* spaces and frame number */
 		(void) sprintf(cmd,"%s %s %d",frame_script,fr->fr_filename,
 		    fr->fr_number);
-		if(debug) rt_log("%s %s\n", stamp(), cmd);
+		if(rem_debug) rt_log("%s %s\n", stamp(), cmd);
 		(void) system(cmd);
 		(void) free(cmd);
 	}
@@ -1618,7 +1618,7 @@ struct timeval	*nowp;
 
 		case SRST_CLOSING:
 			/* Handle final closing */
-			if(debug>1) rt_log("%s Final close on %s\n", stamp(), sp->sr_host->ht_name);
+			if(rem_debug>1) rt_log("%s Final close on %s\n", stamp(), sp->sr_host->ht_name);
 			clients &= ~(1<<sp->sr_pc->pkc_fd);
 			pkg_close(sp->sr_pc);
 
@@ -2138,7 +2138,7 @@ char *buf;
 		drop_server( sp, "rt_struct_import error" );
 		goto out;
 	}
-	if( debug )  {
+	if( rem_debug )  {
 		rt_log("%s %s %d/%d..%d, ray=%d, cpu=%.2g, el=%g\n",
 			stamp(),
 			sp->sr_host->ht_name,
@@ -2753,7 +2753,7 @@ FILE	*fp;
 			sprintf(cmd,
 				"cd %s; rtsrv %s %d",
 				rem_dir, ourname, port );
-			if(debug)  {
+			if(rem_debug)  {
 				rt_log("%s %s\n", stamp(), cmd);
 				fflush(stdout);
 			}
@@ -2793,7 +2793,7 @@ FILE	*fp;
 				RSH, host,
 				rem_dir, rem_db,
 				ourname, port );
-			if(debug)  {
+			if(rem_debug)  {
 				rt_log("%s %s\n", stamp(), cmd);
 				fflush(stdout);
 			}
@@ -3066,11 +3066,11 @@ int	argc;
 char	**argv;
 {
 	if( argc <= 1 )  {
-		debug = !debug;
+		rem_debug = !rem_debug;
 	} else {
-		sscanf( argv[1], "%x", &debug );
+		sscanf( argv[1], "%x", &rem_debug );
 	}
-	rt_log("%s Dispatcher debug=x%x\n", stamp(), debug );
+	rt_log("%s Dispatcher debug=x%x\n", stamp(), rem_debug );
 }
 
 /*
@@ -3577,7 +3577,7 @@ char	**argv;
 			sp->sr_w_rays,
 			sp->sr_host->ht_rs_miss );
 
-		if( debug )
+		if( rem_debug )
 			pr_list( &(sp->sr_work) );
 	}
 }
