@@ -178,13 +178,38 @@ if [ -f "${PKG_NAME}.pkg/Contents/Archive.pax" ] ; then
     exit 1
 fi
 
-mkbom "$ARCHIVE" "${PKG_NAME}.pkg/Contents/Archive.bom"
+# make a temporary root directory for making the bill of materials
+mkdir ${PKG_NAME}.pkg/Contents/Root
+if [ $? != 0 ] ; then
+    echo "ERROR: unable to successfully create the BOM root"
+    exit 1
+fi
+if [ ! -d "${PKG_NAME}.pkg/Contents/Root" ] ; then
+    echo "ERROR: ${PKG_NAME}.pkg/Contents/Root could not be created"
+    exit 1
+fi
+
+# fill the bom root
+pax -rw "$ARCHIVE" "${PKG_NAME}.pkg/Contents/Root"
+if [ $? != 0 ] ; then
+    echo "ERROR: unable to successfully create the BOM root of $ARCHIVE"
+    exit 1
+fi
+
+mkbom "${PKG_NAME}.pkg/Contents/Root" "${PKG_NAME}.pkg/Contents/Archive.bom"
 if [ $? != 0 ] ; then
     echo "ERROR: unable to successfully generate a bill of materials"
     exit 1
 fi
 if [ ! -f "${PKG_NAME}.pkg/Contents/Archive.bom" ] ; then
     echo "ERROR: bill of materials file does not exist"
+    exit 1
+fi
+
+# remove the bom root
+rm -rf "${PKG_NAME}.pkg/Contents/Root"
+if [ -d "${PKG_NAME}.pkg/Contents/Root" ] ; then
+    echo "ERROR: unable to remove temporary BOM root"
     exit 1
 fi
 
