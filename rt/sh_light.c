@@ -373,6 +373,8 @@ light_init()
 /* 
  *			L I G H T _ H I T
  *
+ *  A light visibility test ray hit something.  Determine what this means.
+ *
  *  Input -
  *	a_color[] contains the fraction of a the light that will be
  *	propagated back along the ray, so far.  If this gets too small,
@@ -403,8 +405,16 @@ struct partition *PartHeadp;
 	vect_t	filter_color;
 	int	light_visible;
 
+	/*
+	 *  Since the light visibility ray started at the surface of a solid,
+	 *  it is likely that the solid will be the first partition on
+	 *  the list, with pt_outhit->hit_dist being roughly zero.
+	 *  Don't start using partitions until pt_inhit->hit_dist is
+	 *  slightly larger than zero, i.e., that the partition is not
+	 *  including the start point.
+	 */
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
-		if( pp->pt_outhit->hit_dist >= 0.0 )  break;
+		if( pp->pt_inhit->hit_dist >= ap->a_rt_i->rti_tol.dist )  break;
 	if( pp == PartHeadp )  {
 		rt_log("light_hit:  ERROR, nothing hit, vis=0\n");
 		return(0);		/* light_visible = 0 */
