@@ -120,8 +120,7 @@ brlcadincludedir = $(includedir)/brlcad
 AM_CPPFLAGS = \
 	-I${top_srcdir}/src/other/libtk/bitmaps \
 	-I${top_srcdir}/src/other/libtcl/generic \
-	-I${top_srcdir}/src/other/libtk/unix \
-	-I${top_srcdir}/src/other/libtk/xlib
+	-I${top_srcdir}/src/other/libtk/unix
 
 libtkgeneric_la_LIBADD = ${X_LIBS}
 
