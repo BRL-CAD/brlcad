@@ -124,7 +124,6 @@ HIDDEN void	_put_Data();
 HIDDEN int	_put_Color_Map_Seg();
 HIDDEN int	_put_Std_Map();
 HIDDEN int	_get_Color_Map_Seg();
-HIDDEN int	_get_Short();
 
 /* Functions to read instructions, depending on format.			*/
 HIDDEN int	(*_func_Get_Inst)();	/* Ptr to appropriate function.	*/
