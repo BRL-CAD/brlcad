@@ -1463,10 +1463,6 @@ RT_EXTERN(int rt_boolfinal, (struct partition *InputHdp,
 	struct partition *FinalHdp,
 	fastf_t startdist, fastf_t enddist,
 	bitv_t *regionbits, struct application *ap) );
-					/* Eval bool tree node */
-RT_EXTERN(int rt_booleval, (CONST union tree *treep,
-	CONST struct partition *partp,
-	struct region **trueregp, struct resource *resp) );
 
 RT_EXTERN(void rt_grow_boolstack, (struct resource *res) );
 					/* Approx Floating compare */
