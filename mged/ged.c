@@ -78,7 +78,7 @@ in all countries except the USA.  All rights reserved.";
 #define LOGFILE	"/vld/lib/gedlog"	/* usage log */
 #endif
 
-#if 0
+#if 1
 /* defined in libfb/tcl.c */
 extern void fb_tclInit();
 #endif
@@ -360,7 +360,7 @@ char **argv;
 	/* Initialize libdm */
 	(void)dm_tclInit(interp);
 
-#if 0
+#if 1
 	/* Initialize libfb */
 	(void)fb_tclInit(interp);
 #endif
