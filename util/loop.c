@@ -1,13 +1,15 @@
 /*
  *			L O O P . C
  *
- *	Simple program to output integers between "start" and "finish",
- *	inclusive.  Default is an increment of +1 if start < finish or
- *	-1 if start > finish.  User may specify an alternate increment.
- *	There is no attempt to prevent "infinite" loops.
+ *	Simple program to output integers or floats between 
+ *	"start" and "finish", inclusive.  Default is an increment 
+ *	of +1 if start < finish or -1 if start > finish.  User may 
+ *	specify an alternate increment.  Also, user may left-pad 
+ *	output integers with zeros.  There is no attempt to prevent 
+ *	"infinite" loops.
  *
  *  Author -
- *	Michael John Muuss
+ *	John Grosh, Phil Dykstra, and Michael John Muuss
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -15,39 +17,132 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1986 by the United States Army.
+ *	This software is Copyright (C) 1990 by the United States Army.
  *	All rights reserved.
  */
+
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include <math.h>
+
+#define	INTEGER 0
+#define	REAL	1
 
 main(argc, argv)
-char **argv;
+int	argc;
+char	**argv;
 {
-	register int start, finish, incr;
-	register int i;
+	register int	status = INTEGER;
 
-	if( argc < 3 || argc > 4 )  {
+	register int	i;
+	register int 	start,  finish, incr;
+
+	register double	d;
+	register double	dstart, dfinish,dincr;
+
+	if (argc < 3 || argc > 4) {
 		fprintf(stderr, "Usage:  loop start finish [incr]\n");
 		exit(9);
 	}
-	start = atoi( argv[1] );
-	finish = atoi( argv[2] );
-	if( start > finish )
-		incr = -1;
-	else
-		incr = 1;
-	if( argc == 4 )
-		incr = atoi( argv[3] );
 
-	if( incr >= 0 )  {
-		for( i=start; i<=finish; i += incr )
-			printf("%d\n", i);
-	} else {
-		for( i=start; i>=finish; i += incr )
-			printf("%d\n", i);
+	/* determine if any arguments are real */
+	for (i = 1; i < argc; i++) {
+		if (atof(argv[i]) != atoi(argv[i])) {	
+			status = REAL;
+			break;
+		}
 	}
+
+	if (status == REAL) {
+		dstart  = atof(argv[1]);
+		dfinish = atof(argv[2]);
+
+		if (argc == 4)
+			dincr = atof(argv[3]);
+		else {
+			if (dstart > dfinish)
+				dincr = -1.0;
+			else
+				dincr =  1.0;
+		}
+
+		if (dincr >= 0.0)
+			for (d = dstart; d <= dfinish; d += dincr)
+				printf("%g\n", d);
+		else 
+			for (d = dstart; d >= dfinish; d += dincr)
+				printf("%g\n", d);
+	} else {
+		/* print out integer output */
+		char	*cp;
+		char	fmt_string[50];
+
+		int	field_width = 0;
+
+		int	zeros      = 0;  /* leading zeros for output */
+		int	zeros_arg1 = 0;  /* leading zeros in arg[1]  */
+		int	zeros_arg2 = 0;  /* leading zeros in arg[2]  */
+		int	zeros_arg3 = 0;  /* leading zeros in arg[3]  */
+
+ 		/* count leading leading zeros in argv[1] */
+		for (cp = argv[1]; *cp == '0'; cp++)
+			zeros_arg1++;
+		if (*cp == NULL) 
+			zeros_arg1--;
+
+ 		/* count leading leading zeros in argv[2] */
+		for (cp = argv[2]; *cp == '0'; cp++)
+			zeros_arg2++;
+		if (*cp == NULL) 
+			zeros_arg2--;
+
+ 		/* if argv[3] exists, count leading leading zeros */
+		if (argc == 4 ) {
+			for (cp = argv[3]; *cp == '0'; cp++)
+				zeros_arg3++;
+			if (*cp == NULL) 
+				zeros_arg3--;
+		}
+
+		/* determine field width and leading zeros*/
+		if (zeros_arg1 >= zeros_arg2 && zeros_arg1 >= zeros_arg3) {
+			field_width = strlen(argv[1]);
+			zeros       = zeros_arg1;
+		} else if (zeros_arg2 >= zeros_arg1 && zeros_arg2 >= zeros_arg3) {
+			field_width = strlen(argv[2]);
+			zeros       = zeros_arg2;
+		} else {
+			field_width = strlen(argv[3]);
+			zeros       = zeros_arg3;
+		}
+
+		/* printf format string fmt_string */
+		if (zeros > 0) 
+			sprintf(fmt_string,"%%0%dd\n",field_width); 
+		else
+			strcpy(fmt_string,"%d\n");
+
+		start  = atoi(argv[1]);
+		finish = atoi(argv[2]);
+
+		if (argc == 4)
+			incr = atoi(argv[3]);
+		else {
+			if (start > finish)
+				incr = -1;
+			else
+				incr =  1;
+		}
+
+		if (incr >= 0)
+			for (i = start; i <= finish; i += incr)
+				printf(fmt_string, i);
+		else 
+			for (i = start; i >= finish; i += incr)
+				printf(fmt_string, i);
+	}
+	exit(0);
 }
