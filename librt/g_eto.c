@@ -323,7 +323,7 @@ struct seg		*seghead;
 	LOCAL vect_t	pprime;		/* P' */
 	LOCAL vect_t	work;		/* temporary vector */
 	LOCAL poly	C;		/* The final equation */
-	LOCAL complex	val[MAXP];	/* The complex roots */
+	LOCAL complex	val[4];	/* The complex roots */
 	LOCAL double	k[4];		/* The real roots */
 	register int	i;
 	LOCAL int	j;

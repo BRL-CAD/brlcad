@@ -25,10 +25,10 @@ static char RCSroots[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
+#include "bu.h"
 #include "vmath.h"
+#include "bn.h"
 #include "raytrace.h"
-#include "./polyno.h"
-#include "./complex.h"
 
 int		rt_poly_roots();
 void	rt_poly_eval_w_2derivatives(), rt_poly_deflate();
@@ -102,7 +102,7 @@ register complex	roots[];	/* space to put roots found	*/
 		if ( (rt_poly_findroot( eqn, &roots[n] )) < 0 )
 			return(n);	/* return those we found, anyways */
 
-		if ( Abs(roots[n].im) > 1.0e-5* Abs(roots[n].re) ){
+		if ( fabs(roots[n].im) > 1.0e-5* fabs(roots[n].re) ){
 			/* If root is complex, its complex conjugate is
 			 * also a root since complex roots come in con-
 			 * jugate pairs when all coefficients are real.
@@ -329,7 +329,7 @@ register int		nroots;
 			er = tr;
 			ei = ti;
 		}
-		if ( Abs( er ) > 1.0e-5 || Abs( ei ) > 1.0e-5 )
+		if ( fabs( er ) > 1.0e-5 || fabs( ei ) > 1.0e-5 )
 			return 1;	/* FAIL */
 	}
 	/* Evaluating polynomial for all Z values gives zero */
