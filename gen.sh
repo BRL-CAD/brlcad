@@ -171,6 +171,7 @@ BDIRS="bench \
 	halftone \
 	edpix \
 	nirt irprep \
+	xmged \
 	jove \
 	canon \
 	dhrystone"
