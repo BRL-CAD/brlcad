@@ -170,6 +170,7 @@ int			code;
 	}
 
 	/* XXX What goes here? */
+	rt_bomb("nmg_class.c/joint_hitmiss2() unable to resolve ray/edge hit\n");
 	rt_log("joint_hitmiss2: NO CODE HERE, assuming miss\n");
 
 	if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_NMGRT) )  {
@@ -605,6 +606,8 @@ CONST struct rt_tol	*tol;
 		/* Dangling faces don't participate in Jordan Curve calc */
 		if (nmg_dangling_face(fu))  continue;
 
+/* XXX Adding this code in breaks Test1.r! */
+#if 0
 		/* Un-mark this face, handle it in the second pass */
 		NMG_INDEX_CLEAR(faces_seen, fu->f_p);
 	}
@@ -619,6 +622,7 @@ CONST struct rt_tol	*tol;
 
 		/* Mark this face as having been processed */
 		NMG_INDEX_SET(faces_seen, fu->f_p);
+#endif
 
 		/* Only consider the outward pointing faceuses */
 		if( fu->orientation != OT_SAME )  continue;
