@@ -68,6 +68,7 @@ class Db {
     public method tol {args}
     public method tops {args}
     public method tree {args}
+    public method units {args}
     public method whatid {args}
     public method whichair {args}
     public method whichid {args}
@@ -232,6 +233,10 @@ body Db::title {args} {
 
 body Db::tree {args} {
     eval $db tree $args
+}
+
+body Db::units {args} {
+    eval $db units $args
 }
 
 body Db::color {args} {

@@ -124,6 +124,7 @@ static int wdb_observer_tcl();
 static int wdb_reopen_tcl();
 static int wdb_make_bb_tcl();
 static int wdb_make_name_tcl();
+static int wdb_units_tcl();
 
 static void wdb_deleteProc();
 static void wdb_deleteProc_rt();
@@ -183,6 +184,7 @@ static struct bu_cmdtab wdb_cmds[] = {
 	{"tol",		wdb_tol_tcl},
 	{"tops",	wdb_tops_tcl},
 	{"tree",	wdb_tree_tcl},
+	{"units",	wdb_units_tcl},
 	{"whatid",	wdb_whatid_tcl},
 	{"whichair",	wdb_which_tcl},
 	{"whichid",	wdb_which_tcl},
@@ -4656,6 +4658,95 @@ wdb_make_name_tcl(clientData, interp, argc, argv)
 	while (db_lookup(wdbp->dbip, bu_vls_addr(&obj_name), LOOKUP_QUIET) != DIR_NULL);
 	Tcl_AppendResult(interp, bu_vls_addr(&obj_name), (char *) NULL);
 	bu_vls_free(&obj_name);
+	return TCL_OK;
+}
+
+/*
+ * Set/get the database units. 
+ *
+ * Usage:
+ *        dbobjname units [str]
+ */
+static int
+wdb_units_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int	argc;
+     char	**argv;
+{
+	struct rt_wdb	*wdbp = (struct rt_wdb *)clientData;
+	double		loc2mm;
+	int		new_unit = 0;
+	struct bu_vls 	vls;
+	CONST char	*str;
+	int 		sflag = 0;
+
+	bu_vls_init(&vls);
+	if (argc < 2 || 3 < argc) {
+		bu_vls_printf(&vls, "helplib wdb_units");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	if (argc == 3 && strcmp(argv[2], "-s") == 0) {
+		--argc;
+		++argv;
+
+		sflag = 1;
+	}
+
+	if (argc < 3) {
+		str = bu_units_string(wdbp->dbip->dbi_local2base);
+		if (!str) str = "Unknown_unit";
+
+		if (sflag)
+			bu_vls_printf(&vls, "%s", str);
+		else
+			bu_vls_printf(&vls, "You are editing in '%s'.  1 %s = %g mm \n",
+				      str, str, wdbp->dbip->dbi_local2base );
+
+		Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+		bu_vls_free(&vls);
+		return TCL_OK;
+	}
+
+	/* Allow inputs of the form "25cm" or "3ft" */
+	if ((loc2mm = bu_mm_value(argv[2]) ) <= 0) {
+		Tcl_AppendResult(interp, argv[2], ": unrecognized unit\n",
+				 "valid units: <um|mm|cm|m|km|in|ft|yd|mi>\n", (char *)NULL);
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	/* See if this is a known v4 database unit */
+	if ((new_unit = db_v4_get_units_code(bu_units_string(loc2mm))) >= 0) {
+		/* One of the recognized db.h units */
+		/* change database to remember the new local unit */
+		if (wdbp->dbip->dbi_read_only ||
+		    db_ident(wdbp->dbip, wdbp->dbip->dbi_title, new_unit) < 0)
+			Tcl_AppendResult(interp,
+					 "Warning: unable to stash working units into database\n",
+					 (char *)NULL);
+	} else {
+		/*
+		 *  Can't stash requested units into the database for next session,
+		 *  but there is no problem with the user editing in these units.
+		 */
+		Tcl_AppendResult(interp, "\
+Due to a database restriction in the current format of .g files,\n\
+this choice of units will not be remembered on your next editing session.\n", (char *)NULL);
+	}
+	wdbp->dbip->dbi_local2base = loc2mm;
+	wdbp->dbip->dbi_base2local = 1.0 / loc2mm;
+
+	str = bu_units_string(wdbp->dbip->dbi_local2base);
+	if (!str) str = "Unknown_unit";
+	bu_vls_printf(&vls, "You are now editing in '%s'.  1 %s = %g mm \n",
+		      str, str, wdbp->dbip->dbi_local2base );
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
+
 	return TCL_OK;
 }
 
