@@ -417,7 +417,7 @@ main( int argc , char *argv[] )
 				fu = RT_LIST_FIRST( faceuse , &s->fu_hd );
 				nmg_reverse_face( fu );
 				nmg_propagate_normals( fu , flags );
-				nmg_merge_shells( outer_shell , s );
+				nmg_js( outer_shell , s , &tol );
 				s = next_s;
 			}
 		}
