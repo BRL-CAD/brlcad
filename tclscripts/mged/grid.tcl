@@ -353,8 +353,6 @@ proc grid_control_apply { id } {
     mged_apply $id "rset grid rh \$grid_control($id,rh)"
     mged_apply $id "rset grid mrh \$grid_control($id,mrh)"
 
-    mged_apply $id "rset cs grid \$grid_control($id,color)"
-
     if {$grid_control($id,square)} {
 	mged_apply $id "rset grid rv \$grid_control($id,rh)"
 	mged_apply $id "rset grid mrv \$grid_control($id,mrh)"
@@ -387,7 +385,6 @@ proc grid_control_reset { id top } {
     set grid_control($id,mrh) [rset grid mrh]
     set grid_control($id,rv) [rset grid rv]
     set grid_control($id,mrv) [rset grid mrv]
-    set grid_control($id,color) [rset cs grid]
 
     if {$grid_control($id,rh) != $grid_control($id,rv) ||\
 	$grid_control($id,mrh) != $grid_control($id,mrv)} {
@@ -397,8 +394,6 @@ proc grid_control_reset { id top } {
 
     set mged_grid($id,draw) $grid_control($id,draw)
     set mged_grid($id,snap) $grid_control($id,snap)
-
-    grid_control_set_colorMB $id $top
 }
 
 proc set_grid_square { id } {

@@ -83,10 +83,10 @@ proc solid_data_init {} {
     global solid_data
 
     foreach vv_pair $solid_data_vv_pairs {
-	set var_name [lindex $vv_pair 0]
+	set index [lindex $vv_pair 0]
 
-	if ![info exists solid_data($var_name)] {
-	    set solid_data($var_name) [lindex $vv_pair 1]
+	if ![info exists solid_data($index)] {
+	    set solid_data($index) [lindex $vv_pair 1]
 	}
     }
 }
