@@ -49,6 +49,8 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "./debug.h"
 
+NMG_EXTERN( struct vertexuse *nmg_find_vertex_in_lu, (CONST struct vertex *vp, CONST struct loopuse *lu ) );
+
 extern int nmg_class_nothing_broken;
 
 /* XXX These should go the way of the dodo bird. */
