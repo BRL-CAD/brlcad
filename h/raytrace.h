@@ -1074,6 +1074,7 @@ struct application  {
 	fastf_t		a_rbeam;	/* initial beam radius (mm) */
 	fastf_t		a_diverge;	/* slope of beam divergance/mm */
 	int		a_return;	/* Return of a_hit()/a_miss() */
+	int		a_no_booleans;	/* 1= partitions==segs, no booleans */
 	/* THE FOLLOWING ELEMENTS ARE MAINLINE & APPLICATION SPECIFIC. */
 	/* THEY ARE NEVER EXAMINED BY THE LIBRARY. */
 	int		a_user;		/* application-specific value */
