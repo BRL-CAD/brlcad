@@ -53,4 +53,22 @@ struct tri_specific  {
 	struct tri_specific *tri_forw;	/* Next facet */
 };
 
+typedef struct tri_specific tri_specific_double;
+
+/*
+ *	A more memory conservative version
+ */
+struct tri_float_specific  {
+	float	tri_A[3];			/* triangle vertex (A) */
+	float	tri_BA[3];			/* B - A (second point) */
+	float	tri_CA[3];			/* C - A (third point) */
+	float	tri_wn[3];			/* facet normal (non-unit) */
+	float	tri_N[3];			/* unit normal vector */
+	float *tri_normals;		/* unit vertex normals A, B, C  (this is malloced storage) */
+	int	tri_surfno;		/* solid specific surface number */
+	struct tri_float_specific *tri_forw;	/* Next facet */
+};
+
+typedef struct tri_float_specific tri_specific_float;
+
 #endif /* PLANE_H */
