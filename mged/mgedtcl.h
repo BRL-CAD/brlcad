@@ -7,6 +7,9 @@ extern Tcl_Interp *interp;
 extern Tcl_CmdProc cmd_oed,
                    cmd_pathlist;
 
+/* chgview.c */
+extern Tcl_CmdProc cmd_list;
+
 /* cmd.c */
 extern Tcl_CmdProc cmd_apropos,
                    cmd_echo,
