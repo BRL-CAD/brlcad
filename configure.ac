@@ -123,7 +123,8 @@ AC_ARG_ENABLE(only-benchmark,
 	fi]
 )
 AC_MSG_RESULT($only_benchmark)
-AM_CONDITIONAL(ONLY_BENCHMARK, ! test "$only_benchmark" = "xno")
+
+AM_CONDITIONAL(ONLY_BENCHMARK, [! test "x$only_benchmark" = "xno"])
 
 # only build librtserver
 AC_MSG_CHECKING(whether to only build librtserver)
@@ -140,7 +141,7 @@ AC_ARG_ENABLE(only-rts,
 	fi]
 )
 AC_MSG_RESULT($only_rts)
-AM_CONDITIONAL(ONLY_RTS, ! test "$only_rts" = "xno")
+AM_CONDITIONAL(ONLY_RTS, [! test "x$only_rts" = "xno"])
 if ! test "x$warn_only_both" = "xno" ; then
 	AC_MSG_NOTICE([>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>])
 	AC_MSG_WARN(Requesting BOTH benchmark and librtserver "only"?)
@@ -321,7 +322,7 @@ dnl -compatibility_version 20 -current_version 20.1
 		;;
 esac
 TCL_LIBRARY="$prefix/tcl${TCLVER}"
-if test "$FRAMEWORK_BUILD" = "1" ; then
+if test "x$FRAMEWORK_BUILD" = "x1" ; then
 	dnl this may be wrong
     TCL_BUILD_CFLAGS="-DTCL_PACKAGE_PATH=\\\"$libdir/Resources/Scripts\\\" -DTCL_LIBRARY=\\\"$TCL_LIBRARY\\\""
 else
@@ -586,7 +587,7 @@ if ! test "x$only_rts" = "xno" ; then
 		AC_MSG_ERROR([*** Cannot locate jni.h for building librtserver ***])
 	fi
 fi
-AM_CONDITIONAL(JAVA, ! test "x$with_java" = "xno")
+AM_CONDITIONAL(JAVA, [! test "x$with_java" = "xno"])
 
 
 dnl ***************************
