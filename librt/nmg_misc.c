@@ -2148,10 +2148,6 @@ int	after;
 #endif
 }
 
-/* XXX This should be made a global constant */
-/* XXX move to raytrace.h and ??? */
-CONST struct nmg_visit_handlers  nmg_visit_handlers_null;
-
 /*
  *			N M G _ U N B R E A K _ R E G I O N _ E D G E S
  *

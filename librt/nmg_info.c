@@ -33,7 +33,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "nmg.h"
 #include "raytrace.h"
 
-static CONST struct nmg_visit_handlers	nmg_visit_handlers_null;
+CONST struct nmg_visit_handlers	nmg_visit_handlers_null;
 
 /************************************************************************
  *									*
