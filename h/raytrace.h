@@ -517,9 +517,16 @@ struct soltab {
 #define ID_SUBMODEL	28	/* Instanced submodel */
 #define	ID_CLINE	29	/* FASTGEN4 CLINE solid */
 #define	ID_BOT		30	/* Bag o' triangles */
-#define ID_COMBINATION	31	/* Combination Record (non-geometric) */
+#define	ID_MAX_SOLID	30	/* Maximum defined ID_xxx for solids */
 
-#define ID_MAXIMUM	31	/* Maximum defined ID_xxx value */
+/*
+ *	Non-geometric objects
+ */
+#define ID_COMBINATION	31	/* Combination Record */
+#define ID_BINEXPM	32	/* Experimental binary */
+#define ID_BINUNIF	33	/* Uniform-array binary */
+#define ID_BINMIME	34	/* MIME-typed binary */
+#define ID_MAXIMUM	35	/* Maximum defined ID_xxx value */
 
 /*
  *			M A T E R _ I N F O
@@ -834,6 +841,35 @@ struct rt_comb_internal  {
 #define RT_CK_COMB(_p)			RT_CHECK_COMB(_p)
 #define RT_CHECK_COMB_TCL(_interp,_p)	BU_CKMAG_TCL(interp,_p,RT_COMB_MAGIC, "rt_comb_internal" )
 #define RT_CK_COMB_TCL(_interp,_p)	RT_CHECK_COMB_TCL(_interp,_p)
+
+/*
+ *			R T _ B I N U N I F _ I N T E R N A L
+ *
+ *  In-memory format for database uniform-array binary object.
+ *  Perhaps move to h/wdb.h or h/rtgeom.h?
+ */
+struct rt_binunif_internal {
+	long		magic;
+	char		type;
+	long		count;
+	union		{
+			    float		*flt;
+			    double		*dbl;
+			    char		*int8;
+			    short		*int16;
+			    int			*int32;
+			    long		*int64;
+			    unsigned char	*uint8;
+			    unsigned short	*uint16;
+			    unsigned int	*uint32;
+			    unsigned long	*uint64;
+	}		u;
+};
+#define RT_BINUNIF_INTERNAL_MAGIC	0x42696e55	/* "BinU" */
+#define RT_CHECK_BINUNIF(_p)		BU_CKMAG( _p , RT_BINUNIF_INTERNAL_MAGIC , "rt_binunif_internal" )
+#define RT_CK_BINUNIF(_p)		RT_CHECK_BINUNIF(_p)
+#define RT_CHECK_BINUNIF_TCL(_interp,_p)	BU_CKMAG_TCL(interp,_p,RT_BINUNIF_MAGIC, "rt_binunif_internal" )
+#define RT_CK_BINUNIF_TCL(_interp,_p)	RT_CHECK_BINUNIF_TCL(_interp,_p)
 
 /*
  *			D B _ T R E E _ S T A T E
@@ -1517,8 +1553,8 @@ struct rt_i {
 	int		rti_ncut_by_type[CUT_MAXIMUM+1];	/* number of cuts by type */
 	int		rti_cut_totobj;	/* # objs in all bins, total */
 	int		rti_cut_maxdepth;/* max depth of cut tree */
-	struct soltab	**rti_sol_by_type[ID_MAXIMUM+1];
-	int		rti_nsol_by_type[ID_MAXIMUM+1];
+	struct soltab	**rti_sol_by_type[ID_MAX_SOLID+1];
+	int		rti_nsol_by_type[ID_MAX_SOLID+1];
 	int		rti_maxsol_by_type;
 	int		rti_air_discards;/* # of air regions discarded */
 	struct bu_hist rti_hist_cellsize; /* occupancy of cut cells */
@@ -3875,6 +3911,35 @@ BU_EXTERN(void			nmg_visit,
 				(CONST long			*magicp,
 				CONST struct nmg_visit_handlers	*htab,
 				genptr_t			*state));
+
+/* db5_types.c */
+BU_EXTERN(int			db5_type_tag_from_major,
+				(char				**tag,
+				CONST unsigned char		major));
+
+BU_EXTERN(int			db5_type_descrip_from_major,
+				(char				**descrip,
+				CONST unsigned char		major));
+
+BU_EXTERN(int			db5_type_tag_from_codes,
+				(char				**tag,
+				CONST unsigned char		major,
+				CONST unsigned char		minor));
+
+BU_EXTERN(int			db5_type_descrip_from_codes,
+				(char				**descrip,
+				CONST unsigned char		major,
+				CONST unsigned char		minor));
+
+BU_EXTERN(int			db5_type_codes_from_tag,
+				(unsigned char			*major,
+				unsigned char			*minor,
+				CONST char			*tag));
+
+BU_EXTERN(int			db5_type_codes_from_descrip,
+				(unsigned char			*major,
+				unsigned char			*minor,
+				CONST char			*descrip));
 
 #endif
 
