@@ -35,13 +35,8 @@
 #define XLIB_ILLEGAL_ACCESS	/* necessary on facist SGI 5.0.1 */
 
 #include <X11/extensions/XInput.h>
-#ifdef USE_MESA_GL
-#include <MESA_GL/glx.h>
-#include <MESA_GL/gl.h>
-#else
 #include <GL/glx.h>
 #include <GL/gl.h>
-#endif
 
 #include <stdio.h>
 #ifdef USE_STRING_H
@@ -258,7 +253,7 @@ char *argv[];
     (void)ogl_close(dmp);
     return DM_NULL;
   }
-#if !defined(linux )
+#ifndef USE_MESA_GL
   {
     int return_val;
 

@@ -17,6 +17,19 @@ char *name;
   int return_val;
   int val = 0;
 
+#ifdef USE_MESA_GL
+
+#ifdef DM_OGL
+  if(!strcmp(name, "ogl"))
+     return 1;
+#endif
+#ifdef DM_X
+  if(!strcmp(name, "X"))
+     return 1;
+#endif
+
+#else /* Here we assume the X server supports OpenGL */
+
   if((dpy = XOpenDisplay(dpy_string)) == NULL){
     bu_log("dm_validXType: failed to open display - %s\n", dpy_string);
     return val;
@@ -25,7 +38,7 @@ char *name;
 #ifdef DM_OGL
   if(!strcmp(name, "ogl") &&
      XQueryExtension(dpy, "GLX", &return_val, &return_val, &return_val))
-      val = 1;
+     val = 1;
   else
 #endif  
 #ifdef DM_X
@@ -34,6 +47,8 @@ char *name;
 #endif
 
   XCloseDisplay(dpy);
+
+#endif
 
   return val;
 }
@@ -45,6 +60,17 @@ char *dpy_string;
   Display *dpy;
   int return_val;
   char *name = (char *)NULL;
+
+#ifdef USE_MESA_GL
+
+#ifdef DM_OGL
+  return "ogl";
+#endif
+#ifdef DM_X
+  return "X";
+#endif
+
+#else /* Here we assume the X server supports OpenGL */
 
   if((dpy = XOpenDisplay(dpy_string)) == NULL){
     bu_log("dm_bestXType: failed to open display - %s\n", dpy_string);
@@ -61,6 +87,8 @@ char *dpy_string;
 #endif
 
   XCloseDisplay(dpy);
+
+#endif
 
   return name;
 }
