@@ -173,6 +173,7 @@ struct dm {
   int dm_light;			/* !0 means lighting on */
   int dm_zbuffer;		/* !0 means zbuffer on */
   int dm_zclip;			/* !0 means zclipping */
+  int dm_depthcue;		/* !0 means depthcueing on (not used, only here for X dm to reference) */
   Tcl_Interp *dm_interp;	/* Tcl interpreter */
 };
 

@@ -60,6 +60,7 @@ struct bu_structparse X_vparse[] = {
   {"%d",  1, "useBound",	 DM_O(dm_boundFlag),	dirty_hook},
   {"%d",  1, "zclip",		 DM_O(dm_zclip),	zclip_hook},
   {"%d",  1, "debug",		 DM_O(dm_debugLevel),	BU_STRUCTPARSE_FUNC_NULL},
+  {"%d",  1, "depthcue",         DM_O(dm_depthcue),	BU_STRUCTPARSE_FUNC_NULL},
   {"",	  0, (char *)0,		 0,			BU_STRUCTPARSE_FUNC_NULL}
 };
 
