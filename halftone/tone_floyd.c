@@ -2,9 +2,11 @@
 static char rcsid[] = "$Header$";
 #endif
 #include <stdio.h>
+#include "rndnum.h"
 extern int Debug;
 extern int Levels;
 extern int width;
+extern int RandomFlag;
 
 /*	tone_floyd	floyd-steinberg dispersed error method.
  *
@@ -17,13 +19,16 @@ extern int width;
  *	New	New row flag.
  *
  * Exit:
- *	returns	0 or 1
+ *	returns	0 - Levels
  *
  * Uses:
- *	None.
+ *	Debug	- Current debug level
+ *	Levels	- Number of intensity levels.
+ *	width	- width of bw file.
+ *	RandomFlag - Should we toss random numbers?
  *
  * Calls:
- *	None.
+ *	Random()	Returns a random double between -0.5 and 0.5.
  *
  * Method:
  *	straight-forward.
@@ -32,6 +37,9 @@ extern int width;
  *	Christopher T. Johnson	- 90/03/21
  *
  * $Log$
+ * Revision 1.2  90/04/10  16:46:25  cjohnson
+ * Fix Intensity methods 
+ * 
  * Revision 1.1  90/04/10  05:23:24  cjohnson
  * Initial revision
  * 
@@ -45,6 +53,21 @@ int	New;
 	static int *thisline;
 	int diff,value;
 	int Dir = NX-X;
+	double w1,w3,w5,w7,val;
+
+	if (RandomFlag) {
+		val = Random(0)*1.0/16.0;
+		w1 = 1.0/16.0 + val;
+		w3 = 3.0/16.0 - val;
+		val = Random(0)*5.0/16.0;
+		w5 = 5.0/16.0 + val;
+		w7 = 7.0/16.0 - val;
+	} else {
+		w1 = 1.0/16.0;
+		w3 = 3.0/16.0;
+		w5 = 5.0/16.0;
+		w7 = 7.0/16.0;
+	}
 
 	if (!error) {
 		register int i;
@@ -66,21 +89,14 @@ int	New;
 	thisline[X] = 0;
 	value = (Pix*Levels + 127) / 255;
 	diff =  Pix - (value * 255 /Levels);
-/*	if (Pix > 127) {
-		value=Levels;
-		diff = Pix - 255;
-	} else {
-		value = 0;
-		diff = Pix;
-	}
-*/
+
 	if (X+Dir < width && X+Dir >= 0) {
-		thisline[X+Dir] += diff*7/16;
-		error[X+Dir] += diff/16;
+		thisline[X+Dir] += diff*w7;
+		error[X+Dir] += diff*w1;
 	}
-	error[X] += diff*5/16;
+	error[X] += diff*w5;
 	if (X-Dir < width && X-Dir >= 0) {
-		error[X-Dir] += diff*3/16;
+		error[X-Dir] += diff*w3;
 	}
 	return(value);
 }

@@ -2,8 +2,10 @@
 static char rcsid[] = "$Header$";
 #endif
 #include <stdio.h>
+#include "rndnum.h"
 extern int Debug;
 extern int Levels;
+extern int RandomFlag;
 
 static unsigned char	ordered[6][6] = {
 	{5,4,3,14,15,16},
@@ -24,13 +26,15 @@ static unsigned char	ordered[6][6] = {
  *	New	New row flag.
  *
  * Exit:
- *	returns	0 or 1
+ *	returns	0-Levels
  *
  * Uses:
- *	None.
+ *	Debug	- Global Debug value
+ *	Levels	- Number of Intensity Levels
+ *	RandomFlag - Show we toss random numbers?
  *
  * Calls:
- *	None.
+ *	Random(0) - To get a random number.
  *
  * Method:
  *	straight-forward.
@@ -39,6 +43,9 @@ static unsigned char	ordered[6][6] = {
  *	Christopher T. Johnson	- 90/03/21
  *
  * $Log$
+ * Revision 1.4  90/04/10  16:45:49  cjohnson
+ * Fix Intensity methods 
+ * 
  * Revision 1.3  90/04/10  03:31:25  cjohnson
  * Add intensity levels.
  * 
@@ -54,5 +61,9 @@ int	Pix;
 int	X, Y, NX, NY;
 int	New;
 {
-	return ((Pix*Levels + 14*ordered[( X + 3 ) % 6 ][ Y % 6])/255);
+	register int threshold = 14*ordered[( X + 3) % 6][ Y % 6];
+	if (RandomFlag) {
+		threshold += Random(0)*63;
+	}
+	return ((Pix*Levels + threshold)/255);
 }
