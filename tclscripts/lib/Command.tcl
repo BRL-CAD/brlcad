@@ -38,35 +38,20 @@ class Command {
     public variable edit_style emacs
     public variable prompt "> "
     public variable cmd_prefix ""
-    public variable selection_color #fefe8e
-    public variable prompt_color red1
-    public variable cmd_color black
-    public variable oldcmd_color red3
-    public variable result_color blue3
+#    public variable selection_color #fefe8e
+#    public variable prompt_color red1
+#    public variable cmd_color black
+#    public variable oldcmd_color red3
+#    public variable result_color blue3
 
-    constructor {args} {
-	eval itk_initialize $args
-	doBindings
+    constructor {args} {}
+    destructor {}
 
-	# create command history object
-	set hist [string map {:: "" . _} $this]
-	set hist [ch_open [subst $hist]_hist]
-
-	# initialize text widget
-	print_prompt
-	$itk_component(text) insert insert " "
-	beginning_of_line
-
-	$itk_component(text) tag configure sel -background $selection_color
-	$itk_component(text) tag configure prompt -foreground $prompt_color
-	$itk_component(text) tag configure oldcmd -foreground $oldcmd_color
-	$itk_component(text) tag configure result -foreground $result_color
-    }
-
-    destructor {
-	# destroy command history object
-	rename $hist ""
-    }
+    itk_option define -selection_color selection_color TextColor #fefe8e
+    itk_option define -prompt_color prompt_color TextColor red1
+    itk_option define -cmd_color cmd_color TextColor black
+    itk_option define -oldcmd_color oldcmd_color TextColor red3
+    itk_option define -result_color result_color TextColor blue3
 
     private method invoke {}
     private method first_char_in_line {}
@@ -136,23 +121,49 @@ configbody Command::edit_style {
 }
 
 configbody Command::selection_color {
-	$itk_component(text) tag configure sel -foreground $selection_color
+	$itk_component(text) tag configure sel -foreground $itk_option(-selection_color)
 }
 
 configbody Command::prompt_color {
-	$itk_component(text) tag configure prompt -foreground $prompt_color
+	$itk_component(text) tag configure prompt -foreground $itk_option(-prompt_color)
 }
 
 configbody Command::cmd_color {
-	$itk_component(text) tag configure cmd -foreground $cmd_color
+	$itk_component(text) tag configure cmd -foreground $itk_option(-cmd_color)
 }
 
 configbody Command::oldcmd_color {
-	$itk_component(text) tag configure oldcmd -foreground $oldcmd_color
+	$itk_component(text) tag configure oldcmd -foreground $itk_option(-oldcmd_color)
 }
 
 configbody Command::result_color {
-	$itk_component(text) tag configure result -foreground $result_color
+	$itk_component(text) tag configure result -foreground $itk_option(-result_color)
+}
+
+body Command::constructor {args} {
+	doBindings
+
+	# create command history object
+	set hist [string map {:: "" . _} $this]
+	set hist [ch_open [subst $hist]_hist]
+
+	# initialize text widget
+	print_prompt
+	$itk_component(text) insert insert " "
+	beginning_of_line
+
+	eval itk_initialize $args
+
+	$itk_component(text) tag configure sel -background $itk_option(-selection_color)
+	$itk_component(text) tag configure prompt -foreground $itk_option(-prompt_color)
+	$itk_component(text) tag configure cmd -foreground $itk_option(-cmd_color)
+	$itk_component(text) tag configure oldcmd -foreground $itk_option(-oldcmd_color)
+	$itk_component(text) tag configure result -foreground $itk_option(-result_color)
+}
+
+body Command::destructor {} {
+    # destroy command history object
+    rename $hist ""
 }
 
 body Command::invoke {} {
