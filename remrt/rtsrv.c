@@ -154,7 +154,6 @@ int argc;
 char **argv;
 {
 	register int	n;
-	FILE		*fp;
 
 	if( argc < 2 )  {
 		fprintf(stderr, srv_usage);

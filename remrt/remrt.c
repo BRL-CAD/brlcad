@@ -859,7 +859,7 @@ drop_server(sp, why)
 register struct servers	*sp;
 char	*why;
 {
-	register struct list	*lhp, *lp;
+	register struct list	*lp;
 	register struct pkg_conn *pc;
 	register struct frame	*fr;
 	int fd;
