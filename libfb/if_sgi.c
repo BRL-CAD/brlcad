@@ -1232,12 +1232,16 @@ register ColorMap	*cmp;
 			CMG(ifp)[i] = i;
 			CMB(ifp)[i] = i;
 		}
+		if( SGI(ifp)->si_cmap_flag ) {
+			SGI(ifp)->si_cmap_flag = FALSE;
+			sgi_repaint( ifp );
+		}
 		SGI(ifp)->si_cmap_flag = FALSE;
 		return(0);
 	}
 	
 	for(i = 0; i < 256; i++)  {
-		CMR(ifp)[i] = cmp -> cm_red[i]>>8;
+		CMR(ifp)[i] = cmp-> cm_red[i]>>8;
 		CMG(ifp)[i] = cmp-> cm_green[i]>>8; 
 		CMB(ifp)[i] = cmp-> cm_blue[i]>>8;
 
