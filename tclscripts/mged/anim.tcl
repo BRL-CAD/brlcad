@@ -1676,40 +1676,55 @@ proc sketch_popup_text_load { w } {
 
 proc sketch_popup_text_time { w } {
 	set entries [list \
-		{"Start Speed:" auto} \
-		{"End Speed:" auto} \
+		{"Start Speed:" "100%"} \
+		{"End Speed:" "100%"} \
+		{"Path Columns:" "1,2,3"} \
 		]
 	set buttons [list \
 		[list  "OK" "sketch_text_time $w \
-		    \[._sketch_input.f0.e get\] \[._sketch_input.f1.e get\]"] \
+		    \[._sketch_input.f0.e get\] \[._sketch_input.f1.e get\] \
+			\[._sketch_input.f2.e get\]"] \
 		{"Cancel" "destroy ._sketch_input"} \
 		]
 	sketch_popup_input "Estimate Time" $entries $buttons
 }
 
-proc sketch_text_time {w v0 v1} {
+proc sketch_text_time {w v0 v1 cols } {
 	global mged_sketch_temp1 mged_sketch_temp2 mged_sketch_anim_dir
 
 	#global mged_sketch_text_lmode
 
-	if { ($v0 == "auto") || ($v0 == "") } {
+	if { ($v0 == "100%") || ($v0 == "") } {
 		set arg0 ""
 	} else {
-		set arg0 "-s $v0"
+		set temp [split $v0 %]
+		if { [llength $temp] > 1 } {
+			set arg0 "-i [expr [lindex $temp 0]/100.0]"
+		} else {
+			set arg0 "-s $v0"
+		}
 	}
-	if { ($v1 == "auto") || ($v1 == "") } {
+	if { ($v1 == "100%") || ($v1 == "") } {
 		set arg1 ""
 	} else {
-		set arg1 "-e $v1"
+		set temp [split $v1 %]
+		if { [llength $temp] > 1 } {
+			set arg1 "-f [expr [lindex $temp 0]/100.0]"
+		} else {
+			set arg1 "-e $v1"
+		}
+	}
+	if { $cols == "" } {
+		set $cols "1,2,3"
 	}
 	#count number of lines, doesn't matter if a couple extra
 	scan [$w index end] %d maxlen
 	set arg2 "-m $maxlen"
-	#until new command is installed
 	set cmd "| ${mged_sketch_anim_dir}anim_time $arg0 $arg1 $arg2 > $mged_sketch_temp1"
 	#puts $cmd
 	set f1 [open $cmd w] 
-	sketch_text_to_fd $w $f1 "0,1,2,3"
+	set mycols "0,$cols"
+	sketch_text_to_fd $w $f1 $mycols
 	close $f1
 	#set temp $mged_sketch_text_lmode
 	#set mged_sketch_text_lmode left
@@ -1949,11 +1964,16 @@ proc sketch_popup_text_interp {w wbar}	{
 	catch { destroy ._sketch_col }
 	toplevel ._sketch_col
 	wm title ._sketch_col "Column Interpolator"
+	frame ._sketch_col.fz
+	label ._sketch_col.fz.l0 -text "0:" -width 10
+	label ._sketch_col.fz.l1 -text "time" -width 20
+	pack ._sketch_col.fz -side top
+	pack ._sketch_col.fz.l0 ._sketch_col.fz.l1 -side left
 	frame ._sketch_col.fa
 	frame ._sketch_col.fb
 	frame ._sketch_col.fc
 	frame ._sketch_col.fd
-	menubutton ._sketch_col.mb0 -text "Choose Interpolator" \
+	menubutton ._sketch_col.mb0 -text "Choose Command" \
 		-menu ._sketch_col.mb0.m0
 	menu ._sketch_col.mb0.m0
 	pack ._sketch_col.mb0 ._sketch_col.fa -side bottom -fill x -expand yes
@@ -3271,6 +3291,7 @@ proc sketch_read_from_fd { fd } {
 
 #read current curve into end of table editor
 proc sketch_text_echoc { w } {
+	if { ! [vdraw o] } { return }
 	set length [vdraw r l]
 	upvar #0 "mged_sketch_time_[vdraw r n]" tlist
 	if { ![info exists tlist] } { return } 
