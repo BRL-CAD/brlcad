@@ -18,6 +18,8 @@
  *  Replace this header.
  */
 
+#include "conf.h"
+
 #include "machine.h"
 #include "fb.h"
 #include "externs.h"
