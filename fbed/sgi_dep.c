@@ -15,7 +15,7 @@ static
 char sccsTag[] = "@(#) sgi_dep.c 2.3, modified 1/5/87 at 16:57:35, archive /vld/moss/src/fbed/s.sgi_dep.c";
 #endif
 
-#ifdef sgi
+#if defined(sgi) || defined(__sgi)
 #include <stdio.h>
 #include <device.h>
 #include "fb.h"
