@@ -1088,7 +1088,6 @@ genptr_t	client_data;
 	struct directory	*dp;
 	struct rt_db_internal	intern;
 	union tree		*curtree = TREE_NULL;
-	int			i;
 
 	RT_CK_DBTS(tsp);
 	RT_CHECK_DBI( tsp->ts_dbip );
@@ -1142,7 +1141,6 @@ genptr_t	client_data;
 
 		if( is_region > 0 )  {
 			struct combined_tree_state	*ctsp;
-			const char *value;
 
 			/* get attribute/value structure */
 			bu_avs_merge( &nts.ts_attrs, &intern.idb_avs );
