@@ -32,12 +32,12 @@ libtk@TK_VERSION@_la_LIBADD = \
 	generic/libtkgeneric.la \
 	unix/libtkunix.la
 
-bin_PROGRAMS = wish wish.static
+bin_PROGRAMS = wish #wish.static
 
 wish_SOURCES = unix/tkAppInit.c
 wish_LDADD = $(lib_LTLIBRARIES) @TCL@
+AM_CFLAGS = @X_CFLAGS@
 
-wish_static_SOURCES = unix/tkAppInit.c
-wish_static_LDADD = $(top_builddir)/src/other/libtcl/.libs/libtcl8.4.a $(top_builddir)/src/other/libtk/.libs/libtk8.4.a @DL@ @X_LIBS@ @LIBM@
+#wish_static_SOURCES = unix/tkAppInit.c
+#wish_static_LDADD = $(lib_LTLIBRARIES) $(top_builddir)/src/other/libtcl/.libs/libtcl8.4.a $(top_builddir)/src/other/libtk/.libs/libtk8.4.a @DL@ @X_LIBS@ @LIBM@
 
-wish_CFLAGS = @X_CFLAGS@
