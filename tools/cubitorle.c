@@ -163,7 +163,7 @@ rle_pixel **rows;
 	/* bit set, run data */
 	rundata = fgetc(infile);
 	runlength = fgetc(infile);
-	for (i=(*xpos); i < runlength+(*xpos); i++)
+	for (i=(*xpos); i < (int)runlength+(*xpos); i++)
 	    rows[chan][i] = rundata;
 	*xpos += (int) runlength;
     }

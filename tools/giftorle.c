@@ -131,7 +131,7 @@ char	*filename;
     Screen.Width           = LM_to_uint(buf[0],buf[1]);
     Screen.Height          = LM_to_uint(buf[2],buf[3]);
     Screen.BitPixel        = 2<<(buf[4]&0x07);
-    Screen.ColorResolution = (((buf[4]&0x70)>>3)+1);
+    Screen.ColorResolution = (((unsigned)(buf[4]&0x70)>>3)+1);
     Screen.Background      = buf[5];
     if ((buf[4]&0x80)==0x80) {
 	if (ReadColorMap(fd,Screen.BitPixel,Screen.ColorMap))
