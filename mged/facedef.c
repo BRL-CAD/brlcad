@@ -387,37 +387,3 @@ char	*argv[];
 		pt[i] = atof(argv[i]) * local2base;
 	plane[3] = VDOT(&plane[0], pt);
 }
-
-/*
- *			R T _ A R B _ C A L C _ P O I N T S
- *
- * Takes the planes[] array and intersects the planes to find the vertices
- * of a GENARB8.  The vertices are stored into arb->pt[].
- * This is an analog of rt_arb_calc_planes().
- */
-int
-rt_arb_calc_points( arb, cgtype, planes, tol )
-struct rt_arb_internal	*arb;
-int		cgtype;
-plane_t		planes[6];
-struct rt_tol	*tol;
-{
-	int	i;
-	point_t	pt[8];
-
-	RT_ARB_CK_MAGIC(arb);
-
-	/* find new points for entire solid */
-	for(i=0; i<8; i++){
-		if( rt_arb_3face_intersect( pt[i], planes, cgtype, i*3 ) < 0 )  {
-			rt_log("rt_arb_calc_points: Intersection of planes fails %d\n", i);
-			return -1;			/* FAIL */
-		}
-	}
-
-	/* Move new points to arb */
-	for( i=0; i<8; i++ )  {
-		VMOVE( arb->pt[i], pt[i] );
-	}
-	return 0;					/* success */
-}
