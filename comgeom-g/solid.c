@@ -493,7 +493,7 @@ getsolid()
 		int			numpts;		/* points per wire */
 		int			num;
 		int			i;
-		double			rad;
+		double			dia;
 		double			*pts;		/* 3 entries per pt */
 		struct	wdb_pipeseg	*ps;
 		struct	wdb_pipeseg	head;		/* all ow a whole struct for head */
@@ -511,7 +511,7 @@ getsolid()
 		if( getsoldata( pts, num, sol_work ) < 0 )  {
 			return(-1);
 		}
-		rad = pts[num-1];
+		dia = pts[num-1] * 2.0;	/* radius X 2.0 == diameter */
 
 		/* allocate nodes on a list and store all information in
 		 * the appropriate location.
@@ -526,7 +526,7 @@ getsolid()
 			 }
 			VMOVE( ps->ps_start, &pts[i*3]);	/* 3 pts at a time */
 			ps->ps_id = 0;				/* solid */
-			ps->ps_od = rad;
+			ps->ps_od = dia;
 			ps->ps_type = WDB_PIPESEG_TYPE_LINEAR;
 			RT_LIST_INSERT( &head.l, &ps->l );
 		}
@@ -540,7 +540,7 @@ getsolid()
 		VMOVE( ps->ps_start, &pts[3 * (numpts-1)] );
 		ps->ps_type = WDB_PIPESEG_TYPE_END;
 		ps->ps_id = 0;
-		ps->ps_od = rad;
+		ps->ps_od = dia;
 		RT_LIST_INSERT( &head.l, &ps->l );
 		
 		if( mk_pipe( outfp, name, &head ) < 0 )
