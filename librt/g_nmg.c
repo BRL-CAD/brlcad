@@ -1464,7 +1464,6 @@ register mat_t		mat;
 	struct nmg_struct_counts	cntbuf;
 	struct rt_external		count_ext;
 	int				kind_counts[NMG_N_KINDS];
-	genptr_t			disk_arrays[NMG_N_KINDS];
 	char				*cp;
 	long				**real_ptrs;
 	long				**ptrs;
@@ -1510,30 +1509,25 @@ register mat_t		mat;
 		sizeof(struct nmg_exp_counts), "ecnt[]" );
 	real_ptrs = (long **)rt_calloc( maxindex+3,
 		sizeof(long *), "ptrs[]" );
-	/* So that indexing [-1] gives an appropriately bogus pointer */
+	/* So that indexing [-1] gives an appropriately bogus magic # */
 	ptrs = real_ptrs+1;
 	ptrs[-1] = &bad_magic;		/* [-1] gives bad magic */
 	ptrs[0] = (long *)0;		/* [0] gives NULL */
 	ptrs[maxindex] = &bad_magic;	/* [maxindex] gives bad magic */
 
-	/* Mark off each kind of structure, and how many of them */
+	/*
+	 *  Allocate storage for all the in-memory NMG structures,
+	 *  using the GET_xxx() macros, so that m->maxindex, etc,
+	 *  is all appropriately handled.
+	 */
 	subscript = 1;
-	cp = (char *)(rp+1);	/* start at first granule in */
 	for( kind = 0; kind < NMG_N_KINDS; kind++ )  {
 #if DEBUG
-rt_log("%d  %s\n",
-	kind_counts[kind], rt_nmg_kind_names[kind] );
+rt_log("%d  %s\n", kind_counts[kind], rt_nmg_kind_names[kind] );
 #endif
-		if( kind_counts[kind] <= 0 )  {
-			disk_arrays[kind] = GENPTR_NULL;
-			continue;
-		}
-		disk_arrays[kind] = (genptr_t)cp;
-		/* Mark off all the entries of this kind */
 		for( j = 0; j < kind_counts[kind]; j++ )  {
 			ecnt[subscript].kind = kind;
-			ecnt[subscript].per_struct_index = j+1;
-			ecnt[subscript].new_subscript = 0; /* unused on import */
+			ecnt[subscript].per_struct_index = 0; /* unused on import */
 			switch( kind )  {
 			case NMG_KIND_MODEL:
 				if( m )  rt_bomb("multiple models?");
@@ -1727,10 +1721,10 @@ rt_log("   disk_index=%d, kind=%s, ptr=x%x, final_index=%d\n",
 subscript, rt_nmg_kind_names[kind],
 ptrs[subscript], rt_nmg_index_of_struct(ptrs[subscript]) );
 #endif
+			/* new_subscript unused on import except for printf()s */
 			ecnt[subscript].new_subscript = rt_nmg_index_of_struct(ptrs[subscript]);
 			subscript++;
 		}
-		cp += kind_counts[kind] * rt_disk_sizes[kind];
 	}
 
 	/* Import each structure, in turn */
