@@ -1923,6 +1923,7 @@ AC_CONFIG_FILES([
 	doc/html/manuals/shaders/Makefile
 	doc/legal/Makefile
 	include/Makefile
+	m4/Makefile
 	misc/Makefile
 	misc/macosx/Makefile
 	misc/macosx/Resources/Makefile
