@@ -206,7 +206,7 @@ yyinit()
 /* GNU lex (flex) does not define yylineno... other lexers that do the same will need
  * to be added.
  * May need to a do a check for if __bsdi__ is defined */
-#if (defined(YY_FLEX_MAJOR_VERSION) && !defined(YY_FLEX_LEX_COMPAT)
+#if defined(YY_FLEX_MAJOR_VERSION) && !defined(YY_FLEX_LEX_COMPAT)
 int yylineno=1;
 #else
 extern int yylineno;
