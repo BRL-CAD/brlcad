@@ -205,6 +205,7 @@ struct hit {
 	vect_t		hit_vpriv;	/* PRIVATE vector for xxx_*() */
 	genptr_t	hit_private;	/* PRIVATE handle for xxx_shot() */
 	int		hit_surfno;	/* solid-specific surface indicator */
+	struct xray	*hit_rayp;	/* pointer to defining ray */
 };
 #define HIT_NULL	((struct hit *)0)
 
@@ -219,10 +220,10 @@ struct hit {
 	register int _id = (_stp)->st_id; \
 	RT_CHECK_SOLTAB(_stp); \
 	if( _id <= 0 || _id > ID_MAXIMUM ) { \
-		bu_log("stp=x%x, id=%d. hitp=x%x, rayp=x%x\n", _stp, _id, _hitp, _rayp); \
+		bu_log("stp=x%x, id=%d. hitp=x%x, rayp=x%x\n", _stp, _id, _hitp, (_hitp)->hit_rayp); \
 		rt_bomb("RT_HIT_NORM:  bad st_id");\
 	} \
-	rt_functab[_id].ft_norm(_hitp, _stp, _rayp); }
+	rt_functab[_id].ft_norm(_hitp, _stp, (_hitp)->hit_rayp); }
 
 /*
  *  New macro:  Leave _hitp undisturbed, return post-boolean normal into
@@ -230,7 +231,7 @@ struct hit {
  */
 #define RT_HIT_NORMAL( _normal, _hitp, _stp, _rayp, _flipflag )  { \
 	RT_CHECK_SOLTAB(_stp); \
-	rt_functab[(_stp)->st_id].ft_norm(_hitp, _stp, _rayp); \
+	rt_functab[(_stp)->st_id].ft_norm(_hitp, _stp, (_hitp)->hit_rayp); \
 	if( _flipflag )  { \
 		VREVERSE( _normal, (_hitp)->hit_normal ); \
 	} else { \
