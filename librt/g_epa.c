@@ -887,6 +887,34 @@ struct rt_tol		*tol;
 #define ELLOUT(n)	ov+(n-1)*3
 
 void
+ell_norms( ov, A, B, h_vec, t, sides )
+register fastf_t	*ov;
+fastf_t			*A, *B, *h_vec, t;
+int			sides;
+{
+	fastf_t	a, ang, b, theta, x, y, sqrt_1mt;
+	int	n;
+	vect_t partial_t, partial_ang;
+
+	sqrt_1mt = sqrt( 1.0 - t );
+	if( sqrt_1mt < SMALL_FASTF )
+		rt_bomb( "rt_epa_tess: ell_norms: sqrt( 1.0 -t ) is zero\n" );
+	theta = 2 * rt_pi / sides;
+	ang = 0.;
+
+	for (n = 1; n <= sides; n++, ang += theta) {
+		x = cos( ang );
+		y = sin( ang );
+		VJOIN2( partial_t, h_vec, -x/(2.0*sqrt_1mt), A, -y/(2.0*sqrt_1mt), B );
+		VBLEND2( partial_ang, x*sqrt_1mt, B, -y*sqrt_1mt, A );
+		VCROSS( ELLOUT(n), partial_t, partial_ang );
+		VUNITIZE( ELLOUT(n) );
+	}
+	VMOVE(ELLOUT(n), ELLOUT(1));
+}
+
+
+void
 rt_ell( ov, V, A, B, sides )
 register fastf_t	*ov;
 register fastf_t	*V;
@@ -969,8 +997,9 @@ CONST struct rt_tess_tol *ttol;
 struct rt_tol		*tol;
 {
 	fastf_t		dtol, f, mag_a, mag_h, ntol, r1, r2;
-	fastf_t		**ellipses, theta_new, theta_prev;
+	fastf_t		**ellipses, **normals, theta_new, theta_prev;
 	int		*pts_dbl, face, i, j, nseg, tmpseg;
+	int		*segs_per_ell;
 	int		jj, na, nb, nell, recalc_b;
 	LOCAL mat_t	R;
 	LOCAL mat_t	invR;
@@ -984,6 +1013,11 @@ struct rt_tol		*tol;
 	struct vertex	*vertp[3];
 	struct vertex	***vells = (struct vertex ***)NULL;
 	vect_t		A, Au, B, Bu, Hu, V;
+	vect_t		apex_norm,rev_norm;
+	vect_t		A_orig,B_orig;
+	struct vertex	*apex_v;
+	struct vertexuse *vu;
+	struct faceuse *fu;
 	
 	RT_CK_DB_INTERNAL(ip);
 	xip = (struct rt_epa_internal *)ip->idb_ptr;
@@ -1016,6 +1050,9 @@ struct rt_tol		*tol;
 	VUNITIZE( Hu );
 	VMOVE(    Au, xip->epa_Au );
 	VCROSS(   Bu, Au, Hu );
+
+	VSCALE( A_orig , Au , xip->epa_r1 );
+	VSCALE( B_orig , Bu , xip->epa_r2 );
 
 	/* Compute R and Rinv matrices */
 	mat_idn( R );
@@ -1134,7 +1171,14 @@ struct rt_tol		*tol;
 	ellipses = (fastf_t **)rt_malloc( nell * sizeof(fastf_t *), "fastf_t ell[]");
 	/* keep track of whether pts in each ellipse are doubled or not */
 	pts_dbl = (int *)rt_malloc( nell * sizeof(int), "dbl ints" );
-	
+	/* I don't understand this pts_dbl, so here is an array containing the length of
+	 * each ellipses array
+	 */
+	segs_per_ell = (int *)rt_calloc( nell , sizeof( int ) , "rt_epa_tess: segs_per_ell" );
+
+	/* and an array of normals */
+	normals = (fastf_t **)rt_malloc( nell * sizeof(fastf_t *), "fastf_t normals[]");
+
 	/* make ellipses at each z level */
 	i = 0;
 	nseg = 0;
@@ -1142,6 +1186,9 @@ struct rt_tol		*tol;
 	pos_a = pts_a->next;	/* skip over apex of epa */
 	pos_b = pts_b->next;
 	while (pos_a) {
+		fastf_t t;
+
+		t = (-pos_a->p[Z] / mag_h);
 		VSCALE( A, Au, pos_a->p[Y] );	/* semimajor axis */
 		VSCALE( B, Bu, pos_b->p[Y] );	/* semiminor axis */
 		VJOIN1( V, xip->epa_V, -pos_a->p[Z], Hu );
@@ -1165,7 +1212,14 @@ struct rt_tol		*tol;
 
 		ellipses[i] = (fastf_t *)rt_malloc(3*(nseg+1)*sizeof(fastf_t),
 			"pts ell");
+		segs_per_ell[i] = nseg;
+		normals[i] = (fastf_t *)rt_malloc(3*(nseg+1)*sizeof(fastf_t), "rt_epa_tess_ normals" );
 		rt_ell( ellipses[i], V, A, B, nseg, ntol, dtol );
+		ell_norms( normals[i], A_orig, B_orig, xip->epa_H, t, nseg );
+
+		i++;
+		pos_a = pos_a->next;
+		pos_b = pos_b->next;
 	}
 
 	/*
@@ -1299,6 +1353,7 @@ struct rt_tol		*tol;
 	/* associate geometry with topology */
 	NMG_CK_VERTEX(vertp[0]);
 	nmg_vertex_gv( vertp[0], (fastf_t *)V );
+	apex_v = vertp[0];
 	/* create rest of faces around apex */
 	for (i = 1; i < nseg; i++) {
 		vertp[2] = vertp[1];
@@ -1316,6 +1371,43 @@ struct rt_tol		*tol;
 	for (i=0 ; i < face ; i++) {
 		if( nmg_fu_planeeqn( outfaceuses[i], tol ) < 0 )
 			goto fail;
+	}
+
+	/* Associate vertexuse normals */
+	for( i=0 ; i<nell ; i++ )
+	{
+		for( j=0 ; j<segs_per_ell[i] ; j++ )
+		{
+			VREVERSE( rev_norm , &normals[i][j*3] );
+			for( RT_LIST_FOR( vu , vertexuse , &vells[i][j]->vu_hd ) )
+			{
+
+				fu = nmg_find_fu_of_vu( vu );
+				NMG_CK_FACEUSE( fu );
+
+				if( fu == outfaceuses[0] || fu->fumate_p == outfaceuses[0] )
+					continue;	/* don't assign normals to top faceuse (flat) */
+
+				if( fu->orientation == OT_SAME )
+					nmg_vertexuse_nv( vu , &normals[i][j*3] );
+				else if( fu->orientation == OT_OPPOSITE )
+					nmg_vertexuse_nv( vu , rev_norm );
+			}
+		}
+	}
+	/* and don't forget the apex */
+	VMOVE( apex_norm , xip->epa_H );
+	VUNITIZE( apex_norm );
+	VREVERSE( rev_norm , apex_norm );
+	for( RT_LIST_FOR( vu , vertexuse , &apex_v->vu_hd ) )
+	{
+		NMG_CK_VERTEXUSE( vu );
+		fu = nmg_find_fu_of_vu( vu );
+		NMG_CK_FACEUSE( fu );
+		if( fu->orientation == OT_SAME )
+			nmg_vertexuse_nv( vu , apex_norm );
+		else if( fu->orientation == OT_OPPOSITE )
+			nmg_vertexuse_nv( vu , rev_norm );
 	}
 
 	/* Glue the edges of different outward pointing face uses together */
