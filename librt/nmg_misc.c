@@ -903,7 +903,7 @@ struct edgeuse *eu;
 					p[0], p[1], p[2], q[0], q[1], q[2]);
 				nmg_pr_lu(eu->up.lu_p, (char *)NULL);
 				nmg_pr_lu(eu->eumate_p->up.lu_p, (char *)NULL);
-				rt_log("bad edgeuse mate\n");
+				rt_log("nmg_check_radial: bad edgeuse mate\n");
 				return(1);
 			}
 			eur = eur->eumate_p->radial_p;
@@ -926,7 +926,7 @@ struct edgeuse *eu;
 				rt_log("Radial loop:\n");
 				nmg_pr_fu(eur->up.lu_p->up.fu_p, 0);
 			}
-			rt_log("unclosed space\n");
+			rt_log("nmg_check_radial: unclosed space\n");
 			return(2);
 		}
 
