@@ -613,12 +613,12 @@ struct funtab *functions;
  *  Print a help message, two lines for each command.
  *  Or, help with the indicated commands.
  */
+void f_help2();
 static void
 f_help( argc, argv )
 int	argc;
 char	**argv;
 {
-	void f_help2();
 	f_help2(argc, argv, &funtab[0]);
 }
 
@@ -647,6 +647,7 @@ struct funtab *functions;
  *  Print a fast help message;  just tabulate the commands available.
  *  Or, help with the indicated commands.
  */
+void f_fhelp2();
 static void
 f_fhelp( argc, argv )
 int	argc;
