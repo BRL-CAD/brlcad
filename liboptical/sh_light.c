@@ -33,6 +33,9 @@ static char RCSsh_light[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "shadefuncs.h"
 #include "shadework.h"
+#if RT_MULTISPECTRAL
+# include "tabdata.h"
+#endif
 #include "../rt/mathtab.h"
 #include "../rt/rdebug.h"
 #include "../rt/light.h"
@@ -57,6 +60,10 @@ struct bu_structparse light_parse[] = {
 struct light_specific	LightHead;	/* Heads linked list of lights */
 
 extern double AmbientIntensity;
+
+#if RT_MULTISPECTRAL
+extern CONST struct rt_table	*spectrum;	/* from rttherm/viewtherm.c */
+#endif
 
 HIDDEN int	light_setup(), light_render();
 HIDDEN void	light_print();
@@ -125,7 +132,11 @@ char	*dp;
 		/* within beam area */
 		f = (f+0.5) * lp->lt_fraction;
 	}
+#if RT_MULTISPECTRAL
+	rt_tabdata_scale( swp->msw_color, lp->lt_spectrum, f );
+#else
 	VSCALE( swp->sw_color, lp->lt_color, f );
+#endif
 	return(1);
 }
 
@@ -219,11 +230,23 @@ struct rt_i             *rtip;  /* New since 4.4 release */
 		VUNITIZE( lp->lt_aim );
 	}
 
+#if RT_MULTISPECTRAL
+	RT_GET_TABDATA(lp->lt_spectrum, spectrum);
+	if( rp->reg_mater.ma_override )  {
+		rt_spect_reflectance_rgb( lp->lt_spectrum, rp->reg_mater.ma_color );
+	} else {
+		/* Default: Perfectly even emission across whole spectrum */
+		rt_tabdata_constval( lp->lt_spectrum, 1.0 );
+	}
+	/* XXX Need to convert units of lumens (candela-sr) to ?? mw/sr?  Use any old numbers to get started. */
+	rt_spect_scale( lp->lt_spectrum, lp->lt_spectrum, lp->lt_intensity );
+#else
 	if( rp->reg_mater.ma_override )  {
 		VMOVE( lp->lt_color, rp->reg_mater.ma_color );
 	} else {
 		VSETALL( lp->lt_color, 1 );
 	}
+#endif
 
 	VMOVE( lp->lt_vec, lp->lt_pos );
 	f = MAGNITUDE( lp->lt_vec );
@@ -323,7 +346,13 @@ mat_t	v2m;
 		}
 		GETSTRUCT( lp, light_specific );
 		lp->l.magic = LIGHT_MAGIC;
+#if RT_MULTISPECTRAL
+		RT_GET_TABDATA(lp->lt_spectrum, spectrum);
+		rt_spect_reflectance_rgb( lp->lt_spectrum, color );
+		rt_spect_scale( lp->lt_spectrum, lp->lt_spectrum, 1000.0 );
+#else
 		VMOVE( lp->lt_color, color );
+#endif
 		MAT4X3VEC( lp->lt_pos, v2m, temp );
 		VMOVE( lp->lt_vec, lp->lt_pos );
 		VUNITIZE( lp->lt_vec );
@@ -458,6 +487,8 @@ light_cleanup()
  *	RGB transmissions are separately indicated, to allow simplistic
  *	colored glass (with apologies to Roy Hall).
  *
+ *  a_spectrum is used in place of a_color for multispectral renderings.
+ *
  *  These shadow functions return a boolean "light_visible".
  * 
  *  This is a simplified algorithm, and could be improved.
@@ -479,17 +510,32 @@ struct seg *finished_segs;
 	struct shadework	sw;
 	CONST struct light_specific	*lp;
 	extern int	light_render();
+#if RT_MULTISPECTRAL
+	struct rt_tabdata	*ms_filter_color = RT_TABDATA_NULL;
+#else
 	vect_t	filter_color;
+#endif
 	int	light_visible;
 	int	air_sols_seen = 0;
 	char	*reason = "???";
+
+#if RT_MULTISPECTRAL
+	sub_ap.a_spectrum = RT_TABDATA_NULL;	/* sanity */
+	RT_CK_TABDATA(ap->a_spectrum);
+#endif
 
 	RT_CK_LIST_HEAD(&finished_segs->l);
 
 	lp = (struct light_specific *)(ap->a_uptr);
 	RT_CK_LIGHT(lp);
 
+#if RT_MULTISPECTRAL
+	ms_filter_color = rt_tabdata_get_constval( 1.0, spectrum );
+	RT_GET_TABDATA( sw.msw_color, spectrum );
+	RT_GET_TABDATA( sw.msw_basecolor, spectrum );
+#else
 	VSETALL( filter_color, 1 );
+#endif
 
 	/*XXX Bogus with Air.  We should check to see if it is the same 
 	 * surface.
@@ -516,14 +562,24 @@ struct seg *finished_segs;
 			sw.sw_refrac_index = 1.0;
 			sw.sw_xmitonly = 1;	/* only want sw_transmit */
 			sw.sw_segs = finished_segs;
+#if RT_MULTISPECTRAL
+			rt_tabdata_constval( sw.msw_color, 1.0 );
+			rt_tabdata_constval( sw.msw_basecolor, 1.0 );
+#else
 			VSETALL( sw.sw_color, 1 );
 			VSETALL( sw.sw_basecolor, 1 );
+#endif
 
 			(void)viewshade( ap, pp, &sw );
 			/* sw_transmit is only return */
 
-			/* Clouds don't yet attenuate differently based on freq */
+			/* XXX Clouds don't yet attenuate differently based on freq */
+#if RT_MULTISPECTRAL
+			rt_tabdata_scale( ms_filter_color, ms_filter_color,
+				sw.sw_transmit );
+#else
 			VSCALE( filter_color, filter_color, sw.sw_transmit );
+#endif
 			continue;
 		}
 		if( pp->pt_inhit->hit_dist >= ap->a_rt_i->rti_tol.dist )
@@ -537,14 +593,22 @@ struct seg *finished_segs;
 
 		if( lp->lt_invisible || lp->lt_infinite )  {
 			light_visible = 1;
+#if RT_MULTISPECTRAL
+			rt_tabdata_copy( ap->a_spectrum, ms_filter_color );
+#else
 			VMOVE( ap->a_color, filter_color );
+#endif
 			reason = "Unobstructed invisible/infinite light";
 			goto out;
 		}
 
 		if( air_sols_seen > 0 )  {
 			light_visible = 1;
+#if RT_MULTISPECTRAL
+			rt_tabdata_copy( ap->a_spectrum, ms_filter_color );
+#else
 			VMOVE( ap->a_color, filter_color );
+#endif
 /* XXXXXXX This seems to happen with *every* light vis ray through air */
 			reason = "Off end of partition list, air was seen";
 			goto out;
@@ -562,6 +626,9 @@ struct seg *finished_segs;
 
 			sub_ap = *ap;	/* struct copy */
 			sub_ap.a_level++;
+#if RT_MULTISPECTRAL
+			sub_ap.a_spectrum = rt_tabdata_dup( ap->a_spectrum );
+#endif
 			/* pt_outhit->hit_point has not been calculated */
 			VJOIN1(sub_ap.a_ray.r_pt, ap->a_ray.r_pt,
 				pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
@@ -570,9 +637,13 @@ struct seg *finished_segs;
 
 			ap->a_user = sub_ap.a_user;
 			ap->a_uptr = sub_ap.a_uptr;
+#if RT_MULTISPECTRAL
+			rt_tabdata_copy( ap->a_spectrum, sub_ap.a_spectrum );
+#else
 			ap->a_color[0] = sub_ap.a_color[0];
 			ap->a_color[1] = sub_ap.a_color[1];
 			ap->a_color[2] = sub_ap.a_color[2];
+#endif
 			VMOVE(ap->a_uvec, sub_ap.a_uvec);
 			VMOVE(ap->a_vvec, sub_ap.a_vvec);
 			ap->a_refrac_index = sub_ap.a_refrac_index;
@@ -597,7 +668,11 @@ struct seg *finished_segs;
 
 	/* Check to see if we hit the light source */
 	if( lp->lt_rp == regp )  {
+#if RT_MULTISPECTRAL
+		rt_tabdata_copy( ap->a_spectrum, ms_filter_color );
+#else
 		VMOVE( ap->a_color, filter_color );
+#endif
 		light_visible = 1;
 		reason = "hit light";
 		goto out;
@@ -608,7 +683,11 @@ struct seg *finished_segs;
 		vect_t	tolight;
 		VSUB2( tolight, lp->lt_pos, ap->a_ray.r_pt );
 		if( pp->pt_inhit->hit_dist >= MAGNITUDE(tolight) ) {
+#if RT_MULTISPECTRAL
+			rt_tabdata_copy( ap->a_spectrum, ms_filter_color );
+#else
 			VMOVE( ap->a_color, filter_color );
+#endif
 			light_visible = 1;
 			reason = "hit behind invisible light ==> hit light";
 			goto out;
@@ -618,12 +697,19 @@ struct seg *finished_segs;
 	/* If we hit an entirely opaque object, this light is invisible */
 	if( pp->pt_outhit->hit_dist >= INFINITY ||
 	    (regp->reg_transmit == 0 /* XXX && Not procedural shader */) )  {
+#if RT_MULTISPECTRAL
+	    	rt_tabdata_constval( ap->a_spectrum, 0.0 );
+#else
 		VSETALL( ap->a_color, 0 );
+#endif
 		light_visible = 0;
 	    	reason = "hit opaque object";
 		goto out;
 	}
 
+#if RT_MULTISPECTRAL
+	/* XXX Check area under spectral curve?  What power level for thresh? */
+#else
 	/*  See if any further contributions will mater */
 	if( ap->a_color[0] + ap->a_color[1] + ap->a_color[2] < 0.01 )  {
 	    	/* Any light energy is "fully" attenuated by here */
@@ -632,6 +718,7 @@ struct seg *finished_segs;
 		reason = "light fully attenuated before shading";
 		goto out;
 	}
+#endif
 
 	/*
 	 *  Determine transparency parameters of this object.
@@ -643,12 +730,21 @@ struct seg *finished_segs;
 	sw.sw_refrac_index = 1.0;
 	sw.sw_xmitonly = 1;		/* only want sw_transmit */
 	sw.sw_segs = finished_segs;
+#if RT_MULTISPECTRAL
+	rt_tabdata_constval( sw.msw_color, 1.0 );
+	rt_tabdata_constval( sw.msw_basecolor, 1.0 );
+#else
 	VSETALL( sw.sw_color, 1 );
 	VSETALL( sw.sw_basecolor, 1 );
+#endif
 
 	(void)viewshade( ap, pp, &sw );
 	/* sw_transmit is output */
 
+#if RT_MULTISPECTRAL
+	rt_tabdata_scale( ms_filter_color, ms_filter_color, sw.sw_transmit );
+	/* XXX Power level check again? */
+#else
 	VSCALE( filter_color, filter_color, sw.sw_transmit );
 	if( filter_color[0] + filter_color[1] + filter_color[2] < 0.01 )  {
 	    	/* Any recursion won't be significant */
@@ -657,6 +753,7 @@ struct seg *finished_segs;
 		reason = "light fully attenuated after shading";
 		goto out;
 	}
+#endif
 
 	/*
 	 * Push on to exit point, and trace on from there.
@@ -665,6 +762,9 @@ struct seg *finished_segs;
 	 */
 	sub_ap = *ap;			/* struct copy */
 	sub_ap.a_level = ap->a_level+1;
+#if RT_MULTISPECTRAL
+	sub_ap.a_spectrum = rt_tabdata_dup( ap->a_spectrum );
+#endif
 	{
 		register fastf_t f;
 		f = pp->pt_outhit->hit_dist + ap->a_rt_i->rti_tol.dist;
@@ -673,14 +773,33 @@ struct seg *finished_segs;
 	sub_ap.a_purpose = "light transmission after filtering";
 	light_visible = rt_shootray( &sub_ap );
 
+#if RT_MULTISPECTRAL
+	rt_tabdata_mul( ap->a_spectrum, sub_ap.a_spectrum, ms_filter_color );
+#else
 	VELMUL( ap->a_color, sub_ap.a_color, filter_color );
+#endif
 	reason = "after filtering";
 out:
+#if RT_MULTISPECTRAL
+	if( ms_filter_color ) rt_free_tabdata( ms_filter_color );
+	if( sw.msw_color )  rt_free_tabdata( sw.msw_color );
+	if( sw.msw_basecolor ) rt_free_tabdata( sw.msw_basecolor );
+	if( sub_ap.a_spectrum )  rt_free_tabdata( sub_ap.a_spectrum );
+	if( rdebug & RDEBUG_LIGHT )  {
+		bu_log("light vis=%d %s %s %s  ",
+			light_visible,
+			lp->lt_name,
+			reason,
+			regp ? regp->reg_name : "" );
+		rt_pr_tabdata("light spectrum", ap->a_spectrum);
+	}
+#else
 	if( rdebug & RDEBUG_LIGHT ) bu_log("light vis=%d %s (%4.2f, %4.2f, %4.2f) %s %s\n",
 		light_visible,
 		lp->lt_name,
 		V3ARGS(ap->a_color), reason,
 		regp ? regp->reg_name : "" );
+#endif
 	return(light_visible);
 }
 
@@ -723,7 +842,10 @@ int have;
 {
 		register struct light_specific *lp;
 		register int	i;
-		register fastf_t *intensity, *tolight;
+#if !RT_MULTISPECTRAL
+		register fastf_t *intensity;
+#endif
+		register fastf_t *tolight;
 		register fastf_t f;
 		struct application sub_ap;
 
@@ -737,7 +859,9 @@ int have;
 		 *  sw_intensity=(1,1,1) for no attenuation.
 		 */
 		i = 0;
+#if !RT_MULTISPECTRAL
 		intensity = swp->sw_intensity;
+#endif
 		tolight = swp->sw_tolight;
 		for( RT_LIST_FOR( lp, light_specific, &(LightHead.l) ) )  {
 			RT_CK_LIGHT(lp);
@@ -808,7 +932,12 @@ int have;
 				if (rdebug & RDEBUG_LIGHT)
 					bu_log("fill light, no shadow, visible: %s\n", lp->lt_name);
 				swp->sw_visible[i] = (char *)lp;
+#if RT_MULTISPECTRAL
+				/* XXX Need a power level for this! */
+				rt_tabdata_constval( swp->msw_intensity[i], 1.0 );
+#else
 				VSETALL( intensity, 1 );
+#endif
 				goto next;
 			}
 
@@ -850,7 +979,11 @@ int have;
 				if (rdebug & RDEBUG_LIGHT)
 					bu_log("light visible: %s\n", lp->lt_name);
 				swp->sw_visible[i] = (char *)lp;
+#if RT_MULTISPECTRAL
+				rt_tabdata_copy( swp->msw_intensity[i], sub_ap.a_spectrum );
+#else
 				VMOVE( intensity, sub_ap.a_color );
+#endif
 			} else {
 				/* dark (light obscured) */
 				if (rdebug & RDEBUG_LIGHT)
@@ -860,7 +993,9 @@ int have;
 next:
 			/* Advance to next light */
 			i++;
+#if !RT_MULTISPECTRAL
 			intensity += 3;
+#endif
 			tolight += 3;
 		}
 
