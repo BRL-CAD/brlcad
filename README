@@ -8,8 +8,8 @@ and
 RAY-TRACING BENCHMARK
 .sp
 DISTRIBUTION PACKAGE
-Release 2.1
-(27-Oct-87)
+Release 2.2
+(28-Oct-87)
 .fi
 .sp
 .sp "VERSION"
@@ -29,7 +29,7 @@ half-inch magtape is the strongly preferred format, and can be written
 at either 1600 or 6250 bpi, in either TAR format with 10k byte records,
 or CPIO format with 5k byte records. For sites with no half-inch tape
 drives, Silicon Graphics and SUN tape cartridges can also be
-accommodated.
+accommodated, with more difficulty for BRL.
 .sp
 2)  A letter indicating:
 .sp
@@ -66,9 +66,9 @@ authors at the address below.
 For non-US sites, an extra step is required. Any requests from Foreign
 governments should be sent on a Government to Government basis. You must
 send your letter and tape to your Ambassador to the United States in
-Washington DC, and have them sent to BRL through official channels.
-Have your Embassy forward the request to the Deputy Chief of Staff
-for Intelligence, Department of the Army; they handle all requests from
+Washington DC, for forwarding to BRL through official channels. Have
+your Embassy send the request to the Deputy Chief of Staff for
+Intelligence, Department of the Army; they handle all requests from
 foreign governments.  This procedure has been used many times now, and
 works successfully. The address to use is:
 .sp
@@ -102,6 +102,7 @@ What you have here is a collection of software which includes:
 	libtig	Some plotting routines built on libplot3
 	librle	A Run-Length-Encoding library (originally from UofUtah)
 	libmalloc	The Princeton malloc(3) -- a better malloc
+	libwdb	A library for procedurally writing databases
 	util	Zillions of image-handling utilities, as tools
 	fbed	Frame-buffer image editor
 	vdeck	Convert mged models to GIFT-format card decks.
@@ -207,15 +208,17 @@ will all be provided;  right now, a variety of things need to
 be tailored.  Everything is clearly marked;  #SYSV# appears near
 symbols that need to be changed to run on a System V UNIX.
 Certain vendor-specific settings are similarly marked, e.g.,
-#SGI#, #GOULD#, #ALLIANT#, #CRAY#, etc.  As distributed, this file
+#SGI#, #GOULD#, #ALLIANT#, #XMP#, #CRAY2#, etc.  As distributed, this file
 is configured for a 4.n BSD Berkeley UNIX system on a VAX.
 .sp
 Select the correct value for SYSTEM.
 .sp
-At present, SYSVERS should be defined only on Silicon Graphics (SGI)
-systems.  Set SYSVERS to either SGI34 for Release 3.4 and below, or
-SGI35 for Release 3.5 and above. If you do not have the TCP option on
-your SGI, don't define either.
+At present, SYSVERS should be defined only when specifically called for,
+presently on Silicon Graphics (SGI), Cray, and Sun machines.  The
+complete list of current settings is in Makefile.defs. For the SGI, set
+SYSVERS to either SGI34 for Release 3.4 and below, or SGI35 for Release
+3.5 and above. If you do not have the TCP option on your SGI, don't
+define either.
 .sp
 Configuration of libfb.  Full details on configuring the framebuffer
 library are provided in the "Full Configuration" section, below. If you
@@ -257,7 +260,7 @@ timer42	4.2 BSD, 4.3 BSD (Berkeley UNIX)
 timerunix	Generic UNIX, System III, V, etc.
 timer52brl	For BRL's System 5-under-4.n BSD
 timerhep	Denelcor HEP
-timercray	Cray X-MP and Cray-2, running UNICOS (UNIX)
+timercray	Cray X-MP running UNICOS (UNIX)
 timercos	Cray X-MP running COS
 .TE
 .fi
@@ -277,16 +280,19 @@ PARALLEL	Defined for parallel processors.
 VAX, GOULD, Cray, Alliant and HEP examples are provided. The defaults
 should be correct for reasonable 32-bit serial computers.  Note that
 K&R ``C'' specifies that all floating point calculations must be done
-as \fBdouble\fR, so it is usually fastest to set fastf_t to \fBdouble\fR.
-Also note that when \fBfloat\fR is 32-bit IEEE or IBM style floating
-point, not enough accuracy is carried to correctly process large models.
-See the "Silicon Graphics Warnings" section for more information.
+as \fBdouble\fR, so it is usually fastest to set fastf_t to
+\fBdouble\fR. Also note that when fastf_t is \fBfloat\fR in 32-bit IEEE
+or IBM style floating point, not enough accuracy is carried to correctly
+process large models. See the "Silicon Graphics Warnings" section for
+more information.
 .sp
 3)  It is important to run "make depend" in the top directory of the
 distribution each time these Makefiles are changed.  For libfb, mged,
 and librt, it is also necessary to run "make clean" in those directories
 after making related changes to the Makefiles, because the binaries
 of some modules depend on configuration options selected in the Makefiles.
+Failure to do this is the single most common cause of difficulty
+when experimenting with the configuration of this software.
 .sp
 .IP "BENCHMARK RESULTS"
 .sp
@@ -712,6 +718,7 @@ adage	Adage RDS-3000 ("Ikonas")
 sgi	SGI Iris display
 sun	SunView interface
 ptty	AT&T 5620 w/special Moss layer
+ug	Ultra Graphics
 .TE
 .sp
 In the case of no display hardware at all, the
@@ -755,7 +762,8 @@ When using the framebuffer library on the SGI, it is necessary to modify
 certain kernel limits in the binary image of your kernel to be able to
 use a large block of shared memory.  Follow the directions in
 libfb/if_sgi.c, and then reboot your workstation to allow the changes to
-take effect.
+take effect.  There are claims that on some SGI machines, this may
+cause unreliable operation, so be certain to keep a backup kernel.
 .sp
 If this is a TCP-capable system, you will want to include the remote
 frame-buffer capability;  the defaults already provide for this. If you
@@ -806,14 +814,14 @@ a TCP-capable SGI system of release 3.5, the typical configuration is:
 .sp
 As distributed, the remote, Adage, and Pseudo-tty (Teletype DMD 5620)
 interfaces are all enabled.  You will almost certainly wish to change
-this;  failure to do so is the most common source of difficulties in
+this;  failure to do so is the second most common source of difficulties in
 installing this distribution. If you change the configuration of libfb
 partway through building the system, be certain to run "cd libfb; make
 clean; make depend" before recompiling other programs, because the
 Makefiles and binaries change based on the configuration options in
 Makefile.defs.
 .sp
-The file h/rle.h has a #if statement that will need modification if
+The file h/rle.h has a #\fBif\fR statement that will need modification if
 your machine is a "Little-Endian" machine and your machine is not
 a VAX.  "Big-Endian" machines will work without modification.
 A Big-Endian machine has byte [0] on the left of the word, like IBM,
@@ -836,7 +844,7 @@ when specifically configured:
 center box;
 l l.
 ir	SGI IRIS 2400, 3030
-sunpw	SUN 3.2 Pixwin
+sun	SUN 3.2 Pixwin
 vg	Vector General 3300
 mg	Megatek 7250
 rat	Raster Tech One/80
@@ -884,6 +892,8 @@ To configure a SUN, specify:
 	MGED_LIBES	= -lsuntool -lsunwindow -lpixrect
 .fi
 and remember always to run MGED under a gfxtool window.
+Also note that SUN support is still rudamentary, and there are problems
+with (a) running RT from within MGED, and (b) using MGED on a color SUN.
 .sp
 In all cases,
 be certain to properly define the MGED_VERS variable.
@@ -1044,10 +1054,9 @@ sending to
 .sp .5
 If you find bugs, please report your experiences.  While BRL makes no
 offer of support, we are most interested in hearing about your
-experiences.  Electronic mail is vastly preferred over telephone contact.
-In the most dire circumstances, you may phone;  1500-1800 Eastern time
-is best.  If you don't connect with one of the developers, please
-leave an informative message.
+experiences. Enough people have been pestering us by phone with the most
+basic questions that we can no longer offer telephone assistance.
+Therefore, electronic mail is vastly preferred over telephone contact.
 .sp
 .KS
 .nf
@@ -1060,9 +1069,5 @@ Best Wishes,
   USA
 .sp
 ArpaNet:  <Mike @ BRL.ARPA>
-.sp
-Commercial (301)-278-6678
-AUTOVON 298-6678
-FTS 939-6678
 .KE
 .fi
