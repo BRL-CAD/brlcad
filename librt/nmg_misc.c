@@ -10545,7 +10545,9 @@ CONST struct bn_tol *tol;
 	int count_npts;
 	int face_count=0;
 	int i;
-	struct rt_pg_face_internal *poly;
+#if 0
+	struct rt_pg_face_internal *_poly;
+#endif
 
 	NMG_CK_MODEL( m );
 
