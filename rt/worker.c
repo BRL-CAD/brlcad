@@ -241,6 +241,7 @@ worker()
 	cpu = nworkers_started++;
 	RES_RELEASE( &rt_g.res_worker );
 
+	if( cpu >= MAX_PSW )  rt_bomb("rt/worker() cpu > MAXPSW, array overrun\n");
 	resource[cpu].re_cpu = cpu;
 	resource[cpu].re_magic = RESOURCE_MAGIC;
 	rand_init( resource[cpu].re_randptr, cpu );
