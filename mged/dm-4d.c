@@ -467,10 +467,10 @@ Ir_open()
 	if (mged_variables.sgi_win_size > 0)
 		win_size = mged_variables.sgi_win_size;
 
-	if (mged_variables.sgi_win_origin[0] > 0)
+	if (mged_variables.sgi_win_origin[0] != 0)
 	    	win_o_x = mged_variables.sgi_win_origin[0];
 
-	if (mged_variables.sgi_win_origin[1] > 0)
+	if (mged_variables.sgi_win_origin[1] != 0)
 	    	win_o_y = mged_variables.sgi_win_origin[1];
 
 	prefposition( win_o_x, win_o_x+win_size, win_o_y, win_o_y+win_size);
