@@ -1,4 +1,4 @@
-#define USE_NEW_IMPORT	0
+#define USE_NEW_IMPORT	1
 
 /*
  *			D B _ T R E E . C
@@ -197,7 +197,8 @@ struct rt_db_internal	*ip;
 	comb = (struct rt_comb_internal *)ip->idb_ptr;
 	RT_CK_COMB(comb);
 
-	db_free_tree( comb->tree );
+	/* If tree hasn't been stolen, release it */
+	if(comb->tree) db_free_tree( comb->tree );
 	comb->tree = NULL;
 
 	bu_vls_free( &comb->shader_name );
@@ -1022,8 +1023,7 @@ struct combined_tree_state	**region_start_statepp;
 			RT_CK_TREE(subtree);
 			tmp = *tp;	/* struct copy */
 			*tp = *subtree;	/* struct copy */
-			*subtree = tmp;	/* struct copy */
-			db_free_tree( subtree );
+			db_free_tree( &tmp );
 			RT_CK_TREE(tp);
 		}
 		DB_FULL_PATH_POP(pathp);
@@ -1045,6 +1045,7 @@ struct combined_tree_state	**region_start_statepp;
 		bu_log("recurseit: bad op %d\n", tp->tr_op);
 		rt_bomb("recurseit\n");
 	}
+	RT_CK_TREE(tp);
 	return;
 }
 
@@ -1084,7 +1085,9 @@ struct combined_tree_state	**region_start_statepp;
 		return(TREE_NULL);
 	}
 	dp = DB_FULL_PATH_CUR_DIR(pathp);
+
 	if(rt_g.debug&DEBUG_TREEWALK)  {
+
 		char	*sofar = db_path_to_string(pathp);
 		bu_log("db_recurse() pathp='%s', tsp=x%x, *statepp=x%x\n",
 			sofar, tsp,
@@ -1120,6 +1123,7 @@ struct combined_tree_state	**region_start_statepp;
 		RT_CK_COMB(comb);
 #endif
 
+/* XXX USE_NEW_IMPORT */
 		/* XXX Can't convert this part yet */
 		if( (is_region = db_apply_state_from_comb( &nts, pathp, &ext )) < 0 )  {
 			curtree = TREE_NULL;		/* FAIL */
@@ -1217,13 +1221,18 @@ struct combined_tree_state	**region_start_statepp;
 		}
 #else
 		if( comb->tree )  {
+			/* Steal tree from combination, so it won't be freed */
 			curtree = comb->tree;
+			comb->tree = TREE_NULL;
+			if(curtree) RT_CK_TREE(curtree);
 			recurseit( curtree, &nts, pathp, region_start_statepp );
+			if(curtree) RT_CK_TREE(curtree);
 		} else {
 			/* No subtrees in this combination, invent a NOP */
 			BU_GETUNION( curtree, tree );
 			curtree->magic = RT_TREE_MAGIC;
 			curtree->tr_op = OP_NOP;
+			if(curtree) RT_CK_TREE(curtree);
 		}
 #endif
 
@@ -1238,6 +1247,7 @@ region_end:
 				if(curtree) RT_CK_TREE(curtree);
 			}
 		}
+		if(curtree) RT_CK_TREE(curtree);
 	} else if( dp->d_flags & DIR_SOLID )  {
 		int	id;
 		vect_t	A, B, C;
