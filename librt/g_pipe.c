@@ -297,7 +297,7 @@ fastf_t od2;
  *  	stp->st_specific for use by pipe_shot().
  */
 int
-bn_pipe_prep( stp, ip, rtip )
+rt_pipe_prep( stp, ip, rtip )
 struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
@@ -313,7 +313,7 @@ struct rt_i		*rtip;
 	pip = (struct rt_pipe_internal *)ip->idb_ptr;
 	RT_PIPE_CK_MAGIC(pip);
 
-	head = (struct bu_list *)bu_malloc( sizeof( struct bu_list ), "bn_pipe_prep:head" );
+	head = (struct bu_list *)bu_malloc( sizeof( struct bu_list ), "rt_pipe_prep:head" );
 	stp->st_specific = (genptr_t)head;
 	BU_LIST_INIT( head );
 
@@ -416,7 +416,7 @@ next_pt:
  *			R T _ P I P E _ P R I N T
  */
 void
-bn_pipe_print( stp )
+rt_pipe_print( stp )
 register CONST struct soltab *stp;
 {
 /*	register struct bu_list *pipe =
@@ -424,7 +424,7 @@ register CONST struct soltab *stp;
 }
 
 void
-bn_pipept_print( pipe, mm2local )
+rt_pipept_print( pipe, mm2local )
 struct wdb_pipept *pipe;
 double mm2local;
 {
@@ -1035,7 +1035,7 @@ int			seg_no;
 }
 
 HIDDEN void
-bn_pipe_hitsort( h, nh, rp, stp )
+rt_pipe_hitsort( h, nh, rp, stp )
 struct hit_list		*h;
 int			*nh;
 struct soltab		*stp;
@@ -1094,8 +1094,8 @@ register struct xray	*rp;
 			tmp = hitp;
 			hitp = next_hit;
 			BU_LIST_DEQUEUE( &tmp->l );
-			bu_free( (char *)tmp->hitp, "bn_pipe_hitsort: tmp->hitp" );
-			bu_free( (char *)tmp, "bn_pipe_hitsort: tmp" );
+			bu_free( (char *)tmp->hitp, "rt_pipe_hitsort: tmp->hitp" );
+			bu_free( (char *)tmp, "rt_pipe_hitsort: tmp" );
 			(*nh)--;
 		}
 		else
@@ -1175,7 +1175,7 @@ register struct xray	*rp;
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
 void
-bn_pipe_norm( hitp, stp, rp )
+rt_pipe_norm( hitp, stp, rp )
 register struct hit	*hitp;
 struct soltab		*stp;
 register struct xray	*rp;
@@ -1252,7 +1252,7 @@ register struct xray	*rp;
 			VUNITIZE( hitp->hit_normal );
 			break;
 		default:
-			bu_log( "bn_pipe_norm: Unrecognized surfno (%d)\n", hitp->hit_surfno );
+			bu_log( "rt_pipe_norm: Unrecognized surfno (%d)\n", hitp->hit_surfno );
 			break;
 	}
 }
@@ -1269,7 +1269,7 @@ register struct xray	*rp;
  *	>0	HIT
  */
 int
-bn_pipe_shot( stp, rp, ap, seghead )
+rt_pipe_shot( stp, rp, ap, seghead )
 struct soltab		*stp;
 register struct xray	*rp;
 struct application	*ap;
@@ -1321,15 +1321,15 @@ struct seg		*seghead;
 
 	/* calculate hit points and normals */
 	for( BU_LIST_FOR( hitp, hit_list, &hit_head.l ) )
-		bn_pipe_norm( hitp->hitp, stp , rp );
+		rt_pipe_norm( hitp->hitp, stp , rp );
 
-	bn_pipe_hitsort( &hit_head, &total_hits, rp, stp );
+	rt_pipe_hitsort( &hit_head, &total_hits, rp, stp );
 
 	/* Build segments */
 	if( total_hits%2 )
 	{
 		i = 0;
-		bu_log( "bn_pipe_shot: bad number of hits (%d)\n" , total_hits );
+		bu_log( "rt_pipe_shot: bad number of hits (%d)\n" , total_hits );
 		for( BU_LIST_FOR( hitp, hit_list, &hit_head.l ) )
 		{
 			point_t hit_pt;
@@ -1338,7 +1338,7 @@ struct seg		*seghead;
 			VJOIN1( hit_pt, rp->r_pt, hitp->hitp->hit_dist,  rp->r_dir );
 			bu_log( "\t( %g %g %g )\n" , V3ARGS( hit_pt ) );
 		}
-		rt_bomb( "bn_pipe_shot\n" );
+		rt_bomb( "rt_pipe_shot\n" );
 	}
 
 	hitp = BU_LIST_FIRST( hit_list, &hit_head.l );
@@ -1363,8 +1363,8 @@ struct seg		*seghead;
 	while( BU_LIST_WHILE( hitp, hit_list, &hit_head.l ) )
 	{
 		BU_LIST_DEQUEUE( &hitp->l );
-		bu_free( (char *)hitp->hitp, "bn_pipe_shot: hitp->hitp" );
-		bu_free( (char *)hitp, "bn_pipe_shot: hitp" );
+		bu_free( (char *)hitp->hitp, "rt_pipe_shot: hitp->hitp" );
+		bu_free( (char *)hitp, "rt_pipe_shot: hitp" );
 	}
 
 	if( total_hits )
@@ -1381,7 +1381,7 @@ struct seg		*seghead;
  *  Vectorized version.
  */
 void
-bn_pipe_vshot( stp, rp, segp, n, ap )
+rt_pipe_vshot( stp, rp, segp, n, ap )
 struct soltab	       *stp[]; /* An array of solid pointers */
 struct xray		*rp[]; /* An array of ray pointers */
 struct  seg            segp[]; /* array of segs (results returned) */
@@ -1397,7 +1397,7 @@ struct application	*ap;
  *  Return the curvature of the pipe.
  */
 void
-bn_pipe_curve( cvp, hitp, stp )
+rt_pipe_curve( cvp, hitp, stp )
 register struct curvature *cvp;
 register struct hit	*hitp;
 struct soltab		*stp;
@@ -1420,7 +1420,7 @@ struct soltab		*stp;
  *  v = elevation
  */
 void
-bn_pipe_uv( ap, stp, hitp, uvp )
+rt_pipe_uv( ap, stp, hitp, uvp )
 struct application	*ap;
 struct soltab		*stp;
 register struct hit	*hitp;
@@ -1434,7 +1434,7 @@ register struct uvcoord	*uvp;
  *		R T _ P I P E _ F R E E
  */
 void
-bn_pipe_free( stp )
+rt_pipe_free( stp )
 register struct soltab *stp;
 {
 	register struct bu_list *pipe =
@@ -1458,7 +1458,7 @@ register struct soltab *stp;
  *			R T _ P I P E _ C L A S S
  */
 int
-bn_pipe_class()
+rt_pipe_class()
 {
 	return(0);
 }
@@ -1665,7 +1665,7 @@ CONST int			seg_count;
  *			R T _ P I P E _ P L O T
  */
 int
-bn_pipe_plot( vhead, ip, ttol, tol )
+rt_pipe_plot( vhead, ip, ttol, tol )
 struct bu_list		*vhead;
 struct rt_db_internal	*ip;
 CONST struct rt_tess_tol *ttol;
@@ -3240,7 +3240,7 @@ struct bn_tol *tol;
  *	XXXX Still needs vertexuse normals!
  */
 int
-bn_pipe_tess( r, m, ip, ttol, tol )
+rt_pipe_tess( r, m, ip, ttol, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
@@ -3326,9 +3326,9 @@ struct bn_tol		*tol;
 	s = BU_LIST_FIRST(shell, &(*r)->s_hd);
 
 	outer_loop = (struct vertex **)bu_calloc( arc_segs, sizeof( struct vertex *),
-			"bn_pipe_tess: outer_loop" );
+			"rt_pipe_tess: outer_loop" );
 	inner_loop = (struct vertex **)bu_calloc( arc_segs, sizeof( struct vertex *),
-			"bn_pipe_tess: inner_loop" );
+			"rt_pipe_tess: inner_loop" );
 
 	delta_angle = 2.0 * bn_pi / (double)arc_segs;
 	sin_del = sin( delta_angle );
@@ -3422,8 +3422,8 @@ next_pt:
 
 	tesselate_pipe_end( pp2, arc_segs, sin_del, cos_del, &outer_loop, &inner_loop, s, tol );
 
-	bu_free( (char *)outer_loop, "bn_pipe_tess: outer_loop" );
-	bu_free( (char *)inner_loop, "bn_pipe_tess: inner_loop" );
+	bu_free( (char *)outer_loop, "rt_pipe_tess: outer_loop" );
+	bu_free( (char *)inner_loop, "rt_pipe_tess: inner_loop" );
 
 	nmg_rebound( m, tol );
 
@@ -3434,7 +3434,7 @@ next_pt:
  *			R T _ P I P E _ I M P O R T
  */
 int
-bn_pipe_import( ip, ep, mat )
+rt_pipe_import( ip, ep, mat )
 struct rt_db_internal		*ip;
 CONST struct bu_external	*ep;
 register CONST mat_t		mat;
@@ -3450,7 +3450,7 @@ register CONST mat_t		mat;
 	rp = (union record *)ep->ext_buf;
 	/* Check record type */
 	if( rp->u_id != DBID_PIPE )  {
-		bu_log("bn_pipe_import: defective record\n");
+		bu_log("rt_pipe_import: defective record\n");
 		return(-1);
 	}
 
@@ -3490,7 +3490,7 @@ register CONST mat_t		mat;
  *			R T _ P I P E _ E X P O R T
  */
 int
-bn_pipe_export( ep, ip, local2mm )
+rt_pipe_export( ep, ip, local2mm )
 struct bu_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
@@ -3559,7 +3559,7 @@ double				local2mm;
  *  Additional lines are indented one tab, and give parameter values.
  */
 int
-bn_pipe_describe( str, ip, verbose, mm2local )
+rt_pipe_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
 struct rt_db_internal	*ip;
 int			verbose;
@@ -3611,7 +3611,7 @@ double			mm2local;
  *  Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-bn_pipe_ifree( ip )
+rt_pipe_ifree( ip )
 struct rt_db_internal	*ip;
 {
 	register struct rt_pipe_internal	*pipe;
@@ -3639,7 +3639,7 @@ struct rt_db_internal	*ip;
  *		LINEAR sections are collinear.
  */
 int
-bn_pipe_ck( headp )
+rt_pipe_ck( headp )
 struct wdb_pipept *headp;
 {
 	int error_count=0;
