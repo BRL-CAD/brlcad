@@ -40,9 +40,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "db.h"
 #include "./sedit.h"
+#include "raytrace.h"
 #include "./ged.h"
 #include "./solid.h"
-#include "./objdir.h"
 #include "./dm.h"
 #include "./menu.h"
 
@@ -631,7 +631,7 @@ init_sedit()
 	}
 
 	/* Read solid description.  Save copy of original data */
-	db_getrec( illump->s_path[illump->s_last], &es_orig, 0 );
+	db_get( dbip,  illump->s_path[illump->s_last], &es_orig, 0 , 1);
 	es_rec = es_orig;		/* struct copy */
 
 	if( es_rec.u_id != ID_SOLID )  {
@@ -1646,7 +1646,7 @@ init_objedit()
 	}
 
 	/* Not an evaluated region - just a regular path ending in a solid */
-	db_getrec( illump->s_path[illump->s_last], &es_rec, 0 );
+	db_get( dbip,  illump->s_path[illump->s_last], &es_rec, 0 , 1);
 
 	if( es_rec.u_id == ID_BSOLID ) {
 		(void)printf("SPLINE may not work well\n");
@@ -1658,7 +1658,7 @@ init_objedit()
 
 	if( es_rec.u_id == ID_ARS_A ) { 
 		/* read the first B-record into trec */
-		db_getrec( illump->s_path[illump->s_last], &trec, 1 );
+		db_get( dbip,  illump->s_path[illump->s_last], &trec, 1 , 1);
 		/* only interested in vertex */
 		VMOVE(es_rec.s.s_values, trec.b.b_values);
 		es_rec.s.s_type = es_rec.s.s_cgtype = ARS;
