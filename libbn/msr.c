@@ -27,6 +27,9 @@ extern int Debug;
  *	Translated to 'C' by Christopher T. Johnson
  *
  * $Log$
+ * Revision 1.1  90/04/20  02:05:36  cjohnson
+ * Initial revision
+ * 
  * 
  */
 #define	A	16807
@@ -55,7 +58,7 @@ int method;
 	return(p);
 }
 
-/*	msr_unif_fill_long	fill a random number table.
+/*	msr_unif_long_fill	fill a random number table.
  *
  * Use the msrad algorithm to fill a random number table
  * with values from 1 to 2^31-1.  These numbers can extracted from
@@ -141,8 +144,10 @@ int method;
 		return(NULL);
 	}
 	p->msr_gausses=(double *) malloc(MSRMAXTBL*sizeof(double));
+	p->msr_gauss_doubles=(double *) malloc(MSRMAXTBL*sizeof(double));
 	p->msr_gauss_seed = 1;
 	p->msr_gauss_ptr = 0;
+	p->msr_gauss_dbl_ptr = 0;
 
 	if (setseed&0x7fffffff) p->msr_gauss_seed=setseed&0x7fffffff;
 	return(p);
@@ -153,7 +158,7 @@ msr_gauss_fill(p)
 struct msr_gauss *p;
 {
 	register int i;
-	register double v1,v2,r,fac;
+	/* register */ double v1,v2,r,fac;
 
 	if (p->msr_gausses) {
 		for (i=0; i< MSRMAXTBL; ) {
