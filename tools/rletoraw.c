@@ -104,7 +104,6 @@ char *argv[];
     int y;
     int line_pos;
     int fwrite_len;
-    unsigned char *fwrite_pos;
 
     progname = argv[0];
 
@@ -221,7 +220,6 @@ char *argv[];
     y = height;
     line_pos = 0;
     fwrite_len = outrows_size;
-    fwrite_pos = outrows;
 
     /* write the header */
     if (fflag)

@@ -211,17 +211,14 @@ int argc;
 char **argv;
 {
     char                db_title[TITLE_LEN+1];/* title from MGED file      */
-    char		*sp;
     extern char		*local_unit[];
     extern char		local_u_name[];
     extern double	base2local;
     extern double	local2base;
     FILE		*fPtr;
-    int                 i;               /* counter                       */
     int			Ch;		/* Option name */
     int			mat_flag = 0;	/* Read matrix from stdin? */
     int			use_of_air = 0;
-    outval		*vtp;
     struct bu_list	script_list;	/* For -e and -f options */
     struct script_rec	*srp;
     extern outval	ValTab[];

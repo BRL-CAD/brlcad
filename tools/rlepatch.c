@@ -53,7 +53,7 @@ char **argv;
     rle_pixel ** im_rows, **patch_rows, ** outrows;
     int stdin_used = 0;
     int patches = 0, oflag = 0, i, y, c, xlen, width;
-    int rle_cnt, rle_err;
+    int rle_cnt;
 
     if (! scanargs( argc, argv, "% o%-outfile!s infile!s patchfiles%*s",
 		    &oflag, &outfilename, &imfilename, &patches, &patchnames ))
@@ -90,7 +90,7 @@ char **argv;
     }
 
     for ( rle_cnt = 0;
-	  (rle_err = rle_get_setup( &im_hdr )) == RLE_SUCCESS;
+	  rle_get_setup( &im_hdr );
 	  rle_cnt++ )
     {
 	/* Get the patch files set up */

@@ -65,7 +65,6 @@ int	argc;
 char	*argv[];
 {
 	char		*dot, *fig_file;
-	int		i;
 	register int	c;
 	double		percent;
 

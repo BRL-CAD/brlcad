@@ -63,7 +63,7 @@ char **argv;
 {
     char * infname = NULL, * outfname = NULL;
     FILE * outfile = stdout;
-    int oflag = 0, tflag = 0, y, nrow;
+    int oflag = 0, tflag = 0, nrow;
     rle_hdr out_hdr;
     unsigned char ** scan, *outscan[4];
     unsigned char * buffer;
@@ -134,7 +134,7 @@ char **argv;
 
 	rle_put_setup( &out_hdr );
 
-	while ( (y = rle_getrow( &rle_dflt_hdr, scan )) <=
+	while ( (rle_getrow( &rle_dflt_hdr, scan )) <=
 		rle_dflt_hdr.ymax )
 	{
 	    rgb_to_bw( scan[0], scan[1], scan[2], buffer, nrow );

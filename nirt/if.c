@@ -34,7 +34,6 @@ struct seg		*finished_segs;
     char		*basename();
     fastf_t		ar = azimuth() * deg2rad;
     fastf_t		er = elevation() * deg2rad;
-    fastf_t		los;
     int			i;
     int			part_nm = 0;
     overlap		*ovp;	/* the overlap record for this partition */
@@ -212,7 +211,6 @@ struct seg		*finished_segs;
     struct partition	*part;
     vect_t		dir;
     point_t		point;
-    point_t		onormal;
     int			i;
 
     if ((part = part_head -> pt_back) == part_head)

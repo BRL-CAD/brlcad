@@ -136,14 +136,14 @@ FILE *fgeom;
 int off2nmg(fpin, fpout)
 FILE *fpin, *fpout;
 {
-	char title[64], author[64], geom_fname[64];
+	char title[64] geom_fname[64];
 	char rname[67], sname[67];
 	char buf[200], buf2[200];
 
 	FILE *fgeom;
 	struct model *m;
 
-	title[0] = author[0] = geom_fname[0] = '\0';
+	title[0] = geom_fname[0] = '\0';
 
 	fgets(buf, sizeof(buf), fpin);
 	while (!feof(fpin)) {				/* Retrieve the important data */
@@ -194,7 +194,6 @@ int argc;
 char **argv;
 {
 	FILE *fpin, *fpout;
-	char title[64], buf[200], *bp;
 
 	tol.magic = RT_TOL_MAGIC;	/* Copied from proc-db/nmgmodel.c */
 	tol.dist = 0.01;

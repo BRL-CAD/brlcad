@@ -77,7 +77,7 @@ char **argv;
     float 	heightinch = 3.0, 
     		center = 3.25, 
     		aspect = 1.0;
-    int 	y, nrow, nscan, i, pix, dummy;
+    int 	nrow, nscan, i, pix, dummy;
     float 	x1, y1, x2, y2, widthinch;
     unsigned char ** scan;
     unsigned char * buffer;
@@ -147,7 +147,7 @@ char **argv;
     y2 = y1 + heightinch;
     prologue(outfile,sflag,nscan,nrow,x1,y1,x2,y2);    
 
-    while ( (y = rle_getrow( &rle_dflt_hdr, scan )) <=
+    while ( (rle_getrow( &rle_dflt_hdr, scan )) <=
 	    rle_dflt_hdr.ymax )
     {
 	if (gencps) {

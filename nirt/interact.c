@@ -83,7 +83,6 @@ void	*sPtr;
     int		i;		/* position on the line_buffer[]           */
     com_table	*ctp;		/* command table pointer		   */
     int		key_len;	/* the length of the key word             */
-    int		n;		/* how many chars to compare */
     int		in_cmt;		/* are we now within a comment? */
     int		more_on_line = 0;/* are we withing a multi-command line? */
 

@@ -488,8 +488,6 @@ char			*buffer;
 int			ctp;
 {
     int		i;
-    point_t	point;
-    vect_t	direction;
 
     int		(*phc)();	/* Previous hit callback */
     int		(*pmc)();	/* Previous miss callback */
