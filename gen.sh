@@ -472,25 +472,30 @@ arch)
 		compress | crypt ${KEY} > ${FTP_ARCHIVE}-c.Z
 	chmod 444 ${FTP_ARCHIVE}-c.Z
 	echo "${FTP_ARCHIVE}-c.Z created (core 2)"
-	/usr/gnu/bin/tar -cvf - -X ${EXCLUDE} Copy* README [m-z]* zzzEND |\
+
 	/usr/gnu/bin/tar -cvf - -X ${EXCLUDE} Copy* README [m-t]* zzzEND |\
 		compress | crypt ${KEY} > ${FTP_ARCHIVE}-d.Z
 	chmod 444 ${FTP_ARCHIVE}-d.Z
 	echo "${FTP_ARCHIVE}-d.Z created (core 3)"
-	/usr/gnu/bin/tar cfv - Copy* README pix zzzEND |\
+
 	/usr/gnu/bin/tar -cvf - -X ${EXCLUDE} Copy* README [u-z]* zzzEND |\
 		compress | crypt ${KEY} > ${FTP_ARCHIVE}-e.Z
-	echo "${FTP_ARCHIVE}-e.Z created (pix)"
+	chmod 444 ${FTP_ARCHIVE}-e.Z
 	echo "${FTP_ARCHIVE}-e.Z created (core 4)"
-	/usr/gnu/bin/tar cfv - Copy* README vfont zzzEND |\
+
 	/usr/gnu/bin/tar cfv - Copy* README pix zzzEND |\
 		compress | crypt ${KEY} > ${FTP_ARCHIVE}-f.Z
-	echo "${FTP_ARCHIVE}-f.Z created (vfont)"
+	chmod 444 ${FTP_ARCHIVE}-f.Z
 	echo "${FTP_ARCHIVE}-f.Z created (pix)"
 
-##		compress | crypt ${KEY} > ${FTP_ARCHIVE}-g.Z
-##	chmod 444 ${FTP_ARCHIVE}-g.Z
-##	echo "${FTP_ARCHIVE}-g.Z created (contrib)"
+	/usr/gnu/bin/tar cfv - Copy* README vfont zzzEND |\
+		compress | crypt ${KEY} > ${FTP_ARCHIVE}-g.Z
+	chmod 444 ${FTP_ARCHIVE}-g.Z
+	echo "${FTP_ARCHIVE}-g.Z created (vfont)"
+
+##	/usr/gnu/bin/tar cfv - Copy* README contributed zzzEND |\
+##		compress | crypt ${KEY} > ${FTP_ARCHIVE}-h.Z
+##	chmod 444 ${FTP_ARCHIVE}-h.Z
 ##	echo "${FTP_ARCHIVE}-h.Z created (contrib)"
 
 	rm -f ${EXCLUDE}
