@@ -7,6 +7,7 @@
 #else
 #include <strings.h>
 #endif
+#include "tcl.h"
 #include "tk.h"
 #include "machine.h"
 #include "vmath.h"
@@ -1064,6 +1065,9 @@ char    **argv;
     DM_CLOSE(dmp);
 
   exit(0);
+
+  /* not reached */
+  return TCL_OK;
 }
 
 
@@ -1106,6 +1110,7 @@ X_dmInit()
     return TCL_ERROR;
   }
 
+  ((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.zclip = 0;
   Tk_CreateGenericHandler(X_doEvent, (ClientData)DM_TYPE_X);
   dm_configureWindowShape(dmp);
   DM_SET_WIN_BOUNDS(dmp, windowbounds);
@@ -1318,6 +1323,7 @@ Ogl_dmInit()
   }
 
   dmp->dm_vp = &Viewscale;
+  ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zclipping_on = 0;
   Tk_CreateGenericHandler(Ogl_doEvent, (ClientData)DM_TYPE_OGL);
   dm_configureWindowShape(dmp);
   DM_SET_WIN_BOUNDS(dmp, windowbounds);
@@ -1522,14 +1528,16 @@ Ogl_colorchange()
 static void
 Ogl_establish_zbuffer()
 {
-  ogl_establish_zbuffer(dmp);
+  dm_zbuffer(dmp,
+	     ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on);
   refresh();
 }
 
 static void
 Ogl_establish_lighting()
 {
-  ogl_establish_lighting(dmp);
+  dm_lighting(dmp,
+	      ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.lighting_on);
   refresh();
 }
 #endif
