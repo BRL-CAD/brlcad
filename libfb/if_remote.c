@@ -18,8 +18,6 @@
  *  Copyright Notice -
  *	This software is Copyright (C) 1986 by the United States Army.
  *	All rights reserved.
- *
- *	$Header$ (BRL)
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
@@ -61,55 +59,59 @@ static struct pkg_switch pkgswitch[] = {
 	{ 0, NULL, NULL }
 };
 
-_LOCAL_ int	rem_dopen(),
-		rem_dclose(),
-		rem_dclear(),
-		rem_bread(),
-		rem_bwrite(),
-		rem_cmread(),
-		rem_cmwrite(),
-		rem_window_set(),
-		rem_zoom_set(),
-		rem_cmemory_addr(),
+_LOCAL_ int	rem_open(),
+		rem_close(),
+		rem_clear(),
+		rem_read(),
+		rem_write(),
+		rem_rmap(),
+		rem_wmap(),
+		rem_window(),
+		rem_zoom(),
+		rem_cursor(),
+		rem_scursor(),
 		rem_readrect(),
 		rem_writerect(),
+		rem_flush(),
+		rem_free(),
 		rem_help();
 
-FBIO remote_interface =
-		{
-		rem_dopen,
-		rem_dclose,
-		fb_null,			/* reset		*/
-		rem_dclear,
-		rem_bread,
-		rem_bwrite,
-		rem_cmread,
-		rem_cmwrite,
-		fb_null,			/* viewport_set		*/
-		rem_window_set,
-		rem_zoom_set,
-		fb_null,			/* curs_set		*/
-		rem_cmemory_addr,
-		fb_null,			/* cursor_move_screen_addr */
-		rem_readrect,
-		rem_writerect,
-		rem_help,
-		"Remote Device Interface",	/* should be filled in	*/
-		1024,				/* " */
-		1024,				/* " */
-		"host:[dev]",
-		512,
-		512,
-		-1,
-		PIXEL_NULL,
-		PIXEL_NULL,
-		PIXEL_NULL,
-		-1,
-		0,
-		0L,
-		0L,
-		0
-		};
+FBIO remote_interface = {
+	rem_open,
+	rem_close,
+	fb_null,			/* fb_reset */
+	rem_clear,
+	rem_read,
+	rem_write,
+	rem_rmap,
+	rem_wmap,
+	fb_null,			/* fb_viewport */
+	rem_window,
+	rem_zoom,
+	fb_null,			/* fb_setcursor */
+	rem_cursor,
+	rem_scursor,
+	rem_readrect,
+	rem_writerect,
+	rem_flush,
+	rem_free,
+	rem_help,
+	"Remote Device Interface",	/* should be filled in	*/
+	1024,				/* " */
+	1024,				/* " */
+	"host:[dev]",
+	512,
+	512,
+	-1,
+	PIXEL_NULL,
+	PIXEL_NULL,
+	PIXEL_NULL,
+	-1,
+	0,
+	0L,
+	0L,
+	0
+};
 
 void	pkg_queue(), flush_queue();
 static	struct pkg_conn *pcp;
@@ -119,34 +121,169 @@ extern unsigned short fbgetshort();
 extern unsigned long fbgetlong();
 extern char *fbputshort(), *fbputlong();
 
+/* True if the non-null string s is all digits */
+static int
+numeric( s )
+register char *s;
+{
+	if( s == (char *)0 || *s == 0 )
+		return	0;
+
+	while( *s ) {
+		if( *s < '0' || *s > '9' )
+			return 0;
+		s++;
+	}
+
+	return 1;
+}
+
+/*
+ *  Break up a file specification into its component parts.
+ *  We try to be infinitely flexible here which makes this complicated.
+ *  Handle any of the following:
+ *
+ *	File			Host		Port		Dev
+ *	0			localhost	0		NULL
+ *	0:[dev]			localhost	0		dev
+ *	:0			localhost	0		NULL
+ *	host:[dev]		host		remotefb	dev
+ *	host:0			host		0		NULL
+ *	host:0:[dev]		host		0		dev
+ *
+ *  Return -1 on error, else 0.
+ */
+parse_file( file, host, portp, device )
+char *file;	/* input file spec */
+char *host;	/* host part */
+int  *portp;	/* port number */
+char *device;	/* device part */
+{
+	int	port;
+	char	prefix[256];
+	char	*rest;
+	char	*dev;
+	char	*colon;
+
+	if( numeric(file) ) {
+		/* 0 */
+		port = atoi(file);
+		strcpy( host, "localhost" );
+		dev = NULL;
+		goto done;
+	}
+	if( (colon = strchr(file, ':')) != NULL ) {
+		strncpy( prefix, file, colon-file );
+		prefix[colon-file] = NULL;
+		rest = colon+1;
+		if( numeric(prefix) ) {
+			/* 0:[dev] */
+			port = atoi(prefix);
+			strcpy( host, "localhost" );
+			dev = rest;
+			goto done;
+		} else {
+			/* :[dev] or host:[dev] */
+			strcpy( host, prefix );
+			if( numeric(rest) ) {
+				/* :0 or host:0 */
+				port = atoi(rest);
+				dev = NULL;
+				goto done;
+			} else {
+				/* check for [host]:0:[dev] */
+				if( (colon = strchr(rest, ':')) != NULL ) {
+					strncpy( prefix, rest, colon-rest );
+					prefix[colon-rest] = NULL;
+					if( numeric(prefix) ) {
+						port = atoi(prefix);
+						dev = colon+1;
+						goto done;
+					} else {
+						/* No port given! */
+						dev = rest;
+						port = 5558;	/*XXX*/
+						goto done;
+					}
+				} else {
+					/* No port given */
+					dev = rest;
+					port = 5558;		/*XXX*/
+					goto done;
+				}
+			}
+		}
+	}
+	/* bad file spec */
+	return -1;
+
+done:
+	/* Default hostname */
+	if( strlen(host) == 0 ) {
+		strcpy( host, "localhost" );
+	}
+	/* Magic port number mapping */
+	if( port < 0 )
+		return -1;
+	if( port < 1024 )
+		port += 5559;
+	/*
+	 * In the spirit of X, let "unix" be an alias for the "localhost".
+	 * Eventually this may invoke UNIX Domain PKG (if we can figure
+	 * out what to do about socket pathnames).
+	 */
+	if( strcmp(host,"unix") == 0 )
+		strcpy( host, "localhost" );
+
+	/* copy out port and device */
+	*portp = port;
+	strcpy( device, dev );
+
+	return( 0 );
+}
+
 /*
  * Open a connection to the remotefb.
  * We send NET_LONG_LEN bytes of mode, NET_LONG_LEN bytes of size, then the
  *  devname (or NULL if default).
  */
 _LOCAL_ int
-rem_dopen( ifp, devicename, width, height )
+rem_open( ifp, file, width, height )
 register FBIO	*ifp;
-register char	*devicename;
+register char	*file;
 int	width, height;
 {
 	register int	i;
 	struct pkg_conn *pc;
 	char	buf[128];
-	char	*file;
 	char	hostname[MAX_HOSTNAME];
+	char	portname[MAX_HOSTNAME];
+	char	device[MAX_HOSTNAME];
+	int	port;
 
-	if( devicename == NULL || (file = strchr( devicename, ':' )) == NULL ) {
-		fb_log( "rem_dopen: bad device name \"%s\"\n",
-			devicename == NULL ? "(null)" : devicename );
+	hostname[0] = NULL;
+	portname[0] = NULL;
+	port = 0;
+
+	if( file == NULL || parse_file(file, hostname, &port, device) < 0 ) {
+		/* too wild for our tastes */
+		fb_log( "rem_open: bad device name \"%s\"\n",
+			file == NULL ? "(null)" : file );
 		return	-1;
 	}
-	for( i = 0; devicename[i] != ':' && i < MAX_HOSTNAME; i++ )
-		hostname[i] = devicename[i];
-	hostname[i] = '\0';
+	/*printf("hostname = \"%s\", port = %d, device = \"%s\"\n", hostname, port, device );*/
+
+	if( port != 5558 ) {
+		sprintf(portname, "%d", port);
+		if( (pc = pkg_open( hostname, portname, 0, 0, 0, pkgswitch, fb_log )) == PKC_ERROR ) {
+			fb_log(	"rem_open: can't connect to fb server on host \"%s\", port \"%s\".\n",
+				hostname, portname );
+			return	-1;
+		}
+	} else
 	if( (pc = pkg_open( hostname, "remotefb", 0, 0, 0, pkgswitch, fb_log )) == PKC_ERROR &&
 	    (pc = pkg_open( hostname, "5558", 0, 0, 0, pkgswitch, fb_log )) == PKC_ERROR ) {
-		fb_log(	"remote_open: can't connect to remotefb server on host \"%s\".\n",
+		fb_log(	"rem_open: can't connect to remotefb server on host \"%s\".\n",
 			hostname );
 		return	-1;
 	}
@@ -165,8 +302,8 @@ int	width, height;
 
 	(void)fbputlong( width, &buf[0*NET_LONG_LEN] );
 	(void)fbputlong( height, &buf[1*NET_LONG_LEN] );
-	(void) strcpy( &buf[8], file + 1 );
-	pkg_send( MSG_FBOPEN, buf, strlen(devicename)+2*NET_LONG_LEN, pc );
+	(void) strcpy( &buf[8], device );
+	pkg_send( MSG_FBOPEN, buf, strlen(device)+2*NET_LONG_LEN, pc );
 
 	/* return code, max_width, max_height, width, height as longs */
 	pkg_waitfor( MSG_RETURN, buf, sizeof(buf), pc );
@@ -180,7 +317,7 @@ int	width, height;
 }
 
 _LOCAL_ int
-rem_dclose( ifp )
+rem_close( ifp )
 FBIO	*ifp;
 {
 	char	buf[NET_LONG_LEN+1];
@@ -193,7 +330,20 @@ FBIO	*ifp;
 }
 
 _LOCAL_ int
-rem_dclear( ifp, bgpp )
+rem_free( ifp )
+FBIO	*ifp;
+{
+	char	buf[NET_LONG_LEN+1];
+
+	/* send a free package to remote */
+	pkg_send( MSG_FBFREE, (char *)0, 0, PCP(ifp) );
+	pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) );
+	pkg_close( PCP(ifp) );
+	return( fbgetlong( &buf[0*NET_LONG_LEN] ) );
+}
+
+_LOCAL_ int
+rem_clear( ifp, bgpp )
 FBIO	*ifp;
 RGBpixel	*bgpp;
 {
@@ -216,7 +366,7 @@ RGBpixel	*bgpp;
  *  Send as longs:  x, y, num
  */
 _LOCAL_ int
-rem_bread( ifp, x, y, pixelp, num )
+rem_read( ifp, x, y, pixelp, num )
 register FBIO	*ifp;
 int		x, y;
 RGBpixel	*pixelp;
@@ -237,7 +387,7 @@ int		num;
 	pkg_waitfor( MSG_RETURN, (char *)pixelp,
 			num*sizeof(RGBpixel), PCP(ifp) );
 	if( (ret=PCP(ifp)->pkc_len) == 0 )  {
-		fb_log( "rem_bread: read %d at <%d,%d> failed.\n",
+		fb_log( "rem_read: read %d at <%d,%d> failed.\n",
 			num, x, y );
 		return(-1);
 	}
@@ -248,7 +398,7 @@ int		num;
  * As longs, x, y, num
  */
 _LOCAL_ int
-rem_bwrite( ifp, x, y, pixelp, num )
+rem_write( ifp, x, y, pixelp, num )
 register FBIO	*ifp;
 int		x, y;
 RGBpixel	*pixelp;
@@ -339,7 +489,7 @@ RGBpixel	*pp;
  *  32-bit longs: mode, x, y
  */
 _LOCAL_ int
-rem_cmemory_addr( ifp, mode, x, y )
+rem_cursor( ifp, mode, x, y )
 FBIO	*ifp;
 int	mode;
 int	x, y;
@@ -356,10 +506,30 @@ int	x, y;
 }
 
 /*
+ *  32-bit longs: mode, x, y
+ */
+_LOCAL_ int
+rem_scursor( ifp, mode, x, y )
+FBIO	*ifp;
+int	mode;
+int	x, y;
+{
+	char	buf[3*NET_LONG_LEN+1];
+	
+	/* Send Command */
+	(void)fbputlong( mode, &buf[0*NET_LONG_LEN] );
+	(void)fbputlong( x, &buf[1*NET_LONG_LEN] );
+	(void)fbputlong( y, &buf[2*NET_LONG_LEN] );
+	pkg_send( MSG_FBSCURSOR, buf, 3*NET_LONG_LEN, PCP(ifp) );
+	pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) );
+	return( fbgetlong( buf ) );
+}
+
+/*
  *	x,y
  */
 _LOCAL_ int
-rem_window_set( ifp, x, y )
+rem_window( ifp, x, y )
 FBIO	*ifp;
 int	x, y;
 {
@@ -377,7 +547,7 @@ int	x, y;
  *	x,y
  */
 _LOCAL_ int
-rem_zoom_set( ifp, x, y )
+rem_zoom( ifp, x, y )
 FBIO	*ifp;
 int	x, y;
 {
@@ -394,7 +564,7 @@ int	x, y;
 #define REM_CMAP_BYTES	(256*3*2)
 
 _LOCAL_ int
-rem_cmread( ifp, cmap )
+rem_rmap( ifp, cmap )
 register FBIO		*ifp;
 register ColorMap	*cmap;
 {
@@ -414,7 +584,7 @@ register ColorMap	*cmap;
 }
 
 _LOCAL_ int
-rem_cmwrite( ifp, cmap )
+rem_wmap( ifp, cmap )
 register FBIO		*ifp;
 register ColorMap	*cmap;
 {
@@ -432,6 +602,18 @@ register ColorMap	*cmap;
 		}
 		pkg_send( MSG_FBWMAP, cm, REM_CMAP_BYTES, PCP(ifp) );
 	}
+	pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) );
+	return( fbgetlong( &buf[0*NET_LONG_LEN] ) );
+}
+
+_LOCAL_ int
+rem_flush( ifp )
+FBIO	*ifp;
+{
+	char	buf[NET_LONG_LEN+1];
+
+	/* send a flush package to remote */
+	pkg_send( MSG_FBFLUSH, (char *)0, 0, PCP(ifp) );
 	pkg_waitfor( MSG_RETURN, buf, NET_LONG_LEN, PCP(ifp) );
 	return( fbgetlong( &buf[0*NET_LONG_LEN] ) );
 }
