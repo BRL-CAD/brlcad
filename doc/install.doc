@@ -75,21 +75,23 @@ the software has been designed to install automaticly, without
 need for any modifications to the configuration files.
 The hardware/software configurations
 which are known to have "automatic support" in this release
-are listed in this table:
+are listed in this table,
+along with the
+default configuration specified in \fBCakefile.defs\fR:
 .TS
 center box;
-l l l.
-MTYPE	Hardware	Software
+l l l l l.
+MTYPE	Hardware	Software	Framebuffer	MGED
 _
-fx	Alliant FX/8, /80	Concentrix 3.0, 4.0
-xmp	Cray X-M/P	UNICOS 3.0.10
-cr2	Cray-2	UNICOS 3
-vax	DEC VAX-11	Berkeley 4.2 BSD, 4.3 BSD
-sel	Gould PN6080, PN9080	UTX/30 Rel 2.0
-pyr	Pyramid	??
-3d	SGI 3030	Version 3.5, 3.6
-4d	SGI 4D	Version 2
-sun3	Sun-3/*	SunOS 3.4
+fx	Alliant FX/8, /80	Concentrix 3.0, 4.0	net	-
+xmp	Cray X-M/P	UNICOS 3.0.10	net	-
+cr2	Cray-2	UNICOS 3	net	-
+vax	DEC VAX-11	Berkeley 4.2 BSD, 4.3 BSD	adage, net	mg, vg
+sel	Gould PN6080, PN9080	UTX/32 Rel 2.0	net	-
+pyr	Pyramid 9820	OSx Version 4.1	-	-
+3d	SGI 3030	Version 3.5, 3.6	sgi, net	sgi
+4d	SGI 4D	Version 2	sgi, net	sgi
+sun3	Sun-3/*	SunOS 3.4	sun, net	sun
 .TE
 .IP b)
 With slight modifications to the configuration files, these
@@ -155,25 +157,6 @@ mg	Megatek 7250
 rat	Raster Tech One/180,380
 rat80	Raster Tech One/80
 ps300	E&S Picture System 300
-.TE
-.PP
-This table shows the default configuration specified in \fBCakefile.defs\fR
-for each supported processor.
-.TS
-center box;
-l l l.
-MTYPE	Framebuffer	MGED
-_
-vax	adage, net	mg, vg
-3d	sgi, net	sgi
-4d	sgi, net	sgi
-sun3	sun, net	sun
-alliant	net	-
-sel	net	-
-xmp	net	-
-cr2	net	-
-eta10	-	-
-pyramid	-	-
 .TE
 .NH 1
 LOADING THE SOFTWARE
@@ -304,6 +287,18 @@ dmdfb	libfb support for layers in Teletype 5620 DMD terminal
 whetstone	FORTRAN Whetstone benchmark
 dhrystone	"C" Dhyrstone benchmark
 .TE
+.TS
+center;
+l s
+l l.
+CONTRIBUTED SOFTWARE
+_
+cake	A Fifth Generation version of MAKE
+off-3d	"OFF - A 3D Object File Format" document
+pbm	Portable Bitmap Toolkit
+spd	"Standard" Procedural Databases
+toolkit-2.0	Utah Raster Toolkit, Release 2.0
+.TE
 .PP
 Please note that
 this distribution package does \fInot\fR include the various
@@ -318,15 +313,110 @@ CONFIGURATION
 If you are configuring the software for more than one type of computer,
 you will have to go through this configuration procedure separately for
 each kind of system.
-Configuration question apply only to the hardware available on the
+Configuration questions apply only to the hardware available on the
 particular system presently being configured.
+.NH 2
+Normal (Single Machine) Configuration
+.PP
+As \fBCakefile.defs\fR is distributed,
+the default is to place the compiled object modules and final products
+in the same directories as contain the source code.
+This is the style of operation that most UNIX software packages
+follow.
+It has the advantage of being convenient and familiar.
+.NH 2
+NFS-based Multi-Machine Configuration
 .PP
 If you have several types of machines sharing a single filesystem
-using NFS, and you wish to share the BRL-CAD source tree while
-maintaining separate binaries for each type of machine, this
-can be easily accomodated.
-XXX more
-
+using the Sun NFS (Network File System) or the AT&T RFS (Remote
+File System),
+and you wish to share a single copy of the BRL-CAD source tree
+with all the remote client machines,
+while maintaining separate binaries
+for each different \fItype\fR of client machine,
+then you probably want to take advantage of BRL-CAD's NFS-style
+multi-machine support.
+In this mode, a separate directory is made for each
+source directory for each type of client machine.
+This way, the binaries for each type of client machine can not
+co-mingle, yet everything is generated from a common set of
+source code.
+For example, the sources in cad/librt/ would have sun3 binaries
+in the directory cad/.librt.sun3/, and SGI 4-D binaries
+would be located in the directory cad/.librt.4d/.
+The leading dot on the binary directories keeps them ``invisible''
+to \fBls\fR(1).
+.PP
+This multi-machine configuration
+is the strategy used at BRL, where a single fileserver
+holds the master copy of the source code, and provides NFS
+service for Goulds, Alliants, Sun-3s, SGI 3-Ds and SGI-4Ds.
+Having this capability makes it much easier to keep consistent
+binaries on a wide variety of machines, and minimizes "out of phase"
+errors between different members of the development group.
+Having the source code and binaries in separate directories requires
+slightly more care to be certain that you are in the right directory
+before running \fBcake\fR,
+but being able to share one set of sources across many different
+kinds of machines makes this well worthwhile.
+If you only have one kind of machine, don't bother.
+.PP
+To adopt this style of behavior,
+you will need to activate the "NFS" option in \fBCakefile.defs\fR,
+by adding a \fB#define NFS 1\fR line
+after the large NFS comment block, so that it reads:
+.sp .5
+.nf
+.ft B
+	#undef NFS
+	#define NFS	1
+.ft R
+.fi
+.sp .5
+Then, further on, you will also be instructed to run \fBcake mkdir\fR
+to set up the binary directories for the machine you are installing.
+.PP
+Some C-shell aliases that have proven helpful for dealing with this
+somewhat more complex environment are:
+.sp .5
+.nf
+.ft B
+# Determine machine type
+test -f /usr/brlcad/bin/machinetype.sh
+if ( $status == 0 )  then
+	set machine=`sh /usr/brlcad/bin/machinetype.sh`
+else
+	set machine=unknown
+endif
+# Build "mcd" to push source-code dir onto dir stack, then goto binary dir
+foreach i ( /n/spark/m/cad   ~/cad )
+	test -d $i
+	if ( $status == 0 )  then
+		alias mcd "cd $i/\!:1; pushd ../.\!:1."'$machine'
+		break
+	endif
+end
+.ft R
+.fi
+.sp .5
+.NH 2
+CAKE:  A Fifth Generation MAKE
+.PP
+The complexity of the NFS environment described above required a
+tool for maintaining binary files that was more powerful than
+the standard UNIX \fBmake\fR(1) utility.
+After some evaluation of the options, the \fBcake\fR(1)
+utility was selected.
+\fBcake\fR uses PROLOG-style pattern matching and resolution,
+rather than the suffix-to-suffix translation of \fBmake\fR,
+making it far more general.
+\fBcake\fR also uses the C-PreProcessor (/lib/cpp) to provide
+a general macro, conditional code, and file inclusion facility.
+However, for all these differences, the actual \fBCakefile\fR files
+that you will find in the various source directories will look
+similar enough to \fBMakefile\fR files that all but the most
+extensive configuration changes can be attempted without having
+to learn much about \fBcake\fR.
 .NH 1
 INSTALLATION DIRECTORIES
 .PP
@@ -517,13 +607,17 @@ has been correctly installed into your search path and exported.
 Next, it installs several shell scripts (including \fBmachinetype.sh\fR)
 into BINDIR.
 Finally, it compiles \fBcake\fR and \fBcakeaux\fR.
-Next, run:
+.pp
+Only if you elected the NFS-style multi-machine support above
+and edited \fBCakefile.defs\fR, you need to run
 .ft B
 .sp .5
-	make mkdir
+	cake mkdir
 .sp .5
 .ft R
-to make directories for all of the binaries.
+at this point, to make the binary directories for this machine.
+This step will need to be repeated while logged into each different
+kind of machine that you will be supporting via NFS.
 .NH 1
 COMPILING AND RUNNING THE BENCHMARK
 .PP
@@ -606,10 +700,10 @@ rmdir	NFS: remove binary dirs
 .TE
 .PP
 Within each directory is a \fBCakefile\fR that includes
-\fB../Cakefile.defs\fR, either
-\fB../Cakefile.lib\fR (if the directory makes a library) or
-\fB../Cakefile.prog\fR (if the directory makes programs),
-and finally \fB../Cakefile.rules\fR.
+\fB\&../Cakefile.defs\fR, either
+\fB\&../Cakefile.lib\fR (if the directory makes a library) or
+\fB\&../Cakefile.prog\fR (if the directory makes programs),
+and finally \fB\&../Cakefile.rules\fR.
 This structure allows all configuration of this package to be
 concentrated in the single file \fBCakefile.defs\fR,
 with per-product structural information in the individual
@@ -634,26 +728,48 @@ sit in the top ("cad") directory, and run:
 .NH 2
 Installing Network Framebuffer Service
 .PP
-To offer in-bound remote framebuffer service, you may wish to compile
-"rfbd", the remote-framebuffer daemon. If you wish to do this, you must
-also add the IF_REMOTE capability to libfb. If your system does not support
-inetd(8), then rfbd should be started in /etc/rc.local. However, if your
-system does support inetd(8), then rfbd must be started with this
-/etc/inetd.conf entry:
-.sp
+If your system reported HAS_TCP=1, then you have TCP/IP networking,
+and you have the option of
+offering in-bound remote framebuffer service via
+\fBrfbd\fR, the remote-framebuffer daemon.
+If you wish to do this, you should be sure that
+the IF_REMOTE capability has been selected for \fBlibfb\fR.
+(In the supported configurations, it is).
+.PP
+To define the service,
+add this line to /etc/services:
+.sp .5
+.ft B
+remotefb     5558/tcp       # Remote Frame Buffer
+.ft R
+.PP
+If your system does not support \fBinetd\fR(8),
+\fBrfbd\fR should be started in /etc/rc.local.
+If your system uses the Sun style of \fBinetd\fR(8),
+\fBrfbd\fR must be started with this /etc/servers entry:
+.sp .5
 .nf
-remotefb stream tcp     nowait  nobody  /usr/brl/etc/rfbd       rfbd
-.sp
-This depends on having a ``nobody'' user, so be certain that your
-/etc/passwd file contains a line like this.  (The choice of UID and
-GID of -2 is intentional).
-.sp
-nobody:*:-2:-2:NFS Unprivileged user:/nonexistent:/dev/null
-.sp
-Also, be certain to add this line to /etc/services:
-.sp
-remotefb        5558/tcp                        # Remote Frame Buffer
+.ft B
+remotefb tcp    /usr/brl/etc/rfbd
+.ft R
 .fi
+.PP
+If your system supports the Berkeley 4.3 BSD style of \fBinetd\fR(8),
+\fBrfbd\fR must be started with this /etc/inetd.conf entry:
+.sp .5
+.nf
+.ft B
+remotefb stream tcp     nowait  nobody  /usr/brl/etc/rfbd       rfbd
+.ft R
+.fi
+.sp .5
+This entry depends on having a ``nobody'' user, so be certain that your
+/etc/passwd file contains a line like this.  (The choice of UID and
+GID of -2 is intentional):
+.sp .5
+.ft B
+nobody:*:-2:-2:NFS Unprivileged user:/nonexistent:/dev/null
+.ft R
 .NH 2
 Special Considerations on an SGI 3-D
 .PP
@@ -662,7 +778,8 @@ it is necessary to modify
 certain kernel limits in the binary image of your kernel to be able to
 use a large block of shared memory.  Follow the directions in
 libfb/if_sgi.c, and then reboot your workstation to allow the changes to
-take effect.  There are claims that on some SGI machines, this may
+take effect.  There are claims that on some SGI machines with only
+4 Mbytes of memory, this may
 cause unreliable operation, so be certain to keep a backup kernel.
 .NH 1
 SUPPORTING A NEW MACHINE
@@ -740,12 +857,16 @@ as they serve no purpose in a non-networked environment.
 .NH 2
 Cakefile.defs
 .PP
-There are a great many additional symbols which may be defined
-to specify additional details of the configuration.
+The file \fBCakefile.defs\fR is included in every local \fBCakefile\fR,
+and contains the common definitions
+and configuration information
+for the BRL-CAD Package.
+There are a great many symbols which may be defined
+to specify the details of the desired configuration.
 .NH 3
-
+Machine Type Information
 .PP
-Next, edit the file \fBCakefile.defs\fR and
+Edit the file \fBCakefile.defs\fR and
 start by making the same general kind of additions as were done
 for \fBmachinetype.sh\fR.
 When porting the BRL-CAD software to a new machine,
@@ -757,7 +878,8 @@ results, then a \fBcake clobber\fR can be done,
 the configuration edited to add more complexity,
 and a full \fBcake all\fR can be run.
 .PP
-As an example, the additions to support the ETA-10 are simply:
+As an example which tracks the example in the previous section,
+the additions to support the ETA-10 are simply:
 .ft B
 .sp .5
 .nf
@@ -817,6 +939,9 @@ this can be done with something like this:
 .ft R
 .sp .5
 For most systems, the default values should be fine.
+Changing the definition of CC can be useful when testing a new release
+of the C compiler.  The BRL-CAD Package is used by several hardware vendors
+as part of their standard compiler regression test suite.
 .NH 3
 FORTRAN Compiler Configuration
 .PP
@@ -935,8 +1060,8 @@ This is taken directly from Cakefile.defs:
 .sp .5
 .nf
 .ft B
-#	define	LIBFB_OBJS	if_remote pkg if_sun
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_SUN
+#	define	LIBFB_OBJS	if_remote pkg if_sun
 #	define	LIBFB_SETUP	(rm -fr tmp;  mkdir tmp; \\
 		rm -f libfb.a; cd tmp; \\
 		AR x /usr/lib/libsuntool.a; \\
@@ -955,6 +1080,24 @@ from \fBlibpkg\fR).
 The second important thing to note is the definition of LIBFB_SETUP,
 which includes the entire contents of three SUN-specific libraries
 in \fBlibfb\fR, so that \fBlibfb\fR is completely self-contained.
+.PP
+As a final example, configuring a machine to use the MIT X11
+X-Window System as a framebuffer uses these definitions:
+.sp .5
+.nf
+.ft B
+#	define	LIBFB_CONFIG	-DIF_X -I/usr/local/include/X11
+#	define	LIBFB_OBJS	if_X
+#	define	LIBFB_SETUP	(rm -f PRODUCTS; \\
+		cp /usr/local/lib/libX11.a PRODUCTS; \\
+		AR uv PRODUCTS *.o )
+.ft R
+.fi
+.sp .5
+Note how the X11 include directory is added to LIBFB_CONFIG,
+and how the PRODUCTS (libfb.a) file is first initialized with
+a full copy of the X11 library, and then the \fBlibfb\fR modules
+are added into that.
 .PP
 If you change the configuration of libfb
 partway through building the system, be certain to run
@@ -1195,7 +1338,7 @@ Changing Configurations of libfb, mged, librt
 For \fBlibfb\fR, \fBmged\fR,
 and \fBlibrt\fR,
 it is also necessary to run "\fBcake clean\fR" in those directories
-after making related changes to \fBCakefile\fR or \fB../Cakefile.defs\fR,
+after making related changes to \fBCakefile\fR or \fB\&../Cakefile.defs\fR,
 because the compiled binaries
 of some modules depend on configuration options selected in the Cakefiles.
 Failure to do this is the single most common cause of difficulty
@@ -1229,16 +1372,16 @@ operate correctly in spite of this, beware of the \fBrt\fR program failing to
 find roots, or being unable to perform a "box push". Unfortunately, the
 "star.pix" \fBrt\fR benchmark will will fail due to lack of floating point
 precision, and generate lots of diagnostics, filling your disk.
-.sp
+.PP
 SGI software release version 3.3.1, 3.4, and 3.5 have a defective
 library version of hypot();  be aware of the (slower) substitute in
 "rt/machine.c".
-.sp
+.PP
 Operations of the form "*fp += incr;" are known to compile incorrectly
 on release 3.5 when "fp" is declared as "\fBregister double\fR *fp"
 (or \fBregister float\fR).  The one known instance of this in
 util/bwmod.c has been "fixed" with a #\fBifdef\fR sgi.
-.sp
+.PP
 When running MGED on a 3.5 Iris with XNS networking, there is no
 select() capability, so non-blocking I/O has to be used instead.
 This has two undesirable side effects.  First, it puts MGED into
@@ -1246,17 +1389,23 @@ a hard loop polling the workstation keyboard.  Second, it seems to
 have an interaction with control-S/control-Q flow control -- if you
 suspend output, most of it will be discarded.  However, MGED is
 still somewhat usable in this configuraition.
-.sp
+.PP
 Currently there are no good solutions to these problems.  Voice your
 opinions to the vendor.
-.sp
-It is very useful to add a "gclear" account to each SGI 3-d system,
+.PP
+As a helpful hint,
+it is very useful to add a "gclear" account to each SGI 3-d system,
 so that after
-using the screen in 24-bit mode you can regain control of the screen by
-typing "gclear", whether or not you are logged in.  Add this line
+using the screen in 24-bit mode when not logged into the console,
+you can regain control of the screen by
+typing "gclear".
+By having a "gclear" account, this will succeed
+whether or not you are logged in.  Add this line
 to /etc/passwd:
-.sp
+.sp .5
+.ft B
 gclear::4:5::/tmp:/usr/bin/gclear
+.ft R
 .NH 1
 ENHANCEMENTS
 .PP
@@ -1312,11 +1461,16 @@ UPGRADING FROM RELEASE 2.3 to 3.0
 Release 3.0 introduces a great many new features;  too many to itemize here.
 In general there should be no difficulty upgrading from Release 2.3
 to Release 3.0, with one exception.
+.PP
 All earlier editions of the BRL-CAD package used Version 2 of the Utah
 ``RLE'' (Run-Lenght Encoded) image format.
 The Utah Raster Toolkit uses Version 3, which is incompatible.
 In BRL-CAD Release 3.0, this latest Utah RLE format is adopted,
 to permit complete interoperability with all the Utah Toolkit software.
+For sites that may have stored images in the old RLE format,
+the old library now exists as \fBliborle\fR,
+and all the programs have had an "o" added to their name, eg,
+the version of \fBrle-fb\fR which uses the old library is now \fBorle-fb\fR.
 .NH 1
 WORK IN PROGRES
 .PP
