@@ -193,8 +193,6 @@ grid_setup()
 	}
 }
 
-int	rt_savings;
-
 /*
  *			D O _ R U N
  *
@@ -208,7 +206,6 @@ do_run( a, b )
 
 	cur_pixel = a;
 	last_pixel = b;
-rt_savings = 0;
 
 	if( !rt_g.rtg_parallel )  {
 		/*
@@ -231,7 +228,6 @@ rt_savings = 0;
 		}
 		rt_add_res_stats( ap.a_rt_i, &resource[cpu] );
 	}
-bu_log("rt_savings = %d\n", rt_savings);
 	return;
 }
 
@@ -313,7 +309,6 @@ genptr_t	arg;
 				register struct floatpixel	*fp;
 				fp = &curr_float_frame[a.a_y*width + a.a_x];
 				if( fp->ff_frame >= 0 )  {
-rt_savings++;	/* non-parallel */
 					continue;	/* pixel was reprojected */
 				}
 			}
