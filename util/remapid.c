@@ -130,8 +130,8 @@ char	dmy_eos = '\0';
 BU_FILE	bu_iob[1] = {
     {
 	BU_FILE_MAGIC,
-#if defined(stdin)
-	stdin,
+#if 0
+	stdin,		/* this won't work on Linux, others */
 #else
     	NULL,
 #endif
