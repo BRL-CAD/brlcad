@@ -146,9 +146,13 @@ pattern(register char *cp, register int cnt)
 
 /******* timing *********/
 
+#ifndef _TIME_H
+typedef long	time_t;
+#endif
+
 #ifdef SYSV
-extern long time();
-static long time0;
+extern time_t time();
+static time_t time0;
 static struct tms tms0;
 #else
 static struct	timeval time0;	/* Time at which timeing started */
@@ -183,7 +187,7 @@ double
 read_timer(char *str, int len)
 {
 #ifdef SYSV
-	long now;
+	time_t now;
 	struct tms tmsnow;
 	char line[132];
 
