@@ -67,7 +67,8 @@
 			(a)[2] = (b)[2] * (c)
 
 /* Normalize vector 'a' to be a unit vector */
-#define VUNITIZE(a)	{static float f; f = 1.0/MAGNITUDE(a); \
+#define VUNITIZE(a)	{static double f; f = MAGNITUDE(a); \
+			if( f < 1.0e-10 ) f = 0.0; else f = 1.0/f; \
 			(a)[0] *= f; (a)[1] *= f; (a)[2] *= f; }
 
 /* Compose vector at `a' of:
