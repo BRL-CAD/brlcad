@@ -27,11 +27,24 @@ static char RCSplane[] = "@(#)$Header$ (BRL)";
 #include "./debug.h"
 
 /* XXX move to vmath.h */
+#define VADD2_2D(a,b,c)	{ \
+			(a)[X] = (b)[X] + (c)[X];\
+			(a)[Y] = (b)[Y] + (c)[Y];}
 #define VSUB2_2D(a,b,c)	{ \
 			(a)[X] = (b)[X] - (c)[X];\
 			(a)[Y] = (b)[Y] - (c)[Y];}
 #define MAGSQ_2D(a)	( (a)[X]*(a)[X] + (a)[Y]*(a)[Y] )
 #define VDOT_2D(a,b)	( (a)[X]*(b)[X] + (a)[Y]*(b)[Y] )
+#define VMOVE_2D(a,b)	{ \
+			(a)[X] = (b)[X];\
+			(a)[Y] = (b)[Y];}
+#define VSCALE_2D(a,b,c)	{ \
+			(a)[X] = (b)[X] * (c);\
+			(a)[Y] = (b)[Y] * (c); }
+#define VJOIN1_2D(a,b,c,d) 	{ \
+			(a)[X] = (b)[X] + (c) * (d)[X];\
+			(a)[Y] = (b)[Y] + (c) * (d)[Y]; }
+
 
 #define PI      3.14159265358979323
 
@@ -427,6 +440,11 @@ CONST struct rt_tol	*tol;
  *	line parameters of the intersection point on the 2 rays.
  *	The actual intersection coordinates can be found by
  *	substituting either of these into the original ray equations.
+ *
+ *  Note that for lines which are very nearly parallel, but not
+ *  quite parallel enough to have the determinant go to "zero",
+ *  the intersection can turn up in surprising places.
+ *  (e.g. when det=1e-15 and det1=5.5e-17, t=0.5)
  */
 int
 rt_isect_line2_line2( dist, p, d, a, c, tol )
@@ -443,7 +461,7 @@ CONST struct rt_tol	*tol;
 
 	RT_CK_TOL(tol);
 	if( rt_g.debug & DEBUG_MATH )  {
-		rt_log("rt_isect_line2_line2() p=(%g,%g), d=(%g,%g)\n\t\ta=(%g,%g), c=(%g,%g)\n",
+		rt_log("rt_isect_line2_line2() p=(%g,%g), d=(%g,%g)\n\t\t\ta=(%g,%g), c=(%g,%g)\n",
 			V2ARGS(p), V2ARGS(d), V2ARGS(a), V2ARGS(c) );
 	}
 
@@ -507,12 +525,17 @@ CONST struct rt_tol	*tol;
 	hx = a[X] - p[X];
 	hy = a[Y] - p[Y];
 	det1 = (c[X] * hy - hx * c[Y]);
+
+	/* XXX This zero tolerance here should actually be
+	 * XXX determined by something like
+	 * XXX max(c[X], c[Y], d[X], d[Y]) / MAX_FASTF_DYNAMIC_RANGE
+	 */
 	if( NEAR_ZERO( det, SQRT_SMALL_FASTF ) )  {
 		/* Lines are parallel */
 		if( !NEAR_ZERO( det1, SQRT_SMALL_FASTF ) )  {
 			/* Lines are NOT co-linear, just parallel */
 			if( rt_g.debug & DEBUG_MATH )  {
-				rt_log("parallel, not co-linear\n");
+				rt_log("\tparallel, not co-linear.  det=%e, det1=%g\n", det, det1);
 			}
 			return -1;	/* parallel, no intersection */
 		}
@@ -532,15 +555,19 @@ CONST struct rt_tol	*tol;
 			dist[1] = (hy + c[Y]) / d[Y];
 		}
 		if( rt_g.debug & DEBUG_MATH )  {
-			rt_log("colinear, t = %g, u = %g\n", dist[0], dist[1] );
+			rt_log("\tcolinear, t = %g, u = %g\n", dist[0], dist[1] );
 		}
 		return 0;	/* Lines co-linear */
+	}
+	if( rt_g.debug & DEBUG_MATH )  {
+		/* XXX This print is temporary */
+rt_log("\thx=%g, hy=%g, det=%g, det1=%g, det2=%g\n", hx, hy, det, det1, (d[X] * hy - hx * d[Y]) );
 	}
 	det = 1/det;
 	dist[0] = det * det1;
 	dist[1] = det * (d[X] * hy - hx * d[Y]);
 	if( rt_g.debug & DEBUG_MATH )  {
-		rt_log("intersection, t = %g, u = %g\n", dist[0], dist[1] );
+		rt_log("\tintersection, t = %g, u = %g\n", dist[0], dist[1] );
 	}
 
 	return 1;		/* Intersection found */
@@ -586,39 +613,87 @@ CONST vect_t		c;
 CONST struct rt_tol	*tol;
 {
 	register fastf_t f;
-	fastf_t		fuzz;
+	fastf_t		ctol;
 	int		ret;
 
 	RT_CK_TOL(tol);
+	if( rt_g.debug & DEBUG_MATH )  {
+		rt_log("rt_isect_line2_lseg2() p=(%g,%g), pdir=(%g,%g)\n\t\t\ta=(%g,%g), adir=(%g,%g)\n",
+			V2ARGS(p), V2ARGS(d), V2ARGS(a), V2ARGS(c) );
+	}
+
 	/*
 	 *  To keep the values of u between 0 and 1,
 	 *  C should NOT be scaled to have unit length.
 	 *  However, it is a good idea to make sure that
 	 *  C is a non-zero vector, (ie, that A and B are distinct).
 	 */
-	if( (fuzz = MAGSQ(c)) < tol->dist_sq )  {
-		return -4;		/* points A and B are not distinct */
+	if( (ctol = MAGSQ_2D(c)) < tol->dist_sq )  {
+		ret = -4;		/* points A and B are not distinct */
+		goto out;
 	}
 
 	if( (ret = rt_isect_line2_line2( dist, p, d, a, c, tol )) < 0 )  {
 		/* Lines are parallel, non-colinear */
-		return -3;		/* No intersection found */
+		ret = -3;		/* No intersection found */
+		goto out;
 	}
 	if( ret == 0 )  {
-		fastf_t	ptol;
+		fastf_t	dtol;
 		/*  Lines are colinear */
 		/*  If P within tol of either endpoint (0, 1), make exact. */
-		ptol = tol->dist / sqrt( d[X]*d[X] + d[Y]*d[Y] );
-		if( dist[0] > -ptol && dist[0] < ptol )  dist[0] = 0;
-		else if( dist[0] > 1-ptol && dist[0] < 1+ptol ) dist[0] = 1;
+		dtol = tol->dist / sqrt( d[X]*d[X] + d[Y]*d[Y] );
+		if( rt_g.debug & DEBUG_MATH )  {
+			rt_log("rt_isect_line2_lseg2() dtol=%g, dist[0]=%g, dist[1]=%g\n",
+				dtol, dist[0], dist[1]);
+		}
+		if( dist[0] > -dtol && dist[0] < dtol )  dist[0] = 0;
+		else if( dist[0] > 1-dtol && dist[0] < 1+dtol ) dist[0] = 1;
 
-		if( dist[1] > -ptol && dist[1] < ptol )  dist[1] = 0;
-		else if( dist[1] > 1-ptol && dist[1] < 1+ptol ) dist[1] = 1;
-		return 0;		/* Colinear */
+		if( dist[1] > -dtol && dist[1] < dtol )  dist[1] = 0;
+		else if( dist[1] > 1-dtol && dist[1] < 1+dtol ) dist[1] = 1;
+		ret = 0;		/* Colinear */
+		goto out;
 	}
 
 	/*
-	 *  The two lines intersect at a point.
+	 *  The two lines are claimed to intersect at a point.
+	 *  First, validate that hit point represented by dist[0]
+	 *  is in fact on and between A--B.
+	 *  (Nearly parallel lines can result in odd situations here).
+	 *  The performance hit of doing this is vastly preferable
+	 *  to returning wrong answers.  Know a faster algorithm?
+	 */
+	{
+		fastf_t		ab_dist;
+		point_t		b;
+		point_t		hit_pt;
+
+		VADD2_2D( b, a, c );
+		VJOIN1_2D( hit_pt, p, dist[0], d );
+		ret = rt_isect_pt2_lseg2( &ab_dist, a, b, hit_pt, tol );
+		if( ret <= 0 )  {
+			if( ab_dist < 0 )  {
+				ret = -2;	/* Intersection < A */
+			} else {
+				ret = -1;	/* Intersection >B */
+			}
+			goto out;
+		}
+		if( ret == 1 )  {
+			dist[1] = 0;
+			ret = 1;	/* Intersect is at A */
+			goto out;
+		}
+		if( ret == 2 )  {
+			dist[1] = 1;
+			ret = 2;	/* Intersect is at B */
+			goto out;
+		}
+		/* ret == 3, hit_pt is between A and B */
+	}
+
+	/*
 	 *  If the dist[1] parameter is outside the range (0..1),
 	 *  reject the intersection, because it falls outside
 	 *  the line segment A--B.
@@ -626,22 +701,37 @@ CONST struct rt_tol	*tol;
 	 *  Convert the tol->dist into allowable deviation in terms of
 	 *  (0..1) range of the parameters.
 	 */
-	fuzz = tol->dist / sqrt(fuzz);
-	if( dist[1] < -fuzz )
-		return -2;		/* Intersection < A */
-	if( (f=(dist[1]-1)) > fuzz )
-		return -1;		/* Intersection > B */
+	ctol = tol->dist / sqrt(ctol);
+	if( rt_g.debug & DEBUG_MATH )  {
+		rt_log("rt_isect_line2_lseg2() ctol=%g, dist[1]=%g\n", ctol, dist[1]);
+	}
+	if( dist[1] < -ctol )  {
+		ret = -2;		/* Intersection < A */
+		goto out;
+	}
+	if( (f=(dist[1]-1)) > ctol )  {
+		ret = -1;		/* Intersection > B */
+		goto out;
+	}
 
-	/* Check for fuzzy intersection with one of the verticies */
-	if( dist[1] < fuzz )  {
+	/* Check for ctoly intersection with one of the verticies */
+	if( dist[1] < ctol )  {
 		dist[1] = 0;
-		return 1;		/* Intersection at A */
+		ret = 1;		/* Intersection at A */
+		goto out;
 	}
-	if( f >= -fuzz )  {
+	if( f >= -ctol )  {
 		dist[1] = 1;
-		return 2;		/* Intersection at B */
+		ret = 2;		/* Intersection at B */
+		goto out;
 	}
-	return 3;			/* Intersection between A and B */
+	ret = 3;			/* Intersection between A and B */
+out:
+	if( rt_g.debug & DEBUG_MATH )  {
+		rt_log("rt_isect_line2_lseg2() dist[0]=%g, dist[1]=%g, ret=%d\n",
+			dist[0], dist[1], ret);
+	}
+	return ret;
 }
 
 /*
@@ -1349,7 +1439,11 @@ CONST struct rt_tol	*tol;
 
 	VSUB2(AtoB, b, a);
 	VMOVE(ABunit, AtoB);
-	VUNITIZE(ABunit);
+	distsq = MAGSQ(ABunit);
+	if( distsq < tol->dist_sq )
+		return -1;	/* A equals B, and P isn't there */
+	distsq = 1/distsq;
+	VSCALE( ABunit, ABunit, distsq );
 
 	/* Similar to rt_dist_line_pt, except we
 	 * never actually have to do the sqrt that the other routine does.
@@ -1367,6 +1461,87 @@ CONST struct rt_tol	*tol;
 
 	/* Distance from the point to the line is within tolerance. */
 	*dist = VDOT(AtoP, AtoB) / MAGSQ(AtoB);
+
+	if (*dist > 1.0 || *dist < 0.0)	/* P outside AtoB */
+		return(-2);
+
+	return(3);	/* P on AtoB */
+}
+
+/*
+ *			R T _ I S E C T _ P T 2 _ L S E G 2
+ *
+ * Intersect a point P with the line segment defined by two distinct
+ * points A and B.
+ *	
+ * Explicit Return
+ *	-2	P on line AB but outside range of AB,
+ *			dist = distance from A to P on line.
+ *	-1	P not on line of AB within tolerance
+ *	1	P is at A
+ *	2	P is at B
+ *	3	P is on AB, dist = distance from A to P on line.
+ *	
+ *    B *
+ *	|  
+ *    P'*-tol-*P 
+ *	|    /  _
+ *    dist  /   /|
+ *	|  /   /
+ *	| /   / AtoP
+ *	|/   /
+ *    A *   /
+ *	
+ *	tol = distance limit from line to pt P;
+ *	dist = distance from A to P'
+ */
+int
+rt_isect_pt2_lseg2(dist, a, b, p, tol)
+fastf_t			*dist;		/* distance along line from A to P */
+CONST point_t		a, b, p;	/* points for line and intersect */
+CONST struct rt_tol	*tol;
+{
+	vect_t	AtoP,
+		BtoP,
+		AtoB,
+		ABunit;	/* unit vector from A to B */
+	fastf_t	APprABunit;	/* Mag of projection of AtoP onto ABunit */
+	fastf_t	distsq;
+
+	RT_CK_TOL(tol);
+
+	VSUB2_2D(AtoP, p, a);
+	if (MAGSQ_2D(AtoP) < tol->dist_sq)
+		return(1);	/* P at A */
+
+	VSUB2_2D(BtoP, p, b);
+	if (MAGSQ_2D(BtoP) < tol->dist_sq)
+		return(2);	/* P at B */
+
+	VSUB2_2D(AtoB, b, a);
+	VMOVE_2D(ABunit, AtoB);
+	distsq = MAGSQ_2D(ABunit);
+	if( distsq < tol->dist_sq )
+		return -1;	/* A equals B, and P isn't there */
+	distsq = 1/distsq;
+	VSCALE_2D( ABunit, ABunit, distsq );
+
+	/* Similar to rt_dist_line_pt, except we
+	 * never actually have to do the sqrt that the other routine does.
+	 */
+
+	/* find dist as a function of ABunit, actually the projection
+	 * of AtoP onto ABunit
+	 */
+	APprABunit = VDOT_2D(AtoP, ABunit);
+
+	/* because of pythgorean theorem ... */
+	distsq = MAGSQ_2D(AtoP) - APprABunit * APprABunit;
+	if (distsq > tol->dist_sq)
+		return(-1);	/* dist pt to line too large */
+
+	/* Distance from the point to the line is within tolerance. */
+	*dist = VDOT_2D(AtoP, AtoB) / MAGSQ_2D(AtoB);
 
 	if (*dist > 1.0 || *dist < 0.0)	/* P outside AtoB */
 		return(-2);
