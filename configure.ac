@@ -878,18 +878,15 @@ if test "x$fno_strict_aliasing_flag_works" = "xno" ; then
 	LDFLAGS="$PRELDFLAGS"
 fi
 
-dnl check for -Wl,-search_paths_first
+dnl check for -search_paths_first linker flag
 search_paths_first_flag="-Wl,-search_paths_first"
-AC_MSG_CHECKING([if the compiler understands $search_paths_first_flag])
+AC_MSG_CHECKING([if the linker understands $search_paths_first_flag])
 search_paths_first_flag_works=yes
-PRECFLAGS="$CFLAGS"
 PRELDFLAGS="$LDFLAGS"
-CFLAGS="$CFLAGS $search_paths_first_flag"
 LDFLAGS="$LDFLAGS $search_paths_first_flag"
-AC_TRY_COMPILE( [], [], [], [search_paths_first_flag_works=no])
+AC_TRY_LINK( [], [], [], [search_paths_first_flag_works=no])
 AC_MSG_RESULT($search_paths_first_flag_works)
 if test "x$search_paths_first_flag_works" = "xno" ; then
-	CFLAGS="$PRECFLAGS"
 	LDFLAGS="$PRELDFLAGS"
 fi
 
