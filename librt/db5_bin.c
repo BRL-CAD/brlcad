@@ -277,9 +277,18 @@ rt_binunif_export5( struct bu_external		*ep,
 	unsigned short			*ssrcp;
 
 	RT_CK_DB_INTERNAL(ip);
-	if( ip->idb_type != ID_BINUNIF )  return -1;
+	if( ip->idb_type != minor_type ) {
+		bu_log("ip->idb_type(%d) != minor_type(%d)\n",
+		       ip->idb_type, minor_type );
+		return -1;
+	}
 	bip = (struct rt_binunif_internal *)ip->idb_ptr;
 	RT_CK_BINUNIF(bip);
+	if( bip->type != minor_type ) {
+		bu_log("bip->type(%d) != minor_type(%d)\n",
+		       bip->type, minor_type );
+		return -1;
+	}
 
 	BU_INIT_EXTERNAL(ep);
 
