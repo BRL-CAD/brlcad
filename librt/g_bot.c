@@ -874,6 +874,11 @@ struct rt_piecestate	*psp;
 	    nhits--;
     }
 
+    /* similar for trailing entrance hits */
+    while( nhits > 0 && hits[nhits-1].hit_vpriv[X] < 0.0 ) {
+	    nhits--;
+    }
+
     if( (nhits&1) )  {
 	register int i;
 	/*
