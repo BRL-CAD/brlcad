@@ -127,7 +127,7 @@ char **argv;
 	    char *av[3];
 
 	    av[0] = "kill";
-	    av[1] = "red_tmpcomb";
+	    av[1] = red_tmpcomb;
 	    av[2] = NULL;
 	    (void)f_kill(clientData, interp, 2, av);
 	  }
