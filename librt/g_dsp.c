@@ -7,29 +7,24 @@
  *  The bounding box planes (in dsp coordinates) are numbered 0 .. 5
  *
  *  For purposes of the "struct hit" surface number, the "non-elevation" 
- *  surfaces are numbered -1 .. -6 where:
- *  
+ *  surfaces are numbered 0 .. 7 where:
  *
- *	     Plane #	Name  plane dist     BBSURF #
+ *	     Plane #	Name  plane dist
  *	--------------------------------------------------
- *		0	XMIN (dist = 0)		-1
- *		1	XMAX (dist = xsiz)	-2
- *		2	YMIN (dist = 0)		-3
- *		3	YMAX (dist = ysiz)	-4
- *		4	ZMIN (dist = 0)		-5
- *		5	ZMAX (dsp_max)		-6
+ *		0	XMIN (dist = 0)
+ *		1	XMAX (dist = xsiz)
+ *		2	YMIN (dist = 0)
+ *		3	YMAX (dist = ysiz)
+ *		4	ZMIN (dist = 0)
+ *		5	ZMAX (dsp_max)
  *
- *		6	ZMID (dsp_min)		-7	(upward normal)
+ *		6	ZMID (dsp_min)
+ *		7	ZTOP (computed)
  *
- *  if the "struct hit" surfno surface is positive, then 
+ *  if the "struct hit" surfno surface is ZMAX, then 
  *  	hit_vpriv[X,Y] holds the cell that was hit.
- *	hit_vpriv[Z] is 0 if this was an in-hit.  1 if an out-hit
- *	surfno is either  TRI1 or TRI2  (XXX TRI3/TRI4?)
- *	
- *	The top surfaces of the dsp are numbered 0 .. wid*len*2
- *	(2 triangles per ``cell'')
+ * 	hit_vpriv[Z] is 0 if this was an in-hit.  1 if an out-hit
  *
- *	The BBSURF() macro maps plane # into surface number (or vice versa)
  *
  *  Authors -
  *  	Lee A. Butler
@@ -112,7 +107,6 @@ extern void rt_binunif_ifree( struct rt_db_internal	*ip );
 #define dlog if (RT_G_DEBUG & DEBUG_HF) bu_log	
 
 
-#define BBSURF(_s) (-((_s)+1))	/* bounding box surface */
 #define BBOX_PLANES	7	/* 2 tops & 5 other sides */
 #define XMIN 0
 #define XMAX 1
@@ -121,19 +115,7 @@ extern void rt_binunif_ifree( struct rt_db_internal	*ip );
 #define ZMIN 4
 #define ZMAX 5
 #define ZMID 6
-
-#define XMIN_SURF -1
-#define XMAX_SURF -2
-#define YMIN_SURF -3
-#define YMAX_SURF -4
-#define ZMIN_SURF -5
-#define ZMAX_SURF -6
-#define ZMID_SURF -7
-
-#define TRI1	10
-#define TRI2	20
-#define TRI3	30
-#define TRI4	40
+#define ZTOP 7
 
 /* access to the array */
 #define DSP(_p,_x,_y) ( \
@@ -307,12 +289,13 @@ plot_dsp_bb(FILE *fp, struct dsp_bb *dsp_bb,
 	VMOVE(pt, dsp_bb->dspb_rpp.dsp_max); /* int->float conversion */
 	MAT4X3PNT(rpp.max, stom, pt);
 
-	dlog("dsp_bb (%g %g %g)  (%g %g %g)\n",
+	bu_log("dsp_bb (%g %g %g)  (%g %g %g)\n",
 	     V3ARGS(rpp.min), V3ARGS(rpp.max) );
 
 	plot_rpp(fp, &rpp, r, g, b);
 }
 
+#ifdef PLOT_LAYERS
 /*	P L O T _ L A Y E R S
  *
  *
@@ -349,11 +332,12 @@ plot_layers(struct dsp_specific *dsp_sp)
 		g = colors[c][1];
 		b = colors[c][2];
 
+#if 0
 		if (rt_g.debug & DEBUG_HF)
 			bu_log("plot layer %d dim:%d,%d\n", l, 
 			       dsp_sp->layer[l].dim[X],
 			       dsp_sp->layer[l].dim[Y]);
-
+#endif
 		tot = dsp_sp->layer[l].dim[Y] *  dsp_sp->layer[l].dim[X];
 		for (y=1 ; y < dsp_sp->layer[l].dim[Y] ; y+= 2 ) {
 			for (x=1 ; x < dsp_sp->layer[l].dim[X] ; x+= 2 ) {
@@ -362,6 +346,7 @@ plot_layers(struct dsp_specific *dsp_sp)
 				plot_dsp_bb(fp, d_bb, dsp_sp,
 					    r, g, b);
 
+#if 0
 				if (rt_g.debug & DEBUG_HF)
 					bu_log("\t%d,%d ch_dim:%d,%d  min:(%d %d %d)  max:(%d %d %d)\n",
 					       x, y,
@@ -369,10 +354,12 @@ plot_layers(struct dsp_specific *dsp_sp)
 					       d_bb->dspb_ch_dim[Y],
 					       V3ARGS(d_bb->dspb_rpp.dsp_min),
 					       V3ARGS(d_bb->dspb_rpp.dsp_max));
+#endif
 			}
 		}
 	}
 }
+#endif
 
 /*	P L O T _ C E L L _ T O P 
  *
@@ -383,16 +370,20 @@ static void
 plot_cell_top(struct isect_stuff *isect, 
 	      struct dsp_bb *dsp_bb,
 	      point_t A,
+	      point_t B,
+	      point_t C,
 	      point_t D,
 	      struct hit hitlist[],
-	      int hitnum, int style)
+	      int hitflags, int style)
 {
     fastf_t *stom = &isect->dsp->dsp_i.dsp_stom[0];
     char buf[64];
-    static int n = 0;
+    static int plotcnt = 0;
+    static int cnt = 0;
     FILE *fp;
-    point_t p1, p2;
+    point_t p1, p2, p3, p4;
     int i;
+    int in_seg;
     static unsigned char colors[4][3] = {
 	{255, 255, 128},
 	{255, 128, 255},
@@ -402,36 +393,55 @@ plot_cell_top(struct isect_stuff *isect,
 
 
     if (style)
-	sprintf(buf, "dsp_cell%04d.pl", n++);
+	sprintf(buf, "dsp_cell_isect%04d.pl", cnt++);
     else
-	sprintf(buf, "DSP_isect_cell%04d.pl", n++);
+	sprintf(buf, "dsp_cell_top%04d.pl", plotcnt++);
 
     if ( (fp=fopen(buf, "w")) == (FILE *)NULL) {
 	bu_log("error opening \"%s\"\n", buf);
 	return;
+    } else {
+	bu_log("plotting %s flags 0x%x\n\t", buf, hitflags);
     }
 
-
-    plot_dsp_bb(fp, dsp_bb, isect->dsp, 255, 255, 255);
+    plot_dsp_bb(fp, dsp_bb, isect->dsp, 128, 128, 128);
 
     /* plot the triangulation */
+    pl_color(fp, 255, 255, 255);
     MAT4X3PNT(p1, stom, A);
-    MAT4X3PNT(p2, stom, D);
-    pdv_3line(fp, p1, p2);
+    MAT4X3PNT(p2, stom, B);
+    MAT4X3PNT(p3, stom, C);
+    MAT4X3PNT(p4, stom, D);
+
+    pdv_3move(fp, p1);
+    pdv_3cont(fp, p2);
+    pdv_3cont(fp, p4);
+    if (!style) pl_color(fp, 96, 96, 96);
+
+    pdv_3cont(fp, p1);
+
+    if (!style) pl_color(fp, 255, 255, 255);
+    pdv_3cont(fp, p3);
+    pdv_3cont(fp, p4);
 
 
     /* plot the hit points */
 
-    dlog("plotting %d hit points\n", hitnum);
-    for (i = 0 ; i < hitnum && i < 3 ; i++ ) {
-	pl_color(fp, colors[i][0], colors[i][1], colors[i][2]);
-
-	MAT4X3PNT(p1, stom, hitlist[i].hit_point);
-	MAT4X3PNT(p2, stom, hitlist[i+1].hit_point);
-	pdv_3line(fp, p1, p2);
-
-	if (rt_g.debug & DEBUG_HF)
-	    bu_log(" hit point %g %g %g\n", V3ARGS(p1));
+    for (in_seg = 0, i = 0 ; i < 4 ; i++ ) {
+	if (hitflags & (1<<i)) {
+	    if (in_seg) {
+		in_seg = 0;
+		MAT4X3PNT(p1, stom, hitlist[i].hit_point);
+		pdv_3cont(fp, p1);
+		bu_log("\t%d outseg %g %g %g\n", i, V3ARGS(p1));
+	    } else {
+		in_seg = 1;
+		pl_color(fp, colors[i][0], colors[i][1], colors[i][2]);
+		MAT4X3PNT(p1, stom, hitlist[i].hit_point);
+		pdv_3move(fp, p1);
+		bu_log("\t%d inseg %g %g %g\n", i, V3ARGS(p1));
+	    }
+	}
     }
     fclose(fp);
 }
@@ -789,11 +799,13 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 		}
 	}
 
+#ifdef PLOT_LAYERS
 	if (rt_g.debug & DEBUG_HF) {
 		plot_layers(dsp);
 		bu_log("_  x:%d y:%d min %d max %d\n",
 		       XCNT(dsp), YCNT(dsp), dsp_min, dsp_max);
 	}
+#endif
 }
 
 
@@ -916,143 +928,92 @@ struct rt_i		*rtip;
 
 
 
+static void
+add_seg(struct isect_stuff *isect,
+	struct hit *in_hit,
+	struct hit *out_hit,
+	const point_t bbmin,/* The bounding box of what you are adding ... */
+	const point_t bbmax,/* ... */
+	int r, int g, int b)/* ... this is strictly for debug plot purposes */
 
-
-#if 0
-
-/*
- *  Intersect the ray with the real bounding box of the dsp solid.
- */
-static int
-
-isect_ray_bbox(isect)
-register struct isect_stuff *isect;
 {
-	register double NdotD = -42.0;
-	register double NdotPt;
-	double dist;
-	register int plane;
+    struct dsp_specific *dsp = isect->dsp;
+    fastf_t *stom = &dsp->dsp_i.dsp_stom[0];
+    FILE *fp;
+    char fname[32];
+    static int segnum = 0;
+    struct seg *seg;
+    struct seg *seg_p;
+    struct bound_rpp rpp;
 
-	if (rt_g.debug & DEBUG_HF)
-		bu_log("isect_ray_bbox(tol dist:%g perp:%g para:%g)\n",
-			isect->tol->dist, isect->tol->perp, isect->tol->para);
+    RT_GET_SEG(seg, isect->ap->a_resource);
 
-	isect->bbox.in_dist = - (isect->bbox.out_dist = MAX_FASTF);
-	isect->bbox.in_surf = isect->bbox.out_surf = -1;
-
-	/* intersect the ray with the bounding box */
-	for (plane=0 ; plane < BBOX_PLANES ; plane++) {
-		NdotD = VDOT(dsp_pl[plane], isect->r.r_dir);
-		NdotPt = VDOT(dsp_pl[plane], isect->r.r_pt);
-
-		if (rt_g.debug & DEBUG_HF)
-			bu_log("\nplane %d NdotD:%g\n", plane, NdotD);
-
-		/* if N/ray vectors are perp, ray misses plane */
-		if (plane != ZMID && fabs(NdotD) < isect->tol->perp) {
-
-			if ( (NdotPt - isect->dsp->dsp_pl_dist[plane]) >
-			    SQRT_SMALL_FASTF ) {
-				if (rt_g.debug & DEBUG_HF)
-					bu_log("ray parallel and above bbox plane %d\n", plane);
-
-				return 0; /* MISS */
-			}
-		}
-		dist = - ( NdotPt - isect->dsp->dsp_pl_dist[plane] ) / NdotD;
+    seg->seg_in = *in_hit; /* struct copy */
+    seg->seg_in.hit_magic = RT_HIT_MAGIC;
+    seg->seg_in.hit_vpriv[Z] = 0; /* flag as in-hit */
+    /* XXX */
+    if (seg->seg_in.hit_surfno < 0 || seg->seg_in.hit_surfno > ZTOP) {
+	bu_log("%s:%d bogus surfno %d  dist:%g\n", __FILE__, __LINE__,
+	       seg->seg_in.hit_surfno, seg->seg_in.hit_dist);
+	bu_bomb("");
+    }
 
 
-		if (rt_g.debug & DEBUG_HF)
-			bu_log("plane[%d](%g %g %g %g) dot:%g ss_dist:%g\n",
-				plane, V3ARGS(dsp_pl[plane]),
-				isect->dsp->dsp_pl_dist[plane],
-				NdotD, dist);
+    seg->seg_out = *out_hit; /* struct copy */
+    seg->seg_out.hit_magic = RT_HIT_MAGIC;
+    seg->seg_out.hit_vpriv[Z] = 1; /* flag as out-hit */
+    /* XXX */
+    if (seg->seg_out.hit_surfno < 0 || seg->seg_out.hit_surfno > ZTOP) {
+	bu_log("%s:%d bogus surfno %d  dist:%g\n", __FILE__, __LINE__,
+	       seg->seg_in.hit_surfno, seg->seg_out.hit_dist);
+	bu_bomb("");
+    }
 
-		if ( plane == ZMID) /* dsp_min elevation not valid bbox limit */
-			continue;
+    seg->seg_stp = isect->stp;
 
-		if (NdotD < 0.0) { 
-			/* ray dir and normal oppose,  entering */
-			if (dist > isect->bbox.in_dist) {
-				dlog("new in dist %g\n", dist);
-				isect->bbox.in_dist = dist;
-				isect->bbox.in_surf = plane;
-			}
-		} else if (NdotD > 0.0) {
-			/* leaving */
-			if (dist < isect->bbox.out_dist) {
-				dlog("new out dist %g\n", dist);
-				isect->bbox.out_dist = dist;
-				isect->bbox.out_surf = plane;
-			}
-		} else {
-			dlog("NdotD == 0.0\n");
-		}
+    /* insert the segment in the list by in-hit distance */
+    for ( BU_LIST_FOR(seg_p, seg, &isect->seglist) ) {
+	fp = (FILE *)NULL;
+	if (seg->seg_in.hit_dist < seg_p->seg_in.hit_dist) {
+	    /* found the spot for this one */
+	    BU_LIST_INSERT(&(seg_p->l), &seg->l);
+	    goto done;
+	}
+    }
+    /* this one goes in the end of the list */
+    BU_LIST_INSERT(&isect->seglist, &seg->l);
+ done:
+
+
+    if (seg->seg_in.hit_dist > seg->seg_out.hit_dist) {
+	bu_log("DSP:  Adding inside-out seg\n");
+    }
+
+    if (rt_g.debug & DEBUG_HF) {
+	/* plot the bounding box and the seg */
+	sprintf(fname, "dsp_seg%04d.pl", segnum++);
+
+	if ((fp=fopen(fname, "w")) != (FILE *)NULL) {
+	    bu_log("plotting %s\n", fname);
+
+	    MAT4X3PNT(rpp.min, stom, bbmin);
+	    MAT4X3PNT(rpp.max, stom, bbmax);
+	    plot_rpp(fp, &rpp, r/2, g/2, b/2);
+
+	    /* re-use the rpp for the points for the segment */
+	    MAT4X3PNT(rpp.min, stom, in_hit->hit_point);
+	    MAT4X3PNT(rpp.max, stom, out_hit->hit_point);
+
+	    pl_color(fp, r, g, b);
+	    pdv_3line(fp, rpp.min, rpp.max);
+
+	    fclose(fp);
 	}
 
-	if (rt_g.debug & DEBUG_HF) {
-		vect_t pt, t;
-		VJOIN1(t, isect->r.r_pt, isect->bbox.in_dist, isect->r.r_dir);
-		MAT4X3PNT(pt, isect->dsp->dsp_i.dsp_stom, t);
-		bu_log("solid rpp in  surf[%d] ss_dist:%g (%g %g %g)\n",
-			isect->bbox.in_surf, isect->bbox.in_dist, V3ARGS(pt));
-		VJOIN1(t, isect->r.r_pt, isect->bbox.out_dist, isect->r.r_dir);
-		MAT4X3PNT(pt, isect->dsp->dsp_i.dsp_stom, t);
-		bu_log("solid rpp out surf[%d] ss_dist:%g  (%g %g %g)\n",
-			isect->bbox.out_surf, isect->bbox.out_dist, 
-			V3ARGS(pt));
-	}
-
-	/* validate */
-	if (isect->bbox.in_dist >= isect->bbox.out_dist ||
-	    isect->bbox.out_dist >= MAX_FASTF ) {
-		dlog("apparent miss, in dist: %g out dist:%g\n",
-			isect->bbox.in_dist, isect->bbox.out_dist);
-		return 0; /* MISS */
-	}
-
-	/* copmute "minbox" the bounding box of the rpp under the lowest
-	 * displacement height
-	 */
-
-	isect->minbox.in_dist = isect->bbox.in_dist;
-	isect->minbox.in_surf = isect->bbox.in_surf;
-	isect->minbox.out_dist = isect->bbox.out_dist;
-	isect->minbox.out_surf = isect->bbox.out_surf;
-
-	if (NdotD < 0.0) {
-		/* entering */
-		if (dist > isect->bbox.in_dist) {
-			isect->minbox.in_dist = dist;
-			isect->minbox.in_surf = 6;
-		}
-	} else { /*  (NdotD > 0.0) */
-		/* leaving */
-		if (dist < isect->bbox.out_dist) {
-			isect->minbox.out_dist = dist;
-			isect->minbox.out_surf = 6;
-		}
-	}
-
-	if (rt_g.debug & DEBUG_HF) {
-		vect_t pt, t;
-		VJOIN1(t, isect->r.r_pt, isect->minbox.in_dist, isect->r.r_dir);
-
-		MAT4X3PNT(pt, isect->dsp->dsp_i.dsp_stom, t);
-
-		bu_log("solid minbox rpp in  surf[%d] ss_dist:%g (%g %g %g)\n",
-			isect->minbox.in_surf, isect->minbox.in_dist, V3ARGS(pt));
-
-		VJOIN1(t, isect->r.r_pt, isect->minbox.out_dist, isect->r.r_dir);
-		MAT4X3PNT(pt, isect->dsp->dsp_i.dsp_stom, t);
-
-		bu_log("solid minbox rpp out surf[%d] ss_dist:%g (%g %g %g)\n",
-			isect->minbox.out_surf, isect->minbox.out_dist, V3ARGS(pt));
-	}
-
-	return 1;
+    }
 }
-#endif
+
+
 
 
 /*	I S E C T _ R A Y _ T R I A N G L E
@@ -1070,14 +1031,16 @@ isect_ray_triangle(struct isect_stuff *isect,
 		   point_t A,
 		   point_t B,
 		   point_t C,
-		   double *dist,
-		   point_t P, 
+		   struct hit *hitp,
 		   double alphabbeta[])
 
 {
+    point_t P;
     vect_t AB, AC;
     plane_t N;	/* Normal for plane of triangle */
     double NdotDir, alpha, beta, u0, u1, u2, v0, v1, v2;
+
+    dlog("isect_ray_triangle\n");
 
     VSUB2(AB, B, A);
     VSUB2(AC, C, A);
@@ -1085,6 +1048,7 @@ isect_ray_triangle(struct isect_stuff *isect,
     /* Compute the plane equation of the triangle */
     VCROSS(N, AB, AC);
     VUNITIZE(N);
+    VMOVE(hitp->hit_normal, N);
     N[H] = VDOT(N, A);
 
 
@@ -1094,10 +1058,21 @@ isect_ray_triangle(struct isect_stuff *isect,
 	/* Ray perpendicular to plane of triangle */
 	return -1;
     }
-    *dist = (N[H]+VDOT(N, isect->r.r_pt)) / NdotDir; /* dist to plane icept */
 
-    VJOIN1(P, isect->r.r_pt, *dist, isect->r.r_dir);
+    /* dist to plane icept */
+    hitp->hit_dist = (N[H]-VDOT(N, isect->r.r_pt)) / NdotDir;
 
+    VJOIN1(P, isect->r.r_pt, hitp->hit_dist, isect->r.r_dir);
+    VMOVE(hitp->hit_point, P);
+
+    if (rt_g.debug & DEBUG_HF) {
+	vect_t tmp;
+	fastf_t *stom = &isect->dsp->dsp_i.dsp_stom[0];
+
+	MAT4X3PNT(tmp, stom, hitp->hit_point);
+
+	bu_log("\tdist:%g plane point: %g %g %g\n", hitp->hit_dist, V3ARGS(tmp));
+    }
     /* We project the system into the XY plane at this point to determine
      * if the ray_plane_isect_pt is within the bounds of the triangle
      *
@@ -1130,16 +1105,16 @@ isect_ray_triangle(struct isect_stuff *isect,
      * See: "Graphics Gems",  Andrew S. Glassner ed.  PP390-393 for details
      */
 
-    u0 = P[0] - A[0];
-    v0 = P[1] = A[1];
+    u0 = P[0] - A[0];	/* delta X */
+    v0 = P[1] - A[1];	/* delta Y */
 
-    u1 = AB[0];    /* u1 = B[0] - A[0]; */
-    u2 = AC[0];    /*	u2 = C[0] - A[0]; */
+    u1 = AB[0];    /*   u1 = B[0] - A[0]; always 0 or 1 */
+    u2 = AC[0];    /*	u2 = C[0] - A[0]; always 0 or 1 */
 
-    v1 = AB[1];    /* v1 = B[1] - A[1]; */
-    v2 = AC[1];    /* v2 = C[1] - A[1]; */
+    v1 = AB[1];    /* v1 = B[1] - A[1]; always 0 or 1 */
+    v2 = AC[1];    /* v2 = C[1] - A[1]; always 0 or 1 */
 
-    if ( u1 == 0 ) {
+    if ( u1 == 0 ) { 
 	beta = u0/u2;
 	if ( 0.0 <= beta && beta <= 1.0 ) {
 	    alpha = (v0 - beta * v2) / v1;
@@ -1178,6 +1153,14 @@ permute_cell(point_t A,
 	struct dsp_bb *dsp_bb)
 {
     int x, y;
+
+	if (rt_g.debug & DEBUG_HF) {
+	    VPRINT("\tA", A);
+	    VPRINT("\tB", B);
+	    VPRINT("\tC", C);
+	    VPRINT("\tD", D);
+	}
+
 
     switch (isect->dsp->dsp_i.dsp_cuttype) {
     case DSP_CUT_DIR_llUR:
@@ -1249,8 +1232,9 @@ permute_cell(point_t A,
 	VMOVE(B, D);
 	VMOVE(D, C);
 	VMOVE(C, tmp);
-	    if (rt_g.debug & DEBUG_HF)
+	if (rt_g.debug & DEBUG_HF)
 		bu_log("B-C cut\n");
+
 	return DSP_CUT_DIR_ULlr;
 
 	break;
@@ -1314,7 +1298,7 @@ permute_cell(point_t A,
  *		1 if pt at/below line (such as Q in diagram)
  */
 static int
-check_bbpt_hit_elev(int i,
+check_bbpt_hit_elev(int i,	/* indicates face of cell */
 		   point_t A,
 		   point_t B,
 		   point_t C,
@@ -1325,32 +1309,55 @@ check_bbpt_hit_elev(int i,
     double delta = 0.0;
     double origin = 0.0;
 
+    dlog("check_bbpt_hit_elev(");
 
     switch (i) {
     case XMIN:
-	slope = A[Z] - B[Z];
-	delta = P[X] - A[X];
-	origin = A[Z];
-	break;
-    case XMAX:
-	slope = D[Z] - C[Z];
-	delta = P[X] - C[X];
-	origin = C[Z];
-	break;
-    case YMIN:
+	/* the minimal YZ plane.  Top view:	*   *
+	 *					|    
+	 *					*   *		
+	 */
+	dlog("XMIN)\n");
 	slope = C[Z] - A[Z];
 	delta = P[Y] - A[Y];
 	origin = A[Z];
 	break;
-    case YMAX:
+    case XMAX:
+	/* the maximal YZ plane.   Top view:	*   *
+	 *					    |    
+	 *					*   *
+	 */
+	dlog("XMAX)\n");
 	slope = D[Z] - B[Z];
 	delta = P[Y] - B[Y];
 	origin = B[Z];
 	break;
+    case YMIN:
+	/* the minimal XZ plane.   Top view:	*   *
+	 *
+	 *					* - *
+	 */
+	dlog("YMIN)\n");
+	slope = B[Z] - A[Z];
+	delta = P[X] - A[X];
+	origin = A[Z];
+	break;
+    case YMAX:
+	/* the maximal XZ plane.   Top view:	* - *
+	 *	    
+	 *					*   *
+	 */
+	dlog("YMAX)\n");
+	slope = D[Z] - C[Z];
+	delta = P[X] - C[X];
+	origin = C[Z];
+	break;
     case ZMIN:
+	dlog("ZMIN)\n");
 	return 1;
 	break;
     case ZMAX:
+	dlog("ZMAX)\n");
 	return 0;
 	break;
     default:
@@ -1375,17 +1382,17 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
     point_t A, B, C, D, P;
     int x, y;
     int direction;
-    double dist;
     double ab_first[2], ab_second[2];
-    struct hit hitlist[4];
-    int hitnum = 0;
+    struct hit hits[4];	/* list of hits that are valid */
+    struct hit *hitp;
+    int hitf = 0;	/* bit flags for valid hits in hits */
+    int cond, i;
+    point_t bbmin, bbmax;
+
 
     dlog("isect_ray_cell_top\n");
 
-    /* first order of business is to discard any "fake" hits on the 
-     * bounding box
-     *
-     * assign the values for the corner points
+    /* assign the values for the corner points
      *
      *  C----D
      *  |    |
@@ -1409,71 +1416,137 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 
     if (rt_g.debug & DEBUG_HF) {
 	point_t p1, p2;
-	bu_log("plotting cell top\n");
 
 	VJOIN1(p1, isect->r.r_pt, isect->r.r_min, isect->r.r_dir);
-	hitlist[hitnum].hit_dist = isect->r.r_min;
-	VMOVE(hitlist[hitnum].hit_point, p1);
+	VMOVE(hits[0].hit_point, p1);
+	hits[0].hit_dist = isect->r.r_min;
 
 	VJOIN1(p2, isect->r.r_pt, isect->r.r_max, isect->r.r_dir);
+	VMOVE(hits[1].hit_point, p2);
+	hits[1].hit_dist = isect->r.r_max;
 
-	hitlist[hitnum].hit_dist = isect->r.r_max;
-	VMOVE(hitlist[hitnum].hit_point, p2);
-
-	plot_cell_top(isect, dsp_bb, A, D, hitlist, 2, 0);
+	plot_cell_top(isect, dsp_bb, A, B, C, D, hits, 3, 0);
     }
 
 
 
+    /* first order of business is to discard any "fake" hits on the 
+     * bounding box, and fill in any "real" hits in our list
+     */
     VJOIN1(P, isect->r.r_pt, isect->r.r_min, isect->r.r_dir);
     if ( check_bbpt_hit_elev(isect->dmin, A, B, C, D, P) ) {
-	hitlist[hitnum].hit_dist = isect->r.r_min;
-	VMOVE(hitlist[hitnum].hit_point, P);
+	hits[0].hit_dist = isect->r.r_min;
+	VMOVE(hits[0].hit_point, P);
+	VMOVE(hits[0].hit_normal, dsp_pl[isect->dmin]);
+	/* vpriv */
+	/* private */
+	hits[0].hit_surfno = isect->dmin;
+
 	/* XXX need to fill in rest of hit struct */
-	hitnum++;
+	hitf = 1;
+	dlog("hit ray/bb min\n");
     } else {
-	dlog("ray/bb min is a miss\n");
+	dlog("miss ray/bb min\n");
     }
 
 
     VJOIN1(P, isect->r.r_pt, isect->r.r_max, isect->r.r_dir);
     if (check_bbpt_hit_elev(isect->dmax, A, B, C, D, P) ) {
-	hitlist[hitnum].hit_dist = isect->r.r_max;
-	VMOVE(hitlist[hitnum].hit_point, P);
+	hits[3].hit_dist = isect->r.r_max;
+	VMOVE(hits[3].hit_point, P);
+	VMOVE(hits[3].hit_normal, dsp_pl[isect->dmax]);
+	/* vpriv */
+	/* private */
+	hits[3].hit_surfno = isect->dmax;
+
 	/* XXX need to fill in rest of hit struct */
-	hitnum++;
+	hitf |= 8;
+	dlog("hit ray/bb max\n");
     } else {
-	dlog("ray/bb max is a miss\n");
+	dlog("miss ray/bb max\n");
     }
 
 
 
     direction = permute_cell(A, B, C, D, isect, dsp_bb);
 
-    if (isect_ray_triangle(isect, A, B, C, &dist, P, ab_first) > 0.0) {
+    if ((cond=isect_ray_triangle(isect, B, D, A, &hits[1], ab_first)) > 0.0){
 	/* hit triangle */
-	hitlist[hitnum].hit_dist = dist;
-	VMOVE(hitlist[hitnum].hit_point, P);
-	/* XXX need to fill in rest of hit struct */
-	hitnum++;
-	dlog("hit triangle 1\n");
 
+	/* record cell */
+	hits[1].hit_vpriv[X] = dsp_bb->dspb_rpp.dsp_min[X];
+	hits[1].hit_vpriv[Y] = dsp_bb->dspb_rpp.dsp_min[Y];
+	hits[1].hit_surfno = ZTOP; /* indicate we hit the top */
+
+	hitf |= 2; 
+	dlog("\t hit triangle 1 (alpha: %g beta:%g alpha+beta: %g)\n",
+	     ab_first[0], ab_first[1], ab_first[0] + ab_first[1]);
+    } else {
+	dlog("\tmiss triangle 1 (alpha: %g beta:%g a+b: %g) cond:%d\n",
+	     ab_first[0], ab_first[1], ab_first[0] + ab_first[1], cond);
     }
-    if (isect_ray_triangle(isect, D, C, B, &dist, P, ab_second) > 0.0) {
+    if ((cond=isect_ray_triangle(isect, C, A, D, &hits[2], ab_second)) > 0.0) {
 	/* hit triangle */
-	hitlist[hitnum].hit_dist = dist;
-	VMOVE(hitlist[hitnum].hit_point, P);
-	/* XXX need to fill in rest of hit struct */
-	hitnum++;
-	dlog("hit triangle 2\n");
+
+	/* record cell */
+	hits[2].hit_vpriv[X] = dsp_bb->dspb_rpp.dsp_min[X];
+	hits[2].hit_vpriv[Y] = dsp_bb->dspb_rpp.dsp_min[Y];
+	hits[2].hit_surfno = ZTOP; /* indicate we hit the top */
+
+	hitf |= 4;
+	dlog("\t hit triangle 2 (alpha: %g beta:%g alpha+beta: %g)\n",
+	     ab_second[0], ab_second[1], ab_second[0] + ab_second[1]);
+    } else {
+	dlog("\tmiss triangle 2 (alpha: %g beta:%g alpha+beta: %g) cond:%d\n",
+	     ab_second[0], ab_second[1], ab_second[0] + ab_second[1], cond);
     }
 
 
     if (rt_g.debug & DEBUG_HF) {
-	bu_log("plotting cell top\n");
-	plot_cell_top(isect, dsp_bb, A, D, hitlist, hitnum, 1);
+	plot_cell_top(isect, dsp_bb, A, B, C, D, hits, hitf, 1);
     }
-    dlog("%d hits on cell top\n", hitnum);
+
+    /* fill out the segment structures */
+    hitp = 0;
+    for (i = 0 ; i < 4 ; i++ ) {
+	if (hitf & (1<<i)) {
+	    if (hitp) {
+		/* create seg with hits[i].hit_point); as in point */
+		if (rt_g.debug & DEBUG_HF) {
+		    /* int/float conv */
+		    VMOVE(bbmin, dsp_bb->dspb_rpp.dsp_min);
+		    VMOVE(bbmax, dsp_bb->dspb_rpp.dsp_max);
+		    bu_log("out-hit at dist %g\n", hits[i].hit_dist);
+		}
+
+		add_seg(isect, hitp, &hits[i], bbmin, bbmax, 255, 255, 255);
+		hitp = 0;
+	    } else {
+		/* finish seg with hits[i].hit_point); as out point */
+		if (rt_g.debug & DEBUG_HF) {
+		    bu_log("in-hit at dist %g\n", hits[i].hit_dist);
+		}
+		hitp = &hits[i];
+	    }
+	}
+    }
+
+    if (hitp) {
+	point_t p1, p2;
+
+	bu_log("----------------ERROR incomplete segment-------------\n");
+	bu_log("  pixel %d %d\n", isect->ap->a_x, isect->ap->a_y);
+
+	VJOIN1(p1, isect->r.r_pt, isect->r.r_min, isect->r.r_dir);
+	VMOVE(hits[0].hit_point, p1);
+	hits[0].hit_dist = isect->r.r_min;
+
+	VJOIN1(p2, isect->r.r_pt, isect->r.r_max, isect->r.r_dir);
+	VMOVE(hits[1].hit_point, p2);
+	hits[1].hit_dist = isect->r.r_max;
+
+	plot_cell_top(isect, dsp_bb, A, B, C, D, hits, 3, 0);
+    }
 
 }
 
@@ -1623,70 +1696,6 @@ dsp_in_rpp(struct isect_stuff *isect,
 
 
 
-static void
-add_seg(struct isect_stuff *isect,
-	struct hit *in_hit,
-	struct hit *out_hit,
-	const point_t bbmin,/* The bounding box of what you are adding ... */
-	const point_t bbmax,
-	int r, int g, int b)/* ... this is strictly for debug plot purposes */
-
-{
-    struct dsp_specific *dsp = isect->dsp;
-    fastf_t *stom = &dsp->dsp_i.dsp_stom[0];
-    FILE *fp;
-    char fname[32];
-    static int segnum = 0;
-    struct seg *seg;
-    struct seg *seg_p;
-    struct bound_rpp rpp;
-
-
-    RT_GET_SEG(seg, isect->ap->a_resource);
-
-    seg->seg_in = *in_hit; /* struct copy */
-    seg->seg_in.hit_magic = RT_HIT_MAGIC;
-
-    seg->seg_out = *out_hit; /* struct copy */
-    seg->seg_out.hit_magic = RT_HIT_MAGIC;
-
-    seg->seg_stp = isect->stp;
-
-    /* insert the segment in the list by in-hit distance */
-    for ( BU_LIST_FOR(seg_p, seg, &isect->seglist) ) {
-	fp = (FILE *)NULL;
-	if (seg->seg_in.hit_dist < seg_p->seg_in.hit_dist) {
-	    /* found the spot for this one */
-	    BU_LIST_INSERT(&(seg_p->l), &seg->l);
-	    goto done;
-	}
-    }
-    /* this one goes in the end of the list */
-    BU_LIST_INSERT(&isect->seglist, &seg->l);
- done:
-
-
-    if (rt_g.debug & DEBUG_HF) {
-	/* plot the bounding box and the seg */
-	sprintf(fname, "dsp_seg%04d.pl", segnum++);
-
-	if ((fp=fopen(fname, "w")) != (FILE *)NULL) {
-	    MAT4X3PNT(rpp.min, stom, bbmin);
-	    MAT4X3PNT(rpp.max, stom, bbmax);
-	    plot_rpp(fp, &rpp, r/2, g/2, b/2);
-
-	    /* re-use the rpp for the points for the segment */
-	    MAT4X3PNT(rpp.min, stom, in_hit->hit_point);
-	    MAT4X3PNT(rpp.max, stom, out_hit->hit_point);
-
-	    pl_color(fp, r, g, b);
-	    pdv_3line(fp, rpp.min, rpp.max);
-
-	    fclose(fp);
-	}
-
-    }
-}
 
 /*
  *	I S E C T _ R A Y _ D S P _ B B
@@ -1707,43 +1716,6 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 	bu_log("isect_ray_dsp_bb( (%d,%d,%d) (%d,%d,%d))\n",
 	       V3ARGS(dsp_bb->dspb_rpp.dsp_min),
 	       V3ARGS(dsp_bb->dspb_rpp.dsp_min));
-
-#if 0
-	{
-	    point_t p1;
-	    double dist;
-	    struct dsp_bb *bb;
-	    FILE *fp;
-	    point_t p2;
-	    double *stom;
-	    static int filenum=0;
-	    char fname[32];
-
-	    /* find a distance for the ray */
-	    bb = isect->dsp->layer[isect->dsp->layers-1].p;
-	    VSUB2(p1, bb->dspb_rpp.dsp_min, bb->dspb_rpp.dsp_max);
-	    dist=MAGNITUDE(p1);
-
-	    sprintf(fname, "dsp_miss%04d.pl", filenum++);
-	    if ( (fp=fopen(fname, "w")) != (FILE *)NULL) {
-
-		dlog("plotting \"%s\" ", fname);
-		plot_dsp_bb(fp, dsp_bb, isect->dsp, 0, 255, 0);
-
-		stom = &isect->dsp->dsp_i.dsp_stom[0];
-
-		VJOIN1(p2, isect->r.r_pt, dist, isect->r.r_dir);
-		MAT4X3PNT(p1, stom, p2);
-		MAT4X3PNT(p2, stom, isect->r.r_pt);
-
-		pl_color(fp, 255, 100, 255);
-		pdv_3line(fp, p1, p2);
-		fclose(fp);
-	    }
-	}
-#endif
-
-
     }
 
     /* check to see if we miss the RPP for this area entirely */
@@ -1770,14 +1742,19 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 
 	in_hit.hit_dist = isect->r.r_min;
 	VMOVE(in_hit.hit_point, minpt);
-	/* hit_normal */
+	VMOVE(in_hit.hit_normal, dsp_pl[isect->dmin]);
 	/* hit_priv   */
 	/* hit_private */
-	in_hit.hit_surfno = BBSURF(isect->dmin);
+	in_hit.hit_surfno = isect->dmin;
 	/* hit_rayp */
 
 	out_hit.hit_dist = isect->r.r_max;
-	out_hit.hit_surfno = BBSURF(isect->dmax);
+	VMOVE(out_hit.hit_point, minpt);
+	VMOVE(out_hit.hit_normal, dsp_pl[isect->dmax]);
+	/* hit_priv   */
+	/* hit_private */
+	out_hit.hit_surfno = isect->dmax;
+	/* hit_rayp */
 
 	if (rt_g.debug & DEBUG_HF) {
 	    /* we need these for debug output */
@@ -1829,17 +1806,6 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
     if (dsp_in_rpp(isect, bbmin, bbmax) ) {
 	/* hit rpp */
 	
-	if (rt_g.debug & DEBUG_HF) {
-	    FILE *fp;
-	    static int i;
-	    char buff[32];
-
-	    sprintf(buff, "dsp_cell_%03x", i++);
-	    if ( (fp = fopen(buff, "w")) != (FILE *)NULL) {
-		plot_dsp_bb(fp, dsp_bb, isect->dsp, 170, 170, 170);
-		fclose(fp);
-	    }
-	}
 	isect_ray_cell_top(isect, dsp_bb);
     }
 
@@ -1849,6 +1815,7 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
      * after having come down through the triangles above
      */
     bbmax[Z] = dsp_bb->dspb_rpp.dsp_min[Z];
+    bbmin[Z] = 0.0;
     if (dsp_in_rpp(isect, bbmin, bbmax) ) {
 	/* hit rpp */
 	struct hit in_hit, out_hit;
@@ -1857,11 +1824,11 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 	VJOIN1(maxpt, isect->r.r_pt, isect->r.r_max, isect->r.r_dir);
 
 	in_hit.hit_dist = isect->r.r_min;
-	in_hit.hit_surfno = BBSURF(isect->dmin);
+	in_hit.hit_surfno = isect->dmin;
 	VMOVE(in_hit.hit_point, minpt);
 
 	out_hit.hit_dist = isect->r.r_max;
-	out_hit.hit_surfno = BBSURF(isect->dmax);
+	out_hit.hit_surfno = isect->dmax;
 	VMOVE(out_hit.hit_point, maxpt);
 
 	/* add a segment to the list */
@@ -1938,10 +1905,6 @@ struct seg		*seghead;
 
 
 	if (rt_g.debug & DEBUG_HF) {
-	    FILE *fp;
-	    char fname[32];
-	    static int num=0;
-
 	    bu_log("rt_dsp_shot(pt:(%g %g %g)\n\tdir[%g]:(%g %g %g))\n    pixel(%d,%d)\n",
 			V3ARGS(rp->r_pt),
 			MAGNITUDE(rp->r_dir),
@@ -1954,17 +1917,6 @@ struct seg		*seghead;
 			MAGNITUDE(dir),
 			V3ARGS(dir),
 			V3ARGS(isect.r.r_dir));
-
-	    sprintf(fname, "shot%04d.pl", num++);
-	    if ( (fp=fopen(fname, "w")) != (FILE *)NULL) {
-		point_t pt;
-		/* plot the uppermost dsp bounding box */
-		VJOIN1(pt, rp->r_pt, 10000.0, rp->r_dir);
-		pl_color(fp, 255, 0, 255);
-		pdv_3line(fp, rp->r_pt, pt);
-		
-		fclose(fp);
-	    }
 	}
 
 	/* We look at the topmost layer of the bounding-box tree and
@@ -2137,210 +2089,198 @@ register struct hit	*hitp;
 struct soltab		*stp;
 register struct xray	*rp;
 {
-	vect_t N, t, tmp, A, B, C, D, N_orig;
-	char buf[32];
-	struct dsp_specific *dsp = (struct dsp_specific *)stp->st_specific;
-	vect_t Anorm, Bnorm, Dnorm, Cnorm, ABnorm, CDnorm;
-	double Xfrac, Yfrac;
-	int x, y;
-	point_t pt;
-	double dot;
-	double len;
-	FILE *fd = (FILE *)NULL;
+    vect_t N, t, tmp, A, B, C, D;
+    char buf[32];
+    struct dsp_specific *dsp = (struct dsp_specific *)stp->st_specific;
+    vect_t Anorm, Bnorm, Dnorm, Cnorm, ABnorm, CDnorm;
+    double Xfrac, Yfrac;
+    int x, y;
+    point_t pt;
+    double dot;
+    double len;
+    FILE *fd = (FILE *)NULL;
 
 
-	RT_DSP_CK_MAGIC(dsp);
-	BU_CK_VLS(&dsp->dsp_i.dsp_name);
+    RT_DSP_CK_MAGIC(dsp);
+    BU_CK_VLS(&dsp->dsp_i.dsp_name);
 
-	switch (dsp->dsp_i.dsp_datasrc) {
-	case RT_DSP_SRC_V4_FILE: 
-	case RT_DSP_SRC_FILE:
-	    BU_CK_MAPPED_FILE(dsp->dsp_i.dsp_mp);
-	    break;
-	case RT_DSP_SRC_OBJ:
-	    break;
-	}
+    switch (dsp->dsp_i.dsp_datasrc) {
+    case RT_DSP_SRC_V4_FILE: 
+    case RT_DSP_SRC_FILE:
+	BU_CK_MAPPED_FILE(dsp->dsp_i.dsp_mp);
+	break;
+    case RT_DSP_SRC_OBJ:
+	break;
+    }
 
- 	if (RT_G_DEBUG & DEBUG_HF)
-		bu_log("rt_dsp_norm(%g %g %g)\n", V3ARGS(hitp->hit_normal));
-
-	VMOVE(N_orig, hitp->hit_normal);
-
+    if (RT_G_DEBUG & DEBUG_HF) {
+	bu_log("rt_dsp_norm(%g %g %g)\n", V3ARGS(hitp->hit_normal));
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
- 	if (RT_G_DEBUG & DEBUG_HF)
-		VPRINT("hit point", hitp->hit_point);
+	VPRINT("\thit point", hitp->hit_point);
+    }
 
-	if (hitp->hit_surfno < 0 || !dsp->dsp_i.dsp_smooth ) {
-		/* we've hit one of the sides or bottom, or the user didn't
-		 * ask for smoothing of the elevation data,
-		 * so there's no interpolation to do
-		 */
+    if ( hitp->hit_surfno < XMIN || hitp->hit_surfno > ZTOP ) {
+	bu_log("%s:%d bogus surface of DSP %d\n",
+	       __FILE__, __LINE__, hitp->hit_surfno);
+	bu_bomb("");
+    }
 
-		if (rt_g.debug & DEBUG_HF)
-			bu_log("no Interpolation needed %g,%g,%g\n",
-			       V3ARGS(hitp->hit_normal));
-		return;
-	}
-
-	if (hitp->hit_surfno < 0) {
-	    /* New for the 2nd gen */
-	    bu_log("Hit one of the sides, not a top surface\n");
-	    VMOVE(hitp->hit_normal, dsp_pl[BBSURF(hitp->hit_surfno)]);
-	}
-
-	if ( hitp->hit_surfno != TRI2 &&  hitp->hit_surfno != TRI1 &&
-	     hitp->hit_surfno != TRI3 && hitp->hit_surfno != TRI4 ) {
-		bu_log("%s:%d bogus surface of DSP %d\n",
-		       __FILE__, __LINE__, hitp->hit_surfno);
-		bu_bomb("");
-	}
+    if ( hitp->hit_surfno < ZTOP || !dsp->dsp_i.dsp_smooth ) {
+	/* We've hit one of the sides or bottom, or the user didn't
+	 * ask for smoothing of the elevation data,
+	 * so there's no interpolation to do
+	 */
 
 	if (RT_G_DEBUG & DEBUG_HF)
-		bu_log("Interpolation: %d\n", dsp->dsp_i.dsp_smooth);
+	    bu_log("\tno Interpolation needed.  Normal: %g,%g,%g\n", 
+		   V3ARGS(hitp->hit_normal));
+	return;
+    }
 
-	/* compute the distance between grid points in model space */
-	VSET(tmp, 1.0, 0.0, 0.0);
-	MAT4X3VEC(t, dsp->dsp_i.dsp_stom, tmp);
-	len = MAGNITUDE(t);
+    if (RT_G_DEBUG & DEBUG_HF)
+	bu_log("\tNormal Interpolation flag: %d\n", dsp->dsp_i.dsp_smooth);
 
-	if (RT_G_DEBUG & DEBUG_HF) {
-		bu_semaphore_acquire( BU_SEM_SYSCALL);
-		sprintf(buf, "dsp%02d.pl", plot_file_num++);
-		bu_semaphore_release( BU_SEM_SYSCALL);
 
-		bu_log("plotting normals in %s\n", buf);
-		bu_semaphore_acquire( BU_SEM_SYSCALL);
-		if ((fd=fopen(buf, "w")) == (FILE *)NULL) {
-			bu_semaphore_release( BU_SEM_SYSCALL);
-			bu_bomb("Couldn't open plot file\n");
-		}
+    /* compute the distance between grid points in model space */
+    VSET(tmp, 1.0, 0.0, 0.0);
+    MAT4X3VEC(t, dsp->dsp_i.dsp_stom, tmp);
+    len = MAGNITUDE(t);
+
+    if (RT_G_DEBUG & DEBUG_HF) {
+	bu_semaphore_acquire( BU_SEM_SYSCALL);
+	sprintf(buf, "dsp%02d.pl", plot_file_num++);
+	bu_semaphore_release( BU_SEM_SYSCALL);
+
+	bu_log("plotting normals in %s\n", buf);
+	bu_semaphore_acquire( BU_SEM_SYSCALL);
+	if ((fd=fopen(buf, "w")) == (FILE *)NULL) {
+	    bu_semaphore_release( BU_SEM_SYSCALL);
+	    bu_bomb("Couldn't open plot file\n");
 	}
+    }
 
-	/* get the cell we hit */
-	x = hitp->hit_vpriv[X];
-	y = hitp->hit_vpriv[Y];
+    /* get the cell we hit */
+    x = hitp->hit_vpriv[X];
+    y = hitp->hit_vpriv[Y];
 
-	compute_normal_at_gridpoint(Anorm, dsp, x, y, fd, 1);
-	compute_normal_at_gridpoint(Bnorm, dsp, x+1, y, fd, 0);
-	compute_normal_at_gridpoint(Dnorm, dsp, x+1, y+1, fd, 0);
-	compute_normal_at_gridpoint(Cnorm, dsp, x, y+1, fd, 0);
+    compute_normal_at_gridpoint(Anorm, dsp, x, y, fd, 1);
+    compute_normal_at_gridpoint(Bnorm, dsp, x+1, y, fd, 0);
+    compute_normal_at_gridpoint(Dnorm, dsp, x+1, y+1, fd, 0);
+    compute_normal_at_gridpoint(Cnorm, dsp, x, y+1, fd, 0);
 
-	if (RT_G_DEBUG & DEBUG_HF) {
+    if (RT_G_DEBUG & DEBUG_HF) {
+	
+	/* plot the ray */
+	pl_color(fd, 255, 0, 0);
+	pdv_3line(fd, rp->r_pt, hitp->hit_point);
 
-		/* plot the ray */
-		pl_color(fd, 255, 0, 0);
-		pdv_3line(fd, rp->r_pt, hitp->hit_point);
-
-		/* plot the normal we started with */
-		pl_color(fd, 0, 255, 0);
-		VJOIN1(tmp, hitp->hit_point, len, N_orig);
-		pdv_3line(fd, hitp->hit_point, tmp);
-
-
-		/* Plot the normals we just got */
-		pl_color(fd, 220, 220, 90);
-
-		VSET(tmp, x,   y,   DSP(dsp, x,   y));
-		MAT4X3PNT(A, dsp->dsp_i.dsp_stom, tmp);
-		VJOIN1(tmp, A, len, Anorm);
-		pdv_3line(fd, A, tmp);
-
-		VSET(tmp, x+1, y,   DSP(dsp, x+1, y));
-		MAT4X3PNT(B, dsp->dsp_i.dsp_stom, tmp);
-		VJOIN1(tmp, B, len, Anorm);
-		pdv_3line(fd, B, tmp);
-
-		VSET(tmp, x+1, y+1, DSP(dsp, x+1, y+1));
-		MAT4X3PNT(D, dsp->dsp_i.dsp_stom, tmp);
-		VJOIN1(tmp, D, len, Anorm);
-		pdv_3line(fd, D, tmp);
-
-		VSET(tmp, x,   y+1, DSP(dsp, x,   y+1));
-		MAT4X3PNT(C, dsp->dsp_i.dsp_stom, tmp);
-		VJOIN1(tmp, C, len, Anorm);
-		pdv_3line(fd, C, tmp);
-
-		bu_semaphore_release( BU_SEM_SYSCALL);
-	}
-
-	MAT4X3PNT(pt, dsp->dsp_i.dsp_mtos, hitp->hit_point);
-
-	Xfrac = (pt[X] - x);
-	Yfrac = (pt[Y] - y);
-	if (RT_G_DEBUG & DEBUG_HF)
-		bu_log("Xfract:%g Yfract:%g\n", Xfrac, Yfrac);
-
-	if (Xfrac < 0.0) Xfrac = 0.0;
-	else if (Xfrac > 1.0) Xfrac = 1.0;
-
-	if (Yfrac < 0.0) Yfrac = 0.0;
-	else if (Yfrac > 1.0) Yfrac = 1.0;
+	/* plot the normal we started with */
+	pl_color(fd, 0, 255, 0);
+	VJOIN1(tmp, hitp->hit_point, len, hitp->hit_normal);
+	pdv_3line(fd, hitp->hit_point, tmp);
 
 
-     	if (dsp->dsp_i.dsp_smooth == 2) {
-		/* This is an experiment to "flatten" the curvature 
-		 * of the dsp near the grid points
-		 */
+	/* Plot the normals we just got */
+	pl_color(fd, 220, 220, 90);
+
+	VSET(tmp, x,   y,   DSP(dsp, x,   y));
+	MAT4X3PNT(A, dsp->dsp_i.dsp_stom, tmp);
+	VJOIN1(tmp, A, len, Anorm);
+	pdv_3line(fd, A, tmp);
+
+	VSET(tmp, x+1, y,   DSP(dsp, x+1, y));
+	MAT4X3PNT(B, dsp->dsp_i.dsp_stom, tmp);
+	VJOIN1(tmp, B, len, Bnorm);
+	pdv_3line(fd, B, tmp);
+
+	VSET(tmp, x+1, y+1, DSP(dsp, x+1, y+1));
+	MAT4X3PNT(D, dsp->dsp_i.dsp_stom, tmp);
+	VJOIN1(tmp, D, len, Dnorm);
+	pdv_3line(fd, D, tmp);
+
+	VSET(tmp, x,   y+1, DSP(dsp, x,   y+1));
+	MAT4X3PNT(C, dsp->dsp_i.dsp_stom, tmp);
+	VJOIN1(tmp, C, len, Cnorm);
+	pdv_3line(fd, C, tmp);
+
+	bu_semaphore_release( BU_SEM_SYSCALL);
+    }
+
+    /* transform the hit point into DSP space for determining interpolation */
+    MAT4X3PNT(pt, dsp->dsp_i.dsp_mtos, hitp->hit_point);
+    
+    Xfrac = (pt[X] - x);
+    Yfrac = (pt[Y] - y);
+    if (RT_G_DEBUG & DEBUG_HF)
+	bu_log("Xfract:%g Yfract:%g\n", Xfrac, Yfrac);
+
+    if (Xfrac < 0.0) Xfrac = 0.0;
+    else if (Xfrac > 1.0) Xfrac = 1.0;
+
+    if (Yfrac < 0.0) Yfrac = 0.0;
+    else if (Yfrac > 1.0) Yfrac = 1.0;
+
+
+    if (dsp->dsp_i.dsp_smooth == 2) {
+	/* This is an experiment to "flatten" the curvature 
+	 * of the dsp near the grid points
+	 */
 #define SMOOTHSTEP(x)  ((x)*(x)*(3 - 2*(x)))
-		Xfrac = SMOOTHSTEP( Xfrac );
-		Yfrac = SMOOTHSTEP( Yfrac );
+	Xfrac = SMOOTHSTEP( Xfrac );
+	Yfrac = SMOOTHSTEP( Yfrac );
 #undef SMOOTHSTEP
-     	}
+    }
 
-	/* we compute the normal along the "X edges" of the cell */
-	VSCALE(Anorm, Anorm, (1.0-Xfrac) );
-	VSCALE(Bnorm, Bnorm,      Xfrac  );
-	VADD2(ABnorm, Anorm, Bnorm);
-	VUNITIZE(ABnorm);
+    /* we compute the normal along the "X edges" of the cell */
+    VSCALE(Anorm, Anorm, (1.0-Xfrac) );
+    VSCALE(Bnorm, Bnorm,      Xfrac  );
+    VADD2(ABnorm, Anorm, Bnorm);
+    VUNITIZE(ABnorm);
 
-	VSCALE(Cnorm, Cnorm, (1.0-Xfrac) );
-	VSCALE(Dnorm, Dnorm,      Xfrac  );
-	VADD2(CDnorm, Dnorm, Cnorm);
-	VUNITIZE(CDnorm);
+    VSCALE(Cnorm, Cnorm, (1.0-Xfrac) );
+    VSCALE(Dnorm, Dnorm,      Xfrac  );
+    VADD2(CDnorm, Dnorm, Cnorm);
+    VUNITIZE(CDnorm);
 
-	/* now we interpolate the two X edge normals to get the final one */
-	VSCALE(ABnorm, ABnorm, (1.0-Yfrac) );
-	VSCALE(CDnorm, CDnorm, Yfrac );
-	VADD2(N, ABnorm, CDnorm);
+    /* now we interpolate the two X edge normals to get the final one */
+    VSCALE(ABnorm, ABnorm, (1.0-Yfrac) );
+    VSCALE(CDnorm, CDnorm, Yfrac );
+    VADD2(N, ABnorm, CDnorm);
 
+    VUNITIZE(N);
+    
+    dot = VDOT(N, rp->r_dir);
+    if (RT_G_DEBUG & DEBUG_HF)
+	bu_log("interpolated %g %g %g  dot:%g\n", V3ARGS(N), dot);
+    
+    if ( (hitp->hit_vpriv[Z] == 0.0 && dot > 0.0)/* in-hit needs fix */ ||
+	 (hitp->hit_vpriv[Z] == 1.0 && dot < 0.0)/* out-hit needs fix */){
+	/* bring the normal back to being perpindicular 
+	 * to the ray to avoid "flipped normal" warnings
+	 */
+	VCROSS(A, rp->r_dir, N);
+	VCROSS(N, A, rp->r_dir);
 	VUNITIZE(N);
 
 	dot = VDOT(N, rp->r_dir);
+
+
 	if (RT_G_DEBUG & DEBUG_HF)
-		bu_log("interpolated %g %g %g  dot:%g\n", 
-		       V3ARGS(N), dot);
+	    bu_log("corrected: %g %g %g dot:%g\n", V3ARGS(N), dot);
+    }
+    VMOVE(hitp->hit_normal, N);
 
-	if ( (hitp->hit_vpriv[Z] == 0.0 && dot > 0.0)/* in-hit needs fix */ ||
-	     (hitp->hit_vpriv[Z] == 1.0 && dot < 0.0)/* out-hit needs fix */){
-		/* bring the normal back to being perpindicular 
-		 * to the ray to avoid "flipped normal" warnings
-		 */
-		VCROSS(A, rp->r_dir, N);
-		VCROSS(N, A, rp->r_dir);
-		VUNITIZE(N);
+    if (RT_G_DEBUG & DEBUG_HF) {
+	if (fd) {
+	    bu_semaphore_acquire( BU_SEM_SYSCALL);
+	    pl_color(fd, 255, 255, 255);
+	    VJOIN1(tmp, hitp->hit_point, len, hitp->hit_normal);
+	    pdv_3line(fd, hitp->hit_point, tmp);
 
-		dot = VDOT(N, rp->r_dir);
-
-
-		if (RT_G_DEBUG & DEBUG_HF)
-			bu_log("corrected: %g %g %g dot:%g\n", V3ARGS(N), dot);
+	    fclose(fd);
+	    bu_semaphore_release( BU_SEM_SYSCALL);
 	}
-	VMOVE(hitp->hit_normal, N);
-
-	if (RT_G_DEBUG & DEBUG_HF) {
-
-
-		if (fd) {
-
-			bu_semaphore_acquire( BU_SEM_SYSCALL);
-			pl_color(fd, 255, 255, 255);
-			VJOIN1(tmp, hitp->hit_point, len, hitp->hit_normal);
-			pdv_3line(fd, hitp->hit_point, tmp);
-
-			fclose(fd);
-			bu_semaphore_release( BU_SEM_SYSCALL);
-		}
-	}
+    }
 }
 
 /*
