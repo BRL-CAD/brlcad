@@ -44,14 +44,14 @@ static char RCSmkbundle[] = "@(#)$Header$ (BRL)";
  *  XXX Should we require a and b as inputs, for efficiency?
  */
 void
-rt_raybundle_maker( rp, radius, rays_per_ring, nring )
+rt_raybundle_maker( rp, radius, avec, bvec, rays_per_ring, nring )
 struct xray	*rp;
 double		radius;
+CONST vect_t	avec;
+CONST vect_t	bvec;
 int		rays_per_ring;
 int		nring;
 {
-	vect_t	a;
-	vect_t	b;
 	register struct xray	*rayp = rp+1;
 	int	ring;
 	double	fraction = 1.0;
@@ -59,10 +59,6 @@ int		nring;
 	double	delta;
 	double	radial_scale;
 	int	count = 0;
-
-	/* Basis vectors for a disc perpendicular to the ray */
-	bn_vec_ortho( a, rp[0].r_dir );
-	VCROSS( b, rp[0].r_dir, a );
 
 	rp[0].index = count++;
 
@@ -79,7 +75,7 @@ int		nring;
 			/* pt = V + cos(theta) * A + sin(theta) * B */
 			ct = cos(theta) * radial_scale;
 			st = sin(theta) * radial_scale;
-			VJOIN2( rayp->r_pt, rp[0].r_pt, ct, a, st, b );
+			VJOIN2( rayp->r_pt, rp[0].r_pt, ct, avec, st, bvec );
 			VMOVE( rayp->r_dir, rp[0].r_dir );
 			rayp->index = count++;
 			theta += delta;
