@@ -934,7 +934,7 @@ register char	**argv;
 		    log_flag = false;
 		break;
             case 'x':
-		if (sscanf(optarg, "%x", &rt_g.debug) < 1)
+		if (sscanf(optarg, "%x", &bu_debug) < 1)
 		{
 		    bu_log("Invalid debug flag: '%s'\n", optarg);
 		    return (false);
