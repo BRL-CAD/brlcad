@@ -547,8 +547,8 @@ out:
 	sprintf( buf2, "-D__CAKE__%s", buf );
 	cppargv[cppargc++] = new_name(buf2);
 
-#if defined(BRLCAD_BASEDIR_STRING)
-	sprintf( buf2, "-DBRLCAD_BASEDIR=%s", BRLCAD_BASEDIR_STRING );
+#if defined(BRLCAD_ROOT_STRING)
+	sprintf( buf2, "-DBRLCAD_ROOT=%s", BRLCAD_ROOT_STRING );
 	cppargv[cppargc++] = new_name(buf2);
 #endif
 
