@@ -777,7 +777,7 @@ static void ycctorgb(w,h,l,c1,c2)
 dim w,h;
 implane *l,*c1,*c2;
 {
-	dim x,y;
+	int x,y;		/* not dim! */
 	uBYTE *pl,*pc1,*pc2;
 	long red,green,blue,i;
 	long L;
@@ -808,7 +808,7 @@ implane *l,*c1,*c2;
 
 	BUinit;
 	if(do_bw)  {
-		for( y=h-1; y>=0; y-- )  {
+		for( y=h-1; y >= 0; y-- )  {
 			pl =  l->im + y *  l->mwidth;
 			for(x=0;x<w;x++)  {
 				L = XL[*pl++]>>BitShift;
@@ -816,27 +816,27 @@ implane *l,*c1,*c2;
 				BUwrite1(L);
 			}
 		}
-	}
+	} else {
+		for( y=h-1; y >= 0; y-- )  {
+			pl =  l->im + y *  l->mwidth;
+			pc1= c1->im + y * c1->mwidth;
+			pc2= c2->im + y * c2->mwidth;
 
-	for( y=h-1; y>=0; y-- )  {
-		pl =  l->im + y *  l->mwidth;
-		pc1= c1->im + y * c1->mwidth;
-		pc2= c2->im + y * c2->mwidth;
+			for(x=0;x<w;x++)  {
+				L = XL[*pl];
+				red  =(L + XC2[*pc2]               )>>BitShift;
+				green=(L + XC1g[*pc1] + XC2g[*pc2] )>>BitShift;
+				blue =(L + XC1[*pc1]               )>>BitShift;
 
-		for(x=0;x<w;x++)  {
-			L = XL[*pl];
-			red  =(L + XC2[*pc2]               )>>BitShift;
-			green=(L + XC1g[*pc1] + XC2g[*pc2] )>>BitShift;
-			blue =(L + XC1[*pc1]               )>>BitShift;
+				NORM(red);
+				NORM(green);
+				NORM(blue);
 
-			NORM(red);
-			NORM(green);
-			NORM(blue);
-
-			BUwrite(red,green,blue);
-			pl++;
-			pc1++;
-			pc2++;
+				BUwrite(red,green,blue);
+				pl++;
+				pc1++;
+				pc2++;
+			}
 		}
 	}
 	BUflush;
