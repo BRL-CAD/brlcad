@@ -792,6 +792,12 @@ double		local2mm;
 	struct bu_external	out;
 	struct bu_external	attr;
 
+	if( local2mm <= 0 )  {
+		bu_log("db5_fwrite_ident(%s, %g) local2mm <= 0\n",
+			title, local2mm );
+		return -1;
+	}
+
 	/* First, write the header object */
 	db5_export_object3( &out, DB5HDR_HFLAGS_DLI_HEADER_OBJECT,
 		NULL, NULL, NULL,
