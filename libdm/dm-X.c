@@ -71,7 +71,8 @@ static int      X_drawString2D();
 static int	X_drawLine2D();
 static int      X_drawPoint2D();
 static int	X_drawVList();
-static int      X_setColor(), X_setLineAttr();
+static int      X_setFGColor(), X_setBGColor();
+static int	X_setLineAttr();
 static int	X_setWinBounds(), X_debug();
 
 struct dm dm_X = {
@@ -84,7 +85,8 @@ struct dm dm_X = {
   X_drawLine2D,
   X_drawPoint2D,
   X_drawVList,
-  X_setColor,
+  X_setFGColor,
+  X_setBGColor,
   X_setLineAttr,
   X_setWinBounds,
   X_debug,
@@ -893,7 +895,7 @@ fastf_t x, y;
 }
 
 static int
-X_setColor(dmp, r, g, b, strict)
+X_setFGColor(dmp, r, g, b, strict)
 struct dm *dmp;
 register short r, g, b;
 int strict;
@@ -901,7 +903,7 @@ int strict;
   XGCValues gcv;
 
   if (((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug)
-    bu_log("X_setColor()\n");
+    bu_log("X_setFGColor()\n");
 
   if(((struct x_vars *)dmp->dm_vars.priv_vars)->is_trueColor){
     XColor color;
@@ -920,6 +922,31 @@ int strict;
   XChangeGC(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 	    ((struct x_vars *)dmp->dm_vars.priv_vars)->gc,
 	    GCForeground, &gcv);
+
+  return TCL_OK;
+}
+
+static int
+X_setBGColor(dmp, r, g, b)
+struct dm *dmp;
+int r, g, b;
+{
+  if (((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.debug)
+    bu_log("X_setBGColor()\n");
+
+  if(((struct x_vars *)dmp->dm_vars.priv_vars)->is_trueColor){
+    XColor color;
+
+    color.red = r << 8;
+    color.green = g << 8;
+    color.blue = b << 8;
+    XAllocColor(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+		((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap,
+		&color);
+    ((struct x_vars *)dmp->dm_vars.priv_vars)->bg = color.pixel;
+  } else
+    ((struct x_vars *)dmp->dm_vars.priv_vars)->bg =
+      dm_get_pixel(r, g, b, ((struct x_vars *)dmp->dm_vars.priv_vars)->pixels, CUBE_DIMENSION);
 
   return TCL_OK;
 }
@@ -1156,7 +1183,3 @@ struct dm *dmp;
       return NULL; /* failure */
   }
 }
-
-
-
-

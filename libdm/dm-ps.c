@@ -51,7 +51,7 @@ static int	ps_normal(), ps_loadMatrix();
 static int	ps_drawString2D(), ps_drawLine2D();
 static int      ps_drawPoint2D();
 static int	ps_drawVList();
-static int      ps_setColor();
+static int      ps_setFGColor();
 static int      ps_setLineAttr();
 static int	ps_setWinBounds(), ps_debug();
 
@@ -65,7 +65,8 @@ struct dm dm_ps = {
   ps_drawLine2D,
   ps_drawPoint2D,
   ps_drawVList,
-  ps_setColor,
+  ps_setFGColor,
+  Nu_int0,
   ps_setLineAttr,
   ps_setWinBounds,
   ps_debug,
@@ -644,7 +645,7 @@ fastf_t x, y;
 }
 
 static int
-ps_setColor(dmp, r, g, b, strict)
+ps_setFGColor(dmp, r, g, b, strict)
 struct dm *dmp;
 register short r, g, b;
 int strict;

@@ -61,8 +61,8 @@
 #include "dm_xvars.h"
 #include "solid.h"
 
-#define VIEWFACTOR      (1/(*dmp->dm_vp))
-#define VIEWSIZE        (2*(*dmp->dm_vp))
+#define VIEWFACTOR      (1.0/(*dmp->dm_vp))
+#define VIEWSIZE        (2.0*(*dmp->dm_vp))
 
 /* these are from /usr/include/gl.h could be device dependent */
 #define XMAXSCREEN	1279
@@ -98,7 +98,8 @@ static int	ogl_normal(), ogl_loadMatrix();
 static int	ogl_drawString2D(), ogl_drawLine2D();
 static int      ogl_drawPoint2D();
 static int	ogl_drawVList();
-static int      ogl_setColor(), ogl_setLineAttr();
+static int      ogl_setFGColor(), ogl_setBGColor();
+static int	ogl_setLineAttr();
 static int	ogl_setWinBounds(), ogl_debug();
 static int      ogl_beginDList(), ogl_endDList();
 static int      ogl_drawDList();
@@ -114,7 +115,8 @@ struct dm dm_ogl = {
   ogl_drawLine2D,
   ogl_drawPoint2D,
   ogl_drawVList,
-  ogl_setColor,
+  ogl_setFGColor,
+  ogl_setBGColor,
   ogl_setLineAttr,
   ogl_setWinBounds,
   ogl_debug,
@@ -480,9 +482,13 @@ Done:
   /* This is the applications display list offset */
   dmp->dm_displaylist = ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset + 128;
 
+#if 0
   glDrawBuffer(GL_FRONT_AND_BACK);
   glClearColor(0.0, 0.0, 0.0, 0.0);
-  glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+#else
+  ogl_setBGColor(dmp, 0, 0, 0);
+#endif
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer)
     glDrawBuffer(GL_BACK);
@@ -625,7 +631,10 @@ struct dm *dmp;
     glXSwapBuffers(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 		   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win);
     /* give Graphics pipe time to work */
-    glClearColor(0.0, 0.0, 0.0, 0.0);
+    glClearColor(((struct ogl_vars *)dmp->dm_vars.priv_vars)->r,
+		 ((struct ogl_vars *)dmp->dm_vars.priv_vars)->g,
+		 ((struct ogl_vars *)dmp->dm_vars.priv_vars)->b,
+		 0.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   }
 
@@ -948,15 +957,13 @@ fastf_t x, y;
 
 
 static int
-ogl_setColor(dmp, r, g, b, strict)
+ogl_setFGColor(dmp, r, g, b, strict)
 struct dm *dmp;
 register short r, g, b;
 int strict;
 {
-  register int nvec;
-
   if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.debug)
-    bu_log("ogl_setColor()\n");
+    bu_log("ogl_setFGColor()\n");
 
   if(strict){
     glColor3ub( (GLubyte)r, (GLubyte)g, (GLubyte)b );
@@ -985,6 +992,38 @@ int strict;
   return TCL_OK;
 }
 
+ogl_setBGColor(dmp, r, g, b)
+struct dm *dmp;
+int r, g, b;
+{
+  GLclampf rf, gf, bf;
+
+  if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.debug)
+    bu_log("ogl_setBGColor()\n");
+
+  ((struct ogl_vars *)dmp->dm_vars.priv_vars)->r = r / 255.0;
+  ((struct ogl_vars *)dmp->dm_vars.priv_vars)->g = g / 255.0;
+  ((struct ogl_vars *)dmp->dm_vars.priv_vars)->b = b / 255.0;
+
+  if(((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer){
+    if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
+			((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)){
+      bu_log("ogl_setBGColor: Couldn't make context current\n");
+      return TCL_ERROR;
+    }
+
+    glXSwapBuffers(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+		   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win);
+    glClearColor(((struct ogl_vars *)dmp->dm_vars.priv_vars)->r,
+		 ((struct ogl_vars *)dmp->dm_vars.priv_vars)->g,
+		 ((struct ogl_vars *)dmp->dm_vars.priv_vars)->b,
+		 0.0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  }
+
+  return TCL_OK;
+}
 
 static int
 ogl_setLineAttr(dmp, width, style)
@@ -1217,8 +1256,11 @@ struct dm *dmp;
 
   ogl_lighting(dmp);
 
-  glClearColor(0.0, 0.0, 0.0, 0.0);
-  glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glClearColor(((struct ogl_vars *)dmp->dm_vars.priv_vars)->r,
+	       ((struct ogl_vars *)dmp->dm_vars.priv_vars)->g,
+	       ((struct ogl_vars *)dmp->dm_vars.priv_vars)->b,
+	       0.0);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   /*CJXX this might cause problems in perspective mode? */
   glGetIntegerv(GL_MATRIX_MODE, &mm);

@@ -51,7 +51,7 @@ static int	plot_normal(), plot_loadMatrix();
 static int	plot_drawString2D(), plot_drawLine2D();
 static int      plot_drawPoint2D();
 static int	plot_drawVList();
-static int      plot_setColor();
+static int      plot_setFGColor();
 static int      plot_setLineAttr();
 static int	plot_setWinBounds(), plot_debug();
 
@@ -65,7 +65,8 @@ struct dm dm_plot = {
   plot_drawLine2D,
   plot_drawPoint2D,
   plot_drawVList,
-  plot_setColor,
+  plot_setFGColor,
+  Nu_int0,
   plot_setLineAttr,
   plot_setWinBounds,
   plot_debug,
@@ -537,7 +538,7 @@ fastf_t x, y;
 
 
 static int
-plot_setColor(dmp, r, g, b, strict)
+plot_setFGColor(dmp, r, g, b, strict)
 struct dm *dmp;
 register short r, g, b;
 int strict;
