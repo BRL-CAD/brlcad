@@ -1126,13 +1126,22 @@ struct shell *s;
  *
  *  Join two loops together which share a common edge,
  *  such that both occurances of the common edge are deleted.
+ *  This routine always leaves "lu" intact, and kills the loop
+ *  radial to "eu" (after stealing all it's edges).
+ *
+ *  Either both loops must be of the same orientation, or then
+ *  first loop must be OT_SAME, and the second loop must be OT_OPPOSITE.
+ *  Joining OT_SAME & OT_OPPOSITE always gives an OT_SAME result.
+ *  Since "lu" must survive, it must be the OT_SAME one.
  */
 void
 nmg_jl(lu, eu)
 struct loopuse *lu;
 struct edgeuse *eu;
 {
-	struct edgeuse *eu_r, *nexteu;
+	struct loopuse	*lu2;
+	struct edgeuse	*eu_r;		/* use of shared edge in lu2 */
+	struct edgeuse	*nexteu;
 
 	NMG_CK_LOOPUSE(lu);
 
@@ -1145,20 +1154,25 @@ struct edgeuse *eu;
 	if (eu->up.lu_p != lu)
 		rt_bomb("nmg_jl: edgeuse is not child of loopuse?\n");
 
-	if (*eu_r->up.magic_p != NMG_LOOPUSE_MAGIC)
+	lu2 = eu_r->up.lu_p;
+	if (lu2->l.magic != NMG_LOOPUSE_MAGIC)
 		rt_bomb("nmg_jl: radial edgeuse not part of loopuse\n");
 
-	if (eu_r->up.lu_p == lu)
+	if (lu2 == lu)
 		rt_bomb("nmg_jl: trying to join a loop to itself\n");
 
-	if (lu->up.magic_p != eu_r->up.lu_p->up.magic_p)
+	if (lu->up.magic_p != lu2->up.magic_p)
 		rt_bomb("nmg_jl: loopuses do not share parent\n");
 
-	if (eu_r->up.lu_p->orientation != lu->orientation)  {
-		rt_log("nmg_jl: eu_r->up = %s, lu = %s\n",
-			nmg_orientation(eu_r->up.lu_p->orientation),
-			nmg_orientation(lu->orientation) );
-		rt_bomb("nmg_jl: can't join loops of different orientation!\n");
+	if (lu2->orientation != lu->orientation)  {
+		if( lu->orientation != OT_SAME || lu2->orientation != OT_OPPOSITE )  {
+			rt_log("nmg_jl: lu2 = %s, lu = %s\n",
+				nmg_orientation(lu2->orientation),
+				nmg_orientation(lu->orientation) );
+			rt_bomb("nmg_jl: can't join loops of different orientation!\n");
+		} else {
+			/* Consuming an OPPOSITE into a SAME is OK */
+		}
 	}
 
 	if (eu->radial_p->eumate_p->radial_p->eumate_p != eu ||
@@ -1168,6 +1182,7 @@ struct edgeuse *eu;
 	/*
 	 * Remove all the edgeuses "ahead" of our radial and insert them
 	 * "behind" the current edgeuse.
+	 * Operates on lu and lu's mate simultaneously.
 	 */
 	nexteu = RT_LIST_PNEXT_CIRC(edgeuse, eu_r);
 	while (nexteu != eu_r) {
@@ -1183,14 +1198,14 @@ struct edgeuse *eu;
 	}
 
 	/*
-	 * The other loop just has the one edgeuse/edge left in it.
-	 * Delete the other loop.
+	 * The other loop just has the one (shared) edgeuse left in it.
+	 * Delete the other loop (and it's mate).
 	 */
-	nmg_klu(eu_r->up.lu_p);
+	nmg_klu(lu2);
 
 	/*
-	 * Kill the one remaining use of the "shared" edge and
-	 * voila: one contiguous loop.
+	 * Kill the one remaining use of the (formerly) "shared" edge in lu
+	 * and voila: one contiguous loop.
 	 */
 	if( nmg_keu(eu) )  rt_bomb("nmg_jl() loop vanished?\n");
 }
@@ -1733,6 +1748,15 @@ struct loopuse *lu;
 		    eu_r->up.lu_p->up.magic_p == lu->up.magic_p &&
 		    eu->eumate_p->radial_p == eu->radial_p->eumate_p &&
 		    eu_r->up.lu_p != lu) {
+
+		    	if( eu_r->up.lu_p->orientation != lu->orientation &&
+		    	   (lu->orientation != OT_SAME ||
+			    eu_r->up.lu_p->orientation != OT_OPPOSITE) )  {
+				/* Does not meet requirements of nmg_jl(),
+				 * skip it.
+				 */
+				continue;
+			}
 
 		    	/* save a pointer to where we've already been
 		    	 * so that when eu becomes an invalid pointer, we
