@@ -2123,6 +2123,11 @@ CONST struct rt_tol	*tol;
 		/* If the edge already exists in the face, don't bother
 		 * to add it.
 		 */
+		if( !tp->top || !tp->bot )
+		{
+			rt_log( "tp->top and/or tp->bot is/are NULL!!!!!!!\n" );
+			rt_bomb( "tp->top and/or tp->bot is/are NULL" );
+		}
 		if (nmg_find_eu_in_face(tp->top->vu_p->v_p, tp->bot->vu_p->v_p, fu,
 		    (struct edgeuse *)NULL, 0) != (struct edgeuse *)NULL) {
 		    	if (rt_g.NMG_debug & DEBUG_TRI)
