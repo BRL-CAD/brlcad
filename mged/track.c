@@ -568,7 +568,7 @@ int pos;
 	return;
 }
 
-
+int
 wrobj( name, flags )
 char name[];
 int flags;
