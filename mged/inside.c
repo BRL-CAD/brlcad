@@ -583,7 +583,7 @@ plane_t	planes[6];
 
 	/* find the new vertices by intersecting the new face planes */
 	for(i=0; i<num_pts; i++) {
-	  if( rt_arb_3face_intersect( arb->pt[i], planes, cgtype, i*3 ) < 0 )  {
+	  if( rt_arb_3face_intersect( arb->pt[i], (const plane_t *)planes, cgtype, i*3 ) < 0 )  {
 	    Tcl_AppendResult(interp, "cannot find inside arb\n", (char *)NULL);
 	    return(1);
 	  }
