@@ -61,6 +61,6 @@ everything&::	PRODUCTS
 #endif
 
 %.g:	../SRCDIR/%.asc				if exist ../SRCDIR/%.asc
-	CONV < ../SRCDIR/%.asc > %.g
+	CONV ../SRCDIR/%.asc %.g
 
 #include "../Cakefile.rules"
