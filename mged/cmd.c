@@ -145,6 +145,7 @@ int     f_bindkey();
 /* Carl Nuzman experimental */
 #if 1
 extern int cmd_vdraw();
+extern int cmd_read_center();
 #endif
 
 extern void sync();
@@ -590,6 +591,8 @@ static struct funtab funtab[] = {
 #if 1
 "vdraw", "write|insert|delete|read|length|show [args]", "Expermental drawing (cnuzman)",
 	cmd_vdraw, 2, 7, TRUE,
+"read_center", "", "Experimental - return coords of view center",
+	cmd_read_center, 1, 1, TRUE,
 #endif
 "vrmgr", "host {master|slave|overview}", "link with Virtual Reality manager",
 	f_vrmgr, 3, MAXARGS,FALSE,
