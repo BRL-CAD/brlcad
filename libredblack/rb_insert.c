@@ -187,7 +187,12 @@ void	*data;
     for (order = 0; order < nm_orders; ++order)
 	if (rb_get_uniqueness(tree, order) &&
 	    (rb_search(tree, order, data) != NULL))
-		return (-(order + 1));
+	{
+	    if (tree -> rbt_debug & RB_DEBUG_UNIQ)
+		rt_log("rb_insert(<%x>, <%x>, TBD) will return %d\n",
+		    tree, data, -(order + 1));
+	    return (-(order + 1));
+	}
 
     /*
      *	Make a new package
@@ -267,30 +272,17 @@ void	*data;
 	    rb_set_color(node, order, RB_BLACK);
 	    rb_size(node, order) = 1;
 	    if (tree -> rbt_debug & RB_DEBUG_OS)
-		rt_log("rb_insert(%x): size(%x, %d)=%d\n",
-		    node, node, order, rb_size(node, order));
+		rt_log("rb_insert(<%x>, <%x>, <%x>): size(%x, %d)=%d\n",
+		    tree, data, node, node, order, rb_size(node, order));
 	}
     /*	Otherwise, insert the node into the tree */
     else
     {
+	for (order = 0; order < nm_orders; ++order)
+	    result += _rb_insert(tree, order, node);
 	if (tree -> rbt_debug & RB_DEBUG_UNIQ)
-	{
-	    for (order = 0; order < nm_orders; ++order)
-		if (_rb_insert(tree, order, node))
-		{
-		    rt_log("_rb_insert(<%x>, %d, <%x>) compared SAME\n",
-			tree, order, node);
-		    ++result;
-		}
-		else
-		    rt_log("_rb_insert(<%x>, %d, <%x>) compared DIFFERENT\n",
-			tree, order, node);
-	    rt_log("rb_insert(<%x>, <%x>) will return %d\n",
-		tree, node, result);
-	}
-	else
-	    for (order = 0; order < nm_orders; ++order)
-		result += _rb_insert(tree, order, node);
+	    rt_log("rb_insert(<%x>, <%x>, <%x>) will return %d\n",
+		tree, data, node, result);
     }
 
     ++(tree -> rbt_nm_nodes);
