@@ -446,9 +446,13 @@ struct partition *PartHeadp;
 		d = pp->pt_forw->pt_inhit->hit_dist - hitp->hit_dist;
 		if( NEAR_ZERO( d, AIR_GAP_TOL ) )  {
 			struct shadework	sw;
-			struct application	ap2;
+			struct application	appl;
 
-			ap2 = *ap;			/* struct copy -- avoids accidents */
+			/* Make private copy of application struct,
+			 * because viewshade() may change various fields. ???
+			 */
+			appl = *ap;			/* struct copy */
+
 			sw.sw_transmit = sw.sw_reflect = 0.0;
 			sw.sw_refrac_index = 1.0;
 			sw.sw_xmitonly = 1;		/* want XMIT data only */
@@ -456,7 +460,7 @@ struct partition *PartHeadp;
 			VSETALL( sw.sw_color, 1 );
 			VSETALL( sw.sw_basecolor, 1 );
 
-			(void)viewshade( ap2, pp->pt_forw, &sw );
+			(void)viewshade( &appl, pp->pt_forw, &sw );
 			ap->a_refrac_index = sw.sw_refrac_index;
 		}
 	}
