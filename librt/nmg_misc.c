@@ -207,7 +207,7 @@ long *flags;
 		{
 			lu = eu1->up.lu_p;
 			NMG_CK_LOOPUSE( lu );
-			if( *lu->up.magic_p == NMG_FACEUSE_MAGIC && lu->orientation == OT_SAME )
+			if( *lu->up.magic_p == NMG_FACEUSE_MAGIC )
 			{
 				vect_t left;
 				vect_t edge_dir;
