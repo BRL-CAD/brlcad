@@ -1,6 +1,9 @@
 /*
- * Types of packages.  Put here because I didn't know where it should go.
- *   pkg.h perhaps or should that be generic?
+ *		P K G T Y P E S . H
+ *
+ *  Types of packages used for the remote frame buffer
+ *  communication between libfb/if_remote.c and rfbd/rfbd.c.
+ *  This file is shared by those two modules.
  */
 
 #define	MSG_FBOPEN	1
@@ -13,6 +16,7 @@
 #define	MSG_FBZOOM	8
 #define	MSG_FBRMAP	12
 #define	MSG_FBWMAP	13
+#define	MSG_FBHELP	14
 
 #define	MSG_DATA	20
 #define	MSG_RETURN	21
