@@ -331,9 +331,10 @@ register int	cookie;
 		for (i=0; i<4; i++) {
 			((char *)&testval)[i] = i+1;
 		}
+
 		if (sizeof (long int) == 8) {
 			Indian = IND_CRAY;	/* is this good enough? */
-			if ( ( testval >> 32) == 0x01020304) {
+			if ( ( (testval >> 31) >> 1 ) == 0x01020304) { 
 				Indian = IND_BIG; /* XXX 64bit */
 			} else if (testval == 0x04030201) {
 				Indian = IND_LITTLE;	/* 64 bit */
