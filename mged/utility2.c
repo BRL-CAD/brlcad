@@ -60,6 +60,8 @@ char **argv;
 	char shell_name[NAMESIZE];
 	long **trans_tbl;
 
+	CHECK_READ_ONLY;
+
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 
@@ -267,6 +269,8 @@ char **argv;
 	int	i;
 	int	endpos;
 	int status = TCL_OK;
+
+	CHECK_READ_ONLY;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
@@ -738,6 +742,8 @@ char **argv;
 	struct push_id *pip;
 	struct bu_external	es_ext;
 	struct rt_db_internal	es_int;
+
+	CHECK_READ_ONLY;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
@@ -1326,6 +1332,8 @@ char **argv;
 	mat_t xform;
 	int i,j;
 
+	CHECK_READ_ONLY;
+
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 
@@ -1552,6 +1560,8 @@ char *argv[];
 	char *nmg_name;
 	int success = 0;
 
+	CHECK_READ_ONLY;
+
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 
@@ -1727,6 +1737,8 @@ char **argv;
 	struct rt_db_internal	new_intern;
 	struct region		*regp;
 	char			*new_name;
+
+	CHECK_READ_ONLY;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;

@@ -1297,6 +1297,8 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
+	CHECK_READ_ONLY;
+
   if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
     return TCL_ERROR;
 

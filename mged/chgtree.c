@@ -79,6 +79,8 @@ char	**argv;
 	register struct directory *dp;
 	struct rt_db_internal	intern;
 
+	CHECK_READ_ONLY;
+
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 
@@ -122,6 +124,8 @@ char	**argv;
 	register struct directory *proto;
 	register struct directory *dp;
 	struct bu_external external;
+
+	CHECK_READ_ONLY;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
@@ -177,6 +181,8 @@ char	**argv;
 	register struct directory *dp;
 	char oper;
 
+	CHECK_READ_ONLY;
+
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 
@@ -215,6 +221,8 @@ char	**argv;
 	int i;
 	int ident, air;
 	char oper;
+
+	CHECK_READ_ONLY;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
@@ -307,6 +315,8 @@ char	**argv;
 	register int	i;
 	char	oper;
 
+	CHECK_READ_ONLY;
+
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 
@@ -371,6 +381,8 @@ char	**argv;
 	int	is_phony;
 	int	verbose = LOOKUP_NOISY;
 
+	CHECK_READ_ONLY;
+
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 
@@ -409,6 +421,8 @@ char	**argv;
 	register struct directory *dp;
 	register int i;
 
+	CHECK_READ_ONLY;
+
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 
@@ -440,6 +454,8 @@ char	**argv;
 	struct rt_comb_internal	*comb;
 	union tree		*tp;
 	int			ret;
+
+	CHECK_READ_ONLY;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
@@ -500,7 +516,8 @@ char	**argv;
 	struct rt_db_internal internal;
 	struct rt_tgc_internal *tgc_ip;
 	int id;
-	int ngran;
+
+	CHECK_READ_ONLY;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
@@ -592,6 +609,8 @@ char	**argv;
 	struct rt_db_internal	intern;
 	struct rt_comb_internal	*comb;
 	union tree		*tp;
+
+	CHECK_READ_ONLY;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
@@ -933,6 +952,8 @@ char	**argv;
     char		*newargv[20];
     struct bu_vls	*avp;
 
+	CHECK_READ_ONLY;
+
     if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
       return TCL_ERROR;
 
@@ -1022,6 +1043,8 @@ char **argv;
     struct rt_db_internal	intern;
     struct animate		*anp;
     union tree			*tp;
+
+	CHECK_READ_ONLY;
 
     if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
       return TCL_ERROR;

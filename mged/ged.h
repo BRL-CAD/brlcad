@@ -387,6 +387,13 @@ The in-memory table of contents may not match the status of the on-disk\n\
 database.  The on-disk database should still be intact.  For safety,\n\
 you should exit MGED now, and resolve the I/O problem, before continuing.\n")
 
+/* Check if the database is read only, and if so return TCL_ERROR */
+#define	CHECK_READ_ONLY	\
+	if( dbip->dbi_read_only) \
+	{ \
+		Tcl_AppendResult(interp, "Sorry, this database is READ-ONLY\n", (char *)NULL ); \
+		return TCL_ERROR; \
+	}
 
 struct funtab {
     char *ft_name;

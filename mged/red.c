@@ -63,6 +63,8 @@ char **argv;
 	struct rt_comb_internal	*comb;
 	int node_count;
 
+	CHECK_READ_ONLY;
+
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 

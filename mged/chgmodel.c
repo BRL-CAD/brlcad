@@ -83,6 +83,8 @@ char	**argv;
 	struct rt_db_internal	intern;
 	struct rt_comb_internal	*comb;
 
+	CHECK_READ_ONLY;
+
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 
@@ -133,6 +135,8 @@ char	**argv;
 	char inherit;
 	struct rt_db_internal	intern;
 	struct rt_comb_internal	*comb;
+
+	CHECK_READ_ONLY;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
@@ -280,6 +284,8 @@ char    *argv[];
 
   char **av;
   
+	CHECK_READ_ONLY;
+
   if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
     return TCL_ERROR;
 
@@ -394,6 +400,8 @@ char    *argv[];
   int r,g,b;
   int override;
   int inherit;
+
+	CHECK_READ_ONLY;
 
   if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
     return TCL_ERROR;
@@ -512,6 +520,8 @@ char	**argv;
 	struct rt_db_internal	intern;
 	struct rt_comb_internal	*comb;
 
+	CHECK_READ_ONLY;
+
     if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
       return TCL_ERROR;
 
@@ -565,6 +575,8 @@ char	**argv;
 	struct rt_comb_internal	*comb;
 	struct bu_vls		args;
 
+	CHECK_READ_ONLY;
+
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 
@@ -608,6 +620,8 @@ char	**argv;
 	int			id;
 	mat_t mirmat;
 	mat_t temp;
+
+	CHECK_READ_ONLY;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
@@ -1118,6 +1132,8 @@ char	**argv;
 	struct rt_db_internal	intern;
 	struct rt_comb_internal	*comb;
 
+	CHECK_READ_ONLY;
+
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 
@@ -1170,6 +1186,8 @@ char	**argv;
 	double	loc2mm;
 	int	new_unit = 0;
 	CONST char	*str;
+
+	CHECK_READ_ONLY;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
@@ -1247,6 +1265,8 @@ char	**argv;
 	struct bu_vls	title;
 	int bad = 0;
 
+	CHECK_READ_ONLY;
+
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 
@@ -1306,6 +1326,8 @@ char	**argv;
 	struct rt_eto_internal *eto_ip;
 	struct rt_part_internal *part_ip;
 	struct rt_pipe_internal *pipe_ip;
+
+	CHECK_READ_ONLY;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
@@ -1755,6 +1777,8 @@ char	**argv;
   mat_t temp;
   vect_t s_point, point, v_work, model_pt;
 
+	CHECK_READ_ONLY;
+
   if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
     return TCL_ERROR;
 
@@ -1788,6 +1812,8 @@ char	**argv;
 {
 	mat_t incr;
 	vect_t point, temp;
+
+	CHECK_READ_ONLY;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
@@ -1871,6 +1897,8 @@ char	**argv;
 	register int i;
 	mat_t incr, old;
 	vect_t model_sol_pt, model_incr, ed_sol_pt, new_vertex;
+
+	CHECK_READ_ONLY;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
@@ -2018,6 +2046,8 @@ char	**argv;
 	struct vertex *v_new, *v;
 	unsigned long tw, tf, tp;
 
+	CHECK_READ_ONLY;
+
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 
@@ -2161,6 +2191,8 @@ char	**argv;
 	mat_t temp;
 	vect_t s_point, point, v_work, model_pt;
 	vect_t	specified_pt, direc;
+
+	CHECK_READ_ONLY;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;

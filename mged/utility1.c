@@ -106,6 +106,8 @@ char	*argv[];
   char *tmpfil = "/tmp/GED.aXXXXX";
   char **av;
 
+	CHECK_READ_ONLY;
+
   if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
     return TCL_ERROR;
 
@@ -206,6 +208,8 @@ char		*argv[];
 	register struct directory *dp;
 	struct rt_db_internal intern;
 	struct rt_comb_internal *comb;
+
+	CHECK_READ_ONLY;
 
   if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
     return TCL_ERROR;
@@ -564,6 +568,8 @@ char	**argv;
 	struct shell *kill_s;
 	struct directory *dp;
 	struct rt_db_internal nmg_intern;
+
+	CHECK_READ_ONLY;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;

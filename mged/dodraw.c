@@ -1333,6 +1333,8 @@ char	**argv;
 	char			op;
 	int			failed;
 
+	CHECK_READ_ONLY;
+
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 

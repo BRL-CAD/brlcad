@@ -6014,6 +6014,8 @@ init_objedit()
 	set_e_axes_pos(1);
 }
 
+void oedit_reject();
+
 void
 oedit_accept()
 {
@@ -6025,6 +6027,20 @@ oedit_accept()
 	mat_t inv_topm;	/* inverse */
 	mat_t deltam;	/* final "changes":  deltam = (inv_topm)(modelchanges)(topm) */
 	mat_t tempm;
+
+	if( dbip->dbi_read_only )
+	{
+		oedit_reject();
+		FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
+			if( sp->s_iflag == DOWN )
+				continue;
+			(void)replot_original_solid( sp );
+			sp->s_iflag = DOWN;
+		}
+		bu_log( "Sorry, this database is READ-ONLY\n" );
+		pr_prompt();
+		return;
+	}
 
 	switch( ipathpos )  {
 	case 0:
@@ -6120,6 +6136,8 @@ char	*argv[];
 	vect_t tempvec;
 	struct rt_arb_internal *arb;
 
+	CHECK_READ_ONLY;
+
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 
@@ -6162,6 +6180,7 @@ char	*argv[];
 }
 
 /* Hooks from buttons.c */
+void sedit_reject();
 
 void
 sedit_accept()
@@ -6169,6 +6188,14 @@ sedit_accept()
 	struct directory	*dp;
 
 	if( not_state( ST_S_EDIT, "Solid edit accept" ) )  return;
+
+	if( dbip->dbi_read_only )
+	{
+		sedit_reject();
+		bu_log( "Sorry, this database is READ-ONLY\n" );
+		pr_prompt();
+		return;
+	}
 
 	if( sedraw > 0)
 	  sedit();
@@ -6375,6 +6402,8 @@ char	**argv;
 {
   register int i;
   vect_t argvect;
+
+	CHECK_READ_ONLY;
 
   if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
     return TCL_ERROR;

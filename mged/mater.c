@@ -109,6 +109,8 @@ char	**argv;
 {
 	register struct mater *newp,*next_mater;
 
+	CHECK_READ_ONLY;
+
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 
@@ -171,6 +173,8 @@ char	**argv;
 	register FILE *fp;
 	char line[128];
 	static char hdr[] = "LOW\tHIGH\tRed\tGreen\tBlue\n";
+
+	CHECK_READ_ONLY;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;

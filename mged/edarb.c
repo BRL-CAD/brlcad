@@ -674,6 +674,8 @@ char	**argv;
 	fastf_t rota, fb;
 	vect_t norm1,norm2,norm3;
 
+	CHECK_READ_ONLY;
+
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 
@@ -1144,6 +1146,8 @@ char	**argv;
 	/* ARB8 */	0,  1,  2,  3,  4,  5,  6,  7
     };
 #define		ARB_VERT_LOC(n,v)	vert_loc[((n) - 4) * 8 + (v) - 1]
+
+	CHECK_READ_ONLY;
 
     if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
       return TCL_ERROR;

@@ -794,6 +794,8 @@ char	**argv;
 	struct rt_comb_internal *comb;
 	char		tempstring[NAMESIZE+2];
 
+	CHECK_READ_ONLY;
+
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 
@@ -1149,6 +1151,8 @@ char	**argv;
 	struct rt_comb_internal *comb;
 	struct bu_ptbl		stack;
 
+	CHECK_READ_ONLY;
+
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 
@@ -1267,6 +1271,8 @@ char	**argv;
 	struct rt_comb_internal	*comb;
 	int			ret;
 
+	CHECK_READ_ONLY;
+
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 		return TCL_ERROR;
 
@@ -1347,6 +1353,8 @@ char	**argv;
 {
 	register struct directory *dp;
 	register int i;
+
+	CHECK_READ_ONLY;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;

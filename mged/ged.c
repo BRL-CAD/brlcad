@@ -146,14 +146,35 @@ main(argc,argv)
 int argc;
 char **argv;
 {
+	extern char *optarg;
+	extern int optind, opterr, optopt;
 	int	rateflag = 0;
+	int	c;
+	int	read_only_flag=0;
 
 	/* Check for proper invocation */
 	if( argc < 2 )  {
-		fprintf(stdout, "Usage:  %s database [command]\n", argv[0]);
+		fprintf(stdout, "Usage:  %s [-r] database [command]\n", argv[0]);
 		fflush(stdout);
 		return(1);		/* NOT finish() */
 	}
+
+	while ((c = getopt(argc, argv, "r")) != EOF)
+	{
+		switch( c )
+		{
+			case 'r':
+				read_only_flag = 1;
+				break;
+			default:
+				fprintf( stdout, "Unrecognized option (%c)\n", c );
+				fflush(stdout);
+				return( 1 );
+		}
+	}
+
+	argc -= (optind - 1);
+	argv += (optind - 1);
 
 	/* Identify ourselves if interactive */
 	if( argc == 2 )  {
@@ -309,6 +330,12 @@ char **argv;
 	  mged_finish(1);
 	else
 	  bu_log("%s", interp->result);
+
+	if( read_only_flag && !dbip->dbi_read_only )
+	{
+		dbip->dbi_read_only = 1;
+		bu_log( "Opened in READ ONLY mode\n" );
+	}
 
 #if 0
 	dmp->dm_setWinBounds(windowbounds);

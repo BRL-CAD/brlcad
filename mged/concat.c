@@ -344,6 +344,8 @@ char	**argv;
 	struct db_i		*newdbp;
 	int bad = 0;
 
+	CHECK_READ_ONLY;
+
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 
