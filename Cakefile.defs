@@ -314,7 +314,7 @@ set -S2 "/bin/sh"
 #		define	LDSHARED	ld -n32 -shared
 #		define	BUILD_LIBRARY	LDSHARED -o
 #		define	RANLIB	true
-#		define	STANDARD_LIBES	-lm -rpath LIBDIR:/usr/lib32  /* -lmalloc -lc */
+#		define	STANDARD_LIBES	-lm -rpath LIBDIR:/usr/lib32  -lmalloc /* -lc */
 /*		When debugging libraries, -m and -v are helpful LD_OPTS */
 /*		Warning 84:  library not used for resolving any symbol */
 /*		Warning 85: definition in one library preempts that in another */
