@@ -31,8 +31,6 @@ int face_orient;
 	int no_of_edges;
 	int no_of_param_curves;
 	int vert_no;
-	int start_vert;
-	int vert_inc;
 	struct faceuse *fu_ret;
 	struct loopuse *lu;
 	struct edgeuse *eu;
@@ -71,13 +69,6 @@ int face_orient;
 		Readint( &edge_uses[i].edge_de , "" );
 		Readint( &edge_uses[i].index , "" );
 		Readint( &edge_uses[i].orient , "" );
-		if( !face_orient ) /* need opposite orientation of edge */
-		{
-			if( edge_uses[i].orient )
-				edge_uses[i].orient = 0;
-			else
-				edge_uses[i].orient = 1;
-		}
 		edge_uses[i].root = (struct iges_param_curve *)NULL;
 		Readint( &no_of_param_curves , "" );
 		for( j=0 ; j<no_of_param_curves ; j++ )
@@ -105,51 +96,36 @@ int face_orient;
 	verts = (struct vertex **)rt_calloc( no_of_edges , sizeof( struct vertex *) ,
 		"Add_nurb_loop_to_face: vertex_list **" );
 
-	if( face_orient )
-	{
-		start_vert = 0;
-		vert_inc = 1;
-	}
-	else
-	{
-		start_vert = no_of_edges - 1;
-		vert_inc = (-1);
-	}
-	k = (-1);
-	for( i=start_vert ; i<no_of_edges&&i>=0 ; i += vert_inc )
+	for( i=0 ; i<no_of_edges ; i++ )
 	{
 		struct vertex **v;
 
 		v = Get_vertex( &edge_uses[i] );
 		if( *v )
-			verts[++k] = (*v);
+			verts[i] = (*v);
 		else
-			verts[++k] = (struct vertex *)NULL;
+			verts[i] = (struct vertex *)NULL;
 	}
 
 	fu_ret = nmg_add_loop_to_face( s, fu, verts, no_of_edges, OT_SAME );
-	k = (-1);
-	for( i=start_vert ; i<no_of_edges&&i>=0 ; i += vert_inc )
+	for( i=0 ; i<no_of_edges ; i++ )
 	{
 		struct vertex **v;
 
 		v = Get_vertex( &edge_uses[i] );
 		if( !(*v) )
 		{
-			if( !Put_vertex( verts[++k], &edge_uses[i] ) )
+			if( !Put_vertex( verts[i], &edge_uses[i] ) )
 			{
-				rt_log( "Cannot put vertex x%x\n", verts[k] );
+				rt_log( "Cannot put vertex x%x\n", verts[i] );
 				rt_bomb( "Cannot put vertex\n" );
 			}
 		}
-		else
-			++k;
 	}
 
 	lu = RT_LIST_LAST( loopuse, &fu_ret->lu_hd );
 	NMG_CK_LOOPUSE( lu );
 	i = no_of_edges - 1;
-	k = no_of_edges - 1;
 	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 	{
 		struct vertex **v;
@@ -160,13 +136,8 @@ int face_orient;
 		if( *v != eu->vu_p->v_p )
 		{
 			nmg_jv( *v, eu->vu_p->v_p );
-			verts[k] = *v;
+			verts[i] = *v;
 		}
-		k += vert_inc;
-		if( k == no_of_edges )
-			k = 0;
-		if( k < 0 )
-			k = no_of_edges - 1;
 		i++;
 		if( i == no_of_edges )
 			i = 0;

@@ -57,7 +57,7 @@ int shell_orient;
 
 	for( face=0 ; face<no_of_faces ; face++ )
 	{
-		fu[face_count] = Add_face_to_shell( s , (face_de[face]-1)/2 , 1  );
+		fu[face_count] = Add_face_to_shell( s , (face_de[face]-1)/2 , face_orient[face]  );
 		if( fu[face_count] != (struct faceuse *)NULL )
 			face_count++;
 	}

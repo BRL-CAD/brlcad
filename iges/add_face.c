@@ -81,7 +81,17 @@ int face_orient;
 	}
 	else if( dir[(surf_de-1)/2]->type == 128 )
 	{
+		struct face *f;
+
 		fu = Make_nurb_face( &srf, s, (surf_de-1)/2 );
+		NMG_CK_FACEUSE( fu );
+		if( !face_orient )
+		{
+			f = fu->f_p;
+			NMG_CK_FACE( f );
+			f->flip = 1;
+		}
+		
 		for( loop=0 ; loop<no_of_loops ; loop++ )
 		{
 			if( !Add_nurb_loop_to_face( s, fu, srf, ((loop_de[loop]-1)/2) , face_orient ))
