@@ -36,6 +36,7 @@ static char RCSars[] = "@(#)$Header$ (BRL)";
 extern fastf_t *rd_curve();
 
 HIDDEN void	ars_hitsort();
+extern int	arsface();
 
 /*
  *			A R S _ R E A D I N
@@ -53,7 +54,6 @@ matp_t		mat;
 	LOCAL int	pts_per_curve;
 	LOCAL int	ncurves;
 	LOCAL vect_t	base_vect;
-	LOCAL fastf_t	f;
 	int		currec;
 
 	ncurves = rp[0].a.a_m;
@@ -111,6 +111,7 @@ matp_t		mat;
  *  This routine is unusual in that it has to read additional
  *  database records to obtain all the necessary information.
  */
+int
 ars_prep( vecxx, stp, mat, rp, rtip, dp )
 fastf_t		*vecxx;
 struct soltab	*stp;
@@ -124,7 +125,6 @@ struct directory *dp;
 	register fastf_t **curves;	/* array of curve base addresses */
 	LOCAL int	pts_per_curve;
 	LOCAL int	ncurves;
-	LOCAL int	pts;		/* return from arsface() */
 	LOCAL fastf_t	f;
 
 	ncurves = rp[0].a.a_m;
@@ -208,7 +208,6 @@ rd_curve(rp, npts)
 union record	*rp;
 int		npts;
 {
-	LOCAL int bytes;
 	LOCAL int lim;
 	LOCAL fastf_t *base;
 	register fastf_t *fp;		/* pointer to temp vector */
@@ -249,6 +248,7 @@ int		npts;
  *	0	if the 3 points didn't form a plane (eg, colinear, etc).
  *	#pts	(3) if a valid plane resulted.
  */
+int
 arsface( stp, ap, bp, cp )
 struct soltab *stp;
 pointp_t ap, bp, cp;
@@ -299,7 +299,6 @@ register struct soltab *stp;
 {
 	register struct tri_specific *trip =
 		(struct tri_specific *)stp->st_specific;
-	register int i;
 
 	if( trip == TRI_NULL )  {
 		rt_log("ars(%s):  no faces\n", stp->st_name);
@@ -596,6 +595,7 @@ ars_plot( rp, mat, vhead, dp )
 union record	*rp;
 mat_t		mat;
 struct vlhead	*vhead;
+struct directory *dp;
 {
 	register int	i;
 	register int	j;
