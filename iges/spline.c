@@ -93,16 +93,16 @@ int entityno;
 
 	/* U knot vector */
 	for (i = 0; i <= n1+2*m1; i++) {
-		b_patch->u_knots->knots[i] = params[10+i];
+		b_patch->u_knots.knots[i] = params[10+i];
 	}
 
 	/* V knot vector */
 	for (i = 0; i <= n2+2*m2; i++) {
-		b_patch->v_knots->knots[i] = params[11+a+i];
+		b_patch->v_knots.knots[i] = params[11+a+i];
 	}
 
 	/* control points */
-	dp = b_patch->mesh->ctl_points;
+	dp = b_patch->ctl_points;
 	for (i = 0; i <= k2; i++) {
 		for (j = 0; j <= k1; j++) {
 			fastf_t	x, y, z, w;
