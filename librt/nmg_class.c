@@ -56,10 +56,10 @@ static vect_t projection_dir = { 1.0, 0.0, 0.0 };
  *	edge, or missed it.
  */
 static void joint_hitmiss2(eu, pt, closest, novote)
-struct edgeuse *eu;
-point_t pt;
+struct edgeuse	*eu;
+point_t		pt;
 struct neighbor *closest;
-struct nmg_ptbl *novote;
+long		*novote;
 {
 	struct edgeuse *eu_rinf, *eu_r, *mate_r;
 	struct edgeuse	*p;
@@ -82,11 +82,11 @@ struct nmg_ptbl *novote;
 			closest->dist = 0.0;
 			closest->p.eu = eu;
 			closest->inout = FACE_MISS;
-		} else rt_bomb("bad loop orientation\n");
+		} else rt_bomb("joint_hitmiss2: bad loop orientation\n");
 	    	return;
 	}
 
-	rt_bomb("Dangerous stuff\n");
+	rt_bomb("joint_hitmiss2:  Dangerous stuff\n");
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 		EUPRINT("Hard question time", eu);
 
@@ -104,13 +104,15 @@ struct nmg_ptbl *novote;
 		    *eu_r->up.lu_p->up.magic_p != NMG_FACEUSE_MAGIC ||
 		    eu_r->up.lu_p->up.fu_p->orientation != OT_OPPOSITE ||
 		    eu_r->up.lu_p->up.fu_p->s_p != eu->up.lu_p->up.fu_p->s_p ||
-		    nmg_tbl(novote, TBL_LOC, (long *)&eu_r) >= 0) &&
-		    eu_r != eu->eumate_p)
+/* XXX this was		nmg_tbl(novote, TBL_LOC, (long *)&eu_r) >= 0 ***/
+/* XXX was this right, or should it have been  eu_r->up.lu_p->up.fu_p->f_p ***/
+		    NMG_INDEX_TEST(novote, eu_r)
+		    ) && eu_r != eu->eumate_p)
 			eu_r = eu_r->eumate_p->radial_p;
 
 		if (eu_r == eu->eumate_p) {
 			/* only radial edge/face is planar with projection vector */
-			rt_bomb("bogus Dewd, Non-Manifold on the radial edge!\n");
+			rt_bomb("joint_hitmiss2: bogus Dewd, Non-Manifold on the radial edge!\n");
 		}
 
 		N1 = eu->up.lu_p->up.fu_p->f_p->fg_p->N;
@@ -145,11 +147,11 @@ struct nmg_ptbl *novote;
  *
  */
 static void pt_hitmis_e(pt, eu, closest, tol, novote)
-point_t pt;
-struct edgeuse *eu;
-struct neighbor *closest;
-fastf_t tol;
-struct nmg_ptbl *novote;
+point_t		pt;
+struct edgeuse	*eu;
+struct neighbor	*closest;
+fastf_t		tol;
+long		*novote;
 {
 	vect_t	N,	/* plane normal */
 		euvect,	/* vector of edgeuse */
@@ -264,11 +266,11 @@ struct nmg_ptbl *novote;
  *	is in, or out of the area of the loop
  */
 static void pt_hitmis_l(pt, lu, closest, tol, novote)
-point_t pt;
-struct loopuse *lu;
-struct neighbor *closest;
-fastf_t tol;
-struct nmg_ptbl *novote;
+point_t		pt;
+struct loopuse	*lu;
+struct neighbor	*closest;
+fastf_t		tol;
+long		*novote;
 {
 	vect_t	delta;
 	pointp_t lu_pt;
@@ -307,7 +309,7 @@ struct nmg_ptbl *novote;
 			} else {
 				rt_log("bad orientation for face loopuse\n");
 				nmg_pr_orient(lu->orientation, "\t");
-				rt_bomb("BAD NMG\n");
+				rt_bomb("pt_hitmis_l: BAD NMG\n");
 			}
 
 			if (rt_g.NMG_debug & DEBUG_CLASSIFY)
@@ -336,10 +338,10 @@ struct nmg_ptbl *novote;
  *		0	point is outside the area of the face
  */
 static int pt_hitmis_f(pt, fu, tol, novote)
-point_t pt;
-struct faceuse *fu;
-fastf_t tol;
-struct nmg_ptbl *novote;
+point_t		pt;
+struct faceuse	*fu;
+fastf_t		tol;
+long		*novote;
 {
 	struct loopuse *lu;
 	struct neighbor closest;
@@ -380,12 +382,13 @@ point_t pt;
 struct shell *s;
 fastf_t tol;
 {
-	int hitcount = 0;
-	int stat;
-	fastf_t dist;
-	point_t plane_pt;
-	struct faceuse *fu;
-	struct nmg_ptbl novote;	/* list of faces that can't vote in a hit list */
+	int		hitcount = 0;
+	int		stat;
+	fastf_t 	dist;
+	point_t 	plane_pt;
+	struct faceuse	*fu;
+	struct model	*m;
+	long		*novote; /* faces that can't vote in a hit list */
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 		VPRINT("pt_inout_s: ", pt);
@@ -398,7 +401,10 @@ fastf_t tol;
 		return(OUTSIDE);
 	}
 
-	(void)nmg_tbl(&novote, TBL_INIT, (long *)NULL);
+	m = s->r_p->m_p;
+	NMG_CK_MODEL(m);
+	novote = (long *)rt_calloc( m->maxindex, sizeof(long), "pt_inout_s novote[]" );
+
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 		VPRINT("\tFiring vector:", projection_dir);
 
@@ -409,7 +415,8 @@ fastf_t tol;
 		 * the polling booth
 		 */
 		if (!nmg_manifold_face(fu)) {
-			(void)nmg_tbl(&novote, TBL_INS, &fu->f_p->magic);
+			NMG_INDEX_SET(novote, fu->f_p);
+/***			(void)nmg_tbl(&novote, TBL_INS, &fu->f_p->magic);**/
 
 			if (RT_LIST_PNEXT(faceuse, fu) == fu->fumate_p)
 				fu = RT_LIST_PNEXT_PNEXT(faceuse, fu);
@@ -422,7 +429,8 @@ fastf_t tol;
 		/* since the above block of code isn't the only place that
 		 * faces get put in the list, we need this here too
 		 */
-		if (nmg_tbl(&novote, TBL_LOC, &fu->f_p->magic) >= 0) {
+/***		if (nmg_tbl(&novote, TBL_LOC, &fu->f_p->magic) >= 0)  ***/
+		if( NMG_INDEX_TEST( novote, fu->f_p ) )  {
 			if (RT_LIST_PNEXT(faceuse, fu) == fu->fumate_p)
 				fu = RT_LIST_PNEXT_PNEXT(faceuse, fu);
 			else
@@ -451,7 +459,7 @@ fastf_t tol;
 			    	 */
 			    	VJOIN1(plane_pt, pt, dist,projection_dir);
 				hitcount += pt_hitmis_f(plane_pt, fu, tol,
-						&novote);
+						novote);
 			}
 
 		}
@@ -462,7 +470,7 @@ fastf_t tol;
 			fu = RT_LIST_PNEXT(faceuse, fu);
 	}
 
-	(void)nmg_tbl(&novote, TBL_FREE, (long *)NULL);
+	rt_free( (char *)novote, "pt_inout_s novote[]" );
 
 	/* if the hitcount is even, we're outside.  if it's odd, we're inside
 	 */
@@ -559,7 +567,7 @@ struct nmg_ptbl classlist[4];
 	else  {
 		rt_log("status=%d\n", status);
 		VPRINT("pt", pt);
-		rt_bomb("Why wasn't this point in or out?\n");
+		rt_bomb("class_vu_vs_s: Why wasn't this point in or out?\n");
 	}
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
@@ -700,11 +708,11 @@ struct nmg_ptbl classlist[4];
 				  break;
 		case ON_SURF	: (void)nmg_tbl(&classlist[NMG_CLASS_AonBshared], TBL_INS, &lu->l_p->magic);
 				  break;
-		default		: rt_bomb("bad vertexloop classification\n");
+		default		: rt_bomb("class_lu_vs_s: bad vertexloop classification\n");
 		}
 		return(class);
 	} else if (magic1 != NMG_EDGEUSE_MAGIC) {
-		rt_bomb("bad child of loopuse\n");
+		rt_bomb("class_lu_vs_s: bad child of loopuse\n");
 	}
 
 	/* loop is collection of edgeuses */
@@ -725,7 +733,7 @@ struct nmg_ptbl classlist[4];
 				if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 					EUPRINT("Edge is ON_SURF", eu);
 				break;
-		default		: rt_bomb("bad class for edgeuse\n");
+		default		: rt_bomb("class_lu_vs_s: bad class for edgeuse\n");
 		}
 	}
 
@@ -738,7 +746,7 @@ struct nmg_ptbl classlist[4];
 			EUPRINT("edgeuse", eu);
 		}
 
-		rt_bomb("loop crosses face?\n");
+		rt_bomb("class_lu_vs_s: loop crosses face?\n");
 	}
 	if (out > 0) {
 		(void)nmg_tbl(&classlist[NMG_CLASS_AoutB], TBL_INS, &lu->l_p->magic);
@@ -747,7 +755,7 @@ struct nmg_ptbl classlist[4];
 		(void)nmg_tbl(&classlist[NMG_CLASS_AinB], TBL_INS, &lu->l_p->magic);
 		return(INSIDE);
 	} else if (on == 0)
-		rt_bomb("alright, who's the wiseguy that stole my edgeuses?\n");
+		rt_bomb("class_lu_vs_s: alright, who's the wiseguy that stole my edgeuses?\n");
 
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
@@ -797,7 +805,7 @@ struct nmg_ptbl classlist[4];
 			if (q->vu_p->v_p != p->vu_p->v_p) {
 				q = eu->eumate_p;
 				if (q->vu_p->v_p != p->vu_p->v_p)
-					rt_bomb("radial edgeuse doesn't share verticies\n");
+					rt_bomb("class_lu_vu_s: radial edgeuse doesn't share verticies\n");
 			
 			}
 
