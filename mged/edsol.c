@@ -6141,11 +6141,11 @@ pscale()
 }
 
 /*
- *			I N I T _ O B J E D I T
+ *			I N I T _ O B J E D I T _ G U T S
  *
  */
 void
-init_objedit()
+init_objedit_guts()
 {
 	int			id;
 	char			*strp="";
@@ -6229,15 +6229,25 @@ init_objedit()
 	VSETALL( edit_rate_view_rotate, 0.0 );
 	VSETALL( edit_rate_model_tran, 0.0 );
 	VSETALL( edit_rate_view_tran, 0.0 );
+}
 
-	{
-	  struct bu_vls		vls;
+/*
+ *			I N I T _ O B J E D I T
+ *
+ */
+void
+init_objedit()
+{
+  struct bu_vls		vls;
 
-	  bu_vls_init(&vls);
-	  bu_vls_strcpy(&vls, "begin_edit_callback");
-	  (void)Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	}
+  /* do real initialization work */
+  init_objedit_guts();
+
+  /* begin edit callback */
+  bu_vls_init(&vls);
+  bu_vls_strcpy(&vls, "begin_edit_callback");
+  (void)Tcl_Eval(interp, bu_vls_addr(&vls));
+  bu_vls_free(&vls);
 }
 
 void oedit_reject();
@@ -6327,25 +6337,19 @@ oedit_accept()
 		sp->s_iflag = DOWN;
 	}
 
-	bn_mat_idn( modelchanges );
-	bn_mat_idn( acc_rot_sol );
-	es_edclass = EDIT_CLASS_NULL;
-
-    	if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
-	es_int.idb_ptr = (genptr_t)NULL;
-	db_free_external( &es_ext );
+	oedit_reject();
 }
 
 void
 oedit_reject()
 {
+  bn_mat_idn( modelchanges );
+  bn_mat_idn( acc_rot_sol );
   es_edclass = EDIT_CLASS_NULL;
 
   if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
   es_int.idb_ptr = (genptr_t)NULL;
   db_free_external( &es_ext );
-
-  bn_mat_idn( acc_rot_sol );
 }
 
 /* 			F _ E Q N ( )
@@ -7816,13 +7820,12 @@ int argc;
 char **argv;
 {
   int id;
+  struct bu_vls vls;
 
   if(state != ST_S_EDIT)
     return TCL_ERROR;
 
   if(argc != 1){
-    struct bu_vls vls;
-
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helpdevel reset_edit_solid");
     Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -7872,8 +7875,48 @@ char **argv;
   VSETALL( edit_rate_view_tran, 0.0 );
 
   set_e_axes_pos(1);
-
   update_views = 1;
+
+  /* active edit callback */
+  bu_vls_init(&vls);
+  bu_vls_printf(&vls, "active_edit_callback");
+  (void)Tcl_Eval(interp, bu_vls_addr(&vls));
+  bu_vls_free(&vls);
+
+  return TCL_OK;
+}
+
+int
+f_reset_edit_matrix(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+  struct bu_vls vls;
+
+  if(state != ST_O_EDIT)
+    return TCL_ERROR;
+
+  if(argc != 1){
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "helpdevel reset_edit_matrix");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+    return TCL_ERROR;
+  }
+
+  oedit_reject();
+  init_objedit_guts();
+
+  new_mats();
+  update_views = 1;
+
+  /* active edit callback */
+  bu_vls_init(&vls);
+  bu_vls_printf(&vls, "active_edit_callback");
+  (void)Tcl_Eval(interp, bu_vls_addr(&vls));
+  bu_vls_free(&vls);
 
   return TCL_OK;
 }

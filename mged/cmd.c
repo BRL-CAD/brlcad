@@ -236,6 +236,7 @@ static struct cmdtab cmdtab[] = {
 	"regdef", f_regdef,
 	"regions", f_tables,
 	"release", f_release,
+	"reset_edit_matrix", f_reset_edit_matrix,
 	"reset_edit_solid", f_reset_edit_solid,
 	"rfarb", f_rfarb,
 	"rm", f_rm,
