@@ -341,7 +341,6 @@ Octree	*parentp;
 FILE	*fp;
 	{	register PtList	*ptp;
 		F_Hdr_Ptlist	hdr_ptlist;	
-		extern long	ftell();
 		long		addr = ftell( fp );
 	/* Write temperature and bogus number of points for this leaf.	*/
 	hdr_ptlist.f_temp = parentp->o_temp;

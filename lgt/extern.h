@@ -7,6 +7,7 @@
 			Maryland 21005-5066
 			(301)278-6651 or AV-298-6651
 */
+#include "machine.h"
 #include "./lgt.h"
 
 #ifndef DEBUG
@@ -56,25 +57,10 @@ extern int stop_sig();
 #endif
 
 /* C library functions. */
-#if __STDC__
-#include <stdlib.h>
-#else
-#	ifdef BSD
-	extern int exit();
-	extern int free();
-#	else
-	extern void exit();
-	extern void free();
-#	endif
-extern char *getenv();
-extern char *malloc();
-#endif
-extern char *sbrk();
+#include "externs.h"
+extern char     *sbrk();
 #ifdef BSD
 extern char *tmpnam(), *gets(), *strtok();
-extern int perror();
-#else
-extern void perror();
 #endif
 
 /* other functions */
@@ -227,7 +213,6 @@ extern struct rt_i *rt_ip;
 
 #ifdef sgi
 extern int win_active;
-extern long defpup(), qtest();
 #define	SGI_XCVT( v_ ) (((v_) - xwin) / (fbiop->if_width/grid_sz))
 #define SGI_YCVT( v_ ) (((v_) - ywin) / (fbiop->if_width/grid_sz))
 #else
