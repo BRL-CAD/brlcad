@@ -122,7 +122,7 @@ char **argv;
 	int go;
 	fastf_t y_rot, distance, yaw, pch, roll;
 	vect_t cent_pos, wheel_now, wheel_prev;
-	vect_t zero, position, vdelta, temp, to_track, to_front, norm;
+	vect_t zero, position, vdelta, temp, to_track, to_front;
 	mat_t wmat, mat_x;
 	FILE *stream;
 	struct wheel *wh;
@@ -502,9 +502,9 @@ char **argv;
 int track_prep()
 {
 	int i;
-	fastf_t phi, costheta, link_angle, hyper_start_x, arc_angle;
+	fastf_t phi, costheta, arc_angle;
 	fastf_t linearlen, hyperlen;
-	vect_t start, difference, link_cent;
+	vect_t difference;
 	int getcurve();
 	fastf_t hyper_get_s();
 

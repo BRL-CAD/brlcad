@@ -435,9 +435,8 @@ char **argv;
 	  if(classic_mged)
 	    get_attached();
 	  else{
-	    int pid;
 
-	    if ((pid = fork()) == 0){
+	    if ((fork()) == 0){
 	      struct bu_vls vls;
 	      int status;
 
@@ -585,7 +584,6 @@ int mask;
     int count;
     char ch;
     struct bu_vls temp;
-    static int freshline = 1;
     long fd;
 
     fd = (long)clientData;
@@ -644,7 +642,6 @@ int mask;
 		pr_prompt();
 	    }
 	    input_str_index = 0;
-	    freshline = 1;
 	} else {
 	    bu_vls_trunc(&input_str, 0);
 	    /* Allow the user to hit ^C. */
@@ -1204,7 +1201,6 @@ int
 event_check( non_blocking )
 int	non_blocking;
 {
-    vect_t		knobvec;	/* knob slew */
     register struct dm_list *p;
     struct dm_list *save_dm_list;
     int save_edflag;

@@ -109,7 +109,7 @@ vect_t p_zero, p_one;	/* center of circle0 and circle1 */
 	fastf_t tang_ang, costheta;
 	double stmp;
 	vect_t q_zero, q_one, diff; 
-	static fastf_t last_a, last_b, last_c, last_theta_one, last_theta_zero;
+	static fastf_t last_a, last_c, last_theta_one, last_theta_zero;
 	static int called_before = 0;
 
 	/*first calculate angle at which tangent line would contact circles*/
@@ -190,14 +190,13 @@ fastf_t	*pa, *pb, *pc;
 fastf_t delta_s;
 vect_t p_zero, p_one;
 {
-	int status, f_status, g_status, i, j, k;
+	int status, i, j, k;
 	fastf_t adjust;
 	fastf_t eff(),gee();
 
 	status = MAX_REACHED;
 	i=0;
 	while (i++<MAX_OUT_ITS){
-		f_status = MAX_REACHED;
 		for (j=0;j<MAX_ITS;j++){
 			adjust = eff(*pa,*pc,p_zero[X],p_one[X],delta_s);
 			if ((*pa-adjust)<=0.0){
@@ -207,17 +206,14 @@ vect_t p_zero, p_one;
 				*pa -= adjust;
 			}
 			if (adjust<F_TOL){
-				f_status = SOLVED;
 				break;
 			}
 		}
 		
-		g_status = MAX_REACHED;
 		for (k=0;k<MAX_ITS;k++){
 			adjust = gee(*pa,*pc,p_zero[X],p_one[X],(p_one[Z]-p_zero[Z]));
 			*pc -= adjust;
 			if (adjust<G_TOL){
-				g_status = SOLVED;
 				break;
 			}
 		}

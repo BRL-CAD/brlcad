@@ -51,7 +51,6 @@ char **argv;
 	int i,j, maxlength,num_done;
 	int icount, ocount;
 	struct unit *x, *y;
-	int	*chan;
 	Word *arrayd;
 	
 	i=j=icount = ocount = maxlength = 0;	
