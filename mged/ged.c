@@ -115,6 +115,8 @@ extern char	version[];		/* from vers.c */
 extern int	numargs;	/* number of args */
 extern char	*cmd_args[];	/* array of pointers to args */
 
+struct rt_tol	mged_tol;		/* calculation tolerance */
+
 static char *units_str[] = {
 	"none",
 	"mm",
@@ -202,6 +204,13 @@ char **argv;
 	mat_idn( toViewcenter );
 	mat_idn( modelchanges );
 	mat_idn( ModelDelta );
+
+	/* XXX Some better method is needed for setting this */
+	mged_tol.magic = RT_TOL_MAGIC;
+	mged_tol.dist = 0.005;
+	mged_tol.dist_sq = mged_tol.dist * mged_tol.dist;
+	mged_tol.perp = 1e-6;
+	mged_tol.para = 1 - mged_tol.perp;
 
 	rt_prep_timer();		/* Initialize timer */
 

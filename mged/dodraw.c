@@ -89,7 +89,8 @@ static int		mged_draw_wireframes;
 static int		mged_draw_normals;
 static struct model	*mged_nmg_model;
 struct rt_tess_tol	mged_ttol;	/* XXX needs to replace mged_abs_tol, et.al. */
-struct rt_tol		mged_tol;
+
+extern struct rt_tol		mged_tol;	/* from ged.c */
 
 /*
  *		R T _ C O P Y _ V L I S T
@@ -428,13 +429,6 @@ int	kind;
 	mged_ttol.abs = mged_abs_tol;
 	mged_ttol.rel = mged_rel_tol;
 	mged_ttol.norm = mged_nrm_tol;
-
-	/* XXX These need to be improved */
-	mged_tol.magic = RT_TOL_MAGIC;
-	mged_tol.dist = 0.005;
-	mged_tol.dist_sq = mged_tol.dist * mged_tol.dist;
-	mged_tol.perp = 1e-6;
-	mged_tol.para = 1 - mged_tol.perp;
 
 	switch( kind )  {
 	default:
@@ -785,13 +779,6 @@ CONST mat_t			mat;
 	mged_ttol.rel = mged_rel_tol;
 	mged_ttol.norm = mged_nrm_tol;
 
-	/* XXX These need to be improved */
-	mged_tol.magic = RT_TOL_MAGIC;
-	mged_tol.dist = 0.005;
-	mged_tol.dist_sq = mged_tol.dist * mged_tol.dist;
-	mged_tol.perp = 1e-6;
-	mged_tol.para = 1 - mged_tol.perp;
-
 	transform_editing_solid( &intern, mat, ip, 0 );
 
 	if( rt_functab[ip->idb_type].ft_plot( &vhead, &intern, &mged_ttol, &mged_tol ) < 0 )  {
@@ -1012,13 +999,6 @@ char	**argv;
 	mged_ttol.abs = mged_abs_tol;
 	mged_ttol.rel = mged_rel_tol;
 	mged_ttol.norm = mged_nrm_tol;
-
-	/* XXX These need to be improved */
-	mged_tol.magic = RT_TOL_MAGIC;
-	mged_tol.dist = 0.005;
-	mged_tol.dist_sq = mged_tol.dist * mged_tol.dist;
-	mged_tol.perp = 1e-6;
-	mged_tol.para = 1 - mged_tol.perp;
 
 	/* Initial vaues for options, must be reset each time */
 	ncpu = 1;
