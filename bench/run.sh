@@ -41,7 +41,7 @@ viewrot -5.735764503e-01 8.191520572e-01 0.000000000e+00
 start 0;
 end;
 EOF
-cmp ../pix/moss.pix moss.pix
+./pixcmp ../pix/moss.pix moss.pix
 if test $? = 0
 then
 	echo moss.pix:  RIGHT answers
@@ -67,7 +67,7 @@ viewrot -5.735764503e-01 8.191520572e-01 0.000000000e+00
 start 0;
 end;
 EOF
-cmp ../pix/world.pix world.pix
+./pixcmp ../pix/world.pix world.pix
 if test $? = 0
 then
 	echo world.pix:  RIGHT answers
@@ -92,7 +92,7 @@ viewrot -6.733560560e-01 6.130643360e-01 4.132114880e-01 0.000000000e+00
 start 0;
 end;
 EOF
-cmp ../pix/star.pix star.pix
+./pixcmp ../pix/star.pix star.pix
 if test $? = 0
 then
 	echo star.pix:  RIGHT answers
@@ -118,7 +118,7 @@ viewrot -5.735764503e-01 8.191520572e-01 0.000000000e+00
 start 0;
 end;
 EOF
-cmp ../pix/bldg391.pix bldg391.pix
+./pixcmp ../pix/bldg391.pix bldg391.pix
 if test $? = 0
 then
 	echo bldg391.pix:  RIGHT answers
@@ -133,4 +133,4 @@ then	HOST=`hostname`
 else	HOST=`uname -n`
 fi
 
-sh perf.sh $HOST "`date`" "$*" >> summary
+sh perf.sh "$HOST" "`date`" "$*" >> summary
