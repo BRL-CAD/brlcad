@@ -235,7 +235,7 @@ pipe_dump()	/* Print out Pipe record information */
 
 	dump_pipe_segs(id, name, &pipe.pipe_segs);
 	mk_freemembers( &pipe.pipe_segs );		/* give back memory */
-	free( rp );
+	free( (char *)rp );
 }
 
 void
