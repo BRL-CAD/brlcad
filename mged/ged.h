@@ -361,6 +361,8 @@ struct mged_variables {
 	int     w_axis;  /* world view axis */
 	int     v_axis;  /* view axis */
 	int     e_axis;  /* edit axis */
+	int     focus;
+	int     view;
 	double	predictor_advance;
 	double	predictor_length;
 	double	perspective;	/* >0 implies perspective viewing is on. */
