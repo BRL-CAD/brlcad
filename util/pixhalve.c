@@ -4,20 +4,28 @@
  *  Reduce the resolution of a .pix file by one half in each direction,
  *  using a 5x5 pyramid filter.
  *
+ *  As this tool is used primarily for preparing images for NTSC television,
+ *  convert RGB to YUV, then apply different filter kernels;  use 3x3 for Y,
+ *  5x5 for U and V.
+ *
  *  Author -
  *	Michael John Muuss
  *  
  *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
+ *  Distribution Notice -
+ *	Re-distribution of this software is restricted, as described in
+ *	your "Statement of Terms and Conditions for the Release of
+ *	The BRL-CAD Package" agreement.
+ *
  *  Copyright Notice -
- *	This software is Copyright (C) 1990 by the United States Army.
- *	All rights reserved.
+ *	This software is Copyright (C) 1995 by the United States Army
+ *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "conf.h"
@@ -174,7 +182,7 @@ char	**argv;
 
 	eof_seen = 0;
 	for(;;)  {
-		filter5( rout, rlines, out_width );
+		filter3( rout, rlines, out_width );
 		filter5( gout, glines, out_width );
 		filter5( bout, blines, out_width );
 		combine( outbuf, rout, gout, bout, out_width );
@@ -216,33 +224,52 @@ char	**argv;
  *
  *  Unpack RGB byte tripples into three separate arrays of integers.
  *  The first and last pixels are replicated twice, to handle border effects.
+ *
+ *  Updated version:  the outputs are Y U V values, not R G B.
  */
 separate( rop, gop, bop, cp, num )
-register int	*rop;
-register int	*gop;
-register int	*bop;
+register int	*rop;			/* Y */
+register int	*gop;			/* U */
+register int	*bop;			/* V */
 register unsigned char	*cp;
 int		num;
 {
 	register int 	i;
+	register int	r, g, b;
 
-	rop[-1] = rop[-2] = cp[0];
-	gop[-1] = gop[-2] = cp[1];
-	bop[-1] = bop[-2] = cp[2];
+	r = cp[0];
+	g = cp[1];
+	b = cp[2];
+
+#define YCONV(_r, _g, _b)	(_r * 0.299 + _g * 0.587 + _b * 0.144 + 0.9)
+#define UCONV(_r, _g, _b)	(_r * -0.1686 + _g * -0.3311 + _b * 0.4997 + 0.9)
+#define VCONV(_r, _g, _b)	(_r * 0.4998 + _g * -0.4185 + _b * -0.0813 + 0.9)
+
+	rop[-1] = rop[-2] = YCONV(r,g,b);
+	gop[-1] = gop[-2] = UCONV(r,g,b);
+	bop[-1] = bop[-2] = VCONV(r,g,b);
 
 	for( i = num-1; i >= 0; i-- )  {
-		*rop++ = *cp++;
-		*gop++ = *cp++;
-		*bop++ = *cp++;
+		r = cp[0];
+		g = cp[1];
+		b = cp[2];
+		cp += 3;
+		*rop++ = YCONV(r,g,b);
+		*gop++ = UCONV(r,g,b);
+		*bop++ = VCONV(r,g,b);
 	}
 
-	*rop++ = cp[-3];
-	*gop++ = cp[-2];
-	*bop++ = cp[-1];
+	r = cp[-3];
+	g = cp[-2];
+	b = cp[-1];
 
-	*rop++ = cp[-3];
-	*gop++ = cp[-2];
-	*bop++ = cp[-1];
+	*rop++ = YCONV(r,g,b);
+	*gop++ = UCONV(r,g,b);
+	*bop++ = VCONV(r,g,b);
+
+	*rop++ = YCONV(r,g,b);
+	*gop++ = UCONV(r,g,b);
+	*bop++ = VCONV(r,g,b);
 }
 
 /*
@@ -260,10 +287,27 @@ int			num;
 {
 	register int 	i;
 
+#define RCONV(_y, _u, _v)	(_y + 1.4026 * _v)
+#define GCONV(_y, _u, _v)	(_y - 0.3444 * _u - 0.7144 * _v)
+#define BCONV(_y, _u, _v)	(_y + 1.7730 * _u)
+
+#define CLIP(_v)	( ((_v) <= 0) ? 0 : (((_v) >= 255) ? 255 : (_v)) )
+
 	for( i = num-1; i >= 0; i-- )  {
-		*cp++ = *rip++;
-		*cp++ = *gip++;
-		*cp++ = *bip++;
+		register int	y, u, v;
+		register int	r, g, b;
+
+		y = *rip++;
+		u = *gip++;
+		v = *bip++;
+
+		r = RCONV(y,u,v);
+		g = GCONV(y,u,v);
+		b = BCONV(y,u,v);
+
+		*cp++ = CLIP(r);
+		*cp++ = CLIP(g);
+		*cp++ = CLIP(b);
 	}
 }
 
@@ -338,6 +382,55 @@ int	num;
 		c += 2;
 		d += 2;
 		e += 2;
+	}
+#endif
+}
+
+
+/*
+ *			F I L T E R 3
+ *
+ *  Apply a 3x3 image pyramid to the input scanline, taking every other
+ *  input position to make an output.
+ *
+ *  The filter coefficients are positioned so as to align the center
+ *  of the filter with the same center used in filter5().
+ */
+filter3( op, lines, num )
+int	*op;
+int	*lines[];
+int	num;
+{
+	register int	i;
+	register int	j;
+	register int	*b, *c, *d;
+
+	b = lines[1];
+	c = lines[2];
+	d = lines[3];
+
+#ifdef VECTORIZE
+	/* This version vectorizes */
+#	include "noalias.h"
+	for( i=0; i < num; i++ )  {
+		j = i*2;
+		op[i] = (
+			  b[j+1] + 2*b[j+2] +   b[j+3] +
+			2*c[j+1] + 4*c[j+2] + 2*c[j+3] +
+			  d[j+1] + 2*d[j+2] +   d[j+3]
+			) / 16;
+	}
+#else
+	/* This version is better for non-vectorizing machines */
+	for( i=0; i < num; i++ )  {
+		op[i] = (
+			  b[1] + 2*b[2] +   b[3] +
+			2*c[1] + 4*c[2] + 2*c[3] +
+			  d[1] + 2*d[2] +   d[3]
+			) / 16;
+		b += 2;
+		c += 2;
+		d += 2;
 	}
 #endif
 }
