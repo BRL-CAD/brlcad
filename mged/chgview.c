@@ -59,13 +59,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./sedit.h"
 #include "./ged.h"
 #include "./solid.h"
-#include "./dm.h"
-
-#ifdef USE_LIBDM
-extern void color_soltab();
-#endif
-
+#include "./mged_dm.h"
 #include "../librt/debug.h"	/* XXX */
+
+extern void color_soltab();
 
 #ifndef M_SQRT2
 #define M_SQRT2		1.41421356237309504880
@@ -416,11 +413,7 @@ int	catch_sigint;
 	      VSETALL( absolute_slew, 0.0 );
 	    }
 
-#ifdef USE_LIBDM
 	    dmp->dmr_colorchange(dmp);
-#else
-	    dmp->dmr_colorchange();
-#endif
 	  }
 
 	  curr_dm_list = save_dm_list;
@@ -478,11 +471,7 @@ char	**argv;
 
 	Tcl_AppendResult(interp, "regdebug=", argv[1], "\n", (char *)NULL);
 
-#ifdef USE_LIBDM
 	dmp->dmr_debug(dmp, regdebug);
-#else
-	dmp->dmr_debug(regdebug);
-#endif
 
 	return TCL_OK;
 }
@@ -984,11 +973,7 @@ register struct directory *dp;
 
 			if( state != ST_VIEW && illump == sp )
 				button( BE_REJECT );
-#ifdef USE_LIBDM
 			dmp->dmr_viewchange( dmp, DM_CHGV_DEL, sp );
-#else
-			dmp->dmr_viewchange( DM_CHGV_DEL, sp );
-#endif
 			rt_memfree( &(dmp->dmr_map), sp->s_bytes, (unsigned long)sp->s_addr );
 			DEQUEUE_SOLID( sp );
 			FREE_SOLID( sp );
