@@ -27,11 +27,13 @@ char	sccsTag[] = "@(#) vproc.c	2.7	last edit 7/10/86 at 11:07:27";
  */
 #include <stdio.h>
 #include <signal.h>
-#include <setjmp.h>
-#include <std.h>
+
 #include "./vextern.h"
+
 extern void	eread(), ewrite();
 extern void	mat_idn();
+
+#include "./std.h"
 
 Directory	directory[NDIR];
 static char	*db_title = NULL, *db_units = "  ";
@@ -301,12 +303,13 @@ builddir()
 			if( db_title == NULL )
 				{
 				/* This must be the first ident record.	*/
-				db_title = emalloc( strlen(record.I.i_title)+1 );
-				(void) strcpy( db_title, record.I.i_title );
+				db_title = emalloc( strlen(record.i.i_title)+1 );
+				(void) strcpy( db_title, record.i.i_title );
 				}
-			(void) printf( "%s\n", record.I.i_title );
-			(void) printf(	"GED database version (%s)\n",
-					record.I.i_version
+			(void) fprintf( stdout, "%s\n", record.i.i_title );
+			(void) fprintf( stdout,
+					"GED database version (%s)\n",
+					record.i.i_version
 					);
 			/* Ignore second ident records' units, unless
 				previous were bogus or unspecified.
@@ -316,7 +319,7 @@ builddir()
 				/* NOTE : Default unit conversion factor (1.0)
 					is set in 'vglobal.c'.
 				 */
-				switch( record.I.i_units )
+				switch( record.i.i_units )
 					{
 				case ID_NO_UNIT : /* unspecified	*/
 					(void) printf( "No units specified.\n" );
@@ -354,7 +357,7 @@ builddir()
 				default :
 					(void) fprintf( stderr,
 							"Unknown units (%d)!\n",
-							record.I.i_units
+							record.i.i_units
 							);
 					break;
 					}
@@ -362,7 +365,7 @@ builddir()
 				}
 			}
 		case ID_FREE :  /* Free record -- ignore.		*/
-		case ID_MATER : /* Material database record -- ignore.	*/
+		case ID_MATERIAL : /* Material database record -- ignore.	*/
 			ndir--;
 			dirp--;
 			break;

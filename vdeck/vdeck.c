@@ -54,8 +54,8 @@ char	sccsTag[] = "@(#) vdeck.c	2.15	last edit 8/12/86 at 08:58:59";
  */
 #include <stdio.h>
 #include <signal.h>
-#include <setjmp.h>
 #include "./vextern.h"
+
 extern Directory	*diradd();
 extern double		fabs();
 extern long		lseek();
@@ -975,12 +975,12 @@ register Record *rec;
 		return;
 		}
 	if(	fabs( (mb/md)-(ma/mc) ) < CONV_EPSILON
-	    &&  fabs( fabs(DOT(axb,cxd)) - (maxb*mcxd) ) < CONV_EPSILON
+	    &&  fabs( fabs(VDOT(axb,cxd)) - (maxb*mcxd) ) < CONV_EPSILON
 		)
 		rec->s.s_cgtype = TEC;
 
 	/* Check for right cylinder.					*/
-	if( fabs( fabs(DOT(SV1,axb)) - (mh*maxb) ) < CONV_EPSILON )
+	if( fabs( fabs(VDOT(SV1,axb)) - (mh*maxb) ) < CONV_EPSILON )
 		{
 		if( fabs( ma-mb ) < CONV_EPSILON )
 			{
