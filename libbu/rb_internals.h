@@ -12,14 +12,6 @@
 #ifndef RB_INTERNALS_H
 #define RB_INTERNALS_H seen
 
-/*
- *	Macros without parameters
- */
-#define		RB_RED		0
-#define		RB_BLACK	1
-#define		RB_TREE_MAGIC	0x72627472
-#define		RB_NODE_MAGIC	0x72626e6f
-
 /*			R B _ C K M A G ( )
  *	    Check and validate a structure pointer
  *
@@ -41,6 +33,8 @@
 	    (_s), (p), (m), *((long *)(p)), __FILE__, __LINE__);	\
 	exit (0);							\
     }
+#define	RB_TREE_MAGIC		0x72627472
+#define	RB_NODE_MAGIC		0x72626e6f
 
 /*			R B _ C K O R D E R ( )
  *
@@ -64,6 +58,14 @@
 #define	rb_parent(n, o)		(((n) -> rbn_parent)[o])
 #define	rb_left_child(n, o)	(((n) -> rbn_left)[o])
 #define	rb_right_child(n, o)	(((n) -> rbn_right)[o])
+#define	RB_LEFT			0
+#define	RB_RIGHT		1
+#define	rb_child(n, o, d)	(((d) == RB_LEFT)		? 	\
+				    rb_left_child((n), (o))	:	\
+				    rb_right_child((n), (o)))
+#define	rb_other_child(n, o, d)	(((d) == RB_LEFT)		?	\
+				    rb_right_child((n), (o))	:	\
+				    rb_left_child((n), (o)))
 #define	rb_get_color(n, o)						\
 (									\
     (((n) -> rbn_color)[(o)/8] & (0x1 << ((o) % 8))) ? 1 : 0		\
@@ -78,6 +80,8 @@
     ((n) -> rbn_color)[_b] &= 0x1 << _p;				\
     ((n) -> rbn_color)[_b] |= (c) << _p;				\
 }
+#define	RB_RED			0
+#define	RB_BLACK		1
 
 /*
  *	Global variables within LIBREDBLACK
@@ -91,5 +95,13 @@
 /*
  *	Functions internal to LIBREDBLACK
  */
+void left_rotate	(
+			    struct rb_node	*node,
+			    int			order
+			);
+void right_rotate	(
+			    struct rb_node	*node,
+			    int			order
+			);
 
 #endif /* RB_INTERNALS_H */
