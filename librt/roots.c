@@ -162,8 +162,8 @@ register bn_complex_t	*nxZ;	/* initial guess for root	*/
 	LOCAL bn_complex_t  p1_H;		/* p1 - H, temporary */
 	LOCAL bn_complex_t  cZ, cH;		/* 'Z' and H(Z) in comment	*/
 	LOCAL bn_complex_t  T;		/* temporary for making H */
-	FAST fastf_t	diff;		/* test values for convergence	*/
-	FAST fastf_t	b;		/* floating temps */
+	FAST fastf_t	diff=0.0;		/* test values for convergence	*/
+	FAST fastf_t	b=0.0;		/* floating temps */
 	LOCAL int	n;
 	register int	i;		/* iteration counter		*/
 
