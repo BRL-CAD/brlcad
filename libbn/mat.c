@@ -20,6 +20,7 @@
  *	mat_eigen2x2()			Eigen values and vectors
  *	mat_lookat			Make rot mat:  xform from D to -Z
  *	mat_fromto			Make rot mat:  xform from A to B
+ *	mat_arb_rot( &m, pt, dir, ang)	Make rot mat about axis (pt,dir), through ang
  *	rt_mat_is_equal()		Is mat a equal to mat b?
  *
  *
@@ -1091,6 +1092,73 @@ CONST struct rt_tol	*tol;
 		if ( !NEAR_ZERO(f, tdist)) return 0;
 	}
 	return 1;
+}
+
+
+/*	M A T _ A R B _ R O T
+ *
+ * Construct a transformation matrix for rotation about an arbitrary axis
+ *
+ *	The axis is defined by a point (pt) and a unit direction vector (dir).
+ *	The angle of rotation is "ang"
+ */
+void
+mat_arb_rot( m, pt, dir, ang)
+mat_t m;
+CONST point_t pt;
+CONST vect_t dir;
+CONST fastf_t ang;
+{
+	mat_t tran1,tran2,rot;
+	double cos_ang, sin_ang, one_m_cosang;
+	double n1_sq, n2_sq, n3_sq;
+	double n1_n2, n1_n3, n2_n3;
+
+	if( ang == 0.0 )
+	{
+		mat_idn( m );
+		return;
+	}
+
+	mat_idn( tran1 );
+	mat_idn( tran2 );
+
+	/* construct translation matrix to pt */
+	tran1[MDX] = (-pt[X]);
+	tran1[MDY] = (-pt[Y]);
+	tran1[MDZ] = (-pt[Z]);
+
+	/* construct translation back from pt */
+	tran2[MDX] = pt[X];
+	tran2[MDY] = pt[Y];
+	tran2[MDZ] = pt[Z];
+
+	/* construct rotation matrix */
+	cos_ang = cos( ang );
+	sin_ang = sin( ang );
+	one_m_cosang = 1.0 - cos_ang;
+	n1_sq = dir[X]*dir[X];
+	n2_sq = dir[Y]*dir[Y];
+	n3_sq = dir[Z]*dir[Z];
+	n1_n2 = dir[X]*dir[Y];
+	n1_n3 = dir[X]*dir[Z];
+	n2_n3 = dir[Y]*dir[Z];
+
+	mat_idn( rot );
+	rot[0] = n1_sq + (1.0 - n1_sq)*cos_ang;
+	rot[1] = n1_n2 * one_m_cosang - dir[Z]*sin_ang;
+	rot[2] = n1_n3 * one_m_cosang + dir[Y]*sin_ang;
+
+	rot[4] = n1_n2 * one_m_cosang + dir[Z]*sin_ang;
+	rot[5] = n2_sq + (1.0 - n2_sq)*cos_ang;
+	rot[6] = n2_n3 * one_m_cosang - dir[X]*sin_ang;
+
+	rot[8] = n1_n3 * one_m_cosang - dir[Y]*sin_ang;
+	rot[9] = n2_n3 * one_m_cosang + dir[X]*sin_ang;
+	rot[10] = n3_sq + (1.0 - n3_sq) * cos_ang;
+
+	mat_mul( m, rot, tran1 );
+	mat_mul2( tran2, m );
 }
 
 #if 0
