@@ -1366,8 +1366,7 @@ char *s;
  *	check to see if all radial uses of an edge (within a shell) are
  *	properly oriented with respect to each other.
  *
- *  XXX Note that this routine will not work properly if there are
- *  XXX dangling faces present.  It will report an erroneous error.
+ *  XXX Added code to skip dangling faces (needs to be checked a little more) - JRA
  *
  *	Return
  *	0	OK
@@ -1398,8 +1397,9 @@ CONST struct rt_tol	*tol;
 
 	eu1 = eu;
 
-	/* If this eu is a wire, advance to first non-wire. */
-	while( (fu = nmg_find_fu_of_eu(eu)) == (struct faceuse *)NULL )  {
+	/* If this eu is a wire, advance to first non-wire (skipping dangling faces). */
+	while( (fu = nmg_find_fu_of_eu(eu)) == (struct faceuse *)NULL ||
+		nmg_dangling_face( fu, (char *)NULL ) )  {
 		eu = eu->radial_p->eumate_p;
 		if( eu == eu1 )  return 0;	/* wires all around */
 	}
@@ -1408,8 +1408,9 @@ CONST struct rt_tol	*tol;
 	eur = eu->radial_p;
 	eurstart = eur;
 
-	/* skip the wire edges in the radial direction from eu. */
-	while( (fu = nmg_find_fu_of_eu(eur)) == (struct faceuse *)NULL )  {
+	/* skip the wire edges and dangling faces in the radial direction from eu. */
+	while( (fu = nmg_find_fu_of_eu(eur)) == (struct faceuse *)NULL ||
+		nmg_dangling_face( fu, (char *)NULL ) )  {
 		eur = eur->eumate_p->radial_p;
 		if( eur == eurstart )  return 0;
 	}
@@ -1418,10 +1419,11 @@ CONST struct rt_tol	*tol;
 	do {
 		/*
 		 *  Search until another edgeuse in this shell is found.
-		 *  Continue search if it is a wire edge.
+		 *  Continue search if it is a wire edge or dangling face.
 		 */
 		while( nmg_find_s_of_eu((struct edgeuse *)eur) != s  ||
-		       (fu = nmg_find_fu_of_eu(eur)) == (struct faceuse *)NULL
+		       (fu = nmg_find_fu_of_eu(eur)) == (struct faceuse *)NULL ||
+			nmg_dangling_face( fu, (char *)NULL )
 		)  {
 			/* Advance to next eur */
 			NMG_CK_EDGEUSE(eur->eumate_p);
