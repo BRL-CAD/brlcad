@@ -12,7 +12,7 @@ QuadDisplay - create and manipulate a QuadDisplay widget.
 <P>
 
 <H2><A NAME="sect2" HREF="#toc2"><B>SYNOPSIS</B></A></H2>
-<B>QuadDisplay</B> <I>pathName</I> ?<I>options</I>?
+<B>QuadDisplay</B> <I>pathName</I> ?<I>type</I> ?<I>options</I>??
 <P>
 
 <H2><A NAME="sect3" HREF="#toc3"><B>INHERITANCE</B></A></H2>
@@ -162,19 +162,19 @@ insert paneconfigure reset show</B>
 
 <H3><A NAME="sect13" HREF="#toc13"><B>WIDGET-SPECIFIC METHODS</B></A></H3>
 <DL>
-<DT><I>pathName</I> <A NAME="addall"><B>addall</B></A> [<I>glist</I>]</DT>
+<DT><I>pathName</I> <A NAME="addall"><B>addall</B></A> ?<I>glist</I>?</DT>
 <DD>Call <A HREF="Display.html#add">add</A> for all panes.
 </DD>
 <P>
-<DT><I>pathName</I> <A NAME="attach_drawableall"><B>attach_drawableall</B></A> [<I>dg</I>]</DT>
+<DT><I>pathName</I> <A NAME="attach_drawableall"><B>attach_drawableall</B></A> ?<I>dg</I>?</DT>
 <DD>Call <A HREF="Display.html#attach_drawable">attach_drawable</A> for all panes.
 </DD>
 <P>
-<DT><I>pathName</I> <A NAME="attach_viewall"><B>attach_viewall</B></A> [<I></I>]</DT>
+<DT><I>pathName</I> <A NAME="attach_viewall"><B>attach_viewall</B></A></DT>
 <DD>Call <A HREF="Display.html#attach_view">attach_view</A> for all panes.
 </DD>
 <P>
-<DT><I>pathName</I> <A NAME="autoviewall"><B>autoviewall</B></A> [<I>gindex</I>]</DT>
+<DT><I>pathName</I> <A NAME="autoviewall"><B>autoviewall</B></A> ?<I>gindex</I>?</DT>
 <DD>Call <A HREF="Display.html#autoview">autoview</A> for all panes.
 </DD>
 <P>
@@ -190,7 +190,7 @@ ll - aet  0 0 0
 lr - aet 90 0 0
 </DD>
 <P>
-<DT><I>pathName</I> <A NAME="detach_drawableall"><B>detach_drawableall</B></A> [<I>dg</I>]</DT>
+<DT><I>pathName</I> <A NAME="detach_drawableall"><B>detach_drawableall</B></A> ?<I>dg</I>?</DT>
 <DD>Call <A HREF="Display.html#detach_drawable">detach_drawable</A> for all panes.
 </DD>
 <P>
@@ -198,13 +198,13 @@ lr - aet 90 0 0
 <DD>Call <A HREF="Display.html#detach_view">detach_view</A> for all panes.
 </DD>
 <P>
-<DT><I>pathName</I> <A NAME="multi_pane"><B>multi_pane</B></A> [<I>0</I> | <I>1</I>]</DT>
+<DT><I>pathName</I> <A NAME="multi_pane"><B>multi_pane</B></A> ?<I>0</I> | <I>1</I>?</DT>
 <DD>Set the multi_pane mode as specified by the argument
 (i.e. 0 - single pane, 1 - multiple panes).
 If no argument is provided, simply return the multi_pane mode.
 </DD>
 <P>
-<DT><I>pathName</I> <A NAME="pane"><B>pane</B></A> [<I>ul</I> | <I>ur</I> | <I>ll</I> | <I>lr</I>]</DT>
+<DT><I>pathName</I> <A NAME="pane"><B>pane</B></A> ?<I>ul</I> | <I>ur</I> | <I>ll</I> | <I>lr</I>?</DT>
 <DD>Set the active pane as specified by the argument.
 If no argument is provided, simply return the active pane.
 </DD>
@@ -213,11 +213,11 @@ If no argument is provided, simply return the active pane.
 <DD>Call <A HREF="Display.html#refresh">refresh</A> for all panes.
 </DD>
 <P>
-<DT><I>pathName</I> <A NAME="removeall"><B>removeall</B></A> [<I></I>]</DT>
+<DT><I>pathName</I> <A NAME="removeall"><B>removeall</B></A> ?<I>glist</I>?</DT>
 <DD>Call <A HREF="Display.html#remove">remove</A> for all panes.
 </DD>
 <P>
-<DT><I>pathName</I> <A NAME="resetall"><B>resetall</B></A> [<I></I>]</DT>
+<DT><I>pathName</I> <A NAME="resetall"><B>resetall</B></A></DT>
 <DD>Redisplay all pane windows using default percentages. That is,
 make all panes the same size.
 </DD>
@@ -227,7 +227,7 @@ make all panes the same size.
 
 <H2><A NAME="sect14" HREF="#toc14"><B>NOTES</B></A></H2>
 If optional arguments are provided to the QuadDisplay
-constructor/command, the first argument must be
+command, the first such argument must be
 either <I>X</I> or <I>ogl</I> (i.e. the display manager type).
 <P>
 
