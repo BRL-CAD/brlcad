@@ -168,6 +168,10 @@ struct region *regp;
 	stp->st_specific = (int *)0;
 	stp->st_regionp = regp;
 
+	/* init maxima and minima */
+	stp->st_max[X] = stp->st_max[Y] = stp->st_max[Z] = -INFINITY;
+	stp->st_min[X] = stp->st_min[Y] = stp->st_min[Z] =  INFINITY;
+
 	if( functab[stp->st_id].ft_prep( v, stp, mat, &(rec->s) ) )  {
 		/* Error, solid no good */
 		free(stp);
@@ -412,7 +416,7 @@ int lvl;			/* recursion level */
 
 	fprintf(stderr,"%.8x ", tp);
 	for( i=3*lvl; i>0; i-- )
-		putchar(' ');	/* indent */
+		putc(' ',stderr);	/* indent */
 
 	if( tp == TREE_NULL )  {
 		fprintf(stderr,"Null???\n");
