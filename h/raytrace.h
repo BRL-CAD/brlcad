@@ -1940,6 +1940,8 @@ RT_EXTERN(void			nmg_movevu, (struct vertexuse *vu, struct vertex *v) );
 RT_EXTERN(void			nmg_je, (struct edgeuse *eudst, struct edgeuse *eusrc) );
 RT_EXTERN(void			nmg_unglueedge, (struct edgeuse *eu) );
 RT_EXTERN(void			nmg_jv, (struct vertex *v1, struct vertex *v2) );
+RT_EXTERN(void			nmg_jeg, (struct edge_g_lseg *dest_eg,
+				struct edge_g_lseg *src_eg) );
 
 /* From nmg_mod.c */
 /*	SHELL Routines */
@@ -1992,7 +1994,6 @@ RT_EXTERN(struct vertex		*nmg_e2break, (struct edgeuse *eu1, struct edgeuse *eu2
 RT_EXTERN(struct edgeuse	*nmg_eins, (struct edgeuse *eu) );
 RT_EXTERN(void			nmg_mv_eu_between_shells, (struct shell *dest,
 				struct shell *src, struct edgeuse *eu) );
-RT_EXTERN(void			nmg_move_eg, (struct edge_g *old_eg, struct edge_g *new_eg) );
 /*	VERTEX Routines */
 RT_EXTERN(void			nmg_mv_vu_between_shells, (struct shell *dest,
 				struct shell *src, struct vertexuse *vu) );
@@ -2106,7 +2107,7 @@ RT_EXTERN(void			nmg_pr_fu_briefly, (CONST struct faceuse *fu,	char *h) );
 RT_EXTERN(void			nmg_pr_l, (CONST struct loop *l, char *h) );
 RT_EXTERN(void			nmg_pr_lu, (CONST struct loopuse *lu, char *h) );
 RT_EXTERN(void			nmg_pr_lu_briefly, (CONST struct loopuse *lu, char *h) );
-RT_EXTERN(void			nmg_pr_eg, (CONST struct edge_g *eg, char *h) );
+RT_EXTERN(void			nmg_pr_eg, (CONST struct edge_g_lseg *eg, char *h) );
 RT_EXTERN(void			nmg_pr_e, (CONST struct edge *e, char *h) );
 RT_EXTERN(void			nmg_pr_eu, (CONST struct edgeuse *eu, char *h) );
 RT_EXTERN(void			nmg_pr_eu_briefly, (CONST struct edgeuse *eu, char *h) );
@@ -2250,11 +2251,11 @@ RT_EXTERN(void			nmg_set_lu_orientation, (struct loopuse	*lu,
 RT_EXTERN(double		nmg_vu_angle_measure, (struct vertexuse	*vu,
 				vect_t x_dir, vect_t y_dir, int assessment,
 				int in) );
-RT_EXTERN(struct edge_g		*nmg_face_cutjoin, (
+RT_EXTERN(struct edge_g_lseg	*nmg_face_cutjoin, (
 				struct nmg_ptbl *b1, struct nmg_ptbl *b2,
 				struct faceuse *fu1, struct faceuse *fu2,
 				point_t pt, vect_t dir,
-				struct edge_g *eg,
+				struct edge_g_lseg *eg,
 				CONST struct rt_tol *tol) );
 
 #define nmg_mev(_v, _u)	nmg_me((_v), (struct vertex *)NULL, (_u))
