@@ -689,373 +689,373 @@ bu_cv_w_cookie(genptr_t out, int outcookie, int	size,
 	genptr_t	hold;
 	register int i;
 
-/*
- * Work_count is the size of the working buffer.  If count is smaller
- * than the default work_count (4096) use the smaller number.
- */
+	/*
+	 * Work_count is the size of the working buffer.  If count is smaller
+	 * than the default work_count (4096) use the smaller number.
+	 */
 
 	if (work_count > count) work_count = count;
 
 	incookie = bu_cv_optimize( incookie );
 	outcookie = bu_cv_optimize( outcookie );
 
-/*
- * break out the conversion code and the format code.
- * Conversion is net<-->host.
- * Format is 8/16/32/64/D casting.
- */
+	/*
+	 * break out the conversion code and the format code.
+	 * Conversion is net<-->host.
+	 * Format is 8/16/32/64/D casting.
+	 */
 	inIsHost = incookie & CV_HOST_MASK;	/* not zero if host */
 	outIsHost= outcookie& CV_HOST_MASK;
 	infmt  =  incookie & CV_TYPE_MASK;
 	outfmt = outcookie & CV_TYPE_MASK;
-/*
- * Find the number of bytes required for one item of each kind.
- */
+	/*
+	 * Find the number of bytes required for one item of each kind.
+	 */
 	outsize = bu_cv_itemlen( outcookie );
 	insize = bu_cv_itemlen( incookie );
 
-/*
- * If the input format is the same as the output format then the
- * most that has to be done is a host to net or net to host conversion.
- */
+	/*
+	 * If the input format is the same as the output format then the
+	 * most that has to be done is a host to net or net to host conversion.
+	 */
 	if (infmt == outfmt) {
 
-/*
- * Input format is the same as output format, do we need to do a
- * host/net conversion?
- */
-		if (inIsHost == outIsHost) {
+	    /*
+	     * Input format is the same as output format, do we need to do a
+	     * host/net conversion?
+	     */
+	    if (inIsHost == outIsHost) {
 
-/*
- * No conversion required.
- * Check the amount of space remaining before doing the bcopy.
- */
-			if (count * outsize > size) {
-				number_done = size / outsize;
-			} else {
-				number_done = count;
-			}
-
-/*
- * This is the simplest case, binary copy and out.
- */
-			(void) bcopy((genptr_t) in, (genptr_t) out,
-			    number_done * outsize);
-			return(number_done);
-
-/*
- * Well it's still the same format but the conversion are different.
- * Only one of the *vert variables can be HOST therefore if
- * inIsHost != HOST then outIsHost must be host format.
- */
-
-		} else if (inIsHost != CV_HOST_MASK) { /* net format */
-			switch(incookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
-			case CV_SIGNED_MASK | CV_16:
-				return(	bu_cv_ntohss((signed short *)out, size, in, count));
-			case CV_16:
-				return( bu_cv_ntohus((unsigned short *)out, size, in, count));
-			case CV_SIGNED_MASK | CV_32:
-				return( bu_cv_ntohsl((signed long *)out, size, in, count));
-			case CV_32:
-				return( bu_cv_ntohul((unsigned long *)out, size, in, count));
-			case CV_D:
-				(void) ntohd((unsigned char *)out, (unsigned char *)in, count);
-				return(count);
-			}
-
-/*
- * Since inIsHost != outIsHost and inIsHost == HOST then outIsHost must be
- * in net format.  call the correct subroutine to do the conversion.
- */
+		/*
+		 * No conversion required.
+		 * Check the amount of space remaining before doing the bcopy.
+		 */
+		if (count * outsize > size) {
+		    number_done = size / outsize;
 		} else {
-			switch(incookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
-			case CV_SIGNED_MASK | CV_16:
-				return(	bu_cv_htonss(out, size, (short *)in, count));
-			case CV_16:
-				return( bu_cv_htonus(out, size, (unsigned short *)in, count));
-			case CV_SIGNED_MASK | CV_32:
-				return( bu_cv_htonsl(out, size, (long *)in, count));
-			case CV_32:
-				return( bu_cv_htonul(out, size, (unsigned long *)in, count));
-			case CV_D:
-				(void) htond((unsigned char *)out, (unsigned char *)in, count);
-				return(count);
-			}
+		    number_done = count;
 		}
+
+		/*
+		 * This is the simplest case, binary copy and out.
+		 */
+		(void) bcopy((genptr_t) in, (genptr_t) out,
+			     number_done * outsize);
+		return(number_done);
+
+		/*
+		 * Well it's still the same format but the conversion are different.
+		 * Only one of the *vert variables can be HOST therefore if
+		 * inIsHost != HOST then outIsHost must be host format.
+		 */
+
+	    } else if (inIsHost != CV_HOST_MASK) { /* net format */
+		switch(incookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
+		case CV_SIGNED_MASK | CV_16:
+		    return(	bu_cv_ntohss((signed short *)out, size, in, count));
+		case CV_16:
+		    return( bu_cv_ntohus((unsigned short *)out, size, in, count));
+		case CV_SIGNED_MASK | CV_32:
+		    return( bu_cv_ntohsl((signed long *)out, size, in, count));
+		case CV_32:
+		    return( bu_cv_ntohul((unsigned long *)out, size, in, count));
+		case CV_D:
+		    (void) ntohd((unsigned char *)out, (unsigned char *)in, count);
+		    return(count);
+		}
+
+		/*
+		 * Since inIsHost != outIsHost and inIsHost == HOST then outIsHost must be
+		 * in net format.  call the correct subroutine to do the conversion.
+		 */
+	    } else {
+		switch(incookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
+		case CV_SIGNED_MASK | CV_16:
+		    return(	bu_cv_htonss(out, size, (short *)in, count));
+		case CV_16:
+		    return( bu_cv_htonus(out, size, (unsigned short *)in, count));
+		case CV_SIGNED_MASK | CV_32:
+		    return( bu_cv_htonsl(out, size, (long *)in, count));
+		case CV_32:
+		    return( bu_cv_htonul(out, size, (unsigned long *)in, count));
+		case CV_D:
+		    (void) htond((unsigned char *)out, (unsigned char *)in, count);
+		    return(count);
+		}
+	    }
 	}
-/*
- * If we get to this point then the input format is known to be
- * of a diffrent type than the output format.  This will require
- * a cast to, from or to and from double.
- *
- * because of the number of steps is not know to begin with, we get
- * three working buffers.  The size of a double is the largest of
- * any of the sizes we may be dealing with.
- */
+	/*
+	 * If we get to this point then the input format is known to be
+	 * of a diffrent type than the output format.  This will require
+	 * a cast to, from or to and from double.
+	 *
+	 * because of the number of steps is not know to begin with, we get
+	 * three working buffers.  The size of a double is the largest of
+	 * any of the sizes we may be dealing with.
+	 */
 
 	bufsize = work_count * sizeof(double);
 	t1 = (genptr_t) bu_malloc(bufsize, "vert.c: t1");
 	t2 = (genptr_t) bu_malloc(bufsize, "vert.c: t2");
 	t3 = (genptr_t) bu_malloc(bufsize, "vert.c: t3");
 
-/*
- * From here on we will be working on a chunk of process at a time.
- */
+	/*
+	 * From here on we will be working on a chunk of process at a time.
+	 */
 	while ( size >= outsize  && number_done < count) {
-		int remaining;
+	    int remaining;
 
-/*
- * Size is the number of bytes that the caller said was available.
- * We need the check to make sure that we will not convert to many
- * entries, overflowing the output buffer.
- */
+	    /*
+	     * Size is the number of bytes that the caller said was available.
+	     * We need the check to make sure that we will not convert to many
+	     * entries, overflowing the output buffer.
+	     */
 
-/*
- * Get number of full entries that can be converted
- */
-		remaining = size / outsize;
+	    /*
+	     * Get number of full entries that can be converted
+	     */
+	    remaining = size / outsize;
 
-/*
- * If number of entries that would fit in the output buffer is
- * larger than the number of entries left to convert(based on
- * count and number done), set remaining to request count minus
- * the number of conversions already completed.
- */
-		if (remaining > count - number_done) {
-			remaining = count - number_done;
+	    /*
+	     * If number of entries that would fit in the output buffer is
+	     * larger than the number of entries left to convert(based on
+	     * count and number done), set remaining to request count minus
+	     * the number of conversions already completed.
+	     */
+	    if (remaining > count - number_done) {
+		remaining = count - number_done;
+	    }
+	    /*
+	     * If we are in the last chuck, set the work count to take up
+	     * the slack.
+	     */
+	    if (remaining < work_count) work_count = remaining;
+
+	    /*
+	     * All input at any stage will come from the "from" pointer.  We
+	     * start with the from pointer pointing to the input buffer.
+	     */
+	    from = in;
+
+	    /*
+	     * We will be processing work_count entries of insize bytes each, so
+	     * we set the in pointer to be ready for the next time through the loop.
+	     */
+	    in = ((char *) in) + work_count * insize;
+
+	    /*
+	     * If the input is in net format convert it host format.
+	     * Because we know that the input format is not equal to the output
+	     * this means that there will be at least two conversions taking place
+	     * if the input is in net format.  (from net to host then at least one cast)
+	     */
+	    if (inIsHost != CV_HOST_MASK) { /* net format */
+		switch(incookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
+		case CV_SIGNED_MASK | CV_16:
+		    (void) bu_cv_ntohss((short *)t1, bufsize , from, work_count);
+		    break;
+		case CV_16:
+		    (void) bu_cv_ntohus((unsigned short *)t1, bufsize , from, work_count);
+		    break;
+		case CV_SIGNED_MASK | CV_32:
+		    (void) bu_cv_ntohsl((long *)t1, bufsize , from, work_count);
+		    break;
+		case CV_32:
+		    (void) bu_cv_ntohul((unsigned long *)t1, bufsize , from, work_count);
+		    break;
+		case CV_D:
+		    (void) ntohd((unsigned char *)t1, (unsigned char *)from, work_count);
+		    break;
 		}
-/*
- * If we are in the last chuck, set the work count to take up
- * the slack.
- */
-		if (remaining < work_count) work_count = remaining;
-
-/*
- * All input at any stage will come from the "from" pointer.  We
- * start with the from pointer pointing to the input buffer.
- */
-		from = in;
-
-/*
- * We will be processing work_count entries of insize bytes each, so
- * we set the in pointer to be ready for the next time through the loop.
- */
-		in = ((char *) in) + work_count * insize;
-
-/*
- * If the input is in net format convert it host format.
- * Because we know that the input format is not equal to the output
- * this means that there will be at least two conversions taking place
- * if the input is in net format.  (from net to host then at least one cast)
- */
-		if (inIsHost != CV_HOST_MASK) { /* net format */
-			switch(incookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
-			case CV_SIGNED_MASK | CV_16:
-				(void) bu_cv_ntohss((short *)t1, bufsize , from, work_count);
-				break;
-			case CV_16:
-				(void) bu_cv_ntohus((unsigned short *)t1, bufsize , from, work_count);
-				break;
-			case CV_SIGNED_MASK | CV_32:
-				(void) bu_cv_ntohsl((long *)t1, bufsize , from, work_count);
-				break;
-			case CV_32:
-				(void) bu_cv_ntohul((unsigned long *)t1, bufsize , from, work_count);
-				break;
-			case CV_D:
-				(void) ntohd((unsigned char *)t1, (unsigned char *)from, work_count);
-				break;
-			}
-/*
- * Point the "from" pointer to the host format.
- */
-			from = t1;
-		}
+		/*
+		 * Point the "from" pointer to the host format.
+		 */
+		from = t1;
+	    }
 
 
-/*
- * "From" is a pointer to a HOST format buffer.
- */
+	    /*
+	     * "From" is a pointer to a HOST format buffer.
+	     */
 
-/*
- * If the input format is not double then there must be a cast to
- * double.
- */
-		if (infmt != CV_D) {
+	    /*
+	     * If the input format is not double then there must be a cast to
+	     * double.
+	     */
+	    if (infmt != CV_D) {
 
-/*
- * if the output conversion is HOST and output format is DOUBLE
- * then this will be the last step.
- */
-			if (outIsHost == CV_HOST_MASK && outfmt == CV_D) {
-				to = out;
-			} else {
-				to = t2;
-			}
-
-			hold = to;
-/*
- * Cast the input format to double.
- */
-			switch(incookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
-			case CV_SIGNED_MASK | CV_8:
-				for (i=0; i< work_count; i++) {
-					*((double *)to) = *((signed char *)from);
-					to = (genptr_t)(((double *)to) + 1);
-					from = ((char *)from) + 1;
-				}
-				break;
-			case CV_8:
-				for(i=0; i < work_count; i++) {
-					*((double *)to) = *((unsigned char *)from);
-					to = (genptr_t)(((double *)to) + 1);
-					from = (genptr_t)(((unsigned char *)from) + 1);
-				}
-				break;
-			case CV_SIGNED_MASK | CV_16:
-				for (i=0; i < work_count; i++) {
-					*((double *)to) = *((signed short *)from);
-					to = (genptr_t)(((double *)to) + 1);
-					from = (genptr_t)(((signed short *)from) + 1);
-				}
-				break;
-			case CV_16:
-				for (i=0; i < work_count; i++) {
-					*((double *)to) = *((unsigned short *)from);
-					to = (genptr_t)(((double *)to) + 1);
-					from = (genptr_t)(((unsigned short *)from) + 1);
-				}
-				break;
-			case CV_SIGNED_MASK | CV_32:
-				for (i=0; i < work_count; i++) {
-					*((double *)to) = *((signed long int *)from);
-					to = (genptr_t)(((double *)to) + 1);
-					from =  (genptr_t)(((signed long int *)from) + 1);
-				}
-				break;
-			case CV_32:
-				for (i=0; i < work_count; i++) {
-					*((double *)to) = *((unsigned long int *) from);
-					to = (genptr_t)(((double *)to) + 1);
-					from = (genptr_t)(((unsigned long int *)from) + 1);
-				}
-				break;
-			}
-			from = hold;
+		/*
+		 * if the output conversion is HOST and output format is DOUBLE
+		 * then this will be the last step.
+		 */
+		if (outIsHost == CV_HOST_MASK && outfmt == CV_D) {
+		    to = out;
+		} else {
+		    to = t2;
 		}
 
-		if (outfmt != CV_D) {
-/*
- * The input point is now pointing to a double in host format.  If the
- * output is also in host format then the next conversion will be
- * the last conversion, set the destination to reflect this.
- */
+		hold = to;
+		/*
+		 * Cast the input format to double.
+		 */
+		switch(incookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
+		case CV_SIGNED_MASK | CV_8:
+		    for (i=0; i< work_count; i++) {
+			*((double *)to) = *((signed char *)from);
+			to = (genptr_t)(((double *)to) + 1);
+			from = ((char *)from) + 1;
+		    }
+		    break;
+		case CV_8:
+		    for(i=0; i < work_count; i++) {
+			*((double *)to) = *((unsigned char *)from);
+			to = (genptr_t)(((double *)to) + 1);
+			from = (genptr_t)(((unsigned char *)from) + 1);
+		    }
+		    break;
+		case CV_SIGNED_MASK | CV_16:
+		    for (i=0; i < work_count; i++) {
+			*((double *)to) = *((signed short *)from);
+			to = (genptr_t)(((double *)to) + 1);
+			from = (genptr_t)(((signed short *)from) + 1);
+		    }
+		    break;
+		case CV_16:
+		    for (i=0; i < work_count; i++) {
+			*((double *)to) = *((unsigned short *)from);
+			to = (genptr_t)(((double *)to) + 1);
+			from = (genptr_t)(((unsigned short *)from) + 1);
+		    }
+		    break;
+		case CV_SIGNED_MASK | CV_32:
+		    for (i=0; i < work_count; i++) {
+			*((double *)to) = *((signed long int *)from);
+			to = (genptr_t)(((double *)to) + 1);
+			from =  (genptr_t)(((signed long int *)from) + 1);
+		    }
+		    break;
+		case CV_32:
+		    for (i=0; i < work_count; i++) {
+			*((double *)to) = *((unsigned long int *) from);
+			to = (genptr_t)(((double *)to) + 1);
+			from = (genptr_t)(((unsigned long int *)from) + 1);
+		    }
+		    break;
+		}
+		from = hold;
+	    }
 
-			if (outIsHost == CV_HOST_MASK) {
-				to = out;
-			} else {
-				to = t3;
-			}
+	    if (outfmt != CV_D) {
+		/*
+		 * The input point is now pointing to a double in host format.  If the
+		 * output is also in host format then the next conversion will be
+		 * the last conversion, set the destination to reflect this.
+		 */
 
-/*
- * The ouput format is something other than DOUBLE (tested for earlier),
- * do a cast from double to requested format.
- */
-			hold = to;
+		if (outIsHost == CV_HOST_MASK) {
+		    to = out;
+		} else {
+		    to = t3;
+		}
 
-			switch (outcookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
-			case CV_SIGNED_MASK | CV_8:
-				for (i=0; i<work_count; i++) {
-					*((signed char *)to) = *((double *)from);
-					to = (genptr_t)(((signed char *)to) + 1);
-					from = (genptr_t)(((double *)from) + 1);
-				}
-				break;
-			case CV_8:
-				for (i=0; i<work_count; i++) {
-					*((unsigned char *)to) =
-					    (unsigned char)(*((double *)from));
-					to = (genptr_t)(((unsigned char *)to) + 1);
-					from = (genptr_t)(((double *)from) + 1);
-				}
-				break;
-			case CV_SIGNED_MASK | CV_16:
-				for (i=0; i<work_count; i++) {
-					*((signed short int *)to) =
-					    *((double *)from);
-					to = (genptr_t)(((signed short int *)to) + 1);
-					from = (genptr_t)(((double *)from) + 1);
-				}
-				break;
-			case CV_16:
-				for (i=0; i<work_count; i++) {
-					*((unsigned short int *)to) =
-					    *((double *)from);
-					to = (genptr_t)(((unsigned short int *)to) + 1);
-					from = (genptr_t)(((double *)from) + 1);
-				}
-				break;
-			case CV_SIGNED_MASK | CV_32:
-				for (i=0; i<work_count; i++) {
-					*((signed long int *)to) =
-					    *((double *)from);
-					to = (genptr_t)(((signed long int *)to) + 1);
-					from = (genptr_t)(((double *)from) + 1);
-				}
-				break;
-			case CV_32:
-				for (i=0; i<work_count; i++) {
-					*((unsigned long int *)to) =
-					    *((double *)from);
-					to = (genptr_t)(((unsigned long int *)to) + 1);
-					from = (genptr_t)(((double *)from) + 1);
-				}
-				break;
-			}
-			from = hold;
-/*
- * The input is now pointing to a host formated buffer of the requested
- * output format.
- */
+		/*
+		 * The ouput format is something other than DOUBLE (tested for earlier),
+		 * do a cast from double to requested format.
+		 */
+		hold = to;
 
-/*
- * If the output conversion is network then do a host to net call
- * for either 16 or 32 bit values using Host TO Network All Short | Long
- */
-			if (outIsHost != CV_HOST_MASK) {
-				switch (outfmt) {
-				case CV_D:
-					(void) htond((unsigned char *)out,
-						     (unsigned char *)from,
-						     work_count);
-					break;
+		switch (outcookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
+		case CV_SIGNED_MASK | CV_8:
+		    for (i=0; i<work_count; i++) {
+			*((signed char *)to) = *((double *)from);
+			to = (genptr_t)(((signed char *)to) + 1);
+			from = (genptr_t)(((double *)from) + 1);
+		    }
+		    break;
+		case CV_8:
+		    for (i=0; i<work_count; i++) {
+			*((unsigned char *)to) =
+			    (unsigned char)(*((double *)from));
+			to = (genptr_t)(((unsigned char *)to) + 1);
+			from = (genptr_t)(((double *)from) + 1);
+		    }
+		    break;
+		case CV_SIGNED_MASK | CV_16:
+		    for (i=0; i<work_count; i++) {
+			*((signed short int *)to) =
+			    *((double *)from);
+			to = (genptr_t)(((signed short int *)to) + 1);
+			from = (genptr_t)(((double *)from) + 1);
+		    }
+		    break;
+		case CV_16:
+		    for (i=0; i<work_count; i++) {
+			*((unsigned short int *)to) =
+			    *((double *)from);
+			to = (genptr_t)(((unsigned short int *)to) + 1);
+			from = (genptr_t)(((double *)from) + 1);
+		    }
+		    break;
+		case CV_SIGNED_MASK | CV_32:
+		    for (i=0; i<work_count; i++) {
+			*((signed long int *)to) =
+			    *((double *)from);
+			to = (genptr_t)(((signed long int *)to) + 1);
+			from = (genptr_t)(((double *)from) + 1);
+		    }
+		    break;
+		case CV_32:
+		    for (i=0; i<work_count; i++) {
+			*((unsigned long int *)to) =
+			    *((double *)from);
+			to = (genptr_t)(((unsigned long int *)to) + 1);
+			from = (genptr_t)(((double *)from) + 1);
+		    }
+		    break;
+		}
+		from = hold;
+		/*
+		 * The input is now pointing to a host formated buffer of the requested
+		 * output format.
+		 */
+
+		/*
+		 * If the output conversion is network then do a host to net call
+		 * for either 16 or 32 bit values using Host TO Network All Short | Long
+		 */
+		if (outIsHost != CV_HOST_MASK) {
+		    switch (outfmt) {
+		    case CV_D:
+			(void) htond((unsigned char *)out,
+				     (unsigned char *)from,
+				     work_count);
+			break;
 #if 0
-				case CV_16:
-					(void) bu_cv_htonas(out, bufsize, from,
+		    case CV_16:
+			(void) bu_cv_htonas(out, bufsize, from,
 					    work_count);
-					break;
-				case CV_32:
-					(void) bu_cv_htonal(out, bufsize, from,
+			break;
+		    case CV_32:
+			(void) bu_cv_htonal(out, bufsize, from,
 					    work_count);
-					break;
+			break;
 #endif
-				}
-			}
-					
+		    }
 		}
-/*
- * move the output pointer.
- * reduce the amount of space remaining in the output buffer.
- * Increament the count of values converted.
- */
-		out = ((char *)out) + work_count * outsize;
-		size -= work_count * outsize;
-		number_done += work_count;
+					
+	    }
+	    /*
+	     * move the output pointer.
+	     * reduce the amount of space remaining in the output buffer.
+	     * Increament the count of values converted.
+	     */
+	    out = ((char *)out) + work_count * outsize;
+	    size -= work_count * outsize;
+	    number_done += work_count;
 	}
-/*
- * All Done!  Clean up and leave.
- */
+	/*
+	 * All Done!  Clean up and leave.
+	 */
 	bu_free(t1, "vert.c: t1");
 	bu_free(t2, "vert.c: t2");
 	bu_free(t3, "vert.c: t3");
