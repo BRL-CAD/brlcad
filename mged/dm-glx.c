@@ -28,9 +28,6 @@
  *  was modified to use the glx widget.
  *
  *  Authors -
- *      Paul R. Stay
- *      Michael John Muuss
- *      Robert J. Reschly
  *      Robert G. Parker
  *  
  *  Source -
@@ -60,7 +57,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <X11/extensions/XI.h>
 #include <X11/extensions/XInput.h>
 #include <X11/Xutil.h>
-#include "tkGLX.h"
 
 #include <gl/gl.h>		/* SGI IRIS library */
 #include <gl/device.h>		/* SGI IRIS library */
@@ -120,6 +116,9 @@ static void glx_var_init();
 #define dpy (((struct glx_vars *)dm_vars)->_dpy)
 #define win (((struct glx_vars *)dm_vars)->_win)
 #define xtkwin (((struct glx_vars *)dm_vars)->_xtkwin)
+#define vis (((struct glx_vars *)dm_vars)->_vis)
+#define cmap (((struct glx_vars *)dm_vars)->_cmap)
+#define deep (((struct glx_vars *)dm_vars)->_deep)
 #define mb_mask (((struct glx_vars *)dm_vars)->_mb_mask)
 #define win_l (((struct glx_vars *)dm_vars)->_win_l)
 #define win_b (((struct glx_vars *)dm_vars)->_win_b)
@@ -135,7 +134,6 @@ static void glx_var_init();
 #define devbuttonrelease (((struct glx_vars *)dm_vars)->_devbuttonrelease)
 #define knobs (((struct glx_vars *)dm_vars)->_knobs)
 #define stereo_is_on (((struct glx_vars *)dm_vars)->_stereo_is_on)
-#define ref (((struct glx_vars *)dm_vars)->_ref)
 #define glx_is_gt (((struct glx_vars *)dm_vars)->_glx_is_gt)
 #define aspect (((struct glx_vars *)dm_vars)->_aspect)
 #define mvars (((struct glx_vars *)dm_vars)->_mvars)
@@ -163,6 +161,9 @@ struct glx_vars {
   Display *_dpy;
   Window _win;
   Tk_Window _xtkwin;
+  Visual *_vis;
+  Colormap _cmap;
+  int _deep;
   unsigned int _mb_mask;
   long _win_l, _win_b, _win_r, _win_t;
   long _winx_size, _winy_size;
@@ -173,13 +174,20 @@ struct glx_vars {
   int _devbuttonrelease;
   int _knobs[8];
   int _stereo_is_on;
-  char _ref[32];
   int _glx_is_gt;
   fastf_t _aspect;
   struct modifiable_glx_vars _mvars;
 };
 
 static struct glx_vars head_glx_vars;
+static int GLXdoMotion = 0;
+static GLXconfig glx_config_wish_list [] = {
+  { GLX_NORMAL, GLX_WINDOW, GLX_NONE },
+  { GLX_NORMAL, GLX_DOUBLE, TRUE },
+  { GLX_NORMAL, GLX_RGB, TRUE },
+  { GLX_NORMAL, GLX_ZSIZE, GLX_NOCONFIG },
+  { 0, 0, 0 }
+};
 static int perspective_table[] = { 
 	30, 45, 60, 90 };
 static int ovec = -1;		/* Old color map entry number */
@@ -275,6 +283,9 @@ static void     set_perspective();
 static void	establish_lighting();
 static void	establish_zbuffer();
 static void     establish_am();
+static void set_window();
+static XVisualInfo *extract_visual();
+static unsigned long extract_value();
 
 static void
 refresh_hook()
@@ -404,7 +415,7 @@ Glx_setup( name )
 char *name;
 {
   register int	i;
-  static int ref_count = 0;
+  static int count = 0;
   Matrix		m;
   inventory_t	*inv;
   int		win_size=1000;
@@ -418,8 +429,8 @@ char *name;
   XDevice *dev;
   XEventClass e_class[15];
   XInputClassInfo *cip;
-  GLXconfig *glx_config, *p;
-  Display *tmp_dpy;
+  GLXconfig *p, *glx_config;
+  XVisualInfo *visual_info;
 
   rt_vls_init(&str);
 
@@ -428,43 +439,22 @@ char *name;
     gui_setup();
 
   /* Only need to do this once for this display manager */
-  if(!ref_count){
-    (void)TkGLX_Init(interp, tkwin);
+  if(!count)
     Glx_load_startup();
-  }
 
   if(RT_LIST_IS_EMPTY(&head_glx_vars.l))
     Tk_CreateGenericHandler(Glx_doevent, (ClientData)NULL);
 
   RT_LIST_APPEND(&head_glx_vars.l, &((struct glx_vars *)curr_dm_list->_dm_vars)->l);
 
-  rt_vls_printf(&pathName, ".dm_glx%d", ref_count++);
-  strcpy(ref, rt_vls_addr(&pathName));
-  rt_vls_strcat(&pathName, ".win"); 
-
-  if((tmp_dpy = XOpenDisplay(name)) == NULL){
-    rt_vls_free(&str);
-    return -1;
-  }
-
-  winx_size = DisplayWidth(tmp_dpy, DefaultScreen(tmp_dpy)) - 20;
-  winy_size = DisplayHeight(tmp_dpy, DefaultScreen(tmp_dpy)) - 20;
-
-  /* Make window square */
-  if( winy_size < winx_size )
-    winx_size = winy_size;
-  else /* we have a funky shaped monitor */ 
-    winy_size = winx_size;
-
-  XCloseDisplay(tmp_dpy);
-
+  rt_vls_printf(&pathName, ".dm_glx%d", count++);
+  xtkwin = Tk_CreateWindowFromPath(interp, tkwin, rt_vls_addr(&pathName), name);
   /*
-   * Create the glx widget by calling create_glx which
-   * is defined in glxinit.tk
+   * Create the X drawing window by calling init_glx which
+   * is defined in glxinit.tcl
    */
-  rt_vls_strcpy(&str, "create_glx ");
-  rt_vls_printf(&str, "%s %s %s %s %d %d true true\n", name,
-		ref, rt_vls_addr(&pathName), ref, winx_size, winy_size);
+  rt_vls_strcpy(&str, "init_glx ");
+  rt_vls_printf(&str, "%s\n", rt_vls_addr(&pathName));
 
   if(cmdline(&str, FALSE) == CMD_BAD){
     rt_vls_free(&str);
@@ -473,27 +463,35 @@ char *name;
 
   rt_vls_free(&str);
 
-  if(TkGLXwin_RefExists(ref)){
-    xtkwin = TkGLXwin_RefGetTkwin(ref);
-    if(xtkwin == NULL)
-      return -1;
+  dpy = Tk_Display(xtkwin);
+  winx_size = DisplayWidth(dpy, DefaultScreen(dpy)) - 20;
+  winy_size = DisplayHeight(dpy, DefaultScreen(dpy)) - 20;
 
-    dpy = Tk_Display(xtkwin);
-  }else{
-    Tcl_AppendResult(interp, "Glx_open: ref - ", ref,
-		     " doesn't exist!!!\n", (char *)NULL);
-    return -1;
-  }
+  /* Make window square */
+  if( winy_size < winx_size )
+    winx_size = winy_size;
+  else /* we have a funky shaped monitor */ 
+    winy_size = winx_size;
 
-  /* Do this now to force a GLXlink */
-  Tk_MapWindow(xtkwin);
+  Tk_GeometryRequest(xtkwin, winx_size, winy_size);
+
+  glx_is_gt = 1;
+  glx_config = GLXgetconfig(dpy, Tk_ScreenNumber(xtkwin), glx_config_wish_list);
+  visual_info = extract_visual(GLX_NORMAL, glx_config);
+  vis = visual_info->visual;
+  deep = visual_info->depth;
+  cmap = extract_value(GLX_NORMAL, GLX_COLORMAP, glx_config);
+  Tk_SetWindowVisual(xtkwin, vis, deep, cmap);
 
   Tk_MakeWindowExist(xtkwin);
   win = Tk_WindowId(xtkwin);
+  set_window(GLX_NORMAL, win, glx_config);
 
-  glx_is_gt = 1;
+  /* Inform the GL that you intend to render GL into an X window */
+  if(GLXlink(dpy, glx_config) < 0)
+    return -1;
 
-  glx_config = TkGLXwin_RefGetConfig(ref);
+  GLXwinset(dpy, win);
 
   /* set configuration variables */
   for(p = glx_config; p->buffer; ++p){
@@ -571,6 +569,7 @@ char *name;
    * Hardware specific.
    */
   glcompat( GLC_ZRANGEMAP, 0 );
+
   /* Take off a smidgeon for wraparound, as suggested by SGI manual */
 
   mvars.min_scr_z = getgdesc(GD_ZMIN)+15;
@@ -604,16 +603,20 @@ char *name;
 	for(cip = dev->classes, k = 0; k < dev->num_classes;
 	    ++k, ++cip){
 	  switch(cip->input_class){
+#if IR_BUTTONS
 	  case ButtonClass:
 	    DeviceButtonPress(dev, devbuttonpress, e_class[nclass]);
 	    ++nclass;
 	    DeviceButtonRelease(dev, devbuttonrelease, e_class[nclass]);
 	    ++nclass;
+#endif
 	    break;
+#if IR_KNOBS
 	  case ValuatorClass:
 	    DeviceMotionNotify(dev, devmotionnotify, e_class[nclass]);
 	    ++nclass;
 	    break;
+#endif
 	  default:
 	    break;
 	  }
@@ -626,15 +629,8 @@ char *name;
   }
 Done:
   XFreeDeviceList(olist);
-#if 0
-  Tk_CreateGenericHandler(Glx_doevent,
-			  (ClientData)curr_dm_list);
-#endif
 
-  /* start with constant tracking ON */
-  XSelectInput(dpy, win, ExposureMask|ButtonPressMask|ButtonReleaseMask|
-	       KeyPressMask|StructureNotifyMask|PointerMotionMask|ButtonMotionMask);
-
+  Tk_MapWindow(xtkwin);
   return(0);
 }
 
@@ -664,7 +660,6 @@ Glx_close()
     return;
 
   if(xtkwin != NULL){
-#if 1
     if(mvars.cueing_on)
       depthcue(0);
 
@@ -680,9 +675,9 @@ Glx_close()
     frontbuffer(1);
     glx_clear_to_black();
     frontbuffer(0);
-#endif
-/*XXX*/
-    Tk_DestroyWindow(Tk_Parent(xtkwin));
+
+    GLXunlink(dpy, win);
+    Tk_DestroyWindow(xtkwin);
   }
 
   if(((struct glx_vars *)dm_vars)->l.forw != RT_LIST_NULL)
@@ -690,12 +685,8 @@ Glx_close()
 
   rt_free(dm_vars, "Glx_close: dm_vars");
 
-#if 0
-  Tk_DeleteGenericHandler(Glx_doevent, (ClientData)NULL);
-#else
   if(RT_LIST_IS_EMPTY(&head_glx_vars.l))
     Tk_DeleteGenericHandler(Glx_doevent, (ClientData)NULL);
-#endif
 }
 
 /*
@@ -709,7 +700,7 @@ Glx_close()
 void
 Glx_prolog()
 {
-  TkGLXwin_RefWinset(ref, GLX_NORMAL);
+  GLXwinset(dpy, win);
 
   if (mvars.debug)
     Tcl_AppendResult(interp, "Glx_prolog\n", (char *)NULL);
@@ -1226,8 +1217,7 @@ XEvent *eventPtr;
     case ALT_MOUSE_MODE_ON:
       if(scroll_active && eventPtr->xmotion.state & mb_mask)
 	rt_vls_printf( &cmd, "M 1 %d %d\n", irisX2ged(mx), irisY2ged(my));
-      else if(state == ST_S_PICK || state == ST_O_PICK ||
-	      state == ST_S_VPICK || state == ST_O_PICK)
+      else if(GLXdoMotion)
 	/* do the regular thing */
 	/* Constant tracking (e.g. illuminate mode) bound to M mouse */
 	rt_vls_printf( &cmd, "M 0 %d %d\n", irisX2ged(mx), irisY2ged(my));
@@ -1262,7 +1252,9 @@ XEvent *eventPtr;
 
     omx = mx;
     omy = my;
-  }else if( eventPtr->type == devmotionnotify ){
+  }
+#if IR_KNOBS
+  else if( eventPtr->type == devmotionnotify ){
     XDeviceMotionEvent *M;
     int setting;
 
@@ -1274,7 +1266,6 @@ XEvent *eventPtr;
       goto end;
     }
 
-#if 1
     switch(DIAL0 + M->first_axis){
     case DIAL0:
       if(mged_variables.adcflag) {
@@ -1523,94 +1514,10 @@ XEvent *eventPtr;
 
     /* Keep track of the knob values */
     knob_values[M->first_axis] = M->axis_data[0];
-#else
-    setting = M->axis_data[0] - knob_values[M->first_axis];
-    knob_values[M->first_axis] = M->axis_data[0];
-
-    switch(DIAL0 + M->first_axis){
-    case DIAL0:
-      if(mged_variables.adcflag) {
-	rt_vls_printf( &cmd, "iknob ang1 %d\n",
-		      setting );
-      }
-      break;
-    case DIAL1:
-      rt_vls_printf( &cmd , "iknob S %f\n",
-		    setting / 2048.0 );
-      break;
-    case DIAL2:
-      if(mged_variables.adcflag)
-	rt_vls_printf( &cmd , "iknob ang2 %d\n",
-		      setting );
-      else {
-	if(mged_variables.rateknobs)
-	  rt_vls_printf( &cmd , "iknob z %f\n",
-		      setting / 2048.0 );
-	else
-	  rt_vls_printf( &cmd , "iknob az %f\n",
-		      setting / 512.0 );
-      }
-      break;
-    case DIAL3:
-      if(mged_variables.adcflag)
-	rt_vls_printf( &cmd , "iknob distadc %d\n",
-		      setting );
-      else {
-	if(mged_variables.rateknobs)
-	  rt_vls_printf( &cmd , "iknob Z %f\n",
-			 setting / 2048.0 );
-	else
-	  rt_vls_printf( &cmd , "iknob aZ %f\n",
-			 setting / 512.0 );
-      }
-      break;
-    case DIAL4:
-      if(mged_variables.adcflag)
-	rt_vls_printf( &cmd , "iknob yadc %d\n",
-		      setting );
-      else {
-	if(mged_variables.rateknobs)
-	  rt_vls_printf( &cmd , "iknob y %f\n",
-			 setting / 2048.0 );
-	else
-	  rt_vls_printf( &cmd , "iknob ay %f\n",
-			 setting / 512.0 );
-      }
-      break;
-    case DIAL5:
-      if(mged_variables.rateknobs)
-	rt_vls_printf( &cmd , "iknob Y %f\n",
-		       setting / 2048.0 );
-      else
-	rt_vls_printf( &cmd , "iknob aY %f\n",
-		       setting / 512.0 );
-      break;
-    case DIAL6:
-      if(mged_variables.adcflag)
-	rt_vls_printf( &cmd , "iknob xadc %d\n",
-		      setting );
-      else {
-	if(mged_variables.rateknobs)
-	  rt_vls_printf( &cmd , "iknob x %f\n",
-			 setting / 2048.0 );
-	else
-	  rt_vls_printf( &cmd , "iknob ax %f\n",
-			 setting / 512.0 );
-      }
-      break;
-    case DIAL7:
-      if(mged_variables.rateknobs)
-	rt_vls_printf( &cmd , "iknob X %f\n",
-		       setting / 2048.0 );
-      else
-	rt_vls_printf( &cmd , "iknob aX %f\n",
-		       setting / 512.0 );
-      break;
-    default:
-      break;
-    }
+  }
 #endif
-  }else if( eventPtr->type == devbuttonpress ){
+#if IR_BUTTONS
+  else if( eventPtr->type == devbuttonpress ){
     XDeviceButtonEvent *B;
 
     B = (XDeviceButtonEvent * ) eventPtr;
@@ -1637,7 +1544,9 @@ XEvent *eventPtr;
       button0 = 0;
 
     goto end;
-  }else
+  }
+#endif
+  else
     goto end;
 
   status = cmdline(&cmd, FALSE);
@@ -1722,7 +1631,7 @@ Glx_statechange( a, b )
     Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
     rt_vls_free(&tmp_vls);
   }
-    
+
   /*
    *  Based upon new state, possibly do extra stuff,
    *  including enabling continuous tablet tracking,
@@ -1730,25 +1639,20 @@ Glx_statechange( a, b )
    */
  	switch( b )  {
 	case ST_VIEW:
-	  if(!mvars.alt_mouse_mode)
 	  /* constant tracking OFF */
-	  XSelectInput(dpy, win, ExposureMask|ButtonPressMask|ButtonReleaseMask|
-		       KeyPressMask|StructureNotifyMask);
+	  GLXdoMotion = 0;
 	  break;
 	case ST_S_PICK:
 	case ST_O_PICK:
 	case ST_O_PATH:
 	case ST_S_VPICK:
 	  /* constant tracking ON */
-	  XSelectInput(dpy, win, ExposureMask|ButtonPressMask|ButtonReleaseMask|
-		       KeyPressMask|StructureNotifyMask|PointerMotionMask|ButtonMotionMask);
+	  GLXdoMotion = 1;
 	  break;
 	case ST_O_EDIT:
 	case ST_S_EDIT:
-	  if(!mvars.alt_mouse_mode)
 	  /* constant tracking OFF */
-	  XSelectInput(dpy, win, ExposureMask|ButtonPressMask|ButtonReleaseMask|
-		       KeyPressMask|StructureNotifyMask);
+	  GLXdoMotion = 0;
 	  break;
 	default:
 	  Tcl_AppendResult(interp, "Glx_statechange: unknown state ",
@@ -1941,15 +1845,8 @@ register char *str;
 	char	buf[9];
 	register char *cp;
 
-# if 0
-	for(i = 0, cp = buf; i < 8 && *str; i++, cp++, str++)
-		*cp = islower(*str) ?  toupper(*str) : *str;
-	*cp = 0;
-	dbtext(buf);
-# else
 	Tcl_AppendResult(interp, "dm-glx: You pressed Help key and '",
 			 str, "'\n", (char *)NULL);
-# endif
 #else
 	return;
 #endif
@@ -2079,20 +1976,7 @@ establish_zbuffer()
 static void
 establish_am()
 {
-  if(mvars.alt_mouse_mode){
-    if(state != ST_S_PICK && state != ST_O_PICK &&
-       state != ST_O_PATH && state != ST_S_VPICK)
-      /* turn constant tracking ON */
-      XSelectInput(dpy, win, ExposureMask|ButtonPressMask|ButtonReleaseMask|
-		   KeyPressMask|StructureNotifyMask|PointerMotionMask|ButtonMotionMask);
-  }else{
-    if(state != ST_S_PICK && state != ST_O_PICK &&
-       state != ST_O_PATH && state != ST_S_VPICK)
-
-      /* turn constant tracking OFF */
-      XSelectInput(dpy, win, ExposureMask|ButtonPressMask|ButtonReleaseMask|
-		   KeyPressMask|StructureNotifyMask);
-  }
+  return;
 }
 
 glx_clear_to_black()
@@ -2750,10 +2634,57 @@ Window window;
 
   for( RT_LIST_FOR(p, glx_vars, &head_glx_vars.l) ){
     if(window == p->_win){
-      TkGLXwin_RefWinset(p->_ref, GLX_NORMAL);
+      GLXwinset(p->_dpy, p->_win);
       return p->dm_list;
     }
   }
 
   return DM_LIST_NULL;
+}
+
+static unsigned long
+extract_value(buffer, mode, conf)
+int buffer;
+int mode;
+GLXconfig *conf;
+{
+  int i;
+
+  for (i = 0; conf[i].buffer; i++)
+    if (conf[i].buffer == buffer && conf[i].mode == mode)
+      return conf[i].arg;
+
+  return 0;
+}
+
+/* Extract X visual information */
+static XVisualInfo*
+extract_visual(buffer, conf)
+int buffer;
+GLXconfig *conf;
+{
+  XVisualInfo template, *v;
+  int n;
+
+  template.screen = Tk_ScreenNumber(xtkwin);
+  template.visualid = extract_value(buffer, GLX_VISUAL, conf);
+
+  return XGetVisualInfo(dpy, VisualScreenMask|VisualIDMask, &template, &n);
+}
+
+/* 
+ * Fill the configuration structure with the appropriately
+ * created window
+ */
+static void
+set_window(buffer, _win, conf)
+int buffer;
+Window _win;
+GLXconfig *conf;
+{
+  int i;
+
+  for (i = 0; conf[i].buffer; i++)
+    if (conf[i].buffer == buffer && conf[i].mode == GLX_WINDOW)
+      conf[i].arg = _win;
 }
