@@ -29,19 +29,19 @@ char	name[128];
 
 main()
 {
-	register int i;
+  register int i;
 
-	pl_3space( stdout, -32768,  -32768,  -32768, 32767, 32767, 32767 );
-	while( !feof(stdin) )  {
-		if( scanf( "%d %d %s", &npts, &z, name ) != 3 )  break;
-		for( i=0; i<npts; i++ )  {
-			if( scanf( "%d %d", &x, &y ) != 2 )
-				fprintf(stderr,"bad xy\n");
-			if( i==0 )
-				pl_3move( stdout, x, y, z );
-			else
-				pl_3cont( stdout, x, y, z );
-		}
-		/* Close curves? */
-	}
+  pl_3space( stdout, -32768,  -32768,  -32768, 32767, 32767, 32767 );
+  while( !feof(stdin) )  {
+    if( scanf( "%d %d %s", &npts, &z, name ) != 3 )  break;
+    for( i=0; i<npts; i++ )  {
+      if( scanf( "%d %d", &x, &y ) != 2 )
+	fprintf(stderr,"bad xy\n");
+      if( i==0 )
+	pl_3move( stdout, x, y, z );
+      else
+	pl_3cont( stdout, x, y, z );
+    }
+    /* Close curves? */
+  }
 }
