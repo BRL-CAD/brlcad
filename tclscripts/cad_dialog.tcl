@@ -238,8 +238,8 @@ proc cad_radio { my_widget_name screen radio_result title text_message default c
 	}
 
 	button $w.dismiss -text Dismiss -command "set $radio_result $default; set done 2"
-	hoc_register_data $w.dismiss "DIsmiss" {
-		{ summary "Click on this button to indicate you do not want to change\nthis selection from its value when the window appeard" }
+	hoc_register_data $w.dismiss "Dismiss" {
+		{ summary "Click on this button to indicate you do not want to change\nthis selection from its value when the window first appeared" }
 	}
 
 	grid $w.apply -row [expr $counter + 1] -column 0
@@ -249,3 +249,79 @@ proc cad_radio { my_widget_name screen radio_result title text_message default c
 	$::tk::Priv(wait_cmd) variable done
 	catch " destroy $w "
 }
+
+proc cad_list_buts { my_widget_name screen list_of_results cur_settings title text_message choice_labels help_strings } {
+    global $list_of_results
+    global list_but_result
+    global list_buts_done
+    global ::tk::Priv
+
+    # The screen parameter can be the pathname of some
+    # widget where the screen value can be obtained.
+    # Otherwise, it is assumed to be a genuine X DISPLAY
+    # string.
+    if [winfo exists $screen] {
+	set screen [winfo screen $screen]
+    }
+
+    set list_buts_done 0
+    set w $my_widget_name
+
+    if [winfo exists $w] { catch "destroy $w" }
+    toplevel $w -screen $screen
+    wm title $w $title
+    wm iconname $w Dialog
+    message $w.mess -text $text_message -justify center -width 500
+    hoc_register_data $w.mess "List selection Dialog" {
+	{ summary "Use this window select any number (or none) of the possibilities listed" }
+    }
+
+    grid $w.mess -row 0 -column 0 -columnspan 2 -sticky ew
+    if { [llength $cur_settings] != [llength $choice_labels]} {
+	puts "settings do not match choices"
+	set $list_of_results $cur_settings
+	catch " destroy $w "
+	return
+    }
+    set counter 0
+    foreach setting $cur_settings choice $choice_labels {
+	set list_but_result($counter) $setting
+	checkbutton $w.but_$counter -text [lindex $choice_labels $counter] -variable list_but_result($counter)
+	grid $w.but_$counter -row [expr $counter + 1] -column 0 -sticky ew -columnspan 2
+	set hoc_data [subst {{ summary \"[lindex $help_strings $counter]\" }}]
+	hoc_register_data $w.but_$counter [lindex $choice_labels $counter] $hoc_data
+	incr counter
+    }
+
+    button $w.apply -text Apply -command "set list_buts_done 1"
+    hoc_register_data $w.apply "Apply" {
+	{ summary "Click on this button to indicate you have finished making your selections" }
+    }
+
+    button $w.dismiss -text Dismiss -command "set list_buts_done 2"
+    hoc_register_data $w.dismiss "Dismiss" {
+	{ summary "Click on this button to indicate you do not want to change\nthe selections from their values when the window first appeared" }
+    }
+
+    grid $w.apply -row [expr $counter + 1] -column 0
+    grid $w.dismiss -row [ expr $counter + 1] -column 1
+    update
+
+    $::tk::Priv(wait_cmd) variable list_buts_done
+
+    set num_choices [llength $choice_labels]
+    if { $list_buts_done == 2 } {
+	set $list_of_results $cur_settings
+    } else {
+	set $list_of_results {}
+	for { set counter 0 } { $counter < $num_choices } { incr counter } {
+	    if { $list_but_result($counter) == 1 } {
+		lappend $list_of_results "1"
+	    } else {
+		lappend $list_of_results "0"
+	    }
+	}
+    }
+    catch " destroy $w "
+}
+
