@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) extern.h	2.1
-	Modified: 	12/9/86 at 15:55:10
-	Retrieved: 	12/26/86 at 21:53:39
+	SCCS id:	@(#) extern.h	2.2
+	Modified: 	1/5/87 at 16:57:32
+	Retrieved: 	1/5/87 at 16:58:18
 	SCCS archive:	/vld/moss/src/fbed/s.extern.h
 
 	Author:		Gary S. Moss
@@ -16,9 +16,6 @@
 #if ! defined( _VLD_STD_H_ )
 #include <std.h>
 #endif
-#if ! defined( INCL_POPUP )
-#include "popup.h"
-#endif
 #if ! defined( INCL_ASCII )
 #include "ascii.h"
 #endif
@@ -29,24 +26,48 @@
 #include "try.h"
 #endif
 
+typedef struct
+	{
+	int	p_x;
+	int	p_y;
+	}
+Point;
+
+typedef struct
+	{
+	Point	r_origin;
+	Point	r_corner;
+	}
+Rectangle;
+
+typedef struct
+	{
+	RGBpixel  *n_buf;
+	int	n_wid;
+	int	n_hgt;
+	}
+Panel;
+
 extern FBIO	*fbp;
-extern ColorMap	cmap;
-extern Menu	pick_one, pallet;
 extern RGBpixel	*menu_addr;
 extern RGBpixel	paint;
 extern Point	cursor_pos;
+extern Point	image_center;
+extern Point	windo_center;
+extern Point	windo_anchor;
 extern Try	*try_rootp;
 extern char	cread_buf[BUFSIZ*10], *cptr;
 extern char	macro_buf[];
 extern char	*macro_ptr;
 extern int	brush_sz;
 extern int	gain;
-extern int	fudge_flag;
-extern int	menu_flag;
+extern int	pad_flag;
 extern int	remembering;
 extern int	report_status;
+extern int	reposition_cursor;
 extern int	tty;
 extern int	tty_fd;
+extern int	zoom_factor;
 extern int	LI, CO;
 
 extern Func_Tab	*get_Func_Name();
@@ -59,7 +80,6 @@ extern int	fb_Init_Menu();
 extern int	getpos();
 extern int	get_Input();
 extern int	do_Bitpad();
-extern void	fb_On_Menu(), fb_Off_Menu();
 extern void	fb_Get_Pixel();
 extern void	pos_close();
 extern void	init_Status();
