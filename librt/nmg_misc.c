@@ -5196,7 +5196,7 @@ CONST char		*title;
 	BU_INIT_EXTERNAL( &ext );
 
 	/* Scale change on export is 1.0 -- no change */
-	if( rt_functab[ID_NMG].ft_export( &ext, &intern, 1.0 ) < 0 )  {
+	if( rt_functab[ID_NMG].ft_export( &ext, &intern, 1.0, DBI_NULL ) < 0 )  {
 		bu_log("nmg_stash_model_to_file: solid export failure\n");
 		db_free_external( &ext );
 		rt_bomb("nmg_stash_model_to_file() ft_export() error\n");

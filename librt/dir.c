@@ -168,7 +168,7 @@ CONST mat_t		mat;
 		id = rt_id_solid( &ext );
 	}
 
-	if( rt_functab[id].ft_import( ip, &ext, mat ) < 0 )  {
+	if( rt_functab[id].ft_import( ip, &ext, mat, dbip ) < 0 )  {
 		bu_log("rt_db_get_internal(%s):  import failure\n",
 			dp->d_namep );
 	    	if( ip->idb_ptr )  rt_functab[id].ft_ifree( ip );
@@ -204,7 +204,7 @@ struct db_i		*dbip;
 	RT_CK_DB_INTERNAL( ip );
 
 	/* Scale change on export is 1.0 -- no change */
-	ret = rt_functab[ip->idb_type].ft_export( &ext, ip, 1.0 );
+	ret = rt_functab[ip->idb_type].ft_export( &ext, ip, 1.0, dbip );
 	if( ret < 0 )  {
 		bu_log("rt_db_put_internal(%s):  solid export failure\n",
 			dp->d_namep);

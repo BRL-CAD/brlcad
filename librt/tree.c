@@ -440,7 +440,7 @@ int				id;
 	 *  Import geometry from on-disk (external) format to internal.
 	 */
     	RT_INIT_DB_INTERNAL(&intern);
-	if( rt_functab[id].ft_import( &intern, ep, mat ) < 0 )  {
+	if( rt_functab[id].ft_import( &intern, ep, mat, tsp->ts_dbip ) < 0 )  {
 		int	hash;
 		bu_log("rt_gettree_leaf(%s):  solid import failure\n", dp->d_namep );
 	    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );

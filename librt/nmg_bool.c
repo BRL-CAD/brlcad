@@ -1177,7 +1177,7 @@ int			id;
 	RT_CK_DIR(dp);
 
 	RT_INIT_DB_INTERNAL(&intern);
-	if (rt_functab[id].ft_import(&intern, ep, tsp->ts_mat) < 0) {
+	if (rt_functab[id].ft_import(&intern, ep, tsp->ts_mat, tsp->ts_dbip) < 0) {
 		bu_log("nmg_booltree_leaf_tess(%s):  solid import failure\n", dp->d_namep);
 	    	if (intern.idb_ptr)  rt_functab[id].ft_ifree(&intern);
 	    	return(TREE_NULL);		/* ERROR */
@@ -1250,7 +1250,7 @@ int			id;
 	RT_CK_DIR(dp);
 
 	RT_INIT_DB_INTERNAL(&intern);
-	if (rt_functab[id].ft_import(&intern, ep, tsp->ts_mat) < 0) {
+	if (rt_functab[id].ft_import(&intern, ep, tsp->ts_mat, tsp->ts_dbip) < 0) {
 		bu_log("nmg_booltree_leaf_tess(%s):  solid import failure\n", dp->d_namep);
 	    	if (intern.idb_ptr)  rt_functab[id].ft_ifree(&intern);
 	    	return(TREE_NULL);		/* ERROR */

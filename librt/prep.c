@@ -313,7 +313,7 @@ struct soltab		*stp;
 	if( !(mat = stp->st_matp) )
 		mat = (matp_t)bn_mat_identity;
     	RT_INIT_DB_INTERNAL(&intern);
-	if( rt_functab[id].ft_import( &intern, &ext, mat ) < 0 )  {
+	if( rt_functab[id].ft_import( &intern, &ext, mat, rtip->rti_dbip ) < 0 )  {
 		bu_log("rt_plot_solid(%s):  solid import failure\n",
 			stp->st_name );
 	    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );

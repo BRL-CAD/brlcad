@@ -178,10 +178,11 @@ int			op;
  *  Import a combination record from a V4 database into internal form.
  */
 int
-rt_comb_v4_import( ip, ep, matrix )
+rt_comb_v4_import( ip, ep, matrix, dbip )
 struct rt_db_internal		*ip;
 CONST struct bu_external	*ep;
 CONST matp_t			matrix;		/* NULL if identity */
+CONST struct db_i		*dbip;
 {
 	union record		*rp;
 	struct rt_tree_array	*rt_tree_array;
@@ -317,10 +318,11 @@ CONST matp_t			matrix;		/* NULL if identity */
  *			R T _ C O M B _ V 4 _ E X P O R T
  */
 int
-rt_comb_v4_export( ep, ip, local2mm )
+rt_comb_v4_export( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
+CONST struct db_i		*dbip;
 {
 	struct rt_comb_internal	*comb;
 	int			node_count;
@@ -598,26 +600,28 @@ double		mm2local;
  *			R T _ C O M B _ I M P O R T
  */
 int
-rt_comb_import(ip, ep, mat)
+rt_comb_import(ip, ep, mat, dbip)
 struct rt_db_internal	*ip;
 CONST struct bu_external *ep;
 CONST mat_t		mat;
+CONST struct db_i	*dbip;
 {
 	/* XXX Switch out to right routine, based on database version */
-	return rt_comb_v4_import( ip, ep, mat );
+	return rt_comb_v4_import( ip, ep, mat, dbip );
 }
 
 /*
  *			R T _ C O M B _ E X P O R T
  */
 int
-rt_comb_export(ep, ip, local2mm)
+rt_comb_export(ep, ip, local2mm, dbip)
 struct bu_external	*ep;
 CONST struct rt_db_internal *ip;
 double			local2mm;
+CONST struct db_i	*dbip;
 {
 	/* XXX Switch out to right routine, based on database version */
-	return rt_comb_v4_export( ep, ip, local2mm );
+	return rt_comb_v4_export( ep, ip, local2mm, dbip );
 }
 
 /*
@@ -949,12 +953,13 @@ CONST struct db_wrapper		*wp;
  *			R T _ V 5 _ E X P O R T
  */
 int
-rt_v5_export( ep, ip, local2mm, dp, wp )
+rt_v5_export( ep, ip, local2mm, dp, wp, dbip )
 struct bu_external		*ep;
 CONST struct rt_db_internal	*ip;
 double				local2mm;
 CONST struct directory		*dp;
 CONST struct db_wrapper		*wp;
+CONST struct db_i		*dbip;
 {
 	struct bu_external	temp;
 	int			ret;
@@ -966,9 +971,9 @@ CONST struct db_wrapper		*wp;
 
 	/* Convert Object Body to external form */
 	if( ip->idb_type == ID_COMBINATION )  {
-		ret = rt_comb_v4_export( &temp, ip, local2mm );
+		ret = rt_comb_v4_export( &temp, ip, local2mm, dbip );
 	} else {
-		ret = rt_functab[ip->idb_type].ft_export( &temp, ip, local2mm );
+		ret = rt_functab[ip->idb_type].ft_export( &temp, ip, local2mm, dbip );
 	}
 	if( ret < 0 )  {
 		bu_log("rt_v5_export(%s): ft_export error %d\n",

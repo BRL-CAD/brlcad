@@ -184,7 +184,7 @@ double		local2mm;
 	intern.idb_type = id;
 	intern.idb_ptr = gp;
 
-	if( rt_functab[id].ft_export( &ext, &intern, local2mm ) < 0 )  {
+	if( rt_functab[id].ft_export( &ext, &intern, local2mm, wdbp->dbip ) < 0 )  {
 		bu_log("wdb_export(%s): solid export failure\n",
 			name );
 		db_free_external( &ext );
