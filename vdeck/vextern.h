@@ -26,6 +26,7 @@ typedef long	bitv_t;		/* largest integer type */
 
 #include "vmath.h"
 #include "db.h"
+#include "externs.h"
 
 /* Special characters.							*/
 #define	LF		"\n"
@@ -70,8 +71,8 @@ typedef long	bitv_t;		/* largest integer type */
 #define MAXSOL	10000	/* max solids in description */
 #endif
 #endif
-#ifdef sel
 #ifndef NDIR
+#ifdef sel
 #define NDIR	9000	/* max objects in input */
 #else
 #define NDIR	20000	/* max objects in input */
@@ -160,14 +161,11 @@ extern char	dir_names[], *dir_last;
 
 extern int	discr[];
 
-extern char		*strcpy(), *strcat(), *mktemp();
 extern char		*emalloc();
-extern long		lseek();
 extern void		abort_sig(), quit();
 extern Directory	*lookup(), *diradd();
 extern void		toc(), list_toc();
 extern void		prompt();
-extern void		exit(), free(), perror();
 
 extern char	*toc_list[];
 extern char	*curr_list[];
