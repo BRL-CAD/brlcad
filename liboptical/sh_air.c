@@ -18,7 +18,6 @@
 struct air_specific {
 	long	magic;
 	double	d_p_mm;	/* density per unit mm */
-	double	B;
 	double	scale;
 	double	delta;
 	double	color[3];
@@ -27,11 +26,10 @@ struct air_specific {
 
 static struct air_specific air_defaults = {
 	air_MAGIC,
-	1e-7,		/* d_p_pp */	
-	1.0,
-	.01,
-	0.0,
-	{ .5, .5, .625 }
+	.001,		/* d_p_mm */	
+	.01,		/* scale */
+	0.0,		/* delta */
+	{ .5, .5, .625 }/* color */
 	};
 
 #define SHDR_NULL	((struct air_specific *)0)
@@ -40,9 +38,10 @@ static struct air_specific air_defaults = {
 
 struct structparse air_parse[] = {
 	{"%f",  1, "dpmm",		SHDR_O(d_p_mm),		FUNC_NULL },
-	{"%f",  1, "B",			SHDR_O(B),		FUNC_NULL },
 	{"%f",  1, "scale",		SHDR_O(scale),		FUNC_NULL },
 	{"%f",  1, "s",			SHDR_O(scale),		FUNC_NULL },
+	{"%f",  1, "delta",		SHDR_O(delta),		FUNC_NULL },
+	{"%f",  1, "d",			SHDR_O(delta),		FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 };
 
@@ -229,6 +228,21 @@ char	*dp;
 /*
  *	E M I S T _ R E N D E R
  *
+ *
+ *
+ *
+ * te = dist from pt to end of ray (out hit point)
+ * Zo = elevation at ray start
+ * Ze = elevation at ray end
+ * Zd = Z component of normalized ray vector 
+ * d_p_mm = overall fog density
+ * B = density falloff with altitude
+ *
+ *
+ *	delta = height at which fog starts
+ *	scale = stretches exponential decay zone
+ *	d_p_mm = maximum density @ ground
+ *
  *	This is called (from viewshade() in shade.c)
  *	once for each hit point to be shaded.
  */
@@ -249,15 +263,7 @@ char	*dp;
 	RT_CHECK_PT(pp);
 	CK_air_SP(air_sp);
 
-	/*
-	 * te = dist from pt to end of ray (out hit point)
-	 * Zo = elevation at ray start
-	 * Ze = elevation at ray end
-	 * Zd = Z component of normalized ray vector 
-	 * d_p_mm = overall fog density
-	 * B = density falloff with altitude
-	 */
-
+	/* comput hit point & length of ray */
 	if (pp->pt_inhit->hit_dist < 0.0) {
 		VMOVE(in_pt, ap->a_ray.r_pt);
 		te = pp->pt_outhit->hit_dist;
@@ -267,6 +273,7 @@ char	*dp;
 		te = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
 	}
 
+	/* get exit point */
 	VJOIN1(out_pt,
 		ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
 
@@ -274,55 +281,18 @@ char	*dp;
 	Ze = (air_sp->delta + out_pt[Z]) * air_sp->scale;
 	Zd = ap->a_ray.r_dir[Z];
 
-	if( rdebug&RDEBUG_SHADE) {
-		rt_structprint( "emist_specific", air_parse, (char *)air_sp );	
+	if ( NEAR_ZERO( Zd, SQRT_SMALL_FASTF ) )
+		tau = air_sp->d_p_mm * te * exp( -Zo);
+	else
+		tau = ((air_sp->d_p_mm * te) /  Zd) * ( exp(-Zo) - exp(-Ze) );
 
-		rt_log("emist in pt (%g %g %g) out pt (%g %g %g)\n",
-			V3ARGS(in_pt), V3ARGS(out_pt));
-	}
-
-	if ( NEAR_ZERO( Zd, SQRT_SMALL_FASTF ) ) {
-		tau = air_sp->d_p_mm * te * exp( -air_sp->B * Zo);
-		if( rdebug&RDEBUG_SHADE)
-			rt_log("emist tau = %g * %g * exp( %g * %g )\n",
-				air_sp->d_p_mm, te, air_sp->B, Zo);
-	} else {
-		tau = ((air_sp->d_p_mm * te) / (air_sp->B * Zd)) * 
-			( exp( -Zo ) - exp( -Ze ) );
-
-		if( rdebug&RDEBUG_SHADE) {
-
-			rt_log("emist       %7g * %7g\n",
-air_sp->d_p_mm, te);
-			rt_log("emist tau = ----------------- * ( %g - %g )\n",
-exp( -Zo ),  exp( -Ze ) );
-			rt_log("emist       %7g * %7g\n",
-air_sp->B, Zd);
-
-			rt_log(" emist tau = %g * %g * %g = %g\n",
-				air_sp->d_p_mm / air_sp->d_p_mm,
-				te / Zd,
-				exp( -Zo ) - exp( -Ze ),
-				tau );
-		}
-	}
-	/* extinction = 1. - transmission.  Extinguished part replaced by
-	 * color of the air
-	 */
-	/* transmission = e^(-tau) */
 	swp->sw_transmit = exp(-tau);
 
-	if (swp->sw_transmit > 1.0) {
-		swp->sw_transmit = 1.0;
-	} else if (swp->sw_transmit < 0.0) {
-		swp->sw_transmit = 0.0;
-	}
+	if (swp->sw_transmit > 1.0) swp->sw_transmit = 1.0;
+	else if (swp->sw_transmit < 0.0) swp->sw_transmit = 0.0;
 
-	if( rdebug&RDEBUG_SHADE) {
+	if( rdebug&RDEBUG_SHADE)
 		rt_log("emist transmit = %g\n", swp->sw_transmit);
-
-
-	}
 
 	return(1);
 }
