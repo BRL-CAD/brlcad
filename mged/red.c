@@ -385,7 +385,7 @@ put_tree_into_comb(comb, dp, old_name, new_name, str)
 	char			*line;
 	char			*ptr;
 	char			relation;
-	char			name[NAMESIZE+1];
+	char			*name;
 	struct rt_tree_array	*rt_tree_array;
 	struct line_list	*llp;
 	int			node_count = 0;
@@ -463,11 +463,10 @@ put_tree_into_comb(comb, dp, old_name, new_name, str)
 				bu_log("no name specified\n");
 				return TCL_ERROR;
 			}
-			strncpy(name , ptr, NAMESIZE);
-			name[NAMESIZE] = '\0';
+			name = ptr;
 
 			/* Eliminate trailing white space from name */
-			i = NAMESIZE;
+			i = strlen( ptr );
 			while(isspace(name[--i]))
 				name[i] = '\0';
 
@@ -712,7 +711,8 @@ char **argv;
   struct directory *dp;
   struct rt_db_internal	intern;
   struct rt_comb_internal *comb;
-  char new_name[NAMESIZE+1];
+  char new_name_v4[NAMESIZE+1];
+  char *new_name;
   int offset;
   int save_comb_flag = 0;
 
@@ -731,7 +731,7 @@ char **argv;
 
   strcpy(red_tmpfil, red_tmpfil_init);
   strcpy(red_tmpcomb, red_tmpcomb_init);
-
+  bu_log( "comb name is %s\n", argv[1] );
   dp = db_lookup( dbip , argv[1] , LOOKUP_QUIET );
   if(dp != DIR_NULL){
     if( !(dp->d_flags & DIR_COMB) ){
@@ -763,10 +763,19 @@ char **argv;
     bu_vls_init( &comb->material );
   }
 
-  if(dp == DIR_NULL)
-    NAMEMOVE(argv[1], new_name);
-  else
-    NAMEMOVE(dp->d_namep, new_name);
+  if( dbip->dbi_version < 5 )
+  {
+	  new_name = new_name_v4;
+	  if(dp == DIR_NULL)
+		  NAMEMOVE(argv[1], new_name_v4);
+	  else
+		  NAMEMOVE(dp->d_namep, new_name_v4);
+  } else {
+	  if( dp == DIR_NULL )
+		  new_name = argv[1];
+	  else
+		  new_name = dp->d_namep;
+  }
 
   if(*argv[2] == 'y' || *argv[2] == 'Y')
     comb->region_flag = 1;
@@ -1243,7 +1252,7 @@ make_tree(comb, dp, node_count, old_name, new_name, rt_tree_array, tree_index)
 	intern.idb_ptr = (genptr_t)comb;
 	comb->tree = final_tree;
 
-	if (strncmp(new_name, old_name, NAMESIZE)) {
+	if (strcmp(new_name, old_name)) {
 		int flags;
 
 		if (comb->region_flag)
