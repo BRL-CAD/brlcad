@@ -31,7 +31,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 /* forward declarations */
-int bn_common_name_size(int *, int *, char *);
+int bn_common_name_size(int *, int *, const char *);
 int bn_common_image_size(int *, int *, int);
 
 /* This table does not need to include any square sizes */
@@ -85,12 +85,12 @@ int
 bn_common_file_size( widthp, heightp, filename, pixel_size )
 int	*widthp;		/* pointer to returned width */
 int	*heightp;		/* pointer to returned height */
-char	*filename;		/* image file to stat */
+const char	*filename;	/* image file to stat */
 int	pixel_size;		/* bytes per pixel */
 {
 	struct	stat	sbuf;
 	int	size;
-	register char	*cp;
+	register const char	*cp;
 
 	*widthp = *heightp = 0;		/* sanity */
 
@@ -131,9 +131,9 @@ int
 bn_common_name_size( widthp, heightp, name )
 int	*widthp;		/* pointer to returned width */
 int	*heightp;		/* pointer to returned height */
-char	*name;		        /* name to parse */
+const char	*name;		        /* name to parse */
 {
-    register char *cp = name;
+    register const char *cp = name;
     
     /* File name may have several minus signs in it.  Try repeatedly */
     while( *cp )  {
