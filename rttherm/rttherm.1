@@ -25,7 +25,27 @@ option.
 It also writes a second file (using bn_table_write) with
 the suffix ".spect" which describes
 the spectral sampling pattern used when creating the output file.
-.SH "DEFINING TEMPERATURES"
+.P
+The background (ambient) temperature may be set from the command
+line with the
+.B \-C\ bg_temp=degK
+command, or in the animation script with the command
+.sp .5
+set bg_temp=293.0
+.sp .5
+which is the default.  (20 degrees C is 293 degrees Kelvin).
+.P
+The spectral sampling density may be set from the command line
+with the
+.B \-C\ spectrum=nsamp/lo_nm/hi_nm
+option, or in the animation script with the command
+.sp .5
+set spectrum=nsamp/lo_nm/hi_nm
+.sp .5
+The default setting is 100/380/12000,
+which takes 100 samples equally spaced from 380nm (low end of the optical
+band) to 12microns (upper end of the "Far-IR" band).
+.SH "SPECIFYING TEMPERATURES"
 Temperatures are always specified in degrees Kelvin ("Kelvins").
 .LP
 .IR rttherm (1)
