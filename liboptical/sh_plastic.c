@@ -398,7 +398,7 @@ do_inside:
 		sub_ap.a_hit =  phg_rhit;
 		sub_ap.a_miss = phg_rmiss;
 		if( rt_shootray( &sub_ap ) == 0 )  {
-			rt_log("phong: Refracted ray missed '%s', lvl=%d\n",
+			if(rt_g.debug&DEBUG_HITS)rt_log("phong: Refracted ray missed '%s' -- RETRYING, lvl=%d\n",
 				pp->pt_inseg->seg_stp->st_name,
 				sub_ap.a_level );
 			/* Back off just a little bit, and try again */
