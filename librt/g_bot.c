@@ -773,6 +773,9 @@ CONST struct bn_tol	*tol;
 	bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
 	RT_BOT_CK_MAGIC(bot_ip);
 
+	if( bot_ip->mode == RT_BOT_PLATE )	/* tesselation not supported */
+		return( -1 );
+
         *r = nmg_mrsv( m );     /* Make region, empty shell, vertex */
         s = BU_LIST_FIRST(shell, &(*r)->s_hd);
 
@@ -784,19 +787,34 @@ CONST struct bn_tol	*tol;
 		struct faceuse *fu;
 		struct vertex **corners[3];
 
-		VMOVE( pt[0], &bot_ip->vertices[bot_ip->faces[i*3]*3] );
-		VMOVE( pt[1], &bot_ip->vertices[bot_ip->faces[i*3+1]*3] );
-		VMOVE( pt[2], &bot_ip->vertices[bot_ip->faces[i*3+2]*3] );
+		if( bot_ip->orientation == RT_BOT_CW )
+		{
+			VMOVE( pt[2], &bot_ip->vertices[bot_ip->faces[i*3]*3] );
+			VMOVE( pt[1], &bot_ip->vertices[bot_ip->faces[i*3+1]*3] );
+			VMOVE( pt[0], &bot_ip->vertices[bot_ip->faces[i*3+2]*3] );
+			corners[2] = &verts[bot_ip->faces[i*3]];
+			corners[1] = &verts[bot_ip->faces[i*3+1]];
+			corners[0] = &verts[bot_ip->faces[i*3+2]];
+		}
+		else
+		{
+			VMOVE( pt[0], &bot_ip->vertices[bot_ip->faces[i*3]*3] );
+			VMOVE( pt[1], &bot_ip->vertices[bot_ip->faces[i*3+1]*3] );
+			VMOVE( pt[2], &bot_ip->vertices[bot_ip->faces[i*3+2]*3] );
+			corners[0] = &verts[bot_ip->faces[i*3]];
+			corners[1] = &verts[bot_ip->faces[i*3+1]];
+			corners[2] = &verts[bot_ip->faces[i*3+2]];
+		}
 
 		if( !bn_3pts_distinct( pt[0], pt[1], pt[2], tol )
                            || bn_3pts_collinear( pt[0], pt[1], pt[2], tol ) )
 				continue;
 
-		corners[0] = &verts[bot_ip->faces[i*3]];
-		corners[1] = &verts[bot_ip->faces[i*3+1]];
-		corners[2] = &verts[bot_ip->faces[i*3+2]];
 		if( (fu=nmg_cmface( s, corners, 3 )) == (struct faceuse *)NULL )
+		{
 			bu_log( "rt_bot_tess() nmg_cmface() failed for face #%d\n", i );
+			continue;
+		}
 
 		if( !(*corners[0])->vg_p )
 			nmg_vertex_gv( *(corners[0]), pt[0] );
@@ -807,6 +825,18 @@ CONST struct bn_tol	*tol;
 
 		if( nmg_calc_face_g( fu ) )
 			nmg_kfu( fu );
+		else if( bot_ip->mode == RT_BOT_SURFACE )
+		{
+			struct vertex **tmp;
+
+			tmp = corners[0];
+			corners[0] = corners[2];
+			corners[2] = tmp;
+			if( (fu=nmg_cmface( s, corners, 3 )) == (struct faceuse *)NULL )
+				bu_log( "rt_bot_tess() nmg_cmface() failed for face #%d\n", i );
+			else
+				 nmg_calc_face_g( fu );
+		}
 	}
 
 	bu_free( (char *)verts, "rt_bot_tess *verts[]" );
@@ -814,6 +844,9 @@ CONST struct bn_tol	*tol;
 	nmg_mark_edges_real( &s->l );
 
 	nmg_region_a( *r, tol );
+
+	if( bot_ip->mode == RT_BOT_SOLID && bot_ip->orientation == RT_BOT_UNORIENTED )
+		nmg_fix_normals( s, tol );
 
 	return( 0 );
 }
@@ -1197,4 +1230,34 @@ CONST int free;
 		rt_bot_ifree( ip );
 
 	return( 0 );
+}
+
+int
+bot_find_v_nearest_pt2( bot, pt2, mat )
+CONST struct rt_bot_internal *bot;
+CONST point_t	pt2;
+CONST mat_t	mat;
+{
+	point_t v;
+	int index;
+	fastf_t dist=MAX_FASTF;
+	int closest=-1;
+
+	for( index=0 ; index < bot->num_vertices ; index++ )
+	{
+		fastf_t tmp_dist;
+		fastf_t tmpx, tmpy;
+
+		MAT4X3PNT( v, mat, &bot->vertices[index*3] )
+		tmpx = v[X] - pt2[X];
+		tmpy = v[Y] - pt2[Y];
+		tmp_dist = tmpx * tmpx + tmpy * tmpy;
+		if( tmp_dist < dist )
+		{
+			dist = tmp_dist;
+			closest = index;
+		}
+	}
+
+	return( closest );
 }
