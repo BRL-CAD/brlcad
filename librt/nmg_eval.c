@@ -272,15 +272,12 @@ struct nmg_bool_state *bs;
 			switch( nmg_eval_action( (genptr_t)lu->l_p, bs ) )  {
 			case BACTION_KILL:
 				/* Kill by demoting loop to edges */
-				if( nmg_demote_lu( lu ) == 0 )  {
-					nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
-				} else {
+				if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )  {
 					/* loop of single vertex */
-					nmg_klu( lu );	/* removes from fu list */
+					(void)nmg_klu( lu );
+				} else if( nmg_demote_lu( lu ) == 0 )  {
+					nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
 				}
-#if PARANOID_VERIFY
-				nmg_vshell( &s->r_p->s_hd, s->r_p );
-#endif
 				lu = nextlu;
 				continue;
 			case BACTION_RETAIN:
@@ -298,6 +295,9 @@ struct nmg_bool_state *bs;
 		if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
 			rt_log("faceuse x%x loops retained=%d, flipped=%d\n",
 				fu, loops_retained, loops_flipped);
+#if PARANOID_VERIFY
+		nmg_vshell( &s->r_p->s_hd, s->r_p );
+#endif
 
 		/*
 		 *  Here, faceuse will have 0 or more loopuses still in it.
@@ -411,9 +411,8 @@ struct nmg_bool_state *bs;
 			/* Demote the edegeuse (and mate) into vertices */
 			if( nexteu == eu->eumate_p )
 				nexteu = RT_LIST_PNEXT(edgeuse, nexteu);
-			if( nmg_demote_eu( eu ) )
-				rt_log("nmg_eval_shell() nmg_demote_eu(x%x) fail\n", eu);
-			nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
+			if( nmg_demote_eu( eu ) == 0 )
+				nmg_eval_plot( bs, nmg_eval_count++, 1 );	/* debug */
 			eu = nexteu;
 			continue;
 		case BACTION_RETAIN:

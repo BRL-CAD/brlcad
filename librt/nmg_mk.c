@@ -1775,13 +1775,14 @@ struct nmgregion *r;
  ************************************************************************/
 
 
-/*			N M G _ D E M O T E _ L U
+/*
+ *			N M G _ D E M O T E _ L U
  *
  *	Demote a loopuse of edgeuses to a bunch of wire edges in the shell.
  *
- *	Explicit Return
- *		1	Loopuse was on a single vertex.  Nothing done
- *		0	Loopse edges moved to shell, loopuse deleted.
+ *  Returns -
+ *	0	If all is well (edges moved to shell, loopuse deleted).
+ *	1	If parent is empty, and is thus "illegal".  Still successful.
  */
 int
 nmg_demote_lu(lu1)
@@ -1796,15 +1797,7 @@ struct loopuse *lu1;
 		rt_log("nmg_demote_lu(x%x)\n", lu1);
 
 	if (RT_LIST_FIRST_MAGIC(&lu1->down_hd) == NMG_VERTEXUSE_MAGIC) {
-		if (rt_g.NMG_debug) {
-			register struct vertexuse *vu;
-			vu = RT_LIST_FIRST(vertexuse, &lu1->down_hd);
-			rt_log("trying to demote a loopuse of a single vertex\n");
-			if (vu->v_p->vg_p) {
-				VPRINT("Vertex: ", vu->v_p->vg_p->coord);
-			}
-		}
-		return(1);
+		rt_bomb("nmg_demote_lu() demoting loopuse of a single vertex\n");
 	}
 
 	if (RT_LIST_FIRST_MAGIC(&lu1->down_hd) != NMG_EDGEUSE_MAGIC)
@@ -1837,8 +1830,7 @@ struct loopuse *lu1;
 	if (RT_LIST_NON_EMPTY(&lu1->lumate_p->down_hd))
 		rt_bomb("nmg_demote_lu: loopuse mates don't have same # of edges\n");
 
-	/* XXX What to do if fu went empty? */
-	if( nmg_klu(lu1) )  rt_log("nmg_demote_lu: fu went empty\n");
+	if( nmg_klu(lu1) )  return 1;	/* fu went empty */
 
 	return(0);
 }
@@ -1847,9 +1839,10 @@ struct loopuse *lu1;
  *
  *	Demote a wire edge into a pair of self-loop verticies
  *
- *	Explicit Retruns
- *		1	Edge was not a wire edge.  Nothing done.
- *		0	edge decomposed into verticies.
+ *
+ *  Returns -
+ *	0	If all is well
+ *	1	If shell is empty, and is thus "illegal".
  */
 int
 nmg_demote_eu(eu)
@@ -1858,8 +1851,8 @@ struct edgeuse *eu;
 	struct shell	*s;
 	struct vertex	*v;
 
-	if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC)
-		return(1);
+	if (*eu->up.magic_p != NMG_SHELL_MAGIC)
+		rt_bomb("nmg_demote_eu() up is not shell\n");
 	s = eu->up.s_p;
 	NMG_CK_SHELL(s);
 
@@ -1874,7 +1867,7 @@ struct edgeuse *eu;
 		(void)nmg_mlv(&s->l.magic, v, OT_SAME);
 
 	(void)nmg_keu(eu);
-	return(0);
+	return nmg_shell_is_empty(s);
 }
 
 /************************************************************************
