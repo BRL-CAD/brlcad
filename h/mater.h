@@ -31,4 +31,4 @@ struct mater {
 #define MATER_NULL	((struct mater *)0)
 #define MATER_NO_ADDR	(-1L)		/* invalid mt_daddr */
 
-extern struct mater *MaterHead;		/* defined in mater.c */
+extern struct mater *rt_material_head;		/* defined in mater.c */
