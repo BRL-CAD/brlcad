@@ -39,8 +39,8 @@ mouse button or by using the <a href="mged_cmds.html#M">M</a> command.
 <HR>
 
 <DT><a NAME="cmd_win"><B>cmd_win</B> <I>open</I> | <I>close</I> | <I>set</I> | <I>get</I></DT>
-<DD>This command is used to create, destroy and/or manipulate internal command
-window structures. <I>Cmd_win</I> accepts four different subcommands to accomplish
+<DD>This command is used to maintain internal command window structures.
+<I>Cmd_win</I> accepts several different subcommands to accomplish
 this task.
 
 	<ul>
@@ -178,46 +178,38 @@ Note that this GUI must have been created with the
 </DD>
 <HR>
 
-<DT><a NAME="hist_add"><B>hist_add</B> [<I>command</I>]</DT>
+<DT><a NAME="hist"><B>hist</B> <I>command</I></DT>
+<DD>This command is used to maintain command history. <I>Hist</I> accepts
+several different subcommands to accomplish this task.
 
-<DD> The ``hist_add'' command adds <I>command</I> to the <I>history</I>
-list of commands executed during the current <I>mged</I> session without actually executing it.
-If <I>command</I> is more than one word, it must be surrounded by ``{'' and ``}''.
+	<ul>
+	<li><DT><B>add</B> <I>command</I></DT>
+	<DD> This subcommand adds <I>command</I> to the <a href="mged_cmds.html#history">history</a>
+	list of commands executed during the current <I>mged</I> session.
+	If <I>command</I> is more than one word, it must be surrounded by ``{'' and ``}''.
 
-	<DL>
-	<DT><big>Examples:</big></DT>
-	<DD>mged> <b>hist_add {ae 35 25}</b><br>
-		-- add the command ``ae 35 25'' to the history list without actually executing it.
+		<DL>
+		<DT><big>Examples:</big></DT>
+		<DD>mged> <b>hist add {ae 35 25}</b><br>
+		<br>-- add the command ``ae 35 25'' to the history list
+		</DD>
+		</DL>
 	</DD>
-	</DL>
-</DD>
-<HR>
-
-<DT><a NAME="hist_next"><B>hist_next</B></DT>
-
-<DD> The ``hist_next'' command returns the next command in the command history list.
-This command is used in the implementation of the command line editing available in <I>mged</I>.
-
-	<DL>
-	<DT><big>Examples:</big></DT>
-	<DD>mged> <b>hist_next</b><br>
-		-- return the next command in the command history list.
+	<li><DT><B>next</B></DT>
+	<DD> This subcommand returns the next command in the command history list.
 	</DD>
-	</DL>
-</DD>
-<HR>
+	<li><DT><B>prev</B></DT>
+	<DD> This subcommand returns the previous command in the command history list.
 
-<DT><a NAME="hist_prev"><B>hist_prev</B></DT>
-
-<DD> The ``hist_prev'' command returns the previous command in the command history list.
-This command is used in the implimentation of the command line editing available in <I>mged</I>.
-
-	<DL>
-	<DT><big>Examples:</big></DT>
-	<DD>mged> <b>hist_prev</b><br>
-		-- return the previous command in the command history list.
+		<DL>
+		<DT><big>Examples:</big></DT>
+		<DD>mged> <b>ae 35 25</b><br>
+		<DD>mged> <b>hist prev</b><br>
+		-- return the previous command (i.e. <b>ae 35 25</b>).
+		</DD>
+		</DL>
 	</DD>
-	</DL>
+	</ul>
 </DD>
 <HR>
 
@@ -242,16 +234,20 @@ This command is used in the implimentation of the command line editing available
 </DD>
 <HR>
 
-<DT><a NAME="mged_update"><B>mged_update</B></DT>
+<DT><a NAME="mged_update"><B>mged_update</B> <I>non_blocking</I></DT>
 
-<DD>The ``mged_update'' command refreshes the <I>mged</I> display. This is used
-internally in <I>mged</I>. It may be useful in Tcl scripts to get the <I>mged</I>
-display to update.
+<DD>The ``mged_update'' command is used to handle outstanding events and to
+refresh the <I>mged</I> display(s). This may be useful in certain Tcl scripts
+to maintain interactivity while waiting for user input.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
-	<DD>mged> <b>mged_update</b><br>
-		-- update the <I>mged</I> display
+	<DD>mged> <b>mged_update 0</b><br>
+		-- update the <I>mged</I> display, blocking
+	(i.e. handle all outstanding events, if none, wait for one)
+	<DD>mged> <b>mged_update 1</b><br>
+		-- update the <I>mged</I> display, non-blocking
+	(i.e. handle all outstanding events, if none, return immediately )
 	</DD>
 	</DL>
 </DD>
