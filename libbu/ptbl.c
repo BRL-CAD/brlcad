@@ -40,9 +40,10 @@ struct bu_ptbl	*b;
 int		len;		/* initial len.  Recommend 8 or 64 */
 {
 	if (bu_debug & BU_DEBUG_PTBL)
-		bu_log("bu_ptbl_init(%8x)\n", b);
+		bu_log("bu_ptbl_init(%8x, len=%d)\n", b, len);
 	RT_LIST_INIT(&b->l);
 	b->l.magic = BU_PTBL_MAGIC;
+	if( len <= 0 )  len = 64;
 	b->blen = len;
 	b->buffer = (long **)bu_calloc(b->blen, sizeof(long *),
 		"bu_ptbl.buffer[]");
@@ -246,12 +247,14 @@ CONST struct bu_ptbl	*src;
 		bu_log("bu_ptbl_cat(%8x, %8x)\n", dest, src);
 
 	if ((dest->blen - dest->end) < src->end) {
+		dest->blen = (dest->blen + src->end) * 2 + 8;
 		dest->buffer = (long **)bu_realloc( (char *)dest->buffer,
-			sizeof(long *)*(dest->blen += src->blen + 8),
+			dest->blen * sizeof(long *),
 			"bu_ptbl.buffer[] (cat)");
 	}
 	bcopy( (char *)src->buffer, (char *)&dest->buffer[dest->end],
 		src->end*sizeof(long *));
+	dest->end += src->end;
 }
 
 /*
