@@ -294,15 +294,24 @@ register int	want;
 
 			/*
 			 *  Fire ray at light source to check for shadowing.
-			 *  (This SHOULD actually return an energy value)
+			 *  (This SHOULD actually return an energy spectrum).
+			 *  Advance start point slightly off surface.
 			 */
 			sub_ap = *ap;			/* struct copy */
 			VMOVE( sub_ap.a_ray.r_dir, tolight );
-			VMOVE( sub_ap.a_ray.r_pt, swp->sw_hit.hit_point );
+			{
+				register fastf_t f;
+				f = pp->pt_inhit->hit_dist + ap->a_rt_i->rti_tol.dist;
+				VJOIN1( sub_ap.a_ray.r_pt,
+					swp->sw_hit.hit_point,
+					f, tolight );
+			}
 			sub_ap.a_hit = light_hit;
 			sub_ap.a_miss = light_miss;
 			sub_ap.a_user = (int)lp;	/* so we can tell.. */
 			sub_ap.a_level = 0;
+			/* Will need entry & exit pts, for filter glass */
+			sub_ap.a_onehit = 2;
 
 			VSETALL( sub_ap.a_color, 1 );	/* vis intens so far */
 			sub_ap.a_purpose = lp->lt_name;	/* name of light shot at */
