@@ -1,41 +1,44 @@
 /*
- *			J O V E _ D R A W . C 
+ *			J O V E _ D R A W . C
  *
  * $Revision$
  *
  * $Log$
+ * Revision 11.1  95/01/04  10:35:12  mike
+ * Release_4.4
+ *
  * Revision 10.4  93/10/26  06:33:04  mike
  * Changed printf() to jprintf() so that all modules could safely
  * use stdio.h
- * 
+ *
  * Revision 10.3  93/10/26  06:01:39  mike
  * Changed getchar() to jgetchar() to prevent stdio.h conflict
- * 
+ *
  * Revision 10.2  93/10/26  03:44:16  mike
  * ANSI C
- * 
+ *
  * Revision 10.1  91/10/12  06:53:57  mike
  * Release_4.0
- * 
+ *
  * Revision 2.4  91/08/30  18:59:46  mike
  * Modifications for clean compilation on the XMP
- * 
+ *
  * Revision 2.3  91/08/30  18:11:00  mike
  * Made explicit that termcap.h to be used is the local version
- * 
+ *
  * Revision 2.2  91/08/30  17:54:31  mike
  * Changed #include directives to distinguish between local and system header
  * files.
- * 
+ *
  * Revision 2.1  91/08/30  17:49:04  mike
  * Paul Stay mods for ANSI C
- * 
+ *
  * Revision 2.0  84/12/26  16:45:54  dpk
  * System as distributed to Berkeley 26 Dec 84
- * 
+ *
  * Revision 1.2  83/12/16  00:07:48  dpk
  * Added distinctive RCS header
- * 
+ *
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$";
@@ -43,7 +46,7 @@ static char RCSid[] = "@(#)$Header$";
 
 /*
    Jonathan Payne at Lincoln-Sudbury Regional High School 4-19-83
-  
+
    jove_draw.c
 
    This contains, among other things, the modeline formatting, and the
@@ -55,7 +58,7 @@ static char RCSid[] = "@(#)$Header$";
 
 void	message();
 
-char mesgbuf[100];
+char mesgbuf[LBSIZE];
 
 char *
 bufmod(bp)
@@ -102,33 +105,56 @@ register int	c_char;
 	return pos;
 }
 
-char *
-sprint(fmt, a, b, c, d, e)
-char	*fmt;
-char	*a, *b, *c, *d, *e;
-{
-	static char line[256];
+static char	sp_line[LBSIZE];
 
-	sprintf(line, fmt, a, b, c, d, e);
-	return line;
+/* VARARGS */
+
+char *
+sprint(VA_T(const char *fmt) VA_ALIST)
+	VA_DCL
+{
+	VA_D(char *fmt)
+	VA_LIST(ap)
+
+	VA_START(ap, fmt)
+	VA_I(ap, char *, fmt)
+	vsprintf(sp_line, fmt, ap);
+	VA_END(ap)
+	return sp_line;
 }
 
+/* VARARGS */
+
 void
-s_mess(fmt, a, b, c, d)
-char	*fmt;
-char	*a, *b, *c, *d;
+s_mess(VA_T(const char *fmt) VA_ALIST)
+	VA_DCL
 {
+	VA_D(char *fmt)
+	VA_LIST(ap)
+
 	if (Input)
 		return;
-	sprintf(mesgbuf, fmt, a, b, c, d);
+	VA_START(ap, fmt)
+	VA_I(ap, char *, fmt)
+	vsprintf(mesgbuf, fmt, ap);
+	VA_END(ap)
 	message(mesgbuf);
 }
 
-jprintf(fmt, a, b, c, d)
-char	*fmt;
-char	*a, *b, *c, *d;
+/* VARARGS */
+
+void
+jprintf(VA_T(const char *fmt) VA_ALIST)
+	VA_DCL
 {
-	putstr (sprint(fmt, a, b, c, d));
+	VA_D(char *fmt)
+	VA_LIST(ap)
+
+	VA_START(ap, fmt)
+	VA_I(ap, char *, fmt)
+	vsprintf(sp_line, fmt, ap);
+	putstr (sp_line);
+	VA_END(ap)
 }
 
 /*
@@ -341,7 +367,7 @@ TellWScreen(gobble)
 }
 
 /* DoTell ... don't keep the user in suspense!
-   
+
    Takes a string as an argument and displays it correctly, i.e. if we are
    using buffers simply insert the string into the buffer adding a newline.
    Otherwise we swrite the line and change oimage */
@@ -405,4 +431,3 @@ StopTelling()
 			ignore(Ungetc(c));
 	}
 }
-
