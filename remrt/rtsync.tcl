@@ -1,8 +1,8 @@
 # rtsync.tcl
 # A prototype GUI for rtsync.
 # This file is executed by the rtsync program, not directly from the shell.
-# Depends on rtnode defining $dbip and $rtip.
-# Depends on rtnode having executed {set wdbp [wdb_open .inmem inmem $dbip]}
+# Depends on rtnode defining [get_dbip] and [get_rtip].
+# Depends on rtnode having executed {wdb_open .inmem inmem [get_dbip]}
 # Uses various RTSYNC built-in commands, as well as LIBRT's Tcl commands.
 #  -Mike Muuss, ARL, March 97.
 
@@ -124,15 +124,11 @@ proc apply_color {} {
 	global red grn blu
 	global sun_region_name
 
-	# Less efficient way:
-	##node_send rt_wdb_inmem_rgb {$wdbp} $sun_region_name $red $grn $blu
-	##reprep
-
 	# send new stuff to servers.  No reprep needed for this.
 	# However, change the inmem database too, for consistency.
 	node_send \
-	  sh_directchange_rgb {$rtip} $sun_region_name $red $grn $blu ";" \
-	  rt_wdb_inmem_rgb {$wdbp} $sun_region_name $red $grn $blu
+	  sh_directchange_rgb {[get_rtip]} $sun_region_name $red $grn $blu ";" \
+	  .inmem adjust $sun_region_name rgb $red $grn $blu
 
 	# Send 'refresh' command to MGED to get pov message sent back to us.
 	vrmgr_send refresh
