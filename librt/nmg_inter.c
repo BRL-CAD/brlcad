@@ -2932,6 +2932,7 @@ struct shell		*s2;
 	/* Check eu1 of s1 against all faces in s2 */
 	for( RT_LIST_FOR( fu2, faceuse, &s2->fu_hd ) )  {
 		NMG_CK_FACEUSE(fu2);
+		if( fu2->orientation != OT_SAME )  continue;
 		nmg_isect_edge3p_face3p( is, eu1, fu2 );
 	}
 
@@ -3036,6 +3037,7 @@ nmg_ck_vs_in_region( s2->r_p, tol );
 		f1 = fu1->f_p;
 		NMG_CK_FACE(f1);
 
+		if( fu1->orientation != OT_SAME )  continue;
 		if( NMG_INDEX_IS_SET(flags, f1) )  continue;
 		NMG_CK_FACE_G(f1->fg_p);
 
@@ -3051,16 +3053,9 @@ nmg_ck_vs_in_region( s2->r_p, tol );
 	    	for( RT_LIST_FOR( fu2, faceuse, &s2->fu_hd ) )  {
 	    		NMG_CK_FACEUSE(fu2);
 	    		NMG_CK_FACE(fu2->f_p);
+			if( fu2->orientation != OT_SAME )  continue;
 
 			nmg_isect_two_generic_faces(fu1, fu2, tol);
-
-			/* try not to process redundant faceuses (mates) */
-			if( RT_LIST_NOT_HEAD( fu2, &s2->fu_hd ) )  {
-				register struct faceuse	*nextfu;
-				nextfu = RT_LIST_PNEXT(faceuse, fu2 );
-				if( nextfu->f_p == fu2->f_p )
-					fu2 = nextfu;
-			}
 	    	}
 
 		/*
@@ -3120,6 +3115,7 @@ nmg_ck_vs_in_region( s2->r_p, tol );
 		/* Check vert of s1 against all faceuses in s2 */
 	    	for( RT_LIST_FOR( fu2, faceuse, &s2->fu_hd ) )  {
 	    		NMG_CK_FACEUSE(fu2);
+			if( fu2->orientation != OT_SAME )  continue;
 	    		nmg_isect_3vertex_3face( &is, s1->vu_p, fu2 );
 	    	}
 		/* Check vert of s1 against all wire loops of s2 */
