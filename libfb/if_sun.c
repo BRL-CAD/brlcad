@@ -956,6 +956,7 @@ int	width, height;
 		return	-1;
 	}
 	SUN(ifp)->su_mode = mode;
+	SUN(ifp)->su_shmid = -1;
 #define WHICH_FONT	"/usr/lib/fonts/fixedwidthfonts/screen.b.14"
 	myfont = pf_open( WHICH_FONT );
 	if( myfont == 0 )  {
@@ -1143,7 +1144,7 @@ FBIO	*ifp;
 		pr_close( SUNPR(ifp) );
 	}
 	/* free up memory associated with image */
-	if( SUN(ifp)->su_shmid != -1 ) {
+	if( SUN(ifp)->su_shmid >= 0 ) {
 		/* detach from shared memory */
 		if( shmdt( ifp->if_mem ) == -1 ) {
 			fb_log("sun_dclose shmdt failed, errno=%d\n", errno);
