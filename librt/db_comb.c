@@ -52,14 +52,8 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "./debug.h"
 
-struct tree_list {
-	union tree *tl_tree;
-	int	tl_op;
-};
-#define TREE_LIST_NULL	((struct tree_list *)0)
-
-RT_EXTERN( union tree *db_mkbool_tree , (struct tree_list *tree_list , int howfar ) );
-RT_EXTERN( union tree *db_mkgift_tree , (struct tree_list *tree_list , int howfar , struct db_tree_state *tsp ) );
+RT_EXTERN( union tree *db_mkbool_tree , (struct rt_tree_array *rt_tree_array , int howfar ) );
+RT_EXTERN( union tree *db_mkgift_tree , (struct rt_tree_array *rt_tree_array , int howfar , struct db_tree_state *tsp ) );
 
 #define STAT_ROT	1
 #define STAT_XLATE	2
@@ -147,9 +141,9 @@ CONST union tree	*tp;
  *  left-heavy), and flatten it into an array layout, ready for conversion
  *  back to the GIFT-inspired V4 database format.
  */
-struct tree_list *
-db_flatten_tree( tree_list, tp, op )
-struct tree_list	*tree_list;
+struct rt_tree_array *
+db_flatten_tree( rt_tree_array, tp, op )
+struct rt_tree_array	*rt_tree_array;
 union tree		*tp;
 int			op;
 {
@@ -158,24 +152,24 @@ int			op;
 
 	switch( tp->tr_op )  {
 	case OP_DB_LEAF:
-		tree_list->tl_op = op;
-		tree_list->tl_tree = tp;
-		return tree_list+1;
+		rt_tree_array->tl_op = op;
+		rt_tree_array->tl_tree = tp;
+		return rt_tree_array+1;
 
 	case OP_UNION:
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 		/* This node is known to be a binary op */
-		tree_list = db_flatten_tree( tree_list, tp->tr_b.tb_left, op );
-		tree_list = db_flatten_tree( tree_list, tp->tr_b.tb_right, tp->tr_op );
-		return tree_list;
+		rt_tree_array = db_flatten_tree( rt_tree_array, tp->tr_b.tb_left, op );
+		rt_tree_array = db_flatten_tree( rt_tree_array, tp->tr_b.tb_right, tp->tr_op );
+		return rt_tree_array;
 
 	default:
 		bu_log("db_flatten_tree: bad op %d\n", tp->tr_op);
 		rt_bomb("db_flatten_tree\n");
 	}
 
-	return( (struct tree_list *)NULL ); /* for the compiler */
+	return( (struct rt_tree_array *)NULL ); /* for the compiler */
 }
 
 /*
@@ -190,7 +184,7 @@ CONST struct bu_external	*ep;
 CONST matp_t			matrix;		/* NULL if identity */
 {
 	union record		*rp;
-	struct tree_list	*tree_list;
+	struct rt_tree_array	*rt_tree_array;
 	union tree		*tree;
 	struct rt_comb_internal	*comb;
 	int			i,j;
@@ -209,15 +203,15 @@ CONST matp_t			matrix;		/* NULL if identity */
 	node_count = ep->ext_nbytes/sizeof( union record ) - 1;
 
 	if( node_count )
-		tree_list = (struct tree_list *)bu_calloc( node_count , sizeof( struct tree_list ) , "tree_list" );
+		rt_tree_array = (struct rt_tree_array *)bu_calloc( node_count , sizeof( struct rt_tree_array ) , "rt_tree_array" );
 	else
-		tree_list = (struct tree_list *)NULL;
+		rt_tree_array = (struct rt_tree_array *)NULL;
 
 	for( j=0 ; j<node_count ; j++ )
 	{
 		if( rp[j+1].u_id != ID_MEMB )
 		{
-			bu_free( (genptr_t)tree_list , "rt_comb_v4_import: tree_list" );
+			bu_free( (genptr_t)rt_tree_array , "rt_comb_v4_import: rt_tree_array" );
 			bu_log( "rt_comb_v4_import(): granule in external buffer is not ID_MEMB, id=%d\n", rp[j+1].u_id );
 			return( -1 );
 		}
@@ -225,16 +219,16 @@ CONST matp_t			matrix;		/* NULL if identity */
 		switch( rp[j+1].M.m_relation )
 		{
 			case '+':
-				tree_list[j].tl_op = OP_INTERSECT;
+				rt_tree_array[j].tl_op = OP_INTERSECT;
 				break;
 			case '-':
-				tree_list[j].tl_op = OP_SUBTRACT;
+				rt_tree_array[j].tl_op = OP_SUBTRACT;
 				break;
 			default:
 				bu_log("rt_comb_v4_import() unknown op=x%x, assuming UNION\n", rp[j+1].M.m_relation );
 				/* Fall through */
 			case 'u':
-				tree_list[j].tl_op = OP_UNION;
+				rt_tree_array[j].tl_op = OP_UNION;
 				break;
 		}
 		/* Build leaf node for in-memory tree */
@@ -245,7 +239,7 @@ CONST matp_t			matrix;		/* NULL if identity */
 			char			namebuf[NAMESIZE+2];
 
 			BU_GETUNION( tp, tree );
-			tree_list[j].tl_tree = tp;
+			rt_tree_array[j].tl_tree = tp;
 			tp->tr_l.magic = RT_TREE_MAGIC;
 			tp->tr_l.tl_op = OP_DB_LEAF;
 			strncpy( namebuf, rp[j+1].M.m_instname, NAMESIZE );
@@ -273,7 +267,7 @@ CONST matp_t			matrix;		/* NULL if identity */
 		}
 	}
 	if( node_count )
-		tree = db_mkgift_tree( tree_list, node_count, (struct db_tree_state *)NULL );
+		tree = db_mkgift_tree( rt_tree_array, node_count, (struct db_tree_state *)NULL );
 	else
 		tree = (union tree *)NULL;
 
@@ -314,7 +308,7 @@ CONST matp_t			matrix;		/* NULL if identity */
 	/* Automatic material table lookup here? */
 	bu_vls_printf( &comb->material, "gift%d", comb->GIFTmater );
 
-	if( tree_list )  bu_free( (genptr_t)tree_list, "tree_list" );
+	if( rt_tree_array )  bu_free( (genptr_t)rt_tree_array, "rt_tree_array" );
 
 	return( 0 );
 }
@@ -331,7 +325,7 @@ double				local2mm;
 	struct rt_comb_internal	*comb;
 	int			node_count;
 	int			actual_count;
-	struct tree_list	*tree_list;
+	struct rt_tree_array	*rt_tree_array;
 	union tree		*tp;
 	union record		*rp;
 	int			j;
@@ -355,14 +349,14 @@ double				local2mm;
 	/* Count # leaves in tree -- that's how many Member records needed. */
 	node_count = db_tree_nleaves( comb->tree );
 	if( node_count > 0 )  {
-		tree_list = (struct tree_list *)bu_calloc( node_count , sizeof( struct tree_list ) , "tree_list" );
+		rt_tree_array = (struct rt_tree_array *)bu_calloc( node_count , sizeof( struct rt_tree_array ) , "rt_tree_array" );
 
 		/* Convert tree into array form */
-		actual_count = db_flatten_tree( tree_list, comb->tree, OP_UNION ) - tree_list;
+		actual_count = db_flatten_tree( rt_tree_array, comb->tree, OP_UNION ) - rt_tree_array;
 		if( actual_count > node_count )  bu_bomb("rt_comb_v4_export() array overflow!");
 		if( actual_count < node_count )  bu_log("WARNING rt_comb_v4_export() array underflow! %d < %d", actual_count, node_count);
 	} else {
-		tree_list = (struct tree_list *)NULL;
+		rt_tree_array = (struct rt_tree_array *)NULL;
 		actual_count = 0;
 	}
 
@@ -374,12 +368,12 @@ double				local2mm;
 
 	/* Convert the member records */
 	for( j = 0; j < node_count; j++ )  {
-		tp = tree_list[j].tl_tree;
+		tp = rt_tree_array[j].tl_tree;
 		RT_CK_TREE(tp);
 		if( tp->tr_op != OP_DB_LEAF )  bu_bomb("rt_comb_v4_export() tree not OP_DB_LEAF");
 
 		rp[j+1].u_id = ID_MEMB;
-		switch( tree_list[j].tl_op )  {
+		switch( rt_tree_array[j].tl_op )  {
 		case OP_INTERSECT:
 			rp[j+1].M.m_relation = '+';
 			break;
@@ -390,7 +384,7 @@ double				local2mm;
 			rp[j+1].M.m_relation = 'u';
 			break;
 		default:
-			bu_bomb("rt_comb_v4_export() corrupt tree_list");
+			bu_bomb("rt_comb_v4_export() corrupt rt_tree_array");
 		}
 		strncpy( rp[j+1].M.m_instname, tp->tr_l.tl_name, NAMESIZE );
 		if( tp->tr_l.tl_mat )  {
@@ -793,20 +787,20 @@ CONST union tree	*tp;
 /*
  *			D B _ M K B O O L _ T R E E
  *
- *  Given a tree_list array, build a tree of "union tree" nodes
+ *  Given a rt_tree_array array, build a tree of "union tree" nodes
  *  appropriately connected together.  Every element of the
- *  tree_list array used is replaced with a TREE_NULL.
+ *  rt_tree_array array used is replaced with a TREE_NULL.
  *  Elements which are already TREE_NULL are ignored.
  *  Returns a pointer to the top of the tree.
  */
 HIDDEN union tree *
-db_mkbool_tree( tree_list, howfar )
-struct tree_list *tree_list;
+db_mkbool_tree( rt_tree_array, howfar )
+struct rt_tree_array *rt_tree_array;
 int		howfar;
 {
-	register struct tree_list *tlp;
+	register struct rt_tree_array *tlp;
 	register int		i;
-	register struct tree_list *first_tlp = (struct tree_list *)0;
+	register struct rt_tree_array *first_tlp = (struct rt_tree_array *)0;
 	register union tree	*xtp;
 	register union tree	*curtree;
 	register int		inuse;
@@ -815,7 +809,7 @@ int		howfar;
 		return(TREE_NULL);
 
 	/* Count number of non-null sub-trees to do */
-	for( i=howfar, inuse=0, tlp=tree_list; i>0; i--, tlp++ )  {
+	for( i=howfar, inuse=0, tlp=rt_tree_array; i>0; i--, tlp++ )  {
 		if( tlp->tl_tree == TREE_NULL )
 			continue;
 		if( inuse++ == 0 )
@@ -842,7 +836,7 @@ int		howfar;
 	curtree = first_tlp->tl_tree;
 	first_tlp->tl_tree = TREE_NULL;
 	tlp=first_tlp+1;
-	for( i=howfar-(tlp-tree_list); i>0; i--, tlp++ )  {
+	for( i=howfar-(tlp-rt_tree_array); i>0; i--, tlp++ )  {
 		if( tlp->tl_tree == TREE_NULL )
 			continue;
 
@@ -863,12 +857,12 @@ int		howfar;
  */
 HIDDEN union tree *
 db_mkgift_tree( trees, subtreecount, tsp )
-struct tree_list	*trees;
+struct rt_tree_array	*trees;
 int			subtreecount;
 struct db_tree_state	*tsp;
 {
-	register struct tree_list *tstart;
-	register struct tree_list *tnext;
+	register struct rt_tree_array *tstart;
+	register struct rt_tree_array *tnext;
 	union tree		*curtree;
 	int	i;
 	int	j;
