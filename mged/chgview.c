@@ -229,6 +229,99 @@ char	**argv;
 }
 
 /*
+ *                     M G E D _ M R O T
+ */
+mged_mrot(x, y, z)
+double x, y, z;
+{
+  mat_t newrot;
+  mat_t invtvc;
+  mat_t mat, invmat;
+  mat_t mat2, mat3;
+  vect_t new_pos;
+  vect_t old_model_center, new_model_center;
+  vect_t view_direc, model_direc;
+  point_t origin;
+  point_t vrot_pt;
+  point_t new_cent_view, new_cent_model;
+  point_t vpt1, vpt2;
+
+  bn_mat_idn( newrot );
+  buildHrot( newrot, x * degtorad, y * degtorad, z * degtorad);
+
+  if(mged_variables.origin == 'm'){
+/*XXX This doesn't quite work */
+    bn_mat_idn( mat );
+    bn_mat_idn( mat2 );
+    VSET( model_direc, 0, 0, 1 );
+    MAT4X3PNT( view_direc, model2view, model_direc );
+
+    VSET( origin, 0, 0, 0 );
+    MAT4X3PNT( vrot_pt, model2view, origin );  /* point to rotate around */
+    wrt_point_direc( mat, newrot, mat2, vrot_pt, view_direc );
+    bn_mat_inv( invmat, mat );
+#if 0
+    MAT4X3PNT( new_cent_view, invmat, origin );
+    MAT4X3PNT( new_cent_model, view2model, new_cent_view );
+    MAT_DELTAS_VEC_NEG( toViewcenter, new_cent_model );
+
+    wrt_point_direc( mat, newrot, mat2, origin, view_direc );
+    bn_mat_mul2( mat, Viewrot );
+#else
+    MAT_DELTAS_GET_NEG( old_model_center, toViewcenter );
+    MAT4X3PNT( vpt1, model2view, old_model_center );
+    MAT4X3PNT( vpt2, invmat, vpt1 );
+    MAT4X3PNT( new_model_center, view2model, vpt2 );
+    MAT_DELTAS( toViewcenter, -new_model_center[X], -new_model_center[Y],
+		-new_model_center[Z] );
+
+    bn_mat_mul2( newrot, view2model );
+    bn_mat_inv( model2view, view2model );
+    model2view[15] = 1.0;
+    MAT_DELTAS( mat2, new_model_center[X], new_model_center[Y],
+		new_model_center[Z] );
+    bn_mat_mul( Viewrot, model2view, mat2 );
+#endif
+  }else{
+    wrt_view( view2model, newrot, view2model);
+    bn_mat_inv( model2view, view2model );
+
+    mat_idn( mat );
+    MAT_DELTAS( mat, -toViewcenter[MDX], -toViewcenter[MDY], -toViewcenter[MDZ] );
+    bn_mat_mul( Viewrot, model2view, mat );
+
+    bn_mat_inv( invtvc, toViewcenter );
+  }
+
+  new_mats();
+
+  VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
+  MAT4X3PNT(absolute_slew, model2view, new_pos);
+
+  return TCL_OK;
+}
+
+int
+f_mrot(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int     argc;
+char    **argv;
+{
+  if(argc < 4 || 4 < argc){
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help mrot");
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+    return TCL_ERROR;
+  }
+
+  return mged_mrot(atof(argv[1]), atof(argv[2]), atof(argv[3]));
+}
+
+/*
  *			M G E D _ V R O T
  */
 int
@@ -243,7 +336,61 @@ double x, y, z;
   buildHrot( newrot, x * degtorad, y * degtorad, z * degtorad);
   bn_mat_inv( newinv, newrot );
 
-  if( mged_variables.eyerot == 0 )  {
+  if(mged_variables.origin == 'e'){
+    /* "VR driver" method: rotate around "eye" point (0,0,1) viewspace */
+    point_t		eye_view;
+    point_t		new_origin;
+    mat_t		viewchg, viewchginv;
+    point_t		new_cent_view;
+    point_t		new_cent_model;
+    
+    VSET( eye_view, 0, 0, 1 );		/* point to rotate around */
+    bn_mat_xform_about_pt( viewchg, newrot, eye_view );
+    bn_mat_inv( viewchginv, viewchg );
+
+    /* Convert origin in new (viewchg) coords back to old view coords */
+    VSET( new_origin, 0, 0, 0 );
+    MAT4X3PNT( new_cent_view, viewchginv, new_origin );
+    MAT4X3PNT( new_cent_model, view2model, new_cent_view );
+    MAT_DELTAS_VEC_NEG( toViewcenter, new_cent_model );
+
+    /* XXX This should probably capture the translation too */
+    /* XXX I think the only consumer of ModelDelta is the predictor frame */
+    wrt_view( ModelDelta, newinv, ModelDelta );		/* pure rotation */
+
+    /* Update the rotation component of the model2view matrix */
+    bn_mat_mul2( newrot, Viewrot );			/* pure rotation */
+    new_mats();
+
+    VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
+    MAT4X3PNT(absolute_slew, model2view, new_pos);
+  }else if(mged_variables.origin == 'm'){
+    point_t origin;
+    point_t vrot_pt;
+    mat_t viewchg, viewchginv;
+    point_t new_cent_view, new_cent_model;
+
+    VSET( origin, 0, 0, 0 );
+    MAT4X3PNT( vrot_pt, model2view, origin);  /* point to rotate around */
+    bn_mat_xform_about_pt(viewchg, newrot, vrot_pt);
+    bn_mat_inv( viewchginv, viewchg );
+
+    /* Convert origin in new (viewchg) coords back to old view coords */
+    MAT4X3PNT( new_cent_view, viewchginv, origin );
+    MAT4X3PNT( new_cent_model, view2model, new_cent_view );
+    MAT_DELTAS_VEC_NEG( toViewcenter, new_cent_model );
+
+    /* XXX This should probably capture the translation too */
+    /* XXX I think the only consumer of ModelDelta is the predictor frame */
+    wrt_view( ModelDelta, newinv, ModelDelta );		/* pure rotation */
+
+    /* Update the rotation component of the model2view matrix */
+    bn_mat_mul2(newrot, Viewrot);
+    new_mats();
+
+    VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
+    MAT4X3PNT(absolute_slew, model2view, new_pos);
+  } else {
     /* Traditional method:  rotate around view center (0,0,0) viewspace */
     wrt_view( ModelDelta, newinv, ModelDelta );
 
@@ -257,34 +404,6 @@ double x, y, z;
       VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
       MAT4X3PNT(absolute_slew, model2view, new_pos);
     }
-  } else {
-  	/* "VR driver" method: rotate around "eye" point (0,0,1) viewspace */
-  	point_t		eye_view;
-  	point_t		new_origin;
-  	mat_t		viewchg, viewchginv;
-  	point_t		new_cent_view;
-  	point_t		new_cent_model;
-
-  	VSET( eye_view, 0, 0, 1 );		/* point to rotate around */
-  	bn_mat_xform_about_pt( viewchg, newrot, eye_view );
-  	bn_mat_inv( viewchginv, viewchg );
-
-  	/* Convert origin in new (viewchg) coords back to old view coords */
-  	VSET( new_origin, 0, 0, 0 );
-  	MAT4X3PNT( new_cent_view, viewchginv, new_origin );
-  	MAT4X3PNT( new_cent_model, view2model, new_cent_view );
-  	MAT_DELTAS_VEC_NEG( toViewcenter, new_cent_model );
-
-  	/* XXX This should probably capture the translation too */
-  	/* XXX I think the only consumer of ModelDelta is the predictor frame */
-	wrt_view( ModelDelta, newinv, ModelDelta );		/* pure rotation */
-
-	/* Update the rotation component of the model2view matrix */
-	bn_mat_mul2( newrot, Viewrot );			/* pure rotation */
-	new_mats();
-
-	VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
-	MAT4X3PNT(absolute_slew, model2view, new_pos);
   }
 
   Tcl_UpdateLinkedVar(interp, bu_vls_addr(&absolute_tran_vls[X]));
@@ -301,9 +420,6 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-  int status;
-  struct bu_vls vls;
-
   if(argc < 4 || 4 < argc){
     struct bu_vls vls;
 
@@ -314,9 +430,7 @@ char	**argv;
     return TCL_ERROR;
   }
 
-  status = mged_vrot(atof(argv[1]), atof(argv[2]), atof(argv[3]));
-
-  return status;
+  return mged_vrot(atof(argv[1]), atof(argv[2]), atof(argv[3]));
 }
 
 /* DEBUG -- force viewsize */
@@ -590,12 +704,14 @@ int	catch_sigint;
       /* If we went from blank screen to non-blank, resize */
       if (mged_variables.autosize  && initial_blank_screen &&
 	  BU_LIST_NON_EMPTY(&HeadSolid.l)) {
+	struct view_list *vlp;
+
 	size_reset();
 	new_mats();
 	(void)mged_svbase();
 
-	for(i = 0; i < VIEW_TABLE_SIZE; ++i)
-	  viewscale_table[i] = Viewscale;
+	for(BU_LIST_FOR(vlp, view_list, &headView.l))
+	  vlp->vscale = Viewscale;
       }
 
       color_soltab();
@@ -1993,7 +2109,11 @@ char	**argv;
 	    mged_rot_obj(interp, 1, tvec);
 	    edit_absolute_rotate[X] += f;
 	  }else{
-	    (void)mged_vrot(f, 0.0, 0.0);
+	    if(mged_variables.model)
+	      (void)mged_mrot(f, 0.0, 0.0);
+	    else
+	      (void)mged_vrot(f, 0.0, 0.0);
+
 	    absolute_rotate[X] += f;
 	  }
 	}
@@ -2009,7 +2129,11 @@ char	**argv;
 	    mged_rot_obj(interp, 1, tvec);
 	    edit_absolute_rotate[X] = f;
 	  }else{
-	    mged_vrot(f - last_absolute_rotate[X], 0.0, 0.0);
+	    if(mged_variables.model)
+	      (void)mged_mrot(f - last_absolute_rotate[X], 0.0, 0.0);
+	    else
+	      mged_vrot(f - last_absolute_rotate[X], 0.0, 0.0);
+
 	    absolute_rotate[X] = f;
 	  }
 	}
@@ -2048,7 +2172,11 @@ char	**argv;
 	    mged_rot_obj(interp, 1, tvec);
 	    edit_absolute_rotate[Y] += f;
 	  }else{
-	    (void)mged_vrot(0.0, f, 0.0);
+	    if(mged_variables.model)
+	      (void)mged_mrot(0.0, f, 0.0);
+	    else
+	      (void)mged_vrot(0.0, f, 0.0);
+
 	    absolute_rotate[Y] += f;
 	  }
 	}
@@ -2064,7 +2192,11 @@ char	**argv;
 	    mged_rot_obj(interp, 1, tvec);
 	    edit_absolute_rotate[Y] = f;
 	  }else{
-	    mged_vrot(0.0, f - last_absolute_rotate[Y], 0.0);
+	    if(mged_variables.model)
+	      (void)mged_mrot(0.0, f - last_absolute_rotate[Y], 0.0);
+	    else
+	      mged_vrot(0.0, f - last_absolute_rotate[Y], 0.0);
+
 	    absolute_rotate[Y] = f;
 	  }
 	}
@@ -2103,7 +2235,11 @@ char	**argv;
 	    mged_rot_obj(interp, 1, tvec);
 	    edit_absolute_rotate[Z] += f;
 	  }else{
-	    (void)mged_vrot(0.0, 0.0, f);
+	    if(mged_variables.model)
+	      (void)mged_mrot(0.0, 0.0, f);
+	    else
+	      (void)mged_vrot(0.0, 0.0, f);
+
 	    absolute_rotate[Z] += f;
 	  }
 	}
@@ -2119,7 +2255,11 @@ char	**argv;
 	    mged_rot_obj(interp, 1, tvec);
 	    edit_absolute_rotate[Z] = f;
 	  }else{
-	    mged_vrot(0.0, 0.0, f - last_absolute_rotate[Z]);
+	    if(mged_variables.model)
+	      (void)mged_mrot(0.0, 0.0, f - last_absolute_rotate[Z]);
+	    else
+	      mged_vrot(0.0, 0.0, f - last_absolute_rotate[Z]);
+
 	    absolute_rotate[Z] = f;
 	  }
 	}
@@ -3541,4 +3681,274 @@ char	**argv;
 	new_mats();
 
 	return( status );
+}
+
+int
+mged_view_init(dlp)
+struct dm_list *dlp;
+{
+  struct view_list *vlp;
+
+  BU_LIST_INIT(&dlp->s_info->_headView.l);
+  BU_GETSTRUCT(vlp, view_list);
+  BU_LIST_APPEND(&dlp->s_info->_headView.l, &vlp->l);
+
+  vlp->vid = 1;
+  dlp->s_info->_current_view = vlp;
+  dlp->s_info->_last_view = vlp;
+
+  return TCL_OK;
+}
+
+
+int
+f_add_view(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
+{
+  struct view_list *vlp;
+  struct view_list *lv;
+
+  /* save current Viewrot */
+  bn_mat_copy(current_view->vrot_mat, Viewrot);
+
+  /* save current Viewscale */
+  current_view->vscale = Viewscale;
+
+  /* allocate memory and append to list */
+  BU_GETSTRUCT(vlp, view_list);
+  lv = BU_LIST_LAST(view_list, &headView.l);
+  BU_LIST_APPEND(&lv->l, &vlp->l);
+
+  /* assign a view number */
+  vlp->vid = lv->vid + 1;
+
+  last_view = current_view;
+  current_view = vlp;
+  (void)mged_svbase();
+
+  return TCL_OK;
+}
+
+
+int
+f_delete_view(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
+{
+  int n;
+  struct view_list *vlp;
+
+  /* search for view with id of n */
+  n = atoi(argv[1]);
+  for(BU_LIST_FOR(vlp, view_list, &headView.l)){
+    if(vlp->vid == n)
+      break;
+  }
+
+  if(BU_LIST_IS_HEAD(vlp, &headView.l)){
+    Tcl_AppendResult(interp, "delete_view: ", argv[1], " is not a valid view\n",
+		     (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  /* check to see if this is the last view in the list */
+  if(BU_LIST_IS_HEAD(vlp->l.forw, &headView.l) &&
+     BU_LIST_IS_HEAD(vlp->l.back, &headView.l)){
+    Tcl_AppendResult(interp, "delete_view: cannot delete last view\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  if(vlp == current_view){
+    current_view = last_view;
+    bn_mat_copy(Viewrot, current_view->vrot_mat);
+    Viewscale = current_view->vscale;
+
+    new_mats();
+    (void)mged_svbase();
+  }else if(vlp == last_view)
+    last_view = current_view;
+
+  BU_LIST_DEQUEUE(&vlp->l);
+  bu_free((genptr_t)vlp, "f_delete_view");
+
+  return TCL_OK;
+}
+
+
+int
+f_get_view(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
+{
+  struct bu_vls vls;
+  struct view_list *vlp;
+
+  if(argc < 1 || 2 < argc){
+    return TCL_ERROR;
+  }
+
+  /* return current view */
+  if(argc == 1){
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "%d", current_view->vid);
+    Tcl_AppendElement(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+    return TCL_OK;
+  }
+
+  if(strcmp("-a", argv[1])){
+    return TCL_ERROR;
+  }
+
+  bu_vls_init(&vls);
+  for(BU_LIST_FOR(vlp, view_list, &headView.l)){
+    bu_vls_printf(&vls, "%d", vlp->vid);
+    Tcl_AppendElement(interp, bu_vls_addr(&vls));
+    bu_vls_trunc(&vls, 0);
+  }
+
+  bu_vls_free(&vls);
+  return TCL_OK;
+}
+
+
+int
+f_goto_view(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
+{
+  int n;
+  struct view_list *vlp;
+
+  /* search for view with id of n */
+  n = atoi(argv[1]);
+  for(BU_LIST_FOR(vlp, view_list, &headView.l)){
+    if(vlp->vid == n)
+      break;
+  }
+
+  if(BU_LIST_IS_HEAD(vlp, &headView.l)){
+    Tcl_AppendResult(interp, "goto_view: ", argv[1], " is not a valid view\n",
+		     (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  /* nothing to do */
+  if(vlp == current_view)
+    return TCL_OK;
+
+  /* save current Viewrot */
+  bn_mat_copy(current_view->vrot_mat, Viewrot);
+
+  /* save current Viewscale */
+  current_view->vscale = Viewscale;
+
+  last_view = current_view;
+  current_view = vlp;
+  bn_mat_copy(Viewrot, current_view->vrot_mat);
+  Viewscale = current_view->vscale;
+
+  new_mats();
+  (void)mged_svbase();
+}
+
+
+int
+f_next_view(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
+{
+  /* check to see if this is the last view in the list */
+  if(BU_LIST_IS_HEAD(current_view->l.forw, &headView.l) &&
+     BU_LIST_IS_HEAD(current_view->l.back, &headView.l))
+    return TCL_OK;
+
+  /* save current Viewrot */
+  bn_mat_copy(current_view->vrot_mat, Viewrot);
+
+  /* save current Viewscale */
+  current_view->vscale = Viewscale;
+
+  last_view = current_view;
+  current_view = BU_LIST_PNEXT(view_list, current_view);
+  if(BU_LIST_IS_HEAD(current_view, &headView.l))
+    current_view = BU_LIST_FIRST(view_list, &headView.l);
+  bn_mat_copy(Viewrot, current_view->vrot_mat);
+  Viewscale = current_view->vscale;
+
+  new_mats();
+  (void)mged_svbase();
+
+  return TCL_OK;
+}
+
+
+int
+f_prev_view(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
+{
+  /* check to see if this is the last view in the list */
+  if(BU_LIST_IS_HEAD(current_view->l.forw, &headView.l) &&
+     BU_LIST_IS_HEAD(current_view->l.back, &headView.l))
+    return TCL_OK;
+
+  /* save current Viewrot */
+  bn_mat_copy(current_view->vrot_mat, Viewrot);
+
+  /* save current Viewscale */
+  current_view->vscale = Viewscale;
+
+  last_view = current_view;
+  current_view = BU_LIST_PLAST(view_list, current_view);
+  if(BU_LIST_IS_HEAD(current_view, &headView.l))
+    current_view = BU_LIST_LAST(view_list, &headView.l);
+  bn_mat_copy(Viewrot, current_view->vrot_mat);
+  Viewscale = current_view->vscale;
+
+  new_mats();
+  (void)mged_svbase();
+
+  return TCL_OK;
+}
+
+
+int
+f_toggle_view(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
+{
+  struct view_list *save_last_view;
+
+  /* save current Viewrot */
+  bn_mat_copy(current_view->vrot_mat, Viewrot);
+
+  /* save current Viewscale */
+  current_view->vscale = Viewscale;
+
+  save_last_view = last_view;
+  last_view = current_view;
+  current_view = save_last_view;
+  bn_mat_copy(Viewrot, current_view->vrot_mat);
+  Viewscale = current_view->vscale;
+
+  new_mats();
+  (void)mged_svbase();
+
+  return TCL_OK;
 }
