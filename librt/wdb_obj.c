@@ -7616,18 +7616,55 @@ wdb_do_list(struct db_i		*dbip,
 
 	RT_CK_DBI(dbip);
 
-	if ((id = rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource)) < 0) {
-		Tcl_AppendResult(interp, "rt_db_get_internal(", dp->d_namep,
-				 ") failure\n", (char *)NULL);
-		return;
+	if( dp->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY ) {
+		/* this is the _GLOBAL object */
+		struct bu_attribute_value_set avs;
+		struct bu_attribute_value_pair	*avp;
+
+		bu_vls_strcat( outstrp, dp->d_namep );
+		bu_vls_strcat( outstrp, ": global attributes object\n" );
+		if( db5_get_attributes( dbip, &avs, dp ) ) {
+			Tcl_AppendResult(interp, "Cannot get attributes for ", dp->d_namep,
+					 "\n", (char *)NULL );
+			return;
+		}
+		for( BU_AVS_FOR( avp, &avs ) ) {
+			if( !strcmp( avp->name, "units" ) ) {
+				double conv;
+				const char *str;
+
+				conv = atof( avp->value );
+				bu_vls_strcat( outstrp, "\tunits: " );
+				if( (str=bu_units_string( conv ) ) == NULL ) {
+					bu_vls_strcat( outstrp, "Unrecognized units\n" );
+				} else {
+					bu_vls_strcat( outstrp, str );
+					bu_vls_putc( outstrp, '\n' );
+				}
+			} else {
+				bu_vls_putc( outstrp, '\t' );
+				bu_vls_strcat( outstrp, avp->name );
+				bu_vls_strcat( outstrp, ": " );
+				bu_vls_strcat( outstrp, avp->value );
+				bu_vls_putc( outstrp, '\n' );
+			}
+		}
+	} else {
+
+		if ((id = rt_db_get_internal(&intern, dp, dbip,
+					     (fastf_t *)NULL, &rt_uniresource)) < 0) {
+			Tcl_AppendResult(interp, "rt_db_get_internal(", dp->d_namep,
+					 ") failure\n", (char *)NULL);
+			return;
+		}
+
+		bu_vls_printf(outstrp, "%s:  ", dp->d_namep);
+		
+		if (rt_functab[id].ft_describe(outstrp, &intern,
+					       verbose, dbip->dbi_base2local, &rt_uniresource) < 0)
+			Tcl_AppendResult(interp, dp->d_namep, ": describe error\n", (char *)NULL);
+		rt_db_free_internal(&intern, &rt_uniresource);
 	}
-
-	bu_vls_printf(outstrp, "%s:  ", dp->d_namep);
-
-	if (rt_functab[id].ft_describe(outstrp, &intern,
-				       verbose, dbip->dbi_base2local, &rt_uniresource) < 0)
-		Tcl_AppendResult(interp, dp->d_namep, ": describe error\n", (char *)NULL);
-	rt_db_free_internal(&intern, &rt_uniresource);
 }
 
 /*
