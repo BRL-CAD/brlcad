@@ -61,6 +61,7 @@ int		nring;
 	int	count = 0;
 
 	rp[0].index = count++;
+	rp[0].magic =RT_RAY_MAGIC; 
 
 	for( ring=0; ring < nring; ring++ )  {
 		register int i;
@@ -78,6 +79,7 @@ int		nring;
 			VJOIN2( rayp->r_pt, rp[0].r_pt, ct, avec, st, bvec );
 			VMOVE( rayp->r_dir, rp[0].r_dir );
 			rayp->index = count++;
+			rayp->magic = RT_RAY_MAGIC;
 			theta += delta;
 			rayp++;
 		}
