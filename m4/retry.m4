@@ -106,44 +106,34 @@ fi
 ###	
 AC_DEFUN([BC_RETRY_CONFIGURE], [
 bc_configure="$1"
-bc_config_args="$2"
 if test "x$BC_RETRY" = "x" ; then
 	if test "x$bc_configure" = "x" ; then
 		bc_configure="${srcdir}/configure"
 	fi
-	if test "x$bc_config_args" = "x" ; then
-		if test "x$PATH" = "x" ; then
-			PATH="$bc_retry_path"
-		else
-			PATH="${PATH}:${bc_retry_path}"
-		fi
-		if test "x$CPPFLAGS" = "x" ; then
-			CPPFLAGS="$bc_retry_cppflags"
-		else
-			CPPFLAGS="$CPPFLAGS $bc_retry_cppflags"
-		fi
-		if test "x$LDFLAGS" = "x" ; then
-			LDFLAGS="$bc_retry_ldflags"
-		else
-			LDFLAGS="$LDFLAGS $bc_retry_ldflags"
-		fi
+	if test "x$PATH" = "x" ; then
+		PATH="$bc_retry_path"
+	else
+		PATH="${PATH}:${bc_retry_path}"
 	fi
-
-	if test ! "x$CPPFLAGS" = "x" ; then
-		bc_config_args="$bc_config_args CPPFLAGS=\"${CPPFLAGS}\""
+	if test "x$CPPFLAGS" = "x" ; then
+		CPPFLAGS="$bc_retry_cppflags"
+	else
+		CPPFLAGS="$CPPFLAGS $bc_retry_cppflags"
 	fi
-	if test ! "x$LDFLAGS" = "x" ; then
-		bc_config_args="$bc_config_args LDFLAGS=\"${LDFLAGS}\""
+	if test "x$LDFLAGS" = "x" ; then
+		LDFLAGS="$bc_retry_ldflags"
+	else
+		LDFLAGS="$LDFLAGS $bc_retry_ldflags"
 	fi
-	if test ! "x$PATH" = "x" ; then
-		bc_config_args="$bc_config_args PATH=\"${PATH}\""
-	fi
-	bc_config_args="`echo $bc_config_args | sed ['s/ /\\ /g']`"
 	if test -f "$bc_configure" ; then
 		BC_RETRY=no
 		AC_MSG_WARN([Restarting configure with additional flags])
-		AC_MSG_NOTICE([Restarting with [$bc_configure] [$bc_config_args]])
-		exec $bc_configure "$bc_config_args" BC_RETRY=no
+		AC_MSG_NOTICE([Restarting with CFLAGS=$CFLAGS])
+		AC_MSG_NOTICE([Restarting with CPPFLAGS=$CPPFLAGS])
+		AC_MSG_NOTICE([Restarting with LDFLAGS=$LDFLAGS])
+		AC_MSG_NOTICE([Restarting with PATH=$PATH])
+		export CFLAGS CPPFLAGS LDFLAGS PATH
+		exec $bc_configure BC_RETRY=no
 		exit $?
 	else
 		AC_MSG_ERROR([*** Unable to find configure ***])
