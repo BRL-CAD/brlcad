@@ -151,11 +151,11 @@ struct rt_pg_internal {
 #define RT_PG_CK_MAGIC(_p)	RT_CKMAG(_p,RT_PG_INTERNAL_MAGIC,"rt_pg_internal")
 
 /* ID_BSPLINE */
-#ifdef NURB_H				/* Only if we have seen struct snurb */
+#ifdef NMG_H				/* Only if we have seen struct face_g_snurb */
 struct rt_nurb_internal {
 	long		magic;
 	int	 	nsrf;		/* number of surfaces */
-	struct snurb	**srfs;		/* The surfaces themselves */
+	struct face_g_snurb **srfs;	/* The surfaces themselves */
 };
 
 #define RT_NURB_INTERNAL_MAGIC	0x002b2bdd

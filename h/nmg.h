@@ -378,7 +378,8 @@ struct face_g_plane {
 };
 
 struct face_g_snurb {
-	long			magic;
+	/* NOTICE:  l.forw & l.back *not* stored in database.  For LIBNURB internal use only. */
+	struct rt_list		l;
 	struct rt_list		f_hd;	/* list of faces sharing this surface */
 	int			order[2]; /* surface order [0] = u, [1] = v */
 	struct knot_vector	u;	/* surface knot vectors */
@@ -389,6 +390,8 @@ struct face_g_snurb {
 	fastf_t			*ctl_points; /* array [size[0]*size[1]] */
 	/* START OF ITEMS VALID IN-MEMORY ONLY -- NOT STORED ON DISK */
 	int			dir;	/* direction of last refinement */
+	point_t			min_pt;	/* min corner of bounding box */
+	point_t			max_pt;	/* max corner of bounding box */
 	/*   END OF ITEMS VALID IN-MEMORY ONLY -- NOT STORED ON DISK */
 	long			index;	/* struct # in this model */
 };
@@ -532,7 +535,8 @@ struct edge_g_lseg {
  *  the path through parameter space.
  */
 struct edge_g_cnurb {
-	long			magic;
+	/* NOTICE:  l.forw & l.back *not* stored in database.  For LIBNURB internal use only. */
+	struct rt_list		l;
 	struct rt_list		eu_hd2;	/* heads l2 list of edgeuses on this curve */
 	int			order;	/* Curve Order */
 	struct knot_vector	k;	/* curve knot vector */
