@@ -18,7 +18,7 @@
 #define _UNIXPORT
 
 #ifdef HAVE_CONFIG_H
-# include "config.h"
+#  include "config.h"
 #endif
 
 #define __UNIX__ 1
@@ -31,52 +31,55 @@
  */
 
 #ifndef VOID
-#   ifdef __STDC__
-#       define VOID void
-#   else
-#       define VOID char
-#   endif
+#  ifdef __STDC__
+#    define VOID void
+#  else
+#    define VOID char
+#  endif
 #endif
 
 #include <stdio.h>
 #include <ctype.h>
 #include <fcntl.h>
 #ifdef HAVE_LIMITS_H
-#   include <limits.h>
+#  include <limits.h>
 #else
-#   include "../compat/limits.h"
+#  include "../compat/limits.h"
 #endif
 #include <math.h>
 #include <pwd.h>
 #ifdef NO_STDLIB_H
-#   include "../compat/stdlib.h"
+#  include "../compat/stdlib.h"
 #else
-#   include <stdlib.h>
+#  include <stdlib.h>
 #endif
 #include <string.h>
 #include <sys/types.h>
 #include <sys/file.h>
 #ifdef HAVE_SYS_SELECT_H
-#   include <sys/select.h>
+#  ifdef panic
+#    undef panic
+#  endif
+#  include <sys/select.h>
 #endif
 #include <sys/stat.h>
 #ifndef _TCL
-#   include <tcl.h>
+#  include <tcl.h>
 #endif
 #if TIME_WITH_SYS_TIME
-#   include <sys/time.h>
-#   include <time.h>
+#  include <sys/time.h>
+#  include <time.h>
 #else
-#   if HAVE_SYS_TIME_H
-#       include <sys/time.h>
-#   else
-#       include <time.h>
-#   endif
+#  if HAVE_SYS_TIME_H
+#    include <sys/time.h>
+#  else
+#    include <time.h>
+#  endif
 #endif
 #ifdef HAVE_UNISTD_H
-#   include <unistd.h>
+#  include <unistd.h>
 #else
-#   include "../compat/unistd.h"
+#  include "../compat/unistd.h"
 #endif
 #include <X11/Xlib.h>
 #include <X11/cursorfont.h>
