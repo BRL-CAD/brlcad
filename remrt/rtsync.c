@@ -855,7 +855,7 @@ ClientData clientData;
 		bu_vls_free(&msg);
 		start_line = end_line + 1;
 		rtnodes[i].busy = 1;
-		gettimeofday( &rtnodes[i].time_start );
+		(void)gettimeofday( &rtnodes[i].time_start, (struct timezone *)NULL );
 	}
 }
 
