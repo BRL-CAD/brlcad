@@ -20,25 +20,32 @@ option add *background #ffffff
 frame .mbar -relief raised -bd 2 ; pack .mbar -side top
 frame .logo_fr ; pack .logo_fr -side top
 frame .title_fr ; pack .title_fr -side top
-frame .sunangle_fr -relief ridge ; pack .sunangle_fr -side top
-frame .suncolor_fr -relief ridge ; pack .suncolor_fr -side top
+frame .sunangle_fr -relief ridge -bd 2 ; pack .sunangle_fr -side top -expand 1 -fill x
+frame .suncolor_fr -relief ridge -bd 2 ; pack .suncolor_fr -side top -expand 1 -fill x
 frame .button_fr ; pack .button_fr -side top
 
 # Menu bar, acros very top
 menubutton .mbar.file -text "File" -menu .mbar.file.menu
 menubutton .mbar.help -text "Help" -menu .mbar.help.menu
-pack .mbar.file -side left -in .mbar -expand 1
-pack .mbar.help -side right -in .mbar -expand 1
+pack .mbar.file -side left -in .mbar -expand 1 -fill x
+pack .mbar.help -side right -in .mbar -expand 1 -fill x
 menu .mbar.file.menu
 .mbar.file.menu add command -label "Exit" -command "exit"
 menu .mbar.help.menu
 .mbar.help.menu add command -label "Exit" -command "exit"
 
 # Title, across the top
+frame .words_fr
+frame .title3
 image create photo .eagle -file "/m/cad/remrt/eagleCAD.gif"
 label .logo -image .eagle
-label .title -text "RTSYNC, the real-time ray-tracer"
-pack .logo .title -side left -in .title_fr
+label .title1 -text "RTSYNC"
+label .title2 -text "The Real-Time Ray-Tracer"
+label .title3a -textvariable cpu_count
+label .title3b -text "CPUs active"
+pack .title3a .title3b -side left -in .title3
+pack .title1 .title2 .title3 -side top -in .words_fr
+pack .logo .words_fr -side left -in .title_fr
 
 # The sun angle
 label .sunangle_title -text "Sun Angle"
@@ -67,7 +74,7 @@ label .suncolor_title -text "Sun Color"
 scale .suncolor -label "Yellow to Blue" -from 0 -to 100 -orient horizontal \
 	-command new_suncolor
 frame .suncolor_swatch -height 1c -width 6c
-pack .suncolor_title .suncolor .suncolor_swatch -in .suncolor_fr
+pack .suncolor_title .suncolor .suncolor_swatch -in .suncolor_fr -fill x
 proc new_suncolor {percent} {
 	global red grn blu
 	# alpha is how much yellow, beta is how much blue.
@@ -86,7 +93,7 @@ button .apply_color -text "Apply" -command apply_color
 pack .apply_color -side top -in .suncolor_fr
 
 entry .suncolor_region -width 16 -relief sunken -bd 2 -textvariable sun_region_name
-pack .suncolor_region -side left -in .suncolor_fr
+pack .suncolor_region -side top -in .suncolor_fr
 
 proc apply_color {} {
 	global red grn blu

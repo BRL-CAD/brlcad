@@ -187,6 +187,8 @@ static	int	width = 0;		/* use default size */
 static	int	height = 0;
 int		debug = 0;
 
+/* Variables linked to Tcl/Tk */
+
 Tcl_Interp	*interp = NULL;
 Tk_Window	tkwin;
 
@@ -395,7 +397,6 @@ int		mask;
 	char	buf[511+1];
 	int	fd;
 	int	got;
-bu_log("stdin_event_handler() called\n");
 
 	fd = (int)clientData;
 
@@ -432,7 +433,6 @@ int		mask;
 {
 	struct pkg_conn	*pc;
 	int	val;
-bu_log("pkg_event_handler() called\n");
 
 	pc = (struct pkg_conn *)clientData;
 
@@ -467,7 +467,6 @@ int		mask;
 {
 	struct pkg_conn	*pc;
 	int	val;
-bu_log("vrmgr_event_handler() called\n");
 
 	pc = (struct pkg_conn *)clientData;
 
@@ -549,7 +548,6 @@ vrmgr_listen_handler(clientData, mask)
 ClientData	clientData;	/* fd */
 int		mask;
 {
-bu_log("vrmgr_listen_handler() called\n");
 
 	/* Accept any new VRMGR connections.  Only one at a time is permitted. */
 	if( vrmgr_pc )  {
@@ -590,7 +588,6 @@ rtsync_listen_handler(clientData, mask)
 ClientData	clientData;	/* fd */
 int		mask;
 {
-bu_log("rtsync_listen_handler() called\n");
 	new_rtnode( pkg_getclient( (int)clientData,
 		rtsync_pkgswitch, bu_log, 0 ) );
 
@@ -639,6 +636,7 @@ char	*argv[];
 		bu_log("Tcl_Init error %s\n", interp->result);
 	bn_tcl_setup(interp);
 	rt_tcl_setup(interp);
+	Tcl_SetVar(interp, "cpu_count", "0", TCL_GLOBAL_ONLY );
 	/* Don't allow unknown commands to be fed to the shell */
 	Tcl_SetVar( interp, "tcl_interactive", "0", TCL_GLOBAL_ONLY );
 
@@ -751,22 +749,26 @@ dispatcher(clientData)
 ClientData clientData;
 {
 	register int	i;
-	int		ncpu = 0;
+	int		cpu_count = 0;
 	int		start_line;
 	int		lowest_index = 0;
+	char		buf[32];
 
 	if( !pending_pov )  return;
 
+	cpu_count = 0;
 	for( i = MAX_NODES-1; i >= 0; i-- )  {
 		if( rtnodes[i].fd <= 0 )  continue;
 		if( rtnodes[i].state != STATE_PREPPED )  continue;
 		if( rtnodes[i].ncpus <= 0 )  continue;
 		if( rtnodes[i].busy )  return;	/* Still working on last one */
-		ncpu += rtnodes[i].ncpus;
+		cpu_count += rtnodes[i].ncpus;
 		lowest_index = i;
 	}
-	bu_log("%s dispatcher() has %d cpus\n", stamp(), ncpu);
-	if( ncpu <= 0 )  return;
+	bu_log("%s dispatcher() has %d cpus\n", stamp(), cpu_count);
+	sprintf(buf, "%d", cpu_count);
+	Tcl_SetVar(interp, "cpu_count", buf, TCL_GLOBAL_ONLY );
+	if( cpu_count <= 0 )  return;
 
 	/* Record starting time for this frame */
 	(void)gettimeofday( &time_start, (struct timezone *)NULL );
@@ -785,7 +787,8 @@ ClientData clientData;
 		if( i <= lowest_index )  {
 			end_line = height-1;
 		} else {
-			count = (int)ceil( ((double)rtnodes[i].ncpus) / ncpu * height );
+			count = (int)ceil( ((double)rtnodes[i].ncpus) /
+				cpu_count * height );
 			end_line = start_line + count;
 			if( end_line > height-1 )  end_line = height-1;
 		}
