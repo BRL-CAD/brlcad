@@ -330,7 +330,7 @@ char **argv;
 /*
  *			N O D E _ S E N D
  *
- *  Arrange to send a string to all rtnode processes,
+ *  Arrange to send a string to ALL rtnode processes,
  *  for them to run as a TCL command.
  */
 int
@@ -360,6 +360,54 @@ char **argv;
 			drop_rtnode(i);
 			continue;
 		}
+	}
+	bu_vls_free(&cmd);
+	return TCL_OK;
+}
+
+/*
+ *			O N E _ N O D E _ S E N D
+ *
+ *  Arrange to send a string to one specific rtnode process,
+ *  for it to run as a TCL command.
+ *  Used primarily for debugging, or adjusting number of processors.
+ */
+int
+one_node_send( clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	struct bu_vls	cmd;
+	int		node;
+
+	if( argc < 3 )  {
+		Tcl_AppendResult(interp, "Usage: one_node_send node# command(s)\n", NULL);
+		return TCL_ERROR;
+	}
+
+	if( (node = get_rtnode_by_name(argv[1])) < 0 )  {
+		Tcl_AppendResult(interp, "one_node_send ", argv[1],
+			": bad node specification\n", NULL);
+		return TCL_ERROR;
+	}
+	if( !rtnodes[node].host || !rtnodes[node].pkg ) {
+		Tcl_AppendResult(interp, "one_node_send ", argv[1],
+			": NULL host or pkg pointer?\n", NULL);
+		return TCL_ERROR;
+	}
+
+	bu_vls_init(&cmd);
+	bu_vls_from_argv( &cmd, argc-2, argv+2 );
+
+	bu_log("one_node_send(%s) %s\n",
+		rtnodes[node].host->ht_name,
+		bu_vls_addr(&cmd));
+
+	if( pkg_send_vls( RTSYNCMSG_CMD, &cmd, rtnodes[node].pkg ) < 0 )  {
+		Tcl_AppendResult(interp, "pkg_send to ", argv[1], " failed.\n", NULL);
+		drop_rtnode(node);
 	}
 	bu_vls_free(&cmd);
 	return TCL_OK;
@@ -756,6 +804,8 @@ char	*argv[];
 		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 	(void)Tcl_CreateCommand(interp, "node_send", node_send,
 		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+	(void)Tcl_CreateCommand(interp, "one_node_send", one_node_send,
+		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 	(void)Tcl_CreateCommand(interp, "reprep", reprep,
 		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 	(void)Tcl_CreateCommand(interp, "refresh", refresh,
@@ -1027,6 +1077,8 @@ int	sub;
 
 /*
  *			G E T _ R T N O D E _ B Y _ N A M E
+ *
+ *  Accepts hostname, or numeric table index.
  */
 int
 get_rtnode_by_name( str )
@@ -1039,6 +1091,7 @@ char *str;
 		int	i;
 		i = atoi( str );
 		if( i < 0 || i >= MAX_NODES )  return -1;
+		if( rtnodes[i].fd <= 0 )  return -4;
 		return i;
 	}
 
