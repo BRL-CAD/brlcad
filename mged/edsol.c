@@ -137,65 +137,6 @@ int	es_menu;		/* item selected from menu */
 #define MENU_ETO_SCALE_C	58
 #define MENU_ETO_ROT_C		59
 
-/*
- *			M A T _ S C A L E _ A B O U T _ P T
- *
- *  Build a matrix to scale uniformly around a given point.
- *
- *  Returns -
- *	-1	if scale is too small.
- *	 0	if OK.
- */
-int
-mat_scale_about_pt( mat, pt, scale )
-mat_t		mat;
-CONST point_t	pt;
-CONST double	scale;
-{
-	mat_t	xlate;
-	mat_t	s;
-	mat_t	tmp;
-
-	mat_idn( xlate );
-	MAT_DELTAS_VEC_NEG( xlate, pt );
-
-	mat_idn( s );
-	if( NEAR_ZERO( scale, SMALL ) )  {
-		mat_zero( mat );
-		return -1;			/* ERROR */
-	}
-	s[15] = 1/scale;
-
-	mat_mul( tmp, s, xlate );
-
-	MAT_DELTAS_VEC( xlate, pt );
-	mat_mul( mat, xlate, tmp );
-	return 0;				/* OK */
-}
-
-/*
- *			M A T _ X F O R M _ A B O U T _ P T
- *
- *  Build a matrix to apply arbitary 4x4 transformation around a given point.
- */
-void
-mat_xform_about_pt( mat, xform, pt )
-mat_t		mat;
-CONST mat_t	xform;
-CONST point_t	pt;
-{
-	mat_t	xlate;
-	mat_t	tmp;
-
-	mat_idn( xlate );
-	MAT_DELTAS_VEC_NEG( xlate, pt );
-
-	mat_mul( tmp, xform, xlate );
-
-	MAT_DELTAS_VEC( xlate, pt );
-	mat_mul( mat, xlate, tmp );
-}
-
 extern int arb_faces[5][24];	/* from edarb.c */
 
 struct menu_item  edge8_menu[] = {
@@ -2081,8 +2022,6 @@ CONST vect_t	mousevec;
 	mat_idn( incr_change );
 	new_mats();
 }
-
-#define EPSILON 1.0e-7
 
 /*
  *			V L S _ S O L I D
