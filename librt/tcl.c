@@ -225,10 +225,12 @@ struct application	*ap;
  *		
  *
  *  Returns -
- *	A list of zero or more partitions.
- *	Each partition is a list containing an in, out, and region keyword.
- *	Each segment is a list containing a
- *		dist, point, normal, surfno, and solid keyword.
+ *	This "shootray" operation returns a nested set of lists. It returns
+ *	a list of zero or more partitions. Inside each partition is a list
+ *	containing an in, out, and region keyword, each with an associated
+ *	value. The associated value for each "inhit" and "outhit" is itself
+ *	a list containing a dist, point, normal, surfno, and solid keyword,
+ *	each with an associated value.
  */
 int
 rt_tcl_rt_shootray( clientData, interp, argc, argv )
@@ -287,8 +289,7 @@ char **argv;
 static struct dbcmdstruct rt_tcl_rt_cmds[] = {
 	"shootray",	rt_tcl_rt_shootray,
 #if 0
-	"prep",		rt_tcl_rt_prep,		/* haste | efficient */
-	"useair",	rt_tcl_useair,
+	"prep",		rt_tcl_rt_prep,		/* haste | efficient, useair, elaborate_instances */
 	"onehit",	rt_tcl_onehit,
 #endif
 	(char *)0,	(int (*)())0
