@@ -184,7 +184,7 @@ CONST char	*str;
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	ptr = malloc(cnt);
 	if( ptr==(char *)0 || bu_debug&BU_DEBUG_MEM_LOG )  {
-		fprintf(stderr, "%8x malloc%6d %s\n", ptr, cnt, str);
+		fprintf(stderr, "%8x malloc%7d %s\n", ptr, cnt, str);
 	}
 	bu_semaphore_release( BU_SEM_SYSCALL );
 
@@ -213,7 +213,7 @@ CONST char	*str;
 {
 	if(bu_debug&BU_DEBUG_MEM_LOG) {
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
-		fprintf(stderr, "%8x free %s\n", ptr, str);
+		fprintf(stderr, "%8x free          %s\n", ptr, str);
 		bu_semaphore_release(BU_SEM_SYSCALL);
 	}
 	if(ptr == (char *)0 || ptr == (char *)(-1L) )  {
@@ -335,7 +335,7 @@ CONST char *str;
 		if( mp->magic != MDB_MAGIC )  bu_bomb("bu_memdebug_check() malloc tracing table corrupted!\n");
 		if( mp->mdb_len <= 0 )  continue;
 		ip = (int *)(((char *)mp->mdb_addr)+mp->mdb_len-sizeof(int));
-		fprintf(stderr,"%8x %6x %s %s\n",
+		fprintf(stderr,"%8x %6d %s %s\n",
 			mp->mdb_addr, mp->mdb_len, mp->mdb_str,
 			*ip!=MDB_MAGIC ? "-BAD-" : "" );
 		if( *ip != MDB_MAGIC )
