@@ -930,7 +930,8 @@ plane_t plane2;
 			v[0] = psrf->v_knots->knots[0];
 			v[1] = psrf->v_knots->knots[psrf->v_knots->k_size -1];
 			
-                        if( (u[1] - u[0]) < 1.0e-4 && (v[1] - v[0]) < 1.0e-4)
+#define UV_TOL	1.0e-6	/* Paper says 1.0e-4 is reasonable for 1k images, not close up */
+                        if( (u[1] - u[0]) < UV_TOL && (v[1] - v[0]) < UV_TOL)
                         {
 				struct uv_hit * hit;
                         	hit = (struct uv_hit *) rt_malloc(
@@ -1010,11 +1011,14 @@ struct nurb_hit * hit;
 {
 	register struct nurb_hit * h_ptr;
 
+#if 0
+	/* Shouldn't be discarded, because shootray moves start pt around */
 	if( hit->hit_dist < .001)
 	{
 		rt_free( (char *) hit, "internal_add_hit: hit");
 		return;
 	}
+#endif
 	
 	if( head->next == (struct nurb_hit *) 0)
 	{
