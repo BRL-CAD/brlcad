@@ -19,6 +19,7 @@ struct mfuncs {
 	int		mf_magic;	/* To validate structure */
 	struct mfuncs	*mf_forw;	/* Forward link */
 	int		mf_inputs;	/* shadework inputs needed */
+	int		mf_flags;	/* Flags describing shader */
 	int		(*mf_setup)();	/* Routine for preparing */
 	int		(*mf_render)();	/* Routine for rendering */
 	void		(*mf_print)();	/* Routine for printing */
@@ -36,6 +37,9 @@ struct mfuncs {
 #define MFI_LIGHT	0x04		/* Need light visibility */
 #define MFI_HIT		0x08		/* Need just hit point */
 
+
+/* mf_flags lists important details about individual shaders */
+#define MFF_PROC	0x01		/* shader is procedural, computes tr/re/hits */
 
 #define SW_NLIGHTS	16		/* Max # of light sources */
 
