@@ -145,33 +145,33 @@ register struct rt_i *rtip;
 if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_ncells=%d\n", nu_ncells, nu_sol_per_cell, nu_max_ncells );
 	for( i=0; i<3; i++ )  {
 		rt_hist_init( &start_hist[i],
-			(int)rtip->rti_pmin[i],
-			(int)rtip->rti_pmax[i],
+			rtip->rti_pmin[i],
+			rtip->rti_pmax[i],
 			nu_ncells*100 );
 		rt_hist_init( &end_hist[i],
-			(int)rtip->rti_pmin[i],
-			(int)rtip->rti_pmax[i],
+			rtip->rti_pmin[i],
+			rtip->rti_pmax[i],
 			nu_ncells*100 );
 	}
 #define	RT_NUGRID_NBINS	120		/* For plotting purposes only */
-	rt_hist_init( &xhist, (int)rtip->rti_pmin[X], (int)rtip->rti_pmax[X], RT_NUGRID_NBINS );
-	rt_hist_init( &yhist, (int)rtip->rti_pmin[Y], (int)rtip->rti_pmax[Y], RT_NUGRID_NBINS );
-	rt_hist_init( &zhist, (int)rtip->rti_pmin[Z], (int)rtip->rti_pmax[Z], RT_NUGRID_NBINS );
+	rt_hist_init( &xhist, rtip->rti_pmin[X], rtip->rti_pmax[X], RT_NUGRID_NBINS );
+	rt_hist_init( &yhist, rtip->rti_pmin[Y], rtip->rti_pmax[Y], RT_NUGRID_NBINS );
+	rt_hist_init( &zhist, rtip->rti_pmin[Z], rtip->rti_pmax[Z], RT_NUGRID_NBINS );
 	RT_VISIT_ALL_SOLTABS_START( stp, rtip )  {
 		/* Ignore "dead" solids in the list.  (They failed prep) */
 		if( stp->st_aradius <= 0 )  continue;
 		if( stp->st_aradius >= INFINITY )  continue;
 		rt_hist_range( &xhist,
-			(int)stp->st_min[X], (int)stp->st_max[X] );
+			stp->st_min[X], stp->st_max[X] );
 		rt_hist_range( &yhist,
-			(int)stp->st_min[Y], (int)stp->st_max[Y] );
+			stp->st_min[Y], stp->st_max[Y] );
 		rt_hist_range( &zhist,
-			(int)stp->st_min[Z], (int)stp->st_max[Z] );
+			stp->st_min[Z], stp->st_max[Z] );
 		for( i=0; i<3; i++ )  {
 			RT_HISTOGRAM_TALLY( &start_hist[i],
-				(int)stp->st_min[i] );
+				stp->st_min[i] );
 			RT_HISTOGRAM_TALLY( &end_hist[i],
-				(int)stp->st_max[i] );
+				stp->st_max[i] );
 		}
 	} RT_VISIT_ALL_SOLTABS_END
 	if(rt_g.debug&DEBUG_CUT)  {
