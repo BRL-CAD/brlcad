@@ -83,8 +83,10 @@
 
 #ifdef vax
 #	define VDIVIDE_TOL	(1.0e-10)
+#	define VUNITIZE_TOL	(1.0e-7)
 #else
 #	define VDIVIDE_TOL	(1.0e-20)
+#	define VUNITIZE_TOL	(1.0e-15)
 #endif
 
 #define ELEMENTS_PER_VECT	3	/* # of fastf_t's per vect_t */
@@ -375,17 +377,29 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 
 /* Normalize vector `a' to be a unit vector */
 #ifdef SHORT_VECTORS
-#define VUNITIZE(a) \
-	{ register double _f; register int _vunitize; \
-	_f = MAGNITUDE(a); \
-	if( _f < VDIVIDE_TOL ) _f = 0.0; else _f = 1.0/_f; \
-	for(_vunitize = 0; _vunitize < 3; _vunitize++) \
-		(a)[_vunitize] *= _f; \
-	}
+#define VUNITIZE(a) { \
+	register double _f = MAGSQ(a); \
+	register int _vunitize; \
+	if ( ! NEAR_ZERO( _f-1.0, VUNITIZE_TOL ) ) { \
+		_f = sqrt( _f ); \
+		if( _f < VDIVIDE_TOL ) { VSETALL( (a), 0.0 ); } else { \
+			_f = 1.0/_f; \
+			for(_vunitize = 0; _vunitize < 3; _vunitize++) \
+				(a)[_vunitize] *= _f; \
+		} \
+	} \
+}
 #else
-#define VUNITIZE(a)	{ register double _f; _f = MAGNITUDE(a); \
-			if( _f < VDIVIDE_TOL ) _f = 0.0; else _f = 1.0/_f; \
-			(a)[X] *= _f; (a)[Y] *= _f; (a)[Z] *= _f; }
+#define VUNITIZE(a)	{ \
+	register double _f = MAGSQ(a); \
+	if ( ! NEAR_ZERO( _f-1.0, VUNITIZE_TOL ) ) { \
+		_f = sqrt( _f ); \
+		if( _f < VDIVIDE_TOL ) { VSETALL( (a), 0.0 ); } else { \
+			_f = 1.0/_f; \
+			(a)[X] *= _f; (a)[Y] *= _f; (a)[Z] *= _f; \
+		} \
+	} \
+}
 #endif /* SHORT_VECTORS */
 
 /* If vector magnitude is too small, return an error code */
