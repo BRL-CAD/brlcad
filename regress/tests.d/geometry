@@ -42,30 +42,6 @@ start ( ) {
 PRIMITIVES="arb arbn arg bot cline dsp ebm ehy ell epa eto extrude grip half hf nmg nurb part pg pipe rec rhc rpc sketch sph submodel tgc tor vol xxx"
 VER="4 5"
 
-for PRIM in $PRIMITIVES ; do
-
-    log ""
-    log "Evaluating $PRIM"
-    log "===================="
-
-    rm -f ${GEOMETRY}.*
-
-    if [ "x${PRIM}_IN_ARGS" = "x" ] ; then
-        warn "Primitive ${PRIM}_IN_ARGS has no arguments set, skipping"
-    else
-
-        unset IN_ARGS
-        unset DB_ARGS
-        initializeVariable IN_ARGS "${PRIM}_IN_ARGS"
-        initializeVariable DB_ARGS "${PRIM}_DB_ARGS"
-
-        mged -c <<EOF
-#
-# Start MGED script
-#
-
-set glob_compat_mode 0
-
 
     #
     # Start of Primitive Arguments
@@ -234,94 +210,119 @@ set glob_compat_mode 0
     set pipe_IN_ARGS "6 0 0 0 10 12 25 100 0 0 10 12 25 100 100 0 10 12 25 100 100 100 10 12 25 100 100 200 10 12 25 100 200 200 10 12 25"
     set pipe_DB_ARGS "V0 { 0 0 0 } O0 12 I0 10 R0 25 V1 { 100 0 0 } O1 12 I1 10 R1 25 V2 { 100 100 0 } O2 12 I2 10 R2 25 V3 { 100 100 100 } O3 12 I3 10 R3 25 V4 { 100 100 200 } O4 12 I4 10 R4 25 V5 { 100 200 200 } O5 12 I5 10 R5 25"
 
-    #
-    # (rec) Arguments
-    # 
-    # in args => xvertex yvertex zvertex xheight yheight zheight
-    #            xradius1 yradius1 zradius1 xradius2 yradius2 zradius2
-    #
-    set rec_IN_ARGS "0 0 0  0 0 50  40 0 0  0 10 0"
-    set rec_DB_ARGS "V {0 0 0} H {0 0 50} A {40 0 0} B {0 10 0} C {40 0 0} D {0 10 0}"
+#
+# (rec) Arguments
+# 
+# in args => xvertex yvertex zvertex xheight yheight zheight
+#            xradius1 yradius1 zradius1 xradius2 yradius2 zradius2
+#
+rec_IN_ARGS="0 0 0  0 0 50  40 0 0  0 10 0"
+rec_DB_ARGS="V {0 0 0} H {0 0 50} A {40 0 0} B {0 10 0} C {40 0 0} D {0 10 0}"
 
-    #
-    # (rhc) Arguments
-    # 
-    # in args => xvertex yvertex zvertex xheight yheight zheight 
-    #            rect. half-width apex-to-asymptopes dist.
-    #
-    set rhc_IN_ARGS "0 0 0 0 0 100 100 0 0 10 50"
-    set rhc_DB_ARGS "V {0 0 0} H {0 0 100} B {100 0 0} r 10 c 50"
+#
+# (rhc) Arguments
+# 
+# in args => xvertex yvertex zvertex xheight yheight zheight 
+#            rect. half-width apex-to-asymptopes dist.
+#
+rhc_IN_ARGS="0 0 0 0 0 100 100 0 0 10 50"
+rhc_DB_ARGS="V {0 0 0} H {0 0 100} B {100 0 0} r 10 c 50"
 
-    #
-    # (rpc) Arguments
-    # 
-    # in args =>
-    #
-    set rpc_IN_ARGS "0 0 0  10 0 0 0 0 10 2"
-    set rpc_DB_ARGS "rpc V {0 0 0} H {10 0 0} B {0 0 10} r 2"
+#
+# (rpc) Arguments
+# 
+# in args =>
+#
+rpc_IN_ARGS="0 0 0  10 0 0 0 0 10 2"
+rpc_DB_ARGS="rpc V {0 0 0} H {10 0 0} B {0 0 10} r 2"
 
-    #
-    # (sketch) Arguments
-    # 
-    # in args =>
-    #
-    set sketch_IN_ARGS ""
-    set sketch_DB_ARGS ""
+#
+# (sketch) Arguments
+# 
+# in args =>
+#
+sketch_IN_ARGS=""
+sketch_DB_ARGS=""
 
-    #
-    # Sphere (sph) Arguments
-    #
-    # Note that the sph is really an ell with all radii equal.
-    # 
-    # in args => name type xvertex yvertex zvertex radius1
-    #
-    set sph_IN_ARGS "0 0 0 45"
-    set sph_DB_ARGS "V { 0 0 0 } A {45 0 0} B {0 45 0} C {0 0 45}"
+#
+# Sphere (sph) Arguments
+#
+# Note that the sph is really an ell with all radii equal.
+# 
+# in args => name type xvertex yvertex zvertex radius1
+#
+sph_IN_ARGS="0 0 0 45"
+sph_DB_ARGS="V { 0 0 0 } A {45 0 0} B {0 45 0} C {0 0 45}"
 
-    #
-    # (submodel) Arguments
-    # 
-    # in args =>
-    #
-    set submodel_IN_ARGS ""
-    set submodel_DB_ARGS ""
+#
+# (submodel) Arguments
+# 
+# in args =>
+#
+submodel_IN_ARGS=""
+submodel_DB_ARGS=""
 
-    #
-    # (tgc) Arguments
-    #
-    # in args => xvertex yvertex zvertex xheight yheight zheight
-    #            xradiusA yradiusA zradiusA xradiusB yradiusB zradiusB
-    #            radiusC radiusD
-    set tgc_IN_ARGS "0 0 0  0 0 50  40 0 0  0 10 0  20 5"
-    set tgc_DB_ARGS "V {0 0 0} H {0 0 50} A {40 0 0} B {0 10 0} C {20 0 0} D {0 5 0}"
+#
+# (tgc) Arguments
+#
+# in args => xvertex yvertex zvertex xheight yheight zheight
+#            xradiusA yradiusA zradiusA xradiusB yradiusB zradiusB
+#            radiusC radiusD
+tgc_IN_ARGS="0 0 0  0 0 50  40 0 0  0 10 0  20 5"
+tgc_DB_ARGS="V {0 0 0} H {0 0 50} A {40 0 0} B {0 10 0} C {20 0 0} D {0 5 0}"
  
-    #
-    # Torus (tor) Arguments
-    #
-    # in args => name type xvertex yvertex zvertex xnormal ynormal znormal radius1 radius2
-    #
-    set tor_IN_ARGS "0 0 0 0 0 1 30 20"
-    set tor_DB_ARGS "V { 0 0 0 } H { 1 0 0 } r_a 50 r_h 25"
+#
+# Torus (tor) Arguments
+#
+# in args => name type xvertex yvertex zvertex xnormal ynormal znormal radius1 radius2
+#
+tor_IN_ARGS="0 0 0 0 0 1 30 20"
+tor_DB_ARGS="V { 0 0 0 } H { 1 0 0 } r_a 50 r_h 25"
 
-    #
-    # (vol) Arguments
-    # 
-    # in args =>
-    #
-    set vol_IN_ARGS ""
-    set vol_DB_ARGS ""
+#
+# (vol) Arguments
+# 
+# in args =>
+#
+vol_IN_ARGS=""
+vol_DB_ARGS=""
 
-    #
-    # (xxx) Arguments
-    # 
-    # in args =>
-    #
-    set xxx_IN_ARGS ""
-    set xxx_DB_ARGS ""
+#
+# (xxx) Arguments
+# 
+# in args =>
+#
+xxx_IN_ARGS=""
+xxx_DB_ARGS=""
 
-    #
-    # Done
-    ###
+#
+# Done
+###
+
+for PRIM in $PRIMITIVES ; do
+
+    log ""
+    log "Evaluating $PRIM"
+    log "===================="
+
+    rm -f ${GEOMETRY}.*
+
+    if [ "x${PRIM}_IN_ARGS" = "x" ] ; then
+        warn "Primitive ${PRIM}_IN_ARGS has no arguments set, skipping"
+    else
+
+        unset IN_ARGS
+        unset DB_ARGS
+        initializeVariable IN_ARGS "${PRIM}_IN_ARGS"
+        initializeVariable DB_ARGS "${PRIM}_DB_ARGS"
+
+        mged -c <<EOF
+#
+# Start MGED script
+#
+
+set glob_compat_mode 0
+
 
 foreach version { 4 5 } { 
 
