@@ -27,8 +27,8 @@ static char RCSrefract[] = "@(#)$Header$ (BRL)";
 #include "./material.h"
 #include "./mathtab.h"
 
-#define MAX_IREFLECT	9	/* Maximum internal reflection level */
-#define MAX_BOUNCE	4	/* Maximum recursion level */
+#define MAX_IREFLECT	5	/* Maximum internal reflection level */
+#define MAX_BOUNCE	3	/* Maximum recursion level */
 
 #define MSG_PROLOGUE	20		/* # initial messages to see */
 #define MSG_INTERVAL	4000		/* message interval thereafter */
@@ -59,34 +59,35 @@ char	*dp;
 	if( swp->sw_reflect <= 0 && swp->sw_transmit <= 0 )
 		goto finish;
 
-	if( (swp->sw_inputs & (MFI_HIT|MFI_NORMAL)) != (MFI_HIT|MFI_NORMAL) )
-		shade_inputs( ap, pp, swp, MFI_HIT|MFI_NORMAL );
-
 	if( ap->a_level >= MAX_BOUNCE )  {
 		/* Nothing more to do for this ray */
 		static long count = 0;		/* Not PARALLEL, should be OK */
 
-		if( count++ < MSG_PROLOGUE || (count%MSG_INTERVAL) == 3 )  {
+		if( (rdebug&RDEBUG_SHOWERR) && (
+			count++ < MSG_PROLOGUE ||
+			(count%MSG_INTERVAL) == 3
+		) )  {
 			rt_log("rr_render: %d,%d Max bounces=%d: %s\n",
 				ap->a_x, ap->a_y,
 				ap->a_level,
 				pp->pt_regionp->reg_name );
 		}
-		if(rdebug&RDEBUG_SHOWERR)  {
-			VSET( swp->sw_color, 99, 99, 0 );	/* Yellow */
-		} else {
-			/* Return basic color of object, ignoring the
-			 * the fact that it is supposed to be
-			 * filtering or reflecting light here.
-			 * This is better than returning just black,
-			 * but something better might be done
-			 * (eg, hand off to phong shader too).
-			 */
-			VMOVE( swp->sw_color, swp->sw_basecolor );
-		}
+
+		/* 
+		 * Return the basic color of the object, ignoring the
+		 * the fact that it is supposed to be
+		 * filtering or reflecting light here.
+		 * This is much better than returning just black,
+		 * but something better might be done.
+		 */
+		VMOVE( swp->sw_color, swp->sw_basecolor );
 		goto finish;
 	}
 	VMOVE( filter_color, swp->sw_basecolor );
+
+	if( (swp->sw_inputs & (MFI_HIT|MFI_NORMAL)) != (MFI_HIT|MFI_NORMAL) )
+		shade_inputs( ap, pp, swp, MFI_HIT|MFI_NORMAL );
+
 
 	/*
 	 *  Diminish base color appropriately, and add in
@@ -154,47 +155,20 @@ do_inside:
 		sub_ap.a_miss = rr_miss;
 		sub_ap.a_purpose = "internal reflection";
 		sub_ap.a_onehit = 0;	/* need 1st EXIT, not just 1st HIT */
-		if( rt_shootray( &sub_ap ) == 0 )  {
-			vect_t	voffset;
-			register fastf_t	f;
-
-			/*
-			 *  Internal reflection missed, or hit the wrong
-			 *  thing, or encountered other adversity.
-			 *  [Move the ray start point 1% or 1mm
-			 *  (whichever is smaller) towards the solids'
-			 *  center point, and try again. XXX This is wrong
-			 *  if the entry point was due to a subtracted solid].
-			 */
-/**			if(rdebug&RDEBUG_HITS)**/
-				rt_log("rr_render: Refracted ray missed '%s' -- RETRYING, lvl=%d xy=%d,%d\n",
-				pp->pt_regionp->reg_name,
-				sub_ap.a_level,
-				ap->a_x, ap->a_y );
-#ifdef later
-			VSUB2( voffset, sub_ap.a_ray.r_pt,
-				pp->pt_inseg->seg_stp->st_center );
-			f = MAGNITUDE(voffset);
-			if( f > 1.0 )
-				f = 1.0/f;		/* use 1mm */
-			else
-				f = 0.01/f;		/* use 1% */
-			VJOIN1( sub_ap.a_ray.r_pt, sub_ap.a_ray.r_pt,
-				f, voffset );
-#else
-			VJOIN1( sub_ap.a_ray.r_pt, sub_ap.a_ray.r_pt,
-				-10, incident_dir );
-#endif
-			sub_ap.a_purpose = "backed off, internal reflection";
-			if( rt_shootray( &sub_ap ) == 0 )  {
-				rt_log("rr_render: Refracted ray missed 2x '%s', lvl=%d, xy=%d,%d\n",
-					pp->pt_regionp->reg_name,
-					sub_ap.a_level,
-					ap->a_x, ap->a_y );
-				VSET( swp->sw_color, 0, 99, 0 );	/* green */
-				goto finish;		/* abandon hope */
-			}
+		switch( rt_shootray( &sub_ap ) )  {
+		case 2:
+			/* All is well */
+			break;
+		case 1:
+			/* Treat as escaping ray */
+			goto do_exit;
+		case 0:
+		default:
+			/* Dreadful error */
+			VSET( swp->sw_color, 0, 99, 0 );	/* very green */
+			goto finish;			/* abandon hope */
 		}
+
 		/* NOTE: rr_hit returns EXIT Point in sub_ap.a_uvec,
 		 *  and returns EXIT Normal in sub_ap.a_vvec.
 		 */
@@ -223,21 +197,6 @@ do_inside:
 			if( (++sub_ap.a_level) <= MAX_IREFLECT )
 				goto do_inside;
 
-			/* All chattering should probably be supressed, except
-			 * in the SHOWERR case, as this will be the "normal"
-			 * behavior now.
-			 */
-			if( count++ < MSG_PROLOGUE || (count%MSG_INTERVAL) == 3 )  {
-				rt_log("rr_render: %d,%d Int.reflect=%d: %s lvl=%d\n",
-					sub_ap.a_x, sub_ap.a_y,
-					sub_ap.a_level,
-					pp->pt_regionp->reg_name,
-					ap->a_level );
-			}
-			if(rdebug&RDEBUG_SHOWERR) {
-				VSET( swp->sw_color, 0, 9, 0 );	/* green */
-				goto finish;
-			}
 			/*
 			 *  Internal Reflection limit exceeded -- just let
 			 *  the ray escape, continuing on current course.
@@ -246,13 +205,29 @@ do_inside:
 			 *  which is much better than just returning
 			 *  grey or black, as before.
 			 */
+			if( (rdebug&RDEBUG_SHOWERR) && (
+				count++ < MSG_PROLOGUE ||
+				(count%MSG_INTERVAL) == 3
+			) )  {
+				rt_log("rr_render: %d,%d Int.reflect=%d: %s lvl=%d\n",
+					sub_ap.a_x, sub_ap.a_y,
+					sub_ap.a_level,
+					pp->pt_regionp->reg_name,
+					ap->a_level );
+			}
 			VMOVE( sub_ap.a_ray.r_dir, incident_dir );
 			goto do_exit;
 		}
 do_exit:
-		/* This is the only place we might recurse dangerously */
+		/*
+		 *  Process the escaping refracted ray.
+		 *  This is the only place we might recurse dangerously,
+		 *  so we are careful to use our caller's recursion level+1.
+		 *  NOTE: point & direction already filled in
+		 */
 		sub_ap.a_hit =  ap->a_hit;
 		sub_ap.a_miss = ap->a_miss;
+		sub_ap.a_onehit = ap->a_onehit;
 		sub_ap.a_level = ap->a_level+1;
 		sub_ap.a_purpose = "escaping refracted ray";
 		(void) rt_shootray( &sub_ap );
@@ -278,66 +253,95 @@ rr_miss( ap, PartHeadp )
 register struct application *ap;
 struct partition *PartHeadp;
 {
-	return(0);
+	return(1);	/* treat as escaping ray */
 }
 
 /*
  *			R R _ H I T
  *
- *  Implicit Returns -
- *	a_uvec	exit Point
- *	a_vvec	exit Normal
+ *  This routine is called when an internal reflection ray hits something
+ *  (which is ordinarily the case).
+ *
+ * XXX If this hit resulted from a shot done with the "one hit" flag set,
+ * there are no assurances about the accuracy of things behind
+ * the ENTRY point.  We need the EXIT point to be accurate.
+ * Perhaps this might be good motivation for adding support for
+ * a setting of the "one hit" flag that is accurate through the
+ * EXIT point, rather than the entry point.
+ *
+ *  Explicit Returns -
+ *	0	dreadful internal error
+ *	1	treat as escaping ray & reshoot
+ *	2	Proper exit point determined, with Implicit Returns:
+ *		a_uvec	exit Point
+ *		a_vvec	exit Normal (inward pointing)
  */
 HIDDEN int
 rr_hit( ap, PartHeadp )
 register struct application *ap;
 struct partition *PartHeadp;
 {
-	register struct hit	*hitp;
-	register struct soltab *stp;
 	register struct partition *pp;
+	register struct hit	*hitp;
+	register struct soltab	*stp;
+	struct partition	*psave;				
 
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 		if( pp->pt_outhit->hit_dist > 0.0 )  break;
 	if( pp == PartHeadp )  {
-/**		if(rdebug&RDEBUG_SHOWERR) **/
-			rt_log("rr_hit:  no hit out front?\n");
-		goto bad;
+		if(rdebug&RDEBUG_SHOWERR)  {
+			rt_log("rr_hit:  %d,%d no hit out front?\n",
+				ap->a_x, ap->a_y );
+			return(0);	/* error */
+		}
+		return(1);		/* treat as escaping ray */
 	}
-	if( pp->pt_regionp != (struct region *)(ap->a_user) )  {
-/**		if(rdebug&RDEBUG_HITS) **/
-			rt_log("rr_hit:  Ray reflected within %s now in %s!\n",
+
+	/*
+	 *  Ensure that the partition we are given is part of the same
+	 *  region that we started in.  When the internal reflection
+	 *  is happening very near an edge or corner, this is not always
+	 *  the case, and either (a) a small sliver of some other region
+	 *  is found to be in the way, or (b) the ray completely misses the
+	 *  region that it started in, although not by much.
+	 */
+	psave = pp;
+	for( ; pp != PartHeadp; pp = pp->pt_forw )
+		if( pp->pt_regionp == (struct region *)(ap->a_user) )  break;
+	if( pp == PartHeadp )  {
+		if(rdebug&RDEBUG_SHOWERR)  {
+			rt_log("rr_hit:  %d,%d Ray int.reflected in %s landed in %s\n",
+				ap->a_x, ap->a_y,
 				((struct region *)(ap->a_user))->reg_name,
-				pp->pt_regionp->reg_name );
-		rt_pr_partitions(ap->a_rt_i, PartHeadp, "RR: Whole Partition" );
-		goto bad;
+				psave->pt_regionp->reg_name );
+			return(0);	/* error */
+		}
+		return(1);		/* treat as escaping ray */
 	}
 
 	/*
 	 *  At one time, this was a check for pp->pt_inhit->hit_dist
-	 *  being NEAR zero.  This was a mistake, because we may have
+	 *  being NEAR zero.  That was a mistake, because we may have
 	 *  been at the edge of a subtracted out center piece when
 	 *  internal reflection happened, except that floating point
 	 *  error (being right on the surface of the interior solid)
-	 *  prevents us from "seeing" that solid on the next ray,
+	 *  prevented us from "seeing" that solid on the next ray,
 	 *  causing our ray endpoints to be quite far from the starting
-	 *  point.  There is a real problem if the entry point
-	 *  is somehow further ahead than the firing point, ie, >0.
-	 *  If we have a good exit point, just march on.
+	 *  point, yet with the ray still validly inside the glass region.
+	 *
+	 *  There is a major problem if the entry point
+	 *  is further ahead than the firing point, ie, >0.
+	 *
+	 *  Because this error has not yet been encountered, it is
+	 *  considered dreadful.  Some recovery may be possible.
 	 */
 	if( pp->pt_inhit->hit_dist > 10 )  {
-/**		if(rdebug&RDEBUG_HITS) **/
-		{
-			stp = pp->pt_inseg->seg_stp;
-			RT_HIT_NORM( hitp, stp, &(ap->a_ray) );
-			if( pp->pt_inflip )  {
-				VREVERSE( hitp->hit_normal, hitp->hit_normal );
-			}
-			rt_log("rr_hit:  '%s' inhit %g > 0.0!\n",
-				stp->st_name, hitp->hit_dist);
-			rt_pr_hit("inhit", hitp);
-		}
-		goto bad;
+		stp = pp->pt_inseg->seg_stp;
+		rt_log("rr_hit: %d,%d %s inhit %g > 0.0!\n",
+			ap->a_x, ap->a_y,
+			pp->pt_regionp->reg_name,
+			hitp->hit_dist);
+		return(0);		/* dreadful error */
 	}
 
 	/*
@@ -348,13 +352,6 @@ struct partition *PartHeadp;
 	 * in the bool_weave code, but it is inexpensive to check for it
 	 * here.  If this case is detected, push on, and log it.
 	 * This code is not expected to be needed.
-	 *
-	 * If this shot was done with the "one hit" flag set,
-	 * there are no assurances about the accuracy of things behind
-	 * the ENTRY point.  We need the EXIT point to be accurate.
-	 * Perhaps this might be good motivation for adding support for
-	 * a setting of the "one hit" flag that is accurate through the
-	 * EXIT point, rather than the entry point.
 	 */
 	while( pp->pt_forw != PartHeadp )  {
 		register fastf_t d;
@@ -363,17 +360,20 @@ struct partition *PartHeadp;
 			break;
 		if( pp->pt_forw->pt_regionp != pp->pt_regionp )
 			break;
-		rt_log("rr_hit:  fusing small crack in glass\n");
+		rt_log("rr_hit: %d,%d fusing small crack in glass %s\n",
+			ap->a_x, ap->a_y,
+			pp->pt_regionp->reg_name );
 		pp = pp->pt_forw;
 	}
 
 	hitp = pp->pt_outhit;
 	stp = pp->pt_outseg->seg_stp;
 	if( hitp->hit_dist >= INFINITY )  {
-/**		if(rdebug&RDEBUG_SHOWERR) **/
-			rt_log("rr_hit:  (%g,%g) bad!\n",
-				pp->pt_inhit->hit_dist, hitp->hit_dist);
-		goto bad;
+		rt_log("rr_hit: %d,%d infinite glass (%g,%g) %s\n",
+			ap->a_x, ap->a_y,
+			pp->pt_inhit->hit_dist, hitp->hit_dist,
+			pp->pt_regionp->reg_name );
+		return(0);		/* dreadful error */
 	}
 	VJOIN1( hitp->hit_point, ap->a_ray.r_pt,
 		hitp->hit_dist, ap->a_ray.r_dir );
@@ -381,26 +381,12 @@ struct partition *PartHeadp;
 	if( pp->pt_outflip )  {
 		VREVERSE( hitp->hit_normal, hitp->hit_normal );
 	}
-rt_pr_hit("uvec", hitp);
+
 	VMOVE( ap->a_uvec, hitp->hit_point );
 
-	/* Safety check */
-	if( (rdebug&RDEBUG_SHOWERR) && (
-	    !NEAR_ZERO(hitp->hit_normal[X], 1.001) ||
-	    !NEAR_ZERO(hitp->hit_normal[Y], 1.001) ||
-	    !NEAR_ZERO(hitp->hit_normal[Z], 1.001) ) )  {
-	    	rt_log("rr_hit: defective normal hitting %s\n", stp->st_name);
-	    	VPRINT("hit_normal", hitp->hit_normal);
-	    	goto bad;
-	}
 	/* For refraction, want exit normal to point inward. */
 	VREVERSE( ap->a_vvec, hitp->hit_normal );
-	return(1);
-
-	/* Give serious information when problems are encountered */
-bad:
-	if(rdebug&RDEBUG_HITS) rt_pr_partitions( ap->a_rt_i, PartHeadp, "rr_hit" );
-	return(0);
+	return(2);			/* OK */
 }
 
 /*
