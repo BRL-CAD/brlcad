@@ -30,11 +30,11 @@ extern FILE *ps_fp;
 
 #define SL_TOL 0.031265266  /* size of dead spot - 64/2047 */
 
-#define VIRTUAL_TRACKBALL_OFF 0
-#define VIRTUAL_TRACKBALL_ON 1
-#define VIRTUAL_TRACKBALL_ROTATE 2 
-#define VIRTUAL_TRACKBALL_TRANSLATE 3
-#define VIRTUAL_TRACKBALL_ZOOM 4
+#define ALT_MOUSE_MODE_OFF 0
+#define ALT_MOUSE_MODE_ON 1
+#define ALT_MOUSE_MODE_ROTATE 2 
+#define ALT_MOUSE_MODE_TRANSLATE 3
+#define ALT_MOUSE_MODE_ZOOM 4
 #define VIEW_TABLE_SIZE 5    /* enough to hold the view selections in the menu */
 
 /* Interface to a specific Display Manager */
@@ -208,9 +208,9 @@ extern struct dm_list *curr_dm_list;
 #define scroll_y curr_dm_list->s_info->_scroll_y
 #define scroll_array curr_dm_list->s_info->_scroll_array
 
-#define VIRTUAL_TRACKBALL_NOT_ACTIVE(_type,_name)\
-  ((_type)dm_vars)->_name == VIRTUAL_TRACKBALL_OFF ||\
-  ((_type)dm_vars)->_name == VIRTUAL_TRACKBALL_ON
+#define ALT_MOUSE_MODE_NOT_ACTIVE(_type,_name)\
+  ((_type)dm_vars)->_name == ALT_MOUSE_MODE_OFF ||\
+  ((_type)dm_vars)->_name == ALT_MOUSE_MODE_ON
 
 /*
  * Definitions for dealing with the buttons and lights.
