@@ -1268,7 +1268,7 @@ struct rt_tol *tol;
 		/* Adjust the vertices of new_v */
 		if( debug > 2 )
 			rt_log( "Moving ( %f %f %f )" , V3ARGS( new_v->vg_p->coord ) );
-		if( nmg_in_vert( new_v , tol ) )
+		if( nmg_in_vert( new_v , 1 , tol ) )
 		{
 			/* FAILURE, kill the model and shell and return a failure notification */
 			rt_log( "nmg_in_vert failed on %s!\n" , name );
