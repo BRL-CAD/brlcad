@@ -10,6 +10,7 @@ bin_SCRIPTS = \
 	elapsed.sh \
 	footer.sh \
 	header.sh \
+	indent.sh \
 	ldAix.sh \
 	machinetype.sh \
 	make_deb.sh \
