@@ -129,7 +129,12 @@ re_exec( s )				/* returns 1 if s matches, else 0 */
 #if defined(HAVE_REGCOMP)
 
 #include <sys/types.h>
-#include <regex.h>
+
+#if BUILD_REGEX
+#  include "regex.h"
+#elif defined(HAVE_REGEX_H)
+#  include <regex.h>
+#endif
 
 #if !defined(REG_BASIC)
 #	define REG_BASIC	0
