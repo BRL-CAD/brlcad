@@ -65,42 +65,29 @@ int argc;
 char *argv[];
 {
   int i;
-  char **av;
-  struct bu_vls name_vls, value_vls;
+  struct bu_vls vls;
 
   /* register application provided routines */
   cmd_hook = X_dm;
 
-  /* stuff in a default initialization script */
-  av = (char **)bu_malloc(sizeof(char *)*(argc + 2), "X_dm_init: av");
-  av[0] = "X_open";
-  av[1] = "-i";
-  av[2] = "mged_bind_dm";
-
-  /* copy the rest except last */
-  for(i = 1; i < argc-1; ++i)
-    av[i+2] = argv[i];
-
-  av[i+2] = (char *)NULL;
-
   dm_var_init(o_dm_list);
   Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
-  if((dmp = dm_open(DM_TYPE_X, argc+1, av)) == DM_NULL){
-    bu_free(av, "X_dm_init: av");
+  if((dmp = dm_open(DM_TYPE_X, argc-1, argv)) == DM_NULL)
     return TCL_ERROR;
-  }
 
-  bu_free(av, "X_dm_init: av");
   zclip_ptr = &((struct x_vars *)dmp->dm_vars.priv_vars)->mvars.zclip;
   eventHandler = X_doevent;
   curr_dm_list->s_info->opp = &pathName;
   Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
   dm_configureWindowShape(dmp);
 
-  bu_vls_init(&value_vls);
-#if 1
+  bu_vls_init(&vls);
+  bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_addr(&pathName));
+  Tcl_Eval(interp, bu_vls_addr(&vls));
+  bu_vls_free(&vls);
+
+#if 0
   /*XXX Experimenting */
-  bu_vls_init(&name_vls);
   bu_vls_printf(&name_vls, "dm_info(%s)", bu_vls_addr(&dmp->dm_pathName));
   bu_vls_printf(&value_vls, "%lu %lu %lu %lu %d %d %lu",
 		(unsigned long)((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
@@ -110,8 +97,6 @@ char *argv[];
 		dmp->dm_width, dmp->dm_height,
 		(unsigned long)((struct x_vars *)dmp->dm_vars.priv_vars)->gc);
   Tcl_SetVar(interp, bu_vls_addr(&name_vls), bu_vls_addr(&value_vls), TCL_GLOBAL_ONLY);
-  bu_vls_free(&name_vls);
-  bu_vls_free(&value_vls);
 #endif
 
   return TCL_OK;
