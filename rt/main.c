@@ -53,13 +53,15 @@ int debug = DEBUG_OFF;
 
 struct soltab *HeadSolid = SOLTAB_NULL;
 
+struct seg *FreeSeg = SEG_NULL;		/* Head of freelist */
+
 static struct seg *HeadSeg = SEG_NULL;
 
 char usage[] = "Usage:  rt [-f[#]] [-x#] model.vg object [objects]\n";
 
 /* Used for autosizing */
-static float xbase, ybase, zbase;
-static float deltas;
+static fastf_t xbase, ybase, zbase;
+static fastf_t deltas;
 
 vect_t l0vec;		/* 0th light vector */
 vect_t l1vec;		/* 1st light vector */
@@ -76,6 +78,7 @@ char **argv;
 	static mat_t invview;
 	static vect_t tempdir;
 	static struct partition *PartHeadp, *pp;
+	static fastf_t distsq;
 
 	npts = 200;
 
@@ -152,6 +155,15 @@ char **argv;
 		VSET( tempdir, 0, 0, 1 );
 	}
 	MAT3XVEC( rayp->r_dir, viewrot, tempdir );
+VPRINT("Direction", rayp->r_dir);
+	/* Sanity check */
+	distsq = MAGSQ(rayp->r_dir) - 1.0;
+	if( !NEAR_ZERO(distsq) )
+		printf("ERROR: |r_dir|**2 - 1 = %f != 0\n", distsq);
+
+	VSET( tempdir, 	xbase, ybase, zbase );
+	MAT3XVEC( rayp->r_pt, viewrot, tempdir );
+VPRINT("Starting point", tempdir );
 
 	/* Determine the Light location(s) in model space, xlate to view */
 	/* 0:  Blue, at left edge, 1/2 high */
@@ -199,9 +211,13 @@ VPRINT("Light2 Vec", l2vec);
 
 			/*
 			 *  All intersections of the ray with the model have
-			 *  been computed.
+			 *  been computed.  Evaluate the boolean functions.
 			 */
 			PartHeadp = bool_regions( HeadSeg );
+			if( PartHeadp->pt_forw == PartHeadp )  {
+				wbackground( xscreen, yscreen );
+				continue;
+			}
 
 			/*
 			 * Hand final partitioned intersection list
@@ -219,7 +235,7 @@ VPRINT("Light2 Vec", l2vec);
 				register struct seg *hsp;	/* XXX */
 
 				hsp = HeadSeg->seg_next;
-				free( HeadSeg );
+				FREE_SEG( HeadSeg );
 				HeadSeg = hsp;
 			}
 			/* Free up partition list */
@@ -238,15 +254,12 @@ register struct ray *rayp;
 {
 	register struct soltab *stp;
 	static vect_t diff;	/* diff between shot base & solid center */
-	register float distsq;	/* distance**2 */
+	FAST fastf_t distsq;	/* distance**2 */
 
 	if(debug&DEBUG_ALLRAYS) {
 		VPRINT("\nRay Start", rayp->r_pt);
 		VPRINT("Ray Direction", rayp->r_dir);
 	}
-	distsq = MAGSQ(rayp->r_dir) - 1.0;
-	if( !NEAR_ZERO(distsq) )
-		printf("ERROR: |r_dir|**2 - 1 = %f != 0\n", distsq);
 
 	HeadSeg = SEG_NULL;	/* Should check, actually */
 
@@ -260,7 +273,7 @@ register struct ray *rayp;
 		/* Consider bounding sphere */
 		VSUB2( diff, stp->st_center, rayp->r_pt );
 		distsq = VDOT(rayp->r_dir, diff);
-		if( (distsq=MAGSQ(diff) - distsq*distsq) > stp->st_radsq )  {
+		if( (distsq=(MAGSQ(diff) - distsq*distsq)) > stp->st_radsq ) {
 			if(debug&DEBUG_ALLRAYS)  printf("(Not close)\n");
 			continue;
 		}
@@ -310,12 +323,12 @@ int npts;
 	xmin = ymin = zmin =  100000000.0;
 
 	for( stp=HeadSolid; stp != 0; stp=stp->st_forw ) {
-		register float rad;
+		FAST fastf_t rad;
 
 		rad = sqrt(stp->st_radsq);
 		MAT3XVEC( xlated, invrot, stp->st_center );
-#define MIN(v,t) {register float rt=(t); if(rt<v) v = rt;}
-#define MAX(v,t) {register float rt=(t); if(rt>v) v = rt;}
+#define MIN(v,t) {FAST fastf_t rt=(t); if(rt<v) v = rt;}
+#define MAX(v,t) {FAST fastf_t rt=(t); if(rt>v) v = rt;}
 		MIN( xmin, xlated[0]-rad );
 		MAX( xmax, xlated[0]+rad );
 		MIN( ymin, xlated[1]-rad );
@@ -323,6 +336,15 @@ int npts;
 		MIN( zmin, xlated[2]-rad );
 		MAX( zmax, xlated[2]+rad );
 	}
+
+	/* Provide a slight border */
+	xmin -= xmin * 0.03;
+	ymin -= ymin * 0.03;
+	zmin -= zmin * 0.03;
+	xmax *= 1.03;
+	ymax *= 1.03;
+	zmax *= 1.03;
+
 	xbase = xmin;
 	ybase = ymin;
 	zbase = zmin;
@@ -350,4 +372,3 @@ register struct seg *segp;
 		segp->seg_out.hit_dist,
 		segp->seg_stp->st_name );
 }
-
