@@ -136,6 +136,18 @@
 #	define HAVE_SBRK_DECL	1
 #endif
 
+#if defined(__bsdi__)
+#	define HAVE_GETOPT	1
+#	define HAVE_GETOPT_DECL	1
+#	define HAVE_XOPEN	1
+#	define HAVE_TERMIOS_H	1
+#	define HAVE_MEMORY_H	1				/* XXX */
+#	if !defined(_XOPEN_SOURCE)				/* XXX */
+#		define _XOPEN_SOURCE	1
+#	endif
+#	define HAVE_SYS_ERRLIST_DECL	1
+#endif
+
 #if defined(linux)
 #	define HAVE_GETOPT_H	1
 #	define HAVE_XOSDEFS_H	1
@@ -198,12 +210,11 @@
 #	define HAVE_GETHOSTNAME	1
 #endif
 
-#if defined(SYSV) || defined(__NetBSD__) || defined(__bsdi__) || defined(__stardent)
+#if defined(SYSV) || defined(__NetBSD__) || defined(__stardent)
 #	define HAVE_GETOPT	1
 #endif
 
-#if defined(__NetBSD__) || defined(CRAY1) || defined(__bsdi__) || \
-		defined(_HPUX_SOURCE)
+#if defined(__NetBSD__) || defined(CRAY1) || defined(_HPUX_SOURCE)
 #	define HAVE_GETOPT_DECL	1
 #endif
 
@@ -268,8 +279,7 @@
  *	_XOPEN_SOURCE
  */
 
-#if ( defined(_POSIX_SOURCE) || defined(__bsdi__) || defined(linux) ) \
-    && !defined(__convex__)
+#if ( defined(_POSIX_SOURCE) || defined(linux) ) && !defined(__convex__)
 #	define HAVE_XOPEN	1
 #	define HAVE_TERMIOS_H	1
 #	define HAVE_MEMORY_H	1				/* XXX */
