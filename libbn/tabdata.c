@@ -1233,7 +1233,7 @@ int	num;
 	nw = tabp->nx;
 	nbytes = BN_SIZEOF_TABDATA(tabp);
 
-	data = (struct bn_tabdata *)rt_calloc( num,
+	data = (struct bn_tabdata *)bu_calloc( num,
 		nbytes, "struct bn_tabdata[]" );
 
 	cp = (char *)data;

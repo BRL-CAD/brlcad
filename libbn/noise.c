@@ -7,8 +7,8 @@
  *
  *  Spectral Noise functions
  *
- *	bn_noise_fbm	fractional Brownian motion.  Based on noise_perlin
- *	bn_noise_turb	turbulence.  Based on noise_perlin
+ *	bn_noise_fbm	fractional Brownian motion.  Based on bn_noise_perlin
+ *	bn_noise_turb	turbulence.  Based on bn_noise_perlin
  *
  *  These noise functions provide mostly random noise at the integer lattice
  *  points.  The functions should be evaluated at non-integer locations for
@@ -170,10 +170,10 @@ static struct str_ht ht;
 #define MAGIC_TAB1	   9823
 #define MAGIC_TAB2	 784642
 #define CK_HT() { \
-	RT_CKMAG(&ht.magic, MAGIC_STRHT1, "struct str_ht ht 1"); \
-	RT_CKMAG(&ht.magic_end, MAGIC_STRHT2, "struct str_ht ht 2"); \
-	RT_CKMAG(ht.hashTableMagic1, MAGIC_TAB1, "hashTable Magic 1"); \
-	RT_CKMAG(ht.hashTableMagic2, MAGIC_TAB2, "hashTable Magic 2"); \
+	BU_CKMAG(&ht.magic, MAGIC_STRHT1, "struct str_ht ht 1"); \
+	BU_CKMAG(&ht.magic_end, MAGIC_STRHT2, "struct str_ht ht 2"); \
+	BU_CKMAG(ht.hashTableMagic1, MAGIC_TAB1, "hashTable Magic 1"); \
+	BU_CKMAG(ht.hashTableMagic2, MAGIC_TAB2, "hashTable Magic 2"); \
 	if (ht.hashTable != (short *)&ht.hashTableMagic1[1] ) \
 		bu_bomb("ht.hashTable changed rel ht.hashTableMagic1"); \
 	if (ht.hashTableMagic2 != (long *)&ht.hashTable[4096] ) \
@@ -208,7 +208,7 @@ bn_noise_init()
 	}
 
 	BN_RANDSEED(rndtabi, (BN_RAND_TABSIZE-1) );
-	ht.hashTableMagic1 = (long *) rt_malloc(
+	ht.hashTableMagic1 = (long *) bu_malloc(
 		2*sizeof(long) + 4096*sizeof(short int),
 		"noise hashTable");
 	ht.hashTable = (short *)&ht.hashTableMagic1[1];
@@ -494,11 +494,11 @@ double h_val, lacunarity, octaves;
 	if (etbl_next >= etbl_size) {
 		if (etbl_size) {
 			etbl_size *= 2;
-			etbl = (struct fbm_spec *)rt_realloc((char *)etbl,
+			etbl = (struct fbm_spec *)bu_realloc((char *)etbl,
 					etbl_size*sizeof(struct fbm_spec),
 					"spectral weights table");
 		} else
-			etbl = (struct fbm_spec *)rt_calloc(etbl_size = 10,
+			etbl = (struct fbm_spec *)bu_calloc(etbl_size = 10,
 					sizeof(struct fbm_spec),
 					"spectral weights table");
 
@@ -510,7 +510,7 @@ double h_val, lacunarity, octaves;
 	ep->magic = MAGIC_fbm_spec_wgt;	ep->octaves = octaves;
 	ep->h_val = h_val;		ep->lacunarity = lacunarity;
 	spec_wgts = ep->spec_wgts = 
-		(double *)rt_malloc( ((int)(octaves+1)) * sizeof(double),
+		(double *)bu_malloc( ((int)(octaves+1)) * sizeof(double),
 		"spectral weights" );
 
 	/* precompute and store spectral weights table */
@@ -626,7 +626,7 @@ double octaves;
 	/* inner loop of spectral construction */
 	oct=(int)octaves; /* save repeating double->int cast */
 	for (i=0 ; i < oct ; i++) {
-		value += noise_perlin( pt ) * spec_wgts[i];
+		value += bn_noise_perlin( pt ) * spec_wgts[i];
 		PSCALE(pt, lacunarity);
 	}
 
@@ -635,12 +635,12 @@ double octaves;
 		/* add in ``octaves''  remainder
 		 * ``i''  and spatial freq. are preset in loop above
 		 */
-            value += remainder * noise_perlin( pt ) * spec_wgts[i];
+            value += remainder * bn_noise_perlin( pt ) * spec_wgts[i];
 	}
 
 	return( value );
 
-} /* noise_fbm() */
+} /* bn_noise_fbm() */
 
 
 /*
@@ -705,7 +705,7 @@ double octaves;
 	/* inner loop of spectral construction */
 	oct=(int)octaves; /* save repeating double->int cast */
 	for (i=0 ; i < oct ; i++) {
-		value += fabs(noise_perlin( pt )) * spec_wgts[i];
+		value += fabs(bn_noise_perlin( pt )) * spec_wgts[i];
 		PSCALE(pt, lacunarity);
 	}
 
@@ -714,7 +714,7 @@ double octaves;
 		/* add in ``octaves''  remainder
 		 * ``i''  and spatial freq. are preset in loop above
 		 */
-            value += remainder * noise_perlin( pt ) * spec_wgts[i];
+            value += remainder * bn_noise_perlin( pt ) * spec_wgts[i];
 	}
 #else
 	PCOPY(pt, point);	
@@ -724,7 +724,7 @@ double octaves;
 
 	oct=(int)octaves; /* save repeating double->int cast */
 	for (i=0 ; i < oct ; i++) {
-		value += fabs(noise_perlin( pt )) * pow(frequency, -h_val);
+		value += fabs(bn_noise_perlin( pt )) * pow(frequency, -h_val);
 		frequency *= lacunarity;
 		PSCALE(pt, lacunarity);
 	}
@@ -734,12 +734,12 @@ double octaves;
 		/* add in ``octaves''  remainder
 		 * ``i''  and spatial freq. are preset in loop above
 		 */
-            value += remainder * noise_perlin( pt ) * pow(frequency, -h_val);
+            value += remainder * bn_noise_perlin( pt ) * pow(frequency, -h_val);
 	}
 #endif
 	return( value );
 
-} /* noise_turb() */
+} /* bn_noise_turb() */
 
 /***********************************************************************
  *
@@ -776,7 +776,7 @@ double offset;
 
 	
 	/* get first octave */
-	signal = noise_perlin(pt);
+	signal = bn_noise_perlin(pt);
 
 	/* get absolute value of signal (this creates the ridges) */
 	if (signal < 0.0) signal = -signal;
@@ -794,7 +794,7 @@ double offset;
 	for (i=1 ; i < octaves ; i++ ) {
 		PSCALE(pt, lacunarity);
 
-		signal = noise_perlin(pt);
+		signal = bn_noise_perlin(pt);
 
 		if (signal < 0.0) signal = - signal;
 		signal = offset - signal;
@@ -842,7 +842,7 @@ double offset;
 	spec_wgts = ep->spec_wgts;
 	offset = 1.0;
 
-	result = (noise_perlin(pt) + offset) * spec_wgts[0];
+	result = (bn_noise_perlin(pt) + offset) * spec_wgts[0];
 	weight = result;
 
 	for (i=1 ; i < octaves ; i++) {
@@ -850,9 +850,9 @@ double offset;
 
 		if (weight > 1.0) weight = 1.0;
 
-		signal = ( noise_perlin(pt) + offset ) * spec_wgts[i];
+		signal = ( bn_noise_perlin(pt) + offset ) * spec_wgts[i];
 
-		signal += fabs(noise_perlin( pt )) * pow(frequency, -h_val);
+		signal += fabs(bn_noise_perlin( pt )) * pow(frequency, -h_val);
 		frequency *= lacunarity;
 		PSCALE(pt, lacunarity);
 	}

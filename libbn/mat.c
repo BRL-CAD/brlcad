@@ -247,8 +247,8 @@ CONST mat_t	c;
 {
 	mat_t	t;
 
-	mat_mul( t, b, c );
-	mat_mul( o, a, t );
+	bn_mat_mul( t, b, c );
+	bn_mat_mul( o, a, t );
 }
 
 /*
@@ -268,9 +268,9 @@ CONST mat_t	d;
 {
 	mat_t	t, u;
 
-	mat_mul( u, c, d );
-	mat_mul( t, a, b );
-	mat_mul( o, t, u );
+	bn_mat_mul( u, c, d );
+	bn_mat_mul( t, a, b );
+	bn_mat_mul( o, t, u );
 }
 
 /*

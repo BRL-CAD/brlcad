@@ -599,7 +599,7 @@ bn_cmd_noise_perlin(ClientData clientData,
 	pt[Y] = atof(argv[2]);
 	pt[Z] = atof(argv[3]);
 
-	v = noise_perlin( pt );
+	v = bn_noise_perlin( pt );
 	sprintf(interp->result, "%g", v );
 
 	return TCL_OK;
