@@ -71,7 +71,7 @@ char	**nargv,
 			return(EOF);
 		}
 	}				/* option letter okay? */
-	if ((optopt = (int)*place++) == (int)':' || !(oli = index(ostr,optopt))) {
+	if ((optopt = (int)*place++) == (int)':' || !(oli = strchr(ostr,optopt))) {
 		if(*place == '\0') {
 			++optind;
 			place = EMSG;
