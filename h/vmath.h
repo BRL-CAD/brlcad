@@ -1035,7 +1035,13 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
  *  Macros for dealing with 3-D "extents" represented as axis-aligned
  *  right parallelpipeds (RPPs).
  *  This is stored as two points:  a min point, and a max point.
+ *  RPP 1 is defined by lo1, hi1, RPP 2 by lo2, hi2.
  */
+
+/* Compare two extents represented as RPPs. If they are disjoint, return true */
+#define V3RPP_DISJOINT(_l1, _h1, _l2, _h2) \
+      ( (_l1)[X] > (_h2)[X] || (_l1)[Y] > (_h2)[Y] || (_l1)[Z] > (_h2)[Z] || \
+	(_l2)[X] > (_h1)[X] || (_l2)[Y] > (_h1)[Y] || (_l2)[Z] > (_h1)[Z] )
 
 /* Compare two extents represented as RPPs. If they overlap, return true */
 #define V3RPP_OVERLAP(_l1, _h1, _l2, _h2) \
@@ -1051,7 +1057,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	(_l2)[Y] > (_h1)[Y] + (_t)->dist || \
 	(_l2)[Z] > (_h1)[Z] + (_t)->dist ) )
 
-/* Is the point within the RPP? */
+/* Is the point within or on the boundary of the RPP? */
 #define V3PT_IN_RPP(_pt, _lo, _hi)	( \
 	(_pt)[X] >= (_lo)[X] && (_pt)[X] <= (_hi)[X] && \
 	(_pt)[Y] >= (_lo)[Y] && (_pt)[Y] <= (_hi)[Y] && \
