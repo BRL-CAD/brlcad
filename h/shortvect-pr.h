@@ -22,7 +22,7 @@
  *
  *  @(#)$Header$ (BRL)
  */
-#if __STDC__ || defined(CRAY)
+#if __STDC__
 #	if defined(CRAY)
 #		pragma shortloop
 #	endif

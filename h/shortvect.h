@@ -35,6 +35,8 @@
  *
  *  @(#)$Header$ (BRL)
  */
-#if defined(__STDC__) || defined(CRAY)
+#if __STDC__
 #	include "shortvect-prag.h"
+#else
+	/* convex? */
 #endif
