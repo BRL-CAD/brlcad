@@ -70,6 +70,7 @@ struct dm {
 	char	*dmr_name;		/* short name of device */
 	char	*dmr_lname;		/* long name of device */
 	struct mem_map *dmr_map;	/* displaylist mem map */
+	int	(*dmr_cmd)();		/* dm-specific cmds to perform */
 };
 extern struct dm *dmp;			/* ptr to current display mgr */
 
