@@ -10,13 +10,11 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  *
- * @(#) tcl.h 1.150 95/06/08 10:55:57
+ * @(#) tcl.h 1.153 95/06/27 15:42:31
  */
 
 #ifndef _TCL
 #define _TCL
-
-#define TCL_LIBRARY "/usr/brlcad/tcl"
 
 #ifndef BUFSIZ
 #include <stdio.h>
@@ -38,9 +36,9 @@
 #   define _ANSI_ARGS_(x)	x
 #   define CONST const
 #   ifdef __cplusplus
-#       define VARARGS (...)
+#       define VARARGS(first) (first, ...)
 #   else
-#       define VARARGS ()
+#       define VARARGS(first) ()
 #   endif
 #else
 #   define _ANSI_ARGS_(x)	()
@@ -451,7 +449,8 @@ EXTERN void		Tcl_AddErrorInfo _ANSI_ARGS_((Tcl_Interp *interp,
 EXTERN void		Tcl_AllowExceptions _ANSI_ARGS_((Tcl_Interp *interp));
 EXTERN void		Tcl_AppendElement _ANSI_ARGS_((Tcl_Interp *interp,
 			    char *string));
-EXTERN void		Tcl_AppendResult _ANSI_ARGS_(VARARGS);
+EXTERN void		Tcl_AppendResult _ANSI_ARGS_(
+			    VARARGS(Tcl_Interp *interp));
 EXTERN int		Tcl_AppInit _ANSI_ARGS_((Tcl_Interp *interp));
 EXTERN void		Tcl_AsyncMark _ANSI_ARGS_((Tcl_AsyncHandler async));
 EXTERN Tcl_AsyncHandler	Tcl_AsyncCreate _ANSI_ARGS_((Tcl_AsyncProc *proc,
@@ -582,7 +581,8 @@ EXTERN int		Tcl_ScanElement _ANSI_ARGS_((char *string,
 			    int *flagPtr));
 EXTERN int		Tcl_SetCommandInfo _ANSI_ARGS_((Tcl_Interp *interp,
 			    char *cmdName, Tcl_CmdInfo *infoPtr));
-EXTERN void		Tcl_SetErrorCode _ANSI_ARGS_(VARARGS);
+EXTERN void		Tcl_SetErrorCode _ANSI_ARGS_(
+			    VARARGS(Tcl_Interp *interp));
 EXTERN int		Tcl_SetRecursionLimit _ANSI_ARGS_((Tcl_Interp *interp,
 			    int depth));
 EXTERN void		Tcl_SetResult _ANSI_ARGS_((Tcl_Interp *interp,
@@ -624,7 +624,7 @@ EXTERN int		Tcl_UpVar _ANSI_ARGS_((Tcl_Interp *interp,
 EXTERN int		Tcl_UpVar2 _ANSI_ARGS_((Tcl_Interp *interp,
 			    char *frameName, char *part1, char *part2,
 			    char *localName, int flags));
-EXTERN int		Tcl_VarEval _ANSI_ARGS_(VARARGS);
+EXTERN int		Tcl_VarEval _ANSI_ARGS_(VARARGS(Tcl_Interp *interp));
 EXTERN ClientData	Tcl_VarTraceInfo _ANSI_ARGS_((Tcl_Interp *interp,
 			    char *varName, int flags,
 			    Tcl_VarTraceProc *procPtr,
