@@ -487,11 +487,9 @@ CONST mat_t			mat;
 	union record	*rp;
 	register struct rt_ebm_internal *eip;
 	struct rt_vls	str;
-	FILE		*fp;
 	int		nbytes;
 	register int	y;
 	mat_t		tmat;
-	int		ret;
 	struct rt_mapped_file	*mp;
 	unsigned char	*cp;
 
@@ -1213,18 +1211,16 @@ CONST struct rt_tess_tol *ttol;
 struct rt_tol		*tol;
 {
 	struct rt_ebm_internal	*eip;
-	struct shell	*s,*s2;
+	struct shell	*s;
 	struct faceuse	*fu=(struct faceuse*)NULL;
 	register int	i; 
 	struct vertex	***vertp;	/* dynam array of ptrs to pointers */
 	struct vertex	**loop_verts;
 	struct ebm_edge	edges;		/* list of edges */
 	struct ebm_edge *e,*start_loop;
-	long 		**trans_tbl;
 	int		start,x,y,left;
 	int		max_loop_length;
 	int		loop_length;
-	int		start_x,start_y;
 	vect_t		height,h;
 
 	RT_CK_TOL( tol );
@@ -1302,8 +1298,6 @@ struct rt_tol		*tol;
 	e = RT_LIST_FIRST( ebm_edge , &edges.l );
 	while( RT_LIST_NOT_HEAD( &e->l , &edges.l ) )
 	{
-		vect_t normal;
-
 		start_loop = e;
 		loop_length = 0;
 		vertp[loop_length++] = &start_loop->v;
@@ -1350,8 +1344,6 @@ struct rt_tol		*tol;
 				}
 				else
 				{
-					struct faceuse *fu2;
-
 					/* make a hole */
 					for( i=0 ; i<loop_length ; i++ )
 					{
@@ -1361,7 +1353,7 @@ struct rt_tol		*tol;
 							loop_verts[i] = (struct vertex *)NULL;
 					}
 
-					fu2 = nmg_add_loop_to_face( s , fu , loop_verts ,
+					(void) nmg_add_loop_to_face( s , fu , loop_verts ,
 							loop_length , OT_OPPOSITE );
 
 					/* Assign geometry to new vertices */

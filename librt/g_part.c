@@ -703,9 +703,6 @@ register struct curvature *cvp;
 register struct hit	*hitp;
 struct soltab		*stp;
 {
-	register struct part_specific *part =
-		(struct part_specific *)stp->st_specific;
-
  	cvp->crv_c1 = cvp->crv_c2 = 0;
 
 	/* any tangent direction */

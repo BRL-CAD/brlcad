@@ -248,9 +248,6 @@ register struct hit	*hitp;
 struct soltab		*stp;
 register struct xray	*rp;
 {
-	register struct nmg_specific *nmg =
-		(struct nmg_specific *)stp->st_specific;
-
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 }
 
@@ -359,7 +356,6 @@ CONST struct rt_tess_tol *ttol;
 CONST struct rt_tol	*tol;
 {
 	LOCAL struct model	*lm;
-	struct nmgregion	*lr;
 
 	NMG_CK_MODEL(m);
 
@@ -1122,9 +1118,7 @@ double		local2mm;
 		{
 			struct face_g_snurb	*fg = (struct face_g_snurb *)ip;
 			struct disk_face_g_snurb	*d;
-			int	relpos;
 
-			relpos = ecnt[index].first_fastf_relpos;
 			d = &((struct disk_face_g_snurb *)op)[oindex];
 			NMG_CK_FACE_G_SNURB(fg);
 			PUTMAGIC( DISK_FACE_G_SNURB_MAGIC );
@@ -2481,8 +2475,6 @@ double			mm2local;
 {
 	register struct model	*m =
 		(struct model *)ip->idb_ptr;
-	struct nmg_struct_counts	count;
-	long			**ptrs;
 
 	NMG_CK_MODEL(m);
 	rt_vls_printf( str, "n-Manifold Geometry solid (NMG) maxindex=%d\n",
@@ -2491,6 +2483,9 @@ double			mm2local;
 	if( !verbose )  return(0);
 
 #if 0
+	{
+	struct nmg_struct_counts	count;
+	long			**ptrs;
 	/* This really is not useful for the MGED overlay! */
 	ptrs = nmg_m_struct_count( &count, m );
 
@@ -2498,6 +2493,7 @@ double			mm2local;
 	nmg_vls_struct_counts( str, &count );
 
 	rt_free( (char *)ptrs, "struct_count *ptrs[]" );
+	}
 #endif
 
 	return(0);
