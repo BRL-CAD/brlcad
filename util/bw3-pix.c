@@ -24,6 +24,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#include "machine.h"
 
 unsigned char	obuf[3*1024];
 unsigned char	red[1024], green[1024], blue[1024];
