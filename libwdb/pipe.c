@@ -111,7 +111,7 @@ register struct wdb_pipeseg	*headp;
 {
 	register struct wdb_pipeseg	*wp;
 
-	while( RT_LIST_LOOP( wp, wdb_pipeseg, &headp->l ) )  {
+	while( RT_LIST_WHILE( wp, wdb_pipeseg, &headp->l ) )  {
 		RT_LIST_DEQUEUE( &wp->l );
 		rt_free( (char *)wp, "mk_pipe_free" );
 	}
