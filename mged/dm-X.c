@@ -96,8 +96,10 @@ static Tcl_Interp *xinterp;
 static Tk_Window xtkwin;
 static int XdoMotion = 0;
 
-static XColor *black, *white, *yellow, *red, *blue, *gray;
-static XColor *bd, *bg, *fg;
+static Display	*dpy;			/* X display pointer */
+static Window	win;			/* X window */
+static unsigned long black,gray,white,yellow,red,blue;
+static unsigned long bd, bg, fg;   /*color of border, background, foreground */
 
 static GC	gc;			/* X Graphics Context */
 static int	is_monochrome = 0;
@@ -163,13 +165,7 @@ X_open()
 void
 X_close()
 {
-    Tk_FreeColor(gray);
-    Tk_FreeColor(blue);
-    Tk_FreeColor(yellow);
-    Tk_FreeColor(red);
-    Tk_FreeColor(white);
-    Tk_FreeColor(black);
-    XFreeGC(Tk_Display(xtkwin), gc);
+    XFreeGC(dpy, gc);
     Tk_DestroyWindow(xtkwin);
     Tcl_DeleteInterp(xinterp);
 }
@@ -185,7 +181,7 @@ X_prolog()
     if( !dmaflag )
 	return;
 
-    XClearWindow(Tk_Display(xtkwin), Tk_WindowId(xtkwin));
+    XClearWindow(dpy, win);
 
     /* Put the center point up */
     draw( 0, 0, 0, 0 );
@@ -198,7 +194,7 @@ void
 X_epilog()
 {
     /* Prevent lag between events and updates */
-    XSync(Tk_Display(xtkwin), 0);
+    XSync(dpy, 0);
     return;
 }
 
@@ -242,11 +238,6 @@ int white_flag;
     int	x, y;
     int	lastx = 0;
     int	lasty = 0;
-    Display *dpy;
-    Window win;
-
-    dpy = Tk_Display(xtkwin);
-    win = Tk_WindowId(xtkwin);
 
     XChangeGC(dpy, gc, GCForeground, &gcv);
 
@@ -296,9 +287,9 @@ int white_flag;
 		    continue; /* omit this point (ugh) */
 		/* Integerize and let the X server do the clipping */
 		/*XXX Color */
-		gcv.foreground = fg->pixel;
+		gcv.foreground = fg;
 		if( white_flag && !is_monochrome )  {
-		    gcv.foreground = white->pixel;
+		    gcv.foreground = white;
 		}
 		XChangeGC( dpy, gc, GCForeground, &gcv );
 		
@@ -382,8 +373,7 @@ X_normal()
 void
 X_update()
 {
-    XSync(Tk_Display(xtkwin), 0);
-/*    XFlush(Tk_Display(xtkwin));*/
+    XFlush(dpy);
 }
 
 /*
@@ -402,24 +392,24 @@ register char *str;
 
 	switch( color )  {
 	case DM_BLACK:
-		fg = black->pixel;
+		fg = black;
 		break;
 	case DM_RED:
-		fg = red->pixel;
+		fg = red;
 		break;
 	case DM_BLUE:
-		fg = blue->pixel;
+		fg = blue;
 		break;
 	default:
 	case DM_YELLOW:
-		fg = yellow->pixel;
+		fg = yellow;
 		break;
 	case DM_WHITE:
-		fg = gray->pixel;
+		fg = gray;
 		break;
 	}
 	gcv.foreground = fg;
-	XChangeGC( Tk_Display(xtkwin), gc, GCForeground, &gcv );
+	XChangeGC( dpy, gc, GCForeground, &gcv );
 	label( (double)x, (double)y, str );
 }
 
@@ -435,19 +425,17 @@ int dashed;
 {
     XGCValues gcv;
 
-    gcv.foreground = yellow->pixel;
-    XChangeGC( Tk_Display(xtkwin), gc, GCForeground, &gcv );
+    gcv.foreground = yellow;
+    XChangeGC( dpy, gc, GCForeground, &gcv );
     if( dashed ) {
-	XSetLineAttributes(Tk_Display(xtkwin),
-			   gc, 1, LineOnOffDash, CapButt, JoinMiter );
+	XSetLineAttributes(dpy, gc, 1, LineOnOffDash, CapButt, JoinMiter );
     } else {
-	XSetLineAttributes(Tk_Display(xtkwin),
-			   gc, 1, LineSolid, CapButt, JoinMiter );
+	XSetLineAttributes(dpy, gc, 1, LineSolid, CapButt, JoinMiter );
     }
     draw( x1, y1, x2, y2 );
 }
 
-void
+int
 Xdoevent(clientData, eventPtr)
 ClientData clientData;
 XEvent *eventPtr;
@@ -456,22 +444,20 @@ XEvent *eventPtr;
     char keybuf[4];
     int cnt;
     XComposeStatus compose_stat;
-    Display *dpy;
-    Window win;
 
-    dpy = Tk_Display(xtkwin);
-    win = Tk_WindowId(xtkwin);
+    if (eventPtr->xany.window != win)
+	return 0;
 
     if (eventPtr->type == Expose || eventPtr->type == ConfigureNotify) {
 	if (eventPtr->xexpose.count == 0) {
 	    height = Tk_Height(xtkwin);
 	    width = Tk_Width(xtkwin);
-	    rt_vls_printf( &dm_values.dv_string, "refresh\n");
+	    rt_vls_printf( &dm_values.dv_string, "refresh\n" );
 	}
     } else if( eventPtr->type == MotionNotify ) {
 	int	x, y;
 	if ( !XdoMotion )
-	    return;
+	    return 1;
 	x = (eventPtr->xmotion.x/(double)width - 0.5) * 4095;
 	y = (0.5 - eventPtr->xmotion.y/(double)height) * 4095;
 	rt_vls_printf( &dm_values.dv_string, "M 0 %d %d\n", x, y );
@@ -602,8 +588,10 @@ F	Toggle faceplate\n\
 	    }
 	}
     } else {
-/* 	rt_log( "Unknown event type\n" ) */;
+	return 1;
     }
+
+    return 1;
 }
 	    
 /*
@@ -709,7 +697,7 @@ X_colorchange()
 void
 X_debug(lvl)
 {
-	XFlush(Tk_Display(xtkwin));
+	XFlush(dpy);
 	rt_log("flushed\n");
 }
 
@@ -745,11 +733,9 @@ int	x2, y2;		/* to point */
 	sy2 = GED_TO_Xy( y2 );
 
 	if( sx1 == sx2 && sy1 == sy2 )
-		XDrawPoint(Tk_Display(xtkwin), Tk_WindowId(xtkwin),
-			   gc, sx1, sy1 );
+		XDrawPoint( dpy, win, gc, sx1, sy1 );
 	else
-		XDrawLine(Tk_Display(xtkwin), Tk_WindowId(xtkwin),
-			  gc, sx1, sy1, sx2, sy2 );
+		XDrawLine( dpy, win, gc, sx1, sy1, sx2, sy2 );
 }
 
 static void
@@ -765,8 +751,7 @@ char	*str;
 	/* The following makes the menu look good, the rest bad */
 	/*sy += (fontstruct->max_bounds.ascent + fontstruct->max_bounds.descent)/2;*/
 
-	XDrawString( Tk_Display(xtkwin), Tk_WindowId(xtkwin),
-		    gc, sx, sy, str, strlen(str) );
+	XDrawString( dpy, win, gc, sx, sy, str, strlen(str) );
 }
 
 #define	FONT	"6x10"
@@ -805,63 +790,115 @@ char	*name;
 	return -1;
     }
 
+    dpy = Tk_Display(xtkwin);
+    
+    Tk_GeometryRequest(xtkwin, width+10, height+10);
+    Tk_MakeWindowExist(xtkwin);
+
+    win = Tk_WindowId(xtkwin);
+
     /* Get colormap indices for the colors we use. */
-    black  = Tk_GetColor(xinterp, xtkwin, Tk_GetUid("black"));
-    white  = Tk_GetColor(xinterp, xtkwin, Tk_GetUid("white"));
-    red    = Tk_GetColor(xinterp, xtkwin, Tk_GetUid("red"));
-    yellow = Tk_GetColor(xinterp, xtkwin, Tk_GetUid("yellow"));
-    blue   = Tk_GetColor(xinterp, xtkwin, Tk_GetUid("blue"));
-    gray   = Tk_GetColor(xinterp, xtkwin, Tk_GetUid("gray"));
+
+    a_screen = Tk_ScreenNumber(xtkwin);
+    a_visual = Tk_Visual(xtkwin);
+
+    /* Get color map inddices for the colors we use. */
+    black = BlackPixel( dpy, a_screen );
+    white = WhitePixel( dpy, a_screen );
+
+    a_cmap = Tk_Colormap(xtkwin);
+    a_color.red = 255<<8;
+    a_color.green=0;
+    a_color.blue=0;
+    a_color.flags = DoRed | DoGreen| DoBlue;
+    if ( ! XAllocColor(dpy, a_cmap, &a_color)) {
+	rt_log( "dm-X: Can't Allocate red\n");
+	return -1;
+    }
+    red = a_color.pixel;
+    if ( red == white ) red = black;
+
+    a_color.red = 200<<8;
+    a_color.green=200<<8;
+    a_color.blue=0<<8;
+    a_color.flags = DoRed | DoGreen| DoBlue;
+    if ( ! XAllocColor(dpy, a_cmap, &a_color)) {
+	rt_log( "dm-X: Can't Allocate yellow\n");
+	return -1;
+    }
+    yellow = a_color.pixel;
+    if (yellow == white) yellow = black;
+    
+    a_color.red = 0;
+    a_color.green=0;
+    a_color.blue=255<<8;
+    a_color.flags = DoRed | DoGreen| DoBlue;
+    if ( ! XAllocColor(dpy, a_cmap, &a_color)) {
+	rt_log( "dm-X: Can't Allocate blue\n");
+	return -1;
+    }
+    blue = a_color.pixel;
+    if (blue == white) blue = black;
+
+    a_color.red = 128<<8;
+    a_color.green=128<<8;
+    a_color.blue= 128<<8;
+    a_color.flags = DoRed | DoGreen| DoBlue;
+    if ( ! XAllocColor(dpy, a_cmap, &a_color)) {
+	rt_log( "dm-X: Can't Allocate gray\n");
+	return -1;
+    }
+    gray = a_color.pixel;
+    if (gray == white) gray = black;
 
     /* Select border, background, foreground colors,
      * and border width.
      */
-
-    if (Tk_Visual(xtkwin)->class == GrayScale ||
-	Tk_Visual(xtkwin)->class == StaticGray)  {
+    if( a_visual->class == GrayScale || a_visual->class == StaticGray )  {
 	is_monochrome = 1;
-	bd = black;
-	bg = white;
-	fg = black;
+	bd = BlackPixel( dpy, a_screen );
+	bg = WhitePixel( dpy, a_screen );
+	fg = BlackPixel( dpy, a_screen );
     } else {
 	/* Hey, it's a color server.  Ought to use 'em! */
 	is_monochrome = 0;
-	bd = white;
-	bg = black;
-	fg = white;
+	bd = WhitePixel( dpy, a_screen );
+	bg = BlackPixel( dpy, a_screen );
+	fg = WhitePixel( dpy, a_screen );
     }
 
-    if (!is_monochrome && fg != red && red != black) fg = red;
+    if( !is_monochrome && fg != red && red != black )  fg = red;
 
-    Tk_GeometryRequest(xtkwin, width+10, height+10);
-    Tk_SetWindowBackground(xtkwin, black->pixel);
-    Tk_MakeWindowExist(xtkwin);
+    gcv.foreground = fg;
+    gcv.background = bg;
 
-    gcv.foreground = fg->pixel;
-    gcv.background = bg->pixel;
 #ifndef CRAY2
     cp = FONT;
-    if ((fontstruct = XLoadQueryFont(Tk_Display(xtkwin), cp)) == NULL ) {
+    if ((fontstruct = XLoadQueryFont(dpy, cp)) == NULL ) {
 	/* Try hardcoded backup font */
-	if ((fontstruct = XLoadQueryFont(Tk_Display(xtkwin), FONT2)) == NULL) {
+	if ((fontstruct = XLoadQueryFont(dpy, FONT2)) == NULL) {
 	    rt_log( "dm-X: Can't open font '%s' or '%s'\n", cp, FONT2 );
 	    return -1;
 	}
     }
     gcv.font = fontstruct->fid;
-    gc = XCreateGC(Tk_Display(xtkwin), Tk_WindowId(xtkwin),
-		   (GCFont|GCForeground|GCBackground), &gcv );
+    gc = XCreateGC(dpy, win, (GCFont|GCForeground|GCBackground), &gcv);
 #else
-    gc = XCreateGC(Tk_Display(xtkwin), Tk_WindowId(xtkwin),
-		   (GCForeground|GCBackground), &gcv);
+    gc = XCreateGC(dpy, win, (GCForeground|GCBackground), &gcv);
 #endif
     
     /* Register the file descriptor with the Tk event handler */
-    Tk_CreateEventHandler(xtkwin,
-			  ExposureMask|ButtonPressMask|KeyPressMask|
-			  PointerMotionMask|StructureNotifyMask,
-			  Xdoevent, (ClientData)NULL);
-	
+#if 0
+    Tk_CreateEventHandler(xtkwin, ExposureMask|ButtonPressMask|KeyPressMask|
+			  PointerMotionMask
+/*			  |StructureNotifyMask|FocusChangeMask */,
+			  (void (*)())Xdoevent, (ClientData)NULL);
+
+#else
+    Tk_CreateGenericHandler(Xdoevent, (ClientData)NULL);
+#endif
+
+    Tk_SetWindowBackground(xtkwin, bg);
     Tk_MapWindow(xtkwin);
     return 0;
 }
