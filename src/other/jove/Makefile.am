@@ -24,7 +24,7 @@ SRCS = \
 	tune.c
 
 jove_SOURCES = \
-	$(SRCS)
+	$(SRCS) \
 	version.c
 
 jove_LDADD = @CURSES@
