@@ -1063,7 +1063,7 @@ char **argv;
   struct cmd_list *clp;
 
   if(argc != 2){
-    Tcl_AppendResult(interp, "Usage: cmd_init id", (char *)NULL);
+    Tcl_AppendResult(interp, "Usage: cmd_close id", (char *)NULL);
     return TCL_ERROR;
   }
 
@@ -1074,7 +1074,10 @@ char **argv;
       break;
 
   if(clp == &head_cmd_list){
-    Tcl_AppendResult(interp, "cmd_init: did not find ", argv[1], (char *)NULL);
+    if(!strcmp(argv[1], "mged"))
+      Tcl_AppendResult(interp, "cmd_close: not allowed to close \"mged\"", (char *)NULL);
+    else
+      Tcl_AppendResult(interp, "cmd_close: did not find \"", argv[1], "\"", (char *)NULL);
     return TCL_ERROR;
   }
 
