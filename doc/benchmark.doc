@@ -194,6 +194,7 @@ amsaa-seer	Gould PN 9080, w/MACCs, UTX 2.0, 4x4Mb mem boards
 ardec-3	Pyramid 90Mx, Dual-CPU, OSx 2.5, 16 Mbytes
 bob	Cray-2, SN 2009, 4.3ns clock
 patton	Cray X-MP/48, SN213, UNICOS 5.0, 8.5ns clock
+shpcrc2	IBM RS/6000, AIX 3.1
 slc1	Macintosh II, 68020, 68881, AUX 1.1, GCC 1.39
 spark	Gould PN 9050, no MACC, UTX 2.0, 2x4Mb mem boards
 sws2	Convex C120, 16 Mbytes, Convex Unix 6.2.32.2
@@ -653,6 +654,9 @@ Abs	vhs	1040.44	500.52	436.90	415.15	496.30	577.86	1
 _
 Abs	wilted	1556.66	800.18	722.95	708.21	858.90	929.38	1
 *vgr	wilted	11.36	11.93	12.89	13.27	12.15	12.32
+_
+Abs	shpcrc2	2274.36	1041.79	915.99	854.30	1110.23	1239.33	1
+*vgr	shpcrc2	16.59	15.53	16.33	16.01	15.70	16.03
 _
 Abs	walrus	2291.38	1094.04	960.07	892.67	1066.31	1260.89	1
 *vgr	walrus	16.72	16.31	17.12	16.72	15.08	16.39
