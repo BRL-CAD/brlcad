@@ -145,7 +145,7 @@ char *av[];
 			scr_xoff, scr_yoff, scr_width, scr_height, &param);
 
 	/* Wait for print operation to complete */
-	ipu_acquire(dsp, 120);
+	ipu_acquire(dsp, 30 * copies);
 
 	dsclose(dsp);
 	return(0);
