@@ -35,6 +35,7 @@ static char RCSid[] = "$Header$";
 #include "./nirt.h"
 #include "./usrfmt.h"
 
+extern char	version[];		/* from vers.c */
 extern void	cm_libdebug();
 
 char		*db_name;	/* the name of the MGED file      */
@@ -157,6 +158,14 @@ char **argv;
 	printusage();
 	exit (1);
     }
+    if (isatty(0))
+    {
+	if (! silent_flag)
+	    (void) fputs(version + 5, stdout);	/* skip @(#) */
+    }
+    else
+	silent_flag = 1;
+
     if (use_of_air && (use_of_air != 1))
     {
 	fprintf(stderr,
@@ -164,8 +173,6 @@ char **argv;
 	use_of_air = 1;
     }
     db_name = argv[optind];
-    if (! isatty(0))
-	silent_flag = 1;
 
     /* build directory for target object */
     if (! silent_flag)
