@@ -206,8 +206,8 @@ struct frame *FreeFrame;
 		} \
 		bzero( (p), sizeof(struct frame) ); \
 		(p)->fr_magic = FRAME_MAGIC; \
-		RT_VLS_INIT( &(p)->fr_cmd ); \
-		RT_VLS_INIT( &(p)->fr_after_cmd ); \
+		rt_vls_init( &(p)->fr_cmd ); \
+		rt_vls_init( &(p)->fr_after_cmd ); \
 	}
 #define FREE_FRAME(p)	{ \
 	rt_vls_free( &(p)->fr_cmd ); \
@@ -983,9 +983,9 @@ FILE	*fp;
 	int		frame = 0;
 	struct frame	*fr;
 
-	RT_VLS_INIT( &prelude );
-	RT_VLS_INIT( &body );
-	RT_VLS_INIT( &finish );
+	rt_vls_init( &prelude );
+	rt_vls_init( &body );
+	rt_vls_init( &finish );
 
 	/* Once only, collect up any prelude */
 	while( (buf = rt_read_cmd( fp )) != (char *)0 )  {
@@ -1375,8 +1375,10 @@ register struct frame *fr;
 		perror( fr->fr_filename );
 
 	/* Do any after-frame commands */
-	(void)rt_do_cmd( (struct rt_i *)0,
-		RT_VLS_ADDR(&fr->fr_after_cmd), cmd_tab );
+	if( rt_vls_strlen( &fr->fr_after_cmd ) > 0 )  {
+		(void)rt_do_cmd( (struct rt_i *)0,
+			RT_VLS_ADDR(&fr->fr_after_cmd), cmd_tab );
+	}
 
 	destroy_frame( fr );
 
@@ -3018,7 +3020,7 @@ char	**argv;
 	int		len;
 	struct rt_vls	cmd;
 
-	RT_VLS_INIT( &cmd );
+	rt_vls_init( &cmd );
 	rt_vls_strcpy( &cmd, "opt " );
 	rt_vls_strcat( &cmd, argv[1] );
 	len = rt_vls_strlen( &cmd )+1;
@@ -3369,6 +3371,8 @@ char	**argv;
 	register struct servers *sp;
     	int	frame;
 	char	*s;
+	char	buf[48];
+	char	*state;
 
 	s = stamp();
 
@@ -3391,8 +3395,15 @@ char	**argv;
 			frame = -1;
 		}
 
+		if( sp->sr_state != SRST_READY )  {
+			state = state_to_string(sp->sr_state);
+		}  else  {
+			sprintf( buf, "Running%d",
+				server_q_len(sp) );
+			state = buf;
+		}
 		rt_log("  %8s %5d %7g %7g %5d %s\n",
-			state_to_string(sp->sr_state),
+			state,
 			sp->sr_lump,
 			sp->sr_l_elapsed,
 			sp->sr_w_elapsed,
