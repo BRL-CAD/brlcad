@@ -96,9 +96,9 @@
 #       ifndef __STDC__
 #               define __STDC__         1
 #               define USE_PROTOTYPES   1
-#               define HAVE_FLOAT_H     1
-#               define HAVE_LIMITS_H    1
 #       endif
+#       define HAVE_FLOAT_H     1
+#       define HAVE_LIMITS_H    1
 #endif
 
 #if IRIX == 5
