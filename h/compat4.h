@@ -145,15 +145,50 @@ extern "C" {
 #define RT_CK_MAPPED_FILE	BU_CK_MAPPED_FILE
 
 /* mat.c */
-#define rt_identity		mat_identity
-#define rt_mat_is_equal	mat_is_equal
-#define vtoh_move(_d,_s)	mat_vtoh_move(_d,_s)	/* compat */
-#define htov_move(_d,_s)	mat_htov_move(_d,_s)
-#define ae_vec(_az,_el,_vec)	mat_ae_vec(_az,_el,_vec)	/* compat */
+#define rt_identity		bn_mat_identity		/* compat */
+#define rt_mat_is_equal		bn_mat_is_equal		/* compat */
+#define vtoh_move(_d,_s)	bn_vtoh_move(_d,_s)	/* compat */
+#define htov_move(_d,_s)	bn_htov_move(_d,_s)	/* compat */
+#define ae_vec(_az,_el,_vec)	bn_ae_vec(_az,_el,_vec)	/* compat */
 #define eigen2x2(_val1,_val2,_vec1,_vec2,_a,_b,_c)	\
-	mat_eigen2x2(_val1,_val2,_vec1,_vec2,_a,_b,_c)	/* compat */
-#define vec_ortho(_d,_s)	mat_vec_ortho(_d,_s)	/* compat */
-#define vec_perp(_d,_s)		mat_vec_perp(_d,_s)	/* compat */
+	bn_eigen2x2(_val1,_val2,_vec1,_vec2,_a,_b,_c)	/* compat */
+#define vec_ortho(_d,_s)	bn_vec_ortho(_d,_s)	/* compat */
+#define vec_perp(_d,_s)		bn_vec_perp(_d,_s)	/* compat */
+
+#define mat_degtorad	bn_degtorad			/* const.c */
+#define mat_radtodeg	bn_radtodeg			/* const.c */
+#define	mat_identity	bn_mat_identity
+#define mat_print	bn_mat_print
+#define mat_atan2	bn_atan2
+#define mat_zero	bn_mat_zero
+#define mat_idn		bn_mat_idn
+#define mat_copy	bn_mat_copy
+#define mat_mul		bn_mat_mul
+#define mat_mul2	bn_mat_mul2
+#define matXvec		bn_matXvec
+#define mat_inv		bn_mat_inv
+#define mat_vtoh_move	bn_vtoh_move
+#define mat_htov_move	bn_htov_move
+#define mat_trn		bn_mat_trn
+#define mat_ae		bn_mat_ae
+#define mat_ae_vec	bn_ae_vec
+#define mat_aet_vec	bn_aet_vec
+#define mat_angles	bn_mat_angles
+#define mat_eigen2x2	bn_eigen2x2
+#define mat_vec_perp	bn_vec_perp
+#define mat_fromto	bn_mat_fromto
+#define mat_xrot	bn_mat_xrot
+#define mat_yrot	bn_mat_yrot
+#define mat_zrot	bn_mat_zrot
+#define mat_lookat	bn_mat_lookat
+#define mat_vec_ortho	bn_vec_ortho
+#define mat_scale_about_pt	bn_mat_scale_about_pt
+#define mat_xform_about_pt	bn_mat_xform_about_pt
+#define mat_is_identity	bn_mat_is_identity
+#define mat_arb_rot	bn_mat_arb_rot
+#define mat_dup		bn_mat_dup
+#define mat_is_equal	bn_mat_is_equal
+
 
 /* msr.c */
 #define msr_unif_init	bn_unif_init

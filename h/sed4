@@ -241,7 +241,7 @@ g/mat_angles/s//bn_mat_angles/g
 g/mat_arb_rot/s//bn_mat_arb_rot/g
 g/mat_atan2/s//bn_atan2/g
 g/mat_copy/s//bn_mat_copy/g
-g/mat_degtorad/s//bn_mat_degtorad/g
+g/mat_degtorad/s//bn_degtorad/g
 g/mat_dup/s//bn_mat_dup/g
 g/mat_eigen2x2/s//bn_eigen2x2/g
 g/mat_fromto/s//bn_mat_fromto/g
@@ -255,7 +255,7 @@ g/mat_lookat/s//bn_mat_lookat/g
 g/mat_mul/s//bn_mat_mul/g
 g/mat_mul2/s//bn_mat_mul2/g
 g/mat_print/s//bn_mat_print/g
-g/mat_radtodeg/s//bn_mat_radtodeg/g
+g/mat_radtodeg/s//bn_radtodeg/g
 g/mat_scale_about_pt/s//bn_mat_scale_about_pt/g
 g/mat_trn/s//bn_mat_trn/g
 g/mat_vec_ortho/s//bn_vec_ortho/g

@@ -141,70 +141,67 @@ typedef struct bn_complex {
 /*
  * 4x4 Matrix math
  */
+extern CONST mat_t 	bn_mat_identity;
 
-/* XXX Why aren't these bn_mat_whatever ?? */
-
-extern CONST mat_t mat_identity;
-
-BU_EXTERN(void		mat_print, (CONST char *title, CONST mat_t m));
-BU_EXTERN(double	mat_atan2, (double x, double y));
+BU_EXTERN(void		bn_mat_print, (CONST char *title, CONST mat_t m));
+BU_EXTERN(double	bn_atan2, (double x, double y));
 
 #if 0 /* deprecated for macros below */
-BU_EXTERN(void		mat_zero, (mat_t m));
-BU_EXTERN(void		mat_idn, (mat_t m));
-BU_EXTERN(void		mat_copy, (register mat_t dest,register CONST mat_t src));
+BU_EXTERN(void		bn_mat_zero, (mat_t m));
+BU_EXTERN(void		bn_mat_idn, (mat_t m));
+BU_EXTERN(void		bn_mat_copy, (register mat_t dest,register CONST mat_t src));
 #else
-#define	mat_zero( _m )	(void)memset( (void *)_m, 0, sizeof(mat_t))
-#define mat_idn( _m )	(void)memcpy( (void *)_m, mat_identity, sizeof(mat_t))
-#define mat_copy(_d,_s)	(void)memcpy( (void *)_d, _s, sizeof(mat_t))
+#define	bn_mat_zero( _m )	(void)memset( (void *)_m, 0, sizeof(mat_t))
+#define bn_mat_idn( _m )	(void)memcpy( (void *)_m, mat_identity, sizeof(mat_t))
+#define bn_mat_copy(_d,_s)	(void)memcpy( (void *)_d, _s, sizeof(mat_t))
 #endif /* deprecated */
 
-BU_EXTERN(void		mat_mul, (register mat_t o, register CONST mat_t a,
+BU_EXTERN(void		bn_mat_mul, (register mat_t o, register CONST mat_t a,
 					register CONST mat_t b));
-BU_EXTERN(void		mat_mul2, (register CONST mat_t i, register mat_t o));
-BU_EXTERN(void		mat_Xvec, (register hvect_t ov,
+BU_EXTERN(void		bn_mat_mul2, (register CONST mat_t i, register mat_t o));
+BU_EXTERN(void		bn_matXvec, (register hvect_t ov,
 					register CONST mat_t im,
 					register hvect_t iv));
-BU_EXTERN(void		mat_inv, (register mat_t output, CONST mat_t input));
-BU_EXTERN(void		mat_vtoh_move, (register vect_t h, 
+BU_EXTERN(void		bn_mat_inv, (register mat_t output, CONST mat_t input));
+BU_EXTERN(void		bn_vtoh_move, (register vect_t h, 
 					register CONST vect_t v));
-BU_EXTERN(void		mat_htov_move, (register vect_t v, 
+BU_EXTERN(void		bn_htov_move, (register vect_t v, 
 					register CONST vect_t h));
-BU_EXTERN(void		mat_trn, (mat_t om, register CONST mat_t im));
-BU_EXTERN(void		mat_ae, (register mat_t	m, double azimuth,
+BU_EXTERN(void		bn_mat_trn, (mat_t om, register CONST mat_t im));
+BU_EXTERN(void		bn_mat_ae, (register mat_t m, double azimuth,
 					double elev));
-BU_EXTERN(void		mat_ae_vec, (fastf_t *azp, fastf_t *elp, 
+BU_EXTERN(void		bn_ae_vec, (fastf_t *azp, fastf_t *elp, 
 					CONST vect_t v));
-BU_EXTERN(void 		mat_aet_vec, ( fastf_t *az, fastf_t *el, 
+BU_EXTERN(void 		bn_aet_vec, ( fastf_t *az, fastf_t *el, 
 					fastf_t *twist, vect_t vec_ae,
 					vect_t vec_twist, fastf_t accuracy));
 
-BU_EXTERN(void		mat_angles, (register mat_t mat, double alpha,
+BU_EXTERN(void		bn_mat_angles, (register mat_t mat, double alpha,
 					double beta, double ggamma ));
 
-BU_EXTERN(void		mat_eigen2x2, ( fastf_t	*val1, fastf_t *val2,
+BU_EXTERN(void		bn_eigen2x2, ( fastf_t	*val1, fastf_t *val2,
 					vect_t	vec1, vect_t vec2, fastf_t a,
 					fastf_t b, fastf_t c) );
 
-BU_EXTERN(void		mat_vec_perp, (vect_t new, CONST vect_t	old));
-BU_EXTERN(void		mat_fromto, ( mat_t m, CONST vect_t from,
+BU_EXTERN(void		bn_vec_perp, (vect_t new, CONST vect_t	old));
+BU_EXTERN(void		bn_mat_fromto, ( mat_t m, CONST vect_t from,
 					CONST vect_t to));
-BU_EXTERN(void		mat_xrot, (mat_t m, double sinx, double cosx));
-BU_EXTERN(void		mat_yrot, (mat_t m, double siny, double cosy));
-BU_EXTERN(void		mat_zrot, (mat_t m, double sinz, double cosz));
-BU_EXTERN(void		mat_lookat, (mat_t rot, CONST vect_t dir, int yflip));
-BU_EXTERN(void		mat_vec_ortho, (register vect_t out, 
+BU_EXTERN(void		bn_mat_xrot, (mat_t m, double sinx, double cosx));
+BU_EXTERN(void		bn_mat_yrot, (mat_t m, double siny, double cosy));
+BU_EXTERN(void		bn_mat_zrot, (mat_t m, double sinz, double cosz));
+BU_EXTERN(void		bn_mat_lookat, (mat_t rot, CONST vect_t dir, int yflip));
+BU_EXTERN(void		bn_vec_ortho, (register vect_t out, 
 					register CONST vect_t in));
-BU_EXTERN(int		mat_scale_about_pt, (mat_t mat, CONST point_t pt,
+BU_EXTERN(int		bn_mat_scale_about_pt, (mat_t mat, CONST point_t pt,
 					CONST double scale));
-BU_EXTERN(void		mat_xform_about_pt, (mat_t mat, 
+BU_EXTERN(void		bn_mat_xform_about_pt, (mat_t mat, 
 					CONST mat_t xform,
 					CONST point_t pt));
-BU_EXTERN(int		mat_is_identity, (CONST mat_t m));
-BU_EXTERN(void		mat_arb_rot, ( mat_t m, CONST point_t pt,
+BU_EXTERN(int		bn_mat_is_identity, (CONST mat_t m));
+BU_EXTERN(void		bn_mat_arb_rot, ( mat_t m, CONST point_t pt,
 					CONST vect_t dir, CONST fastf_t ang));
-BU_EXTERN(matp_t	mat_dup, (CONST mat_t	in));
-BU_EXTERN(int		mat_is_equal, (CONST mat_t a, CONST mat_t b, 
+BU_EXTERN(matp_t	bn_mat_dup, (CONST mat_t in));
+BU_EXTERN(int		bn_mat_is_equal, (CONST mat_t a, CONST mat_t b, 
 					CONST struct bn_tol *tol));
 
 /*----------------------------------------------------------------------*/
