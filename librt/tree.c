@@ -111,15 +111,20 @@ char *node;
 		 *  is encountered.  Build a special region for it.
 		 */
 		register struct region *regionp;	/* XXX */
+		register struct soltab *stp;
+
 		GETSTRUCT( regionp, region );
 		regionp->reg_active = REGION_NULL;
 		fprintf(stderr,"Warning:  Top level solid, region %s created\n",
 			path_str(0) );
 		if( curtree->tr_op != OP_SOLID )
 			rtbomb("root subtree not Solid");
-		curtree->tr_stp->st_regionp = regionp;
+		stp = curtree->tr_stp;
+		stp->st_regionp = regionp;
 		regionp->reg_treetop = curtree;
 		regionp->reg_name = strdup(path_str(0));
+		VMOVE( regionp->reg_min, stp->st_min );
+		VMOVE( regionp->reg_max, stp->st_max );
 		regionp->reg_forw = HeadRegion;
 		HeadRegion = regionp;
 		nregions++;
@@ -221,9 +226,9 @@ matp_t old_xlate;
 	auto long savepos;
 	auto int nparts;		/* Number of sub-parts to this comb */
 	auto int i;
-	auto union tree *curtree;	/* ptr to current tree top */
+	register union tree *curtree;	/* ptr to current tree top */
 	auto union tree *subtree;	/* ptr to subtree passed up */
-	auto struct region *regionp;
+	register struct region *regionp;
 
 	if( pathpos >= MAXLEVELS )  {
 		fprintf(stderr,"%s: nesting exceeds %d levels\n",
@@ -269,7 +274,7 @@ matp_t old_xlate;
 	regionp = argregion;
 	if( rec.c.c_flags == 'R' )  {
 		if( argregion != REGION_NULL )  {
-			fprintf(stderr,"Warning:  region %s within region %s (ignored)\n",
+			fprintf(stderr,"Warning:  region %s within region %s (ID ignored)\n",
 				path_str(pathpos), argregion->reg_name );
 		} else {
 			/* Start a new region here */
@@ -279,6 +284,10 @@ matp_t old_xlate;
 			regionp->reg_aircode = rec.c.c_aircode;
 			regionp->reg_material = rec.c.c_material;
 			regionp->reg_los = rec.c.c_los;
+			regionp->reg_max[X] = regionp->reg_max[Y] =
+				regionp->reg_max[Z] = -INFINITY;
+			regionp->reg_min[X] = regionp->reg_min[Y] =
+				regionp->reg_min[Z] =  INFINITY;
 		}
 	}
 	curtree = TREE_NULL;
@@ -325,6 +334,10 @@ matp_t old_xlate;
 			if(subtree->tr_op != OP_SOLID )
 				rtbomb("subtree not Solid");
 			subtree->tr_stp->st_regionp = regionp;
+			regionp->reg_max[X] = regionp->reg_max[Y] =
+				regionp->reg_max[Z] = -INFINITY;
+			regionp->reg_min[X] = regionp->reg_min[Y] =
+				regionp->reg_min[Z] =  INFINITY;
 		}
 
 		if( curtree == TREE_NULL )  {
@@ -350,6 +363,31 @@ matp_t old_xlate;
 			case INTERSECT:
 				xtp->tr_op = OP_INTERSECT; break;
 			}
+
+			/* Compute bounding RPP of full subtree */
+#define MINMAX(a,b,c)	{ if( (c) < (a) )  a = (c);\
+			if( (c) > (b) )  b = (c); }
+#define MM(v)		MINMAX( xtp->tr_min[X], xtp->tr_max[X], v[X] ); \
+			MINMAX( xtp->tr_min[Y], xtp->tr_max[Y], v[Y] ); \
+			MINMAX( xtp->tr_min[Z], xtp->tr_max[Z], v[Z] )
+			if( curtree->tr_op == OP_SOLID )  {
+				register vectp_t v = curtree->tr_stp->st_min;
+				VMOVE( xtp->tr_min, v );
+				v = curtree->tr_stp->st_max;
+				VMOVE( xtp->tr_max, v );
+			} else {
+				VMOVE( xtp->tr_min, curtree->tr_min );
+				VMOVE( xtp->tr_max, curtree->tr_max );
+			}
+			if( subtree->tr_op == OP_SOLID )  {
+				register vectp_t v = subtree->tr_stp->st_min;
+				MM( v );
+				v = subtree->tr_stp->st_max;
+				MM( v );
+			} else {
+				MM( subtree->tr_min );
+				MM( subtree->tr_max );
+			}
 			curtree = xtp;
 		}
 	}
@@ -360,6 +398,8 @@ matp_t old_xlate;
 			/* Region began at this level */
 			regionp->reg_treetop = curtree;
 			regionp->reg_name = strdup(path_str(pathpos));
+			VMOVE( regionp->reg_min, curtree->tr_min );
+			VMOVE( regionp->reg_max, curtree->tr_max );
 			regionp->reg_forw = HeadRegion;
 			HeadRegion = regionp;
 			nregions++;
@@ -403,6 +443,8 @@ register struct region *rp;
 	fprintf(stderr,"id=%d, air=%d, material=%d, los=%d\n",
 		rp->reg_regionid, rp->reg_aircode,
 		rp->reg_material, rp->reg_los );
+	VPRINT( "RPP min", rp->reg_min );
+	VPRINT( "RPP max", rp->reg_max );
 	pr_tree( rp->reg_treetop, 0 );
 	fprintf(stderr,"\n");
 }
