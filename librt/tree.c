@@ -120,23 +120,6 @@ union tree		*curtree;
 	}
 
 	/*
-	 *  Find region RPP, and update the model maxima and minima
-	 *
-	 *  Don't update min & max for halfspaces;  instead, add them
-	 *  to the list of infinite solids, for special handling.
-	 */
-	if( rt_bound_tree( curtree, region_min, region_max ) < 0 )  {
-		rt_log("rt_gettree_region_end() %s\n", rp->reg_name );
-		rt_bomb("rt_gettree_region_end(): rt_bound_tree() fail\n");
-	}
-	if( region_max[X] >= INFINITY )  {
-		/* skip infinite region */
-	} else {
-		VMINMAX( rt_tree_rtip->mdl_min, rt_tree_rtip->mdl_max, region_min );
-		VMINMAX( rt_tree_rtip->mdl_min, rt_tree_rtip->mdl_max, region_max );
-	}
-
-	/*
 	 *  Add a region and it's boolean tree to all the appropriate places.
 	 *  The	region and treetop are cross-linked, and the region is added
 	 *  to the linked list of regions.
@@ -152,7 +135,24 @@ union tree		*curtree;
 	if( rp->reg_mater.ma_override == 0 )
 		rt_region_color_map(rp);
 
+	/*
+	 *  Find region RPP, and update the model maxima and minima
+	 *
+	 *  Don't update min & max for halfspaces;  instead, add them
+	 *  to the list of infinite solids, for special handling.
+	 */
+	if( rt_bound_tree( curtree, region_min, region_max ) < 0 )  {
+		rt_log("rt_gettree_region_end() %s\n", rp->reg_name );
+		rt_bomb("rt_gettree_region_end(): rt_bound_tree() fail\n");
+	}
 	RES_ACQUIRE( &rt_g.res_results );	/* enter critical section */
+	if( region_max[X] >= INFINITY )  {
+		/* skip infinite region */
+	} else {
+		VMINMAX( rt_tree_rtip->mdl_min, rt_tree_rtip->mdl_max, region_min );
+		VMINMAX( rt_tree_rtip->mdl_min, rt_tree_rtip->mdl_max, region_max );
+	}
+
 	rp->reg_instnum = dp->d_uses++;
 
 	/* Add to linked list */
@@ -218,6 +218,7 @@ int			id;
 	have_match = 0;
 	RES_ACQUIRE( &rt_g.res_model );	/* enter critical section */
 	for( RT_LIST( stp, soltab, &(rt_tree_rtip->rti_headsolid) ) )  {
+		RT_CK_SOLTAB(stp);		/* sanity */
 		/* Leaf solids must be the same before comparing matrices */
 		if( dp != stp->st_dp )  continue;
 
@@ -280,18 +281,6 @@ next_one: ;
 	}
 	RT_CK_DB_INTERNAL( &intern );
 
-	if(rt_g.debug&DEBUG_SOLIDS)  {
-		struct rt_vls	str;
-		rt_vls_init( &str );
-		/* verbose=1, mm2local=1.0 */
-		if( rt_functab[id].ft_describe( &str, &intern, 1, 1.0 ) < 0 )  {
-			rt_log("rt_gettree_leaf(%s):  solid describe failure\n",
-				dp->d_namep );
-		}
-		rt_log( "%s:  %s", dp->d_namep, rt_vls_addr( &str ) );
-		rt_vls_free( &str );
-	}
-
     	/*
     	 *  If the ft_prep routine wants to keep the internal structure,
     	 *  that is OK, as long as idb_ptr is set to null.
@@ -304,7 +293,6 @@ next_one: ;
 		rt_free( (char *)stp, "struct soltab");
 		return( TREE_NULL );		/* BAD */
 	}
-    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
 	id = stp->st_id;	/* type may have changed in prep */
 
 	/*
@@ -315,7 +303,23 @@ next_one: ;
 	stp->st_bit = rt_tree_rtip->nsolids++;
 	RES_RELEASE( &rt_g.res_model );	/* leave critical section */
 
-	if(rt_g.debug&DEBUG_SOLIDS)  rt_pr_soltab( stp );
+#if 0
+	if(rt_g.debug&DEBUG_SOLIDS)  {
+		struct rt_vls	str;
+		rt_log("\n---Solid %d: %s\n", stp->st_bit, dp->d_namep);
+		rt_vls_init( &str );
+		/* verbose=1, mm2local=1.0 */
+		if( rt_functab[id].ft_describe( &str, &intern, 1, 1.0 ) < 0 )  {
+			rt_log("rt_gettree_leaf(%s):  solid describe failure\n",
+				dp->d_namep );
+		}
+		rt_log( "%s:  %s", dp->d_namep, rt_vls_addr( &str ) );
+		rt_vls_free( &str );
+	}
+#endif
+
+	/* Release internal version */
+    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
 
 found_it:
 	GETUNION( curtree, tree );
@@ -352,6 +356,11 @@ char		*node;
  *  			R T _ G E T T R E E S
  *
  *  User-called function to add a set of tree hierarchies to the active set.
+ *
+ *  Semaphores used for critical sections in parallel mode:
+ *	res_model	protects rti_headsolid & list
+ *	res_results	protects HeadRegion, mdl_min/max, d_uses, nregions
+ *	res_worker	(db_walk_dispatcher, from db_walk_tree)
  *  
  *  Returns -
  *  	0	Ordinarily
@@ -384,6 +393,15 @@ int		ncpus;
 		rt_gettree_leaf );
 
 	rt_tree_rtip = (struct rt_i *)0;	/* sanity */
+
+	if(rt_g.debug&DEBUG_SOLIDS)  {
+		register CONST struct soltab	*stp;
+		for( RT_LIST( stp, soltab, &(rtip->rti_headsolid) ) )  {
+			RT_CK_SOLTAB(stp);
+			rt_pr_soltab( stp );
+		}
+	}
+
 	if( i < 0 )  return(-1);
 
 	if( rtip->nsolids <= prev_sol_count )
