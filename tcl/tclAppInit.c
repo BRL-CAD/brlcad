@@ -1,18 +1,17 @@
 /* 
  * tclAppInit.c --
  *
- *	Provides a default version of the Tcl_AppInit procedure.
+ *	Provides a default version of the main program and Tcl_AppInit
+ *	procedure for Tcl applications (without Tk).
  *
  * Copyright (c) 1993 The Regents of the University of California.
- * Copyright (c) 1994 Sun Microsystems, Inc.
+ * Copyright (c) 1994-1995 Sun Microsystems, Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  */
 
-#ifndef lint
-static char sccsid[] = "@(#) tclAppInit.c 1.11 94/12/17 16:14:03";
-#endif /* not lint */
+static char sccsid[] = "@(#) tclAppInit.c 1.13 95/06/08 10:55:54";
 
 #include "tcl.h"
 
@@ -21,10 +20,8 @@ static char sccsid[] = "@(#) tclAppInit.c 1.11 94/12/17 16:14:03";
  * Sun shared libraries to be used for Tcl.
  */
 
-#ifdef NEED_MATHERR
 extern int matherr();
 int *tclDummyMathPtr = (int *) matherr;
-#endif
 
 /*
  *----------------------------------------------------------------------
@@ -48,7 +45,7 @@ main(argc, argv)
     int argc;			/* Number of command-line arguments. */
     char **argv;		/* Values of command-line arguments. */
 {
-    Tcl_Main(argc, argv);
+    Tcl_Main(argc, argv, Tcl_AppInit);
     return 0;			/* Needed only to prevent compiler warning. */
 }
 
