@@ -590,7 +590,9 @@ set help_data(apropos)		{{keyword}	{finds commands whose descriptions contain th
 set help_data(arb)		{{name rot fb}	{make arb8, rotation + fallback}}
 set help_data(arced)		{{a/b ...anim_command...}	{edit matrix or materials on combination's arc}}
 set help_data(area)		{{[endpoint_tolerance]}	{calculate presented area of view}}
-set help_data(attach)		{{[-d display_string] [-i init_script] [-n name]\n\t\t[-t is_toplevel]\n[-W width] [-N height]\n\t\t[-S square_size] dev_type}	{attach to a display manager}}
+set help_data(attach)		{{[-d display_string] [-i init_script] [-n name]
+	      [-t is_toplevel] [-W width] [-N height]
+	      [-S square_size] dev_type}	{attach to a display manager}}
 set help_data(B)		{{<objects>}	{clear screen, edit objects}}
 set help_data(bev)		{{[-t] [-P#] new_obj obj1 op obj2 op obj3 op ...}	{Boolean evaluation of objects via NMG's}}
 set help_data(c)		{{[-gr] comb_name [boolean_expr]}	{create or extend a combination using standard notation}}
@@ -702,7 +704,7 @@ set help_data(preview)		{{[-v] [-d sec_delay] rt_script_file}	{preview new style
 set help_data(press)		{{button_label}	{emulate button press}}
 set help_data(ps)		{{[-f font] [-t title] [-c creator] [-s size in inches] [-l linewidth] file}	{creates a postscript file of the current view}}
 set help_data(push)		{{object[s]}	{pushes object's path transformations to solids}}
-set help_data(putmat)		{{a/b \{I | m0 m1 ... m16\}}	{replace matrix on combination's arc}}
+set help_data(putmat)		{{a/b {I | m0 m1 ... m16}}	{replace matrix on combination's arc}}
 set help_data(q)		{{}	{quit}}
 set help_data(quit)		{{}	{quit}}
 set help_data(qorot)		{{x y z dx dy dz theta}	{rotate object being edited about specified vector}}
@@ -759,7 +761,7 @@ set help_data(vdraw)		{{write|insert|delete|read|length|show [args]}	{Expermenta
 set help_data(viewget)		{{center|size|eye|ypr|quat}	{Experimental - return high-precision view parameters.}}
 set help_data(viewset)		{{center|eye|size|ypr|quat|aet}	{Experimental - set several view parameters at once.}}
 set help_data(view2model)	{{mx my mz}	{convert point in view coords to model coords (mm)}}
-set help_data(vrmgr)		{{host \{master|slave|overview\}}	{link with Virtual Reality manager}}
+set help_data(vrmgr)		{{host {master|slave|overview}}	{link with Virtual Reality manager}}
 set help_data(vrot)		{{xdeg ydeg zdeg}	{rotate viewpoint}}
 set help_data(vrot_center)	{{v|m x y z}	{set center point of viewpoint rotation, in model or view coords}}
 set help_data(wcodes)		{{filename object(s)}	{write region ident codes to filename}}
@@ -781,14 +783,16 @@ proc help {args}	{
 	if {[llength $args] > 0}	{
 		set cmd [lindex $args 0]
 		if [info exists help_data($cmd)] {
-			puts "Usage: $cmd [lindex $help_data($cmd) 0]\n\t([lindex $help_data($cmd) 1])"
+			return "Usage: $cmd [lindex $help_data($cmd) 0]\n\t([lindex $help_data($cmd) 1])"
 		} else {
-			puts "Command not found: $cmd"
+			return "Command not found: $cmd"
 		}
 	} else {
 		foreach cmd [lsort [array names help_data]] {
-			puts "$cmd [lindex $help_data($cmd) 0]\n\t[lindex $help_data($cmd) 1]"
+			append info "$cmd [lindex $help_data($cmd) 0]\n\t[lindex $help_data($cmd) 1]\n"
 		}
+
+		return $info
 	}
 }
 
