@@ -15,7 +15,7 @@ nirt_srcs = \
 
 nirt_SOURCES = $(nirt_srcs) vers.c
 noinst_HEADERS = nirt.h usrfmt.h
-nirt_LDADD = @RT@ @BN@ @FB@
+nirt_LDADD = ${RT} ${BN} ${FB}
 nirt_CFLAGS = -DDFLT_SHELL=\"/bin/sh\"
 man_MANS = nirt.1 showshot.1
 EXTRA_DIST = $(man_MANS)

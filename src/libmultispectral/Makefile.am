@@ -11,6 +11,7 @@ libmultispectral_la_SOURCES = \
 	vers.c
 
 libmultispectral_la_LDFLAGS = -version-info 19:1
+libmultispectral_la_LIBADD = ${BU} ${TCL} ${RT}
 
 BUILT_SOURCES = vers.c
 vers.c: $(SRCS)

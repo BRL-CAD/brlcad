@@ -3,7 +3,7 @@
 bin_PROGRAMS = patch-g rpatch
 
 patch_g_SOURCES = patch-g.c
-patch_g_LDADD = @RT@ @WDB@
+patch_g_LDADD = ${RT} ${WDB}
 
 rpatch_SOURCES = rpatch.c
 

@@ -43,9 +43,9 @@ include_HEADERS = \
 
 dist_man_MANS = libfb.3
 
-AM_CFLAGS = @X_CFLAGS@ -DIF_REMOTE -DIF_AB -DIF_X -DIF_OGL
+AM_CFLAGS = ${X_CFLAGS} -DIF_REMOTE -DIF_AB -DIF_X -DIF_OGL
 
-libfb_la_LIBADD = @PKG@ @X_LIBS@ ${BU} ${GL_LIBS}
+libfb_la_LIBADD = ${PKG} ${X_LIBS} ${TCL} ${BU} ${GL_LIBS}
 
 BUILT_SOURCES = vers.c
 

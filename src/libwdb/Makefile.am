@@ -25,6 +25,7 @@ libwdb_la_SOURCES = \
 	vers.c
 
 libwdb_la_LDFLAGS = -version-info 19:1
+libwdb_la_LIBADD = ${BN} ${BU} ${RT}
 
 man_MANS = libwdb.3
 

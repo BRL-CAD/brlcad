@@ -7,7 +7,7 @@ bin_PROGRAMS = \
 	scriptsort \
 	script-tab
 
-LDADD = @RT@
+LDADD = ${RT}
 scriptsort_SOURCES = scriptsort.c script.l
 noinst_HEADERS = tokens.h
 

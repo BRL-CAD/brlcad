@@ -4,7 +4,7 @@ bin_PROGRAMS = remrt rtsrv
 
 remrt_srcs = remrt.c ihost.c $(top_srcdir)/src/rt/opt.c
 remrt_SOURCES = $(remrt_srcs) vers.c
-remrt_LDADD = @FB@ @OPTICAL@ @RT@
+remrt_LDADD = ${FB} ${OPTICAL} ${RT}
 
 rtsrv_SOURCES = \
 	rtsrv.c \
@@ -14,13 +14,13 @@ rtsrv_SOURCES = \
 	$(top_srcdir)/src/rt/view.c \
 	$(top_srcdir)/src/rt/worker.c
 
-rtsrv_LDADD = @PKG@ @OPTICAL@ @RT@
+rtsrv_LDADD = ${PKG} ${OPTICAL} ${RT}
 rtsrv_CFLAGS = -DRTSRV
 
 noinst_HEADERS = ihost.h protocol.h
 
 vers.c: $(remrt_srcs) Makefile.am
-	sh $(top_srcdir)/sh/vers.sh version "Network-Distributed RT (REMRT)" > $@
+	@SH@ $(top_srcdir)/sh/vers.sh version "Network-Distributed RT (REMRT)" > $@
 
 dist_man_MANS = remrt.1
 

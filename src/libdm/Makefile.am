@@ -23,9 +23,10 @@ libdm_la_SOURCES = \
 	vers.c
 
 libdm_la_LDFLAGS = -version-info 19:1
-libdm_la_LIBADD = @PNG_LIBS@ ${TK_LIBS} ${RT}
+libdm_la_CFLAGS = ${X_CFLAGS}
+libdm_la_LIBADD = ${TCL} ${TK} ${RT} ${LIBPNG} ${X_LIBS}
 
-AM_CFLAGS = @X_CFLAGS@
+AM_CFLAGS = ${X_CFLAGS}
 
 BUILT_SOURCES = vers.c
 vers.c: $(SRCS)

@@ -44,6 +44,7 @@ liboptical_la_SOURCES = \
 	vers.c
 
 liboptical_la_LDFLAGS = -version-info 19:1
+liboptical_la_LIBADD = ${BU} ${BN} ${TCL} ${RT}
 
 BUILT_SOURCES = vers.c
 vers.c: $(SRCS)

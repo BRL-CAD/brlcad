@@ -102,16 +102,30 @@ mged_SOURCES = \
 	vrlink.c
 
 mged_LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) -o $@
-mged_LDADD = @TK_LIBS@ @ITCL_LIBS@ @ITK_LIBS@ @TERMIO@ @WDB@ @DM@ @FB@ @SYSV@ @GL_LIBS@ @PNG_LIBS@
+mged_LDADD = \
+	${TCL} \
+	${TK} \
+	${ITCL_LIBS} \
+	${ITK_LIBS} \
+	${TERMIO} \
+	${WDB} \
+	${DM} \
+	${FB} \
+	${SYSV} \
+	${GL_LIBS} \
+	${LIBPNG}
 
 cad_boundp_SOURCES = cad_boundp.c
-cad_boundp_LDADD = @BU@
+cad_boundp_LDADD = ${BU}
 
 cad_parea_SOURCES = cad_parea.c
-cad_parea_LDADD = @BU@
+cad_parea_LDADD = ${BU}
 
 
-INCLUDES = @GL_CFLAGS@ @X_CFLAGS@ -I$(top_srcdir)/include
+INCLUDES = \
+	${GL_CFLAGS} \
+	${X_CFLAGS} \
+	-I$(top_srcdir)/include
 
 BUILT_SOURCES = vers.c
 vers.c:

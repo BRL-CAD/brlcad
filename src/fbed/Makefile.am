@@ -28,7 +28,7 @@ noinst_HEADERS = \
 	std.h \
 	try.h
 
-fbed_LDADD = @FB@ @TERMIO@ @CURSOR@ @CURSES@ @SGIGL@
+fbed_LDADD = ${FB} ${TERMIO} ${CURSOR} ${CURSES} ${SGIGL}
 
 man_MANS = fbed.1
 EXTRA_DIST = $(man_MANS)

@@ -141,7 +141,12 @@ librt_la_SOURCES = \
 	vers.c
 
 librt_la_LDFLAGS = -version-info 19:1
-librt_la_LIBADD = ${BN} ${REGEX_LIBS}
+librt_la_LIBADD = \
+	${BN} \
+	${BU} \
+	${TCL} \
+	${REGEX_LIBS} \
+	${LIBM}
 
 include_HEADERS = \
 	bot.h \

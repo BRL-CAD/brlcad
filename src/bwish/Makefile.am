@@ -1,12 +1,44 @@
 # $Id$
 
-bin_PROGRAMS = bwish btclsh
+bin_PROGRAMS = \
+	btclsh \
+	bwish
 
-bwish_SOURCES = cmd.c input.c main.c tcl.c
+bwish_SOURCES = \
+	cmd.c \
+	input.c \
+	main.c \
+	tcl.c
+
 bwish_LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) -o $@
-bwish_LDADD = @TK_LIBS@ @ITK_LIBS@ @TCLCAD@ @ITCL_LIBS@ @FB@ @DM@ @SYSV@ @TERMIO@ @WDB@ @PNG_LIBS@
-bwish_CFLAGS = -DBWISH=1 @X_CFLAGS@
 
-btclsh_SOURCES = cmd.c input.c main.c tcl.c
-btclsh_LDADD = @ITCL_LIBS@ @PKG@ @RT@ @SYSV@ @TERMIO@ @WDB@
+bwish_CFLAGS = -DBWISH=1 ${X_CFLAGS}
+
+bwish_LDADD = \
+	${ITCL_LIBS} \
+	${TCL} \
+	${TK} \
+	${ITK_LIBS} \
+	${TCLCAD} \
+	${FB} \
+	${DM} \
+	${SYSV} \
+	${TERMIO} \
+	${WDB} \
+	${PNG}
+
+btclsh_SOURCES = \
+	cmd.c \
+	input.c \
+	main.c \
+	tcl.c
+
+btclsh_LDADD = \
+	${ITCL_LIBS} \
+	${TCL} \
+	${PKG} \
+	${RT} \
+	${SYSV} \
+	${TERMIO} \
+	${WDB}
 

@@ -42,7 +42,10 @@ EXTRA_DIST = \
 
 
 libbn_la_LDFLAGS = -version-info 19:1
-libbn_la_LIBADD = ${BU}
+libbn_la_LIBADD = \
+	${BU} \
+	${TCL} \
+	${LIBM}
 
 BUILT_SOURCES = vers.c
 

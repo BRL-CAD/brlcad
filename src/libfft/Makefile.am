@@ -29,7 +29,8 @@ BUILT_SOURCES = \
 libfft_la_SOURCES = \
 	$(SRCS) \
 	$(BUILT_SOURCES)
-libfft_la_LIBADD = -lm
+
+libfft_la_LIBADD = ${LIBM}
 
 noinst_HEADERS = \
 	complex.h \
@@ -40,12 +41,14 @@ libfft_la_LDFLAGS = -version-info 19:1
 fftc_SOURCES = \
 	fftc.c \
 	splitditc.c
-fftc_LDADD = -lm
+
+fftc_LDADD = ${LIBM}
 
 ifftc_SOURCES = \
 	ditsplitc.c \
 	ifftc.c
-ifftc_LDADD = -lm
+
+ifftc_LDADD = ${LIBM}
 
 rfft16.c:	fftc
 	./fftc 16 > rfft16.c

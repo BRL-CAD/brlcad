@@ -11,10 +11,11 @@ libtclcad_la_SOURCES = \
 	vers.c
 
 libtclcad_la_LDFLAGS = -version-info 19:1
+libtclcad_la_LIBADD = ${BN} ${BU} ${TCL} ${TK}
 
-LIBADD = @TK_LIBS@ @BN@
+LIBADD = ${TK} ${BN}
 
-AM_CFLAGS = @X_CFLAGS@
+AM_CFLAGS = ${X_CFLAGS}
 
 BUILT_SOURCES = vers.c
 vers.c: $(SRCS)

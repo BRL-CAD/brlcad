@@ -12,7 +12,7 @@ bin_PROGRAMS = \
 
 dist_bin_SCRIPTS = ssampview.tcl
 
-LDADD = @RT@ @FB@ @OPTICAL@
+LDADD = ${RT} ${FB} ${OPTICAL} ${TCL}
 
 man_MANS = \
 	rttherm.1 \
@@ -46,4 +46,4 @@ pixtest_SOURCES = \
 
 BUILT_SOURCES = vers.c
 vers.c: $(ALLSRCS)
-	sh $(top_srcdir)/sh/vers.sh version "Thermal Multi-Spectral RT" > $@
+	@SH@ $(top_srcdir)/sh/vers.sh version "Thermal Multi-Spectral RT" > $@
