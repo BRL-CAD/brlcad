@@ -49,11 +49,12 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "rtprivate.h"
 #include "light.h"
-#if RT_MULTISPECTRAL
-#include "spectrum.h"
-#endif
 #include "plastic.h"
 #include "photonmap.h"
+
+#ifdef RT_MULTISPECTRAL
+extern const struct bn_table	*spectrum;
+#endif
 
 extern int rr_render(struct application	*ap,
 		     struct partition	*pp,
@@ -64,9 +65,6 @@ extern int rr_render(struct application	*ap,
 /* from view.c */
 extern double AmbientIntensity;
 
-#if RT_MULTISPECTRAL
-extern const struct bn_table	*spectrum;	/* from rttherm/viewtherm.c */
-#endif
 
 struct bu_structparse phong_parse[] = {
 	{"%d",	1, "shine",		PL_O(shine),		BU_STRUCTPARSE_FUNC_NULL },
@@ -321,7 +319,7 @@ HIDDEN int
 phong_render(register struct application *ap, struct partition *pp, struct shadework *swp, char *dp)
 {
 	register struct light_specific *lp;
-#if !RT_MULTISPECTRAL
+#ifndef RT_MULTISPECTRAL
 	register	fastf_t	*intensity;
 #endif
 	register	fastf_t	refl;
@@ -333,7 +331,7 @@ phong_render(register struct application *ap, struct partition *pp, struct shade
 	point_t			pt;
 	fastf_t			dist;
 
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 	struct bn_tabdata	*ms_matcolor = BN_TABDATA_NULL;
 #else
 	point_t	matcolor;		/* Material color */
@@ -368,7 +366,7 @@ phong_render(register struct application *ap, struct partition *pp, struct shade
 	}
 
 
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 	ms_matcolor = bn_tabdata_dup( swp->msw_color );
 #else
 	VMOVE( matcolor, swp->sw_color );
@@ -403,13 +401,13 @@ if (!PM_Visualize) {
 #else
 		cosine *= AmbientIntensity;
 #endif
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 		bn_tabdata_scale( swp->msw_color, ms_matcolor, cosine );
 #else
 		VSCALE( swp->sw_color, matcolor, cosine );
 #endif
 	} else {
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 		bn_tabdata_constval( swp->msw_color, 0.0 );
 #else
 		VSETALL( swp->sw_color, 0 );
@@ -417,7 +415,7 @@ if (!PM_Visualize) {
 	}
 
 	/* Emission.  0..1 is normal range, -1..0 sucks light out, like OpenGL */
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 	{
 		float emission[3];
 		struct bn_tabdata	*ms_emission = BN_TABDATA_NULL;
@@ -466,7 +464,7 @@ if (!PM_Visualize) {
 		}
 	
 		/* Light is not shadowed -- add this contribution */
-#if !RT_MULTISPECTRAL
+#ifndef RT_MULTISPECTRAL
 		intensity = swp->sw_intensity+3*i;
 #endif
 		to_light = swp->sw_tolight+3*i;
@@ -489,7 +487,7 @@ if (!PM_Visualize) {
 				refl= ps -> wgt_diffuse * swp -> sw_lightfract[i] * cosine * lp -> lt_fraction;
 			}
 
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 			bn_tabdata_incr_mul3_scale( swp->msw_color,
 				lp->lt_spectrum,
 				swp->msw_intensity[i],
@@ -528,7 +526,7 @@ if (!PM_Visualize) {
 #else
 				phg_ipow(cosine, ps->shine);
 #endif /* PHAST_PHONG */
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 			bn_tabdata_incr_mul2_scale( swp->msw_color,
 				lp->lt_spectrum,
 				swp->msw_intensity[i],
@@ -569,7 +567,7 @@ if (!PM_Visualize) {
 	if (swp->sw_reflect > 0 || swp->sw_transmit > 0 )
 		(void)rr_render( ap, pp, swp );
 
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 	bn_tabdata_free(ms_matcolor);
 #endif
 	return(1);

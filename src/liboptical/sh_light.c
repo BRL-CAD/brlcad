@@ -51,8 +51,8 @@ static const char RCSsh_light[] = "@(#)$Header$ (ARL)";
 #include "light.h"
 #include "photonmap.h"
 
-#if RT_MULTISPECTRAL
-#include "spectrum.h"
+#ifdef RT_MULTISPECTRAL
+extern const struct bn_table	*spectrum;
 #endif
 
 
@@ -177,9 +177,6 @@ struct bu_structparse light_parse[] = {
 
 struct light_specific	LightHead;	/* Heads linked list of lights */
 
-#if RT_MULTISPECTRAL
-extern const struct bn_table	*spectrum;	/* from rttherm/viewtherm.c */
-#endif
 
 HIDDEN int	light_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, struct mfuncs *mfp, struct rt_i *rtip), light_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
 HIDDEN void	light_print(register struct region *rp, char *dp);
@@ -203,7 +200,7 @@ struct light_obs_stuff {
     struct light_specific *lsp;
     int *rand_idx;
 
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
     struct bn_tabdata **inten;
 #else
     fastf_t *inten;
@@ -262,7 +259,7 @@ light_render(struct application *ap, struct partition *pp, struct shadework *swp
 	/* within beam area */
 	f = (f+0.5) * lsp->lt_fraction;
     }
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
     /* Support a shader having modified the temperature of the source */
     if (swp->sw_temperature > 0 )  {
 	rt_spect_black_body( swp->msw_color, swp->sw_temperature, 5 );
@@ -690,7 +687,7 @@ light_setup(register struct region *rp,
 	VUNITIZE( lsp->lt_aim );
     }
 
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
     BN_GET_TABDATA(lsp->lt_spectrum, spectrum);
     if (rp->reg_mater.ma_temperature > 0 )  {
 	rt_spect_black_body( lsp->lt_spectrum,
@@ -785,7 +782,7 @@ light_maker(int num, mat_t v2m)
     vect_t	temp;
     vect_t	color;
     char	name[64];
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
     float	fcolor[3];
 #endif
     /* Determine the Light location(s) in view space */
@@ -823,7 +820,7 @@ light_maker(int num, mat_t v2m)
 
 	BU_GETSTRUCT( lsp, light_specific );
 	lsp->l.magic = LIGHT_MAGIC;
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 
 	BN_GET_TABDATA(lsp->lt_spectrum, spectrum);
 	VMOVE(fcolor, color);
@@ -902,7 +899,7 @@ light_init(struct application *ap)
     for( BU_LIST_FOR( lsp, light_specific, &(LightHead.l) ) )  {
 	RT_CK_LIGHT(lsp);
 	if (lsp->lt_fraction > 0 )  continue;	/* overridden */
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 	lsp->lt_fraction = 1.0;	/* always use honest intensity values */
 #else
 	lsp->lt_fraction = lsp->lt_intensity / inten;
@@ -1021,7 +1018,7 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
     struct shadework	sw;
     const struct light_specific	*lsp;
     extern int	light_render(struct application *ap, struct partition *pp, struct shadework *swp, char *dp);
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
     struct bn_tabdata	*ms_filter_color = BN_TABDATA_NULL;
 #else
     vect_t	filter_color;
@@ -1035,7 +1032,7 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
     if (rdebug&RDEBUG_LIGHT)
 	bu_log("light_hit level %d %d\n", ap->a_level, __LINE__);
 
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
     sub_ap.a_spectrum = BN_TABDATA_NULL;	/* sanity */
     BN_CK_TABDATA(ap->a_spectrum);
 #endif
@@ -1045,7 +1042,7 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
     lsp = (struct light_specific *)(ap->a_uptr);
     RT_CK_LIGHT(lsp);
 
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
     ms_filter_color = bn_tabdata_get_constval( 1.0, spectrum );
     BN_GET_TABDATA( sw.msw_color, spectrum );
     BN_GET_TABDATA( sw.msw_basecolor, spectrum );
@@ -1077,7 +1074,7 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
 	    sw.sw_refrac_index = 1.0;
 	    sw.sw_xmitonly = 1;	/* only want sw_transmit */
 	    sw.sw_segs = finished_segs;
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 	    bn_tabdata_constval( sw.msw_color, 1.0 );
 	    bn_tabdata_constval( sw.msw_basecolor, 1.0 );
 #else
@@ -1090,7 +1087,7 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
 	    /* sw_transmit is only return */
 
 	    /* XXX Clouds don't yet attenuate differently based on freq */
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 	    bn_tabdata_scale( ms_filter_color, ms_filter_color,
 			      sw.sw_transmit );
 #else
@@ -1114,7 +1111,7 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
 
 	if (lsp->lt_invisible || lsp->lt_infinite )  {
 	    light_visible = 1;
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 	    bn_tabdata_copy( ap->a_spectrum, ms_filter_color );
 #else
 	    VMOVE( ap->a_color, filter_color );
@@ -1125,7 +1122,7 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
 
 	if (air_sols_seen > 0 )  {
 	    light_visible = 1;
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 	    bn_tabdata_copy( ap->a_spectrum, ms_filter_color );
 #else
 	    VMOVE( ap->a_color, filter_color );
@@ -1148,7 +1145,7 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
 
 	    sub_ap = *ap;	/* struct copy */
 	    sub_ap.a_level++;
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 	    sub_ap.a_spectrum = bn_tabdata_dup( ap->a_spectrum );
 #endif
 	    /* pt_outhit->hit_point has not been calculated */
@@ -1160,7 +1157,7 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
 
 	    ap->a_user = sub_ap.a_user;
 	    ap->a_uptr = sub_ap.a_uptr;
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 	    bn_tabdata_copy( ap->a_spectrum, sub_ap.a_spectrum );
 #else
 	    ap->a_color[0] = sub_ap.a_color[0];
@@ -1192,7 +1189,7 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
 
     /* Check to see if we hit the light source */
     if (lsp->lt_rp == regp )  {
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 	bn_tabdata_copy( ap->a_spectrum, ms_filter_color );
 #else
 	VMOVE( ap->a_color, filter_color );
@@ -1208,7 +1205,7 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
 	struct light_specific *lsp;
 	for( BU_LIST_FOR( lsp, light_specific, &(LightHead.l) ) )  {
 	    if (lsp->lt_rp == regp) {
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 		bn_tabdata_copy( ap->a_spectrum, ms_filter_color );
 #else
 		VMOVE( ap->a_color, filter_color );
@@ -1226,7 +1223,7 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
 	vect_t	tolight;
 	VSUB2( tolight, lsp->lt_pos, ap->a_ray.r_pt );
 	if (pp->pt_inhit->hit_dist >= MAGNITUDE(tolight) ) {
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 	    bn_tabdata_copy( ap->a_spectrum, ms_filter_color );
 #else
 	    VMOVE( ap->a_color, filter_color );
@@ -1245,7 +1242,7 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
 	(regp->reg_transmit == 0 &&
 	 ! is_proc /* procedural shader */) ) {
 
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 	bn_tabdata_constval( ap->a_spectrum, 0.0 );
 #else
 	VSETALL( ap->a_color, 0 );
@@ -1255,7 +1252,7 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
 	goto out;
     }
 
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
     /* XXX Check area under spectral curve?  What power level for thresh? */
 #else
     /*  See if any further contributions will mater */
@@ -1278,7 +1275,7 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
     sw.sw_refrac_index = 1.0;
     sw.sw_xmitonly = 1;		/* only want sw_transmit */
     sw.sw_segs = finished_segs;
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
     bn_tabdata_constval( sw.msw_color, 1.0 );
     bn_tabdata_constval( sw.msw_basecolor, 1.0 );
 #else
@@ -1291,7 +1288,7 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
     if (rdebug&RDEBUG_LIGHT) bu_log("viewshade back\n");
     /* sw_transmit is output */
 
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
     bn_tabdata_scale( ms_filter_color, ms_filter_color, sw.sw_transmit );
     /* XXX Power level check again? */
 #else
@@ -1311,7 +1308,7 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
      */
     sub_ap = *ap;			/* struct copy */
     sub_ap.a_level = ap->a_level+1;
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
     sub_ap.a_spectrum = bn_tabdata_dup( ap->a_spectrum );
 #endif
     {
@@ -1328,7 +1325,7 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
 	if (light_visible < 0)
 	    bu_log("%s:%d\n", __FILE__, __LINE__);
 
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
     bn_tabdata_mul( ap->a_spectrum, sub_ap.a_spectrum, ms_filter_color );
 #else
     VELMUL( ap->a_color, sub_ap.a_color, filter_color );
@@ -1336,7 +1333,7 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
     reason = "after filtering";
  out:
 
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
     if (ms_filter_color ) bn_tabdata_free( ms_filter_color );
     if (sw.msw_color )  bn_tabdata_free( sw.msw_color );
     if (sw.msw_basecolor ) bn_tabdata_free( sw.msw_basecolor );
@@ -1635,7 +1632,7 @@ light_vis(struct light_obs_stuff *los, char *flags)
 	if (rdebug & RDEBUG_LIGHT)
 	    bu_log("fill light, no shadow, visible: %s\n",
 		   los->lsp->lt_name);
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 	/* XXX Need a power level for this! */
 	bn_tabdata_constval( ((struct bn_tabdata *)los->inten), 1.0);
 #else
@@ -1713,7 +1710,7 @@ light_vis(struct light_obs_stuff *los, char *flags)
 	if (rdebug & RDEBUG_LIGHT)
 	    bu_log("light visible: %s\n", los->lsp->lt_name);
 
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 	BN_CK_TABDATA(sub_ap.a_spectrum);
 	if (*(los->inten) == BN_TABDATA_NULL) {
 	    *(los->inten) = sub_ap.a_spectrum;
@@ -1799,7 +1796,7 @@ light_obs(struct application *ap, struct shadework *swp, int have)
 	else			tot_vis_rays = lsp->lt_shadows;
 
 	los.lsp = lsp;
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 	if(swp->msw_intensity[i]) BN_CK_TABDATA(swp->msw_intensity[i]);
 	los.inten = &swp->msw_intensity[i];
 #else

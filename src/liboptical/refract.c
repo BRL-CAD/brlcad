@@ -35,8 +35,6 @@ static const char RCSrefract[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
@@ -65,9 +63,9 @@ int	max_bounces = 5;	/* Maximum recursion level */
 HIDDEN int	rr_hit(), rr_miss();
 HIDDEN int	rr_refract();
 
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 extern const struct bn_table	*spectrum;
-extern struct bn_tabdata	*background; /* from rttherm/viewtherm.c */
+extern struct bn_tabdata	*background;
 #else
 extern vect_t background;
 #endif
@@ -87,7 +85,7 @@ rr_render(register struct application *ap,
 	fastf_t	reflect;
 	fastf_t	transmit;
 
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 	struct bn_tabdata	*ms_filter_color = BN_TABDATA_NULL;
 	struct bn_tabdata	*ms_shader_color = BN_TABDATA_NULL;
 	struct bn_tabdata	*ms_reflect_color = BN_TABDATA_NULL;
@@ -108,7 +106,7 @@ rr_render(register struct application *ap,
 
 	RT_AP_CHECK(ap);
 
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 	sub_ap.a_spectrum = BN_TABDATA_NULL;
 #endif
 
@@ -161,7 +159,7 @@ rr_render(register struct application *ap,
 		 * This is much better than returning just black,
 		 * but something better might be done.
 		 */
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 		BN_CK_TABDATA(swp->msw_color);
 		BN_CK_TABDATA(swp->msw_basecolor);
 		bn_tabdata_copy( swp->msw_color, swp->msw_basecolor );
@@ -171,7 +169,7 @@ rr_render(register struct application *ap,
 		ap->a_cumlen += pp->pt_inhit->hit_dist;
 		goto out;
 	}
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 	BN_CK_TABDATA(swp->msw_basecolor);
 	ms_filter_color = bn_tabdata_dup( swp->msw_basecolor );
 
@@ -227,7 +225,7 @@ rr_render(register struct application *ap,
 			shader_fract, reflect, transmit,
 			pp->pt_regionp->reg_name );
 	}
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 	BN_GET_TABDATA( ms_shader_color, swp->msw_color->table );
 	bn_tabdata_scale( ms_shader_color, swp->msw_color, shader_fract );
 #else
@@ -249,7 +247,7 @@ rr_render(register struct application *ap,
 		 *  Calculate refraction at entrance.
 		 */
 		sub_ap = *ap;		/* struct copy */
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 		sub_ap.a_spectrum = bn_tabdata_dup( (struct bn_tabdata *)ap->a_spectrum );
 #endif
 		sub_ap.a_level = 0;	/* # of internal reflections */
@@ -279,7 +277,7 @@ rr_render(register struct application *ap,
 			 */
 			reflect += transmit;
 			transmit = 0;
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 			ms_transmit_color = bn_tabdata_get_constval( 0.0, spectrum );
 #else
 			VSETALL( transmit_color, 0 );
@@ -338,7 +336,7 @@ do_inside:
 		case 0:
 		default:
 			/* Dreadful error */
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 			bu_bomb("rr_refract: Stuck in glass. Very green pixel, unsupported in multi-spectral mode\n");
 #else
 			VSET( swp->sw_color, 0, 99, 0 ); /* very green */
@@ -462,21 +460,21 @@ do_exit:
 
 		/* a_user has hit/miss flag! */
 		if( sub_ap.a_user == 0 )  {
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 			bn_tabdata_copy( ms_transmit_color, background );
 #else
 			VMOVE( transmit_color, background );
 #endif
 			sub_ap.a_cumlen = 0;
 		} else {
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 			bn_tabdata_copy( ms_transmit_color, sub_ap.a_spectrum );
 #else
 			VMOVE( transmit_color, sub_ap.a_color );
 #endif
 		}
 		transmit *= attenuation;
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 		bn_tabdata_mul( ms_transmit_color, ms_filter_color, ms_transmit_color );
 #else
 		VELMUL( transmit_color, filter_color, transmit_color );
@@ -487,7 +485,7 @@ do_exit:
 				pp->pt_regionp->reg_name );
 		}
 	} else {
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 		bn_tabdata_constval( ms_transmit_color, 0.0 );
 #else
 		VSETALL( transmit_color, 0 );
@@ -499,7 +497,7 @@ do_exit:
 	 *  detected by the transmission code, above.
 	 */
 do_reflection:
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 	if(sub_ap.a_spectrum)  {
 		bu_free(sub_ap.a_spectrum, "rr_render: sub_ap.a_spectrum bn_tabdata*");
 		sub_ap.a_spectrum = BN_TABDATA_NULL;
@@ -512,7 +510,7 @@ do_reflection:
 		if(R_DEBUG&RDEBUG_REFRACT)
 			bu_log("rr_render: calculating mirror reflection off of %s\n", pp->pt_regionp->reg_name);
 		sub_ap = *ap;		/* struct copy */
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 		sub_ap.a_spectrum = bn_tabdata_dup( (struct bn_tabdata *)ap->a_spectrum );
 #endif
 		sub_ap.a_rbeam = ap->a_rbeam + swp->sw_hit.hit_dist * ap->a_diverge;
@@ -553,21 +551,21 @@ vdraw open rrnorm;vdraw params c 00ffff;vdraw write n 0 %g %g %g;vdraw write n 1
 		/* a_user has hit/miss flag! */
 		if( sub_ap.a_user == 0 )  {
 			/* MISS */
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 			bn_tabdata_copy( ms_reflect_color, background );
 #else
 			VMOVE( reflect_color, background );
 #endif
 		} else {
 			ap->a_cumlen += sub_ap.a_cumlen;
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 			bn_tabdata_copy( ms_reflect_color, sub_ap.a_spectrum );
 #else
 			VMOVE( reflect_color, sub_ap.a_color );
 #endif
 		}
 	} else {
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 		bn_tabdata_constval( ms_reflect_color, 0.0 );
 #else
 		VSETALL( reflect_color, 0 );
@@ -577,7 +575,7 @@ vdraw open rrnorm;vdraw params c 00ffff;vdraw write n 0 %g %g %g;vdraw write n 1
 	/*
 	 *  Collect the contributions to the final color
 	 */
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 	bn_tabdata_join2( swp->msw_color, ms_shader_color,
 		reflect, ms_reflect_color,
 		transmit, ms_transmit_color );
@@ -591,7 +589,7 @@ vdraw open rrnorm;vdraw params c 00ffff;vdraw write n 0 %g %g %g;vdraw write n 1
 			ap->a_level,
 			shader_fract, reflect, transmit,
 			pp->pt_regionp->reg_name );
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 		{ struct bu_vls str;
 			bu_vls_init(&str);
 			bu_vls_strcat(&str, "ms_shader_color: ");
@@ -611,7 +609,7 @@ vdraw open rrnorm;vdraw params c 00ffff;vdraw write n 0 %g %g %g;vdraw write n 1
 	}
 out:
 	if(R_DEBUG&RDEBUG_REFRACT)  {
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 		{ struct bu_vls str;
 			bu_vls_init(&str);
 			bu_vls_strcat(&str, "final swp->msw_color: ");
@@ -625,7 +623,7 @@ out:
 	}
 
 	/* Release all the dynamic spectral curves */
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 	if(ms_filter_color) bu_free(ms_filter_color, "rr_render: ms_filter_color bn_tabdata*");
 	if(ms_shader_color) bu_free(ms_shader_color, "rr_render: ms_shader_color bn_tabdata*");
 	if(ms_reflect_color) bu_free(ms_reflect_color, "rr_render: ms_reflect_color bn_tabdata*");
@@ -822,7 +820,7 @@ struct partition *PartHeadp;
 			 */
 			sw.sw_xmitonly = 2;
 			sw.sw_inputs = 0;		/* no fields filled yet */
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 			sw.msw_color = bn_tabdata_get_constval( 1.0, spectrum );
 			sw.msw_basecolor = bn_tabdata_get_constval( 1.0, spectrum );
 #else
@@ -835,7 +833,7 @@ struct partition *PartHeadp;
 
 			(void)viewshade( &appl, pp->pt_forw, &sw );
 
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 			bu_free( sw.msw_color, "sw.msw_color");
 			bu_free( sw.msw_basecolor, "sw.msw_basecolor");
 #endif

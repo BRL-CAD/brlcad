@@ -460,7 +460,7 @@ fractal_render(struct application *ap, struct partition *pp, struct shadework *s
 		val = bn_noise_turb(pt, noise_sp->h_val,
 			noise_sp->lacunarity, noise_sp->octaves);
 		if (val < noise_sp->minval )  val = noise_sp->minval;
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 		swp->sw_temperature *= val;
 #else
 		VSCALE(swp->sw_color, swp->sw_color, val);
@@ -484,7 +484,7 @@ fractal_render(struct application *ap, struct partition *pp, struct shadework *s
 			noise_sp->lacunarity, noise_sp->octaves);
 		RESCALE_NOISE(val);
 		if (val < noise_sp->minval )  val = noise_sp->minval;
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 		swp->sw_temperature *= val;
 #else
 		VSCALE(swp->sw_color, swp->sw_color, val);
@@ -494,7 +494,7 @@ fractal_render(struct application *ap, struct partition *pp, struct shadework *s
 		val = bn_noise_turb(pt, noise_sp->h_val,
 			noise_sp->lacunarity, noise_sp->octaves);
 		if (val < noise_sp->minval )  val = noise_sp->minval;
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 		swp->sw_temperature *= val;
 #else
 		VSCALE(swp->sw_color, swp->sw_color, val);
@@ -506,7 +506,7 @@ fractal_render(struct application *ap, struct partition *pp, struct shadework *s
 			noise_sp->lacunarity, noise_sp->octaves);
 		RESCALE_NOISE(val);
 		if (val < noise_sp->minval )  val = noise_sp->minval;
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 		swp->sw_temperature *= val;
 #else
 		VSCALE(swp->sw_color, swp->sw_color, val);
@@ -521,7 +521,7 @@ fractal_render(struct application *ap, struct partition *pp, struct shadework *s
 		val = 1.0 - val;
 		if (val < noise_sp->minval )  val = noise_sp->minval;
 
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 		swp->sw_temperature *= val;
 #else
 		VSCALE(swp->sw_color, swp->sw_color, val);

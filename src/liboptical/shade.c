@@ -42,8 +42,6 @@ static const char RCSview[] = "@(#)$Header";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <math.h>
 
@@ -53,7 +51,7 @@ static const char RCSview[] = "@(#)$Header";
 #include "rtprivate.h"
 #include "light.h"
 #include "plot3.h"
-#include "spectrum.h"
+
 
 /*
  *			P R _ S H A D E W O R K
@@ -85,7 +83,7 @@ register const struct shadework *swp;
 	bu_log( " sw_reflect %f\n", swp->sw_reflect );
 	bu_log( " sw_refract_index %f\n", swp->sw_refrac_index );
 	bu_log( " sw_extinction %f\n", swp->sw_extinction );
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 	bn_pr_tabdata( "msw_color", swp->msw_color );
 	bn_pr_tabdata( "msw_basecolor", swp->msw_basecolor );
 #else
@@ -99,7 +97,7 @@ register const struct shadework *swp;
 	if( swp->sw_inputs & MFI_LIGHT ) for( i=0; i < SW_NLIGHTS; i++ )  {
 		if( swp->sw_visible[i] == (char *)0 )  continue;
 		RT_CK_LIGHT( swp->sw_visible[i] );
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 		bu_log("   light %d visible, dir=(%g,%g,%g)\n",
 			i,
 			V3ARGS(&swp->sw_tolight[i*3]) );
@@ -230,7 +228,7 @@ hit pt: %g %g %g end pt: %g %g %g\n",
 		    		rt_functab[pp->pt_inseg->seg_stp->st_id].ft_name,
 		    		pp->pt_inhit->hit_surfno,
 				ap->a_x, ap->a_y );
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 		    	{
 		    		static const vect_t green = {0,9,0};
 				rt_spect_reflectance_rgb( swp->msw_color, green );
@@ -302,7 +300,7 @@ register struct shadework *swp;
 
 	swp->sw_hit = *(pp->pt_inhit);		/* struct copy */
 
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 	/* XXX where does region get reflectance?  Default temperature? */
 	BN_CK_TABDATA(swp->msw_color);
 	BN_CK_TABDATA(swp->msw_basecolor);

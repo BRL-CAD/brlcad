@@ -50,8 +50,10 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 int		rt_verbosity = -1;	/* blather incesantly by default */
 int		rdebug;			/* RT program debugging */
 double		AmbientIntensity = 0.4;	/* Ambient light intensity */
+struct bn_table		*spectrum = NULL;
+
 #ifdef RT_MULTISPECTRAL
-struct bn_tabdata	*background; 		/* radiant emittance of bg */
+struct bn_tabdata	*background = NULL;	/* radiant emittance of bg */
 #else
 vect_t			background = { 0.0, 0.0, 0.0 }; /* Black */
 #endif

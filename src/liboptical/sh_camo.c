@@ -51,9 +51,8 @@
 
 #define SMOOTHSTEP(x)  ((x)*(x)*(3 - 2*(x)))
 
-#if RT_MULTISPECTRAL
-#include "spectrum.h"
-extern const struct bn_table	*spectrum;	/* from rttherm/viewtherm.c */
+#ifdef RT_MULTISPECTRAL
+extern const struct bn_table	*spectrum;
 #endif
 
 #define camo_MAGIC 0x18364	/* XXX change this number for each shader */
@@ -311,7 +310,7 @@ camo_render(struct application *ap, struct partition *pp, struct shadework *swp,
 		(struct camo_specific *)dp;
 	point_t pt;
 	double val;
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 	float fcolor[3];
 #endif
 
@@ -332,7 +331,7 @@ camo_render(struct application *ap, struct partition *pp, struct shadework *swp,
 	val = bn_noise_fbm(pt, camo_sp->noise_h_val,
 		camo_sp->noise_lacunarity, camo_sp->noise_octaves );
 
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 	BN_CK_TABDATA(swp->msw_color);
 	if (val < camo_sp->t1) {
 		VMOVE(fcolor, camo_sp->c1 );
@@ -469,7 +468,7 @@ marble_render(struct application *ap, struct partition *pp, struct shadework *sw
 #endif
 	inv_val = 1.0 - val;
 
-#if RT_MULTISPECTRAL
+#ifdef RT_MULTISPECTRAL
 	{
 		struct bn_tabdata *tcolor;
 
