@@ -626,6 +626,7 @@ struct nmg_bool_state *bs;
 
 				NMG_CK_LOOPUSE(nextlu);
 				(void)nmg_demote_lu( lu );
+				if( lu == lu_end )  break;
 				NMG_CK_LOOPUSE(nextlu);
 				lu = nextlu;
 				continue;
@@ -649,6 +650,7 @@ struct nmg_bool_state *bs;
 		    	if( fu->fumate_p == nextfu ) nextfu = nextfu->next;
 		    	NMG_CK_FACEUSE(nextfu);
 			nmg_kfu( fu );
+		    	if( fu == fu_end )  break;
 		    	NMG_CK_FACEUSE(nextfu);
 			fu = nextfu;
 		    	continue;
@@ -688,6 +690,7 @@ struct nmg_bool_state *bs;
 				if( lu->lumate_p == nextlu )  nextlu=nextlu->next;
 				NMG_CK_LOOPUSE(nextlu);
 				(void)nmg_demote_lu( lu );
+				if( lu == lu_end )  break;
 				NMG_CK_LOOPUSE(nextlu);
 				lu = nextlu;
 				continue;
@@ -712,11 +715,12 @@ struct nmg_bool_state *bs;
 		NMG_CK_EDGE( eu->e_p );
 		switch( nmg_action( (genptr_t)eu->e_p, bs ) )  {
 		case BACTION_KILL:
-			/* Demote the degeuse into vertices */
+			/* Demote the edegeuse into vertices */
 			{
 				register struct edgeuse	*nexteu = eu->next;
 				NMG_CK_EDGEUSE(nexteu);
 				nmg_demote_eu( eu );
+				if( eu == eu_end )  break;
 				NMG_CK_EDGEUSE(nexteu);
 				eu = nexteu;
 				continue;
@@ -764,6 +768,7 @@ struct nmg_bool_state *bs;
 				if( lu->lumate_p == nextlu )  nextlu=nextlu->next;
 				NMG_CK_LOOPUSE(nextlu);
 				nmg_klu( lu );
+				if( lu == lu_end )  break;
 				NMG_CK_LOOPUSE(nextlu);
 				lu = nextlu;
 				continue;
