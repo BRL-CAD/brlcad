@@ -1,8 +1,8 @@
-.TH RLE-FB 1 BRL/CAD
+.TH ORLE-FB 1 BRL/CAD
 .SH NAME
-rle\(hyfb \- decode run-length encoded image onto a frame buffer
+orle\(hyfb \- decode old run-length encoded image onto a frame buffer
 .SH SYNOPSIS
-.B rle-fb
+.B orle-fb
 [
 .B \-Otdv
 ] [
@@ -13,16 +13,17 @@ rle\(hyfb \- decode run-length encoded image onto a frame buffer
 .B \-p
 x y ] [ file.rle ]
 .SH DESCRIPTION
-.I Rle-fb\^
-decodes a University of Utah standard Run-Length Encoded (RLE) format file
+.I orle-fb\^
+decodes an old, Edition-2
+University of Utah standard Run-Length Encoded (RLE) format file
 (saved with
-.IR fb-rle\^ (1)
+.IR fb-orle\^ (1)
 or a similar program)
 to a frame buffer device or a file.
 If
 .I file.rle\^
 is not specified, standard input is read.
-.I Rle-fb\^
+.I orle-fb\^
 determines the type and size of the saved file (color or B&W)
 and acts accordingly.
 The environment
@@ -92,19 +93,20 @@ and it is repositioned, the framebuffer will be opened in
 1024x1024 mode.
 .TP
 .I file.rle\^
-Name of file to decode, in RLE format.
+Name of file to decode, in old RLE format.
 .SH EXAMPLES
 .RS
 .ft I
-\|rle-fb \|truck.rle
+\|orle-fb \|truck.rle
 .br
-\|rle-fb \|\-Ot \|text.rle
+\|orle-fb \|\-Ot \|text.rle
 .br
-\|rle-fb \|\-bG \|<car.rle
+\|orle-fb \|\-bG \|<car.rle
 .ft R
 .RE
 .SH SEE ALSO
-brlcad(1), fb-rle(1), rle-pix(1), pix-rle(1), librle(3).
+brlcad(1), rle-fb(1), fb-rle(1), rle-pix(1), pix-rle(1), librle(3),
+liborle(3).
 .SH AUTHORS
 Gary S. Moss
 .br
