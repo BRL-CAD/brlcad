@@ -293,7 +293,7 @@ char **argv;
 	}
 
 	/* Be nice on loaded machines */
-	{
+	if( (debug&1) == 0 )  {
 		FILE	*fp;
 		fp = popen("PATH=/bin:/usr/ucb:/usr/bsd; export PATH; uptime|sed -e 's/.*average: //' -e 's/,.*//' ", "r");
 		if( fp )  {
@@ -344,7 +344,7 @@ char **argv;
 			exit(1);
 		}
 	}
-	if( debug )  fprintf(stderr, "PROTOCOL_VERSION='%s'\n", PROTOCOL_VERSION );
+	if( debug&2 )  fprintf(stderr, "PROTOCOL_VERSION='%s'\n", PROTOCOL_VERSION );
 
 
 	for(;;)  {
