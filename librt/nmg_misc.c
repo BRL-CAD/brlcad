@@ -41,6 +41,73 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "db.h"		/* for debugging stuff at bottom */
 
+
+/*	N M G _ M O V E _ L U _ B E T W E E N _ F U S
+ *
+ * Moves lu from src faceuse to dest faceuse
+ *
+ * returns:
+ *	0 - All is well
+ *	1 - src faceuse is now empty
+ */
+int
+nmg_move_lu_between_fus( dest , src , lu )
+struct faceuse *dest;
+struct faceuse *src;
+struct loopuse *lu;
+{
+	struct loopuse *lumate;
+	int src_is_empty;
+
+	NMG_CK_FACEUSE( dest );
+	NMG_CK_FACEUSE( dest->fumate_p );
+	NMG_CK_FACEUSE( src );
+	NMG_CK_FACEUSE( src->fumate_p );
+	NMG_CK_LOOPUSE( lu );
+
+	if( rt_g.NMG_debug & DEBUG_BASIC )
+		rt_log( "nmg_move_lu_between_fus( dest=x%x, src=x%x, lu=x%x)\n", dest, src, lu );
+
+	if( lu->up.fu_p != src )
+	{
+		rt_log( "nmg_move_lu_between_fus( dest=x%x, src=x%x, lu=x%x)\n", dest, src, lu );
+		rt_bomb( "\tlu is not in src faceuse\n" );
+	}
+
+	if( dest == src )
+		return( 0 );
+
+	lumate = lu->lumate_p;
+	NMG_CK_LOOPUSE( lumate );
+
+	/* remove lu from src faceuse */
+	RT_LIST_DEQUEUE( &lu->l );
+	src_is_empty = RT_LIST_IS_EMPTY( &src->lu_hd );
+
+	/* remove lumate from src faceuse mate */
+	RT_LIST_DEQUEUE( &lumate->l );
+	if( src_is_empty != RT_LIST_IS_EMPTY( &src->fumate_p->lu_hd ) )
+	{
+		rt_log( "nmg_move_lu_between_fus( dest=x%x, src=x%x, lu=x%x)\n", dest, src, lu );
+		if( src_is_empty )
+			rt_bomb( "\tsrc faceuse contains only lu, but src->fumate_p has more!!\n" );
+		else
+			rt_bomb( "\tsrc->fumate_p faceuse contains only lu->lumate_p, but src has more!!\n" );
+	}
+
+	/* add lu to dest faceuse */
+	RT_LIST_INSERT( &dest->lu_hd, &lu->l );
+
+	/* add lumate to dest mate */
+	RT_LIST_INSERT( &dest->fumate_p->lu_hd, &lumate->l );
+
+	/* adjust up pointers */
+	lu->up.fu_p = dest;
+	lumate->up.fu_p = dest->fumate_p;
+
+	return( src_is_empty );
+}
+
 /*	N M G _ L O O P _ P L A N E _ A R E A
  *
  *  Calculates a plane equation and the area of a loop
@@ -1598,6 +1665,58 @@ long *flags;
 	return( f_top );
 }
 
+/*	N M G _ S H E L L _ I S _ V O I D
+ *
+ * determines if the shell is a void shell or an exterior shell
+ * by finding the topmost face (in the z-direction) and looking at
+ * the Z component of the OT_SAME faceuse. Positive is an exterior
+ * shell, negative is a void shell.
+ *
+ * returns:
+ *	0 - shell is exterior shell
+ *	1 - shell is a void shell
+ *
+ * It is expected that this shell is the result of nmg_decompose_shells.
+ */
+int
+nmg_shell_is_void( s )
+CONST struct shell *s;
+{
+	struct model *m;
+	struct face *f;
+	struct faceuse *fu;
+	vect_t normal;
+	long *flags;
+
+	NMG_CK_SHELL( s );
+
+	m = nmg_find_model( &s->l.magic );
+	NMG_CK_MODEL( m );
+
+	flags = (long *)rt_calloc( m->maxindex , sizeof( long ) , "nmg_shell_is_void: flags " );
+
+	f = nmg_find_top_face( s , flags );
+
+	rt_free( (char *)flags , "nmg_shell_is_void: flags" );
+
+	NMG_CK_FACE( f );
+	fu = f->fu_p;
+	NMG_CK_FACEUSE( fu );
+
+	if( fu->orientation != OT_SAME )
+		fu = fu->fumate_p;
+	if( fu->orientation != OT_SAME )
+		rt_bomb( "nmg_shell_is_void: Neither faceuse nor mate have OT_SAME orient\n" );
+
+	NMG_GET_FU_NORMAL( normal , fu );
+
+	if( normal[Z] == 0.0 )
+		rt_bomb( "nmg_shell_is_void: Cannot determine if shell is void\n" );
+	else if( normal[Z] < 0.0 )
+		return( 1 );
+	else
+		return( 0 );
+}
 
 /*	N M G _ P R O P A G A T E _ N O R M A L S
  *
@@ -2052,68 +2171,105 @@ int after;
 		}
 	}
 
+rt_log( "nmg_split_loops_handler: fu x%x has %d OT_SAME loops and %d OT_OPPOSITE loops\n", fu , otsame_loops, otopp_loops );
+
+	/* if there is only one OT_SAME loop in this faceuse, nothing to do */
+	if( otsame_loops == 1 )
+		return;
+
 	if( otopp_loops && otsame_loops )
 	{
-		struct faceuse *new_fu;
-		struct loopuse *lu1;
-		int first=1;
+		struct nmg_ptbl inside_loops;
+
+		nmg_tbl( &inside_loops , TBL_INIT , (long *)NULL );
 
 		lu = RT_LIST_FIRST( loopuse , &fu->lu_hd );
 		while( RT_LIST_NOT_HEAD( lu , &fu->lu_hd ) )
 		{
-			struct loopuse *next_lu;
+			struct faceuse *new_fu;
+			struct loopuse *lu_next;
+			struct loopuse *lu1;
+			plane_t plane;
+			int index;
+rt_log( "%d otsame loops\n" , otsame_loops );
+			lu_next = RT_LIST_PNEXT( loopuse , &lu->l );
 
-			next_lu = RT_LIST_PNEXT( loopuse , &lu->l );
-			if( lu->orientation == OT_OPPOSITE )
+			if( otsame_loops == 1 )
 			{
-				struct loopuse *lu1;
-				int inside=0;
+				/* done */
+				nmg_tbl( &inside_loops , TBL_FREE , (long *)NULL );
+				return;
+			}
+			if( lu->orientation != OT_SAME )
+			{
+				lu = lu_next;
+				continue;
+			}
+rt_log( "\tlu x%x is OT_SAME\n" , lu );
 
-				/* check if this loop is within another loop */
-				for( RT_LIST_FOR( lu1 , loopuse , &fu->lu_hd ) )
+			/* find OT_OPPOSITE loops for this exterior loop */
+			for( RT_LIST_FOR( lu1 , loopuse , &fu->lu_hd ) )
+			{
+				struct loopuse *lu2;
+				int hole_in_lu=1;
+
+				/* skip loops that are not OT_OPPOSITE */
+				if( lu1->orientation != OT_OPPOSITE )
+					continue;
+
+				/* skip loops that are not within lu */
+				if( nmg_classify_lu_lu( lu1 , lu , tol ) != NMG_CLASS_AinB )
+					continue;
+rt_log( "\t\tlu x%x is OT_OPPOSITE inside lu x%x\n" , lu1 , lu );
+				/* lu1 is an OT_OPPOSITE loopuse within the OT_SAME lu
+				 * but lu1 may be within yet another loopuse that is
+				 * also within lu (nested loops)
+				 */
+
+				/* look for another OT_SAME loopuse within lu */
+				for( RT_LIST_FOR( lu2 , loopuse , &fu->lu_hd ) )
 				{
-					int class;
-
-					if( lu == lu1 || lu1->orientation != OT_SAME )
+					if( lu2->orientation != OT_SAME )
 						continue;
 
-					class = nmg_classify_lu_lu( lu , lu1 , tol );
-					if( class == NMG_CLASS_AinB )
+					if( nmg_classify_lu_lu( lu2 , lu , tol ) == NMG_CLASS_AinB )
 					{
-						inside = 1;
-						break;
+						/* lu2 is within lu, does it contain lu1?? */
+						if( nmg_classify_lu_lu( lu1 , lu2 , tol ) == NMG_CLASS_AinB )
+						{
+							/* Yes, lu1 is within lu2, so lu1 is not
+							 * a hole in lu
+							 */
+rt_log( "\t\t\tx%x is within x%x, so not a hole in x%x\n" , lu1, lu2, lu );
+							hole_in_lu = 0;;
+							break;
+						}
 					}
 				}
 
-				if( !inside )
+				if( hole_in_lu )
 				{
-					/* this loop is not a hole inside another loop
-					 * so make it a face of its own */
-					plane_t plane;
-
-					NMG_GET_FU_PLANE( plane , fu->fumate_p );
-					new_fu = nmg_mk_new_face_from_loop( lu );
-					nmg_face_g( new_fu , plane );
-					nmg_lu_reorient( lu , tol );
+rt_log( "\t\t\tAdding x%x to list of holes in x%x\n" , lu1 , lu );
+					nmg_tbl( &inside_loops , TBL_INS , (long *)lu1 );
 				}
 			}
-			else
+
+			NMG_GET_FU_PLANE( plane , fu );
+			new_fu = nmg_mk_new_face_from_loop( lu );
+			nmg_face_g( new_fu , plane );
+			for( index=0 ; index<NMG_TBL_END( &inside_loops ) ; index++ )
 			{
-				plane_t plane;
-
-				if( first )
-					first = 0;
-				else
-				{
-					NMG_GET_FU_PLANE( plane , fu );
-					new_fu = nmg_mk_new_face_from_loop( lu );
-					nmg_face_g( new_fu , plane );
-				}
+				lu1 = (struct loopuse *)NMG_TBL_GET( &inside_loops , index );
+				nmg_move_lu_between_fus( new_fu , fu , lu1 );
 			}
-			lu = next_lu;
+			nmg_tbl( &inside_loops , TBL_RST , (long *)NULL );
+			otsame_loops--;
+nmg_pr_fu_briefly( new_fu , (char *)NULL );
+nmg_pr_fu_briefly( new_fu->fumate_p , (char *)NULL );
 		}
+		nmg_tbl( &inside_loops , TBL_FREE , (long *)NULL );
 	}
-	else
+	else if( otsame_loops )
 	{
 		/* all loops are of the same orientation, just make a face for every loop */
 		int first=1;
@@ -2138,6 +2294,7 @@ int after;
 				}
 				else
 				{
+rt_log( "ALL LOOPS should be OT_SAME, x%x is %s\n" , lu , nmg_orientation( lu->orientation ) );
 					NMG_GET_FU_PLANE( plane , fu->fumate_p );
 				}
 				new_fu = nmg_mk_new_face_from_loop( lu );
@@ -2147,8 +2304,11 @@ int after;
 			lu = next_lu;
 		}
 	}
-
-	/* XXXX Need code for faces with OT_OPPOSITE loops */
+	else
+	{
+		/* faceuse has only OT_OPPOSITE loopuses */
+		rt_log( "nmg_split_loops_into_faces: fu (x%x) has only OT_OPPOSITE loopuses, ignored\n" , fu );
+	}
 }
 
 /*	N M G _ S P L I T _ L O O P S _ I N T O _ F A C E S
@@ -2228,7 +2388,7 @@ struct rt_tol *tol;
 	long *flags;
 
 	if( rt_g.NMG_debug & DEBUG_BASIC )
-		rt_log( "nmg_decompose_shell( s = x%x )\n" , s );
+		rt_log( "nmg_decompose_shell( s = x%x ) START\n" , s );
 
 	NMG_CK_SHELL( s );
 
@@ -2279,9 +2439,9 @@ struct rt_tol *tol;
 
 			/* build two lists, one of winged edges, the other not */
 			if( face_count > 2 )
-				nmg_tbl( &shared_edges , TBL_INS , (long *)eu );
+				nmg_tbl( &shared_edges , TBL_INS_UNIQUE , (long *)eu );
 			else
-				nmg_tbl( &stack , TBL_INS , (long *)eu );
+				nmg_tbl( &stack , TBL_INS_UNIQUE , (long *)eu );
 		}
 	}
 
@@ -2340,9 +2500,9 @@ struct rt_tol *tol;
 
 					/* build two lists, one of winged edges, the other not */
 					if( face_count > 2 )
-						nmg_tbl( &shared_edges , TBL_INS , (long *)eu );
+						nmg_tbl( &shared_edges , TBL_INS_UNIQUE , (long *)eu );
 					else
-						nmg_tbl( &stack , TBL_INS , (long *)eu );
+						nmg_tbl( &stack , TBL_INS_UNIQUE , (long *)eu );
                                 }
                         }
 			/* Mark this faceuse and its mate with a shell number */
@@ -2388,6 +2548,10 @@ struct rt_tol *tol;
 		for( i=0 ; i<NMG_TBL_END( &shared_edges ) ; i++ )
 		{
 			int faces_at_edge=0;
+			int k;
+
+			for( k=0 ; k<=no_of_shells ; k++ )
+				shells_at_edge[k] = 0;
 
 			unassigned_eu = NULL;
 
@@ -2411,27 +2575,22 @@ struct rt_tol *tol;
 				/* Only one face at this edge is unassigned, should be
 				 * able to determine which shell it belongs in */
 
+
 				/* Make sure everything is O.K. so far */
 				if( faces_at_edge & 1 )
 					rt_bomb( "nmg_decompose_shell: Odd number of faces at edge\n" );
 
-				for( j=1 ; j<no_of_shells ; j++ )
+				for( j=1 ; j<=no_of_shells ; j++ )
 				{
 					if( shells_at_edge[j] == 1 )
 					{
-						/* the unassigned face could belong to shell number j */
-						if( new_shell_no )
-						{
-							/* more than one shell has only one face here
-							 * cannot determine which to choose */
-							new_shell_no = 0;
-							break;
-						}
-						else
-							new_shell_no = j;
+						new_shell_no = j;
+						break;
 					}
 				}
 			}
+			if( new_shell_no )
+				break;
 		}
 
 		rt_free( (char *)shells_at_edge , "nmg_decompose_shell: shells_at_edge" );
@@ -2482,9 +2641,9 @@ struct rt_tol *tol;
 
 					/* build two lists, one of winged edges, the other not */
 					if( face_count > 2 )
-						nmg_tbl( &shared_edges , TBL_INS , (long *)eu );
+						nmg_tbl( &shared_edges , TBL_INS_UNIQUE , (long *)eu );
 					else
-						nmg_tbl( &stack , TBL_INS , (long *)eu );
+						nmg_tbl( &stack , TBL_INS_UNIQUE , (long *)eu );
                                 }
                         }
 
@@ -2541,9 +2700,9 @@ struct rt_tol *tol;
 
 						/* build two lists, one of winged edges, the other not */
 						if( face_count > 2 )
-							nmg_tbl( &shared_edges , TBL_INS , (long *)eu );
+							nmg_tbl( &shared_edges , TBL_INS_UNIQUE , (long *)eu );
 						else
-							nmg_tbl( &stack , TBL_INS , (long *)eu );
+							nmg_tbl( &stack , TBL_INS_UNIQUE , (long *)eu );
 	                                }
 	                        }
 
@@ -2604,6 +2763,10 @@ struct rt_tol *tol;
 	rt_free( (char *)flags , "nmg_decompose_shell: flags " );
 	nmg_tbl( &stack , TBL_FREE , (long *)NULL );
 	nmg_tbl( &shared_edges , TBL_FREE , (long *)NULL );
+
+	if( rt_g.NMG_debug & DEBUG_BASIC )
+		rt_log( "nmg_decompose_shell END (%d shells)\n" , no_of_shells );
+
 	return( no_of_shells );
 }
 
