@@ -94,6 +94,10 @@ proc menu_accelerator_bindings_for_clone { id parent w pos } {
 	    tk_popup $parent.menubar.#$id#menubar#modes %X %Y; break"
     bind $w <Alt-m> "set mged_gui($id,dm_loc) $pos; set_active_dm $id;\
 	    tk_popup $parent.menubar.#$id#menubar#modes %X %Y; break"
+    bind $w <Alt-I> "set mged_gui($id,dm_loc) $pos; set_active_dm $id;\
+	    tk_popup $parent.menubar.#$id#menubar#misc %X %Y; break"
+    bind $w <Alt-i> "set mged_gui($id,dm_loc) $pos; set_active_dm $id;\
+	    tk_popup $parent.menubar.#$id#menubar#misc %X %Y; break"
     bind $w <Alt-T> "set mged_gui($id,dm_loc) $pos; set_active_dm $id;\
 	    tk_popup $parent.menubar.#$id#menubar#tools %X %Y; break"
     bind $w <Alt-t> "set mged_gui($id,dm_loc) $pos; set_active_dm $id;\
