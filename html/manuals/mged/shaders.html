@@ -80,6 +80,65 @@ Below this level, density increases exponentially.
 </pre>
 </DD>
 <HR>
+<DT><A name="marble"><b>marble</b></a></dt>
+<DD>The "marble" shader simulates the color patterns present in some types of
+marble. This is a procedural shader based
+upon a fractal noise function known as turbulence.
+<p>
+The fractal noise function produces a pseudo- random number in the range
+[0.0&nbsp;...&nbsp;1.0] from the 3-space coordinates of a point in the bounding volume
+of the region.  This noise value is used to determine the ratio of two colors
+present as the final color of the object.
+The object color and a shader-specific color are combined.
+
+The color produced is a combination of 
+
+
+<p>
+The fractal pattern has infinite resolution.  As a result, the borders of
+the color splashes never become pixelated, no mater how close the eyepoint is
+to the surface.
+
+<p><center><table border=1>
+<tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<tr></tr>
+<tr><th colspan=3>Noise Parameters</th></tr>
+<tr><td>lacunarity</td><td>l</td><td>2.1753974</td></tr>
+<tr><td>H</td><td>H</td><td>1.0</td></tr>
+<tr><td>octaves</td><td>o</td><td>4.0</td></tr>
+<tr><td>size</td><td>s</td><td>1.0</td></tr>
+<tr><td>vscale</td><td>v</td><td>1.0/1.0/1.0</td></tr>
+<tr><td>delta</td><td>d</td><td>1000/1000/1000</td></tr>
+<tr></tr>
+<tr><th colspan=3>Shader Specific Parameters</tr>
+<tr><td>color2</td><td>c2</td><td>250/100/100</td></tr>
+</table></center>
+<dl>
+<dt><b>Lacunarity</b>
+<dd>The grid on which the noise function is built is scaled by this value
+for each successive octave of noise which will be combined to produce the
+final result.
+<dt><b>H</b>
+<dd>
+<dt><B>Octaves</b>
+<dd>The number of times the noise grid will be scaled and recombined to 
+produce the final noise function
+<dt><b>Size, Vscale</b>
+<dd>If <b>size</b> is set it is used as a scalar which defines the size of the
+noise grid on the object.  So if t2=0.5 and size=5mm then splotches of color3
+would tend to be no larger than 5-10mm.  If non-uniform scaling is required, 
+Vscale can specify the grid size in X, Y and Z.
+<dt><b>Delta</b>
+<dd>This specifies a translation in noise space for the origin of region space.
+Since the origin of noise space is reflected 8 ways, it is undesireable to have
+that portion of noise space overlap with region space.
+</dl>
+<H3>Examples</h3>
+<pre>
+	mater column.r stack marble s=512;plastic 250 240 280 0
+</pre>
+</DD>
+<HR>
 <DT><a name="camo"><b>camo</b></a></DT>
 <DD>The "camo" shader creates a pseudo-random tri-color camoflage pattern on
 the object using a fractal noise pattern.  This is a procedural shader based
@@ -214,7 +273,7 @@ The color of the region defines the color of the light.
 	<DL COMPACT>
 	<DT>intensity</DT>
 	<DD>Intensity of the light source (nominally in lumens)</DD>
-	<DT>angle</DT>
+	<DT>angle&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</DT>
 	<DD>Beam displersion angle (degrees 0..180)</DD>
 	<DT>fraction</DT>
 	<DD>Fraction of total light</DD>
@@ -222,10 +281,10 @@ The color of the region defines the color of the light.
 	<DD>Boolean:  Does light cast shadows</DD>
 	<DT>infinite</DT>
 	<DD>Boolean:  Is light source infinitely distant</DD>
+	<DT>aim&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</DT>
+	<DD>Boolean: Take light aim direction from solid</DD>
 	<DT>invisible</DT>
 	<DD>Boolean:  Is light source visible as an object</DD>
-	<DT>aim</DT>
-	<DD>Boolean: Take light aim direction from solid</DD>
 	</DL>
 
 <H3>Example</h3>
@@ -484,6 +543,44 @@ noise to the intensity of the surface color.
 
 <HR>
 
+
+<DT><a NAME="extern"><B>stack</B></DT>
+<DD>external Shader stacker</DD>
+<p>
+
+The "extern" shader takes a filename as its only argument.  The file is
+opened and shaders and their parameters are read from the file.  The
+"extern" shader is really an extension of the "stack" shader.  The contents
+of the file can have the same structure as the content of the stack shader 
+parameters.
+
+<p>
+WARNING: Since the mged command line format for specifying shaders and their
+parameters was converted to a Tcl/Tk syntax, the format in the shader file
+is NOT what the user is accustomed to typing.  Instead, the old structparse()
+format should be adhered to:
+<pre>
+	shader param=value param=value;shader param=value param=value
+</pre>
+The "extern" shader was developed to overcome limitations in the v4 database
+format.  The specific limitation addressed is that there are only 40
+characters available for the shader parameter string.
+
+
+<H3>Example</h3>
+<pre>
+	mged> shader stuff.r "extern stuff_material.shd" 255 255 255 0
+
+	% cat stuff_material.shd
+	texture file=image.pix w=768 n=512;
+	plastic sp=.8 di=.2 sh=10 tr=.1 re=.1
+</pre>
+</DD>
+
+<HR>
+
+
+
 <DT><a NAME="stxt"><B>stxt</B></DT>
 <DD>Broken and antiquated attempt at solid textures</DD>
 <H3>Parameters</h3>
@@ -513,13 +610,18 @@ noise to the intensity of the surface color.
 </table></center>
 <p>
 	<DL COMPACT>
-	<DT>parameter</DT>
-	<DD>Description of parameter</DD>
+	<DT>a</DT>
+	<DD>3-tuple color for squares</DD>
+	<DT>b</DT>
+	<DD>3-tuple color for other squares</DD>
+	<DT>s</DT>
+	<DD>number of squares in each direction (u,v)</DD>
+
 	</DL>
 
 <H3>Example</h3>
 <pre>
-	mged> shader air.r proto
+	mged> shader board.r "stack checker a=255/255/255 b=100/100/100 s=8;plastic"
 </pre>
 </DD>
 <HR>
@@ -545,22 +647,40 @@ noise to the intensity of the surface color.
 <HR>
 
 <DT><a NAME="texture"><B>texture</B></DT>
-<DD>maps a .pix file onto an object using u,v coordinates</DD>
+<DD>maps a .pix file onto an object using u,v coordinates.
+This is usually undesireable for objects made up of more than one primitive solid.
+</DD>
+
 <H3>Parameters</h3>
 <p><center><table border=1>
 <tr><th>Parameter</th><th>Abreviation</th><th>Default Value</th></tr>
+<TR><td>file</td>	<td>&nbsp;</td>	<td>&nbsp;</td></td>
+<TR><td>w</td>		<td>&nbsp;</td>	<td>512</td></td>
+<TR><td>n</td>		<td>l</td>	<td>w</td></td>
+<TR><td>transp</td>	<td>&nbsp;</td>	<td>&nbsp</td></td>
 <tr></tr>
 </table></center>
 <p>
 	<DL COMPACT>
-	<DT>parameter</DT>
-	<DD>Description of parameter</DD>
+	<DT>file</DT>
+	<DD>Name of the pix file to map onto the object</DD>
+	<DT>w</DT>
+	<DD>width of the pix file in pixels</DD>
+	<DT>n</DT>
+	<DD>number of scanlines in the pix file</DD>
+	<DT>transp</DT>
+	<DD>a value which indicates the object does not exist (is transparent).</DD>
 	</DL>
+
+<p>
+If the "transp" parameter is not set by the user, then no values are deemed transparent.
 
 <H3>Example</h3>
 <pre>
-	mged> shader air.r proto
-</pre>
+	mged> shader cube.r stack texture file=eagle-w512-n438.pix w=512 n=438;plastic 0 0 0 0
+<pre>
+<H3>See Also</h3>
+<p>prj, bwtexture
 </DD>
 <HR>
 
