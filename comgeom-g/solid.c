@@ -515,7 +515,6 @@ char	*name;
 	npe = getint( scard, 10+1*10, 10 );
 	neq = getint( scard, 10+2*10, 10 );
 	nae = getint( scard, 10+3*10, 10 );
-printf("npt=%d, npe=%d, neq=%d, nae=%d\n", npt, npe, neq, nae);
 
 	nface = npe + neq + nae;
 	if( npt < 1 )  {
@@ -620,7 +619,7 @@ bad:
 		}
 		scale = 1/scale;
 		VSCALE( eqn[cur_eq], eqn[cur_eq], scale );
-		eqn[cur_eq][3] = eqn[cur_eq][3] * scale;
+		eqn[cur_eq][3] *= scale;
 		cur_eq++;
 	}
 
@@ -709,11 +708,13 @@ bad:
 	for( i=0; i<nface-2; i++ )  {
 		for( j=i+1; j<nface-1; j++ )  {
 			double	dot;
+			int	point_count;	/* # points on this line */
 
 			/* If normals are parallel, no intersection */
 			dot = VDOT( eqn[i], eqn[j] );
 			if( !NEAR_ZERO( dot, 0.999999 ) )  continue;
 
+			point_count = 0;
 			for( k=j+1; k<nface; k++ )  {
 				point_t	pt;
 
@@ -753,12 +754,16 @@ bad:
 
 				VMOVE( &vertex[last_vertex*3], pt );
 				last_vertex++;
+				point_count++;
 
 				/* Increment "face used" counts */
 				used[i]++;
 				used[j]++;
 				used[k]++;
 next_k:				;
+			}
+			if( point_count > 2 )  {
+				printf("arbn: warning, point_count on line=%d\n", point_count);
 			}
 		}
 	}
