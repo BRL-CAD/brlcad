@@ -230,7 +230,7 @@ solbld()
 				VADD2( pnts[i], pnts[i], pnts[0] );
 			}
 
-			mk_arb8(stdout, name, pnts);
+			mk_arb8(stdout, name, (CONST point_t *)pnts);
 			break;
 
 		case HALFSPACE:
@@ -539,7 +539,7 @@ identbld()
 	char		units;		/* units code number */
 	char		version[6];
 	char		title[72];
-	char		*unit_str;
+	char		*unit_str = "none";
 
 	cp = buf;
 	id = *cp++;
