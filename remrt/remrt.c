@@ -2478,7 +2478,7 @@ int		b;
 		if( write_len > pixels_todo )  write_len = pixels_todo;
 		if( write_len > 0 )
 			fb_write( fbp, x, y, pp+offset, write_len );
-		offset += len_to_eol;
+		offset += len_to_eol*3;
 		y = (y+1) % fr->fr_height;
 		x = 0;
 		pixels_todo -= len_to_eol;
@@ -2577,14 +2577,16 @@ register struct frame	*fr;
 	if( fr->fr_width > fb_getwidth(fbp) )  {
 		rt_log("Warning:  fb not big enough for %d pixels, display truncated\n", fr->fr_width );
 		cur_fbwidth = fr->fr_width;
+		fb_view( fbp, fb_getwidth(fbp)/2, fb_getheight(fbp)/2, 1, 1 );
 		return;
 	}
 	cur_fbwidth = fr->fr_width;
 
-	fb_zoom( fbp, fb_getwidth(fbp)/fr->fr_width,
+	/* Center, zoom */
+	fb_view( fbp,
+		fr->fr_width/2, fr->fr_height/2,
+		fb_getwidth(fbp)/fr->fr_width,
 		fb_getheight(fbp)/fr->fr_height );
-	/* center the view */
-	fb_window( fbp, fr->fr_width/2, fr->fr_height/2 );
 }
 
 /*
