@@ -43,16 +43,16 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#include	<fcntl.h>
-#include	<stdio.h>
-#include	<string.h>
-#include	<signal.h>
-#include "ged_types.h"
+#include <fcntl.h>
+#include <stdio.h>
+#include <string.h>
+#include <signal.h>
+#include "./machine.h"	/* special copy */
+#include "../h/vmath.h"
 #include "../h/db.h"
 #include "ged.h"
 #include "solid.h"
 #include "objdir.h"
-#include "../h/vmath.h"
 #include "dm.h"
 
 extern int	read();

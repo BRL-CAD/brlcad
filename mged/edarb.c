@@ -25,10 +25,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include	<math.h>
 #include	<string.h>
-#include "ged_types.h"
+#include "./machine.h"	/* special copy */
+#include "../h/vmath.h"
 #include "../h/db.h"
 #include "sedit.h"
-#include "../h/vmath.h"
 #include "ged.h"
 #include "solid.h"
 #include "objdir.h"
@@ -487,11 +487,11 @@ int bp1, bp2, end1, end2;
 	}
 	t = (es_peqn[bp1][3] - VDOT(&es_peqn[bp1][0], thru)) / VDOT(&es_peqn[bp1][0], es_m);
 	op = &es_rec.s.s_values[end1*3];
-	VCOMP1( op, thru, t, es_m );
+	VJOIN1( op, thru, t, es_m );
 
 	t = (es_peqn[bp2][3] - VDOT(&es_peqn[bp2][0], thru)) / VDOT(&es_peqn[bp2][0], es_m);
 	op = &es_rec.s.s_values[end2*3];
-	VCOMP1( op, thru, t, es_m );
+	VJOIN1( op, thru, t, es_m );
 
 	return( 0 );
 }

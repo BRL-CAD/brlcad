@@ -30,16 +30,16 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#include	<math.h>
-#include	<stdio.h>
-#include "ged_types.h"
+#include <math.h>
+#include <stdio.h>
+#include "./machine.h"	/* special copy */
+#include "../h/vmath.h"
 #include "../h/db.h"
 #include "sedit.h"
 #include "ged.h"
 #include "objdir.h"
 #include "solid.h"
 #include "dm.h"
-#include "../h/vmath.h"
 
 extern int	atoi();
 void	aexists();

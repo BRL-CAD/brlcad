@@ -36,10 +36,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <time.h>
 #include <sgtty.h>
 
-#include "ged_types.h"
+#include "./machine.h"	/* special copy */
+#include "../h/vmath.h"
 #include "ged.h"
 #include "dm.h"
-#include "../h/vmath.h"
 #include "../h/mater.h"
 #include "solid.h"
 

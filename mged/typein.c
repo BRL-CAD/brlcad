@@ -31,9 +31,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <signal.h>
 #include <stdio.h>
 #include <strings.h>
-#include "ged_types.h"
-#include "../h/db.h"
+#include "./machine.h"	/* special copy */
 #include "../h/vmath.h"
+#include "../h/db.h"
 #include "ged.h"
 #include "objdir.h"
 

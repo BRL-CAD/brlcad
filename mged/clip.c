@@ -26,7 +26,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
-#include "ged_types.h"
+#include "./machine.h"	/* special copy */
 #include "../h/vmath.h"
 
 static int	code();
@@ -105,7 +105,6 @@ float x, y;
 	return (cval);
 }
 
-typedef float fastf_t;		/* for compatability with ged_types.h */
 #define EPSILON		0.0001
 #define INFINITY	100000000.0
 
@@ -181,7 +180,7 @@ register fastf_t *min, *max;
 		maxdist = 1;
 
 	/* Compute actual intercept points */
-	VCOMP1( b, a, maxdist, diff );		/* b must go first */
-	VCOMP1( a, a, mindist, diff );
+	VJOIN1( b, a, maxdist, diff );		/* b must go first */
+	VJOIN1( a, a, mindist, diff );
 	return(1);		/* HIT */
 }

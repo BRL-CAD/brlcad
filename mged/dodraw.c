@@ -20,12 +20,12 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#include "ged_types.h"
+#include "./machine.h"	/* special copy */
+#include "../h/vmath.h"
 #include "../h/db.h"
 #include "ged.h"
 #include "solid.h"
 #include "objdir.h"
-#include "../h/vmath.h"
 #include "dm.h"
 
 #ifdef BSD42

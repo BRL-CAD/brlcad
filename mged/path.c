@@ -22,7 +22,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include	<stdio.h>
-#include "ged_types.h"
+#include "./machine.h"	/* special copy */
+#include "../h/vmath.h"
 #include "../h/db.h"
 #include "solid.h"
 #include "objdir.h"

@@ -22,10 +22,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
-#include "ged_types.h"
+#include "./machine.h"	/* special copy */
+#include "../h/vmath.h"
 #include "ged.h"
 #include "dm.h"
-#include "../h/vmath.h"
 #include "solid.h"
 
 extern void	perror();
