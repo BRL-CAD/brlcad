@@ -91,10 +91,85 @@ Options:\n\
  -x #		Set librt debug flags\n\
 ";
 
-/* Null function -- handle a miss */
-int	raymiss() { return(0); }
+int	rayhit(), raymiss();
 
-void	view_pixel() {}
+/*
+ *  			V I E W _ I N I T
+ */
+int
+view_init( ap, file, obj, minus_o )
+register struct application *ap;
+char *file, *obj;
+{
+
+	if( outfp == NULL )
+		outfp = stdout;
+
+	ap->a_hit = rayhit;
+	ap->a_miss = raymiss;
+	ap->a_onehit = 0;
+
+	output_is_binary = 0;		/* output is printable ascii */
+
+	/*
+	 *  Overall header, to be read by COVART format:
+	 *  9220 FORMAT( BZ, I5, 10A4 )
+	 *	number of views, title
+	 *  Initially, do only one view per run of RTG3.
+	 */
+        fprintf(outfp,"%5d %s %s\n", 1, file, obj);
+
+	return(0);		/* No framebuffer needed */
+}
+
+/*
+ *			V I E W _ 2 I N I T
+ */
+void
+view_2init( ap )
+struct application	*ap;
+{
+
+	if( outfp == NULL )
+		rt_bomb("outfp is NULL\n");
+
+	/*
+	 *  Header for each view, to be read by COVART format:
+	 *  9230 FORMAT( BZ, 2( 5X, E15.8), 30X, E10.3 )
+	 *	azimuth, elevation, grid_spacing
+	 * NOTE that GIFT provides several other numbers that are not used
+	 * by COVART;  this should be investigated.
+	 * NOTE that grid_spacing is assumed to be square (by COVART),
+	 * and that (for now), the units are MM.
+	 * NOTE that variables "azimuth and elevation" are not valid
+	 * when the -M flag is used.
+	 */
+	fprintf(outfp,
+		"     %-15.8f     %-15.8f                              %10g\n",
+		azimuth, elevation, MAGNITUDE(dx_model)*MM2IN );
+
+	regionfix( ap, "rtray.regexp" );		/* XXX */
+}
+
+/*
+ *			R A Y M I S S
+ *
+ *  Null function -- handle a miss
+ */
+int
+raymiss()
+{
+	return(0);
+}
+
+/*
+ *			V I E W _ P I X E L
+ */
+void
+view_pixel()
+{
+	return;
+}
 
 /*
  *			R A Y H I T
@@ -308,31 +383,6 @@ register struct partition *PartHeadp;
 }
 
 /*
- *  			V I E W _ I N I T
- */
-int
-view_init( ap, file, obj, minus_o )
-register struct application *ap;
-char *file, *obj;
-{
-	ap->a_hit = rayhit;
-	ap->a_miss = raymiss;
-	ap->a_onehit = 0;
-
-	output_is_binary = 0;		/* output is printable ascii */
-
-	/*
-	 *  Overall header, to be read by COVART format:
-	 *  9220 FORMAT( BZ, I5, 10A4 )
-	 *	number of views, title
-	 *  Initially, do only one view per run of RTG3.
-	 */
-        fprintf(outfp,"%5d %s %s\n", 1, file, obj);
-
-	return(0);		/* No framebuffer needed */
-}
-
-/*
  *			V I E W _ E O L
  */
 void	view_eol()
@@ -358,33 +408,4 @@ view_end()
 	/* An abbreviated component record:  just give item code 0 */
 	fprintf(outfp, " %4d\n", 0 );
 	fflush(outfp);
-}
-
-/*
- *			V I E W _ 2 I N I T
- */
-void
-view_2init( ap )
-struct application	*ap;
-{
-
-	if( outfp == NULL )
-		rt_bomb("outfp is NULL\n");
-
-	/*
-	 *  Header for each view, to be read by COVART format:
-	 *  9230 FORMAT( BZ, 2( 5X, E15.8), 30X, E10.3 )
-	 *	azimuth, elevation, grid_spacing
-	 * NOTE that GIFT provides several other numbers that are not used
-	 * by COVART;  this should be investigated.
-	 * NOTE that grid_spacing is assumed to be square (by COVART),
-	 * and that (for now), the units are MM.
-	 * NOTE that variables "azimuth and elevation" are not valid
-	 * when the -M flag is used.
-	 */
-	fprintf(outfp,
-		"     %-15.8f     %-15.8f                              %10g\n",
-		azimuth, elevation, MAGNITUDE(dx_model)*MM2IN );
-
-	regionfix( ap, "rtray.regexp" );		/* XXX */
 }
