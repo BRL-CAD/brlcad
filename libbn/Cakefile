@@ -10,7 +10,11 @@
 
 #define FILES	\
 	complex \
-	poly
+	mat \
+	poly \
+	qmath \
+	rand \
+	wavelet
 
 #define VERSION_VARIABLE	bn_version
 #define LIBRARY_TITLE		"The BRL-CAD Numerical Computation Library"
