@@ -14,6 +14,9 @@
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
+#define FILES	asize canonize canonlib canonserver ipuscan ipustat pix-ipu
+
+
 #include "../Cakefile.defs"
 
 /* XXX
