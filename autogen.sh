@@ -43,7 +43,7 @@ esac
 TAIL_N=""
 echo "test" | tail -n 1 2>/dev/null 1>&2
 if [ $? = 0 ] ; then
-    TAIL_N="-n "
+    TAIL_N="n "
 fi
 
 
