@@ -1,12 +1,11 @@
 #include "rtlist.h"
 #include "rtstring.h"
 #include "nmg.h"
+#include "raytrace.h"
 
 extern fastf_t brlabs();
 
 #define	NAMELEN	16	/* from "brlcad/db.h" */
-
-#define	ARCSEGS	10	/* number of segments to use in representing a circle */
 
 #define	TOL		0.0005
 #define EQUAL( a , b )		((brlabs( (a)-(b) ) < TOL) ? 1 : 0 )
