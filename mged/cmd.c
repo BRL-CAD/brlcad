@@ -155,7 +155,7 @@ extern void sync();
 int	inpara;			/* parameter input from keyboard */
 
 int glob_compat_mode = 1;
-int output_as_return = 0;
+int output_as_return = 1;
 
 int mged_cmd();
 struct rt_vls tcl_output_hook;
@@ -1448,8 +1448,15 @@ int record;
     /* First check to see if it's a secret message from cmd_wrapper. */
 
 	if (strstr(interp->result, MORE_ARGS_STR) == interp->result) {
+#if 0
 	    rt_vls_strcpy(&mged_prompt,interp->result+sizeof(MORE_ARGS_STR)-1);
 	    Tcl_SetResult(interp, rt_vls_addr(&mged_prompt), TCL_VOLATILE);
+#else
+	    rt_vls_trunc(&mged_prompt, 0);
+	    rt_vls_printf(&mged_prompt, "\r%s",
+			  interp->result+sizeof(MORE_ARGS_STR)-1);
+	    Tcl_SetResult(interp, rt_vls_addr(&mged_prompt) + 1, TCL_VOLATILE);
+#endif
 	    rt_vls_free(&globbed);
 	    return CMD_MORE;
 	}

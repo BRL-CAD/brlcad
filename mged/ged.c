@@ -594,7 +594,11 @@ int mask;
 	    }
 	} else {
 	    rt_vls_trunc(&input_str, 0);
+#if 0
 	    rt_vls_strcpy(&mged_prompt, "? ");
+#else
+	    rt_vls_strcpy(&mged_prompt, "\r? ");
+#endif
 	    /* Allow the user to hit ^C */
 	    cmdline_sig = sig2;
 	}
