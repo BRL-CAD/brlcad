@@ -39,7 +39,6 @@
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
-
 #include "conf.h"
 
 #include <math.h>
@@ -69,20 +68,16 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #ifdef XMGED
+int local_rt_arb_describe();
+void check_nonzero_rates();
+#endif
+
+#ifdef VIRTUAL_TRACKBALL
 extern int (*rot_hook)();
 extern int (*set_tran_hook)();
 extern int (*tran_hook)();
-int local_rt_arb_describe();
-void check_nonzero_rates();
 
-extern int irot_set;
-extern double irot_x;
-extern double irot_y;
-extern double irot_z;
-extern double tran_x;
-extern double tran_y;
-extern double tran_z;
-extern point_t orig_pos;
+extern int rot_set;
 #endif
 
 extern void (*knob_offset_hook)();
@@ -165,11 +160,11 @@ char	**argv;
 	if( not_state( ST_VIEW, "View Rotate") )
 		return CMD_BAD;
 
-#ifdef XMGED
-	if(!irot_set){
-          irot_x += atof(argv[1]);
-          irot_y += atof(argv[2]);
-          irot_z += atof(argv[3]);
+#ifdef VIRTUAL_TRACKBALL 
+	if(!rot_set){
+          rot_x += atof(argv[1]);
+          rot_y += atof(argv[2]);
+          rot_z += atof(argv[3]);
         }
 #endif
 
@@ -177,7 +172,7 @@ char	**argv;
 		atof(argv[2]) * degtorad,
 		atof(argv[3]) * degtorad );
 
-#ifdef XMGED
+#ifdef VIRTUAL_TRACKBALL
 	if(rot_hook)
           (*rot_hook)();
 #endif
@@ -380,7 +375,7 @@ int	catch_sigint;
 		size_reset();
 		new_mats();
 
-#ifdef XMGED
+#ifdef VIRTUAL_TRACKBALL
 		MAT_DELTAS_GET(orig_pos, toViewcenter);
 		tran_x = 0.0;
 		tran_y = 0.0;
@@ -1541,7 +1536,7 @@ int	argc;
 char	**argv;
 {
 	double	val;
-#ifdef XMGED
+#ifdef VIRTUAL_TRACKBALL
 	vect_t view_pos;
 	point_t new_pos;
 	point_t old_pos;
@@ -1561,7 +1556,7 @@ char	**argv;
 	Viewscale /= val;
 	new_mats();
 
-#ifdef XMGED
+#ifdef VIRTUAL_TRACKBALL
 	if(state == ST_S_EDIT || state == ST_O_EDIT){
 	  tran_x *= val;
 	  tran_y *= val;

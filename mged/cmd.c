@@ -68,7 +68,6 @@ extern FILE     *ps_fp;
 extern struct dm dm_PS;
 extern char     ps_ttybuf[];
 extern int      in_middle;
-extern mat_t    ModelDelta;
 extern FILE	*journal_file;
 extern int	journal;	/* initialize to off */
 
@@ -93,33 +92,31 @@ AliasList atop = NULL;
 AliasList alias_free = NULL;
 
 int 	savedit = 0;
-point_t	orig_pos;
-int irot_set = 0;
-double irot_x = 0;
-double irot_y = 0;
-double irot_z = 0;
-int tran_set = 0;
-double tran_x = 0;
-double tran_y = 0;
-double tran_z = 0;
-
-void set_tran();
 int     mged_wait();
 int chg_state();
 
-static void    make_command();
 int	f_history(), f_alias(), f_unalias();
 int	f_journal(), f_button(), f_savedit(), f_slider();
 int	f_slewview(), f_openw(), f_closew();
 int	(*button_hook)(), (*slider_hook)();
 int	(*openw_hook)(), (*closew_hook)();
-int (*tran_hook)(), (*rot_hook)();
-int (*set_tran_hook)();
 
 int     f_perspective(), f_cue(), f_light(), f_zbuffer(), f_zclip();
-int     f_tran(), f_irot();
 int     f_ps();
 #endif /* XMGED */
+
+#ifdef VIRTUAL_TRACKBALL
+int (*tran_hook)(), (*rot_hook)();
+int (*set_tran_hook)();
+int f_tran(), f_irot();
+void set_tran();
+static void make_command();
+
+extern mat_t    ModelDelta;
+
+int rot_set = 0;
+int tran_set = 0;
+#endif
 
 extern int (*knob_hook)();
 extern int (*cue_hook)(), (*zclip_hook)(), (*zbuffer_hook)();
@@ -358,13 +355,13 @@ static struct funtab funtab[] = {
 	f_in, 1, MAXARGS, FALSE,
 "inside", "", "finds inside solid per specified thicknesses",
 	f_inside, 1, MAXARGS, FALSE,
-#ifdef XMGED
+#ifdef VIRTUAL_TRACKBALL
 "irot", "x y z", "incremental/relative rotate",
         f_irot, 4, 4, FALSE,
 #endif
 "item", "region item [air]", "change item # or air code",
 	f_itemair,3,4,FALSE,
-#ifdef XMGED
+#ifdef VIRTUAL_TRACKBALL
 "itran", "x y z", "incremental/relative translate using normalized screen coordinates",
         f_tran, 4, 4,FALSE,
 #endif
@@ -556,7 +553,7 @@ static struct funtab funtab[] = {
 	f_tops,1,1,FALSE,
 "track", "<parameters>", "adds tracks to database",
 	f_amtrack, 1, 27,FALSE,
-#ifdef XMGED
+#ifdef VIRTUAL_TRACKBALL
 "tran", "x y z", "absolute translate using view coordinates",
         f_tran, 4, 4,FALSE,
 #endif
@@ -1776,192 +1773,7 @@ char    *argv[];
   return CMD_BAD;
 }
 
-static void
-make_command(line, diff)
-char	*line;
-point_t	diff;
-{
-
-  if(state == ST_O_EDIT)
-    (void)sprintf(line, "translate %f %f %f\n",
-		  (e_axis_pos[X] + diff[X]) * base2local,
-		  (e_axis_pos[Y] + diff[Y]) * base2local,
-		  (e_axis_pos[Z] + diff[Z]) * base2local);
-  else
-    (void)sprintf(line, "p %f %f %f\n",
-		  (e_axis_pos[X] + diff[X]) * base2local,
-		  (e_axis_pos[Y] + diff[Y]) * base2local,
-		  (e_axis_pos[Z] + diff[Z]) * base2local);
-
-}
-
-/*
- *                         S E T _ T R A N
- *
- * Calculate the values for tran_x, tran_y, and tran_z.
- *
- *
- */
-void
-set_tran(x, y, z)
-fastf_t x, y, z;
-{
-  point_t diff;
-
-  diff[X] = x - e_axis_pos[X];
-  diff[Y] = y - e_axis_pos[Y];
-  diff[Z] = z - e_axis_pos[Z];
-  
-  /* If there is more than one active view, then tran_x/y/z
-     needs to be initialized for each view. */
-  if(set_tran_hook)
-    (*set_tran_hook)(diff);
-  else{
-    point_t old_pos;
-    point_t new_pos;
-    point_t view_pos;
-
-    MAT_DELTAS_GET_NEG(old_pos, toViewcenter);
-    VADD2(new_pos, old_pos, diff);
-    MAT4X3PNT(view_pos, model2view, new_pos);
-
-    tran_x = view_pos[X];
-    tran_y = view_pos[Y];
-    tran_z = view_pos[Z];
-  }
-}
-
-
-int
-f_tran(argc, argv)
-int     argc;
-char    *argv[];
-{
-  double x, y, z;
-  int itran;
-  char cmd[128];
-  vect_t view_pos;
-  point_t old_pos;
-  point_t new_pos;
-  point_t diff;
-  struct rt_vls str;
-  int save_journal = journal;
-
-  rt_vls_init(&str);
-  
-  sscanf(argv[1], "%lf", &x);
-  sscanf(argv[2], "%lf", &y);
-  sscanf(argv[3], "%lf", &z);
-
-  itran = !strcmp(argv[0], "itran");
-
-  if(itran){
-    tran_x += x;
-    tran_y += y;
-    tran_z += z;
-  }else{
-    tran_x = x;
-    tran_y = y;
-    tran_z = z;
-  }
-
-  VSET(view_pos, tran_x, tran_y, tran_z);
-  MAT4X3PNT( new_pos, view2model, view_pos );
-  MAT_DELTAS_GET_NEG(old_pos, toViewcenter);
-  VSUB2( diff, new_pos, old_pos );
-
-  if(state == ST_O_EDIT)
-    make_command(cmd, diff);
-  else if(state == ST_S_EDIT)
-    make_command(cmd, diff);
-  else{
-    VADD2(new_pos, orig_pos, diff);
-    MAT_DELTAS_VEC( toViewcenter, new_pos);
-    MAT_DELTAS_VEC( ModelDelta, new_pos);
-    new_mats();
-
-    if(tran_hook)
-      (*tran_hook)();
-
-    rt_vls_free(&str);
-    save_journal = journal;
-    return CMD_OK;
-  }
-
-  tran_set = 1;
-  rt_vls_strcpy( &str, cmd );
-  cmdline(&str, False);
-  rt_vls_free(&str);
-  tran_set = 0;
-  save_journal = journal;
-
-  /* If there is more than one active view, then tran_x/y/z
-     needs to be initialized for each view. */
-  if(set_tran_hook)
-    (*set_tran_hook)(diff);
-
-  return CMD_OK;
-}
-
-int
-f_irot(argc, argv)
-int argc;
-char *argv[];
-{
-  int save_journal = journal;
-  double x, y, z;
-  char cmd[128];
-  struct rt_vls str;
-  vect_t view_pos;
-  point_t new_pos;
-  point_t old_pos;
-  point_t diff;
-
-  journal = 0;
-
-  rt_vls_init(&str);
-
-  sscanf(argv[1], "%lf", &x);
-  sscanf(argv[2], "%lf", &y);
-  sscanf(argv[3], "%lf", &z);
-
-  irot_x += x;
-  irot_y += y;
-  irot_z += z;
-
-  MAT_DELTAS_GET(old_pos, toViewcenter);
-
-  if(state == ST_VIEW)
-    sprintf(cmd, "vrot %f %f %f\n", x, y, z);
-  else if(state == ST_O_EDIT)
-    sprintf(cmd, "rotobj %f %f %f\n", irot_x, irot_y, irot_z);
-  else if(state == ST_S_EDIT)
-    sprintf(cmd, "p %f %f %f\n", irot_x, irot_y, irot_z);
-
-  irot_set = 1;
-  rt_vls_strcpy( &str, cmd );
-  cmdline(&str, False);
-  rt_vls_free(&str);
-  irot_set = 0;
-
-  if(state == ST_VIEW){
-    MAT_DELTAS_GET_NEG(new_pos, toViewcenter);
-    VSUB2(diff, new_pos, orig_pos);
-    VADD2(new_pos, old_pos, diff);
-    VSET(view_pos, new_pos[X], new_pos[Y], new_pos[Z]);
-    MAT4X3PNT( new_pos, model2view, view_pos);
-    tran_x = new_pos[X];
-    tran_y = new_pos[Y];
-    tran_z = new_pos[Z];
-
-    if(tran_hook)
-      (*tran_hook)();
-  }
-
-  journal = save_journal;
-  return CMD_OK;
-}
-
+static
 int
 f_ps(argc, argv)
 int argc;
@@ -2126,7 +1938,7 @@ set_e_axis_pos()
   if(rot_hook)
     (*rot_hook)();
 
-  irot_x = irot_y = irot_z = 0;
+  rot_x = rot_y = rot_z = 0;
 #endif
 #ifdef MULTI_ATTACH
   update_views = 1;
@@ -2249,5 +2061,186 @@ char    **argv;
 
   rt_log( "Unrecognized pathname - %s\n", argv[1] );
   return CMD_BAD;
+}
+#endif
+
+#ifdef VIRTUAL_TRACKBALL
+void
+make_command(line, diff)
+char	*line;
+point_t	diff;
+{
+
+  if(state == ST_O_EDIT)
+    (void)sprintf(line, "translate %f %f %f\n",
+		  (e_axis_pos[X] + diff[X]) * base2local,
+		  (e_axis_pos[Y] + diff[Y]) * base2local,
+		  (e_axis_pos[Z] + diff[Z]) * base2local);
+  else
+    (void)sprintf(line, "p %f %f %f\n",
+		  (e_axis_pos[X] + diff[X]) * base2local,
+		  (e_axis_pos[Y] + diff[Y]) * base2local,
+		  (e_axis_pos[Z] + diff[Z]) * base2local);
+
+}
+
+/*
+ *                         S E T _ T R A N
+ *
+ * Calculate the values for tran_x, tran_y, and tran_z.
+ *
+ *
+ */
+void
+set_tran(x, y, z)
+fastf_t x, y, z;
+{
+  point_t diff;
+
+  diff[X] = x - e_axis_pos[X];
+  diff[Y] = y - e_axis_pos[Y];
+  diff[Z] = z - e_axis_pos[Z];
+  
+  /* If there is more than one active view, then tran_x/y/z
+     needs to be initialized for each view. */
+  if(set_tran_hook)
+    (*set_tran_hook)(diff);
+  else{
+    point_t old_pos;
+    point_t new_pos;
+    point_t view_pos;
+
+    MAT_DELTAS_GET_NEG(old_pos, toViewcenter);
+    VADD2(new_pos, old_pos, diff);
+    MAT4X3PNT(view_pos, model2view, new_pos);
+
+    tran_x = view_pos[X];
+    tran_y = view_pos[Y];
+    tran_z = view_pos[Z];
+  }
+}
+
+
+int
+f_tran(argc, argv)
+int     argc;
+char    *argv[];
+{
+  double x, y, z;
+  int itran;
+  char cmd[128];
+  vect_t view_pos;
+  point_t old_pos;
+  point_t new_pos;
+  point_t diff;
+  struct rt_vls str;
+
+  rt_vls_init(&str);
+  
+  sscanf(argv[1], "%lf", &x);
+  sscanf(argv[2], "%lf", &y);
+  sscanf(argv[3], "%lf", &z);
+
+  itran = !strcmp(argv[0], "itran");
+
+  if(itran){
+    tran_x += x;
+    tran_y += y;
+    tran_z += z;
+  }else{
+    tran_x = x;
+    tran_y = y;
+    tran_z = z;
+  }
+
+  VSET(view_pos, tran_x, tran_y, tran_z);
+  MAT4X3PNT( new_pos, view2model, view_pos );
+  MAT_DELTAS_GET_NEG(old_pos, toViewcenter);
+  VSUB2( diff, new_pos, old_pos );
+
+  if(state == ST_O_EDIT)
+    make_command(cmd, diff);
+  else if(state == ST_S_EDIT)
+    make_command(cmd, diff);
+  else{
+    VADD2(new_pos, orig_pos, diff);
+    MAT_DELTAS_VEC( toViewcenter, new_pos);
+    MAT_DELTAS_VEC( ModelDelta, new_pos);
+    new_mats();
+
+    if(tran_hook)
+      (*tran_hook)();
+
+    rt_vls_free(&str);
+    return CMD_OK;
+  }
+
+  tran_set = 1;
+  rt_vls_strcpy( &str, cmd );
+  cmdline(&str, False);
+  rt_vls_free(&str);
+  tran_set = 0;
+
+  /* If there is more than one active view, then tran_x/y/z
+     needs to be initialized for each view. */
+  if(set_tran_hook)
+    (*set_tran_hook)(diff);
+
+  return CMD_OK;
+}
+
+int
+f_irot(argc, argv)
+int argc;
+char *argv[];
+{
+  double x, y, z;
+  char cmd[128];
+  struct rt_vls str;
+  vect_t view_pos;
+  point_t new_pos;
+  point_t old_pos;
+  point_t diff;
+
+  rt_vls_init(&str);
+
+  sscanf(argv[1], "%lf", &x);
+  sscanf(argv[2], "%lf", &y);
+  sscanf(argv[3], "%lf", &z);
+
+  rot_x += x;
+  rot_y += y;
+  rot_z += z;
+
+  MAT_DELTAS_GET(old_pos, toViewcenter);
+
+  if(state == ST_VIEW)
+    sprintf(cmd, "vrot %f %f %f\n", x, y, z);
+  else if(state == ST_O_EDIT)
+    sprintf(cmd, "rotobj %f %f %f\n", rot_x, rot_y, rot_z);
+  else if(state == ST_S_EDIT)
+    sprintf(cmd, "p %f %f %f\n", rot_x, rot_y, rot_z);
+
+  rot_set = 1;
+  rt_vls_strcpy( &str, cmd );
+  cmdline(&str, False);
+  rt_vls_free(&str);
+  rot_set = 0;
+
+  if(state == ST_VIEW){
+    MAT_DELTAS_GET_NEG(new_pos, toViewcenter);
+    VSUB2(diff, new_pos, orig_pos);
+    VADD2(new_pos, old_pos, diff);
+    VSET(view_pos, new_pos[X], new_pos[Y], new_pos[Z]);
+    MAT4X3PNT( new_pos, model2view, view_pos);
+    tran_x = new_pos[X];
+    tran_y = new_pos[Y];
+    tran_z = new_pos[Z];
+
+    if(tran_hook)
+      (*tran_hook)();
+  }
+
+  return CMD_OK;
 }
 #endif

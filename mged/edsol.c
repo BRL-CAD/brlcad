@@ -56,20 +56,17 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 extern struct rt_tol		mged_tol;	/* from ged.c */
 
 extern void set_e_axis_pos();
-#ifdef XMGED
+
+#ifdef VIRTUAL_TRACKBALL
 extern void (*tran_hook)();
 extern void (*rot_hook)();
-extern int irot_set;
-extern double irot_x;
-extern double irot_y;
-extern double irot_z;
-extern int tran_set;
-extern double tran_x;
-extern double tran_y;
-extern double tran_z;
-extern int      savedit;
-
 void set_tran();
+extern int rot_set;
+extern int tran_set;
+#endif
+
+#ifdef XMGED
+extern int      savedit;
 #endif
 
 static void	arb8_edge(), ars_ed(), ell_ed(), tgc_ed(), tor_ed(), spline_ed();
@@ -4330,15 +4327,15 @@ char	**argv;
 			es_para[2] *= local2base;
 			/* fall through */
 		default:
-#ifdef XMGED
+#ifdef VIRTUAL_TRACKBALL
 			break;
 	}
 
 	if(es_edflag >= SROT && es_edflag <= ECMD_ETO_ROT_C){
-	  if(!irot_set){
-	    irot_x = es_para[0];
-	    irot_y = es_para[1];
-	    irot_z = es_para[2];
+	  if(!rot_set){
+	    rot_x = es_para[0];
+	    rot_y = es_para[1];
+	    rot_z = es_para[2];
 	  }
 
 	  if(rot_hook)

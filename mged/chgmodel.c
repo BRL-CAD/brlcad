@@ -60,17 +60,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./dm.h"
 #include "./sedit.h"
 
-#ifdef XMGED
+#ifdef VIRTUAL_TRACKBALL
 extern void (*tran_hook)();
 extern void (*rot_hook)();
-extern int irot_set;
-extern double irot_x;
-extern double irot_y;
-extern double irot_z;
+extern int rot_set;
 extern int tran_set;
-extern double tran_x;
-extern double tran_y;
-extern double tran_z;
 
 void set_tran();
 #endif
@@ -1093,11 +1087,11 @@ char	**argv;
 	if( not_state( ST_O_EDIT, "Object Rotation" ) )
 		return CMD_BAD;
 
-#ifdef XMGED
-	if(!irot_set){
-	  irot_x = atof(argv[1]);
-	  irot_y = atof(argv[2]);
-	  irot_z = atof(argv[3]);
+#ifdef VIRTUAL_TRACKBALL
+	if(!rot_set){
+	  rot_x = atof(argv[1]);
+	  rot_y = atof(argv[2]);
+	  rot_z = atof(argv[3]);
 	}
 
 #endif
@@ -1139,7 +1133,7 @@ char	**argv;
 			atof(argv[2])*degtorad,
 			atof(argv[3])*degtorad );
 
-#ifdef XMGED
+#ifdef VIRTUAL_TRACKBALL
 /*XXX*/ mat_copy(acc_rot_sol, temp); /* used to rotate solid/object axis */
 #endif
 
@@ -1151,7 +1145,7 @@ char	**argv;
 	new_mats();
 	dmaflag = 1;
 
-#ifdef XMGED
+#ifdef VIRTUAL_TRACKBALL
 	if(rot_hook)
           (*rot_hook)();
 #endif
@@ -1269,7 +1263,7 @@ char	**argv;
 	mat_mul(modelchanges, incr, old);
 	new_mats();
 
-#ifdef XMGED
+#ifdef VIRTUAL_TRACKBALL
 	if(!tran_set) /*   not calling from f_tran()   */
 	  set_tran(new_vertex[0], new_vertex[1], new_vertex[2]);
 
