@@ -206,8 +206,8 @@ struct rt_i		*rtip;
 		min = max = *sp++;
 		len = hf->hf_w * hf->hf_n;
 		for (i=1; i< len; i++, sp++) {
-			if (*sp > max) max=*sp;
-			if (*sp < min) min=*sp;
+			if ((int)*sp > max) max=*sp;
+			if ((int)*sp < min) min=*sp;
 		}
 		hf->hf_min = min * hf->hf_file2mm;
 		hf->hf_max = max * hf->hf_file2mm;
@@ -940,16 +940,16 @@ rt_log("aray[Y]/aray[X]=%g\n", delta);
 				/* 0,0 */
 				highest = lowest = *sp++;
 				/* 1,0 */
-				if (lowest > *sp) lowest=*sp;
-				if (highest < *sp) highest=*sp;
+				if (lowest > (double)*sp) lowest=*sp;
+				if (highest < (double)*sp) highest=*sp;
 				sp+=hf->hf_w;
 				/* 1,1 */
-				if (lowest > *sp) lowest=*sp;
-				if (highest < *sp) highest=*sp;
+				if (lowest > (double)*sp) lowest=*sp;
+				if (highest < (double)*sp) highest=*sp;
 				sp--;
 				/* 0,1 */
-				if (lowest > *sp) lowest = *sp;
-				if (highest < *sp) highest = *sp;
+				if (lowest > (double)*sp) lowest = *sp;
+				if (highest < (double)*sp) highest = *sp;
 				lowest *= hf->hf_file2mm;
 				highest *= hf->hf_file2mm;
 			} else {
@@ -1018,16 +1018,16 @@ skip_first:
 					/* 0,0 */
 					highest = lowest = *sp++;
 					/* 1,0 */
-					if (lowest > *sp) lowest=*sp;
-					if (highest < *sp) highest=*sp;
+					if (lowest > (double)*sp) lowest=*sp;
+					if (highest < (double)*sp) highest=*sp;
 					sp+=hf->hf_w;
 					/* 1,1 */
-					if (lowest > *sp) lowest=*sp;
-					if (highest < *sp) highest=*sp;
+					if (lowest > (double)*sp) lowest=*sp;
+					if (highest < (double)*sp) highest=*sp;
 					sp--;
 					/* 0,1 */
-					if (lowest > *sp) lowest = *sp;
-					if (highest < *sp) highest = *sp;
+					if (lowest > (double)*sp) lowest = *sp;
+					if (highest < (double)*sp) highest = *sp;
 					lowest *= hf->hf_file2mm;
 					highest *= hf->hf_file2mm;
 				} else {
@@ -1198,16 +1198,16 @@ rt_log("aray[X]/aray[Y]=%g\n", delta);
 				/* 0,0 */
 				highest = lowest = *sp++;
 				/* 1,0 */
-				if (lowest > *sp) lowest=*sp;
-				if (highest < *sp) highest=*sp;
+				if (lowest > (double)*sp) lowest=*sp;
+				if (highest < (double)*sp) highest=*sp;
 				sp+=hf->hf_w;
 				/* 1,1 */
-				if (lowest > *sp) lowest=*sp;
-				if (highest < *sp) highest=*sp;
+				if (lowest > (double)*sp) lowest=*sp;
+				if (highest < (double)*sp) highest=*sp;
 				sp--;
 				/* 0,1 */
-				if (lowest > *sp) lowest = *sp;
-				if (highest < *sp) highest = *sp;
+				if (lowest > (double)*sp) lowest = *sp;
+				if (highest < (double)*sp) highest = *sp;
 				lowest *= hf->hf_file2mm;
 				highest *= hf->hf_file2mm;
 			} else {
@@ -1277,16 +1277,16 @@ skip_2nd:
 					/* 0,0 */
 					highest = lowest = *sp++;
 					/* 1,0 */
-					if (lowest > *sp) lowest=*sp;
-					if (highest < *sp) highest=*sp;
+					if (lowest > (double)*sp) lowest=*sp;
+					if (highest < (double)*sp) highest=*sp;
 					sp+=hf->hf_w;
 					/* 1,1 */
-					if (lowest > *sp) lowest=*sp;
-					if (highest < *sp) highest=*sp;
+					if (lowest > (double)*sp) lowest=*sp;
+					if (highest < (double)*sp) highest=*sp;
 					sp--;
 					/* 0,1 */
-					if (lowest > *sp) lowest = *sp;
-					if (highest < *sp) highest = *sp;
+					if (lowest > (double)*sp) lowest = *sp;
+					if (highest < (double)*sp) highest = *sp;
 					lowest *= hf->hf_file2mm;
 					highest *= hf->hf_file2mm;
 				} else {
