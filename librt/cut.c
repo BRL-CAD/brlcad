@@ -74,6 +74,35 @@ rt_log("Cut: Tree Depth=%d, Leaf Len=%d\n", rt_cutDepth, rt_cutLen );
 
 	if(rt_g.debug&DEBUG_CUT) rt_pr_cut( &rtip->rti_CutHead, 0 );
 
+	/* For plotting, build slightly enlarged model RPP, to
+	 * allow rays clipped to the model RPP to be depicted,
+	 * and compute a scale factor for using 4096 units.
+	 * Always do this, because application debugging uses it too.
+	 */
+	{
+		FAST fastf_t f, diff;
+
+		diff = (rtip->mdl_max[X] - rtip->mdl_min[X]);
+		f = (rtip->mdl_max[Y] - rtip->mdl_min[Y]);
+		if( f > diff )  diff = f;
+		f = (rtip->mdl_max[Z] - rtip->mdl_min[Z]);
+		if( f > diff )  diff = f;
+		diff *= 0.1;	/* 10% expansion of box */
+		rtip->rti_pmin[0] = rtip->mdl_min[0] - diff;
+		rtip->rti_pmin[1] = rtip->mdl_min[1] - diff;
+		rtip->rti_pmin[2] = rtip->mdl_min[2] - diff;
+		rtip->rti_pmax[0] = rtip->mdl_max[0] + diff;
+		rtip->rti_pmax[1] = rtip->mdl_max[1] + diff;
+		rtip->rti_pmax[2] = rtip->mdl_max[2] + diff;
+
+		diff = 4096.0 / (rtip->rti_pmax[X] - rtip->rti_pmin[X]);
+		f = 4096.0 / (rtip->rti_pmax[Y] - rtip->rti_pmin[Y]);
+		if( f < diff )  diff = f;
+		f = 4096.0 / (rtip->rti_pmax[Z] - rtip->rti_pmin[Z]);
+		if( f < diff )  diff = f;
+		rtip->rti_pconv = diff;
+	}
+
 	if( !(rt_g.debug&DEBUG_PLOTBOX) )  return;
 
 	/* Debugging code to plot cuts, solid RRPs */
@@ -546,20 +575,13 @@ register vect_t		a, b;
 {
 	int ax, ay, az;
 	int bx, by, bz;
-	double conv, f;
 
-	conv = 4096.0 / (rtip->mdl_max[X] - rtip->mdl_min[X]);
-	f = 4096.0 / (rtip->mdl_max[Y] - rtip->mdl_min[Y]);
-	if( f < conv )  conv = f;
-	f = 4096.0 / (rtip->mdl_max[Z] - rtip->mdl_min[Z]);
-	if( f < conv )  conv = f;
-
-	ax =	(a[X] - rtip->mdl_min[X])*conv;
-	ay =	(a[Y] - rtip->mdl_min[Y])*conv;
-	az =	(a[Z] - rtip->mdl_min[Z])*conv;
-	bx =	(b[X] - rtip->mdl_min[X])*conv;
-	by =	(b[Y] - rtip->mdl_min[Y])*conv;
-	bz =	(b[Z] - rtip->mdl_min[Z])*conv;
+	ax =	(a[X] - rtip->rti_pmin[X])*rtip->rti_pconv;
+	ay =	(a[Y] - rtip->rti_pmin[Y])*rtip->rti_pconv;
+	az =	(a[Z] - rtip->rti_pmin[Z])*rtip->rti_pconv;
+	bx =	(b[X] - rtip->rti_pmin[X])*rtip->rti_pconv;
+	by =	(b[Y] - rtip->rti_pmin[Y])*rtip->rti_pconv;
+	bz =	(b[Z] - rtip->rti_pmin[Z])*rtip->rti_pconv;
 
 	pl_3box( fp, ax, ay, az, bx, by, bz );
 }
@@ -657,26 +679,19 @@ register vect_t		aa, bb;
 {
 	int ax, ay, az;
 	int bx, by, bz;
-	double conv, f;
 	vect_t	a, b;
 
 	VMOVE( a, aa );		/* Make local copys, for vclip to change */
 	VMOVE( b, bb );
-	if( rt_vclip( a, b, rtip->mdl_min, rtip->mdl_max ) == 0 )
+	if( rt_vclip( a, b, rtip->rti_pmin, rtip->rti_pmax ) == 0 )
 		return;
 
-	conv = 4096.0 / (rtip->mdl_max[X] - rtip->mdl_min[X]);
-	f = 4096.0 / (rtip->mdl_max[Y] - rtip->mdl_min[Y]);
-	if( f < conv )  conv = f;
-	f = 4096.0 / (rtip->mdl_max[Z] - rtip->mdl_min[Z]);
-	if( f < conv )  conv = f;
-
-	ax =	(a[X] - rtip->mdl_min[X])*conv;
-	ay =	(a[Y] - rtip->mdl_min[Y])*conv;
-	az =	(a[Z] - rtip->mdl_min[Z])*conv;
-	bx =	(b[X] - rtip->mdl_min[X])*conv;
-	by =	(b[Y] - rtip->mdl_min[Y])*conv;
-	bz =	(b[Z] - rtip->mdl_min[Z])*conv;
+	ax =	(a[X] - rtip->rti_pmin[X])*rtip->rti_pconv;
+	ay =	(a[Y] - rtip->rti_pmin[Y])*rtip->rti_pconv;
+	az =	(a[Z] - rtip->rti_pmin[Z])*rtip->rti_pconv;
+	bx =	(b[X] - rtip->rti_pmin[X])*rtip->rti_pconv;
+	by =	(b[Y] - rtip->rti_pmin[Y])*rtip->rti_pconv;
+	bz =	(b[Z] - rtip->rti_pmin[Z])*rtip->rti_pconv;
 
 	pl_3line( fp, ax, ay, az, bx, by, bz );
 }
