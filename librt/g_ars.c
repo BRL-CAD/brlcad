@@ -26,6 +26,7 @@ static char RCSars[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "db.h"
 #include "raytrace.h"
+#include "nmg.h"
 #include "./debug.h"
 #include "./plane.h"
 
@@ -46,11 +47,17 @@ HIDDEN fastf_t	*rt_ars_rd_curve();
 HIDDEN void	rt_ars_hitsort();
 extern int	rt_ars_face();
 
+extern struct vertex *rt_nmg_find_pt_in_shell();
+
+
 /*
  *			R T _ A R S _ I M P O R T
  *
  *  Read all the curves in as a two dimensional array.
  *  The caller is responsible for freeing the dynamic memory.
+ *
+ *  Note that in each curve array, the first point is replicated
+ *  as the last point, to make processing the data easier.
  */
 int
 rt_ars_import( ari, rp, mat )
@@ -181,13 +188,13 @@ struct rt_i	*rtip;
 		    j++, v1 += ELEMENTS_PER_VECT, v2 += ELEMENTS_PER_VECT )  {
 		    	/* carefully make faces, w/inward pointing normals */
 			rt_ars_face( stp,
-				&v1[0],
-				&v2[ELEMENTS_PER_VECT],
-				&v1[ELEMENTS_PER_VECT] );
+				&v1[0],				/* [0][0] */
+				&v2[ELEMENTS_PER_VECT],		/* [1][1] */
+				&v1[ELEMENTS_PER_VECT] );	/* [0][1] */
 			rt_ars_face( stp,
-				&v2[0],
-				&v2[ELEMENTS_PER_VECT],
-				&v1[0] );
+				&v2[0],				/* [1][0] */
+				&v2[ELEMENTS_PER_VECT],		/* [1][1] */
+				&v1[0] );			/* [0][0] */
 		}
 	}
 
@@ -596,11 +603,14 @@ rt_ars_class()
  *			R T _ A R S _ P L O T
  */
 int
-rt_ars_plot( rp, mat, vhead, dp )
-union record	*rp;
-mat_t		mat;
-struct vlhead	*vhead;
-struct directory *dp;
+rt_ars_plot( rp, mat, vhead, dp, abs_tol, rel_tol, norm_tol  )
+union record		*rp;
+mat_t			mat;
+struct vlhead		*vhead;
+struct directory	*dp;
+double			abs_tol;
+double			rel_tol;
+double			norm_tol;
 {
 	register int	i;
 	register int	j;
@@ -646,8 +656,140 @@ struct directory *dp;
 	return(0);
 }
 
+/*
+ *			R T _ A R S _ T E S S
+ */
 int
-rt_ars_tess()
+rt_ars_tess( r, m, rp, mat, dp, abs_tol, rel_tol, norm_tol )
+struct nmgregion	**r;
+struct model		*m;
+union record		*rp;
+mat_t			mat;
+struct directory	*dp;
+double			abs_tol;
+double			rel_tol;
+double			norm_tol;
 {
-	return(-1);
+	register int	i;
+	register int	j;
+	struct ars_internal ari;
+	struct shell	*s;
+	struct vertex	**verts;
+	struct faceuse	*fu;
+	fastf_t		tol;
+	fastf_t		tol_sq;
+
+	i = rt_ars_import( &ari, rp, mat );
+
+	if ( i < 0) {
+		rt_log("rt_ars_tess: db import failure\n");
+		return(-1);
+	}
+
+	/* rel_tol is hard to deal with, given we don't know the RPP yet */
+	tol = abs_tol;
+	if( tol <= 0.0 )
+		tol = 0.1;	/* mm */
+	tol_sq = tol * tol;
+
+	/* Build the topology of the ARS.  Start by allocating storage */
+
+	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
+	s = NMG_LIST_FIRST(shell, &(*r)->s_hd);
+
+	verts = (struct vertex **)rt_calloc( ari.ncurves * (ari.pts_per_curve+1),
+		sizeof(struct vertex *),
+		"rt_tor_tess *verts[]" );
+
+#define IJ(ii,jj)	(((i+(ii))*(ari.pts_per_curve+1))+(j+(jj)))
+#define ARS_PT(ii,jj)	(&ari.curves[i+(ii)][(j+(jj))*ELEMENTS_PER_VECT])
+#define FIND_IJ(a,b)	\
+	if( !(verts[IJ(a,b)]) )  { \
+		verts[IJ(a,b)] = \
+		rt_nmg_find_pt_in_shell( s, ARS_PT(a,b), tol_sq ); \
+	}
+#define ASSOC_GEOM(corn, a,b)	\
+	if( !((*corners[corn])->vg_p) )  { \
+		nmg_vertex_gv( *(corners[corn]), ARS_PT(a,b) ); \
+	}
+
+	/*
+	 *  Draw the "waterlines", by tracing each curve.
+	 *  n+1th point is first point replicated by import code.
+	 */
+	for( i = 0; i < ari.ncurves-1; i++ )  {
+		for( j = 0; j < ari.pts_per_curve; j++ )  {
+			struct vertex **corners[3];
+
+			/*
+			 *  First triangular face
+			 */
+			if( rt_3pts_distinct( ARS_PT(0,0), ARS_PT(1,1),
+			    ARS_PT(0,1), tol_sq )
+			)  {
+				/* Locate these points, if previously mentioned */
+				FIND_IJ(0, 0);
+				FIND_IJ(1, 1);
+				FIND_IJ(0, 1);
+
+				/* Construct first face topology, clockwise order */
+				corners[0] = &verts[IJ(0,0)];
+				corners[1] = &verts[IJ(1,1)];
+				corners[2] = &verts[IJ(0,1)];
+				if( (fu = nmg_cmface( s, corners, 3 )) == (struct faceuse *)0 )  {
+					rt_log("rt_ars_tess() nmg_cmface failed, skipping face a[%d][%d]\n",
+						i,j);
+				}
+
+				/* Associate vertex geometry, if new */
+				ASSOC_GEOM( 0, 0, 0 );
+				ASSOC_GEOM( 1, 1, 1 );
+				ASSOC_GEOM( 2, 0, 1 );
+
+				rt_mk_nmg_planeeqn( fu );
+			}
+
+			/*
+			 *  Second triangular face
+			 */
+			if( rt_3pts_distinct( ARS_PT(1,0), ARS_PT(1,1),
+			    ARS_PT(0,0), tol_sq )
+			)  {
+				/* Locate these points, if previously mentioned */
+				FIND_IJ(1, 0);
+				FIND_IJ(1, 1);
+				FIND_IJ(0, 0);
+
+				/* Construct second face topology, clockwise */
+				corners[0] = &verts[IJ(1,0)];
+				corners[1] = &verts[IJ(1,1)];
+				corners[2] = &verts[IJ(0,0)];
+				if( (fu = nmg_cmface( s, corners, 3 )) == (struct faceuse *)0 )  {
+					rt_log("rt_ars_tess() nmg_cmface failed, skipping face b[%d][%d]\n",
+						i,j);
+				}
+
+				/* Associate vertex geometry, if new */
+				ASSOC_GEOM( 0, 1, 0 );
+				ASSOC_GEOM( 1, 1, 1 );
+				ASSOC_GEOM( 2, 0, 0 );
+
+				rt_mk_nmg_planeeqn( fu );
+			}
+		}
+	}
+
+	/* Compute "geometry" for region and shell */
+	nmg_region_a( *r );
+
+	rt_free( (char *)verts, "rt_ars_tess *verts[]" );
+
+	/*
+	 *  Free storage for imported curves
+	 */
+	for( i = 0; i < ari.ncurves; i++ )  {
+		rt_free( (char *)ari.curves[i], "ars curve" );
+	}
+	rt_free( (char *)ari.curves, "ars curves[]" );
+	return(0);
 }
