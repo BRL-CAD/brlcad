@@ -1546,7 +1546,7 @@ ptrs[subscript], nmg_index_of_struct(ptrs[subscript]) );
 }
 
 /*
- *			R T _ N M G _ I M P O R T
+ *			R T _ N M G _ I M P O R T _ I N T E R N A L
  *
  *  Import an NMG from the database format to the internal format.
  *  Apply modeling transformations as well.
@@ -1557,7 +1557,7 @@ ptrs[subscript], nmg_index_of_struct(ptrs[subscript]) );
  *	 0	indicates that a null pointer should be used.
  */
 int
-rt_nmg_import( ip, ep, mat )
+rt_nmg_import_internal( ip, ep, mat )
 struct rt_db_internal	*ip;
 struct rt_external	*ep;
 register mat_t		mat;
@@ -1628,16 +1628,24 @@ register mat_t		mat;
 }
 
 /*
- *			R T _ N M G _ E X P O R T
+ *			R T _ N M G _ E X P O R T _ I N T E R N A L
  *
  *  The name is added by the caller, in the usual place.
  *
+ *  When the "compact" flag is set, bounding boxes from (at present)
+ *	nmgregion_a, shell_a, and loop_g
+ *  are not converted for storage in the database.
+ *  They should be re-generated at import time.
+ *  (Saving space in face_g is problematic).
+ *
+ *  If the "compact" flag is not set, then the NMG model is saved, verbatim.
  */
 int
-rt_nmg_export( ep, ip, local2mm )
+rt_nmg_export_internal( ep, ip, local2mm, compact )
 struct rt_external	*ep;
 struct rt_db_internal	*ip;
 double			local2mm;
+int			compact;
 {
 	struct model			*m;
 	union record			*rp;
@@ -1750,6 +1758,67 @@ rt_log("Mapping of old index to new index, and kind\n");
 	rt_free( (char *)ecnt, "ecnt[]" );
 
 	return(0);
+}
+
+/*
+ *			R T _ N M G _ I M P O R T
+ *
+ *  Import an NMG from the database format to the internal format.
+ *  Apply modeling transformations as well.
+ */
+int
+rt_nmg_import( ip, ep, mat )
+struct rt_db_internal	*ip;
+struct rt_external	*ep;
+register mat_t		mat;
+{
+	struct model			*m;
+	struct nmgregion		*r;
+	union record			*rp;
+
+	RT_CK_EXTERNAL( ep );
+	rp = (union record *)ep->ext_buf;
+	/* Check record type */
+	if( rp->u_id != DBID_NMG )  {
+		rt_log("rt_nmg_import: defective record\n");
+		return(-1);
+	}
+
+	if( rt_nmg_import_internal( ip, ep, mat ) < 0 )
+		return(-1);
+
+	m = (struct model *)ip->idb_ptr;
+	NMG_CK_MODEL(m);
+
+	/* XXX Perhaps bounding boxes should be recomputed here? */
+
+	return(0);			/* OK */
+}
+
+/*
+ *			R T _ N M G _ E X P O R T
+ *
+ *  The name is added by the caller, in the usual place.
+ *
+ */
+int
+rt_nmg_export( ep, ip, local2mm )
+struct rt_external	*ep;
+struct rt_db_internal	*ip;
+double			local2mm;
+{
+	struct model			*m;
+	union record			*rp;
+
+	RT_CK_DB_INTERNAL(ip);
+	if( ip->idb_type != ID_NMG )  return(-1);
+	m = (struct model *)ip->idb_ptr;
+	NMG_CK_MODEL(m);
+
+	/* XXX Perhaps some _a structures need not be stored to disk? */
+
+	/* The "compact" flag is used to save space in the database */
+	return  rt_nmg_export_internal( ep, ip, local2mm, 0 );
 }
 
 /*
