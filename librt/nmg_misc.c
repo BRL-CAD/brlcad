@@ -42,6 +42,60 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "db.h"		/* for debugging stuff at bottom */
 
+/*	N M G _ C H E C K _ C L O S E D _ S H E L L
+ *
+ *	Looks at every eu in OT_SAME fu's. If any eu
+ *	has no radials, then it must be the edge of a
+ *	dangling face and therfore the edge of an opening.
+ *
+ *  returns:
+ *	0 - O.K.
+ *	1 - found a hole
+ */
+int
+nmg_check_closed_shell( s , tol )
+struct shell *s;
+struct rt_tol *tol;
+{
+	struct faceuse *fu;
+
+	NMG_CK_SHELL( s );
+	RT_CK_TOL( tol );
+
+	for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+	{
+		struct loopuse *lu;
+
+		NMG_CK_FACEUSE( fu );
+
+		if( fu->orientation != OT_SAME )
+			continue;
+
+		for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+		{
+			struct edgeuse *eu;
+
+			NMG_CK_LOOPUSE( lu );
+
+			if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+				continue;
+
+			for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+			{
+				if( eu->eumate_p == eu->radial_p )
+				{
+					rt_log( "Shell has an opening at edge ( %g %g %g ) -> ( %g %g %g )\n",
+						V3ARGS( eu->vu_p->v_p->vg_p->coord ),
+						V3ARGS( eu->eumate_p->vu_p->v_p->vg_p->coord ) );
+					return( 1 );
+				}
+			}
+		}
+	}
+
+	return( 0 );
+}
+
 /*
  *	N M G _ F I N D _ T O P _ F A C E
  *
@@ -2233,6 +2287,9 @@ struct rt_tol *tol;
 
 				/* already have face geometry, so don't need to call nmg_fu_planeeqn */
 				nmg_face_g( fu , pl1 );
+
+				/* Calculate face bounding box */
+				nmg_face_bb( fu->f_p , tol );
 
 				/* add this face to list for glueing */
 				fu_list[fu_counter++] = fu;
