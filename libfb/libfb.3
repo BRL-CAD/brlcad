@@ -130,11 +130,8 @@ and the environment variable
 is set, then the value of
 .SM FB_FILE
 is used;
-otherwise a default
-frame buffer device is used.
-A "/dev/debug" interface exists which just logs all calls to the library.
-If the remote interface is available, remote devices can be accessed
-as "hostname:/dev/device".
+otherwise the default frame buffer device for the system is used.
+See below for more details.
 The
 .I width\^
 and
@@ -350,13 +347,14 @@ see
 .IR printf\^ (3S).
 This function may be supplied by the application if different behavior
 is desired.
-.SH DEVICES
+.SH "FB_FILE DEVICES"
 The following devices are supported by the library; not all may
 be available on any given system.  New device support can be
 incorporated by the addition of a single module to the library.
 .TP
 .BI /dev/debug [num]
-Debug interface
+The "/dev/debug" interface prints one line to logs each call
+to the frame buffer library.
 .br
 .I num
 is a bitvector indicating the levels of verbosity of the output.  See
@@ -392,8 +390,16 @@ To release the shared memory segment, open /dev/sgi99.
 .TP
 .B /dev/rat
 RasterTek 1/80 (untested)
+.B /dev/sun
+Sun PixWin interface.  On monochrome displays, a dither pattern is used
+to create the impression of shading.  On 8-bit color displays, a simple
+3x3x2 color-cube approximation is used.  At present, there is no ability
+to read back pixels from the Sun display, making it less useful for
+serious image manipulation, but being able to ``brouse'' through
+images even on a monochrome workstation makes this still a very
+useful capability.
 .TP
-.BI hostname: devicename
+.BI hostname: [devicename]
 TCP-based network links to a remote framebuffer, where
 .I devicename
 is any from this list, for example,
@@ -403,7 +409,11 @@ A
 with a null
 .I devicename
 will select the default display device on that host.
-(Be careful not to omit the colon, or a disk file will result).
+If explicitly specifying a remote device,
+be careful not to omit the colon between the host and device name,
+or you will be specifying a local disk file as the result.
+Note that for security reasons, it is not permitted to access a
+disk file via the remote interface.
 .SH EXAMPLE
 .I Libfb\^
 can be loaded with any
