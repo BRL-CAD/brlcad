@@ -26,8 +26,14 @@ set mged_help_data(arot)            {{x y z angle} {rotate about axis x,y,z by a
 set mged_help_data(attach)	{{[-d display_string] [-i init_script] [-n name]
 	      [-t is_toplevel] [-W width] [-N height]
 	      [-S square_size] win_type}	{attach to a display manager}}
-set mged_help_data(attr)        {{object attr_name attr_value [attr_name attr_value ...]}
-	      {assign or adjust attribute values for the specified object}}
+set mged_help_data(attr)        {{object [attr_name [attr_value]] [attr_name attr_value ...]}
+	      {get, assign or adjust attribute values for the specified object.
+              with only an object specified,
+                    displays all the attributes of that object.
+              with an object and an attribute name specified,
+                    displays the value of that attribute.
+              with an object and attribute value pairs specified,
+                    it sets the value of the specified attributes for that object}   }
 set mged_help_data(attr_rm)     {{object attr_name [attr_name attr_name ...]}
 	      {delete attributes for the specified object}}
 set mged_help_data(autoview)	{{}	{set view size and center so that all displayed solids are in view}}
