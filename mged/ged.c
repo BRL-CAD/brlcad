@@ -307,10 +307,10 @@ refresh()
 		dotitles();
 
 		dmp->dmr_epilog();
-
-		dmaflag = 0;
 	}
 	dmp->dmr_update();
+
+	dmaflag = 0;
 }
 
 /*
