@@ -264,6 +264,8 @@ strsolbld()
 
 	cp = nxt_spc( cp );
 
+/* XXX This block of code could easily be disposed of */
+#if 1
 	if( !strcmp( keyword , "ebm" ) )
 	{
 		struct rt_ebm_internal ebm;
@@ -298,10 +300,12 @@ strsolbld()
 		rt_vls_free( &vls );
 	}
 	else
+#endif
 	{
-		rt_log( "asc2g: Unrecognized STRSOL keyword '%s', skipping\n" , keyword );
-		rt_log( "buf=%s\n" , buf );
-		return;
+		if( mk_strsol( ofp, name, keyword, cp ) )  {
+			rt_log("asc2g(%s) couldn't convert %s type solid\n",
+				name, keyword );
+		}
 	}
 }
 
@@ -473,7 +477,7 @@ solbld()
 				VADD2( pnts[i], pnts[i], pnts[0] );
 			}
 
-			mk_arb8(ofp, name, (CONST point_t *)pnts);
+			mk_arb8(ofp, name, &pnts[0][X]);
 			break;
 
 		case HALFSPACE:
