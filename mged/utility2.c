@@ -16,6 +16,7 @@
 
 #include <signal.h>
 #include <stdio.h>
+#include <math.h>
 #ifdef USE_STRING_H
 #include <string.h>
 #else
@@ -540,7 +541,7 @@ register matp_t m;
 		if( (i+1)%4 )
 			rt_log("%f\t",m[i]);
 		else if(i == 15)
-			rt_log("%f\t",m[i]);
+			rt_log("%f\n",m[i]);
 		else
 			rt_log("%f\n",m[i]*base2local);
 	}
@@ -878,4 +879,446 @@ struct directory *dp;
 	}
 	/* bottom position */
 	return;
+}
+
+static void
+zero_dp_counts( db_ip, dp )
+struct db_i *db_ip;
+struct directory *dp;
+{
+	RT_CK_DIR( dp );
+
+	dp->d_nref = 0;
+	dp->d_uses = 0;
+
+	if( RT_LIST_NON_EMPTY( &dp->d_use_hd ) )
+		rt_log( "List for %s is not empty\n" , dp->d_namep );
+}
+
+static void
+zero_nrefs( db_ip, dp )
+struct db_i *db_ip;
+struct directory *dp;
+{
+	RT_CK_DIR( dp );
+
+	dp->d_nref = 0;
+}
+
+static void
+increment_uses( db_ip, dp )
+struct db_i *db_ip;
+struct directory *dp;
+{
+	RT_CK_DIR( dp );
+
+	dp->d_uses++;
+}
+
+static void
+increment_nrefs( db_ip, dp )
+struct db_i *db_ip;
+struct directory *dp;
+{
+	RT_CK_DIR( dp );
+
+	dp->d_nref++;
+}
+
+struct object_use
+{
+	struct rt_list	l;
+	struct directory *dp;
+	mat_t xform;
+	int used;
+};
+
+static void
+Free_uses( db_ip, dp )
+struct db_i *db_ip;
+struct directory *dp;
+{
+	struct object_use *use;
+
+	RT_CK_DIR( dp );
+
+	while( RT_LIST_NON_EMPTY( &dp->d_use_hd ) )
+	{
+		use = RT_LIST_FIRST( object_use, &dp->d_use_hd );
+		if( !use->used )
+		{
+			/* never used, so delete directory entry */
+			db_dirdelete( dbip, use->dp );
+		}
+
+		RT_LIST_DEQUEUE( &use->l );
+		rt_free( (char *)use, "Free_uses: use" );
+	}
+}
+
+static void
+Make_new_name( db_ip, dp )
+struct db_i *db_ip;
+struct directory *dp;
+{
+	struct object_use *use;
+	int use_no;
+	int digits;
+	int suffix_start;
+	int name_length;
+	int j;
+	char format[25];
+	char name[NAMESIZE];
+
+	/* only one use and not referenced elsewhere, nothing to do */
+	if( dp->d_uses < 2 && dp->d_uses == dp->d_nref )
+		return;
+
+	/* check if already done */
+	if( RT_LIST_NON_EMPTY( &dp->d_use_hd ) )
+		return;
+
+	digits = log10( (double)dp->d_uses ) + 2.0;
+	sprintf( format, "_%%0%dd", digits );
+
+	name_length = strlen( dp->d_namep );
+	if( name_length + digits + 1 > NAMESIZE - 1 )
+		suffix_start = NAMESIZE - digits - 2;
+	else
+		suffix_start = name_length;
+
+	j = 0;
+	for( use_no=0 ; use_no<dp->d_uses ; use_no++ )
+	{
+		j++;
+		use = (struct object_use *)rt_malloc( sizeof( struct object_use ), "Make_new_name: use" );
+
+		/* set xform for this object_use to all zeros */
+		mat_zero( use->xform );
+		use->used = 0;
+		NAMEMOVE( dp->d_namep, name );
+
+		if( use_no == 0 ) /* Add an entry for the original at the end of the list */
+			use->dp = dp;
+		else
+		{
+			sprintf( &name[suffix_start], format, j );
+
+			/* Insure that new name is unique */
+			while( db_lookup( dbip, name, 0 ) != DIR_NULL )
+			{
+				j++;
+				sprintf( &name[suffix_start], format, j );
+			}
+
+			/* Add new name to directory */
+			if( (use->dp = db_diradd( dbip, name, -1, 0, dp->d_flags )) == DIR_NULL )
+			{
+				ALLOC_ERR;
+				return;
+			}
+		}
+
+		/* Add new directory pointer to use list for this object */
+		RT_LIST_APPEND( &dp->d_use_hd, &use->l );
+	}
+}
+
+static struct directory *
+Copy_solid( dp, xform )
+struct directory *dp;
+mat_t xform;
+{
+	struct directory *found;
+	struct rt_external sol_ext;
+	struct rt_db_internal sol_int;
+	struct object_use *use;
+	int id;
+
+	RT_CK_DIR( dp );
+
+	if( !(dp->d_flags & DIR_SOLID) )
+	{
+		rt_log( "Copy_solid: %s is not a solid!!!!\n", dp->d_namep );
+		return( DIR_NULL );
+	}
+
+	/* Look for a copy that already has this transform matrix */
+	for( RT_LIST_FOR( use, object_use, &dp->d_use_hd ) )
+	{
+		if( rt_mat_is_equal( xform, use->xform, &mged_tol ) )
+		{
+			/* found a match, no need to make another copy */
+			use->used = 1;
+			return( use->dp );
+		}
+	}
+
+	found = DIR_NULL;
+	/* get a fresh use */
+	for( RT_LIST_FOR( use, object_use, &dp->d_use_hd ) )
+	{
+		if( use->used )
+			continue;
+
+		found = use->dp;
+		use->used = 1;
+		break;
+	}
+
+	if( found == DIR_NULL && dp->d_nref == 1 && dp->d_uses == 1 )
+	{
+		/* only one use, take it */
+		found = dp;
+	}
+
+	if( found == DIR_NULL )
+	{
+		rt_log( "Ran out of uses for solid %s\n" , dp->d_namep );
+		return( DIR_NULL );
+	}
+
+	RT_INIT_EXTERNAL( &sol_ext );
+
+	if( db_get_external( &sol_ext, dp, dbip ) < 0 )
+	{
+		rt_log( "Cannot get external form of %s\n" , dp->d_namep );
+		return( DIR_NULL );
+	}
+
+	RT_INIT_DB_INTERNAL( &sol_int );
+
+	id = rt_id_solid( &sol_ext );
+	if( rt_functab[id].ft_import( &sol_int, &sol_ext, xform ) < 0 )
+	{
+		rt_log( "Cannot import solid %s\n" , dp->d_namep );
+		return( DIR_NULL );
+	}
+
+	RT_CK_DB_INTERNAL( &sol_int );
+
+	if( rt_db_put_internal( found, dbip, &sol_int ) < 0 )
+	{
+		rt_log( "Cannot write copy solid (%s) to database\n" , found->d_namep );
+		return( DIR_NULL );
+	}
+
+	return( found );
+}
+
+static struct directory *Copy_object();
+
+static struct directory *
+Copy_comb( dp, xform )
+struct directory *dp;
+mat_t xform;
+{
+	struct object_use *use;
+	struct directory *found;
+	union record *rp;
+	mat_t new_xform;
+	int i;
+
+	RT_CK_DIR( dp );
+
+	/* Look for a copy that already has this transform matrix */
+	for( RT_LIST_FOR( use, object_use, &dp->d_use_hd ) )
+	{
+		if( rt_mat_is_equal( xform, use->xform, &mged_tol ) )
+		{
+			/* found a match, no need to make another copy */
+			use->used = 1;
+			return( use->dp );
+		}
+	}
+
+	/* if we can't get records for this combination, just leave it alone */
+	if( (rp=db_getmrec( dbip , dp )) == (union record *)0 )
+		return( dp );
+
+	/* copy members */
+	for( i=1 ; i<dp->d_len ; i++ )
+	{
+		mat_t arc_mat;
+		struct directory *dp2;
+		struct directory *dp_new;
+
+		/* ignore members that don't exist */
+		if( (dp2=db_lookup( dbip, rp[i].M.m_instname, 0 )) == DIR_NULL )
+			continue;
+
+		/* apply transform matrix for this arc */
+		rt_mat_dbmat( arc_mat, rp[i].M.m_mat );
+		mat_mul( new_xform, xform, arc_mat );
+
+		/* Copy member with current tranform matrix */
+		if( (dp_new=Copy_object( dp2, new_xform )) == DIR_NULL )
+		{
+			rt_log( "Failed to copy object %s\n" , dp2->d_namep );
+			return( DIR_NULL );
+		}
+
+		/* replace member name with new copy */
+		NAMEMOVE( dp_new->d_namep, rp[i].M.m_instname );
+
+		/* make transform for this arc the identity matrix */
+		rt_dbmat_mat( rp[i].M.m_mat, rt_identity );
+	}
+
+	/* Get a use of this object */
+	found = DIR_NULL;
+	for( RT_LIST_FOR( use, object_use, &dp->d_use_hd ) )
+	{
+		/* Get a fresh use of this object */
+		if( use->used )
+			continue;	/* already used */
+		found = use->dp;
+		use->used = 1;
+		break;
+	}
+
+	if( found == DIR_NULL && dp->d_nref == 1 && dp->d_uses == 1 )
+	{
+		/* only one use, so take original */
+		found = dp;
+	}
+
+	if( found == DIR_NULL )
+	{
+		rt_log( "Ran out of uses for combination %s\n" , dp->d_namep );
+		return( DIR_NULL );
+	}
+
+	if( found != dp )
+	{
+		if( db_alloc( dbip, found, dp->d_len ) < 0 )
+		{
+			rt_log( "Cannot allocate space for combination %s\n" , found->d_namep );
+			return( DIR_NULL );
+		}
+		NAMEMOVE( found->d_namep, rp[0].c.c_name );
+	}
+
+	if( db_put( dbip, found, rp, 0, found->d_len ) < 0 )
+	{
+		rt_log( "Failed to write combination %s to database\n" , found->d_namep );
+		return( DIR_NULL );
+	}
+
+	return( found );
+}
+
+static struct directory *
+Copy_object( dp, xform )
+struct directory *dp;
+mat_t xform;
+{
+	RT_CK_DIR( dp );
+
+	if( dp->d_flags & DIR_SOLID )
+		return( Copy_solid( dp, xform ) );
+	else
+		return( Copy_comb( dp, xform ) );
+}
+
+int
+f_xpush( argc, argv )
+int argc;
+char **argv;
+{
+	struct directory *old_dp;
+	struct nmg_ptbl tops;
+	mat_t xform;
+	int i,j;
+
+	/* get directory pointer for arg */
+	if( (old_dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
+		return CMD_BAD;
+
+	/* initialize use and reference counts */
+	db_functree( dbip, old_dp, zero_dp_counts, zero_dp_counts );
+
+	/* Count uses */
+	db_functree( dbip, old_dp, increment_uses, increment_uses );
+
+	/* Get list of tree tops in this model */
+	nmg_tbl( &tops, TBL_INIT, (long *)NULL );
+	for( i=0 ; i<RT_DBNHASH ; i++ )
+	{
+		struct directory *dp;
+
+		for( dp=dbip->dbi_Head[i] ; dp!=DIR_NULL ; dp=dp->d_forw )
+		{
+			union record *rp;
+
+			if( dp->d_flags & DIR_SOLID )
+				continue;
+
+			if( (rp=db_getmrec( dbip , dp )) == (union record *)0 )
+			{
+				rt_log( "Cannot get records for %s\n" , dp->d_namep );
+				return CMD_BAD;
+			}
+
+			for( j=1 ; j<dp->d_len ; j++ )
+			{
+				struct directory *dp2;
+
+				dp2 = db_lookup( dbip, rp[j].M.m_instname, 0 );
+				if( dp2 == DIR_NULL )
+					continue;
+
+				dp2->d_nref++;
+			}
+			rt_free( (char *)rp, "rp[]" );
+		}
+	}
+
+	for( i=0 ; i<RT_DBNHASH ; i++ )
+	{
+		struct directory *dp;
+
+		for( dp=dbip->dbi_Head[i] ; dp!=DIR_NULL ; dp=dp->d_forw )
+		{
+			if( dp->d_flags & DIR_SOLID )
+				continue;
+
+			if( dp->d_nref == 0 )
+				nmg_tbl( &tops, TBL_INS, (long *)dp );
+		}
+	}
+
+	/* zero nrefs in entire model */
+	for( i=0 ; i<NMG_TBL_END( &tops ) ; i++ )
+	{
+		struct directory *dp;
+
+		dp = (struct directory *)NMG_TBL_GET( &tops, i );
+		db_functree( dbip, dp, zero_nrefs, zero_nrefs );
+	}
+
+	/* count references in entire model */
+	for( i=0 ; i<NMG_TBL_END( &tops ) ; i++ )
+	{
+		struct directory *dp;
+
+		dp = (struct directory *)NMG_TBL_GET( &tops, i );
+		db_functree( dbip, dp, increment_nrefs, increment_nrefs );
+	}
+
+	/* Free list of tree-tops */
+	nmg_tbl( &tops, TBL_FREE, (long *)NULL );
+
+	/* Make new names */
+	db_functree( dbip, old_dp, Make_new_name, Make_new_name );
+
+	mat_idn( xform );
+
+	/* Make new objects */
+	(void) Copy_object( old_dp, xform );
+
+	/* Free use lists and delete unused directory entries */
+	db_functree( dbip, old_dp, Free_uses, Free_uses );
+
+	return CMD_OK;
 }
