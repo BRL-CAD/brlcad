@@ -35,8 +35,10 @@
 # The caller is responsible for calling "unset data"
 #
 proc cadColorWidget { mode parent child args } {
+    global tkPriv
+
     if ![winfo exists $parent] {
-	cad_dialog .cadColorWidgetError [winfo screen .]\
+	cad_dialog $tkPriv(cad_dialog) [winfo screen .]\
 		"cadColorWidget: parent does not exist"\
 		"cadColorWidget: parent does not exist - $parent"\
 		"" 0 OK
