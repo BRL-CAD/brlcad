@@ -58,6 +58,7 @@ char *argv[];
   default:
     break;
   }
+  return( (struct dm *)NULL );
 }
 
 fastf_t
