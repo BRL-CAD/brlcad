@@ -163,7 +163,6 @@ extern void		sedit_menu();
 extern void		attach(), release(), get_attached();
 extern void		(*cur_sigint)();	/* Current SIGINT status */
 extern void		aexists(), f_quit();
-extern char		*addname(), *strdup();
 extern int		clip(), getname(), use_pen();
 extern struct directory	*combadd(), **dir_getspace();
 extern void		ellipse();
