@@ -435,7 +435,7 @@ Tcl_Interp	*inter;
 	/* Specify startup file to invoke when run interactively */
 	/* Source the TCL part of this lashup */
 	/* Tcl7 way:  tcl_RcFileName = "./disp.tcl"; */
-	Tcl_SetVar(interp, "tcl_rcFileName", "../rt/disp.tcl", TCL_GLOBAL_ONLY);
+	Tcl_SetVar(interp, "tcl_rcFileName", "../rttherm/disp.tcl", TCL_GLOBAL_ONLY);
 
 	return TCL_OK;
 }
