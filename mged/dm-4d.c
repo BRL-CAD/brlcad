@@ -85,6 +85,8 @@ static int	ir_is_gt;		/* 0 for non-GT machines */
 static int	ir_has_zbuf;		/* 0 if no Z buffer */
 static int	ir_has_rgb;		/* 0 if mapped mode must be used */
 static int	ir_has_doublebuffer;	/* 0 if singlebuffer mode must be used */
+static int	min_scr_z;		/* based on getgdesc(GD_ZMIN) */
+static int	max_scr_z;		/* based on getgdesc(GD_ZMAX) */
 /* End modifiable variables */
 
 
@@ -197,6 +199,8 @@ struct structparse Ir_vparse[] = {
 	{"%d",  1, "has_zbuf",		(int)&ir_has_zbuf,	refresh_hook },
 	{"%d",  1, "has_rgb",		(int)&ir_has_rgb,	Ir_colorchange },
 	{"%d",  1, "has_doublebuffer",	(int)&ir_has_doublebuffer, refresh_hook },
+	{"%d",  1, "min_scr_z",		(int)&min_scr_z,	refresh_hook },
+	{"%d",  1, "max_scr_z",		(int)&max_scr_z,	refresh_hook },
 	{"%d",  1, "debug",		(int)&ir_debug,		FUNC_NULL },
 	{"",	0,  (char *)0,		0,			FUNC_NULL }
 };
@@ -299,6 +303,11 @@ Ir_configure_window_shape()
  * XXX (2) the drawing overflows the boundaries.
  * XXX Perhaps XY clipping could be used?
  * At least the aspect ratio is right!
+ */
+/* XXXXX See page 8-9 in the manual.
+ * XXX The best way to do the masking in NTSC mode is to
+ * XXX just set a Z-buffer write mask of 0 on the parts we don't
+ * XXX want to have written.
  */
 			viewport( (XMAX170 - npix)/2, npix + (XMAX170 - npix)/2,
 				(YMAX170-npix)/2, npix + (YMAX170-npix)/2 );
@@ -533,17 +542,16 @@ Ir_open()
 	 */
 	/* Don't draw polygon edges */
 	glcompat( GLC_OLDPOLYGON, 0 );
+
 	/* Z-range mapping */
-#if 0
-	/* Optional:  Z from 0 to 0x007fffff */
-	glcompat( GLC_ZRANGEMAP, 1 );
-#else
 	/* Z range from getgdesc(GD_ZMIN)
 	 * to getgdesc(GD_ZMAX).
-	 * Hardware specific.  This is the default mode.
+	 * Hardware specific.
 	 */
 	glcompat( GLC_ZRANGEMAP, 0 );
-#endif
+	/* Take off a smidgeon for wraparound, as suggested by SGI manual */
+	min_scr_z = getgdesc(GD_ZMIN)+15;
+	max_scr_z = getgdesc(GD_ZMAX)-15;
 
 	Ir_configure_window_shape();
 
@@ -878,20 +886,20 @@ int		white;
 			b = (short)sp->s_color[2];
 		}
 		if(cueing_on)  {
-			/* RGBrange marked obsolete, use lRGBrange! */
 			lRGBrange(
 				r/10, g/10, b/10,
 				r, g, b,
-				0, 0x007fffff );
-			/* XXX should investigate lRGBrange, lshaderange, lsetdepth */
+				min_scr_z, max_scr_z );
 		}
 		RGBcolor( r, g, b );
 	} else {
 		if( white ) {
 			ovec = nvec = MAP_ENTRY(DM_WHITE);
 			/* Use the *next* to the brightest white entry */
-			if(cueing_on) lshaderange(nvec+1, nvec+1, 0, 0x007fffff);
-
+			if(cueing_on)  {
+				lshaderange(nvec+1, nvec+1,
+					min_scr_z, max_scr_z );
+			}
 			color( nvec );
 		} else {
 			if( (nvec = MAP_ENTRY( sp->s_dmindex )) != ovec) {
@@ -900,7 +908,10 @@ int		white;
 				 * The code will use the "reserved" color map entries
 				 * to display it when in depthcued mode.
 				 */
-			  	if(cueing_on) lshaderange(nvec+1, nvec+14, 0, 0x007fffff);
+			  	if(cueing_on)  {
+					lshaderange(nvec+1, nvec+14,
+			  			min_scr_z, max_scr_z );
+			  	}
 				color( nvec );
 			  	ovec = nvec;
 			  }
@@ -1026,12 +1037,13 @@ int dashed;
 			lRGBrange(
 				255, 255, 0,
 				255, 255, 0,
-				0, 0x007fffff );
+				min_scr_z, max_scr_z );
 		}
 		RGBcolor( (short)255, (short)255, (short) 0 );
 	} else {
 		if((nvec = MAP_ENTRY(DM_YELLOW)) != ovec) {
-		  	if(cueing_on) lshaderange(nvec, nvec, 0, 0x007fffff);
+		  	if(cueing_on) lshaderange(nvec, nvec,
+				min_scr_z, max_scr_z );
 			color( nvec );
 		  	ovec = nvec;
 		}
@@ -1833,10 +1845,12 @@ establish_zbuffer()
 	if( ir_has_zbuf == 0 )  {
 		printf("dm-4d: This machine has no Zbuffer to enable\n");
 		zbuffer_on = 0;
-		continue;
 	}
 	zbuffer( zbuffer_on );
-	if( zbuffer_on) lsetdepth(0, 0x007fffff);
+	if( zbuffer_on)  {
+		/* Set screen coords of near and far clipping planes */
+		lsetdepth(min_scr_z, max_scr_z);
+	}
 	dmaflag = 1;
 }
 
@@ -1848,9 +1862,9 @@ ir_clear_to_black()
 	if( zbuffer_on )  {
 		zfunction( ZF_LEQUAL );
 		if( ir_has_rgb )  {
-			czclear( 0, 0x7fffff );
+			czclear( 0x000000, max_scr_z );
 		} else {
-			czclear( BLACK, 0x7fffff );
+			czclear( BLACK, max_scr_z );
 		}
 	} else {
 		if( ir_has_rgb )  {
