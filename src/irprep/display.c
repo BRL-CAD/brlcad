@@ -1,40 +1,57 @@
-/*  file:  display.c  */
-/*  S.Coates - 30 September 1994  */
-
-/*  Graphical display of output from PRISM or another infrared  */
-/*  model.  This program will read as input two different types  */
-/*  of output files, a PRISM output file or a generic output  */
-/*  file.  A PRISM file has a time stamp then the next line  */
-/*  contains the ellasped time, background temperature, and six  */
-/*  region temperatures.  Each line afterwards contains eight  */
-/*  temperatures.  Then this sequence repeats (except for the  */
-/*  time stamp) for each time step.  The number of regions must  */
-/*  be known.  The first line of the generic file will contain  */
-/*  the number of regions, the second line will contain the ellasped  */
-/*  time, and on each of the succeeding lines will be the temperature  */
-/*  of a region (with the background being first and the rest of the  */
-/*  regions in order).  This pattern will repeat (except for the  */
-/*  number of regions).  This program will write a file that can  */
-/*  be read by Glen Durfee's 'Analyzer2' program or by my 'ir-X'  */
-/*  program.  */
-
-/*  NOTE:  */
-/*  The .g file must contain ONLY the regions contained in the  */
-/*  PRISM (or other infrared model) output file.  For example  */
-/*  if 'file.g' with objects 'all' and 'air' were use with firpass  */
-/*  and secpass.  The air objects had to be removed in order for  */
-/*  PRISM to run.  Then when running display use only the object  */
-/*  'all.'  Make sure the air was at the end so that the numbering  */
-/*  sceme is not altered.  */
-
-/*  Compile:  */
-/*	cc -c display.c  */
-/*	cake  */
-
-/*	CHANGES		*/
-/*	25 November 1991 - Start of original program.  */
-/*	12 March 1992	 - Add some comments.  */
-/*	30 September 1994- Changed references to see to ir-X.  */
+/*                       D I S P L A Y . C
+ * BRL-CAD
+ *
+ * Copyright (c) 2004 United States Government as represented by the
+ * U.S. Army Research Laboratory.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file display.c
+ *
+ *  Graphical display of output from PRISM or another infrared model.
+ *  This program will read as input two different types of output
+ *  files, a PRISM output file or a generic output file.  A PRISM file
+ *  has a time stamp then the next line contains the ellasped time,
+ *  background temperature, and six region temperatures.  Each line
+ *  afterwards contains eight temperatures.  Then this sequence
+ *  repeats (except for the time stamp) for each time step.  The
+ *  number of regions must be known.  The first line of the generic
+ *  file will contain the number of regions, the second line will
+ *  contain the ellasped time, and on each of the succeeding lines
+ *  will be the temperature of a region (with the background being
+ *  first and the rest of the regions in order).  This pattern will
+ *  repeat (except for the number of regions).  This program will
+ *  write a file that can be read by Glen Durfee's 'Analyzer2' program
+ *  or by my 'ir-X' program.
+ *
+ *  S.Coates - 30 September 1994
+ *
+ *  NOTE:
+ *  The .g file must contain ONLY the regions contained in the
+ *  PRISM (or other infrared model) output file.  For example
+ *  if 'file.g' with objects 'all' and 'air' were use with firpass
+ *  and secpass.  The air objects had to be removed in order for
+ *  PRISM to run.  Then when running display use only the object
+ *  'all.'  Make sure the air was at the end so that the numbering 
+ *  sceme is not altered.
+ *
+ *	CHANGES
+ *	25 November 1991 - Start of original program.
+ *	12 March 1992	 - Add some comments.
+ *	30 September 1994- Changed references to see to ir-X.
+ */
 
 #include "common.h"
 
