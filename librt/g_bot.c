@@ -91,7 +91,7 @@ struct rt_i		*rtip;
 	struct rt_bot_internal		*bot_ip;
 	register struct bot_specific	*bot;
 	CONST struct bn_tol		*tol = &rtip->rti_tol;
-	int				tri_index;
+	int				tri_index, i;
 	LOCAL fastf_t			dx, dy, dz;
 	LOCAL fastf_t			f;
 
@@ -130,6 +130,16 @@ struct rt_i		*rtip;
 	if( stp->st_specific == (genptr_t)0 )  {
 		bu_log("bot(%s):  no faces\n", stp->st_name);
 		return(-1);             /* BAD */
+	}
+
+	/* zero thickness will get missed by the raytracer */
+	for( i=0 ; i<3 ; i++ )
+	{
+		if( NEAR_ZERO( stp->st_min[i] - stp->st_max[i], 1.0 ) )
+		{
+			stp->st_min[i] -= 0.000001;
+			stp->st_max[i] += 0.000001;
+		}
 	}
 
 	VADD2SCALE( stp->st_center, stp->st_max, stp->st_min, 0.5 );
@@ -1243,6 +1253,8 @@ CONST mat_t	mat;
 	fastf_t dist=MAX_FASTF;
 	int closest=-1;
 
+	RT_BOT_CK_MAGIC( bot );
+
 	for( index=0 ; index < bot->num_vertices ; index++ )
 	{
 		fastf_t tmp_dist;
@@ -1260,4 +1272,155 @@ CONST mat_t	mat;
 	}
 
 	return( closest );
+}
+
+int
+bot_edge_in_list( v1, v2, edge_list, edge_count )
+CONST int v1, v2, edge_count, edge_list[];
+{
+	int i, ev1, ev2;
+
+	for( i=0 ; i<edge_count ; i++ )
+	{
+		ev1 = edge_list[i*2];
+		ev2 = edge_list[i*2 + 1];
+
+		if( ev1 == v1 && ev2 == v2 )
+			return( 1 );
+
+		if( ev1 == v2 && ev2 == v1 )
+			return( 1 );
+	}
+
+	return( 0 );
+}
+
+/* This routine finds the edge closest to the 2D point "pt2", and returns the edge as two
+ * vertex indices (vert1 and vert2). These vertices are ordered (closest to pt2 is first)
+ */
+int
+bot_find_e_nearest_pt2( vert1, vert2, bot, pt2, mat)
+int *vert1, *vert2;
+CONST struct rt_bot_internal *bot;
+CONST point_t	pt2;
+CONST mat_t	mat;
+{
+	int i;
+	int v1, v2, v3;
+	fastf_t dist=MAX_FASTF, tmp_dist;
+	int *edge_list;
+	int edge_count=0;
+	struct bn_tol tol;
+
+	RT_BOT_CK_MAGIC( bot );
+
+	if( bot->num_faces < 1 )
+		return( -1 );
+
+	/* first build a list of edges */
+	edge_list = (int *)bu_calloc( bot->num_faces * 3 * 2, sizeof( int ), "bot edge list" );
+
+	for( i=0 ; i<bot->num_faces ; i++ )
+	{
+		v1 = bot->faces[i*3];
+		v2 = bot->faces[i*3 + 1];
+		v3 = bot->faces[i*3 + 2];
+
+		if( !bot_edge_in_list( v1, v2, edge_list, edge_count ) )
+		{
+			edge_list[edge_count*2] = v1;
+			edge_list[edge_count*2 + 1] = v2;
+			edge_count++;
+		}
+		if( !bot_edge_in_list( v3, v2, edge_list, edge_count ) )
+		{
+			edge_list[edge_count*2] = v3;
+			edge_list[edge_count*2 + 1] = v2;
+			edge_count++;
+		}
+		if( !bot_edge_in_list( v1, v3, edge_list, edge_count ) )
+		{
+			edge_list[edge_count*2] = v1;
+			edge_list[edge_count*2 + 1] = v3;
+			edge_count++;
+		}
+	}
+
+	/* build a tyolerance structure for the bn_dist routine */
+	tol.magic = BN_TOL_MAGIC;
+	tol.dist = 0.0;
+	tol.dist_sq = 0.0;
+	tol.perp = 0.0;
+	tol.para =  1.0;
+
+	/* now look for the closest edge */
+	for( i=0 ; i<edge_count ; i++ )
+	{
+		point_t p1, p2, pca;
+		vect_t p1_to_pca, p1_to_p2;
+		int ret;
+
+		MAT4X3PNT( p1, mat, &bot->vertices[ edge_list[i*2]*3] )
+		MAT4X3PNT( p2, mat, &bot->vertices[ edge_list[i*2+1]*3] )
+
+		ret = bn_dist_pt2_lseg2( &tmp_dist, pca, p1, p2, pt2, &tol );
+
+		if( ret < 3 || tmp_dist < dist )
+		{
+			switch( ret )
+			{
+				case 0:
+					dist = 0.0;
+					if( tmp_dist < 0.5 )
+					{
+						*vert1 = edge_list[i*2];
+						*vert2 = edge_list[i*2+1];
+					}
+					else
+					{
+						*vert1 = edge_list[i*2+1];
+						*vert2 = edge_list[i*2];
+					}
+					break;
+				case 1:
+					dist = 0.0;
+					*vert1 = edge_list[i*2];
+					*vert2 = edge_list[i*2+1];
+					break;
+				case 2:
+					dist = 0.0;
+					*vert1 = edge_list[i*2+1];
+					*vert2 = edge_list[i*2];
+					break;
+				case 3:
+					dist = tmp_dist;
+					*vert1 = edge_list[i*2];
+					*vert2 = edge_list[i*2+1];
+					break;
+				case 4:
+					dist = tmp_dist;
+					*vert1 = edge_list[i*2+1];
+					*vert2 = edge_list[i*2];
+				case 5:
+					dist = tmp_dist;
+					V2SUB2( p1_to_pca, pca, p1 );
+					V2SUB2( p1_to_p2, p2, p1 );
+					if( MAG2SQ( p1_to_pca ) / MAG2SQ( p1_to_p2 ) < 0.25 )
+					{
+						*vert1 = edge_list[i*2];
+						*vert2 = edge_list[i*2+1];
+					}
+					else
+					{
+						*vert1 = edge_list[i*2+1];
+						*vert2 = edge_list[i*2];
+					}
+					break;
+			}
+		}
+	}
+
+	bu_free( (char *)edge_list, "bot edge list" );
+
+	return( 0 );
 }
