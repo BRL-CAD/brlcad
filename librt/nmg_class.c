@@ -575,9 +575,6 @@ CONST struct rt_tol	*tol;
  *  that point with respect to all the rest of the loopuses in the face.
  *  The containment status of that point is the status of the loopuse.
  *
- *  The algorithm used is to find the edge which the point is closest
- *  to, and classifiy with respect to that.
- *
  *  If the first vertex chosen is "ON" another loop boundary,
  *  choose the next vertex and try again.  Only return an "ON"
  *  status if _all_ the vertices are ON.
@@ -597,12 +594,11 @@ CONST struct rt_tol	*tol;
 	CONST struct faceuse	*fu;
 	struct vertexuse	*vu;
 	CONST struct vertex_g	*vg;
-	struct loopuse *lu2;
-	struct neighbor closest;
-	struct edgeuse	*eu;
-	struct edgeuse	*eu_first;
-	fastf_t		dist;
-	plane_t		n;
+	struct edgeuse		*eu;
+	struct edgeuse		*eu_first;
+	fastf_t			dist;
+	plane_t			n;
+	int			class;
 
 	NMG_CK_LOOPUSE(lu);
 	RT_CK_TOL(tol);
@@ -643,44 +639,29 @@ again:
 	}
 
 	/* find the closest approach in this face to the projected point */
-	closest.dist = MAX_FASTF;
-	closest.p.eu = (struct edgeuse *)NULL;
-	closest.class = NMG_CLASS_AoutB;	/* default return */
+	class = nmg_class_pt_fu_except( vg->coord, fu, lu,
+		NULL, NULL, NULL, 0, tol );
 
-	for (RT_LIST_FOR(lu2, loopuse, &fu->lu_hd)) {
-		/* Do not use the supplied loopuse in the comparison! */
-		if( lu2 == lu )  continue;
-		if( lu2 == lu->lumate_p )  continue;
-
-		/* Any other OT_UNSPEC or OT_BOOLPLACE lu's don't help either */
-		if( lu2->orientation != OT_SAME && lu2->orientation != OT_OPPOSITE )  {
-			if (rt_g.NMG_debug & DEBUG_CLASSIFY)  {
-				rt_log("nmg_class_lu_fu(lu=x%x) WARNING:  skipping %s lu=x%x in fu=x%x!\n",
-					lu, nmg_orientation(lu2->orientation), lu2, fu);
-			}
-			continue;
-		}
-
-		/* XXX Any point to doing a topology search first? */
-		nmg_class_pt_l( &closest, vg->coord, lu2, tol );
-
-		/* If this vertex lies ON loop edge, must check all others. */
-		if( closest.class == NMG_CLASS_AonBshared )  {
-			if( !eu_first )  break;  /* was self-loop */
+	/* If this vertex lies ON loop edge, must check all others. */
+	if( class == NMG_CLASS_AonBshared )  {
+		if( !eu_first )  {
+			/* was self-loop, nothing more to test */
+		} else {
 			eu = RT_LIST_PNEXT_CIRC(edgeuse, &eu->l);
-			if( eu == eu_first )  break;	/* all match */
-			vu = eu->vu_p;
-			goto again;
+			if( eu != eu_first )  {
+				vu = eu->vu_p;
+				goto again;
+			}
+			/* all match, call it "ON" */
 		}
 	}
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
-		rt_log("nmg_class_lu_fu(lu=x%x) END, dist=%g, ret=%s\n",
+		rt_log("nmg_class_lu_fu(lu=x%x) END, ret=%s\n",
 			lu,
-			closest.dist,
-			nmg_class_name(closest.class) );
+			nmg_class_name(class) );
 	}
-	return closest.class;
+	return class;
 }
 
 /* Ray direction vectors for Jordan curve algorithm */
