@@ -38,6 +38,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "tcl.h"
 
 #include "machine.h"
+#include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "externs.h"
@@ -719,8 +720,8 @@ char	**argv;
 		db_get( dbip,  dp, &rec, 0 , 1);
 		FOR_ALL_SOLIDS(sp)  {
 			if( sp->s_path[sp->s_last] != dp )  continue;
-			if( RT_LIST_IS_EMPTY( &(sp->s_vlist) ) )  continue;
-			vp = RT_LIST_LAST( rt_vlist, &(sp->s_vlist) );
+			if( BU_LIST_IS_EMPTY( &(sp->s_vlist) ) )  continue;
+			vp = BU_LIST_LAST( rt_vlist, &(sp->s_vlist) );
 			VMOVE( sav_start, vp->pt[vp->nused-1] );
 			VMOVE( sav_center, sp->s_center );
 			Tcl_AppendResult(interp, "animating EYE solid\n", (char *)NULL);
@@ -781,10 +782,10 @@ work:
 	    		VMOVE( sp->s_center, eye_model );
 
 	    		/* Adjust vector list for non-dl devices */
-	    		if( RT_LIST_IS_EMPTY( &(sp->s_vlist) ) )  break;
-			vp = RT_LIST_LAST( rt_vlist, &(sp->s_vlist) );
+	    		if( BU_LIST_IS_EMPTY( &(sp->s_vlist) ) )  break;
+			vp = BU_LIST_LAST( rt_vlist, &(sp->s_vlist) );
 	    		VSUB2( xlate, eye_model, vp->pt[vp->nused-1] );
-			for( RT_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+			for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
 				register int	i;
 				register int	nused = vp->nused;
 				register int	*cmd = vp->cmd;
@@ -811,10 +812,10 @@ work:
 	}
 	if( mode == 1 )  {
     		VMOVE( sp->s_center, sav_center );
-		if( RT_LIST_NON_EMPTY( &(sp->s_vlist) ) )  {
-			vp = RT_LIST_LAST( rt_vlist, &(sp->s_vlist) );
+		if( BU_LIST_NON_EMPTY( &(sp->s_vlist) ) )  {
+			vp = BU_LIST_LAST( rt_vlist, &(sp->s_vlist) );
 	    		VSUB2( xlate, sav_start, vp->pt[vp->nused-1] );
-			for( RT_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+			for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
 				register int	i;
 				register int	nused = vp->nused;
 				register int	*cmd = vp->cmd;
@@ -1358,14 +1359,14 @@ int	argc;
 	vect_t	new_cent;
 	vect_t	xv, yv;			/* view x, y */
 	vect_t	xm, ym;			/* model x, y */
-	struct rt_list		*vhead = &rtif_vbp->head[0];
+	struct bu_list		*vhead = &rtif_vbp->head[0];
 
 	/* Only display the frames the user is interested in */
 	if( rtif_currentframe < rtif_desiredframe )  return 0;
 	if( rtif_finalframe && rtif_currentframe > rtif_finalframe )  return 0;
 
 	/* Record eye path as a polyline.  Move, then draws */
-	if( RT_LIST_IS_EMPTY( vhead ) )  {
+	if( BU_LIST_IS_EMPTY( vhead ) )  {
 		RT_ADD_VLIST( vhead, rtif_eye_model, RT_VLIST_LINE_MOVE );
 	} else {
 		RT_ADD_VLIST( vhead, rtif_eye_model, RT_VLIST_LINE_DRAW );

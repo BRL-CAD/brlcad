@@ -29,6 +29,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include "machine.h"
+#include "bu.h"
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"
@@ -227,12 +228,12 @@ int			id;
 	struct rt_db_internal	intern;
 	union tree	*curtree;
 	int		dashflag;		/* draw with dashed lines */
-	struct rt_list	vhead;
+	struct bu_list	vhead;
 
 	RT_CK_TESS_TOL(tsp->ts_ttol);
 	RT_CK_TOL(tsp->ts_tol);
 
-	RT_LIST_INIT( &vhead );
+	BU_LIST_INIT( &vhead );
 
 	if(rt_g.debug&DEBUG_TREEWALK)  {
 	  char	*sofar = db_path_to_string(pathp);
@@ -313,14 +314,14 @@ struct db_full_path	*pathp;
 union tree		*curtree;
 {
 	struct nmgregion	*r;
-	struct rt_list		vhead;
+	struct bu_list		vhead;
 	int			failed;
 
 	RT_CK_TESS_TOL(tsp->ts_ttol);
 	RT_CK_TOL(tsp->ts_tol);
 	NMG_CK_MODEL(*tsp->ts_m);
 
-	RT_LIST_INIT( &vhead );
+	BU_LIST_INIT( &vhead );
 
 	if(rt_g.debug&DEBUG_TREEWALK)  {
 	  char	*sofar = db_path_to_string(pathp);
@@ -595,7 +596,7 @@ register struct solid *sp;
 	xmax = ymax = zmax = -INFINITY;
 	xmin = ymin = zmin =  INFINITY;
 	sp->s_vlen = 0;
-	for( RT_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+	for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
 		register int	j;
 		register int	nused = vp->nused;
 		register int	*cmd = vp->cmd;
@@ -652,7 +653,7 @@ register struct solid *sp;
 void
 drawH_part2( dashflag, vhead, pathp, tsp, existing_sp )
 int			dashflag;
-struct rt_list		*vhead;
+struct bu_list		*vhead;
 struct db_full_path	*pathp;
 struct db_tree_state	*tsp;
 struct solid		*existing_sp;
@@ -682,7 +683,7 @@ struct solid		*existing_sp;
 	/*
 	 * Compute the min, max, and center points.
 	 */
-	RT_LIST_APPEND_LIST( &(sp->s_vlist), vhead );
+	BU_LIST_APPEND_LIST( &(sp->s_vlist), vhead );
 	mged_bound_solid( sp );
 	nvectors += sp->s_vlen;
 
@@ -868,9 +869,9 @@ CONST mat_t			mat;
 {
 	struct rt_db_internal	intern;
 	unsigned		addr, bytes;
-	struct rt_list		vhead;
+	struct bu_list		vhead;
 
-	RT_LIST_INIT( &vhead );
+	BU_LIST_INIT( &vhead );
 
 	if( sp == SOLID_NULL )  {
 	  Tcl_AppendResult(interp, "replot_modified_solid() sp==NULL?\n", (char *)NULL);
@@ -939,7 +940,7 @@ int			copy;
 
 	for( i=0; i < vbp->nused; i++ )  {
 		if( vbp->rgb[i] == 0 )  continue;
-		if( RT_LIST_IS_EMPTY( &(vbp->head[i]) ) )  continue;
+		if( BU_LIST_IS_EMPTY( &(vbp->head[i]) ) )  continue;
 		if( i== 0 )  {
 			invent_solid( name, &vbp->head[0], vbp->rgb[0], copy );
 			continue;
@@ -962,7 +963,7 @@ int			copy;
 int
 invent_solid( name, vhead, rgb, copy )
 char		*name;
-struct rt_list	*vhead;
+struct bu_list	*vhead;
 long		rgb;
 int		copy;
 {
@@ -997,12 +998,12 @@ int		copy;
 	GET_SOLID(sp);
 
 	if( copy )  {
-		RT_LIST_INIT( &(sp->s_vlist) );
+		BU_LIST_INIT( &(sp->s_vlist) );
 		rt_vlist_copy( &(sp->s_vlist), vhead );
 	} else {
 		/* For efficiency, just swipe the vlist */
-		RT_LIST_APPEND_LIST( &(sp->s_vlist), vhead );
-		RT_LIST_INIT(vhead);
+		BU_LIST_APPEND_LIST( &(sp->s_vlist), vhead );
+		BU_LIST_INIT(vhead);
 	}
 	mged_bound_solid( sp );
 	nvectors += sp->s_vlen;
@@ -1054,9 +1055,9 @@ register struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
 union tree		*curtree;
 {
-	struct rt_list		vhead;
+	struct bu_list		vhead;
 
-	RT_LIST_INIT( &vhead );
+	BU_LIST_INIT( &vhead );
 
 	if(rt_g.debug&DEBUG_TREEWALK)  {
 	  char	*sofar = db_path_to_string(pathp);

@@ -63,20 +63,20 @@ author - Carl Nuzman
 ********************************************************************/
 #include "conf.h"
 
+#include <stdio.h>
 #include <math.h>
 #include <signal.h>
-#include <stdio.h>
 #include "tcl.h"
 #include "tk.h"
 
 
 #include "machine.h"
+#include "bu.h"
 #include "vmath.h"
 #include "db.h"
 #include "mater.h"
-#include "rtstring.h"
-#include "raytrace.h"
 #include "nmg.h"
+#include "raytrace.h"
 #include "externs.h"
 #include "./sedit.h"
 #include "./ged.h"
@@ -94,28 +94,28 @@ author - Carl Nuzman
 #define VDRW_PREFIX_LEN	6
 #define VDRW_MAXNAME	31
 #define VDRW_DEF_COLOR	0xffff00
-#define REV_RT_LIST_FOR(p,structure,hp)	\
-	(p)=RT_LIST_LAST(structure,hp);	\
-	RT_LIST_NOT_HEAD(p,hp);		\
-	(p)=RT_LIST_PLAST(structure,p)
+#define REV_BU_LIST_FOR(p,structure,hp)	\
+	(p)=BU_LIST_LAST(structure,hp);	\
+	BU_LIST_NOT_HEAD(p,hp);		\
+	(p)=BU_LIST_PLAST(structure,p)
 
-static struct rt_list vdraw_head;
+static struct bu_list vdraw_head;
 struct rt_curve {
-	struct rt_list	l;
+	struct bu_list	l;
 	char		name[VDRW_MAXNAME+1]; 	/* name array */
 	long		rgb;	/* color */
-	struct rt_list	vhd;	/* head of list of vertices */
+	struct bu_list	vhd;	/* head of list of vertices */
 };
 
 
 #if 0
 /*XXX Not being called. */
 int my_final_check(hp)
-struct rt_list *hp;
+struct bu_list *hp;
 {
 	struct rt_vlist *vp;
 
-	for ( RT_LIST_FOR( vp, rt_vlist, hp) ) {
+	for ( BU_LIST_FOR( vp, rt_vlist, hp) ) {
 		RT_CK_VLIST( vp );
 		printf("num_used = %d\n", vp->nused);
 	}
@@ -153,9 +153,9 @@ char **argv;
 	  return TCL_ERROR;
 
 	if (!initialized){
-		if (RT_LIST_UNINITIALIZED( &rt_g.rtg_vlfree ))
-			RT_LIST_INIT( &rt_g.rtg_vlfree );
-		RT_LIST_INIT( &vdraw_head );
+		if (BU_LIST_UNINITIALIZED( &rt_g.rtg_vlfree ))
+			BU_LIST_INIT( &rt_g.rtg_vlfree );
+		BU_LIST_INIT( &vdraw_head );
 		curhead = (struct rt_curve *) NULL;
 		initialized = 1;
 	}
@@ -171,24 +171,24 @@ char **argv;
 			return TCL_ERROR;
 		}
 		if (argv[2][0] == 'n') { /* next */
-			for (REV_RT_LIST_FOR(vp, rt_vlist, &(curhead->vhd))){
+			for (REV_BU_LIST_FOR(vp, rt_vlist, &(curhead->vhd))){
 				if (vp->nused > 0){
 					break;
 				}
 			}
-			if (RT_LIST_IS_HEAD(vp,&(curhead->vhd))){
+			if (BU_LIST_IS_HEAD(vp,&(curhead->vhd))){
 				/* we went all the way through */
-				vp = RT_LIST_PNEXT(rt_vlist, vp);
-				if (RT_LIST_IS_HEAD(vp,&(curhead->vhd))){
+				vp = BU_LIST_PNEXT(rt_vlist, vp);
+				if (BU_LIST_IS_HEAD(vp,&(curhead->vhd))){
 					RT_GET_VLIST(vp);
-					RT_LIST_INSERT( &(curhead->vhd), &(vp->l) );
+					BU_LIST_INSERT( &(curhead->vhd), &(vp->l) );
 				}
 			}
 			if (vp->nused >= RT_VLIST_CHUNK){
-				vp = RT_LIST_PNEXT(rt_vlist, vp);
-				if (RT_LIST_IS_HEAD(vp,&(curhead->vhd))){
+				vp = BU_LIST_PNEXT(rt_vlist, vp);
+				if (BU_LIST_IS_HEAD(vp,&(curhead->vhd))){
 					RT_GET_VLIST(vp);
-					RT_LIST_INSERT(&(curhead->vhd),&(vp->l));
+					BU_LIST_INSERT(&(curhead->vhd),&(vp->l));
 				}
 			}
 			cp = vp;
@@ -200,7 +200,7 @@ char **argv;
 			/* uind holds user-specified index */
 			/* only allow one past the end */
 
-			for (RT_LIST_FOR(vp, rt_vlist, &(curhead->vhd)) ){
+			for (BU_LIST_FOR(vp, rt_vlist, &(curhead->vhd)) ){
 				if (uind < RT_VLIST_CHUNK){
 					/* this is the right vlist */
 					break;
@@ -211,13 +211,13 @@ char **argv;
 				uind -= vp->nused;
 			}
 
-			if (RT_LIST_IS_HEAD(vp,&(curhead->vhd))){
+			if (BU_LIST_IS_HEAD(vp,&(curhead->vhd))){
 				if (uind > 0){
 					Tcl_AppendResult(interp, "vdraw: write out of range\n", (char *)NULL);
 					return TCL_ERROR;
 				}
 				RT_GET_VLIST(vp);
-				RT_LIST_INSERT(&(curhead->vhd),&(vp->l));
+				BU_LIST_INSERT(&(curhead->vhd),&(vp->l));
 			}
 			if (uind > vp->nused) {
 				Tcl_AppendResult(interp, "vdraw: write out of range\n", (char *)NULL);
@@ -254,7 +254,7 @@ char **argv;
 		} 
 
 		/* uinds hold user specified index */
-		for (RT_LIST_FOR(vp, rt_vlist, &(curhead->vhd)) ){
+		for (BU_LIST_FOR(vp, rt_vlist, &(curhead->vhd)) ){
 			if (uind < RT_VLIST_CHUNK){
 				/* this is the right vlist */
 				break;
@@ -265,13 +265,13 @@ char **argv;
 			uind -= vp->nused;
 		}
 
-		if (RT_LIST_IS_HEAD(vp,&(curhead->vhd))){
+		if (BU_LIST_IS_HEAD(vp,&(curhead->vhd))){
 			if (uind > 0){
 				Tcl_AppendResult(interp, "vdraw: insert out of range\n", (char *)NULL);
 				return TCL_ERROR;
 			}
 			RT_GET_VLIST(vp);
-			RT_LIST_INSERT(&(curhead->vhd),&(vp->l));
+			BU_LIST_INSERT(&(curhead->vhd),&(vp->l));
 		}
 		if (uind > vp->nused) {
 			Tcl_AppendResult(interp, "vdraw: insert out of range\n", (char *)NULL);
@@ -282,7 +282,7 @@ char **argv;
 		cp = vp;
 		index = uind;
 
-		vp = RT_LIST_LAST(rt_vlist, &(curhead->vhd));
+		vp = BU_LIST_LAST(rt_vlist, &(curhead->vhd));
 		vp->nused++;
 
 		while (vp != cp){
@@ -290,7 +290,7 @@ char **argv;
 				vp->cmd[i] = vp->cmd[i-1];
 				VMOVE(vp->pt[i],vp->pt[i-1]);
 			}
-			wp = RT_LIST_PLAST(rt_vlist,vp);
+			wp = BU_LIST_PLAST(rt_vlist,vp);
 			vp->cmd[0] = wp->cmd[RT_VLIST_CHUNK-1];
 			VMOVE(vp->pt[0],wp->pt[RT_VLIST_CHUNK-1]);
 			vp = wp;
@@ -319,14 +319,14 @@ char **argv;
 		}
 		if (argv[2][0] == 'a') {
 			/* delete all */
-			for ( RT_LIST_FOR( vp, rt_vlist, &(curhead->vhd)) ){
+			for ( BU_LIST_FOR( vp, rt_vlist, &(curhead->vhd)) ){
 				vp->nused = 0;
 			}
 			return TCL_OK;
 		} 
 		if (argv[2][0] == 'l') {
 			/* delete last */
-			for ( REV_RT_LIST_FOR( vp, rt_vlist, &(curhead->vhd)) ){
+			for ( REV_BU_LIST_FOR( vp, rt_vlist, &(curhead->vhd)) ){
 				if (vp->nused > 0){
 					vp->nused--;
 					break;
@@ -339,7 +339,7 @@ char **argv;
 			return TCL_ERROR;
 		}  
 
-		for ( RT_LIST_FOR(vp, rt_vlist, &(curhead->vhd)) ){
+		for ( BU_LIST_FOR(vp, rt_vlist, &(curhead->vhd)) ){
 			if (uind < RT_VLIST_CHUNK){
 				/* this is the right vlist */
 				break;
@@ -361,8 +361,8 @@ char **argv;
 			VMOVE(vp->pt[i],vp->pt[i+1]);
 		}
 		
-		wp = RT_LIST_PNEXT(rt_vlist, vp);
-		while ( RT_LIST_NOT_HEAD(wp, &(curhead->vhd)) ){
+		wp = BU_LIST_PNEXT(rt_vlist, vp);
+		while ( BU_LIST_NOT_HEAD(wp, &(curhead->vhd)) ){
 			if (wp->nused == 0) {
 				break;
 			}
@@ -375,7 +375,7 @@ char **argv;
 				VMOVE(wp->pt[i],wp->pt[i+1]);
 			}
 			vp = wp;
-			wp = RT_LIST_PNEXT(rt_vlist, vp);
+			wp = BU_LIST_PNEXT(rt_vlist, vp);
 		}
 
 		if (vp->nused <= 0) {
@@ -410,10 +410,10 @@ char **argv;
 		if (argv[2][0] == 'l') {
 			/* return lenght of list */
 			length = 0;
-			vp = RT_LIST_FIRST(rt_vlist, &(curhead->vhd));
-			while ( !RT_LIST_IS_HEAD(vp, &(curhead->vhd)) ) {
+			vp = BU_LIST_FIRST(rt_vlist, &(curhead->vhd));
+			while ( !BU_LIST_IS_HEAD(vp, &(curhead->vhd)) ) {
 				length += vp->nused;
-				vp = RT_LIST_PNEXT(rt_vlist, vp);
+				vp = BU_LIST_PNEXT(rt_vlist, vp);
 			}
 			sprintf(result_string, "%d", length);
 			Tcl_AppendResult(interp, result_string, (char *)NULL);
@@ -424,7 +424,7 @@ char **argv;
 			return TCL_ERROR;
 		}
 
-		for ( RT_LIST_FOR(vp, rt_vlist, &(curhead->vhd)) ){
+		for ( BU_LIST_FOR(vp, rt_vlist, &(curhead->vhd)) ){
 			if (uind < RT_VLIST_CHUNK){
 				/* this is the right vlist */
 				break;
@@ -489,7 +489,7 @@ char **argv;
 		}
 		if (argv[2][0] == 'n'){
 			/* check for conflicts with existing vlists*/
-			for ( RT_LIST_FOR( rcp, rt_curve, &vdraw_head) ) {
+			for ( BU_LIST_FOR( rcp, rt_curve, &vdraw_head) ) {
 				if (!strncmp( rcp->name, argv[3], VDRW_MAXNAME)) {
 					sprintf(result_string,"vdraw: name %.40s is already in use\n", argv[3]);
 					Tcl_AppendResult(interp,result_string,(char *)NULL);
@@ -516,7 +516,7 @@ char **argv;
 		strncpy(temp_name, argv[2], VDRW_MAXNAME);
 		temp_name[VDRW_MAXNAME] = (char) NULL;
 		curhead = (struct rt_curve *) NULL;
-		for ( RT_LIST_FOR( rcp, rt_curve, &vdraw_head) ) {
+		for ( BU_LIST_FOR( rcp, rt_curve, &vdraw_head) ) {
 			if (!strncmp( rcp->name, temp_name, VDRW_MAXNAME)) {
 				curhead = rcp;
 				break;
@@ -524,21 +524,21 @@ char **argv;
 		}
 		if (!curhead) { /* create new entry */
 			BU_GETSTRUCT( rcp, rt_curve );
-			RT_LIST_APPEND( &vdraw_head, &(rcp->l) );
+			BU_LIST_APPEND( &vdraw_head, &(rcp->l) );
 			strcpy( rcp->name, temp_name);
 			rcp->name[VDRW_MAXNAME] = (char) NULL;
 			rcp->rgb = VDRW_DEF_COLOR;
-			RT_LIST_INIT(&(rcp->vhd));
+			BU_LIST_INIT(&(rcp->vhd));
 			RT_GET_VLIST(vp);
-			RT_LIST_APPEND( &(rcp->vhd), &(vp->l) );
+			BU_LIST_APPEND( &(rcp->vhd), &(vp->l) );
 			curhead = rcp;
 			/* 1 means new entry */
 			Tcl_AppendResult(interp, "1", (char *)NULL);
 			return TCL_OK;
 		} else { /* entry already existed */
-			if (RT_LIST_IS_EMPTY(&(curhead->vhd))){
+			if (BU_LIST_IS_EMPTY(&(curhead->vhd))){
 				RT_GET_VLIST(vp);
-				RT_LIST_APPEND( &(curhead->vhd), &(vp->l) );
+				BU_LIST_APPEND( &(curhead->vhd), &(vp->l) );
 			}
 			curhead->name[VDRW_MAXNAME] = (char) NULL; /*safety*/
 			/* 0 means entry already existed*/
@@ -554,7 +554,7 @@ char **argv;
 		switch  (argv[2][0]) {
 		case 'l':
 			bu_vls_init(&killstr);
-			for ( RT_LIST_FOR( rcp, rt_curve, &vdraw_head) ) {
+			for ( BU_LIST_FOR( rcp, rt_curve, &vdraw_head) ) {
 				bu_vls_strcat( &killstr, rcp->name);
 				bu_vls_strcat( &killstr, " ");
 			}
@@ -568,7 +568,7 @@ char **argv;
 				return TCL_ERROR;
 			}
 			rcp2 = (struct rt_curve *)NULL;
-			for ( RT_LIST_FOR( rcp, rt_curve, &vdraw_head) ) {
+			for ( BU_LIST_FOR( rcp, rt_curve, &vdraw_head) ) {
 				if (!strncmp(rcp->name,argv[3],VDRW_MAXNAME)){
 					rcp2 = rcp;
 					break;
@@ -579,12 +579,12 @@ char **argv;
 				Tcl_AppendResult(interp, result_string, (char *)NULL);
 				return TCL_ERROR;
 			}
-			RT_LIST_DEQUEUE(&(rcp2->l));
+			BU_LIST_DEQUEUE(&(rcp2->l));
 			if (curhead == rcp2) {
-				if ( RT_LIST_IS_EMPTY( &vdraw_head ) ){
+				if ( BU_LIST_IS_EMPTY( &vdraw_head ) ){
 					curhead = (struct rt_curve *)NULL;
 				} else {
-					curhead = RT_LIST_LAST(rt_curve,&vdraw_head);
+					curhead = BU_LIST_LAST(rt_curve,&vdraw_head);
 				}
 			}
 			RT_FREE_VLIST(&(rcp2->vhd));

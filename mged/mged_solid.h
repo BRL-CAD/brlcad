@@ -25,7 +25,7 @@ struct solid  {
 	vect_t	s_center;	/* Center point of solid, in model space */
 	unsigned long s_addr;	/* Display processor's core address */
 	unsigned s_bytes;	/* Display processor's core length */
-	struct rt_list s_vlist;/* Pointer to unclipped vector list */
+	struct bu_list s_vlist;/* Pointer to unclipped vector list */
 	int	s_vlen;		/* # of actual cmd[] entries in vlist */
 	struct directory *s_path[MAX_PATH];	/* Full `path' name */
 	char	s_last;		/* index of last path element */
@@ -51,7 +51,7 @@ extern int		ndrawn;
 	} else { \
 		FreeSolid = (p)->s_forw; \
 	} \
-	RT_LIST_INIT( &((p)->s_vlist) ); \
+	BU_LIST_INIT( &((p)->s_vlist) ); \
 	}
 
 #define FREE_SOLID(p) {(p)->s_forw = FreeSolid; FreeSolid = (p); \

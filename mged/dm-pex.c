@@ -50,9 +50,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "externs.h"
+#include "bu.h"
 #include "vmath.h"
 #include "mater.h"
-#include "bu.h"
 #include "raytrace.h"
 #include "./ged.h"
 #include "./dm.h"
@@ -138,7 +138,7 @@ struct modifiable_pex_vars {
 };
 
 struct pex_vars {
-  struct rt_list l;
+  struct bu_list l;
   struct dm_list *dm_list;
   Display *dpy;
   Tk_Window xtkwin;
@@ -226,12 +226,12 @@ Pex_close()
   if(((struct pex_vars *)dm_vars)->xtkwin != 0)
     Tk_DestroyWindow(((struct pex_vars *)dm_vars)->xtkwin);
 
-  if(((struct pex_vars *)dm_vars)->l.forw != RT_LIST_NULL)
-    RT_LIST_DEQUEUE(&((struct pex_vars *)dm_vars)->l);
+  if(((struct pex_vars *)dm_vars)->l.forw != BU_LIST_NULL)
+    BU_LIST_DEQUEUE(&((struct pex_vars *)dm_vars)->l);
 
   bu_free(dm_vars, "Pex_close: dm_vars");
 
-  if(RT_LIST_IS_EMPTY(&head_pex_vars.l))
+  if(BU_LIST_IS_EMPTY(&head_pex_vars.l))
     Tk_DeleteGenericHandler(Pex_doevent, (ClientData)NULL);
 }
 
@@ -406,7 +406,7 @@ int white_flag;
     ncoord = 0;
     cp = coord_buf;
     first = 1;
-    for( RT_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+    for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
       register int	i;
       register int	nused = vp->nused;
       register int	*cmd = vp->cmd;
@@ -1012,10 +1012,10 @@ char	*name;
   if(!count)
     Pex_load_startup();
 
-  if(RT_LIST_IS_EMPTY(&head_pex_vars.l))
+  if(BU_LIST_IS_EMPTY(&head_pex_vars.l))
     Tk_CreateGenericHandler(Pex_doevent, (ClientData)NULL);
 
-  RT_LIST_APPEND(&head_pex_vars.l, &((struct pex_vars *)curr_dm_list->_dm_vars)->l);
+  BU_LIST_APPEND(&head_pex_vars.l, &((struct pex_vars *)curr_dm_list->_dm_vars)->l);
 
   bu_vls_printf(&pathName, ".dm_pex%d", count);
 
@@ -1433,7 +1433,7 @@ Pex_load_startup()
   char *filename;
 
   bzero((void *)&head_pex_vars, sizeof(struct pex_vars));
-  RT_LIST_INIT( &head_pex_vars.l );
+  BU_LIST_INIT( &head_pex_vars.l );
 
   if((filename = getenv("DM_PEX_RCFILE")) != (char *)NULL )
     Tcl_EvalFile(interp, filename);
@@ -1446,7 +1446,7 @@ Window window;
 {
   register struct pex_vars *p;
 
-  for( RT_LIST_FOR(p, pex_vars, &head_pex_vars.l) ){
+  for( BU_LIST_FOR(p, pex_vars, &head_pex_vars.l) ){
     if(window == p->win)
       return p->dm_list;
   }

@@ -27,7 +27,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "vmath.h"
-#include "rtstring.h"
+#include "bu.h"
 #include "raytrace.h"
 #include "externs.h"
 #include "pkg.h"
@@ -310,12 +310,12 @@ ph_vlist(pc, buf)
 register struct pkg_conn *pc;
 unsigned char		*buf;
 {
-	struct rt_list	vhead;
+	struct bu_list	vhead;
 	struct bu_vls	name;
 
 	bu_vls_init(&name);
 
-	RT_LIST_INIT( &vhead );
+	BU_LIST_INIT( &vhead );
 
 	rt_vlist_import( &vhead, &name, buf );
 

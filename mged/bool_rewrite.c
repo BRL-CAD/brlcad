@@ -28,6 +28,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include <stdio.h>
 #include "machine.h"
+#include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "./comb_bool.h"

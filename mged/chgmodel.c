@@ -47,10 +47,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "machine.h"
+#include "bu.h"
 #include "vmath.h"
 #include "externs.h"
 #include "db.h"
-#include "rtstring.h"
 #include "nmg.h"
 #include "raytrace.h"
 #include "rtgeom.h"
@@ -1227,7 +1227,7 @@ char	**argv;
 
 		m = nmg_mm();
 		r = nmg_mrsv( m );
-		s = RT_LIST_FIRST( shell , &r->s_hd );
+		s = BU_LIST_FIRST( shell , &r->s_hd );
 		nmg_vertex_g( s->vu_p->v_p, -toViewcenter[MDX], -toViewcenter[MDY], -toViewcenter[MDZ]);
 		(void)nmg_meonvu( s->vu_p );
 		(void)nmg_ml( s );
@@ -1240,21 +1240,21 @@ char	**argv;
 		internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_pipe_internal), "rt_pipe_internal" );
 		pipe_ip = (struct rt_pipe_internal *)internal.idb_ptr;
 		pipe_ip->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
-		RT_LIST_INIT( &pipe_ip->pipe_segs_head );
+		BU_LIST_INIT( &pipe_ip->pipe_segs_head );
 		BU_GETSTRUCT( ps, wdb_pipept );
 		ps->l.magic = WDB_PIPESEG_MAGIC;
 		VSET( ps->pp_coord, -toViewcenter[MDX] , -toViewcenter[MDY] , -toViewcenter[MDZ]-Viewscale );
 		ps->pp_od = 0.5*Viewscale;
 		ps->pp_id = 0.5*ps->pp_od;
 		ps->pp_bendradius = ps->pp_od;
-		RT_LIST_INSERT( &pipe_ip->pipe_segs_head, &ps->l );
+		BU_LIST_INSERT( &pipe_ip->pipe_segs_head, &ps->l );
 		BU_GETSTRUCT( ps, wdb_pipept );
 		ps->l.magic = WDB_PIPESEG_MAGIC;
 		VSET( ps->pp_coord, -toViewcenter[MDX] , -toViewcenter[MDY] , -toViewcenter[MDZ]+Viewscale );
 		ps->pp_od = 0.5*Viewscale;
 		ps->pp_id = 0.5*ps->pp_od;
 		ps->pp_bendradius = ps->pp_od;
-		RT_LIST_INSERT( &pipe_ip->pipe_segs_head, &ps->l );
+		BU_LIST_INSERT( &pipe_ip->pipe_segs_head, &ps->l );
 	} else if( strcmp( argv[2], "ars" ) == 0 ||
 		   strcmp( argv[2], "poly" ) == 0 ||
 		   strcmp( argv[2], "ebm" ) == 0 ||
@@ -1554,7 +1554,7 @@ struct model *m;
 	}
 
 	/* make sure the geometry/bounding boxes are up to date */
-	for (RT_LIST_FOR(r, nmgregion, &m->r_hd))
+	for (BU_LIST_FOR(r, nmgregion, &m->r_hd))
 		nmg_region_a(r, &mged_tol);
 
 
@@ -1647,9 +1647,9 @@ char	**argv;
 	/* Bust it up here */
 
 	i = 1;
-	for (RT_LIST_FOR(r, nmgregion, &m->r_hd)) {
+	for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
 		NMG_CK_REGION(r);
-		for (RT_LIST_FOR(s, shell, &r->s_hd)) {
+		for (BU_LIST_FOR(s, shell, &r->s_hd)) {
 			NMG_CK_SHELL(s);
 			if (s->vu_p) {
 				NMG_CK_VERTEXUSE(s->vu_p);
@@ -1659,7 +1659,7 @@ char	**argv;
 /*	nmg_start_dup(m); */
 				new_model = nmg_mm();
 				new_r = nmg_mrsv(new_model);
-				new_s = RT_LIST_FIRST(shell, &r->s_hd);
+				new_s = BU_LIST_FIRST(shell, &r->s_hd);
 				v_new = new_s->vu_p->v_p;
 				if (v->vg_p) {
 					nmg_vertex_gv(v_new, v->vg_p->coord);
@@ -1672,7 +1672,7 @@ char	**argv;
 				if (frac_stat) return CMD_BAD;
 				continue;
 			}
-			for (RT_LIST_FOR(fu, faceuse, &s->fu_hd)) {
+			for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
 				if (fu->orientation != OT_SAME)
 					continue;
 
@@ -1682,7 +1682,7 @@ char	**argv;
 				NMG_CK_MODEL(new_model);
 				new_r = nmg_mrsv(new_model);
 				NMG_CK_REGION(new_r);
-				new_s = RT_LIST_FIRST(shell, &new_r->s_hd);
+				new_s = BU_LIST_FIRST(shell, &new_r->s_hd);
 				NMG_CK_SHELL(new_s);
 /*	nmg_start_dup(m); */
 				NMG_CK_SHELL(new_s);
@@ -1694,11 +1694,11 @@ char	**argv;
 				if (frac_stat) return CMD_BAD;
 			}
 #if 0
-			while (RT_LIST_NON_EMPTY(&s->lu_hd)) {
-				lu = RT_LIST_FIRST(loopuse, &s->lu_hd);
+			while (BU_LIST_NON_EMPTY(&s->lu_hd)) {
+				lu = BU_LIST_FIRST(loopuse, &s->lu_hd);
 				new_model = nmg_mm();
 				r = nmg_mrsv(new_model);
-				new_s = RT_LIST_FIRST(shell, &r->s_hd);
+				new_s = BU_LIST_FIRST(shell, &r->s_hd);
 
 				nmg_dup_loop(lu, new_s);
 				nmg_klu(lu);
@@ -1707,11 +1707,11 @@ char	**argv;
 				mged_add_nmg_part(newname, new_model);
 				if (frac_stat) return CMD_BAD;
 			}
-			while (RT_LIST_NON_EMPTY(&s->eu_hd)) {
-				eu = RT_LIST_FIRST(edgeuse, &s->eu_hd);
+			while (BU_LIST_NON_EMPTY(&s->eu_hd)) {
+				eu = BU_LIST_FIRST(edgeuse, &s->eu_hd);
 				new_model = nmg_mm();
 				r = nmg_mrsv(new_model);
-				new_s = RT_LIST_FIRST(shell, &r->s_hd);
+				new_s = BU_LIST_FIRST(shell, &r->s_hd);
 
 				nmg_dup_edge(eu, new_s);
 				nmg_keu(eu);

@@ -38,7 +38,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "externs.h"
 #include "vmath.h"
-#include "rtstring.h"
+#include "bu.h"
 #include "raytrace.h"
 #include "./ged.h"
 #include "./dm.h"
@@ -88,13 +88,13 @@ point_t		pt;
  */
 static void
 draw_trail(vhead, tp)
-struct rt_list	*vhead;
+struct bu_list	*vhead;
 struct trail	*tp;
 {
 	int	i;
 	int	todo = tp->nused;
 
-	RT_LIST_INIT( vhead );
+	BU_LIST_INIT( vhead );
 	if( tp->nused <= 0 )  return;
 	if( (i = tp->cur_index-1) < 0 )  i = tp->nused-1;
 	for( ; todo > 0; todo-- )  {
@@ -117,7 +117,7 @@ struct trail	*tp;
  */
 static void
 poly_trail(vhead, t1, t2)
-struct rt_list	*vhead;
+struct bu_list	*vhead;
 struct trail	*t1;
 struct trail	*t2;
 {
@@ -129,7 +129,7 @@ struct trail	*t2;
 
 	if( t2->nused < todo )  todo = t2->nused;
 
-	RT_LIST_INIT( vhead );
+	BU_LIST_INIT( vhead );
 	if( t1->nused <= 0 || t1->nused <= 0 )  return;
 
 	if( (i1 = t1->cur_index-1) < 0 )  i1 = t1->nused-1;
@@ -241,8 +241,8 @@ predictor_frame()
 	mat_t	predictorXv2m;
 	point_t	m;		/* model coords */
 	point_t	mA,mB,mC,mD,mE,mF,mG,mH,mI,mJ,mK,mL;
-	struct rt_list	vhead;
-	struct rt_list	trail;
+	struct bu_list	vhead;
+	struct bu_list	trail;
 	point_t	framecenter_m;
 #if 0
 	point_t	framecenter_v;
@@ -281,7 +281,7 @@ predictor_frame()
 	/*
 	 * Draw the frame around the point framecenter_v.
 	 */
-	RT_LIST_INIT( &vhead );
+	BU_LIST_INIT( &vhead );
 
 	/* Centering dot */
 	VSETALL( delta_v, 0 );

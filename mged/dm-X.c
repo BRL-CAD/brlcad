@@ -40,9 +40,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "externs.h"
+#include "bu.h"
 #include "vmath.h"
 #include "mater.h"
-#include "bu.h"
 #include "raytrace.h"
 #include "./ged.h"
 #include "./dm.h"
@@ -124,7 +124,7 @@ struct modifiable_x_vars {
 };
 
 struct x_vars {
-  struct rt_list l;
+  struct bu_list l;
   struct dm_list *dm_list;
   Display *dpy;
   Tk_Window xtkwin;
@@ -201,12 +201,12 @@ X_close()
   if(((struct x_vars *)dm_vars)->xtkwin != 0)
     Tk_DestroyWindow(((struct x_vars *)dm_vars)->xtkwin);
 
-  if(((struct x_vars *)dm_vars)->l.forw != RT_LIST_NULL)
-    RT_LIST_DEQUEUE(&((struct x_vars *)dm_vars)->l);
+  if(((struct x_vars *)dm_vars)->l.forw != BU_LIST_NULL)
+    BU_LIST_DEQUEUE(&((struct x_vars *)dm_vars)->l);
 
   bu_free(dm_vars, "X_close: dm_vars");
 
-  if(RT_LIST_IS_EMPTY(&head_x_vars.l))
+  if(BU_LIST_IS_EMPTY(&head_x_vars.l))
     Tk_DeleteGenericHandler(X_doevent, (ClientData)NULL);
 }
 
@@ -313,7 +313,7 @@ int white_flag;
 
     nseg = 0;
     segp = segbuf;
-    for( RT_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+    for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
 	register int	i;
 	register int	nused = vp->nused;
 	register int	*cmd = vp->cmd;
@@ -829,10 +829,10 @@ char	*name;
   if(!count)
     X_load_startup();
 
-  if(RT_LIST_IS_EMPTY(&head_x_vars.l))
+  if(BU_LIST_IS_EMPTY(&head_x_vars.l))
     Tk_CreateGenericHandler(X_doevent, (ClientData)NULL);
 
-  RT_LIST_APPEND(&head_x_vars.l, &((struct x_vars *)curr_dm_list->_dm_vars)->l);
+  BU_LIST_APPEND(&head_x_vars.l, &((struct x_vars *)curr_dm_list->_dm_vars)->l);
 
   bu_vls_printf(&pathName, ".dm_x%d", count++);
 
@@ -1272,7 +1272,7 @@ X_load_startup()
   char *filename;
 
   bzero((void *)&head_x_vars, sizeof(struct x_vars));
-  RT_LIST_INIT( &head_x_vars.l );
+  BU_LIST_INIT( &head_x_vars.l );
 
   if((filename = getenv("DM_X_RCFILE")) != (char *)NULL )
     Tcl_EvalFile(interp, filename);
@@ -1285,7 +1285,7 @@ Window window;
 {
   register struct x_vars *p;
 
-  for( RT_LIST_FOR(p, x_vars, &head_x_vars.l) ){
+  for( BU_LIST_FOR(p, x_vars, &head_x_vars.l) ){
     if(window == p->win)
       return p->dm_list;
   }

@@ -15,8 +15,6 @@
  *  $Header$
  */
 
-#include "rtstring.h"		/* for vls string support */
-
 struct device_values  {
 	struct bu_vls	dv_string;	/* newline-separated "commands" from dm */
 };
@@ -126,7 +124,7 @@ struct shared_info {
 
 
 struct dm_list {
-  struct rt_list l;
+  struct bu_list l;
   struct dm *_dmp;
 
 /* New stuff to allow more than one active display manager */

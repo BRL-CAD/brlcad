@@ -68,8 +68,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/invent.h>
 
 #include "machine.h"
-#include "vmath.h"
 #include "bu.h"
+#include "vmath.h"
 #include "raytrace.h"
 #include "./ged.h"
 #include "./dm.h"
@@ -156,7 +156,7 @@ struct modifiable_glx_vars {
 };
 
 struct glx_vars {
-  struct rt_list l;
+  struct bu_list l;
   struct dm_list *dm_list;
   Display *_dpy;
   Window _win;
@@ -441,10 +441,10 @@ char *name;
   if(!count)
     Glx_load_startup();
 
-  if(RT_LIST_IS_EMPTY(&head_glx_vars.l))
+  if(BU_LIST_IS_EMPTY(&head_glx_vars.l))
     Tk_CreateGenericHandler(Glx_doevent, (ClientData)NULL);
 
-  RT_LIST_APPEND(&head_glx_vars.l, &((struct glx_vars *)curr_dm_list->_dm_vars)->l);
+  BU_LIST_APPEND(&head_glx_vars.l, &((struct glx_vars *)curr_dm_list->_dm_vars)->l);
 
   bu_vls_printf(&pathName, ".dm_glx%d", count++);
   xtkwin = Tk_CreateWindowFromPath(interp, tkwin, bu_vls_addr(&pathName), name);
@@ -640,7 +640,7 @@ Glx_load_startup()
   char *filename;
 
   bzero((void *)&head_glx_vars, sizeof(struct glx_vars));
-  RT_LIST_INIT( &head_glx_vars.l );
+  BU_LIST_INIT( &head_glx_vars.l );
 
   if((filename = getenv("DM_GLX_RCFILE")) != (char *)NULL )
     Tcl_EvalFile(interp, filename);
@@ -679,12 +679,12 @@ Glx_close()
     Tk_DestroyWindow(xtkwin);
   }
 
-  if(((struct glx_vars *)dm_vars)->l.forw != RT_LIST_NULL)
-    RT_LIST_DEQUEUE(&((struct glx_vars *)dm_vars)->l);
+  if(((struct glx_vars *)dm_vars)->l.forw != BU_LIST_NULL)
+    BU_LIST_DEQUEUE(&((struct glx_vars *)dm_vars)->l);
 
   bu_free(dm_vars, "Glx_close: dm_vars");
 
-  if(RT_LIST_IS_EMPTY(&head_glx_vars.l))
+  if(BU_LIST_IS_EMPTY(&head_glx_vars.l))
     Tk_DeleteGenericHandler(Glx_doevent, (ClientData)NULL);
 }
 
@@ -982,7 +982,7 @@ int		white;
 
 	/* Viewing region is from -1.0 to +1.0 */
 	first = 1;
-	for( RT_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+	for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
 		register int	i;
 		register int	nused = vp->nused;
 		register int	*cmd = vp->cmd;
@@ -2629,7 +2629,7 @@ Window window;
 {
   register struct glx_vars *p;
 
-  for( RT_LIST_FOR(p, glx_vars, &head_glx_vars.l) ){
+  for( BU_LIST_FOR(p, glx_vars, &head_glx_vars.l) ){
     if(window == p->_win){
       GLXwinset(p->_dpy, p->_win);
       return p->dm_list;

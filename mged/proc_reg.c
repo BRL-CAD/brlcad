@@ -32,6 +32,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
+#include "bu.h"
 #include "vmath.h"
 #include "db.h"
 #include "raytrace.h"
@@ -397,10 +398,10 @@ struct mater_info	*materp;
 {
 	register int i;
 	int dashflag;		/* draw with dashed lines */
-	struct rt_list	vhead;
+	struct bu_list	vhead;
 	struct rt_tess_tol	ttol;
 
-	RT_LIST_INIT( &vhead );
+	BU_LIST_INIT( &vhead );
 	if( regmemb >= 0 ) {
 		/* processing a member of a processed region */
 		/* regmemb  =>  number of members left */
@@ -490,7 +491,7 @@ struct mater_info	*materp;
 	/*
 	 * Compute the min, max, and center points.
 	 */
-	RT_LIST_APPEND_LIST( &(sp->s_vlist), &vhead );
+	BU_LIST_APPEND_LIST( &(sp->s_vlist), &vhead );
 
 	mged_bound_solid( sp );
 	nvectors += sp->s_vlen;
@@ -703,7 +704,7 @@ arbcom:		/* common area for arbs */
 
 int
 finish_region(vhead)
-struct rt_list	*vhead;
+struct bu_list	*vhead;
 {
 	/* last member solid has been seen, now draw the region */
 	nmemb = memb_count;
@@ -1118,7 +1119,7 @@ static char	oper;
 
 static void
 dwreg(vhead)
-struct rt_list	*vhead;
+struct bu_list	*vhead;
 {
 	register int i,j;
 	static int k,l;

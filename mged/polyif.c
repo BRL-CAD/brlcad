@@ -24,6 +24,7 @@ static char RCSpolyif[] = "@(#)$Header$ (BRL)";
 #include <signal.h>
 #include <stdio.h>
 #include "machine.h"
+#include "bu.h"
 #include "vmath.h"
 #include "db.h"
 #include "mater.h"
@@ -107,7 +108,7 @@ char	**argv;
 	}
 
 	FOR_ALL_SOLIDS( sp )  {
-		for( RT_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+		for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
 			register int	i;
 			register int	nused = vp->nused;
 			register int	*cmd = vp->cmd;

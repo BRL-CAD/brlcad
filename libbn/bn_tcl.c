@@ -39,10 +39,9 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "tk.h"
 
 #include "machine.h"
+#include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtstring.h"
-#include "rtlist.h"
 #include "rtgeom.h"
 #include "externs.h"
 #include "./ged.h"

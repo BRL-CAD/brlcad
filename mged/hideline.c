@@ -45,6 +45,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "machine.h"
 #include "externs.h"
+#include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "./ged.h"
@@ -227,7 +228,7 @@ char	**argv;
 			continue;
 
 		Tcl_AppendResult(interp, "Solid\n", (char *)NULL);
-		for( RT_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+		for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
 			register int	i;
 			register int	nused = vp->nused;
 			register int	*cmd = vp->cmd;

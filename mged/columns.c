@@ -32,9 +32,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include "machine.h"
+#include "bu.h"
 #include "vmath.h"
 #include "db.h"			/* for NAMESIZE */
-#include "rtstring.h"
 #include "raytrace.h"
 #include "externs.h"
 #include "./ged.h"

@@ -72,10 +72,9 @@ extern Tk_Window tkwin;
 
 #include "machine.h"
 #include "externs.h"
+#include "bu.h"
 #include "vmath.h"
 #include "db.h"
-#include "rtlist.h"
-#include "rtstring.h"
 #include "raytrace.h"
 #include "./ged.h"
 #include "./titles.h"
@@ -210,16 +209,16 @@ char **argv;
 	HeadSolid.s_forw = &HeadSolid;
 	HeadSolid.s_back = &HeadSolid;
 	FreeSolid = SOLID_NULL;
-	RT_LIST_INIT( &rt_g.rtg_vlfree );
+	BU_LIST_INIT( &rt_g.rtg_vlfree );
 
 	bzero((void *)&head_cmd_list, sizeof(struct cmd_list));
-	RT_LIST_INIT(&head_cmd_list.l);
+	BU_LIST_INIT(&head_cmd_list.l);
 	bu_vls_init(&head_cmd_list.name);
 	bu_vls_strcpy(&head_cmd_list.name, "mged");
 	curr_cmd_list = &head_cmd_list;
 
 	bzero((void *)&head_dm_list, sizeof(struct dm_list));
-	RT_LIST_INIT( &head_dm_list.l );
+	BU_LIST_INIT( &head_dm_list.l );
 	head_dm_list._dmp = &dm_Null;
 	curr_dm_list = &head_dm_list;
 	curr_dm_list->s_info = (struct shared_info *)bu_malloc(sizeof(struct shared_info),
@@ -894,7 +893,7 @@ again:
 #endif
 
     save_dm_list = curr_dm_list;
-    for( RT_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+    for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
       if(!p->_owner)
 	continue;
 
@@ -987,7 +986,7 @@ refresh()
   struct dm_list *save_dm_list;
 
   save_dm_list = curr_dm_list;
-  for( RT_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+  for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
     /*
      * if something has changed, then go update the display.
      * Otherwise, we are happy with the view we have
@@ -1045,7 +1044,7 @@ refresh()
     }
   }
 
-  for( RT_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+  for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
     curr_dm_list = p;
     dmaflag = 0;
   }
@@ -1264,7 +1263,7 @@ int	exitcode;
 	(void)sprintf(place, "exit_status=%d", exitcode );
 	log_event( "CEASE", place );
 
-	for( RT_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+	for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
 	  curr_dm_list = p;
 
 	  dmp->dmr_light( LIGHT_RESET, 0 );	/* turn off the lights */
@@ -1334,7 +1333,7 @@ new_mats()
 	    struct dm_list *save_dm_list;
 
 	    save_dm_list = curr_dm_list;
-	    for( RT_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+	    for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
 	      if(!p->_owner)
 		continue;
 

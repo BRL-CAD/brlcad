@@ -27,6 +27,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include "machine.h"
+#include "bu.h"
 #include "vmath.h"
 #include "mater.h"
 #include "raytrace.h"
@@ -366,7 +367,7 @@ double	ratio;
 	ptP = ptlist;
 	mvP = mvlist;
 	numvec = 0;
-	for( RT_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+	for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
 		register int	i;
 		register int	nused = vp->nused;
 		register int	*cmd = vp->cmd;

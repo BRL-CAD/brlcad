@@ -39,6 +39,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "externs.h"
+#include "bu.h"
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"
@@ -81,8 +82,8 @@ static short int fixv;		/* used in ECMD_ARB_ROTATE_FACE,f_eqn(): fixed vertex */
 #endif
 
 MGED_EXTERN( fastf_t nmg_loop_plane_area , ( struct loopuse *lu , plane_t pl ) );
-MGED_EXTERN( struct wdb_pipept *find_pipept_nearest_pt, (CONST struct rt_list *pipe_hd, CONST point_t pt ) );
-MGED_EXTERN( void split_pipept, (struct rt_list *pipe_hd, struct wdb_pipept *ps, point_t pt ) );
+MGED_EXTERN( struct wdb_pipept *find_pipept_nearest_pt, (CONST struct bu_list *pipe_hd, CONST point_t pt ) );
+MGED_EXTERN( void split_pipept, (struct bu_list *pipe_hd, struct wdb_pipept *ps, point_t pt ) );
 MGED_EXTERN( struct wdb_pipept *del_pipept, (struct wdb_pipept *ps ) );
 
 /* data for solid editing */
@@ -651,8 +652,8 @@ int arg;
 			  Tcl_AppendResult(interp, "No Pipe Segment selected\n", (char *)NULL);
 			  return;
 			}
-			next = RT_LIST_NEXT( wdb_pipept, &es_pipept->l );
-			if( next->l.magic == RT_LIST_HEAD_MAGIC )
+			next = BU_LIST_NEXT( wdb_pipept, &es_pipept->l );
+			if( next->l.magic == BU_LIST_HEAD_MAGIC )
 			{
 			  Tcl_AppendResult(interp, "Current segment is the last\n", (char *)NULL);
 			  return;
@@ -669,8 +670,8 @@ int arg;
 			  Tcl_AppendResult(interp, "No Pipe Segment selected\n", (char *)NULL);
 			  return;
 			}
-			prev = RT_LIST_PREV( wdb_pipept, &es_pipept->l );
-			if( prev->l.magic == RT_LIST_HEAD_MAGIC )
+			prev = BU_LIST_PREV( wdb_pipept, &es_pipept->l );
+			if( prev->l.magic == BU_LIST_HEAD_MAGIC )
 			{
 			  Tcl_AppendResult(interp, "Current segment is the first\n", (char *)NULL);
 			  return;
@@ -1054,7 +1055,7 @@ int arg;
 		  return;
 		}
 		NMG_CK_EDGEUSE(es_eu);
-		es_eu = RT_LIST_PNEXT_CIRC(edgeuse, es_eu);
+		es_eu = BU_LIST_PNEXT_CIRC(edgeuse, es_eu);
 
 		{
 		  struct bu_vls tmp_vls;
@@ -1075,7 +1076,7 @@ int arg;
 			return;
 		}
 		NMG_CK_EDGEUSE(es_eu);
-		es_eu = RT_LIST_PPREV_CIRC(edgeuse, es_eu);
+		es_eu = BU_LIST_PPREV_CIRC(edgeuse, es_eu);
 
 		{
 		  struct bu_vls tmp_vls;
@@ -1126,15 +1127,15 @@ int arg;
 			NMG_CK_MODEL( m );
 
 			/* look for wire loops */
-			for( RT_LIST_FOR( r , nmgregion , &m->r_hd ) )
+			for( BU_LIST_FOR( r , nmgregion , &m->r_hd ) )
 			{
 				NMG_CK_REGION( r );
-				for( RT_LIST_FOR( s , shell , &r->s_hd ) )
+				for( BU_LIST_FOR( s , shell , &r->s_hd ) )
 				{
-					if( RT_LIST_IS_EMPTY( &s->lu_hd ) )
+					if( BU_LIST_IS_EMPTY( &s->lu_hd ) )
 						continue;
 
-					for( RT_LIST_FOR( lu_tmp , loopuse , &s->lu_hd ) )
+					for( BU_LIST_FOR( lu_tmp , loopuse , &s->lu_hd ) )
 					{
 						if( !lu )
 							lu = lu_tmp;
@@ -1176,7 +1177,7 @@ int arg;
 			}
 
 			/* Check if loop crosses itself */
-			for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+			for( BU_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
 			{
 				struct edgeuse *eu2;
 				struct vertex *v1;
@@ -1188,7 +1189,7 @@ int arg;
 				NMG_CK_VERTEX( v1 );
 				VSUB2( edge1, eu->eumate_p->vu_p->v_p->vg_p->coord, v1->vg_p->coord );
 
-				for( eu2 = RT_LIST_PNEXT( edgeuse , &eu->l ) ; RT_LIST_NOT_HEAD( eu2 , &lu->down_hd ) ; eu2=RT_LIST_PNEXT( edgeuse, &eu2->l) )
+				for( eu2 = BU_LIST_PNEXT( edgeuse , &eu->l ) ; BU_LIST_NOT_HEAD( eu2 , &lu->down_hd ) ; eu2=BU_LIST_PNEXT( edgeuse, &eu2->l) )
 				{
 					struct vertex *v2;
 					vect_t edge2;
@@ -1199,9 +1200,9 @@ int arg;
 
 					if( eu2 == eu )
 						continue;
-					if( eu2 == RT_LIST_PNEXT_CIRC( edgeuse,  &eu->l ) )
+					if( eu2 == BU_LIST_PNEXT_CIRC( edgeuse,  &eu->l ) )
 						continue;
-					if( eu2 == RT_LIST_PPREV_CIRC( edgeuse, &eu->l ) )
+					if( eu2 == BU_LIST_PPREV_CIRC( edgeuse, &eu->l ) )
 						continue;
 
 					v2 = eu2->vu_p->v_p;
@@ -1246,7 +1247,7 @@ int arg;
 			/* Create a temporary model to store the basis loop */
 			m_tmp = nmg_mm();
 			r_tmp = nmg_mrsv( m_tmp );
-			s_tmp = RT_LIST_FIRST( shell , &r_tmp->s_hd );
+			s_tmp = BU_LIST_FIRST( shell , &r_tmp->s_hd );
 			lu_copy = nmg_dup_loop( lu , &s_tmp->l.magic , (long **)0 );
 			if( !lu_copy )
 			{
@@ -1256,16 +1257,16 @@ int arg;
 			}
 
 			/* Get the first vertex in the loop as the basis for extrusion */
-			eu = RT_LIST_FIRST( edgeuse, &lu->down_hd );
+			eu = BU_LIST_FIRST( edgeuse, &lu->down_hd );
 			VMOVE( lu_keypoint , eu->vu_p->v_p->vg_p->coord );
 
 			s = lu->up.s_p;
 			
-			if( RT_LIST_NON_EMPTY( &s->fu_hd ) )
+			if( BU_LIST_NON_EMPTY( &s->fu_hd ) )
 			{
 				/* make a new shell to hold the extruded solid */
 
-				r = RT_LIST_FIRST( nmgregion , &m->r_hd );
+				r = BU_LIST_FIRST( nmgregion , &m->r_hd );
 				NMG_CK_REGION( r );
 				es_s = nmg_msv( r );
 			}
@@ -1338,7 +1339,7 @@ mat_t		mat;
 
 			RT_PIPE_CK_MAGIC( pipe );
 
-			pipe_seg = RT_LIST_FIRST( wdb_pipept , &pipe->pipe_segs_head );
+			pipe_seg = BU_LIST_FIRST( wdb_pipept , &pipe->pipe_segs_head );
 			VMOVE( mpt , pipe_seg->pp_coord );
 			*strp = "V";
 			break;
@@ -1669,41 +1670,41 @@ mat_t		mat;
 			VSETALL( mpt, 0 );
 			*strp = "(origin)";
 
-			if( RT_LIST_IS_EMPTY( &m->r_hd ) )
+			if( BU_LIST_IS_EMPTY( &m->r_hd ) )
 				break;
 
-			r = RT_LIST_FIRST( nmgregion , &m->r_hd );
+			r = BU_LIST_FIRST( nmgregion , &m->r_hd );
 			if( !r )
 				break;
 			NMG_CK_REGION( r );
 
-			if( RT_LIST_IS_EMPTY( &r->s_hd ) )
+			if( BU_LIST_IS_EMPTY( &r->s_hd ) )
 				break;
 
-			s = RT_LIST_FIRST( shell , &r->s_hd );
+			s = BU_LIST_FIRST( shell , &r->s_hd );
 			if( !s )
 				break;
 			NMG_CK_SHELL( s );
 
-			if( RT_LIST_IS_EMPTY( &s->fu_hd ) )
+			if( BU_LIST_IS_EMPTY( &s->fu_hd ) )
 				fu = (struct faceuse *)NULL;
 			else
-				fu = RT_LIST_FIRST( faceuse , &s->fu_hd );
+				fu = BU_LIST_FIRST( faceuse , &s->fu_hd );
 			if( fu )
 			{
 				NMG_CK_FACEUSE( fu );
-				lu = RT_LIST_FIRST( loopuse , &fu->lu_hd );
+				lu = BU_LIST_FIRST( loopuse , &fu->lu_hd );
 				NMG_CK_LOOPUSE( lu );
-				if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_EDGEUSE_MAGIC )
+				if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_EDGEUSE_MAGIC )
 				{
-					eu = RT_LIST_FIRST( edgeuse , &lu->down_hd );
+					eu = BU_LIST_FIRST( edgeuse , &lu->down_hd );
 					NMG_CK_EDGEUSE( eu );
 					NMG_CK_VERTEXUSE( eu->vu_p );
 					v = eu->vu_p->v_p;
 				}
 				else
 				{
-					vu = RT_LIST_FIRST( vertexuse , &lu->down_hd );
+					vu = BU_LIST_FIRST( vertexuse , &lu->down_hd );
 					NMG_CK_VERTEXUSE( vu );
 					v = vu->v_p;
 				}
@@ -1714,23 +1715,23 @@ mat_t		mat;
 				*strp = "V";
 				break;
 			}
-			if( RT_LIST_IS_EMPTY( &s->lu_hd ) )
+			if( BU_LIST_IS_EMPTY( &s->lu_hd ) )
 				lu = (struct loopuse *)NULL;
 			else
-				lu = RT_LIST_FIRST( loopuse , &s->lu_hd );
+				lu = BU_LIST_FIRST( loopuse , &s->lu_hd );
 			if( lu )
 			{
 				NMG_CK_LOOPUSE( lu );
-				if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_EDGEUSE_MAGIC )
+				if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_EDGEUSE_MAGIC )
 				{
-					eu = RT_LIST_FIRST( edgeuse , &lu->down_hd );
+					eu = BU_LIST_FIRST( edgeuse , &lu->down_hd );
 					NMG_CK_EDGEUSE( eu );
 					NMG_CK_VERTEXUSE( eu->vu_p );
 					v = eu->vu_p->v_p;
 				}
 				else
 				{
-					vu = RT_LIST_FIRST( vertexuse , &lu->down_hd );
+					vu = BU_LIST_FIRST( vertexuse , &lu->down_hd );
 					NMG_CK_VERTEXUSE( vu );
 					v = vu->v_p;
 				}
@@ -1741,10 +1742,10 @@ mat_t		mat;
 				*strp = "V";
 				break;
 			}
-			if( RT_LIST_IS_EMPTY( &s->eu_hd ) )
+			if( BU_LIST_IS_EMPTY( &s->eu_hd ) )
 				eu = (struct edgeuse *)NULL;
 			else
-				eu = RT_LIST_FIRST( edgeuse , &s->eu_hd );
+				eu = BU_LIST_FIRST( edgeuse , &s->eu_hd );
 			if( eu )
 			{
 				NMG_CK_EDGEUSE( eu );
@@ -2693,7 +2694,7 @@ sedit()
 				  break;
 				}
 
-				prev_eu = RT_LIST_PPREV_CIRC( edgeuse , &es_eu->l );
+				prev_eu = BU_LIST_PPREV_CIRC( edgeuse , &es_eu->l );
 				NMG_CK_EDGEUSE( prev_eu );
 
 				if( prev_eu == es_eu )
@@ -2714,7 +2715,7 @@ sedit()
 					break;
 				}
 
-				next_eu = RT_LIST_PNEXT_CIRC( edgeuse , &es_eu->l );
+				next_eu = BU_LIST_PNEXT_CIRC( edgeuse , &es_eu->l );
 				NMG_CK_EDGEUSE( next_eu );
 
 				nmg_movevu( next_eu->vu_p , es_eu->vu_p->v_p );
@@ -2852,7 +2853,7 @@ sedit()
 			  return;
 			}
 
-			if( RT_LIST_NON_EMPTY( &es_s->fu_hd ) )
+			if( BU_LIST_NON_EMPTY( &es_s->fu_hd ) )
 			{
 				struct nmgregion *r;
 
@@ -3910,7 +3911,7 @@ CONST mat_t			mat;
 		pipe = (struct rt_pipe_internal *)ip->idb_ptr;
 		RT_PIPE_CK_MAGIC( pipe );
 
-		for( RT_LIST_FOR( ps, wdb_pipept, &pipe->pipe_segs_head ) )
+		for( BU_LIST_FOR( ps, wdb_pipept, &pipe->pipe_segs_head ) )
 		{
 			seg_no++;
 			if( ps == es_pipept )
@@ -4551,17 +4552,17 @@ pscale()
 
 			RT_PIPE_CK_MAGIC( pipe );
 
-			ps = RT_LIST_FIRST( wdb_pipept, &pipe->pipe_segs_head );
+			ps = BU_LIST_FIRST( wdb_pipept, &pipe->pipe_segs_head );
 			BU_CKMAG( ps, WDB_PIPESEG_MAGIC, "wdb_pipept" );
 
 			if( ps->pp_od > 0.0 )
 				es_scale = es_para[0] * es_mat[15]/ps->pp_od;
 			else
 			{
-				while( ps->l.magic != RT_LIST_HEAD_MAGIC && ps->pp_od <= 0.0 )
-					ps = RT_LIST_NEXT( wdb_pipept, &ps->l );
+				while( ps->l.magic != BU_LIST_HEAD_MAGIC && ps->pp_od <= 0.0 )
+					ps = BU_LIST_NEXT( wdb_pipept, &ps->l );
 
-				if( ps->l.magic == RT_LIST_HEAD_MAGIC )
+				if( ps->l.magic == BU_LIST_HEAD_MAGIC )
 				{
 				  Tcl_AppendResult(interp, "Entire pipe solid has zero OD!!!!\n", (char *)NULL);
 				  return;
@@ -4581,18 +4582,18 @@ pscale()
 
 			RT_PIPE_CK_MAGIC( pipe );
 
-			ps = RT_LIST_FIRST( wdb_pipept, &pipe->pipe_segs_head );
+			ps = BU_LIST_FIRST( wdb_pipept, &pipe->pipe_segs_head );
 			BU_CKMAG( ps, WDB_PIPESEG_MAGIC, "wdb_pipept" );
 
 			if( ps->pp_id > 0.0 )
 				es_scale = es_para[0] * es_mat[15]/ps->pp_id;
 			else
 			{
-				while( ps->l.magic != RT_LIST_HEAD_MAGIC && ps->pp_id <= 0.0 )
-					ps = RT_LIST_NEXT( wdb_pipept, &ps->l );
+				while( ps->l.magic != BU_LIST_HEAD_MAGIC && ps->pp_id <= 0.0 )
+					ps = BU_LIST_NEXT( wdb_pipept, &ps->l );
 
 				/* Check if entire pipe has zero ID */
-				if( ps->l.magic == RT_LIST_HEAD_MAGIC )
+				if( ps->l.magic == BU_LIST_HEAD_MAGIC )
 					es_scale = (-es_para[0] * es_mat[15]);
 				else
 					es_scale = es_para[0] * es_mat[15]/ps->pp_id;
@@ -4609,18 +4610,18 @@ pscale()
 
 			RT_PIPE_CK_MAGIC( pipe );
 
-			ps = RT_LIST_FIRST( wdb_pipept, &pipe->pipe_segs_head );
+			ps = BU_LIST_FIRST( wdb_pipept, &pipe->pipe_segs_head );
 			BU_CKMAG( ps, WDB_PIPESEG_MAGIC, "wdb_pipept" );
 
 			if( ps->pp_bendradius > 0.0 )
 				es_scale = es_para[0] * es_mat[15]/ps->pp_bendradius;
 			else
 			{
-				while( ps->l.magic != RT_LIST_HEAD_MAGIC && ps->pp_bendradius <= 0.0 )
-					ps = RT_LIST_NEXT( wdb_pipept, &ps->l );
+				while( ps->l.magic != BU_LIST_HEAD_MAGIC && ps->pp_bendradius <= 0.0 )
+					ps = BU_LIST_NEXT( wdb_pipept, &ps->l );
 
 				/* Check if entire pipe has zero ID */
-				if( ps->l.magic == RT_LIST_HEAD_MAGIC )
+				if( ps->l.magic == BU_LIST_HEAD_MAGIC )
 					es_scale = (-es_para[0] * es_mat[15]);
 				else
 					es_scale = es_para[0] * es_mat[15]/ps->pp_bendradius;
@@ -5579,22 +5580,22 @@ point_t	v_pos;
  */
 int
 rt_vl_closest3d(vhead, ref_pt, closest_pt)
-struct rt_list	*vhead;
+struct bu_list	*vhead;
 point_t		ref_pt, closest_pt;
 {
 	fastf_t		dist, cur_dist;
 	pointp_t	c_pt;
 	struct rt_vlist	*cur_vp;
 	
-	if (vhead == RT_LIST_NULL || RT_LIST_IS_EMPTY(vhead))
+	if (vhead == BU_LIST_NULL || BU_LIST_IS_EMPTY(vhead))
 		return(1);	/* fail */
 
 	/* initialize smallest distance using 1st point in list */
-	cur_vp = RT_LIST_FIRST(rt_vlist, vhead);
+	cur_vp = BU_LIST_FIRST(rt_vlist, vhead);
 	dist = DIST3D(ref_pt, cur_vp->pt[0]);
 	c_pt = cur_vp->pt[0];
 
-	for (RT_LIST_FOR(cur_vp, rt_vlist, vhead)) {
+	for (BU_LIST_FOR(cur_vp, rt_vlist, vhead)) {
 		register int	i;
 		register int	nused = cur_vp->nused;
 		register point_t *cur_pt = cur_vp->pt;
@@ -5622,7 +5623,7 @@ point_t		ref_pt, closest_pt;
  */
 int
 rt_vl_closest2d(vhead, ref_pt, mat, closest_pt)
-struct rt_list	*vhead;
+struct bu_list	*vhead;
 point_t		ref_pt, closest_pt;
 mat_t		mat;
 {
@@ -5631,19 +5632,19 @@ mat_t		mat;
 	pointp_t	c_pt;
 	struct rt_vlist	*cur_vp;
 	
-	if (vhead == RT_LIST_NULL || RT_LIST_IS_EMPTY(vhead))
+	if (vhead == BU_LIST_NULL || BU_LIST_IS_EMPTY(vhead))
 		return(1);	/* fail */
 
 	/* transform reference point to 2d */
 	MAT4X3PNT(ref_pt2d, mat, ref_pt);
 
 	/* initialize smallest distance using 1st point in list */
-	cur_vp = RT_LIST_FIRST(rt_vlist, vhead);
+	cur_vp = BU_LIST_FIRST(rt_vlist, vhead);
 	MAT4X3PNT(cur_pt2d, mat, cur_vp->pt[0]);
 	dist = DIST2D(ref_pt2d, cur_pt2d);
 	c_pt = cur_vp->pt[0];
 
-	for (RT_LIST_FOR(cur_vp, rt_vlist, vhead)) {
+	for (BU_LIST_FOR(cur_vp, rt_vlist, vhead)) {
 		register int	i;
 		register int	nused = cur_vp->nused;
 		register point_t *cur_pt = cur_vp->pt;

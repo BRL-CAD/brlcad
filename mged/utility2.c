@@ -25,6 +25,7 @@
 #endif
 
 #include "machine.h"
+#include "bu.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "db.h"
@@ -83,18 +84,18 @@ char **argv;
 	m = (struct model *)old_intern.idb_ptr;
 	NMG_CK_MODEL(m);
 
-	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
+	for( BU_LIST_FOR( r, nmgregion, &m->r_hd ) )
 	{
-		for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+		for( BU_LIST_FOR( s, shell, &r->s_hd ) )
 		{
 			s_tmp = nmg_dup_shell( s, &trans_tbl );
 			bu_free( (char *)trans_tbl, "trans_tbl" );
 
 			m_tmp = nmg_mmr();
-			r_tmp = RT_LIST_FIRST( nmgregion, &m_tmp->r_hd );
+			r_tmp = BU_LIST_FIRST( nmgregion, &m_tmp->r_hd );
 
-			RT_LIST_DEQUEUE( &s_tmp->l );
-			RT_LIST_APPEND( &r_tmp->s_hd, &s_tmp->l );
+			BU_LIST_DEQUEUE( &s_tmp->l );
+			BU_LIST_APPEND( &r_tmp->s_hd, &s_tmp->l );
 			s_tmp->r_p = r_tmp;
 			nmg_m_reindex( m_tmp, 0 );
 			nmg_m_reindex( m, 0 );
@@ -620,7 +621,7 @@ static int push_error;
  *
  * This routine is called once for eas leaf (solid) that is to
  * be pushed.  All it does is build at push_id linked list.  The 
- * linked list could be handled by rt_list macros but it is simple
+ * linked list could be handled by bu_list macros but it is simple
  * enough to do hear with out them.
  */
 HIDDEN union tree *push_leaf( tsp, pathp, ep, id)
@@ -953,7 +954,7 @@ struct directory *dp;
   dp->d_nref = 0;
   dp->d_uses = 0;
 
-  if( RT_LIST_NON_EMPTY( &dp->d_use_hd ) )
+  if( BU_LIST_NON_EMPTY( &dp->d_use_hd ) )
     Tcl_AppendResult(interp, "List for ", dp->d_namep, " is not empty\n", (char *)NULL);
 }
 
@@ -989,7 +990,7 @@ struct directory *dp;
 
 struct object_use
 {
-	struct rt_list	l;
+	struct bu_list	l;
 	struct directory *dp;
 	mat_t xform;
 	int used;
@@ -1007,9 +1008,9 @@ struct directory *dp;
 
 	RT_CK_DIR( dp );
 
-	while( RT_LIST_NON_EMPTY( &dp->d_use_hd ) )
+	while( BU_LIST_NON_EMPTY( &dp->d_use_hd ) )
 	{
-		use = RT_LIST_FIRST( object_use, &dp->d_use_hd );
+		use = BU_LIST_FIRST( object_use, &dp->d_use_hd );
 		if( !use->used )
 		{
 			/* never used, so delete directory entry.
@@ -1018,7 +1019,7 @@ struct directory *dp;
 			db_dirdelete( dbip, use->dp );
 		}
 
-		RT_LIST_DEQUEUE( &use->l );
+		BU_LIST_DEQUEUE( &use->l );
 		bu_free( (char *)use, "Free_uses: use" );
 	}
 }
@@ -1042,7 +1043,7 @@ struct directory *dp;
 		return;
 
 	/* check if already done */
-	if( RT_LIST_NON_EMPTY( &dp->d_use_hd ) )
+	if( BU_LIST_NON_EMPTY( &dp->d_use_hd ) )
 		return;
 
 	digits = log10( (double)dp->d_uses ) + 2.0;
@@ -1091,7 +1092,7 @@ struct directory *dp;
 		}
 
 		/* Add new directory pointer to use list for this object */
-		RT_LIST_INSERT( &dp->d_use_hd, &use->l );
+		BU_LIST_INSERT( &dp->d_use_hd, &use->l );
 	}
 }
 
@@ -1116,7 +1117,7 @@ mat_t xform;
 	}
 
 	/* Look for a copy that already has this transform matrix */
-	for( RT_LIST_FOR( use, object_use, &dp->d_use_hd ) )
+	for( BU_LIST_FOR( use, object_use, &dp->d_use_hd ) )
 	{
 		if( rt_mat_is_equal( xform, use->xform, &mged_tol ) )
 		{
@@ -1128,7 +1129,7 @@ mat_t xform;
 
 	found = DIR_NULL;
 	/* get a fresh use */
-	for( RT_LIST_FOR( use, object_use, &dp->d_use_hd ) )
+	for( BU_LIST_FOR( use, object_use, &dp->d_use_hd ) )
 	{
 		if( use->used )
 			continue;
@@ -1199,7 +1200,7 @@ mat_t xform;
 	RT_CK_DIR( dp );
 
 	/* Look for a copy that already has this transform matrix */
-	for( RT_LIST_FOR( use, object_use, &dp->d_use_hd ) )
+	for( BU_LIST_FOR( use, object_use, &dp->d_use_hd ) )
 	{
 		if( rt_mat_is_equal( xform, use->xform, &mged_tol ) )
 		{
@@ -1245,7 +1246,7 @@ mat_t xform;
 
 	/* Get a use of this object */
 	found = DIR_NULL;
-	for( RT_LIST_FOR( use, object_use, &dp->d_use_hd ) )
+	for( BU_LIST_FOR( use, object_use, &dp->d_use_hd ) )
 	{
 		/* Get a fresh use of this object */
 		if( use->used )
@@ -1648,14 +1649,14 @@ char *argv[];
 	{
 		int ngran;
 
-		r = RT_LIST_FIRST( nmgregion, &m->r_hd );
-		s = RT_LIST_FIRST( shell, &r->s_hd );
+		r = BU_LIST_FIRST( nmgregion, &m->r_hd );
+		s = BU_LIST_FIRST( shell, &r->s_hd );
 
-		if( RT_LIST_NON_EMPTY( &s->lu_hd ) )
+		if( BU_LIST_NON_EMPTY( &s->lu_hd ) )
 		  Tcl_AppendResult(interp, "wire loops in ", nmg_name,
 				   " have been ignored in conversion\n", (char *)NULL);
 
-		if( RT_LIST_NON_EMPTY( &s->eu_hd ) )
+		if( BU_LIST_NON_EMPTY( &s->eu_hd ) )
 		  Tcl_AppendResult(interp, "wire edges in ", nmg_name,
 				   " have been ignored in conversion\n", (char *)NULL);
 

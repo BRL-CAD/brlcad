@@ -37,18 +37,17 @@
 #include "tcl.h"
 
 #include "machine.h"
+#include "bu.h"
 #include "vmath.h"
 #include "db.h"
 #include "raytrace.h"
-#include "rtstring.h"
-#include "rtlist.h"
 #include "externs.h"
 #include "./ged.h"
 #include "./mgedtcl.h"
 
 #if 0
 struct mged_hist {
-    struct rt_list l;
+    struct bu_list l;
     struct bu_vls command;
     struct timeval start, finish;
     int status;
@@ -87,7 +86,7 @@ int status;   /* Either CMD_OK or CMD_BAD */
     new_hist->start = *start;
     new_hist->finish = *finish;
     new_hist->status = status;
-    RT_LIST_INSERT(&(mged_hist_head.l), &(new_hist->l));
+    BU_LIST_INSERT(&(mged_hist_head.l), &(new_hist->l));
 
     /* As long as this isn't our first command to record after setting
        up the journal (which would be "journal", which we don't want
@@ -126,7 +125,7 @@ struct mged_hist *hptr;
     struct timeval tvdiff;
     struct mged_hist *lasthptr;
 
-    lasthptr = RT_LIST_PREV(mged_hist, &(hptr->l));
+    lasthptr = BU_LIST_PREV(mged_hist, &(hptr->l));
     if (timediff(&tvdiff, &(lasthptr->finish), &(hptr->start)) >= 0)
 	fprintf(journalfp, "delay %d %d\n", tvdiff.tv_sec, tvdiff.tv_usec);
     
@@ -254,10 +253,10 @@ char **argv;
     }
 
     bu_vls_init(&str);
-    for (RT_LIST_FOR(hp, mged_hist, &(mged_hist_head.l))) {
+    for (BU_LIST_FOR(hp, mged_hist, &(mged_hist_head.l))) {
 	bu_vls_trunc(&str, 0);
-	hp_prev = RT_LIST_PREV(mged_hist, &(hp->l));
-	if (with_delays && RT_LIST_NOT_HEAD(hp_prev, &(mged_hist_head.l))) {
+	hp_prev = BU_LIST_PREV(mged_hist, &(hp->l));
+	if (with_delays && BU_LIST_NOT_HEAD(hp_prev, &(mged_hist_head.l))) {
 	    if (timediff(&tvdiff, &(hp_prev->finish), &(hp->start)) >= 0)
 		bu_vls_printf(&str, "delay %d %d\n", tvdiff.tv_sec,
 			      tvdiff.tv_usec);
@@ -286,8 +285,8 @@ history_prev()
 {
     struct mged_hist *hp;
 
-    hp = RT_LIST_PREV(mged_hist, &(curr_cmd_list->cur_hist->l));
-    if (RT_LIST_IS_HEAD(hp, &(mged_hist_head.l)))
+    hp = BU_LIST_PREV(mged_hist, &(curr_cmd_list->cur_hist->l));
+    if (BU_LIST_IS_HEAD(hp, &(mged_hist_head.l)))
 	return NULL;
     else {
 	curr_cmd_list->cur_hist = hp;
@@ -300,7 +299,7 @@ history_prev()
 struct bu_vls *
 history_cur()
 {
-    if (RT_LIST_IS_HEAD(curr_cmd_list->cur_hist, &(mged_hist_head.l)))
+    if (BU_LIST_IS_HEAD(curr_cmd_list->cur_hist, &(mged_hist_head.l)))
 	return NULL;
     else
 	return &(curr_cmd_list->cur_hist->command);
@@ -313,12 +312,12 @@ history_next()
 {
     struct mged_hist *hp;
 
-    if (RT_LIST_IS_HEAD(curr_cmd_list->cur_hist, &(mged_hist_head.l))) {
+    if (BU_LIST_IS_HEAD(curr_cmd_list->cur_hist, &(mged_hist_head.l))) {
 	return 0;
     }
     
-    hp = RT_LIST_NEXT(mged_hist, &(curr_cmd_list->cur_hist->l));
-    if (RT_LIST_IS_HEAD(hp, &(mged_hist_head.l))) {
+    hp = BU_LIST_NEXT(mged_hist, &(curr_cmd_list->cur_hist->l));
+    if (BU_LIST_IS_HEAD(hp, &(mged_hist_head.l))) {
 	curr_cmd_list->cur_hist = hp;
 	return 0;
     } else {
@@ -414,7 +413,7 @@ char **argv;
 void
 history_setup()
 {
-    RT_LIST_INIT(&(mged_hist_head.l));
+    BU_LIST_INIT(&(mged_hist_head.l));
     curr_cmd_list->cur_hist = &mged_hist_head;
     bu_vls_init(&(mged_hist_head.command));
     mged_hist_head.start.tv_sec = mged_hist_head.start.tv_usec =

@@ -386,7 +386,7 @@ struct funtab {
 };
 
 struct mged_hist {
-  struct rt_list l;
+  struct bu_list l;
   struct bu_vls command;
   struct timeval start, finish;
   int status;
@@ -394,7 +394,7 @@ struct mged_hist {
 
 /* internal variables related to the command window(s) */
 struct cmd_list {
-  struct rt_list l;
+  struct bu_list l;
   struct dm_list *aim;        /* the drawing window being aimed at */
   struct mged_hist *cur_hist;
   struct bu_vls more_default;

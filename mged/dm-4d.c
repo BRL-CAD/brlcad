@@ -47,8 +47,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/invent.h>
 
 #include "machine.h"
-#include "vmath.h"
 #include "bu.h"
+#include "vmath.h"
 #include "raytrace.h"
 #include "./ged.h"
 #include "./dm.h"
@@ -1113,7 +1113,7 @@ int		white;
 
 	/* Viewing region is from -1.0 to +1.0 */
 	first = 1;
-	for( RT_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+	for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
 		register int	i;
 		register int	nused = vp->nused;
 		register int	*cmd = vp->cmd;

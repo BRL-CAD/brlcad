@@ -41,11 +41,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "tk.h"
 
 #include "machine.h"
+#include "bu.h"
 #include "vmath.h"
 #include "db.h"
 #include "raytrace.h"
-#include "bu.h"
-#include "rtlist.h"
 #include "rtgeom.h"
 #include "externs.h"
 #include "./ged.h"
@@ -1172,7 +1171,7 @@ char **argv;
 #if 1
   /* First, search to see if there exists a command window with the name
      in argv[1] */
-  for( RT_LIST_FOR(clp, cmd_list, &head_cmd_list.l) )
+  for( BU_LIST_FOR(clp, cmd_list, &head_cmd_list.l) )
     if(!strcmp(argv[1], bu_vls_addr(&clp->name))){
       name_not_used = 0;
       break;
@@ -1181,7 +1180,7 @@ char **argv;
   if(name_not_used){
     clp = (struct cmd_list *)bu_malloc(sizeof(struct cmd_list), "cmd_list");
     bzero((void *)clp, sizeof(struct cmd_list));
-    RT_LIST_APPEND(&head_cmd_list.l, &clp->l);
+    BU_LIST_APPEND(&head_cmd_list.l, &clp->l);
     clp->cur_hist = head_cmd_list.cur_hist;
     bu_vls_init(&clp->more_default);
     bu_vls_init(&clp->name);
@@ -1199,7 +1198,7 @@ char **argv;
 
   clp = (struct cmd_list *)bu_malloc(sizeof(struct cmd_list), "cmd_list");
   bzero((void *)clp, sizeof(struct cmd_list));
-  RT_LIST_APPEND(&head_cmd_list.l, &clp->l);
+  BU_LIST_APPEND(&head_cmd_list.l, &clp->l);
   clp->cur_hist = head_cmd_list.cur_hist;
   bu_vls_init(&clp->more_default);
   bu_vls_init(&clp->name);
@@ -1229,7 +1228,7 @@ char **argv;
   }
 
   /* return all ids associated with the current command window */
-  for( RT_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+  for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
     /* The display manager tied to the current command window shares
        information with display manager p */
     if(curr_cmd_list->aim->s_info == p->s_info)
@@ -1257,7 +1256,7 @@ char **argv;
     return TCL_ERROR;
   }
 
-  for( RT_LIST_FOR(p, cmd_list, &head_cmd_list.l) ){
+  for( BU_LIST_FOR(p, cmd_list, &head_cmd_list.l) ){
     if(strcmp(bu_vls_addr(&p->name), argv[1]))
       continue;
 
@@ -2072,7 +2071,7 @@ char *argv[];
         return TCL_ERROR;
 
   if(argc == 1){
-    for( RT_LIST_FOR(p_cmd, cmd_list, &head_cmd_list.l) )
+    for( BU_LIST_FOR(p_cmd, cmd_list, &head_cmd_list.l) )
       if(p_cmd->aim)
 	Tcl_AppendResult(interp, bu_vls_addr(&p_cmd->name), " ---> ",
 			 bu_vls_addr(&p_cmd->aim->_pathName),
@@ -2092,7 +2091,7 @@ char *argv[];
     return TCL_OK;
   }
 
-  for( RT_LIST_FOR(p_cmd, cmd_list, &head_cmd_list.l) )
+  for( BU_LIST_FOR(p_cmd, cmd_list, &head_cmd_list.l) )
     if(!strcmp(bu_vls_addr(&p_cmd->name), argv[1]))
       break;
 
@@ -2115,7 +2114,7 @@ char *argv[];
     return TCL_OK;
   }
 
-  for( RT_LIST_FOR(p_dm, dm_list, &head_dm_list.l) )
+  for( BU_LIST_FOR(p_dm, dm_list, &head_dm_list.l) )
     if(!strcmp(argv[2], bu_vls_addr(&p_dm->_pathName)))
       break;
 
@@ -2380,7 +2379,7 @@ char    **argv;
   }
 
   /* change primary focus to window argv[1] */
-  for( RT_LIST_FOR(p, dm_list, &head_dm_list.l ) ){
+  for( BU_LIST_FOR(p, dm_list, &head_dm_list.l ) ){
     if( !strcmp( argv[1], bu_vls_addr( &p->_pathName ) ) ){
       curr_dm_list = p;
 

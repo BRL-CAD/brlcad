@@ -49,10 +49,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "tk.h"
 
 #include "machine.h"
+#include "bu.h"
 #include "vmath.h"
 #include "db.h"
 #include "mater.h"
-#include "rtstring.h"
 #include "raytrace.h"
 #include "nmg.h"
 #include "externs.h"
@@ -396,7 +396,7 @@ int	catch_sigint;
 	  struct dm_list *save_dm_list;
 
 	  save_dm_list = curr_dm_list;
-	  for( RT_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+	  for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
 	    curr_dm_list = p;
 
 	    /* If we went from blank screen to non-blank, resize */
@@ -794,9 +794,9 @@ mged_freemem()
 		FreeSolid = sp->s_forw;
 		bu_free( (char *)sp, "mged_freemem: struct solid" );
 	}
-	while( RT_LIST_NON_EMPTY( &rt_g.rtg_vlfree ) )  {
-		vp = RT_LIST_FIRST( rt_vlist, &rt_g.rtg_vlfree );
-		RT_LIST_DEQUEUE( &(vp->l) );
+	while( BU_LIST_NON_EMPTY( &rt_g.rtg_vlfree ) )  {
+		vp = BU_LIST_FIRST( rt_vlist, &rt_g.rtg_vlfree );
+		BU_LIST_DEQUEUE( &(vp->l) );
 		bu_free( (char *)vp, "mged_freemem: struct rt_vlist" );
 	}
 }
@@ -1045,7 +1045,7 @@ int		lvl;			/* debug level */
 		/* Print the actual vector list */
 		nvlist = 0;
 		npts = 0;
-		for( RT_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+		for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
 			register int	i;
 			register int	nused = vp->nused;
 			register int	*cmd = vp->cmd;

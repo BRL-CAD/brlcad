@@ -27,6 +27,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/time.h>		/* for struct timeval */
 #include "machine.h"
 #include "externs.h"
+#include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "./ged.h"
@@ -197,7 +198,7 @@ char *name;
 	struct dm_list *save_dm_list = DM_LIST_NULL;
 
 	if(name != NULL){
-	  for( RT_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+	  for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
 	    if(strcmp(name, bu_vls_addr(&p->_pathName)))
 	      continue;
 
@@ -237,12 +238,12 @@ char *name;
 	  find_new_owner(p);
 
 	/* If this display is being referenced by a command window, remove it */
-	for( RT_LIST_FOR(p_cmd, cmd_list, &head_cmd_list.l) )
+	for( BU_LIST_FOR(p_cmd, cmd_list, &head_cmd_list.l) )
 	  if(p_cmd->aim == p)
 	    p_cmd->aim = (struct dm_list *)NULL;
 
 	bu_vls_free(&pathName);
-	RT_LIST_DEQUEUE( &p->l );
+	BU_LIST_DEQUEUE( &p->l );
 	bu_free( (char *)p, "release: curr_dm_list" );
 
 	if(save_dm_list != DM_LIST_NULL)
@@ -413,7 +414,7 @@ char    **argv;
   }else{
     dmlp = (struct dm_list *)bu_malloc(sizeof(struct dm_list), "dm_list");
     bzero((void *)dmlp, sizeof(struct dm_list));
-    RT_LIST_APPEND(&head_dm_list.l, &dmlp->l);
+    BU_LIST_APPEND(&head_dm_list.l, &dmlp->l);
     o_dm_list = curr_dm_list;
     curr_dm_list = dmlp;
     dmp = *dp;
@@ -505,7 +506,7 @@ char    **argv;
   if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
         return TCL_ERROR;
 
-  for( RT_LIST_FOR(p, dm_list, &head_dm_list.l) )
+  for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) )
     if(!strcmp(argv[1], bu_vls_addr(&p->_pathName)))
       break;
 
@@ -554,7 +555,7 @@ char    **argv;
   if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
     return TCL_ERROR;
 
-  for( RT_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+  for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
     if(p1 == (struct dm_list *)NULL && !strcmp(argv[1], bu_vls_addr(&p->_pathName)))
 	p1 = p;
     else if(p2 == (struct dm_list *)NULL && !strcmp(argv[2], bu_vls_addr(&p->_pathName)))
@@ -594,7 +595,7 @@ struct dm_list *op;
 {
   struct dm_list *p;
 
-  for( RT_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+  for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
     /* first one found is the new owner */
     if(op != p && p->s_info == op->s_info){
       p->_owner = 1;

@@ -40,7 +40,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "rtgeom.h"
 #include "./ged.h"
-#include "rtstring.h"
 #include "./comb_bool.h"
 
 #define	PRINT_USAGE Tcl_AppendResult(interp, "c: usage 'c [-gr] comb_name [bool_expr]'\n",\

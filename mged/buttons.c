@@ -27,6 +27,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
+#include "bu.h"
 #include "vmath.h"
 #include "db.h"
 #include "raytrace.h"
@@ -758,7 +759,7 @@ char *str;
 	  point_t new_pos;
 
 	  save_dm_list = curr_dm_list;
-	  for( RT_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+	  for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
 	    curr_dm_list = p;
 
 	    /* Advise display manager of state change */

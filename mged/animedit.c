@@ -31,9 +31,9 @@ static char RCSid[] = "@(#)$Header$";
 
 #include "machine.h"
 #include "externs.h"
+#include "bu.h"
 #include "vmath.h"
 #include "db.h"
-#include "rtstring.h"
 #include "raytrace.h"
 #include "rtgeom.h"
 #include "rtlex.h"
@@ -203,12 +203,12 @@ char **argv;
   else
     return CMD_BAD;
 }
-struct rt_list joint_head = {
-	RT_LIST_HEAD_MAGIC,
+struct bu_list joint_head = {
+	BU_LIST_HEAD_MAGIC,
 	&joint_head, &joint_head
 };
-struct rt_list hold_head = {
-	RT_LIST_HEAD_MAGIC,
+struct bu_list hold_head = {
+	BU_LIST_HEAD_MAGIC,
 	&hold_head, &hold_head
 };
 static struct joint *
@@ -217,7 +217,7 @@ char *name;
 {
 	register struct joint *jp;
 
-	for (RT_LIST_FOR(jp, joint, &joint_head)) {
+	for (BU_LIST_FOR(jp, joint, &joint_head)) {
 		if (strcmp(jp->name, name) == 0) return jp;
 	}
 	return (struct joint *) 0;
@@ -269,9 +269,9 @@ struct hold *hp;
 		}
 		free_arc(&hp->effector.arc);
 	}
-	while (RT_LIST_WHILE(jh, jointH, &hp->j_head)) {
+	while (BU_LIST_WHILE(jh, jointH, &hp->j_head)) {
 		jh->p->uses--;
-		RT_LIST_DEQUEUE(&jh->l);
+		BU_LIST_DEQUEUE(&jh->l);
 		bu_free((char *) jh, "joint handle");
 	}
 	if (hp->joint) bu_free(hp->joint, "hold joint name");
@@ -481,15 +481,15 @@ char **argv;
 
 	db_free_anim(dbip);
 	holds = 0;
-	while (RT_LIST_WHILE(hp, hold, &hold_head)) {
+	while (BU_LIST_WHILE(hp, hold, &hold_head)) {
 		holds++;
-		RT_LIST_DEQUEUE(&hp->l);
+		BU_LIST_DEQUEUE(&hp->l);
 		free_hold(hp);
 	}
 	joints = 0;
-	while (RT_LIST_WHILE(jp, joint, &joint_head)) {
+	while (BU_LIST_WHILE(jp, joint, &joint_head)) {
 		joints++;
-		RT_LIST_DEQUEUE(&(jp->l));
+		BU_LIST_DEQUEUE(&(jp->l));
 		if (joint_debug & DEBUG_J_LOAD) {
 		  Tcl_AppendResult(interp, "joint unload: unloading '", 
 				   jp->name, "'.\n", (char *)NULL);
@@ -1498,7 +1498,7 @@ struct bu_vls *str;
 		    	jp->location[Y] *= base2mm;
 		    	jp->location[Z] *= base2mm;
 
-		    	RT_LIST_INSERT(&joint_head, &(jp->l));
+		    	BU_LIST_INSERT(&joint_head, &(jp->l));
 		    	gobble_token(RT_LEX_SYMBOL, SYM_END, fip, str);
 		    	return 1;
 		}
@@ -1799,7 +1799,7 @@ struct bu_vls *str;
 	hp->l.magic = MAGIC_HOLD_STRUCT;
 	hp->name = NULL;
 	hp->joint = NULL;
-	RT_LIST_INIT(&hp->j_head);
+	BU_LIST_INIT(&hp->j_head);
 	hp->effector.type = ID_FIXED;
 	hp->effector.arc.type = ARC_UNSET;
 	db_init_full_path(&hp->effector.path);
@@ -1869,7 +1869,7 @@ struct bu_vls *str;
 			if (!prifound) {
 				hp->priority = 50;
 			}
-			RT_LIST_INSERT(&hold_head, &(hp->l));
+			BU_LIST_INSERT(&hold_head, &(hp->l));
 
 			gobble_token(RT_LEX_SYMBOL, SYM_END, fip, str);
 			return 1;
@@ -1946,7 +1946,7 @@ struct bu_vls *str;
 	}
 	/* NOTREACHED */
 }
-static struct rt_list path_head;
+static struct bu_list path_head;
 int
 f_jload(argc, argv)
 int argc;
@@ -2001,7 +2001,7 @@ char **argv;
 			if (token.type == RT_LEX_KEYWORD) {
 				if (token.t_key.value == KEY_JOINT ) {
 					if (parse_joint(fip,instring)) {
-						jp = RT_LIST_LAST(joint, &joint_head);
+						jp = BU_LIST_LAST(joint, &joint_head);
 						if (!no_apply) joint_move(jp);
 					}
 				} else if (token.t_key.value == KEY_CON) {
@@ -2027,21 +2027,21 @@ char **argv;
 	 * For each "struct arc" in joints or constraints, build a linked
 	 * list of all ARC_PATHs and a control list of all unique tops.
 	 */
-	RT_LIST_INIT(&path_head);
-	for (RT_LIST_FOR(jp, joint, &joint_head)) {
+	BU_LIST_INIT(&path_head);
+	for (BU_LIST_FOR(jp, joint, &joint_head)) {
 		if (jp->path.type == ARC_PATH) {
-			RT_LIST_INSERT(&path_head, &(jp->path.l));
+			BU_LIST_INSERT(&path_head, &(jp->path.l));
 		}
 	}
-	for (RT_LIST_FOR(hp, hold, &hold_head)) {
+	for (BU_LIST_FOR(hp, hold, &hold_head)) {
 		if (hp->j_set.path.type == ARC_PATH) {
-			RT_LIST_INSERT(&path_head, &(hp->j_set.path.l));
+			BU_LIST_INSERT(&path_head, &(hp->j_set.path.l));
 		}
 		if (hp->effector.arc.type == ARC_PATH) {
-			RT_LIST_INSERT(&path_head, &(hp->effector.arc.l));
+			BU_LIST_INSERT(&path_head, &(hp->effector.arc.l));
 		}
 		if (hp->objective.arc.type == ARC_PATH) {
-			RT_LIST_INSERT(&path_head, &(hp->objective.arc.l));
+			BU_LIST_INSERT(&path_head, &(hp->objective.arc.l));
 		}
 	}
 	/*
@@ -2054,7 +2054,7 @@ char **argv;
 	 * can be done at a latter time, such as when the constraint is
 	 * evaluated. ??? XXX
 	 */
-	for (RT_LIST_FOR(hp, hold, &hold_head)) {
+	for (BU_LIST_FOR(hp, hold, &hold_head)) {
 		register struct directory *dp;
 		register int i;
 
@@ -2147,7 +2147,7 @@ char **argv;
 	mm2base = dbip->dbi_local2base;
 	base2mm = dbip->dbi_base2local;
 
-	for (RT_LIST_FOR(jp, joint, &joint_head)) {
+	for (BU_LIST_FOR(jp, joint, &joint_head)) {
 		fprintf(fop,"joint %s {\n",jp->name);
 		/* } for jove */
 		if (jp->path.type == ARC_PATH) {
@@ -2217,7 +2217,7 @@ char **argv;
 	argc -= optind;
 	argv += optind;
 
-	for (RT_LIST_FOR(jp, joint, &joint_head)) {
+	for (BU_LIST_FOR(jp, joint, &joint_head)) {
 		if (argc) {
 			for (i=0; i<argc; i++) {
 				if (strcmp(argv[i], jp->name) == 0) break;
@@ -2254,7 +2254,7 @@ char **argv;
 	argc -= optind;
 	argv += optind;
 
-	for (RT_LIST_FOR(jp, joint, &joint_head)) {
+	for (BU_LIST_FOR(jp, joint, &joint_head)) {
 		if (argc) {
 			for (i=0; i<argc; i++) {
 				if (strcmp(argv[i], jp->name) == 0) break;
@@ -2372,15 +2372,15 @@ struct hold *hp;
 	return value;
 }
 struct solve_stack {
-	struct rt_list	l;
+	struct bu_list	l;
 	struct joint	*jp;
 	int		freedom;
 	double		old;
 	double		new;
 };
 #define	SOLVE_STACK_MAGIC	0x76766767
-struct rt_list solve_head = {
-	RT_LIST_HEAD_MAGIC,
+struct bu_list solve_head = {
+	BU_LIST_HEAD_MAGIC,
 	&solve_head,
 	&solve_head
 };
@@ -2389,10 +2389,10 @@ void
 joint_clear()
 {
 	register struct stack_solve *ssp;
-	RT_LIST_POP(stack_solve, &solve_head, ssp);
+	BU_LIST_POP(stack_solve, &solve_head, ssp);
 	while (ssp) {
 		bu_free((char *)ssp, "struct stack_solve");
-		RT_LIST_POP(stack_solve, &solve_head, ssp);
+		BU_LIST_POP(stack_solve, &solve_head, ssp);
 	}
 }
 
@@ -2415,7 +2415,7 @@ double tol;
 			   ".\n", (char *)NULL);
 	}
 
-	if (RT_LIST_IS_EMPTY(&hp->j_head)) {
+	if (BU_LIST_IS_EMPTY(&hp->j_head)) {
 		register int i,j;
 		int startjoint;
 		startjoint = -1;
@@ -2423,7 +2423,7 @@ double tol;
 		  Tcl_AppendResult(interp, "part_solve: looking for joints on arc.\n",
 				   (char *)NULL);
 		}
-		for(RT_LIST_FOR(jp,joint,&joint_head)) {
+		for(BU_LIST_FOR(jp,joint,&joint_head)) {
 			if (hp->j_set.path.type == ARC_LIST) {
 				for (i=0; i<= hp->j_set.path.arc_last; i++) {
 					if (strcmp(jp->name, hp->j_set.path.arc[i]) == 0) {
@@ -2433,7 +2433,7 @@ double tol;
 						jp->uses++;
 						jh->arc_loc = -1;
 						jh->flag = 0;
-						RT_LIST_APPEND(&hp->j_head, &jh->l);
+						BU_LIST_APPEND(&hp->j_head, &jh->l);
 						break;
 					}
 				}
@@ -2460,7 +2460,7 @@ double tol;
 				jp->uses++;
 				jh->arc_loc = i+j-1;
 				jh->flag = 0;
-				RT_LIST_APPEND(&hp->j_head, &jh->l);
+				BU_LIST_APPEND(&hp->j_head, &jh->l);
 				if (strcmp(hp->joint, jp->name) == 0) {
 					startjoint = jh->arc_loc;
 				}
@@ -2470,7 +2470,7 @@ double tol;
 		  Tcl_AppendResult(interp, "part_solve: ", hp->name,
 				   ", joint ", hp->joint, " not on arc.\n", (char *)NULL);
 		}
-		for (RT_LIST_FOR(jh, jointH, &hp->j_head)) {
+		for (BU_LIST_FOR(jh, jointH, &hp->j_head)) {
 			/*
 			 * XXX - Coming to a source module near you  RSN.
 			 * Not only joint location, but drop joints that
@@ -2483,7 +2483,7 @@ double tol;
 						   " from ", hp->name, "\n", (char *)NULL);
 				}
 				hold=(struct jointH *)jh->l.back;
-				RT_LIST_DEQUEUE(&jh->l);
+				BU_LIST_DEQUEUE(&jh->l);
 				jh->p->uses--;
 				jh=hold;
 			}
@@ -2507,7 +2507,7 @@ double tol;
 	 * From here, we try each joint to try and find the best movement
 	 * if any.
 	 */
-	for (RT_LIST_FOR(jh, jointH, &hp->j_head)) {
+	for (BU_LIST_FOR(jh, jointH, &hp->j_head)) {
 		register int i;
 		double hold;
 		jp= jh->p;
@@ -2708,7 +2708,7 @@ double tol;
 		ssp->old = (bestfreedom<3) ? bestjoint->rots[bestfreedom].current :
 		    bestjoint->dirs[bestfreedom-3].current;
 		ssp->new = bestvalue;
-		RT_LIST_PUSH(&solve_head,ssp);
+		BU_LIST_PUSH(&solve_head,ssp);
 	}
 	if (bestfreedom < 3 ) {
 		bestjoint->rots[bestfreedom].current = bestvalue;
@@ -2722,7 +2722,7 @@ void
 reject_move()
 {
 	register struct solve_stack *ssp;
-	RT_LIST_POP(solve_stack, &solve_head, ssp);
+	BU_LIST_POP(solve_stack, &solve_head, ssp);
 	if (!ssp) return;
 	if (joint_debug & DEBUG_J_SYSTEM) {
 	  struct bu_vls tmp_vls;
@@ -2787,7 +2787,7 @@ double epsilon;
 	if (pri < 0) return 1;
 
 	for (i=0; i<=pri; i++) 	pri_weights[i]=0.0;
-	for (RT_LIST_FOR(hp,hold,&hold_head)) {
+	for (BU_LIST_FOR(hp,hold,&hold_head)) {
 		hp->eval = hold_eval(hp);
 		pri_weights[hp->priority] += hp->eval;
 	}
@@ -2816,8 +2816,8 @@ double epsilon;
 	    	if ((tmp->priority < hp->priority) ||
 		    ((tmp->priority == hp->priority) &&
 		     (tmp->eval > hp->eval))) {
-		     	RT_LIST_DEQUEUE(&tmp->l);
-		     	RT_LIST_INSERT(&hp->l,&tmp->l);
+		     	BU_LIST_DEQUEUE(&tmp->l);
+		     	BU_LIST_INSERT(&hp->l,&tmp->l);
 		     	if (tmp->l.back != &hold_head) {
 		     		hp = (struct hold*)tmp->l.back;
 		     	}
@@ -2836,7 +2836,7 @@ Middle:
 		}
 		return 1;	/* solved */
 	}
-	for (RT_LIST_FOR(hp,hold,&hold_head)) {
+	for (BU_LIST_FOR(hp,hold,&hold_head)) {
 		if (hp->priority != pri) continue;
 		if (hp->flag & HOLD_FLAG_TRIED) continue;
 		if (part_solve(hp,delta,epsilon)==0) continue;
@@ -2862,7 +2862,7 @@ Middle:
 	 * we'll know that in a little bit.
 	 */
 	new_eval = 0.0;
-	for (RT_LIST_FOR(hp,hold,&hold_head)) {
+	for (BU_LIST_FOR(hp,hold,&hold_head)) {
 		if (hp->priority != pri) continue;
 		new_eval += hold_eval(hp);
 	}
@@ -2888,7 +2888,7 @@ Middle:
 		ssp = (struct solve_stack *) solve_head.forw;
 
 		i = (2<<6) - 1;		/* Six degrees of freedom */
-		for (RT_LIST_FOR(jh,jointH, &test_hold->j_head)) {
+		for (BU_LIST_FOR(jh,jointH, &test_hold->j_head)) {
 			if (ssp->jp != jh->p) {
 				i &= jh->flag;
 				continue;
@@ -2918,7 +2918,7 @@ Middle:
 	 * make sure they did not get any worse.
 	 */
 	for (j=0; j<=pri; j++) new_weights[j] = 0.0;
-	for (RT_LIST_FOR(hp, hold, &hold_head)) {
+	for (BU_LIST_FOR(hp, hold, &hold_head)) {
 		new_weights[hp->priority] += hold_eval(hp);
 	}
 	for (j=0; j<=pri; j++) {
@@ -2934,7 +2934,7 @@ Middle:
 			reject_move();
 		}
 		i = (2 << 6) - 1;
-		for (RT_LIST_FOR(jh, jointH, &test_hold->j_head)) {
+		for (BU_LIST_FOR(jh, jointH, &test_hold->j_head)) {
 			if (ssp->jp != jh->p) {
 				i &= jh->flag;
 				continue;
@@ -3030,11 +3030,11 @@ char **argv;
 	argc -= optind;
 	argv += optind;
 
-	for (RT_LIST_FOR(hp, hold, &hold_head)) hold_clear_flags(hp);
+	for (BU_LIST_FOR(hp, hold, &hold_head)) hold_clear_flags(hp);
 	found = -1;
 	while (argc) {
 	  found = 0;
-	  for(RT_LIST_FOR(hp,hold,&hold_head)) {
+	  for(BU_LIST_FOR(hp,hold,&hold_head)) {
 	    if (strcmp(*argv, hp->name)==0) {
 	      found = 1;
 	      for (count=0; count<loops; count++) {
@@ -3084,11 +3084,11 @@ char **argv;
 		/*
 		 * Clear all constrain flags.
 		 */
-		for (RT_LIST_FOR(hp,hold,&hold_head)) {
+		for (BU_LIST_FOR(hp,hold,&hold_head)) {
 			register struct jointH *jh;
 			hp->flag &= ~HOLD_FLAG_TRIED;
 			hp->eval = hold_eval(hp);
-			for (RT_LIST_FOR(jh, jointH, &hp->j_head)) {
+			for (BU_LIST_FOR(jh, jointH, &hp->j_head)) {
 				jh->flag = 0;
 			}
 		}
@@ -3119,11 +3119,11 @@ char **argv;
 			/*
 			 * Clear all constrain flags.
 			 */
-			for (RT_LIST_FOR(hp,hold,&hold_head)) {
+			for (BU_LIST_FOR(hp,hold,&hold_head)) {
 				register struct jointH *jh;
 				hp->flag &= ~HOLD_FLAG_TRIED;
 				hp->eval = hold_eval(hp);
-				for (RT_LIST_FOR(jh, jointH, &hp->j_head)) {
+				for (BU_LIST_FOR(jh, jointH, &hp->j_head)) {
 					jh->flag = 0;
 				}
 			}
@@ -3229,7 +3229,7 @@ char **argv;
 	register struct hold *hp;
 	++argv;
 	--argc;
-	for (RT_LIST_FOR(hp, hold, &hold_head)) {
+	for (BU_LIST_FOR(hp, hold, &hold_head)) {
 		if (argc) {
 			register int i;
 			for (i=0; i<argc; i++) {
@@ -3248,7 +3248,7 @@ int argc;
 char **argv;
 {
 	register struct joint *jp;
-	for (RT_LIST_FOR(jp, joint, &joint_head)) {
+	for (BU_LIST_FOR(jp, joint, &joint_head)) {
 		col_item(jp->name);
 	}
 	col_eol();
@@ -3480,20 +3480,20 @@ char **argv;
 }
 
 struct artic_grips {
-	struct rt_list	l;
+	struct bu_list	l;
 	vect_t		vert;
 	struct directory *dir;
 };
 #define	MAGIC_A_GRIP	0x414752aa
 struct artic_joints {
-	struct rt_list	l;
-	struct rt_list	head;
+	struct bu_list	l;
+	struct bu_list	head;
 	struct joint	*joint;
 };
 #define MAGIC_A_JOINT	0x414A4F55
 
-struct rt_list artic_head = {
-	RT_LIST_HEAD_MAGIC,
+struct bu_list artic_head = {
+	BU_LIST_HEAD_MAGIC,
 	&artic_head, &artic_head
 };
 
@@ -3514,7 +3514,7 @@ struct db_full_path	*pathp;
 	}
 
 	best = -1;
-	for (RT_LIST_FOR(jp, joint, &joint_head)) {
+	for (BU_LIST_FOR(jp, joint, &joint_head)) {
 		for (i=0; i< pathp->fp_len; i++) {
 			int good=1;
 			if (jp->path.arc_last+i >= pathp->fp_len) break;
@@ -3591,9 +3591,9 @@ int			id;
 	newGrip->l.magic = MAGIC_A_GRIP;
 	VMOVE(newGrip->vert, gip->center);
 	newGrip->dir = pathp->fp_names[pathp->fp_len-1];
-	for (RT_LIST_FOR(newJoint, artic_joints, &artic_head)) {
+	for (BU_LIST_FOR(newJoint, artic_joints, &artic_head)) {
 		if (newJoint->joint == jp) {
-			RT_LIST_APPEND(&newJoint->head, &(newGrip->l));
+			BU_LIST_APPEND(&newJoint->head, &(newGrip->l));
 			return curtree;
 		}
 	}
@@ -3604,9 +3604,9 @@ int			id;
 	    "Artic Joint");
 	newJoint->l.magic = MAGIC_A_JOINT;
 	newJoint->joint = jp;
-	RT_LIST_INIT(&newJoint->head);
-	RT_LIST_APPEND(&artic_head, &(newJoint->l));
-	RT_LIST_APPEND(&newJoint->head, &(newGrip->l));
+	BU_LIST_INIT(&newJoint->head);
+	BU_LIST_APPEND(&artic_head, &(newJoint->l));
+	BU_LIST_APPEND(&newJoint->head, &(newGrip->l));
 
 	return curtree;
 }
@@ -3648,7 +3648,7 @@ char **argv;
 {
 	char			*name;
 	struct rt_vlblock	*vbp;
-	register struct rt_list *vhead;
+	register struct bu_list *vhead;
 	struct artic_joints	*jp;
 	struct artic_grips	*gp, *gpp;
 	int i;
@@ -3683,13 +3683,13 @@ char **argv;
 	vbp = rt_vlblock_init();
 	vhead = rt_vlblock_find( vbp, 0x00, 0xff, 0xff);
 
-	for (RT_LIST_FOR(jp, artic_joints, &artic_head)) {
+	for (BU_LIST_FOR(jp, artic_joints, &artic_head)) {
 		i=0;
-		for (RT_LIST_FOR(gp, artic_grips, &jp->head)){
+		for (BU_LIST_FOR(gp, artic_grips, &jp->head)){
 			i++;
-			for (gpp=RT_LIST_NEXT(artic_grips, &(gp->l));
-			    RT_LIST_NOT_HEAD(gpp, &(jp->head));
-			    gpp=RT_LIST_NEXT(artic_grips, &(gpp->l))) {
+			for (gpp=BU_LIST_NEXT(artic_grips, &(gp->l));
+			    BU_LIST_NOT_HEAD(gpp, &(jp->head));
+			    gpp=BU_LIST_NEXT(artic_grips, &(gpp->l))) {
 				RT_ADD_VLIST( vhead, gp->vert, RT_VLIST_LINE_MOVE);
 				RT_ADD_VLIST( vhead, gpp->vert, RT_VLIST_LINE_DRAW);
 			}
@@ -3707,12 +3707,12 @@ char **argv;
 
 	cvt_vlblock_to_solids(vbp, name, 0);
 	rt_vlblock_free(vbp);
-	while (RT_LIST_WHILE(jp, artic_joints, &artic_head)) {
-		while (RT_LIST_WHILE(gp, artic_grips, &jp->head)) {
-			RT_LIST_DEQUEUE(&gp->l);
+	while (BU_LIST_WHILE(jp, artic_joints, &artic_head)) {
+		while (BU_LIST_WHILE(gp, artic_grips, &jp->head)) {
+			BU_LIST_DEQUEUE(&gp->l);
 			bu_free((char *)gp,"artic_grip");
 		}
-		RT_LIST_DEQUEUE(&jp->l);
+		BU_LIST_DEQUEUE(&jp->l);
 		bu_free((char *)jp, "Artic Joint");
 	}
 	return CMD_OK;

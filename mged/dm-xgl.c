@@ -93,6 +93,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <string.h>
 
 #include "machine.h"
+#include "bu.h"
 #include "vmath.h"
 #include "mater.h"
 #include "raytrace.h"
@@ -589,7 +590,7 @@ double ratio;
 		flag_f3d_ptr = &(pl_solid_list.pts.flag_f3d[num_pts]);
 	}
 		
-	for( RT_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+	for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
 		int    i;
 		int    nused = vp->nused;
                 int    *cmd = vp->cmd;

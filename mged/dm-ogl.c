@@ -48,9 +48,9 @@
 
 #include "machine.h"
 #include "externs.h"
+#include "bu.h"
 #include "vmath.h"
 #include "mater.h"
-#include "bu.h"
 #include "raytrace.h"
 #include "./ged.h"
 #include "./dm.h"
@@ -176,7 +176,7 @@ struct modifiable_ogl_vars {
 };
 
 struct ogl_vars {
-  struct rt_list l;
+  struct bu_list l;
   struct dm_list *dm_list;
   Display *_dpy;
   Window _win;
@@ -379,7 +379,7 @@ Ogl_load_startup()
   char *filename;
 
   bzero((void *)&head_ogl_vars, sizeof(struct ogl_vars));
-  RT_LIST_INIT( &head_ogl_vars.l );
+  BU_LIST_INIT( &head_ogl_vars.l );
 
   if((filename = getenv("DM_OGL_RCFILE")) != (char *)NULL )
     Tcl_EvalFile(interp, filename);
@@ -407,12 +407,12 @@ Ogl_close()
   if(xtkwin != NULL)
     Tk_DestroyWindow(xtkwin);
 
-  if(((struct ogl_vars *)dm_vars)->l.forw != RT_LIST_NULL)
-    RT_LIST_DEQUEUE(&((struct ogl_vars *)dm_vars)->l);
+  if(((struct ogl_vars *)dm_vars)->l.forw != BU_LIST_NULL)
+    BU_LIST_DEQUEUE(&((struct ogl_vars *)dm_vars)->l);
 
   bu_free(dm_vars, "Ogl_close: dm_vars");
 
-  if(RT_LIST_IS_EMPTY(&head_ogl_vars.l))
+  if(BU_LIST_IS_EMPTY(&head_ogl_vars.l))
     Tk_DeleteGenericHandler(Ogl_doevent, (ClientData)NULL);
 }
 
@@ -697,7 +697,7 @@ int white_flag;
 
 	/* Viewing region is from -1.0 to +1.0 */
 	first = 1;
-	for( RT_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+	for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
 		register int	i;
 		register int	nused = vp->nused;
 		register int	*cmd = vp->cmd;
@@ -1567,10 +1567,10 @@ char	*name;
   if(!count)
     Ogl_load_startup();
 
-  if(RT_LIST_IS_EMPTY(&head_ogl_vars.l))
+  if(BU_LIST_IS_EMPTY(&head_ogl_vars.l))
     Tk_CreateGenericHandler(Ogl_doevent, (ClientData)NULL);
 
-  RT_LIST_APPEND(&head_ogl_vars.l, &((struct ogl_vars *)curr_dm_list->_dm_vars)->l);
+  BU_LIST_APPEND(&head_ogl_vars.l, &((struct ogl_vars *)curr_dm_list->_dm_vars)->l);
 
   bu_vls_printf(&pathName, ".dm_ogl%d", count++);
 
@@ -2438,7 +2438,7 @@ Window window;
 {
   register struct ogl_vars *p;
 
-  for( RT_LIST_FOR(p, ogl_vars, &head_ogl_vars.l) ){
+  for( BU_LIST_FOR(p, ogl_vars, &head_ogl_vars.l) ){
     if(window == p->_win){
       if (!glXMakeCurrent(p->_dpy, p->_win, p->_glxc)){
 	return DM_LIST_NULL;

@@ -28,18 +28,16 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "conf.h"
 
+#include <stdio.h>
 #include <math.h>
 #include <signal.h>
-#include <stdio.h>
 
 #include "tcl.h"
 #include "tk.h"
 #include "machine.h"
-#include "vmath.h"
 #include "bu.h"
+#include "vmath.h"
 #include "db.h"
-#include "rtstring.h"
-#include "rtlist.h"
 #include "redblack.h"
 #include "raytrace.h"
 #include "externs.h"
@@ -264,7 +262,7 @@ struct partition	*ph;
 	pp = ph -> pt_forw;
 	BU_CKMAG(pp, PT_MAGIC, "partition structure");
 	for (segh = pp -> pt_inseg;
-		*((long *) segh) != RT_LIST_HEAD_MAGIC;
+		*((long *) segh) != BU_LIST_HEAD_MAGIC;
 		segh = (struct seg *) (segh -> l.forw))
 	    BU_CKMAG(segh, RT_SEG_MAGIC, "segment structure");
 
@@ -333,7 +331,7 @@ struct partition	*ph;
 	pp = ph -> pt_forw;
 	BU_CKMAG(pp, PT_MAGIC, "partition structure");
 	for (segh = pp -> pt_inseg;
-		*((long *) segh) != RT_LIST_HEAD_MAGIC;
+		*((long *) segh) != BU_LIST_HEAD_MAGIC;
 		segh = (struct seg *) (segh -> l.forw))
 	    BU_CKMAG(segh, RT_SEG_MAGIC, "segment structure");
 
@@ -432,7 +430,7 @@ int		full_path;
 {
     struct application	ap;
     struct rt_i		*rtip;
-    struct rt_list	sol_list;
+    struct bu_list	sol_list;
     struct sol_name_dist	*sol;
 
     if (argc <= 0) {
@@ -458,7 +456,7 @@ int		full_path;
     }
     rt_prep(rtip);
 
-    RT_LIST_INIT(&sol_list);
+    BU_LIST_INIT(&sol_list);
 
     /*
      *	Initialize the application

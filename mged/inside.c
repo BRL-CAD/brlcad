@@ -40,9 +40,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "machine.h"
+#include "bu.h"
 #include "vmath.h"
 #include "db.h"			/* XXX needed for NAMESIZE */
-#include "rtlist.h"
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
@@ -644,8 +644,8 @@ plane_t	planes[6];
 			int found=0;
 
 			/* look for the face plane with the same geometry as the arb7 planes */
-			s = RT_LIST_FIRST( shell , &r->s_hd );
-			for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+			s = BU_LIST_FIRST( shell , &r->s_hd );
+			for( BU_LIST_FOR( fu , faceuse , &s->fu_hd ) )
 			{
 				struct face_g_plane *fg;
 				plane_t pl;
@@ -1039,35 +1039,35 @@ fastf_t thick;
 	m = (struct model *)ip->idb_ptr;
 	NMG_CK_MODEL( m );
 
-	r = RT_LIST_FIRST( nmgregion ,  &m->r_hd );
-	while( RT_LIST_NOT_HEAD( r , &m->r_hd ) )
+	r = BU_LIST_FIRST( nmgregion ,  &m->r_hd );
+	while( BU_LIST_NOT_HEAD( r , &m->r_hd ) )
 	{
 		struct nmgregion *next_r;
 		struct shell *s;
 
 		NMG_CK_REGION( r );
 
-		next_r = RT_LIST_PNEXT( nmgregion , &r->l );
+		next_r = BU_LIST_PNEXT( nmgregion , &r->l );
 
-		s = RT_LIST_FIRST( shell , &r->s_hd );
-		while( RT_LIST_NOT_HEAD( s , &r->s_hd ) )
+		s = BU_LIST_FIRST( shell , &r->s_hd );
+		while( BU_LIST_NOT_HEAD( s , &r->s_hd ) )
 		{
 			struct shell *next_s;
 
-			next_s = RT_LIST_PNEXT( shell , &s->l );
+			next_s = BU_LIST_PNEXT( shell , &s->l );
 
 			(void)nmg_extrude_shell( s , thick , 0 , 0 , &mged_tol );
 
 			s = next_s;
 		}
 
-		if( RT_LIST_IS_EMPTY( &r->s_hd ) )
+		if( BU_LIST_IS_EMPTY( &r->s_hd ) )
 			nmg_kr( r );
 
 		r = next_r;
 	}
 
-	if( RT_LIST_IS_EMPTY( &m->r_hd ) )
+	if( BU_LIST_IS_EMPTY( &m->r_hd ) )
 	{
 	  Tcl_AppendResult(interp, "No inside created\n", (char *)NULL);
 	  nmg_km( m );

@@ -50,6 +50,7 @@ is different from the factory default.
 #include <stdio.h>
 #include <sys/time.h>		/* for struct timeval */
 #include "machine.h"
+#include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "externs.h"
@@ -288,7 +289,7 @@ double ratio;
 	else	
 		fprintf(outfp,"%cMV0",ESC);		/* Solid Line  NRTC */
 
-	for( RT_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+	for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
 		register int	i;
 		register int	nused = vp->nused;
 		register int	*cmd = vp->cmd;

@@ -39,7 +39,7 @@
 
 /* NB: The quaternions should (MUST?) have zero twist! */
 struct arc {
-	struct rt_list	l;
+	struct bu_list	l;
 	int		type;
 	char		**arc;
 	int		arc_last;
@@ -71,7 +71,7 @@ struct direct {
 	int	changed;
 };
 struct joint {
-	struct rt_list	l;
+	struct bu_list	l;
 	int		uses;
 	char		*name;
 	struct arc	path;
@@ -84,7 +84,7 @@ struct joint {
 };
 #define	MAGIC_JOINT_STRUCT	0x4a4f4900	/* 1246710016 */
 struct jointH {
-	struct rt_list	l;
+	struct bu_list	l;
 	struct joint	*p;
 	int		arc_loc;
 	int		flag;
@@ -116,12 +116,12 @@ struct j_set_desc {
 	struct arc	exclude;
 };
 struct hold {
-	struct rt_list	l;
+	struct bu_list	l;
 	char		*name;
 	/* set of joints is defined by joint to grip list of joints */
 	struct j_set_desc	j_set;
 	char		*joint;
-	struct rt_list	j_head;
+	struct bu_list	j_head;
 	struct hold_point	effector;
 	struct hold_point	objective;
 	double		weight;

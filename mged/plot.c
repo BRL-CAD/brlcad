@@ -26,9 +26,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 #include <stdio.h>
 #include "machine.h"
+#include "bu.h"
 #include "vmath.h"
 #include "mater.h"
-#include "rtstring.h"
 #include "raytrace.h"
 #include "./ged.h"
 #include "externs.h"
@@ -194,7 +194,7 @@ char	**argv;
 				pl_linmod( fp, "solid");
 			Dashing = sp->s_soldash;
 		}
-		for( RT_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+		for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
 			register int	i;
 			register int	nused = vp->nused;
 			register int	*cmd = vp->cmd;
@@ -363,7 +363,7 @@ char	**argv;
 	 * and unscaled vectors
 	 */
 	FOR_ALL_SOLIDS( sp )  {
-	  for( RT_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+	  for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
 	    register int	i;
 	    register int	nused = vp->nused;
 	    register int	*cmd = vp->cmd;

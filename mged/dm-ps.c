@@ -29,6 +29,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/time.h>		/* for struct timeval */
 #include "machine.h"
 #include "externs.h"
+#include "bu.h"
 #include "vmath.h"
 #include "mater.h"
 #include "raytrace.h"
@@ -240,7 +241,7 @@ int white;
 	else
 		fprintf(ps_fp, "NV ");		/* Normal vectors */
 
-	for( RT_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+	for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
 		register int	i;
 		register int	nused = vp->nused;
 		register int	*cmd = vp->cmd;

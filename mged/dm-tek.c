@@ -31,6 +31,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <strings.h>
 #endif
 #include "machine.h"
+#include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "externs.h"
@@ -248,7 +249,7 @@ double ratio;
 	else
 		(void)putc('`',outfp);	/* Solid */
 
-	for( RT_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+	for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
 		register int	i;
 		register int	nused = vp->nused;
 		register int	*cmd = vp->cmd;
