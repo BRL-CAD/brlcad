@@ -132,7 +132,7 @@ struct dm_list {
   int _owner;      /* true if owner of the shared info */
   struct cmd_list *aim;
   char _dname[80];  /* Display name */
-  void (*_knob_offset_hook)();
+  void (*_knob_hook)();
   void (*_axis_color_hook)();
 };
 
@@ -147,7 +147,7 @@ extern struct dm_list *curr_dm_list;
 #define dirty curr_dm_list->_dirty
 #define owner curr_dm_list->_owner
 #define dname curr_dm_list->_dname
-#define knob_offset_hook curr_dm_list->_knob_offset_hook
+#define knob_hook curr_dm_list->_knob_hook
 #define axis_color_hook curr_dm_list->_axis_color_hook
 
 #define mged_variables curr_dm_list->s_info->_mged_variables
