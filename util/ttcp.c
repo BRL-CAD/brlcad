@@ -472,7 +472,9 @@ main(argc,argv)
 int argc;
 char **argv;
 {
+#ifdef cray
 	unsigned long addr_tmp;
+#endif
 
 	if (argc < 2) goto usage;
 
@@ -530,11 +532,11 @@ char **argv;
 			if ((addr=gethostbyname(host)) == NULL)
 				err("bad hostname");
 			sinhim.sin_family = addr->h_addrtype;
-			bcopy(addr->h_addr,(char*)&addr_tmp, addr->h_length);
 #ifdef cray
+			bcopy(addr->h_addr,(char*)&addr_tmp, addr->h_length);
 			sinhim.sin_addr = addr_tmp;
 #else
-			sinhim.sin_addr.s_addr = addr_tmp;
+			bcopy(addr->h_addr,(char*)&sinhim.sin_addr.s_addr, addr->h_length);
 #endif /* cray */
 		}
 		sinhim.sin_port = htons(port);
