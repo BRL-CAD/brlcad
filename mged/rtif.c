@@ -297,11 +297,11 @@ int mask;
 {
   int fd = (int)clientData;
   int count;
-  char line[MAXLINE];
+  char line[RT_MAXLINE];
 
   /* Get data from rt */
 #if 0
-  if((count = read((int)fd, line, MAXLINE)) == 0){
+  if((count = read((int)fd, line, RT_MAXLINE)) == 0){
 #else
   if((count = read((int)fd, line, 5120)) == 0){
 #endif
@@ -607,12 +607,12 @@ ClientData clientData;
 int mask;
 {
   int count;
-  char line[MAXLINE];
+  char line[RT_MAXLINE];
   int fd = (int)clientData;
 
   /* Get textual output from rtcheck */
 #if 0
-  if((count = read((int)fd, line, MAXLINE)) == 0){
+  if((count = read((int)fd, line, RT_MAXLINE)) == 0){
 #else
   if((count = read((int)fd, line, 5120)) == 0){
 #endif
@@ -2106,7 +2106,9 @@ char		**argv;
 }
 
 
-/* list the objects currently being edited (displayed)*/
+/*
+ * List the objects currently being drawn.
+ */
 int 
 cmd_who (clientData, interp, argc, argv)
 ClientData	clientData;
