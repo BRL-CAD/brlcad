@@ -54,7 +54,7 @@ fi
 echo "--- Execution Test Status ---" >> $REGRESS_DIR/.regress.${ARCH}/DIFFS
 tail -10 $REGRESS_DIR/.regress.${ARCH}/MAKE_LOG >> $REGRESS_DIR/.regress.${ARCH}/DIFFS
 
-export MAILUSER=morrison
+export MAILUSER=morrison@arl.army.mil
 if [ -s $REGRESS_DIR/.regress.${ARCH}/DIFFS -a X$MAILUSER != X ] ; then
     echo "MAILING OUT DIFF FILE"
     mail -s "Regression Errors .regress.${ARCH}" $MAILUSER < $REGRESS_DIR/.regress.${ARCH}/DIFFS
