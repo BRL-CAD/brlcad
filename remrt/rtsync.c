@@ -544,7 +544,7 @@ int	fd;
 	int	on = 1;
 
 #if defined(SO_KEEPALIVE)
-	if( setsockopt( fd, SOL_SOCKET, SO_KEEPALIVE, &on, sizeof(on)) < 0 ) {
+	if( setsockopt( fd, SOL_SOCKET, SO_KEEPALIVE, (char *)&on, sizeof(on)) < 0 ) {
 		perror( "setsockopt (SO_KEEPALIVE)");
 	}
 #endif
