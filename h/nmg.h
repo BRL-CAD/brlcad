@@ -536,12 +536,6 @@ struct edge {
 	struct edgeuse		*eu_p;	/* Ptr to one use of this edge */
 #if OLD_NMG
 	struct edge_g		*eg_p;  /* geometry */
-#else
-	union {
-		long		    *magic_p;
-		struct edge_g_lseg  *lseg_p;
-		struct edge_g_cnurb *cnurb_p;
-	} g;				/* geometry */
 #endif
 	long			is_real;/* artifact or modeled edge (from tessellator) */
 	long			index;	/* struct # in this model */
@@ -561,6 +555,7 @@ struct edge_g_lseg {
 
 /* !OLD_NMG */
 /* The ctl_points on this curve are (u,v) values on the face's surface */
+/* If order <= 0, cnurb is straight line seg in param space, with null knots and ctl_points */
 struct edge_g_cnurb {
 	long			magic;
 	struct rt_list		e_hd;	/* heads list of edges on this curve */
@@ -589,7 +584,12 @@ struct edgeuse {
 	int	  		orientation;/* compared to geom (null if wire) */
 	struct vertexuse	*vu_p;	    /* first vu of eu in this orient */
 #if !OLD_NMG
-	fastf_t			param;	/* parametric dist of starting vert */
+	union {
+		long		    *magic_p;
+		struct edge_g_lseg  *lseg_p;
+		struct edge_g_cnurb *cnurb_p;
+	} g;				/* geometry */
+	/* (u,v,w) param[] of vu is found in vu_p->vua_p->param */
 #endif
 	long			index;	/* struct # in this model */
 };
@@ -641,6 +641,13 @@ struct vertexuse_a {
 	long			index;	/* struct # in this model */
 };
 
+#if !OLD_NMG
+struct vertexuse_a_cnurb {
+	long			magic;
+	fastf_t			param[3]; /* (u,v,w) of vu on eu's cnurb */
+	long			index;	/* struct # in this model */
+};
+#endif
 
 /*
  * storage allocation and de-allocation support
