@@ -127,14 +127,14 @@ mat_t		Rot, Inv;
 	tmp_mat1[10] = uC[Z];
 
 	MAT_DELTAS_VEC_NEG( Rot, eip->V )
-	bn_bn_mat_mul2( tmp_mat1, Rot );
+	bn_mat_mul2( tmp_mat1, Rot );
 
 	MAT4X3VEC( tmp_h, Rot, eip->h );
 
 	tmp_mat2[2] = tmp_h[X]/tmp_h[Z];
 	tmp_mat2[6] = tmp_h[Y]/tmp_h[Z];
 
-	bn_bn_mat_mul2( tmp_mat2, Rot );
+	bn_mat_mul2( tmp_mat2, Rot );
 
 }
 

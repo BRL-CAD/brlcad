@@ -160,7 +160,7 @@ int paint_color;
 			bu_log( "\tlu=x%x\n", lu );
 
 		NMG_CK_LOOPUSE( lu );
-		RT_LIST_LINK_CHECK( &lu->l );
+		BU_LIST_LINK_CHECK( &lu->l );
 
 		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
 			continue;
@@ -178,8 +178,8 @@ int paint_color;
 			if (rt_g.NMG_debug & DEBUG_MANIF)
 				bu_log( "\t\t\teur=x%x, newfu=x%x\n", eur, newfu );
 
-			RT_LIST_LINK_CHECK( &eu->l );
-			RT_LIST_LINK_CHECK( &eur->l );
+			BU_LIST_LINK_CHECK( &eu->l );
+			BU_LIST_LINK_CHECK( &eur->l );
 
 			while (NMG_MANIFOLDS(tbl, newfu) & NMG_2MANIFOLD &&
 			    eur != eu->eumate_p) {
@@ -247,7 +247,7 @@ char manifold;
 		NMG_SET_MANIFOLD(tbl, vu_p->v_p, manifold);
 	} else if (BU_LIST_FIRST_MAGIC(&lu_p->down_hd) == NMG_EDGEUSE_MAGIC) {
 		for (BU_LIST_FOR(eu_p, edgeuse, &lu_p->down_hd)) {
-			RT_LIST_LINK_CHECK( &eu_p->l );
+			BU_LIST_LINK_CHECK( &eu_p->l );
 			set_edge_sub_manifold(tbl, eu_p, manifold);
 		}
 	} else
@@ -266,7 +266,7 @@ char manifold;
 	NMG_SET_MANIFOLD(tbl, fu_p, manifold);
 	NMG_SET_MANIFOLD(tbl, fu_p->f_p, manifold);
 	for (BU_LIST_FOR(lu_p, loopuse, &fu_p->lu_hd)) {
-		RT_LIST_LINK_CHECK( &lu_p->l );
+		BU_LIST_LINK_CHECK( &lu_p->l );
 		set_loop_sub_manifold(tbl, lu_p, manifold);
 	}
 }
@@ -300,7 +300,7 @@ char *tbl;
 		NMG_SET_MANIFOLD(tbl, sp, NMG_0MANIFOLD);
 		NMG_SET_MANIFOLD(tbl, sp->vu_p, NMG_0MANIFOLD);
 		NMG_SET_MANIFOLD(tbl, sp->vu_p->v_p, NMG_0MANIFOLD);
-		RT_LIST_LINK_CHECK( &sp->vu_p->l );
+		BU_LIST_LINK_CHECK( &sp->vu_p->l );
 	}
 
 	/* edges in shells are (components of)
@@ -309,7 +309,7 @@ char *tbl;
 	if (BU_LIST_NON_EMPTY(&sp->eu_hd)) {
 
 		for (BU_LIST_FOR(eu_p, edgeuse, &sp->eu_hd)) {
-			RT_LIST_LINK_CHECK( &eu_p->l );
+			BU_LIST_LINK_CHECK( &eu_p->l );
 			set_edge_sub_manifold(tbl, eu_p, NMG_1MANIFOLD);
 		}
 		NMG_SET_MANIFOLD(tbl, sp, NMG_1MANIFOLD);
@@ -321,7 +321,7 @@ char *tbl;
 	if (BU_LIST_NON_EMPTY(&sp->lu_hd)) {
 
 		for (BU_LIST_FOR(lu_p, loopuse, &sp->lu_hd)) {
-			RT_LIST_LINK_CHECK( &lu_p->l );
+			BU_LIST_LINK_CHECK( &lu_p->l );
 
 			set_loop_sub_manifold(tbl, lu_p, NMG_1MANIFOLD);
 		}
@@ -345,7 +345,7 @@ char *tbl;
 		found = 0;
 		for (BU_LIST_FOR(fu_p, faceuse, &sp->fu_hd)) {
 			NMG_CK_FACEUSE(fu_p);
-			RT_LIST_LINK_CHECK( &fu_p->l );
+			BU_LIST_LINK_CHECK( &fu_p->l );
 
 			/* if this has already been marked as a 2-manifold
 			 * then we don't need to check it again
@@ -376,7 +376,7 @@ char *tbl;
 	paint_color = 1;
 
 	for (BU_LIST_FOR(fu_p, faceuse, &sp->fu_hd)) {
-		RT_LIST_LINK_CHECK( &fu_p->l );
+		BU_LIST_LINK_CHECK( &fu_p->l );
 
 		if (fu_p->orientation != OT_SAME ||
 		    NMG_INDEX_VALUE(paint_table, fu_p->index) != 0)
@@ -396,7 +396,7 @@ char *tbl;
 	 * 3manifolds, ie. part of the enclosing surface
 	 */
 	for (BU_LIST_FOR(fu_p, faceuse, &sp->fu_hd)) {
-		RT_LIST_LINK_CHECK( &fu_p->l );
+		BU_LIST_LINK_CHECK( &fu_p->l );
 
 		paint_color = NMG_INDEX_VALUE(paint_table,
 						fu_p->index);
@@ -414,7 +414,7 @@ char *tbl;
 	bu_free(paint_table, "paint table");
 
 	for (BU_LIST_FOR(fu_p, faceuse, &sp->fu_hd)) {
-		RT_LIST_LINK_CHECK( &fu_p->l );
+		BU_LIST_LINK_CHECK( &fu_p->l );
 
 		if (fu_p->orientation != OT_SAME)
 			NMG_CP_MANIFOLD(tbl, fu_p, fu_p->fumate_p);
@@ -442,12 +442,12 @@ struct model *m;
 
 	for (BU_LIST_FOR(rp, nmgregion, &m->r_hd)) {
 		NMG_CK_REGION(rp);
-		RT_LIST_LINK_CHECK( &rp->l );
+		BU_LIST_LINK_CHECK( &rp->l );
 
 		for (BU_LIST_FOR(sp, shell, &rp->s_hd)) {
 
 			NMG_CK_SHELL( sp );
-			RT_LIST_LINK_CHECK( &sp->l );
+			BU_LIST_LINK_CHECK( &sp->l );
 
 			nmg_shell_manifolds(sp, tbl);
 

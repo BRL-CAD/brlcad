@@ -744,7 +744,7 @@ register struct uvcoord	*uvp;
  *		R T _ P A R T _ F R E E
  */
 void
-rt_pabu_free( stp )
+rt_part_free( stp )
 register struct soltab *stp;
 {
 	register struct part_specific *part =
