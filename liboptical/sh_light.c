@@ -527,7 +527,8 @@ struct partition *PartHeadp;
 			ap->a_cumlen = sub_ap.a_cumlen;
 			ap->a_return = sub_ap.a_return;
 
-			return ( retval );
+			light_visible = retval;
+			goto out;
 		}
 
 
@@ -635,10 +636,12 @@ struct partition *PartHeadp;
 	RT_CK_LIGHT(lp);
 	if( lp->lt_invisible || lp->lt_infinite ) {
 		VSETALL( ap->a_color, 1 );
+		if( rdebug & RDEBUG_LIGHT ) rt_log("light_miss vis=1\n");
 		return(1);		/* light_visible = 1 */
 	}
 	/* Missed light, either via blockage or dither.  Return black */
 	VSETALL( ap->a_color, 0 );
+	if( rdebug & RDEBUG_LIGHT ) rt_log("light_miss vis=0\n");
 	return(0);			/* light_visible = 0 */
 }
 

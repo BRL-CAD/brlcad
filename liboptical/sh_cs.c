@@ -42,6 +42,21 @@ struct cs_specific cs_defaults = {
 		0.0, 0.0, 0.0, 0.0,
 		0.0, 0.0, 0.0, 0.0 }
 	};
+#if CRAY
+#	define byteoffset(_i)	(((int)&(_i)))	/* actually a word offset */
+#else
+#  if IRIX > 5
+#	define byteoffset(_i)	((size_t)__INTADDR__(&(_i)))
+#  else
+#    if sgi || __convexc__ || ultrix || _HPUX_SOURCE
+	/* "Lazy" way.  Works on reasonable machines with byte addressing */
+#	define byteoffset(_i)	((int)((char *)&(_i)))
+#    else
+	/* "Conservative" way of finding # bytes as diff of 2 char ptrs */
+#	define byteoffset(_i)	((int)(((char *)&(_i))-((char *)0)))
+#    endif
+#  endif
+#endif
 
 #define SHDR_NULL	((struct cs_specific *)0)
 #define SHDR_O(m)	offsetof(struct cs_specific, m)
@@ -57,7 +72,7 @@ struct structparse cs_print_tab[] = {
 
 };
 struct structparse cs_parse_tab[] = {
-	{"i",	(long)(cs_print_tab), (char *)0, 0,		FUNC_NULL },
+	{"i",	byteoffset(cs_print_tab[0]), (char *)0, 0,		FUNC_NULL },
 	{"%f",  1, "v",			SHDR_O(cs_val),		FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 };

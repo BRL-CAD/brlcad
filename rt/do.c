@@ -408,7 +408,7 @@ extern struct structparse view_parse[];
 #	define byteoffset(_i)	(((int)&(_i)))	/* actually a word offset */
 #else
 #  if IRIX > 5
-#	define byteoffset(_i)	((long)((char *)&(_i)))
+#	define byteoffset(_i)	((size_t)__INTADDR__(&(_i)))
 #  else
 #    if sgi || __convexc__ || ultrix || _HPUX_SOURCE
 	/* "Lazy" way.  Works on reasonable machines with byte addressing */

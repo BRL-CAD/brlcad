@@ -547,7 +547,11 @@ char	*dp;
 		register int i;
 		FAST fastf_t f;
 		i = (sizeof(star_colors)-1) / sizeof(star_colors[0]);
-		i = ((double)i) * rand0to1(ap->a_resource->re_randptr);
+
+		/* "f" used for intermediate result to avoid an SGI compiler error */
+		f = rand0to1(ap->a_resource->re_randptr);
+		i = ((double)i) * f;
+
 		f = rand0to1(ap->a_resource->re_randptr);
 		VSCALE( swp->sw_color, star_colors[i], f );
 	} else {
