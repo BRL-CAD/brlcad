@@ -79,7 +79,6 @@ char	**argv;
 	fastf_t			pt4[2], length, thick;
 	vect_t			norm;
 	fastf_t			ndotv;
-	char			name[NAMESIZE+2];
 	struct directory	*dp;
 	struct rt_db_internal	internal;
 	struct rt_arb_internal	*aip;
@@ -107,19 +106,6 @@ char	**argv;
 	  Tcl_AppendResult(interp, argv[1], ":  already exists\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
-
-	if( (int)strlen(argv[1]) >= NAMESIZE ) {
-	  struct bu_vls tmp_str;
-
-	  bu_vls_init(&tmp_str);
-	  bu_vls_printf(&tmp_str, "Names are limited to %d characters\n",
-			NAMESIZE-1);
-	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_str), (char *)NULL);
-	  bu_vls_free(&tmp_str);
-
-	  return TCL_ERROR;
-	}
-	strcpy( name , argv[1] );
 
 	/* read the three points */
 	promp = &p_arb3pt[0];
@@ -292,9 +278,9 @@ char	**argv;
 		VJOIN1( aip->pt[i+4] , aip->pt[i] , thick , norm );
 	}
 
-	if( (dp = db_diradd( dbip, name, -1L, 0, DIR_SOLID, NULL)) == DIR_NULL )
+	if( (dp = db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID, NULL)) == DIR_NULL )
 	{
-		Tcl_AppendResult(interp, "Cannot add ", name, " to the directory\n", (char *)NULL );
+		Tcl_AppendResult(interp, "Cannot add ", argv[1], " to the directory\n", (char *)NULL );
 		return TCL_ERROR;
 	}
 
@@ -341,7 +327,6 @@ char	**argv;
 	struct directory	*dp;
 	int			i;
 	int			solve[3];
-	char			name[NAMESIZE+2];
 	fastf_t			pt[3][2];
 	fastf_t			thick, rota, fba;
 	vect_t			norm;
@@ -372,16 +357,6 @@ char	**argv;
 	  return TCL_ERROR;
 	}
 
-	if( (int)strlen(argv[1]) >= NAMESIZE ) {
-	  struct bu_vls tmp_vls;
-
-	  bu_vls_init(&tmp_vls);
-	  bu_vls_printf(&tmp_vls, "Names are limited to %d charscters\n",NAMESIZE-1);
-	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-	  bu_vls_free(&tmp_vls);
-	  return TCL_ERROR;
-	}
-	strcpy( name , argv[1] );
 
 	/* read the known point */
 	promp = &p_rfin[0];
@@ -560,9 +535,9 @@ char	**argv;
 	/* no interuprts */
 	(void)signal( SIGINT, SIG_IGN );
 
-	if( (dp = db_diradd( dbip, name, -1L, 0, DIR_SOLID, NULL)) == DIR_NULL )
+	if( (dp = db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID, NULL)) == DIR_NULL )
 	{
-		Tcl_AppendResult(interp, "Cannot add ", name, " to the directory\n", (char *)NULL );
+		Tcl_AppendResult(interp, "Cannot add ", argv[1], " to the directory\n", (char *)NULL );
 		return TCL_ERROR;
 	}
 
