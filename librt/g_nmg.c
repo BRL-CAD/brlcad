@@ -253,13 +253,37 @@ double			abs_tol;
 double			rel_tol;
 double			norm_tol;
 {
-	LOCAL struct model	*m;
+	LOCAL struct model	*lm;
+	struct nmgregion	*lr;
 
-	RT_CK_DB_INTERNAL(ip);
-	m = (struct model *)ip->idb_ptr;
 	NMG_CK_MODEL(m);
 
-	return(-1);
+	RT_CK_DB_INTERNAL(ip);
+	lm = (struct model *)ip->idb_ptr;
+	NMG_CK_MODEL(lm);
+
+	if( RT_LIST_IS_EMPTY( &(lm->r_hd) ) )  {
+		/* No regions in imported geometry, that is OK */
+		return(0);
+	}
+
+	/* XXX A big hack, just for testing ***/
+	/* Dest must be empty to avoid index confusion */
+	if( RT_LIST_NON_EMPTY( &(m->r_hd) ) )  {
+		rt_log("rt_nmg_tess: destination model non-empty\n");
+		return(-1);
+	}
+	*r = RT_LIST_FIRST(nmgregion, &(lm->r_hd) );
+	NMG_CK_REGION(*r);
+
+	/* Swipe newly imported model's stuff */
+	RT_LIST_APPEND_LIST( &(m->r_hd), &(lm->r_hd) );
+
+	for( RT_LIST_FOR( lr, nmgregion, &(m->r_hd) ) )  {
+		lr->m_p = m;
+	}
+
+	return(0);
 }
 
 /*
@@ -876,8 +900,6 @@ double		local2mm;
 			INDEX( d, fu, f_p );
 			INDEX( d, fu, fua_p );
 			INDEXL( d, fu, lu_hd );
-rt_log("fu disk_index=%d, fumate=%d, f=%d\n", ecnt[index].new_subscript,
- rt_glong(d->fumate_p), rt_glong(d->f_p) );
 		}
 		return;
 	case NMG_KIND_FACEUSE_A:
@@ -1196,8 +1218,6 @@ mat_t		mat;
 			INDEXL_HD( d, fu, l, fu->s_p->fu_hd ); /* after fu->s_p */
 			NMG_CK_FACE(fu->f_p);
 			NMG_CK_FACEUSE(fu->fumate_p);
-rt_log("fu index=%d, fumate=%d, f=%d\n",
- fu->index, fu->fumate_p->index, fu->f_p->index );
 		}
 		return;
 	case NMG_KIND_FACEUSE_A:
@@ -1484,8 +1504,10 @@ register mat_t		mat;
 	subscript = 1;
 	cp = (char *)(rp+1);	/* start at first granule in */
 	for( kind = 0; kind < NMG_N_KINDS; kind++ )  {
-		rt_log("%d  %s\n",
-			kind_counts[kind], rt_nmg_kind_names[kind] );
+#if 0
+rt_log("%d  %s\n",
+	kind_counts[kind], rt_nmg_kind_names[kind] );
+#endif
 		if( kind_counts[kind] <= 0 )  {
 			disk_arrays[kind] = GENPTR_NULL;
 			continue;
@@ -1677,23 +1699,23 @@ register mat_t		mat;
 				ptrs[subscript] = (long *)0;
 				break;
 			}
+#if 0
 rt_log("   disk_index=%d, kind=%s, ptr=x%x, final_index=%d\n",
 subscript, rt_nmg_kind_names[kind],
 ptrs[subscript], rt_nmg_index_of_struct(ptrs[subscript]) );
+#endif
 			ecnt[subscript].new_subscript = rt_nmg_index_of_struct(ptrs[subscript]);
 			subscript++;
 		}
 		cp += kind_counts[kind] * rt_disk_sizes[kind];
 	}
 
-rt_log("starting to convert to internal form\n");
 	/* Import each structure, in turn */
 	cp = (char *)(rp+1);	/* start at first granule in */
 	for( i=1; i < maxindex; i++ )  {
 		rt_nmg_idisk( ptrs[i], cp, ecnt, i, ptrs, mat );
 		cp += rt_disk_sizes[ecnt[i].kind];
 	}
-rt_log("all structures imported\n");
 
 	RT_INIT_DB_INTERNAL( ip );
 	ip->idb_type = ID_NMG;
@@ -1763,12 +1785,16 @@ double			local2mm;
 		}
 	}
 
-	rt_log("Mapping of old index to new index, and kind\n");
+#if 0
+rt_log("Mapping of old index to new index, and kind\n");
+#endif
 	for( i=0; i < m->maxindex; i++ )  {
 		if( ptrs[i] == (long *)0 )  continue;
+#if 0
 		rt_log(" %4d %4d %s (%d)\n",
 			i, ecnt[i].new_subscript,
 			rt_nmg_kind_names[ecnt[i].kind], ecnt[i].kind);
+#endif
 		if( rt_nmg_index_of_struct(ptrs[i]) != i )  {
 			rt_log("***ERROR, ptrs[%d]->index = %d\n",
 				i, rt_nmg_index_of_struct(ptrs[i]) );
