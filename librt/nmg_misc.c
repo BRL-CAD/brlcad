@@ -5247,8 +5247,12 @@ CONST struct rt_tol *tol;
 	struct faceuse *fu,*fu1;
 	struct edgeuse *eu,*eu1;
 	struct edge_g *eg;
+	struct vertex *v1,*v2;
 	struct model *m;
 	vect_t e_dir;
+	struct nmg_ptbl tmp_faces[2];
+	struct nmg_ptbl faces;
+	int count;
 	long *flags;
 
 	if( rt_g.NMG_debug & DEBUG_BASIC )
@@ -5259,6 +5263,12 @@ CONST struct rt_tol *tol;
 
 	m = nmg_find_model( &mv_eu->l.magic );
 	NMG_CK_MODEL( m );
+
+	/* get endpoint vertices */
+	v1 = mv_eu->vu_p->v_p;
+	NMG_CK_VERTEX( v1 );
+	v2 = mv_eu->eumate_p->vu_p->v_p;
+	NMG_CK_VERTEX( v2 );
 
 	/* get edge direction */
 	eg = mv_eu->e_p->eg_p;
@@ -5272,7 +5282,7 @@ CONST struct rt_tol *tol;
 	}
 	else
 	{
-		VSUB2( e_dir , mv_eu->eumate_p->vu_p->v_p->vg_p->coord , mv_eu->vu_p->v_p->vg_p->coord );
+		VSUB2( e_dir , v2->vg_p->coord , v1->vg_p->coord );
 		VUNITIZE( e_dir );
 	}
 
@@ -5289,16 +5299,37 @@ CONST struct rt_tol *tol;
 		/* This must be a wire edge, just adjust the endpoints */
 		/* keep edge the same length, and move vertices perpendicular to e_dir */
 
-		VSUB2( to_pt , pt , eu->vu_p->v_p->vg_p->coord );
+		VSUB2( to_pt , pt , v1->vg_p->coord );
 		edir_comp = VDOT( to_pt , e_dir );
 		VJOIN1( move_v , to_pt , -edir_comp , e_dir );
 
 		/* move the vertices */
-		VADD2( new_loc , eu->vu_p->v_p->vg_p->coord , move_v );
-		nmg_vertex_gv( eu->vu_p->v_p , new_loc );
-		VADD2( new_loc , eu->eumate_p->vu_p->v_p->vg_p->coord , move_v );
-		nmg_vertex_gv( eu->eumate_p->vu_p->v_p , new_loc );
+		VADD2( new_loc , v1->vg_p->coord , move_v );
+		nmg_vertex_gv( v1 , new_loc );
+
+		VADD2( new_loc , v2->vg_p->coord , move_v );
+		nmg_vertex_gv( v2 , new_loc );
 		return( 0 );
+	}
+
+	/* can only handle edges with up to two radial faces */
+	if( mv_eu->radial_p->eumate_p != mv_eu->eumate_p->radial_p && mv_eu->radial_p != mv_eu->eumate_p )
+	{
+		rt_log( "Cannot handle edges with more than two radial faces\n" );
+		return( 1 );
+	}
+
+	nmg_tbl( &tmp_faces[0] , TBL_INIT , (long *)NULL );
+	nmg_tbl( &tmp_faces[1] , TBL_INIT , (long *)NULL );
+
+	/* cannot handle complex vertices yet */
+	if( nmg_find_isect_faces( v1 , &tmp_faces[0] , &count , tol ) > 3 ||
+	    nmg_find_isect_faces( v2 , &tmp_faces[1] , &count , tol ) > 3 )
+	{
+		rt_log( "nmg_move_edge_thru_pt: cannot handle complex vertices yet\n" );
+		nmg_tbl( &tmp_faces[0] , TBL_FREE , (long *)NULL );
+		nmg_tbl( &tmp_faces[1] , TBL_FREE , (long *)NULL );
+		return( 1 );
 	}
 
 	/* Move edge geometry to new point */
@@ -5373,6 +5404,7 @@ CONST struct rt_tol *tol;
 	 */
 
 	flags = (long *)rt_calloc( m->maxindex , sizeof( long ) , "nmg_move_edge_thru_pt: flags" );
+	nmg_tbl( &faces , TBL_INIT , (long *)NULL );
 
 	eu1 = mv_eu;
 	fu1 = nmg_find_fu_of_eu( eu1 );
@@ -5380,12 +5412,11 @@ CONST struct rt_tol *tol;
 	do
 	{
 		struct loopuse *lu;
-		struct edgeuse *eu;
 		struct vertex *v;
 
 		for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
 		{
-			struct nmg_ptbl faces;
+			struct edgeuse *eu;
 
 			NMG_CK_LOOPUSE( lu );
 
@@ -5395,60 +5426,58 @@ CONST struct rt_tol *tol;
 				vu = RT_LIST_FIRST( vertexuse , &lu->down_hd );
 				if( NMG_INDEX_TEST_AND_SET( flags , vu->v_p ) )
 				{
-					int free_edges=0;
-
-					nmg_tbl( &faces , TBL_INIT , (long *)NULL );
+					nmg_tbl( &faces , TBL_RST , (long *)NULL );
 
 					/* find all unique faces that intersect at this vertex (vu->v_p) */
-					if( nmg_find_isect_faces( vu->v_p , &faces , &free_edges , tol ) < 4 )
+					if( nmg_find_isect_faces( vu->v_p , &faces , &count , tol ) > 3 )
 					{
-						if( nmg_simple_vertex_solve( vu->v_p , &faces ) )
-						{
-							/* failed */
-							rt_log( "nmg_move_edge_thru_pt: Could not solve simple vertex\n" );
-							nmg_tbl( &faces , TBL_FREE , (long *)NULL );
-							return( 1 );
-						}
+						rt_log( "mg_move_edge_thru_pt: Cannot handle complex vertices\n" );
+						nmg_tbl( &faces , TBL_FREE , (long *)NULL );
+						rt_free( (char *)flags , "mg_move_edge_thru_pt: flags" );
+						return( 1 );
 					}
-					else
-						nmg_complex_vertex_solve( vu->v_p , &faces , tol );
-					
+
+					if( nmg_simple_vertex_solve( vu->v_p , &faces ) )
+					{
+						/* failed */
+						rt_log( "nmg_move_edge_thru_pt: Could not solve simple vertex\n" );
+						nmg_tbl( &faces , TBL_FREE , (long *)NULL );
+						rt_free( (char *)flags , "mg_move_edge_thru_pt: flags" );
+						return( 1 );
+					}
 				}
 				continue;
 			}
 
-			eu = RT_LIST_FIRST( edgeuse , &lu->down_hd );
-			while( RT_LIST_NOT_HEAD( eu , &lu->down_hd ) )
+			for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
 			{
 				struct vertexuse *vu;
-				struct edgeuse *eu_next;
-
-				eu_next = RT_LIST_PNEXT( edgeuse , &eu->l );
 
 				vu = eu->vu_p;
 				if( NMG_INDEX_TEST_AND_SET( flags , vu->v_p ) )
 				{
-					int free_edges=0;
 
-					nmg_tbl( &faces , TBL_INIT , (long *)NULL );
+					nmg_tbl( &faces , TBL_RST , (long *)NULL );
 
 					/* find all unique faces that intersect at this vertex (vu->v_p) */
-					if( nmg_find_isect_faces( vu->v_p , &faces , &free_edges , tol ) < 4 )
+					if( nmg_find_isect_faces( vu->v_p , &faces , &count , tol ) > 3 )
 					{
-						if( nmg_simple_vertex_solve( vu->v_p , &faces ) )
-						{
-							/* failed */
-							rt_log( "nmg_move_edge_thru_pt: Could not solve simple vertex\n" );
-							nmg_tbl( &faces , TBL_FREE , (long *)NULL );
-							return( 1 );
-						}
+						rt_log( "mg_move_edge_thru_pt: Cannot handle complex vertices\n" );
+						nmg_tbl( &faces , TBL_FREE , (long *)NULL );
+						rt_free( (char *)flags , "mg_move_edge_thru_pt: flags" );
+						return( 1 );
 					}
-					else
-						nmg_complex_vertex_solve( vu->v_p , &faces , tol );
+
+					if( nmg_simple_vertex_solve( vu->v_p , &faces ) )
+					{
+						/* failed */
+						rt_log( "nmg_move_edge_thru_pt: Could not solve simple vertex\n" );
+						nmg_tbl( &faces , TBL_FREE , (long *)NULL );
+						rt_free( (char *)flags , "mg_move_edge_thru_pt: flags" );
+						return( 1 );
+					}
 				}
-				eu = eu_next;
 			}
-			nmg_tbl( &faces , TBL_FREE , (long *)NULL );
 		}
 
 		/* move on to next radial face */
@@ -5458,6 +5487,7 @@ CONST struct rt_tol *tol;
 	while( fu != fu1 && fu != fu1->fumate_p );
 
 	rt_free( (char *)flags , "mg_move_edge_thru_pt: flags" );
+	nmg_tbl( &faces , TBL_FREE , (long *)NULL );
 
 	return( 0 );
 }
