@@ -22,6 +22,10 @@
 
 check_externs "_mged_attach _mged_tie _mged_view_ring"
 
+if ![info exists tk_version] {
+    loadtk
+}
+
 if ![info exists mged_default(html_dir)] {
     set mged_default(html_dir) [bu_brlcad_path html/manuals/mged]
 }
@@ -116,10 +120,6 @@ if ![info exists mged_gui(databaseDir)] {
 
 if ![info exists mged_gui(loadScriptDir)] {
     set mged_gui(loadScriptDir) [pwd]
-}
-
-if ![info exists tk_version] {
-    loadtk
 }
 
 if ![info exists mged_default(text_font)] {
