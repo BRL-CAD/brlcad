@@ -64,6 +64,13 @@ double		mged_abs_tol;
 double		mged_rel_tol = 0.01;		/* 1%, by default */
 double		mged_nrm_tol;			/* normal ang tol, radians */
 
+int		rateflag_slew;
+vect_t		rate_slew;
+int		rateflag_rotate;
+vect_t		rate_rotate;
+int		rateflag_zoom;
+fastf_t		rate_zoom;
+
 static void	eedit();
 void		f_zap();
 
@@ -804,49 +811,108 @@ char	**argv;
 	f_ill(argc, argv);		/* Illuminate named solid --> ST_S_EDIT */
 }
 
-/* Simulate a knob twist.  "knob id val" */
+void
+check_nonzero_rates()
+{
+	if( rate_rotate[X] != 0.0 ||
+	    rate_rotate[Y] != 0.0 ||
+	    rate_rotate[Z] != 0.0 )  {
+	    	rateflag_rotate = 1;
+	} else {
+		rateflag_rotate = 0;
+	}
+	if( rate_slew[X] != 0.0 ||
+	    rate_slew[Y] != 0.0 ||
+	    rate_slew[Z] != 0.0 )  {
+	    	rateflag_slew = 1;
+	} else {
+		rateflag_slew = 0;
+	}
+	if( rate_zoom != 0.0 )  {
+		rateflag_zoom = 1;
+
+	} else {
+		rateflag_zoom = 0;
+	}
+	dmaflag = 1;	/* values changed so update faceplate */
+}
+
+/* Main processing of a knob twist.  "knob id val" */
 void
 f_knob(argc, argv)
 int	argc;
 char	**argv;
 {
-	fastf_t f;
+	int	i;
+	fastf_t	f;
+	char	*cmd = argv[1];
 
-	if(argc == 2)
+	if(argc == 2)  {
+		i = 0;
 		f = 0;
-	else {
+	} else {
+		i = atoi(argv[2]);
 		f = atof(argv[2]);
 		if( f < -1.0 )
 			f = -1.0;
 		else if( f > 1.0 )
 			f = 1.0;
 	}
-	switch( argv[1][0] )  {
-	case 'x':
-		dm_values.dv_xjoy = f;
-		break;
-	case 'y':
-		dm_values.dv_yjoy = f;
-		break;
-	case 'z':
-		dm_values.dv_zjoy = f;
-		break;
-	case 'X':
-		dm_values.dv_xslew = f;
-		break;
-	case 'Y':
-		dm_values.dv_yslew = f;
-		break;
-	case 'Z':
-		dm_values.dv_zslew = f;
-		break;
-	case 'S':
-		dm_values.dv_zoom = f;
-		break;
-	default:
-		(void)printf("x,y,z for rotation, S for scale, X,Y,Z for slew\n");
-		return;
+	if( cmd[1] == '\0' )  {
+		switch( cmd[0] )  {
+		case 'x':
+			dm_values.dv_xjoy = f;
+			rate_rotate[X] = f;
+			break;
+		case 'y':
+			dm_values.dv_yjoy = f;
+			rate_rotate[Y] = f;
+			break;
+		case 'z':
+			dm_values.dv_zjoy = f;
+			rate_rotate[Z] = f;
+			break;
+		case 'X':
+			dm_values.dv_xslew = f;
+			rate_slew[X] = f;
+			break;
+		case 'Y':
+			dm_values.dv_yslew = f;
+			rate_slew[Y] = f;
+			break;
+		case 'Z':
+			dm_values.dv_zslew = f;
+			rate_slew[Z] = f;
+			break;
+		case 'S':
+			dm_values.dv_zoom = f;
+			rate_zoom = f;
+			break;
+		default:
+			goto usage;
+		}
+	} else if( strcmp( cmd, "xadc" ) == 0 )  {
+		dm_values.dv_xadc = i;
+		dm_values.dv_flagadc = 1;
+	} else if( strcmp( cmd, "yadc" ) == 0 )  {
+		dm_values.dv_yadc = i;
+		dm_values.dv_flagadc = 1;
+	} else if( strcmp( cmd, "ang1" ) == 0 )  {
+		dm_values.dv_1adc = i;
+		dm_values.dv_flagadc = 1;
+	} else if( strcmp( cmd, "ang2" ) == 0 )  {
+		dm_values.dv_2adc = i;
+		dm_values.dv_flagadc = 1;
+	} else if( strcmp( cmd, "distadc" ) == 0 )  {
+		dm_values.dv_distadc = i;
+		dm_values.dv_flagadc = 1;
+	} else {
+usage:
+		(void)printf("knob: x,y,z for rotation, S for scale, X,Y,Z for slew (rates, range -1..+1)\n");
+		(void)printf("knob: xadc, yadc, zadc, ang1, ang2, distadc (values, range -2048..+2047)\n");
 	}
+
+	check_nonzero_rates();
 }
 
 /*
@@ -930,3 +996,29 @@ char	**argv;
 	}
 	(void)printf("Error, tolerance '%s' unknown\n", argv[1] );
 }
+
+/*
+ *			F _ Z O O M
+ *
+ *  A scale factor of 2 will increase the view size by a factor of 2,
+ *  (i.e., a zoom out) which is accomplished by reducing Viewscale in half.
+ */
+void
+f_zoom( argc, argv )
+int	argc;
+char	**argv;
+{
+	double	val;
+
+	val = atof(argv[1]);
+	if( val < SMALL_FASTF || val > INFINITY )  {
+		(void)printf("zoom: scale factor out of range\n");
+		return;
+	}
+	if( Viewscale < SMALL_FASTF || Viewscale > INFINITY )
+		return;
+
+	Viewscale /= val;
+	new_mats();
+}
+
