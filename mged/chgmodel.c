@@ -1050,6 +1050,8 @@ struct directory *old_dp;
 {
 	struct rt_db_internal	new_intern;
 	struct directory *new_dp;
+	struct nmgregion *r;
+	extern struct rt_tol mged_tol;
 
 	if( db_lookup( dbip,  newname, LOOKUP_QUIET ) != DIR_NULL )  {
 		aexists( newname );
@@ -1062,6 +1064,11 @@ struct directory *old_dp;
 	if( (new_dp=db_diradd( dbip, newname, -1, 0, DIR_SOLID)) == DIR_NULL )  {
 	    	ALLOC_ERR_return;
 	}
+
+	/* make sure the geometry/bounding boxes are up to date */
+	for (RT_LIST_FOR(r, nmgregion, &m->r_hd))
+		nmg_region_a(r, &mged_tol);
+
 
 	/* Export NMG as a new solid */
 	RT_INIT_DB_INTERNAL(&new_intern);
