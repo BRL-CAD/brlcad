@@ -154,6 +154,11 @@ extern "C" {
 #define vec_perp(_d,_s)		mat_vec_perp(_d,_s)	/* compat */
 
 /* msr.c */
+#define msr_unif_init	bn_unif_init
+#define msr_unif_long_fill	bn_unif_long_fill
+#define msr_unif_double_fill	bn_unif_double_fill
+#define msr_gauss_init	bn_gauss_init
+#define msr_gauss_fill	bn_gauss_fill
 #define msr_unif	bn_unif		/* structure */
 #define msr_gauss	bn_gauss	/* structure */
 #define MSR_CK_UNIF	BN_CK_UNIF
