@@ -363,7 +363,7 @@ struct rt_list	*hp;
 struct rt_vls	*namevls;
 CONST unsigned char	*buf;
 {
-	CONST register unsigned char	*bp;
+	register CONST unsigned char	*bp;
 	CONST unsigned char		*pp;		/* point pointer */
 	int		nelem;
 	int		namelen;
