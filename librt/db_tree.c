@@ -175,6 +175,8 @@ CONST matp_t			matrix;		/* NULL if identity */
 	comb->rgb[2] = rp[0].c.c_rgb[2];
 	bu_vls_strncpy( &comb->shader_name , rp[0].c.c_matname, 32 );
 	bu_vls_strncpy( &comb->shader_param , rp[0].c.c_matparm, 60 );
+	/* XXX Separate flags for color inherit, shader inherit, (new) material inherit? */
+	/* XXX cf: ma_cinherit, ma_minherit */
 	comb->inherit = rp[0].c.c_inherit;
 	/* Automatic material table lookup here? */
 	bu_vls_printf( &comb->material, "gift%d", comb->GIFTmater );
@@ -209,6 +211,42 @@ struct rt_db_internal	*ip;
 	rt_free( (char *)comb, "comb ifree" );
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
+
+/*
+ *			R T _ G E T _ C O M B
+ *
+ *  A convenience wrapper to retrive a combination from the database
+ *  into internal form.
+ *
+ *  Returns -
+ *	-1	FAIL
+ *	 0	OK
+ */
+int
+rt_get_comb( ip, dp, matp, dbip )
+struct rt_db_internal	*ip;
+CONST struct directory	*dp;
+CONST mat_t		*matp;
+CONST struct db_i	*dbip;
+{
+	struct bu_external	ext;
+
+	RT_CK_DIR(dp);
+	RT_CHECK_DBI( dbip );
+
+	/* Load the entire combination into contiguous memory */
+	BU_INIT_EXTERNAL( &ext );
+	if( db_get_external( &ext, dp, dbip ) < 0 )
+		return -1;
+
+	/* Switch out to right routine, based on database version */
+	if( rt_comb_v4_import( ip, &ext, matp ) < 0 )
+		return -1;
+
+	db_free_external( &ext );
+	return 0;
+}
+
 
 /* -------------------- */
 /* Some export support routines */
@@ -404,24 +442,14 @@ register CONST struct combined_tree_state	*ctsp;
  *	 1	success, this is the top of a new region.
  */
 int
-db_apply_state_from_comb( tsp, pathp, ep )
+db_apply_state_from_combNEW( tsp, pathp, comb )
 struct db_tree_state		*tsp;
 CONST struct db_full_path	*pathp;
-CONST struct bu_external	*ep;
+register CONST struct rt_comb_internal	*comb;
 {
-	register CONST union record	*rp;
+	RT_CK_COMB(comb);
 
-	BU_CK_EXTERNAL( ep );
-	rp = (union record *)ep->ext_buf;
-	if( rp->u_id != ID_COMB )  {
-		char	*sofar = db_path_to_string(pathp);
-		bu_log("db_apply_state_from_comb() defective record at '%s'\n",
-			sofar );
-		rt_free(sofar, "path string");
-		return(-1);
-	}
-
-	if( rp->c.c_override == 1 )  {
+	if( comb->rgb_valid == 1 )  {
 		if( tsp->ts_sofar & TS_SOFAR_REGION )  {
 			if( (tsp->ts_sofar&(TS_SOFAR_MINUS|TS_SOFAR_INTER)) == 0 )  {
 				/* This combination is within a region */
@@ -435,15 +463,15 @@ CONST struct bu_external	*ep;
 		} else if( tsp->ts_mater.ma_cinherit == DB_INH_LOWER )  {
 			tsp->ts_mater.ma_override = 1;
 			tsp->ts_mater.ma_color[0] =
-				(((double)(rp->c.c_rgb[0]))*bn_inv255);
+				(((double)(comb->rgb[0]))*bn_inv255);
 			tsp->ts_mater.ma_color[1] =
-				(((double)(rp->c.c_rgb[1]))*bn_inv255);
+				(((double)(comb->rgb[1]))*bn_inv255);
 			tsp->ts_mater.ma_color[2] =
-				(((double)(rp->c.c_rgb[2]))*bn_inv255);
-			tsp->ts_mater.ma_cinherit = rp->c.c_inherit;
+				(((double)(comb->rgb[2]))*bn_inv255);
+			tsp->ts_mater.ma_cinherit = comb->inherit;
 		}
 	}
-	if( rp->c.c_matname[0] != '\0' )  {
+	if( bu_vls_strlen( &comb->shader_name ) > 0 )  {
 		if( tsp->ts_sofar & TS_SOFAR_REGION )  {
 			if( (tsp->ts_sofar&(TS_SOFAR_MINUS|TS_SOFAR_INTER)) == 0 )  {
 				/* This combination is within a region */
@@ -455,14 +483,15 @@ CONST struct bu_external	*ep;
 			}
 			/* Just quietly ignore it -- it's being subtracted off */
 		} else if( tsp->ts_mater.ma_minherit == DB_INH_LOWER )  {
-			strncpy( tsp->ts_mater.ma_matname, rp->c.c_matname, sizeof(rp->c.c_matname) );
-			strncpy( tsp->ts_mater.ma_matparm, rp->c.c_matparm, sizeof(rp->c.c_matparm) );
-			tsp->ts_mater.ma_minherit = rp->c.c_inherit;
+			/* XXX ts_mater should become a bu_vls */
+			strncpy( tsp->ts_mater.ma_matname, bu_vls_addr(&comb->shader_name), sizeof(tsp->ts_mater.ma_matname) );
+			strncpy( tsp->ts_mater.ma_matparm, bu_vls_addr(&comb->shader_param), sizeof(tsp->ts_mater.ma_matparm) );
+			tsp->ts_mater.ma_minherit = comb->inherit;
 		}
 	}
 
 	/* Handle combinations which are the top of a "region" */
-	if( rp->c.c_flags == 'R' )  {
+	if( comb->region_flag )  {
 		if( tsp->ts_sofar & TS_SOFAR_REGION )  {
 			if( (tsp->ts_sofar&(TS_SOFAR_MINUS|TS_SOFAR_INTER)) == 0 )  {
 				char	*sofar = db_path_to_string(pathp);
@@ -474,10 +503,10 @@ CONST struct bu_external	*ep;
 		} else {
 			/* This starts a new region */
 			tsp->ts_sofar |= TS_SOFAR_REGION;
-			tsp->ts_regionid = rp->c.c_regionid;
-			tsp->ts_aircode = rp->c.c_aircode;
-			tsp->ts_gmater = rp->c.c_material;
-			tsp->ts_los = rp->c.c_los;
+			tsp->ts_regionid = comb->region_id;
+			tsp->ts_aircode = comb->aircode;
+			tsp->ts_gmater = comb->GIFTmater;
+			tsp->ts_los = comb->los;
 			return(1);	/* Success, this starts new region */
 		}
 	}
@@ -664,6 +693,97 @@ CONST union tree	*tp;
 }
 
 /*
+ *		D B _ A P P L Y _ S T A T E _ F R O M _ O N E _ M E M B E R
+ *
+ *  Returns -
+ *	-1	found member, failed to apply state
+ *	 0	unable to find member 'cp'
+ *	 1	state applied OK
+ */
+int
+db_apply_state_from_one_member( tsp, pathp, cp, sofar, tp )
+struct db_tree_state	*tsp;
+struct db_full_path	*pathp;
+CONST char		*cp;
+int			sofar;
+CONST union tree	*tp;
+{
+	int	ret;
+
+	RT_CHECK_DBI( tsp->ts_dbip );
+	RT_CK_FULL_PATH( pathp );
+	RT_CK_TREE(tp);
+
+	switch( tp->tr_op )  {
+
+	case OP_DB_LEAF:
+		if( strcmp( cp, tp->tr_l.tl_name ) != 0 )
+			return 0;		/* NO-OP */
+		tsp->ts_sofar |= sofar;
+		if( db_apply_state_from_memb_new( tsp, pathp, tp ) < 0 )
+			return -1;		/* FAIL */
+		return 1;			/* success */
+
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+		ret = db_apply_state_from_one_member( tsp, pathp, cp, sofar,
+			tp->tr_b.tb_left );
+		if( ret != 0 )  return ret;
+		if( tp->tr_op == OP_SUBTRACT )
+			sofar |= TS_SOFAR_MINUS;
+		else if( tp->tr_op == OP_INTERSECT )
+			sofar |= TS_SOFAR_INTER;
+		return db_apply_state_from_one_member( tsp, pathp, cp, sofar,
+			tp->tr_b.tb_right );
+
+	default:
+		bu_log("db_apply_state_from_one_member: bad op %d\n", tp->tr_op);
+		bu_bomb("db_apply_state_from_one_member\n");
+	}
+	return -1;
+}
+
+/*
+ *			D B _ F I N D _ N A M E D _ L E A F
+ *
+ *  Returns -
+ *	tp		if found
+ *	TREE_NULL	if not found in this tree
+ */
+union tree *
+db_find_named_leaf( tp, cp )
+union tree		*tp;
+CONST char		*cp;
+{
+	union tree	*ret;
+
+	RT_CK_TREE(tp);
+
+	switch( tp->tr_op )  {
+
+	case OP_DB_LEAF:
+		if( strcmp( cp, tp->tr_l.tl_name ) != 0 )
+			return tp;
+		return TREE_NULL;
+
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+		ret = db_find_named_leaf( tp->tr_b.tb_left, cp );
+		if( ret != TREE_NULL )  return ret;
+		return db_find_named_leaf( tp->tr_b.tb_right, cp );
+
+	default:
+		bu_log("db_find_named_leaf: bad op %d\n", tp->tr_op);
+		bu_bomb("db_find_named_leaf\n");
+	}
+	return TREE_NULL;
+}
+
+/*
  *			D B _ F O L L O W _ P A T H _ F O R _ S T A T E
  *
  *  Follow the slash-separated path given by "cp", and update
@@ -683,6 +803,8 @@ CONST char		*orig_str;
 int			noisy;
 {
 	struct bu_external	ext;
+	struct rt_db_internal	intern;
+	struct rt_comb_internal	*comb;
 	register int		i;
 	register char		*cp;
 	register char		*ep;
@@ -778,6 +900,26 @@ int			noisy;
 		if( db_get_external( &ext, comb_dp, tsp->ts_dbip ) < 0 )
 			goto fail;
 
+#if USE_NEW_IMPORT
+		if( rt_comb_v4_import( &intern , &ext , NULL ) < 0 )  {
+			bu_log("db_follow_path_for_state() import of %s failed\n", comb_dp->d_namep);
+			goto fail;
+		}
+		comb = (struct rt_comb_internal *)intern.idb_ptr;
+		RT_CK_COMB(comb);
+		if( db_apply_state_from_combNEW( tsp, pathp, comb ) < 0 )
+			goto fail;
+
+		/* Crawl tree searching for specified leaf */
+		if( db_apply_state_from_one_member( tsp, pathp, cp, 0, comb->tree ) <= 0 )  {
+			bu_log("db_follow_path_for_state() ERROR: unable to apply member %s state\n", dp->d_namep);
+			goto fail;
+		}
+		/* Found it, state has been applied, sofar applied, directory entry pushed onto pathp */
+		/* Done */
+		rt_comb_ifree( &intern );
+
+#else
 		/* Apply state changes from new combination */
 		if( db_apply_state_from_comb( tsp, pathp, &ext ) < 0 )
 			goto fail;
@@ -817,6 +959,7 @@ found_it:
 		} else {
 			/* Handle as a union */
 		}
+#endif
 		db_free_external( &ext );
 
 		/* If member is a leaf, handle leaf processing too. */
@@ -995,8 +1138,13 @@ final:
 	return( curtree );
 }
 
+/*
+ *			D B _ R E C U R S E _ S U B T R E E
+ *
+ *  Helper routine for db_recurse()
+ */
 void
-recurseit( tp, msp, pathp, region_start_statepp )
+db_recurse_subtree( tp, msp, pathp, region_start_statepp )
 union tree		*tp;
 struct db_tree_state	*msp;
 struct db_full_path	*pathp;
@@ -1033,17 +1181,17 @@ struct combined_tree_state	**region_start_statepp;
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	case OP_XOR:
+		db_recurse_subtree( tp->tr_b.tb_left, &memb_state, pathp, region_start_statepp );
 		if( tp->tr_op == OP_SUBTRACT )
 			memb_state.ts_sofar |= TS_SOFAR_MINUS;
 		else if( tp->tr_op == OP_INTERSECT )
 			memb_state.ts_sofar |= TS_SOFAR_INTER;
-		recurseit( tp->tr_b.tb_right, &memb_state, pathp, region_start_statepp );
-		recurseit( tp->tr_b.tb_left, &memb_state, pathp, region_start_statepp );
+		db_recurse_subtree( tp->tr_b.tb_right, &memb_state, pathp, region_start_statepp );
 		break;
 
 	default:
-		bu_log("recurseit: bad op %d\n", tp->tr_op);
-		rt_bomb("recurseit\n");
+		bu_log("db_recurse_subtree: bad op %d\n", tp->tr_op);
+		rt_bomb("db_recurse_subtree\n");
 	}
 	RT_CK_TREE(tp);
 	return;
@@ -1105,7 +1253,9 @@ struct combined_tree_state	**region_start_statepp;
 	}
 
 	if( dp->d_flags & DIR_COMB )  {
+#if !USE_NEW_IMPORT
 		register CONST union record	*rp = (union record *)ext.ext_buf;
+#endif
 		struct rt_comb_internal	*comb;
 		struct db_tree_state	nts;
 		int			is_region;
@@ -1121,14 +1271,16 @@ struct combined_tree_state	**region_start_statepp;
 		}
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
 		RT_CK_COMB(comb);
-#endif
-
-/* XXX USE_NEW_IMPORT */
-		/* XXX Can't convert this part yet */
+		if( (is_region = db_apply_state_from_combNEW( &nts, pathp, comb )) < 0 )  {
+			curtree = TREE_NULL;		/* FAIL */
+			goto out;
+		}
+#else
 		if( (is_region = db_apply_state_from_comb( &nts, pathp, &ext )) < 0 )  {
 			curtree = TREE_NULL;		/* FAIL */
 			goto out;
 		}
+#endif
 
 		if( is_region > 0 )  {
 			struct combined_tree_state	*ctsp;
@@ -1225,7 +1377,7 @@ struct combined_tree_state	**region_start_statepp;
 			curtree = comb->tree;
 			comb->tree = TREE_NULL;
 			if(curtree) RT_CK_TREE(curtree);
-			recurseit( curtree, &nts, pathp, region_start_statepp );
+			db_recurse_subtree( curtree, &nts, pathp, region_start_statepp );
 			if(curtree) RT_CK_TREE(curtree);
 		} else {
 			/* No subtrees in this combination, invent a NOP */
@@ -1399,6 +1551,7 @@ CONST union tree	*tp;
 
 	switch( tp->tr_op )  {
 	case OP_NOP:
+	case OP_DB_LEAF:
 		break;
 	case OP_SOLID:
 		if( tp->tr_a.tu_stp )
@@ -1545,6 +1698,7 @@ top:
 	switch( tp->tr_op )  {
 	case OP_REGION:
 	case OP_SOLID:
+	case OP_DB_LEAF:
 		/* If this is a leaf, done */
 		return;
 
@@ -1647,6 +1801,7 @@ register int			count;
 	case OP_NOP:
 	case OP_SOLID:
 	case OP_REGION:
+	case OP_DB_LEAF:
 		/* A leaf node */
 		return(count+1);
 
@@ -1686,6 +1841,7 @@ CONST union tree	*tp;
 	switch( tp->tr_op )  {
 	case OP_SOLID:
 	case OP_REGION:
+	case OP_DB_LEAF:
 		return(1);
 
 	case OP_UNION:
@@ -1966,6 +2122,9 @@ db_walk_dispatcher()
  *
  *  This is the top interface to the tree walker.
  *
+ *  This routine will employ multiple CPUs, but is not
+ *  itself parallel-safe.  Call this routine from serial code only.
+ *
  *  If ncpu > 1, the caller is responsible for making sure that
  *	rt_g.rtg_parallel is non-zero, and that the various
  *	bu_semaphore_init(5)functions have been performed, first.
@@ -2120,12 +2279,6 @@ union tree *	(*leaf_func)();
 	if( ncpu <= 1 )  {
 		db_walk_dispatcher();
 	} else {
-		/* Ensure that rt_g.rtg_parallel is set */
-		/* XXX Should actually be done by bu_parallel(). */
-		if( rt_g.rtg_parallel == 0 )  {
-			bu_log("db_walk_tree() ncpu=%d, rtg_parallel not set!\n", ncpu);
-			rt_g.rtg_parallel = 1;
-		}
 		bu_parallel( db_walk_dispatcher, ncpu );
 	}
 
@@ -2149,11 +2302,18 @@ struct db_full_path *pathp;
 mat_t mat;
 int depth;			/* number of arcs */
 {
+#if USE_NEW_IMPORT
+	struct rt_db_internal	intern;
+	struct rt_comb_internal	*comb;
+	union tree		*tp;
+#else
 	register union record	*rp;
+#endif
 	struct directory	*kidp;
 	struct directory	*parentp;
 	int			i,j;
 	mat_t			tmat;
+	int			holdlength;
 
 	RT_CHECK_DBI(dbip);
 	RT_CK_FULL_PATH(pathp);
@@ -2188,10 +2348,36 @@ int depth;			/* number of arcs */
 			return 0;
 		}
 
+#if USE_NEW_IMPORT
+		if( rt_get_comb( &intern, parentp, NULL, dbip ) < 0 )  return 0;
+		comb = (struct rt_comb_internal *)intern.idb_ptr;
+		RT_CK_COMB(comb);
+		if( (tp = db_find_named_leaf( comb->tree, kidp->d_namep )) == TREE_NULL )  {
+			bu_log("db_path_to_mat: unable to follow %s/%s path\n",
+			    parentp->d_namep, kidp->d_namep);
+			return 0;
+		}
+		/*
+		 * tp->tl_mat is the matrix from the disk.
+		 * mat is the collection of all operations so far.
+		 * (Stack)
+		 */
+		holdlength = pathp->fp_len;
+		pathp->fp_len = i+2;
+		if( tp->tr_l.tl_mat )  {
+			db_apply_anims(pathp, kidp, mat, tp->tr_l.tl_mat, 0);
+			mat_mul(tmat, mat, tp->tr_l.tl_mat);
+			mat_copy(mat, tmat);
+		} else {
+			mat_idn( tmat );
+			db_apply_anims(pathp, kidp, mat, tmat, 0);
+		}
+		pathp->fp_len = holdlength;
+		rt_comb_ifree( &intern );
+#else
 		if (!(rp= db_getmrec(dbip, parentp))) return 0;
 		for (j=1; j< parentp->d_len; j++ ) {
 			mat_t xmat;	/* temporary matrix */
-			int holdlength;
 
 			/* search for the right member */
 			if (strcmp(kidp->d_namep, rp[j].M.m_instname) != 0) {
@@ -2218,6 +2404,7 @@ int depth;			/* number of arcs */
 			return 0;
 		}
 		rt_free((char *) rp, "db_path_to_mat recs");
+#endif
 	}
 	return 1;
 }
