@@ -98,25 +98,6 @@ struct trap {
  *	return 0
  */
 
-/* The "ray" here is the intersection line between two faces */
-struct nmg_ray_state {
-	struct vertexuse	**vu;		/* ptr to vu array */
-	int			nvu;		/* len of vu[] */
-	point_t			pt;		/* The ray */
-	vect_t			dir;
-	struct edge_g_lseg	*eg_p;		/* Edge geom of the ray */
-	struct shell		*sA;
-	struct shell		*sB;
-	struct faceuse		*fu1;
-	struct faceuse		*fu2;
-	vect_t			left;		/* points left of ray, on face */
-	int			state;		/* current (old) state */
-	int			last_action;	/* last action taken */
-	vect_t			ang_x_dir;	/* x axis for angle measure */
-	vect_t			ang_y_dir;	/* y axis for angle measure */
-	CONST struct bn_tol	*tol;
-};
-
 
 /* subroutine version to pass to the rt_tree functions */
 PvsV(p, v)
