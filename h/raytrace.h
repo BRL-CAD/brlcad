@@ -1446,8 +1446,8 @@ struct rt_i {
 #define RT_CK_RTI(_p)			RT_CHECK_RTI(_p)
 #define RT_CK_RTI_TCL(_interp,_p)	RT_CHECK_RTI_TCL(_interp,_p)
 
-#define RT_PART_NUGRID	0
-#define	RT_PART_NUBSPT	1
+#define	RT_PART_NUBSPT	0
+#define RT_PART_NUGRID	1
 	
 /*
  *  Macros to painlessly visit all the active solids.  Serving suggestion:
