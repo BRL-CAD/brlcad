@@ -179,7 +179,7 @@ HmPrntMenu( HmMenu *menup )
 HmPrntMenu( menup )
 HmMenu	*menup;
 #endif
-	{	register HmWindow	*win;
+	{
 	(void) ErLog( "\tHmPrntMenu( 0x%x )\n", menup );
 	(void) ErLog( "\t\tgenerator=0x%x\n", menup->generator );
 	(void) ErLog( "\t\tprevtop=%d\n", menup->prevtop );
@@ -325,7 +325,6 @@ int			flag;
 		return;
 	if( itemp->text[0] & 0200 )	/* right-justified */
 		{	register int	i;
-			char	errbuf[81];
 		label_len--;
 		for( i = 0; i < width - label_len; i++ )
 			*p++ = itemp->text[0] & 0177;

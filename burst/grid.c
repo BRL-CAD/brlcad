@@ -598,8 +598,7 @@ struct seg *segp;
 			else
 			/* If air expicitly follows, output space code. */
 			if( np != pt_headp && Air( nregp ) )
-				{ fastf_t slos = np->pt_outhit->hit_dist -
-						np->pt_inhit->hit_dist;
+				{
 				/* Check for interior burst point. */
 #if DEBUG_GRID
 				brst_log( "\t\texplicit air follows\n" );
@@ -1657,7 +1656,6 @@ burstRay()
 		threads of execution. */
 		struct application	a_spall;
 		fastf_t			phi;
-		fastf_t			nrings = conehfangle / phiinc;
 		bool			hitcrit = false;
 	a_spall = a_burst;
 	a_spall.a_resource = RESOURCE_NULL;

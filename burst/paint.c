@@ -56,7 +56,6 @@ int	*fxp, *fyp;
 
 void
 paintGridFb()
-	{	register int	gx, gy;
 		register int	fx, fy;
 		int		fxbeg, fybeg;
 		int		fxfin, fyfin;

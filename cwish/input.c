@@ -103,8 +103,6 @@ inputHandler(clientData, mask)
 {
 	int count;
 	char ch;
-	struct bu_vls temp;
-	static int freshline = 1;
 	long fd;
 	char buf[4096];
 	int index;

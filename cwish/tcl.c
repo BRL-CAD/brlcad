@@ -56,7 +56,6 @@ Cad_Main(argc, argv, appInitProc, interp)
      Tcl_AppInitProc *appInitProc;
      Tcl_Interp *interp;
 {
-	struct bu_vls vls;
 	char *filename = NULL;
 	char *args;
 	char buf[TCL_INTEGER_SPACE];

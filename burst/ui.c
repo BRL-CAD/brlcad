@@ -67,10 +67,10 @@ static char *pgmverp = "2.2";
 #define GetVar( var, ptr, conv )\
 	{\
 	if( ! batchmode )\
-		{ int items;\
+		{\
 		(void) sprintf( (ptr)->buffer, (ptr)->fmt, var*conv );\
 		(void) getInput( ptr );\
-		if( (items = sscanf( (ptr)->buffer, (ptr)->fmt, &(var) )) != 1 )\
+		if( (sscanf( (ptr)->buffer, (ptr)->fmt, &(var) )) != 1 )\
 			{\
 			(void) strcpy( (ptr)->buffer, "" );\
 			return;\
