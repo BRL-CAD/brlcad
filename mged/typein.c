@@ -1443,6 +1443,8 @@ struct rt_db_internal	*intern;
 		VMOVE( eip->v, &vals[0] );
 		VMOVE( eip->a, &vals[3] );
 		r_rev = vals[6];
+	} else {
+		r_rev = 0;
 	}
 	
 	/* convert ELL1 format into ELLG format */
