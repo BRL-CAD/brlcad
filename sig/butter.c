@@ -9,7 +9,7 @@
  * For 1/3 octave filters y = 2^(1/6) - 2^(-1/6).
  */
 #include <math.h>
-#include "complex.h"
+#include "./complex.h"
 
 /*
  *  Returns the magnitude of the transfer function Hs(s) for a
@@ -81,4 +81,4 @@ main()
 		printf( "%4d: %f, %f, %f\n", offset, wr, mag, 20.0*log10( mag ) );
 	}
 }
-#endif TEST
+#endif /* TEST */
