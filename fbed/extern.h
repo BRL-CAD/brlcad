@@ -20,6 +20,19 @@
 #define STD_SIGNAL_DECLS 0
 #endif
 
+/*
+ * Note: all files that include this one should have the following set of
+ *       includes *before* #include "./extern.h".
+ *
+ * #include "fb.h"
+ *
+ * #include "./std.h"
+ * #include "./ascii.h"
+ * #include "./font.h"
+ * #include "./try.h"
+ *
+ */
+
 /* For production use, set to "static" */
 #ifndef STATIC
 #define STATIC static
