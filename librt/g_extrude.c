@@ -57,6 +57,7 @@ static const char RCSextrude[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
+#include "nurb.h"
 #include "./debug.h"
 
 struct extrude_specific {
