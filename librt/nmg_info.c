@@ -1136,6 +1136,60 @@ CONST struct faceuse	*fu;
 }
 
 /*
+ *			N M G _ F I N D _ P T _ I N _ L U
+ *
+ *  Conduct a geometric search for a vertex in loopuse 'lu' which is
+ *  "identical" to the given point, within the specified tolerance.
+ *  The loopuse may be part of a face, or it may be wires.
+ *
+ *  Returns -
+ *	NULL			No vertex matched
+ *	(struct vertexuse *)	A matching vertexuse from that loopuse.
+ */
+struct vertexuse *
+nmg_find_pt_in_lu(lu, pt, tol)
+CONST struct loopuse	*lu;
+CONST point_t		pt;
+CONST struct rt_tol	*tol;
+{
+	struct edgeuse		*eu;
+	vect_t			delta;
+	struct vertex		*v;
+	register struct vertex_g *vg;
+	int			magic1;
+
+	magic1 = RT_LIST_FIRST_MAGIC( &lu->down_hd );
+	if (magic1 == NMG_VERTEXUSE_MAGIC) {
+		struct vertexuse	*vu;
+		vu = RT_LIST_FIRST(vertexuse, &lu->down_hd);
+		v = vu->v_p;
+		NMG_CK_VERTEX(v);
+		if( !(vg = v->vg_p) )
+			return ((struct vertexuse *)NULL);
+		NMG_CK_VERTEX_G(vg);
+		VSUB2(delta, vg->coord, pt);
+		if ( MAGSQ(delta) <= tol->dist_sq)
+			return(vu);
+		return ((struct vertexuse *)NULL);
+	}
+	if (magic1 != NMG_EDGEUSE_MAGIC) {
+		rt_bomb("nmg_find_pt_in_lu() Bogus child of loop\n");
+	}
+
+	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
+		v = eu->vu_p->v_p;
+		NMG_CK_VERTEX(v);
+		if( !(vg = v->vg_p) )  continue;
+		NMG_CK_VERTEX_G(vg);
+		VSUB2(delta, vg->coord, pt);
+		if ( MAGSQ(delta) <= tol->dist_sq)
+			return(eu->vu_p);
+	}
+	return ((struct vertexuse *)NULL);
+
+}
+
+/*
  *			N M G _ F I N D _ P T _ I N _ F A C E
  *
  *  Conduct a geometric search for a vertex in face 'fu' which is
@@ -1152,41 +1206,15 @@ CONST point_t		pt;
 CONST struct rt_tol	*tol;
 {
 	register struct loopuse	*lu;
-	struct edgeuse		*eu;
-	vect_t			delta;
-	struct vertex		*v;
-	register struct vertex_g *vg;
-	int			magic1;
+	struct vertexuse	*vu;
 
 	NMG_CK_FACEUSE(fu);
 	RT_CK_TOL(tol);
 
 	for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
 		NMG_CK_LOOPUSE(lu);
-		magic1 = RT_LIST_FIRST_MAGIC( &lu->down_hd );
-		if (magic1 == NMG_VERTEXUSE_MAGIC) {
-			struct vertexuse	*vu;
-			vu = RT_LIST_FIRST(vertexuse, &lu->down_hd);
-			v = vu->v_p;
-			NMG_CK_VERTEX(v);
-			if( !(vg = v->vg_p) )  continue;
-			NMG_CK_VERTEX_G(vg);
-			VSUB2(delta, vg->coord, pt);
-			if ( MAGSQ(delta) < tol->dist_sq)
-				return(vu);
-		} else if (magic1 == NMG_EDGEUSE_MAGIC) {
-			for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
-				v = eu->vu_p->v_p;
-				NMG_CK_VERTEX(v);
-				if( !(vg = v->vg_p) )  continue;
-				NMG_CK_VERTEX_G(vg);
-				VSUB2(delta, vg->coord, pt);
-				if ( MAGSQ(delta) < tol->dist_sq)
-					return(eu->vu_p);
-			}
-		} else {
-			rt_bomb("nmg_find_vu_in_face() Bogus child of loop\n");
-		}
+		if( (vu = nmg_find_pt_in_lu(lu, pt, tol)) )
+			return vu;
 	}
 	return ((struct vertexuse *)NULL);
 }
@@ -1430,6 +1458,8 @@ CONST struct rt_list	*fu_hd;
  *  Returns -
  *	pointer to vertex with matching geometry
  *	NULL
+ *
+ *  XXX Why does this return a vertex, while it's helpers return a vertexuse?
  */
 struct vertex *
 nmg_find_pt_in_shell( s, pt, tol )
@@ -1452,60 +1482,29 @@ CONST struct rt_tol	*tol;
 	while (RT_LIST_NOT_HEAD(fu, &s->fu_hd) ) {
 		/* Shell has faces */
 		NMG_CK_FACEUSE(fu);
-			if( (vu = nmg_find_pt_in_face( fu, pt, tol )) )
-				return(vu->v_p);
+		if( (vu = nmg_find_pt_in_face( fu, pt, tol )) )
+			return(vu->v_p);
 
-			if (RT_LIST_PNEXT(faceuse, fu) == fu->fumate_p)
-				fu = RT_LIST_PNEXT_PNEXT(faceuse, fu);
-			else
-				fu = RT_LIST_PNEXT(faceuse, fu);
+		if (RT_LIST_PNEXT(faceuse, fu) == fu->fumate_p)
+			fu = RT_LIST_PNEXT_PNEXT(faceuse, fu);
+		else
+			fu = RT_LIST_PNEXT(faceuse, fu);
 	}
 
-	for (RT_LIST_FOR(lu, loopuse, &s->lu_hd)) {
-		NMG_CK_LOOPUSE(lu);
-		if (RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
-			vu = RT_LIST_FIRST(vertexuse, &lu->down_hd);
-			NMG_CK_VERTEX(vu->v_p);
-			if (vg = vu->v_p->vg_p) {
-				NMG_CK_VERTEX_G(vg);
-				VSUB2( delta, vg->coord, pt );
-				if( MAGSQ(delta) < tol->dist_sq )
-					return(vu->v_p);
-			}
-		} else if (RT_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
-			rt_log("in %s at %d ", __FILE__, __LINE__);
-			rt_bomb("loopuse has bad child\n");
-		} else {
-			/* loopuse made of edgeuses */
-			for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-				
-				NMG_CK_EDGEUSE(eu);
-				NMG_CK_VERTEXUSE(eu->vu_p);
-				v = eu->vu_p->v_p;
-				NMG_CK_VERTEX(v);
-				if( (vg = v->vg_p) )  {
-					NMG_CK_VERTEX_G(vg);
-					VSUB2( delta, vg->coord, pt );
-					if( MAGSQ(delta) < tol->dist_sq )
-						return(v);
-				}
-			}
-		}
-	}
-
+	/* Wire loopuses */
 	lu = RT_LIST_FIRST(loopuse, &s->lu_hd);
 	while (RT_LIST_NOT_HEAD(lu, &s->lu_hd) ) {
+		NMG_CK_LOOPUSE(lu);
+		if( (vu = nmg_find_pt_in_lu(lu, pt, tol)) )
+			return vu->v_p;
 
-			NMG_CK_LOOPUSE(lu);
-			/* XXX what to do here? */
-			rt_log("nmg_find_vu_in_face(): lu?\n");
-
-			if (RT_LIST_PNEXT(loopuse, lu) == lu->lumate_p)
-				lu = RT_LIST_PNEXT_PNEXT(loopuse, lu);
-			else
-				lu = RT_LIST_PNEXT(loopuse, lu);
+		if (RT_LIST_PNEXT(loopuse, lu) == lu->lumate_p)
+			lu = RT_LIST_PNEXT_PNEXT(loopuse, lu);
+		else
+			lu = RT_LIST_PNEXT(loopuse, lu);
 	}
 
+	/* Wire edgeuses */
 	for (RT_LIST_FOR(eu, edgeuse, &s->eu_hd)) {
 		NMG_CK_EDGEUSE(eu);
 		NMG_CK_VERTEXUSE(eu->vu_p);
@@ -1514,12 +1513,12 @@ CONST struct rt_tol	*tol;
 		if( (vg = v->vg_p) )  {
 			NMG_CK_VERTEX_G(vg);
 			VSUB2( delta, vg->coord, pt );
-			if( MAGSQ(delta) < tol->dist_sq )
+			if( MAGSQ(delta) <= tol->dist_sq )
 				return(v);
 		}
 	}
 
-
+	/* Lone vertexuse */
 	if (s->vu_p) {
 		NMG_CK_VERTEXUSE(s->vu_p);
 		v = s->vu_p->v_p;
@@ -1527,7 +1526,7 @@ CONST struct rt_tol	*tol;
 		if( (vg = v->vg_p) )  {
 			NMG_CK_VERTEX_G( vg );
 			VSUB2( delta, vg->coord, pt );
-			if( MAGSQ(delta) < tol->dist_sq )
+			if( MAGSQ(delta) <= tol->dist_sq )
 				return(v);
 		}
 	}
