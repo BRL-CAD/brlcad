@@ -59,8 +59,13 @@ char	*optarg;		/* argument associated with option */
 int
 getopt(nargc,nargv,ostr)
 int	nargc;
+#if defined(linux)
 char	* CONST nargv[];
 CONST char *ostr;
+#else
+char	*nargv[];
+char	*ostr;
+#endif
 {
 	static char	*place = EMSG;	/* option letter processing */
 	register char	*oli;		/* option letter list index */
