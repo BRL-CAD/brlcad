@@ -29,6 +29,7 @@ static char RCSarb[] = "@(#)$Header$ (BRL)";
 #include "db.h"
 #include "./debug.h"
 
+void	arb_print();
 
 /*
  *			Ray/ARB Intersection
@@ -191,6 +192,7 @@ int		uv_wanted;
 			/* Verify that this point is not the same
 			 * as an earlier point
 			 */
+#			include "noalias.h"
 			for( k=0; k < pa.pa_npts; k++ )  {
 				VSUB2( work, point, pa.pa_points[k] );
 				if( MAGSQ( work ) < 0.005 )  {
@@ -239,7 +241,7 @@ next_pt:		;
 	 *  exact number of faces.
 	 */
 	{
-		register struct arb_specific *arbp;
+		register struct arb_specific	*arbp;
 		if( (arbp = (struct arb_specific *)stp->st_specific) == 0 )  {
 			arbp = (struct arb_specific *)rt_malloc(
 				sizeof(struct arb_specific) +
@@ -248,13 +250,21 @@ next_pt:		;
 			stp->st_specific = (int *)arbp;
 		}
 		arbp->arb_nmfaces = pa.pa_faces;
-		for( i=0; i < pa.pa_faces; i++ )
-			arbp->arb_face[i] = pa.pa_face[i];	/* struct copy */
+		{
+			register struct aface	*aip, *aop;
+#			include "noalias.h"
+			aip = &pa.pa_face[pa.pa_faces-1];
+			aop = &arbp->arb_face[pa.pa_faces-1];
+			for( i=pa.pa_faces-1; i>=0; i--, aip--, aop-- )  {
+				*aop = *aip;	/* struct copy */
+			}
+		}
 
 		if( uv_wanted )  {
 			arbp->arb_opt = (struct oface *)rt_malloc(
 				pa.pa_faces * sizeof(struct oface), "arb_opt");
-			for( i=0; i < pa.pa_faces; i++ )
+#			include "noalias.h"
+			for( i = pa.pa_faces-1; i>=0; i-- )
 				arbp->arb_opt[i] = pa.pa_opt[i];	/* struct copy */
 		} else {
 			arbp->arb_opt = (struct oface *)0;
@@ -316,6 +326,8 @@ struct prep_arb	*pap;
 	switch( i )  {
 	case 0:
 		VMOVE( afp->A, point );
+VPRINT("pt", point );
+VPRINT(" A", afp->A);
 		if( pap->pa_doopt )  {
 			VMOVE( ofp->arb_UVorig, point );
 		}
@@ -471,24 +483,24 @@ struct soltab *stp;
 register struct xray *rp;
 struct application	*ap;
 {
-	register struct arb_specific *arbp =
-		(struct arb_specific *)stp->st_specific;
-	LOCAL int iplane, oplane;
-	LOCAL fastf_t	in, out;	/* ray in/out distances */
-	register int j;
+	struct arb_specific *arbp = (struct arb_specific *)stp->st_specific;
+	LOCAL int		iplane, oplane;
+	LOCAL fastf_t		in, out;	/* ray in/out distances */
+	register struct aface	*afp;
+	register int		j;
 
 	in = -INFINITY;
 	out = INFINITY;
 	iplane = oplane = -1;
 
 	/* consider each face */
-	for( j = arbp->arb_nmfaces-1; j >= 0; j-- )  {
+	for( afp = &arbp->arb_face[j=arbp->arb_nmfaces-1]; j >= 0; j--, afp-- )  {
 		FAST fastf_t	dn;		/* Direction dot Normal */
 		FAST fastf_t	dxbdn;
 		FAST fastf_t	s;
 
-		dxbdn = VDOT( arbp->arb_face[j].N, rp->r_pt ) - arbp->arb_face[j].NdotA;
-		if( (dn = -VDOT( arbp->arb_face[j].N, rp->r_dir )) < -SQRT_SMALL_FASTF )  {
+		dxbdn = VDOT( afp->N, rp->r_pt ) - afp->NdotA;
+		if( (dn = -VDOT( afp->N, rp->r_dir )) < -SQRT_SMALL_FASTF )  {
 			/* exit point, when dir.N < 0.  out = min(out,s) */
 			if( out > (s = dxbdn/dn) )  {
 				out = s;
