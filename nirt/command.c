@@ -38,6 +38,7 @@ extern struct resource		res_tab[];	/* For use w/ and w/o air */
 extern struct nirt_obj		object_list;
 extern com_table		ComTab[];
 extern outval			ValTab[];
+extern int			nirt_debug;
 
 void az_el(buffer, ctp)
 char			*buffer;
@@ -561,9 +562,37 @@ int			ctp;
     point_t	point;
     vect_t	direction;
 
-    double	dist_default();  /* computes grid[DIST] default val*/
+    int		(*phc)();	/* Previous hit callback */
+    int		(*pmc)();	/* Previous miss callback */
+    int		if_bhit();	/* Backout hit callback */
+    int		if_bmiss();	/* Backout miss callback */
 
-    targ2grid();
-    grid(DIST) = bsphere_diameter;
-    grid2targ();
+
+    /*
+     *	Record previous callbacks
+     */
+    phc = ap.a_hit;
+    pmc = ap.a_miss;
+
+    /*
+     *	Prepare to fire the backing-out ray
+     */
+    for (i = 0; i < 3; ++i)
+    {
+	ap.a_ray.r_pt[i] = target(i);
+	ap.a_ray.r_dir[i] = -direct(i);
+    }
+    ap.a_hit = if_bhit;
+    ap.a_miss = if_bmiss;
+    if (nirt_debug & DEBUG_BACKOUT)
+	bu_log("Backing out from (%g %g %g) via (%g %g %g)\n",
+	    V3ARGS(ap.a_ray.r_pt), V3ARGS(ap.a_ray.r_dir));
+
+    (void) rt_shootray( &ap );
+
+    /*
+     *	Reset the callbacks the way we found them
+     */
+    ap.a_hit = phc;
+    ap.a_miss = pmc;
 }
