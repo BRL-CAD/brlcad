@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.8  87/04/14  20:14:21  dpk
+ * Added SIGHUP fix.
+ * 
  * Revision 2.7  86/09/23  22:28:52  mike
  * Externs now declared properly.
  * I/O fixes for SysV
@@ -186,27 +189,18 @@ getchar()
 {
 	char buf[128];
 	if (nchars <= 0) {
-#ifdef JOBCONTROL
-		nchars = read(Input, smbuf, sizeof smbuf);
-#else
 		/*
 		 *  This loop will retry the read if it is interrupted
 		 *  by an alarm signal.  (Like VMUNIX...)
 		 */
 		do {
 			nchars = read(Input, smbuf, sizeof smbuf);
-#ifdef never
-sprintf(buf,"getchar() nchars=%d\n", nchars);
-write(2,buf,strlen(buf));
-#endif
 #ifdef SYS5
 		} while ((nchars == 0 && Input == 0)	/* DAG -- added Input test */
 			 || (nchars < 0 && errno == EINTR));
 #else
 		} while (nchars < 0 && errno == EINTR);
 #endif SYS5
-#endif JOBCONTROL
-
 		if(nchars <= 0) {
 			if (Input)
 				return EOF;
