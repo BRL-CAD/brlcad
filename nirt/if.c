@@ -16,6 +16,8 @@ static char RCSid[] = "$Header$";
 #include "./usrfmt.h"
 
 extern outval		ValTab[];
+extern int		nirt_debug;
+
 overlap			ovlp_list;
 
 overlap			*find_ovlp();
@@ -177,6 +179,54 @@ struct region			*reg2;
     ovlp_list.forw = new_ovlp;
 
     return(1);
+}
+
+/*
+ *
+ *		The callbacks used by backup()
+ *
+ */
+int if_bhit(ap, part_head)
+struct application	*ap;
+struct partition 	*part_head;
+{
+    struct partition	*part;
+    vect_t		dir;
+    point_t		point;
+    int			i;
+
+    if ((part = part_head -> pt_back) == part_head)
+    {
+	bu_log("if_bhit() got empty partition list.  Shouldn't happen\n");
+	exit (1);
+    }
+    RT_HIT_NORM( part->pt_outhit, part->pt_outseg->seg_stp, &ap->a_ray );
+
+    if (nirt_debug & DEBUG_BACKOUT)
+    {
+	bu_log("Backmost region is '%s'\n", part->pt_regionp->reg_name);
+	bu_log("Backout ray exits at (%g %g %g)\n",
+	    V3ARGS(part -> pt_outhit -> hit_point));
+    }
+
+    for (i = 0; i < 3; ++i)
+	dir[i] = -direct(i);
+    VJOIN1(point, part -> pt_outhit -> hit_point, BACKOUT_DIST, dir);
+
+    if (nirt_debug & DEBUG_BACKOUT)
+	bu_log("Point %g beyond is (%g %g %g)\n",
+	    BACKOUT_DIST, V3ARGS(point));
+
+    for (i = 0; i < 3; ++i)
+	target(i) = point[i];
+    targ2grid();
+
+    return( HIT );
+}
+
+int if_bmiss()
+{ 
+    return ( MISS );
 }
 
 fastf_t get_obliq (ray, normal)
