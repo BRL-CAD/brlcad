@@ -33,6 +33,7 @@ static char RCSvol[] = "@(#)$Header$ (BRL)";
 #include "rtstring.h"
 #include "rtgeom.h"
 #include "raytrace.h"
+#include "nmg.h"
 #include "./debug.h"
 #include "./fixpt.h"
 
