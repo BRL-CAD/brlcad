@@ -1510,7 +1510,7 @@ rts_shutdown()
 	int i;
 	struct db_i *dbip;
 
-	if( rts_geometry ) {
+	if( rts_geometry && rts_geometry[0] ) {
 		dbip = rts_geometry[0]->rts_rtis[0]->rtrti_rtip->rti_dbip;
 	}
 
