@@ -62,8 +62,10 @@ outval		ValTab[] =
 		    { 0 }
 		};
 outitem		*oi_list[FMT_NONE];
-char		*dest_string = "stdout";
-char		*sf_name = DEF_SF_NAME;		/* Name of state file */
+static char	def_dest_string[] = "stdout";
+char		*dest_string = def_dest_string;
+static char	def_sf_name[] = DEF_SF_NAME;	
+char		*sf_name = def_sf_name;		/* Name of state file */
 
 FILE		*outf = stdout;
 char		*def_fmt[] =
@@ -179,12 +181,7 @@ int	outcom_type;	/* Type of output command */
     outitem	*prev_oip = OUTITEM_NULL;
     outval	*vtp;
 
-    if ((uos = malloc(strlen(uoutspec) + 1)) == NULL)
-    {
-	fflush(stdout);
-	fprintf(stderr, "parse_fmt(): Ran out of memory\n");
-	exit(1);
-    }
+    uos = rt_malloc(strlen(uoutspec) + 1, "uos");
     strcpy(uos, uoutspec);
     /* Break up the format specification into pieces,
      * one per conversion specification (and, hopefully)
@@ -229,12 +226,7 @@ int	outcom_type;	/* Type of output command */
 	 * needs an output item or not (i.e. whether it
 	 * contains 1 conversion spec vs. none)
 	 */
-	if ((oip -> format = malloc(uos - up + 1)) == NULL)
-	{
-	    fflush(stdout);
-	    fprintf(stderr, "parse_fmt(): Ran out of memory\n");
-	    exit(1);
-	}
+    	oip->format = rt_malloc(uos - up + 1, "format");
 	of = oip -> format;
 	while (up != uos)
 	{
@@ -478,13 +470,8 @@ FILE *fopenrc()
     {
 	if ((home = getenv("HOME")) != NULL)
 	{
-	    if ((rc_file_name =
-		malloc(strlen(home) + strlen(DEF_RCF_NAME) + 1)) == NULL)
-	    {
-		fflush(stdout);
-		fputs("fopenrc():  Ran out of memory\n", stderr);
-		exit (1);
-	    }
+	    rc_file_name = rt_malloc(strlen(home) + strlen(DEF_RCF_NAME) + 2,
+	    			"rc_file_name");
 	    sprintf(rc_file_name, "%s/%s", home, DEF_RCF_NAME);
 	    fPtr = fopen(rc_file_name, "r");
 	}
@@ -604,6 +591,7 @@ com_table	*ctp;
 
     while (isspace(*(buffer+i)))
 	    ++i;
+
     if (*(buffer+i) == '\0')     /* display current destination */
     {
 	printf("destination = %s%s'\n",
@@ -616,53 +604,39 @@ com_table	*ctp;
 	com_usage(ctp);
 	return;
     }
-    else if (strcmp(buffer + i, "default") == 0)
-    {
+
+    if (strcmp(buffer + i, "default") == 0) {
 	newf = stdout;
-	new_dest = "stdout";
+	new_dest = def_dest_string;
 	openfunc = 0;
-    }
-    else
-    {
-	if (*(buffer + i) == '|')
-	{
+    } else {
+	if (*(buffer + i) == '|') {
 	    openfunc=popen;
 	    ++i;
-	}
-	else
+	} else
 	    openfunc=fopen;
-	if ((new_dest = malloc(strlen(buffer + i))) == NULL)
-	{
-	    fflush(stdout);
-	    fprintf(stderr, "direct_output(): Ran out of memory\n");
-	    return;
-	}
+
+	new_dest = rt_malloc(strlen(buffer + i)+1,"new_dest");
+
 	sprintf(new_dest, "%s", buffer + i);
-	if ((newf = (*openfunc)(new_dest, "w")) == NULL)
-	{
+	if ((newf = (*openfunc)(new_dest, "w")) == NULL) {
 	    fprintf(stderr, "Cannot open %s '%s'\n",
 		(openfunc == popen) ? "pipe" : "file", new_dest);
 	    fprintf(stderr, "Destination remains = '%s'\n", dest_string);
+
+	    rt_free(new_dest, "new(now old)dest");
 	    return;
 	}
+
+
     }
 
     /* Clean up from previous output destination */
     if (outf != stdout)
 	fclose(outf);
-    /*
-     * We were calling free(dest_string) at this point, since any destination
-     * the user specifies explicitly (i.e., anything but "default") gets
-     * a call to malloc().  However, this free was causing a memory fault
-     * when you did several successive "dest default" commands at the
-     * "nirt> " prompt.  I guess freeing memory that belongs to a
-     * string constant is not such a bright idea.  Anyway, we should
-     * probably be returning the malloced memory when appropriate,
-     * but a few destination strings shouldnt' take up much room, and
-     * there are other bigger mallocs elsewhere that are probably bigger
-     * wasters of memory.
-     *	PJT	25 Feb 91
-     */
+
+    if (dest_string != def_dest_string)
+	rt_free(dest_string, "free dest_string");
 
     /* Establish the new destination */
     outf = newf;
@@ -691,20 +665,17 @@ com_table	*ctp;
 	com_usage(ctp);
 	return;
     }
-    else if (strcmp(buffer + i, "default") == 0)
-	new_name = DEF_SF_NAME;
-    else if ((new_name = malloc(strlen(buffer + i))) == NULL)
-    {
-	fflush(stdout);
-	fprintf(stderr, "direct_output(): Ran out of memory\n");
-	return;
-    }
-    else
+
+    if (strcmp(buffer + i, "default") == 0)
+	new_name = def_sf_name;
+    else {
+	new_name = rt_malloc(strlen(buffer + i)+1, "new_state_filename");
 	sprintf(new_name, "%s", buffer + i);
+    }
 
     /* Clean up from previous output destination */
-    if (strcmp(sf_name, DEF_SF_NAME) != 0)
-	free(sf_name);
+    if (sf_name != def_sf_name)
+	rt_free(sf_name);
 
     /* Establish the new destination */
     sf_name = new_name;

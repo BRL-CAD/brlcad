@@ -47,7 +47,7 @@ com_table		*ctp;
 		++i;
 	if (*(buffer+i) == '\0')     /* display current az and el values */
 	{
-		printf("(az, el) = (%4.2f, %4.2f)\n",
+		rt_log("(az, el) = (%4.2f, %4.2f)\n",
 		    azimuth(), elevation());
 		return;
 	}
@@ -58,7 +58,7 @@ com_table		*ctp;
 	}
 	if (abs(az) > 360)       /* check for valid az value */
 	{
-		fprintf(stderr, "Error:  |azimuth| <= 360\n"); 
+		rt_log("Error:  |azimuth| <= 360\n"); 
 		return;
 	}
 	i += rc; 
@@ -71,7 +71,7 @@ com_table		*ctp;
 	}
 	if (abs(el) > 90)       /* check for valid el value */
 	{
-		fprintf(stderr, "Error:  |elevation| <= 90\n"); 
+		rt_log("Error:  |elevation| <= 90\n"); 
 		return;
 	}
 	i += rc; 
@@ -121,7 +121,7 @@ com_table		*ctp;
 		++i;
 	if (*(buffer+i) == '\0')    /* display current grid coordinates */
 	{
-		printf("(h,v,d) = (%4.2f, %4.2f, %4.2f)\n",
+		rt_log("(h,v,d) = (%4.2f, %4.2f, %4.2f)\n",
 			grid(HORZ) * base2local,
 			grid(VERT) * base2local,
 			grid(DIST) * base2local);
@@ -181,7 +181,7 @@ com_table		*ctp;
 		++i;
 	if (*(buffer+i) == '\0')         /* display current target coors */
 	{
-		printf("(x,y,z) = (%4.2f, %4.2f, %4.2f)\n",
+		rt_log("(x,y,z) = (%4.2f, %4.2f, %4.2f)\n",
 			    target(X) * base2local,
 			    target(Y) * base2local,
 			    target(Z) * base2local);
@@ -234,7 +234,7 @@ com_table		*ctp;
 		++i;
 	if (*(buffer+i) == '\0')         /* display current direct coors */
 	{
-		printf("(x,y,z) = (%4.2f, %4.2f, %4.2f)\n",
+		rt_log("(x,y,z) = (%4.2f, %4.2f, %4.2f)\n",
 			    direct(X), direct(Y), direct(Z));
 		return;
 	}
@@ -284,7 +284,7 @@ char	*buffer;
 	com_table	*ctp;
 
 	for (ctp = ComTab; ctp -> com_name; ++ctp)
-	    (void) printf("%-10s %s\n", ctp -> com_name, ctp -> com_desc);
+	    (void) rt_log("%-10s %s\n", ctp -> com_name, ctp -> com_desc);
 }
 
 void shoot(buffer, ctp)
@@ -300,6 +300,7 @@ int			ctp;
 	ap.a_ray.r_pt[i] = target(i);
 	ap.a_ray.r_dir[i] = direct(i);
     }
+
     init_ovlp();
     (void) rt_shootray( &ap );
 }
@@ -323,7 +324,7 @@ com_table		*ctp;
 	    ++buffer;
     if (*buffer == '\0')     /* display current value of use_of_air */
     {
-	printf("use_air = %d\n", ap.a_rt_i -> useair);
+	rt_log("use_air = %d\n", ap.a_rt_i -> useair);
 	return;
     }
     if (!isdigit(*buffer))
@@ -338,35 +339,33 @@ com_table		*ctp;
     }
     if (new_use && (new_use != 1))
     {
-	fprintf(stderr,
-	    "Warning: useair=%d specified, will set to 1\n",
+	rt_log("Warning: useair=%d specified, will set to 1\n",
 	    new_use);
 	new_use = 1;
     }
     if (rti_tab[new_use] == RTI_NULL)
     {
-	printf(" Air %s in the current directory of database objects.\n",
+	rt_log(" Air %s in the current directory of database objects.\n",
 	    new_use ? "is not included" : "is included");
-	printf(
+	rt_log(
 	    " To set useair=%d requires building/prepping another directory.\n",
 	    new_use);
-	printf(" Do you want to do that now (y|n)[n]? ");
+	rt_log(" Do you want to do that now (y|n)[n]? ");
 	gets(response);
 	while ((*rp == ' ') || (*rp == '\t'))
 	    ++rp;
 	if ((*rp != 'y') && (*rp != 'Y'))
 	{
-	    printf("useair remains %d\n", ap.a_rt_i -> useair);
+	    rt_log("useair remains %d\n", ap.a_rt_i -> useair);
 	    return;
 	}
 #if 0
-	printf("Building the directory...");fflush(stdout);
+	rt_log("Building the directory...");fflush(stdout);
 #endif
-	fprintf(stderr, "Building the directory...");fflush(stderr);
+	rt_log("Building the directory...");fflush(stderr);
 	if ((rtip = rt_dirbuild( db_name , db_title, TITLE_LEN )) == RTI_NULL)
 	{
-	    fflush(stdout);
-	    fprintf(stderr, "Could not load file %s\n", db_name);
+	    rt_log("Could not load file %s\n", db_name);
 	    printusage();
 	    exit(1);
 	}
@@ -374,9 +373,9 @@ com_table		*ctp;
 	rtip -> useair = new_use;
 
 #if 0
-	printf("\nPrepping the geometry...");fflush(stdout);
+	rt_log("\nPrepping the geometry...");fflush(stdout);
 #endif
-	fprintf(stderr, "Prepping the geometry...");fflush(stderr);
+	rt_log("Prepping the geometry...");fflush(stderr);
 	for (op = &object_list; op -> obj_next != NULL; op = op -> obj_next)
 	    do_rt_gettree( rtip, op -> obj_name, 0);
     }
@@ -400,7 +399,7 @@ com_table	*ctp;
 	    ++i;
     if (*(buffer+i) == '\0')     /* display current destination */
     {
-	printf("units = '%s'\n", local_u_name);
+	rt_log("units = '%s'\n", local_u_name);
 	return;
     }
     
@@ -420,7 +419,7 @@ com_table	*ctp;
     {
 	if ((tmp_dbl = mk_cvt_factor(buffer + i)) == 0.0)
 	{
-	    fprintf(stderr, "Invalid unit specification: '%s'\n", buffer + i);
+	    rt_log("Invalid unit specification: '%s'\n", buffer + i);
 	    return;
 	}
 	strncpy(local_u_name, buffer + i, 64);

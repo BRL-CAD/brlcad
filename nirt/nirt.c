@@ -282,7 +282,8 @@ int		save;		/* Add object_name to object_list? */
 	    exit (1);
 	}
 	op -> obj_name = object_name;
-	op -> obj_next = (struct nirt_obj *) malloc(sizeof(struct nirt_obj));
+	op -> obj_next = (struct nirt_obj *)
+				rt_malloc(sizeof(struct nirt_obj), "obj_next");
 	op = op -> obj_next;
 	if (op != NULL)
 	    op -> obj_next = NULL;
