@@ -44,6 +44,7 @@ static char RCSscale[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "wdb.h"
+#include "tig.h"
 
 #define NAMELEN 40
 #define BUFF_LEN 256
@@ -133,7 +134,7 @@ fprintf(stderr, "label=%s\n", label);
 /* mat_print("view2model", view2model);
  */
 
-	ret = layout_n_plot(stdout, label, view2model, intervals, m_len);
+	ret = layout_n_plot(stdout, label, view2model, model2view, intervals, m_len);
 	if(ret < 0)  {
 		exit(-1);
 	}
@@ -154,10 +155,11 @@ fprintf(stderr, "label=%s\n", label);
  */
 
 int
-layout_n_plot(outfp, label, v2mod, intervals, m_len)
+layout_n_plot(outfp, label, v2mod, m2view, intervals, m_len)
 FILE	*outfp;
 char	*label;
 mat_t	v2mod;
+mat_t	m2view;
 int	intervals;
 fastf_t	m_len;
 {
@@ -166,8 +168,18 @@ fastf_t	m_len;
 	int		nticks;		/* number of tick marks required */
 	int		tickno;		/* counter of tickmarks to be done */
 	int		ret;		/* return code from functions */
+	int		nchar;		/* number of characters in the label */
+	int		m_char_width;	/* char. width in model space */
+	int		v_char_width;	/* char. width in view space */
+	mat_t		v2symbol;	/* view to symbol sapce matrix */
+	float		v_len;		/* scale length in view space */
 	float		v_tick_hgt;	/* total height of tick marks, view space */
 	float		m_tick_hgt;	/* total height of tick marks, model space */
+	float		m_free_space;	/* 80% of scale len, use for writing */
+	float		v_free_space;	/* m_free_space's analogue in view space */
+	float		v_x_offset;	/* distance the label is offset in x */
+	float		v_y_offset;	/* distance the label is offset in y */
+	point_t		v_offset;
 	vect_t		v_hgtv;		/* height vector for ticks, view space */
 	vect_t		m_hgtv;		/* height vector for ticks, model space */
 	vect_t		m_inv_hgtv;
@@ -175,6 +187,8 @@ fastf_t	m_len;
 	vect_t		m_lenv;		/* direction vector along x-axis, model space */
 	point_t		v_startpt;	/* starting point of scales, view space */
 	point_t		m_startpt;	/* starting point in model space */
+	point_t		v_label_st;	/* starting point of label, view space */
+	point_t		m_label_st;	/* starting point of label, model space */
 	point_t		centerpt;	/* point on scale where tick mark starts */
 
 
@@ -217,11 +231,40 @@ fastf_t	m_len;
 
 /* fprintf(stderr, "layout: m_tick_hgt=%g, v_tick_hgt=%g\n", m_tick_hgt, v_tick_hgt);
  */
+
+	/* Lay out the label in view space.  Find the number of characters
+	 * in the label and calculate their width.  Since characters are
+	 * square, that will also be the char. height.  Use this to calculate
+	 * the x- and y-offset of the label starting point in view space.
+	 */
+
+	nchar = strlen(label);
+	m_free_space = m_len - (m_len * 0.2);
+	v_free_space = m_free_space / m2view[15];
+
+	v_x_offset = 0.1 * v_len;
+	v_y_offset = -(2 * v_tick_hgt + v_char_width);
+
+	VSET(v_offset, v_x_offset, v_y_offset, 0 );
+
+	VADD2(v_label_st, v_startpt, v_offset);
+
+	/* Convert v_label_st to model space */
+	MAT4X3VEC(m_label_st, v2mod, v_label_st);
+
+	/* Make a view to symbol matrix.  Copy the view2model matrix, set the
+	 * MAT_DELTAS to 0, and set the scale to 1.
+	 */
+
+	mat_copy(v2symbol, v2mod);
+	MAT_DELTAS(v2symbol, 0, 0, 0);
+	v2symbol[15] = 1;
+
 	/* Draw the basic scale with the two freebie end ticks.  Then,
 	 * if nticks is 0, nothing further is needed.
 	 */
 
-	ret = drawscale(outfp, label, m_startpt, m_len, m_tick_hgt, m_lenv, m_hgtv, m_inv_hgtv);
+	ret = drawscale(outfp, m_startpt, m_len, m_tick_hgt, m_lenv, m_hgtv, m_inv_hgtv);
 	if( ret < 0 )  {
 		fprintf(stderr, "Layout: drawscale failed\n");
 		return(-1);
@@ -248,6 +291,14 @@ fastf_t	m_len;
 		}
 
 	}
+
+fprintf(stderr, "Now calling tp_3symbol( outfp, %s, m_lable_st= %g, %g, %g, m_char_width=%d\n",
+        label, V3ARGS(m_label_st), m_char_width);
+mat_print("v2symbol", v2symbol);
+
+	/* Now put the label on the plot. */
+	tp_3symbol(outfp, label, m_label_st, v2symbol, m_char_width);
+
 }
 
 /*		R E A D _ R T _ F I L E
@@ -305,11 +356,19 @@ mat_t 	model2view;
 		}
 		ret = fgets(string, BUFF_LEN, infp);
 		if( ret == NULL )  {
-/*			fprintf(stderr, "read_rt_log: read failure on file %s\n",
- *				string);
- *			return(-1);
- */
-			break;
+			/* There are two situations for which NULL might be
+			 * seen: end of file (handled above) and when the
+			 * process dies a horrible death.  The latter is the
+			 * condition to be caught here.
+			 */
+
+			if( feof(infp) )
+				break;
+			/* Else report that there is a problem. */
+
+			fprintf(stderr, "read_rt_log: read failure on file %s\n",
+				string);
+			return(-1);
 		}
 
 
@@ -458,15 +517,14 @@ mat_t 	model2view;
  *
  * This routine draws the basic scale: it draws a line confined by two
  * end tick marks.  It return either 0 okay < 0 failure.
- * The parameters are pointers to stdout  and a lable, as well as a start 
+ * The parameters are a pointer to stdout, a start 
  * point, a height, a length vector, a height vector, and an inverse height
  * vector.
  */
 
 int
-drawscale(outfp, label, startpt, len, hgt, lenv, hgtv, inv_hgtv)
+drawscale(outfp, startpt, len, hgt, lenv, hgtv, inv_hgtv)
 FILE		*outfp;
-char		*label;
 point_t		startpt;
 fastf_t		len;
 fastf_t		hgt;
@@ -476,8 +534,6 @@ vect_t		inv_hgtv;
 {
 
 	point_t		endpt;
-	point_t		st_label;
-
 
 	/* Make an end point.  Call drawtick to make the two ticks. */
 
@@ -486,13 +542,6 @@ vect_t		inv_hgtv;
 	pdv_3move(outfp, startpt);
 	pdv_3cont(outfp, endpt);
 
-	/* Lable the scale *
-
-/*	VJOIN1(st_label, startpt, 3 * hgt, inv_hgtv);
- *	pdv_3move(outfp, st_label);
- *	pl_label(outfp, label);
- */
-	
 /* fprintf(stderr, "drawscale invoked drawticks\n");
  * VPRINT("startpt", startpt);
  * VPRINT("endpt", endpt);
