@@ -244,3 +244,5 @@ view_end() {
 void view_pixel() {}
 
 void view_eol() {}
+
+void view_cleanup() {}

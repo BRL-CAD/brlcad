@@ -188,3 +188,5 @@ char *file, *obj;
 }
 
 void	view_2init()  {;}
+
+void	view_cleanup() {}

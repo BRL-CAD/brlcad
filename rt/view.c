@@ -327,8 +327,18 @@ struct application *ap;
 			return(0);		 /* more res to come */
 	}
 	free_scanlines();
-	light_cleanup();
 	return(0);		/* OK */
+}
+
+/*
+ *			V I E W _ C L E A N U P
+ *
+ *  Called after rt_clean() in do.c
+ */
+void
+view_cleanup()
+{
+	light_cleanup();
 }
 
 /*

@@ -280,6 +280,8 @@ view_pixel()
 	return;
 }
 
+void view_cleanup() {}
+
 /*
  *			R A Y H I T
  *

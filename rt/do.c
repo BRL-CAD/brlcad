@@ -388,6 +388,7 @@ char	**argv;
 		mlib_free( &env_region );
 	}
 	rt_clean( ap.a_rt_i );
+	view_cleanup();
 	if(rdebug&RDEBUG_RTMEM_END)
 		rt_prmem( "After rt_clean" );
 	return(0);

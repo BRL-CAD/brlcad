@@ -65,6 +65,8 @@ int	raymiss() { return(0); }
 
 void	view_pixel() {}
 
+void	view_cleanup() {}
+
 /* "paint" types are negative ==> interpret as "special" air codes */
 #define PAINT_FIRST_ENTRY	(-999)
 #define PAINT_INTERN_EXIT	(-998)

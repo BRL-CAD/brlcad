@@ -156,7 +156,7 @@ void	view_pixel() {}
 /* end of each line */
 void	view_eol() {}
 
-/* end of processing */
+/* Associated with "clean" command, before new tree is loaded  */
 void	view_cleanup() {}
 
 /* end of a frame */

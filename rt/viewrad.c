@@ -164,6 +164,8 @@ void	view_pixel() {}
 /* end of each line */
 void	view_eol() {}
 
+void	view_cleanup() {}
+
 /* end of a frame */
 void
 view_end()

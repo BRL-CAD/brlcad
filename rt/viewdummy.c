@@ -70,6 +70,9 @@ register struct application *ap;
 /* end of a frame */
 void	view_end() {}
 
+/* Associated with "clean" command, before new tree is loaded  */
+void	view_cleanup() {}
+
 int
 dummyhit( ap, PartHeadp )
 register struct application *ap;

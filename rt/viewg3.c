@@ -484,3 +484,5 @@ view_end()
 	fprintf(outfp, " %4d\n", 0 );
 	fflush(outfp);
 }
+
+void view_cleanup() {}
