@@ -144,7 +144,7 @@ TOP_FILES="Copyright* README Cakefile* Makefile Acknowledgements \
 		cakeinclude.sh newbindir.sh pixinfo.sh"
 
 # Has Cakefile, but no compilation or tools needed, not machine specific
-ADIRS="h doc pix vfont whetstone awf brlman"
+ADIRS="h doc pix vfont whetstone awf brlman tclscripts"
 
 # Has no Cakefile, just copy it (and all sub-directories!) verbatim.
 # Only used in "dist" command.
