@@ -255,6 +255,14 @@ proc hole_size { radius } {
 		reprep ";" refresh
 }
 
+if { [catch { set val [send rtsync vrmgr_send .inmem get $treetop_name] } status ] } {
+	puts "Unable to get status of $treetop_name"
+	puts "status = $status"
+	exit
+} else {
+	puts "$treetop_name = $val"
+}
+
 puts "done dg.tcl"
 
 # node_send sh_opt -P1 -x1 -X1
