@@ -3,8 +3,8 @@
  */
 #include "../../../Cakefile.defs"
 
-#define PRODUCTS *.tcl *.itcl *.itk tclIndex
-#define STATIC_PRODUCTS	*.tcl *.itcl *.itk tclIndex
+#define PRODUCTS *.tcl *.itcl *.itk tclIndex pkgIndex.tcl
+#define STATIC_PRODUCTS	*.tcl *.itcl *.itk tclIndex pkgIndex.tcl
 #define SRCDIR	../../tclscripts/rtwizard/lib
 #undef BINDIR
 #define BINDIR	TCLSCRIPTSDIR/rtwizard/lib
@@ -23,7 +23,7 @@
 all&:
 	@echo "SRCDIR:  all done"
 
-tclIndex:
+pkgIndex.tcl tclIndex:
 	../../../tclscripts/ami.tcl ../../../tclscripts/rtwizard/lib
 
 clean&:
