@@ -27,10 +27,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <strings.h>
 #endif
 
-#ifndef CRAY
+#ifdef HAVE_TERMCAP_H
+# include <termcap.h>
+#endif
+
 #include <sys/ioctl.h>
 #define _winsize winsize	/* For compat with _ioctl.h. */
-#endif
 
 #define TBUFSIZ		1024
 #define MAX_TERM_LEN	80
