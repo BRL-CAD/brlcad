@@ -39,21 +39,21 @@ struct spm_specific {
 #define SP_O(m)	offsetof(struct spm_specific, m)
 
 struct structparse spm_parse[] = {
-	"%s",	SPM_NAME_LEN, "file",		offsetofarray(struct spm_specific, sp_file),	FUNC_NULL,
-	"%d",	1, "w",		SP_O(sp_w),	FUNC_NULL,
-	"%d",	1, "n",		SP_O(sp_w),	FUNC_NULL,	/*compat*/
-	"",	0, (char *)0,	0,		FUNC_NULL
+	{"%s",	SPM_NAME_LEN, "file",		offsetofarray(struct spm_specific, sp_file),	FUNC_NULL },
+	{"%d",	1, "w",		SP_O(sp_w),	FUNC_NULL },
+	{"%d",	1, "n",		SP_O(sp_w),	FUNC_NULL },	/*compat*/
+	{"",	0, (char *)0,	0,		FUNC_NULL }
 };
 
 HIDDEN int	spm_setup(), spm_render();
 HIDDEN void	spm_print(), spm_mfree();
 
 struct mfuncs spm_mfuncs[] = {
-	"spm",		0,		0,		MFI_UV,
-	spm_setup,	spm_render,	spm_print,	spm_mfree,
+	{"spm",		0,		0,		MFI_UV,
+	spm_setup,	spm_render,	spm_print,	spm_mfree },
 
-	(char *)0,	0,		0,
-	0,		0,		0,		0
+	{(char *)0,	0,		0,
+	0,		0,		0,		0 }
 };
 
 /*

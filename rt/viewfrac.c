@@ -45,7 +45,7 @@ int	use_air = 1;		/* Handling of air in librt */
  *  the command line, or from within an animation script.
  */
 struct structparse view_parse[] = {
-	"",	0, (char *)0,	0,	FUNC_NULL
+	{"",	0, (char *)0,	0,	FUNC_NULL }
 };
 
 /*

@@ -82,18 +82,18 @@ struct txt_specific {
 struct structparse txt_parse[] = {
 #if CRAY && !__STDC__
 	/* Hack for old Cray compilers */
-	"%d",	1, "transp",	0,			txt_transp_hook,
-	"%s",	TXT_NAME_LEN, "file",	3,		FUNC_NULL,
+	{"%d",	1, "transp",	0,			txt_transp_hook },
+	{"%s",	TXT_NAME_LEN, "file",	3,		FUNC_NULL },
 #else
-	"%d",	1, "transp",	offsetofarray(struct txt_specific, tx_transp),	txt_transp_hook,
-	"%s",	TXT_NAME_LEN, "file", offsetofarray(struct txt_specific, tx_file),		FUNC_NULL,
+	{"%d",	1, "transp",	offsetofarray(struct txt_specific, tx_transp),	txt_transp_hook },
+	{"%s",	TXT_NAME_LEN, "file", offsetofarray(struct txt_specific, tx_file),		FUNC_NULL },
 #endif
-	"%d",	1, "w",		TX_O(tx_w),		FUNC_NULL,
-	"%d",	1, "n",		TX_O(tx_n),		FUNC_NULL,
-	"%d",	1, "l",		TX_O(tx_n),		FUNC_NULL, /*compat*/
-	"%d",	1, "fw",	TX_O(tx_fw),		FUNC_NULL,
-	"%d",	1, "trans_valid",	TX_O(tx_trans_valid),	FUNC_NULL,
-	"",	0, (char *)0,	0,			FUNC_NULL
+	{"%d",	1, "w",		TX_O(tx_w),		FUNC_NULL },
+	{"%d",	1, "n",		TX_O(tx_n),		FUNC_NULL },
+	{"%d",	1, "l",		TX_O(tx_n),		FUNC_NULL }, /*compat*/
+	{"%d",	1, "fw",	TX_O(tx_fw),		FUNC_NULL },
+	{"%d",	1, "trans_valid",	TX_O(tx_trans_valid),	FUNC_NULL },
+	{"",	0, (char *)0,	0,			FUNC_NULL }
 };
 
 /*
@@ -333,13 +333,13 @@ struct ckr_specific  {
 struct structparse ckr_parse[] = {
 #if CRAY && !__STDC__
 	/* Hack for old Cray compilers */
-	"%d",	1, "a",		0,			FUNC_NULL,
-	"%d",	1, "b",		1,			FUNC_NULL,
+	{"%d",	1, "a",		0,			FUNC_NULL },
+	{"%d",	1, "b",		1,			FUNC_NULL },
 #else
-	"%d",	1, "a",	offsetofarray(struct ckr_specific, ckr_a), FUNC_NULL,
-	"%d",	1, "b",	offsetofarray(struct ckr_specific, ckr_b), FUNC_NULL,
+	{"%d",	1, "a",	offsetofarray(struct ckr_specific, ckr_a), FUNC_NULL },
+	{"%d",	1, "b",	offsetofarray(struct ckr_specific, ckr_b), FUNC_NULL },
 #endif
-	"",	0, (char *)0,	0,			FUNC_NULL
+	{"",	0, (char *)0,	0,			FUNC_NULL }
 };
 
 /*

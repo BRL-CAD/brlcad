@@ -36,7 +36,7 @@ struct	marble_specific  {
 #define MARB_O(m)	offsetof(struct marble_specific, m)
 
 struct	structparse marble_parse[] = {
-	"",	0,	(char *)0,	0,		FUNC_NULL
+	{"",	0,	(char *)0,	0,		FUNC_NULL }
 };
 
 
@@ -45,11 +45,11 @@ extern int	mlib_zero(), mlib_one();
 extern void	mlib_void();
 
 struct	mfuncs marble_mfuncs[] = {
-	"marble",	0,		0,		MFI_HIT,
-	marble_setup,	marble_render,	mlib_void,	mlib_void,
+	{"marble",	0,		0,		MFI_HIT,
+	marble_setup,	marble_render,	mlib_void,	mlib_void },
 
-	(char *)0,	0,		0,		0,
-	0,		0,		0,		0
+	{(char *)0,	0,		0,		0,
+	0,		0,		0,		0 }
 };
 
 

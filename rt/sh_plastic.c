@@ -51,20 +51,20 @@ struct phong_specific {
 #define PL_O(m)	offsetof(struct phong_specific, m)
 
 struct structparse phong_parse[] = {
-	"%d",	1, "shine",		PL_O(shine),		FUNC_NULL,
-	"%d",	1, "sh",		PL_O(shine),		FUNC_NULL,
-	"%f",	1, "specular",		PL_O(wgt_specular),	FUNC_NULL,
-	"%f",	1, "sp",		PL_O(wgt_specular),	FUNC_NULL,
-	"%f",	1, "diffuse",		PL_O(wgt_diffuse),	FUNC_NULL,
-	"%f",	1, "di",		PL_O(wgt_diffuse),	FUNC_NULL,
-	"%f",	1, "transmit",		PL_O(transmit),		FUNC_NULL,
-	"%f",	1, "tr",		PL_O(transmit),		FUNC_NULL,
-	"%f",	1, "reflect",		PL_O(reflect),		FUNC_NULL,
-	"%f",	1, "re",		PL_O(reflect),		FUNC_NULL,
-	"%f",	1, "ri",		PL_O(refrac_index),	FUNC_NULL,
-	"%f",	1, "extinction",	PL_O(extinction),	FUNC_NULL,
-	"%f",	1, "ex",		PL_O(extinction),	FUNC_NULL,
-	"",	0, (char *)0,		0,			FUNC_NULL
+	{"%d",	1, "shine",		PL_O(shine),		FUNC_NULL },
+	{"%d",	1, "sh",		PL_O(shine),		FUNC_NULL },
+	{"%f",	1, "specular",		PL_O(wgt_specular),	FUNC_NULL },
+	{"%f",	1, "sp",		PL_O(wgt_specular),	FUNC_NULL },
+	{"%f",	1, "diffuse",		PL_O(wgt_diffuse),	FUNC_NULL },
+	{"%f",	1, "di",		PL_O(wgt_diffuse),	FUNC_NULL },
+	{"%f",	1, "transmit",		PL_O(transmit),		FUNC_NULL },
+	{"%f",	1, "tr",		PL_O(transmit),		FUNC_NULL },
+	{"%f",	1, "reflect",		PL_O(reflect),		FUNC_NULL },
+	{"%f",	1, "re",		PL_O(reflect),		FUNC_NULL },
+	{"%f",	1, "ri",		PL_O(refrac_index),	FUNC_NULL },
+	{"%f",	1, "extinction",	PL_O(extinction),	FUNC_NULL },
+	{"%f",	1, "ex",		PL_O(extinction),	FUNC_NULL },
+	{"",	0, (char *)0,		0,			FUNC_NULL }
 };
 
 HIDDEN int phong_setup(), mirror_setup(), glass_setup();
@@ -73,20 +73,20 @@ HIDDEN void	phong_print();
 HIDDEN void	phong_free();
 
 struct mfuncs phg_mfuncs[] = {
-	"default",	0,		0,		MFI_NORMAL|MFI_LIGHT,
-	phong_setup,	phong_render,	phong_print,	phong_free,
+	{"default",	0,		0,		MFI_NORMAL|MFI_LIGHT,
+	phong_setup,	phong_render,	phong_print,	phong_free },
 
-	"plastic",	0,		0,		MFI_NORMAL|MFI_LIGHT,
-	phong_setup,	phong_render,	phong_print,	phong_free,
+	{"plastic",	0,		0,		MFI_NORMAL|MFI_LIGHT,
+	phong_setup,	phong_render,	phong_print,	phong_free },
 
-	"mirror",	0,		0,		MFI_NORMAL|MFI_LIGHT,
-	mirror_setup,	phong_render,	phong_print,	phong_free,
+	{"mirror",	0,		0,		MFI_NORMAL|MFI_LIGHT,
+	mirror_setup,	phong_render,	phong_print,	phong_free },
 
-	"glass",	0,		0,		MFI_NORMAL|MFI_LIGHT,
-	glass_setup,	phong_render,	phong_print,	phong_free,
+	{"glass",	0,		0,		MFI_NORMAL|MFI_LIGHT,
+	glass_setup,	phong_render,	phong_print,	phong_free },
 
-	(char *)0,	0,		0,		0,
-	0,		0,		0,		0
+	{(char *)0,	0,		0,		0,
+	0,		0,		0,		0 }
 };
 
 extern double phg_ipow();

@@ -58,32 +58,32 @@ struct	stxt_specific  {
 struct	structparse stxt_parse[] = {
 #if CRAY && !__STDC__
 	/* Hack for Cray compiler */
-	"%d",	1, "transp",		0,		stxt_transp_hook,
-	"%s",	STX_NAME_LEN, "file",	1,			FUNC_NULL,
+	{"%d",	1, "transp",		0,		stxt_transp_hook },
+	{"%s",	STX_NAME_LEN, "file",	1,			FUNC_NULL },
 #else
-	"%d",	1, "transp",	offsetofarray(struct stxt_specific, stx_transp),	stxt_transp_hook,
-	"%s",	STX_NAME_LEN, "file",	offsetofarray(struct stxt_specific, stx_file),	FUNC_NULL,
+	{"%d",	1, "transp",	offsetofarray(struct stxt_specific, stx_transp),	stxt_transp_hook },
+	{"%s",	STX_NAME_LEN, "file",	offsetofarray(struct stxt_specific, stx_file),	FUNC_NULL },
 #endif
-	"%d",	1, "w",			SOL_O(stx_w),		FUNC_NULL,
-	"%d",	1, "n",			SOL_O(stx_n),		FUNC_NULL,
-	"%d",	1, "d",			SOL_O(stx_d),		FUNC_NULL,
-	"%d",	1, "fw",		SOL_O(stx_fw),		FUNC_NULL,
-	"%d",	1, "trans_valid",	SOL_O(trans_valid),	FUNC_NULL,
-	"",	0, (char *)0,		0,			FUNC_NULL
+	{"%d",	1, "w",			SOL_O(stx_w),		FUNC_NULL },
+	{"%d",	1, "n",			SOL_O(stx_n),		FUNC_NULL },
+	{"%d",	1, "d",			SOL_O(stx_d),		FUNC_NULL },
+	{"%d",	1, "fw",		SOL_O(stx_fw),		FUNC_NULL },
+	{"%d",	1, "trans_valid",	SOL_O(trans_valid),	FUNC_NULL },
+	{"",	0, (char *)0,		0,			FUNC_NULL }
 };
 
 struct	mfuncs stxt_mfuncs[] = {
-	"brick",	0,		0,		MFI_HIT,
-	stxt_setup,	brick_render,	stxt_print,	stxt_free,
+	{"brick",	0,		0,		MFI_HIT,
+	stxt_setup,	brick_render,	stxt_print,	stxt_free },
 
-	"mbound",	0,		0,		MFI_HIT,
-	stxt_setup,	mbound_render,	stxt_print,	stxt_free,
+	{"mbound",	0,		0,		MFI_HIT,
+	stxt_setup,	mbound_render,	stxt_print,	stxt_free },
 
-	"rbound",	0,		0,		MFI_HIT,
-	stxt_setup,	rbound_render,	stxt_print,	stxt_free,
+	{"rbound",	0,		0,		MFI_HIT,
+	stxt_setup,	rbound_render,	stxt_print,	stxt_free },
 
-	(char *)0,	0,		0,		0,
-	0,		0,		0,		0
+	{ (char *)0,	0,		0,		0,
+	0,		0,		0,		0 }
 };
 
 /*

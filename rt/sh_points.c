@@ -47,21 +47,21 @@ struct points_specific {
 #define POINTS_O(m)	offsetof(struct points_specific, m)
 
 struct structparse points_parse[] = {
-	"%s",	PT_NAME_LEN, "file", offsetofarray(struct points_specific, pt_file),	FUNC_NULL,
-	"%d",	1, "size",		POINTS_O(pt_size),	FUNC_NULL,
-	"%d",	1, "w",			POINTS_O(pt_size),	FUNC_NULL,
-	"",	0, (char *)0,		0,			FUNC_NULL
+	{"%s",	PT_NAME_LEN, "file", offsetofarray(struct points_specific, pt_file),	FUNC_NULL },
+	{"%d",	1, "size",		POINTS_O(pt_size),	FUNC_NULL },
+	{"%d",	1, "w",			POINTS_O(pt_size),	FUNC_NULL },
+	{"",	0, (char *)0,		0,			FUNC_NULL }
 };
 
 HIDDEN int	points_setup(), points_render();
 HIDDEN void	points_print(), points_mfree();
 
 struct mfuncs points_mfuncs[] = {
-	"points",	0,		0,		MFI_UV,
-	points_setup,	points_render,	points_print,	points_mfree,
+	{"points",	0,		0,		MFI_UV,
+	points_setup,	points_render,	points_print,	points_mfree },
 
-	(char *)0,	0,		0,
-	0,		0,		0,		0
+	{(char *)0,	0,		0,		0,
+	0,		0,		0,		0 }
 };
 
 HIDDEN
