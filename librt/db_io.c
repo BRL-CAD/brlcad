@@ -306,6 +306,13 @@ long		offset;
 /*
  *			D B _ G E T _ E X T E R N A L
  *
+ *  Obtains a object from the database, leaving it in external (on-disk)
+ *  format.
+ *  The bu_external structure represented by 'ep' is initialized here,
+ *  the caller need not pre-initialize it.  On error, 'ep' is left
+ *  un-initialized and need not be freed, to simplify error recovery.
+ *  On success, the caller is responsible for calling db_free_external(ep);
+ *
  *  Returns -
  *	-1	error
  *	 0	success
@@ -402,6 +409,46 @@ struct db_i		*dbip;
 	if( db_put( dbip, dp, (union record *)(ep->ext_buf), 0, ngran ) < 0 )
 		return(-1);
 	return(0);
+}
+
+
+/*
+ *
+ *			D B _ F W R I T E _ E X T E R N A L
+ *
+ *  Add name from dp->d_namep to external representation of solid,
+ *  and write it into a file.
+ *
+ *  Caller is responsible for freeing memory of external representation,
+ *  using db_free_external().
+ *
+ *  The 'name' field of the external representation is modified to
+ *  contain the desired name.
+ *
+ *  Returns -
+ *	<0	error
+ *	0	OK
+ */
+int
+db_fwrite_external( fp, name, ep )
+FILE			*fp;
+CONST char		*name;
+struct bu_external	*ep;			/* can't be const */
+{
+	union record		*rec;
+
+	if(rt_g.debug&DEBUG_DB) bu_log("db_fwrite_external(%s) ep=x%x\n",
+		name, ep);
+
+	BU_CK_EXTERNAL(ep);
+
+	/* Add name.  Depends on solid names always being in the same place */
+	rec = (union record *)ep->ext_buf;
+	NAMEMOVE( name, rec->s.s_name );
+
+	if( fwrite( ep->ext_buf, ep->ext_nbytes, 1, fp ) != 1 )
+		return -1;
+	return 0;
 }
 
 /*
