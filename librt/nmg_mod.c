@@ -2264,7 +2264,7 @@ long *parent;
 
 	NMG_CK_LOOPUSE(lu);
 
-	if (trans_tbl == (long **)NULL)\
+	if (trans_tbl == (long **)NULL)
 		nmg_start_dup(nmg_find_model( (long *)lu ));
 
 	/* if loop is just a vertex, that's simple to duplicate */
