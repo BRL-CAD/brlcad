@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.0  84/12/26  16:47:55  dpk
+ * System as distributed to Berkeley 26 Dec 84
+ * 
  * Revision 1.4  84/02/06  20:43:17  dpk
  * Fixed handling of clear to end of line (ADM3A bug).  Thanks
  * go to Terry Slatterly for finding this bug and providing the fix.
@@ -62,12 +65,24 @@ make_scr()
 	register struct screenline	*ns;
 	register char	*nsp;
 
+	if (Savelines)
+		free (Savelines);
+	Savelines = (struct screenline *)emalloc(LI*sizeof (struct screenline));
+
+	if (nimage)
+		free (nimage);
+	if (oimage)
+		free (oimage);
 	nimage = (struct scrimage *) emalloc(LI * sizeof (struct scrimage));
 	oimage = (struct scrimage *) emalloc(LI * sizeof (struct scrimage));
 
+	if (ns)
+		free (ns);
 	ns = Screen = (struct screenline *)
 			emalloc(LI * sizeof(struct screenline));
 
+	if (nsp)
+		free (nsp);
 	nsp = (char *) emalloc(CO * LI);
 
 	for (i = 0; i < LI; i++) {

@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.0  84/12/26  16:46:45  dpk
+ * System as distributed to Berkeley 26 Dec 84
+ * 
  * Revision 1.3  84/03/20  22:27:17  dpk
  * Added better termcap handling
  * 
@@ -287,6 +290,32 @@ ReInitTTY()
 {
 	ttyset(0);	/* Back to original settings */
 	ttinit();
+}
+
+ttsize()
+{
+#ifdef TIOCGWINSZ
+	struct winsize win;
+
+	if (ioctl (0, TIOCGWINSZ, &win) == 0) {
+		if (win.col)
+			CO = win.col;
+		if (win.row)
+			LI = win.row;
+	}
+#else TIOCGWINSZ
+#ifdef BTL_BLIT
+#include <sys/jioctl.h>
+	struct jwinsize jwin;
+
+	if (ioctl (0, JWINSIZE, &jwin) == 0) {
+		if (jwin.bytesx)
+			CO = win.bytesx;
+		if (jwin.bytesy)
+			LI = win.bytesy;
+	}
+#endif BTL_BLIT
+#endif TIOCGWINSZ
 }
 
 ttinit()
@@ -623,11 +652,12 @@ char	*argv[];
 	}
 
 	getTERM();
+	ttsize();
 	ttsetup();
 	InitCM();
 	CanScroll = ((AL && DL) || CS);
 	settout();
-	make_scr();	/* Do this before making zero */
+	make_scr();	/* Do this before making zero, allocates memory */
 	tmpinit();	/* Init temp file */
 	MacInit();	/* Initialize Macros */
 	InitFuncs();	/* Initialize functions and variables */
