@@ -18,6 +18,6 @@
 /* Explicit composition of each product */
 
 halftone:	OBJ 
-	CC LDFLAGS -o halftone OBJ LIBRT LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES
+	CC LDFLAGS -o halftone OBJ LIBRT LIBFB LIBFB_LIBES LIBBN LIBBU LIBBU_LIBES LIBES
 
 #include "../Cakefile.rules"
