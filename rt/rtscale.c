@@ -3,14 +3,14 @@
 *  This is a program will compute and plot an appropriate scale in the lower
 *  left corner of a given image.  The scale is layed out in view
 *  space coordinates and then translated into model coordinates, where it is
-*  plotted.  This plot can be overlayed onto any other UNIXplot file of onto
+*  plotted.  This plot can be overlayed onto any other UNIX-Plot file of onto
 *  a pix file.
 *  
 *  The scale will be a simple line with a certain number of tick marks along
-*  it.  It will always end with a "nice" number: that is, rounded to the the
+*  it.  It will always end with a "nice" number: that is, rounded to the 
 *  nearest 10 as appropriate.
 *
-*  The program conisists of three parts:
+*  The program consists of three parts:
 *	1) take view, orientation, eye_position, and size from the rt log 
 *          file, and use this information to build up the view2model matrix;
 *	2) lay out the scale in view-coordinates and convert all points to
@@ -19,7 +19,7 @@
 *	3) concatenate the scales and a copy of the original image into a
 *	   a composite that it printed on standard out.  For the moment this
 *	   is achieved by saying " cat scale.pl file.pl >> out.file ".  
-*	   The order of the files is very important: if not cat'edin the
+*	   The order of the files is very important: if not cat'ed in the
 *	   right order, the scales will be lost when plrot is applied though
 *	   they will still be seen with pl-sgi and mged. Later
 *	   this will be handled by scale.c as an fread() and fwrite().
@@ -55,6 +55,7 @@ static char RCSscale[] = "@(#)$Header$ (BRL)";
 #define FALSE 0
 #define TRUE 1
 
+
 char usage[] = "\
 Usage:  rtscale (width) (units) (interval) filename [string] >  file.pl\n\
 	(width)		length of scale in model measurements\n\
@@ -72,8 +73,9 @@ void	make_border();
 void	make_bounding_rpp();
 
 static FILE	*fp;
-int		border;		/* flag for debugging; to be used later */
-int		verbose;	/* flag for debugging; to be used later */
+int		border;			/* flag for debugging; to be used later */
+int		verbose;		/* flag for debugging; to be used later */
+int		SEEN_DESCRIPT=0;	/* flag for descriptive string */
 
 /*
  *
@@ -128,6 +130,7 @@ char	**argv;
 
 	if( argc == 6 )  {
 		strcpy( descript, argv[5] );
+		SEEN_DESCRIPT = 1;
 	}
 
 	intervals = atof(argv[3]);
@@ -219,6 +222,7 @@ char	*descript;
 	float		v_y_offset;	/* distance the label is offset in y */
 	float		v_y_des_offset;	/* descriptive string offset */
 	point_t		v_offset;
+	point_t		v_des_offset;
 	vect_t		v_hgtv;		/* height vector for ticks, view space */
 	vect_t		m_hgtv;		/* height vector for ticks, model space */
 	vect_t		m_inv_hgtv;
@@ -256,7 +260,18 @@ char	*descript;
 
 	VSET(v_lenv, 1.0, 0.0, 0.0);
 	VSET(v_hgtv, 0.0, 1.0, 0.0);
-	VSET(v_startpt, -0.9, -0.8, 0.0);
+
+	/* If a second, descriptive string is given, move the printed
+	 * material up by one line so that it will not be cut off by
+	 * pl-fb, since the lettering rides right on the hairy edge
+	 * height wise.
+	 */
+
+	if(SEEN_DESCRIPT)  {
+		VSET(v_startpt, -0.9, -0.7, 0.0);
+	} else {
+		VSET(v_startpt, -0.9, -0.8, 0.0);
+	}
 
 	/* Now convert all necessary points and vectors to model coordinates.
 	 * Unitize all direction vectors, and invert the height vector so
@@ -305,8 +320,8 @@ char	*descript;
 	 */
 
 	v_y_des_offset = -( 4 * v_tick_hgt + v_char_width );
-	VSET(v_offset, 0.0, v_y_des_offset, 0.0);
-	VADD2(v_descript_st, v_startpt, v_offset);
+	VSET(v_des_offset, 0.0, v_y_des_offset, 0.0);
+	VADD2(v_descript_st, v_startpt, v_des_offset);
 
 	MAT4X3PNT(m_descript_st, v2mod, v_descript_st);
 
