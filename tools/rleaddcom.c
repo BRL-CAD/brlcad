@@ -133,7 +133,7 @@ char **argv;
 	}
 	else
 	    strcpy( buf, temp );
-	mktemp( buf );
+	mkstemp( buf );
 #ifndef NO_OPEN_PIPES
 	/* Compressed file special case. */
 	cp = i_fname + strlen( i_fname ) - 2;
