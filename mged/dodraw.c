@@ -747,8 +747,8 @@ struct solid		*existing_sp;
 	/* do nothing here */
 #else
 	save_dmlp = curr_dm_list;
-	for( BU_LIST_FOR(dmlp, dm_list, &head_dm_list.l) ){
-	  if(dmlp->_dmp->dm_displaylist && dmlp->_mged_variables.dlist){
+	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
+	  if(dmlp->_dmp->dm_displaylist && dmlp->_mged_variables->dlist){
 	    curr_dm_list = dmlp;
 	    createDList(sp);
 	  }
@@ -1021,8 +1021,8 @@ int			copy;
 	}
 
 #ifdef DO_SINGLE_DISPLAY_LIST
-	for( BU_LIST_FOR(dmlp, dm_list, &head_dm_list.l) ){
-	  if(dmlp->_dmp->dm_displaylist && dmlp->_mged_variables.dlist){
+	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
+	  if(dmlp->_dmp->dm_displaylist && dmlp->_mged_variables->dlist){
 	    save_dmlp = curr_dm_list;
 	    curr_dm_list = dmlp;
 	    createDList(&HeadSolid);
@@ -1070,7 +1070,6 @@ int		copy;
 	/* Need to enter phony name in directory structure */
 	dp = db_diradd( dbip,  name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID );
 
-
 #if 0
 	/* XXX need to get this going. */
 	path.fp_names[0] = dp;
@@ -1114,8 +1113,8 @@ int		copy;
 	/* do nothing here */
 #else
 	save_dmlp = curr_dm_list;
-	for( BU_LIST_FOR(dmlp, dm_list, &head_dm_list.l) ){
-	  if(dmlp->_dmp->dm_displaylist && dmlp->_mged_variables.dlist){
+	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
+	  if(dmlp->_dmp->dm_displaylist && dmlp->_mged_variables->dlist){
 	    curr_dm_list = dmlp;
 	    createDList(sp);
 	  }
@@ -1737,8 +1736,8 @@ char	**argv;
 
 #ifdef DO_SINGLE_DISPLAY_LIST
 	save_dmlp = curr_dm_list;
-	for( BU_LIST_FOR(dmlp, dm_list, &head_dm_list.l) ){
-	  if(dmlp->_dmp->dm_displaylist && dmlp->_mged_variables.dlist){
+	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
+	  if(dmlp->_dmp->dm_displaylist && dmlp->_mged_variables->dlist){
 	    curr_dm_list = dmlp;
 	    createDList(&HeadSolid);
 	  }
