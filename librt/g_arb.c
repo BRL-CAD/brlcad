@@ -74,6 +74,34 @@ HIDDEN int	arb_face(), arb_add_pt();
 
 static struct arb_specific *FreeArb;	/* Head of free list */
 
+/* Layout of arb in input record */
+static struct arb_info {
+	char	*ai_title;
+	int	ai_sub[4];
+} arb_info[6] = {
+	{ "1234", 3, 2, 1, 0 },
+	{ "8765", 4, 5, 6, 7 },
+	{ "1485", 4, 7, 3, 0 },
+	{ "2673", 2, 6, 5, 1 },
+	{ "1562", 1, 5, 4, 0 },
+	{ "4378", 7, 6, 2, 3 }
+};
+
+HIDDEN void
+arb_getarb()
+{
+	register struct arb_specific *arbp;
+	register int bytes;
+
+	bytes = rt_byte_roundup(64*sizeof(struct arb_specific));
+	arbp = (struct arb_specific *)rt_malloc(bytes, "get_arb");
+	while( bytes >= sizeof(struct arb_specific) )  {
+		arbp->arb_forw = FreeArb;
+		FreeArb = arbp++;
+		bytes -= sizeof(struct arb_specific);
+	}
+}
+
 /*
  *  			A R B _ P R E P
  */
@@ -126,6 +154,7 @@ struct rt_i	*rtip;
 
 #define P(x)	(&vec[(x)*ELEMENTS_PER_VECT])
 	faces = 0;
+#if 0
 	if( arb_face( stp, P(3), P(2), P(1), P(0), "1234" ) )
 		faces++;					/* 1234 */
 	if( arb_face( stp, P(4), P(5), P(6), P(7), "8765" ) )
@@ -139,7 +168,16 @@ struct rt_i	*rtip;
 	if( arb_face( stp, P(7), P(6), P(2), P(3), "4378" ) )
 		faces++;					/* 4378 */
 #undef P
-
+#else
+	for( i=0; i<6; i++ )  {
+		if( arb_face( stp,
+			P(arb_info[i].ai_sub[0]),
+			P(arb_info[i].ai_sub[1]),
+			P(arb_info[i].ai_sub[2]),
+			P(arb_info[i].ai_sub[3]),
+			arb_info[i].ai_title ) )  faces++;
+	}
+#endif
 	if( faces < 4  || faces > 6 )  {
 		rt_log("arb(%s):  only %d faces present\n",
 			stp->st_name, faces);
@@ -190,18 +228,7 @@ char	*title;
 {
 	register struct arb_specific *arbp;
 
-	while( (arbp=FreeArb) == ARB_NULL )  {
-		register struct arb_specific *arbp;
-		register int bytes;
-
-		bytes = rt_byte_roundup(64*sizeof(struct arb_specific));
-		arbp = (struct arb_specific *)rt_malloc(bytes, "get_arb");
-		while( bytes >= sizeof(struct arb_specific) )  {
-			arbp->arb_forw = FreeArb;
-			FreeArb = arbp++;
-			bytes -= sizeof(struct arb_specific);
-		}
-	}
+	while( (arbp=FreeArb) == ARB_NULL )  arb_getarb();
 	FreeArb = arbp->arb_forw;
 
 	arb_npts = 0;
