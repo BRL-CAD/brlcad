@@ -70,6 +70,75 @@ CONST mat_t m;
 
 }
 
+/*	N M G _ T A B U L A T E _ F A C E _ G _ V E R T S
+ *
+ * Tabulates all vertices in faces that use fg
+ */
+
+void
+nmg_tabulate_face_g_verts( tab , fg )
+struct nmg_ptbl *tab;
+CONST struct face_g *fg;
+{
+	struct face *f;
+
+	NMG_CK_FACE_G( fg );
+
+	/* loop through all faces using fg */
+	for( RT_LIST_FOR( f , face , &fg->f_hd ) )
+	{
+		struct faceuse *fu;
+		struct loopuse *lu;
+
+		NMG_CK_FACE( f );
+
+		/* get one of the two uses of this face */
+		fu = f->fu_p;
+		NMG_CK_FACEUSE( fu );
+
+		/* Visit each loop in this faceuse */
+		for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+		{
+			NMG_CK_LOOPUSE( lu );
+
+			/* include loops of a single vertex */
+			if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )
+			{
+				struct vertexuse *vu;
+				struct vertex *v;
+
+				vu = RT_LIST_FIRST(vertexuse, &lu->down_hd);
+				NMG_CK_VERTEXUSE( vu );
+				v = vu->v_p;
+				NMG_CK_VERTEX( v );
+
+				/* insert vertex into table */
+				nmg_tbl( tab , TBL_INS_UNIQUE , (long *)v );
+			}
+			else
+			{
+				struct edgeuse *eu;
+
+				/* visit each edgeuse in the loop */
+				for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+				{
+					struct vertexuse *vu;
+					struct vertex *v;
+
+					NMG_CK_EDGEUSE( eu );
+					vu = eu->vu_p;
+					NMG_CK_VERTEXUSE( vu );
+					v = vu->v_p;
+					NMG_CK_VERTEX( v );
+
+					/* insert vertex into table */
+					nmg_tbl( tab , TBL_INS_UNIQUE , (long *)v );
+				}
+			}
+		}
+	}
+}
+
 /*	R T _ I S E C T _ P L A N E S
  *
  * Calculates the point that is the minimum distance from all the
@@ -539,6 +608,162 @@ plane_t pl;
 	HMOVE( pl , plane );
 
 	return( area );
+}
+
+/*	N M G _ C A L C _ F A C E _ G
+ *
+ * Calculate face geometry using a least squares fit.
+ *
+ * If fu does not already have a face_g associated, only
+ * vertices in fu will participate.
+ *
+ * if fu has a face_g, then all vertices in any face that
+ * references the same face_g will participate in the
+ * fit for the face plane.
+ *
+ * This routine is not efficient for use with newly created
+ * faces as it calculates the direction of the face normal
+ * (old_pl), then fits a plane to the vertices. For faces
+ * with a single loop, this is calculating the same thing twice.
+ *
+ * Returns:
+ *	0 - All is well
+ *	1 - Failed to calculate face geometry
+ */
+
+int
+nmg_calc_face_g( fu )
+struct faceuse *fu;
+{
+	struct nmg_ptbl verts;
+	plane_t pl,old_pl;
+	struct face *f;
+	struct face_g *fg;
+	struct loopuse *lu;
+	mat_t matrix;
+	mat_t inverse;
+	fastf_t det;
+	vect_t vsum;
+	int i;
+	int got_dir=0;
+	int failed=0;
+
+	nmg_tbl( &verts , TBL_INIT , (long *)NULL );
+
+	NMG_CK_FACEUSE( fu );
+	f = fu->f_p;
+	NMG_CK_FACE( f );
+	fg = f->fg_p;
+	if( fg )
+	{
+		NMG_CK_FACE_G( fg );
+		nmg_tabulate_face_g_verts( &verts , fg );
+	}
+	else
+		nmg_vertex_tabulate( &verts , &fu->l.magic );
+
+	/* Get the direction for the plane normal in "old_pl".
+	 * Make sure we are dealing with OT_SAME faceuse.
+	 */
+	if( fu->orientation != OT_SAME )
+		fu = fu->fumate_p;
+	if( fu->orientation != OT_SAME )
+	{
+		rt_log( "nmg_calc_face_g: fu x%x has no OT_SAME use\n" , fu );
+		nmg_tbl( &verts , TBL_FREE , (long *)NULL );
+		return( 1 );
+	}
+
+	/* find an OT_SAME loop to use for direction calculation */
+	for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+	{
+		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+			continue;
+
+		if( !got_dir && lu->orientation == OT_SAME )
+		{
+			fastf_t area;
+
+			/* get direction for face normal */
+			area = nmg_loop_plane_area( lu , old_pl );
+			if( area > 0.0 )
+			{
+				got_dir = 1;
+				break;
+			}
+		}
+	}
+
+	if( !got_dir )
+	{
+		rt_log( "nmg_calc_face_g: Cannot get direction for face normal for fu x%x\n" , fu );
+		return( 1 );
+	}
+
+	/* build matrix */
+	mat_zero( matrix );
+	VSET( vsum , 0.0 , 0.0 , 0.0 );
+
+	for( i=0 ; i<NMG_TBL_END( &verts ) ; i++ )
+	{
+		struct vertex *v;
+		struct vertex_g *vg;
+
+		v = (struct vertex *)NMG_TBL_GET( &verts , i );
+		vg = v->vg_p;
+
+		matrix[0] += vg->coord[X] * vg->coord[X];
+		matrix[1] += vg->coord[X] * vg->coord[Y];
+		matrix[2] += vg->coord[X] * vg->coord[Z];
+		matrix[5] += vg->coord[Y] * vg->coord[Y];
+		matrix[6] += vg->coord[Y] * vg->coord[Z];
+		matrix[10] += vg->coord[Z] * vg->coord[Z];
+
+		vsum[X] += vg->coord[X];
+		vsum[Y] += vg->coord[Y];
+		vsum[Z] += vg->coord[Z];
+	}
+	matrix[4] = matrix[1];
+	matrix[8] = matrix[2];
+	matrix[9] = matrix[6];
+	matrix[15] = 1.0;
+
+
+	/* Check that we don't have a singular matrix */
+	det = mat_determinant( matrix );
+
+	if( !NEAR_ZERO( det , SMALL_FASTF ) )
+	{
+		fastf_t inv_len_pl;
+
+		/* invert matrix */
+		mat_inv( inverse , matrix );
+
+		/* get normal vector */
+		MAT4X3PNT( pl , inverse , vsum );
+
+		/* get distance from plane to orgin */
+		inv_len_pl = 1.0/(MAGNITUDE( pl ));
+		pl[H] = VDOT( pl , vsum )/(fastf_t)(NMG_TBL_END( &verts));
+
+		/* unitize direction vector */
+		HSCALE( pl , pl , inv_len_pl );
+
+		/* make sure it points in the correct direction */
+		if( VDOT( pl , old_pl ) < 0.0 )
+			HREVERSE( pl , pl );
+
+		/* assign new geometry to face */
+		nmg_face_g( fu , pl );
+	}
+	else
+	{
+		rt_log( "nmg_calc_face_g: Cannot calculate plane for fu x%x\n" , fu );
+		failed = 1;
+	}
+
+	nmg_tbl( &verts , TBL_FREE , (long *)NULL );
+	return( failed );
 }
 
 /*	The following routines calculate surface area of
