@@ -105,7 +105,7 @@ register complex	roots[];	/* space to put roots found	*/
 		if ( (findRoot( eqn, &roots[n] )) < 0 )
 			return(n);	/* return those we found, anyways */
 
-		if ( Abs(roots[n].im) > SMALL* Abs(roots[n].re) ){
+		if ( Abs(roots[n].im) > 1.0e-5* Abs(roots[n].re) ){
 			/* If root is complex, its complex conjugate is
 			 * also a root since complex roots come in con-
 			 * jugate pairs when all coefficients are real.
@@ -213,7 +213,7 @@ register complex	*nxZ;	/* initial guess for root	*/
 			continue;
 		if( (b-diff) == b )
 			return(i);		/* OK -- can't do better */
-		if( diff > (b - diff)*SMALL ) 
+		if( diff > (b - diff)*1.0e-5 ) 
 			continue;
 		return(i);			/* OK */
 	}
@@ -303,7 +303,7 @@ register int		nroots;
 			CxMul( &epoly, &roots[m] );
 			epoly.re += eqn->cf[n];
 			}
-		if ( Abs( epoly.re ) > SMALL || Abs( epoly.im ) > SMALL )
+		if ( Abs( epoly.re ) > 1.0e-5 || Abs( epoly.im ) > 1.0e-5 )
 			return 1;
 	}
 	return 0;
