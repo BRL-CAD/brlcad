@@ -402,7 +402,18 @@ else
 fi
 AM_CONDITIONAL(NEED_ZLIB, [test "$have_zlib" == no])
 
-PNG_LIBS='${top_builddir}/src/other/libpng/libpng.la ${Z}'
+have_png=no
+build_png=no
+AC_CHECK_LIB(png, png_check_sig, have_png=yes,,'-lz')
+if test "$have_png"
+then
+	build_png="no (use native)"
+	PNG_LIBS='-lpng ${Z}'
+else
+	build_png=yes
+	PNG_LIBS='${top_builddir}/src/other/libpng/libpng.la ${Z}'
+fi
+AM_CONDITIONAL(NEED_PNG, [test "$have_png" == no])
 AC_SUBST(PNG_LIBS)
 
 
@@ -922,7 +933,7 @@ echo Build Tk .............................: yes
 echo Build Itcl/Itk .......................: yes
 echo Build IWidgets .......................: yes
 echo Build libregex .......................: yes
-echo Build libpng .........................: yes
+echo Build libpng .........................: ${build_png}
 echo Build libz ...........................: ${build_zlib}
 echo 
 echo Java Developer Kit support ...........: $with_java

@@ -5,6 +5,11 @@ if NEED_ZLIB
 	LIBZ=libz
 endif
 
+PNG=
+if NEED_PNG
+	PNG=libpng
+endif
+
 if ONLY_BENCHMARK
 SUBDIRS = libtcl
 
@@ -20,7 +25,7 @@ SUBDIRS = \
 	jove \
 	libitcl \
 	liborle \
-	libpng \
+	${PNG} \
 	libtcl \
 	libtk \
 	libtkGLX \
