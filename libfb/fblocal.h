@@ -38,6 +38,5 @@ extern void	free();
 #endif
 
 extern	int	_disk_enable;		/* disk file interface enable */
-extern	int	_fb_debug;		/* debug level */
 
 #endif INCL_FBLOCAL
