@@ -2,6 +2,11 @@
 
 noinst_LTLIBRARIES = libtclgeneric.la
 
+lib_LTLIBRARIES = libtclstub.la
+
+libtclstub_la_SOURCES = \
+	tclStubLib.c
+
 libtclgeneric_la_SOURCES = \
 	regcomp.c \
 	regerror.c \

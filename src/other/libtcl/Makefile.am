@@ -3,11 +3,11 @@
 SUBDIRS = \
 	doc \
 	generic \
+	library \
 	unix
 
 EXTRA_DIST = \
 	compat \
-	library \
 	mac \
 	macosx \
 	tests \
@@ -27,3 +27,4 @@ libtcl@TCL_VERSION@_la_LIBADD = \
 	unix/libtclunix.la \
 	${LIBZ} \
 	${LIBM}
+

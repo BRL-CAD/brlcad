@@ -1307,6 +1307,15 @@ AC_CONFIG_FILES([
 	src/other/libtcl/Makefile
 	src/other/libtcl/doc/Makefile
 	src/other/libtcl/generic/Makefile
+	src/other/libtcl/library/Makefile
+	src/other/libtcl/library/dde/Makefile
+	src/other/libtcl/library/encoding/Makefile
+	src/other/libtcl/library/http/Makefile
+	src/other/libtcl/library/http1.0/Makefile
+	src/other/libtcl/library/msgcat/Makefile
+	src/other/libtcl/library/opt/Makefile
+	src/other/libtcl/library/reg/Makefile
+	src/other/libtcl/library/tcltest/Makefile
 	src/other/libtcl/unix/Makefile
 	src/other/libtcl/unix/tclConfig.sh
 	src/other/libtk/Makefile
