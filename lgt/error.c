@@ -35,6 +35,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "vmath.h"
+#include "bu.h"
 #include "raytrace.h"
 #include "fb.h"
 #include "./hmenu.h"
@@ -42,13 +43,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./extern.h"
 #include "./screen.h"
 /*
- *  		R T _ B O M B
+ *  		B U _ B O M B
  *  
  *  Abort the RT library
  */
 void
-rt_bomb(str)
-char *str;
+bu_bomb(str)
+CONST char *str;
 	{
 	rt_log( "%s (librt.a) : Fatal error, aborting!\n", str );
 	(void) fflush( stdout );
@@ -63,7 +64,7 @@ char *str;
 
 #if defined(HAVE_STDARG_H)
 void
-rt_log( char *fmt, ... )
+bu_log( char *fmt, ... )
 	{
 	va_list ap;
 	/* We use the same lock as malloc.  Sys-call or mem lock, really */
@@ -116,7 +117,7 @@ rt_log( char *fmt, ... )
 #if !defined(HAVE_VARARGS_H)
 /* VARARGS */
 void
-rt_log(fmt, a,b,c,d,e,f,g,h,i)
+bu_log(fmt, a,b,c,d,e,f,g,h,i)
 char *fmt;
 	{
 	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
@@ -166,7 +167,7 @@ char *fmt;
  */
 /* VARARGS */
 void
-rt_log( fmt, va_alist )
+bu_log( fmt, va_alist )
 char	*fmt;
 va_dcl
 	{	va_list		ap;
