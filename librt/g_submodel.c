@@ -89,7 +89,7 @@ struct rt_i		*rtip;
 	struct submodel_specific	*submodel;
 	struct rt_i			*sub_rtip;
 	struct db_i			*sub_dbip;
-	struct resource			**respp;
+	struct resource			*resp;
 	vect_t	radvec;
 	vect_t	diam;
 	char	*argv[2];
@@ -172,9 +172,9 @@ struct rt_i		*rtip;
 	 *  rt_gettrees() will pluck the 0th resource out of the rtip table.
 	 *  rt_submodel_shot() will get additional resources as needed.
 	 */
-	respp = (struct resource **)&BU_PTBL_GET(&sub_rtip->rti_resources, 0);
-	BU_GETSTRUCT( *respp, resource );
-	rt_init_resource( *respp, 0, sub_rtip );
+	BU_GETSTRUCT( resp, resource );
+	BU_PTBL_SET(&sub_rtip->rti_resources, 0, resp);
+	rt_init_resource( resp, 0, sub_rtip );
 
 	/* Propagate some important settings downward */
 	sub_rtip->useair = rtip->useair;
