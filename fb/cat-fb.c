@@ -650,7 +650,7 @@ register FILE	*fp;
 
 normal_char:
 			c = (c & 077) | mcase;
-			outc(c);
+			(void)outc(c);
 		}
 	}
 out:
@@ -726,6 +726,13 @@ register int size;
 }
 
 
+/*
+ *			R E A D I N F O N T
+ *
+ *  Returns -
+ *	-1	FAIL
+ *	 0	OK
+ */
 readinfont()
 {
 	register struct vfont	*vfp;
@@ -789,6 +796,13 @@ relfont()
 	return (newfont);
 }
 
+/*
+ *			O U T C
+ *
+ *  Returns -
+ *	0	FAIL
+ *	1	OK
+ */
 outc(code)
 	int code;
 {
@@ -805,8 +819,9 @@ outc(code)
 	register unsigned fontdata;	/* font data temporary */
 	register int off8;		/* offset + 8 */
 
-	if (fontwanted)
-		readinfont();
+	if (fontwanted)  {
+		if( readinfont() < 0 )  return(0);
+	}
 	if (railmag == SPECIALFONT) {
 		if ((c = spectab[code]) < 0)
 			return(0);
