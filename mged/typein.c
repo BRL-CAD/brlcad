@@ -1349,6 +1349,11 @@ struct rt_db_internal	*intern;
 		(void)printf("ERROR, height and axes must be greater than zero!\n");
 		return(1);	/* failure */
 	}
+
+	if (rip->epa_r2 > rip->epa_r1) {
+		(void)printf("ERROR, |A| must be greater than |B|!\n");
+		return(1);	/* failure */
+	}
 	
 	return(0);	/* success */
 }
@@ -1387,6 +1392,11 @@ struct rt_db_internal	*intern;
 		(void)printf("ERROR, height, axes, and distance to asymptotes must be greater than zero!\n");
 		return(1);	/* failure */
 	}
+
+	if (rip->ehy_r2 > rip->ehy_r1) {
+		(void)printf("ERROR, |A| must be greater than |B|!\n");
+		return(1);	/* failure */
+	}
 	
 	return(0);	/* success */
 }
@@ -1421,6 +1431,11 @@ struct rt_db_internal	*intern;
 		|| MAGNITUDE(eip->eto_C) < RT_LEN_TOL
 		|| eip->eto_r <= RT_LEN_TOL || eip->eto_rd <= RT_LEN_TOL) {
 		(void)printf("ERROR, normal, axes, and radii must be greater than zero!\n");
+		return(1);	/* failure */
+	}
+
+	if (eip->eto_rd > MAGNITUDE(eip->eto_C)) {
+		(void)printf("ERROR, |C| must be greater than |D|!\n");
 		return(1);	/* failure */
 	}
 	
