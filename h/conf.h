@@ -300,7 +300,9 @@
 #	define HAVE_LIMITS_H	1
 /*#	define HAVE_BZERO	1 -- faster to use memcpy */
 #	define TK_READ_DATA_PENDING(f)	((f)->_IO_read_ptr != (f)->_IO_read_end)
-
+#	if defined(__GNUC__)
+#		define HAVE_GET_NPROCS	1
+#	endif
 #endif
 
 #if defined(__NetBSD__)
