@@ -17,7 +17,8 @@
 	view viewpp viewray viewrad viewcheck \
 	text cloud mathtab \
 	material refract stack \
-	plastic cook wray spm light cmd
+	plastic cook wray spm light cmd \
+	marble stxt
 
 #ifndef	RT_CONFIG
 #	define	RT_CONFIG	/**/
@@ -27,17 +28,23 @@
 
 #define	RT_OBJ	rt.o do.o worker.o text.o cloud.o view.o wray.o \
 		material.o refract.o stack.o plastic.o cook.o mathtab.o \
-		spm.o light.o cmd.o
+		spm.o light.o cmd.o marble.o stxt.o
 
-rt:	RT_OBJ LIBRT
-	CC CFLAGS RT_OBJ LIBRT LIBFB RT_CONFIG LIBSYSV LIBMALLOC LIBES -o rt
 #if defined(CRAY1)
-	/* XMP UNICOS version, sigh */
+/* XMP UNICOS version, sigh */
 #	define	XMP_MULTI	/lib/multi/libc.o \
 		/lib/multi/libu.o \
 		/lib/multi/libm.o 
+
+rt:	RT_OBJ LIBRT
+	CC CFLAGS RT_OBJ LIBRT LIBFB RT_CONFIG LIBSYSV LIBMALLOC LIBES -o rt
 	echo "nodeflib;symbols=off;map=stat;stack=200000+60000;heap=50000+50000" >segldr.cmds
 	segldr -ort RT_OBJ LIBRT LIBFB LIBSYSV LIBMALLOC XMP_MULTI segldr.cmds
+#else
+
+rt:	RT_OBJ LIBRT
+	CC CFLAGS RT_OBJ LIBRT LIBFB RT_CONFIG LIBSYSV LIBMALLOC LIBES -o rt
+
 #endif
 
 #define RTRAY_OBJ	rt.o do.o worker.o viewray.o \
