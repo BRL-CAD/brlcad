@@ -711,7 +711,7 @@ register struct application *ap;
 		if( BU_LIST_UNINITIALIZED( &resp->re_nmgfree ) )
 			BU_LIST_INIT(  &resp->re_nmgfree );
 
-		for( i=0 ; i<NBUCKETS ; i++ )
+		for( i=0 ; i<RT_PM_NBUCKETS ; i++ )
 		{
 			resp->re_pmem.buckets[i].q_forw = &resp->re_pmem.buckets[i];
 			resp->re_pmem.buckets[i].q_back = &resp->re_pmem.buckets[i];
