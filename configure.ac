@@ -1729,12 +1729,16 @@ AC_CONFIG_FILES([
 	src/other/Makefile
 	src/other/awf/Makefile
 	src/other/incrTcl/Makefile
+	src/other/incrTcl/doc/Makefile
 	src/other/incrTcl/itcl/Makefile
+	src/other/incrTcl/itcl/generic/Makefile
 	src/other/incrTcl/itcl/library/Makefile
 	src/other/incrTcl/itcl/pkgIndex.tcl
 	src/other/incrTcl/itk/Makefile
+	src/other/incrTcl/itk/generic/Makefile
 	src/other/incrTcl/itk/library/Makefile
 	src/other/incrTcl/itk/pkgIndex.tcl
+	src/other/incrTcl/tools/Makefile
 	src/other/iwidgets/Makefile
 	src/other/iwidgets/doc/Makefile
 	src/other/iwidgets/generic/Makefile

@@ -554,6 +554,22 @@ sample_applicationsdir = $(SAMPLE_APPLICATIONS_DIR)
 
 sample_applications_DATA = pl-dm.c
 
+# XXX need to investigate why these .c are not being built
 EXTRA_DIST = \
 	$(man_MANS) \
-	$(sample_applications_DATA)
+	$(sample_applications_DATA) \
+	fix_polysolids.c \
+	lowp.c \
+	pix-both-ik.c \
+	pix-ci.c \
+	pix-filt-ik.c \
+	pix-ik.c \
+	pix-ikr.c \
+	pix-lowp-ik.c \
+	pixt-ik.c \
+	pl-X10.1.stub \
+	pl-X10.c \
+	pl-starbase.c \
+	strchr.c
+
+MAINTAINERCLEANFILES = Makefile.in

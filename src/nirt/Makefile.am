@@ -1,6 +1,8 @@
 # $Id$
 
-bin_PROGRAMS = nirt
+bin_PROGRAMS = \
+	nirt \
+	showshot
 
 nirt_srcs = \
 	nirt.c \
@@ -13,13 +15,34 @@ nirt_srcs = \
 	str_manip.c \
 	parse_fmt.c
 
-nirt_SOURCES = $(nirt_srcs) vers.c
-noinst_HEADERS = nirt.h usrfmt.h
 nirt_LDADD = ${RT} ${BN} ${FB}
 nirt_CFLAGS = -DDFLT_SHELL=\"/bin/sh\"
-man_MANS = nirt.1 showshot.1
-EXTRA_DIST = $(man_MANS)
+nirt_SOURCES = \
+	$(nirt_srcs) \
+	vers.c
+
+showshot_LDADD = ${BN}
+showshot_SOURCES = showshot.c
+
+man_MANS = \
+	nirt.1 \
+	showshot.1
+
+noinst_HEADERS = \
+	nirt.h \
+	usrfmt.h
+
+EXTRA_DIST = \
+	$(man_MANS) \
+	dist_def.c \
+	nirt.dsp \
+	nirt.dsw \
+	nirt.ncb \
+	nirt.opt
 
 vers.c: $(nirt_srcs) Makefile.am
 	sh $(top_srcdir)/sh/vers.sh version "Natalie's Interactive Ray Tracer" > $@
 
+DISTCLEANFILES = version
+
+MAINTAINERCLEANFILES = Makefile.in

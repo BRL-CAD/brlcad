@@ -39,13 +39,34 @@ SRCS = \
 	turb.c \
 	wray.c
 
+liboptical_la_LDFLAGS = -version-info 19:1
+liboptical_la_LIBADD = ${BU} ${BN} ${TCL} ${RT}
 liboptical_la_SOURCES = \
 	$(SRCS) \
 	vers.c
 
-liboptical_la_LDFLAGS = -version-info 19:1
-liboptical_la_LIBADD = ${BU} ${BN} ${TCL} ${RT}
+noinst_LTLIBRARIES = librtms.la
+
+librtms_la_CFLAGS = -DRT_MULTISPECTRAL
+librtms_la_LDFLAGS = -static
+librtms_la_LIBADD = ${BU} ${BN} ${TCL} ${RT}
+librtms_la_SOURCES = \
+	sh_camo.c \
+	sh_light.c \
+	sh_noise.c \
+	sh_plastic.c \
+	sh_stack.c
+
+EXTRA_DIST = \
+	liboptical.dsp \
+	liboptical.dsw \
+	liboptical.ncb \
+	liboptical.opt
 
 BUILT_SOURCES = vers.c
 vers.c: $(SRCS)
 	@SH@ $(top_srcdir)/sh/vers.sh liboptical_version "The BRL-CAD Optical Shader Library" > $@
+
+DISTCLEANFILES = version
+
+MAINTAINERCLEANFILES = Makefile.in

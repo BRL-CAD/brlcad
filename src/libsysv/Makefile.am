@@ -2,14 +2,29 @@
 
 lib_LTLIBRARIES = libsysv.la
 
+# XXX this library needs to move into src/other at some point
+libsysv_la_LDFLAGS = -version-info 19:1
 libsysv_la_SOURCES = \
 	redata.c \
 	regex.c \
 	tcl.c \
 	vers.c
 
-libsysv_la_LDFLAGS = -version-info 19:1
+EXTRA_DIST = \
+	bsdselect.c \
+	getopt.c \
+	libsysv.dsp \
+	libsysv.dsw \
+	libsysv.ncb \
+	libsysv.opt \
+	linebuf.c \
+	memset.c \
+	strchr.c
 
 BUILT_SOURCES = vers.c
 vers.c:
 	@SH@ $(top_srcdir)/sh/vers.sh libsysv_version "BRL-CAD System V Compatibility Library" > $@
+
+DISTCLEANFILES = version
+
+MAINTAINERCLEANFILES = Makefile.in

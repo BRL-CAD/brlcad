@@ -4,6 +4,7 @@ lib_LTLIBRARIES = libfft.la
 
 noinst_PROGRAMS = \
 	fftc \
+	fftest \
 	ifftc
 
 SRCS = \
@@ -11,42 +12,29 @@ SRCS = \
 	splitdit.c \
 	ditsplit.c
 
-BUILT_SOURCES = \
-	irfft128.c \
-	irfft16.c \
-	irfft256.c \
-	irfft32.c \
-	irfft64.c \
-	rfft128.c \
-	rfft16.c \
-	rfft256.c \
-	rfft32.c \
-	rfft64.c \
-	vers.c
-
 libfft_la_SOURCES = \
 	$(SRCS) \
 	$(BUILT_SOURCES)
 
+libfft_la_LDFLAGS = -version-info 19:1
 libfft_la_LIBADD = ${LIBM}
 
 noinst_HEADERS = \
 	complex.h \
 	fft.h
 
-libfft_la_LDFLAGS = -version-info 19:1
-
+fftc_LDADD = ${LIBM}
 fftc_SOURCES = \
 	fftc.c \
 	splitditc.c
 
-fftc_LDADD = ${LIBM}
+fftest_LDADD = libfft.la
+fftest_SOURCES = fftest.c
 
+ifftc_LDADD = ${LIBM}
 ifftc_SOURCES = \
 	ditsplitc.c \
 	ifftc.c
-
-ifftc_LDADD = ${LIBM}
 
 rfft16.c:	fftc
 	./fftc 16 > rfft16.c
@@ -84,9 +72,27 @@ irfft256.c:	ifftc
 irfft512.c:	ifftc
 	./ifftc 512 > irfft512.c
 
-
 vers.c: $(SRCS)
 	@SH@ $(top_srcdir)/sh/vers.sh fft_version "BRL-CAD FFT Library" > $@
 
 clean-local:
 	@RM@ -f ${BUILT_SOURCES}
+
+BUILT_SOURCES = \
+	irfft128.c \
+	irfft16.c \
+	irfft256.c \
+	irfft32.c \
+	irfft64.c \
+	rfft128.c \
+	rfft16.c \
+	rfft256.c \
+	rfft32.c \
+	rfft64.c \
+	vers.c
+
+DISTCLEANFILES = \
+	$(BUILT_SOURCES) \
+	version
+
+MAINTAINERCLEANFILES = Makefile.in

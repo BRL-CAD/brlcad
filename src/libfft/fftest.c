@@ -3,6 +3,7 @@
  *
  *  12 Oct 84
  */
+#include "fft.h"
 
 typedef struct {
 	double	re;	/* Real Part */
@@ -27,11 +28,11 @@ main(void)
 	printf("Original Data:\n\n");
 	display(data, 64);
 
-	fft(data, 64);
+	cfft(data, 64);
 	printf("\n\nTransformed Data:\n\n");
 	display(data, 64);
 
-	invfft(data, 64);
+	icfft(data, 64);
 	printf("\n\nInversed Data:\n\n");
 	display(data, 64);
 }

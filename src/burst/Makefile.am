@@ -1,5 +1,5 @@
 # $Id$
-                                                                                                                                            
+
 bin_PROGRAMS = burst
 
 burst_SOURCES = \
@@ -34,16 +34,18 @@ noinst_HEADERS = \
 	trie.h \
 	vecmath.h
 
-test:	../.burst.MTYPE/burst tfiles/ktank.g
-	../.burst.MTYPE/burst -b < tfiles/ktank.in
+EXTRA_DIST = burst.format
+
+test:	burst $(top_builddir)/db/ktank.g
+	./burst -b < $(top_builddir)/db/ktank.in
 	@if test $? -ne 0
 	then echo "Test failed." ; exit 1
 	fi
-	diff tfiles/ktank.burst tfiles/ktank.burst.bak4.0
+	diff $(top_builddir)/db/ktank.burst $(top_builddir)/db/ktank.burst.bak4.0
 	@if test $? -ne 0
 	then echo "Test failed." ; exit 1
 	fi
-	diff tfiles/ktank.shotlines tfiles/ktank.shotlines.bak4.0
+	diff $(top_builddir)/db/ktank.shotlines $(top_builddir)/db/ktank.shotlines.bak4.0
 	@if test $? -ne 0
 	then echo "Test failed." ; exit 1
 	fi
@@ -51,13 +53,13 @@ test:	../.burst.MTYPE/burst tfiles/ktank.g
 
 untest:
 	rm -f \
-	tfiles/ktank.burst \
-	tfiles.ktank.shotlines \
-	tfiles/ktank.plot \
-	tfiles/ktank.pix \
-	tfiles/ktank.g \
-	tfiles/ktank.log
+	$(top_builddir)/db/ktank.burst \
+	$(top_builddir)/db.ktank.shotlines \
+	$(top_builddir)/db/ktank.plot \
+	$(top_builddir)/db/ktank.pix \
+	$(top_builddir)/db/ktank.g \
+	$(top_builddir)/db/ktank.log
 
-tfiles/ktank.g:
-	asc2g < ../burst/tfiles/ktank.asc > tfiles/ktank.g
+$(top_builddir)/db/ktank.g:
+	asc2g < $(top_builddir)/db/ktank.asc > $(top_builddir)/db/ktank.g
 

@@ -1,5 +1,7 @@
 # $Id$
 
+LDADD = ${RT} ${FB} ${OPTICAL} ${TCL}
+
 if ONLY_BENCHMARK
 bin_PROGRAMS = \
 	rt
@@ -245,18 +247,34 @@ BUILT_SOURCES = \
 	rtxray_vers.c \
 	vers.c
 
+noinst_LIBRARIES = \
+	libremrt.a \
+	librttherm.a
+
+librttherm_a_SOURCES = $(COMMON)
+
+libremrt_a_CFLAGS = -DRTSRV
+libremrt_a_SOURCES = \
+	do.c \
+	opt.c \
+	sh_tcl.c \
+	view.c \
+	worker.c
+
+sample_applicationsdir=$(SAMPLE_APPLICATIONS_DIR)
+sample_applications_DATA = rtexample.c
 
 vers.c: $(ALLSRCS)
 	@SH@ $(top_srcdir)/sh/vers.sh version "The BRL-CAD Raytracer RT" > $@
 
-
-LDADD = ${RT} ${FB} ${OPTICAL} ${TCL}
-
 EXTRA_DIST = \
 	$(ALLSRCS) \
-	$(man_MANS)
+	$(man_MANS) \
+	rt.dsp \
+	rt.dsw \
+	rt.ncb \
+	rt.opt
 
+DISTCLEANFILES = version
 
-sample_applicationsdir=$(SAMPLE_APPLICATIONS_DIR)
-
-sample_applications_DATA = rtexample.c
+MAINTAINERCLEANFILES = Makefile.in

@@ -1,8 +1,21 @@
 # $Id$
 
 bin_PROGRAMS = vas4
-vas4_SOURCES = vas4.c vas_io.c record_seq.c
+
 vas4_LDADD = ${FB}
+vas4_SOURCES = \
+	record_seq.c \
+	vas4.c \
+	vas_io.c
+
 noinst_HEADERS = vas4.h
+
 man_MANS = vas4.1
-EXTRA_DIST = $(man_MANS)
+
+EXTRA_DIST = \
+	$(man_MANS) \
+	init_ik.c \
+	status.c \
+	vas4.doc
+
+MAINTAINERCLEANFILES = Makefile.in

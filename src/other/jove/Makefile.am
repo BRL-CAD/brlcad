@@ -34,10 +34,6 @@ findcom_SOURCES = \
 	findcom.c \
 	tune.c
 
-BUILT_SOURCES = \
-	tune.c \
-	version.c
-
 noinst_HEADERS = \
 	jove.h \
 	jove_temp.h \
@@ -47,10 +43,6 @@ dist_man_MANS = \
 	jove.1 \
 	describe.com.1 \
 	teach-jove.1
-
-DISTCLEANFILES = \
-	version.c \
-	version.number
 
 tune.c:	$(top_srcdir)/src/other/jove/jove_tune.c
 	rm -f tune.c
@@ -70,8 +62,19 @@ install-data-local:
 	$(INSTALL_DATA) $(srcdir)/teach-jove.1 $(libdir)/teach-jove
 
 EXTRA_DIST = \
+	$(BUILT_SOURCES) \
 	describe.com.1 \
 	jove_tune.c \
 	mkversion.sh \
 	teach-jove.1 \
 	teach-jove.sh
+
+BUILT_SOURCES = \
+	tune.c \
+	version.c
+
+DISTCLEANFILES = \
+	$(BUILT_SOURCES) \
+	version.number
+
+MAINTAINERCLEANFILES = Makefile.in

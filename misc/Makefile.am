@@ -1,22 +1,21 @@
 # $Id$
 
-sampleapplicationsdir = $(SAMPLE_APPLICATIONS_DIR)
-sampleapplications_DATA = \
-	fortran_example.f
+sample_applicationsdir = $(SAMPLE_APPLICATIONS_DIR)
+sample_applications_DATA = fortran_example.f
 
 EXTRA_DIST = \
-	S(sampleapplications_DATA) \
+	$(sample_applications_DATA) \
 	Cakefile.defs \
-	Description.txt
+	Description.txt \
+	enigma
 
 SUBDIRS = \
 	macosx \
 	pro-engineer \
 	vfont
 
-DIST_SUBDIRS = enigma
-
 DISTCLEANFILES = \
+	COPYING.backup \
 	config.guess.backup \
 	config.sub.backup \
 	ltmain.sh.backup	

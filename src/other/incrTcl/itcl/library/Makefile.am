@@ -1,6 +1,6 @@
 # $Id$
 
-brlcadscriptdir = $(libdir)/itcl3.3
+brlcadscriptdir = $(libdir)/itcl@ITCL_VERSION@
 
 brlcadscript_SCRIPTS = itcl.tcl
 

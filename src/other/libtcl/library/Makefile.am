@@ -10,9 +10,6 @@ SUBDIRS = \
 	reg \
 	tcltest
 
-MAINTAINERCLEANFILES = \
-	Makefile.in
-
 brlcadscriptdir = $(TCL_LIBRARY)
 
 brlcadscript_SCRIPTS = \
@@ -26,4 +23,9 @@ brlcadscript_SCRIPTS = \
 	tclIndex \
 	word.tcl
 
-EXTRA_DIST = $(brlcadscript_SCRIPTS)
+EXTRA_DIST = \
+	$(brlcadscript_SCRIPTS) \
+	license.terms
+
+MAINTAINERCLEANFILES = Makefile.in
+

@@ -17,4 +17,6 @@ comgeom_g_LDADD = ${RT} ${WDB}
 
 man_MANS = comgeom-g.1
 
-EXTRA_DIST = $(man_MANS)
+EXTRA_DIST = \
+	$(man_MANS) \
+	try.sh

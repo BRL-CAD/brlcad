@@ -8,11 +8,14 @@ brlcadscript_SCRIPTS = \
 	el.msg \
 	en.msg \
 	en_gb.msg \
+	eo.msg \
 	es.msg \
 	fr.msg \
 	it.msg \
 	nl.msg \
+	pl.msg \
 	ru.msg
 
 EXTRA_DIST = $(brlcadscript_SCRIPTS)
 
+MAINTAINERCLEANFILES = Makefile.in

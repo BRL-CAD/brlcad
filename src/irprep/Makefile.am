@@ -36,7 +36,6 @@ secpass_SOURCES = secpass.c subroutines.c
 shapefact_LDADD = ${RT} ${BN}
 shapefact_SOURCES = shapefact.c
 
-
 man_MANS = \
 	all_sf.1 \
 	display.1 \
@@ -44,11 +43,17 @@ man_MANS = \
 	irdisp.1 \
 	ir-sgi.1 \
 	ir-X.1 \
-	pictsgi.1 \
-	pictx.1 \
 	secpass.1 \
-	see.1 \
-	see2.1 \
 	shapefact.1
 
-EXTRA_DIST = $(man_MANS)
+EXTRA_DIST = \
+	$(man_MANS) \
+	Compile.sgi \
+	pictsgi.1 \
+	pictsgi.c \
+	pictx.1 \
+	pictx.c \
+	see.1 \
+	see.c \
+	see2.1 \
+	see2.c

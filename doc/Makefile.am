@@ -5,11 +5,13 @@ SUBDIRS = \
 	legal
 
 data_DATA = \
+	README.MacOSX \
 	anim.txt \
 	benchmark.tr \
 	cvs.txt \
 	description.txt \
 	ged.tr \
+	history.txt \
 	hypot.txt \
 	irprep.tr \
 	mater.txt \

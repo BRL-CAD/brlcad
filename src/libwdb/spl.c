@@ -53,11 +53,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  *  the appropriate number of calls to mk_bsurf().
  */
 int
-mk_bsolid( fp, name, nsurf, res )
-FILE	*fp;
-char	*name;
-int	nsurf;
-double	res;
+mk_bsolid( FILE *fp, char *name, int nsurf, double res )
 {
 	union record rec;
 
@@ -83,9 +79,7 @@ double	res;
  */
 
 int
-mk_bsurf( filep, srf )
-FILE	* filep;
-struct face_g_snurb * srf;
+mk_bsurf( FILE *filep, struct face_g_snurb *srf )
 {
 	union record rec;
 	dbfloat_t	*kp;		/* knot vector area */

@@ -8,9 +8,12 @@ bin_PROGRAMS = \
 	g2asc \
 	pix2asc
 
-EXTRA_DIST = \
+EXTRA_DIST = 
+	dbclean.sh \
+	g-xxx.c \
 	g-xxx_facets.c \
-	g-xxx.c
+	g4-g5.c \
+	g5-g4.c
 
 else !ONLY_BENCHMARK
 
@@ -46,6 +49,7 @@ bin_PROGRAMS = \
 	nastran-g \
 	nmg-bot \
 	nmg-rib \
+	nmg-sgp \
 	pix2asc \
 	ply-g \
 	poly-bot \
@@ -55,8 +59,12 @@ bin_PROGRAMS = \
 	viewpoint-g
 
 noinst_PROGRAMS = \
+	g4-g5 \
+	g5-g4 \
 	g-xxx \
 	g-xxx_facets
+
+EXTRA_DIST = dbclean.sh
 
 endif
 # end ONLY_BENCHMARK
@@ -74,6 +82,8 @@ euclid_format_LDADD = ${RT}
 euclid_g_LDADD = ${WDB} ${RT} 
 fast4_g_LDADD = ${WDB} ${RT} 
 g2asc_LDADD = ${WDB} ${RT} ${TCL}
+g4_g5_LDADD = ${WDB} ${RT}
+g5_g4_LDADD = ${WDB} ${RT}
 g_acad_LDADD = ${WDB} ${RT} 
 g_dxf_LDADD = ${WDB} ${RT} 
 g_euclid1_LDADD = ${RT} 
@@ -91,6 +101,7 @@ g_xxx_facets_LDADD = ${WDB} ${RT}
 nastran_g_LDADD = ${WDB} ${RT} 
 nmg_bot_LDADD = ${WDB} ${RT} 
 nmg_rib_LDADD = ${WDB} ${RT} 
+nmg_sgp_LDADD = ${WDB} ${RT} 
 ply_g_LDADD = ${WDB} ${RT} ${SYSV} 
 poly_bot_LDADD = ${WDB} ${RT} 
 proe_g_LDADD = ${WDB} ${RT} ${SYSV} ${TCL}
@@ -114,6 +125,8 @@ euclid_g_SOURCES = euclid-g.c
 euclid_unformat_SOURCES = euclid_unformat.c
 fast4_g_SOURCES = fast4-g.c 
 g2asc_SOURCES = g2asc.c 
+g4_g5_SOURCES = g4-g5.c
+g5_g4_SOURCES = g5-g4.c
 g_acad_SOURCES = g-acad.c 
 g_dxf_SOURCES = g-dxf.c 
 g_euclid1_SOURCES = g-euclid1.c 
@@ -131,6 +144,7 @@ g_xxx_facets_SOURCES = g-xxx_facets.c
 nastran_g_SOURCES = nastran-g.c 
 nmg_bot_SOURCES = nmg-bot.c 
 nmg_rib_SOURCES = nmg-rib.c 
+nmg_sgp_SOURCES = nmg-sgp.c 
 pix2asc_SOURCES = pix2asc.c
 ply_g_SOURCES = ply-g.c 
 poly_bot_SOURCES = poly-bot.c 
@@ -178,4 +192,4 @@ sample_applications_DATA = \
 	g-xxx.c \
 	g-xxx_facets.c
 
-
+MAINTAINERCLEANFILES = Makefile.in

@@ -108,3 +108,12 @@ syn_LDADD = ${LIBM}
 damdf_SOURCES = damdf.c
 dauto2_SOURCES = dauto2.c
 ihist_SOURCES = ihist.c
+
+# XXX need to review why these are not built
+EXTRA_DIST = \
+	d2-c.c \
+	fhor2.c \
+	fhor3.c \
+	smod.c
+
+MAINTAINERCLEANFILES = Makefile.in

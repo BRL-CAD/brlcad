@@ -36,7 +36,6 @@ man_MANS = \
 	cad_parea.1 \
 	mged.1
 
-
 mged_SOURCES = \
 	adc.c \
 	anal.c \
@@ -49,6 +48,7 @@ mged_SOURCES = \
 	chgmodel.c \
 	chgtree.c \
 	chgview.c \
+	clip.c \
 	cmd.c \
 	color_scheme.c \
 	columns.c \
@@ -131,4 +131,20 @@ BUILT_SOURCES = vers.c
 vers.c:
 	sh $(top_srcdir)/sh/vers.sh version "Geometry Editor (MGED)"> $@
 
-EXTRA_DIST = $(man_MANS)
+EXTRA_DIST = \
+	$(man_MANS) \
+	arb.c \
+	bool_rewrite.c \
+	comb_bool_parse.y \
+	comb_bool_scan.l \
+	fbserv_win32.c \
+	hideline.c \
+	memalloc.c \
+	mged.dsp \
+	mged.dsw \
+	mged.ncb \
+	mged.opt
+
+DISTCLEANFILES = version
+
+MAINTAINERCLEANFILES = Makefile.in

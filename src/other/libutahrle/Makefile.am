@@ -74,4 +74,8 @@ man_MANS = \
 	rle_skiprow.3 \
 	scanargs.3
 
-EXTRA_DIST = $(man_MANS)
+EXTRA_DIST = \
+	$(man_MANS) \
+	bstring.c \
+	getopt.c \
+	sVsetlinebuf.c

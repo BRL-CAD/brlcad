@@ -12,6 +12,17 @@ libpkg_la_SOURCES = \
 
 libpkg_la_LDFLAGS = -version-info 19:1
 
-BUILT_SOURCES = vers.c
 vers.c: $(SRCS)
 	@SH@ $(top_srcdir)/sh/vers.sh pkg_version "The BRL-CAD Network Package (PKG) Library" > $@
+
+BUILT_SOURCES = vers.c
+
+EXTRA_DIST = \
+	libpkg.dsp \
+	libpkg.dsw \
+	libpkg.ncb \
+	libpkg.opt
+
+DISTCLEANFILES = version
+
+MAINTAINERCLEANFILES = Makefile.in

@@ -7,7 +7,8 @@ G2A=$(top_builddir)/src/conv/g2asc
 
 # the shell script fu is to cope with gmake vs irix make weirdness...
 # gmake seems to prefix the src with the appropriate srcdir automagically...
-.asc.g: ; $(A2G) `if test -e $< ; then echo $< ; else echo $(top_srcdir)/db/$< ; fi` $@
+.asc.g:
+	if test -x $(A2G) ; then $(A2G) `if test -e $< ; then echo $< ; else echo $(top_srcdir)/db/$< ; fi` $@ ; else echo "$(A2G) does not exist, no action taken" ; touch $@ ; fi
 
 MODELS = \
 	axis.asc \
@@ -38,36 +39,16 @@ MODELS = \
 	world.asc \
 	xmp.asc
 
-DISTCLEANFILES = ${MODELS:asc=g}
-
 EXTRA_DIST = \
 	${DISTCLEANFILES} \
 	${MODELS} \
 	db.php
 
-all: ${MODELS:asc=g}
+EXTRA_DATA = ${MODELS:asc=g}
+BUILT_SOURCES = ${MODELS:asc=g}
 
-install-data-hook: ${MODELS:asc=g}
-	@$(NORMAL_INSTALL)
-	$(mkinstalldirs) $(DESTDIR)$(pkgdatadir)
-	@list='${MODELS:asc=g}'; for p in $$list; do \
-	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
-	  f="`echo $$p | sed -e 's|^.*/||'`"; \
-	  echo " $(INSTALL_DATA) $$d$$p $(DESTDIR)$(pkgdatadir)/$$f"; \
-	  $(INSTALL_DATA) $$d$$p $(DESTDIR)$(pkgdatadir)/$$f; \
-	done
-																					    
-uninstall:
-	@$(NORMAL_UNINSTALL)
-	@list='${MODELS:asc=g}'; for p in $$list; do \
-	  f="`echo $$p | sed -e 's|^.*/||'`"; \
-	  echo " rm -f $(DESTDIR)$(pkgdatadir)/$$f"; \
-	  rm -f $(DESTDIR)$(pkgdatadir)/$$f; \
-	done
+all-local: ${MODELS:asc=g}
 
-clean:
-	@list='${MODELS:asc=g}'; for p in $$list; do \
-	  f="`echo $$p | sed -e 's|^.*/||'`"; \
-	  echo " rm -f $(builddir)/db/$$f"; \
-	  rm -f $(builddir)/db/$$f; \
-	done
+DISTCLEANFILES = ${MODELS:asc=g}
+
+MAINTAINERCLEANFILES = Makefile.am

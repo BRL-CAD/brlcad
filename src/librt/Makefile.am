@@ -157,8 +157,46 @@ include_HEADERS = \
 
 dist_man_MANS = librt.3
 
-EXTRA_DIST = g_bot_include.c
+noinst_PROGRAMS = \
+	comb \
+	nurb_example
+
+comb_LDADD = librt.la ${BU}
+comb_SOURCES = comb.c
+
+nurb_example_LDADD = librt.la ${BU}
+nurb_example_SOURCES = nurb_example.c
+
+sample_applicationsdir = $(SAMPLE_APPLICATIONS_DIR)
+
+sample_applications_DATA = \
+	g_xxx.c \
+	nurb_example.c \
+	raydebug.tcl
+
+# XXX need to fix these so the timers are selected by configure.ac
+EXTRA_DIST = \
+	$(sample_applications_DATA) \
+	g_bot_include.c \
+	librt.dsp \
+	librt.dsw \
+	librt.ncb \
+	librt.opt \
+	nmg_junk.c \
+	pmalloc.c \
+	sqrt.gould.s \
+	sqrt.vax.s \
+	timer-nt.c \
+	timer52brl.c \
+	timercos.c \
+	timerhep.c \
+	timerunix.c \
+	vshoot.c
 
 BUILT_SOURCES = vers.c
 vers.c: $(SRCS)
 	@SH@ $(top_srcdir)/sh/vers.sh rt_version "The BRL-CAD Ray-Tracing Library" > $@
+
+DISTCLEANFILES = version
+
+MAINTAINERCLEANFILES = Makefile.in

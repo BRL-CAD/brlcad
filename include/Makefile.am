@@ -8,6 +8,7 @@ brlcadinclude_required = \
 	bu.h \
 	common.h \
 	config.h \
+	config_win.h \
 	raytrace.h \
 	rtgeom.h \
 	rtlist.h \
@@ -19,6 +20,7 @@ brlcadinclude_wanted = \
 	XtndRunsv.h \
 	anim.h \
 	cmd.h \
+	conf.h \
 	compat4.h \
 	db.h \
 	db5.h \
@@ -79,15 +81,24 @@ brlcadinclude_wanted = \
 	tclDecls.h \
 	tclInt.h \
 	tclIntDecls.h \
+	tclIntPlatDecls.h \
 	tclPlatDecls.h \
 	tk.h \
 	tkDecls.h \
+	tkInt.h \
+	tkIntDecls.h \
+	tkIntPlatDecls.h \
+	tkIntXlibDecls.h \
+	tkPlatDecls.h \
 	vectfont.h \
 	vfont-if.h \
 	vmath.h \
 	wdb.h \
 	zconf.h \
 	zlib.h
+
+EXTRA_DIST = \
+	sed4
 
 if ONLY_BENCHMARK
 brlcadinclude_HEADERS = $(brlcadinclude_required)
@@ -113,13 +124,16 @@ endif
 noinst_HEADERS = \
 	brlcad_version.h
 
-DISTCLEANFILES = \
-	brlcad_version.h \
-	version
-
 brlcad_version.h:
 	@sh $(top_srcdir)/sh/vers.sh brlcad_version "BRL-CAD" > $@
 
 # make sure that the build date/version is updated every time make is run
 all-local:
 	@sh $(top_srcdir)/sh/vers.sh brlcad_version "BRL-CAD" > brlcad_version.h
+
+DISTCLEANFILES = \
+	brlcad_version.h \
+	stamp-h1 \
+	version
+
+MAINTAINERCLEANFILES = Makefile.in

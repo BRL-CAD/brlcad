@@ -21,6 +21,7 @@ dist_tcl_SCRIPTS = \
 	comb.tcl \
 	combmenu.tcl \
 	cycle.tcl \
+	dbfindtree.tcl \
 	dbupgrade.tcl \
 	e_id.tcl \
 	edit_menu.tcl \

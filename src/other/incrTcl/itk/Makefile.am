@@ -1,32 +1,35 @@
 # $Id$
 
-SUBDIRS = library
+SUBDIRS = \
+	generic \
+	library
 
 lib_LTLIBRARIES = \
-	libitk3.3.la \
-	libitkstub3.3.la
+	libitk.la \
+	libitk@ITCL_VERSION@.la
 
-libitkstub3_3_la_SOURCES = \
-	generic/itkStubLib.c
-
-libitk3_3_la_SOURCES = \
-	generic/itk_cmds.c \
-	generic/itk_option.c \
-	generic/itk_archetype.c \
-	generic/itk_util.c \
-	generic/itkStubInit.c
-
-include_HEADERS = \
-	generic/itk.h \
-	generic/itkDecls.h
+libitk_la_LIBADD = generic/libitg.la
+libitk_la_SOURCES =
+libitk@ITCL_VERSION@_la_LIBADD = $(libitk_la_LIBADD)
+libitk@ITCL_VERSION@_la_SOURCES = $(libitk_la_SOURCES)
 
 AM_CFLAGS = ${X_CFLAGS}
 
-MAINTAINERCLEANFILES = \
-	Makefile.in
-
-brlcadscriptdir = $(libdir)/itk3.3
-
+brlcadscriptdir = $(libdir)/itk@ITCL_VERSION@
 brlcadscript_SCRIPTS = pkgIndex.tcl
 
-EXTRA_DIST = $(brlcadscript_SCRIPTS)
+EXTRA_DIST = \
+	$(brlcadscript_SCRIPTS) \
+	aclocal.m4 \
+	demos \
+	doc \
+	examples \
+	itkConfig.sh.in \
+	license.terms \
+	mac \
+	tests \
+	win
+
+DISTCLEANFILES = pkgIndex.tcl
+
+MAINTAINERCLEANFILES = Makefile.in

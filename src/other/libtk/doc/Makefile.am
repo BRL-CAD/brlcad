@@ -144,9 +144,12 @@ man_MANS = \
 	tkwait.n \
 	toplevel.n \
 	winfo.n \
+	wish.1 \
 	wm.n
 
-MAINTAINERCLEANFILES = \
-	Makefile.in
+EXTRA_DIST = \
+	$(man_MANS) \
+	license.terms \
+	man.macros
 
-EXTRA_DIST = $(man_MANS)
+MAINTAINERCLEANFILES = Makefile.in

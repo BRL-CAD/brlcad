@@ -42,3 +42,4 @@ lgt_CFLAGS = -DBEHIND_ME_TOL=0.05
 
 dist_man_MANS = lgt.1
 
+EXTRA_DIST = resource.c

@@ -1,41 +1,32 @@
 # $Id$
 
-SUBDIRS = library
+SUBDIRS = \
+	generic \
+	library
 
 lib_LTLIBRARIES = \
-	libitcl3.3.la \
-	libitclstub3.3.la
+	libitcl.la \
+	libitcl@ITCL_VERSION@.la
 
-libitclstub3_3_la_SOURCES = \
-	generic/itclStubLib.c
+libitcl_la_LIBADD = generic/libitg.la
+libitcl_la_SOURCES =
+libitcl@ITCL_VERSION@_la_LIBADD = $(libitcl_la_LIBADD)
+libitcl@ITCL_VERSION@_la_SOURCES = $(libitcl_la_SOURCES)
 
-libitcl3_3_la_SOURCES = \
-	generic/itclStubInit.c \
-	generic/itcl_bicmds.c \
-	generic/itcl_class.c \
-	generic/itcl_cmds.c \
-	generic/itcl_ensemble.c \
-	generic/itcl_linkage.c \
-	generic/itcl_methods.c \
-	generic/itcl_migrate.c \
-	generic/itcl_objects.c \
-	generic/itcl_parse.c \
-	generic/itcl_util.c
-
-include_HEADERS = \
-	generic/itcl.h \
-	generic/itclDecls.h \
-	generic/itclInt.h \
-	generic/itclIntDecls.h
-
-
-MAINTAINERCLEANFILES = \
-	Makefile.in
-
-pkglibdir = $(libdir)/itcl3.3
-
-brlcadscriptdir = $(libdir)/itcl3.3
-
+brlcadscriptdir = $(libdir)/itcl@ITCL_VERSION@
 brlcadscript_SCRIPTS = pkgIndex.tcl
 
-EXTRA_DIST = $(brlcadscript_SCRIPTS)
+EXTRA_DIST = \
+	$(brlcadscript_SCRIPTS) \
+	aclocal.m4 \
+	doc \
+	itclConfig.sh.in \
+	license.terms \
+	mac \
+	tests \
+	win
+
+DISTCLEANFILES = pkgIndex.tcl
+
+MAINTAINERCLEANFILES = Makefile.in
+

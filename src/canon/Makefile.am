@@ -2,6 +2,7 @@
 
 bin_PROGRAMS = \
 	canonize \
+	canonserver \
 	pix-ipu \
 	png-ipu \
 	ipuscan \
@@ -15,8 +16,9 @@ man_MANS = canonize.1
 
 
 canonize_SOURCES = canonize.c canonlib.c asize.c
-
 canonize_LDADD = ${LIBM}
+
+canonserver_SOURCES = canonserver.c
 
 pix_ipu_SOURCES = pix-ipu.c canonlib.c asize.c
 
@@ -26,6 +28,6 @@ ipuscan_SOURCES = ipuscan.c canonlib.c asize.c
 
 ipustat_SOURCES = ipustat.c canonlib.c
 
-MAINTAINERCLEANFILES = Makefile.in
-
 EXTRA_DIST = $(man_MANS)
+
+MAINTAINERCLEANFILES = Makefile.in

@@ -179,4 +179,11 @@ man_MANS = \
 	urt.1 \
 	wasatchrle.1
 
-EXTRA_DIST = $(man_MANS) makeFont.sh font.src
+EXTRA_DIST = \
+	$(man_MANS) \
+	font.src \
+	makeFont.sh \
+	rleaddeof.c \
+	rleskel.c
+
+MAINTAINERCLEANFILES = Makefile.in

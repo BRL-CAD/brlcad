@@ -1,48 +1,20 @@
 # $Id$
 
-lib_LTLIBRARIES = libtclstub.la libtclstub@TCL_VERSION@.la
+lib_LTLIBRARIES = \
+	libtclstub.la \
+	libtclstub@TCL_VERSION@.la
 
-libtclstub_la_SOURCES = \
-	tclStubLib.c
+noinst_LTLIBRARIES = libtclg.la
 
-libtclstub@TCL_VERSION@_la_SOURCES = \
-	$(libtclstub_la_SOURCES)
+libtclstub_la_SOURCES = tclStubLib.c
+libtclstub@TCL_VERSION@_la_SOURCES = $(libtclstub_la_SOURCES)
 
-noinst_HEADERS = \
-	regcustom.h \
-	regerrs.h \
-	regex.h \
-	regguts.h \
-	tclCompile.h \
-	tclIO.h \
-	tclInitScript.h \
-	tclInt.h \
-	tclIntDecls.h \
-	tclIntPlatDecls.h \
-	tclMath.h \
-	tclPort.h \
-	tclRegexp.h
-
-include_HEADERS = \
-	tcl.h \
-	tclDecls.h \
-	tclPlatDecls.h
-
-brlcadincludedir = $(includedir)/brlcad
-brlcadinclude_HEADERS = $(include_HEADERS)
-
-EXTRA_DIST = \
-	regc_color.c \
-	regc_cvec.c \
-	regc_lex.c \
-	regc_locale.c \
-	regc_nfa.c \
+libtclg_la_LDFLAGS = -static
+libtclg_la_SOURCES = \
 	regcomp.c \
-	rege_dfa.c \
 	regerror.c \
 	regexec.c \
 	regfree.c \
-	regfronts.c \
 	tclAlloc.c \
 	tclAsync.c \
 	tclBasic.c \
@@ -76,7 +48,6 @@ EXTRA_DIST = \
 	tclListObj.c \
 	tclLiteral.c \
 	tclLoad.c \
-	tclLoadNone.c \
 	tclMain.c \
 	tclNamesp.c \
 	tclNotify.c \
@@ -96,15 +67,59 @@ EXTRA_DIST = \
 	tclStringObj.c \
 	tclStubInit.c \
 	tclStubLib.c \
-	tclTest.c \
-	tclTestObj.c \
-	tclTestProcBodyObj.c \
 	tclThread.c \
 	tclThreadAlloc.c \
 	tclThreadJoin.c \
-	tclThreadTest.c \
 	tclTimer.c \
-	tclUniData.c \
 	tclUtf.c \
 	tclUtil.c \
 	tclVar.c
+
+noinst_HEADERS = \
+	regcustom.h \
+	regerrs.h \
+	regex.h \
+	regguts.h \
+	tclCompile.h \
+	tclIO.h \
+	tclInitScript.h \
+	tclInt.h \
+	tclIntDecls.h \
+	tclIntPlatDecls.h \
+	tclMath.h \
+	tclPort.h \
+	tclRegexp.h
+
+include_HEADERS = \
+	tcl.h \
+	tclDecls.h \
+	tclPlatDecls.h
+
+EXTRA_DIST = \
+	regc_color.c \
+	regc_cvec.c \
+	regc_lex.c \
+	regc_locale.c \
+	regc_nfa.c \
+	rege_dfa.c \
+	regfronts.c \
+	tcl.decls \
+	tclGetDate.y \
+	tclInt.decls \
+	tclLoadNone.c \
+	tclTest.c \
+	tclTestObj.c \
+	tclTestProcBodyObj.c \
+	tclThreadTest.c \
+	tclUniData.c
+
+brlcadincludedir = $(includedir)/brlcad
+brlcadinclude_HEADERS = $(include_HEADERS)
+
+AM_CPPFLAGS = \
+	-I${top_srcdir}/src/other/libtcl/generic \
+	-DTCL_LIBRARY="\"${TCL_LIBRARY}\"" \
+	-DTCL_PACKAGE_PATH="\"${TCL_PACKAGE_PATH}\"" \
+	-DUSE_TCLALLOC=0
+
+MAINTAINERCLEANFILES = Makefile.in

@@ -40,3 +40,7 @@ dist_brlcadscript_SCRIPTS = \
 libtkdir = ${libdir}/tk8.4
 
 libtk_SCRIPTS = pkgIndex.tcl
+
+EXTRA_DIST = license.terms
+
+MAINTAINERCLEANFILES = Makefile.in

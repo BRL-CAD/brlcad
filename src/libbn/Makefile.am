@@ -32,20 +32,28 @@ SRCS = \
 	vert_tree.c \
 	wavelet.c
 
-libbn_la_SOURCES = $(SRCS) vers.c
-
-man_MANS = libplot3.3
-
-EXTRA_DIST = \
-	htester.c \
-	$(man_MANS)
-
-
 libbn_la_LDFLAGS = -version-info 19:1
+libbn_la_SOURCES = \
+	$(SRCS) \
+	vers.c
+
 libbn_la_LIBADD = \
 	${BU} \
 	${TCL} \
 	${LIBM}
+
+man_MANS = libplot3.3
+
+EXTRA_DIST = \
+	$(man_MANS) \
+	htester.c \
+	libbn.dsp \
+	libbn.dsw \
+	libbn.ncb \
+	libbn.opt \
+	plot3.doc
+
+DISTCLEANFILES = version
 
 BUILT_SOURCES = vers.c
 

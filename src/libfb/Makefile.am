@@ -2,6 +2,8 @@
 
 lib_LTLIBRARIES = libfb.la
 
+AM_CFLAGS = ${X_CFLAGS} -DIF_REMOTE -DIF_AB -DIF_X -DIF_OGL
+
 SRCS = \
 	fb_generic.c \
 	fb_log.c \
@@ -29,6 +31,7 @@ libfb_la_SOURCES = \
 	vers.c
 
 libfb_la_LDFLAGS = -version-info 19:1
+libfb_la_LIBADD = ${PKG} ${X_LIBS} ${TCL} ${BU} ${GL_LIBS}
 
 include_HEADERS = \
 	adage.h \
@@ -43,12 +46,36 @@ include_HEADERS = \
 
 dist_man_MANS = libfb.3
 
-AM_CFLAGS = ${X_CFLAGS} -DIF_REMOTE -DIF_AB -DIF_X -DIF_OGL
-
-libfb_la_LIBADD = ${PKG} ${X_LIBS} ${TCL} ${BU} ${GL_LIBS}
+# XXX lots of work is needed here to make the other if_ interfaces available.
+EXTRA_DIST = \
+	asize.c \
+	compress.c \
+	fbserv_obj_win32.c \
+	if_4d-old.c \
+	if_4d.c \
+	if_TEMPLATE.c \
+	if_adage.c \
+	if_ap.c \
+	if_ogl_win32.c \
+	if_ptty.c \
+	if_rat.c \
+	if_sgi.c \
+	if_sgiw.c \
+	if_sun.c \
+	if_ts.c \
+	if_ug.c \
+	libfb.dsp \
+	libfb.dsw \
+	libfb.ncb \
+	libfb.opt \
+	pkgswitch.c \
+	sgiselect.s
 
 BUILT_SOURCES = vers.c
 
 vers.c: $(SRCS)
 	@SH@ $(top_srcdir)/sh/vers.sh fb_version "The BRL-CAD Framebuffer Library" > $@
 
+DISTCLEANFILES = version
+
+MAINTAINERCLEANFILES = Makefile.in

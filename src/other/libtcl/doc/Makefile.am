@@ -179,6 +179,7 @@ man_MANS = \
 	string.n \
 	subst.n \
 	switch.n \
+	tclsh.1 \
 	tcltest.n \
 	tclvars.n \
 	tell.n \
@@ -193,7 +194,9 @@ man_MANS = \
 	vwait.n \
 	while.n
 
-MAINTAINERCLEANFILES = \
-	Makefile.in
+EXTRA_DIST = \
+	$(man_MANS) \
+	license.terms \
+	man.macros
 
-EXTRA_DIST = $(man_MANS)
+MAINTAINERCLEANFILES = Makefile.in

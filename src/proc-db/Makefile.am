@@ -41,6 +41,7 @@ noinst_HEADERS = \
 man_MANS = picket_fence.1
 
 
+# XXX does not compile?
 #apply_mdb_SOURCES = apply-mdb.c 
 #apply_mdb_LDADD = ${WDB}
 
@@ -128,4 +129,8 @@ wall_LDADD = ${WDB}
 wdb_example_SOURCES = wdb_example.c 
 wdb_example_LDADD = ${WDB}
 
-EXTRA_DIST = $(man_MANS)
+# XXX .c added until they compile
+EXTRA_DIST = \
+	$(man_MANS) \
+	apply-mdb.c \
+	nmgxplode.c

@@ -5,6 +5,7 @@ bin_SCRIPTS = \
 	brlcad-check.sh \
 	cadbug.sh \
 	cakeinclude.sh \
+	copyright.sh \
 	cray.sh \
 	elapsed.sh \
 	ldAix.sh \

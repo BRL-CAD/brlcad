@@ -94,7 +94,21 @@ iges-g-vers.c: $(iges_g_srcs) Makefile.am
 g-iges-vers.c: $(g_iges_srcs) Makefile.am
 	sh $(top_srcdir)/sh/vers.sh version "BRLCAD-to-IGES Translator" > $@
 
-BUILT_SOURCES = iges-g-vers.c g-iges-vers.c
+BUILT_SOURCES = \
+	iges-g-vers.c \
+	g-iges-vers.c
 
 man_MANS = g-iges.1 iges-g.1
-EXTRA_DIST = $(man_MANS)
+
+EXTRA_DIST = \
+	$(man_MANS) \
+	arrange.c \
+	bubbleup.c \
+	copytree.c \
+	ge6.igs \
+	spl.c \
+	treecheck.c \
+	wing128.igs \
+	woodie.igs
+
+DISTCLEANFILES = version

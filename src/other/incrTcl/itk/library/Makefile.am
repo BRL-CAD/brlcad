@@ -1,6 +1,6 @@
 # $Id$
 
-brlcadscriptdir = $(libdir)/itk3.3
+brlcadscriptdir = $(libdir)/itk@ITCL_VERSION@
 
 brlcadscript_SCRIPTS =\
 	Archetype.itk \

@@ -1,0 +1,5 @@
+# $Id$
+
+EXTRA_DIST = README
+
+MAINTAINERCLEANFILES = Makefile.in

@@ -59,5 +59,4 @@ endif
 endif
 # end ONLY_BENCHMARK
 
-MAINTAINERCLEANFILES = \
-	Makefile.in
+MAINTAINERCLEANFILES = Makefile.in

@@ -31,4 +31,7 @@ noinst_HEADERS = \
 fbed_LDADD = ${FB} ${TERMIO} ${CURSOR} ${CURSES} ${SGIGL}
 
 man_MANS = fbed.1
-EXTRA_DIST = $(man_MANS)
+
+EXTRA_DIST = \
+	$(man_MANS) \
+	font.doc

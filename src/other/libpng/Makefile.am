@@ -2,6 +2,7 @@
 
 lib_LTLIBRARIES = libpng.la
 
+libpng_la_LDFLAGS = -version-info 3:5:2
 libpng_la_SOURCES = \
 	example.c \
 	png.c \
@@ -21,10 +22,8 @@ libpng_la_SOURCES = \
 	pngwtran.c \
 	pngwutil.c
 
-libpng_la_LDFLAGS = -version-info 3:5:2
 
-
-bin_PROGRAMS = ansi2knr pngtest
+noinst_PROGRAMS = ansi2knr pngtest
 
 ansi2knr_SOURCES = ansi2knr.c
 
@@ -35,11 +34,19 @@ pngtest_LDADD = \
 	${LIBZ} \
 	${LIBM}
 
-
 include_HEADERS = png.h pngconf.h
 
 dist_man_MANS = ansi2knr.1 libpng.3 libpngpf.3 png.5
 
+EXTRA_DIST = \
+	ANNOUNCE \
+	CHANGES \
+	KNOWNBUG \
+	Makefile \
+	libpng.txt
+
 .PHONY : test
 test:	pngtest
 	./pngtest ${top_srcdir}/src/other/libpng/pngtest.png
+
+MAINTAINERCLEANFILES = Makefile.in

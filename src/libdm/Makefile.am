@@ -18,8 +18,15 @@ SRCS = \
 	query.c \
 	tcl.c 
 
-# need to test this as a dm-ogl.c replacement
-EXTRA_DIST = dm-ogl_win.c
+# need to test dm-ogl_win.c as a dm-ogl.c replacement
+EXTRA_DIST = \
+	dm-glx.c \
+	dm-ogl_win.c \
+	dm-pex.c \
+	libdm.dsp \
+	libdm.dsw \
+	libdm.ncb \
+	libdm.opt
 
 libdm_la_SOURCES = \
 	$(SRCS) \
@@ -34,3 +41,5 @@ AM_CFLAGS = ${X_CFLAGS}
 BUILT_SOURCES = vers.c
 vers.c: $(SRCS)
 	@SH@ $(top_srcdir)/sh/vers.sh dm_version "The BRL-CAD Display Manager Library" > $@
+
+DISTCLEANFILES = version

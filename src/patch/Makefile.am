@@ -10,4 +10,11 @@ rpatch_SOURCES = rpatch.c
 noinst_HEADERS = patch-g.h
 
 man_MANS = patch-g.1 rpatch.1
-EXTRA_DIST = $(man_MANS)
+
+EXTRA_DIST = \
+	$(man_MANS) \
+	pull_comp.sh \
+	pull_solidsub.sh \
+	rpatch.f
+
+MAINTAINERCLEANFILES = Makefile.in

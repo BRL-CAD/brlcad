@@ -4,17 +4,16 @@ tklibdir = ${libdir}
 
 tklib_DATA = tkConfig.sh
 
-EXTRA_DIST = \
-	README \
-	mkLinks \
-	tkConfig.sh.in \
+noinst_LTLIBRARIES = libtku.la libwish.la
+
+libtku_la_LDFLAGS = -static
+libtku_la_SOURCES = \
 	tkUnix.c \
 	tkUnix3d.c \
 	tkUnixButton.c \
 	tkUnixColor.c \
 	tkUnixConfig.c \
 	tkUnixCursor.c \
-	tkUnixDefault.h \
 	tkUnixDialog.c \
 	tkUnixDraw.c \
 	tkUnixEmbed.c \
@@ -22,11 +21,9 @@ EXTRA_DIST = \
 	tkUnixFocus.c \
 	tkUnixFont.c \
 	tkUnixInit.c \
-	tkUnixInt.h \
 	tkUnixKey.c \
 	tkUnixMenu.c \
 	tkUnixMenubu.c \
-	tkUnixPort.h \
 	tkUnixScale.c \
 	tkUnixScrlbr.c \
 	tkUnixSelect.c \
@@ -34,7 +31,29 @@ EXTRA_DIST = \
 	tkUnixWm.c \
 	tkUnixXId.c
 
+libwish_la_LDFLAGS = -static
+libwish_la_SOURCES = tkAppInit.c
+
+EXTRA_DIST = \
+	README \
+	aclocal.m4 \
+	license.terms \
+	mkLinks \
+	tcl.m4 \
+	tk.spec \
+	tkConfig.sh.in
+
 noinst_HEADERS = \
 	tkUnixDefault.h \
 	tkUnixInt.h \
 	tkUnixPort.h
+
+AM_CPPFLAGS = \
+	-DTK_LIBRARY="\"${TK_LIBRARY}\"" \
+	-I${top_srcdir}/src/other/libtcl/generic \
+	-I${top_srcdir}/src/other/libtk/bitmaps \
+	-I${top_srcdir}/src/other/libtk/generic \
+	-I${top_srcdir}/src/other/libtk/unix \
+	@X_CFLAGS@
+
+MAINTAINERCLEANFILES = Makefile.in

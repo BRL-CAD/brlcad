@@ -53,7 +53,11 @@ SRCS = \
 	vls.c \
 	xdr.c
 
-libbu_la_SOURCES = $(SRCS) vers.c
+libbu_la_LDFLAGS = -version-info 19:1
+libbu_la_LIBADD = ${PTHREAD_LIBS} ${TCL}
+libbu_la_SOURCES = \
+	$(SRCS) \
+	vers.c
 
 include_HEADERS = rb_internals.h
 
@@ -62,12 +66,16 @@ man_MANS = \
 	libbu.3 \
 	redblack.3
 
-EXTRA_DIST = $(man_MANS)
+EXTRA_DIST = \
+	$(man_MANS) \
+	libbu.dsp \
+	libbu.dsw \
+	libbu.ncb \
+	libbu.opt
+
+DISTCLEANFILES = version
 
 AM_CFLAGS = -DPREFIX=\"$(prefix)\"
-
-libbu_la_LDFLAGS = -version-info 19:1
-libbu_la_LIBADD = ${PTHREAD_LIBS} ${TCL}
 
 BUILT_SOURCES = vers.c
 

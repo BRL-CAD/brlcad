@@ -1,12 +1,20 @@
 # $Id$
 
 SUBDIRS = \
+	doc \
 	itcl \
-	itk
+	itk \
+	tools
 
 EXTRA_DIST = \
 	doc \
-	tools	
+	tools \
+	CHANGES \
+	INCOMPATIBLE \
+	license.terms \
+	makefile.bc \
+	makefile.vc \
+	rules.vc \
+	tcl.m4
 
-MAINTAINERCLEANFILES = \
-	Makefile.in
+MAINTAINERCLEANFILES = Makefile.in

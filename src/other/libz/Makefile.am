@@ -35,4 +35,23 @@ include_HEADERS = \
 	zutil.h
 
 man_MANS = zlib.3
-EXTRA_DIST=$(man_MANS)
+
+EXTRA_DIST = \
+	$(man_MANS) \
+	FAQ \
+	INDEX \
+	Make_vms.com \
+	Makefile.riscos \
+	afile \
+	algorithm.txt \
+	amiga \
+	contrib \
+	descrip.mms \
+	maketree.c \
+	minigzip.c \
+	msdos \
+	nt \
+	sfile \
+	zlib.html	
+
+MAINTAINERCLEANFILES = Makefile.in

@@ -1,39 +1,17 @@
 # $Id$
 
-noinst_HEADERS = \
-	default.h \
-	ks_names.h \
-	tk3d.h \
-	tkButton.h \
-	tkCanvas.h \
-	tkColor.h \
-	tkFileFilter.h \
-	tkFont.h \
-	tkInitScript.h \
-	tkInt.h \
-	tkIntDecls.h \
-	tkIntPlatDecls.h \
-	tkIntXlibDecls.h \
-	tkMenu.h \
-	tkMenubutton.h \
-	tkPort.h \
-	tkScale.h \
-	tkScrollbar.h \
-	tkSelect.h \
-	tkText.h \
-	tkUndo.h
+lib_LTLIBRARIES = \
+	libtkstub.la \
+	libtkstub@TK_VERSION@.la
 
-include_HEADERS = \
-	tk.h \
-	tkDecls.h \
-	tkPlatDecls.h
+# XXX libtkPW.la is a hack to make the IRIX linker behave
+noinst_LTLIBRARIES = libtkg.la libtkPW.la
 
-brlcadinclude_HEADERS = $(include_HEADERS)
+libtkstub_la_SOURCES = tkStubLib.c
+libtkstub@TK_VERSION@_la_SOURCES = $(libtkstub_la_SOURCES)
 
-EXTRA_DIST = \
-	README \
-	prolog.ps \
-	tk.decls \
+libtkg_la_LDFLAGS = -static
+libtkg_la_SOURCES = \
 	tk3d.c \
 	tkArgv.c \
 	tkAtom.c \
@@ -73,7 +51,6 @@ EXTRA_DIST = \
 	tkImgGIF.c \
 	tkImgPPM.c \
 	tkImgPhoto.c \
-	tkInt.decls \
 	tkListbox.c \
 	tkMain.c \
 	tkMenu.c \
@@ -84,7 +61,6 @@ EXTRA_DIST = \
 	tkOldConfig.c \
 	tkOption.c \
 	tkPack.c \
-	tkPanedWindow.c \
 	tkPlace.c \
 	tkRectOval.c \
 	tkScale.c \
@@ -108,5 +84,58 @@ EXTRA_DIST = \
 	tkVisual.c \
 	tkWindow.c
 
-brlcadincludedir = $(includedir)/brlcad
+# XXX libtkPW.la is a hack to make the IRIX linker behave
+libtkPW_la_LDFLAGS = -static
+libtkPW_la_SOURCES = \
+	tkPanedWindow.c
 
+noinst_HEADERS = \
+	default.h \
+	ks_names.h \
+	tk3d.h \
+	tkButton.h \
+	tkCanvas.h \
+	tkColor.h \
+	tkFileFilter.h \
+	tkFont.h \
+	tkInitScript.h \
+	tkInt.h \
+	tkIntDecls.h \
+	tkIntPlatDecls.h \
+	tkIntXlibDecls.h \
+	tkMenu.h \
+	tkMenubutton.h \
+	tkPort.h \
+	tkScale.h \
+	tkScrollbar.h \
+	tkSelect.h \
+	tkText.h \
+	tkUndo.h
+
+include_HEADERS = \
+	tk.h \
+	tkDecls.h \
+	tkPlatDecls.h
+
+EXTRA_DIST = \
+	README \
+	prolog.ps \
+	tk.decls \
+	tkFileFilter.c \
+	tkImgUtil.c \
+	tkInt.decls \
+	tkMacWinMenu.c \
+	tkPointer.c \
+	tkSquare.c \
+	tkTest.c
+
+brlcadincludedir = $(includedir)/brlcad
+brlcadinclude_HEADERS = $(include_HEADERS)
+
+AM_CPPFLAGS = \
+	-DTK_LIBRARY="\"${TK_LIBRARY}\"" \
+	-I${top_srcdir}/src/other/libtcl/generic \
+	-I${top_srcdir}/src/other/libtk/bitmaps \
+	-I${top_srcdir}/src/other/libtk/generic \
+	-I${top_srcdir}/src/other/libtk/unix \
+	@X_CFLAGS@
