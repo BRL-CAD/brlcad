@@ -86,7 +86,6 @@ struct mfuncs		*mfp;
 struct rt_i		*rtip;	/* New since 4.4 release */
 {
 	register struct rtrans_specific	*rtrans_sp;
-	mat_t	tmp;
 
 	RT_CHECK_RTI(rtip);
 	BU_CK_VLS( matparm );
@@ -143,7 +142,6 @@ char	*dp;
 {
 	register struct rtrans_specific *rtrans_sp =
 		(struct rtrans_specific *)dp;
-	point_t pt;
 
 	RT_AP_CHECK(ap);
 	RT_CHECK_PT(pp);

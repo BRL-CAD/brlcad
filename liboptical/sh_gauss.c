@@ -498,12 +498,9 @@ char			*dp;	/* ptr to the shader-specific struct */
 {
 	register struct gauss_specific *gauss_sp =
 		(struct gauss_specific *)dp;
-	point_t pt;
 	struct seg *seg_p;
 	struct reg_db_internals *dbint_p;
 	double optical_density = 0.0;
-	double partition_dist;
-	double tau;
 
 	/* check the validity of the arguments we got */
 	RT_AP_CHECK(ap);
@@ -564,14 +561,14 @@ char			*dp;	/* ptr to the shader-specific struct */
 		bu_log("Optical Density %g\n", optical_density);
 
 	/* get the path length right */
-	if (pp->pt_inhit->hit_dist < 0.0)
+/*	if (pp->pt_inhit->hit_dist < 0.0)
 		partition_dist = pp->pt_outhit->hit_dist;
 	else
 		partition_dist = (pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist);
 
 	tau = optical_density * partition_dist;
+ 	swp->sw_transmit = exp(-tau); */
 
-/* 	swp->sw_transmit = exp(-tau); */
  	swp->sw_transmit = 1.0 - optical_density;
 
 /*	VMOVE(swp->sw_color, pt);*/

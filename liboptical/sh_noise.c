@@ -233,7 +233,6 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	register struct noise_specific	*noise_sp;
 	mat_t	tmp;
 	mat_t model_to_region;
-	vect_t	bb_min, bb_max, v_tmp;
 	int i;
 
 	/* check the arguments */
@@ -323,9 +322,6 @@ HIDDEN void
 noise_free( cp )
 char *cp;
 {
-	register struct noise_specific *noise_sp =
-		(struct noise_specific *)cp;
-
 	bu_free( cp, "noise_specific" );
 }
 #define RESCALE_NOISE(n) n = n+1.0
