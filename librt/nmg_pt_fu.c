@@ -386,7 +386,7 @@ CONST struct bn_tol *tol;
 	fastf_t xpt,ypt;
 	fastf_t len;
 	int quado,quadpt;
-	int class;
+	int class = NMG_CLASS_Unknown;
 	int eu_is_crack=0;
 	int prev_eu_is_crack=0;
 

@@ -59,7 +59,6 @@ struct rt_i	*rtip;
 	char	*line;
 	char	*tabp;
 	int	linenum = 0;
-	char	*err;
 	register struct region	*rp;
 	int	ret;
 	int	oldid;
@@ -112,9 +111,12 @@ struct rt_i	*rtip;
 			continue;		/* just ignore it */
 		}
 #else
-		if( (err = re_comp(line)) != (char *)0 )  {
-			bu_log("%s: line %d, re_comp error '%s'\n", file, line, err );
-			continue;		/* just ignore it */
+		{
+			char	*err;
+			if( (err = re_comp(line)) != (char *)0 )  {
+				bu_log("%s: line %d, re_comp error '%s'\n", file, line, err );
+				continue;		/* just ignore it */
+			}
 		}
 #endif
 		

@@ -2656,7 +2656,7 @@ CONST struct bn_tol	*tol;
 	CONST struct loopuse	*lu;
 	CONST struct edgeuse	*eu;
 	register int		uses;
-	int			outie;
+	int			outie = -1;
 
 	BU_CK_LIST_HEAD(hd);
 	NMG_CK_EDGE(e1);
