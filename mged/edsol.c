@@ -6174,6 +6174,8 @@ void
 oedit_accept()
 {
 	register struct solid *sp;
+	register struct dm_list *dmlp;
+	register struct dm_list *save_dmlp;
 	/* matrices used to accept editing done from a depth
 	 *	>= 2 from the top of the illuminated path
 	 */
@@ -6196,6 +6198,17 @@ oedit_accept()
 		}
 		bu_log( "Sorry, this database is READ-ONLY\n" );
 		pr_prompt();
+
+#ifdef DO_SINGLE_DISPLAY_LIST
+		save_dmlp = curr_dm_list;
+		for( BU_LIST_FOR(dmlp, dm_list, &head_dm_list.l) ){
+		  if(dmlp->_dmp->dm_displaylist && dmlp->_mged_variables.dlist){
+		    curr_dm_list = dmlp;
+		    createDList(&HeadSolid);
+		  }
+		}
+		curr_dm_list = save_dmlp;
+#endif
 		return;
 	}
 
@@ -6251,6 +6264,18 @@ oedit_accept()
 		(void)replot_original_solid( sp );
 		sp->s_iflag = DOWN;
 	}
+
+#ifdef DO_SINGLE_DISPLAY_LIST
+	save_dmlp = curr_dm_list;
+	for( BU_LIST_FOR(dmlp, dm_list, &head_dm_list.l) ){
+	  if(dmlp->_dmp->dm_displaylist && dmlp->_mged_variables.dlist){
+	    curr_dm_list = dmlp;
+	    createDList(&HeadSolid);
+	  }
+	}
+	curr_dm_list = save_dmlp;
+#endif
+
 	bn_mat_idn( modelchanges );
 	bn_mat_idn( acc_rot_sol );
 	es_edclass = EDIT_CLASS_NULL;
@@ -6353,6 +6378,8 @@ void
 sedit_accept()
 {
 	struct directory	*dp;
+	register struct dm_list *dmlp;
+	register struct dm_list *save_dmlp;
 
 	if(dbip == DBI_NULL)
 	  return;
@@ -6369,6 +6396,17 @@ sedit_accept()
 
 	if( sedraw > 0)
 	  sedit();
+
+#ifdef DO_SINGLE_DISPLAY_LIST
+	save_dmlp = curr_dm_list;
+	for( BU_LIST_FOR(dmlp, dm_list, &head_dm_list.l) ){
+	  if(dmlp->_dmp->dm_displaylist && dmlp->_mged_variables.dlist){
+	    curr_dm_list = dmlp;
+	    createDList(&HeadSolid);
+	  }
+	}
+	curr_dm_list = save_dmlp;
+#endif
 
 	es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
 	es_pipept = (struct wdb_pipept *)NULL; /* Reset es_pipept */
@@ -6415,6 +6453,9 @@ sedit_accept()
 void
 sedit_reject()
 {
+	register struct dm_list *dmlp;
+	register struct dm_list *save_dmlp;
+
 	if( not_state( ST_S_EDIT, "Solid edit reject" ) )  return;
 
 	if( sedraw > 0)
@@ -6443,6 +6484,17 @@ sedit_reject()
 	      (void)replot_original_solid( sp );
 	  }
 	}
+
+#ifdef DO_SINGLE_DISPLAY_LIST
+	save_dmlp = curr_dm_list;
+	for( BU_LIST_FOR(dmlp, dm_list, &head_dm_list.l) ){
+	  if(dmlp->_dmp->dm_displaylist && dmlp->_mged_variables.dlist){
+	    curr_dm_list = dmlp;
+	    createDList(&HeadSolid);
+	  }
+	}
+	curr_dm_list = save_dmlp;
+#endif
 
 	menuflag = 0;
 	movedir = 0;

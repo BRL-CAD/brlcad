@@ -26,6 +26,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./sedit.h"
 #include "./ged.h"
+#include "./mged_solid.h"
 #include "./mged_dm.h"
 
 #include "tcl.h"
@@ -50,6 +51,7 @@ struct _mged_variables default_mged_variables = {
 /* send_key */                  0,
 /* hot_key */                   0,
 /* context */                   1,
+/* dlist */                     0,
 /* coords */                    'v',
 /* rotate_about */              'v',
 /* transform */                 'v',
@@ -64,6 +66,7 @@ struct _mged_variables default_mged_variables = {
 /* difference lexeme */		"-"
 };
 
+static void set_dlist();
 static void set_v_axes();
 void set_scroll();
 void set_absolute_tran();
@@ -115,6 +118,7 @@ struct bu_structparse mged_vparse[] = {
 	{"%d",  1, "send_key",          MV_O(send_key),         BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "hot_key",           MV_O(hot_key),          BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "context",           MV_O(context),          dirty_hook },
+	{"%d",  1, "dlist",             MV_O(dlist),            set_dlist },
 	{"%c",  1, "coords",            MV_O(coords),           set_absolute_tran },
 	{"%c",  1, "rotate_about",      MV_O(rotate_about),     dirty_hook },
 	{"%c",  1, "transform",         MV_O(transform),        dirty_hook },
@@ -348,4 +352,34 @@ set_v_axes()
   }
 
   last_v_axes = mged_variables.v_axes;
+}
+
+static void
+set_dlist()
+{
+#ifdef DO_DISPLAY_LISTS
+  if(mged_variables.dlist){
+    /* create display lists */
+    if(displaylist){
+      dirty = 1;
+#ifdef DO_SINGLE_DISPLAY_LIST
+      createDList(&HeadSolid);
+#else
+      createDLists(&HeadSolid); 
+#endif
+    }
+  }else{
+    /* free display lists */
+    if(displaylist){
+      dirty = 1;
+#ifdef DO_SINGLE_DISPLAY_LIST
+      dmp->dm_freeDLists(dmp, HeadSolid.s_dlist + dmp->dm_displaylist, 1);
+#else
+      dmp->dm_freeDLists(dmp, HeadSolid.s_dlist + dmp->dm_displaylist,
+			 BU_LIST_LAST(solid, &HeadSolid.l)->s_dlist -
+			 HeadSolid.s_dlist + 1);
+#endif
+    }
+  }
+#endif
 }

@@ -23,6 +23,11 @@
 #include "./scroll.h" /* struct scroll_item */
 #define DO_NEW_EDIT_MATS
 
+#define DO_DISPLAY_LISTS
+#if 0
+#define DO_SINGLE_DISPLAY_LIST
+#endif
+
 struct device_values  {
 	struct bu_vls	dv_string;	/* newline-separated "commands" from dm */
 };
@@ -177,7 +182,6 @@ struct menu_vars {
 struct dm_list {
   struct bu_list l;
   struct dm *_dmp;
-
 /* New stuff to allow more than one active display manager */
   struct shared_info *s_info;  /* info that can be used by display managers that are tied */
   int _dirty;      /* true if received an expose or configuration event */
@@ -217,6 +221,7 @@ extern struct dm_list *curr_dm_list;
 #define pathName dmp->dm_pathName
 #define tkName dmp->dm_tkName
 #define dName dmp->dm_dName
+#define displaylist dmp->dm_displaylist
 #define dirty curr_dm_list->_dirty
 #define mapped curr_dm_list->_mapped
 #define owner curr_dm_list->_owner

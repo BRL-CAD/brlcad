@@ -47,6 +47,11 @@ extern point_t e_axes_pos;
 extern point_t curr_e_axes_pos;
 static void draw_axes();
 
+#if 0
+void createDList();
+void createDLists();
+#endif
+
 mat_t	perspective_mat;
 mat_t	incr_change;
 mat_t	modelchanges;
@@ -274,7 +279,7 @@ int	which_eye;
 	mat_t		tmat, tvmat;
 	mat_t		new;
 	matp_t		mat;
-	int linestyle = 0;  /* not dashed */
+	int linestyle = -1;  /* not dashed */
 	short r = -1;
 	short g = -1;
 	short b = -1;
@@ -367,11 +372,7 @@ bn_mat_print("perspective_mat", perspective_mat);
 	}
 
 	dmp->dm_newrot( dmp, mat, which_eye );
-#if 1
-	dmp->dm_setLineAttr(dmp, mged_variables.linewidth, linestyle);
-#else
-	dmp->dm_setLineAttr(dmp, 1, linestyle); /* linewidth - 0, not dashed */
-#endif
+
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
 	  sp->s_flag = DOWN;		/* Not drawn yet */
 	  /* If part of object rotation, will be drawn below */
@@ -389,11 +390,7 @@ bn_mat_print("perspective_mat", perspective_mat);
 
 	  if(linestyle != sp->s_soldash){
 	    linestyle = sp->s_soldash;
-#if 1
 	    dmp->dm_setLineAttr(dmp, mged_variables.linewidth, linestyle);
-#else
-	    dmp->dm_setLineAttr(dmp, 1, linestyle);
-#endif
 	  }
 
 	  if(!DM_SAME_COLOR(r,g,b,
@@ -409,11 +406,35 @@ bn_mat_print("perspective_mat", perspective_mat);
 			  (short)sp->s_color[1],
 			  (short)sp->s_color[2]);
 	  }
-	  if(dmp->dm_drawVList( dmp, (struct rt_vlist *)&sp->s_vlist, mat ) == TCL_OK) {
+#ifdef DO_DISPLAY_LISTS
+	  if(displaylist && mged_variables.dlist){
+#ifdef DO_SINGLE_DISPLAY_LIST
+	    /* don't draw anything here --- just update variables */
+#else
+	    DM_DRAWDLIST(dmp, sp->s_dlist + displaylist);
+#endif
+	    sp->s_flag = UP;
+	    ndrawn++;
+	  }else{
+	    if(DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist) == TCL_OK){
+	      sp->s_flag = UP;
+	      ndrawn++;
+	    }
+	  }
+#else
+	  if(dmp->dm_drawVList( dmp, (struct rt_vlist *)&sp->s_vlist ) == TCL_OK) {
 	    sp->s_flag = UP;
 	    ndrawn++;
 	  }
+#endif
 	}
+
+#ifdef DO_SINGLE_DISPLAY_LIST
+	if(displaylist && mged_variables.dlist){
+	  /* draw single display list containing all solids */
+	  DM_DRAWDLIST(dmp, displaylist + 1);
+	}
+#endif
 
 	if(mged_variables.m_axes)
 	  draw_axes(M_AXES);  /* draw world view axis */
@@ -454,22 +475,111 @@ bn_mat_print("perspective_mat", perspective_mat);
 
 	  if(linestyle != sp->s_soldash){
 	    linestyle = sp->s_soldash;
-#if 1
 	    dmp->dm_setLineAttr(dmp, mged_variables.linewidth, linestyle);
-#else
-	    dmp->dm_setLineAttr(dmp, 1, linestyle);
-#endif
 	  }
 
-	  if( dmp->dm_drawVList( dmp, (struct rt_vlist *)&sp->s_vlist, mat ) == TCL_OK){
+#ifdef DO_DISPLAY_LISTS
+#ifdef DO_SINGLE_DISPLAY_LIST
+	  /* draw in immediate mode */
+	  if(DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist) == TCL_OK){
 	    sp->s_flag = UP;
 	    ndrawn++;
 	  }
+#else
+	  if(displaylist){
+	    DM_DRAWDLIST(dmp, sp->s_dlist + displaylist);
+	    sp->s_flag = UP;
+	    ndrawn++;
+	  }else{
+	    /* draw in immediate mode */
+	    if(DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist) == TCL_OK){
+	      sp->s_flag = UP;
+	      ndrawn++;
+	    }
+	  }
+#endif
+#else
+	  if( dmp->dm_drawVList( dmp, (struct rt_vlist *)&sp->s_vlist ) == TCL_OK){
+	    sp->s_flag = UP;
+	    ndrawn++;
+	  }
+#endif
 	}
 
   if(mged_variables.e_axes)
     draw_axes(E_AXES); /* draw edit axis */
 }
+
+#ifdef DO_DISPLAY_LISTS
+#ifdef DO_SINGLE_DISPLAY_LIST
+/*
+ * Create Display List
+ */
+void
+createDList(hsp)
+struct solid *hsp;
+{
+  register struct solid *sp;
+  int linestyle = -1;  /* not dashed */
+  short r = -1;
+  short g = -1;
+  short b = -1;
+
+  DM_BEGINDLIST(dmp, displaylist + 1);
+
+  FOR_ALL_SOLIDS(sp, &hsp->l){
+    if(linestyle != sp->s_soldash){
+      linestyle = sp->s_soldash;
+      dmp->dm_setLineAttr(dmp, mged_variables.linewidth, linestyle);
+    }
+
+    if(!DM_SAME_COLOR(r,g,b,
+		      (short)sp->s_color[0],
+		      (short)sp->s_color[1],
+		      (short)sp->s_color[2])){
+      DM_SET_COLOR(dmp,
+		       (short)sp->s_color[0],
+		       (short)sp->s_color[1],
+		       (short)sp->s_color[2], 0);
+      DM_COPY_COLOR(r,g,b,
+		    (short)sp->s_color[0],
+		    (short)sp->s_color[1],
+		    (short)sp->s_color[2]);
+    }
+
+    DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist);
+  }
+
+  DM_ENDDLIST(dmp, displaylist + 1);
+}
+#else
+/*
+ * Create Display List
+ */
+void
+createDList(sp)
+struct solid *sp;
+{
+  DM_BEGINDLIST(dmp, sp->s_dlist + displaylist);
+  DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist);
+  DM_ENDDLIST(dmp, sp->s_dlist + displaylist);
+}
+
+/*
+ * Create Display Lists
+ */
+void
+createDLists(hsp)
+struct solid *hsp;
+{
+  register struct solid *sp;
+
+  FOR_ALL_SOLIDS(sp, &hsp->l){
+    createDList(sp);
+  }
+}
+#endif
+#endif
 
 /*
  * Draw view, edit or world axes.
@@ -550,7 +660,7 @@ int axes;
       }
     }
 
-    if(axes == M_AXES){ /* world axes */
+    if(axes == M_AXES){ /* model axes */
       m1[X] = Viewscale*a1[X];
       m1[Y] = Viewscale*a1[Y];
       m1[Z] = Viewscale*a1[Z];
@@ -693,5 +803,5 @@ int axes;
 #else
   dmp->dm_setLineAttr(dmp, 1, 0);  /* linewidth - 1, not dashed */
 #endif
-  dmp->dm_drawVList(dmp, &h_vlist, model2view);
+  dmp->dm_drawVList(dmp, &h_vlist);
 }

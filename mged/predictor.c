@@ -43,6 +43,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "bn.h"
 #include "raytrace.h"
 #include "./ged.h"
+#include "./mged_solid.h"
 #include "./cmd.h"
 #include "./mged_dm.h"
 
@@ -255,6 +256,8 @@ predictor_frame()
 	vect_t	delta_v;
 	vect_t	right, up;
 	vect_t	norm;
+	register struct dm_list *dmlp;
+	register struct dm_list *save_dmlp;
 
 	if(dbip == DBI_NULL)
 	  return;
@@ -432,6 +435,17 @@ predictor_frame()
 
 	poly_trail( &trail, &tH, &tD );
 	invent_solid( "_PREDIC_TRAIL_UL_", &trail, 0x0000FFFFL, 0 );
+#endif
+
+#ifdef DO_SINGLE_DISPLAY_LIST
+	save_dmlp = curr_dm_list;
+	for( BU_LIST_FOR(dmlp, dm_list, &head_dm_list.l) ){
+	  if(dmlp->_dmp->dm_displaylist && dmlp->_mged_variables.dlist){
+	    curr_dm_list = dmlp;
+	    createDList(&HeadSolid);
+	  }
+	}
+	curr_dm_list = save_dmlp;
 #endif
 
 	/* Done */

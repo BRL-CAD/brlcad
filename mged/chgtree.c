@@ -436,6 +436,8 @@ char	**argv;
 {
 	register struct directory *dp;
 	register int i;
+	register struct dm_list *dmlp;
+	register struct dm_list *save_dmlp;
 	int	is_phony;
 	int	verbose = LOOKUP_NOISY;
 
@@ -474,6 +476,18 @@ char	**argv;
 			}
 		}
 	}
+
+#ifdef DO_SINGLE_DISPLAY_LIST
+	for( BU_LIST_FOR(dmlp, dm_list, &head_dm_list.l) ){
+	  if(dmlp->_dmp->dm_displaylist && dmlp->_mged_variables.dlist){
+	    save_dmlp = curr_dm_list;
+	    curr_dm_list = dmlp;
+	    createDList(&HeadSolid);
+	    curr_dm_list = save_dmlp;
+	  }
+	}
+#endif
+
 	return TCL_OK;
 }
 

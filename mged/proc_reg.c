@@ -1099,6 +1099,9 @@ char	**argv;
 	int	initial_blank_screen;
 	int start_argc=1;
 	char perf_message[128];
+	register struct dm_list *dmlp;
+	register struct dm_list *save_dmlp;
+	register struct cmd_list *save_cmd_list;
 
 	if(argc < 2 || MAXARGS < argc){
 	  struct bu_vls vls;
@@ -1128,17 +1131,8 @@ char	**argv;
 		if( (dp = db_lookup( dbip,  argv[i], LOOKUP_QUIET )) != DIR_NULL )
 		{
 			eraseobj( dp );
-			no_memory = 0;
 		}
 	}
-
-	if( dmp->dm_displaylist )
-	{
-		/* Force displaylist update before starting new drawing */
-		update_views = 1;
-		refresh();
-	}
-
 
 	E_initial_tree_state.ts_ttol = &mged_ttol;
 	E_initial_tree_state.ts_tol  = &mged_tol;
@@ -1175,18 +1169,41 @@ char	**argv;
 	/* free leaf_list */
 	bu_ptbl_free( &leaf_list );
 
-      /* If we went from blank screen to non-blank, resize */
-      if (mged_variables.autosize  && initial_blank_screen &&
-	  BU_LIST_NON_EMPTY(&HeadSolid.l)) {
-	size_reset();
-	new_mats();
-	(void)mged_svbase();
-      }
+	save_dmlp = curr_dm_list;
+	save_cmd_list = curr_cmd_list;
+	for( BU_LIST_FOR(dmlp, dm_list, &head_dm_list.l) ){
+	  curr_dm_list = dmlp;
+	  if(curr_dm_list->aim)
+	    curr_cmd_list = curr_dm_list->aim;
+	  else
+	    curr_cmd_list = &head_cmd_list;
 
-	color_soltab();
+	  /* If we went from blank screen to non-blank, resize */
+	  if (mged_variables.autosize  && initial_blank_screen &&
+	      BU_LIST_NON_EMPTY(&HeadSolid.l)) {
+	    struct view_list *vlp;
+
+	    size_reset();
+	    new_mats();
+	    (void)mged_svbase();
+
+	    for(BU_LIST_FOR(vlp, view_list, &headView.l))
+	      vlp->vscale = Viewscale;
+	  }
+
+	  color_soltab();
+
+#ifdef DO_SINGLE_DISPLAY_LIST
+	  createDList(&HeadSolid);
+#endif
+	}
+
+	curr_dm_list = save_dmlp;
+	curr_cmd_list = save_cmd_list;
 
 	sprintf(perf_message, "E: %ld vectors in %ld sec\n", nvectors, etime - start_time );
 	Tcl_AppendResult(interp, perf_message, (char *)NULL);
 
+	update_views = 1;
 	return TCL_OK;
 }

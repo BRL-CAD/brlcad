@@ -202,8 +202,10 @@ char	**argv;
     return TCL_ERROR;
   }
 
+#if 0
   Tcl_AppendResult(interp, "Display manager free map:\n", (char *)NULL);
   rt_memprint( &(dmp->dm_map) );
+#endif
   Tcl_AppendResult(interp, "Database free granule map:\n", (char *)NULL);
   rt_memprint( &(dbip->dbi_freep) );
 
@@ -1356,17 +1358,31 @@ killtree( dbip, dp )
 struct db_i	*dbip;
 register struct directory *dp;
 {
-	if(dbip == DBI_NULL)
-	  return;
+  register struct dm_list *dmlp;
+  register struct dm_list *save_dmlp;
 
-	Tcl_AppendResult(interp, "KILL ", (dp->d_flags & DIR_COMB) ? "COMB" : "Solid",
+  if(dbip == DBI_NULL)
+    return;
+
+  Tcl_AppendResult(interp, "KILL ", (dp->d_flags & DIR_COMB) ? "COMB" : "Solid",
 		   ":  ", dp->d_namep, "\n", (char *)NULL);
 
-	eraseobjall( dp );
+  eraseobjall( dp );
 
-	if( db_delete( dbip, dp) < 0 || db_dirdelete( dbip, dp ) < 0 ){
-	  TCL_DELETE_ERR("");
-	}
+#ifdef DO_SINGLE_DISPLAY_LIST
+  for( BU_LIST_FOR(dmlp, dm_list, &head_dm_list.l) ){
+    if(dmlp->_dmp->dm_displaylist && dmlp->_mged_variables.dlist){
+      save_dmlp = curr_dm_list;
+      curr_dm_list = dmlp;
+      createDList(&HeadSolid);
+      curr_dm_list = save_dmlp;
+    }
+  }
+#endif
+
+  if( db_delete( dbip, dp) < 0 || db_dirdelete( dbip, dp ) < 0 ){
+    TCL_DELETE_ERR("");
+  }
 }
 
 int

@@ -688,6 +688,8 @@ struct solid		*existing_sp;
 {
 	register struct solid *sp;
 	register int	i;
+	register struct dm_list *dmlp;
+	register struct dm_list *save_dmlp;
 
 	if( !existing_sp )  {
 		if (pathp->fp_len > MAX_PATH) {
@@ -700,6 +702,8 @@ struct solid		*existing_sp;
 		}
 		/* Handling a new solid */
 		GET_SOLID(sp, &FreeSolid.l);
+
+		sp->s_dlist = BU_LIST_LAST(solid, &HeadSolid.l)->s_dlist + 1;
 	} else {
 		/* Just updating an existing solid.
 		 *  'tsp' and 'pathpos' will not be used
@@ -737,6 +741,21 @@ struct solid		*existing_sp;
 		}
 		sp->s_regionid = tsp->ts_regionid;
 	}
+
+#ifdef DO_DISPLAY_LISTS
+#ifdef DO_SINGLE_DISPLAY_LIST
+	/* do nothing here */
+#else
+	save_dmlp = curr_dm_list;
+	for( BU_LIST_FOR(dmlp, dm_list, &head_dm_list.l) ){
+	  if(dmlp->_dmp->dm_displaylist && dmlp->_mged_variables.dlist){
+	    curr_dm_list = dmlp;
+	    createDList(sp);
+	  }
+	}
+	curr_dm_list = save_dmlp;
+#endif
+#endif
 
 	/* Solid is successfully drawn */
 	if( !existing_sp )  {
@@ -977,6 +996,8 @@ int			copy;
 	char		shortname[32];
 	char		namebuf[64];
 	char		*av[4];
+	register struct dm_list *dmlp;
+	register struct dm_list *save_dmlp;
 
 	strncpy( shortname, name, 16-6 );
 	shortname[16-6] = '\0';
@@ -998,6 +1019,17 @@ int			copy;
 			shortname, vbp->rgb[i] );
 		invent_solid( namebuf, &vbp->head[i], vbp->rgb[i], copy );
 	}
+
+#ifdef DO_SINGLE_DISPLAY_LIST
+	for( BU_LIST_FOR(dmlp, dm_list, &head_dm_list.l) ){
+	  if(dmlp->_dmp->dm_displaylist && dmlp->_mged_variables.dlist){
+	    save_dmlp = curr_dm_list;
+	    curr_dm_list = dmlp;
+	    createDList(&HeadSolid);
+	    curr_dm_list = save_dmlp;
+	  }
+	}
+#endif
 }
 
 /*
@@ -1018,6 +1050,8 @@ int		copy;
 {
 	register struct directory	*dp;
 	register struct solid		*sp;
+	register struct dm_list *dmlp;
+	register struct dm_list *save_dmlp;
 
 	if(dbip == DBI_NULL)
 	  return 0;
@@ -1074,6 +1108,21 @@ int		copy;
 
 	/* Solid successfully drawn, add to linked list of solid structs */
 	BU_LIST_APPEND(HeadSolid.l.back, &sp->l);
+
+#ifdef DO_DISPLAY_LISTS
+#ifdef DO_SINGLE_DISPLAY_LIST
+	/* do nothing here */
+#else
+	save_dmlp = curr_dm_list;
+	for( BU_LIST_FOR(dmlp, dm_list, &head_dm_list.l) ){
+	  if(dmlp->_dmp->dm_displaylist && dmlp->_mged_variables.dlist){
+	    curr_dm_list = dmlp;
+	    createDList(sp);
+	  }
+	}
+	curr_dm_list = save_dmlp;
+#endif
+#endif
 #endif
 	return(0);		/* OK */
 }
@@ -1656,6 +1705,8 @@ char	**argv;
 {
 	struct directory	*dp;
 	int		i;
+	register struct dm_list *dmlp;
+	register struct dm_list *save_dmlp;
 
 	if(dbip == DBI_NULL)
 	  return TCL_OK;
@@ -1683,5 +1734,17 @@ char	**argv;
 			}
 		}
 	}
+
+#ifdef DO_SINGLE_DISPLAY_LIST
+	save_dmlp = curr_dm_list;
+	for( BU_LIST_FOR(dmlp, dm_list, &head_dm_list.l) ){
+	  if(dmlp->_dmp->dm_displaylist && dmlp->_mged_variables.dlist){
+	    curr_dm_list = dmlp;
+	    createDList(&HeadSolid);
+	  }
+	}
+	curr_dm_list = save_dmlp;
+#endif
+
 	return TCL_OK;
 }
