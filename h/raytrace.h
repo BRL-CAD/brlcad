@@ -2404,7 +2404,7 @@ RT_EXTERN(struct edge_g_lseg	*nmg_face_cutjoin, (
 #define nmg_mev(_v, _u)	nmg_me((_v), (struct vertex *)NULL, (_u))
 
 /* From nmg_eval.c */
-RT_EXTERN(CONST char		*nmg_class_name, (int class) );
+RT_EXTERN(CONST char		*nmg_class_name, (int class_no) );
 #if 0
 /* These can't be included because struct nmg_bool_state is in nmg_eval.c */
 RT_EXTERN(void			nmg_eval_shell, (struct shell *s,
