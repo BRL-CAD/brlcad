@@ -56,7 +56,7 @@ static const char RCSview[] = "@(#)$Header$ (BRL)";
 #include "shadework.h"
 #include "./ext.h"
 #include "rtprivate.h"
-#include "./light.h"
+#include "light.h"
 #include "plot3.h"
 
 int		use_air = 0;		/* Handling of air in librt */

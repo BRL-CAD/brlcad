@@ -36,7 +36,7 @@ static const char RCSview[] = "@(#)$Header$ (BRL)";
 #include "shadework.h"
 #include "./ext.h"
 #include "rtprivate.h"
-#include "./light.h"
+#include "light.h"
 #include "plot3.h"
 
 

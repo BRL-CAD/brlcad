@@ -43,7 +43,7 @@
 #include "shadework.h"
 #include "rtprivate.h"
 #include "plot3.h"
-#include "../rt/light.h"
+#include "light.h"
 
 /* Sky onditions for luminance calculations. */
 #define CLEAR_SKY	0

@@ -55,7 +55,7 @@ Bill Laut (Gull Island Consultants, Inc.)
   P.O. Box 627, Muskegon, MI  49440
 	rt/sh_marble.c	-- substantial enhancements
 	rt/sh_wood.c -- a completely new shader
-	rt/light.h enhancements
+	h/light.h enhancements
 	rt/sh_light.c enhancements for more easily aimable lights.
 
 Henry Spencer

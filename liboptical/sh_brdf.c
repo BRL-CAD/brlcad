@@ -42,7 +42,7 @@ static const char RCSbrdf[] = "@(#)$Header$ (BRL)";
 #include "shadefuncs.h"
 #include "shadework.h"
 #include "rtprivate.h"
-#include "../rt/light.h"
+#include "light.h"
 
 extern int rr_render(struct application	*ap,
 		     struct partition	*pp,

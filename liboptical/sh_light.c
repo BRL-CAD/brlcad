@@ -38,7 +38,7 @@ static const char RCSsh_light[] = "@(#)$Header$ (ARL)";
 #include "shadework.h"
 #include "plot3.h"
 #include "rtprivate.h"
-#include "../rt/light.h"
+#include "light.h"
 
 #if RT_MULTISPECTRAL
 #include "spectrum.h"
