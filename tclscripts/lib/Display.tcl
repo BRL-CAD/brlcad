@@ -268,7 +268,8 @@ body Display::slew {x1 y1} {
     set sf [expr 2.0 * $invWidth]
 
     set _x [expr ($x1 - $x2) * $sf]
-    set _y [expr (-1.0 * $y1 + $y2) * $sf]
+    set _y [expr ($y2 - $y1) * $sf]
+#    set _y [expr (-1.0 * $y1 + $y2) * $sf]
 	
     View::slew $_x $_y
 }
