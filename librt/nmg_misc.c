@@ -1778,12 +1778,6 @@ struct shell *s;
 
 	/* Mark first faceuse with shell number */
 	NMG_INDEX_ASSIGN( flags , fu , shell_no );
-rt_log( "After first face, %d edges on shared list\n" , NMG_TBL_END( &shared_edges ) );
-for( i=0 ; i<NMG_TBL_END( &shared_edges ) ; i++ )
-{
-	eu = (struct edgeuse *)NMG_TBL_GET( &shared_edges , i );
-	rt_log( "\t( %f %f %f ) -> ( %f %f %f )\n" , V3ARGS( eu->vu_p->v_p->vg_p->coord ) , V3ARGS( eu->eumate_p->vu_p->v_p->vg_p->coord ) );
-}
 
 	/* now pop edgeuse of the stack and visit faces radial to edgeuse */
 	while( (eu1 = nmg_pop_eu( &stack )) != (struct edgeuse *)NULL )
@@ -1844,12 +1838,6 @@ for( i=0 ; i<NMG_TBL_END( &shared_edges ) ; i++ )
 			/* Mark this faceuse and its mate with a shell number */
 			NMG_INDEX_ASSIGN( flags , fu , shell_no );
 			NMG_INDEX_ASSIGN( flags , fu->fumate_p , shell_no );
-rt_log( "After another face, %d edges on shared list\n" , NMG_TBL_END( &shared_edges ) );
-for( i=0 ; i<NMG_TBL_END( &shared_edges ) ; i++ )
-{
-	eu = (struct edgeuse *)NMG_TBL_GET( &shared_edges , i );
-	rt_log( "\t( %f %f %f ) -> ( %f %f %f )\n" , V3ARGS( eu->vu_p->v_p->vg_p->coord ) , V3ARGS( eu->eumate_p->vu_p->v_p->vg_p->coord ) );
-}
 		}
 	}
 
@@ -1870,7 +1858,6 @@ for( i=0 ; i<NMG_TBL_END( &shared_edges ) ; i++ )
 
 	if( !missed_faces )	/* nothing to do, just one shell */
 	{
-rt_log( "No missed faces - done!!!\n" );
 		rt_free( (char *)flags , "nmg_decompose_shell: flags " );
 		nmg_tbl( &stack , TBL_FREE , NULL );
 		nmg_tbl( &shared_edges , TBL_FREE , NULL );
