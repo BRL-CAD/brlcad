@@ -43,9 +43,13 @@ char **argv;
 		nlines = 1024;
 		argc--; argv++;
 	}
-	if( (infd = open( argv[1], 0 )) < 0 )  {
-		perror( argv[1] );
-		exit(3);
+	if( strcmp( "-", argv[1] ) == 0 )  {
+		infd = 0;	/* stdin */
+	} else {
+		if( (infd = open( argv[1], 0 )) < 0 )  {
+			perror( argv[1] );
+			exit(3);
+		}
 	}
 	if( argc >= 3 )
 		nlines = atoi(argv[2] );
@@ -75,7 +79,7 @@ char **argv;
 			register struct pixel *out;
 			register int i;
 
-			if( read( infd, (char *)scanline, scanbytes ) != scanbytes )
+			if( mread( infd, (char *)scanline, scanbytes ) != scanbytes )
 				exit(0);
 
 			in = scanline;
@@ -90,4 +94,35 @@ char **argv;
 		}
 	}
 	exit(0);
+}
+
+/*
+ *			M R E A D
+ *
+ * This function performs the function of a read(II) but will
+ * call read(II) multiple times in order to get the requested
+ * number of characters.  This can be necessary because pipes
+ * and network connections don't deliver data with the same
+ * grouping as it is written with.
+ */
+static int
+mread(fd, bufp, n)
+int fd;
+register char	*bufp;
+unsigned	n;
+{
+	register unsigned	count = 0;
+	register int		nread;
+
+	do {
+		nread = read(fd, bufp, n-count);
+		if(nread == -1)
+			return(nread);
+		if(nread == 0)
+			return((int)count);
+		count += (unsigned)nread;
+		bufp += nread;
+	 } while(count < n);
+
+	return((int)count);
 }
