@@ -25,6 +25,7 @@
  *
  *	Rules:
  *
+ * XXX - What does "overlap" mean? ctj
  *	edges of loops of the same face must not overlap
  *	the "magic" member of each struct is the first item.
  *
@@ -85,11 +86,11 @@ nmg_mm()
 
 	NMG_GETSTRUCT( m, model );
 
-	m->magic = NMG_MODEL_MAGIC;
 	m->ma_p = (struct model_a *)NULL;
 	RT_LIST_INIT( &m->r_hd );
 	m->index = 0;
 	m->maxindex = 1;
+	m->magic = NMG_MODEL_MAGIC;	/* Model Structure is Good */
 
 	return(m);
 }
@@ -115,12 +116,12 @@ nmg_mmr()
 
 	m = nmg_mm();
 	GET_REGION(r, m);
-	r->l.magic = NMG_REGION_MAGIC;
 
 	r->m_p = m;
 
 	r->ra_p = (struct nmgregion_a *)NULL;
 	RT_LIST_INIT( &r->s_hd );
+	r->l.magic = NMG_REGION_MAGIC;	/* Region Structure is GOOD */
 
 	RT_LIST_APPEND( &m->r_hd, &r->l );
 
@@ -150,10 +151,12 @@ struct model *m;
 	NMG_CK_MODEL(m);
 
 	GET_REGION(r, m);
-	r->l.magic = NMG_REGION_MAGIC;
 	r->m_p = m;
+	r->ra_p = (struct nmgregion_a *) NULL;
 
 	RT_LIST_INIT( &r->s_hd );
+	r->l.magic = NMG_REGION_MAGIC;	/* Region struct is GOOD */
+
 	(void)nmg_msv(r);
 
 	/* new region goes at "head" of list of regions in model */
@@ -187,7 +190,6 @@ struct nmgregion	*r;
 
 	/* set up shell */
 	GET_SHELL(s, r->m_p);
-	s->l.magic = NMG_SHELL_MAGIC;
 
 	s->r_p = r;
 	RT_LIST_APPEND( &r->s_hd, &s->l );
@@ -196,6 +198,8 @@ struct nmgregion	*r;
 	RT_LIST_INIT( &s->fu_hd );
 	RT_LIST_INIT( &s->lu_hd );
 	RT_LIST_INIT( &s->eu_hd );
+	s->vu_p = (struct vertexuse *) NULL;
+	s->l.magic = NMG_SHELL_MAGIC;	/* Shell Struct is GOOD */
 
 	vu = nmg_mvvu(&s->l.magic, r->m_p);
 	s->vu_p = vu;
@@ -243,9 +247,8 @@ struct loopuse *lu1;
 
 	f->fu_p = fu1;
 	f->fg_p = (struct face_g *)NULL;
-	f->magic = NMG_FACE_MAGIC;
+	f->magic = NMG_FACE_MAGIC;	/* Face struct is GOOD */
 
-	fu1->l.magic = fu2->l.magic = NMG_FACEUSE_MAGIC;
 	RT_LIST_INIT(&fu1->lu_hd);
 	RT_LIST_INIT(&fu2->lu_hd);
 	fu1->s_p = fu2->s_p = s;
@@ -254,6 +257,8 @@ struct loopuse *lu1;
 	fu1->orientation = fu2->orientation = OT_UNSPEC;
 	fu1->f_p = fu2->f_p = f;
 	fu1->fua_p = fu2->fua_p = (struct faceuse_a *)NULL;
+	fu1->l.magic = 
+	    fu2->l.magic = NMG_FACEUSE_MAGIC; /* Faceuse structs are GOOD */
 
 	/* move the loopuses from the shell to the faceuses */
 	RT_LIST_DEQUEUE( &lu1->l );
@@ -275,6 +280,7 @@ struct loopuse *lu1;
 /*
  *			N M G _ M L V
  *
+ * XXX - vertex or vertexuse? or both? ctj 
  *	Make a new loop (with specified orientation) and vertex,
  *	in a shell or face.
  *	If the vertex 'v' is NULL, the shell's lone vertex is used,
@@ -308,6 +314,7 @@ int		orientation;
 	struct loop	*l;
 	struct loopuse	*lu1, *lu2;
 	struct model	*m;
+	/* XXX - why the new union? ctj */
 	union {
 		struct shell *s;
 		struct faceuse *fu;
@@ -322,7 +329,6 @@ int		orientation;
 
 	m = nmg_find_model( magic );
 	GET_LOOP(l, m);
-	l->magic = NMG_LOOP_MAGIC;
 	l->lg_p = (struct loop_g *)NULL;
 
 	GET_LOOPUSE(lu1, m);
@@ -334,6 +340,7 @@ int		orientation;
 	RT_LIST_INIT( &lu2->down_hd );
 
 	l->lu_p = lu1;
+	l->magic = NMG_LOOP_MAGIC;	/* Loop struct is GOOD */
 
 	lu1->l_p = lu2->l_p = l;
 	lu1->lua_p = lu2->lua_p = (struct loopuse_a *)NULL;
