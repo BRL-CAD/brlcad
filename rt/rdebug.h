@@ -35,6 +35,7 @@ extern int	rdebug;
 #define RDEBUG_REFRACT	0x00000080	/* 8 Debug reflection & refraction */
 #define RDEBUG_INSTANCE	0x00000100	/* 9 Debug instance revectoring */
 #define RDEBUG_STATS	0x00000200	/* 10 Print more statistics */
+#define RDEBUG_RTMEM_END 0x00000400	/* 11 Print librt mem use on 'clean' */
 
 /* These will cause binary debugging output */
 #define RDEBUG_MISSPLOT	0x20000000	/* 30 plot(5) missed rays to stdout */
@@ -44,5 +45,6 @@ extern int	rdebug;
 /* Format string for rt_printb() */
 #define RDEBUG_FORMAT	\
 "\020\040RAYPLOT\037RAYWRITE\036MISSPLOT\
+\013RTMEM_END\
 \012STATS\011INSTANCE\010REFRACT\
 \7LIGHT\6PARSE\5SHADE\4RTMEM\3SHOWERR\2MATERIAL\1HITS"
