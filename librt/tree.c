@@ -378,12 +378,20 @@ struct mater_info *materp;
 	/*
 	 * Load the first record of the object into local record buffer
 	 */
+#ifdef CRAY_COS
+	/* CRAY COS can't fseek() properly, hence this hideous I/O hack */
+	rewind(rt_i.fp);
+	while( !feof(rt_i.fp) && ftell(rt_i.fp) <= dp->d_addr  &&
+	    fread( (char *)&rec, sizeof rec, 1, rt_i.fp ) == 1 )
+		/* NULL */ ;
+#else
 	if( fseek( rt_i.fp, dp->d_addr, 0 ) < 0 ||
 	    fread( (char *)&rec, sizeof rec, 1, rt_i.fp ) != 1 )  {
 		rt_log("rt_drawobj: %s record read error\n",
 			rt_path_str(pathpos) );
 		return(TREE_NULL);
 	}
+#endif
 
 	/*
 	 *  Draw a solid
@@ -410,8 +418,9 @@ struct mater_info *materp;
 	}
 
 	if( rec.u_id != ID_COMB )  {
-		rt_log("rt_drawobj:  defective database record, type '%c'\n",
-			rec.u_id );
+		rt_log("rt_drawobj:  %s defective database record, type '%c' (0%o), addr=x%x\n",
+			dp->d_namep,
+			rec.u_id, rec.u_id, dp->d_addr );
 		return(TREE_NULL);			/* ERROR */
 	}
 
@@ -497,6 +506,10 @@ struct mater_info *materp;
 		auto mat_t new_xlate;		/* Accum translation mat */
 
 		mp = &(members[i].M);
+		if( mp->m_id != ID_MEMB )  {
+			rt_log("rt_drawobj:  defective member of %s\n", dp->d_namep);
+			continue;
+		}
 		if( (nextdp = rt_dir_lookup( mp->m_instname, LOOKUP_NOISY )) ==
 		    DIR_NULL )
 			continue;
