@@ -33,9 +33,6 @@ extern int fb_refresh();  /* from libfb/tcl.c */
 
 extern void mged_center(); /* from chgview.c */
 extern int mged_vscale();
-extern struct bu_vls rubber_band_color;         /* from cmd.c */
-extern struct bu_vls rubber_band_line_width;
-extern struct bu_vls rubber_band_line_style;
 
 void draw_rect();
 void get_rect();
@@ -50,54 +47,19 @@ int f_set_rect();
 void
 draw_rect()
 {
-  char *val;
-  int r, g, b;
-  int line_width;
-  int line_style;
-  struct rt_vlist h_vlist;
-  struct rt_vlist vlist;
-  fastf_t width, height;
   point_t view_pt;
   point_t model_pt;
   point_t first_pt;
+  fastf_t width, height;
+  int line_style;
 
   if(NEAR_ZERO(rect_width, (fastf_t)SMALL_FASTF) &&
      NEAR_ZERO(rect_height, (fastf_t)SMALL_FASTF))
     return;
 
-  /* get rubber band color */
-  val = Tcl_GetVar(interp, bu_vls_addr(&rubber_band_color), TCL_GLOBAL_ONLY);
-  if(sscanf(val, "%d %d %d", &r, &g, &b) != 3){
-    /* use default - white */
-    r = 255;
-    g = 255;
-    b = 255;
-  }
-
-  /* get rubber band line width */
-  val = Tcl_GetVar(interp, bu_vls_addr(&rubber_band_line_width), TCL_GLOBAL_ONLY);
-  if(sscanf(val, "%d", &line_width) != 1)
-    line_width = 1;
-
-  if(line_width < 0)
-    line_width = 1;
-
-  /* get rubber band line style */
-  val = Tcl_GetVar(interp, bu_vls_addr(&rubber_band_line_style), TCL_GLOBAL_ONLY);
-  if(sscanf(val, "%d", &line_style) != 1){
-    char c;
-
-    if(sscanf(val, "%c", &c) != 1)
-      line_style = 0; /* solid lines */
-    else{
-      if(c == 'd')
-	line_style = 1;
-      else
-	line_style = 0; /* solid lines */
-    }
-  }
-
-  if(line_style < 0 || line_style > 1)
+  if(mged_variables->rubber_band_linestyle == 'd')
+    line_style = 1; /* dashed lines */
+  else
     line_style = 0; /* solid lines */
 
   if(mged_variables->mouse_behavior == 'z'){
@@ -124,38 +86,17 @@ draw_rect()
     }
   }
 
-  BU_LIST_INIT(&h_vlist.l);
-  BU_LIST_APPEND(&h_vlist.l, &vlist.l);
+  /* draw rectangle */
+  DM_SET_COLOR(dmp,
+	       mged_variables->rubber_band_color[0],
+	       mged_variables->rubber_band_color[1],
+	       mged_variables->rubber_band_color[2], 1);
+  DM_SET_LINE_ATTR(dmp, mged_variables->rubber_band_linewidth, line_style);
 
-  VSET(view_pt, rect_x, rect_y, 1.0);
-  MAT4X3PNT(first_pt, view2model, view_pt);
-  VMOVE(vlist.pt[0], first_pt);
-  vlist.cmd[0] = RT_VLIST_LINE_MOVE;
-
-  VSET(view_pt, rect_x, rect_y + rect_height, 1.0);
-  MAT4X3PNT(model_pt, view2model, view_pt);
-  VMOVE(vlist.pt[1], model_pt);
-  vlist.cmd[1] = RT_VLIST_LINE_DRAW;
-
-  VSET(view_pt, rect_x + rect_width, rect_y + rect_height, 1.0);
-  MAT4X3PNT(model_pt, view2model, view_pt);
-  VMOVE(vlist.pt[2], model_pt);
-  vlist.cmd[2] = RT_VLIST_LINE_DRAW;
-
-  VSET(view_pt, rect_x + rect_width, rect_y, 1.0);
-  MAT4X3PNT(model_pt, view2model, view_pt);
-  VMOVE(vlist.pt[3], model_pt);
-  vlist.cmd[3] = RT_VLIST_LINE_DRAW;
-
-  VMOVE(vlist.pt[4], first_pt);
-  vlist.cmd[4] = RT_VLIST_LINE_DRAW;
-
-  vlist.nused = 5;
-
-  /* draw axes */
-  DM_SET_COLOR(dmp, r, g, b, 1);
-  DM_SET_LINE_ATTR(dmp, line_width, line_style);
-  DM_DRAW_VLIST(dmp, &h_vlist);
+  DM_DRAW_LINE_2D(dmp, rect_x, rect_y, rect_x, rect_y + rect_height);
+  DM_DRAW_LINE_2D(dmp, rect_x, rect_y + rect_height, rect_x + rect_width, rect_y + rect_height);
+  DM_DRAW_LINE_2D(dmp, rect_x + rect_width, rect_y + rect_height, rect_x + rect_width, rect_y);
+  DM_DRAW_LINE_2D(dmp, rect_x + rect_width, rect_y, rect_x, rect_y);
 }
 
 /*
