@@ -551,6 +551,12 @@ char	**argv;
 		if ((dp = db_lookup(dbip, comb_name, LOOKUP_NOISY)) == DIR_NULL)
 			return TCL_ERROR;
 
+		if( !(dp->d_flags & DIR_COMB) )
+		{
+			Tcl_AppendResult(interp, comb_name, " is not a combination\n", (char *)0 );
+			return TCL_ERROR;
+		}
+
 		if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
 			TCL_READ_ERR_return;
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -581,23 +587,8 @@ char	**argv;
 	dp = db_lookup( dbip, comb_name, LOOKUP_QUIET );
 	if( dp != DIR_NULL )
 	{
-		if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
-		{
-			Tcl_AppendResult(interp, "Cannot get records for ", comb_name, "\n" );
-			TCL_READ_ERR_return;
-		}
-		comb = (struct rt_comb_internal *)intern.idb_ptr;
-		RT_CK_COMB( comb );
-
-		if( region_flag != (-1) )
-		{
-			if( region_flag )
-				comb->region_flag = 1;
-			else
-				comb->region_flag = 0;
-		}
-		Tcl_AppendResult(interp, "WARNING: existing combination '", comb_name,
-			"' will be overwritten\n", (char *)NULL );
+		Tcl_AppendResult(interp, "ERROR: ", comb_name, " already exists\n", (char *)0 );
+		return TCL_ERROR;
 	}
 
 	/* parse Boolean expression */
