@@ -1,0 +1,96 @@
+.\" Copyright (c) 1986, University of Utah
+.\" Template man page.  Taken from wtm's page for getcx3d
+.TH RLETOPS 1 "December 20, 1986" 1
+.UC 4 
+.SH NAME
+rletops \- Convert RLE images to PostScript
+.SH SYNOPSIS
+.B rletops
+[
+.B \-C
+] [
+.B \-a
+.I aspect
+] [
+.B \-c
+.I center
+] [
+.B \-h
+.I height
+] [
+.B \-o
+.I outfile.ps
+] [
+.B \-s
+] [
+.I infile
+]
+.SH DESCRIPTION
+.IR Rletops
+converts
+.IR RLE (5)
+images into 
+.IR PostScript .
+The conversion uses the 
+.I PostScript
+.B image
+operator, instructing the device to reproduce the image to the best of its
+abilities.  If
+.I infile
+isn't specified, the RLE image is read from stdin.  The PostScript output is
+dumped to stdout, or to
+.I outfile.ps,
+if specified.
+.SH OPTIONS
+.TP
+.B \fB\-a\ \fIaspect\fR
+Specify aspect ratio of image.  Default is 1.0 (note PostScript uses square
+pixels).
+.TP
+.B \-C
+Causes a color PostScript image to be generated.
+This creates larger files and uses the PostScript
+.B colorimage
+operator, which is not recognized by all devices.
+The default is monochrome.
+.TP
+.B \fB\-c\ \fIcenter\fR
+Centers the images about a point
+.I center
+inches from the left edge of the page (or left margin if
+.B \-s
+is specified).  Default is 4.25 inches.
+.TP
+.B \fB\-h\ \fIheight\fR
+Specifies the height (in inches) the image is to appear on the page.  The
+default is three inches.  The width of the image is calculated from
+the image height, aspect ratio, and pixel dimensions.
+.TP
+.B \-s
+Specifies image is to be generated in "Scribe Mode."  The image is generated
+without a PostScript
+.I showpage
+operator at the end, and the default image center is changed to 3.25 inches
+from the margin (which usually is 1 inch).
+This is to generate PostScript files that can be included in Scribe documents
+with the @Picture command.  Images may also be included in LaTex documents
+with local conventions like the \\special{psfile=image.ps} command.  
+.SH NOTES
+On devices like the Apple LaserWriter, 
+.I rletops
+generates large PostScript files that take a non-trivial amount of time
+to download and print.  A 512x512 image takes about ten minutes.
+For including images in documents at the default sizes, 256x256 is
+usually sufficient resolution.
+.SH SEE ALSO
+.IR avg4 (1),
+.IR urt (1),
+.IR RLE (5).
+.SH AUTHORS
+Rod Bogart, John W. Peterson, Gregg Townsend.
+
+Portions are based on a program by Marc Majka.
+.SH BUGS
+Due to a mis-understanding with the PostScript interpreter,
+.I rletops
+always rounds the image size up to an even number of scanlines.

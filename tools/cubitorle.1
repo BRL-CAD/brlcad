@@ -1,0 +1,36 @@
+.\" Copyright (c) 1988, University of Utah
+.TH CUBITORLE 1 "6 February 1988" 1
+.SH NAME
+cubitorle \- Convert cubicomp image to an RLE format file.
+.SH SYNOPSIS
+.B cubitorle
+[
+.B \-o 
+.I outfile
+] 
+.I inprefix
+.SH DESCRIPTION
+.I Cubitorle
+converts a set of files in the Cubicomp image format to a raster file in the 
+Utah Raster Toolkit RLE format.
+.I Cubitorle
+expects as input a set of files of the form "\fIinprefix\fR.r8", 
+"\fIinprefix\fR.g8", and "\fIinprefix\fR.b8".  These files are combined
+to form a single 
+.IR RLE (5)
+file.
+The output is written to
+.I stdout
+unless an output file name is given using the
+.B \-o
+option.
+.SH OPTIONS
+.TP
+.BI \-o
+Allows specification of an output file name.
+.SH SEE ALSO
+.IR rleflip (1),
+.IR urt (1),
+.IR RLE (5).
+.SH AUTHOR
+Rod Bogart
