@@ -25,7 +25,6 @@ static char RCSrefract[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./rdebug.h"
 #include "./material.h"
-#include "./mathtab.h"
 
 int	max_ireflect = 5;	/* Maximum internal reflection level */
 int	max_bounces = 5;	/* Maximum recursion level */
