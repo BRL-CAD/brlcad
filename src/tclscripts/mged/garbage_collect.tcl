@@ -1,3 +1,24 @@
+#             G A R B A G E _ C O L L E C T . T C L
+# BRL-CAD
+#
+# Copyright (c) 2004 United States Government as represented by the
+# U.S. Army Research Laboratory.
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Library General Public License
+# as published by the Free Software Foundation; either version 2 of
+# the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Library General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this file; see the file named COPYING for more
+# information.
+#
+###
 #	This routine uses the MGED "keep" command to create a copy of the current
 #	database in a temporary file (thus eliminating free blocks), then overwriting
 #	the current database with the copy.
