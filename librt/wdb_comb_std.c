@@ -483,7 +483,7 @@ wdb_comb_std_tcl(clientData, interp, argc, argv)
      int     argc;
      char    **argv;
 {
-	struct wdb_obj *wdbop = (struct wdb_obj *)clientData;
+	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
 	char				*comb_name;
 	int				ch;
 	int				region_flag = -1;
@@ -498,7 +498,7 @@ wdb_comb_std_tcl(clientData, interp, argc, argv)
 	int				i;
 	union tree			*final_tree;
 
-	if (wdbop->wdb_wp->dbip->dbi_read_only) {
+	if (wdbp->dbip->dbi_read_only) {
 		Tcl_AppendResult(interp, "Database is read-only!\n", (char *)NULL);
 		return TCL_ERROR;
 	}
@@ -542,7 +542,7 @@ wdb_comb_std_tcl(clientData, interp, argc, argv)
 		/*
 		 *	Set/Reset the REGION flag of an existing combination
 		 */
-		if ((dp = db_lookup(wdbop->wdb_wp->dbip, comb_name, LOOKUP_NOISY)) == DIR_NULL)
+		if ((dp = db_lookup(wdbp->dbip, comb_name, LOOKUP_NOISY)) == DIR_NULL)
 			return TCL_ERROR;
 
 		if (!(dp->d_flags & DIR_COMB)) {
@@ -550,7 +550,7 @@ wdb_comb_std_tcl(clientData, interp, argc, argv)
 			return TCL_ERROR;
 		}
 
-		if (rt_db_get_internal(&intern, dp, wdbop->wdb_wp->dbip, (fastf_t *)NULL) < 0) {
+		if (rt_db_get_internal(&intern, dp, wdbp->dbip, (fastf_t *)NULL) < 0) {
 			Tcl_AppendResult(interp, "Database read error, aborting\n", (char *)NULL);	
 			return TCL_ERROR;
 		}
@@ -562,7 +562,7 @@ wdb_comb_std_tcl(clientData, interp, argc, argv)
 		else
 			comb->region_flag = 0;
 
-		if (rt_db_put_internal(dp, wdbop->wdb_wp->dbip, &intern) < 0) {
+		if (rt_db_put_internal(dp, wdbp->dbip, &intern) < 0) {
 			rt_comb_ifree(&intern);
 			Tcl_AppendResult(interp, "Database write error, aborting\n", (char *)NULL);
 			return TCL_ERROR;
@@ -579,7 +579,7 @@ wdb_comb_std_tcl(clientData, interp, argc, argv)
 	 *	Otherwise, make sure to set its c_flags according to region_flag.
 	 */
 
-	dp = db_lookup( wdbop->wdb_wp->dbip, comb_name, LOOKUP_QUIET );
+	dp = db_lookup( wdbp->dbip, comb_name, LOOKUP_QUIET );
 	if (dp != DIR_NULL) {
 		Tcl_AppendResult(interp, "ERROR: ", comb_name, " already exists\n", (char *)0 );
 		return TCL_ERROR;
@@ -664,7 +664,7 @@ wdb_comb_std_tcl(clientData, interp, argc, argv)
 		}
 	}
 
-	if (wdb_check_syntax(interp, wdbop->wdb_wp->dbip, &tok_hd.l, comb_name, dp)) {
+	if (wdb_check_syntax(interp, wdbp->dbip, &tok_hd.l, comb_name, dp)) {
 		wdb_free_tokens(&tok_hd.l);
 		return TCL_ERROR;
 	}
@@ -685,7 +685,7 @@ wdb_comb_std_tcl(clientData, interp, argc, argv)
 			case WDB_TOK_TREE:
 				if (!strcmp(tok->tp->tr_l.tl_name, comb_name)) {
 					db_free_tree( tok->tp );
-					if (rt_db_get_internal(&intern1, dp, wdbop->wdb_wp->dbip, (fastf_t *)NULL) < 0) {
+					if (rt_db_get_internal(&intern1, dp, wdbp->dbip, (fastf_t *)NULL) < 0) {
 						Tcl_AppendResult(interp, "Cannot get records for ", comb_name, "\n" );
 						Tcl_AppendResult(interp, "Database read error, aborting\n", (char *)NULL);
 						return TCL_ERROR;
@@ -724,10 +724,10 @@ wdb_comb_std_tcl(clientData, interp, argc, argv)
 			struct bu_vls tmp_vls;
 
 			comb->region_flag = 1;
-			comb->region_id = wdbop->wdb_item_default++;;
-			comb->aircode = wdbop->wdb_air_default;
-			comb->los = wdbop->wdb_los_default;
-			comb->GIFTmater = wdbop->wdb_mat_default;
+			comb->region_id = wdbp->wdb_item_default++;;
+			comb->aircode = wdbp->wdb_air_default;
+			comb->los = wdbp->wdb_los_default;
+			comb->GIFTmater = wdbp->wdb_mat_default;
 			bu_vls_init(&tmp_vls);
 			bu_vls_printf(&tmp_vls,
 				"Creating region id=%d, air=%d, los=%d, GIFTmaterial=%d\n",
@@ -741,25 +741,25 @@ wdb_comb_std_tcl(clientData, interp, argc, argv)
 		intern.idb_meth = &rt_functab[ID_COMBINATION];
 		intern.idb_ptr = (genptr_t)comb;
 
-		if ((dp=db_diradd(wdbop->wdb_wp->dbip, comb_name, -1L, 0, DIR_COMB, NULL)) == DIR_NULL) {
+		if ((dp=db_diradd(wdbp->dbip, comb_name, -1L, 0, DIR_COMB, NULL)) == DIR_NULL) {
 			Tcl_AppendResult(interp, "Failed to add ", comb_name,
 					 " to directory, aborting\n" , (char *)NULL);
 			return TCL_ERROR;
 		}
 
-		if (rt_db_put_internal(dp, wdbop->wdb_wp->dbip, &intern) < 0) {
+		if (rt_db_put_internal(dp, wdbp->dbip, &intern) < 0) {
 			Tcl_AppendResult(interp, "Failed to write ", dp->d_namep, (char *)NULL );
 			return TCL_ERROR;
 		}
 	} else {
-		db_delete(wdbop->wdb_wp->dbip, dp);
+		db_delete(wdbp->dbip, dp);
 
 		dp->d_len = 0;
 		dp->d_un.file_offset = -1;
 		db_free_tree(comb->tree);
 		comb->tree = final_tree;
 
-		if (rt_db_put_internal(dp, wdbop->wdb_wp->dbip, &intern) < 0) {
+		if (rt_db_put_internal(dp, wdbp->dbip, &intern) < 0) {
 			Tcl_AppendResult(interp, "Failed to write ", dp->d_namep, (char *)NULL );
 			return TCL_ERROR;
 		}

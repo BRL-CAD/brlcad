@@ -528,7 +528,7 @@ vdraw_send_tcl(clientData, interp, argc, argv)
 
 	sprintf(solid_name, RT_VDRW_PREFIX);
 	strncat(solid_name, dgop->dgo_currVHead->vdc_name, RT_VDRW_MAXNAME);
-	if ((dp = db_lookup(dgop->dgo_wdbop->wdb_wp->dbip, solid_name, LOOKUP_QUIET)) == DIR_NULL) {
+	if ((dp = db_lookup(dgop->dgo_wdbp->dbip, solid_name, LOOKUP_QUIET)) == DIR_NULL) {
 		real_flag = 0;
 	} else {
 		real_flag = (dp->d_addr == RT_DIR_PHONY_ADDR) ? 0 : 1;

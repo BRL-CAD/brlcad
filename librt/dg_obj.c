@@ -219,10 +219,10 @@ dgo_close_tcl(clientData, interp, argc, argv)
 
 /*
  * Open/create a drawable geometry object that's associated with the
- * database object "wdb_obj".
+ * database object "rt_wdb".
  *
  * USAGE:
- *	  dgo_open [name wdb_obj]
+ *	  dgo_open [name rt_wdb]
  */
 static int
 dgo_open_tcl(clientData, interp, argc, argv)
@@ -232,7 +232,7 @@ dgo_open_tcl(clientData, interp, argc, argv)
      char    **argv;
 {
 	struct dg_obj *dgop;
-	struct wdb_obj *wdbop;
+	struct rt_wdb *wdbp;
 	struct bu_vls vls;
 
 	if (argc == 1) {
@@ -252,12 +252,12 @@ dgo_open_tcl(clientData, interp, argc, argv)
 	}
 
 	/* search for database object */
-	for (BU_LIST_FOR(wdbop, wdb_obj, &HeadWDBObj.l)) {
-		if (strcmp(bu_vls_addr(&wdbop->wdb_name), argv[2]) == 0)
+	for (BU_LIST_FOR(wdbp, rt_wdb, &HeadWDB.l)) {
+		if (strcmp(bu_vls_addr(&wdbp->wdb_name), argv[2]) == 0)
 			break;
 	}
 
-	if (BU_LIST_IS_HEAD(wdbop, &HeadWDBObj.l)) {
+	if (BU_LIST_IS_HEAD(wdbp, &HeadWDB.l)) {
 		Tcl_AppendResult(interp, "dgo_open: bad database object - ", argv[2],
 				 "\n", (char *)NULL);
 		return TCL_ERROR;
@@ -269,7 +269,7 @@ dgo_open_tcl(clientData, interp, argc, argv)
 	/* initialize dg_obj */
 	bu_vls_init(&dgop->dgo_name);
 	bu_vls_strcpy(&dgop->dgo_name,argv[1]);
-	dgop->dgo_wdbop = wdbop;
+	dgop->dgo_wdbp = wdbp;
 	BU_LIST_INIT(&dgop->dgo_headSolid.l);
 	BU_LIST_INIT(&dgop->dgo_headVDraw);
 
@@ -347,13 +347,13 @@ dgo_draw(dgop, interp, argc, argv, kind)
      char    **argv;
      int kind;
 {
-	struct wdb_obj *wdbop;
+	struct rt_wdb *wdbp;
 	register struct directory *dp;
 	register int i;
 
 	curr_dgop = dgop;
 	curr_interp = interp;
-	curr_dbip = dgop->dgo_wdbop->wdb_wp->dbip;
+	curr_dbip = dgop->dgo_wdbp->dbip;
 	curr_hsp = &dgop->dgo_headSolid;
 
 	/* skip past procname and cmd */
@@ -423,7 +423,7 @@ dgo_erase(dgop, interp, argc, argv)
 	register int i;
 
 	for (i = 0; i < argc; i++) {
-		if ((dp = db_lookup(dgop->dgo_wdbop->wdb_wp->dbip,  argv[i], LOOKUP_NOISY)) != DIR_NULL)
+		if ((dp = db_lookup(dgop->dgo_wdbp->dbip,  argv[i], LOOKUP_NOISY)) != DIR_NULL)
 			dgo_eraseobj(dgop, interp, dp);
 	}
 }
@@ -469,7 +469,7 @@ dgo_erase_all(dgop, interp, argc, argv)
 	register int i;
 
 	for (i = 0; i < argc; i++) {
-		if ((dp = db_lookup(dgop->dgo_wdbop->wdb_wp->dbip,  argv[i], LOOKUP_NOISY)) != DIR_NULL)
+		if ((dp = db_lookup(dgop->dgo_wdbp->dbip,  argv[i], LOOKUP_NOISY)) != DIR_NULL)
 			dgo_eraseobjall(dgop, interp, dp);
 	}
 }
@@ -650,7 +650,7 @@ char	**argv;
 
 	curr_dgop = dgop;
 	curr_interp = interp;
-	curr_dbip = dgop->dgo_wdbop->wdb_wp->dbip;
+	curr_dbip = dgop->dgo_wdbp->dbip;
 	curr_hsp = &dgop->dgo_headSolid;
 	dgo_overlay(dgop, interp, fp, name, char_size);
 
@@ -770,7 +770,7 @@ char	**argv;
 		}
 		*vp++ = argv[i];
 	}
-	*vp++ = dgop->dgo_wdbop->wdb_wp->dbip->dbi_filename;
+	*vp++ = dgop->dgo_wdbp->dbip->dbi_filename;
 
 	/*
 	 * Now that we've grabbed all the options, if no args remain,
@@ -813,7 +813,7 @@ char	**argv;
 
 	curr_dgop = dgop;
 	curr_interp = interp;
-	curr_dbip = dgop->dgo_wdbop->wdb_wp->dbip;
+	curr_dbip = dgop->dgo_wdbp->dbip;
 	curr_hsp = &dgop->dgo_headSolid;
 
 	return bu_cmd(clientData, interp, argc, argv, vdraw_cmds, 2);
@@ -834,7 +834,7 @@ dgo_zap(dgop, interp)
 		dp = sp->s_path[0];
 		RT_CK_DIR(dp);
 		if (dp->d_addr == RT_DIR_PHONY_ADDR) {
-			if (db_dirdelete(dgop->dgo_wdbop->wdb_wp->dbip, dp) < 0) {
+			if (db_dirdelete(dgop->dgo_wdbp->dbip, dp) < 0) {
 			  Tcl_AppendResult(interp, "dgo_zap: db_dirdelete failed\n", (char *)NULL);
 			}
 		}
@@ -1275,7 +1275,7 @@ dgo_rtcheck_tcl(clientData, interp, argc, argv)
 	*vp++ = "-M";
 	for (i=3; i < argc; i++)
 		*vp++ = argv[i];
-	*vp++ = dgop->dgo_wdbop->wdb_wp->dbip->dbi_filename;
+	*vp++ = dgop->dgo_wdbp->dbip->dbi_filename;
 
 	/*
 	 * Now that we've grabbed all the options, if no args remain,
@@ -2009,10 +2009,10 @@ dgo_invent_solid(dgop, interp, name, vhead, rgb, copy)
 	register struct dm_list *dmlp;
 	register struct dm_list *save_dmlp;
 
-	if (dgop->dgo_wdbop->wdb_wp->dbip == DBI_NULL)
+	if (dgop->dgo_wdbp->dbip == DBI_NULL)
 		return 0;
 
-	if ((dp = db_lookup(dgop->dgo_wdbop->wdb_wp->dbip, name, LOOKUP_QUIET)) != DIR_NULL) {
+	if ((dp = db_lookup(dgop->dgo_wdbp->dbip, name, LOOKUP_QUIET)) != DIR_NULL) {
 		if (dp->d_addr != RT_DIR_PHONY_ADDR) {
 			Tcl_AppendResult(interp, "dgo_invent_solid(", name,
 					 ") would clobber existing database entry, ignored\n", (char *)NULL);
@@ -2026,7 +2026,7 @@ dgo_invent_solid(dgop, interp, name, vhead, rgb, copy)
 		dgo_eraseobjall(dgop, interp, dp);
 	}
 	/* Need to enter phony name in directory structure */
-	dp = db_diradd(dgop->dgo_wdbop->wdb_wp->dbip,  name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, NULL);
+	dp = db_diradd(dgop->dgo_wdbp->dbip,  name, RT_DIR_PHONY_ADDR, 0, DIR_SOLID, NULL);
 
 	/* Obtain a fresh solid structure, and fill it in */
 	GET_SOLID(sp,&FreeSolid.l);
@@ -2239,7 +2239,7 @@ dgo_eraseobjall_callback(dbip, interp, dp)
 
 	for (BU_LIST_FOR(dgop, dg_obj, &HeadDGObj.l))
 		/* drawable geometry objects associated database matches */
-		if (dgop->dgo_wdbop->wdb_wp->dbip == dbip)
+		if (dgop->dgo_wdbp->dbip == dbip)
 			dgo_eraseobjall(dgop, interp, dp);
 }
 
@@ -2259,7 +2259,7 @@ dgo_eraseobjall(dgop, interp, dp)
   static struct solid *nsp;
   register int i;
 
-  if(dgop->dgo_wdbop->wdb_wp->dbip == DBI_NULL)
+  if(dgop->dgo_wdbp->dbip == DBI_NULL)
     return;
 
   RT_CK_DIR(dp);
@@ -2279,7 +2279,7 @@ dgo_eraseobjall(dgop, interp, dp)
   }
 
   if (dp->d_addr == RT_DIR_PHONY_ADDR) {
-    if (db_dirdelete(dgop->dgo_wdbop->wdb_wp->dbip, dp) < 0) {
+    if (db_dirdelete(dgop->dgo_wdbp->dbip, dp) < 0) {
 	    Tcl_AppendResult(interp, "dgo_eraseobjall: db_dirdelete failed\n", (char *)NULL);
     }
   }
@@ -2294,7 +2294,7 @@ dgo_eraseobj(dgop, interp, dp)
 	register struct solid *sp;
 	register struct solid *nsp;
 
-	if(dgop->dgo_wdbop->wdb_wp->dbip == DBI_NULL)
+	if(dgop->dgo_wdbp->dbip == DBI_NULL)
 		return;
 
 	RT_CK_DIR(dp);
@@ -2313,7 +2313,7 @@ dgo_eraseobj(dgop, interp, dp)
 	}
 
 	if (dp->d_addr == RT_DIR_PHONY_ADDR ) {
-		if (db_dirdelete(dgop->dgo_wdbop->wdb_wp->dbip, dp) < 0)  {
+		if (db_dirdelete(dgop->dgo_wdbp->dbip, dp) < 0)  {
 			Tcl_AppendResult(interp, "dgo_eraseobj: db_dirdelete failed\n", (char *)NULL);
 		}
 	}
