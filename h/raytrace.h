@@ -2823,7 +2823,8 @@ void db_ck_directory(const struct db_i *dbip);
 
 extern void db_inmem(struct directory	*dp,
 		     struct bu_external	*ext,
-		     int			flags);
+		     int		flags,
+		     struct db_i	*dbip);
 
 extern int db_is_directory_non_empty( const struct db_i	*dbip);
 
