@@ -157,7 +157,7 @@ genptr_t clientdata;
 #endif
 }
 
-#if 0
+#if 1
 HIDDEN void
 bu_log_call_hooks( buf )
 genptr_t	buf;
@@ -227,7 +227,7 @@ int c;
 	char buf[2];
 	buf[0] = (char)c;
 	buf[1] = '\0';
-#if 0
+#if 1
 	bu_log_call_hooks(buf);
 #else
 	bu_call_hook(&bu_log_hook_list, (genptr_t)buf);
@@ -330,7 +330,7 @@ char *fmt;
 	}
 
     } else {
-#if 0
+#if 1
 	    bu_log_call_hooks(bu_vls_addr(&output));
 #else
 	    bu_call_hook(&bu_log_hook_list, (genptr_t)bu_vls_addr(&output));
@@ -428,7 +428,7 @@ char *fmt;
 	}
 
     } else {
-#if 0
+#if 1
 	    bu_log_call_hooks(bu_vls_addr(&output));
 #else
 	    bu_call_hook(&bu_log_hook_list, (genptr_t)bu_vls_addr(&output));
