@@ -353,3 +353,26 @@ long		*client;
 	bu_ptbl_ins_unique( &dbip->dbi_clients, client );
 	return dbip;
 }
+
+/*
+ *			D B _ S Y N C
+ *
+ *  Ensure that the on-disk database has been completely written
+ *  out of the operating system's cache.
+ */
+void
+db_sync( dbip )
+struct db_i	*dbip;
+{
+	RT_CK_DBI(dbip);
+
+#ifdef HAVE_UNIX_IO
+	bu_semaphore_acquire(BU_SEM_SYSCALL);
+	fsync(dbip->dbi_fd);
+	bu_semaphore_release(BU_SEM_SYSCALL);
+#else
+	bu_semaphore_acquire(BU_SEM_SYSCALL);
+	sync();
+	bu_semaphore_release(BU_SEM_SYSCALL);
+#endif
+}
