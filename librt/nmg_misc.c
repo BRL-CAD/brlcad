@@ -1183,3 +1183,22 @@ struct vertexuse *vu;
 	rt_log("How did I get here %s %d?\n", __FILE__, __LINE__);
 	abort();
 }
+
+
+/*	N M G _ F I N D _ F U _ O F _ E U
+ *
+ *	return a pointer to the faceuse that is the super-parent of this
+ *	edgeuse.  If edgeuse has no super-parent faceuse, return NULL.
+ */
+struct faceuse *
+nmg_find_fu_of_eu(eu)
+struct edgeuse *eu;
+{
+	NMG_CK_EDGEUSE(eu);
+
+	if (*eu->up.magic_p == NMG_LOOP_MAGIC &&
+		*eu->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC)
+			return *eu->up.lu_p->up.fu_p;
+
+	return (struct faceuse *)NULL;			
+}
