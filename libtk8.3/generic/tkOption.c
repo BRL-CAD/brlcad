@@ -474,7 +474,7 @@ Tk_OptionObjCmd(clientData, interp, objc, objv)
 				 * interpreter. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of Tcl_Obj arguments. */
-    Tcl_Obj *CONST objv[];	/* Tcl_Obj arguments. */
+    Tcl_Obj *const objv[];	/* Tcl_Obj arguments. */
 {
     Tk_Window tkwin = (Tk_Window) clientData;
     int index, result;

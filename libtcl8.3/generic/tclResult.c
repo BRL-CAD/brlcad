@@ -598,7 +598,7 @@ void
 Tcl_AppendElement(interp, string)
     Tcl_Interp *interp;		/* Interpreter whose result is to be
 				 * extended. */
-    CONST char *string;		/* String to convert to list element and
+    const char *string;		/* String to convert to list element and
 				 * add to result. */
 {
     Interp *iPtr = (Interp *) interp;

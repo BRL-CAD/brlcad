@@ -47,8 +47,8 @@ int argc;
 char **argv;
 {
     rle_hdr im_hdr, *patch_hdr, out_hdr;
-    CONST char *imfilename = NULL, *outfilename = NULL;
-    CONST char **patchnames;
+    const char *imfilename = NULL, *outfilename = NULL;
+    const char **patchnames;
     FILE *outfile = stdout;
     rle_pixel ** im_rows, **patch_rows, ** outrows;
     int stdin_used = 0;

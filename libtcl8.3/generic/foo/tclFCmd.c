@@ -724,13 +724,13 @@ FileBasename(interp, path, bufferPtr)
  *				    Since this is an object-based API,
  *				    the object form of the result should be
  *				    used.
- *	    CONST char *fileName;   This is extracted using
+ *	    const char *fileName;   This is extracted using
  *				    Tcl_TranslateFileName.
  *	    TclObj **attrObjPtrPtr; A new object to hold the attribute
  *				    is allocated and put here.
  *	The first two parameters of the callback used to write out the
  *	attributes are the same. The third parameter is:
- *	    CONST *attrObjPtr;	    A pointer to the object that has
+ *	    const *attrObjPtr;	    A pointer to the object that has
  *				    the new attribute.
  *	They both return standard TCL errors; if the routine to get
  *	an attribute fails, no object is allocated and *attrObjPtrPtr
@@ -749,7 +749,7 @@ int
 TclFileAttrsCmd(interp, objc, objv)
     Tcl_Interp *interp;		/* The interpreter for error reporting. */
     int objc;			/* Number of command line arguments. */
-    Tcl_Obj *CONST objv[];	/* The command line objects. */
+    Tcl_Obj *const objv[];	/* The command line objects. */
 {
     char *fileName;
     int result;

@@ -40,7 +40,7 @@ struct rt_many_internal  {
 	long			magic;
 	long			cur_index;		/* semaphored */
 	long			max_index;
-	CONST struct application *proto_ap;
+	const struct application *proto_ap;
 	struct resource		*resources;
 	int			(*callback) BU_ARGS((struct application *, int index));
 	int			stop_worker;
@@ -147,7 +147,7 @@ genptr_t	arg;
  */
 void
 rt_shoot_many_rays( proto_ap, callback, ncpus, nrays, resources )
-CONST struct application *proto_ap;
+const struct application *proto_ap;
 int			callback BU_ARGS((struct application *, int index));
 int			ncpus;
 long			nrays;

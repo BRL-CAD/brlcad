@@ -55,7 +55,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 /* should be HIDDEN */
 int
 db_read( dbip, addr, count, offset )
-CONST struct db_i	*dbip;
+const struct db_i	*dbip;
 genptr_t	addr;
 long		count;		/* byte count */
 long		offset;		/* byte offset from start of file */
@@ -118,8 +118,8 @@ long		offset;		/* byte offset from start of file */
  */
 union record *
 db_getmrec( dbip, dp )
-CONST struct db_i	*dbip;
-CONST struct directory	*dp;
+const struct db_i	*dbip;
+const struct directory	*dp;
 {
 	union record	*where;
 
@@ -160,8 +160,8 @@ CONST struct directory	*dp;
  */
 int
 db_get( dbip, dp, where, offset, len )
-CONST struct db_i	*dbip;
-CONST struct directory	*dp;
+const struct db_i	*dbip;
+const struct directory	*dp;
 union record	*where;
 int		offset;
 int		len;
@@ -213,7 +213,7 @@ int		len;
 int
 db_write( dbip, addr, count, offset )
 struct db_i	*dbip;
-CONST genptr_t	addr;
+const genptr_t	addr;
 long		count;
 long		offset;
 {
@@ -324,8 +324,8 @@ int		len;
 int
 db_get_external( ep, dp, dbip )
 register struct bu_external	*ep;
-CONST struct directory		*dp;
-CONST struct db_i		*dbip;
+const struct directory		*dp;
+const struct db_i		*dbip;
 {
 	RT_CK_DBI(dbip);
 	RT_CK_DIR(dp);
@@ -459,7 +459,7 @@ struct db_i		*dbip;
 int
 db_fwrite_external( fp, name, ep )
 FILE			*fp;
-CONST char		*name;
+const char		*name;
 struct bu_external	*ep;			/* can't be const */
 {
 

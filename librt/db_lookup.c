@@ -52,7 +52,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  *		which implies that a db_scan() has already been performed.
  */
 int
-db_is_directory_non_empty(CONST struct db_i	*dbip)
+db_is_directory_non_empty(const struct db_i	*dbip)
 {
 	register int	i;
 
@@ -72,7 +72,7 @@ db_is_directory_non_empty(CONST struct db_i	*dbip)
  */
 int
 db_get_directory_size( dbip )
-CONST struct db_i	*dbip;
+const struct db_i	*dbip;
 {
 	register struct directory *dp;
 	register int	count = 0;
@@ -115,9 +115,9 @@ db_ck_directory(const struct db_i *dbip)
  */
 int
 db_dirhash(str)
-CONST char *str;
+const char *str;
 {
-	register CONST unsigned char *s = (unsigned char *)str;
+	register const unsigned char *s = (unsigned char *)str;
 	register long sum;
 	register int i;
 
@@ -217,8 +217,8 @@ db_dircheck(struct db_i		*dbip,
  */
 struct directory *
 db_lookup( dbip, name, noisy )
-CONST struct db_i	*dbip;
-register CONST char	*name;
+const struct db_i	*dbip;
+register const char	*name;
 int			noisy;
 {
 	register struct directory *dp;
@@ -256,7 +256,7 @@ int			noisy;
 struct directory *
 db_diradd( dbip, name, laddr, len, flags, ptr )
 register struct db_i	*dbip;
-register CONST char	*name;
+register const char	*name;
 long			laddr;
 int			len;
 int			flags;
@@ -401,7 +401,7 @@ int
 db_rename( dbip, dp, newname )
 register struct db_i		*dbip;
 register struct directory	*dp;
-CONST char			*newname;
+const char			*newname;
 {
 	register struct directory *findp;
 	register struct directory **headp;
@@ -444,9 +444,9 @@ out:
  */
 void
 db_pr_dir( dbip )
-register CONST struct db_i	*dbip;
+register const struct db_i	*dbip;
 {
-	register CONST struct directory *dp;
+	register const struct directory *dp;
 	register char		*flags;
 	register int		i;
 

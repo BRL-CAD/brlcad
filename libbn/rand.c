@@ -9,7 +9,7 @@
  * random() or rand() we just pick numbers out of this table.  This table 
  * has 4096 unique entries.  Macros for accessing are in "bn.h"
  */
-CONST float bn_rand_table[BN_RAND_TABSIZE] = {
+const float bn_rand_table[BN_RAND_TABSIZE] = {
     0.39646477, 0.84048537, 0.35333610, 0.44658343, 0.31869277, 0.88642843,
     0.01558285, 0.58409022, 0.15936863, 0.38371587, 0.69100437, 0.05885891,
     0.89985431, 0.16354595, 0.15907150, 0.53306471, 0.60414419, 0.58269902,
@@ -700,7 +700,7 @@ CONST float bn_rand_table[BN_RAND_TABSIZE] = {
 /* from rt/mathtab.c */
 
 double bn_sin_scale = 325.949323452232;	/* SINTABSIZE / TWOPI */
-CONST float bn_sin_table[BN_SINTABSIZE] = {
+const float bn_sin_table[BN_SINTABSIZE] = {
 0,		0.00306796,	0.00613588,	0.00920375,
 0.0122715,	0.0153392,	0.0184067,	0.0214741,
 0.0245412,	0.0276081,	0.0306748,	0.0337412,

@@ -184,12 +184,12 @@ again:
  *			R T _ A D V A N C E _ T O _ N E X T _ C E L L
  */
 
-CONST union cutter *
+const union cutter *
 rt_advance_to_next_cell( ssp )
 register struct rt_shootray_status	*ssp;
 {
-	register CONST union cutter		*cutp, *curcut = ssp->curcut;
-	register CONST struct application	*ap = ssp->ap;
+	register const union cutter		*cutp, *curcut = ssp->curcut;
+	register const struct application	*ap = ssp->ap;
 	register fastf_t			t0, px, py, pz;
 	int					push_flag = 0;
 	double					fraction;
@@ -253,13 +253,13 @@ top:		switch( curcut->cut_type ) {
 			 ****************************************************************************************
 			 */
 			register int out_axis;
-			register CONST struct nu_axis  **nu_axis =
-			     (CONST struct nu_axis **)&curcut->nugn.nu_axis[0];
-			register CONST int		*nu_stepsize =
+			register const struct nu_axis  **nu_axis =
+			     (const struct nu_axis **)&curcut->nugn.nu_axis[0];
+			register const int		*nu_stepsize =
 			     &curcut->nugn.nu_stepsize[0];
-			register CONST int	        *nu_cells_per_axis =
+			register const int	        *nu_cells_per_axis =
 			     &curcut->nugn.nu_cells_per_axis[0];
-			register CONST union cutter	*nu_grid =
+			register const union cutter	*nu_grid =
 			     curcut->nugn.nu_grid;
 
 			if( ssp->lastcell == CUTTER_NULL ) {
@@ -701,10 +701,10 @@ register struct application *ap;
 	auto struct partition	InitialPart;	/* Head of Initial Partitions */
 	auto struct partition	FinalPart;	/* Head of Final Partitions */
 	struct soltab		**stpp;
-	register CONST union cutter *cutp;
+	register const union cutter *cutp;
 	struct resource		*resp;
 	struct rt_i		*rtip;
-	CONST int		debug_shoot = rt_g.debug & DEBUG_SHOOT;
+	const int		debug_shoot = rt_g.debug & DEBUG_SHOOT;
 	fastf_t			pending_hit = 0; /* dist of closest odd hit pending */
 
 	RT_AP_CHECK(ap);
@@ -1306,16 +1306,16 @@ out:
  *  Intended to mirror the operation of rt_shootray().
  *  The first cell is 0.
  */
-CONST union cutter *
+const union cutter *
 rt_cell_n_on_ray( ap, n )
 register struct application *ap;
 int	n;		/* First cell is #0 */
 {
 	struct rt_shootray_status	ss;
-	register CONST union cutter *cutp;
+	register const union cutter *cutp;
 	struct resource		*resp;
 	struct rt_i		*rtip;
-	CONST int		debug_shoot = rt_g.debug & DEBUG_SHOOT;
+	const int		debug_shoot = rt_g.debug & DEBUG_SHOOT;
 
 	RT_AP_CHECK(ap);
 	if( ap->a_magic )  {
@@ -1546,11 +1546,11 @@ int	n;		/* First cell is #0 */
 int
 rt_in_rpp( rp, invdir, min, max )
 struct xray		*rp;
-register CONST fastf_t *invdir;	/* inverses of rp->r_dir[] */
-register CONST fastf_t *min;
-register CONST fastf_t *max;
+register const fastf_t *invdir;	/* inverses of rp->r_dir[] */
+register const fastf_t *min;
+register const fastf_t *max;
 {
-	register CONST fastf_t	*pt = &rp->r_pt[0];
+	register const fastf_t	*pt = &rp->r_pt[0];
 	register fastf_t	sv;
 #define st sv			/* reuse the register */
 	register fastf_t	rmin = -INFINITY;
@@ -1631,11 +1631,11 @@ register CONST fastf_t *max;
 int
 rt_DB_rpp( rp, invdir, min, max )
 register struct xray *rp;
-register CONST fastf_t *invdir;	/* inverses of rp->r_dir[] */
-register CONST fastf_t *min;
-register CONST fastf_t *max;
+register const fastf_t *invdir;	/* inverses of rp->r_dir[] */
+register const fastf_t *min;
+register const fastf_t *max;
 {
-	register CONST fastf_t *pt = &rp->r_pt[0];
+	register const fastf_t *pt = &rp->r_pt[0];
 	FAST fastf_t sv;
 
 	/* Start with infinite ray, and trim it down */

@@ -51,34 +51,34 @@
  *  FORWARD DECLARATIONS
  */
 static int ItclOldClassCmd _ANSI_ARGS_((ClientData cdata,
-    Tcl_Interp *interp, int objc, Tcl_Obj* CONST objv[]));
+    Tcl_Interp *interp, int objc, Tcl_Obj* const objv[]));
 
 static int ItclOldMethodCmd _ANSI_ARGS_((ClientData cdata,
-    Tcl_Interp *interp, int objc, Tcl_Obj* CONST objv[]));
+    Tcl_Interp *interp, int objc, Tcl_Obj* const objv[]));
 static int ItclOldPublicCmd _ANSI_ARGS_((ClientData cdata,
-    Tcl_Interp *interp, int objc, Tcl_Obj* CONST objv[]));
+    Tcl_Interp *interp, int objc, Tcl_Obj* const objv[]));
 static int ItclOldProtectedCmd _ANSI_ARGS_((ClientData cdata,
-    Tcl_Interp *interp, int objc, Tcl_Obj* CONST objv[]));
+    Tcl_Interp *interp, int objc, Tcl_Obj* const objv[]));
 static int ItclOldCommonCmd _ANSI_ARGS_((ClientData cdata,
-    Tcl_Interp *interp, int objc, Tcl_Obj* CONST objv[]));
+    Tcl_Interp *interp, int objc, Tcl_Obj* const objv[]));
 
 static int ItclOldBiDeleteCmd _ANSI_ARGS_((ClientData cdata,
-    Tcl_Interp *interp, int objc, Tcl_Obj* CONST objv[]));
+    Tcl_Interp *interp, int objc, Tcl_Obj* const objv[]));
 static int ItclOldBiVirtualCmd _ANSI_ARGS_((ClientData cdata,
-    Tcl_Interp *interp, int objc, Tcl_Obj* CONST objv[]));
+    Tcl_Interp *interp, int objc, Tcl_Obj* const objv[]));
 static int ItclOldBiPreviousCmd _ANSI_ARGS_((ClientData cdata,
-    Tcl_Interp *interp, int objc, Tcl_Obj* CONST objv[]));
+    Tcl_Interp *interp, int objc, Tcl_Obj* const objv[]));
 
 static int ItclOldBiInfoMethodsCmd _ANSI_ARGS_((ClientData cdata,
-    Tcl_Interp *interp, int objc, Tcl_Obj* CONST objv[]));
+    Tcl_Interp *interp, int objc, Tcl_Obj* const objv[]));
 static int ItclOldBiInfoProcsCmd _ANSI_ARGS_((ClientData cdata,
-    Tcl_Interp *interp, int objc, Tcl_Obj* CONST objv[]));
+    Tcl_Interp *interp, int objc, Tcl_Obj* const objv[]));
 static int ItclOldBiInfoPublicsCmd _ANSI_ARGS_((ClientData cdata,
-    Tcl_Interp *interp, int objc, Tcl_Obj* CONST objv[]));
+    Tcl_Interp *interp, int objc, Tcl_Obj* const objv[]));
 static int ItclOldBiInfoProtectedsCmd _ANSI_ARGS_((ClientData cdata,
-    Tcl_Interp *interp, int objc, Tcl_Obj* CONST objv[]));
+    Tcl_Interp *interp, int objc, Tcl_Obj* const objv[]));
 static int ItclOldBiInfoCommonsCmd _ANSI_ARGS_((ClientData cdata,
-    Tcl_Interp *interp, int objc, Tcl_Obj* CONST objv[]));
+    Tcl_Interp *interp, int objc, Tcl_Obj* const objv[]));
 
 
 /*
@@ -404,7 +404,7 @@ ItclOldClassCmd(clientData, interp, objc, objv)
     ClientData clientData;   /* info for all known objects */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     ItclObjectInfo* info = (ItclObjectInfo*)clientData;
 
@@ -542,7 +542,7 @@ ItclOldMethodCmd(clientData, interp, objc, objv)
     ClientData clientData;   /* info for all known objects */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     ItclObjectInfo *info = (ItclObjectInfo*)clientData;
     ItclClass *cdefn = (ItclClass*)Itcl_PeekStack(&info->cdefnStack);
@@ -605,7 +605,7 @@ ItclOldPublicCmd(clientData, interp, objc, objv)
     ClientData clientData;   /* info for all known objects */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     ItclObjectInfo *info = (ItclObjectInfo*)clientData;
     ItclClass *cdefnPtr = (ItclClass*)Itcl_PeekStack(&info->cdefnStack);
@@ -667,7 +667,7 @@ ItclOldProtectedCmd(clientData, interp, objc, objv)
     ClientData clientData;   /* info for all known objects */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     ItclObjectInfo *info = (ItclObjectInfo*)clientData;
     ItclClass *cdefnPtr = (ItclClass*)Itcl_PeekStack(&info->cdefnStack);
@@ -726,7 +726,7 @@ ItclOldCommonCmd(clientData, interp, objc, objv)
     ClientData clientData;   /* info for all known objects */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     ItclObjectInfo *info = (ItclObjectInfo*)clientData;
     ItclClass *cdefnPtr = (ItclClass*)Itcl_PeekStack(&info->cdefnStack);
@@ -835,7 +835,7 @@ ItclOldBiDeleteCmd(dummy, interp, objc, objv)
     ClientData dummy;     /* not used */
     Tcl_Interp *interp;   /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     ItclClass *contextClass;
     ItclObject *contextObj;
@@ -889,7 +889,7 @@ ItclOldBiVirtualCmd(dummy, interp, objc, objv)
     ClientData dummy;        /* not used */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     int result;
     ItclClass *contextClass;
@@ -960,7 +960,7 @@ ItclOldBiPreviousCmd(dummy, interp, objc, objv)
     ClientData dummy;        /* not used */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     int result;
     char *name;
@@ -1071,7 +1071,7 @@ ItclOldBiInfoMethodsCmd(dummy, interp, objc, objv)
     ClientData dummy;        /* not used */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     char *methodName = NULL;
     int methodArgs = 0;
@@ -1199,7 +1199,7 @@ ItclOldBiInfoMethodsCmd(dummy, interp, objc, objv)
      *  Return the list of available methods.
      */
     else {
-        listPtr = Tcl_NewListObj(0, (Tcl_Obj* CONST*)NULL);
+        listPtr = Tcl_NewListObj(0, (Tcl_Obj* const*)NULL);
 
         Itcl_InitHierIter(&hier, contextClass);
         while ((cdefn=Itcl_AdvanceHierIter(&hier)) != NULL) {
@@ -1252,7 +1252,7 @@ ItclOldBiInfoProcsCmd(dummy, interp, objc, objv)
     ClientData dummy;     /* not used */
     Tcl_Interp *interp;   /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     char *procName = NULL;
     int procArgs = 0;
@@ -1378,7 +1378,7 @@ ItclOldBiInfoProcsCmd(dummy, interp, objc, objv)
      *  Return the list of available procs.
      */
     else {
-        listPtr = Tcl_NewListObj(0, (Tcl_Obj* CONST*)NULL);
+        listPtr = Tcl_NewListObj(0, (Tcl_Obj* const*)NULL);
 
         Itcl_InitHierIter(&hier, contextClass);
         while ((cdefn=Itcl_AdvanceHierIter(&hier)) != NULL) {
@@ -1426,7 +1426,7 @@ ItclOldBiInfoPublicsCmd(dummy, interp, objc, objv)
     ClientData dummy;     /* not used */
     Tcl_Interp *interp;   /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     char *varName = NULL;
     int varInit = 0;
@@ -1558,7 +1558,7 @@ ItclOldBiInfoPublicsCmd(dummy, interp, objc, objv)
      *  Return the list of public variables.
      */
     else {
-        listPtr = Tcl_NewListObj(0, (Tcl_Obj* CONST*)NULL);
+        listPtr = Tcl_NewListObj(0, (Tcl_Obj* const*)NULL);
 
         Itcl_InitHierIter(&hier, contextClass);
         cdPtr = Itcl_AdvanceHierIter(&hier);
@@ -1610,7 +1610,7 @@ ItclOldBiInfoProtectedsCmd(dummy, interp, objc, objv)
     ClientData dummy;     /* not used */
     Tcl_Interp *interp;   /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     char *varName = NULL;
     int varInit = 0;
@@ -1750,7 +1750,7 @@ ItclOldBiInfoProtectedsCmd(dummy, interp, objc, objv)
      *  Return the list of public variables.
      */
     else {
-        listPtr = Tcl_NewListObj(0, (Tcl_Obj* CONST*)NULL);
+        listPtr = Tcl_NewListObj(0, (Tcl_Obj* const*)NULL);
 
         Itcl_InitHierIter(&hier, contextClass);
         cdPtr = Itcl_AdvanceHierIter(&hier);
@@ -1802,7 +1802,7 @@ ItclOldBiInfoCommonsCmd(dummy, interp, objc, objv)
     ClientData dummy;     /* not used */
     Tcl_Interp *interp;   /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     char *varName = NULL;
     int varInit = 0;
@@ -1921,7 +1921,7 @@ ItclOldBiInfoCommonsCmd(dummy, interp, objc, objv)
      *  Return the list of public variables.
      */
     else {
-        listPtr = Tcl_NewListObj(0, (Tcl_Obj* CONST*)NULL);
+        listPtr = Tcl_NewListObj(0, (Tcl_Obj* const*)NULL);
 
         Itcl_InitHierIter(&hier, contextClass);
         cdPtr = Itcl_AdvanceHierIter(&hier);

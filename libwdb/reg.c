@@ -373,8 +373,8 @@ mk_comb(
  */
 int
 mk_comb1( struct rt_wdb *wdbp,
-	CONST char *combname,
-	CONST char *membname,
+	const char *combname,
+	const char *membname,
 	int regflag )
 {
 	struct bu_list	head;

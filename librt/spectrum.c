@@ -41,7 +41,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
  *  observer with a 2-degree visual field.
  *  From Roy Hall, pg 228.
  */
-CONST double	rt_CIE_XYZ[81][4] = {
+const double	rt_CIE_XYZ[81][4] = {
     {380, 0.0014, 0.0000, 0.0065}, {385, 0.0022, 0.0001, 0.0105},
     {390, 0.0042, 0.0001, 0.0201}, {395, 0.0076, 0.0002, 0.0362},
     {400, 0.0143, 0.0004, 0.0679}, {405, 0.0232, 0.0006, 0.1102},
@@ -104,7 +104,7 @@ rt_spect_make_CIE_XYZ( x, y, z, tabp )
 struct bn_tabdata		**x;
 struct bn_tabdata		**y;
 struct bn_tabdata		**z;
-CONST struct bn_table	*tabp;
+const struct bn_table	*tabp;
 {
 	struct bn_tabdata	*a, *b, *c;
 	fastf_t	xyz_scale;
@@ -186,10 +186,10 @@ again:
 void
 rt_spect_reflectance_rgb( curve, rgb )
 struct bn_tabdata	*curve;
-CONST float		rgb[3];
+const float		rgb[3];
 {
 	register int	i;
-	register CONST struct bn_table	*tabp;
+	register const struct bn_table	*tabp;
 
 	BN_CK_TABDATA(curve);
 	tabp = curve->table;
@@ -239,7 +239,7 @@ struct bn_tabdata	*data;
 double			temp;		/* Degrees Kelvin */
 unsigned int		n;		/* # wavelengths to eval at */
 {
-	CONST struct bn_table	*tabp;
+	const struct bn_table	*tabp;
 	int				j;
 
 	BN_CK_TABDATA(data);
@@ -297,7 +297,7 @@ rt_spect_black_body_fast( data, temp )
 struct bn_tabdata	*data;
 double			temp;		/* Degrees Kelvin */
 {
-	CONST struct bn_table	*tabp;
+	const struct bn_table	*tabp;
 	int				j;
 
 	BN_CK_TABDATA(data);
@@ -327,7 +327,7 @@ rt_spect_black_body_points( data, temp )
 struct bn_tabdata	*data;
 double			temp;		/* Degrees Kelvin */
 {
-	CONST struct bn_table	*tabp;
+	const struct bn_table	*tabp;
 	int				j;
 
 	BN_CK_TABDATA(data);

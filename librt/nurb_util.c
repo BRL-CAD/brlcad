@@ -179,7 +179,7 @@ struct edge_g_cnurb * crv;
 
 void
 rt_nurb_c_print( crv)
-CONST struct edge_g_cnurb * crv;
+const struct edge_g_cnurb * crv;
 {
 	register fastf_t * ptr;
 	int i,j;
@@ -213,7 +213,7 @@ CONST struct edge_g_cnurb * crv;
 void
 rt_nurb_s_print( c, srf )
 char * c;
-CONST struct face_g_snurb * srf;
+const struct face_g_snurb * srf;
 {
 
     bu_log("%s\n", c );
@@ -234,7 +234,7 @@ CONST struct face_g_snurb * srf;
 
 void
 rt_nurb_pr_kv( kv )
-CONST struct knot_vector * kv;
+const struct knot_vector * kv;
 {
     register fastf_t * ptr = kv->knots;
     int i;
@@ -251,7 +251,7 @@ CONST struct knot_vector * kv;
 
 void
 rt_nurb_pr_mesh( m )
-CONST struct face_g_snurb * m;
+const struct face_g_snurb * m;
 {
 	int i,j,k;
 	fastf_t * m_ptr = m->ctl_points;

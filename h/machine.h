@@ -25,7 +25,7 @@
  *
  *  General Symbols and Types Defined -
  *
- *	CONST -
+ *	const -
  *		A portable way of indicating that the ANSI C "const"
  *		keyword is desired, when compiling on an ANSI compiler.
  *
@@ -206,7 +206,7 @@
  **********************************/
 
 #if defined(_WIN32) && defined(_MSC_VER) && defined(_M_IX86)
-#define CONST const
+#define const const
 #endif
 
 
@@ -394,7 +394,7 @@ typedef long	bitv_t;		/* largest integer type */
 #else
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 #endif
-#define CONST	const
+#define const	const
 
 #define MAX_PSW		256
 #define DEFAULT_PSW	MAX_PSW
@@ -411,7 +411,7 @@ typedef long	bitv_t;		/* largest integer type */
  ********************************/
 #if __STDC__
 #define const	/**/		/* Does not support const keyword */
-#define CONST	/**/		/* Does not support const keyword */
+#define const	/**/		/* Does not support const keyword */
 #endif
 
 typedef double	fastf_t;	/* double|float, "Fastest" float type */
@@ -454,7 +454,7 @@ typedef long	bitv_t;		/* largest integer type */
  *				*
  ********************************/
 /* icc compiler gets confused on const typedefs */
-#define	CONST	/**/
+#define	const	/**/
 #define	const	/**/
 #define MALLOC_NOT_MP_SAFE 1
 #endif
@@ -496,7 +496,7 @@ typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
 #define const   /**/            /* Does not support const keyword */
-#define CONST   /**/            /* Does not support const keyword */
+#define const   /**/            /* Does not support const keyword */
 
 #define MAX_PSW		1	/* only one processor, max */
 #define DEFAULT_PSW	1
@@ -577,16 +577,16 @@ typedef long	bitv_t;		/* largest integer type */
 #  define GENPTR_NULL	((genptr_t)0)
 #endif
 
-/* A portable way of handling the ANSI C const keyword: use CONST */
-#if !defined(CONST)
+/* A portable way of handling the ANSI C const keyword: use const */
+#if !defined(const)
 # if __STDC__
-#	define	CONST	const
+#	define	const	const
 # else
-#	define	CONST	/**/
+#	define	const	/**/
 # endif
 #endif
-#undef CONST
-#define CONST const
+#undef const
+#define const const
 
 /* Even in C++ not all compilers know the "bool" keyword yet */
 #if !defined(BOOL_T)

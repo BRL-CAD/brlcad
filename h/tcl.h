@@ -267,19 +267,19 @@ extern "C" {
  */
 
 #undef _ANSI_ARGS_
-#undef CONST
+#undef const
 #ifndef INLINE
 #   define INLINE
 #endif
 
-  /* CONST is deprecated */
+  /* const is deprecated */
 #if ((defined(__STDC__) || defined(SABER)) && !defined(NO_PROTOTYPE)) || defined(__cplusplus) || defined(USE_PROTOTYPE)
 #   define _USING_PROTOTYPES_ 1
 #   define _ANSI_ARGS_(x)	x
-#   define CONST const
+#   define const const
 #else
 #   define _ANSI_ARGS_(x)	()
-#   define CONST
+#   define const
 #endif
 
 /*

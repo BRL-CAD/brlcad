@@ -173,7 +173,7 @@ void			vls_ftoa_vec();
 void			vls_ftoa_cvt();
 void			vls_ftoa();
 
-RT_EXTERN(void ewrite, (FILE *fp, CONST char *buf, unsigned bytes) );
+RT_EXTERN(void ewrite, (FILE *fp, const char *buf, unsigned bytes) );
 RT_EXTERN(void blank_fill, (FILE *fp, int count) );
 
 /* Head of linked list of solids */
@@ -203,15 +203,15 @@ char	*fmt;
 static int
 sortFunc( a, b )
 #if __STDC__
-CONST void	*a;		/* The exact template expected by qsort */
-CONST void	*b;
+const void	*a;		/* The exact template expected by qsort */
+const void	*b;
 #else
-CONST genptr_t	a;
-CONST genptr_t	b;
+const genptr_t	a;
+const genptr_t	b;
 #endif
 {
-	CONST char **lhs = (CONST char **)a;
-	CONST char **rhs = (CONST char **)b;
+	const char **lhs = (const char **)a;
+	const char **rhs = (const char **)b;
 
 	return( strcmp( *lhs, *rhs ) );
 }
@@ -836,11 +836,11 @@ int			num;
 static void
 vls_solid_pts( v, pts, npts, name, num, kind )
 struct rt_vls	*v;
-CONST point_t	pts[];
-CONST int	npts;
-CONST char	*name;
-CONST int	num;
-CONST char	*kind;
+const point_t	pts[];
+const int	npts;
+const char	*name;
+const int	num;
+const char	*kind;
 {
 	register int	i;
 
@@ -895,21 +895,21 @@ int			num;
 	/* Print the solid parameters.					*/
 	switch( cgtype )  {
 	case 8:
-		vls_solid_pts( v, (CONST point_t *)pts, 8, name, num, "arb8 " );
+		vls_solid_pts( v, (const point_t *)pts, 8, name, num, "arb8 " );
 		break;
 	case 7:
-		vls_solid_pts( v, (CONST point_t *)pts, 7, name, num, "arb7 " );
+		vls_solid_pts( v, (const point_t *)pts, 7, name, num, "arb7 " );
 		break;
 	case 6:
 		VMOVE( pts[5], pts[6] );
-		vls_solid_pts( v, (CONST point_t *)pts, 6, name, num, "arb6 " );
+		vls_solid_pts( v, (const point_t *)pts, 6, name, num, "arb6 " );
 		break;
 	case 5:
-		vls_solid_pts( v, (CONST point_t *)pts, 5, name, num, "arb5 " );
+		vls_solid_pts( v, (const point_t *)pts, 5, name, num, "arb5 " );
 		break;
 	case 4:
 		VMOVE( pts[3], pts[4] );
-		vls_solid_pts( v, (CONST point_t *)pts, 4, name, num, "arb4 " );
+		vls_solid_pts( v, (const point_t *)pts, 4, name, num, "arb4 " );
 		break;
 
 		/* Currently, cgarbs() will not return RAW, BOX, or RPP */
@@ -1255,7 +1255,7 @@ int			num;
 void
 ewrite( fp, buf, bytes )
 FILE		*fp;
-CONST char	*buf;
+const char	*buf;
 unsigned	bytes;
 {	
 	if( bytes == 0 )  return;
@@ -1351,7 +1351,7 @@ register char *prefix;
 
 	/*  Build the whole card deck.	*/
 	/*  '1' indicates one CPU.  This code isn't ready for parallelism */
-	if( db_walk_tree( dbip, curr_ct, (CONST char **)curr_list,
+	if( db_walk_tree( dbip, curr_ct, (const char **)curr_list,
 	    1, &rt_initial_tree_state,
 	    0, region_end, gettree_leaf, (genptr_t)NULL ) < 0 )  {
 		fprintf(stderr,"Unable to treewalk any trees!\n");

@@ -77,7 +77,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 int
 db_scan( dbip, handler, do_old_matter, client_data )
 register struct db_i	*dbip;
-int			(*handler)BU_ARGS((struct db_i *, CONST char *name, long addr, int nrec, int flags, genptr_t client_data));
+int			(*handler)BU_ARGS((struct db_i *, const char *name, long addr, int nrec, int flags, genptr_t client_data));
 int			do_old_matter;
 genptr_t		client_data;	/* argument for handler */
 {

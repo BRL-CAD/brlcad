@@ -79,7 +79,7 @@ struct reg_db_internals {
 struct tree_bark {
 	struct db_i	*dbip;
 	struct bu_list	*l;	/* lists solids in region (built in setup) */
-	CONST char	*name;
+	const char	*name;
 	struct gauss_specific *gs;
 };
 
@@ -102,7 +102,7 @@ struct gauss_specific {
 
 
 /* The default values for the variables in the shader specific structure */
-static CONST
+static const
 struct gauss_specific gauss_defaults = {
 	gauss_MAGIC,
 	4.0,

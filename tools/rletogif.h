@@ -14,4 +14,4 @@ void error();
 int getpixel();
 int GIFNextPixel();
 
-extern CONST char *MY_NAME;
+extern const char *MY_NAME;

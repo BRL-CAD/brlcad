@@ -76,8 +76,8 @@ static struct bu_list	bu_mapped_file_list = {
  */
 struct bu_mapped_file *
 bu_open_mapped_file( name, appl )
-CONST char	*name;		/* file name */
-CONST char	*appl;		/* non-null only when app. will use 'apbuf' */
+const char	*name;		/* file name */
+const char	*appl;		/* non-null only when app. will use 'apbuf' */
 {
 	struct bu_mapped_file	*mp = (struct bu_mapped_file *)NULL;
 #ifdef HAVE_UNIX_IO
@@ -328,8 +328,8 @@ struct bu_mapped_file	*mp;
  */
 void
 bu_pr_mapped_file( title, mp )
-CONST char			*title;
-CONST struct bu_mapped_file	*mp;
+const char			*title;
+const struct bu_mapped_file	*mp;
 {
 	BU_CK_MAPPED_FILE(mp);
 
@@ -410,11 +410,11 @@ int	verbose;
  */
 struct bu_mapped_file *
 bu_open_mapped_file_with_path( path, name, appl )
-char * CONST *path;
-CONST char	*name;		/* file name */
-CONST char	*appl;		/* non-null only when app. will use 'apbuf' */
+char * const *path;
+const char	*name;		/* file name */
+const char	*appl;		/* non-null only when app. will use 'apbuf' */
 {
-	char	* CONST *pathp = path;
+	char	* const *pathp = path;
 	struct bu_vls	str;
 	struct bu_mapped_file	*ret;
 

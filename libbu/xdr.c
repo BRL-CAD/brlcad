@@ -49,9 +49,9 @@ static const char libbu_xdr_RCSid[] = "@(#)$Header$ (ARL)";
  */
 unsigned short
 bu_gshort(msgp)
-CONST unsigned char *msgp;
+const unsigned char *msgp;
 {
-	register CONST unsigned char *p = msgp;
+	register const unsigned char *p = msgp;
 #ifdef vax
 	/*
 	 * vax compiler doesn't put shorts in registers
@@ -70,9 +70,9 @@ CONST unsigned char *msgp;
  */
 unsigned long
 bu_glong(msgp)
-CONST unsigned char *msgp;
+const unsigned char *msgp;
 {
-	register CONST unsigned char *p = msgp;
+	register const unsigned char *p = msgp;
 	register unsigned long u;
 
 	u = *p++; u <<= 8;

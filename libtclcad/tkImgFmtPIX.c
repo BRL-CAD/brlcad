@@ -54,16 +54,16 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
  */
 
 static int		FileMatchPIX _ANSI_ARGS_((Tcl_Channel chan,
-			    CONST char *fileName,
+			    const char *fileName,
 			    Tcl_Obj *format, int *widthPtr,
 			    int *heightPtr, Tcl_Interp *interp));
 static int		FileReadPIX  _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tcl_Channel chan,
-			    CONST char *fileName, Tcl_Obj *formatString,
+			    const char *fileName, Tcl_Obj *formatString,
 			    Tk_PhotoHandle imageHandle, int destX, int destY,
 			    int width, int height, int srcX, int srcY));
 static int		FileWritePIX _ANSI_ARGS_((Tcl_Interp *interp,
-			    CONST char *fileName, Tcl_Obj *formatString,
+			    const char *fileName, Tcl_Obj *formatString,
 			    Tk_PhotoImageBlock *blockPtr));
 
 Tk_PhotoImageFormat tkImgFmtPIX = {
@@ -102,7 +102,7 @@ Tk_PhotoImageFormat tkImgFmtPIX = {
 static int
 FileMatchPIX(chan, fileName, format, widthPtr, heightPtr, interp)
     Tcl_Channel chan;
-    CONST char *fileName;	/* The name of the image file. */
+    const char *fileName;	/* The name of the image file. */
     Tcl_Obj *format;	/* User-specified format string, or NULL. */
     int *widthPtr, *heightPtr;	/* The dimensions of the image are
 				 * returned here if the file is a valid
@@ -157,7 +157,7 @@ FileReadPIX(interp, chan, fileName, format, imageHandle, destX, destY,
 	width, height, srcX, srcY)
     Tcl_Interp *interp;		/* Interpreter to use for reporting errors. */
     Tcl_Channel chan;
-    CONST char *fileName;	/* The name of the image file. */
+    const char *fileName;	/* The name of the image file. */
     Tcl_Obj *format;		/* User-specified format string, or NULL. */
     Tk_PhotoHandle imageHandle;	/* The photo image to write into. */
     int destX, destY;		/* Coordinates of top-left pixel in
@@ -262,7 +262,7 @@ FileReadPIX(interp, chan, fileName, format, imageHandle, destX, destY,
 static int
 FileWritePIX(interp, fileName, format, blockPtr)
     Tcl_Interp *interp;
-    CONST char *fileName;
+    const char *fileName;
     Tcl_Obj *format;
     Tk_PhotoImageBlock *blockPtr;
 {

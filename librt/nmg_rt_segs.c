@@ -40,7 +40,7 @@ struct ef_data {
 };
 
 #if 0
-static CONST 
+static const 
 struct bu_structparse rt_ef_parsetab[] = {
 	{"%f", 1, "fdotr", offsetof(struct ef_data, fdotr), BU_STRUCTPARSE_FUNC_NULL},
 	{"%f", 1, "fdotl", offsetof(struct ef_data, fdotl), BU_STRUCTPARSE_FUNC_NULL},
@@ -49,7 +49,7 @@ struct bu_structparse rt_ef_parsetab[] = {
 	{"", 0, (char *)NULL,	  0,			  BU_STRUCTPARSE_FUNC_NULL}
 };
 
-static CONST
+static const
 struct bu_structparse rt_hit_parsetab[] = {
 {"%f", 1, "hit_dist", offsetof(struct hit, hit_dist), BU_STRUCTPARSE_FUNC_NULL},
 {"%f", 3, "hit_point", bu_offsetofarray(struct hit, hit_point), BU_STRUCTPARSE_FUNC_NULL},

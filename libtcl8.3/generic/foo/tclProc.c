@@ -63,7 +63,7 @@ Tcl_ProcObjCmd(dummy, interp, objc, objv)
     ClientData dummy;		/* Not used. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     register Interp *iPtr = (Interp *) interp;
     Proc *procPtr;
@@ -561,7 +561,7 @@ Tcl_UplevelObjCmd(dummy, interp, objc, objv)
     ClientData dummy;		/* Not used. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     register Interp *iPtr = (Interp *) interp;
     char *optLevel;
@@ -829,7 +829,7 @@ TclObjInterpProc(clientData, interp, objc, objv)
 				  * invoked. */
     int objc;			 /* Count of number of arguments to this
 				  * procedure. */
-    Tcl_Obj *CONST objv[];	 /* Argument value objects. */
+    Tcl_Obj *const objv[];	 /* Argument value objects. */
 {
     Interp *iPtr = (Interp *) interp;
     register Proc *procPtr = (Proc *) clientData;
@@ -1051,8 +1051,8 @@ TclProcCompileProc(interp, procPtr, bodyPtr, nsPtr, description, procName)
  				 * but could be any code fragment compiled
  				 * in the context of this procedure.) */
     Namespace *nsPtr;		/* Namespace containing procedure. */
-    CONST char *description;	/* string describing this body of code. */
-    CONST char *procName;	/* Name of this procedure. */
+    const char *description;	/* string describing this body of code. */
+    const char *procName;	/* Name of this procedure. */
 {
     Interp *iPtr = (Interp*)interp;
     int result;

@@ -1523,7 +1523,7 @@ _LOCAL_ int
 ogl_write( ifp, xstart, ystart, pixelp, count ) /*write count pixels from pixelp starting at xstart,ystart*/
 FBIO	*ifp;
 int	xstart, ystart;
-CONST unsigned char	*pixelp;
+const unsigned char	*pixelp;
 int	count;
 {
 	register short		scan_count;	/* # pix on this scanline */
@@ -1667,7 +1667,7 @@ ogl_writerect( ifp, xmin, ymin, width, height, pp )
 FBIO		*ifp;
 int		xmin, ymin;
 int		width, height;
-CONST unsigned char	*pp;
+const unsigned char	*pp;
 {
 	register int		x;
 	register int		y;
@@ -1740,7 +1740,7 @@ ogl_bwwriterect( ifp, xmin, ymin, width, height, pp )
 FBIO		*ifp;
 int		xmin, ymin;
 int		width, height;
-CONST unsigned char	*pp;
+const unsigned char	*pp;
 {
 	register int		x;
 	register int		y;
@@ -1863,7 +1863,7 @@ register FBIO	*ifp;
 _LOCAL_ int
 ogl_wmap( ifp, cmp )
 register FBIO	*ifp;
-register CONST ColorMap	*cmp;
+register const ColorMap	*cmp;
 {
 	register int	i;
 	int		prev;	/* !0 = previous cmap was non-linear */
@@ -1997,7 +1997,7 @@ FBIO	*ifp;
 _LOCAL_ int
 ogl_setcursor( ifp, bits, xbits, ybits, xorig, yorig )
 FBIO	*ifp;
-CONST unsigned char *bits;
+const unsigned char *bits;
 int	xbits, ybits;
 int	xorig, yorig;
 {

@@ -85,11 +85,11 @@ static DWORD mainThreadId;
 
 #include "tclInitScript.h"
 
-static void		AppendEnvironment(Tcl_Obj *listPtr, CONST char *lib);
+static void		AppendEnvironment(Tcl_Obj *listPtr, const char *lib);
 static void		AppendDllPath(Tcl_Obj *listPtr, HMODULE hModule,
-			    CONST char *lib);
-static void		AppendRegistry(Tcl_Obj *listPtr, CONST char *lib);
-static int		ToUtf(CONST WCHAR *wSrc, char *dst);
+			    const char *lib);
+static void		AppendRegistry(Tcl_Obj *listPtr, const char *lib);
+static int		ToUtf(const WCHAR *wSrc, char *dst);
 
 /*
  *---------------------------------------------------------------------------
@@ -174,7 +174,7 @@ TclpInitPlatform()
 
 void
 TclpInitLibraryPath(path)
-    CONST char *path;		/* Potentially dirty UTF string that is */
+    const char *path;		/* Potentially dirty UTF string that is */
 				/* the path to the executable name.     */
 {
 #define LIBRARY_SIZE	    32
@@ -318,7 +318,7 @@ TclpInitLibraryPath(path)
 static void
 AppendEnvironment(
     Tcl_Obj *pathPtr,
-    CONST char *lib)
+    const char *lib)
 {
     int pathc;
     WCHAR wBuf[MAX_PATH];
@@ -395,7 +395,7 @@ static void
 AppendDllPath(
     Tcl_Obj *pathPtr, 
     HMODULE hModule,
-    CONST char *lib)
+    const char *lib)
 {
     WCHAR wName[MAX_PATH + LIBRARY_SIZE];
     char name[(MAX_PATH + LIBRARY_SIZE) * TCL_UTF_MAX];
@@ -439,7 +439,7 @@ AppendDllPath(
 
 static int
 ToUtf(
-    CONST WCHAR *wSrc,
+    const WCHAR *wSrc,
     char *dst)
 {
     char *start;
@@ -476,7 +476,7 @@ ToUtf(
 void
 TclpSetInitialEncodings()
 {
-    CONST char *encoding;
+    const char *encoding;
     char buf[4 + TCL_INTEGER_SPACE];
     int platformId;
     Tcl_Obj *pathPtr;
@@ -654,7 +654,7 @@ TclpSetVariables(interp)
 
 int
 TclpFindVariable(name, lengthPtr)
-    CONST char *name;		/* Name of desired environment variable
+    const char *name;		/* Name of desired environment variable
 				 * (UTF-8). */
     int *lengthPtr;		/* Used to return length of name (for
 				 * successful searches) or number of non-NULL
@@ -662,7 +662,7 @@ TclpFindVariable(name, lengthPtr)
 				 * searches). */
 {
     int i, length, result = -1;
-    register CONST char *env, *p1, *p2;
+    register const char *env, *p1, *p2;
     char *envUpper, *nameUpper;
     Tcl_DString envString;
 

@@ -166,7 +166,7 @@ struct ehy_specific {
 	fastf_t	ehy_cprime;	/* c / |H| */
 };
 
-CONST struct bu_structparse rt_ehy_parse[] = {
+const struct bu_structparse rt_ehy_parse[] = {
     { "%f", 3, "V",   offsetof(struct rt_ehy_internal, ehy_V[X]),  BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "H",   offsetof(struct rt_ehy_internal, ehy_H[X]),  BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "A",   offsetof(struct rt_ehy_internal, ehy_Au[X]), BU_STRUCTPARSE_FUNC_NULL },
@@ -199,7 +199,7 @@ struct rt_i		*rtip;
 {
 	struct rt_ehy_internal		*xip;
 	register struct ehy_specific	*ehy;
-	CONST struct bn_tol		*tol = &rtip->rti_tol;
+	const struct bn_tol		*tol = &rtip->rti_tol;
 	LOCAL fastf_t	magsq_h;
 	LOCAL fastf_t	mag_a, mag_h;
 	LOCAL fastf_t	c, f, r1, r2;
@@ -290,9 +290,9 @@ struct rt_i		*rtip;
  */
 void
 rt_ehy_print( stp )
-register CONST struct soltab *stp;
+register const struct soltab *stp;
 {
-	register CONST struct ehy_specific *ehy =
+	register const struct ehy_specific *ehy =
 		(struct ehy_specific *)stp->st_specific;
 
 	VPRINT("V", ehy->ehy_V);
@@ -649,8 +649,8 @@ int
 rt_ehy_plot( vhead, ip, ttol, tol )
 struct bu_list		*vhead;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol	*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol	*tol;
 {
 	fastf_t		c, dtol, f, mag_a, mag_h, ntol, r1, r2;
 	fastf_t		**ellipses, theta_prev, theta_new, rt_ell_ang();
@@ -933,8 +933,8 @@ rt_ehy_tess( r, m, ip, ttol, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol	*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol	*tol;
 {
 	fastf_t		c, dtol, f, mag_a, mag_h, ntol, r1, r2, cprime;
 	fastf_t		**ellipses, theta_prev, theta_new, rt_ell_ang();
@@ -1422,9 +1422,9 @@ fail:
 int
 rt_ehy_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-register CONST mat_t		mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	LOCAL struct rt_ehy_internal	*xip;
 	union record			*rp;
@@ -1471,9 +1471,9 @@ CONST struct db_i		*dbip;
 int
 rt_ehy_export( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_ehy_internal	*xip;
 	union record		*ehy;
@@ -1535,9 +1535,9 @@ CONST struct db_i		*dbip;
 int
 rt_ehy_import5( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-register CONST mat_t		mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	LOCAL struct rt_ehy_internal	*xip;
 	fastf_t				vec[3*4];
@@ -1584,9 +1584,9 @@ CONST struct db_i		*dbip;
 int
 rt_ehy_export5( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_ehy_internal	*xip;
 	fastf_t			vec[3*4];
@@ -1648,7 +1648,7 @@ CONST struct db_i		*dbip;
 int
 rt_ehy_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {

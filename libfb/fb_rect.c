@@ -81,7 +81,7 @@ fb_sim_writerect( ifp, xmin, ymin, width, height, pp )
 FBIO	*ifp;
 int	xmin, ymin;
 int	width, height;
-CONST unsigned char	*pp;
+const unsigned char	*pp;
 {
 	register int	y;
 	register int	tot;
@@ -147,7 +147,7 @@ fb_sim_bwwriterect( ifp, xmin, ymin, width, height, pp )
 FBIO	*ifp;
 int	xmin, ymin;
 int	width, height;
-CONST unsigned char	*pp;
+const unsigned char	*pp;
 {
 	register int	y;
 	register int	tot;

@@ -48,7 +48,7 @@ struct db5_type {
  *	and it must occur below any of its entries that
  *	have heed_minor==1.
  */
-CONST static struct db5_type type_table[] = {
+const static struct db5_type type_table[] = {
     {
 	DB5_MAJORTYPE_BRLCAD, DB5_MINORTYPE_BRLCAD_TOR, 1, "tor", "torus"
     },
@@ -208,7 +208,7 @@ CONST static struct db5_type type_table[] = {
 };
 
 int
-db5_type_tag_from_major( char **tag, CONST int major ) {
+db5_type_tag_from_major( char **tag, const int major ) {
     register struct db5_type	*tp;
 
     for (tp = (struct db5_type *) type_table;
@@ -223,7 +223,7 @@ db5_type_tag_from_major( char **tag, CONST int major ) {
 }
 
 int
-db5_type_descrip_from_major( char **descrip, CONST int major ) {
+db5_type_descrip_from_major( char **descrip, const int major ) {
     register struct db5_type	*tp;
 
     for (tp = (struct db5_type *) type_table;
@@ -238,7 +238,7 @@ db5_type_descrip_from_major( char **descrip, CONST int major ) {
 }
 
 int
-db5_type_tag_from_codes( char **tag, CONST int major, CONST int minor ) {
+db5_type_tag_from_codes( char **tag, const int major, const int minor ) {
     register struct db5_type	*tp;
     register int		found_minors = 0;
 
@@ -258,8 +258,8 @@ db5_type_tag_from_codes( char **tag, CONST int major, CONST int minor ) {
 }
 
 int
-db5_type_descrip_from_codes( char **descrip, CONST int major,
-			    CONST int minor ) {
+db5_type_descrip_from_codes( char **descrip, const int major,
+			    const int minor ) {
     register struct db5_type	*tp;
     register int		found_minors = 0;
 
@@ -279,7 +279,7 @@ db5_type_descrip_from_codes( char **descrip, CONST int major,
 }
 
 int
-db5_type_codes_from_tag( int *major, int *minor, CONST char *tag ) {
+db5_type_codes_from_tag( int *major, int *minor, const char *tag ) {
     register struct db5_type	*tp;
 
 
@@ -296,7 +296,7 @@ db5_type_codes_from_tag( int *major, int *minor, CONST char *tag ) {
 }
 
 int
-db5_type_codes_from_descrip( int *major, int *minor, CONST char *descrip ) {
+db5_type_codes_from_descrip( int *major, int *minor, const char *descrip ) {
     register struct db5_type	*tp;
 
 
@@ -314,7 +314,7 @@ db5_type_codes_from_descrip( int *major, int *minor, CONST char *descrip ) {
 }
 
 size_t
-db5_type_sizeof_h_binu( CONST int minor ) {
+db5_type_sizeof_h_binu( const int minor ) {
     switch ( minor ) {
 	case DB5_MINORTYPE_BINU_FLOAT:
 	    return sizeof(float);
@@ -337,7 +337,7 @@ db5_type_sizeof_h_binu( CONST int minor ) {
 }
 
 size_t
-db5_type_sizeof_n_binu( CONST int minor ) {
+db5_type_sizeof_n_binu( const int minor ) {
     switch ( minor ) {
 	case DB5_MINORTYPE_BINU_FLOAT:
 	    return (size_t) SIZEOF_NETWORK_FLOAT;

@@ -34,8 +34,8 @@ struct nmg_bool_state  {
 	struct shell	*bs_src;
 	int		bs_isA;		/* true if A, else doing B */
 	long		**bs_classtab;
-	CONST int	*bs_actions;
-	CONST struct bn_tol	*bs_tol;
+	const int	*bs_actions;
+	const struct bn_tol	*bs_tol;
 };
 
 static void nmg_eval_shell RT_ARGS( (struct shell *s,
@@ -48,7 +48,7 @@ static void nmg_eval_plot RT_ARGS( (struct nmg_bool_state *bs,
 #define BACTION_RETAIN			2
 #define BACTION_RETAIN_AND_FLIP		3
 
-static CONST char	*nmg_baction_names[] = {
+static const char	*nmg_baction_names[] = {
 	"*undefined 0*",
 	"BACTION_KILL",
 	"BACTION_RETAIN",
@@ -57,7 +57,7 @@ static CONST char	*nmg_baction_names[] = {
 };
 
 #define NMG_CLASS_BAD		8
-static CONST char	*nmg_class_names[] = {
+static const char	*nmg_class_names[] = {
 	"onAinB",
 	"onAonBshared",
 	"onAonBanti",
@@ -78,7 +78,7 @@ static CONST char	*nmg_class_names[] = {
 void
 nmg_ck_lu_orientation( lu, tolp )
 struct loopuse		*lu;
-CONST struct bn_tol	*tolp;
+const struct bn_tol	*tolp;
 {
 	struct faceuse	*fu;
 	plane_t		fu_peqn;
@@ -115,7 +115,7 @@ CONST struct bn_tol	*tolp;
  *
  *  Convert an NMG_CLASS_xxx token into a string name.
  */
-CONST char *
+const char *
 nmg_class_name(class)
 int	class;
 {
@@ -134,7 +134,7 @@ int	class;
  *	(Aon)	onAinB, onAonBshared, onAonBanti-shared, onAoutB,
  *	(Bon)	inAonB, onAonBshared, onAonBanti-shared, outAonB
  */
-static CONST int		subtraction_actions[8] = {
+static const int		subtraction_actions[8] = {
 	BACTION_KILL,
 	BACTION_KILL,		/* shared */
 	BACTION_RETAIN,		/* anti-shared */
@@ -146,7 +146,7 @@ static CONST int		subtraction_actions[8] = {
 	BACTION_KILL
 };
 
-static CONST int		union_actions[8] = {
+static const int		union_actions[8] = {
 	BACTION_KILL,
 	BACTION_RETAIN,		/* shared */
 	BACTION_KILL,		/* anti-shared */
@@ -158,7 +158,7 @@ static CONST int		union_actions[8] = {
 	BACTION_RETAIN
 };
 
-static CONST int		intersect_actions[8] = {
+static const int		intersect_actions[8] = {
 	BACTION_RETAIN,
 	BACTION_RETAIN,		/* shared */
 	BACTION_KILL,		/* anti-shared ==> non-manifold result */
@@ -189,9 +189,9 @@ struct shell	*sA;
 struct shell	*sB;
 int		op;
 long		*classlist[8];
-CONST struct bn_tol	*tol;
+const struct bn_tol	*tol;
 {
-	int CONST	*actions;
+	int const	*actions;
 	struct nmg_bool_state	bool_state;
 
 	NMG_CK_SHELL(sA);

@@ -458,7 +458,7 @@ Tk_CanvasTagsPrintProc(clientData, tkwin, widgRec, offset, freeProcPtr)
 }
 
 
-static int	DashConvert _ANSI_ARGS_((char *l, CONST char *p,
+static int	DashConvert _ANSI_ARGS_((char *l, const char *p,
 			int n, double width));
 #define ABS(a) ((a>=0)?(a):(-(a)))
 
@@ -486,7 +486,7 @@ TkCanvasDashParseProc(clientData, interp, tkwin, value, widgRec, offset)
     ClientData clientData;		/* Not used.*/
     Tcl_Interp *interp;			/* Used for reporting errors. */
     Tk_Window tkwin;			/* Window containing canvas widget. */
-    CONST char *value;			/* Value of option. */
+    const char *value;			/* Value of option. */
     char *widgRec;			/* Pointer to record for item. */
     int offset;				/* Offset into item. */
 {
@@ -674,7 +674,7 @@ TkSmoothParseProc(clientData, interp, tkwin, value, widgRec, offset)
     ClientData clientData;		/* some flags.*/
     Tcl_Interp *interp;			/* Used for reporting errors. */
     Tk_Window tkwin;			/* Window containing canvas widget. */
-    CONST char *value;			/* Value of option. */
+    const char *value;			/* Value of option. */
     char *widgRec;			/* Pointer to record for item. */
     int offset;				/* Offset into item. */
 {
@@ -772,7 +772,7 @@ TkSmoothPrintProc(clientData, tkwin, widgRec, offset, freeProcPtr)
 int
 Tk_GetDash(interp, value, dash)
     Tcl_Interp *interp;		/* Used for error reporting. */
-    CONST char *value;		/* Textual specification of dash list. */
+    const char *value;		/* Textual specification of dash list. */
     Tk_Dash *dash;		/* Pointer to record in which to
 				 * store dash information. */
 {
@@ -1080,7 +1080,7 @@ Tk_ChangeOutlineGC(canvas, item, outline)
     Tk_Item *item;
     Tk_Outline *outline;
 {
-    CONST char *p;
+    const char *p;
     double width;
     Tk_Dash *dash;
     XColor *color;
@@ -1423,7 +1423,7 @@ Tk_CanvasPsOutline(canvas, item, outline)
 static int
 DashConvert (l, p, n, width)
     char *l;
-    CONST char *p;
+    const char *p;
     int n;
     double width;
 {

@@ -805,7 +805,7 @@ vo_persp_mat(m, fovy, aspect, near, far, backoff)
 static void
 vo_mike_persp_mat(pmat, eye)
      mat_t		pmat;
-     CONST point_t	eye;
+     const point_t	eye;
 {
 	mat_t	shear;
 	mat_t	persp;

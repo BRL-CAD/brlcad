@@ -1645,7 +1645,7 @@ struct model *m;
 void
 nmg_vertex_gv(v, pt)
 struct vertex	*v;
-CONST point_t	pt;
+const point_t	pt;
 {
 	struct vertex_g *vg;
 	struct model	*m;
@@ -1701,7 +1701,7 @@ fastf_t x, y, z;
 void
 nmg_vertexuse_nv( vu , norm )
 struct vertexuse *vu;
-CONST vect_t norm;
+const vect_t norm;
 {
 	struct model *m;
 
@@ -1742,7 +1742,7 @@ CONST vect_t norm;
 void
 nmg_vertexuse_a_cnurb( vu, uvw )
 struct vertexuse	*vu;
-CONST fastf_t		*uvw;
+const fastf_t		*uvw;
 {
 	struct vertexuse_a_cnurb	*vua;
 	struct model	*m;
@@ -2185,7 +2185,7 @@ long		*magic_p;
 void
 nmg_loop_g(l, tol)
 struct loop		*l;
-CONST struct bn_tol	*tol;
+const struct bn_tol	*tol;
 {
 	struct edgeuse	*eu;
 	struct vertex_g	*vg;
@@ -2267,7 +2267,7 @@ CONST struct bn_tol	*tol;
 void
 nmg_face_g(fu, p)
 struct faceuse *fu;
-CONST plane_t p;
+const plane_t p;
 {
 	int i;
 	struct face_g_plane	*fg;
@@ -2316,7 +2316,7 @@ CONST plane_t p;
 void
 nmg_face_new_g( fu, pl )
 struct faceuse *fu;
-CONST plane_t pl;
+const plane_t pl;
 {
 	struct face *f;
 	struct face *f_tmp;
@@ -2472,7 +2472,7 @@ fastf_t		*mesh;
 void
 nmg_face_bb(f, tol)
 struct face		*f;
-CONST struct bn_tol	*tol;
+const struct bn_tol	*tol;
 {
 	struct loopuse	*lu;
 	struct faceuse	*fu;
@@ -2527,7 +2527,7 @@ CONST struct bn_tol	*tol;
 void
 nmg_shell_a(s, tol)
 struct shell		*s;
-CONST struct bn_tol	*tol;
+const struct bn_tol	*tol;
 {
 	struct shell_a *sa;
 	struct vertex_g *vg;
@@ -2613,7 +2613,7 @@ CONST struct bn_tol	*tol;
 void
 nmg_region_a(r, tol)
 struct nmgregion	*r;
-CONST struct bn_tol	*tol;
+const struct bn_tol	*tol;
 {
 	register struct shell	*s;
 	struct nmgregion_a	*ra;

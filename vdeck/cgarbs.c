@@ -46,10 +46,10 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 int
 cgarbs( cgtype, gp, uniq, svec, dist_tol )
 int			*cgtype;
-CONST struct rt_arb_internal	*gp;
+const struct rt_arb_internal	*gp;
 int			uniq[8];	/* array of unique pt subscripts */
 int			svec[11];	/* array of like pt subscripts */
-CONST double		dist_tol;	/* distance tolerance */
+const double		dist_tol;	/* distance tolerance */
 {
 	register int	i, j;
 	int		numuniq, unique, done;
@@ -140,8 +140,8 @@ CONST double		dist_tol;	/* distance tolerance */
 static void
 arb_mv( pts, gp, p0, p1, p2, p3, p4, p5, p6, p7 )
 register point_t	pts[8];
-register CONST struct rt_arb_internal	*gp;
-CONST int		p0, p1, p2, p3, p4, p5, p6, p7;
+register const struct rt_arb_internal	*gp;
+const int		p0, p1, p2, p3, p4, p5, p6, p7;
 {	
 	RT_ARB_CK_MAGIC(gp);
 	VMOVE( pts[0], gp->pt[p0] );
@@ -168,11 +168,11 @@ CONST int		p0, p1, p2, p3, p4, p5, p6, p7;
 int
 redoarb( pts, gp, uniq, svec, numvec, cgtype )
 point_t		pts[8];
-CONST struct rt_arb_internal	*gp;
+const struct rt_arb_internal	*gp;
 int		uniq[8];
 int		svec[11];
-CONST int	numvec;
-CONST int	cgtype;
+const int	numvec;
+const int	cgtype;
 {
 	register int	i, j;
 	int		prod;

@@ -34,7 +34,7 @@
 
 #if RT_MULTISPECTRAL
 #include "spectrum.h"
-extern CONST struct bn_table	*spectrum;	/* from rttherm/viewtherm.c */
+extern const struct bn_table	*spectrum;	/* from rttherm/viewtherm.c */
 #endif
 
 #define camo_MAGIC 0x18364	/* XXX change this number for each shader */
@@ -61,10 +61,10 @@ struct camo_specific {
  */
 void
 camo_cvt_parse( sdp, name, base, value )
-register CONST struct bu_structparse	*sdp;	/* structure description */
-register CONST char			*name;	/* struct member name */
+register const struct bu_structparse	*sdp;	/* structure description */
+register const char			*name;	/* struct member name */
 char					*base;	/* begining of structure */
-CONST char				*value;	/* string containing value */
+const char				*value;	/* string containing value */
 {
 	double *p = (double *)(base+sdp->sp_offset);
 
@@ -166,10 +166,10 @@ struct mfuncs camo_mfuncs[] = {
  */
 void
 color_fix( sdp, name, base, value )
-register CONST struct bu_structparse	*sdp;	/* structure description */
-register CONST char			*name;	/* struct member name */
+register const struct bu_structparse	*sdp;	/* structure description */
+register const char			*name;	/* struct member name */
 char					*base;	/* begining of structure */
-CONST char				*value;	/* string containing value */
+const char				*value;	/* string containing value */
 {
 	register double *p = (double *)(base+sdp->sp_offset);
 	register int i;

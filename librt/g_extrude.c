@@ -339,7 +339,7 @@ struct rt_i		*rtip;
  */
 void
 rt_extrude_print( stp )
-register CONST struct soltab *stp;
+register const struct soltab *stp;
 {
 }
 
@@ -1152,8 +1152,8 @@ int
 rt_extrude_plot( vhead, ip, ttol, tol )
 struct bu_list		*vhead;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol	*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol	*tol;
 {
 	LOCAL struct rt_extrude_internal	*extrude_ip;
 	struct curve			*crv=(struct curve *)NULL;
@@ -1244,8 +1244,8 @@ rt_extrude_tess( r, m, ip, ttol, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol	*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol	*tol;
 {
 	return(-1);
 }
@@ -1259,9 +1259,9 @@ CONST struct bn_tol	*tol;
 int
 rt_extrude_import( ip, ep, mat, dbip, resp )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-register CONST mat_t		mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 struct resource			*resp;
 {
 	LOCAL struct rt_extrude_internal	*extrude_ip;
@@ -1335,9 +1335,9 @@ struct resource			*resp;
 int
 rt_extrude_export( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_extrude_internal	*extrude_ip;
 	vect_t				tmp_vec;
@@ -1384,9 +1384,9 @@ CONST struct db_i		*dbip;
 int
 rt_extrude_export5( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_extrude_internal	*extrude_ip;
 	vect_t				tmp_vec[4];
@@ -1426,9 +1426,9 @@ CONST struct db_i		*dbip;
 int
 rt_extrude_import5(
 	struct rt_db_internal		*ip,
-	CONST struct bu_external	*ep,
-	register CONST mat_t		mat,
-	CONST struct db_i		*dbip,
+	const struct bu_external	*ep,
+	register const mat_t		mat,
+	const struct db_i		*dbip,
 	struct resource			*resp)
 {
 	LOCAL struct rt_extrude_internal	*extrude_ip;
@@ -1493,7 +1493,7 @@ rt_extrude_import5(
 int
 rt_extrude_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {
@@ -1634,8 +1634,8 @@ rt_extrude_tclform( const struct rt_functab *ftp, Tcl_Interp *interp )
 int
 rt_extrude_tclget( interp, intern, attr )
 Tcl_Interp                      *interp;
-CONST struct rt_db_internal     *intern;
-CONST char                      *attr;
+const struct rt_db_internal     *intern;
+const char                      *attr;
 {
 	register struct rt_extrude_internal *extr=(struct rt_extrude_internal *) intern->idb_ptr;
         Tcl_DString     ds;

@@ -180,7 +180,7 @@ static int		CommandComplete _ANSI_ARGS_((char *script,
 static int		ParseTokens _ANSI_ARGS_((char *src, int mask,
 			    Tcl_Parse *parsePtr));
 static int		EvalObjv _ANSI_ARGS_((Tcl_Interp *interp, int objc,
-			    Tcl_Obj *CONST objv[], char *command, int length,
+			    Tcl_Obj *const objv[], char *command, int length,
 			    int flags));
 
 /*
@@ -778,7 +778,7 @@ EvalObjv(interp, objc, objv, command, length, flags)
 				 * command.  Also used for error
 				 * reporting. */
     int objc;			/* Number of words in command. */
-    Tcl_Obj *CONST objv[];	/* An array of pointers to objects that are
+    Tcl_Obj *const objv[];	/* An array of pointers to objects that are
 				 * the words that make up the command. */
     char *command;		/* Points to the beginning of the string
 				 * representation of the command; this
@@ -976,7 +976,7 @@ Tcl_EvalObjv(interp, objc, objv, flags)
 				 * command.  Also used for error
 				 * reporting. */
     int objc;			/* Number of words in command. */
-    Tcl_Obj *CONST objv[];	/* An array of pointers to objects that are
+    Tcl_Obj *const objv[];	/* An array of pointers to objects that are
 				 * the words that make up the command. */
     int flags;			/* Collection of OR-ed bits that control
 				 * the evaluation of the script.  Only
@@ -2260,11 +2260,11 @@ TclObjCommandComplete(objPtr)
 
 int
 TclIsLocalScalar(src, len)
-    CONST char *src;
+    const char *src;
     int len;
 {
-    CONST char *p;
-    CONST char *lastChar = src + (len - 1);
+    const char *p;
+    const char *lastChar = src + (len - 1);
 
     for (p = src; p <= lastChar; p++) {
 	if ((CHAR_TYPE(*p) != TYPE_NORMAL) &&

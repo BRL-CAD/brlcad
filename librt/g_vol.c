@@ -51,7 +51,7 @@ struct rt_vol_specific {
 
 #define VOL_O(m)	offsetof(struct rt_vol_internal, m)
 
-CONST struct bu_structparse rt_vol_parse[] = {
+const struct bu_structparse rt_vol_parse[] = {
 #if CRAY && !__STDC__
 	{"%s",	RT_VOL_NAME_LEN, "file",	1,		BU_STRUCTPARSE_FUNC_NULL },
 #else
@@ -399,9 +399,9 @@ if(rt_g.debug&DEBUG_VOL)bu_log("Exit axis is %s, t[]=(%g, %g, %g)\n",
 int
 rt_vol_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-CONST mat_t			mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+const mat_t			mat;
+const struct db_i		*dbip;
 {
 	union record	*rp;
 	register struct rt_vol_internal *vip;
@@ -500,9 +500,9 @@ CONST struct db_i		*dbip;
 int
 rt_vol_export( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_vol_internal	*vip;
 	struct rt_vol_internal	vol;	/* scaled version */
@@ -544,9 +544,9 @@ CONST struct db_i		*dbip;
 int
 rt_vol_import5( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-CONST mat_t			mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+const mat_t			mat;
+const struct db_i		*dbip;
 {
 	register struct rt_vol_internal *vip;
 	struct bu_vls	str;
@@ -639,9 +639,9 @@ CONST struct db_i		*dbip;
 int
 rt_vol_export5( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_vol_internal	*vip;
 	struct rt_vol_internal	vol;	/* scaled version */
@@ -679,7 +679,7 @@ CONST struct db_i		*dbip;
 int
 rt_vol_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {
@@ -808,9 +808,9 @@ struct rt_i		*rtip;
  */
 void
 rt_vol_print( stp )
-register CONST struct soltab	*stp;
+register const struct soltab	*stp;
 {
-	register CONST struct rt_vol_specific *volp =
+	register const struct rt_vol_specific *volp =
 		(struct rt_vol_specific *)stp->st_specific;
 
 	bu_log("vol file = %s\n", volp->vol_i.file );
@@ -934,8 +934,8 @@ int
 rt_vol_plot( vhead, ip, ttol, tol )
 struct bu_list		*vhead;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol		*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol		*tol;
 {
 	register struct rt_vol_internal *vip;
 	register short	x,y,z;
@@ -1067,8 +1067,8 @@ rt_vol_tess( r, m, ip, ttol, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol		*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol		*tol;
 {
 	struct rt_vol_internal	*vip;
 	register int	x,y,z;

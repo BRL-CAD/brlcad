@@ -51,14 +51,14 @@ EXTERN int		TclpCreateProcess _ANSI_ARGS_((Tcl_Interp * interp,
 EXTERN TclFile		TclpMakeFile _ANSI_ARGS_((Tcl_Channel channel, 
 				int direction));
 /* 7 */
-EXTERN TclFile		TclpOpenFile _ANSI_ARGS_((CONST char * fname, 
+EXTERN TclFile		TclpOpenFile _ANSI_ARGS_((const char * fname, 
 				int mode));
 /* 8 */
 EXTERN int		TclUnixWaitForFile _ANSI_ARGS_((int fd, int mask, 
 				int timeout));
 /* 9 */
 EXTERN TclFile		TclpCreateTempFile _ANSI_ARGS_((
-				CONST char * contents));
+				const char * contents));
 #endif /* UNIX */
 #ifdef __WIN32__
 /* 0 */
@@ -66,8 +66,8 @@ EXTERN void		TclWinConvertError _ANSI_ARGS_((DWORD errCode));
 /* 1 */
 EXTERN void		TclWinConvertWSAError _ANSI_ARGS_((DWORD errCode));
 /* 2 */
-EXTERN struct servent *	 TclWinGetServByName _ANSI_ARGS_((CONST char * nm, 
-				CONST char * proto));
+EXTERN struct servent *	 TclWinGetServByName _ANSI_ARGS_((const char * nm, 
+				const char * proto));
 /* 3 */
 EXTERN int		TclWinGetSockOpt _ANSI_ARGS_((SOCKET s, int level, 
 				int optname, char FAR * optval, 
@@ -79,7 +79,7 @@ EXTERN HINSTANCE	TclWinGetTclInstance _ANSI_ARGS_((void));
 EXTERN u_short		TclWinNToHS _ANSI_ARGS_((u_short ns));
 /* 7 */
 EXTERN int		TclWinSetSockOpt _ANSI_ARGS_((SOCKET s, int level, 
-				int optname, CONST char FAR * optval, 
+				int optname, const char FAR * optval, 
 				int optlen));
 /* 8 */
 EXTERN unsigned long	TclpGetPid _ANSI_ARGS_((Tcl_Pid pid));
@@ -110,7 +110,7 @@ EXTERN int		TclpCreateProcess _ANSI_ARGS_((Tcl_Interp * interp,
 EXTERN TclFile		TclpMakeFile _ANSI_ARGS_((Tcl_Channel channel, 
 				int direction));
 /* 19 */
-EXTERN TclFile		TclpOpenFile _ANSI_ARGS_((CONST char * fname, 
+EXTERN TclFile		TclpOpenFile _ANSI_ARGS_((const char * fname, 
 				int mode));
 /* 20 */
 EXTERN void		TclWinAddProcess _ANSI_ARGS_((HANDLE hProcess, 
@@ -119,7 +119,7 @@ EXTERN void		TclWinAddProcess _ANSI_ARGS_((HANDLE hProcess,
 EXTERN void		TclpAsyncMark _ANSI_ARGS_((Tcl_AsyncHandler async));
 /* 22 */
 EXTERN TclFile		TclpCreateTempFile _ANSI_ARGS_((
-				CONST char * contents));
+				const char * contents));
 /* 23 */
 EXTERN char *		TclpGetTZName _ANSI_ARGS_((int isdst));
 /* 24 */
@@ -150,18 +150,18 @@ EXTERN OSErr		FSpFindFolder _ANSI_ARGS_((short vRefNum,
 /* 7 */
 EXTERN void		GetGlobalMouse _ANSI_ARGS_((Point * mouse));
 /* 8 */
-EXTERN pascal OSErr	FSpGetDirectoryID _ANSI_ARGS_((CONST FSSpec * spec, 
+EXTERN pascal OSErr	FSpGetDirectoryID _ANSI_ARGS_((const FSSpec * spec, 
 				long * theDirID, Boolean * isDirectory));
 /* 9 */
 EXTERN pascal short	FSpOpenResFileCompat _ANSI_ARGS_((
-				CONST FSSpec * spec, SignedByte permission));
+				const FSSpec * spec, SignedByte permission));
 /* 10 */
 EXTERN pascal void	FSpCreateResFileCompat _ANSI_ARGS_((
-				CONST FSSpec * spec, OSType creator, 
+				const FSSpec * spec, OSType creator, 
 				OSType fileType, ScriptCode scriptTag));
 /* 11 */
 EXTERN int		FSpLocationFromPath _ANSI_ARGS_((int length, 
-				CONST char * path, FSSpecPtr theSpec));
+				const char * path, FSSpecPtr theSpec));
 /* 12 */
 EXTERN OSErr		FSpPathFromLocation _ANSI_ARGS_((FSSpecPtr theSpec, 
 				int * length, Handle * fullPath));
@@ -190,8 +190,8 @@ EXTERN short		TclMacUnRegisterResourceFork _ANSI_ARGS_((
 /* 22 */
 EXTERN int		TclMacCreateEnv _ANSI_ARGS_((void));
 /* 23 */
-EXTERN FILE *		TclMacFOpenHack _ANSI_ARGS_((CONST char * path, 
-				CONST char * mode));
+EXTERN FILE *		TclMacFOpenHack _ANSI_ARGS_((const char * path, 
+				const char * mode));
 /* Slot 24 is reserved */
 /* 25 */
 EXTERN int		TclMacChmod _ANSI_ARGS_((char * path, int mode));
@@ -209,19 +209,19 @@ typedef struct TclIntPlatStubs {
     int (*tclpCreateProcess) _ANSI_ARGS_((Tcl_Interp * interp, int argc, char ** argv, TclFile inputFile, TclFile outputFile, TclFile errorFile, Tcl_Pid * pidPtr)); /* 4 */
     void *reserved5;
     TclFile (*tclpMakeFile) _ANSI_ARGS_((Tcl_Channel channel, int direction)); /* 6 */
-    TclFile (*tclpOpenFile) _ANSI_ARGS_((CONST char * fname, int mode)); /* 7 */
+    TclFile (*tclpOpenFile) _ANSI_ARGS_((const char * fname, int mode)); /* 7 */
     int (*tclUnixWaitForFile) _ANSI_ARGS_((int fd, int mask, int timeout)); /* 8 */
-    TclFile (*tclpCreateTempFile) _ANSI_ARGS_((CONST char * contents)); /* 9 */
+    TclFile (*tclpCreateTempFile) _ANSI_ARGS_((const char * contents)); /* 9 */
 #endif /* UNIX */
 #ifdef __WIN32__
     void (*tclWinConvertError) _ANSI_ARGS_((DWORD errCode)); /* 0 */
     void (*tclWinConvertWSAError) _ANSI_ARGS_((DWORD errCode)); /* 1 */
-    struct servent * (*tclWinGetServByName) _ANSI_ARGS_((CONST char * nm, CONST char * proto)); /* 2 */
+    struct servent * (*tclWinGetServByName) _ANSI_ARGS_((const char * nm, const char * proto)); /* 2 */
     int (*tclWinGetSockOpt) _ANSI_ARGS_((SOCKET s, int level, int optname, char FAR * optval, int FAR * optlen)); /* 3 */
     HINSTANCE (*tclWinGetTclInstance) _ANSI_ARGS_((void)); /* 4 */
     void *reserved5;
     u_short (*tclWinNToHS) _ANSI_ARGS_((u_short ns)); /* 6 */
-    int (*tclWinSetSockOpt) _ANSI_ARGS_((SOCKET s, int level, int optname, CONST char FAR * optval, int optlen)); /* 7 */
+    int (*tclWinSetSockOpt) _ANSI_ARGS_((SOCKET s, int level, int optname, const char FAR * optval, int optlen)); /* 7 */
     unsigned long (*tclpGetPid) _ANSI_ARGS_((Tcl_Pid pid)); /* 8 */
     int (*tclWinGetPlatformId) _ANSI_ARGS_((void)); /* 9 */
     void *reserved10;
@@ -233,10 +233,10 @@ typedef struct TclIntPlatStubs {
     void *reserved16;
     void *reserved17;
     TclFile (*tclpMakeFile) _ANSI_ARGS_((Tcl_Channel channel, int direction)); /* 18 */
-    TclFile (*tclpOpenFile) _ANSI_ARGS_((CONST char * fname, int mode)); /* 19 */
+    TclFile (*tclpOpenFile) _ANSI_ARGS_((const char * fname, int mode)); /* 19 */
     void (*tclWinAddProcess) _ANSI_ARGS_((HANDLE hProcess, DWORD id)); /* 20 */
     void (*tclpAsyncMark) _ANSI_ARGS_((Tcl_AsyncHandler async)); /* 21 */
-    TclFile (*tclpCreateTempFile) _ANSI_ARGS_((CONST char * contents)); /* 22 */
+    TclFile (*tclpCreateTempFile) _ANSI_ARGS_((const char * contents)); /* 22 */
     char * (*tclpGetTZName) _ANSI_ARGS_((int isdst)); /* 23 */
     char * (*tclWinNoBackslash) _ANSI_ARGS_((char * path)); /* 24 */
     TclPlatformType * (*tclWinGetPlatform) _ANSI_ARGS_((void)); /* 25 */
@@ -251,10 +251,10 @@ typedef struct TclIntPlatStubs {
     int (*fSpSetDefaultDir) _ANSI_ARGS_((FSSpecPtr theSpec)); /* 5 */
     OSErr (*fSpFindFolder) _ANSI_ARGS_((short vRefNum, OSType folderType, Boolean createFolder, FSSpec * spec)); /* 6 */
     void (*getGlobalMouse) _ANSI_ARGS_((Point * mouse)); /* 7 */
-    pascal OSErr (*fSpGetDirectoryID) _ANSI_ARGS_((CONST FSSpec * spec, long * theDirID, Boolean * isDirectory)); /* 8 */
-    pascal short (*fSpOpenResFileCompat) _ANSI_ARGS_((CONST FSSpec * spec, SignedByte permission)); /* 9 */
-    pascal void (*fSpCreateResFileCompat) _ANSI_ARGS_((CONST FSSpec * spec, OSType creator, OSType fileType, ScriptCode scriptTag)); /* 10 */
-    int (*fSpLocationFromPath) _ANSI_ARGS_((int length, CONST char * path, FSSpecPtr theSpec)); /* 11 */
+    pascal OSErr (*fSpGetDirectoryID) _ANSI_ARGS_((const FSSpec * spec, long * theDirID, Boolean * isDirectory)); /* 8 */
+    pascal short (*fSpOpenResFileCompat) _ANSI_ARGS_((const FSSpec * spec, SignedByte permission)); /* 9 */
+    pascal void (*fSpCreateResFileCompat) _ANSI_ARGS_((const FSSpec * spec, OSType creator, OSType fileType, ScriptCode scriptTag)); /* 10 */
+    int (*fSpLocationFromPath) _ANSI_ARGS_((int length, const char * path, FSSpecPtr theSpec)); /* 11 */
     OSErr (*fSpPathFromLocation) _ANSI_ARGS_((FSSpecPtr theSpec, int * length, Handle * fullPath)); /* 12 */
     void (*tclMacExitHandler) _ANSI_ARGS_((void)); /* 13 */
     void (*tclMacInitExitToShell) _ANSI_ARGS_((int usePatch)); /* 14 */
@@ -266,7 +266,7 @@ typedef struct TclIntPlatStubs {
     int (*tclMacRegisterResourceFork) _ANSI_ARGS_((short fileRef, Tcl_Obj * tokenPtr, int insert)); /* 20 */
     short (*tclMacUnRegisterResourceFork) _ANSI_ARGS_((char * tokenPtr, Tcl_Obj * resultPtr)); /* 21 */
     int (*tclMacCreateEnv) _ANSI_ARGS_((void)); /* 22 */
-    FILE * (*tclMacFOpenHack) _ANSI_ARGS_((CONST char * path, CONST char * mode)); /* 23 */
+    FILE * (*tclMacFOpenHack) _ANSI_ARGS_((const char * path, const char * mode)); /* 23 */
     void *reserved24;
     int (*tclMacChmod) _ANSI_ARGS_((char * path, int mode)); /* 25 */
 #endif /* MAC_TCL */

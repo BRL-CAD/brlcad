@@ -54,7 +54,7 @@ long	bu_n_realloc = 0;
 struct memdebug {
 	long		magic;		/* corruption can be everywhere */
 	genptr_t	mdb_addr;
-	CONST char	*mdb_str;
+	const char	*mdb_str;
 	int		mdb_len;
 };
 static struct memdebug	*bu_memdebug = (struct memdebug *)NULL;
@@ -74,7 +74,7 @@ HIDDEN void
 bu_memdebug_add( ptr, cnt, str )
 char		*ptr;
 unsigned int	cnt;
-CONST char	*str;
+const char	*str;
 {
 	register struct memdebug *mp;
 top:
@@ -136,7 +136,7 @@ again:
 HIDDEN struct memdebug *
 bu_memdebug_check( ptr, str )
 register char	*ptr;
-CONST char	*str;
+const char	*str;
 {
 	register struct memdebug *mp = &bu_memdebug[bu_memdebug_len-1];
 	register long	*ip;
@@ -177,7 +177,7 @@ CONST char	*str;
 genptr_t
 bu_malloc(cnt, str)
 unsigned int	cnt;
-CONST char	*str;
+const char	*str;
 {
 	register genptr_t ptr;
 
@@ -223,7 +223,7 @@ CONST char	*str;
 void
 bu_free(ptr,str)
 genptr_t	ptr;
-CONST char	*str;
+const char	*str;
 {
 	if(bu_debug&BU_DEBUG_MEM_LOG) {
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -269,7 +269,7 @@ genptr_t
 bu_realloc(ptr, cnt, str)
 register genptr_t	ptr;
 unsigned int		cnt;
-CONST char		*str;
+const char		*str;
 {
 	struct memdebug		*mp=NULL;
 	char	*original_ptr = ptr;
@@ -323,7 +323,7 @@ genptr_t
 bu_calloc( nelem, elsize, str )
 unsigned int	nelem;
 unsigned int	elsize;
-CONST char	*str;
+const char	*str;
 {
 	unsigned	len;
 	genptr_t	ret;
@@ -340,7 +340,7 @@ CONST char	*str;
  */
 void
 bu_prmem(str)
-CONST char *str;
+const char *str;
 {
 	register struct memdebug *mp;
 	register long *ip;
@@ -387,7 +387,7 @@ CONST char *str;
  */
 char *
 bu_strdup( cp )
-register CONST char *cp;
+register const char *cp;
 {
 	register char	*base;
 	register int	len;
@@ -426,7 +426,7 @@ register CONST char *cp;
  */
 char *
 bu_dirname( cp )
-CONST char *cp;
+const char *cp;
 {
 	char	*ret;
 	char	*slash;
@@ -524,7 +524,7 @@ register int nbytes;
 void
 bu_ck_malloc_ptr( ptr, str )
 genptr_t	ptr;
-CONST char	*str;
+const char	*str;
 {
 	register struct memdebug *mp = &bu_memdebug[bu_memdebug_len-1];
 	register long	*ip;

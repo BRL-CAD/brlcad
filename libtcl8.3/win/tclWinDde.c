@@ -94,7 +94,7 @@ static void		    SetDdeError _ANSI_ARGS_((Tcl_Interp *interp));
 int Tcl_DdeObjCmd(ClientData clientData,	/* Used only for deletion */
 	Tcl_Interp *interp,		/* The interp we are sending from */
 	int objc,			/* Number of arguments */
-	Tcl_Obj *CONST objv[]);	/* The arguments */
+	Tcl_Obj *const objv[]);	/* The arguments */
 
 EXTERN int Dde_Init(Tcl_Interp *interp);
 
@@ -824,7 +824,7 @@ Tcl_DdeObjCmd(
     ClientData clientData,	/* Used only for deletion */
     Tcl_Interp *interp,		/* The interp we are sending from */
     int objc,			/* Number of arguments */
-    Tcl_Obj *CONST objv[])	/* The arguments */
+    Tcl_Obj *const objv[])	/* The arguments */
 {
     enum {
 	DDE_SERVERNAME,

@@ -166,7 +166,7 @@ struct epa_specific {
 	mat_t	epa_invRoS;	/* invRot(Scale(vect)) */
 };
 
-CONST struct bu_structparse rt_epa_parse[] = {
+const struct bu_structparse rt_epa_parse[] = {
     { "%f", 3, "V",   offsetof(struct rt_epa_internal, epa_V[X]),  BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "H",   offsetof(struct rt_epa_internal, epa_H[X]),  BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "A",   offsetof(struct rt_epa_internal, epa_Au[X]), BU_STRUCTPARSE_FUNC_NULL },
@@ -198,7 +198,7 @@ struct rt_i		*rtip;
 {
 	struct rt_epa_internal		*xip;
 	register struct epa_specific	*epa;
-	CONST struct bn_tol		*tol = &rtip->rti_tol;
+	const struct bn_tol		*tol = &rtip->rti_tol;
 	LOCAL fastf_t	magsq_h;
 	LOCAL fastf_t	mag_a, mag_h;
 	LOCAL fastf_t	f, r1, r2;
@@ -291,9 +291,9 @@ struct rt_i		*rtip;
  */
 void
 rt_epa_print( stp )
-register CONST struct soltab *stp;
+register const struct soltab *stp;
 {
-	register CONST struct epa_specific *epa =
+	register const struct epa_specific *epa =
 		(struct epa_specific *)stp->st_specific;
 
 	VPRINT("V", epa->epa_V);
@@ -634,8 +634,8 @@ int
 rt_epa_plot( vhead, ip, ttol, tol )
 struct bu_list		*vhead;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol	*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol	*tol;
 {
 	fastf_t		dtol, f, mag_a, mag_h, ntol, r1, r2;
 	fastf_t		**ellipses, theta_new, theta_prev, rt_ell_ang();
@@ -933,8 +933,8 @@ int			sides;
 void
 rt_ell( ov, V, A, B, sides )
 register fastf_t	*ov;
-register CONST fastf_t	*V;
-CONST fastf_t		*A, *B;
+register const fastf_t	*V;
+const fastf_t		*A, *B;
 int			sides;
 {
 	fastf_t	ang, theta, x, y;
@@ -1007,8 +1007,8 @@ rt_epa_tess( r, m, ip, ttol, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol	*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol	*tol;
 {
 	fastf_t		dtol, f, mag_a, mag_h, ntol, r1, r2;
 	fastf_t		**ellipses, **normals, theta_new, theta_prev;
@@ -1468,9 +1468,9 @@ fail:
 int
 rt_epa_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-register CONST mat_t		mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	LOCAL struct rt_epa_internal	*xip;
 	union record			*rp;
@@ -1516,9 +1516,9 @@ CONST struct db_i		*dbip;
 int
 rt_epa_export( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_epa_internal	*xip;
 	union record		*epa;
@@ -1580,9 +1580,9 @@ CONST struct db_i		*dbip;
 int
 rt_epa_import5( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-register CONST mat_t		mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	LOCAL struct rt_epa_internal	*xip;
 	fastf_t				vec[11];
@@ -1628,9 +1628,9 @@ CONST struct db_i		*dbip;
 int
 rt_epa_export5( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_epa_internal	*xip;
 	fastf_t			vec[11];
@@ -1692,7 +1692,7 @@ CONST struct db_i		*dbip;
 int
 rt_epa_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {

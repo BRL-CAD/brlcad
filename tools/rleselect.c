@@ -35,7 +35,7 @@
 
 static void insert();
 
-static CONST char *my_name = "rleselect";
+static const char *my_name = "rleselect";
 
 /*****************************************************************
  * TAG( rleselect )

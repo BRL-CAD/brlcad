@@ -47,8 +47,8 @@ void
 rt_raybundle_maker( rp, radius, avec, bvec, rays_per_ring, nring )
 struct xray	*rp;
 double		radius;
-CONST vect_t	avec;
-CONST vect_t	bvec;
+const vect_t	avec;
+const vect_t	bvec;
 int		rays_per_ring;
 int		nring;
 {

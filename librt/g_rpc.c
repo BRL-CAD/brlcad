@@ -176,7 +176,7 @@ struct rpc_specific {
 	mat_t	rpc_invRoS;	/* invRot(Scale(vect)) */
 };
 
-CONST struct bu_structparse rt_rpc_parse[] = {
+const struct bu_structparse rt_rpc_parse[] = {
     { "%f", 3, "V", offsetof(struct rt_rpc_internal, rpc_V[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "H", offsetof(struct rt_rpc_internal, rpc_H[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "B", offsetof(struct rt_rpc_internal, rpc_B[X]), BU_STRUCTPARSE_FUNC_NULL },
@@ -207,7 +207,7 @@ struct rt_i		*rtip;
 {
 	struct rt_rpc_internal		*xip;
 	register struct rpc_specific	*rpc;
-	CONST struct bn_tol		*tol = &rtip->rti_tol;
+	const struct bn_tol		*tol = &rtip->rti_tol;
 	LOCAL fastf_t	magsq_b, magsq_h, magsq_r;
 	LOCAL fastf_t	mag_b, mag_h, mag_r;
 	LOCAL fastf_t	f;
@@ -303,9 +303,9 @@ struct rt_i		*rtip;
  */
 void
 rt_rpc_print( stp )
-register CONST struct soltab *stp;
+register const struct soltab *stp;
 {
-	register CONST struct rpc_specific *rpc =
+	register const struct rpc_specific *rpc =
 		(struct rpc_specific *)stp->st_specific;
 
 	VPRINT("V", rpc->rpc_V);
@@ -348,7 +348,7 @@ struct seg		*seghead;
 	LOCAL vect_t	xlated;		/* translated vector */
 	LOCAL struct hit hits[3];	/* 2 potential hit points */
 	register struct hit *hitp;	/* pointer to hit point */
-/*?????	CONST struct bn_tol	*tol = &rtip->rti_tol; ?????*/
+/*?????	const struct bn_tol	*tol = &rtip->rti_tol; ?????*/
 
 	hitp = &hits[0];
 
@@ -650,8 +650,8 @@ int
 rt_rpc_plot( vhead, ip, ttol, tol )
 struct bu_list		*vhead;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol		*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol		*tol;
 {
 	LOCAL struct rt_rpc_internal	*xip;
         fastf_t *front;
@@ -923,8 +923,8 @@ rt_rpc_tess( r, m, ip, ttol, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol	*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol	*tol;
 {
 	int		i, j, n;
 	fastf_t		b, *back, f, *front, h, rh;
@@ -1203,9 +1203,9 @@ CONST struct bn_tol	*tol;
 int
 rt_rpc_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-register CONST mat_t		mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	LOCAL struct rt_rpc_internal	*xip;
 	union record			*rp;
@@ -1249,9 +1249,9 @@ CONST struct db_i		*dbip;
 int
 rt_rpc_export( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_rpc_internal	*xip;
 	union record		*rpc;
@@ -1302,9 +1302,9 @@ CONST struct db_i		*dbip;
 int
 rt_rpc_import5( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-register CONST mat_t		mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	struct rt_rpc_internal	*xip;
 	fastf_t			vec[10];
@@ -1348,9 +1348,9 @@ CONST struct db_i		*dbip;
 int
 rt_rpc_export5( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_rpc_internal	*xip;
 	fastf_t			vec[10];
@@ -1401,7 +1401,7 @@ CONST struct db_i		*dbip;
 int
 rt_rpc_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {

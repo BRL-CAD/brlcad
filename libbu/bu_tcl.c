@@ -95,10 +95,10 @@ static struct bu_cmdtab bu_cmds[] = {
 
 void
 bu_badmagic_tcl(Tcl_Interp	*interp,
-		CONST long	*ptr,
+		const long	*ptr,
 		long		magic,
-		CONST char	*str,
-		CONST char	*file,
+		const char	*str,
+		const char	*file,
 		int		line)
 {
 	char	buf[256];
@@ -220,11 +220,11 @@ int
 bu_structparse_argv(Tcl_Interp			*interp,
 		    int				argc,
 		    char			**argv,
-		    CONST struct bu_structparse	*desc,
+		    const struct bu_structparse	*desc,
 		    char			*base)
 {
 	register char				*cp, *loc;
-	register CONST struct bu_structparse	*sdp;
+	register const struct bu_structparse	*sdp;
 	register int				 j;
 	register int				ii;
 	struct bu_vls				 str;
@@ -320,7 +320,7 @@ bu_structparse_argv(Tcl_Interp			*interp,
 			case 'd': {
 				register int *ip = (int *)loc;
 				register int tmpi;
-				register char CONST *cp;
+				register char const *cp;
 
 				if( argc < 1 ) { /* XXX - when was ii defined */
 					bu_vls_trunc( &str, 0 );

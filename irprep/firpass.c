@@ -89,7 +89,7 @@ extern double radians();/*  Subroutines to find angle in radians.  */
 /*  Define structure.  */
 struct table
 {
-	CONST char *regname;		/*  region name  */
+	const char *regname;		/*  region name  */
 	short mat;		/*  material code  */
 	double cumnorm[3];	/*  cummulative normal vector sum  */
 				/*  for the exterior free surfaces  */

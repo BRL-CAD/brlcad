@@ -35,7 +35,7 @@
 
 void
 rt_nurb_s_eval( srf, u, v, final_value )
-CONST struct face_g_snurb *srf;
+const struct face_g_snurb *srf;
 fastf_t	u;
 fastf_t v;
 fastf_t * final_value;
@@ -110,7 +110,7 @@ fastf_t * final_value;
 
 void
 rt_nurb_c_eval( crv, param, final_value)
-CONST struct edge_g_cnurb *crv;
+const struct edge_g_cnurb *crv;
 fastf_t param;
 fastf_t * final_value;
 {
@@ -146,7 +146,7 @@ rt_nurb_eval_crv( crv, order, param, k_vec, k_index, coords )
 register fastf_t *crv;
 int	order;
 fastf_t	param;
-CONST struct knot_vector *k_vec;
+const struct knot_vector *k_vec;
 int	k_index;
 int	coords;
 {

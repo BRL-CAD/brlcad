@@ -125,7 +125,7 @@ HIDDEN int
 rt_pgface( stp, ap, bp, cp, tol )
 struct soltab	*stp;
 fastf_t		*ap, *bp, *cp;
-CONST struct bn_tol	*tol;
+const struct bn_tol	*tol;
 {
 	register struct tri_specific *trip;
 	vect_t work;
@@ -169,9 +169,9 @@ CONST struct bn_tol	*tol;
  */
 void
 rt_pg_print( stp )
-register CONST struct soltab *stp;
+register const struct soltab *stp;
 {
-	register CONST struct tri_specific *trip =
+	register const struct tri_specific *trip =
 		(struct tri_specific *)stp->st_specific;
 
 	if( trip == TRI_NULL )  {
@@ -487,8 +487,8 @@ int
 rt_pg_plot( vhead, ip, ttol, tol )
 struct bu_list		*vhead;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol		*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol		*tol;
 {
 	register int	i;
 	register int	p;	/* current polygon number */
@@ -521,8 +521,8 @@ int
 rt_pg_plot_poly( vhead, ip, ttol, tol )
 struct bu_list		*vhead;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol		*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol		*tol;
 {
 	register int	i;
 	register int	p;	/* current polygon number */
@@ -575,8 +575,8 @@ rt_pg_tess( r, m, ip, ttol, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol		*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol		*tol;
 {
 	register int	i;
 	struct shell	*s;
@@ -660,9 +660,9 @@ CONST struct bn_tol		*tol;
 int
 rt_pg_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-CONST mat_t			mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+const mat_t			mat;
+const struct db_i		*dbip;
 {
 	struct rt_pg_internal	*pgp;
 	union record		*rp;
@@ -736,9 +736,9 @@ CONST struct db_i		*dbip;
 int
 rt_pg_export( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_pg_internal	*pgp;
 	union record		*rec;
@@ -785,9 +785,9 @@ CONST struct db_i		*dbip;
 int
 rt_pg_import5( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-CONST mat_t			mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+const mat_t			mat;
+const struct db_i		*dbip;
 {
 	bu_log( "Import of polysolids from a version 5 database is not allowed\n" );
 	bu_log( "\tPolysolids should be converted to BOT solids using the rt_pg_to_bot() routine or g4-g5 utility.\n" );
@@ -797,9 +797,9 @@ CONST struct db_i		*dbip;
 int
 rt_pg_export5( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	bu_log( "Export of polysolids to a version 5 database is not allowed\n" );
 	bu_log( "\tPolysolids should be converted to BoT solids using the rt_pg_to_bot() routine or g4-g5 utility.\n" );
@@ -816,7 +816,7 @@ CONST struct db_i		*dbip;
 int
 rt_pg_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {

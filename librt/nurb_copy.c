@@ -26,7 +26,7 @@
 
 struct face_g_snurb *
 rt_nurb_scopy( srf, res )
-CONST struct face_g_snurb * srf;
+const struct face_g_snurb * srf;
 struct resource *res;
 {
 	register struct face_g_snurb * n;
@@ -57,7 +57,7 @@ struct resource *res;
 
 struct edge_g_cnurb *
 rt_nurb_crv_copy( crv )
-CONST struct edge_g_cnurb * crv;
+const struct edge_g_cnurb * crv;
 {
 	register struct edge_g_cnurb * n;
 	int i;

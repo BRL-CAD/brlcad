@@ -69,7 +69,7 @@ static char rt_hf_RcSid[] = "@(#)$Header$ (ARL)";
 #define HF_O(m)			offsetof(struct rt_hf_internal, m)
 
 /* All fields valid in string solid */
-CONST struct bu_structparse rt_hf_parse[] = {
+const struct bu_structparse rt_hf_parse[] = {
 	{"%s",	128,	"cfile",	bu_offsetofarray(struct rt_hf_internal, cfile), BU_STRUCTPARSE_FUNC_NULL},
 	{"%s",	128,	"dfile",	bu_offsetofarray(struct rt_hf_internal, dfile), BU_STRUCTPARSE_FUNC_NULL},
 	{"%s",	8,	"fmt",		bu_offsetofarray(struct rt_hf_internal, fmt), BU_STRUCTPARSE_FUNC_NULL},
@@ -86,7 +86,7 @@ CONST struct bu_structparse rt_hf_parse[] = {
 	{"",	0,	(char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 /* Subset of fields found in cfile */
-CONST struct bu_structparse rt_hf_cparse[] = {
+const struct bu_structparse rt_hf_cparse[] = {
 	{"%s",	128,	"dfile",	bu_offsetofarray(struct rt_hf_internal, dfile), BU_STRUCTPARSE_FUNC_NULL},
 	{"%s",	8,	"fmt",		bu_offsetofarray(struct rt_hf_internal, fmt), BU_STRUCTPARSE_FUNC_NULL},
 	{"%d",	1,	"w",		HF_O(w),		BU_STRUCTPARSE_FUNC_NULL },
@@ -210,7 +210,7 @@ struct rt_i		*rtip;
 {
 	struct rt_hf_internal *hip;
 	register struct hf_specific	*hf;
-	CONST struct bn_tol		*tol = &rtip->rti_tol;
+	const struct bn_tol		*tol = &rtip->rti_tol;
 	double	dot;
 	vect_t	height, work;
 	static int first_time=1;
@@ -348,9 +348,9 @@ struct rt_i		*rtip;
  */
 void
 rt_hf_print( stp )
-register CONST struct soltab *stp;
+register const struct soltab *stp;
 {
-	register CONST struct hf_specific *hf =
+	register const struct hf_specific *hf =
 		(struct hf_specific *)stp->st_specific;
 	VPRINT("V", hf->hf_V);
 	VPRINT("X", hf->hf_X);
@@ -1689,8 +1689,8 @@ int
 rt_hf_plot( vhead, ip, ttol, tol )
 struct bu_list		*vhead;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol		*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol		*tol;
 {
 	LOCAL struct rt_hf_internal	*xip;
 	register unsigned short		*sp = (unsigned short *)NULL;
@@ -1945,8 +1945,8 @@ rt_hf_tess( r, m, ip, ttol, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol		*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol		*tol;
 {
 	LOCAL struct rt_hf_internal	*xip;
 
@@ -1966,9 +1966,9 @@ CONST struct bn_tol		*tol;
 int
 rt_hf_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-register CONST mat_t		mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	LOCAL struct rt_hf_internal	*xip;
 	union record			*rp;
@@ -2138,9 +2138,9 @@ err1:
 int
 rt_hf_export( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_hf_internal	*xip;
 	union record		*rec;
@@ -2179,9 +2179,9 @@ CONST struct db_i		*dbip;
 int
 rt_hf_import5( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-CONST mat_t			mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+const mat_t			mat;
+const struct db_i		*dbip;
 {
 	bu_log( "Import of HF solids from a version 5 database is not allowed.\n" );
 	bu_log( "\tHF solids should be converted to DSP solids using the rt_hf_to_dsp() routine or g4-g5 utility.\n" );
@@ -2191,9 +2191,9 @@ CONST struct db_i		*dbip;
 int
 rt_hf_export5( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	bu_log( "Export of HF solids from a version 5 database is not allowed.\n" );
 	bu_log( "\tHF solids should be converted to DSP solids using the rt_hf_to_dsp() routine or g4-g5 utility.\n" );
@@ -2210,7 +2210,7 @@ CONST struct db_i		*dbip;
 int
 rt_hf_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {

@@ -131,7 +131,7 @@ _LOCAL_ int
 DEVNAME_write( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
-CONST unsigned char	*pixelp;
+const unsigned char	*pixelp;
 int	count;
 {
 	return(count);
@@ -148,7 +148,7 @@ ColorMap	*cmp;
 _LOCAL_ int
 DEVNAME_wmap( ifp, cmp )
 FBIO	*ifp;
-CONST ColorMap	*cmp;
+const ColorMap	*cmp;
 {
 	return(0);
 }
@@ -174,7 +174,7 @@ int	*xzoom, *yzoom;
 _LOCAL_ int
 DEVNAME_setcursor( ifp, bits, xbits, ybits, xorig, yorig )
 FBIO	*ifp;
-CONST unsigned char *bits;
+const unsigned char *bits;
 int	xbits, ybits;
 int	xorig, yorig;
 {
@@ -214,7 +214,7 @@ DEVNAME_writerect( ifp, xmin, ymin, width, height, pp )
 FBIO	*ifp;
 int	xmin, ymin;
 int	width, height;
-CONST unsigned char	*pp;
+const unsigned char	*pp;
 {
 	return( width*height );
 }

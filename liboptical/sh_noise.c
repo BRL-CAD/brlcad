@@ -55,10 +55,10 @@ extern int rr_render(struct application	*ap,
  */
 void
 noise_cvt_parse( sdp, name, base, value )
-register CONST struct bu_structparse	*sdp;	/* structure description */
-register CONST char			*name;	/* struct member name */
+register const struct bu_structparse	*sdp;	/* structure description */
+register const char			*name;	/* struct member name */
 char					*base;	/* begining of structure */
-CONST char				*value;	/* string containing value */
+const char				*value;	/* string containing value */
 {
 	double *p = (double *)(base+sdp->sp_offset);
 
@@ -74,10 +74,10 @@ CONST char				*value;	/* string containing value */
 
 void
 noise_deg_to_rad( sdp, name, base, value )
-register CONST struct bu_structparse	*sdp;	/* structure description */
-register CONST char			*name;	/* struct member name */
+register const struct bu_structparse	*sdp;	/* structure description */
+register const char			*name;	/* struct member name */
 char					*base;	/* begining of structure */
-CONST char				*value;	/* string containing value */
+const char				*value;	/* string containing value */
 {
 	double *p = (double *)(base+sdp->sp_offset);
 
@@ -107,7 +107,7 @@ struct noise_specific {
 };
 
 /* The default values for the variables in the shader specific structure */
-static CONST
+static const
 struct noise_specific noise_defaults = {
 	noise_MAGIC,
 	2.1753974,	/* lacunarity */

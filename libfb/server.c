@@ -67,7 +67,7 @@ int	fb_server_got_fb_free = 0;	/* !0 => we have received an fb_free */
 int	fb_server_refuse_fb_free = 0;	/* !0 => don't accept fb_free() */
 int	fb_server_retain_on_close = 0;	/* !0 => we are holding a reusable FB open */
 
-CONST struct pkg_switch fb_server_pkg_switch[] = {
+const struct pkg_switch fb_server_pkg_switch[] = {
   { MSG_FBOPEN,			fb_server_fb_open,	"Open Framebuffer" },
   { MSG_FBCLOSE,		fb_server_fb_close,	"Close Framebuffer" },
   { MSG_FBCLEAR,		fb_server_fb_clear,	"Clear Framebuffer" },

@@ -48,7 +48,7 @@ static const char RCStorus[] = "@(#)$Header$ (BRL)";
  *
  */
 
-CONST struct bu_structparse rt_tor_parse[] = {
+const struct bu_structparse rt_tor_parse[] = {
     { "%f", 3, "V",   offsetof(struct rt_tor_internal, v[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "H",   offsetof(struct rt_tor_internal, h[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 1, "r_a", offsetof(struct rt_tor_internal, r_a),  BU_STRUCTPARSE_FUNC_NULL },
@@ -287,9 +287,9 @@ struct rt_i		*rtip;
  */
 void
 rt_tor_print( stp )
-register CONST struct soltab *stp;
+register const struct soltab *stp;
 {
-	register CONST struct tor_specific *tor =
+	register const struct tor_specific *tor =
 		(struct tor_specific *)stp->st_specific;
 
 	bu_log("r2/r1 (alpha) = %f\n", tor->tor_alpha);
@@ -1000,8 +1000,8 @@ int
 rt_tor_plot( vhead, ip, ttol, tol )
 struct bu_list		*vhead;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol	*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol	*tol;
 {
 	fastf_t		alpha;
 	fastf_t		beta;
@@ -1120,8 +1120,8 @@ rt_tor_tess( r, m, ip, ttol, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol	*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol	*tol;
 {
 	fastf_t		alpha;
 	fastf_t		beta;
@@ -1303,9 +1303,9 @@ CONST struct bn_tol	*tol;
 int
 rt_tor_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-register CONST mat_t		mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	struct rt_tor_internal	*tip;
 	union record		*rp;
@@ -1365,9 +1365,9 @@ CONST struct db_i		*dbip;
 int
 rt_tor_export5( ep , ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	double			vec[2*3+2];
 	struct rt_tor_internal	*tip;
@@ -1400,9 +1400,9 @@ CONST struct db_i		*dbip;
 int
 rt_tor_export( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_tor_internal	*tip;
 	union record		*rec;
@@ -1498,9 +1498,9 @@ CONST struct db_i		*dbip;
 int
 rt_tor_import5( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-register CONST mat_t		mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	struct rt_tor_internal	*tip;
 	LOCAL struct rec {
@@ -1553,7 +1553,7 @@ CONST struct db_i		*dbip;
 int
 rt_tor_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {

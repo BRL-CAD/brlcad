@@ -85,7 +85,7 @@ extern int overlap();	/*  User supplied overlap function.  */
 /*  Define structure to hold all information needed.  */
 struct table
 {
-   CONST char *name;	/*  Region name.  */
+   const char *name;	/*  Region name.  */
    int regnum;		/*  Region number that matches firpass &  */
 			/*  secpass.  */
    int numchar;		/*  Number of char each region name has.  */

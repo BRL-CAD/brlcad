@@ -44,7 +44,7 @@
 int
 rt_nurb_bezier( bezier_hd, orig_surf, res )
 struct bu_list		*bezier_hd;
-CONST struct face_g_snurb	*orig_surf;
+const struct face_g_snurb	*orig_surf;
 struct resource *res;
 {
 	struct face_g_snurb	*s;
@@ -79,7 +79,7 @@ struct resource *res;
 
 int
 rt_bez_check( srf )
-CONST struct face_g_snurb * srf;
+const struct face_g_snurb * srf;
 {
 	NMG_CK_SNURB(srf);
 
@@ -102,7 +102,7 @@ CONST struct face_g_snurb * srf;
 
 int
 nurb_crv_is_bezier( crv )
-CONST struct edge_g_cnurb *crv;
+const struct edge_g_cnurb *crv;
 {
 	int i;
 	fastf_t knot_min, knot_max;

@@ -76,7 +76,7 @@ struct db_tree_counter_state {
  *		tcsp->leafbytes -= tcsp->n_leaf * (8 - db5_enc_len[wid]);
  */
 long
-db_tree_counter( CONST union tree *tp, struct db_tree_counter_state *tcsp )
+db_tree_counter( const union tree *tp, struct db_tree_counter_state *tcsp )
 {
 	long	ldepth, rdepth;
 

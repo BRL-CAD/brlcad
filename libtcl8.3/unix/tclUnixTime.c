@@ -265,7 +265,7 @@ TclpGetDate(time, useGMT)
     TclpTime_t time;
     int useGMT;
 {
-    CONST time_t *tp = (CONST time_t *)time;
+    const time_t *tp = (const time_t *)time;
 
     if (useGMT) {
 	return gmtime(tp);
@@ -294,8 +294,8 @@ size_t
 TclpStrftime(s, maxsize, format, t)
     char *s;
     size_t maxsize;
-    CONST char *format;
-    CONST struct tm *t;
+    const char *format;
+    const struct tm *t;
 {
     if (format[0] == '%' && format[1] == 'Q') {
 	/* Format as a stardate */

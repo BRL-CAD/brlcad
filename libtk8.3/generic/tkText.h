@@ -797,22 +797,22 @@ EXTERN int		TkTextGetIndex _ANSI_ARGS_((Tcl_Interp *interp,
 EXTERN TkTextTabArray *	TkTextGetTabs _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tk_Window tkwin, char *string));
 EXTERN void		TkTextIndexBackBytes _ANSI_ARGS_((
-			    CONST TkTextIndex *srcPtr, int count,
+			    const TkTextIndex *srcPtr, int count,
 			    TkTextIndex *dstPtr));
 EXTERN void		TkTextIndexBackChars _ANSI_ARGS_((
-			    CONST TkTextIndex *srcPtr, int count,
+			    const TkTextIndex *srcPtr, int count,
 			    TkTextIndex *dstPtr));
 EXTERN int		TkTextIndexCmp _ANSI_ARGS_((
-			    CONST TkTextIndex *index1Ptr,
-			    CONST TkTextIndex *index2Ptr));
+			    const TkTextIndex *index1Ptr,
+			    const TkTextIndex *index2Ptr));
 EXTERN void		TkTextIndexForwBytes _ANSI_ARGS_((
-			    CONST TkTextIndex *srcPtr, int count,
+			    const TkTextIndex *srcPtr, int count,
 			    TkTextIndex *dstPtr));
 EXTERN void		TkTextIndexForwChars _ANSI_ARGS_((
-			    CONST TkTextIndex *srcPtr, int count,
+			    const TkTextIndex *srcPtr, int count,
 			    TkTextIndex *dstPtr));
 EXTERN TkTextSegment *	TkTextIndexToSeg _ANSI_ARGS_((
-			    CONST TkTextIndex *indexPtr, int *offsetPtr));
+			    const TkTextIndex *indexPtr, int *offsetPtr));
 EXTERN void		TkTextInsertDisplayProc _ANSI_ARGS_((
 			    TkTextDispChunk *chunkPtr, int x, int y, int height,
 			    int baseline, Display *display, Drawable dst,
@@ -839,7 +839,7 @@ EXTERN void		TkTextPickCurrent _ANSI_ARGS_((TkText *textPtr,
 EXTERN void		TkTextPixelIndex _ANSI_ARGS_((TkText *textPtr,
 			    int x, int y, TkTextIndex *indexPtr));
 EXTERN void		TkTextPrintIndex _ANSI_ARGS_((
-			    CONST TkTextIndex *indexPtr, char *string));
+			    const TkTextIndex *indexPtr, char *string));
 EXTERN void		TkTextRedrawRegion _ANSI_ARGS_((TkText *textPtr,
 			    int x, int y, int width, int height));
 EXTERN void		TkTextRedrawTag _ANSI_ARGS_((TkText *textPtr,
@@ -851,8 +851,8 @@ EXTERN int		TkTextScanCmd _ANSI_ARGS_((TkText *textPtr,
 EXTERN int		TkTextSeeCmd _ANSI_ARGS_((TkText *textPtr,
 			    Tcl_Interp *interp, int argc, char **argv));
 EXTERN int		TkTextSegToOffset _ANSI_ARGS_((
-			    CONST TkTextSegment *segPtr,
-			    CONST TkTextLine *linePtr));
+			    const TkTextSegment *segPtr,
+			    const TkTextLine *linePtr));
 EXTERN TkTextSegment *	TkTextSetMark _ANSI_ARGS_((TkText *textPtr, char *name,
 			    TkTextIndex *indexPtr));
 EXTERN void		TkTextSetYView _ANSI_ARGS_((TkText *textPtr,

@@ -73,7 +73,7 @@ struct resource *res;
 void
 rt_nurb_kvmult( new_kv, kv, num, val, res)
 struct knot_vector	*new_kv;
-CONST struct knot_vector *kv;
+const struct knot_vector *kv;
 int			num;
 register fastf_t	val;
 struct resource *res;
@@ -140,8 +140,8 @@ struct resource *res;
 void
 rt_nurb_kvmerge( new_knots, kv1, kv2, res )
 struct knot_vector *new_knots;
-CONST struct knot_vector *kv1;
-CONST struct knot_vector *kv2;
+const struct knot_vector *kv1;
+const struct knot_vector *kv2;
 struct resource *res;
 {
 	int	kv1_ptr = 0;
@@ -175,7 +175,7 @@ struct resource *res;
 int
 rt_nurb_kvcheck( val, kv)
 fastf_t val;
-register CONST struct knot_vector *kv;
+register const struct knot_vector *kv;
 {
 	register int	kv_num = 0;
 	register int	i;
@@ -197,7 +197,7 @@ register CONST struct knot_vector *kv;
 void
 rt_nurb_kvextract( new_kv, kv, lower, upper, res)
 struct knot_vector	*new_kv;
-register CONST struct knot_vector *kv;
+register const struct knot_vector *kv;
 int	upper, lower;
 struct resource *res;
 {
@@ -223,7 +223,7 @@ struct resource *res;
 void
 rt_nurb_kvcopy( new_kv, old_kv, res )
 struct knot_vector	*new_kv;
-register CONST struct knot_vector *old_kv;
+register const struct knot_vector *old_kv;
 struct resource *res;
 {
 	register int	i;
@@ -269,7 +269,7 @@ register struct knot_vector *kv;
 
 int
 rt_nurb_knot_index( kv, k_value, order)
-CONST struct knot_vector *kv;
+const struct knot_vector *kv;
 fastf_t k_value;
 int	order;
 {

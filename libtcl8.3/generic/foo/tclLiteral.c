@@ -34,7 +34,7 @@ static int		AddLocalLiteralEntry _ANSI_ARGS_((
 			    int localHash));
 static void		ExpandLocalLiteralArray _ANSI_ARGS_((
 			    CompileEnv *envPtr));
-static unsigned int	HashString _ANSI_ARGS_((CONST char *bytes,
+static unsigned int	HashString _ANSI_ARGS_((const char *bytes,
 			    int length));
 static void		RebuildLiteralTable _ANSI_ARGS_((
 			    LiteralTable *tablePtr));
@@ -773,7 +773,7 @@ TclReleaseLiteral(interp, objPtr)
 
 static unsigned int
 HashString(bytes, length)
-    register CONST char *bytes; /* String for which to compute hash
+    register const char *bytes; /* String for which to compute hash
 				 * value. */
     int length;			/* Number of bytes in the string. */
 {

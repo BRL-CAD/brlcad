@@ -193,7 +193,7 @@ rle_hdr * the_hdr;
 	    i++;			/* extra for NULL pointer at end */
 	    /* Get space to put pointers to comments */
 	    the_hdr->comments =
-		(CONST char **)malloc( (unsigned)(i * sizeof(char *)) );
+		(const char **)malloc( (unsigned)(i * sizeof(char *)) );
 	    if ( the_hdr->comments == NULL )
 	    {
 		fprintf( stderr,
@@ -248,8 +248,8 @@ rle_hdr * the_hdr;
 int
 rle_get_error( code, pgmname, fname )
 int code;
-CONST char *pgmname;
-CONST char *fname;
+const char *pgmname;
+const char *fname;
 {
     if (! fname)
 	fname = "Standard Input";
@@ -311,8 +311,8 @@ CONST char *fname;
 void
 rle_get_setup_ok( the_hdr, prog_name, file_name )
 rle_hdr * the_hdr;
-CONST char *prog_name;
-CONST char *file_name;
+const char *prog_name;
+const char *file_name;
 {
     int code;
 

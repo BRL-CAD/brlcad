@@ -52,7 +52,7 @@ extern int rr_render(struct application	*ap,
 extern double AmbientIntensity;
 
 #if RT_MULTISPECTRAL
-extern CONST struct bn_table	*spectrum;	/* from rttherm/viewtherm.c */
+extern const struct bn_table	*spectrum;	/* from rttherm/viewtherm.c */
 #endif
 
 /* Local information */
@@ -97,7 +97,7 @@ HIDDEN int phong_render();
 HIDDEN void	phong_print();
 HIDDEN void	phong_free();
 
-/* This can't be CONST, so the forward link can be written later */
+/* This can't be const, so the forward link can be written later */
 struct mfuncs phg_mfuncs[] = {
 	{MF_MAGIC,	"default",	0,		MFI_NORMAL,	0,
 	phong_setup,	phong_render,	phong_print,	phong_free },

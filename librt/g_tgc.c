@@ -72,7 +72,7 @@ struct  tgc_specific {
 #define VLARGE		1000000.0
 #define	ALPHA(x,y,c,d)	( (x)*(x)*(c) + (y)*(y)*(d) )
 
-CONST struct bu_structparse rt_tgc_parse[] = {
+const struct bu_structparse rt_tgc_parse[] = {
     { "%f", 3, "V", offsetof(struct rt_tgc_internal, v[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "H", offsetof(struct rt_tgc_internal, h[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "A", offsetof(struct rt_tgc_internal, a[X]), BU_STRUCTPARSE_FUNC_NULL },
@@ -401,7 +401,7 @@ struct tgc_specific	*tgc;
  */
 static void
 rt_tgc_shear( vect, axis, Shr, Trn, Inv )
-CONST vect_t	vect;
+const vect_t	vect;
 int		axis;
 mat_t		Shr, Trn, Inv;
 {
@@ -448,9 +448,9 @@ mat_t	Scl, Inv;
  */
 void
 rt_tgc_print( stp )
-register CONST struct soltab	*stp;
+register const struct soltab	*stp;
 {
-	register CONST struct tgc_specific	*tgc =
+	register const struct tgc_specific	*tgc =
 	(struct tgc_specific *)stp->st_specific;
 
 	VPRINT( "V", tgc->tgc_V );
@@ -511,7 +511,7 @@ register struct xray	*rp;
 struct application	*ap;
 struct seg		*seghead;
 {
-	register CONST struct tgc_specific	*tgc =
+	register const struct tgc_specific	*tgc =
 	(struct tgc_specific *)stp->st_specific;
 	register struct seg	*segp;
 	LOCAL vect_t		pprime;
@@ -1553,9 +1553,9 @@ rt_tgc_class()
 int
 rt_tgc_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-register CONST mat_t		mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	struct rt_tgc_internal	*tip;
 	union record		*rp;
@@ -1596,9 +1596,9 @@ CONST struct db_i		*dbip;
 int
 rt_tgc_export( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_tgc_internal	*tip;
 	union record		*rec;
@@ -1636,9 +1636,9 @@ CONST struct db_i		*dbip;
 int
 rt_tgc_import5( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-register CONST mat_t		mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	struct rt_tgc_internal	*tip;
 	fastf_t			vec[3*6];
@@ -1675,9 +1675,9 @@ CONST struct db_i		*dbip;
 int
 rt_tgc_export5( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_tgc_internal	*tip;
 	fastf_t			vec[3*6];
@@ -1715,7 +1715,7 @@ CONST struct db_i		*dbip;
 int
 rt_tgc_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {
@@ -1808,8 +1808,8 @@ int
 rt_tgc_plot( vhead, ip, ttol, tol )
 struct bu_list		*vhead;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol		*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol		*tol;
 {
 	LOCAL struct rt_tgc_internal	*tip;
 	register int		i;
@@ -1950,8 +1950,8 @@ rt_tgc_tess( r, m, ip, ttol, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol	*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol	*tol;
 {
 	struct shell		*s;		/* shell to hold facetted TGC */
 	struct faceuse		*fu,*fu_top,*fu_base;
@@ -2691,7 +2691,7 @@ rt_tgc_tnurb( r, m, ip, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-CONST struct bn_tol		*tol;
+const struct bn_tol		*tol;
 {
 	LOCAL struct rt_tgc_internal	*tip;
 

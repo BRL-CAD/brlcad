@@ -43,7 +43,7 @@ extern int	rt_find_nugrid();
 /*
  *			R T _ A D V A N C E _ T O _ N E X T _ C E L L
  */
-extern CONST union cutter *rt_advance_to_next_cell();
+extern const union cutter *rt_advance_to_next_cell();
 
 /*
  *			R T _ S H O O T R A Y _ B U N D L E
@@ -92,10 +92,10 @@ int			nrays;
 	auto struct partition	InitialPart;	/* Head of Initial Partitions */
 	auto struct partition	FinalPart;	/* Head of Final Partitions */
 	struct soltab		**stpp;
-	register CONST union cutter *cutp;
+	register const union cutter *cutp;
 	struct resource		*resp;
 	struct rt_i		*rtip;
-	CONST int		debug_shoot = rt_g.debug & DEBUG_SHOOT;
+	const int		debug_shoot = rt_g.debug & DEBUG_SHOOT;
 
 	RT_AP_CHECK(ap);
 	if( ap->a_magic )  {

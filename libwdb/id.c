@@ -43,7 +43,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 int
 mk_id( fp, title )
 struct rt_wdb		*fp;
-CONST char	*title;
+const char	*title;
 {
 	return mk_id_editunits( fp, title, 1.0 );
 }
@@ -61,8 +61,8 @@ CONST char	*title;
 int
 mk_id_units( fp, title, units )
 struct rt_wdb		*fp;
-CONST char	*title;
-register CONST char	*units;
+const char	*title;
+register const char	*units;
 {
 	return mk_id_editunits( fp, title, bu_units_conversion(units) );
 }

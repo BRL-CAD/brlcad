@@ -35,10 +35,10 @@
 void
 rt_nurb_plot_snurb( fp, srf )
 FILE	*fp;
-CONST struct face_g_snurb	*srf;
+const struct face_g_snurb	*srf;
 {
 	int i,j;
-	CONST fastf_t * m_ptr = srf->ctl_points;
+	const fastf_t * m_ptr = srf->ctl_points;
 	int evp = RT_NURB_EXTRACT_COORDS( srf->pt_type);
 	int rat = RT_NURB_IS_PT_RATIONAL( srf->pt_type);
 	point_t pt;
@@ -109,10 +109,10 @@ CONST struct face_g_snurb	*srf;
 void
 rt_nurb_plot_cnurb( fp, crv )
 FILE	*fp;
-CONST struct edge_g_cnurb	*crv;
+const struct edge_g_cnurb	*crv;
 {
 	register int	i, k;
-	CONST fastf_t * m_ptr = crv->ctl_points;
+	const fastf_t * m_ptr = crv->ctl_points;
 	int evp = RT_NURB_EXTRACT_COORDS( crv->pt_type);
 	int rat = RT_NURB_IS_PT_RATIONAL( crv->pt_type);
 	point_t ptr;
@@ -150,7 +150,7 @@ rt_nurb_closefile()
 }
 
 void rt_nurb_s_plot( srf )
-CONST struct face_g_snurb * srf;
+const struct face_g_snurb * srf;
 {
 	rt_nurb_plot_snurb( stdout, srf );
 }

@@ -68,12 +68,12 @@ static float ident_mat[16] = {
 int
 mk_comb( fp, name, len, region, matname, matparm, rgb, inherit )
 FILE			*fp;
-CONST char		*name;
+const char		*name;
 int			len;
 int			region;
-CONST char		*matname;
-CONST char		*matparm;
-CONST unsigned char	*rgb;
+const char		*matname;
+const char		*matparm;
+const unsigned char	*rgb;
 int			inherit;
 {
 	union record rec;
@@ -120,12 +120,12 @@ int			inherit;
 int
 mk_rcomb( fp, name, len, region, matname, matparm, rgb, id, air, material, los, inherit )
 FILE		*fp;
-CONST char	*name;
+const char	*name;
 int		len;
 int		region;
-CONST char	*matname;
-CONST char	*matparm;
-CONST unsigned char	*rgb;
+const char	*matname;
+const char	*matparm;
+const unsigned char	*rgb;
 int		id;
 int		air;
 int		material;
@@ -189,7 +189,7 @@ int		inherit;
 int
 mk_fcomb( fp, name, len, region )
 FILE		*fp;
-CONST char	*name;
+const char	*name;
 int		len;
 int		region;
 {
@@ -220,8 +220,8 @@ int		region;
 int
 mk_memb( fp, name, mat, bool_op )
 FILE		*fp;
-CONST char	*name;
-CONST mat_t	mat;
+const char	*name;
+const mat_t	mat;
 int		bool_op;
 {
 	union record rec;

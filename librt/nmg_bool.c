@@ -43,7 +43,7 @@ extern int nmg_class_nothing_broken;
 /* XXX Move to nmg_manif.c or nmg_ck.c */
 struct dangling_faceuse_state {
 	char		*visited;
-	CONST char	*manifolds;
+	const char	*manifolds;
 	int		count;
 };
 
@@ -81,7 +81,7 @@ int		first;
 int
 nmg_has_dangling_faces( magic_p, manifolds )
 long		*magic_p;
-CONST char	*manifolds;
+const char	*manifolds;
 {
 	struct model			*m;
 	struct nmg_visit_handlers	handlers;
@@ -114,7 +114,7 @@ nmg_show_each_loop(s, classlist, new, fancy, str)
 struct shell	*s;
 long		*classlist[4];
 int		new;		/* non-zero means flush previous vlist */
-CONST char	*str;		/* non-zero means pause after the display */
+const char	*str;		/* non-zero means pause after the display */
 {
 	struct faceuse	*fu;
 	struct loopuse	*lu;
@@ -440,7 +440,7 @@ long *classlist[8];
 void
 nmg_kill_anti_loops( s, tol )
 struct shell *s;
-CONST struct bn_tol *tol;
+const struct bn_tol *tol;
 {
 	struct bu_ptbl loops;
 	struct faceuse *fu;
@@ -580,8 +580,8 @@ struct shell *s;
  */
 static struct shell * nmg_bool(sA, sB, oper, tol)
 struct shell *sA, *sB;
-CONST int		oper;
-CONST struct bn_tol	*tol;
+const int		oper;
+const struct bn_tol	*tol;
 {
 	int	i;
 	int	nelem;
@@ -1089,8 +1089,8 @@ nmg_s_radial_check( sA, tol );
 struct nmgregion *
 nmg_do_bool(rA, rB, oper, tol)
 struct nmgregion *rA, *rB;
-CONST int		oper;
-CONST struct bn_tol	*tol;
+const int		oper;
+const struct bn_tol	*tol;
 {
 	struct shell		*s;
 	struct nmgregion	*r;
@@ -1287,14 +1287,14 @@ genptr_t		client_data;
 union tree *
 nmg_booltree_evaluate(tp, tol, resp)
 register union tree		*tp;
-CONST struct bn_tol		*tol;
+const struct bn_tol		*tol;
 struct resource			*resp;
 {
 	union tree		*tl;
 	union tree		*tr;
 	struct nmgregion	*reg;
 	int			op;
-	CONST char		*op_str;
+	const char		*op_str;
 	char			*name;
 
 	RT_CK_TREE(tp);

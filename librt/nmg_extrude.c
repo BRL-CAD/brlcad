@@ -95,8 +95,8 @@ struct faceuse	*fu;
 void
 nmg_translate_face(fu, Vec, tol)
 struct faceuse	*fu;
-CONST vect_t		Vec;
-CONST struct bn_tol	*tol;
+const vect_t		Vec;
+const struct bn_tol	*tol;
 {
 	int		cnt,		/* Number of vertices in face. */
 			cur,
@@ -188,8 +188,8 @@ CONST struct bn_tol	*tol;
 int
 nmg_extrude_face(fu, Vec, tol)
 struct faceuse	*fu;	/* Face to extrude. */
-CONST vect_t		Vec;	/* Magnitude and direction of extrusion. */
-CONST struct bn_tol	*tol;	/* NMG tolerances. */
+const vect_t		Vec;	/* Magnitude and direction of extrusion. */
+const struct bn_tol	*tol;	/* NMG tolerances. */
 {
 	fastf_t		cosang;
 	int		nfaces;
@@ -276,8 +276,8 @@ CONST struct bn_tol	*tol;	/* NMG tolerances. */
 
 struct vertexuse *
 nmg_find_vertex_in_lu( v , lu )
-CONST struct vertex *v;
-CONST struct loopuse *lu;
+const struct vertex *v;
+const struct loopuse *lu;
 {
 	struct edgeuse *eu;
 	struct vertexuse *ret_vu;
@@ -444,7 +444,7 @@ struct bu_ptbl *loops;
 void
 nmg_fix_overlapping_loops( s , tol )
 struct shell *s;
-CONST struct bn_tol *tol;
+const struct bn_tol *tol;
 {
 	struct faceuse *fu;
 	struct edgeuse *start_eu;
@@ -747,7 +747,7 @@ CONST struct bn_tol *tol;
 void
 nmg_break_crossed_loops( is , tol )
 struct shell *is;
-CONST struct bn_tol *tol;
+const struct bn_tol *tol;
 {
 	struct faceuse *fu;
 
@@ -854,8 +854,8 @@ CONST struct bn_tol *tol;
 struct shell *
 nmg_extrude_cleanup( is , is_void , tol )
 struct shell *is;
-CONST int is_void;
-CONST struct bn_tol *tol;
+const int is_void;
+const struct bn_tol *tol;
 {
 	struct model *m;
 	struct nmgregion *new_r;
@@ -1045,9 +1045,9 @@ CONST struct bn_tol *tol;
 void
 nmg_hollow_shell( s , thick , approximate , tol )
 struct shell *s;
-CONST fastf_t thick;
-CONST int approximate;
-CONST struct bn_tol *tol;
+const fastf_t thick;
+const int approximate;
+const struct bn_tol *tol;
 {
 	struct nmgregion *new_r,*old_r;
 	struct vertexuse *vu;
@@ -1221,7 +1221,7 @@ CONST struct bn_tol *tol;
 				{
 					/* connect the boundaries of the two open shells */
 					nmg_open_shells_connect( s_tmp , is ,
-						(CONST long **)copy_tbl , tol );
+						(const long **)copy_tbl , tol );
 				}
 			}
 		}
@@ -1268,10 +1268,10 @@ CONST struct bn_tol *tol;
 struct shell *
 nmg_extrude_shell( s , dist , normal_ward , approximate , tol )
 struct shell *s;
-CONST fastf_t dist;
-CONST int normal_ward;
-CONST int approximate;
-CONST struct bn_tol *tol;
+const fastf_t dist;
+const int normal_ward;
+const int approximate;
+const struct bn_tol *tol;
 {
 	fastf_t thick;
 	int along_normal;

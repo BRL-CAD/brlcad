@@ -71,7 +71,7 @@ Tcl_ObjType tclListType = {
 Tcl_Obj *
 Tcl_NewListObj(objc, objv)
     int objc;			/* Count of objects referenced by objv. */
-    Tcl_Obj *CONST objv[];	/* An array of pointers to Tcl objects. */
+    Tcl_Obj *const objv[];	/* An array of pointers to Tcl objects. */
 {
     return Tcl_DbNewListObj(objc, objv, "unknown", 0);
 }
@@ -81,7 +81,7 @@ Tcl_NewListObj(objc, objv)
 Tcl_Obj *
 Tcl_NewListObj(objc, objv)
     int objc;			/* Count of objects referenced by objv. */
-    Tcl_Obj *CONST objv[];	/* An array of pointers to Tcl objects. */
+    Tcl_Obj *const objv[];	/* An array of pointers to Tcl objects. */
 {
     register Tcl_Obj *listPtr;
     register Tcl_Obj **elemPtrs;
@@ -146,7 +146,7 @@ Tcl_NewListObj(objc, objv)
 Tcl_Obj *
 Tcl_DbNewListObj(objc, objv, file, line)
     int objc;			/* Count of objects referenced by objv. */
-    Tcl_Obj *CONST objv[];	/* An array of pointers to Tcl objects. */
+    Tcl_Obj *const objv[];	/* An array of pointers to Tcl objects. */
     char *file;			/* The name of the source file calling this
 				 * procedure; used for debugging. */
     int line;			/* Line number in the source file; used
@@ -185,7 +185,7 @@ Tcl_DbNewListObj(objc, objv, file, line)
 Tcl_Obj *
 Tcl_DbNewListObj(objc, objv, file, line)
     int objc;			/* Count of objects referenced by objv. */
-    Tcl_Obj *CONST objv[];	/* An array of pointers to Tcl objects. */
+    Tcl_Obj *const objv[];	/* An array of pointers to Tcl objects. */
     char *file;			/* The name of the source file calling this
 				 * procedure; used for debugging. */
     int line;			/* Line number in the source file; used
@@ -221,7 +221,7 @@ void
 Tcl_SetListObj(objPtr, objc, objv)
     Tcl_Obj *objPtr;		/* Object whose internal rep to init. */
     int objc;			/* Count of objects referenced by objv. */
-    Tcl_Obj *CONST objv[];	/* An array of pointers to Tcl objects. */
+    Tcl_Obj *const objv[];	/* An array of pointers to Tcl objects. */
 {
     register Tcl_Obj **elemPtrs;
     register List *listRepPtr;
@@ -611,7 +611,7 @@ Tcl_ListObjReplace(interp, listPtr, first, count, objc, objv)
     int first;			/* Index of first element to replace. */
     int count;			/* Number of elements to replace. */
     int objc;			/* Number of objects to insert. */
-    Tcl_Obj *CONST objv[];	/* An array of objc pointers to Tcl objects
+    Tcl_Obj *const objv[];	/* An array of objc pointers to Tcl objects
 				 * to insert. */
 {
     List *listRepPtr;
@@ -880,10 +880,10 @@ SetListFromAny(interp, objPtr)
 {
     Tcl_ObjType *oldTypePtr = objPtr->typePtr;
     char *string, *s;
-    CONST char *elemStart, *nextElem;
+    const char *elemStart, *nextElem;
     int lenRemain, length, estCount, elemSize, hasBrace, i, j, result;
     char *limit;		/* Points just after string's last byte. */
-    register CONST char *p;
+    register const char *p;
     register Tcl_Obj **elemPtrs;
     register Tcl_Obj *elemPtr;
     List *listRepPtr;

@@ -34,7 +34,7 @@ void
 rt_htbl_init(b, len, str)
 struct rt_htbl	*b;
 int		len;		/* initial len. */
-CONST char	*str;
+const char	*str;
 {
 	if (bu_debug & BU_DEBUG_PTBL)
 		bu_log("rt_htbl_init(%8x, len=%d, %s)\n", b, len, str);

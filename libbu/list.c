@@ -30,10 +30,10 @@ static const char libbu_list_RCSid[] = "@(#)$Header$ (ARL)";
  */
 int
 bu_list_len( hd )
-register CONST struct bu_list	*hd;
+register const struct bu_list	*hd;
 {
 	register int			count = 0;
-	register CONST struct bu_list	*ep;
+	register const struct bu_list	*ep;
 
 	for( BU_LIST_FOR( ep, bu_list, hd ) )  {
 		count++;
@@ -146,10 +146,10 @@ struct bu_list	*headp;
  */
 void
 bu_ck_list( hd, str )
-CONST struct bu_list	*hd;
-CONST char		*str;
+const struct bu_list	*hd;
+const char		*str;
 {
-	register CONST struct bu_list	*cur;
+	register const struct bu_list	*cur;
 	int	head_count = 0;
 
 	cur = hd;
@@ -192,11 +192,11 @@ CONST char		*str;
  */
 void
 bu_ck_list_magic( hd, str, magic )
-CONST struct bu_list	*hd;
-CONST char		*str;
-CONST long		magic;
+const struct bu_list	*hd;
+const char		*str;
+const long		magic;
 {
-	register CONST struct bu_list	*cur;
+	register const struct bu_list	*cur;
 	int	head_count = 0;
 	int	item = 0;
 

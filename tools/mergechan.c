@@ -43,7 +43,7 @@ char ** argv;
     rle_op ** out_rows;
     int * out_count;
     int * skips;
-    CONST char **filenames, *out_fname = NULL;
+    const char **filenames, *out_fname = NULL;
     FILE *outfile = stdout;
     int minskip = 0, y;
     register int i;

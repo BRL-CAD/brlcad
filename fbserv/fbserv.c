@@ -95,7 +95,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "../libfb/pkgtypes.h"
 
 /* These symbols are provided by libfb/server.c */
-extern CONST struct pkg_switch fb_server_pkg_switch[];
+extern const struct pkg_switch fb_server_pkg_switch[];
 extern FBIO	*fb_server_fbp;
 extern fd_set	*fb_server_select_list;			/* master copy */
 extern int	*fb_server_max_fd;

@@ -62,12 +62,12 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
  */
 int 
 nmg_dangling_face(fu, manifolds)
-CONST struct faceuse	*fu;
-register CONST char	*manifolds;
+const struct faceuse	*fu;
+register const char	*manifolds;
 {
 	struct loopuse *lu;
 	struct edgeuse *eu;
-	CONST struct edgeuse *eur;
+	const struct edgeuse *eur;
 	struct faceuse *newfu;
 
 	NMG_CK_FACEUSE(fu);
@@ -111,7 +111,7 @@ register CONST char	*manifolds;
 		}
 	    }
 	}
-	eur = (CONST struct edgeuse *)NULL;
+	eur = (const struct edgeuse *)NULL;
 
 out:
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
@@ -125,10 +125,10 @@ out:
 		bu_log("nmg_dangling_face(fu=x%x, manifolds=x%x) dangling_eu=x%x\n", fu, manifolds, eur);
 		if( eur )  nmg_pr_fu_around_eu( eur, &tol );
 	}
-	if ((rt_g.NMG_debug & DEBUG_MANIF) && (eur != (CONST struct edgeuse *)NULL) )
+	if ((rt_g.NMG_debug & DEBUG_MANIF) && (eur != (const struct edgeuse *)NULL) )
 		bu_log( "\tdangling eu x%x\n", eur );
 
-	return eur != (CONST struct edgeuse *)NULL;
+	return eur != (const struct edgeuse *)NULL;
 }
 
 /*
@@ -143,7 +143,7 @@ int paint_color;
 	struct faceuse *newfu;
 	struct loopuse *lu;
 	struct edgeuse *eu;
-	CONST struct edgeuse *eur;
+	const struct edgeuse *eur;
 
 #if 1
 	if (rt_g.NMG_debug & DEBUG_MANIF)

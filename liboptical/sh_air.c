@@ -76,10 +76,10 @@ struct mfuncs air_mfuncs[] = {
 };
 static void 
 dpm_hook(sdp, name, base, value)
-register CONST struct bu_structparse	*sdp;	/* structure description */
-register CONST char			*name;	/* struct member name */
+register const struct bu_structparse	*sdp;	/* structure description */
+register const char			*name;	/* struct member name */
 char					*base;	/* begining of structure */
-CONST char				*value;	/* string containing value */
+const char				*value;	/* string containing value */
 {
 #define meters_to_millimeters 0.001
 	struct air_specific *air_sp = (struct air_specific *)base;

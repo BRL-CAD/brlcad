@@ -163,7 +163,7 @@ struct shell *
 nmg_polytonmg(fp, r, tol)
 FILE *fp;
 struct nmgregion	*r;
-CONST struct bn_tol	*tol;
+const struct bn_tol	*tol;
 {
 	int i, j, num_pts, num_facets, pts_this_face, facet;
 	int vl_len;

@@ -194,8 +194,8 @@ int coords;
 
 void
 rt_nurb_forw_solve(lu, b, y, n)		/* spl_solve lower trianglular matrix */
-CONST fastf_t *lu;
-CONST fastf_t *b;
+const fastf_t *lu;
+const fastf_t *b;
 fastf_t *y;
 int n;
 {
@@ -213,8 +213,8 @@ int n;
 
 void
 rt_nurb_back_solve( lu, y, x, n)		/* spl_solve upper triangular matrix */
-CONST fastf_t *lu;
-CONST fastf_t *y;
+const fastf_t *lu;
+const fastf_t *y;
 fastf_t *x;
 int n;
 {
@@ -233,7 +233,7 @@ int n;
 
 void
 rt_nurb_p_mat(mat, dim)
-CONST fastf_t * mat;
+const fastf_t * mat;
 int dim;
 {
 	int i;

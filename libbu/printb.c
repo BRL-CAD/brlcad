@@ -44,9 +44,9 @@ static const char libbu_printb_RCSid[] = "@(#)$Header$ (ARL)";
 void
 bu_vls_printb( vls, s, v, bits)
 struct bu_vls		*vls;
-CONST char		*s;
+const char		*s;
 register unsigned long	v;
-register CONST char	*bits;
+register const char	*bits;
 {
 	register int i, any = 0;
 	register char c;
@@ -76,9 +76,9 @@ register CONST char	*bits;
  */
 void
 bu_printb(s, v, bits)
-CONST char		*s;
+const char		*s;
 register unsigned long	v;
-register CONST char	*bits;
+register const char	*bits;
 {
 	struct bu_vls	str;
 

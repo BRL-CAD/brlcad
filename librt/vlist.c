@@ -303,7 +303,7 @@ rt_vlist_cleanup()
  *  Given an RPP, draw the outline of it into the vlist.
  */
 void
-bn_vlist_rpp( struct bu_list *hd, const point_t minn, CONST point_t maxx )
+bn_vlist_rpp( struct bu_list *hd, const point_t minn, const point_t maxx )
 {
 	point_t	p;
 
@@ -371,7 +371,7 @@ void
 rt_vlist_export( vls, hp, name )
 struct bu_vls	*vls;
 struct bu_list	*hp;
-CONST char	*name;
+const char	*name;
 {
 	register struct bn_vlist	*vp;
 	int		nelem;
@@ -432,10 +432,10 @@ void
 rt_vlist_import( hp, namevls, buf )
 struct bu_list	*hp;
 struct bu_vls	*namevls;
-CONST unsigned char	*buf;
+const unsigned char	*buf;
 {
-	register CONST unsigned char	*bp;
-	CONST unsigned char		*pp;		/* point pointer */
+	register const unsigned char	*bp;
+	const unsigned char		*pp;		/* point pointer */
 	int		nelem;
 	int		namelen;
 	int		i;
@@ -477,7 +477,7 @@ CONST unsigned char	*buf;
 void
 rt_plot_vlblock( fp, vbp )
 FILE			*fp;
-CONST struct bn_vlblock	*vbp;
+const struct bn_vlblock	*vbp;
 {
 	int	i;
 
@@ -504,14 +504,14 @@ CONST struct bn_vlblock	*vbp;
 void
 rt_vlist_to_uplot( fp, vhead )
 FILE			*fp;
-CONST struct bu_list	*vhead;
+const struct bu_list	*vhead;
 {
 	register struct bn_vlist	*vp;
 
 	for( BU_LIST_FOR( vp, bn_vlist, vhead ) )  {
 		register int		i;
 		register int		nused = vp->nused;
-		register CONST int	*cmd = vp->cmd;
+		register const int	*cmd = vp->cmd;
 		register point_t	 *pt = vp->pt;
 
 		for( i = 0; i < nused; i++,cmd++,pt++ )  {
@@ -548,8 +548,8 @@ struct uplot {
 	int	narg;		/* number or args */
 	char	desc[14];	/* description */
 };
-static CONST struct uplot rt_uplot_error = { 0, 0, "error" };
-static CONST struct uplot rt_uplot_letters[] = {
+static const struct uplot rt_uplot_error = { 0, 0, "error" };
+static const struct uplot rt_uplot_letters[] = {
 /*A*/	{ 0, 0, "" },
 /*B*/	{ 0, 0, "" },
 /*C*/	{ TCHAR, 3, "color" },
@@ -632,7 +632,7 @@ FILE	*fp;
 static void
 rt_uplot_get_args( fp, up, carg, arg )
 FILE			*fp;
-CONST struct uplot	*up;
+const struct uplot	*up;
 char			*carg;
 fastf_t			*arg;
 {
@@ -678,7 +678,7 @@ register int		c;		/* the value to process */
 double			char_size;
 {
 	mat_t			mat;
-	CONST struct uplot	*up;
+	const struct uplot	*up;
 	char			carg[256];
 	fastf_t			arg[6];
 	vect_t			a,b;

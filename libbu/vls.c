@@ -42,7 +42,7 @@ static const char libbu_vls_RCSid[] = "@(#)$Header$ (BRL)";
 #include "bu.h"
 
 #if defined(HAVE_VARARGS_H) || defined(HAVE_STDARG_H)
-BU_EXTERN(void	bu_vls_vprintf, (struct bu_vls *vls, CONST char *fmt, va_list ap));
+BU_EXTERN(void	bu_vls_vprintf, (struct bu_vls *vls, const char *fmt, va_list ap));
 #endif
 
 const char bu_vls_message[] = "bu_vls_str";
@@ -111,7 +111,7 @@ bu_vls_vlsinit()
  */
 char *
 bu_vls_addr( vp )
-register CONST struct bu_vls	*vp;
+register const struct bu_vls	*vp;
 {
 	static char	nullbuf[4];
 
@@ -191,7 +191,7 @@ int		newlen;
  */
 int
 bu_vls_strlen(vp)
-register CONST struct bu_vls	*vp;
+register const struct bu_vls	*vp;
 {
 	BU_CK_VLS(vp);
 	if( vp->vls_len <= 0 )  return  0;
@@ -302,7 +302,7 @@ register struct bu_vls *vp;
  */
 char *
 bu_vls_strdup( vp )
-register CONST struct bu_vls *vp;
+register const struct bu_vls *vp;
 {
 	register char *str;
 	register int len;
@@ -351,12 +351,12 @@ register struct bu_vls *vp;
 void
 bu_vls_strcpy( vp, s )
 register struct bu_vls	*vp;
-CONST char		*s;
+const char		*s;
 {
 	register int	len;
 
 	BU_CK_VLS(vp);
-	if( s == (CONST char *)NULL )  return;
+	if( s == (const char *)NULL )  return;
 	if( (len = strlen(s)) <= 0 )  {
 		vp->vls_len = 0;
 		vp->vls_offset = 0;
@@ -378,13 +378,13 @@ CONST char		*s;
 void
 bu_vls_strncpy( vp, s, n )
 register struct bu_vls	*vp;
-CONST char		*s;
+const char		*s;
 long			n;
 {
 	register int	len;
 
 	BU_CK_VLS(vp);
-	if( s == (CONST char *)NULL )  return;
+	if( s == (const char *)NULL )  return;
 	len = strlen(s);
 	if( len > n )  len = n;
 	if( len <= 0 )  {
@@ -406,12 +406,12 @@ long			n;
 void
 bu_vls_strcat( vp, s )
 register struct bu_vls	*vp;
-CONST char		*s;
+const char		*s;
 {
 	register int	len;
 
 	BU_CK_VLS(vp);
-	if( s == (CONST char *)NULL )  return;
+	if( s == (const char *)NULL )  return;
 	if( (len = strlen(s)) <= 0 )  return;
 	if( vp->vls_offset + vp->vls_len + len+1 >= vp->vls_max )
 		bu_vls_extend( vp, len+1 );
@@ -427,13 +427,13 @@ CONST char		*s;
 void
 bu_vls_strncat( vp, s, n )
 register struct bu_vls	*vp;
-CONST char		*s;
+const char		*s;
 long			n;
 {
 	register int	len;
 
 	BU_CK_VLS(vp);
-	if( s == (CONST char *)NULL )  return;
+	if( s == (const char *)NULL )  return;
 	len = strlen(s);
 	if( len > n )  len = n;
 	if( len <= 0 )  return;			/* do nothing */
@@ -453,7 +453,7 @@ long			n;
 void
 bu_vls_vlscat( dest, src )
 register struct bu_vls		*dest;
-register CONST struct bu_vls	*src;
+register const struct bu_vls	*src;
 {
 	BU_CK_VLS(src);
 	BU_CK_VLS(dest);
@@ -566,7 +566,7 @@ register char	*lp;
 void
 bu_vls_fwrite( fp, vp )
 FILE			*fp;
-CONST struct bu_vls	*vp;
+const struct bu_vls	*vp;
 {
 	int status;
 
@@ -745,11 +745,11 @@ bu_vls_trimspace( struct bu_vls *vp )
 void
 bu_vls_vprintf(vls, fmt, ap)
 struct bu_vls *vls;
-CONST char *fmt;
+const char *fmt;
 va_list ap;
 {
-    register CONST char	*sp;			/* start pointer */
-    register CONST char	*ep;			/* end pointer */
+    register const char	*sp;			/* start pointer */
+    register const char	*ep;			/* end pointer */
     register int len;
 
 #define LONGINT  0x001
@@ -1062,7 +1062,7 @@ int			cnt;
  */
 int
 bu_vls_print_positions_used( vp )
-CONST struct bu_vls	*vp;
+const struct bu_vls	*vp;
 {
 	char	*start;
 	int	used;

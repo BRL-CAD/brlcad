@@ -518,8 +518,8 @@ fastf_t u,v;
 
 int
 nmg_uv_in_lu( u, v, lu )
-CONST fastf_t u, v;
-CONST struct loopuse *lu;
+const fastf_t u, v;
+const struct loopuse *lu;
 {
 	struct edgeuse *eu;
 	int crossings=0;

@@ -42,7 +42,7 @@ static int tIME_chunk_present=0;
 static char tIME_string[30] = "no tIME chunk present in file";
 #endif /* PNG_TIME_RFC1123_SUPPORTED */
 
-int test_one_file PNGARG((PNG_CONST char *inname, PNG_CONST char *outname));
+int test_one_file PNGARG((PNG_const char *inname, PNG_const char *outname));
 
 #ifdef __TURBOC__
 #include <mem.h>
@@ -342,7 +342,7 @@ png_default_write_data(png_structp png_ptr, png_bytep data, png_size_t length)
 static void
 png_default_warning(png_structp png_ptr, png_const_charp message)
 {
-   PNG_CONST char *name = "UNKNOWN (ERROR!)";
+   PNG_const char *name = "UNKNOWN (ERROR!)";
    if (png_ptr != NULL && png_ptr->error_ptr != NULL)
       name = png_ptr->error_ptr;
    fprintf(STDERR, "%s: libpng warning: %s\n", name, message);
@@ -461,7 +461,7 @@ png_debug_free(png_structp png_ptr, png_voidp ptr)
 
 /* Test one file */
 int
-test_one_file(PNG_CONST char *inname, PNG_CONST char *outname)
+test_one_file(PNG_const char *inname, PNG_const char *outname)
 {
    static FILE *fpin, *fpout;  /* "static" prevents setjmp corruption */
    png_structp read_ptr, write_ptr;
@@ -885,11 +885,11 @@ test_one_file(PNG_CONST char *inname, PNG_CONST char *outname)
 
 /* input and output filenames */
 #ifdef RISCOS
-PNG_CONST char *inname = "pngtest/png";
-PNG_CONST char *outname = "pngout/png";
+PNG_const char *inname = "pngtest/png";
+PNG_const char *outname = "pngout/png";
 #else
-static PNG_CONST char *inname = "pngtest.png";
-static PNG_CONST char *outname = "pngout.png";
+static PNG_const char *inname = "pngtest.png";
+static PNG_const char *outname = "pngout.png";
 #endif
 
 int

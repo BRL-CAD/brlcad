@@ -34,7 +34,7 @@ static const char libbu_units_RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"	/* needed for things like strtod() */
 #include "bu.h"
 
-static CONST struct cvt_tab {
+static const struct cvt_tab {
 	double	val;
 	char	name[32];
 } bu_units_tab[] = {
@@ -90,11 +90,11 @@ static CONST struct cvt_tab {
  */
 double
 bu_units_conversion(str)
-CONST char	*str;
+const char	*str;
 {
 	register char	*ip;
 	register int	c;
-	register CONST struct cvt_tab	*tp;
+	register const struct cvt_tab	*tp;
 	char		ubuf[256];
 	int		len;
 
@@ -137,11 +137,11 @@ CONST char	*str;
  *	char*	units string
  *	NULL	No known unit matches this conversion factor.
  */
-CONST char *
+const char *
 bu_units_string(mm)
-register CONST double	mm;
+register const double	mm;
 {
-	register CONST struct cvt_tab	*tp;
+	register const struct cvt_tab	*tp;
 
 	if( mm <= 0 )  return (char *)NULL;
 
@@ -180,11 +180,11 @@ register CONST double	mm;
  */
 double
 bu_mm_value(s)
-CONST char *s;
+const char *s;
 {
 	double v;
 	char *ptr;	
-	register CONST struct cvt_tab	*tp;
+	register const struct cvt_tab	*tp;
 
 	v = strtod(s, &ptr);
 
@@ -217,10 +217,10 @@ CONST char *s;
  */
 void
 bu_mm_cvt( sdp, name, base, value )
-register CONST struct bu_structparse	*sdp;	/* structure description */
-register CONST char			*name;	/* struct member name */
+register const struct bu_structparse	*sdp;	/* structure description */
+register const char			*name;	/* struct member name */
 char					*base;	/* begining of structure */
-CONST char				*value;	/* string containing value */
+const char				*value;	/* string containing value */
 {
 	register double *p = (double *)(base+sdp->sp_offset);
 

@@ -69,10 +69,10 @@ static pascal Boolean	FileFilterProc _ANSI_ARGS_((CInfoPBPtr pb,
 			    void *myData));
 static int 		GetFileName _ANSI_ARGS_ ((ClientData clientData, 
 			    Tcl_Interp *interp, int objc, 
-			    Tcl_Obj *CONST objv[], int isOpen));
+			    Tcl_Obj *const objv[], int isOpen));
 static int 		NavGetFileName _ANSI_ARGS_ ((ClientData clientData, 
 			    Tcl_Interp *interp, int objc, 
-			    Tcl_Obj *CONST objv[], int isOpen));
+			    Tcl_Obj *const objv[], int isOpen));
 static Boolean		MatchOneType _ANSI_ARGS_((StringPtr fileNamePtr, OSType fileType,
 			    OpenFileData *myofdPtr, FileFilter *filterPtr));
 static pascal short 	OpenHookProc _ANSI_ARGS_((short item,
@@ -132,7 +132,7 @@ Tk_ChooseColorObjCmd(
     ClientData clientData,	/* Main window associated with interpreter. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument objects. */
+    Tcl_Obj *const objv[])	/* Argument objects. */
 {
     Tk_Window parent;
     char *title;
@@ -296,7 +296,7 @@ Tk_GetOpenFileObjCmd(
     ClientData clientData,	/* Main window associated with interpreter. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument objects. */
+    Tcl_Obj *const objv[])	/* Argument objects. */
 {
     int i, result, multiple;
     OpenFileData ofd;
@@ -444,7 +444,7 @@ Tk_GetSaveFileObjCmd(
     ClientData clientData,	/* Main window associated with interpreter. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument objects. */
+    Tcl_Obj *const objv[])	/* Argument objects. */
 {
     int i, result;
     Str255 initialFile;
@@ -584,7 +584,7 @@ Tk_ChooseDirectoryObjCmd(clientData, interp, objc, objv)
     ClientData clientData;	/* Main window associated with interpreter. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     int i, result;
     Tk_Window parent;
@@ -776,7 +776,7 @@ GetFileName(
     ClientData clientData,	/* Main window associated with interpreter. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[],	/* Argument objects. */
+    Tcl_Obj *const objv[],	/* Argument objects. */
     int isOpen)			/* true if we should call GetOpenFileName(),
 				 * false if we should call GetSaveFileName() */
 {

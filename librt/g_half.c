@@ -57,7 +57,7 @@ struct half_specific  {
 };
 #define HALF_NULL	((struct half_specific *)0)
 
-CONST struct bu_structparse rt_hlf_parse[] = {
+const struct bu_structparse rt_hlf_parse[] = {
     { "%f", 3, "N", offsetof(struct rt_half_internal, eqn[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 1, "d", offsetof(struct rt_half_internal, eqn[3]), BU_STRUCTPARSE_FUNC_NULL },
     { {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
@@ -110,9 +110,9 @@ struct rt_i		*rtip;
  */
 void
 rt_hlf_print( stp )
-register CONST struct soltab *stp;
+register const struct soltab *stp;
 {
-	register CONST struct half_specific *halfp =
+	register const struct half_specific *halfp =
 		(struct half_specific *)stp->st_specific;
 
 	if( halfp == HALF_NULL )  {
@@ -409,11 +409,11 @@ struct soltab *stp;
  */
 int
 rt_hlf_class( stp, min, max, tol )
-register CONST struct soltab	*stp;
-CONST vect_t			 min, max;
-CONST struct bn_tol		*tol;
+register const struct soltab	*stp;
+const vect_t			 min, max;
+const struct bn_tol		*tol;
 {
-	register CONST struct half_specific *halfp =
+	register const struct half_specific *halfp =
 		(struct half_specific *)stp->st_specific;
 
 	if( halfp == HALF_NULL ) {
@@ -439,8 +439,8 @@ int
 rt_hlf_plot( vhead, ip, ttol, tol )
 struct bu_list		*vhead;
 struct rt_db_internal 	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol		*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol		*tol;
 {
 	struct rt_half_internal	*hip;
 	vect_t cent;		/* some point on the plane */
@@ -496,7 +496,7 @@ CONST struct bn_tol		*tol;
 int
 rt_hlf_xform(
 	struct rt_db_internal	*op,
-	CONST mat_t		mat,
+	const mat_t		mat,
 	struct rt_db_internal *ip,
 	int		free,
 	struct db_i	*dbip,
@@ -557,9 +557,9 @@ rt_hlf_xform(
 int
 rt_hlf_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-CONST mat_t			mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+const mat_t			mat;
+const struct db_i		*dbip;
 {
 	struct rt_half_internal	*hip;
 	union record	*rp;
@@ -619,9 +619,9 @@ CONST struct db_i		*dbip;
 int
 rt_hlf_export( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_half_internal	*hip;
 	union record		*rec;
@@ -650,9 +650,9 @@ CONST struct db_i		*dbip;
 int
 rt_hlf_import5( ip, ep, mat, dbip )
 struct rt_db_internal           *ip;
-CONST struct bu_external        *ep;
-register CONST mat_t            mat;
-CONST struct db_i               *dbip;
+const struct bu_external        *ep;
+register const mat_t            mat;
+const struct db_i               *dbip;
 {
 	struct rt_half_internal	*hip;
 	point_t			tmp_pt, new_pt;
@@ -708,9 +708,9 @@ CONST struct db_i               *dbip;
 int
 rt_hlf_export5( ep, ip, local2mm, dbip )
 struct bu_external              *ep;
-CONST struct rt_db_internal     *ip;
+const struct rt_db_internal     *ip;
 double                          local2mm;
-CONST struct db_i               *dbip;
+const struct db_i               *dbip;
 {
 	struct rt_half_internal		*hip;
 	fastf_t				scaled_dist;
@@ -747,7 +747,7 @@ CONST struct db_i               *dbip;
 int
 rt_hlf_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {
@@ -788,8 +788,8 @@ rt_hlf_tess( r, m, ip, ttol, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol		*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol		*tol;
 {
 	struct rt_half_internal	*vip;
 #if 0

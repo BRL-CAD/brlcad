@@ -468,7 +468,7 @@ static void		ButtonCmdDeletedProc _ANSI_ARGS_((
 			    ClientData clientData));
 static int		ButtonCreate _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj *CONST objv[], int type));
+			    Tcl_Obj *const objv[], int type));
 static void		ButtonEventProc _ANSI_ARGS_((ClientData clientData,
 			    XEvent *eventPtr));
 static void		ButtonImageProc _ANSI_ARGS_((ClientData clientData,
@@ -485,10 +485,10 @@ static char *		ButtonVarProc _ANSI_ARGS_((ClientData clientData,
 			    int flags));
 static int		ButtonWidgetObjCmd _ANSI_ARGS_((ClientData clientData,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 static int		ConfigureButton _ANSI_ARGS_((Tcl_Interp *interp,
 			    TkButton *butPtr, int objc,
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 static void		DestroyButton _ANSI_ARGS_((TkButton *butPtr));
 
 /*
@@ -515,7 +515,7 @@ Tk_ButtonObjCmd(clientData, interp, objc, objv)
     ClientData clientData;	/* Either NULL or pointer to option table. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument values. */
+    Tcl_Obj *const objv[];	/* Argument values. */
 {
     return ButtonCreate(clientData, interp, objc, objv, TYPE_BUTTON);
 }
@@ -525,7 +525,7 @@ Tk_CheckbuttonObjCmd(clientData, interp, objc, objv)
     ClientData clientData;	/* Either NULL or pointer to option table. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument values. */
+    Tcl_Obj *const objv[];	/* Argument values. */
 {
     return ButtonCreate(clientData, interp, objc, objv, TYPE_CHECK_BUTTON);
 }
@@ -535,7 +535,7 @@ Tk_LabelObjCmd(clientData, interp, objc, objv)
     ClientData clientData;	/* Either NULL or pointer to option table. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument values. */
+    Tcl_Obj *const objv[];	/* Argument values. */
 {
     return ButtonCreate(clientData, interp, objc, objv, TYPE_LABEL);
 }
@@ -545,7 +545,7 @@ Tk_RadiobuttonObjCmd(clientData, interp, objc, objv)
     ClientData clientData;	/* Either NULL or pointer to option table. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument values. */
+    Tcl_Obj *const objv[];	/* Argument values. */
 {
     return ButtonCreate(clientData, interp, objc, objv, TYPE_RADIO_BUTTON);
 }
@@ -574,7 +574,7 @@ ButtonCreate(clientData, interp, objc, objv, type)
 				 * NULL if not created yet. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument values. */
+    Tcl_Obj *const objv[];	/* Argument values. */
     int type;			/* Type of button to create: TYPE_LABEL,
 				 * TYPE_BUTTON, TYPE_CHECK_BUTTON, or
 				 * TYPE_RADIO_BUTTON. */
@@ -732,7 +732,7 @@ ButtonWidgetObjCmd(clientData, interp, objc, objv)
     ClientData clientData;	/* Information about button widget. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument values. */
+    Tcl_Obj *const objv[];	/* Argument values. */
 {
     TkButton *butPtr = (TkButton *) clientData;
     int index;
@@ -987,7 +987,7 @@ ConfigureButton(interp, butPtr, objc, objv)
     register TkButton *butPtr;	/* Information about widget;  may or may
 				 * not already have values for some fields. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument values. */
+    Tcl_Obj *const objv[];	/* Argument values. */
 {
     Tk_SavedOptions savedOptions;
     Tcl_Obj *errorResult = NULL;

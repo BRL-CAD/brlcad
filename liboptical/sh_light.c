@@ -46,7 +46,7 @@ static const char RCSsh_light[] = "@(#)$Header$ (ARL)";
 
 extern int
 viewshade(struct application *ap,
-	  register CONST struct partition *pp,
+	  register const struct partition *pp,
 	  register struct shadework *swp);
 
 
@@ -59,8 +59,8 @@ viewshade(struct application *ap,
 #define LIGHT_O(m)	offsetof(struct light_specific, m)
 #define LIGHT_OA(m)	bu_offsetofarray(struct light_specific, m)
 
-RT_EXTERN(HIDDEN void	aim_set, (CONST struct bu_structparse *sdp, CONST char *name,
-CONST char *base, char *value));
+RT_EXTERN(HIDDEN void	aim_set, (const struct bu_structparse *sdp, const char *name,
+const char *base, char *value));
 
 /***********************************************************************
  *
@@ -70,10 +70,10 @@ CONST char *base, char *value));
  */
 void
 light_cvt_visible( sdp, name, base, value )
-register CONST struct bu_structparse	*sdp;	/* structure description */
-register CONST char			*name;	/* struct member name */
+register const struct bu_structparse	*sdp;	/* structure description */
+register const char			*name;	/* struct member name */
 char					*base;	/* begining of structure */
-CONST char				*value;	/* string containing value */
+const char				*value;	/* string containing value */
 {
 	struct light_specific *lsp = (struct light_specific *)base;
 
@@ -98,10 +98,10 @@ CONST char				*value;	/* string containing value */
  */
 static void
 light_pt_set( sdp, name, base, value )
-register CONST struct bu_structparse	*sdp;	/* structure description */
-register CONST char			*name;	/* struct member name */
+register const struct bu_structparse	*sdp;	/* structure description */
+register const char			*name;	/* struct member name */
 char					*base;	/* begining of structure */
-CONST char				*value;	/* string containing value */
+const char				*value;	/* string containing value */
 {
 	struct light_specific *lsp = (struct light_specific *)base;
 	fastf_t *p = (fastf_t *)(base+sdp->sp_offset);
@@ -170,7 +170,7 @@ struct light_specific	LightHead;	/* Heads linked list of lights */
 extern double AmbientIntensity;
 
 #if RT_MULTISPECTRAL
-extern CONST struct bn_table	*spectrum;	/* from rttherm/viewtherm.c */
+extern const struct bn_table	*spectrum;	/* from rttherm/viewtherm.c */
 #endif
 
 HIDDEN int	light_setup(), light_render();
@@ -215,9 +215,9 @@ struct light_obs_stuff {
  */
 
 HIDDEN void aim_set (sdp, name, base, value)
-CONST struct bu_structparse *sdp;
-CONST char *name;
-CONST char *base;
+const struct bu_structparse *sdp;
+const char *name;
+const char *base;
 char *value;
 {
 	register struct light_specific *lsp = (struct light_specific *)base;
@@ -1004,7 +1004,7 @@ struct seg *finished_segs;
 	register struct region	*regp = NULL;
 	struct application	sub_ap;
 	struct shadework	sw;
-	CONST struct light_specific	*lsp;
+	const struct light_specific	*lsp;
 	extern int	light_render();
 #if RT_MULTISPECTRAL
 	struct bn_tabdata	*ms_filter_color = BN_TABDATA_NULL;

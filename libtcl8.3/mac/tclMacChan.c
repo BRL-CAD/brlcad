@@ -114,8 +114,8 @@ static int		FileSeek _ANSI_ARGS_((ClientData instanceData,
 static void		FileSetupProc _ANSI_ARGS_((ClientData clientData,
 			    int flags));
 static int		GetOpenMode _ANSI_ARGS_((Tcl_Interp *interp,
-        		    CONST char *string));
-static Tcl_Channel	OpenFileChannel _ANSI_ARGS_((CONST char *fileName, 
+        		    const char *string));
+static Tcl_Channel	OpenFileChannel _ANSI_ARGS_((const char *fileName, 
 			    int mode, int permissions, int *errorCodePtr));
 static int		StdIOBlockMode _ANSI_ARGS_((ClientData instanceData,
 			    int mode));
@@ -628,7 +628,7 @@ Tcl_PidObjCmd(dummy, interp, objc, objv)
     ClientData dummy;           /* Not used. */
     Tcl_Interp *interp;         /* Current interpreter. */
     int objc;                   /* Number of arguments. */
-    Tcl_Obj *CONST *objv;       /* Argument strings. */
+    Tcl_Obj *const *objv;       /* Argument strings. */
 {
     ProcessSerialNumber psn;
     char buf[20]; 
@@ -810,7 +810,7 @@ TclpOpenFileChannel(
 
 static Tcl_Channel
 OpenFileChannel(
-    CONST char *fileName,		/* Name of file to open (native). */
+    const char *fileName,		/* Name of file to open (native). */
     int mode,				/* Mode for opening file. */
     int permissions,			/* If the open involves creating a
                                          * file, with what modes to create
@@ -1281,7 +1281,7 @@ static int
 GetOpenMode(
     Tcl_Interp *interp,			/* Interpreter to use for error
 					 * reporting - may be NULL. */
-    CONST char *string)			/* Mode string, e.g. "r+" or
+    const char *string)			/* Mode string, e.g. "r+" or
 					 * "RDONLY CREAT". */
 {
     int mode, modeArgc, c, i, gotRW;

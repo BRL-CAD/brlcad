@@ -38,7 +38,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 void
 rt_nurb_nodes( nodes, knots, order)
 fastf_t * nodes;
-CONST struct knot_vector * knots;
+const struct knot_vector * knots;
 int order;
 {
 	int i, j;
@@ -90,7 +90,7 @@ void
 rt_nurb_cinterp( crv, order, data, n)
 struct edge_g_cnurb	* crv;
 int		order;
-CONST fastf_t	* data;
+const fastf_t	* data;
 int		n;
 {
 	fastf_t * interp_mat;
@@ -164,7 +164,7 @@ void
 rt_nurb_sinterp( srf, order, data, ymax, xmax)
 struct face_g_snurb	*srf;
 int		order;
-CONST fastf_t	*data;		/* data[x,y] */
+const fastf_t	*data;		/* data[x,y] */
 int		ymax;		/* nrow = max Y */
 int		xmax;		/* ncol = max X */
 {

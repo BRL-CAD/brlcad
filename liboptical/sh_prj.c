@@ -69,10 +69,10 @@ struct prj_specific {
  */
 static void 
 persp_hook( sdp, name, base, value )
-register CONST struct bu_structparse	*sdp;	/* structure description */
-register CONST char			*name;	/* struct member name */
+register const struct bu_structparse	*sdp;	/* structure description */
+register const char			*name;	/* struct member name */
 char					*base;	/* begining of structure */
-CONST char				*value;	/* string containing value */
+const char				*value;	/* string containing value */
 {
 	struct img_specific *img_sp = (struct img_specific *)base;
 
@@ -97,10 +97,10 @@ CONST char				*value;	/* string containing value */
  */
 static void 
 dimen_hook( sdp, name, base, value )
-register CONST struct bu_structparse	*sdp;	/* structure description */
-register CONST char			*name;	/* struct member name */
+register const struct bu_structparse	*sdp;	/* structure description */
+register const char			*name;	/* struct member name */
 char					*base;	/* begining of structure */
-CONST char				*value;	/* string containing value */
+const char				*value;	/* string containing value */
 {
 	if (! strcmp("%f", sdp->sp_fmt)) {
 		fastf_t *f;
@@ -125,10 +125,10 @@ CONST char				*value;	/* string containing value */
 #if 0
 static void 
 noop_hook( sdp, name, base, value )
-register CONST struct bu_structparse	*sdp;	/* structure description */
-register CONST char			*name;	/* struct member name */
+register const struct bu_structparse	*sdp;	/* structure description */
+register const char			*name;	/* struct member name */
 char					*base;	/* begining of structure */
-CONST char				*value;	/* string containing value */
+const char				*value;	/* string containing value */
 {
 	struct img_specific *img_sp = (struct img_specific *)base;
 
@@ -148,10 +148,10 @@ CONST char				*value;	/* string containing value */
  */
 static void 
 orient_hook( sdp, name, base, value )
-register CONST struct bu_structparse	*sdp;	/* structure description */
-register CONST char			*name;	/* struct member name */
+register const struct bu_structparse	*sdp;	/* structure description */
+register const char			*name;	/* struct member name */
 char					*base;	/* begining of structure */
-CONST char				*value;	/* string containing value */
+const char				*value;	/* string containing value */
 {
 	struct prj_specific	*prj_sp;
 	struct img_specific	*img_sp = (struct img_specific *)base;
@@ -472,19 +472,19 @@ char *cp;
 
 	bu_free( cp, "prj_specific" );
 }
-static CONST double	cs = (1.0/255.0);
-static CONST point_t delta = {0.5, 0.5, 0.0};
+static const double	cs = (1.0/255.0);
+static const point_t delta = {0.5, 0.5, 0.0};
 
 #if 0
 static int
 project_antialiased(sh_color, img_sp, prj_sp, ap, r_pe, r_N, r_pt)
 point_t sh_color;
-CONST struct img_specific *img_sp;
-CONST struct prj_specific *prj_sp;
-CONST struct application *ap;
-CONST struct pixel_ext *r_pe;	/* pts on plane of hit */
-CONST plane_t r_N;
-CONST point_t r_pt;
+const struct img_specific *img_sp;
+const struct prj_specific *prj_sp;
+const struct application *ap;
+const struct pixel_ext *r_pe;	/* pts on plane of hit */
+const plane_t r_N;
+const point_t r_pt;
 {
 	int i, x, y;
 	point_t sh_pts[CORNER_PTS];

@@ -65,7 +65,7 @@ XXX Should have different name prefix.
  */
 static int
 mat_categorize( matp )
-CONST mat_t	matp;
+const mat_t	matp;
 {
 	int	status = 0;
 
@@ -896,7 +896,7 @@ rt_comb_describe(
 	double		mm2local,
 	struct resource	*resp)
 {
-	CONST struct rt_comb_internal	*comb;
+	const struct rt_comb_internal	*comb;
 
 	RT_CK_DB_INTERNAL(ip);
 	RT_CK_RESOURCE(resp);
@@ -986,7 +986,7 @@ db_ck_left_heavy_tree(
  *	 0	OK
  */
 int
-db_ck_v4gift_tree( CONST union tree *tp )
+db_ck_v4gift_tree( const union tree *tp )
 {
 	RT_CK_TREE(tp);
 	switch( tp->tr_op )  {

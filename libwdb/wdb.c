@@ -55,7 +55,7 @@ int
 mk_half( wdbp, name, norm, d )
 struct rt_wdb	*wdbp;
 const char		*name;
-CONST vect_t	norm;
+const vect_t	norm;
 double		d;
 {
 	struct rt_half_internal		*half;
@@ -102,8 +102,8 @@ int
 mk_rpp( wdbp, name, min, max )
 struct rt_wdb		*wdbp;
 const char		*name;
-CONST point_t	min;
-CONST point_t	max;
+const point_t	min;
+const point_t	max;
 {
 	point_t	pt8[8];
 
@@ -132,9 +132,9 @@ int
 mk_wedge(wdbp, name, vert, xdirv, zdirv, xlen, ylen, zlen, x_top_len)
 struct rt_wdb		*wdbp;
 const char		*name;
-CONST point_t	vert;
-CONST vect_t	xdirv;
-CONST vect_t	zdirv;
+const point_t	vert;
+const vect_t	xdirv;
+const vect_t	zdirv;
 fastf_t		xlen;
 fastf_t		ylen;
 fastf_t		zlen;
@@ -188,7 +188,7 @@ int
 mk_arb4( wdbp, name, pts )
 struct rt_wdb		*wdbp;
 const char		*name;
-CONST fastf_t	*pts;	/* [4*3] */
+const fastf_t	*pts;	/* [4*3] */
 {
 	point_t	pt8[8];
 
@@ -219,7 +219,7 @@ int
 mk_arb8( wdbp, name, pts )
 struct rt_wdb		*wdbp;
 const char		*name;
-CONST fastf_t	*pts;		/* [24] */
+const fastf_t	*pts;		/* [24] */
 {
 	register int i;
 	struct rt_arb_internal	*arb;
@@ -243,7 +243,7 @@ int
 mk_sph( wdbp, name, center, radius )
 struct rt_wdb		*wdbp;
 const char		*name;
-CONST point_t	center;
+const point_t	center;
 fastf_t		radius;
 {
 	struct rt_ell_internal	*ell;
@@ -269,8 +269,8 @@ int
 mk_ell( wdbp, name, center, a, b, c )
 struct rt_wdb		*wdbp;
 const char		*name;
-CONST point_t	center;
-CONST vect_t	a, b, c;
+const point_t	center;
+const vect_t	a, b, c;
 {
 	struct rt_ell_internal	*ell;
 
@@ -295,8 +295,8 @@ int
 mk_tor( wdbp, name, center, inorm, r1, r2 )
 struct rt_wdb		*wdbp;
 const char		*name;
-CONST point_t	center;
-CONST vect_t	inorm;
+const point_t	center;
+const vect_t	inorm;
 double		r1, r2;
 {
 	struct rt_tor_internal	*tor;
@@ -320,8 +320,8 @@ int
 mk_rcc( wdbp, name, base, height, radius )
 struct rt_wdb		*wdbp;
 const char		*name;
-CONST point_t	base;
-CONST vect_t	height;
+const point_t	base;
+const vect_t	height;
 fastf_t		radius;
 {
 	vect_t	cross1, cross2;
@@ -350,12 +350,12 @@ int
 mk_tgc( wdbp, name, base, height, a, b, c, d )
 struct rt_wdb		*wdbp;
 const char		*name;
-CONST point_t	base;
-CONST vect_t	height;
-CONST vect_t	a;
-CONST vect_t	b;
-CONST vect_t	c;
-CONST vect_t	d;
+const point_t	base;
+const vect_t	height;
+const vect_t	a;
+const vect_t	b;
+const vect_t	c;
+const vect_t	d;
 {
 	struct rt_tgc_internal	*tgc;
 
@@ -382,8 +382,8 @@ int
 mk_cone( wdbp, name, base, dirv, height, rad1, rad2)
 struct rt_wdb		*wdbp;
 const char		*name;
-CONST point_t	base;
-CONST vect_t	dirv;
+const point_t	base;
+const vect_t	dirv;
 fastf_t		height;
 fastf_t		rad1;
 fastf_t		rad2;
@@ -428,8 +428,8 @@ int
 mk_trc_h( wdbp, name, base, height, radbase, radtop )
 struct rt_wdb		*wdbp;
 const char		*name;
-CONST point_t	base;
-CONST vect_t	height;
+const point_t	base;
+const vect_t	height;
 fastf_t		radbase;
 fastf_t		radtop;
 {
@@ -462,8 +462,8 @@ int
 mk_trc_top( wdbp, name, ibase, itop, radbase, radtop )
 struct rt_wdb		*wdbp;
 const char		*name;
-CONST point_t	ibase;
-CONST point_t	itop;
+const point_t	ibase;
+const point_t	itop;
 fastf_t		radbase;
 fastf_t		radtop;
 {

@@ -167,10 +167,10 @@ static char *		MenuButtonTextVarProc _ANSI_ARGS_((
 			    char *name1, char *name2, int flags));
 static int		MenuButtonWidgetObjCmd _ANSI_ARGS_((
                             ClientData clientData, Tcl_Interp *interp, 
-			    int objc, Tcl_Obj *CONST objv[]));
+			    int objc, Tcl_Obj *const objv[]));
 static int		ConfigureMenuButton _ANSI_ARGS_((Tcl_Interp *interp,
 			    TkMenuButton *mbPtr, int objc, 
-                            Tcl_Obj *CONST objv[]));
+                            Tcl_Obj *const objv[]));
 static void		DestroyMenuButton _ANSI_ARGS_((char *memPtr));
 
 /*
@@ -197,7 +197,7 @@ Tk_MenubuttonObjCmd(clientData, interp, objc, objv)
 				 * option table. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     register TkMenuButton *mbPtr;
     Tk_OptionTable optionTable;
@@ -340,7 +340,7 @@ MenuButtonWidgetObjCmd(clientData, interp, objc, objv)
     ClientData clientData;	/* Information about button widget. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     register TkMenuButton *mbPtr = (TkMenuButton *) clientData;
     int result, index;
@@ -495,7 +495,7 @@ ConfigureMenuButton(interp, mbPtr, objc, objv)
 				 * not already have values for some 
 				 * fields. */
     int objc;			/* Number of valid entries in objv. */
-    Tcl_Obj *CONST objv[];	/* Arguments. */
+    Tcl_Obj *const objv[];	/* Arguments. */
 {
     Tk_SavedOptions savedOptions;
     Tcl_Obj *errorResult = NULL;

@@ -48,7 +48,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
  */
 void
 rt_bomb(s)
-CONST char *s;
+const char *s;
 {
 	if(rt_g.debug || rt_g.NMG_debug )
 		bu_debug |= BU_DEBUG_COREDUMP;

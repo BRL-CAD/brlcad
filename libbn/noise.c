@@ -261,7 +261,7 @@ bn_noise_init()
  */
 double
 bn_noise_perlin(point)
-CONST point_t point;
+const point_t point;
 {
 	register int	jx, jy, jz;
 	int ix, iy, iz;	/* lower integer lattice point */
@@ -341,7 +341,7 @@ CONST point_t point;
  */
 void
 bn_noise_vec(point, result)
-CONST point_t point;
+const point_t point;
 point_t result;
 {
 	register int	jx, jy, jz;

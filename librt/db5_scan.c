@@ -64,7 +64,7 @@ db5_scan(
 
 	/* Fast-path when file is already memory-mapped */
 	if( dbip->dbi_mf )  {
-		CONST unsigned char	*cp = (CONST unsigned char *)dbip->dbi_inmem;
+		const unsigned char	*cp = (const unsigned char *)dbip->dbi_inmem;
 		long	eof;
 
 		BU_CK_MAPPED_FILE(dbip->dbi_mf);

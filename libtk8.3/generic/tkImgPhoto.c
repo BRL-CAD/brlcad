@@ -281,7 +281,7 @@ static char *optionNames[] = {
  */
 
 static int		ImgPhotoCreate _ANSI_ARGS_((Tcl_Interp *interp,
-			    char *name, int objc, Tcl_Obj *CONST objv[],
+			    char *name, int objc, Tcl_Obj *const objv[],
 			    Tk_ImageType *typePtr, Tk_ImageMaster master,
 			    ClientData *clientDataPtr));
 static ClientData	ImgPhotoGet _ANSI_ARGS_((Tk_Window tkwin,
@@ -358,16 +358,16 @@ static int imgPhotoColorHashInitialized;
  */
 
 static int		ImgPhotoCmd _ANSI_ARGS_((ClientData clientData,
-			    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
+			    Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]));
 static int		ParseSubcommandOptions _ANSI_ARGS_((
 			    struct SubcommandOptions *optPtr,
 			    Tcl_Interp *interp, int allowedOptions,
-			    int *indexPtr, int objc, Tcl_Obj *CONST objv[]));
+			    int *indexPtr, int objc, Tcl_Obj *const objv[]));
 static void		ImgPhotoCmdDeletedProc _ANSI_ARGS_((
 			    ClientData clientData));
 static int		ImgPhotoConfigureMaster _ANSI_ARGS_((
 			    Tcl_Interp *interp, PhotoMaster *masterPtr,
-			    int objc, Tcl_Obj *CONST objv[], int flags));
+			    int objc, Tcl_Obj *const objv[], int flags));
 static void		ImgPhotoConfigureInstance _ANSI_ARGS_((
 			    PhotoInstance *instancePtr));
 static void		ImgPhotoSetSize _ANSI_ARGS_((PhotoMaster *masterPtr,
@@ -499,7 +499,7 @@ ImgPhotoCreate(interp, name, objc, objv, typePtr, master, clientDataPtr)
 				 * image. */
     char *name;			/* Name to use for image. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects for options (doesn't
+    Tcl_Obj *const objv[];	/* Argument objects for options (doesn't
 				 * include image name or type). */
     Tk_ImageType *typePtr;	/* Pointer to our type record (not used). */
     Tk_ImageMaster master;	/* Token for image, to be used by us in
@@ -560,7 +560,7 @@ ImgPhotoCmd(clientData, interp, objc, objv)
     ClientData clientData;	/* Information about photo master. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     int oldformat = 0;
     static char *photoOptions[] = {
@@ -1343,7 +1343,7 @@ ParseSubcommandOptions(optPtr, interp, allowedOptions, optIndexPtr, objc, objv)
 				 * current index in objv; this variable is
 				 * updated by this procedure. */
     int objc;			/* Number of arguments in objv[]. */
-    Tcl_Obj *CONST objv[];	/* Arguments to be parsed. */
+    Tcl_Obj *const objv[];	/* Arguments to be parsed. */
 {
     int index, c, bit, currentBit;
     int length;
@@ -1582,7 +1582,7 @@ ImgPhotoConfigureMaster(interp, masterPtr, objc, objv, flags)
     PhotoMaster *masterPtr;	/* Pointer to data structure describing
 				 * overall photo image to (re)configure. */
     int objc;			/* Number of entries in objv. */
-    Tcl_Obj *CONST objv[];	/* Pairs of configuration options for image. */
+    Tcl_Obj *const objv[];	/* Pairs of configuration options for image. */
     int flags;			/* Flags to pass to Tk_ConfigureWidget,
 				 * such as TK_CONFIG_ARGV_ONLY. */
 {
@@ -5084,7 +5084,7 @@ PhotoOptionCleanupProc(clientData, interp)
 void
 Tk_CreatePhotoOption(interp, name, proc)
     Tcl_Interp *interp;			/* interpreter */
-    CONST char *name;			/* option name */
+    const char *name;			/* option name */
     Tcl_ObjCmdProc *proc;		/* proc to execute command */
 {
     OptionAssocData *typePtr2, *prevPtr, *ptr;

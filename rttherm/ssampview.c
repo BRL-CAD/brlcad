@@ -83,8 +83,8 @@ char			*first_command = "no_command?";
 void
 assign_tabdata_to_tcl_var( interp, name, tabp )
 Tcl_Interp	*interp;
-CONST char	*name;
-CONST struct bn_tabdata *tabp;
+const char	*name;
+const struct bn_tabdata *tabp;
 {
 	struct bu_vls	str;
 

@@ -150,7 +150,7 @@ struct rt_i		*rtip;
  */
 void
 rt_sketch_print( stp )
-register CONST struct soltab *stp;
+register const struct soltab *stp;
 {
 }
 
@@ -266,7 +266,7 @@ rt_sketch_class()
 int
 curve_to_vlist( vhead, ttol, V, u_vec, v_vec, sketch_ip, crv )
 struct bu_list          *vhead;
-CONST struct rt_tess_tol *ttol;
+const struct rt_tess_tol *ttol;
 point_t			V;
 vect_t			u_vec, v_vec;
 struct rt_sketch_internal *sketch_ip;
@@ -614,8 +614,8 @@ int
 rt_sketch_plot( vhead, ip, ttol, tol )
 struct bu_list		*vhead;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol		*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol		*tol;
 {
 	LOCAL struct rt_sketch_internal	*sketch_ip;
 	int				ret;
@@ -647,8 +647,8 @@ rt_sketch_tess( r, m, ip, ttol, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol		*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol		*tol;
 {
 	return(-1);
 }
@@ -662,9 +662,9 @@ CONST struct bn_tol		*tol;
 int
 rt_sketch_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-register CONST mat_t		mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	LOCAL struct rt_sketch_internal	*sketch_ip;
 	union record			*rp;
@@ -813,9 +813,9 @@ CONST struct db_i		*dbip;
 int
 rt_sketch_export( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_sketch_internal	*sketch_ip;
 	union record		*rec;
@@ -895,7 +895,7 @@ CONST struct db_i		*dbip;
 		point2d_t pt2d;
 
 		V2SCALE( pt2d, sketch_ip->verts[i], local2mm )
-		htond( ptr, (CONST unsigned char *)pt2d, 2 );
+		htond( ptr, (const unsigned char *)pt2d, 2 );
 		ptr += 16;
 	}
 
@@ -946,7 +946,7 @@ CONST struct db_i		*dbip;
 				ptr += 4;
 				(void)bu_plong( ptr, nseg->k.k_size );
 				ptr += 4;
-				htond( ptr, (CONST unsigned char *)nseg->k.knots, nseg->k.k_size );
+				htond( ptr, (const unsigned char *)nseg->k.knots, nseg->k.k_size );
 				ptr += nseg->k.k_size * 8;
 				(void)bu_plong( ptr, nseg->c_size );
 				ptr += 4;
@@ -957,7 +957,7 @@ CONST struct db_i		*dbip;
 				}
 				if( RT_NURB_IS_PT_RATIONAL( nseg->pt_type ) )
 				{
-					htond( ptr, (CONST unsigned char *)nseg->weights, nseg->c_size );
+					htond( ptr, (const unsigned char *)nseg->weights, nseg->c_size );
 					ptr += 8 * nseg->c_size;
 				}
 				break;
@@ -992,9 +992,9 @@ CONST struct db_i		*dbip;
 int
 rt_sketch_import5( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-register CONST mat_t		mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	LOCAL struct rt_sketch_internal	*sketch_ip;
 	vect_t				v;
@@ -1140,9 +1140,9 @@ CONST struct db_i		*dbip;
 int
 rt_sketch_export5( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_sketch_internal	*sketch_ip;
 	unsigned char			*cp;
@@ -1222,7 +1222,7 @@ CONST struct db_i		*dbip;
 		point2d_t pt2d;
 
 		V2SCALE( pt2d, sketch_ip->verts[i], local2mm )
-		htond( cp, (CONST unsigned char *)pt2d, 2 );
+		htond( cp, (const unsigned char *)pt2d, 2 );
 		cp += 2 * SIZEOF_NETWORK_DOUBLE;
 	}
 
@@ -1273,7 +1273,7 @@ CONST struct db_i		*dbip;
 				cp += SIZEOF_NETWORK_LONG;
 				(void)bu_plong( cp, nseg->k.k_size );
 				cp += SIZEOF_NETWORK_LONG;
-				htond( cp, (CONST unsigned char *)nseg->k.knots, nseg->k.k_size );
+				htond( cp, (const unsigned char *)nseg->k.knots, nseg->k.k_size );
 				cp += nseg->k.k_size * SIZEOF_NETWORK_DOUBLE;
 				(void)bu_plong( cp, nseg->c_size );
 				cp += SIZEOF_NETWORK_LONG;
@@ -1284,7 +1284,7 @@ CONST struct db_i		*dbip;
 				}
 				if( RT_NURB_IS_PT_RATIONAL( nseg->pt_type ) )
 				{
-					htond( cp, (CONST unsigned char *)nseg->weights, nseg->c_size );
+					htond( cp, (const unsigned char *)nseg->weights, nseg->c_size );
 					cp += SIZEOF_NETWORK_DOUBLE * nseg->c_size;
 				}
 				break;
@@ -1322,7 +1322,7 @@ CONST struct db_i		*dbip;
 int
 rt_sketch_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {
@@ -1601,7 +1601,7 @@ struct curve *crv;
 void
 rt_copy_curve( crv_out, crv_in )
 struct curve *crv_out;
-CONST struct curve *crv_in;
+const struct curve *crv_in;
 {
 	int i, j;
 
@@ -1660,7 +1660,7 @@ CONST struct curve *crv_in;
 
 struct rt_sketch_internal *
 rt_copy_sketch( sketch_ip )
-CONST struct rt_sketch_internal *sketch_ip;
+const struct rt_sketch_internal *sketch_ip;
 {
 	struct rt_sketch_internal *out;
 	int i;
@@ -1759,8 +1759,8 @@ int rt_sketch_tclform( const struct rt_functab *ftp, Tcl_Interp *interp)
 int
 rt_sketch_tclget( interp, intern, attr )
 Tcl_Interp			*interp;
-CONST struct rt_db_internal	*intern;
-CONST char			*attr;
+const struct rt_db_internal	*intern;
+const char			*attr;
 {
 	register struct rt_sketch_internal *skt=(struct rt_sketch_internal *)intern->idb_ptr;
 	Tcl_DString     ds;

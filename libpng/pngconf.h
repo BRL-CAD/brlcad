@@ -210,13 +210,13 @@ __dont__ include it again
 
 /* The following uses const char * instead of char * for error
  * and warning message functions, so some compilers won't complain.
- * If you do not want to use const, define PNG_NO_CONST here.
+ * If you do not want to use const, define PNG_NO_const here.
  */
 
-#ifndef PNG_NO_CONST
-#  define PNG_CONST const
+#ifndef PNG_NO_const
+#  define PNG_const const
 #else
-#  define PNG_CONST
+#  define PNG_const
 #endif
 
 /* The following defines give you the ability to remove code from the
@@ -608,7 +608,7 @@ typedef png_uint_32     FAR * png_uint_32p;
 typedef png_int_32      FAR * png_int_32p;
 typedef png_uint_16     FAR * png_uint_16p;
 typedef png_int_16      FAR * png_int_16p;
-typedef PNG_CONST char  FAR * png_const_charp;
+typedef PNG_const char  FAR * png_const_charp;
 typedef char            FAR * png_charp;
 typedef double          FAR * png_doublep;
 
@@ -618,7 +618,7 @@ typedef png_uint_32     FAR * FAR * png_uint_32pp;
 typedef png_int_32      FAR * FAR * png_int_32pp;
 typedef png_uint_16     FAR * FAR * png_uint_16pp;
 typedef png_int_16      FAR * FAR * png_int_16pp;
-typedef PNG_CONST char  FAR * FAR * png_const_charpp;
+typedef PNG_const char  FAR * FAR * png_const_charpp;
 typedef char            FAR * FAR * png_charpp;
 typedef double          FAR * FAR * png_doublepp;
 

@@ -133,7 +133,7 @@ static int FindEnsemblePartIndex _ANSI_ARGS_((Ensemble *ensData,
 static void ComputeMinChars _ANSI_ARGS_((Ensemble *ensData, int pos));
 
 static int HandleEnsemble _ANSI_ARGS_((ClientData clientData,
-    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
+    Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]));
 
 static EnsembleParser* GetEnsembleParser _ANSI_ARGS_((Tcl_Interp *interp));
 
@@ -1462,7 +1462,7 @@ HandleEnsemble(clientData, interp, objc, objv)
     ClientData clientData;   /* ensemble data */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     Ensemble *ensData = (Ensemble*)clientData;
 
@@ -1584,7 +1584,7 @@ Itcl_EnsembleCmd(clientData, interp, objc, objv)
     ClientData clientData;   /* ensemble data */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     int status;
     char *ensName;
@@ -1886,7 +1886,7 @@ Itcl_EnsPartCmd(clientData, interp, objc, objv)
     ClientData clientData;   /* ensemble data */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     EnsembleParser *ensInfo = (EnsembleParser*)clientData;
     Ensemble *ensData = (Ensemble*)ensInfo->ensData;
@@ -2016,7 +2016,7 @@ Itcl_EnsembleErrorCmd(clientData, interp, objc, objv)
     ClientData clientData;   /* ensemble info */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     Ensemble *ensData = (Ensemble*)clientData;
 

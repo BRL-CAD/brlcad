@@ -238,7 +238,7 @@ temp_setup( rp, matparm, dpp, mfp, rtip )
 register struct region	*rp;
 struct bu_vls		*matparm;
 char			**dpp;
-CONST struct mfuncs	*mfp;
+const struct mfuncs	*mfp;
 struct rt_i             *rtip;  /* New since 4.4 release */
 {
 	register struct temp_specific *tp;

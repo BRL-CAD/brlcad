@@ -39,7 +39,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 
 static void 	vertex_neighborhood RT_ARGS((struct ray_data *rd, struct vertexuse *vu_p, struct hitmiss *myhit));
 
-CONST char *
+const char *
 nmg_rt_inout_str( code )
 int	code;
 {
@@ -66,7 +66,7 @@ int	code;
 	return("?_?\n");
 }
 
-CONST char *
+const char *
 nmg_rt_state_str( code )
 int	code;
 {
@@ -90,7 +90,7 @@ int	code;
  */
 void
 nmg_ck_hitmiss_list( hd )
-CONST struct bu_list	*hd;
+const struct bu_list	*hd;
 {
 	struct hitmiss	*hmp;
 	int		state = NMG_RAY_STATE_OUTSIDE;
@@ -2634,10 +2634,10 @@ struct ray_data *rd;
  */
 void
 nmg_pl_hitmiss_list( str, num, hd, rp )
-CONST char		*str;
+const char		*str;
 int			num;
-CONST struct bu_list	*hd;
-CONST struct xray	*rp;
+const struct bu_list	*hd;
+const struct xray	*rp;
 {
 	FILE		*fp;
 	char		buf[128];

@@ -445,7 +445,7 @@ Tcl_PosixError(interp)
 
 int
 TclStat(path, buf)
-    CONST char *path;		/* Path of file to stat (in current CP). */
+    const char *path;		/* Path of file to stat (in current CP). */
     struct stat *buf;		/* Filled with results of stat call. */
 {
     StatProc *statProcPtr;
@@ -488,7 +488,7 @@ TclStat(path, buf)
 
 int
 TclAccess(path, mode)
-    CONST char *path;		/* Path of file to access (in current CP). */
+    const char *path;		/* Path of file to access (in current CP). */
     int mode;                   /* Permission setting. */
 {
     AccessProc *accessProcPtr;

@@ -231,9 +231,9 @@ int		start;
  */
 int
 db_flags_internal( intern )
-CONST struct rt_db_internal	*intern;
+const struct rt_db_internal	*intern;
 {
-	CONST struct rt_comb_internal	*comb;
+	const struct rt_comb_internal	*comb;
 
 	RT_CK_DB_INTERNAL(intern);
 

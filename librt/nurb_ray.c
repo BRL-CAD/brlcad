@@ -32,7 +32,7 @@ void rt_nurb_pbound();
 
 struct face_g_snurb *
 rt_nurb_project_srf( srf, plane1, plane2, res)
-CONST struct face_g_snurb *srf;
+const struct face_g_snurb *srf;
 plane_t plane1, plane2;
 struct resource *res;
 {
@@ -123,7 +123,7 @@ struct internal_convex_hull {
 
 void
 rt_nurb_clip_srf( srf, dir, min, max)
-CONST struct face_g_snurb *srf;
+const struct face_g_snurb *srf;
 int	dir;
 fastf_t *min, *max;
 {
@@ -292,7 +292,7 @@ fastf_t *min, *max;
  */
 struct face_g_snurb *
 rt_nurb_region_from_srf( srf, dir, param1, param2, res)
-CONST struct face_g_snurb *srf;
+const struct face_g_snurb *srf;
 int	dir;
 fastf_t param1, param2;
 struct resource *res;
@@ -335,7 +335,7 @@ struct resource *res;
  */
 struct rt_nurb_uv_hit *
 rt_nurb_intersect( srf, plane1, plane2, uv_tol, res )
-CONST struct face_g_snurb * srf;
+const struct face_g_snurb * srf;
 plane_t plane1;
 plane_t plane2;
 double	uv_tol;

@@ -44,7 +44,7 @@
 void
 rt_nurb_s_split( split_hd, srf, dir, res )
 struct bu_list	*split_hd;
-CONST struct face_g_snurb 	*srf;
+const struct face_g_snurb 	*srf;
 int		dir;
 struct resource *res;
 {
@@ -260,7 +260,7 @@ struct resource *res;
 void
 rt_nurb_c_split( split_hd, crv )
 struct bu_list		*split_hd;
-CONST struct edge_g_cnurb	*crv;
+const struct edge_g_cnurb	*crv;
 {
 	struct knot_vector new_kv;
 	fastf_t value;

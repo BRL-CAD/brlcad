@@ -41,7 +41,7 @@ struct tcl_specific {
 };
 
 /* The default values for the variables in the shader specific structure */
-CONST static
+const static
 struct tcl_specific tcl_defaults = {
 	tcl_MAGIC,
 	{	0.0, 0.0, 0.0, 0.0,	/* tcl_m_to_r */

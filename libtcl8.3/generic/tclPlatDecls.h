@@ -20,10 +20,10 @@
 
 #ifdef __WIN32__
 /* 0 */
-EXTERN TCHAR *		Tcl_WinUtfToTChar _ANSI_ARGS_((CONST char * str, 
+EXTERN TCHAR *		Tcl_WinUtfToTChar _ANSI_ARGS_((const char * str, 
 				int len, Tcl_DString * dsPtr));
 /* 1 */
-EXTERN char *		Tcl_WinTCharToUtf _ANSI_ARGS_((CONST TCHAR * str, 
+EXTERN char *		Tcl_WinTCharToUtf _ANSI_ARGS_((const TCHAR * str, 
 				int len, Tcl_DString * dsPtr));
 #endif /* __WIN32__ */
 #ifdef MAC_TCL
@@ -52,11 +52,11 @@ EXTERN void		Tcl_SetOSTypeObj _ANSI_ARGS_((Tcl_Obj * objPtr,
 /* 6 */
 EXTERN Tcl_Obj *	Tcl_NewOSTypeObj _ANSI_ARGS_((OSType osType));
 /* 7 */
-EXTERN int		strncasecmp _ANSI_ARGS_((CONST char * s1, 
-				CONST char * s2, size_t n));
+EXTERN int		strncasecmp _ANSI_ARGS_((const char * s1, 
+				const char * s2, size_t n));
 /* 8 */
-EXTERN int		strcasecmp _ANSI_ARGS_((CONST char * s1, 
-				CONST char * s2));
+EXTERN int		strcasecmp _ANSI_ARGS_((const char * s1, 
+				const char * s2));
 #endif /* MAC_TCL */
 
 typedef struct TclPlatStubs {
@@ -64,8 +64,8 @@ typedef struct TclPlatStubs {
     struct TclPlatStubHooks *hooks;
 
 #ifdef __WIN32__
-    TCHAR * (*tcl_WinUtfToTChar) _ANSI_ARGS_((CONST char * str, int len, Tcl_DString * dsPtr)); /* 0 */
-    char * (*tcl_WinTCharToUtf) _ANSI_ARGS_((CONST TCHAR * str, int len, Tcl_DString * dsPtr)); /* 1 */
+    TCHAR * (*tcl_WinUtfToTChar) _ANSI_ARGS_((const char * str, int len, Tcl_DString * dsPtr)); /* 0 */
+    char * (*tcl_WinTCharToUtf) _ANSI_ARGS_((const TCHAR * str, int len, Tcl_DString * dsPtr)); /* 1 */
 #endif /* __WIN32__ */
 #ifdef MAC_TCL
     void (*tcl_MacSetEventProc) _ANSI_ARGS_((Tcl_MacConvertEventPtr procPtr)); /* 0 */
@@ -75,8 +75,8 @@ typedef struct TclPlatStubs {
     int (*tcl_GetOSTypeFromObj) _ANSI_ARGS_((Tcl_Interp * interp, Tcl_Obj * objPtr, OSType * osTypePtr)); /* 4 */
     void (*tcl_SetOSTypeObj) _ANSI_ARGS_((Tcl_Obj * objPtr, OSType osType)); /* 5 */
     Tcl_Obj * (*tcl_NewOSTypeObj) _ANSI_ARGS_((OSType osType)); /* 6 */
-    int (*strncasecmp) _ANSI_ARGS_((CONST char * s1, CONST char * s2, size_t n)); /* 7 */
-    int (*strcasecmp) _ANSI_ARGS_((CONST char * s1, CONST char * s2)); /* 8 */
+    int (*strncasecmp) _ANSI_ARGS_((const char * s1, const char * s2, size_t n)); /* 7 */
+    int (*strcasecmp) _ANSI_ARGS_((const char * s1, const char * s2)); /* 8 */
 #endif /* MAC_TCL */
 } TclPlatStubs;
 

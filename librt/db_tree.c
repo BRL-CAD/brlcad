@@ -41,7 +41,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "./debug.h"
 
-BU_EXTERN(void db_ck_tree, (CONST union tree *tp));
+BU_EXTERN(void db_ck_tree, (const union tree *tp));
 
 /*
  *			D B _ D U P _ D B _ T R E E _ S T A T E
@@ -112,8 +112,8 @@ db_init_db_tree_state( struct db_tree_state *tsp, struct db_i *dbip, struct reso
  */
 struct combined_tree_state *
 db_new_combined_tree_state( tsp, pathp )
-register CONST struct db_tree_state	*tsp;
-register CONST struct db_full_path	*pathp;
+register const struct db_tree_state	*tsp;
+register const struct db_full_path	*pathp;
 {
 	struct combined_tree_state	*new;
 
@@ -134,7 +134,7 @@ register CONST struct db_full_path	*pathp;
  */
 struct combined_tree_state *
 db_dup_combined_tree_state( old )
-CONST struct combined_tree_state	*old;
+const struct combined_tree_state	*old;
 {
 	struct combined_tree_state	*new;
 
@@ -166,7 +166,7 @@ register struct combined_tree_state	*ctsp;
  */
 void
 db_pr_tree_state( tsp )
-register CONST struct db_tree_state	*tsp;
+register const struct db_tree_state	*tsp;
 {
 	RT_CK_DBTS(tsp);
 
@@ -193,7 +193,7 @@ register CONST struct db_tree_state	*tsp;
  */
 void
 db_pr_combined_tree_state( ctsp )
-register CONST struct combined_tree_state	*ctsp;
+register const struct combined_tree_state	*ctsp;
 {
 	char	*str;
 
@@ -219,8 +219,8 @@ register CONST struct combined_tree_state	*ctsp;
 int
 db_apply_state_from_comb( tsp, pathp, comb )
 struct db_tree_state		*tsp;
-CONST struct db_full_path	*pathp;
-register CONST struct rt_comb_internal	*comb;
+const struct db_full_path	*pathp;
+register const struct rt_comb_internal	*comb;
 {
 	RT_CK_DBTS(tsp);
 	RT_CK_COMB(comb);
@@ -340,7 +340,7 @@ int
 db_apply_state_from_memb( tsp, pathp, tp )
 struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
-CONST union tree	*tp;
+const union tree	*tp;
 {
 	register struct directory *mdp;
 	mat_t			xmat;
@@ -780,7 +780,7 @@ int
 db_follow_path(
 	struct db_tree_state		*tsp,
 	struct db_full_path		*total_path,
-	CONST struct db_full_path	*new_path,
+	const struct db_full_path	*new_path,
 	int				noisy,
 	int				depth )		/* # arcs in new_path to use */
 {
@@ -942,7 +942,7 @@ int
 db_follow_path_for_state( tsp, total_path, orig_str, noisy )
 struct db_tree_state	*tsp;
 struct db_full_path	*total_path;
-CONST char		*orig_str;
+const char		*orig_str;
 int			noisy;
 {
 	struct db_full_path	new_path;
@@ -1408,7 +1408,7 @@ db_free_tree( register union tree *tp, struct resource *resp )
 			struct nmgregion *r = tp->tr_d.td_r;
 			if( tp->tr_d.td_name )  {
 				bu_free( (char *)tp->tr_d.td_name, "region name" );
-				tp->tr_d.td_name = (CONST char *)NULL;
+				tp->tr_d.td_name = (const char *)NULL;
 			}
 			if( r == (struct nmgregion *)NULL )  {
 				break;
@@ -2129,13 +2129,13 @@ int
 db_walk_tree( dbip, argc, argv, ncpu, init_state, reg_start_func, reg_end_func, leaf_func, client_data )
 struct db_i	*dbip;
 int		argc;
-CONST char	**argv;
+const char	**argv;
 int		ncpu;
-CONST struct db_tree_state *init_state;
+const struct db_tree_state *init_state;
 int		(*reg_start_func) BU_ARGS((
 			struct db_tree_state * /*tsp*/,
 			struct db_full_path * /*pathp*/,
-			CONST struct rt_comb_internal * /* combp */,
+			const struct rt_comb_internal * /* combp */,
 			genptr_t client_data
 		));
 union tree *	(*reg_end_func) BU_ARGS((
@@ -2514,7 +2514,7 @@ db_shader_mat(
 	mat_t	m_tmp;
 	vect_t	v_tmp;
 	struct	rt_i *my_rtip;
-	CONST char	*reg_name;
+	const char	*reg_name;
 
 	RT_CK_RTI(rtip);
 	RT_CK_RESOURCE(resp);

@@ -54,7 +54,7 @@ int	make_bond( int sp1, int sp2 );
 
 struct wmember head;
 
-static CONST char usage[] = "Usage: molecule db_title < mol-cube.dat > mol.g\n";
+static const char usage[] = "Usage: molecule db_title < mol-cube.dat > mol.g\n";
 
 struct rt_wdb	*outfp;
 

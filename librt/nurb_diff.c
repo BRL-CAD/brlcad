@@ -42,7 +42,7 @@
 
 struct face_g_snurb *
 rt_nurb_s_diff( srf, dir )
-CONST struct face_g_snurb *srf;
+const struct face_g_snurb *srf;
 int	dir;
 {
 	struct face_g_snurb *nsrf;
@@ -118,7 +118,7 @@ int	dir;
 
 struct edge_g_cnurb *
 rt_nurb_c_diff( crv )
-CONST struct edge_g_cnurb *crv;
+const struct edge_g_cnurb *crv;
 {
 
 	struct edge_g_cnurb *ncrv;
@@ -149,9 +149,9 @@ CONST struct edge_g_cnurb *crv;
 void
 rt_nurb_mesh_diff( order, o_pts, n_pts, knots, o_stride, n_stride, o_size, pt_type)
 int	order;
-CONST fastf_t *o_pts;
+const fastf_t *o_pts;
 fastf_t *n_pts;
-CONST fastf_t *knots;
+const fastf_t *knots;
 int	o_stride;
 int	n_stride;
 int	o_size;

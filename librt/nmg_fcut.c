@@ -58,7 +58,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #define NMG_STATE_ON_B		4
 #define NMG_STATE_ON_N		5
 #define NMG_STATE_IN		6
-static CONST char *nmg_state_names[] = {
+static const char *nmg_state_names[] = {
 	"*ERROR*",
 	"out",
 	"on_L",
@@ -83,7 +83,7 @@ static CONST char *nmg_state_names[] = {
 #define NMG_V_ASSESSMENT_PREV(_a)	(((_a)>>2)&3)
 #define NMG_V_ASSESSMENT_NEXT(_a)	((_a)&3)
 
-static CONST char *nmg_v_assessment_names[32] = {
+static const char *nmg_v_assessment_names[32] = {
 	"Left,Left",
 	"Left,Right",
 	"Left,On_Forw",
@@ -135,7 +135,7 @@ static CONST char *nmg_v_assessment_names[32] = {
 #define NMG_ON_REV_ON_REV NMG_V_COMB(NMG_E_ASSESSMENT_ON_REV,NMG_E_ASSESSMENT_ON_REV)
 #define NMG_LONE	NMG_V_ASSESSMENT_LONE
 
-static CONST char *nmg_e_assessment_names[6] = {
+static const char *nmg_e_assessment_names[6] = {
 	"LEFT",
 	"RIGHT",
 	"ON_FORW",
@@ -155,7 +155,7 @@ static CONST char *nmg_e_assessment_names[6] = {
 #define NMG_ACTION_LONE_V_ESPLIT	5
 #define NMG_ACTION_LONE_V_JAUNT		6
 #define NMG_ACTION_CUTJOIN		7
-static CONST char *action_names[] = {
+static const char *action_names[] = {
 	"*ERROR*",
 	"NONE",
 	"NONE_OPTIM",
@@ -184,7 +184,7 @@ struct nmg_ray_state {
 	int			last_action;	/* last action taken */
 	vect_t			ang_x_dir;	/* x axis for angle measure */
 	vect_t			ang_y_dir;	/* y axis for angle measure */
-	CONST struct bn_tol	*tol;
+	const struct bn_tol	*tol;
 };
 #define NMG_RAYSTATE_MAGIC	0x54322345
 #define NMG_CK_RAYSTATE(_p)	NMG_CKMAG(_p, NMG_RAYSTATE_MAGIC, "nmg_ray_state")
@@ -529,8 +529,8 @@ int			in;	/* 1 = inbound edge, 0 = outbound edge */
  */
 int
 nmg_is_v_on_rs_list( rs, v )
-CONST struct nmg_ray_state	*rs;
-CONST struct vertex		*v;
+const struct nmg_ray_state	*rs;
+const struct vertex		*v;
 {
 	register int	i;
 
@@ -836,7 +836,7 @@ struct nmg_loop_stuff {
 #define WEDGE_RIGHT	2
 #define WEDGE_ON	3
 #define WEDGECLASS2STR(_cl)	nmg_wedgeclass_string[(_cl)]
-static CONST char *nmg_wedgeclass_string[] = {
+static const char *nmg_wedgeclass_string[] = {
 	"LEFT",
 	"CROSS",
 	"RIGHT",
@@ -849,7 +849,7 @@ static CONST char *nmg_wedgeclass_string[] = {
  */
 void
 nmg_pr_vu_stuff( vs )
-CONST struct nmg_vu_stuff	*vs;
+const struct nmg_vu_stuff	*vs;
 {
 	bu_log("nmg_pr_vu_stuff(x%x) vu=x%x, loop_index=%d, lsp=x%x\n",
 		vs, vs->vu, vs->loop_index, vs->lsp);
@@ -950,7 +950,7 @@ out:
 	return ret;
 }
 
-static CONST char *nmg_wedge2_string[] = {
+static const char *nmg_wedge2_string[] = {
 	"WEDGE2_OVERLAP",
 	"WEDGE2_NO_OVERLAP",
 	"WEDGE2_AB_IN_CD",
@@ -1267,8 +1267,8 @@ out:
  */
 static int
 nmg_is_wedge_before_cross( wedge, cross )
-CONST struct nmg_vu_stuff	*wedge;
-CONST struct nmg_vu_stuff	*cross;
+const struct nmg_vu_stuff	*wedge;
+const struct nmg_vu_stuff	*cross;
 {
 	int	class2;
 	int	ret = -1;
@@ -1338,12 +1338,12 @@ nmg_face_vu_compare( aa, bb )
  const void	*aa;
  const void	*bb;
 #else
- CONST genptr_t	aa;
- CONST genptr_t	bb;
+ const genptr_t	aa;
+ const genptr_t	bb;
 #endif
 {
-	register CONST struct nmg_vu_stuff *a = (CONST struct nmg_vu_stuff *)aa;
-	register CONST struct nmg_vu_stuff *b = (CONST struct nmg_vu_stuff *)bb;
+	register const struct nmg_vu_stuff *a = (const struct nmg_vu_stuff *)aa;
+	register const struct nmg_vu_stuff *b = (const struct nmg_vu_stuff *)bb;
 	register double	diff;
 	int	lo_equal = 0;
 	int	hi_equal = 0;
@@ -1479,7 +1479,7 @@ static void
 nmg_face_vu_dot( vsp, lu, rs, ass )
 struct nmg_vu_stuff		*vsp;
 struct loopuse			*lu;
-CONST struct nmg_ray_state	*rs;
+const struct nmg_ray_state	*rs;
 int				ass;
 {
 	struct edgeuse	*this_eu;
@@ -1560,7 +1560,7 @@ double	lo_ang;
 double	hi_ang;
 int	wclass;
 int	*exclude;
-CONST struct bn_tol	*tol;
+const struct bn_tol	*tol;
 {
 	register int	i;
 	int		outer_wedge;
@@ -1984,7 +1984,7 @@ struct faceuse	*fu2;		/* for plane equation */
 point_t		pt;
 vect_t		dir;
 struct edge_g_lseg		*eg;	/* may be null.  Geom of isect line. */
-CONST struct bn_tol	*tol;
+const struct bn_tol	*tol;
 {
 	plane_t	n1;
 
@@ -2189,7 +2189,7 @@ void
 nmg_edge_geom_isect_line( eu, rs, reason )
 struct edgeuse		*eu;
 struct nmg_ray_state	*rs;
-CONST char		*reason;
+const char		*reason;
 {
 	register struct edge_g_lseg	*eg;
 
@@ -3508,7 +3508,7 @@ rt_bomb("nmg_onon_fix(): check the intersector\n");
 void
 nmg_sort_coincident_vus( tbl, tol )
 struct bu_ptbl *tbl;
-CONST struct bn_tol *tol;
+const struct bn_tol *tol;
 {
 	int curr_vu=0;
 	int start1,end1;
@@ -3609,7 +3609,7 @@ struct faceuse	*fu2;		/* for plane equation */
 point_t		pt;
 vect_t		dir;
 struct edge_g_lseg		*eg;	/* may be null.  geometry of isect line */
-CONST struct bn_tol	*tol;
+const struct bn_tol	*tol;
 {
 	struct vertexuse **vu1, **vu2;
 	int		i;
@@ -3791,7 +3791,7 @@ struct state_transitions {
 	int	action;
 };
 
-static CONST struct state_transitions nmg_state_is_out[17] = {
+static const struct state_transitions nmg_state_is_out[17] = {
 	{ NMG_LEFT_LEFT,	NMG_STATE_OUT,		NMG_ACTION_NONE },
 	{ NMG_LEFT_RIGHT,	NMG_STATE_IN,		NMG_ACTION_VFY_EXT },
 	{ NMG_LEFT_ON_FORW,	NMG_STATE_ON_L,		NMG_ACTION_VFY_EXT },
@@ -3811,7 +3811,7 @@ static CONST struct state_transitions nmg_state_is_out[17] = {
 	{ NMG_LONE,		NMG_STATE_OUT,		NMG_ACTION_NONE }
 };
 
-static CONST struct state_transitions nmg_state_is_on_L[17] = {
+static const struct state_transitions nmg_state_is_on_L[17] = {
 	{ NMG_LEFT_LEFT,	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
 	{ NMG_LEFT_RIGHT,	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
 	{ NMG_LEFT_ON_FORW,	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
@@ -3831,7 +3831,7 @@ static CONST struct state_transitions nmg_state_is_on_L[17] = {
 	{ NMG_LONE,		NMG_STATE_ON_L,		NMG_ACTION_LONE_V_ESPLIT }
 };
 
-static CONST struct state_transitions nmg_state_is_on_R[17] = {
+static const struct state_transitions nmg_state_is_on_R[17] = {
 	{ NMG_LEFT_LEFT,	NMG_STATE_ON_R,		NMG_ACTION_NONE },
 	{ NMG_LEFT_RIGHT,	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
 	{ NMG_LEFT_ON_FORW,	NMG_STATE_ON_B,		NMG_ACTION_NONE },
@@ -3851,7 +3851,7 @@ static CONST struct state_transitions nmg_state_is_on_R[17] = {
 	{ NMG_LONE,		NMG_STATE_ON_R,		NMG_ACTION_LONE_V_ESPLIT }
 };
 
-static CONST struct state_transitions nmg_state_is_on_B[17] = {
+static const struct state_transitions nmg_state_is_on_B[17] = {
 	{ NMG_LEFT_LEFT,	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
 	{ NMG_LEFT_RIGHT,	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
 	{ NMG_LEFT_ON_FORW,	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
@@ -3871,7 +3871,7 @@ static CONST struct state_transitions nmg_state_is_on_B[17] = {
 	{ NMG_LONE,		NMG_STATE_ON_B,		NMG_ACTION_LONE_V_ESPLIT }
 };
 
-static CONST struct state_transitions nmg_state_is_on_N[17] = {
+static const struct state_transitions nmg_state_is_on_N[17] = {
 	{ NMG_LEFT_LEFT,	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
 	{ NMG_LEFT_RIGHT,	NMG_STATE_OUT,		NMG_ACTION_VFY_MULTI },
 	{ NMG_LEFT_ON_FORW,	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
@@ -3891,7 +3891,7 @@ static CONST struct state_transitions nmg_state_is_on_N[17] = {
 	{ NMG_LONE,		NMG_STATE_ON_N,		NMG_ACTION_LONE_V_ESPLIT }
 };
 
-static CONST struct state_transitions nmg_state_is_in[17] = {
+static const struct state_transitions nmg_state_is_in[17] = {
 	{ NMG_LEFT_LEFT,	NMG_STATE_IN,		NMG_ACTION_CUTJOIN },
 	{ NMG_LEFT_RIGHT,	NMG_STATE_ERROR,	NMG_ACTION_ERROR },
 	{ NMG_LEFT_ON_FORW,	NMG_STATE_ON_R,		NMG_ACTION_CUTJOIN },
@@ -4026,7 +4026,7 @@ int			other_rs_state;
 	int			assessment;
 	int			old_state;
 	int			new_state;
-	CONST struct state_transitions	*stp;
+	const struct state_transitions	*stp;
 	struct vertexuse	*vu;
 	struct vertexuse	*prev_vu = (struct vertexuse *)NULL;
 	struct loopuse		*lu;

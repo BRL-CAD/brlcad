@@ -613,7 +613,7 @@ _LOCAL_ int
 X_write( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
-CONST unsigned char	*pixelp;
+const unsigned char	*pixelp;
 int	count;
 {
 	int	maxcount;
@@ -662,7 +662,7 @@ _LOCAL_ int
 X_scanwrite( ifp, x, y, pixelp, count, save )
 FBIO	*ifp;
 int	x, y;
-CONST unsigned char	*pixelp;
+const unsigned char	*pixelp;
 int	count;
 int	save;
 {
@@ -802,7 +802,7 @@ ColorMap	*cmp;
 _LOCAL_ int
 X_wmap( ifp, cmp )
 FBIO	*ifp;
-CONST ColorMap	*cmp;
+const ColorMap	*cmp;
 {
 	register int i;
 	int	is_linear = 1;
@@ -895,7 +895,7 @@ int	*xzoom, *yzoom;
 _LOCAL_ int
 X_setcursor( ifp, bits, xbits, ybits, xorig, yorig )
 FBIO	*ifp;
-CONST unsigned char *bits;
+const unsigned char *bits;
 int	xbits, ybits;
 int	xorig, yorig;
 {

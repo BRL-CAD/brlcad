@@ -99,10 +99,10 @@ struct bu_bitv	*bv;
 void
 bu_bitv_or( ov, iv )
 struct bu_bitv		*ov;
-CONST struct bu_bitv	*iv;
+const struct bu_bitv	*iv;
 {
 	register bitv_t		*out;
-	register CONST bitv_t	*in;
+	register const bitv_t	*in;
 	register int		words;
 
 	if( ov->nbits != iv->nbits )  bu_bomb("bu_bitv_or: length mis-match");
@@ -125,10 +125,10 @@ CONST struct bu_bitv	*iv;
 void
 bu_bitv_and( ov, iv )
 struct bu_bitv		*ov;
-CONST struct bu_bitv	*iv;
+const struct bu_bitv	*iv;
 {
 	register bitv_t		*out;
-	register CONST bitv_t	*in;
+	register const bitv_t	*in;
 	register int		words;
 
 	if( ov->nbits != iv->nbits )  bu_bomb("bu_bitv_and: length mis-match");
@@ -153,7 +153,7 @@ CONST struct bu_bitv	*iv;
 void
 bu_bitv_vls( v, bv )
 struct bu_vls			*v;
-register CONST struct bu_bitv	*bv;
+register const struct bu_bitv	*bv;
 {
 	int		seen = 0;
 	register int	i;
@@ -184,8 +184,8 @@ register CONST struct bu_bitv	*bv;
  */
 void
 bu_pr_bitv( str, bv )
-CONST char			*str;
-register CONST struct bu_bitv	*bv;
+const char			*str;
+register const struct bu_bitv	*bv;
 {
 	struct bu_vls	v;
 
@@ -207,7 +207,7 @@ register CONST struct bu_bitv	*bv;
 void
 bu_bitv_to_hex( v, bv )
 struct bu_vls *v;
-register CONST struct bu_bitv	*bv;
+register const struct bu_bitv	*bv;
 {
 	int word_count, byte_no;
 
@@ -236,10 +236,10 @@ register CONST struct bu_bitv	*bv;
  */
 struct bu_bitv *
 bu_hex_to_bitv( str )
-CONST char *str;
+const char *str;
 {
 	char abyte[3];
-	CONST char *str_start;
+	const char *str_start;
 	int len=0;
 	int bytes;
 	struct bu_bitv *bv;
@@ -304,7 +304,7 @@ CONST char *str;
  */
 struct bu_bitv *
 bu_bitv_dup( bv )
-register CONST struct bu_bitv	*bv;
+register const struct bu_bitv	*bv;
 {
 	struct bu_bitv *bv2;
 

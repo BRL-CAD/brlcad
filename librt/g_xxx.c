@@ -99,7 +99,7 @@ struct rt_i		*rtip;
 {
 	struct rt_xxx_internal		*xxx_ip;
 	register struct xxx_specific	*xxx;
-	CONST struct bn_tol		*tol = &rtip->rti_tol;
+	const struct bn_tol		*tol = &rtip->rti_tol;
 
 	RT_CK_DB_INTERNAL(ip);
 	xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
@@ -111,9 +111,9 @@ struct rt_i		*rtip;
  */
 void
 rt_xxx_print( stp )
-register CONST struct soltab *stp;
+register const struct soltab *stp;
 {
-	register CONST struct xxx_specific *xxx =
+	register const struct xxx_specific *xxx =
 		(struct xxx_specific *)stp->st_specific;
 }
 
@@ -138,7 +138,7 @@ struct seg		*seghead;
 	register struct xxx_specific *xxx =
 		(struct xxx_specific *)stp->st_specific;
 	register struct seg *segp;
-	CONST struct bn_tol	*tol = &ap->a_rt_i->rti_tol;
+	const struct bn_tol	*tol = &ap->a_rt_i->rti_tol;
 
 	return(0);			/* MISS */
 }
@@ -235,9 +235,9 @@ register struct soltab *stp;
  */
 int
 rt_xxx_class( stp, min, max, tol )
-CONST struct soltab    *stp;
-CONST vect_t		min, max;
-CONST struct bn_tol    *tol;
+const struct soltab    *stp;
+const vect_t		min, max;
+const struct bn_tol    *tol;
 {
 	return RT_CLASSIFY_UNIMPLEMENTED;
 }
@@ -249,8 +249,8 @@ int
 rt_xxx_plot( vhead, ip, ttol, tol )
 struct bu_list		*vhead;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol	*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol	*tol;
 {
 	LOCAL struct rt_xxx_internal	*xxx_ip;
 
@@ -273,8 +273,8 @@ rt_xxx_tess( r, m, ip, ttol, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol	*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol	*tol;
 {
 	LOCAL struct rt_xxx_internal	*xxx_ip;
 
@@ -294,9 +294,9 @@ CONST struct bn_tol	*tol;
 int
 rt_xxx_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-register CONST mat_t		mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	LOCAL struct rt_xxx_internal	*xxx_ip;
 	union record			*rp;
@@ -329,9 +329,9 @@ CONST struct db_i		*dbip;
 int
 rt_xxx_export( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_xxx_internal	*xxx_ip;
 	union record		*rec;
@@ -381,9 +381,9 @@ CONST struct db_i		*dbip;
 int
 rt_xxx_import5( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-register CONST mat_t		mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	LOCAL struct rt_xxx_internal	*xxx_ip;
 	fastf_t				vv[ELEMENTS_PER_VECT*1];
@@ -425,9 +425,9 @@ CONST struct db_i		*dbip;
 int
 rt_xxx_export5( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_xxx_internal	*xxx_ip;
 	fastf_t			vec[ELEMENTS_PER_VECT];
@@ -464,7 +464,7 @@ CONST struct db_i		*dbip;
 int
 rt_xxx_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {
@@ -513,7 +513,7 @@ struct rt_db_internal	*ip;
 int
 rt_xxx_xform( op, mat, ip, free )
 struct rt_db_internal	*op;
-CONST mat_t		mat;
+const mat_t		mat;
 struct rt_db_internal	*ip;
 int			free;
 {

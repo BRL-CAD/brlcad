@@ -41,9 +41,9 @@ void
 bn_vlist_3string( vhead, free_hd, string, origin, rot, scale )
 struct bu_list	*vhead;
 struct bu_list	*free_hd;	/* source of free vlists */
-CONST char	*string;	/* string of chars to be plotted */
-CONST point_t	origin;		/* lower left corner of 1st char */
-CONST mat_t	rot;		/* Transform matrix (WARNING: may xlate) */
+const char	*string;	/* string of chars to be plotted */
+const point_t	origin;		/* lower left corner of 1st char */
+const mat_t	rot;		/* Transform matrix (WARNING: may xlate) */
 double		scale;		/* scale factor to change 1x1 char sz */
 {
 	register unsigned char *cp;
@@ -124,7 +124,7 @@ void
 bn_vlist_2string( vhead, free_hd, string, x, y, scale, theta )
 struct bu_list	*vhead;
 struct bu_list	*free_hd;	/* source of free vlists */
-CONST char	*string;	/* string of chars to be plotted */
+const char	*string;	/* string of chars to be plotted */
 double	x;			/* x,y of lower left corner of 1st char */
 double	y;
 double	scale;			/* scale factor to change 1x1 char sz */

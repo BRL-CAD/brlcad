@@ -36,7 +36,7 @@ static const char RCSpoly[] = "@(#)$Header$ (ARL)";
 #endif
 #define PI_DIV_3	(M_PI/3.0)
 
-static CONST struct bn_poly	bn_Zero_poly = { BN_POLY_MAGIC, 0, {0.0} };
+static const struct bn_poly	bn_Zero_poly = { BN_POLY_MAGIC, 0, {0.0} };
 
 /*
  *	bn_poly_mul -- multiply two polynomials
@@ -44,8 +44,8 @@ static CONST struct bn_poly	bn_Zero_poly = { BN_POLY_MAGIC, 0, {0.0} };
 struct bn_poly *
 bn_poly_mul(product, m1, m2)
 register struct bn_poly	*product;
-register CONST struct bn_poly	*m1;
-register CONST struct bn_poly	*m2;
+register const struct bn_poly	*m1;
+register const struct bn_poly	*m2;
 {
 	if( m1->dgr == 1 && m2->dgr == 1 )  {
 		product->dgr = 2;
@@ -116,8 +116,8 @@ double	factor;
 struct bn_poly *
 bn_poly_add(sum,poly1,poly2)
 register struct bn_poly	*sum;
-register CONST struct bn_poly	*poly1;
-register CONST struct bn_poly	*poly2;
+register const struct bn_poly	*poly1;
+register const struct bn_poly	*poly2;
 {
 	LOCAL struct bn_poly	tmp;
 	register int		i, offset;
@@ -151,8 +151,8 @@ register CONST struct bn_poly	*poly2;
 struct bn_poly *
 bn_poly_sub(diff, poly1, poly2)
 register struct bn_poly *diff;
-register CONST struct bn_poly	*poly1;
-register CONST struct bn_poly	*poly2;
+register const struct bn_poly	*poly1;
+register const struct bn_poly	*poly2;
 {
 	LOCAL struct bn_poly	tmp;
 	register int		i, offset;
@@ -190,8 +190,8 @@ void
 bn_poly_synthetic_division(quo, rem, dvdend, dvsor)
 register struct bn_poly	*quo;
 register struct bn_poly	*rem;
-register CONST struct bn_poly	*dvdend;
-register CONST struct bn_poly	*dvsor;
+register const struct bn_poly	*dvdend;
+register const struct bn_poly	*dvsor;
 {
 	register int	div;
 	register int	n;
@@ -225,7 +225,7 @@ register CONST struct bn_poly	*dvsor;
 int
 bn_poly_quadratic_roots( roots, quadrat )
 register struct bn_complex	roots[];
-register CONST struct bn_poly	*quadrat;
+register const struct bn_poly	*quadrat;
 {
 	LOCAL fastf_t	discrim, denom, rad;
 
@@ -310,7 +310,7 @@ int	sig;
 int
 bn_poly_cubic_roots( roots, eqn )
 register struct bn_complex	roots[];
-register CONST struct bn_poly	*eqn;
+register const struct bn_poly	*eqn;
 {
 	LOCAL fastf_t	a, b, c1, c1_3rd, delta;
 	register int	i;
@@ -414,7 +414,7 @@ register CONST struct bn_poly	*eqn;
 int
 bn_poly_quartic_roots( roots, eqn )
 register struct bn_complex	roots[];
-register CONST struct bn_poly	*eqn;
+register const struct bn_poly	*eqn;
 {
 	LOCAL struct bn_poly	cube, quad1, quad2;
 	LOCAL bn_complex_t	u[3];
@@ -493,8 +493,8 @@ register CONST struct bn_poly	*eqn;
  */
 void
 bn_pr_poly(title, eqn)
-CONST char			*title;
-register CONST struct bn_poly	*eqn;
+const char			*title;
+register const struct bn_poly	*eqn;
 {
 	register int	n;
 	register int	exp;
@@ -538,8 +538,8 @@ register CONST struct bn_poly	*eqn;
  */
 void
 bn_pr_roots( title, roots, n )
-CONST char	*title;
-CONST struct bn_complex	roots[];
+const char	*title;
+const struct bn_complex	roots[];
 int		n;
 {
 	register int	i;

@@ -74,10 +74,10 @@ main( argc, argv )
 int argc;
 char **argv;
 {
-    CONST char ** fname = NULL;
-    CONST char *stdname = "-";
+    const char ** fname = NULL;
+    const char *stdname = "-";
     char **comment_names = NULL;
-    CONST char *the_file;
+    const char *the_file;
     int    	brief = 0, 
 		cflag = 0,
 		mflag = 0,

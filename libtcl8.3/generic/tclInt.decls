@@ -24,7 +24,7 @@ interface tclInt
 # be changed between versions to avoid gratuitous incompatibilities.
 
 declare 0 generic {
-    int TclAccess(CONST char *path, int mode)
+    int TclAccess(const char *path, int mode)
 }
 declare 1 generic {
     int TclAccessDeleteProc(TclAccessProc_ *proc)
@@ -47,7 +47,7 @@ declare 6 generic {
     void TclCleanupCommand(Command *cmdPtr)
 }
 declare 7 generic {
-    int TclCopyAndCollapse(int count, CONST char *src, char *dst)
+    int TclCopyAndCollapse(int count, const char *src, char *dst)
 }
 declare 8 generic {
     int TclCopyChannel(Tcl_Interp *interp, Tcl_Channel inChan, \
@@ -86,7 +86,7 @@ declare 16 generic {
     void TclExprFloatError(Tcl_Interp *interp, double value)
 }
 declare 17 generic {
-    int TclFileAttrsCmd(Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[])
+    int TclFileAttrsCmd(Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
 }
 declare 18 generic {
     int TclFileCopyCmd(Tcl_Interp *interp, int argc, char **argv)
@@ -101,8 +101,8 @@ declare 21 generic {
     int TclFileRenameCmd(Tcl_Interp *interp, int argc, char **argv)
 }
 declare 22 generic {
-    int TclFindElement(Tcl_Interp *interp, CONST char *listStr, \
-	    int listLength, CONST char **elementPtr, CONST char **nextPtr, \
+    int TclFindElement(Tcl_Interp *interp, const char *listStr, \
+	    int listLength, const char **elementPtr, const char **nextPtr, \
 	    int *sizePtr, int *bracePtr)
 }
 declare 23 generic {
@@ -129,9 +129,9 @@ declare 29 generic {
     Tcl_Obj * TclGetElementOfIndexedArray(Tcl_Interp *interp, \
 	    int localIndex, Tcl_Obj *elemPtr, int leaveErrorMsg)
 }
-# Replaced by char * TclGetEnv(CONST char *name, Tcl_DString *valuePtr) in 8.1:
+# Replaced by char * TclGetEnv(const char *name, Tcl_DString *valuePtr) in 8.1:
 #  declare 30 generic {
-#      char * TclGetEnv(CONST char *name)
+#      char * TclGetEnv(const char *name)
 #  }
 declare 31 generic {
     char * TclGetExtension(char *name)
@@ -172,7 +172,7 @@ declare 41 generic {
     Tcl_Command TclGetOriginalCommand(Tcl_Command command)
 }
 declare 42 generic {
-    char * TclpGetUserHome(CONST char *name, Tcl_DString *bufferPtr)
+    char * TclpGetUserHome(const char *name, Tcl_DString *bufferPtr)
 }
 declare 43 generic {
     int TclGlobalInvoke(Tcl_Interp *interp, int argc, char **argv, int flags)
@@ -214,7 +214,7 @@ declare 53 generic {
 }
 declare 54 generic {
     int TclInvokeStringCommand(ClientData clientData, Tcl_Interp *interp, \
-	    int objc, Tcl_Obj *CONST objv[])
+	    int objc, Tcl_Obj *const objv[])
 }
 declare 55 generic {
     Proc * TclIsProc(Command *cmdPtr)
@@ -249,15 +249,15 @@ declare 62 generic {
 }
 declare 63 generic {
     int TclObjInterpProc(ClientData clientData, Tcl_Interp *interp, \
-	    int objc, Tcl_Obj *CONST objv[])
+	    int objc, Tcl_Obj *const objv[])
 }
 declare 64 generic {
-    int TclObjInvoke(Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[], \
+    int TclObjInvoke(Tcl_Interp *interp, int objc, Tcl_Obj *const objv[], \
 	    int flags)
 }
 declare 65 generic {
     int TclObjInvokeGlobal(Tcl_Interp *interp, int objc, \
-	    Tcl_Obj *CONST objv[], int flags)
+	    Tcl_Obj *const objv[], int flags)
 }
 declare 66 generic {
     int TclOpenFileChannelDeleteProc(TclOpenFileChannelProc_ *proc)
@@ -266,23 +266,23 @@ declare 67 generic {
     int TclOpenFileChannelInsertProc(TclOpenFileChannelProc_ *proc)
 }
 declare 68 generic {
-    int TclpAccess(CONST char *path, int mode)
+    int TclpAccess(const char *path, int mode)
 }
 declare 69 generic {
     char * TclpAlloc(unsigned int size)
 }
 declare 70 generic {
-    int TclpCopyFile(CONST char *source, CONST char *dest)
+    int TclpCopyFile(const char *source, const char *dest)
 }
 declare 71 generic {
-    int TclpCopyDirectory(CONST char *source, CONST char *dest, \
+    int TclpCopyDirectory(const char *source, const char *dest, \
 	    Tcl_DString *errorPtr)
 }
 declare 72 generic {
-    int TclpCreateDirectory(CONST char *path)
+    int TclpCreateDirectory(const char *path)
 }
 declare 73 generic {
-    int TclpDeleteFile(CONST char *path)
+    int TclpDeleteFile(const char *path)
 }
 declare 74 generic {
     void TclpFree(char *ptr)
@@ -310,11 +310,11 @@ declare 81 generic {
     char * TclpRealloc(char *ptr, unsigned int size)
 }
 declare 82 generic {
-    int TclpRemoveDirectory(CONST char *path, int recursive, \
+    int TclpRemoveDirectory(const char *path, int recursive, \
 	    Tcl_DString *errorPtr)
 }
 declare 83 generic {
-    int TclpRenameFile(CONST char *source, CONST char *dest)
+    int TclpRenameFile(const char *source, const char *dest)
 }
 # Removed in 8.1:
 #  declare 84 generic {
@@ -349,8 +349,8 @@ declare 91 generic {
 }
 declare 92 generic {
     int TclProcCompileProc(Tcl_Interp *interp, Proc *procPtr, \
-	    Tcl_Obj *bodyPtr, Namespace *nsPtr, CONST char *description, \
-	    CONST char *procName)
+	    Tcl_Obj *bodyPtr, Namespace *nsPtr, const char *description, \
+	    const char *procName)
 }
 declare 93 generic {
     void TclProcDeleteProc(ClientData clientData)
@@ -360,7 +360,7 @@ declare 94 generic {
 	    int argc, char **argv)
 }
 declare 95 generic {
-    int TclpStat(CONST char *path, struct stat *buf)
+    int TclpStat(const char *path, struct stat *buf)
 }
 declare 96 generic {
     int TclRenameCommand(Tcl_Interp *interp, char *oldName, char *newName)
@@ -393,7 +393,7 @@ declare 104 {unix win} {
     int TclSockMinimumBuffers(int sock, int size)
 }
 declare 105 generic {
-    int TclStat(CONST char *path, struct stat *buf)
+    int TclStat(const char *path, struct stat *buf)
 }
 declare 106 generic {
     int TclStatDeleteProc(TclStatProc_ *proc)
@@ -502,8 +502,8 @@ declare 133 generic {
     struct tm *	TclpGetDate(TclpTime_t time, int useGMT)
 }
 declare 134 generic {
-    size_t TclpStrftime(char *s, size_t maxsize, CONST char *format, \
-	    CONST struct tm *t)
+    size_t TclpStrftime(char *s, size_t maxsize, const char *format, \
+	    const struct tm *t)
 }
 declare 135 generic {
     int TclpCheckStackSpace(void)
@@ -512,10 +512,10 @@ declare 135 generic {
 # Added in 8.1:
 
 declare 137 generic {
-   int TclpChdir(CONST char *dirName)
+   int TclpChdir(const char *dirName)
 }
 declare 138 generic {
-    char * TclGetEnv(CONST char *name, Tcl_DString *valuePtr)
+    char * TclGetEnv(const char *name, Tcl_DString *valuePtr)
 }
 declare 139 generic {
     int TclpLoadFile(Tcl_Interp *interp, char *fileName, char *sym1, \
@@ -658,15 +658,15 @@ declare 7 mac {
 # however.  The first set are from the MoreFiles package.
 
 declare 8 mac {
-    pascal OSErr FSpGetDirectoryID(CONST FSSpec *spec, long *theDirID, \
+    pascal OSErr FSpGetDirectoryID(const FSSpec *spec, long *theDirID, \
 	    Boolean *isDirectory)
 }
 declare 9 mac {
-    pascal short FSpOpenResFileCompat(CONST FSSpec *spec, \
+    pascal short FSpOpenResFileCompat(const FSSpec *spec, \
 	    SignedByte permission)
 }
 declare 10 mac {
-    pascal void FSpCreateResFileCompat(CONST FSSpec *spec, OSType creator, \
+    pascal void FSpCreateResFileCompat(const FSSpec *spec, OSType creator, \
 	    OSType fileType, ScriptCode scriptTag)
 }
 
@@ -674,7 +674,7 @@ declare 10 mac {
 # Mac calls.  These routines are from tclMacUtils.h.
 
 declare 11 mac {
-    int FSpLocationFromPath(int length, CONST char *path, FSSpecPtr theSpec)
+    int FSpLocationFromPath(int length, const char *path, FSSpecPtr theSpec)
 }
 declare 12 mac {
     OSErr FSpPathFromLocation(FSSpecPtr theSpec, int *length, \
@@ -715,7 +715,7 @@ declare 22 mac {
     int TclMacCreateEnv(void)
 }
 declare 23 mac {
-    FILE * TclMacFOpenHack(CONST char *path, CONST char *mode)
+    FILE * TclMacFOpenHack(const char *path, const char *mode)
 }
 # Replaced in 8.1 by TclpReadLink:
 #  declare 24 mac {
@@ -735,8 +735,8 @@ declare 1 win {
     void TclWinConvertWSAError(DWORD errCode)
 }
 declare 2 win {
-    struct servent * TclWinGetServByName(CONST char *nm, \
-	    CONST char *proto)
+    struct servent * TclWinGetServByName(const char *nm, \
+	    const char *proto)
 }
 declare 3 win {
     int TclWinGetSockOpt(SOCKET s, int level, int optname, \
@@ -754,7 +754,7 @@ declare 6 win {
 }
 declare 7 win {
     int TclWinSetSockOpt(SOCKET s, int level, int optname, \
-	    CONST char FAR * optval, int optlen)
+	    const char FAR * optval, int optlen)
 }
 declare 8 win {
     unsigned long TclpGetPid(Tcl_Pid pid)
@@ -798,7 +798,7 @@ declare 18 win {
     TclFile TclpMakeFile(Tcl_Channel channel, int direction)
 }
 declare 19 win {
-    TclFile TclpOpenFile(CONST char *fname, int mode)
+    TclFile TclpOpenFile(const char *fname, int mode)
 }
 declare 20 win {
     void TclWinAddProcess(HANDLE hProcess, DWORD id)
@@ -809,7 +809,7 @@ declare 21 win {
 
 # Added in 8.1:
 declare 22 win {
-    TclFile TclpCreateTempFile(CONST char *contents)
+    TclFile TclpCreateTempFile(const char *contents)
 }
 declare 23 win {
     char * TclpGetTZName(int isdst)
@@ -856,7 +856,7 @@ declare 6 unix {
     TclFile TclpMakeFile(Tcl_Channel channel, int direction)
 }
 declare 7 unix {
-    TclFile TclpOpenFile(CONST char *fname, int mode)
+    TclFile TclpOpenFile(const char *fname, int mode)
 }
 declare 8 unix {
     int TclUnixWaitForFile(int fd, int mask, int timeout)
@@ -865,5 +865,5 @@ declare 8 unix {
 # Added in 8.1:
 
 declare 9 unix {
-    TclFile TclpCreateTempFile(CONST char *contents)
+    TclFile TclpCreateTempFile(const char *contents)
 }

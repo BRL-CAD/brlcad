@@ -232,7 +232,7 @@ static void 		DrawMenuBackground _ANSI_ARGS_((
 static void		DrawMenuEntryAccelerator _ANSI_ARGS_((
 			    TkMenu *menuPtr, TkMenuEntry *mePtr, 
 			    Drawable d, GC gc, Tk_Font tkfont,
-			    CONST Tk_FontMetrics *fmPtr,
+			    const Tk_FontMetrics *fmPtr,
 			    Tk_3DBorder activeBorder, int x, int y,
 			    int width, int height, int drawArrow));
 static void		DrawMenuEntryBackground _ANSI_ARGS_((
@@ -244,42 +244,42 @@ static void		DrawMenuEntryIndicator _ANSI_ARGS_((
 			    TkMenu *menuPtr, TkMenuEntry *mePtr,
 			    Drawable d, GC gc, GC indicatorGC, 
 			    Tk_Font tkfont,
-			    CONST Tk_FontMetrics *fmPtr, int x, int y,
+			    const Tk_FontMetrics *fmPtr, int x, int y,
 			    int width, int height));
 static void		DrawMenuEntryLabel _ANSI_ARGS_((
 			    TkMenu * menuPtr, TkMenuEntry *mePtr, Drawable d,
 			    GC gc, Tk_Font tkfont,
-			    CONST Tk_FontMetrics *fmPtr, int x, int y,
+			    const Tk_FontMetrics *fmPtr, int x, int y,
 			    int width, int height));
 static void		DrawMenuSeparator _ANSI_ARGS_((TkMenu *menuPtr,
 			    TkMenuEntry *mePtr, Drawable d, GC gc, 
-			    Tk_Font tkfont, CONST Tk_FontMetrics *fmPtr, 
+			    Tk_Font tkfont, const Tk_FontMetrics *fmPtr, 
 			    int x, int y, int width, int height));
 static void		DrawTearoffEntry _ANSI_ARGS_((TkMenu *menuPtr,
 			    TkMenuEntry *mePtr, Drawable d, GC gc, 
-			    Tk_Font tkfont, CONST Tk_FontMetrics *fmPtr, 
+			    Tk_Font tkfont, const Tk_FontMetrics *fmPtr, 
 			    int x, int y, int width, int height));
 static Handle		FixMDEF _ANSI_ARGS_((void));
 static void		GetEntryText _ANSI_ARGS_((TkMenuEntry *mePtr,
 			    Tcl_DString *dStringPtr));
 static void		GetMenuAccelGeometry _ANSI_ARGS_((TkMenu *menuPtr,
 			    TkMenuEntry *mePtr, Tk_Font tkfont,
-			    CONST Tk_FontMetrics *fmPtr, int *modWidthPtr,
+			    const Tk_FontMetrics *fmPtr, int *modWidthPtr,
 			    int *textWidthPtr, int *heightPtr));
 static void		GetMenuLabelGeometry _ANSI_ARGS_((TkMenuEntry *mePtr,
-			    Tk_Font tkfont, CONST Tk_FontMetrics *fmPtr,
+			    Tk_Font tkfont, const Tk_FontMetrics *fmPtr,
 			    int *widthPtr, int *heightPtr));
 static void		GetMenuIndicatorGeometry _ANSI_ARGS_((
 			    TkMenu *menuPtr, TkMenuEntry *mePtr, 
-			    Tk_Font tkfont, CONST Tk_FontMetrics *fmPtr, 
+			    Tk_Font tkfont, const Tk_FontMetrics *fmPtr, 
 			    int *widthPtr, int *heightPtr));
 static void		GetMenuSeparatorGeometry _ANSI_ARGS_((
 			    TkMenu *menuPtr, TkMenuEntry *mePtr,
-			    Tk_Font tkfont, CONST Tk_FontMetrics *fmPtr,
+			    Tk_Font tkfont, const Tk_FontMetrics *fmPtr,
 			    int *widthPtr, int *heightPtr));
 static void		GetTearoffEntryGeometry _ANSI_ARGS_((TkMenu *menuPtr,
 			    TkMenuEntry *mePtr, Tk_Font tkfont,
-			    CONST Tk_FontMetrics *fmPtr, int *widthPtr,
+			    const Tk_FontMetrics *fmPtr, int *widthPtr,
 			    int *heightPtr));
 static int		GetNewID _ANSI_ARGS_((Tcl_Interp *interp,
 			    TkMenu *menuInstPtr, int cascade, 
@@ -2085,7 +2085,7 @@ GetMenuIndicatorGeometry (
     TkMenu *menuPtr,			/* The menu we are drawing */
     TkMenuEntry *mePtr,			/* The entry we are measuring */
     Tk_Font tkfont,			/* Precalculated font */
-    CONST Tk_FontMetrics *fmPtr,	/* Precalculated font metrics */
+    const Tk_FontMetrics *fmPtr,	/* Precalculated font metrics */
     int *widthPtr,			/* The resulting width */
     int *heightPtr)			/* The resulting height */
 {
@@ -2118,7 +2118,7 @@ GetMenuAccelGeometry (
     TkMenu *menuPtr,			/* The menu we are measuring */
     TkMenuEntry *mePtr,			/* The entry we are measuring */
     Tk_Font tkfont,			/* The precalculated font */
-    CONST Tk_FontMetrics *fmPtr,	/* The precalculated font metrics */
+    const Tk_FontMetrics *fmPtr,	/* The precalculated font metrics */
     int *modWidthPtr,			/* The width of all of the key
     					 * modifier symbols. */
     int *textWidthPtr,			/* The resulting width */
@@ -2194,7 +2194,7 @@ GetTearoffEntryGeometry (
     TkMenu *menuPtr,			/* The menu we are drawing */
     TkMenuEntry *mePtr,			/* The entry we are measuring */
     Tk_Font tkfont,			/* The precalculated font */
-    CONST Tk_FontMetrics *fmPtr,	/* The precalculated font metrics */
+    const Tk_FontMetrics *fmPtr,	/* The precalculated font metrics */
     int *widthPtr,			/* The resulting width */
     int *heightPtr)			/* The resulting height */
 {
@@ -2228,7 +2228,7 @@ GetMenuSeparatorGeometry(
     TkMenu *menuPtr,			/* The menu we are drawing */
     TkMenuEntry *mePtr,			/* The entry we are measuring */
     Tk_Font tkfont,			/* The precalculated font */
-    CONST Tk_FontMetrics *fmPtr,	/* The precalcualted font metrics */
+    const Tk_FontMetrics *fmPtr,	/* The precalcualted font metrics */
     int *widthPtr,			/* The resulting width */
     int *heightPtr)			/* The resulting height */
 {
@@ -2269,7 +2269,7 @@ DrawMenuEntryIndicator(
     GC gc,				/* The GC we are drawing with */
     GC indicatorGC,			/* The GC to use for the indicator */
     Tk_Font tkfont,			/* The precalculated font */
-    CONST Tk_FontMetrics *fmPtr,	/* The precalculated font metrics */
+    const Tk_FontMetrics *fmPtr,	/* The precalculated font metrics */
     int x,				/* topleft hand corner of entry */
     int y,				/* topleft hand corner of entry */
     int width,				/* width of entry */
@@ -2439,7 +2439,7 @@ DrawMenuEntryAccelerator(
     Drawable d,			    /* The drawable we are drawing in */
     GC gc,			    /* The gc to draw into */
     Tk_Font tkfont,		    /* The precalculated font */
-    CONST Tk_FontMetrics *fmPtr,    /* The precalculated font metrics */
+    const Tk_FontMetrics *fmPtr,    /* The precalculated font metrics */
     Tk_3DBorder activeBorder,	    /* border for menu background */
     int x,			    /* The left side of the entry */
     int y,			    /* The top of the entry */
@@ -2552,7 +2552,7 @@ DrawMenuSeparator(
     Drawable d,				/* The drawable we are drawing into */
     GC gc,				/* The gc we are drawing with */
     Tk_Font tkfont,			/* The precalculated font */
-    CONST Tk_FontMetrics *fmPtr,	/* The precalculated font metrics */
+    const Tk_FontMetrics *fmPtr,	/* The precalculated font metrics */
     int x,				/* left coordinate of entry */
     int y,				/* top coordinate of entry */
     int width,				/* width of entry */
@@ -3434,7 +3434,7 @@ DrawTearoffEntry(
     Drawable d,				/* The drawable we are drawing into */
     GC gc,				/* The gc we are drawing with */
     Tk_Font tkfont,			/* The font we are drawing with */
-    CONST Tk_FontMetrics *fmPtr,	/* The metrics we are drawing with */
+    const Tk_FontMetrics *fmPtr,	/* The metrics we are drawing with */
     int x,				/* Left edge of entry. */
     int y,				/* Top edge of entry. */
     int width,				/* Width of entry. */
@@ -3561,7 +3561,7 @@ TkpDrawMenuEntry(
     TkMenuEntry *mePtr,		    /* The entry to draw */
     Drawable d,			    /* What to draw into */
     Tk_Font tkfont,		    /* Precalculated font for menu */
-    CONST Tk_FontMetrics *menuMetricsPtr,
+    const Tk_FontMetrics *menuMetricsPtr,
 				    /* Precalculated metrics for menu */
     int x,			    /* X-coordinate of topleft of entry */
     int y,			    /* Y-coordinate of topleft of entry */
@@ -3939,7 +3939,7 @@ DrawMenuEntryLabel(
     Drawable d,				/* What we are drawing into */
     GC gc,				/* The gc we are drawing into */
     Tk_Font tkfont,			/* The precalculated font */
-    CONST Tk_FontMetrics *fmPtr,	/* The precalculated font metrics */
+    const Tk_FontMetrics *fmPtr,	/* The precalculated font metrics */
     int x,				/* left edge */
     int y,				/* right edge */
     int width,				/* width of entry */
@@ -4083,7 +4083,7 @@ static void
 GetMenuLabelGeometry(
     TkMenuEntry *mePtr,			/* The entry we are computing */
     Tk_Font tkfont,			/* The precalculated font */
-    CONST Tk_FontMetrics *fmPtr,	/* The precalculated metrics */
+    const Tk_FontMetrics *fmPtr,	/* The precalculated metrics */
     int *widthPtr,			/* The resulting width of the label
 					 * portion */
     int *heightPtr)			/* The resulting height of the label

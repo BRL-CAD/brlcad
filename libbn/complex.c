@@ -46,7 +46,7 @@ static const char RCScomplex[] = "@(#)$Header$ (BRL)";
 void
 bn_cx_div( ap, bp )
 register bn_complex_t		*ap;
-register CONST bn_complex_t	*bp;
+register const bn_complex_t	*bp;
 {
 	FAST fastf_t	r, s;
 	FAST fastf_t	ap__re;
@@ -92,7 +92,7 @@ err:
 void
 bn_cx_sqrt( op, ip )
 bn_complex_t			*op;
-register CONST bn_complex_t	*ip;
+register const bn_complex_t	*ip;
 {
 	FAST fastf_t	ampl, temp;
 	/* record signs of original real & imaginary parts */

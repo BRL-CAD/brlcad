@@ -83,7 +83,7 @@ struct dbcmdstruct {
  *	{20 -13.5 20} at {10 .5 3}
  */
 int
-rt_tcl_parse_ray( Tcl_Interp *interp, struct xray *rp, CONST char *CONST*argv )
+rt_tcl_parse_ray( Tcl_Interp *interp, struct xray *rp, const char *const*argv )
 {
 	if( bn_decode_vect( rp->r_pt,  argv[0] ) != 3 )  {
 		Tcl_AppendResult( interp,
@@ -126,9 +126,9 @@ rt_tcl_parse_ray( Tcl_Interp *interp, struct xray *rp, CONST char *CONST*argv )
  *	type nugridnode
  */
 void
-rt_tcl_pr_cutter( Tcl_Interp *interp, CONST union cutter *cutp )
+rt_tcl_pr_cutter( Tcl_Interp *interp, const union cutter *cutp )
 {
-	static CONST char xyz[4] = "XYZ";
+	static const char xyz[4] = "XYZ";
 	struct bu_vls	str;
 	int i;
 
@@ -204,7 +204,7 @@ rt_tcl_cutter( ClientData clientData, Tcl_Interp *interp, int argc, const char *
 {
 	struct application	*ap = (struct application *)clientData;
 	struct rt_i		*rtip;
-	CONST union cutter	*cutp;
+	const union cutter	*cutp;
 	int			n;
 
 	if( argc != 6 )  {
@@ -250,7 +250,7 @@ rt_tcl_pr_hit( Tcl_Interp *interp, struct hit *hitp, const struct seg *segp, con
 	struct bu_vls	str;
 	vect_t		norm;
 	struct soltab	*stp;
-	CONST struct directory	*dp;
+	const struct directory	*dp;
 	struct curvature crv;
 
 	RT_CK_SEG(segp);
@@ -901,10 +901,10 @@ out:
 int
 rt_comb_tclget( interp, intern, item )
 Tcl_Interp			*interp;
-CONST struct rt_db_internal	*intern;
-CONST char			*item;
+const struct rt_db_internal	*intern;
+const char			*item;
 {
-	CONST struct rt_comb_internal *comb;
+	const struct rt_comb_internal *comb;
 	char buf[128];
 	Tcl_DString	ds;
 
@@ -1232,7 +1232,7 @@ int
 rt_tcl_import_from_path( interp, ip, path, wdb )
 Tcl_Interp		*interp;
 struct rt_db_internal	*ip;
-CONST char		*path;
+const char		*path;
 struct rt_wdb		*wdb;
 {
 	struct db_i	*dbip;
@@ -1332,11 +1332,11 @@ struct rt_wdb		*wdb;
 int
 rt_parsetab_tclget( interp, intern, attr )
 Tcl_Interp			*interp;
-CONST struct rt_db_internal	*intern;
-CONST char			*attr;
+const struct rt_db_internal	*intern;
+const char			*attr;
 {
-	register CONST struct bu_structparse	*sp = NULL;
-	register CONST struct rt_functab	*ftp;
+	register const struct bu_structparse	*sp = NULL;
+	register const struct rt_functab	*ftp;
 	int                     status;
 	Tcl_DString             ds;
 	struct bu_vls           str;
@@ -1393,7 +1393,7 @@ CONST char			*attr;
  */
 int
 rt_comb_tclform( ftp, interp )
-CONST struct rt_functab *ftp;
+const struct rt_functab *ftp;
 Tcl_Interp		*interp;
 {
 	RT_CK_FUNCTAB(ftp);
@@ -1413,7 +1413,7 @@ shader {%s} material {%s} inherit {%s} tree {%s}", (char *)NULL );
  */
 void
 rt_comb_make( ftp, intern, diameter )
-CONST struct rt_functab	*ftp;
+const struct rt_functab	*ftp;
 struct rt_db_internal	*intern;
 double			diameter;
 {
@@ -1449,7 +1449,7 @@ double			diameter;
  */
 void
 rt_generic_make( ftp, intern, diameter )
-CONST struct rt_functab	*ftp;
+const struct rt_functab	*ftp;
 struct rt_db_internal	*intern;
 double			diameter;
 {
@@ -1474,7 +1474,7 @@ struct rt_db_internal	*intern;
 int			argc;
 char			**argv;
 {
-	CONST struct rt_functab	*ftp;
+	const struct rt_functab	*ftp;
 
 	RT_CK_DB_INTERNAL(intern);
 	ftp = intern->idb_meth;
@@ -1500,7 +1500,7 @@ char			**argv;
  */
 int
 rt_parsetab_tclform( ftp, interp)
-CONST struct rt_functab	*ftp;
+const struct rt_functab	*ftp;
 Tcl_Interp		*interp;
 {
 	RT_CK_FUNCTAB(ftp);

@@ -35,7 +35,7 @@ char *type = "frame";
 char *units = "mm";
 double unit_conv = 1.0;
 matp_t trans_matrix = (matp_t)NULL; 
-CONST double degtorad =  0.01745329251994329573;
+const double degtorad =  0.01745329251994329573;
 
 int log_cmds = 0;	/* log sessions to a log file */
 /* standard construction brick:

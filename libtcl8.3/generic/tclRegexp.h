@@ -36,7 +36,7 @@ typedef struct TclRegexp {
     int flags;			/* Regexp compile flags. */
     regex_t re;			/* Compiled re, includes number of
 				 * subexpressions. */
-    CONST char *string;		/* Last string passed to Tcl_RegExpExec. */
+    const char *string;		/* Last string passed to Tcl_RegExpExec. */
     Tcl_Obj *objPtr;		/* Last object passed to Tcl_RegExpExecObj. */
     regmatch_t *matches;	/* Array of indices into the Tcl_UniChar
 				 * representation of the last string matched

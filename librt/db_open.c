@@ -72,8 +72,8 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  */
 struct db_i *
 db_open( name, mode )
-CONST char	*name;
-CONST char	*mode;
+const char	*name;
+const char	*mode;
 {
 	register struct db_i	*dbip = DBI_NULL;
 	register int		i;
@@ -186,7 +186,7 @@ fail:
  *	db_i *		success
  */
 struct db_i *
-db_create( CONST char *name, int version )
+db_create( const char *name, int version )
 {
 	FILE	*fp;
 	struct db_i	*dbip;

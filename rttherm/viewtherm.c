@@ -56,10 +56,10 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "../rt/light.h"
 
 /* XXX Move to raytrace.h when routine goes into LIBRT */
-BU_EXTERN( double	rt_pixel_footprint, (CONST struct application *ap,
-				CONST struct hit *hitp,
-				CONST struct seg *segp,
-				CONST vect_t normal));
+BU_EXTERN( double	rt_pixel_footprint, (const struct application *ap,
+				const struct hit *hitp,
+				const struct seg *segp,
+				const vect_t normal));
 
 
 /* XXX move to h/tabdata.h when function moves out of spectrum.c */
@@ -128,7 +128,7 @@ struct bu_structparse view_parse[] = {
 };
 
 /********* spectral parameters *************/
-CONST struct bn_table		*spectrum;	/* definition of spectrum */
+const struct bn_table		*spectrum;	/* definition of spectrum */
 struct bn_tabdata		*background;		/* radiant emittance of bg */
 /********* spectral parameters *************/
 
@@ -780,10 +780,10 @@ void application_init ()
  */
 double
 rt_pixel_footprint(ap, hitp, segp, normal)
-CONST struct application *ap;
-CONST struct hit	*hitp;
-CONST struct seg	*segp;
-CONST vect_t		normal;
+const struct application *ap;
+const struct hit	*hitp;
+const struct seg	*segp;
+const vect_t		normal;
 {
 	plane_t	perp;
 	plane_t	surf_tan;

@@ -132,7 +132,7 @@ struct eto_specific {
 	fastf_t	eu, ev, fu, fv;
 };
 
-CONST struct bu_structparse rt_eto_parse[] = {
+const struct bu_structparse rt_eto_parse[] = {
     { "%f", 3, "V",   offsetof(struct rt_eto_internal, eto_V[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "N",   offsetof(struct rt_eto_internal, eto_N[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "C",   offsetof(struct rt_eto_internal, eto_C[X]), BU_STRUCTPARSE_FUNC_NULL },
@@ -266,9 +266,9 @@ struct rt_i		*rtip;
  */
 void
 rt_eto_print( stp )
-register CONST struct soltab *stp;
+register const struct soltab *stp;
 {
-	register CONST struct eto_specific *eto =
+	register const struct eto_specific *eto =
 		(struct eto_specific *)stp->st_specific;
 
 	VPRINT("V", eto->eto_V);
@@ -746,8 +746,8 @@ int
 rt_eto_plot( vhead, ip, ttol, tol )
 struct bu_list		*vhead;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol	*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol	*tol;
 {
 	fastf_t		a, b;	/* axis lengths of ellipse */
 	fastf_t		ang, ch, cv, dh, dv, ntol, dtol, phi, theta;
@@ -1002,8 +1002,8 @@ rt_eto_tess( r, m, ip, ttol, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol	*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol	*tol;
 {
 	fastf_t		a, b;	/* axis lengths of ellipse */
 	fastf_t		ang, ch, cv, dh, dv, ntol, dtol, phi, theta;
@@ -1214,9 +1214,9 @@ failure:
 int
 rt_eto_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-register CONST mat_t		mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	struct rt_eto_internal	*tip;
 	union record		*rp;
@@ -1259,9 +1259,9 @@ CONST struct db_i		*dbip;
 int
 rt_eto_export( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_eto_internal	*tip;
 	union record		*eto;
@@ -1311,9 +1311,9 @@ CONST struct db_i		*dbip;
 int
 rt_eto_import5( ip, ep, mat, dbip )
      struct rt_db_internal	*ip;
-     CONST struct bu_external	*ep;
-     register CONST mat_t	mat;
-     CONST struct db_i		*dbip;
+     const struct bu_external	*ep;
+     register const mat_t	mat;
+     const struct db_i		*dbip;
 {
 	struct rt_eto_internal	*tip;
 	fastf_t			vec[11];
@@ -1356,9 +1356,9 @@ rt_eto_import5( ip, ep, mat, dbip )
 int
 rt_eto_export5( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_eto_internal	*tip;
 	fastf_t			vec[11];
@@ -1408,7 +1408,7 @@ CONST struct db_i		*dbip;
 int
 rt_eto_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {

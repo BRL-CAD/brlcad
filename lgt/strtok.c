@@ -20,7 +20,7 @@ static const char RCSid[] = "@(#)$Header$";
 #define	NULL	0
 /*
  * sean - why was const undefined here?
- * #define CONST
+ * #define const
  */
 static char *scanpoint = NULL;
 

@@ -118,13 +118,13 @@ fastf_t				high;
  */
 void
 bu_hist_pr_suppress( histp, title, zero_suppress )
-register CONST struct bu_hist	*histp;
-CONST char		*title;
+register const struct bu_hist	*histp;
+const char		*title;
 int			zero_suppress;
 {
 	register int	i;
 	long		maxcount;
-	static CONST char	marks[] = "################################################################";
+	static const char	marks[] = "################################################################";
 #define	NMARKS	50
 	char		buf[256];
 	int		percent;
@@ -194,8 +194,8 @@ int			zero_suppress;
  */
 void
 bu_hist_pr( histp, title )
-register CONST struct bu_hist	*histp;
-CONST char			*title;
+register const struct bu_hist	*histp;
+const char			*title;
 {
 	bu_hist_pr_suppress( histp, title, 1 );
 }

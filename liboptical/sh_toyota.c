@@ -2014,7 +2014,7 @@ fastf_t	*rgb;	/* Output, RGB approximation of input. */
 
 	fastf_t	krx, kry, krz, kgx, kgy, kgz, kbz;
 	fastf_t	ratio, r, g, b, x, y, z;
-	static CONST fastf_t	table[NCOLOR][4] = {
+	static const fastf_t	table[NCOLOR][4] = {
 		{380,	0.26899e-2,	0.20000e-3,	0.12260e-1},
 		{385,	0.53105e-2,	0.39556e-3,	0.24222e-1},
 		{390,	0.10781e-1,	0.80000e-3,	0.49250e-1},

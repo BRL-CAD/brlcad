@@ -180,7 +180,7 @@ struct rhc_specific {
 	fastf_t	rhc_rsq;	/* r * r */
 };
 
-CONST struct bu_structparse rt_rhc_parse[] = {
+const struct bu_structparse rt_rhc_parse[] = {
     { "%f", 3, "V", offsetof(struct rt_rhc_internal, rhc_V[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "H", offsetof(struct rt_rhc_internal, rhc_H[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "B", offsetof(struct rt_rhc_internal, rhc_B[X]), BU_STRUCTPARSE_FUNC_NULL },
@@ -309,9 +309,9 @@ struct rt_i		*rtip;
  */
 void
 rt_rhc_print( stp )
-register CONST struct soltab *stp;
+register const struct soltab *stp;
 {
-	register CONST struct rhc_specific *rhc =
+	register const struct rhc_specific *rhc =
 		(struct rhc_specific *)stp->st_specific;
 
 	VPRINT("V", rhc->rhc_V);
@@ -689,8 +689,8 @@ int
 rt_rhc_plot( vhead, ip, ttol, tol )
 struct bu_list		*vhead;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol		*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol		*tol;
 {
 	int		i, n;
 	fastf_t		b, c, *back, f, *front, h, rh;
@@ -916,8 +916,8 @@ rt_rhc_tess( r, m, ip, ttol, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol		*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol		*tol;
 {
 	int		i, j, n;
 	fastf_t		b, c, *back, f, *front, h, rh;
@@ -1195,9 +1195,9 @@ fail:
 int
 rt_rhc_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-register CONST mat_t		mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	LOCAL struct rt_rhc_internal	*xip;
 	union record			*rp;
@@ -1242,9 +1242,9 @@ CONST struct db_i		*dbip;
 int
 rt_rhc_export( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_rhc_internal	*xip;
 	union record		*rhc;
@@ -1302,9 +1302,9 @@ CONST struct db_i		*dbip;
 int
 rt_rhc_import5( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-register CONST mat_t		mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	LOCAL struct rt_rhc_internal	*xip;
 	fastf_t			vec[11];
@@ -1349,9 +1349,9 @@ CONST struct db_i		*dbip;
 int
 rt_rhc_export5( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_rhc_internal	*xip;
 	fastf_t			vec[11];
@@ -1409,7 +1409,7 @@ CONST struct db_i		*dbip;
 int
 rt_rhc_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {

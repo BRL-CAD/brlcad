@@ -143,10 +143,10 @@ static void		ComputeRectOvalBbox _ANSI_ARGS_((Tk_Canvas canvas,
 			    RectOvalItem *rectOvalPtr));
 static int		ConfigureRectOval _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tk_Canvas canvas, Tk_Item *itemPtr, int argc,
-			    Tcl_Obj *CONST argv[], int flags));
+			    Tcl_Obj *const argv[], int flags));
 static int		CreateRectOval _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tk_Canvas canvas, struct Tk_Item *itemPtr,
-			    int argc, Tcl_Obj *CONST argv[]));
+			    int argc, Tcl_Obj *const argv[]));
 static void		DeleteRectOval _ANSI_ARGS_((Tk_Canvas canvas,
 			    Tk_Item *itemPtr, Display *display));
 static void		DisplayRectOval _ANSI_ARGS_((Tk_Canvas canvas,
@@ -158,7 +158,7 @@ static double		OvalToPoint _ANSI_ARGS_((Tk_Canvas canvas,
 			    Tk_Item *itemPtr, double *pointPtr));
 static int		RectOvalCoords _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tk_Canvas canvas, Tk_Item *itemPtr, int argc,
-			    Tcl_Obj *CONST argv[]));
+			    Tcl_Obj *const argv[]));
 static int		RectOvalToPostscript _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tk_Canvas canvas, Tk_Item *itemPtr, int prepass));
 static int		RectToArea _ANSI_ARGS_((Tk_Canvas canvas,
@@ -249,7 +249,7 @@ CreateRectOval(interp, canvas, itemPtr, argc, argv)
     Tk_Item *itemPtr;			/* Record to hold new item;  header
 					 * has been initialized by caller. */
     int argc;				/* Number of arguments in argv. */
-    Tcl_Obj *CONST argv[];		/* Arguments describing rectangle. */
+    Tcl_Obj *const argv[];		/* Arguments describing rectangle. */
 {
     RectOvalItem *rectOvalPtr = (RectOvalItem *) itemPtr;
     int i;
@@ -335,7 +335,7 @@ RectOvalCoords(interp, canvas, itemPtr, argc, argv)
 					 * read or modified. */
     int argc;				/* Number of coordinates supplied in
 					 * argv. */
-    Tcl_Obj *CONST argv[];		/* Array of coordinates: x1, y1,
+    Tcl_Obj *const argv[];		/* Array of coordinates: x1, y1,
 					 * x2, y2, ... */
 {
     RectOvalItem *rectOvalPtr = (RectOvalItem *) itemPtr;
@@ -411,7 +411,7 @@ ConfigureRectOval(interp, canvas, itemPtr, argc, argv, flags)
     Tk_Canvas canvas;		/* Canvas containing itemPtr. */
     Tk_Item *itemPtr;		/* Rectangle item to reconfigure. */
     int argc;			/* Number of elements in argv.  */
-    Tcl_Obj *CONST argv[];	/* Arguments describing things to configure. */
+    Tcl_Obj *const argv[];	/* Arguments describing things to configure. */
     int flags;			/* Flags to pass to Tk_ConfigureWidget. */
 {
     RectOvalItem *rectOvalPtr = (RectOvalItem *) itemPtr;

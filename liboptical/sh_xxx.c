@@ -71,7 +71,7 @@ struct xxx_specific {
 };
 
 /* The default values for the variables in the shader specific structure */
-CONST static
+const static
 struct xxx_specific xxx_defaults = {
 	xxx_MAGIC,
 	1.0,				/* xxx_val */

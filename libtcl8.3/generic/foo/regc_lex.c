@@ -821,7 +821,7 @@ int maxlen;
 	int len;
 	chr c;
 	int d;
-	CONST uchr ub = (uchr) base;
+	const uchr ub = (uchr) base;
 
 	n = 0;
 	for (len = 0; len < maxlen && !ATEOS(); len++) {

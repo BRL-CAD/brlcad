@@ -58,8 +58,8 @@
 #ifdef __REG_VOID_T
 #undef __REG_VOID_T
 #endif
-#ifdef __REG_CONST
-#undef __REG_CONST
+#ifdef __REG_const
+#undef __REG_const
 #endif
 #ifdef __REG_NOFRONT
 #undef __REG_NOFRONT
@@ -71,7 +71,7 @@
 #define	__REG_WIDE_T	Tcl_UniChar
 #define	__REG_REGOFF_T	long	/* not really right, but good enough... */
 #define	__REG_VOID_T	VOID
-#define	__REG_CONST	CONST
+#define	__REG_const	const
 /* names and declarations */
 #define	__REG_WIDE_COMPILE	TclReComp
 #define	__REG_WIDE_EXEC		TclReExec

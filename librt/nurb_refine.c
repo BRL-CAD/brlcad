@@ -36,7 +36,7 @@
  */
 struct face_g_snurb *
 rt_nurb_s_refine( srf, dir, kv, res )
-CONST struct face_g_snurb * srf;		/* Old surface to be refined */
+const struct face_g_snurb * srf;		/* Old surface to be refined */
 int dir;				/* Direction to refine */
 					/* Row = 0, Col = 1 */
 struct knot_vector *kv;			/* New knot vector */
@@ -135,7 +135,7 @@ struct resource *res;
 
 struct edge_g_cnurb *
 rt_nurb_c_refine( crv, kv )
-CONST struct edge_g_cnurb * crv;
+const struct edge_g_cnurb * crv;
 struct knot_vector * kv;
 {
 	struct oslo_mat * oslo;

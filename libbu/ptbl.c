@@ -43,7 +43,7 @@ void
 bu_ptbl_init(b, len, str)
 struct bu_ptbl	*b;
 int		len;		/* initial len.  Recommend 8 or 64 */
-CONST char	*str;
+const char	*str;
 {
 	if (bu_debug & BU_DEBUG_PTBL)
 		bu_log("bu_ptbl_init(%8x, len=%d, %s)\n", b, len, str);
@@ -115,14 +115,14 @@ long		*p;
  */
 int
 bu_ptbl_locate(b, p)
-CONST struct bu_ptbl	*b;
-CONST long		*p;
+const struct bu_ptbl	*b;
+const long		*p;
 {
 	register int		k;
-	register CONST long	**pp;
+	register const long	**pp;
 
 	BU_CK_PTBL(b);
-	pp = (CONST long **)b->buffer;
+	pp = (const long **)b->buffer;
 #	include "noalias.h"
 	for( k = b->end-1; k >= 0; k-- )
 		if (pp[k] == p) return(k);
@@ -139,13 +139,13 @@ CONST long		*p;
 void
 bu_ptbl_zero(b, p)
 struct bu_ptbl	*b;
-CONST long	*p;
+const long	*p;
 {
 	register int		k;
-	register CONST long	**pp;
+	register const long	**pp;
 
 	BU_CK_PTBL(b);
-	pp = (CONST long **)b->buffer;
+	pp = (const long **)b->buffer;
 #	include "noalias.h"
 	for( k = b->end-1; k >= 0; k-- )
 		if (pp[k] == p) pp[k] = (long *)0;
@@ -208,7 +208,7 @@ long		*p;
 int
 bu_ptbl_rm(b, p)
 struct bu_ptbl	*b;
-CONST long	*p;
+const long	*p;
 {
 	register int end = b->end, j, k, l;
 	register long **pp = b->buffer;
@@ -245,7 +245,7 @@ CONST long	*p;
 void
 bu_ptbl_cat(dest, src)
 struct bu_ptbl		*dest;
-CONST struct bu_ptbl	*src;
+const struct bu_ptbl	*src;
 {
 	BU_CK_PTBL(dest);
 	BU_CK_PTBL(src);
@@ -274,7 +274,7 @@ CONST struct bu_ptbl	*src;
 void
 bu_ptbl_cat_uniq(dest, src)
 struct bu_ptbl		*dest;
-CONST struct bu_ptbl	*src;
+const struct bu_ptbl	*src;
 {
 	register long	**p;
 
@@ -344,7 +344,7 @@ long		*p;
 	} else if (func == BU_PTBL_RM) {
 		return bu_ptbl_rm(b, p);
 	} else if (func == BU_PTBL_CAT) {
-		bu_ptbl_cat( b, (CONST struct bu_ptbl *)p );
+		bu_ptbl_cat( b, (const struct bu_ptbl *)p );
 		return(0);
 	} else if (func == BU_PTBL_FREE) {
 		bu_ptbl_free(b);
@@ -364,8 +364,8 @@ long		*p;
  */
 void
 bu_pr_ptbl( title, tbl, verbose )
-CONST char		*title;
-CONST struct bu_ptbl	*tbl;
+const char		*title;
+const struct bu_ptbl	*tbl;
 int			verbose;
 {
 	register long	**lp;

@@ -30,7 +30,7 @@
 void
 rt_nurb_curvature(cvp, srf, u, v)
 struct curvature *cvp;
-CONST struct face_g_snurb * srf;
+const struct face_g_snurb * srf;
 fastf_t	u;
 fastf_t v;
 {

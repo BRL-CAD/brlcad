@@ -18,9 +18,9 @@
  */
 
 static int    Pkga_EqObjCmd _ANSI_ARGS_((ClientData clientData,
-		Tcl_Interp *interp, int objc, Tcl_Obj * CONST objv[]));
+		Tcl_Interp *interp, int objc, Tcl_Obj * const objv[]));
 static int    Pkga_QuoteObjCmd _ANSI_ARGS_((ClientData clientData,
-		Tcl_Interp *interp, int objc, Tcl_Obj * CONST objv[]));
+		Tcl_Interp *interp, int objc, Tcl_Obj * const objv[]));
 
 /*
  *----------------------------------------------------------------------
@@ -45,7 +45,7 @@ Pkga_EqObjCmd(dummy, interp, objc, objv)
     ClientData dummy;		/* Not used. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj * CONST objv[];	/* Argument objects. */
+    Tcl_Obj * const objv[];	/* Argument objects. */
 {
     int result;
 
@@ -81,7 +81,7 @@ Pkga_QuoteObjCmd(dummy, interp, objc, objv)
     ClientData dummy;			/* Not used. */
     Tcl_Interp *interp;			/* Current interpreter. */
     int objc;                         /* Number of arguments. */
-    Tcl_Obj * CONST objv[];           /* Argument strings. */
+    Tcl_Obj * const objv[];           /* Argument strings. */
 {
     if (objc != 2) {
 	Tcl_WrongNumArgs(interp, 1, objv, "value");

@@ -1285,7 +1285,7 @@ int
 Itcl_EvalArgs(interp, objc, objv)
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     int result;
     Tcl_Command cmd;
@@ -1365,7 +1365,7 @@ Itcl_CreateArgs(interp, string, objc, objv)
     Tcl_Interp *interp;      /* current interpreter */
     char *string;            /* first command word */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     int i;
     Tcl_Obj *listPtr;

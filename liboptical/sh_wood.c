@@ -93,8 +93,8 @@ HIDDEN int	wood_init(), wood_setup(), wood_render();
 HIDDEN void	wood_print();
 HIDDEN void	wood_free RT_ARGS(( char * ));
 
-HIDDEN void	wood_V_set RT_ARGS((CONST struct bu_structparse *, CONST char *, CONST char *, char *));
-HIDDEN void	wood_D_set RT_ARGS((CONST struct bu_structparse *, CONST char *, CONST char *, char *));
+HIDDEN void	wood_V_set RT_ARGS((const struct bu_structparse *, const char *, const char *, char *));
+HIDDEN void	wood_D_set RT_ARGS((const struct bu_structparse *, const char *, const char *, char *));
 
 /*
  *	functions block for the shader
@@ -258,9 +258,9 @@ HIDDEN int wood_init ()
  */
 
 HIDDEN void wood_V_set (sdp, name, base, value)
-CONST struct bu_structparse *sdp;
-CONST char *name;
-CONST char *base;
+const struct bu_structparse *sdp;
+const char *name;
+const char *base;
 char *value;
 {
 	register struct wood_specific *wd =
@@ -270,9 +270,9 @@ char *value;
 }
 
 HIDDEN void wood_D_set (sdp, name, base, value)
-CONST struct bu_structparse *sdp;
-CONST char *name;
-CONST char *base;
+const struct bu_structparse *sdp;
+const char *name;
+const char *base;
 char *value;
 {
 	register struct wood_specific *wd =

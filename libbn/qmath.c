@@ -69,7 +69,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 void
 quat_mat2quat( quat, mat )
 register quat_t	quat;
-register CONST mat_t	mat;
+register const mat_t	mat;
 {
 	fastf_t		tr;
 	FAST fastf_t	s;
@@ -138,7 +138,7 @@ register CONST mat_t	mat;
 void
 quat_quat2mat( mat, quat )
 register mat_t	mat;
-register CONST quat_t	quat;
+register const quat_t	quat;
 {
 	quat_t	q;
 
@@ -170,7 +170,7 @@ register CONST quat_t	quat;
  */
 double
 quat_distance( q1, q2 )
-CONST quat_t	q1, q2;
+const quat_t	q1, q2;
 {
 	quat_t	qtemp;
 
@@ -189,7 +189,7 @@ CONST quat_t	q1, q2;
 void
 quat_double( qout, q1, q2 )
 quat_t	qout;
-CONST quat_t q1, q2;
+const quat_t q1, q2;
 {
 	quat_t	qtemp;
 	double	scale;
@@ -210,7 +210,7 @@ CONST quat_t q1, q2;
 void
 quat_bisect( qout, q1, q2 )
 quat_t	qout;
-CONST quat_t q1, q2;
+const quat_t q1, q2;
 {
 	QADD2( qout, q1, q2 );
 	QUNITIZE( qout );
@@ -228,7 +228,7 @@ CONST quat_t q1, q2;
 void
 quat_slerp( qout, q1, q2, f )
 quat_t	qout;
-CONST quat_t q1, q2;
+const quat_t q1, q2;
 double	f;
 {
 	double		omega;
@@ -285,7 +285,7 @@ double	f;
 void
 quat_sberp( qout, q1, qa, qb, q2, f )
 quat_t	qout;
-CONST quat_t q1, qa, qb, q2;
+const quat_t q1, qa, qb, q2;
 double	f;
 {
 	quat_t	p1, p2, p3, p4, p5;
@@ -316,7 +316,7 @@ double	f;
 void
 quat_make_nearest( q1, q2 )
 quat_t	q1;
-CONST quat_t q2;
+const quat_t q2;
 {
 	quat_t	qtemp;
 	double	d1, d2;
@@ -337,8 +337,8 @@ CONST quat_t q2;
 /* DEBUG ROUTINE */
 void
 quat_print( title, quat )
-CONST char	*title;
-CONST quat_t	quat;
+const char	*title;
+const quat_t	quat;
 {
 	int	i;
 	vect_t	axis;
@@ -364,7 +364,7 @@ CONST quat_t	quat;
 void
 quat_exp( out, in )
 quat_t	out;
-CONST quat_t	in;
+const quat_t	in;
 {
 	FAST fastf_t	theta;
 	FAST fastf_t	scale;
@@ -387,7 +387,7 @@ CONST quat_t	in;
 void
 quat_log( out, in )
 quat_t	out;
-CONST quat_t in;
+const quat_t in;
 {
 	FAST fastf_t	theta;
 	FAST fastf_t	scale;

@@ -56,11 +56,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 int
 mk_dsp( fp, name, file, xdim, ydim, mat )
 struct rt_wdb		*fp;
-CONST char	*name;
-CONST char	*file;		/* name of file containing elevation data */
+const char	*name;
+const char	*file;		/* name of file containing elevation data */
 int		xdim;		/* X dimension of file (w cells) */
 int		ydim;		/* Y dimension of file (n cells) */
-CONST matp_t	mat;		/* convert solid coords to model space */
+const matp_t	mat;		/* convert solid coords to model space */
 {
 	struct rt_dsp_internal *dsp;
 	
@@ -83,12 +83,12 @@ CONST matp_t	mat;		/* convert solid coords to model space */
 int
 mk_ebm( fp, name, file, xdim, ydim, tallness, mat )
 struct rt_wdb		*fp;
-CONST char	*name;
-CONST char	*file;		/* name of file containing bitmap */
+const char	*name;
+const char	*file;		/* name of file containing bitmap */
 int		xdim;		/* X dimansion of file (w cells) */
 int		ydim;		/* Y dimension of file (n cells) */
 fastf_t		tallness;	/* Z extrusion height (mm) */
-CONST matp_t	mat;		/* convert local coords to model space */
+const matp_t	mat;		/* convert local coords to model space */
 {
 	struct rt_ebm_internal	*ebm;
 
@@ -109,15 +109,15 @@ CONST matp_t	mat;		/* convert local coords to model space */
 int
 mk_vol( fp, name, file, xdim, ydim, zdim, lo, hi, cellsize, mat )
 struct rt_wdb		*fp;
-CONST char	*name;
-CONST char	*file;		/* name of file containing bitmap */
+const char	*name;
+const char	*file;		/* name of file containing bitmap */
 int		xdim;		/* X dimansion of file (w cells) */
 int		ydim;		/* Y dimension of file (n cells) */
 int		zdim;		/* Z dimension of file (d cells) */
 int		lo;		/* Low threshold */
 int		hi;		/* High threshold */
-CONST vect_t	cellsize;	/* ideal coords: size of each cell */
-CONST matp_t	mat;		/* convert local coords to model space */
+const vect_t	cellsize;	/* ideal coords: size of each cell */
+const matp_t	mat;		/* convert local coords to model space */
 {
 	struct rt_vol_internal	*vol;
 
@@ -146,9 +146,9 @@ CONST matp_t	mat;		/* convert local coords to model space */
 int
 mk_strsol( fp, name, string_solid, string_arg )
 FILE		*fp;
-CONST char	*name;
-CONST char	*string_solid;
-CONST char	*string_arg;
+const char	*name;
+const char	*string_solid;
+const char	*string_arg;
 {
 	union record	rec[DB_SS_NGRAN];
 
@@ -178,9 +178,9 @@ CONST char	*string_arg;
 int
 mk_submodel( fp, name, file, treetop, meth )
 struct rt_wdb		*fp;
-CONST char	*name;
-CONST char	*file;
-CONST char	*treetop;
+const char	*name;
+const char	*file;
+const char	*treetop;
 int		meth;
 {
 	struct rt_submodel_internal *in;

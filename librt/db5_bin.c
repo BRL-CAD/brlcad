@@ -39,9 +39,9 @@ static const char RCSell[] = "@(#)$Header$ (BRL)";
  */
 int
 rt_bin_expm_export5(struct bu_external *ep,
-			CONST struct rt_db_internal *ip,
+			const struct rt_db_internal *ip,
 			double local2mm,
-			CONST struct db_i *dbip,
+			const struct db_i *dbip,
 			struct resource *resp)
 {
 	bu_log("rt_bin_expm_export5() not implemented\n");
@@ -50,9 +50,9 @@ rt_bin_expm_export5(struct bu_external *ep,
 
 int
 rt_bin_unif_export5(struct bu_external *ep,
-			CONST struct rt_db_internal *ip,
+			const struct rt_db_internal *ip,
 			double local2mm,
-			CONST struct db_i *dbip,
+			const struct db_i *dbip,
 			struct resource *resp)
 {
 	bu_log("rt_bin_unif_export5() not implemented\n");
@@ -60,9 +60,9 @@ rt_bin_unif_export5(struct bu_external *ep,
 }
 int
 rt_bin_unif_import5(struct rt_db_internal * ip,
- 			CONST struct bu_external *ep,
- 			CONST mat_t mat,
-			CONST struct db_i *dbip,
+ 			const struct bu_external *ep,
+ 			const mat_t mat,
+			const struct db_i *dbip,
 			      struct resource *resp)
 {
 	bu_log("rt_bin_unif_import5() not implemented\n");
@@ -70,9 +70,9 @@ rt_bin_unif_import5(struct rt_db_internal * ip,
 }
 int
 rt_bin_expm_import5(struct rt_db_internal * ip,
- 			CONST struct bu_external *ep,
- 			CONST mat_t mat,
-			CONST struct db_i *dbip,
+ 			const struct bu_external *ep,
+ 			const mat_t mat,
+			const struct db_i *dbip,
 			      struct resource *resp)
 {
 	bu_log("rt_bin_expm_import5() not implemented\n");
@@ -81,9 +81,9 @@ rt_bin_expm_import5(struct rt_db_internal * ip,
 
 int
 rt_bin_mime_import5(struct rt_db_internal * ip,
- 			CONST struct bu_external *ep,
- 			CONST mat_t mat,
-			CONST struct db_i *dbip,
+ 			const struct bu_external *ep,
+ 			const mat_t mat,
+			const struct db_i *dbip,
 			      struct resource *resp)
 {
 	bu_log("rt_bin_mime_import5() not implemented\n");
@@ -98,11 +98,11 @@ rt_bin_mime_import5(struct rt_db_internal * ip,
  */
 int
 rt_binunif_import5( struct rt_db_internal	*ip,
-		    CONST struct bu_external	*ep,
-		    CONST mat_t			mat,
-		    CONST struct db_i		*dbip,
+		    const struct bu_external	*ep,
+		    const mat_t			mat,
+		    const struct db_i		*dbip,
 		    struct resource		*resp,
-		    CONST int			minor_type)
+		    const int			minor_type)
 {
 	struct rt_binunif_internal	*bip;
 	int				i;
@@ -229,9 +229,9 @@ rt_binunif_dump( struct rt_binunif_internal *bip) {
  */
 int
 rt_binexpm_import5( struct rt_db_internal	*ip,
-		    CONST unsigned char		minor_type,
-		    CONST struct bu_external	*ep,
-		    CONST struct db_i		*dbip )
+		    const unsigned char		minor_type,
+		    const struct bu_external	*ep,
+		    const struct db_i		*dbip )
 {
 	bu_log("rt_binexpm_import5() not implemented yet\n");
 	return -1;
@@ -246,9 +246,9 @@ rt_binexpm_import5( struct rt_db_internal	*ip,
  */
 int
 rt_binmime_import5( struct rt_db_internal	*ip,
-		    CONST unsigned char		minor_type,
-		    CONST struct bu_external	*ep,
-		    CONST struct db_i		*dbip )
+		    const unsigned char		minor_type,
+		    const struct bu_external	*ep,
+		    const struct db_i		*dbip )
 {
 	bu_log("rt_binmime_import5() not implemented yet\n");
 	return -1;
@@ -263,10 +263,10 @@ rt_binmime_import5( struct rt_db_internal	*ip,
  */
 int
 rt_bin_import5( struct rt_db_internal		*ip,
-		CONST unsigned char		major_type,
-		CONST unsigned char		minor_type,
-		CONST struct bu_external	*ep,
-		CONST struct db_i		*dbip )
+		const unsigned char		major_type,
+		const unsigned char		minor_type,
+		const struct bu_external	*ep,
+		const struct db_i		*dbip )
 {
     RT_CK_DB_INTERNAL(ip);
 
@@ -286,11 +286,11 @@ rt_bin_import5( struct rt_db_internal		*ip,
  */
 int
 rt_binunif_export5( struct bu_external		*ep,
-		    CONST struct rt_db_internal	*ip,
+		    const struct rt_db_internal	*ip,
 		    double			local2mm,	/* we ignore */
-		    CONST struct db_i		*dbip,
+		    const struct db_i		*dbip,
 		    struct resource		*resp,
-		    CONST int			minor_type )
+		    const int			minor_type )
 {
 	struct rt_binunif_internal	*bip;
 	int				i;
@@ -404,7 +404,7 @@ rt_binunif_export5( struct bu_external		*ep,
  */
 int
 rt_binunif_describe( struct bu_vls		*str,
-		    CONST struct rt_db_internal	*ip,
+		    const struct rt_db_internal	*ip,
 		    int				verbose,
 		    double			mm2local )
 {

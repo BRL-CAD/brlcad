@@ -235,7 +235,7 @@ _LOCAL_ int
 dsk_write( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
-CONST unsigned char	*pixelp;
+const unsigned char	*pixelp;
 long	count;
 {
 	register long	bytes = count * (long) sizeof(RGBpixel);
@@ -294,7 +294,7 @@ ColorMap	*cmap;
 _LOCAL_ int
 dsk_wmap( ifp, cmap )
 FBIO	*ifp;
-CONST ColorMap	*cmap;
+const ColorMap	*cmap;
 {
 	if( cmap == (ColorMap *) NULL )
 		/* Do not write default map to file. */

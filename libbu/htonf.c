@@ -31,7 +31,7 @@ static const char libbu_htond_RCSid[] = "@(#)$Header$ (BRL)";
 void
 htonf( out, in, count )
 register unsigned char	*out;
-register CONST unsigned char	*in;
+register const unsigned char	*in;
 int			count;
 {
 #if	defined(NATURAL_IEEE)
@@ -79,7 +79,7 @@ int			count;
 void
 ntohf( out, in, count )
 register unsigned char	*out;
-register CONST unsigned char	*in;
+register const unsigned char	*in;
 int			count;
 {
 #ifdef NATURAL_IEEE

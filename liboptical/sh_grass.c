@@ -139,7 +139,7 @@ struct grass_specific {
 };
 
 /* The default values for the variables in the shader specific structure */
-static CONST
+static const
 struct grass_specific grass_defaults = {
 	grass_MAGIC,
 	0,
@@ -240,7 +240,7 @@ struct grass_specific *grass_sp;
 static void
 print_plant(str, plant)
 char *str;
-CONST struct plant *plant;
+const struct plant *plant;
 {
 	int blade, seg;
 
@@ -269,7 +269,7 @@ blade_rot(o, i, m, root)
 struct blade *o;
 struct blade *i;
 mat_t m;
-CONST point_t root;
+const point_t root;
 {
 	struct blade tmp;
 	int seg;
@@ -358,7 +358,7 @@ static void
 make_proto(grass_sp)
 struct grass_specific *grass_sp;
 {
-  static CONST point_t z_axis = { 0.0, 0.0, 1.0 };
+  static const point_t z_axis = { 0.0, 0.0, 1.0 };
   vect_t left;
   int blade, seg;
   mat_t m, r;
@@ -610,8 +610,8 @@ static void
 make_bush(pl, seed, cell_pos, grass_sp, w, r)
 struct plant 			*pl;
 double 				seed;	/* derived from cell_num */
-CONST point_t			cell_pos;
-CONST struct grass_specific 	*grass_sp;
+const point_t			cell_pos;
+const struct grass_specific 	*grass_sp;
 double				w; /* cell specific weght for count, height */
 struct grass_ray		*r;
 {
@@ -667,10 +667,10 @@ struct grass_ray		*r;
  */
 static void
 hit_blade(bl, r, swp, grass_sp, seg, ldist, blade_num, fract)
-CONST struct blade *bl;
+const struct blade *bl;
 struct grass_ray *r;
 struct shadework	*swp;	/* defined in material.h */
-CONST struct grass_specific *grass_sp;
+const struct grass_specific *grass_sp;
 int seg;
 double ldist[2];
 int blade_num;
@@ -740,11 +740,11 @@ double fract;
  */
 static void
 isect_blade(bl, root, r, swp, grass_sp, blade_num)
-CONST struct blade *bl;
-CONST point_t root;
+const struct blade *bl;
+const point_t root;
 struct grass_ray *r;
 struct shadework	*swp;	/* defined in material.h */
-CONST struct grass_specific *grass_sp;
+const struct grass_specific *grass_sp;
 int blade_num;
 {
 	double ldist[2];
@@ -840,10 +840,10 @@ iter:
 
 static void
 isect_plant(pl, r, swp, grass_sp)
-CONST struct plant *pl;
+const struct plant *pl;
 struct grass_ray *r;
 struct shadework	*swp;	/* defined in material.h */
-CONST struct grass_specific *grass_sp;
+const struct grass_specific *grass_sp;
 {
 	int i;
 

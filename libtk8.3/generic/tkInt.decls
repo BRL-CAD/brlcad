@@ -124,12 +124,12 @@ declare 20 generic {
 
 declare 21 generic {
     int TkFindStateNum (Tcl_Interp *interp, \
-	    CONST char *option, CONST TkStateMap *mapPtr, \
-	    CONST char *strKey)
+	    const char *option, const TkStateMap *mapPtr, \
+	    const char *strKey)
 }
 
 declare 22 generic {
-    char * TkFindStateString (CONST TkStateMap *mapPtr, int numKey)
+    char * TkFindStateString (const TkStateMap *mapPtr, int numKey)
 }
 
 declare 23 generic {
@@ -186,7 +186,7 @@ declare 34 generic {
 }
 
 declare 35 generic {
-    int TkGetDisplayOf (Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[], \
+    int TkGetDisplayOf (Tcl_Interp *interp, int objc, Tcl_Obj *const objv[], \
 	    Tk_Window *tkwinPtr)
 }
 
@@ -369,7 +369,7 @@ declare 77 generic {
 }
 
 declare 78 generic {
-    int TkReadBitmapFile (Display* display, Drawable d, CONST char* filename, \
+    int TkReadBitmapFile (Display* display, Drawable d, const char* filename, \
 	    unsigned int* width_return, unsigned int* height_return, \
 	    Pixmap* bitmap_return, int* x_hot_return, int* y_hot_return)
 }
@@ -485,7 +485,7 @@ declare 103 generic {
 
 declare 104 generic {
     int  TkFindStateNumObj (Tcl_Interp *interp, \
-	    Tcl_Obj *optionPtr, CONST TkStateMap *mapPtr, \
+	    Tcl_Obj *optionPtr, const TkStateMap *mapPtr, \
 	    Tcl_Obj *keyPtr)
 }
 
@@ -573,7 +573,7 @@ declare 123 mac {
 
 declare 124 mac {
     Pixmap TkpGetNativeAppBitmap (Display *display, \
- 	    CONST char *name, int *width, int *height)
+ 	    const char *name, int *width, int *height)
 }
 
 declare 125 mac {

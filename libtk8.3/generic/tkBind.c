@@ -664,7 +664,7 @@ static Tk_Uid		GetVirtualEventUid _ANSI_ARGS_((Tcl_Interp *interp,
 			    char *virtString));
 static int		HandleEventGenerate _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tk_Window main, int objc,
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 static void		InitVirtualEventTable _ANSI_ARGS_((
 			    VirtualEventTable *vetPtr));
 static PatSeq *		MatchPatterns _ANSI_ARGS_((TkDisplay *dispPtr,
@@ -2603,7 +2603,7 @@ Tk_EventObjCmd(clientData, interp, objc, objv)
     ClientData clientData;	/* Main window associated with interpreter. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     int index;
     Tk_Window tkwin;
@@ -3168,7 +3168,7 @@ HandleEventGenerate(interp, mainWin, objc, objv)
     Tcl_Interp *interp;		/* Interp for errors return and name lookup. */
     Tk_Window mainWin;		/* Main window associated with interp. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     XEvent event;    
     char *name, *p, *windowName;
@@ -3524,7 +3524,7 @@ HandleEventGenerate(interp, mainWin, objc, objv)
 		break;
 	    }
 	    case EVENT_SEND: {
-		CONST char *value;
+		const char *value;
 
 		value = Tcl_GetStringFromObj(valuePtr, NULL);
 		if (isdigit(UCHAR(value[0]))) {

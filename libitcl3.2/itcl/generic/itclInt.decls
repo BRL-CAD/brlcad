@@ -65,11 +65,11 @@ declare 12 generic {
         Tcl_Namespace **rNsPtr, char **rCmdPtr)
 }
 declare 13 generic {
-    int Itcl_EvalArgs (Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[])
+    int Itcl_EvalArgs (Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
 }
 declare 14 generic {
     Tcl_Obj* Itcl_CreateArgs (Tcl_Interp *interp, char *string, \
-        int objc, Tcl_Obj *CONST objv[])
+        int objc, Tcl_Obj *const objv[])
 }
 declare 15 generic {
     int Itcl_PushContext (Tcl_Interp *interp, ItclMember *member, \
@@ -94,39 +94,39 @@ declare 20 generic {
 }
 declare 21 generic {
     int Itcl_FindClassesCmd (ClientData clientData, Tcl_Interp *interp, \
-        int objc, Tcl_Obj *CONST objv[])
+        int objc, Tcl_Obj *const objv[])
 }
 declare 22 generic {
     int Itcl_FindObjectsCmd (ClientData clientData, Tcl_Interp *interp, \
-        int objc, Tcl_Obj *CONST objv[])
+        int objc, Tcl_Obj *const objv[])
 }
 declare 23 generic {
     int Itcl_ProtectionCmd (ClientData clientData, Tcl_Interp *interp, \
-        int objc, Tcl_Obj *CONST objv[])
+        int objc, Tcl_Obj *const objv[])
 }
 declare 24 generic {
     int Itcl_DelClassCmd (ClientData clientData, Tcl_Interp *interp, \
-        int objc, Tcl_Obj *CONST objv[])
+        int objc, Tcl_Obj *const objv[])
 }
 declare 25 generic {
     int Itcl_DelObjectCmd (ClientData clientData, Tcl_Interp *interp, \
-        int objc, Tcl_Obj *CONST objv[])
+        int objc, Tcl_Obj *const objv[])
 }
 declare 26 generic {
     int Itcl_ScopeCmd (ClientData clientData, Tcl_Interp *interp, \
-        int objc, Tcl_Obj *CONST objv[])
+        int objc, Tcl_Obj *const objv[])
 }
 declare 27 generic {
     int Itcl_CodeCmd (ClientData clientData, Tcl_Interp *interp, \
-        int objc, Tcl_Obj *CONST objv[])
+        int objc, Tcl_Obj *const objv[])
 }
 declare 28 generic {	
     int Itcl_StubCreateCmd (ClientData clientData, Tcl_Interp *interp, \
-        int objc, Tcl_Obj *CONST objv[])
+        int objc, Tcl_Obj *const objv[])
 }
 declare 29 generic {
     int Itcl_StubExistsCmd (ClientData clientData, Tcl_Interp *interp, \
-        int objc, Tcl_Obj *CONST objv[])
+        int objc, Tcl_Obj *const objv[])
 }
 declare 30 generic {
     int Itcl_IsStub (Tcl_Command cmd)
@@ -149,7 +149,7 @@ declare 33 generic {
 }
 declare 34 generic {
     int Itcl_HandleClass (ClientData clientData, Tcl_Interp *interp, \
-        int objc, Tcl_Obj *CONST objv[])
+        int objc, Tcl_Obj *const objv[])
 }
 declare 35 generic {
     int Itcl_ClassCmdResolver (Tcl_Interp *interp, char* name, \
@@ -192,7 +192,7 @@ declare 43 generic {
 
 declare 44 generic {
     int Itcl_CreateObject (Tcl_Interp *interp, char* name, ItclClass *cdefn, \
-        int objc, Tcl_Obj *CONST objv[], ItclObject **roPtr)
+        int objc, Tcl_Obj *const objv[], ItclObject **roPtr)
 }
 declare 45 generic {
     int Itcl_DeleteObject (Tcl_Interp *interp, ItclObject *contextObj)
@@ -203,7 +203,7 @@ declare 46 generic {
 }
 declare 47 generic {
     int Itcl_HandleInstance (ClientData clientData, Tcl_Interp *interp, \
-        int objc, Tcl_Obj *CONST objv[])
+        int objc, Tcl_Obj *const objv[])
 }
 declare 48 generic {
     char* Itcl_GetInstanceVar (Tcl_Interp *interp, char *name, \
@@ -221,11 +221,11 @@ declare 49 generic {
 
 declare 50 generic {
     int Itcl_BodyCmd (ClientData dummy, Tcl_Interp *interp, int objc, \
-        Tcl_Obj *CONST objv[])
+        Tcl_Obj *const objv[])
 }
 declare 51 generic {
     int Itcl_ConfigBodyCmd (ClientData dummy, Tcl_Interp *interp, int objc, \
-        Tcl_Obj *CONST objv[])
+        Tcl_Obj *const objv[])
 }
 declare 52 generic {
     int Itcl_CreateMethod (Tcl_Interp* interp, ItclClass *cdefn, char* name, \
@@ -263,7 +263,7 @@ declare 59 generic {
 declare 61 generic {
     int Itcl_EvalMemberCode (Tcl_Interp *interp, ItclMemberFunc *mfunc, \
         ItclMember *member, ItclObject *contextObj, int objc, \
-        Tcl_Obj *CONST objv[])
+        Tcl_Obj *const objv[])
 }
 declare 62 generic {
     int Itcl_CreateArgList (Tcl_Interp* interp, char* decl, int* argcPtr, \
@@ -288,14 +288,14 @@ declare 67 generic {
 }
 declare 68 generic {
     int Itcl_ExecMethod (ClientData clientData, Tcl_Interp *interp, int objc, \
-        Tcl_Obj *CONST objv[])
+        Tcl_Obj *const objv[])
 }
 declare 69 generic {
     int Itcl_ExecProc (ClientData clientData, Tcl_Interp *interp, \
-        int objc, Tcl_Obj *CONST objv[])
+        int objc, Tcl_Obj *const objv[])
 }
 declare 70 generic {
-    int Itcl_AssignArgs (Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[], \
+    int Itcl_AssignArgs (Tcl_Interp *interp, int objc, Tcl_Obj *const objv[], \
         ItclMemberFunc *mfunc)
 }
 declare 71 generic {
@@ -305,7 +305,7 @@ declare 71 generic {
 declare 72 generic {
     int Itcl_InvokeMethodIfExists (Tcl_Interp *interp, char *name, \
         ItclClass *contextClass, ItclObject *contextObj, int objc, \
-        Tcl_Obj *CONST objv[])
+        Tcl_Obj *const objv[])
 }
 #declare 73 generic {
 #    int Itcl_EvalBody (Tcl_Interp *interp, Tcl_Obj *bodyPtr)
@@ -325,39 +325,39 @@ declare 75 generic {
 }
 declare 76 generic {
     int Itcl_ClassCmd (ClientData clientData, Tcl_Interp *interp, int objc, \
-        Tcl_Obj *CONST objv[])
+        Tcl_Obj *const objv[])
 }
 declare 77 generic {
     int Itcl_ClassInheritCmd (ClientData clientData, Tcl_Interp *interp, \
-        int objc, Tcl_Obj *CONST objv[])
+        int objc, Tcl_Obj *const objv[])
 }
 declare 78 generic {
     int Itcl_ClassProtectionCmd (ClientData clientData, Tcl_Interp *interp, \
-        int objc, Tcl_Obj *CONST objv[])
+        int objc, Tcl_Obj *const objv[])
 }
 declare 79 generic {
     int Itcl_ClassConstructorCmd (ClientData clientData, Tcl_Interp *interp, \
-        int objc, Tcl_Obj *CONST objv[])
+        int objc, Tcl_Obj *const objv[])
 }
 declare 80 generic {
     int Itcl_ClassDestructorCmd (ClientData clientData, Tcl_Interp *interp, \
-        int objc, Tcl_Obj *CONST objv[])
+        int objc, Tcl_Obj *const objv[])
 }
 declare 81 generic {
     int Itcl_ClassMethodCmd (ClientData clientData, Tcl_Interp *interp, \
-        int objc, Tcl_Obj *CONST objv[])
+        int objc, Tcl_Obj *const objv[])
 }
 declare 82 generic {
     int Itcl_ClassProcCmd (ClientData clientData, Tcl_Interp *interp, \
-        int objc, Tcl_Obj *CONST objv[])
+        int objc, Tcl_Obj *const objv[])
 }
 declare 83 generic {
     int Itcl_ClassVariableCmd (ClientData clientData, Tcl_Interp *interp, \
-        int objc, Tcl_Obj *CONST objv[])
+        int objc, Tcl_Obj *const objv[])
 }
 declare 84 generic {
     int Itcl_ClassCommonCmd (ClientData clientData, Tcl_Interp *interp, \
-        int objc, Tcl_Obj *CONST objv[])
+        int objc, Tcl_Obj *const objv[])
 }
 declare 85 generic {
     int Itcl_ParseVarResolver (Tcl_Interp *interp, char* name, \
@@ -377,51 +377,51 @@ declare 87 generic {
 }
 declare 88 generic {
     int Itcl_BiIsaCmd (ClientData clientData, Tcl_Interp *interp, \
-        int objc, Tcl_Obj *CONST objv[])
+        int objc, Tcl_Obj *const objv[])
 }
 declare 89 generic {
     int Itcl_BiConfigureCmd (ClientData clientData, Tcl_Interp *interp, \
-        int objc, Tcl_Obj *CONST objv[])
+        int objc, Tcl_Obj *const objv[])
 }
 declare 90 generic {
     int Itcl_BiCgetCmd (ClientData clientData, Tcl_Interp *interp, int objc, \
-        Tcl_Obj *CONST objv[])
+        Tcl_Obj *const objv[])
 }
 declare 91 generic {
     int Itcl_BiChainCmd (ClientData dummy, Tcl_Interp *interp, int objc, \
-        Tcl_Obj *CONST objv[])
+        Tcl_Obj *const objv[])
 }
 declare 92 generic {
     int Itcl_BiInfoClassCmd (ClientData dummy, Tcl_Interp *interp, int objc, \
-        Tcl_Obj *CONST objv[])
+        Tcl_Obj *const objv[])
 }
 declare 93 generic {
     int Itcl_BiInfoInheritCmd (ClientData dummy, Tcl_Interp *interp, int objc, \
-        Tcl_Obj *CONST objv[])
+        Tcl_Obj *const objv[])
 }
 declare 94 generic {
     int Itcl_BiInfoHeritageCmd (ClientData dummy, Tcl_Interp *interp, \
-        int objc, Tcl_Obj *CONST objv[])
+        int objc, Tcl_Obj *const objv[])
 }
 declare 95 generic {
     int Itcl_BiInfoFunctionCmd (ClientData dummy, Tcl_Interp *interp, \
-        int objc, Tcl_Obj *CONST objv[])
+        int objc, Tcl_Obj *const objv[])
 }
 declare 96 generic {
     int Itcl_BiInfoVariableCmd (ClientData dummy, Tcl_Interp *interp, \
-        int objc, Tcl_Obj *CONST objv[])
+        int objc, Tcl_Obj *const objv[])
 }
 declare 97 generic {
     int Itcl_BiInfoBodyCmd (ClientData dummy, Tcl_Interp *interp, int objc, \
-        Tcl_Obj *CONST objv[])
+        Tcl_Obj *const objv[])
 }
 declare 98 generic {
     int Itcl_BiInfoArgsCmd (ClientData dummy, Tcl_Interp *interp, int objc, \
-        Tcl_Obj *CONST objv[])
+        Tcl_Obj *const objv[])
 }
 declare 99 generic {
     int Itcl_DefaultInfoCmd (ClientData dummy, Tcl_Interp *interp, int objc, \
-        Tcl_Obj *CONST objv[])
+        Tcl_Obj *const objv[])
 }
 
 
@@ -457,15 +457,15 @@ declare 106 generic {
 }
 declare 107 generic {
     int Itcl_EnsembleCmd (ClientData clientData, Tcl_Interp *interp, int objc, \
-        Tcl_Obj *CONST objv[])
+        Tcl_Obj *const objv[])
 }
 declare 108 generic {
     int Itcl_EnsPartCmd (ClientData clientData, Tcl_Interp *interp, int objc, \
-        Tcl_Obj *CONST objv[])
+        Tcl_Obj *const objv[])
 }
 declare 109 generic {
     int Itcl_EnsembleErrorCmd (ClientData clientData, Tcl_Interp *interp, \
-        int objc, Tcl_Obj *CONST objv[])
+        int objc, Tcl_Obj *const objv[])
 }
 
 

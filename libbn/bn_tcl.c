@@ -144,8 +144,8 @@ void
 bn_mat_scale_about_pt_wrapper(statusp, mat, pt, scale)
 int *statusp;
 mat_t mat;
-CONST point_t pt;
-CONST double scale;
+const point_t pt;
+const double scale;
 {
 	*statusp = bn_mat_scale_about_pt(mat, pt, scale);
 }
@@ -168,7 +168,7 @@ mat_t m;
 
 static void
 bn_hdivide(o, i)
-CONST hvect_t i;
+const hvect_t i;
 vect_t o;
 {
 	HDIVIDE(o, i);
@@ -177,9 +177,9 @@ vect_t o;
 static void
 bn_vjoin1(o, pnt, scale, dir )
 point_t o;
-CONST point_t pnt;
+const point_t pnt;
 double scale;
-CONST vect_t dir;
+const vect_t dir;
 {
 	VJOIN1( o, pnt, scale, dir );
 }

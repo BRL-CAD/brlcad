@@ -40,7 +40,7 @@
 int
 regcomp(re, str, flags)
 regex_t *re;
-CONST char *str;
+const char *str;
 int flags;
 {
 	size_t len;
@@ -61,12 +61,12 @@ int flags;
 int
 regexec(re, str, nmatch, pmatch, flags)
 regex_t *re;
-CONST char *str;
+const char *str;
 size_t nmatch;
 regmatch_t pmatch[];
 int flags;
 {
-	CONST char *start;
+	const char *start;
 	size_t len;
 	int f = flags;
 

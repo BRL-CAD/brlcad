@@ -540,7 +540,7 @@ char *buf;
 	}
 
 	/* Load the desired portion of the model */
-	if( rt_gettrees(rtip, argc, (CONST char **)argv, npsw) < 0 )
+	if( rt_gettrees(rtip, argc, (const char **)argv, npsw) < 0 )
 		fprintf(stderr,"rt_gettrees(%s) FAILED\n", argv[0]);
 
 	/* In case it changed from startup time via an OPT command */
@@ -935,7 +935,7 @@ jmp_buf		bu_jmpbuf;		/* for BU_SETJMP() */
 
 void
 bu_bomb(str)
-CONST char *str;
+const char *str;
 {
 	char	*bomb = "RTSRV terminated by rt_bomb()\n";
 

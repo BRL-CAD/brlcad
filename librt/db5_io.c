@@ -56,9 +56,9 @@ const int db5_enc_len[4] = {
  */
 int
 db5_header_is_valid( hp )
-CONST unsigned char *hp;
+const unsigned char *hp;
 {
-	CONST struct db5_ondisk_header *odp = (CONST struct db5_ondisk_header *)hp;
+	const struct db5_ondisk_header *odp = (const struct db5_ondisk_header *)hp;
 
 	if( odp->db5h_magic1 != DB5HDR_MAGIC1 )  return 0;
 	if( hp[7] != DB5HDR_MAGIC2 )  return 0;
@@ -122,7 +122,7 @@ long len;
 int
 db5_decode_length( lenp, cp, format )
 long			*lenp;
-CONST unsigned char	*cp;
+const unsigned char	*cp;
 int			format;
 {
 	switch( format )  {
@@ -162,7 +162,7 @@ int			format;
 int
 db5_decode_signed( lenp, cp, format )
 long			*lenp;
-CONST unsigned char	*cp;
+const unsigned char	*cp;
 int			format;
 {
 	switch( format )  {
@@ -231,7 +231,7 @@ db5_encode_length(
 int
 db5_crack_disk_header( rip, cp )
 struct db5_raw_internal		*rip;
-CONST unsigned char		*cp;
+const unsigned char		*cp;
 {
 	if( cp[0] != DB5HDR_MAGIC1 )  {
 		bu_log("db5_crack_disk_header() bad magic1 -- database has become corrupted\n expected x%x, got x%x\n",
@@ -295,7 +295,7 @@ CONST unsigned char		*cp;
 const unsigned char *
 db5_get_raw_internal_ptr( struct db5_raw_internal *rip, const unsigned char *ip)
 {
-	CONST unsigned char	*cp = ip;
+	const unsigned char	*cp = ip;
 
 	if( db5_crack_disk_header( rip, cp ) < 0 )  return NULL;
 	cp += sizeof(struct db5_ondisk_header);
@@ -324,7 +324,7 @@ db5_get_raw_internal_ptr( struct db5_raw_internal *rip, const unsigned char *ip)
 	if( rip->h_name_present )  {
 		cp += db5_decode_length( &rip->name.ext_nbytes,
 			cp, rip->h_name_width );
-		rip->name.ext_buf = (genptr_t)cp;	/* discard CONST */
+		rip->name.ext_buf = (genptr_t)cp;	/* discard const */
 		cp += rip->name.ext_nbytes;
 	}
 
@@ -332,7 +332,7 @@ db5_get_raw_internal_ptr( struct db5_raw_internal *rip, const unsigned char *ip)
 	if( rip->a_present )  {
 		cp += db5_decode_length( &rip->attributes.ext_nbytes,
 			cp, rip->a_width );
-		rip->attributes.ext_buf = (genptr_t)cp;	/* discard CONST */
+		rip->attributes.ext_buf = (genptr_t)cp;	/* discard const */
 		cp += rip->attributes.ext_nbytes;
 	}
 
@@ -340,7 +340,7 @@ db5_get_raw_internal_ptr( struct db5_raw_internal *rip, const unsigned char *ip)
 	if( rip->b_present )  {
 		cp += db5_decode_length( &rip->body.ext_nbytes,
 			cp, rip->b_width );
-		rip->body.ext_buf = (genptr_t)cp;	/* discard CONST */
+		rip->body.ext_buf = (genptr_t)cp;	/* discard const */
 		cp += rip->body.ext_nbytes;
 	}
 
@@ -434,7 +434,7 @@ FILE			*fp;
 	if( rip->h_name_present )  {
 		cp += db5_decode_length( &rip->name.ext_nbytes,
 			cp, rip->h_name_width );
-		rip->name.ext_buf = (genptr_t)cp;	/* discard CONST */
+		rip->name.ext_buf = (genptr_t)cp;	/* discard const */
 		cp += rip->name.ext_nbytes;
 	}
 
@@ -442,7 +442,7 @@ FILE			*fp;
 	if( rip->a_present )  {
 		cp += db5_decode_length( &rip->attributes.ext_nbytes,
 			cp, rip->a_width );
-		rip->attributes.ext_buf = (genptr_t)cp;	/* discard CONST */
+		rip->attributes.ext_buf = (genptr_t)cp;	/* discard const */
 		cp += rip->attributes.ext_nbytes;
 	}
 
@@ -450,7 +450,7 @@ FILE			*fp;
 	if( rip->b_present )  {
 		cp += db5_decode_length( &rip->body.ext_nbytes,
 			cp, rip->b_width );
-		rip->body.ext_buf = (genptr_t)cp;	/* discard CONST */
+		rip->body.ext_buf = (genptr_t)cp;	/* discard const */
 		cp += rip->body.ext_nbytes;
 	}
 
@@ -469,10 +469,10 @@ void
 db5_export_object3(
 	struct bu_external *out,
 	int dli,
-	CONST char *name,
-	CONST unsigned char hidden,
-	CONST struct bu_external *attrib,
-	CONST struct bu_external *body,
+	const char *name,
+	const unsigned char hidden,
+	const struct bu_external *attrib,
+	const struct bu_external *body,
 	int major,
 	int minor,
 	int a_zzz,
@@ -790,7 +790,7 @@ void
 db5_export_attributes( struct bu_external *ext, const struct bu_attribute_value_set *avs )
 {
 	int	need = 0;
-	CONST struct bu_attribute_value_pair	*avpp;
+	const struct bu_attribute_value_pair	*avpp;
 	char	*cp;
 	int	i;
 
@@ -1025,7 +1025,7 @@ int db5_update_ident( struct db_i *dbip, const char *title, double local2mm )
 int
 db5_fwrite_ident( fp, title, local2mm )
 FILE		*fp;
-CONST char	*title;
+const char	*title;
 double		local2mm;
 {
 	struct bu_attribute_value_set avs;
@@ -1098,7 +1098,7 @@ rt_db_cvt_to_external5(
 	double conv2mm,
 	struct db_i *dbip,
 	struct resource *resp,
-	CONST int major)
+	const int major)
 {
 	struct bu_external	attributes;
 	struct bu_external	body;
@@ -1278,7 +1278,7 @@ rt_db_put_internal5(
 	struct db_i		*dbip,
 	struct rt_db_internal	*ip,
 	struct resource		*resp,
-	CONST int		major)
+	const int		major)
 {
 	struct bu_external	ext;
 

@@ -104,7 +104,7 @@ char	*argv[];
     int		rle_cnt, rle_err;
     char	*err_fname;
       
-    static CONST char *comp_ops[NUM_OPS] =
+    static const char *comp_ops[NUM_OPS] =
 	 { "clear",
 	   "over",
 	   "in",

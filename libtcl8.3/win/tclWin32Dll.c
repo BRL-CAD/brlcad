@@ -46,75 +46,75 @@ static int platformId;		/* Running under NT, or 95/98? */
 static TclWinProcs asciiProcs = {
     0,
 
-    (BOOL (WINAPI *)(CONST TCHAR *, LPDCB)) BuildCommDCBA,
+    (BOOL (WINAPI *)(const TCHAR *, LPDCB)) BuildCommDCBA,
     (TCHAR *(WINAPI *)(TCHAR *)) CharLowerA,
-    (BOOL (WINAPI *)(CONST TCHAR *, CONST TCHAR *, BOOL)) CopyFileA,
-    (BOOL (WINAPI *)(CONST TCHAR *, LPSECURITY_ATTRIBUTES)) CreateDirectoryA,
-    (HANDLE (WINAPI *)(CONST TCHAR *, DWORD, DWORD, SECURITY_ATTRIBUTES *, 
+    (BOOL (WINAPI *)(const TCHAR *, const TCHAR *, BOOL)) CopyFileA,
+    (BOOL (WINAPI *)(const TCHAR *, LPSECURITY_ATTRIBUTES)) CreateDirectoryA,
+    (HANDLE (WINAPI *)(const TCHAR *, DWORD, DWORD, SECURITY_ATTRIBUTES *, 
 	    DWORD, DWORD, HANDLE)) CreateFileA,
-    (BOOL (WINAPI *)(CONST TCHAR *, TCHAR *, LPSECURITY_ATTRIBUTES, 
-	    LPSECURITY_ATTRIBUTES, BOOL, DWORD, LPVOID, CONST TCHAR *, 
+    (BOOL (WINAPI *)(const TCHAR *, TCHAR *, LPSECURITY_ATTRIBUTES, 
+	    LPSECURITY_ATTRIBUTES, BOOL, DWORD, LPVOID, const TCHAR *, 
 	    LPSTARTUPINFOA, LPPROCESS_INFORMATION)) CreateProcessA,
-    (BOOL (WINAPI *)(CONST TCHAR *)) DeleteFileA,
-    (HANDLE (WINAPI *)(CONST TCHAR *, WIN32_FIND_DATAT *)) FindFirstFileA,
+    (BOOL (WINAPI *)(const TCHAR *)) DeleteFileA,
+    (HANDLE (WINAPI *)(const TCHAR *, WIN32_FIND_DATAT *)) FindFirstFileA,
     (BOOL (WINAPI *)(HANDLE, WIN32_FIND_DATAT *)) FindNextFileA,
     (BOOL (WINAPI *)(WCHAR *, LPDWORD)) GetComputerNameA,
     (DWORD (WINAPI *)(DWORD, WCHAR *)) GetCurrentDirectoryA,
-    (DWORD (WINAPI *)(CONST TCHAR *)) GetFileAttributesA,
-    (DWORD (WINAPI *)(CONST TCHAR *, DWORD nBufferLength, WCHAR *, 
+    (DWORD (WINAPI *)(const TCHAR *)) GetFileAttributesA,
+    (DWORD (WINAPI *)(const TCHAR *, DWORD nBufferLength, WCHAR *, 
 	    TCHAR **)) GetFullPathNameA,
     (DWORD (WINAPI *)(HMODULE, WCHAR *, int)) GetModuleFileNameA,
-    (DWORD (WINAPI *)(CONST TCHAR *, WCHAR *, DWORD)) GetShortPathNameA,
-    (UINT (WINAPI *)(CONST TCHAR *, CONST TCHAR *, UINT uUnique, 
+    (DWORD (WINAPI *)(const TCHAR *, WCHAR *, DWORD)) GetShortPathNameA,
+    (UINT (WINAPI *)(const TCHAR *, const TCHAR *, UINT uUnique, 
 	    WCHAR *)) GetTempFileNameA,
     (DWORD (WINAPI *)(DWORD, WCHAR *)) GetTempPathA,
-    (BOOL (WINAPI *)(CONST TCHAR *, WCHAR *, DWORD, LPDWORD, LPDWORD, LPDWORD,
+    (BOOL (WINAPI *)(const TCHAR *, WCHAR *, DWORD, LPDWORD, LPDWORD, LPDWORD,
 	    WCHAR *, DWORD)) GetVolumeInformationA,
-    (HINSTANCE (WINAPI *)(CONST TCHAR *)) LoadLibraryA,
-    (TCHAR (WINAPI *)(WCHAR *, CONST TCHAR *)) lstrcpyA,
-    (BOOL (WINAPI *)(CONST TCHAR *, CONST TCHAR *)) MoveFileA,
-    (BOOL (WINAPI *)(CONST TCHAR *)) RemoveDirectoryA,
-    (DWORD (WINAPI *)(CONST TCHAR *, CONST TCHAR *, CONST TCHAR *, DWORD, 
+    (HINSTANCE (WINAPI *)(const TCHAR *)) LoadLibraryA,
+    (TCHAR (WINAPI *)(WCHAR *, const TCHAR *)) lstrcpyA,
+    (BOOL (WINAPI *)(const TCHAR *, const TCHAR *)) MoveFileA,
+    (BOOL (WINAPI *)(const TCHAR *)) RemoveDirectoryA,
+    (DWORD (WINAPI *)(const TCHAR *, const TCHAR *, const TCHAR *, DWORD, 
 	    WCHAR *, TCHAR **)) SearchPathA,
-    (BOOL (WINAPI *)(CONST TCHAR *)) SetCurrentDirectoryA,
-    (BOOL (WINAPI *)(CONST TCHAR *, DWORD)) SetFileAttributesA,
+    (BOOL (WINAPI *)(const TCHAR *)) SetCurrentDirectoryA,
+    (BOOL (WINAPI *)(const TCHAR *, DWORD)) SetFileAttributesA,
 };
 
 static TclWinProcs unicodeProcs = {
     1,
 
-    (BOOL (WINAPI *)(CONST TCHAR *, LPDCB)) BuildCommDCBW,
+    (BOOL (WINAPI *)(const TCHAR *, LPDCB)) BuildCommDCBW,
     (TCHAR *(WINAPI *)(TCHAR *)) CharLowerW,
-    (BOOL (WINAPI *)(CONST TCHAR *, CONST TCHAR *, BOOL)) CopyFileW,
-    (BOOL (WINAPI *)(CONST TCHAR *, LPSECURITY_ATTRIBUTES)) CreateDirectoryW,
-    (HANDLE (WINAPI *)(CONST TCHAR *, DWORD, DWORD, SECURITY_ATTRIBUTES *, 
+    (BOOL (WINAPI *)(const TCHAR *, const TCHAR *, BOOL)) CopyFileW,
+    (BOOL (WINAPI *)(const TCHAR *, LPSECURITY_ATTRIBUTES)) CreateDirectoryW,
+    (HANDLE (WINAPI *)(const TCHAR *, DWORD, DWORD, SECURITY_ATTRIBUTES *, 
 	    DWORD, DWORD, HANDLE)) CreateFileW,
-    (BOOL (WINAPI *)(CONST TCHAR *, TCHAR *, LPSECURITY_ATTRIBUTES, 
-	    LPSECURITY_ATTRIBUTES, BOOL, DWORD, LPVOID, CONST TCHAR *, 
+    (BOOL (WINAPI *)(const TCHAR *, TCHAR *, LPSECURITY_ATTRIBUTES, 
+	    LPSECURITY_ATTRIBUTES, BOOL, DWORD, LPVOID, const TCHAR *, 
 	    LPSTARTUPINFOA, LPPROCESS_INFORMATION)) CreateProcessW,
-    (BOOL (WINAPI *)(CONST TCHAR *)) DeleteFileW,
-    (HANDLE (WINAPI *)(CONST TCHAR *, WIN32_FIND_DATAT *)) FindFirstFileW,
+    (BOOL (WINAPI *)(const TCHAR *)) DeleteFileW,
+    (HANDLE (WINAPI *)(const TCHAR *, WIN32_FIND_DATAT *)) FindFirstFileW,
     (BOOL (WINAPI *)(HANDLE, WIN32_FIND_DATAT *)) FindNextFileW,
     (BOOL (WINAPI *)(WCHAR *, LPDWORD)) GetComputerNameW,
     (DWORD (WINAPI *)(DWORD, WCHAR *)) GetCurrentDirectoryW,
-    (DWORD (WINAPI *)(CONST TCHAR *)) GetFileAttributesW,
-    (DWORD (WINAPI *)(CONST TCHAR *, DWORD nBufferLength, WCHAR *, 
+    (DWORD (WINAPI *)(const TCHAR *)) GetFileAttributesW,
+    (DWORD (WINAPI *)(const TCHAR *, DWORD nBufferLength, WCHAR *, 
 	    TCHAR **)) GetFullPathNameW,
     (DWORD (WINAPI *)(HMODULE, WCHAR *, int)) GetModuleFileNameW,
-    (DWORD (WINAPI *)(CONST TCHAR *, WCHAR *, DWORD)) GetShortPathNameW,
-    (UINT (WINAPI *)(CONST TCHAR *, CONST TCHAR *, UINT uUnique, 
+    (DWORD (WINAPI *)(const TCHAR *, WCHAR *, DWORD)) GetShortPathNameW,
+    (UINT (WINAPI *)(const TCHAR *, const TCHAR *, UINT uUnique, 
 	    WCHAR *)) GetTempFileNameW,
     (DWORD (WINAPI *)(DWORD, WCHAR *)) GetTempPathW,
-    (BOOL (WINAPI *)(CONST TCHAR *, WCHAR *, DWORD, LPDWORD, LPDWORD, LPDWORD, 
+    (BOOL (WINAPI *)(const TCHAR *, WCHAR *, DWORD, LPDWORD, LPDWORD, LPDWORD, 
 	    WCHAR *, DWORD)) GetVolumeInformationW,
-    (HINSTANCE (WINAPI *)(CONST TCHAR *)) LoadLibraryW,
-    (TCHAR (WINAPI *)(WCHAR *, CONST TCHAR *)) lstrcpyW,
-    (BOOL (WINAPI *)(CONST TCHAR *, CONST TCHAR *)) MoveFileW,
-    (BOOL (WINAPI *)(CONST TCHAR *)) RemoveDirectoryW,
-    (DWORD (WINAPI *)(CONST TCHAR *, CONST TCHAR *, CONST TCHAR *, DWORD, 
+    (HINSTANCE (WINAPI *)(const TCHAR *)) LoadLibraryW,
+    (TCHAR (WINAPI *)(WCHAR *, const TCHAR *)) lstrcpyW,
+    (BOOL (WINAPI *)(const TCHAR *, const TCHAR *)) MoveFileW,
+    (BOOL (WINAPI *)(const TCHAR *)) RemoveDirectoryW,
+    (DWORD (WINAPI *)(const TCHAR *, const TCHAR *, const TCHAR *, DWORD, 
 	    WCHAR *, TCHAR **)) SearchPathW,
-    (BOOL (WINAPI *)(CONST TCHAR *)) SetCurrentDirectoryW,
-    (BOOL (WINAPI *)(CONST TCHAR *, DWORD)) SetFileAttributesW,
+    (BOOL (WINAPI *)(const TCHAR *)) SetCurrentDirectoryW,
+    (BOOL (WINAPI *)(const TCHAR *, DWORD)) SetFileAttributesW,
 };
 
 TclWinProcs *tclWinProcs;
@@ -468,7 +468,7 @@ TclWinSetInterfaces(
 
 TCHAR *
 Tcl_WinUtfToTChar(string, len, dsPtr)
-    CONST char *string;		/* Source string in UTF-8. */
+    const char *string;		/* Source string in UTF-8. */
     int len;			/* Source string length in bytes, or < 0 for
 				 * strlen(). */
     Tcl_DString *dsPtr;		/* Uninitialized or free DString in which 
@@ -480,7 +480,7 @@ Tcl_WinUtfToTChar(string, len, dsPtr)
 
 char *
 Tcl_WinTCharToUtf(string, len, dsPtr)
-    CONST TCHAR *string;	/* Source string in Unicode when running
+    const TCHAR *string;	/* Source string in Unicode when running
 				 * NT, ANSI when running 95. */
     int len;			/* Source string length in bytes, or < 0 for
 				 * platform-specific string length. */
@@ -488,5 +488,5 @@ Tcl_WinTCharToUtf(string, len, dsPtr)
 				 * the converted string is stored. */
 {
     return Tcl_ExternalToUtfDString(tclWinTCharEncoding, 
-	    (CONST char *) string, len, dsPtr);
+	    (const char *) string, len, dsPtr);
 }

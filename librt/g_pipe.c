@@ -421,7 +421,7 @@ next_pt:
  */
 void
 rt_pipe_print( stp )
-register CONST struct soltab *stp;
+register const struct soltab *stp;
 {
 /*	register struct bu_list *pipe =
 		(struct bu_list *)stp->st_specific; */
@@ -1548,10 +1548,10 @@ int			full_circle;
 HIDDEN void
 draw_linear_seg( vhead, p1, or1, ir1, p2, or2, ir2, v1, v2 )
 struct bu_list			*vhead;
-CONST point_t			p1,p2;
-CONST fastf_t			or1,ir1,or2,ir2;
-CONST vect_t			v1;
-CONST vect_t			v2;
+const point_t			p1,p2;
+const fastf_t			or1,ir1,or2,ir2;
+const vect_t			v1;
+const vect_t			v2;
 {
 	point_t pt;
 
@@ -1596,14 +1596,14 @@ CONST vect_t			v2;
 HIDDEN void
 draw_pipe_bend( vhead, center, end, radius, angle, v1, v2, norm, or, ir, f1, f2, seg_count )
 struct bu_list			*vhead;
-CONST point_t			center;
-CONST point_t			end;
-CONST fastf_t			radius;
-CONST fastf_t			angle;
-CONST vect_t			v1,v2,norm;
-CONST fastf_t			or,ir;
+const point_t			center;
+const point_t			end;
+const fastf_t			radius;
+const fastf_t			angle;
+const vect_t			v1,v2,norm;
+const fastf_t			or,ir;
 vect_t				f1,f2;
-CONST int			seg_count;
+const int			seg_count;
 {
 
 	point_t	tmp_center, tmp_start, tmp_end;
@@ -1693,8 +1693,8 @@ int
 rt_pipe_plot( vhead, ip, ttol, tol )
 struct bu_list		*vhead;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol		*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol		*tol;
 {
 	register struct wdb_pipept		*prevp;
 	register struct wdb_pipept		*curp;
@@ -3250,8 +3250,8 @@ rt_pipe_tess( r, m, ip, ttol, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol		*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol		*tol;
 {
 	struct wdb_pipept	*pp1;
 	struct wdb_pipept	*pp2;
@@ -3440,9 +3440,9 @@ next_pt:
 int
 rt_pipe_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-register CONST mat_t		mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	register struct exported_pipept *exp;
 	register struct wdb_pipept	*ptp;
@@ -3497,9 +3497,9 @@ CONST struct db_i		*dbip;
 int
 rt_pipe_export( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_pipe_internal	*pip;
 	struct bu_list		*headp;
@@ -3563,9 +3563,9 @@ CONST struct db_i		*dbip;
 int
 rt_pipe_import5( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-register CONST mat_t		mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	register struct wdb_pipept	*ptp;
 	struct rt_pipe_internal		*pipe;
@@ -3624,9 +3624,9 @@ CONST struct db_i		*dbip;
 int
 rt_pipe_export5( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_pipe_internal	*pip;
 	struct bu_list		*headp;
@@ -3690,7 +3690,7 @@ CONST struct db_i		*dbip;
 int
 rt_pipe_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {
@@ -3874,8 +3874,8 @@ next_pt:
 int
 rt_pipe_tclget( interp, intern, attr )
 Tcl_Interp			*interp;
-CONST struct rt_db_internal	*intern;
-CONST char			*attr;
+const struct rt_db_internal	*intern;
+const char			*attr;
 {
 	register struct rt_pipe_internal *pipe=(struct rt_pipe_internal *)intern->idb_ptr;
 	struct wdb_pipept *ptp;

@@ -35,7 +35,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "spectrum.h"
 
-static CONST double rt_NTSC_R[][2] = {
+static const double rt_NTSC_R[][2] = {
 	{543, 0.0001},
 	{552, 0.05},
 	{562, 0.2},
@@ -59,7 +59,7 @@ static CONST double rt_NTSC_R[][2] = {
 	{-1, -1}
 };
 
-static CONST double rt_NTSC_G[][2] = {
+static const double rt_NTSC_G[][2] = {
 	{456, 0.0001},
 	{475, 0.05},
 	{480, 0.1},
@@ -83,7 +83,7 @@ static CONST double rt_NTSC_G[][2] = {
 	{-1, -1}
 };
 
-static CONST double rt_NTSC_B[][2] = {
+static const double rt_NTSC_B[][2] = {
 	{347, 0.0001},
 	{373, 0.05},
 	{385, 0.1},
@@ -127,7 +127,7 @@ rt_spect_make_NTSC_RGB( rp, gp, bp, tabp )
 struct bn_tabdata		**rp;
 struct bn_tabdata		**gp;
 struct bn_tabdata		**bp;
-CONST struct bn_table		*tabp;
+const struct bn_table		*tabp;
 {
 	BN_CK_TABLE(tabp);
 
@@ -165,7 +165,7 @@ bu_log("ntsc_B: area=%g\n", bn_tabdata_area2(rt_NTSC_b_tabdata) );
  *  Gives the XYZ coordinates of the NTSC primaries and D6500 white.
  *  Note:  X+Y+Z=1 for primaries (cf. equations of pg.54)
  */
-CONST static point_t      rgb_NTSC[4] = {
+const static point_t      rgb_NTSC[4] = {
     {0.670,     0.330,      0.000},     /* red */
     {0.210,     0.710,      0.080},     /* green */
     {0.140,     0.080,      0.780},     /* blue */
@@ -258,7 +258,7 @@ mat_t	xyz2rgb;
  */
 int
 rt_clr__cspace_to_xyz (cspace, rgb2xyz)
-CONST point_t	cspace[4];
+const point_t	cspace[4];
 mat_t		rgb2xyz;
 {
 	int     ii, jj, kk, tmp_i, ind[3];
@@ -335,10 +335,10 @@ mat_t		rgb2xyz;
 void
 rt_spect_curve_to_xyz( xyz, tabp, cie_x, cie_y, cie_z )
 point_t			xyz;
-CONST struct bn_tabdata	*tabp;
-CONST struct bn_tabdata	*cie_x;
-CONST struct bn_tabdata	*cie_y;
-CONST struct bn_tabdata	*cie_z;
+const struct bn_tabdata	*tabp;
+const struct bn_tabdata	*cie_x;
+const struct bn_tabdata	*cie_y;
+const struct bn_tabdata	*cie_z;
 {
 	FAST fastf_t	tab_area;
 
@@ -376,10 +376,10 @@ rt_log(" tab_area = %g\n", tab_area);
 void
 rt_spect_rgb_to_curve( tabp, rgb, ntsc_r, ntsc_g, ntsc_b )
 struct bn_tabdata	*tabp;
-CONST point_t		rgb;
-CONST struct bn_tabdata	*ntsc_r;
-CONST struct bn_tabdata	*ntsc_g;
-CONST struct bn_tabdata	*ntsc_b;
+const point_t		rgb;
+const struct bn_tabdata	*ntsc_r;
+const struct bn_tabdata	*ntsc_g;
+const struct bn_tabdata	*ntsc_b;
 {
 	bn_tabdata_blend3( tabp,
 		rgb[0], ntsc_r,
@@ -400,10 +400,10 @@ XXX Converting rgb to a curve, directly, should be easy.
 void
 rt_spect_xyz_to_curve( tabp, xyz, cie_x, cie_y, cie_z )
 struct bn_tabdata	*tabp;
-CONST point_t		xyz;
-CONST struct bn_tabdata	*cie_x;
-CONST struct bn_tabdata	*cie_y;
-CONST struct bn_tabdata	*cie_z;
+const point_t		xyz;
+const struct bn_tabdata	*cie_x;
+const struct bn_tabdata	*cie_y;
+const struct bn_tabdata	*cie_z;
 {
 	bn_tabdata_blend3( tabp,
 		xyz[X], cie_x,

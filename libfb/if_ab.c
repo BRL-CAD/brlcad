@@ -528,11 +528,11 @@ _LOCAL_ int
 ab_write( ifp, x, y, pixelp, count )
 register FBIO	*ifp;
 int		x, y;
-CONST unsigned char	*pixelp;
+const unsigned char	*pixelp;
 int		count;
 {
 	register short		scan_count;	/* # pix on this scanline */
-	register CONST unsigned char	*cp;
+	register const unsigned char	*cp;
 	int			ret;
 	int			xoff, yoff;
 

@@ -43,7 +43,7 @@ static const char RCSell[] = "@(#)$Header$ (BRL)";
 RT_EXTERN(int rt_sph_prep, (struct soltab *stp, struct rt_db_internal *ip,
 	struct rt_i *rtip));
 
-CONST struct bu_structparse rt_ell_parse[] = {
+const struct bu_structparse rt_ell_parse[] = {
     { "%f", 3, "V", offsetof(struct rt_ell_internal, v[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "A", offsetof(struct rt_ell_internal, a[X]), BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "B", offsetof(struct rt_ell_internal, b[X]), BU_STRUCTPARSE_FUNC_NULL },
@@ -319,7 +319,7 @@ struct rt_i		*rtip;
  */
 void
 rt_ell_print( stp )
-register CONST struct soltab *stp;
+register const struct soltab *stp;
 {
 	register struct ell_specific *ell =
 		(struct ell_specific *)stp->st_specific;
@@ -627,8 +627,8 @@ int
 rt_ell_plot( vhead, ip, ttol, tol )
 struct bu_list		*vhead;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol	*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol	*tol;
 {
 	register int		i;
 	struct rt_ell_internal	*eip;
@@ -751,8 +751,8 @@ rt_ell_tess( r, m, ip, ttol, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol	*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol	*tol;
 {
 	LOCAL mat_t	R;
 	LOCAL mat_t	S;
@@ -1125,9 +1125,9 @@ fail:
 int
 rt_ell_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-register CONST mat_t		mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	struct rt_ell_internal	*eip;
 	union record		*rp;
@@ -1166,9 +1166,9 @@ CONST struct db_i		*dbip;
 int
 rt_ell_export( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_ell_internal	*tip;
 	union record		*rec;
@@ -1205,9 +1205,9 @@ CONST struct db_i		*dbip;
 int
 rt_ell_import5( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-register CONST mat_t		mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	struct rt_ell_internal	*eip;
 	fastf_t			vec[ELEMENTS_PER_VECT*4];
@@ -1248,9 +1248,9 @@ CONST struct db_i		*dbip;
 int
 rt_ell_export5( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_ell_internal	*eip;
 	fastf_t			vec[ELEMENTS_PER_VECT*4];
@@ -1286,7 +1286,7 @@ CONST struct db_i		*dbip;
 int
 rt_ell_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {
@@ -1366,7 +1366,7 @@ struct rt_db_internal	*ip;
  *  In order to orient loop CCW, need to start with 0,1-->0,0 transition
  *  at the south pole.
  */
-static CONST fastf_t rt_ell_uvw[5*ELEMENTS_PER_VECT] = {
+static const fastf_t rt_ell_uvw[5*ELEMENTS_PER_VECT] = {
 	0, 1, 0,
 	0, 0, 0,
 	1, 0, 0,
@@ -1382,7 +1382,7 @@ rt_ell_tnurb( r, m, ip, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-CONST struct bn_tol		*tol;
+const struct bn_tol		*tol;
 {
 	LOCAL mat_t	R;
 	LOCAL mat_t	S;
@@ -1567,7 +1567,7 @@ VPRINT("surf(u,v)", param);
 static void
 nmg_sphere_face_snurb( fu, m )
 struct faceuse	*fu;
-CONST matp_t	m;
+const matp_t	m;
 {
 	struct face_g_snurb	*fg;
 	FAST fastf_t root2_2;

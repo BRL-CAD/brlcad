@@ -70,7 +70,7 @@ struct soltab *stp;
 struct bot_specific *bot;
 fastf_t		*ap, *bp, *cp;
 int		face_no;
-CONST struct bn_tol	*tol;
+const struct bn_tol	*tol;
 {
 	register struct tri_specific *trip;
 	vect_t work;

@@ -54,7 +54,7 @@ TkStateParseProc(clientData, interp, tkwin, value, widgRec, offset)
     ClientData clientData;		/* some flags.*/
     Tcl_Interp *interp;			/* Used for reporting errors. */
     Tk_Window tkwin;			/* Window containing canvas widget. */
-    CONST char *value;			/* Value of option. */
+    const char *value;			/* Value of option. */
     char *widgRec;			/* Pointer to record for item. */
     int offset;				/* Offset into item. */
 {
@@ -176,7 +176,7 @@ TkOrientParseProc(clientData, interp, tkwin, value, widgRec, offset)
     ClientData clientData;		/* some flags.*/
     Tcl_Interp *interp;			/* Used for reporting errors. */
     Tk_Window tkwin;			/* Window containing canvas widget. */
-    CONST char *value;			/* Value of option. */
+    const char *value;			/* Value of option. */
     char *widgRec;			/* Pointer to record for item. */
     int offset;				/* Offset into item. */
 {
@@ -264,13 +264,13 @@ TkOffsetParseProc(clientData, interp, tkwin, value, widgRec, offset)
     ClientData clientData;	/* not used */
     Tcl_Interp *interp;		/* Interpreter to send results back to */
     Tk_Window tkwin;		/* Window on same display as tile */
-    CONST char *value;		/* Name of image */
+    const char *value;		/* Name of image */
     char *widgRec;		/* Widget structure record */
     int offset;			/* Offset of tile in record */
 {
     Tk_TSOffset *offsetPtr = (Tk_TSOffset *)(widgRec + offset);
     Tk_TSOffset tsoffset;
-    CONST char *q, *p;
+    const char *q, *p;
     int result;
 
     if ((value == NULL) || (*value == 0)) {
@@ -465,7 +465,7 @@ TkPixelParseProc(clientData, interp, tkwin, value, widgRec, offset)
 				 * allowed as well */
     Tcl_Interp *interp;		/* Interpreter to send results back to */
     Tk_Window tkwin;		/* Window on same display as tile */
-    CONST char *value;		/* Name of image */
+    const char *value;		/* Name of image */
     char *widgRec;		/* Widget structure record */
     int offset;			/* Offset of tile in record */
 {
@@ -710,7 +710,7 @@ int
 Tk_GetScrollInfoObj(interp, objc, objv, dblPtr, intPtr)
     Tcl_Interp *interp;			/* Used for error reporting. */
     int objc;				/* # arguments for command. */
-    Tcl_Obj *CONST objv[];		/* Arguments for command. */
+    Tcl_Obj *const objv[];		/* Arguments for command. */
     double *dblPtr;			/* Filled in with argument "moveto"
 					 * option, if any. */
     int *intPtr;			/* Filled in with number of pages
@@ -850,7 +850,7 @@ TkComputeAnchor(anchor, tkwin, padX, padY, innerWidth, innerHeight, xPtr, yPtr)
 
 char *
 TkFindStateString(mapPtr, numKey)
-    CONST TkStateMap *mapPtr;	/* The state table. */
+    const TkStateMap *mapPtr;	/* The state table. */
     int numKey;			/* The key to try to find in the table. */
 {
     for ( ; mapPtr->strKey != NULL; mapPtr++) {
@@ -885,11 +885,11 @@ TkFindStateString(mapPtr, numKey)
 int
 TkFindStateNum(interp, option, mapPtr, strKey)
     Tcl_Interp *interp;		/* Interp for error reporting. */
-    CONST char *option;		/* String to use when constructing error. */
-    CONST TkStateMap *mapPtr;	/* Lookup table. */
-    CONST char *strKey;		/* String to try to find in lookup table. */
+    const char *option;		/* String to use when constructing error. */
+    const TkStateMap *mapPtr;	/* Lookup table. */
+    const char *strKey;		/* String to try to find in lookup table. */
 {
-    CONST TkStateMap *mPtr;
+    const TkStateMap *mPtr;
 
     for (mPtr = mapPtr; mPtr->strKey != NULL; mPtr++) {
 	if (strcmp(strKey, mPtr->strKey) == 0) {
@@ -913,12 +913,12 @@ int
 TkFindStateNumObj(interp, optionPtr, mapPtr, keyPtr)
     Tcl_Interp *interp;		/* Interp for error reporting. */
     Tcl_Obj *optionPtr;		/* String to use when constructing error. */
-    CONST TkStateMap *mapPtr;	/* Lookup table. */
+    const TkStateMap *mapPtr;	/* Lookup table. */
     Tcl_Obj *keyPtr;		/* String key to find in lookup table. */
 {
-    CONST TkStateMap *mPtr;
-    CONST char *key;
-    CONST Tcl_ObjType *typePtr;
+    const TkStateMap *mPtr;
+    const char *key;
+    const Tcl_ObjType *typePtr;
 
     if ((keyPtr->typePtr == &stateKeyType)
 	    && (keyPtr->internalRep.twoPtrValue.ptr1 == (VOID *) mapPtr)) {

@@ -66,7 +66,7 @@ jmp_buf		bu_jmpbuf;		/* for BU_SETJMP() */
  */
 void
 bu_bomb(str)
-CONST char *str;
+const char *str;
 {
 
 	/* First thing, always always always try to print the string */

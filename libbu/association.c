@@ -46,8 +46,8 @@ static const char libbu_association_RCSid[] = "@(#)$Header$ (ARL)";
  */
 struct bu_vls *bu_association (fname, value, field_sep)
 
-CONST char	*fname;
-CONST char	*value;
+const char	*fname;
+const char	*value;
 int	field_sep;
 
 {

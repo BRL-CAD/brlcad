@@ -148,7 +148,7 @@ typedef struct InterpInfo {
 static int		AliasCreate _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tcl_Interp *slaveInterp, Tcl_Interp *masterInterp,
 			    Tcl_Obj *namePtr, Tcl_Obj *targetPtr, int objc,
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 static int		AliasDelete _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tcl_Interp *slaveInterp, Tcl_Obj *namePtr));
 static int		AliasDescribe _ANSI_ARGS_((Tcl_Interp *interp,
@@ -157,37 +157,37 @@ static int		AliasList _ANSI_ARGS_((Tcl_Interp *interp,
 		            Tcl_Interp *slaveInterp));
 static int		AliasObjCmd _ANSI_ARGS_((ClientData dummy,
 			    Tcl_Interp *currentInterp, int objc,
-		            Tcl_Obj *CONST objv[]));
+		            Tcl_Obj *const objv[]));
 static void		AliasObjCmdDeleteProc _ANSI_ARGS_((
 			    ClientData clientData));
 
 static Tcl_Interp *	GetInterp _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tcl_Obj *pathPtr));
 static Tcl_Interp *	GetInterp2 _ANSI_ARGS_((Tcl_Interp *interp, int objc,
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 static void		InterpInfoDeleteProc _ANSI_ARGS_((
 			    ClientData clientData, Tcl_Interp *interp));
 static Tcl_Interp *	SlaveCreate _ANSI_ARGS_((Tcl_Interp *interp,
 		            Tcl_Obj *pathPtr, int safe));
 static int		SlaveEval _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tcl_Interp *slaveInterp, int objc,
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 static int		SlaveExpose _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tcl_Interp *slaveInterp, int objc,
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 static int		SlaveHide _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tcl_Interp *slaveInterp, int objc,
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 static int		SlaveHidden _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tcl_Interp *slaveInterp));
 static int		SlaveInvokeHidden _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tcl_Interp *slaveInterp, int global, int objc,
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 static int		SlaveMarkTrusted _ANSI_ARGS_((Tcl_Interp *interp,
 			    Tcl_Interp *slaveInterp));
 static int		SlaveObjCmd _ANSI_ARGS_((ClientData dummy,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj *CONST objv[]));
+			    Tcl_Obj *const objv[]));
 static void		SlaveObjCmdDeleteProc _ANSI_ARGS_((
 			    ClientData clientData));
 
@@ -344,7 +344,7 @@ Tcl_InterpObjCmd(clientData, interp, objc, objv)
     ClientData clientData;		/* Unused. */
     Tcl_Interp *interp;			/* Current interpreter. */
     int objc;				/* Number of arguments. */
-    Tcl_Obj *CONST objv[];		/* Argument objects. */
+    Tcl_Obj *const objv[];		/* Argument objects. */
 {
     int index;
     static char *options[] = {
@@ -777,7 +777,7 @@ GetInterp2(interp, objc, objv)
     Tcl_Interp *interp;		/* Default interp if no interp was specified
 				 * on the command line. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     if (objc == 2) {
 	return interp;
@@ -867,7 +867,7 @@ Tcl_CreateAliasObj(slaveInterp, slaveCmd, targetInterp, targetCmd, objc, objv)
     Tcl_Interp *targetInterp;	/* Interpreter for target command. */
     char *targetCmd;		/* Name of target command. */
     int objc;			/* How many additional arguments? */
-    Tcl_Obj *CONST objv[];	/* Argument vector. */
+    Tcl_Obj *const objv[];	/* Argument vector. */
 {
     Tcl_Obj *slaveObjPtr, *targetObjPtr;
     int result;
@@ -1124,7 +1124,7 @@ AliasCreate(interp, slaveInterp, masterInterp, namePtr, targetNamePtr,
     Tcl_Obj *namePtr;		/* Name of alias cmd. */
     Tcl_Obj *targetNamePtr;	/* Name of target cmd. */
     int objc;			/* Additional arguments to store */
-    Tcl_Obj *CONST objv[];	/* with alias. */
+    Tcl_Obj *const objv[];	/* with alias. */
 {
     Alias *aliasPtr;
     Tcl_HashEntry *hPtr;
@@ -1379,7 +1379,7 @@ AliasObjCmd(clientData, interp, objc, objv)
     ClientData clientData;	/* Alias record. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument vector. */	
+    Tcl_Obj *const objv[];	/* Argument vector. */	
 {
     Tcl_Interp *targetInterp;	
     Alias *aliasPtr;		
@@ -1812,7 +1812,7 @@ SlaveObjCmd(clientData, interp, objc, objv)
     ClientData clientData;	/* Slave interpreter. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     Tcl_Interp *slaveInterp;
     int index;
@@ -2007,7 +2007,7 @@ SlaveEval(interp, slaveInterp, objc, objv)
     Tcl_Interp *slaveInterp;	/* The slave interpreter in which command
 				 * will be evaluated. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     int result;
     Tcl_Obj *objPtr;
@@ -2051,7 +2051,7 @@ SlaveExpose(interp, slaveInterp, objc, objv)
     Tcl_Interp *interp;		/* Interp for error return. */
     Tcl_Interp	*slaveInterp;	/* Interp in which command will be exposed. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument strings. */
+    Tcl_Obj *const objv[];	/* Argument strings. */
 {
     char *name;
     
@@ -2093,7 +2093,7 @@ SlaveHide(interp, slaveInterp, objc, objv)
     Tcl_Interp *interp;		/* Interp for error return. */
     Tcl_Interp	*slaveInterp;	/* Interp in which command will be exposed. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument strings. */
+    Tcl_Obj *const objv[];	/* Argument strings. */
 {
     char *name;
     
@@ -2177,7 +2177,7 @@ SlaveInvokeHidden(interp, slaveInterp, global, objc, objv)
 				 * will be invoked. */
     int global;			/* Non-zero to invoke in global namespace. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST objv[];	/* Argument objects. */
+    Tcl_Obj *const objv[];	/* Argument objects. */
 {
     int result;
     

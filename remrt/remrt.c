@@ -835,7 +835,7 @@ struct pkg_conn *pc;
 		close(fd);
 		return;
 	}
-	if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (CONST char *)&on, sizeof (on)) < 0)
+	if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (const char *)&on, sizeof (on)) < 0)
 		perror("setsockopt (SO_KEEPALIVE)");
 
 	if( (ihp = host_lookup_by_addr( &from, 1 )) == IHOST_NULL )  {

@@ -59,7 +59,7 @@ FBIO *ifp;
  */
 int fb_null_setcursor(ifp, bits, xbits, ybits, xorig, yorig )
 FBIO		*ifp;
-CONST unsigned char	*bits;
+const unsigned char	*bits;
 int		xbits, ybits;
 int		xorig, yorig;
 {
@@ -326,7 +326,7 @@ register char *s;
  */
 int
 fb_is_linear_cmap(cmap)
-register CONST ColorMap	*cmap;
+register const ColorMap	*cmap;
 {
 	register int i;
 

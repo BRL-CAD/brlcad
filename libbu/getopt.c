@@ -50,8 +50,8 @@ char	*bu_optarg = NULL;	/* argument associated with option */
 int
 bu_getopt(nargc,nargv,ostr)
 int	nargc;
-char	* CONST nargv[];
-CONST char *ostr;
+char	* const nargv[];
+const char *ostr;
 {
 	static char	*place = EMSG;	/* option letter processing */
 	register char	*oli;		/* option letter list index */

@@ -59,11 +59,11 @@ static unsigned char charmap[] = {
  * Here are the prototypes just in case they are not included
  * in tclPort.h.
  */
-int		strncasecmp _ANSI_ARGS_((CONST char *s1,
-			    CONST char *s2, size_t n));
+int		strncasecmp _ANSI_ARGS_((const char *s1,
+			    const char *s2, size_t n));
 
-int		strcasecmp _ANSI_ARGS_((CONST char *s1,
-			    CONST char *s2));
+int		strcasecmp _ANSI_ARGS_((const char *s1,
+			    const char *s2));
 
 /*
  *----------------------------------------------------------------------
@@ -85,8 +85,8 @@ int		strcasecmp _ANSI_ARGS_((CONST char *s1,
 
 int
 strcasecmp(s1, s2)
-    CONST char *s1;			/* First string. */
-    CONST char *s2;			/* Second string. */
+    const char *s1;			/* First string. */
+    const char *s2;			/* Second string. */
 {
     unsigned char u1, u2;
 
@@ -120,8 +120,8 @@ strcasecmp(s1, s2)
 
 int
 strncasecmp(s1, s2, length)
-    CONST char *s1;		/* First string. */
-    CONST char *s2;		/* Second string. */
+    const char *s1;		/* First string. */
+    const char *s2;		/* Second string. */
     size_t length;		/* Maximum number of characters to compare
 				 * (stop earlier if the end of either string
 				 * is reached). */

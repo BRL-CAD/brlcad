@@ -154,7 +154,7 @@ struct isect_stuff {
 
 
 /* plane equations (minus offset distances) for bounding RPP */
-static CONST vect_t	dsp_pl[BBOX_PLANES] = {
+static const vect_t	dsp_pl[BBOX_PLANES] = {
 	{-1.0, 0.0, 0.0},
 	{ 1.0, 0.0, 0.0},
 
@@ -198,7 +198,7 @@ hook_file(
 #define DSP_O(m) offsetof(struct rt_dsp_internal, m)
 #define DSP_AO(a) bu_offsetofarray(struct rt_dsp_internal, a)
 
-CONST struct bu_structparse rt_dsp_parse[] = {
+const struct bu_structparse rt_dsp_parse[] = {
 	{"%S",	1, "file", DSP_O(dsp_name), hook_file },
 	{"%d",  1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "w", DSP_O(dsp_xcnt), BU_STRUCTPARSE_FUNC_NULL },
@@ -207,7 +207,7 @@ CONST struct bu_structparse rt_dsp_parse[] = {
 	{"",	0, (char *)0, 0,	BU_STRUCTPARSE_FUNC_NULL }
 };
 
-CONST struct bu_structparse rt_dsp_ptab[] = {
+const struct bu_structparse rt_dsp_ptab[] = {
 	{"%S",	1, "file", DSP_O(dsp_name), BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "w", DSP_O(dsp_xcnt), BU_STRUCTPARSE_FUNC_NULL },
@@ -223,7 +223,7 @@ static int plot_em=1;
 static void
 dsp_print_v4(vls, dsp_ip)
 struct bu_vls *vls;
-CONST struct rt_dsp_internal *dsp_ip;
+const struct rt_dsp_internal *dsp_ip;
 {
 	point_t pt, v;
 	RT_DSP_CK_MAGIC(dsp_ip);
@@ -260,7 +260,7 @@ CONST struct rt_dsp_internal *dsp_ip;
 static void
 dsp_print_v5(vls, dsp_ip)
 struct bu_vls *vls;
-CONST struct rt_dsp_internal *dsp_ip;
+const struct rt_dsp_internal *dsp_ip;
 {
 	point_t pt, v;
 	RT_DSP_CK_MAGIC(dsp_ip);
@@ -324,9 +324,9 @@ dsp_dump(struct rt_dsp_internal *dsp)
  */
 void
 rt_dsp_print( stp )
-register CONST struct soltab *stp;
+register const struct soltab *stp;
 {
-	register CONST struct dsp_specific *dsp =
+	register const struct dsp_specific *dsp =
 		(struct dsp_specific *)stp->st_specific;
 	struct bu_vls vls;
  
@@ -2006,7 +2006,7 @@ struct seg		*seghead;
 	vect_t	dir;	/* temp storage */
 	vect_t	v;
 	struct isect_stuff isect;
-	static CONST int junk[2] = { 0, 0 };
+	static const int junk[2] = { 0, 0 };
 
 
 	if (setjmp(isect.env)) {
@@ -2143,7 +2143,7 @@ struct seg		*seghead;
 	if (rt_g.debug & DEBUG_HF) {
 		double NdotD;
 		double d;
-		static CONST plane_t plane = {0.0, 0.0, -1.0, 0.0};
+		static const plane_t plane = {0.0, 0.0, -1.0, 0.0};
 
 		NdotD = VDOT(plane, rp->r_dir);
 		d = - ( (VDOT(plane, rp->r_pt) - plane[H]) / NdotD);	
@@ -2602,8 +2602,8 @@ int
 rt_dsp_plot( vhead, ip, ttol, tol )
 struct bu_list		*vhead;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol	*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol	*tol;
 {
 	struct rt_dsp_internal	*dsp_ip =
 		(struct rt_dsp_internal *)ip->idb_ptr;
@@ -2773,8 +2773,8 @@ rt_dsp_tess( r, m, ip, ttol, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol	*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol	*tol;
 {
 	LOCAL struct rt_dsp_internal	*dsp_ip;
 
@@ -2933,9 +2933,9 @@ dsp_get_data(struct rt_dsp_internal	*dsp_ip,
 int
 rt_dsp_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-register CONST mat_t		mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	LOCAL struct rt_dsp_internal	*dsp_ip;
 	union record			*rp;
@@ -3022,9 +3022,9 @@ CONST struct db_i		*dbip;
 int
 rt_dsp_export( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_dsp_internal	*dsp_ip;
 	struct rt_dsp_internal	dsp;
@@ -3079,9 +3079,9 @@ CONST struct db_i		*dbip;
 int
 rt_dsp_import5( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-register CONST mat_t		mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	struct rt_dsp_internal	*dsp_ip;
 	unsigned char		*cp;
@@ -3142,9 +3142,9 @@ CONST struct db_i		*dbip;
 int
 rt_dsp_export5( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_dsp_internal	*dsp_ip;
 	unsigned long		name_len;
@@ -3213,7 +3213,7 @@ CONST struct db_i		*dbip;
 int
 rt_dsp_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
-CONST struct rt_db_internal *ip;
+const struct rt_db_internal *ip;
 int			verbose;
 double			mm2local;
 {

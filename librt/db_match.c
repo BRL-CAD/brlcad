@@ -56,7 +56,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
  */
 int
 db_regexp_match( pattern, string )
-register CONST char *pattern, *string;
+register const char *pattern, *string;
 {
 	do {
 		switch( *pattern ) {
@@ -124,7 +124,7 @@ int
 db_regexp_match_all( dest, dbip, pattern )
 struct bu_vls	*dest;
 struct db_i	*dbip;
-CONST char	*pattern;
+const char	*pattern;
 {
 	register int i, num;
 	register struct directory *dp;

@@ -54,11 +54,11 @@ Tcl_ClockObjCmd (client, interp, objc, objv)
     ClientData client;			/* Not used. */
     Tcl_Interp *interp;			/* Current interpreter. */
     int objc;				/* Number of arguments. */
-    Tcl_Obj *CONST objv[];		/* Argument values. */
+    Tcl_Obj *const objv[];		/* Argument values. */
 {
     Tcl_Obj *resultPtr;
     int index;
-    Tcl_Obj *CONST *objPtr;
+    Tcl_Obj *const *objPtr;
     int useGMT = 0;
     char *format = "%a %b %d %X %Z %Y";
     int dummy;

@@ -58,7 +58,7 @@ RT_EXTERN(struct nurb_hit *rt_conv_uv, (struct nurb_specific *n,
 	struct xray *r, struct rt_nurb_uv_hit *h));
 RT_EXTERN(struct nurb_hit *rt_return_nurb_hit, (struct nurb_hit * head));
 RT_EXTERN(void		rt_nurb_add_hit, (struct nurb_hit *head,
-			struct nurb_hit * hit, CONST struct bn_tol *tol));
+			struct nurb_hit * hit, const struct bn_tol *tol));
 
 
 /*
@@ -137,7 +137,7 @@ struct rt_i		*rtip;
  */
 void
 rt_nurb_print( stp )
-register CONST struct soltab *stp;
+register const struct soltab *stp;
 {
 	register struct nurb_specific *nurb =
 		(struct nurb_specific *)stp->st_specific;
@@ -177,7 +177,7 @@ struct seg		*seghead;
 	register struct nurb_specific * nurb =
 		(struct nurb_specific *)stp->st_specific;
 	register struct seg *segp;
-	CONST struct bn_tol	*tol = &ap->a_rt_i->rti_tol;
+	const struct bn_tol	*tol = &ap->a_rt_i->rti_tol;
 	point_t p1, p2, p3, p4;
 	vect_t dir1, dir2;
 	plane_t	plane1, plane2;
@@ -457,8 +457,8 @@ int
 rt_nurb_plot( vhead, ip, ttol, tol )
 struct bu_list		*vhead;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol		*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol		*tol;
 {
 	struct rt_nurb_internal *sip;
 	register int		i;
@@ -592,8 +592,8 @@ rt_nurb_tess( r, m, ip, ttol, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol		*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol		*tol;
 {
 	return(-1);
 }
@@ -604,9 +604,9 @@ CONST struct bn_tol		*tol;
 int
 rt_nurb_import( ip, ep, mat, dbip )
 struct rt_db_internal	*ip;
-CONST struct bu_external	*ep;
-register CONST mat_t		mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 
 	struct rt_nurb_internal * sip;
@@ -746,7 +746,7 @@ void
 rt_nurb_add_hit( head, hit, tol )
 struct nurb_hit		* head;
 struct nurb_hit		* hit;
-CONST struct bn_tol	*tol;
+const struct bn_tol	*tol;
 {
 	register struct nurb_hit * h_ptr;
 
@@ -833,9 +833,9 @@ struct nurb_hit * head;
 int
 rt_nurb_export( ep, ip, local2mm, dbip)
 struct bu_external	 	* ep;
-CONST struct rt_db_internal	* ip;
+const struct rt_db_internal	* ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	register int		rec_ptr;
 	struct rt_nurb_internal	* sip;
@@ -944,9 +944,9 @@ struct face_g_snurb * srf;
 int
 rt_nurb_export5( ep, ip, local2mm, dbip)
 struct bu_external	 	* ep;
-CONST struct rt_db_internal	* ip;
+const struct rt_db_internal	* ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_nurb_internal	* sip;
 	int			s;
@@ -1017,9 +1017,9 @@ CONST struct db_i		*dbip;
 int
 rt_nurb_import5( ip, ep, mat, dbip )
 struct rt_db_internal	*ip;
-CONST struct bu_external	*ep;
-register CONST mat_t		mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 
 	struct rt_nurb_internal * sip;
@@ -1172,7 +1172,7 @@ struct rt_db_internal 	*ip;
 int
 rt_nurb_describe(str, ip, verbose, mm2local )
 struct bu_vls		* str;
-CONST struct rt_db_internal	* ip;
+const struct rt_db_internal	* ip;
 int			verbose;
 double			mm2local;
 {

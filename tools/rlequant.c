@@ -56,7 +56,7 @@ typedef enum { NORMAL=0, INIT_HIST, USE_HIST, PROCESS_HIST, OUTPUT } state_t;
 static void mem_alloc(), read_input(), copy_hdr();
 static void setup_output(), write_output(), free_mem();
 
-static CONST char *MY_NAME = "rlequant";
+static const char *MY_NAME = "rlequant";
 
 /*****************************************************************
  * TAG( main )

@@ -50,7 +50,7 @@ static const char RCSmagic[] = "@(#)$Header$ (BRL)";
  *  This is called by the macro BU_CK_MAGIC() to provide a "hint"
  *  as to what sort of pointer error might have been made.
  */
-CONST char *
+const char *
 bu_identify_magic( magic )
 register long	magic;
 {

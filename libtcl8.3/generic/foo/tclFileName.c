@@ -66,18 +66,18 @@ TclPlatformType tclPlatform = TCL_PLATFORM_UNIX;
  */
 
 static char *		DoTildeSubst _ANSI_ARGS_((Tcl_Interp *interp,
-			    CONST char *user, Tcl_DString *resultPtr));
-static CONST char *	ExtractWinRoot _ANSI_ARGS_((CONST char *path,
+			    const char *user, Tcl_DString *resultPtr));
+static const char *	ExtractWinRoot _ANSI_ARGS_((const char *path,
 			    Tcl_DString *resultPtr, int offset, Tcl_PathType *typePtr));
 static void		FileNameCleanup _ANSI_ARGS_((ClientData clientData));
 static void		FileNameInit _ANSI_ARGS_((void));
 static int		SkipToChar _ANSI_ARGS_((char **stringPtr,
 			    char *match));
-static char *		SplitMacPath _ANSI_ARGS_((CONST char *path,
+static char *		SplitMacPath _ANSI_ARGS_((const char *path,
 			    Tcl_DString *bufPtr));
-static char *		SplitWinPath _ANSI_ARGS_((CONST char *path,
+static char *		SplitWinPath _ANSI_ARGS_((const char *path,
 			    Tcl_DString *bufPtr));
-static char *		SplitUnixPath _ANSI_ARGS_((CONST char *path,
+static char *		SplitUnixPath _ANSI_ARGS_((const char *path,
 			    Tcl_DString *bufPtr));
 
 /*
@@ -153,9 +153,9 @@ FileNameCleanup(clientData)
  *----------------------------------------------------------------------
  */
 
-static CONST char *
+static const char *
 ExtractWinRoot(path, resultPtr, offset, typePtr)
-    CONST char *path;		/* Path to parse. */
+    const char *path;		/* Path to parse. */
     Tcl_DString *resultPtr;	/* Buffer to hold result. */
     int offset;			/* Offset in buffer where result should be
 				 * stored. */
@@ -342,7 +342,7 @@ Tcl_GetPathType(path)
 
 void
 Tcl_SplitPath(path, argcPtr, argvPtr)
-    CONST char *path;		/* Pointer to string containing a path. */
+    const char *path;		/* Pointer to string containing a path. */
     int *argcPtr;		/* Pointer to location to fill in with
 				 * the number of elements in the path. */
     char ***argvPtr;		/* Pointer to place to store pointer to array
@@ -436,11 +436,11 @@ Tcl_SplitPath(path, argcPtr, argvPtr)
 
 static char *
 SplitUnixPath(path, bufPtr)
-    CONST char *path;		/* Pointer to string containing a path. */
+    const char *path;		/* Pointer to string containing a path. */
     Tcl_DString *bufPtr;	/* Pointer to DString to use for the result. */
 {
     int length;
-    CONST char *p, *elementStart;
+    const char *p, *elementStart;
 
     /*
      * Deal with the root directory as a special case.
@@ -511,11 +511,11 @@ SplitUnixPath(path, bufPtr)
 
 static char *
 SplitWinPath(path, bufPtr)
-    CONST char *path;		/* Pointer to string containing a path. */
+    const char *path;		/* Pointer to string containing a path. */
     Tcl_DString *bufPtr;	/* Pointer to DString to use for the result. */
 {
     int length;
-    CONST char *p, *elementStart;
+    const char *p, *elementStart;
     Tcl_PathType type = TCL_PATH_ABSOLUTE;
 
     p = ExtractWinRoot(path, bufPtr, 0, &type);
@@ -570,12 +570,12 @@ SplitWinPath(path, bufPtr)
 
 static char *
 SplitMacPath(path, bufPtr)
-    CONST char *path;		/* Pointer to string containing a path. */
+    const char *path;		/* Pointer to string containing a path. */
     Tcl_DString *bufPtr;	/* Pointer to DString to use for the result. */
 {
     int isMac = 0;		/* 1 if is Mac-style, 0 if Unix-style path. */
     int i, length;
-    CONST char *p, *elementStart;
+    const char *p, *elementStart;
     Tcl_RegExp re;
     ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&dataKey);
 
@@ -766,7 +766,7 @@ Tcl_JoinPath(argc, argv, resultPtr)
     int oldLength, length, i, needsSep;
     Tcl_DString buffer;
     char c, *dest;
-    CONST char *p;
+    const char *p;
     Tcl_PathType type = TCL_PATH_ABSOLUTE;
 
     Tcl_DStringInit(&buffer);
@@ -1156,7 +1156,7 @@ static char *
 DoTildeSubst(interp, user, resultPtr)
     Tcl_Interp *interp;		/* Interpreter in which to store error
 				 * message (if necessary). */
-    CONST char *user;		/* Name of user whose home directory should be
+    const char *user;		/* Name of user whose home directory should be
 				 * substituted, or "" for current user. */
     Tcl_DString *resultPtr;	/* Initialized DString filled with name
 				 * after tilde substitution. */
@@ -1213,7 +1213,7 @@ Tcl_GlobObjCmd(dummy, interp, objc, objv)
     ClientData dummy;			/* Not used. */
     Tcl_Interp *interp;			/* Current interpreter. */
     int objc;				/* Number of arguments. */
-    Tcl_Obj *CONST objv[];		/* Argument objects. */
+    Tcl_Obj *const objv[];		/* Argument objects. */
 {
     int index, i, globFlags, pathlength, length, join, dir, result;
     char *string, *pathOrDir, *separators;

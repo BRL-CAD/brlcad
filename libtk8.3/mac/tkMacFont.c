@@ -46,7 +46,7 @@
  * The preferred font encodings.
  */
 
-static CONST char *encodingList[] = {
+static const char *encodingList[] = {
     "macRoman", "macJapan", NULL
 };
 
@@ -237,9 +237,9 @@ static GWorldPtr gWorld = NULL;
  * Procedures used only in this file.
  */
 
-static FontFamily *	AllocFontFamily(CONST MacFont *fontPtr, int family);
+static FontFamily *	AllocFontFamily(const MacFont *fontPtr, int family);
 static SubFont *	CanUseFallback(MacFont *fontPtr,
-			    CONST char *fallbackName, int ch);
+			    const char *fallbackName, int ch);
 static SubFont *	CanUseFallbackWithAliases(MacFont *fontPtr, 
 			    char *faceName, int ch, Tcl_DString *nameTriedPtr);
 static SubFont *	FindSubFontForChar(MacFont *fontPtr, int ch);
@@ -249,18 +249,18 @@ static int		FontMapLookup(SubFont *subFontPtr, int ch);
 static void 		FreeFontFamily(FontFamily *familyPtr);
 static void		InitFont(Tk_Window tkwin, int family, int size, 
 			    int style, MacFont *fontPtr);
-static void		InitSubFont(CONST MacFont *fontPtr, int family, 
+static void		InitSubFont(const MacFont *fontPtr, int family, 
 			    SubFont *subFontPtr);
 static void		MultiFontDrawText(MacFont *fontPtr,
-			    CONST char *source, int numBytes, int x, int y);
+			    const char *source, int numBytes, int x, int y);
 static void		ReleaseFont(MacFont *fontPtr);
 static void		ReleaseSubFont(SubFont *subFontPtr);
-static int		SeenName(CONST char *name, Tcl_DString *dsPtr);
+static int		SeenName(const char *name, Tcl_DString *dsPtr);
 
 static char *      	BreakLine(FontFamily *familyPtr, int flags, 
-			    CONST char *source, int numBytes, int *widthPtr);
-static int		GetFamilyNum(CONST char *faceName, short *familyPtr);
-static int		GetFamilyOrAliasNum(CONST char *faceName, 
+			    const char *source, int numBytes, int *widthPtr);
+static int		GetFamilyNum(const char *faceName, short *familyPtr);
+static int		GetFamilyOrAliasNum(const char *faceName, 
 			    short *familyPtr);
 static Tcl_Encoding	GetFontEncoding(int faceNum, int allowSymbol,
 			    int *isSymbolPtr);
@@ -423,7 +423,7 @@ TkpFontPkgInit(mainPtr)
 TkFont *
 TkpGetNativeFont(
     Tk_Window tkwin,	/* For display where font will be used. */
-    CONST char *name)	/* Platform-specific font name. */
+    const char *name)	/* Platform-specific font name. */
 {
     short family;
     MacFont *fontPtr;
@@ -479,7 +479,7 @@ TkpGetFontFromAttributes(
 				 * will be released.  If NULL, a new TkFont
 				 * structure is allocated. */
     Tk_Window tkwin,		/* For display where font will be used. */
-    CONST TkFontAttributes *faPtr)
+    const TkFontAttributes *faPtr)
 				/* Set of attributes to match. */
 {
     short faceNum, style;
@@ -667,7 +667,7 @@ TkpGetSubFonts(interp, tkfont)
 int
 Tk_MeasureChars(
     Tk_Font tkfont,		/* Font in which characters will be drawn. */
-    CONST char *source,		/* UTF-8 string to be displayed.  Need not be
+    const char *source,		/* UTF-8 string to be displayed.  Need not be
 				 * '\0' terminated. */
     int numBytes,		/* Maximum number of bytes to consider
 				 * from source string. */
@@ -719,7 +719,7 @@ Tk_MeasureChars(
     	curX = 0;
     	curByte = 0;
     } else if (maxLength < 0) {
-    	CONST char *p, *end, *next;
+    	const char *p, *end, *next;
     	Tcl_UniChar ch;
     	FontFamily *thisFamilyPtr;
     	Tcl_DString runString;
@@ -757,7 +757,7 @@ Tk_MeasureChars(
         Tcl_DStringFree(&runString);
 	curByte = numBytes;
     } else {
-        CONST char *p, *end, *next, *sourceOrig;
+        const char *p, *end, *next, *sourceOrig;
         int widthLeft;
         FontFamily *thisFamilyPtr;
         Tcl_UniChar ch;
@@ -847,7 +847,7 @@ BreakLine(
 				 * boundary, if possible.
 				 * TK_AT_LEAST_ONE means return at least one
 				 * character even if no characters fit. */				 
-    CONST char *source,		/* UTF-8 string to be displayed.  Need not be
+    const char *source,		/* UTF-8 string to be displayed.  Need not be
 				 * '\0' terminated. */
     int numBytes,		/* Maximum number of bytes to consider
 				 * from source string. */
@@ -976,7 +976,7 @@ Tk_DrawChars(
     GC gc,			/* Graphics context for drawing characters. */
     Tk_Font tkfont,		/* Font in which characters will be drawn;
 				 * must be the same as font used in GC. */
-    CONST char *source,		/* UTF-8 string to be displayed.  Need not be
+    const char *source,		/* UTF-8 string to be displayed.  Need not be
 				 * '\0' terminated.  All Tk meta-characters
 				 * (tabs, control characters, and newlines)
 				 * should be stripped out of the string that
@@ -1086,14 +1086,14 @@ static void
 MultiFontDrawText(
     MacFont *fontPtr,		/* Contains set of fonts to use when drawing
 				 * following string. */
-    CONST char *source,		/* Potentially multilingual UTF-8 string. */
+    const char *source,		/* Potentially multilingual UTF-8 string. */
     int numBytes,		/* Length of string in bytes. */
     int x, int y)		/* Coordinates at which to place origin *
 				 * of string when drawing. */
 {
     FontFamily *lastFamilyPtr, *thisFamilyPtr;
     Tcl_DString runString;
-    CONST char *p, *end, *next;
+    const char *p, *end, *next;
     Tcl_UniChar ch;
     
     TextSize(fontPtr->size);
@@ -1310,7 +1310,7 @@ ReleaseFont(
 
 static void
 InitSubFont(
-    CONST MacFont *fontPtr,	/* Font object in which the SubFont will be
+    const MacFont *fontPtr,	/* Font object in which the SubFont will be
     				 * used. */
     int faceNum,		/* The font number. */
     SubFont *subFontPtr)	/* Filled with SubFont constructed from 
@@ -1369,7 +1369,7 @@ ReleaseSubFont(
 
 static FontFamily *
 AllocFontFamily(
-    CONST MacFont *fontPtr,	/* Font object in which the FontFamily will
+    const MacFont *fontPtr,	/* Font object in which the FontFamily will
     				 * be used. */
     int faceNum)		/* The font number. */
 {
@@ -1884,11 +1884,11 @@ CanUseFallbackWithAliases(
 
 static int
 SeenName(
-    CONST char *name,		/* The name to check. */
+    const char *name,		/* The name to check. */
     Tcl_DString *dsPtr)		/* Contains names that have already been
 				 * seen. */
 {
-    CONST char *seen, *end;
+    const char *seen, *end;
 
     seen = Tcl_DStringValue(dsPtr);
     end = seen + Tcl_DStringLength(dsPtr);
@@ -1931,7 +1931,7 @@ static SubFont *
 CanUseFallback(
     MacFont *fontPtr,		/* The font object that will own the new
 				 * screen font. */
-    CONST char *faceName,	/* Desired face name for new screen font. */
+    const char *faceName,	/* Desired face name for new screen font. */
     int ch)			/* The Unicode character that the new
 				 * screen font must be able to display. */
 {
@@ -2005,7 +2005,7 @@ CanUseFallback(
 
 static int
 GetFamilyNum(
-    CONST char *faceName, 	/* UTF-8 name of font family to query. */
+    const char *faceName, 	/* UTF-8 name of font family to query. */
     short *faceNumPtr)		/* Filled with font number for above family. */
 {
     FontNameMap *mapPtr;
@@ -2024,7 +2024,7 @@ GetFamilyNum(
 
 static int
 GetFamilyOrAliasNum(
-    CONST char *faceName, 	/* UTF-8 name of font family to query. */
+    const char *faceName, 	/* UTF-8 name of font family to query. */
     short *faceNumPtr)		/* Filled with font number for above family. */
 {
     char **aliases;

@@ -483,9 +483,9 @@ extern double strtod();
 #undef TclpStat
 #endif
 
-EXTERN int		TclpLstat _ANSI_ARGS_((CONST char *path, 
+EXTERN int		TclpLstat _ANSI_ARGS_((const char *path, 
 			    struct stat *buf));
-EXTERN int		TclpStat _ANSI_ARGS_((CONST char *path, 
+EXTERN int		TclpStat _ANSI_ARGS_((const char *path, 
 			    struct stat *buf));
 
 /*

@@ -44,7 +44,7 @@ static const char RCSsubmodel[] = "@(#)$Header$ (BRL)";
 
 #define RT_SUBMODEL_O(m)	offsetof(struct rt_submodel_internal, m)
 
-CONST struct bu_structparse rt_submodel_parse[] = {
+const struct bu_structparse rt_submodel_parse[] = {
 	{"%S",	1, "file",	RT_SUBMODEL_O(file),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%S",	1, "treetop",	RT_SUBMODEL_O(treetop),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "meth",	RT_SUBMODEL_O(meth),		BU_STRUCTPARSE_FUNC_NULL },
@@ -189,7 +189,7 @@ struct rt_i		*rtip;
 
 	argv[0] = bu_vls_addr( &sip->treetop );
 	argv[1] = NULL;
-	if( rt_gettrees( sub_rtip, 1, (CONST char **)argv, 1 ) < 0 )  {
+	if( rt_gettrees( sub_rtip, 1, (const char **)argv, 1 ) < 0 )  {
 		bu_log("submodel(%s) rt_gettrees(%s) failed\n", stp->st_name, argv[0]);
 		/* Can't call rt_free_rti( sub_rtip ) because it may have
 		 * already been instanced!
@@ -249,9 +249,9 @@ done:
  */
 void
 rt_submodel_print( stp )
-register CONST struct soltab *stp;
+register const struct soltab *stp;
 {
-	register CONST struct submodel_specific *submodel =
+	register const struct submodel_specific *submodel =
 		(struct submodel_specific *)stp->st_specific;
 
 	RT_CK_SUBMODEL_SPECIFIC(submodel);
@@ -655,9 +655,9 @@ register struct soltab *stp;
  */
 int
 rt_submodel_class( stp, min, max, tol )
-CONST struct soltab    *stp;
-CONST vect_t		min, max;
-CONST struct bn_tol    *tol;
+const struct soltab    *stp;
+const vect_t		min, max;
+const struct bn_tol    *tol;
 {
 	return RT_CLASSIFY_UNIMPLEMENTED;
 }
@@ -732,8 +732,8 @@ int
 rt_submodel_plot( vhead, ip, ttol, tol )
 struct bu_list		*vhead;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol	*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol	*tol;
 {
 	LOCAL struct rt_submodel_internal	*sip;
 	struct db_tree_state	state;
@@ -772,13 +772,13 @@ CONST struct bn_tol	*tol;
 	} else {
 		/* Make another use of the current database */
 		RT_CK_DBI(sip->dbip);
-		good.dbip = (struct db_i *)sip->dbip;	/* un-CONST-cast */
+		good.dbip = (struct db_i *)sip->dbip;	/* un-const-cast */
 		/* good.dbip->dbi_uses++; */	/* don't close it either */
 	}
 
 	argv[0] = bu_vls_addr( &sip->treetop );
 	argv[1] = NULL;
-	ret = db_walk_tree( good.dbip, 1, (CONST char **)argv,
+	ret = db_walk_tree( good.dbip, 1, (const char **)argv,
 		1,
 		&state,
 		0,			/* take all regions */
@@ -804,8 +804,8 @@ rt_submodel_tess( r, m, ip, ttol, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol	*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol	*tol;
 {
 	LOCAL struct rt_submodel_internal	*sip;
 
@@ -825,9 +825,9 @@ CONST struct bn_tol	*tol;
 int
 rt_submodel_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-register CONST mat_t		mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	LOCAL struct rt_submodel_internal	*sip;
 	union record			*rp;
@@ -889,9 +889,9 @@ bn_mat_print("root2leaf", sip->root2leaf );
 int
 rt_submodel_export( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_submodel_internal	*sip;
 	union record		*rec;
@@ -937,9 +937,9 @@ bu_log("rt_submodel_export: '%s'\n", rec->ss.ss_args);
 int
 rt_submodel_import5( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-register CONST mat_t		mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	LOCAL struct rt_submodel_internal	*sip;
 	struct bu_vls		str;
@@ -993,9 +993,9 @@ bn_mat_print("root2leaf", sip->root2leaf );
 int
 rt_submodel_export5( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_submodel_internal	*sip;
 	struct bu_vls		str;
@@ -1036,7 +1036,7 @@ bu_log("rt_submodel_export: '%s'\n", rec->ss.ss_args);
 int
 rt_submodel_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {

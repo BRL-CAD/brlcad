@@ -50,7 +50,7 @@ HIDDEN void	rt_tree_region_assign();
  *  Also used by converters in conv/ directory.
  *  Don't forget to initialize ts_dbip before use.
  */
-CONST struct db_tree_state	rt_initial_tree_state = {
+const struct db_tree_state	rt_initial_tree_state = {
 	RT_DBTS_MAGIC,		/* magic */
 	0,			/* ts_dbip */
 	0,			/* ts_sofar */
@@ -122,9 +122,9 @@ CONST struct db_tree_state	rt_initial_tree_state = {
  */
 /* ARGSUSED */
 HIDDEN int rt_gettree_region_start( tsp, pathp, combp, client_data )
-/*CONST*/ struct db_tree_state	*tsp;
-/*CONST*/ struct db_full_path	*pathp;
-CONST struct rt_comb_internal	*combp;
+/*const*/ struct db_tree_state	*tsp;
+/*const*/ struct db_full_path	*pathp;
+const struct rt_comb_internal	*combp;
 genptr_t			client_data;
 {
 	RT_CK_RTI(tsp->ts_rtip);
@@ -153,8 +153,8 @@ genptr_t			client_data;
  *  out into the serial section.  (rt_tree_region_assign, rt_bound_tree)
  */
 HIDDEN union tree *rt_gettree_region_end( tsp, pathp, curtree, client_data )
-register /*CONST*/ struct db_tree_state	*tsp;
-/*CONST*/ struct db_full_path	*pathp;
+register /*const*/ struct db_tree_state	*tsp;
+/*const*/ struct db_full_path	*pathp;
 union tree			*curtree;
 genptr_t			client_data;
 {
@@ -287,7 +287,7 @@ genptr_t			client_data;
  *  proper semaphore.
  */
 HIDDEN struct soltab *rt_find_identical_solid( mat, dp, rtip )
-register CONST matp_t		mat;
+register const matp_t		mat;
 register struct directory	*dp;
 struct rt_i			*rtip;
 {
@@ -420,9 +420,9 @@ more_checks:
  *  This routine must be prepared to run in parallel.
  */
 HIDDEN union tree *rt_gettree_leaf( tsp, pathp, ip, client_data )
-/*CONST*/ struct db_tree_state	*tsp;
+/*const*/ struct db_tree_state	*tsp;
 struct db_full_path		*pathp;
-/*CONST*/ struct rt_db_internal	*ip;
+/*const*/ struct rt_db_internal	*ip;
 genptr_t			client_data;
 {
 	register struct soltab	*stp;
@@ -643,7 +643,7 @@ struct soltab	*stp;
 int
 rt_gettree( rtip, node )
 struct rt_i	*rtip;
-CONST char	*node;
+const char	*node;
 {
 	return( rt_gettrees( rtip, 1, &node, 1 ) );
 }
@@ -670,7 +670,7 @@ int
 rt_gettrees( rtip, argc, argv, ncpus )
 struct rt_i	*rtip;
 int		argc;
-CONST char	**argv;
+const char	**argv;
 int		ncpus;
 {
 	register struct soltab	*stp;
@@ -800,7 +800,7 @@ again:
  */
 int
 rt_bound_tree( tp, tree_min, tree_max )
-register CONST union tree	*tp;
+register const union tree	*tp;
 vect_t				tree_min;
 vect_t				tree_max;
 {	
@@ -812,7 +812,7 @@ vect_t				tree_max;
 
 	case OP_SOLID:
 		{
-			register CONST struct soltab	*stp;
+			register const struct soltab	*stp;
 
 			stp = tp->tr_a.tu_stp;
 			RT_CK_SOLTAB(stp);
@@ -1031,11 +1031,11 @@ top:
  *  Given a string containing slashes such as a pathname, return a
  *  pointer to the first character after the last slash.
  */
-CONST char *
+const char *
 rt_basename( str )
-register CONST char	*str;
+register const char	*str;
 {	
-	register CONST char	*p = str;
+	register const char	*p = str;
 	while( *p != '\0' )
 		if( *p++ == '/' )
 			str = p;
@@ -1056,14 +1056,14 @@ register CONST char	*str;
 HIDDEN struct region *
 rt_getregion( rtip, reg_name )
 struct rt_i		*rtip;
-register CONST char	*reg_name;
+register const char	*reg_name;
 {	
 	register struct region	*regp;
-	register CONST char *reg_base = rt_basename(reg_name);
+	register const char *reg_base = rt_basename(reg_name);
 
 	RT_CK_RTI(rtip);
 	for( BU_LIST_FOR( regp, region, &(rtip->HeadRegion) ) )  {
-		register CONST char	*cp;
+		register const char	*cp;
 		/* First, check for a match of the full path */
 		if( *reg_base == regp->reg_name[0] &&
 		    strcmp( reg_base, regp->reg_name ) == 0 )
@@ -1087,7 +1087,7 @@ register CONST char	*reg_name;
 int
 rt_rpp_region( rtip, reg_name, min_rpp, max_rpp )
 struct rt_i	*rtip;
-CONST char	*reg_name;
+const char	*reg_name;
 fastf_t		*min_rpp, *max_rpp;
 {	
 	register struct region	*regp;
@@ -1109,7 +1109,7 @@ fastf_t		*min_rpp, *max_rpp;
 void
 rt_fastf_float( ff, fp, n )
 register fastf_t *ff;
-register CONST dbfloat_t *fp;
+register const dbfloat_t *fp;
 register int n;
 {
 #	include "noalias.h"
@@ -1129,7 +1129,7 @@ register int n;
 void
 rt_mat_dbmat( ff, dbp )
 register fastf_t *ff;
-register CONST dbfloat_t *dbp;
+register const dbfloat_t *dbp;
 {
 
 	*ff++ = *dbp++;
@@ -1161,7 +1161,7 @@ register CONST dbfloat_t *dbp;
 void
 rt_dbmat_mat( dbp, ff )
 register dbfloat_t *dbp;
-register CONST fastf_t *ff;
+register const fastf_t *ff;
 {
 
 	*dbp++ = (dbfloat_t) *ff++;
@@ -1194,8 +1194,8 @@ register CONST fastf_t *ff;
  */
 struct soltab *
 rt_find_solid( rtip, name )
-CONST struct rt_i	*rtip;
-register CONST char	*name;
+const struct rt_i	*rtip;
+register const char	*name;
 {
 	register struct soltab	*stp;
 	struct directory	*dp;
@@ -1285,7 +1285,7 @@ struct resource		*resp;
 HIDDEN void
 rt_tree_region_assign( tp, regionp )
 register union tree	*tp;
-register CONST struct region	*regionp;
+register const struct region	*regionp;
 {
 	RT_CK_TREE(tp);
 	RT_CK_REGION(regionp);

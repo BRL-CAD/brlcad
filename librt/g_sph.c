@@ -187,9 +187,9 @@ struct rt_i		*rtip;
  */
 void
 rt_sph_print( stp )
-register CONST struct soltab *stp;
+register const struct soltab *stp;
 {
-	register CONST struct sph_specific *sph =
+	register const struct sph_specific *sph =
 		(struct sph_specific *)stp->st_specific;
 
 	VPRINT("V", sph->sph_V);
@@ -442,9 +442,9 @@ rt_sph_class()
 int
 rt_sph_import5( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-register CONST mat_t		mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	struct rt_sph_internal	*sip;
 	LOCAL fastf_t		vec[3+1];
@@ -475,9 +475,9 @@ CONST struct db_i		*dbip;
 int
 rt_sph_export5( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_sph_internal	*tip;
 	union record		*rec;

@@ -53,7 +53,7 @@ extern int overlap();   /*  User supplied overlap function.  */
 
 struct table
 {
-   CONST char *name;	/*  Region name.  */
+   const char *name;	/*  Region name.  */
    double lvrays;	/*  Number of rays that leave a region &  */
 			/*  hit air or nothing.  */
    double *intrays;	/*  Number of rays that leave a region &  */

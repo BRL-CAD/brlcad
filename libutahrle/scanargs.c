@@ -86,11 +86,11 @@ static int isnum();
 static int	_do_scanargs();
 void		scan_usage();
 #else
-static CONST char * prformat( CONST char *, int );
-static int isnum( CONST char *, int, int );
-static int	_do_scanargs( int argc, char **argv, CONST char *format,
+static const char * prformat( const char *, int );
+static int isnum( const char *, int, int );
+static int	_do_scanargs( int argc, char **argv, const char *format,
 			      va_list argl );
-void		scan_usage( char **, CONST char * );
+void		scan_usage( char **, const char * );
 #endif
 
 /* 
@@ -98,7 +98,7 @@ void		scan_usage( char **, CONST char * );
  */
 int
 #ifdef HAVE_STDARG_H
-scanargs ( int argc, char **argv, CONST char *format, ... )
+scanargs ( int argc, char **argv, const char *format, ... )
 #else
 scanargs ( va_alist )
 va_dcl
@@ -111,12 +111,12 @@ va_dcl
 #else
     int argc;
     char ** argv;
-    CONST char *format;
+    const char *format;
 
     va_start( argl );
     argc = va_arg( argl, int );
     argv = va_arg( argl, char ** );
-    format = va_arg( argl, CONST char * );
+    format = va_arg( argl, const char * );
 #endif
     retval = _do_scanargs( argc, argv, format, argl );
     va_end( argl );
@@ -134,13 +134,13 @@ static int
 _do_scanargs( argc, argv, format, argl )
 int     argc;			/* Actual arguments */
 char  **argv;
-CONST char   *format;
+const char   *format;
 va_list argl;
 {
 
     register int    check;			/* check counter to be sure all argvs
 					   are processed */
-    register CONST char  *cp;
+    register const char  *cp;
     register int    cnt;
     int	    optarg = 0;			/* where optional args start */
     int	    nopt = 0;
@@ -167,7 +167,7 @@ va_list argl;
     double *dbllist = 0;
     char  * argp;			/* Pointer to argument. */
 
-    CONST char   *ncp;		/* remember cp during flag scanning */
+    const char   *ncp;		/* remember cp during flag scanning */
     static char   cntrl[7] = "%  %1s";	/* control string for scanf's */
     char    junk[2];			/* junk buffer for scanf's */
 
@@ -644,9 +644,9 @@ error:
 void
 scan_usage( argv, format )
 char ** argv;
-CONST char * format;
+const char * format;
 {
-    register CONST char * cp;
+    register const char * cp;
 
     fprintf (stderr, "usage : ");
     if (*(cp = format) != ' ')
@@ -676,12 +676,12 @@ CONST char * format;
     (void)prformat (cp, NO);
 }
 
-static CONST char *
+static const char *
 prformat (format, recurse)
-CONST char   *format;
+const char   *format;
 int 	recurse;
 {
-    register CONST char  *cp;
+    register const char  *cp;
     bool    required, comma_list;
     int    list_of;
 
@@ -809,11 +809,11 @@ reswitch:
  */
 static int
 isnum( str, typchr, comma_list )
-register CONST char * str;
+register const char * str;
 int typchr;
 int comma_list;
 {
-    register CONST char *allowed, *digits, *cp;
+    register const char *allowed, *digits, *cp;
     int hasdigit = NO;
 
     switch( typchr )

@@ -82,9 +82,9 @@ struct rt_i		*rtip;
  */
 void
 rt_grp_print( stp )
-register CONST struct soltab *stp;
+register const struct soltab *stp;
 {
-	register CONST struct grip_specific *gripp =
+	register const struct grip_specific *gripp =
 		(struct grip_specific *)stp->st_specific;
 
 	if( gripp == GRIP_NULL )  {
@@ -218,8 +218,8 @@ int
 rt_grp_plot( vhead, ip, ttol, tol )
 struct bu_list		*vhead;
 struct rt_db_internal 	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol		*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol		*tol;
 {
 	struct rt_grip_internal	*gip;
 	vect_t xbase, ybase;	/* perpendiculars to normal */
@@ -274,9 +274,9 @@ CONST struct bn_tol		*tol;
 int
 rt_grp_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-CONST mat_t			mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+const mat_t			mat;
+const struct db_i		*dbip;
 {
 	struct rt_grip_internal	*gip;
 	union record	*rp;
@@ -329,9 +329,9 @@ CONST struct db_i		*dbip;
 int
 rt_grp_export( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_grip_internal	*gip;
 	union record		*rec;
@@ -358,9 +358,9 @@ CONST struct db_i		*dbip;
 int
 rt_grp_import5( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-register CONST mat_t		mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	struct rt_grip_internal *gip;
 	fastf_t			vec[7];
@@ -411,9 +411,9 @@ CONST struct db_i		*dbip;
 int
 rt_grp_export5( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_grip_internal *gip;
 	fastf_t			vec[7];
@@ -447,7 +447,7 @@ CONST struct db_i		*dbip;
 int
 rt_grp_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {
@@ -493,8 +493,8 @@ rt_grp_tess( r, m, ip, ttol, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol		*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol		*tol;
 {
 	struct rt_grip_internal	*gip;
 

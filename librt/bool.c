@@ -51,11 +51,11 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #define TRUE	1
 
 RT_EXTERN(void rt_grow_boolstack, (struct resource *resp) );
-int rt_tree_max_raynum(register CONST union tree *,
-		       register CONST struct partition *);
-int rt_bool_partition_eligible(register CONST struct bu_ptbl *,
-			       register CONST struct bu_bitv *,
-			       register CONST struct partition *);
+int rt_tree_max_raynum(register const union tree *,
+		       register const struct partition *);
+int rt_bool_partition_eligible(register const struct bu_ptbl *,
+			       register const struct bu_bitv *,
+			       register const struct partition *);
 int rt_booleval(register union tree*,
 		struct partition *,
 		struct region **,
@@ -725,20 +725,20 @@ struct partition		*pheadp;
 void
 rt_get_region_seglist_for_partition( sl, pp, regp )
 struct bu_ptbl	*sl;
-CONST struct partition *pp;
-CONST struct region *regp;
+const struct partition *pp;
+const struct region *regp;
 {
-	CONST struct seg **segpp;
+	const struct seg **segpp;
 
 	bu_ptbl_init( sl, 8, "region seglist for partition" );
 
 	/* Walk the partitions segment list */
-	for( BU_PTBL_FOR( segpp, (CONST struct seg **), &pp->pt_seglist ) )  {
-		CONST struct region **srpp;
+	for( BU_PTBL_FOR( segpp, (const struct seg **), &pp->pt_seglist ) )  {
+		const struct region **srpp;
 
 		RT_CK_SEG(*segpp);
 		/* For every segment in part, walk the solid's region list */
-		for( BU_PTBL_FOR( srpp, (CONST struct region **), &(*segpp)->seg_stp->st_regions ) )  {
+		for( BU_PTBL_FOR( srpp, (const struct region **), &(*segpp)->seg_stp->st_regions ) )  {
 			RT_CK_REGION(*srpp);
 
 			if( *srpp != regp )  continue;
@@ -764,11 +764,11 @@ void
 rt_fastgen_vol_vol_overlap( fr1, fr2, pp )
 struct region **fr1;
 struct region **fr2;
-CONST struct partition *pp;
+const struct partition *pp;
 {
 	struct bu_ptbl	sl1, sl2;
-	CONST struct seg *s1 = (CONST struct seg *)NULL;
-	CONST struct seg *s2 = (CONST struct seg *)NULL;
+	const struct seg *s1 = (const struct seg *)NULL;
+	const struct seg *s2 = (const struct seg *)NULL;
 	fastf_t s1_in_dist;
 	fastf_t s2_in_dist;
 	fastf_t depth;
@@ -1141,9 +1141,9 @@ code2:
 void
 rt_silent_logoverlap( ap, pp, regiontable, InputHdp )
 struct application	*ap;
-CONST struct partition	*pp;
-CONST struct bu_ptbl	*regiontable;
-CONST struct partition	*InputHdp;
+const struct partition	*pp;
+const struct bu_ptbl	*regiontable;
+const struct partition	*InputHdp;
 {
 	RT_CK_AP(ap);
 	RT_CK_PT(pp);
@@ -1163,9 +1163,9 @@ CONST struct partition	*InputHdp;
 void
 rt_default_logoverlap( ap, pp, regiontable, InputHdp )
 struct application	*ap;
-CONST struct partition	*pp;
-CONST struct bu_ptbl	*regiontable;
-CONST struct partition	*InputHdp;
+const struct partition	*pp;
+const struct bu_ptbl	*regiontable;
+const struct partition	*InputHdp;
 {
 	point_t	pt;
 	static long count = 0;		/* Not PARALLEL, shouldn't hurt */
@@ -1340,7 +1340,7 @@ struct partition *FinalHdp;
 fastf_t startdist, enddist;
 struct bu_ptbl	*regiontable;
 struct application *ap;
-CONST struct bu_bitv	*solidbits;
+const struct bu_bitv	*solidbits;
 {
 	LOCAL struct region *lastregion = (struct region *)NULL;
 	LOCAL struct region *TrueRg[2];
@@ -2095,10 +2095,10 @@ rt_partition_len( const struct partition *partheadp )
  */
 int
 rt_tree_test_ready( tp, solidbits, regionp, pp )
-register CONST union tree	*tp;
-register CONST struct bu_bitv	*solidbits;
-register CONST struct region	*regionp;
-register CONST struct partition	*pp;
+register const union tree	*tp;
+register const struct bu_bitv	*solidbits;
+register const struct region	*regionp;
+register const struct partition	*pp;
 {
 	RT_CK_TREE(tp);
 	BU_CK_BITV(solidbits);
@@ -2147,9 +2147,9 @@ register CONST struct partition	*pp;
  */
 int
 rt_bool_partition_eligible(regiontable, solidbits, pp)
-register CONST struct bu_ptbl	*regiontable;
-register CONST struct bu_bitv	*solidbits;
-register CONST struct partition	*pp;
+register const struct bu_ptbl	*regiontable;
+register const struct bu_bitv	*solidbits;
+register const struct partition	*pp;
 {
 	struct region **regpp;
 
@@ -2184,8 +2184,8 @@ register CONST struct partition	*pp;
  */
 int
 rt_tree_max_raynum( tp, pp )
-register CONST union tree	*tp;
-register CONST struct partition	*pp;
+register const union tree	*tp;
+register const struct partition	*pp;
 {
 	RT_CK_TREE(tp);
 	RT_CK_PARTITION(pp);

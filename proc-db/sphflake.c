@@ -433,7 +433,7 @@ void createLights(p)
   c[1] = (char)g;
   c[2] = (char)b;
   mk_lcomb(fp, name, &(wmemberArray[LIGHT0_ID]), 1, LIGHT0_MAT, LIGHT0_MATPARAM,
-	   (CONST unsigned char *) c, 0);
+	   (const unsigned char *) c, 0);
   
   VSET(lPos, p->pos[X]+(13 * p->maxRadius), p->pos[Y]+(-13 * p->maxRadius), p->pos[Z]+(152 * p->maxRadius));
   sprintf(name, "light1");
@@ -447,7 +447,7 @@ void createLights(p)
   c[1] = (char)g;
   c[2] = (char)b;
   mk_lcomb(fp, name, &(wmemberArray[LIGHT1_ID]), 1, LIGHT1_MAT, LIGHT1_MATPARAM,
-	   (CONST unsigned char *) c, 0);
+	   (const unsigned char *) c, 0);
   
   printf("\nLights created");
 }

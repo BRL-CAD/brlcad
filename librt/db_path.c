@@ -79,7 +79,7 @@ db_add_node_to_full_path( struct db_full_path *pp, struct directory *dp )
 void
 db_dup_full_path( newp, oldp )
 register struct db_full_path		*newp;
-register CONST struct db_full_path	*oldp;
+register const struct db_full_path	*oldp;
 {
 	RT_CK_FULL_PATH(newp);
 	RT_CK_FULL_PATH(oldp);
@@ -154,7 +154,7 @@ db_append_full_path( struct db_full_path *dest, const struct db_full_path *src )
 void
 db_dup_path_tail( newp, oldp, start )
 register struct db_full_path		*newp;
-register CONST struct db_full_path	*oldp;
+register const struct db_full_path	*oldp;
 int					start;
 {
 	RT_CK_FULL_PATH(newp);
@@ -345,7 +345,7 @@ db_argv_to_path( pp, dbip, argc, argv )
 register struct db_full_path	*pp;
 struct db_i			*dbip;
 int				argc;
-CONST char			*CONST*argv;
+const char			*const*argv;
 {
 	struct directory	*dp;
 	int			ret = 0;

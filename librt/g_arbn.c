@@ -33,7 +33,7 @@ static const char RCSarbn[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "./debug.h"
 
-RT_EXTERN(void rt_arbn_print, (CONST struct soltab *stp) );
+RT_EXTERN(void rt_arbn_print, (const struct soltab *stp) );
 RT_EXTERN(void rt_arbn_ifree, (struct rt_db_internal *ip) );
 
 /*
@@ -56,7 +56,7 @@ struct rt_i		*rtip;
 	int		j;
 	int		k;
 	int		*used = (int *)0;	/* plane eqn use count */
-	CONST struct bn_tol	*tol = &rtip->rti_tol;
+	const struct bn_tol	*tol = &rtip->rti_tol;
 
 	RT_CK_DB_INTERNAL( ip );
 	aip = (struct rt_arbn_internal *)ip->idb_ptr;
@@ -142,7 +142,7 @@ struct rt_i		*rtip;
  */
 void
 rt_arbn_print( stp )
-register CONST struct soltab *stp;
+register const struct soltab *stp;
 {
 }
 
@@ -334,8 +334,8 @@ int
 rt_arbn_plot( vhead, ip, ttol, tol )
 struct bu_list		*vhead;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol	*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol	*tol;
 {
 	register struct rt_arbn_internal	*aip;
 	register int	i;
@@ -440,7 +440,7 @@ static void
 Sort_edges( edges , edge_count , aip )
 struct arbn_edges *edges;
 int *edge_count;
-CONST struct rt_arbn_internal   *aip;
+const struct rt_arbn_internal   *aip;
 {
 	int face;
 
@@ -518,8 +518,8 @@ rt_arbn_tess( r, m, ip, ttol, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol	*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol	*tol;
 {
 	LOCAL struct rt_arbn_internal	*aip;
 	struct shell		*s;
@@ -794,9 +794,9 @@ fail:
 int
 rt_arbn_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-register CONST mat_t		mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	union record		*rp;
 	struct rt_arbn_internal	*aip;
@@ -849,9 +849,9 @@ CONST struct db_i		*dbip;
 int
 rt_arbn_export( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_arbn_internal	*aip;
 	union record		*rec;
@@ -910,9 +910,9 @@ CONST struct db_i		*dbip;
 int
 rt_arbn_import5( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-register CONST mat_t		mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	struct rt_arbn_internal	*aip;
 	register int		i;
@@ -969,9 +969,9 @@ CONST struct db_i		*dbip;
 int
 rt_arbn_export5( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_arbn_internal	*aip;
 	register int		i;
@@ -1024,7 +1024,7 @@ CONST struct db_i		*dbip;
 int
 rt_arbn_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {

@@ -101,7 +101,7 @@ char **argv;
     int tflag = 0, fflag = 0, oflag = 0, dflag = 0, pflag = 0, verbose = 0;
     char * fname = NULL, *out_fname = NULL;
     FILE *outfile = stdout;
-    static CONST char * argfmt =
+    static const char * argfmt =
 	"% v%- f%-from-channels!,d t%-to-channels!,d \n\
 \td%-delete-channels!,d p%-channel-pairs!,d o%-outfile!s infile%s";
     register int i;

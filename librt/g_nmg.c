@@ -125,7 +125,7 @@ struct rt_i		*rtip;
  */
 void
 rt_nmg_print( stp )
-register CONST struct soltab *stp;
+register const struct soltab *stp;
 {
 	register struct model *m =
 		(struct model *)stp->st_specific;
@@ -331,8 +331,8 @@ int
 rt_nmg_plot( vhead, ip, ttol, tol )
 struct bu_list		*vhead;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol	*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol	*tol;
 {
 	LOCAL struct model	*m;
 
@@ -362,8 +362,8 @@ rt_nmg_tess( r, m, ip, ttol, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol	*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol	*tol;
 {
 	LOCAL struct model	*lm;
 
@@ -663,7 +663,7 @@ struct disk_double_array  {
 /* 26 is the limit, in the current incarnation of db.h */
 #define NMG_N_KINDS		26		/* number of kinds */
 
-CONST int	rt_nmg_disk_sizes[NMG_N_KINDS] = {
+const int	rt_nmg_disk_sizes[NMG_N_KINDS] = {
 	sizeof(struct disk_model),		/* 0 */
 	sizeof(struct disk_nmgregion),
 	sizeof(struct disk_nmgregion_a),
@@ -691,7 +691,7 @@ CONST int	rt_nmg_disk_sizes[NMG_N_KINDS] = {
 	0,
 	0  /* disk_double_array, MUST BE ZERO */	/* 25: MUST BE ZERO */
 };
-CONST char	rt_nmg_kind_names[NMG_N_KINDS+2][18] = {
+const char	rt_nmg_kind_names[NMG_N_KINDS+2][18] = {
 	"model",				/* 0 */
 	"nmgregion",
 	"nmgregion_a",
@@ -827,7 +827,7 @@ static unsigned int	rt_nmg_cur_fastf_subscript;
  */
 int
 rt_nmg_export_fastf( fp, count, pt_type, scale )
-CONST fastf_t	*fp;
+const fastf_t	*fp;
 int		count;
 int		pt_type;	/* If zero, means literal array of values */
 double		scale;
@@ -874,14 +874,14 @@ double		scale;
  */
 fastf_t *
 rt_nmg_import_fastf( base, ecnt, subscript, mat, len, pt_type )
-CONST unsigned char	*base;
+const unsigned char	*base;
 struct nmg_exp_counts	*ecnt;
 long			subscript;
-CONST matp_t		mat;
+const matp_t		mat;
 int			len;		/* expected size */
 int			pt_type;
 {
-	CONST unsigned char	*cp;
+	const unsigned char	*cp;
 	register int		count;
 	fastf_t			*ret;
 	fastf_t			*tmp;
@@ -1404,8 +1404,8 @@ genptr_t	ip;		/* base of disk array */
 struct nmg_exp_counts	*ecnt;
 int		index;
 long		**ptrs;
-CONST mat_t	mat;
-CONST unsigned char	*basep;	/* base of whole import record */
+const mat_t	mat;
+const unsigned char	*basep;	/* base of whole import record */
 {
 	int	iindex;		/* index in ip */
 
@@ -2078,10 +2078,10 @@ bu_log("rt_nmg_i2alloc() first one at cp=x%x, offset=%d, subscript=%d\n", cp, of
 int
 rt_nmg_import_internal( ip, ep, mat, rebound, tol )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-register CONST mat_t		mat;
+const struct bu_external	*ep;
+register const mat_t		mat;
 int				rebound;
-CONST struct bn_tol		*tol;
+const struct bn_tol		*tol;
 {
 	struct model			*m;
 	union record			*rp;
@@ -2223,7 +2223,7 @@ CONST struct bn_tol		*tol;
 int
 rt_nmg_export_internal( ep, ip, local2mm, compact )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
 int				compact;
 {
@@ -2425,9 +2425,9 @@ bu_log("Mapping of old index to new index, and kind\n");
 int
 rt_nmg_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-register CONST mat_t		mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	struct model			*m;
 	union record			*rp;
@@ -2566,9 +2566,9 @@ rt_nmg_import5( struct rt_db_internal	*ip,
 int
 rt_nmg_export( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct model			*m;
 
@@ -2765,7 +2765,7 @@ rt_nmg_export5(
 int
 rt_nmg_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {

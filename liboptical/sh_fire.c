@@ -103,7 +103,7 @@ struct fire_specific {
 };
 
 /* The default values for the variables in the shader specific structure */
-static CONST
+static const
 struct fire_specific fire_defaults = {
 	fire_MAGIC,
 	0,			/* fire_debug */
@@ -193,7 +193,7 @@ struct mfuncs fire_mfuncs[] = {
 	0,		0,		0,		0 }
 };
 
-CONST double flame_colors[18][3] = {
+const double flame_colors[18][3] = {
 	{0.0, 0.0, 0.0},
 	{0.0, 0.0, 0.0},
 	{0.106, 0.0, 0.0},

@@ -44,7 +44,7 @@ struct cline_specific {
 
 #define	RT_CLINE_O(m)	offsetof( struct rt_cline_internal, m )
 
-CONST struct bu_structparse rt_cline_parse[] = {
+const struct bu_structparse rt_cline_parse[] = {
 	{ "%f", 3, "V", RT_CLINE_O( v ),  BU_STRUCTPARSE_FUNC_NULL },
 	{ "%f", 3, "H", RT_CLINE_O( h ),  BU_STRUCTPARSE_FUNC_NULL },
 	{ "%f", 1, "r", RT_CLINE_O( radius ), BU_STRUCTPARSE_FUNC_NULL },
@@ -126,9 +126,9 @@ struct rt_i		*rtip;
  */
 void
 rt_cline_print( stp )
-register CONST struct soltab *stp;
+register const struct soltab *stp;
 {
-	register CONST struct cline_specific *cline =
+	register const struct cline_specific *cline =
 		(struct cline_specific *)stp->st_specific;
 
 	VPRINT( "V", cline->V );
@@ -420,9 +420,9 @@ register struct soltab *stp;
  */
 int
 rt_cline_class( stp, min, max, tol )
-CONST struct soltab    *stp;
-CONST vect_t		min, max;
-CONST struct bn_tol    *tol;
+const struct soltab    *stp;
+const vect_t		min, max;
+const struct bn_tol    *tol;
 {
 
 	return( 0 );
@@ -435,8 +435,8 @@ int
 rt_cline_plot( vhead, ip, ttol, tol )
 struct bu_list		*vhead;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol	*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol	*tol;
 {
 	LOCAL struct rt_cline_internal	*cline_ip;
         LOCAL fastf_t           top[16*3];
@@ -531,8 +531,8 @@ rt_cline_tess( r, m, ip, ttol, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-CONST struct rt_tess_tol *ttol;
-CONST struct bn_tol	*tol;
+const struct rt_tess_tol *ttol;
+const struct bn_tol	*tol;
 {
 	struct shell			*s;
 	struct rt_cline_internal	*cline_ip;
@@ -826,9 +826,9 @@ CONST struct bn_tol	*tol;
 int
 rt_cline_import( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-register CONST mat_t		mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	LOCAL struct rt_cline_internal	*cline_ip;
 	union record			*rp;
@@ -869,9 +869,9 @@ CONST struct db_i		*dbip;
 int
 rt_cline_export( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_cline_internal	*cline_ip;
 	union record			*rec;
@@ -912,9 +912,9 @@ CONST struct db_i		*dbip;
 int
 rt_cline_import5( ip, ep, mat, dbip )
 struct rt_db_internal		*ip;
-CONST struct bu_external	*ep;
-register CONST mat_t		mat;
-CONST struct db_i		*dbip;
+const struct bu_external	*ep;
+register const mat_t		mat;
+const struct db_i		*dbip;
 {
 	struct rt_cline_internal	*cline_ip;
 	fastf_t				vec[8];
@@ -950,9 +950,9 @@ CONST struct db_i		*dbip;
 int
 rt_cline_export5( ep, ip, local2mm, dbip )
 struct bu_external		*ep;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 double				local2mm;
-CONST struct db_i		*dbip;
+const struct db_i		*dbip;
 {
 	struct rt_cline_internal	*cline_ip;
 	fastf_t				vec[8];
@@ -987,7 +987,7 @@ CONST struct db_i		*dbip;
 int
 rt_cline_describe( str, ip, verbose, mm2local )
 struct bu_vls		*str;
-CONST struct rt_db_internal	*ip;
+const struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {
@@ -1043,7 +1043,7 @@ rt_cline_tnurb( r, m, ip, tol )
 struct nmgregion	**r;
 struct model		*m;
 struct rt_db_internal	*ip;
-CONST struct bn_tol		*tol;
+const struct bn_tol		*tol;
 {
 	return( 1 );
 }
@@ -1051,8 +1051,8 @@ CONST struct bn_tol		*tol;
 int
 rt_cline_tclget( interp, intern, attr )
 Tcl_Interp                      *interp;
-CONST struct rt_db_internal     *intern;
-CONST char                      *attr;
+const struct rt_db_internal     *intern;
+const char                      *attr;
 {
 	register struct rt_cline_internal *cli = 
 		(struct rt_cline_internal *)intern->idb_ptr;

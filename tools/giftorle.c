@@ -65,7 +65,7 @@ int ReadInterlaced(), ReadRaster();
 
 static rle_map out_map[3*(1<<8)];
 
-CONST char *MY_NAME = "giftorle";
+const char *MY_NAME = "giftorle";
 
 FILE *outfile;
 

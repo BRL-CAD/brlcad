@@ -33,10 +33,10 @@ static const char RCSbadmagic[] = "@(#)$Header$ (ARL)";
  */
 void
 bu_badmagic( ptr, magic, str, file, line )
-CONST long	*ptr;
+const long	*ptr;
 long		magic;
-CONST char	*str;
-CONST char	*file;
+const char	*str;
+const char	*file;
 int		line;
 {
 	char	buf[512];

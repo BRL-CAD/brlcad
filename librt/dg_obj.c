@@ -52,13 +52,13 @@
 #include "solid.h"
 /* XXX this should be done else where? */
 int rt_pg_plot(struct bu_list *, struct rt_db_internal *,
-	       CONST struct rt_tess_tol *, CONST struct bn_tol *);
+	       const struct rt_tess_tol *, const struct bn_tol *);
 int rt_pg_plot_poly(struct bu_list *, struct rt_db_internal *,
-		    CONST struct rt_tess_tol *, CONST struct bn_tol *);
+		    const struct rt_tess_tol *, const struct bn_tol *);
 int rt_bot_plot(struct bu_list *, struct rt_db_internal *,
-		    CONST struct rt_tess_tol *, CONST struct bn_tol *);
+		    const struct rt_tess_tol *, const struct bn_tol *);
 int rt_bot_plot_poly(struct bu_list *, struct rt_db_internal *,
-		    CONST struct rt_tess_tol *, CONST struct bn_tol *);
+		    const struct rt_tess_tol *, const struct bn_tol *);
 
 #include "./debug.h"
 
@@ -1708,7 +1708,7 @@ int
 dgo_nmg_region_start(tsp, pathp, combp, client_data)
      struct db_tree_state		*tsp;
      struct db_full_path		*pathp;
-     CONST struct rt_comb_internal	*combp;
+     const struct rt_comb_internal	*combp;
      genptr_t				client_data;
 {
 	union tree		*tp;
@@ -2074,7 +2074,7 @@ dgo_drawtrees(dgop, interp, argc, argv, kind)
 	  bu_free((genptr_t)dgcdp, "dgo_drawtrees: dgcdp");
 	  return(-1);
 	case 1:		/* Wireframes */
-		ret = db_walk_tree(dgop->dgo_wdbp->dbip, argc, (CONST char **)argv,
+		ret = db_walk_tree(dgop->dgo_wdbp->dbip, argc, (const char **)argv,
 			ncpu,
 			&dgop->dgo_wdbp->wdb_initial_tree_state,
 			0,			/* take all regions */
@@ -2095,7 +2095,7 @@ dgo_drawtrees(dgop, interp, argc, argv, kind)
 			dgcdp->draw_edge_uses_vbp = rt_vlblock_init();
 	  	}
 
-		ret = db_walk_tree(dgop->dgo_wdbp->dbip, argc, (CONST char **)argv,
+		ret = db_walk_tree(dgop->dgo_wdbp->dbip, argc, (const char **)argv,
 				   ncpu,
 				   &dgop->dgo_wdbp->wdb_initial_tree_state,
 				   dgo_enable_fastpath ? dgo_nmg_region_start : 0,

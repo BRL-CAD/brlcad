@@ -46,7 +46,7 @@ void
 bu_avs_init( avsp, len, str )
 struct bu_attribute_value_set	*avsp;
 int		len;
-CONST char	*str;
+const char	*str;
 {
 	if (bu_debug & BU_DEBUG_AVS)
 		bu_log("bu_avs_init(%8x, len=%d, %s)\n", avsp, len, str);
@@ -69,7 +69,7 @@ CONST char	*str;
 struct bu_attribute_value_set	*
 bu_avs_new( len, str )
 int		len;
-CONST char	*str;
+const char	*str;
 {
 	struct bu_attribute_value_set	*avsp;
 
@@ -95,8 +95,8 @@ CONST char	*str;
 int
 bu_avs_add( avsp, attribute, value )
 struct bu_attribute_value_set	*avsp;
-CONST char	*attribute;
-CONST char	*value;
+const char	*attribute;
+const char	*value;
 {
 	struct bu_attribute_value_pair *app;
 
@@ -186,7 +186,7 @@ bu_avs_get( const struct bu_attribute_value_set *avsp, const char *attribute )
 int
 bu_avs_remove( avsp, attribute )
 struct bu_attribute_value_set	*avsp;
-CONST char	*attribute;
+const char	*attribute;
 {
 	struct bu_attribute_value_pair *app, *epp;
 

@@ -54,7 +54,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 static void
 GetBeta(m, bias, tension)
 mat_t m;
-CONST double bias, tension;
+const double bias, tension;
 {
 	register int i;
 	double d, b2, b3;
@@ -95,7 +95,7 @@ CONST double bias, tension;
 static void
 GetCardinal(m, tension)
 mat_t m;
-CONST double tension;
+const double tension;
 {
 	m[ 1] = 2.0 - tension;
 	m[ 2] = tension - 2.0;
@@ -116,9 +116,9 @@ CONST double tension;
 void
 rt_dspline_matrix(m, type, tension, bias)
       mat_t	m;
-CONST char	*type;		/* "Cardinal", "Catmull", "Beta" */
-CONST double	tension;	/* Cardinal tension of .5 is Catmull spline */
-CONST double	bias;		/* only for B spline */
+const char	*type;		/* "Cardinal", "Catmull", "Beta" */
+const double	tension;	/* Cardinal tension of .5 is Catmull spline */
+const double	bias;		/* only for B spline */
 {
 	if (!strncmp(type, "Cardinal", 8))	GetCardinal(m, tension);
 	else if (!strncmp(type, "Catmull", 7))	GetCardinal(m, 0.5);
@@ -169,13 +169,13 @@ double alpha;		/* point to interpolate at */
 void
 rt_dspline4v(pt, m, a, b, c, d, depth, alpha)
 double *pt;	/* result */
-CONST mat_t	m;	/* spline matrix obtained with spline_matrix() */
-CONST double *a;	/* knots */
-CONST double *b;
-CONST double *c;
-CONST double *d;
-CONST int depth;	/* number of values per knot */
-CONST double alpha;	/* 0 <= alpha <= 1 */
+const mat_t	m;	/* spline matrix obtained with spline_matrix() */
+const double *a;	/* knots */
+const double *b;
+const double *c;
+const double *d;
+const int depth;	/* number of values per knot */
+const double alpha;	/* 0 <= alpha <= 1 */
 {
 	int i;
 	double p0, p1, p2, p3;
@@ -219,11 +219,11 @@ CONST double alpha;	/* 0 <= alpha <= 1 */
 void
 rt_dspline_n(r, m, knots, nknots, depth, alpha)
       double	*r;	/* result */
-CONST mat_t	m;	/* spline matrix */
-CONST double	*knots;	/* knot values */
-CONST int	nknots;	/* number of knots */
-CONST int	depth;	/* number of values per knot */
-CONST double	alpha;	/* point on surface (0..1) to evaluate */
+const mat_t	m;	/* spline matrix */
+const double	*knots;	/* knot values */
+const int	nknots;	/* number of knots */
+const int	depth;	/* number of values per knot */
+const double	alpha;	/* point on surface (0..1) to evaluate */
 {
 	double *a, *b, *c, *d, x;
 	int nspans = nknots - 3;

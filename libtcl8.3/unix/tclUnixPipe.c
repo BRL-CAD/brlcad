@@ -128,7 +128,7 @@ TclpMakeFile(channel, direction)
 
 TclFile
 TclpOpenFile(fname, mode)
-    CONST char *fname;		/* The name of the file to open. */
+    const char *fname;		/* The name of the file to open. */
     int mode;			/* In what mode to open the file? */
 {
     int fd;
@@ -180,7 +180,7 @@ TclpOpenFile(fname, mode)
 
 TclFile
 TclpCreateTempFile(contents)
-    CONST char *contents;	/* String to write into temp file, or NULL. */
+    const char *contents;	/* String to write into temp file, or NULL. */
 {
     char fileName[L_tmpnam], *native;
     Tcl_DString dstring;
@@ -1138,7 +1138,7 @@ Tcl_PidObjCmd(dummy, interp, objc, objv)
     ClientData dummy;		/* Not used. */
     Tcl_Interp *interp;		/* Current interpreter. */
     int objc;			/* Number of arguments. */
-    Tcl_Obj *CONST *objv;	/* Argument strings. */
+    Tcl_Obj *const *objv;	/* Argument strings. */
 {
     Tcl_Channel chan;
     Tcl_ChannelType *chanTypePtr;

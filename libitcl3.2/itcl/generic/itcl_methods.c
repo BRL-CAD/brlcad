@@ -37,7 +37,7 @@
  *  FORWARD DECLARATIONS
  */
 static int ItclParseConfig _ANSI_ARGS_((Tcl_Interp *interp,
-    int objc, Tcl_Obj *CONST objv[], ItclObject *contextObj,
+    int objc, Tcl_Obj *const objv[], ItclObject *contextObj,
     int *rargc, ItclVarDefn ***rvars, char ***rvals));
 
 static int ItclHandleConfig _ANSI_ARGS_((Tcl_Interp *interp,
@@ -70,7 +70,7 @@ Itcl_BodyCmd(dummy, interp, objc, objv)
     ClientData dummy;        /* unused */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     int status = TCL_OK;
 
@@ -183,7 +183,7 @@ Itcl_ConfigBodyCmd(dummy, interp, objc, objv)
     ClientData dummy;        /* unused */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     int status = TCL_OK;
 
@@ -883,7 +883,7 @@ Itcl_EvalMemberCode(interp, mfunc, member, contextObj, objc, objv)
     ItclMember *member;       /* command member containing code */
     ItclObject *contextObj;   /* object context, or NULL */
     int objc;                 /* number of arguments */
-    Tcl_Obj *CONST objv[];    /* argument objects */
+    Tcl_Obj *const objv[];    /* argument objects */
 {
     int result = TCL_OK;
     Tcl_CallFrame *oldFramePtr = NULL;
@@ -1446,7 +1446,7 @@ Itcl_ExecMethod(clientData, interp, objc, objv)
     ClientData clientData;   /* method definition */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     ItclMemberFunc *mfunc = (ItclMemberFunc*)clientData;
     ItclMember *member = mfunc->member;
@@ -1544,7 +1544,7 @@ Itcl_ExecProc(clientData, interp, objc, objv)
     ClientData clientData;   /* proc definition */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
 {
     ItclMemberFunc *mfunc = (ItclMemberFunc*)clientData;
     ItclMember *member = mfunc->member;
@@ -1808,7 +1808,7 @@ int
 Itcl_AssignArgs(interp, objc, objv, mfunc)
     Tcl_Interp *interp;        /* interpreter */
     int objc;                  /* number of arguments */
-    Tcl_Obj *CONST objv[];     /* argument objects */
+    Tcl_Obj *const objv[];     /* argument objects */
     ItclMemberFunc *mfunc;     /* member function info (for error messages) */
 {
     ItclMemberCode *mcode = mfunc->member->code;
@@ -2084,7 +2084,7 @@ static int
 ItclParseConfig(interp, objc, objv, contextObj, rargc, rvars, rvals)
     Tcl_Interp *interp;      /* interpreter */
     int objc;                /* number of arguments */
-    Tcl_Obj *CONST objv[];   /* argument objects */
+    Tcl_Obj *const objv[];   /* argument objects */
     ItclObject *contextObj;  /* object whose public vars are being config'd */
     int *rargc;              /* return: number of variables accessed */
     ItclVarDefn ***rvars;    /* return: list of variables */
@@ -2233,7 +2233,7 @@ ItclHandleConfig(interp, argc, vars, vals, contextObj)
             oldFramePtr = _Tcl_ActivateCallFrame(interp, uplevelFramePtr);
 
             result = Itcl_EvalMemberCode(interp, (ItclMemberFunc*)NULL,
-                vars[i]->member, contextObj, 0, (Tcl_Obj* CONST*)NULL);
+                vars[i]->member, contextObj, 0, (Tcl_Obj* const*)NULL);
 
             (void) _Tcl_ActivateCallFrame(interp, oldFramePtr);
 
@@ -2315,7 +2315,7 @@ Itcl_ConstructBase(interp, contextObj, contextClass)
         if (!Tcl_FindHashEntry(contextObj->constructed, cdefn->name)) {
 
             result = Itcl_InvokeMethodIfExists(interp, "constructor",
-                cdefn, contextObj, 0, (Tcl_Obj* CONST*)NULL);
+                cdefn, contextObj, 0, (Tcl_Obj* const*)NULL);
 
             if (result != TCL_OK) {
                 return TCL_ERROR;
@@ -2365,7 +2365,7 @@ Itcl_InvokeMethodIfExists(interp, name, contextClass, contextObj, objc, objv)
     ItclClass *contextClass;  /* current class being constructed */
     ItclObject *contextObj;   /* object being constructed */
     int objc;                 /* number of arguments */
-    Tcl_Obj *CONST objv[];    /* argument objects */
+    Tcl_Obj *const objv[];    /* argument objects */
 {
     int result = TCL_OK;
 

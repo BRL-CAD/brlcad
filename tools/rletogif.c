@@ -42,7 +42,7 @@
 #include "rle.h"
 #include "./rletogif.h"
 
-CONST char *MY_NAME = "rletogif";
+const char *MY_NAME = "rletogif";
 
 static rle_hdr in_hdr;
 static rle_pixel **scan;

@@ -735,7 +735,7 @@ wdb_put_cmd(struct rt_wdb	*wdbp,
 	    char 		**argv)
 {
 	struct rt_db_internal			intern;
-	register CONST struct rt_functab	*ftp;
+	register const struct rt_functab	*ftp;
 	int					i;
 	char				       *name;
 	char				        type[16];
@@ -901,7 +901,7 @@ wdb_form_cmd(struct rt_wdb	*wdbp,
 	     int		argc,
 	     char 		**argv)
 {
-	CONST struct rt_functab		*ftp;
+	const struct rt_functab		*ftp;
 
 	if (argc != 2) {
 		Tcl_AppendResult(interp, "wrong # args: should be \"db form objType\"",
@@ -1038,7 +1038,7 @@ wdb_rt_gettrees_cmd(struct rt_wdb	*wdbp,
 		break;
 	}
 
-	if (rt_gettrees(rtip, argc-2, (CONST char **)&argv[2], 1) < 0) {
+	if (rt_gettrees(rtip, argc-2, (const char **)&argv[2], 1) < 0) {
 		Tcl_AppendResult(interp,
 				 "rt_gettrees() returned error", (char *)NULL);
 		rt_free_rti(rtip);
@@ -2357,7 +2357,7 @@ wdb_do_update(struct db_i		*dbip,
 		bu_vls_free( &mref5 );
 }
 
-static int wdb_dir_add BU_ARGS((struct db_i *input_dbip, CONST char
+static int wdb_dir_add BU_ARGS((struct db_i *input_dbip, const char
 	*name, long laddr, int len, int flags, genptr_t ptr));
 
 struct dir_add_stuff {
@@ -2556,7 +2556,7 @@ wdb_dir_add5(struct db_i			*dbip,		/* db_i to add this object to */
  */
 static int
 wdb_dir_add(register struct db_i	*input_dbip,
-	    register CONST char		*name,
+	    register const char		*name,
 	    long			laddr,
 	    int				len,
 	    int				flags,
@@ -2814,7 +2814,7 @@ wdb_concat_tcl(ClientData	clientData,
 }
 
 BU_EXTERN(int wdb_dir_check, ( struct
-db_i *input_dbip, CONST char *name, long laddr, int len, int flags,
+db_i *input_dbip, const char *name, long laddr, int len, int flags,
 genptr_t ptr));
 
 struct dir_check_stuff {
@@ -2890,7 +2890,7 @@ wdb_dir_check5(register struct db_i		*input_dbip,
 int
 wdb_dir_check(input_dbip, name, laddr, len, flags, ptr)
      register struct db_i	*input_dbip;
-     register CONST char	*name;
+     register const char	*name;
      long			laddr;
      int			len;
      int			flags;
@@ -4521,7 +4521,7 @@ wdb_push_cmd(struct rt_wdb	*wdbp,
 	 * check to make sure that a solid is not pushed in two
 	 * different directions at the same time.
 	 */
-	i = db_walk_tree(wdbp->dbip, argc, (CONST char **)argv,
+	i = db_walk_tree(wdbp->dbip, argc, (const char **)argv,
 			 ncpu,
 			 &wdbp->wdb_initial_tree_state,
 			 0,				/* take all regions */
@@ -5054,7 +5054,7 @@ wdb_make_bb_cmd(struct rt_wdb	*wdbp,
 	for (i = 2 ; i < argc ; i++) {
 		vect_t reg_min, reg_max;
 		struct region *regp;
-		CONST char *reg_name;
+		const char *reg_name;
 
 		/* check if input name is a region */
 		for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
@@ -5257,7 +5257,7 @@ wdb_units_cmd(struct rt_wdb	*wdbp,
 	double		loc2mm;
 	int		new_unit = 0;
 	struct bu_vls 	vls;
-	CONST char	*str;
+	const char	*str;
 	int 		sflag = 0;
 
 	bu_vls_init(&vls);
@@ -5581,7 +5581,7 @@ wdb_attr_cmd(struct rt_wdb	*wdbp,
 		}
 	} else if( argc == 3 ) {
 		/* just getting a single attribute */
-		CONST char *val;
+		const char *val;
 
 		val = bu_avs_get( &avs, argv[2] );
 		if( !val ) {
@@ -5664,8 +5664,8 @@ wdb__tcl(ClientData	clientData,
  *  This routine was lifted from mged/columns.c.
  */
 int
-wdb_cmpdirname(CONST genptr_t a,
-	       CONST genptr_t b)
+wdb_cmpdirname(const genptr_t a,
+	       const genptr_t b)
 {
 	register struct directory **dp1, **dp2;
 
