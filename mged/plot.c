@@ -42,7 +42,7 @@ extern char	*local_unit[];
 FILE *up_fp;		/* output file pointer */
 int up_color(), up_cont(), up_cont3(), up_erase(), up_label();
 int up_line(), up_line3(), up_linemod();
-int up_move(), up_move3(), up_putsi(), up_space(), up_space3();
+int up_move(), up_move3(), up_putsi(), up_space(), up_spc3();
 
 
 /*
@@ -139,7 +139,7 @@ f_plot()
 	 * which we map to integer space -2048 to +2048
 	 */
 	if( Three_D )
-		up_space3( -2048, -2048, -2048, 2048, 2048, 2048 );
+		up_spc3( -2048, -2048, -2048, 2048, 2048, 2048 );
 	else
 		up_space( -2048, -2048, 2048, 2048 );
 	up_erase();
@@ -360,7 +360,7 @@ up_space(xval0,yval0,xval1,yval1){
 	up_putsi(yval1);
 }
 
-up_space3(xval0,yval0,zval0,xval1,yval1,zval1){
+up_spc3(xval0,yval0,zval0,xval1,yval1,zval1){
 	putc('S',up_fp);
 	up_putsi(xval0);
 	up_putsi(yval0);

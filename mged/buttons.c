@@ -109,7 +109,7 @@ struct buttons  {
 };
 
 static mat_t sav_viewrot, sav_toviewcenter;
-static float sav_viewscale;
+static float sav_vscale;
 static int	vsaved = 0;	/* set iff view saved */
 
 void btn_head_menu();
@@ -266,7 +266,7 @@ static void bv_rear()  {
 static void bv_vrestore()  {
 	/* restore to saved view */
 	if ( vsaved )  {
-		Viewscale = sav_viewscale;
+		Viewscale = sav_vscale;
 		mat_copy( Viewrot, sav_viewrot );
 		mat_copy( toViewcenter, sav_toviewcenter );
 		new_mats();
@@ -276,7 +276,7 @@ static void bv_vrestore()  {
 
 static void bv_vsave()  {
 	/* save current view */
-	sav_viewscale = Viewscale;
+	sav_vscale = Viewscale;
 	mat_copy( sav_viewrot, Viewrot );
 	mat_copy( sav_toviewcenter, toViewcenter );
 	vsaved = 1;

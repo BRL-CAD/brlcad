@@ -52,8 +52,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <fcntl.h>
 #include <stdio.h>
-#include <string.h>
 #include <signal.h>
+#ifdef BSD
+#include <string.h>
+#endif
+#include <strings.h>
+#endif
+
 #include "./machine.h"	/* special copy */
 #include "vmath.h"
 #include "db.h"
@@ -1795,3 +1800,12 @@ register struct directory *dp;
 
 
 
+#ifdef SYSV
+bzero( str, n )
+{
+	memset( str, '\0', n );
+}
+bcopy(from, to, count)  {
+	memcpy( to, from, count );
+}
+#endif

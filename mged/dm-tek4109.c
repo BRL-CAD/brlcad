@@ -59,32 +59,32 @@ typedef unsigned char u_char;
 /* Display Manager package interface */
  
 #define TEKBOUND	1000.0	/* Max magnification in Rot matrix */
-int	Tek4109_open();
-void	Tek4109_close();
-int	Tek4109_input();
-void	Tek4109_prolog(), Tek4109_epilog();
-void	Tek4109_normal(), Tek4109_newrot();
-void	Tek4109_update();
-void	Tek4109_puts(), Tek4109_2d_line(), Tek4109_light();
-int	Tek4109_object();
-unsigned Tek4109_cvtvecs(), Tek4109_load();
-void	Tek4109_statechange(), Tek4109_viewchange(), Tek4109_colorchange();
-void	Tek4109_window(), Tek4109_debug();
+int	T49_open();
+void	T49_close();
+int	T49_input();
+void	T49_prolog(), T49_epilog();
+void	T49_normal(), T49_newrot();
+void	T49_update();
+void	T49_puts(), T49_2d_line(), T49_light();
+int	T49_object();
+unsigned T49_cvtvecs(), T49_load();
+void	T49_statechange(), T49_viewchange(), T49_colorchange();
+void	T49_window(), T49_debug();
 
-struct dm dm_Tek4109 = {
-	Tek4109_open, Tek4109_close,
-	Tek4109_input,
-	Tek4109_prolog, Tek4109_epilog,
-	Tek4109_normal, Tek4109_newrot,
-	Tek4109_update,
-	Tek4109_puts, Tek4109_2d_line,
-	Tek4109_light,
-	Tek4109_object,
-	Tek4109_cvtvecs, Tek4109_load,
-	Tek4109_statechange,
-	Tek4109_viewchange,
-	Tek4109_colorchange,
-	Tek4109_window, Tek4109_debug,
+struct dm dm_T49 = {
+	T49_open, T49_close,
+	T49_input,
+	T49_prolog, T49_epilog,
+	T49_normal, T49_newrot,
+	T49_update,
+	T49_puts, T49_2d_line,
+	T49_light,
+	T49_object,
+	T49_cvtvecs, T49_load,
+	T49_statechange,
+	T49_viewchange,
+	T49_colorchange,
+	T49_window, T49_debug,
 	0,				/* no displaylist */
 	TEKBOUND,
 	"tek4109", "Tektronix 4109"		/* NRTC */
@@ -127,7 +127,7 @@ static void tekmove(), tekcont();
  * Fire up the display manager, and the display processor.
  *
  */
-Tek4109_open()
+T49_open()
 {
 	char line[64], line2[64];
 
@@ -184,7 +184,7 @@ Tek4109_open()
  *  Gracefully release the display.
  */
 void
-Tek4109_close()
+T49_close()
 {
 	cancel_cursor();
 	fprintf(outfp,"%cLZ", ESC);	/* clear screen */
@@ -201,7 +201,7 @@ Tek4109_close()
  * Used when the display processor wanders off.
  */
 void
-Tek4109_restart()
+T49_restart()
 {
 	(void)printf("%cTek_restart\n",US);		/* NRTC */
 }
@@ -212,7 +212,7 @@ Tek4109_restart()
  * There are global variables which are parameters to this routine.
  */
 void
-Tek4109_prolog()
+T49_prolog()
 {
 	if( !dmaflag )
 		return;
@@ -237,7 +237,7 @@ Tek4109_prolog()
  *			T E K _ E P I L O G
  */
 void
-Tek4109_epilog()
+T49_epilog()
 {
 	if( !dmaflag )
 		return;
@@ -251,7 +251,7 @@ Tek4109_epilog()
  */
 /* ARGSUSED */
 void
-Tek4109_newrot(mat)
+T49_newrot(mat)
 mat_t mat;
 {
 	return;
@@ -268,7 +268,7 @@ mat_t mat;
  */
 /* ARGSUSED */
 int
-Tek4109_object( sp, mat, ratio, white )
+T49_object( sp, mat, ratio, white )
 register struct solid *sp;
 mat_t mat;
 double ratio;
@@ -320,7 +320,7 @@ double ratio;
  * Turns off windowing.
  */
 void
-Tek4109_normal()
+T49_normal()
 {
 	return;
 }
@@ -331,7 +331,7 @@ Tek4109_normal()
  * Transmit accumulated displaylist to the display processor.
  */
 void
-Tek4109_update()
+T49_update()
 {
 	if( second_fd )  {
 		/* put up graphics cursor */
@@ -350,7 +350,7 @@ Tek4109_update()
  */
 /* ARGSUSED */
 void
-Tek4109_puts( str, x, y, size, color )
+T49_puts( str, x, y, size, color )
 register u_char *str;
 {
 	tekmove(x,y);
@@ -362,7 +362,7 @@ register u_char *str;
  *
  */
 void
-Tek4109_2d_line( x1, y1, x2, y2, dashed )
+T49_2d_line( x1, y1, x2, y2, dashed )
 int x1, y1;
 int x2, y2;
 int dashed;
@@ -458,7 +458,7 @@ static get_cursor()
  *	0 if no command waiting to be read,
  *	1 if command is waiting to be read.
  */
-Tek4109_input( cmd_fd, noblock )
+T49_input( cmd_fd, noblock )
 {
 	static long readfds;
 
@@ -499,7 +499,7 @@ Tek4109_input( cmd_fd, noblock )
  */
 /* ARGSUSED */
 void
-Tek4109_light( cmd, func )
+T49_light( cmd, func )
 int cmd;
 int func;			/* BE_ or BV_ function */
 {
@@ -508,7 +508,7 @@ int func;			/* BE_ or BV_ function */
 
 /* ARGSUSED */
 unsigned
-Tek4109_cvtvecs( sp )
+T49_cvtvecs( sp )
 struct solid *sp;
 {
 	return( 0 );
@@ -518,7 +518,7 @@ struct solid *sp;
  * Loads displaylist
  */
 unsigned
-Tek4109_load( addr, count )
+T49_load( addr, count )
 unsigned addr, count;
 {
 	(void)printf("%cTek_load(x%x, %d.)\n",US, addr, count );
@@ -526,17 +526,17 @@ unsigned addr, count;
 }
 
 void
-Tek4109_statechange()
+T49_statechange()
 {
 }
 
 void
-Tek4109_viewchange()
+T49_viewchange()
 {
 }
 
 void
-Tek4109_colorchange()
+T49_colorchange()
 {
 }
 
@@ -667,12 +667,12 @@ static point(xi,yi){
 
 /* ARGSUSED */
 void
-Tek4109_debug(lvl)
+T49_debug(lvl)
 {
 }
 
 void
-Tek4109_window(w)
+T49_window(w)
 register int w[];
 {
 	/* Compute the clipping bounds */

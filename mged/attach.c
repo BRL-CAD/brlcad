@@ -55,11 +55,11 @@ struct dm dm_Null = {
 
 /* All systems can compile these! */
 extern struct dm dm_Tek;
-extern struct dm dm_Tek4109;
+extern struct dm dm_T49;	/* Tek 4109 */
 extern struct dm dm_Plot;
 
 #ifdef BSD
-/* Only Berkeley systems have kernel drivers for these */
+/* We only supply kernel drivers for Berkeley systems for these */
 extern struct dm dm_Mg, dm_Vg;
 #endif
 
@@ -85,7 +85,7 @@ struct dm *dmp = &dm_Null;	/* Ptr to current Display Manager package */
 static struct dm *which_dm[] = {
 	&dm_Null,		/* This should go first */
 	&dm_Tek,
-	&dm_Tek4109,
+	&dm_T49,
 	&dm_Plot,
 #ifdef DM_IR
 	&dm_Ir,

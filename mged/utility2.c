@@ -14,7 +14,11 @@
 
 #include <signal.h>
 #include <stdio.h>
+#ifdef BSD
+#include <string.h>
+#else
 #include <strings.h>
+
 #include "./machine.h"	/* special copy */
 #include "vmath.h"
 #include "db.h"
@@ -657,7 +661,6 @@ f_push( )
  *
  */
 
-struct directory *path[MAX_LEVELS];
 
 push( dp, pathpos, old_xlate )
 struct directory *dp;

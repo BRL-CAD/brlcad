@@ -144,11 +144,11 @@ register int pen_y;
  *			M E N U _ A R R O W
  *
  *  Routine to allow user to reset the arrow to any menu & item desired.
- *  Example:  menu_arrow( MENU_L1, 3 ).
+ *  Example:  menu_pntr( MENU_L1, 3 ).
  *  The arrow can always be eliminated by setting menuflag=0, dmaflag=1.
  */
 void
-menu_arrow( menu, item )
+menu_pntr( menu, item )
 {
 	cur_menu = menu;
 	cur_item = item;

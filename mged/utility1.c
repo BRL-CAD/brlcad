@@ -16,7 +16,12 @@
 #include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
+#ifdef BSD
 #include <strings.h>
+#else
+#include <string.h>
+#endif
+
 #include "./machine.h"	/* special copy */
 #include "vmath.h"
 #include "db.h"
