@@ -57,6 +57,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <X11/extensions/XI.h>
 #include <X11/extensions/XInput.h>
 #include <X11/Xutil.h>
+#include <X11/keysym.h>
 
 #include <gl/gl.h>		/* SGI IRIS library */
 #include <gl/device.h>		/* SGI IRIS library */
@@ -758,7 +759,7 @@ XEvent *eventPtr;
       XLookupString(&(eventPtr->xkey), buffer, 1,
 		    &keysym, (XComposeStatus *)NULL);
 
-      if(*buffer == 'c'){
+      if(keysym == XK_c){
 	bu_vls_free(&cmd);
 	curr_dm_list = save_dm_list;
 

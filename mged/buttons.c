@@ -490,7 +490,9 @@ ill_common()  {
 	movedir = 0;		/* No edit modes set */
 	bn_mat_idn( modelchanges );	/* No changes yet */
 
+#if 0
 	update_views = 1;
+#endif
 	return(1);		/* OK */
 }
 
@@ -504,7 +506,9 @@ be_o_illuminate()  {
 #endif
 	if( ill_common() )  {
 		(void)chg_state( ST_VIEW, ST_O_PICK, "Object Illuminate" );
+#if 0
 		new_mats();
+#endif
 	}
 	/* reset accumulation local scale factors */
 	acc_sc[0] = acc_sc[1] = acc_sc[2] = 1.0;
@@ -512,7 +516,9 @@ be_o_illuminate()  {
 	/* reset accumulation global scale factors */
 	acc_sc_obj = 1.0;
 
+#if 0
 	update_views = 1;
+#endif
 }
 
 static void
@@ -524,10 +530,13 @@ be_s_illuminate()  {
 #endif
 	if( ill_common() )  {
 		(void)chg_state( ST_VIEW, ST_S_PICK, "Solid Illuminate" );
+#if 0
 		new_mats();
+#endif
 	}
-
+#if 0
 	update_views = 1;
+#endif
 }
 
 static void

@@ -35,11 +35,11 @@
 #define XLIB_ILLEGAL_ACCESS	/* necessary on facist SGI 5.0.1 */
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-#include <X11/keysym.h>
 
 #include "tk.h"
 #include <X11/extensions/XI.h>
 #include <X11/extensions/XInput.h>
+#include <X11/keysym.h>
 
 #ifdef USE_MESA_GL
 #include <MESA_GL/glx.h>
@@ -741,7 +741,7 @@ XEvent *eventPtr;
       XLookupString(&(eventPtr->xkey), buffer, 1,
 		    &keysym, (XComposeStatus *)NULL);
 
-      if(*buffer == 'c'){
+      if(keysym == XK_c){
 	bu_vls_free(&cmd);
 	curr_dm_list = save_dm_list;
 

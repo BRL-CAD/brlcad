@@ -37,6 +37,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <X11/Xutil.h>
 #include <X11/extensions/Xext.h>
 #include <X11/extensions/multibuf.h>
+#include <X11/keysym.h>
 
 #include "machine.h"
 #include "externs.h"
