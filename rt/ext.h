@@ -72,6 +72,8 @@ struct floatpixel {
 	float	ff_hitpt[3];
 	struct region *ff_regp;
 	int	ff_frame;		/* >= 0 means pixel was reprojected */
+	short	ff_x;			/* screen x,y coords of first location */
+	short	ff_y;
 	char	ff_color[3];
 };
 extern int		fullfloat_mode;
