@@ -393,7 +393,7 @@ struct rt_sketch_internal
 	vect_t		v_vec;		/* the sketch */
 	int		vert_count;	/* number of vertices in this sketch */
 	point2d_t	*verts;		/* array of 2D vertices that may be used as
-					 * endpoints, centers, or NURB control points */
+					 * endpoints, centers, or spline control points */
 /* XXX this should have a distinctive name, like rt_curve */
 	struct curve {
 		int		seg_count;	/* number of segments in this curve */

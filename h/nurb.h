@@ -127,6 +127,11 @@ struct oslo_mat {
 
 /* --- new way */
 
+struct bezier_2d_list {
+	struct bu_list	l;
+	point2d_t	*ctl;
+};
+
 /* nurb_basis.c */
 BU_EXTERN(fastf_t rt_nurb_basis_eval, (struct knot_vector *knts, int interval,
 			int order, fastf_t mu));
@@ -276,4 +281,16 @@ BU_EXTERN(void rt_nurb_map_oslo, (struct oslo_mat *oslo,
 			int o_stride, int n_stride,
 			int lower, int upper, int pt_type));
 
+/* bezier_2d_isect.c */
+BU_EXTERN( int CrossingCount, (point2d_t *V, int degree, point2d_t ray_start,
+			       point2d_t ray_dir, point2d_t ray_perp ) );
+BU_EXTERN( int ControlPolygonFlatEnough, (point2d_t *V, int degree, fastf_t epsilon ) );
+BU_EXTERN( void Bezier, (point2d_t *V, int degree, double t,
+			 point2d_t *Left, point2d_t *Right, point2d_t eval_pt ) );
+BU_EXTERN( int FindRoots, (point2d_t *w, int degree, point2d_t **intercept,
+			   point2d_t ray_start, point2d_t ray_dir, point2d_t ray_perp,
+			   int depth, fastf_t epsilon) );
+BU_EXTERN( struct bezier_2d_list *subdivide_bezier, (struct bezier_2d_list *bezier_hd, int degree,
+							fastf_t epsilon, int depth) );
 #endif
+

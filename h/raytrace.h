@@ -1804,6 +1804,13 @@ struct nurb_seg		/* NURB curve segment */
 };
 #define CURVE_NURB_MAGIC     0x6e757262		/* nurb */
 
+struct bezier_seg	/* Bezier curve segment */
+{
+	long			magic;
+	int			degree;		/* degree of curve (number of control points - 1) */
+	int			*ctl_points;	/* array of indices for control points */
+};
+#define CURVE_BEZIER_MAGIC	0x62657a69	/* bezi */
 
 /*
  *			R T _ F U N C T A B
