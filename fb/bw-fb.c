@@ -37,11 +37,12 @@ Pixel	obuf[1024];
 int	size, initx, inity;
 int	outsize;
 int	offx, offy;
+int	clear = 0;
 int	redflag   = 0;
 int	greenflag = 0;
 int	blueflag  = 0;
 
-char	*Usage = "usage: bw-fb [-h -i -r -g -b] [-o xoff yoff] [width] [xorig] [yorig] < file.bw\n";
+char	*Usage = "usage: bw-fb [-h -i -c -r -g -b] [-o xoff yoff] [width] [xorig] [yorig] < file.bw\n";
 
 main( argc, argv )
 int argc; char **argv;
@@ -62,6 +63,9 @@ int argc; char **argv;
 			break;
 		case 'i':
 			inverted++;
+			break;
+		case 'c':
+			clear++;
 			break;
 		case 'r':
 			redflag = 1;
@@ -109,6 +113,8 @@ int argc; char **argv;
 		perror (framebuffer == NULL ? "$FB_FILE" : framebuffer);
 		exit( 3 );
 	}
+
+	if( clear ) fbclear();
 
 	if( offy != 0 ) fseek( stdin, offy*size, 1 );
 	for( y = inity; y > (inity-outsize); y-- ) {
