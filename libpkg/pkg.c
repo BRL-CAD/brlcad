@@ -1004,6 +1004,8 @@ register struct pkg_conn *pc;
 			pc->pkc_strpos, i);
 		(pc->pkc_errlog)(errbuf);
 		pc->pkc_strpos -= i;
+		/* copy leftovers to front of stream */
+		bcopy(pc->pkc_stream + i, pc->pkc_stream, pc->pkc_strpos);
 		return( i );	/* amount of user data sent */
 	}
 	pc->pkc_strpos = 0;
@@ -1664,7 +1666,7 @@ register struct pkg_conn	*pc;
 	}
 
 	/* If cur point is near end of buffer, recopy data to buffer front */
-	if( pc->pkc_incur >= (pc->pkc_inlen * 8) / 7 )  {
+	if( pc->pkc_incur >= (pc->pkc_inlen * 7) / 8 )  {
 		register int	ammount;
 
 		ammount = pc->pkc_inend - pc->pkc_incur;
@@ -1692,6 +1694,8 @@ register struct pkg_conn	*pc;
 			ret = -1;
 			goto out;
 		}
+		/* since the input buffer has grown, lets update avail */
+		avail = pc->pkc_inlen - pc->pkc_inend;
 	}
 
 	/* Take as much as the system will give us, up to buffer size */
