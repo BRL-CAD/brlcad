@@ -107,18 +107,18 @@ char	**argv;
 	mousevec[Y] =  ypos / 2047.0;
 	mousevec[Z] = 0;
 
-	if (mged_variables.faceplate && mged_variables.show_menu) {
+	if (mged_variables.faceplate && mged_variables.show_menu && up) {
 	  /*
 	   * If mouse press is in scroll area, see if scrolling, and if so,
 	   * divert this mouse press.
 	   */
-	  if( (xpos >= MENUXLIM) && up || scroll_active && up)  {
+	  if( (xpos >= MENUXLIM) || scroll_active )  {
 	    register int i;
 
 	    if(scroll_active)
 	      ypos = scroll_y;
 
-	    if( (i = scroll_select(xpos, ypos )) < 0 )  {
+	    if( (i = scroll_select( xpos, ypos, 1 )) < 0 )  {
 	      Tcl_AppendResult(interp,
 			       "mouse press outside valid scroll area\n",
 			       (char *)NULL);
@@ -139,10 +139,10 @@ char	**argv;
 	   * If menu is active, and mouse press is in menu area,
 	   * divert this mouse press for menu purposes.
 	   */
-	  if( xpos < MENUXLIM && up )  {
+	  if( xpos < MENUXLIM )  {
 	    register int i;
 
-	    if( (i = mmenu_select( ypos )) < 0 )  {
+	    if( (i = mmenu_select( ypos, 1 )) < 0 )  {
 	      Tcl_AppendResult(interp,
 			       "mouse press outside valid menu\n",
 			       (char *)NULL);
