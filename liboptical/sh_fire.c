@@ -223,8 +223,6 @@ struct mfuncs		*mfp;
 struct rt_i		*rtip;	/* New since 4.4 release */
 {
 	register struct fire_specific	*fire_sp;
-	mat_t	tmp;
-	vect_t	bb_min, bb_max, v_tmp;
 
 	/* check the arguments */
 	RT_CHECK_RTI(rtip);
@@ -339,8 +337,6 @@ char			*dp;	/* ptr to the shader-specific struct */
 
 	register struct fire_specific *fire_sp =
 		(struct fire_specific *)dp;
-	point_t t_i_pt;
-	point_t t_o_pt;
 	point_t	m_i_pt, m_o_pt;	/* model space in/out points */
 	point_t sh_i_pt, sh_o_pt;	/* shader space in/out points */
 	point_t noise_i_pt, noise_o_pt;	/* shader space in/out points */

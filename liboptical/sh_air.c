@@ -95,7 +95,6 @@ struct mfuncs		*mfp;
 struct rt_i		*rtip;	/* New since 4.4 release */
 {
 	register struct air_specific	*air_sp;
-	mat_t	tmp;
 
 	if( rdebug&RDEBUG_SHADE) bu_log("air_setup\n");
 
@@ -162,7 +161,6 @@ char	*dp;
 {
 	register struct air_specific *air_sp =
 		(struct air_specific *)dp;
-	point_t pt;
 
 	RT_AP_CHECK(ap);
 	RT_CHECK_PT(pp);
@@ -200,7 +198,6 @@ char	*dp;
 {
 	register struct air_specific *air_sp =
 		(struct air_specific *)dp;
-	point_t pt;
 	double tau;
 	double dist;
 
@@ -290,8 +287,6 @@ char	*dp;
 		(struct air_specific *)dp;
 	point_t in_pt, out_pt;
 	vect_t vapor_path;
-	fastf_t in_altitude;
-	fastf_t out_altitude;
 	fastf_t dist;
 	fastf_t step_dist;
 	fastf_t tau;
@@ -459,12 +454,9 @@ char	*dp;
 {
 	register struct air_specific *air_sp =
 		(struct air_specific *)dp;
-	point_t in_pt, out_pt, curr_pt;
+	point_t in_pt, out_pt;
 	vect_t dist_v;
 	double dist, delta;
-	double tau;
-	double Zo, Ze, Zd, te;
-	struct application my_ap;
 
 	RT_AP_CHECK(ap);
 	RT_CHECK_PT(pp);
@@ -473,11 +465,9 @@ char	*dp;
 	/* compute hit point & length of ray */
 	if (pp->pt_inhit->hit_dist < 0.0) {
 		VMOVE(in_pt, ap->a_ray.r_pt);
-		te = pp->pt_outhit->hit_dist;
 	} else {
 		VJOIN1(in_pt, ap->a_ray.r_pt,
 			pp->pt_inhit->hit_dist, ap->a_ray.r_dir);
-		te = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
 	}
 
 	/* get exit point */
@@ -494,7 +484,6 @@ char	*dp;
 
 	for (delta=0 ; delta < dist ; delta += 1.0 ) {
 		/* compute the current point in space */
-		VJOIN1(curr_pt, in_pt, delta, ap->a_ray.r_dir);
 
 		/* Shoot a ray down the -Z axis to find our current height 
 		 * above the local terrain.
