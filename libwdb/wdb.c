@@ -71,7 +71,8 @@ char	*title;
 	rec.i.i_units = ID_MM_UNIT;
 	strncpy( rec.i.i_version, ID_VERSION, sizeof(rec.i.i_version) );
 	strncpy( rec.i.i_title, title, sizeof(rec.i.i_title) );
-	fwrite( (char *)&rec, sizeof(rec), 1, fp );
+	if( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1 )
+		return(-1);
 	return(0);
 }
 
@@ -96,7 +97,8 @@ double	d;
 	NAMEMOVE( name, rec.s.s_name );
 	VMOVE( rec.s.s_values, norm );
 	rec.s.s_values[3] = d;
-	fwrite( (char *)&rec, sizeof(rec), 1, fp );
+	if( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1 )
+		return(-1);
 	return(0);
 }
 
@@ -180,7 +182,8 @@ point_t	pts[];
 	for( i=1; i<8; i++ )  {
 		VSUB2( &rec.s.s_values[3*i], pts[i], pts[0] );
 	}
-	fwrite( (char *)&rec, sizeof(rec), 1, fp );
+	if( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1 )
+		return(-1);		/* fail */
 	return(0);
 }
 
@@ -210,7 +213,8 @@ fastf_t	radius;
 	VSET( &rec.s.s_values[6], 0, radius, 0 );
 	VSET( &rec.s.s_values[9], 0, 0, radius );
 	
-	fwrite( (char *) &rec, sizeof(rec), 1, fp);
+	if( fwrite( (char *) &rec, sizeof(rec), 1, fp) != 1 )
+		return(-1);
 	return(0);
 }
 
@@ -241,7 +245,8 @@ vect_t	a, b, c;
 	VMOVE( &rec.s.s_values[6], b );
 	VMOVE( &rec.s.s_values[9], c );
 	
-	fwrite( (char *) &rec, sizeof(rec), 1, fp);
+	if( fwrite( (char *) &rec, sizeof(rec), 1, fp) != 1 )
+		return(-1);
 	return(0);
 }
 
@@ -272,7 +277,7 @@ double	r1, r2;
 	rec.s.s_cgtype = TOR;
 	NAMEMOVE(name,rec.s.s_name);
 
-	if( r1 <= 0 || r2 <= 0 || r1 <= r2 )  {
+	if( r1 <= 0 || r2 <= 0 || r1 < r2 )  {
 		fprintf(stderr, "mk_tor(%s):  illegal r1=%g, r2=%g\n",
 			name, r1, r2);
 		return(-1);
@@ -339,7 +344,8 @@ double	r1, r2;
 	VSCALE( F7, F3, r4/m5 );
 	VSCALE( F8, F4, r4/m6 );
 	
-	fwrite( (char *) &rec, sizeof(rec), 1, fp);
+	if( fwrite( (char *) &rec, sizeof(rec), 1, fp) != 1 )
+		return(-1);	/* failure */
 	return(0);		/* OK */
 }
 
@@ -397,7 +403,8 @@ fastf_t	radius;
 	VMOVE( F5, F3);
 	VMOVE( F6, F4);
 
-	fwrite( (char *)&rec, sizeof( rec), 1, fp);
+	if( fwrite( (char *)&rec, sizeof( rec), 1, fp) != 1 )
+		return(-1);
 	return(0);		/* OK */
 }
 
@@ -432,7 +439,8 @@ vect_t	c, d;
 	VMOVE( F5, c );
 	VMOVE( F6, d );
 
-	fwrite( (char *)&rec, sizeof( rec), 1, fp);
+	if( fwrite( (char *)&rec, sizeof( rec), 1, fp) != 1 )
+		return(-1);
 	return(0);		/* OK */
 }
 
@@ -515,7 +523,8 @@ fastf_t	radtop;
 
 	VSCALE( F6, F6, radtop/m2 );
 
-	fwrite( (char *)&rec, sizeof( rec), 1, fp);
+	if( fwrite( (char *)&rec, sizeof( rec), 1, fp) != 1 )
+		return(-1);
 	return(0);	/* OK */
 }
 
@@ -536,7 +545,8 @@ char	*name;
 	bzero( (char *)&rec, sizeof(rec) );
 	rec.p.p_id = ID_P_HEAD;
 	NAMEMOVE( name, rec.p.p_name );
-	fwrite( (char *)&rec, sizeof(rec), 1, fp );
+	if( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1 )
+		return(-1);
 	return(0);
 }
 
@@ -569,7 +579,8 @@ fastf_t	norms[][3];
 			rec.q.q_norms[i][j] = norms[i][j];
 		}
 	}
-	fwrite( (char *)&rec, sizeof(rec), 1, fp );
+	if( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1)
+		return(-1);
 	return(0);
 }
 
