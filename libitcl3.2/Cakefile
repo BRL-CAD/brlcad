@@ -72,11 +72,11 @@ noprod&:
 
 #ifdef NFS
 clobber&:
-	rm -f *.MTYPE *.o confdefs.h config.log config.status Makefile lib* *.a *.so *.ARCH_SUF
-	rm -rf itcl itk iwidgets*
+	rm -f *.MTYPE *.o confdefs.h config.log config.status Makefile lib* *.a *.ARCH_SUF
+	rm -rf itcl itk
 #else
 clobber&:
-	rm -f *.MTYPE *.o confdefs.h config.log config.status Makefile lib* *.a *.so *.ARCH_SUF
+	rm -f *.MTYPE *.o confdefs.h config.log config.status Makefile lib* *.a *.ARCH_SUF
 #endif
 
 install&: Makefile.MTYPE
