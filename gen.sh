@@ -24,7 +24,7 @@ SHELL=/bin/sh
 export SHELL
 
 # Set to 0 for non-NFS environment (default), 1 for NFS configuration.
-NFS=0
+NFS=1
 
 # Label number for this CAD Release,
 # RCS main Revision number, and date.
@@ -427,7 +427,7 @@ arch)
 	echo "${ARCHIVE} created"
 
 	FTP_ARCHIVE=/usr/spool/ftp/tmp/cad${RELEASE}.tar
-	KEY=alphabeta		# Encryption key
+	KEY=atlonglast		# Encryption key
 	echo "encryption key is /$KEY/"
 	EXCLUDE=/tmp/cad-exclude
 	rm -f ${EXCLUDE}
