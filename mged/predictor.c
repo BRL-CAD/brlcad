@@ -179,6 +179,8 @@ predictor_frame()
 	point_t	framecenter_v;
 	point_t	center_m;
 	vect_t	delta_v;
+	vect_t	right, up;
+	vect_t	norm;
 
 	if( rateflag_rotate == 0 && rateflag_slew == 0 && rateflag_zoom == 0 )  {
 		/* If no motion, and predictor is drawn, get rid of it */
@@ -254,6 +256,12 @@ predictor_frame()
 	VSET( delta_v, -TF_X+TF_BORD,  TF_Y-TF_BORD, 0 );
 	TF_VL( mL, delta_v );
 
+	VSUB2( right, mB, mA );
+	VSUB2( up, mD, mA );
+	VCROSS( norm, right, up );
+	VUNITIZE(norm);
+
+#if 0
 	RT_ADD_VLIST( &vhead, mA, RT_VLIST_LINE_MOVE );
 	RT_ADD_VLIST( &vhead, mB, RT_VLIST_LINE_DRAW );
 	RT_ADD_VLIST( &vhead, mF, RT_VLIST_LINE_DRAW );
@@ -277,6 +285,35 @@ predictor_frame()
 	RT_ADD_VLIST( &vhead, mG, RT_VLIST_LINE_DRAW );
 	RT_ADD_VLIST( &vhead, mK, RT_VLIST_LINE_DRAW );
 	RT_ADD_VLIST( &vhead, mJ, RT_VLIST_LINE_DRAW );
+#else
+	RT_ADD_VLIST( &vhead, norm, RT_VLIST_POLY_START );
+	RT_ADD_VLIST( &vhead, mA, RT_VLIST_POLY_MOVE );
+	RT_ADD_VLIST( &vhead, mB, RT_VLIST_POLY_DRAW );
+	RT_ADD_VLIST( &vhead, mF, RT_VLIST_POLY_DRAW );
+	RT_ADD_VLIST( &vhead, mE, RT_VLIST_POLY_DRAW );
+	RT_ADD_VLIST( &vhead, mA, RT_VLIST_POLY_END );
+
+	RT_ADD_VLIST( &vhead, norm, RT_VLIST_POLY_START );
+	RT_ADD_VLIST( &vhead, mE, RT_VLIST_POLY_MOVE );
+	RT_ADD_VLIST( &vhead, mI, RT_VLIST_POLY_DRAW );
+	RT_ADD_VLIST( &vhead, mL, RT_VLIST_POLY_DRAW );
+	RT_ADD_VLIST( &vhead, mH, RT_VLIST_POLY_DRAW );
+	RT_ADD_VLIST( &vhead, mE, RT_VLIST_POLY_END );
+
+	RT_ADD_VLIST( &vhead, norm, RT_VLIST_POLY_START );
+	RT_ADD_VLIST( &vhead, mH, RT_VLIST_POLY_MOVE );
+	RT_ADD_VLIST( &vhead, mG, RT_VLIST_POLY_DRAW );
+	RT_ADD_VLIST( &vhead, mC, RT_VLIST_POLY_DRAW );
+	RT_ADD_VLIST( &vhead, mD, RT_VLIST_POLY_DRAW );
+	RT_ADD_VLIST( &vhead, mH, RT_VLIST_POLY_END );
+
+	RT_ADD_VLIST( &vhead, norm, RT_VLIST_POLY_START );
+	RT_ADD_VLIST( &vhead, mJ, RT_VLIST_POLY_MOVE );
+	RT_ADD_VLIST( &vhead, mF, RT_VLIST_POLY_DRAW );
+	RT_ADD_VLIST( &vhead, mG, RT_VLIST_POLY_DRAW );
+	RT_ADD_VLIST( &vhead, mK, RT_VLIST_POLY_DRAW );
+	RT_ADD_VLIST( &vhead, mJ, RT_VLIST_POLY_END );
+#endif
 
 	invent_solid( PREDICTOR_NAME, &vhead, 0x00FFFFFFL );
 
