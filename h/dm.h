@@ -2,7 +2,6 @@
 #define SEEN_DM_H
 
 #define DM_NULL (struct dm *)NULL
-#define DM_EVENT_HANDLER_NULL (int (*)())NULL
 
 #if IR_KNOBS
 #define NOISE 16		/* Size of dead spot on knob */
@@ -113,11 +112,11 @@ struct dm {
   int (*dm_setLineAttr)();	/* currently - linewidth, (not-)dashed */
   int (*dm_setWinBounds)();
   int (*dm_debug)();		/* Set DM debug level */
-  int (*dm_eventHandler)();	/* application provided dm-specific event handler */
   int (*dm_beginDList)();
   int (*dm_endDList)();
   int (*dm_drawDList)();
   int (*dm_freeDLists)();
+  unsigned long dm_id;          /* window id */
   int dm_displaylist;		/* !0 means device has displaylist */
   int dm_stereo;                /* stereo flag */
   double dm_bound;		/* zoom-in limit */
@@ -151,12 +150,10 @@ struct dm {
 #define DM_SET_LINE_ATTR(_dmp,_width,_dashed) _dmp->dm_setLineAttr(_dmp,_width,_dashed)
 #define DM_SET_WIN_BOUNDS(_dmp,_w) _dmp->dm_setWinBounds(_dmp,_w)
 #define DM_DEBUG(_dmp,_lvl) _dmp->dm_debug(_dmp,_lvl)
-#if 1
 #define DM_BEGINDLIST(_dmp,_list) _dmp->dm_beginDList(_dmp,_list)
 #define DM_ENDDLIST(_dmp) _dmp->dm_endDList(_dmp)
 #define DM_DRAWDLIST(_dmp,_list) _dmp->dm_drawDList(_dmp,_list)
 #define DM_FREEDLISTS(_dmp,_list,_range) _dmp->dm_freeDLists(_dmp,_list,_range)
-#endif
 
 extern int dm_Tcl_Init();
 extern struct dm *dm_open();
