@@ -82,7 +82,7 @@ retry:
 			continue;
 		goto found;
 	}
-	rt_log("mlib_setup(%s):  material not known, default assumed\n",
+	rt_log("\n*ERROR mlib_setup(%s):  material not known, default assumed\n",
 		material );
 	if( material != mdefault )  {
 		material = mdefault;
