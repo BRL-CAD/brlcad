@@ -117,11 +117,17 @@ register struct shadework *swp;
 		shade_inputs( ap, pp, swp, want );
 
 	if( rdebug&RDEBUG_SHADE ) {
+		rt_log("About to shade %s:\n", rp->reg_name);
 		pr_shadework( "before mf_render", swp );
 	}
 
 	/* Invoke the actual shader (may be a tree of them) */
 	(void)mfp->mf_render( ap, pp, swp, rp->reg_udata );
+
+	if( rdebug&RDEBUG_SHADE ) {
+		pr_shadework( "after mf_render", swp );
+		rt_log("\n");
+	}
 
 	return(1);
 }
