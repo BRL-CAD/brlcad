@@ -54,7 +54,7 @@ void
 rt_htbl_reset(b)
 struct rt_htbl	*b;
 {
-	BU_CK_PTBL(b);
+	RT_CK_HTBL(b);
 	b->end = 0;
 	if (bu_debug & BU_DEBUG_PTBL)
 		bu_log("rt_htbl_reset(%8x)\n", b);
@@ -70,7 +70,7 @@ void
 rt_htbl_free(b)
 struct rt_htbl	*b;
 {
-	BU_CK_PTBL(b);
+	RT_CK_HTBL(b);
 
 	bu_free((genptr_t)b->hits, "rt_htbl.hits[]");
 	bzero((char *)b, sizeof(struct rt_htbl));	/* sanity */
@@ -88,7 +88,7 @@ struct hit *
 rt_htbl_get(b)
 struct rt_htbl *b;
 {
-	BU_CK_PTBL(b);
+	RT_CK_HTBL(b);
 
 	if( b->end >= b->blen )  {
 		/* Increase size of array */
