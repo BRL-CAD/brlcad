@@ -154,12 +154,12 @@ CONST struct bu_structparse rt_arb_parse[] = {
  *			Entries [0] and [1] are special
  */
 int
-rt_arb_get_cgtype( cgtype, arb, tol, uvec, svec )
-int			*cgtype;
-struct rt_arb_internal	*arb;
-CONST struct bn_tol	*tol;
-register int *uvec;	/* array of unique points */
-register int *svec;	/* array of like points */
+rt_arb_get_cgtype(
+	int			*cgtype,
+	struct rt_arb_internal	*arb,
+	const struct bn_tol	*tol,
+	register int *uvec,	/* array of unique points */
+	register int *svec)	/* array of like points */
 {
 	register int i,j;
 	int	numuvec, unique, done;

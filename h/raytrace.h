@@ -2876,6 +2876,7 @@ BU_EXTERN(void db_functree, (struct db_i *dbip, struct directory *dp,
 	genptr_t client_data));
 
 /* g_arb.c */
+int rt_arb_get_cgtype();		/* needs rt_arb_internal for arg list */
 int rt_arb_std_type( const struct rt_db_internal *ip, const struct bn_tol *tol );
 void rt_arb_centroid();			/* needs rt_arb_internal for arg list */
 int rt_arb_calc_points();		/* needs wdb.h for arg list */
