@@ -367,15 +367,15 @@ fastf_t	radius;
 
 	VMOVE( F1, base );
 	VMOVE( F2, height  );
-	F1[0] += PI;
-	F1[1] += PI;
-	F1[2] += PI;
-	VCROSS( F3, F1, F2 );
+	base[0] += PI;
+	base[1] += PI;
+	base[2] += PI;
+	VCROSS( F3, base, F2 );
 	m1 = MAGNITUDE( F3 );
 	if( m1 == 0.0 )  {
-		F1[1] = 0.0;		/* Vector is colinear, so */
-		F1[2] = 0.0;		/* make it different */
-		VCROSS( F3, F1, F2 );
+		base[1] = 0.0;		/* Vector is colinear, so */
+		base[2] = 0.0;		/* make it different */
+		VCROSS( F3, base, F2 );
 		m1 = MAGNITUDE( F3 );
 		if( m1 == 0.0 )  {
 			(void)printf("ERROR, magnitude is zero!\n");
