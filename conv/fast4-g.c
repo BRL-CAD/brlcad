@@ -2457,6 +2457,8 @@ make_bot_object()
 	char name[NAMESIZE+1];
 	struct wmember bot_region;
 	int element_id=bot;
+	int count;
+	struct rt_bot_internal bot_ip;
 
 	if( !pass )
 	{
@@ -2464,6 +2466,7 @@ make_bot_object()
 		return;
 	}
 
+	bot_ip.magic = RT_BOT_INTERNAL_MAGIC;
 	for( i=0 ; i<face_count ; i++ )
 	{
 		V_MIN( min_pt, faces[i*3] );
@@ -2475,10 +2478,20 @@ make_bot_object()
 	}
 
 	num_vertices = max_pt - min_pt + 1;
+	bot_ip.num_vertices = num_vertices;
+	bot_ip.vertices = (fastf_t *)bu_calloc( num_vertices*3, sizeof( fastf_t ), "BOT vertices" );
+	for( i=0 ; i<num_vertices ; i++ )
+		VMOVE( &bot_ip.vertices[i*3], grid_pts[min_pt+i] )
 
 	for( i=0 ; i<face_count*3 ; i++ )
 		faces[i] -= min_pt;
+	bot_ip.num_faces = face_count;
+	bot_ip.faces = bu_calloc( face_count*3, sizeof( int ), "BOT faces" );
+	for( i=0 ; i<face_count*3 ; i++ )
+		bot_ip.faces[i] = faces[i];
 
+	bot_ip.face_mode = (struct bu_bitv *)NULL;
+	bot_ip.thickness = (fastf_t *)NULL;
 	if( mode == PLATE_MODE )
 	{
 		bot_mode = RT_BOT_PLATE;
@@ -2489,15 +2502,39 @@ make_bot_object()
 			if( facemode[i] == POS_FRONT )
 				BU_BITSET( bv, i );
 		}
+		bot_ip.face_mode = bv;
+		bot_ip.thickness = (fastf_t *)bu_calloc( face_count, sizeof( fastf_t ), "BOT thickness" );
+		for( i=0 ; i<face_count ; i++ )
+			bot_ip.thickness[i] = thickness[i];
 	}
 	else
 		bot_mode = RT_BOT_SOLID;
 
+	bot_ip.mode = bot_mode;
+	bot_ip.orientation = RT_BOT_UNORIENTED;
+	bot_ip.error_mode = 0;
+
+	count = bot_vertex_fuse( &bot_ip );
+	if( count )
+		(void)bot_condense( &bot_ip );
+
+	count = bot_face_fuse( &bot_ip );
+	if( count )
+		bu_log( "\t%d duplicate faces eliminated\n", count );
+
 	BU_LIST_INIT( &bot_region.l );
 
 	make_solid_name( name , BOT , element_id , comp_id , group_id , 0 );
-	mk_bot( fdout, name, bot_mode, RT_BOT_UNORIENTED, 0, num_vertices, face_count, &grid_pts[min_pt],
-		faces, thickness, bv );
+	mk_bot( fdout, name, bot_mode, RT_BOT_UNORIENTED, 0, bot_ip.num_vertices, bot_ip.num_faces, bot_ip.vertices,
+		bot_ip.faces, bot_ip.thickness, bot_ip.face_mode );
+
+	if( mode == PLATE_MODE )
+	{
+		bu_free( (char *)bot_ip.thickness, "BOT thickness" );
+		bu_free( (char *)bot_ip.face_mode, "BOT face_mode" );
+	}
+	bu_free( (char *)bot_ip.vertices, "BOT vertices" );
+	bu_free( (char *)bot_ip.faces, "BOT faces" );
 
 	if( mk_addmember( name ,  &bot_region , WMOP_UNION ) == (struct wmember *)NULL )
 	{
@@ -2505,8 +2542,6 @@ make_bot_object()
 		rt_bomb( "make_bot_object" );
 	}
 
-	if( bv )
-		bu_free( (char *)bv, "bv" );
 
 	/* subtract any holes for this component */
 	Subtract_holes( &bot_region , comp_id , group_id );
@@ -3103,6 +3138,7 @@ char *argv[];
 				sscanf( optarg, "%x", &bu_debug );
 				break;
 			default:
+				bu_log( "Unrecognzed option (%c)\n", c );
 				rt_bomb( usage );
 				break;
 		}
