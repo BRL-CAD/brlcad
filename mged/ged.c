@@ -78,6 +78,11 @@ in all countries except the USA.  All rights reserved.";
 #define LOGFILE	"/vld/lib/gedlog"	/* usage log */
 #endif
 
+#if 0
+/* defined in libfb/tcl.c */
+extern void fb_tclInit();
+#endif
+
 /* defined in predictor.c */
 extern void predictor_init();
 
@@ -92,6 +97,8 @@ extern struct dm dm_Null;
 extern struct _mged_variables default_mged_variables;
 
 int dm_pipe[2];
+int pipe_out[2];
+int pipe_err[2];
 struct db_i *dbip = DBI_NULL;	/* database instance pointer */
 int    update_views = 0;
 int		(*cmdline_hook)() = NULL;
@@ -137,8 +144,10 @@ void pr_prompt(), pr_beep();
 
 #ifdef USE_PROTOTYPES
 Tcl_FileProc stdin_input;
+Tcl_FileProc std_out_or_err;
 #else
 void stdin_input();
+void std_out_or_err();
 #endif
 
 /* 
@@ -319,7 +328,7 @@ char **argv;
 
 	state = ST_VIEW;
 	es_edflag = -1;
-	es_edclass = scroll_edit = EDIT_CLASS_NULL;
+	es_edclass = EDIT_CLASS_NULL;
 	inpara = newedge = 0;
 
 	/* These values match old GED.  Use 'tol' command to change them. */
@@ -348,8 +357,13 @@ char **argv;
 	btn_head_menu(0,0,0);
 	mged_slider_link_vars(curr_dm_list);
 
-	/* This initializes libdm */
+	/* Initialize libdm */
 	(void)dm_tclInit(interp);
+
+#if 0
+	/* Initialize libfb */
+	(void)fb_tclInit(interp);
+#endif
 
 	setview( 0.0, 0.0, 0.0 );
 
@@ -381,12 +395,26 @@ char **argv;
 	    if ((pid = fork()) == 0){
 	      struct bu_vls vls;
 
+	      (void)pipe(pipe_out);
+	      (void)pipe(pipe_err);
+
+	      /* Redirect stdout */
+	      (void)close(1);
+	      (void)dup(pipe_out[1]);
+	      (void)close(pipe_out[1]);
+
+	      /* Redirect stderr */
+	      (void)close(2);
+	      (void)dup(pipe_err[1]);
+	      (void)close(pipe_err[1]);
+
 	      bu_vls_init(&vls);
 	      bu_vls_strcpy(&vls, "openw");
 	      (void)Tcl_Eval(interp, bu_vls_addr(&vls));
 	      bu_vls_free(&vls);
-
+#if 0
 	      bu_add_hook(bit_bucket, (genptr_t)NULL);
+#endif
 	    }else{
 	      exit(0);
 	    }
@@ -436,6 +464,11 @@ char **argv;
 	    set_Cbreak(fileno(stdin));
 	    clr_Echo(fileno(stdin));
 	  }
+	}else{
+	  Tcl_CreateFileHandler(Tcl_GetFile((ClientData)pipe_out[0], TCL_UNIX_FD),
+				TCL_READABLE, std_out_or_err, (ClientData)pipe_out[0]);
+	  Tcl_CreateFileHandler(Tcl_GetFile((ClientData)pipe_err[0], TCL_UNIX_FD),
+				TCL_READABLE, std_out_or_err, (ClientData)pipe_err[0]);
 	}
 
 	/****************  M A I N   L O O P   *********************/
@@ -1054,16 +1087,39 @@ char    **argv;
   if(argc != 2)
     return TCL_ERROR;
 
-  bu_log("\r%s\n", argv[1]);
-  pr_prompt();
-  bu_log("%s", bu_vls_addr(&input_str));
-  pr_prompt();
-  for(i = 0; i < input_str_index; ++i)
-    bu_log("%c", bu_vls_addr(&input_str)[i]);
+  if(classic_mged){
+    bu_log("\r%s\n", argv[1]);
+    pr_prompt();
+    bu_log("%s", bu_vls_addr(&input_str));
+    pr_prompt();
+    for(i = 0; i < input_str_index; ++i)
+      bu_log("%c", bu_vls_addr(&input_str)[i]);
+  }
 
   return TCL_OK;
 }
 
+void
+std_out_or_err(clientData, mask)
+ClientData clientData;
+int mask;
+{
+  int fd = (int)clientData;
+  int count;
+  struct bu_vls vls;
+  char line[MAXLINE];
+
+  /* Get data from stdout or stderr */
+  if((count = read((int)fd, line, MAXLINE)) == 0)
+    return;
+
+  bu_vls_init(&vls);
+  bu_vls_printf(&vls, "distribute_text {} {} %*s", count, line);
+  (void)Tcl_Eval(interp, bu_vls_addr(&vls));
+  bu_vls_free(&vls);
+
+  return;
+}
 
 /*
  *			E V E N T _ C H E C K
