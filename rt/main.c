@@ -70,6 +70,9 @@ mat_t		Viewrotscale;
 fastf_t		viewsize=0;
 fastf_t		zoomout=1;		/* >0 zoom out, 0..1 zoom in */
 char		*scanbuf;		/* For optional output buffering */
+int		incr_mode;		/* !0 for incremental resolution */
+int		incr_level;		/* current incremental level */
+int		incr_nlevel;		/* number of levels */
 int		parallel=0;		/* Trying to use multi CPUs */
 int		npsw = MAX_PSW;		/* number of worker PSWs to run */
 struct resource	resource[MAX_PSW];	/* memory resources */
@@ -100,8 +103,11 @@ register char **argv;
 	register int c;
 	register int i;
 
-	while( (c=getopt( argc, argv, "SH:F:D:MA:x:X:s:f:a:e:l:O:o:p:P:Bb:n:w:" )) != EOF )  {
+	while( (c=getopt( argc, argv, "SH:F:D:MA:x:X:s:f:a:e:l:O:o:p:P:Bb:n:w:i" )) != EOF )  {
 		switch( c )  {
+		case 'i':
+			incr_mode = 1;
+			break;
 		case 'S':
 			stereo = 1;
 			break;
@@ -260,6 +266,15 @@ char **argv;
 	if( pix_start == -1 )  {
 		pix_start = 0;
 		pix_end = height * width - 1;
+	}
+
+	if( incr_mode )  {
+		x = height;
+		if( x < width )  x = width;
+		incr_nlevel = 1;
+		while( (1<<incr_nlevel) < x )
+			incr_nlevel++;
+		rt_log("incremental resolution, nlevels = %d\n", incr_nlevel);
 	}
 
 	RES_INIT( &rt_g.res_syscall );

@@ -75,6 +75,9 @@ extern mat_t	view2model;
 extern mat_t	model2view;
 extern int	hex_out;		/* Output format, 0=binary, !0=hex */
 extern char	*scanbuf;		/* Optional output buffer */
+extern int	incr_mode;		/* !0 for incremental resolution */
+extern int	incr_level;		/* current incremental level */
+extern int	incr_nlevel;		/* number of levels */
 
 extern struct light_specific *LightHeadp;
 vect_t ambient_color = { 1, 1, 1 };	/* Ambient white light */
@@ -99,7 +102,8 @@ static int	buf_mode=0;	/* 0=pixel, 1=line, 2=frame */
  *  The buffering strategy for an "online" libfb framebuffer:
  *	buf_mode = 0	single pixel I/O
  *	buf_mode = 1	line buffering
- *	buf_mode = 2	full frame buffering
+ *	buf_mode = 2	full frame buffering, dump to fb at end of scanline
+ *	buf_mode = 3	full frame buffering, dump to fb at end of frame
  */
 view_pixel(ap)
 register struct application *ap;
@@ -197,9 +201,25 @@ register struct application *ap;
 
 		/* Don't depend on interlocked hardware byte-splice */
 		RES_ACQUIRE( &rt_g.res_results );
-		*pixelp++ = r ;
-		*pixelp++ = g ;
-		*pixelp++ = b ;
+		if( incr_mode )  {
+			register int dx,dy;
+			register int spread;
+
+			spread = 1<<(incr_nlevel-incr_level);
+			for( dy=0; dy<spread; dy++ )  {
+				pixelp = scanbuf+
+					(((ap->a_y+dy)*width)+ap->a_x)*3;
+				for( dx=0; dx<spread; dx++ )  {
+					*pixelp++ = r ;
+					*pixelp++ = g ;
+					*pixelp++ = b ;
+				}
+			}
+		} else {
+			*pixelp++ = r ;
+			*pixelp++ = g ;
+			*pixelp++ = b ;
+		}
 		RES_RELEASE( &rt_g.res_results );
 	}
 }
@@ -218,10 +238,16 @@ register struct application *ap;
 		return;
 
 	RES_ACQUIRE( &rt_g.res_syscall );
-	if( buf_mode == 2 )
+	switch( buf_mode )  {
+	case 3:
+		break;
+	case 2:
 		fb_write( fbp, 0, ap->a_y, scanbuf+ap->a_y*width*3, width );
-	else
+		break;
+	default:
 		fb_write( fbp, 0, ap->a_y, scanbuf, width );
+		break;
+	}
 	RES_RELEASE( &rt_g.res_syscall );
 }
 
@@ -233,6 +259,12 @@ struct application *ap;
 {
 	register struct light_specific *lp, *nlp;
 
+	if( buf_mode == 3 )  {
+		/* Dump full screen */
+		fb_write( fbp, 0, 0, scanbuf, width*height );
+		if( incr_level < incr_nlevel )
+			return(0);		 /* more res to come */
+	}
 	if( parallel )  {
 		if( (outfp != NULL) &&
 		    fwrite( scanbuf, sizeof(char), width*height*3, outfp ) != width*height*3 )  {
@@ -253,6 +285,7 @@ struct application *ap;
 		light_free( (char *)lp );
 		lp = nlp;
 	}
+	return(0);		/* OK */
 }
 
 /*
@@ -653,23 +686,37 @@ char *file, *obj;
 {
 
 #ifndef RTSRV
-	if( parallel )  {
-		/* frame buffering */
-		scanbuf = rt_malloc( width*height*3 + sizeof(long), "scanbuf [frame]" );
-		buf_mode = 2;
-		rt_log("Buffering full frames\n");
+	if( incr_mode )  {
+		buf_mode = 3;		/* Frame buffering, dump at end */
+	} else if( parallel )  {
+		buf_mode = 2;		/* frame buffering */
 	} else if( width <= 96 )  {
-		/* single-pixel I/O */
-		scanbuf = (char *)0;
-		buf_mode = 0;
-		rt_log("Single pixel I/O, unbuffered\n");
+		buf_mode = 0;		/* single-pixel I/O */
 	}  else
 #endif not RTSRV
 	{
-		/* line buffering */
+		buf_mode = 1;		/* line buffering */
+	}
+
+	switch( buf_mode )  {
+	case 0:
+		scanbuf = (char *)0;
+		rt_log("Single pixel I/O, unbuffered\n");
+		break;	
+	case 1:
 		scanbuf = rt_malloc( width*3 + sizeof(long), "scanbuf [line]" );
-		buf_mode = 1;
 		rt_log("Buffering single scanlines\n");
+		break;
+	case 2:
+		scanbuf = rt_malloc( width*height*3 + sizeof(long), "scanbuf [frame]" );
+		rt_log("Buffering full frames, fb write at end of line\n");
+		break;
+	case 3:
+		scanbuf = rt_malloc( width*height*3 + sizeof(long), "scanbuf [frame]" );
+		rt_log("Buffering full frames, fb write at end of frame\n");
+		break;
+	default:
+		rt_bomb("bad buf_mode");
 	}
 
 	mlib_init();			/* initialize material library */

@@ -63,6 +63,9 @@ extern int	height;			/* # of lines in Y */
 extern mat_t	Viewrotscale;
 extern fastf_t	viewsize;
 extern char	*scanbuf;		/* For optional output buffering */
+extern int	incr_mode;		/* !0 for incremental resolution */
+extern int	incr_level;		/* current incremental level */
+extern int	incr_nlevel;		/* number of levels */
 extern int	parallel;		/* Trying to use multi CPUs */
 extern int	npsw;
 extern struct resource resource[];
@@ -488,7 +491,14 @@ int framenumber;
 	 *  It may prove desirable to do this in chunks
 	 */
 	rt_prep_timer();
-	do_run( pix_start, pix_end );
+	if( incr_mode )  {
+		for( incr_level = 0; incr_level < incr_nlevel; incr_level++ )  {
+			do_run( 0, (1<<incr_level)*(1<<incr_level)-1 );
+			view_end( &ap );
+		}
+	} else {
+		do_run( pix_start, pix_end );
+	}
 	utime = rt_read_timer( outbuf, sizeof(outbuf) );
 
 	/*

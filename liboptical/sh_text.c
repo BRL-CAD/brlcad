@@ -193,16 +193,18 @@ char	*dp;
 	g /= (dx*dy);
 	b /= (dx*dy);
 
-	if( tp->tx_transp[3] == 0 ||
-	    r != (tp->tx_transp[0]) ||
-	    g != (tp->tx_transp[1]) ||
-	    b != (tp->tx_transp[2]) )  {
+	if( tp->tx_transp[3] == 0 )  {
+opaque:
 		VSET( swp->sw_color,
 			(r+0.5) * rt_inv255,
 			(g+0.5) * rt_inv255,
 			(b+0.5) * rt_inv255 );
 		return(1);
 	}
+	/* This circumlocution needed to keep expression simple for Cray, others */
+	if( r != (tp->tx_transp[0]) )  goto opaque;
+	if( g != (tp->tx_transp[1]) )  goto opaque;
+	if( b != (tp->tx_transp[2]) )  goto opaque;
 
 	/*
 	 *  Transparency mapping is enabled, and we hit a transparent spot.

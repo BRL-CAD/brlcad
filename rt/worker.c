@@ -50,6 +50,9 @@ extern int	height;			/* # of lines in Y */
 extern mat_t	Viewrotscale;
 extern fastf_t	viewsize;
 extern fastf_t	zoomout;
+extern int	incr_mode;		/* !0 for incremental resolution */
+extern int	incr_level;		/* current incremental level */
+extern int	incr_nlevel;		/* number of levels */
 extern int	parallel;		/* Trying to use multi CPUs */
 extern int	npsw;
 extern struct resource resource[];
@@ -224,8 +227,22 @@ int cpu;
 		/* Note: ap.... may not be valid until first time here */
 		a = ap;				/* struct copy */
 		a.a_resource = &resource[cpu];
-		a.a_x = com%width;
-		a.a_y = com/width;
+		if( incr_mode )  {
+			register int i = 1<<incr_level;
+			a.a_x = com%i;
+			a.a_y = com/i;
+			if( incr_level != 0 )  {
+				/* See if already done last pass */
+				if( ((a.a_x & 1) == 0 ) &&
+				    ((a.a_y & 1) == 0 ) )
+					continue;
+			}
+			a.a_x <<= (incr_nlevel-incr_level);
+			a.a_y <<= (incr_nlevel-incr_level);
+		} else {
+			a.a_x = com%width;
+			a.a_y = com/width;
+		}
 		VSETALL( colorsum, 0 );
 		for( com=0; com<=hypersample; com++ )  {
 			if( hypersample )  {
