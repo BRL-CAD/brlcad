@@ -144,18 +144,16 @@ char **argv;
 
 char help[] = "\r\n\
 Both VI and EMACS motions work.\r\n\
-b ^V	zoom Bigger (*2)\r\n\
-s	zoom Smaller (*0.5)\r\n\
-+	zoom Bigger (+1)\r\n\
--	zoom Smaller (-1)\r\n\
-h B 	pan Left (1)\r\n\
-j N	pan Down (1)\r\n\
-k P	pan Up (1)\r\n\
-l F	pan Right (1)\r\n\
-H ^B	pan Left (many)\r\n\
-J ^N	pan Down (many)\r\n\
-K ^P	pan Up (many)\r\n\
-L ^F	pan Right (many)\r\n\
+b ^V	zoom Bigger (*2)		s	zoom Smaller (*0.5)\r\n\
++ =	zoom Bigger (+1)		-	zoom Smaller (-1)\r\n\
+(	zoom Y Bigger (*2)		)	zoom Y Smaller (*0.5)\r\n\
+0	zoom Y Bigger (+1)		9	zoom Y Smaller (-1)\r\n\
+<	zoom X Bigger (*2)		>	zoom X Smaller (*0.5)\r\n\
+,	zoom X Bigger (+1)		.	zoom X Smaller (-1)\r\n\
+h B 	pan Left (1)			l F	pan Right (1)\r\n\
+H ^B	pan Left (many)			L ^F	pan Right (many)\r\n\
+k P	pan Up (1)			j N	pan Down (1)\r\n\
+K ^P	pan Up (many)			J ^N	pan Down (many)\r\n\
 T	toggle sense of pan commands\r\n\
 c	goto Center\r\n\
 z	zoom 1 1\r\n\
@@ -213,6 +211,7 @@ doKeyPad()
 		new_xZoom *= 2;
 		new_yZoom *= 2;
 		break;
+	case '=' :
 	case '+' :				/* zoom BIG incr */
 		new_xZoom++;
 		new_yZoom++;
