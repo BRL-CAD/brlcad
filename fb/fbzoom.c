@@ -59,10 +59,10 @@ char **argv;
 	set_Raw( 0 );
 	clr_Echo( 0 );
 
+	PanFactor = fb_getwidth(fbp)/16;
+	if( PanFactor < 2 )  PanFactor = 2;
+
 	do  {
-		PanFactor = fb_getwidth(fbp)/16;
-		if( PanFactor < 2 )  PanFactor = 2;
-		(void) fb_zoom( fbp, zoom, zoom );
 		fb_window( fbp, xPan, yPan );
 		(void) fprintf( stdout,
 				"zoom=%d, Center Pixel is %d,%d            \r",
@@ -125,28 +125,33 @@ doKeyPad()
 		return	0;
 	case 'c' :	
 	case 'C' :				/* Center */
-		xPan = yPan = 0;
+		xPan = fb_getwidth(fbp)/2;
+		yPan = fb_getheight(fbp)/2;
 		break;
 	case 'r' :	
 	case 'R' :				/* Reset */
-		zoom = 1;
+		(void)fb_zoom( fbp, 1, 1 );
 		xPan = fb_getwidth(fbp)/2;
 		yPan = fb_getheight(fbp)/2;
 		break;
 	case ctl(v) :
 	case 'b' :				/* zoom BIG binary */
-		zoom *= 2;
+		if( fb_zoom(fbp, zoom*2, zoom*2 ) >= 0 )
+			zoom *= 2;
 		break;
 	case '+' :				/* zoom BIG incr */
-		++zoom;
+		if( fb_zoom(fbp, zoom+1, zoom+1 ) >= 0 )
+			++zoom;
 		break;
 	case 's' :				/* zoom small binary */
 		if(  (zoom /= 2) < MinZoom )
 			zoom = MinZoom;
+		(void)fb_zoom(fbp, zoom, zoom );
 		break;
 	case '-' :				/* zoom small incr */
 		if(  --zoom < MinZoom )
 			zoom = MinZoom;
+		(void)fb_zoom(fbp, zoom, zoom );
 		break;
 	case 'F' :
 	case 'l' :				/* move LEFT.	*/
