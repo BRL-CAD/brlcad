@@ -198,6 +198,11 @@ getid()
 			mat =	getint( idcard, 74, 3 );
 			los =	getint( idcard, 77, 3 );
 		}
+
+		if( reg_num <= 0 )  {
+			printf("\ngetid:  region_id %d encountered, stoping\n", reg_num);
+			return(0);
+		}
 #if 0
 printf("reg_num=%d,id=%d,air=%d,mat=%d,los=%d\n", reg_num,id,air,mat,los);
 #endif
