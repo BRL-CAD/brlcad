@@ -857,7 +857,7 @@ process_point_entities_code( int code )
 	case 20:
 	case 30:
 		coord = code / 10 - 1;
-		pt[coord] = atof( line );
+		pt[coord] = atof( line ) * units_conv[units] * scale_factor;
 		break;
 	case 62:	/* color number */
 		curr_color = atoi( line );
