@@ -1,24 +1,21 @@
 /*
  * tkImgFmtPIX.c --
  *
- *      A photo image file handler for PIX (BRL-CAD) files.
+ *      A photo image file handler for BRL-CAD(tm) ".pix" format files.
  *
- * Army copyright foo
- * 
- * 
- * 
- * 
- * 
- * 
- * 
- * 
- * 
- * 
- * 
+ *  Author -
+ *	Glenn Durfee
+ *  
+ *  Source -
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  
+ *  Distribution Status -
+ *	Public Domain, Distribution Unlimited.
  * 
  * 
  * Based on:
- * tkImgFmtPPM.c --
+ *	tkImgFmtPPM.c --
  *
  *	A photo image file handler for PPM (Portable PixMap) files.
  *
@@ -33,7 +30,9 @@
  *	   Australian National University.
  */
 
-static char rcsid[] = "@(#) tkImgFmtPIX.c 1.7 95/06/14 22:49:55";
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (ARL)";
+#endif
 
 #include "./tkPort.h"
 
