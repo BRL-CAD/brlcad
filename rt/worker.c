@@ -28,10 +28,6 @@ static char RCSworker[] = "@(#)$Header$ (BRL)";
 #include "./mathtab.h"
 #include "./rdebug.h"
 
-#ifdef HEP
-# include <synch.h>
-#endif
-
 /***** view.c variables imported from rt.c *****/
 extern mat_t	view2model;
 extern mat_t	model2view;
@@ -165,16 +161,16 @@ do_run( a, b )
  *  Compute one pixel, and store it.
  */
 void
-worker(cpu)
-int cpu;
+worker()
 {
 	LOCAL struct application a;
 	LOCAL vect_t point;		/* Ref point on eye or view plane */
 	LOCAL vect_t colorsum;
 	register int com;
+	int	cpu;			/* our CPU (PSW) number */
 
 	RES_ACQUIRE( &rt_g.res_worker );
-	com = nworkers++;
+	cpu = nworkers++;
 	RES_RELEASE( &rt_g.res_worker );
 
 	resource[cpu].re_cpu = cpu;
