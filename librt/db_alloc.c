@@ -61,7 +61,8 @@ int		count;
 	unsigned long	addr;
 	union record	rec;
 
-	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_alloc:  bad dbip\n");
+	RT_CK_DBI(dbip);
+	RT_CK_DIR(dp);
 	if(rt_g.debug&DEBUG_DB) rt_log("db_alloc(%s) x%x, x%x, count=%d\n",
 		dp->d_namep, dbip, dp, count );
 
@@ -123,7 +124,8 @@ int		count;
 	int		extra_start;
 	int		old_len;
 
-	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_grow:  bad dbip\n");
+	RT_CK_DBI(dbip);
+	RT_CK_DIR(dp);
 	if(rt_g.debug&DEBUG_DB) rt_log("db_grow(%s) x%x, x%x, count=%d\n",
 		dp->d_namep, dbip, dp, count );
 
@@ -197,7 +199,8 @@ int			 count;
 {
 	register int i;
 
-	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_trunc:  bad dbip\n");
+	RT_CK_DBI(dbip);
+	RT_CK_DIR(dp);
 	if(rt_g.debug&DEBUG_DB) rt_log("db_trunc(%s) x%x, x%x, count=%d\n",
 		dp->d_namep, dbip, dp, count );
 
@@ -227,7 +230,8 @@ int			recnum;
 	union record	*rp;
 	register union record *in, *out;
 
-	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_delrec:  bad dbip\n");
+	RT_CK_DBI(dbip);
+	RT_CK_DIR(dp);
 	if(rt_g.debug&DEBUG_DB) rt_log("db_delrec(%s) x%x, x%x, recnum=%d\n",
 		dp->d_namep, dbip, dp, recnum );
 
@@ -271,7 +275,8 @@ struct directory *dp;
 {
 	register int i;
 
-	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_delete:  bad dbip\n");
+	RT_CK_DBI(dbip);
+	RT_CK_DIR(dp);
 	if(rt_g.debug&DEBUG_DB) rt_log("db_delete(%s) x%x, x%x\n",
 		dp->d_namep, dbip, dp );
 
@@ -306,7 +311,8 @@ int		start;
 	register int		i;
 	int			todo;
 
-	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_zapper:  bad dbip\n");
+	RT_CK_DBI(dbip);
+	RT_CK_DIR(dp);
 	if(rt_g.debug&DEBUG_DB) rt_log("db_zapper(%s) x%x, x%x, start=%d\n",
 		dp->d_namep, dbip, dp, start );
 
@@ -322,5 +328,7 @@ int		start;
 	bzero( (char *)rp, todo * sizeof(union record) );
 	for( i=0; i < todo; i++ )
 		rp[i].u_id = ID_FREE;
-	return( db_put( dbip, dp, rp, start, todo ) );
+	i = db_put( dbip, dp, rp, start, todo );
+	rt_free( (char *)rp, "db_zapper buf" );
+	return i;
 }
