@@ -72,6 +72,7 @@ set mged_help_data(dump)	$helplib_data(wdb_dump)
 set mged_help_data(dup)		$helplib_data(wdb_dup)
 set mged_help_data(E)		$helplib_data(dgo_E)
 set mged_help_data(e)		$helplib_data(dgo_draw)
+set mged_help_data(em)          {{value [value value...]} {display all rgions with attribute "MUVES_Component" set to any of the specified values}}
 set mged_help_data(eac)		{{air_code(s)}	{display all regions with given air code}}
 set mged_help_data(echo)	{{[text]}	{echo arguments back}}
 set mged_help_data(edcodes)	{{object(s)}	{edit region ident codes}}
