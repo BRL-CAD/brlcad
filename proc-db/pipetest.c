@@ -202,7 +202,7 @@ struct wdb_pipeseg *head;
 	register struct wdb_pipeseg	*psp;
 
 	fprintf(stderr,"\n--- %s:\n", name);
-	for( RT_LIST( psp, wdb_pipeseg, &head->l ) )  {
+	for( RT_LIST_FOR( psp, wdb_pipeseg, &head->l ) )  {
 		switch( psp->ps_type )  {
 		case WDB_PIPESEG_TYPE_END:
 			fprintf(stderr,"END	id=%g od=%g, start=(%g,%g,%g)\n",
