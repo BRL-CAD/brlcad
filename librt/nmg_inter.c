@@ -60,6 +60,9 @@ RT_EXTERN(double		rt_dist_line2_point2, (CONST point_t pt,
 RT_EXTERN(double		rt_distsq_line2_point2, (CONST point_t pt,
 				CONST vect_t dir, CONST point_t a));
 
+RT_EXTERN(struct edgeuse	*nmg_find_matching_eu_in_s, (
+				CONST struct edgeuse *eu1, CONST struct shell *s2));
+
 #define DIST_PT_PT(a,b)		sqrt( \
 	((a)[X]-(b)[X])*((a)[X]-(b)[X]) + \
 	((a)[Y]-(b)[Y])*((a)[Y]-(b)[Y]) + \
@@ -1708,7 +1711,7 @@ struct faceuse		*fu2;
 			VADD2SCALE(v1b->vg_p->coord, v1b->vg_p->coord, p3, 0.5);
 #endif
 			/* Combine the two vertices */
-			nmg_jv(v1b, vu2_final->v_p);
+			nmg_jv(v1b, v2);
 			vu2_final = nmg_insert_fu_vu_in_other_list( is, is->l1, v1b, fu2 );
 			nmg_ck_v_in_2fus(v1b, fu1, fu2, &is->tol);
 		} else {
@@ -1737,6 +1740,9 @@ out:
 		if( dist > 100*is->tol.dist )  {
 			rt_log("ERROR nmg_isect_edge3p_face3p() vu1=x%x point off line by %g > 100*dist_tol\n",
 				dist);
+			VPRINT("is->pt|", is->pt);
+			VPRINT("is->dir", is->dir);
+			VPRINT(" coord ", vu1_final->v_p->vg_p->coord );
 			rt_bomb("nmg_isect_edge3p_face3p()\n");
 		}
 		if( dist > is->tol.dist )  {
@@ -2063,6 +2069,7 @@ nmg_region_v_unique( fu1->s_p->r_p, &is->tol );
 	total_splits = 0;
 	do  {
 		another_pass = 0;
+
 		/* First, eu1 -vs- fu2 */
 		for( RT_LIST_FOR( lu, loopuse, &fu2->lu_hd ) )  {
 			struct edgeuse	*eu2;
@@ -3061,12 +3068,31 @@ struct edgeuse		*eu;
 /*
  *			N M G _ I S E C T _ E D G E 3 P _ S H E L L
  *
- *  Intersect one wire edge with another shell.
- *  There is no face context, or intersection line, unless this edge
- *  happens to lie in the plane of one of the shell's faces.
+ *  Intersect one edge with all of another shell.
+ *  There is no face context for this edge, because
  *
- *  XXX If this edge is split, how to ensure that all eu's are visited?
- *  (Probably via a return code, and re-iteration)
+ *  At present, this routine is used for only two purposes:
+ *	1)  Handling wire edge -vs- shell intersection,
+ *	2)  From nmg_isect_face3p_shell_int(), for "straddling" edges.
+ *
+ *  The edge will be fully intersected with the shell, potentially
+ *  getting trimmed down in the process as crossings of s2 are found.
+ *  The caller is responsible for re-calling with the extra edgeuses.
+ *
+ *  If both vertices of eu1 are on s2 (the other shell), and
+ *  there is no edge in s2 between them, we need to determine
+ *  whether this is an interior or exterior edge, and
+ *  perhaps add a loop into s2 connecting those two verts.
+ *
+ *  We can't use the face cutter, because s2 has no
+ *  appropriate face containing this edge.
+ *
+ *  If this edge is split, we have to
+ *  trust nmg_ebreak() to insert new eu's ahead in the eu list,
+ *  so caller will see them.
+ *
+ *  Lots of junk will be put on the vert_list's in 'is';  the caller
+ *  should just free the lists without using them.
  */
 static void
 nmg_isect_edge3p_shell( is, eu1, s2 )
@@ -3074,27 +3100,55 @@ struct nmg_inter_struct		*is;
 struct edgeuse		*eu1;
 struct shell		*s2;
 {
+	struct shell	*s1;
 	struct faceuse	*fu2;
 	struct loopuse	*lu2;
 	struct edgeuse	*eu2;
+	struct vertexuse *vu2;
+	point_t		midpt;
 
 	NMG_CK_INTER_STRUCT(is);
 	NMG_CK_EDGEUSE(eu1);
 	NMG_CK_SHELL(s2);
 
+	s1 = nmg_find_s_of_eu(eu1);
+
+	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
+		rt_log("nmg_isect_edge3p_shell(, eu1=x%x, s2=x%x) START\n",
+			eu1, s2 );
+	}
+
+	if( eu2 = nmg_find_matching_eu_in_s( eu1, s2 ) )  {
+		/* XXX Is the fact that s2 has a corresponding edge good enough? */
+		/* We can't fuse wire edges */
+		return;
+	}
+
+	/* Note the ray that contains this edge.  For debug in nmg_isect_edge3p_face3p() */
+	VMOVE( is->pt, eu1->vu_p->v_p->vg_p->coord );
+	VSUB2( is->dir, eu1->eumate_p->vu_p->v_p->vg_p->coord, is->pt );
+	VUNITIZE( is->dir );
+
 	/* Check eu1 of s1 against all faces in s2 */
 	for( RT_LIST_FOR( fu2, faceuse, &s2->fu_hd ) )  {
 		NMG_CK_FACEUSE(fu2);
 		if( fu2->orientation != OT_SAME )  continue;
-		/* XXX _must_ look at return code here! */
-		nmg_isect_edge3p_face3p( is, eu1, fu2 );
+
+		/* We aren't interested in the vert_list's, ignore return */
+		(void)nmg_isect_edge3p_face3p( is, eu1, fu2 );
 	}
 
 	/* Check eu1 of s1 against all wire loops in s2 */
 	for( RT_LIST_FOR( lu2, loopuse, &s2->lu_hd ) )  {
 		NMG_CK_LOOPUSE(lu2);
 		/* Really, it's just a bunch of wire edges, in a loop. */
-		/* XXX Can there be lone-vertex loops here? */
+		if( RT_LIST_FIRST_MAGIC( &lu2->down_hd ) == NMG_VERTEXUSE_MAGIC)  {
+			/* XXX Can there be lone-vertex wire loops here? */
+			vu2 = RT_LIST_FIRST( vertexuse, &lu2->down_hd );
+			NMG_CK_VERTEXUSE(vu2);
+			nmg_isect_vertex3_edge3p( &is, vu2, eu1 );
+			continue;
+		}
 		for( RT_LIST_FOR( eu2, edgeuse, &lu2->down_hd ) )  {
 			NMG_CK_EDGEUSE(eu2);
 			nmg_isect_edge3p_edge3p( &is, eu1, eu2 );
@@ -3111,6 +3165,48 @@ struct shell		*s2;
 	if( s2->vu_p )  {
 		nmg_isect_vertex3_edge3p( &is, s2->vu_p, eu1 );
 	}
+
+	/*
+	 *  The edge has been fully intersected with the other shell.
+	 *  It may have been trimmed in the process;  the caller is
+	 *  responsible for re-calling us with the extra edgeuses.
+	 *  If both vertices of eu1 are on s2 (the other shell), and
+	 *  there is no edge in s2 between them, we need to determine
+	 *  whether this is an interior or exterior edge, and
+	 *  perhaps add a loop into s2 connecting those two verts.
+	 */
+	if( eu2 = nmg_find_matching_eu_in_s( eu1, s2 ) )  {
+		/* We can't fuse wire edges */
+		goto out;
+	}
+	/*  Can't use the face cutter, because s2 has no associated face!
+	 *  Call the geometric classifier on the midpoint.
+	 *  If it's INSIDE or ON the other shell, add a wire loop
+	 *  that connects the two vertices.
+	 */
+	VADD2SCALE( midpt, eu1->vu_p->v_p->vg_p->coord,
+		eu1->eumate_p->vu_p->v_p->vg_p->coord,  0.5 );
+	if( nmg_class_pt_s( midpt, s2, &is->tol ) == NMG_CLASS_AoutB )
+		goto out;		/* Nothing more to do */
+
+	/* Add a wire loop in s2 connecting the two vertices */
+	lu2 = nmg_mlv( &s2->l.magic, eu1->vu_p->v_p, OT_UNSPEC );
+	NMG_CK_LOOPUSE(lu2);
+	eu2 = nmg_meonvu( RT_LIST_FIRST( vertexuse, &lu2->down_hd ) );
+	NMG_CK_EDGEUSE(eu2);
+	(void)nmg_eusplit( eu1->eumate_p->vu_p->v_p, eu2 );
+	nmg_loop_g(lu2->l_p, &is->tol);
+	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
+		rt_log("nmg_isect_edge3p_shell(, eu1=x%x, s2=x%x) Added wire lu=x%x\n",
+			eu1, s2, lu2 );
+	}
+
+out:
+	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
+		rt_log("nmg_isect_edge3p_shell(, eu1=x%x, s2=x%x) END\n",
+			eu1, s2 );
+	}
+	return;
 }
 
 /*
@@ -3157,6 +3253,41 @@ int			edges_only;
 	return (struct vertexuse *)NULL;
 }
 
+/* XXX move to nmg_info.c */
+/*
+ *			N M G _ F I N D _ M A T C H I N G _ E U _ I N _ S
+ *
+ *  If shell s2 has an edge that connects the same vertices as eu1 connects,
+ *  return the matching edgeuse in s2.
+ */
+struct edgeuse *
+nmg_find_matching_eu_in_s( eu1, s2 )
+CONST struct edgeuse	*eu1;
+CONST struct shell	*s2;
+{
+	CONST struct vertexuse	*vu1a, *vu1b;
+	struct vertexuse	*vu2a, *vu2b;
+	struct edgeuse		*eu2;
+
+	NMG_CK_EDGEUSE(eu1);
+	NMG_CK_SHELL(s2);
+
+	vu1a = eu1->vu_p;
+	vu1b = RT_LIST_PNEXT_CIRC( edgeuse, eu1 )->vu_p;
+	NMG_CK_VERTEXUSE(vu1a);
+	NMG_CK_VERTEXUSE(vu1b);
+	if( (vu2a = nmg_find_v_in_shell( vu1a->v_p, s2, 0 )) == (struct vertexuse *)NULL )
+		return (struct edgeuse *)NULL;
+	if( (vu2b = nmg_find_v_in_shell( vu1b->v_p, s2, 0 )) == (struct vertexuse *)NULL )
+		return (struct edgeuse *)NULL;
+
+	/* Both vertices have vu's of eu's in s2 */
+
+	eu2 = nmg_findeu( vu1a->v_p, vu1b->v_p, s2,
+	    (CONST struct edgeuse *)NULL, 0 );
+	return eu2;		/* May be NULL if no edgeuse found */
+}
+
 /*
  *			N M G _ I S E C T _ F A C E 3 P _ S H E L L _ I N T
  *
@@ -3173,7 +3304,8 @@ int			edges_only;
  *  does only "interior" edges, and is not a general face/shell intersector.
  */
 void
-nmg_isect_face3p_shell_int( fu1, s2 )
+nmg_isect_face3p_shell_int( is, fu1, s2 )
+struct nmg_inter_struct	*is;
 struct faceuse	*fu1;
 struct shell	*s2;
 {
@@ -3181,6 +3313,7 @@ struct shell	*s2;
 	struct loopuse	*lu1;
 	struct edgeuse	*eu1;
 
+	NMG_CK_INTER_STRUCT(is);
 	NMG_CK_FACEUSE(fu1);
 	NMG_CK_SHELL(s2);
 	s1 = fu1->s_p;
@@ -3191,26 +3324,11 @@ struct shell	*s2;
 		if( RT_LIST_FIRST_MAGIC( &lu1->down_hd ) == NMG_VERTEXUSE_MAGIC)
 			continue;
 		for( RT_LIST_FOR( eu1, edgeuse, &lu1->down_hd ) )  {
-			struct vertexuse	*vu1a, *vu1b;
-			struct vertexuse	*vu2a, *vu2b;
 			struct edgeuse		*eu2;
 
-			NMG_CK_EDGEUSE(eu1);
-			vu1a = eu1->vu_p;
-			vu1b = RT_LIST_PNEXT_CIRC( edgeuse, eu1 )->vu_p;
-			NMG_CK_VERTEXUSE(vu1a);
-			NMG_CK_VERTEXUSE(vu1b);
-			if( (vu2a = nmg_find_v_in_shell( vu1a->v_p, s2, 0 )) == (struct vertexuse *)NULL )
-				continue;
-			if( (vu2b = nmg_find_v_in_shell( vu1b->v_p, s2, 0 )) == (struct vertexuse *)NULL )
-				continue;
-
-			/* Both vertices have vu's of eu's in s2 */
-
-			eu2 = nmg_findeu( vu1a->v_p, vu1b->v_p, s2,
-			    (CONST struct edgeuse *)NULL, 0 );
+			eu2 = nmg_find_matching_eu_in_s( eu1, s2 );
 			if( eu2	)  {
-rt_log("nmg_isect_face3p_shell_int() eu2=x%x: v1=x%x, v2=x%x (nothing to do)\n", eu2, vu1a->v_p, vu1b->v_p);
+rt_log("nmg_isect_face3p_shell_int() eu1=x%x, eu2=x%x (nothing to do)\n", eu1, eu2);
 				/*  Whether the edgeuse is in a face, or a
 				 *  wire edgeuse, the other guys will isect it.
 				 */
@@ -3220,11 +3338,8 @@ rt_log("nmg_isect_face3p_shell_int() eu2=x%x: v1=x%x, v2=x%x (nothing to do)\n",
 			 *  edge running between them in shell s2.
 			 *  Create a line of intersection, and go to it!.
 			 */
-rt_log("nmg_isect_face3p_shell_int() no eu: v1=x%x, v2=x%x (skipping)\n", vu1a->v_p, vu1b->v_p);
-rt_bomb("nmg_isect_face3p_shell_int()\n");	/* needs finishing */
-#if 0
+rt_log("nmg_isect_face3p_shell_int(, s2=x%x) eu1=x%x, no eu2\n", s2, eu1);
 			nmg_isect_edge3p_shell( is, eu1, s2 );
-#endif
 		}
 	}
 
@@ -3330,7 +3445,7 @@ nmg_ck_vs_in_region( s2->r_p, tol );
 	    	}
 
 		/* Intersect all "interior" edges that got missed by generic. */
-		nmg_isect_face3p_shell_int( fu1, s2 );
+		nmg_isect_face3p_shell_int( &is, fu1, s2 );
 
 		/*
 		 *  Because the rest of the shell elements are wires,
