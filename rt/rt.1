@@ -40,7 +40,7 @@ option, a transformation matrix may be provided on standard input
 which maps model-space to view-space.
 In this case, the grid ranges from -1.0 <= X,Y <= +1.0 in view space,
 with the size of the grid (number of rays fired) specified with
-.B \-s .
+.BR \-s .
 The
 .B \-M
 option is most useful when
@@ -52,9 +52,7 @@ is being invoked from a shell script created by an
 The following options are recognized.
 .TP
 .B \-s#
-(also
-.B \-f#
-) specifies the
+specifies the
 number of rays to fire in the X and Y directions on a square grid.
 For non-square grids, the
 .B \-n#
@@ -72,7 +70,7 @@ is best when accompanied by debugging options.  Note that the standard
 .IR getopt (3)
 routine only allows options to have one parameter, so the X and Y
 coordinates need to be combined into one string parameter by enclosing
-them in double quotes.
+them in double quotes.  This option must follow any viewing parameters.
 .TP
 .B \-a#
 Select azimuth in degrees.  Used with
@@ -109,9 +107,6 @@ Specify the name of a file to store the ASCII version of the image.
 can be used to later convert the file to
 .IR pix (5)
 format output.
-.TP
-.B \-x#
-Set debug flags to (hexadecimal) number.  Not generally useful.
 .TP
 .B \-l#
 Select lighting model.  Default is 0.
@@ -151,31 +146,35 @@ Set distance of eye from center.
 .B \-S
 Turns on stereo viewing.
 .TP
-.B \-J 
-The "jitter" flag, randomizes the point from which the ray is fired, 
-to eliminate systemic
-errors.  This could be useful in obtaining more accurate results 
-in a volume-calculating raytrace, for example.  
+.B \-J#
+The "jitter" flag, if nonzero randomizes the point from which the ray
+is fired by +/- one half of the pixel size.  Useful if doing your own
+post filtering for antialiasing, or to eliminate systematic
+errors.  This has been useful in obtaining more accurate results
+in a volume-calculating raytrace as well.
+.TP
 .B \-H#
 The "hypersample" flag, specifies number of extra rays to fire for 
-more accurate results.
+more accurate results.  The final colors of all rays are averaged
+together.
 .TP
 .B \-F\ framebuffer
 .TP
 .B \-D#
 The "desired frame" flag, specifies frame number to start with.
 .TP
-.B \-x#\ (hexidecimal)
-Turns on the 
-.IR librt(3)
-debugging flag specified.
+.B \-x#
+Set the
+.IR librt (3)
+debug flags to the given hexadecimal bit vector.
+See librt/debug.h for the bit definitions.
 .TP
-.B \-X#\ (hexidecimal)
+.B \-X#
 Turns on the
-.I rt 
-program debugging flag specified.
+.I rt (1)
+program debugging flags.  See rt/rdebug.h for the meaning of these bits.
 .TP
-.B \A#
+.B \-A#
 Sets the ambient light intensity.
 .TP
 .B \-p#
@@ -185,13 +184,15 @@ Sets the perspective, in degrees ranging  0 <= p < 180.
 Sets the "increment mode" flag, calling for incremental resolution.
 .TP
 .B \-I
-Turns on interactive mode.
+Turns on interactive mode.  If this flag is off, and your image is
+"large" (>= 256x256) it will lower the priority of the rt process.
 .TP
 .B \-U#
 Sets the "use_air" value.
 .TP
 .B \-V#
-Sets the view aspect.
+Sets the view aspect.  This is the ratio of width over height and can
+be specified as either 1.33 or 4:3 for example.
 .LP
 The
 .B rt
@@ -226,4 +227,4 @@ program are usually with the
 package instead.
 .SH "BUG REPORTS"
 Reports of bugs or problems should be submitted via electronic
-mail to <CAD@BRL.ARPA>.
+mail to <CAD@BRL.MIL>.
