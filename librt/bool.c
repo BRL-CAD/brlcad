@@ -360,7 +360,8 @@ struct region			*reg1;
 struct region			*reg2;
 {
 	point_t	pt;
-	static long count = 0;
+	static long count = 0;		/* Not PARALLEL, shouldn't hurt */
+	register fastf_t depth;
 
 	/* Attempt to control tremendous error outputs */
 	if( ++count > 100 )  {
@@ -370,13 +371,17 @@ struct region			*reg2;
 
 	VJOIN1( pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist,
 		ap->a_ray.r_dir );
+	depth = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
+	/*
+	 * An application program might want to add code here
+	 * to ignore "small" overlap depths.
+	 */
 	rt_log("OVERLAP: reg=%s sol=%s, reg=%s sol=%s (x%d y%d lvl%d)\n",
 		reg1->reg_name, pp->pt_inseg->seg_stp->st_name,
 		reg2->reg_name, pp->pt_outseg->seg_stp->st_name,
 		ap->a_x, ap->a_y, ap->a_level );
 	rt_log("OVERLAP depth %gmm at (%g,%g,%g)\n",
-		pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist,
-		pt[X], pt[Y], pt[Z] );
+		depth, pt[X], pt[Y], pt[Z] );
 	return(1);
 }
 
@@ -802,7 +807,7 @@ double a, b;
 	} else {
 		if( (-b) > d )  d = (-b);
 	}
-	if( d <= 0.0001 )  {
+	if( d <= 1.0e-6 )  {
 		ret = 0;	/* both nearly zero */
 		goto out;
 	}
@@ -819,8 +824,8 @@ double a, b;
 		goto out;
 	}
 	if( (diff = a - b) < 0.0 )  diff = -diff;
-	if( diff <= 0.0001 )  {
-		ret = 0;	/* absolute difference is small */
+	if( diff < 0.001 )  {
+		ret = 0;	/* absolute difference is small, < 1/1000mm */
 		goto out;
 	}
 	if( diff < 0.000001 * d )  {
