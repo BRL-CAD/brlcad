@@ -2493,6 +2493,7 @@ rt_log("S . N = %g\n", sun_dot_n);
 				ts->lambda, ts->Zenith, Transmitted,
 				Sun, ts->weather, t_vl);
 #endif
+			dist = 1;	/* XXX what distance to use? */
 			transmitted_light =
 				(1 - f)
 				* trans_radiance
