@@ -642,38 +642,6 @@ struct rt_db_internal	*ip;
 }
 
 /*
- *			R T _ R O T _ B O U N D _ R P P
- *
- *  Given an RPP that defines a bounding cube in a local coordinate
- *  system, transform that cube into another coordinate system,
- *  and then find the new (usually somewhat larger) bounding RPP.
- */
-void
-rt_rot_bound_rpp( omin, omax, mat, imin, imax )
-vect_t	omin, omax;
-mat_t	mat;
-vect_t	imin, imax;
-{
-	point_t	local;		/* vertex point in local coordinates */
-	point_t	model;		/* vertex point in model coordinates */
-
-#define ROT_VERT( a, b, c )  \
-	VSET( local, a[X], b[Y], c[Z] ); \
-	MAT4X3PNT( model, mat, local ); \
-	VMINMAX( omin, omax, model ) \
-
-	ROT_VERT( imin, imin, imin );
-	ROT_VERT( imin, imin, imax );
-	ROT_VERT( imin, imax, imin );
-	ROT_VERT( imin, imax, imax );
-	ROT_VERT( imax, imin, imin );
-	ROT_VERT( imax, imin, imax );
-	ROT_VERT( imax, imax, imin );
-	ROT_VERT( imax, imax, imax );
-#undef ROT_VERT
-}
-
-/*
  *			R T _ E B M _ P R E P
  *
  *  Returns -
@@ -721,7 +689,7 @@ CONST struct rt_tol	*tol;
 	/* Find bounding RPP of rotated local RPP */
 	VSETALL( small, 0 );
 	VSET( ebmp->ebm_large, ebmp->ebm_i.xdim, ebmp->ebm_i.ydim, ebmp->ebm_i.tallness );
-	rt_rot_bound_rpp( stp->st_min, stp->st_max, eip->mat,
+	rt_rotate_bbox( stp->st_min, stp->st_max, eip->mat,
 		small, ebmp->ebm_large );
 
 	/* for now, EBM origin in ideal coordinates is at origin */
