@@ -167,6 +167,7 @@ BDIRS="bench \
 	conv \
 	db \
 	rt \
+	anim \
 	mged \
 	remrt \
 	libtermio \
@@ -196,7 +197,6 @@ BDIRS="bench \
 	nirt \
 	irprep \
 	xmged \
-	anim \
 	jove \
 	canon \
 	burst \
