@@ -49,6 +49,11 @@ bn_decode_mat(m, str)
 mat_t m;
 char *str;
 {
+	if( strcmp( str, "I" ) == 0 )  {
+		bn_mat_idn( m );
+		return 16;
+	}
+
 	return sscanf(str,
 	    "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf",
 	    &m[0], &m[1], &m[2], &m[3], &m[4], &m[5], &m[6], &m[7],
@@ -76,6 +81,11 @@ bn_encode_mat(vp, m)
 struct bu_vls *vp;
 mat_t m;
 {
+	if( m == NULL )  {
+		bu_vls_putc(vp, 'I');
+		return;
+	}
+
 	bu_vls_printf(vp, "%g %g %g %g  %g %g %g %g  %g %g %g %g  %g %g %g %g",
 	    m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7],
 	    m[8], m[9], m[10], m[11], m[12], m[13], m[14], m[15]);
