@@ -287,7 +287,7 @@ PutPixel( value )
 
 		if ( fb_write( fbp, left, ht - row, pixbuf, right - left ) == -1
 		   )
-			Fatal( "Error writing scan line to frame buffer" );
+			Message( "Error writing scan line to frame buffer" );
 
 		col = left;
 
@@ -789,7 +789,7 @@ main( argc, argv )
 		ht = fb_getheight( fbp );
 
 		if ( wt < width || ht < height )
-			Fatal( "Frame buffer too small (%dx%d); %dx%d needed",
+			Message( "Frame buffer too small (%dx%d); %dx%d needed",
 			       wt, ht, width, height
 			     );
 
