@@ -60,7 +60,8 @@ extern struct seg *FreeSeg;		/* Head of freelist */
 				GETSTRUCT((p), seg); \
 			} else { \
 				FreeSeg = (p)->seg_next; \
-			} }
+			} \
+			p->seg_next = SEG_NULL; }
 #define FREE_SEG(p) {(p)->seg_next = FreeSeg; FreeSeg = (p);}
 
 
