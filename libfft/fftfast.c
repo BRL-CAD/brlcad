@@ -34,7 +34,9 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #define	MAXSIZE	65536	/* Needed for sin/cos tables */
 int	_init_size = 0;	/* Internal: shows last initialized size */
 
-#define	PI	3.141592653589793238462643
+#if !defined(PI)
+#	define	PI	3.141592653589793238462643
+#endif
 
 /* The COMPLEX type used throughout */
 typedef struct {
