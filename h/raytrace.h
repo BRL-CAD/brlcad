@@ -3460,6 +3460,13 @@ extern int nmg_ray_segs(struct ray_data	*rd);
 extern int rt_num_circular_segments(double maxerr, double radius);
 
 /* tcl.c */
+int rt_tcl_parse_ray( Tcl_Interp *interp, struct xray *rp, CONST char *CONST*argv );
+void rt_tcl_pr_cutter( Tcl_Interp *interp, CONST union cutter *cutp );
+int rt_tcl_cutter( ClientData clientData, Tcl_Interp *interp, int argc, const char *const*argv );
+void rt_tcl_pr_hit( Tcl_Interp *interp, struct hit *hitp, const struct seg *segp, const struct xray	*rayp, int flipflag );
+void rt_tcl_setup(Tcl_Interp *interp);
+int Rt_Init(Tcl_Interp *interp);
+void db_full_path_appendresult( Tcl_Interp *interp, const struct db_full_path *pp );
 extern int tcl_obj_to_int_array(Tcl_Interp *interp,
 				Tcl_Obj *list,
 				int **array,

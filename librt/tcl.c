@@ -83,10 +83,7 @@ struct dbcmdstruct {
  *	{20 -13.5 20} at {10 .5 3}
  */
 int
-rt_tcl_parse_ray( interp, rp, argv )
-Tcl_Interp *interp;
-struct xray *rp;
-CONST char *CONST*argv;
+rt_tcl_parse_ray( Tcl_Interp *interp, struct xray *rp, CONST char *CONST*argv )
 {
 	if( bn_decode_vect( rp->r_pt,  argv[0] ) != 3 )  {
 		Tcl_AppendResult( interp,
@@ -129,9 +126,7 @@ CONST char *CONST*argv;
  *	type nugridnode
  */
 void
-rt_tcl_pr_cutter( interp, cutp )
-Tcl_Interp		*interp;
-CONST union cutter	*cutp;
+rt_tcl_pr_cutter( Tcl_Interp *interp, CONST union cutter *cutp )
 {
 	static CONST char xyz[4] = "XYZ";
 	struct bu_vls	str;
@@ -205,11 +200,7 @@ CONST union cutter	*cutp;
  *	.rt cutter 7 {0 0 0} dir {0 0 -1}
  */
 int
-rt_tcl_cutter( clientData, interp, argc, argv )
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
+rt_tcl_cutter( ClientData clientData, Tcl_Interp *interp, int argc, const char *const*argv )
 {
 	struct application	*ap = (struct application *)clientData;
 	struct rt_i		*rtip;
@@ -254,12 +245,7 @@ char **argv;
  *  give the user more precision.
  */
 void
-rt_tcl_pr_hit( interp, hitp, segp, rayp, flipflag )
-Tcl_Interp	*interp;
-struct hit	*hitp;
-struct seg	*segp;
-struct xray	*rayp;
-int		flipflag;
+rt_tcl_pr_hit( Tcl_Interp *interp, struct hit *hitp, const struct seg *segp, const struct xray	*rayp, int flipflag )
 {
 	struct bu_vls	str;
 	vect_t		norm;
@@ -304,8 +290,8 @@ int		flipflag;
 int
 rt_tcl_a_hit( ap, PartHeadp, segHeadp )
 struct application	*ap;
-struct partition	*PartHeadp;
-struct seg		*segHeadp;
+const struct partition	*PartHeadp;
+const struct seg		*segHeadp;
 {
 	Tcl_Interp *interp = (Tcl_Interp *)ap->a_uptr;
 	register struct partition *pp;
@@ -335,7 +321,7 @@ struct seg		*segHeadp;
  */
 int
 rt_tcl_a_miss( ap )
-struct application	*ap;
+const struct application	*ap;
 {
 	return 0;
 }
@@ -368,7 +354,7 @@ rt_tcl_rt_shootray( clientData, interp, argc, argv )
 ClientData clientData;
 Tcl_Interp *interp;
 int argc;
-char **argv;
+const char *const*argv;
 {
 	struct application	*ap = (struct application *)clientData;
 	struct rt_i		*rtip;
@@ -407,7 +393,7 @@ rt_tcl_rt_onehit( clientData, interp, argc, argv )
 ClientData clientData;
 Tcl_Interp *interp;
 int argc;
-char **argv;
+const char *const*argv;
 {
 	struct application	*ap = (struct application *)clientData;
 	struct rt_i		*rtip;
@@ -444,7 +430,7 @@ rt_tcl_rt_no_bool( clientData, interp, argc, argv )
 ClientData clientData;
 Tcl_Interp *interp;
 int argc;
-char **argv;
+const char *const*argv;
 {
 	struct application	*ap = (struct application *)clientData;
 	struct rt_i		*rtip;
@@ -483,7 +469,7 @@ rt_tcl_rt_check( clientData, interp, argc, argv )
 ClientData clientData;
 Tcl_Interp *interp;
 int argc;
-char **argv;
+const char *const*argv;
 {
 	struct application	*ap = (struct application *)clientData;
 	struct rt_i		*rtip;
@@ -519,7 +505,7 @@ rt_tcl_rt_prep( clientData, interp, argc, argv )
 ClientData clientData;
 Tcl_Interp *interp;
 int argc;
-char **argv;
+const char *const*argv;
 {
 	struct application	*ap = (struct application *)clientData;
 	struct rt_i		*rtip;
@@ -609,7 +595,7 @@ rt_tcl_rt( clientData, interp, argc, argv )
 ClientData clientData;
 Tcl_Interp *interp;
 int argc;
-char **argv;
+const char *const*argv;
 {
 	struct dbcmdstruct	*dbcmd;
 
@@ -676,7 +662,7 @@ char **argv;
 void
 db_tcl_tree_describe( dsp, tp )
 Tcl_DString		*dsp;
-union tree		*tp;
+const union tree		*tp;
 {
 	if( !tp ) return;
 
@@ -1548,8 +1534,7 @@ Tcl_Interp		*interp;
  *  which exposes all of this power.
  */
 void
-rt_tcl_setup(interp)
-     Tcl_Interp *interp;
+rt_tcl_setup(Tcl_Interp *interp)
 {
 	extern int rt_bot_minpieces;	/* from g_bot.c */
 
@@ -1576,8 +1561,7 @@ rt_tcl_setup(interp)
  *  "load /usr/brlcad/lib/librt.so"
  */
 int
-Rt_Init(interp)
-Tcl_Interp *interp;
+Rt_Init(Tcl_Interp *interp)
 {
 	char *version_number;
 
@@ -1602,9 +1586,7 @@ Tcl_Interp *interp;
  *  Take a db_full_path and append it to the TCL result string.
  */
 void
-db_full_path_appendresult( interp, pp )
-Tcl_Interp			*interp;
-CONST struct db_full_path	*pp;
+db_full_path_appendresult( Tcl_Interp *interp, const struct db_full_path *pp )
 {
 	register int i;
 
