@@ -30,8 +30,8 @@
 			sharedliblink.sh libitcl3.2.so''[[LIBVERS]] ; \
 			sharedliblink.sh libitk3.2.so''[[LIBVERS]] ; */ \
 			rm -f libitcl.so libitk.so ; \
-			cp [[pwd]]/../SRCDIR/itcl/libitcl3.2.so . ; \
-			cp [[pwd]]/../SRCDIR/itk/libitk3.2.so . ; \
+			cp [[pwd]]/itcl/libitcl3.2.so . ; \
+			cp [[pwd]]/itk/libitk3.2.so . ; \
 			ln -s libitk3.2.so libitk.so ; \
 			ln -s libitcl3.2.so libitcl.so
 #endif
