@@ -137,18 +137,14 @@ ARCHIVE=${ARCHDIR}/cad${RELEASE}.tar
 # Every shell script to be distributed must be listed here.
 # Scripts to be installed in $BINDIR need to be listed in setup.sh $SCRIPTS also.
 TOP_FILES="Copyright* README Cakefile* Makefile Acknowledgements \
-		cray.sh cray-ar.sh ranlib5.sh sgisnap.sh \
-		machinetype.sh gen.sh setup.sh newvers.sh \
-		sharedlibvers.sh sharedliblink.sh cadbug.sh \
-		show.sh \
-		cakeinclude.sh newbindir.sh pixinfo.sh"
+		gen.sh setup.sh newbindir.sh"
 
 # Has Cakefile, but no compilation or tools needed, not machine specific
 ADIRS="h doc pix vfont whetstone awf brlman tclscripts"
 
 # Has no Cakefile, just copy it (and all sub-directories!) verbatim.
 # Only used in "dist" command.
-CDIRS="cake cakeaux html papers contributed pro-engineer"
+CDIRS="sh cake cakeaux html papers contributed pro-engineer"
 
 # Source directories that will have Machine specific binary directories
 # These will be built in the order listed.
