@@ -970,18 +970,18 @@ CONST char                      *attr;
 	if( attr == (char *)NULL )
 	{
 		bu_vls_strcpy( &vls, "cline" );
-		bu_vls_printf( &vls, " V {%.25g %.25g %.25g}", V3ARGS( cli->v ) );
-		bu_vls_printf( &vls, " H {%.25g %.25g %.25g}", V3ARGS( cli->h ) );
-		bu_vls_printf( &vls, " R %.25g T %.25g", cli->radius, cli->thickness );
+		bu_vls_printf( &vls, " V {%.25G %.25G %.25G}", V3ARGS( cli->v ) );
+		bu_vls_printf( &vls, " H {%.25G %.25G %.25G}", V3ARGS( cli->h ) );
+		bu_vls_printf( &vls, " R %.25G T %.25G", cli->radius, cli->thickness );
 	}
 	else if( *attr == 'V')
-		bu_vls_printf( &vls, "%.25g %.25g %.25g", V3ARGS( cli->v ) );
+		bu_vls_printf( &vls, "%.25G %.25G %.25G", V3ARGS( cli->v ) );
 	else if( *attr == 'H' )
-		bu_vls_printf( &vls, "%.25g %.25g %.25g", V3ARGS( cli->h ) );
+		bu_vls_printf( &vls, "%.25G %.25G %.25G", V3ARGS( cli->h ) );
 	else if( *attr == 'R' )
-		bu_vls_printf( &vls, "%.25g", cli->radius );
+		bu_vls_printf( &vls, "%.25G", cli->radius );
 	else if( *attr == 'T' )
-		bu_vls_printf( &vls, "%.25g", cli->thickness );
+		bu_vls_printf( &vls, "%.25G", cli->thickness );
 	else
 	{
 		bu_vls_strcat( &vls, "ERROR: unrecognized attribute, must be V, H, R, or T!!!" );
