@@ -64,9 +64,10 @@ fi
 echo "TCL_BUILD_CFLAGS = $TCL_BUILD_CFLAGS"
 AC_SUBST(TCL_BUILD_CFLAGS)
 
-
-ITCL_LIBS="${prefix}/libitcl8.4/itcl/libitcl.la"
+ITCL_LIBS="${prefix}/libitcl3.2/itcl/libitcl.la"
+ITCL_VERSION="3.2"
 AC_SUBST(ITCL_LIBS)
+AC_SUBST(ITCL_VERSION)
 
 dnl tk
 TK_LIBS='${top_builddir}'"/libtk8.4/libtk.la"
@@ -76,7 +77,7 @@ AC_SUBST(TK)
 AC_SUBST(TK_LIBS)
 AC_SUBST(TK_LIBRARY)
 
-ITK_LIBS="${prefix}/libitcl8.4/itk/libitk.la"
+ITK_LIBS="${prefix}/libitcl3.2/itk/libitk.la"
 AC_SUBST(ITK_LIBS)
 
 PNG_LIBS="-lpng -lz"
@@ -171,8 +172,10 @@ AC_OUTPUT([
 	html/ReleaseNotes/Rel5.0/Summary/Makefile
 	html/ReleaseNotes/Rel6.0/Makefile
 	irprep/Makefile
-	iwidgets4.0.1/Makefile
 	iwidgets4.0.1/generic/Makefile
+	iwidgets4.0.1/iwidgets.tcl
+	iwidgets4.0.1/Makefile
+	iwidgets4.0.1/pkgIndex.tcl
 	libbn/Makefile
 	libbu/Makefile
 	libcursor/Makefile

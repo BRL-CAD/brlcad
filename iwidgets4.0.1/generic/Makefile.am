@@ -6,5 +6,4 @@ FILES = buttonbox.itk calendar.itk canvasprintbox.itk canvasprintdialog.itk chec
 install:
 	mkdir -p ${INSTALL_DIR}
 	for a in $(FILES) ; do ${INSTALL_SCRIPT} -m 444 $$a ${INSTALL_DIR}/$$a ; done
-	for a in $(SUBDIRS) ; do (cd $$a && make install) ; done
 
