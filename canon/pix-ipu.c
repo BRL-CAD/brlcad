@@ -72,7 +72,6 @@ char *av[];
 	struct dsreq *dsp;
 	u_char	*img_buffer = (u_char *)NULL;
 	int	img_bytes;
-	FILE	*image_file;
 	int i;
 
 	if ((arg_index = parse_args(ac, av)) >= ac) {

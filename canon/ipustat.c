@@ -29,11 +29,10 @@ int ac;
 char *av[];
 {
 #if defined(__sgi) || defined(sgi)
-	int i;
 	struct dsreq *dsp;
 	char *p;
 
-	if ((i=parse_args(ac, av)) < ac)
+	if ((parse_args(ac, av)) < ac)
 		fprintf(stderr,
 			"%s: Excess command line arguments ignored\n",
 			progname);

@@ -14,7 +14,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "conf.h"
-#include "machine.h"
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -29,6 +28,8 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #else
 #include <strings.h>
 #endif
+
+#include "machine.h"
 
 #include "./canon.h"
 
@@ -69,7 +70,6 @@ ipu_acquire(struct dsreq *dsp,
 	    int timeout)
 {
 	int i=0;
-	int status=0;
 	u_char buf[48];
 	char *p;
 
@@ -896,19 +896,19 @@ ipu_get_conf(struct dsreq *dsp)
 	if (params[0] == 15 && params[4] == 0x25) {
 		p = & params[4];
 		switch (p[2]) {
-		case IPU_AUTOSCALE : fprintf(stderr, "conv=Autoscale\  ");
+		case IPU_AUTOSCALE : fprintf(stderr, "conv=Autoscale  ");
 					break;
-		case IPU_AUTOSCALE_IND : fprintf(stderr, "conv=Autoscale_ind\  ");
+		case IPU_AUTOSCALE_IND : fprintf(stderr, "conv=Autoscale_ind  ");
 					break;
-		case IPU_MAG_FACTOR : fprintf(stderr, "conv=Mag Factor\  ");
+		case IPU_MAG_FACTOR : fprintf(stderr, "conv=Mag Factor  ");
 					break;
-		case IPU_RESOLUTION : fprintf(stderr, "conv=Resolution\  ");
+		case IPU_RESOLUTION : fprintf(stderr, "conv=Resolution  ");
 					break;
-		default	: fprintf(stderr, "conv=Unknown conv.\  ");
+		default	: fprintf(stderr, "conv=Unknown conv.");
 					break;
 		}
 
-		fprintf(stderr, "Repeat=%d\  ", p[3]);
+		fprintf(stderr, "Repeat=%d  ", p[3]);
 		
 		switch (p[4]) {
 		case IPU_GAMMA_STANDARD: fprintf(stderr, "gamma=std  ");
@@ -963,6 +963,7 @@ ipu_get_conf(struct dsreq *dsp)
 		default : fputs("unknown\n", stderr); break;
 		}
 	}
+	return 0;
 }
 
 int
@@ -992,6 +993,7 @@ ipu_get_conf_long(struct dsreq *dsp)
 
 	(void)fprintf(stderr, "Block Descriptor Length %u\n",
 		((unsigned)params[6] << 8) + params[7]);
+	return 0;
 }
 
 #endif /* __sgi__ */
