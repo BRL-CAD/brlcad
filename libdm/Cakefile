@@ -1,0 +1,20 @@
+/*
+ *			libdm/Cakefile
+ */
+#define CONFIGDEFS	LIBDM_CONFIG 
+
+#define SRCDIR	libdm
+#define PRODUCTS	libdm.ARCH_SUF
+#define	SRCSUFF	.c
+#define MANSECTION	3
+
+#include "../Cakefile.defs"
+
+#define FILES	\
+	dm-X dm-ogl dm-glx dm-pex dm-ps
+
+#define VERSION_VARIABLE	dm_version
+#define LIBRARY_TITLE		"The BRL-CAD Display Manager Library"
+
+#include "../Cakefile.lib"
+#include "../Cakefile.rules"
