@@ -36,6 +36,13 @@ Options associated with
 </DD>
 </DL>
 <P>
+Options associated with
+<A HREF="Display.html#sect7">Display</A>:<BR>
+<DL>
+<DD><B>rscale sscale type</B>
+</DD>
+</DL>
+<P>
 
 <H2><A NAME="sect6" HREF="#toc6"><B>INHERITED OPTIONS</B></A></H2>
 Options inherited from itk::Archetype:<BR>
@@ -52,10 +59,9 @@ sashheight sashwidth sashindent thickness width</B>
 </DL>
 <P>
 Options inherited from 
-<A HREF="QuadDisplay.html#sect5">QuadDisplay</A>:<BR>
+<A HREF="QuadDisplay.html#sect7">QuadDisplay</A>:<BR>
 <DL>
-<DD><B>multi_pane pane rscale sscale type
-</B>
+<DD><B>multi_pane pane</B>
 </DD>
 </DL>
 <P>
@@ -96,7 +102,36 @@ The following commands are possible for mged widgets:
 <P>
 
 <H3><A NAME="sect11" HREF="#toc11"><B>ASSOCIATED METHODS</B></A></H3>
-Methods associated with <A HREF="Db.html#sect11">Db</A>:<BR>
+Methods associated with LIBDM's
+<A HREF="../libdm/dm_obj.html#sect9">display manager object</A>:<BR>
+<DL>
+<DD><B>bg light linestyle linewidth listen
+perspective zbuffer zclip</B>
+</DD>
+</DL>
+<P>
+Methods associated with
+<A HREF="../librt/view_obj.html#sect9">LIBRT's view object</A>:<BR>
+<DL>
+<DD><B>aet center rot size slew tra zoom</B>
+</DD>
+</DL>
+<P>
+Methods associated with <A HREF="Dm.html#sect13">Dm</A>:<BR>
+<DL>
+<DD><B>fb_active fb_observe</B>
+</DD>
+</DL>
+<P>
+Methods associated with <A HREF="Display.html#sect13">Display</A>:<BR>
+<DL>
+<DD><B>add attach_drawable attach_view
+autoview contents detach_drawable
+detach_view refresh remove rt rtcheck</B>
+</DD>
+</DL>
+<P>
+Methods associated with <A HREF="../librt/wdb_obj.html#sect9">LIBRT's database object</A>:<BR>
 <DL>
 <DD><B>adjust c cat color comb concat cp dbip dump
 dup expand find form g get i keep kill
@@ -106,7 +141,7 @@ title tol tops tree whatid whichair whichid</B>
 </DD>
 </DL>
 <P>
-Methods associated with <A HREF="Drawable.html#sect11">Drawable</A>:<BR>
+Methods associated with <A HREF="../librt/dg_obj.html#sect9">LIBRT's drawable geometry object</A>:<BR>
 <DL>
 <DD><B>blast clear draw erase erase_all ev
 get_autoview get_dgname illum label overlay
@@ -129,21 +164,17 @@ insert paneconfigure reset show</B>
 </DD>
 </DL>
 <P>
-Methods inherited from <A HREF="QuadDisplay.html#sect11">QuadDisplay</A>:
-<DL><DD><B>add addall aet attach_drawable attach_drawableall
-attach_view attach_viewall autoview autoviewall bg center
-contents default_views detach_drawable detach_drawableall
-detach_view detach_viewall fb_active fb_observe pane light
-linestyle linewidth listen multi_pane perspective refresh
-refreshall remove removeall resetall rot rt rtcheck size slew
-tra zclip zbuffer zoom</B>
+Methods inherited from <A HREF="QuadDisplay.html#sect13">QuadDisplay</A>:
+<DL><DD><B>addall attach_drawableall attach_viewall autoviewall 
+default_views detach_drawableall tach_viewall pane
+multi_pane refreshall removeall resetall</B>
 </DL>
 <P>
 
 <H3><A NAME="sect13" HREF="#toc13"><B>WIDGET-SPECIFIC METHODS</B></A></H3>
 <DL>
-<DT><I>pathName</I> <A NAME = "opendb"><B>opendb</B></DT>
-<DD>See LIBRT's database object's <A HREF="wdb_obj.html#open">open</A> method.
+<DT><I>pathName</I> <A NAME = "opendb"><B>opendb</B> [<I>dbfile</I>]</DT>
+<DD>See LIBRT's database object's <A HREF="../librt/wdb_obj.html#open">open</A> method.
 </DD>
 <P>
 </DL>

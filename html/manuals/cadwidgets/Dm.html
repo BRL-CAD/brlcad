@@ -37,6 +37,38 @@ Options inherited from itk::Archetype:<BR>
 
 <H2><A NAME="sect7" HREF="#toc7"><B>WIDGET-SPECIFIC OPTIONS</B></A></H2>
 <DL>
+<DT>Name: <DD>          <B>bg</B>
+</DD>
+</DL>
+<DL>
+<DT>Class: <DD>         <B>Bg</B>
+</DD>
+</DL>
+<DL>
+<DT>Command-Line Switch: <DD>          <B>-bg</B>
+<P>
+</DD>
+</DL>
+Specifies the background color of the drawing area.
+See the <A HREF="../libdm/dm_obj.html#bg">bg</A> method.
+<P>
+<DL>
+<DT>Name: <DD>          <B>debug</B>
+</DD>
+</DL>
+<DL>
+<DT>Class: <DD>         <B>Debug</B>
+</DD>
+</DL>
+<DL>
+<DT>Command-Line Switch: <DD>          <B>-debug</B>
+<P>
+</DD>
+</DL>
+Specifies the debug mode.
+See the <A HREF="../libdm/dm_obj.html#debug">debug</A> method.
+<P>
+<DL>
 <DT>Name: <DD>          <B>dmsize</B>
 </DD>
 </DL>
@@ -51,22 +83,6 @@ Options inherited from itk::Archetype:<BR>
 </DL>
 Specifies the window's size.
 See the <A HREF="#dmsize">dmsize</A> method.
-<P>
-<DL>
-<DT>Name: <DD>          <B>listen</B>
-</DD>
-</DL>
-<DL>
-<DT>Class: <DD>         <B>Listen</B>
-</DD>
-</DL>
-<DL>
-<DT>Command-Line Switch: <DD>          <B>-listen</B>
-<P>
-</DD>
-</DL>
-Specifies the port to listen on.
-See the <A HREF="../libdm/dm_obj.html#listen">listen</A> method.
 <P>
 <DL>
 <DT>Name: <DD>          <B>fb_active</B>
@@ -103,22 +119,6 @@ if pixel data arrives in the framebuffer.
 See the <A HREF="#fb_observe">fb_observe</A> method.
 <P>
 <DL>
-<DT>Name: <DD>          <B>bg</B>
-</DD>
-</DL>
-<DL>
-<DT>Class: <DD>         <B>Bg</B>
-</DD>
-</DL>
-<DL>
-<DT>Command-Line Switch: <DD>          <B>-bg</B>
-<P>
-</DD>
-</DL>
-Specifies the background color of the drawing area.
-See the <A HREF="../libdm/dm_obj.html#bg">bg</A> method.
-<P>
-<DL>
 <DT>Name: <DD>          <B>light</B>
 </DD>
 </DL>
@@ -133,86 +133,6 @@ See the <A HREF="../libdm/dm_obj.html#bg">bg</A> method.
 </DL>
 Specifies the light mode.
 See the <A HREF="../libdm/dm_obj.html#light">light</A> method.
-<P>
-<DL>
-<DT>Name: <DD>          <B>zclip</B>
-</DD>
-</DL>
-<DL>
-<DT>Class: <DD>         <B>Zclip</B>
-</DD>
-</DL>
-<DL>
-<DT>Command-Line Switch: <DD>          <B>-zclip</B>
-<P>
-</DD>
-</DL>
-Specifies the zclipping mode.
-See the <A HREF="../libdm/dm_obj.html#zclip">zclip</A> method.
-<P>
-<DL>
-<DT>Name: <DD>          <B>zbuffer</B>
-</DD>
-</DL>
-<DL>
-<DT>Class: <DD>         <B>Zbuffer</B>
-</DD>
-</DL>
-<DL>
-<DT>Command-Line Switch: <DD>          <B>-zbuffer</B>
-<P>
-</DD>
-</DL>
-Specifies the zbuffer mode.
-See the <A HREF="../libdm/dm_obj.html#zbuffer">zbuffer</A> method.
-<P>
-<DL>
-<DT>Name: <DD>          <B>perspective</B>
-</DD>
-</DL>
-<DL>
-<DT>Class: <DD>         <B>Perspective</B>
-</DD>
-</DL>
-<DL>
-<DT>Command-Line Switch: <DD>          <B>-perspective</B>
-<P>
-</DD>
-</DL>
-Specifies the perspective mode.
-See the <A HREF="../libdm/dm_obj.html#perspective">perspective</A> method.
-<P>
-<DL>
-<DT>Name: <DD>          <B>debug</B>
-</DD>
-</DL>
-<DL>
-<DT>Class: <DD>         <B>Debug</B>
-</DD>
-</DL>
-<DL>
-<DT>Command-Line Switch: <DD>          <B>-debug</B>
-<P>
-</DD>
-</DL>
-Specifies the debug mode.
-See the <A HREF="../libdm/dm_obj.html#debug">debug</A> method.
-<P>
-<DL>
-<DT>Name: <DD>          <B>linewidth</B>
-</DD>
-</DL>
-<DL>
-<DT>Class: <DD>         <B>Linewidth</B>
-</DD>
-</DL>
-<DL>
-<DT>Command-Line Switch: <DD>          <B>-linewidth</B>
-<P>
-</DD>
-</DL>
-Specifies the linewidth.
-See the <A HREF="../libdm/dm_obj.html#linewidth">linewidth</A> method.
 <P>
 <DL>
 <DT>Name: <DD>          <B>linestyle</B>
@@ -231,6 +151,54 @@ Specifies the linestyle.
 See the <A HREF="../libdm/dm_obj.html#linestyle">linestyle</A> method.
 <P>
 <DL>
+<DT>Name: <DD>          <B>linewidth</B>
+</DD>
+</DL>
+<DL>
+<DT>Class: <DD>         <B>Linewidth</B>
+</DD>
+</DL>
+<DL>
+<DT>Command-Line Switch: <DD>          <B>-linewidth</B>
+<P>
+</DD>
+</DL>
+Specifies the linewidth.
+See the <A HREF="../libdm/dm_obj.html#linewidth">linewidth</A> method.
+<P>
+<DL>
+<DT>Name: <DD>          <B>listen</B>
+</DD>
+</DL>
+<DL>
+<DT>Class: <DD>         <B>Listen</B>
+</DD>
+</DL>
+<DL>
+<DT>Command-Line Switch: <DD>          <B>-listen</B>
+<P>
+</DD>
+</DL>
+Specifies the port to listen on.
+See the <A HREF="../libdm/dm_obj.html#listen">listen</A> method.
+<P>
+<DL>
+<DT>Name: <DD>          <B>perspective</B>
+</DD>
+</DL>
+<DL>
+<DT>Class: <DD>         <B>Perspective</B>
+</DD>
+</DL>
+<DL>
+<DT>Command-Line Switch: <DD>          <B>-perspective</B>
+<P>
+</DD>
+</DL>
+Specifies the perspective mode.
+See the <A HREF="../libdm/dm_obj.html#perspective">perspective</A> method.
+<P>
+<DL>
 <DT>Name: <DD>          <B>type</B>
 </DD>
 </DL>
@@ -246,6 +214,38 @@ See the <A HREF="../libdm/dm_obj.html#linestyle">linestyle</A> method.
 Specifies the display manager type. The valid types
 are X and ogl.
 </DL>
+<P>
+<DL>
+<DT>Name: <DD>          <B>zbuffer</B>
+</DD>
+</DL>
+<DL>
+<DT>Class: <DD>         <B>Zbuffer</B>
+</DD>
+</DL>
+<DL>
+<DT>Command-Line Switch: <DD>          <B>-zbuffer</B>
+<P>
+</DD>
+</DL>
+Specifies the zbuffer mode.
+See the <A HREF="../libdm/dm_obj.html#zbuffer">zbuffer</A> method.
+<P>
+<DL>
+<DT>Name: <DD>          <B>zclip</B>
+</DD>
+</DL>
+<DL>
+<DT>Class: <DD>         <B>Zclip</B>
+</DD>
+</DL>
+<DL>
+<DT>Command-Line Switch: <DD>          <B>-zclip</B>
+<P>
+</DD>
+</DL>
+Specifies the zclipping mode.
+See the <A HREF="../libdm/dm_obj.html#zclip">zclip</A> method.
 <P>
 
 <H2><A NAME="sect8" HREF="#toc8"><B>DESCRIPTION</B></A></H2>

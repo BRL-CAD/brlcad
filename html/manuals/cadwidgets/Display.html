@@ -107,6 +107,26 @@ The following commands are possible for display widgets:
 </DL>
 <P>
 
+<H3><A NAME="sect11" HREF="#toc11"><B>ASSOCIATED METHODS</B></A></H3>
+Methods associated with LIBDM's
+<A HREF="../libdm/dm_obj.html#sect9">display manager object</A>:<BR>
+<DL>
+<DD><B>bg bounds clear debug dmsize drawBegin drawEnd
+drawGeom drawLine drawPoint drawString fg flush get_aspect
+light linestyle linewidth listen loadmat normal observer
+perspective refreshfb sync zbuffer zclip</B>
+</DD>
+</DL>
+<P>
+Methods associated with
+<A HREF="../librt/view_obj.html#sect9">LIBRT's view object</A>:<BR>
+<DL>
+<DD><B>aet center model2view observer perspective
+pmodel2view rot size slew tra zoom</B>
+</DD>
+</DL>
+<P>
+
 <H3><A NAME="sect12" HREF="#toc12"><B>INHERITED METHODS</B></A></H3>
 Methods inherited from Archetype:<BR>
 <DL>
@@ -114,20 +134,16 @@ Methods inherited from Archetype:<BR>
 <B>cget component configure</B>
 </DD>
 </DL>
-Methods inherited from <A HREF="View.html#sect11">View</A>:<BR>
+Methods inherited from <A HREF="View.html#sect13">View</A>:<BR>
 <DL>
 <DD>
-<B>aet center get_viewname model2view observer perspective pmodel2view
-rot size slew tra zoom</B>
+<B>get_viewname</B>
 </DD>
 </DL>
-Methods inherited from <A HREF="Dm.html#sect11">Dm</A>:<BR>
+Methods inherited from <A HREF="Dm.html#sect13">Dm</A>:<BR>
 <DL>
 <DD>
-<B>bg bounds clear debug dmsize drawBegin drawEnd drawGeom drawLine drawPoint
-drawString fb_active fb_observe fg flush get_aspect light linestyle
-linewidth listen loadmat normal observer perspective
-sync zbuffer zclip</B>
+<B>dmsize fb_active fb_observe</B>
 </B>
 </DD>
 </DL>
@@ -135,56 +151,86 @@ sync zbuffer zclip</B>
 
 <H3><A NAME="sect13" HREF="#toc13"><B>WIDGET-SPECIFIC METHODS</B></A></H3>
 <DL>
-<DT><I>pathName</I> <A NAME="add"><B>add</B></A> [<I>glist</I>]</DT>
-<DD>
+<DT><I>pathName</I> <A NAME="add"><B>add</B></A> <I>glist</I></DT>
+<DD>Add the specified list of drawable geometry objects (i.e. <I>glist</I>)
+to this object's list of drawable geometry objects.
 </DD>
 <P>
 <DT><I>pathName</I> <A NAME="attach_view"><B>attach_view</B></A> [<I></I>]</DT>
-<DD>
+<DD>Cause this object to observe it's view (i.e. whenever the view changes, this
+object is notified).
 </DD>
 <P>
-<DT><I>pathName</I> <A NAME="attach_drawable"><B>attach_drawable</B></A> [<I>dg</I>]</DT>
-<DD>
+<DT><I>pathName</I> <A NAME="attach_drawable"><B>attach_drawable</B></A> <I>dg</I></DT>
+<DD>Cause this object to observe the specified drawable geometry
+object (i.e. whenever the drawable geometry object changes, this
+object is notified).
 </DD>
 <P>
 <DT><I>pathName</I> <A NAME="autoview"><B>autoview</B></A> [<I>gindex</I>]</DT>
 <DD>
+The first order of business is to decide which drawable geometry
+object in the list will be used to invoke it's 
+<A HREF="../librt/dg_obj.html#get_autoview">get_autoview</A> method.
+If <I>-geo gindex</I> is specified, then use that as an index into the
+list of drawable geometry objects in order to determine the drawable
+geometry object. Otherwise, use the first drawable geometry object in the list.
+Once found, the drawable geometry object's get_autoview method is called
+to obtain optimal viewing parameters for it's geometry.
+These parameters are then used to set this object's view.
 </DD>
 <P>
 <DT><I>pathName</I> <A NAME="contents"><B>contents</B></A> [<I></I>]</DT>
-<DD>
+<DD>Return the list of drawable geometry objects referenced by this object.
 </DD>
 <P>
 <DT><I>pathName</I> <A NAME="detach_drawable"><B>detach_drawable</B></A> [<I>dg</I>]</DT>
-<DD>
+<DD>Cause this object to stop observing the specified drawable geometry
+object (i.e. <I>dg</I>).
 </DD>
 <P>
 <DT><I>pathName</I> <A NAME="detach_view"><B>detach_view</B></A> [<I></I>]</DT>
-<DD>
-</DD>
-<P>
-<DT><I>pathName</I> <A NAME="fb_active"><B>fb_active</B></A> [<I>0</I> | <I>1</I>]</DT>
-<DD>
+<DD>Cause this object to stop observing it's view.
 </DD>
 <P>
 <DT><I>pathName</I> <A NAME="refresh"><B>refresh</B></A> [<I></I>]</DT>
-<DD>
+<DD>Causes this object to draw it's list of drawable geometry objects.
 </DD>
 <P>
 <DT><I>pathName</I> <A NAME="remove"><B>remove</B></A> [<I>glist</I>]</DT>
-<DD>
+<DD>Remove the specified list of drawable geometry objects (i.e. <I>glist</I>)
+from this object's list of drawable geometry objects.
 </DD>
 <P>
-<DT><I>pathName</I> <A NAME="rt"><B>rt</B></A> [<I>options</I>]</DT>
+<DT><I>pathName</I> <A NAME="rt"><B>rt</B></A> [<I>-geo gindex</I>] [<I>args</I>]</DT>
 <DD>
+The first order of business is to decide which drawable geometry
+object in the list will be used to invoke it's 
+<A HREF="../librt/dg_obj.html#rt">rt</A> method.
+If <I>-geo gindex</I> is specified, then use that as an index into the
+list of drawable geometry objects in order to determine the drawable
+geometry object. Otherwise, use the first drawable geometry object in the list.
+Once found, the drawable geometry object's rt method is called
+with this object's <A HREF="../librt/view_obj.html">view object</A> as the
+first argument.
 </DD>
 <P>
-<DT><I>pathName</I> <A NAME="rtcheck"><B>rtcheck</B></A> [<I>options</I>]</DT>
+<DT><I>pathName</I> <A NAME="rtcheck"><B>rtcheck</B></A> [<I>-geo gindex</I>] [<I>args</I>]</DT>
 <DD>
+The first order of business is to decide which drawable geometry
+object in the list will be used to invoke it's 
+<A HREF="../librt/dg_obj.html#rtcheck">rtcheck</A> method.
+If <I>-geo gindex</I> is specified, then use that as an index into the
+list of drawable geometry objects in order to determine the drawable
+geometry object. Otherwise, use the first drawable geometry object in the list.
+Once found, the drawable geometry object's rtcheck method is called
+with this object's <A HREF="../librt/view_obj.html">view object</A> as the
+first argument.
 </DD>
 <P>
-<DT><I>pathName</I> <A NAME="update"><B>update</B></A> [<I></I>]</DT>
-<DD>
+<DT><I>pathName</I> <A NAME="update"><B>update</B></A></DT>
+<DD>This method is provided for the observed objects to call. It simply
+calls <A HREF="#refresh">refresh</A>.
 </DD>
 <P>
 </DL>

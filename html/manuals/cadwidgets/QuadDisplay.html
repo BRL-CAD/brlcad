@@ -112,26 +112,33 @@ The following commands are possible for QuadDisplay widgets:
 <P>
 
 <H3><A NAME="sect11" HREF="#toc11"><B>ASSOCIATED METHODS</B></A></H3>
-Methods associated with <A HREF="Display.html#sect12">Display</A>:<BR>
+Methods associated with LIBDM's
+<A HREF="../libdm/dm_obj.html#sect9">display manager object</A>:<BR>
 <DL>
-<DD><B>
-add
-aet
-attach_drawable
-attach_view
-autoview
-bg center
-contents
-detach_drawable
-detach_view
-fb_active fb_observe
-light linewidth linestyle
-listen perspective 
-refresh
-remove
-rot rt rtcheck
-size slew tra zclip zbuffer zoom
-</B>
+<DD><B>bg light linestyle linewidth listen
+perspective zbuffer zclip</B>
+</DD>
+</DL>
+<P>
+Methods associated with
+<A HREF="../librt/view_obj.html#sect9">LIBRT's view object</A>:<BR>
+<DL>
+<DD><B>aet center rot size slew tra zoom</B>
+</DD>
+</DL>
+<P>
+Methods associated with <A HREF="Dm.html#sect13">Dm</A>:<BR>
+<DL>
+<DD><B>fb_active fb_observe</B>
+</DD>
+</DL>
+<P>
+
+Methods associated with <A HREF="Display.html#sect13">Display</A>:<BR>
+<DL>
+<DD><B>add attach_drawable attach_view
+autoview contents detach_drawable
+detach_view refresh remove rt rtcheck</B>
 </DD>
 </DL>
 <P>
@@ -153,8 +160,9 @@ insert paneconfigure reset show</B>
 
 <H3><A NAME="sect13" HREF="#toc13"><B>WIDGET-SPECIFIC METHODS</B></A></H3>
 <DL>
-<DT><I>pathName</I> <A NAME="addall"><B>addall</B></A> [<I></I>]</DT>
-<DD>
+<DT><I>pathName</I> <A NAME="addall"><B>addall</B></A> [<I>glist</I>]</DT>
+<DD>Add the specified list of drawable geometry objects (i.e. <I>glist</I>)
+to all four panes.
 </DD>
 <P>
 <DT><I>pathName</I> <A NAME="attach_drawableall"><B>attach_drawableall</B></A> [<I></I>]</DT>
