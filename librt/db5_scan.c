@@ -337,7 +337,9 @@ db_dirbuild( struct db_i *dbip )
 		const char		*cp;
 
 		/* File is v5 format */
+#if 0
 bu_log("NOTICE:  %s is BRL-CAD v5 format.\n", dbip->dbi_filename);
+#endif
 		dbip->dbi_version = 5;
 		if( db5_scan( dbip, db5_diradd_handler, NULL ) < 0 )  {
 			bu_log("db_dirbuild(%s): db5_scan() failed\n",
@@ -347,28 +349,28 @@ bu_log("NOTICE:  %s is BRL-CAD v5 format.\n", dbip->dbi_filename);
 
 		/* Need to retrieve _GLOBAL object and obtain title and units */
 		if( (dp = db_lookup( dbip, DB5_GLOBAL_OBJECT_NAME, LOOKUP_NOISY )) == DIR_NULL )  {
-			bu_log("db_dirbuild(%s): improper v5 database, no %s object\n",
+			bu_log("db_dirbuild(%s): improper database, no %s object\n",
 				dbip->dbi_filename, DB5_GLOBAL_OBJECT_NAME );
 			dbip->dbi_title = bu_strdup(DB5_GLOBAL_OBJECT_NAME);
 			/* Missing _GLOBAL object so create it and set default title and units */
-			db5_update_ident(dbip, "Untitled v5 BRL-CAD Database",1.0);
+			db5_update_ident(dbip, "Untitled BRL-CAD Database",1.0);
 			return 0;	/* not a fatal error, user may have deleted it */
 		}
 		BU_INIT_EXTERNAL(&ext);
 		if( db_get_external( &ext, dp, dbip ) < 0 ||
 		    db5_get_raw_internal_ptr( &raw, ext.ext_buf ) == NULL )  {
-			bu_log("db_dirbuild(%s): improper v5 database, unable to read %s object\n",
+			bu_log("db_dirbuild(%s): improper database, unable to read %s object\n",
 				dbip->dbi_filename, DB5_GLOBAL_OBJECT_NAME );
 			return -1;
 		}
 		if( raw.major_type != DB5_MAJORTYPE_ATTRIBUTE_ONLY )  {
-			bu_log("db_dirbuild(%s): improper v5 database, %s exists but is not an attribute-only object\n",
+			bu_log("db_dirbuild(%s): improper database, %s exists but is not an attribute-only object\n",
 				dbip->dbi_filename, DB5_GLOBAL_OBJECT_NAME );
 			dbip->dbi_title = bu_strdup(DB5_GLOBAL_OBJECT_NAME);
 			return 0;	/* not a fatal error, need to let user proceed to fix it */
 		}
 		if( db5_import_attributes( &avs, &raw.attributes ) < 0 )  {
-			bu_log("db_dirbuild(%s): improper v5 database, corrupted attribute-only %s object\n",
+			bu_log("db_dirbuild(%s): improper database, corrupted attribute-only %s object\n",
 				dbip->dbi_filename, DB5_GLOBAL_OBJECT_NAME );
 		    	bu_free_external(&ext);
 			return -1;	/* this is fatal */
@@ -385,7 +387,7 @@ bu_log("NOTICE:  %s is BRL-CAD v5 format.\n", dbip->dbi_filename);
 			double	dd;
 			if( sscanf( cp, "%lf", &dd ) != 1 ||
 			    NEAR_ZERO( dd, VUNITIZE_TOL ) )  {
-			    	bu_log("db_dirbuild(%s): improper v5 database, %s object attribute 'units'=%s is invalid\n",
+			    	bu_log("db_dirbuild(%s): improper database, %s object attribute 'units'=%s is invalid\n",
 					dbip->dbi_filename, DB5_GLOBAL_OBJECT_NAME,
 				    	cp );
 			    	/* Not fatal, just stick with default value from db_open() */
