@@ -21,6 +21,11 @@
 #include "dm.h"	/* struct dm */
 #include "./menu.h" /* struct menu_item */
 #include "./scroll.h" /* struct scroll_item */
+#ifdef USE_FRAMEBUFFER
+#include "fb.h" /* FBIO */
+#include "pkg.h" /* struct pkg_conn */
+#endif
+
 #define DO_NEW_EDIT_MATS
 
 #define DO_DISPLAY_LISTS
@@ -67,6 +72,7 @@
 struct view_list {
   struct bu_list l;
   mat_t   vrot_mat;
+  mat_t   tvc_mat;
   fastf_t vscale;
   int     vid;
 };
@@ -177,16 +183,29 @@ struct menu_vars {
 };
 
 #define NUM_TRAILS 8
-#define MAX_TRAIL  32
+#define MAX_TRAIL 32
 struct trail {
   int cur_index;      /* index of first free entry */
   int nused;          /* max index in use */
   point_t pt[MAX_TRAIL];
 };
 
+#ifdef USE_FRAMEBUFFER
+#define MAX_CLIENTS 32
+struct client{
+  int fd;
+  struct pkg_conn *pkg;
+};
+#endif
+
 struct dm_list {
   struct bu_list l;
   struct dm *_dmp;
+#ifdef USE_FRAMEBUFFER
+  FBIO *_fbp;
+  int _netfd;       /* socket used to listen for connections */
+  struct client _clients[MAX_CLIENTS];
+#endif
 /* New members to allow more than one active display manager */
   struct shared_info *s_info;  /* info that can be used by display managers that share their views */
   int _dirty;      /* true if received an expose or configuration event */
@@ -203,6 +222,14 @@ struct dm_list {
   struct menu_vars *menu_vars;
   struct bu_list p_vlist; /* predictor vlist */
   struct trail trails[NUM_TRAILS];
+
+#ifdef DO_RUBBER_BAND
+  int _rubber_band_active;
+  fastf_t _rect_x;		/* Corner of rectangle in normalized     */
+  fastf_t _rect_y;		/* ------ view coordinates (i.e. +-1.0). */
+  fastf_t _rect_width;		/* Width and height of rectangle in      */
+  fastf_t _rect_height;		/* ------ normalized view coordinates.   */
+#endif
 
 /* Slider stuff */
   int _scroll_top;
@@ -225,6 +252,11 @@ struct dm_char_queue {
 
 #define DM_LIST_NULL ((struct dm_list *)NULL)
 #define dmp curr_dm_list->_dmp
+#ifdef USE_FRAMEBUFFER
+#define fbp curr_dm_list->_fbp
+#define netfd curr_dm_list->_netfd
+#define clients curr_dm_list->_clients
+#endif
 #define pathName dmp->dm_pathName
 #define tkName dmp->dm_tkName
 #define dName dmp->dm_dName
@@ -338,6 +370,14 @@ struct dm_char_queue {
 #define distadc_vls curr_dm_list->s_info->_distadc_vls
 #define Viewscale_vls curr_dm_list->s_info->_Viewscale_vls
 
+#ifdef DO_RUBBER_BAND
+#define rubber_band_active curr_dm_list->_rubber_band_active
+#define rect_x curr_dm_list->_rect_x
+#define rect_y curr_dm_list->_rect_y
+#define rect_width curr_dm_list->_rect_width
+#define rect_height curr_dm_list->_rect_height
+#endif
+
 #define scroll_top curr_dm_list->_scroll_top
 #define scroll_active curr_dm_list->_scroll_active
 #define scroll_y curr_dm_list->_scroll_y
@@ -424,6 +464,10 @@ extern int update_views;   /* defined in ged.c */
 extern struct dm_list head_dm_list;  /* list of active display managers */
 extern struct dm_list *curr_dm_list;
 extern struct dm_char_queue head_dm_char_queue;
+
+#ifdef USE_FRAMEBUFFER
+extern int fb_busy_flag;
+#endif
 
 struct w_dm {
   int type;
