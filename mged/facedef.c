@@ -26,6 +26,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./sedit.h"
 #include "externs.h"
 #include "./solid.h"
+#include <signal.h>
 
 extern int numargs;   			/* number of arguments */
 extern int args;       			/* total number of args available */
@@ -74,6 +75,7 @@ f_facedef()
 	short int 	i,face,prod,plane;
 	static vect_t 	tempvec;	/* because MAT4X3PNT,MAT4X3VEC corrupts the vector */
 
+	(void)signal( SIGINT, sig2 );		/* allow interrupts */
 	if( state != ST_S_EDIT ){
 		(void)printf("Facedef: must be in solid edit\n");
 		return;
@@ -344,16 +346,19 @@ struct solidrec *s_recp;
 	es_peqn[loc][2] = sin(fb);
 
 	if( cmd_args[arr_loc][0] == 'v' ){     	/* vertex given */
+
 		temp = atoi(++cmd_args[arr_loc]) - 1;	/* strip off 'v', subtract 1 */
-		es_peqn[loc][3]=
-			VDOT(&es_peqn[loc][0],
-			     &s_recp->s_values[temp*3]);
+		if(temp > 0){
+			VADD2( &plane_pts.s_values[0], &s_recp->s_values[0], &s_recp->s_values[temp*3] );
+			es_peqn[loc][3]= VDOT(&es_peqn[loc][0],&plane_pts.s_values[0]);
+		} else {
+			es_peqn[loc][3]= VDOT(&es_peqn[loc][0],&s_recp->s_values[0]);
+		}
 	}
 	else{				         /* definite point given */
 		for(i=0; i<3; i++)
 			plane_pts.s_values[i]=atof(cmd_args[arr_loc+i]) * local2base;
-		es_peqn[loc][3]=VDOT(&es_peqn[loc][0],
-				     &plane_pts.s_values[0]);
+		es_peqn[loc][3]=VDOT(&es_peqn[loc][0], &plane_pts.s_values[0]);
 	}
 }
 
