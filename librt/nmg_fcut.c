@@ -112,6 +112,8 @@ struct nmg_ray_state {
 	struct edge_g		*eg_p;		/* Edge geom of the ray */
 	struct shell		*sA;
 	struct shell		*sB;
+	struct faceuse		*fu1;
+	struct faceuse		*fu2;
 	vect_t			left;		/* points left of ray, on face */
 	int			state;
 	vect_t			ang_x_dir;	/* x axis for angle measure */
@@ -792,6 +794,8 @@ vect_t		dir;
 	rs->eg_p = (struct edge_g *)NULL;
 	rs->sA = fu1->s_p;
 	rs->sB = fu2->s_p;
+	rs->fu1 = fu1;
+	rs->fu2 = fu2;
 	VMOVE( rs->pt, pt );
 	VMOVE( rs->dir, dir );
 	VCROSS( rs->left, fu1->f_p->fg_p->N, dir );
@@ -819,33 +823,39 @@ vect_t		dir;
 }
 
 /*
+ *			N M G _ F A C E _ N E X T _ V U _ I N T E R V A L
+ *
+ *  Handle the extent of coincident vertexuses at this distance.
+ *  ptbl_vsort() will have forced all the distances to be
+ *  exactly equal if they are within tolerance of each other.
+ *
+ *  Two cases:  lone vertexuse, and range of vertexuses.
+ *
  *  Return value is where next interval starts.
- *  *end is 1 beyond where current interval ends, e.g. from [cur ... *end - 1]
  */
 HIDDEN int
-nmg_face_next_vu_interval( end, rs, cur, b, mag )
-int		*end;
+nmg_face_next_vu_interval( rs, cur, mag, other_rs )
 struct nmg_ray_state	*rs;
 int		cur;
-struct nmg_ptbl	*b;
 fastf_t		*mag;
+struct nmg_ray_state	*other_rs;
 {
 	int	j;
 	int	k;
 	int	m;
 	struct vertex	*v;
-	struct vertexuse	**vu;
 
-	if( cur == b->end-1 || mag[cur+1] != mag[cur] )  {
+	if( cur == rs->nvu-1 || mag[cur+1] != mag[cur] )  {
 		/* Single vertexuse at this dist */
 		if(rt_g.NMG_debug&DEBUG_COMBINE)
 			rt_log("single vertexuse at index %d\n", cur);
-		*end = cur+1;
+		nmg_face_state_transition( rs->vu[cur], rs, cur, 0, other_rs );
+		nmg_face_plot( rs->fu1 );
 		return cur+1;
 	}
 
 	/* Find range of vertexuses at this distance */
-	for( j = cur+1; j < b->end; j++ )  {
+	for( j = cur+1; j < rs->nvu; j++ )  {
 		if( mag[j] != mag[cur] )  break;
 	}
 
@@ -854,15 +864,21 @@ fastf_t		*mag;
 		rt_log("vu's on list interval [%d] to [%d] equal\n", cur, j-1 );
 
 	/* Ensure that all vu's point to same vertex */
-	vu = (struct vertexuse **)b->buffer;
-	v = vu[cur]->v_p;
+	v = rs->vu[cur]->v_p;
 	for( k = cur+1; k < j; k++ )  {
-		if( vu[k]->v_p != v )  rt_bomb("nmg_face_combine: vu block with differing vertices\n");
+		if( rs->vu[k]->v_p != v )  rt_bomb("nmg_face_combine: vu block with differing vertices\n");
 	}
 	/* All vu's point to the same vertex, sort them */
 	m = nmg_face_coincident_vu_sort( rs, cur, j );
 
-	*end = m;	/* This can be less than j */
+	/* Process vu list, up to cutoff index 'm', which can be less than j */
+	for( k = cur; k < m; k++ )  {
+		nmg_face_state_transition( rs->vu[k], rs, k, 1, other_rs );
+		nmg_face_plot( rs->fu1 );
+	}
+	rs->vu[j-1] = rs->vu[m-1]; /* for next iteration's lookback */
+	if(rt_g.NMG_debug&DEBUG_COMBINE)
+		rt_log("vu[%d] set to x%x\n", j-1, rs->vu[j-1] );
 	return j;
 }
 
@@ -873,63 +889,34 @@ fastf_t		*mag;
  *
  */
 HIDDEN void
-nmg_face_combineX(b, fu1, fu2, pt, dir, mag)
-struct nmg_ptbl	*b;		/* table of vertexuses in fu1 on intercept line */
-struct faceuse	*fu1;		/* face being worked */
-struct faceuse	*fu2;		/* for plane equation */
-point_t		pt;
-vect_t		dir;
-fastf_t		*mag;
+nmg_face_combineX(rs1, mag1, rs2, mag2)
+struct nmg_ray_state	*rs1;
+fastf_t			*mag1;
+struct nmg_ray_state	*rs2;
+fastf_t			*mag2;
 {
-	struct vertexuse	**vu;
-	register int	i;
-	register int	j;
-	int		k;
-	int		m;
-	struct nmg_ray_state	rs;
+	register int	cur1, cur2;
+	register int	nxt1, nxt2;
 
-	if(rt_g.NMG_debug&DEBUG_COMBINE)  {
-		rt_log("\nnmg_face_combine(fu1=x%x, fu2=x%x)\n", fu1, fu2);
-		nmg_pr_fu_briefly(fu1,(char *)0);
+	nmg_face_plot( rs1->fu1 );
+	nmg_face_plot( rs2->fu1 );
+
+	/* Handle next block of coincident vertexuses */
+	cur1 = cur2 = 0;
+	for( ; cur1 < rs1->nvu && cur2 < rs2->nvu; cur1=nxt1, cur2=nxt2 )  {
+		nxt1 = nmg_face_next_vu_interval( rs1, cur1, mag1, rs2 );
+		nxt2 = nmg_face_next_vu_interval( rs2, cur2, mag2, rs1 );
 	}
 
-	vu = (struct vertexuse **)b->buffer;
-	nmg_face_rs_init( &rs, b, fu1, fu2, pt, dir );
-	nmg_face_plot( fu1 );
-
-	/*
-	 *  Find the extent of the vertexuses at this distance.
-	 *  ptbl_vsort() will have forced all the distances to be
-	 *  exactly equal if they are within tolerance of each other.
-	 *
-	 *  Two cases:  lone vertexuse, and range of vertexuses.
-	 */
-	for( i=0; i < b->end; i = j )  {
-		j = nmg_face_next_vu_interval( &m, &rs, i, b, mag );
-		if( j == i + 1 )  {
-			/* Single vertexuse at this dist */
-			nmg_face_state_transition( vu[i], &rs, i, 0 );
-			nmg_face_plot( fu1 );
-		} else {
-			/* Process vu list, up to cutoff index 'm' */
-			for( k = i; k < m; k++ )  {
-				nmg_face_state_transition( vu[k], &rs, k, 1 );
-				nmg_face_plot( fu1 );
-			}
-			vu[j-1] = vu[m-1]; /* for next iteration's lookback */
-			if(rt_g.NMG_debug&DEBUG_COMBINE)
-				rt_log("vu[%d] set to x%x\n", j-1, vu[j-1] );
-		}
-	}
-
-	if( rs.state != NMG_STATE_OUT )  {
-		rt_log("ERROR nmg_face_combine() ended in state '%s'?\n",
-			nmg_state_names[rs.state] );
+	if( rs1->state != NMG_STATE_OUT || rs2->state != NMG_STATE_OUT )  {
+		rt_log("ERROR nmg_face_combine() ended in state '%s'/'%s'?\n",
+			nmg_state_names[rs1->state],
+			nmg_state_names[rs2->state] );
 
 		/* Drop a plot file */
 		rt_g.NMG_debug |= DEBUG_COMBINE|DEBUG_PLOTEM;
-		nmg_pl_comb_fu( 0, 1, fu1 );
-		nmg_pl_comb_fu( 0, 2, fu2 );
+		nmg_pl_comb_fu( 0, 1, rs1->fu1 );
+		nmg_pl_comb_fu( 0, 2, rs1->fu2 );
 
 /*		rt_bomb("nmg_face_combine() bad ending state\n"); */
 	}
@@ -962,14 +949,16 @@ CONST struct rt_tol	*tol;
 	fastf_t		dist_tol = 0.005;	/* XXX */
 	struct vertexuse **vu1, **vu2;
 	int		i;
+	struct nmg_ray_state	rs1;
+	struct nmg_ray_state	rs2;
 
 	if(rt_g.NMG_debug&DEBUG_COMBINE)  {
 		rt_log("\nnmg_face_cutjoin(fu1=x%x, fu2=x%x)\n", fu1, fu2);
 	}
 
-	mag1 = (fastf_t *)rt_calloc(b1->end, sizeof(fastf_t),
+	mag1 = (fastf_t *)rt_calloc(b1->end+1, sizeof(fastf_t),
 		"vector magnitudes along ray, for sort");
-	mag2 = (fastf_t *)rt_calloc(b2->end, sizeof(fastf_t),
+	mag2 = (fastf_t *)rt_calloc(b2->end+1, sizeof(fastf_t),
 		"vector magnitudes along ray, for sort");
 
 	/*
@@ -1009,9 +998,10 @@ CONST struct rt_tol	*tol;
 		}
 	}
 #endif
+	nmg_face_rs_init( &rs1, b1, fu1, fu2, pt, dir );
+	nmg_face_rs_init( &rs2, b2, fu2, fu1, pt, dir );
 
-	nmg_face_combineX( b1, fu1, fu2, pt, dir, mag1 );
-	nmg_face_combineX( b2, fu2, fu1, pt, dir, mag2 );
+	nmg_face_combineX( &rs1, mag1, &rs2, mag2 );
 
 	rt_free((char *)mag1, "vector magnitudes");
 	rt_free((char *)mag2, "vector magnitudes");
@@ -1199,11 +1189,12 @@ static CONST struct state_transitions nmg_state_is_in[17] = {
  *			N M G _ F A C E _ S T A T E _ T R A N S I T I O N
  */
 int
-nmg_face_state_transition( vu, rs, pos, multi )
+nmg_face_state_transition( vu, rs, pos, multi, other_rs )
 struct vertexuse	*vu;
 struct nmg_ray_state	*rs;
 int			pos;
 int			multi;
+struct nmg_ray_state	*other_rs;
 {
 	int			assessment;
 	int			old;
@@ -1215,6 +1206,7 @@ int			multi;
 	struct edgeuse	*first_new_eu;
 	struct edgeuse	*second_new_eu;
 	int			e_assessment;
+	int			action;
 
 	NMG_CK_VERTEXUSE(vu);
 	assessment = nmg_assess_vu( rs, pos );
@@ -1239,6 +1231,7 @@ int			multi;
 		stp = &nmg_state_is_in[assessment];
 		break;
 	}
+
 	if(rt_g.NMG_debug&DEBUG_COMBINE)  {
 		rt_log("nmg_face_state_transition(vu x%x, pos=%d)\n\told=%s, assessed=%s, new=%s, action=%s\n",
 			vu, pos,
@@ -1270,14 +1263,22 @@ rt_log("force next eu to ray\n");
 		}
 	}
 
-	switch( stp->action )  {
+	/* If no loop has been entered in other face, don't do any cutting */
+	action = stp->action;
+#if 0
+	/* XXX This is the new part */
+	if( other_rs->state == NMG_STATE_OUT )
+		action = NMG_ACTION_NONE;
+#endif
+
+	switch( action )  {
 	default:
 	case NMG_ACTION_ERROR:
 	bomb:
 		rt_log("nmg_face_state_transition(vu x%x, pos=%d)\n\told=%s, assessed=%s, new=%s, action=%s\n",
 			vu, pos,
 			nmg_state_names[old], nmg_v_assessment_names[assessment],
-			nmg_state_names[stp->new_state], action_names[stp->action] );
+			nmg_state_names[stp->new_state], action_names[action] );
 #if 0	/* XXX turn this on only for debugging */
 		/* First, print this faceuse */
 		lu = nmg_lu_of_vu( vu );
@@ -1408,6 +1409,9 @@ rt_log("force next eu to ray\n");
 		NMG_CK_LOOPUSE(lu);
 		prev_vu = rs->vu[pos-1];
 		NMG_CK_VERTEXUSE(prev_vu);
+		if( *prev_vu->up.magic_p == NMG_LOOPUSE_MAGIC )  {
+			eu = nmg_meonvu(prev_vu);
+		}
 		eu = prev_vu->up.eu_p;
 		NMG_CK_EDGEUSE(eu);
 
@@ -1472,7 +1476,16 @@ rt_log("force next eu to ray\n");
 			rt_log("nmg_join_2loops(prev_vu=x%x, vu=x%x)\n",
 			prev_vu, vu);
 
+#if 0
+		/* XXX This checking routine does not work */
 		nmg_vmodel(nmg_find_model(&vu->l.magic));
+#endif
+		if( *prev_vu->up.magic_p == NMG_LOOPUSE_MAGIC )  {
+			(void)nmg_meonvu(prev_vu);
+		}
+		if( *vu->up.magic_p == NMG_LOOPUSE_MAGIC )  {
+			(void)nmg_meonvu(vu);
+		}
 		nmg_join_2loops( prev_vu, vu );
 
 		/* update vu[pos], as it will have changed. */
