@@ -1306,7 +1306,7 @@ RT_EXTERN(int db_put, ( struct db_i *, struct directory *dp, union record *where
 	int offset, int len ) );
 /* db_scan.c */
 					/* read db (to build directory) */
-RT_EXTERN(int db_scan, ( struct db_i *, int (*handler)() ) );
+RT_EXTERN(int db_scan, ( struct db_i *, int (*handler)(), int do_old_matter ) );
 					/* update db unit conversions */
 RT_EXTERN(void db_conversions, ( struct db_i *, int units ) );
 /* db_lookup.c */
