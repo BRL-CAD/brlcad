@@ -43,6 +43,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <ctype.h>		/* used by inet_addr() routine, below */
+#undef BSD	/* /usr/include/sys/param.h redefines this */
 #include <sys/param.h>
 #include <sys/time.h>
 #if !defined(vax)
@@ -70,8 +71,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 # include <sys/netinet/in.h>
 # include <sys/aux/netdb.h>
 # include <sys/netinet/tcp.h>
-# define BSD 42
-# undef SYSV
 #endif
 
 #ifdef HAVE_WRITEV
