@@ -1428,9 +1428,9 @@ bu_log("mallocing curr_float_frame\n");
 	ap->a_rt_i->rti_nlights = light_init(ap);
 
 	/* Create integer version of background color */
-	inonbackground[0] = ibackground[0] = rint( background[0] * 255 );
-	inonbackground[1] = ibackground[1] = rint( background[1] * 255 );
-	inonbackground[2] = ibackground[2] = rint( background[2] * 255 );
+	inonbackground[0] = ibackground[0] = background[0] * 255.0 + 0.5;
+	inonbackground[1] = ibackground[1] = background[1] * 255.0 + 0.5;
+	inonbackground[2] = ibackground[2] = background[2] * 255.0 + 0.5;
 
 	/*
 	 * If a non-background pixel comes out the same color as the
