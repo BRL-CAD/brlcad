@@ -38,7 +38,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "vmath.h"
-#include "db.h"
+#include "db.h"			/* XXX needed for NAMESIZE */
+#include "rtlist.h"
+#include "rtgeom.h"
 #include "raytrace.h"
 #include "./ged.h"
 #include "./sedit.h"
@@ -46,16 +48,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./solid.h"
 #include "./dm.h"
 
+extern struct rt_db_internal	es_int;	/* from edsol.c */
+
 extern int	args;		/* total number of args available */
 extern int	argcnt;		/* holder for number of args added later */
 extern int	newargs;	/* number of args from getcmd() */
 extern int	numargs;	/* number of args */
 extern char	*cmd_args[];	/* array of pointers to args */
 extern char	**promp;	/* pointer to a pointer to a char */
-
-void		arb_center();
-
-static union record newrec;		/* new record to find inside solid */
 
 static char *p_arb4[] = {
 	"Enter thickness for face 123: ",
@@ -111,12 +111,24 @@ void
 f_inside()
 {
 	register int i;
-	register struct directory *dp;
+	struct directory	*dp;
+	struct directory	*outdp;
 	mat_t newmat;
-	int type, p1, p2, p3;
+	int	cgtype;		/* cgtype ARB 4..8 */
+	int	p1, p2, p3;
 	int	nface;
-	int	np;		/* number of points */
 	fastf_t	thick[6];
+	plane_t	planes[6];
+	struct rt_db_internal	intern;
+	char	*newname;
+	struct rt_tol	tol;
+
+	/* XXX These need to be improved */
+	tol.magic = RT_TOL_MAGIC;
+	tol.dist = 0.005;
+	tol.dist_sq = tol.dist * tol.dist;
+	tol.perp = 1e-6;
+	tol.para = 1 - tol.perp;
 
 	(void)signal( SIGINT, sig2);	/* allow interrupts */
 
@@ -127,21 +139,16 @@ f_inside()
 	argcnt = 0;
 
 	/* SCHEME:
-	 *	if in solid edit, use "edited" solid as newrec
-	 *	if in object edit, use "key" solid as newrec
-	 *	else get solid name to use as newrec
+	 *	if in solid edit, use "edited" solid
+	 *	if in object edit, use "key" solid
+	 *	else get solid name to use
 	 */
 
 	if( state == ST_S_EDIT ) {
-		/* solid edit mode, use edited solid for newrec */
-		newrec = es_rec;
+		/* solid edit mode */
 		/* apply es_mat editing to parameters */
-		MAT4X3PNT( &newrec.s.s_values[0], es_mat, &es_rec.s.s_values[0]);
-		for(i=1; i<8; i++) {
-			MAT4X3VEC(	&newrec.s.s_values[i*3],
-					es_mat,
-					&es_rec.s.s_values[i*3] );
-		}
+		transform_editing_solid( &intern, es_mat, &es_int, 0 );
+		outdp = illump->s_path[illump->s_last];
 
 		(void)printf("Outside solid: ");
 		for(i=0; i <= illump->s_last; i++) {
@@ -154,16 +161,11 @@ f_inside()
 			(void)printf("Cannot find inside of a processed (E'd) region\n");
 			return;
 		}
-		/* use the solid at bottom of path (key solid) for newrec */
-		newrec = es_rec;
+		/* use the solid at bottom of path (key solid) */
 		/* apply es_mat and modelchanges editing to parameters */
 		mat_mul(newmat, modelchanges, es_mat);
-		MAT4X3PNT( &newrec.s.s_values[0], newmat, &es_rec.s.s_values[0]);
-		for(i=1; i<8; i++) {
-			MAT4X3VEC(	&newrec.s.s_values[i*3],
-					newmat,
-					&es_rec.s.s_values[i*3] );
-		}
+		transform_editing_solid( &intern, newmat, &es_int, 0 );
+		outdp = illump->s_path[illump->s_last];
 
 		(void)printf("Outside solid: ");
 		for(i=0; i <= illump->s_last; i++) {
@@ -174,29 +176,28 @@ f_inside()
 		/* Not doing any editing....ask for outside solid */
 		(void)printf("Enter name of outside solid: ");
 		argcnt = getcmd(args);
-		if( (dp = db_lookup( dbip,  cmd_args[args], LOOKUP_NOISY )) == DIR_NULL )  
+		if( (outdp = db_lookup( dbip,  cmd_args[args], LOOKUP_NOISY )) == DIR_NULL )  
 			return;
 		args += argcnt;
-		if( db_get( dbip,  dp, &newrec, 0 , 1) < 0 )  READ_ERR_return;
-
-		if( newrec.s.s_type == GENARB8 ) {
-			/* find the comgeom arb type, & reorganize */
-			if( (type = type_arb( &newrec )) == 0 ) {
-				(void)printf("%s: BAD ARB\n",newrec.s.s_name);
-				return;
-			}
-			newrec.s.s_cgtype = type;
-		}
+		if( rt_db_get_internal( &intern, outdp, dbip, rt_identity ) < 0 )
+			READ_ERR_return;
 	}
-	if(newrec.s.s_type == GENARB8) {
+	if( intern.idb_type == ID_ARB8 )  {
+		/* find the comgeom arb type, & reorganize */
+		if( (cgtype = rt_arb_get_cgtype( &intern, &tol )) <= 0 ) {
+			rt_log("%s: BAD ARB\n",outdp->d_namep);
+			return;
+		}
+
 		/* must find new plane equations to account for
 		 * any editing in the es_mat matrix or path to this solid.
 		 */
-		calc_planes( &newrec.s, newrec.s.s_cgtype );
+		if( rt_arb_calc_planes( planes, intern.idb_ptr, cgtype, &tol ) < 0 )  {
+			rt_log("rt_arb_calc_planes(%s): failued\n", outdp->d_namep);
+			return;
+		}
 	}
-
-	/* newrec is now loaded with the outside solid data */
-
+	/* "intern" is now loaded with the outside solid data */
 
 	/* get the inside solid name */
 	argcnt=0;
@@ -212,50 +213,44 @@ f_inside()
 		(void)printf("Names are limited to %d characters\n", NAMESIZE-1);
 		return;
 	}
-	NAMEMOVE( cmd_args[args], newrec.s.s_name );
+	newname = cmd_args[args];
 
 	args += argcnt;
 
 	/* get thicknesses and calculate parameters for newrec */
-	switch( newrec.s.s_type ) {
+	switch( intern.idb_type )  {
 
-	case GENARB8:
+	case ID_ARB8:
+	    {
+	    	struct rt_arb_internal *arb =
+			(struct rt_arb_internal *)intern.idb_ptr;
+
 		nface = 6;
-		np = newrec.s.s_cgtype;
 
-		/* point notation */
-		for(i=3; i<=21; i+=3) {
-			VADD2(	&newrec.s.s_values[i],
-				&newrec.s.s_values[i],
-				&newrec.s.s_values[0] );
-		}
-
-		switch( newrec.s.s_cgtype ) {
-		case ARB8:
+		switch( cgtype ) {
+		case 8:
 			promp = p_arb8;
 			break;
 
-		case ARB7:
+		case 7:
 			promp = p_arb7;
 			break;
 
-		case ARB6:
+		case 6:
 			promp = p_arb6;
 			nface = 5;
-			VMOVE( &newrec.s.s_values[15],
-				&newrec.s.s_values[18] );
+			VMOVE( arb->pt[5], arb->pt[6] );
 			break;
 
-		case ARB5:
+		case 5:
 			promp = p_arb5;
 			nface = 5;
 			break;
 
-		case ARB4:
+		case 4:
 			promp = p_arb4;
 			nface = 4;
-			VMOVE( &newrec.s.s_values[9],
-				&newrec.s.s_values[12] );
+			VMOVE( arb->pt[3], arb->pt[4] );
 			break;
 		}
 
@@ -267,18 +262,12 @@ f_inside()
 			args += argcnt;
 		}
 
-		if( arbin(thick, nface, np) )
+		if( arbin(&intern, thick, nface, cgtype, planes) )
 			return;
-
-		/* back to vector notation */
-		for(i=3; i<=21; i+=3) {
-			VSUB2(	&newrec.s.s_values[i],
-				&newrec.s.s_values[i],
-				&newrec.s.s_values[0] );
-		}
 		break;
+	    }
 
-	case GENTGC:
+	case ID_TGC:
 		promp = p_tgcin;
 		for(i=0; i<3; i++) {
 			(void)printf("%s",promp[i]);
@@ -288,32 +277,33 @@ f_inside()
 			args += argcnt;
 		}
 
-		if( tgcin(thick) )
+		if( tgcin(&intern, thick) )
 			return;
 		break;
 
-	case GENELL:
+	case ID_ELL:
 		(void)printf("Enter desired thickness: ");
 		if( (argcnt = getcmd(args)) < 0 )
 			return;
 		thick[0] = atof( cmd_args[args] ) * local2base;
 
-		if( ellgin(thick) )
+		if( ellgin(&intern, thick) )
 			return;
 		break;
 
-	case TOR:
+	case ID_TOR:
 		(void)printf("Enter desired thickness: ");
 		if( (argcnt = getcmd(args)) < 0 )
 			return;
 		thick[0] = atof( cmd_args[args] ) * local2base;
 
-		if( torin(thick) )
+		if( torin(&intern, thick) )
 			return;
 		break;
 
 	default:
-		(void)printf("Cannot find inside for this record (%c) type\n",newrec.s.s_type);
+		(void)printf("Cannot find inside for '%s' solid\n",
+			rt_functab[intern.idb_type].ft_name );
 		return;
 	}
 
@@ -321,17 +311,17 @@ f_inside()
 	(void)signal( SIGINT, SIG_IGN);
  
 	/* Add to in-core directory */
-	if( (dp = db_diradd( dbip,  newrec.s.s_name, -1, 0, DIR_SOLID )) == DIR_NULL ||
-	    db_alloc( dbip, dp, 1 ) < 0 )  {
+	if( (dp = db_diradd( dbip,  newname, -1, 0, DIR_SOLID )) == DIR_NULL )  {
 	    	ALLOC_ERR_return;
 	}
-	if( db_put( dbip, dp, &newrec, 0, 1 ) < 0 )  WRITE_ERR_return;
+	if( rt_db_put_internal( dp, dbip, &intern ) < 0 )
+		WRITE_ERR_return;
 
 	/* Draw the new solid */
 	{
 		char	*arglist[3];
 		arglist[0] = "e";
-		arglist[1] = newrec.s.s_name;
+		arglist[1] = newname;
 		f_edit( 2, arglist );
 	}
 }
@@ -340,76 +330,49 @@ f_inside()
 
 /* finds inside arbs */
 int
-arbin(thick, nface, np)
+arbin(ip, thick, nface, cgtype, planes)
+struct rt_db_internal	*ip;
 fastf_t	thick[6];
 int	nface;
-int	np;
+int	cgtype;		/* # of points, 4..8 */
+plane_t	planes[6];
 {
-	vect_t	pc;
-	int i;
+	struct rt_arb_internal	*arb = (struct rt_arb_internal *)ip->idb_ptr;
+	point_t		center_pt;
+	int		i;
 
-	/* find reference point (pc[3]) to find direction of normals */
-	arb_center(pc, newrec.s.s_values, np);
+	RT_ARB_CK_MAGIC(arb);
 
-	/* new face planes for the desired thicknesses */
+	/* find reference point (center_pt[3]) to find direction of normals */
+	rt_arb_centroid( center_pt, arb, cgtype );
+
+	/* move new face planes for the desired thicknesses */
 	for(i=0; i<nface; i++) {
-		if( (es_peqn[i][3] - VDOT(pc, &es_peqn[i][0])) > 0.0 )
+		if( (planes[i][3] - VDOT(center_pt, &planes[i][0])) > 0.0 )
 			thick[i] *= -1.0;
-		es_peqn[i][3] += thick[i];
+		planes[i][3] += thick[i];
 	}
 
 	/* find the new vertices by intersecting the new face planes */
 	for(i=0; i<8; i++) {
-		if( intersect(np, i*3, i, &newrec.s) ) {
+		if( rt_arb_3face_intersect( arb->pt[i], planes, cgtype, i ) < 0 )  {
 			(void)printf("cannot find inside arb\n");
-			/* restore es_peqn for anyone else */
-			for(i=0; i<nface; i++)
-				es_peqn[i][3] -= thick[i];
 			return(1);
 		}
 	}
-
-	/* restore es_peqn for anyone else */
-	for(i=0; i<nface; i++)
-		es_peqn[i][3] -= thick[i];
 	return(0);
 }
 
-/* 
- *	A R B _ C E N T E R
- *
- * Find the center point for the arb whose values are in the s array,
- * with the given number of verticies.  Return the point in cpt.
- * WARNING: The s array is dbfloat_t's not fastf_t's.
- */
-void
-arb_center( cpt, s, npoints )
-vect_t cpt;
-dbfloat_t s[];
-int npoints;
-{
-	int i,j,k;
-	fastf_t temp;
-
-	for(i=0; i<3; i++) {
-		temp = 0.0;
-		for(j=0; j<npoints; j++) {
-			k = j * 3 + i;
-			temp += s[k];
-		}
-		cpt[i] = temp / (fastf_t)npoints;
-	}
-}
-
-
-
 /* finds inside of tgc */
 int
-tgcin(thick)
+tgcin(ip, thick)
+struct rt_db_internal	*ip;
 fastf_t	thick[6];
 {
+	struct rt_tgc_internal	*tgc = (struct rt_tgc_internal *)ip->idb_ptr;
 	fastf_t	mag[5], nmag[5];
 	vect_t	unitH, unitA, unitB;
+	vect_t	unitC, unitD;
 	vect_t	hwork;
 	fastf_t	aa[2], ab[2], ba[2], bb[2];
 	fastf_t	dt, h1, h2, ht, dtha, dthb;
@@ -418,16 +381,21 @@ fastf_t	thick[6];
 	double ratio;
 
 	thick[3] = thick[2];
+	RT_TGC_CK_MAGIC(tgc);
 
-	for(i=0; i<5; i++) {
-		j = (i+1) * 3;
-		mag[i] = MAGNITUDE( &newrec.s.s_values[j] );
-	}
+	mag[0] = MAGNITUDE( tgc->h );
+	mag[1] = MAGNITUDE( tgc->a );
+	mag[2] = MAGNITUDE( tgc->b );
+	mag[3] = MAGNITUDE( tgc->c );
+	mag[4] = MAGNITUDE( tgc->d );
+
 	if( (ratio = (mag[2] / mag[1])) < .8 )
 		thick[3] = thick[3] / (1.016447 * pow(ratio, .071834));
-	VSCALE(unitH, &newrec.s.s_values[3], 1.0/mag[0]);
-	VSCALE(unitA, &newrec.s.s_values[6], 1.0/mag[1]);
-	VSCALE(unitB, &newrec.s.s_values[9], 1.0/mag[2]);
+	VSCALE(unitH, tgc->h, 1.0/mag[0]);
+	VSCALE(unitA, tgc->a, 1.0/mag[1]);
+	VSCALE(unitB, tgc->b, 1.0/mag[2]);
+	VSCALE(unitC, tgc->c, 1.0/mag[3]);
+	VSCALE(unitD, tgc->d, 1.0/mag[4]);
 
 	VCROSS(hwork, unitA, unitB);
 	if( (dt = VDOT(hwork, unitH)) == 0.0 ) {
@@ -440,8 +408,8 @@ fastf_t	thick[6];
 		(void)printf("Cannot find the inside cylinder\n");
 		return(1);
 	}
-	dtha = VDOT(unitA, &newrec.s.s_values[3]);
-	dthb = VDOT(unitB, &newrec.s.s_values[3]);
+	dtha = VDOT(unitA, tgc->h);
+	dthb = VDOT(unitB, tgc->h);
 	s = 1.0;
 	for(k=0; k<2; k++) {
 		if( k )
@@ -464,75 +432,70 @@ fastf_t	thick[6];
 	nmag[2] = ( ba[0] + ba[1] ) * .5;
 	nmag[3] = (ab[0] + ab[1]) * .5;
 	nmag[4] = (bb[0] + bb[1]) * .5;
-	VSCALE(&newrec.s.s_values[3], &newrec.s.s_values[3], nmag[0]/mag[0]);
-	VSCALE(&newrec.s.s_values[6], &newrec.s.s_values[6], nmag[1]/mag[1]);
-	VSCALE(&newrec.s.s_values[9], &newrec.s.s_values[9], nmag[2]/mag[2]);
-	VSCALE(&newrec.s.s_values[12], &newrec.s.s_values[12], nmag[3]/mag[3]);
-	VSCALE(&newrec.s.s_values[15], &newrec.s.s_values[15], nmag[4]/mag[4]);
+	VSCALE(tgc->h, unitH, nmag[0] );
+	VSCALE(tgc->a, unitA, nmag[1] );
+	VSCALE(tgc->b, unitB, nmag[2] );
+	VSCALE(tgc->c, unitC, nmag[3] );
+	VSCALE(tgc->d, unitD, nmag[4] );
 
-	for( i=0; i<3; i++ ) 
-		newrec.s.s_values[i] = newrec.s.s_values[i]
-					 + unitH[i]*h1
-		 + .5 * ( (aa[0] - aa[1])*unitA[i] + (ba[0] - ba[1])*unitB[i] );
+	for( i=0; i<3; i++ )  {
+		tgc->v[i] += unitH[i]*h1 + .5 *
+		    ( (aa[0] - aa[1])*unitA[i] + (ba[0] - ba[1])*unitB[i] );
+	}
 	return(0);
 }
 
 
 /* finds inside of torus */
 int
-torin(thick)
-fastf_t	thick[6];
+torin(ip, thick)
+struct rt_db_internal	*ip;
+fastf_t			thick[6];
 {
-	fastf_t	mr1, mr2, mnewr2, msum, mdif, nmsum, nmdif;
+	struct rt_tor_internal	*tor = (struct rt_tor_internal *)ip->idb_ptr;
 
-
+	RT_TOR_CK_MAGIC(tor);
 	if( thick[0] == 0.0 )
 		return(0);
 
-	mr1 = MAGNITUDE( &newrec.s.s_values[6] );
-	mr2 = MAGNITUDE( &newrec.s.s_values[3] );
 	if( thick[0] < 0 ) {
-		if( (mr2 - thick[0]) > (mr1 + .01) ) {
+		if( (tor->r_h - thick[0]) > (tor->r_a + .01) ) {
 			(void)printf("cannot do: r2 > r1\n");
 			return(1);
 		}
 	}
-	if( thick[0] >= mr2 ) {
+	if( thick[0] >= tor->r_h ) {
 		(void)printf("cannot do: r2 <= 0\n");
 		return(1);
 	}
 
-	mnewr2 = mr2 - thick[0];
-	VSCALE(&newrec.s.s_values[3],&newrec.s.s_values[3],mnewr2/mr2);
-	msum = MAGNITUDE( &newrec.s.s_values[18] );
-	mdif = MAGNITUDE( &newrec.s.s_values[12] );
-	nmsum = mr1 + mnewr2;
-	nmdif = mr1 - mnewr2;
-	VSCALE(&newrec.s.s_values[12],&newrec.s.s_values[12],nmdif/mdif);
-	VSCALE(&newrec.s.s_values[15],&newrec.s.s_values[15],nmdif/mdif);
-	VSCALE(&newrec.s.s_values[18],&newrec.s.s_values[18],nmsum/msum);
-	VSCALE(&newrec.s.s_values[21],&newrec.s.s_values[21],nmsum/msum);
+	tor->r_h = tor->r_h - thick[0];
 	return(0);
 }
 
 
 /* finds inside ellg */
 int
-ellgin(thick)
+ellgin(ip, thick)
+struct rt_db_internal	*ip;
 fastf_t	thick[6];
 {
+	struct rt_ell_internal	*ell = (struct rt_ell_internal *)ip->idb_ptr;
 	int i, j, k, order[3];
 	fastf_t mag[3], nmag[3];
 	fastf_t ratio;
 
 	if( thick[0] <= 0.0 ) 
 		return(0);
+	thick[2] = thick[1] = thick[0];	/* uniform thickness */
+
+	RT_ELL_CK_MAGIC(ell);
+	mag[0] = MAGNITUDE(ell->a);
+	mag[1] = MAGNITUDE(ell->b);
+	mag[2] = MAGNITUDE(ell->c);
 
 	for(i=0; i<3; i++) {
-		j = (i + 1) * 3;
-		mag[i] = MAGNITUDE( &newrec.s.s_values[j] );
 		order[i] = i;
-		thick[i] = thick[0];
 	}
 
 	for(i=0; i<2; i++) {
@@ -550,10 +513,10 @@ fastf_t	thick[6];
 
 	for(i=0; i<3; i++) {
 		if( (nmag[i] = mag[i] - thick[i]) <= 0.0 )
-			(void)printf("Warning: new vector length <= 0 \n");
-		j = (i+1) * 3;
-		VSCALE(&newrec.s.s_values[j], &newrec.s.s_values[j],
-			nmag[i]/mag[i]);
+			(void)printf("Warning: new vector [%d] length <= 0 \n", i);
 	}
+	VSCALE(ell->a, ell->a, nmag[0]/mag[0]);
+	VSCALE(ell->b, ell->b, nmag[1]/mag[1]);
+	VSCALE(ell->c, ell->c, nmag[2]/mag[2]);
 	return(0);
 }
