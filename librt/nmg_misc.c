@@ -310,6 +310,10 @@ char *h;
 		nmg_pr_l(lu->l_p, h);
 
 
+	rt_log("%s%8x down_hd.magic\n", h, lu->down_hd.magic);
+	rt_log("%s%8x down_hd.forw\n", h, lu->down_hd.forw);
+	rt_log("%s%8x down_hd.back\n", h, lu->down_hd.back);
+
 	magic1 = NMG_LIST_FIRST_MAGIC( &lu->down_hd );
 	if (magic1 == NMG_VERTEXUSE_MAGIC) {
 		vu = NMG_LIST_PNEXT( vertexuse, &lu->down_hd );
