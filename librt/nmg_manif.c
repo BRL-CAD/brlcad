@@ -22,9 +22,9 @@
  *	0	face does not have a dangling edge
  */
 int 
-nmg_dangling_face(fu, tbl)
+nmg_dangling_face(fu, tblXXX)
 struct faceuse *fu;
-char *tbl;
+char *tblXXX;
 {
 	struct loopuse *lu;
 	struct edgeuse *eu, *eur;
