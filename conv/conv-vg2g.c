@@ -37,7 +37,7 @@ char *argv[];
 	static int units;
 	static int count;
 	static int i;
-	double factor;
+	double factor = 1.0;
 
 	if( argc != 3 )  {
 		printf("Usage: conv-vg2g file.vg file.g\n");
