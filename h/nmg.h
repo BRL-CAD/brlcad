@@ -359,8 +359,8 @@ struct faceuse_a {
 
 /* Returns a 3-tuple (vect_t), given faceuse and state of flip flags */
 #define NMG_GET_FU_NORMAL(_N, _fu)	{ \
-	register struct faceuse	*_fu1 = (_fu); \
-	register struct face_g	*_fg; \
+	register CONST struct faceuse	*_fu1 = (_fu); \
+	register CONST struct face_g	*_fg; \
 	NMG_CK_FACEUSE(_fu1); \
 	NMG_CK_FACE(_fu1->f_p); \
 	_fg = _fu1->f_p->fg_p; \
@@ -373,8 +373,8 @@ struct faceuse_a {
 
 /* Returns a 4-tuple (plane_t), given faceuse and state of flip flags */
 #define NMG_GET_FU_PLANE(_N, _fu)	{ \
-	register struct faceuse	*_fu1 = (_fu); \
-	register struct face_g	*_fg; \
+	register CONST struct faceuse	*_fu1 = (_fu); \
+	register CONST struct face_g	*_fg; \
 	NMG_CK_FACEUSE(_fu1); \
 	NMG_CK_FACE(_fu1->f_p); \
 	_fg = _fu1->f_p->fg_p; \
