@@ -107,6 +107,10 @@ static char *p_tgcin[] = {
 	"Enter thickness for side: ",
 };
 
+static char *p_partin[] = {
+	"Enter thickness for body: ",
+};
+
 static char *p_rpcin[] = {
 	"Enter thickness for front plate (contains V): ",
 	"Enter thickness for back plate: ",
@@ -384,6 +388,24 @@ char **argv;
 	  }
 	  break;
 
+	case ID_PARTICLE:
+	  promp = p_partin;
+	  for (i = 0; i < 1; i++) {
+	    if( argc < arg+1 ) {
+	      Tcl_AppendResult(interp, MORE_ARGS_STR, promp[i], (char *)NULL);
+	      status = TCL_ERROR;
+	      goto end;
+	    }
+	    thick[i] = atof( argv[arg] ) * local2base;
+	    ++arg;
+	  }
+
+	  if( partin(&intern, thick) ){
+	    status = TCL_ERROR;
+	    goto end;
+	  }
+	  break;
+	  
 	case ID_RPC:
 	  promp = p_rpcin;
 	  for (i = 0; i < 4; i++) {
@@ -1149,6 +1171,25 @@ fastf_t	thick[6];
 	VSCALE(ell->a, ell->a, nmag[0]/mag[0]);
 	VSCALE(ell->b, ell->b, nmag[1]/mag[1]);
 	VSCALE(ell->c, ell->c, nmag[2]/mag[2]);
+	return(0);
+}
+
+/* find inside of particle solid */
+int
+partin(ip, thick)
+struct rt_db_internal	*ip;
+fastf_t	*thick;
+{
+	struct rt_part_internal	*part = (struct rt_part_internal *)ip->idb_ptr;
+
+	RT_PART_CK_MAGIC( part );
+
+	if(*thick >= part->part_vrad || *thick >= part->part_hrad)
+	  return(1);    /* BAD */
+
+	part->part_vrad -= *thick;
+	part->part_hrad -= *thick;
+
 	return(0);
 }
 

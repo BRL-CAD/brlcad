@@ -70,7 +70,7 @@ extern short earb8[12][18];
 
 static void	arb8_edge(), ars_ed(), ell_ed(), tgc_ed(), tor_ed(), spline_ed();
 static void	nmg_ed(), pipe_ed(), vol_ed(), ebm_ed(), dsp_ed();
-static void	rpc_ed(), rhc_ed(), epa_ed(), ehy_ed(), eto_ed();
+static void	rpc_ed(), rhc_ed(), part_ed(), epa_ed(), ehy_ed(), eto_ed();
 static void	arb7_edge(), arb6_edge(), arb5_edge(), arb4_point();
 static void	arb8_mv_face(), arb7_mv_face(), arb6_mv_face();
 static void	arb5_mv_face(), arb4_mv_face(), arb8_rot_face(), arb7_rot_face();
@@ -200,7 +200,9 @@ int	es_menu;		/* item selected from menu */
 #define	MENU_DSP_SCALE_X	85
 #define	MENU_DSP_SCALE_Y	86
 #define	MENU_DSP_SCALE_ALT	87
-
+#define MENU_PART_H		88
+#define MENU_PART_v		89
+#define MENU_PART_h		90
 
 extern int arb_faces[5][24];	/* from edarb.c */
 
@@ -483,6 +485,14 @@ struct menu_item cntrl_menu[] = {
 	{ "move edges", arb_control, MENU_ARB_MV_EDGE },
 	{ "move faces", arb_control, MENU_ARB_MV_FACE },
 	{ "rotate faces", arb_control, MENU_ARB_ROT_FACE },
+	{ "", (void (*)())NULL, 0 }
+};
+
+struct menu_item part_menu[] = {
+	{ "Particle MENU", (void (*)())NULL, 0 },
+	{ "scale H", part_ed, MENU_PART_H },
+	{ "scale v", part_ed, MENU_PART_v },
+	{ "scale h", part_ed, MENU_PART_h },
 	{ "", (void (*)())NULL, 0 }
 };
 
@@ -903,6 +913,16 @@ int arg;
 
 static void
 rpc_ed( arg )
+int arg;
+{
+	es_menu = arg;
+	es_edflag = PSCALE;
+
+	set_e_axes_pos(1);
+}
+
+static void
+part_ed( arg )
 int arg;
 {
 	es_menu = arg;
@@ -2319,6 +2339,9 @@ sedit_menu()  {
 		break;
 	case ID_DSP:
 		mmenu_set_all( MENU_L1, dsp_menu );
+		break;
+	case ID_PARTICLE:
+		mmenu_set_all( MENU_L1, part_menu );
 		break;
 	}
 	es_edflag = IDLE;	/* Drop out of previous edit mode */
@@ -6066,6 +6089,54 @@ pscale()
 		}
 		pipe_scale_radius( &es_int, es_scale );
 		break;
+	case MENU_PART_H:
+		/* scale vector H */
+		{
+			struct rt_part_internal	*part = 
+				(struct rt_part_internal *)es_int.idb_ptr;
+
+			RT_PART_CK_MAGIC(part);
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / MAGNITUDE(part->part_H);
+			}
+			VSCALE(part->part_H, part->part_H, es_scale);
+		}
+		break;
+
+	case MENU_PART_v:
+		/* scale v end radius */
+		{
+			struct rt_part_internal	*part = 
+				(struct rt_part_internal *)es_int.idb_ptr;
+
+			RT_PART_CK_MAGIC(part);
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / part->part_vrad;
+			}
+			part->part_vrad *= es_scale;
+		}
+		break;
+
+	case MENU_PART_h:
+		/* scale h end radius */
+		{
+			struct rt_part_internal	*part = 
+				(struct rt_part_internal *)es_int.idb_ptr;
+
+			RT_PART_CK_MAGIC(part);
+			if( inpara ) {
+				/* take es_mat[15] (path scaling) into account */
+				es_para[0] *= es_mat[15];
+				es_scale = es_para[0] / part->part_hrad;
+			}
+			part->part_hrad *= es_scale;
+		}
+		break;
+
 	}
 }
 
@@ -6850,6 +6921,35 @@ struct rt_db_internal	*ip;
 		}
 		break;
 
+	case ID_PARTICLE:
+		{
+			struct rt_part_internal	*part =
+				(struct rt_part_internal *)es_int.idb_ptr;
+			vect_t	Ru, ortho;
+
+			RT_PART_CK_MAGIC(part);
+			MAT4X3PNT( pos_view, xform, part->part_V );
+			POINT_LABEL( pos_view, 'V' );
+
+			VADD2( work, part->part_V, part->part_H );
+                        MAT4X3PNT(pos_view, xform, work);
+                        POINT_LABEL( pos_view, 'H' );
+
+			VMOVE( Ru, part->part_H );
+			VUNITIZE( Ru );
+			bn_vec_ortho( ortho, Ru );
+			VSCALE( work, ortho, part->part_vrad );
+			VADD2( work, part->part_V, work );
+                        MAT4X3PNT( pos_view, xform, work );
+                        POINT_LABEL( pos_view, 'v' );
+
+			VSCALE( work, ortho, part->part_hrad );
+			VADD3( work, part->part_V, part->part_H, work );
+                        MAT4X3PNT( pos_view, xform, work );
+                        POINT_LABEL( pos_view, 'h' );
+		}
+		break;
+
 	case ID_RHC:
 		{
 			struct rt_rhc_internal	*rhc = 
@@ -7524,6 +7624,9 @@ char **argv;
       break;
     case ID_DSP:
       mip = dsp_menu;
+      break;
+    case ID_PARTICLE:
+      mip = part_menu;
       break;
     }
 

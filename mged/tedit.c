@@ -145,6 +145,7 @@ writesolid()
 		struct rt_epa_internal *epa;
 		struct rt_ehy_internal *ehy;
 		struct rt_eto_internal *eto;
+		struct rt_part_internal *part;
 
 		default:
 		  Tcl_AppendResult(interp, "Cannot text edit this solid type\n", (char *)NULL);
@@ -189,6 +190,13 @@ writesolid()
 			(void)fprintf( fp , "Center: %.9f %.9f %.9f\n" , V3BASE2LOCAL( grip->center ) );
 			(void)fprintf( fp , "Normal: %.9f %.9f %.9f\n" , V3BASE2LOCAL( grip->normal ) );
 			(void)fprintf( fp , "Magnitude: %.9f\n" , grip->mag*base2local );
+			break;
+		case ID_PARTICLE:
+			part = (struct rt_part_internal *)es_int.idb_ptr;
+			(void)fprintf( fp , "Vertex: %.9f %.9f %.9f\n" , V3BASE2LOCAL( part->part_V ) );
+			(void)fprintf( fp , "Height: %.9f %.9f %.9f\n" , V3BASE2LOCAL( part->part_H ) );
+			(void)fprintf( fp , "v radius: %.9f\n", part->part_vrad * base2local );
+			(void)fprintf( fp , "h radius: %.9f\n", part->part_hrad * base2local );
 			break;
 		case ID_RPC:
 			rpc = (struct rt_rpc_internal *)es_int.idb_ptr;
@@ -288,6 +296,7 @@ readsolid()
 		struct rt_epa_internal *epa;
 		struct rt_ehy_internal *ehy;
 		struct rt_eto_internal *eto;
+		struct rt_part_internal *part;
 		char *str;
 		double a,b,c,d;
 
@@ -472,6 +481,44 @@ readsolid()
 			}
 			(void)sscanf( str , "%lf %lf %lf" , &a , &b , &c );
 			VSET( grip->normal , a , b , c );
+			break;
+		case ID_PARTICLE:
+			part = (struct rt_part_internal *)es_int.idb_ptr;
+
+			if( (str=Get_next_line( fp )) == NULL )
+			{
+				ret_val = 1;
+				break;
+			}
+			(void)sscanf( str , "%lf %lf %lf" , &a , &b , &c );
+			VSET( part->part_V , a , b , c );
+			VSCALE( part->part_V , part->part_V , local2base );
+
+			if( (str=Get_next_line( fp )) == NULL )
+			{
+				ret_val = 1;
+				break;
+			}
+			(void)sscanf( str , "%lf %lf %lf" , &a , &b , &c );
+			VSET( part->part_H , a , b , c );
+			VSCALE( part->part_H , part->part_H , local2base );
+
+			if( (str=Get_next_line( fp )) == NULL )
+			{
+				ret_val = 1;
+				break;
+			}
+			(void)sscanf( str , "%lf" , &a );
+			part->part_vrad = a * local2base;
+
+			if( (str=Get_next_line( fp )) == NULL )
+			{
+				ret_val = 1;
+				break;
+			}
+			(void)sscanf( str , "%lf" , &a );
+			part->part_hrad = a * local2base;
+
 			break;
 		case ID_RPC:
 			rpc = (struct rt_rpc_internal *)es_int.idb_ptr;
