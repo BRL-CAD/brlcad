@@ -246,19 +246,6 @@ int	tcp_listen_fd;
 extern int	pkg_permport;	/* libpkg/pkg_permserver() listen port */
 
 /*
- *			E R R L O G
- *
- *  Log an error from the pkg library
- */
-/* VARARGS */
-void
-errlog( str, a, b, c, d, e, f, g, h )
-char *str;
-{
-	(void)fprintf( stderr, str, a, b, c, d, e, f, g, h );
-}
-
-/*
  *			T V S U B
  */
 void
@@ -309,8 +296,8 @@ char	**argv;
 	}
 
 	/* Listen for our PKG connections */
-	if( (tcp_listen_fd = pkg_permserver("rtsrv", "tcp", 8, errlog)) < 0 &&
-	    (tcp_listen_fd = pkg_permserver("20210", "tcp", 8, errlog)) < 0 )
+	if( (tcp_listen_fd = pkg_permserver("rtsrv", "tcp", 8, rt_log)) < 0 &&
+	    (tcp_listen_fd = pkg_permserver("20210", "tcp", 8, rt_log)) < 0 )
 		exit(1);
 	/* Now, pkg_permport has tcp port number */
 
@@ -318,7 +305,7 @@ char	**argv;
 
 	if( argc <= 1 )  {
 		(void)signal( SIGINT, SIG_IGN );
-		printf("Interactive REMRT listening at port %d\n", pkg_permport);
+		rt_log("Interactive REMRT listening at port %d\n", pkg_permport);
 		clients = (1<<fileno(stdin));
 
 		/* Read .remrtrc file to acquire server info */
@@ -332,9 +319,9 @@ char	**argv;
 		}
 		/* Might want to see if any work remains, and if so,
 		 * record it somewhere */
-		printf("REMRT out of clients\n");
+		rt_log("REMRT out of clients\n");
 	} else {
-		printf("Automatic REMRT listening at port %d\n", pkg_permport);
+		rt_log("Automatic REMRT listening at port %d\n", pkg_permport);
 		clients = 0;
 
 		/* parse command line args for sizes, etc */
@@ -386,7 +373,7 @@ char	**argv;
 			(void)gettimeofday( &now, (struct timezone *)0 );
 			schedule( &now );
 		}
-		printf("REMRT:  task accomplished\n");
+		rt_log("REMRT:  task accomplished\n");
 	}
 	exit(0);
 }
@@ -449,7 +436,7 @@ int waittime;
 	/* First, accept any pending connections */
 	if( ibits & (1<<tcp_listen_fd) )  {
 		register struct pkg_conn *pc;
-		pc = pkg_getclient(tcp_listen_fd, pkgswitch, errlog, 1);
+		pc = pkg_getclient(tcp_listen_fd, pkgswitch, rt_log, 1);
 		if( pc != PKC_NULL && pc != PKC_ERROR )
 			addclient(pc);
 		ibits &= ~(1<<tcp_listen_fd);
@@ -503,7 +490,7 @@ struct pkg_conn *pc;
 
 	if( (ihp = host_lookup_by_addr( &from, 1 )) == IHOST_NULL )  {
 		/* Disaster */
-		printf("abandoning this unknown server!!\n");
+		rt_log("abandoning this unknown server!!\n");
 		close( fd );
 		/* Maybe free the pkg struct? */
 		return;
@@ -540,20 +527,20 @@ register struct servers	*sp;
 	int	oldstate;
 
 	if( sp == SERVERS_NULL || sp->sr_host == IHOST_NULL )  {
-		printf("drop_server(x%x), sr_host=0\n", sp);
+		rt_log("drop_server(x%x), sr_host=0\n", sp);
 		return;
 	}
 	oldstate = sp->sr_state;
-	printf("dropping %s\n", sp->sr_host->ht_name);
+	rt_log("dropping %s\n", sp->sr_host->ht_name);
 
 	pc = sp->sr_pc;
 	if( pc == PKC_NULL )  {
-		printf("drop_server(x%x), sr_pc=0\n", sp);
+		rt_log("drop_server(x%x), sr_pc=0\n", sp);
 		return;
 	}
 	fd = pc->pkc_fd;
 	if( fd <= 3 || fd >= NFD )  {
-		printf("drop_server: fd=%d is unreasonable, forget it!\n", fd);
+		rt_log("drop_server: fd=%d is unreasonable, forget it!\n", fd);
 		return;
 	}
 	clients &= ~(1<<fd);
@@ -573,7 +560,7 @@ register struct servers	*sp;
 	while( (lp = lhp->li_forw) != lhp )  {
 		fr = lp->li_frame;
 		DEQUEUE_LIST( lp );
-		printf("requeueing fr%d %d..%d\n",
+		rt_log("requeueing fr%d %d..%d\n",
 			fr->fr_number,
 			lp->li_start, lp->li_stop);
 		APPEND_LIST( lp, &(fr->fr_todo) );
@@ -602,7 +589,7 @@ struct timeval	*nowp;
 	if( tvdiff( nowp, &last_server_check_time ) < SERVER_CHECK_INTERVAL )
 		return;
 
-	printf("seeking servers to start\n");
+	rt_log("seeking servers to start\n");
 	night = is_night( nowp );
 	for( ihp = HostHead; ihp != IHOST_NULL; ihp = ihp->ht_next )  {
 
@@ -630,7 +617,7 @@ struct timeval	*nowp;
 			/* This host is a server */
 			if( add == 0 )  {
 				/* Drop this host -- out of time range */
-				printf("auto dropping %s:  out of time range\n",
+				rt_log("auto dropping %s:  out of time range\n",
 					ihp->ht_name );
 				drop_server( sp );
 			} else {
@@ -641,7 +628,7 @@ struct timeval	*nowp;
 
 		/* This host is not presently in contact */
 		if( add )  {
-			printf("auto adding %s\n", ihp->ht_name);
+			rt_log("auto adding %s\n", ihp->ht_name);
 			add_host( ihp );
 		}
 
@@ -711,7 +698,7 @@ FILE	*fp;
 		/* buf has saved "start" line in it */
 		argc = rt_split_cmd( argv, 64, buf );
 		if( argc < 2 )  {
-			printf("bad 'start' line\n");
+			rt_log("bad 'start' line\n");
 			rt_free( buf, "bad start line" );
 			goto out;
 		}
@@ -761,7 +748,7 @@ register char *str;
 	else
 		cnt = sscanf( str, "%d", &ret );
 	if( cnt != 1 )
-		printf("string2int(%s) = %d?\n", str, ret );
+		rt_log("string2int(%s) = %d?\n", str, ret );
 	return(ret);
 }
 
@@ -814,7 +801,7 @@ FILE *fp;
 	while( pos[i-1]=='\n' && pos[i-2]=='\\' )  {
 		pos += i-2;	/* zap NL and backslash */
 		*pos = '\0';
-		printf("-> "); (void)fflush(stdout);
+		rt_log("-> "); (void)fflush(stderr);
 		(void)fgets( pos, sizeof(buf)-strlen(buf), fp );
 		i = strlen(pos);
 	}
@@ -891,15 +878,15 @@ do_a_frame()
 {
 	register struct frame *fr;
 	if( running )  {
-		printf("already running, please wait or STOP\n");
+		rt_log("already running, please wait or STOP\n");
 		return;
 	}
 	if( file_fullname[0] == '\0' )  {
-		printf("need LOAD before GO\n");
+		rt_log("need LOAD before GO\n");
 		return;
 	}
 	if( (fr = FrameHead.fr_forw) == &FrameHead )  {
-		printf("No frames to do!\n");
+		rt_log("No frames to do!\n");
 		return;
 	}
 	running = 1;
@@ -961,7 +948,7 @@ register struct frame	*fr;
 		 * pixels.
 xxx
 		 */
-		printf("...need to scan %s for non-black pixels (deferred)\n",
+		rt_log("...need to scan %s for non-black pixels (deferred)\n",
 			fr->fr_filename );
 	}
 
@@ -985,12 +972,12 @@ register struct frame *fr;
 	(void)gettimeofday( &fr->fr_end, (struct timezone *)0 );
 	delta = tvdiff( &fr->fr_end, &fr->fr_start);
 	if( delta < 0.0001 )  delta=0.0001;
-	printf("frame %d DONE: %g elapsed sec, %d rays/%g cpu sec\n",
+	rt_log("frame %d DONE: %g elapsed sec, %d rays/%g cpu sec\n",
 		fr->fr_number,
 		delta,
 		fr->fr_nrays,
 		fr->fr_cpu );
-	printf("  RTFM=%g rays/sec (%g rays/cpu sec)\n",
+	rt_log("  RTFM=%g rays/sec (%g rays/cpu sec)\n",
 		fr->fr_nrays/delta,
 		fr->fr_nrays/fr->fr_cpu );
 
@@ -1153,7 +1140,7 @@ next_frame: ;
 	if( !running )  goto out;
 	if( all_done() )  {
 		running = 0;
-		printf("REMRT:  All work done!\n");
+		rt_log("REMRT:  All work done!\n");
 		if( detached )  exit(0);
 		goto out;
 	}
@@ -1220,7 +1207,7 @@ struct timeval		*nowp;
 	if( server_q_len(sp) > 0 &&
 	    sp->sr_sendtime.tv_sec > 0 && 
 	    tvdiff( nowp, &sp->sr_sendtime ) > TARDY_SERVER_INTERVAL )  {
-		printf("%s: *TARDY*\n", sp->sr_host->ht_name);
+		rt_log("%s: *TARDY*\n", sp->sr_host->ht_name);
 		drop_server( sp );
 		return(0);	/* not worth giving another assignment */
 	}
@@ -1343,7 +1330,7 @@ register struct frame *fr;
 
 	if( feof(fp) ) {
 out:
-		printf("EOF on frame file.\n");
+		rt_log("EOF on frame file.\n");
 		return(-1);
 	}
 	return(0);	/* OK */
@@ -1362,7 +1349,7 @@ char *buf;
 	for( i=0; pc->pkc_switch[i].pks_handler != NULL; i++ )  {
 		if( pc->pkc_switch[i].pks_type == pc->pkc_type )  break;
 	}
-	errlog("ctl: unable to handle %s message: len %d",
+	rt_log("ctl: unable to handle %s message: len %d",
 		pc->pkc_switch[i].pks_title, pc->pkc_len);
 	*buf = '*';
 	(void)free(buf);
@@ -1384,21 +1371,21 @@ char *buf;
 
 	sp = &servers[pc->pkc_fd];
 	if( strcmp( PROTOCOL_VERSION, buf ) != 0 )  {
-		printf("ERROR %s: protocol version mis-match\n",
+		rt_log("ERROR %s: protocol version mis-match\n",
 			sp->sr_host->ht_name);
-		printf(" local='%s'\n", PROTOCOL_VERSION );
-		printf("remote='%s'\n", buf );
+		rt_log(" local='%s'\n", PROTOCOL_VERSION );
+		rt_log("remote='%s'\n", buf );
 		drop_server( sp );
 		if(buf) (void)free(buf);
 		return;
 	}
 	if(buf) (void)free(buf);
 	if( sp->sr_pc != pc )  {
-		printf("unexpected MSG_START from fd %d\n", pc->pkc_fd);
+		rt_log("unexpected MSG_START from fd %d\n", pc->pkc_fd);
 		return;
 	}
 	if( sp->sr_state != SRST_LOADING )  {
-		printf("MSG_START in state %d?\n", sp->sr_state);
+		rt_log("MSG_START in state %d?\n", sp->sr_state);
 		drop_server( sp );
 		return;
 	}
@@ -1414,7 +1401,7 @@ register struct pkg_conn *pc;
 char *buf;
 {
 	if(print_on)
-		printf("%s:%s", servers[pc->pkc_fd].sr_host->ht_name, buf );
+		rt_log("%s:%s", servers[pc->pkc_fd].sr_host->ht_name, buf );
 	if(buf) (void)free(buf);
 }
 
@@ -1430,14 +1417,14 @@ char	*buf;
 
 	sp = &servers[pc->pkc_fd];
 	if( strcmp( PROTOCOL_VERSION, buf ) != 0 )  {
-		printf("ERROR %s: protocol version mis-match\n",
+		rt_log("ERROR %s: protocol version mis-match\n",
 			sp->sr_host->ht_name);
-		printf("  local='%s'\n", PROTOCOL_VERSION );
-		printf(" remote='%s'\n", buf );
+		rt_log("  local='%s'\n", PROTOCOL_VERSION );
+		rt_log(" remote='%s'\n", buf );
 		drop_server( sp );
 	} else {
 		if( sp->sr_state != SRST_NEW )  {
-			printf("NOTE %s:  VERSION message unexpected\n",
+			rt_log("NOTE %s:  VERSION message unexpected\n",
 				sp->sr_host->ht_name);
 		}
 		sp->sr_state = SRST_VERSOK;
@@ -1456,7 +1443,7 @@ char	*buf;
 	register struct servers	*sp;
 
 	sp = &servers[pc->pkc_fd];
-	printf("%s: cmd '%s'\n", sp->sr_host->ht_name, buf );
+	rt_log("%s: cmd '%s'\n", sp->sr_host->ht_name, buf );
 	(void)rt_do_cmd( (struct rt_i *)0, buf, cmd_tab );
 	if(buf) (void)free(buf);
 	drop_server( sp );
@@ -1489,11 +1476,11 @@ char *buf;
 
 	i = struct_import( (stroff_t)&info, desc_line_info, buf );
 	if( i < 0 || i != info.li_len )  {
-		fprintf(stderr,"struct_import error, %d, %d\n", i, info.li_len);
+		rt_log("struct_import error, %d, %d\n", i, info.li_len);
 		goto out;
 	}
 #if 0
-	printf("%s:fr=%d, %d..%d, ry=%d, cpu=%g, el=%g\n",
+	rt_log("%s:fr=%d, %d..%d, ry=%d, cpu=%g, el=%g\n",
 		sp->sr_host->ht_name,
 		info.li_frame, info.li_startpix, info.li_endpix,
 	info.li_nrays, info.li_cpusec, sp->sr_l_elapsed );
@@ -1502,20 +1489,20 @@ char *buf;
 	/* XXX this is bogus -- assignments may have moved on to subsequent
 	 * frames.  Need to search frame list */
 	if( (fr = sp->sr_curframe) == FRAME_NULL )  {
-		printf("%s: no current frame, discarding\n");
+		rt_log("%s: no current frame, discarding\n");
 		goto out;
 	}
 
 	/* Don't be so trusting... */
 	if( info.li_frame != fr->fr_number )  {
-		printf("frame number mismatch, claimed=%d, actual=%d\n",
+		rt_log("frame number mismatch, claimed=%d, actual=%d\n",
 			info.li_frame, fr->fr_number );
 		drop_server( sp );
 		goto out;
 	}
 	if( info.li_startpix < 0 ||
 	    info.li_endpix >= fr->fr_width*fr->fr_height )  {
-		printf("pixel numbers out of range\n");
+		rt_log("pixel numbers out of range\n");
 		drop_server( sp );
 		goto out;
 	}
@@ -1524,7 +1511,7 @@ char *buf;
 	npix = info.li_endpix - info.li_startpix + 1;
 	i = npix*3;
 	if( pc->pkc_len - info.li_len < i )  {
-		fprintf(stderr,"short scanline, s/b=%d, was=%d\n",
+		rt_log("short scanline, s/b=%d, was=%d\n",
 			i, pc->pkc_len - info.li_len );
 		i = pc->pkc_len - info.li_len;
 		drop_server( sp );
@@ -1543,7 +1530,7 @@ char *buf;
 	}
 	if( (cnt = write( fd, buf+info.li_len, i )) != i )  {
 		perror("write");
-		printf("write s/b %d, got %d\n", i, cnt );
+		rt_log("write s/b %d, got %d\n", i, cnt );
 		/* Again, now what? */
 	}
 	(void)close(fd);
@@ -1605,7 +1592,7 @@ register struct list *lhp;
 		/* (start..a-1) and (b+1..stop) */
 		{
 			register struct list *lp2;
-			printf("splitting range into (%d %d) (%d %d)\n",
+			rt_log("splitting range into (%d %d) (%d %d)\n",
 				lp->li_start, a-1,
 				b+1, lp->li_stop);
 			GET_LIST(lp2);
@@ -1713,7 +1700,7 @@ char *name;
 {
 	if( fbp != FBIO_NULL )  fb_close(fbp);
 	if( (fbp = fb_open( name, width, height )) == FBIO_NULL )  {
-		printf("fb_open %d,%d failed\n", width, height);
+		rt_log("fb_open %d,%d failed\n", width, height);
 		return(-1);
 	}
 	fb_wmap( fbp, COLORMAP_NULL );	/* Standard map: linear */
@@ -1732,7 +1719,7 @@ register struct frame	*fp;
 	if( fbp == FBIO_NULL )
 		return;
 	if( fp->fr_width > fb_getwidth(fbp) )  {
-		printf("Warning:  fb not big enough for %d pixels, display truncated\n", fp->fr_width );
+		rt_log("Warning:  fb not big enough for %d pixels, display truncated\n", fp->fr_width );
 		cur_fbwidth = fp->fr_width;
 		return;
 	}
@@ -1768,7 +1755,7 @@ register struct servers *sp;
 		sprintf( cmd, "%s %s", file_basename, object_list );
 		break;
 	default:
-		printf("send_start: ht_where=%d unimplemented\n", ihp->ht_where);
+		rt_log("send_start: ht_where=%d unimplemented\n", ihp->ht_where);
 		drop_server(sp);
 		return;
 	}
@@ -1845,7 +1832,7 @@ register struct list *lhp;
 	register struct list *lp;
 
 	for( lp = lhp->li_forw; lp != lhp; lp = lp->li_forw  )  {
-		printf("\t%d..%d frame %d\n",
+		rt_log("\t%d..%d frame %d\n",
 			lp->li_start, lp->li_stop,
 			lp->li_frame->fr_number );
 	}
@@ -1875,7 +1862,7 @@ struct ihost	*ihp;
 		break;
 	case HT_CONVERT:
 		if( file_fullname[0] == '\0' )  {
-			printf("unable to add CONVERT host %s until database given\n",
+			rt_log("unable to add CONVERT host %s until database given\n",
 				ihp->ht_name);
 			return;
 		}
@@ -1885,7 +1872,7 @@ struct ihost	*ihp;
 			file_fullname, file_basename );
 		break;
 	default:
-		printf("add_host:  ht_where=%d?\n", ihp->ht_where );
+		rt_log("add_host:  ht_where=%d?\n", ihp->ht_where );
 		break;
 	}
 	fflush( helper_fp );
@@ -1944,7 +1931,7 @@ FILE	*fp;
 		cnt = sscanf( line, "%s %d %s %s %s",
 			host, &port, rem_dir, loc_db, rem_db );
 		if( cnt != 3 && cnt != 5 )  {
-			printf("host_helper: cnt=%d, aborting\n", cnt);
+			rt_log("host_helper: cnt=%d, aborting\n", cnt);
 			break;
 		}
 
@@ -1953,7 +1940,7 @@ FILE	*fp;
 				"cd %s; rtsrv %s %d",
 				rem_dir, ourname, port );
 #if 0
-			printf("%s\n", cmd); fflush(stdout);
+			rt_log("%s\n", cmd); fflush(stdout);
 #endif
 
 			pid = fork();
@@ -1988,7 +1975,7 @@ FILE	*fp;
 				rem_dir, rem_db,
 				ourname, port );
 #if 0
-			printf("%s\n", cmd); fflush(stdout);
+			rt_log("%s\n", cmd); fflush(stdout);
 #endif
 
 			pid = fork();
@@ -2066,7 +2053,7 @@ int	startc;
 	int		len;
 
 	if( startc+2 > argc )  {
-		printf("build_start_cmd:  need file and at least one object\n");
+		rt_log("build_start_cmd:  need file and at least one object\n");
 		file_fullname[0] = '\0';
 		return;
 	}
@@ -2173,7 +2160,7 @@ int	enter;
 		(addr_tmp>> 8) & 0xff,
 		(addr_tmp    ) & 0xff );
 	if( enter == 0 )  {
-		printf("%s: unknown host\n");
+		rt_log("%s: unknown host\n");
 		return( IHOST_NULL );
 	}
 
@@ -2203,7 +2190,7 @@ int	enter;
 		addr = gethostbyname(name);
 	}
 	if( addr == NULL )  {
-		printf("%s:  bad host\n", name);
+		rt_log("%s:  bad host\n", name);
 		return( IHOST_NULL );
 	}
 	return( host_lookup_by_hostent( addr, enter ) );
@@ -2218,13 +2205,13 @@ char	**argv;
 	register struct servers *sp;
 
 	if( running )  {
-		printf("Can't load while running!!\n");
+		rt_log("Can't load while running!!\n");
 		return;
 	}
 
 	/* Really ought to reset here, too */
 	if(file_fullname[0] != '\0' )  {
-		printf("Was loaded with %s, restarting all\n", file_fullname);
+		rt_log("Was loaded with %s, restarting all\n", file_fullname);
 		for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 			if( sp->sr_pc == PKC_NULL )  continue;
 			send_restart( sp );
@@ -2257,7 +2244,7 @@ char	**argv;
 	width = height = atoi( argv[1] );
 	if( width < 4 || width > 16*1024 )
 		width = 64;
-	printf("width=%d, height=%d, takes effect after next MAT\n",
+	rt_log("width=%d, height=%d, takes effect after next MAT\n",
 		width, height);
 }
 
@@ -2266,7 +2253,7 @@ int	argc;
 char	**argv;
 {
 	hypersample = atoi( argv[1] );
-	printf("hypersample=%d, takes effect after next MAT\n", hypersample);
+	rt_log("hypersample=%d, takes effect after next MAT\n", hypersample);
 }
 
 cd_bench( argc, argv )
@@ -2274,7 +2261,7 @@ int	argc;
 char	**argv;
 {
 	benchmark = atoi( argv[1] );
-	printf("Benchmark flag=%d, takes effect after next MAT\n", benchmark);
+	rt_log("Benchmark flag=%d, takes effect after next MAT\n", benchmark);
 }
 
 cd_persp( argc, argv )
@@ -2283,7 +2270,7 @@ char	**argv;
 {
 	rt_perspective = atof( argv[1] );
 	if( rt_perspective < 0.0 )  rt_perspective = 0.0;
-	printf("perspective angle=%g, takes effect after next MAT\n", rt_perspective);
+	rt_log("perspective angle=%g, takes effect after next MAT\n", rt_perspective);
 }
 
 cd_read( argc, argv )
@@ -2298,7 +2285,7 @@ char	**argv;
 	}
 	source(fp);
 	fclose(fp);
-	printf("read file done\n");
+	rt_log("read file done\n");
 }
 
 source(fp)
@@ -2326,7 +2313,7 @@ int	argc;
 char	**argv;
 {
 	outputfile = rt_strdup( argv[1] );
-	printf("frames will be recorded in %s.###\n", outputfile);
+	rt_log("frames will be recorded in %s.###\n", outputfile);
 }
 
 cd_mat( argc, argv )
@@ -2368,11 +2355,11 @@ char	**argv;
 
 	/* movie mat a b */
 	if( running )  {
-		printf("already running, please wait\n");
+		rt_log("already running, please wait\n");
 		return;
 	}
 	if( file_fullname[0] == '\0' )  {
-		printf("need LOAD before MOVIE\n");
+		rt_log("need LOAD before MOVIE\n");
 		return;
 	}
 	a = atoi( argv[2] );
@@ -2392,7 +2379,7 @@ char	**argv;
 		APPEND_FRAME( fr, FrameHead.fr_back );
 	}
 	fclose(fp);
-	printf("Movie ready\n");
+	rt_log("Movie ready\n");
 }
 
 cd_add( argc, argv )
@@ -2428,7 +2415,7 @@ char	**argv;
 
 	if( argc <= 1 )  {
 		/* Restart all */
-		printf("restarting all\n");
+		rt_log("restarting all\n");
 		for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 			if( sp->sr_pc == PKC_NULL )  continue;
 			send_restart( sp );
@@ -2445,7 +2432,7 @@ cd_stop( argc, argv )
 int	argc;
 char	**argv;
 {
-	printf("no more scanlines being scheduled, done soon\n");
+	rt_log("no more scanlines being scheduled, done soon\n");
 	running = 0;
 }
 
@@ -2456,7 +2443,7 @@ char	**argv;
 	register struct frame *fr;
 
 	if( running )  {
-		printf("must STOP before RESET!\n");
+		rt_log("must STOP before RESET!\n");
 		return;
 	}
 	do {
@@ -2500,20 +2487,20 @@ char	**argv;
 	register int	i;
 
 	/* Sumarize frames waiting */
-	printf("Frames waiting:\n");
+	rt_log("Frames waiting:\n");
 	for(fr=FrameHead.fr_forw; fr != &FrameHead; fr=fr->fr_forw) {
-		printf("%5d\t", fr->fr_number);
-		printf("width=%d, height=%d\n",
+		rt_log("%5d\t", fr->fr_number);
+		rt_log("width=%d, height=%d\n",
 			fr->fr_width, fr->fr_height );
-		if( fr->fr_filename )  printf(" %s\n", fr->fr_filename );
+		if( fr->fr_filename )  rt_log(" %s\n", fr->fr_filename );
 
-		printf("\tnrays = %d, cpu sec=%g\n", fr->fr_nrays, fr->fr_cpu);
-		printf("       servinit: ");
+		rt_log("\tnrays = %d, cpu sec=%g\n", fr->fr_nrays, fr->fr_cpu);
+		rt_log("       servinit: ");
 		for( i=0; i<MAXSERVERS; i++ )
-			printf("%d ", fr->fr_servinit[i]);
-		printf("\n");
+			rt_log("%d ", fr->fr_servinit[i]);
+		rt_log("\n");
 		pr_list( &(fr->fr_todo) );
-		printf("cmd=%s\n", fr->fr_cmd.vls_str );
+		rt_log("cmd=%s\n", fr->fr_cmd.vls_str );
 	}
 }
 
@@ -2525,54 +2512,54 @@ char	**argv;
     	int	num;
 
 	if( file_fullname[0] == '\0' )
-		printf("No model loaded yet\n");
+		rt_log("No model loaded yet\n");
 	else
-		printf("\n%s %s %s\n",
+		rt_log("\n%s %s %s\n",
 			running ? "RUNNING" : "loaded",
 			file_fullname, object_list );
 
 	if( fbp != FBIO_NULL )
-		printf("Framebuffer is %s\n", fbp->if_name);
+		rt_log("Framebuffer is %s\n", fbp->if_name);
 	else
-		printf("No framebuffer\n");
+		rt_log("No framebuffer\n");
 	if( outputfile )
-		printf("Output file: %s.###\n", outputfile );
-	printf("Printing of remote messages is %s\n",
+		rt_log("Output file: %s.###\n", outputfile );
+	rt_log("Printing of remote messages is %s\n",
 		print_on?"ON":"Off" );
-    	printf("Listening at %s, port %d\n", ourname, pkg_permport);
+    	rt_log("Listening at %s, port %d\n", ourname, pkg_permport);
 
 	/* Print work assignments */
-	printf("Servers:\n");
+	rt_log("Servers:\n");
 	for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 		if( sp->sr_pc == PKC_NULL )  continue;
-		printf("  %2d  %s ", sp->sr_index, sp->sr_host->ht_name );
+		rt_log("  %2d  %s ", sp->sr_index, sp->sr_host->ht_name );
 		switch( sp->sr_state )  {
 		case SRST_NEW:
-			printf("New"); break;
+			rt_log("New"); break;
 		case SRST_VERSOK:
-			printf("Vers_OK"); break;
+			rt_log("Vers_OK"); break;
 		case SRST_LOADING:
-			printf("(Loading)"); break;
+			rt_log("(Loading)"); break;
 		case SRST_READY:
-			printf("READY"); break;
+			rt_log("READY"); break;
 		case SRST_RESTART:
-			printf("--about to restart--"); break;
+			rt_log("--about to restart--"); break;
 		default:
-			printf("Unknown"); break;
+			rt_log("Unknown"); break;
 		}
 		if( sp->sr_curframe != FRAME_NULL )  {
-			printf(" frame %d, assignments=%d\n",
+			rt_log(" frame %d, assignments=%d\n",
 				sp->sr_curframe->fr_number,
 				server_q_len(sp) );
 		}  else  {
-			printf("\n");
+			rt_log("\n");
 		}
 		num = sp->sr_nsamp<=0 ? 1 : sp->sr_nsamp;
-		printf("\tlast:  elapsed=%g, cpu=%g, lump=%d\n",
+		rt_log("\tlast:  elapsed=%g, cpu=%g, lump=%d\n",
 			sp->sr_l_elapsed,
 			sp->sr_l_cpu,
 			sp->sr_lump );
-		printf("\t avg:  elapsed=%gp/s, cpu=%g, weighted=%gp/s\n",
+		rt_log("\t avg:  elapsed=%gp/s, cpu=%g, weighted=%gp/s\n",
 			(sp->sr_s_elapsed/num),
 			sp->sr_s_cpu/num,
 			sp->sr_w_elapsed );
@@ -2608,7 +2595,7 @@ char	**argv;
 		if( sp->sr_pc == PKC_NULL )  continue;
 		send_loglvl( sp );
 	}
-	printf("Printing of remote messages is %s\n",
+	rt_log("Printing of remote messages is %s\n",
 		print_on?"ON":"Off" );
 }
 
@@ -2642,7 +2629,7 @@ char	**argv;
 	register struct command_tab	*tp;
 
 	for( tp = cmd_tab; tp->ct_cmd != (char *)0; tp++ )  {
-		printf("%s %s\t\t%s\n",
+		rt_log("%s %s\t\t%s\n",
 			tp->ct_cmd, tp->ct_parms,
 			tp->ct_comment );
 	}
@@ -2658,32 +2645,32 @@ char	**argv;
 	register struct ihost	*ihp;
 
 	if( argc < 5 )  {
-		printf("Registered Host Table:\n");
+		rt_log("Registered Host Table:\n");
 		for( ihp = HostHead; ihp != IHOST_NULL; ihp=ihp->ht_next )  {
-			printf("  %s ", ihp->ht_name);
+			rt_log("  %s ", ihp->ht_name);
 			switch(ihp->ht_when)  {
 			case HT_ALWAYS:
-				printf("always ");
+				rt_log("always ");
 				break;
 			case HT_NIGHT:
-				printf("night ");
+				rt_log("night ");
 				break;
 			case HT_PASSIVE:
-				printf("passive ");
+				rt_log("passive ");
 				break;
 			default:
-				printf("?when? ");
+				rt_log("?when? ");
 				break;
 			}
 			switch(ihp->ht_where)  {
 			case HT_CD:
-				printf("cd %s\n", ihp->ht_path);
+				rt_log("cd %s\n", ihp->ht_path);
 				break;
 			case HT_CONVERT:
-				printf("convert %s\n", ihp->ht_path);
+				rt_log("convert %s\n", ihp->ht_path);
 				break;
 			default:
-				printf("?where?\n");
+				rt_log("?where?\n");
 				break;
 			}
 		}
@@ -2700,7 +2687,7 @@ char	**argv;
 	} else if( strcmp( argv[2], "passive" ) == 0 )  {
 		ihp->ht_when = HT_PASSIVE;
 	} else {
-		printf("unknown 'when' string '%s'\n", argv[2]);
+		rt_log("unknown 'when' string '%s'\n", argv[2]);
 	}
 
 	/* Where */
@@ -2711,7 +2698,7 @@ char	**argv;
 		ihp->ht_where = HT_CONVERT;
 		ihp->ht_path = rt_strdup( argv[4] );
 	} else {
-		printf("unknown 'where' string '%s'\n", argv[3] );
+		rt_log("unknown 'where' string '%s'\n", argv[3] );
 	}
 }
 
