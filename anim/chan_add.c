@@ -19,8 +19,11 @@
  *      in all countries except the USA.  All rights reserved.
  */
 
+#include <stdlib.h>
+#include <unistd.h>
 #include <stdio.h>
 
+int
 main(argc,argv)
 int argc;
 char **argv;
@@ -61,4 +64,5 @@ char **argv;
 			printf("\n");
 		count = (count+1)%of;
 	}
+	return( 0 );
 }

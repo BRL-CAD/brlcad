@@ -27,7 +27,16 @@
  *      This software is Copyright (C) 1993 by the United States Army
  *      in all countries except the USA.  All rights reserved.
  */
+#include "conf.h"
 
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+
+#include <stdlib.h>
+#include <unistd.h>
 #include <stdio.h>
 
 #define MAXLEN 40
@@ -44,6 +53,8 @@ unsigned i_o;	/*i=1 o=0*/
 
 char ihead[] = "-i";
 char ohead[] = "-o";
+
+int
 main(argc,argv)
 int argc;
 char **argv;
