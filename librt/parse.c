@@ -547,7 +547,7 @@ register CONST double	*dp;
 
 	rt_vls_extend(vls, strlen(name) + 3 + 32 * count);
 
-	cp = rt_vls_addr(vls) + rt_vls_strlen(vls);
+	cp = vls->vls_str + vls->vls_offset + vls->vls_len;
 	sprintf(cp, "%s%s=%.27G", (vls->vls_len?" ":""), name, *dp++);
 	tmpi = strlen(cp);
 	vls->vls_len += tmpi;
@@ -622,7 +622,7 @@ CONST char				*base;	/* structure ponter */
 				break;
 			if (sdp->sp_count == 1) {
 				rt_vls_extend(vls, strlen(sdp->sp_name)+6);
-				cp = rt_vls_addr(vls) + rt_vls_strlen(vls);
+				cp = vls->vls_str + vls->vls_offset + vls->vls_len;
 				if (*loc == '"')
 					sprintf(cp, "%s%s=\"%s\"",
 						(vls->vls_len?" ":""),
@@ -645,7 +645,7 @@ CONST char				*base;	/* structure ponter */
 				rt_vls_extend(vls, strlen(sdp->sp_name)+
 					strlen(loc)+5+count);
 
-				cp = rt_vls_addr(vls) + rt_vls_strlen(vls);
+				cp = vls->vls_str + vls->vls_offset + vls->vls_len;
 				if (vls->vls_len) (void)strcat(cp, " ");
 				(void)strcat(cp, sdp->sp_name);
 				(void)strcat(cp, "=\"");
@@ -672,7 +672,7 @@ CONST char				*base;	/* structure ponter */
 				rt_vls_extend(vls, rt_vls_strlen(vls_p) + 5 +
 					strlen(sdp->sp_name) );
 
-				cp = rt_vls_addr(vls) + rt_vls_strlen(vls);
+				cp = vls->vls_str + vls->vls_offset + vls->vls_len;
 				sprintf(cp, "%s%s=\"%s\"",
 					(vls->vls_len?" ":""),
 					sdp->sp_name,
@@ -688,7 +688,7 @@ CONST char				*base;	/* structure ponter */
 				rt_vls_extend(vls, 
 					64 * i + strlen(sdp->sp_name) + 3 );
 
-				cp = rt_vls_addr(vls) + rt_vls_strlen(vls);
+				cp = vls->vls_str + vls->vls_offset + vls->vls_len;
 				sprintf(cp, "%s%s=%d",
 						(vls->vls_len?" ":""),
 						 sdp->sp_name, *sp++);
@@ -711,7 +711,7 @@ CONST char				*base;	/* structure ponter */
 				rt_vls_extend(vls, 
 					64 * i + strlen(sdp->sp_name) + 3 );
 
-				cp = rt_vls_addr(vls) + rt_vls_strlen(vls);
+				cp = vls->vls_str + vls->vls_offset + vls->vls_len;
 				sprintf(cp, "%s%s=%d", 
 					(vls->vls_len?" ":""),
 					sdp->sp_name, *dp++);
