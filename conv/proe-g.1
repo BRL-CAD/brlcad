@@ -1,0 +1,49 @@
+.TH PROE-G 1 BRL-CAD
+.SH NAME
+proe-g \- Pro/Engineer Translator (Pro/Engineer to BRL-CAD)
+.SH SYNOPSIS
+.B proe-g
+[-dp] [-x RT_DEBUG_FLAG] [-X NMG_DEBUG_FLAG] file.brl file.g
+.SH DESCRIPTION
+.I proe-g\^
+converts the specified
+.I file.brl
+to a BRL-CAD
+.I file.g
+file.
+The
+.I -d
+option prints debugging information.
+The
+.I -p
+option results in a BRLCAD model built from polysolids instead of NMG's.
+The
+The
+.I file.brl
+file is expected to be output from the
+.I BRL-CAD
+menu option of the Pro/Engineer
+.I EXPORT
+menu. This menu option is a Pro/Develop application produced by the USARL.
+.SH EXAMPLE
+.RS
+$ \|\fIproe-g < \|sample.brl > \|sample.g\fP
+.RE
+.SH "SEE ALSO"
+.I
+Pro/Engineer Modeling User's Guide,
+Version 13.0,
+Parametric Technology Corporation
+.SH DIAGNOSTICS
+Error messages are intended to be self-explanatory.
+.SH AUTHORS
+John Anderson
+.SH SOURCE
+SLAD/BVLD/VMB Advanced Computer Support Team
+.br
+The U. S. Army  Research Laboratory
+.br
+Aberdeen Proving Ground, Maryland  21005
+.SH "BUG REPORTS"
+Reports of bugs or problems should be submitted via electronic
+mail to <CAD@BRL.MIL>.
