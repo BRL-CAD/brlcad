@@ -17,6 +17,7 @@
 #define FILES	\
 	shoot \
 	cut bool \
+	bomb \
 	db_open db_scan db_lookup db_io db_alloc db_walk \
 	db_path db_tree db_comb db_anim db_match \
 	memalloc \
