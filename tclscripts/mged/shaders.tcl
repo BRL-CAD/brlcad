@@ -1821,6 +1821,7 @@ proc do_texture { shade_var id } {
 
 	catch { destroy $shader_params($id,window).fr }
 	frame $shader_params($id,window).fr
+        frame $shader_params($id,window).fr.repl -relief groove -bd 3
 
 	label $shader_params($id,window).fr.file -text "Texture File Name"
 	entry $shader_params($id,window).fr.file_e -width 40 -textvariable shader_params($id,file)
@@ -1831,16 +1832,16 @@ proc do_texture { shade_var id } {
 	label $shader_params($id,window).fr.height -text "File height (pixels)"
 	entry $shader_params($id,window).fr.height_e -width 5 -textvariable shader_params($id,height)
 	bind $shader_params($id,window).fr.height_e <KeyRelease> "do_shader_apply $shade_var $id"
-	label $shader_params($id,window).fr.mirror -text "Mirror Adjacent tiles"
-	checkbutton $shader_params($id,window).fr.mirror_e \
+	label $shader_params($id,window).fr.repl.mirror -text "Mirror Adjacent tiles"
+	checkbutton $shader_params($id,window).fr.repl.mirror_e \
 		-variable shader_params($id,mirror) \
 		-command "do_shader_apply $shade_var $id"
-	label $shader_params($id,window).fr.u_scale -text "Texture Replication in U-direction"
-	entry $shader_params($id,window).fr.u_scale_e -width 4 -textvariable shader_params($id,tx_scale_u)
-	bind $shader_params($id,window).fr.u_scale_e <KeyRelease> "do_shader_apply $shade_var $id"
-	label $shader_params($id,window).fr.v_scale -text "V-direction"
-	entry $shader_params($id,window).fr.v_scale_e -width 4 -textvariable shader_params($id,tx_scale_v)
-	bind $shader_params($id,window).fr.v_scale_e <KeyRelease> "do_shader_apply $shade_var $id"
+	label $shader_params($id,window).fr.repl.u_scale -text "in U-direction"
+	entry $shader_params($id,window).fr.repl.u_scale_e -width 4 -textvariable shader_params($id,tx_scale_u)
+	bind $shader_params($id,window).fr.repl.u_scale_e <KeyRelease> "do_shader_apply $shade_var $id"
+	label $shader_params($id,window).fr.repl.v_scale -text "in V-direction"
+	entry $shader_params($id,window).fr.repl.v_scale_e -width 4 -textvariable shader_params($id,tx_scale_v)
+	bind $shader_params($id,window).fr.repl.v_scale_e <KeyRelease> "do_shader_apply $shade_var $id"
 	label $shader_params($id,window).fr.trans -text "Transparency (RGB)"
 	entry $shader_params($id,window).fr.trans_e -width 15 -textvariable shader_params($id,transp)
 	bind $shader_params($id,window).fr.trans_e <KeyRelease> "do_shader_apply $shade_var $id"
@@ -1877,19 +1878,19 @@ proc do_texture { shade_var id } {
 		{ range "RGB values must be integers from 0 to 255"}
 	}
 
-	hoc_register_data $shader_params($id,window).fr.mirror Mirror {
+	hoc_register_data $shader_params($id,window).fr.repl.mirror Mirror {
 		{ summary "Turn this option on to get smooth transitions between adjacent tiles\n\
 			of the texture by mirroring. This only has an effect when texture\n\
 			replication is greater than 1"}
 	}
 
-	hoc_register_data $shader_params($id,window).fr.mirror_e Mirror {
+	hoc_register_data $shader_params($id,window).fr.repl.mirror_e Mirror {
 		{ summary "Turn this option on to get smooth transitions between adjacent tiles\n\
 			of the texture by mirroring. This only has an effect when texture\n\
 			replication is greater than 1"}
 	}
 
-	hoc_register_data $shader_params($id,window).fr.u_scale "Texture Replication" {
+	hoc_register_data $shader_params($id,window).fr.repl.u_scale "Texture Replication" {
 		{summary "Each object being shaded has UV coordinates from 0 through 1.0 used to\n\
 			lookup which part of the texture should be applied where.  Normally,\n\
 			one entire copy of the texture is stretched or compressed to fit the object.\n\
@@ -1899,7 +1900,7 @@ proc do_texture { shade_var id } {
 		{ range "Real numbers greater than 0.0" }
 	}
 
-	hoc_register_data $shader_params($id,window).fr.u_scale_e "Texture Replication" {
+	hoc_register_data $shader_params($id,window).fr.repl.u_scale_e "Texture Replication" {
 		{summary "Each object being shaded has UV coordinates from 0 through 1.0 used to\n\
 			lookup which part of the texture should be applied where.  Normally,\n\
 			one entire copy of the texture is stretched or compressed to fit the object.\n\
@@ -1909,7 +1910,7 @@ proc do_texture { shade_var id } {
 		{ range "Real numbers greater than 0.0" }
 	}
 
-	hoc_register_data $shader_params($id,window).fr.v_scale "Texture Replication" {
+	hoc_register_data $shader_params($id,window).fr.repl.v_scale "Texture Replication" {
 		{summary "Each object being shaded has UV coordinates from 0 through 1.0 used to\n\
 			lookup which part of the texture should be applied where.  Normally,\n\
 			one entire copy of the texture is stretched or compressed to fit the object.\n\
@@ -1919,7 +1920,7 @@ proc do_texture { shade_var id } {
 		{ range "Real numbers greater than 0.0" }
 	}
 
-	hoc_register_data $shader_params($id,window).fr.v_scale_e "Texture Replication" {
+	hoc_register_data $shader_params($id,window).fr.repl.v_scale_e "Texture Replication" {
 		{summary "Each object being shaded has UV coordinates from 0 through 1.0 used to\n\
 			lookup which part of the texture should be applied where.  Normally,\n\
 			one entire copy of the texture is stretched or compressed to fit the object.\n\
@@ -1973,18 +1974,30 @@ proc do_texture { shade_var id } {
 
 	set_texture_values $shader_str $id
 
+        label $shader_params($id,window).fr.repl.repl_label \
+	    -text "Texture Replication"
+        grid $shader_params($id,window).fr.repl.repl_label \
+	    -row 0 -column 0 -columnspan 4 -sticky ew
+        grid $shader_params($id,window).fr.repl.u_scale \
+	    -row 1 -column 0 -sticky e
+        grid $shader_params($id,window).fr.repl.u_scale_e \
+	    -row 1 -column 1 -sticky w
+        grid $shader_params($id,window).fr.repl.v_scale \
+	    -row 1 -column 2 -sticky e
+        grid $shader_params($id,window).fr.repl.v_scale_e \
+	    -row 1 -column 3 -sticky w
+        grid $shader_params($id,window).fr.repl.mirror_e \
+	    -row 2 -column 1 -sticky e
+        grid $shader_params($id,window).fr.repl.mirror \
+	    -row 2 -column 2 -sticky w
+
 	grid $shader_params($id,window).fr.file -row 0 -column 0 -sticky e
 	grid $shader_params($id,window).fr.file_e -row 0 -column 1 -columnspan 5 -sticky w
 	grid $shader_params($id,window).fr.width -row 1 -column 0 -sticky e
 	grid $shader_params($id,window).fr.width_e -row 1 -column 1 -sticky w
 	grid $shader_params($id,window).fr.height -row 1 -column 2 -sticky e
 	grid $shader_params($id,window).fr.height_e -row 1 -column 3 -sticky w
-	grid $shader_params($id,window).fr.u_scale -row 2 -column 0 -sticky e
-	grid $shader_params($id,window).fr.u_scale_e -row 2 -column 1 -sticky w
-	grid $shader_params($id,window).fr.v_scale -row 2 -column 2 -sticky e
-	grid $shader_params($id,window).fr.v_scale_e -row 2 -column 3 -sticky w
-	grid $shader_params($id,window).fr.mirror_e -row 2 -column 4 -sticky e
-	grid $shader_params($id,window).fr.mirror -row 2 -column 5 -sticky w
+        grid $shader_params($id,window).fr.repl -row 2 -column 0 -sticky nsew -columnspan 5
 	grid $shader_params($id,window).fr.trans -row 3 -column 0 -sticky e
 	grid $shader_params($id,window).fr.trans_e -row 3 -column 1 -sticky w
 	grid $shader_params($id,window).fr.valid_e -row 3 -column 2 -sticky e
