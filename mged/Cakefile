@@ -14,7 +14,7 @@
 			cmd chgview chgmodel chgtree \
 			rtif anal typein predictor \
 			buttons menu adc edsol edarb edpipe edars \
-			proc_reg hideline polyif red \
+			proc_reg polyif red \
 			mater math plot overlay inside \
 			concat utility1 utility2 track arbs \
 			facedef arb set animedit db comb_std \
