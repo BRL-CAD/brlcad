@@ -45,11 +45,9 @@ static char RCSid[] = "@(#)$Header";
 #include "./sedit.h"
 #include "./mged_dm.h"
 
-extern int common_dm();				/* defined in dm-generic.c */
-
-extern void ogl_configureWindow();
-
-extern void dm_var_init();
+extern int common_dm();			/* defined in dm-generic.c */
+extern void dm_var_init();		/* defined in attach.c */
+extern void cs_set_bg();		/* defined in color_scheme.c */
 
 static int	Ogl_dm();
 static int	Ogl_doevent();
@@ -119,6 +117,9 @@ char *argv[];
 		((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer, 0);
   Tcl_SetVar(interp, bu_vls_addr(&vls1), bu_vls_addr(&vls2), TCL_GLOBAL_ONLY);
 #endif
+
+  /* initialize the background color */
+  cs_set_bg();
 
   return TCL_OK;
 }
