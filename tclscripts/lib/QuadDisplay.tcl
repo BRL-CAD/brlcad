@@ -57,6 +57,7 @@ class QuadDisplay {
     public method fb_active {args}
     public method fb_update {args}
     public method rt {args}
+    public method rtcheck {args}
 
     public method dm_size {args}
     public method dm_name {}
@@ -422,6 +423,10 @@ body QuadDisplay::fb_update {args} {
 
 body QuadDisplay::rt {args} {
     eval [subst $[subst $itk_option(-pane)]] rt $args
+}
+
+body QuadDisplay::rtcheck {args} {
+    eval [subst $[subst $itk_option(-pane)]] rtcheck $args
 }
 
 body QuadDisplay::dm_size {args} {

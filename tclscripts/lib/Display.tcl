@@ -44,6 +44,7 @@ class Display {
     public method update {obj}
     public method refresh {}
     public method rt {args}
+    public method rtcheck {args}
     public method autoview {}
 
     # methods for maintaining the list of geometry objects
@@ -143,6 +144,29 @@ body Display::rt {args} {
 
     set v_obj [View::get_name]
     eval $geo rt $v_obj -F $itk_option(-listen) -w $width -n $height -V $aspect $args
+}
+
+body Display::rtcheck {args} {
+    if {$itk_option(-listen) < 0} {
+	return "rtcheck: not listening"
+    }
+
+    set len [llength $args]
+
+    if {$len > 1 && [lindex $args 0] == "-geo"} {
+	set index [lindex $args 1]
+	set args [lrange $args 2 end]
+	set geo [lindex $geolist $index]
+    } else {
+	set geo [lindex $geolist 0]
+    }
+
+    if {$geo == ""} {
+	return "rtcheck: bad geometry index"
+    }
+
+    set v_obj [View::get_name]
+    eval $geo rtcheck $v_obj -F $itk_option(-listen) $args
 }
 
 
