@@ -49,7 +49,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./ged.h"
 #include "./sedit.h"
 #include "externs.h"
-#include "./solid.h"
+#include "./mged_solid.h"
 #include "./mged_dm.h"
 
 BU_EXTERN( void nmg_invert_shell , ( struct shell *s , CONST struct rt_tol *tol ) );

@@ -20,6 +20,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
+#include <signal.h>
 #include "machine.h"
 #include "externs.h"
 #include "bu.h"
@@ -29,8 +30,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./ged.h"
 #include "./sedit.h"
-#include "./solid.h"
-#include <signal.h>
+#include "./mged_solid.h"
 
 extern struct rt_db_internal	es_int;	/* from edsol.c */
 extern struct rt_tol		mged_tol;		/* from ged.c */

@@ -34,7 +34,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "./ged.h"
 #include "externs.h"
-#include "./solid.h"
+#include "./mged_solid.h"
 #include "./mged_dm.h"
 
 extern struct rt_db_internal	es_int;	/* from edsol.c */

@@ -48,7 +48,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "wdb.h"
 
 #include "./ged.h"
-#include "./solid.h"
+#include "./mged_solid.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
 #include "./menu.h"

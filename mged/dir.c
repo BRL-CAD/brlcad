@@ -54,7 +54,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "externs.h"
 #include "./ged.h"
-#include "./solid.h"
+#include "./mged_solid.h"
 #include "./mged_dm.h"
 #include "./mgedtcl.h"
 

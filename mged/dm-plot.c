@@ -38,9 +38,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "dm-plot.h"
 #include "./ged.h"
 #include "./mged_dm.h"
-#include "./solid.h"
-
-extern void color_soltab();
+#include "./mged_solid.h"
 
 int Plot_dm_init();
 
@@ -49,7 +47,7 @@ Plot_dm_init(argc, argv)
 int argc;
 char *argv[];
 {
-  if(dmp->dmr_init(dmp, color_soltab, argc, argv) == TCL_ERROR)
+  if(dmp->dmr_init(dmp, argc, argv) == TCL_ERROR)
     return TCL_ERROR;
 
   return dmp->dmr_open(dmp);

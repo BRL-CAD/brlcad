@@ -45,7 +45,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "rtgeom.h"
 #include "externs.h"
 #include "./ged.h"
-#include "./solid.h"
+#include "./mged_solid.h"
 
 #include "./mgedtcl.h"
 

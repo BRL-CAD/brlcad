@@ -38,7 +38,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./ged.h"
 #include "externs.h"
-#include "./solid.h"
+#include "./mged_solid.h"
 
 /* default region ident codes */
 int	item_default = 1000;	/* GIFT region ID */
