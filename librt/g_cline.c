@@ -52,6 +52,9 @@ CONST struct bu_structparse rt_cline_parse[] = {
 	{ {'\0','\0','\0','\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
 	};
 
+/* shared with do.c */
+fastf_t rt_cline_radius=-1.0;
+
 /*
  *  			R T _ C L I N E _ P R E P
  *  
@@ -79,7 +82,7 @@ struct rt_i		*rtip;
 	vect_t					rad;
 	point_t					top;
 	fastf_t					tmp;
-	fastf_t					max_tr=50.0;
+	fastf_t					max_tr;
 
 	RT_CK_DB_INTERNAL(ip);
 	cline_ip = (struct rt_cline_internal *)ip->idb_ptr;
@@ -94,10 +97,13 @@ struct rt_i		*rtip;
 	VUNITIZE( cline->h );
 	stp->st_specific = (genptr_t)cline;
 
-	/* XXXX max_tr (maximum threat radius) is a temporary kludge */
+	if( rt_cline_radius > 0.0 )
+		max_tr = rt_cline_radius;
+	else
+		max_tr = 0.0;
 	tmp = MAGNITUDE( cline_ip->h ) * 0.5;
 	stp->st_aradius = sqrt( tmp*tmp + cline_ip->radius*cline_ip->radius );
-	stp->st_bradius = stp->st_aradius + 50.0;
+	stp->st_bradius = stp->st_aradius + max_tr;
 	VSETALL( stp->st_min, MAX_FASTF );
 	VREVERSE( stp->st_max, stp->st_min );
 
@@ -165,11 +171,21 @@ struct seg		*seghead;
 	vect_t diff;
 	fastf_t tmp;
 	fastf_t distmin, distmax;
+	fastf_t add_radius;
 
 	BU_LIST_INIT( &ref_seghead.l );
 
 	/* This is a CLINE FASTGEN element */
-	reff = cline->radius + ap->a_rbeam;
+	if( rt_cline_radius > 0.0 )
+	{
+		add_radius = rt_cline_radius;
+		reff = cline->radius + add_radius;
+	}
+	else
+	{
+		add_radius = 0.0;
+		reff = cline->radius;
+	}
 
 	cosa = VDOT( rp->r_dir, cline->h );
 
@@ -221,8 +237,8 @@ struct seg		*seghead;
 		return( 0 );	/* missed */
 
 	sina = sqrt( 1.0 - cosa*cosa);
-	tmp = sqrt( dist[2] ) - ap->a_rbeam;
-	if( dist[2] > ap->a_rbeam * ap->a_rbeam )
+	tmp = sqrt( dist[2] ) - add_radius;
+	if( dist[2] > add_radius * add_radius )
 		half_los = sqrt( cline->radius*cline->radius - tmp*tmp) / sina;
 	else
 		half_los = cline->radius / sina;
@@ -1051,18 +1067,18 @@ CONST char                      *attr;
 	if( attr == (char *)NULL )
 	{
 		bu_vls_strcpy( &vls, "cline" );
-		bu_vls_printf( &vls, " V {%.25g %.25g %.25g}", V3ARGS( cli->v ) );
-		bu_vls_printf( &vls, " H {%.25g %.25g %.25g}", V3ARGS( cli->h ) );
-		bu_vls_printf( &vls, " R %.25g T %.25g", cli->radius, cli->thickness );
+		bu_vls_printf( &vls, " V {%.25G %.25G %.25G}", V3ARGS( cli->v ) );
+		bu_vls_printf( &vls, " H {%.25G %.25G %.25G}", V3ARGS( cli->h ) );
+		bu_vls_printf( &vls, " R %.25G T %.25G", cli->radius, cli->thickness );
 	}
 	else if( *attr == 'V')
-		bu_vls_printf( &vls, "%.25g %.25g %.25g", V3ARGS( cli->v ) );
+		bu_vls_printf( &vls, "%.25G %.25G %.25G", V3ARGS( cli->v ) );
 	else if( *attr == 'H' )
-		bu_vls_printf( &vls, "%.25g %.25g %.25g", V3ARGS( cli->h ) );
+		bu_vls_printf( &vls, "%.25G %.25G %.25G", V3ARGS( cli->h ) );
 	else if( *attr == 'R' )
-		bu_vls_printf( &vls, "%.25g", cli->radius );
+		bu_vls_printf( &vls, "%.25G", cli->radius );
 	else if( *attr == 'T' )
-		bu_vls_printf( &vls, "%.25g", cli->thickness );
+		bu_vls_printf( &vls, "%.25G", cli->thickness );
 	else
 	{
 		bu_vls_strcat( &vls, "ERROR: unrecognized attribute, must be V, H, R, or T!!!" );
