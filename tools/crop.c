@@ -35,7 +35,7 @@ static char rcs_ident[] = "$Header$";
 
 #include "machine.h"
 #include "externs.h"
-#include "<rle.h"
+#include "rle.h"
 
 extern void rle_box();
 int pos_box_vals();
