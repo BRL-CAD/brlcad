@@ -39,9 +39,18 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include <strings.h>
 #endif
 #include <math.h>
-#if unix
-# include <fcntl.h>
-# include <sys/errno.h>
+#if defined(HAVE_FCNTL_H)
+#  include <fcntl.h>
+#endif
+#if defined(HAVE_ERRNO_H)
+#  include <errno.h>
+#else
+#  if defined(HAVE_SYS_ERRNO_H)
+#    include <sys/errno.h>
+#  endif
+#endif
+#if defined(HAVE_UNISTD_H)
+#  include <unistd.h>
 #endif
 #include "tcl.h"
 #include "machine.h"
@@ -593,16 +602,15 @@ wdb_prep_dbip(Tcl_Interp *interp, char *filename)
 	/* open database */
 	if (((dbip = db_open(filename, "r+w")) == DBI_NULL) &&
 	    ((dbip = db_open(filename, "r"  )) == DBI_NULL)) {
+
+#if defined(HAVE_ACCESS)
 		/*
 		 * Check to see if we can access the database
 		 */
-#if unix
 		if (access(filename, R_OK|W_OK) != 0 && errno != ENOENT) {
 			perror(filename);
 			return DBI_NULL;
 		}
-#endif
-#if WIN32
 #endif
 
 		/* db_create does a db_dirbuild */
