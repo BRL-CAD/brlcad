@@ -2055,8 +2055,8 @@ struct faceuse		*fu1;		/* fu that eu1 is from */
 			rt_log("nmg_isect_edge2p_face2p(eu1=x%x) skipping 0-len edge (topology)\n", eu1);
 		goto out;
 	}
-	VMOVE( line.r_pt, vu1->v_p->vg_p->coord );		/* 3D line */
-	VSUB2( line.r_dir, vu2->v_p->vg_p->coord, line.r_pt );
+	VMOVE( line.r_pt, is->on_eg->e_pt );			/* 3D line */
+	VMOVE( line.r_dir, is->on_eg->e_dir );
 	VUNITIZE( line.r_dir );
 	VINVDIR( invdir, line.r_dir );
 
@@ -3730,16 +3730,11 @@ struct faceuse		*fu1, *fu2;
 		/*
 		 *  There is a topological edge_g in common between
 		 *  the two face geometries.
-		 *  If it isn't used by at least one edge of *both* faceuses,
-		 *  then we know there can't be an intersection.
+		 *  The intersection still needs to be done, because
+		 *  there might be partial sharing due to the fuser,
+		 *  but a full intersection may not have been performed
+		 *  on both faceuses yet.
 		 */
-		if( is->on_eg )  {
-			struct edgeuse	*eu1, *eu2;
-
-			eu1 = nmg_does_fu_use_eg( fu1, is->on_eg );
-			eu2 = nmg_does_fu_use_eg( fu2, is->on_eg );
-			if( !eu1 || !eu2 )  goto outfast;
-		}
 	}
 	if( !is->on_eg )  {
 		/* Geometry search */
