@@ -464,6 +464,7 @@ XEvent *eventPtr;
 	    return 1;
 	x = (eventPtr->xmotion.x/(double)width - 0.5) * 4095;
 	y = (0.5 - eventPtr->xmotion.y/(double)height) * 4095;
+    	/* Constant tracking (e.g. illuminate mode) bound to M mouse */
 	rt_vls_printf( &dm_values.dv_string, "M 0 %d %d\n", x, y );
     } else if( eventPtr->type == ButtonPress ) {
 	/* There may also be ButtonRelease events */
@@ -473,16 +474,16 @@ XEvent *eventPtr;
 	y = (0.5 - eventPtr->xbutton.y/(double)height) * 4095;
 	switch( eventPtr->xbutton.button ) {
 	case Button1:
-	    /* Left mouse: Zoom out */
-	    rt_vls_strcat( &dm_values.dv_string, "zoom 0.5\n");
+	    /* Left mouse */
+	    rt_vls_strcat( &dm_values.dv_string, "L 1 %d %d\n", x, y);
 	    break;
 	case Button2:
 	    /* Middle mouse, up to down transition */
 	    rt_vls_printf( &dm_values.dv_string, "M 1 %d %d\n", x, y);
 	    break;
 	case Button3:
-	    /* Right mouse: Zoom in */
-	    rt_vls_strcat( &dm_values.dv_string, "zoom 2\n");
+	    /* Right mouse */
+	    rt_vls_strcat( &dm_values.dv_string, "R 1 %d %d\n", x, y);
 	    break;
 	}
     } else if( eventPtr->type == ButtonRelease ) {
@@ -491,14 +492,14 @@ XEvent *eventPtr;
 	y = (0.5 - eventPtr->xbutton.y/(double)height) * 4095;
 	switch( eventPtr->xbutton.button ) {
 	case Button1:
-	    /* Left mouse: Zoom out.  Do nothing more */
+	    rt_vls_printf( &dm_values.dv_string, "L 0 %d %d\n", x, y);
 	    break;
 	case Button2:
 	    /* Middle mouse, down to up transition */
 	    rt_vls_printf( &dm_values.dv_string, "M 0 %d %d\n", x, y);
 	    break;
 	case Button3:
-	    /* Right mouse: Zoom in.  Do nothing more. */
+	    rt_vls_printf( &dm_values.dv_string, "R 0 %d %d\n", x, y);
 	    break;
 	}
     } else if( eventPtr->type == KeyPress ) {
