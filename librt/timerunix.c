@@ -62,10 +62,11 @@ char *str;
 {
 	long now;
 	double usert;
+	double syst;
 	double realt;
 	double	percent;
 	struct tms tmsnow;
-	char line[132];
+	char line[256];
 
 	(void)time(&now);
 	realt = now-time0;
@@ -73,16 +74,19 @@ char *str;
 	usert = (tmsnow.tms_utime + tmsnow.tms_cutime) - 
 		(tms0.tms_utime + tms0.tms_cutime );
 	usert /= HZ;
+	syst = (tmsnow.tms_stime + tmsnow.tms_cstime) - 
+		(tms0.tms_stime + tms0.tms_cstime );
+	syst /= HZ;
 	if( usert < 0.00001 )  usert = 0.01;
 	if( realt < 0.00001 )  realt = usert;
 	percent = usert/realt*100.0;
 #ifdef DEFAULT_HZ
 	sprintf(line,
-		"%g CPU secs in %g elapsed secs (%g%%) WARNING: HZ=60 assumed, fix librt/timerunix.c",
-		usert, realt, percent );
+		"%g user + %g sys in %g elapsed secs (%g%%) WARNING: HZ=60 assumed, fix librt/timerunix.c",
+		usert, syst, realt, percent );
 #else
-	sprintf(line,"%g CPU secs in %g elapsed secs (%g%%)",
-		usert, realt, percent );
+	sprintf(line,"%g user + %s sys in %g elapsed secs (%g%%)",
+		usert, syst, realt, percent );
 #endif
 	(void)strncpy( str, line, len );
 	return( usert );
