@@ -17,7 +17,7 @@
 #include "../Cakefile.defs"
 #include "../Cakefile.prog"
 
-#ifdef NFS
+#if NFS
 #	define	RTDIR	../.rt.MTYPE
 #else
 #	define	RTDIR	../rt
