@@ -399,11 +399,11 @@ f_status()
 	}
 }
 
-/* Fix the display processor after a hardware error, as best we can */
+/* Fix the display processor after a hardware error by re-attaching */
 void
 f_fix()
 {
-	dmp->dmr_restart();
+	attach( dmp->dmr_name );	/* reattach */
 	dmaflag = 1;		/* causes refresh() */
 }
 
