@@ -71,8 +71,8 @@ FBIO sgi_interface =
 		fb_null,
 		fb_null,
 		sgi_viewport_set,
-		fb_null,
-		fb_null,
+		sgi_window_set,
+		sgi_zoom_set,
 		fb_null,
 		fb_null,
 		fb_null,
@@ -109,8 +109,13 @@ int	width, height;
 	
 	gbegin();		/* not ginit() */
 	RGBmode();
-	gconfig();		/* Must be called after RGBmode() */
-
+	gconfig();
+	if( getplanes() < 24 )  {
+		fb_log("Only %d bit planes?  24 required\n", getplanes());
+		(void)sgi_dclose(ifp);
+		return(-1);
+	}
+	tpoff();		/* Turn off textport */
 
 	/* Build a linear "colormap" in case he wants to read it */
 	sgi_cmwrite( ifp, COLORMAP_NULL );
@@ -123,6 +128,9 @@ int	width, height;
 
 	ifp->if_width = width;
 	ifp->if_height = height;
+
+#define if_pixsize	if_pref
+	ifp->if_pixsize = 1;	/* for zoom fakeout */
 	return(0);
 }
 
@@ -130,7 +138,9 @@ _LOCAL_ int
 sgi_dclose( ifp )
 FBIO	*ifp;
 {
+	tpon();			/* Turn on textport */
 	greset();
+	/* could be ginit(), gconfig() */
 	gexit();
 	return(0);
 }
@@ -162,6 +172,27 @@ Pixel	*pp;
 		RGBcolor( (short) 0, (short) 0, (short) 0);
 	clear();
 	return(0);
+}
+
+_LOCAL_ int
+sgi_window_set( ifp, x, y )
+FBIO	*ifp;
+int	x, y;
+{
+	return(0);	/* Unable to do much */
+}
+
+_LOCAL_ int
+sgi_zoom_set( ifp, x, y )
+FBIO	*ifp;
+int	x, y;
+{
+	int npts;
+	npts = ifp->if_width;
+	if( npts > 768 )  npts = 768;
+	if( x < 1 )  x = 1;
+	npts = npts / x;
+	ifp->if_pixsize = 768/npts;
 }
 
 _LOCAL_ int
@@ -223,7 +254,7 @@ short	count;
 	xpos = x;
 	ypos = y;
 	while( count > 0 )  {
-		if( xpos >= 768 )  return(0);
+		if( ypos >= 768 )  return(0);
 		if ( count >= ifp->if_width )  {
 			scan_count = ifp->if_width;
 		} else	{
@@ -237,8 +268,23 @@ short	count;
 		GEP_END(hole)->s = (0xFF<<8)|8;	/* im_last_passthru(0) */
 
 		for( i=scan_count; i > 0; )  {
-			register int chunk;
+			register short chunk;
 
+			if( ifp->if_pixsize > 1 )  {
+				Coord l, b;
+				RGBcolor( (short)pixelp->red,
+					(short)pixelp->green,
+					(short)pixelp->blue );
+				l = xpos * ifp->if_pixsize;
+				b = ypos * ifp->if_pixsize;
+				/* left bottom right top */
+				rectf( l, b,
+					l+ifp->if_pixsize, b+ifp->if_pixsize);
+				i--;
+				xpos++;
+				pixelp++;
+				continue;
+			}
 			if( i <= (127/3) )
 				chunk = i;
 			else
