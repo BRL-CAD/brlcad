@@ -83,7 +83,7 @@ cake ${SILENT} \
  utility2.o &
 
 cake ${SILENT} \
- dm-plot.o dm-ps.o dm-X.o dm-ogl.o \
+ dm-plot.o dm-ps.o \
  vparse.o \
  doevent.o muves.o \
  bodyio.o &
