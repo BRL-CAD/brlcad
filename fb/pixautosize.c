@@ -85,13 +85,13 @@ char **argv;
 	}
 
 	if( file_name ) {
-		if( !fb_common_file_size(&width, &height, file_name, bytes_per_sample) ) {
+		if( !bn_common_file_size(&width, &height, file_name, bytes_per_sample) ) {
 			fprintf(stderr,"pixautosize: unable to autosize file '%s'\n", file_name);
 			ret = 1;		/* ERROR */
 		}
 	} else {
 		nsamp = file_length/bytes_per_sample;
-		if( !fb_common_image_size(&width, &height, nsamp) ) {
+		if( !bn_common_image_size(&width, &height, nsamp) ) {
 			fprintf(stderr,"pixautosize: unable to autosize nsamples=%d\n", nsamp);
 			ret = 2;		/* ERROR */
 		}
