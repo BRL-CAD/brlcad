@@ -213,7 +213,7 @@ puts "disp.tcl: about to define proc plot_tabdata"
 #
 # Remember: 4th quadrant addressing!
 #
-proc plot_tabdata { canvas data {minval -1} {maxval -1} {screen_ymax 256} } {
+proc plot_tabdata { canvas data {y_minval -1} {y_maxval -1} {screen_ymax 256} } {
 puts "plot_tabdata starting"
 puts "canvas = $canvas"
 puts "data   = $data"
@@ -229,14 +229,26 @@ puts "nx     = $key_nx"
 puts "key_x  = $key_x"
 puts "key_y  = $key_y"
 
-	# If minval and maxval not set, scale data.
-	if {$minval == $maxval} {
-		set minval $key_ymin
-		set maxval $key_ymax
+	# If y_minval and y_maxval not set (arg defaults used),
+	# scale data using min and max values provided with the data.
+	if {$y_minval == $y_maxval} {
+		set y_minval $key_ymin
+		set y_maxval $key_ymax
 	}
-puts "minval = $minval"
-puts "maxval = $maxval"
+puts "y_minval = $y_minval"
+puts "y_maxval = $y_maxval"
+	set y_scale [expr ($screen_ymax - 1) / ($y_maxval - $y_minval) ]
+puts "y_scale  = $y_scale"
 
+	# Scale in X dimension
+	set x_minval [lindex $key_x 0]
+	set x_maxval [lindex $key_x end]
+puts "x_minval = $x_minval"
+puts "x_maxval = $x_maxval"
+	set x_scale [expr ($screen_ymax - 1) / ($x_maxval - $x_minval) ]
+	# Don't let X scale scrunch less than 1 pixel per sample.
+	if {$x_scale > 1.0} {set x_scale 1}
+puts "x_scale  = $x_scale"
 
 	# Draw a vertical line to control screen-size auto-scale of widget.
 	set x0 0
@@ -245,11 +257,11 @@ puts "maxval = $maxval"
 	$canvas delete T
 	$canvas create line $x0 0 $x0 $screen_ymax -tags T -fill grey
 
-	set scale [expr 255 / ($maxval - $minval) ]
 
-	for {set x1 0} {$x1 < $key_nx} {incr x1} {
+	for {set j 0} {$j < $key_nx} {incr j} {
+		set x1 [expr ([lindex $key_x $j] - $x_minval ) * $x_scale]
 		set y1 [expr $screen_ymax - 1 - \
-			( [lindex $key_y $x1] - $minval ) * $scale]
+			( [lindex $key_y $j] - $y_minval ) * $y_scale]
 		if {$y1 < 0} {
 			set y1 0
 		} elseif {$y1 > 255} {
@@ -258,8 +270,9 @@ puts "maxval = $maxval"
 		$canvas create line $x0 $y0 $x1 $y1 -tags T
 		set x0 $x1
 		set y0 $y1
-##		puts "$x0 $y0 $x1 $y1"
+		puts "$x0 $y0 $x1 $y1"
 	}
+puts "plot_tabdata $canvas ending"
 }
 
 puts "disp.tcl: about to define proc popup_plot_tabdata"
@@ -280,7 +293,7 @@ proc popup_plot_tabdata { title data {minval -1} {maxval -1} {screen_ymax 256} }
 
 	puts "About to run canvas ${popup}.canvas"
 
-	canvas ${popup}.canvas -width 256 -height 256
+	canvas ${popup}.canvas -width 256 -height $screen_ymax
 	button ${popup}.dismiss -text "Dismiss" -command "destroy $popup"
 	pack ${popup}.canvas ${popup}.dismiss -side top -in $popup
 
