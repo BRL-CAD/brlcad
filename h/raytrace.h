@@ -1499,6 +1499,8 @@ RT_EXTERN(int rt_do_cmd, (struct rt_i *rtip, char *lp, struct command_tab *ctp) 
 					/* Start the timer */
 RT_EXTERN(void rt_prep_timer, (void) );
 					/* Read timer, return time + str */
+RT_EXTERN(double rt_get_timer, (struct rt_vls *vp, double *elapsed));
+					/* Return CPU time, text, & wall clock time */
 RT_EXTERN(double rt_read_timer, (char *str, int len) );
 					/* Plot a solid */
 RT_EXTERN(int rt_plot_solid, (FILE *fp, struct rt_i *rtip, struct soltab *stp) );
