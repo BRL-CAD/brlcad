@@ -105,7 +105,8 @@ struct rt_i		*rtip;
 	RT_SUBMODEL_CK_MAGIC(sip);
 
 	bu_semaphore_acquire(RT_SEM_MODEL);
-	/* This code must be prepared to run in parallel
+	/*
+	 * This code must be prepared to run in parallel
 	 * without tripping over itself.
 	 */
 	if( sip->file[0] == '\0' )  {
@@ -121,6 +122,7 @@ struct rt_i		*rtip;
 
 		if( !db_is_directory_non_empty(sub_dbip) )  {
 			/* This is first open of db, build directory */
+bu_log("rt_submodel_prep(%s) doing db_scan\n", stp->st_name);
 			if( db_scan( sub_dbip, (int (*)())db_diradd, 1, NULL ) < 0 )  {
 				db_close( sub_dbip );
 				bu_semaphore_release(RT_SEM_MODEL);
@@ -128,6 +130,7 @@ struct rt_i		*rtip;
 			}
 		}
 	}
+if(sub_dbip == rtip->rti_dbip) bu_log("rt_submodel_prep(%s): re-attached to parent's database %s\n", stp->st_name, sub_dbip->dbi_filename);
 
 	/*
 	 *  Search for a previous exact use of this file and treetop,
@@ -161,6 +164,8 @@ struct rt_i		*rtip;
 
 	bu_semaphore_release(RT_SEM_MODEL);
 
+bu_log("rt_submodel_prep(%s) rtip=x%x, sub_rtip=x%x\n", stp->st_name, rtip, sub_rtip);
+
 	if( rt_g.debug & (DEBUG_DB|DEBUG_SOLIDS) )  {
 		bu_log("rt_submodel_prep(%s): Opened database %s\n",
 			stp->st_dp->d_namep, sub_dbip->dbi_filename );
@@ -182,14 +187,18 @@ struct rt_i		*rtip;
 
 	argv[0] = sip->treetop;
 	argv[1] = NULL;
+bu_log("submodel(%s) starting rt_gettrees %s\n", stp->st_name, argv[0]);
 	if( rt_gettrees( sub_rtip, 1, (CONST char **)argv, 1 ) < 0 )  {
-		rt_free_rti( rtip );
+		bu_log("submodel(%s) rt_gettrees(%s) failed\n", stp->st_name, argv[0]);
+		rt_free_rti( sub_rtip );
 		return -2;
 	}
+bu_log("submodel(%s) finished rt_gettrees\n", stp->st_name);
 
 	if( sub_rtip->nsolids <= 0 )  {
 		bu_log("rt_submodel_prep(%s): %s No solids found\n",
 			stp->st_dp->d_namep, sip->file );
+		rt_free_rti( sub_rtip );
 		return -3;
 	}
 
