@@ -37,10 +37,13 @@
 #include <GL/gl.h>
 #endif
 
+#include <stdio.h>
+#include <math.h>
 #include "machine.h"
 #include "externs.h"
 #include "bu.h"
 #include "vmath.h"
+#include "bn.h"
 #include "raytrace.h"
 #include "dm.h"
 #include "dm-ogl.h"
@@ -56,6 +59,7 @@
 #define YOFFSET_LEFT	532	/* YSTEREO + YBLANK ? */
 
 extern Tk_Window tkwin;
+
 void	Ogl_configure_window_shape();
 void    Ogl_establish_perspective();
 void    Ogl_set_perspective();
@@ -431,7 +435,7 @@ Done:
   glPushMatrix();
   glLoadIdentity();
   ((struct ogl_vars *)dmp->dm_vars)->face_flag = 1;	/* faceplate matrix is on top of stack */
-		
+
   Tk_MapWindow(((struct ogl_vars *)dmp->dm_vars)->xtkwin);
   return TCL_OK;
 }
@@ -641,9 +645,9 @@ int which_eye;
   if( ! ((struct ogl_vars*)dmp->dm_vars)->mvars.zclipping_on ) {
     mat_t       nozclip;
 
-    mat_idn( nozclip );
+    bn_mat_idn( nozclip );
     nozclip[10] = 1.0e-20;
-    mat_mul( newm, nozclip, mat );
+    bn_mat_mul( newm, nozclip, mat );
     mptr = newm;
   } else {
     mptr = mat;
@@ -783,12 +787,12 @@ fastf_t *m;
     glEnd();
 
 #if 0
-	if (illum && ((struct ogl_vars *)dmp->dm_vars)->mvars.cueing_on){
-		glEnable(GL_FOG);
-	}
+  if (illum && ((struct ogl_vars *)dmp->dm_vars)->mvars.cueing_on){
+    glEnable(GL_FOG);
+  }
 #endif
 
-	return(1);	/* OK */
+  return TCL_OK;
 }
 
 /*
@@ -841,7 +845,7 @@ int size;
     Tcl_AppendResult(interp, "Ogl_drawString2D()\n", (char *)NULL);
 
 	
-  glRasterPos2f( GED2IRIS(x),  GED2IRIS(y));
+  glRasterPos2f(GED2IRIS(x),  GED2IRIS(y));
   glListBase(((struct ogl_vars *)dmp->dm_vars)->fontOffset);
   glCallLists(strlen( str ), GL_UNSIGNED_BYTE,  str );
 
@@ -887,8 +891,8 @@ int x2, y2;
   }
 
   glBegin(GL_LINES); 
-  glVertex2f( GED2IRIS(x1),  GED2IRIS(y1));
-  glVertex2f( GED2IRIS(x2),  GED2IRIS(y2));
+  glVertex2f(GED2IRIS(x1),  GED2IRIS(y1));
+  glVertex2f(GED2IRIS(x2),  GED2IRIS(y2));
   glEnd();
 
   return TCL_OK;
@@ -899,7 +903,11 @@ Ogl_drawVertex2D(dmp, x, y)
 struct dm *dmp;
 int x, y;
 {
-  return Ogl_drawLine2D(dmp, x, y, x+1, y+1);
+  glBegin(GL_POINTS);
+  glVertex2f(GED2IRIS(x), GED2IRIS(y));
+  glEnd();
+
+  return TCL_OK;
 }
 
 
