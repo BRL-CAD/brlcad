@@ -841,8 +841,10 @@ main( argc, argv )
 		{
 		register int	c;
 
-		if ( (c = getc( gfp )) == EOF )
+		if ( (c = getc( gfp )) == EOF )  {
 			Fatal( "Missing GIF terminator" );
+			break;
+		}
 
 		switch( c )
 			{
@@ -1006,4 +1008,5 @@ main( argc, argv )
 			}
 		}
 	/* [not reached] */
+	exit(1);
 	}
