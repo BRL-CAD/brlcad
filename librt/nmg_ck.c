@@ -9,16 +9,20 @@
  *	John R. Anderson
  *  
  *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
+ *  Distribution Notice -
+ *	Re-distribution of this software is restricted, as described in
+ *	your "Statement of Terms and Conditions for the Release of
+ *	The BRL-CAD Pacakge" agreement.
+ *
  *  Copyright Notice -
- *	This software is Copyright (C) 1990 by the United States Army.
- *	All rights reserved.
+ *	This software is Copyright (C) 1993 by the United States Army
+ *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include <stdio.h>
@@ -32,20 +36,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "raytrace.h"
 
-/* THis duplicates the extern from nmg_mesh.c */
+/* XXX move to raytrace.h This duplicates the extern from nmg_mesh.c */
 RT_EXTERN(double nmg_measure_fu_angle, (CONST struct edgeuse *eu, CONST vect_t xvec, CONST vect_t yvec, CONST vect_t zvec));
-
-/* XXX move into librt/pr.c */
-void
-rt_pr_tol(tol)
-CONST struct rt_tol	*tol;
-{
-	RT_CK_TOL(tol);
-
-	rt_log("%8.8x TOL %e (sq=%e) perp=%e, para=%e\n",
-		tol, tol->dist, tol->dist_sq,
-		tol->perp, tol->para );
-}
 
 /************************************************************************
  *									*
@@ -978,6 +970,49 @@ char *str;
 		nmg_ck_lu(&fu->l.magic, lu, errstr);
 	}
 	rt_free(errstr, "nmg_ck_fu error str");
+}
+
+/*
+ *			N M G _ C K _ F A C E _ W O R T H L E S S _ E D G E S
+ *
+ *  Search for null ("worthless") edges in a face.
+ *  Such edges are legitimate to have, but can be troublesom
+ *  for the boolean routines.
+ *
+ *  Often used to see if breaking an edge at a given
+ *  vertex results in a null edge being created.
+ */
+int
+nmg_ck_face_worthless_edges( fu )
+CONST struct faceuse	*fu;
+{
+	CONST struct loopuse	*lu;
+
+	for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
+		struct edgeuse	*eu;
+		struct vertexuse *vu2;
+
+		NMG_CK_LOOPUSE(lu);
+		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )
+			continue;
+		for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
+			struct edgeuse		*neu;
+			neu = RT_LIST_PNEXT_CIRC( edgeuse, eu );
+			if( eu->vu_p == neu->vu_p )
+				rt_bomb("edge runs between two copies of vu??\n");
+			if( eu->vu_p->v_p == neu->vu_p->v_p )  {
+#if 0
+				nmg_pr_eu( eu, NULL );
+				nmg_pr_eu( neu, NULL );
+#endif
+				rt_log("eu=x%x, neu=x%x, v=x%x\n", eu, neu, eu->vu_p->v_p);
+				rt_log("eu=x%x, neu=x%x, v=x%x\n", eu->eumate_p, neu->eumate_p, eu->eumate_p->vu_p->v_p);
+				rt_bomb("nmg_ck_face_worthless_edges() edge runs from&to same vertex\n");
+				return 1;
+			}
+		}
+	}
+	return 0;
 }
 
 /*
