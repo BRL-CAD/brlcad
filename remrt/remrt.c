@@ -1271,6 +1271,27 @@ register struct frame	*fr;
 }
 
 /*
+ *			A L L _ S E R V E R S _ I D L E
+ *
+ *  Returns -
+ *	!0	All servers are idle
+ *	 0	Some servers still busy
+ */
+int
+all_servers_idle()
+{
+	register struct servers	*sp;
+
+	for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
+		if( sp->sr_pc == PKC_NULL )  continue;
+		if( sp->sr_state != SRST_READY )  continue;
+		if( sp->sr_work.li_forw == &(sp->sr_work) )  continue;
+		return(0);		/* nope, still more work */
+	}
+	return(1);			/* All done */
+}
+
+/*
  *			A L L _ D O N E
  *
  *  All work is done when there is no more work to be sent out,
@@ -1293,12 +1314,10 @@ all_done()
 		return(0);		/* nope, still more work */
 	}
 
-	for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
-		if( sp->sr_pc == PKC_NULL )  continue;
-		if( sp->sr_work.li_forw == &(sp->sr_work) )  continue;
-		return(0);		/* nope, still more work */
-	}
-	return(1);			/* All done */
+	if( all_servers_idle() )
+		return(1);		/* All done */
+
+	return(0);			/* nope, still more work */
 }
 
 /*
@@ -3071,11 +3090,26 @@ char	**argv;
 	struct timeval	now;
 
 	clients &= ~(1<<fileno(stdin));
-	while( running && clients && FrameHead.fr_forw != &FrameHead )  {
-		check_input( 30 );	/* delay up to 30 secs */
+	if( running )  {
+		/*
+		 *  When running, WAIT command waits for all
+		 *  outstanding frames to be completed.
+		 */
+		while( clients && FrameHead.fr_forw != &FrameHead )  {
+			check_input( 30 );	/* delay up to 30 secs */
 
-		(void)gettimeofday( &now, (struct timezone *)0 );
-		schedule( &now );
+			(void)gettimeofday( &now, (struct timezone *)0 );
+			schedule( &now );
+		}
+	} else {
+		/*
+		 *  When stopped, WAIT command waits for all
+		 *  servers to finish their assignments.
+		 */
+		while( !all_servers_idle() )  {
+			rt_log("Stopped, waiting for servers to become idle\n");
+			check_input( 30 );	/* delay up to 30 secs */
+		}
 	}
 	clients |= 1<<fileno(stdin);
 }
@@ -3160,6 +3194,13 @@ char	**argv;
 	}
 }
 
+cd_exit( argc, argv )
+int	argc;
+char	**argv;
+{
+	exit(0);
+}
+
 struct command_tab cmd_tab[] = {
 	"load",	"file obj(s)",	"specify database and treetops",
 		cd_load,	3, 99,
@@ -3193,6 +3234,8 @@ struct command_tab cmd_tab[] = {
 		cd_host,	1, 5,
 	"wait", "",		"wait for current work assignment to finish",
 		cd_wait,	1, 1,
+	"exit", "",		"terminate remrt",
+		cd_exit,	1, 1,
 	/* FRAME BUFFER */
 	"attach", "[fb]",	"attach to frame buffer",
 		cd_attach,	1, 2,
