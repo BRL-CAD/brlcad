@@ -353,7 +353,8 @@ CONST char		*s;
 	if( (len = strlen(s)) <= 0 )  {
 		vp->vls_len = 0;
 		vp->vls_offset = 0;
-		vp->vls_str[0] = '\0';
+		if(vp->vls_max > 0)
+			vp->vls_str[0] = '\0';
 		return;
 	}
 	vp->vls_offset = 0;		/* cancel offset before extending */
