@@ -362,6 +362,10 @@ body Mged::label {args} {
     eval $db label $args
 }
 
+body Mged::r {args} {
+    eval $db r $args
+}
+
 body Mged::report {args} {
     eval $db report $args
 }
