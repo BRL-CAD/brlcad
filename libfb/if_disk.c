@@ -54,7 +54,7 @@ FBIO disk_interface = {
 	dsk_wmap,
 	fb_sim_view,		/* set view */
 	fb_sim_getview,		/* get view */
-	fb_null,		/* define cursor */
+	fb_null_setcursor,		/* define cursor */
 	fb_sim_cursor,		/* set cursor */
 	fb_sim_getcursor,	/* get cursor */
 	fb_sim_readrect,
