@@ -137,6 +137,11 @@ set_port()
   if(!mged_variables->listen)
     return;
 
+  if(!mged_variables->fb){
+    mged_variables->listen = 0;
+    return;
+  }
+
   if(mged_variables->port < 0){
     mged_variables->listen = 0;
     bu_log("set_port: invalid port number - %d\n", mged_variables->port);
