@@ -30,13 +30,14 @@ static void 	vertex_neighborhood RT_ARGS((struct ray_data *rd, struct vertexuse 
 RT_EXTERN(void	nmg_isect_ray_model, (struct ray_data *rd));
 
 /* Plot a faceuse and a line between pt and plane_pt */
+static int plot_file_number=0;
+
 static void
 plfu( fu, pt, plane_pt )
 struct faceuse *fu;
 point_t pt;
 point_t plane_pt;
 {
-	static int file_number=0;
 	FILE *fd;
 	char name[25];
 	char buf[80];
@@ -47,7 +48,7 @@ point_t plane_pt;
 
 	NMG_CK_FACEUSE(fu);
 	
-	sprintf(name, "ray%02d.pl", file_number++);
+	sprintf(name, "ray%02d.pl", plot_file_number++);
 	if ((fd=fopen(name, "w")) == (FILE *)NULL) {
 		perror(name);
 		abort();
@@ -75,6 +76,57 @@ point_t plane_pt;
 	fclose(fd);
 }
 
+static void
+pleu( eu, pt, plane_pt)
+struct edgeuse *eu;
+point_t pt;
+point_t plane_pt;
+{
+        FILE *fd;
+        char name[25];
+        char buf[80];
+	long *b;
+	point_t min_pt, max_pt;
+	int i;
+	struct model *m;
+        
+        sprintf(name, "ray%02d.pl", plot_file_number++);
+        if ((fd=fopen(name, "w")) == (FILE *)NULL) {
+        	perror(name);
+        	abort();
+        }
+
+	rt_log("\tplotting %s\n", name);
+	m = nmg_find_model( eu->up.magic_p );
+	b = (long *)rt_calloc( m->maxindex, sizeof(long), "bit vec");
+
+	pl_erase(fd);
+
+	VMOVE(min_pt, eu->vu_p->v_p->vg_p->coord);
+	
+	for (i=0 ; i < 3 ; i++) {
+		if (eu->eumate_p->vu_p->v_p->vg_p->coord[i] < min_pt[i]) {
+			max_pt[i] = min_pt[i];
+			min_pt[i] = eu->eumate_p->vu_p->v_p->vg_p->coord[i];
+		} else {
+			max_pt[i] = eu->eumate_p->vu_p->v_p->vg_p->coord[i];
+		}
+	}
+	pd_3space(fd,
+		min_pt[0]-1.0, min_pt[1]-1.0, min_pt[2]-1.0,
+		max_pt[0]+1.0, max_pt[1]+1.0, max_pt[2]+1.0);
+
+	nmg_pl_eu(fd, eu, b, 255, 255, 255);
+	pl_color(fd, 255, 50, 50);
+	pdv_3line(fd, pt, plane_pt);
+	rt_free((char *)b, "bit vec");
+	fclose(fd);
+}
+static void
+plvu(vu)
+struct vertexuse *vu;
+{
+}
 
 nmg_rt_print_hitmiss(a_hit)
 struct hitmiss *a_hit;
@@ -123,8 +175,8 @@ struct hitmiss *hl;
 	if (!(rt_g.NMG_debug & DEBUG_RT_ISECT))
 		return;
 
-	rt_log("nmg/ray hit list\n\n");
-f
+	rt_log("nmg/ray hit list:\n");
+
 	for (RT_LIST_FOR(a_hit, hitmiss, &(hl->l))) {
 		nmg_rt_print_hitmiss(a_hit);
 	}
@@ -145,50 +197,38 @@ struct ray_data *rd;
 struct hitmiss *newhit;
 {
 	struct hitmiss *a_hit;
+	struct faceuse *fu;
+	struct vertexuse *vu;
 
-	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-		rt_log("hit_ins()\n");
+	RT_LIST_MAGIC_SET(&newhit->l, NMG_RT_HIT_MAGIC);
+
+	if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
+		rt_log("hit_ins()\n  inserting:");
+		nmg_rt_print_hitmiss(newhit);
+	}
 
 	for (RT_LIST_FOR(a_hit, hitmiss, &rd->rd_hit)) {
 		if (newhit->hit.hit_dist < a_hit->hit.hit_dist)
 			break;
-		if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-			rt_log("\tahit: 0x%08x dist:%g pt:(%g %g %g)\n",
-				a_hit,
-				a_hit->hit.hit_dist,
-				a_hit->hit.hit_point[0],
-				a_hit->hit.hit_point[1],
-				a_hit->hit.hit_point[2]);
 	}
 
 	/* a_hit now points to the item before which we should insert this
 	 * hit in the hit list.
 	 */
-	 
-	if (RT_LIST_NOT_HEAD(a_hit, &rd->rd_hit)) {
-		if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-		    rt_log ("\tinserting newhit 0x%08x dist:%g pt:(%g %g %g)\n\tprior to 0x%08x dist:%g pt:(%g %g %g)\n",
-			newhit,
-			newhit->hit.hit_dist,
-			newhit->hit.hit_point[0],
-			newhit->hit.hit_point[1],
-			newhit->hit.hit_point[2],
-			a_hit,
-			a_hit->hit.hit_dist,
-			a_hit->hit.hit_point[0],
-			a_hit->hit.hit_point[1],
-			a_hit->hit.hit_point[2]);
-	} else {
-		if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-		    rt_log ("\tinserting newhit 0x%08x dist:%g pt:(%g %g %g)\n\tat end of list\n",
-			newhit,
-			newhit->hit.hit_dist,
-			newhit->hit.hit_point[0],
-			newhit->hit.hit_point[1],
-			newhit->hit.hit_point[2]);
+
+	if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
+		if (RT_LIST_NOT_HEAD(a_hit, &rd->rd_hit)) {
+			rt_log("   prior to:");
+			nmg_rt_print_hitmiss(a_hit);
+		} else {
+			rt_log("\tat end of list\n");
+		}
 	}
+
 	RT_LIST_INSERT(&a_hit->l, &newhit->l);
-	RT_LIST_MAGIC_SET(&newhit->l, NMG_RT_HIT_MAGIC);
+
+	print_hitlist(&rd->rd_hit);
+
 }
 
 
@@ -243,19 +283,49 @@ struct vertexuse *vu_p;
 	return myhit;
 }
 
-/*
+/*	V E R T E X _ N E I G H B O R H O O D
+ *
  *	Examine the vertex neighborhood to classify the ray as IN/ON/OUT of
  *	the NMG both before and after hitting the vertex.
  *
- *	N       R
- *	^      ^
- *	|     /
- *	|    / |
- *	|   /  | -NdotR (N)
- *	|  /   |
- *	| /    |
- *	|/     V
- *	.----->Q
+ *
+ *	There is a conceptual sphere about the vertex.  The point where the
+ *	ray enters the sphere is called the "North Pole" and the point where
+ *	it exits the sphere is called the "South Pole"  
+ *
+ *	For each face which uses this vertex we compute 2 "distance" metrics:
+ *
+ *	project the "north pole" and "south pole" down onto the plane of the
+ *	face.
+ *
+ *		XXX If necessary expand the sphere until the projections for
+ *			all faces are no longer within tolerance of the
+ *			vertex. 
+ *		XXX what about rays (nearly) perpendicular to a face?
+ *
+ *	If the projected polar point is inside the two edgeuses at this
+ *		vertexuse, then
+ *		 	the distance to the face is the projection distance.
+ *
+ *		else
+ *			Each of the two edgeuses at this vertexuse 
+ *			implies an infinite ray originating at the vertex.
+ *			Find the point of closest approach (PCA) of each ray
+ *			to the projection point.  For whichever ray passes
+ *			closer to the projection point, find the distance
+ *			from the original pole point to the PCA.  This is
+ *			the "distance to the face" metric for this face from
+ *			the given pole point.
+ *
+ *	We compute this metric for the North and South poles for all faces at
+ *	the vertex.  The face with the smallest distance to the north (south)
+ * 	pole is used to determine the state of the ray before (after) it hits
+ *	the vertex.  
+ *
+ *	If the north (south) pole is "outside" the plane of the closest face,
+ *	then the ray state is "outside" before (after) the ray hits the
+ *	vertex.
+ *
  *
  */
 static void
@@ -266,13 +336,14 @@ struct hitmiss *myhit;
 {
 	struct vertexuse *vu;
 	struct faceuse *fu;
-	double NdotR;
-	point_t q;
-	vect_t		n;
 	struct nmg_ptbl ftbl;
-	double cos_angle;
-	hvect_t norm;
-	point_t	North_plane_pt, South_plane_pt, South_Pole, North_Pole;
+	double scalar_dist;
+	vect_t north_vect;	/* vector from vertex to North_Pole */
+	vect_t norm, anti_norm;
+	point_t	North_pl_pt, South_pl_pt, South_Pole, North_Pole;
+	point_t min_pt, max_pt;
+	double dimen, t;
+	int i;
 
 	NMG_CK_VERTEXUSE(vu_p);
 	NMG_CK_VERTEX(vu_p->v_p);
@@ -280,60 +351,77 @@ struct hitmiss *myhit;
 
 	(void)nmg_tbl( &ftbl, TBL_INIT, (long *)NULL );
 
+
+    	/* There is a conceptual sphere around the vertex
+	 * The max dimension of the bounding box for the NMG defines the size.
+    	 * The point where the ray enters this sphere is
+    	 *  called the North Pole, and the point where it
+    	 *  exits is called the South Pole.
+    	 */
+	nmg_model_bb( min_pt, max_pt, nmg_find_model( vu_p->up.magic_p ));
+	for (dimen= -MAX_FASTF,i=3 ; i-- ; ) {
+		t = max_pt[i]-min_pt[i];
+		if (t > dimen) dimen = t;
+	}
+
+	VJOIN1(North_Pole, vu_p->v_p->vg_p->coord, -dimen, rd->rp->r_dir);
+	VJOIN1(South_Pole, vu_p->v_p->vg_p->coord, dimen, rd->rp->r_dir);
+
+
 	/* for every use of this vertex */
 	for ( RT_LIST_FOR(vu, vertexuse, &vu_p->v_p->vu_hd) ) {
 		/* if the parent use is an (edge/loop)use of an 
 		 * OT_SAME faceuse that we haven't already processed...
 		 */
-		if (*vu->up.magic_p == NMG_EDGEUSE_MAGIC &&
-		    *vu->up.eu_p->up.magic_p == NMG_LOOPUSE_MAGIC &&
-		    *vu->up.eu_p->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC &&
-		    vu->up.eu_p->up.lu_p->up.fu_p->orientation == OT_SAME &&
-		    nmg_tbl(&ftbl, TBL_INS_UNIQUE,
-		    &vu->up.eu_p->up.lu_p->up.fu_p->l.magic) < 0 ) {
+		fu = nmg_find_fu_of_vu( vu );
+		if (fu && *vu->up.magic_p == NMG_EDGEUSE_MAGIC &&
+		    fu->orientation == OT_SAME &&
+		    nmg_tbl(&ftbl, TBL_INS_UNIQUE, &fu->l.magic) < 0 ) {
 
-		    	/* There is a conceptual sphere around the vertex
-		    	 * The point where the ray enters this sphere is
-		    	 *  called the North Pole, and the point where it
-		    	 *  exits is called the South Pole.
-		    	 *
-		    	 * The distance from each "Pole Point" to the faceuse
+		    	/* The distance from each "Pole Point" to the faceuse
 		    	 *  is the commodity in which we are interested.
+		    	 *
+		    	 * A pole point is projected
 		    	 * This is either the distance to the plane (if the
 		    	 * projection of the point into the plane lies within
-		    	 * the faceuse), or the magnitude of the sum of the
-		    	 * vectors point->plane and plane_pt->faceuse boundary
+		    	 * the angle of the two edgeuses at this vertex) or
 		    	 */
 
+/*
+ *
+ *
+ *		    		    /
+ *			  	   /
+ *			     	  /North Pole
+ *			     	 / |
+ *		Face Normal  ^	/  |
+ *		 	     | /   |
+ *		    	     |/    V Projection of North Pole
+ *  Projection of    	     *			 to plane
+ *  South Pole to plane ^   / Vertex
+ *		    	|  /
+ *		    	| /
+ *		    	|/
+ *		    	/South Pole
+ *		       /
+ *		     |/
+ *		      -
+ *		    Ray
+ *
+ *
+ */
 
-			fu = vu->up.eu_p->up.lu_p->up.fu_p;
-			/* check this face */
-			NMG_CK_FACE(fu->f_p);
-			NMG_CK_FACE_G(fu->f_p->fg_p);
 		    	NMG_GET_FU_NORMAL( norm, fu );
+		    	VREVERSE(anti_norm, norm);
 
+		    	/* project the north pole onto the plane */
+		    	VSUB2(north_vect, vu->v_p->vg_p->coord, North_Pole);
+			scalar_dist = VDOT(norm, north_vect);
 
+		    	/* project the poles down onto the plane */
+			VJOIN1(North_pl_pt, North_Pole, scalar_dist, anti_norm);
+			VJOIN1(South_pl_pt, South_Pole, scalar_dist, norm);
 
-		    	/* compute the "north pole" points
-		    	 *
-		    	 * project the point a unit distance BACK along the
-		    	 * ray and then project the point "back down" onto
-		    	 * the plane.
-		    	 */
-			VJOIN1(North_Pole, vu_p->v_p->vg_p->coord,
-				-1.0, rd->rp->r_dir);
-		    	VJOIN1(North_plane_pt, North_Pole, cos_angle, norm);
-
-
-		    	/* compute the "south pole" points
-		    	 *
-		    	 * project the point a unit distance FORWARD along the
-		    	 * ray, and then project the point down "back up"
-		    	 * onto the plane.
-		    	 */
-			VADD2(South_Pole, vu_p->v_p->vg_p->coord,
-				rd->rp->r_dir);
-		    	VJOIN1(South_plane_pt, South_Pole, -cos_angle, norm);
 
 		}
 	}
@@ -385,6 +473,8 @@ int status;
 	vertex_neighborhood(rd, vu_p, myhit);
 
 	hit_ins(rd, myhit);
+	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+		plvu(vu_p, rd->rp->r_pt, myhit->hit.hit_point);
 
 	NMG_CK_HITMISS(myhit);
 
@@ -702,6 +792,14 @@ point_t pt;
 	myhit->in_out = edge_hit_ray_state(rd, eu_p);
 
 	hit_ins(rd, myhit);
+	if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
+		register struct faceuse *fu;
+		if ((fu=nmg_find_fu_of_eu( eu_p )))
+			plfu(fu, rd->rp->r_pt, myhit->hit.hit_point);
+		else
+			pleu(eu_p, rd->rp->r_pt, myhit->hit.hit_point);
+	}
+
 	NMG_CK_HITMISS(myhit);
 }
 
@@ -961,7 +1059,6 @@ struct fu_pt_info *fpi;
 
 	rt_log("\t No previous hit\n");
 
-	plfu(fpi->fu_p, rd->rp->r_pt, fpi->pt);
 
 	ray_hit_edge(rd, eu, rd->ray_dist_to_plane, fpi->pt);
 }
@@ -980,7 +1077,6 @@ struct fu_pt_info *fpi;
 		vu->v_p->vg_p->coord[2]);
 
 	rd = (struct ray_data *)fpi->priv;
-	plfu(fpi->fu_p, rd->rp->r_pt, fpi->pt);
 
 	rd->face_subhit = 1;
 	ray_hit_vertex(rd, vu, NMG_VERT_UNKNOWN);
@@ -1159,7 +1255,6 @@ struct faceuse *fu_p;
 
 			/* also rd->ray_dist_to_plane */
 			myhit->hit.hit_dist = dist; 
-
 			myhit->hit.hit_private = (genptr_t)fu_p->f_p;
 
 
@@ -1168,33 +1263,47 @@ struct faceuse *fu_p;
 			 */
 
 			cos_angle = VDOT(norm, rd->rp->r_dir);
+			if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
+				VPRINT("face Normal", norm);
+				rt_log("cos_angle wrt ray direction: %g\n", cos_angle);
+			}
 
-			if (fu_p->orientation == OT_OPPOSITE) {
+			switch (fu_p->orientation) {
+			case OT_SAME:
 				if (RT_VECT_ARE_PERP(cos_angle, rd->tol)) {
 					/* perpendicular? */
 					rt_log("%s[%d]: Ray is in plane of face?\n",
 						__FILE__, __LINE__);
-					rt_bomb("I quit\n");
+						rt_bomb("I quit\n");
 				} else if (cos_angle > 0.0)
 					myhit->in_out = HMG_HIT_IN_OUT;
-				else /* (cos_angle < 0.0) */
+				else
 					myhit->in_out = HMG_HIT_OUT_IN;
-
-			} else if (fu_p->orientation == OT_SAME) {
+				break;
+			case OT_OPPOSITE:
 				if (RT_VECT_ARE_PERP(cos_angle, rd->tol)) {
 					/* perpendicular? */
 					rt_log("%s[%d]: Ray is in plane of face?\n",
 						__FILE__, __LINE__);
-					rt_bomb("I quit\n");
+						rt_bomb("I quit\n");
 				} else if (cos_angle > 0.0)
 					myhit->in_out = HMG_HIT_OUT_IN;
 				else
 					myhit->in_out = HMG_HIT_IN_OUT;
+				break;
+			default:
+				rt_log("%s %d:face orientation not SAME/OPPOSITE\n",
+					__FILE__, __LINE__);
+				rt_bomb("Crash and burn\n");
 			}
 
-
 			hit_ins(rd, myhit);
+			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+				plfu(fu_p, rd->rp->r_pt, myhit->hit.hit_point);
+
 			NMG_CK_HITMISS(myhit);
+
+
 		}
 		break;
 	case NMG_CLASS_AoutB	:
@@ -1273,7 +1382,7 @@ struct ray_data *rd;
 {
 	struct nmgregion *r_p;
 	struct shell *s_p;
-	struct hitmiss *hm;
+	struct hitmiss *a_hit;
 
 
 	rt_g.NMG_debug |= DEBUG_RT_ISECT;
@@ -1310,7 +1419,15 @@ struct ray_data *rd;
 		if (RT_LIST_IS_EMPTY(&rd->rd_hit)) {
 			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 				rt_log("ray missed NMG\n");
-		} else
+		} else {
 			print_hitlist(&rd->rd_hit);
+
+			while (RT_LIST_NON_EMPTY(&rd->rd_hit) ) {
+				a_hit = RT_LIST_FIRST(hitmiss, &rd->rd_hit);
+				NMG_CK_HITMISS(a_hit);
+				RT_LIST_DEQUEUE(&a_hit->l);
+				rt_free((char *)a_hit, "dumping hitlist");
+			}
+		}
 	}
 }
