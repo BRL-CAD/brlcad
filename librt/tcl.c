@@ -1626,7 +1626,6 @@ int *array_len;
 {
 	Tcl_Obj **obj_array;
 	int len, i;
-	int ret;
 
 	if( Tcl_ListObjGetElements( interp, list, &len, &obj_array ) != TCL_OK )
 		return( 0 );
