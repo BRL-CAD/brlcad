@@ -23,7 +23,7 @@ CLEANFILES = \
 	shaders.pix solids solids.g solids.log solids.pix spdi spdi.g \
 	spdi.log spdi.pix moss.pix moss_ref.pix solids_ref.pix \
 	shaders_ref.pix moss-diff.log moss.pix.diff shaders.pix.diff \
-	solids-diff.log solids.pix.diff lights.g lights_diff.pix lights_ref.pix lights.pix
+	solids-diff.log solids.pix.diff lights.g lights_diff.pix lights_ref.pix lights.pix lights.asc
 
 MOSTLYCLEANFILES = \
 	mged_shaders.log mged_solids.log moss.asc moss.log \
