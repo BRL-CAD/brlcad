@@ -142,7 +142,9 @@ struct rt_i		*rtip;
 	 *  These array allocations can't be made until the number of
 	 *  triangles are known.
 	 */
+#if 0	/* Set this to '1' to enable BoT pieces */
 	stp->st_npieces = ntri;
+#endif
 
 	bot->bot_facearray = (struct tri_specific **)
 		bu_malloc( sizeof(struct tri_specific *) * ntri,
@@ -679,6 +681,7 @@ struct resource		*resp;
 	RT_CK_SOLTAB(stp);
 	RT_CK_RESOURCE(resp);
 	bot = (struct bot_specific *)stp->st_specific;
+bu_log("rt_bot_piece_shot %d,%d\n", ap->a_x, ap->a_y);
 
 	sol_piece_subscr_p = &(plp->pieces[plp->npieces-1]);
 	for( ; sol_piece_subscr_p >= plp->pieces; sol_piece_subscr_p-- )  {
@@ -755,7 +758,7 @@ struct resource		*resp;
 
 	/* Now, drop into all that gore to sort hits and build segs */
 
-	bu_bomb("rt_bot_piece_shot(): needs more code\n");
+	bu_bomb("rt_bot_piece_shot(): got a hit, oops, need more code\n");
 
 	return 0;	/* MISS */
 }
