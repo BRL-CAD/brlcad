@@ -474,6 +474,33 @@ union bitv_elem {
 	(lp[bit>>BITV_SHIFT] &= ~(((bitv_t)1)<<(bit&BITV_MASK)))
 #define BITZERO(lp,nbits) bzero((char *)lp, BITS2BYTES(nbits))
 
+#define RT_BITV_BITS2WORDS(_nb)	(((_nb)+BITV_MASK)>>BITV_SHIFT)
+
+/*
+ *  Macros to efficiently find all the bits set in a bit vector.
+ *  Counts words down, counts bits in words going up, for speed & portability.
+ *  It does not matter if the shift causes the sign bit to smear to the right.
+ */
+#define RT_BITV_LOOP_START(_bitv, _lim)	\
+{ \
+	register int		_b;	/* Current bit-in-word number */  \
+	register bitv_t		_val;	/* Current word value */  \
+	register int		_wd;	/* Current word number */  \
+	for( _wd=RT_BITV_BITS2WORDS(_lim); _wd>=0; _wd-- )  {  \
+		_val = (_bitv)[_wd];  \
+		for(_b=0; _val!=0 && _b < BITV_MASK+1; _b++, _val >>= 1 ) { \
+			if( !(_val & 1) )  continue;
+
+#define RT_BITV_LOOP_END	\
+		} /* end for(_b) */ \
+	} /* end for(_wd) */ \
+} /* end block */
+
+/* The two registers are combined when needed;  the assumption is
+ * that "one" bits are relatively infrequent with respect to zero bits.
+ */
+#define RT_BITV_LOOP_INDEX	((_wd << BITV_SHIFT) | _b)
+
 /*
  *			C U T
  *
@@ -553,6 +580,7 @@ struct db_i  {
 	int			dbi_read_only;	/* !0 => read only file */
 	struct mem_map		*dbi_freep;	/* map of free granules */
 	char			*dbi_inmem;	/* ptr to in-memory copy */
+	char			*dbi_shmaddr;	/* ptr to memory-mapped file */
 };
 #define DBI_NULL	((struct db_i *)0)
 #define DBI_MAGIC	0x57204381
