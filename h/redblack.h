@@ -153,5 +153,6 @@ RB_EXTERN(void rb_walk,		(rb_tree	*tree,
 				 void		(*visit)(),
 				 int		trav_type
 				));
+#define		rb_walk1(t,v,d)	rb_walk((t), 0, (v), (d))
 
 #endif /* REDBLACK_H */
