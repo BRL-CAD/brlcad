@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.8  91/08/30  19:41:59  mike
+ * Added ^Xe to run cake, like ^X^E runs make.
+ * 
  * Revision 2.7  91/08/30  19:14:21  mike
  * Modified to successfully parse C compiler errors, even on more modern
  * compilers, and on the oddball CRAYs.
@@ -501,7 +504,8 @@ char	*bufname,
 #ifdef VMUNIX			/* No easy way to find out */
 				mess = "Chugging along...";
 #else
-#ifdef JOBCONTROL
+#ifdef 0
+				/* Needs gldav() to get load average */
 				{
 					short	avg[3];
 					double	theavg;
