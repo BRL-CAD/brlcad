@@ -366,8 +366,8 @@ register struct partition *PartHeadp;
 		}
 		in_obliq = acos( -VDOT( ap->a_ray.r_dir,
 			pp->pt_inhit->hit_normal ) ) * mat_radtodeg;
-		RT_HIT_NORM( pp->pt_outhit,
-			pp->pt_outseg->seg_stp, &(ap->a_ray) );
+		/* next macro must be on one line for 3d compiler */
+		RT_HIT_NORM( pp->pt_outhit, pp->pt_outseg->seg_stp, &(ap->a_ray) );
 		if( pp->pt_outflip )  {
 			VREVERSE( pp->pt_outhit->hit_normal,
 				  pp->pt_outhit->hit_normal );
