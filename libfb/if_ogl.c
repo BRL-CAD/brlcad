@@ -35,10 +35,12 @@
 #include <Xm/Xm.h> 
 #include <Xm/Form.h> 
 #include <Xm/RowColumn.h>
+#include <Xm/MenuShell.h>
 #include <Xm/PushBG.h>
+#include <Xm/DrawingA.h>
 #include <X11/keysym.h> 
 #include <X11/StringDefs.h> 
-#include <GL/GLwMDrawA.h>  
+#include <GL/glx.h>
 #include <GL/gl.h> 
 #include <GL/glu.h> 
 #include <stdio.h> 
@@ -104,7 +106,6 @@ char *visual_class[] = {
 /* Internal callbacks etc.*/
 static void input(Widget, XtPointer, XtPointer); 
 static void expose_callback (Widget, XtPointer, XtPointer); 
-static void init_window(Widget, XtPointer, XtPointer);  
 static void CloseCB(Widget, XtPointer, XtPointer);
 static void PostIt(Widget, XtPointer, XButtonEvent *);
 
@@ -117,6 +118,7 @@ _LOCAL_ XVisualInfo *	ogl_choose_visual();
 static int		is_linear_cmap();
 
 static Widget 	popup;
+static Widget 	popupshell;
 static int	ogl_nwindows = 0; 	/* number of open windows*/
 static int	multiple_windows = 0;	/* someone wants to be ready
 					 * for multiple windows, at the
@@ -263,6 +265,8 @@ struct oglinfo {
 	short		copy_flag;	/* pan and zoom copied from backbuffer */
 	short		soft_cmap_flag;	/* use software colormapping */
 	int		cmap_size;	/* hardware colormap size */
+	int 		win_width;	/* actual window width */
+	int		win_height;	/* actual window height */
 	int		vp_width;	/* actual viewport width */
 	int		vp_height;	/* actual viewport height */
 	struct ogl_clip	clip;		/* current view clipping */
@@ -588,7 +592,7 @@ int		npix;
 	if(ybase < clp->ypixmin)
 		ybase = clp->ypixmin;
 
-	if((xbase + npix -1) > clp->xpixmax)
+	if((xbase + npix -1 ) > clp->xpixmax)
 		npix = clp->xpixmax - xbase + 1;
 	if((ybase + nlines - 1) > clp->ypixmax)
 		nlines = clp->ypixmax - ybase + 1;
@@ -682,6 +686,7 @@ int		npix;
 		glDrawPixels(npix,nlines,GL_ABGR_EXT,GL_UNSIGNED_BYTE,
 				(unsigned long *) ifp->if_mem);
 
+
 if (CJDEBUG) {
 	int valid;
 	float rpos[4];
@@ -707,7 +712,7 @@ int	width, height;
 	int		f;
 	int		status;
 	static char	title[128];
-	int		mode, i;
+	int		mode, i, direct;
 	int 		xpos, ypos, win_width, win_height;
 
 	Pixmap		src_bitmap, nil_bitmap;
@@ -912,6 +917,21 @@ int	width, height;
 		exit(-1);
 	}
 
+	/* Open an OpenGL context with this visual*/
+	if (multiple_windows){	/* force indirect context */
+		OGL(ifp)->glxc = glXCreateContext(OGL(ifp)->dispp,
+					OGL(ifp)->vip, 0, GL_FALSE);
+	} else {		/* try direct context */
+		OGL(ifp)->glxc = glXCreateContext(OGL(ifp)->dispp,
+					OGL(ifp)->vip, 0, GL_TRUE);
+	}
+
+	if (CJDEBUG){
+		direct = glXIsDirect(OGL(ifp)->dispp,OGL(ifp)->glxc);
+		printf("Context is %s.\n", direct ? "direct" : "indirect");
+	}
+
+
 	/* Create a colormap for this visual */
 	SGI(ifp)->mi_cmap_flag = !is_linear_cmap(ifp);
 	if (!OGL(ifp)->soft_cmap_flag) {
@@ -950,6 +970,9 @@ int	width, height;
 		XtSetArg(args[n], XmNx, xpos); n++;
 		XtSetArg(args[n], XmNy, ypos); n++;
 	} 
+	XtSetArg(args[n], XmNvisual, OGL(ifp)->vip->visual); n++;
+	XtSetArg(args[n], XmNcolormap, OGL(ifp)->xcmap); n++;
+	XtSetArg(args[n], XmNdepth, OGL(ifp)->vip->depth); n++;
 	OGL(ifp)->toplevel = XtAppCreateShell(NULL,NULL,
 			applicationShellWidgetClass, OGL(ifp)->dispp, args, n);
 
@@ -959,23 +982,20 @@ int	width, height;
 	XtManageChild(OGL(ifp)->form);     
 
 	n = 0;
-	XtSetArg(args[n], GLwNvisualInfo, OGL(ifp)->vip); n++;
 	XtSetArg(args[n], XmNbottomAttachment, XmATTACH_FORM); n++;    
 	XtSetArg(args[n], XmNtopAttachment, XmATTACH_FORM); n++;    
 	XtSetArg(args[n], XmNleftAttachment, XmATTACH_FORM); n++;    
 	XtSetArg(args[n], XmNrightAttachment, XmATTACH_FORM); n++;    
 	XtSetArg(args[n], XmNwidth, win_width); n++;
 	XtSetArg(args[n], XmNheight, win_height); n++;
-	OGL(ifp)->glw = GLwCreateMDrawingArea(OGL(ifp)->form, "glwidget", 
-				args, n);    
+	OGL(ifp)->glw = XmCreateDrawingArea(OGL(ifp)->form, "glwidget",
+				args, n);
 
 	XtManageChild (OGL(ifp)->glw);    
 
-	XtAddCallback(OGL(ifp)->glw, GLwNexposeCallback,    
+	XtAddCallback(OGL(ifp)->glw, XmNexposeCallback,    
 		expose_callback, (XtPointer) ifp);    
-	XtAddCallback(OGL(ifp)->glw, GLwNginitCallback, 
-		init_window,    (XtPointer) ifp);    
-	XtAddCallback(OGL(ifp)->glw, GLwNinputCallback, 
+	XtAddCallback(OGL(ifp)->glw, XmNinputCallback, 
 		input,    (XtPointer) ifp);     
 
 
@@ -1086,7 +1106,8 @@ FBIO	*ifp;
 	FILE *fp = NULL;
 	XEvent event;
 	Widget closeit;
-
+	Arg args[10];
+	int n, scr;
 
 	/* only the last open window can linger -
 	 * call final_close if not lingering
@@ -1131,8 +1152,18 @@ FBIO	*ifp;
 
 	kill(SGI(ifp)->mi_parent, SIGUSR1);	/* zap the lurking parent */
 
-	/* Create popup widget to act implement the close menu button */
-	popup = XmCreatePopupMenu(OGL(ifp)->form, "popup", NULL, 0);
+	scr = DefaultScreen(OGL(ifp)->dispp);
+	n = 0;
+	XtSetArg(args[n], XmNvisual, DefaultVisual(OGL(ifp)->dispp, scr)); n++;
+	XtSetArg(args[n], XmNdepth, DefaultDepth(OGL(ifp)->dispp, scr)); n++;
+	XtSetArg(args[n], XmNcolormap, DefaultColormap(OGL(ifp)->dispp, scr));	n++;
+	XtSetArg(args[n], XmNheight, 100); n++;
+	XtSetArg(args[n], XmNwidth, 100); n++;
+	popupshell = XmCreateMenuShell(OGL(ifp)->form, "pshell", args, n);
+	
+	n = 0;
+	XtSetArg(args[n], XmNrowColumnType, XmMENU_POPUP); n++;
+	popup = XmCreateRowColumn(popupshell, "popup", args, n);
 	XtAddEventHandler(OGL(ifp)->form, ButtonPressMask, False, (XtEventHandler) PostIt, ifp);
 
 	closeit = XmCreatePushButtonGadget(popup,"close",NULL,0);
@@ -2007,12 +2038,12 @@ input(Widget w, XtPointer client_data,    XtPointer call)
 {    
 	char buffer[1];    
 	KeySym keysym;    
-	GLwDrawingAreaCallbackStruct *call_data;     
+	XmDrawingAreaCallbackStruct *call_data;     
 
 	if(CJDEBUG) printf("entering input()\n");
 
 
-	call_data = (GLwDrawingAreaCallbackStruct *) call;     
+	call_data = (XmDrawingAreaCallbackStruct *) call;     
 	switch(call_data->event->type)    {    
 	case KeyRelease:      /* It is necessary to convert the keycode       * to a keysym before it is possible to check       * if it is an escape.       */      
 		if (XLookupString( (XKeyEvent *)                         
@@ -2028,41 +2059,22 @@ input(Widget w, XtPointer client_data,    XtPointer call)
 	return;
 }   
 
-static void 
-init_window(Widget w, XtPointer client_data, XtPointer call) 
-{
-	int direct;
-	FBIO *ifp;
-
-	if(CJDEBUG) printf("entering init_window\n");
-
-	ifp = (FBIO *) client_data;
-
-	if (multiple_windows){
-		OGL(ifp)->glxc = glXCreateContext(OGL(ifp)->dispp,OGL(ifp)->vip, 0, GL_FALSE);
-	} else {
-		OGL(ifp)->glxc = glXCreateContext(OGL(ifp)->dispp,OGL(ifp)->vip, 0, GL_TRUE);
-	}
-
-	if (CJDEBUG){
-		direct = glXIsDirect(OGL(ifp)->dispp,OGL(ifp)->glxc);
-		printf("Context is %s.\n", direct ? "direct" : "indirect");
-	}
-
-}
   
 static void 
 expose_callback (Widget w, XtPointer client_data, XtPointer call) 
 {    
-	GLwDrawingAreaCallbackStruct *call_data;
+	XmDrawingAreaCallbackStruct *call_data;
 	FBIO *ifp;
 	struct ogl_clip *clp;
+	Arg args[10];
+	int n;
+	Dimension width, height;
 
 	if(CJDEBUG) printf("entering expose_callback()\n");
 
 	ifp = (FBIO *) client_data;     
 
-	call_data = (GLwDrawingAreaCallbackStruct *) call;    
+	call_data = (XmDrawingAreaCallbackStruct *) call;    
 
 	if (multiple_windows || OGL(ifp)->firstTime) {
 	if (glXMakeCurrent(OGL(ifp)->dispp,OGL(ifp)->wind,OGL(ifp)->glxc)==False){
@@ -2099,24 +2111,31 @@ expose_callback (Widget w, XtPointer client_data, XtPointer call)
 			OGL(ifp)->copy_flag = 0;
 		}
 
+		n = 0;
+		XtSetArg(args[n], XmNwidth, &width); n++;
+		XtSetArg(args[n], XmNheight, &height); n++;
+		XtGetValues(OGL(ifp)->glw, args, n);
+		OGL(ifp)->win_width = width;
+		OGL(ifp)->win_height = height;
+		
 		/* clear entire window */
-		glViewport(0, 0, call_data->width, call_data->height);      
+		glViewport(0, 0, OGL(ifp)->win_width, OGL(ifp)->win_height);      
 		glClearColor(0,0,0,0);
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		/* Set normal viewport size to minimum of actual window
 		 * size and requested framebuffer size
 		 */
-		OGL(ifp)->vp_width = (call_data->width < ifp->if_width) ?
-				call_data->width : ifp->if_width;
-		OGL(ifp)->vp_height = (call_data->height < ifp->if_height) ?
-				call_data->height : ifp->if_height;
+		OGL(ifp)->vp_width = (OGL(ifp)->win_width < ifp->if_width) ?
+				OGL(ifp)->win_width : ifp->if_width;
+		OGL(ifp)->vp_height = (OGL(ifp)->win_height < ifp->if_height) ?
+				OGL(ifp)->win_height : ifp->if_height;
 		ifp->if_xcenter = OGL(ifp)->vp_width/2;
 		ifp->if_ycenter = OGL(ifp)->vp_height/2;
 
 		/* center viewport in window */
-		SGI(ifp)->mi_xoff = (call_data->width - OGL(ifp)->vp_width)/2;
-		SGI(ifp)->mi_yoff = (call_data->height - OGL(ifp)->vp_height)/2;
+		SGI(ifp)->mi_xoff = (OGL(ifp)->win_width - OGL(ifp)->vp_width)/2;
+		SGI(ifp)->mi_yoff = (OGL(ifp)->win_height - OGL(ifp)->vp_height)/2;
 		glViewport(	SGI(ifp)->mi_xoff,
 				SGI(ifp)->mi_yoff,
 				OGL(ifp)->vp_width,
@@ -2130,17 +2149,17 @@ expose_callback (Widget w, XtPointer client_data, XtPointer call)
 				-1.0,1.0);
 		glPixelZoom((float) ifp->if_xzoom,(float) ifp->if_yzoom);
 	} else if 
-	((call_data->width > ifp->if_width) || 
-	 (call_data->height > ifp->if_height)) {
+	((OGL(ifp)->win_width > ifp->if_width) || 
+	 (OGL(ifp)->win_height > ifp->if_height)) {
 		/* clear whole buffer if window larger than framebuffer */
 	 	if (OGL(ifp)->copy_flag && !OGL(ifp)->front_flag){
 	 		glDrawBuffer(GL_FRONT);
-			glViewport(0, 0, call_data->width, call_data->height);      
+			glViewport(0, 0, OGL(ifp)->win_width, OGL(ifp)->win_height);      
 			glClearColor(0,0,0,0);
 			glClear(GL_COLOR_BUFFER_BIT);
 	 		glDrawBuffer(GL_BACK);
 	 	} else {
-			glViewport(0, 0, call_data->width, call_data->height);      
+			glViewport(0, 0, OGL(ifp)->win_width, OGL(ifp)->win_height);      
 			glClearColor(0,0,0,0);
 			glClear(GL_COLOR_BUFFER_BIT);
 	 	}
