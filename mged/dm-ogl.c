@@ -73,6 +73,14 @@ static void	Ogl_configure_window_shape();
 static int	Ogldoevent();
 static void	Ogl_gen_color();
 
+/* Flags indicating whether the ogl and sgi display managers have been
+ * attached. 
+ * These are necessary to decide whether or not to use direct rendering
+ * with ogl.
+ */
+char	ogl_ogl_used = 0;
+char	ogl_sgi_used = 0;
+char	ogl_is_direct = 0;
 
 /* Display Manager package interface */
 
@@ -184,6 +192,8 @@ static struct rgbtab {
 } ogl_rgbtab[NSLOTS];
 
 extern struct device_values dm_values;	/* values read from devices */
+
+extern void sl_toggle_scroll();		/* from scroll.c */
 
 static void	establish_lighting();
 static void	establish_zbuffer();
@@ -309,6 +319,7 @@ Ogl_open()
 	char	*envp;
 
 	ogl_debug = CJDEBUG;
+
 	/* get or create the default display */
 	if( (envp = getenv("DISPLAY")) == NULL ) {
 		/* Env not set, use local host */
@@ -968,6 +979,14 @@ int dashed;
 
 }
 
+#define OGL_NUM_SLID	7
+#define OGL_XSLEW	0
+#define OGL_YSLEW	1
+#define OGL_ZSLEW	2
+#define OGL_ZOOM	3
+#define OGL_XROT	4
+#define OGL_YROT	5
+#define OGL_ZROT	6
 
 int
 Ogldoevent(clientData, eventPtr)
@@ -977,7 +996,9 @@ XEvent *eventPtr;
     KeySym key;
     char keybuf[4];
     int cnt;
+	float inc;
     XComposeStatus compose_stat;
+	static int ogl_which_slid = OGL_XSLEW;
 
     if (eventPtr->xany.window != win)
 	return 0;
@@ -1044,19 +1065,27 @@ XEvent *eventPtr;
 	cnt = XLookupString(&eventPtr->xkey, keybuf, sizeof(keybuf),
 			    &key, &compose_stat);
 
-    	/* CJXX I think this code is bad in X.c*/
+    	/* CJXX I think the following line is bad in X.c*/
 /*	for(i=0 ; i < cnt ; i++){*/
 
-	    switch( key ) {
-	    case '?':
-		rt_log( "\nKey Help Menu:\n\
-0, <F12>	Zero 'knobs'\n\
-x		Increase xrot\n\
-y		Increase yrot\n\
-z		Increase zrot\n\
-X		Increase Xslew\n\
-Y		Increase Yslew\n\
-Z		Increase Zslew\n\
+	inc = 0.1;		
+	switch( key ) {
+	case '?':
+		rt_log( "\n\t\tKey Help Menu:\n\
+\n\tView Control Functions\n\
+0, <F12>	Zero sliders (knobs)\n\
+s		Toggle sliders\n\
+x		Enable xrot slider\n\
+y		Enable yrot slider\n\
+z		Enable zrot slider\n\
+X		Enable Xslew slider\n\
+Y		Enable Yslew slider\n\
+Z		Enable Zslew slider\n\
+S		Enable Zoom (Scale) slider\n\
+<Up Arrow>	Enable slider above the current slider\n\
+<Down Arrow>	Enable slider below the current slider\n\
+<Left Arrow>	Move enabled slider to the left (decrement)\n\
+<Right Arrow>	Move enabled slider to the right (increment)\n\
 f		Front view\n\
 t		Top view\n\
 b		Bottom view\n\
@@ -1065,79 +1094,85 @@ r		Right view\n\
 R		Rear view\n\
 3		35,25 view\n\
 4		45,45 view\n\
-F,<F7>		Toggle faceplate\n\
+\n\tToggle Functions\n\
 <F1>		Toggle depthcueing\n\
 <F2>		Toggle zclipping\n\
 <F3>		Toggle perspective\n\
 <F4>		Toggle zbuffer status\n\
 <F5>		Toggle smooth-shading\n\
-<F6>		Toggle perspective matrix\n\
+<F6>		Change perspective angle\n\
+<F7>,F		Toggle faceplate\n\
 " );
 		break;
-	    case '0':
+	case '0':
 		rt_vls_printf( &dm_values.dv_string, "knob zero\n" );
 		break;
-	    case 'x':
+	case 's':
+		sl_toggle_scroll(); /* calls rt_vls_printf() */
+		break;
+	case 'S':
+		ogl_which_slid = OGL_ZOOM;
+		break;
+	case 'x':
 		/* 6 degrees per unit */
-		rt_vls_printf( &dm_values.dv_string, "knob +x 0.1\n" );
+		ogl_which_slid = OGL_XROT;
 		break;
-	    case 'y':
-		rt_vls_printf( &dm_values.dv_string, "knob +y 0.1\n" );
+	case 'y':
+		ogl_which_slid = OGL_YROT;
 		break;
-	    case 'z':
-		rt_vls_printf( &dm_values.dv_string, "knob +z 0.1\n" );
+	case 'z':
+		ogl_which_slid = OGL_ZROT;
 		break;
-	    case 'X':
-		/* viewsize per unit */
-		rt_vls_printf( &dm_values.dv_string, "knob +X 0.1\n" );
+	case 'X':
+		ogl_which_slid = OGL_XSLEW;
 		break;
-	    case 'Y':
-		rt_vls_printf( &dm_values.dv_string, "knob +Y 0.1\n" );
+	case 'Y':
+		ogl_which_slid = OGL_YSLEW;
 		break;
-	    case 'Z':
-		rt_vls_printf( &dm_values.dv_string, "knob +Z 0.1\n" );
+	case 'Z':
+		ogl_which_slid = OGL_ZSLEW;
 		break;
-	    case 'f':
+	case 'f':
 		rt_vls_strcat( &dm_values.dv_string, "press front\n");
 		break;
-	    case 't':
+	case 't':
 		rt_vls_strcat( &dm_values.dv_string, "press top\n");
 		break;
-	    case 'b':
+	case 'b':
 		rt_vls_strcat( &dm_values.dv_string, "press bottom\n");
 		break;
-	    case 'l':
+	case 'l':
 		rt_vls_strcat( &dm_values.dv_string, "press left\n");
 		break;
-	    case 'r':
+	case 'r':
 		rt_vls_strcat( &dm_values.dv_string, "press right\n");
 		break;
-	    case 'R':
+	case 'R':
 		rt_vls_strcat( &dm_values.dv_string, "press rear\n");
 		break;
-	    case '3':
+	case '3':
 		rt_vls_strcat( &dm_values.dv_string, "press 35,25\n");
 		break;
-	    case '4':
+	case '4':
 		rt_vls_strcat( &dm_values.dv_string, "press 45,45\n");
 		break;
-	    case 'F':
+	case 'F':
 		no_faceplate = !no_faceplate;
 		rt_vls_strcat( &dm_values.dv_string,
 			      no_faceplate ?
 			      "set faceplate 0\n" :
 			      "set faceplate 1\n" );
 		break;
-	    case XK_F1:			/* F1 key */
+	case XK_F1:			/* F1 key */
 	    	rt_log("F1 botton!\n");
 		rt_vls_printf( &dm_values.dv_string,
 				"dm set depthcue !\n");
 		break;
-	    case XK_F2:			/* F2 key */
+	case XK_F2:			/* F2 key */
 		rt_vls_printf(&dm_values.dv_string,
 				"dm set zclip !\n");
 		break;
-	    case XK_F3:			/* F3 key */
+	case XK_F3:			/* F3 key */
 		perspective_mode = 1-perspective_mode;
 		rt_vls_printf( &dm_values.dv_string,
 			    "set perspective %d\n",
@@ -1146,17 +1181,17 @@ F,<F7>		Toggle faceplate\n\
 			    -1 );
 		dmaflag = 1;
 		break;
-	    case XK_F4:			/* F4 key */
+	case XK_F4:			/* F4 key */
 		/* toggle zbuffer status */
 		rt_vls_printf(&dm_values.dv_string,
 				"dm set zbuffer !\n");
 		break;
-	    case XK_F5:			/* F5 key */
+	case XK_F5:			/* F5 key */
 		/* toggle status */
 		rt_vls_printf(&dm_values.dv_string,
 		    "dm set lighting !\n");
 	    	break;
-	    case XK_F6:			/* F6 key */
+	case XK_F6:			/* F6 key */
 		/* toggle perspective matrix */
 		if (--perspective_angle < 0) perspective_angle = 3;
 		if(perspective_mode) rt_vls_printf( &dm_values.dv_string,
@@ -1164,7 +1199,7 @@ F,<F7>		Toggle faceplate\n\
 			    perspective_table[perspective_angle] );
 		dmaflag = 1;
 		break;
-	    case XK_F7:			/* F7 key */
+	case XK_F7:			/* F7 key */
 		/* Toggle faceplate on/off */
 		no_faceplate = !no_faceplate;
 		rt_vls_strcat( &dm_values.dv_string,
@@ -1174,11 +1209,60 @@ F,<F7>		Toggle faceplate\n\
 		Ogl_configure_window_shape();
 		dmaflag = 1;
 		break;
-	    case XK_F12:			/* F12 key */
+	case XK_F12:			/* F12 key */
 		rt_vls_printf( &dm_values.dv_string, "knob zero\n" );
 		break;
-	    default:
-		rt_log("dm-ogl: The key '%c' is not defined\n", key);
+	case XK_Up:
+	    	if (ogl_which_slid-- == 0)
+	    		ogl_which_slid = OGL_NUM_SLID - 1;
+		break;
+	case XK_Down:
+	    	if (ogl_which_slid++ == OGL_NUM_SLID - 1)
+	    		ogl_which_slid = 0;
+		break;
+	case XK_Left:
+	    	/* set inc and fall through */
+	    	inc = -0.1;
+	case XK_Right:
+	    	/* keep value of inc set at top of switch */
+	    	switch(ogl_which_slid){
+	    	case OGL_XSLEW:
+	    		rt_vls_printf( &dm_values.dv_string, 
+				"knob X %f\n", rate_slew[X] + inc);
+	    		break;
+	    	case OGL_YSLEW:
+	    		rt_vls_printf( &dm_values.dv_string, 
+				"knob Y %f\n", rate_slew[Y] + inc);
+	    		break;
+	    	case OGL_ZSLEW:
+	    		rt_vls_printf( &dm_values.dv_string, 
+				"knob Z %f\n", rate_slew[Z] + inc);
+	    		break;
+	    	case OGL_ZOOM:
+	    		rt_vls_printf( &dm_values.dv_string, 
+				"knob S %f\n", rate_zoom + inc);
+	    		break;
+	    	case OGL_XROT:
+	    		rt_vls_printf( &dm_values.dv_string, 
+				"knob x %f\n", rate_rotate[X] + inc);
+	    		break;
+	    	case OGL_YROT:
+	    		rt_vls_printf( &dm_values.dv_string, 
+				"knob y %f\n", rate_rotate[Y] + inc);
+	    		break;
+	    	case OGL_ZROT:
+	    		rt_vls_printf( &dm_values.dv_string, 
+				"knob z %f\n", rate_rotate[Z] + inc);
+	    		break;
+	    	default:
+	    		break;
+	    	}
+		break;
+	case XK_Shift_L:
+	case XK_Shift_R:
+		break;
+	default:
+		rt_log("dm-ogl: The key '%c' is not defined in the drawing window.\n", key);
 		break;
 	    }
 
@@ -1393,12 +1477,13 @@ static int
 Ogl_xsetup( name )
 char	*name;
 {
-    char *cp, symbol;
-    XGCValues gcv;
-    XColor a_color;
-    Visual *a_visual;
-    int a_screen, num, i, success;
-    Colormap  a_cmap;
+	char *cp, symbol;
+	XGCValues gcv;
+	XColor a_color;
+	Visual *a_visual;
+	int a_screen, num, i, success;
+	int major, minor;
+	Colormap  a_cmap;
 	XVisualInfo *vip;
 	int dsize, use, dbfr, rgba, red, blue, green, alpha, index;
 	GLfloat backgnd[4];
@@ -1411,17 +1496,28 @@ char	*name;
 	 * the font */
 	fontstruct = NULL;
 
-    width = height = 900;
+	width = height = 900;
 
-    xinterp = Tcl_CreateInterp(); /* Dummy interpreter */
-    xtkwin = Tk_CreateMainWindow(xinterp, name, "MGED", "MGED");
+	xinterp = Tcl_CreateInterp(); /* Dummy interpreter */
+	xtkwin = Tk_CreateMainWindow(xinterp, name, "MGED", "MGED");
 
-    /* Open the display - XXX see what NULL does now */
-    if( xtkwin == NULL ) {
-	rt_log( "dm-X: Can't open X display\n" );
-	return -1;
-    }
-    dpy = Tk_Display(xtkwin);
+	/* Open the display - XXX see what NULL does now */
+	if( xtkwin == NULL ) {
+		rt_log( "dm-X: Can't open X display\n" );
+		return -1;
+	}
+	dpy = Tk_Display(xtkwin);
+
+#if 0
+	/*CJXX temporary */
+	if (glXQueryExtension(dpy, NULL, NULL)){
+		printf("glX extension exists\n");
+		glXQueryVersion(dpy, &major, &minor);
+		printf("version %d.%d\n", major, minor);
+	} else {
+		printf("glX extension doesn't exist\n");
+	}
+#endif
 
 	/* must do this before Make Exist */
 
@@ -1446,25 +1542,31 @@ char	*name;
 	Tk_MoveToplevelWindow(xtkwin, 376, 0);
 	Tk_MakeWindowExist(xtkwin);
 
-    win = Tk_WindowId(xtkwin);
+	win = Tk_WindowId(xtkwin);
 
-    a_screen = Tk_ScreenNumber(xtkwin);
+	a_screen = Tk_ScreenNumber(xtkwin);
 
 	/* open GLX context */
-	/* The context must be indirect, or else errors occur when you
-	 * try to attach the sgi display manager 
+	/* If the sgi display manager has been used, then we must use
+	 * an indirect context. Otherwise use direct, since it is usually
+	 * faster.
 	 */
-	if ((glxc = glXCreateContext(dpy, vip, 0, GL_TRUE))==NULL) {
+	if ((glxc = glXCreateContext(dpy, vip, 0, ogl_sgi_used ? GL_FALSE : GL_TRUE))==NULL) {
 		rt_log("Ogl_open: couldn't create glXContext.\n");
 		return -1;
 	}
+	/* If we used an indirect context, then as far as sgi is concerned,
+	 * ogl hasn't been used.
+	 */
+	ogl_is_direct = (char) glXIsDirect(dpy, glxc);
+	rt_log("Using %s OpenGL rendering context.\n", ogl_is_direct ? "a direct" : "an indirect");
+	/* set ogl_ogl_used if the context was ever direct */
+	ogl_ogl_used = (ogl_is_direct || ogl_ogl_used);
 
 	/* CJXX We may not want color map indices **/
 	/* In fact, lets rewrite code assuming rgba, and add index support
 	 * later if we feel it's worthwhile 
 	 */
-	/* This the the X way, rather than the sgi way .
-	 * go with sgi for the nonce */
 #if 0
 	if (!ogl_has_rgb){
 		/* Get color map inddices for the colors we use. */
@@ -1540,18 +1642,18 @@ char	*name;
 	}
 #endif
 
-    /* Register the file descriptor with the Tk event handler */
+	/* Register the file descriptor with the Tk event handler */
 #if 0
-    Tk_CreateEventHandler(xtkwin, ExposureMask|ButtonPressMask|KeyPressMask|
+	Tk_CreateEventHandler(xtkwin, ExposureMask|ButtonPressMask|KeyPressMask|
 			  PointerMotionMask
 			  |StructureNotifyMask|FocusChangeMask,
 			  (void (*)())Ogldoevent, (ClientData)NULL);
 
 #else
-    Tk_CreateGenericHandler(Ogldoevent, (ClientData)NULL);
+	Tk_CreateGenericHandler(Ogldoevent, (ClientData)NULL);
 #endif
 
-    Tk_SetWindowBackground(xtkwin, bg);
+	Tk_SetWindowBackground(xtkwin, bg);
 
 
 	if (!glXMakeCurrent(dpy, win, glxc)){
@@ -1615,7 +1717,7 @@ char	*name;
 	glLoadIdentity();
 	ogl_face_flag = 1;	/* faceplate matrix is on top of stack */
 		
-    return 0;
+	return 0;
 }
 
 /* currently, get a double buffered rgba visual that works with Tk and
