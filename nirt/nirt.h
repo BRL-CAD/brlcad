@@ -10,7 +10,9 @@
 #define    EVER         ;;              /* syntactic sugar       */
 #define    TITLE_LEN    80 
 #define    MAX_RAND     2147483647      /* maximum random number */ 
+#if !defined(PI)
 #define    PI           3.141592654
+#endif
 #define    OFF          0
 #define    ON		1
 #define    YES          1

@@ -40,7 +40,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "msr.h"
 
+#if !defined(PI)
 #define PI 3.14159265358979323846262    /*  Pi.  */
+#endif
 #define ZTOL 1.e-20	/*  Zero tolerance.  */
 
 struct application ap;  /*  Structure passed between functions.  */

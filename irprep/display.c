@@ -55,7 +55,9 @@
 #define MAXFIL 26	/*  Maximum number of char in file name.  */
 #define TOL 1e-10	/*  Tolerance, if two numbers are w/in this  */
 			/*  tolerance they are equal.  */
+#if !defined(PI)
 #define PI 3.14159265358979323846264	/*  Pi.  */
+#endif
 
 struct table		/*  Table for region name & temperature.  */
 {

@@ -28,7 +28,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "externs.h"
 
+#if !defined(PI)
 #define PI 3.14159265358979323846264		/*  Pi.  */
+#endif
 
 
 /*  Subroutine to rotate a point, given a point (3 coordinates)  */

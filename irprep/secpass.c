@@ -62,7 +62,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define ADJTOL 1.e-1	/*  Tolerance for adjacent regions.  */
 #define ZEROTOL 1.e-20	/*  Tolerance for dividing by zero.  */
 #define MINCAL 10	/*  Minimum number of calculations for length.  */
-#define PI 3.14159265358979323	/*  Pi.  */
 #define ALPHA 25.	/*  Rotation about z-axis.  */
 #define BETA 50.	/*  Rotation about y-axis.  */
 #define GAMMA 35.	/*  Rotation about x-axis.  */

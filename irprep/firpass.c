@@ -75,7 +75,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 			/*  that is allowed, before flag is set.  */
 #define ZEROTOL 1.e-20	/*  Tolerance for dividing by zero.  */
 #define NORMTOL 1.e-2	/*  Tolerance for finding cummulative normals.  */
-#define PI 3.14159265358979323846264	/*  Pi.  */
 #define ALPHA 25.	/*  Rotation about z-axis.  */
 #define BETA 50.	/*  Rotation about y-axis.  */
 #define GAMMA 35.	/*  Rotation about x-axis.  */

@@ -69,7 +69,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "msr.h"
 
 
+#if !defined(PI)
 #define PI 3.14159265358979323846262	/*  Pi.  */
+#endif
 #define ADJTOL 1.e-1	/*  Tolerance for adjacent regions.  */
 #define ZEROTOL 1.e-20	/*  Zero tolerance.  */
 #define MAXREG 200	/*  Maximum number of regions.  */
