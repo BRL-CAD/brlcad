@@ -1,8 +1,15 @@
 /*	C A N O N I Z E --- queue an image to a Canon CLC500 via qpr/MDQS
  *
  */
+#include "conf.h"
+
 #include <stdio.h>
+#ifdef USE_STRING_H
 #include <string.h>
+#else
+#include <strings.h>
+#endif
+
 #include "./canon.h"
 
 char cmdbuf[64]="/usr/mdqs/bin/qpr -q "; /* queue name filled in by main() */
