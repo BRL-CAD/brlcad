@@ -371,7 +371,7 @@ char *argv[];
     bu_vls_init(&tmp_dmp->dm_pathName);
     bu_vls_init(&tmp_dmp->dm_dName);
     bu_vls_init(&tmp_vls);
-    dm_process_options(tmp_dmp, &tmp_vls, argc - 1, argv + 1);
+    dm_processOptions(tmp_dmp, &tmp_vls, argc - 1, argv + 1);
     if(strlen(bu_vls_addr(&tmp_dmp->dm_dName))){
       if(gui_setup(bu_vls_addr(&tmp_dmp->dm_dName)) == TCL_ERROR){
 	BU_LIST_DEQUEUE( &curr_dm_list->l );
