@@ -52,8 +52,16 @@ unsigned char	*pp;
 	tot = 0;
 	for( y=ymin; y < ymin+height; y++ )  {
 		got = fb_read( ifp, xmin, y, pp, width );
+		if( got < 0 )  {
+			fb_log("fb_sim_readrect() y=%d unexpected EOF\n", y);
+			break;
+		}
 		tot += got;
-		if( got != width )  break;
+		if( got != width )  {
+			fb_log("fb_sim_readrect() y=%d, read of %d got %d pixels, aborting\n",
+				y, width, got );
+			break;
+		}
 		pp += width * sizeof(RGBpixel);
 	}
 	return(tot);
