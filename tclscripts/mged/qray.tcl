@@ -147,17 +147,16 @@ ray enters/leaves an object." } }
 
     frame $top.gridF2 -relief groove -bd 2
     frame $top.bnameF
-    label $top.bnameL -text "Base Name" -anchor w
-    hoc_register_data $top.bnameL "Base Name"\
-	    { { summary "The base name is used to build the names
+    set hoc_data { { summary "The base name is used to build the names
 of fake solids that are created for the ray.
 Specifically, there is one solid created for
 each color used. Note that it is possible to
 create a maximum of four fake solids as a
 result of firing a query ray." } }
+    label $top.bnameL -text "Base Name" -anchor w
+    hoc_register_data $top.bnameL "Base Name" $hoc_data
     entry $top.bnameE -relief sunken -bd 2 -textvar qray_control($id,basename)
-    hoc_register_data $top.bnameE "Base Name"\
-	    { { summary "Enter base name for query ray." } }
+    hoc_register_data $top.bnameE "Base Name" $hoc_data
     grid $top.bnameL -sticky "ew" -in $top.bnameF
     grid $top.bnameE -sticky "ew" -in $top.bnameF
     grid columnconfigure $top.bnameF 0 -weight 1
@@ -177,9 +176,13 @@ rays being drawn through the geometry." } }
     checkbutton $top.cmd_echoCB -relief flat -text "Echo Cmd"\
 	    -offvalue 0 -onvalue 1 -variable qray_control($id,cmd_echo)
     hoc_register_data $top.cmd_echoCB "Echo Cmd"\
-	    { { summary "Toggle echoing of the command." } }
+	    { { summary "Toggle echoing of the command used
+to fire a query ray." }
+              { see_also "nirt" } }
     menubutton $top.effectsMB -textvariable qray_control($id,text_effects)\
 	    -menu $top.effectsMB.m -indicatoron 1
+    hoc_register_data $top.effectsMB "Query Ray Effects"\
+	    { { summary "Pops up a menu of query ray effects." } }
     menu $top.effectsMB.m -title "Query Ray Effects" -tearoff 0
     $top.effectsMB.m add radiobutton -value t -variable qray_control($id,effects)\
 	    -label "Text" -command "qray_effects $id"
@@ -236,7 +239,7 @@ control panel." } }
 	    -command "qray_ok $id $top"
     hoc_register_data $top.okB "Ok"\
 	    { { summary "Apply the query ray control panel settings
-to MGED's internal state then close the
+to MGED's internal state, then close the
 query ray control panel." } }
     button $top.applyB -relief raised -text "Apply"\
 	    -command "qray_apply $id"
@@ -282,38 +285,31 @@ proc qray_ok { id top } {
 }
 
 proc qray_apply { id } {
-    global mged_active_dm
-    global mged_use_air
     global mged_mouse_behavior
+    global mged_use_air
     global mged_qray_effects
     global use_air
     global mouse_behavior
     global qray_control
 
-    winset $mged_active_dm($id)
-
     if {$qray_control($id,active)} {
-	set mouse_behavior q
 	set mged_mouse_behavior($id) q
     } elseif {$mouse_behavior == "q"} {
-	set mouse_behavior d
 	set mged_mouse_behavior($id) d
     }
 
-    set use_air $qray_control($id,use_air)
     set mged_use_air($id) $qray_control($id,use_air)
-
-    qray echo $qray_control($id,cmd_echo)
-
-    qray effects $qray_control($id,effects)
     set mged_qray_control($id,effects) $qray_control($id,effects)
 
-    qray basename $qray_control($id,basename)
-
-    eval qray oddcolor $qray_control($id,oddcolor)
-    eval qray evencolor $qray_control($id,evencolor)
-    eval qray voidcolor $qray_control($id,voidcolor)
-    eval qray overlapcolor $qray_control($id,overlapcolor)
+    mged_apply $id "set mouse_behavior $mged_mouse_behavior($id);\
+	    set use_air $qray_control($id,use_air);\
+	    qray echo $qray_control($id,cmd_echo);\
+	    qray effects $qray_control($id,effects);\
+	    qray basename $qray_control($id,basename);\
+	    eval qray oddcolor $qray_control($id,oddcolor);\
+	    eval qray evencolor $qray_control($id,evencolor);\
+	    eval qray voidcolor $qray_control($id,voidcolor);\
+	    eval qray overlapcolor $qray_control($id,overlapcolor)"
 }
 
 proc qray_reset { id } {
@@ -501,7 +497,7 @@ bindings." }
 	    -command "qray_ok_fmt $id $top"
     hoc_register_data $top.okB "Ok"\
 	    { { summary "Apply the format string settings to
-MGED's internal state then close the
+MGED's internal state, then close the
 advanced settings control panel." } }
     button $top.applyB -relief raised -text "Apply"\
 	    -command "qray_apply_fmt $id"
