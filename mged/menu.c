@@ -42,12 +42,15 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mgedtcl.h"
 
 extern struct menu_item second_menu[], sed_menu[];
+
+#if 0
 int	menuflag;	/* flag indicating if a menu item is selected */
 struct menu_item *menu_array[NMENU];	/* base of array of menu items */
 
 static int	menu_top;	/* screen loc of the first menu item */
 int	cur_menu;	/* index of selected menu in list */
 int	cur_item;	/* index of selected item in menu */
+#endif
 
 void set_menucurrent();
 int set_arrowloc();
@@ -117,10 +120,12 @@ mmenu_init()
 	menu_array[MENU_L1] = MENU_NULL;
 	menu_array[MENU_L2] = MENU_NULL;
 	menu_array[MENU_GEN] = MENU_NULL;
+#if 0
 	(void)Tcl_CreateCommand(interp, "mmenu_set", cmd_nop, (ClientData)NULL,
 				(Tcl_CmdDeleteProc *)NULL);
 	(void)Tcl_CreateCommand(interp, "mmenu_get", cmd_mmenu_get,
 				(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+#endif
 }
 
 
@@ -141,7 +146,12 @@ struct menu_item *value;
     bu_vls_init(&menu_string);
     Tcl_DStringInit(&ds_menu);
 
+#if 0
     bu_vls_printf(&menu_string, "mmenu_set %d ", index);
+#else
+    bu_vls_printf(&menu_string, "mmenu_set .mmenu%S %S %d ",
+		  &curr_cmd_list->name, &curr_cmd_list->name, index);
+#endif
 
     Tcl_DStringStartSublist(&ds_menu);
     if (value != MENU_NULL)
@@ -155,7 +165,28 @@ struct menu_item *value;
     Tcl_DStringFree(&ds_menu);
     bu_vls_free(&menu_string);
 
+#if 0
     update_views = 1;
+#else
+    dirty = 1;
+#endif
+}
+
+void
+mmenu_set_all( index, value )
+int index;
+struct menu_item *value;
+{
+  struct dm_list *p;
+  struct dm_list *save_dm_list;
+
+  save_dm_list = curr_dm_list;
+  for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+    curr_dm_list = p;
+    mmenu_set( index, value );
+  }
+
+  curr_dm_list = save_dm_list;
 }
 
 void
