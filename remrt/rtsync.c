@@ -480,9 +480,17 @@ new_rtnode(pcp)
 struct pkg_conn	*pcp;
 {
 	register int	i;
+	struct ihost	*host;
 
 	if( pcp == PKC_ERROR )
 		return;
+
+	if( !(host = host_lookup_of_fd(pcp->pkc_fd)) )  {
+		rt_log("%s Unable to get host name of new connection, dropping\n", stamp() );
+		pkg_close(pcp);
+		return;
+	}
+	rt_log("%s Connection from %s\n", stamp(), host->ht_name);
 
 	for( i = MAX_NODES-1; i >= 0; i-- )  {
 		if( rtnodes[i].fd != 0 )  continue;
@@ -494,9 +502,7 @@ struct pkg_conn	*pcp;
 		FD_SET(pcp->pkc_fd, &select_list);
 		if( pcp->pkc_fd > max_fd )  max_fd = pcp->pkc_fd;
 		setup_socket( pcp->pkc_fd );
-		rtnodes[i].host = host_lookup_of_fd(pcp->pkc_fd);
-
-		rt_log("%s Connection from %s\n", stamp(), rtnodes[i].host->ht_name);
+		rtnodes[i].host = host;
 		return;
 	}
 	rt_log("rtsync: too many rtnode clients.  My cup runneth over!\n");
