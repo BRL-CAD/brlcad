@@ -53,8 +53,9 @@ long *p;
 {
 	if (func == TBL_INIT) {
 		b->magic = NMG_PTBL_MAGIC;
-		b->buffer = (long **)rt_calloc(b->blen=64,
-						sizeof(p), "pointer table");
+		b->blen=64;
+		b->buffer = (long **)rt_calloc(b->blen, sizeof(long *),
+			"nmg_ptbl.buffer[]");
 		b->end = 0;
 		if (rt_g.NMG_debug & DEBUG_INS)
 			rt_log("nmg_tbl(%8x) TBL_INIT\n", b);
