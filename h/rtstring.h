@@ -37,6 +37,7 @@
 struct rt_vls  {
 	long	vls_magic;
 	char	*vls_str;	/* Dynamic memory for buffer */
+	int	vls_offset;	/* Offset into vls_str where data is good */
 	int	vls_len;	/* Length, not counting the null */
 	int	vls_max;
 };
@@ -72,6 +73,7 @@ RT_VLS_EXTERN(char *rt_vls_addr, (struct rt_vls *vp) );
 RT_VLS_EXTERN(void rt_vls_extend, (struct rt_vls *vp, int extra) );
 RT_VLS_EXTERN(int rt_vls_strlen, (CONST struct rt_vls *vp) );
 RT_VLS_EXTERN(void rt_vls_trunc, (struct rt_vls *vp, int len) );
+RT_VLS_EXTERN(void rt_vls_nibble, (struct rt_vls *vp, int len) );
 RT_VLS_EXTERN(void rt_vls_free, (struct rt_vls *vp) );
 RT_VLS_EXTERN(void rt_vls_strcpy, (struct rt_vls *vp, CONST char *s) );
 RT_VLS_EXTERN(void rt_vls_strncpy, (struct rt_vls *vp, CONST char *s, int n) );
