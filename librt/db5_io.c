@@ -466,17 +466,17 @@ FILE			*fp;
  *  Any of name, attrib, and body may be null.
  */
 void
-db5_export_object3( out, dli, name, hidden, attrib, body, major, minor, a_zzz, b_zzz )
-struct bu_external		*out;			/* output */
-int				dli;
-CONST char			*name;
-CONST unsigned char		hidden;
-CONST struct bu_external	*attrib;
-CONST struct bu_external	*body;
-int				major;
-int				minor;
-int				a_zzz;		/* compression, someday */
-int				b_zzz;
+db5_export_object3(
+	struct bu_external *out,
+	int dli,
+	CONST char *name,
+	CONST unsigned char hidden,
+	CONST struct bu_external *attrib,
+	CONST struct bu_external *body,
+	int major,
+	int minor,
+	int a_zzz,
+	int b_zzz )
 {
 	struct db5_ondisk_header *odp;
 	register unsigned char	*cp;
@@ -959,7 +959,6 @@ int db5_update_ident( struct db_i *dbip, const char *title, double local2mm )
 	struct directory		*dp;
 	struct bu_vls			units;
 	int				ret;
-	char				*old_title;
 
 	RT_CK_DBI(dbip);
 
@@ -996,7 +995,6 @@ int db5_update_ident( struct db_i *dbip, const char *title, double local2mm )
 	ret = db5_update_attributes( dp, &avs, dbip );
 	bu_vls_free( &units );
 
-	old_title = dbip->dbi_title;
 	dbip->dbi_title = bu_strdup(title);
 
 	return ret;
