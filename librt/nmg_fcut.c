@@ -1071,6 +1071,13 @@ int			end;		/* last index + 1 */
 			rs->ang_x_dir, rs->ang_y_dir, ass, 1 ) * rt_radtodeg;
 		vs[nvu].out_vu_angle = nmg_vu_angle_measure( rs->vu[i],
 			rs->ang_x_dir, rs->ang_y_dir, ass, 0 ) * rt_radtodeg;
+
+		/* Special case for LEFT & ON combos */
+		if( ass == NMG_V_ASSESSMENT_COMBINE(NMG_E_ASSESSMENT_ON_FORW, NMG_E_ASSESSMENT_LEFT) )
+			vs[nvu].in_vu_angle = 360;
+		else if( ass == NMG_V_ASSESSMENT_COMBINE(NMG_E_ASSESSMENT_LEFT, NMG_E_ASSESSMENT_ON_REV) )
+			vs[nvu].out_vu_angle = 360;
+
 		vs[nvu].wedge_class = nmg_wedge_class( vs[nvu].in_vu_angle, vs[nvu].out_vu_angle );
 		if(rt_g.NMG_debug&DEBUG_VU_SORT) rt_log("nmg_wedge_class = %d %s\n", vs[nvu].wedge_class, WEDGECLASS2STR(vs[nvu].wedge_class));
 		/* Sort the angles */
