@@ -778,8 +778,14 @@ int	x, y;
 		y_window = first_line - top_margin + 6;		/* was 9 */
 		break;
 	}
-	IKI(ifp)->y_winoff = y_window;
+	IKI(ifp)->y_winoff = y_window;	/* save for cursor routines */
 	y_window /= IKI(ifp)->y_zoom;
+
+	/* HACK - XXX */
+	if( IKI(ifp)->x_zoom > 1 )
+		ikx--;
+	if( IKI(ifp)->mode == 2 && IKI(ifp)->y_zoom > 1 )
+		iky--;	/* hires zoom */
 
 	if( IKI(ifp)->mode != 2 )
 		IKI(ifp)->ikfbcmem.fbc_xwindow = ikx << 2;	/* lores */
@@ -812,46 +818,6 @@ FBIO	*ifp;
 int	mode;
 int	x, y;
 {
-#ifdef never
-	register int	x_cursor_offset, y_cursor_offset;
-	int x_origin = ifp->if_width / 2;	/* Odd formulas */
-	int y_origin = ifp->if_height / 2;
-
-	y = ifp->if_width-1-y;		/* 1st quadrant */
-	/* Map image coordinates to screen space.			*/
-	if( ifp->if_width == 1024 ) {
-		switch( IKI(ifp)->x_zoom ) {
-		case 16 :
-			x_cursor_offset = 9;
-			y_cursor_offset = 39;
-			break;
-		case 8 :
-			x_cursor_offset = -4;
-			y_cursor_offset = 43;
-			break;
-		case 4 :
-			x_cursor_offset = -10;
-			y_cursor_offset = 44;
-			break;
-		case 2 :
-			x_cursor_offset = -17;
-			y_cursor_offset = 45;
-			break;
-		case 1 :
-			x_cursor_offset = -16;
-			y_cursor_offset = 46;
-			break;
-		}
-	} else {
-		x_cursor_offset = X_CURSOR_OFFSET;
-		y_cursor_offset = Y_CURSOR_OFFSET;
-	}
-	x = x_origin + ((x - x_origin)
-		- IKI(ifp)->x_window)*IKI(ifp)->x_zoom + x_cursor_offset;
-	y = y_origin + ((y - y_origin)
-		- IKI(ifp)->y_window)*IKI(ifp)->y_zoom + y_cursor_offset;
-#endif
-
 	y = ifp->if_height-1-y;		/* q1 -> q4 */
 	y = y - IKI(ifp)->y_window;
 	x = x - IKI(ifp)->x_window;
@@ -860,6 +826,9 @@ int	x, y;
 	if( x < 0 )  x = 0;
 */
 	y *= IKI(ifp)->y_zoom;
+	/* HACK - XXX */
+	if( IKI(ifp)->x_zoom > 1 )
+		x++;
 	if( IKI(ifp)->mode == 2 && IKI(ifp)->x_zoom > 1 )
 		x *= (IKI(ifp)->x_zoom / 2);
 	else
