@@ -214,7 +214,8 @@ char	**argv;
 /*
  *			S E P A R A T E
  *
- *  Unpack RGB byte tripples into three separate arrays of integers
+ *  Unpack RGB byte tripples into three separate arrays of integers.
+ *  The first and last pixels are replicated twice, to handle border effects.
  */
 separate( rop, gop, bop, cp, num )
 register int	*rop;
@@ -225,11 +226,23 @@ int		num;
 {
 	register int 	i;
 
+	rop[-1] = rop[-2] = cp[0];
+	gop[-1] = gop[-2] = cp[1];
+	bop[-1] = bop[-2] = cp[2];
+
 	for( i = num-1; i >= 0; i-- )  {
 		*rop++ = *cp++;
 		*gop++ = *cp++;
 		*bop++ = *cp++;
 	}
+
+	*rop++ = cp[-3];
+	*gop++ = cp[-2];
+	*bop++ = cp[-1];
+
+	*rop++ = cp[-3];
+	*gop++ = cp[-2];
+	*bop++ = cp[-1];
 }
 
 /*
