@@ -59,8 +59,10 @@ extern "C" {
  *  System library routines used by LIBRT.
  *  If header files are to be included, this should happen first,
  *  to prevent accidentally redefining important stuff.
+ *
+ *  A few non-ANSI systems have (and need) these headers anyway.
  */
-#if (__STDC__ && !apollo) || (sgi && mips)
+#if __STDC__ || (sgi && mips) || (ultrix && mips)
 /*	NOTE:  Nested includes, gets malloc(), offsetof(), etc */
 #	include <stdlib.h>
 #	include <stddef.h>
