@@ -1,25 +1,22 @@
 /*
-	SCCS id:	@(#) pp-fb.c	1.6
-	Last edit: 	3/28/85 at 16:38:52	G S M
-	Retrieved: 	8/13/86 at 03:16:08
-	SCCS archive:	/m/cad/fb_utils/RCS/s.pp-fb.c
-
-*/
-#if ! defined( lint )
-static
-char	sccsTag[] = "@(#) pp-fb.c	1.6	last edit 3/28/85 at 16:38:52";
-#endif
-/*
-			P P - F B . C
-
-	plot color shaded pictures from GIFT on a frame buffer.
-
-	Original Version:  Gary Kuehl,  April 1983
-	Ported to VAX:  Mike Muuss, January 1984
-
-	Conversion to generic frame buffer utility using libfb(3).
-	In the process, the name has been changed to pp-fb from pp-ik.
-	Gary S. Moss, BRL. 03/14/85
+ *			P P - F B . C
+ *
+ *	plot color shaded pictures from GIFT on a frame buffer.
+ *
+ *	Original Version:  Gary Kuehl,  April 1983
+ *	Ported to VAX:  Mike Muuss, January 1984
+ *
+ *	Conversion to generic frame buffer utility using libfb(3).
+ *	Gary S. Moss, BRL. 03/14/85
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1986 by the United States Army.
+ *	All rights reserved.
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
@@ -43,7 +40,7 @@ static Pixel	pix_buf[FBBUFSIZE]; /* Pixel buffer.			*/
 	*fb_p++ = *pix; \
 	if( fb_p >= end_p ) \
 		{ \
-		fbwrite( 0, fb_y, pix_buf, FBBUFSIZE ); \
+		fb_write( fbp, 0, fb_y, pix_buf, FBBUFSIZE ); \
 		fb_y += scans_per_buffer; \
 		fb_p = pix_buf; \
 		} \
@@ -55,6 +52,7 @@ static char linebuf[128];		/* For reading text lines into */
 
 static int last_unpacked;		/* Global magic */
 static FILE *input;			/* Input file handle */
+FBIO *fbp;
 
 #define NCOLORS	((sizeof(ctab))/(sizeof(struct colors)))
 static struct colors {
@@ -103,6 +101,8 @@ static int nitems = 11;		/* Number of items in table */
 
 #define REFLECTANCE .003936
 
+int width = 512;
+
 main(argc,argv)
 int argc;
 char **argv;
@@ -150,14 +150,15 @@ line1:
 	(void) fscanf( input, "%d", &maxh );
 	(void) fscanf( input, "%d", &maxv );
 	if( maxh > 512 || maxv > 512 ) /* Automatic high res. mode.	*/
-		fbsetsize( 1024 );
-	if(	fbopen( NULL, APPEND ) == -1
-	    ||	fb_wmap( (ColorMap *) NULL ) == -1
-		)
-		{
-		return	1;
-		}
-	scans_per_buffer = FBBUFSIZE/fbgetsize();
+		width = 1024;
+
+	if( (fbp = fb_open( NULL, width, width )) == NULL )  {
+		fprintf(stderr,"fb_open failed\n");
+		exit(12);
+	}
+	(void) fb_wmap( fbp, COLORMAP_NULL );
+
+	scans_per_buffer = FBBUFSIZE/fb_getwidth(fbp);
 
 	(void) printf( "Number of Horz cells %4d, ",maxh);
 	(void) printf( "Number of Vert cells %4d\n",maxv);
@@ -320,7 +321,7 @@ noread:
 			break;
 	}
 	(void) printf( "\n\n----------------------------------\n");
-	if( fbclose( _fbfd ) == -1 )
+	if( fb_close( fbp ) == -1 )
 		{
 		(void) fprintf( stderr, "Can't close framebuffer!\n" );
 		return	1;
