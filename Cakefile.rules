@@ -212,6 +212,10 @@ dist-clobber&:
 %.inst-dist&:
 	-INS % DISTRIBUTION/SRCDIR/.
 
+#ifndef EXTRA_CLEAN
+#	define	EXTRA_CLEAN	/**/
+#endif
+
 /*
  *	clean	remove all .o files and by-products
  *	noprod	remove the final executables
@@ -220,7 +224,7 @@ dist-clobber&:
 clobber&:	clean noprod
 
 clean&:
-	-rm -f core *~ *.o SRCDIR.out SRCDIR.err SRCDIR.xref SRCDIR.flow SRCDIR.lint
+	-rm -f core *~ *.o EXTRA_CLEAN SRCDIR.out SRCDIR.err SRCDIR.xref SRCDIR.flow SRCDIR.lint
 
 noprod&:
 	-rm -f PRODUCTS
