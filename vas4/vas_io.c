@@ -46,16 +46,14 @@ vas_open()
 
 	/* Open VAS Port */
 	if((vas_fd=open(VAS_PORT,RW)) < 0){
-		fprintf(stderr,"Can not open VAS port");
-		fprintf(stderr,VAS_PORT);
-		fprintf(stderr,"\n");
+		perror(VAS_PORT);
 		exit(1);
 	}
 
 	/* Setup VAS line */
 	vtty.sg_ispeed = BAUD;
 	vtty.sg_ospeed = BAUD;
-	vtty.sg_flags = RAW+EVENP+ODDP;
+	vtty.sg_flags = RAW|EVENP|ODDP;
 	ioctl(vas_fd,TIOCSETP,&vtty);
 	ioctl(vas_fd,TIOCEXCL,&vtty);	/* exclusive use */
 }
