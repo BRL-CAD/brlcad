@@ -36,6 +36,7 @@ static char RCSprep[] = "@(#)$Header$ (BRL)";
 
 HIDDEN void	rt_fr_tree();
 HIDDEN void	rt_plot_solids();
+HIDDEN void	rt_solid_bitfinder();
 
 extern struct resource	rt_uniresource;		/* from shoot.c */
 
@@ -418,6 +419,62 @@ register union tree *tp;
 	default:
 		rt_log("rt_fr_tree: bad op x%x\n", tp->tr_op);
 		return;
+	}
+}
+
+/*
+ *  			S O L I D _ B I T F I N D E R
+ *  
+ *  Used to walk the boolean tree, setting bits for all the solids in the tree
+ *  to the provided bit vector.  Should be called AFTER the region bits
+ *  have been assigned.
+ */
+HIDDEN void
+rt_solid_bitfinder( treep, regbit, resp )
+register union tree	*treep;
+register int		regbit;
+struct resource		*resp;
+{
+	register union tree	**sp;
+	register struct soltab	*stp;
+	register union tree	**stackend;
+
+	while( (sp = resp->re_boolstack) == (union tree **)0 )
+		rt_grow_boolstack( resp );
+	stackend = &(resp->re_boolstack[resp->re_boolslen-1]);
+	*sp++ = TREE_NULL;
+	*sp++ = treep;
+	while( (treep = *--sp) != TREE_NULL ) {
+		switch( treep->tr_op )  {
+		case OP_SOLID:
+			stp = treep->tr_a.tu_stp;
+			BITSET( stp->st_regions, regbit );
+			if( !BITTEST( stp->st_regions, regbit ) )
+				rt_bomb("BITSET failure\n");	/* sanity check */
+			if( regbit+1 > stp->st_maxreg )  stp->st_maxreg = regbit+1;
+			if( rt_g.debug&DEBUG_REGIONS )  {
+				rt_pr_bitv( stp->st_name, stp->st_regions,
+					stp->st_maxreg );
+			}
+			break;
+		case OP_UNION:
+		case OP_INTERSECT:
+		case OP_SUBTRACT:
+			/* BINARY type */
+			/* push both nodes - search left first */
+			*sp++ = treep->tr_b.tb_right;
+			*sp++ = treep->tr_b.tb_left;
+			if( sp >= stackend )  {
+				register int off = sp - resp->re_boolstack;
+				rt_grow_boolstack( resp );
+				sp = &(resp->re_boolstack[off]);
+				stackend = &(resp->re_boolstack[resp->re_boolslen-1]);
+			}
+			break;
+		default:
+			rt_log("rt_solid_bitfinder:  op=x%x\n", treep->tr_op);
+			break;
+		}
 	}
 }
 
