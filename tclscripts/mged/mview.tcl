@@ -9,6 +9,9 @@ if ![info exists mged_default(bd)] {
 proc openmv { id w wc dpy dtype } {
     global win_to_id
     global mged_default
+    global faceplate
+    global orig_gui
+    global perspective_mode
 
     frame $wc.ulF -relief sunken -borderwidth $mged_default(bd)
     frame $wc.urF -relief sunken -borderwidth $mged_default(bd)
@@ -16,9 +19,28 @@ proc openmv { id w wc dpy dtype } {
     frame $wc.lrF -relief sunken -borderwidth $mged_default(bd)
 
     attach -d $dpy -t 0 -n $w.ul $dtype
+    dm set zclip $mged_default(zclip)
+    set faceplate $mged_default(faceplate)
+    set orig_gui $mged_default(orig_gui)
+    set perspective_mode $mged_default(perspective_mode)
+
     attach -d $dpy -t 0 -n $w.ur $dtype
+    dm set zclip $mged_default(zclip)
+    set faceplate $mged_default(faceplate)
+    set orig_gui $mged_default(orig_gui)
+    set perspective_mode $mged_default(perspective_mode)
+
     attach -d $dpy -t 0 -n $w.ll $dtype
+    dm set zclip $mged_default(zclip)
+    set faceplate $mged_default(faceplate)
+    set orig_gui $mged_default(orig_gui)
+    set perspective_mode $mged_default(perspective_mode)
+
     attach -d $dpy -t 0 -n $w.lr $dtype
+    dm set zclip $mged_default(zclip)
+    set faceplate $mged_default(faceplate)
+    set orig_gui $mged_default(orig_gui)
+    set perspective_mode $mged_default(perspective_mode)
 
     set win_to_id($w.ul) $id
     set win_to_id($w.ur) $id
@@ -184,10 +206,11 @@ proc closemv { id } {
 
 proc setupmv { id } {
     global mged_gui
+    global mged_default
     global faceplate
 
     set_default_views $id
-    mged_apply_local $id "set faceplate 0"
+#    mged_apply_local $id "set faceplate $mged_default(faceplate)"
 
     grid columnconfigure $mged_gui($id,dmc) 0 -weight 1
     grid columnconfigure $mged_gui($id,dmc) 1 -weight 1

@@ -126,6 +126,22 @@ if ![info exists mged_default(text_font)] {
     font_init
 }
 
+if ![info exists mged_default(faceplate)] {
+    set mged_default(faceplate) 0
+}
+
+if ![info exists mged_default(orig_gui)] {
+    set mged_default(orig_gui) 1
+}
+
+if ![info exists mged_default(zclip)] {
+    set mged_default(zclip) 1
+}
+
+if ![info exists mged_default(perspective_mode)] {
+    set mged_default(perspective_mode) 0
+}
+
 ##
 # Set the class bindings for use with help. This requires the
 # widget to register its data using hoc_register_data. Also, for now,
