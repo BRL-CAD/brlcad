@@ -29,6 +29,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "db.h"
 #include "raytrace.h"
+#include "nmg.h"
 #include "./ged.h"
 #include "externs.h"
 #include "./solid.h"
@@ -109,11 +110,15 @@ struct mater_info *materp;
 	if( (rp = db_getmrec( dbip, dp )) == (union record *)0 )
 		return;
 
-	if( rp[0].u_id == ID_SOLID ||
-	    rp[0].u_id == ID_ARS_A ||
-	    rp[0].u_id == ID_BSOLID ||
-	    rp[0].u_id == ID_P_HEAD )  {
+	if( rp[0].u_id != ID_COMB )  {
 		register struct solid *sp;
+
+		if( rt_id_solid( rp ) == ID_NULL )  {
+			(void)printf("drawobj(%s):  defective database record, type='%c' (0%o) addr=x%x\n",
+				dp->d_namep,
+				rp[0].u_id, rp[0].u_id, dp->d_addr );
+			goto out;		/* ERROR */
+		}
 		/*
 		 * Enter new solid (or processed region) into displaylist.
 		 */
@@ -129,12 +134,9 @@ struct mater_info *materp;
 	}
 
 	/*
-	 * Process a Combination (directory) node
+	 *  At this point, u_id == ID_COMB.
+	 *  Process a Combination (directory) node
 	 */
-	if( rp[0].u_id != ID_COMB )  {
-		(void)printf("drawobj:  defective input '%c'\n", rp[0].u_id );
-		goto out;		/* ERROR */
-	}
 	if( dp->d_len <= 1 )  {
 		(void)printf("Warning: combination with zero members \"%s\".\n",
 			dp->d_namep );
@@ -309,6 +311,7 @@ struct mater_info *materp;
 	}  else  {
 		/* Doing a normal solid */
 		int id;
+		extern int use_nmg_flag;	/* XXX from chgview.c */
 
 		dashflag = (flag != ROOT);
 
@@ -319,8 +322,31 @@ struct mater_info *materp;
 			return(-1);			/* ERROR */
 		}
 
-		rt_functab[id].ft_plot( recordp, xform, &vhead,
-			cur_path[pathpos] );
+		if( use_nmg_flag )  {
+			struct model	*m;
+
+			if( (m = nmg_mkmodel()) == (struct model *)0 ||
+			    nmg_mkshell( m->r_p ) )  {
+			    	printf("nmg_mkmodel or nmg_mkshell failure\n");
+			    	return(-1);
+			}
+
+			/* Tessellate Solid to NMG */
+			rt_functab[id].ft_tessellate(
+				m->r_p->s_p,
+				recordp, xform,
+				cur_path[pathpos] );
+
+			/* Convert NMG to vlist */
+			/* 0 = vectors, 1 = w/polygon markers */
+			nmg_s_to_vlist( &vhead, m->r_p->s_p, 1 );
+
+			/* Destroy NMG */
+			nmg_kmodel( m );
+		} else {
+			rt_functab[id].ft_plot( recordp, xform, &vhead,
+				cur_path[pathpos] );
+		}
 	}
 
 	/* Take note of the base color */
