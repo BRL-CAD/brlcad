@@ -251,9 +251,8 @@ int dir;
 	srf2->next = (struct snurb *)0;
 
 	rt_nurb_free_oslo(oslo);
-	rt_free(new_kv->knots, "rt_nurb_s_split: new kv knots");
-	rt_free(new_kv, "rt_nurb_s_split: new kv knot struct");
-	
+	rt_free( (char *)new_kv->knots, "rt_nurb_s_split: new kv knots");
+	rt_free( (char *)new_kv, "rt_nurb_s_split: new kv knot struct");
 
 	return (struct snurb *) srf1;
 }

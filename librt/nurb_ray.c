@@ -270,7 +270,7 @@ fastf_t *min, *max;
 		if ( SIGN(ch[row_size-1 ].min) != SIGN(ch[row_size -1].max))
 			*max = 1.0;	}
 
-	rt_free( ch, "rt_nurb_clip_srf:convex_hull");
+	rt_free( (char *)ch, "rt_nurb_clip_srf:convex_hull");
 }
 
 
@@ -319,8 +319,8 @@ fastf_t param1, param2;
 	region = (struct snurb *)
 		rt_nurb_s_refine( srf, dir, new_knots);
 
-	rt_free( new_knots->knots, "rt_nurb_region_from_srf:knotvalues");
-	rt_free( new_knots, "rt_nurb_region_from_srf:knot vector");
+	rt_free( (char *)new_knots->knots, "rt_nurb_region_from_srf:knotvalues");
+	rt_free( (char *)new_knots, "rt_nurb_region_from_srf:knot vector");
 
 	return region;
 }

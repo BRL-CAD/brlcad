@@ -204,7 +204,7 @@ struct oslo_mat * om;
 	{
 		omp = om;
 		om = om->next;
-		rt_free( omp->o_vec, "rt_nurb_free_oslo: ovec");
-		rt_free( omp, "rt_nurb_free_oslo: struct oslo");	
+		rt_free( (char *)omp->o_vec, "rt_nurb_free_oslo: ovec");
+		rt_free( (char *)omp, "rt_nurb_free_oslo: struct oslo");
 	}
 }
