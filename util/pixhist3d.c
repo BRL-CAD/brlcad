@@ -28,7 +28,7 @@ FBIO	*fbp;
 
 long	rxb[256][256], rxg[256][256], bxg[256][256];
 
-unsigned char ibuf[512*3];
+unsigned char ibuf[8*1024*3];
 
 static char *Usage = "usage: pixhist3d < file.pix\n";
 
@@ -75,7 +75,7 @@ int xoff, yoff;
 	register int	x, y;
 	static long	max;
 	static double scale;
-	Pixel	obuf[256];
+	RGBpixel	obuf[256];
 
 	/* Find max value */
 	max = 0;
@@ -95,8 +95,8 @@ int xoff, yoff;
 			value = v[y][x] * scale;
 			if( value < 20 && v[y][x] != 0 )
 				value = 20;
-			obuf[x].red = obuf[x].green = obuf[x].blue = value;
+			obuf[x][RED] = obuf[x][GRN] = obuf[x][BLU] = value;
 		}
-		fb_write( fbp, xoff, yoff+y, &obuf[0], 256 );
+		fb_write( fbp, xoff, yoff+y, obuf, 256 );
 	}
 }
