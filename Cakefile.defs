@@ -104,7 +104,7 @@ set -S2 "/bin/sh"
  *	MGED_OBJS		(default=undefined)		*
  *	MGED_LIBES		(default=undefined)		*
  *	RT_CONFIG						*
- *	RT_LIBES						*
+ *	LIBRT_LIBES						*
  *	LGT_CONFIG						*
  *	RFBD_CONFIG						*
  *	CC							*
@@ -121,7 +121,7 @@ set -S2 "/bin/sh"
  *  libraries, they must also link with some related libraries.	*
  *  This relationship is listed in this table:			*
  *								*
- *	LIBRT		RT_LIBES	(should be LIBRT_LIBES)	*
+ *	LIBRT		LIBRT_LIBES	(formerly RT_LIBES)	*
  *	LIBFB		LIBFB_LIBES				*
  *								*
  ****************************************************************/
@@ -201,7 +201,7 @@ set -S2 "/bin/sh"
 #	define	LD_OPTS	CC_OPTS
 #	define	FC	/usr/alliant/fortran
 #	define	LIBMALLOC	/* use vendor library */
-#	define	RT_LIBES	-lcvec -lcommon
+#	define	LIBRT_LIBES	-lcvec -lcommon
 #	define	LIBRT_TIMER	timer42
 #endif
 
@@ -309,7 +309,7 @@ set -S2 "/bin/sh"
 #	define	MTYPE	4d
 #	define  CC_OPTS		GFLAG
 #	define	STANDARD_LIBES	-lm -lc''SHARED
-#	define	RT_LIBES	-lmpc
+#	define	LIBRT_LIBES	-lmpc
 #	define	MGED_LIBES	-lbsd -lgl''SHARED
 #	define	LGT_CONFIG	GFLAG -lmpc
 #	define	LIBMALLOC	/* needs malloc() from -lmpc */
@@ -461,7 +461,7 @@ set -S2 "/bin/sh"
 #	define	LIBMALLOC	/* use vendor library */
 #	define	RFBD_LIBES	-lbsd
 #	define	LIBRT_TIMER	timerunix
-#	define	RT_LIBES	-L/lib/multi -lu -lio
+#	define	LIBRT_LIBES	-L/lib/multi -lu -lio
 #	define	LGT_CONFIG	-Dcray
 #	define	LIBTERMLIB	-lcurses
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB
@@ -498,7 +498,7 @@ set -S2 "/bin/sh"
 #	define	RANLIB	echo
 #	define	LIBMALLOC	/* use vendor library */
 #	define	LIBRT_TIMER	timerunix
-#	define	RT_LIBES	-lmt
+#	define	LIBRT_LIBES	-lmt
 #	define	LGT_CONFIG	-Dcray
 #	define	LIBPKG_SETUP	cp /usr/lib/libnet.ARCH_SUF PRODUCTS
 #	define	LIBPKG_CONFIG	-DBSD=43
@@ -660,9 +660,10 @@ set -S2 "/bin/sh"
 
 /* (potentially null) loader flags needed with the corresponding libraries */
 
-#ifndef RT_LIBES
-#	define	RT_LIBES	/**/
+#ifndef LIBRT_LIBES
+#	define	LIBRT_LIBES	/**/
 #endif
+#define	RT_LIBES	LIBRT_LIBES	/* compat w/old Cakefiles */
 
 #ifndef LIBFB_LIBES
 #	define	LIBFB_LIBES	/**/
