@@ -56,13 +56,16 @@
  */
 #include <stdio.h>
 #include <math.h>
+#include "machine.h"
+#include "vmath.h"
+#include "plot3.h"
 #include "./tig.h"
 
 void
 tp_scale( idata, elements, mode, length, odata, min, dx )
 int idata[];
 int elements;
-register char mode;
+register int mode;
 int length;
 int odata[];
 double *min;
@@ -158,18 +161,17 @@ double *dx;
 
 
 /*
- *	FORTRAN-FOUR PLUS User Interface
+ *	FORTRAN Interface
  */
-
 void
-F(fscale, FSCALE)( idata, elements, mode, length, odata, min, dx )
-int idata[];
-int *elements;
-char *mode;
-int *length;
-int odata[];
-double *min;
-double *dx;
+PL_FORTRAN(fscale, FSCALE)( idata, elements, mode, length, odata, min, dx )
+int	idata[];
+int	*elements;
+char	*mode;
+int	*length;
+int	odata[];
+double	*min;
+double	*dx;
 {
 	tp_scale( idata, *elements, *mode, *length, odata, min, dx );
 }

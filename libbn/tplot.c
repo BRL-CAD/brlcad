@@ -38,6 +38,9 @@
  */
 #include <stdio.h>
 #include <math.h>
+#include "machine.h"
+#include "vmath.h"
+#include "plot3.h"
 #include "./tig.h"
 
 #define TIC		100
@@ -45,18 +48,21 @@
 #define NUM_DISTANCE	250
 #define LAB_LNGTH	860
 
-/* XXX These should probably either be static, or get different names */
-void	fixsc(), sep();
-float	pwr();
+void	tp_ftoa();
+void	tp_fixsc(), tp_sep();
+double	tp_ipow();
 
 void
 tp_plot( fp, xp, yp, xl, yl, xtitle, ytitle, x, y, n, cscale )
 FILE	*fp;
-int	xp, yp;		/* page point desired to be (0,0) for plot */
-int	xl, yl;		/* lengths of x,y axis */
+int	xp;		/* page point desired to be (0,0) for plot */
+int	yp;
+int	xl;		/* lengths of x,y axis */
+int	yl;
 char	xtitle[];
 char	ytitle[];
-float	x[], y[];
+float	x[];
+float	y[];
 int	n;		/* number of points */
 double	cscale;		/* character scale factor */
 {
@@ -74,8 +80,8 @@ double	cscale;		/* character scale factor */
 	fxl = xl/1000.0;
 	fyl = yl/1000.0;
 	n -= 1; /* allow for the fact that fortran starts arrays at 1 */
-	fixsc (x, n, fxl, &xs, &xmin, &xmax, &dx);
-	fixsc (y, n, fyl, &ys, &ymin, &ymax, &dy);
+	tp_fixsc (x, n, fxl, &xs, &xmin, &xmax, &dx);
+	tp_fixsc (y, n, fyl, &ys, &ymin, &ymax, &dy);
 	ddx = dx*xs;
 	ddy = dy*ys;
 	xtics = LAB_LNGTH / ddx + 1.0;
@@ -160,13 +166,13 @@ loop:
 		i++;
 		j++;
 	}
-	tp_2list( fp, ix, iy, isave+1 );
+	tp_i2list( fp, ix, iy, isave+1 );
 	if( isave == 100 )
 		goto loop;
 }
 
 /*
- *			F T O A
+ *			T P _ F T O A
  *
  *
  *			George W Hartwig, Jr.
@@ -177,7 +183,7 @@ loop:
  * null terminated.
  */
 void
-ftoa(x, s)
+tp_ftoa(x, s)
 float x;
 char *s;
 {
@@ -185,7 +191,7 @@ char *s;
 	float coef;
 	char esgn, nsgn;
 	char i;
-	sep(x, &coef, &ex);
+	tp_sep(x, &coef, &ex);
 	if( ex < -15 ){
 		ex = 0;
 		*s++ = '0';
@@ -246,19 +252,19 @@ char *s;
 	*s = 0;
 }
 /*
- *			F I X S C
+ *			T P _ F I X S C
  *
  *		written by George Hartwig
  *			6 March 1979
  *
- *   fixsc is a scaling routine intended to be used in conjunction
- *   with plotting routines. What fixsc does is scale the user supplied
+ *   tp_fixsc is a scaling routine intended to be used in conjunction
+ *   with plotting routines. What tp_fixsc does is scale the user supplied
  *   data so that it fits on a specified axis and has 'nice' numbers
  *   for labels.
  *
  *   Calling sequence
  *
- *   fixsc(x, npts, size, xs, xmin, xmax, dx)
+ *   tp_fixsc(x, npts, size, xs, xmin, xmax, dx)
  *   where
  *
  *	float x[]	the data array to be scaled
@@ -275,7 +281,7 @@ char *s;
  *
  */
 void
-fixsc(x,npts,size,xs,xmin,xmax,dx)
+tp_fixsc(x,npts,size,xs,xmin,xmax,dx)
 int npts;
 float x[], size, *xs, *xmin, *xmax, *dx ;
 {
@@ -293,7 +299,7 @@ float x[], size, *xs, *xmin, *xmax, *dx ;
 	diff = txma - txmi;
 	if( diff < .000001 )
 		diff = .000001;
-	sep (diff, &coef, &ex);
+	tp_sep (diff, &coef, &ex);
 	if( coef < 2.0 )
 		delta = .1;
 	else if ( coef < 4.0 )
@@ -305,7 +311,7 @@ float x[], size, *xs, *xmin, *xmax, *dx ;
 		ex = -ex;
 		i=12;
 	}
-	delta *= pwr(10.0,ex);
+	delta *= tp_ipow(10.0,ex);
 	if(i == 12)
 		delta = 1.0/delta;
 	*dx = delta;
@@ -322,12 +328,14 @@ float x[], size, *xs, *xmin, *xmax, *dx ;
 	*xs = 1000.*size/(*xmax - *xmin);
 }
 
-void
-sep( x, coef, ex )
 /*
- *  sep() divides a floating point number into a coefficient
+ *			T P _ S E P
+ *
+ *  tp_sep() divides a floating point number into a coefficient
  *  and an exponent. works in base ten.
  */
+void
+tp_sep( x, coef, ex )
 float x, *coef;
 int *ex;
 {
@@ -371,25 +379,36 @@ int *ex;
 }
 
 /*
- *  pwr() raises a floating point number to a positve integer
+ *			T P _ I P O W
+ *
+ *  tp_ipow() raises a floating point number to a positve integer
  *  power.
+ *  XXX Horribly inefficient!
  */
-float pwr (x, n)
-float x;
+double tp_ipow (x, n)
+double x;
 int n;
 {
-	return(n>0?x*pwr(x,n-1):1);
+	return(n>0?x*tp_ipow(x,n-1):1);
 }
 
 
 /*
- *	CULC FORTRAN-IV Interface Entry
+ *	FORTRAN Interface Entry
  */
 void
-F(fplot, FPLOT)(xp, yp, xl, yl, xtitle, ytitle, x, y, n )
-char *xtitle, *ytitle;
-int *xp, *yp, *xl, *yl, *n;
-float *x, *y;
+PL_FORTRAN(fplot, FPLOT)(fp, xp, yp, xl, yl, xtitle, ytitle, x, y, n, cscale )
+FILE	**fp;
+int	*xp;
+int	*yp;
+int	*xl;
+int	*yl;
+char	*xtitle;
+char	*ytitle;
+float	*x;
+float	*y;
+int	*n;
+float	*cscale;
 {
-	tp_plot(*xp, *yp, *xl, *yl, xtitle, ytitle, x, y, *n);
+	tp_plot(*fp, *xp, *yp, *xl, *yl, xtitle, ytitle, x, y, *n, *cscale);
 }

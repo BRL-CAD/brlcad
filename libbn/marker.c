@@ -34,13 +34,15 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "vmath.h"
+#include "plot3.h"
 #include "./tig.h"
 
 void
 tp_2marker( fp, c, x, y, scale )
 FILE	*fp;
 register int c;
-double	x, y;
+double	x;
+double	y;
 double	scale;
 {
 	char	mark_str[4];
@@ -55,20 +57,26 @@ double	scale;
 }
 
 void
-F(f2mark, F2MARK)( fp, c, x, y, scale )
+PL_FORTRAN(f2mark, F2MARK)( fp, c, x, y, scale )
 FILE	**fp;
 int	*c;
-float	*x, *y;
+float	*x;
+float	*y;
 float	*scale;
 {
 	tp_2marker( *fp, *c, *x, *y, *scale );
 }
 
+/*
+ *			T P _ 3 M A R K E R
+ */
 void
 tp_3marker( fp, c, x, y, z, scale )
 FILE	*fp;
 register int c;
-double	x, y, z;
+double	x;
+double	y;
+double	z;
 double	scale;
 {
 	char	mark_str[4];
@@ -83,10 +91,12 @@ double	scale;
 }
 
 void
-F(f3mark, F3MARK)( fp, c, x, y, z, scale )
+PL_FORTRAN(f3mark, F3MARK)( fp, c, x, y, z, scale )
 FILE	**fp;
 int	*c;
-float	*x, *y, *z;
+float	*x;
+float	*y;
+float	*z;
 float	*scale;
 {
 	tp_3marker( *fp, *c, *x, *y, *z, *scale );

@@ -20,6 +20,7 @@
 
 #include "machine.h"
 #include "vmath.h"
+#include "plot3.h"
 #include "./tig.h"
 
 /*
@@ -42,8 +43,6 @@
 
 static TINY	*tp_cindex[256];	/* index to stroke tokens */
 extern TINY	tp_ctable[];	/* table of strokes */
-
-void		tp_3symbol();
 
 /*
  *  Once-only setup routine
@@ -70,24 +69,8 @@ tp_setup()
 }
 
 /*
- *			T P _ S Y M B O L
+ *			T P _ 3 S Y M B O L
  */
-void
-tp_2symbol( fp, string, x, y, scale, theta )
-FILE	*fp;
-char	*string;		/* string of chars to be plotted */
-double	x, y;			/* x,y of lower left corner of 1st char */
-double	scale;			/* scale factor to change 1x1 char sz */
-double	theta;			/* degrees ccw from X-axis */
-{
-	mat_t	mat;
-	vect_t	p;
-
-	mat_angles( mat, 0.0, 0.0, theta );
-	VSET( p, x, y, 0 );
-	tp_3symbol( fp, string, p, mat, scale );
-}
-
 void
 tp_3symbol( fp, string, origin, rot, scale )
 FILE	*fp;
@@ -163,6 +146,26 @@ double	scale;			/* scale factor to change 1x1 char sz */
 	}
 }
 
+
+/*
+ *			T P _ 2 S Y M B O L
+ */
+void
+tp_2symbol( fp, string, x, y, scale, theta )
+FILE	*fp;
+char	*string;		/* string of chars to be plotted */
+double	x;			/* x,y of lower left corner of 1st char */
+double	y;
+double	scale;			/* scale factor to change 1x1 char sz */
+double	theta;			/* degrees ccw from X-axis */
+{
+	mat_t	mat;
+	vect_t	p;
+
+	mat_angles( mat, 0.0, 0.0, theta );
+	VSET( p, x, y, 0 );
+	tp_3symbol( fp, string, p, mat, scale );
+}
 
 /*	tables for markers	*/
 
@@ -1152,10 +1155,11 @@ TINY	tp_ctable[] = {
  *  This FORTRAN interface expects REAL args (single precision).
  */
 void
-F(f2symb, F2SYMB)( fp, string, x, y, scale, theta )
+PL_FORTRAN(f2symb, F2SYMB)( fp, string, x, y, scale, theta )
 FILE	**fp;
 char	*string;
-float	*x, *y;
+float	*x;
+float	*y;
 float	*scale;
 float	*theta;
 {

@@ -21,12 +21,35 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include "plot3.h"
 #include "./tig.h"
 
 /* Modes for internal flag */
 #define	TP_MARK		1		/* Draw marks */
 #define	TP_LINE		2		/* Draw lines */
 
+/*
+ *			T P _ I 2 L I S T
+ * 
+ *  Take a set of x,y coordinates, and plot them as a
+ *  polyline, ie, connect them with line segments.
+ *  For markers, use tp_mlist(), below.
+ *  This "C" interface expects arrays of INTs.
+ */
+void
+tp_i2list( fp, x, y, npoints )
+register FILE	*fp;
+register int	*x;			/* array of points */
+register int	*y;			/* array of points */
+register int	npoints;
+{
+	if( npoints <= 0 )
+		return;
+
+	pl_move( fp, *x++, *y++ );
+	while( --npoints > 0 )
+		pl_cont( fp, *x++, *y++ );
+}
 
 /*
  *			T P _ 2 L I S T
@@ -39,7 +62,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 void
 tp_2list( fp, x, y, npoints )
 register FILE	*fp;
-register double	*x, *y;			/* arrays of points */
+register double	*x;			/* array of points */
+register double	*y;			/* array of points */
 register int	npoints;
 {
 	if( npoints <= 0 )
@@ -51,9 +75,10 @@ register int	npoints;
 }
 
 void
-F(f2list, F2LIST)( fpp, x, y, n )
+PL_FORTRAN(f2list, F2LIST)( fpp, x, y, n )
 FILE		**fpp;
-register float	*x, *y;
+register float	*x;
+register float	*y;
 int		*n;
 {
 	register int npoints = *n-1;	/* FORTRAN uses 1-based subscripts */
@@ -73,7 +98,9 @@ int		*n;
 void
 tp_3list( fp, x, y, z, npoints )
 FILE		*fp;
-register double	*x, *y, *z;
+register double	*x;
+register double	*y;
+register double	*z;
 register int	npoints;
 {
 	if( npoints <= 0 )
@@ -85,9 +112,11 @@ register int	npoints;
 }
 
 void
-F(f3list, F3LIST)( fpp, x, y, z, n )
+PL_FORTRAN(f3list, F3LIST)( fpp, x, y, z, n )
 FILE		**fpp;
-register float	*x, *y, *z;
+register float	*x;
+register float	*y;
+register float	*z;
 int		*n;
 {
 	register int npoints = *n-1;	/* FORTRAN uses 1-based subscripts */
@@ -126,7 +155,8 @@ int		*n;
 void
 tp_2mlist( fp, x, y, npoints, flag, mark, interval, size )
 FILE		*fp;
-register double	*x, *y;			/* arrays of points */
+register double	*x;
+register double	*y;			/* arrays of points */
 int		npoints;
 int		flag;			/* TP_MARK|TP_LINE */
 int		mark;			/* marker character to use */
@@ -159,12 +189,14 @@ double		size;			/* marker size */
  *  This FORTRAN interface expects arrays of REALs (single precision).
  */
 void
-F(f2mlst, F2MLST)( fp, x, y, np, flag, mark, interval, size )
+PL_FORTRAN(f2mlst, F2MLST)( fp, x, y, np, flag, mark, interval, size )
 FILE	**fp;
-float	*x, *y;
+float	*x;
+float	*y;
 int	*np;
 int	*flag;		/* indicates user's mode request */
-int	*mark, *interval;
+int	*mark;
+int	*interval;
 float	*size;
 {
 	register int i;			/* index variable */

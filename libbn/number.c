@@ -21,13 +21,17 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include "machine.h"
+#include "vmath.h"
+#include "plot3.h"
 #include "./tig.h"
 
 void
 tp_2number( fp, input, x, y, cscale, theta, digits )
 FILE	*fp;
 double	input;		/* number to be plotted */
-int	x, y;		/* first char position */
+int	x;		/* first char position */
+int	y;
 int	cscale;		/* char scale */
 double	theta;		/* degrees ccw from X-axis */
 int	digits;		/* # digits wide */
@@ -43,10 +47,11 @@ int	digits;		/* # digits wide */
 }
 
 void
-F(f2numb, F2NUMB)( fp, input, x, y, cscale, theta, digits )
+PL_FORTRAN(f2numb, F2NUMB)( fp, input, x, y, cscale, theta, digits )
 FILE	**fp;
 float	*input;
-int	*x, *y;
+int	*x;
+int	*y;
 float	*cscale;
 float	*theta;
 int     *digits;
