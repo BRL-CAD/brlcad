@@ -479,7 +479,8 @@ int	count;
 	int	inIsHost,outIsHost,infmt,outfmt,insize,outsize;
 	int	bufsize;
 	genptr_t	t1,t2,t3;
-	genptr_t	from,to;
+	genptr_t	from;
+	genptr_t	to;
 	genptr_t	hold;
 	register int i;
 
@@ -700,7 +701,7 @@ fprintf(stderr,"insize=%d, outsize=%d\n", insize, outsize);
 			switch(incookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
 			case CV_SIGNED_MASK | CV_8:
 				for (i=0; i< work_count; i++) {
-					*((double *)to) = *((signed char *)from);
+					*((double *)to) = *((SIGNED char *)from);
 					to = (genptr_t)(((double *)to) + 1);
 					from = ((char *)from) + 1;
 				}
@@ -709,14 +710,14 @@ fprintf(stderr,"insize=%d, outsize=%d\n", insize, outsize);
 				for(i=0; i < work_count; i++) {
 					*((double *)to) = *((unsigned char *)from);
 					to = (genptr_t)(((double *)to) + 1);
-					from = ((unsigned char *)from) + 1;
+					from = (genptr_t)(((unsigned char *)from) + 1);
 				}
 				break;
 			case CV_SIGNED_MASK | CV_16:
 				for (i=0; i < work_count; i++) {
-					*((double *)to) = *((signed short *)from);
+					*((double *)to) = *((SIGNED short *)from);
 					to = (genptr_t)(((double *)to) + 1);
-					from = (genptr_t)(((signed short *)from) + 1);
+					from = (genptr_t)(((SIGNED short *)from) + 1);
 				}
 				break;
 			case CV_16:
@@ -728,9 +729,9 @@ fprintf(stderr,"insize=%d, outsize=%d\n", insize, outsize);
 				break;
 			case CV_SIGNED_MASK | CV_32:
 				for (i=0; i < work_count; i++) {
-					*((double *)to) = *((signed long int *)from);
+					*((double *)to) = *((SIGNED long int *)from);
 					to = (genptr_t)(((double *)to) + 1);
-					from =  (genptr_t)(((signed long int *)from) + 1);
+					from =  (genptr_t)(((SIGNED long int *)from) + 1);
 				}
 				break;
 			case CV_32:
@@ -766,24 +767,24 @@ fprintf(stderr,"insize=%d, outsize=%d\n", insize, outsize);
 			switch (outcookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
 			case CV_SIGNED_MASK | CV_8:
 				for (i=0; i<work_count; i++) {
-					*((signed char *)to) = *((double *)from);
-					to = (genptr_t)(((signed char *)to) + 1);
+					*((SIGNED char *)to) = *((double *)from);
+					to = (genptr_t)(((SIGNED char *)to) + 1);
 					from = (genptr_t)(((double *)from) + 1);
 				}
 				break;
 			case CV_8:
 				for (i=0; i<work_count; i++) {
 					*((unsigned char *)to) =
-					    *((double *)from);
-					to = ((unsigned char *)to) + 1;
+					    (unsigned char)(*((double *)from));
+					to = (genptr_t)(((unsigned char *)to) + 1);
 					from = (genptr_t)(((double *)from) + 1);
 				}
 				break;
 			case CV_SIGNED_MASK | CV_16:
 				for (i=0; i<work_count; i++) {
-					*((signed short int *)to) =
+					*((SIGNED short int *)to) =
 					    *((double *)from);
-					to = (genptr_t)(((signed short int *)to) + 1);
+					to = (genptr_t)(((SIGNED short int *)to) + 1);
 					from = (genptr_t)(((double *)from) + 1);
 				}
 				break;
@@ -797,9 +798,9 @@ fprintf(stderr,"insize=%d, outsize=%d\n", insize, outsize);
 				break;
 			case CV_SIGNED_MASK | CV_32:
 				for (i=0; i<work_count; i++) {
-					*((signed long int *)to) =
+					*((SIGNED long int *)to) =
 					    *((double *)from);
-					to = (genptr_t)(((signed long int *)to) + 1);
+					to = (genptr_t)(((SIGNED long int *)to) + 1);
 					from = (genptr_t)(((double *)from) + 1);
 				}
 				break;
@@ -882,7 +883,7 @@ fprintf(stderr,"insize=%d, outsize=%d\n", insize, outsize);
  */
 int
 ntohss(out, size, in, count)
-register signed short	*out;
+register SIGNED short	*out;
 int			size;
 register genptr_t	in;
 int			count;
@@ -890,11 +891,11 @@ int			count;
 	int limit;
 	register int i;
 
-	limit = size / sizeof(signed short);
+	limit = size / sizeof(SIGNED short);
 	if (limit < count) count = limit;
 
 	for (i=0; i<count; i++) {
-		*out++ = ((signed char *)in)[0] << 8 | ((unsigned char *)in)[1];
+		*out++ = ((SIGNED char *)in)[0] << 8 | ((unsigned char *)in)[1];
 		/* XXX This needs sign extension here for the case of
 		 * XXX a negative 2-byte input on a 4 or 8 byte machine.
 		 * XXX The "signed char" trick isn't enough.
@@ -926,7 +927,7 @@ int			count;
 }
 int
 ntohsl(out, size, in, count)
-register signed long int	*out;
+register SIGNED long int	*out;
 int				size;
 register genptr_t		in;
 int				count;
@@ -934,11 +935,11 @@ int				count;
 	int limit;
 	register int i;
 
-	limit = size / sizeof(signed long int);
+	limit = size / sizeof(SIGNED long int);
 	if (limit < count) count = limit;
 
 	for (i=0; i<count; i++) {
-		*out++ = ((signed char *)in)[0] << 24 |
+		*out++ = ((SIGNED char *)in)[0] << 24 |
 		    ((unsigned char *)in)[1] << 16 | 
 		    ((unsigned char *)in)[2] << 8  |
 		    ((unsigned char *)in)[3];
