@@ -46,7 +46,7 @@ The second most important advantage of a source-code-only distribution
 is that it gives you complete control of your destiny.
 If you need to add a feature, change something, or fix a bug,
 you have everything required.
-Since BRL is unable to offer any kind of support of this software
+Since BRL is unable to offer any kind of support of this software to
 non-Government recipients, distributing full source code ensures
 that you need not become "stuck".
 .PP
@@ -54,7 +54,7 @@ This software is generally used in one of three ways:
 .IP a)
 For production use,
 .IP b)
-For the RT benchmark, or
+For the RT ray tracing benchmark, or
 .IP c)
 For exploration, to get acquainted with the software.
 .PP
@@ -84,8 +84,8 @@ l l l l l.
 MTYPE	Hardware	Software	Framebuffer	MGED
 _
 fx	Alliant FX/8, /80	Concentrix 3.0, 4.0	net	-
-xmp	Cray X-M/P	UNICOS 3.0.10	net	-
-cr2	Cray-2	UNICOS 3	net	-
+xmp	Cray X-MP	UNICOS 3.0.10	net	-
+cr2	Cray-2	UNICOS 3.0, 4.0	net	-
 vax	DEC VAX-11	Berkeley 4.2 BSD, 4.3 BSD	adage, net	mg, vg
 sel	Gould PN6080, PN9080	UTX/32 Rel 2.0	net	-
 pyr	Pyramid 9820	OSx Version 4.1	-	-
@@ -120,16 +120,16 @@ Optional framebuffer support is:
 .TS
 center box;
 l l.
-remote	Network access to remote display
-adage	Adage RDS-3000 ("Ikonas")
-sgi	SGI Iris 3-D display
-4d	SGI 4-D display
-gt	SGI 4-D/GT display
-sun	SunView interface
-ptty	AT&T 5620 w/special Moss layer
-ug	Ultra Graphics
-rat	Raster Technology One/80
-X	MIT X-window X11R2
+if_remote	Network access to remote display
+if_adage	Adage RDS-3000 ("Ikonas")
+if_sgi	SGI Iris 3-D display
+if_4d	SGI 4-D display
+if_gt	SGI 4-D/GT display
+if_sun	SunView interface
+if_ptty	AT&T 5620 w/special Moss layer
+if_ug	Ultra Graphics
+if_rat	Raster Technology One/80
+if_X	X Window System (X11R2)
 .TE
 .PP
 At present, all versions of \fBmged\fR have support for these types of
@@ -137,10 +137,10 @@ display devices by default:
 .TS
 center box;
 l l.
-plot	any UNIX-plot filter
-tek	Tektronix 4014 and family
-tek4109	Tektronix 4109
-ps	PostScript
+dm-plot	any UNIX-plot filter
+dm-tek	Tektronix 4014 and family
+dm-tek4109	Tektronix 4109
+dm-ps	PostScript
 .TE
 .PP
 These optional display devices are also supported,
@@ -148,15 +148,16 @@ when specifically configured:
 .TS
 center box;
 l l.
-ir	SGI 2400, 3030
-4d	SGI 4-D
-gt	SGI 4-D/GT
-sun	SUN 3.2 Pixwin
-vg	Vector General 3300
-mg	Megatek 7250
-rat	Raster Tech One/180,380
-rat80	Raster Tech One/80
-ps300	E&S Picture System 300
+dm-ir	SGI 2400, 3030
+dm-4d	SGI 4-D
+dm-gt	SGI 4-D/GT
+dm-sun	SUN 3.2 Pixwin
+dm-vg	Vector General 3300
+dm-mg	Megatek 7250
+dm-rat	Raster Tech One/180,380
+dm-rat80	Raster Tech One/80
+dm-ps300	E&S Picture System 300
+dm-X	X Window System (X11R2 or X10R4)
 .TE
 .NH 1
 LOADING THE SOFTWARE
@@ -246,6 +247,7 @@ l l.
 PROGRAMS
 _
 rt	A ray-tracing lighting model, for rendering
+lgt	Another lighting model, for rendering
 mged	A solid-model editor
 conv	ASCII/binary database converters
 rfbd	Remote network frame-buffer daemon
@@ -291,7 +293,7 @@ dhrystone	"C" Dhyrstone benchmark
 center;
 l s
 l l.
-CONTRIBUTED SOFTWARE
+CONTRIBUTED SOFTWARE (contributed/)
 _
 cake	A Fifth Generation version of MAKE
 off-3d	"OFF - A 3D Object File Format" document
@@ -421,7 +423,7 @@ to learn much about \fBcake\fR.
 INSTALLATION DIRECTORIES
 .PP
 At this stage, it is necessary to decide
-what UNIX directory the BRL-CAD Pacakge
+what UNIX directory the BRL-CAD Package
 executable programs are going to be installed in, and to make certain
 that the binary (program) installation directory is in your Shell
 search path.
@@ -663,7 +665,7 @@ VAX-11/780 (with hardware FPA) times which are given in the
 The reference images are also located in the "pix/" directory.
 .PP
 For example,
-if you are running the benchmark on a Cray XMP, as I'm sure all of you
+if you are running the benchmark on a Cray X-MP, as I'm sure all of you
 are, the world.pix and bldg391.pix images will have a single byte in the
 blue channel off by 1, out in the cloud background.  This is not to be
 considered an error.
@@ -750,7 +752,7 @@ If your system uses the Sun style of \fBinetd\fR(8),
 .sp .5
 .nf
 .ft B
-remotefb tcp    /usr/brl/etc/rfbd
+remotefb tcp    /usr/brlcad/etc/rfbd
 .ft R
 .fi
 .PP
@@ -759,7 +761,7 @@ If your system supports the Berkeley 4.3 BSD style of \fBinetd\fR(8),
 .sp .5
 .nf
 .ft B
-remotefb stream tcp     nowait  nobody  /usr/brl/etc/rfbd       rfbd
+remotefb stream tcp     nowait  nobody  /usr/brlcad/etc/rfbd       rfbd
 .ft R
 .fi
 .sp .5
@@ -1081,12 +1083,12 @@ The second important thing to note is the definition of LIBFB_SETUP,
 which includes the entire contents of three SUN-specific libraries
 in \fBlibfb\fR, so that \fBlibfb\fR is completely self-contained.
 .PP
-As a final example, configuring a machine to use the MIT X11
-X-Window System as a framebuffer uses these definitions:
+As a final example, configuring a machine to use the
+X Window System (X11R2) as a framebuffer uses these definitions:
 .sp .5
 .nf
 .ft B
-#	define	LIBFB_CONFIG	-DIF_X -I/usr/local/include/X11
+#	define	LIBFB_CONFIG	-DIF_X  -I/usr/local/include/X11
 #	define	LIBFB_OBJS	if_X
 #	define	LIBFB_SETUP	(rm -f PRODUCTS; \\
 		cp /usr/local/lib/libX11.a PRODUCTS; \\
@@ -1130,7 +1132,7 @@ running version 3.5 of the software, with XNS networking, specify:
 .sp .5
 .nf
 .ft B
-#	define	MGED_CONFIG	-DDM_IR -DNOBLOCK
+#	define	MGED_CONFIG	-DDM_IR  -DNOBLOCK
 #	define	MGED_OBJS	dm-ir
 #	define	MGED_LIBES	-lbsd -lgl2
 .ft R
@@ -1173,7 +1175,7 @@ while a Little-Endian machine has byte [0] on the right side of the word,
 like DEC.  Some of the RLE code needs to know.
 .PP
 Worse still, some of the code in the Utah Raster Toolkit
-software (especially in \fBliburt\fR, soon to be \fBlibrle\fR)
+software (especially in \fBlibrle\fR)
 also needs to know about this, including:
 Runsv.c, rle_getrow.c, and sv_putrow.c.
 .NH 2
@@ -1412,15 +1414,9 @@ ENHANCEMENTS
 If you develop additional software for the BRL CAD environment that
 you would be willing to share, please send it to us for inclusion
 in the next release.
-The first such inclusion is the Utah Raster Toolkit, included "as is"
-in the directory utah-raster.  Note that the current BRL CAD
-distribution uses Edition-2 of the Utah RLE file format, while the
-Utah Raster Toolkit uses Edition-3.  In a subsequent release, all
-the BRL CAD tools will have been converted to use the Edition-3
-format and library interface.  Image conversion aids exist in the
-programs utah-raster/get/getfb.c to display Edition-3 RLE images
-on libfb supported displays, and utah-raster/tools/jwp/pixtorle.c
-to convert pix(5) images into Edition-3 RLE images.
+The first such inclusion was the Utah Raster Toolkit, included "as is"
+in the directory contributed and integrated into the system in the
+directories tools and librle.
 Note that BRL considers the RLE format a long-term image storage format,
 with pix(5) format used for image manipulation, while Utah uses RLE
 format for all manipulation stages as well.
@@ -1469,7 +1465,7 @@ In BRL-CAD Release 3.0, this latest Utah RLE format is adopted,
 to permit complete interoperability with all the Utah Toolkit software.
 For sites that may have stored images in the old RLE format,
 the old library now exists as \fBliborle\fR,
-and all the programs have had an "o" added to their name, eg,
+and all the programs have had an "o" added to their name, e.g.,
 the version of \fBrle-fb\fR which uses the old library is now \fBorle-fb\fR.
 .NH 1
 WORK IN PROGRES
