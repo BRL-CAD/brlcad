@@ -52,12 +52,13 @@ int	redflag   = 0;
 int	greenflag = 0;
 int	blueflag  = 0;
 
+char	*framebuffer = NULL;
 char	*file_name;
 int	infd;
 FBIO	*fbp;
 
 char	usage[] = "\
-Usage: bw-fb [-h -i -c -z -R -G -B]\n\
+Usage: bw-fb [-h -i -c -z -R -G -B] [-F framebuffer]\n\
 	[-s squarefilesize] [-w file_width] [-n file_height]\n\
 	[-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff]\n\
 	[-S squarescrsize] [-W scr_width] [-N scr_height] [file.bw]\n";
@@ -67,7 +68,7 @@ register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "hiczRGBs:w:n:x:y:X:Y:S:W:N:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "hiczRGBF:s:w:n:x:y:X:Y:S:W:N:" )) != EOF )  {
 		switch( c )  {
 		case 'h':
 			/* high-res */
@@ -90,6 +91,9 @@ register char **argv;
 			break;
 		case 'B':
 			blueflag = 1;
+			break;
+		case 'F':
+			framebuffer = optarg;
 			break;
 		case 's':
 			/* square file size */
@@ -172,7 +176,7 @@ int argc; char **argv;
 		scr_height = file_height;
 
 	/* Open Display Device */
-	if ((fbp = fb_open( NULL, scr_width, scr_height )) == NULL ) {
+	if ((fbp = fb_open( framebuffer, scr_width, scr_height )) == NULL ) {
 		fprintf( stderr, "fb_open failed\n");
 		exit( 3 );
 	}

@@ -31,6 +31,7 @@ extern int	optind;
 RGBpixel scanline[MAX_LINE];		/* 1 scanline pixel buffer */
 static int scanbytes;			/* # of bytes of scanline */
 
+char	*framebuffer = NULL;
 char	*file_name;
 int	infd;
 
@@ -47,7 +48,7 @@ int	zoom = 0;
 int	inverse = 0;			/* Draw upside-down */
 
 char usage[] = "\
-Usage: pix-fb [-h -i -c -z]\n\
+Usage: pix-fb [-h -i -c -z] [-F framebuffer]\n\
 	[-s squarefilesize] [-w file_width] [-n file_height]\n\
 	[-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff]\n\
 	[-S squarescrsize] [-W scr_width] [-N scr_height] [file.pix]\n";
@@ -57,7 +58,7 @@ register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "hiczs:w:n:x:y:X:Y:S:W:N:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "hiczF:s:w:n:x:y:X:Y:S:W:N:" )) != EOF )  {
 		switch( c )  {
 		case 'h':
 			/* high-res */
@@ -71,6 +72,9 @@ register char **argv;
 			break;
 		case 'z':
 			zoom = 1;
+			break;
+		case 'F':
+			framebuffer = optarg;
 			break;
 		case 's':
 			/* square file size */
@@ -150,7 +154,7 @@ char **argv;
 	if( scr_height == 0 && file_height != INFIN )
 		scr_height = file_height;
 
-	if( (fbp = fb_open( NULL, scr_width, scr_height )) == NULL )
+	if( (fbp = fb_open( framebuffer, scr_width, scr_height )) == NULL )
 		exit(12);
 
 	/* Get the screen size we were given */
