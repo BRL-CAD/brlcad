@@ -18,14 +18,19 @@
 			 	 * supporting this anyways.
 				 */
 
+#if 1
+#include "machine.h"
+#else
 typedef float	fastf_t;	/* double|float, "Fastest" float type */
 #define LOCAL	static		/* static|auto, for serial|parallel cpu */
 #define FAST	LOCAL		/* LOCAL|register, for fastest floats */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
+#endif
 
 #include "vmath.h"
 #include "db.h"
+#include "raytrace.h"
 #include "externs.h"
 
 /* Special characters.							*/
@@ -122,18 +127,11 @@ typedef long	bitv_t;		/* largest integer type */
 #define SV6     &(rec->s.s_values[18])
 #define SV7     &(rec->s.s_values[21])
 
-/* Dot product of vector a and vector b.				*/
+
 #define MAX( a, b )		if( (a) < (b) )		a = b
 #define MIN( a, b )		if( (a) > (b) )		a = b
 #define MINMAX( min, max, val )		MIN( min, val );\
 				else	MAX( max, val )
-
-/* Object directory structure.						*/
-typedef struct directory {
-	char	*d_namep;	/* pointer to name string */
-	long	d_addr;		/* disk address in object file */
-} Directory;
-#define	DIR_NULL	((Directory *)NULL)
 
 /* Region names to find comgeom numbers for.				*/
 struct findrr {
@@ -161,9 +159,7 @@ extern char	dir_names[], *dir_last;
 
 extern int	discr[];
 
-extern char		*emalloc();
 extern void		abort_sig(), quit();
-extern Directory	*lookup(), *diradd();
 extern void		toc(), list_toc();
 extern void		prompt();
 
@@ -200,3 +196,5 @@ extern jmp_buf		env;
 #define strrchr(a,b)	rindex(a,b)
 extern char *index(), *rindex();
 #endif
+
+extern struct db_i	*dbip;		/* Database instance ptr */

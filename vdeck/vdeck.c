@@ -38,28 +38,25 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 |    | cont'  : reg_#,(op,[sol/reg]_#)*,comment   : i5,1x,9(a2,i5),1x,a10  |
 |----|---------------------------------------------------------------------|
 | 3  |Flag    : a -1 marks end of region table    : i5                     |
-|    |Idents  : reg_#,ident,space,mat,%,descriptn : 5i5,5x,a40             |
+|    |Idents  : reg_#,ident,space,mat,%,descriptn : 5i5,5x,a50             |
 |--------------------------------------------------------------------------|
-
-	To compile,
-	               $ make 
-		   or  $ make install clobber
 
  */
 #include <stdio.h>
 #include <signal.h>
 #include "externs.h"
 #include "./vextern.h"
+#include "rtstring.h"
+#include "rtgeom.h"
+#include "raytrace.h"
 
-extern Directory	*diradd();
+
 extern void		blank_fill(), menu();
 extern void		quit();
 char			regBuffer[BUFSIZ], *regBufPtr;
 
 char			getcmd();
 void			prompt();
-void			mat_copy(), mat_mul(), matXvec();
-void			vtoh_move(), htov_move();
 void			eread(), ewrite();
 
 #define endRegion( buff ) \
@@ -73,11 +70,17 @@ void			eread(), ewrite();
 			*s++ = ' '; \
 		}
 
+/* Head of linked list of solids */
+struct soltab	sol_hd;
+
+struct db_i	*dbip;		/* Database instance ptr */
+
 /*	m a i n ( )							*/
 main( argc, argv )
 char	*argv[];
 	{
-	setbuf( stdout, emalloc( BUFSIZ ) );
+	setbuf( stdout, rt_malloc( BUFSIZ, "stdout buffer" ) );
+	RT_LIST_INIT( &(sol_hd.l) );
 
 	if( ! parsArg( argc, argv ) )
 		{
@@ -85,7 +88,12 @@ char	*argv[];
 		exit( 1 );
 		}
 
-	builddir();	/* Build directory from object file.	 	*/
+	/* Build directory from object file.	 	*/
+	if( db_scan( dbip, (int (*)())db_diradd, 1 ) < 0 )  {
+		fprintf(stderr,"db_scan failure\n");
+		exit(1);
+	}
+
 	toc();		/* Build table of contents from directory.	*/
 
 	/*      C o m m a n d   I n t e r p r e t e r			*/
@@ -107,7 +115,7 @@ char	*argv[];
 			break;
 		case ERASE :
 			while( curr_ct > 0 )
-				free( curr_list[--curr_ct] );
+				rt_free( curr_list[--curr_ct], "curr_list[ct]" );
 			break;
 		case INSERT :
 			if( arg_list[1] == 0 )
@@ -185,19 +193,349 @@ char	*argv[];
 		}
 	}
 
+/*
+ *  XXX This is clearly not right, but should do simple test cases.
+ */
+flatten_tree( vls, tp, op, neg )
+struct rt_vls	*vls;
+union tree	*tp;
+char		*op;
+int		neg;
+{
+	int	bit;
+
+	RT_VLS_CHECK( vls );
+
+	switch( tp->tr_op )  {
+
+	case OP_NOP:
+		rt_log("NOP\n");
+		return;
+
+	case OP_SOLID:
+		rt_vls_strncat( vls, op, 2 );
+		bit = tp->tr_a.tu_stp->st_bit;
+		if(neg) bit = -bit;
+		vls_itoa( vls, bit, 5 );
+		/* tp->tr_a.tu_stp->st_name */
+		return;
+
+	case OP_REGION:
+		rt_log("REGION 'stp'=x%x\n",
+			tp->tr_a.tu_stp );
+		return;
+
+	default:
+		rt_log("Unknown op=x%x\n", tp->tr_op );
+		return;
+
+	case OP_UNION:
+		flatten_tree( vls, tp->tr_b.tb_left, op, neg );
+		flatten_tree( vls, tp->tr_b.tb_right, "or", 0 );
+		break;
+	case OP_INTERSECT:
+		flatten_tree( vls, tp->tr_b.tb_left, op, neg );
+		flatten_tree( vls, tp->tr_b.tb_right, "  ", 0 );
+		break;
+	case OP_SUBTRACT:
+		flatten_tree( vls, tp->tr_b.tb_left, op, neg );
+		flatten_tree( vls, tp->tr_b.tb_right, "  ", 1 );
+		break;
+	}
+}
+
+static CONST struct db_tree_state	initial_tree_state = {
+	0,			/* ts_dbip */
+	0,			/* ts_sofar */
+	0, 0, 0, 0,		/* region, air, gmater, LOS */
+	1.0, 1.0, 1.0,		/* color, RGB */
+	0,			/* override */
+	DB_INH_LOWER,		/* color inherit */
+	DB_INH_LOWER,		/* mater inherit */
+	"",			/* material name */
+	"",			/* material params */
+	1.0, 0.0, 0.0, 0.0,
+	0.0, 1.0, 0.0, 0.0,
+	0.0, 0.0, 1.0, 0.0,
+	0.0, 0.0, 0.0, 1.0,
+};
+
+/*
+ *			R E G I O N _ E N D
+ *
+ *  This routine will be called by db_walk_tree() once all the
+ *  solids in this region have been visited.
+ */
+union tree *region_end( tsp, pathp, curtree )
+register struct db_tree_state	*tsp;
+struct db_full_path	*pathp;
+union tree		*curtree;
+{
+	struct directory	*dp;
+	char			*fullname;
+	struct rt_vls		ident;
+	struct rt_vls		reg;
+	struct rt_vls		flat;
+	char			obuf[128];
+	char			*cp;
+	int			left;
+	int			length;
+
+	RT_VLS_INIT( &ident );
+	RT_VLS_INIT( &reg );
+	RT_VLS_INIT( &flat );
+	fullname = db_path_to_string(pathp);
+
+	dp = DB_FULL_PATH_CUR_DIR(pathp);
+	dp->d_uses++;		/* instance number */
+
+	/* ---------------- */
+
+	/* Print an indicator of our progress */
+	(void) printf( "%4d:%s\n", nnr+delreg, fullname );
+
+	/*
+	 *  Write the boolean formula into the region table.
+	 */
+	nnr++;			/* Start new region */
+
+	/* Convert boolean tree into string of 7-char chunks */
+	flatten_tree( &flat, curtree, "  ", 0 );
+
+	/* Output 9 of the 7-char chunks per region "card" */
+	cp = rt_vls_addr( &flat );
+	left = rt_vls_strlen( &flat );
+rt_log("flat tree='%s'\n", cp);
+
+	do  {
+		register char	*op;
+
+		op = obuf;
+		(void) sprintf( op, "%5d ", nnr+delreg );
+		op += 6;
+
+		if( left > 9*7 )  {
+			strncpy( op, cp, 9*7 );
+			op += 9*7;
+			*op = '\n';
+			ewrite( regfd, obuf, 6+9*7+1 );
+			left -= 9*7;
+		} else {
+			strncpy( op, cp, left );
+			op += left;
+			*op = '\n';
+			ewrite( regfd, obuf, 6+left+1 );
+			left = 0;
+			break;
+		}
+	} while( left > 0 );
+
+	/*
+	 *  Write a record into the region ident table.
+	 */
+	vls_itoa( &ident, nnr+delreg, 5 );
+	vls_itoa( &ident, tsp->ts_regionid, 5 );
+	vls_itoa( &ident, tsp->ts_aircode, 5 );
+	vls_itoa( &ident, tsp->ts_gmater, 5 );
+	vls_itoa( &ident, tsp->ts_los, 5 );
+	rt_vls_strcat( &ident, "     " );		/* 5 spaces */
+
+	length = strlen( fullname );
+	if( length > 50 )  {
+		register char	*bp;
+
+		bp = fullname + (length - 50);
+		*bp = '*';
+		rt_vls_strcat( &ident, bp );
+	} else {
+		rt_vls_strcat( &ident, fullname );
+	}
+	rt_vls_strcat( &ident, "\n" );
+	ewrite( ridfd, rt_vls_addr(&ident), rt_vls_strlen(&ident) );
+
+	/* ---------------- */
+
+	rt_vls_free( &ident );
+	rt_vls_free( &reg );
+	rt_vls_free( &flat );
+	rt_free( fullname, "fullname" );
+
+	curtree->tr_a.tu_stp = 0;	/* XXX to keep solid table from evaporating */
+	return curtree;
+}
+
+/*
+ *			G E T T R E E _ L E A F
+ *
+ *  Re-use the librt "soltab" structures here, for our own purposes.
+ */
+union tree *gettree_leaf( tsp, pathp, ep, id )
+struct db_tree_state	*tsp;
+struct db_full_path	*pathp;
+struct rt_external	*ep;
+int			id;
+{
+	register fastf_t	f;
+	register struct soltab	*stp;
+	union tree		*curtree;
+	struct directory	*dp;
+	struct rt_db_internal	intern;
+	struct rt_tol		tol;
+	struct rt_vls		sol;
+	union record		rec;	/* XXX hack */
+
+	RT_VLS_INIT( &sol );
+
+	RT_CK_EXTERNAL(ep);
+	dp = DB_FULL_PATH_CUR_DIR(pathp);
+
+	/*
+	 *  Check to see if this exact solid has already been processed.
+	 *  Match on leaf name and matrix.
+	 */
+	for( RT_LIST( stp, soltab, &(sol_hd.l) ) )  {
+		register int i;
+
+		RT_CHECK_SOLTAB(stp);				/* debug */
+		if(	dp->d_namep[0] != stp->st_name[0]  ||	/* speed */
+			dp->d_namep[1] != stp->st_name[1]  ||	/* speed */
+			strcmp( dp->d_namep, stp->st_name ) != 0
+		)
+			continue;
+		for( i=0; i<16; i++ )  {
+			f = tsp->ts_mat[i] - stp->st_pathmat[i];
+			if( !NEAR_ZERO(f, 0.0001) )
+				goto next_one;
+		}
+		/* Success, we have a match! */
+#if 0
+		if( rt_g.debug & DEBUG_SOLIDS )
+			rt_log("rt_gettree_leaf:  %s re-referenced\n",
+				dp->d_namep );
+#endif
+		goto found_it;
+next_one: ;
+	}
+
+	GETSTRUCT(stp, soltab);
+	stp->l.magic = RT_SOLTAB_MAGIC;
+	stp->st_id = id;
+	stp->st_dp = dp;
+	mat_copy( stp->st_pathmat, tsp->ts_mat );
+	stp->st_specific = (genptr_t)0;
+
+	/* init solid's maxima and minima */
+	VSETALL( stp->st_max, -INFINITY );
+	VSETALL( stp->st_min,  INFINITY );
+
+    	RT_INIT_DB_INTERNAL(&intern);
+	if( rt_functab[id].ft_import( &intern, ep, stp->st_pathmat ) < 0 )  {
+		rt_log("rt_gettree_leaf(%s):  solid import failure\n", dp->d_namep );
+	    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
+		rt_free( (char *)stp, "struct soltab");
+		return( TREE_NULL );		/* BAD */
+	}
+	RT_CK_DB_INTERNAL( &intern );
+
+#if 0
+	if(rt_g.debug&DEBUG_SOLIDS)  {
+		struct rt_vls	str;
+		rt_vls_init( &str );
+		/* verbose=1, mm2local=1.0 */
+		if( rt_functab[id].ft_describe( &str, &intern, 1, 1.0 ) < 0 )  {
+			rt_log("rt_gettree_leaf(%s):  solid describe failure\n",
+				dp->d_namep );
+		}
+		rt_log( "%s:  %s", dp->d_namep, rt_vls_addr( &str ) );
+		rt_vls_free( &str );
+	}
+#endif
+
+	/* For now, just link them all onto the same list */
+	RT_LIST_INSERT( &(sol_hd.l), &(stp->l) );
+
+	/* ---------------- */
+	/* XXX output the solid */
+
+	stp->st_bit = ++nns;
+
+	/* Write solid #.						*/
+	vls_itoa( &sol, stp->st_bit+delsol, 5 );
+
+	/* Process appropriate solid type.				*/
+	switch( intern.idb_type )  {
+	case ID_TOR :
+		addtor( &sol, (struct rt_tor_internal *)intern.idb_ptr,
+			dp->d_namep, stp->st_bit+delsol );
+		break;
+	case GENARB8 :
+		addarb( &rec );
+		break;
+	case ID_ELL :
+		addell( &sol, (struct rt_ell_internal *)intern.idb_ptr,
+			dp->d_namep, stp->st_bit+delsol );
+		break;
+	case GENTGC :
+		addtgc( &rec );
+		break;
+	case ARS :
+		addars( &rec );
+		break;
+	default:
+		(void) fprintf( stderr,
+				"Solid type (%d) unknown.\n", rec.s.s_type
+				);
+		exit( 10 );
+		}
+
+rt_log("solid='%s'\n", rt_vls_addr(&sol) );
+	ewrite( solfd, rt_vls_addr(&sol), rt_vls_strlen(&sol) );
+
+	/* ---------------- */
+
+	/* Free storage for internal form */
+    	if( intern.idb_ptr )  rt_functab[id].ft_ifree( &intern );
+
+found_it:
+	GETUNION( curtree, tree );
+	curtree->tr_op = OP_SOLID;
+	curtree->tr_a.tu_stp = stp;
+	curtree->tr_a.tu_name = db_path_to_string( pathp );
+	curtree->tr_a.tu_regionp = (struct region *)0;
+
+	return(curtree);
+}
+
+/*
+ *  Called from deck().
+ */
+void
+treewalk( str )
+char	*str;
+{
+	if( !sol_hd.l.magic )  RT_LIST_INIT( &sol_hd.l );
+
+	if( db_walk_tree( dbip, 1, &str, 1, &initial_tree_state,
+	    0, region_end, gettree_leaf ) < 0 )  {
+		fprintf(stderr,"Unable to treewalk '%s'\n", str );
+	}
+}
+
+#if 0
 /*	c g o b j ( )
 	Build deck for object pointed to by 'dirp'.
+ *	Called from deck(), with pathpos=0 and old_xlate=identity.
  */
 cgobj( dirp, pathpos, old_xlate )
-register Directory	*dirp;
+register struct directory	*dirp;
 int			pathpos;
 matp_t			old_xlate;
 	{
 	register struct member	*mp;
 	register char		*bp;
 	Record			rec;
-	Directory		*nextdirp, *tdirp;
-	static Directory	*path[MAXPATH];
+	struct directory	*nextdirp, *tdirp;
+	static struct directory	*path[MAXPATH];
 	mat_t			new_xlate;
 	long			savepos, RgOffset;
 	int			nparts;
@@ -403,28 +741,9 @@ matp_t			old_xlate;
 			operate = mp->m_relation;
  			path[pathpos] = dirp;
 			if(	(nextdirp =
-				lookup( mp->m_instname, NOISY )) == DIR_NULL
+				db_lookup( mp->m_instname, NOISY )) == DIR_NULL
 				)
 				continue;
-#if defined( BRANCH_NAMING )
-			if( mp->m_brname[0] != 0 )
-				{
-				/* Create an alias.  First step towards
-					full branch naming.  User is
-					responsible for his branch names
-				 	being unique.
-				 */
-				if(	(tdirp =
-					lookup( mp->m_brname, NOISY ))
-				     !=	DIR_NULL
-					)
-					/* Use existing alias.		*/
-					nextdirp = tdirp;
-				else
-					nextdirp = diradd(mp->m_brname,
-							nextdirp->d_addr );
-				}
-#endif
 			mat_mul( new_xlate, old_xlate, mp->m_mat );
 
 			/* Recursive call.				*/
@@ -670,17 +989,19 @@ notnew:	/* Sent here if solid already in solid table.			*/
 	(void) lseek( objfd, savepos, 0 );
 	return;
 	}
+#endif
 
 
 void
-swap_vec( v1, v2, work )
-register float	*v1, *v2, *work;
-	{
+swap_vec( v1, v2 )
+vect_t	v1, v2;
+{
+	vect_t	work;
+
 	VMOVE( work, v1 );
 	VMOVE( v1, v2 );
 	VMOVE( v2, work );
-	return;
-	}
+}
 
 void
 swap_dbl( d1, d2 )
@@ -695,40 +1016,34 @@ register double	*d1, *d2;
 /*	a d d t o r ( )
 	Process torus.
  */
-addtor( rec )
-register Record	*rec;
-	{	register int	i;
-		float	work[3];
-		double	rr1, rr2;
-		hvect_t	v_work, v_workk;
+addtor( v, tor, name, num )
+struct rt_vls		*v;
+struct rt_tor_internal	*tor;
+char			*name;
+int			num;
+{
+	vect_t	norm;
 
-	ewrite( solfd, "tor  ", 5 );
+	RT_VLS_CHECK(v);
+	RT_TOR_CK_MAGIC(tor);
 
-	/* Operate on vertex.						*/
-	vtoh_move( v_workk, &(rec->s.s_values[0]) );
-	matXvec( v_work, xform, v_workk );
-	htov_move( &(rec->s.s_values[0]), v_work );
-	VMOVE( &(rec->s.s_values[0]) , v_work );
+	/* V, N, r1, r2 */
+	VSCALE( norm, tor->h, 1/tor->r_h );
 
-	/* Rest of vectors.						*/
-	for( i = 3; i <= 21; i += 3 )
-		{
-		vtoh_move( v_workk, &(rec->s.s_values[i]) );
-		matXvec( v_work, notrans, v_workk );
-		htov_move( &(rec->s.s_values[i]), v_work );
-		}
-	rr1 = MAGNITUDE( SV2 );	/* r1 */
-	rr2 = MAGNITUDE( SV1 );	/* r2 */    
+	rt_vls_strcat( v, "tor  " );		/* 5 */
+	vls_ftoa_vec_cvt( v, tor->v, 10, 4 );
+	vls_ftoa_vec( v, norm, 10, 4 );
+	rt_vls_strcat( v, name );
+	rt_vls_strcat( v, "\n" );
 
-	/*  print solid parameters
-	 */
-	work[0] = rr1;
-	work[1] = rr2;
-	work[2] = 0.0;
-	VMOVE( SV2, work );
-	psp( 3, rec );
-	return;
-	}
+	vls_itoa( v, num, 5 );
+	vls_blanks( v, 5 );
+	vls_ftoa( v, tor->r_a*unit_conversion, 10, 4 );
+	vls_ftoa( v, tor->r_h*unit_conversion, 10, 4 );
+	vls_blanks( v, 4*10 );
+	rt_vls_strcat( v, name );
+	rt_vls_strcat( v, "\n");
+}
 
 /*	a d d a r b ( )
 	Process generalized arb.
@@ -836,108 +1151,103 @@ register Record	*rec;
 /*	a d d e l l ( )
 	Process the general ellipsoid.
  */
-addell( rec )
-register Record	*rec;
-	{	register int	i;
-		float	work[3];
-		hvect_t	v_work, v_workk;
-		double	ma, mb, mc;
+addell( v, ell, name, num )
+struct rt_vls		*v;
+struct rt_ell_internal	*ell;
+char			*name;
+int			num;
+{
+	register int	i;
+	double	ma, mb, mc;
+	int	cgtype;
 	
-	/* Operate on vertex.						*/
-	vtoh_move( v_workk, &(rec->s.s_values[0]) );
-	matXvec( v_work, xform, v_workk);
-	htov_move( &(rec->s.s_values[0]), v_work );
-
-	/* Rest of vectors.						*/
-	for( i = 3; i <= 9; i += 3 )
-		{
-		vtoh_move( v_workk, &(rec->s.s_values[i]) );
-		matXvec( v_work, notrans, v_workk );
-		htov_move( &(rec->s.s_values[i]), v_work );
-		}
-
 	/* Check for ell1 or sph.					*/
-	ma = MAGNITUDE( SV1 );
-	mb = MAGNITUDE( SV2 );
-	mc = MAGNITUDE( SV3 );
-	if( fabs( ma-mb ) < CONV_EPSILON )
-		{ /* vector A == vector B */
-		rec->s.s_cgtype = ELL1;
+	ma = MAGNITUDE( ell->a );
+	mb = MAGNITUDE( ell->b );
+	mc = MAGNITUDE( ell->c );
+	if( fabs( ma-mb ) < CONV_EPSILON )  {
+		/* vector A == vector B */
+		cgtype = ELL1;
 		/* SPH if vector B == vector C also */
 		if( fabs( mb-mc ) < CONV_EPSILON )
-			rec->s.s_cgtype = SPH;
+			cgtype = SPH;
 		else	/* switch A and C */
 			{
-			swap_vec( SV1, SV3, work );
+			swap_vec( ell->a, ell->c );
 			swap_dbl( &ma, &mc );
 			}
-		}
-	else
-	if( fabs( ma-mc ) < CONV_EPSILON )
-		{ /* vector A == vector C */
-		rec->s.s_cgtype = ELL1;
+	} else if( fabs( ma-mc ) < CONV_EPSILON ) {
+		/* vector A == vector C */
+		cgtype = ELL1;
 		/* switch vector A and vector B */
-		swap_vec( SV1, SV2, work );
+		swap_vec( ell->a, ell->b );
 		swap_dbl( &ma, &mb );
-		}
+	} else if( fabs( mb-mc ) < CONV_EPSILON ) 
+		cgtype = ELL1;
 	else
-	if( fabs( mb-mc ) < CONV_EPSILON ) 
-		rec->s.s_cgtype = ELL1;
-	else
-		rec->s.s_cgtype = GENELL;
+		cgtype = GENELL;
 
 	/* Print the solid parameters.					*/
-	switch( rec->s.s_cgtype )
-		{
+	switch( cgtype )  {
 	case GENELL :
-		ewrite( solfd, "ellg ", 5 );
-		psp( 4, rec );
+		rt_vls_strcat( v, "ellg " );		/* 5 */
+		vls_ftoa_vec_cvt( v, ell->v, 10, 4 );
+		vls_ftoa_vec_cvt( v, ell->a, 10, 4 );
+		rt_vls_strcat( v, name );
+		rt_vls_strcat( v, "\n" );
+
+		vls_itoa( v, num, 5 );
+		vls_blanks( v, 5 );
+		vls_ftoa_vec_cvt( v, ell->b, 10, 4 );
+		vls_ftoa_vec_cvt( v, ell->c, 10, 4 );
+		rt_vls_strcat( v, name );
+		rt_vls_strcat( v, "\n");
 		break;
 	case ELL1 :
-		ewrite( solfd, "ell1 ", 5 );
-		work[0] = mb;
-		work[1] = work[2] = 0.0;
-		VMOVE( SV2, work );
-		psp( 3, rec );
+		rt_vls_strcat( v, "ell1 " );		/* 5 */
+		vls_ftoa_vec_cvt( v, ell->v, 10, 4 );
+		vls_ftoa_vec_cvt( v, ell->a, 10, 4 );
+		rt_vls_strcat( v, name );
+		rt_vls_strcat( v, "\n" );
+
+		vls_itoa( v, num, 5 );
+		vls_blanks( v, 5 );
+		vls_ftoa_cvt( v, mb, 10, 4 );
+		vls_blanks( v, 5*10 );
+		rt_vls_strcat( v, name );
+		rt_vls_strcat( v, "\n");
 		break;
 	case SPH :
-		ewrite( solfd, "sph  ", 5 );
-		work[0] = ma;
-		work[1] = work[2] = 0.0;
-		VMOVE( SV1, work );
-		psp( 2, rec );
+		rt_vls_strcat( v, "sph  " );		/* 5 */
+		vls_ftoa_vec_cvt( v, ell->v, 10, 4 );
+		vls_ftoa_cvt( v, ma, 10, 4 );
+		vls_blanks( v, 2*10 );
+		rt_vls_strcat( v, name );
+		rt_vls_strcat( v, "\n" );
 		break;
 	default :
 		(void) fprintf( stderr,
 				"Error in type of ellipse (%d).\n",
-				rec->s.s_cgtype
+				cgtype
 				);
 		exit( 10 );
-		}
-	return;
 	}
+}
 
 /*	a d d t g c ( )
 	Process generalized truncated cone.
  */
-addtgc( rec )
-register Record *rec;
-	{	register int	i;
-		float	work[3], axb[3], cxd[3];
-		hvect_t	v_work, v_workk;
-		double	ma, mb, mc, md, maxb, mcxd, mh;
-
-	/* Operate on vertex.						*/
-	vtoh_move( v_workk, &(rec->s.s_values[0]) );
-	matXvec( v_work, xform, v_workk );
-	htov_move( &(rec->s.s_values[0]), v_work );
-
-	for( i = 3; i <= 15; i += 3 )
-		{
-		vtoh_move( v_workk, &(rec->s.s_values[i]) );
-		matXvec( v_work, notrans, v_workk );
-		htov_move( &(rec->s.s_values[i]), v_work );
-		}
+addtgc( v, tgc, name, num )
+struct rt_vls		*v;
+struct rt_tgc_internal	*tgc;
+char			*name;
+int			num;
+{
+	register int	i;
+	vect_t	axb, cxd;
+	vect_t	work;
+	double	ma, mb, mc, md, maxb, mcxd, mh;
+	union record	*rec;	/* XXX */
 
 	/* Check for tec rec trc rcc.					*/
 	rec->s.s_cgtype = TGC;
@@ -995,9 +1305,9 @@ register Record *rec;
 		{
 		if( ma < mb )
 			{
-			swap_vec( SV2, SV3, work );
+			swap_vec( SV2, SV3 );
 			swap_dbl( &ma, &mb );
-			swap_vec( SV4, SV5, work );
+			swap_vec( SV4, SV5 );
 			swap_dbl( &mc, &md );
 			}
 		}
@@ -1212,126 +1522,6 @@ register Record	*rec;
 	return;
 	}
 
-/*	m a t _ z e r o ( )
-	Fill in the matrix "m" with zeros.
- */
-void
-mat_zero( m )
-register matp_t	m;
-	{	register int	i;
-	for( i = 0; i < 16; i++ )
-		*m++ = 0;
-	return;
-	}
-
-/*	m a t _ i d n ( )
-	Fill in the matrix "m" with an identity matrix.
- */
-void
-mat_idn( m )
-register matp_t m;
-	{
-	mat_zero( m );
-	m[0] = m[5] = m[10] = m[15] = 1;
-	return;
-	}
-
-/*	m a t _ c o p y ( )
-	Copy the matrix "im" into the matrix "om".
- */
-void
-mat_copy( om, im )
-register matp_t om, im;
-	{	register int	i;
-	for( i = 0; i < 16; i++ )
-		*om++ = *im++;
-	return;
-	}
-
-/*	m a t _ m u l ( )
-	Multiply matrix "im1" by "im2" and store the result in "om".
-	NOTE:  This is different from multiplying "im2" by "im1" (most
-	of the time!)
- */
-void
-mat_mul( om, im1, im2 )
-register matp_t	om, im1, im2;
-	{ 	register int em1;	/* Element subscript for im1.	*/
-		register int em2;	/* Element subscript for im2.	*/
-		register int el = 0;	/* Element subscript for om.	*/
-	/* For each element in the output matrix... */
-	for( ; el < 16; el++ )
-		{	register int i;
-		om[el] = 0;		/* Start with zero in output.	*/
-		em1 = (el / 4) * 4;	/* Element at rt of row in im1.	*/
-		em2 = el % 4;		/* Element at top of col in im2.*/
-		for( i = 0; i < 4; i++ )
-			{
-			om[el] += im1[em1] * im2[em2];
-			em1++;		/* Next row element in m1.	*/
-			em2 += 4;	/* Next column element in m2.	*/
-			}
-		}
-	return;
-	}
-/*	m a t X v e c ( )
-	Multiply the vector "iv" by the matrix "im" and store the result
-	in the vector "ov".
- */
-void
-matXvec( op, mp, vp )
-register vectp_t	op;
-register matp_t		mp;
-register vectp_t	vp;
-	{	register int io;	/* Position in output vector.	*/
-		register int im = 0;	/* Position in input matrix.	*/
-		register int iv;	/* Position in input vector.	*/
-	/* Fill each element of output vector with.			*/
-	for( io = 0; io < 4; io++ )
-		{ /* Dot prod. of each row w/ each element of input vec.*/
-		op[io] = 0.;
-		for( iv = 0; iv < 4; iv++ )
-			op[io] += mp[im++] * vp[iv];
-		}
-	return;
-	}
-
-/*	v t o h _ m o v e ( )						*/
-void
-vtoh_move( h, v)
-register float	*h, *v;
-	{
-	*h++ = *v++;
-	*h++ = *v++;
-	*h++ = *v;
-	*h++ = 1.0;
-	return;
-	}
-
-/*	h t o v _ m o v e ( )						*/
-void
-htov_move( v, h )
-register float	*v, *h;
-	{	static double	inv;
-	if( h[3] == 1.0 )
-		{
-		*v++ = *h++;
-		*v++ = *h++;
-		*v   = *h;
-		}
-	else
-		{
-		if( h[3] == 0.0 )
-			inv = 1.0;
-		else
-			inv = 1.0 / h[3];
-		*v++ = *h++ * inv;
-		*v++ = *h++ * inv;
-		*v = *h * inv;
-		}
-	return;
-	}
-
 #include <varargs.h>
 /*	p r o m p t ( )							*/
 /*VARARGS*/
@@ -1386,24 +1576,11 @@ unsigned	bytes;
 	}
 
 pr_dir( dirp )
-Directory	*dirp;
+struct directory	*dirp;
 	{
 	(void) printf(	"dirp(0x%x)->d_namep=%s d_addr=%ld\n",
 			dirp, dirp->d_namep, dirp->d_addr
 			);
 	(void) fflush( stdout );
 	return	1;
-	}
-
-char *
-emalloc( size )
-int	size;
-	{
-		char		*ptr;
-	if( (ptr = (char *)malloc( (unsigned) size )) == NULL )
-		{
-		(void) fprintf( stderr, "Malloc() failed!\n" );
-		exit( 1 );
-		}
-	return	ptr;
 	}

@@ -12,7 +12,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 	Procedures for vproc.c
 
 	Section 1:  Commands
-		2:  Object Directory Routines
 		3:  List Processing Routines
 		4:  String Processing Routines
 		5:  Input/Output Routines
@@ -22,18 +21,17 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <signal.h>
 
-#include "./vextern.h"
 
-extern void	eread(), ewrite();
-extern void	mat_idn();
+#include "./vextern.h"
+#include "rtstring.h"
+#include "raytrace.h"
 
 #include "./std.h"
 
-Directory	directory[NDIR];
-static char	*db_title = NULL, *db_units = "  ";
+extern void	eread(), ewrite();
 
-char		*addname(), getarg();
-Directory	*lookup(), *diradd();
+
+char		getarg();
 void		quit(), abort_sig();
 void		blank_fill();
 
@@ -72,14 +70,14 @@ register char *prefix;
 		}
 
 	/* Target units (a2,3x)						*/
-	ewrite( solfd, db_units, 2 );
+	ewrite( solfd, "mm", 2 );	/* XXX Need units here */
 	blank_fill( solfd, 3 );
 
 	/* Title							*/
-	if( db_title == NULL )
+	if( dbip->dbi_title == NULL )
 		ewrite( solfd, objfile, (unsigned) strlen( objfile ) );
 	else
-		ewrite( solfd, db_title, (unsigned) strlen( db_title ) );
+		ewrite( solfd, dbip->dbi_title, (unsigned) strlen( dbip->dbi_title ) );
 	ewrite( solfd, LF, 1 );
 
 	/* Save space for number of solids and regions.			*/
@@ -143,9 +141,14 @@ register char *prefix;
 
 	/* Check integrity of list against directory and build card deck.	*/
 	for( i = 0; i < curr_ct; i++ )
-		{	Directory	*dirp;
-		if( (dirp = lookup( curr_list[i], NOISY )) != DIR_NULL )
+		{	struct directory	*dirp;
+		if( (dirp = db_lookup( dbip, curr_list[i], LOOKUP_NOISY )) != DIR_NULL )  {
+#if 1
+			treewalk( curr_list[i] );
+#else
 			cgobj( dirp, 0, identity );
+#endif
+		}
 		}
 	/* Add number of solids and regions on second card.		*/
 	(void) lseek( solfd, savsol, 0 );
@@ -261,251 +264,26 @@ char  *args[];
 	return( 0 );
 }
 
-/*
-	Section 2:	O B J E C T   D I R E C T O R Y   R O U T I N E S
-
-			builddir()
-			toc()
-			diradd()
-			addname()
- */
-
-/*
-			B U I L D D I R
-
- This routine reads through the 3d object file and
- builds a directory of the object names, to allow rapid
- named access to objects.
- */
-builddir()
-	{	register Directory *dirp;
-	(void) printf( "Building the directory.\n" );
-	(void) fflush( stdout );
-	for(	dirp = directory, ndir = 0;
-		ndir < NDIR
-	    &&	(dirp->d_addr = lseek( objfd, 0L, 1 )) != -1
-	    &&	read( objfd, (char *) &record, sizeof(record) ) == sizeof(record);
-		dirp++, ndir++
-		)
-		{
-		switch( record.u_id )
-			{
-		case ID_IDENT : /* Identification record.		*/
-			{	static int	units_set_flag = false;
-			ndir--;	/* Don't include in directory.		*/
-			dirp--;
-			if( db_title == NULL )
-				{
-				/* This must be the first ident record.	*/
-				db_title = emalloc( strlen(record.i.i_title)+1 );
-				(void) strcpy( db_title, record.i.i_title );
-				}
-			(void) fprintf( stdout, "%s\n", record.i.i_title );
-			(void) fprintf( stdout,
-					"GED database version (%s)\n",
-					record.i.i_version
-					);
-			/* Ignore second ident records' units, unless
-				previous were bogus or unspecified.
-			 */
-			if( ! units_set_flag )
-				{
-				/* NOTE : Default unit conversion factor (1.0)
-					is set in 'vglobal.c'.
-				 */
-				switch( record.i.i_units )
-					{
-				case ID_NO_UNIT : /* unspecified	*/
-					(void) printf( "No units specified.\n" );
-					break;
-				case ID_MM_UNIT	: /* milimeters		*/
-					(void) printf( "Units = milimeters.\n" );
-					unit_conversion = 1.0;
-					units_set_flag = true;
-					(void) strcpy( db_units, "mm" );
-					break;
-				case ID_CM_UNIT	: /* centimeters	*/
-					(void) printf( "Units = centimeters.\n" );
-					unit_conversion = 0.1;
-					units_set_flag = true;
-					(void) strcpy( db_units, "cm" );
-					break;
-				case ID_M_UNIT  : /* meters		*/
-					(void) printf( "Units = meters.\n" );
-					unit_conversion = 0.001;
-					units_set_flag = true;
-					(void) strcpy( db_units, "m " );
-					break;
-				case ID_IN_UNIT	: /* inches		*/
-					(void) printf( "Units = inches.\n" );
-					unit_conversion = 0.03937008;
-					units_set_flag = true;
-					(void) strcpy( db_units, "in" );
-					break;
-				case ID_FT_UNIT	: /* feet		*/
-					(void) printf( "Units = feet.\n" );
-					unit_conversion = 0.00328084;
-					units_set_flag = true;
-					(void) strcpy( db_units, "ft" );
-					break;
-				default :
-					(void) fprintf( stderr,
-							"Unknown units (%d)!\n",
-							record.i.i_units
-							);
-					break;
-					}
-				break;
-				}
-			}
-		case ID_FREE :  /* Free record -- ignore.		*/
-		case ID_MATERIAL : /* Material database record -- ignore.	*/
-			ndir--;
-			dirp--;
-			break;
-		case ID_SOLID : /* Check for a deleted record.	 	*/
-			if( record.s.s_name[0] == 0 )
-				{
-				ndir--;
-				dirp--;
-				}
-			else
-				dirp->d_namep = addname( record.s.s_name );
-			break;
-		case ID_ARS_A :  /* Check for a deleted record.		 */
-			if( record.s.s_name[0] == 0 )
-				{
-				ndir--;
-				dirp--;
-				}
-			else
-				dirp->d_namep = addname( record.s.s_name );
-			/*  Skip remaining B type records.		*/
-			(void) lseek(	objfd,
-					(long)(record.a.a_totlen * sizeof record),
-					1
-					);
-			break;
-		case ID_COMB :  /* Check for a deleted record.		 */
-			if( record.c.c_name[0] == 0 )
-				{
-				ndir--;
-				dirp--;
-				}
-			else
-				dirp->d_namep = addname( record.c.c_name );
-			/* Skip over remaining records.			 */
-			(void) lseek(	objfd,
-					(long)(record.c.c_length * sizeof(record)),
-					1
-					);
-			break;
-		default :
-			(void) fprintf( stderr,
-					"Builddir:  unknown record %c (0%o).\n",
-					record.u_id,
-					record.u_id
-					);
-			ndir--;
-			dirp--;
-			break;
-			}
-		}
-	if( ndir == NDIR )
-		(void) fprintf( stderr, "Too many objects in input\n" );
-	(void) printf( "%d objects tallied\n", ndir );
-	return;
-	}
-
 /*	t o c ( )
 	Build a sorted list of names of all the objects accessable
 	in the object file.
  */
 void
 toc()
-	{	register int		i;
+{
+	register struct directory *dp;
+	register char		*flags;
+	register int		i;
+
 	(void) printf( "Making the Table of Contents.\n" );
 	(void) fflush( stdout );
 
-	for( i = 0; i < ndir; i++ )
-		toc_list[i] = directory[i].d_namep;
-	return;
-	}
-
-/*	l o o k u p ( )
-	This routine takes a name, and looks it up in the
-	directory table.  If the name is present, a pointer to
-	the directory struct element is returned, otherwise
-	a -1 is returned.
-
-	If the flag is NOISY, a print occurs, else only
-	the return code indicates failure.
- */
-Directory *
-lookup( str, flag )
-register char *str;
-	{	register Directory	*dirp;
-		register char		*np;
-		static Directory	*ep;
-		static int		i;
-	ep = &directory[ndir];
-	for( dirp = &directory[0]; dirp < ep; dirp++ )
-		{
-		np = dirp->d_namep;
-		for( i = 0; i < NAMESIZE; i++ )
-			{
-			if( str[i] != *np )
-				break;
-			if( *np++ == 0 || i == 15 )
-				return	dirp;
-			}
+	for( i = 0; i < RT_DBNHASH; i++ )  {
+		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp=dp->d_forw )  {
+			toc_list[ndir++] = dp->d_namep;
 		}
-	if( flag == NOISY )
-		(void) fprintf( stderr, "Lookup: could not find '%s'.\n", str );
-	return	DIR_NULL;
 	}
-
-/*	d i r a d d ( )
-	Add an entry to the directory.
- */
-Directory *
-diradd( namep, laddr )
-register char	*namep;
-long		laddr;
-	{	register Directory *dirp;
-
-	if( ndir >= NDIR )
-		{
-		(void) fprintf( stderr, "Diradd:  no more dir structs.\n" );
-		return	DIR_NULL;
-		}
-	dirp = &directory[ndir++];
-	dirp->d_namep = addname( namep );
-	dirp->d_addr = laddr;
-	return	dirp;
-	}
-
-/*	a d d n a m e ( )
-	Given a name, it puts the name in the name buffer, and
-	returns a pointer to that string.
- */
-char *
-addname( cp )
-register char	*cp;
-	{	static char	*holder;
-		register int	i;
-	if( dir_last >= &dir_names[NDIR*10-NAMESIZE] )
-		{
-		(void) fprintf( stderr, "Addname:  out of name space.\n" );
-		exit( 1 );
-		}
-	holder = dir_last;
-	i = 0;
-	while( *cp != 0 && i++ < NAMESIZE )
-		*dir_last++ = *cp++;
-	*dir_last++ = 0;
-	return	holder;
-	}
+}
 
 /*
 	Section 3:	L I S T   P R O C E S S I N G   R O U T I N E S
@@ -598,12 +376,7 @@ register int	ct;
 				{
 				nomatch = NO;
 				/* Allocate storage for string.			*/
-				bytect = strlen( toc_list[j] );
-				curr_list[curr_ct] = emalloc( (int) ++bytect );
-				/* Insert string at end of list.		*/
-				(void) strcpy(	curr_list[curr_ct++],
-						toc_list[j]
-						);
+				curr_list[curr_ct++] = rt_strdup(toc_list[j]);
 				}
 			}
 		if( nomatch )
@@ -635,7 +408,8 @@ char	*args[];
 			{	register int	k;			
 
 				nomatch = NO;
-				free( curr_list[j] );	--curr_ct;
+				rt_free( curr_list[j], "curr_list" );
+				--curr_ct;
 				/* starting from bottom of list,
 				 * pull all entries up to fill up space
 				 made by deletion
@@ -754,6 +528,152 @@ float	  	f;
 		}
 	}
 
+vls_blanks( v, n )
+struct rt_vls	*v;
+int		n;
+{
+	RT_VLS_CHECK(v);
+	rt_vls_strncat( v, "                                                                                                                                ", n);
+}
+
+/*
+ *			V L S _ I T O A
+ *
+ *	Convert integer to ascii  wd format.
+ */
+vls_itoa( v, n, w )
+struct rt_vls	*v;
+register int	n;
+register int	w;
+{
+	int	 c, i, j, sign;
+	register char	*s;
+
+	RT_VLS_CHECK(v);
+	rt_vls_strncat( v, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", w);
+	s = rt_vls_addr(v)+rt_vls_strlen(v)-w;
+
+	if( (sign = n) < 0 )	n = -n;
+	i = 0;
+	do	s[i++] = n % 10 + '0';	while( (n /= 10) > 0 );
+	if( sign < 0 )	s[i++] = '-';
+
+	/* Blank fill array.					*/
+	for( j = i; j < w; j++ )	s[j] = ' ';
+	if( i > w ) {
+		s[w-1] = (s[w]-1-'0')*10 + (s[w-1]-'0')  + 'A';
+	}
+	s[w] = '\0';
+
+	/* Reverse the array.					*/
+	for( i = 0, j = w - 1; i < j; i++, j-- ) {
+		c    = s[i];
+		s[i] = s[j];
+		s[j] =    c;
+	}
+}
+
+vls_ftoa_vec_cvt( v, vec, w, d )
+struct rt_vls	*v;
+vect_t		vec;
+int		w;
+int		d;
+{
+	vls_ftoa( v, vec[X]*unit_conversion, w, d );
+	vls_ftoa( v, vec[Y]*unit_conversion, w, d );
+	vls_ftoa( v, vec[Z]*unit_conversion, w, d );
+}
+
+vls_ftoa_vec( v, vec, w, d )
+struct rt_vls	*v;
+vect_t		vec;
+int		w;
+int		d;
+{
+	vls_ftoa( v, vec[X], w, d );
+	vls_ftoa( v, vec[Y], w, d );
+	vls_ftoa( v, vec[Z], w, d );
+}
+
+vls_ftoa_cvt( v, f, w, d )
+struct rt_vls	*v;
+register double	f;
+register int	w, d;
+{
+	vls_ftoa( v, f*unit_conversion, w, d );
+}
+
+/*
+ *			V L S _ F T O A
+ *
+ *	Convert float to ascii  w.df format.
+ */
+vls_ftoa( v, f, w, d )
+struct rt_vls	*v;
+register double	f;
+register int	w, d;
+{
+	register char	*s;
+	register int	c, i, j;
+	long	n, sign;
+
+	RT_VLS_CHECK(v);
+	rt_vls_strncat( v, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", w);
+	s = rt_vls_addr(v)+rt_vls_strlen(v)-w;
+
+	if( w <= d + 2 )
+		{
+		(void) fprintf( stderr,
+				"ftoascii: incorrect format  need w.df  stop"
+				);
+		exit( 10 );
+		}
+	for( i = 1; i <= d; i++ )
+		f = f * 10.0;
+
+	/* round up */
+	if( f < 0.0 )
+		f -= 0.5;
+	else
+		f += 0.5;
+	n = f;
+	if( (sign = n) < 0 )
+		n = -n;
+	i = 0;
+	do	{
+		s[i++] = n % 10 + '0';
+		if( i == d )
+			s[i++] = '.';
+		}
+	while( (n /= 10) > 0 );
+
+	/* Zero fill the d field if necessary.				*/
+	if( i < d )
+		{	
+		for( j = i; j < d; j++ )
+			s[j] = '0';
+		s[j++] = '.';
+		i = j;
+		}
+	if( sign < 0 )
+		s[i++] = '-';
+	
+	/* Blank fill rest of field.					*/
+	for ( j = i; j < w; j++ )
+		s[j] = ' ';
+	if( i > w )
+		(void) fprintf( stderr, "Ftoascii: field length too small\n" );
+	s[w] = '\0';
+
+	/* Reverse the array.						*/
+	for( i = 0, j = w - 1; i < j; i++, j-- )
+		{
+		c    = s[i];
+		s[i] = s[j];
+		s[j] =    c;
+		}
+}
+
 /*	c h e c k ( )
 	Compares solids to see if have a new solid.
  */
@@ -790,10 +710,10 @@ register int	ct;
 	/* Get arguments.						 */
 	if( ct == 0 )
 		while( --arg_ct >= 0 )
-			free( args[arg_ct] );
+			rt_free( args[arg_ct], "args[arg_ct]" );
 	for( arg_ct = ct; arg_ct < MAXARG - 1; ++arg_ct )
 		{
-		args[arg_ct] = emalloc( MAXLN );
+		args[arg_ct] = rt_malloc( MAXLN, "getcmd buffer" );
 		if( ! getarg( args[arg_ct] ) )
 			break;
 		}

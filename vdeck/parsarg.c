@@ -52,11 +52,10 @@ parsArg( argc, argv )	char	*argv[];
 		}
 	else
 		objfile = argv[optind++];
-	if( (objfd = open( objfile, 0 )) < 0 )
-		{
-		perror( objfile );
-		return	0;
-		}
+	if( (dbip = db_open( objfile, "r" )) == DBI_NULL )  {
+		perror(objfile);
+	    	return( 0 );		/* FAIL */
+	}
 
 	arg_list[0] = argv[0]; /* Program name goes in first.	*/
 	for( i = optind, arg_cnt = 1; i < argc; i++, arg_cnt++ )
