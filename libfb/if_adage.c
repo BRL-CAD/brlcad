@@ -324,6 +324,10 @@ Pixel		*pixelp;
 int		count;
 	{	register long bytes = count * (long) sizeof(Pixel);
 		register long todo;
+
+	if( count == 1 )
+		return adage_read_pio_pixel( ifp, x, y, pixelp );
+
 	y = ifp->if_width-1-y;		/* 1st quadrant */
 	if( lseek(	ifp->if_fd,
 			(((long) y * (long) ifp->if_width) + (long) x)
@@ -358,6 +362,10 @@ Pixel	*pixelp;
 long	count;
 	{	register long	bytes = count * (long) sizeof(Pixel);
 		register int	todo;
+
+	if( count == 1 )
+		return adage_write_pio_pixel( ifp, x, y, pixelp );
+
 	y = ifp->if_width-1-y;		/* 1st quadrant */
 	if( lseek(	ifp->if_fd,
 			((long) y * (long) ifp->if_width + (long) x)
@@ -386,7 +394,7 @@ long	count;
 
 /* Write 1 Ikonas pixel using PIO rather than DMA */
 _LOCAL_ int
-adage_pio_pixel_write( ifp, x, y, data )
+adage_write_pio_pixel( ifp, x, y, data )
 FBIO	*ifp;
 int		x, y;
 long		*data;
@@ -421,12 +429,12 @@ long		*data;
 		fb_log( "IK ERROR bit on PIO.\n" );
 		return	-1;
 		}
-	return	0;
+	return	1;
 	}
 
 /* Read 1 Ikonas pixel using PIO rather than DMA */
 _LOCAL_ long
-adage_pio_pixel_read( ifp, x, y, datap )
+adage_read_pio_pixel( ifp, x, y, datap )
 FBIO	*ifp;
 int		x, y;
 long		*datap;
@@ -471,7 +479,7 @@ long		*datap;
 		return	-1;
 		}
 	*datap = data;
-	return	0;
+	return	1;
 	}
 
 /*	a d a g e _ z o o m _ s e t ( )
