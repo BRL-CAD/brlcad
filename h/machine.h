@@ -150,35 +150,6 @@
  *		(and sometimes requires special queues/privs), so ordinary
  *		runs should just stay serial.
  *
- *	RES_INIT() -
- *		Macro to initialize a semaphore.
- *		For now, the semaphore *must* be given as the address of
- *		one of these five variables from raytrace.h:
- *			rt_g.res_syscall
- *			rt_g.res_worker
- *			rt_g.res_stats
- *			rt_g.res_results
- *			rt_g.res_model
- *		This is a historical limitation that will be removed when
- *		the macro names are changed.
- *
- *	RES_ACQUIRE() -
- *		Macro to acquire exclusive use of a semaphore, entering
- *		a (1 processor only) critical section.  If another processor
- *		already has exclusive use of this semaphore, it will be
- *		forced to wait, either in a spin-lock, or by relinquishing
- *		it's CPU.
- *
- *	RES_RELEASE() -
- *		Macro to release a semaphore, ending a critical section.
- *		Uses of RES_ACQUIRE() and RES_RELEASE() need to be carefully
- *		paired.  No more than a few lines of code should exist
- *		between them, to keep the critical (non-parallel) sections
- *		as brief as possible.  The frequency and duration of
- *		critical sections determines the asymptotic performance
- *		of a parallel application as the number of processors
- *		is made large.
- *
  *  Author -
  *	Michael John Muuss
  *
@@ -193,10 +164,10 @@
  *	#include <stdio.h>
  *	#include <math.h>
  *	#include "machine.h"
+ *	#include "bu.h"
  *
  *  Libraries Used -
- *	-lm -lc				(serial-only applications)
- *	LIBRT LIBRT_LIBES -lm -lc	(parallel applications)
+ *	LIBBU LIBBU_LIBES -lm -lc
  *
  *  $Header$
  */
@@ -242,10 +213,6 @@ typedef double	fastf_t;	/* double|float, "Fastest" float type */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 
-/* full means resource free, empty means resource busy */
-#define RES_INIT(ptr)		RES_RELEASE(ptr)
-#define	RES_ACQUIRE(ptr)	(void)Daread(ptr)	/* wait full set empty */
-#define RES_RELEASE(ptr)	(void)Daset(ptr,3)	/* set full */
 #define MAX_PSW		128	/* Max number of process streams */
 #define DEFAULT_PSW	MAX_PSW
 #define PARALLEL	1
@@ -269,9 +236,6 @@ typedef double	fastf_t;	/* double|float, "Fastest" float type */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 
-#define RES_INIT(ptr)		;
-#define RES_ACQUIRE(ptr)	;
-#define RES_RELEASE(ptr)	;
 #define MAX_PSW		1	/* only one processor, max */
 #define DEFAULT_PSW	1
 #endif
@@ -289,11 +253,6 @@ typedef double	fastf_t;	/* double|float, "Fastest" float type */
 #define FAST	register	/* LOCAL|register, for fastest floats */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
-
-/* All FX/8's have parallel capability -- compile the locking in always */
-#define RES_INIT(ptr)		RES_RELEASE(ptr)
-/* RES_ACQUIRE is a function */
-#define RES_RELEASE(ptr)	*(ptr)=0;
 
 #define MAX_PSW		8	/* Max number of processors */
 #define DEFAULT_PSW	MAX_PSW
@@ -315,9 +274,6 @@ typedef double	fastf_t;	/* double|float, "Fastest" float type */
 #define FAST	register	/* LOCAL|register, for fastest floats */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
-
-/* All Alliant machines have parallel capability */
-/* RES_INIT, RES_ACQUIRE, and RES_RELASE are all subroutines */
 
 #define MAX_PSW		28	/* Max number of processors */
 #define DEFAULT_PSW	MAX_PSW
@@ -365,11 +321,6 @@ typedef long		bitv_t;
 #define BITV_SHIFT	5
 #endif
 
-
-#define RES_INIT(ptr)		RES_RELEASE(ptr)
-/* RES_ACQUIRE is a function in machine.c, using tas instruction */
-#define RES_RELEASE(ptr)	*(ptr)=0;
-
 #define MAX_PSW		4	/* Max number of processors */
 #define DEFAULT_PSW	1	/* for now */
 #define PARALLEL	1
@@ -388,7 +339,6 @@ typedef double	fastf_t;	/* double|float, "Fastest" float type */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
-/* RES_INIT, RES_ACQUIRE, RES_RELEASE are subroutines, for now */
 #define MAX_PSW		4	/* # processors, max */
 #define DEFAULT_PSW	1
 #define PARALLEL	1
@@ -409,9 +359,6 @@ typedef double	fastf_t;	/* double|float, "Fastest" float type */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
-#define RES_INIT(ptr)		;
-#define RES_ACQUIRE(ptr)	;
-#define RES_RELEASE(ptr)	;
 #define MAX_PSW		1	/* only one processor, max */
 #define DEFAULT_PSW	1
 #endif
@@ -435,7 +382,6 @@ typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 #define CONST	const
 
-/* RES_INIT, RES_ACQUIRE, RES_RELEASE are subroutines */
 #define MAX_PSW		32
 #define DEFAULT_PSW	MAX_PSW
 #define PARALLEL	1
@@ -460,9 +406,6 @@ typedef double	fastf_t;	/* double|float, "Fastest" float type */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
-#define RES_INIT(ptr)		;
-#define RES_ACQUIRE(ptr)	;
-#define RES_RELEASE(ptr)	;
 #define MAX_PSW		1	/* only one processor, max */
 #define DEFAULT_PSW	1
 
@@ -513,7 +456,6 @@ typedef double	fastf_t;	/* double|float, "Fastest" float type */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
-/* RES_INIT, RES_ACQUIRE, RES_RELEASE are subroutines */
 #define MAX_PSW		20	/* need to increase this for Super Dragon? */
 #define DEFAULT_PSW	20
 #define PARALLEL	1
@@ -538,9 +480,6 @@ typedef long	bitv_t;		/* largest integer type */
 #define const   /**/            /* Does not support const keyword */
 #define CONST   /**/            /* Does not support const keyword */
 
-#define RES_INIT(ptr)		;
-#define RES_ACQUIRE(ptr)	;
-#define RES_RELEASE(ptr)	;
 #define MAX_PSW		1	/* only one processor, max */
 #define DEFAULT_PSW	1
 
@@ -559,9 +498,6 @@ typedef double	fastf_t;	/* double|float, "Fastest" float type */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
-#define RES_INIT(ptr)		;
-#define RES_ACQUIRE(ptr)	;
-#define RES_RELEASE(ptr)	;
 #define MAX_PSW		1	/* only one processor, max */
 #define DEFAULT_PSW	1
 
@@ -647,17 +583,6 @@ typedef long	bitv_t;		/* largest integer type */
 #	define bzero(str,n)		memset( str, '\0', n )
 #	define bcopy(from,to,count)	memcpy( to, from, count )
 #endif
-
-/* XXX Soon BRL-CAD will convert to sources written using the SYSV names,
- * XXX with defines back to the old UNIX V6 names for antique systems.
- */
-#if !defined(HAVE_STRCHR)
-#	define strchr(sp,c)	index(sp,c)
-#	define strrchr(sp,c)	rindex(sp,c)
-	extern char *index();
-	extern char *rindex();
-#endif
-
 
 
 /* Functions local to one file should be declared HIDDEN:  (nil)|static */
