@@ -59,7 +59,7 @@ if [ ! "x$_autofound" = "xyes" ] ; then
   echo "ERROR:  Unable to locate GNU Autoconf."
   _report_error=yes
 else
-  _version_line="`$AUTOCONF --version | head -1`"
+  _version_line="`$AUTOCONF --version | head -n 1`"
   if [ "x$HAVE_SED" = "xyes" ] ; then
     _maj_version="`echo $_version_line | sed 's/.*\([0-9]\)\..*/\1/'`"
     _min_version="`echo $_version_line | sed 's/.*\.\([0-9][0-9]\).*/\1/'`"
@@ -196,7 +196,7 @@ if test -f configure.ac ; then
 elif test -f configure.in ; then
   _configure_file=configure.in
 fi
-_aux_dir="`cat $_configure_file | grep AC_CONFIG_AUX_DIR | tail -1 | sed 's/^[ ]*AC_CONFIG_AUX_DIR(\(.*\)).*/\1/'`"
+_aux_dir="`cat $_configure_file | grep AC_CONFIG_AUX_DIR | tail -n 1 | sed 's/^[ ]*AC_CONFIG_AUX_DIR(\(.*\)).*/\1/'`"
 if test ! -d "$_aux_dir" ; then
   _aux_dir=.
 fi
