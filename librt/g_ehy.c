@@ -1098,8 +1098,11 @@ const struct bn_tol	*tol;
 		/* free mem for old approximation of hyperbola */
 		pos_b = pts_b;
 		while ( pos_b ) {
+			struct rt_pt_node *tmp;
+
+			tmp = pos_b->next;
 			bu_free( (char *)pos_b, "rt_pt_node" );
-			pos_b = pos_b->next;
+			pos_b = tmp;
 		}
 		/* construct hyperbola along semi-major axis of ehy
 		 * using same z coords as parab along semi-minor axis
@@ -1157,10 +1160,8 @@ const struct bn_tol	*tol;
 		} else if (theta_new < theta_prev) {
 			nseg *= 2;
 			pts_dbl[i] = 1;
-			outfaceuses = NULL;
 		} else {
 			pts_dbl[i] = 0;
-			outfaceuses = NULL;
 		}
 		theta_prev = theta_new;
 
@@ -1195,11 +1196,11 @@ const struct bn_tol	*tol;
 	for (i = 0; i < nseg; i++)
 		vells[nell-1][i] = (struct vertex *)NULL;
 	face = 0;
+	BU_ASSERT_PTR( outfaceuses, !=, NULL );
 	if ( (outfaceuses[face++] = nmg_cface(s, vells[nell-1], nseg)) == 0) {
 		bu_log("rt_ehy_tess() failure, top face\n");
 		goto fail;
 	}
-	BU_ASSERT_PTR( outfaceuses, !=, NULL );
 	fu_top = outfaceuses[0];
 
 	/* Mark edges of this face as real, this is the only real edge */
