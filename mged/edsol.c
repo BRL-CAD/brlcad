@@ -2332,7 +2332,7 @@ init_sedit()
 	if( rt_functab[id].ft_import( &es_int, &es_ext, bn_mat_identity, dbip ) < 0 )  {
 	  Tcl_AppendResult(interp, "init_sedit(", illump->s_path[illump->s_last]->d_namep,
 			   "):  solid import failure\n", (char *)NULL);
-	  if( es_int.idb_ptr )  rt_functab[id].ft_ifree( &es_int );
+	  rt_db_free_internal( &es_int );
 	  db_free_external( &es_ext );
 	  return;				/* FAIL */
 	}
@@ -2354,7 +2354,7 @@ init_sedit()
 		  Tcl_AppendResult(interp,"Cannot calculate plane equations for ARB8\n",
 				   (char *)NULL);
 		  db_free_external( &es_ext );
-		  rt_functab[id].ft_ifree( &es_int );
+		  rt_db_free_internal( &es_int );
 		  return;
 		}
 	}
@@ -6515,7 +6515,7 @@ CONST mat_t			mat;
 			vls_pipept( vp, seg_no, &intern, base2local );
 	}
 
-	rt_functab[id].ft_ifree( &intern );
+	rt_db_free_internal( &intern );
 }
 
 /*
@@ -7339,8 +7339,7 @@ init_oedit_guts()
 	if (rt_functab[id].ft_import(&es_int, &es_ext, bn_mat_identity, dbip) < 0) {
 		Tcl_AppendResult(interp, "init_oedit(", illump->s_path[illump->s_last]->d_namep,
 				 "):  solid import failure\n", (char *)NULL);
-		if (es_int.idb_ptr)
-			rt_functab[id].ft_ifree( &es_int );
+		rt_db_free_internal( &es_int );
 		db_free_external(&es_ext);
 		return;				/* FAIL */
 	}
@@ -7504,9 +7503,7 @@ oedit_accept()
 void
 oedit_reject()
 {
-	if (es_int.idb_ptr)
-		rt_functab[es_int.idb_type].ft_ifree(&es_int);
-	es_int.idb_ptr = (genptr_t)NULL;
+	rt_db_free_internal(&es_int);
 	db_free_external(&es_ext);
 }
 
@@ -7639,15 +7636,14 @@ sedit_apply(accept_flag)
 		Tcl_AppendResult(interp, "sedit_apply(", dp->d_namep,
 				 "):  solid export failure\n", (char *)NULL);
 		if (accept_flag) {
-			if (es_int.idb_ptr)
-				rt_functab[es_int.idb_type].ft_ifree(&es_int);
+			rt_db_free_internal(&es_int);
 			db_free_external(&es_ext);
 		}
 		return TCL_ERROR;				/* FAIL */
 	}
 
-    	if (es_int.idb_ptr && accept_flag)
-		rt_functab[es_int.idb_type].ft_ifree(&es_int);
+    	if (accept_flag)
+		rt_db_free_internal(&es_int);
 
 	if (db_put_external(&es_ext, dp, dbip) < 0) {
 		if (accept_flag)
@@ -7661,9 +7657,7 @@ sedit_apply(accept_flag)
 		es_edflag = -1;
 		es_edclass = EDIT_CLASS_NULL;
 
-		if (es_int.idb_ptr)
-			rt_functab[es_int.idb_type].ft_ifree(&es_int);
-		es_int.idb_ptr = (genptr_t)NULL;
+		rt_db_free_internal(&es_int);
 		db_free_external(&es_ext);
 	}
 
@@ -7734,8 +7728,7 @@ sedit_reject()
 	es_edflag = -1;
 	es_edclass = EDIT_CLASS_NULL;
 
-    	if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );
-	es_int.idb_ptr = (genptr_t)NULL;
+	rt_db_free_internal( &es_int );
 	db_free_external( &es_ext );
 }
 
@@ -9056,8 +9049,7 @@ char **argv;
 
   Tcl_SetObjResult(interp, pnto);
 
-  if( ces_int.idb_ptr )
-    rt_functab[ces_int.idb_type].ft_ifree( &ces_int );
+  rt_db_free_internal( &ces_int );
 
   return status;
 }
@@ -9165,8 +9157,7 @@ char **argv;
   }
 
   /* free old copy */
-  if(es_int.idb_ptr)
-    rt_functab[es_int.idb_type].ft_ifree(&es_int);
+  rt_db_free_internal( &es_int );
 
   /* read in a fresh copy */
   RT_INIT_DB_INTERNAL(&es_int);
@@ -9174,7 +9165,7 @@ char **argv;
   if( rt_functab[id].ft_import( &es_int, &es_ext, bn_mat_identity, dbip ) < 0 )  {
     Tcl_AppendResult(interp, "init_sedit(", illump->s_path[illump->s_last]->d_namep,
 		     "):  solid import failure\n", (char *)NULL);
-    if( es_int.idb_ptr )  rt_functab[id].ft_ifree( &es_int );
+    rt_db_free_internal( &es_int );
     db_free_external( &es_ext );
     return TCL_ERROR;				/* FAIL */
   }
