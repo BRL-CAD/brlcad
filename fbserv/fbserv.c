@@ -117,12 +117,8 @@ static	int	port_set = 0;		/* !0 if user supplied port num */
 static	int	once_only = 0;
 static 	int	netfd;
 
-struct client {
-	int		fd;
-	struct pkg_conn	*pkg;
-};
 #define MAX_CLIENTS	32
-struct client	clients[MAX_CLIENTS];
+struct pkg_conn	*clients[MAX_CLIENTS];
 
 int	verbose = 0;
 
@@ -234,10 +230,9 @@ struct pkg_conn	*pcp;
 		return;
 
 	for( i = MAX_CLIENTS-1; i >= 0; i-- )  {
-		if( clients[i].fd != 0 )  continue;
+		if( clients == NULL )  continue;
 		/* Found an available slot */
-		clients[i].pkg = pcp;
-		clients[i].fd = pcp->pkc_fd;
+		clients[i] = pcp;
 		FD_SET(pcp->pkc_fd, &select_list);
 		if( pcp->pkc_fd > max_fd )  max_fd = pcp->pkc_fd;
 		setup_socket( pcp->pkc_fd );
@@ -254,16 +249,14 @@ void
 drop_client( sub )
 int	sub;
 {
+	int fd = clients[sub]->pkc_fd;
 
-	if( clients[sub].pkg != PKC_NULL )  {
-		pkg_close( clients[sub].pkg );
-		clients[sub].pkg = PKC_NULL;
-	}
-	if( clients[sub].fd != 0 )  {
-		FD_CLR( clients[sub].fd, &select_list );
-		close( clients[sub].fd );
-		clients[sub].fd = 0;
-	}
+	if( clients[sub] == PKC_NULL )  return;
+
+	FD_CLR( fd, &select_list );
+	pkg_close( clients[sub] );
+	clients[sub] = PKC_NULL;
+	(void)close( fd );			/* double-safety */
 }
 
 /*
@@ -277,7 +270,7 @@ int argc; char **argv;
 
 	/* No disk files on remote machine */
 	_fb_disk_enable = 0;
-	bzero((void *)clients, sizeof(struct client) * MAX_CLIENTS);
+	bzero((void *)clients, sizeof(struct pkg_conn *) * MAX_CLIENTS);
 
 	(void)signal( SIGPIPE, SIG_IGN );
 	(void)signal( SIGALRM, sigalarm );
@@ -434,12 +427,12 @@ main_loop()
 		/* Process arrivals from existing clients */
 		/* First, pull the data out of the kernel buffers */
 		for( i = MAX_CLIENTS-1; i >= 0; i-- )  {
-			if( clients[i].fd == 0 )  continue;
-			if( pkg_process( clients[i].pkg ) < 0 ) {
+			if( clients[i] == NULL )  continue;
+			if( pkg_process( clients[i] ) < 0 ) {
 				fprintf(stderr,"pkg_process error encountered (1)\n");
 			}
-			if( ! FD_ISSET( clients[i].fd, &infds ) )  continue;
-			if( pkg_suckin( clients[i].pkg ) <= 0 )  {
+			if( ! FD_ISSET( clients[i]->pkc_fd, &infds ) )  continue;
+			if( pkg_suckin( clients[i] ) <= 0 )  {
 				/* Probably EOF */
 				drop_client( i );
 				ncloses++;
@@ -448,8 +441,8 @@ main_loop()
 		}
 		/* Second, process all the finished ones that we just got */
 		for( i = MAX_CLIENTS-1; i >= 0; i-- )  {
-			if( clients[i].fd == 0 )  continue;
-			if( pkg_process( clients[i].pkg ) < 0 ) {
+			if( clients[i] == NULL )  continue;
+			if( pkg_process( clients[i] ) < 0 ) {
 				fprintf(stderr,"pkg_process error encountered (2)\n");
 			}
 		}
@@ -557,8 +550,8 @@ fb_log( char *fmt, ... )
 
 	want = strlen(outbuf)+1;
 	for( i = MAX_CLIENTS-1; i >= 0; i-- )  {
-		if( clients[i].fd == 0 )  continue;
-		if( pkg_send( MSG_ERROR, outbuf, want, clients[i].pkg ) != want )  {
+		if( clients[i] == NULL )  continue;
+		if( pkg_send( MSG_ERROR, outbuf, want, clients[i] ) != want )  {
 			comm_error("pkg_send error in fb_log, message was:\n");
 			comm_error(outbuf);
 		} else {
@@ -675,8 +668,8 @@ va_dcl
 
 	want = strlen(outbuf)+1;
 	for( i = MAX_CLIENTS-1; i >= 0; i-- )  {
-		if( clients[i].fd == 0 )  continue;
-		if( pkg_send( MSG_ERROR, outbuf, want, clients[i].pkg ) != want )  {
+		if( clients[i] == NULL )  continue;
+		if( pkg_send( MSG_ERROR, outbuf, want, clients[i] ) != want )  {
 			comm_error("pkg_send error in fb_log, message was:\n");
 			comm_error(outbuf);
 		} else {
