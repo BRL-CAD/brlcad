@@ -190,11 +190,11 @@ char	**argv;
 }
 
 HIDDEN void
-Count_refs( dbip, comb, comb_leaf, user_ptr1, user_ptr2 )
+Count_refs( dbip, comb, comb_leaf, user_ptr1, user_ptr2, user_ptr3 )
 struct db_i		*dbip;
 struct rt_comb_internal *comb;
 union tree		*comb_leaf;
-genptr_t		user_ptr1, user_ptr2;
+genptr_t		user_ptr1, user_ptr2, user_ptr3;
 {
 	struct directory *dp;
 
@@ -234,7 +234,7 @@ dir_nref( )
 			if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
 				continue;
 			comb = (struct rt_comb_internal *)intern.idb_ptr;
-			db_tree_funcleaf( dbip, comb, comb->tree, Count_refs, (genptr_t)NULL, (genptr_t)NULL );
+			db_tree_funcleaf( dbip, comb, comb->tree, Count_refs, (genptr_t)NULL, (genptr_t)NULL, (genptr_t)NULL );
 			rt_comb_ifree( &intern );
 		}
 	}
@@ -678,12 +678,13 @@ char **argv;
 }
 
 HIDDEN void
-Find_ref( dbip, comb, comb_leaf, object, comb_name_ptr )
+Find_ref( dbip, comb, comb_leaf, object, comb_name_ptr, user_ptr3 )
 struct db_i		*dbip;
 struct rt_comb_internal	*comb;
 union tree		*comb_leaf;
 genptr_t		object;
 genptr_t		comb_name_ptr;
+genptr_t		user_ptr3;
 {
 	char *obj_name;
 	char *comb_name;
@@ -740,7 +741,7 @@ char	**argv;
 	}
     	comb = (struct rt_comb_internal *)intern.idb_ptr;
 	for( k=0; k<argc; k++ )
-	    	db_tree_funcleaf( dbip, comb, comb->tree, Find_ref, (genptr_t)argv[k], dp->d_namep );
+	    	db_tree_funcleaf( dbip, comb, comb->tree, Find_ref, (genptr_t)argv[k], (genptr_t)dp->d_namep, (genptr_t)NULL );
 
     	rt_comb_ifree( &intern );
     }
@@ -751,11 +752,11 @@ char	**argv;
 }
 
 HIDDEN void
-Do_prefix( dbip, comb, comb_leaf, prefix_ptr, obj_ptr )
+Do_prefix( dbip, comb, comb_leaf, prefix_ptr, obj_ptr, user_ptr3 )
 struct db_i		*dbip;
 struct rt_comb_internal *comb;
 union tree		*comb_leaf;
-genptr_t		prefix_ptr, obj_ptr;
+genptr_t		prefix_ptr, obj_ptr, user_ptr3;
 {
 	char *prefix,*obj;
 	char tempstring[NAMESIZE+2];
@@ -771,7 +772,8 @@ genptr_t		prefix_ptr, obj_ptr;
 
 	(void)strcpy( tempstring, prefix);
 	(void)strcat( tempstring, obj);
-	(void)strncpy( comb_leaf->tr_l.tl_name, tempstring, NAMESIZE );
+	bu_free( comb_leaf->tr_l.tl_name, "comb_leaf->tr_l.tl_name" );
+	comb_leaf->tr_l.tl_name = bu_strdup( tempstring );
 }
 
 /*
@@ -845,7 +847,7 @@ char	**argv;
 
 			for( k=2; k<argc; k++ )
 				db_tree_funcleaf( dbip, comb, comb->tree, Do_prefix,
-					(genptr_t)argv[1], (genptr_t)argv[k] );
+					(genptr_t)argv[1], (genptr_t)argv[k], (genptr_t)NULL );
 			if( rt_db_put_internal( dp, dbip, &intern ) )
 				TCL_WRITE_ERR_return;
 		}
@@ -1071,7 +1073,8 @@ genptr_t		old_ptr, new_ptr;
 	if( strncmp( comb_leaf->tr_l.tl_name, old_name, NAMESIZE ) )
 		return;
 
-	strncpy( comb_leaf->tr_l.tl_name, new_name, NAMESIZE );
+	bu_free( comb_leaf->tr_l.tl_name, "comb_leaf->tr_l.tl_name" );
+	comb_leaf->tr_l.tl_name = bu_strdup( new_name );
 }
 
 /*	F _ M V A L L
@@ -1156,7 +1159,8 @@ char	**argv;
 				}
 				if( !strncmp( comb_leaf->tr_l.tl_name, argv[1], NAMESIZE ) )
 				{
-					strncpy( comb_leaf->tr_l.tl_name, argv[2], NAMESIZE );
+					bu_free( comb_leaf->tr_l.tl_name, "comb_leaf->tr_l.tl_name" );
+					comb_leaf->tr_l.tl_name = bu_strdup( argv[2] );
 					changed = 1;
 				}
 
