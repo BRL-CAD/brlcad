@@ -163,9 +163,13 @@ extern double   modf();
  */
 #if USE_PROTOTYPES
 extern void	port_setlinebuf( FILE *fp );
-#if !defined(HAVE_GETOPT_DECL)
+# if !defined(HAVE_GETOPT_DECL)
+#  if defined(linux)
 extern int	getopt( int argc, char * CONST *argv, CONST char *optstr );
-#endif
+#  else
+extern int	getopt( int argc, char **argv, char *optstr );
+#  endif
+# endif
 #if !defined(HAVE_REGEX_DECL)
 extern char	*re_comp( char *s );
 extern int	re_exec( char *s );
