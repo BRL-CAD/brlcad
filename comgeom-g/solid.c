@@ -618,7 +618,7 @@ ell1:
 		/* N, d */
 		if( getsoldata( dd, 1*3+1, sol_work ) < 0 )
 			return(-1);
-		return( mk_half( outfp, name, D(0), dd[3] ) );
+		return( mk_half( outfp, name, D(0), -dd[3] ) );
 	}
 
 	if( strcmp( solid_type, "arbn" ) == 0 )  {
