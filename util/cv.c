@@ -57,8 +57,8 @@ char	**argv;
 		exit(1);
 	}
 
-	in_cookie = cv_cookie( argv[1] );
-	out_cookie = cv_cookie( argv[2] );
+	in_cookie = bu_cv_cookie( argv[1] );
+	out_cookie = bu_cv_cookie( argv[2] );
 
 	if( argc >= 5 )  {
 		if( (outfp = fopen( argv[4], "w" )) == NULL )  {
@@ -83,21 +83,21 @@ char	**argv;
 		exit(5);
 	}
 
-	iitem = cv_itemlen( in_cookie );
-	oitem = cv_itemlen( out_cookie );
+	iitem = bu_cv_itemlen( in_cookie );
+	oitem = bu_cv_itemlen( out_cookie );
 #define NITEMS	(64*1024)
 	inbytes = NITEMS*iitem;
 	outbytes = NITEMS*oitem;
 
-	ibuf = (genptr_t)rt_malloc( inbytes, "cv input buffer" );
-	obuf = (genptr_t)rt_malloc( outbytes, "cv output buffer" );
+	ibuf = (genptr_t)bu_malloc( inbytes, "cv input buffer" );
+	obuf = (genptr_t)bu_malloc( outbytes, "cv output buffer" );
 
 	while( !feof( infp ) )  {
 		if( (n = fread( ibuf, iitem, NITEMS, infp )) <= 0 )
 			break;
-		m = cv_w_cookie( obuf, out_cookie, outbytes, ibuf, in_cookie, n );
+		m = bu_cv_w_cookie( obuf, out_cookie, outbytes, ibuf, in_cookie, n );
 		if( m != n )  {
-			fprintf(stderr, "cv: cv_w_cookie() ret=%d, count=%d\n", m, n );
+			fprintf(stderr, "cv: bu_cv_w_cookie() ret=%d, count=%d\n", m, n );
 			exit(4);
 		}
 		m = fwrite( obuf, oitem, n, outfp );

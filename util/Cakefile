@@ -242,8 +242,8 @@ plgetframe:	plgetframe.o LIBBN_DEP LIBBU_DEP
 plrot:		plrot.o LIBBN_DEP LIBBU_DEP
 	CC LDFLAGS -o plrot plrot.o LIBBN LIBBU LIBBU_LIBES LIBES
 
-cv:		cv.o LIBRT_DEP LIBBU_DEP LIBBN_DEP
-	CC LDFLAGS -o cv cv.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES
+cv:		cv.o LIBBU_DEP
+	CC LDFLAGS -o cv cv.o LIBBU LIBBU_LIBES LIBES
 
 op-bw:		op-bw.o
 	CC LDFLAGS -o op-bw op-bw.o LIBES
