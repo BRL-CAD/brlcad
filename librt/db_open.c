@@ -127,19 +127,19 @@ char	*mode;
 		if( (dbip->dbi_fp = fdopen( dbip->dbi_fd, "r" )) == NULL )
 			goto fail;
 
-#ifdef HAVE_SYS_MMAN_H
-		/* Attempt to access as memory-mapped file */
-		dbip->dbi_eof = sb.st_size;	/* needed by db_read() */
-		if( (dbip->dbi_inmem = mmap(
-		    (caddr_t)0, sb.st_size, PROT_READ, MAP_PRIVATE,
-		    dbip->dbi_fd, (off_t)0 )) == (caddr_t)-1L )  {
-			perror("mmap");
-			dbip->dbi_inmem = (char *)0;
-		} else {
-			if(rt_g.debug&DEBUG_DB)
-				rt_log("db_open: memory mapped file\n");
-		}
-#endif
+#		ifdef HAVE_SYS_MMAN_H
+			/* Attempt to access as memory-mapped file */
+			dbip->dbi_eof = sb.st_size;	/* needed by db_read() */
+			if( (dbip->dbi_inmem = mmap(
+			    (caddr_t)0, sb.st_size, PROT_READ, MAP_PRIVATE,
+			    dbip->dbi_fd, (off_t)0 )) == (caddr_t)-1L )  {
+				perror("mmap");
+				dbip->dbi_inmem = (char *)0;
+			} else {
+				if(rt_g.debug&DEBUG_DB)
+					rt_log("db_open: memory mapped file, addr=x%x\n", dbip->dbi_inmem);
+			}
+#		endif
 
 		if( !dbip->dbi_inmem && sb.st_size <= INMEM_LIM )  {
 			dbip->dbi_inmem = rt_malloc( sb.st_size,
@@ -158,26 +158,30 @@ char	*mode;
 		dbip->dbi_read_only = 1;
 	}  else  {
 		/* Read-write mode */
-#ifdef HAVE_UNIX_IO
-		if( (dbip->dbi_fd = open( name, O_RDWR )) < 0 )
-			goto fail;
-		if( (dbip->dbi_fp = fdopen( dbip->dbi_fd, "r+w" )) == NULL )
-			goto fail;
-#else /* HAVE_UNIX_IO */
-		if( (dbip->dbi_fp = fopen( name, "r+w")) == NULL )
-			goto fail;
-		dbip->dbi_fd = -1;
-#endif
+#		ifdef HAVE_UNIX_IO
+			if( (dbip->dbi_fd = open( name, O_RDWR )) < 0 )
+				goto fail;
+			if( (dbip->dbi_fp = fdopen( dbip->dbi_fd, "r+w" )) == NULL )
+				goto fail;
+#		else /* HAVE_UNIX_IO */
+			if( (dbip->dbi_fp = fopen( name, "r+w")) == NULL )
+				goto fail;
+			dbip->dbi_fd = -1;
+#		endif
 		dbip->dbi_read_only = 0;
 	}
 
 	dbip->dbi_filename = rt_strdup(name);
 	dbip->dbi_magic = DBI_MAGIC;		/* Now it's valid */
 
-	return(dbip);
+	if(rt_g.debug&DEBUG_DB)
+		rt_log("db_open(%s) dbip=x%x\n", dbip->dbi_filename, dbip);
+	return dbip;
 fail:
+	if(rt_g.debug&DEBUG_DB)
+		rt_log("db_open(%s) FAILED\n", name);
 	rt_free( (char *)dbip, "struct db_i" );
-	return( DBI_NULL );
+	return DBI_NULL;
 }
 
 /*
