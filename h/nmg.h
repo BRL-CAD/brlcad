@@ -640,6 +640,24 @@ struct nmg_struct_counts {
 	long	shells_of_lone_vert;
 };
 
+/*
+ *  For use with tables subscripted by NMG structure "index" values,
+ *  traditional test and set macros.
+ *  A value of zero indicates unset, a value of one indicates set.
+ *  test-and-set returns TRUE if value was unset;  in the process,
+ *  value has become set.  This is often used to detect the first
+ *  time an item is used, so an alternative name is given, for clarity.
+ *  Note that the somewhat simpler auto-increment form
+ *	( (tab)[(p)->index]++ == 0 )
+ *  is not used, to avoid the possibility of integer overflow from
+ *  repeated test-and-set operations on one item.
+ */
+#define NMG_INDEX_TEST(tab,p)	( (tab)[(p)->index] )
+#define NMG_INDEX_SET(tab,p)	(tab)[(p)->index] = 1
+#define NMG_INDEX_TEST_AND_SET(tab,p)	\
+	( (tab)[(p)->index] == 0 ? ((tab)[(p)->index] = 1) : 0 )
+#define NMG_INDEX_FIRST_TIME(tab,p)	NMG_INDEX_TEST_AND_SET(tab,p)
+
 
 /************************************************************************
  *									*
