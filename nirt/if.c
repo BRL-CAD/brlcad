@@ -36,6 +36,7 @@ struct seg		*finished_segs;
     fastf_t		er = elevation() * deg2rad;
     fastf_t		los;
     int			i;
+    int			part_nm = 0;
     overlap		*ovp;	/* the overlap record for this partition */
     point_t		inormal;
     point_t		onormal;
@@ -47,6 +48,8 @@ struct seg		*finished_segs;
     report(FMT_HEAD);
     for (part = part_head -> pt_forw; part != part_head; part = part -> pt_forw)
     {
+	++part_nm;
+
 	RT_HIT_NORMAL( inormal, part->pt_inhit, part->pt_inseg->seg_stp,
 		&ap->a_ray, part->pt_inflip );
 	RT_HIT_NORMAL( onormal, part->pt_outhit, part->pt_outseg->seg_stp,
@@ -66,6 +69,13 @@ struct seg		*finished_segs;
 	    n_entry(i) = inormal[i];
 	    n_exit(i) = onormal[i];
 	}
+	if (nirt_debug & DEBUG_HITS)
+	{
+	    bu_log("Partition %d entry: (%g, %g, %g) exit: (%g, %g, %g)\n",
+		part_nm, r_entry(X), r_entry(Y), r_entry(Z),
+			 r_exit(X),  r_exit(Y),  r_exit(Z));
+	}
+
 	r_entry(D) = r_entry(X) * cos(er) * cos(ar)
 		    + r_entry(Y) * cos(er) * sin(ar)
 		    + r_entry(Z) * sin(er);
