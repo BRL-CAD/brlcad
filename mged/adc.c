@@ -254,7 +254,7 @@ char	**argv;
 	if( strcmp( parameter, "a1" ) == 0 )  {
 	  if (argc == 1) {
 	    if(iadc)
-	      dv_1adc += (1.0 - pt[0] / 45.0) * 2047.0;
+	      dv_1adc +=  pt[0] / 45.0 * 2047.0;
 	    else
 	      dv_1adc = (1.0 - pt[0] / 45.0) * 2047.0;
 
@@ -270,7 +270,7 @@ char	**argv;
 	if( strcmp( parameter, "a2" ) == 0 )  {
 	  if (argc == 1) {
 	    if(iadc)
-	      dv_2adc += (1.0 - pt[0] / 45.0) * 2047.0;
+	      dv_2adc +=  pt[0] / 45.0 * 2047.0;
 	    else
 	      dv_2adc = (1.0 - pt[0] / 45.0) * 2047.0;
 
