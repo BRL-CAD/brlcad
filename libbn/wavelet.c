@@ -1,35 +1,53 @@
 /*			W A V E L E T . C
  *
+ *  This is a standard wavelet library that takes a given data buffer of some data
+ *  type and then performs a wavelet transform on that data.  The transform
+ *  operations available are to either decompose or reconstruct a signal into it's
+ *  corresponding wavelet form based on the haar wavelet.
+ *
  *  Wavelet decompose/reconstruct operations
  *
- *	bn_wlt_1d_double_decompose(tbuffer, buffer, dimen, channels, limit)
- *	bn_wlt_1d_float_decompose (tbuffer, buffer, dimen, channels, limit)
- *	bn_wlt_1d_char_decompose  (tbuffer, buffer, dimen, channels, limit)
- *	bn_wlt_1d_short_decompose (tbuffer, buffer, dimen, channels, limit)
- *	bn_wlt_1d_int_decompose   (tbuffer, buffer, dimen, channels, limit)
- *	bn_wlt_1d_long_decompose  (tbuffer, buffer, dimen, channels, limit)
+ *	bn_wlt_haar_1d_double_decompose(tbuffer, buffer, dimen, channels, limit)
+ *	bn_wlt_haar_1d_float_decompose (tbuffer, buffer, dimen, channels, limit)
+ *	bn_wlt_haar_1d_char_decompose  (tbuffer, buffer, dimen, channels, limit)
+ *	bn_wlt_haar_1d_short_decompose (tbuffer, buffer, dimen, channels, limit)
+ *	bn_wlt_haar_1d_int_decompose   (tbuffer, buffer, dimen, channels, limit)
+ *	bn_wlt_haar_1d_long_decompose  (tbuffer, buffer, dimen, channels, limit)
  *
- *	bn_wlt_1d_double_reconstruct(tbuffer, buffer, dimen, channels, sub_sz, limit)
- *	bn_wlt_1d_float_reconstruct (tbuffer, buffer, dimen, channels, sub_sz, limit)
- *	bn_wlt_1d_char_reconstruct  (tbuffer, buffer, dimen, channels, sub_sz, limit)
- *	bn_wlt_1d_short_reconstruct (tbuffer, buffer, dimen, channels, sub_sz, limit)
- *	bn_wlt_1d_int_reconstruct   (tbuffer, buffer, dimen, channels, sub_sz, limit)
- *	bn_wlt_1d_long_reconstruct  (tbuffer, buffer, dimen, channels, sub_sz, limit)
+ *	bn_wlt_haar_1d_double_reconstruct(tbuffer, buffer, dimen, channels, sub_sz, limit)
+ *	bn_wlt_haar_1d_float_reconstruct (tbuffer, buffer, dimen, channels, sub_sz, limit)
+ *	bn_wlt_haar_1d_char_reconstruct  (tbuffer, buffer, dimen, channels, sub_sz, limit)
+ *	bn_wlt_haar_1d_short_reconstruct (tbuffer, buffer, dimen, channels, sub_sz, limit)
+ *	bn_wlt_haar_1d_int_reconstruct   (tbuffer, buffer, dimen, channels, sub_sz, limit)
+ *	bn_wlt_haar_1d_long_reconstruct  (tbuffer, buffer, dimen, channels, sub_sz, limit)
  *
- *	bn_wlt_2d_double_decompose(tbuffer, buffer, dimen, channels, limit)
- *	bn_wlt_2d_float_decompose (tbuffer, buffer, dimen, channels, limit)
- *	bn_wlt_2d_char_decompose  (tbuffer, buffer, dimen, channels, limit)
- *	bn_wlt_2d_short_decompose (tbuffer, buffer, dimen, channels, limit)
- *	bn_wlt_2d_int_decompose   (tbuffer, buffer, dimen, channels, limit)
- *	bn_wlt_2d_long_decompose  (tbuffer, buffer, dimen, channels, limit)
+ *	bn_wlt_haar_2d_double_decompose(tbuffer, buffer, dimen, channels, limit)
+ *	bn_wlt_haar_2d_float_decompose (tbuffer, buffer, dimen, channels, limit)
+ *	bn_wlt_haar_2d_char_decompose  (tbuffer, buffer, dimen, channels, limit)
+ *	bn_wlt_haar_2d_short_decompose (tbuffer, buffer, dimen, channels, limit)
+ *	bn_wlt_haar_2d_int_decompose   (tbuffer, buffer, dimen, channels, limit)
+ *	bn_wlt_haar_2d_long_decompose  (tbuffer, buffer, dimen, channels, limit)
  *
- *	bn_wlt_2d_double_reconstruct(tbuffer, buffer, dimen, channels, sub_sz, limit)
- *	bn_wlt_2d_float_reconstruct (tbuffer, buffer, dimen, channels, sub_sz, limit)
- *	bn_wlt_2d_char_reconstruct  (tbuffer, buffer, dimen, channels, sub_sz, limit)
- *	bn_wlt_2d_short_reconstruct (tbuffer, buffer, dimen, channels, sub_sz, limit)
- *	bn_wlt_2d_int_reconstruct   (tbuffer, buffer, dimen, channels, sub_sz, limit)
- *	bn_wlt_2d_long_reconstruct  (tbuffer, buffer, dimen, channels, sub_sz, limit)
+ *	bn_wlt_haar_2d_double_reconstruct(tbuffer, buffer, dimen, channels, sub_sz, limit)
+ *	bn_wlt_haar_2d_float_reconstruct (tbuffer, buffer, dimen, channels, sub_sz, limit)
+ *	bn_wlt_haar_2d_char_reconstruct  (tbuffer, buffer, dimen, channels, sub_sz, limit)
+ *	bn_wlt_haar_2d_short_reconstruct (tbuffer, buffer, dimen, channels, sub_sz, limit)
+ *	bn_wlt_haar_2d_int_reconstruct   (tbuffer, buffer, dimen, channels, sub_sz, limit)
+ *	bn_wlt_haar_2d_long_reconstruct  (tbuffer, buffer, dimen, channels, sub_sz, limit)
  *
+ *	bn_wlt_haar_2d_double_decompose2(tbuffer, buffer, width, height, channels, limit)
+ *	bn_wlt_haar_2d_float_decompose2 (tbuffer, buffer, width, height, channels, limit)
+ *	bn_wlt_haar_2d_char_decompose2  (tbuffer, buffer, width, height, channels, limit)
+ *	bn_wlt_haar_2d_short_decompose2 (tbuffer, buffer, width, height, channels, limit)
+ *	bn_wlt_haar_2d_int_decompose2   (tbuffer, buffer, width, height, channels, limit)
+ *	bn_wlt_haar_2d_long_decompose2  (tbuffer, buffer, width, height, channels, limit)
+ *
+ *	bn_wlt_haar_2d_double_reconstruct2(tbuffer, buffer, width, height, channels, sub_sz, limit)
+ *	bn_wlt_haar_2d_float_reconstruct2 (tbuffer, buffer, width, height, channels, sub_sz, limit)
+ *	bn_wlt_haar_2d_char_reconstruct2  (tbuffer, buffer, width, height, channels, sub_sz, limit)
+ *	bn_wlt_haar_2d_short_reconstruct2 (tbuffer, buffer, width, height, channels, sub_sz, limit)
+ *	bn_wlt_haar_2d_int_reconstruct2   (tbuffer, buffer, width, height, channels, sub_sz, limit)
+ *	bn_wlt_haar_2d_long_reconstruct2  (tbuffer, buffer, width, height, channels, sub_sz, limit)
  *	
  *  
  *  For greatest accuracy, it is preferable to convert everything to "double"
@@ -47,7 +65,7 @@
  *
  *
  *
- *  bn_wlt_1d_*_decompose(tbuffer, buffer, dimen, channels, limit)
+ *  bn_wlt_haar_1d_*_decompose(tbuffer, buffer, dimen, channels, limit)
  *  Parameters:
  *	tbuffer     a temporary data buffer 1/2 as large as "buffer". See (1) below.
  *	buffer      pointer to the data to be decomposed
@@ -73,25 +91,25 @@
  *  Examples:
  *	double dbuffer[512], cbuffer[256];
  *	...
- *	bn_wlt_1d_double_decompose(cbuffer, dbuffer, 512, 1, 1);
+ *	bn_wlt_haar_1d_double_decompose(cbuffer, dbuffer, 512, 1, 1);
  *
  *    performs complete decomposition on the data in array "dbuffer".
  *
  *	double buffer[3][512];	 /_* 512 samples, 3 values/sample (e.g. RGB?)*_/
  *	double tbuffer[3][256];	 /_* the temporary buffer *_/
  *	...
- *	bn_wlt_1d_double_decompose(tbuffer, buffer, 512, 3, 1);
+ *	bn_wlt_haar_1d_double_decompose(tbuffer, buffer, 512, 3, 1);
  *
  *    This will completely decompose the data in buffer.  The first sample will
  *    be the average of all the samples.  Alternatively:
  *
- *	bn_wlt_1d_double_decompose(tbuffer, buffer, 512, 3, 64);
+ *	bn_wlt_haar_1d_double_decompose(tbuffer, buffer, 512, 3, 64);
  *
  *    decomposes buffer into a 64-sample "average image" and 3 "detail" sets.
  *
  *
  *
- *  bn_wlt_1d_*_reconstruct(tbuffer, buffer, dimen, channels, sub_sz, limit)
+ *  bn_wlt_haar_1d_*_reconstruct(tbuffer, buffer, dimen, channels, sub_sz, limit)
  *
  *
  *  Author -
@@ -116,14 +134,14 @@
 
 
 #ifdef __STDC__
-#define decompose_1d(DATATYPE) bn_wlt_1d_ ## DATATYPE ## _decompose
+#define decompose_1d(DATATYPE) bn_wlt_haar_1d_ ## DATATYPE ## _decompose
 #else
-#define decompose_1d(DATATYPE) bn_wlt_1d_/**/DATATYPE/**/_decompose
+#define decompose_1d(DATATYPE) bn_wlt_haar_1d_/**/DATATYPE/**/_decompose
 #endif
 
 
 
-#define make_wlt_1d_decompose(DATATYPE)  \
+#define make_wlt_haar_1d_decompose(DATATYPE)  \
 void \
 decompose_1d(DATATYPE) \
 ( tbuffer, buffer, dimen, channels, limit ) \
@@ -186,12 +204,12 @@ unsigned long limit;	/* extent of decomposition */ \
 
 
 #if defined(__STDC__) 
-#define reconstruct(DATATYPE ) bn_wlt_1d_ ## DATATYPE ## _reconstruct
+#define reconstruct(DATATYPE ) bn_wlt_haar_1d_ ## DATATYPE ## _reconstruct
 #else
-#define reconstruct(DATATYPE) bn_wlt_1d_/**/DATATYPE/**/_reconstruct
+#define reconstruct(DATATYPE) bn_wlt_haar_1d_/**/DATATYPE/**/_reconstruct
 #endif
 
-#define make_wlt_1d_reconstruct( DATATYPE ) \
+#define make_wlt_haar_1d_reconstruct( DATATYPE ) \
 void \
 reconstruct(DATATYPE) \
 ( tbuffer, buffer, dimen, channels, subimage_size, limit )\
@@ -270,32 +288,32 @@ unsigned long limit; \
 
 /* Believe it or not, this is where the actual code is generated */
 
-make_wlt_1d_decompose(double)
-make_wlt_1d_reconstruct(double)
+make_wlt_haar_1d_decompose(double)
+make_wlt_haar_1d_reconstruct(double)
 
-make_wlt_1d_decompose(float)
-make_wlt_1d_reconstruct(float)
+make_wlt_haar_1d_decompose(float)
+make_wlt_haar_1d_reconstruct(float)
 
-make_wlt_1d_decompose(char)
-make_wlt_1d_reconstruct(char)
+make_wlt_haar_1d_decompose(char)
+make_wlt_haar_1d_reconstruct(char)
 
-make_wlt_1d_decompose(int)
-make_wlt_1d_reconstruct(int)
+make_wlt_haar_1d_decompose(int)
+make_wlt_haar_1d_reconstruct(int)
 
-make_wlt_1d_decompose(short)
-make_wlt_1d_reconstruct(short)
+make_wlt_haar_1d_decompose(short)
+make_wlt_haar_1d_reconstruct(short)
 
-make_wlt_1d_decompose(long)
-make_wlt_1d_reconstruct(long)
+make_wlt_haar_1d_decompose(long)
+make_wlt_haar_1d_reconstruct(long)
 
 
 #ifdef __STDC__
-#define decompose_2d( DATATYPE ) bn_wlt_2d_ ## DATATYPE ## _decompose
+#define decompose_2d( DATATYPE ) bn_wlt_haar_2d_ ## DATATYPE ## _decompose
 #else
-#define decompose_2d(DATATYPE) bn_wlt_2d_/* */DATATYPE/* */_decompose
+#define decompose_2d(DATATYPE) bn_wlt_haar_2d_/* */DATATYPE/* */_decompose
 #endif
 
-#define make_wlt_2d_decompose(DATATYPE) \
+#define make_wlt_haar_2d_decompose(DATATYPE) \
 void \
 decompose_2d(DATATYPE) \
 (tbuffer, buffer, dimen, channels, limit) \
@@ -393,12 +411,129 @@ unsigned long limit; \
 	} \
 }
 
-#define make_wlt_2d_reconstruct(DATATYPE) /* DATATYPE */
+make_wlt_haar_2d_decompose(double)
+make_wlt_haar_2d_decompose(float)
+make_wlt_haar_2d_decompose(char)
+make_wlt_haar_2d_decompose(int)
+make_wlt_haar_2d_decompose(short)
+make_wlt_haar_2d_decompose(long)
 
-make_wlt_2d_decompose(double)
-make_wlt_2d_decompose(float)
-make_wlt_2d_decompose(char)
-make_wlt_2d_decompose(int)
-make_wlt_2d_decompose(short)
-make_wlt_2d_decompose(long)
 
+
+#ifdef __STDC__
+#define decompose_2d_2( DATATYPE ) bn_wlt_haar_2d_ ## DATATYPE ## _decompose2
+#else
+#define decompose_2d_2(DATATYPE) bn_wlt_haar_2d_/* */DATATYPE/* */_decompose2
+#endif
+
+#define make_wlt_haar_2d_decompose2(DATATYPE) \
+void \
+decompose_2d_2(DATATYPE) \
+(tbuffer, buffer, width, height, channels, limit) \
+DATATYPE *tbuffer; \
+DATATYPE *buffer; \
+unsigned long width; \
+unsigned long height; \
+unsigned long channels; \
+unsigned long limit; \
+{ \
+	register DATATYPE *detail; \
+	register DATATYPE *avg; \
+	register DATATYPE *ptr; \
+	unsigned long img_wsize; \
+	unsigned long img_hsize; \
+	unsigned long half_wsize; \
+	unsigned long half_hsize; \
+	unsigned long x, y, x_tmp, y_tmp, d, i, j; \
+	int do_free = 0; \
+	register fastf_t onehalf = (fastf_t)0.5; \
+\
+	CK_POW_2( width ); \
+	CK_POW_2( height ); \
+\
+        /* create a temp buffer the half the size of the larger dimension \
+         */ \
+	if ( ! tbuffer ) { \
+		tbuffer = (DATATYPE *)bu_malloc( \
+				(((width>height)?width:height)/2) * channels * sizeof( *buffer ), \
+				"1d wavelet buffer"); \
+		do_free = 1; \
+	} \
+\
+	/* each iteration of this loop decomposes the data into 4 quarters: \
+	 * the "average image", the horizontal detail, the vertical detail \
+	 * and the horizontal-vertical detail \
+	 */ \
+	for (img_wsize = width, img_hsize = height ; (img_wsize > limit) && (img_hsize > limit) ; img_wsize = half_wsize, img_hsize = half_hsize ) { \
+		half_wsize = img_wsize/2; \
+		half_hsize = img_hsize/2; \
+\
+		/* do a horizontal detail decomposition first */ \
+		for (y=0 ; y < img_hsize ; y++ ) { \
+			y_tmp = y * width * channels; \
+\
+			detail = tbuffer; \
+			avg = &buffer[y_tmp]; \
+\
+			for (x=0 ; x < img_wsize ; x += 2 ) { \
+				x_tmp = x*channels + y_tmp; \
+\
+				for (d=0 ; d < channels ; d++, avg++, detail++){ \
+					i = x_tmp + d; \
+					j = i + channels; \
+					*detail = (buffer[i] - buffer[j]) * onehalf; \
+					*avg    = (buffer[i] + buffer[j]) * onehalf; \
+				} \
+			} \
+			/* "avg" now points to the first element AFTER the \
+			 * "average image" section, and hence is the START \
+			 * of the "image detail" portion.  Convenient, since \
+			 * we now want to copy the contents of "tbuffer" (which \
+			 * holds the image detail) into place. \
+			 */ \
+			memcpy(avg, tbuffer, sizeof(*buffer) * channels * half_wsize); \
+		} \
+\
+		/* Now do the vertical decomposition */ \
+		for (x=0 ; x < img_wsize ; x ++ ) { \
+			x_tmp = x*channels; \
+\
+			detail = tbuffer; \
+			avg = &buffer[x_tmp]; \
+\
+			for (y=0 ; y < img_hsize ; y += 2) { \
+				y_tmp =y*width*channels + x_tmp; \
+\
+				for (d=0 ; d < channels ; d++, avg++, detail++) { \
+					i = y_tmp + d; \
+					j = i + width*channels; \
+					*detail = (buffer[i] - buffer[j]) * onehalf; \
+					*avg    = (buffer[i] + buffer[j]) * onehalf; \
+				} \
+				avg += (width-1)*channels; \
+			} \
+\
+			/* "avg" now points to the element ABOVE the \
+			 * last "average image" pixel or the first "detail" \
+			 * location in the user buffer. \
+			 * \
+			 * There is no memcpy for the columns, so we have to \
+			 * copy the data back to the user buffer ourselves. \
+			 */ \
+			detail = tbuffer; \
+			for (y=half_hsize ; y < img_hsize ; y++) { \
+				for (d=0; d < channels ; d++) { \
+					*avg++ = *detail++; \
+				} \
+				avg += (width-1)*channels; \
+			} \
+		} \
+	} \
+}
+
+make_wlt_haar_2d_decompose2(double)
+make_wlt_haar_2d_decompose2(float)
+make_wlt_haar_2d_decompose2(char)
+make_wlt_haar_2d_decompose2(int)
+make_wlt_haar_2d_decompose2(short)
+make_wlt_haar_2d_decompose2(long)
