@@ -196,7 +196,6 @@ BDIRS="bench \
 	edpix \
 	nirt \
 	irprep \
-	xmged \
 	jove \
 	canon \
 	burst \
