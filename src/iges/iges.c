@@ -818,7 +818,7 @@ w_start_global(
 	bu_vls_printf( &str , ",,%dH%s" , strlen( db_name ), db_name);
 
 	if( output_file == NULL )
-		bu_vls_printf( &str , ",7Hstd_out," );
+		bu_vls_printf( &str , ",7Hstd_out" );
 	else
 		bu_vls_printf( &str , ",%dH%s" , strlen( output_file ) , output_file );
 
