@@ -161,11 +161,11 @@ rt_cut_optimize_parallel()
 	}
 }
 
-#define CMP(p1,p2,memb,ind) \
-	(*(CONST struct soltab **)(p1))->memb[ind] < \
-	(*(CONST struct soltab **)(p2))->memb[ind] ? -1 : \
-	(*(CONST struct soltab **)(p1))->memb[ind] > \
-	(*(CONST struct soltab **)(p2))->memb[ind] ? 1 : 0
+#define CMP(_p1,_p2,_memb,_ind) \
+	(*(CONST struct soltab **)(_p1))->_memb[_ind] < \
+	(*(CONST struct soltab **)(_p2))->_memb[_ind] ? -1 : \
+	(*(CONST struct soltab **)(_p1))->_memb[_ind] > \
+	(*(CONST struct soltab **)(_p2))->_memb[_ind] ? 1 : 0
 	
 HIDDEN int
 rt_projXmin_comp( p1, p2 )
