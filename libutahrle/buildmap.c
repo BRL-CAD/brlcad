@@ -26,8 +26,8 @@
  */
 
 #include <stdio.h>
-#include <rle.h>
 #include <math.h>
+#include "rle.h"
 
 #ifdef VOID_STAR
 void *malloc();
