@@ -3591,6 +3591,7 @@ CONST struct rt_tol	*tol;
 				rt_log(" visiting lu1=x%x, fu1=x%x, fg1=x%x\n",
 					lu1, fu1, fg1 );
 			}
+restart:
 			for( RT_LIST_FOR( eu1, edgeuse, &lu1->down_hd ) )  {
 				struct edgeuse *eur;
 
@@ -3637,7 +3638,7 @@ CONST struct rt_tol	*tol;
 								eur, ret );
 						}
 						nmg_radial_join_eu(ret, eur, tol);
-						continue;
+						goto restart;
 					}
 
 					/* This condition "shouldn't happen" */
@@ -3661,7 +3662,7 @@ CONST struct rt_tol	*tol;
 					} else {
 			    			rt_bomb("nmg_find_eg_between_2fg() 2 faces intersect with differing edge geometries?\n");
 					}
-					/* Advance to next radial edgeuse */
+					goto restart;
 				}
 			}
 		}
