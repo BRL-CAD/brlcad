@@ -75,7 +75,7 @@ register char	**argv;
 	extern int	optind;
 	extern char	*optarg;
 
-	while( (c = getopt( argc, argv, "chds:w:n:S:W:N:X:Y:C:" )) != EOF )  {
+	while( (c = getopt( argc, argv, "cF:hds:w:n:S:W:N:X:Y:C:" )) != EOF )  {
 		switch( c )  {
 		case 'c':
 			crunch = 1;
