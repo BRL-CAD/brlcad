@@ -63,9 +63,9 @@
  *
  *    performs complete decomposition on the data in array "dbuf".
  *
- *	double buf[3][512];	 /* 512 samples, 3 values/sample (e.g. RGB?)*/
-/*	double tbuf[3][256];	 /* the temporary buffer */
-/*	...
+ *	double buf[3][512];	 /_* 512 samples, 3 values/sample (e.g. RGB?)*_/
+ *	double tbuf[3][256];	 /_* the temporary buffer *_/
+ *	...
  *	bn_wlt_1d_double_decompose(tbuf, buf, 512, 3, 1);
  *
  *    This will completely decompose the data in buf.  The first sample will
