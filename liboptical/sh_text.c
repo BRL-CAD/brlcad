@@ -29,6 +29,7 @@ static char RCStext[] = "@(#)$Header$ (BRL)";
 
 HIDDEN int txt_setup(), txt_render(), txt_print(), txt_free();
 HIDDEN int ckr_setup(), ckr_render(), ckr_print(), ckr_free();
+HIDDEN int bmp_setup(), bmp_render(), bmp_print(), bmp_free();
 HIDDEN int tstm_render();
 HIDDEN int star_render();
 extern int mlib_zero();
@@ -45,6 +46,9 @@ struct mfuncs txt_mfuncs[] = {
 
 	"fakestar",	0,		0,		0,
 	mlib_zero,	star_render,	mlib_zero,	mlib_zero,
+
+	"bump",		0,		0,		MFI_UV|MFI_NORMAL,
+	txt_setup,	bmp_render,	txt_print,	txt_free,
 
 	(char *)0,	0,		0,		0,
 	0,		0,		0,		0
@@ -144,15 +148,8 @@ struct shadework	*swp;
 		VSET( swp->sw_color, swp->sw_uv.uv_u, 0, swp->sw_uv.uv_v );
 		return(1);
 	}
+
 	/* u is left->right index, v is line number bottom->top */
-	if( swp->sw_uv.uv_u < 0 || swp->sw_uv.uv_u > 1 || swp->sw_uv.uv_v < 0 || swp->sw_uv.uv_v > 1 )  {
-		rt_log("txt_render:  bad u,v=%g,%g du,dv=%g,%g seg=%s\n",
-			swp->sw_uv.uv_u, swp->sw_uv.uv_v,
-			swp->sw_uv.uv_du, swp->sw_uv.uv_dv,
-			pp->pt_inseg->seg_stp->st_name );
-		VSET( swp->sw_color, 0, 1, 0 );
-		return(1);
-	}
 	/* Don't filter more than 1/8 of the texture for 1 pixel! */
 	if( swp->sw_uv.uv_du > 0.125 )  swp->sw_uv.uv_du = 0.125;
 	if( swp->sw_uv.uv_dv > 0.125 )  swp->sw_uv.uv_dv = 0.125;
@@ -406,4 +403,86 @@ struct shadework	*swp;
 	} else {
 		VSETALL( swp->sw_color, 0 );
 	}
+}
+
+struct phong_specific {
+	int	shine;
+	double	wgt_specular;
+	double	wgt_diffuse;
+	double	transmit;	/* Moss "transparency" */
+	double	reflect;	/* Moss "transmission" */
+	double	refrac_index;
+} junk = {
+	10, 0.7, 0.3, 0, 0, 1.0
+};
+
+/*
+ *  			B M P _ R E N D E R
+ *  
+ *  Given a u,v coordinate within the texture ( 0 <= u,v <= 1.0 ),
+ *  compute a new surface normal.
+ *  For now we come up with a local coordinate system, and
+ *  make bump perturbations from the red and blue channels of
+ *  an RGB image.
+ *
+ *  Note that .pix files are stored left-to-right, bottom-to-top,
+ *  which works out very naturally for the indexing scheme.
+ */
+HIDDEN
+bmp_render( ap, pp, swp )
+struct application	*ap;
+struct partition	*pp;
+struct shadework	*swp;
+{
+	register struct txt_specific *tp =
+		(struct txt_specific *)pp->pt_regionp->reg_udata;
+	unsigned char *cp;
+	fastf_t	pertU, pertV;
+	vect_t	x, y;		/* world coordinate axis vectors */
+	vect_t	u, v;		/* surface coord system vectors */
+	int	i, j;		/* bump map pixel indicies */
+	char *save;
+
+	/*
+	 * If no texture file present, or if
+	 * texture isn't and can't be read, give debug color.
+	 */
+	if( tp->tx_file[0] == '\0'  ||
+	    ( tp->tx_pixels == (char *)0 && txt_read(tp) == 0 ) )  {
+		VSET( swp->sw_color, swp->sw_uv.uv_u, 0, swp->sw_uv.uv_v );
+		return(1);
+	}
+	/* u is left->right index, v is line number bottom->top */
+	if( swp->sw_uv.uv_u < 0 || swp->sw_uv.uv_u > 1 || swp->sw_uv.uv_v < 0 || swp->sw_uv.uv_v > 1 )  {
+		rt_log("bmp_render:  bad u,v=%g,%g du,dv=%g,%g seg=%s\n",
+			swp->sw_uv.uv_u, swp->sw_uv.uv_v,
+			swp->sw_uv.uv_du, swp->sw_uv.uv_dv,
+			pp->pt_inseg->seg_stp->st_name );
+		VSET( swp->sw_color, 0, 1, 0 );
+		return(1);
+	}
+
+	/* Find a local coordinate system */
+	VSET( x, 1, 0, 0 );
+	VSET( y, 0, 1, 0 );
+	VCROSS( u, y, swp->sw_hit.hit_normal );
+	VUNITIZE( u );
+	VCROSS( v, swp->sw_hit.hit_normal, u );
+
+	/* Find our RGB value */
+	i = swp->sw_uv.uv_u * (tp->tx_w-1);
+	j = swp->sw_uv.uv_v * (tp->tx_l-1);
+	cp = (unsigned char *)(tp->tx_pixels +
+	     (j) * tp->tx_w * 3  +  i * 3);
+	pertU = (*cp - 128) / 256.0;
+	pertV = (*(cp+2) - 128) / 256.0;
+
+	VJOIN2( swp->sw_hit.hit_normal, swp->sw_hit.hit_normal, pertU, u, pertV, v );
+	VUNITIZE( swp->sw_hit.hit_normal );
+
+	save = pp->pt_regionp->reg_udata;
+	pp->pt_regionp->reg_udata = (char *)&junk;
+	phong_render( ap, pp, swp );
+	pp->pt_regionp->reg_udata = save;
+	return(1);
 }
