@@ -25,8 +25,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 double	atof();
 
-ColorMap old_map;
-ColorMap cm;
+extern int	getopt();
+extern char	*optarg;
+extern int	optind;
+
+ColorMap cm1, cm2;
+ColorMap *inp, *outp;
 
 #ifdef SYSV
 #define bzero(p,cnt)	memset(p,'\0',cnt);
@@ -34,8 +38,49 @@ ColorMap cm;
 
 int size = 512;
 double fps = 0.0;	/* frames per second */
+int increment = 1;
+int onestep = 0;
 
 FBIO *fbp;
+
+static char usage[] = "\
+Usage: fbcmrot [-h] [-i increment] steps_per_second\n";
+
+get_args( argc, argv )
+register char **argv;
+{
+	register int c;
+
+	while ( (c = getopt( argc, argv, "hi:" )) != EOF )  {
+		switch( c )  {
+		case 'h':
+			/* high-res */
+			size = 1024;
+			break;
+		case 'i':
+			/* increment */
+			increment = atoi(optarg);
+			break;
+
+		default:		/* '?' */
+			return(0);
+		}
+	}
+
+	if( optind >= argc )  {
+		/* no fps specified */
+		fps = 0;
+	} else {
+		fps = atoi(argv[optind]);
+		if( fps == 0 )
+			onestep++;
+	}
+
+	if ( argc > ++optind )
+		(void)fprintf( stderr, "fbcmrot: excess argument(s) ignored\n" );
+
+	return(1);		/* OK */
+}
 
 main(argc, argv )
 char **argv;
@@ -43,48 +88,51 @@ char **argv;
 	register int i;
 	int sec, usec;
 
-	if( argc > 1 && argv[1][0] == '-' && argv[1][1] == 'h' )  {
-		argc--;
-		argv++;
-		size = 1024;
+	if ( !get_args( argc, argv ) )  {
+		(void)fputs(usage, stderr);
+		exit( 1 );
 	}
-	if( argc > 1 )  {
-		fps = atof( argv[1] );
-		if( fps != 0 ) {
-			sec = 1.0 / fps;
-			usec = ((1.0 / fps) - sec) * 1000000;
-		}
+
+	if( fps != 0 ) {
+		sec = 1.0 / fps;
+		usec = ((1.0 / fps) - sec) * 1000000;
 	}
 
 	if( (fbp = fb_open( NULL, size, size)) == FBIO_NULL )  {
 		fprintf(stderr, "fbcmrot:  fb_open failed\n");
 		return	1;
 	}
-	fb_rmap( fbp, &old_map );
-	fb_rmap( fbp, &cm );
+
+	inp = &cm1;
+	outp = &cm2;
+	fb_rmap( fbp, inp );
 
 	while(1)  {
-		register int t;
+		register int from;
+		ColorMap *tp;
+
 		/* Build color map for current value */
-		t = cm.cm_red[0];
-		for( i=0; i<255; i++ )
-			cm.cm_red[i] = cm.cm_red[i+1];
-		cm.cm_red[255] = t;
+		for( i=0, from = increment; i < 256; i++, from++ ) {
+			if( from < 0 )
+				from += 256;
+			else if( from > 255 )
+				from -= 256;
+			outp->cm_red[i]   = inp->cm_red[from];
+			outp->cm_green[i] = inp->cm_green[from];
+			outp->cm_blue[i]  = inp->cm_blue[from];
+		}
 
-		t = cm.cm_green[0];
-		for( i=0; i<255; i++ )
-			cm.cm_green[i] = cm.cm_green[i+1];
-		cm.cm_green[255] = t;
-
-		t = cm.cm_blue[0];
-		for( i=0; i<255; i++ )
-			cm.cm_blue[i] = cm.cm_blue[i+1];
-		cm.cm_blue[255] = t;
-
-		fb_wmap( fbp, &cm );
+		fb_wmap( fbp, outp );
+		tp = outp;
+		outp = inp;
+		inp = tp;
 
 		if( fps ) delay( sec, usec );
+		if( onestep )
+			break;
 	}
+	fb_close( fbp );
+	return	0;
 }
 
 #ifdef BSD
