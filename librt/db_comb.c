@@ -226,7 +226,7 @@ CONST matp_t			matrix;		/* NULL if identity */
 					tp->tr_l.tl_mat = mat_dup( diskmat );
 				} else {
 					mat_t	prod;
-					mat_mul( prod, matrix, diskmat );
+					bn_mat_mul( prod, matrix, diskmat );
 					tp->tr_l.tl_mat = mat_dup( prod );
 				}
 			}
@@ -351,7 +351,7 @@ double				local2mm;
 		if( tp->tr_l.tl_mat )  {
 			rt_dbmat_mat( rp[j+1].M.m_mat, tp->tr_l.tl_mat );
 		} else {
-			rt_dbmat_mat( rp[j+1].M.m_mat, mat_identity );
+			rt_dbmat_mat( rp[j+1].M.m_mat, bn_mat_identity );
 		}
 	}
 
