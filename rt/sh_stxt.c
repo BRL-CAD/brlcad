@@ -33,6 +33,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 extern double	modf();
 #endif
 
+HIDDEN int  stxt_setup(), brick_render(), mbound_render(), rbound_render();
+HIDDEN void	stxt_print(), stxt_free();
+HIDDEN void	stxt_transp_hook();
+
 struct	stxt_specific  {
 	unsigned char stx_transp[8];	/* RGB for transparency */
 	char	stx_file[128];	/* Filename */
@@ -44,6 +48,7 @@ struct	stxt_specific  {
 	vect_t	stx_min;
 	vect_t	stx_max;
 	char	*stx_pixels;	/* Pixel holding area */
+	int	trans_valid;	/* boolean: has stx_transp been set? */
 };
 #define STXT_MAGIC	0xfeedbaad
 #define SOL_NULL	((struct stxt_specific *)0)
@@ -52,21 +57,19 @@ struct	stxt_specific  {
 struct	structparse stxt_parse[] = {
 #if CRAY && !__STDC__
 	/* Hack for Cray compiler */
-	"%C",	"transp",	0,			FUNC_NULL,
+	"%C",	"transp",	0,			stxt_transp_hook,
 	"%s",	"file",		1,			FUNC_NULL,
 #else
-	"%C",	"transp",	offsetofarray(struct stxt_specific, stx_transp),	FUNC_NULL,
+	"%C",	"transp",	offsetofarray(struct stxt_specific, stx_transp),	stxt_transp_hook,
 	"%s",	"file",		offsetofarray(struct stxt_specific, stx_file),	FUNC_NULL,
 #endif
 	"%d",	"w",		SOL_O(stx_w),		FUNC_NULL,
 	"%d",	"n",		SOL_O(stx_n),		FUNC_NULL,
 	"%d",	"d",		SOL_O(stx_d),		FUNC_NULL,
 	"%d",	"fw",		SOL_O(stx_fw),		FUNC_NULL,
+	"%d",	"trans_valid",	SOL_O(trans_valid),	FUNC_NULL,
 	(char *)0,(char *)0,	0,			FUNC_NULL
 };
-
-HIDDEN int  stxt_setup(), brick_render(), mbound_render(), rbound_render();
-HIDDEN void	stxt_print(), stxt_free();
 
 struct	mfuncs stxt_mfuncs[] = {
 	"brick",	0,		0,		MFI_HIT,
@@ -81,6 +84,29 @@ struct	mfuncs stxt_mfuncs[] = {
 	(char *)0,	0,		0,		0,
 	0,		0,		0,		0
 };
+
+/*
+ *			S T X T _ T R A N S P _ H O O K
+ *
+ *  Hooked function, called by rt_structparse.
+ */
+HIDDEN void
+stxt_transp_hook( ptab, name, cp, value)
+struct structparse *ptab;
+char	*name;
+char	*cp;
+char	*value;
+{
+	register struct stxt_specific *stp =
+		(struct stxt_specific *)cp;
+
+	if (!strcmp(name, stxt_parse[0].sp_name) && ptab == stxt_parse) {
+		stp->trans_valid = 1;
+	} else {
+		rt_log("file:%s, line:%d stxt_transp_hook name:(%s) instead of (%s)\n",
+			__FILE__, __LINE__, name, stxt_parse[0].sp_name);
+	}
+}
 
 /*
  *			S T X T _ R E A D
@@ -172,7 +198,7 @@ char	**dpp;
 
 	if( stp->stx_fw < 0 )  stp->stx_fw = stp->stx_w;
 	stp->stx_pixels = (char *)0;
-	if( stp->stx_transp[3] != 0 )
+	if( stp->trans_valid )
 		rp->reg_transmit = 1;
 
 	/**	Read in texture file/s  **/
