@@ -185,7 +185,7 @@ char	*dp;
 
 	vect_t  lx, ly, lz;	/* local coordinate axis */
 	fastf_t f;
-	int iptr;
+	double iptr;
 
 	fastf_t sx, sy, sz;
 	fastf_t tx, ty, tz;
