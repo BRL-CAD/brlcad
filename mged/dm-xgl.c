@@ -117,7 +117,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 				/* are recognized, ON and OFF;  may be	*/
 				/* toggled by mged "redebug" command.	*/
 static int		XGL_debug_level = 0;
-#define	DPRINTF(S)	if(XGL_debug_level) (void)fprintf(stderr, S)
+#define	DPRINTF(S)	if(XGL_debug_level) rt_log(S)
 
 /*
  *	NON-dm functions
@@ -930,7 +930,7 @@ int	oldstate, newstate;
 			KeyPressMask|StructureNotifyMask );
 		break;
 	default:
-		(void)printf("X_statechange: unknown state %s\n", 
+		rt_log("X_statechange: unknown state %s\n", 
 			state_str[newstate]);
 		break;
 	}
@@ -1083,7 +1083,7 @@ int
 XGL_dm( int argc, char ** argv)
 {
 
-	fprintf(stderr, "No commands implemented\n");
+	rt_log(stderr, "No commands implemented\n");
 	return 0;
 }
 
@@ -1131,8 +1131,7 @@ X_setup( Display **dpy, int *screen, Window *win, int *w, int *h)
 
 	/* Use the DISPLAY environment variable. If not set, it's an error */
 	if ((*dpy = XOpenDisplay (NULL)) == NULL) {
-		fprintf (stderr, "Could not open X display %s\n", 
-			XDisplayName(NULL));
+		rt_log("Could not open X display %s\n", XDisplayName(NULL));
 		return (-1);
 	}
 
@@ -1195,7 +1194,7 @@ X_setup( Display **dpy, int *screen, Window *win, int *w, int *h)
 		CWBorderPixel |CWColormap | CWBackPixel, &xswa);
 
 	if (xwin == NULL) {
-		fprintf (stderr, "Could not create X window\n");
+		rt_log("Could not create X window\n");
 		return (-1);
 	}
 	xsh.flags = (PSize | PPosition);
@@ -1214,8 +1213,7 @@ X_setup( Display **dpy, int *screen, Window *win, int *w, int *h)
 	wm_protocols_atom = XInternAtom(*dpy, "WM_PROTOCOLS", False);
 	wm_delete_win_atom = XInternAtom(*dpy, "WM_DELETE_WINDOW", True);
 	if (wm_delete_win_atom == None || wm_protocols_atom == None) 
-		fprintf(stderr, 
-			"Couldn't get WM_PROTOCOLS or WM_DELETE_WINDOW atom\n");
+	    rt_log("Couldn't get WM_PROTOCOLS or WM_DELETE_WINDOW atom\n");
 	else 
 		XSetWMProtocols (*dpy, *win, &wm_delete_win_atom, 1);
 
@@ -1260,7 +1258,7 @@ XGL_setup()
 	sys_state = xgl_open(0);
 
        if (!(inq_info = xgl_inquire(sys_state, &win_desc))) {
-          	printf("error in getting inquiry\n");
+          	rt_log("error in getting inquiry\n");
           	exit(1);
         }
 	bufs = inq_info->maximum_buffer;	/* if double buffering, its 2 */
@@ -1289,7 +1287,7 @@ XGL_setup()
 			XGL_WIN_X_PROTO_XLIB ;
 		sys_state = xgl_open(0);
 		if (!(inq_info = xgl_inquire(sys_state, &win_desc))) {
-			printf("error in getting inquiry\n");
+			rt_log("error in getting inquiry\n");
 			exit(1);
 		}
 	}
@@ -1491,27 +1489,27 @@ init_check_buffering( int bufs)
 	xgl_object_get(cmap, XGL_CMAP_MAX_COLOR_TABLE_SIZE, &maxsize);
 
 	if(nbufs > 1) {
-		printf("\nA total of %d buffers are supported by this\n", 
+		rt_log("\nA total of %d buffers are supported by this\n", 
 				nbufs);
-		printf("hardware. Hardware double buffering will be used.\n");
+		rt_log("hardware. Hardware double buffering will be used.\n");
 
 		return(AB_DBUFF);
 	} else if(maxsize == 2) {
 
-		printf("\nThis is a MONOCHROME frame buffer. No double \n");
-		printf("buffering of any type can be used.\n\n");
+		rt_log("\nThis is a MONOCHROME frame buffer. No double \n");
+		rt_log("buffering of any type can be used.\n\n");
 
 		maxcolors = 2;
 		colortablesize = 2;
 		return(NO_DBUFF);
 
 	} else if(maxsize != 256) {
-		printf("\nUnknown frame buffer type ... aborting.\n\n");
+		rt_log("\nUnknown frame buffer type ... aborting.\n\n");
 		return(-1);
 
 	} else {
 		if (color_type == XGL_COLOR_INDEX) {
-			printf(
+			rt_log(
 			   "\nUsing colormap double buffering, 8 bit color.\n");
 			switch(DEFAULT_DB) {
 			case OPTION_ZERO:
@@ -1535,8 +1533,8 @@ init_check_buffering( int bufs)
 				colortablesize = 256;
 				break;
 		  	default:
-				printf("Undefined DEFAULT_DB option,exiting\n");
-				exit(1);
+			       rt_log("Undefined DEFAULT_DB option,exiting\n");
+			       exit(1);
 			}
 		} else {
 			/* 
@@ -1696,7 +1694,7 @@ checkevents()
 			else {
 				switch( key ) {
 				case '?':
-					fprintf( stderr, "\nKey Help Menu:\n\
+					rt_log( "\nKey Help Menu:\n\
 0	Zero 'knobs'\n\
 x	Increase xrot\n\
 y	Increase yrot\n\
@@ -1787,8 +1785,8 @@ F	Toggle faceplate\n\
 				case XK_Shift_Lock:
 					break;	/* ignore */
 				default:
-					printf(
-					  "dm-X:The key '%c' is not defined\n", 
+					rt_log(
+					  "dm-X:The key '%c' is not defined\n",
 						key);
 					break;
 				}
@@ -1801,7 +1799,7 @@ F	Toggle faceplate\n\
 		    /* No need for action here - we'll get the Expose */
 		    break;
 		default:
-			fprintf( stderr, "Unknown event type\n" );
+			rt_log( "Unknown event type\n" );
 		}
 	}
 }
@@ -1898,7 +1896,7 @@ handle_sundials_event(XDeviceMotionEvent *ev)
 	setting = val*2048;
 	
 	if (XGL_debug_level)
-		fprintf(stderr, "val = %f, setting = %d\n",val, setting);
+		rt_log( "val = %f, setting = %d\n",val, setting);
 
 	switch (dial_num) {	/* first_axis is button number */
 	case 0:
@@ -2005,7 +2003,7 @@ fk_depth_cue()
 	float scale_factors_persp[2]     = {1.0, 0.5};
 	
 	if (color_type == XGL_COLOR_INDEX) {
-		fprintf(stderr, 
+		rt_log(
 		    "Depth-cue support not available for this frame buffer\n");
 		return;
 	}
@@ -2086,7 +2084,7 @@ static void
 fk_lighting()
 {
 	if (color_type == XGL_COLOR_INDEX) {
-		fprintf(stderr, 
+		rt_log(
 		    "Lighting support not available for this frame buffer\n");
 		return;
 	}
@@ -2189,7 +2187,7 @@ fk_zero_knobs()
 static void
 fk_nop()
 {
-	fprintf(stderr, "Function Key Undefined\n");
+	rt_log("Function Key Undefined\n");
 }
 
 static void
@@ -2198,8 +2196,8 @@ toggle_faceplate()
 	no_faceplate = !no_faceplate;
 	rt_vls_strcat( &dm_values.dv_string,
 		no_faceplate ?
-		"set faceplate=0\n" :
-		"set faceplate=1\n" );
+		"set faceplate 0\n" :
+		"set faceplate 1\n" );
 }
 
 /*************************************************************************
@@ -2412,9 +2410,9 @@ dump_pl(Xgl_pt_list *pl, int n)
         int i, j;
  
         for (i = 0; i < n; i++) {
-                fprintf(stderr, "PL[%d]: (%d pts)\n",i, pl[i].num_pts);
+                rt_log("PL[%d]: (%d pts)\n",i, pl[i].num_pts);
                 for (j = 0; j < pl[i].num_pts; j++) {
-                        fprintf(stderr, "       pt[%d]: %e,%e,%e, %d\n",j,
+                        rt_log( "       pt[%d]: %e,%e,%e, %d\n",j,
                                 pl[i].pts.flag_f3d[j].x,
                                 pl[i].pts.flag_f3d[j].y,
                                 pl[i].pts.flag_f3d[j].z,
