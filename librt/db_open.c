@@ -144,10 +144,13 @@ CONST char	*mode;
 	dbip->dbi_filename = bu_strdup(name);
 
 	/* XXX At some point, expand with getenv("BRLCAD_FILE_PATH"); */
-	dbip->dbi_filepath = (char **)bu_malloc( 3 * sizeof(char *), "dbi_filepath[3]" );
-	dbip->dbi_filepath[0] = bu_strdup( "." );
-	dbip->dbi_filepath[1] = bu_dirname( name );
-	dbip->dbi_filepath[2] = NULL;
+	{
+		char **argv = (char **)bu_malloc( 3 * sizeof(char *), "dbi_filepath[3]" );
+		argv[0] = bu_strdup( "." );
+		argv[1] = bu_dirname( name );
+		argv[2] = NULL;
+		dbip->dbi_filepath = argv;
+	}
 
 	bu_ptbl_init( &dbip->dbi_clients, 128, "dbi_clients[]" );
 	dbip->dbi_magic = DBI_MAGIC;		/* Now it's valid */

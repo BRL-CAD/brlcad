@@ -726,7 +726,7 @@ struct db_i  {
 	double			dbi_local2base;	/* local2mm */
 	double			dbi_base2local;	/* unit conversion factors */
 	char			*dbi_title;	/* title from IDENT rec */
-	char			**dbi_filepath;	/* search path for aux file opens (convenience var) */
+	char			*CONST*dbi_filepath; /* search path for aux file opens (convenience var) */
 	/* THESE ELEMENTS ARE FOR LIBRT ONLY, AND MAY CHANGE */
 	struct directory	*dbi_Head[RT_DBNHASH];
 	int			dbi_fd;		/* UNIX file descriptor */
