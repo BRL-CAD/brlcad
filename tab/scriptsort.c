@@ -26,6 +26,8 @@ static char RCSid[] = "$Id$";
 #include "machine.h"
 #include "externs.h"
 #include "rtlist.h"
+#include "bu.h"
+#include "compat4.h"
 
 #include "./tokens.h"
 
