@@ -461,6 +461,19 @@ char	**argv;
 }
 
 /*
+ *			C M _ O P T
+ */
+cm_opt( argc, argv )
+int	argc;
+char	**argv;
+{
+	if( get_args( argc, argv ) <= 0 )
+		return(-1);
+	return(0);
+}
+
+
+/*
  *			D E F _ T R E E
  *
  *  Load default tree list, from command line.
@@ -934,6 +947,8 @@ struct command_tab rt_cmdtab[] = {
 		cm_set,		1, 999,
 	"ae", "azim elev", "specify view as azim and elev, in degrees",
 		cm_ae,		3, 3,
+	"opt", "-flags", "set flags, like on command line",
+		cm_opt,		2, 999,
 	(char *)0, (char *)0, (char *)0,
 		0,		0, 0	/* END */
 };
