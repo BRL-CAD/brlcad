@@ -215,7 +215,11 @@ struct seg {
 #define RT_SEG_MAGIC	0x98bcdef1
 
 #define RT_CHECK_SEG(_p)	{ \
-	if( (_p)->l.magic != RT_SEG_MAGIC )  { \
+	if( !(_p) )  {\
+		rt_log("RT_CHECK_SEG() NULL seg ptr, %s line %d\n", \
+			__FILE__, __LINE__ ); \
+		rt_bomb("NULL seg ptr\n"); \
+	} else if( (_p)->l.magic != RT_SEG_MAGIC )  { \
 		rt_log("RT_CHECK_SEG(x%x) magic was x%x, s/b x%x, %s line %d\n", \
 			(_p), (_p)->l.magic, RT_SEG_MAGIC, \
 			__FILE__, __LINE__ ); \
