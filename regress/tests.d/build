@@ -1,0 +1,135 @@
+#!/bin/sh
+#
+# This is the initial build app
+#
+
+# Source function library
+. `dirname $0`/library
+
+initializeVariable PACKAGE_NAME brlcad
+# if regress_dir was not set, default to the package that this script is included with
+if [ "x$REGRESS_DIR" = "x" ] ; then
+    if [ -d "$LPWD/../../$PACKAGE_NAME" ] ; then
+        initializeVariable REGRESS_DIR "$LPWD/../.."
+    elif [ -d "$LPWD/../$PACKAGE_NAME" ] ; then
+        initializeVariable REGRESS_DIR "$LPWD/.."
+    elif [ -d "$LPWD/$PACKAGE_NAME" ] ; then
+        initializeVariable REGRESS_DIR "$LPWD"
+    else
+        bomb "Unable to locate $PACKAGE_NAME"
+    fi
+fi
+__ARCH="$ARCH"
+initializeVariable ARCH `${REGRESS_DIR}/brlcad/sh/machinetype.sh`
+initializeVariable ARCH "$__ARCH"
+initializeVariable BRLCAD_ROOT "${REGRESS_DIR}/${PACKAGE_NAME}.${ARCH}"
+
+
+start ( ) {
+
+    # acquire an architecture lock in the package source to avoid nfs clobbering.
+    if ! eval "acquireLock $REGRESS_DIR/$PACKAGE_NAME/build-$ARCH 3 10 " ; then
+        bomb "Unable to obtain build-$ARCH.lock"
+    fi
+
+    __PATH="$PATH"
+    PATH="${BRLCAD_ROOT}/bin:$PATH" ; export PATH
+
+    STARTPWD="`pwd`"
+    
+    cd ${REGRESS_DIR}/${PACKAGE_NAME}
+
+    ./setup.sh -s > $REGRESS_DIR/setup.log 2>&1 <<EOF
+yes
+EOF
+    log "Setup complete"
+    
+    ./gen.sh -s all > $REGRESS_DIR/compilation.log 2>&1
+    log "Compilation complete"
+    
+    ./gen.sh -s install > $REGRESS_DIR/installation.log 2>&1
+    log "Installation complete"
+
+    # restore to previous state
+    cd $STARTPWD
+    PATH="$__PATH" ; export PATH
+
+    releaseLock $REGRESS_DIR/$PACKAGE_NAME/build-$ARCH
+}
+
+stop ( ) {
+    bomb "stop unimplemented"
+    killall build
+    killall sh
+    killall cake
+}
+
+status ( ) {
+    if [ ! -f $REGRESS_DIR/build.log ] ; then
+        warn "build did not run"
+        return 1
+    fi
+    if [ ! -f $REGRESS_DIR/setup.log ] ; then
+        warn "build no setup log"
+        return 1
+    fi
+    if [ ! -f $REGRESS_DIR/compilation.log ] ; then
+        warn "build no compilation log"
+        return 1
+    fi
+    if [ ! -f $REGRESS_DIR/installation.log ] ; then
+        warn "build no installation log"
+        return 1
+    fi
+
+    if [ ! "x`grep -i error $REGRESS_DIR/setup.log`" = "x" ] ; then
+        warn "build Setup failed"
+        return 1
+    fi
+    if [ ! "x`grep -i \"no such file\" $REGRESS_DIR/setup.log`" = "x" ] ; then
+        warn "build Setup failed"
+        return 1
+    fi
+
+    if [ ! "x`grep Error $REGRESS_DIR/compilation.log`" = "x" ] ; then
+        warn "build Compilation failed"
+        return 1
+    fi
+    if [ ! "x`grep -i \"no such file\" $REGRESS_DIR/compilation.log`" = "x" ] ; then
+        warn "build Compilation failed"
+        return 1
+    fi
+
+    if [ ! "x`grep Error $REGRESS_DIR/installation.log`" = "x" ] ; then
+        warn "build Installation failed"
+        return 1
+    fi
+    if [ ! "x`grep -i \"no such file\" $REGRESS_DIR/installlation.log`" = "x" ] ; then
+        warn "build Installation failed"
+        return 1
+    fi
+    log "build OK"
+    return 0
+}
+
+
+case "$1" in
+    start )
+        start
+        ;;
+    stop )
+        stop
+        ;;
+    restart )
+        stop
+        start
+        ;;
+    status )
+        status
+        ;;
+    * )
+        log "Usage: $0 {start|stop|restart|status}"
+        exit 1
+esac
+
+exit $?

@@ -1,0 +1,124 @@
+#!/bin/sh
+#
+# This is the initial spdi test
+#
+
+# Source function library
+. `dirname $0`/library
+
+initializeVariable PACKAGE_NAME brlcad
+# if regress_dir was not set, default to the package that this script is included with
+if [ "x$REGRESS_DIR" = "x" ] ; then
+    if [ -d "$LPWD/../../$PACKAGE_NAME" ] ; then
+        initializeVariable REGRESS_DIR "$LPWD/../.."
+    elif [ -d "$LPWD/../$PACKAGE_NAME" ] ; then
+        initializeVariable REGRESS_DIR "$LPWD/.."
+    elif [ -d "$LPWD/$PACKAGE_NAME" ] ; then
+        initializeVariable REGRESS_DIR "$LPWD"
+    else
+        bomb "Unable to locate $PACKAGE_NAME"
+    fi
+fi
+__ARCH="$ARCH"
+initializeVariable ARCH `${REGRESS_DIR}/brlcad/sh/machinetype.sh`
+initializeVariable ARCH "$__ARCH"
+initializeVariable BRLCAD_ROOT "${REGRESS_DIR}/${PACKAGE_NAME}.${ARCH}"
+
+
+start ( ) {
+
+BIN=$BRLCAD_ROOT/bin
+export BIN
+
+rm -f spdi.g spdi.log spdi spdi.pix
+
+$BIN/mged -c spdi.g << EOF
+
+
+set glob_compat_mode 0
+
+in half.s half 0 0 1 -1
+r half.r u half.s
+mater half.r plastic 76 158 113 0
+g all.g half.r
+
+set radius 256
+foreach p {1 2 3 4 5} { 
+
+  set sh [expr \$p \* 4]
+  set y  [expr [expr \$p - 3] \* 640]
+
+  foreach v {1 2 3 4 5} {
+    set sp [expr \$v \* 0.2]
+    set di [expr 1.0 - \$sp]
+    set x  [expr [expr \$v - 3] \* 640]
+
+    in sph_\${sp}_\${sh}.s sph \$x \$y \$radius \$radius
+    r  sph_\${sp}_\${sh}.r u sph_\${sp}_\${sh}.s
+    mater sph_\${sp}_\${sh}.r "plastic {sp \$sp di \$di sh \$sh}" 100 200 200 0
+
+    g all.g sph_\${sp}_\${sh}.r
+  }
+}
+
+set glob_compat_mode 1
+
+in light1.s ell -464 339 2213 0 100 0 0 0 100 100 0 0
+r light1.r u light1.s
+mater light1.r "light {invisible 1 angle 180 infinite 1}" 255 255 255 0
+g all.g light1.r
+
+Z
+e all.g
+press top
+size 3200
+saveview spdi.view
+q
+EOF
+
+mv spdi.view spdi.orig
+sed "s,^rt,$BIN/rt," < spdi.orig > spdi.view
+rm spdi.orig
+chmod 775 spdi.view
+echo "rendering..."
+./spdi.view
+
+}
+
+stop ( ) {
+    bomb "stop unimplemented"
+    killall build
+    killall sh
+    killall cake
+}
+
+status ( ) {
+    if [ ! -f $REGRESS_DIR/spdi.view ] || [ ! -f $REGRESS_DIR/spdi.g ] ; then
+        warn "mged failed"
+        return 1
+    fi
+    log "spdi OK"
+    return 0
+}
+
+
+case "$1" in
+    start )
+        start
+        ;;
+    stop )
+        stop
+        ;;
+    restart )
+        stop
+        start
+        ;;
+    status )
+        status
+        ;;
+    * )
+        log "Usage: $0 {start|stop|restart|status}"
+        exit 1
+esac
+
+exit $?
