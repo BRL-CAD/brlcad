@@ -353,6 +353,7 @@ int			noisy;
 	struct directory	*dp;		/* element's dp */
 
 	RT_CHECK_DBI( tsp->ts_dbip );
+	RT_CK_FULL_PATH( pathp );
 
 	if(rt_g.debug&DEBUG_TREEWALK)  {
 		char	*sofar = db_path_to_string(pathp);
