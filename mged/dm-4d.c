@@ -1283,9 +1283,12 @@ checkevents()  {
 			 * on whether button0 is also being held down.
 			 */
 			i = bmap[ret - SWBASE];
-			if(valp[1])  {
-				if(button0 && valp[1])
-					 ir_dbtext(label_button(i));
+
+
+
+			if(!valp[1]) continue;
+			if(button0) {
+				 ir_dbtext(label_button(i));
 			} else {
 				/* An actual button press */
 #				if 0
