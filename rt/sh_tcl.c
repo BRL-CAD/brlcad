@@ -93,7 +93,7 @@ char **argv;
 	}
 
 	/* Find all region names which match /comb/ pattern */
-	for( regp=rtip->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )  {
+	for( BU_LIST_FOR( regp, region, &rtip->HeadRegion ) )  {
 		if( dp->d_flags & DIR_REGION )  {
 			/* name will occur at end of region string w/leading slash */
 		} else {
@@ -161,7 +161,7 @@ char **argv;
 	bu_vls_trimspace(&shader);
 
 	/* Find all region names which match /comb/ pattern */
-	for( regp=rtip->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )  {
+	for( BU_LIST_FOR( regp, region, &rtip->HeadRegion ) )  {
 		if( dp->d_flags & DIR_REGION )  {
 			/* name will occur at end of region string w/leading slash */
 		} else {
