@@ -352,7 +352,7 @@ size_reset()
 /*
  *			E D I T _ C O M
  *
- * B, e, and E commands use this area as common
+ * B and e commands use this area as common
  */
 int
 edit_com(int	argc,
@@ -365,13 +365,116 @@ edit_com(int	argc,
 	register struct cmd_list *save_cmd_list;
 	int		ret;
 	int		initial_blank_screen;
+	int		attr_flag=0;
+	int		oflag=1;
+	int		i;
+	int		last_opt=0;
+	struct bu_vls	vls;
 
 	CHECK_DBI_NULL;
 
 	initial_blank_screen = BU_LIST_IS_EMPTY(&dgop->dgo_headSolid);
 
-	if ((ret = dgo_draw_cmd(dgop, interp, argc, argv, kind)) != TCL_OK)
-		return ret;
+	/* check args for "-A" (attributes) and "-o" */
+	bu_vls_init( &vls );
+	bu_vls_strcpy( &vls, argv[0] );
+	for( i=1 ; i<argc ; i++ ) {
+		char *ptr_A=NULL;
+		char *ptr_o=NULL;
+		char *c;
+
+		if( *argv[i] != '-' ) break;
+		if( (ptr_A=strchr( argv[i], 'A' )) ) attr_flag = 1;
+		if( (ptr_o=strchr( argv[i], 'o' )) ) oflag = 2;
+		last_opt = i;
+
+		if( !ptr_A && !ptr_o ) {
+			bu_vls_putc( &vls, ' ' );
+			bu_vls_strcat( &vls, argv[i] );
+			continue;
+		}
+
+		if( strlen( argv[i] ) == (1 + (ptr_A != NULL) + (ptr_o != NULL))) {
+			/* argv[i] is just a "-A" or "-o" */
+			continue;
+		}
+
+		/* copy args other than "-A" or "-o" */
+		bu_vls_putc( &vls, ' ' );
+		c = argv[i];
+		while( *c != '\0' ) {
+			if( *c != 'A' && *c != 'o' ) {
+				bu_vls_putc( &vls, *c );
+			}
+			c++;
+		}
+	}
+
+	if( attr_flag ) {
+		/* args are attribute name/value pairs */
+		struct bu_attribute_value_set avs;
+		int max_count=0;
+		int remaining_args=0;
+		int new_argc=0;
+		char **new_argv=NULL;
+		struct bu_ptbl *tbl;
+
+		remaining_args = argc - last_opt - 1;;
+		if( remaining_args < 2 || remaining_args%2 ) {
+			bu_log( "Error: must have even number of arguments (name/value pairs)\n" );
+			return TCL_ERROR;
+		}
+
+		bu_avs_init( &avs, (argc - last_opt)/2, "edit_com avs" );
+		i = 1;
+		while( i < argc ) {
+			if( *argv[i] == '-' ) {
+				i++;
+				continue;
+			}
+
+			/* this is a name/value pair */
+			if( oflag == 2 ) {
+				bu_avs_add_nonunique( &avs, argv[i], argv[i+1] );
+			} else {
+				bu_avs_add( &avs, argv[i], argv[i+1] );
+			}
+			i += 2;
+		}
+
+		tbl = db_lookup_by_attr( dbip, DIR_REGION | DIR_SOLID | DIR_COMB, &avs, oflag );
+		bu_avs_free( &avs );
+		if( !tbl ) {
+			bu_log( "Error: db_lookup_by_attr() failed!!\n" );
+			bu_vls_free( &vls );
+			return TCL_ERROR;
+		}
+		for( i=0 ; i<BU_PTBL_LEN( tbl ) ; i++ ) {
+			struct directory *dp;
+
+			dp = (struct directory *)BU_PTBL_GET( tbl, i );
+			bu_vls_putc( &vls, ' ' );
+			bu_vls_strcat( &vls, dp->d_namep );
+		}
+
+		max_count = BU_PTBL_LEN( tbl ) + last_opt + 2;
+		bu_ptbl_free( tbl );
+		bu_free( (char *)tbl, "edit_com ptbl" );
+		new_argv = (char **)bu_calloc( max_count, sizeof( char *), "edit_com new_argv" );
+		new_argc = bu_argv_from_string( new_argv, max_count, bu_vls_addr( &vls ) );
+		
+		if ((ret = dgo_draw_cmd(dgop, interp, new_argc, new_argv, kind)) != TCL_OK) {
+			bu_vls_free( &vls );
+			bu_free( (char *)new_argv, "edit_com new_argv" );
+			return ret;
+		}
+		bu_vls_free( &vls );
+		bu_free( (char *)new_argv, "edit_com new_argv" );
+	} else {
+		bu_vls_free( &vls );
+		if ((ret = dgo_draw_cmd(dgop, interp, argc, argv, kind)) != TCL_OK)
+			return ret;
+	}
 		
 	update_views = 1;
 
