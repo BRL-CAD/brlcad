@@ -48,7 +48,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <gl.h>
 #include <get.h>
 #include <device.h>
-#include <psio.h>
 #include <sys/types.h>
 #include <sys/invent.h>
 #include <sys/ipc.h>
@@ -846,38 +845,6 @@ int	width, height;
 		}
 	}
 	ifp->if_mode = mode;
-
-#ifdef IF_4D_AUTO_POSTSCRIPT
-	/*
-	 *  Now that the mode has been determined,
-	 *  ensure that the graphics system is running.
-	 *  XXX Note that ps_open_PostScript is not in the
-	 *  XXX shared libgl, so this can't be done in an
-	 *  XXX SGI processor-independent way.  Sigh.
-	 */
-	if( !(g_status = ps_open_PostScript()) )  {
-		char * grcond = "/etc/gl/grcond";
-		char * newshome = "/usr/brlcad/etc";		/* XXX */
-
-		f = fork();
-		if( f < 0 )  {
-			perror("fork");
-			return(-1);		/* error */
-		}
-		if( f == 0 )  {
-			/* Child */
-			chdir( newshome );
-			execl( grcond, (char *) 0 );
-			perror( grcond );
-			_exit(1);
-			/* NOTREACHED */
-		}
-		/* Parent */
-		while( !(g_status = ps_open_PostScript()) )  {
-			sleep(1);
-		}
-	}
-#endif
 
 	/*
 	 *  Allocate extension memory section,
