@@ -29,7 +29,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 extern void	rt_parallel();
 
 #ifndef FLIPPED_NORMALS_BUG
-#define FLIPPED_NORMALS_BUG	TRUE /* Keep an eye out for dark spots. */
+#define FLIPPED_NORMALS_BUG	FALSE /* Keep an eye out for dark spots. */
 #endif
 #define Fix_Iflip( _pp, _normal, _rdir, _stp )\
 	{\
