@@ -136,7 +136,7 @@ long *p;
 
 				end -= j - l;
 #				include "noalias.h"
-				for(k=l ; j < end ;)
+				for(k=l ; j <= end ;)
 					b->buffer[k++] = b->buffer[j++];
 			}
 
