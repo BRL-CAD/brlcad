@@ -229,10 +229,10 @@ struct bu_list {
  *  onto the list headed by dest_hd, without examining every element
  *  in the list.  src_hd is left with a valid but empty list.
  *  
- *  BU_LIST_INSEBU_LIST places src_hd elements at head of dest_hd list,
+ *  BU_LIST_INSERT_LIST places src_hd elements at head of dest_hd list,
  *  BU_LIST_APPEND_LIST places src_hd elements at end of dest_hd list.
  */
-#define BU_LIST_INSEBU_LIST(dest_hp,src_hp) \
+#define BU_LIST_INSERT_LIST(dest_hp,src_hp) \
 	if( BU_LIST_NON_EMPTY(src_hp) )  { \
 		register struct bu_list	*_first = (src_hp)->forw; \
 		register struct bu_list	*_last = (src_hp)->back; \
