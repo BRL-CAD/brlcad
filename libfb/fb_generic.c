@@ -87,14 +87,8 @@ FBIO *_if_list[] = {
 #ifdef IF_SUN
 	&sun_interface,
 #endif
-#ifdef IF_SGI
+#if defined(IF_SGI) || defined(IF_4D)
 	&sgi_interface,
-#endif
-#ifdef IF_4D
-	&mips_interface,
-#endif
-#ifdef IF_GT
-	& gt_interface,
 #endif
 #ifdef IF_RAT
 	&rat_interface,
