@@ -1,5 +1,5 @@
 /*
- *			libredblack/Cakefile
+ *	Cake(1) specification file for libredblack(3)
  */
 #define SRCDIR	libredblack
 #define PRODUCTS	libredblack.ARCH_SUF
@@ -9,8 +9,8 @@
 #include "../Cakefile.defs"
 
 #define FILES	\
-		rb_create rb_delete rb_diag		\
-		rb_extreme rb_free rb_insert		\
+		rb_create rb_delete rb_diag rb_extreme	\
+		rb_free rb_insert rb_order_stats	\
 		rb_rotate rb_search rb_walk
 	
 
