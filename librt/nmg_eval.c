@@ -267,14 +267,14 @@ static char	*nmg_baction_names[] = {
 
 #define NMG_CLASS_BAD		8
 static char	*nmg_class_names[] = {
-	"AinB",
-	"AonBshared",
-	"AonBanti",
-	"AoutB",
-	"BinA",
-	"BonAshared",
-	"BonAanti",
-	"BoutA",
+	"onAinB",
+	"onAonBshared",
+	"onAonBanti",
+	"onAoutB",
+	"inAonB",
+	"onAonBshared",
+	"onAonBanti",
+	"outAonB",
 	"*BAD*"
 };
 
@@ -543,6 +543,16 @@ struct nmg_ptbl class_table[];
 	int		i;
 	struct nmg_bool_state	bool_state;
 
+	if (rt_g.NMG_debug & DEBUG_SUBTRACT) {
+		rt_log("nmg_evaluate_boolean(sA=x%x, sB=x%x, op=%d)\n",
+			sA, sB, op );
+		for( i=0; i<8; i++ )  {
+			rt_log("	%6d %s\n",
+				class_table[i].end,
+				nmg_class_names[i] );
+		}
+	}
+
 	switch( op )  {
 	case NMG_BOOL_SUB:
 		actions = subtraction_actions;
@@ -564,10 +574,10 @@ struct nmg_ptbl class_table[];
 	bool_state.bs_actions = actions;
 
 	bool_state.bs_isA = 1;
-	nmg_eval_do( sA, &bool_state );
+	nmg_eval_shell( sA, &bool_state );
 
 	bool_state.bs_isA = 0;
-	nmg_eval_do( sB, &bool_state );
+	nmg_eval_shell( sB, &bool_state );
 
 	/* Plot the result */
 	if (rt_g.NMG_debug & DEBUG_SUBTRACT) {
@@ -593,11 +603,13 @@ struct nmg_ptbl class_table[];
 }
 
 /*
+ *			N M G _ E V A L _ S H E L L
+ *
  *  Make a life-and-death decision on every element of a shell.
  *  Descend the "great chain of being" from the face to loop to edge
  *  to vertex, saving or demoting along the way.
  */
-nmg_eval_do( s, bs )
+nmg_eval_shell( s, bs )
 register struct shell	*s;
 struct nmg_bool_state *bs;
 {
@@ -616,18 +628,20 @@ struct nmg_bool_state *bs;
 	 *  For each face in the shell, process all the loops in the face,
 	 *  and then handle the face and all loops as a unit.
 	 */
+faces_again:
 	fu = fu_end = s->fu_p;
 	do  {
 		/* Consider this face */
 		if( !fu )  break;
 		NMG_CK_FACEUSE(fu);
 		NMG_CK_FACE(fu->f_p);
+faceloop_again:
 		lu = lu_end = fu->lu_p;
 		do {
 			if( !lu )  break;
 			NMG_CK_LOOPUSE(lu);
 			eu = lu->down.eu_p;
-			NMG_CK_EDGEUSE(eu);
+			NMG_CK_EDGEUSE(eu);		/* sanity */
 			if( nmg_eval_action( (genptr_t)lu->l_p, bs ) == BACTION_KILL )  {
 				/* Kill by demoting loop to edges */
 				register struct loopuse	*nextlu = lu->next;
@@ -637,6 +651,7 @@ struct nmg_bool_state *bs;
 
 				NMG_CK_LOOPUSE(nextlu);
 				(void)nmg_demote_lu( lu );
+				if( lu == lu_end )  goto faceloop_again;
 				if( lu == lu_end )  break;
 				NMG_CK_LOOPUSE(nextlu);
 				lu = nextlu;
@@ -653,19 +668,24 @@ struct nmg_bool_state *bs;
 		 *  Decide the fate of the face;  if the face dies,
 		 *  then any remaining loops, edges, etc, will die too.
 		 */
-		if( ((lu = fu->lu_p) == (struct loopuse *)0) ||
-		    lu->next == fu->lu_p )  {
+		if( ((lu = fu->lu_p) == (struct loopuse *)0) )  {
 			/* faceuse is empty, it dies */
 			register struct faceuse	*nextfu = fu->next;
+			if (rt_g.NMG_debug & DEBUG_SUBTRACT)
+		    		rt_log("faceuse x%x empty, kill\n", fu);
 		    	NMG_CK_FACEUSE(nextfu);
 		    	if( fu->fumate_p == nextfu ) nextfu = nextfu->next;
 		    	NMG_CK_FACEUSE(nextfu);
 			nmg_kfu( fu );
+			goto faces_again;
 		    	if( fu == fu_end )  break;
 		    	NMG_CK_FACEUSE(nextfu);
 			fu = nextfu;
 		    	continue;
 		}
+
+		if (rt_g.NMG_debug & DEBUG_SUBTRACT)
+	    		rt_log("faceuse x%x retained\n", fu);
 
 #if 0
 		/* XXX decide how */
@@ -673,6 +693,7 @@ struct nmg_bool_state *bs;
 #endif
 		if( s != bs->bs_dest )  {
 			nmg_mv_fu_between_shells( bs->bs_dest, s, fu );
+			goto faces_again;
 		}
 		fu = fu->next;
 	} while (fu != fu_end);
@@ -682,6 +703,7 @@ struct nmg_bool_state *bs;
 	 *  Each loop is either a wire-loop, or a vertex-with-self-loop.
 	 *  Only consider wire loops here.
 	 */
+wire_loops_again:
 	lu = lu_end = s->lu_p;
 	do  {
 		if( !lu )  break;
@@ -701,6 +723,7 @@ struct nmg_bool_state *bs;
 				if( lu->lumate_p == nextlu )  nextlu=nextlu->next;
 				NMG_CK_LOOPUSE(nextlu);
 				(void)nmg_demote_lu( lu );
+				goto wire_loops_again;
 				if( lu == lu_end )  break;
 				NMG_CK_LOOPUSE(nextlu);
 				lu = nextlu;
@@ -719,6 +742,7 @@ struct nmg_bool_state *bs;
 	/*
 	 *  For each wire-edge in the shell, ...
 	 */
+wire_edge_again:
 	eu = eu_end = s->eu_p;
 	do  {
 		/* Consider this edge */
@@ -731,6 +755,7 @@ struct nmg_bool_state *bs;
 				register struct edgeuse	*nexteu = eu->next;
 				NMG_CK_EDGEUSE(nexteu);
 				nmg_demote_eu( eu );
+				goto wire_edge_again;
 				if( eu == eu_end )  break;
 				NMG_CK_EDGEUSE(nexteu);
 				eu = nexteu;
@@ -758,6 +783,7 @@ struct nmg_bool_state *bs;
 	 *  be demoted into vertex-with-self-loop objects above,
 	 *  which will be processed here.
 	 */
+vertex_self_loop_again:
 	lu = lu_end = s->lu_p;
 	do  {
 		if( !lu )  break;
@@ -779,6 +805,7 @@ struct nmg_bool_state *bs;
 				if( lu->lumate_p == nextlu )  nextlu=nextlu->next;
 				NMG_CK_LOOPUSE(nextlu);
 				nmg_klu( lu );
+				goto vertex_self_loop_again;
 				if( lu == lu_end )  break;
 				NMG_CK_LOOPUSE(nextlu);
 				lu = nextlu;
