@@ -67,6 +67,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define M_SQRT2		1.41421356237309504880
 #endif
 
+#ifndef M_SQRT2_DIV2
+#define M_SQRT2_DIV2       0.70710678118654752440
+#endif
+
 extern mat_t    ModelDelta;     /* from ged.c */
 extern long	nvectors;	/* from dodraw.c */
 
@@ -1596,7 +1600,7 @@ char	**argv;
 	    av[0] = "adc";
 
 	  av[2] = sval;
-	  sprintf(sval, "%f", ((double)i/2047.0 + 1.0)*Viewscale * base2local * M_SQRT2);
+	  sprintf(sval, "%f", ((double)i/2047.0 + 1.0)*Viewscale * base2local * M_SQRT2_DIV2);
 	  (void)f_adc(clientData, interp, 3, av);
 	} else {
 usage:
