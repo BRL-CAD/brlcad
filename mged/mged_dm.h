@@ -400,12 +400,12 @@ struct dm_list {
 
   int dml_adc_auto;
   int dml_grid_auto_size;
-  int dml_mouse_dx;
-  int dml_mouse_dy;
-  int dml_omx;
-  int dml_omy;
-  int dml_knobs[8];
-  point_t dml_work_pt;
+  int _dml_mouse_dx;
+  int _dml_mouse_dy;
+  int _dml_omx;
+  int _dml_omy;
+  int _dml_knobs[8];
+  point_t _dml_work_pt;
 
   /* Slider stuff */
   int dml_scroll_top;
@@ -466,12 +466,14 @@ struct dm_char_queue {
 
 #define adc_auto curr_dm_list->dml_adc_auto
 #define grid_auto_size curr_dm_list->dml_grid_auto_size
-#define dml_mouse_dx curr_dm_list->dml_mouse_dx
-#define dml_mouse_dy curr_dm_list->dml_mouse_dy
-#define dml_omx curr_dm_list->dml_omx
-#define dml_omy curr_dm_list->dml_omy
-#define dml_knobs curr_dm_list->dml_knobs
-#define dml_work_pt curr_dm_list->dml_work_pt
+
+/* Names of macros must be different than actual struct element */
+#define dml_mouse_dx curr_dm_list->_dml_mouse_dx
+#define dml_mouse_dy curr_dm_list->_dml_mouse_dy
+#define dml_omx curr_dm_list->_dml_omx
+#define dml_omy curr_dm_list->_dml_omy
+#define dml_knobs curr_dm_list->_dml_knobs
+#define dml_work_pt curr_dm_list->_dml_work_pt
 
 #define scroll_top curr_dm_list->dml_scroll_top
 #define scroll_active curr_dm_list->dml_scroll_active
