@@ -152,7 +152,7 @@ char	**argv;
 	vls_col_pr4v( &str, dirp0, (int)(dirp - dirp0));
 	rt_free( (char *)dirp0, "dir_getspace dp[]" );
 
-	Tcl_SetResult(interp, rt_vls_addr(&str), TCL_VOLATILE );
+	Tcl_SetResult(interp, rt_vls_strgrab(&str), TCL_DYNAMIC );
 	return TCL_OK;
 }
 
