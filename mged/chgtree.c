@@ -49,7 +49,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "./ged.h"
 #include "externs.h"
-#include "./solid.h"
+#include "./mged_solid.h"
 #include "./mged_dm.h"
 #include "./mgedtcl.h"
 
@@ -769,7 +769,7 @@ register struct db_full_path	*pathp;
 
 	RT_CK_FULL_PATH(pathp);
 
-	FOR_ALL_SOLIDS(sp)  {
+	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
 		if( pathp->fp_len != sp->s_last+1 )
 			continue;
 
@@ -824,7 +824,7 @@ char      	**argv;
 		Tcl_AppendResult(interp, "MGED state is not VIEW", (char *)NULL);
 		return TCL_ERROR;
 	}
-	if( HeadSolid.s_forw == &HeadSolid )  {
+	if(BU_LIST_IS_EMPTY(&HeadSolid.l)) {
 		Tcl_AppendResult(interp, "no solids in view", (char *)NULL);
 		return TCL_ERROR;
 	}
@@ -855,7 +855,7 @@ char      	**argv;
 #endif
 
 	/* Patterned after  ill_common() ... */
-	illump = HeadSolid.s_forw;/* any valid solid would do */
+	illump = BU_LIST_NEXT(solid, &HeadSolid.l);/* any valid solid would do */
 	edobj = 0;		/* sanity */
 	movedir = 0;		/* No edit modes set */
 	mat_idn( modelchanges );	/* No changes yet */

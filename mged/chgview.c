@@ -58,7 +58,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "./sedit.h"
 #include "./ged.h"
-#include "./solid.h"
+#include "./mged_solid.h"
 #include "./mged_dm.h"
 #include "../librt/debug.h"	/* XXX */
 
@@ -305,7 +305,7 @@ size_reset()
 	VSETALL( min,  INFINITY );
 	VSETALL( max, -INFINITY );
 
-	FOR_ALL_SOLIDS( sp )  {
+	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
 		minus[X] = sp->s_center[X] - sp->s_size;
 		minus[Y] = sp->s_center[Y] - sp->s_size;
 		minus[Z] = sp->s_center[Z] - sp->s_size;
@@ -316,7 +316,7 @@ size_reset()
 		VMAX( max, plus );
 	}
 
-	if( HeadSolid.s_forw == &HeadSolid )  {
+	if(BU_LIST_IS_EMPTY(&HeadSolid.l)) {
 		/* Nothing is in view */
 		VSETALL( center, 0 );
 		VSETALL( radial, 1000 );	/* 1 meter */
@@ -354,7 +354,7 @@ int	catch_sigint;
 	double		elapsed_time;
 	int		initial_blank_screen;
 
-	initial_blank_screen = (HeadSolid.s_forw == &HeadSolid);
+	initial_blank_screen = BU_LIST_IS_EMPTY(&HeadSolid.l);
 
 	/*  First, delete any mention of these objects.
 	 *  Silently skip any leading options (which start with minus signs).
@@ -402,7 +402,7 @@ int	catch_sigint;
 
 	    /* If we went from blank screen to non-blank, resize */
 	    if (mged_variables.autosize  && initial_blank_screen &&
-		HeadSolid.s_forw != &HeadSolid)  {
+		BU_LIST_NON_EMPTY(&HeadSolid.l)) {
 	      size_reset();
 	      new_mats();
 
@@ -788,18 +788,19 @@ char	**argv;
 void
 mged_freemem()
 {
-	register struct solid		*sp;
-	register struct rt_vlist	*vp;
+  register struct solid		*sp;
+  register struct rt_vlist	*vp;
 
-	while( (sp = FreeSolid) != SOLID_NULL )  {
-		FreeSolid = sp->s_forw;
-		bu_free( (char *)sp, "mged_freemem: struct solid" );
-	}
-	while( BU_LIST_NON_EMPTY( &rt_g.rtg_vlfree ) )  {
-		vp = BU_LIST_FIRST( rt_vlist, &rt_g.rtg_vlfree );
-		BU_LIST_DEQUEUE( &(vp->l) );
-		bu_free( (char *)vp, "mged_freemem: struct rt_vlist" );
-	}
+  FOR_ALL_SOLIDS(sp,&FreeSolid.l){
+    GET_SOLID(sp,&FreeSolid.l);
+    bu_free((genptr_t)sp, "mged_freemem: struct solid");
+  }
+
+  while( BU_LIST_NON_EMPTY( &rt_g.rtg_vlfree ) )  {
+    vp = BU_LIST_FIRST( rt_vlist, &rt_g.rtg_vlfree );
+    BU_LIST_DEQUEUE( &(vp->l) );
+    bu_free( (char *)vp, "mged_freemem: struct rt_vlist" );
+  }
 }
 
 /* ZAP the display -- everything dropped */
@@ -825,8 +826,8 @@ char	**argv;
 	if( state != ST_VIEW )
 		button( BE_REJECT );
 
-	sp=HeadSolid.s_forw;
-	while( sp != &HeadSolid )  {
+	sp = BU_LIST_NEXT(solid, &HeadSolid.l);
+	while(BU_LIST_NOT_HEAD(sp, &HeadSolid.l)){
 		rt_memfree( &(dmp->dmr_map), sp->s_bytes, (unsigned long)sp->s_addr );
 		dp = sp->s_path[0];
 		RT_CK_DIR(dp);
@@ -836,9 +837,9 @@ char	**argv;
 			}
 		}
 		sp->s_addr = sp->s_bytes = 0;
-		nsp = sp->s_forw;
-		DEQUEUE_SOLID( sp );
-		FREE_SOLID( sp );
+		nsp = BU_LIST_PNEXT(solid, sp);
+		BU_LIST_DEQUEUE(&sp->l);
+		FREE_SOLID(sp,&FreeSolid.l);
 		sp = nsp;
 	}
 
@@ -965,9 +966,9 @@ register struct directory *dp;
 	update_views = 1;
 
 	RT_CK_DIR(dp);
-	sp=HeadSolid.s_forw;
-	while( sp != &HeadSolid )  {
-		nsp = sp->s_forw;
+	sp = BU_LIST_NEXT(solid, &HeadSolid.l);
+	while(BU_LIST_NOT_HEAD(sp, &HeadSolid.l)){
+		nsp = BU_LIST_PNEXT(solid, sp);
 		for( i=0; i<=sp->s_last; i++ )  {
 			if( sp->s_path[i] != dp )  continue;
 
@@ -975,8 +976,8 @@ register struct directory *dp;
 				button( BE_REJECT );
 			dmp->dmr_viewchange( dmp, DM_CHGV_DEL, sp );
 			rt_memfree( &(dmp->dmr_map), sp->s_bytes, (unsigned long)sp->s_addr );
-			DEQUEUE_SOLID( sp );
-			FREE_SOLID( sp );
+			BU_LIST_DEQUEUE(&sp->l);
+			FREE_SOLID(sp, &FreeSolid.l);
 
 			break;
 		}
@@ -1007,7 +1008,7 @@ int		lvl;			/* debug level */
 	int			nvlist;
 	int			npts;
 
-	for( sp = startp->s_forw; sp != startp; sp = sp->s_forw )  {
+	FOR_ALL_SOLIDS(sp, &startp->l){
 	  Tcl_AppendResult(interp, sp->s_flag == UP ? "VIEW ":"-no- ", (char *)NULL);
 	  for( i=0; i <= sp->s_last; i++ )
 	    Tcl_AppendResult(interp, "/", sp->s_path[i]->d_namep, (char *)NULL);
@@ -1132,7 +1133,7 @@ char	**argv;
 		  Tcl_AppendResult(interp, basename, " is not a solid\n", (char *)NULL);
 		  goto bail_out;
 		}
-		FOR_ALL_SOLIDS(sp)
+		FOR_ALL_SOLIDS(sp, &HeadSolid.l)
 		{
 		    int	a_new_match;
 
@@ -1158,7 +1159,7 @@ char	**argv;
 		}
 		break;
 	    case ST_O_PICK:
-		FOR_ALL_SOLIDS( sp )  {
+		FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
 			for( i=0; i<=sp->s_last; i++ )  {
 				if( sp->s_path[i] == dp )  {
 					lastfound = sp;
@@ -1225,7 +1226,7 @@ char	**argv;
 
   if( not_state( ST_VIEW, "keyboard solid edit start") )
     return TCL_ERROR;
-  if( HeadSolid.s_forw == &HeadSolid )  {
+  if(BU_LIST_IS_EMPTY(&HeadSolid.l)){
     Tcl_AppendResult(interp, "no solids being displayed\n",  (char *)NULL);
     return TCL_ERROR;
   }

@@ -33,7 +33,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./ged.h"
 #include "externs.h"
-#include "./solid.h"
+#include "./mged_solid.h"
 #include "./menu.h"
 #include "./scroll.h"
 #include "./mged_dm.h"
@@ -422,11 +422,12 @@ static int
 ill_common()  {
 	/* Common part of illumination */
 	dmp->dmr_light( dmp, LIGHT_ON, BE_REJECT );
-	if( HeadSolid.s_forw == &HeadSolid )  {
+	if(BU_LIST_IS_EMPTY(&HeadSolid.l)) {
 	  Tcl_AppendResult(interp, "no solids in view\n", (char *)NULL);
 	  return(0);	/* BAD */
 	}
-	illump = HeadSolid.s_forw;/* any valid solid would do */
+
+	illump = BU_LIST_NEXT(solid, &HeadSolid.l);/* any valid solid would do */
 	edobj = 0;		/* sanity */
 	edsol = 0;		/* sanity */
 	movedir = 0;		/* No edit modes set */
@@ -573,7 +574,7 @@ be_accept()  {
 		mmenu_set( MENU_L2, MENU_NULL );
 		dmp->dmr_light( dmp, LIGHT_OFF, BE_S_EDIT );
 
-		FOR_ALL_SOLIDS( sp )
+		FOR_ALL_SOLIDS(sp, &HeadSolid.l)
 			sp->s_iflag = DOWN;
 
 		illump = SOLID_NULL;
@@ -653,7 +654,7 @@ be_reject()  {
 	illump = SOLID_NULL;		/* None selected */
 
 	/* Clear illumination flags */
-	FOR_ALL_SOLIDS( sp )
+	FOR_ALL_SOLIDS(sp, &HeadSolid.l)
 		sp->s_iflag = DOWN;
 	dmp->dmr_colorchange(dmp);
 	(void)chg_state( state, ST_VIEW, "Edit Reject" );

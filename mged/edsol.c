@@ -49,7 +49,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "wdb.h"
 
 #include "./ged.h"
-#include "./solid.h"
+#include "./mged_solid.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
 #include "./menu.h"
@@ -4757,7 +4757,7 @@ oedit_accept()
 #endif
 
 	/* Now, recompute new chunks of displaylist */
-	FOR_ALL_SOLIDS( sp )  {
+	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
 		if( sp->s_iflag == DOWN )
 			continue;
 		(void)replot_original_solid( sp );

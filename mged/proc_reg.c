@@ -38,7 +38,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "externs.h"
 #include "./ged.h"
-#include "./solid.h"
+#include "./mged_solid.h"
 #include "./mged_dm.h"
 
 extern void color_soltab();
@@ -136,7 +136,7 @@ char	**argv;
 		regmemb = -1;
 	}
 	(void)time( &etime );
-	if( first_time && HeadSolid.s_forw != &HeadSolid)  {
+	if(first_time && BU_LIST_NON_EMPTY(&HeadSolid.l)){
 		first_time = 0;
 
 		size_reset();
@@ -250,11 +250,11 @@ struct mater_info *materp;
 		 */
 		cur_path[pathpos] = dp;
 
-		GET_SOLID( sp );
+		GET_SOLID(sp, &FreeSolid.l);
 		if( sp == SOLID_NULL )
 			return;		/* ERROR */
 		if( EdrawHsolid( sp, flag, pathpos, old_xlate, &ext, regionid, materp ) != 1 ) {
-			FREE_SOLID( sp );
+			FREE_SOLID(sp, &FreeSolid.l);
 		}
 		goto out;
 	}
@@ -538,12 +538,12 @@ struct mater_info	*materp;
 	/* Solid is successfully drawn */
 	if( sp != illump )  {
 		/* Add to linked list of solid structs */
-		APPEND_SOLID( sp, HeadSolid.s_back );
-		dmp->dmr_viewchange( dmp, DM_CHGV_ADD, sp );
+	  BU_LIST_APPEND(HeadSolid.l.back, &sp->l);
+	  dmp->dmr_viewchange( dmp, DM_CHGV_ADD, sp );
 	} else {
-		/* replacing illuminated solid -- struct already linked in */
-		sp->s_iflag = UP;
-		dmp->dmr_viewchange( dmp, DM_CHGV_REPL, sp );
+	  /* replacing illuminated solid -- struct already linked in */
+	  sp->s_iflag = UP;
+	  dmp->dmr_viewchange( dmp, DM_CHGV_REPL, sp );
 	}
 
 	return(1);		/* OK */

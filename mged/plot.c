@@ -33,7 +33,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./ged.h"
 #include "externs.h"
 #include "plot3.h"
-#include "./solid.h"
+#include "./mged_solid.h"
 #include "./mged_dm.h"
 
 /*
@@ -143,7 +143,7 @@ char	**argv;
 			-toViewcenter[MDZ] + Viewscale );
 		Dashing = 0;
 		pl_linmod( fp, "solid" );
-		FOR_ALL_SOLIDS( sp )  {
+		FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
 			/* Could check for differences from last color */
 			pl_color( fp,
 				sp->s_color[0],
@@ -186,7 +186,7 @@ char	**argv;
 	pl_erase( fp );
 	Dashing = 0;
 	pl_linmod( fp, "solid");
-	FOR_ALL_SOLIDS( sp )  {
+	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
 		if( Dashing != sp->s_soldash )  {
 			if( sp->s_soldash )
 				pl_linmod( fp, "dotdashed");
@@ -285,7 +285,7 @@ char	**argv;
 	if( not_state( ST_VIEW, "Presented Area Calculation" ) == TCL_ERROR )
 		return TCL_ERROR;
 
-	FOR_ALL_SOLIDS( sp )  {
+	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
 	  if( !sp->s_Eflag && sp->s_soldash != 0 )  {
 	    Tcl_AppendResult(interp, "everything in view must be 'E'ed\n", (char *)NULL);
 	    return TCL_ERROR;
@@ -362,7 +362,7 @@ char	**argv;
 	 * Write out rotated but unclipped, untranslated,
 	 * and unscaled vectors
 	 */
-	FOR_ALL_SOLIDS( sp )  {
+	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
 	  for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
 	    register int	i;
 	    register int	nused = vp->nused;

@@ -36,7 +36,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./ged.h"
 #include "externs.h"
-#include "./solid.h"
+#include "./mged_solid.h"
 #include "./mged_dm.h"
 
 #include "../librt/debug.h"	/* XXX */
@@ -669,11 +669,11 @@ struct solid		*existing_sp;
 
 		  Tcl_AppendResult(interp, "dodraw: path too long, solid ignored.\n\t",
 				   cp, "\n", (char *)NULL);
-		  bu_free(cp, "Path string");
+		  bu_free((genptr_t)cp, "Path string");
 		  return;
 		}
 		/* Handling a new solid */
-		GET_SOLID( sp );
+		GET_SOLID(sp, &FreeSolid.l);
 	} else {
 		/* Just updating an existing solid.
 		 *  'tsp' and 'pathpos' will not be used
@@ -731,7 +731,7 @@ struct solid		*existing_sp;
 	if( !existing_sp )  {
 		/* Add to linked list of solid structs */
 		RES_ACQUIRE( &rt_g.res_model );
-		APPEND_SOLID( sp, HeadSolid.s_back );
+		BU_LIST_APPEND(HeadSolid.l.back, &sp->l);
 		RES_RELEASE( &rt_g.res_model );
 		dmp->dmr_viewchange( dmp, DM_CHGV_ADD, sp );
 	} else {
@@ -997,7 +997,7 @@ int		copy;
 #else
 
 	/* Obtain a fresh solid structure, and fill it in */
-	GET_SOLID(sp);
+	GET_SOLID(sp,&FreeSolid.l);
 
 	if( copy )  {
 		BU_LIST_INIT( &(sp->s_vlist) );
@@ -1038,7 +1038,7 @@ int		copy;
 	}
 
 	/* Solid successfully drawn, add to linked list of solid structs */
-	APPEND_SOLID( sp, HeadSolid.s_back );
+	BU_LIST_APPEND(HeadSolid.l.back, &sp->l);
 	dmp->dmr_viewchange( dmp, DM_CHGV_ADD, sp );
 	dmp->dmr_colorchange(dmp);
 #endif

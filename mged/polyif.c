@@ -31,7 +31,7 @@ static char RCSpolyif[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "externs.h"
 #include "./ged.h"
-#include "./solid.h"
+#include "./mged_solid.h"
 #include "./mged_dm.h"
 
 /* XXX When finalized, this stuff belongs in a header file of it's own */
@@ -107,7 +107,7 @@ char	**argv;
 	  return TCL_ERROR;
 	}
 
-	FOR_ALL_SOLIDS( sp )  {
+	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
 		for( BU_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
 			register int	i;
 			register int	nused = vp->nused;

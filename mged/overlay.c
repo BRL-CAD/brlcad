@@ -34,7 +34,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./ged.h"
 #include "externs.h"
-#include "./solid.h"
+#include "./mged_solid.h"
 #include "./mged_dm.h"
 
 /* Usage:  overlay file.plot [name] */
@@ -105,7 +105,7 @@ char	**argv;
 		if( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY )) == DIR_NULL )
 			continue;
 		/* Find uses of this solid in the solid table */
-		FOR_ALL_SOLIDS(s)  {
+		FOR_ALL_SOLIDS(s, &HeadSolid.l)  {
 			int	j;
 			for( j = s->s_last; j >= 0; j-- )  {
 				if( s->s_path[j] == dp )  {

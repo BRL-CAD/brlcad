@@ -38,7 +38,7 @@ static char RCSid[] = "@(#)$Header$";
 #include "rtgeom.h"
 #include "rtlex.h"
 #include "./ged.h"
-#include "./solid.h"
+#include "./mged_solid.h"
 #include "./sedit.h"	/* ??? */
 #include "./mged_dm.h"	/* ??? */
 #include "./joints.h"
@@ -3664,7 +3664,7 @@ char **argv;
 	topc = build_tops(topv, topv+2000);
 	{
 		register struct solid *sp;
-		FOR_ALL_SOLIDS(sp) {
+		FOR_ALL_SOLIDS(sp, &HeadSolid.l) {
 			sp->s_iflag=DOWN;
 		}
 	}

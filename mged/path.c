@@ -25,7 +25,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
-#include "./solid.h"
+#include "./mged_solid.h"
 #include "raytrace.h"
 #include "./ged.h"
 #include "./mged_dm.h"
@@ -76,11 +76,11 @@ matp_t old_xlate;
 		 */
 		cur_path[pathpos] = dp;
 
-		GET_SOLID( sp );
+		GET_SOLID(sp, &FreeSolid.l);
 		if( sp == SOLID_NULL )
 			return;		/* ERROR */
 		if( drawHsolid( sp, flag, pathpos, old_xlate, rp, regionid ) != 1 ) {
-			FREE_SOLID( sp );
+			FREE_SOLID(sp, &FreeSolid.l);
 		}
 		goto out;
 	}

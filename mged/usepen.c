@@ -38,7 +38,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "./ged.h"
 #include "./titles.h"
-#include "./solid.h"
+#include "./mged_solid.h"
 #include "./menu.h"
 #include "./mged_dm.h"
 
@@ -274,7 +274,7 @@ illuminate( y )  {
 	 */
 	count = ( (fastf_t) y + 2048.0 ) * ndrawn / 4096.0;
 
-	FOR_ALL_SOLIDS( sp )  {
+	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
 		/* Only consider solids which are presently in view */
 		if( sp->s_flag == UP )  {
 			if( count-- == 0 && illump != sp )  {
@@ -331,15 +331,15 @@ char *argv[];
     sp = illump;
     sp->s_iflag = DOWN;
     if(argc == 1 || *argv[1] == 'f'){
-      if(sp->s_forw == &HeadSolid)
-	sp = HeadSolid.s_forw;
+      if(BU_LIST_NEXT_IS_HEAD(sp, &HeadSolid.l))
+	sp = BU_LIST_NEXT(solid, &HeadSolid.l);
       else
-	sp = sp->s_forw;
+	sp = BU_LIST_PNEXT(solid, sp);
     }else if(*argv[1] == 'b'){
-      if(sp->s_back == &HeadSolid)
-	sp = HeadSolid.s_back;
+      if(BU_LIST_PREV_IS_HEAD(sp, &HeadSolid.l))
+	sp = BU_LIST_PREV(solid, &HeadSolid.l);
       else
-	sp = sp->s_back;
+	sp = BU_LIST_PLAST(solid, sp);
     }else{
       Tcl_AppendResult(interp, "aill: bad parameter - ", argv[1], "\n", (char *)NULL);
       return TCL_ERROR;
@@ -587,7 +587,7 @@ got:
 	dmp->dmr_light( dmp, LIGHT_OFF, BE_O_ILLUMINATE );
 
 	/* Include all solids with same tree top */
-	FOR_ALL_SOLIDS( sp )  {
+	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
 		for( j = 0; j <= ipathpos; j++ )  {
 			if( sp->s_path[j] != illump->s_path[j] )
 				break;

@@ -30,7 +30,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./ged.h"
 #include "externs.h"
-#include "./solid.h"
+#include "./mged_solid.h"
 #include "./sedit.h"
 #include "./mged_dm.h"
 
@@ -50,7 +50,7 @@ mat_t	identity;
  */
 point_t	eye_pos_scr = { 0, 0, 1 };
 
-struct solid	*FreeSolid;	/* Head of freelist */
+struct solid	FreeSolid;	/* Head of freelist */
 struct solid	HeadSolid;	/* Head of solid table */
 int		ndrawn;
 
@@ -359,7 +359,7 @@ mat_print("pmat", pmat);
 
 	dmp->dmr_newrot( dmp, mat, which_eye );
 
-	FOR_ALL_SOLIDS( sp )  {
+	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
 		sp->s_flag = DOWN;		/* Not drawn yet */
 		/* If part of object rotation, will be drawn below */
 		if( sp->s_iflag == UP )
@@ -402,7 +402,7 @@ mat_print("pmat", pmat);
 	dmp->dmr_newrot( dmp, mat, which_eye );
 	inv_viewsize /= modelchanges[15];
 
-	FOR_ALL_SOLIDS( sp )  {
+	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
 		/* Ignore all objects not being rotated */
 		if( sp->s_iflag != UP )
 			continue;

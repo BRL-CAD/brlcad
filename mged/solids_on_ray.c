@@ -42,7 +42,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "externs.h"
 #include "./ged.h"
-#include "./solid.h"
+#include "./mged_solid.h"
 #include "./mged_dm.h"
 
 #define	ORDER_BY_NAME		 0
@@ -328,7 +328,7 @@ struct seg		*final_segs;
 	printf("HELLO %s:%d\n", __FILE__, __LINE__);
 	bu_vls_init(&sol_path_name);
 	bu_log("Path names for all solids...\n");
-	FOR_ALL_SOLIDS(sp)
+	FOR_ALL_SOLIDS(sp, &HeadSolid.l)
 	{
 	    build_path_name_of_solid (&sol_path_name, sp);
 	    printf("%s\n", bu_vls_addr(&sol_path_name));

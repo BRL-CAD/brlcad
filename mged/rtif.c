@@ -46,7 +46,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "mater.h"
 #include "./sedit.h"
 #include "./ged.h"
-#include "./solid.h"
+#include "./mged_solid.h"
 #include "./mged_dm.h"
 #include "./mgedtcl.h"
 
@@ -152,12 +152,12 @@ vect_t eye_model;
 #endif
 #define DIR_USED	0x80
 	(void)fprintf(fp, "start 0; clean;\n");
-	FOR_ALL_SOLIDS(sp) {
+	FOR_ALL_SOLIDS(sp, &HeadSolid.l) {
 		for (i=0;i<=sp->s_last;i++) {
 			sp->s_path[i]->d_flags &= ~DIR_USED;
 		}
 	}
-	FOR_ALL_SOLIDS(sp) {
+	FOR_ALL_SOLIDS(sp, &HeadSolid.l) {
 		for (i=0; i<=sp->s_last; i++ ) {
 			if (!(sp->s_path[i]->d_flags & DIR_USED)) {
 				register struct animate *anp;
@@ -170,7 +170,7 @@ vect_t eye_model;
 		}
 	}
 
-	FOR_ALL_SOLIDS(sp) {
+	FOR_ALL_SOLIDS(sp, &HeadSolid.l) {
 		for (i=0;i<=sp->s_last;i++) {
 			sp->s_path[i]->d_flags &= ~DIR_USED;
 		}
@@ -226,9 +226,9 @@ register char **end;
 	 * Find all unique top-level entries.
 	 *  Mark ones already done with s_iflag == UP
 	 */
-	FOR_ALL_SOLIDS( sp )
+	FOR_ALL_SOLIDS(sp, &HeadSolid.l)
 		sp->s_iflag = DOWN;
-	FOR_ALL_SOLIDS( sp )  {
+	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
 		register struct solid *forw;
 
 		if( sp->s_iflag == UP )
@@ -243,7 +243,7 @@ register char **end;
 		  break;
 		}
 		sp->s_iflag = UP;
-		for( forw=sp->s_forw; forw != &HeadSolid; forw=forw->s_forw) {
+		for(BU_LIST_PFOR(forw, sp, solid, &HeadSolid.l)){
 			if( forw->s_path[0] == sp->s_path[0] )
 				forw->s_iflag = UP;
 		}
@@ -329,7 +329,7 @@ run_rt()
 	(void)signal(SIGINT, cur_sigint);
 #endif
 
-	FOR_ALL_SOLIDS( sp )
+	FOR_ALL_SOLIDS(sp, &HeadSolid.l)
 		sp->s_iflag = DOWN;
 
 	return(retcode);
@@ -561,7 +561,7 @@ char	**argv;
 	  return TCL_OK;
 #endif
 
-	FOR_ALL_SOLIDS( sp )
+	FOR_ALL_SOLIDS(sp, &HeadSolid.l)
 		sp->s_iflag = DOWN;
 
 	/* Add overlay */
@@ -634,9 +634,9 @@ char	**argv;
 	/* Find all unique top-level entries.
 	 *  Mark ones already done with s_iflag == UP
 	 */
-	FOR_ALL_SOLIDS( sp )
+	FOR_ALL_SOLIDS(sp, &HeadSolid.l)
 		sp->s_iflag = DOWN;
-	FOR_ALL_SOLIDS( sp )  {
+	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
 		register struct solid *forw;	/* XXX */
 
 		if( sp->s_iflag == UP )
@@ -644,7 +644,7 @@ char	**argv;
 		if (sp->s_path[0]->d_addr == RT_DIR_PHONY_ADDR) continue;
 		(void)fprintf(fp, "'%s' ", sp->s_path[0]->d_namep);
 		sp->s_iflag = UP;
-		for( forw=sp->s_forw; forw != &HeadSolid; forw=forw->s_forw) {
+		for(BU_LIST_PFOR(forw, sp, solid, &HeadSolid.l)){
 			if( forw->s_path[0] == sp->s_path[0] )
 				forw->s_iflag = UP;
 		}
@@ -662,7 +662,7 @@ char	**argv;
 	(void)fprintf(fp,"\nEOF\n");
 	(void)fclose( fp );
 	
-	FOR_ALL_SOLIDS( sp )
+	FOR_ALL_SOLIDS(sp, &HeadSolid.l)
 		sp->s_iflag = DOWN;
 
 	return TCL_OK;
@@ -718,7 +718,7 @@ char	**argv;
 			break;
 		}
 		db_get( dbip,  dp, &rec, 0 , 1);
-		FOR_ALL_SOLIDS(sp)  {
+		FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
 			if( sp->s_path[sp->s_last] != dp )  continue;
 			if( BU_LIST_IS_EMPTY( &(sp->s_vlist) ) )  continue;
 			vp = BU_LIST_LAST( rt_vlist, &(sp->s_vlist) );
@@ -1170,7 +1170,7 @@ char	**argv;
 			extremum[0][i] = INFINITY;
 			extremum[1][i] = -INFINITY;
 		    }
-		    FOR_ALL_SOLIDS (sp)
+		    FOR_ALL_SOLIDS (sp, &HeadSolid.l)
 		    {
 			    minus[X] = sp->s_center[X] - sp->s_size;
 			    minus[Y] = sp->s_center[Y] - sp->s_size;
@@ -1240,7 +1240,7 @@ char	**argv;
 	(void)signal(SIGINT, cur_sigint);
 #endif
 
-	FOR_ALL_SOLIDS( sp )
+	FOR_ALL_SOLIDS(sp, &HeadSolid.l)
 		sp->s_iflag = DOWN;
 
 	return TCL_OK;
@@ -1567,7 +1567,7 @@ char		**argv;
 	extremum[0][i] = INFINITY;
 	extremum[1][i] = -INFINITY;
     }
-    FOR_ALL_SOLIDS (sp)
+    FOR_ALL_SOLIDS (sp, &HeadSolid.l)
     {
 	    minus[X] = sp->s_center[X] - sp->s_size;
 	    minus[Y] = sp->s_center[Y] - sp->s_size;
@@ -1678,26 +1678,26 @@ char 		**argv;
 	/* Find all unique top-level entries.
 	 *  Mark ones already done with s_iflag == UP
 	 */
-	FOR_ALL_SOLIDS( sp )
-		sp->s_iflag = DOWN;
-	FOR_ALL_SOLIDS( sp )  {
-		register struct solid *forw;	/* XXX */
+	FOR_ALL_SOLIDS(sp, &HeadSolid.l)
+	  sp->s_iflag = DOWN;
+	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
+	  register struct solid *forw;	/* XXX */
 
-		if( sp->s_iflag == UP )
-			continue;
-		if (sp->s_path[0]->d_addr == RT_DIR_PHONY_ADDR){
-			if (skip_phony) continue;
-		} else {
-			if (skip_real) continue;
-		}
-		Tcl_AppendResult(interp, sp->s_path[0]->d_namep, " ", (char *)NULL);
-		sp->s_iflag = UP;
-		for( forw=sp->s_forw; forw != &HeadSolid; forw=forw->s_forw) {
-			if( forw->s_path[0] == sp->s_path[0] )
-				forw->s_iflag = UP;
-		}
+	  if( sp->s_iflag == UP )
+	    continue;
+	  if (sp->s_path[0]->d_addr == RT_DIR_PHONY_ADDR){
+	    if (skip_phony) continue;
+	  } else {
+	    if (skip_real) continue;
+	  }
+	  Tcl_AppendResult(interp, sp->s_path[0]->d_namep, " ", (char *)NULL);
+	  sp->s_iflag = UP;
+	  FOR_REST_OF_SOLIDS(forw, sp, &HeadSolid.l){
+	    if( forw->s_path[0] == sp->s_path[0] )
+	      forw->s_iflag = UP;
+	  }
 	}
-	FOR_ALL_SOLIDS( sp )
+	FOR_ALL_SOLIDS(sp, &HeadSolid.l)
 		sp->s_iflag = DOWN;
 
 	Tcl_AppendResult(interp, "\n", (char *)NULL);
