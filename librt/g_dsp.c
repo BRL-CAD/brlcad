@@ -172,10 +172,11 @@ struct isect_stuff {
     struct bbox_isect	bbox;
     struct bbox_isect	minbox;
 
+    int			num_segs;
+
     struct seg		*sp;		/* the current segment being filled */
     short		sp_is_valid;	/* boolean: sp allocated, inhit set */
     short		sp_is_done;	/* boolean: sp has (outhit) content */
-    jmp_buf		env;		/* for setjmp()/longjmp() */
 
     int			dmin, dmax;	/* for dsp_in_rpp , {X,Y,Z}MIN/MAX */
 };
@@ -1004,11 +1005,15 @@ plot_seg(struct isect_stuff *isect,
 /*	A D D _ S E G
  *
  *  Add a segment to the list of intersections in DSP space
+ *
+ *	Return:
+ *	0	continue to intersect
+ *	1	All intersections computed, terminate intersection processing
  */
 #define ADD_SEG(isect, in, out, min, max, r, g, b) \
 	add_seg(isect, in, out, min, max, r, g, b, __LINE__)
 
-static void
+static int
 add_seg(struct isect_stuff *isect,
 	struct hit *in_hit,
 	struct hit *out_hit,
@@ -1042,7 +1047,7 @@ add_seg(struct isect_stuff *isect,
 		bu_log("extending previous seg to %g\n", out_hit->hit_dist);
 		plot_seg(isect, in_hit, out_hit, bbmin, bbmax, r, g, b);
 	    }
-	    return;
+	    return 0;
 	}
     }
 #endif
@@ -1101,6 +1106,8 @@ add_seg(struct isect_stuff *isect,
 #endif
     if (RT_G_DEBUG & DEBUG_HF)
 	plot_seg(isect, in_hit, out_hit, bbmin, bbmax, r, g, b);
+
+    return (++isect->num_segs > isect->ap->a_onehit);
 }
 
 /*	I S E C T _ R A Y _ T R I A N G L E
@@ -1522,9 +1529,11 @@ check_bbpt_hit_elev(int i,	/* indicates face of cell */
 /*
  *	I S E C T _ R A Y _ C E L L _ T O P 
  *
- *
+ *  Return
+ *	0	continue intesection calculations
+ *	1	Terminate intesection computation
  */
-static void
+static int
 isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 {
     point_t A, B, C, D, P;
@@ -1737,7 +1746,9 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 		    VMOVE(bbmax, dsp_bb->dspb_rpp.dsp_max);
 		}
 		
-		ADD_SEG(isect, hitp, &hits[i], bbmin, bbmax, 255, 255, 255);
+		if (ADD_SEG(isect, hitp, &hits[i], bbmin, bbmax,255, 255, 255))
+		    return 1;
+
 		hitp = 0;
 	    } else {
 		dot = VDOT(isect->r.r_dir, hits[i].hit_normal);
@@ -1770,7 +1781,7 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 
 	plot_cell_top(isect, dsp_bb, A, B, C, D, hits, 3, 0);
     }
-
+    return 0;
 }
 
 /*
@@ -1918,14 +1929,17 @@ dsp_in_rpp(struct isect_stuff *isect,
     return(1);		/* HIT */
 }
 
-static void 
+static int
 isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb);
 
 /*
  *	R E C U R S E _ D S P _ B B
  *
+ *  Return
+ *	0	continue intesection calculations
+ *	1	Terminate intesection computation
  */
-static void
+static int
 recurse_dsp_bb(struct isect_stuff *isect,
 	       struct dsp_bb *dsp_bb,
 	       point_t minpt, /* entry point of dsp_bb */
@@ -2042,7 +2056,7 @@ recurse_dsp_bb(struct isect_stuff *isect,
 	    bu_log_indent_delta(4);
 	    bu_log("\n");
 	}
-	isect_ray_dsp_bb(isect, *p);
+	if (isect_ray_dsp_bb(isect, *p)) return 1;
 
 	/* figure out which cell is next */
 	if (RT_G_DEBUG & DEBUG_HF) {
@@ -2071,6 +2085,8 @@ recurse_dsp_bb(struct isect_stuff *isect,
 	    tY += tDY;
 	}
     } while ( curr_dist < out_dist );
+
+    return 0;
 }
 
 
@@ -2079,8 +2095,12 @@ recurse_dsp_bb(struct isect_stuff *isect,
  *
  *  Intersect a ray with a DSP bounding box.  This is the primary child of
  *  rt_dsp_shot()
+ *
+ *  Return
+ *	0	continue intesection calculations
+ *	1	Terminate intesection computation
  */
-static void 
+static int
 isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 {
     point_t bbmin, bbmax;
@@ -2121,7 +2141,7 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 
 	    fclose(draw_dsp_bb(&plotnum, dsp_bb, isect->dsp, 0, 150, 0));
 	}
-	return;
+	return 0;
     }
 
     /* At this point we know that we've hit the overall bounding box */
@@ -2181,10 +2201,8 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 	    bbmin[Z] = 0.0;
 	}
 
-	ADD_SEG(isect, &seg_in, &seg_out, bbmin, bbmax, 0, 255, 255);
-
 	/* outta here */
-	return;
+	return (ADD_SEG(isect, &seg_in, &seg_out, bbmin, bbmax, 0, 255, 255));
     }
 
 
@@ -2193,16 +2211,16 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
      */
     if (dsp_bb->dspb_ch_dim[0]) {
 #ifdef ORDERED_ISECT
-	recurse_dsp_bb(isect, dsp_bb, minpt, maxpt, bbmin, bbmax);
+	return (recurse_dsp_bb(isect, dsp_bb, minpt, maxpt, bbmin, bbmax));
 #else
 	int i;
 	/* there are children, so we recurse */
 	i = dsp_bb->dspb_ch_dim[X] * dsp_bb->dspb_ch_dim[Y] - 1;
 	for ( ; i >= 0 ; i--)
 	    isect_ray_dsp_bb(isect, dsp_bb->dspb_children[i]);
+	return;
 
 #endif
-	return;
     }
 
     /***********************************************************************
@@ -2252,8 +2270,10 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 	VMOVE(out_hit.hit_normal, dsp_pl[isect->dmax]);
 
 	/* add a segment to the list */
-	ADD_SEG(isect, &in_hit, &out_hit, bbmin, bbmax, 255, 255, 0);
+	return (ADD_SEG(isect, &in_hit, &out_hit, bbmin, bbmax, 255, 255, 0));
     }
+
+    return 0;
 }
 
 /*
@@ -2292,16 +2312,6 @@ struct seg		*seghead;
 	    break;
 	case RT_DSP_SRC_OBJ:
 	    break;
-	}
-
-	/* if we run into an error, we can jump here and re-start the
-	 * ray with debugging turned on.
-	 */
-	if (setjmp(isect.env)) {
-		if (RT_G_DEBUG & DEBUG_HF)
-			bu_bomb("");
-
-		rt_g.debug |= DEBUG_HF; 
 	}
 
 	/* 
@@ -2351,7 +2361,7 @@ struct seg		*seghead;
 
 
 	/* intersect the ray with the bounding rpps */
-	isect_ray_dsp_bb(&isect, isect.dsp->layer[isect.dsp->layers-1].p);
+	(void)isect_ray_dsp_bb(&isect, isect.dsp->layer[isect.dsp->layers-1].p);
 
 
 	/* if we missed it all, give up now */
