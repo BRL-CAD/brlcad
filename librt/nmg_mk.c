@@ -1954,7 +1954,7 @@ fastf_t		*points;
 	eu->g.cnurb_p = eg;
 	eu->eumate_p->g.cnurb_p = eg;
 
-	eg->magic = NMG_EDGE_G_LSEG_MAGIC;
+	eg->magic = NMG_EDGE_G_CNURB_MAGIC;
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
 		rt_log("nmg_edge_g_cnurb(eu=x%x, order=%d, n_knots=%d, kv=x%x, n_pts=%d, pt_type=x%x, points=x%x) eg=x%x\n",
