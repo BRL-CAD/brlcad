@@ -72,6 +72,7 @@ set help_data(find)		{{<objects>}	{find all references to objects}}
 set help_data(fix)		{{}	{fix display after hardware error}}
 set help_data(fracture)		{{NMGsolid [prefix]}	{fracture an NMG solid into many NMG solids, each containing one face\n}}
 set help_data(g)		{{groupname <objects>}	{group objects}}
+set help_data(get_comb)		{{combname} {get information about combination}}
 set help_data(getknob)		{{knobname}	{Gets the current setting of the given knob}}
 set help_data(output_hook)	{{output_hook_name}	{All output is sent to the Tcl procedure \"output_hook_name\"}}
 set help_data(help)		{{[commands]}	{give usage message for given commands}}
@@ -119,7 +120,7 @@ set help_data(nmg_collapse)	{{ maximum_error_distance new_solid nmg_solid}	{deci
 set help_data(nmg_simplify)	{{[arb|tgc|ell|poly] new_solid nmg_solid}	{simplify nmg_solid, if possible}}
 set help_data(oed)		{{path_lhs path_rhs}	{Go from view to object_edit of path_lhs/path_rhs}}
 set help_data(opendb)		{{database.g}	{Close current .g file, and open new .g file}}
-set help_data(openw)		{{[-c b|c|g] [-d display string] [-gd graphics display string] [-gt graphics type] [-id name] [-h] [-j] [-s]}	{open display/command window pair}}
+set help_data(openw)		{{[-config b|c|g] [-d display string] [-gd graphics display string] [-gt graphics type] [-id name] [-chjs]}	{open display/command window pair}}
 set help_data(orientation)	{{x y z w}	{Set view direction from quaternion}}
 set help_data(orot)		{{[-i] xdeg ydeg zdeg}	{rotate object being edited}}
 set help_data(oscale)		{{factor}	{scale object by factor}}
@@ -140,6 +141,7 @@ set help_data(preview)		{{[-v] [-d sec_delay] [-D start frame] [-K last frame] r
 set help_data(press)		{{button_label}	{emulate button press}}
 set help_data(ps)		{{[-f font] [-t title] [-c creator] [-s size in inches] [-l linewidth] file}	{creates a postscript file of the current view}}
 set help_data(push)		{{object[s]}	{pushes object's path transformations to solids}}
+set help_data(put_comb)		{{combname isRegion id air gift los color shader inherit boolean_expr} {set combination}}
 set help_data(putmat)		{{a/b {I | m0 m1 ... m16}}	{replace matrix on combination's arc}}
 set help_data(q)		{{}	{quit}}
 set help_data(qcs)		{{id}	{quit collaborative session}}
@@ -173,6 +175,9 @@ set help_data(sed)		{{<path>}	{solid-edit named solid}}
 set help_data(setview)		{{x y z}	{set the view given angles x, y, and z in degrees}}
 set help_data(shells)		{{nmg_model}	{breaks model into seperate shells}}
 set help_data(shader)		{{comb material [arg(s)]}	{assign materials (like 'mater')}}
+set help_data(share_menu)	{{pathName1 pathName2}  {pathName1 shares its menu with pathName2}}
+set help_data(share_vars)	{{pathName1 pathName2}	{pathName1 shares its vars with pathName2}}
+set help_data(share_view)	{{pathName1 pathName2}	{pathName1 shares its view with pathName2}}
 set help_data(size)		{{size}	{set view size}}
 set help_data(sliders)		{{[on|off]}	{turns the sliders on or off, or reads current state}}
 set help_data(solids)		{{file object(s)}	{make ascii summary of solid parameters}}
@@ -184,7 +189,6 @@ set help_data(svb)		{{}	{set view reference base}}
 set help_data(sync)		{{}	{forces UNIX sync}}
 set help_data(t)		{{}	{table of contents}}
 set help_data(ted)		{{}	{text edit a solid's parameters}}
-set help_data(tie)		{{pathName1 pathName2}	{tie display manager pathName1 to display manager pathName2}}
 set help_data(title)		{{[string]}	{print or change the title}}
 set help_data(tol)		{{[abs #] [rel #] [norm #] [dist #] [perp #]}	{show/set tessellation and calculation tolerances}}
 set help_data(tops)		{{}	{find all top level objects}}
@@ -195,7 +199,9 @@ set help_data(translate)	{{x y z}	{trans object to x,y, z}}
 set help_data(tree)		{{object(s)}	{print out a tree of all members of an object}}
 set help_data(unaim)		{{command_window}	{stop aiming command_window}}
 set help_data(units)		{{[mm|cm|m|in|ft|...]}	{change units}}
-set help_data(untie)		{{pathName}	{untie display manager pathName}}
+set help_date(unshare_menu)	{{pathName}	{pathName no longer shares its menu}}
+set help_data(unshare_vars)	{{pathName}	{pathName no longer shares its vars}}
+set help_data(unshare_view)	{{pathName}	{pathName no longer shares its view}}
 set help_data(mged_update)	{{}	{handle outstanding events and refresh}}
 set help_data(vars)		{{[var=opt]}	{assign/display mged variables}}
 set help_data(vdraw)		{{write|insert|delete|read|length|show [args]}	{Expermental drawing (cnuzman)}}
