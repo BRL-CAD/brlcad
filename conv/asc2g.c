@@ -358,6 +358,12 @@ solbld()
 
 	switch( s_type ) {
 
+		case GRP:
+			VSET(center, val[0], val[1], val[2]);
+			VSET(n, val[3], val[4], val[5]);
+			(void)mk_grip( ofp, name, center, n, val[6] );
+			break;
+
 		case TOR:
 			VSET(center, val[0], val[1], val[2]);
 			VSET(n, val[3], val[4], val[5]);
