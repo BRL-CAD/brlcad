@@ -655,7 +655,7 @@ wdb_put_tcl(clientData, interp, argc, argv)
 	--argc;
 	++argv;
 
-	if (argc < 2) {
+	if (argc < 3) {
 		Tcl_AppendResult(interp,
 				 "wrong # args: should be db put objName objType attrs",
 				 (char *)NULL);
