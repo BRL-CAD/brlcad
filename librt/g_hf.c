@@ -97,19 +97,19 @@ CONST struct bu_structparse rt_hf_cparse[] = {
 };
 
 struct hf_specific {
-	vect_t	hf_V;
-	vect_t	hf_VO;
-	vect_t	hf_X;
-	fastf_t	hf_Xlen;
-	vect_t	hf_Y;
-	fastf_t	hf_Ylen;
-	vect_t	hf_N;
-	fastf_t	hf_min;
+	vect_t	hf_V;		/* min vertex/origin of HF */
+	vect_t	hf_VO;		/* max vertex of HF */
+	vect_t	hf_X;		/* X direction vector */
+	fastf_t	hf_Xlen;	/* magnitude of HF in X direction */
+	vect_t	hf_Y;		/* Y Direction vector */
+	fastf_t	hf_Ylen;	/* magnitude of HF in Y direction */
+	vect_t	hf_N;		/* dir of elevation */
+	fastf_t	hf_min;		/* bounding box of hf solid */
 	fastf_t	hf_max;
-	fastf_t	hf_file2mm;
-	int	hf_w;
-	int	hf_n;
-	int	hf_shorts;
+	fastf_t	hf_file2mm;	/* scale file elevation units to mm */
+	int	hf_w;		/* X dimension of file */
+	int	hf_n;		/* Y dimension of file */
+	int	hf_shorts;	/* Boolean: use shorts instead of double */
 	struct rt_mapped_file *hf_mp;
 };
 
@@ -318,33 +318,42 @@ int			xCell, yCell;
 	}
 	if (hfp->hf_shorts) {
 		register unsigned short *sp;
-		sp = (unsigned short *)hfp->hf_mp->apbuf + yCell*hfp->hf_w+xCell;
-		/* 0,0 -> A */
+		sp = (unsigned short *)hfp->hf_mp->apbuf +
+			 yCell * hfp->hf_w + xCell;
+
+		/* Get the points of one of the triangles */
+
+		/* 0,0 -> tri_A */
 		VJOIN3(tri_A, hfp->hf_V, *sp*hf2mm, hfp->hf_N, xCell+0, xvect,
 		    yCell+0, yvect);
 		sp++;
-		/* 1, 0 */
+		/* 1, 0 -> tri_B */
 		VJOIN3(tri_B, hfp->hf_V, *sp*hf2mm, hfp->hf_N, xCell+1, xvect,
 		    yCell+0, yvect);
 		sp += hfp->hf_w;
-		/* 1, 1 */
+		/* 1, 1 -> tri_C */
 		VJOIN3(tri_C, hfp->hf_V, *sp*hf2mm, hfp->hf_N, xCell+1, xvect,
 		    yCell+1, yvect);
+
 		VSUB2(tri_CA1st, tri_C, tri_A);
 		VSUB2(tri_BA1st, tri_B, tri_A);
 		VCROSS(tri_wn1st, tri_BA1st, tri_CA1st);
 		VMOVE(tri_B, tri_C);		/* This can optimize down. */
 		--sp;
+
 		/* 0, 1 */
 		VJOIN3(tri_C, hfp->hf_V, *sp*hf2mm, hfp->hf_N, xCell+0, xvect,
 		    yCell+1, yvect);
 		VSUB2(tri_CA2nd, tri_C, tri_A);	
-/*		VMOVE(tri_CA2nd, tri_BA1st); */
+
+/*		VMOVE(tri_BA2nd, tri_CA1st); */
+
 		VSUB2(tri_BA2nd, tri_B, tri_A);
 		VCROSS(tri_wn2nd, tri_BA2nd, tri_CA2nd);
 	} else {
 		register float *fp;
-		fp = (float *)hfp->hf_mp->apbuf + yCell*hfp->hf_w+xCell;
+		fp = (float *)hfp->hf_mp->apbuf + 
+			yCell * hfp->hf_w + xCell;
 		/* 0,0 -> A */
 		VJOIN3(tri_A, hfp->hf_V, *fp*hf2mm, hfp->hf_N, xCell+0, xvect,
 		    yCell+0, yvect);
@@ -365,32 +374,91 @@ int			xCell, yCell;
 		VJOIN3(tri_C, hfp->hf_V, *fp*hf2mm, hfp->hf_N, xCell+0, xvect,
 		    yCell+1, yvect);
 		VSUB2(tri_CA2nd, tri_C, tri_A);	
-/*		VMOVE(tri_CA2nd, tri_BA1st); */
+/*		VMOVE(tri_BA2nd, tri_CA1st); */
 		VSUB2(tri_BA2nd, tri_B, tri_A);
 		VCROSS(tri_wn2nd, tri_BA2nd, tri_CA2nd);
 	}
 
-	/*
-	 * Ray Direction dot N of this triangle.  N is outward pointing.
-	 * wn points inwards and is not unit length.
+	/*	0,1		1,1
+	 *	  o		o
+	 *	  	    _
+	 *	  ^          //|
+	 *   CA2nd|         //
+	 *	  |        //
+	 *	  |  BA2nd//
+	 *	  |      //
+	 *	  |     // CA1st
+	 *	  |    //
+	 *	  |   //
+	 *	  |  //
+	 *	  | //
+	 *	   
+	 *	  o  -------->  o
+	 *	0,0	BA1st	1,0
+	 *
+	 * wn1st and wn2nd are non-unit normal vectors pointing out of screen
 	 */
+
 	fnd1 = fnd2 = 0;
 
-	dn = VDOT(tri_wn1st, rp->r_dir);
+#if 0
+	dn = VDOT(tri_wn1st, rp->r_dir); /* wn1st points out */
 	abs_dn = (dn >= 0.0) ? dn : (-dn);
-	if (abs_dn <SQRT_SMALL_FASTF) goto other_half;
+	if (abs_dn <SQRT_SMALL_FASTF)
+		goto other_half; /* ray parellel to plane */
+
 	VSUB2( wxb, tri_A, rp->r_pt);
 	VCROSS( xp, wxb, rp->r_dir);
-	alpha = VDOT(tri_CA1st, xp);
+	alpha = VDOT(tri_CA1st, xp);	/* alpha = dist along CA1 to isect pt */
 	if (dn < 0.0) alpha = -alpha;
 	if (alpha < 0.0 || alpha > abs_dn) goto other_half;
-	beta = VDOT(tri_BA1st, xp);
+	beta = VDOT(tri_BA1st, xp);	/* beta = dist along BA1 to isect pt */
 	if (dn > 0.0) beta = -beta;
 	if (beta < 0.0 || beta > abs_dn) goto other_half;
 	if (alpha + beta > abs_dn) goto other_half;
 	k1st = VDOT(wxb, tri_wn1st) / dn;
 	dn1st = dn;
 	fnd1 = 1;
+#else
+	/* Ray triangle intersection.  
+	 * See: "Graphics Gems" An Efficient Ray-Polygon Intersection P:390
+	 */
+
+	dn = VDOT(tri_wn1st, rp->r_dir); /* wn1st points out */
+	abs_dn = (dn >= 0.0) ? dn : (-dn);
+
+	/* make sure ray not parallel to plane of triangle */
+	if (abs_dn >= SQRT_SMALL_FASTF) {
+		VSUB2( wxb, tri_A, rp->r_pt);
+		VCROSS( xp, wxb, rp->r_dir);
+
+		/* alpha = dist along CA1 to isect pt */
+		alpha = VDOT(tri_CA1st, xp);
+		if (dn < 0.0) alpha = -alpha;
+
+		/* if pt before CA1st or beyond end of CA1st pt is
+		 * outside triangle
+		 */
+		if (alpha >= 0.0 && alpha <= abs_dn) {
+
+			/* beta = dist along BA1 to isect pt */
+			beta = VDOT(tri_BA1st, xp);
+			if (dn > 0.0) beta = -beta;
+
+			if (beta >= 0.0 && beta <= abs_dn) {
+				if (alpha + beta <= abs_dn) {
+					k1st = VDOT(wxb, tri_wn1st) / dn;
+					dn1st = dn;
+					fnd1 = 1;
+				}
+			}
+		}
+	}
+#endif
+
+
+
+
 other_half:
 	dn = VDOT(tri_wn2nd, rp->r_dir);
 	abs_dn = ( dn >= 0.0) ? dn : (-dn);
@@ -416,7 +484,7 @@ leave:
 	/*
 	 * We have now done the ray-triangle intersection.  dn1st
 	 * and dn tell us the direction of the normal, <0 is in
-	 * and >0 is out.  k1st and k2nd tell us the distence from
+	 * and >0 is out.  k1st and k2nd tell us the distance from
 	 * the start point.
 	 *
 	 * We are only interested in the closest hit. and that will
@@ -467,6 +535,128 @@ leave:
 #endif
 }
 
+#define	MAXHITS	128		/* # of surfaces hit, must be even */
+
+/*
+ *	For the given plane of the bounding box of the hf solid, compute the
+ *	hit distance and add it to the list of hits.  If the plane happens 
+ *	to be the "Zmax" face, then the hit is really in the elevation data,
+ *	and we skip it.  That will be handled elsewhere.
+ */
+static void
+axis_plane_isect(plane, inout, rp, hf, xWidth, yWidth, hp, nhits)
+int plane;
+fastf_t inout;
+struct xray	*rp;
+struct hf_specific *hf;
+double xWidth, yWidth;
+struct hit **hp;
+int *nhits;
+
+{
+	double left, right, xx, xright, answer;
+	vect_t loc;
+	int CellX, CellY;
+
+	if (plane == -6) return;
+
+	if (plane == -3) { 
+		(*hp)->hit_dist = inout;
+		(*hp)->hit_surfno = plane;
+		(*hp)++;
+		if ((*nhits)++>=MAXHITS) rt_bomb("g_hf.c: too many hits.\n");
+		return;
+	}
+
+	VJOIN1(loc, rp->r_pt, inout, rp->r_dir);
+	VSUB2(loc,loc,hf->hf_V);
+
+	/* find the left, right and xx */
+	switch (plane) {
+	case -1:
+		CellY = loc[Y]/ yWidth;
+		CellX = 0;
+		xright = yWidth;
+		xx = loc[Y] - (CellY* yWidth);
+		break;
+	case -2:
+		CellY = 0;
+		CellX = loc[X]/ xWidth;
+		xright = xWidth;
+		xx = loc[X] - CellX * xWidth;
+		break;
+	case -4:
+		CellY = loc[Y]/ yWidth;
+		CellX = hf->hf_n-1;
+		xright = yWidth;
+		xx = loc[Y] - (CellY* yWidth);
+		break;
+	case -5:
+		CellY = hf->hf_w-1;
+		CellX = loc[X]/ xWidth;
+		xright = xWidth;
+		xx = loc[X] - CellX* xWidth;
+		break;
+	}
+	if (xx < 0) {
+		rt_log("hf: xx < 0, plane = %d\n", plane);
+	}
+
+	if (hf->hf_shorts) {
+		register unsigned short *sp;
+		sp = (unsigned short *)hf->hf_mp->apbuf +
+		    CellY * hf->hf_w + CellX;
+		left = *sp;
+		if (plane == -2 || plane == -5) {
+			sp++;
+		} else {
+			sp += hf->hf_w;
+		}
+		right = *sp;
+	} else {
+		register float *fp;
+		fp = (float *) hf->hf_mp->apbuf +
+		    CellY * hf->hf_w + CellX;
+		left = *fp;
+		if (plane == -2 || plane == -5) {
+			fp++;
+		} else {
+			fp += hf->hf_w;
+		}
+		right = *fp;
+	}
+	left *= hf->hf_file2mm;
+	right *= hf->hf_file2mm;
+	answer = (right-left)/xright*xx+left;
+#if 0
+rt_log("inout: loc[Z]=%g, answer=%g, left=%g, right=%g, xright=%g, xx=%g\n",
+    loc[Z], answer, left, right, xright, xx);
+#endif
+
+	if (loc[Z]-SQRT_SMALL_FASTF < answer) {
+		(*hp)->hit_dist = inout;
+		(*hp)->hit_surfno = plane;
+		VJOIN1((*hp)->hit_point, rp->r_pt, inout, rp->r_dir);
+		(*hp)++;
+		if ((*nhits)++>=MAXHITS) rt_bomb("g_hf.c: too many hits.\n");
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /*
  *  			R T _ H T F _ S H O T
  *  
@@ -488,9 +678,9 @@ struct seg		*seghead;
 	register struct hf_specific *hf =
 		(struct hf_specific *)stp->st_specific;
 	register struct seg *segp;
-#define	MAXHITS	128		/* # of surfaces hit, must be even */
+
 	LOCAL	struct hit	hits[MAXHITS];
-	register struct hit *hp;
+	struct hit *hp;
 	LOCAL	int		nhits;
 	double	xWidth, yWidth;
 
@@ -531,26 +721,32 @@ bzero(hits,sizeof(hits));
 
 		switch (j) {
 		case -1:
+			/* Xmin plane */
 			VREVERSE(peqn, hf->hf_X);
 			pdist = VDOT(peqn, hf->hf_V);
 			break;
 		case -2:
+			/* Ymin plane */
 			VREVERSE(peqn, hf->hf_Y);
 			pdist = VDOT(peqn, hf->hf_V);
 			break;
 		case -3:
+			/* Zmin plane */
 			VREVERSE(peqn, hf->hf_N);
 			pdist = VDOT(peqn, hf->hf_V);
 			break;
 		case -4:
+			/* Xmax plane */
 			VMOVE(peqn, hf->hf_X);
 			pdist = VDOT(peqn, hf->hf_VO);
 			break;
 		case -5:
+			/* Ymax plane */
 			VMOVE(peqn, hf->hf_Y);
 			pdist = VDOT(peqn, hf->hf_VO);
 			break;
 		case -6:
+			/* Zmax plane */
 			VMOVE(peqn, hf->hf_N);
 			pdist = VDOT(peqn, hf->hf_VO);
 			break;
@@ -620,171 +816,14 @@ bzero(hits,sizeof(hits));
 	if (rt_g.debug & DEBUG_HF) {
 		rt_log("hf: xWidth=%g, yWidth=%g\n", xWidth, yWidth);
 	}
+
+
 	/*
 	 * add the sides, and bottom to the hit list.
 	 */
-	if (iplane == -3) { 
-		hp->hit_dist = in;
-		hp->hit_surfno = iplane;
-		hp++;
-		if (nhits++>=MAXHITS) rt_bomb("g_hf.c: too many hits.\n");
-	} else if (iplane != -6) {
-		double left, right, xx, xright,answer;
-		vect_t loc;
-		int CellX, CellY;
-		VJOIN1(loc, rp->r_pt, in, rp->r_dir);
-		VSUB2(loc,loc,hf->hf_V);
+	axis_plane_isect(iplane,  in, rp, hf, xWidth, yWidth, &hp, &nhits);
+	axis_plane_isect(oplane, out, rp, hf, xWidth, yWidth, &hp, &nhits);
 
-		/* find the left, right and xx */
-		switch (iplane) {
-		case -1:
-			CellY = loc[Y]/yWidth;
-			CellX = 0;
-			xright = yWidth;
-			xx = loc[Y] - (CellY*yWidth);
-			break;
-		case -2:
-			CellY = 0;
-			CellX = loc[X]/xWidth;
-			xright = xWidth;
-			xx = loc[X] - CellX*xWidth;
-			break;
-		case -4:
-			CellY = loc[Y]/yWidth;
-			CellX = hf->hf_n-1;
-			xright = yWidth;
-			xx = loc[Y] - (CellY*yWidth);
-			break;
-		case -5:
-			CellY = hf->hf_w-1;
-			CellX = loc[X]/xWidth;
-			xright = xWidth;
-			xx = loc[X] - CellX*xWidth;
-			break;
-		}
-		if (xx < 0) {
-			rt_log("hf: xx < 0, iplane = %d\n", iplane);
-		}
-
-		if (hf->hf_shorts) {
-			register unsigned short *sp;
-			sp = (unsigned short *)hf->hf_mp->apbuf +
-			    CellY * hf->hf_w + CellX;
-			left = *sp;
-			if (iplane == -2 || iplane == -5) {
-				sp++;
-			} else {
-				sp += hf->hf_w;
-			}
-			right = *sp;
-		} else {
-			register float *fp;
-			fp = (float *) hf->hf_mp->apbuf +
-			    CellY * hf->hf_w + CellX;
-			left = *fp;
-			if (iplane == -2 || iplane == -5) {
-				fp++;
-			} else {
-				fp += hf->hf_w;
-			}
-			right = *fp;
-		}
-		left *= hf->hf_file2mm;
-		right *= hf->hf_file2mm;
-		answer = (right-left)/xright*xx+left;
-#if 0
-rt_log("in: loc[Z]=%g, answer=%g, left=%g, right=%g, xright=%g, xx=%g\n",
-    loc[Z], answer, left, right, xright, xx);
-#endif
-		if (loc[Z]-SQRT_SMALL_FASTF < answer) {
-			hp->hit_dist = in;
-			hp->hit_surfno = iplane;
-			VJOIN1(hp->hit_point, rp->r_pt, in, rp->r_dir);
-			hp++;
-			if (nhits++>=MAXHITS) rt_bomb("g_hf.c: too many hits.\n");
-		}
-	}
-	if (oplane == -3) { 
-		hp->hit_dist = out;
-		hp->hit_surfno = oplane;
-		hp++;
-		if (nhits++>=MAXHITS) rt_bomb("g_hf.c: too many hits.\n");
-	} else if (oplane != -6) {
-		double left, right, xx, xright, answer;
-		vect_t loc;
-		int CellX, CellY;
-		VJOIN1(loc, rp->r_pt, out, rp->r_dir);
-		VSUB2(loc,loc,hf->hf_V);
-
-		/* find the left, right and xx */
-		switch (oplane) {
-		case -1:
-			CellY = loc[Y]/yWidth;
-			CellX = 0;
-			xright = yWidth;
-			xx = loc[Y] - (CellY*yWidth);
-			break;
-		case -2:
-			CellY = 0;
-			CellX = loc[X]/xWidth;
-			xright = xWidth;
-			xx = loc[X] - CellX*xWidth;
-			break;
-		case -4:
-			CellY = loc[Y]/yWidth;
-			CellX = hf->hf_n-1;
-			xright = yWidth;
-			xx = loc[Y] - (CellY*yWidth);
-			break;
-		case -5:
-			CellY = hf->hf_w-1;
-			CellX = loc[X]/xWidth;
-			xright = xWidth;
-			xx = loc[X] - CellX*xWidth;
-			break;
-		}
-		if (xx < 0) {
-			rt_log("hf: xx < 0, oplane = %d\n", iplane);
-		}
-
-		if (hf->hf_shorts) {
-			register unsigned short *sp;
-			sp = (unsigned short *)hf->hf_mp->apbuf +
-			    CellY * hf->hf_w + CellX;
-			left = *sp;
-			if (oplane == -2 || oplane == -5) {
-				sp++;
-			} else {
-				sp += hf->hf_w;
-			}
-			right = *sp;
-		} else {
-			register float *fp;
-			fp = (float *) hf->hf_mp->apbuf +
-			    CellY * hf->hf_w + CellX;
-			left = *fp;
-			if (oplane == -2 || oplane == -5) {
-				fp++;
-			} else {
-				fp += hf->hf_w;
-			}
-			right = *fp;
-		}
-		left *= hf->hf_file2mm;
-		right *= hf->hf_file2mm;
-		answer = (right-left)/xright*xx+left;
-#if 0
-rt_log("out: loc[Z]=%g, answer=%g, left=%g, right=%g, xright=%g, xx=%g\n",
-    loc[Z], answer, left, right, xright, xx);
-#endif
-		if (loc[Z]-SQRT_SMALL_FASTF < answer) {
-			hp->hit_dist = out;
-			hp->hit_surfno = oplane;
-			VJOIN1(hp->hit_point, rp->r_pt, out, rp->r_dir);
-			hp++;
-			if (nhits++>=MAXHITS) rt_bomb("g_hf.c: too many hits.\n");
-		}
-	}
 	/*
 	 * Gee, we've gotten much closer, we know that we hit the
 	 * the solid. Now it's time to see which cell we hit.  The
@@ -802,7 +841,7 @@ rt_log("out: loc[Z]=%g, answer=%g, left=%g, right=%g, xright=%g, xx=%g\n",
 	{
 		vect_t tmp;
 		VMOVE(tmp,rp->r_dir);
-		tmp[Z] = 0.0;
+		tmp[Z] = 0.0;	/* XXX Bogus?  Assumes X,Y in XY plane */
 		VUNITIZE(tmp);
 		cosine = VDOT(tmp, hf->hf_X);
 	}
@@ -815,8 +854,8 @@ rt_log("out: loc[Z]=%g, answer=%g, left=%g, right=%g, xright=%g, xx=%g\n",
 
 		vect_t	goesIN, goesOUT;
 
-		VJOIN1(goesIN, rp->r_pt, allDist[3], rp->r_dir);
-		VJOIN1(goesOUT,rp->r_pt, allDist[0], rp->r_dir);
+		VJOIN1(goesIN, rp->r_pt, allDist[3], rp->r_dir); /* Xmax plane */
+		VJOIN1(goesOUT,rp->r_pt, allDist[0], rp->r_dir); /* Xmin plane */
 		VSUB2(aray, goesOUT, goesIN);
 		VSUB2(curloc, goesIN, hf->hf_V);
 
@@ -837,7 +876,7 @@ rt_log("hf: before VSCALE... aray=(%g,%g,%g)\n",
 #endif
 
 		VSCALE(aray, aray, tmp);
-		farZ = curloc[Z]+aray[Z];
+
 		/*
 		 * Some fudges here.  First, the size of the array of
 		 * samples is iXj, but the size of the array of CELLS
@@ -1108,7 +1147,7 @@ rt_log("hf: before VSCALE... aray=(%g,%g,%g)\n",
 #endif
 
 		VSCALE(aray, aray, tmp);
-		farZ = curloc[Z]+aray[Z];
+
 		/*
 		 * Some fudges here.  First, the size of the array of
 		 * samples is iXj, but the size of the array of CELLS
