@@ -20,8 +20,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
-#include <string.h>
 #include <ctype.h>
+#ifdef BSD
+#include <strings.h>
+#else
+#include <string.h>
+#endif
 
 #include "fb.h"
 #include "./fblocal.h"
@@ -112,7 +116,7 @@ int	width, height;
 	 *  If we have a ':' assume the remote interface
 	 *    (should we check to see if it's us? XXX)
 	 *  else strip out "devname" and try to look it up in the
-	 *    device array.  If we don't find it assume it's a file?
+	 *    device array.  If we don't find it assume it's a file.
 	 *
 	 * XXX - devname can match a magic cookie regardless of pathname.
 	 */
@@ -124,11 +128,7 @@ int	width, height;
 		goto found_interface;
 	}
 #endif IF_REMOTE
-	/* NOTE: we are assuming no host names at this point		*/
-	if( (cp = strrchr( file, '/' )) == NULL )
-		cp = file;
-	else
-		cp++;	/* start just past the slash			*/
+	cp = file;
 	i = 0;
 	while( *cp != NULL && !isdigit(*cp) && i < DEVNAMLEN ) {
 		devnambuf[ i++ ] = *cp++;
@@ -136,7 +136,7 @@ int	width, height;
 	devnambuf[i] = 0;
 
 #ifdef IF_PTTY
-	if( strncmp( devnambuf, "tty", 3 ) == 0 && devnambuf[3] != '\0' ) {
+	if( strncmp( devnambuf, "/dev/tty", 8 ) == 0 && devnambuf[8] != '\0' ) {
 		/* We have a UNIX pseudo-tty presumably (tty[pqr]*).	*/
 		*ifp = ptty_interface;
 		goto found_interface;
@@ -156,6 +156,7 @@ int	width, height;
 	}
 
 found_interface:
+	/* Copy over the name it was opened by. */
 	if( (ifp->if_name = malloc( (unsigned) strlen( file ) + 1 ))
 	    == (char *) NULL
 	    )
@@ -166,10 +167,14 @@ found_interface:
 	}
 	(void) strcpy( ifp->if_name, file );
 
+	/* set default width/height */
+	if( width == 0 )
+		width = ifp->if_width;
+	if( height == 0 )
+		height = ifp->if_height;
+
 	if( (*ifp->if_dopen)( ifp, file, width, height ) == -1 )  {
-		fb_log(	"fb_open : can not open device \"%s\".\n",
-		file
-		    );
+		fb_log(	"fb_open : can not open device \"%s\".\n", file );
 		free( (void *) ifp->if_name );
 		free( (void *) ifp );
 		return	FBIO_NULL;
@@ -214,7 +219,7 @@ register Pixel	*bpp;
 		*pix_to++ = *bpp;
 	/* Send until frame buffer is full.				*/
 	scans_per_dma = MAX_PIXELS_DMA / ifp->if_width;
-	for( y = 0; y < ifp->if_height; y += scans_per_dma )
+	for( y = ifp->if_height-1; y > 0; y -= scans_per_dma )
 		if( fb_write( ifp, 0, y, pix_buf, (long) MAX_PIXELS_DMA	) == -1 )
 			return	-1;
 	return	0;
