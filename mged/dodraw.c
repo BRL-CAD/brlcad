@@ -269,7 +269,7 @@ struct mater_info *materp;
 	int dashflag;		/* draw with dashed lines */
 	int count;
 	struct vlhead	vhead;
-	vect_t		max, min;
+	vect_t		maxvalue, minvalue;
 
 	vhead.vh_first = vhead.vh_last = VL_NULL;
 	if( regmemb >= 0 ) {
@@ -325,11 +325,8 @@ struct mater_info *materp;
 		if( use_nmg_flag )  {
 			struct model	*m;
 
-			if( (m = nmg_mkmodel()) == (struct model *)0 ||
-			    nmg_mkshell( m->r_p ) )  {
-			    	printf("nmg_mkmodel or nmg_mkshell failure\n");
-			    	return(-1);
-			}
+			m = nmg_mmr();		/* Make model & region */
+			nmg_msv( m->r_p );	/* Make empty shell (& vertex) */
 
 			/* Tessellate Solid to NMG */
 			rt_functab[id].ft_tessellate(
@@ -342,7 +339,7 @@ struct mater_info *materp;
 			nmg_s_to_vlist( &vhead, m->r_p->s_p, 1 );
 
 			/* Destroy NMG */
-			nmg_kmodel( m );
+			nmg_km( m );
 		} else {
 			rt_functab[id].ft_plot( recordp, xform, &vhead,
 				cur_path[pathpos] );
@@ -359,21 +356,21 @@ struct mater_info *materp;
 	/*
 	 * Compute the min, max, and center points.
 	 */
-	VSETALL( max, -INFINITY );
-	VSETALL( min,  INFINITY );
+	VSETALL( maxvalue, -INFINITY );
+	VSETALL( minvalue,  INFINITY );
 	sp->s_vlist = vhead.vh_first;
 	sp->s_vlen = 0;
 	for( vp = vhead.vh_first; vp != VL_NULL; vp = vp->vl_forw )  {
-		VMINMAX( min, max, vp->vl_pnt );
+		VMINMAX( minvalue, maxvalue, vp->vl_pnt );
 		sp->s_vlen++;
 	}
 	nvectors += sp->s_vlen;
 
-	VADD2SCALE( sp->s_center, min, max, 0.5 );
+	VADD2SCALE( sp->s_center, minvalue, maxvalue, 0.5 );
 
-	sp->s_size = max[X] - min[X];
-	MAX( sp->s_size, max[Y] - min[Y] );
-	MAX( sp->s_size, max[Z] - min[Z] );
+	sp->s_size = maxvalue[X] - minvalue[X];
+	MAX( sp->s_size, maxvalue[Y] - minvalue[Y] );
+	MAX( sp->s_size, maxvalue[Z] - minvalue[Z] );
 
 	/*
 	 * If this solid is not illuminated, fill in it's information.
