@@ -777,65 +777,67 @@ point_t A, B, C, D;
 int *tri1;
 int *tri2;
 {
-	int sub[2], sup[2];
+	int lo[2], hi[2];
 	point_t tmp;
-	vect_t Aline, Bline, Cline, Dline;
-	double dot1, dot2;
+	double c1, c2;
+	double h1, h2, h3, h4;
 
-	/*  C	 D
-	 *   *--*
-	 *   | /|
-	 *   |/ |
-	 *   *--*
-	 *  A    B
-	 */
+	/* Load the corner points of the cell */
+
 	VSET(A, cell[X],   cell[Y],   DSP(isect->dsp, cell[X],   cell[Y])  );
 	VSET(B, cell[X]+1, cell[Y],   DSP(isect->dsp, cell[X]+1, cell[Y])  );
 	VSET(C, cell[X],   cell[Y]+1, DSP(isect->dsp, cell[X],   cell[Y]+1));
 	VSET(D, cell[X]+1, cell[Y]+1, DSP(isect->dsp, cell[X]+1, cell[Y]+1));
 
-	sub[X] = cell[X] - 1;
-	sub[Y] = cell[Y] - 1;
-	sup[X] = cell[X] + 1;
-	sup[Y] = cell[Y] + 1;
 
-	if (sub[X] < 0) sub[X] = 0;
-	if (sub[Y] < 0) sub[Y] = 0;
+	/*
+	 *  We look at the points in the diagonal next cells to determine
+	 *  the curvature along each diagonal of this cell.  This cell is
+	 *  divided into two triangles by cutting across the cell in the
+	 *  direction of least curvature.
+	 *
+	 *	*  *  *	 *
+	 *	 \      /
+	 *	  \C  D/
+	 *	*  *--*  *
+	 *	   |\/|
+	 *	   |/\|
+	 *	*  *--*  *
+	 *	  /A  B\
+	 *	 /	\
+	 *	*  *  *	 *
+	 */
 
-	if (sup[X] > XSIZ(isect->dsp)) sup[X] = XSIZ(isect->dsp);
-	if (sup[Y] > YSIZ(isect->dsp)) sup[Y] = YSIZ(isect->dsp);
+	lo[X] = cell[X] - 1;
+	lo[Y] = cell[Y] - 1;
+	hi[X] = cell[X] + 1;
+	hi[Y] = cell[Y] + 1;
 
-	VSET(tmp,	 sub[X], sub[Y],
-	 DSP(isect->dsp, sub[X], sub[Y]));
-	VSUB2(Aline, A, tmp);
-	VUNITIZE(Aline);
+	if (lo[X] < 0) lo[X] = 0;
+	if (lo[Y] < 0) lo[Y] = 0;
 
-	VSET(tmp,	 sup[X], sup[Y],
-	 DSP(isect->dsp, sup[X], sup[Y]));
-	VSUB2(Dline, tmp, D);
-	VUNITIZE(Dline);
-
-	VSUB2(tmp, D, A);
-	VUNITIZE(tmp);
-
-	dot1 = VDOT(Aline, tmp) + VDOT(Dline, tmp);
+	if (hi[X] > XSIZ(isect->dsp)) hi[X] = XSIZ(isect->dsp);
+	if (hi[Y] > YSIZ(isect->dsp)) hi[Y] = YSIZ(isect->dsp);
 
 
-	VSET(tmp,	 sub[X], sup[Y],
-	 DSP(isect->dsp, sub[X], sup[Y]));
-	VSUB2(Cline, tmp, C);
-	VUNITIZE(Cline);
+	/* compute curvature along the A->D direction */
+	h1 = DSP(isect->dsp, lo[X], lo[Y]);
+	h2 = A[Z];
+	h3 = D[Z];
+	h4 = DSP(isect->dsp, hi[X], hi[Y]);
 
-	VSET(tmp, sup[X], sub[Y], DSP(isect->dsp, sup[X], sub[Y]));
-	VSUB2(Bline, B, tmp);
-	VUNITIZE(Bline);
+	c1 = fabs(h3 + h1 - 2*h2 ) + fabs( h4 + h2 - 2*h3 );
 
-	VSUB2(tmp, C, B);
-	VUNITIZE(tmp);
+
+	/* compute curvature along the B->C direction */
+	h1 = DSP(isect->dsp, hi[X], lo[Y]);
+	h2 = B[Z];
+	h3 = C[Z];
+	h4 = DSP(isect->dsp, lo[X], hi[Y]);
+
+	c2 = fabs(h3 + h1 - 2*h2 ) + fabs( h4 + h2 - 2*h3 );
 	
-	dot2 = VDOT(Cline, tmp) + VDOT(Bline, tmp);
-
-	if ( dot1 > dot2 ) {
+	if ( c1 < c2 ) {
 		*tri1 = TRI1;
 		*tri2 = TRI2;
 
@@ -1404,7 +1406,7 @@ struct isect_stuff *isect;
 	double	bbin_dist;
 	point_t	bbout_pt;	/* DSP Bounding Box exit point */
 	int	bbout_cell[3];	/* grid cell of last point in bbox */
-	int	cell_bbox[4];
+	int	cell_bbox[4];	/* bbox (in x, y) of cells along ray */
 
 	point_t curr_pt;	/* entry pt into a cell */
 	int	curr_surf;	/* surface of cell bbox for curr_pt */
@@ -1921,16 +1923,20 @@ register struct xray	*rp;
 			Xfrac = (pt[X] - A[X]) / (D[X] - A[X]);
 			Yfrac = (pt[Y] - A[Y]) / (D[Y] - A[Y]);
 
-#if 1
-#define SMOOTHSTEP(x)  ((x)*(x)*(3 - 2*(x)))
 			if (Xfrac < 0.0) Xfrac = 0.0;
 			if (Xfrac > 1.0) Xfrac = 1.0;
-			Xfrac = SMOOTHSTEP( Xfrac );
 
 			if (Yfrac < 0.0) Yfrac = 0.0;
 			if (Yfrac > 1.0) Yfrac = 1.0;
-			Yfrac = SMOOTHSTEP( Yfrac );
-#endif
+
+		     	if (dsp->dsp_i.dsp_smooth == 2) {
+#define SMOOTHSTEP(x)  ((x)*(x)*(3 - 2*(x)))
+				Xfrac = SMOOTHSTEP( Xfrac );
+
+				Yfrac = SMOOTHSTEP( Yfrac );
+#undef SMOOTHSTEP(x)
+		     	}
+
 			VSCALE(Anorm, Anorm, (1.0-Xfrac) );
 			VSCALE(Bnorm, Bnorm,      Xfrac  );
 			VADD2(ABnorm, Anorm, Bnorm);
@@ -2170,11 +2176,11 @@ register struct uvcoord	*uvp;
 	uvp->uv_u = u;
 	uvp->uv_v = v;
 
+#define DUDV
 #ifdef DUDV
 	r = ap->a_rbeam + ap->a_diverge * hitp->hit_dist;
 
 	VSETALL(v_m, r);
-	VUNITIZE(v_m);
 
 	MAT4X3VEC(v_s, dsp->dsp_i.dsp_mtos, v_m);
 
@@ -2190,8 +2196,9 @@ register struct uvcoord	*uvp;
 	uvp->uv_dv = 0.0;
 #endif
 	if (rt_g.debug & DEBUG_HF)
-		bu_log("rt_dsp_uv(pt:%g,%g siz:%d,%d) u=%g v=%g du=%g dv=%g\n",
+		bu_log("rt_dsp_uv(pt:%g,%g siz:%d,%d)\n r=%g rbeam=%g diverge=%g dist=%g\n u=%g v=%g du=%g dv=%g\n",
 			pt[X], pt[Y], XSIZ(dsp), YSIZ(dsp), 
+			r, ap->a_rbeam, ap->a_diverge, hitp->hit_dist,
 			uvp->uv_u, uvp->uv_v,
 			uvp->uv_du, uvp->uv_dv);
 }
