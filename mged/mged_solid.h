@@ -25,10 +25,8 @@ struct solid  {
 	vect_t	s_center;	/* Center point of solid, in model space */
 	unsigned long s_addr;	/* Display processor's core address */
 	unsigned s_bytes;	/* Display processor's core length */
-	struct vlist *s_vlist;/* Pointer to unclipped vector list */
-	int	s_vlen;		/* Len of unclipped vector list (structs) */
-	struct vlist *s_clipv;/* Pointer to clipped vector list */
-	int	s_clen;		/* Len of clipped vector list (structs) */
+	struct rt_list s_vlist;/* Pointer to unclipped vector list */
+	int	s_vlen;		/* # of actual cmd[] entries in vlist */
 	struct directory *s_path[MAX_PATH];	/* Full `path' name */
 	char	s_last;		/* index of last path element */
 	char	s_flag;		/* UP = object visible, DOWN = obj invis */
@@ -52,11 +50,13 @@ extern int		ndrawn;
 		p = (struct solid *)rt_calloc(1,sizeof(struct solid),"struct solid"); \
 	} else { \
 		FreeSolid = (p)->s_forw; \
-	} }
+	} \
+	RT_LIST_INIT( &((p)->s_vlist) ); \
+	}
 
 #define FREE_SOLID(p) {(p)->s_forw = FreeSolid; FreeSolid = (p); \
-	if((p)->s_vlist) FREE_VL((p)->s_vlist); \
-	(p)->s_vlist = 0; (p)->s_addr = 0; }
+	RT_FREE_VLIST( &((p)->s_vlist ) ); \
+	(p)->s_addr = 0; }
 
 #define FOR_ALL_SOLIDS(p)  \
 	for( p=HeadSolid.s_forw; p != &HeadSolid; p = p->s_forw )

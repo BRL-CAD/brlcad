@@ -162,7 +162,8 @@ char **argv;
 	HeadSolid.s_forw = &HeadSolid;
 	HeadSolid.s_back = &HeadSolid;
 	FreeSolid = SOLID_NULL;
-	
+	RT_LIST_INIT( &rt_g.rtg_vlfree );
+
 	state = ST_VIEW;
 	es_edflag = -1;
 	inpara = newedge = 0;

@@ -47,8 +47,8 @@ f_plot( argc, argv )
 int	argc;
 char	**argv;
 {
-	register struct solid *sp;
-	register struct vlist *vp;
+	register struct solid		*sp;
+	register struct rt_vlist	*vp;
 	register FILE *fp;
 	static vect_t clipmin, clipmax;
 	static vect_t last;		/* last drawn point */
@@ -147,11 +147,29 @@ char	**argv;
 					pl_linmod( fp, "solid");
 				Dashing = sp->s_soldash;
 			}
-			for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
-				if( vp->vl_draw )
-					pdv_3cont( fp, vp->vl_pnt );
-				else
-					pdv_3move( fp, vp->vl_pnt );
+			for( RT_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+				register int	i;
+				register int	nused = vp->nused;
+				register int	*cmd = vp->cmd;
+				register point_t *pt = vp->pt;
+				for( i = 0; i < nused; i++,cmd++,pt++ )  {
+					switch( *cmd )  {
+					case RT_VLIST_POLY_START:
+						break;
+					case RT_VLIST_POLY_MOVE:
+					case RT_VLIST_LINE_MOVE:
+						pdv_3move( fp, *pt );
+						break;
+					case RT_VLIST_POLY_DRAW:
+					case RT_VLIST_POLY_END:
+					case RT_VLIST_LINE_DRAW:
+						pdv_3cont( fp, *pt );
+						break;
+					default:
+						rt_log("unknown vlist cmd x%x\n",
+							*cmd );
+					}
+				}
 			}
 		}
 		goto out;
@@ -190,39 +208,54 @@ char	**argv;
 				pl_linmod( fp, "solid");
 			Dashing = sp->s_soldash;
 		}
-		for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
-			if( vp->vl_draw == 0 )  {
-				/* Move, not draw */
-				MAT4X3PNT( last, model2view, vp->vl_pnt );
-				continue;
-			}
-			/* draw */
-			MAT4X3PNT( fin, model2view, vp->vl_pnt );
-			VMOVE( start, last );
-			VMOVE( last, fin );
-			if(
-				vclip( start, fin, clipmin, clipmax ) == 0
-			)  continue;
+		for( RT_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+			register int	i;
+			register int	nused = vp->nused;
+			register int	*cmd = vp->cmd;
+			register point_t *pt = vp->pt;
+			for( i = 0; i < nused; i++,cmd++,pt++ )  {
+				switch( *cmd )  {
+				case RT_VLIST_POLY_START:
+					continue;
+				case RT_VLIST_POLY_MOVE:
+				case RT_VLIST_LINE_MOVE:
+					/* Move, not draw */
+					MAT4X3PNT( last, model2view, *pt );
+					continue;
+				case RT_VLIST_POLY_DRAW:
+				case RT_VLIST_POLY_END:
+				case RT_VLIST_LINE_DRAW:
+					/* draw */
+					MAT4X3PNT( fin, model2view, *pt );
+					VMOVE( start, last );
+					VMOVE( last, fin );
+					break;
+				}
+				if(
+					vclip( start, fin, clipmin, clipmax ) == 0
+				)  continue;
 
-			if( Three_D )  {
-				/* Could check for differences from last color */
-				pl_color( fp,
-					sp->s_color[0],
-					sp->s_color[1],
-					sp->s_color[2] );
-				pl_3line( fp,
-					(int)( start[X] * 2047 ),
-					(int)( start[Y] * 2047 ),
-					(int)( start[Z] * 2047 ),
-					(int)( fin[X] * 2047 ),
-					(int)( fin[Y] * 2047 ),
-					(int)( fin[Z] * 2047 ) );
-			}  else
-				pl_line( fp,
-					(int)( start[0] * 2047 ),
-					(int)( start[1] * 2047 ),
-					(int)( fin[0] * 2047 ),
-					(int)( fin[1] * 2047 ) );
+				if( Three_D )  {
+					/* Could check for differences from last color */
+					pl_color( fp,
+						sp->s_color[0],
+						sp->s_color[1],
+						sp->s_color[2] );
+					pl_3line( fp,
+						(int)( start[X] * 2047 ),
+						(int)( start[Y] * 2047 ),
+						(int)( start[Z] * 2047 ),
+						(int)( fin[X] * 2047 ),
+						(int)( fin[Y] * 2047 ),
+						(int)( fin[Z] * 2047 ) );
+				}  else  {
+					pl_line( fp,
+						(int)( start[0] * 2047 ),
+						(int)( start[1] * 2047 ),
+						(int)( fin[0] * 2047 ),
+						(int)( fin[1] * 2047 ) );
+				}
+			}
 		}
 	}
 out:
@@ -237,8 +270,8 @@ f_area( argc, argv )
 int	argc;
 char	**argv;
 {
-	register struct solid *sp;
-	register struct vlist *vp;
+	register struct solid		*sp;
+	register struct rt_vlist	*vp;
 	static vect_t last;
 	static vect_t fin;
 	char buf[128];
@@ -274,22 +307,36 @@ char	**argv;
 	 * and unscaled vectors
 	 */
 	FOR_ALL_SOLIDS( sp )  {
-		for( vp = sp->s_vlist; vp != VL_NULL; vp = vp->vl_forw )  {
-			if( vp->vl_draw == 0 )  {
-				/* Move, not draw */
-				MAT4X3VEC( last, Viewrot, vp->vl_pnt );
-				continue;
+		for( RT_LIST_FOR( vp, rt_vlist, &(sp->s_vlist) ) )  {
+			register int	i;
+			register int	nused = vp->nused;
+			register int	*cmd = vp->cmd;
+			register point_t *pt = vp->pt;
+			for( i = 0; i < nused; i++,cmd++,pt++ )  {
+				switch( *cmd )  {
+				case RT_VLIST_POLY_START:
+					continue;
+				case RT_VLIST_POLY_MOVE:
+				case RT_VLIST_LINE_MOVE:
+					/* Move, not draw */
+					MAT4X3VEC( last, Viewrot, *pt );
+					continue;
+				case RT_VLIST_POLY_DRAW:
+				case RT_VLIST_POLY_END:
+				case RT_VLIST_LINE_DRAW:
+					/* draw.  */
+					MAT4X3VEC( fin, Viewrot, *pt );
+					break;
+				}
+
+				fprintf(fp, "%.9e %.9e %.9e %.9e\n",
+					last[X] * base2local,
+					last[Y] * base2local,
+					fin[X] * base2local,
+					fin[Y] * base2local );
+
+				VMOVE( last, fin );
 			}
-			/* draw.  */
-			MAT4X3VEC( fin, Viewrot, vp->vl_pnt );
-
-			fprintf(fp, "%.9e %.9e %.9e %.9e\n",
-				last[X] * base2local,
-				last[Y] * base2local,
-				fin[X] * base2local,
-				fin[Y] * base2local );
-
-			VMOVE( last, fin );
 		}
 	}
 	(void)printf("Presented area from this viewpoint, square %s:\n",
