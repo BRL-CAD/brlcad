@@ -28,17 +28,7 @@
 #define prj_MAGIC 0x1834    /* make this a unique number for each shader */
 #define CK_prj_SP(_p) RT_CKMAG(_p, prj_MAGIC, "prj_specific")
 
-struct image {
-	bu_list	l;
-	struct bu_vls	i_filename;
-	unsigned char	*i_image;
-	unsigned	i_width;
-	unsigned	i_height;
-	fastf_t		i_viewsize;
-	point_t		i_eye;
-	quat_t		i_orient;
-	mat_t		i_m;
-}
+
 
 /*
  * the shader specific structure contains all variables which are unique
