@@ -2220,10 +2220,14 @@ point_t p_max;	/* shader/region max point */
 	mat_print("model_to_region", model_to_region);
 #endif
 	if (VEQUAL(p_min, p_max)) {
-
-		bu_log("db_shader_mat() min/max equal, getting bounding box of \"%s\"\n", reg_name);
 		/* User/shader did not specify bounding box,
 		 * obtain bounding box for un-transformed region
+		 */
+
+		/* XXX This should really be handled by a special set of
+		 * tree walker routines which just build up the RPP of the
+		 * region.  For now we just re-use rt_rpp_region() with
+		 * a scratch rtip.
 		 */
 		my_rtip = rt_new_rti(rtip->rti_dbip);
 		my_rtip->useair = rtip->useair;
