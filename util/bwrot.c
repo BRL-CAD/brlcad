@@ -1,15 +1,15 @@
 /*
- *		B W R O T . C
+ *			B W R O T . C
  *
- * Rotate, Invert, and/or Reverse the pixels in a Black
- * and white (.bw) file.
+ *  Rotate, Invert, and/or Reverse the pixels in a Black
+ *  and white (.bw) file.
  *
- * The rotation logic was worked out for data ordered with
+ *  The rotation logic was worked out for data ordered with
  *  "upper left" first.  It is being used on files in first
  *  quadrant order (lower left first).  Thus the "forward",
  *  "backward" flags are reversed.
  *
- * Note that this program can be applied to any collection
+ *  Note that this program can be applied to any collection
  *  of single byte entities.
  *
  *  Author -
@@ -31,7 +31,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 
-unsigned char *malloc();
+extern int	getopt();
+extern char	*optarg;
+extern int	optind;
+extern unsigned char *malloc();
 
 #define	MAXBUFBYTES	(1024*1024)
 
@@ -43,24 +46,27 @@ unsigned char *bp;
 unsigned char *obuf;
 unsigned char *obp;
 
-int	xin, yin, xout, yout, nxin, nyin;
+int	nxin = 512;
+int	nyin = 512;
+int	yin, xout, yout;
 int	plus90, minus90, reverse, invert;
 
-static	char *Usage = "usage: bwrot [-f -b -r -i] nx ny < file.bw > file.bw\n";
+static	char usage[] = "\
+Usage: bwrot [-f -b -r -i] [-s squaresize]\n\
+	[-w width] [-n height] [file.bw] > file.bw\n";
 
 void	fill_buffer(), reverse_buffer();
 
+static char	*file_name;
 FILE	*ifp, *ofp;
 
-main( argc, argv )
-int argc; char **argv;
+get_args( argc, argv )
+register char **argv;
 {
-	int	x, y;
-	int	outbyte, outplace;
+	register int c;
 
-	/* Check for flags */
-	while( argc > 1 && argv[1][0] == '-' )  {
-		switch( argv[1][1] )  {
+	while ( (c = getopt( argc, argv, "fbrihs:w:n:S:W:N:" )) != EOF )  {
+		switch( c )  {
 		case 'f':
 			minus90++;
 			break;
@@ -73,24 +79,66 @@ int argc; char **argv;
 		case 'i':
 			invert++;
 			break;
-		default:
-			fprintf( stderr, "bwrot: unrecognized flag '%s'\n", argv[1] );
-			fprintf( stderr, Usage );
-			exit( 1 );
+		case 'h':
+			/* high-res */
+			nxin = nyin = 1024;
+			break;
+		case 'S':
+		case 's':
+			/* square size */
+			nxin = nyin = atoi(optarg);
+			break;
+		case 'W':
+		case 'w':
+			nxin = atoi(optarg);
+			break;
+		case 'N':
+		case 'n':
+			nyin = atoi(optarg);
+			break;
+
+		default:		/* '?' */
+			return(0);
 		}
-		argc--;
-		argv++;
 	}
 
-	if( argc != 3 ) {
-		fprintf( stderr, Usage );
+	/* XXX - backward compatability hack */
+	if( optind+2 == argc ) {
+		nxin = atoi(argv[optind++]);
+		nyin = atoi(argv[optind++]);
+	}
+	if( optind >= argc )  {
+		if( isatty(fileno(stdin)) )
+			return(0);
+		file_name = "-";
+		ifp = stdin;
+	} else {
+		file_name = argv[optind];
+		if( (ifp = fopen(file_name, "r")) == NULL )  {
+			(void)fprintf( stderr,
+				"bwrot: cannot open \"%s\" for reading\n",
+				file_name );
+			return(0);
+		}
+	}
+
+	if ( argc > ++optind )
+		(void)fprintf( stderr, "bwrot: excess argument(s) ignored\n" );
+
+	return(1);		/* OK */
+}
+
+main( argc, argv )
+int argc; char **argv;
+{
+	int	x, y;
+	int	outbyte, outplace;
+
+	if ( !get_args( argc, argv ) || isatty(fileno(stdout)) )  {
+		(void)fputs(usage, stderr);
 		exit( 1 );
 	}
 
-	nxin = atoi( argv[1] );
-	nyin = atoi( argv[2] );
-
-	ifp = stdin;
 	ofp = stdout;
 
 	scanbytes = nxin;
