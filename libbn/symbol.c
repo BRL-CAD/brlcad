@@ -33,7 +33,7 @@
 #define bneg(x,y)	NEGY, brt(x,y)
 #define dneg(x,y)	NEGY, drk(x,y)
 
-#if defined(cray) || defined(CRAY2)
+#if defined(cray) || defined(CRAY2) || defined(mips)
 #define TINY	int
 #else
 #define TINY	char		/* must be signed */
