@@ -457,10 +457,10 @@ struct partition *PartHeadp;
 	 */
 	if( pp->pt_inhit->hit_dist > 10 )  {
 		stp = pp->pt_inseg->seg_stp;
-		rt_log("rr_hit: %d,%d %s inhit %g > 0.0!\n",
+		rt_log("rr_hit: %d,%d %s inhit %g > 10.0!\n",
 			ap->a_x, ap->a_y,
 			pp->pt_regionp->reg_name,
-			hitp->hit_dist);
+			pp->pt_inhit->hit_dist);
 		return(0);		/* dreadful error */
 	}
 
