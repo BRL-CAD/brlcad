@@ -118,6 +118,8 @@ char *file, *obj;
 	 */
 	if( cell_width > 0 )
 		gift_grid_rounding = cell_width;
+	else if( cell_height > 0 )
+		gift_grid_rounding = cell_height;
 	else
 		gift_grid_rounding = 25.4;		/* one inch */
 
@@ -696,13 +698,6 @@ top:		nextpp = pp->pt_forw;
 
 		if(gap > tolerance)  {
 			continue;
-		}
-		if(pp->pt_regionp == nextpp->pt_regionp)  {
-			/* If same region, then is a librt problem */
-			rt_log("WARNING: part_comp: region_id's are identical %d\n last=%s\n next=%s\n",
-				pp->pt_regionp->reg_regionid,
-				pp->pt_regionp->reg_name,
-				nextpp->pt_regionp->reg_name );
 		}
 
 		/* Eliminate the gap by collapsing the two partitions
