@@ -429,7 +429,7 @@ char **argv;
 		x = y = 0;
 		w = fbop->fbo_fbs.fbs_fbp->if_width;
 		h = fbop->fbo_fbs.fbs_fbp->if_height;
-	} else if (sscanf(argv[2], "%d", &x, &y, &w, &h) != 4) { /* refresh rectanglar area */
+	} else if (sscanf(argv[2], "%d %d %d %d", &x, &y, &w, &h) != 4) { /* refresh rectanglar area */
 		Tcl_AppendResult(interp, "fb_refresh: bad rectangle - ",
 				 argv[2], (char *)NULL);
 		return TCL_ERROR;
@@ -526,13 +526,8 @@ fbo_pixel_tcl(clientData, interp, argc, argv)
 	int r, g, b;
 	RGBpixel pixel;
 
-	if (argc < 4) {
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib fb_pixel");
-		Tcl_Eval(interp, bu_vls_addr(&vls));
-		bu_vls_free(&vls);
-		return TCL_ERROR;
-	}
+	if (argc < 4)
+		goto error;
 
 	/* get pixel position */
 	if (sscanf(argv[2], "%d", &x) != 1) {
@@ -583,6 +578,13 @@ fbo_pixel_tcl(clientData, interp, argc, argv)
 
 		return TCL_OK;
 	}
+
+error:
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "helplib fb_pixel");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
 }
 
 /*
