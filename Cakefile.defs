@@ -909,12 +909,6 @@ set -S2 "/bin/sh"
 #	define	BWISH_LIBES	MGED_LIBES LIBTCLCAD
 #	define	BWISH_CONFIG	-I''XINCDIR -DBWISH
 #	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11
-#	define	LIBZ_DIR	_use_system_z_
-#	define	LIBZ		-lz
-#	define	LIBZ_DEP	/**/
-/*#	define	LIBPNG_DIR	_use_system_png_*/
-/*#	define	LIBPNG		-lpng*/
-/*#	define	LIBPNG_DEP	*/
 #endif
 
 #if defined(CRAY1)
@@ -1016,7 +1010,7 @@ set -S2 "/bin/sh"
 #	if BUILD_OPTIMIZED	
 #		define	OPTIMIZER	-O3 -fomit-frame-pointer -fno-strict-aliasing
 #	else
-#		define	OPTIMIZER	-O -g
+#		define	OPTIMIZER	-g
 #		define	PROFILER	-pg  /* gprof profiling -- build staticly to include libraries */
 #	endif
 #	if BUILD_SHARED	
@@ -1086,12 +1080,6 @@ set -S2 "/bin/sh"
 #		define	LIBTK		-ltk8.0
 #		define	LIBTK_DEP	/**/
 #	endif
-#	define	LIBZ_DIR	_use_system_z_
-#	define	LIBZ		-lz
-#	define	LIBZ_DEP	/**/
-#	define	LIBPNG_DIR	_use_system_png_
-#	define	LIBPNG		-lpng
-#	define	LIBPNG_DEP	/**/
 #endif
 
 #if defined(__CAKE__fbsd)
@@ -1163,12 +1151,6 @@ set -S2 "/bin/sh"
 #	define	BWISH_CONFIG	-I''XINCDIR -DBWISH
 #	define	LIBDM_SAMPLE_LIBES \$"(LIBDM)" \$"(LIBTK)" \$"(LIBTCL)" \$"(LIBTK_LIBES)" \$"(LIBTCL_LIBES)" \$"(XLIBDIR)" -lXi -lXext -lX11
 /*	Use the system-provided libz and libpng */
-#	define	LIBZ_DIR	_use_system_z_
-#	define	LIBZ		-lz
-#	define	LIBZ_DEP	/**/
-#	define	LIBPNG_DIR	_use_system_png_
-#	define	LIBPNG		-L/usr/local/lib -lpng
-#	define	LIBPNG_DEP	/**/
 #endif
 
 #if defined(__CAKE__pmac)
