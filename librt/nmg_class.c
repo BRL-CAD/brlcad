@@ -149,7 +149,10 @@ int			code;
 			closest->class = NMG_CLASS_AonBshared;
 		} else if (eu->up.lu_p->orientation == OT_OPPOSITE) {
 			closest->class = NMG_CLASS_AoutB;
-		} else rt_bomb("joint_hitmiss2: bad loop orientation\n");
+		} else {
+			nmg_pr_lu_briefly(eu->up.lu_p, (char *)0);
+			rt_bomb("joint_hitmiss2: bad loop orientation\n");
+		}
 		closest->dist = 0.0;
 		switch(code)  {
 		case 0:
