@@ -9,7 +9,6 @@ brlcadinclude_HEADERS = \
 	bu.h \
 	cmd.h \
 	compat4.h \
-	conf.h \
 	db.h \
 	db5.h \
 	dm-Null.h \
@@ -83,5 +82,6 @@ brlcadinclude_HEADERS = \
 	vmath.h \
 	wdb.h \
 	zconf.h \
-	zlib.h
+	zlib.h \
+	config.h
 
