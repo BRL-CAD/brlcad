@@ -31,6 +31,7 @@
 #include "raytrace.h"
 #include "externs.h"
 #include "./ged.h"
+#include "./mged_solid.h"
 #include "./mged_dm.h"
 
 #define RESOURCE_TYPE_ADC		0
@@ -46,28 +47,22 @@
     if (uflag) { \
       struct str *strp; \
 \
-      if (dlp1->resource->rc == 1) {   /* already not sharing */ \
-	bu_vls_free(&vls); \
-	return TCL_OK; \
+      if (dlp1->resource->rc > 1) {   /* must be sharing this resource */ \
+	--dlp1->resource->rc; \
+	strp = dlp1->resource; \
+	BU_GETSTRUCT(dlp1->resource, str); \
+	*dlp1->resource = *strp;        /* struct copy */ \
+	dlp1->resource->rc = 1; \
       } \
-\
-      --dlp1->resource->rc; \
-      strp = dlp1->resource; \
-      BU_GETSTRUCT(dlp1->resource, str); \
-      *dlp1->resource = *strp;        /* struct copy */ \
-      dlp1->resource->rc = 1; \
     } else { \
-      /* already sharing this resource */ \
-      if (dlp1->resource == dlp2->resource) { \
-	bu_vls_free(&vls); \
-	return TCL_OK; \
+      /* must not be sharing this resource */ \
+      if (dlp1->resource != dlp2->resource) { \
+        if (!--dlp2->resource->rc) \
+          bu_free((genptr_t)dlp2->resource, error_msg); \
+\
+          dlp2->resource = dlp1->resource; \
+          ++dlp1->resource->rc; \
       } \
-\
-      if (!--dlp2->resource->rc) \
-	bu_free((genptr_t)dlp2->resource, error_msg); \
-\
-      dlp2->resource = dlp1->resource; \
-      ++dlp1->resource->rc; \
     } \
 }
 
@@ -104,7 +99,8 @@ int argc;
 char **argv;
 {
   register int uflag = 0;		/* unshare flag */
-  struct dm_list *dlp1, *dlp2;
+  struct dm_list *dlp1 = (struct dm_list *)NULL;
+  struct dm_list *dlp2 = (struct dm_list *)NULL;
   struct bu_vls vls;
 
   bu_vls_init(&vls);
@@ -174,6 +170,40 @@ char **argv;
   case 'C':
     SHARE_RESOURCE(uflag,_color_scheme,dml_color_scheme,cs_rc,dlp1,dlp2,vls,"share: color_scheme")
     break;
+  case 'd':
+  case 'D':
+    {
+      struct dm *dmp1;
+      struct dm *dmp2 = (struct dm *)NULL;
+
+      dmp1 = dlp1->dml_dmp;
+      if (dlp2 != (struct dm_list *)NULL)
+	dmp2 = dlp2->dml_dmp;
+
+      if (dm_share_dlist(dmp1, dmp2) == TCL_OK) {
+	SHARE_RESOURCE(uflag,_dlist_state,dml_dlist_state,dl_rc,dlp1,dlp2,vls,"share: dlist_state");
+	if (uflag) {
+	  dlp1->dml_dlist_state->dl_active = dlp1->dml_mged_variables->mv_dlist;
+
+	  if (dlp1->dml_mged_variables->mv_dlist) {
+	    struct dm_list *save_dlp;
+
+	    save_dlp = curr_dm_list;
+
+	    curr_dm_list = dlp1;
+	    createDLists(&HeadSolid);
+
+	    /* restore */
+	    curr_dm_list = save_dlp;
+	  }
+
+	  dlp1->dml_dirty = 1;
+	} else {
+	  dlp1->dml_dirty = dlp2->dml_dirty = 1;
+	}
+      }
+    }
+    break;
   case 'g':
   case 'G':
     SHARE_RESOURCE(uflag,_grid_state,dml_grid_state,gr_rc,dlp1,dlp2,vls,"share: grid_state")
@@ -198,7 +228,8 @@ char **argv;
 	SHARE_RESOURCE(uflag,_view_state,dml_view_state,vs_rc,dlp1,dlp2,vls,"share: view_state")
 
 	/* initialize dlp1's view_state */
-	view_ring_init(dlp1->dml_view_state, ovsp);
+	if (ovsp != dlp1->dml_view_state)
+	  view_ring_init(dlp1->dml_view_state, ovsp);
       } else {
 	/* free dlp2's view_state resources if currently not sharing */
 	if (dlp2->dml_view_state->vs_rc == 1)
@@ -353,6 +384,10 @@ struct dm_list *dlp2;
   dlp2->dml_color_scheme = (struct _color_scheme *)NULL;
   dlp2->dml_grid_state = (struct _grid_state *)NULL;
   dlp2->dml_axes_state = (struct _axes_state *)NULL;
+
+  /* it doesn't make sense to save display list info */
+  if(!--dlp2->dml_dlist_state->dl_rc)
+    bu_free((genptr_t)curr_dm_list->dml_dlist_state, "usurp_all_resources: _dlist_state");
 }
 
 /*
@@ -365,27 +400,54 @@ struct dm_list *dlp;
 {
   if(!--dlp->dml_view_state->vs_rc){
     view_ring_destroy(dlp);
-    bu_free((genptr_t)dlp->dml_view_state, "release: view_state");
+    bu_free((genptr_t)dlp->dml_view_state, "free_all_resources: view_state");
   }
 
   if (!--dlp->dml_adc_state->adc_rc)
-    bu_free((genptr_t)dlp->dml_adc_state, "release: adc_state");
+    bu_free((genptr_t)dlp->dml_adc_state, "free_all_resources: adc_state");
 
   if (!--dlp->dml_menu_state->ms_rc)
-    bu_free((genptr_t)dlp->dml_menu_state, "release: menu_state");
+    bu_free((genptr_t)dlp->dml_menu_state, "free_all_resources: menu_state");
 
   if (!--dlp->dml_rubber_band->rb_rc)
-    bu_free((genptr_t)dlp->dml_rubber_band, "release: rubber_band");
+    bu_free((genptr_t)dlp->dml_rubber_band, "free_all_resources: rubber_band");
 
   if (!--dlp->dml_mged_variables->mv_rc)
-    bu_free((genptr_t)dlp->dml_mged_variables, "release: mged_variables");
+    bu_free((genptr_t)dlp->dml_mged_variables, "free_all_resources: mged_variables");
 
   if (!--dlp->dml_color_scheme->cs_rc)
-    bu_free((genptr_t)dlp->dml_color_scheme, "release: color_scheme");
+    bu_free((genptr_t)dlp->dml_color_scheme, "free_all_resources: color_scheme");
 
   if (!--dlp->dml_grid_state->gr_rc)
-    bu_free((genptr_t)dlp->dml_grid_state, "release: grid_state");
+    bu_free((genptr_t)dlp->dml_grid_state, "free_all_resources: grid_state");
 
   if (!--dlp->dml_axes_state->ax_rc)
-    bu_free((genptr_t)dlp->dml_axes_state, "release: axes_state");
+    bu_free((genptr_t)dlp->dml_axes_state, "free_all_resources: axes_state");
+}
+
+void
+share_dlist(dlp2)
+struct dm_list *dlp2;
+{
+  struct dm_list *dlp1;
+
+  if(!dlp2->dml_dmp->dm_displaylist)
+    return;
+
+  FOR_ALL_DISPLAYS(dlp1, &head_dm_list.l){
+    if(dlp1 != dlp2 && 
+       dlp1->dml_dmp->dm_type == dlp2->dml_dmp->dm_type &&
+       !strcmp(bu_vls_addr(&dlp1->dml_dmp->dm_dName), bu_vls_addr(&dlp2->dml_dmp->dm_dName))){
+      if (dm_share_dlist(dlp1->dml_dmp, dlp2->dml_dmp) == TCL_OK) {
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	SHARE_RESOURCE(0,_dlist_state,dml_dlist_state,dl_rc,dlp1,dlp2,vls,"share: dlist_state");
+	dlp1->dml_dirty = dlp2->dml_dirty = 1;
+	bu_vls_free(&vls);
+      }
+      
+      break;
+    }
+  }
 }
