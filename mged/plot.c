@@ -27,6 +27,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "mater.h"
+#include "rtstring.h"
 #include "raytrace.h"
 #include "./ged.h"
 #include "externs.h"
@@ -57,8 +58,7 @@ char	**argv;
 	int Z_clip;			/* Z clipping */
 	int Dashing;			/* linetype is dashed */
 	int floating;			/* 3-D floating point plot */
-	char **argv;
-	char buf[128];
+	int	is_pipe = 0;
 
 	if( not_state( ST_VIEW, "UNIX Plot of view" ) )
 		return;
@@ -67,9 +67,8 @@ char	**argv;
 	Three_D = 1;				/* 3-D w/color, by default */
 	Z_clip = 0;				/* NO Z clipping, by default*/
 	floating = 0;
-	argv = &argv[1];
-	while( argv[0] != (char *)0 && argv[0][0] == '-' )  {
-		switch( argv[0][1] )  {
+	while( argv[1] != (char *)0 && argv[1][0] == '-' )  {
+		switch( argv[1][1] )  {
 		case 'f':
 			floating = 1;
 			break;
@@ -90,32 +89,37 @@ char	**argv;
 			Z_clip = 1;
 			break;
 		default:
-			(void)printf("bad PLOT option %s\n", argv[0] );
+			(void)printf("bad PLOT option %s\n", argv[1] );
 			break;
 		}
 		argv++;
 	}
-	if( argv[0] == (char *)0 )  {
+	if( argv[1] == (char *)0 )  {
 		printf("no filename or filter specified\n");
 		return;
 	}
-	if( argv[0][0] == '|' )  {
-		strncpy( buf, &argv[0][1], sizeof(buf) );
-		while( (++argv)[0] != (char *)0 )  {
-			strncat( buf, " ", sizeof(buf) );
-			strncat( buf, argv[0], sizeof(buf) );
+	if( argv[2][0] == '|' )  {
+		struct rt_vls	str;
+		rt_vls_init( &str );
+		rt_vls_strcpy( &str, &argv[2][1] );
+		while( (++argv)[1] != (char *)0 )  {
+			rt_vls_strcat( &str, " " );
+			rt_vls_strcat( &str, argv[1] );
 		}
-		if( (fp = popen( buf, "w" ) ) == NULL )  {
-			perror( buf );
+		if( (fp = popen( rt_vls_addr( &str ), "w" ) ) == NULL )  {
+			perror( rt_vls_addr( &str ) );
 			return;
 		}
-		(void)printf("piped to %s\n", buf );
+		(void)printf("piped to %s\n", rt_vls_addr( &str ) );
+		rt_vls_free( &str );
+		is_pipe = 1;
 	}  else  {
-		if( (fp = fopen( argv[0], "w" )) == NULL )  {
-			perror( argv[0] );
+		if( (fp = fopen( argv[1], "w" )) == NULL )  {
+			perror( argv[1] );
 			return;
 		}
-		(void)printf("plot stored in %s\n", argv[0] );
+		(void)printf("plot stored in %s\n", argv[1] );
+		is_pipe = 0;
 	}
 
 	color_soltab();		/* apply colors to the solid table */
@@ -222,7 +226,7 @@ char	**argv;
 		}
 	}
 out:
-	if( argv[1][0] == '|' )
+	if( is_pipe )
 		(void)pclose( fp );
 	else
 		(void)fclose( fp );
