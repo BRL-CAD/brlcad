@@ -1502,6 +1502,8 @@ struct faceuse		*eu_fu;		/* fu that eu is from */
 
 nmg_fu_touchingloops(fu);
 nmg_fu_touchingloops(eu_fu);
+nmg_region_v_unique( fu->s_p->r_p, &is->tol );
+nmg_region_v_unique( eu_fu->s_p->r_p, &is->tol );
 	for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
 		struct edgeuse	*eu2;
 
@@ -1520,6 +1522,8 @@ nmg_fu_touchingloops(eu_fu);
 			nmg_isect_edge2p_edge2p( is, eu, eu2, eu_fu, fu );
 nmg_fu_touchingloops(fu);
 nmg_fu_touchingloops(eu_fu);
+nmg_region_v_unique( fu->s_p->r_p, &is->tol );
+nmg_region_v_unique( eu_fu->s_p->r_p, &is->tol );
 		}
 	}
 
@@ -1545,9 +1549,13 @@ nmg_fu_touchingloops(eu_fu);
 
 nmg_fu_touchingloops(fu);
 nmg_fu_touchingloops(eu_fu);
+nmg_region_v_unique( fu->s_p->r_p, &is->tol );
+nmg_region_v_unique( eu_fu->s_p->r_p, &is->tol );
 	nmg_face_cutjoin(&vert_list1, &vert_list2, fu, eu_fu, is->pt, is->dir, &is->tol);
 nmg_fu_touchingloops(fu);		/* XXX r410 dies here */
 nmg_fu_touchingloops(eu_fu);
+nmg_region_v_unique( fu->s_p->r_p, &is->tol );
+nmg_region_v_unique( eu_fu->s_p->r_p, &is->tol );
 	nmg_mesh_faces(fu, eu_fu, &is->tol);
 
 out:
@@ -1593,6 +1601,8 @@ struct faceuse		*fu1, *fu2;
 f1_again:
 nmg_fu_touchingloops(fu1);
 nmg_fu_touchingloops(fu2);
+nmg_region_v_unique( fu1->s_p->r_p, &is->tol );
+nmg_region_v_unique( fu2->s_p->r_p, &is->tol );
 	for( RT_LIST_FOR( lu, loopuse, &fu1->lu_hd ) )  {
 		NMG_CK_LOOPUSE(lu);
 		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )  {
@@ -1616,6 +1626,8 @@ nmg_fu_touchingloops(fu2);
 f2_again:
 nmg_fu_touchingloops(fu1);
 nmg_fu_touchingloops(fu2);
+nmg_region_v_unique( fu1->s_p->r_p, &is->tol );
+nmg_region_v_unique( fu2->s_p->r_p, &is->tol );
 	for( RT_LIST_FOR( lu, loopuse, &fu2->lu_hd ) )  {
 		NMG_CK_LOOPUSE(lu);
 		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )  {
@@ -1633,6 +1645,8 @@ nmg_fu_touchingloops(fu2);
 	}
 nmg_fu_touchingloops(fu1);
 nmg_fu_touchingloops(fu2);
+nmg_region_v_unique( fu1->s_p->r_p, &is->tol );
+nmg_region_v_unique( fu2->s_p->r_p, &is->tol );
 }
 
 /*
@@ -1665,6 +1679,8 @@ struct faceuse		*fu1, *fu2;
 	}
 nmg_fu_touchingloops(fu1);
 nmg_fu_touchingloops(fu2);
+nmg_region_v_unique( fu1->s_p->r_p, &is->tol );
+nmg_region_v_unique( fu2->s_p->r_p, &is->tol );
 
 	(void)nmg_tbl(&vert_list1, TBL_INIT,(long *)NULL);
 	(void)nmg_tbl(&vert_list2, TBL_INIT,(long *)NULL);
@@ -1681,6 +1697,8 @@ nmg_fu_touchingloops(fu2);
 	nmg_isect_face3p_face3p(is, fu1, fu2);
 nmg_fu_touchingloops(fu1);
 nmg_fu_touchingloops(fu2);
+nmg_region_v_unique( fu1->s_p->r_p, &is->tol );
+nmg_region_v_unique( fu2->s_p->r_p, &is->tol );
 
 	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 		nmg_vfu( &fu1->s_p->fu_hd, fu1->s_p );
@@ -1698,6 +1716,8 @@ nmg_fu_touchingloops(fu2);
 	nmg_isect_face3p_face3p(is, fu2, fu1);
 nmg_fu_touchingloops(fu1);
 nmg_fu_touchingloops(fu2);
+nmg_region_v_unique( fu1->s_p->r_p, &is->tol );
+nmg_region_v_unique( fu2->s_p->r_p, &is->tol );
 
 	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 		nmg_vfu( &fu1->s_p->fu_hd, fu1->s_p );
@@ -1721,6 +1741,8 @@ nmg_fu_touchingloops(fu2);
 	nmg_face_cutjoin(&vert_list1, &vert_list2, fu1, fu2, is->pt, is->dir, &is->tol);
 nmg_fu_touchingloops(fu1);
 nmg_fu_touchingloops(fu2);
+nmg_region_v_unique( fu1->s_p->r_p, &is->tol );
+nmg_region_v_unique( fu2->s_p->r_p, &is->tol );
 
 	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 		nmg_vfu( &fu1->s_p->fu_hd, fu1->s_p );
@@ -1822,6 +1844,8 @@ rt_log("co-planar faces.\n");
 	}
 
 	if(bs.vert2d)  rt_free( (char *)bs.vert2d, "vert2d" );
+nmg_region_v_unique( fu1->s_p->r_p, &bs.tol );
+nmg_region_v_unique( fu2->s_p->r_p, &bs.tol );
 nmg_fu_touchingloops(fu1);
 nmg_fu_touchingloops(fu2);
 }
