@@ -896,6 +896,7 @@ CONST struct rt_table	*tabp;
 	char	*cp;
 	int	nbytes;
 	int	len;
+	int	got;
 	int	fd;
 	int	i;
 
@@ -903,16 +904,36 @@ CONST struct rt_table	*tabp;
 
 	nbytes = RT_SIZEOF_TABDATA(tabp);
 	len = num * nbytes;
-	data = (struct rt_tabdata *)rt_malloc( len+8, "rt_tabdata[]" );
 
-	if( (fd = open(filename, 0)) <= 0 )  {
+	bu_semaphore_acquire( BU_SEM_SYSCALL );
+	fd = open(filename, 0);
+	bu_semaphore_release( BU_SEM_SYSCALL );
+	if( fd <= 0 )  {
 		perror(filename);
-		rt_bomb("Unable to open rt_tabdata file\n");
+		bu_log("rt_tabdata_binary_read(%s): %m\n", filename);
+		bu_semaphore_acquire( BU_SEM_SYSCALL );
+		close(fd);
+		bu_semaphore_release( BU_SEM_SYSCALL );
+		return (struct rt_tabdata *)NULL;
 	}
-	if( read( fd, (char *)data, len ) != len )  {
-		rt_bomb("Read of rt_tabdata failed\n");
+
+	data = (struct rt_tabdata *)bu_malloc( len+8, "rt_tabdata[]" );
+
+	bu_semaphore_acquire( BU_SEM_SYSCALL );
+	got = read( fd, (char *)data, len );
+	bu_semaphore_release( BU_SEM_SYSCALL );
+	if( got != len )  {
+		bu_log("rt_tabdata_binary_read(%s) expected %d got %d\n",
+			filename, len, got);
+		bu_free( data, "rt_tabdata[]" );
+		bu_semaphore_acquire( BU_SEM_SYSCALL );
+		close(fd);
+		bu_semaphore_release( BU_SEM_SYSCALL );
+		return (struct rt_tabdata *)NULL;
 	}
+	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	close(fd);
+	bu_semaphore_release( BU_SEM_SYSCALL );
 
 	/* Connect data[i].table pointer to tabp */
 	cp = (char *)data;
@@ -1080,4 +1101,54 @@ CONST struct rt_tabdata	*data;
 	}
 	bu_vls_printf( vp, "} nx %d ymin %g ymax %g",
 		tabp->nx, minval, maxval );
+}
+
+/*
+ *			R T _ T A B D A T A _ F R E Q _ S H I F T
+ *
+ *  Shift the data by a constant offset in the independent variable
+ *  (often frequency), interpolating new sample values.
+ */
+void
+rt_tabdata_freq_shift( out, in, offset )
+struct rt_tabdata		*out;
+CONST struct rt_tabdata		*in;
+double				offset;
+{
+	CONST struct rt_table	*tabp;
+	register int 		i;
+
+	RT_CK_TABDATA( out );
+	RT_CK_TABDATA( in );
+	tabp = in->table;
+
+	if( tabp != out->table )
+		rt_bomb("rt_tabdata_freq_shift(): samples drawn from different tables\n");
+	if( in->ny != out->ny )
+		rt_bomb("rt_tabdata_freq_shift(): different tabdata lengths?\n");
+
+	for( i=0; i < out->ny; i++ ) {
+		out->y[i] = rt_table_lin_interp( in, tabp->x[i]+offset );
+	}
+}
+
+/*
+ *			R T _ T A B D A T A _ I N T E R V A L _ N U M _ S A M P L E S
+ *  Returns number of sample points between 'low' and 'hi', inclusive.
+ */
+int
+rt_tabdata_interval_num_samples( tabp, low, hi )
+CONST struct rt_table *tabp;
+double	low;
+double	hi;
+{
+	register int	i;
+	register int	count = 0;
+
+	RT_CK_TABLE(tabp);
+
+	for( i=0; i < tabp->nx-1; i++ )  {
+		if( tabp->x[i] >= low && tabp->x[i] <= hi )  count++;
+	}
+	return count;
 }
