@@ -37,7 +37,7 @@ asc2g:	asc2g.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBWDB_DEP
 g2asc:	g2asc.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
 	CC LDFLAGS g2asc.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o g2asc
 
-conv-vg2g:	conv-vg2g.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBWDB_DEP
+conv-vg2g:	conv-vg2g.o
 	CC LDFLAGS conv-vg2g.o -o conv-vg2g
 
 pix2asc:	pix2asc.o
