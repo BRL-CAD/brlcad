@@ -23,8 +23,9 @@ static char RCStree[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 #include "machine.h"
 #include "vmath.h"
-#include "raytrace.h"
 #include "db.h"
+#include "nmg.h"
+#include "raytrace.h"
 #include "./debug.h"
 
 #if __STDC__ && !alliant && !apollo
@@ -162,8 +163,8 @@ struct rt_functab rt_functab[ID_MAXIMUM+2] = {
 		rt_hlf_prep,	rt_hlf_shot,	rt_hlf_print,	rt_hlf_norm,
 		rt_hlf_uv,	rt_hlf_curve,	rt_hlf_class,	rt_hlf_free,
 		rt_hlf_plot,	rt_hlf_vshot,	rt_hlf_tess,
-		rt_nul_import,	rt_nul_export,	rt_nul_ifree,
-		rt_nul_describe,
+		rt_hlf_import,	rt_hlf_export,	rt_hlf_ifree,
+		rt_hlf_describe,
 
 	"ID_REC",	1,
 		rt_rec_prep,	rt_rec_shot,	rt_rec_print,	rt_rec_norm,
@@ -247,25 +248,55 @@ int rt_nfunctab = sizeof(rt_functab)/sizeof(struct rt_functab);
 /*
  *  Hooks for unimplemented routines
  */
-#define DEF(func)	func() { rt_log("func unimplemented\n"); return; }
-#define IDEF(func)	func() { rt_log("func unimplemented\n"); return(0); }
-#define NDEF(func)	func() { rt_log("func unimplemented\n"); return(-1); }
+#define DEF(func,args)	func RT_ARGS(args) { \
+	rt_log("func unimplemented\n"); return; }
+#define IDEF(func,args)	func RT_ARGS(args) { \
+	rt_log("func unimplemented\n"); return(0); }
+#define NDEF(func,args)	func RT_ARGS(args) { \
+	rt_log("func unimplemented\n"); return(-1); }
 
-int IDEF(rt_nul_prep)
-int	 IDEF(rt_nul_shot)
-void DEF(rt_nul_print)
-void DEF(rt_nul_norm)
-void DEF(rt_nul_uv)
-void DEF(rt_nul_curve)
-int IDEF(rt_nul_class)
-void DEF(rt_nul_free)
-int NDEF(rt_nul_plot)
-void DEF(rt_nul_vshot)
-int NDEF(rt_nul_tess)
-int NDEF(rt_nul_import)
-int NDEF(rt_nul_export)
-void DEF(rt_nul_ifree)
-int NDEF(rt_nul_describe)
+int IDEF(rt_nul_prep,(struct soltab *stp,union record *rec,struct rt_i *rtip))
+int IDEF(rt_nul_shot,(struct soltab *stp,
+			struct xray *rp,
+			struct application *ap,
+			struct seg *seghead))
+void DEF(rt_nul_print,(struct soltab *stp))
+void DEF(rt_nul_norm,(struct hit *hitp,
+			struct soltab *stp,
+			struct xray *rp))
+void DEF(rt_nul_uv,(struct application *ap,
+			struct soltab *stp,
+			struct hit *hitp,
+			struct uvcoord *uvp))
+void DEF(rt_nul_curve,(struct curvature *cvp,
+			struct hit *hitp,
+			struct soltab *stp))
+int IDEF(rt_nul_class,())
+void DEF(rt_nul_free,(struct soltab *stp))
+int NDEF(rt_nul_plot,(union record *rec,
+			mat_t mat,
+			struct vlhead *vhead,
+			struct directory *dp,
+			double abs_tol, double rel_tol, double norm_tol))
+void DEF(rt_nul_vshot,(struct soltab *stp[],
+			struct xray *rp[],
+			struct seg segp[], int n,
+			struct resource *resp))
+int NDEF(rt_nul_tess,(struct nmgregion **r,
+			struct model *m,
+			union record *rec,
+			mat_t mat,
+			struct directory *dp,
+			double abs_tol, double rel_tol, double norm_tol))
+int NDEF(rt_nul_import,(struct rt_db_internal *ip,
+			struct rt_external *ep,
+			mat_t mat))
+int NDEF(rt_nul_export,(struct rt_external *ep,
+			struct rt_db_internal *ip))
+void DEF(rt_nul_ifree,(struct rt_db_internal *ip))
+int NDEF(rt_nul_describe,(struct rt_vls *str,
+			struct rt_db_internal *ip,
+			int verbose))
 
 /* Map for database solidrec objects to internal objects */
 static char idmap[] = {
