@@ -2502,6 +2502,10 @@ rt_extrude_xform(
 		op->idb_meth = &rt_functab[ID_EXTRUDE];
 		op->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		op->idb_type = ID_EXTRUDE;
+		if( ip->idb_avs.magic == BU_AVS_MAGIC ) {
+			bu_avs_init( &op->idb_avs, ip->idb_avs.count, "avs" );
+			bu_avs_merge( &op->idb_avs, &ip->idb_avs );
+		}
 	}
 	else
 		eop = (struct rt_extrude_internal *)ip->idb_ptr;

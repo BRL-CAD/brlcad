@@ -1320,6 +1320,13 @@ struct db_i	*dbip;
 	else
 		botop = botip;
 
+	if( ip != op ) {
+		if( ip->idb_avs.magic == BU_AVS_MAGIC ) {
+			bu_avs_init( &op->idb_avs, ip->idb_avs.count, "avs" );
+			bu_avs_merge( &op->idb_avs, &ip->idb_avs );
+		}
+	}
+
 	for( i=0 ; i<botip->num_vertices ; i++ )
 	{
 		MAT4X3PNT( pt, mat, &botip->vertices[i*3] );
@@ -1331,8 +1338,9 @@ struct db_i	*dbip;
 		VMOVE( &botop->normals[i*3], pt );
 	}
 
-	if( free && op != ip )
+	if( free && op != ip ) {
 		rt_bot_ifree( ip );
+	}
 
 	return( 0 );
 }
