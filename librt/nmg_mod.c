@@ -3988,8 +3988,10 @@ register struct edgeuse	*eu;
 /*
  *			N M G _ M O V E _ E G
  *
- *  For every edge in shell 's', change all occurances of edge geometry
- *  structure 'old_eg' to be 'new_eg'.
+ *  For all edges in the model which refer to 'old_eg',
+ *  change them to refer to 'new_eg'.
+ *
+ *  XXX The algorithm needs to be changed when edge_g get linked lists of edges.
  */
 void
 nmg_move_eg( old_eg, new_eg, s )
@@ -4003,6 +4005,8 @@ struct shell	*s;
 	struct loop		*l;
 	register struct edgeuse		*eu;
 	register struct edge		*e;
+	register struct edgeuse	**eup;
+	struct nmg_ptbl		eutab;
 
 	NMG_CK_EDGE_G(old_eg);
 	NMG_CK_EDGE_G(new_eg);
@@ -4012,6 +4016,23 @@ struct shell	*s;
 			old_eg, new_eg, s );
 	}
 
+#if 1
+	/* XXX Replace with walk of eg eu list */
+	nmg_edgeuse_with_eg_tabulate( &eutab, nmg_find_model(&s->l.magic), old_eg );
+
+	for( eup = (struct edgeuse **)NMG_TBL_LASTADDR(&eutab);
+	     eup >= (struct edgeuse **)NMG_TBL_BASEADDR(&eutab);
+	     eup--
+	)  {
+		NMG_CK_EDGEUSE(*eup);
+		e = (*eup)->e_p;
+		NMG_CK_EDGE(e);
+		/* Another use of this edge may have fix things already */
+		if( e->eg_p != old_eg )  continue;
+		nmg_use_edge_g( e, new_eg );
+	}
+	nmg_tbl( &eutab, TBL_FREE, (long *)0 );
+#else
 	/* Faces in shell */
 	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
 		NMG_CK_FACEUSE(fu);
@@ -4063,6 +4084,7 @@ struct shell	*s;
 			nmg_use_edge_g( e, new_eg );
 		}
 	}
+#endif
 }
 
 /************************************************************************

@@ -2469,8 +2469,6 @@ top:
  *  Force the edge geometry structure for a given edge to be that of
  *  the intersection line between the two faces.
  *
- *  XXX What about orientation?  Which way should direction vector point?
- *  XXX What about edgeuse orientation flags?
  */
 void
 nmg_edge_geom_isect_line( e, rs )
@@ -2512,7 +2510,11 @@ struct nmg_ray_state	*rs;
 	 * Everywhere e->eg_p is seen, replace with rs->eg_p.
 	 */
 	nmg_move_eg( e->eg_p, rs->eg_p, rs->sA );
+#if 0
+	/* XXX Old routine will break association with eg in other shells!! */
+	/* Only need one call to do whole model, with new routine */
 	nmg_move_eg( e->eg_p, rs->eg_p, rs->sB );
+#endif
 }
 
 /*
