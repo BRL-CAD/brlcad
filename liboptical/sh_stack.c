@@ -75,9 +75,9 @@ char	**dpp;		/* pointer to user data pointer */
 		rt_log( "stk_setup called with \"%s\"\n", RT_VLS_ADDR(matparm) );
 	i = 0;
 	start = cp = RT_VLS_ADDR(matparm);
-	while( *cp != NULL ) {
+	while( *cp != '\0' ) {
 		if( *cp == ';' ) {
-			*cp = NULL;
+			*cp = '\0';
 			if( i >= 16 ) {
 				rt_log( "stk_setup: max levels exceeded\n" );
 				return( 0 );
@@ -201,7 +201,7 @@ char	**mpp;		/* mfuncs pointer address */
 	while( *cp == ' ' || *cp == '\t' )
 		cp++;
 
-	for( i = 0; i < 31 && *cp != NULL; i++, cp++ ) {
+	for( i = 0; i < 31 && *cp != '\0'; i++, cp++ ) {
 		if( *cp == ' ' || *cp == '\t' ) {
 			matname[i++] = '\0';
 			break;
