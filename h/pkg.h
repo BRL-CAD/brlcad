@@ -23,7 +23,7 @@
 
 struct pkg_switch {
 	unsigned short	pks_type;	/* Type code */
-	int	(*pks_handler)();	/* Message Handler */
+	void	(*pks_handler)();	/* Message Handler */
 	char	*pks_title;		/* Description of message type */
 };
 
