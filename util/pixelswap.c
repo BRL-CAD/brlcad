@@ -2,15 +2,16 @@
  *	Options
  *	h	help
  */
+#include "conf.h"
+
 #include <stdio.h>
+#include "machine.h"
+#include "externs.h"		/* For getopt() */
 #include "fb.h"
 
-/* declarations to support use of getopt() system call */
 char *options = "hd:";
-extern char *optarg;
-extern int optind, opterr, getopt();
-
 char *progname = "(noname)";
+
 int depth = 3;
 unsigned char ibuf[32767 * 3];
 unsigned char obuf[32767 * 3];
@@ -39,7 +40,6 @@ int ac;
 char *av[];
 {
 	int  c;
-	char *strrchr();
 
 	if (  ! (progname=strrchr(*av, '/'))  )
 		progname = *av;
