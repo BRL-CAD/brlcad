@@ -1,0 +1,321 @@
+# This file is a Tcl script to test out [incr Widgets] Hierarchy class.
+# It is organized in the standard fashion for Tcl tests with the following
+# notation for test case labels:
+#
+#   1.x - Construction/Destruction tests
+#   2.x - Configuration option tests
+#   3.x - Method tests
+#
+# Copyright (c) 1995 DSC Technologies Corporation
+#
+# See the file "license.terms" for information on usage and redistribution
+# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+# @(#) $Id$
+
+package require tcltest
+namespace import -force ::tcltest::*
+
+if [catch {package require Iwidgets 4.0}] {
+  # Let's try modifying the auto_path.  Note that the IWIDGETS_LIBRARY
+  # env var is initialized in the Makefile when doing a 'make test'.
+  # If sourcing this file independently, this variable must be set manually.
+  if ![info exists env(IWIDGETS_LIBRARY)] {
+    error "Unable to locate Iwidgets package.  Set your IWIDGETS_LIBRARY\
+      environment\nvariable to the directory that contains iwidgets.tcl"
+  }
+  lappend auto_path $env(IWIDGETS_LIBRARY)
+  package require Iwidgets 4.0
+}
+
+if {[string compare test [info procs test]] == 1} {
+    source defs
+}
+
+wm geometry . {}
+raise .
+
+set c 1
+set o 1
+set m 1
+
+set cdir [pwd]
+
+#
+# Initial construction test
+#
+test Hierarchy-1.$c {Hierarchy construction} {
+    iwidgets::Hierarchy .h
+    pack .h -padx 10 -pady 10 -fill both -expand yes
+    update 
+
+    image create bitmap testicon -data {
+	#define node.xbm_width 16
+	#define node.xbm_height 16
+	static unsigned char node.xbm_bits[] = {
+	   0x00, 0x00, 0x00, 0x00, 0xfe, 0x7f, 0x02, 0x40, 
+           0xfa, 0x5f, 0xfa, 0x5f, 0x82, 0x41, 0x82, 0x41, 
+           0x82, 0x41, 0x82, 0x41, 0x82, 0x41, 0x02, 0x40, 
+           0xfe, 0x7f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+    }	
+
+    set homelist [lsort [glob -nocomplain $env(HOME)/*]]
+
+    proc get_files {file} {
+	global env
+
+	if {$file == ""} {
+	    set dir $env(HOME)
+	} else {
+	    set dir $file
+	}
+
+	if {[catch {cd $dir}] != 0} {
+	    return ""
+	}
+
+	set rlist ""
+
+	foreach file [lsort [glob -nocomplain *]] {
+	    lappend rlist [list [file join $dir $file] $file]
+	}
+	
+	return $rlist
+    }
+} {}
+
+incr c
+
+#
+# Option tests which are successful.
+#
+test Hierarchy-2.$o {configuration option} {
+    llength [.h configure]
+} {58}
+
+incr o
+
+foreach test {
+    {-activebackground #ececec #ececec}
+    {-activeforeground Black Black}
+    {-activerelief raised raised}
+    {-alwaysquery 0 0}
+    {-alwaysquery 1 1}
+    {-alwaysquery true true}
+    {-alwaysquery false false}
+    {-alwaysquery yes yes}
+    {-alwaysquery no no}
+    {-alwaysquery on on}
+    {-alwaysquery off off}
+    {-background #d9d9d9 #d9d9d9} 
+    {-borderwidth 2 2} 
+    {-cursor gumby gumby} 
+    {-disabledforeground #a3a3a3 #a3a3a3}
+    {-elementborderwidth -1 -1}
+    {-foreground Black Black} 
+    {-height 300 300} 
+    {-width 400 400}
+    {-highlightcolor Black Black}
+    {-highlightthickness 2 2}
+    {-hscrollmode none none} 
+    {-hscrollmode static static} 
+    {-hscrollmode dynamic dynamic} 
+    {-jump 0 0}
+    {-textbackground GhostWhite GhostWhite} 
+    {-labelmargin 5 5} 
+    {-labeltext Label Label}
+    {-labelpos nw nw}
+    {-labelpos ne ne}
+    {-labelpos en en}
+    {-labelpos e e}
+    {-labelpos es es}
+    {-labelpos se se}
+    {-labelpos s s}
+    {-labelpos sw sw}
+    {-labelpos wn wn}
+    {-labelpos w w}
+    {-labelpos ws ws}
+    {-labelpos n n}
+    {-markbackground #a0a0a0 #a0a0a0}
+    {-markforeground Black Black}
+    {-menucursor gumby gumby}
+    {-relief raised raised} 
+    {-relief sunken sunken} 
+    {-vscrollmode none none} 
+    {-vscrollmode static static} 
+    {-vscrollmode dynamic dynamic} 
+    {-sbwidth 20 20} 
+    {-scrollmargin 5 5} 
+    {-textbackground #d9d9d9 #d9d9d9} 
+    {-visibleitems 40x20 40x20}
+    {-height 0 0}
+    {-width 0 0}
+    {-selectbackground #c3c3c3 #c3c3c3}
+    {-selectcolor #b03060 #b03060}
+    {-selectforeground Black Black}
+    {-spacing1 0 0}
+    {-spacing2 0 0}
+    {-spacing3 0 0}
+    {-closedicon testicon testicon}
+    {-nodeicon testicon testicon}
+    {-openicon testicon testicon}
+    {-querycommand {get_files %n} {get_files %n}}
+    {-closedicon closedFolder closedFolder}
+    {-nodeicon nodeFolder nodeFolder}
+    {-openicon openFolder openFolder}
+    {-querycommand {get_files %n} {get_files %n}}
+    {-expanded 0 0}
+    {-expanded 1 1}
+    {-expanded true true}
+    {-expanded false false}
+    {-expanded yes yes}
+    {-expanded no no}
+    {-expanded on on}
+    {-expanded off off}
+    {-sticky w w}
+    {-sticky nw nw}
+    {-sticky n n}
+    {-sticky ne ne}
+    {-sticky e e}
+    {-sticky se se}
+    {-sticky s s}
+    {-sticky sw sw}
+    {-sticky news news}
+    {-filter 0 0}
+    {-iconcommand {} {}}
+    {-selectcommand {} {}}} {
+	set option [lindex $test 0]
+	test Hierarchy-2.$o "configuration options, $option" {
+	    .h configure $option [lindex $test 1]
+	    lindex [.h configure $option] 4
+	} [lindex $test 2]
+	update 
+	incr o
+}
+
+#
+# Option tests which fail and produce errors.
+#
+foreach test {
+  {-filter bogus {bad filter option "bogus": should be boolean}}
+  {-alwaysquery bogus {bad alwaysquery option "bogus": should be boolean}}
+  {-expanded bogus {bad expanded option "bogus": should be boolean}}
+  {-openicon bogus {bad openicon option "bogus": should be an existing image}}
+  {-closedicon bogus {bad closedicon option "bogus": should be an existing image}}
+  {-nodeicon bogus {bad nodeicon option "bogus": should be an existing image}}
+  {-visibleitems bogus {bad visibleitems option "bogus": should be widthxheight}}
+  {-hscrollmode bogus {bad hscrollmode option "bogus": should be static, dynamic, or none}}
+  {-vscrollmode bogus {bad vscrollmode option "bogus": should be static, dynamic, or none}}} {
+	set option [lindex $test 0]
+        test Hierarchy-2.$o "configuration options, $option" {
+	    list [catch {.h configure $option [lindex $test 1]} msg] $msg
+	} [list 1 [lindex $test 2]]
+	incr o
+}
+
+#
+# Addtional test for selection/mark get
+#
+test Hierarchy-1.$m {Hierarchy selection/mark get} {
+    .h draw -now
+    .h selection clear
+    eval .h selection add $homelist
+    update 
+    if {[lsort [.h selection get]] != [lsort $homelist]} {
+	error "selection isn't right" 
+    }
+    .h selection clear
+    update
+
+    .h mark clear
+    eval .h mark add $homelist
+    update 
+    if {[lsort [.h mark get]] != [lsort $homelist]} {
+	error "mark isn't right" 
+    }
+    update
+    .h mark clear
+} {}
+incr m
+
+#
+# Method tests which are successful.
+#
+foreach test {
+    {{eval .h selection add $homelist} {}}
+    {{eval .h selection remove $homelist} {}}
+    {{.h selection clear} {}}
+    {{eval .h mark add $homelist} {}}
+    {{eval .h mark remove $homelist} {}}
+    {{.h mark clear} {}}
+    {{.h current} {}}
+    {{.h expand [lindex $homelist 0]} {}}
+    {{.h collapse [lindex $homelist 0]} {}}
+    {{.h toggle [lindex $homelist 0]} {}}
+    {{.h refresh [lindex $homelist 0]} {}}
+    {{.h prune [lindex $homelist 0]} {}}
+    {{.h draw -now} {}}
+    {{.h draw -eventually} {}}
+    {{.h clear} {}}} {
+	set method [lindex [lindex $test 0] 1]
+	test Hierarchy-3.$m "object methods, $method" {
+	    list [catch {eval [lindex $test 0]} msg] $msg
+	} [list 0 [lindex $test 1]]
+	update 
+	incr m
+}
+
+#
+# Method tests which fail and produce errors
+#
+foreach test {
+    {{.h expand bogus} {bad expand node argument: "bogus", the node doesn't exist}}
+    {{.h collapse bogus} {bad collapse node argument: "bogus", the node doesn't exist}}
+    {{.h toggle bogus} {bad toggle node argument: "bogus", the node doesn't exist}}
+    {{.h draw bogus} {bad when option "bogus": should be -eventually or -now}}
+    {{.h mark bogus} {bad mark operation "bogus": should be add, remove, clear or get}}
+    {{.h selection bogus} {bad selection operation "bogus": should be add, remove, clear or get}}} {
+	set method [lindex [lindex $test 0] 1]
+	test Hierarchy-3.$m "object methods, $method" {
+	    list [catch {eval [lindex $test 0]} msg] $msg
+	} [list 1 [lindex $test 1]]
+	incr m
+}
+
+#
+# Conclusion of constrcution/destruction tests
+#
+test Hierarchy-1.$c {Hierarchy destruction} {
+    destroy .h
+    update 
+} {}
+
+incr c
+
+test Hierarchy-1.$c {Hierarchy construction} {
+    iwidgets::hierarchy .h -hscrollmode dynamic -labeltext "Label" \
+	    -labelpos n -labelmargin 5
+    pack .h -padx 10 -pady 10 -fill both -expand yes
+    update 
+} {}
+
+incr c
+
+test Hierarchy-1.$c {Hierarchy destruction} {
+    destroy .h
+    update 
+} {}
+
+incr c
+
+test Hierarchy-1.$c {Hierarchy destruction} {
+    iwidgets::hierarchy .h
+    pack .h
+    destroy .h
+    update 
+} {}
+
+cd $cdir
+
+::tcltest::cleanupTests
+exit

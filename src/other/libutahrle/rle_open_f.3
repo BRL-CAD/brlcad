@@ -1,0 +1,90 @@
+.\" Copyright (c) 1986, 1987, University of Utah
+.TH RLE_OPEN_F 3 2/2/87 3
+.UC 4 
+
+.SH NAME
+rle_open_f \- Open a binary file for input or output with defaults.
+.br
+rle_open_f_noexit \- Returns error code instead of exiting.
+.SH SYNOPSIS
+.B
+FILE *rle_open_f( prog_name, file_name, mode )
+.br
+.B
+char *prog_name, *file_name, *mode;
+.sp
+.B
+FILE *rle_open_f_noexit( prog_name, file_name, mode )
+.br
+.B
+char *prog_name, *file_name, *mode;
+.SH DESCRIPTION
+The function
+.I rle_open_f
+is provided to simplify the task of opening files in toolkit programs.
+It works similarly to 
+.IR fopen (3),
+but it also provides error checking and messages, and default values
+for input and output.  If the specified 
+.I file_name
+cannot be opened, an error message is printed and the program exits.
+A variant
+.I rle_open_f_noexit
+is provided which will return NULL if the file cannot be opened.  An
+error message is still printed.
+
+On those systems which require it, a 'b' will be appended to the mode
+string so that the file will be opened in binary mode.
+
+If the 
+.I file_name
+is NULL or "\-", then 
+.I stdin
+will be returned for input (\fImode\fR "r") files and
+.I stdout
+will be returned for output (\fImode\fR "w" or "a") files.  
+
+.I 
+The following two options are available only on systems supporting pipes.
+If the 
+.I file_name
+starts with a "|" character, then the rest of the file name will be
+taken as a 
+.IR sh (1)
+command.  If 
+.I mode
+is "r", a pipe from the output of the
+.I sh
+command will be returned.  If
+.I mode
+is "w" or "a", a pipe to the input of the
+.I sh
+command will be returned.
+
+If the
+.I file_name
+ends with the suffix ".Z" (and does not start with "|"), then the 
+.IR compress (1)
+program will be invoked to uncompress (\fImode\fR "r") or compress
+(\fImode\fR "w" or "a") the file.  The file descriptor returned by
+.I rle_open_f
+will be a pipe from or to the compress program.
+.SH SEE ALSO
+.IR fopen (3),
+.IR popen (3),
+.IR compress (1).
+.SH AUTHOR
+Gerald Winter
+.br
+Spencer W. Thomas
+.br
+University of Michigan
+.SH BUGS
+If the command invoked via \fIpopen\fR does not exist, the \fIpopen\fR
+still returns successfully, and the underlying \fIsh\fR prints an
+error message.
+ 
+There is no way of telling that a particular \fIFILE\fP pointer has
+been created by \fIpopen\fP, so it isn't possible to cleanly close the
+pipe with \fIpclose\fP.  In fact, the eventual output file may not
+even exist by the time the program exits.

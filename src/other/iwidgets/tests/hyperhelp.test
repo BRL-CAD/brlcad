@@ -1,0 +1,178 @@
+# This file is a Tcl script to test out [incr Widgets] Hyperhelp class.
+# It is organized in the standard fashion for Tcl tests with the following
+# notation for test case labels:
+#
+#   1.x - Construction/Destruction tests
+#   2.x - Configuration option tests
+#   3.x - Method tests
+#
+# Copyright (c) 1995 DSC Technologies Corporation
+#
+# See the file "license.terms" for information on usage and redistribution
+# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+# @(#) $Id
+
+package require tcltest
+namespace import -force ::tcltest::*
+
+if [catch {package require Iwidgets 4.0}] {
+  # Let's try modifying the auto_path.  Note that the IWIDGETS_LIBRARY
+  # env var is initialized in the Makefile when doing a 'make test'.
+  # If sourcing this file independently, this variable must be set manually.
+  if ![info exists env(IWIDGETS_LIBRARY)] {
+    error "Unable to locate Iwidgets package.  Set your IWIDGETS_LIBRARY\
+      environment\nvariable to the directory that contains iwidgets.tcl"
+  }
+  lappend auto_path $env(IWIDGETS_LIBRARY)
+  package require Iwidgets 4.0
+}
+
+if {[string compare test [info procs test]] == 1} {
+    source defs
+}
+
+set c 1
+set o 1
+set m 1
+
+#
+# Initial construction test
+#
+test Hyperhelp-1.$c {Hyperhelp construction} {
+    iwidgets::Hyperhelp .h
+    .h center
+    .h activate
+    update 
+} {}
+
+incr c
+
+#
+# Option tests which are successful.
+#
+test Hyperhelp-2.$o {configuration option} {
+    llength [.h configure]
+} {43}
+
+incr o
+
+foreach test [concat {
+    {-activebackground #ececec #ececec} 
+    {-activeforeground Black Black}
+    {-activerelief raised raised}
+    {-background #d9d9d9 #d9d9d9} 
+    {-borderwidth 3 3} 
+    {-cursor gumby gumby} 
+    {-font -Adobe-Helvetica-Bold-R-Normal--*-120-*-*-*-*-*-* \
+       -Adobe-Helvetica-Bold-R-Normal--*-120-*-*-*-*-*-*}
+    {-foreground Black Black} 
+    {-highlightcolor Black Black}
+    {-highlightthickness 3 3}
+    {-height 120 120} 
+    {-width 500 500}
+    {-relief raised raised} 
+    {-relief sunken sunken} 
+    {-vscrollmode none none} 
+    {-vscrollmode static static} 
+    {-vscrollmode dynamic dynamic} 
+    {-hscrollmode none none} 
+    {-hscrollmode static static} 
+    {-hscrollmode dynamic dynamic} 
+    {-sbwidth 20 20} 
+    {-scrollmargin 5 5} 
+    {-selectborderwidth 2 2} 
+    {-textbackground GhostWhite GhostWhite} 
+    {-visibleitems 72x40 72x40}
+    {-height 0 0}
+    {-width 0 0}
+    {-wrap char char}
+    {-wrap none none}
+    {-unknownimage {} {}}
+    {-link blue blue}
+    {-linkhighlight red red}
+    {-fontname times times}
+    {-fixedfont courier courier}
+    {-fontsize medium medium}
+    {-topics {} {}}
+    {-title "Test" "Test"} } \
+    [list [list -helpdir . [pwd]/.]]] {
+	set option [lindex $test 0]
+	test Hyperhelp-2.$o "configuration options, $option" {
+	    .h configure $option [lindex $test 1]
+	    lindex [.h configure $option] 4
+	} [lindex $test 2]
+	update 
+	incr o
+}
+
+#
+# Option tests which fail and produce errors.
+#
+foreach test {
+  {-visibleitems bogus {bad visibleitems option "bogus": should be widthxheight}}
+  {-hscrollmode bogus {bad hscrollmode option "bogus": should be static, dynamic, or none}}
+  {-vscrollmode bogus {bad vscrollmode option "bogus": should be static, dynamic, or none}}
+  {-fontname bogus {Invalid font name "bogus". Must be one of  helvetica courier times symbol}}
+  {-fontsize bogus {bad fontsize option "bogus": should be small, medium, large, or huge}}
+  {-fixedfont bogus {Invalid font name "bogus". Must be one of  helvetica courier times symbol}}} {
+	set option [lindex $test 0]
+        test Hyperhelp-2.$o "configuration options, $option" {
+	    list [catch {.h configure $option [lindex $test 1]} msg] $msg
+	} [list 1 [lindex $test 2]]
+	incr o
+}
+
+#
+# Method tests which are successful.
+# 
+foreach test {
+    {{.h showtopic hyperhelp} -1}
+    {{.h followlink scrolledhtml.test#} -1}
+    {{.h back} -1}
+    {{.h forward} -1}} {
+	set method [lindex [lindex $test 0] 1]
+	test Hyperhelp-3.$m "object methods, $method" {
+	    list [catch {eval [lindex $test 0]} msg] $msg
+	} [list 0 [lindex $test 1]]
+	update 
+	incr m
+}
+
+#
+# Conclusion of construction/destruction tests
+#
+test Hyperhelp-1.$c {Hyperhelp destruction} {
+    destroy .h
+    update 
+} {}
+
+incr c
+
+test Hyperhelp-1.$c {Hyperhelp construction} {
+    iwidgets::hyperhelp .h -topics {index} -helpdir ~/public_html
+    .h center
+    .h activate
+    update 
+} {}
+
+incr c
+
+test Hyperhelp-1.$c {Hyperhelp destruction} {
+    destroy .h
+    update 
+} {}
+
+incr c
+
+test Hyperhelp-1.$c {Hyperhelp destruction} {
+    iwidgets::hyperhelp .h
+    .h center
+    .h activate
+    .h deactivate
+    destroy .h
+    update 
+} {}
+
+::tcltest::cleanupTests
+exit

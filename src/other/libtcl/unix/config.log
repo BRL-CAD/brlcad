@@ -1,0 +1,359 @@
+This file contains any messages produced by compilers while
+running configure, to aid debugging if configure makes a mistake.
+
+configure:575: checking whether to use symlinks for manpages
+configure:587: checking compression for manpages
+configure:615: checking for gcc
+configure:728: checking whether the C compiler (gcc  ) works
+configure:744: gcc -o conftest    conftest.c  1>&5
+configure:770: checking whether the C compiler (gcc  ) is a cross-compiler
+configure:775: checking whether we are using GNU C
+configure:784: gcc -E conftest.c
+configure:803: checking whether gcc accepts -g
+configure:835: checking how to run the C preprocessor
+configure:856: gcc -E  conftest.c >/dev/null 2>conftest.out
+configure:918: checking for unistd.h
+configure:928: gcc -E  conftest.c >/dev/null 2>conftest.out
+configure:918: checking for limits.h
+configure:928: gcc -E  conftest.c >/dev/null 2>conftest.out
+configure:961: checking for building with threads
+configure:1411: checking if the compiler understands -pipe
+configure:1422: gcc -pipe -c   conftest.c 1>&5
+configure:1442: checking for required early compiler flags
+configure:1456: gcc -pipe -c   conftest.c 1>&5
+configure:1505: gcc -pipe -c   conftest.c 1>&5
+configure: In function `main':
+configure:1501: error: storage size of `buf' isn't known
+configure: failed program was:
+#line 1498 "configure"
+#include "confdefs.h"
+#include <sys/stat.h>
+int main() {
+struct stat64 buf; int i = stat64("/", &buf);
+; return 0; }
+configure:1521: gcc -pipe -c   conftest.c 1>&5
+configure: In function `main':
+configure:1517: error: storage size of `buf' isn't known
+configure: failed program was:
+#line 1513 "configure"
+#include "confdefs.h"
+#define _LARGEFILE64_SOURCE 1
+#include <sys/stat.h>
+int main() {
+struct stat64 buf; int i = stat64("/", &buf);
+; return 0; }
+configure:1550: checking for 64-bit integer type
+configure:1565: gcc -pipe -c   conftest.c 1>&5
+configure: In function `main':
+configure:1561: error: `__int64' undeclared (first use in this function)
+configure:1561: error: (Each undeclared identifier is reported only once
+configure:1561: error: for each function it appears in.)
+configure:1561: error: parse error before "value"
+configure: failed program was:
+#line 1558 "configure"
+#include "confdefs.h"
+
+int main() {
+__int64 value = (__int64) 0;
+; return 0; }
+configure:1588: gcc -pipe -o conftest    conftest.c  1>&5
+configure:1617: checking for struct dirent64
+configure:1631: gcc -pipe -c   conftest.c 1>&5
+configure: In function `main':
+configure:1627: error: storage size of `p' isn't known
+configure: failed program was:
+#line 1623 "configure"
+#include "confdefs.h"
+#include <sys/types.h>
+#include <sys/dirent.h>
+int main() {
+struct dirent64 p;
+; return 0; }
+configure:1652: checking for struct stat64
+configure:1666: gcc -pipe -c   conftest.c 1>&5
+configure: In function `main':
+configure:1661: error: storage size of `p' isn't known
+configure: failed program was:
+#line 1658 "configure"
+#include "confdefs.h"
+#include <sys/stat.h>
+int main() {
+struct stat64 p;
+
+; return 0; }
+configure:1687: checking for off64_t
+configure:1701: gcc -pipe -c   conftest.c 1>&5
+configure: In function `main':
+configure:1696: error: `off64_t' undeclared (first use in this function)
+configure:1696: error: (Each undeclared identifier is reported only once
+configure:1696: error: for each function it appears in.)
+configure:1696: error: parse error before "offset"
+configure: failed program was:
+#line 1693 "configure"
+#include "confdefs.h"
+#include <sys/types.h>
+int main() {
+off64_t offset;
+
+; return 0; }
+configure:1728: checking whether byte ordering is bigendian
+configure:1746: gcc -pipe -c   conftest.c 1>&5
+configure:1761: gcc -pipe -c   conftest.c 1>&5
+configure:1827: checking for getcwd
+configure:1855: gcc -pipe -o conftest    conftest.c  1>&5
+configure:1889: checking for opendir
+configure:1917: gcc -pipe -o conftest    conftest.c  1>&5
+configure:1889: checking for strstr
+configure:1917: gcc -pipe -o conftest    conftest.c  1>&5
+configure:1901: warning: conflicting types for built-in function `strstr'
+configure:1947: checking for strtol
+configure:1975: gcc -pipe -o conftest    conftest.c  1>&5
+configure:1947: checking for strtoll
+configure:1975: gcc -pipe -o conftest    conftest.c  1>&5
+configure:1947: checking for strtoull
+configure:1975: gcc -pipe -o conftest    conftest.c  1>&5
+configure:1947: checking for tmpnam
+configure:1975: gcc -pipe -o conftest    conftest.c  1>&5
+configure:1947: checking for waitpid
+configure:1975: gcc -pipe -o conftest    conftest.c  1>&5
+configure:2002: checking for strerror
+configure:2030: gcc -pipe -o conftest    conftest.c  1>&5
+configure:2054: checking for getwd
+configure:2082: gcc -pipe -o conftest    conftest.c  1>&5
+configure:2106: checking for wait3
+configure:2134: gcc -pipe -o conftest    conftest.c  1>&5
+configure:2158: checking for uname
+configure:2186: gcc -pipe -o conftest    conftest.c  1>&5
+configure:2210: checking for realpath
+configure:2238: gcc -pipe -o conftest    conftest.c  1>&5
+configure:2273: checking dirent.h
+configure:2301: gcc -pipe -o conftest    conftest.c  1>&5
+configure:2322: checking for errno.h
+configure:2332: gcc -E  conftest.c >/dev/null 2>conftest.out
+configure:2359: checking for float.h
+configure:2369: gcc -E  conftest.c >/dev/null 2>conftest.out
+configure:2396: checking for values.h
+configure:2406: gcc -E  conftest.c >/dev/null 2>conftest.out
+configure:2402:20: values.h: No such file or directory
+configure: failed program was:
+#line 2401 "configure"
+#include "confdefs.h"
+#include <values.h>
+configure:2433: checking for limits.h
+configure:2470: checking for stdlib.h
+configure:2480: gcc -E  conftest.c >/dev/null 2>conftest.out
+configure:2552: checking for string.h
+configure:2562: gcc -E  conftest.c >/dev/null 2>conftest.out
+configure:2625: checking for sys/wait.h
+configure:2635: gcc -E  conftest.c >/dev/null 2>conftest.out
+configure:2662: checking for dlfcn.h
+configure:2672: gcc -E  conftest.c >/dev/null 2>conftest.out
+configure:2704: checking for unistd.h
+configure:2704: checking for sys/param.h
+configure:2714: gcc -E  conftest.c >/dev/null 2>conftest.out
+configure:2754: checking for sys/modem.h
+configure:2764: gcc -E  conftest.c >/dev/null 2>conftest.out
+configure:2760:23: sys/modem.h: No such file or directory
+configure: failed program was:
+#line 2759 "configure"
+#include "confdefs.h"
+#include <sys/modem.h>
+configure:2791: checking termios vs. termio vs. sgtty
+configure:2815: gcc -pipe -o conftest    conftest.c  1>&5
+configure:3026: checking for fd_set in sys/types
+configure:3038: gcc -pipe -c   conftest.c 1>&5
+configure:3096: checking whether struct tm is in sys/time.h or time.h
+configure:3109: gcc -pipe -c   conftest.c 1>&5
+configure:3134: checking for sys/time.h
+configure:3144: gcc -E  conftest.c >/dev/null 2>conftest.out
+configure:3171: checking whether time.h and sys/time.h may both be included
+configure:3185: gcc -pipe -c   conftest.c 1>&5
+configure:3206: checking for tm_zone in struct tm
+configure:3219: gcc -pipe -c   conftest.c 1>&5
+configure:3279: checking for gmtime_r
+configure:3307: gcc -pipe -o conftest    conftest.c  1>&5
+configure:3279: checking for localtime_r
+configure:3307: gcc -pipe -o conftest    conftest.c  1>&5
+configure:3333: checking tm_tzadj in struct tm
+configure:3345: gcc -pipe -c   conftest.c 1>&5
+configure: In function `main':
+configure:3341: error: structure has no member named `tm_tzadj'
+configure: failed program was:
+#line 3338 "configure"
+#include "confdefs.h"
+#include <time.h>
+int main() {
+struct tm tm; tm.tm_tzadj;
+; return 0; }
+configure:3366: checking tm_gmtoff in struct tm
+configure:3378: gcc -pipe -c   conftest.c 1>&5
+configure:3403: checking long timezone variable
+configure:3417: gcc -pipe -c   conftest.c 1>&5
+configure: In function `main':
+configure:3411: error: `timezone' redeclared as different kind of symbol
+/usr/include/time.h:141: error: previous declaration of `timezone'
+configure: failed program was:
+#line 3408 "configure"
+#include "confdefs.h"
+#include <time.h>
+int main() {
+extern long timezone;
+	    timezone += 1;
+	    exit (0);
+; return 0; }
+configure:3440: checking time_t timezone variable
+configure:3454: gcc -pipe -c   conftest.c 1>&5
+configure: In function `main':
+configure:3448: error: `timezone' redeclared as different kind of symbol
+/usr/include/time.h:141: error: previous declaration of `timezone'
+configure: failed program was:
+#line 3445 "configure"
+#include "confdefs.h"
+#include <time.h>
+int main() {
+extern time_t timezone;
+		timezone += 1;
+		exit (0);
+; return 0; }
+configure:3481: checking for st_blksize in struct stat
+configure:3494: gcc -pipe -c   conftest.c 1>&5
+configure:3515: checking for fstatfs
+configure:3543: gcc -pipe -o conftest    conftest.c  1>&5
+configure:3572: checking for 8-bit clean memcmp
+configure:3590: gcc -pipe -o conftest    conftest.c  1>&5
+configure:3614: checking for memmove
+configure:3642: gcc -pipe -o conftest    conftest.c  1>&5
+configure:3675: checking proper strstr implementation
+configure:3690: gcc -pipe -o conftest    conftest.c  1>&5
+configure:3716: checking for strtoul
+configure:3744: gcc -pipe -o conftest    conftest.c  1>&5
+configure:3784: gcc -pipe -o conftest    conftest.c  1>&5
+configure:3807: checking for strtod
+configure:3835: gcc -pipe -o conftest    conftest.c  1>&5
+configure:3875: gcc -pipe -o conftest    conftest.c  1>&5
+configure:3901: checking for strtod
+configure:3951: checking for Solaris2.4/Tru64 strtod bugs
+configure:3983: gcc -pipe -o conftest    conftest.c  1>&5
+configure:4016: checking for ANSI C header files
+configure:4029: gcc -E  conftest.c >/dev/null 2>conftest.out
+configure:4096: gcc -pipe -o conftest    conftest.c  1>&5
+configure:4120: checking for mode_t
+configure:4153: checking for pid_t
+configure:4186: checking for size_t
+configure:4219: checking for uid_t in sys/types.h
+configure:4254: checking for socklen_t
+configure:4298: checking for opendir
+configure:4359: checking union wait
+configure:4376: gcc -pipe -o conftest    conftest.c  1>&5
+configure:4403: checking for strncasecmp
+configure:4431: gcc -pipe -o conftest    conftest.c  1>&5
+configure:4553: checking for BSDgettimeofday
+configure:4581: gcc -pipe -o conftest    conftest.c  1>&5
+ld: Undefined symbols:
+_BSDgettimeofday
+configure: failed program was:
+#line 4558 "configure"
+#include "confdefs.h"
+/* System header to define __stub macros and hopefully few prototypes,
+    which can conflict with char BSDgettimeofday(); below.  */
+#include <assert.h>
+/* Override any gcc2 internal prototype to avoid an error.  */
+/* We use char because int might match the return type of a gcc2
+    builtin and then its argument prototype would still apply.  */
+char BSDgettimeofday();
+
+int main() {
+
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined (__stub_BSDgettimeofday) || defined (__stub___BSDgettimeofday)
+choke me
+#else
+BSDgettimeofday();
+#endif
+
+; return 0; }
+configure:4603: checking for gettimeofday
+configure:4631: gcc -pipe -o conftest    conftest.c  1>&5
+configure:4658: checking for gettimeofday declaration
+configure:4694: checking whether char is unsigned
+configure:4757: checking signed char declarations
+configure:4772: gcc -pipe -c   conftest.c 1>&5
+configure:4797: checking for a putenv() that copies the buffer
+configure:4827: gcc -pipe -o conftest    conftest.c  1>&5
+configure: failed program was:
+#line 4805 "configure"
+#include "confdefs.h"
+
+	#include <stdlib.h>
+	#define OURVAR "havecopy=yes"
+	int main (int argc, char *argv)
+	{
+	    char *foo, *bar;
+	    foo = (char *)strdup(OURVAR);
+	    putenv(foo);
+	    strcpy((char *)(strchr(foo, '=') + 1), "no");
+	    bar = getenv("havecopy");
+	    if (!strcmp(bar, "no")) {
+		/* doesnt copy */
+		return 0;
+	    } else {
+		/* does copy */
+		return 1;
+	    }
+	}
+    
+configure:4869: checking for langinfo.h
+configure:4879: gcc -E  conftest.c >/dev/null 2>conftest.out
+configure:4904: checking whether to use nl_langinfo
+configure:4914: gcc -pipe -c   conftest.c 1>&5
+configure:4950: checking for sin
+configure:4978: gcc -pipe -o conftest    conftest.c  1>&5
+configure:4962: warning: conflicting types for built-in function `sin'
+configure:4999: checking for main in -lieee
+configure:5014: gcc -pipe -o conftest    conftest.c -lieee   1>&5
+ld: can't locate file for: -lieee
+configure: failed program was:
+#line 5007 "configure"
+#include "confdefs.h"
+
+int main() {
+main()
+; return 0; }
+configure:5041: checking for main in -linet
+configure:5056: gcc -pipe -o conftest    conftest.c -linet   1>&5
+ld: can't locate file for: -linet
+configure: failed program was:
+#line 5049 "configure"
+#include "confdefs.h"
+
+int main() {
+main()
+; return 0; }
+configure:5078: checking for net/errno.h
+configure:5088: gcc -E  conftest.c >/dev/null 2>conftest.out
+configure:5084:23: net/errno.h: No such file or directory
+configure: failed program was:
+#line 5083 "configure"
+#include "confdefs.h"
+#include <net/errno.h>
+configure:5133: checking for connect
+configure:5161: gcc -pipe -o conftest    conftest.c  1>&5
+configure:5326: checking for gethostbyname
+configure:5354: gcc -pipe -o conftest    conftest.c  1>&5
+configure:5428: checking how to build libraries
+configure:5467: checking for ranlib
+configure:5499: checking if 64bit support is requested
+configure:5519: checking if 64bit Sparc VIS support is requested
+configure:5543: checking system version (for dynamic loading)
+configure:5569: checking for dlopen in -ldl
+configure:5588: gcc -pipe -o conftest    conftest.c -ldl   1>&5
+configure:5636: checking for ar
+configure:6961: checking for build with symbols
+configure:7028: checking for sys/ioctl.h
+configure:7038: gcc -E  conftest.c >/dev/null 2>conftest.out
+configure:7068: checking for sys/filio.h
+configure:7078: gcc -E  conftest.c >/dev/null 2>conftest.out
+configure:7105: checking FIONBIO vs. O_NONBLOCK for nonblocking I/O
+configure:7168: checking how to package libraries
