@@ -1050,7 +1050,6 @@ char	**argv;
 		dm_values.dv_distadc = i;
 		dm_values.dv_flagadc = 1;
 	} else if( strcmp( cmd, "zap" ) == 0 || strcmp( cmd, "zero" ) == 0 )  {
-		VSETALL( absolute_rotate, 0 );
 		VSETALL( rate_rotate, 0 );
 		dm_values.dv_xjoy = 0;
 		dm_values.dv_yjoy = 0;
