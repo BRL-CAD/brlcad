@@ -374,7 +374,6 @@ struct rt_vls	*vp;
 	struct rt_vls	cmd;
 	struct rt_vls	cmd_buf;
 	struct rt_vls	str;
-	int  	result;
 	int	argc;
 	char 	*argv[MAXARGS+2];
 
@@ -516,7 +515,6 @@ char	**argv;
 struct funtab *functions;
 {
 	register struct funtab *ftp;
-	struct rt_vls str;
 
 	if( argc == 0 )  {
 		(void)printf("no command entered, type '%s?' for help\n",
@@ -660,7 +658,6 @@ char **argv;
 struct funtab *functions;
 {
 	register struct funtab *ftp;
-	register int	i;
 
 	if( argc <= 1 )  {
 		(void)printf("The following commands are available:\n");

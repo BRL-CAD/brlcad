@@ -210,7 +210,7 @@ register char **end;
 {
 	register char **vp = start;
 	register struct solid *sp;
-	register int i;
+
 	/*
 	 * Find all unique top-level entrys.
 	 *  Mark ones already done with s_iflag == UP
@@ -255,9 +255,6 @@ void
 setup_rt( vp )
 register char	**vp;
 {
-	register struct solid *sp;
-	register int i;
-
 	rt_cmd_vec_len = vp - rt_cmd_vec;
 	rt_cmd_vec_len += build_tops(vp, &rt_cmd_vec[LEN]);
 
@@ -773,7 +770,6 @@ f_savekey( argc, argv )
 int	argc;
 char	**argv;
 {
-	register int i;
 	register FILE *fp;
 	fastf_t	time;
 	vect_t	eye_model;
@@ -1164,8 +1160,6 @@ cm_eyept(argc, argv)
 char	**argv;
 int	argc;
 {
-	vect_t	x, y;
-
 	if( argc < 4 )
 		return(-1);
 	rtif_eye_model[X] = atof(argv[1]);
@@ -1239,7 +1233,6 @@ int	argc;
 	vect_t	new_cent;
 	vect_t	xv, yv;			/* view x, y */
 	vect_t	xm, ym;			/* model x, y */
-	int	move;
 	struct rt_list		*vhead = &rtif_vbp->head[0];
 
 	/* Only display the frames the user is interested in */

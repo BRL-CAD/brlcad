@@ -933,8 +933,6 @@ char	**argv;
 	register int	i,j,k;
 	register union record *rp;
 	register struct directory *dp;
-	char combname[NAMESIZE+2];
-	int len;
 
 	(void)signal( SIGINT, sig2 );	/* allow interupts */
 

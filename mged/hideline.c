@@ -140,7 +140,7 @@ char	**argv;
 	FILE 	*plotfp;
 	char 	visible;
 	extern int 	hit_headon(),hit_tangent(),hit_overlap();
-	int 	i,j,numobjs;
+	int 	i,numobjs;
 	char 	*objname[MAXOBJECTS],title[1];
 	fastf_t 	len,u,step;
 	FAST float 	ratio;

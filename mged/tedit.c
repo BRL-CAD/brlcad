@@ -130,7 +130,6 @@ writesolid()
 			(void)printf( "Cannot text edit this solid type\n" );
 			(void)fclose(fp);
 			return( 1 );
-			break;
 		case ID_TOR:
 			tor = (struct rt_tor_internal *)es_int.idb_ptr;
 			(void)fprintf( fp , "Vertex: %.9f %.9f %.9f\n", V3BASE2LOCAL( tor->v ) );
@@ -441,7 +440,7 @@ readsolid()
 			}
 			(void)sscanf( str , "%lf %lf %lf" , &a , &b , &c );
 			VSET( grip->center , a , b , c );
-			HSCALE( grip->center , grip->center , local2base );
+			VSCALE( grip->center , grip->center , local2base );
 
 			if( (str=Get_next_line( fp )) == NULL )
 			{
