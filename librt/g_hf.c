@@ -57,6 +57,11 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
  *  relating to dfile parameters, and not to the geometric
  *  position, orientation, and scale of the HF's bounding RPP.
  *
+ *  In general, the cfile should be thought of as describing
+ *  the data arrangement of the dfile, and the string solid should
+ *  be thought of as describing the "geometry" of the height
+ *  field's bounding RPP.
+ *
  *  The string solid is parsed first.  If a cfile is present, it is
  *  parsed second, and any parameters specified in the cfile override
  *  the values taken from the string solid.
@@ -362,41 +367,43 @@ struct rt_tol		*tol;
 	/* Draw the contour lines in W (x) direction.  Don't redo ridges. */
 	for( y = half_step; y < xip->n-half_step; y += step )  {
 		VJOIN1( start, xip->v, y, ybasis );
-		cmd = RT_VLIST_LINE_MOVE;
-		sp = &HF_GET((unsigned short *)xip->mp->apbuf, 0, y );
-		for( x = 0; x < xip->w; x += step )  {
+		x = 0;
+		sp = &HF_GET((unsigned short *)xip->mp->apbuf, x, y );
+		VJOIN2( cur, start, x, xbasis, *sp, zbasis );
+		RT_ADD_VLIST(vhead, cur, RT_VLIST_LINE_MOVE );
+		x += half_step;
+		sp = &HF_GET((unsigned short *)xip->mp->apbuf, x, y );
+		for( ; x < xip->w; x += step )  {
 			VJOIN2( cur, start, x, xbasis, *sp, zbasis );
-			RT_ADD_VLIST(vhead, cur, cmd );
-			cmd = RT_VLIST_LINE_DRAW;
+			RT_ADD_VLIST(vhead, cur, RT_VLIST_LINE_DRAW );
 			sp += step;
-			goal--;
 		}
-		if( x != step+xip->w-1 )  {
+		if( x != step+xip->w-1+step )  {
 			x = xip->w - 1;
 			sp = &HF_GET((unsigned short *)xip->mp->apbuf, x, y );
 			VJOIN2( cur, start, x, xbasis, *sp, zbasis );
 			RT_ADD_VLIST(vhead, cur, RT_VLIST_LINE_DRAW );
-			goal--;
 		}
 	}
 
 	/* Draw the contour lines in the N (y) direction */
 	for( x = half_step; x < xip->w-half_step; x += step )  {
 		VJOIN1( start, xip->v, x, xbasis );
-		cmd = RT_VLIST_LINE_MOVE;
-		for( y = 0; y < xip->n; y += step )  {
+		y = 0;
+		sp = &HF_GET((unsigned short *)xip->mp->apbuf, x, y );
+		VJOIN2( cur, start, y, ybasis, *sp, zbasis );
+		RT_ADD_VLIST(vhead, cur, RT_VLIST_LINE_MOVE );
+		y += half_step;
+		for( ; y < xip->n; y += step )  {
 			sp = &HF_GET((unsigned short *)xip->mp->apbuf, x, y );
 			VJOIN2( cur, start, y, ybasis, *sp, zbasis );
-			RT_ADD_VLIST(vhead, cur, cmd );
-			cmd = RT_VLIST_LINE_DRAW;
-			goal--;
+			RT_ADD_VLIST(vhead, cur, RT_VLIST_LINE_DRAW );
 		}
-		if( y != step+xip->n-1 )  {
+		if( y != step+xip->n-1+step )  {
 			y = xip->n - 1;
 			sp = &HF_GET((unsigned short *)xip->mp->apbuf, x, y );
 			VJOIN2( cur, start, y, ybasis, *sp, zbasis );
 			RT_ADD_VLIST(vhead, cur, RT_VLIST_LINE_DRAW );
-			goal--;
 		}
 	}
 	return 0;
