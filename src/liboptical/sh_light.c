@@ -122,6 +122,10 @@ light_pt_set(register const struct bu_structparse *sdp, register const char *nam
 
     memcpy( &lsp->lt_sample_pts[ lsp->lt_pt_count++ ], p,
 	    sizeof( struct light_pt ) );
+
+    if (rdebug & RDEBUG_LIGHT )
+	bu_log("set light point %g %g %g   N %g %g %g\n", p[0], p[1], p[2], p[3], p[4], p[5]);
+
 }
 
 struct bu_structparse light_print_tab[] = {
@@ -551,7 +555,7 @@ light_gen_sample_pts(struct application    *upap,
 
 
     if (rdebug & RDEBUG_LIGHT ) {
-	bu_log("light bb (%g %g %g), (%g %g %g)\n", 
+	bu_log("\tlight bb (%g %g %g), (%g %g %g)\n", 
 	       V3ARGS(tree_min), V3ARGS(tree_max) );
     }
 
@@ -561,10 +565,10 @@ light_gen_sample_pts(struct application    *upap,
      */
     VSUB2(span, tree_max, tree_min);
     if (rdebug & RDEBUG_LIGHT ) {
-	bu_log("span %g %g %g\n", V3ARGS(span));
+	bu_log("\tspan %g %g %g\n", V3ARGS(span));
     }
     if (span[X] <= 0.0 && span[Y] <= 0.0 && span[Z] <= 0.0) {
-	bu_log("Small light. (treating as point source)\n");
+	bu_log("\tSmall light. (treating as point source)\n");
 	return;
     }
 
@@ -573,22 +577,23 @@ light_gen_sample_pts(struct application    *upap,
 	ray_setup(&ap, tree_min, tree_max, span);
 	(void)rt_shootray( &ap );
     }
-
+#if 0
     if (rdebug & RDEBUG_LIGHT ) {
 	int l;
 	point_t p;
 	struct light_pt *lpt = &lsp->lt_sample_pts[0];
 
-	bu_log("%d light sample points\n", lsp->lt_pt_count);
+	bu_log("\t%d light sample points\n", lsp->lt_pt_count);
 
 	for (l=0 ; l < lsp->lt_pt_count ; l++, lpt++) {
 
 	    VJOIN1(p, lpt->lp_pt, 100.0, lpt->lp_norm);
 
-	    bu_log("V %g %g %g  %g %g %g\n",
+	    bu_log("\tV %g %g %g  %g %g %g\n",
 		   V3ARGS(lpt->lp_pt), V3ARGS(p));
 	}
     }
+#endif
 }
 
 /*
@@ -624,6 +629,7 @@ light_setup(register struct region *rp,
     lsp->lt_pt_count = 0;
     memset(lsp->lt_sample_pts, 0, sizeof(lsp->lt_sample_pts));
     lsp->lt_name = bu_strdup( rp->reg_name );
+
     if (bu_struct_parse( matparm, light_parse, (char *)lsp ) < 0 )  {
 	bu_free( (char *)lsp, "light_specific" );
 	return(-1);
@@ -727,9 +733,9 @@ light_setup(register struct region *rp,
     }
     BU_LIST_INSERT( &(LightHead.l), &(lsp->l) );
 
-    if (rdebug&RDEBUG_LIGHT)
+    if (rdebug&RDEBUG_LIGHT) {
 	light_print(rp, (char *)lsp);
-
+    }
     if (lsp->lt_invisible )  {
 	return(2);	/* don't show light, destroy it later */
     }
@@ -907,8 +913,7 @@ light_init(struct application *ap)
      */
     for( BU_LIST_FOR( lsp, light_specific, &(LightHead.l) ) )  {
 	RT_CK_LIGHT(lsp);
-	if (lsp->lt_shadows > 1 && 
-	    lsp->lt_pt_count < 1)
+	if (lsp->lt_shadows > 1 && ! lsp->lt_infinite && lsp->lt_pt_count < 1)
 	    light_gen_sample_pts(ap, lsp);
     }
 
@@ -930,6 +935,17 @@ light_init(struct application *ap)
 		    lsp->lt_intensity,
 		    (int)(lsp->lt_fraction*100),
 		    lsp->lt_angle );
+
+	    if ( lsp->lt_pt_count > 0) {
+		int samp;
+
+		bu_log( "  %d sample points\n", lsp->lt_pt_count);
+		for (samp = 0 ; samp < lsp->lt_pt_count ; samp++) {
+		    bu_log("     pt %g %g %g N %g %g %g\n",
+			   V3ARGS(lsp->lt_sample_pts[samp].lp_pt),
+			   V3ARGS(lsp->lt_sample_pts[samp].lp_norm) );
+		}
+	    }
 	}
     }
     if (nlights > SW_NLIGHTS )  {
@@ -1466,12 +1482,16 @@ light_vis(struct light_obs_stuff *los, char *flags)
 
 	    VisRayvsSurfN
 		= VDOT(los->swp->sw_hit.hit_normal, dir);
-	    VisRayvsLightN
-		= VDOT(lpt->lp_norm, rdir);
+
+	    if ( VEQUAL(lpt->lp_norm, zero) ) {
+		VisRayvsLightN = 1.0;
+	    } else {
+		VisRayvsLightN = VDOT(lpt->lp_norm, rdir);
+	    }
+
 
 	    if ( VisRayvsLightN > COSINE89_99DEG &&
-		 ( VEQUAL(lpt->lp_norm, zero) ||
-		   VisRayvsSurfN > COSINE89_99DEG ) ) {
+		   VisRayvsSurfN > COSINE89_99DEG ) {
 
 		/* ok, we can shoot at this sample point */
 		if (rdebug & RDEBUG_LIGHT ) 
@@ -1483,8 +1503,13 @@ light_vis(struct light_obs_stuff *los, char *flags)
 		goto done;
 	    }
 #undef COSINE89DEG
-	    if (rdebug & RDEBUG_LIGHT ) 
+	    if (rdebug & RDEBUG_LIGHT ) {
 		bu_log("\tbackfacing\n");
+		bu_log("VisRayvsLightN %g\n", VisRayvsLightN);
+		bu_log("VisRayvsSurfN %g\n", VisRayvsSurfN);
+		VPRINT("norm", lpt->lp_norm);
+		VPRINT("zero", zero);
+	    }
 	    /* the sample point is backfacing to the location
 	     * we want to test from
 	     */
