@@ -82,8 +82,6 @@ static int	class_lu_vs_s RT_ARGS( (struct loopuse *lu, struct shell *s,
 static void	class_fu_vs_s RT_ARGS( (struct faceuse *fu, struct shell *s,
 			long *classlist[4], CONST struct rt_tol	*tol) );
 
-static CONST vect_t projection_dir = { 1.0, 0.0, 0.0 };
-
 /*
  *			N M G _ C L A S S _ S T A T U S
  *
@@ -506,6 +504,19 @@ CONST struct rt_tol	*tol;
 	return closest.class;
 }
 
+/* Ray direction vectors for Jordan curve algorithm */
+static CONST point_t nmg_good_dirs[10] = {
+	3, 2, 1,
+	-3,-2,-1,
+	1, 0, 0,
+	0, 1, 0,
+	0, 0, 1,
+	-1,0, 0,
+	0,-1, 0,
+	0, 0,-1,
+	1, 1, 1,
+	-1,-1,-1
+};
 
 /*
  *			N M G _ C L A S S _ P T _ S
@@ -540,9 +551,18 @@ CONST struct rt_tol	*tol;
 	vect_t		region_diagonal;
 	fastf_t		region_diameter;
 	int		class;
+	vect_t		projection_dir;
+	int		try;
 
 	NMG_CK_SHELL(s);
 	RT_CK_TOL(tol);
+
+	/* Choose an unlikely direction */
+	try = 0;
+retry:
+	VMOVE( projection_dir, nmg_good_dirs[try] );
+	try++;
+	VUNITIZE(projection_dir);
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 		rt_log("nmg_class_pt_s:\tpt=(%g, %g, %g), s=x%x\n",
@@ -657,8 +677,6 @@ CONST struct rt_tol	*tol;
 		 * XXX not a point/edge classification.
 		 * XXX The ray can go in/in, out/out, in/out, out/in,
 		 * XXX with different meanings.  Can't tell the difference here.
-		 * XXX One strategy:  keep picking different directions until
-		 * XXX no "hard" cases come up.  (Limit 10 per customer).
 		 */
 	    	VJOIN1(plane_pt, pt, dist, projection_dir);
 		if (rt_g.NMG_debug & DEBUG_CLASSIFY)
@@ -666,6 +684,14 @@ CONST struct rt_tol	*tol;
 		class = nmg_class_pt_f( plane_pt, fu, tol );
 		if( class == NMG_CLASS_AinB )  hitcount++;
 		else if( class == NMG_CLASS_AonBshared )  {
+			/* XXX Can't handle this case.
+			 * XXX Keep picking different directions until
+			 * XXX no "hard" cases come up.  (Limit 10 per customer).
+			 */
+			if( try < 10 )  {
+				rt_log("nmg_class_pt_s(%g, %g, %g) try=%d, grazed edge\n", V3ARGS(pt), try);
+				goto retry;
+			}
 			hitcount++;
 			rt_bomb("nmg_class_pt_s: ray grazed an edge, could be 1 hit (in/out) or 2 hits (in/in, out/out), can't tell which!\n");
 		}
@@ -683,7 +709,7 @@ CONST struct rt_tol	*tol;
 		class = NMG_CLASS_AoutB;
 	}
 out:
-	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
+	if (rt_g.NMG_debug & DEBUG_CLASSIFY || try > 1)
 		rt_log("nmg_class_pt_s: returning %s, s=x%x\n",
 			nmg_class_name(class), s );
 	return class;
@@ -767,6 +793,17 @@ CONST struct rt_tol	*tol;
 	 * edges, since the intersection algorithm would have combined the
 	 * topology if that had been the case.
 	 */
+	/* XXX eventually, make this conditional on DEBUG_CLASSIFY */
+	{
+		/* Verify this assertion */
+		struct vertex	*sv;
+		if( (sv = nmg_find_pt_in_shell( sB, pt, tol ) ) )  {
+			rt_log("vu=x%x, v=x%x, sv=x%x, pt=(%g,%g,%g)\n",
+				vu, vu->v_p, sv, V3ARGS(pt) );
+			rt_bomb("nmg_class_pt_s() vertex topology not shared properly\n");
+		}
+	}
+
 	reason = "of nmg_class_pt_s()";
 	class = nmg_class_pt_s(pt, sB, tol);
 	
@@ -1013,11 +1050,11 @@ retry:
 	}
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-		rt_log("Loopuse edges in:%d on:%d out:%d\n", in, on, out);
+		rt_log("class_lu_vs_s: Loopuse edges in:%d on:%d out:%d\n", in, on, out);
 
 	if (in > 0 && out > 0) {
 		FILE *fp;
-		rt_log("Loopuse edges in:%d on:%d out:%d\n", in, on, out);
+		rt_log("Loopuse edges in:%d on:%d out:%d, turning on DEBUG_CLASSIFY\n", in, on, out);
 		if( rt_g.NMG_debug & DEBUG_CLASSIFY )  {
 			char		buf[128];
 			static int	num;
