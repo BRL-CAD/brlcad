@@ -28,7 +28,8 @@ typedef unsigned char u_char;
 /* Display Manager package interface */
 
 #define TEKBOUND	1000.0	/* Max magnification in Rot matrix */
-void	Tek_open(), Tek_close(), Tek_restart();
+int	Tek_open();
+void	Tek_close(), Tek_restart();
 int	Tek_input();
 void	Tek_prolog(), Tek_epilog();
 void	Tek_normal(), Tek_newrot();
@@ -100,7 +101,6 @@ static char ttybuf[BUFSIZ];
  * Fire up the display manager, and the display processor.
  *
  */
-void
 Tek_open()
 {
 	char line[64], line2[64];
@@ -113,15 +113,17 @@ Tek_open()
 			sprintf( line2, "/dev/tty%s%c", line, '\0' );
 			if( (outfp = fopen(line2,"r+w")) == NULL )  {
 				perror(line);
-				outfp = fopen("/dev/null","r+w");
+				return(1);		/* BAD */
 			}
 		}
 		second_fd = fileno(outfp);
 	} else {
-		outfp = fopen("/dev/tty","r+w");
+		if( (outfp = fopen("/dev/tty","r+w")) == NULL )
+			return(1);	/* BAD */
 		second_fd = 0;		/* no second filedes */
 	}
 	setbuf( outfp, ttybuf );
+	return(0);			/* OK */
 }
 
 /*

@@ -23,18 +23,18 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 static int	Nu_input();	/* Quite necessary */
 static void	Nu_void();
-static int	Nu_int();
+static int	Nu_int0(), Nu_int1();
 static unsigned Nu_unsign();
 
 struct dm dm_Null = {
-	Nu_void, Nu_void, Nu_void,
+	Nu_int0, Nu_void, Nu_void,
 	Nu_input,
 	Nu_void, Nu_void,
 	Nu_void, Nu_void,
 	Nu_void,
 	Nu_void, Nu_void,
 	Nu_void,
-	Nu_int,
+	Nu_int0,
 	Nu_unsign, Nu_unsign,
 	0.0,
 	"nu", "Null Display"
@@ -81,10 +81,12 @@ char *name;
 		if( strcmp( (*dp)->dmr_name, name ) != 0 )
 			continue;
 		dmp = *dp;
+
+		if( dmp->dmr_open() )
+			break;
+
 		printf("ATTACHING %s (%s)\n",
 			dmp->dmr_name, dmp->dmr_lname);
-
-		dmp->dmr_open();
 
 		FOR_ALL_SOLIDS( sp )  {
 			/* Write vector subs into new display processor */
@@ -104,7 +106,8 @@ char *name;
 	dmp = &dm_Null;
 }
 
-static int Nu_int() { return(0); }
+static int Nu_int0() { return(0); }
+static int Nu_int1() { return(1); }
 static void Nu_void() { ; }
 static unsigned Nu_unsign() { return(0); }
 

@@ -44,7 +44,7 @@ struct mem_map {
 
 /* Interface to a specific Display Manager */
 struct dm {
-	void	(*dmr_open)();
+	int	(*dmr_open)();
 	void	(*dmr_close)();
 	void	(*dmr_restart)();
 	int	(*dmr_input)();
