@@ -12,8 +12,14 @@
 #include "conf.h"
 
 #include <stdio.h>
+#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
+#endif
+#ifdef USE_STRING_H
 #include <string.h>
+#else
+#include <strings.h>
+#endif
 #include <math.h>
 
 #include "machine.h"
@@ -21,8 +27,13 @@
 #include "vmath.h"
 #include "wdb.h"
 
+#ifdef M_PI
+#define PI M_PI
+#else
 #define PI 3.141592653589793
+#endif
 
+int
 main(argc,argv)
 
 int argc;
@@ -729,5 +740,5 @@ char *argv[];
 
    /*  Close file.  */
    (void)fclose(fpw);
-
+   return 0;
 }							/*  END # 1  */
