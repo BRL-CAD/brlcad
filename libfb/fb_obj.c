@@ -53,6 +53,7 @@ static int fbo_flush_tcl();
 static int fbo_listen_tcl();
 static int fbo_refresh_tcl();
 static int fbo_rect_tcl();
+static int fbo_configure_tcl();
 
 static int fbo_coords_ok();
 static int fbo_tcllist2color();
@@ -72,6 +73,7 @@ static struct bu_cmdtab fbo_cmds[] = {
        "cell",		fbo_cell_tcl,
        "clear",		fbo_clear_tcl,
        "close",		fbo_close_tcl,
+       "configure",	fbo_configure_tcl,
        "cursor",	fbo_cursor_tcl,
        "pixel",		fbo_pixel_tcl,
        "flush",		fbo_flush_tcl,
@@ -826,8 +828,6 @@ fbo_rect_tcl(clientData, interp, argc, argv)
 	int i;
 	RGBpixel pixel;
 
-
-    
 	if (argc != 7) {
 		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "helplib fb_rect");
@@ -909,6 +909,49 @@ fbo_rect_tcl(clientData, interp, argc, argv)
 	return TCL_OK;    
 }
 
+/*
+ * Usage:
+ *	  procname configure width height
+ */
+int
+fbo_configure_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int argc;
+     char **argv;
+{
+	struct fb_obj *fbop = (struct fb_obj *)clientData;
+	struct bu_vls vls;
+	int width, height;
+
+	if (argc != 4) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib fb_configure");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	if (sscanf(argv[2], "%d", &width) != 1) {
+		Tcl_AppendResult(interp, "fb_configure: bad width - ",
+				 argv[2], (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	if (sscanf(argv[3], "%d", &height) != 1) {
+		Tcl_AppendResult(interp, "fb_configure: bad height - ",
+				 argv[3], (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	/* configure the framebuffer window */
+	if (fbop->fbo_fbs.fbs_fbp != FBIO_NULL)
+		fb_configureWindow(fbop->fbo_fbs.fbs_fbp, width, height);
+
+	return TCL_OK;    
+}
 #if 0
 /*
  *
