@@ -73,6 +73,16 @@ HIDDEN struct bu_cmdtab vo_cmds[] =
 	"perspective",		vo_perspective_tcl,
 	"pmat",			vo_pmat_tcl,
 	"update",		vo_update_tcl,
+#if 0
+	"eye",			vo_eye_tcl,
+	"lookat",		vo_lookat_tcl,
+	"orientation",		vo_orientation_tcl,
+	"pov",			vo_pov_tcl,
+	"read_view"		vo_read_view_tcl,
+	"write_view"		vo_write_view_tcl,
+	"units",		vo_units_tcl,
+	"zoom",			vo_zoom_tcl,
+#endif
 	"close",		vo_close_tcl,
 	(char *)0,		(int (*)())0
 };

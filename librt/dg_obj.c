@@ -123,6 +123,13 @@ HIDDEN struct bu_cmdtab dgo_cmds[] = {
 	"who",			dgo_who_tcl,
 	"rt",			dgo_rt_tcl,
 	"vdraw",		dgo_vdraw_tcl,
+#if 0
+	"B",			dgo_blast_tcl,
+	"Z",			dgo_zap_tcl,
+	"erase_all",		dgo_erase_all_tcl,
+	"rtcheck",		dgo_rtcheck_tcl,
+	"tol",			dgo_tol_tcl,
+#endif
 	"close",		dgo_close_tcl,
 	(char *)0,		(int (*)())0
 };
