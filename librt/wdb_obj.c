@@ -3492,7 +3492,7 @@ wdb_push_leaf(tsp, pathp, ep, id, client_data)
  *  for each tree walk.  If it is not, then d_uses is NOT a safe
  *  way to check and this method will always work.)
  */
-	bu_semaphore_acquire((unsigned int)(RT_SEM_WORKER - BU_SEM_SYSCALL));
+	bu_semaphore_acquire(RT_SEM_WORKER);
 	FOR_ALL_WDB_PUSH_SOLIDS(pip,wpdp->pi_head) {
 		if (pip->pi_dir == dp ) {
 			if (!bn_mat_is_equal(pip->pi_mat,
@@ -3505,7 +3505,7 @@ wdb_push_leaf(tsp, pathp, ep, id, client_data)
 				wpdp->push_error = 1;
 			}
 
-			bu_semaphore_release((unsigned int)(RT_SEM_WORKER - BU_SEM_SYSCALL));
+			bu_semaphore_release(RT_SEM_WORKER);
 			BU_GETUNION(curtree, tree);
 			curtree->magic = RT_TREE_MAGIC;
 			curtree->tr_op = OP_NOP;
@@ -3523,7 +3523,7 @@ wdb_push_leaf(tsp, pathp, ep, id, client_data)
 	wpdp->pi_head.back = pip;
 	pip->forw = &wpdp->pi_head;
 	pip->back->forw = pip;
-	bu_semaphore_release((unsigned int)(RT_SEM_WORKER - BU_SEM_SYSCALL));
+	bu_semaphore_release(RT_SEM_WORKER);
 	BU_GETUNION(curtree, tree);
 	curtree->magic = RT_TREE_MAGIC;
 	curtree->tr_op = OP_NOP;
