@@ -255,8 +255,9 @@ const char				*value;	/* string containing value */
 #endif
 /* 
  * This routine is responsible for duplicating the image list head to make
- * a new list element.  It also reads in the pixel data for the image, and
- * computes the matrix from the view quaternion.  
+ * a new list element.  It used to read in pixel data for an image (this is
+ * now done in the prj_setup() routine), and computes the matrix from the view 
+ * quaternion.  
  *
  * XXX "orient" MUST ALWAYS BE THE LAST PARAMETER SPECIFIED FOR EACH IMAGE.
  */
@@ -436,7 +437,9 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 {
 	struct prj_specific		*prj_sp;
 	struct img_specific		*img_sp;
-	char 				*fname;
+#if 0
+	char * fname;
+#endif
 	struct bu_vls 			parameter_data;
 	struct bu_mapped_file		*parameter_file;
 
@@ -458,43 +461,51 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 
 
 	if (rdebug&RDEBUG_SHADE) {
-		if ((prj_sp->prj_plfd=fopen("prj.pl", "w")) == (FILE *)NULL) {
-			bu_log("ERROR creating plot file prj.pl");
-		}
-	} else
+	  if ((prj_sp->prj_plfd=fopen("prj.pl", "w")) == (FILE *)NULL) {
+	    bu_log("ERROR creating plot file prj.pl");
+	  }
+	} else {
 	  prj_sp->prj_plfd = (FILE *)NULL;
+	}
 	
-	
-	/* !!! need to handle a parse_tab for prj_specific so that the arg does not *have* to be just a file name. */
-	/* perhaps, if only one arge, it's a filename. if more, load through parse table with options for all of the identifiers you might find (perhaps just img_parse_tab, still) */
-
-	fname = bu_vls_addr(matparm);
 #if 0
+	fname = bu_vls_addr(matparm);
 	if (! isspace(*fname) )
-		bu_log("------ Stack shader fixed?  Remove hack from prj shader ----\n");
+	  bu_log("------ Stack shader fixed?  Remove hack from prj shader ----\n");
 	while (isspace(*fname)) fname++; /* XXX Hack till stack shader fixed */
-
+	
 #endif
-	if (! *fname) {
-	  bu_log("ERROR: Null projection shader file?\n");
+	if (! *(bu_vls_addr(matparm))) {
+	  bu_log("ERROR: Null projection shader file or options?\n");
 	  return -1;
 	}
-
-	parameter_file = bu_open_mapped_file( fname, (char *)NULL );
-	if (! parameter_file) {
-		bu_log( "ERROR: Projection shader can't find shaderfile (%s)\n", fname );
-		return -1;
-	}
-
+	
+	/* first we try to open the specified argument as a file, as previously implemented.  
+	 * if it succeeds, then the file contents become the parameter data.  Otherwise, the
+	 * argument string considered the parameter data.
+	 */
+	
 	bu_vls_init(&parameter_data);
-	bu_vls_strncpy( &parameter_data, (char *)parameter_file->buf,
-		parameter_file->buflen );
+	parameter_file = bu_open_mapped_file( bu_vls_addr(matparm), (char *)NULL );
 
-	if (rdebug&RDEBUG_SHADE ) {
-		bu_log("parsing: %s\n", bu_vls_addr(&parameter_data));
+	if (parameter_file) {
+	  /* the file loaded, so the contents become the parameter string */
+	  bu_log("Filename: %s\n", bu_vls_addr(matparm));
+	  
+	  bu_vls_strncpy( &parameter_data, (char *)parameter_file->buf,
+			  parameter_file->buflen );
+	  
+	  if (rdebug&RDEBUG_SHADE ) {
+	    bu_log("parsing: %s\n", bu_vls_addr(&parameter_data));
+	  }
+
+	  bu_close_mapped_file( parameter_file );
+	} else {
+	  /* the file did not load, so the shader args become the param string */
+	  bu_log("Parameters: %s\n", bu_vls_addr(matparm));
+
+	  bu_vls_strncpy ( &parameter_data, bu_vls_addr(matparm), bu_vls_strlen(matparm) );
 	}
-
-	bu_close_mapped_file( parameter_file );
 
 	/* set defaults on img_specific struct */
 	prj_sp->prj_images.i_width = prj_sp->prj_images.i_height = 512;
@@ -509,8 +520,12 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	prj_sp->prj_images.i_img = GENPTR_NULL;
 
 	if(bu_struct_parse( &parameter_data, img_parse_tab, 
-	    (char *)&prj_sp->prj_images) < 0)
-		return -1;
+			    (char *)&prj_sp->prj_images) < 0) {
+	  bu_log("ERROR: Unable to properly parse projection shader parameters\n");
+	  return -1;
+	}
+
+	bu_vls_free( &parameter_data );
 
         /* load the image data for any specified images */
         for (BU_LIST_FOR(img_sp, img_specific, &prj_sp->prj_images.l)) {
@@ -537,11 +552,6 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 			break;
 		}
 	}
-
-	
-
-
-	bu_vls_free( &parameter_data );
 
 	/* The shader needs to operate in a coordinate system which stays
 	 * fixed on the region when the region is moved (as in animation)
