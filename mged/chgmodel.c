@@ -1310,41 +1310,22 @@ char	**argv;
 	}
 }
 
-/* allow precise changes to object rotation */
 int
-f_rot_obj(clientData, interp, argc, argv)
-ClientData clientData;
+mged_rot_obj(interp, iflag, argvect)
 Tcl_Interp *interp;
-int	argc;
-char	**argv;
+int iflag;
+vect_t argvect;
 {
-  int iflag = 0;
-  mat_t temp;
-  vect_t s_point, point, v_work, model_pt;
-
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-    return TCL_ERROR;
-
-  if( not_state( ST_O_EDIT, "Object Rotation" ) )
-    return TCL_ERROR;
-
-  /* Check for -i option */
-  if(argv[1][0] == '-' && argv[1][1] == 'i'){
-    iflag = 1;  /* treat arguments as incremental values */
-    ++argv;
-    --argc;
-  }
-
   update_views = 1;
 
   if(movedir != ROTARROW) {
     /* NOT in object rotate mode - put it in obj rot */
 #if 0
-		dmp->dm_light( dmp, LIGHT_ON, BE_O_ROTATE );
-		dmp->dm_light( dmp, LIGHT_OFF, BE_O_SCALE );
-		dmp->dm_light( dmp, LIGHT_OFF, BE_O_XY );
+    dmp->dm_light( dmp, LIGHT_ON, BE_O_ROTATE );
+    dmp->dm_light( dmp, LIGHT_OFF, BE_O_SCALE );
+    dmp->dm_light( dmp, LIGHT_OFF, BE_O_XY );
 #endif
-		movedir = ROTARROW;
+    movedir = ROTARROW;
   }
 
   /* find point for rotation to take place wrt */
@@ -1369,9 +1350,10 @@ char	**argv;
 
   /* build new rotation matrix */
   mat_idn(temp);
-  buildHrot(temp, atof(argv[1])*degtorad,
-	    atof(argv[2])*degtorad,
-	    atof(argv[3])*degtorad );
+  buildHrot(temp,
+	    argvect[0]*degtorad,
+	    argvect[1]*degtorad,
+	    argvect[2]*degtorad );
 
   if(iflag){
     /* apply accumulated rotations */
@@ -1388,6 +1370,43 @@ char	**argv;
   new_mats();
 
   return TCL_OK;
+}
+
+
+/* allow precise changes to object rotation */
+int
+f_rot_obj(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	**argv;
+{
+  int iflag = 0;
+  vect_t argvect;
+  mat_t temp;
+  vect_t s_point, point, v_work, model_pt;
+
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
+
+  if( not_state( ST_O_EDIT, "Object Rotation" ) )
+    return TCL_ERROR;
+
+  /* Check for -i option */
+  if(argv[1][0] == '-' && argv[1][1] == 'i'){
+    iflag = 1;  /* treat arguments as incremental values */
+    ++argv;
+    --argc;
+  }
+
+  if(argc != 4)
+    return TCL_ERROR;
+
+  argvect[0] = atof(argv[1]);
+  argvect[1] = atof(argv[2]);
+  argvect[2] = atof(argv[3]);
+
+  return mged_rot_obj(interp, iflag, argvect);
 }
 
 /* allow precise changes to object scaling, both local & global */
