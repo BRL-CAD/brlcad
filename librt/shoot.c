@@ -22,6 +22,7 @@ static char RCSshoot[] = "@(#)$Header$ (BRL)";
 char CopyRight_Notice[] = "@(#) Copyright (C) 1985 by the United States Army";
 
 #include <stdio.h>
+#include <math.h>
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -253,7 +254,7 @@ register struct application *ap;
 	 *  it isn't much trouble here.
 	 */
 #define BACKING_DIST	(-2.0)		/* mm to look behind start point */
-#define OFFSET_DIST	0.75		/* mm to advance point into box */
+#define OFFSET_DIST	0.01		/* mm to advance point into box */
 	box_start = ap->a_ray.r_min;
 	if( box_start < BACKING_DIST )
 		box_start = BACKING_DIST; /* Only look a little bit behind */
