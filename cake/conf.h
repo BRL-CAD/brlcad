@@ -15,19 +15,29 @@ typedef	int	Cast;
 #define	ULIB		"/lib/cake"
 
 /* command to invoke the C preprocessor */
-#if 1
+#if _AIX
+	/*
+	 *  Using CPP is necessary for the IBM RS/6000, because their
+	 *  cc -E will not work unless the source file name ends in .c
+	 */
+#	define	CPP		"/lib/cpp"
+#	define	CPP_OPTIONS	"-D_AIX=1"
+#endif
+#if !defined(CPP)
+#    if 1
 	/*
 	 *  All BRL systems handle cc -E quite nicely.
-	 *  Using cc is necessary for the IBM RS/6000, and is nice on the SGI.
+	 *  Using cc gets you more configuration flags than cpp these days.
 	 */
 #	define	CPP		"cc"
-#	define CPP_OPTIONS	"-E"
-#else
+#	define	CPP_OPTIONS	"-E"
+#    else
 #	define	CPP		"/lib/cpp"
 	/* If C preprocessor needs options, define them here.  For example, GNU CPP */
 #	if 0
 #		define	CPP_OPTIONS	"-traditional"
 #	endif
+#    endif
 #endif
 
 /* location of the statistics file - if not defined, no stats kept */
