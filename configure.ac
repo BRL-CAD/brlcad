@@ -1152,7 +1152,7 @@ AC_MSG_RESULT($regex_works)
 dnl figure out whether we need to build libregex
 build_brlcad_regex="no (using system)"
 if test "x$build_regex" = "xyes" ; then
-	build_brlcad_bregex=yes
+	build_brlcad_regex=yes
 else
 	if test "x$build_regex" = "xno" ; then
 		if test "x$regex_works" != "xyes" ; then
