@@ -274,7 +274,7 @@ struct rt_i		*rtip;
 
 	/* X */
 	VSET( P, 1.0, 0, 0 );		/* bounding plane normal */
-	MAT3XVEC( w1, R, P );		/* map plane into local coord syst */
+	MAT3X3VEC( w1, R, P );		/* map plane into local coord syst */
 	f = fabs( w1[Z] * r2 );		/* Z part */
 	tmp = a2 * w1[X] * w1[X] + b2 * w1[Y] * w1[Y];
 	if( tmp > 1.0e-8 )
@@ -284,7 +284,7 @@ struct rt_i		*rtip;
 
 	/* Y */
 	VSET( P, 0, 1.0, 0 );		/* bounding plane normal */
-	MAT3XVEC( w1, R, P );		/* map plane into local coord syst */
+	MAT3X3VEC( w1, R, P );		/* map plane into local coord syst */
 	f = fabs( w1[Z] * r2 );		/* Z part */
 	tmp = a2 * w1[X] * w1[X] + b2 * w1[Y] * w1[Y];
 	if( tmp > 1.0e-8 )
@@ -294,7 +294,7 @@ struct rt_i		*rtip;
 
 	/* Z */
 	VSET( P, 0, 0, 1.0 );		/* bounding plane normal */
-	MAT3XVEC( w1, R, P );		/* map plane into local coord syst */
+	MAT3X3VEC( w1, R, P );		/* map plane into local coord syst */
 	f = fabs( w1[Z] * r2 );		/* Z part */
 	tmp = a2 * w1[X] * w1[X] + b2 * w1[Y] * w1[Y];
 	if( tmp > 1.0e-8 )
@@ -520,6 +520,9 @@ struct application	*ap;
  *	df/dx = 2 * w * 2 * x - 8 * x	= (4 * w - 8) * x
  *	df/dy = 2 * w * 2 * y - 8 * y	= (4 * w - 8) * y
  *	df/dz = 2 * w * 2 * z		= 4 * w * z
+ *
+ *  Since we rescale the gradient (normal) to unity, we divide the
+ *  above equations by four here.
  */
 tor_norm( hitp, stp, rp)
 register struct hit *hitp;
@@ -532,16 +535,16 @@ register struct xray *rp;
 	LOCAL vect_t work;
 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
-	w = (hitp->hit_vpriv[X]*hitp->hit_vpriv[X] +
-	     hitp->hit_vpriv[Y]*hitp->hit_vpriv[Y] +
-	     hitp->hit_vpriv[Z]*hitp->hit_vpriv[Z] +
-	     1.0 - tor->tor_alpha*tor->tor_alpha) * 4.0;
+	w = hitp->hit_vpriv[X]*hitp->hit_vpriv[X] +
+	    hitp->hit_vpriv[Y]*hitp->hit_vpriv[Y] +
+	    hitp->hit_vpriv[Z]*hitp->hit_vpriv[Z] +
+	    1.0 - tor->tor_alpha*tor->tor_alpha;
 	VSET( work,
-		( w - 8.0 ) * hitp->hit_vpriv[X],
-		( w - 8.0 ) * hitp->hit_vpriv[Y],
+		( w - 2.0 ) * hitp->hit_vpriv[X],
+		( w - 2.0 ) * hitp->hit_vpriv[Y],
 		  w * hitp->hit_vpriv[Z] );
 	VUNITIZE( work );
-	MAT3XVEC( hitp->hit_normal, tor->tor_invR, work );
+	MAT3X3VEC( hitp->hit_normal, tor->tor_invR, work );
 }
 
 /*
