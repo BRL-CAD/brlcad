@@ -9,7 +9,7 @@
 			g-euclid euclid_format euclid_unformat tankill-g g-tankill \
 			viewpoint-g dxf-g g-nmg g-euclid1 fast4-g proe-g \
 			asc-nmg nmg-rib g-vrml g-acad cy-g nastran-g g-wave \
-			nmg-polysolid g-shell.rect stl-g
+			nmg-polysolid g-shell.rect stl-g g-xxx
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
@@ -19,6 +19,9 @@
 #include "../Cakefile.prog"
 
 /* Explicit composition of each product */
+
+g-xxx: g-xxx.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP LIBWDB_DEP
+	CC LDFLAGS g-xxx.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBTCL LIBES -o g-xxx
 
 nmg-polysolid: nmg-polysolid.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP LIBWDB_DEP
 	CC LDFLAGS nmg-polysolid.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBTCL LIBES -o nmg-polysolid
