@@ -642,6 +642,7 @@ Ir_open()
 	qdevice(F5KEY);	/* pf5 for lighting */
 	qdevice(F6KEY);	/* pf6 for changing perspective */
 	qdevice(F7KEY);	/* pf7 for no faceplate */
+	qdevice(F12KEY);/* pf12 to zero knobs */
 	while( getbutton(LEFTMOUSE)||getbutton(MIDDLEMOUSE)||getbutton(RIGHTMOUSE) )  {
 		rt_log("IRIS_open:  mouse button stuck\n");
 		sleep(1);
@@ -1233,9 +1234,7 @@ checkevents()  {
 		if( ir_debug ) rt_log("qread ret=%d, val=%d\n", ret, valp[1]);
 #if IR_BUTTONS
 		if((ret >= SWBASE && ret < SWBASE+IR_BUTTONS)
-		    || ret == F1KEY || ret == F2KEY || ret == F3KEY
-		    || ret == F4KEY || ret == F5KEY || ret == F6KEY
-		    || ret == F7KEY
+		    || (ret >= F1KEY && ret <= F12KEY)
 		    ) {
 			register int	i;
 
@@ -1275,7 +1274,7 @@ continue;
 			/*
 			 *  If button 1 is pressed, reset run away knobs.
 			 */
-			if(ret == SW_ZERO_KEY)  {
+			if(ret == SW_ZERO_KEY || ret == F12KEY)  {
 				if(!valp[1]) continue; /* Ignore release */
 				/*  Help mode */
 				if(button0)  {
@@ -1290,6 +1289,8 @@ continue;
 					knobs[i] = 0;
 				}
 #endif
+				rt_vls_printf(&dm_values.dv_string,
+				    "knob zero\n");
 				continue;
 			}
 #endif
