@@ -224,16 +224,25 @@ proc ia_apropos { parent screen } {
 proc ia_changestate { args } {
     global mged_display ia_illum_label
     global mged_active_dm
+    global transform
+    global transform_what
 
     set id [lindex $args 0]
 
-    if { [string length $mged_display(keypoint)]>0 } {
+    if {$mged_display($mged_active_dm($id),adc) != ""} {
+	set ia_illum_label($id) $mged_display($mged_active_dm($id),adc)
+    } elseif {[string length $mged_display(keypoint)]>0} {
 	set ia_illum_label($id) $mged_display(keypoint)
-    } elseif { [string compare $mged_display(state) VIEWING]==0 } {
+    } elseif {$mged_display(state) == "VIEWING"} {
 	set ia_illum_label($id) $mged_display($mged_active_dm($id),fps)
     } else {
-	set ia_illum_label($id) [format "Illuminated path:    %s    %s" \
-		$mged_display(path_lhs) $mged_display(path_rhs)]
+	if {$mged_display(state) == "OBJ PATH"} {
+	    set ia_illum_label($id) [format "Illuminated path: %s/__MATRIX__%s" \
+		    $mged_display(path_lhs) $mged_display(path_rhs)]
+	} else {
+	    set ia_illum_label($id) [format "Illuminated path: %s    %s" \
+		    $mged_display(path_lhs) $mged_display(path_rhs)]
+	}
     }
 }
 
@@ -321,23 +330,71 @@ proc distribute_text { w cmd str} {
     }
 }
 
-#    if { [mged_input_dialog .$id.open $player_screen($id) "Open New File" \
-#	    "Enter filename of database you wish to open:" \
-#	    ia_filename "" 0 Open Cancel] == 0 } {
 proc do_Open { id } {
     global player_screen
 
-    set ia_filename [fs_dialog .$id.open .$id "./*.g"]
-    if {[string length $ia_filename] > 0} {
-	if [file exists $ia_filename] {
-	    opendb $ia_filename
-	    mged_dialog .$id.cool $player_screen($id) "File loaded" \
-		    "Database $ia_filename successfully loaded." info 0 OK
-	} else {
-	    mged_dialog .$id.toobad $player_screen($id) "Error" \
-		    "No such file exists." warning 0 OK
-	}
+    set file_types {{{MGED Database} {.g}}}
+    set ia_filename [tk_getOpenFile -parent .$id -filetypes $file_types\
+	    -initialdir . -title "Open MGED Database" -defaultextension ".g"]
+    if {$ia_filename != ""} {
+	opendb $ia_filename
+	mged_dialog .$id.cool $player_screen($id) "File loaded" \
+		"Database $ia_filename successfully loaded." info 0 OK
     }
+}
+
+proc do_New { id } {
+    global player_screen
+
+    set file_types {{{MGED Database} {.g}}}
+    set ia_filename [tk_getSaveFile -parent .$id -filetypes $file_types\
+	    -initialdir . -title "New MGED Database" -defaultextension ".g"]
+    if {$ia_filename != ""} {
+	opendb $ia_filename y
+	mged_dialog .$id.cool $player_screen($id) "File loaded" \
+		"Database $ia_filename successfully loaded." info 0 OK
+    }
+}
+
+proc do_Concat { id } {
+    global player_screen
+
+    set file_types {{{MGED Database} {.g}}}
+    set ia_filename [tk_getOpenFile -parent .$id -filetypes $file_types\
+	    -initialdir . -title "Insert MGED Database" -defaultextension ".g"]
+    if {$ia_filename != ""} {
+	dbconcat $ia_filename /
+    }
+}
+
+proc do_Keep { id } {
+}
+
+proc do_Units { id } {
+    global mged_display
+
+    _mged_units $mged_display(units)
+}
+
+proc do_Raytrace { id } {
+}
+
+proc do_rt_script { id } {
+    global player_screen
+
+    set ia_filename [fs_dialog .$id.rtscript .$id "./*"]
+    if {[string length $ia_filename] > 0} {
+	saveview $ia_filename
+    } else {
+	mged_dialog .$id.toobad $player_screen($id) "Error" \
+		"No such file exists." warning 0 OK
+    }
+}
+
+proc do_plot { id } {
+}
+
+proc do_postscript { id } {
 }
 
 proc do_About_MGED { id } {
@@ -353,10 +410,13 @@ Aberdeen Proving Ground, Maryland  21005-5068  USA\n\
 	    {} 0 OK
 }
 
-proc do_On_command { id } {
+proc command_help { id } {
     global player_screen
 
     ia_help .$id $player_screen($id) [concat [?]]
+}
+
+proc on_context_help { id } {
 }
 
 proc ia_invoke { w } {
@@ -573,246 +633,6 @@ proc ia_get_html {file} {
     close $fd
     return $result
 }
-
-#==============================================================================
-#
-# TCL versions of MGED "help", "?", and "apropos" commands
-#
-#==============================================================================
-
-set help_data(?)		{{}	{summary of available mged commands}}
-set help_data(?lib)		{{}	{summary of available library commands}}
-set help_data(%)		{{}	{escape to interactive shell}}
-set help_data(3ptarb)		{{}	{makes arb given 3 pts, 2 coord of 4th pt, and thickness}}
-set help_data(adc)		{{[<a1|a2|dst|dh|dv|hv|dx|dy|dz|xyz|reset|help> value(s)]}	{control the angle/distance cursor}}
-set help_data(ae)		{{[-i] azim elev [twist]}	{set view using azim, elev and twist angles}}
-set help_data(aim)		{{[command_window [pathName of display window]]}	{aims command_window at pathName}}
-set help_data(aip)		{{[fb]}		{advance illumination pointer or path position forward or backward}}
-set help_data(analyze)		{{[arbname]}	{analyze faces of ARB}}
-set help_data(apropos)		{{keyword}	{finds commands whose descriptions contain the given keyword}}
-set help_data(arb)		{{name rot fb}	{make arb8, rotation + fallback}}
-set help_data(arced)		{{a/b ...anim_command...}	{edit matrix or materials on combination's arc}}
-set help_data(area)		{{[endpoint_tolerance]}	{calculate presented area of view}}
-set help_data(attach)		{{[-d display_string] [-i init_script] [-n name]
-	      [-t is_toplevel] [-W width] [-N height]
-	      [-S square_size] dev_type}	{attach to a display manager}}
-set help_data(attach4)		{{id screen dtype}	{open a set of 4 display windows}}
-set help_data(B)		{{<objects>}	{clear screen, edit objects}}
-set help_data(bev)		{{[-t] [-P#] new_obj obj1 op obj2 op obj3 op ...}	{Boolean evaluation of objects via NMG's}}
-set help_data(c)		{{[-gr] comb_name [boolean_expr]}	{create or extend a combination using standard notation}}
-set help_data(cat)		{{<objects>}	{list attributes (brief)}}
-set help_data(center)		{{x y z}	{set view center}}
-set help_data(closew)		{{id}	{close display/command window pair}}
-set help_data(color)		{{low high r g b str}	{make color entry}}
-set help_data(comb)		{{comb_name <operation solid>}	{create or extend combination w/booleans}}
-set help_data(comb_color)	{{comb R G B}	{assign a color to a combination (like 'mater')}}
-set help_data(copyeval)		{{new_solid path_to_old_solid}	{copy an 'evaluated' path solid}}
-set help_data(copymat)		{{a/b c/d}	{copy matrix from one combination's arc to another's}}
-set help_data(cp)		{{from to}	{copy [duplicate] object}}
-set help_data(cpi)		{{from to}	{copy cylinder and position at end of original cylinder}}
-set help_data(d)		{{<objects>}	{remove objects from the screen}}
-set help_data(dall)		{{<objects>}	{remove all occurrences of object(s) from the screen}}
-set help_data(db)		{{command}	{database manipulation routines}}
-set help_data(dbconcat)		{{file [prefix]}	{concatenate 'file' onto end of present database.  Run 'dup file' first.}}
-set help_data(debugbu)		{{[hex_code]}	{Show/set debugging bit vector for libbu}}
-set help_data(debugdir)		{{}	{Print in-memory directory, for debugging}}
-set help_data(debuglib)		{{[hex_code]}	{Show/set debugging bit vector for librt}}
-set help_data(debugmem)		{{}	{Print librt memory use map}}
-set help_data(debugnmg)		{{[hex code]}	{Show/set debugging bit vector for NMG}}
-set help_data(decompose)	{{nmg_solid [prefix]}	{decompose nmg_solid into maximally connected shells}}
-set help_data(delay)		{{sec usec}	{Delay for the specified amount of time}}
-set help_data(dm)		{{set var [val]}	{Do display-manager specific command}}
-set help_data(draw)		{{<objects>}	{draw objects}}
-set help_data(dup)		{{file [prefix]}	{check for dup names in 'file'}}
-set help_data(E)		{{ [-s] <objects>}	{evaluated edit of objects. Option 's' provides a slower, but better fidelity evaluation}}
-set help_data(e)		{{<objects>}	{edit objects}}
-set help_data(eac)		{{Air_code(s)}	{display all regions with given air code}}
-set help_data(echo)		{{[text]}	{echo arguments back}}
-set help_data(edcodes)		{{object(s)}	{edit region ident codes}}
-set help_data(edmater)		{{comb(s)}	{edit combination materials}}
-set help_data(edcolor)		{{}	{text edit color table}}
-set help_data(edcomb)		{{combname Regionflag regionid air los [GIFTmater]}	{edit combination record info}}
-set help_data(edgedir)		{{[delta_x delta_y delta_z]|[rot fb]}	{define direction of ARB edge being moved}}
-set help_data(erase)		{{<objects>}	{remove objects from the screen}}
-set help_data(erase_all)	{{<objects>}	{remove all occurrences of object(s) from the screen}}
-set help_data(ev)		{{[-dnqstuvwT] [-P #] <objects>}	{evaluate objects via NMG tessellation}}
-set help_data(eqn)		{{A B C}	{planar equation coefficients}}
-set help_data(exit)		{{}	{exit}}
-set help_data(extrude)		{{#### distance}	{extrude dist from face}}
-set help_data(expand)		{{wildcard expression}	{expands wildcard expression}}
-set help_data(eye_pt)		{{mx my mz}	{set eye point to given model coordinates (in mm)}}
-set help_data(facedef)		{{####}	{define new face for an arb}}
-set help_data(facetize)		{{[-tT] [-P#] new_obj old_obj(s)}	{convert objects to faceted NMG objects at current tol}}
-set help_data(find)		{{<objects>}	{find all references to objects}}
-set help_data(fix)		{{}	{fix display after hardware error}}
-set help_data(fracture)		{{NMGsolid [prefix]}	{fracture an NMG solid into many NMG solids, each containing one face\n}}
-set help_data(g)		{{groupname <objects>}	{group objects}}
-set help_data(getknob)		{{knobname}	{Gets the current setting of the given knob}}
-set help_data(output_hook)	{{output_hook_name}	{All output is sent to the Tcl procedure \"output_hook_name\"}}
-set help_data(help)		{{[commands]}	{give usage message for given commands}}
-set help_data(helplib)		{{[library commands]}	{give usage message for given library commands}}
-set help_data(history)		{{[-delays]}	{list command history}}
-set help_data(hist_prev)	{{}	{Returns previous command in history}}
-set help_data(hist_next)	{{}	{Returns next command in history}}
-set help_data(hist_add)		{{[command]}	{Adds command to the history (without executing it)}}
-set help_data(i)		{{obj combination [operation]}	{add instance of obj to comb}}
-set help_data(idents)		{{file object(s)}	{make ascii summary of region idents}}
-set help_data(ill)		{{name}	{illuminate object}}
-set help_data(in)		{{[-f] [-s] parameters...}	{keyboard entry of solids.  -f for no drawing, -s to enter solid edit}}
-set help_data(inside)		{{}	{finds inside solid per specified thicknesses}}
-set help_data(item)		{{region item [air [GIFTmater [los]]]}	{set region ident codes}}
-set help_data(jcs)		{{id}	{join collaborative session}}
-set help_data(joint)		{{command [options]}	{articulation/animation commands}}
-set help_data(journal)		{{[-d] fileName}	{record all commands and timings to journal}}
-set help_data(keep)		{{keep_file object(s)}	{save named objects in specified file}}
-set help_data(keypoint)		{{[x y z | reset]}	{set/see center of editing transformations}}
-set help_data(kill)		{{[-f] <objects>}	{delete object[s] from file}}
-set help_data(killall)		{{<objects>}	{kill object[s] and all references}}
-set help_data(killtree)		{{<object>}	{kill complete tree[s] - BE CAREFUL}}
-set help_data(knob)		{{[-e -i -v] [id [val]]}	{emulate knob twist}}
-set help_data(l)		{{<objects>}	{list attributes (verbose)}}
-set help_data(L)		{{1|0 xpos ypos}	{handle a left mouse event}}
-set help_data(labelvert)	{{object[s]}	{label vertices of wireframes of objects}}
-set help_data(listeval)		{{}	{lists 'evaluated' path solids}}
-set help_data(load_dv)		{{}	{Initializes the view matrices}}
-set help_data(loadtk)		{{[DISPLAY]}	{Initializes Tk window library}}
-set help_data(lookat)		{{x y z}	{Adjust view to look at given coordinates}}
-set help_data(ls)		{{}	{table of contents}}
-set help_data(M)		{{1|0 xpos ypos}	{handle a middle mouse event}}
-set help_data(make)		{{name <arb8|sph|ellg|tor|tgc|rpc|rhc|epa|ehy|eto|part|grip|half|nmg|pipe>}	{create a primitive}}
-set help_data(make_bb)		{{new_rpp_name obj1_or_path1 [list of objects or paths ...]}	{make a bounding box solid enclosing specified objects/paths}}
-set help_data(mater)		{{comb [material]}	{assign/delete material to combination}}
-set help_data(matpick)		{{# or a/b}	{select arc which has matrix to be edited, in O_PATH state}}
-set help_data(memprint)		{{}	{print memory maps}}
-set help_data(mirface)		{{#### axis}	{mirror an ARB face}}
-set help_data(mirror)		{{old new axis}	{mirror solid or combination around axis}}
-set help_data(model2view)	{{mx my mz}	{convert point in model coords (mm) to view coords}}
-set help_data(mv)		{{old new}	{rename object}}
-set help_data(mvall)		{{oldname newname}	{rename object everywhere}}
-set help_data(nirt)		{{}	{trace a single ray from current view}}
-set help_data(nmg_simplify)	{{[arb|tgc|ell|poly] new_solid nmg_solid}	{simplify nmg_solid, if possible}}
-set help_data(oed)		{{path_lhs path_rhs}	{Go from view to object_edit of path_lhs/path_rhs}}
-set help_data(opendb)		{{database.g}	{Close current .g file, and open new .g file}}
-set help_data(openw)		{{[-c b|c|g] [-d display string] [-gd graphics display string] [-gt graphics type] [-id name] [-h] [-j] [-s]}	{open display/command window pair}}
-set help_data(orientation)	{{x y z w}	{Set view direction from quaternion}}
-set help_data(orot)		{{[-i] xdeg ydeg zdeg}	{rotate object being edited}}
-set help_data(oscale)		{{factor}	{scale object by factor}}
-set help_data(overlay)		{{file.plot [name]}	{Read UNIX-Plot as named overlay}}
-set help_data(p)		{{dx [dy dz]}	{set parameters}}
-set help_data(paths)		{{pattern}	{lists all paths matching input path}}
-set help_data(pathlist)		{{name(s)}	{list all paths from name(s) to leaves}}
-set help_data(pcs)		{{}	{print collaborative participants}}
-set help_data(pmp)		{{}	{print mged players}}
-set help_data(permute)		{{tuple}	{permute vertices of an ARB}}
-set help_data(plot)		{{[-float] [-zclip] [-2d] [-grid] [out_file] [|filter]}	{make UNIX-plot of view}}
-set help_data(pl)		{{[-float] [-zclip] [-2d] [-grid] [out_file] [|filter]}	{Experimental - uses dm-plot:make UNIX-plot of view}}
-set help_data(polybinout)	{{file}	{store vlist polygons into polygon file (experimental)}}
-set help_data(pov)		{{args}	{experimental:  set point-of-view}}
-set help_data(prcolor)		{{}	{print color&material table}}
-set help_data(prefix)		{{new_prefix object(s)}	{prefix each occurrence of object name(s)}}
-set help_data(preview)		{{[-v] [-d sec_delay] [-D start frame] [-K last frame] rt_script_file}	{preview new style RT animation script}}
-set help_data(press)		{{button_label}	{emulate button press}}
-set help_data(ps)		{{[-f font] [-t title] [-c creator] [-s size in inches] [-l linewidth] file}	{creates a postscript file of the current view}}
-set help_data(push)		{{object[s]}	{pushes object's path transformations to solids}}
-set help_data(putmat)		{{a/b {I | m0 m1 ... m16}}	{replace matrix on combination's arc}}
-set help_data(q)		{{}	{quit}}
-set help_data(qcs)		{{id}	{quit collaborative session}}
-set help_data(quit)		{{}	{quit}}
-set help_data(qorot)		{{x y z dx dy dz theta}	{rotate object being edited about specified vector}}
-set help_data(qvrot)		{{dx dy dz theta}	{set view from direction vector and twist angle}}
-set help_data(r)		{{region <operation solid>}	{create or extend a Region combination}}
-set help_data(R)		{{1|0 xpos ypos}	{handle a right mouse event}}
-set help_data(rcodes)		{{filename}	{read region ident codes from filename}}
-set help_data(red)		{{object}	{edit a group or region using a text editor}}
-set help_data(refresh)		{{}	{send new control list}}
-set help_data(regdebug)		{{[number]}	{toggle display manager debugging or set debug level}}
-set help_data(regdef)		{{item [air [los [GIFTmaterial]]]}	{change next region default codes}}
-set help_data(regions)		{{file object(s)}	{make ascii summary of regions}}
-set help_data(release)		{{[name]}	{release display processor}}
-set help_data(release4)		{{id}	{release the display manager window opened with attach4}}
-set help_data(rfarb)		{{}	{makes arb given point, 2 coord of 3 pts, rot, fb, thickness}}
-set help_data(rm)		{{comb <members>}	{remove members from comb}}
-set help_data(rmater)		{{filename}	{read combination materials from filename}}
-set help_data(rmats)		{{file}	{load view(s) from 'savekey' file}}
-set help_data(rotobj)		{{[-i] xdeg ydeg zdeg}	{rotate object being edited}}
-set help_data(rrt)		{{prog [options]}	{invoke prog with view}}
-set help_data(rt)		{{[options]}	{do raytrace of view}}
-set help_data(rtcheck)		{{[options]}	{check for overlaps in current view}}
-set help_data(savekey)		{{file [time]}	{save keyframe in file (experimental)}}
-set help_data(saveview)		{{file [args]}	{save view in file for RT}}
-set help_data(showmats)		{{path}	{show xform matrices along path}}
-set help_data(sed)		{{<path>}	{solid-edit named solid}}
-set help_data(setview)		{{x y z}	{set the view given angles x, y, and z in degrees}}
-set help_data(shells)		{{nmg_model}	{breaks model into seperate shells}}
-set help_data(shader)		{{comb material [arg(s)]}	{assign materials (like 'mater')}}
-set help_data(size)		{{size}	{set view size}}
-set help_data(sliders)		{{[on|off]}	{turns the sliders on or off, or reads current state}}
-set help_data(solids)		{{file object(s)}	{make ascii summary of solid parameters}}
-set help_data(solids_on_ray)	{{h v}	{List all displayed solids along a ray}}
-set help_data(status)		{{}	{get view status}}
-set help_data(summary)		{{[s r g]}	{count/list solid/reg/groups}}
-set help_data(sv)		{{x y [z]}	{Move view center to (x, y, z)}}
-set help_data(svb)		{{}	{set view reference base}}
-set help_data(sync)		{{}	{forces UNIX sync}}
-set help_data(t)		{{}	{table of contents}}
-set help_data(ted)		{{}	{text edit a solid's parameters}}
-set help_data(tie)		{{pathName1 pathName2}	{tie display manager pathName1 to display manager pathName2}}
-set help_data(title)		{{[string]}	{print or change the title}}
-set help_data(tol)		{{[abs #] [rel #] [norm #] [dist #] [perp #]}	{show/set tessellation and calculation tolerances}}
-set help_data(tops)		{{}	{find all top level objects}}
-set help_data(track)		{{<parameters>}	{adds tracks to database}}
-set help_data(tran)		{{[-i] x y [z]}	{absolute translate using view coordinates}}
-set help_data(translate)	{{x y z}	{trans object to x,y, z}}
-set help_data(tree)		{{object(s)}	{print out a tree of all members of an object}}
-set help_data(units)		{{[mm|cm|m|in|ft|...]}	{change units}}
-set help_data(untie)		{{pathName}	{untie display manager pathName}}
-set help_data(mged_update)	{{}	{handle outstanding events and refresh}}
-set help_data(vars)		{{[var=opt]}	{assign/display mged variables}}
-set help_data(vdraw)		{{write|insert|delete|read|length|show [args]}	{Expermental drawing (cnuzman)}}
-set help_data(viewget)		{{center|size|eye|ypr|quat|aet}	{Experimental - return high-precision view parameters.}}
-set help_data(viewset)		{{center|eye|size|ypr|quat|aet}	{Experimental - set several view parameters at once.}}
-set help_data(view2model)	{{mx my mz}	{convert point in view coords to model coords (mm)}}
-set help_data(vrmgr)		{{host {master|slave|overview}}	{link with Virtual Reality manager}}
-set help_data(vrot)		{{xdeg ydeg zdeg}	{rotate viewpoint}}
-set help_data(vrot_center)	{{v|m x y z}	{set center point of viewpoint rotation, in model or view coords}}
-set help_data(wcodes)		{{filename object(s)}	{write region ident codes to filename}}
-set help_data(whatid)		{{region_name}	{display ident number for region}}
-set help_data(whichair)		{{air_codes(s)}	{lists all regions with given air code}}
-set help_data(whichid)		{{ident(s)}	{lists all regions with given ident code}}
-set help_data(which_shader)	{{Shader(s)}	{lists all combinations using the given shaders}}
-set help_data(who)		{{[r(eal)|p(hony)|b(oth)]}	{list the top-level objects currently being displayed}}
-set help_data(winset)		{{pathname}	{sets the current display manager to pathname}}
-set help_data(wmater)		{{filename comb(s)}	{write combination materials to filename}}
-set help_data(x)		{{lvl}	{print solid table & vector list}}
-set help_data(xpush)		{{object}	{Experimental Push Command}}
-set help_data(Z)		{{}	{zap all objects off screen}}
-set help_data(zoom)		{{scale_factor}	{zoom view in or out}}
-
-proc help {args}	{
-	global help_data
-
-	if {[llength $args] > 0} {
-                return [help_comm help_data $args]
-        } else {
-                return [help_comm help_data]
-        }
-}
-
-proc ? {} {
-	global help_data
-
-	return [?_comm help_data 15 5]
-}
-
-proc apropos key {
-	global help_data
-
-	return [apropos_comm help_data $key]
-}
-
-
-
-
 
 #==============================================================================
 # Other Support Routines
