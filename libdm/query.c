@@ -31,7 +31,7 @@ dm_best_type()
 	t = DM_TYPE_OGL;
 #endif  
 
-	returnt;
+	return t;
 }
 
 char *
