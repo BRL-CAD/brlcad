@@ -175,6 +175,7 @@ int			flags;
 	dp->d_len = len;
 	headp = &(dbip->dbi_Head[db_dirhash(local)]);
 	dp->d_forw = *headp;
+	RT_LIST_INIT( &dp->d_use_hd );
 	*headp = dp;
 	return( dp );
 }
@@ -184,6 +185,9 @@ int			flags;
  *
  *  Given a pointer to a directory entry, remove it from the
  *  linked list, and free the associated memory.
+ *
+ *  It is the responsibility of the caller to have released whatever
+ *  structures have been hung on the d_use_hd rt_list, first.
  *
  *  Returns -
  *	 0	on success
