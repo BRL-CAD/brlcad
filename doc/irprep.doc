@@ -24,7 +24,7 @@ IRPREP
 .ce 3
 Susan A. Coates
 The Army Research Laboratory
-ARL-SLAD-BVLD-VMD
+ARL-SLAD-BVLD-VMB
 .sp 2
 This document lists the differences between the IRPREP set of programs in
 the BRL-CAD release 4.0 and the set in the BRL-CAD release 4.?.
@@ -84,7 +84,7 @@ shapefact
 .ft R
 .in 0.75i
 .sp
-1.  The region number & name file is read so that the
+1.  The region number and name file is read so that the
 numbering of regions is consistent across all irprep
 programs.
 .sp
@@ -125,7 +125,7 @@ pictx
 .sp
 .ft R
 A new program that combines the programs display and see for use in
-and X-windows environment.
+an X-windows environment.
 .sp 2
 .ft B
 pictsgi
@@ -133,4 +133,9 @@ pictsgi
 .ft R
 A new program that combines the programs display and see2 for use on
 an SGI machine.
-
+.sp 2
+See the manual pages for firpass, secpass, shapefact, display, see,
+see2, pictx, and pictsgi for more information.  Also see the User's
+Manual for IRPREP (BRL Special Publication BRL-SP-96, September 1992)
+and the report Computer Programs for Generating an Input File for PRISM
+and Displaying PRISM Results (BRL report in progress).
