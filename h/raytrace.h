@@ -1470,12 +1470,22 @@ struct rt_functab {
 			struct rt_db_internal * /*ip*/,
 			CONST struct rt_tess_tol * /*ttol*/,
 			CONST struct rt_tol * /*tol*/));
+	int	(*ft_tnurb) RT_ARGS((
+			struct nmgregion ** /*r*/,
+			struct model * /*m*/,
+			struct rt_db_internal * /*ip*/,
+			CONST struct rt_tol * /*tol*/));
 #else
 	int	(*ft_tessellate) RT_ARGS((
 			genptr_t * /*r*/,
 			genptr_t /*m*/,
 			struct rt_db_internal * /*ip*/,
 			CONST struct rt_tess_tol * /*ttol*/,
+			CONST struct rt_tol * /*tol*/));
+	int	(*ft_tnurb) RT_ARGS((
+			genptr_t * /*r*/,
+			genptr_t /*m*/,
+			struct rt_db_internal * /*ip*/,
 			CONST struct rt_tol * /*tol*/));
 #endif
 	int	(*ft_import) RT_ARGS((struct rt_db_internal * /*ip*/,
@@ -2341,6 +2351,9 @@ RT_EXTERN(void			nmg_shell_coplanar_face_merge,
 RT_EXTERN(int			nmg_two_region_vertex_fuse, (struct nmgregion *r1,
 				struct nmgregion *r2, CONST struct rt_tol *tol));
 RT_EXTERN(union tree		*nmg_booltree_leaf_tess, (struct db_tree_state *tsp,
+				struct db_full_path *pathp,
+				struct rt_external *ep, int id));
+RT_EXTERN(union tree		*nmg_booltree_leaf_tnurb, (struct db_tree_state *tsp,
 				struct db_full_path *pathp,
 				struct rt_external *ep, int id));
 RT_EXTERN(union tree		*nmg_booltree_evaluate, (union tree *tp,
