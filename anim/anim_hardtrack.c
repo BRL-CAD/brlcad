@@ -99,7 +99,6 @@ char **argv;
 {
 	void dir2mat(), y_p_r2mat(), add_trans(),an_mat_print();
 	int get_args(), get_link(), track_prep(), val, frame, go, i, count;
-	char *calloc();
 	fastf_t y_rot, distance, yaw, pitch, roll;
 	vect_t p1, p2, p3, dir, dir2, wheel_now, wheel_prev;
 	vect_t zero, position, vdelta, temp, to_track, to_front;
