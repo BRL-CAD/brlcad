@@ -24,57 +24,127 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include "fb.h"
 
+extern int	getopt();
+extern char	*optarg;
+extern int	optind;
+
+/* Shared with dunncomm.c */
 extern int	fd;
 extern char	cmd;
+
+static int	nframes = 1;
+static char	*framebuffer;
+static int	scr_width = 0;
+static int	scr_height = 0;
+
+static char usage[] = "\
+Usage: dunnsnap [-h] [-F framebuffer]\n\
+	[-S squarescrsize] [-W scr_width] [-N scr_height] [num_frames]\n";
+
+get_args( argc, argv )
+register char **argv;
+{
+	register int c;
+
+	while ( (c = getopt( argc, argv, "hF:S:W:N:" )) != EOF )  {
+		switch( c )  {
+		case 'h':
+			/* high-res */
+			scr_height = scr_width = 1024;
+			break;
+		case 'F':
+			framebuffer = optarg;
+			break;
+		case 'S':
+			scr_height = scr_width = atoi(optarg);
+			break;
+		case 'W':
+			scr_width = atoi(optarg);
+			break;
+		case 'N':
+			scr_height = atoi(optarg);
+			break;
+
+		default:		/* '?' */
+			return(0);
+		}
+	}
+
+	if( optind < argc )  {
+		nframes = atoi( argv[optind] );
+	}
+	if ( argc > ++optind )
+		(void)fprintf( stderr, "dunnsnap: excess argument(s) ignored\n" );
+
+	return(1);		/* OK */
+}
 
 main(argc, argv)
 int argc;
 char **argv;
 {
-	int nframes;
+	register FBIO *fbp;
+	int	retcode = 0;
+
+	if ( !get_args( argc, argv ) )  {
+		(void)fputs(usage, stderr);
+		exit( 1 );
+	}
 
 	dunnopen();
 
-	/* check argument */
-
-	if ( argc < 1 || argc > 2) {
-		printf("Usage: dunnsnap [num_frames]\n");
-		exit(25);
+	if( framebuffer != (char *)0 )  {
+		if( (fbp = fb_open( framebuffer, scr_width, scr_height )) == FBIO_NULL )
+			exit(12);
 	}
-	if ( argc > 1) 
-		nframes = atoi(*++argv);
-	else
-		nframes = 1;
+
+	/* check argument */
+	if( nframes < 0 )  {
+		fprintf(stderr,"dunnsnap: negative frame count\n");
+		goto bad;
+	}
+	if( nframes >= 10000 )
+		fprintf(stderr,"dunnsnap: What a lot of film!\n");
 
 	if (!ready(2)) {
-		printf("dunnsnap:  camera not ready at startup\n");
-		exit(30);
+		fprintf(stderr,"dunnsnap:  camera not ready at startup\n");
+		goto bad;
 	}
 		
 	/* loop until number of frames specified have been exposed */
 
-	while (nframes) {
+	while (nframes>0) {
 
 		while (!ready(20)) {
-			printf("dunnsnap: camera not ready at frame start\n");
-			exit(40);
+			fprintf(stderr,"dunnsnap: camera not ready at frame start\n");
+			goto bad;
 		}
 
 		if (!goodstatus()) {
-			printf("badstatus\n");
-			exit(50);
+			fprintf(stderr,"dunnsnap: badstatus\n");
+			goto bad;
 		}
 		
 		/* send expose command to camera */
+		cmd = 'I';	/* expose command */
+		write(fd, &cmd, 1);
+		hangten();
 
-			cmd = 'I';	/* expose command */
-			write(fd, &cmd, 1);
-			hangten();
-			if (!ready(20)) {
-				printf("dunnsnap: camera not ready after expose cmd\n");
-				exit(60);
-			}
+		/* Wait a long time here, because exposure can be lengthy */
+		if (!ready(45)) {
+			fprintf(stderr,"dunnsnap: camera not ready after expose cmd\n");
+			goto bad;
+		}
 		--nframes;
 	}
+	if( fbp != FBIO_NULL )
+		fb_close(fbp);
+	exit(0);
+
+bad:
+	if( fbp != FBIO_NULL )
+		fb_close(fbp);
+	exit(1);
 }
