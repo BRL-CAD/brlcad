@@ -96,8 +96,7 @@ static char	usage[] = "Usage: %s [-v] [-xX lvl] [-d tolerance_distance (mm) ] [-
 static char	*tok_sep = " \t";
 static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
 static int	verbose=0;
-static int	ncpu = 1;		/* Number of processors */
-static int	nmg_count=0;		/* Count of nmgregions written to output */
+/* static int	ncpu = 1; */		/* Number of processors */
 static char	*out_file = NULL;	/* Output filename */
 static FILE	*fp_out;		/* Output file pointer */
 static struct db_i		*dbip;
@@ -181,7 +180,6 @@ char	*argv[];
 {
 	int		i;
 	register int	c;
-	double		percent;
 
 	port_setlinebuf( stderr );
 
@@ -241,7 +239,7 @@ char	*argv[];
 			verbose++;
 			break;
 		case 'P':
-			ncpu = atoi( optarg );
+/*			ncpu = atoi( optarg ); */
 			rt_g.debug = 1;	/* XXX DEBUG_ALLRAYS -- to get core dumps */
 			break;
 		case 'x':
@@ -380,7 +378,6 @@ struct mater_info *mater;
 	int is_light=0;
 	float r,g,b;
 	point_t ave_pt;
-	fastf_t pt_count=0.0;
 	char *full_path;
 	/*There may be a better way to capture the region_id, than getting the rt_comb_internal structure, 
 	 * (and may be a better way to capture the rt_comb_internal struct), but for now I just copied the
@@ -501,7 +498,6 @@ struct mater_info *mater;
 			int nbytes;
 			long tex_len;
 			long bytes_read=0;
-			int buf_start=0;
 			unsigned char tex_buf[TXT_BUF_LEN*3];
 
 			if( (tex_fd = open( mat.tx_file, O_RDONLY )) == (-1) )
@@ -845,9 +841,6 @@ union tree		*curtree;
 	regions_converted++;
 	if (r != 0)
 	{
-		char nmg_name[16];
-		unsigned char rgb[3];
-		struct wmember headp;
 		struct shell *s;
 		int empty_region=0;
 		int empty_model=0;

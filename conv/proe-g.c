@@ -231,10 +231,9 @@ char *name;
 unsigned int obj;
 int type;
 {
-	struct name_conv_list *ptr,*ptr2;
+	struct name_conv_list *ptr;
 	char tmp_name[NAMESIZE];
 	int suffix_insert;
-	char try_char='@';
 
 	if( debug )
 		bu_log( "Add_new_name( %s, x%x, %d )\n", name, obj, type );
@@ -1295,7 +1294,6 @@ char line[MAX_LINE_LEN];
 	if( do_simplify && face_count < 13 )
 	{
 		struct rt_arb_internal arb_int;
-		struct rt_tgc_internal tgc_int;
 
 		if( solid_is_written = nmg_to_arb( m, &arb_int ) )
 		{
@@ -1544,7 +1542,6 @@ top:
 
 			if( changed )
 			{
-				union tree *final_tree;
 				char name[NAMESIZE+1];
 				int flags;
 
