@@ -213,11 +213,13 @@ struct rt_tess_tol  {
  */
 struct rt_db_internal  {
 	long		idb_magic;
-	int		idb_type;		/* ID_xxx */
+	int		idb_major_type;
+	int		idb_minor_type;		/* ID_xxx */
 	CONST struct rt_functab *idb_meth;	/* for ft_ifree(), etc. */
 	genptr_t	idb_ptr;
 	struct bu_attribute_value_set idb_avs;
 };
+#define idb_type		idb_minor_type
 #define RT_DB_INTERNAL_MAGIC	0x0dbbd867
 #define RT_INIT_DB_INTERNAL(_p)	{(_p)->idb_magic = RT_DB_INTERNAL_MAGIC; \
 	(_p)->idb_type = -1; (_p)->idb_ptr = GENPTR_NULL;\
