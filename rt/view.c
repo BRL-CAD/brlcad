@@ -547,11 +547,11 @@ struct seg *finished_segs;
 			pp->pt_regionp->reg_name);
 		rt_pr_pt( ap->a_rt_i, pp );
 	}
-	ap->a_dist = hitp->hit_dist;
 	if( hitp->hit_dist >= INFINITY )  {
 		rt_log("colorview:  entry beyond infinity\n");
 		VSET( ap->a_color, .5, 0, 0 );
 		ap->a_user = 1;		/* Signal view_pixel:  HIT */
+		ap->a_dist = hitp->hit_dist;
 		goto out;
 	}
 
@@ -579,6 +579,7 @@ struct seg *finished_segs;
 		    		VSETALL( ap->a_color, 0.18 );	/* 18% Grey */
 		    	}
 			ap->a_user = 1;		/* Signal view_pixel:  HIT */
+			ap->a_dist = hitp->hit_dist;
 			goto out;
 		}
 		/* Push on to exit point, and trace on from there */
@@ -598,6 +599,7 @@ struct seg *finished_segs;
 #endif
 
 		ap->a_user = 1;		/* Signal view_pixel: HIT */
+		ap->a_dist = hitp->hit_dist;
 		goto out;
 	}
 
@@ -662,6 +664,7 @@ struct seg *finished_segs;
 
 	VMOVE( ap->a_color, sw.sw_color );
 	ap->a_user = 1;		/* Signal view_pixel:  HIT */
+	ap->a_dist = hitp->hit_dist;
 out:
 	if(rdebug&RDEBUG_HITS)  {
 		rt_log("colorview: lvl=%d ret a_user=%d %s\n",
