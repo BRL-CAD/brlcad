@@ -85,6 +85,7 @@ HIDDEN int dmo_perspective_tcl();
 HIDDEN int dmo_debug_tcl();
 #ifdef USE_FBSERV
 HIDDEN int dmo_openFb_tcl();
+HIDDEN int dmo_closeFb();
 HIDDEN int dmo_closeFb_tcl();
 HIDDEN int dmo_listen_tcl();
 HIDDEN int dmo_refreshFb_tcl();
@@ -168,6 +169,7 @@ ClientData clientData;
 {
   struct dm_obj *dmop = (struct dm_obj *)clientData;
 
+  dmo_closeFb(dmop);
   bu_vls_free(&dmop->dmo_name);
   DM_CLOSE(dmop->dmo_dmp);
   BU_LIST_DEQUEUE(&dmop->l);
@@ -320,6 +322,8 @@ char    **argv;
   VSETALL(dmop->dmo_dmp->dm_clipmax, 2047.0);
   dmop->dmo_fbs.fbs_listener.fbsl_fbsp = &dmop->dmo_fbs;
   dmop->dmo_fbs.fbs_listener.fbsl_fd = -1;
+  dmop->dmo_fbs.fbs_listener.fbsl_port = -1;
+  dmop->dmo_fbs.fbs_fbp = FBIO_NULL;
 
   /* append to list of dm_obj's */
   BU_LIST_APPEND(&HeadDMObj.l,&dmop->l);
@@ -550,6 +554,11 @@ char    **argv;
   return DM_DRAW_VLIST(dmop->dmo_dmp, vp);
 }
 
+/*
+ * Usage:
+ *	  procname drawSList hsp
+ */
+HIDDEN int
 dmo_drawSList(dmop, hsp)
      struct dm_obj *dmop;
      struct solid *hsp;
@@ -569,6 +578,8 @@ dmo_drawSList(dmop, hsp)
 			       (short)sp->s_color[2], 0);
 		DM_DRAW_VLIST(dmop->dmo_dmp, (struct rt_vlist *)&sp->s_vlist);
 	}
+
+	return TCL_OK;
 }
 
 /*
@@ -1201,6 +1212,10 @@ char    **argv;
   char *ogl_name = "/dev/ogl";
 #endif
 
+  /* already open */
+  if (dmop->dmo_fbs.fbs_fbp != FBIO_NULL)
+	  return TCL_OK;
+
   if((dmop->dmo_fbs.fbs_fbp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL){
     Tcl_AppendResult(interp, "openfb: failed to allocate framebuffer memory\n",
 		     (char *)NULL);
@@ -1253,6 +1268,36 @@ char    **argv;
   return TCL_OK;
 }
 
+HIDDEN int
+dmo_closeFb(dmop)
+     struct dm_obj *dmop;
+{
+	if (dmop->dmo_fbs.fbs_fbp == FBIO_NULL)
+		return TCL_OK;
+
+	_fb_pgflush(dmop->dmo_fbs.fbs_fbp);
+
+	switch (dmop->dmo_dmp->dm_type) {
+	case DM_TYPE_X:
+		X24_close_existing(dmop->dmo_fbs.fbs_fbp);
+		break;
+#ifdef DM_OGL
+	case DM_TYPE_OGL:
+		ogl_close_existing(dmop->dmo_fbs.fbs_fbp);
+		break;
+#endif
+	}
+
+	/* free framebuffer memory */
+	if (dmop->dmo_fbs.fbs_fbp->if_pbase != PIXEL_NULL)
+		free((void *)dmop->dmo_fbs.fbs_fbp->if_pbase);
+	free((void *)dmop->dmo_fbs.fbs_fbp->if_name);
+	free((void *)dmop->dmo_fbs.fbs_fbp);
+	dmop->dmo_fbs.fbs_fbp = FBIO_NULL;
+
+	return TCL_OK;
+}
+
 /*
  * Close/de-activate the display managers framebuffer.
  *
@@ -1268,28 +1313,8 @@ int     argc;
 char    **argv;
 {
   struct dm_obj *dmop = (struct dm_obj *)clientData;
-  struct bu_vls vls;
 
-  _fb_pgflush(dmop->dmo_fbs.fbs_fbp);
-
-  switch (dmop->dmo_dmp->dm_type) {
-  case DM_TYPE_X:
-    X24_close_existing(dmop->dmo_fbs.fbs_fbp);
-    break;
-#ifdef DM_OGL
-  case DM_TYPE_OGL:
-    ogl_close_existing(dmop->dmo_fbs.fbs_fbp);
-    break;
-#endif
-  }
-
-  /* free framebuffer memory */
-  if(dmop->dmo_fbs.fbs_fbp->if_pbase != PIXEL_NULL)
-    free((void *)dmop->dmo_fbs.fbs_fbp->if_pbase);
-  free((void *)dmop->dmo_fbs.fbs_fbp->if_name);
-  free((void *)dmop->dmo_fbs.fbs_fbp);
-
-  return TCL_OK;
+  return dmo_closeFb(dmop);
 }
 
 /*
@@ -1298,7 +1323,7 @@ char    **argv;
  * Usage:
  *	  procname listen port
  *
- * Returns the port number actually used in interp->result.
+ * Returns the port number actually used.
  *
  */
 HIDDEN int
@@ -1308,19 +1333,27 @@ Tcl_Interp *interp;
 int     argc;
 char    **argv;
 {
-  struct dm_obj *dmop = (struct dm_obj *)clientData;
-  struct bu_vls vls;
+	struct dm_obj *dmop = (struct dm_obj *)clientData;
+	struct bu_vls vls;
 
-  bu_vls_init(&vls);
+	bu_vls_init(&vls);
 
-  /* return the port number */
-  if (argc == 2) {
-    bu_vls_printf(&vls, "%d", dmop->dmo_fbs.fbs_listener.fbsl_port);
-    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-    bu_vls_free(&vls);
+	if (dmop->dmo_fbs.fbs_fbp == FBIO_NULL) {
+		bu_vls_printf(&vls, "%s listen: framebuffer not open!\n", argv[0]);
+		Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+		bu_vls_free(&vls);
 
-    return TCL_OK;
-  }
+		return TCL_ERROR;
+	}
+
+	/* return the port number */
+	if (argc == 2) {
+		bu_vls_printf(&vls, "%d", dmop->dmo_fbs.fbs_listener.fbsl_port);
+		Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+		bu_vls_free(&vls);
+
+		return TCL_OK;
+	}
 
   if (argc == 3) {
     int port;
@@ -1330,7 +1363,11 @@ char    **argv;
       return TCL_ERROR;
     }
 
-    fbs_open(interp, &dmop->dmo_fbs, port);
+    if (port >= 0)
+      fbs_open(interp, &dmop->dmo_fbs, port);
+    else {
+      fbs_close(interp, &dmop->dmo_fbs);
+    }
     bu_vls_printf(&vls, "%d", dmop->dmo_fbs.fbs_listener.fbsl_port);
     Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
@@ -1359,12 +1396,21 @@ Tcl_Interp *interp;
 int     argc;
 char    **argv;
 {
-  struct dm_obj *dmop = (struct dm_obj *)clientData;
-  struct bu_vls vls;
+	struct dm_obj *dmop = (struct dm_obj *)clientData;
+	struct bu_vls vls;
 
-  fb_refresh(dmop->dmo_fbs.fbs_fbp, 0, 0, dmop->dmo_dmp->dm_width, dmop->dmo_dmp->dm_height);
+	if (dmop->dmo_fbs.fbs_fbp == FBIO_NULL) {
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "%s refresh: framebuffer not open!\n", argv[0]);
+		Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+		bu_vls_free(&vls);
+
+		return TCL_ERROR;
+	}
+
+	fb_refresh(dmop->dmo_fbs.fbs_fbp, 0, 0, dmop->dmo_dmp->dm_width, dmop->dmo_dmp->dm_height);
   
-  return TCL_OK;
+	return TCL_OK;
 }
 #endif
 
