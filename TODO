@@ -19,6 +19,8 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 THESE ARE LOWER PRIORITY
 
+* have x11/tk mged output a helpful message when DISPLAY is unset
+
 * need non-generic installation instructions
 
 * consider providing installation and post configuration support
@@ -28,8 +30,6 @@ THESE ARE LOWER PRIORITY
   volume II
 
 * recheck AquaTk useability so we can decouple mac build from X11
-
-* converter support for common simple formats like nff and bzw
 
 * write up the history of brlcad
 
@@ -41,7 +41,7 @@ THESE ARE LOWER PRIORITY
 
 * add support for subgeometry support to the geometry syndicator
 
-* add xml geometry import and export support
+* add xml, nff, bzw, pov, blend geometry import and export support
 
 * add support for filesystem-based geometry collections
 
