@@ -652,8 +652,8 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	XLIBDIR	/usr/X11R6/lib
 
 #	define	LIBRT_TIMER	timer42
-/*	for "ncurses" change "-lcurses" to "-lncurses" (Caldera OpenLinux) */
-#	define	LIBTERMLIB	-lcurses
+/*	for "ncurses" change "-lcurses" to "-lncurses" (Caldera OpenLinux, RedHat) */
+#	define	LIBTERMLIB	-lncurses
 #	define	LIBFB_CONFIG	-DIF_REMOTE -I''XINCDIR -DIF_X
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
