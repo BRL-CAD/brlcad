@@ -56,7 +56,7 @@ int	outy = 512;
 void	init_buffer(), fill_buffer(), binterp(), ninterp();
 
 static	char usage[] = "\
-Usage: bwscale [-r] [-s squareinsize] [-w inwidth] [-n inheight]\n\
+Usage: bwscale [-h] [-r] [-s squareinsize] [-w inwidth] [-n inheight]\n\
 	[-S squareoutsize] [-W outwidth] [-N outheight] [in.bw] > out.bw\n";
 
 get_args( argc, argv )
