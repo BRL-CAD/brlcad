@@ -580,12 +580,11 @@ struct xray *rp;
 		bx = VDOT( uu, rec->rec_B ) * rec->rec_iBsq;
 		q = sqrt( ax * ax * rec->rec_iAsq + bx * bx * rec->rec_iBsq );
 		cvp->crv_c2 = rec->rec_iAsq * rec->rec_iBsq / (q*q*q);
-		if( VDOT( uu, hitp->hit_normal ) >= 0 )
-			break;
-		rt_log("rec_curve:  flipping curvature?\n");
-		cvp->crv_c1 = -(cvp->crv_c2);
-		cvp->crv_c2 = 0;
-		VCROSS( cvp->crv_pdir, hitp->hit_normal, rec->rec_Hunit );
+
+		if( VDOT( hitp->hit_normal, rp->r_dir ) > 0 )  {
+			/* ray strikes surface from inside; make curv negative */
+			cvp->crv_c2 = - cvp->crv_c2;
+		}
 		break;
 	case 1:
 	case 2:
