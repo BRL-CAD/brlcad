@@ -42,7 +42,7 @@ anim_script: anim_script.o anim.o
 	CC LDFLAGS anim_script.o anim.o LIBRT LIBRT_LIBES LIBES -o anim_script
 
 anim_sort: anim_sort.o
-	CC LDFLAGS anim_sort.o -o LIBES anim_sort
+	CC LDFLAGS anim_sort.o LIBES -o anim_sort
 
 anim_track: anim_track.o cattrack.o anim.o
 	CC LDFLAGS anim_track.o cattrack.o anim.o LIBRT LIBRT_LIBES LIBES -o anim_track
