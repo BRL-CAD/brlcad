@@ -501,7 +501,7 @@ register struct pm_res *pmem;
 	char oendfree;
 
 	if (mem == NULL)
-		return(pmalloc(nbytes));
+		return(pmalloc(nbytes, pmem));
 
 	/* if beyond current arena it has to be bad */
 	if(mem > (char*)FROMADJ(pmem->adjhead.q_back) + sizeof(struct overhead))
@@ -562,7 +562,7 @@ register struct pm_res *pmem;
 	else
 		bu_semaphore_release( BU_SEM_SYSCALL );
 
-	newmem = pmalloc(nbytes);
+	newmem = pmalloc(nbytes, pmem);
 
 	if (newmem != mem && newmem != NULL) {
 		register Size n;
