@@ -136,6 +136,11 @@ case $FILE in
 	wrap=1
 	commentprefix=" *"
 	;;
+    *.java)
+	echo "$FILE is a Java source file"
+	wrap=1
+	commentprefix=" *"
+	;;
     *.tcl)
 	echo "$FILE is a Tcl source file"
 	wrap=0
