@@ -180,13 +180,10 @@ class Attr_editor {
 
 	set cur_index [llength $cur_attrs]
 	lappend cur_attrs $cur_attr_name
-	set val [$textb get 1.0 end]
-	if [string length $val] {
-	    lappend cur_vals $val
-	} else {
-	    lappend cur_vals {}
-	}
+	lappend cur_vals {}
 
+	$listb selection clear 0 end
+	$listb selection set $cur_index
 	update_attr_text
 
 	# restore normal binding for attribute name entry widget
@@ -247,7 +244,7 @@ class Attr_editor {
     method update_cur_attr {} {
 	if { $cur_index < 0 } return
 
-	set cur_vals [lreplace $cur_vals $cur_index $cur_index [$textb get 1.0 end]]
+	set cur_vals [lreplace $cur_vals $cur_index $cur_index [$textb get 1.0 {end - 1 chars}]]
     }
 
     # method called when a selection is made in the attribute name listbox
