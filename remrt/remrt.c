@@ -69,6 +69,33 @@ extern char	*getenv();
 #define vfork	fork
 #endif SYSV
 
+void		read_rc_file();
+void		check_input();
+void		addclient();
+void		start_servers();
+void		eat_script();
+void		interactive_cmd();
+void		prep_frame();
+void		frame_is_done();
+void		destroy_frame();
+void		schedule();
+void		list_remove();
+void		write_fb();
+void		repaint_fb();
+void		size_display();
+void		send_start();
+void		send_restart();
+void		send_loglvl();
+void		send_matrix();
+void		send_to_lines();
+void		pr_list();
+void		mathtab_constant();
+void		add_host();
+void		host_helper();
+void		start_helper();
+void		build_start_cmd();
+void		drop_server();
+
 struct vls  {
 	char	*vls_str;
 	int	vls_cur;	/* Length, not counting the null */
@@ -223,7 +250,7 @@ extern int	height;
 extern int	hypersample;
 extern int	matflag;
 extern double	rt_perspective;
-int		benchmark = 0;
+extern int	benchmark;
 int		rdebug;
 int		use_air = 0;
 extern char	*outputfile;		/* output file name */
@@ -277,11 +304,11 @@ struct timeval	*t1, *t0;
 /*
  *			M A I N
  */
+int
 main(argc, argv)
 int	argc;
 char	**argv;
 {
-	register int i;
 	register struct servers *sp;
 	struct timeval	now;
 
@@ -357,6 +384,7 @@ char	**argv;
 			prep_frame(fr);
 			sprintf(buf, "ae %g %g;", azimuth, elevation);
 			vls_cat( &fr->fr_cmd, buf);
+			create_outputfilename( fr );
 			APPEND_FRAME( fr, FrameHead.fr_back );
 		} else {
 			/* if -M, read RT script from stdin */
@@ -377,7 +405,7 @@ char	**argv;
 		}
 		rt_log("REMRT:  task accomplished\n");
 	}
-	exit(0);
+	return(0);			/* exit(0); */
 }
 
 /*
@@ -387,6 +415,7 @@ char	**argv;
  *  the intention is primarily to permit "automatic" registration of
  *  server hosts via "host" commands.
  */
+void
 read_rc_file()
 {
 	FILE	*fp;
@@ -418,12 +447,12 @@ read_rc_file()
 /*
  *			C H E C K _ I N P U T
  */
+void
 check_input(waittime)
 int waittime;
 {
-	static long ibits, obits, ebits;
-	register struct list *lp;
-	register int i;
+	static long	ibits;
+	register int	i;
 	static struct timeval tv;
 
 	tv.tv_sec = waittime;
@@ -467,6 +496,7 @@ int waittime;
 /*
  *			A D D C L I E N T
  */
+void
 addclient(pc)
 struct pkg_conn *pc;
 {
@@ -474,7 +504,6 @@ struct pkg_conn *pc;
 	register struct frame	*fr;
 	struct ihost	*ihp;
 	int		on = 1;
-	int		options = 0;
 	auto int	fromlen;
 	struct sockaddr_in from;
 	int fd;
@@ -519,6 +548,7 @@ struct pkg_conn *pc;
 /*
  *			D R O P _ S E R V E R
  */
+void
 drop_server(sp)
 register struct servers	*sp;
 {
@@ -578,6 +608,7 @@ register struct servers	*sp;
 #define SERVER_CHECK_INTERVAL	(10*60)		/* seconds */
 struct timeval	last_server_check_time;
 
+void
 start_servers( nowp )
 struct timeval	*nowp;
 {
@@ -664,6 +695,7 @@ struct timeval	*tv;
 /*
  *			E A T _ S C R I P T
  */
+void
 eat_script( fp )
 FILE	*fp;
 {
@@ -719,6 +751,7 @@ FILE	*fp;
 		if( body.vls_cur > 0 )  {
 			vls_2cat( &fr->fr_cmd, &body );
 		}
+		create_outputfilename( fr );
 		APPEND_FRAME( fr, FrameHead.fr_back );
 bad:
 		rt_free( buf, "command line" );
@@ -784,11 +817,11 @@ char *str;
 /*
  *			I N T E R A C T I V E _ C M D
  */
+void
 interactive_cmd(fp)
 FILE *fp;
 {
 	char buf[BUFSIZ];
-	char obuf[256];
 	register char *pos;
 	register int i;
 
@@ -840,6 +873,7 @@ FILE *fp;
  *
  * Fill in frame structure after reading MAT
  */
+void
 prep_frame(fr)
 register struct frame *fr;
 {
@@ -895,6 +929,24 @@ do_a_frame()
 }
 
 /*
+ *			C R E A T E _ O U T P U T F I L E N A M E
+ */
+create_outputfilename( fr )
+register struct frame	*fr;
+{
+	char	name[512];
+
+	/* Always create a file name to write into */
+	if( outputfile )  {
+		sprintf( name, "%s.%d", outputfile, fr->fr_number );
+	} else {
+		sprintf( name, "/usr/tmp/remrt%d", getpid() );
+		(void)unlink(name);	/* remove any previous one */
+	}
+	fr->fr_filename = rt_strdup( name );
+}
+
+/*
  *			F R A M E _ S T A R T
  *
  *  This code is called just before the first time work is to be
@@ -905,21 +957,18 @@ do_a_frame()
  *	 0	OK
  *	-1	drop this frame
  */
+int
 frame_start(fr)
 register struct frame	*fr;
 {
-	char		name[512];
 	struct stat	sb;
 	int		fd;
 
-	/* Always create a file name to write into */
-	if( outputfile )  {
-		sprintf( name, "%s.%d", outputfile, fr->fr_number );
-	} else {
-		sprintf( name, "/usr/tmp/remrt%d", getpid() );
-		(void)unlink(name);	/* remove any previous one */
+	if( fr->fr_filename == (char *)0 ||
+	    fr->fr_filename[0] == '\0' )  {
+	    	rt_log("frame_start(%d):  null filename!\n",fr->fr_number);
+	    	return(-1);
 	}
-	fr->fr_filename = rt_strdup( name );
 
 	/*
 	 *  There are several cases:
@@ -963,13 +1012,11 @@ begin:
 /*
  *			F R A M E _ I S _ D O N E
  */
+void
 frame_is_done(fr)
 register struct frame *fr;
 {
-	char	name[256];
 	double	delta;
-	int	fd;
-	int	cnt;
 
 	(void)gettimeofday( &fr->fr_end, (struct timezone *)0 );
 	delta = tvdiff( &fr->fr_end, &fr->fr_start);
@@ -993,6 +1040,7 @@ register struct frame *fr;
 /*
  *			D E S T R O Y _ F R A M E
  */
+void
 destroy_frame( fr )
 register struct frame	*fr;
 {
@@ -1091,12 +1139,12 @@ all_done()
  *
  *  When done, we leave the last finished frame around for attach/release.
  */
+void
 schedule( nowp )
 struct timeval	*nowp;
 {
 	register struct servers *sp;
 	register struct frame *fr;
-	int		servers_going;		/* # servers still going */
 	register struct frame *fr2;
 	int		another_pass;
 	static int	scheduler_going = 0;	/* recursion protection */
@@ -1187,6 +1235,7 @@ out:
  *	0	when this server winds up with a full workload
  *	1	when this server needs additional work
  */
+int
 task_server( fr, sp, nowp )
 register struct servers	*sp;
 register struct frame	*fr;
@@ -1289,6 +1338,7 @@ struct timeval		*nowp;
  *
  *  Report number of assignments that a server has
  */
+int
 server_q_len( sp )
 register struct servers	*sp;
 {
@@ -1305,6 +1355,7 @@ register struct servers	*sp;
 /*
  *			R E A D _ M A T R I X
  */
+int
 read_matrix( fp, fr )
 register FILE *fp;
 register struct frame *fr;
@@ -1339,6 +1390,7 @@ out:
 		rt_log("EOF on frame file.\n");
 		return(-1);
 	}
+	create_outputfilename( fr );
 	return(0);	/* OK */
 }
 
@@ -1574,8 +1626,10 @@ out:
  *
  * Given pointer to head of list of ranges, remove the range that's done
  */
+void
 list_remove( lhp, a, b )
 register struct list *lhp;
+int		a, b;
 {
 	register struct list *lp;
 
@@ -1617,6 +1671,7 @@ register struct list *lhp;
  *  Buffer 'pp' contains pixels numbered 'a' through (not including) 'b'.
  *  Write them out, clipping them to the current screen.
  */
+void
 write_fb( pp, fr, a, b )
 RGBpixel	*pp;
 struct frame	*fr;
@@ -1664,6 +1719,7 @@ int		b;
  *  Repaint the frame buffer from the stored file.
  *  Sort of a cheap "pix-fb", built in.
  */
+void
 repaint_fb( fr )
 register struct frame *fr;
 {
@@ -1717,6 +1773,7 @@ char *name;
 /*
  *			S I Z E _ D I S P L A Y
  */
+void
 size_display(fp)
 register struct frame	*fp;
 {
@@ -1740,6 +1797,7 @@ register struct frame	*fp;
 /*
  *			S E N D _ S T A R T
  */
+void
 send_start(sp)
 register struct servers *sp;
 {
@@ -1774,6 +1832,7 @@ register struct servers *sp;
 /*
  *			S E N D _ R E S T A R T
  */
+void
 send_restart(sp)
 register struct servers *sp;
 {
@@ -1787,6 +1846,7 @@ register struct servers *sp;
 /*
  *			S E N D _ L O G L V L
  */
+void
 send_loglvl(sp)
 register struct servers *sp;
 {
@@ -1801,6 +1861,7 @@ register struct servers *sp;
  *
  *  Send current options, and the view matrix information.
  */
+void
 send_matrix(sp, fr)
 struct servers *sp;
 register struct frame *fr;
@@ -1815,8 +1876,12 @@ register struct frame *fr;
 /*
  *			S E N D _ D O _ L I N E S
  */
+void
 send_do_lines( sp, start, stop, fr )
 register struct servers *sp;
+int		start;
+int		stop;
+int		fr;
 {
 	char obuf[128];
 
@@ -1832,6 +1897,7 @@ register struct servers *sp;
 /*
  *			P R _ L I S T
  */
+void
 pr_list( lhp )
 register struct list *lhp;
 {
@@ -1844,6 +1910,7 @@ register struct list *lhp;
 	}
 }
 
+void
 mathtab_constant()
 {
 	/* Called on -B (benchmark) flag, by get_args() */
@@ -1856,6 +1923,7 @@ mathtab_constant()
  *	HT_CD		host, port, rem_dir
  *	HT_CONVERT	host, port, rem_dir, loc_db, rem_db
  */
+void
 add_host( ihp )
 struct ihost	*ihp;
 {
@@ -1912,6 +1980,7 @@ struct ihost	*ihp;
  *  given the same name.  If relative path names are used, this should
  *  not be a problem, but this could be changed later.
  */
+void
 host_helper(fp)
 FILE	*fp;
 {
@@ -2010,11 +2079,11 @@ FILE	*fp;
 /*
  *			S T A R T _ H E L P E R
  */
+void
 start_helper()
 {
 	int	fds[2];
 	int	pid;
-	int	i;
 
 	if( pipe(fds) < 0 )  {
 		perror("pipe");
@@ -2049,6 +2118,7 @@ start_helper()
 /*
  *			B U I L D _ S T A R T _ C M D
  */
+void
 build_start_cmd( argc, argv, startc )
 int	argc;
 char	**argv;
@@ -2318,8 +2388,8 @@ cd_file( argc, argv )
 int	argc;
 char	**argv;
 {
+	if(outputfile)  rt_free(outputfile, "outputfile");
 	outputfile = rt_strdup( argv[1] );
-	rt_log("frames will be recorded in %s.###\n", outputfile);
 }
 
 cd_mat( argc, argv )
