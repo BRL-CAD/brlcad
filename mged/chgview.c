@@ -299,7 +299,7 @@ f_status()
 {
 	printf("STATE=%s, ", state_str[state] );
 	printf("maxview=%f, ", maxview*base2local);
-	printf("Viewscale=%f\n", Viewscale*base2local);
+	printf("Viewscale=%f (%f mm)\n", Viewscale*base2local, Viewscale);
 	mat_print("toViewcenter", toViewcenter);
 	mat_print("Viewrot", Viewrot);
 	mat_print("model2view", model2view);
