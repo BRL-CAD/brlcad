@@ -602,29 +602,46 @@ fastf_t accuracy;
  * Gamma is angle of rotation about Z axis, and is done first.
  */
 void
-bn_mat_angles( mat, alpha, beta, ggamma )
+bn_mat_angles( mat, alpha_in, beta_in, ggamma_in )
 register mat_t	mat;
-double alpha, beta, ggamma;
+double alpha_in, beta_in, ggamma_in;
 {
+	LOCAL double alpha, beta, ggamma;
 	LOCAL double calpha, cbeta, cgamma;
 	LOCAL double salpha, sbeta, sgamma;
 
-	if( alpha == 0.0 && beta == 0.0 && ggamma == 0.0 )  {
+	if( alpha_in == 0.0 && beta_in == 0.0 && ggamma_in == 0.0 )  {
 		bn_mat_idn( mat );
 		return;
 	}
 
-	alpha *= bn_degtorad;
-	beta *= bn_degtorad;
-	ggamma *= bn_degtorad;
+	alpha = alpha_in * bn_degtorad;
+	beta = beta_in * bn_degtorad;
+	ggamma = ggamma_in * bn_degtorad;
 
 	calpha = cos( alpha );
 	cbeta = cos( beta );
 	cgamma = cos( ggamma );
 
-	salpha = sin( alpha );
-	sbeta = sin( beta );
-	sgamma = sin( ggamma );
+	/* sine of "180*bn_degtorad" will not be exactly zero
+	 * and will result in errors when some codes try to
+	 * convert this back to azimuth and elevation.
+	 * do_frame() uses this technique!!!
+	 */
+	if( alpha_in == 180.0 )
+		salpha = 0.0;
+	else
+		salpha = sin( alpha );
+
+	if( beta_in == 180.0 )
+		sbeta = 0.0;
+	else
+		sbeta = sin( beta );
+
+	if( ggamma_in == 180.0 )
+		sgamma = 0.0;
+	else
+		sgamma = sin( ggamma );
 
 	mat[0] = cbeta * cgamma;
 	mat[1] = -cbeta * sgamma;
