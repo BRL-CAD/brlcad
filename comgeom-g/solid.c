@@ -494,8 +494,8 @@ getsolid()
 		int			i;
 		double			dia;
 		double			*pts;		/* 3 entries per pt */
-		struct	wdb_pipeseg	*ps;
-		struct	wdb_pipeseg	head;		/* all ow a whole struct for head */
+		struct	wdb_pipept	*ps;
+		struct	wdb_pipept	head;		/* allow a whole struct for head */
 
 		/* This might be getint( solid_type, 3, 2 ); for non-V5 */
 		numpts = getint( scard, 8, 2 );
@@ -516,32 +516,21 @@ getsolid()
 		 * the appropriate location.
 		 */
 		RT_LIST_INIT( &head.l );
-		for( i = 0; i < numpts - 1; i++ )  {
+		for( i = 0; i < numpts; i++ )  {
 			/* malloc a new structure */
-			if( (ps = (struct wdb_pipeseg *)malloc( 
-			 sizeof( struct wdb_pipeseg)) ) == WDB_PIPESEG_NULL )  {
+			if( (ps = (struct wdb_pipept *)malloc( 
+			 sizeof( struct wdb_pipept)) ) == (struct wdb_pipept *)NULL )  {
 			   	printf("malloc failure for WIR %d\n", sol_work);
 			   	return(-1);
 			 }
-			VMOVE( ps->ps_start, &pts[i*3]);	/* 3 pts at a time */
-			ps->ps_id = 0;				/* solid */
-			ps->ps_od = dia;
-			ps->ps_type = WDB_PIPESEG_TYPE_LINEAR;
+			ps->l.magic = WDB_PIPESEG_MAGIC;
+			VMOVE( ps->pp_coord, &pts[i*3]);	/* 3 pts at a time */
+			ps->pp_id = 0;				/* solid */
+			ps->pp_od = dia;
+			ps->pp_bendradius = dia;
 			RT_LIST_INSERT( &head.l, &ps->l );
 		}
 
-		/* make the end plate */
-		if( (ps = ( struct wdb_pipeseg *)malloc( sizeof(
-	          struct wdb_pipeseg)) ) == WDB_PIPESEG_NULL )  {
-	               	printf("malloc failure for WIR %d\n", sol_work);
-	               	return(-1);
-	        }
-		VMOVE( ps->ps_start, &pts[3 * (numpts-1)] );
-		ps->ps_type = WDB_PIPESEG_TYPE_END;
-		ps->ps_id = 0;
-		ps->ps_od = dia;
-		RT_LIST_INSERT( &head.l, &ps->l );
-		
 		if( mk_pipe( outfp, name, &head ) < 0 )
 			return(-1);
 		mk_pipe_free( &head );
