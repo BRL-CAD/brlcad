@@ -122,6 +122,7 @@ int main(int argc, char **argv)
 	register int	x;
 	char idbuf[132];		/* First ID record info */
 	void	application_init();
+	struct bu_vls	times;
 	int i;
 
 	bu_setlinebuf( stderr );
@@ -238,6 +239,8 @@ int main(int argc, char **argv)
 	}
 
 	/* Build directory of GED database */
+	bu_vls_init( &times );
+	rt_prep_timer();
 	if( (rtip=rt_dirbuild(title_file, idbuf, sizeof(idbuf))) == RTI_NULL ) {
 		bu_log("rt:  rt_dirbuild(%s) failure\n", title_file);
 		exit(2);
@@ -245,6 +248,16 @@ int main(int argc, char **argv)
 	ap.a_rt_i = rtip;
 	if (rt_verbosity & VERBOSE_MODELTITLE)
 		bu_log("db title:  %s\n", idbuf);
+	if (rt_verbosity & VERBOSE_STATS)
+		bu_log("DIRBUILD: %s\n", bu_vls_addr(&times) );
+	bu_vls_free( &times );
+
+#ifdef HAVE_SBRK
+	if (rt_verbosity & VERBOSE_STATS)
+		bu_log("Additional dynamic memory used=%ld. bytes\n",
+			(long)((char *)sbrk(0)-beginptr) );
+	beginptr = (char *) sbrk(0);
+#endif
 
 	/* Copy values from command line options into rtip */
 	rtip->rti_space_partition = space_partition;
