@@ -124,6 +124,13 @@ f_concat(clientData, interp, argc, argv)
 	CHECK_READ_ONLY;
 
 	/* get any prefix */
+	if (argc < 2) {
+		Tcl_AppendResult(interp, MORE_ARGS_STR,
+				 "concat: Enter database: ",
+				 (char *)NULL);
+		return TCL_ERROR;
+	}
+
 	if (argc < 3) {
 		Tcl_AppendResult(interp, MORE_ARGS_STR,
 				 "concat: Enter prefix string or / for no prefix: ",
