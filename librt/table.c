@@ -630,7 +630,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_epa_uv,	rt_epa_curve,	rt_epa_class,	rt_epa_free,
 		rt_epa_plot,	rt_epa_vshot,	rt_epa_tess,	rt_nul_tnurb,
-		rt_nul_import5, rt_nul_export5,
+		rt_epa_import5, rt_epa_export5,
 		rt_epa_import,	rt_epa_export,	rt_epa_ifree,
 		rt_epa_describe,rt_epa_xform,	rt_epa_parse,
 		sizeof(struct rt_epa_internal), RT_EPA_INTERNAL_MAGIC,
