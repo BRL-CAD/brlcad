@@ -518,7 +518,7 @@ char	**argv;
 			continue;
 		}
 
-		if( strlen(argv[1]) + strlen(argv[i]) > NAMESIZE) {
+		if( (int)(strlen(argv[1]) + strlen(argv[i])) > NAMESIZE) {
 			printf("'%s%s' too long, must be less than %d characters.\n",
 				argv[1], argv[i],
 				NAMESIZE);
@@ -836,7 +836,7 @@ char	**argv;
 	register struct directory *dp;
 	union record	record;
 
-	if( strlen(argv[2]) > NAMESIZE ) {
+	if( (int)strlen(argv[2]) > NAMESIZE ) {
 		(void)printf("ERROR: name length limited to %d characters\n",
 				NAMESIZE);
 		return;

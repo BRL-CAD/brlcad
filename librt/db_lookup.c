@@ -91,7 +91,7 @@ int			noisy;
 
 	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_lookup:  bad dbip\n");
 
-	if( strlen(name) > NAMESIZE )  {
+	if( (int)strlen(name) > NAMESIZE )  {
 		(void)strncpy( local, name, NAMESIZE );	/* Trim the name */
 		local[NAMESIZE] = '\0';			/* ensure null termination */
 		name = local;
