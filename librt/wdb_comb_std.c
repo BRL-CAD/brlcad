@@ -35,6 +35,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "tcl.h"
 #include "machine.h"
+#include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "rtgeom.h"
@@ -488,9 +489,7 @@ wdb_comb_std_tcl(clientData, interp, argc, argv)
 	int				region_flag = -1;
 	register struct directory	*dp;
     	struct rt_db_internal		intern;
-	struct rt_comb_internal		*comb;
-	extern int			bu_optind;
-	extern char			*bu_optarg;
+	struct rt_comb_internal		*comb = NULL;
 	struct tokens			tok_hd;
 	struct tokens			*tok;
 	short				last_tok;

@@ -27,10 +27,17 @@
  *	This software is Copyright (C) 1997 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  */
+#include "conf.h"
 
+#include <stdio.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 #include <fcntl.h>
 #include <math.h>
-#include "conf.h"
+
 #include "tcl.h"
 #include "machine.h"
 #include "externs.h"
@@ -109,30 +116,30 @@ struct dg_obj HeadDGObj;		/* head of drawable geometry object list */
 static struct solid FreeSolid;		/* head of free solid list */
 
 static struct bu_cmdtab dgo_cmds[] = {
-	"assoc",		dgo_assoc_tcl,
-	"blast",		dgo_blast_tcl,
-	"clear",		dgo_zap_tcl,
-	"close",		dgo_close_tcl,
-	"draw",			dgo_draw_tcl,
-	"erase",		dgo_erase_tcl,
-	"erase_all",		dgo_erase_all_tcl,
-	"ev",			dgo_draw_tcl,
-	"get_autoview",		dgo_get_autoview_tcl,
-	"headSolid",		dgo_headSolid_tcl,
-	"illum",		dgo_illum_tcl,
-	"label",		dgo_label_tcl,
-	"observer",		dgo_observer_tcl,
-	"overlay",		dgo_overlay_tcl,
-	"report",		dgo_report_tcl,
-	"rt",			dgo_rt_tcl,
-	"rtcheck",		dgo_rtcheck_tcl,
+	{"assoc",		dgo_assoc_tcl},
+	{"blast",		dgo_blast_tcl},
+	{"clear",		dgo_zap_tcl},
+	{"close",		dgo_close_tcl},
+	{"draw",		dgo_draw_tcl},
+	{"erase",		dgo_erase_tcl},
+	{"erase_all",		dgo_erase_all_tcl},
+	{"ev",			dgo_draw_tcl},
+	{"get_autoview",	dgo_get_autoview_tcl},
+	{"headSolid",		dgo_headSolid_tcl},
+	{"illum",		dgo_illum_tcl},
+	{"label",		dgo_label_tcl},
+	{"observer",		dgo_observer_tcl},
+	{"overlay",		dgo_overlay_tcl},
+	{"report",		dgo_report_tcl},
+	{"rt",			dgo_rt_tcl},
+	{"rtcheck",		dgo_rtcheck_tcl},
 #if 0
-	"tol",			dgo_tol_tcl,
+	{"tol",			dgo_tol_tcl},
 #endif
-	"vdraw",		dgo_vdraw_tcl,
-	"who",			dgo_who_tcl,
-	"zap",			dgo_zap_tcl,
-	(char *)0,		(int (*)())0
+	{"vdraw",		dgo_vdraw_tcl},
+	{"who",			dgo_who_tcl},
+	{"zap",			dgo_zap_tcl},
+	{(char *)0,		(int (*)())0}
 };
 
 /*
@@ -380,7 +387,6 @@ dgo_illum_tcl(clientData, interp, argc, argv)
 		goto bad;
 
 	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
-		register struct solid *forw;
 		register int i;
 
 		for (i = 0; i <= sp->s_last; ++i) {
@@ -443,8 +449,6 @@ dgo_draw(dgop, interp, argc, argv, kind)
      char    **argv;
      int kind;
 {
-	register struct directory *dp;
-	register int i;
 
 	/* skip past procname and cmd */
 	argc -= 2;
@@ -2967,7 +2971,7 @@ dgo_print_schain(dgop, interp, lvl)
 	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
 		if (lvl <= -2) {
 			/* print only leaves */
-			bu_vls_printf(&vls, "%s ", sp->s_path[sp->s_last]->d_namep);
+			bu_vls_printf(&vls, "%s ", sp->s_path[(int)(sp->s_last)]->d_namep);
 			continue;
 		}
 
