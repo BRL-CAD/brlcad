@@ -1,7 +1,13 @@
 /*
  *			R A Y T R A C E . H
  *
- * All the structures necessary for dealing with the RT ray tracer library.
+ *  All the data structures and manifest constants
+ *  necessary for interacting with the BRL-CAD LIBRT ray-tracing library.
+ *
+ *  Note that this header file defines many internal data structures,
+ *  as well as the external (interface) data structures.  These are
+ *  provided for the convenience of applications builders.  However,
+ *  the internal data structures are subject to change.
  *
  *  Author -
  *	Michael John Muuss
@@ -21,11 +27,47 @@
 #ifndef RAYTRACE_H
 #define RAYTRACE_H seen
 
+/*
+ *  It is necessary to have a representation of 1.0/0.0, or "infinity"
+ *  that fits within the dynamic range of the machine being used.
+ *  This constant places an upper bound on the size object which
+ *  can be represented in the model.
+ */
 #if defined(vax) || (defined(sgi) && !defined(mips))
 #	define INFINITY	(1.0e20)	/* VAX limit is 10**37 */
 #else
 #	define INFINITY	(1.0e40)	/* IBM limit is 10**75 */
 #endif
+
+/*
+ *  Unfortunately, to prevent divide-by-zero, some tolerancing
+ *  needs to be introduced.
+ *
+ *  RT_LEN_TOL is the shortest length, in mm, that can be stood
+ *  as the dimensions of a primitive.
+ *  Can probably become at least SMALL.
+ *
+ *  Dot products smaller than RT_DOT_TOL are considered to have
+ *  a dot product of zero, i.e., the angle is effectively zero.
+ *  This is used to check vectors that should be perpendicular.
+ *  asin(0.1   ) = 5.73917 degrees
+ *  asin(0.01  ) = 0.572967
+ *  asin(0.001 ) = 0.0572958 degrees
+ *  asin(0.0001) = 0.00572958 degrees
+ *
+ *  sin(0.01 degrees) = sin(0.000174 radians) = 0.000174533
+ *
+ *  Many TGCs at least, in existing databases, will fail the
+ *  perpendicularity test if DOT_TOL is much smaller than 0.001,
+ *  which establishes a 1/20th degree tolerance.
+ *  The intent is to eliminate grossly bad primitives, not pick nits.
+ *
+ *  RT_PCOEF_TOL is a tolerance on polynomial coefficients to prevent
+ *  the root finder from having heartburn.
+ */
+#define RT_LEN_TOL	(1.0e-8)
+#define RT_DOT_TOL	(0.001)
+#define RT_PCOEF_TOL	(1.0e-10)
 
 /*
  * Handy memory allocator
@@ -567,17 +609,49 @@ struct resource {
 };
 #define RESOURCE_NULL	((struct resource *)0)
 
+/*
+ *			S T R U C T P A R S E
+ *
+ *  Definitions and data structures needed for routines that assign values
+ *  to elements of arbitrary data structures, the layout of which is
+ *  described by tables of "structparse" structures.
+ */
+#if defined(CRAY)
+	/*
+	 * CRAY machines have a problem taking the address of an arbitrary
+	 * character within a structure.  int pointers have to be used.
+	 * There is some matching hackery in the invididual tables.
+	 */
+	typedef int	*stroff_t;
+#else
+#	ifdef __STDC__
+		typedef void	*stroff_t;
+#	else
+		typedef char	*stroff_t;
+#	endif
+#endif
+
+struct structparse {
+	char		*sp_fmt;		/* "indir" or "%f", etc */
+	char		*sp_name;		/* Element's symbolic name */
+	stroff_t	sp_offset;		/* Offset within structure */
+	void		(*sp_hook)();		/* Optional hooked function */
+};
+#define FUNC_NULL	((void (*)())0)
 
 /*
  *			A P P L I C A T I O N
  *
- * Note:  When calling rt_shootray(), these fields are mandatory:
+ *  This structure is the only parameter to rt_shootray().
+ *
+ *  When calling rt_shootray(), these fields are mandatory:
  *	a_ray.r_pt	Starting point of ray to be fired
  *	a_ray.r_dir	UNIT VECTOR with direction to fire in (dir cosines)
  *	a_hit		Routine to call when something is hit
  *	a_miss		Routine to call when ray misses everything
  *
- * Also note that rt_shootray() returns the (int) return of a_hit()/a_miss().
+ *  Note that rt_shootray() returns the (int) return of the a_hit()/a_miss()
+ *  function called.
  */
 struct application  {
 	/* THESE ELEMENTS ARE MANDATORY */
@@ -678,6 +752,8 @@ struct rt_i {
  *  in 3-space.
  *  Intented for common handling of wireframe display information.
  *  XXX For the moment, allocated with individual malloc() calls.
+ *  XXX For the moment, only hold one point per structure.
+ *  It is debatable whether these should be single or double precision.
  */
 struct vlist {
 	point_t		vl_pnt;		/* coordinates in space */
@@ -752,6 +828,8 @@ extern void rt_pr_partitions(struct rt_i *rtip,
 extern void rt_printb(char *s, unsigned long v, char *bits);
 					/* Print a bit vector */
 extern struct soltab *rt_find_solid(struct rt_i *rtip, char *name);
+					/* Parse arbitrary data structure */
+extern void rt_structparse(char *cp, struct structparse *tab, stroff_t base );
 					/* Start the timer */
 extern void rt_prep_timer(void);
 					/* Read timer, return time + str */
@@ -771,9 +849,11 @@ extern void rt_pr_seg();		/* Print seg struct */
 extern void rt_pr_partitions();		/* Print the partitions */
 extern void rt_printb();		/* Print a bit vector */
 extern struct soltab *rt_find_solid();	/* Find solid by leaf name */
+extern void rt_structparse();		/* Parse arbitrary data structure */
 
 extern void rt_prep_timer();		/* Start the timer */
 extern double rt_read_timer();		/* Read timer, return time + str */
+			
 #endif
 
 /* The matrix math routines */
@@ -980,35 +1060,6 @@ extern void rt_pr_roots();		/* print complex roots */
  */
 extern double	rt_invpi, rt_inv2pi;
 extern double	rt_inv255;
-
-/*
- *  Unfortunately, to prevent divide-by-zero, some tolerancing
- *  needs to be introduced.
- *
- *  RT_LEN_TOL is the shortest length, in mm, that can be stood
- *  as the dimensions of a primitive.
- *  Can probably become at least SMALL.
- *  Dot products smaller than RT_DOT_TOL are considered to have
- *  a dot product of zero, i.e., the angle is effectively zero.
- *  This is used to check vectors that should be perpendicular.
- *  asin(0.1   ) = 5.73917 degrees
- *  asin(0.01  ) = 0.572967
- *  asin(0.001 ) = 0.0572958 degrees
- *  asin(0.0001) = 0.00572958 degrees
- *
- *  sin(0.01 degrees) = sin(0.000174 radians) = 0.000174533
- *
- *  Many TGCs at least, in existing databases, will fail the
- *  perpendicularity test if DOT_TOL is much smaller than 0.001,
- *  which establishes a 1/20th degree tolerance.
- *  The intent is to eliminate grossly bad primitives, not pick nits.
- *
- *  RT_PCOEF_TOL is a tolerance on polynomial coefficients to prevent
- *  the root finder from having heartburn.
- */
-#define RT_LEN_TOL	(1.0e-8)
-#define RT_DOT_TOL	(0.001)
-#define RT_PCOEF_TOL	(1.0e-10)
 
 /*
  *  System library routines used by the RT library.
