@@ -703,15 +703,27 @@ set -S2 "/bin/sh"
 #	define	BSD	44
 #	define	HAS_TCP 1
 #	define	HAS_SYMLINKS 1
-#	define	RANLIB	ar -s
-#	define	CC	gcc
 #	if 1	/* PRODUCTION=1 */
 #		define	OPTIMIZER	-O2
 #	else
 #		define	OPTIMIZER	-g
 #	endif
-/*	Don't use -ansi, that gives __STRICT_ANSI__.  Default is _GNU_SOURCE. */
-#	define	CC_OPTS /**/
+#	if 1	/* PRODUCTION=1 */
+/*		Shared library version support.  Requires ELF for Linux. */
+#		define	CC	gcc-elf
+#		define	CC_OPTS -fPIC
+#		define	ARCH_SUF	so
+#		define	LIBVERS ../sharedlibvers.sh
+#		define	BUILD_LIBRARY	gcc-elf -shared -o
+#		define	RANLIB	true
+#		define	STANDARD_LIBES	-lm -lc -Wl,-rpath -Wl,/usr/lib:LIBDIR
+#	else
+/*		Static linked executables */
+#		define	CC	gcc
+#		define	RANLIB	ar -s
+/*		Don't use -ansi, that gives __STRICT_ANSI__.  Default is _GNU_SOURCE. */
+#		define	CC_OPTS /**/
+#	endif
 #	define	XINCDIR	/usr/X11/include
 #	define	XLIBDIR	/usr/X11/lib
 
