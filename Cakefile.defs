@@ -1518,6 +1518,9 @@ set -S2 "/bin/sh"
 #	define	LIBBU_DIR	../libbu
 #	define	LIBBU		-L''LIBBU_DIR -lbu
 #	define	LIBBU_DEP	[[LIBVERS ../libbu/libbu.ARCH_SUF]]
+#	define	LIBBN_DIR	../libbn
+#	define	LIBBN		-L''LIBBN_DIR -lbn
+#	define	LIBBN_DEP	[[LIBVERS ../libbn/libbn.ARCH_SUF]]
 #	define	LIBPLOT_DIR	../libplot3
 #	define	LIBPLOT		-L''LIBPLOT_DIR -lplot3
 #	define	LIBPLOT_DEP	[[LIBVERS ../libplot3/libplot3.ARCH_SUF]]
@@ -1585,6 +1588,9 @@ set -S2 "/bin/sh"
 #	define	LIBBU_DIR	../.libbu.MTYPE
 #	define	LIBBU		-L''LIBBU_DIR -lbu
 #	define	LIBBU_DEP	[[LIBVERS ../.libbu.MTYPE/libbu.ARCH_SUF]]
+#	define	LIBBN_DIR	../.libbn.MTYPE
+#	define	LIBBN		-L''LIBBN_DIR -lbn
+#	define	LIBBN_DEP	[[LIBVERS ../.libbn.MTYPE/libbn.ARCH_SUF]]
 #	define	LIBPLOT_DIR	../.libplot3.MTYPE
 #	define	LIBPLOT		-L''LIBPLOT_DIR -lplot3
 #	define	LIBPLOT_DEP	[[LIBVERS ../.libplot3.MTYPE/libplot3.ARCH_SUF]]
