@@ -1440,14 +1440,22 @@ struct edgeuse *oldeu;
 	eu1->up.magic_p = oldeu->up.magic_p;
 	eu1->orientation = oldeu->orientation;
 	eu1->eua_p = (struct edgeuse_a *)NULL;
-	eu1->eumate_p = eu1->radial_p = oldeumate;
-	oldeumate->radial_p = oldeumate->eumate_p = eu1;
 
 	eu2->up.magic_p = oldeumate->up.magic_p;
 	eu2->orientation = oldeumate->orientation;
 	eu2->eua_p = (struct edgeuse_a *)NULL;
-	eu2->eumate_p = eu2->radial_p = oldeu;
-	oldeu->radial_p = oldeu->eumate_p = eu2;
+
+	/* Build mate relationship */
+	eu1->eumate_p = oldeumate;
+	oldeumate->eumate_p = eu1;
+	eu2->eumate_p = oldeu;
+	oldeu->eumate_p = eu2;
+
+	/* Build radial relationship */
+	eu1->radial_p = oldeumate;
+	oldeumate->radial_p = eu1;
+	eu2->radial_p = oldeu;
+	oldeu->radial_p = eu2;
 
 	/* Associate oldeumate with new edge, and eu2 with old edge. */
 	oldeumate->e_p = eu1->e_p;
@@ -1467,46 +1475,59 @@ struct edgeuse *oldeu;
 void nmg_moveeu(eudst, eusrc)
 struct edgeuse *eudst, *eusrc;
 {
-	struct edge *e;
+	struct edgeuse	*eudst_mate;
+	struct edgeuse	*eusrc_mate;
+	struct edge	*e;
 
 	NMG_CK_EDGEUSE(eudst);
 	NMG_CK_EDGEUSE(eusrc);
+	eudst_mate = eudst->eumate_p;
+	eusrc_mate = eusrc->eumate_p;
+	NMG_CK_EDGEUSE(eudst_mate);
+	NMG_CK_EDGEUSE(eusrc_mate);
 
 	/* protect the morons from themselves.  Don't let them
 	 * move an edgeuse to itself or it's mate
 	 */
-	if (eusrc == eudst || eusrc->eumate_p == eudst)
+	if (eusrc == eudst || eusrc_mate == eudst)  {
+		rt_log("nmg_moveeu() moving edgeuse to itself\n");
 		return;
+	}
 
 	if (eusrc->e_p == eudst->e_p &&
-	    (eusrc->radial_p == eudst || eudst->radial_p == eusrc))
+	    (eusrc->radial_p == eudst || eudst->radial_p == eusrc))  {
+	    	rt_log("nmg_moveeu() edgeuses already share edge\n");
 		return;
-
+	}
 
 	/* make sure vertices are shared */
-	if ( ! ( (eudst->eumate_p->vu_p->v_p == eusrc->vu_p->v_p &&
-	    eudst->vu_p->v_p == eusrc->eumate_p->vu_p->v_p) ||
+	if ( ! ( (eudst_mate->vu_p->v_p == eusrc->vu_p->v_p &&
+	    eudst->vu_p->v_p == eusrc_mate->vu_p->v_p) ||
 	    (eudst->vu_p->v_p == eusrc->vu_p->v_p &&
-	    eudst->eumate_p->vu_p->v_p == eusrc->eumate_p->vu_p->v_p) ) ) {
+	    eudst_mate->vu_p->v_p == eusrc_mate->vu_p->v_p) ) ) {
 		/* edgeuses do NOT share verticies. */
+	    	VPRINT("eusrc", eusrc->vu_p->v_p->vg_p->coord);
+	    	VPRINT("eusrc_mate", eusrc_mate->vu_p->v_p->vg_p->coord);
+	    	VPRINT("eudst", eudst->vu_p->v_p->vg_p->coord);
+	    	VPRINT("eudst_mate", eudst_mate->vu_p->v_p->vg_p->coord);
 	    	rt_bomb("nmg_moveeu() edgeuses do not share vertices, cannot share edge\n");
 	}
 
 	e = eusrc->e_p;
-	eusrc->eumate_p->e_p = eusrc->e_p = eudst->e_p;
+	eusrc_mate->e_p = eusrc->e_p = eudst->e_p;
 
 	/* if we're not deleting the edge, make sure it will be able
 	 * to reference the remaining uses, otherwise, take care of disposing
 	 * of the (now unused) edge
 	 */
-	if (eusrc->radial_p != eusrc->eumate_p) {
+	if (eusrc->radial_p != eusrc_mate) {
 		/* this is NOT the only use of the eusrc edge! */
-		if (e->eu_p == eusrc || e->eu_p == eusrc->eumate_p)
+		if (e->eu_p == eusrc || e->eu_p == eusrc_mate)
 			e->eu_p = eusrc->radial_p;
 
 		/* disconnect from the list of uses of this edge */
-		eusrc->radial_p->radial_p = eusrc->eumate_p->radial_p;
-		eusrc->eumate_p->radial_p->radial_p = eusrc->radial_p;
+		eusrc->radial_p->radial_p = eusrc_mate->radial_p;
+		eusrc_mate->radial_p->radial_p = eusrc->radial_p;
 	} else {
 		/* this is the only use of the eusrc edge */
 		if (e->eg_p) FREE_EDGE_G(e->eg_p);
@@ -1514,9 +1535,9 @@ struct edgeuse *eudst, *eusrc;
 	}
 
 	eusrc->radial_p = eudst;
-	eusrc->eumate_p->radial_p = eudst->radial_p;
+	eusrc_mate->radial_p = eudst->radial_p;
 
-	eudst->radial_p->radial_p = eusrc->eumate_p;
+	eudst->radial_p->radial_p = eusrc_mate;
 	eudst->radial_p = eusrc;
 }
 
@@ -2037,7 +2058,8 @@ struct edge *e;
 /*
  *				N M G _ E I N S
  *
- *	Insert a new (zero length) edge at the begining of an existing edge
+ *	Insert a new (zero length) edge at the begining of (ie, before)
+ *	an existing edgeuse
  *	Perhaps this is what nmg_esplit and nmg_eusplit should have been like?
  *
  *	Before:
@@ -2049,19 +2071,25 @@ struct edge *e;
  *
  *
  *	After:
+ *
+ *               eu1     eu
  *	.--A--> .---> .--eu-->
  *		 \   /
  *		  >.<
  *		 /   \
  *	  <-A'--. <---. <-eu'--.
+ *	          eu2     eumate
  */
 struct edgeuse *nmg_eins(eu)
 struct edgeuse *eu;
 {
-	struct edgeuse *eu1, *eu2;
-	struct shell *s;
+	struct edgeuse	*eumate;
+	struct edgeuse	*eu1, *eu2;
+	struct shell	*s;
 
 	NMG_CK_EDGEUSE(eu);
+	eumate = eu->eumate_p;
+	NMG_CK_EDGEUSE(eumate);
 
 	if (*eu->up.magic_p == NMG_SHELL_MAGIC) {
 		s = eu->up.s_p;
@@ -2088,17 +2116,14 @@ struct edgeuse *eu;
 	eu2 = eu1->eumate_p;
 
 	if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC) {
-		struct edgeuse	*eumate_pred;	/* predecessor to eumate */
-
 		NMG_LIST_DEQUEUE( &eu1->l );
 		NMG_LIST_DEQUEUE( &eu2->l );
 
-		NMG_LIST_APPEND( &eu->l, &eu1->l );
-		eumate_pred = NMG_LIST_NEXT( edgeuse, &eu->eumate_p->l );
-		NMG_LIST_APPEND( &eumate_pred->l, &eu2->l );
+		NMG_LIST_INSERT( &eu->l, &eu1->l );
+		NMG_LIST_APPEND( &eumate->l, &eu2->l );
 
 		eu1->up.lu_p = eu->up.lu_p;
-		eu2->up.lu_p = eu->eumate_p->up.lu_p;
+		eu2->up.lu_p = eumate->up.lu_p;
 	}
 	else {
 		rt_bomb("nmg_eins() Cannot yet insert null edge in shell\n");
