@@ -2907,9 +2907,9 @@ struct nmg_ptbl		*eu1_list;
 struct nmg_ptbl		*eu2_list;
 {
 	struct nmg_ptbl		eg_list;
-	struct edge_g_lseg		**eg1;
-	struct edgeuse		**eu1;
-	struct edgeuse		**eu2;
+	struct edge_g_lseg	**eg1;
+	struct edgeuse		*eu1;
+	struct edgeuse		*eu2;
 	fastf_t			dist[2];
 	int			code;
 	point_t			eg_pt2d;	/* 2D */
@@ -2918,6 +2918,8 @@ struct nmg_ptbl		*eu2_list;
 	point_t			hit3d;
 	point_t			hit2d;		/* 2D */
 	struct edgeuse		*new_eu;
+	int			eu1_index;
+	int			eu2_index;
 
 	NMG_CK_INTER_STRUCT(is);
 	NMG_CK_FACEUSE(fu1);
@@ -2950,8 +2952,9 @@ struct nmg_ptbl		*eu2_list;
 		    	rt_log(" dot=%g, ang=%g deg\n", dot,
 				acos(fabs(dot)) * rt_radtodeg );
 #endif
-			rt_log("WARNING nmg_isect_line2_face2pNEW() is->pt and on_eg lines differ by %g deg.  Using on_eg line.\n",
-				acos(fabs(dot)) * rt_radtodeg );
+			rt_log("WARNING nmg_isect_line2_face2pNEW() is->pt and on_eg lines differ by %g deg.  Using on_eg line.  |on_eg|=%gmm\n",
+				acos(fabs(dot)) * rt_radtodeg,
+				MAGNITUDE(is->on_eg->e_dir) );
 
 			/* Ensure absolute consistency between the two versions of the line! */
 			VMOVE( is->pt, is->on_eg->e_pt );
@@ -2996,32 +2999,29 @@ colinear:
 			if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
 				rt_log("\tThis edge_geom generated the line.  Enlisting.\n");
 			}
-			for( eu1 = (struct edgeuse **)NMG_TBL_BASEADDR(eu1_list);
-			     eu1 <= (struct edgeuse **)NMG_TBL_LASTADDR(eu1_list);
-			     eu1++
-			)  {
-				NMG_CK_EDGEUSE(*eu1);
-				if( (*eu1)->g.lseg_p != is->on_eg )  continue;
-				/* *eu1 is from fu1 */
+			for( eu1_index=0; eu1_index < NMG_TBL_END(eu1_list); eu1_index++ )  {
+				eu1 = (struct edgeuse *)NMG_TBL_GET(eu1_list, eu1_index);
+				NMG_CK_EDGEUSE(eu1);
+				if( eu1->g.lseg_p != is->on_eg )  continue;
+				/* eu1 is from fu1 */
 
-				for( eu2 = (struct edgeuse **)NMG_TBL_BASEADDR(eu2_list);
-				     eu2 <= (struct edgeuse **)NMG_TBL_LASTADDR(eu2_list);
-				     eu2++
-				)  {
-					NMG_CK_EDGEUSE(*eu2);
-					if( (*eu2)->g.lseg_p != is->on_eg )  continue;
+				for( eu2_index=0; eu2_index < NMG_TBL_END(eu2_list); eu2_index++ )  {
+					eu2 = (struct edgeuse *)NMG_TBL_GET(eu2_list, eu2_index);
+					NMG_CK_EDGEUSE(eu2);
+
+					if( eu2->g.lseg_p != is->on_eg )  continue;
 					/*
-					 *  *eu2 is from fu2.
+					 *  eu2 is from fu2.
 					 *  Perform intersection.
 					 *  New edgeuses are added to lists.
 					 */
-					(void)nmg_isect_2colinear_edge2p( *eu1, *eu2,
+					(void)nmg_isect_2colinear_edge2p( eu1, eu2,
 						fu1, is, eu1_list, eu2_list);
 				}
 
 				/* For the case where only 1 face is involved */
-				nmg_enlist_vu(is, (*eu1)->vu_p, 0 );
-				nmg_enlist_vu(is, RT_LIST_PNEXT_CIRC(edgeuse, (*eu1))->vu_p, 0 );
+				nmg_enlist_vu(is, eu1->vu_p, 0 );
+				nmg_enlist_vu(is, RT_LIST_PNEXT_CIRC(edgeuse, eu1)->vu_p, 0 );
 			}
 			continue;
 		}
@@ -3136,7 +3136,7 @@ fixup:
 				 *  Since on_eg is the line of intersection
 				 *  between fu1 and fu2, and since eg1
 				 *  lies in the plane of fu1,
-				 *  and since hit_v lines on eg1
+				 *  and since hit_v lies on eg1
 				 *  at the point where eg1 intersects on_eg,
 				 *  it's pretty hard to see how hit_v
 				 *  could fail to lie in the plane of fu2.
@@ -3158,6 +3158,7 @@ fixup:
 
 				if( !NEAR_ZERO( dist1 , is->tol.dist ) || !NEAR_ZERO( dist2 , is->tol.dist ) )  {
 					rt_log("WARNING fu1 dist1=%g, fu2 dist2=%g.  Intersect not in plane of face, skipping.\n", dist1, dist2);
+rt_bomb("nmg_isect_line2_face2pNEW()\n");
 					continue;
 				}
 				/* Ignore further geometry checking, isect is good.
@@ -3225,20 +3226,21 @@ force_isect:
 		}
 
 eu_search:
-		/* Search all eu's on eg1 for vu's to enlist.  May be many. */
-		for( eu1 = (struct edgeuse **)NMG_TBL_LASTADDR(eu1_list);
-		     eu1 >= (struct edgeuse **)NMG_TBL_BASEADDR(eu1_list); eu1--
-		)  {
+		/*  Search all eu's on eg1 for vu's to enlist.
+		 *  There may be many, and the list may grow.
+		 */
+		for( eu1_index=0; eu1_index < NMG_TBL_END(eu1_list); eu1_index++ )  {
 			struct vertexuse	*vu1a, *vu1b;
 			struct vertexuse	*vu1_midpt;
 			fastf_t			ldist;
 			point_t			eu1_pt2d;	/* 2D */
 			point_t			eu1_end2d;	/* 2D */
 
-			NMG_CK_EDGEUSE(*eu1);
-			if( (*eu1)->g.lseg_p != *eg1 )  continue;
-			vu1a = (*eu1)->vu_p;
-			vu1b = RT_LIST_PNEXT_CIRC( edgeuse, (*eu1) )->vu_p;
+			eu1 = (struct edgeuse *)NMG_TBL_GET(eu1_list, eu1_index);
+			NMG_CK_EDGEUSE(eu1);
+			if( eu1->g.lseg_p != *eg1 )  continue;
+			vu1a = eu1->vu_p;
+			vu1b = RT_LIST_PNEXT_CIRC( edgeuse, eu1 )->vu_p;
 
 
 			/* First, a topology check of both endpoints */
@@ -3340,8 +3342,7 @@ hit_b:
 					if( hit_v == vu1a->v_p || hit_v == vu1b->v_p )
 						rt_bomb("About to make 0-length edge!\n");
 				}
-				new_eu = nmg_ebreaker(hit_v, *eu1, &is->tol);
-				/* WARNING: realloc() may move the array */
+				new_eu = nmg_ebreaker(hit_v, eu1, &is->tol);
 				nmg_tbl( eu1_list, TBL_INS_UNIQUE, &new_eu->l.magic );
 				/* "eu1" must now be considered invalid */
 				vu1_midpt = new_eu->vu_p;
@@ -3408,40 +3409,28 @@ hit_b:
 		 */
 
 		/* Break all edges from fu1 list */
-		for( eu1 = (struct edgeuse **)NMG_TBL_BASEADDR(eu1_list);
-		     eu1 <= (struct edgeuse **)NMG_TBL_LASTADDR(eu1_list);
-		     eu1++
-		)  {
-			NMG_CK_EDGEUSE(*eu1);
-			if( (*eu1)->g.lseg_p != is->on_eg )  continue;
-			/* *eu1 is from fu1 and on the intersection line */
-			new_eu = nmg_break_eu_on_v( *eu1, vu1->v_p, fu1, is );
+		for( eu1_index=0; eu1_index < NMG_TBL_END(eu1_list); eu1_index++ )  {
+			eu1 = (struct edgeuse *)NMG_TBL_GET(eu1_list, eu1_index);
+			NMG_CK_EDGEUSE(eu1);
+			if( eu1->g.lseg_p != is->on_eg )  continue;
+			/* eu1 is from fu1 and on the intersection line */
+			new_eu = nmg_break_eu_on_v( eu1, vu1->v_p, fu1, is );
 			if( !new_eu )  continue;
-			/* XXX What about realloc() moving the array? */
 			nmg_tbl( eu1_list, TBL_INS_UNIQUE, &new_eu->l.magic );
 			nmg_enlist_vu(is, new_eu->vu_p, 0 );
 		}
 
 		/* Break all edges from fu2 list */
-		for( eu2 = (struct edgeuse **)NMG_TBL_BASEADDR(eu2_list);
-		     eu2 <= (struct edgeuse **)NMG_TBL_LASTADDR(eu2_list);
-		     eu2++
-		)  {
-			NMG_CK_EDGEUSE(*eu2);
-			if( (*eu2)->g.lseg_p != is->on_eg )  continue;
-			/* *eu2 is from fu2 and on the intersection line */
-			new_eu = nmg_break_eu_on_v( *eu2, vu1->v_p, fu1, is );
+		for( eu2_index=0; eu2_index < NMG_TBL_END(eu2_list); eu2_index++ )  {
+			eu2 = (struct edgeuse *)NMG_TBL_GET(eu2_list, eu2_index);
+			NMG_CK_EDGEUSE(eu2);
+			if( eu2->g.lseg_p != is->on_eg )  continue;
+			/* eu2 is from fu2 and on the intersection line */
+			new_eu = nmg_break_eu_on_v( eu2, vu1->v_p, fu1, is );
 			if( !new_eu )  continue;
-			/* XXX What about realloc() moving the array? */
 			nmg_tbl( eu2_list, TBL_INS_UNIQUE, &new_eu->l.magic );
 			nmg_enlist_vu(is, new_eu->vu_p, 0 );
 		}
-#endif
-
-#if 0
-		/* OLD WAY: */
-		nmg_isect_line2_vertex2( is, vu1, fu1 );
-		/* Only result is a use of vu1 added to the other face */
 #endif
 	}
 
