@@ -8,6 +8,9 @@
  *  advantage of centralizing the struct timeval stuff.
  */
 
+#if defined(BSD)
+#	include <sys/types.h>	/* for fd_set macros */
+#endif
 #if defined(BSD) || defined(CRAY)
 #	include <sys/time.h>	/* for struct timeval.  Includes <time.h> */
 #else
@@ -28,6 +31,31 @@
 #	include <sys/timeval.h>
 #endif
 
+#ifdef FD_SET
+/* The 4.3 BSD version */
+bsdselect( readfds, sec, us )
+long readfds;
+{
+	fd_set	fdset;
+	int	width;
+	struct	timeval tv;
+
+	tv.tv_sec = sec;
+	tv.tv_usec = us;
+
+	width = getdtablesize();
+	FD_ZERO( &fdset );
+	fdset.fds_bits[0] = readfds;	/* peek inside! */
+
+	if( select( width, &fdset, (fd_set *)0, (fd_set *)0, &tv ) <= 0 )
+		return(0);
+
+	readfds = fdset.fds_bits[0];
+	return( readfds );
+}
+#else
+
+/* The old version */
 bsdselect( readfds, sec, us )
 long readfds;
 {
@@ -43,3 +71,4 @@ long readfds;
 	return(32-1);	/* SYSV always has lots of input */
 #endif
 }
+#endif /* FD_SET */
