@@ -811,23 +811,32 @@ struct shell *s;
  *
  *	In either case, the new edge will exist as the "next" edge after
  *	the edge passed as a parameter.
+ *
  *	Explicit return:
- *		pointer to the new edge which took the place of the parameter
- *	edge.
+ *		edge pointer, referring to the edge structure which
+ *		replaces the edge passed in as parameter "e".
+ *		The calling routine should be careful to update it's
+ *		"e" variable with this new value, assuming that "e"
+ *		wasn't derived as eu->e_p, which will still evaluate to
+ *		the correct edge (but with a different pointer value
+ *		than before).
+ *		This is silly, because the return is *always* "e".
+ *
  * XXX I don't understand what the return is, by reading this comment.
  * XXX something more useful might be along these lines:
  *	The explicit return (ret_e) referrs to the new edge.
- *	Vertex A is e->eu_p->v_p,
- *	Vertex B is e->eu_p->eumate_p->v_p,
- *	and vertex V (either made new or as an argument) will lie inbetween.
  *	On return, e->eu_p will run from A to V, and
  *	(ret_e)->eu_p will run from V to B.
  *	Note that only edgeuses are oriented, not edges, so it's
  *	not possible to say whether ret_e "starts" or "ends" at V.
  * XXX The question is, is this what really happens?
  *
+ *	Vertex A is e->eu_p->vu_p->v_p,
+ *	Vertex B is e->eu_p->eumate_p->vu_p->v_p,
+ *	and vertex V (either made new or as an argument) will lie inbetween.
+ *
  *	If the call was nmg_esplit( NULL, eu->e_p );
- *	then the new vertex created will be eu->eumate_p->vu_p->v_p;
+ *	then on return the new vertex created will be eu->eumate_p->vu_p->v_p;
  *
  *  Edge on entry -
  *
@@ -861,18 +870,21 @@ struct edge *e;
 	int 		notdone=1;
 	struct vertex	*v1, *v2;
 
+	NMG_CK_EDGE(e);
 	eu = e->eu_p;
 	neu1 = neu2 = (struct edgeuse *)NULL;
 
 	NMG_CK_EDGEUSE(eu);
 	NMG_CK_VERTEXUSE(eu->vu_p);
-	NMG_CK_VERTEX(eu->vu_p->v_p);
 	v1 = eu->vu_p->v_p;
+	NMG_CK_VERTEX(v1);
 
+	NMG_CK_EDGEUSE(eu->eumate_p);
 	NMG_CK_VERTEXUSE(eu->eumate_p->vu_p);
-	NMG_CK_VERTEX(eu->eumate_p->vu_p->v_p);
 	v2 = eu->eumate_p->vu_p->v_p;
+	NMG_CK_VERTEX(v2);
 
+	/* v1 and v2 are the endpoints of the original edge "e" */
 	if( v1 == v2 )
 		rt_log("WARNING: nmg_esplit() on edge from&to v=x%x\n", v1);
 	if( v && ( v == v1 || v == v2 ) )
@@ -884,17 +896,22 @@ struct edge *e;
 	 */
 	do {
 		eur = eu->radial_p;
+		/* eur could run either from v1 to v2, or from v2 to v1 */
 		eu2 = nmg_eusplit(v, eur);
 		NMG_CK_EDGEUSE(eur);
 		NMG_CK_EDGEUSE(eu2);
 		NMG_TEST_EDGEUSE(eur);
 		NMG_TEST_EDGEUSE(eu2);
 		
-		if (!v) v = eu2->vu_p->v_p;
+		if (!v)  {
+			/* "v" is the vertex "e" was just split at */
+			v = eu2->vu_p->v_p;
+			NMG_CK_VERTEX(v);
+		}
 
 		if (eu2->e_p == e || eur->e_p == e) notdone = 0;
-
 		
+		NMG_CK_VERTEX(eur->vu_p->v_p);
 		if (eur->vu_p->v_p == v1) {
 			if (neu1) {
 				nmg_moveeu(neu1, eur);
@@ -910,18 +927,19 @@ struct edge *e;
 			neu2 = eur->eumate_p;
 			neu1 = eu2->eumate_p;
 		} else {
-			rt_log("in %s at %d ", __FILE__, __LINE__);
-			rt_bomb("nmg_esplit() Something's awry\n");
+			rt_log("nmg_esplit(v=x%x, e=x%x)\n", v, e);
+			rt_log("nmg_esplit: eur->vu_p->v_p=x%x, v1=x%x, v2=x%x\n", eur->vu_p->v_p, v1, v2 );
+			rt_bomb("nmg_esplit() eur->vu_p->v_p is neither v1 nor v2\n");
 		}
 	} while (notdone);
 
+	/* Error checking loops */
 	eu = neu1;
 	do {
 		NMG_CK_EDGEUSE(eu);
 		NMG_CK_EDGEUSE(eu->eumate_p);
 		NMG_TEST_EDGEUSE(eu);
 		NMG_TEST_EDGEUSE(eu->eumate_p);
-
 		eu = eu->radial_p->eumate_p;
 	} while (eu != neu1);
 	eu = neu2;
@@ -930,11 +948,12 @@ struct edge *e;
 		NMG_CK_EDGEUSE(eu->eumate_p);
 		NMG_TEST_EDGEUSE(eu);
 		NMG_TEST_EDGEUSE(eu->eumate_p);
-
 		eu = eu->radial_p->eumate_p;
 	} while (eu != neu2);
 
-	return(neu2->e_p);
+	if( neu2->e_p != e )  rt_log("nmg_esplit: neu2->e_p != e\n");
+
+	return(e);
 }
 
 /*
@@ -981,6 +1000,7 @@ struct edge	*e2;
 	struct vertex		*v;
 	struct vertexuse	*vu;
 	long			*magicp;
+	struct edge		*repl_e1;
 
 	NMG_CK_EDGE(e1);
 	NMG_CK_EDGE(e2);
@@ -1001,7 +1021,7 @@ struct edge	*e2;
 	NMG_CK_VERTEXUSE(vu);
 	v = vu->v_p;
 	NMG_CK_VERTEX(v);
-	(void)nmg_ebreak( v, e1 );
+	repl_e1 = nmg_ebreak( v, e1 );
 	/* XXX If we could get the new v info here, the nmg_mvvu()
 	 * XXX gunk could be avoided. */
 	(void)nmg_ebreak( v, e2 );
