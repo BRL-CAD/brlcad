@@ -1705,7 +1705,8 @@ struct rt_functab {
 			struct rt_piecelist * /*plp*/,
 			double /* dist_corr */,
 			struct xray * /*rp*/,
-			struct application * /*ap*/));
+			struct application * /*ap*/,	/* has resource */
+			struct seg * /*seghead*/));	/* used only for PLATE mode hits */
 	void 	(*ft_piece_hitsegs) BU_ARGS((
 			struct rt_piecestate * /*psp*/,
 			struct seg * /*seghead*/,

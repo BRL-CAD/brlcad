@@ -51,7 +51,8 @@ CONST struct bu_structparse rt_nul_parse[] = {
 			struct rt_piecelist *plp, \
 			double dist_corr, \
 			register struct xray *rp, \
-			struct application *ap )); \
+			struct application *ap, \
+			struct seg *seghead )); \
 	BU_EXTERN(void rt_##name##_piece_hitsegs, (\
 			struct rt_piecestate *psp, \
 			struct seg *seghead, \
@@ -103,7 +104,8 @@ CONST struct bu_structparse rt_nul_parse[] = {
 			struct rt_piecestate *psp, \
 			struct rt_piecelist *plp, \
 			struct soltab *stp, struct xray *rp, \
-			struct application *ap )); \
+			struct application *ap, \
+			struct seg *seghead )); \
 	BU_EXTERN(void rt_/**/name/**/_piece_hitsegs, (\
 			struct rt_piecestate *psp, \
 			struct seg *seghead, \
@@ -812,7 +814,8 @@ int IDEF(rt_nul_piece_shot,(struct rt_piecestate *psp,
 			struct rt_piecelist *plp,
 			double dist_corr,
 			struct xray *rp,
-			struct application *ap))
+			struct application *ap,
+			struct seg *seghead))
 void DEF(rt_nul_piece_hitsegs,(struct rt_piecestate *psp,
 			struct seg *seghead,
 			struct application *ap))
