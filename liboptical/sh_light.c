@@ -417,7 +417,9 @@ struct partition *PartHeadp;
 		if( pp->pt_inhit->hit_dist >= ap->a_rt_i->rti_tol.dist )  break;
 	if( pp == PartHeadp )  {
 		pp=PartHeadp->pt_forw;
-		rt_log("light_hit:  ERROR, nothing hit, vis=0, dtol=%e\n",ap->a_rt_i->rti_tol.dist);
+		rt_log("light_hit:  ERROR, nothing hit, sxy=%d,%d, dtol=%e\n",
+			ap->a_x, ap->a_y,
+			ap->a_rt_i->rti_tol.dist);
 		rt_pr_partitions(ap->a_rt_i, PartHeadp, "light_hit pt list");
 		return(0);		/* light_visible = 0 */
 	}
