@@ -399,21 +399,30 @@ rfbrmap(pcp, buf)
 struct pkg_conn *pcp;
 char *buf;
 {
-	int	i;
+	register int	i;
 	char	rbuf[NET_LONG_LEN+1];
-	ColorMap map, map2;
+	ColorMap map;
+	char	cm[256*2*3];
 
 	(void)pkg_plong( &rbuf[0*NET_LONG_LEN], fb_rmap( fbp, &map ) );
 	for( i = 0; i < 256; i++ ) {
-		(void)pkg_pshort( &map2.cm_red[i], map.cm_red[i] );
-		(void)pkg_pshort( &map2.cm_green[i], map.cm_green[i] );
-		(void)pkg_pshort( &map2.cm_blue[i], map.cm_blue[i] );
+		(void)pkg_pshort( cm+2*(0+i), map.cm_red[i] );
+		(void)pkg_pshort( cm+2*(256+i), map.cm_green[i] );
+		(void)pkg_pshort( cm+2*(512+i), map.cm_blue[i] );
 	}
-	pkg_send( MSG_DATA, (char *)&map2, sizeof(map2), pcp );
+	pkg_send( MSG_DATA, cm, sizeof(cm), pcp );
 	pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp );
 	if( buf ) (void)free(buf);
 }
 
+/*
+ *			R F B W M A P
+ *
+ *  Accept a color map sent by the client, and write it to the framebuffer.
+ *  Network format is to send each entry as a network (IBM) order 2-byte
+ *  short, 256 red shorts, followed by 256 green and 256 blue, for a total
+ *  of 3*256*2 bytes.
+ */
 rfbwmap(pcp, buf)
 struct pkg_conn *pcp;
 char *buf;
@@ -427,9 +436,9 @@ char *buf;
 		ret = fb_wmap( fbp, COLORMAP_NULL );
 	else {
 		for( i = 0; i < 256; i++ ) {
-			map.cm_red[i] = pkg_gshort( &(((ColorMap *)buf)->cm_red[i]) );
-			map.cm_green[i] = pkg_gshort( &(((ColorMap *)buf)->cm_green[i]) );
-			map.cm_blue[i] = pkg_gshort( &(((ColorMap *)buf)->cm_blue[i]) );
+			map.cm_red[i] = pkg_gshort( buf+2*(0+i) );
+			map.cm_green[i] = pkg_gshort( buf+2*(256+i) );
+			map.cm_blue[i] = pkg_gshort( buf+2*(512+i) );
 		}
 		ret = fb_wmap( fbp, &map );
 	}
