@@ -307,7 +307,7 @@ vo_size_cmd(struct view_obj	*vop,
 
 	/* compose error message */
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib vo_size");
+	bu_vls_printf(&vls, "helplib_alias vo_size %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
@@ -350,7 +350,7 @@ vo_invSize_cmd(struct view_obj	*vop,
 
 	/* compose error message */
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib vo_invSize");
+	bu_vls_printf(&vls, "helplib_alias vo_invSize %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
@@ -452,7 +452,7 @@ vo_aet_cmd(struct view_obj	*vop,
  bad:
 	/* compose error message */
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib vo_aet");
+	bu_vls_printf(&vls, "helplib_alias vo_aet %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
@@ -504,7 +504,7 @@ vo_rmat_cmd(struct view_obj	*vop,
 
 	/* compose error message */
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib vo_rmat");
+	bu_vls_printf(&vls, "helplib_alias vo_rmat %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
@@ -589,7 +589,7 @@ vo_center_cmd(struct view_obj	*vop,
  bad:
 	/* compose error message */
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib vo_center");
+	bu_vls_printf(&vls, "helplib_alias vo_center %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
@@ -632,7 +632,7 @@ vo_model2view_cmd(struct view_obj	*vop,
 
 	/* compose error message */
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib vo_model2view");
+	bu_vls_printf(&vls, "helplib_alias vo_model2view %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
@@ -675,7 +675,7 @@ vo_pmodel2view_cmd(struct view_obj	*vop,
 
 	/* compose error message */
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib vo_pmodel2view");
+	bu_vls_printf(&vls, "helplib_alias vo_pmodel2view %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
@@ -718,7 +718,7 @@ vo_view2model_cmd(struct view_obj	*vop,
 
 	/* compose error message */
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib vo_view2model");
+	bu_vls_printf(&vls, "helplib_alias vo_view2model %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
@@ -783,7 +783,7 @@ vo_perspective_cmd(struct view_obj	*vop,
 
 	/* Compose error message */
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib vo_perspective");
+	bu_vls_printf(&vls, "helplib_alias vo_perspective %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
@@ -826,7 +826,7 @@ vo_pmat_cmd(struct view_obj	*vop,
 
 	/* compose error message */
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib vo_pmat");
+	bu_vls_printf(&vls, "helplib_alias vo_pmat %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
@@ -902,7 +902,7 @@ vo_eye_cmd(struct view_obj	*vop,
 
  bad:
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib vo_eye");
+	bu_vls_printf(&vls, "helplib_alias vo_eye %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -970,7 +970,7 @@ vo_eye_pos_cmd(struct view_obj	*vop,
 
  bad:
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib vo_eye_pos");
+	bu_vls_printf(&vls, "helplib_alias vo_eye_pos %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -1051,7 +1051,7 @@ vo_lookat_cmd(struct view_obj	*vop,
 
  bad:
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib vo_lookat");
+	bu_vls_printf(&vls, "helplib_alias vo_lookat %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -1104,7 +1104,7 @@ vo_orientation_cmd(struct view_obj	*vop,
 
  bad:
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib vo_orient");
+	bu_vls_printf(&vls, "helplib_alias vo_orient %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -1141,7 +1141,7 @@ vo_pov_cmd(struct view_obj	*vop,
 		struct bu_vls	vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib vo_pov");
+		bu_vls_printf(&vls, "helplib_alias vo_pov %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -1236,7 +1236,7 @@ vo_zoom_cmd(struct view_obj	*vop,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib vo_zoom");
+		bu_vls_printf(&vls, "helplib_alias vo_zoom %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 
@@ -1304,7 +1304,7 @@ vo_units_cmd(struct view_obj	*vop,
 	}
 
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib vo_units");
+	bu_vls_printf(&vls, "helplib_alias vo_units %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
@@ -1339,7 +1339,7 @@ vo_base2local_cmd(struct view_obj	*vop,
 	bu_vls_init(&vls);
 
 	if (argc != 1) {
-		bu_vls_printf(&vls, "helplib vo_base2local");
+		bu_vls_printf(&vls, "helplib_alias vo_base2local %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 
@@ -1381,7 +1381,7 @@ vo_local2base_cmd(struct view_obj	*vop,
 	bu_vls_init(&vls);
 
 	if (argc != 1) {
-		bu_vls_printf(&vls, "helplib vo_local2base");
+		bu_vls_printf(&vls, "helplib_alias vo_local2base %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 
@@ -1538,7 +1538,7 @@ vo_rot_cmd(struct view_obj	*vop,
 
  bad:
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib vo_rot");
+	bu_vls_printf(&vls, "helplib_alias vo_rot %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
@@ -1645,7 +1645,7 @@ vo_tra_cmd(struct view_obj	*vop,
 
  bad:
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib vo_tra");
+	bu_vls_printf(&vls, "helplib_alias vo_tra %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
@@ -1729,7 +1729,7 @@ vo_slew_cmd(struct view_obj	*vop,
 
  bad:
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib vo_slew");
+	bu_vls_printf(&vls, "helplib_alias vo_slew %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
@@ -1764,7 +1764,7 @@ vo_observer_cmd(struct view_obj	*vop,
 
 		/* return help message */
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib vo_observer");
+		bu_vls_printf(&vls, "helplib_alias vo_observer %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -1820,7 +1820,7 @@ vo_coord_cmd(struct view_obj	*vop,
 
 	/* return help message */
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib vo_coord");
+	bu_vls_printf(&vls, "helplib_alias vo_coord %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -1874,7 +1874,7 @@ vo_rotate_about_cmd(struct view_obj	*vop,
 
 	/* return help message */
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib vo_rotate_about");
+	bu_vls_printf(&vls, "helplib_alias vo_rotate_about %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -1942,7 +1942,7 @@ vo_keypoint_cmd(struct view_obj	*vop,
 
  bad:
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib vo_keypoint");
+	bu_vls_printf(&vls, "helplib_alias vo_keypoint %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -2020,7 +2020,7 @@ vo_setview_cmd(struct view_obj	*vop,
 
  bad:
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib vo_setview");
+	bu_vls_printf(&vls, "helplib_alias vo_setview %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -2057,7 +2057,7 @@ vo_arot_cmd(struct view_obj	*vop,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib vo_arot");
+		bu_vls_printf(&vls, "helplib_alias vo_arot %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -2146,7 +2146,7 @@ vo_vrot_cmd(struct view_obj	*vop,
 
 bad:
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib vo_vrot");
+	bu_vls_printf(&vls, "helplib_alias vo_vrot %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -2208,7 +2208,7 @@ vo_mrot_cmd(struct view_obj	*vop,
 
  bad:
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib vo_mrot");
+	bu_vls_printf(&vls, "helplib_alias vo_mrot %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -2263,7 +2263,7 @@ vo_sca_cmd(struct view_obj	*vop,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib vo_sca");
+		bu_vls_printf(&vls, "helplib_alias vo_sca %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;

@@ -689,7 +689,7 @@ wdb_reopen_cmd(struct rt_wdb	*wdbp,
 	}
 
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib wdb_reopen");
+	bu_vls_printf(&vls, "helplib_alias wdb_reopen %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -1250,7 +1250,7 @@ wdb_showmats_cmd(struct rt_wdb	*wdbp,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib wdb_showmats");
+		bu_vls_printf(&vls, "helplib_alias wdb_showmats %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -1339,7 +1339,7 @@ wdb_shells_cmd(struct rt_wdb	*wdbp,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib wdb_shells");
+		bu_vls_printf(&vls, "helplib_alias wdb_shells %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -1491,7 +1491,7 @@ wdb_dbip_cmd(struct rt_wdb	*wdbp,
 	bu_vls_init(&vls);
 
 	if (argc != 1) {
-		bu_vls_printf(&vls, "helplib wdb_dbip");
+		bu_vls_printf(&vls, "helplib_alias wdb_dbip %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -1542,7 +1542,7 @@ wdb_ls_cmd(struct rt_wdb	*wdbp,
 	bu_vls_init(&vls);
 
 	if (argc < 1 || MAXARGS < argc) {
-		bu_vls_printf(&vls, "helplib wdb_ls");
+		bu_vls_printf(&vls, "helplib_alias wdb_ls %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -1654,7 +1654,7 @@ wdb_list_cmd(struct rt_wdb	*wdbp,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib wdb_list");
+		bu_vls_printf(&vls, "helplib_alias wdb_list %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -1884,7 +1884,7 @@ wdb_pathsum_cmd(struct rt_wdb	*wdbp,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib %s%s", "wdb_", argv[0]);
+		bu_vls_printf(&vls, "helplib_alias %s%s %s", "wdb_", argv[0], argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -2114,7 +2114,7 @@ wdb_kill_cmd(struct rt_wdb	*wdbp,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib wdb_kill");
+		bu_vls_printf(&vls, "helplib_alias wdb_kill %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -2185,7 +2185,7 @@ wdb_killall_cmd(struct rt_wdb	*wdbp,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib  wdb_killall");
+		bu_vls_printf(&vls, "helplib_alias  wdb_killall %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -2283,7 +2283,7 @@ wdb_killtree_cmd(struct rt_wdb	*wdbp,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib wdb_killtree");
+		bu_vls_printf(&vls, "helplib_alias wdb_killtree %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -2364,7 +2364,7 @@ wdb_copy_cmd(struct rt_wdb	*wdbp,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib wdb_copy");
+		bu_vls_printf(&vls, "helplib_alias wdb_copy %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -2430,7 +2430,7 @@ wdb_move_cmd(struct rt_wdb	*wdbp,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib wdb_move");
+		bu_vls_printf(&vls, "helplib_alias wdb_move %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -2501,7 +2501,7 @@ wdb_move_all_cmd(struct rt_wdb	*wdbp,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib wdb_moveall");
+		bu_vls_printf(&vls, "helplib_alias wdb_moveall %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -3041,7 +3041,7 @@ wdb_concat_cmd(struct rt_wdb	*wdbp,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib wdb_concat");
+		bu_vls_printf(&vls, "helplib_alias wdb_concat %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -3393,7 +3393,7 @@ wdb_dup_cmd(struct rt_wdb	*wdbp,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib wdb_dup");
+		bu_vls_printf(&vls, "helplib_alias wdb_dup %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -3499,7 +3499,7 @@ wdb_group_cmd(struct rt_wdb	*wdbp,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib wdb_group");
+		bu_vls_printf(&vls, "helplib_alias wdb_group %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -3551,7 +3551,7 @@ wdb_remove_cmd(struct rt_wdb	*wdbp,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib wdb_remove");
+		bu_vls_printf(&vls, "helplib_alias wdb_remove %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -3634,7 +3634,7 @@ wdb_region_cmd(struct rt_wdb	*wdbp,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib wdb_region");
+		bu_vls_printf(&vls, "helplib_alias wdb_region %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -3743,7 +3743,7 @@ wdb_comb_cmd(struct rt_wdb	*wdbp,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib wdb_comb");
+		bu_vls_printf(&vls, "helplib_alias wdb_comb %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -3861,7 +3861,7 @@ wdb_find_cmd(struct rt_wdb	*wdbp,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib wdb_find");
+		bu_vls_printf(&vls, "helplib_alias wdb_find %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -3936,7 +3936,7 @@ wdb_which_cmd(struct rt_wdb	*wdbp,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib wdb_%s", argv[0]);
+		bu_vls_printf(&vls, "helplib_alias wdb_%s %s", argv[0], argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -3955,7 +3955,7 @@ wdb_which_cmd(struct rt_wdb	*wdbp,
 			struct bu_vls vls;
 
 			bu_vls_init(&vls);
-			bu_vls_printf(&vls, "helplib wdb_%s", argv[-1]);
+			bu_vls_printf(&vls, "helplib_alias wdb_%s %s", argv[-1], argv[-1]);
 			Tcl_Eval(interp, bu_vls_addr(&vls));
 			bu_vls_free(&vls);
 			return TCL_ERROR;
@@ -4117,7 +4117,7 @@ wdb_title_cmd(struct rt_wdb	*wdbp,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib wdb_title");
+		bu_vls_printf(&vls, "helplib_alias wdb_title %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -4258,7 +4258,7 @@ wdb_lt_cmd(struct rt_wdb	*wdbp,
 
  bad:
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib wdb_lt");
+	bu_vls_printf(&vls, "helplib_alias wdb_lt %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -4415,7 +4415,7 @@ wdb_tree_cmd(struct rt_wdb	*wdbp,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib wdb_tree");
+		bu_vls_printf(&vls, "helplib_alias wdb_tree %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -4556,7 +4556,7 @@ wdb_color_cmd(struct rt_wdb	*wdbp,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib wdb_color");
+		bu_vls_printf(&vls, "helplib_alias wdb_color %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -4643,7 +4643,7 @@ wdb_prcolor_cmd(struct rt_wdb	*wdbp,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib wdb_prcolor");
+		bu_vls_printf(&vls, "helplib_alias wdb_prcolor %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -4687,7 +4687,7 @@ wdb_tol_cmd(struct rt_wdb	*wdbp,
 
 	if (argc < 1 || 3 < argc){
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib wdb_tol");
+		bu_vls_printf(&vls, "helplib_alias wdb_tol %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -5019,7 +5019,7 @@ wdb_push_cmd(struct rt_wdb	*wdbp,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib wdb_push");
+		bu_vls_printf(&vls, "helplib_alias wdb_push %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -5561,7 +5561,7 @@ wdb_xpush_cmd(struct rt_wdb	*wdbp,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib wdb_xpush");
+		bu_vls_printf(&vls, "helplib_alias wdb_xpush %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -5711,7 +5711,7 @@ wdb_whatid_cmd(struct rt_wdb	*wdbp,
 
 	if (argc != 2) {
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib wdb_whatid");
+		bu_vls_printf(&vls, "helplib_alias wdb_whatid %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -5799,7 +5799,7 @@ wdb_keep_cmd(struct rt_wdb	*wdbp,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib wdb_keep");
+		bu_vls_printf(&vls, "helplib_alias wdb_keep %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -5877,7 +5877,7 @@ wdb_cat_cmd(struct rt_wdb	*wdbp,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib wdb_cat");
+		bu_vls_printf(&vls, "helplib_alias wdb_cat %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -5927,7 +5927,7 @@ wdb_instance_cmd(struct rt_wdb	*wdbp,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib wdb_instance");
+		bu_vls_printf(&vls, "helplib_alias wdb_instance %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -5986,7 +5986,7 @@ wdb_observer_cmd(struct rt_wdb	*wdbp,
 
 		/* return help message */
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib wdb_observer");
+		bu_vls_printf(&vls, "helplib_alias wdb_observer %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -6036,7 +6036,7 @@ wdb_make_bb_cmd(struct rt_wdb	*wdbp,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib wdb_make_bb");
+		bu_vls_printf(&vls, "helplib_alias wdb_make_bb %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -6257,7 +6257,7 @@ wdb_make_name_cmd(struct rt_wdb	*wdbp,
 			struct bu_vls	vls;
 
 			bu_vls_init(&vls);
-			bu_vls_printf(&vls, "helplib wdb_make_name");
+			bu_vls_printf(&vls, "helplib_alias wdb_make_name %s", argv[0]);
 			Tcl_Eval(interp, bu_vls_addr(&vls));
 			bu_vls_free(&vls);
 			return TCL_ERROR;
@@ -6322,7 +6322,7 @@ wdb_units_cmd(struct rt_wdb	*wdbp,
 
 	bu_vls_init(&vls);
 	if (argc < 1 || 2 < argc) {
-		bu_vls_printf(&vls, "helplib wdb_units");
+		bu_vls_printf(&vls, "helplib_alias wdb_units %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -6413,7 +6413,7 @@ wdb_hide_cmd(struct rt_wdb	*wdbp,
 		struct bu_vls vls;
 
 		bu_vls_init( &vls );
-		bu_vls_printf(&vls, "helplib wdb_hide");
+		bu_vls_printf(&vls, "helplib_alias wdb_hide %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -6507,7 +6507,7 @@ wdb_unhide_cmd(struct rt_wdb	*wdbp,
 		struct bu_vls vls;
 
 		bu_vls_init( &vls );
-		bu_vls_printf(&vls, "helplib wdb_unhide");
+		bu_vls_printf(&vls, "helplib_alias wdb_unhide %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -6773,7 +6773,7 @@ wdb_nmg_simplify_cmd(struct rt_wdb	*wdbp,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib wdb_nmg_simplify");
+		bu_vls_printf(&vls, "helplib_alias wdb_nmg_simplify %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -6998,7 +6998,7 @@ wdb_nmg_collapse_cmd(struct rt_wdb	*wdbp,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib wdb_nmg_collapse");
+		bu_vls_printf(&vls, "helplib_alias wdb_nmg_collapse %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -7106,7 +7106,7 @@ wdb_summary_cmd(struct rt_wdb	*wdbp,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib wdb_summary");
+		bu_vls_printf(&vls, "helplib_alias wdb_summary %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
@@ -7164,7 +7164,7 @@ wdb_pathlist_cmd(struct rt_wdb	*wdbp,
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib wdb_pathlist");
+		bu_vls_printf(&vls, "helplib_alias wdb_pathlist %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
 		return TCL_ERROR;
