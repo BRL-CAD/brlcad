@@ -4,6 +4,25 @@
  *  Function -
  *  	Intersect a ray with an Arbitrary Regular Polyhedron with
  *  	as many as 8 vertices.
+ *
+ *  An ARB is a convex volume bounded by 4 (pyramid), 5 (wedge), or 6 (box)
+ *  planes.  This analysis depends on the properties of objects with convex
+ *  hulls.  Let the ray in question be defined such that any point X on the
+ *  ray may be expressed as X = P + k D.  Intersect the ray with each of the
+ *  planes bounding the ARB as discussed above, and record the values of the
+ *  parametric distance k along the ray.
+ *
+ *  With outward pointing normal vectors,
+ *  note that the ray enters the half-space defined by a plane when D cdot N <
+ *  0, is parallel to the plane when D cdot N = 0, and exits otherwise.  Find
+ *  the entry point farthest away from the starting point bold P, i.e.  it has
+ *  the largest value of k among the entry points.
+ *  The ray enters the solid at this point.
+ *  Similarly, find the exit point closest to point P, i.e. it has
+ *  the smallest value of k among the exit points.  The ray exits the solid
+ *  here.
+ *
+ *  This algorithm is due to Cyrus & Beck, USAF.
  *  
  *  Author -
  *	Michael John Muuss
@@ -32,34 +51,12 @@ static char RCSarb[] = "@(#)$Header$ (BRL)";
 
 void	arb_print();
 
-/* The internal (in memory form of an ARM -- 8 points in space */
+/* The internal (in memory) form of an ARB8 -- 8 points in space */
 struct arb_internal {
 	fastf_t	arbi_pt[3*8];
 };
 
-/*
- *			Ray/ARB Intersection
- *
- *  An ARB is a convex volume bounded by 4 (pyramid), 5 (wedge), or 6 (box)
- *  planes.  This analysis depends on the properties of objects with convex
- *  hulls.  Let the ray in question be defined such that any point X on the
- *  ray may be expressed as X = P + k D.  Intersect the ray with each of the
- *  planes bounding the ARB as discussed above, and record the values of the
- *  parametric distance k along the ray.
- *
- *  With outward pointing normal vectors,
- *  note that the ray enters the half-space defined by a plane when D cdot N <
- *  0, is parallel to the plane when D cdot N = 0, and exits otherwise.  Find
- *  the entry point farthest away from the starting point bold P, i.e.  it has
- *  the largest value of k among the entry points.
- *  The ray enters the solid at this point.
- *  Similarly, find the exit point closest to point P, i.e. it has
- *  the smallest value of k among the exit points.  The ray exits the solid
- *  here.
- *
- *  This algorithm is due to Cyrus & Beck, USAF.
- */
-
+/* Optionally, one of these for each face.  (Lazy evaluation) */
 struct oface {
 	fastf_t	arb_UVorig[3];		/* origin of UV coord system */
 	fastf_t	arb_U[3];		/* unit U vector (along B-A) */
@@ -150,7 +147,10 @@ int		uv_wanted;
 	} else {
 		i = arb_import( &ai, rec, stp->st_pathmat );
 	}
-	if( i < 0 )  return(-1);		/* BAD */
+	if( i < 0 )  {
+		rt_log("arb_setup(%s): db import failure\n", stp->st_name);
+		return(-1);		/* BAD */
+	}
 
 	pa.pa_doopt = uv_wanted;
 
@@ -763,7 +763,10 @@ struct directory	*dp;
 {
 	struct arb_internal	ai;
 
-	(void)arb_import( &ai, rp, matp );
+	if( arb_import( &ai, rp, matp ) < 0 )  {
+		rt_log("arb_plot(%s): db import failure\n", dp->d_namep);
+		return;
+	}
 
 	ARB_FACE( ai.arbi_pt, 0, 1, 2, 3 );
 	ARB_FACE( ai.arbi_pt, 4, 0, 3, 7 );
@@ -808,7 +811,7 @@ register matp_t		matp;
 	
 	/* Check record type */
 	if( rp->u_id != ID_SOLID )  {
-		rt_log("arb_import: defective record\n");
+		rt_log("arb_import: defective record, id=x%x\n", rp->u_id);
 		return(-1);
 	}
 
