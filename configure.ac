@@ -861,8 +861,8 @@ if test "x$regex_link_works" = "xno" ; then
 fi
 
 dnl check if zlib library links
-zlib_link_works=no
-AC_CHECK_LIB(z, deflate, zlib_link_works=yes)
+z_link_works=no
+AC_CHECK_LIB(z, deflate, z_link_works=yes)
 
 dnl check if a png library links
 png_link_works=no
@@ -1652,7 +1652,7 @@ if test "x$build_brlcad_zlib" = "xyes" ; then
 	LIBZ='${top_builddir}/src/other/libz/libz.la'
 	AC_MSG_RESULT(yes)
 else
-	if test "x$zlib_link_works" = "xyes" ; then
+	if test "x$z_link_works" = "xyes" ; then
 		LIBZ='-lz'
 	fi
 	AC_MSG_RESULT(no)
