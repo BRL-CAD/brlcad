@@ -218,6 +218,7 @@ struct faceuse *fu;
 	 *  Form a ray that starts at one vertex of the edgeuse
 	 *  and points to the other vertex.
 	 */
+/* XXX This should use edge geometry, when available. */
 	VSUB2(edge_vect, v1mate->vg_p->coord, v1->vg_p->coord);
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
