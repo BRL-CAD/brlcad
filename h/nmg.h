@@ -69,9 +69,11 @@
 #define DEBUG_POLYTO	0x00002000	/* 14 combine() */
 #define DEBUG_LABEL_PTS 0x00004000	/* 15 label points in plot files */
 #define DEBUG_INS	0x00008000	/* 16 nmg_tbl table insert */
+#define DEBUG_NMGRT     0x00010000	/* ray tracing */
 
 #define NMG_DEBUG_FORMAT \
-"\020\020TBL_INS\017LABEL_PTS\016POLYTO\015MESH_EU\014MESH\013GRAZING\
+"\021\021NMGRAYTR\020TBL_INS\017LABEL_PTS\016POLYTO\015MESH_EU\014MESH\
+\013GRAZING\
 \012BOOLEVAL\011CLASSIFY\
 \010BOOL\7PLOTEM\6POLYSECT\5CUTLOOP\4COMBINE\3CMFACE\2FINDEU\1PL_ANIM"
 
@@ -749,6 +751,11 @@ NMG_EXTERN(struct shell		*nmg_eups, (struct edgeuse *eu) );
 NMG_EXTERN(struct edgeuse	*nmg_faceradial, (struct edgeuse *eu) );
 NMG_EXTERN(int			nmg_manifold_face, (struct faceuse *fu) );
 NMG_EXTERN(void			nmg_euprint, (char *str, struct edgeuse *eu) );
+
+/* g_nmg.c */
+
+/* nmg_class.c */
+NMG_EXTERN(int			nmg_pt_hitmis_f, (point_t pt, struct faceuse *fu, fastf_t tol, long *novote) );
 
 /* From nmg_plot.c */
 NMG_EXTERN(struct rt_vlblock *	rt_vlblock_init, () );
