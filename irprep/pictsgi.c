@@ -4,7 +4,7 @@
 
 /*  This is a program that will raytrace a BRL-CAD mged  */
 /*  model and/or display it using the PRISM temperature output  */
-/*  file, using auxiliary program "see2".  */
+/*  file, using auxiliary program "ir-sgi".  */
 
 /*  Include files.  */
 #include<stdio.h>
@@ -14,7 +14,7 @@
 main()
 {
    int ichoice;			/*  Choice.  */
-   char *see2 = "see2";		/*  Calls see2 program.  */
+   char *irsgi = "ir-sgi";	/*  Calls ir-sgi program.  */
    char display[125];		/*  Calls display program.  */
    char gfile[16];		/*  .g file.  */
    char group[26];		/*  Group names.  */
@@ -100,14 +100,14 @@ main()
 
    if( (ichoice == 1) || (ichoice == 2) )
    {
-	/*  Call the program see2 so that a file that has been raytraced  */
+	/*  Call the program ir-sgi so that a file that has been raytraced  */
 	/*  may be displayed using X-Windows.  */
-	(void)printf("\nThe program see2 in now being run.  If option\n");
+	(void)printf("\nThe program ir-sgi in now being run.  If option\n");
 	(void)printf("0 or 1 was used when the name of a file is asked\n");
 	(void)printf("for enter the name of the file that was just\n");
 	(void)printf("stored.\n\n");
 	(void)fflush(stdout);
-	system(see2);
+	system(irsgi);
    }
 
 }
