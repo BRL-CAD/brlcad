@@ -80,8 +80,8 @@ minigzip: minigzip.o $(LIBS)
 install: $(LIBS)
 	-@if [ ! -d $(prefix)/include  ]; then mkdir $(prefix)/include; fi
 	-@if [ ! -d $(exec_prefix)/lib ]; then mkdir $(exec_prefix)/lib; fi
-	cp zlib.h zconf.h $(prefix)/include
-	chmod 644 $(prefix)/include/zlib.h $(prefix)/include/zconf.h
+#	cp zlib.h zconf.h $(prefix)/include
+#	chmod 644 $(prefix)/include/zlib.h $(prefix)/include/zconf.h
 	cp $(LIBS) $(exec_prefix)/lib
 	cd $(exec_prefix)/lib; chmod 755 $(LIBS)
 	-@(cd $(exec_prefix)/lib; $(RANLIB) libz.a || true) >/dev/null 2>&1
