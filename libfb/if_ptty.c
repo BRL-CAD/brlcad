@@ -84,6 +84,12 @@ FBIO	*ifp;
 char	*ptty_name;
 int	width, height;
 	{
+	/* Check for default size */
+	if( width == 0 )
+		width = ifp->if_width;
+	if( height == 0 )
+		height = ifp->if_height;
+
 	ifp->if_width = width;
 	ifp->if_height = height;
 	if( (ifp->if_fd = open( ptty_name, O_RDWR, 0 )) == -1 )
