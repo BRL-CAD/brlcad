@@ -3,7 +3,7 @@
 proe-g \- Pro/Engineer Translator (Pro/Engineer to BRL-CAD)
 .SH SYNOPSIS
 .B proe-g
-[-sdarSn] [-i initial_ident] [-I constant_ident] [-m material_code] [-u reg_exp] [-x RT_DEBUG_FLAG] [-X NMG_DEBUG_FLAG] file.brl file.g
+[-darS] [-i initial_ident] [-I constant_ident] [-m material_code] [-u reg_exp] [-x RT_DEBUG_FLAG] file.brl file.g
 .SH DESCRIPTION
 .I proe-g\^
 converts the specified
@@ -11,20 +11,6 @@ converts the specified
 to a BRL-CAD
 .I file.g
 file.
-The
-.I -s
-option requests that the Pro/E parts be written as BRL-CAD
-.I ARB
-solds, if possible. This will only be done if this simplification
-results in no loss of accuracy. The
-.I ARB
-solid will raytrace faster than
-.I polysolids
-or
-.I NMG's.
-The
-.I -n
-option results in a BRL-CAD model built from NMGs instead of polysolids (not recommended).
 The
 .I -d
 option prints debugging information.
@@ -60,9 +46,6 @@ The
 .I -x
 option sets an RT debug flags (see librt/debug.h).
 The
-.I -X
-option specifies an NMG debug flag (see h/nmg.h).
-The
 .I file.brl
 file is expected to be output from the
 .I BRL-CAD
@@ -71,7 +54,7 @@ menu option of the Pro/Engineer
 menu. This menu option is a Pro/Develop application produced by the USARL.
 .SH EXAMPLE
 .RS
-$ \|\fIproe-g -s \|sample.brl \|sample.g\fP
+$ \|\fIproe-g \|sample.brl \|sample.g\fP
 .RE
 .SH "SEE ALSO"
 .I

@@ -3,7 +3,7 @@
 stl-g \- Stereolithography Translator (STL to BRL-CAD)
 .SH SYNOPSIS
 .B stl-g
-[-dsan] [-i initial_ident] [-I constant_ident] [-m material_code] [-N forced_name] [-u reg_exp] [-x RT_DEBUG_FLAG] [-X NMG_DEBUG_FLAG] file.stl file.g
+[-da] [-i initial_ident] [-I constant_ident] [-m material_code] [-N forced_name] [-u reg_exp] [-x RT_DEBUG_FLAG] file.stl file.g
 .SH DESCRIPTION
 .I stl-g\^
 converts the specified
@@ -15,8 +15,6 @@ The
 .I -d
 option prints debugging information.
 The
-.I -n
-option results in a BRL-CAD model built from NMGs instead of polysolids (not recommended).
 The
 .I -i
 option sets the starting ident number for the regions created. As each
@@ -32,16 +30,9 @@ The
 .I -m
 option sets a material code that will be assigned to all the regions created (default is 1).
 The
-.I -s
-option requests that the Pro/E parts be written as BRL-CAD
-.I ARB
-solds, if possible. This will only be done if this simplification
-results in no loss of accuracy. The
-.I ARB
-solid will raytrace faster than
-.I polysolids
-or
-.I NMG's.
+.I -N
+option sets a name for the resulting BRL-CAD object. STL files typically do not contain any
+object names.
 The
 .I -a
 option implies that all the parts in the Pro/E model should be converted to
@@ -59,7 +50,7 @@ The
 file is expected to be a stereolithography file.
 .SH EXAMPLE
 .RS
-$ \|\fIstl-g -s \|sample.stl \|sample.g\fP
+$ \|\fIstl-g \|sample.stl \|sample.g\fP
 .RE
 .SH DIAGNOSTICS
 Error messages are intended to be self-explanatory.
