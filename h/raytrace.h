@@ -891,6 +891,7 @@ struct rt_g {
 	int		res_model;	/* lock on model growth (splines) */
 	struct vlist	*rtg_vlFree;	/* vlist freelist */
 	int		rtg_logindent;	/* rt_log() indentation level */
+	int		NMG_debug;	/* debug bits for NMG's see nmg.h */
 };
 extern struct rt_g rt_g;
 
