@@ -34,8 +34,8 @@ HIDDEN void rt_binunif_free();
 #define CK_prj_SP(_p) BU_CKMAG(_p, prj_MAGIC, "prj_specific")
 
 struct img_specific {
-	struct bu_list	l;
-	unsigned long	junk;
+  struct bu_list	l;
+  unsigned long	junk;
   struct bu_vls i_name; /* name of object or file (depending on i_datasrc flag) */
 #define IMG_SRC_FILE 'f'
 #define IMG_SRC_OBJECT  'o'
@@ -43,20 +43,20 @@ struct img_specific {
   char i_datasrc; /* is the datasource a file/object or automatic */
   struct bu_mapped_file *i_data; /* mapped file when IMG_SRC_FILE */
   struct rt_binunif_internal *i_binunifp;  /* db internal object when IMG_SRC_OBJECT */
-	unsigned char 	*i_img;
-	int		i_width;
-	int		i_height;
-	fastf_t		i_viewsize;
-	point_t		i_eye_pt;
-	quat_t		i_orient;
-	mat_t		i_mat;		/* computed from i_orient */
-	mat_t		i_bn_mat_inv;	/* computed (for debug) */
-	plane_t		i_plane;	/* dir/plane of projection */
-	mat_t		i_sh_to_img;	/* transform used in prj_render() */
-	char		i_through;	/* ignore surface normal */
-	char		i_antialias;	/* anti-alias texture */
-	char		i_behind;	/* shade points behind img plane */
-	fastf_t		i_perspective;	/* perspective angle 0=ortho */
+  unsigned char *i_img;
+  int		i_width;
+  int		i_height;
+  fastf_t	i_viewsize;
+  point_t	i_eye_pt;
+  quat_t	i_orient;
+  mat_t		i_mat;		/* computed from i_orient */
+  mat_t		i_bn_mat_inv;	/* computed (for debug) */
+  plane_t	i_plane;	/* dir/plane of projection */
+  mat_t		i_sh_to_img;	/* transform used in prj_render() */
+  char		i_through;	/* ignore surface normal */
+  char		i_antialias;	/* anti-alias texture */
+  char		i_behind;	/* shade points behind img plane */
+  fastf_t	i_perspective;	/* perspective angle 0=ortho */
 };
 #define img_MAGIC	0x696d6700	/* "img" */
 
@@ -361,14 +361,6 @@ orient_hook(register const struct bu_structparse *sdp, register const char *name
 
 	}
 
-	/* read in the pixel data */
-	img_new->i_data = bu_open_mapped_file(bu_vls_addr(&img_new->i_file),
-				(char *)NULL);
-	if ( ! img_new->i_data)
-		bu_bomb("shader prj: orient_hook() can't get pixel data... bombing\n");
-
-	img_new->i_img = (unsigned char *)img_new->i_data->buf;
-
 	/* read in the pixel data now happens in prj_setup() */
 	/* we add an image to the list of images regardless of whether the data is valid or not */
 	BU_LIST_MAGIC_SET(&img_new->l, img_MAGIC);
@@ -664,7 +656,7 @@ const point_t r_pt;
 }
 #endif
 static int
-project_point(point_t *sh_color, struct img_specific *img_sp, struct prj_specific *prj_sp, point_t *r_pt)
+project_point(point_t sh_color, struct img_specific *img_sp, struct prj_specific *prj_sp, point_t r_pt)
 {
 	int x, y;
 	point_t sh_pt;
