@@ -3,16 +3,18 @@
 #
 # A quick way of recompiling MGED using multiple processors.
 #
+# Optional flag:  -s	for silent running
+#
 #  $Header$
 
-cake \
+cake ${SILENT} \
  adc.o \
  anal.o \
  arb.o \
  arbs.o \
  attach.o &
 
-cake \
+cake ${SILENT} \
  buttons.o \
  chgmodel.o \
  chgtree.o \
@@ -20,7 +22,7 @@ cake \
  cmd.o \
  columns.o &
 
-cake \
+cake ${SILENT} \
  grid.o \
  axes.o \
  qray.o \
@@ -31,7 +33,7 @@ cake \
  edpipe.o \
  edars.o &
 
-cake \
+cake ${SILENT} \
  red.o \
  set.o \
  animedit.o \
@@ -43,21 +45,21 @@ cake \
  fbserv.o \
  rect.o &
 
-cake \
+cake ${SILENT} \
  dir.o \
  dodraw.o \
  dozoom.o \
  edarb.o \
  edsol.o &
 
-cake \
+cake ${SILENT} \
  facedef.o \
  ged.o \
  history.o \
  inside.o \
  mater.o &
 
-cake \
+cake ${SILENT} \
  menu.o \
  mover.o \
  overlay.o \
@@ -65,19 +67,28 @@ cake \
  proc_reg.o \
  rtif.o &
 
-cake \
+cake ${SILENT} \
  scroll.o \
  tedit.o \
  titles.o \
  track.o &
 
-cake \
+cake ${SILENT} \
  typein.o \
  usepen.o \
  concat.o \
  utility1.o \
  utility2.o &
 
+cake ${SILENT} \
+ dm-plot.o dm-ps.o dm-X.o dm-ogl.o \
+ vparse.o \
+ doevent.o muves.o \
+ bodyio.o &
+
 wait
-echo --- Collecting any stragglers.
-cake
+if test "${SILENT}" == ""
+then
+	echo --- Collecting any stragglers.
+fi
+cake ${SILENT}

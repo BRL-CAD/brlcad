@@ -3,9 +3,13 @@
 #
 # A quick way of recompiling LIBRT using multiple processors.
 #
+# Optional flag:  -s	for silent running
+#
 #  $Header$
 
-cake  \
+SILENT="$1"
+
+cake ${SILENT}  \
  nmg_misc.o \
  g_nurb.o \
  g_nmg.o \
@@ -16,7 +20,7 @@ cake  \
  g_hf.o \
  &
 
-cake \
+cake ${SILENT} \
  g_arb.o \
  nmg_rt_isect.o \
  g_ars.o \
@@ -25,7 +29,7 @@ cake \
  db_io.o \
  db_lookup.o &
 
-cake \
+cake ${SILENT} \
  nmg_rt_segs.o \
  g_ebm.o \
  g_ell.o \
@@ -39,7 +43,7 @@ cake \
  nmg_pt_fu.o \
  db_walk.o &
 
-cake \
+cake ${SILENT} \
  g_half.o \
  nmg_fcut.o \
  nmg_index.o \
@@ -49,7 +53,7 @@ cake \
  g_sph.o \
  &
 
-cake \
+cake ${SILENT} \
  g_tgc.o \
  g_torus.o \
  g_part.o \
@@ -59,7 +63,7 @@ cake \
  nmg_class.o \
  &
 
-cake \
+cake ${SILENT} \
  nmg_manif.o \
  nmg_visit.o \
  nmg_info.o \
@@ -71,7 +75,7 @@ cake \
  tcl.o \
  &
 
-cake \
+cake ${SILENT} \
  pr.o \
  db_tree.o \
  db_comb.o \
@@ -85,7 +89,7 @@ cake \
  g_grip.o \
  nmg_eval.o &
 
-cake \
+cake ${SILENT} \
  g_rec.o \
  g_pg.o \
  bool.o \
@@ -95,7 +99,7 @@ cake \
  nmg_plot.o \
  &
 
-cake \
+cake ${SILENT} \
  wdb.o \
  fortray.o \
  nmg_bool.o \
@@ -105,7 +109,7 @@ cake \
  g_arbn.o \
  &
 
-cake \
+cake ${SILENT} \
  nmg_mod.o \
  storage.o \
  spectrum.o \
@@ -115,15 +119,25 @@ cake \
  regionfix.o \
  tree.o &
 
-cake \
+cake ${SILENT} \
  nurb_basis.o nurb_bound.o nurb_diff.o nurb_eval.o nurb_flat.o \
  nurb_knot.o nurb_norm.o nurb_poly.o nurb_ray.o nurb_refine.o \
  nurb_solve.o nurb_split.o nurb_util.o nurb_xsplit.o nurb_copy.o &
 
-cake \
+cake ${SILENT} \
  nurb_c2.o oslo_calc.o oslo_map.o nurb_plot.o nurb_bezier.o nurb_trim.o \
  nurb_interp.o nurb_reverse.o nurb_tess.o nurb_trim_util.o &
 
+cake ${SILENT} \
+ db5_scan.o db5_io.o db5_comb.o db5_alloc.o db5_types.o db5_bin.o \
+ g_cline.o htbl.o mkbundle.o bundle.o many.o rt_dspline.o &
+
+cake ${SILENT} \
+ bomb.o wdb_obj.o view_obj.o dg_obj.o vdraw.o wdb_comb_std.o &
+
 wait
-echo --- Collecting any stragglers.
-cake
+if test "${SILENT}" == ""
+then
+	echo --- Collecting any stragglers.
+fi
+cake ${SILENT}
