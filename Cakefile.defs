@@ -177,7 +177,7 @@ set -S2 "/bin/sh"
 #		define	OPTIMIZER	-g
 #		define	SHARED	_s
 #	endif
-#	define	GFLAG		-G 9
+#	define	GFLAG		-G 7
 /*	ANSI+POSIX mode is used over ANSI, to get fdopen(), etc, defined. */
 #	define  CC_OPTS		GFLAG -ansiposix -DIRIX=4
 #	define	STANDARD_LIBES	-lm -lmalloc -lc''SHARED
@@ -549,7 +549,7 @@ set -S2 "/bin/sh"
 #	else
 #		define	OPTIMIZER	-g
 #	endif
-#	define	CC_OPTS		-Xc -K PIC -v
+#	define	CC_OPTS		-Xc -K PIC 
 /*	SunPro C 2.0.1 does not define __sparc or sparc.  3.0 on does */
 #	define	CC_DEFS		-D_REENTRANT -D__sparc -DSUNOS=53
 
