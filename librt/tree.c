@@ -1,3 +1,4 @@
+#define HIDDEN /**/
 /*
  *			T R E E
  *
@@ -23,7 +24,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "debug.h"
 
 struct region *HeadRegion;
-static union tree *drawHobj();
+
+/* A bounding RPP around the whole model */
+vect_t model_min = {  INFINITY,  INFINITY,  INFINITY };
+vect_t model_max = { -INFINITY, -INFINITY, -INFINITY };
+#define MINMAX(a,b,c)	{ if( (c) < (a) )  a = (c);\
+			if( (c) > (b) )  b = (c); }
+
+HIDDEN union tree *drawHobj();
 
 extern int nul_prep(),	nul_print();
 extern int tor_prep(),	tor_print();
@@ -88,7 +96,7 @@ static char idmap[] = {
 	ID_NULL		/* n+1 */
 };
 
-static char *path_str();
+HIDDEN char *path_str();
 
 void
 get_tree(node)
@@ -123,8 +131,6 @@ char *node;
 		stp->st_regionp = regionp;
 		regionp->reg_treetop = curtree;
 		regionp->reg_name = strdup(path_str(0));
-		VMOVE( regionp->reg_min, stp->st_min );
-		VMOVE( regionp->reg_max, stp->st_max );
 		regionp->reg_forw = HeadRegion;
 		HeadRegion = regionp;
 		nregions++;
@@ -141,7 +147,7 @@ char *node;
 	}
 }
 
-static
+HIDDEN
 struct soltab *
 add_solid( rec, name, mat, regp )
 union record *rec;
@@ -173,7 +179,7 @@ struct region *regp;
 	stp->st_specific = (int *)0;
 	stp->st_regionp = regp;
 
-	/* init maxima and minima */
+	/* init solid's maxima and minima */
 	stp->st_max[X] = stp->st_max[Y] = stp->st_max[Z] = -INFINITY;
 	stp->st_min[X] = stp->st_min[Y] = stp->st_min[Z] =  INFINITY;
 
@@ -186,6 +192,13 @@ struct region *regp;
 	/* For now, just link them all onto the same list */
 	stp->st_forw = HeadSolid;
 	HeadSolid = stp;
+
+	/* Update the model maxima and minima */
+#define MMM(v)		MINMAX( model_min[X], model_max[X], v[X] ); \
+			MINMAX( model_min[Y], model_max[Y], v[Y] ); \
+			MINMAX( model_min[Z], model_max[Z], v[Z] )
+	MMM( stp->st_min );
+	MMM( stp->st_max );
 
 	if(debug&DEBUG_SOLIDS)  {
 		fprintf(stderr,"-------------- %s -------------\n", stp->st_name);
@@ -213,7 +226,7 @@ static mat_t xmat;				/* temporary fastf_t matrix */
  * The actual processing of solids is performed by add_solid(),
  * but all transformations and region building is done here.
  */
-static
+HIDDEN
 union tree *
 drawHobj( dp, argregion, pathpos, old_xlate )
 struct directory *dp;
@@ -262,6 +275,8 @@ matp_t old_xlate;
 		bzero( (char *)curtree, sizeof(union tree) );
 		curtree->tr_op = OP_SOLID;
 		curtree->tr_stp = stp;
+		VMOVE( curtree->tr_min, stp->st_min );
+		VMOVE( curtree->tr_max, stp->st_max );
 		return( curtree );
 	}
 
@@ -284,10 +299,7 @@ matp_t old_xlate;
 			regionp->reg_aircode = rec.c.c_aircode;
 			regionp->reg_material = rec.c.c_material;
 			regionp->reg_los = rec.c.c_los;
-			regionp->reg_max[X] = regionp->reg_max[Y] =
-				regionp->reg_max[Z] = -INFINITY;
-			regionp->reg_min[X] = regionp->reg_min[Y] =
-				regionp->reg_min[Z] =  INFINITY;
+			regionp->reg_name = "being created";
 		}
 	}
 	curtree = TREE_NULL;
@@ -322,22 +334,30 @@ matp_t old_xlate;
 		if( subtree == TREE_NULL )
 			continue;	/* no valid subtree, keep on going */
 		if( regionp == REGION_NULL )  {
+			register struct region *xrp;
+			register struct soltab *stp;
 			/*
 			 * Found subtree that is not contained in a region;
-			 * invent a region to hold it.  Reach down into
-			 * subtree and "fix" first solid's region pointer.
+			 * invent a region to hold JUST THIS SOLID,
+			 * and add it to the region chain.  Don't force
+			 * this whole combination into this region, because
+			 * other subtrees might themselves contain regions.
+			 * This matches GIFT's current behavior.
 			 */
-			GETSTRUCT( regionp, region );
-			regionp->reg_forw = regionp->reg_active = REGION_NULL;
 			fprintf(stderr,"Warning:  Forced to create region %s\n",
-				path_str(pathpos) );
+				path_str(pathpos+1) );
 			if(subtree->tr_op != OP_SOLID )
 				rtbomb("subtree not Solid");
-			subtree->tr_stp->st_regionp = regionp;
-			regionp->reg_max[X] = regionp->reg_max[Y] =
-				regionp->reg_max[Z] = -INFINITY;
-			regionp->reg_min[X] = regionp->reg_min[Y] =
-				regionp->reg_min[Z] =  INFINITY;
+			stp = subtree->tr_stp;
+			GETSTRUCT( xrp, region );
+			xrp->reg_treetop = subtree;
+			stp->st_regionp = xrp;
+			xrp->reg_name = stp->st_name;
+			xrp->reg_forw = HeadRegion;
+			HeadRegion = xrp;
+			xrp->reg_active = REGION_NULL;
+			nregions++;
+			continue;	/* no remaining subtree, go on */
 		}
 
 		if( curtree == TREE_NULL )  {
@@ -365,29 +385,14 @@ matp_t old_xlate;
 			}
 
 			/* Compute bounding RPP of full subtree */
-#define MINMAX(a,b,c)	{ if( (c) < (a) )  a = (c);\
-			if( (c) > (b) )  b = (c); }
 #define MM(v)		MINMAX( xtp->tr_min[X], xtp->tr_max[X], v[X] ); \
 			MINMAX( xtp->tr_min[Y], xtp->tr_max[Y], v[Y] ); \
 			MINMAX( xtp->tr_min[Z], xtp->tr_max[Z], v[Z] )
-			if( curtree->tr_op == OP_SOLID )  {
-				register vectp_t v = curtree->tr_stp->st_min;
-				VMOVE( xtp->tr_min, v );
-				v = curtree->tr_stp->st_max;
-				VMOVE( xtp->tr_max, v );
-			} else {
-				VMOVE( xtp->tr_min, curtree->tr_min );
-				VMOVE( xtp->tr_max, curtree->tr_max );
-			}
-			if( subtree->tr_op == OP_SOLID )  {
-				register vectp_t v = subtree->tr_stp->st_min;
-				MM( v );
-				v = subtree->tr_stp->st_max;
-				MM( v );
-			} else {
-				MM( subtree->tr_min );
-				MM( subtree->tr_max );
-			}
+
+			VMOVE( xtp->tr_min, curtree->tr_min );
+			VMOVE( xtp->tr_max, curtree->tr_max );
+			MM( subtree->tr_min );
+			MM( subtree->tr_max );
 			curtree = xtp;
 		}
 	}
@@ -398,8 +403,6 @@ matp_t old_xlate;
 			/* Region began at this level */
 			regionp->reg_treetop = curtree;
 			regionp->reg_name = strdup(path_str(pathpos));
-			VMOVE( regionp->reg_min, curtree->tr_min );
-			VMOVE( regionp->reg_max, curtree->tr_max );
 			regionp->reg_forw = HeadRegion;
 			HeadRegion = regionp;
 			nregions++;
@@ -418,7 +421,7 @@ matp_t old_xlate;
 	return( curtree );
 }
 
-static char *
+HIDDEN char *
 path_str( pos )
 int pos;
 {
@@ -443,8 +446,6 @@ register struct region *rp;
 	fprintf(stderr,"id=%d, air=%d, material=%d, los=%d\n",
 		rp->reg_regionid, rp->reg_aircode,
 		rp->reg_material, rp->reg_los );
-	VPRINT( "RPP min", rp->reg_min );
-	VPRINT( "RPP max", rp->reg_max );
 	pr_tree( rp->reg_treetop, 0 );
 	fprintf(stderr,"\n");
 }
@@ -468,28 +469,33 @@ int lvl;			/* recursion level */
 	switch( tp->tr_op )  {
 
 	case OP_SOLID:
-		fprintf(stderr,"SOLID %s (bin %d)\n",
+		fprintf(stderr,"SOLID %s (bin %d)",
 			tp->tr_stp->st_name,
 			tp->tr_stp->st_bin );
-		return;
+		break;
 
 	default:
 		fprintf(stderr,"Unknown op=x%x\n", tp->tr_op );
 		return;
 
 	case OP_UNION:
-		fprintf(stderr,"UNION\n");
+		fprintf(stderr,"UNION");
 		break;
 	case OP_INTERSECT:
-		fprintf(stderr,"INTERSECT\n");
+		fprintf(stderr,"INTERSECT");
 		break;
 	case OP_SUBTRACT:
-		fprintf(stderr,"MINUS\n");
+		fprintf(stderr,"MINUS");
 		break;
 	}
-	/* BINARY TYPE */
-	pr_tree( tp->tr_left, lvl+1 );
-	pr_tree( tp->tr_right, lvl+1 );
+	fprintf(stderr," (%.0f,%.0f,%.0f) (%.0f,%.0f,%.0f)\n",
+		tp->tr_min[0], tp->tr_min[1], tp->tr_min[2],
+		tp->tr_max[0], tp->tr_max[1], tp->tr_max[2] );
+	if( BINOP(tp) )  {
+		/* BINARY TYPE */
+		pr_tree( tp->tr_left, lvl+1 );
+		pr_tree( tp->tr_right, lvl+1 );
+	}
 }
 
 /* Convert TO 4xfastf_t FROM 3xfloats (for database)  */
