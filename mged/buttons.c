@@ -401,6 +401,9 @@ static void bv_reset()  {
 	/* Reset view such that all solids can be seen */
 	size_reset();
 	setview( 0.0, 0.0, 0.0 );
+	absolute_zoom = 0.0;
+	VSETALL( absolute_rotate, 0.0 );
+	VSETALL( absolute_slew, 0.0 );
 }
 
 static void bv_45_45()  {
