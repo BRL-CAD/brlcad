@@ -993,9 +993,10 @@ struct dm *dmp;
   while(1){
     for (i=0, j=0, vip=vibase; i<num; i++, vip++){
       /* requirements */
-      if(desire_trueColor && vip->class != TrueColor)
-	continue;
-      else if (vip->class != PseudoColor)
+      if(desire_trueColor){
+	if(vip->class != TrueColor)
+	  continue;
+      }else if (vip->class != PseudoColor)
 	continue;
 			
       /* this visual meets criteria */
