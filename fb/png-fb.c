@@ -46,8 +46,6 @@ static FILE	*fp_in;
 
 static int	fileinput = 0;		/* file of pipe on input? */
 
-static int	file_width = 512;	/* default input width */
-static int	file_height = 512;	/* default input height */
 static int	scr_width = 0;		/* screen tracks file if not given */
 static int	scr_height = 0;
 static int	file_xoff=0, file_yoff=0;
@@ -166,7 +164,7 @@ char **argv;
 	register int y;
 	register FBIO *fbp;
 	int i;
-	int	xout, yout, n, m, xstart, xskip;
+	int	xout, yout, m, xstart;
 	png_structp png_p;
 	png_infop info_p;
 	char header[8];
@@ -316,13 +314,11 @@ char **argv;
 	if( scr_xoff < 0 )
 	{
 		xout = scr_width + scr_xoff;
-		xskip = (-scr_xoff);
 		xstart = 0;
 	}
 	else
 	{
 		xout = scr_width - scr_xoff;
-		xskip = 0;
 		xstart = scr_xoff;
 	}
 

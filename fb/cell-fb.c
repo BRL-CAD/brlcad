@@ -725,11 +725,9 @@ register char	**argv;
 		break;
 	    case 'M':
 		{	
-		    double	value;
 		    RGBpixel	lo_rgb, hi_rgb;
 		    int		lo_red, lo_grn, lo_blu;
 		    int		hi_red, hi_grn, hi_blu;
-		    int		index;
 
 		    if (sscanf(optarg, "%d %d %d %d %d %d",
 			    &lo_red, &lo_grn, &lo_blu,

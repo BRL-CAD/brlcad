@@ -102,7 +102,6 @@ main( argc, argv )
 int	argc;
 char	**argv;
 {
-	int	n;
 	register spm_map_t	*mp;
 
 	if ( !get_args( argc, argv ) )  {
