@@ -258,14 +258,6 @@ CONST struct rt_tol	*tol;
 		int	wire_skip = 0;
 		/* Resume where we left off from last eu2 insertion */
 
-		/* because faces are always created with counter-clockwise
-		 * exterior loops and clockwise interior loops, radial
-		 * edgeuses will never share the same vertex.  We thus make
-		 * sure that eu2 is an edgeuse which might be radial to eu1
-		 */
-		if (eu2->vu_p->v_p == eu1->vu_p->v_p)
-			eu2 = eu2->eumate_p;
-
 		/* find a place to insert eu2 around eu1's edge */
 		for ( iteration2=0; iteration2 < 10000; iteration2++ ) {
 			struct faceuse	*fur;
@@ -399,6 +391,16 @@ insert:
 		nexteu = eu2->radial_p;
 		if (nexteu == eu2->eumate_p)
 			nexteu = (struct edgeuse *)NULL;
+
+		/* because faces are always created with counter-clockwise
+		 * exterior loops and clockwise interior loops,
+		 * radial edgeuses IN THE SAME SHELL will never point in
+		 * the same direction or share the same vertex.  We thus make
+		 * sure that eu2 is an edgeuse which might be radial to eu1
+		 * XXX Need to look back for last eu IN THIS SHELL.
+		 */
+		if (eu2->vu_p->v_p == eu1->vu_p->v_p)
+			eu2 = eu2->eumate_p;
 
 		if (rt_g.NMG_debug & DEBUG_MESH_EU)  {
 			rt_log("  Inserting.  code=%d\n", code);
