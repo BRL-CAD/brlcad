@@ -666,6 +666,10 @@ struct shell *s;
 
 
 	NMG_CK_SHELL(s);
+	if( s->sa_p )  {
+		NMG_CK_SHELL_A( s->sa_p );
+		pdv_3space( fp, s->sa_p->min_pt, s->sa_p->max_pt );
+	}
 
 	/* get space for list of items processed */
 	(void)nmg_tbl(&b, TBL_INIT, (long *)0);	
@@ -805,6 +809,11 @@ struct shell *s;
 	(void)nmg_tbl(&b, TBL_INIT, (long *)NULL);
 
 	rt_log("Plotting to \"%s\"\n", filename);
+	if( s->sa_p )  {
+		NMG_CK_SHELL_A( s->sa_p );
+		pdv_3space( fp, s->sa_p->min_pt, s->sa_p->max_pt );
+	}
+
 	for( NMG_LIST( fu, faceuse, &s->fu_hd ) )  {
 		NMG_CK_FACEUSE(fu);
 		for( NMG_LIST( lu, loopuse, &fu->lu_hd ) )  {
