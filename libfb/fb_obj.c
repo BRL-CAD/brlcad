@@ -38,7 +38,6 @@
 
 /* defined in libfb/tcl.c */
 extern int fb_refresh();
-extern int fb_configureWindow(FBIO *, int, int);
 
 static int fbo_open_tcl();
 static int fbo_cell_tcl();

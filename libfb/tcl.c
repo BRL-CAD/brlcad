@@ -70,6 +70,8 @@ extern int ogl_close_existing();
 extern FBIO ogl_interface;
 #endif
 
+extern void X24_configureWindow();
+extern int X24_refresh();
 extern int X24_open_existing();
 extern int X24_close_existing();
 extern FBIO X24_interface;
@@ -78,9 +80,9 @@ int fb_tcl_open_existing();
 int fb_tcl_close_existing();
 
 static struct bu_cmdtab cmdtab[] = {
-	"fb_open_existing",	 fb_tcl_open_existing,
-	"fb_close_existing",	 fb_tcl_close_existing,
-	(char *)0, (int (*)())0
+	{"fb_open_existing",	 fb_tcl_open_existing},
+	{"fb_close_existing",	 fb_tcl_close_existing},
+	{(char *)0, (int (*)())0}
 };
 
 int
@@ -198,7 +200,9 @@ fb_tcl_close_existing(clientData, interp, argc, argv)
      char **argv;
 {
 	FBIO *ifp;
+#ifdef IF_OGL
 	char *ogl_name = "/dev/ogl";
+#endif
 	char *X_name = "/dev/X";
 	struct bu_vls vls;
 	int status;
