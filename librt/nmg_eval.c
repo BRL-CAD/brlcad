@@ -27,6 +27,8 @@ static char RCSnmg_eval[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "raytrace.h"
 
+extern void	nmg_m_reindex();
+
 struct nmg_counter {
 	long	max_structs;
 	long	regions;
@@ -380,6 +382,10 @@ struct nmg_ptbl class_table[];
 		rt_bomb("bad boolean\n");
 	}
 
+	/* Reindex structures before starting evaluation. */
+	/* XXX this should be done before starting classification! */
+	nmg_m_reindex( sA->r_p->m_p );
+
 	bool_state.bs_dest = sA;
 	bool_state.bs_src = sB;
 	bool_state.bs_classtab = class_table;
@@ -420,12 +426,6 @@ struct nmg_ptbl class_table[];
 	/* Regardless of what is in it, kill shell B */
 	nmg_ks( sB );
 
-#if 0
-	bzero( (char *)&counter, sizeof(counter) );
-	nmg_m_count( &counter, sA->r_p->m_p );
-	nmg_pr_count( &counter, "near end of nmg_evaluate_boolean()");
-#endif
-
 	/* Remove loops/edges/vertices that appear more than once in result */
 	nmg_rm_redundancies( sA );
 
@@ -436,7 +436,7 @@ struct nmg_ptbl class_table[];
 #endif
 }
 
-static int	nmg_eval_count = 0;
+static int	nmg_eval_count = 0;	/* debug -- plot file numbering */
 
 /*
  *			N M G _ E V A L _ S H E L L
@@ -1161,4 +1161,192 @@ int		delay;
 		}
 		rt_vlblock_free(vbp);
 	}
+}
+
+#define NMG_HIGH_BIT	0x80000000
+
+/*
+ *			N M G _ M _ R E I N D E X
+ *
+ *  Reassign index numbers to all the data structures in a model.
+ *  The model structure will get index 0, all others will be sequentially
+ *  assigned after that.
+ */
+void
+nmg_m_reindex( m )
+struct model	*m;
+{
+	struct nmgregion	*r;
+	struct shell		*s;
+	struct faceuse		*fu;
+	struct loopuse		*lu;
+	register struct edgeuse		*eu;
+	register struct vertexuse	*vu;
+	register int		newindex;
+
+	NMG_CK_MODEL(m);
+	if( m->index != 0 )  rt_log("nmg_m_reindex() m->index=%d\n", m->index);
+
+	/* First pass:  just set the high bit on all index words */
+	for( NMG_LIST( r, nmgregion, &m->r_hd ) )  {
+		NMG_CK_REGION(r);
+		r->index |= NMG_HIGH_BIT;
+		for( NMG_LIST( s, shell, &r->s_hd ) )  {
+			NMG_CK_SHELL(s);
+			s->index |= NMG_HIGH_BIT;
+			/* Faces in shell */
+			for( NMG_LIST( fu, faceuse, &s->fu_hd ) )  {
+				NMG_CK_FACEUSE(fu);
+				fu->index |= NMG_HIGH_BIT;
+				fu->f_p->index |= NMG_HIGH_BIT;
+				/* Loops in face */
+				for( NMG_LIST( lu, loopuse, &fu->lu_hd ) )  {
+					NMG_CK_LOOPUSE(lu);
+					lu->index |= NMG_HIGH_BIT;
+					lu->l_p->index |= NMG_HIGH_BIT;
+					if( NMG_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC )  {
+						/* Loop of Lone vertex */
+						vu = NMG_LIST_FIRST( vertexuse, &lu->down_hd );
+						NMG_CK_VERTEXUSE(vu);
+						vu->index |= NMG_HIGH_BIT;
+						vu->v_p->index |= NMG_HIGH_BIT;
+						continue;
+					}
+					for( NMG_LIST( eu, edgeuse, &lu->down_hd ) )  {
+						NMG_CK_EDGEUSE(eu);
+						eu->index |= NMG_HIGH_BIT;
+						eu->e_p->index |= NMG_HIGH_BIT;
+						vu = eu->vu_p;
+						NMG_CK_VERTEXUSE(vu);
+						vu->index |= NMG_HIGH_BIT;
+						vu->v_p->index |= NMG_HIGH_BIT;
+					}
+				}
+			}
+			/* Wire loops in shell */
+			for( NMG_LIST( lu, loopuse, &s->lu_hd ) )  {
+				NMG_CK_LOOPUSE(lu);
+				lu->index |= NMG_HIGH_BIT;
+				lu->l_p->index |= NMG_HIGH_BIT;
+				if( NMG_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC )  {
+					/* Wire loop of Lone vertex */
+					vu = NMG_LIST_FIRST( vertexuse, &lu->down_hd );
+					NMG_CK_VERTEXUSE(vu);
+					vu->index |= NMG_HIGH_BIT;
+					vu->v_p->index |= NMG_HIGH_BIT;
+					continue;
+				}
+				for( NMG_LIST( eu, edgeuse, &lu->down_hd ) )  {
+					NMG_CK_EDGEUSE(eu);
+					eu->index |= NMG_HIGH_BIT;
+					eu->e_p->index |= NMG_HIGH_BIT;
+					vu = eu->vu_p;
+					NMG_CK_VERTEXUSE(vu);
+					vu->index |= NMG_HIGH_BIT;
+					vu->v_p->index |= NMG_HIGH_BIT;
+				}
+			}
+			/* Wire edges in shell */
+			for( NMG_LIST( eu, edgeuse, &s->eu_hd ) )  {
+				NMG_CK_EDGEUSE(eu);
+				eu->index |= NMG_HIGH_BIT;
+				eu->e_p->index |= NMG_HIGH_BIT;
+				vu = eu->vu_p;
+				NMG_CK_VERTEXUSE(vu);
+				vu->index |= NMG_HIGH_BIT;
+				vu->v_p->index |= NMG_HIGH_BIT;
+			}
+			/* Lone vertex in shell */
+			if( vu = s->vu_p )  {
+				NMG_CK_VERTEXUSE(vu);
+				vu->index |= NMG_HIGH_BIT;
+				vu->v_p->index |= NMG_HIGH_BIT;
+			}
+		}
+	}
+
+#define	NMG_ASSIGN_NEW_INDEX(_p)	\
+	{ if( ((_p)->index & NMG_HIGH_BIT) != 0 ) \
+		(_p)->index = newindex++; }
+
+	/* Second pass:  assign new index number */
+	newindex = 1;	/* model remains index 0 */
+	for( NMG_LIST( r, nmgregion, &m->r_hd ) )  {
+		NMG_CK_REGION(r);
+		NMG_ASSIGN_NEW_INDEX(r);
+		for( NMG_LIST( s, shell, &r->s_hd ) )  {
+			NMG_CK_SHELL(s);
+			NMG_ASSIGN_NEW_INDEX(s);
+			/* Faces in shell */
+			for( NMG_LIST( fu, faceuse, &s->fu_hd ) )  {
+				NMG_CK_FACEUSE(fu);
+				NMG_ASSIGN_NEW_INDEX(fu);
+				NMG_ASSIGN_NEW_INDEX(fu->f_p);
+				/* Loops in face */
+				for( NMG_LIST( lu, loopuse, &fu->lu_hd ) )  {
+					NMG_CK_LOOPUSE(lu);
+					NMG_ASSIGN_NEW_INDEX(lu);
+					NMG_ASSIGN_NEW_INDEX(lu->l_p);
+					if( NMG_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC )  {
+						/* Loop of Lone vertex */
+						vu = NMG_LIST_FIRST( vertexuse, &lu->down_hd );
+						NMG_CK_VERTEXUSE(vu);
+						NMG_ASSIGN_NEW_INDEX(vu);
+						NMG_ASSIGN_NEW_INDEX(vu->v_p);
+						continue;
+					}
+					for( NMG_LIST( eu, edgeuse, &lu->down_hd ) )  {
+						NMG_CK_EDGEUSE(eu);
+						NMG_ASSIGN_NEW_INDEX(eu);
+						NMG_ASSIGN_NEW_INDEX(eu->e_p);
+						vu = eu->vu_p;
+						NMG_CK_VERTEXUSE(vu);
+						NMG_ASSIGN_NEW_INDEX(vu);
+						NMG_ASSIGN_NEW_INDEX(vu->v_p);
+					}
+				}
+			}
+			/* Wire loops in shell */
+			for( NMG_LIST( lu, loopuse, &s->lu_hd ) )  {
+				NMG_CK_LOOPUSE(lu);
+				NMG_ASSIGN_NEW_INDEX(lu);
+				NMG_ASSIGN_NEW_INDEX(lu->l_p);
+				if( NMG_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC )  {
+					/* Wire loop of Lone vertex */
+					vu = NMG_LIST_FIRST( vertexuse, &lu->down_hd );
+					NMG_CK_VERTEXUSE(vu);
+					NMG_ASSIGN_NEW_INDEX(vu);
+					NMG_ASSIGN_NEW_INDEX(vu->v_p);
+					continue;
+				}
+				for( NMG_LIST( eu, edgeuse, &lu->down_hd ) )  {
+					NMG_CK_EDGEUSE(eu);
+					NMG_ASSIGN_NEW_INDEX(eu);
+					NMG_ASSIGN_NEW_INDEX(eu->e_p);
+					vu = eu->vu_p;
+					NMG_CK_VERTEXUSE(vu);
+					NMG_ASSIGN_NEW_INDEX(vu);
+					NMG_ASSIGN_NEW_INDEX(vu->v_p);
+				}
+			}
+			/* Wire edges in shell */
+			for( NMG_LIST( eu, edgeuse, &s->eu_hd ) )  {
+				NMG_CK_EDGEUSE(eu);
+				NMG_ASSIGN_NEW_INDEX(eu);
+				NMG_ASSIGN_NEW_INDEX(eu->e_p);
+				vu = eu->vu_p;
+				NMG_CK_VERTEXUSE(vu);
+				NMG_ASSIGN_NEW_INDEX(vu);
+				NMG_ASSIGN_NEW_INDEX(vu->v_p);
+			}
+			/* Lone vertex in shell */
+			if( vu = s->vu_p )  {
+				NMG_CK_VERTEXUSE(vu);
+				NMG_ASSIGN_NEW_INDEX(vu);
+				NMG_ASSIGN_NEW_INDEX(vu->v_p);
+			}
+		}
+	}
+rt_log("nmg_m_reindex() oldmax=%d, newmax=%d\n", m->maxindex, newindex );
+	m->maxindex = newindex;
 }
