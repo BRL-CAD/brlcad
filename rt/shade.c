@@ -53,6 +53,9 @@ HIDDEN void	shade_inputs();
  *  Returns -
  *	0 on failure
  *	1 on success
+ *
+ *	But of course, nobody cares what this returns.
+ *	Everyone calls us as (void)viewshade()
  */
 int
 viewshade( ap, pp, swp )
@@ -123,7 +126,8 @@ register struct shadework *swp;
 		shade_inputs( ap, pp, swp, want );
 
 	if( rdebug&RDEBUG_SHADE ) {
-		rt_log("About to shade %s:\n", rp->reg_name);
+		rt_log("About to shade %s: using \"%s\" shader\n",
+			rp->reg_name, mfp->mf_name);
 		pr_shadework( "before mf_render", swp );
 	}
 
