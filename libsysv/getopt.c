@@ -14,7 +14,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 
-#ifdef SYSV
+#if defined(SYSV) || defined(CRAY)
 #define index(s, c)	strchr(s, c)
 extern char	*strchr();
 #else
