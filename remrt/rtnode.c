@@ -154,6 +154,7 @@ char **argv;
 {
 	register int	n;
 	FILE		*fp;
+	double		load = 0;
 
 	if( argc < 2 )  {
 		fprintf(stderr, srv_usage);
@@ -291,18 +292,19 @@ char **argv;
 		FILE	*fp;
 		fp = popen("PATH=/bin:/usr/ucb:/usr/bsd; export PATH; uptime|sed -e 's/.*average: //' -e 's/,.*//' ", "r");
 		if( fp )  {
-			double	load = 0;
 			int	iload;
+
 			fscanf( fp, "%lf", &load );
-			rt_log("Load average = %g\n", load);
 			fclose(fp);
 
 			iload = (int)(load + 0.5);	/* round up */
 			max_cpus -= iload;
 			if( max_cpus <= 0 )  {
-				rt_log("This machine is overloaded, aborting.\n");
+				rt_log("This machine is overloaded, load=%g, aborting.\n", load);
 				exit(9);
 			}
+
+			while( wait(NULL) != -1 )  ;	/* NIL */
 		}
 	}
 
@@ -319,7 +321,8 @@ char **argv;
 	RES_INIT( &rt_g.res_model );
 	/* DO NOT USE rt_log() before this point! */
 
-	rt_log("using %d of %d cpus\n",
+	rt_log("load average = %d, using %d of %d cpus\n",
+		load,
 		npsw, avail_cpus );
 	if( max_cpus <= 0 )  {
 		pkg_close(pcsrv);
