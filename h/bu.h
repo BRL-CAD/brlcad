@@ -816,6 +816,10 @@ extern BU_FILE			bu_iob[1];
 #define BU_FILE_NO_COMMENT	-1
 
 /*----------------------------------------------------------------------*/
+/* Miscellaneous macros */
+#define made_it()		bu_log("Made it to %s:%d\n",	\
+					__FILE__, __LINE__)
+/*----------------------------------------------------------------------*/
 /*
  *  Declarations of external functions in LIBBU.
  *  Source file names listed alphabetically.
