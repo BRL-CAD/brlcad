@@ -169,7 +169,7 @@ char *device;	/* device part */
 		/* 0 */
 		port = atoi(file);
 		strcpy( host, "localhost" );
-		dev = NULL;
+		dev = "";
 		goto done;
 	}
 	if( (colon = strchr(file, ':')) != NULL ) {
@@ -188,7 +188,7 @@ char *device;	/* device part */
 			if( numeric(rest) ) {
 				/* :0 or host:0 */
 				port = atoi(rest);
-				dev = NULL;
+				dev = "";
 				goto done;
 			} else {
 				/* check for [host]:0:[dev] */
