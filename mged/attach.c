@@ -834,7 +834,7 @@ struct dm_list *initial_dm_list;
   frametime = 1;
   mapped = 1;
   adc_a1_deg = adc_a2_deg = 45.0;
-  last_v_axes = 2; /* center location */
+  last_v_axes = initial_dm_list->_last_v_axes;
   mged_view_init(curr_dm_list);
 
 #if 1
@@ -858,7 +858,6 @@ struct dm_list *p;
   bu_vls_init(&p->s_info->_rate_rotate_vls[Y]);
   bu_vls_init(&p->s_info->_rate_rotate_vls[Z]);
   bu_vls_init(&p->s_info->_rate_scale_vls);
-  bu_vls_init(&p->s_info->_rate_azimuth_vls);
   bu_vls_init(&p->s_info->_absolute_tran_vls[X]);
   bu_vls_init(&p->s_info->_absolute_tran_vls[Y]);
   bu_vls_init(&p->s_info->_absolute_tran_vls[Z]);
@@ -866,7 +865,6 @@ struct dm_list *p;
   bu_vls_init(&p->s_info->_absolute_rotate_vls[Y]);
   bu_vls_init(&p->s_info->_absolute_rotate_vls[Z]);
   bu_vls_init(&p->s_info->_absolute_scale_vls);
-  bu_vls_init(&p->s_info->_absolute_azimuth_vls);
   bu_vls_init(&p->s_info->_xadc_vls);
   bu_vls_init(&p->s_info->_yadc_vls);
   bu_vls_init(&p->s_info->_ang1_vls);
@@ -890,7 +888,6 @@ struct dm_list *p;
   bu_vls_free(&p->s_info->_rate_rotate_vls[Y]);
   bu_vls_free(&p->s_info->_rate_rotate_vls[Z]);
   bu_vls_free(&p->s_info->_rate_scale_vls);
-  bu_vls_free(&p->s_info->_rate_azimuth_vls);
   bu_vls_free(&p->s_info->_absolute_tran_vls[X]);
   bu_vls_free(&p->s_info->_absolute_tran_vls[Y]);
   bu_vls_free(&p->s_info->_absolute_tran_vls[Z]);
@@ -898,7 +895,6 @@ struct dm_list *p;
   bu_vls_free(&p->s_info->_absolute_rotate_vls[Y]);
   bu_vls_free(&p->s_info->_absolute_rotate_vls[Z]);
   bu_vls_free(&p->s_info->_absolute_scale_vls);
-  bu_vls_free(&p->s_info->_absolute_azimuth_vls);
   bu_vls_free(&p->s_info->_xadc_vls);
   bu_vls_free(&p->s_info->_yadc_vls);
   bu_vls_free(&p->s_info->_ang1_vls);
@@ -936,8 +932,6 @@ struct dm_list *p;
 		&p->_dmp->dm_pathName);
   bu_vls_printf(&p->s_info->_rate_scale_vls, "rate_scale(%S)",
 		&p->_dmp->dm_pathName);
-  bu_vls_printf(&p->s_info->_rate_azimuth_vls, "rate_rotate(%S,azim)",
-		&p->_dmp->dm_pathName);
   bu_vls_printf(&p->s_info->_absolute_tran_vls[X], "abs_tran(%S,X)",
 		&p->_dmp->dm_pathName);
   bu_vls_printf(&p->s_info->_absolute_tran_vls[Y], "abs_tran(%S,Y)",
@@ -951,8 +945,6 @@ struct dm_list *p;
   bu_vls_printf(&p->s_info->_absolute_rotate_vls[Z], "abs_rotate(%S,Z)",
 		&p->_dmp->dm_pathName);
   bu_vls_printf(&p->s_info->_absolute_scale_vls, "abs_scale(%S)",
-		&p->_dmp->dm_pathName);
-  bu_vls_printf(&p->s_info->_absolute_azimuth_vls, "abs_rotate(%S,azim)",
 		&p->_dmp->dm_pathName);
   bu_vls_printf(&p->s_info->_xadc_vls, "xadc(%S)",
 		&p->_dmp->dm_pathName);
@@ -979,8 +971,6 @@ struct dm_list *p;
 	      (char *)&p->s_info->_rate_rotate[Z], TCL_LINK_DOUBLE);
   Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_rate_scale_vls),
 	      (char *)&p->s_info->_rate_scale, TCL_LINK_DOUBLE);
-  Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_rate_azimuth_vls),
-	      (char *)&p->s_info->_rate_azimuth, TCL_LINK_DOUBLE);
   Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_absolute_tran_vls[X]),
 	      (char *)&p->s_info->_absolute_tran[X], TCL_LINK_DOUBLE);
   Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_absolute_tran_vls[Y]),
@@ -995,8 +985,6 @@ struct dm_list *p;
 	      (char *)&p->s_info->_absolute_rotate[Z], TCL_LINK_DOUBLE);
   Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_absolute_scale_vls),
 	      (char *)&p->s_info->_absolute_scale, TCL_LINK_DOUBLE);
-  Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_absolute_azimuth_vls),
-	      (char *)&p->s_info->azimuth, TCL_LINK_DOUBLE);
   Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_xadc_vls),
 	      (char *)&p->s_info->_dv_xadc, TCL_LINK_INT);
   Tcl_LinkVar(interp, bu_vls_addr(&p->s_info->_yadc_vls),
@@ -1020,7 +1008,6 @@ struct dm_list *p;
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_rate_rotate_vls[Y]));
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_rate_rotate_vls[Z]));
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_rate_scale_vls));
-  Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_rate_azimuth_vls));
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_absolute_tran_vls[X]));
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_absolute_tran_vls[Y]));
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_absolute_tran_vls[Z]));
@@ -1028,7 +1015,6 @@ struct dm_list *p;
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_absolute_rotate_vls[Y]));
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_absolute_rotate_vls[Z]));
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_absolute_scale_vls));
-  Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_absolute_azimuth_vls));
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_xadc_vls));
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_yadc_vls));
   Tcl_UnlinkVar(interp, bu_vls_addr(&p->s_info->_ang1_vls));
