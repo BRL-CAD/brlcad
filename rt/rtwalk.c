@@ -466,7 +466,7 @@ write_matrix(frame)
 	VSUB2( model, goal_point, pt_prev_step );
 	VUNITIZE( model );
 
-	mat_lookat( viewrot, model );
+	mat_lookat( viewrot, model, 0 );
 
 #if 0
 	/* Old way */

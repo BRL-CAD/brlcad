@@ -230,7 +230,7 @@ view_end() {
 			rt_log("OVERLAP: %gmm %s %s\n", op->maxdepth, op->reg1, op->reg2);
 			/* free struct */
 			nextop = op->next;
-			rt_free( op );
+			rt_free( (char *)op, "overlap_list" );
 			op = nextop;
 		}
 		olist = (struct overlap_list *)NULL;
