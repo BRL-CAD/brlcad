@@ -50,19 +50,22 @@ static char RCSarb[] = "@(#)$Header$ (BRL)";
  *  here.
  */
 
-#define ARB_MAXPTS	4			/* All we need are 4 points */
-static point_t	arb_points[ARB_MAXPTS];		/* Actual points on plane */
+/* These hold temp values for the face being prep'ed */
+#define ARB_MAXPTS	4		/* All we need are 4 points */
+static point_t	arb_points[ARB_MAXPTS];	/* Actual points on plane */
 static int	arb_npts;		/* number of points on plane */
 static char	arb_code[ARB_MAXPTS+1];	/* Face code string.  Decorative. */
 
+/* One of these for each face */
 struct arb_specific  {
 	float	arb_A[3];		/* "A" point */
-	float	arb_Xbasis[3];		/* X (B-A) vector (for 2d coords) */
-	float	arb_Ybasis[3];		/* "Y" vector (perp to N and X) */
 	float	arb_N[3];		/* Unit-length Normal (outward) */
 	float	arb_NdotA;		/* Normal dot A */
-	float	arb_XXlen;		/* 1/(Xbasis dot Xbasis) */
-	float	arb_YYlen;		/* 1/(Ybasis dot Ybasis) */
+	float	arb_UVorig[3];		/* origin of UV coord system */
+	float	arb_U[3];		/* unit U vector (along B-A) */
+	float	arb_V[3];		/* unit V vector (perp to N and U) */
+	float	arb_Ulen;		/* length of U basis (for du) */
+	float	arb_Vlen;		/* length of V basis (for dv) */
 	struct arb_specific *arb_forw;	/* Forward link */
 };
 #define ARB_NULL	((struct arb_specific *)0)
@@ -218,6 +221,12 @@ pointp_t ap, bp, cp, dp;
 		return(0);				/* BAD */
 	}
 
+	/* Scale U and V basis vectors by the inverse of Ulen and Vlen */
+	arbp->arb_Ulen = 1.0 / arbp->arb_Ulen;
+	arbp->arb_Vlen = 1.0 / arbp->arb_Vlen;
+	VSCALE( arbp->arb_U, arbp->arb_U, arbp->arb_Ulen );
+	VSCALE( arbp->arb_V, arbp->arb_V, arbp->arb_Vlen );
+
 	/* Add this face onto the linked list for this solid */
 	arbp->arb_forw = (struct arb_specific *)stp->st_specific;
 	stp->st_specific = (int *)arbp;
@@ -259,15 +268,19 @@ int a;
 	switch( i )  {
 	case 0:
 		VMOVE( arbp->arb_A, point );
+		VMOVE( arbp->arb_UVorig, point );
 		return(1);				/* OK */
 	case 1:
-		VSUB2( arbp->arb_Xbasis, point, arbp->arb_A );	/* B-A */
-		arbp->arb_XXlen = 1.0 / VDOT( arbp->arb_Xbasis, arbp->arb_Xbasis );
+		VSUB2( arbp->arb_U, point, arbp->arb_A );	/* B-A */
+		f = MAGNITUDE( arbp->arb_U );
+		arbp->arb_Ulen = f;
+		f = 1/f;
+		VSCALE( arbp->arb_U, arbp->arb_U, f );
 		return(1);				/* OK */
 	case 2:
 		VSUB2( P_A, point, arbp->arb_A );	/* C-A */
 		/* Check for co-linear, ie, (B-A)x(C-A) == 0 */
-		VCROSS( arbp->arb_N, arbp->arb_Xbasis, P_A );
+		VCROSS( arbp->arb_N, arbp->arb_U, P_A );
 		f = MAGNITUDE( arbp->arb_N );
 		if( NEAR_ZERO(f,0.005) )  {
 			arb_npts--;
@@ -275,17 +288,30 @@ int a;
 			return(0);			/* BAD */
 		}
 		f = 1/f;
-		VSCALE( arbp->arb_N, arbp->arb_N, f);
+		VSCALE( arbp->arb_N, arbp->arb_N, f );
 
 		/*
 		 * Get vector perp. to AB in face of plane ABC.
-		 * Scale by projection of AC, make this Ybasis.
+		 * Scale by projection of AC, make this V.
 		 */
-		VCROSS( work, arbp->arb_N, arbp->arb_Xbasis );
+		VCROSS( work, arbp->arb_N, arbp->arb_U );
 		VUNITIZE( work );
 		f = VDOT( work, P_A );
-		VSCALE( arbp->arb_Ybasis, work, f );
-		arbp->arb_YYlen = 1.0 / VDOT( arbp->arb_Ybasis, arbp->arb_Ybasis );
+		VSCALE( arbp->arb_V, work, f );
+		f = MAGNITUDE( arbp->arb_V );
+		arbp->arb_Vlen = f;
+		f = 1/f;
+		VSCALE( arbp->arb_V, arbp->arb_V, f );
+
+		/* Check for new Ulen */
+		VSUB2( P_A, point, arbp->arb_UVorig );
+		f = VDOT( P_A, arbp->arb_U );
+		if( f > arbp->arb_Ulen ) {
+			arbp->arb_Ulen = f;
+		} else if( f < 0.0 ) {
+			VJOIN1( arbp->arb_UVorig, arbp->arb_UVorig, f, arbp->arb_U );
+			arbp->arb_Ulen += (-f);
+		}
 
 		/*
 		 *  If C-A is clockwise from B-A, then the normal
@@ -300,6 +326,23 @@ int a;
 		return(1);				/* OK */
 	default:
 		/* Merely validate 4th and subsequent points */
+		VSUB2( P_A, point, arbp->arb_UVorig );
+		/* Check for new Ulen, Vlen */
+		f = VDOT( P_A, arbp->arb_U );
+		if( f > arbp->arb_Ulen ) {
+			arbp->arb_Ulen = f;
+		} else if( f < 0.0 ) {
+			VJOIN1( arbp->arb_UVorig, arbp->arb_UVorig, f, arbp->arb_U );
+			arbp->arb_Ulen += (-f);
+		}
+		f = VDOT( P_A, arbp->arb_V );
+		if( f > arbp->arb_Vlen ) {
+			arbp->arb_Vlen = f;
+		} else if( f < 0.0 ) {
+			VJOIN1( arbp->arb_UVorig, arbp->arb_UVorig, f, arbp->arb_V );
+			arbp->arb_Vlen += (-f);
+		}
+
 		VSUB2( P_A, point, arbp->arb_A );
 		VUNITIZE( P_A );		/* Checking direction only */
 		f = VDOT( arbp->arb_N, P_A );
@@ -333,12 +376,13 @@ register struct soltab *stp;
 	}
 	do {
 		VPRINT( "A", arbp->arb_A );
-		VPRINT( "Xbasis", arbp->arb_Xbasis );
-		VPRINT( "Ybasis", arbp->arb_Ybasis );
-		rt_log("XXlen = %g, YYlen = %g\n",
-			arbp->arb_XXlen, arbp->arb_YYlen);
 		VPRINT( "Normal", arbp->arb_N );
 		rt_log( "N.A = %g\n", arbp->arb_NdotA );
+		VPRINT( "UVorig", arbp->arb_UVorig );
+		VPRINT( "U", arbp->arb_U );
+		VPRINT( "V", arbp->arb_V );
+		rt_log( "Ulen = %g, Vlen = %g\n",
+			arbp->arb_Ulen, arbp->arb_Vlen);
 	} while( arbp = arbp->arb_forw );
 }
 
@@ -467,8 +511,8 @@ struct soltab *stp;
  *  
  *  For a hit on a face of an ARB, return the (u,v) coordinates
  *  of the hit point.  0 <= u,v <= 1.
- *  u extends along the Xbasis direction defined by B-A,
- *  v extends along the "Ybasis" direction defined by (B-A)xN.
+ *  u extends along the arb_U direction defined by B-A,
+ *  v extends along the arb_V direction defined by Nx(B-A).
  */
 arb_uv( ap, stp, hitp, uvp )
 struct application *ap;
@@ -481,19 +525,19 @@ register struct uvcoord *uvp;
 	LOCAL vect_t P_A;
 	LOCAL fastf_t r;
 
-	VSUB2( P_A, hitp->hit_point, arbp->arb_A );
+	VSUB2( P_A, hitp->hit_point, arbp->arb_UVorig );
 	/* Flipping v is an artifact of how the faces are built */
-	uvp->uv_u = VDOT( P_A, arbp->arb_Xbasis ) * arbp->arb_XXlen;
-	uvp->uv_v = 1.0 - ( VDOT( P_A, arbp->arb_Ybasis ) * arbp->arb_YYlen );
-	if( uvp->uv_u < 0 || uvp->uv_v < 0 )  {
+	uvp->uv_u = VDOT( P_A, arbp->arb_U );
+	uvp->uv_v = 1.0 - VDOT( P_A, arbp->arb_V );
+	if( uvp->uv_u < 0 || uvp->uv_v < 0 || uvp->uv_u > 1 || uvp->uv_v > 1 )  {
 		rt_log("arb_uv: bad uv=%g,%g\n", uvp->uv_u, uvp->uv_v);
 		/* Fix it up */
 		if( uvp->uv_u < 0 )  uvp->uv_u = (-uvp->uv_u);
 		if( uvp->uv_v < 0 )  uvp->uv_v = (-uvp->uv_v);
 	}
 	r = ap->a_rbeam + ap->a_diverge * hitp->hit_dist;
-	uvp->uv_du = r * arbp->arb_XXlen;
-	uvp->uv_dv = r * arbp->arb_YYlen;
+	uvp->uv_du = r * arbp->arb_Ulen;
+	uvp->uv_dv = r * arbp->arb_Vlen;
 }
 
 /*
