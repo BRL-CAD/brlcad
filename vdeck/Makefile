@@ -1,13 +1,13 @@
 #	Makefile -- for vdeck
 
-#	last edit:	84/06/01	G S Moss
+#	last edit:	85/01/31	G S Moss
 
-#	SCCSID	@(#)Makefile	2.1
+#	SCCSID	@(#)Makefile	2.2
 
 PRODUCT = vdeck
 HEADERS = ${PRODUCT}.h ged_types.h 3d.h vextern.h
-CFILES	= ${PRODUCT}.c cgarbs.c parsarg.c vproc.c vglobal.c vsort.c
-OBJS	= ${PRODUCT}.o cgarbs.o parsarg.o vproc.o vglobal.o vsort.o
+CFILES	= ${PRODUCT}.c cgarbs.c match.c parsarg.c vproc.c vglobal.c vsort.c
+OBJS	= ${PRODUCT}.o cgarbs.o match.o parsarg.o vproc.o vglobal.o vsort.o
 VMBLIB	= # /vld/lib/libVMB.a
 LIBES	= ${VMBLIB} -lm
 LDFLAGS = -i -n
