@@ -46,6 +46,9 @@ extern char	*cmd_args[];	/* array of pointers to args */
 
 void		prename();
 
+int			num_dups;
+struct directory	**dup_dirp;
+
 char	new_name[NAMESIZE];
 char	prestr[15];
 int	ncharadd;
@@ -67,177 +70,105 @@ char old_name[NAMESIZE];
 }
 
 /*
+ *			M G E D _ D I R A D D
+ *
+ * Add an entry to the directory
+ */
+int
+mged_diradd( loc_dbip, name, laddr, len, flags )
+register struct db_i	*loc_dbip;
+register char		*name;
+long			laddr;
+int			len;
+int			flags;
+{
+	register struct directory **headp;
+	register struct directory *dp;
+	struct directory	*dupdp;
+	char			local[NAMESIZE+2];
+
+	if( loc_dbip->dbi_magic != DBI_MAGIC )  rt_bomb("mged_diradd:  bad dbip\n");
+
+	/* Add the prefix, if any */
+	if( ncharadd > 0 )  {
+		(void)strncpy( local, prestr, ncharadd );
+		(void)strncpy( local+ncharadd, name, NAMESIZE-ncharadd );
+	} else {
+		(void)strncpy( local, name, NAMESIZE );
+	}
+	local[NAMESIZE] = '\0';
+		
+	/* Look up this new name in the existing (main) database */
+	if( (dupdp = db_lookup( dbip, name, 0 )) != DIR_NULL )  {
+		/* Duplicate found, add it to the list */
+		num_dups++;
+		*dup_dirp++ = dupdp;
+	}
+	return 0;
+}
+
+/*
  *
  *			F _ D U P ( )
  *
  *  Check for duplicate names in preparation for cat'ing of files
  *
- *
+ *  Usage:  dup file.g [prefix]
  */
 void
 f_dup( argc, argv )
 int	argc;
 char	**argv;
 {
-	union record	record;
-	register FILE *dupfp;
-	register int i;
-	int ndup;
-	register struct directory *tmpdp;
-	struct directory **dirp, **dirp0;
+	struct db_i		*newdbp;
+	struct directory	**dirp0;
 
 	(void)signal( SIGINT, sig2 );		/* allow interrupts */
 
-	/* save number of args entered initially */
-	args = argc;
-	argcnt = 0;
-
-	/* get target file name */
-	while( args < 2 ) {
-		(void)printf("Enter the target file name: ");
-		argcnt = getcmd(args);
-		/* add any new args entered */
-		args += argcnt;
+	/* get any prefix */
+	if( argc < 3 ) {
+		prestr[0] = '\0';
+	} else {
+		(void)strcpy(prestr, argv[2]);
+	}
+	num_dups = 0;
+	if( (ncharadd = strlen( prestr )) > 12 )  {
+		ncharadd = 12;
+		prestr[12] = '\0';
 	}
 
 	/* open the target file */
-	if( (dupfp=fopen(cmd_args[1], "r")) == NULL ) {
-		(void)fprintf(stderr,"Can't open %s\n",cmd_args[1]);
-		return;
-	}
-
-	/* get any prefix */
-	if( args < 3 ) {
-		(void)printf("Enter prefix string or CR: ");
-		argcnt = getcmd(args);
-		/* add any new args entered */
-		args += argcnt;
-		/* no prefix is acceptable */
-		if(args == 2)
-			cmd_args[2][0] = '\0';
-	}
-
-	ndup = 0;
-	ncharadd = 0;
-	(void)strcpy(prestr, cmd_args[2]);
-	ncharadd = strlen( prestr );
-
-	fread( (char *)&record, sizeof record, 1, dupfp );
-	if(record.u_id != ID_IDENT) {
-		(void)printf("%s: Not a correct GED data base - STOP\n",
-				cmd_args[1]);
-		(void)fclose( dupfp );
+	if( (newdbp = db_open( argv[1], "r" )) == DBI_NULL )  {
+		perror( argv[1] );
+		(void)fprintf(stderr, "dup: Can't open %s\n", argv[1]);
 		return;
 	}
 
 	(void)printf("\n*** Comparing %s with %s for duplicate names\n",
-		dbip->dbi_filename,cmd_args[1]);
+		dbip->dbi_filename,argv[1]);
 	if( ncharadd ) {
 		(void)printf("  For comparison, all names in %s prefixed with:  %s\n",
-				cmd_args[1],prestr);
+				argv[1],prestr);
 	}
 
-	if( (dirp = dir_getspace(0)) == (struct directory **) 0) {
+	/* Get array to hold names of duplicates */
+	if( (dup_dirp = dir_getspace(0)) == (struct directory **) 0) {
 		(void) printf( "f_dup: unable to get memory\n");
 		return;
 	}
-	dirp0 = dirp;
+	dirp0 = dup_dirp;
 
-	while( fread( (char *)&record, sizeof record, 1, dupfp ) == 1 && ! feof(dupfp) ) {
-		tmpdp = DIR_NULL;
-
-		switch( record.u_id ) {
-
-			case ID_IDENT:
-			case ID_FREE:
-			case ID_ARS_B:
-			case ID_MEMB:
-			case ID_P_DATA:
-			case ID_MATERIAL:
-				break;
-
-			case ID_SOLID:
-				if(record.s.s_name[0] == 0)
-					break;
-				if( ncharadd ) {
-					prename(record.s.s_name);
-					tmpdp = db_lookup( dbip, new_name, LOOKUP_QUIET);
-				}
-				else
-					tmpdp = db_lookup( dbip, record.s.s_name, LOOKUP_QUIET);
-				break;
-
-			case ID_ARS_A:
-				if(record.a.a_name[0] == 0) 
-					break;
-				if( ncharadd ) {
-					prename(record.a.a_name);
-					tmpdp = db_lookup( dbip, new_name, LOOKUP_QUIET);
-				}
-				else
-					tmpdp = db_lookup( dbip, record.a.a_name, LOOKUP_QUIET);
-				break;
-
-			case ID_COMB:
-				if(record.c.c_name[0] == 0)
-					break;
-				if( ncharadd ) {
-					prename(record.c.c_name);
-					tmpdp = db_lookup( dbip, new_name, LOOKUP_QUIET);
-				}
-				else
-					tmpdp = db_lookup( dbip, record.c.c_name, LOOKUP_QUIET);
-				break;
-
-			case ID_BSOLID:
-				if(record.B.B_name[0] == 0)
-					break;
-				if( ncharadd ) {
-					prename(record.B.B_name);
-					tmpdp = db_lookup( dbip, new_name, LOOKUP_QUIET);
-				}
-				else
-					tmpdp = db_lookup( dbip, record.B.B_name, LOOKUP_QUIET);
-				break;
-
-			case ID_BSURF:
-				/* Need to skip over knots & mesh which follows! */
-				(void)fseek( dupfp,
-					(record.d.d_nknots+record.d.d_nctls) *
-						(long)(sizeof(record)),
-					1 );
-				continue;
-
-			case ID_P_HEAD:
-				if(record.p.p_name[0] == 0)
-					break;
-				if( ncharadd ) {
-					prename(record.p.p_name);
-					tmpdp = db_lookup( dbip, new_name, LOOKUP_QUIET);
-				}
-				else
-					tmpdp = db_lookup( dbip, record.p.p_name, LOOKUP_QUIET);
-				break;
-
-			default:
-				(void)printf("Unknown record type (%c) in %s\n",
-						record.u_id,cmd_args[1]);
-				break;
-
-		}
-
-		if(tmpdp != DIR_NULL) {
-			/* have a duplicate name */
-			ndup++;
-			*dirp++ = tmpdp;
-			tmpdp = DIR_NULL;
-		}
+	/* Scan new directory for overlaps */
+	if( db_scan( newdbp, mged_diradd ) < 0 )  {
+		(void)fprintf(stderr, "dup: db_scan failure\n");
+		return;
 	}
-	col_pr4v( dirp0, (int)(dirp - dirp0));
-	free( dirp0);
-	(void)printf("\n -----  %d duplicate names found  -----\n",ndup);
-	(void)fclose( dupfp );
-	return;
+
+	col_pr4v( dirp0, (int)(dup_dirp - dirp0));
+	rt_free( (char *)dirp0, "dir_getspace array" );
+	(void)printf("\n -----  %d duplicate names found  -----\n",num_dups);
+
+	db_close( newdbp );
 }
 
 
@@ -377,7 +308,12 @@ printf("adding solid \"%s\"\n", record.s.s_name);
 					break;
 				}
 				/* add to the directory */
+#if 0
 				length = record.c.c_length;
+#else
+	/* XXXXX XXXXX XXXXX */
+				length = 0;
+#endif
 printf("adding comb \"%s\"\n", record.c.c_name);
 				if( (dp = db_diradd( dbip,  record.c.c_name, -1,
 						length+1,
