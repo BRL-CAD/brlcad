@@ -6,6 +6,12 @@
  *	h	help
  */
 #include <stdio.h>
+#ifdef BSD
+#include <strings.h>
+#endif
+#ifdef SYSV
+#include <string.h>
+#endif
 
 /* declarations to support use of getopt() system call */
 char *options = "hs:w:n:f:";
@@ -25,8 +31,9 @@ int factor = 2;
  */
 void usage()
 {
-	(void) fprintf(stderr, "Usage: %s [ -%s ] [ < infile > outfile]\n",
-			progname, options);
+	(void) fprintf(stderr,
+"Usage: %s [-h] [-w width] [-n scanlines] [-s squaresize]\n\
+[-f shrink_factor] [pixfile] > pixfile\n", progname);
 	exit(1);
 }
 
@@ -38,9 +45,12 @@ void parse_args(ac, av)
 int ac;
 char *av[];
 {
+	char *strrchr();
 	int  c;
 
-	progname = *av;
+	
+	if (!(progname = strrchr(*av, '/')))
+		progname = *av;
 	
 	/* Turn off getopt's error messages */
 	opterr = 0;
