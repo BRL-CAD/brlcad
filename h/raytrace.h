@@ -2133,8 +2133,7 @@ RT_EXTERN(void	 		nmg_moveltof, (struct faceuse *fu, struct shell *s) );
 RT_EXTERN(struct loopuse	*nmg_dup_loop, (struct loopuse *lu,
 				long *parent, long **trans_tbl) );
 RT_EXTERN(void			nmg_set_lu_orientation, (struct loopuse *lu, int is_opposite) );
-RT_EXTERN(void			nmg_lu_reorient, (struct loopuse *lu,
-				CONST struct rt_tol *tol) );
+RT_EXTERN(void			nmg_lu_reorient, (struct loopuse *lu ) );
 /*	EDGE Routines */
 RT_EXTERN(struct edgeuse	*nmg_eusplit, (struct vertex *v, struct edgeuse *oldeu, int share_geom) );
 RT_EXTERN(struct edgeuse	*nmg_esplit, (struct vertex *v, struct edgeuse *eu, int share_geom) );
