@@ -255,13 +255,6 @@ void (*errlog)();
 		pkg_perror( errlog, "pkg_initserver:  socket" );
 		return(-1);
 	}
-
-	/* wait until someone tries to connect */
-	/* XXX not quite right semantics! */
-	if(accept(pkg_listenfd,&sinhim) < 0){
-		pkg_perror( errlog, "pkg_initserver:  accept" );
-		return(-1);
-	}
 #endif
 	return(pkg_listenfd);
 }
@@ -320,6 +313,13 @@ void (*errlog)();
 	return( pkg_makeconn(s2, switchp, errlog) );
 #endif
 #ifdef SGI_EXCELAN
+
+	/* block until someone tries to connect */
+	if(accept(fd, &from) < 0){
+		pkg_perror( errlog, "pkg_getclient:  accept" );
+		return(PKC_ERROR);
+	}
+
 	/* Hopefully, once-only XXX */
 	return( pkg_makeconn( fd, switchp, errlog) );
 #endif
@@ -524,6 +524,110 @@ register struct pkg_conn *pc;
 	}
 #endif
 	return(len);
+}
+
+/*
+ *			P K G _ 2 S E N D
+ *
+ *  Exactly like pkg_send, except user's data is located in
+ *  two disjoint buffers, rather than one.
+ *  Fiendishly useful!
+ */
+int
+pkg_2send( type, buf1, len1, buf2, len2, pc )
+int type;
+char *buf1, *buf2;
+int len1, len2;
+register struct pkg_conn *pc;
+{
+#ifdef BSD
+	static struct iovec cmdvec[3];
+#endif
+	static struct pkg_header hdr;
+	struct timeval tv;
+	long bits;
+	register int i;
+
+	PKG_CK(pc);
+	if( len1 < 0 )  len1=0;
+	if( len2 < 0 )  len2=0;
+
+	/* Finish any partially read message */
+	do  {
+		if( pc->pkc_left > 0 )
+			if( pkg_block(pc) < 0 )
+				return(-1);
+
+		/* Check socket for unexpected input */
+		tv.tv_sec = 0;
+		tv.tv_usec = 0;		/* poll -- no waiting */
+		bits = 1 << pc->pkc_fd;
+#ifdef BSD
+		i = select( pc->pkc_fd+1, &bits, (char *)0, (char *)0, &tv );
+#endif
+#ifdef SGI_EXCELAN
+		i = select( pc->pkc_fd+1, &bits, (char *)0, tv.tv_usec );
+#endif
+		if( i > 0 && bits )
+			if( pkg_block(pc) < 0 )
+				return(-1);
+	} while( pc->pkc_left > 0 );
+
+	/* Flush any queued stream output first. */
+	if( pc->pkc_strpos > 0 )  {
+		if( pkg_flush( pc ) < 0 )
+			return(-1);	/* assumes 2nd write would fail too */
+	}
+
+	hdr.pkg_magic = htons(PKG_MAGIC);
+	hdr.pkg_type = htons(type);	/* should see if it's a valid type */
+	hdr.pkg_len = htonl(len1+len2);
+
+#ifdef BSD
+	cmdvec[0].iov_base = (caddr_t)&hdr;
+	cmdvec[0].iov_len = sizeof(hdr);
+	cmdvec[1].iov_base = (caddr_t)buf1;
+	cmdvec[1].iov_len = len1;
+	cmdvec[2].iov_base = (caddr_t)buf2;
+	cmdvec[2].iov_len = len2;
+
+	/*
+	 * TODO:  set this FD to NONBIO.  If not all output got sent,
+	 * loop in select() waiting for capacity to go out, and
+	 * reading input as well.  Prevents deadlocking.
+	 */
+	if( (i = writev(pc->pkc_fd, cmdvec, 3)) != len1+len2+sizeof(hdr) )  {
+		if( i < 0 )  {
+			pkg_perror(pc->pkc_errlog, "pkg_2send: writev");
+			return(-1);
+		}
+		sprintf(errbuf,"pkg_2send of %d+%d+%d, wrote %d\n",
+			sizeof(hdr), len1, len2, i);
+		(pc->pkc_errlog)(errbuf);
+		return(i-sizeof(hdr));	/* amount of user data sent */
+	}
+#else
+	(void)write( pc->pkc_fd, (char *)&hdr, sizeof(hdr) );
+	if( (i = write( pc->pkc_fd, buf1, len1 )) != len1 )  {
+		if( i < 0 )  {
+			pkg_perror(pc->pkc_errlog, "pkg_2send: write");
+			return(-1);
+		}
+		sprintf(errbuf,"pkg_2send of %d, wrote %d\n", len, i);
+		(pc->pkc_errlog)(errbuf);
+		return(i);		/* amount of user data sent */
+	}
+	if( (i = write( pc->pkc_fd, buf2, len2 )) != len2 )  {
+		if( i < 0 )  {
+			pkg_perror(pc->pkc_errlog, "pkg_2send: write2");
+			return(-1);
+		}
+		sprintf(errbuf,"pkg_2send of %d, wrote %d+%d\n", len2, len1, i);
+		(pc->pkc_errlog)(errbuf);
+		return(len1+i);		/* amount of user data sent */
+	}
+#endif
+	return(len1+len2);
 }
 
 /*
