@@ -238,7 +238,27 @@ struct bu_ptbl {
 
 /* vlist, vlblock?  But they use vmath.h... */
 
-/* rt_mapped_file */
+/*----------------------------------------------------------------------*/
+
+/*
+ *			B U _ M A P P E D _ F I L E
+ */
+struct bu_mapped_file {
+	struct rt_list	l;
+	char		*name;		/* bu_strdup() of file name */
+	genptr_t	buf;		/* In-memory copy of file (may be mmapped) */
+	long		buflen;		/* # bytes in 'buf' */
+	int		is_mapped;	/* 1=mmap() used, 0=bu_malloc/fread */
+	char		*appl;		/* bu_strdup() of tag for application using 'apbuf' */
+	genptr_t	apbuf;		/* opt: application-specific buffer */
+	long		apbuflen;	/* opt: application-specific buflen */
+	/* XXX Needs date stamp, in case file is modified */
+	int		uses;		/* # ptrs to this struct handed out */
+};
+#define BU_MAPPED_FILE_MAGIC	0x4d617066	/* Mapf */
+#define BU_CK_MAPPED_FILE(_p)	BU_CKMAG(_p, BU_MAPPED_FILE_MAGIC, "bu_mapped_file")
+
+/*----------------------------------------------------------------------*/
 
 /* formerly rt_g.rtg_logindent, now use bu_log_indent_delta() */
 typedef int (*bu_hook_t)BU_ARGS((genptr_t, genptr_t));
@@ -440,6 +460,12 @@ BU_EXTERN(char *		bu_strdup, (CONST char *cp));
 BU_EXTERN(int			bu_malloc_len_roundup, (int nbytes));
 BU_EXTERN(void			bu_ck_malloc_ptr, (genptr_t ptr, CONST char *str));
 BU_EXTERN(int			bu_mem_barriercheck, ());
+
+/* mappedfile.c */
+BU_EXTERN(struct bu_mapped_file *bu_open_mapped_file, (CONST char *name,
+					CONST char *appl));
+BU_EXTERN(void			bu_close_mapped_file, (struct bu_mapped_file *mp));
+
 
 /* parallel.c */
 BU_EXTERN(void			bu_nice_set, (int newnice));
