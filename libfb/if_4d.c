@@ -164,6 +164,7 @@ struct sgiinfo {
 	short	mi_xoff;		/* X viewport offset, rel. window */
 	short	mi_yoff;		/* Y viewport offset, rel. window */
 	short	mi_is_gt;		/* !0 when using GT hardware */
+	int	mi_pid;			/* for multi-cpu check */
 };
 #define	SGI(ptr)	((struct sgiinfo *)((ptr)->u1.p))
 #define	SGIL(ptr)	((ptr)->u1.p)		/* left hand side version */
@@ -349,9 +350,8 @@ FBIO	*ifp;
 
 	/* The shared memory section never changes size */
 	SGI(ifp)->mi_memwidth = ifp->if_max_width;
-	pixsize = ifp->if_max_height * ifp->if_max_width * sizeof(struct sgi_pixel);
-/*** XXX hack hack hack */
-pixsize = ifp->if_max_height * ifp->if_max_width * sizeof(RGBpixel);
+	pixsize = ifp->if_max_height * ifp->if_max_width *
+		sizeof(struct sgi_pixel);
 	size = pixsize + sizeof(struct sgi_cmap);
 	size = (size + 4096-1) & ~(4096-1);
 
@@ -479,11 +479,8 @@ int		nlines;
 	} else {
 		/* Single buffered, direct to screen */
 		if( ifp->if_zoomflag )  {
-			rectzoom( (double) SGI(ifp)->mi_xzoom, 
-				  (double) SGI(ifp)->mi_yzoom);
 			sw_zoom = 1;
 		} else {
-			rectzoom( 1.0, 1.0 );
 			sw_zoom = 0;
 		}
 		if( SGI(ifp)->mi_xcenter != ifp->if_width/2 ||
@@ -496,6 +493,8 @@ int		nlines;
 	if( (ifp->if_mode & MODE_7MASK) == MODE_7SWCMAP  &&
 	    SGI(ifp)->mi_cmap_flag )  {
 	    	sw_cmap = 1;
+	} else {
+		sw_cmap = 0;
 	}
 
 	/* Simplest case, nothing fancy */
@@ -547,9 +546,9 @@ int		nlines;
 		return;
 	}
 
-	if( !sw_zoom )  {
-		fb_log("sgi_xmit_scanlines:  unexpected !sw_zoom\n");
-	}
+	/*
+	 *  All code below is to handle software zooming on non-GT machines.
+	 */
 
 	/* Blank out area left of image */
 	RGBcolor( 0, 0, 0 );
@@ -580,192 +579,60 @@ int		nlines;
 		(Scoord) ifp->if_width-1,
 		(Scoord) ifp->if_height-1 );
 
-	/* Output pixels */
-	if( sw_zoom && !sw_cmap )  {
-		register int	yrep;
+	/* Output pixels in zoomed condition */
+	{
+		register int	rep;
 		register int	yscr;
+		register int	xscrmin, xscrmax;
+		register struct sgi_pixel	*sgip, *op;
 
-		yscr = y + clip.yscroff;
+		/*
+		 *  From memory starting at (xmin, ymin) to
+		 *  screen starting at (xscroff, yscroff).
+		 *  Memory addresses increment by 1.
+		 *  Screen addresses increment by mi_?zoom.
+		 */
+		yscr = SGI(ifp)->mi_yoff + y + clip.yscroff;
+		xscrmin = SGI(ifp)->mi_xoff+clip.xscroff;
+		xscrmax = SGI(ifp)->mi_xoff+ifp->if_width-1-clip.xscrpad;
 		for( n=nlines; n>0; n--, y++ )  {
+			register int	x;
+
 			if( y < clip.ymin )  continue;
-			if( y > clip.ymax )  break;
-			/* X direction replication is handled by HW */
-			for( yrep=0; yrep < SGI(ifp)->mi_yzoom; yrep++, yscr++ )  {
+			if( y > clip.ymax )  continue;
+
+			/* widen this line */
+			sgip = (struct sgi_pixel *)&ifp->if_mem[
+				(y*SGI(ifp)->mi_memwidth+clip.xmin)*
+				sizeof(struct sgi_pixel)];
+			op = one_scan;
+			for( x=clip.xmin; x<=clip.xmax; x++ )  {
+				for( rep=0; rep<SGI(ifp)->mi_xzoom; rep++ )  {
+					*op++ = *sgip;	/* struct copy */
+				}
+				sgip++;
+			}
+			if( sw_cmap )  {
+				for( x=(clip.xmax-clip.xmin); x>=0; x-- )  {
+					one_scan[x].red   = CMR(ifp)[one_scan[x].red];
+					one_scan[x].green = CMG(ifp)[one_scan[x].green];
+					one_scan[x].blue  = CMB(ifp)[one_scan[x].blue];
+				}
+			}
+			/* X direction replication is handled above,
+			 * Y direction replication is done by this loop.
+			 */
+			for( rep=0; rep<SGI(ifp)->mi_yzoom; rep++ )  {
 				lrectwrite(
-				SGI(ifp)->mi_xoff+0+clip.xscroff,
-				SGI(ifp)->mi_yoff+yscr,
-				SGI(ifp)->mi_xoff+0+ifp->if_width-1-clip.xscrpad,
-				SGI(ifp)->mi_yoff+yscr,
-				&ifp->if_mem[(y*SGI(ifp)->mi_memwidth+clip.xmin)*
-				    sizeof(struct sgi_pixel)] );
+					xscrmin, yscr,
+					xscrmax, yscr,
+					one_scan );
+				yscr++;
 			}
 		}
 		return;
 	}
-	if( sw_zoom && sw_cmap )  {
-		/* Hardest case */
-		fb_log("too hard to zoom and cmap at the same time\n");
-		return;
-	}
-	fb_log("sgi_xmit_scanlines:  unexpected case\n");
 }
-
-#if 0
-_LOCAL_ int
-OLDsgi_xmit_scanlines( ifp )
-register FBIO	*ifp;
-{
-	register short i;
-	register unsigned char *ip;
-	short y;
-	short xwidth;
-	static RGBpixel black = { 0, 0, 0 };
-	struct sgi_clip	clip;
-	im_setup;			/* declares GE & Windowstate vars */
-
-	xwidth = ifp->if_width/SGI(ifp)->mi_xzoom;
-	sgi_clipper( ifp, &clip );
-
-	RGBcolor( 0, 0, 0 );
-	/* Blank out area left of image.			*/
-	if( clip.xscroff > 0 )
-		rectfs(
-				0, 0,
-				(Scoord) clip.xscroff-1, (Scoord) ifp->if_height-1,
-				(RGBpixel *) black
-				);
-	/* Blank out area below image.			*/
-	if( clip.yscroff > 0 )
-		rectfs(
-				0, 0,
-				(Scoord) ifp->if_width-1, (Scoord) clip.yscroff-1,
-				(RGBpixel *) black
-				);
-	/* Blank out area right of image.			*/
-	if( clip.xscrpad > 0 )
-		rectfs(
-				(Scoord) ifp->if_width-clip.xscrpad,
-				0,
-				(Scoord) ifp->if_width-1,
-				(Scoord) ifp->if_height-1,
-				(RGBpixel *) black
-				);
-	/* Blank out area above image.			*/
-	if( clip.yscrpad > 0 )
-		rectfs(
-				0,
-				(Scoord) ifp->if_height-clip.yscrpad,
-				(Scoord) ifp->if_width-1,
-				(Scoord) ifp->if_height-1,
-				(RGBpixel *) black
-				);
-
-	/*
-	 *  First, the Zoomed case
-	 */
-	if( ifp->if_zoomflag )  {
-		register Scoord l, b, r, t;
-
-		for( y = clip.ymin; y <= clip.ymax; y++ )  {
-			ip = (unsigned char *)
-				&ifp->if_mem[(y*SGI(ifp)->mi_memwidth+clip.xmin)*sizeof(RGBpixel)];
-
-			l = clip.xscroff;
-			b = clip.yscroff + (y-clip.ymin)*SGI(ifp)->mi_yzoom;
-			t = b + SGI(ifp)->mi_yzoom - 1;
-			if ( SGI(ifp)->mi_cmap_flag == FALSE )  {
-				for( i=xwidth; i > 0; i--)  
-				{
-					/* XXX could this be im_RGBcolor? */
- 					RGBcolor( ip[RED], ip[GRN], ip[BLU]);
-					r = l + SGI(ifp)->mi_xzoom - 1;
-					im_rectfs( l, b, r, t );
-					l = r + 1;
-					ip += sizeof(RGBpixel);
-				}
-			} else {
-				for( i=xwidth; i > 0; i--)  
-				{
-				    	RGBcolor( CMR(ifp)[ip[RED]], 
-						CMG(ifp)[ip[GRN]], 
-						CMB(ifp)[ip[BLU]] );
-
-					r = l + SGI(ifp)->mi_xzoom - 1;
-					im_rectfs( l, b, r, t );
-					l = r + 1;
-					ip += sizeof(RGBpixel);
-				}
-			}
-			continue;
-		}
-		goto out;
-	}
-
-	/*
-	 *  The non-zoomed case
-	 */
-	for( y = clip.ymin; y <= clip.ymax; y++ )  {
-		register long amount, n;
-
-		ip = (unsigned char *)
-			&ifp->if_mem[(y*SGI(ifp)->mi_memwidth+clip.xmin)*sizeof(RGBpixel)];
-
-		im_cmov2s(clip.xscroff, clip.yscroff +( y - clip.ymin) );
-
-		if ( SGI(ifp)->mi_cmap_flag == FALSE )  {
-			n = xwidth;
-
-			while( n > 0 )  {
-				amount = n > 30 ? 30 : n;
-
-				im_passthru( amount + amount + amount + 2);
-				im_outshort( FBCRGBdrawpixels);
-				im_outshort( amount );
-				
-				n -= amount;
-				while( --amount != -1 )  {
-					im_outshort( *ip++ );
-					im_outshort( *ip++ );
-					im_outshort( *ip++ );
-				}
-				amount = amount;
-			}
-			GEWAIT;
-		} else {
-			n = xwidth;
-
-			while( n > 0 )  {
-				amount = n > 30 ? 30 : n;
-
-				im_passthru( amount + amount + amount + 2);
-				im_outshort( FBCRGBdrawpixels);
-				im_outshort( amount );
-				
-				n -= amount;
-				while( --amount != -1 )  {
-					im_outshort( CMR(ifp)[*ip++] );
-					im_outshort( CMG(ifp)[*ip++] );
-					im_outshort( CMB(ifp)[*ip++] );
-				}
-				amount = amount;
-			}
-			GEWAIT;
-		}
-	}
-	/*
-	 *  Releasing the pipe has been moved outside the main scanline
-	 *  loop, to prevent the kernel from switching windows
-	 *  from scanline to scanline as several windows repaint.
-	 *  Kernel pre-emption still happens, but much less often.
-	 */
-	im_freepipe;
-	GEWAIT;
-
-	/* The common final section */
-out:
-	;
-}
-#endif
 
 /*
  *			S I G K I D
@@ -774,6 +641,14 @@ static int sigkid()
 {
 	exit(0);
 }
+
+/************************************************************************/
+/************************************************************************/
+/************************************************************************/
+/************** Routines to implement the libfb interface ***************/
+/************************************************************************/
+/************************************************************************/
+/************************************************************************/
 
 /*
  *			S G I _ D O P E N
@@ -929,7 +804,6 @@ int	width, height;
 	if( (ifp->if_mode & MODE_8MASK) == MODE_8NOGT )  {
 		SGI(ifp)->mi_is_gt = 0;
 	}
-if( SGI(ifp)->mi_is_gt ) fb_log("Using GT hardware\n");
 
 	if( (ifp->if_mode & MODE_5MASK) == MODE_5GENLOCK )  {
 		/* NTSC, see below */
@@ -1094,6 +968,7 @@ if( SGI(ifp)->mi_is_gt ) fb_log("Using GT hardware\n");
 	SGI(ifp)->mi_ycenter = height/2;
 	SGI(ifp)->mi_xoff = 0;
 	SGI(ifp)->mi_yoff = 0;
+	SGI(ifp)->mi_pid = getpid();
 
 	/*
 	 *  In full screen mode, center the image on the screen.
@@ -1167,6 +1042,8 @@ FBIO	*ifp;
 	int menu, menuval, val, dev, f;
 	int k;
 	FILE *fp = NULL;
+
+	if( SGI(ifp)->mi_pid != getpid() )  {fb_log("libfb/sgi call from wrong process!\n");return(-1);}
 
 	if( (ifp->if_mode & MODE_2MASK) == MODE_2TRANSIENT )
 		goto out;
@@ -1309,7 +1186,10 @@ register RGBpixel	*pp;
 {
 	struct sgi_pixel	bg;
 	register struct sgi_pixel	*sgip;
-	register int		cnt;
+	register int	cnt;
+	register int	y;
+
+	if( SGI(ifp)->mi_pid != getpid() )  {fb_log("libfb/sgi call from wrong process!\n");return(-1);}
 
 	if( qtest() )
 		sgi_inqueue(ifp);
@@ -1328,10 +1208,13 @@ register RGBpixel	*pp;
 		RGBcolor( (short) 0, (short) 0, (short) 0);
 	}
 
-	/* Slightly simplistic -- runover to right border */
-	sgip = (struct sgi_pixel *)ifp->if_mem;
-	for( cnt=SGI(ifp)->mi_memwidth*ifp->if_height-1; cnt > 0; cnt-- )  {
-		*sgip++ = bg;	/* struct copy */
+	/* Flood rectangle in shared memory */
+	for( y=0; y < ifp->if_height; y++ )  {
+		sgip = (struct sgi_pixel *)&ifp->if_mem[
+		    (y*SGI(ifp)->mi_memwidth+0)*sizeof(struct sgi_pixel) ];
+		for( cnt=ifp->if_width-1; cnt >= 0; cnt-- )  {
+			*sgip++ = bg;	/* struct copy */
+		}
 	}
 
 	if( SGI(ifp)->mi_is_gt )  {
@@ -1351,6 +1234,9 @@ sgi_window_set( ifp, x, y )
 FBIO	*ifp;
 int	x, y;
 {
+
+	if( SGI(ifp)->mi_pid != getpid() )  {fb_log("libfb/sgi call from wrong process!\n");return(-1);}
+
 	if( qtest() )
 		sgi_inqueue(ifp);
 
@@ -1379,6 +1265,9 @@ sgi_zoom_set( ifp, x, y )
 FBIO	*ifp;
 int	x, y;
 {
+
+	if( SGI(ifp)->mi_pid != getpid() )  {fb_log("libfb/sgi call from wrong process!\n");return(-1);}
+
 	if( qtest() )
 		sgi_inqueue(ifp);
 
@@ -1423,10 +1312,6 @@ int	count;
 	register struct sgi_pixel	*sgip;
 
 	ybase = y;
-
-	/* Handle events promptly */
-	if( qtest() )
-		sgi_inqueue(ifp);
 
 	if( x < 0 || x > ifp->if_width ||
 	    y < 0 || y > ifp->if_height)
@@ -1552,6 +1437,8 @@ register int	count;
 	 * Handle events after updating the memory, and
 	 * before updating the screen
 	 */
+	if( SGI(ifp)->mi_pid != getpid() )  {fb_log("libfb/sgi call from wrong process!\n");return(-1);}
+
 	if( qtest() )
 		sgi_inqueue(ifp);
 
@@ -1571,8 +1458,6 @@ sgi_viewport_set( ifp, left, top, right, bottom )
 FBIO	*ifp;
 int	left, top, right, bottom;
 {
-	if( qtest() )
-		sgi_inqueue(ifp);
 	return(0);
 }
 
@@ -1585,9 +1470,6 @@ register FBIO	*ifp;
 register ColorMap	*cmp;
 {
 	register int i;
-
-	if( qtest() )
-		sgi_inqueue(ifp);
 
 	/* Just parrot back the stored colormap */
 	for( i = 0; i < 256; i++)  {
@@ -1646,6 +1528,8 @@ register ColorMap	*cmp;
 	register int	i;
 	int		prev;	/* !0 = previous cmap was non-linear */
 
+	if( SGI(ifp)->mi_pid != getpid() )  {fb_log("libfb/sgi call from wrong process!\n");return(-1);}
+
 	if( qtest() )
 		sgi_inqueue(ifp);
 
@@ -1689,6 +1573,8 @@ int		xorig, yorig;
 	register int	xbytes;
 	Cursor		newcursor;
 
+	if( SGI(ifp)->mi_pid != getpid() )  {fb_log("libfb/sgi call from wrong process!\n");return(-1);}
+
 	if( qtest() )
 		sgi_inqueue(ifp);
 
@@ -1727,6 +1613,8 @@ int	x, y;
 	register short	i;
 	short	xwidth;
 	long left, bottom, x_size, y_size;
+
+	if( SGI(ifp)->mi_pid != getpid() )  {fb_log("libfb/sgi call from wrong process!\n");return(-1);}
 
 	if( qtest() )
 		sgi_inqueue(ifp);
@@ -1867,6 +1755,7 @@ register FBIO	*ifp;
 
 	sgi_clipper( ifp, &clip );
 
+	/* rectzoom only works on GT and PI machines */
 	rectzoom( (double) SGI(ifp)->mi_xzoom, (double) SGI(ifp)->mi_yzoom);
 
 	cpack(0x00000000);	/* clear to black first */
@@ -1883,10 +1772,16 @@ register FBIO	*ifp;
 		clip.yscroff+SGI(ifp)->mi_yoff );
 
  	swapbuffers();	 
+	rectzoom( 1.0, 1.0 );
 }
 
 /*
  *			S G I _ C L I P P E R
+ *
+ *  The image coordinates of the lower left pixel in view are:
+ *	(xmin, ymin)
+ *  The screen coordinates of the lower left pixle in view are:
+ *	(xscroff, yscroff)
  */
 sgi_clipper( ifp, clp )
 register FBIO	*ifp;
