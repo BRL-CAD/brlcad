@@ -256,9 +256,14 @@ EOF
 			-e 's/libz//' -e 's/libpng//' `
 		fi
 		;;
-	7d|m4i64|m4i65)
+	7d)
 		BDIRS=`echo ${BDIRS} | \
 		    sed -e 's/libz//' -e 's/libpng//' `
+		;;
+	m4i65)
+		# Be sure to look in /usr/lib64, not /usr/lib!
+		BDIRS=`echo ${BDIRS} | \
+		    sed -e 's/libz//' `
 		;;
 esac
 
