@@ -101,9 +101,8 @@ char **argv;
 	static vect_t temp;
 	char	*title_file;
 	char	idbuf[132];		/* First ID record info */
-	vect_t	diff;
 	int	curstep;
-
+	vect_t	first_dir;	/* First dir chosen on a step */
 
 	RES_INIT( &rt_g.res_syscall );
 	RES_INIT( &rt_g.res_worker );
@@ -173,8 +172,11 @@ err:
 
 	if( set_pt + set_at != 2 )  goto err;
 
-	VSUB2( diff, ap.a_ray.r_pt, goal_point );
-	incr_dist = MAGNITUDE(diff) / nsteps;
+	VSUB2( first_dir, goal_point, ap.a_ray.r_pt );
+	incr_dist = MAGNITUDE(first_dir) / nsteps;
+	VMOVE( ap.a_ray.r_dir, first_dir );
+	VUNITIZE( ap.a_ray.r_dir );	/* initial dir, for dir_prev_step */
+
 	fprintf(stderr,"nsteps = %d, incr_dist = %gmm\n", nsteps, incr_dist );
 	fprintf(stderr,"viewsize = %gmm\n", viewsize);
 
@@ -196,15 +198,21 @@ err:
 		argc--;
 		argv++;
 	}
+
+	/* Prep finds the model RPP, needed for the plotting step */
 	rt_prep(rtip);
 
+	/*
+	 *  With stdout for the plot file, and stderr for
+	 *  remarks, the output must go into a file.
+	 */
 	if( (outfp=fopen("rtwalk.mats", "w")) == NULL )  {
 		perror("rtwalk.mats");
 		exit(1);
 	}
 
+	/* Plot all of the solid RPPs in a light grey */
 	pl_3space( plotfp, 0,0,0, 4096, 4096, 4096);
-/**	rt_plot_cut( plotfp, rtip, &rtip->rti_CutHead, 0 );**/
 	pl_color( plotfp, 150, 150, 150 );
 	{
 		register struct soltab *stp;
@@ -217,7 +225,6 @@ err:
 
 	/* Take a walk */
 	for( curstep = 0; curstep < nsteps*4; curstep++ )  {
-		vect_t	first_dir;	/* First dir chosen on this try */
 		mat_t	mat;
 		int	failed_try;
 
@@ -237,20 +244,23 @@ err:
 		VSETALL( norm_cur_try, 0 );	/* sanity */
 
 		/* See if goal has been reached */
-		VSUB2( diff, goal_point, ap.a_ray.r_pt );
-		if( (max_dist_togo=MAGNITUDE(diff)) < 1.0 )  {
-			/* Walk is complete */
+		VSUB2( first_dir, goal_point, ap.a_ray.r_pt );
+		if( (max_dist_togo=MAGNITUDE(first_dir)) < 1.0 )  {
 			fprintf(stderr,"Complete in %d steps\n", curstep);
 			exit(0);
 		}
 
-		/* See if additional clear space ahead */
-		if( clear_dist > 0.0 )  goto advance;
+		/*  See if there is significant clear space ahead
+		 *  Avoid taking small steps.
+		 */
+		if( clear_dist < incr_dist * 0.25 )
+			clear_dist = 0.0;
+		if( clear_dist > 0.0 )
+			goto advance;
 
 		/*
 		 * Initial direction:  Head directly towards the goal.
 		 */
-		VSUB2( first_dir, goal_point, ap.a_ray.r_pt );
 		VUNITIZE( first_dir );
 		VMOVE( ap.a_ray.r_dir, first_dir );
 
@@ -349,8 +359,10 @@ err:
 			if( clear_dist > incr_dist )
 				clear_dist = incr_dist;
 		}
-		/* One simple attempt at not overshooting the goal */
-		/* Really should measure distance point-to-line */
+
+		/* One simple attempt at not overshooting the goal.
+		 * Really should measure distance point-to-line
+		 */
 		if( clear_dist > max_dist_togo )
 			clear_dist = max_dist_togo;
 
@@ -371,7 +383,7 @@ advance:	;
 		VMOVE( norm_prev_step, norm_cur_try );
 	}
 	fprintf(stderr,"%d steps used without reaching goal by %gmm\n", curstep, max_dist_togo);
-	return(0);
+	exit(1);
 }
 
 hit( ap, PartHeadp )
@@ -405,11 +417,18 @@ miss()
 	return(0);
 }
 
+/*
+ *			P R O J _ G O A L
+ *
+ *  When progress towards the goal is blocked by an object,
+ *  head off "towards the side" to try to get around.
+ *  Project the goal point onto the plane tangent to the object
+ *  at the hit point.  Head for the projection of the goal point,
+ *  which should keep things moving in the right general direction,
+ *  except perhaps for concave objects.
+ */
 proj_goal()
 {
-	/* Head towards projection of
-	 * goal onto tangent plane
-	 */
 	vect_t	goal_dir;
 	vect_t	goal_proj;
 	vect_t	newdir;
@@ -431,6 +450,37 @@ proj_goal()
 	VSUB2( newdir, goal_proj, hit_cur_try );
 	VUNITIZE( newdir );
 	VMOVE( ap.a_ray.r_dir, newdir );
+}
+
+/*
+ *			W R I T E _ M A T R I X
+ */
+write_matrix(frame)
+{
+	mat_t	viewrot;
+	int	i;
+	vect_t	model;
+	vect_t	view;
+
+	/* Build viewrot matrix */
+/*	VSUB2( model, hit_cur_try, pt_prev_step );	/* Look to next step */
+	VSUB2( model, goal_point, pt_prev_step );
+	VUNITIZE( model );
+
+	mat_lookat( viewrot, model );
+
+/*	fprintf(outfp, "start %d;\n", frame); */
+	fprintf(outfp, "%g\n", viewsize);
+	fprintf(outfp, "%g %g %g",
+		pt_prev_step[X],
+		pt_prev_step[Y],
+		pt_prev_step[Z]);
+
+	for( i=0; i < 16; i++ ) {
+		if( (i%4) == 0 )  (void)fprintf(outfp, "\n");
+		(void)fprintf( outfp, "%.9e ", viewrot[i] );
+	}
+	(void)fprintf(outfp,"\n\n");
 }
 
 #if defined(SYSV)
@@ -509,63 +559,31 @@ vect_t	to;
 	m[15] = 1.0;
 }
 
-write_matrix(frame)
-{
-	mat_t	xlate;
-	mat_t	rot;
-	mat_t	model2view;
-	int	i;
-	vect_t	from;
-	vect_t	to;
-
-	/* Build model2view matrix */
-/*	VSUB2( from, hit_cur_try, pt_prev_step );	/* Look to next step */
-	VSUB2( from, goal_point, pt_prev_step );
-	VSET( to, 0, 0, -1 );
-	VUNITIZE( from );
-	VUNITIZE( to );
-
-	mat_idn(xlate);
-	MAT_DELTAS( xlate,
-		-pt_prev_step[X],
-		-pt_prev_step[Y],
-		-pt_prev_step[Z]);
-/**	mat_fromto( rot, from, to ); **/
-	mat_lookat( rot, from );
-	mat_mul( model2view, rot, xlate );
-
-/*	fprintf(outfp, "start %d;\n", frame); */
-	fprintf(outfp, "%g\n", viewsize);
-	fprintf(outfp, "%g %g %g",
-		pt_prev_step[X],
-		pt_prev_step[Y],
-		pt_prev_step[Z]);
-
-	for( i=0; i < 16; i++ ) {
-		if( (i%4) == 0 )  (void)fprintf(outfp, "\n");
-		(void)fprintf( outfp, "%.9e ", rot[i] );
-	}
-	(void)fprintf(outfp,"\n\n");
-
-}
-
+/*
+ *			M A T _ L O O K A T
+ *
+ *  Given a direction vector D, product a matrix suitable for use
+ *  as a "model2view" matrix that transforms the vector D
+ *  into the -Z ("view") axis.
+ *
+ *  Note that due to the special property of mat_fromto()
+ *  that prevents "twist" on the vector by orienting on the X-Y
+ *  plane, we must first find the transformation that maps
+ *  D into the +X axis, and then rotate to the -Z axis.
+ */
 mat_lookat( rot, dir )
 mat_t rot;
 vect_t dir;
 {
-	mat_t left, down, t;
+	mat_t	second;
+	mat_t	first;
+	vect_t	x;
 
-	VUNITIZE( dir );
-	mat_idn( rot );
-	mat_idn( left );
-	mat_idn( down );
-	mat_idn( t );
-	mat_ae( t,
-		atan2(dir[Y],dir[X])*deg2rad ,/* az */
-		asin(dir[Z]) * deg2rad ); /* elev */
-	mat_inv( rot, t );
-	mat_angles( left, 0.0, 0.0, 90.0 );
-	mat_angles( down, -90.0, 0.0, 0.0 );
-	mat_mul( t, left, rot );
-	mat_mul( rot, down, t );
+	/* Rotate from Dir to +X */
+	VSET( x, 1, 0, 0 );
+	mat_fromto( first, dir, x );
+
+	/* Rotate so that +X is now -Z axis */
+	mat_angles( second, -90.0, 0.0, 90.0 );
+	mat_mul( rot, second, first );
 }
