@@ -63,6 +63,15 @@ cat << EOF > ${IN_FILE}
 	HAS_SYMLINKS=1;
 #endif
 
+#if defined(mips) && defined (ultrix)
+/*	DECStation-5200, ULTRIX v4.2a, MIPS chip */
+#	undef mips
+	MACHINE=mips;
+	UNIXTYPE=BSD;
+	HAS_TCP=1;
+	HAS_SYMLINKS=1;
+#endif
+
 #ifdef ipsc860
 /*	iPSC/860 Hypercube */
 #	undef	i386
