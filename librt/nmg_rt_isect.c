@@ -291,7 +291,7 @@ struct vertexuse *vu_p;
  * Support routine for vertex_neighborhood()
  *
  */
-static double
+static void
 get_pole_dist_to_face(rd, vu,
 	Pole, Pole_prj_pt, Pole_dist, Pole_pca,
 	pointA, leftA, pointB, leftB, polar_height_vect, Pole_name)
@@ -1823,7 +1823,7 @@ struct faceuse *fu_p;
 	NMG_CK_FACEUSE(fu_p);
 	NMG_CK_FACEUSE(fu_p->fumate_p);
 	NMG_CK_FACE(fu_p->f_p);
-	NMG_CK_FACE_G(fu_p->f_p->fg_p);
+	NMG_CK_FACE_G_PLANE(fu_p->f_p->g.plane_p);
 
 #ifdef CHECK_HITMISS_LISTS
 	NMG_CK_HITMISS_LISTS(a_hit, rd);
