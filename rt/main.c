@@ -97,6 +97,8 @@ char **argv;
 	register int	x;
 	char idbuf[132];		/* First ID record info */
 
+	void	application_init();
+
 	port_setlinebuf( stderr );
 
 	(void)fprintf(stderr, "%s%s\n",
@@ -112,6 +114,9 @@ char **argv;
 	/* Before option processing, get default number of processors */
 	npsw = rt_avail_cpus();		/* Use all that are present */
 	if( npsw > DEFAULT_PSW )  npsw = DEFAULT_PSW;
+
+	/* Before option processing, do application-specific initialization */
+	application_init();
 
 	/* Process command line options */
 	if ( !get_args( argc, argv ) )  {
