@@ -2104,8 +2104,6 @@ RT_EXTERN(void			nmg_vlblock_m, (struct rt_vlblock *vbp,
 				CONST struct model *m, int fancy) );
 RT_EXTERN(void			nmg_pl_around_edge, (FILE *fd,
 				long *b, CONST struct edgeuse *eu) );
-RT_EXTERN(void			nmg_pl_edges_in_2_shells, (FILE *fd,
-				long *b, CONST struct edgeuse *eu) );
 RT_EXTERN(void			nmg_pl_isect, (CONST char *filename,
 				CONST struct shell *s) );
 RT_EXTERN(void			nmg_pl_comb_fu, (int num1, int num2,
