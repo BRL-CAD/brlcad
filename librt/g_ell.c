@@ -350,10 +350,11 @@ register struct xray *rp;
  *  
  *  For a hit on the surface of an ELL, return the (u,v) coordinates
  *  of the hit point, 0 <= u,v <= 1.
- *  u = angle around skin in X,Y plane.
- *  v = angle around skin in X,Z plane.
+ *  u = azimuth
+ *  v = elevation
  */
 static double inv2pi =  0.15915494309189533619;		/* 1/(pi*2) */
+static double invpi = 0.31830988618379067153;	/* 1/pi */
 
 ell_uv( stp, hitp, uvp )
 struct soltab *stp;
@@ -364,7 +365,6 @@ register fastf_t *uvp;
 		(struct ell_specific *)stp->st_specific;
 	LOCAL vect_t work;
 	LOCAL vect_t pprime;
-	FAST fastf_t len;
 
 	/* hit_point is on surface;  project back to unit sphere,
 	 * creating a vector from vertex to hit point which always
@@ -372,22 +372,8 @@ register fastf_t *uvp;
 	 */
 	VSUB2( work, hitp->hit_point, ell->ell_V );
 	MAT4X3VEC( pprime, ell->ell_SoR, work );
+	/* Assert that pprime has unit length */
 
-	/* project onto X,Y plane */
-	if( (len=sqrt(pprime[X]*pprime[X]+pprime[Y]*pprime[Y])) > EPSILON )  {
-		uvp[0] = acos(pprime[Y]/len) * inv2pi;
-		/* Handle other half of acos() domain */
-		if( pprime[X] < 0 )
-			uvp[0] += 0.5;
-	} else
-		uvp[0] = 0;
-
-	/* project onto X,Z plane */
-	if( (len=sqrt(pprime[X]*pprime[X]+pprime[Z]*pprime[Z])) > EPSILON )  {
-		uvp[1] = acos(pprime[Z]/len) * inv2pi;
-		/* Handle other half of acos() domain */
-		if( pprime[X] < 0 )
-			uvp[1] += 0.5;
-	} else
-		uvp[1] = 0;
+	uvp[0] = atan2( pprime[Y], pprime[X] ) * inv2pi + 0.5;
+	uvp[1] = asin( pprime[Z] ) * invpi + 0.5;
 }
