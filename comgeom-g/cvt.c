@@ -50,8 +50,8 @@ char name_it[16];	/* stores argv if it exists and appends it
 
 int	cur_col = 0;
 
-FILE	*infp;
-FILE	*outfp;		/* Output file descriptor */
+FILE		*infp;
+struct rt_wdb	*outfp;		/* Output file descriptor */
 
 int	sol_total, sol_work;	/* total num solids, num solids processed */
 int	reg_total;

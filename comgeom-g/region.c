@@ -19,6 +19,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 #include <ctype.h>
 
 #include "machine.h"
@@ -31,8 +36,8 @@ extern char	name_it[];
 
 extern struct wmember	*wmp;	/* array indexed by region number */
 
-extern FILE	*infp;
-extern FILE	*outfp;
+extern FILE		*infp;
+extern struct rt_wdb	*outfp;
 
 extern int	reg_total;
 extern int	version;

@@ -29,6 +29,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
 #include <ctype.h>
 #include <math.h>
 
@@ -40,7 +45,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "wdb.h"
 
 
-extern FILE	*outfp;
+extern struct rt_wdb	*outfp;
 extern int	version;
 extern int	verbose;
 
@@ -182,6 +187,7 @@ register char	*cp;
  *	 0	conversion OK
  *	 1	EOF
  */
+int
 getsolid()
 {
 	char	given_solid_num[16];
@@ -665,6 +671,7 @@ ell1:
 	return(-1);
 }
 
+int
 read_arbn( name )
 char	*name;
 {
