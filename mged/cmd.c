@@ -648,24 +648,14 @@ mged_setup()
 	if( Tcl_Init(interp) == TCL_ERROR )
 		bu_log("Tcl_Init error %s\n", interp->result);
 
-#if 1
 	/* Initialize [incr Tcl] */
 	if (Itcl_Init(interp) == TCL_ERROR)
 	  bu_log("Itcl_Init error %s\n", interp->result);
 
-#if 0
-	Tcl_StaticPackage(interp, "Itcl", Itcl_Init, Itcl_SafeInit);
-#endif
-
 	/* Import [incr Tcl] commands into the global namespace. */
-	/* Then cause the autoloader to do the same. */
 	if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
 		       "::itcl::*", /* allowOverwrite */ 1) != TCL_OK)
 	  bu_log("Tcl_Import error %s\n", interp->result);
-
-	if (Tcl_Eval(interp, "auto_mkindex_parser::slavehook { _%@namespace import -force ::itcl::* }") != TCL_OK)
-	  bu_log("auto_mkindex_parser error %s\n", interp->result);
-#endif
 
 	/* register commands */
 	cmd_setup();
@@ -678,8 +668,8 @@ mged_setup()
 
 	bu_vls_init(&str);
 	bu_vls_printf(&str, "set auto_path [linsert $auto_path 0 \
-                             %stclscripts/mged %stclscripts %slib/iwidgets/scripts]",
-		      filename, filename, filename);
+                             %stclscripts/mged %stclscripts]",
+		      filename, filename);
 	(void)Tcl_Eval(interp, bu_vls_addr(&str));
 
 	/* Tcl needs to write nulls onto subscripted variable names */
