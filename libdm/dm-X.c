@@ -97,6 +97,8 @@ struct dm dm_X = {
   1,
   0,
   0,
+  0,
+  0,
   1.0, /* aspect ratio */
   0,
   0,
@@ -642,18 +644,23 @@ int strict;
 }
 
 static int
-X_setLineAttr(dmp, width, dashed)
+X_setLineAttr(dmp, width, style)
 struct dm *dmp;
 int width;
-int dashed;
+int style;
 {
-  int linestyle = LineSolid;
+  int linestyle;
 
-  if(dashed)
-    linestyle = LineOnOffDash;
+  dmp->dm_lineWidth = width;
+  dmp->dm_lineStyle = style;
 
   if(width < 1)
     width = 1;
+
+  if(style == DM_DASHED_LINE)
+    linestyle = LineOnOffDash;
+  else
+    linestyle = LineSolid;
 
   XSetLineAttributes( ((struct x_vars *)dmp->dm_vars)->dpy,
 		      ((struct x_vars *)dmp->dm_vars)->gc,
