@@ -72,7 +72,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 extern int (*rot_hook)();
 extern int (*set_tran_hook)();
 extern int (*tran_hook)();
-extern int (*knob_hook)();
 int local_rt_arb_describe();
 void check_nonzero_rates();
 
@@ -87,6 +86,7 @@ extern double tran_z;
 extern point_t orig_pos;
 #endif
 
+extern int (*knob_hook)();
 extern long	nvectors;	/* from dodraw.c */
 
 extern struct rt_tol mged_tol;	/* from ged.c */
@@ -1139,7 +1139,7 @@ char	**argv;
 	char	*cmd = argv[1];
 	static int aslewflag = 0;
 	vect_t	aslew;
-#ifdef XMGED
+#if 1
   int iknob;
 
   if(knob_hook != NULL)
