@@ -153,9 +153,9 @@ char	**dpp;
 	stp->stx_file[0] = '\0';
 	stp->stx_w = stp->stx_fw = stp->stx_n = stp->stx_d = -1;
 	stp->stx_norm = 0;
-	VSETALL(stp->stx_min,  INFINITY);
-	VSETALL(stp->stx_max, -INFINITY);
-	rt_rpp_tree(rp->reg_treetop,stp->stx_min,stp->stx_max);
+
+	if( rt_bound_tree(rp->reg_treetop, stp->stx_min, stp->stx_max) < 0 )
+		return(-1);
 
 	/**	Get input values  **/
 	rt_structparse( matparm, stxt_parse, (char *)stp );

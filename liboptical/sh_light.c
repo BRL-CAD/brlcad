@@ -133,16 +133,21 @@ char	**dpp;
 		VMOVE( lp->lt_pos, stp->st_center );
 		lp->lt_radius = stp->st_aradius;
 	} else {
-		vect_t	min_rpp, max_rpp, avg, rad;
+		vect_t	min_rpp, max_rpp;
+		vect_t	rad;
 		register union tree *tp;
 
-		VSETALL( min_rpp,  INFINITY );
-		VSETALL( max_rpp, -INFINITY );
-		rt_rpp_tree( rp->reg_treetop, min_rpp, max_rpp );
-		VADD2( avg, min_rpp, max_rpp );
-		VSCALE( avg, avg, 0.5 );
-		VMOVE( lp->lt_pos, avg );
-		VSUB2( rad, max_rpp, avg );
+		if( rt_bound_tree( rp->reg_treetop, min_rpp, max_rpp ) < 0 )
+			return(-1);
+
+		if( max_rpp[X] >= INFINITY )  {
+			rt_log("light_setup(%s) Infinite light sources not supported\n",
+				lp->lt_name );
+			return(-1);
+		}
+		VADD2SCALE( lp->lt_pos, min_rpp, max_rpp, 0.5 );
+		VSUB2( rad, max_rpp, lp->lt_pos );
+		/* XXX This radius is way too big */
 		lp->lt_radius = MAGNITUDE( rad );
 
 		/* Find first leaf node on left of tree */

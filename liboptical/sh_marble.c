@@ -74,9 +74,8 @@ char	**dpp;
 	GETSTRUCT( mp, marble_specific );
 	*dpp = (char *)mp;
 
-	VSETALL(mp->mar_min,  INFINITY);
-	VSETALL(mp->mar_max, -INFINITY);
-	rt_rpp_tree(rp->reg_treetop,mp->mar_min,mp->mar_max);
+	if( rt_bound_tree(rp->reg_treetop,mp->mar_min,mp->mar_max) < 0 )
+		return(-1);	/* FAIL */
 
 	for( i = 0; i < IPOINTS+1; i++ )
 		for( j = 0; j < IPOINTS+1; j++ )
