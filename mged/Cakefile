@@ -20,7 +20,7 @@
 			facedef set animedit comb_std \
 			solids_on_ray history \
 			TCP_FILES attach dm-plot dm-ps doevent muves \
-			MGED_OBJS vdraw fbserv rect grid axes
+			MGED_OBJS vdraw fbserv rect grid axes qray
 
 /*#define USING_NEW_SO*/
 #include "../Cakefile.defs"
