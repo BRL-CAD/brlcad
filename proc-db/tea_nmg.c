@@ -158,7 +158,7 @@ pt patch;
 	{
 		struct vertexuse *vu;
 		vect_t uvw;
-		point_t pt;
+		point_t pnt;
 		int k,j;
 
 		switch( i )
@@ -185,8 +185,8 @@ pt patch;
 				break;
 		}
 
-		VSET( pt , ducks[patch[k][j]-1].x * 1000 , ducks[patch[k][j]-1].y * 1000 , ducks[patch[k][j]-1].z * 1000 );
-		nmg_vertex_gv( verts[i] , pt );
+		VSET( pnt , ducks[patch[k][j]-1].x * 1000 , ducks[patch[k][j]-1].y * 1000 , ducks[patch[k][j]-1].z * 1000 );
+		nmg_vertex_gv( verts[i] , pnt );
 
 		for( RT_LIST_FOR( vu , vertexuse , &verts[i]->vu_hd ) )
 			nmg_vertexuse_a_cnurb( vu , uvw );
