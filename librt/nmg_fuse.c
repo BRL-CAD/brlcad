@@ -1381,7 +1381,7 @@ CONST struct bn_tol	*tol;
 		}
 
 		NMG_CK_EDGE_G_LSEG(eg1);
-		eu1 = BU_LIST_MAIN_PTR( edgeuse, BU_LIST_FIRST( rt_list, &eg1->eu_hd2 ), l2 );
+		eu1 = BU_LIST_MAIN_PTR( edgeuse, BU_LIST_FIRST( bu_list, &eg1->eu_hd2 ), l2 );
 		NMG_CK_EDGEUSE(eu1);
 
 		for( j = i-1; j >= 0; j-- )  {
@@ -1392,7 +1392,7 @@ CONST struct bn_tol	*tol;
 			NMG_CK_EDGE_G_EITHER(eg2);
 			if( eg2->l.magic == NMG_EDGE_G_CNURB_MAGIC )  continue;
 			NMG_CK_EDGE_G_LSEG(eg2);
-			eu2 = BU_LIST_MAIN_PTR( edgeuse, BU_LIST_FIRST( rt_list, &eg2->eu_hd2 ), l2 );
+			eu2 = BU_LIST_MAIN_PTR( edgeuse, BU_LIST_FIRST( bu_list, &eg2->eu_hd2 ), l2 );
 			NMG_CK_EDGEUSE(eu2);
 
 			if( eg1 == eg2 )  rt_bomb("nmg_model_edge_g_fuse() edge_g listed twice in ptbl?\n");
@@ -2159,7 +2159,7 @@ CONST struct bn_tol	*tol;
 
 /*		N M G _ I N S U R E _ L I S T _ I S _ I N C R E A S I N G
  *
- *	Check if the passed rt_list is in increasing order. If not,
+ *	Check if the passed bu_list is in increasing order. If not,
  *	reverse the order of the list.
  * XXX Isn't the word "ensure"?
  */

@@ -60,14 +60,14 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #define NMG_TRAP_MAGIC  0x1ab1ab
 #define	NMG_CK_PT2D(_p)	NMG_CKMAG(_p, NMG_PT2D_MAGIC, "pt2d")
 #define	NMG_CK_TRAP(_p)	{NMG_CKMAG(_p, NMG_TRAP_MAGIC, "trap");\
-	if ( ! BU_LIST_PREV(rt_list, &(_p)->l) ) {\
+	if ( ! BU_LIST_PREV(bu_list, &(_p)->l) ) {\
 		bu_log("%s %d bad prev pointer of trapezoid 0x%08x\n",\
 			__FILE__, __LINE__, &(_p)->l);\
-		rt_bomb("aborting");\
-	} else if (! BU_LIST_NEXT(rt_list, &(_p)->l) ) {\
+		rt_bomb("NMG_CK_TRAP: aborting");\
+	} else if (! BU_LIST_NEXT(bu_list, &(_p)->l) ) {\
 		bu_log("%s %d bad next pointer of trapezoid 0x%08x\n",\
 			__FILE__, __LINE__, &(_p)->l);\
-		rt_bomb("aborting");\
+		rt_bomb("NMG_CL_TRAP: aborting");\
 	}}
 
 #define NMG_TBL2D_MAGIC 0x3e3e3e3e

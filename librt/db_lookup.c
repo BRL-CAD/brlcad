@@ -258,7 +258,7 @@ int			flags;
  *  linked list, and free the associated memory.
  *
  *  It is the responsibility of the caller to have released whatever
- *  structures have been hung on the d_use_hd rt_list, first.
+ *  structures have been hung on the d_use_hd bu_list, first.
  *
  *  Returns -
  *	 0	on success

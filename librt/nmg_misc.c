@@ -10181,7 +10181,7 @@ CONST struct bn_tol *tol;
 		angles[2] = angle;
 	}
 
-	/* initialize rt_list structure to hold list of curves */
+	/* initialize bu_list structure to hold list of curves */
 	BU_LIST_INIT( &crv_head );
 
 	/* Make each arc segment */
