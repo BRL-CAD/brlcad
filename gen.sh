@@ -183,9 +183,10 @@ BDIRS="bench \
 	libwdb \
 	libpkg \
 	libfb \
-	libtcl8.3 \
-	libtk8.3 \
+	libtcl8.4 \
+	libtk8.4 \
 	libitcl3.2 \
+        iwidgets4.0.1 \
 	libdm \
 	libz \
 	libpng \
@@ -325,7 +326,7 @@ benchmark)
 	(T=libbn; echo ${T}; cd ${DIRPRE}${T}${DIRSUF} && cake -k ${SILENT})
 	(T=librt; echo ${T}; cd ${DIRPRE}${T}${DIRSUF} && cake -k ${SILENT})
 	(T=liboptical; echo ${T}; cd ${DIRPRE}${T}${DIRSUF} && cake -k ${SILENT})
-	(T=libtcl8.3; echo ${T}; cd ${DIRPRE}${T}${DIRSUF} && cake -k ${SILENT})
+	(T=libtcl8.4; echo ${T}; cd ${DIRPRE}${T}${DIRSUF} && cake -k ${SILENT})
 	(T=libitcl3.2; echo ${T}; cd ${DIRPRE}${T}${DIRSUF} && cake -k ${SILENT})
 	(T=rt; echo ${T}; cd ${DIRPRE}${T}${DIRSUF} && cake -k ${SILENT})
 	(T=conv; echo ${T}; cd ${DIRPRE}${T}${DIRSUF} && cake -k ${SILENT})
@@ -681,9 +682,10 @@ dist)
 	echo 'html/*' >> ${EXCLUDE}
 	echo 'pix/*' >> ${EXCLUDE}
 	echo 'pro-engineer/*' >> ${EXCLUDE}
-	echo 'libtcl8.3/*' >> ${EXCLUDE}
-	echo 'libtk8.3/*' >> ${EXCLUDE}
+	echo 'libtcl8.4/*' >> ${EXCLUDE}
+	echo 'libtk8.4/*' >> ${EXCLUDE}
 	echo 'libitcl3.2/*' >> ${EXCLUDE}
+	echo 'iwidgets4.0.1/*' >> ${EXCLUDE}
 
 	tar cfv - Copy* README doc html \
 	    zzzEND |\
@@ -726,10 +728,10 @@ dist)
 	chmod 444 ${FTP_ARCHIVE}-h.gz
 	echo "${FTP_ARCHIVE}-h.gz created (pro-engineer)"
 
-	tar cfv - Copy* README libtcl8.3 libtk8.3 libitcl3.2 zzzEND |\
+	tar cfv - Copy* README libtcl8.4 libtk8.4 libitcl3.2 iwidgets4.0.1 zzzEND |\
 		gzip -9 > ${FTP_ARCHIVE}-i.gz
 	chmod 444 ${FTP_ARCHIVE}-i.gz
-	echo "${FTP_ARCHIVE}-i.gz created (libtcl8.3 libtk8.3 libitcl3.2)"
+	echo "${FTP_ARCHIVE}-i.gz created (libtcl8.4 libtk8.4 libitcl3.2 iwidgets4.0.1)"
 
 	rm -f ${EXCLUDE}
 
