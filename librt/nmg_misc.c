@@ -3838,9 +3838,9 @@ missed:
 
 	if( missed_faces )
 	{
-		bu_log( "nmg_fix_decomposed_shell_normals: missed %d faces in shell x%x (was it decomposed????)\n", 
+		bu_log( "nmg_fix_decomposed_shell_normals: missed %d faces in shell x%x (was it decomposed?)\n", 
 			missed_faces, s );
-		rt_bomb( "nmg_fix_decomposed_shell_normals: missed faces in shell (was it decomposed????)\n" );
+		rt_bomb( "nmg_fix_decomposed_shell_normals: missed faces in shell (was it decomposed?)\n" );
 	}
 
 	bu_free( (char *)flags, "flags" );
