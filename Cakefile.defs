@@ -700,6 +700,24 @@ set -S2 "/bin/sh"
 #	undef	sun
 #	undef	sun4
 #	define	MTYPE	sun4
+#   if defined(__CAKE__SunOS5)
+/*	SunOS 5, aka Solaris 2 support.  Looks more like a SysV.  -Xt */
+#	define	UNIXTYPE	SYSV
+
+#	define	HAS_TCP		1
+
+#	define	LIBFB_OBJS	if_remote if_X
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_X -I/usr/openwin/include
+#	define	LIBFB_LIBES	LIBPKG -L/usr/openwin/lib -R/usr/openwin/lib -lX11
+
+#	define	LIBPKG_CONFIG	-DBSD=43 -D_KERNEL
+#	define	LIBRT_TIMER	timerunix
+#	define	CC		cc
+
+#	define	OPTIMIZER	-fast -Xc
+#	define	CC_DEFS		-D_REENTRANT -Dsparc -D_POSIX_SOURCE
+#	define	STANDARD_LIBES	-lm  -lsocket -lnsl -lthread
+#   else
 #	define	BSD	43
 #	define	HAS_TCP	1
 #	if 0
@@ -710,7 +728,7 @@ set -S2 "/bin/sh"
 /*#	define	CC_DEFS	-DAUTOSPEC	/* What does this do? */
 #	define	LIBMALLOC	/* use vendor library */
 #	define	LIBRT_TIMER	timer42
-#	if 1
+#	if 0
 /*		Bare Sun configuration */
 #		define	LIBFB_OBJS	if_remote if_sun
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_SUN
@@ -757,6 +775,7 @@ set -S2 "/bin/sh"
 #		define	CC	/usr/lang/cc
 #		define	FC	/usr/lang/f77
 #	endif
+#   endif	/* __STDC__ */
 #endif
 
 #ifdef NeXT
