@@ -40,6 +40,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 extern void	perror();
 extern int	atoi(), execl(), fork(), nice(), wait();
 extern long	time();
+extern void	sync();
 
 #define MAXARGS		 200	/* Maximum number of args per line */
 int	maxargs = MAXARGS;	/* For dir.c */
@@ -49,7 +50,7 @@ char *cmd_args[MAXARGS + 1];	/* array of pointers to args */
 
 extern int	cmd_glob();
 
-static void	do_cmd();
+void	do_cmd();
 void	f_help(), f_center(), f_press(), f_view(), f_blast();
 void	f_edit(), f_evedit(), f_delobj();
 void	f_debug(), f_regdebug(), f_name(), f_copy(), f_instance();
@@ -93,6 +94,8 @@ static struct funtab {
 	f_delobj,2,MAXARGS,
 "t", "", "table of contents",
 	dir_print,1,MAXARGS,
+"ls", "", "table of contents",
+	dir_print,1,MAXARGS,
 "mv", "old new", "rename object",
 	f_name,3,3,
 "cp", "from to", "copy [duplicate] object",
@@ -110,6 +113,8 @@ static struct funtab {
 "kill", "<objects>", "delete objects from file",
 	f_kill,2,MAXARGS,
 "l", "<objects>", "list attributes",
+	f_list,2,MAXARGS,
+"cat", "<objects>", "list attributes",
 	f_list,2,MAXARGS,
 "find", "<objects>", "find all references to objects",
 	f_find, 1, MAXARGS,
@@ -259,6 +264,8 @@ static struct funtab {
 	f_memprint, 1, 1,
 "facedef", "####", "define new face for an arb",
 	f_facedef, 2, MAXARGS,
+"sync",	"",	"forces UNIX sync",
+	sync, 1, 1,
 "eqn", "A B C", "planar equation coefficients",
 	f_eqn, 4, 4
 };
@@ -356,7 +363,7 @@ parse_line()
  *  to the proper function.  If the number of arguments is
  *  incorrect, print out a short help message.
  */
-static void
+void
 do_cmd()
 {
 	extern char *cmd_args[];
