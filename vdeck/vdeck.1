@@ -1,6 +1,6 @@
 .TH VDECK 1 VMB
-'\"	last edit:	10/11/83	G S Moss
-'\"	SCCSID		@(#)vdeck.1	1.4
+'\"	last edit:	5/24/84	G S Moss
+'\"	SCCSID		@(#)vdeck.1	1.5
 .SH NAME
 Vdeck \- Generate COM-GEOM decks from a
 .I vged
@@ -8,34 +8,28 @@ file
 .SH SYNOPSIS
 .B vdeck
 {file}.g
-[
-.BI object...
-]
 .SH DESCRIPTION
-.I Vdeck\^
-allows the user to select a list of objects (solids,  regions,  or
-groups) from a
-.I vged
-file and generate a COM-GEOM vdeck for them.
-A list of objects  can be specified when invoking the program or a list
-can be selected interactively from the table of contents. String match-
-ing operators  like  those used to specify file or directory names from
-the UNIX shell are provided for this purpose,  as well as to search for
-names in the table of contents.   A list of objects can be edited using
-the 'delete' and 'insert' operators.  A vdeck consists of  three  tables
-(solid, region and region-id) and are saved as seperate files. Multiple
-decks can be created by specifying unique file name prefixes,  in which
-case the tables are suffixed by a ".st", ".rt" and ".id".
+A list of
+.I objects
+to be converted are selected interactively from the table of contents.
+String matching operators (wild cards) like those used to specify file
+or directory names as in
+.IB sh (1)
+are provided for this purpose, as well as to search for names in the
+table of contents.
+One or more COM-GEOM decks can be output.  Each deck consists of three
+files, the solid, region and region-id tables.
 .sp
-On-line documentation is provided.
+A menu of the commands and their usage is available by typing '?' to
+the program.
 .sp
 .SH FILES
 Output files:
 .sp
 .in +1.0
-solids, regions, region_ids		Default file names
+solids,\ regions,\ region_ids\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Default file names
 .br
-*.st,   *.rt,    *.id			Unique file names
+{pre-fix}.st,\ {pre-fix}.rt,\ {pre-fix}.id\ \ \ \ Unique file names
 .in -1.0
 .sp
 Temporary files:
@@ -46,7 +40,7 @@ Temporary files:
 .in -1.0
 .sp
 .SH "SEE ALSO"
-ged, gedu, view
+vged(1), gedu(1), gedplot(1)
 .sp
 .SH AUTHORS
 .in +1.0
