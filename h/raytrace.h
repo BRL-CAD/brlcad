@@ -519,7 +519,7 @@ struct mater_info {
  *  The region structure.
  */
 struct region  {
-	long		reg_magic;
+	struct bu_list	l;		/* magic # and doubly linked list */
 	CONST char	*reg_name;	/* Identifying string */
 	union tree	*reg_treetop;	/* Pointer to boolean tree */
 	int		reg_bit;	/* constant index into Regions[] */
@@ -527,7 +527,6 @@ struct region  {
 	int		reg_aircode;	/* Region ID AIR code */
 	int		reg_gmater;	/* GIFT Material code */
 	int		reg_los;	/* equivalent LOS estimate ?? */
-	struct region	*reg_forw;	/* linked list of all regions */
 	struct mater_info reg_mater;	/* Real material information */
 	genptr_t	reg_mfuncs;	/* User appl. funcs for material */
 	genptr_t	reg_udata;	/* User appl. data for material */
@@ -1296,7 +1295,7 @@ struct rt_i {
 	/* THESE ITEMS SHOULD BE CONSIDERED OPAQUE, AND SUBJECT TO CHANGE */
 	int		needprep;	/* needs rt_prep */
 	struct region	**Regions;	/* ptrs to regions [reg_bit] */
-	struct region	*HeadRegion;	/* ptr of list of regions in model */
+	struct bu_list	HeadRegion;	/* ptr of list of regions in model */
 	/* Ray-tracing statistics */
 	long		nregions;	/* total # of regions participating */
 	long		nsolids;	/* total # of solids participating */
