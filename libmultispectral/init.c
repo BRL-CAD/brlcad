@@ -39,6 +39,9 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "shadework.h"
 #include "../rt/rdebug.h"
 
+#define MFUNCS(_name)	\
+	{ extern struct mfuncs _name[]; mlib_add_shader( headp, _name ); }
+
 /*
  *			M U L T I S P E C T R A L _ S H A D E R _ I N I T
  */
@@ -46,14 +49,22 @@ void
 multispectral_shader_init(headp)
 struct mfuncs	**headp;
 {
+	MFUNCS( phg_mfuncs );
+	MFUNCS( light_mfuncs );
 #if 0
+	{
+		extern struct mfuncs phg_mfuncs[];
+		mlib_add_shader( headp, phg_mfuncs );
+	}
+	{
+		extern struct mfuncs light_mfuncs[];
+		mlib_add_shader( headp, light_mfuncs );
+	}
 	/*
 	 *  Connect up shader ("material") interfaces
 	 *  Note that sh_plastic.c defines the required "default" entry.
 	 */
 	{
-		extern struct mfuncs phg_mfuncs[];
-		extern struct mfuncs light_mfuncs[];
 		extern struct mfuncs cloud_mfuncs[];
 		extern struct mfuncs spm_mfuncs[];
 		extern struct mfuncs txt_mfuncs[];
@@ -75,8 +86,6 @@ struct mfuncs	**headp;
 		extern struct mfuncs prj_mfuncs[];
 		extern struct mfuncs grass_mfuncs[];
 
-		mlib_add_shader( headp, phg_mfuncs );
-		mlib_add_shader( headp, light_mfuncs );
 		mlib_add_shader( headp, cloud_mfuncs );
 		mlib_add_shader( headp, spm_mfuncs );
 		mlib_add_shader( headp, txt_mfuncs );
