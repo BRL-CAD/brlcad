@@ -66,6 +66,7 @@ void	f_analyze(), f_sed();
 void	f_ill(), f_knob(), f_tops(), f_summary();
 void	f_prcolor(), f_color(), f_edcolor();
 void	f_plot(), f_area(), f_find();
+void	f_regdef(), f_aeview();
 
 static struct funtab {
 	char *ft_name;
@@ -190,6 +191,10 @@ static struct funtab {
 	f_plot, 2, MAXARGS,
 "area", "[endpoint_tolerance]", "calculate presented area of view",
 	f_area, 1, 2,
+"ae", "azim elev", "set view using az and elev angles",
+	f_aeview, 3, 3,
+"regdef", "item [air] [material] [los]", "change next region default codes",
+	f_regdef, 2, 5,
 "memprint", "", "print memory maps",
 	f_memprint,1,1
 };
