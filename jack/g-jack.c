@@ -533,6 +533,9 @@ FILE		*fp_psurf;	/* Jack format file to write vertex list to. */
 	struct loopuse		*lu;
 	struct shell		*s;
 	struct vertex		*v, **verts[1];
+	int			*map;	/* map from v->index to Jack vert # */
+
+	map = (int *)rt_calloc(r->m_p->maxindex, sizeof(int *), "Jack vert map");
 
 	sz = 1000;
 	verts[0] = init_heap(sz);
@@ -617,18 +620,22 @@ FILE		*fp_psurf;	/* Jack format file to write vertex list to. */
 
 	/* Print list of unique vertices and convert from mm to cm. */
 	for (i = 1; i < cnt; i++)  {
+		struct vertex			*v;
 		register struct vertex_g	*vg;
-		NMG_CK_VERTEX(verts[0][i]);
-		vg = verts[0][i]->vg_p;
+		v = verts[0][i];
+		NMG_CK_VERTEX(v);
+		vg = v->vg_p;
 		NMG_CK_VERTEX_G(vg);
+		NMG_INDEX_ASSIGN( map, v, i );	/* map[v] = i */
 		fprintf(fp_psurf, "%f\t%f\t%f\n",
 			vg->coord[X] / 10.,
 			vg->coord[Y] / 10.,
 			vg->coord[Z] / 10.);
 	}
 	fprintf(fp_psurf, ";;\n");
-	jack_faces(r, fp_psurf, verts[0], cnt-1);
+	jack_faces(r, fp_psurf, verts[0], cnt-1, map);
 	rt_free((char *)(verts[0]), "heap");
+	rt_free( (char *)map, "Jack vert map" );
 }
 
 
@@ -640,11 +647,12 @@ FILE		*fp_psurf;	/* Jack format file to write vertex list to. */
 *	stored in a heap.  Using this heap and the nmg structure, a
 *	list of face vertices is written to the Jack data base file.
 */
-jack_faces(r, fp_psurf, verts, sz)
+jack_faces(r, fp_psurf, verts, sz, map)
 struct nmgregion *r;		/* NMG region to be converted. */
 FILE		*fp_psurf;	/* Jack format file to write face vertices to. */
 struct vertex	**verts;	/* Heap of vertex structs. */
 int		sz;	/* Size of vertex heap. */
+int		*map;
 {
 	point_t			vert;
 	struct edgeuse		*eu;
@@ -668,14 +676,14 @@ int		sz;	/* Size of vertex heap. */
 						NMG_CK_VERTEXUSE(eu->vu_p);
 						NMG_CK_VERTEX(eu->vu_p->v_p);
 						NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p);
-		    				fprintf(fp_psurf, "%d ", heap_find(verts, sz, eu->vu_p->v_p, 1));
+		    				fprintf(fp_psurf, "%d ", NMG_INDEX_GET(map,eu->vu_p->v_p));
 					}
 				} else if (RT_LIST_FIRST_MAGIC(&lu->down_hd)
 		  			== NMG_VERTEXUSE_MAGIC) {
 		  			v = RT_LIST_PNEXT(vertexuse, &lu->down_hd)->v_p;
 					NMG_CK_VERTEX(v);
 					NMG_CK_VERTEX_G(v->vg_p);
-		  			fprintf(fp_psurf, "%d ", heap_find(verts, sz, v, 1));
+		  			fprintf(fp_psurf, "%d ", NMG_INDEX_GET(map,v));
 				} else
 					rt_log("jack_faces: loopuse mess up! (1)\n");
 				fprintf(fp_psurf, ";\n");
@@ -692,14 +700,14 @@ int		sz;	/* Size of vertex heap. */
 					NMG_CK_VERTEXUSE(eu->vu_p);
 					NMG_CK_VERTEX(eu->vu_p->v_p);
 					NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p);
-		  			fprintf(fp_psurf, "%d ", heap_find(verts, sz, eu->vu_p->v_p, 1));
+		  			fprintf(fp_psurf, "%d ", NMG_INDEX_GET(map,eu->vu_p->v_p));
 				}
 			} else if (RT_LIST_FIRST_MAGIC(&lu->down_hd)
 				== NMG_VERTEXUSE_MAGIC) {
 				v = RT_LIST_PNEXT(vertexuse, &lu->down_hd)->v_p;
 				NMG_CK_VERTEX(v);
 				NMG_CK_VERTEX_G(v->vg_p);
-				fprintf(fp_psurf, "%d ", heap_find(verts, sz, v, 1));
+				fprintf(fp_psurf, "%d ", NMG_INDEX_GET(map,v));
 			} else
 				rt_log("jack_faces: loopuse mess up! (1)\n");
 			fprintf(fp_psurf, ";\n");
@@ -712,7 +720,7 @@ int		sz;	/* Size of vertex heap. */
 			NMG_CK_VERTEXUSE(eu->vu_p);
 			NMG_CK_VERTEX(eu->vu_p->v_p);
 			NMG_CK_VERTEX_G(eu->vu_p->v_p->vg_p);
-			fprintf(fp_psurf, "%d ", heap_find(verts, sz, eu->vu_p->v_p, 1));
+			fprintf(fp_psurf, "%d ", NMG_INDEX_GET(map,eu->vu_p->v_p));
 		}
 		if (RT_LIST_FIRST_MAGIC(&s->eu_hd) == NMG_EDGEUSE_MAGIC)
 			fprintf(fp_psurf, ";\n");
@@ -722,7 +730,7 @@ int		sz;	/* Size of vertex heap. */
 			NMG_CK_VERTEXUSE(s->vu_p);
 			NMG_CK_VERTEX(s->vu_p->v_p);
 			NMG_CK_VERTEX_G(s->vu_p->v_p->vg_p);
-			fprintf(fp_psurf, "%d;\n", heap_find(verts, sz, s->vu_p->v_p, 1));
+			fprintf(fp_psurf, "%d;\n", NMG_INDEX_GET(map,s->vu_p->v_p));
 		}
 
 		if (RT_LIST_IS_EMPTY(&s->fu_hd) &&
