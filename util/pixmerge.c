@@ -49,7 +49,7 @@ static int	seen_const;
 static int	seen_formula;
 
 static int	width = 3;
-static unsigned char	const[32];
+static unsigned char	pconst[32];
 
 #define CHUNK	1024
 static char	*b1;			/* fg input buffer */
@@ -88,13 +88,13 @@ register char **argv;
 			break;
 		case 'w':
 			c = atoi(optarg);
-			if( c > 1 && c < sizeof(const) )
+			if( c > 1 && c < sizeof(pconst) )
 				width = c;
 			break;
 		case 'c':
 			{
 				register char *cp = optarg;
-				register unsigned char *conp = const;
+				register unsigned char *conp = pconst;
 
 				/* premature null => atoi gives zeros */
 				for( c=0; c < width; c++ )  {
@@ -165,7 +165,7 @@ char **argv;
 
 		putc( ' ', stderr );
 		for( i = 0; i < width; i++ )  {
-			fprintf( stderr, "%d", const[i] );
+			fprintf( stderr, "%d", pconst[i] );
 			if( i < width-1 )
 				putc( '/', stderr );
 		}
@@ -209,7 +209,7 @@ char **argv;
 
 			ap = cb1;
 			if( seen_const )
-				bp = const;
+				bp = pconst;
 			else
 				bp = cb2;
 			if( wanted & NE )  {
