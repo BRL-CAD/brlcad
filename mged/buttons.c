@@ -490,18 +490,10 @@ static void
 be_s_illuminate()  {
 	if( not_state( ST_VIEW, "Solid Illuminate" ) )
 		return;
-#if 0
-	dmp->dm_light( dmp, LIGHT_ON, BE_S_ILLUMINATE );
-#endif
+
 	if( ill_common() )  {
 		(void)chg_state( ST_VIEW, ST_S_PICK, "Solid Illuminate" );
-#if 0
-		new_mats();
-#endif
 	}
-#if 0
-	update_views = 1;
-#endif
 }
 
 static void
@@ -591,7 +583,6 @@ be_o_x()  {
 	edobj = BE_O_X;
 	movedir = RARROW;
 	update_views = 1;
-
 	set_e_axes_pos(1);
 }
 
@@ -607,7 +598,6 @@ be_o_y()  {
 	edobj = BE_O_Y;
 	movedir = UARROW;
 	update_views = 1;
-
 	set_e_axes_pos(1);
 }
 
@@ -624,7 +614,6 @@ be_o_xy()  {
 	edobj = BE_O_XY;
 	movedir = UARROW | RARROW;
 	update_views = 1;
-
 	set_e_axes_pos(1);
 }
 
@@ -640,13 +629,13 @@ be_o_rotate()  {
 	edobj = BE_O_ROTATE;
 	movedir = ROTARROW;
 	update_views = 1;
-
 	set_e_axes_pos(1);
 }
 
 static void
 be_accept()  {
 	register struct solid *sp;
+	struct bu_vls vls;
 
 	if( state == ST_S_EDIT )  {
 		/* Accept a solid edit */
@@ -698,11 +687,16 @@ be_accept()  {
 		(void)not_state( ST_S_EDIT, "Edit Accept" );
 		return;
 	}
+
+	bu_vls_init(&vls);
+	bu_vls_strcpy(&vls, "undo_edit_menu");
+	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
 }
 
 static void
 be_reject()  {
 	register struct solid *sp;
+	struct bu_vls vls;
 
 	update_views = 1;
 
@@ -773,6 +767,10 @@ be_reject()  {
 	dmp->dm_colorchange(dmp);
 #endif
 	(void)chg_state( state, ST_VIEW, "Edit Reject" );
+
+	bu_vls_init(&vls);
+	bu_vls_strcpy(&vls, "undo_edit_menu");
+	(void)Tcl_Eval(interp, bu_vls_addr(&vls));
 }
 
 static void
@@ -785,16 +783,19 @@ be_s_edit()  {
 	if( not_state( ST_S_EDIT, "Solid Edit (Menu)" ) )
 		return;
 
-#if 0
-	if( edsol )
-		dmp->dm_light( dmp, LIGHT_OFF, edsol );
-
-	dmp->dm_light( dmp, LIGHT_ON, edsol = BE_S_EDIT );
-#endif
 	edsol = BE_S_EDIT;
 	sedit_menu();		/* Install appropriate menu */
+#if 0
+	build_tcl_edit_menu();
+
+	bn_mat_idn(acc_rot_sol);
+	VSETALL( edit_absolute_rotate, 0.0 );
+	VSETALL( edit_absolute_tran, 0.0 );
+	edit_absolute_scale = 0;
+	acc_sc_sol = 1;
 
 	set_e_axes_pos(1);
+#endif
 }
 
 static void
@@ -803,14 +804,9 @@ be_s_rotate()  {
 	if( not_state( ST_S_EDIT, "Solid Rotate" ) )
 		return;
 
-#if 0
-	dmp->dm_light( dmp, LIGHT_OFF, edsol );
-	dmp->dm_light( dmp, LIGHT_ON, edsol = BE_S_ROTATE );
-#endif
+	es_edflag = SROT;
 	edsol = BE_S_ROTATE;
 	mmenu_set( MENU_L1, MENU_NULL );
-	es_edflag = SROT;
-	bn_mat_idn(acc_rot_sol);
 
         set_e_axes_pos(1);
 }
@@ -821,14 +817,11 @@ be_s_trans()  {
 	if( not_state( ST_S_EDIT, "Solid Translate" ) )
 		return;
 
-#if 0
-	dmp->dm_light( dmp, LIGHT_OFF, edsol );
-	dmp->dm_light( dmp, LIGHT_ON, edsol = BE_S_TRANS );
-#endif
 	edsol = BE_S_TRANS;
 	es_edflag = STRANS;
 	movedir = UARROW | RARROW;
 	mmenu_set( MENU_L1, MENU_NULL );
+
         set_e_axes_pos(1);
 }
 
@@ -838,14 +831,11 @@ be_s_scale()  {
 	if( not_state( ST_S_EDIT, "Solid Scale" ) )
 		return;
 
-#if 0
-	dmp->dm_light( dmp, LIGHT_OFF, edsol );
-	dmp->dm_light( dmp, LIGHT_ON, edsol = BE_S_SCALE );
-#endif
 	edsol = BE_S_SCALE;
 	es_edflag = SSCALE;
 	mmenu_set( MENU_L1, MENU_NULL );
 	acc_sc_sol = 1.0;
+
         set_e_axes_pos(1);
 }
 
