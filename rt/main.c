@@ -85,6 +85,7 @@ char		*scanbuf;	/*** Output buffering, for parallelism */
 
 /* Eventually, npsw = MAX_PSW by default */
 int		npsw = 1;		/* number of worker PSWs to run */
+struct resource	resource[MAX_PSW];	/* memory resources */
 /***** end variables shared with worker() */
 
 static char	*beginptr;		/* sbrk() at start of program */
@@ -96,25 +97,47 @@ static char	*framebuffer = NULL;	/* Name of framebuffer */
 #ifdef PARALLEL
 static int	lock_tab[12];		/* Lock usage counters */
 static char	*all_title[12] = {
-	"partition",
-	"seg",
 	"malloc",
-	"printf",
-	"bitv",
 	"worker",
 	"stats",
 	"???"
 };
+
+/*
+ *			L O C K _ P R
+ */
 lock_pr()
 {
 	register int i;
-	for( i=0; i<8; i++ )  {
+	for( i=0; i<3; i++ )  {
 		if(lock_tab[i] == 0)  continue;
 		fprintf(stderr,"%10d %s\n", lock_tab[i], all_title[i]);
 	}
 }
 #endif PARALLEL
 
+/*
+ *			R E S _ P R
+ */
+res_pr()
+{
+	register struct resource *res;
+	register int i;
+
+	res = &resource[0];
+	for( i=0; i<npsw; i++, res++ )  {
+		fprintf(stderr,"seg  len=%10d get=%10d free=%10d\n",
+			res->re_seglen, res->re_segget, res->re_segfree );
+		fprintf(stderr,"part len=%10d get=%10d free=%10d\n",
+			res->re_partlen, res->re_partget, res->re_partfree );
+		fprintf(stderr,"bitv len=%10d get=%10d free=%10d\n",
+			res->re_bitvlen, res->re_bitvget, res->re_bitvfree );
+	}
+}
+
+/*
+ *			G E T _ A R G S
+ */
 get_args( argc, argv )
 register char **argv;
 {
@@ -235,11 +258,7 @@ char **argv;
 		exit(1);
 	}
 
-	RES_INIT( &rt_g.res_pt );
-	RES_INIT( &rt_g.res_seg );
 	RES_INIT( &rt_g.res_malloc );
-	RES_INIT( &rt_g.res_printf );
-	RES_INIT( &rt_g.res_bitv );
 	RES_INIT( &rt_g.res_worker );
 	RES_INIT( &rt_g.res_stats );
 #ifdef PARALLEL
@@ -322,9 +341,9 @@ char **argv;
 #ifdef PARALLEL
 	/* Get enough dynamic memory to keep from making malloc sbrk() */
 	for( x=0; x<npsw; x++ )  {
-		rt_get_pt(x);
-		rt_get_seg(x);
-		rt_get_bitv(x);
+		rt_get_pt(&resource[x]);
+		rt_get_seg(&resource[x]);
+		rt_get_bitv(&resource[x]);
 	}
 #ifdef HEP
 	/* This isn't useful with the Caltech malloc() in most systems,
@@ -515,6 +534,7 @@ do_more:
 
 #ifdef PARALLEL
 	lock_pr();
+	res_pr();
 #endif PARALLEL
 
 	if( matflag )  goto do_more;
@@ -533,7 +553,7 @@ out:
 RES_INIT(p)
 register int *p;
 {
-	register int i = p - (&rt_g.res_pt);
+	register int i = p - (&rt_g.res_malloc);
 	if(rdebug&RDEBUG_PARALLEL) 
 		fprintf(stderr,"RES_INIT 0%o, i=%d, rt_g=0%o\n", p, i, &rt_g);
 	LOCKASGN(p);
@@ -543,7 +563,7 @@ register int *p;
 RES_ACQUIRE(p)
 register int *p;
 {
-	register int i = p - (&rt_g.res_pt);
+	register int i = p - (&rt_g.res_malloc);
 	if( i < 0 || i > 12 )  {
 		fprintf("RES_ACQUIRE(0%o)? %d?\n", p, i);
 		abort();
@@ -556,7 +576,7 @@ register int *p;
 RES_RELEASE(p)
 register int *p;
 {
-	register int i = p - (&rt_g.res_pt);
+	register int i = p - (&rt_g.res_malloc);
 	if(rdebug&RDEBUG_PARALLEL) fputc( 'a'+i, stderr );
 	LOCKOFF(p);
 	if(rdebug&RDEBUG_PARALLEL) fputc( '\n', stderr);
@@ -583,7 +603,7 @@ RES_ACQUIRE(p)
 register int *p;		/* known to be a5 */
 {
 	register int i;
-	i = p - (&rt_g.res_pt);
+	i = p - (&rt_g.res_malloc);
 
 #ifdef PARALLEL
 	asm("loop:");

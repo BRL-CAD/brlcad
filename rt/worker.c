@@ -28,25 +28,26 @@ static char RCSworker[] = "@(#)$Header$ (BRL)";
 #include "./rdebug.h"
 
 /***** view.c variables imported from rt.c *****/
-extern mat_t view2model;
-extern mat_t model2view;
+extern mat_t	view2model;
+extern mat_t	model2view;
 
 /***** worker.c variables imported from rt.c *****/
-extern void worker();
+extern void	worker();
 extern struct application ap;
 extern int	stereo;		/* stereo viewing */
-extern vect_t left_eye_delta;
+extern vect_t	left_eye_delta;
 extern int	hypersample;	/* number of extra rays to fire */
 extern int	perspective;	/* perspective view -vs- parallel view */
 extern vect_t	dx_model;	/* view delta-X as model-space vector */
 extern vect_t	dy_model;	/* view delta-Y as model-space vector */
 extern point_t	eye_model;	/* model-space location of eye */
 extern point_t	viewbase_model;	/* model-space location of viewplane corner */
-extern int npts;	/* # of points to shoot: x,y */
-extern mat_t Viewrotscale;
-extern fastf_t viewsize;
-extern fastf_t zoomout;
-extern int npsw;
+extern int	npts;		/* # of points to shoot: x,y */
+extern mat_t	Viewrotscale;
+extern fastf_t	viewsize;
+extern fastf_t	zoomout;
+extern int	npsw;
+extern struct resource resource[];
 
 #ifdef RTSRV
 extern char scanbuf[];
@@ -206,11 +207,11 @@ int cpu;
 	RES_ACQUIRE( &rt_g.res_worker );
 	com = nworkers++;
 	RES_RELEASE( &rt_g.res_worker );
-#ifdef PARALLEL
-rt_log("Worker %d running on cpu %d, rt_g=0%o, ap=0%o\n", com, cpu, &rt_g, &ap);
-#endif
 
+	a.a_resource = &resource[cpu];
+	resource[cpu].re_cpu = cpu;
 	a.a_onehit = 1;
+
 	while(1)  {
 		RES_ACQUIRE( &rt_g.res_worker );
 		com = cur_pixel++;
