@@ -945,7 +945,12 @@ int	width, height;
 		return	-1;
 	}
 	SUN(ifp)->su_mode = mode;
-	myfont = pf_open( "/usr/lib/fonts/fixedwidthfonts/screen.b.14" );
+#define WHICH_FONT	"/usr/lib/fonts/fixedwidthfonts/screen.b.14"
+	myfont = pf_open( WHICH_FONT );
+	if( myfont == 0 )  {
+		fb_log("sun_dopen: pf_open %s failure\n", WHICH_FONT);
+		return(-1);
+	}
 
 	/*
 	 * Initialize what we want an 8bit *hardware* colormap to
@@ -964,10 +969,18 @@ int	width, height;
 		/* Make a frame and a canvas to go in it */
 		frame = window_create(NULL, FRAME,
 			      FRAME_LABEL, "Frame Buffer", 0);
+		if( frame == 0 )  {
+			fb_log("sun_dopen: window_create frame failure\n");
+			return(-1);
+		}
 		/* XXX - "command line" args? pg.51 */
 		canvas = window_create(frame, CANVAS,
 			      WIN_WIDTH, width,
 			      WIN_HEIGHT, height, 0);
+		if( canvas == 0 )  {
+			fb_log("sun_dopen: window_create canvas failure\n");
+			return(-1);
+		}
 		/* Fit window to canvas (width+10, height+20) */
 		window_fit(frame);
 
@@ -1010,17 +1023,24 @@ int	width, height;
 	}
 	else {
         	/************ Raw Screen Open ************/
-		static Pixrect	*screenpr = NULL;
-		static Pixrect	*windowpr;
+		Pixrect	*screenpr;
+		Pixrect	*windowpr;
 
+		screenpr = pr_open( "/dev/fb" );
 		if( screenpr == (Pixrect *) NULL ) {
-			screenpr = pr_open( "/dev/fb" );
-			windowpr = pr_region(	screenpr,
-					XMAXSCREEN-width-BORDER*2,
-					YMAXSCREEN-(height+BANNER+BORDER*3),
-					width+BORDER*2, height+BANNER+BORDER*3
-					);
+			fb_log("sun_dopen: pr_open /dev/fb failure\n");
+			return(-1);
 		}
+		windowpr = pr_region(	screenpr,
+			XMAXSCREEN-width-BORDER*2,
+			YMAXSCREEN-(height+BANNER+BORDER*3),
+			width+BORDER*2, height+BANNER+BORDER*3
+			);
+		if( windowpr == 0 )  {
+			fb_log("sun_dopen: pr_region failure\n");
+			return(-1);
+		}
+
 		SUNPRL(ifp) = (char *)
 			pr_region(	windowpr,
 					BORDER, BANNER+BORDER*2,
@@ -1054,8 +1074,14 @@ int	width, height;
 				redmap, grnmap, blumap );
 		}
 	}
-
 	pf_close( myfont );
+
+	if( (SUN(ifp)->su_depth != 1) && (SUN(ifp)->su_depth != 8) ) {
+		fb_log( "if_sun: Can only handle 1bit and 8bit deep displays (not %d)\n",
+			SUN(ifp)->su_depth );
+		return	-1;
+	}
+
 	ifp->if_width = width;
 	ifp->if_height = height;
 	SUN(ifp)->su_xzoom = 1;
@@ -1073,14 +1099,8 @@ int	width, height;
 		sun_repaint( ifp );
 	}
 
-	if( (SUN(ifp)->su_depth != 1) && (SUN(ifp)->su_depth != 8) ) {
-		fb_log( "if_sun: Can only handle 1bit and 8bit deep displays (not %d)\n",
-			SUN(ifp)->su_depth );
-		return	-1;
-	}
-
 	return	0;		/* "Success" */
-	}
+}
 
 /*
  *			S U N _ D C L O S E 
