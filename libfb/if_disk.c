@@ -46,20 +46,19 @@ _LOCAL_ int	dsk_open(),
 FBIO disk_interface = {
 	dsk_open,
 	dsk_close,
-	fb_null,		/* reset */
 	dsk_clear,
 	dsk_read,
 	dsk_write,
 	dsk_rmap,
 	dsk_wmap,
-	fb_null,		/* viewport_set */
-	fb_null,		/* window_set */
-	fb_null,		/* zoom_set */
-	fb_null,		/* setcursor */
-	fb_null,		/* cursor */
-	fb_null,		/* scursor */
+	fb_sim_view,		/* set view */
+	fb_sim_getview,		/* get view */
+	fb_null,		/* define cursor */
+	fb_sim_cursor,		/* set cursor */
+	fb_sim_getcursor,	/* get cursor */
 	fb_sim_readrect,
 	fb_sim_writerect,
+	fb_null,		/* poll */
 	fb_null,		/* flush */
 	dsk_free,
 	dsk_help,
@@ -69,7 +68,11 @@ FBIO disk_interface = {
 	"filename",		/* not in list so name is safe */
 	512,
 	512,
+	-1,			/* select fd */
 	-1,
+	1, 1,			/* zoom */
+	256, 256,		/* window center */
+	0, 0, 0,		/* cursor */
 	PIXEL_NULL,
 	PIXEL_NULL,
 	PIXEL_NULL,
