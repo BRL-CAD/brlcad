@@ -72,24 +72,24 @@ fastf_t scale;
 
 	RT_PIPE_CK_MAGIC( pipe );
 
-	if( scale < 1.0 )
+	/* check that this can be done */
+	for( RT_LIST_FOR( ps, wdb_pipept, &pipe->pipe_segs_head ) )
 	{
-		/* check that this can be done */
-		for( RT_LIST_FOR( ps, wdb_pipept, &pipe->pipe_segs_head ) )
-		{
-			fastf_t tmp_od;
+		fastf_t tmp_od;
 
+		if( scale < 0.0 )
+			tmp_od = (-scale );
+		else
 			tmp_od = ps->pp_od*scale;
-			if( ps->pp_id > tmp_od )
-			{
-				rt_log( "Cannot make OD less than ID\n" );
-				return;
-			}
-			if( tmp_od > 2.0*ps->pp_bendradius )
-			{
-				rt_log( "Cannot make outer radius greater than bend radius\n" );
-				return;
-			}
+		if( ps->pp_id > tmp_od )
+		{
+			rt_log( "Cannot make OD less than ID\n" );
+			return;
+		}
+		if( tmp_od > 2.0*ps->pp_bendradius )
+		{
+			rt_log( "Cannot make outer radius greater than bend radius\n" );
+			return;
 		}
 	}
 
@@ -107,25 +107,22 @@ fastf_t scale;
 
 	RT_PIPE_CK_MAGIC( pipe );
 
-	if( scale > 1.0 || scale < 0.0 )
+	/* check that this can be done */
+	for( RT_LIST_FOR( ps, wdb_pipept, &pipe->pipe_segs_head ) )
 	{
-		/* check that this can be done */
-		for( RT_LIST_FOR( ps, wdb_pipept, &pipe->pipe_segs_head ) )
+		if( scale > 0.0 )
+			tmp_id = ps->pp_id*scale;
+		else
+			tmp_id = (-scale);
+		if( ps->pp_od < tmp_id )
 		{
-			if( scale > 0.0 )
-				tmp_id = ps->pp_id*scale;
-			else
-				tmp_id = (-scale);
-			if( ps->pp_od < tmp_id )
-			{
-				rt_log( "Cannot make ID greater than OD\n" );
-				return;
-			}
-			if( tmp_id > 2.0*ps->pp_bendradius )
-			{
-				rt_log( "Cannot make inner radius greater than bend radius\n" );
-				return;
-			}
+			rt_log( "Cannot make ID greater than OD\n" );
+			return;
+		}
+		if( tmp_id > 2.0*ps->pp_bendradius )
+		{
+			rt_log( "Cannot make inner radius greater than bend radius\n" );
+			return;
 		}
 	}
 
@@ -147,26 +144,22 @@ fastf_t scale;
 
 	RT_CKMAG( ps, WDB_PIPESEG_MAGIC, "pipe segment" );
 
-	/* make sure we can make this change */
-	if( scale < 1.0 )
+	/* need to check that the new OD is not less than ID
+	 * of any affected segment.
+	 */
+	if( scale < 0.0 )
+		tmp_od = (-scale);
+	else
+		tmp_od = scale*ps->pp_od;
+	if( ps->pp_id > tmp_od )
 	{
-		/* need to check that the new OD is not less than ID
-		 * of any affected segment.
-		 */
-		if( scale < 0.0 )
-			tmp_od = (-scale);
-		else
-			tmp_od = scale*ps->pp_od;
-		if( ps->pp_id > tmp_od )
-		{
-			rt_log( "Cannot make OD smaller than ID\n" );
-			return;
-		}
-		if( tmp_od > 2.0*ps->pp_bendradius )
-		{
-			rt_log( "Cannot make outer radius greater than bend radius\n" );
-			return;
-		}
+		rt_log( "Cannot make OD smaller than ID\n" );
+		return;
+	}
+	if( tmp_od > 2.0*ps->pp_bendradius )
+	{
+		rt_log( "Cannot make outer radius greater than bend radius\n" );
+		return;
 	}
 
 	if( scale > 0.0 )
@@ -183,24 +176,20 @@ fastf_t scale;
 
 	RT_CKMAG( ps, WDB_PIPESEG_MAGIC, "pipe segment" );
 
-	/* make sure we can make this change */
-	if( scale > 1.0 || scale < 0.0 )
+	/* need to check that the new ID is not greater than OD */
+	if( scale > 0.0 )
+		tmp_id = scale*ps->pp_id;
+	else
+		tmp_id = (-scale);
+	if( ps->pp_od < tmp_id )
 	{
-		/* need to check that the new ID is not greater than OD */
-		if( scale > 0.0 )
-			tmp_id = scale*ps->pp_id;
-		else
-			tmp_id = (-scale);
-		if( ps->pp_od < tmp_id )
-		{
-			rt_log( "Cannot make ID greater than OD\n" );
-			return;
-		}
-		if( tmp_id > 2.0*ps->pp_bendradius )
-		{
-			rt_log( "Cannot make inner radius greater than bend radius\n" );
-			return;
-		}
+		rt_log( "Cannot make ID greater than OD\n" );
+		return;
+	}
+	if( tmp_id > 2.0*ps->pp_bendradius )
+	{
+		rt_log( "Cannot make inner radius greater than bend radius\n" );
+		return;
 	}
 
 	if( scale > 0.0 )
