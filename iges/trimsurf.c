@@ -28,7 +28,18 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 static fastf_t u_translation=0.0;
 static fastf_t v_translation=0.0;
 
+#define UV_TOL  1.0e-6
+
 #define CTL_INDEX(_i,_j)	((_i * n_cols + _j) * ncoords)
+
+struct snurb_hit
+{
+	struct bu_list l;
+	fastf_t dist;
+	point_t pt;
+	vect_t norm;
+	struct face *f;
+};
 
 struct face_g_snurb *
 Get_nurb_surf( entityno, m )
@@ -341,11 +352,33 @@ struct face_g_snurb *srf;
 	point_t uvw;
 	hpoint_t pt_on_srf;
 	struct vertexuse *vu1;
+	int moved=0;
 
 	NMG_CK_VERTEXUSE( vu );
 	NMG_CK_SNURB( srf );
 
 	VSETALLN( pt_on_srf, 0.0, 4 )
+
+	if( u < srf->u.knots[0] || v < srf->v.knots[0] ||
+		u > srf->u.knots[srf->u.k_size-1] || v > srf->v.knots[srf->v.k_size-1] )
+	{
+		bu_log( "WARNING: UV point outside of domain of surface!!!:\n" );
+		bu_log( "\tUV = (%g %g)\n", u, v );
+		bu_log( "\tsrf domain: (%g %g) <-> (%g %g)\n",
+			srf->u.knots[0], srf->v.knots[0],
+			srf->u.knots[srf->u.k_size-1], srf->v.knots[srf->v.k_size-1] );
+
+		if( u < srf->u.knots[0] )
+			u = srf->u.knots[0];
+		if( v < srf->v.knots[0] )
+			v = srf->v.knots[0];
+		if( u > srf->u.knots[srf->u.k_size-1] )
+			u = srf->u.knots[srf->u.k_size-1];
+		if( v > srf->v.knots[srf->v.k_size-1] )
+			v = srf->v.knots[srf->v.k_size-1];
+
+		moved = 1;
+	}
 
 	rt_nurb_s_eval( srf, u, v, pt_on_srf );
 	if( RT_NURB_IS_PT_RATIONAL( srf->pt_type ) )
@@ -354,6 +387,11 @@ struct face_g_snurb *srf;
 
 		scale = 1.0/pt_on_srf[3];
 		VSCALE( pt_on_srf, pt_on_srf, scale );
+	}
+	if( moved )
+	{
+		bu_log( "\tMoving VU geom to (%g %g %g) new UV = (%g %g)\n",
+			V3ARGS( pt_on_srf ), u, v );
 	}
 
 	nmg_vertex_gv( vu->v_p, pt_on_srf );
@@ -605,7 +643,6 @@ struct faceuse *fu;
 				struct edge_g_cnurb *crv1,*crv2;
 				point_t center, start, end;
 				struct rt_list curv_hd;
-rt_log( "Full circle\n" );
 
 				/* read Arc center start and end points */
 				Readcnv( &z , "" );	/* common Z-coord */
@@ -673,7 +710,6 @@ rt_log( "Full circle\n" );
 				struct rt_list curv_hd;
 
 				/* Get spline curve */
-rt_log( "CLosed loop spline curve\n" );
 				crv = Get_cnurb( entity_no );
 
 				ncoords = RT_NURB_EXTRACT_COORDS( crv->pt_type );
@@ -1013,6 +1049,360 @@ struct shell *s;
 	return( fu );
 }
 
+int
+uv_in_fu( u, v, fu )
+fastf_t u, v;
+struct faceuse *fu;
+{
+	int ot_sames, ot_opps;
+	struct loopuse *lu;
+
+	/* check if point is in face (trimming curves) */
+	ot_sames = 0;
+	ot_opps = 0;
+
+	for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+	{
+		if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+			continue;
+
+		if( lu->orientation == OT_SAME )
+			ot_sames += nmg_uv_in_lu( u, v, lu );
+		else if( lu->orientation == OT_OPPOSITE )
+			ot_opps += nmg_uv_in_lu( u, v, lu );
+		else
+		{
+			bu_log( "isect_ray_snurb_face: lu orientation = %s!!\n",
+				nmg_orientation( lu->orientation ) );
+			bu_bomb( "isect_ray_snurb_face: bad lu orientation\n" );
+		}
+	}
+
+	if( ot_sames == 0 || ot_opps == ot_sames )
+	{
+		/* not a hit */
+		return( 0 );
+	}
+	else
+	{
+		/* this is a hit */
+		return( 1 );
+	}
+}
+
+/* find all the intersections of fu along line through "mid_pt",
+ * in direction "ray_dir". Place hits on "hit_list"
+ */
+void
+find_intersections( fu, mid_pt, ray_dir, hit_list )
+struct faceuse *fu;
+point_t mid_pt;
+vect_t ray_dir;
+struct bu_list *hit_list;
+{
+	plane_t pl1, pl2;
+	struct bu_list bezier;
+	struct face *f;
+	struct face_g_snurb *fg;
+
+	NMG_CK_FACEUSE( fu );
+
+	f = fu->f_p;
+
+	if( *f->g.magic_p != NMG_FACE_G_SNURB_MAGIC )
+		bu_bomb( "ERROR: find_intersections(): face is not a TNURB surface!!!!\n" );
+
+	fg = f->g.snurb_p;
+
+	bn_vec_ortho( pl2, ray_dir );
+	VCROSS( pl1, pl2, ray_dir );
+	pl1[3] = VDOT( mid_pt, pl1 );
+	pl2[3] = VDOT( mid_pt, pl2 );
+
+	BU_LIST_INIT( &bezier );
+
+	rt_nurb_bezier( &bezier, fg );
+	while( BU_LIST_NON_EMPTY( &bezier ) )
+	{
+		struct face_g_snurb *srf;
+		struct rt_nurb_uv_hit *hp;
+
+		srf = BU_LIST_FIRST( face_g_snurb,  &bezier );
+		BU_LIST_DEQUEUE( &srf->l );
+
+		hp = rt_nurb_intersect( srf, pl1, pl2, UV_TOL );
+		/* process each hit point */
+		while( hp != (struct rt_nurb_uv_hit *)NULL )
+		{
+			struct rt_nurb_uv_hit *next;
+			struct snurb_hit *myhit;
+			vect_t to_hit;
+			fastf_t homo_hit[4];
+			int ot_sames, ot_opps;
+			struct loopuse *lu;
+
+			next = hp->next;
+
+			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+				bu_log( "\tintersect snurb surface at uv=(%g %g)\n", hp->u, hp->v );
+
+			/* check if point is in face (trimming curves) */
+			if( !uv_in_fu( hp->u, hp->v, fu ) )
+			{
+				/* not a hit */
+
+				if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+					bu_log( "\tNot a hit\n" );
+
+				bu_free( (char *)hp, "nurb_uv_hit" );
+				hp = next;
+				continue;
+			}
+
+			myhit = (struct snurb_hit *)bu_malloc( sizeof( struct snurb_hit ), "myhit" );
+			myhit->f = f;
+
+			/* calculate actual hit point (x y z) */
+			rt_nurb_s_eval( srf, hp->u, hp->v, homo_hit );
+			if( RT_NURB_IS_PT_RATIONAL( srf->pt_type ) )
+			{
+				fastf_t inv_homo;
+
+				inv_homo = 1.0/homo_hit[3];
+				VSCALE( myhit->pt, homo_hit, inv_homo )
+			}
+			else
+				VMOVE( myhit->pt, homo_hit )
+
+			VSUB2( to_hit, myhit->pt, mid_pt );
+			myhit->dist = VDOT( to_hit, ray_dir );
+
+			/* get surface normal */
+			rt_nurb_s_norm( srf, hp->u, hp->v, myhit->norm );
+
+			/* may need to reverse it */
+			if( f->flip )
+				VREVERSE( myhit->norm, myhit->norm )
+
+			/* add hit to list */
+			if( BU_LIST_IS_EMPTY( hit_list ) )
+				BU_LIST_APPEND( hit_list, &myhit->l )
+			else
+			{
+				struct snurb_hit *tmp;
+
+				for( BU_LIST_FOR( tmp, snurb_hit, hit_list ) )
+				{
+					if( tmp->dist >= myhit->dist )
+					{
+						BU_LIST_INSERT( &tmp->l, &myhit->l );
+						break;
+					}
+				}
+				if( myhit->l.forw == (struct bu_list *)0 )
+					BU_LIST_INSERT( hit_list, &myhit->l )
+			}
+
+			bu_free( (char *)hp, "nurb_uv_hit" );
+			hp = next;
+		}
+		rt_nurb_free_snurb( srf );
+	}
+}
+
+/* adjust flip flag on faces using hit list data */
+void
+adjust_flips( hit_list, ray_dir )
+struct bu_list *hit_list;
+vect_t ray_dir;
+{
+	struct snurb_hit *hit;
+	int enter=0;
+	fastf_t prev_dist=(-MAX_FASTF);
+
+	for( BU_LIST_FOR( hit, snurb_hit, hit_list ) )
+	{
+		fastf_t dot;
+
+		if( !NEAR_ZERO( hit->dist - prev_dist, tol.dist ) )
+			enter = !enter;
+
+		dot = VDOT( hit->norm, ray_dir );
+
+		if( (enter && dot > 0.0) || (!enter && dot < 0.0) )
+		{
+			struct snurb_hit *tmp;
+
+			/* reverse this face */
+			hit->f->flip = !(hit->f->flip);
+			for( BU_LIST_FOR( tmp, snurb_hit, hit_list ) )
+			{
+				if( tmp->f == hit->f )
+				{
+					VREVERSE( tmp->norm, tmp->norm )
+				}
+			}
+		}
+
+		prev_dist = hit->dist;
+	}
+}
+
+/* Find a uv point that is actually in the face */
+int
+Find_uv_in_fu( u_in, v_in, fu )
+fastf_t *u_in, *v_in;
+struct faceuse *fu;
+{
+	struct face *f;
+	struct face_g_snurb *fg;
+	struct loopuse *lu;
+	fastf_t umin, umax, vmin, vmax;
+	fastf_t u, v;
+	int i;
+
+	NMG_CK_FACEUSE( fu );
+
+	f = fu->f_p;
+
+	if( *f->g.magic_p != NMG_FACE_G_SNURB_MAGIC )
+		return( 1 );
+
+	fg = f->g.snurb_p;
+
+	umin = fg->u.knots[0];
+	umax = fg->u.knots[fg->u.k_size-1];
+	vmin = fg->v.knots[0];
+	vmax = fg->v.knots[fg->v.k_size-1];
+
+	/* first try the center of the uv-plane */
+	u = (umin + umax)/2.0;
+	v = (vmin + vmax)/2.0;
+
+	if( uv_in_fu( u, v, fu ) )
+	{
+		*u_in = u;
+		*v_in = v;
+		return( 0 );
+	}
+
+	/* no luck, try a few points along the diagonals of the UV plane */
+	for( i=0 ; i<10 ; i++ )
+	{
+		u = umin + (umax - umin)*(double)(i + 1)/11.0;
+		v = vmin + (vmax - vmin)*(double)(i + 1)/11.0;
+
+		if( uv_in_fu( u, v, fu ) )
+		{
+			*u_in = u;
+			*v_in = v;
+			return( 0 );
+		}
+	}
+
+	/* try other diagonal */
+	for( i=0 ; i<10 ; i++ )
+	{
+		u = umin + (umax - umin)*(double)(i + 1)/11.0;
+		v = vmax - (vmax - vmin)*(double)(i + 1)/11.0;
+
+		if( uv_in_fu( u, v, fu ) )
+		{
+			*u_in = u;
+			*v_in = v;
+			return( 0 );
+		}
+	}
+
+	/* last resort, look at loops */
+	for( BU_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
+	{
+		struct edgeuse *eu;
+
+		if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+			continue;
+
+		for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+		{
+			struct edge_g_cnurb *eg;
+
+			if( *eu->g.magic_p != NMG_EDGE_G_CNURB_MAGIC )
+				continue;
+
+			eg = eu->g.cnurb_p;
+
+			if(RT_NURB_IS_PT_RATIONAL( eg->pt_type ) )
+			{
+				u = eu->vu_p->a.cnurb_p->param[0] / eu->vu_p->a.cnurb_p->param[2];
+				v = eu->vu_p->a.cnurb_p->param[1] / eu->vu_p->a.cnurb_p->param[2];
+			}
+			else
+			{
+				u = eu->vu_p->a.cnurb_p->param[0];
+				v = eu->vu_p->a.cnurb_p->param[1];
+			}
+
+			if( uv_in_fu( u, v, fu ) )
+			{
+				*u_in = u;
+				*v_in = v;
+				return( 0 );
+			}
+		}
+	}
+
+	return( 1 );
+}
+
+/* find an xyz pt that s actually in the face
+ * and the surface normal at that point
+ */
+int
+Find_pt_in_fu( fu, pt, norm, hit_list )
+struct faceuse *fu;
+point_t pt;
+vect_t norm;
+struct bu_list *hit_list;
+{
+	struct face *f;
+	struct face_g_snurb *fg;
+	fastf_t u, v;
+	fastf_t homo_hit[4];
+
+	NMG_CK_FACEUSE( fu );
+
+	f = fu->f_p;
+
+	if( *f->g.magic_p != NMG_FACE_G_SNURB_MAGIC )
+		return( 1 );
+
+	fg = f->g.snurb_p;
+
+	if( Find_uv_in_fu( &u, &v, fu ) )
+		return( 1 );
+
+	/* calculate actual hit point (x y z) */
+	rt_nurb_s_eval( fg, u, v, homo_hit );
+	if( RT_NURB_IS_PT_RATIONAL( fg->pt_type ) )
+	{
+		fastf_t inv_homo;
+
+		inv_homo = 1.0/homo_hit[3];
+		VSCALE( pt, homo_hit, inv_homo )
+	}
+	else
+		VMOVE( pt, homo_hit )
+
+	/* get surface normal */
+	rt_nurb_s_norm( fg, u, v, norm );
+
+	/* may need to reverse it */
+	if( f->flip )
+		VREVERSE( norm, norm )
+
+	return( 0 );
+}
+
 void
 Convtrimsurfs()
 {
@@ -1022,6 +1412,8 @@ Convtrimsurfs()
 	struct nmgregion *r;
 	struct shell *s;
 	struct faceuse *fu;
+	struct bu_list bezier;
+	struct bu_list hit_list;
 
 	rt_log( "\n\nConverting Trimmed Surface entities:\n" );
 
@@ -1050,6 +1442,53 @@ Convtrimsurfs()
 				rt_mem_barriercheck();
 
 		}
+	}
+
+	nmg_rebound( m, &tol );
+
+	bu_log( "\n\t%d surfaces converted, adusting surface normals....\n", convsurf );
+
+	/* do some raytracing to get face orientations correct */
+	for( BU_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+	{
+		struct faceuse *fu2;
+		point_t mid_pt;
+		vect_t ray_dir;
+
+		if( fu->orientation != OT_SAME )
+			continue;
+
+		BU_LIST_INIT( &hit_list );
+		if( Find_pt_in_fu( fu, mid_pt, ray_dir ) )
+		{
+			bu_log( "Convtrimsurfs: Cannot find a point in fu (x%x)\n", fu );
+			bu_bomb( "Convtrimsurfs: Cannot find a point in fu\n" );
+		}
+
+		/* find intersections with all the faces
+		 * must include current fu since there
+		 * may be more than one intersection
+		 */
+		for( BU_LIST_FOR( fu2, faceuse, &s->fu_hd ) )
+		{
+			if( fu2->orientation != OT_SAME )
+				continue;
+
+			find_intersections( fu2, mid_pt, ray_dir, &hit_list );
+		}
+
+		adjust_flips( &hit_list, ray_dir );
+
+		while( BU_LIST_NON_EMPTY( &hit_list ) )
+		{
+			struct snurb_hit *myhit;
+
+			myhit = BU_LIST_FIRST( snurb_hit, &hit_list );
+			BU_LIST_DEQUEUE( &myhit->l );
+
+			bu_free( (char *)myhit, "myhit" );
+		}
+
 	}
 
 	rt_log( "Converted %d Trimmed Sufaces successfully out of %d total Trimmed Sufaces\n" , convsurf , totsurfs );
