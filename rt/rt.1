@@ -62,6 +62,14 @@ option defines the width of each scanline in pixels.
 In all cases,
 the default size is 512 pixels.
 There is no maximum size limit.
+Alternatively, the grid cell sizes can be specified with
+.B \-g#
+used to set the grid cell width, and
+.B \-G#
+optionally used to set the grid cell height.
+If the grid cell width is specified and
+the grid cell height is \fInot\fR specified,
+the grid cell height defaults to be the same as the width.
 .TP
 .B \-b "# #"
 is sometimes useful for debugging.  A single ray is fired at the pixel

@@ -116,6 +116,17 @@ Note that the VLD standary ray file format
 is a machine-specific binary format, which means ray files should
 be moved between machines with care.
 .TP
+As an alternative to the
+.B \-s#
+option, the grid cell sizes can be specified with
+.B \-g#
+used to set the grid cell width, and
+.B \-G#
+optionally used to set the grid cell height.
+If the grid cell width is specified and
+the grid cell height is \fInot\fR specified,
+the grid cell height defaults to be the same as the width.
+.TP
 .B \-x#
 Set librt debug flags to (hexadecimal) number.
 .LP
