@@ -132,6 +132,24 @@ const struct bu_vls	*value_vls;
 }
 
 /*
+ *			B U _ A V S _ M E R G E
+ *
+ *  Take all the attributes from 'src' and merge them into 'dest'.
+ */
+void
+bu_avs_merge( struct bu_attribute_value_set *dest, struct bu_attribute_value_set *src )
+{
+	struct bu_attribute_value_pair *app;
+
+	BU_CK_AVS(dest);
+	BU_CK_AVS(src);
+
+	for( BU_AVS_FOR( app, src ) )  {
+		(void)bu_avs_add( dest, app->name, app->value );
+	}
+}
+
+/*
  *			B U _ A V S _ G E T
  */
 const char *

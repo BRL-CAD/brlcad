@@ -1166,6 +1166,8 @@ BU_EXTERN(int			bu_avs_add, (struct bu_attribute_value_set *avp,
 extern int			bu_avs_add_vls(struct bu_attribute_value_set *avp,
 				const char *attribute,
 				const struct bu_vls *value_vls);
+void				bu_avs_merge( struct bu_attribute_value_set *dest,
+				struct bu_attribute_value_set *src );
 extern const char *		bu_avs_get( const struct bu_attribute_value_set *avp,
 				const char *attribute );
 BU_EXTERN(int			bu_avs_remove, (struct bu_attribute_value_set *avp,
