@@ -146,13 +146,12 @@ proc init_edit_solid_int { id } {
     frame $w._F$row -borderwidth 2
     button $w.applyB -text "Apply" -command "esolint_apply $id $w"
     button $w.resetB -text "Reset" -command "esolint_reset"
+    button $w.acceptB -text "Accept" -command "press accept"
+    button $w.rejectB -text "Reject" -command "press reject"
     button $w.dismissB -text "Dismiss" -command "destroy $w"
-    grid $w.applyB x $w.resetB x $w.dismissB -sticky nsew -in $w._F$row
-    grid columnconfigure $w._F$row 0 -weight 0
+    grid $w.applyB x $w.resetB x $w.acceptB $w.rejectB $w.dismissB -sticky nsew -in $w._F$row
     grid columnconfigure $w._F$row 1 -weight 1
-    grid columnconfigure $w._F$row 2 -weight 0
     grid columnconfigure $w._F$row 3 -weight 1
-    grid columnconfigure $w._F$row 4 -weight 0
     grid $w._F$row -row $row -column 0 -sticky nsew -padx 6 -pady 8
     grid rowconfigure $w $row -weight 0
 
