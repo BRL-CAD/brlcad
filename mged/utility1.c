@@ -78,7 +78,7 @@ int discr[MAXSOL], idfd, rd_idfd;
 int flag;	/* which type of table to make */
 FILE	*tabptr;
 
-void
+int
 f_tables( argc, argv )
 int	argc;
 char	**argv;
@@ -109,7 +109,7 @@ char	**argv;
 	else {
 		/* should never reach here */
 		(void)printf("tables:  input error\n");
-		return;
+		return CMD_BAD;
 	}
 
 	regflag = numreg = lastmemb = numsol = 0;
@@ -118,14 +118,14 @@ char	**argv;
 	/* open the file */
 	if( (tabptr=fopen(argv[1], "w+")) == NULL ) {
 		(void)fprintf(stderr,"Can't open %s\n",argv[1]);
-		return;
+		return CMD_BAD;
 	}
 
 	if( flag == SOL_TABLE || flag == REG_TABLE ) {
 		/* temp file for discrimination of solids */
 		if( (idfd = creat("/tmp/mged_discr", 0600)) < 0 ) {
 			perror( "/tmp/mged_discr" );
-			return;
+			return CMD_BAD;
 		}
 		rd_idfd = open( "/tmp/mged_discr", 2 );
 	}
@@ -183,7 +183,7 @@ char	**argv;
 		(void)unlink( "/tmp/ord_id\0" );
 	}
 
-	return;
+	return CMD_OK;
 }
 
 
@@ -198,7 +198,7 @@ char ctemp[7];
  *
  *
  */
-void
+int
 f_edcodes( argc, argv )
 int	argc;
 char	**argv;
@@ -211,7 +211,7 @@ char	**argv;
 	/* need user interaction for this command */
 	if( isatty(0) == 0 ) {
 		(void)printf("Need user interaction for the 'edcodes' command\n");
-		return;
+		return CMD_BAD;
 	}
 
 	regflag = lastmemb = 0;
@@ -230,7 +230,7 @@ char	**argv;
 	/* put terminal back in cooked mode  -  need "nice" way to do this */
 	(void)system( "stty cooked echo" );
 
-	return;
+	return CMD_OK;
 }
 
 
@@ -799,7 +799,7 @@ int num;
 /*
  *	F _ W H I C H _ I D ( ) :	finds all regions with given idents
  */
-void
+int
 f_which_id( argc, argv )
 int	argc;
 char	**argv;
@@ -822,12 +822,15 @@ char	**argv;
 				if( (dp->d_flags & DIR_COMB|DIR_REGION) !=
 				    (DIR_COMB|DIR_REGION) )
 					continue;
-				if( db_get( dbip, dp, &rec, 0, 1 ) < 0 )
-					READ_ERR_return;
+				if( db_get( dbip, dp, &rec, 0, 1 ) < 0 ) {
+					READ_ERR;
+					return CMD_BAD;
+				}
 				if( rec.c.c_regionid != item )
 					continue;
 				(void)printf("   %s\n",rec.c.c_name);
 			}
 		}
 	}
+	return CMD_OK;
 }
