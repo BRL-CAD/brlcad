@@ -2936,7 +2936,7 @@ printf("blit: postclip (%d, %d) to (%d, %d) wds (%d, %d) hts (%d, %d)\n",
 
 #if BLIT_DBG
 printf("blit: output to (%d, %d)\n", ox, oy);
-printf("blit: xi_flags & FLG_VMASK = x%x\n", xi->xi_flags & FLG_VMASK );
+printf("blit: xi_flags & FLG_VMASK = 0x%x\n", xi->xi_flags & FLG_VMASK );
 #endif
 
 	/*
@@ -2995,7 +2995,7 @@ printf("blit: xi_flags & FLG_VMASK = x%x\n", xi->xi_flags & FLG_VMASK );
 			} else if (y==y2) {
 				pyht = y2ht;
 			} else {
-				pyht = ifp->if_yzoom-1;
+				pyht = ifp->if_yzoom;
 			}
 
 			/* Save pointer to start of line */
@@ -3078,9 +3078,10 @@ printf("blit: xi_flags & FLG_VMASK = x%x\n", xi->xi_flags & FLG_VMASK );
 			 * Remember where we put all those bytes.
 			 */
 			holdit = (unsigned char *)opix;
-			opix -= xi->xi_image->bytes_per_line;
-			while (pyht--) {
+			while (pyht-- > 1) {
 				unsigned char *src;
+
+				opix -= xi->xi_image->bytes_per_line;
 				p = (unsigned char *)opix;
 
 #if BLIT_DBG_PIX
@@ -3095,8 +3096,8 @@ printf("blit: xi_flags & FLG_VMASK = x%x\n", xi->xi_flags & FLG_VMASK );
 				for (x=xi->xi_image->bytes_per_line;x>=0;x--) {
 					*p++ = *src++;
 				}
-				opix -= xi->xi_image->bytes_per_line;
 			}
+			opix -= xi->xi_image->bytes_per_line;
 
 			irgb += xi->xi_iwidth * sizeof(RGBpixel);
 		}
