@@ -1,15 +1,18 @@
-#
-#			Makefile.rules
-#
-#  Source -
-#	SECAD/VLD Computing Consortium, Bldg 394
-#	The U. S. Army Ballistic Research Laboratory
-#	Aberdeen Proving Ground, Maryland  21005
-#
-#  This Makefile draws heavily on the experiences of Doug Gwyn's
-#  VLD Standard Makefile, and Doug Kingston's MMDF Global Makefile.
-#	-Mike Muuss, BRL/SECAD, August 1986.
-
+#################################################################
+#								#
+#			Makefile.rules				#
+#								#
+#  Author -							#
+#	Michael John Muuss					#
+#								#
+#  Source -							#
+#	SECAD/VLD Computing Consortium, Bldg 394		#
+#	The U. S. Army Ballistic Research Laboratory		#
+#	Aberdeen Proving Ground, Maryland  21005		#
+#								#
+#  $Header$		#
+#								#
+#################################################################
 
 #  Define default list of targets to be made
 all:		${PRODUCTS}
@@ -48,15 +51,6 @@ flow:		${HEADERS} ${CFILES}
 xref:		${HEADERS} ${CFILES}
 	cxref -c -s -w132 -I${INCDIR} ${CFILES} > ${SRCDIR}.xref
 
-#test:		${PRODUCTS} ${TFILES}
-#	${PRODUCT} < ${PRODUCT}.in > ${PRODUCT}.out 2> ${PRODUCT}.err
-#	@if cmp ${PRODUCT}.exp ${PRODUCT}.out ; \
-#	then	echo 'Tested okay' ; \
-#	else	echo 'Test failed; differences:' ; \
-#		diff ${PRODUCT}.exp ${PRODUCT}.out ; \
-#		exit 1 ; \
-#	fi
-
 compare:	all
 	for prod in ${PRODUCTS} ; \
 		do	cmp ${BINDIR}/$$prod $$prod; \
@@ -93,6 +87,7 @@ uninst-stub:
 		    ${MANDIR}${MANSECTION}/$$man.bak 2>/dev/null ; \
 	done
 
+# Handle all phases of final installation
 install:	all
 	-@if test -n "${PRODUCTS}" ; \
 	then	$(MAKE) $(MFLAGS) -$(MAKEFLAGS) inst-prod ; \
@@ -107,6 +102,7 @@ install:	all
 	fi
 	-@sh -c "if test `${GETHOST}` = ${MASTERHOST} ; then $(MAKE) inst-dist; else exit 0 ; fi"
 
+# Install all products
 inst-prod:	${PRODUCTS}
 	-@for prod in ${PRODUCTS} ; \
 	do	if cmp -s ${BINDIR}/$$prod $$prod; \
@@ -152,7 +148,7 @@ inst-stub:
 # but that would miss routines that were not configured in a particular system.
 inst-dist:
 	-rm -fr ${DISTRIBUTION}/${SRCDIR}/*
-	-${INS} ./Makefile.loc Makefile *.[hcs] ${SHFILES} \
+	-${INS} ./Makefile.loc Makefile *.[hcfs] ${SHFILES} \
 		*.${MANSECTION} *.${MANSECTION}.stub \
 		*.doc \
 		${DISTRIBUTION}/${SRCDIR}/.
