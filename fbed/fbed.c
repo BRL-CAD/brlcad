@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) fbed.c	2.5
-	Modified: 	12/29/86 at 16:16:06
-	Retrieved: 	12/30/86 at 17:01:43
+	SCCS id:	@(#) fbed.c	2.6
+	Modified: 	1/5/87 at 16:56:54
+	Retrieved: 	1/5/87 at 16:58:08
 	SCCS archive:	/vld/moss/src/fbed/s.fbed.c
 
 	Author:		Gary S. Moss
@@ -12,7 +12,7 @@
 */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) fbed.c 2.5, modified 12/29/86 at 16:16:06, archive /vld/moss/src/fbed/s.fbed.c";
+char	sccsTag[] = "@(#) fbed.c 2.6, modified 1/5/87 at 16:56:54, archive /vld/moss/src/fbed/s.fbed.c";
 #endif
 
 #include <stdio.h>
@@ -39,32 +39,30 @@ static struct
 				__FILE__, __LINE__ ); \
 		return	0;
 
-static Panel		panel;	      /* Current panel.			*/
-static Point		bitpad;
-static Point		image_center; /* Center of image space.		*/
-static Point		windo_center; /* Center of screen, image coords.*/
-static Point		windo_anchor; /* Saved "windo_center".		*/
-static Rectangle	current;      /* Current saved rectangle.	*/
-static int		step;	      /* Current step size.		*/
-static int		size_viewport;
-static int		zoom_factor;
-static int		pad_flag = false;
-static int		menu_press;
-static int		last_key;
+static Panel	panel;	      /* Current panel.				*/
+static Point	bitpad;
+static Rectangle current;     /* Current saved rectangle.		*/
+static int	step;	      /* Current step size.			*/
+static int	size_viewport;
+static int	last_key;
 
+_LOCAL_ int	do_Bitpad();
 _LOCAL_ int	fb_Setup();
 _LOCAL_ int	pars_Argv();
-_LOCAL_ int	in_Menu_Area();
 _LOCAL_ int	push_Macro();
 #if defined( BSD ) || defined( sgi )
 _LOCAL_ int	general_Handler();
 #else
 _LOCAL_ void	general_Handler();
 #endif
-_LOCAL_ void	do_Menu_Press();
 _LOCAL_ void	init_Try();
 _LOCAL_ void	fb_Paint();
 _LOCAL_ void	fb_Wind();
+_LOCAL_ void	get_Point();
+_LOCAL_ void	get_Rectangle();
+_LOCAL_ void	fill_Rectangle();
+_LOCAL_ void	fix_Rectangle();
+_LOCAL_ void	put_Fb_Panel();
 _LOCAL_ RGBpixel	*pixel_Avg();
 
 _LOCAL_ int	/* ^X  */ ft_Execute_Function(),
@@ -94,7 +92,6 @@ _LOCAL_ int	/* ^X  */ ft_Execute_Function(),
 		/* J   */ ft_Jump_Dwn(),
 		/* K   */ ft_Jump_Up(),
 		/* L   */ ft_Jump_Rgt(),
-		/* M   */ ft_Pick_Popup(),
 		/* N   */ ft_Name_Keyboard_Macro(),
 		/* P   */ ft_Put_Panel(),
 		/* R   */ ft_Restore_RLE(),
@@ -108,6 +105,7 @@ _LOCAL_ int	/* ^X  */ ft_Execute_Function(),
 		/* a   */ ft_Enter_Macro_Definition(),
 		/* b   */ ft_Set_Rectangle(),
 		/* c   */ ft_Center_Window(),
+		/* d   */ ft_Draw_Line(),
 		/* f   */ ft_Read_Font(),
 		/* g   */ ft_Set_Pixel(),
 		/* h   */ ft_Move_Lft(),
@@ -206,7 +204,7 @@ Func_Tab func_tab[] =
 /* J   */ ft_Jump_Dwn,			NULL,	"jump-cursor-down",
 /* K   */ ft_Jump_Up,			NULL,	"jump-cursor-up",
 /* L   */ ft_Jump_Rgt,			NULL,	"jump-cursor-right",
-/* M   */ ft_Pick_Popup,		NULL,	"popup-menu",
+/* M   */ ft_Nop,			NULL,	"nop",
 /* N   */ ft_Name_Keyboard_Macro,	NULL,	"name-keyboard-macro",
 /* O   */ ft_Nop,			NULL,	"nop",
 /* P   */ ft_Put_Panel,			NULL,	"put-saved-rectangle",
@@ -229,7 +227,7 @@ Func_Tab func_tab[] =
 /* a   */ ft_Enter_Macro_Definition,	NULL,	"enter-macro-definition",
 /* b   */ ft_Set_Rectangle,		NULL,	"set-current-rectangle",
 /* c   */ ft_Center_Window,		NULL,	"window-center",
-/* d   */ ft_Nop,			NULL,	"nop",
+/* d   */ ft_Draw_Line,			NULL,	"draw-line",
 /* e   */ ft_Nop,			NULL,	"nop",
 /* f   */ ft_Read_Font,			NULL,	"read-font",
 /* g   */ ft_Set_Pixel,			NULL,	"set-paint-to-current-pixel",
@@ -264,7 +262,6 @@ static Func_Tab	*macro_entry = FT_NULL; /* Last keyboard macro defined.	*/
 
 FBIO	*fbp;				/* Current framebuffer */
 static int	cur_width = 512;
-static int	reposition_cursor = 1;
 
 /*	m a i n ( )							*/
 main( argc, argv )
@@ -316,7 +313,6 @@ char	*argv[];
 	for( cread_buf[0] = NUL; ; )
 		{	register int	button_press;
 			register int	status_change = false;
-		menu_press = false;
 		for( ; *cptr != NUL; )
 			{
 			do_Key_Cmd( (int) *cptr++, 1 );
@@ -333,7 +329,8 @@ char	*argv[];
 							cursor_pos.p_x,
 							cursor_pos.p_y
 							);
-				reposition_cursor = 0;
+				status_change = true;
+				reposition_cursor = false;
 				}
 			if( ! empty( tty_fd ) )
 				{
@@ -346,55 +343,46 @@ char	*argv[];
 					(void) ft_Quit( (char *) NULL );
 				}
 			}
-		if( pad_flag )
-			if( (button_press = do_Bitpad( &cursor_pos )) == 1 )
-				{
-				De_Bounce_Pen();
-				do_Menu_Press();
-				status_change = true;
-				}
-			else
-			if( button_press != -1 )
-				status_change = true;
-		if(	pallet.on_flag
-		    &&	in_Menu_Area( &pallet, cursor_pos.p_x, cursor_pos.p_y )
+		if(   !	reposition_cursor
+		    &&	(button_press = get_Mouse_Pos( &cursor_pos ))
+		    	!= -1
 			)
-			fb_Pick_Menu( menu_press, &pallet );
-		else
-		if(	pick_one.on_flag
-		    &&	in_Menu_Area( &pick_one, cursor_pos.p_x, cursor_pos.p_y )
-			)
-			fb_Pick_Menu( menu_press, &pick_one );
+			status_change = true;
 		if( status_change )
 			{
-			(void) fb_flush(fbp);
+			(void) fb_flush( fbp );
 			if( report_status )
 				prnt_Status();
 			}
 		}
 	}
 
-void
-fill_Rect( lft, rgt, btm, top, pixelp )
-register int		lft, rgt, top;
+_LOCAL_ void
+fill_Rectangle( rectp, pixelp )
+register Rectangle	*rectp;
 register RGBpixel	*pixelp;
-int			btm;
-	{	register int	y = btm;
+	{	register int	btm = rectp->r_origin.p_y;
+		register int	top = rectp->r_corner.p_y;
+		register int	rgt = rectp->r_corner.p_x;
+		int		lft = rectp->r_origin.p_x;
 #ifdef sgi /* More efficient on IRIS.					*/
-	for( ; y <= top; y++ )
-		{	register int	x = lft;
-		for( ; x <= rgt; x++ )
-			fb_write( fbp, x, y, pixelp, 1 );
+	if( top - btm < 10 || rgt - lft < 10 )
+		{
+		for( ; btm <= top; btm++ )
+			{	register int	x = lft;
+			for( ; x <= rgt; x++ )
+				fb_write( fbp, x, btm, pixelp, 1 );
+			}
+		return;
 		}
-#else
-	for( ; y <= top; y++ )
+#endif
+	for( ; btm <= top; btm++ )
 		{	register int	x = lft;
-		(void) fb_seek( fbp, x, y );
+		(void) fb_seek( fbp, x, btm );
 		for( ; x <= rgt; x++ )
 			FB_WPIXEL( fbp, *pixelp );
 		}
 	(void) fb_flush(fbp);
-#endif
 	return;
 	}
 
@@ -460,13 +448,7 @@ register int	n;
 			*macro_ptr = NUL;
 			}
 		}
-	if( in_Menu_Area( &pick_one, cursor_pos.p_x, cursor_pos.p_y ) )
-		step = pick_one.seg_hgt;
-	else
-	if( in_Menu_Area( &pallet, cursor_pos.p_x, cursor_pos.p_y ) )
-		step = pallet.seg_hgt;
-	else
-		step = gain;
+	step = gain;
 	while( n-- > 0 )
 		{
 		/* For now, ignore return values;
@@ -632,7 +614,6 @@ _LOCAL_ int
 ft_Press( buf )
 char	*buf;
 	{
-	do_Menu_Press();
 	return	1;
 	}
 
@@ -941,19 +922,81 @@ char	*buf;
 
 _LOCAL_ int
 /*ARGSUSED*/
+ft_Draw_Line( buf )
+char	*buf;
+	{	Rectangle	lineseg;
+		register int	major;
+		register int	minor;
+		register int	xsign;
+		register int	ysign;
+		register int	error;
+		register int	x;
+		register int	de;
+		int		xmajor;
+
+	get_Point( "Pick starting point of line", &lineseg.r_origin );
+	get_Point( "Pick ending point of line", &lineseg.r_corner );
+
+	/* Below is a implementation of Bresenham's algorithm written
+		by Douglas A. Gwyn of BRL, as suggested by Newman and
+		Sproull, "Principles of Interactive Computer Graphics",
+		Second Edition, pages 25-26.				*/
+	/* Arrange for X coordinate to increase from start point to
+		end point.						*/
+	if( lineseg.r_origin.p_x > lineseg.r_corner.p_x )
+		{	Point	temp;
+		temp = lineseg.r_origin;
+		lineseg.r_origin = lineseg.r_corner;
+		lineseg.r_corner = temp;
+		}
+	major = lineseg.r_corner.p_x - lineseg.r_origin.p_x;
+	xsign = major ? 1 : 0;
+	minor = lineseg.r_corner.p_y - lineseg.r_origin.p_y;
+	ysign = minor ? (minor > 0 ? 1 : -1) : 0;
+	if( ysign < 0 )
+		minor = -minor;
+	/* If X is not really major, correct the assignments.		*/
+	if( ! (xmajor = minor <= major) )
+		{	register int	temp = minor;
+		minor = major;
+		major = temp;
+		}
+
+	error = major / 2 - minor; /* Initial DDA error.		*/
+	de = major - minor;
+	for( x = lineseg.r_origin.p_x; x <= lineseg.r_corner.p_x; )
+		{
+		(void) fb_write(	fbp,
+					x, lineseg.r_origin.p_y, 
+					(RGBpixel *) paint,
+					1
+					);
+		if( major-- == 0 ) /* Done!				*/
+			return	1;
+		if( error < 0 )	 /* Advance major and minor.		*/
+			{
+			x += xsign;
+			lineseg.r_origin.p_y += ysign;
+			error += de;
+			}
+		else
+			{		/* Advance major only.		*/
+			if( xmajor )	/* X is major direction.	*/
+				x++;
+			else		/* Y is major direction.	*/
+				lineseg.r_origin.p_y += ysign;
+			error -= minor;
+			}
+		}
+	return	1;
+	}
+
+_LOCAL_ int
+/*ARGSUSED*/
 ft_Fill_Panel( buf ) /* Fill current rectangle with "paint" color.	*/
 char	*buf;
-	{	register int	x, y;
-		register int	top, btm, lft, rgt;	
-	lft = current.r_origin.p_x;
-	rgt = current.r_corner.p_x;
-	btm = current.r_origin.p_y;
-	top = current.r_corner.p_y;
-	if( pallet.on_flag )
-		fb_Off_Menu( &pallet );
-	if( pick_one.on_flag )
-		fb_Off_Menu( &pick_one );
-	fill_Rect( lft, rgt, btm, top, (RGBpixel *) paint );
+	{
+	fill_Rectangle( &current, (RGBpixel *) paint );
 	return	1;
 	}
 
@@ -1052,10 +1095,6 @@ char	*buf;
 		return	0;
 	if( answer[0] == 'n' )
 		return	1;
-	if( pallet.on_flag )
-		fb_Off_Menu( &pallet );
-	if( pick_one.on_flag )
-		fb_Off_Menu( &pick_one );
 	(void) fb_cursor( fbp, 0, 0, 0 );	/* off */
 	if( fb_close( fbp ) == -1 )
 		return	0;
@@ -1071,10 +1110,6 @@ _LOCAL_ int
 ft_Get_Panel( buf ) /* Grab panel from framebuffer.			*/
 char	*buf;
 	{
-	if( pallet.on_flag )
-		fb_Off_Menu( &pallet );
-	if( pick_one.on_flag )
-		fb_Off_Menu( &pick_one );
 	if( panel.n_buf != (RGBpixel *) NULL )
 		free( (char *) panel.n_buf );
 	prnt_Rectangle(	"Storing rectangle", &current );
@@ -1138,41 +1173,14 @@ char	*buf;
 
 _LOCAL_ int
 /*ARGSUSED*/
-ft_Pick_Popup( buf ) /* Toggle 'pick' menu.				*/
-char	*buf;
-	{
-	if( menu_flag )
-		{
-		prnt_Event( "Initializing popup menu." );
-		fb_Init_Menu();
-		menu_flag = false;
-		if( fudge_flag )
-			{
-			prnt_Event( "Correcting image." );
-			fudge_Picture( fbp, RESERVED_CMAP );
-			fudge_flag = false;
-			}
-		fb_log( "Popup menu initialized.\n" );
-		}
-	else
-		Toggle( pick_one.on_flag );
-	if( pick_one.on_flag )
-		fb_On_Menu( &pick_one );
-	else
-		fb_Off_Menu( &pick_one );
-	reposition_cursor = true;
-	return	1;
-	}
-
-_LOCAL_ int
-/*ARGSUSED*/
 ft_Put_Panel( buf ) /* Put grabbed panel to framebuffer.		*/
 char	*buf;
 	{
-	if( pallet.on_flag )
-		fb_Off_Menu( &pallet );
-	if( pick_one.on_flag )
-	fb_Off_Menu( &pick_one );
+	if( panel.n_buf == (RGBpixel *) NULL )
+		{
+		fb_log( "You must use \"get-current-rectangle\" first.\n" );
+		return	0;
+		}
 	get_Point( "Pick lower-left corner of panel", &current.r_origin );
 	current.r_corner.p_x = current.r_origin.p_x + panel.n_wid;
 	current.r_corner.p_y = current.r_origin.p_y + panel.n_hgt;
@@ -1204,10 +1212,6 @@ char	*buf;
 		return	0;
 		}
 	prnt_Event( "Decoding \"%s\".", rle_file_nm );
-	if( pallet.on_flag )
-		fb_Off_Menu( &pallet );
-	if( pick_one.on_flag )
-		fb_Off_Menu( &pick_one );
 	(void) fb_cursor( fbp, 0, 0, 0 );	/* off */
 	reposition_cursor = true;
 	if( fb_close( fbp ) == -1 )
@@ -1218,7 +1222,6 @@ char	*buf;
 	(void) exec_Shell( args );
 	if( fb_Setup() == -1 )
 		exit( 1 );
-	fudge_flag = true;
 	(void) fclose( rle_fp );
 	return	1;
 	}
@@ -1258,10 +1261,6 @@ char	*buf;
 		(void) unlink( rle_file_nm );
 		}
 	prnt_Event( "Encoding \"%s\".", rle_file_nm );
-	if( pallet.on_flag )
-		fb_Off_Menu( &pallet );
-	if( pick_one.on_flag )
-		fb_Off_Menu( &pick_one );
 	if( fb_close( fbp ) == -1 )
 		return	0;
 	if( exec_Shell( args ) == 0 )
@@ -1270,7 +1269,6 @@ char	*buf;
 		fb_log( "Image not saved.\n" );
 	if( fb_Setup() == -1 )
 		exit( 1 );
-	fudge_flag = true;
 	reposition_cursor = true;
 	return	1;
 	}
@@ -1288,10 +1286,6 @@ char	*buf;
 	rgt = current.r_corner.p_x;
 	top = current.r_origin.p_y;
 	btm = current.r_corner.p_y;
-	if( pallet.on_flag )
-		fb_Off_Menu( &pallet );
-	if( pick_one.on_flag )
-		fb_Off_Menu( &pick_one );
 	if( ! get_Input( old_color, CLR_LEN, "Enter old pixel color [r g b] : " ) )
 		return	0;
 	if(	sscanf( old_color, "%d %d %d", &red, &grn, &blu ) == 3
@@ -1580,11 +1574,6 @@ char	*buf;
 	{
 	prnt_Event( "Bye..." );
 	restore_Tty();
-	if( pallet.on_flag )
-		fb_Off_Menu( &pallet );
-	if( pick_one.on_flag )
-		fb_Off_Menu( &pick_one );
-	/*(void) fb_wmap( fbp, &cmap );*/
 	exit( 0 );
 	/*NOTREACHED*/
 	}
@@ -1609,20 +1598,8 @@ char	*buf;
 		return	0;
 		}
 	prnt_Event( "Reading \"%s\".", image );
-	if( pallet.on_flag )
-		fb_Off_Menu( &pallet );
-	if( pick_one.on_flag )
-		fb_Off_Menu( &pick_one );
 	(void) fb_cursor( fbp, 0, 0, 0 );	/* off */
 	reposition_cursor = true;
-#if 0
-	if( fudge_Picture( imp, RESERVED_CMAP ) == -1 )
-		{
-		fb_log( "Read of \"%s\" failed.\n", image );
-		return	0;
-		}
-	fudge_flag = false;
-#else
 	{	register int	y;
 	for( y = 0; y < fb_getheight( imp ); y++ )
 		{	RGBpixel	scanbuf[1024];
@@ -1638,7 +1615,6 @@ char	*buf;
 			}
 		}
 	}
-#endif
 	(void) fb_close( imp );
 	return	1;
 	}
@@ -1755,16 +1731,6 @@ fb_Setup()
 		return	-1;
 		}
 	fb_ioinit( fbp );
-	/*if( fb_rmap( fbp, &cmap ) == -1 )
-		{
-		fb_log( "Can't read color map.\n" );
-		return	0;
-		}
-	if( fb_wmap( fbp, &cmap ) == -1 )
-		{
-		fb_log( "Can't write color map.\n" );
-		return	0;
-		}*/
 	if( fb_setcursor( fbp, cursor.bits, cursor.xbits, cursor.ybits,
 	    cursor.xorig, cursor.yorig ) == -1 )
 		{
@@ -1795,11 +1761,12 @@ fb_Paint( x0, y0, x1, y1, color )
 register int	x0, y0, x1, y1;
 RGBpixel		*color;
 	{	register int	x;
-	x0 = x0 < 1 ? 1 : x0;
-	x1 = x1 > fb_getwidth(fbp) ? fb_getwidth(fbp) : x1;
-	y0 = y0 < 1 ? 1 : y0;
-	y1 = y1 > fb_getheight(fbp) ? fb_getheight(fbp) : y1;
-	fill_Rect( x0, x1, y0, y1, color ); 
+		Rectangle	clipped_rect;
+	clipped_rect.r_origin.p_x = x0 < 0 ? 0 : x0;
+	clipped_rect.r_corner.p_x = x1 >= fb_getwidth(fbp) ? fb_getwidth(fbp) - 1 : x1;
+	clipped_rect.r_origin.p_y = y0 < 0 ? 0 : y0;
+	clipped_rect.r_corner.p_y = y1 >= fb_getheight(fbp) ? fb_getheight(fbp) - 1 : y1;
+	fill_Rectangle( &clipped_rect, color ); 
 	return;
 	}
 
@@ -1912,69 +1879,194 @@ restore_Tty()
 	return;
 	}
 
-/*	d o _ M e n u _ P r e s s ( )					*/
-_LOCAL_ void
-do_Menu_Press()
-	{
-	if(	pick_one.on_flag
-	    &&	in_Menu_Area( &pick_one, cursor_pos.p_x, cursor_pos.p_y )
-	   ||	pallet.on_flag
-	    &&	in_Menu_Area( &pallet, cursor_pos.p_x, cursor_pos.p_y )
-		)
-		menu_press = true;
-	return;
-	}
-
-/*	d o _ B i t p a d ( )						*/
-int
-do_Bitpad( pointp )
-register Point	*pointp;
-	{	int	press;
-	if( ! pad_flag )
-		return	-1;
-	if( (press = getpos( &bitpad )) != -1 )
-		{		
-		pointp->p_x = windo_anchor.p_x +
-				(bitpad.p_x-image_center.p_x)/zoom_factor;
-		pointp->p_y = windo_anchor.p_y +
-				(bitpad.p_y-image_center.p_y)/zoom_factor;
-		(void) fb_cursor( fbp, 1, pointp->p_x, pointp->p_y );
-		return	press;
-		}
-	return	-1;
-	}
-
 /*	f b _ G e t _ P i x e l ( )					*/
 void
 fb_Get_Pixel( pixel )
 RGBpixel	pixel;
 	{
-	if( pallet.on_flag && in_Menu_Area( &pallet, cursor_pos.p_x, cursor_pos.p_y ) )
-		{
-		COPYRGB( pixel, pallet.segs[pallet.last_pick-1].color );
-		}
-	else
-		{
 #ifdef sgi
-		(void) fb_read( fbp, cursor_pos.p_x, cursor_pos.p_y, pixel, 1 );
+	(void) fb_read( fbp, cursor_pos.p_x, cursor_pos.p_y, pixel, 1 );
 #else
-		(void) fb_seek( fbp, cursor_pos.p_x, cursor_pos.p_y );
-		(void) fb_rpixel( fbp, pixel );
+	(void) fb_seek( fbp, cursor_pos.p_x, cursor_pos.p_y );
+	(void) fb_rpixel( fbp, pixel );
 #endif
+	return;
+	}
+
+/*	g e t _ F b _ P a n e l ( )					*/
+RGBpixel	*
+get_Fb_Panel( rectp )
+register Rectangle	*rectp;
+	{	register int	top;
+		register int	rectwid;
+		int		recthgt;
+		int		btm, lft, rgt;
+		RGBpixel	*panel;
+		unsigned	u;
+	lft = rectp->r_origin.p_x;
+	rgt = rectp->r_corner.p_x;
+	btm = rectp->r_origin.p_y;
+	top = rectp->r_corner.p_y;
+	if( lft > rgt )
+		{
+		lft = rgt;
+		rgt = rectp->r_origin.p_x;
+		}
+	if( btm > top )
+		{
+		top = btm;
+		btm = rectp->r_origin.p_y;
+		}
+	rectwid = rgt-lft + 1;
+	recthgt = top-btm + 1;
+	u = (rectwid*recthgt) * sizeof(RGBpixel);
+	if( (panel = (RGBpixel *) malloc( u )) == RGBPIXEL_NULL )
+		fb_log(	"\"%s\" (%d), get_Fb_Panel() : malloc %d (%d*%d) failed.\n",
+			__FILE__, __LINE__,
+			u, rectwid, recthgt
+			);
+	else
+		{	register int	y = btm;
+			RGBpixel	*pixelp = panel;
+		for( ; y <= top; y++, pixelp += rectwid )
+			{
+			if( fb_read( fbp, lft, y, pixelp, rectwid ) == -1 )
+				{
+				fb_log( "Read of %d pixels from <%d,%d> failed.\n",
+					rectwid, lft, y
+					);
+				return	panel;
+				}
+			}
+		}
+	return	panel;
+	}
+
+/*	p u t _ F b _ P a n e l ( )					*/
+_LOCAL_ void
+put_Fb_Panel( rectp, panel )
+register Rectangle	*rectp;
+register RGBpixel	*panel;
+	{	register int	top, rectwid, y;
+		int		lft, rgt, btm;
+	lft = rectp->r_origin.p_x;
+	rgt = rectp->r_corner.p_x;
+	btm = rectp->r_origin.p_y;
+	top = rectp->r_corner.p_y;
+	if( lft > rgt )
+		{
+		lft = rgt;
+		rgt = rectp->r_origin.p_x;
+		}
+	if( btm > top )
+		{
+		top = btm;
+		btm = rectp->r_origin.p_y;
+		}
+	rectwid = rgt-lft + 1;
+	for( y = btm; y <= top; y++, panel += rectwid )
+		{
+		if( fb_write( fbp, lft, y, panel, rectwid ) == -1 )
+			{
+			fb_log( "Write of %d pixels to <%d,%d> failed.\n",
+				rectwid, lft, btm
+				);
+			return;
+			}
 		}
 	return;
 	}
 
-/*	i n _ M e n u _ A r e a ( )					*/
-_LOCAL_ int
-in_Menu_Area( menup, x, y )
-register Menu	*menup;
-register int	x, y;
-	{
-	return	x > menup->rect.r_origin.p_x
-	   &&	x < menup->rect.r_corner.p_x
-	   &&	y > menup->rect.r_origin.p_y + menup->seg_hgt
-	   &&	y < menup->rect.r_corner.p_y;
+/*	g e t _ P o i n t ( )						*/
+_LOCAL_ void
+get_Point( msg, pointp )
+char		*msg;
+register Point	*pointp;
+	{	register int	tag_point = -1;
+		register int	status_change;
+		register int	c = NUL;
+	prnt_Prompt( msg );
+	for( ; tag_point != 1 && c != ' '; )
+		{	register int	status_change = false;
+		if( *cptr != NUL )
+			{
+			c = *cptr++;
+			do_Key_Cmd( c, 1 );
+			}
+		else
+			{
+			if( reposition_cursor )
+				{
+				(void) fb_cursor(	fbp,
+							1,
+							cursor_pos.p_x,
+							cursor_pos.p_y
+							);
+				status_change = true;
+				reposition_cursor = false;
+				}
+			if( ! empty( tty_fd ) )
+				{
+				if( (c = get_Char()) != EOF )
+					{
+					do_Key_Cmd( c, 1 );
+					status_change = true;
+					}
+				else	/* EOF detected.		*/
+					{
+					prnt_Scroll( "Premature EOF.\n" );
+					return;
+					}
+				}
+			if(   !	reposition_cursor
+			    &&	(tag_point = get_Mouse_Pos( &cursor_pos ))
+				!= -1
+				)
+				status_change = true;
+			}
+		if( status_change )
+			{
+			(void) fflush( fbp );
+			if( report_status )
+				prnt_Status();
+			}
+		}
+	fb_log( "Point picked.\n" );
+	*pointp = cursor_pos;
+	return;
+	}
+
+/*	g e t _ R e c t a n g l e ( )					*/
+_LOCAL_ void
+get_Rectangle( name, rectp )
+char			*name;
+register Rectangle	*rectp;
+	{	char	buf[MAX_LN];
+	(void) sprintf( buf, "Pick lower-left corner of %s.", name );
+	get_Point( buf, &rectp->r_origin );
+	(void) sprintf( buf, "Pick upper-right corner of %s.", name );
+	get_Point( buf, &rectp->r_corner );
+	fix_Rectangle( rectp );
+	return;
+	}
+
+_LOCAL_ void
+fix_Rectangle( rectp )
+register Rectangle	*rectp;
+	{	register int	i;
+	if( rectp->r_origin.p_x > rectp->r_corner.p_x )
+		{
+		i = rectp->r_origin.p_x;
+		rectp->r_origin.p_x = rectp->r_corner.p_x;
+		rectp->r_corner.p_x = i;
+		}
+	if( rectp->r_origin.p_y > rectp->r_corner.p_y )
+		{
+		i = rectp->r_origin.p_y;
+		rectp->r_origin.p_y = rectp->r_corner.p_y;
+		rectp->r_corner.p_y = i;
+		}
+	return;
 	}
 
 _LOCAL_ RGBpixel	*
@@ -2009,6 +2101,39 @@ int	i;
 	else
 		return	"EOF";
 	return	buf;
+	}
+
+get_Mouse_Pos( pointp )
+Point	*pointp;
+	{	extern FBIO	*fbp;
+	if( pad_flag )
+		return	do_Bitpad( pointp );
+#ifdef sgi
+	return	sgi_Mouse_Pos( &cursor_pos );
+#else
+	return	-1;
+#endif
+	}
+
+/*	d o _ B i t p a d ( )						*/
+_LOCAL_ int
+do_Bitpad( pointp )
+register Point	*pointp;
+	{	int	press;
+	if( ! pad_flag )
+		return	-1;
+	if( (press = getpos( &bitpad )) != -1 )
+		{		
+		pointp->p_x = windo_anchor.p_x +
+				(bitpad.p_x-image_center.p_x)/zoom_factor;
+		pointp->p_y = windo_anchor.p_y +
+				(bitpad.p_y-image_center.p_y)/zoom_factor;
+		(void) fb_cursor( fbp, 1, pointp->p_x, pointp->p_y );
+		if( press == 1 )
+			De_Bounce_Pen();
+		return	press;
+		}
+	return	-1;
 	}
 
 int
