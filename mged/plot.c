@@ -302,7 +302,12 @@ char	**argv;
 
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
 	  if( !sp->s_Eflag && sp->s_soldash != 0 )  {
-	    Tcl_AppendResult(interp, "everything in view must be 'E'ed\n", (char *)NULL);
+	    struct bu_vls vls;
+
+	    bu_vls_init(&vls);
+	    bu_vls_printf(&vls, "help area");
+	    Tcl_Eval(interp, bu_vls_addr(&vls));
+	    bu_vls_free(&vls);
 	    return TCL_ERROR;
 	  }
 	}
