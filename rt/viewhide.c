@@ -88,7 +88,7 @@ struct structparse view_parse[] = {
 
 
 char usage[] = "\
-Usage:  rthide [options] model.g objects... >file.ray\n\
+Usage:  rthide [options] model.g objects... >file.pl\n\
 Options:\n\
  -s #		Grid size in pixels, default 512\n\
  -A angle	Angle between surface normals (default=5degrees)\n\
