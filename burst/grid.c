@@ -481,6 +481,11 @@ struct partition *pt_headp;
 #if DEBUG_GRID
 			rt_log( "\twe have a component\n" );
 #endif
+			/* In the case of fragmenting munitions, a hit on any
+				component will cause a burst point. */
+			if( bp == PT_NULL && bdist > 0.0 )
+				bp = pp;	/* register exterior burst */
+
 			/* If there is a void, output 01 air as space. */
 			if( voidflag )
 				{
@@ -494,17 +499,17 @@ struct partition *pt_headp;
 			if( np != pt_headp && Air( nregp ) )
 				{ fastf_t slos = np->pt_outhit->hit_dist -
 						np->pt_inhit->hit_dist;
-				/* Check for burst point. */
+				/* Check for interior burst point. */
 #if DEBUG_GRID
 				rt_log( "\t\texplicit air follows\n" );
 #endif
-				if(	bp == PT_NULL
+				if(	bp == PT_NULL && bdist <= 0.0
 				    &&	findIdents( regp->reg_regionid,
 							&armorids )
 				    &&	findIdents( nregp->reg_aircode,
 							&airids )
 					)
-					bp = pp;
+					bp = pp; /* register interior burst */
 				prntSeg( ap, pp, nregp->reg_aircode );
 				}
 			else
@@ -618,8 +623,8 @@ struct partition *pt_headp;
 		else	  /* Interior burst point: no fuzing offset. */
 			CopyVec( burstpt, bp->pt_outhit->hit_point );
 
-		/* only generate burst rays if nspallrays is greater then
-			zero */
+		/* Only generate burst rays if nspallrays is greater then
+			zero. */
 		if( nspallrays < 1 )
 			return	true;
 
