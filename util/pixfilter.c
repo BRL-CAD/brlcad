@@ -1,9 +1,9 @@
 /*
  *		P I X F I L T E R . C
  *
- * Filters a color pix file with an arbitrary 3x3 kernel.
+ *  Filters a color pix file with an arbitrary 3x3 kernel.
  *  Leaves the outer rows untouched.
- *  Allows an alternate devisor and offset to be given.
+ *  Allows an alternate divisor and offset to be given.
  *
  *  Author -
  *	Phillip Dykstra
@@ -50,7 +50,7 @@ struct	kernels {
 } kernel[] = {
 	{ "Low Pass", "lo", 3, 5, 3, 5, 10, 5, 3, 5, 3, 42, 0 },
 	{ "Laplacian", "la", -1, -1, -1, -1, 8, -1, -1, -1, -1, 16, 128 },
-/*	{ "High Pass", "hi", 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0 },*/
+	{ "High Pass", "hi", -1, -2, -1, -2,13, -2, -1, -2, -1, 1, 0 },
 	{ "Horizontal Gradiant", "hg", 1, 0, -1, 1, 0, -1, 1, 0, -1, 6, 128 },
 	{ "Vertical Gradient", "vg", 1, 1, 1, 0, 0, 0, -1, -1, -1, 6, 128 },
 	{ "Boxcar Average", "b", 1, 1, 1, 1, 1, 1, 1, 1, 1, 9, 0 },
@@ -61,6 +61,7 @@ int	*kern;
 int	kerndiv;
 int	kernoffset;
 int	width = DEFAULT_WIDTH;
+int	height = DEFAULT_WIDTH;
 int	verbose = 0;
 int	dflag = 0;	/* Different divisor specified */
 int	oflag = 0;	/* Different offset specified */
@@ -69,15 +70,15 @@ char *file_name;
 FILE *infp;
 
 char	usage[] = "\
-Usage: pixfilter [-f<type>] [-v] [-d#] [-o#] [-w width]\n\
-                 [file.pix] > file.pix\n";
+Usage: pixfilter [-f<type>] [-v] [-d#] [-o#]\n\
+        [-s squaresize] [-w width] [-n height] [file.pix] > file.pix\n";
 
 get_args( argc, argv )
 register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "vf:d:o:w:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "vf:d:o:w:n:s:" )) != EOF )  {
 		switch( c )  {
 		case 'v':
 			verbose++;
@@ -96,7 +97,12 @@ register char **argv;
 		case 'w':
 			width = atoi(optarg);
 			break;
-
+		case 'n':
+			height = atoi(optarg);
+			break;
+		case 's':
+			width = height = atoi(optarg);
+			break;
 		default:		/* '?' */
 			return(0);
 		}
@@ -165,7 +171,7 @@ int argc; char **argv;
 	max = 0;
 	min = 255;
 
-	for( y = 1; y < width-1; y++ ) {
+	for( y = 1; y < height-1; y++ ) {
 		/* read in top line */
 		fread( top, sizeof( char ), 3*width, infp );
 		for( color = 0; color < 3; color++ ) {
