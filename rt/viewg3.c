@@ -83,14 +83,21 @@ int	rayhit(), raymiss();
  *  header. Furthermore, pointers to rayhit() and raymiss() are set up
  *  and are later called from do_run().
  */
+
+static char * save_file;
+static char * save_obj;
+
 int
 view_init( ap, file, obj, minus_o )
 register struct application *ap;
 char *file, *obj;
 {
 
-	if( outfp == NULL )
+	if( !minus_o )
 		outfp = stdout;
+	
+	save_file = file;
+	save_obj = obj;
 
 	ap->a_hit = rayhit;
 	ap->a_miss = raymiss;
@@ -98,17 +105,10 @@ char *file, *obj;
 
 	output_is_binary = 0;		/* output is printable ascii */
 
-	/*
-	 *  Overall header, to be read by COVART format:
-	 *  9220 FORMAT( BZ, I5, 10A4 )
-	 *	number of views, title
-	 *  Initially, do only one view per run of RTG3.
-	 */
 	if(rdebug & RDEBUG_RAYPLOT) {
 		plotfp = fopen("rtg3.pl", "w");
 	}
 
-	fprintf(outfp,"%5d %s %s\n", 1, file, obj);
 
 	return(0);		/* No framebuffer needed */
 }
@@ -127,6 +127,14 @@ struct application	*ap;
 
 	if( outfp == NULL )
 		rt_bomb("outfp is NULL\n");
+
+	/*
+	 *  Overall header, to be read by COVART format:
+	 *  9220 FORMAT( BZ, I5, 10A4 )
+	 *	number of views, title
+	 *  Initially, do only one view per run of RTG3.
+	 */
+	fprintf(outfp,"%5d %s %s\n", 1, save_file, save_obj);
 
 	/*
 	 *  Header for each view, to be read by COVART format:
