@@ -32,29 +32,214 @@ static char RCSpipe[] = "@(#)$Header$ (BRL)";
 #include "wdb.h"
 #include "rtgeom.h"
 #include "./debug.h"
+#include "./complex.h"
+#include "./polyno.h"
 
-struct pipe_specific {
-	struct rt_list l;
-	int	pipe_type;
-	vect_t	pipe_V;
-	vect_t	pipe_H;
-	vect_t	pipe_bend_center;
-	fastf_t	pipe_len;
-	fastf_t pipe_ribase, pipe_ritop;
-	fastf_t pipe_ribase_sq, pipe_ritop_sq;
-	fastf_t pipe_ridiff_sq, pipe_ridiff;
-	fastf_t pipe_rodiff_sq, pipe_rodiff;
-	fastf_t pipe_robase, pipe_rotop;
-	fastf_t pipe_robase_sq, pipe_rotop_sq;
-	mat_t	pipe_SoR;	/* Scale and rotate */
-	mat_t	pipe_invRoS;	/* inverse rotation and scale */
+union pipe_specific {
+	struct pipe_id
+	{
+		struct rt_list l;
+		int	pipe_type;
+	} id;
+	struct lin_pipe
+	{
+		struct rt_list l;
+		int	pipe_type;
+		vect_t	pipe_V;
+		vect_t	pipe_H;
+		fastf_t pipe_ribase, pipe_ritop;
+		fastf_t pipe_ribase_sq, pipe_ritop_sq;
+		fastf_t pipe_ridiff_sq, pipe_ridiff;
+		fastf_t pipe_rodiff_sq, pipe_rodiff;
+		fastf_t pipe_robase, pipe_rotop;
+		fastf_t pipe_robase_sq, pipe_rotop_sq;
+		fastf_t	pipe_len;
+		mat_t	pipe_SoR;	/* Scale and rotate */
+		mat_t	pipe_invRoS;	/* inverse rotation and scale */
+	} lin;
+	struct bend_pipe
+	{
+		struct rt_list l;
+		int	pipe_type;
+		fastf_t	bend_radius;
+		fastf_t	bend_or;
+		fastf_t	bend_ir;
+		mat_t	bend_invR;
+		mat_t	bend_SoR;
+		point_t	bend_V;
+		point_t	bend_start;
+		point_t	bend_end;
+		fastf_t	bend_alpha_i;
+		fastf_t	bend_alpha_o;
+		fastf_t	bend_angle;
+		vect_t	bend_ra;
+		vect_t	bend_rb;
+		vect_t	bend_N;
+	} bend;
+};
+
+struct hit_list
+{
+	struct rt_list	l;
+	struct hit	*hitp;
 };
 
 #define PIPE_MM(_v)       VMINMAX( stp->st_min, stp->st_max, _v );
 
 #define	ARC_SEGS	16	/* number of segments used to plot a circle */
 
+#define	PIPE_LINEAR_OUTER_BODY	1
+#define	PIPE_LINEAR_INNER_BODY	2
+#define	PIPE_LINEAR_TOP		3
+#define	PIPE_LINEAR_BASE	4
+#define PIPE_BEND_OUTER_BODY	5
+#define PIPE_BEND_INNER_BODY	6
+#define	PIPE_BEND_BASE		7
+#define PIPE_BEND_TOP		8
+
 RT_EXTERN( void rt_pipe_ifree, (struct rt_db_internal *ip) );
+
+int
+rt_bend_pipe_prep( stp, pipe_seg, head )
+struct soltab		*stp;
+struct wdb_pipeseg	*pipe_seg;
+union pipe_specific	*head;
+{
+	register union pipe_specific *pipe;
+	register struct wdb_pipeseg *next_seg;
+	LOCAL vect_t	to_start,to_end;
+	LOCAL mat_t	R;
+
+	if( pipe_seg->ps_type != WDB_PIPESEG_TYPE_BEND )
+	{
+		rt_log( "rt_bend_pipe_prep called for non-bend segment (type=%d)\n", pipe_seg->ps_type );
+		return( 1 );
+	}
+
+	pipe = (union pipe_specific *)rt_malloc( sizeof( union pipe_specific ), "rt_bend_pipe_prep:pipe" )	 ;
+	RT_LIST_INSERT( &head->id.l, &pipe->id.l );
+
+	next_seg = RT_LIST_PNEXT( wdb_pipeseg, pipe_seg );
+
+	pipe->id.pipe_type = WDB_PIPESEG_TYPE_BEND;
+	pipe->bend.bend_or = pipe_seg->ps_od * 0.5;
+	pipe->bend.bend_ir = pipe_seg->ps_id * 0.5;
+
+	VMOVE( pipe->bend.bend_start, pipe_seg->ps_start );
+	VMOVE( pipe->bend.bend_end, next_seg->ps_start );
+	VMOVE( pipe->bend.bend_V, pipe_seg->ps_bendcenter );
+	VSUB2( to_start, pipe_seg->ps_start, pipe_seg->ps_bendcenter );
+	pipe->bend.bend_radius = MAGNITUDE( to_start );
+	VSUB2( to_end, next_seg->ps_start, pipe_seg->ps_bendcenter );
+	VSCALE( pipe->bend.bend_ra, to_start, 1.0/pipe->bend.bend_radius );
+	VCROSS( pipe->bend.bend_N, to_start, to_end );
+	VUNITIZE( pipe->bend.bend_N );
+	VCROSS( pipe->bend.bend_rb, pipe->bend.bend_N, pipe->bend.bend_ra );
+
+	pipe->bend.bend_angle = atan2( VDOT( to_end, pipe->bend.bend_rb ), VDOT( to_end, pipe->bend.bend_ra ) );
+	if( pipe->bend.bend_angle < 0.0 )
+		pipe->bend.bend_angle += 2.0 * M_PI;
+	pipe->bend.bend_alpha_i = pipe->bend.bend_ir/pipe->bend.bend_radius;
+	pipe->bend.bend_alpha_o = pipe->bend.bend_or/pipe->bend.bend_radius;
+
+	mat_idn( R );
+	VMOVE( &R[0], pipe->bend.bend_ra );
+	VMOVE( &R[4], pipe->bend.bend_rb );
+	VMOVE( &R[8], pipe->bend.bend_N );
+	mat_inv( pipe->bend.bend_invR, R );
+	mat_copy( pipe->bend.bend_SoR, R );
+	pipe->bend.bend_SoR[15] *= pipe->bend.bend_radius;
+
+	/* XXX Need bounding box calculations */
+
+}
+
+void
+rt_linear_pipe_prep( stp, pipe_seg, head )
+struct soltab		*stp;
+struct wdb_pipeseg	*pipe_seg;
+union pipe_specific	*head;
+{
+	fastf_t dx,dy,dz,f;
+	register union pipe_specific *pipe;
+	register struct wdb_pipeseg *next_seg;
+	LOCAL mat_t	R;
+	LOCAL mat_t	Rinv;
+	LOCAL mat_t	S;
+	LOCAL point_t work;
+	LOCAL point_t top;
+	LOCAL vect_t seg_ht;
+	LOCAL vect_t v1,v2;
+
+	pipe = (union pipe_specific *)rt_malloc( sizeof( union pipe_specific ), "rt_bend_pipe_prep:pipe" );
+	RT_LIST_INSERT( &head->id.l, &pipe->id.l );
+
+	next_seg = RT_LIST_PNEXT( wdb_pipeseg, pipe_seg );
+
+	VMOVE( pipe->lin.pipe_V, pipe_seg->ps_start );
+
+	VSUB2( seg_ht, next_seg->ps_start, pipe_seg->ps_start );
+	pipe->lin.pipe_ribase = pipe_seg->ps_id/2.0;
+	pipe->lin.pipe_ribase_sq = pipe->lin.pipe_ribase * pipe->lin.pipe_ribase;
+	pipe->lin.pipe_ritop = next_seg->ps_id/2.0;
+	pipe->lin.pipe_ritop_sq = pipe->lin.pipe_ritop * pipe->lin.pipe_ritop;
+	pipe->lin.pipe_robase = pipe_seg->ps_od/2.0;
+	pipe->lin.pipe_robase_sq = pipe->lin.pipe_robase * pipe->lin.pipe_robase;
+	pipe->lin.pipe_rotop = next_seg->ps_od/2.0;
+	pipe->lin.pipe_rotop_sq = pipe->lin.pipe_rotop * pipe->lin.pipe_rotop;
+	pipe->lin.pipe_ridiff = pipe->lin.pipe_ritop - pipe->lin.pipe_ribase;
+	pipe->lin.pipe_ridiff_sq = pipe->lin.pipe_ridiff * pipe->lin.pipe_ridiff;
+	pipe->lin.pipe_rodiff = pipe->lin.pipe_rotop - pipe->lin.pipe_robase;
+	pipe->lin.pipe_rodiff_sq = pipe->lin.pipe_rodiff * pipe->lin.pipe_rodiff;
+	pipe->lin.pipe_type = pipe_seg->ps_type;
+
+	pipe->lin.pipe_len = MAGNITUDE( seg_ht );
+	VSCALE( seg_ht, seg_ht, 1.0/pipe->lin.pipe_len );
+	VMOVE( pipe->lin.pipe_H, seg_ht );
+	mat_vec_ortho( v1, seg_ht );
+	VCROSS( v2, seg_ht, v1 );
+
+	/* build R matrix */
+	mat_idn( R );
+	VMOVE( &R[0], v1 );
+	VMOVE( &R[4], v2 );
+	VMOVE( &R[8], seg_ht );
+
+	/* Rinv is transpose */
+	mat_trn( Rinv, R );
+
+	/* Build Scale matrix */
+	mat_idn( S );
+	S[10] = 1.0/pipe->lin.pipe_len;
+
+	/* Compute SoR and invRoS */
+	mat_mul( pipe->lin.pipe_SoR, S, R );
+	mat_mul( pipe->lin.pipe_invRoS, Rinv, S );
+
+
+
+	VJOIN2( work, pipe_seg->ps_start, pipe_seg->ps_od, v1, pipe_seg->ps_od, v2 );
+	PIPE_MM( work )
+	VJOIN2( work, pipe_seg->ps_start, -pipe_seg->ps_od, v1, pipe_seg->ps_od, v2 );
+	PIPE_MM( work )
+	VJOIN2( work, pipe_seg->ps_start, pipe_seg->ps_od, v1, -pipe_seg->ps_od, v2 );
+	PIPE_MM( work )
+	VJOIN2( work, pipe_seg->ps_start, -pipe_seg->ps_od, v1, -pipe_seg->ps_od, v2 );
+	PIPE_MM( work )
+
+	if( next_seg->ps_type == WDB_PIPESEG_TYPE_END )
+	{
+		VJOIN1( top, pipe_seg->ps_start, pipe->lin.pipe_len, seg_ht );
+		VJOIN2( work, top, pipe_seg->ps_od, v1, pipe_seg->ps_od, v2 );
+		PIPE_MM( work )
+		VJOIN2( work, top, -pipe_seg->ps_od, v1, pipe_seg->ps_od, v2 );
+		PIPE_MM( work )
+		VJOIN2( work, top, pipe_seg->ps_od, v1, -pipe_seg->ps_od, v2 );
+		PIPE_MM( work )
+		VJOIN2( work, top, -pipe_seg->ps_od, v1, -pipe_seg->ps_od, v2 );
+		PIPE_MM( work )
+	}
+}
 
 /*
  *  			R T _ P I P E _ P R E P
@@ -68,7 +253,7 @@ RT_EXTERN( void rt_pipe_ifree, (struct rt_db_internal *ip) );
  *  	!0	Error in description
  *  
  *  Implicit return -
- *  	A struct pipe_specific is created, and it's address is stored in
+ *  	A union pipe_specific is created, and it's address is stored in
  *  	stp->st_specific for use by pipe_shot().
  */
 int
@@ -77,107 +262,37 @@ struct soltab		*stp;
 struct rt_db_internal	*ip;
 struct rt_i		*rtip;
 {
-	register struct pipe_specific *head;
+	register union pipe_specific *head;
 	struct rt_pipe_internal	*pip;
 	struct wdb_pipeseg *pipe_seg;
-	fastf_t dx,dy,dz,f;
+	LOCAL fastf_t dx;
+	LOCAL fastf_t dy;
+	LOCAL fastf_t dz;
+	LOCAL fastf_t f;
 
 	RT_CK_DB_INTERNAL( ip );
 	pip = (struct rt_pipe_internal *)ip->idb_ptr;
 	RT_PIPE_CK_MAGIC(pip);
 
-	GETSTRUCT( head, pipe_specific );
+	head = (union pipe_specific *)rt_malloc( sizeof( union pipe_specific ), "rt_pipe_prep:head" );
 	stp->st_specific = (genptr_t)head;
-	RT_LIST_INIT( &head->l );
+	RT_LIST_INIT( &head->id.l );
 
 	/* Compute bounding sphere and RPP */
 	for( RT_LIST_FOR( pipe_seg, wdb_pipeseg, &(pip->pipe_segs_head) ) )
 	{
-		register struct pipe_specific *pipe;
-		register struct wdb_pipeseg *next_seg;
-		LOCAL mat_t	R;
-		LOCAL mat_t	Rinv;
-		LOCAL mat_t	S;
-		LOCAL point_t work;
-		LOCAL point_t top;
-		LOCAL vect_t seg_ht;
-		LOCAL vect_t v1,v2;
-		LOCAL fastf_t seg_length;
-
-		if( pipe_seg->ps_type == WDB_PIPESEG_TYPE_END )
-			break;
-
-		GETSTRUCT( pipe, pipe_specific );
-		RT_LIST_INSERT( &head->l, &pipe->l );
-
-		next_seg = RT_LIST_PNEXT( wdb_pipeseg, pipe_seg );
-
-		VMOVE( pipe->pipe_V, pipe_seg->ps_start );
-
-		VSUB2( seg_ht, next_seg->ps_start, pipe_seg->ps_start );
-		VMOVE( pipe->pipe_bend_center, pipe_seg->ps_bendcenter );
-		pipe->pipe_ribase = pipe_seg->ps_id/2.0;
-		pipe->pipe_ribase_sq = pipe->pipe_ribase * pipe->pipe_ribase;
-		pipe->pipe_ritop = next_seg->ps_id/2.0;
-		pipe->pipe_ritop_sq = pipe->pipe_ritop * pipe->pipe_ritop;
-		pipe->pipe_robase = pipe_seg->ps_od/2.0;
-		pipe->pipe_robase_sq = pipe->pipe_robase * pipe->pipe_robase;
-		pipe->pipe_rotop = next_seg->ps_od/2.0;
-		pipe->pipe_rotop_sq = pipe->pipe_rotop * pipe->pipe_rotop;
-		pipe->pipe_ridiff = pipe->pipe_ritop - pipe->pipe_ribase;
-		pipe->pipe_ridiff_sq = pipe->pipe_ridiff * pipe->pipe_ridiff;
-		pipe->pipe_rodiff = pipe->pipe_rotop - pipe->pipe_robase;
-		pipe->pipe_rodiff_sq = pipe->pipe_rodiff * pipe->pipe_rodiff;
-		pipe->pipe_type = pipe_seg->ps_type;
-
-		seg_length = MAGNITUDE( seg_ht );
-		pipe->pipe_len = seg_length;
-		VSCALE( seg_ht, seg_ht, 1.0/seg_length );
-		VMOVE( pipe->pipe_H, seg_ht );
-		mat_vec_ortho( v1, seg_ht );
-		VCROSS( v2, seg_ht, v1 );
-
-		/* build R matrix */
-		mat_idn( R );
-		VMOVE( &R[0], v1 );
-		VMOVE( &R[4], v2 );
-		VMOVE( &R[8], seg_ht );
-
-		/* Rinv is transpose */
-		mat_trn( Rinv, R );
-
-		/* Build Scale matrix */
-		mat_idn( S );
-		S[10] = 1.0/seg_length;
-
-		/* Compute SoR and invRoS */
-		mat_mul( pipe->pipe_SoR, S, R );
-		mat_mul( pipe->pipe_invRoS, Rinv, S );
-
-
-
-		VJOIN2( work, pipe_seg->ps_start, pipe_seg->ps_od, v1, pipe_seg->ps_od, v2 );
-		PIPE_MM( work )
-		VJOIN2( work, pipe_seg->ps_start, -pipe_seg->ps_od, v1, pipe_seg->ps_od, v2 );
-		PIPE_MM( work )
-		VJOIN2( work, pipe_seg->ps_start, pipe_seg->ps_od, v1, -pipe_seg->ps_od, v2 );
-		PIPE_MM( work )
-		VJOIN2( work, pipe_seg->ps_start, -pipe_seg->ps_od, v1, -pipe_seg->ps_od, v2 );
-		PIPE_MM( work )
-
-		if( next_seg->ps_type != WDB_PIPESEG_TYPE_END )
-			continue;
-		VJOIN1( top, pipe_seg->ps_start, seg_length, seg_ht );
-		VJOIN2( work, top, pipe_seg->ps_od, v1, pipe_seg->ps_od, v2 );
-		PIPE_MM( work )
-		VJOIN2( work, top, -pipe_seg->ps_od, v1, pipe_seg->ps_od, v2 );
-		PIPE_MM( work )
-		VJOIN2( work, top, pipe_seg->ps_od, v1, -pipe_seg->ps_od, v2 );
-		PIPE_MM( work )
-		VJOIN2( work, top, -pipe_seg->ps_od, v1, -pipe_seg->ps_od, v2 );
-		PIPE_MM( work )
-
+		switch( pipe_seg->ps_type )
+		{
+			case WDB_PIPESEG_TYPE_END:
+				break;
+			case WDB_PIPESEG_TYPE_LINEAR:
+				rt_linear_pipe_prep( stp, pipe_seg, head );
+				break;
+			case WDB_PIPESEG_TYPE_BEND:
+				rt_bend_pipe_prep( stp, pipe_seg, head );
+		}
 	}
+
 	VSET( stp->st_center,
 		(stp->st_max[X] + stp->st_min[X])/2,
 		(stp->st_max[Y] + stp->st_min[Y])/2,
@@ -202,26 +317,242 @@ void
 rt_pipe_print( stp )
 register CONST struct soltab *stp;
 {
-/*	register struct pipe_specific *pipe =
-		(struct pipe_specific *)stp->st_specific; */
+/*	register union pipe_specific *pipe =
+		(union pipe_specific *)stp->st_specific; */
 }
 
-#define	PIPE_NORM_OUTER_BODY	1
-#define	PIPE_NORM_INNER_BODY	2
-#define	PIPE_NORM_TOP		3
-#define	PIPE_NORM_BASE		4
-
 void
-linear_pipe_shot( stp, rp, ap, seghead, pipe, hits, hit_count, seg_no )
+bend_pipe_shot( stp, rp, ap, seghead, pipe, hit_headp, hit_count, seg_no )
 struct soltab           *stp;
 register struct xray    *rp;
 struct application      *ap;
 struct seg              *seghead;
-struct pipe_specific	*pipe;
-struct hit		*hits;
+union pipe_specific	*pipe;
+struct hit_list		*hit_headp;
 int			*hit_count;
 int			seg_no;
 {
+	register struct seg *segp;
+	LOCAL vect_t	dprime;		/* D' */
+	LOCAL vect_t	pprime;		/* P' */
+	LOCAL vect_t	work;		/* temporary vector */
+	LOCAL poly	C;		/* The final equation */
+	LOCAL complex	val[MAXP];	/* The complex roots */
+	LOCAL double	k[4];		/* The real roots */
+	register int	i;
+	LOCAL int	j;
+	LOCAL int	root_count=0;
+	LOCAL poly	A, Asqr;
+	LOCAL poly	X2_Y2;		/* X**2 + Y**2 */
+	LOCAL vect_t	cor_pprime;	/* new ray origin */
+	LOCAL fastf_t	cor_proj;
+
+	/* Convert vector into the space of the unit torus */
+	MAT4X3VEC( dprime, pipe->bend.bend_SoR, rp->r_dir );
+	VUNITIZE( dprime );
+
+	VSUB2( work, rp->r_pt, pipe->bend.bend_V );
+	MAT4X3VEC( pprime, pipe->bend.bend_SoR, work );
+
+	/* normalize distance from torus.  substitute
+	 * corrected pprime which contains a translation along ray
+	 * direction to closest approach to vertex of torus.
+	 * Translating ray origin along direction of ray to closest pt. to
+	 * origin of solid's coordinate system, new ray origin is
+	 * 'cor_pprime'.
+	 */
+	cor_proj = VDOT( pprime, dprime );
+	VSCALE( cor_pprime, dprime, cor_proj );
+	VSUB2( cor_pprime, pprime, cor_pprime );
+
+	/*
+	 *  Given a line and a ratio, alpha, finds the equation of the
+	 *  unit torus in terms of the variable 't'.
+	 *
+	 *  The equation for the torus is:
+	 *
+	 * [ X**2 + Y**2 + Z**2 + (1 - alpha**2) ]**2 - 4*( X**2 + Y**2 ) = 0
+	 *
+	 *  First, find X, Y, and Z in terms of 't' for this line, then
+	 *  substitute them into the equation above.
+	 *
+	 *  	Wx = Dx*t + Px
+	 *
+	 *  	Wx**2 = Dx**2 * t**2  +  2 * Dx * Px  +  Px**2
+	 *  		[0]                [1]           [2]    dgr=2
+	 */
+	X2_Y2.dgr = 2;
+	X2_Y2.cf[0] = dprime[X] * dprime[X] + dprime[Y] * dprime[Y];
+	X2_Y2.cf[1] = 2.0 * (dprime[X] * cor_pprime[X] +
+			     dprime[Y] * cor_pprime[Y]);
+	X2_Y2.cf[2] = cor_pprime[X] * cor_pprime[X] +
+		      cor_pprime[Y] * cor_pprime[Y];
+
+	/* A = X2_Y2 + Z2 */
+	A.dgr = 2;
+	A.cf[0] = X2_Y2.cf[0] + dprime[Z] * dprime[Z];
+	A.cf[1] = X2_Y2.cf[1] + 2.0 * dprime[Z] * cor_pprime[Z];
+	A.cf[2] = X2_Y2.cf[2] + cor_pprime[Z] * cor_pprime[Z] +
+		  1.0 - pipe->bend.bend_alpha_o * pipe->bend.bend_alpha_o;
+
+	/* Inline expansion of (void) rt_poly_mul( &A, &A, &Asqr ) */
+	/* Both polys have degree two */
+	Asqr.dgr = 4;
+	Asqr.cf[0] = A.cf[0] * A.cf[0];
+	Asqr.cf[1] = A.cf[0] * A.cf[1] + A.cf[1] * A.cf[0];
+	Asqr.cf[2] = A.cf[0] * A.cf[2] + A.cf[1] * A.cf[1] + A.cf[2] * A.cf[0];
+	Asqr.cf[3] = A.cf[1] * A.cf[2] + A.cf[2] * A.cf[1];
+	Asqr.cf[4] = A.cf[2] * A.cf[2];
+
+	/* Inline expansion of rt_poly_scale( &X2_Y2, 4.0 ) and
+	 * rt_poly_sub( &Asqr, &X2_Y2, &C ).
+	 */
+	C.dgr   = 4;
+	C.cf[0] = Asqr.cf[0];
+	C.cf[1] = Asqr.cf[1];
+	C.cf[2] = Asqr.cf[2] - X2_Y2.cf[0] * 4.0;
+	C.cf[3] = Asqr.cf[3] - X2_Y2.cf[1] * 4.0;
+	C.cf[4] = Asqr.cf[4] - X2_Y2.cf[2] * 4.0;
+
+	/*  It is known that the equation is 4th order.  Therefore,
+	 *  if the root finder returns other than 4 roots, error.
+	 */
+	if ( (root_count = rt_poly_roots( &C, val )) != 4 ){
+		if( (root_count) != 0 )  {
+			rt_log("tor:  rt_poly_roots() 4!=%d\n", root_count);
+			rt_pr_roots( stp->st_name, val, root_count );
+		}
+		return;	/* MISSED */
+	}
+
+	/*  Only real roots indicate an intersection in real space.
+	 *
+	 *  Look at each root returned; if the imaginary part is zero
+	 *  or sufficiently close, then use the real part as one value
+	 *  of 't' for the intersections
+	 */
+	for ( j=0, (*hit_count)=0; j < 4; j++ ){
+		if( NEAR_ZERO( val[j].im, 0.0001 ) )
+		{
+			struct hit_list *hitp;
+			fastf_t normalized_dist;
+			fastf_t dist;
+			point_t hit_pt;
+			vect_t	to_hit;
+			fastf_t	angle;
+
+			normalized_dist = val[j].re - cor_proj;
+			dist = normalized_dist * pipe->bend.bend_radius;
+
+			/* check if this hit is within bend angle */
+			VJOIN1( hit_pt, rp->r_pt, dist, rp->r_dir );
+			VSUB2( to_hit, hit_pt, pipe->bend.bend_V );
+			angle = atan2( VDOT( to_hit, pipe->bend.bend_rb ), VDOT( to_hit, pipe->bend.bend_ra ) );
+			if( angle < 0.0 )
+				angle += 2.0 * M_PI;
+			if( angle <= pipe->bend.bend_angle )
+			{
+				GETSTRUCT( hitp, hit_list );
+				GETSTRUCT( hitp->hitp, hit );
+				hitp->hitp->hit_dist = dist;
+				VJOIN1( hitp->hitp->hit_vpriv, pprime, normalized_dist, dprime );
+				hitp->hitp->hit_surfno = seg_no*10 + PIPE_BEND_OUTER_BODY;
+				RT_LIST_INSERT( &hit_headp->l, &hitp->l );
+				(*hit_count)++;
+			}
+		}
+	}
+
+	/* Now do inner torus */
+	A.cf[2] = X2_Y2.cf[2] + cor_pprime[Z] * cor_pprime[Z] +
+		  1.0 - pipe->bend.bend_alpha_i * pipe->bend.bend_alpha_i;
+
+	/* Inline expansion of (void) rt_poly_mul( &A, &A, &Asqr ) */
+	/* Both polys have degree two */
+	Asqr.dgr = 4;
+	Asqr.cf[0] = A.cf[0] * A.cf[0];
+	Asqr.cf[1] = A.cf[0] * A.cf[1] + A.cf[1] * A.cf[0];
+	Asqr.cf[2] = A.cf[0] * A.cf[2] + A.cf[1] * A.cf[1] + A.cf[2] * A.cf[0];
+	Asqr.cf[3] = A.cf[1] * A.cf[2] + A.cf[2] * A.cf[1];
+	Asqr.cf[4] = A.cf[2] * A.cf[2];
+
+	/* Inline expansion of rt_poly_scale( &X2_Y2, 4.0 ) and
+	 * rt_poly_sub( &Asqr, &X2_Y2, &C ).
+	 */
+	C.dgr   = 4;
+	C.cf[0] = Asqr.cf[0];
+	C.cf[1] = Asqr.cf[1];
+	C.cf[2] = Asqr.cf[2] - X2_Y2.cf[0] * 4.0;
+	C.cf[3] = Asqr.cf[3] - X2_Y2.cf[1] * 4.0;
+	C.cf[4] = Asqr.cf[4] - X2_Y2.cf[2] * 4.0;
+
+	/*  It is known that the equation is 4th order.  Therefore,
+	 *  if the root finder returns other than 4 roots, error.
+	 */
+	if ( (root_count = rt_poly_roots( &C, val )) != 4 ){
+		if( root_count != 0 )  {
+			rt_log("tor:  rt_poly_roots() 4!=%d\n", root_count);
+			rt_pr_roots( stp->st_name, val, root_count );
+		}
+		return;	/* MISSED */
+	}
+
+	/*  Only real roots indicate an intersection in real space.
+	 *
+	 *  Look at each root returned; if the imaginary part is zero
+	 *  or sufficiently close, then use the real part as one value
+	 *  of 't' for the intersections
+	 */
+	for ( j=0, root_count=0; j < 4; j++ ){
+		if( NEAR_ZERO( val[j].im, 0.0001 ) )
+		{
+			struct hit_list *hitp;
+			fastf_t normalized_dist;
+			fastf_t dist;
+			point_t hit_pt;
+			vect_t	to_hit;
+			fastf_t	angle;
+
+			normalized_dist = val[j].re - cor_proj;
+			dist = normalized_dist * pipe->bend.bend_radius;
+
+			/* check if this hit is within bend angle */
+			VJOIN1( hit_pt, rp->r_pt, dist, rp->r_dir );
+			VSUB2( to_hit, hit_pt, pipe->bend.bend_V );
+			angle = atan2( VDOT( to_hit, pipe->bend.bend_rb ), VDOT( to_hit, pipe->bend.bend_ra ) );
+			if( angle < 0.0 )
+				angle += 2.0 * M_PI;
+			if( angle <= pipe->bend.bend_angle )
+			{
+				GETSTRUCT( hitp, hit_list );
+				GETSTRUCT( hitp->hitp, hit );
+				hitp->hitp->hit_dist = dist;
+				VJOIN1( hitp->hitp->hit_vpriv, pprime, normalized_dist, dprime );
+				hitp->hitp->hit_surfno = seg_no*10 + PIPE_BEND_INNER_BODY;
+				RT_LIST_INSERT( &hit_headp->l, &hitp->l );
+				root_count++;
+			}
+		}
+	}
+
+	*hit_count += root_count;
+
+	return;
+
+}
+
+void
+linear_pipe_shot( stp, rp, ap, seghead, pipe, hit_headp, hit_count, seg_no )
+struct soltab           *stp;
+register struct xray    *rp;
+struct application      *ap;
+struct seg              *seghead;
+struct lin_pipe		*pipe;
+struct hit_list		*hit_headp;
+int			*hit_count;
+int			seg_no;
+{
+	LOCAL struct hit_list	*hitp;
 	LOCAL point_t	work_pt;
 	LOCAL point_t	ray_start;
 	LOCAL vect_t	ray_dir;
@@ -236,6 +567,8 @@ int			seg_no;
 		rt_log( "linear_pipe_shot called for pipe type %d\n" , pipe->pipe_type );
 		rt_bomb( "linear_pipe_shot\n" );
 	}
+
+	*hit_count = 0;
 
 	/* transform ray start point */
 	VSUB2( work_pt, rp->r_pt, pipe->pipe_V );
@@ -271,24 +604,30 @@ int			seg_no;
 		VJOIN1( hit_pt, ray_start, t_tmp, ray_dir );
 		if( hit_pt[Z] >= 0.0 && hit_pt[Z] <= 1.0 )
 		{
-			hits[*hit_count].hit_dist = t_tmp;
-			hits[*hit_count].hit_surfno = seg_no*10 + PIPE_NORM_OUTER_BODY;
-			VMOVE( hits[*hit_count].hit_vpriv, hit_pt );
-			hits[*hit_count].hit_vpriv[Z] = (-pipe->pipe_robase - hit_pt[Z] * pipe->pipe_rodiff) *
+			GETSTRUCT( hitp, hit_list );
+			GETSTRUCT( hitp->hitp, hit );
+			hitp->hitp->hit_dist = t_tmp;
+			hitp->hitp->hit_surfno = seg_no*10 + PIPE_LINEAR_OUTER_BODY;
+			VMOVE( hitp->hitp->hit_vpriv, hit_pt );
+			hitp->hitp->hit_vpriv[Z] = (-pipe->pipe_robase - hit_pt[Z] * pipe->pipe_rodiff) *
 					pipe->pipe_rodiff;
 			(*hit_count)++;
+			RT_LIST_INSERT( &hit_headp->l, &hitp->l );
 		}
 
 		t_tmp = (-b + sqrt_descrim)/(2.0*a);
 		VJOIN1( hit_pt, ray_start, t_tmp, ray_dir );
 		if( hit_pt[Z] >= 0.0 && hit_pt[Z] <= 1.0 )
 		{
-			hits[*hit_count].hit_dist = t_tmp;
-			hits[*hit_count].hit_surfno = seg_no*10 + PIPE_NORM_OUTER_BODY;
-			VMOVE( hits[*hit_count].hit_vpriv, hit_pt );
-			hits[*hit_count].hit_vpriv[Z] = (-pipe->pipe_robase - hit_pt[Z] * pipe->pipe_rodiff) *
+			GETSTRUCT( hitp, hit_list );
+			GETSTRUCT( hitp->hitp, hit );
+			hitp->hitp->hit_dist = t_tmp;
+			hitp->hitp->hit_surfno = seg_no*10 + PIPE_LINEAR_OUTER_BODY;
+			VMOVE( hitp->hitp->hit_vpriv, hit_pt );
+			hitp->hitp->hit_vpriv[Z] = (-pipe->pipe_robase - hit_pt[Z] * pipe->pipe_rodiff) *
 					pipe->pipe_rodiff;
 			(*hit_count)++;
+			RT_LIST_INSERT( &hit_headp->l, &hitp->l );
 		}
 	}
 
@@ -322,91 +661,279 @@ int			seg_no;
 			VJOIN1( hit_pt, ray_start, t_tmp, ray_dir );
 			if( hit_pt[Z] >= 0.0 && hit_pt[Z] <= 1.0 )
 			{
-				hits[*hit_count].hit_dist = t_tmp;
-				hits[*hit_count].hit_surfno = seg_no*10 + PIPE_NORM_INNER_BODY;
-				VMOVE( hits[*hit_count].hit_vpriv, hit_pt );
-				hits[*hit_count].hit_vpriv[Z] = (-pipe->pipe_ribase - hit_pt[Z] * pipe->pipe_ridiff) *
+				GETSTRUCT( hitp, hit_list );
+				GETSTRUCT( hitp->hitp, hit );
+				hitp->hitp->hit_dist = t_tmp;
+				hitp->hitp->hit_surfno = seg_no*10 + PIPE_LINEAR_INNER_BODY;
+				VMOVE( hitp->hitp->hit_vpriv, hit_pt );
+				hitp->hitp->hit_vpriv[Z] = (-pipe->pipe_ribase - hit_pt[Z] * pipe->pipe_ridiff) *
 					pipe->pipe_ridiff;
 				(*hit_count)++;
+				RT_LIST_INSERT( &hit_headp->l, &hitp->l );
 			}
 
 			t_tmp = (-b + sqrt_descrim)/(2.0*a);
 			VJOIN1( hit_pt, ray_start, t_tmp, ray_dir );
 			if( hit_pt[Z] >= 0.0 && hit_pt[Z] <= 1.0 )
 			{
-				hits[*hit_count].hit_dist = t_tmp;
-				hits[*hit_count].hit_surfno = seg_no*10 + PIPE_NORM_INNER_BODY;
-				VMOVE( hits[*hit_count].hit_vpriv, hit_pt );
-				hits[*hit_count].hit_vpriv[Z] = (-pipe->pipe_ribase - hit_pt[Z] * pipe->pipe_ridiff) *
+				GETSTRUCT( hitp, hit_list );
+				GETSTRUCT( hitp->hitp, hit );
+				hitp->hitp->hit_dist = t_tmp;
+				hitp->hitp->hit_surfno = seg_no*10 + PIPE_LINEAR_INNER_BODY;
+				VMOVE( hitp->hitp->hit_vpriv, hit_pt );
+				hitp->hitp->hit_vpriv[Z] = (-pipe->pipe_ribase - hit_pt[Z] * pipe->pipe_ridiff) *
 					pipe->pipe_ridiff;
 				(*hit_count)++;
+				RT_LIST_INSERT( &hit_headp->l, &hitp->l );
 			}
 		}
 	}
 
-	if( NEAR_ZERO( ray_dir[Z], SMALL ) )
-		goto out;
+}
 
-	/* Intersect with base plane */
-	t_tmp = (-ray_start[Z]/ray_dir[Z]);
-	VJOIN1( hit_pt, ray_start, t_tmp, ray_dir );
-	radius_sq = hit_pt[X]*hit_pt[X] + hit_pt[Y]*hit_pt[Y];
-	VJOIN1( hit_pt, rp->r_pt, t_tmp, rp->r_dir );
-	if( radius_sq <= pipe->pipe_robase_sq && radius_sq >= pipe->pipe_ribase_sq )
+void
+pipe_start_shot( stp, rp, ap, seghead, pipe, hit_headp, hit_count, seg_no )
+struct soltab           *stp;
+register struct xray    *rp;
+struct application      *ap;
+struct seg              *seghead;
+struct pipe_id		*pipe;
+struct hit_list		*hit_headp;
+int			*hit_count;
+int			seg_no;
+{
+	point_t work_pt;
+	point_t ray_start;
+	vect_t ray_dir;
+	point_t hit_pt;
+	fastf_t t_tmp;
+	fastf_t radius_sq;
+	struct hit_list *hitp;
+
+	*hit_count = 0;
+
+	if( pipe->pipe_type == WDB_PIPESEG_TYPE_LINEAR )
 	{
-		hits[*hit_count].hit_dist = t_tmp;
-		hits[*hit_count].hit_surfno = seg_no*10 + PIPE_NORM_BASE;
-		(*hit_count)++;
-	}
+		struct lin_pipe *lin=(struct lin_pipe *)(&pipe->l);
+		fastf_t dist_to_plane;
+		fastf_t norm_dist;
+		fastf_t slant_factor;
 
-	/* Intersect with top plane */
-	t_tmp = (1.0 - ray_start[Z])/ray_dir[Z];
-	VJOIN1( hit_pt, ray_start, t_tmp, ray_dir );
-	radius_sq = hit_pt[X]*hit_pt[X] + hit_pt[Y]*hit_pt[Y];
-	VJOIN1( hit_pt, rp->r_pt, t_tmp, rp->r_dir );
-	if( radius_sq <= pipe->pipe_rotop_sq && radius_sq >= pipe->pipe_ritop_sq )
+		dist_to_plane = VDOT( lin->pipe_H, lin->pipe_V );
+		norm_dist = dist_to_plane - VDOT( lin->pipe_H, rp->r_pt );
+		slant_factor = VDOT( lin->pipe_H, rp->r_dir );
+		if( !NEAR_ZERO( slant_factor, SMALL_FASTF ) )
+		{
+			vect_t to_center;
+
+			t_tmp = norm_dist/slant_factor;
+			VJOIN1( hit_pt, rp->r_pt, t_tmp, rp->r_dir );
+			VSUB2( to_center, lin->pipe_V, hit_pt );
+			radius_sq = MAGSQ( to_center );
+			if( radius_sq <= lin->pipe_robase_sq && radius_sq >= lin->pipe_ribase_sq )
+			{
+				GETSTRUCT( hitp, hit_list );
+				GETSTRUCT( hitp->hitp, hit );
+				hitp->hitp->hit_dist = t_tmp;
+				hitp->hitp->hit_surfno = seg_no*10 + PIPE_LINEAR_BASE;
+				(*hit_count)++;
+				RT_LIST_INSERT( &hit_headp->l, &hitp->l );
+			}
+		}
+	}
+	else if( pipe->pipe_type == WDB_PIPESEG_TYPE_BEND )
 	{
-		hits[*hit_count].hit_dist = t_tmp;
-		hits[*hit_count].hit_surfno = seg_no*10 + PIPE_NORM_TOP;
-		(*hit_count)++;
-	}
+		struct bend_pipe *bend=(struct bend_pipe *)(&pipe->l);
+		fastf_t dist_to_plane;
+		fastf_t norm_dist;
+		fastf_t slant_factor;
 
-out:
-	if( (*hit_count) == 1 )
-		(*hit_count) = 0;
+		dist_to_plane = VDOT( bend->bend_rb, bend->bend_start );
+		norm_dist = dist_to_plane - VDOT( bend->bend_rb, rp->r_pt );
+		slant_factor = VDOT( bend->bend_rb, rp->r_dir );
+
+		if( !NEAR_ZERO( slant_factor, SMALL_FASTF ) )
+		{
+			vect_t to_center;
+
+			t_tmp = norm_dist/slant_factor;
+			VJOIN1( hit_pt, rp->r_pt, t_tmp, rp->r_dir );
+			VSUB2( to_center, bend->bend_start, hit_pt );
+			radius_sq = MAGSQ( to_center );
+			if( radius_sq <= bend->bend_or*bend->bend_or && radius_sq >= bend->bend_ir*bend->bend_ir )
+			{
+				GETSTRUCT( hitp, hit_list );
+				GETSTRUCT( hitp->hitp, hit );
+				hitp->hitp->hit_dist = t_tmp;
+				hitp->hitp->hit_surfno = seg_no*10 + PIPE_BEND_BASE;
+				(*hit_count)++;
+				RT_LIST_INSERT( &hit_headp->l, &hitp->l );
+			}
+		}
+	}
+}
+void
+pipe_end_shot( stp, rp, ap, seghead, pipe, hit_headp, hit_count, seg_no )
+struct soltab           *stp;
+register struct xray    *rp;
+struct application      *ap;
+struct seg              *seghead;
+struct pipe_id		*pipe;
+struct hit_list		*hit_headp;
+int			*hit_count;
+int			seg_no;
+{
+	point_t work_pt;
+	point_t ray_start;
+	vect_t ray_dir;
+	point_t hit_pt;
+	fastf_t t_tmp;
+	fastf_t radius_sq;
+	struct hit_list *hitp;
+
+	*hit_count = 0;
+
+	if( pipe->pipe_type == WDB_PIPESEG_TYPE_LINEAR )
+	{
+		struct lin_pipe *lin=(struct lin_pipe *)(&pipe->l);
+		point_t top;
+		fastf_t dist_to_plane;
+		fastf_t norm_dist;
+		fastf_t slant_factor;
+
+		VJOIN1( top, lin->pipe_V, lin->pipe_len, lin->pipe_H );
+		dist_to_plane = VDOT( lin->pipe_H, top );
+		norm_dist = dist_to_plane - VDOT( lin->pipe_H, rp->r_pt );
+		slant_factor = VDOT( lin->pipe_H, rp->r_dir );
+		if( !NEAR_ZERO( slant_factor, SMALL_FASTF ) )
+		{
+			vect_t to_center;
+
+			t_tmp = norm_dist/slant_factor;
+			VJOIN1( hit_pt, rp->r_pt, t_tmp, rp->r_dir );
+			VSUB2( to_center, top, hit_pt );
+			radius_sq = MAGSQ( to_center );
+			if( radius_sq <= lin->pipe_rotop_sq && radius_sq >= lin->pipe_ritop_sq )
+			{
+				GETSTRUCT( hitp, hit_list );
+				GETSTRUCT( hitp->hitp, hit );
+				hitp->hitp->hit_dist = t_tmp;
+				hitp->hitp->hit_surfno = seg_no*10 + PIPE_LINEAR_TOP;
+				(*hit_count)++;
+				RT_LIST_INSERT( &hit_headp->l, &hitp->l );
+			}
+		}
+	}
+	else if( pipe->pipe_type == WDB_PIPESEG_TYPE_BEND )
+	{
+		struct bend_pipe *bend=(struct bend_pipe *)(&pipe->l);
+		vect_t to_end;
+		vect_t plane_norm;
+		fastf_t dist_to_plane;
+		fastf_t norm_dist;
+		fastf_t slant_factor;
+
+		VSUB2( to_end, bend->bend_end, bend->bend_V );
+		VCROSS( plane_norm, to_end, bend->bend_N );
+		VUNITIZE( plane_norm );
+
+		dist_to_plane = VDOT( plane_norm, bend->bend_end );
+		norm_dist = dist_to_plane - VDOT( plane_norm, rp->r_pt );
+		slant_factor = VDOT( plane_norm, rp->r_dir );
+
+		if( !NEAR_ZERO( slant_factor, SMALL_FASTF ) )
+		{
+			vect_t to_center;
+
+			t_tmp = norm_dist/slant_factor;
+			VJOIN1( hit_pt, rp->r_pt, t_tmp, rp->r_dir );
+			VSUB2( to_center, bend->bend_end, hit_pt );
+			radius_sq = MAGSQ( to_center );
+			if( radius_sq <= bend->bend_or*bend->bend_or && radius_sq >= bend->bend_ir*bend->bend_ir )
+			{
+				GETSTRUCT( hitp, hit_list );
+				GETSTRUCT( hitp->hitp, hit );
+				hitp->hitp->hit_dist = t_tmp;
+				hitp->hitp->hit_surfno = seg_no*10 + PIPE_BEND_TOP;
+				(*hit_count)++;
+				RT_LIST_INSERT( &hit_headp->l, &hitp->l );
+			}
+		}
+	}
 }
 
 HIDDEN void
 rt_pipe_hitsort( h, nh )
-register struct hit h[];
+struct hit_list *h;
 int *nh;
 {
 	register int i, j;
+	struct hit_list *hitp;
 	LOCAL struct hit temp;
 
-	for( i=0; i < (*nh)-1; i++ )  {
-		for( j=i+1; j < (*nh); j++ )  {
-			if( h[i].hit_dist <= h[j].hit_dist )
-				continue;
-			temp = h[j];		/* struct copy */
-			h[j] = h[i];		/* struct copy */
-			h[i] = temp;		/* struct copy */
+	hitp = RT_LIST_FIRST( hit_list, &h->l );
+	while( RT_LIST_NEXT_NOT_HEAD( &hitp->l, &h->l ) )
+	{
+		struct hit_list *next_hit;
+		struct hit_list *prev_hit;
+
+		next_hit = RT_LIST_NEXT( hit_list, &hitp->l );
+		if( hitp->hitp->hit_dist > next_hit->hitp->hit_dist )
+		{
+			struct hit_list *tmp;
+
+			if( hitp == RT_LIST_FIRST( hit_list, &h->l ) )
+				prev_hit = (struct hit_list *)NULL;
+			else
+				prev_hit = RT_LIST_PREV( hit_list, &hitp->l );
+
+			/* move this hit to the end of the list */
+			tmp = hitp;
+			RT_LIST_DEQUEUE( &tmp->l );
+			RT_LIST_INSERT( &h->l, &tmp->l );
+
+			if( prev_hit )
+				hitp = prev_hit;
+			else
+				hitp = RT_LIST_FIRST( hit_list, &h->l );
 		}
+		else
+			hitp = next_hit;
 	}
 
 	/* delete duplicate hits */
-	for( i=0; i < (*nh)-1; i++ )
+	hitp = RT_LIST_FIRST( hit_list, &h->l );
+	while( RT_LIST_NEXT_NOT_HEAD( &hitp->l, &h->l ) )
 	{
-		if( NEAR_ZERO( h[i].hit_dist - h[i+1].hit_dist , 0.0001 ) )
+		struct hit_list *next_hit;
+
+		next_hit = RT_LIST_NEXT( hit_list, &hitp->l );
+
+		if( NEAR_ZERO( hitp->hitp->hit_dist - next_hit->hitp->hit_dist, 0.00001  ) )
 		{
-			for( j=i ; j<(*nh)-1 ; j++ )
-				h[j] = h[j+1];
+			struct hit_list *tmp;
+
+			tmp = hitp;
+			hitp = next_hit;
+			RT_LIST_DEQUEUE( &tmp->l );
+			rt_free( (char *)tmp->hitp, "rt_pipe_hitsort: tmp->hitp" );
+			rt_free( (char *)tmp, "rt_pipe_hitsort: tmp" );
 			(*nh)--;
 		}
+		else
+			hitp = next_hit;
 	}
 
 	if( *nh == 1 )
+	{
+		while( RT_LIST_WHILE( hitp, hit_list, &h->l ) )
+		{
+			RT_LIST_DEQUEUE( &hitp->l );
+			rt_free( (char *)hitp->hitp, "pipe_hitsort: hitp->hitp" );
+			rt_free( (char *)hitp, "pipe_hitsort: hitp" );
+		}
 		(*nh) = 0;
+	}
 }
 
 /*
@@ -427,28 +954,43 @@ register struct xray	*rp;
 struct application	*ap;
 struct seg		*seghead;
 {
-	register struct pipe_specific *head =
-		(struct pipe_specific *)stp->st_specific;
-	register struct pipe_specific *pipe;
+	register union pipe_specific *head =
+		(union pipe_specific *)stp->st_specific;
+	register struct pipe_id *pipe;
 	register struct seg *segp;
+	register struct hit_list hit_head;
+	LOCAL struct hit_list *hitp;
+	LOCAL int hit_count;
 	LOCAL int total_hits=0;
 	LOCAL int seg_no=0;
 	LOCAL int i;
 
-	for( RT_LIST_FOR( pipe, pipe_specific, &head->l ) )
-	{
-		LOCAL struct hit hits[8];
-		LOCAL int hit_count=0;
+	RT_LIST_INIT( &hit_head.l );
 
+	pipe_start_shot( stp, rp, ap, seghead, RT_LIST_FIRST( pipe_id, &(head->id.l)),
+		&hit_head, &total_hits, 1 );
+	for( RT_LIST_FOR( pipe, pipe_id, &(head->id.l) ) )
+		seg_no++;
+	pipe_end_shot( stp, rp, ap, seghead, RT_LIST_LAST( pipe_id, &(head->id.l)),
+		&hit_head, &hit_count, seg_no );
+	total_hits += hit_count;
+
+	seg_no = 0;
+	for( RT_LIST_FOR( pipe, pipe_id, &(head->id.l) ) )
+	{
 		seg_no++;
 
 		switch( pipe->pipe_type )
 		{
 			case WDB_PIPESEG_TYPE_LINEAR:
-				linear_pipe_shot( stp, rp, ap, seghead, pipe, hits, &hit_count, seg_no );
+				linear_pipe_shot( stp, rp, ap, seghead, (struct lin_pipe *)pipe,
+					&hit_head, &hit_count, seg_no );
 				total_hits += hit_count;
 				break;
 			case WDB_PIPESEG_TYPE_BEND:
+				bend_pipe_shot( stp, rp, ap, seghead, (struct bend_pipe *)pipe,
+					&hit_head, &hit_count, seg_no );
+				total_hits += hit_count;
 				break;
 			default:
 				rt_log( "rt_pipe_shot: Bad pipe type (%d)\n", pipe->pipe_type );
@@ -456,37 +998,52 @@ struct seg		*seghead;
 				break;
 		}
 
-		if( !hit_count )
-			continue;
+	}
+	if( !total_hits )
+		return( 0 );
 
-		rt_pipe_hitsort( hits, &hit_count );
+	rt_pipe_hitsort( &hit_head, &total_hits );
 
-		/* Build segments for this pipe segment */
-		if( hit_count%2 )
+	/* Build segments */
+	if( total_hits%2 )
+	{
+		i = 0;
+		rt_log( "rt_pipe_shot: bad number of hits (%d)\n" , total_hits );
+		for( RT_LIST_FOR( hitp, hit_list, &hit_head.l ) )
 		{
-			rt_log( "rt_pipe_shot: bad number of hits (%d)\n" , hit_count );
-			for( i=0 ; i<hit_count ; i++ )
-			{
-				point_t hit_pt;
+			point_t hit_pt;
 
-				rt_log( "#%d, dist = %g, surfno=%d\n" , i, hits[i].hit_dist, hits[i].hit_surfno );
-				VJOIN1( hit_pt, rp->r_pt, hits[i].hit_dist,  rp->r_dir );
-				rt_log( "\t( %g %g %g )\n" , V3ARGS( hit_pt ) );
-			}
-			rt_bomb( "rt_pipe_shot\n" );
+			rt_log( "#%d, dist = %g, surfno=%d\n" , ++i, hitp->hitp->hit_dist, hitp->hitp->hit_surfno );
+			VJOIN1( hit_pt, rp->r_pt, hitp->hitp->hit_dist,  rp->r_dir );
+			rt_log( "\t( %g %g %g )\n" , V3ARGS( hit_pt ) );
 		}
+		rt_bomb( "rt_pipe_shot\n" );
+	}
 
-		for( i=0 ; i<hit_count ; i += 2 )
-		{
+	hitp = RT_LIST_FIRST( hit_list, &hit_head.l );
+	while( RT_LIST_NOT_HEAD( &hitp->l, &hit_head.l ) )
+	{
+		struct hit_list *next;
 
-			RT_GET_SEG(segp, ap->a_resource);
-			segp->seg_stp = stp;
+		next = RT_LIST_NEXT( hit_list, &hitp->l );
 
-			segp->seg_in = hits[i];
-			segp->seg_out = hits[i+1];
+		RT_GET_SEG(segp, ap->a_resource);
 
-			RT_LIST_INSERT( &(seghead->l), &(segp->l) );
-		}
+		segp->seg_stp = stp;
+		segp->seg_in = (*hitp->hitp);
+		segp->seg_out = (*next->hitp);
+
+		RT_LIST_INSERT( &(seghead->l), &(segp->l) );
+
+		hitp = RT_LIST_NEXT( hit_list, &next->l );
+	}
+
+	/* free the list of hits */
+	while( RT_LIST_WHILE( hitp, hit_list, &hit_head.l ) )
+	{
+		RT_LIST_DEQUEUE( &hitp->l );
+		rt_free( (char *)hitp->hitp, "rt_pipe_shot: hitp->hitp" );
+		rt_free( (char *)hitp, "rt_pipe_shot: hitp" );
 	}
 
 	if( total_hits )
@@ -524,33 +1081,55 @@ register struct hit	*hitp;
 struct soltab		*stp;
 register struct xray	*rp;
 {
-	register struct pipe_specific *pipe =
-		(struct pipe_specific *)stp->st_specific;
+	register union pipe_specific *pipe =
+		(union pipe_specific *)stp->st_specific;
+	LOCAL fastf_t	w;
+	LOCAL vect_t	work;
 	LOCAL int	segno;
 	LOCAL int	i;
 
 	segno = hitp->hit_surfno/10;
 
 	for( i=0 ; i<segno ; i++ )
-		pipe = RT_LIST_PNEXT( pipe_specific, &pipe->l );
+		pipe = (union pipe_specific *)((&pipe->id.l)->forw);
 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 	switch( hitp->hit_surfno%10 )
 	{
-		case PIPE_NORM_TOP:
-			VMOVE( hitp->hit_normal, pipe->pipe_H );
+		case PIPE_LINEAR_TOP:
+			VMOVE( hitp->hit_normal, pipe->lin.pipe_H );
 			break;
-		case PIPE_NORM_BASE:
-			VREVERSE( hitp->hit_normal, pipe->pipe_H );
+		case PIPE_LINEAR_BASE:
+			VREVERSE( hitp->hit_normal, pipe->lin.pipe_H );
 			break;
-		case PIPE_NORM_OUTER_BODY:
-			MAT4X3VEC( hitp->hit_normal, pipe->pipe_invRoS, hitp->hit_vpriv );
+		case PIPE_LINEAR_OUTER_BODY:
+			MAT4X3VEC( hitp->hit_normal, pipe->lin.pipe_invRoS, hitp->hit_vpriv );
 			VUNITIZE( hitp->hit_normal );
 			break;
-		case PIPE_NORM_INNER_BODY:
-			MAT4X3VEC( hitp->hit_normal, pipe->pipe_invRoS, hitp->hit_vpriv );
+		case PIPE_LINEAR_INNER_BODY:
+			MAT4X3VEC( hitp->hit_normal, pipe->lin.pipe_invRoS, hitp->hit_vpriv );
 			VUNITIZE( hitp->hit_normal );
 			VREVERSE( hitp->hit_normal, hitp->hit_normal );
+			break;
+		case PIPE_BEND_OUTER_BODY:
+			w = hitp->hit_vpriv[X]*hitp->hit_vpriv[X] +
+			    hitp->hit_vpriv[Y]*hitp->hit_vpriv[Y] +
+			    hitp->hit_vpriv[Z]*hitp->hit_vpriv[Z] +
+			    1.0 - pipe->bend.bend_alpha_o*pipe->bend.bend_alpha_o;
+			VSET( work,
+				( w - 2.0 ) * hitp->hit_vpriv[X],
+				( w - 2.0 ) * hitp->hit_vpriv[Y],
+				  w * hitp->hit_vpriv[Z] );
+			VUNITIZE( work );
+			MAT3X3VEC( hitp->hit_normal, pipe->bend.bend_invR, work );
+			break;
+		case PIPE_BEND_BASE:
+			VREVERSE( hitp->hit_normal, pipe->bend.bend_rb );
+			break;
+		case PIPE_BEND_TOP:
+			VSUB2( work, pipe->bend.bend_end, pipe->bend.bend_V );
+			VCROSS( hitp->hit_normal, pipe->bend.bend_N, work );
+			VUNITIZE( hitp->hit_normal );
 			break;
 		default:
 			rt_log( "rt_pipe_norm: Unrecognized surfno (%d)\n", hitp->hit_surfno );
@@ -569,8 +1148,8 @@ register struct curvature *cvp;
 register struct hit	*hitp;
 struct soltab		*stp;
 {
-/*	register struct pipe_specific *pipe =
-		(struct pipe_specific *)stp->st_specific; */
+/*	register union pipe_specific *pipe =
+		(union pipe_specific *)stp->st_specific; */
 
  	cvp->crv_c1 = cvp->crv_c2 = 0;
 
@@ -593,8 +1172,8 @@ struct soltab		*stp;
 register struct hit	*hitp;
 register struct uvcoord	*uvp;
 {
-/*	register struct pipe_specific *pipe =
-		(struct pipe_specific *)stp->st_specific; */
+/*	register union pipe_specific *pipe =
+		(union pipe_specific *)stp->st_specific; */
 }
 
 /*
@@ -604,15 +1183,15 @@ void
 rt_pipe_free( stp )
 register struct soltab *stp;
 {
-	register struct pipe_specific *pipe =
-		(struct pipe_specific *)stp->st_specific;
+	register union pipe_specific *pipe =
+		(union pipe_specific *)stp->st_specific;
 
 	/* free linked list */
-	while( RT_LIST_NON_EMPTY( &pipe->l ) )
+	while( RT_LIST_NON_EMPTY( &pipe->id.l ) )
 	{
-		register struct pipe_specific *pipe_ptr;
+		register union pipe_specific *pipe_ptr;
 
-		pipe_ptr = RT_LIST_FIRST( pipe_specific, &pipe->l );
+		pipe_ptr = (union pipe_specific *)(&pipe->id.l)->forw;
 		rt_free( (char *)pipe_ptr, "pipe_specific" );
 	}
 
@@ -628,48 +1207,62 @@ rt_pipe_class()
 {
 	return(0);
 }
-void
-draw_pipe_circle( vhead, r, center, v1, v2, segments )
+
+/*	D R A W _ P I P E _ A R C
+ *
+ * v1 and v2 must be unit vectors normal to each other in plane of circle
+ * v1 must be in direction from center to start point (unless a full circle is
+ * requested). "Start" and "end" are start and endpoints of arc. "Seg_count"
+ * is how many straight line segements to use to draw the arc. "Full_circle"
+ * is a flag to indicate that a complete circle is desired.
+ */
+
+static void
+draw_pipe_arc( vhead, radius, center, v1, v2, start, end, seg_count, full_circle )
 struct rt_list		*vhead;
-fastf_t			r;
+fastf_t			radius;
 point_t			center;
 vect_t			v1,v2;
-int			segments;
+point_t			start,end;
+int			seg_count;
+int			full_circle;
 {
-	fastf_t		x;
-	fastf_t		y;
-	fastf_t		xnew;
-	fastf_t		ynew;
+	fastf_t		arc_angle;
 	fastf_t		delta_ang;
-	fastf_t		cos_delta;
-	fastf_t		sin_delta;
+	fastf_t		cos_del, sin_del;
+	fastf_t		x, y, xnew, ynew;
+	vect_t		to_end;
 	point_t		pt;
 	int		i;
 
-	if( r <= 0.0 )
-		return;
-
-	delta_ang = 2.0*M_PI/segments;
-	cos_delta = cos( delta_ang );
-	sin_delta = sin( delta_ang );
-
-	x = r;
-	y = 0.0;
-	VJOIN1( pt, center, x, v1 );
-	RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_MOVE );
-	for( i=0 ; i<ARC_SEGS ; i++ )
+	if( !full_circle )
 	{
-		xnew = x*cos_delta - y*sin_delta;
-		ynew = x*sin_delta + y*cos_delta;
+		VSUB2( to_end, end, center );
+		arc_angle = atan2( VDOT( to_end, v2 ), VDOT( to_end, v1 ) );
+		delta_ang = arc_angle/seg_count;
+	}
+	else
+		delta_ang = 2.0*M_PI/seg_count;
+
+	cos_del = cos( delta_ang );
+	sin_del = sin( delta_ang );
+
+	x = radius;
+	y = 0.0;
+	VJOIN2( pt, center, x, v1, y, v2 );
+	RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_MOVE );
+	for( i=0 ; i<seg_count ; i++ )
+	{
+		vect_t radial_dir;
+		fastf_t local_radius;
+
+		xnew = x*cos_del - y*sin_del;
+		ynew = x*sin_del + y*cos_del;
 		VJOIN2( pt, center, xnew, v1, ynew, v2 );
 		RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_DRAW );
 		x = xnew;
 		y = ynew;
 	}
-	x = r;
-	y = 0.0;
-	VJOIN1( pt, center, x, v1 );
-	RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_DRAW );
 }
 
 static void
@@ -685,7 +1278,7 @@ int			seg_count;
 	point_t		pt;
 
 	if( r1 > 0.0 )
-		draw_pipe_circle( vhead, r1, base_vertex, v1, v2, seg_count );
+		draw_pipe_arc( vhead, r1, base_vertex, v1, v2, pt, pt, seg_count, 1 );
 
 	if( r1 > 0.0 )
 	{
@@ -752,48 +1345,6 @@ int			seg_count;
 	RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_DRAW );
 }
 
-static void
-draw_pipe_arc( vhead, r_start, r_end, center, v1, v2, start, end, seg_count )
-struct rt_list		*vhead;
-fastf_t			r_start,r_end;
-point_t			center;
-vect_t			v1,v2;
-point_t			start,end;
-int			seg_count;
-{
-	fastf_t		arc_angle;
-	fastf_t		delta_ang;
-	fastf_t		cos_del, sin_del;
-	fastf_t		x, y, xnew, ynew;
-	vect_t		to_end;
-	point_t		pt;
-	int		i;
-
-	VSUB2( to_end, end, center );
-	arc_angle = atan2( VDOT( to_end, v2 ), VDOT( to_end, v1 ) );
-	delta_ang = arc_angle/seg_count;
-	cos_del = cos( delta_ang );
-	sin_del = sin( delta_ang );
-
-	x = 1.0;
-	y = 0.0;
-	RT_ADD_VLIST( vhead, start, RT_VLIST_LINE_MOVE );
-	for( i=0 ; i<seg_count ; i++ )
-	{
-		vect_t radial_dir;
-		fastf_t local_radius;
-
-		xnew = x*cos_del - y*sin_del;
-		ynew = x*sin_del + y*cos_del;
-		VBLEND2( radial_dir, xnew, v1, ynew, v2 );
-		local_radius = r_start + (fastf_t)i/(fastf_t)(seg_count-1) * (r_end - r_start);
-		VJOIN1( pt, center, local_radius, radial_dir );
-		RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_DRAW );
-		x = xnew;
-		y = ynew;
-	}
-}
-
 /*
  *			R T _ P I P E _ P L O T
  */
@@ -828,8 +1379,8 @@ struct rt_tol		*tol;
 
 	for( RT_LIST_FOR( psp, wdb_pipeseg, &pip->pipe_segs_head ) ) 
 	{
-		LOCAL fastf_t radius1,radius2;
-		LOCAL fastf_t inv_radius1,inv_radius2;
+		LOCAL fastf_t radius;
+		LOCAL fastf_t inv_radius;
 		LOCAL vect_t end_dir;
 		LOCAL point_t start,end;
 
@@ -856,104 +1407,77 @@ struct rt_tol		*tol;
 				break;
 			case WDB_PIPESEG_TYPE_BEND:
 				if( psp->ps_od > 0.0 )
-					draw_pipe_circle( vhead, psp->ps_od/2.0, psp->ps_start,
-							v1, v2, ARC_SEGS );
+					draw_pipe_arc( vhead, psp->ps_od/2.0, psp->ps_start,
+							v1, v2, tmp_center, tmp_center, ARC_SEGS, 1 );
 				if( psp->ps_id > 0.0 )
-					draw_pipe_circle( vhead, psp->ps_id/2.0, psp->ps_start,
-							v1, v2, ARC_SEGS );
+					draw_pipe_arc( vhead, psp->ps_id/2.0, psp->ps_start,
+							v1, v2, tmp_center, tmp_center, ARC_SEGS, 1 );
+
+				if( psp->ps_od != np->ps_od )
+				{
+					rt_log( "Pipe solid has bend with non-constant O.D.\n" );
+					return( -1 );
+				}
+				if( psp->ps_id != np->ps_id )
+				{
+					rt_log( "Pipe solid has bend with non-constant I.D.\n" );
+					return( -1 );
+				}
 
 				/* draw bend arcs in plane of bend */
 				VSUB2( v1, psp->ps_start, psp->ps_bendcenter );
-				radius1 = MAGNITUDE( v1 );
-				inv_radius1 = 1.0/radius1;
-				VSCALE( v1, v1, inv_radius1 );
+				radius = MAGNITUDE( v1 );
+				inv_radius = 1.0/radius;
+				VSCALE( v1, v1, inv_radius );
 				VCROSS( v2, pipe_dir, v1 );
 				VSUB2( end_dir, np->ps_start, psp->ps_bendcenter );
-				radius2 = MAGNITUDE( end_dir );
-				inv_radius2 = 1.0/radius2;
-				VSCALE( end_dir, end_dir, inv_radius2 );
+				VUNITIZE( end_dir );
 				VJOIN1( start, psp->ps_start, psp->ps_od/2.0, v1 );
 				VJOIN1( end, np->ps_start, np->ps_od/2.0, end_dir );
-				draw_pipe_arc( vhead, radius1+psp->ps_od/2.0, radius2+np->ps_od/2.0,
-					psp->ps_bendcenter, v1, pipe_dir, start, end, ARC_SEGS );
+				draw_pipe_arc( vhead, radius+psp->ps_od/2.0,
+					psp->ps_bendcenter, v1, pipe_dir, start, end, ARC_SEGS, 0 );
 				VJOIN1( start, psp->ps_start, -psp->ps_od/2.0, v1 );
 				VJOIN1( end, np->ps_start, -np->ps_od/2.0, end_dir );
-				draw_pipe_arc( vhead, radius1-psp->ps_od/2.0, radius2-np->ps_od/2.0,
-					psp->ps_bendcenter, v1, pipe_dir, start, end, ARC_SEGS );
-				if( psp->ps_id > 0.0 || np->ps_id > 0.0 )
+				draw_pipe_arc( vhead, radius-psp->ps_od/2.0,
+					psp->ps_bendcenter, v1, pipe_dir, start, end, ARC_SEGS, 0 );
+				if( psp->ps_id > 0.0 )
 				{
 					VJOIN1( start, psp->ps_start, psp->ps_id/2.0, v1 );
 					VJOIN1( end, np->ps_start, np->ps_id/2.0, end_dir );
-					draw_pipe_arc( vhead, radius1+psp->ps_id/2.0, radius2+np->ps_id/2.0,
-						psp->ps_bendcenter, v1, pipe_dir, start, end, ARC_SEGS );
+					draw_pipe_arc( vhead, radius+psp->ps_id/2.0,
+						psp->ps_bendcenter, v1, pipe_dir, start, end, ARC_SEGS, 0 );
 					VJOIN1( start, psp->ps_start, -psp->ps_id/2.0, v1 );
 					VJOIN1( end, np->ps_start, -np->ps_id/2.0, end_dir );
-					draw_pipe_arc( vhead, radius1-psp->ps_id/2.0, radius2-np->ps_id/2.0,
-						psp->ps_bendcenter, v1, pipe_dir, start, end, ARC_SEGS );
+					draw_pipe_arc( vhead, radius-psp->ps_id/2.0,
+						psp->ps_bendcenter, v1, pipe_dir, start, end, ARC_SEGS, 0 );
 				}
 
 				/* draw bend arcs not in plane of bend */
 				VJOIN1( tmp_center, psp->ps_bendcenter, psp->ps_od/2.0, v2 );
 				VJOIN1( start, psp->ps_start, psp->ps_od/2.0, v2 );
 				VJOIN1( end, np->ps_start, np->ps_od/2.0, v2 );
-				VSUB2( v1, start, tmp_center );
-				radius1 = MAGNITUDE( v1 );
-				inv_radius1 = 1.0/radius1;
-				VSCALE( v1, v1, inv_radius1 );
-				VSUB2( v3, end, tmp_center );
-				radius2 = MAGNITUDE( v3 );
-				VCROSS( tmp_vec, v3, v1 );
-				VCROSS( v3, v1, tmp_vec );
-				VUNITIZE( v3 );
-				draw_pipe_arc( vhead, radius1, radius2,
-					tmp_center, v1, v3, start, end, ARC_SEGS );
+				draw_pipe_arc( vhead, radius,
+					tmp_center, v1, pipe_dir, start, end, ARC_SEGS, 0 );
 
 				VJOIN1( tmp_center, psp->ps_bendcenter, -psp->ps_od/2.0, v2 );
 				VJOIN1( start, psp->ps_start, -psp->ps_od/2.0, v2 );
 				VJOIN1( end, np->ps_start, -np->ps_od/2.0, v2 );
-				VSUB2( v1, start, tmp_center );
-				radius1 = MAGNITUDE( v1 );
-				inv_radius1 = 1.0/radius1;
-				VSCALE( v1, v1, inv_radius1 );
-				VSUB2( v3, end, tmp_center );
-				radius2 = MAGNITUDE( v3 );
-				VCROSS( tmp_vec, v3, v1 );
-				VCROSS( v3, v1, tmp_vec );
-				VUNITIZE( v3 );
-				draw_pipe_arc( vhead, radius1, radius2,
-					tmp_center, v1, v3, start, end, ARC_SEGS );
+				draw_pipe_arc( vhead, radius,
+					tmp_center, v1, pipe_dir, start, end, ARC_SEGS, 0 );
 
-				if( psp->ps_id > 0.0 || np->ps_id > 0.0 )
+				if( psp->ps_id > 0.0 )
 				{
 					VJOIN1( tmp_center, psp->ps_bendcenter, psp->ps_id/2.0, v2 );
 					VJOIN1( start, psp->ps_start, psp->ps_id/2.0, v2 );
 					VJOIN1( end, np->ps_start, np->ps_id/2.0, v2 );
-					VSUB2( v1, start, tmp_center );
-					radius1 = MAGNITUDE( v1 );
-					inv_radius1 = 1.0/radius1;
-					VSCALE( v1, v1, inv_radius1 );
-					VSUB2( v3, end, tmp_center );
-					radius2 = MAGNITUDE( v3 );
-					VCROSS( tmp_vec, v3, v1 );
-					VCROSS( v3, v1, tmp_vec );
-					VUNITIZE( v3 );
-					draw_pipe_arc( vhead, radius1, radius2,
-						tmp_center, v1, v3, start, end, ARC_SEGS );
+					draw_pipe_arc( vhead, radius,
+						tmp_center, v1, pipe_dir, start, end, ARC_SEGS, 0 );
 
 					VJOIN1( tmp_center, psp->ps_bendcenter, -psp->ps_id/2.0, v2 );
 					VJOIN1( start, psp->ps_start, -psp->ps_id/2.0, v2 );
 					VJOIN1( end, np->ps_start, -np->ps_id/2.0, v2 );
-					VSUB2( v1, start, tmp_center );
-					radius1 = MAGNITUDE( v1 );
-					inv_radius1 = 1.0/radius1;
-					VSCALE( v1, v1, inv_radius1 );
-					VSUB2( v3, end, tmp_center );
-					radius2 = MAGNITUDE( v3 );
-					VCROSS( tmp_vec, v3, v1 );
-					VCROSS( v3, v1, tmp_vec );
-					VUNITIZE( v3 );
-					draw_pipe_arc( vhead, radius1, radius2,
-						tmp_center, v1, v3, start, end, ARC_SEGS );
+					draw_pipe_arc( vhead, radius,
+						tmp_center, v1, pipe_dir, start, end, ARC_SEGS, 0 );
 				}
 
 				/* prepare for drawing END circles */
@@ -963,11 +1487,11 @@ struct rt_tol		*tol;
 				break;
 			case WDB_PIPESEG_TYPE_END:
 				if( psp->ps_od > 0.0 )
-					draw_pipe_circle( vhead, psp->ps_od/2.0,
-						psp->ps_start, v1, v2, ARC_SEGS );
+					draw_pipe_arc( vhead, psp->ps_od/2.0,
+						psp->ps_start, v1, v2, tmp_center, tmp_center, ARC_SEGS, 1 );
 				if( psp->ps_id > 0.0 )
-					draw_pipe_circle( vhead, psp->ps_id/2.0,
-						psp->ps_start, v1, v2, ARC_SEGS );
+					draw_pipe_arc( vhead, psp->ps_id/2.0,
+						psp->ps_start, v1, v2, tmp_center, tmp_center, ARC_SEGS, 1 );
 				break;
 			default:
 				rt_log("rt_pipe_plot: unknown ps_type=%d\n", psp->ps_type);
@@ -1241,4 +1765,119 @@ struct rt_db_internal	*ip;
 	}
 	rt_free( ip->idb_ptr, "pipe ifree" );
 	ip->idb_ptr = GENPTR_NULL;
+}
+
+/*
+ *			R T _ P I P E _ C K
+ *
+ *  Check pipe solid
+ *	All bends must have constant diameters
+ *	No consecutive LINEAR sections without BENDS unless the
+ *		LINEAR sections are collinear.
+ */
+int
+rt_pipe_ck( headp )
+struct wdb_pipeseg *headp;
+{
+	register struct wdb_pipeseg	*psp;
+	register int			error_count=0;
+
+	psp = RT_LIST_FIRST( wdb_pipeseg, &headp->l );
+	while( RT_LIST_NOT_HEAD( &psp->l, &headp->l ) )
+	{
+		register struct wdb_pipeseg	*next;
+		vect_t				dir1;
+		vect_t				dir2;
+
+		if( psp->l.magic != WDB_PIPESEG_MAGIC )
+		{
+			rt_log( "Pipe solid segment has bad MAGIC, should be x%x, but is x%x\n",
+				WDB_PIPESEG_MAGIC, psp->l.magic );
+			error_count++;
+			return( error_count );
+		}
+
+		next = RT_LIST_PNEXT( wdb_pipeseg, &psp->l );
+		if( RT_LIST_NOT_HEAD( &next->l, &headp->l ) )
+		{
+			if( next->l.magic != WDB_PIPESEG_MAGIC )
+			{
+				rt_log( "Pipe solid segment has bad MAGIC, should be x%x, but is x%x\n",
+					WDB_PIPESEG_MAGIC, next->l.magic );
+				error_count++;
+				return( error_count );
+			}
+		}
+		else if( psp->ps_type != WDB_PIPESEG_TYPE_END )
+		{
+			rt_log( "Pipe solid does not end with an END segment\m" );
+			error_count++;
+			return( error_count );
+		}
+
+		switch( psp->ps_type )
+		{
+			case WDB_PIPESEG_TYPE_BEND:
+				if( psp->ps_id >= psp->ps_od )
+				{
+					rt_log( "Pipe solid has BEND with inner radius (%g) as big as outer (%g)\n",
+						psp->ps_id, psp->ps_od );
+					error_count++;
+				}
+				if( psp->ps_od != next->ps_od )
+				{
+					rt_log( "Pipe solid has BEND with non-constant outer radius (%g and %g)\n",
+						psp->ps_od, next->ps_od );
+					error_count++;
+				}
+				if( psp->ps_id > 0.0 || next->ps_id > 0.0 )
+				{
+					if( psp->ps_id != next->ps_id )
+					{
+						rt_log( "Pipe solid has BEND with non-constant inner radius (%g and %g)\n",
+							psp->ps_id, next->ps_id  );
+						error_count++;
+					}
+				}
+				break;
+			case WDB_PIPESEG_TYPE_LINEAR:
+				if( next->ps_type == WDB_PIPESEG_TYPE_LINEAR )
+				{
+					register struct wdb_pipeseg *next_next;
+
+					next_next = RT_LIST_PNEXT( wdb_pipeseg, &next->l );
+					if( RT_LIST_IS_HEAD( &next_next->l, &headp->l ) )
+					{
+						rt_log( "Pipe does not end with an END segment\n" );
+						error_count++;
+						return( error_count );
+					}
+					if( next_next->l.magic != WDB_PIPESEG_MAGIC )
+					{
+						rt_log( "Pipe solid segment has bad MAGIC, should be x%x, but is x%x\n",
+							WDB_PIPESEG_MAGIC, next_next->l.magic );
+						error_count++;
+						return( error_count );
+					}
+
+					VSUB2( dir1, next->ps_start, psp->ps_start );
+					VSUB2( dir2, next_next->ps_start, next->ps_start );
+					VUNITIZE( dir1 );
+					VUNITIZE( dir2 );
+					if( !NEAR_ZERO( VDOT( dir1, dir2 ) - 1.0, RT_DOT_TOL ) )
+					{
+						rt_log( "Pipe solid has a corner with no BEND segment\n" );
+						error_count++;
+					}
+				}
+				break;
+			case WDB_PIPESEG_TYPE_END:
+				break;
+			default:
+				rt_log( "Pipe solid has unrecognized segment type\n" );
+				error_count++;
+		}
+		psp = next;
+	}
+	return( error_count );
 }
