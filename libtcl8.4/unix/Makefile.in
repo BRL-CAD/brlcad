@@ -1343,8 +1343,10 @@ allpatch: dist
 # TOOL_DIR.
 #
 
-html-tcl: EXTRA_HTML_ARGS=--tcl
-html-tk:  EXTRA_HTML_ARGS=--tk
+html-tcl:
+	EXTRA_HTML_ARGS=--tcl
+html-tk:
+	EXTRA_HTML_ARGS=--tk
 
 html html-tcl html-tk: 
 	$(TCL_EXE) $(TOOL_DIR)/tcltk-man2html.tcl --htmldir=$(DISTDIR)/html \
