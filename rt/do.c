@@ -66,6 +66,7 @@ extern int	hypersample;		/* number of extra rays to fire */
 extern fastf_t	aspect;			/* view aspect ratio X/Y */
 extern point_t	eye_model;		/* model-space location of eye */
 extern fastf_t  eye_backoff;		/* dist of eye from center */
+extern fastf_t	rt_perspective;		/* persp (degrees X) 0 => ortho */
 extern int	width;			/* # of pixels in X */
 extern int	height;			/* # of lines in Y */
 extern mat_t	Viewrotscale;
@@ -90,6 +91,11 @@ extern int	curframe;		/* current frame number */
 extern char	*outputfile;		/* name of base of output file */
 extern int	interactive;		/* human is watching results */
 /***** end variables shared with rt.c *****/
+
+/***** variables shared with refract.c *****/
+extern int	max_bounces;		/* max reflection/recursion level */
+extern int	max_ireflect;		/* max internal reflection level */
+/***** end variables shared with refract.c *****/
 
 void		def_tree();
 void		do_ae();
@@ -367,6 +373,36 @@ char	**argv;
 	rt_clean( ap.a_rt_i );
 	if(rdebug&RDEBUG_RTMEM)
 		rt_prmem( "After rt_clean" );
+	return(0);
+}
+
+struct matparse set_parse[] = {
+	"width",	(mp_off_ty)&width,			"%d",
+	"height",	(mp_off_ty)&height,			"%d",
+	"angle",	(mp_off_ty)&rt_perspective,		"%f",
+	"bounces",	(mp_off_ty)&max_bounces,		"%d",
+	"ireflect",	(mp_off_ty)&max_ireflect,		"%d",
+	(char *)0,	(mp_off_ty)0,				(char *)0
+};
+
+/*
+ *			C M _ S E T
+ *
+ *  Allow variable values to be set or examined.
+ */
+cm_set( argc, argv )
+int	argc;
+char	**argv;
+{
+	if( argc <= 1 ) {
+		mlib_print( "Variable Values:", set_parse, (mp_off_ty)0 );
+		return(0);
+	}
+	while( argc > 1 ) {
+		mlib_parse( argv[1], set_parse, (mp_off_ty)0 );
+		argc--;
+		argv++;
+	}
 	return(0);
 }
 
