@@ -878,6 +878,101 @@ CONST struct rt_tol	*tol;
 }
 
 /*
+ *			N M G _ M O D E L _ B R E A K _ E _ O N _ V
+ *
+ *  As the first step in evaluating a boolean formula,
+ *  before starting to do face/face intersections, compare every
+ *  edge in the model with every vertex in the model.
+ *  If the vertex is within tolerance of the edge, break the edge,
+ *  and enrole the new edge on a list of edges still to be processed.
+ *
+ *  A list of edges and a list of vertices are built, and then processed.
+ *
+ *  Space partitioning could improve the performance of this algorithm.
+ *  For the moment, a brute-force approach is used.
+ *
+ *  Returns -
+ *	Number of edges broken.
+ */
+int
+nmg_model_break_e_on_v( m, tol )
+struct model			*m;
+CONST struct rt_tol		*tol;
+{
+	int		count = 0;
+	struct nmg_ptbl	verts;
+	struct nmg_ptbl	edgeuses;
+	struct nmg_ptbl	new_edgeuses;
+	register struct edgeuse	**eup;
+
+	NMG_CK_MODEL(m);
+	RT_CK_TOL(tol);
+
+	nmg_e_and_v_tabulate( &edgeuses, &verts, &m->magic );
+
+/* XXX Move to nmg.h */
+#define NMG_TBL_LEN(p)	((p)->end)
+	/* Repeat the process until no new edgeuses are created */
+	while( NMG_TBL_LEN( &edgeuses ) > 0 )  {
+		(void)nmg_tbl( &new_edgeuses, TBL_INIT, 0 );
+
+		for( eup = (struct edgeuse **)NMG_TBL_LASTADDR(&edgeuses);
+		     eup >= (struct edgeuse **)NMG_TBL_BASEADDR(&edgeuses);
+		     eup--
+		)  {
+			register struct edgeuse	*eu;
+			register struct vertex	*va;
+			register struct vertex	*vb;
+			register struct vertex	**vp;
+
+			eu = *eup;
+			NMG_CK_EDGEUSE(eu);
+			va = eu->vu_p->v_p;
+			vb = eu->eumate_p->vu_p->v_p;
+			NMG_CK_VERTEX(va);
+			NMG_CK_VERTEX(vb);
+			for( vp = (struct vertex **)NMG_TBL_LASTADDR(&verts);
+			     vp >= (struct vertex **)NMG_TBL_BASEADDR(&verts);
+			     vp--
+			)  {
+				register struct vertex	*v;
+				fastf_t			dist;
+				int			code;
+				struct edgeuse		*new_eu;
+
+				v = *vp;
+				NMG_CK_VERTEX(v);
+				if( va == v )  continue;
+				if( vb == v )  continue;
+
+				/* A good candidate for inline expansion */
+				code = rt_isect_pt_lseg( &dist,
+					va->vg_p->coord,
+					vb->vg_p->coord,
+					v->vg_p->coord, tol );
+				if( code < 1 )  continue;	/* missed */
+				if( code == 1 || code == 2 )  {
+					rt_log("nmg_model_break_e_on_v() code=%d, why wasn't this vertex fused?\n", code);
+					continue;
+				}
+				/* Break edge on vertex, but don't fuse yet. */
+				new_eu = nmg_ebreak( v, eu );
+				/* Put new edge into follow-on list */
+				nmg_tbl( &new_edgeuses, TBL_INS, &new_eu->l.magic );
+				count++;
+			}
+		}
+		nmg_tbl( &edgeuses, TBL_FREE, 0 );
+		edgeuses = new_edgeuses;		/* struct copy */
+	}
+#if 0
+	if (rt_g.NMG_debug & (DEBUG_BOOL|DEBUG_BASIC) )
+#endif
+		rt_log("nmg_model_break_e_on_v() broke %d edges\n", count);
+	return count;
+}
+
+/*
  *			N M G _ M O D E L _ F U S E
  *
  *  This is the primary application interface to the geometry fusing support.
@@ -912,6 +1007,9 @@ CONST struct rt_tol	*tol;
 
 	/* Step 2 -- the face geometry */
 	total += nmg_model_face_fuse( m, tol );
+
+	/* Step 2.5 -- break edges on vertices, before fusing edges */
+	total += nmg_model_break_e_on_v( m, tol );
 
 	/* Step 3 -- edges */
 	total += nmg_model_edge_fuse( m, tol );
