@@ -1,5 +1,5 @@
 /*
- *			R T
+ *			R T . C 
  *
  *  Demonstration Ray Tracing main program, using RT library.
  *  Invoked by MGED for quick pictures.
@@ -50,21 +50,25 @@ mat_t model2view;
 int hex_out = 0;	/* Binary or Hex .pix output file */
 /***** end of sharing with viewing model *****/
 
-/***** variables shared with worker() */
-static struct application ap;
-static int	stereo = 0;	/* stereo viewing */
+extern void grid_setup();
+extern void worker();
+/***** variables shared with worker() ******/
+struct application ap;
+int	stereo = 0;	/* stereo viewing */
 vect_t left_eye_delta;
-static int	hypersample=0;	/* number of extra rays to fire */
-static int	perspective=0;	/* perspective view -vs- parallel view */
+int	hypersample=0;	/* number of extra rays to fire */
+int	perspective=0;	/* perspective view -vs- parallel view */
 vect_t	dx_model;	/* view delta-X as model-space vector */
 vect_t	dy_model;	/* view delta-Y as model-space vector */
-static point_t	eye_model;	/* model-space location of eye */
-static point_t	viewbase_model;	/* model-space location of viewplane corner */
-static int npts;	/* # of points to shoot: x,y */
-int npsw = 1;		/* PARALLEL: number of worker PSWs to run */
-void worker();
+point_t	eye_model;	/* model-space location of eye */
+point_t	viewbase_model;	/* model-space location of viewplane corner */
+int npts;	/* # of points to shoot: x,y */
 int cur_pixel;		/* current pixel number, 0..last_pixel */
 int last_pixel;		/* last pixel number */
+mat_t Viewrotscale;
+mat_t toEye;
+fastf_t viewsize;
+fastf_t	zoomout=1;	/* >0 zoom out, 0..1 zoom in */
 
 #ifdef PARALLEL
 char *scanbuf;		/*** Output buffering, for parallelism */
@@ -83,6 +87,7 @@ struct taskcontrol {
 #endif
 /***** end variables shared with worker() */
 
+static int npsw = 1;		/* number of worker PSWs to run */
 #ifndef MAX_PSW
 #define MAX_PSW 1
 #endif
@@ -100,15 +105,11 @@ char **argv;
 	static double utime;
 	char *title_file, *title_obj;	/* name of file and first object */
 	char *outputfile = (char *)0;	/* name of base of output file */
-	static float	zoomout=1;	/* >0 zoom out, 0..1 zoom in */
 	static FILE *outfp = NULL;	/* optional pixel output file */
 	register int x,y;
 	char framename[128];		/* File name to hold current frame */
 	char outbuf[132];
 	char idbuf[132];		/* First ID record info */
-	mat_t Viewrotscale;
-	mat_t toEye;
-	fastf_t viewsize;
 	int framenumber = 0;
 	int desiredframe = 0;
 	static struct region *regp;
@@ -350,48 +351,7 @@ do_more:
 		fprintf(stderr,"Output file is %s\n", framename);
 	}
 
-	/* model2view takes us to eye_model location & orientation */
-	mat_idn( toEye );
-	toEye[MDX] = -eye_model[X];
-	toEye[MDY] = -eye_model[Y];
-	toEye[MDZ] = -eye_model[Z];
-	Viewrotscale[15] = 0.5*viewsize;	/* Viewscale */
-	mat_mul( model2view, Viewrotscale, toEye );
-	mat_inv( view2model, model2view );
-
-	/* Chop -1.0..+1.0 range into npts parts */
-	VSET( temp, 2.0/npts, 0, 0 );
-	MAT4X3VEC( dx_model, view2model, temp );
-	VSET( temp, 0, 2.0/npts, 0 );
-	MAT4X3VEC( dy_model, view2model, temp );
-	if( stereo )  {
-		/* Move left 2.5 inches (63.5mm) */
-		VSET( temp, 2.0*(-63.5/viewsize), 0, 0 );
-		rt_log("red eye: moving %f relative screen (left)\n", temp[X]);
-		MAT4X3VEC( left_eye_delta, view2model, temp );
-		VPRINT("left_eye_delta", left_eye_delta);
-	}
-
-	/* "Lower left" corner of viewing plane */
-	if( perspective )  {
-		VSET( temp, -1, -1, -zoomout );	/* viewing plane */
-		/*
-		 * Divergance is (0.5 * viewsize / npts) mm at
-		 * a ray distance of (viewsize * zoomout) mm.
-		 */
-		ap.a_diverge = (0.5 / npts) / zoomout;
-		ap.a_rbeam = 0;
-	}  else  {
-		VSET( temp, 0, 0, -1 );
-		MAT4X3VEC( ap.a_ray.r_dir, view2model, temp );
-		VUNITIZE( ap.a_ray.r_dir );
-
-		VSET( temp, -1, -1, 0 );	/* eye plane */
-		ap.a_rbeam = 0.5 * viewsize / npts;
-		ap.a_diverge = 0;
-	}
-	MAT4X3PNT( viewbase_model, view2model, temp );
-
+	grid_setup();
 	fprintf(stderr,"Beam radius=%g mm, divergance=%g mm/1mm\n",
 		ap.a_rbeam, ap.a_diverge );
 
@@ -473,121 +433,6 @@ out:
 	fprintf(stderr,"rt: exit\n");
 #endif
 	return(0);
-}
-
-#define CRT_BLEND(v)	(0.26*(v)[X] + 0.66*(v)[Y] + 0.08*(v)[Z])
-#define NTSC_BLEND(v)	(0.30*(v)[X] + 0.59*(v)[Y] + 0.11*(v)[Z])
-
-/*
- *  			W O R K E R
- *  
- *  Compute one pixel, and store it.
- */
-void
-worker()
-{
-	LOCAL struct application a;
-	LOCAL vect_t point;		/* Ref point on eye or view plane */
-	LOCAL vect_t colorsum;
-	register int com;
-
-	a.a_onehit = 1;
-	while(1)  {
-		RES_ACQUIRE( &rt_g.res_printf );	/* HACK */
-		com = cur_pixel++;
-		RES_RELEASE( &rt_g.res_printf );	/* HACK */
-
-		if( com > last_pixel )  return;
-		/* Note: ap.... not valid until first time here */
-		a.a_x = com%npts;
-		a.a_y = com/npts;
-		a.a_hit = ap.a_hit;
-		a.a_miss = ap.a_miss;
-		a.a_rt_i = ap.a_rt_i;
-		a.a_rbeam = ap.a_rbeam;
-		a.a_diverge = ap.a_diverge;
-		VSETALL( colorsum, 0 );
-		for( com=0; com<=hypersample; com++ )  {
-			if( hypersample )  {
-				FAST fastf_t dx, dy;
-				dx = a.a_x + rand_half();
-				dy = a.a_y + rand_half();
-				VJOIN2( point, viewbase_model,
-					dx, dx_model, dy, dy_model );
-			}  else  {
-				VJOIN2( point, viewbase_model,
-					a.a_x, dx_model,
-					a.a_y, dy_model );
-			}
-			if( perspective )  {
-				VSUB2( a.a_ray.r_dir,
-					point, eye_model );
-				VUNITIZE( a.a_ray.r_dir );
-				VMOVE( a.a_ray.r_pt, eye_model );
-			} else {
-				VMOVE( a.a_ray.r_pt, point );
-			 	VMOVE( a.a_ray.r_dir, ap.a_ray.r_dir );
-			}
-			a.a_level = 0;		/* recursion level */
-			rt_shootray( &a );
-
-			if( stereo )  {
-				FAST fastf_t right,left;
-
-				right = CRT_BLEND(a.a_color);
-
-				VADD2(  point, point,
-					left_eye_delta );
-				if( perspective )  {
-					VSUB2( a.a_ray.r_dir,
-						point, eye_model );
-					VUNITIZE( a.a_ray.r_dir );
-					VMOVE( a.a_ray.r_pt, eye_model );
-				} else {
-					VMOVE( a.a_ray.r_pt, point );
-				}
-				a.a_level = 0;		/* recursion level */
-				rt_shootray( &a );
-
-				left = CRT_BLEND(a.a_color);
-				VSET( a.a_color, left, 0, right );
-			}
-			VADD2( colorsum, colorsum, a.a_color );
-		}
-		if( hypersample )  {
-			FAST fastf_t f;
-			f = 1.0 / (hypersample+1);
-			VSCALE( a.a_color, colorsum, f );
-		}
-#ifndef PARALLEL
-		view_pixel( &a );
-		if( a.a_x == npts-1 )
-			view_eol( &a );		/* End of scan line */
-#else
-		{
-			register char *pixelp;
-			register int r,g,b;
-			/* .pix files go bottom to top */
-			pixelp = scanbuf+((a.a_y*npts)+a.a_x)*3;
-			r = a.a_color[0]*255.+rand_half();
-			g = a.a_color[1]*255.+rand_half();
-			b = a.a_color[2]*255.+rand_half();
-			/* Truncate glints, etc */
-			if( r > 255 )  r=255;
-			if( g > 255 )  g=255;
-			if( b > 255 )  b=255;
-			if( r<0 || g<0 || b<0 )  {
-				rt_log("Negative RGB %d,%d,%d\n", r, g, b );
-				r = 0x80;
-				g = 0xFF;
-				b = 0x80;
-			}
-			*pixelp++ = r ;
-			*pixelp++ = g ;
-			*pixelp++ = b ;
-		}
-#endif
-	}
 }
 
 #ifdef cray
