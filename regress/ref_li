@@ -1195,7 +1195,7 @@ itcl: make all
 itk: make all
 iwidgets2.2.0: make all
 iwidgets3.0.0: make all
- rm -f libitcl.so libitk.so ; cp /n/cad/c/regress/brlcad/.libitcl3.2.li/../libitcl3.2/itcl/libitcl3.2.so . ; cp /n/cad/c/regress/brlcad/.libitcl3.2.li/../libitcl3.2/itk/libitk3.2.so . ; ln -s libitk3.2.so libitk.so ; ln -s libitcl3.2.so libitcl.so
+ rm -f libitcl.so libitk.so ; cp /n/cad/c/regress/brlcad/.libitcl3.2.li/itcl/libitcl3.2.so . ; cp /n/cad/c/regress/brlcad/.libitcl3.2.li/itk/libitk3.2.so . ; ln -s libitk3.2.so libitk.so ; ln -s libitcl3.2.so libitcl.so
 -------------------------------- .libdm.li
 ../libdm/dm-ps.c: In function `ps_open':
 ../libdm/dm-ps.c:313: warning: string length `612' is greater than the minimum length `509' ISO C89 is required to support
@@ -3895,8 +3895,6 @@ cake: install is up to date
 ++++++INSTALLED /n/cad/c/regress/brlcad.li/html/manuals/mged/mged3.html
 ......checking mged_callbacks.html
 ++++++INSTALLED /n/cad/c/regress/brlcad.li/html/manuals/mged/mged_callbacks.html
-......checking mged_cmd_index.html
-++++++INSTALLED /n/cad/c/regress/brlcad.li/html/manuals/mged/mged_cmd_index.html
 ......checking mged_cmds.html
 ++++++INSTALLED /n/cad/c/regress/brlcad.li/html/manuals/mged/mged_cmds.html
 ......checking mged_devel_cmds.html
@@ -3977,6 +3975,8 @@ cake: install is up to date
 ++++++INSTALLED /n/cad/c/regress/brlcad.li/html/manuals/mged/peewee.jpg
 ......checking rim.jpg
 ++++++INSTALLED /n/cad/c/regress/brlcad.li/html/manuals/mged/rim.jpg
+......checking mged_cmd_index.html
+++++++INSTALLED /n/cad/c/regress/brlcad.li/html/manuals/mged/mged_cmd_index.html
 -------------------------------- html/manuals/mged/animmate
 ......checking anim_cascade.html
 ++++++INSTALLED /n/cad/c/regress/brlcad.li/html/manuals/mged/animmate/anim_cascade.html
@@ -4350,6 +4350,9 @@ RUNNING TEST:
 NOTICE:  moss.g is BRL-CAD v5 format.
 rendering solids...
 solids.pix  766396 off by many
+  766396 off by many
+  766396 off by many
+  766399 off by many
   766396 off by many
   766396 off by many
   766399 off by many
