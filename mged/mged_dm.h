@@ -169,6 +169,7 @@ struct shared_info {
   struct bu_vls _size_name;
   struct bu_vls _adc_name;
 
+#ifdef UPDATE_TCL_SLIDERS
   /* Tcl variable names for sliders */
   struct bu_vls _rate_tran_vls[3];
   struct bu_vls _rate_model_tran_vls[3];
@@ -185,8 +186,8 @@ struct shared_info {
   struct bu_vls _ang1_vls;
   struct bu_vls _ang2_vls;
   struct bu_vls _distadc_vls;
-
   struct bu_vls _Viewscale_vls;
+#endif
 
   /* Convenient pointer to the owner's (of the shared_info) dm_pathName */
   struct bu_vls *opp;
