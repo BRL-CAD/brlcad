@@ -189,7 +189,7 @@ char **argv;
 	void (*math_func)();
 	struct bu_vls result;
 
-	math_func = (void (*)())clientData;
+	math_func = (void (*)())clientData; /* object-to-function cast */
 	bu_vls_init(&result);
 
 	if (math_func == bn_mat_mul) {
@@ -767,7 +767,7 @@ Tcl_Interp *interp;
 
 	for (mp = math_funcs; mp->name != NULL; mp++) {
 		(void)Tcl_CreateCommand(interp, mp->name, bn_math_cmd,
-		    (ClientData)mp->func,
+		    (ClientData)mp->func, /* Function-to-Object pointer cast */
 		    (Tcl_CmdDeleteProc *)NULL);
 	}
 
