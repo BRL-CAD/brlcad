@@ -84,16 +84,18 @@ usepen()
 	static vect_t temp;
 
 	/*
-	 * Keep the pen input from doing other things to
-	 * ged when the MENU_ON is active.  This test may want
-	 * to include some other stuff for illumination, which
-	 * might still be done in a vertical direction, with
-	 * the menu active under the illumination info. Bob S
+	 * If menu is active, and pen press is in menu area,
+	 * divert this pen press for menu purposes.
 	 */
 	if(  menu_on == TRUE  &&
-		menu_list != (struct menu_item *) NULL  &&
-		menu_select( dm_values.dv_xpen, dm_values.dv_ypen, dm_values.dv_penpress )
-	) return;
+		dm_values.dv_xpen > XLIM &&
+		dm_values.dv_penpress &&
+		menu_list != (struct menu_item *) NULL
+	)  {
+		if( menu_select( dm_values.dv_ypen ) == 0 )
+			(void)printf("pen press outside valid menu\n");
+		return;
+	}
 
 	/*
 	 *  In the best of all possible worlds, nothing should happen
