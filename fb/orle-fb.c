@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) rle-fb.c	1.8
-	Last edit: 	8/7/85 at 14:23:55
-	Retrieved: 	8/13/86 at 03:17:29
+	SCCS id:	@(#) rle-fb.c	1.9
+	Last edit: 	2/4/86 at 16:38:20
+	Retrieved: 	8/13/86 at 03:17:36
 	SCCS archive:	/m/cad/fb_utils/RCS/s.rle-fb.c
 
 	Author:		Gary S. Moss
@@ -12,7 +12,7 @@
  */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) rle-fb.c	1.8	last edit 8/7/85 at 14:23:55";
+char	sccsTag[] = "@(#) rle-fb.c	1.9	last edit 2/4/86 at 16:38:20";
 #endif
 #include <stdio.h>
 #include <fb.h>
@@ -27,9 +27,10 @@ char	sccsTag[] = "@(#) rle-fb.c	1.8	last edit 8/7/85 at 14:23:55";
 #define PIXEL_OFFSET	((scan_ln%dma_scans)*_fbsize)
 
 typedef unsigned char	u_char;
-static char	*usage[] = {
+static char	*usage[] =
+	{
 "",
-"rle-fb (1.8)",
+"rle-fb (1.9)",
 "",
 "Usage: rle-fb [-Odv][-b (rgbBG)][-p X Y][file.rle]",
 "",
@@ -37,7 +38,7 @@ static char	*usage[] = {
 "If the environment variable FB_FILE is set, its value will be used",
 "	to specify the framebuffer file or device to write to.",
 0
-};
+	};
 
 static FILE	*fp = stdin;
 static Pixel	bgpixel = { 0, 0, 0, 0 };
@@ -54,16 +55,14 @@ static void	prnt_Usage();
 main( argc, argv )
 int	argc;
 char	*argv[];
-	{
-	register int	scan_ln;
-	register int	dma_scans;
-	static Pixel	scans[DMA_PIXELS];
-	static Pixel	bg_scan[1024];
-	static ColorMap	cmap;
-	static int	get_flags;
-	static int	scan_bytes;
-	static int	dma_pixels;
-	static int	dummy;
+	{	register int	scan_ln;
+		register int	dma_scans;
+		static Pixel	scans[DMA_PIXELS];
+		static Pixel	bg_scan[1025];
+		static ColorMap	cmap;
+		int		get_flags;
+		int		scan_bytes;
+		int		dma_pixels;
 
 	if( ! pars_Argv( argc, argv ) )
 		{
@@ -134,11 +133,9 @@ char	*argv[];
 		}
 	/* Fill buffer with background.					*/
 	if( ! olflag && (get_flags & NO_BOX_SAVE) )
-		{
-		register int	i;
-		register Pixel	*to;
-		register Pixel	*from;
-
+		{	register int	i;
+			register Pixel	*to;
+			register Pixel	*from;
 		to = bg_scan;
 		from = &bgpixel;
 		for( i = 0; i < _fbsize; i++ )
@@ -170,9 +167,8 @@ char	*argv[];
 			page_fault = 0;
 			}
 		if( scan_ln >= top && scan_ln <= btm )
-			{ register int
-			touched =
-				rle_decode_ln( fp, scans+PIXEL_OFFSET );
+			{	register int
+			touched = rle_decode_ln( fp, scans+PIXEL_OFFSET );
 			if( touched == -1 )
 				return	1;
 			else
@@ -197,9 +193,7 @@ register char	*buff_p;	/* On VAX, known to be R11 */
 register char	*scan_p;	/* VAX R10 */
 register int	scan_bytes;	/* VAX R9 */
 register int	dma_scans;
-	{
-	register int	i;
-
+	{	register int	i;
 	for( i = 0; i < dma_scans; ++i )
 		{
 #if ! defined( vax ) || defined( lint )
@@ -213,26 +207,25 @@ register int	dma_scans;
 	return;
 	}
 
-/*	p a r s _ A r g v ( )
- */
+/*	p a r s _ A r g v ( )						*/
 static int
 pars_Argv( argc, argv )
 register char	**argv;
-	{
-	register int	c;
-	extern int	optind;
-	extern char	*optarg;
-
+	{	register int	c;
+		extern int	optind;
+		extern char	*optarg;
 	/* Parse options.						*/
 	while( (c = getopt( argc, argv, "Ob:dp:v" )) != EOF )
 		{
-		switch( c ) {
+		switch( c )
+			{
 		case 'O' : /* Overlay mode.				*/
 			olflag = 1;
 			break;
 		case 'b' : /* User-specified background.		*/
 			bgflag = optarg[0];
-			switch( bgflag ) {
+			switch( bgflag )
+				{
 			case 'r':
 				bgpixel.red = 255;
 				break;
@@ -261,7 +254,7 @@ register char	**argv;
 						);
 				bgflag = 0;
 				break;
-			} /* End switch */
+				} /* End switch */
 			break;
 		case 'd' :
 			rle_debug = 1;
@@ -307,23 +300,17 @@ register char	**argv;
  */
 static void
 prnt_Usage()
-	{
-	register char	**p = usage;
-
+	{	register char	**p = usage;
 	while( *p )
-		{
 		(void) fprintf( stderr, "%s\n", *p++ );
-		}
 	return;
 	}
 
 static void
 prnt_Cmap( cmap )
 ColorMap	*cmap;
-	{
-	register u_char	*cp;
-	register int	i;
-
+	{	register u_char	*cp;
+		register int	i;
 	(void) fprintf( stderr, "\t\t\t_________ Color map __________\n" );
 	(void) fprintf( stderr, "Red segment :\n" );
 	for( i = 0, cp = cmap->cm_red; i < 16; ++i, cp += 16 )
