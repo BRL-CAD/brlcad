@@ -428,8 +428,13 @@ struct soltab {
 #define ID_ARBN		14	/* ARB with N faces */
 #define ID_PIPE		15	/* Pipe (wire) solid */
 #define ID_PARTICLE	16	/* Particle system solid */
+#define ID_RPC		17	/* Right Parabolic Cylinder  */
+#define ID_RHC		18	/* Right Hyperbolic Cylinder  */
+#define ID_EPA		19	/* Elliptical Paraboloid  */
+#define ID_EHY		20	/* Elliptical Hyperboloid  */
+#define ID_ETO		21	/* Elliptical Torus  */
 
-#define ID_MAXIMUM	16	/* Maximum defined ID_xxx value */
+#define ID_MAXIMUM	21	/* Maximum defined ID_xxx value */
 
 
 /*

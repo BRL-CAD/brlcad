@@ -120,6 +120,11 @@ RT_DECLARE_INTERFACE(arbn)
 RT_DECLARE_INTERFACE(pipe)
 RT_DECLARE_INTERFACE(part)
 RT_DECLARE_INTERFACE(nmg)
+RT_DECLARE_INTERFACE(rpc)
+RT_DECLARE_INTERFACE(rhc)
+RT_DECLARE_INTERFACE(epa)
+RT_DECLARE_INTERFACE(ehy)
+RT_DECLARE_INTERFACE(eto)
 
 /* XXX from shoot.c / vshoot.c */
 RT_EXTERN(void rt_vstub, (struct soltab *stp[], struct xray *rp[],
@@ -245,6 +250,41 @@ struct rt_functab rt_functab[ID_MAXIMUM+2] = {
 		rt_part_import,	rt_part_export,	rt_part_ifree,
 		rt_part_describe,
 
+	"ID_RPC",	0,
+		rt_rpc_prep,	rt_rpc_shot,	rt_rpc_print,	rt_rpc_norm,
+		rt_rpc_uv,	rt_rpc_curve,	rt_rpc_class,	rt_rpc_free,
+		rt_rpc_plot,	rt_rpc_vshot,	rt_rpc_tess,
+		rt_rpc_import,	rt_rpc_export,	rt_rpc_ifree,
+		rt_rpc_describe,
+
+	"ID_RHC",	0,
+		rt_rhc_prep,	rt_rhc_shot,	rt_rhc_print,	rt_rhc_norm,
+		rt_rhc_uv,	rt_rhc_curve,	rt_rhc_class,	rt_rhc_free,
+		rt_rhc_plot,	rt_rhc_vshot,	rt_rhc_tess,
+		rt_rhc_import,	rt_rhc_export,	rt_rhc_ifree,
+		rt_rhc_describe,
+
+	"ID_EPA",	0,
+		rt_epa_prep,	rt_epa_shot,	rt_epa_print,	rt_epa_norm,
+		rt_epa_uv,	rt_epa_curve,	rt_epa_class,	rt_epa_free,
+		rt_epa_plot,	rt_epa_vshot,	rt_epa_tess,
+		rt_epa_import,	rt_epa_export,	rt_epa_ifree,
+		rt_epa_describe,
+
+	"ID_EHY",	0,
+		rt_ehy_prep,	rt_ehy_shot,	rt_ehy_print,	rt_ehy_norm,
+		rt_ehy_uv,	rt_ehy_curve,	rt_ehy_class,	rt_ehy_free,
+		rt_ehy_plot,	rt_ehy_vshot,	rt_ehy_tess,
+		rt_ehy_import,	rt_ehy_export,	rt_ehy_ifree,
+		rt_ehy_describe,
+
+	"ID_ETO",	0,
+		rt_eto_prep,	rt_eto_shot,	rt_eto_print,	rt_eto_norm,
+		rt_eto_uv,	rt_eto_curve,	rt_eto_class,	rt_eto_free,
+		rt_eto_plot,	rt_eto_vshot,	rt_eto_tess,
+		rt_eto_import,	rt_eto_export,	rt_eto_ifree,
+		rt_eto_describe,
+
 	">ID_MAXIMUM",	0,
 		rt_nul_prep,	rt_nul_shot,	rt_nul_print,	rt_nul_norm,
 		rt_nul_uv,	rt_nul_curve,	rt_nul_class,	rt_nul_free,
@@ -345,6 +385,11 @@ static char idmap[] = {
 	ID_NULL,	/* ELLG 23:  gift-only */
 	ID_HALF,	/* HALFSPACE 24:  halfspace */
 	ID_NULL,	/* HACK: SPLINE 25 */
+	ID_RPC,		/* HACK: RPC 26: right parabolic cylinder */
+	ID_RHC,		/* HACK: RHC 27: right hyperbolic cylinder */
+	ID_EPA,		/* HACK: EPA 28: elliptical paraboloid */
+	ID_EHY,		/* HACK: EHY 29: elliptical hyperboloid */
+	ID_ETO,		/* HACK: ETO 29: elliptical torus */
 	ID_NULL		/* n+1 */
 };
 
