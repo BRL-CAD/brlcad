@@ -170,7 +170,7 @@ proc do_Open { id } {
 
     set file_types {{{MGED Database} {.g}}}
     set ia_filename [tk_getOpenFile -parent .$id -filetypes $file_types\
-	    -initialdir . -title "Open MGED Database" -defaultextension ".g"]
+	    -title "Open MGED Database" -defaultextension ".g"]
     if {$ia_filename != ""} {
 	opendb $ia_filename
 	cad_dialog .$id.cool $mged_gui($id,screen) "File loaded" \
