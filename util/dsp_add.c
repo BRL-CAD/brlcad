@@ -154,7 +154,7 @@ int
 main(int ac, char *av[])
 {
 	int next_arg;
-	FILE *inp, *in;
+	FILE *in1, *in2;
 	unsigned short *buf1, *buf2;
 	unsigned long count;
 	int in_cookie, out_cookie;
@@ -171,7 +171,7 @@ main(int ac, char *av[])
 	/* Open the files */
 
 	if (stat(av[next_arg], &sb) ||
-	    (inp = fopen(av[next_arg], "r"))  == (FILE *)NULL) {
+	    (in1 = fopen(av[next_arg], "r"))  == (FILE *)NULL) {
 		perror(av[next_arg]);
 		return -1;
 	}
@@ -182,7 +182,7 @@ main(int ac, char *av[])
 	next_arg++;
 
 	if (stat(av[next_arg], &sb) ||
-	    (inp = fopen(av[next_arg], "r"))  == (FILE *)NULL) {
+	    (in2 = fopen(av[next_arg], "r"))  == (FILE *)NULL) {
 		perror(av[next_arg]);
 		return -1;
 	}
@@ -190,16 +190,16 @@ main(int ac, char *av[])
 	if (sb.st_size != count)
 		bu_bomb("**** ERROR **** file size mis-match\n");
 
-	buf2 = bu_malloc(sb.st_size, "buf1");
+	buf2 = bu_malloc(sb.st_size, "buf2");
 
 	count = count >> 1; /* convert count of char to count of short */
 
 	/* Read the terrain data */
-	fread(buf1, sizeof(short), count, inp);
-	fclose(inp);
+	fread(buf1, sizeof(short), count, in1);
+	fclose(in1);
 
-	fread(buf2, sizeof(short), count, in);
-	fclose(in);
+	fread(buf2, sizeof(short), count, in2);
+	fclose(in2);
 
 
 
