@@ -31,7 +31,7 @@
  *	anim_mat2ypr()		extract yaw,pitch,roll from rotation matrix
  *	anim_mat2quat()		extract quaternion from rotation matrix
  *
- *	anim_ypr2mat()		create rotation matrix from angles, etc.
+ *	anim_ypr2mat()		create rotation matrix from ypr, etc.
  *	anim_ypr2vmat()
  *	anim_y_p_r2mat()
  *	anim_dy_p_r2mat()
@@ -41,8 +41,8 @@
  *	anim_z_y_x2mat()
  *	anim_dz_y_x2mat()
  *	anim_quat2mat()
- *	anim_dir2mat()
- *	anim_dirn2mat()		
+ *	anim_dir2mat()		create rotation matrix from direction
+ *	anim_dirn2mat()		create rot matrix from dir and normal
  *
  *	anim_add_trans()	add pre- and post- translation to matrix
  *	anim_rotatez()		rotate vector about z-axis
@@ -179,7 +179,7 @@ vect_t angle;
                 return_value = ERROR1;
                 angle[0] = 0.0;
                 angle[2] = atan2(viewrot[4],viewrot[5]);
-                fprintf(stderr,"Warning: x arbitrarily set to 0.0; z set to %f.\n",angle[2]);
+                /*fprintf(stderr,"Warning: x arbitrarily set to 0.0; z set to %f.\n",angle[2]);*/
         }
         else {
                 return_value = NORMAL;
@@ -248,7 +248,7 @@ vect_t angle;
                 return_value = ERROR1;
                 angle[2] = 0.0;
                 angle[0] = atan2(-viewrot[1],viewrot[5]);
-                fprintf(stderr,"Warning: roll arbitrarily set to 0.0; yaw set to %f radians.\n",angle[0]);
+                /*fprintf(stderr,"Warning: roll arbitrarily set to 0.0; yaw set to %f radians.\n",angle[0]);*/
         }
         else {
                 return_value = NORMAL;
