@@ -2737,28 +2737,8 @@ struct nmg_ray_state *rs;
 		next_end = next_start;
 		while( ++next_end < rs->nvu && rs->vu[next_end]->v_p == vu2->v_p );
 
-		/* See if there is an edge joining the 2 vertices already */
-		old_eu = nmg_findeu( vu1->v_p, vu2->v_p, (struct shell *)NULL,
-			(struct edgeuse *)NULL, 0);
-
-		VAVERAGE( mid_pt, vu1->v_p->vg_p->coord, vu2->v_p->vg_p->coord )
-		class = nmg_class_pt_fu_except( mid_pt, rs->fu1, (struct loopuse *)NULL,
-			(void *)NULL, (void *)NULL, (char *)NULL, 0, rs->tol );
-
-		if(rt_g.NMG_debug&DEBUG_FCUT)
-		{
-			rt_log( "vu1=x%x (%g %g %g ), vu2=x%x (%g %g %g)\n",
-				vu1, V3ARGS( vu1->v_p->vg_p->coord ),
-				vu2, V3ARGS( vu2->v_p->vg_p->coord ) );
-			rt_log( "\tmid_pt = (%g %g %g)\n", V3ARGS( mid_pt ) );
-			rt_log( "class for mid point is %s\n", nmg_class_name(class) );
-		}
-
-		if( class == NMG_CLASS_AoutB )
-			continue;
-
+		/* look for an EU in this face that connects vu1 and vu2 */
 		if( nmg_find_eu_in_face( vu1->v_p, vu2->v_p, rs->fu1,
-
 			(struct edgeuse *)NULL, 0 ) )
 		{
 			if(rt_g.NMG_debug&DEBUG_FCUT)
@@ -2773,6 +2753,31 @@ struct nmg_ray_state *rs;
 				rt_log( "Already an edge here\n" );
 			continue;
 		}
+
+		/* we know that fu1 does not contain an edge connecting vu1 and vu2,
+		 * Now check if the midpoint is inside or outside fu1.
+		 * Note that ON fu1 is not an option at this point
+		 */
+		VAVERAGE( mid_pt, vu1->v_p->vg_p->coord, vu2->v_p->vg_p->coord )
+		class = nmg_class_pt_fu_except( mid_pt, rs->fu1, (struct loopuse *)NULL,
+			(void *)NULL, (void *)NULL, (char *)NULL, 0, 1, rs->tol );
+
+		if(rt_g.NMG_debug&DEBUG_FCUT)
+		{
+			rt_log( "vu1=x%x (%g %g %g ), vu2=x%x (%g %g %g)\n",
+				vu1, V3ARGS( vu1->v_p->vg_p->coord ),
+				vu2, V3ARGS( vu2->v_p->vg_p->coord ) );
+			rt_log( "\tmid_pt = (%g %g %g)\n", V3ARGS( mid_pt ) );
+			rt_log( "class for mid point is %s\n", nmg_class_name(class) );
+		}
+
+		if( class == NMG_CLASS_AoutB )
+			continue;
+
+		/* See if there is an edge joining the 2 vertices already, this
+		 * will be used for radial join later */
+		old_eu = nmg_findeu( vu1->v_p, vu2->v_p, (struct shell *)NULL,
+			(struct edgeuse *)NULL, 0);
 
 		if( find_loop_to_cut( &index1, &index2, prior_start, prior_end, next_start, next_end, rs ) )
 		{
