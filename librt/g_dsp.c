@@ -75,6 +75,8 @@ static char RCSdsp[] = "@(#)$Header$ (BRL)";
 
 #define TRI1	10
 #define TRI2	20
+#define TRI3	30
+#define TRI4	40
 
 /* access to the array */
 #define DSP(_p,_x,_y) ( \
@@ -758,8 +760,80 @@ int inside;
 	}
 }
 
+static void
+set_and_permute(isect, cell, A, B, C, D, tri1, tri2)
+struct isect_stuff *isect;
+int cell[3];
+point_t A, B, C, D;
+int *tri1;
+int *tri2;
+{
+	int sub[2], sup[2];
+	point_t tmp;
+	vect_t Aline, Bline, Cline, Dline;
+	double dot1, dot2;
+
+	/*  C	 D
+	 *   *--*
+	 *   | /|
+	 *   |/ |
+	 *   *--*
+	 *  A    B
+	 */
+	VSET(A, cell[X],   cell[Y],   DSP(isect->dsp, cell[X],   cell[Y])  );
+	VSET(B, cell[X]+1, cell[Y],   DSP(isect->dsp, cell[X]+1, cell[Y])  );
+	VSET(C, cell[X],   cell[Y]+1, DSP(isect->dsp, cell[X],   cell[Y]+1));
+	VSET(D, cell[X]+1, cell[Y]+1, DSP(isect->dsp, cell[X]+1, cell[Y]+1));
+
+	sub[X] = cell[X] - 1;
+	sub[Y] = cell[Y] - 1;
+	sup[X] = cell[X] + 1;
+	sup[Y] = cell[Y] + 1;
+
+	if (sub[X] < 0) sub[X] = 0;
+	if (sub[Y] < 0) sub[Y] = 0;
+
+	if (sup[X] > XSIZ(isect->dsp)) sup[X] = XSIZ(isect->dsp);
+	if (sup[Y] > YSIZ(isect->dsp)) sup[Y] = YSIZ(isect->dsp);
+
+	VSET(tmp,	 sub[X], sub[Y],
+	 DSP(isect->dsp, sub[X], sub[Y]));
+	VSUB2(Aline, A, tmp);
+
+	VSET(tmp,	 sup[X], sup[Y],
+	 DSP(isect->dsp, sup[X], sup[Y]));
+	VSUB2(Dline, tmp, D);
+
+	VSET(tmp,	 sub[X], sup[Y],
+	 DSP(isect->dsp, sub[X], sup[Y]));
+	VSUB2(Cline, tmp, C);
+
+	VSET(tmp, sup[X], sub[Y], DSP(isect->dsp, sup[X], sub[Y]));
+	VSUB2(Bline, B, tmp);
+
+	dot1 = VDOT(Aline, Dline);
+	dot2 = VDOT(Bline, Cline);
+
+	if ( dot1 > dot2 ) {
+		*tri1 = TRI1;
+		*tri2 = TRI2;
+
+		return;
+	}
+
+	
+	/* prefer the B-C cut rather than the A-D cut */
+	*tri1 = TRI3;
+	*tri2 = TRI4;
 
 
+	VMOVE(tmp, A);
+	VMOVE(A, B);
+	VMOVE(B, D);
+	VMOVE(D, C);
+	VMOVE(C, tmp);
+
+}
 
 /*
  *  Once we've determined that the ray hits the bounding box for
@@ -778,7 +852,7 @@ int *inside;
 {
 	point_t A, B, C, D;
 	vect_t AB, AC, AD;
-	vect_t N;
+	vect_t N1, N2;
 	vect_t PA;
 	vect_t PAxD;
 	double alpha;
@@ -792,18 +866,9 @@ int *inside;
 	int hit2;
 	char *reason1;
 	char *reason2;
+	int tri1, tri2;
 
-	/*  C	 D
-	 *   *--*
-	 *   | /|
-	 *   |/ |
-	 *   *--*
-	 *  A    B
-	 */
-	VSET(A, cell[X],   cell[Y],   DSP(isect->dsp, cell[X],   cell[Y])  );
-	VSET(B, cell[X]+1, cell[Y],   DSP(isect->dsp, cell[X]+1, cell[Y])  );
-	VSET(C, cell[X],   cell[Y]+1, DSP(isect->dsp, cell[X],   cell[Y]+1));
-	VSET(D, cell[X]+1, cell[Y]+1, DSP(isect->dsp, cell[X]+1, cell[Y]+1));
+	set_and_permute(isect, cell, A, B, C, D, &tri1, &tri2);
 
 	if (rt_g.debug & DEBUG_HF) {
 		point_t t;
@@ -819,6 +884,7 @@ int *inside;
 		VPRINT("D", t);
 	}
 
+
 	VSUB2(AB, B, A);
 	VSUB2(AC, C, A);
 	VSUB2(AD, D, A);
@@ -828,8 +894,8 @@ int *inside;
 	/* get perpendicular to PA, D */
 	VCROSS(PAxD, PA, isect->r.r_dir);
 
-	VCROSS(N, AB, AD);
-	NdotD1 = VDOT( N, isect->r.r_dir);
+	VCROSS(N1, AB, AD);
+	NdotD1 = VDOT( N1, isect->r.r_dir);
 
 	hit1 = 0;
 	reason1 = (char *)NULL;
@@ -864,7 +930,7 @@ int *inside;
 		goto tri2;
 	}
 	hit1 = 1;
-	dist1 = VDOT( PA, N ) / NdotD1;
+	dist1 = VDOT( PA, N1 ) / NdotD1;
 
 tri2:
 	if (rt_g.debug & DEBUG_HF && reason1 != (char *)NULL)
@@ -872,8 +938,8 @@ tri2:
 		
 
 
-	VCROSS(N, AD, AC);
-	NdotD2 = VDOT( N, isect->r.r_dir);
+	VCROSS(N2, AD, AC);
+	NdotD2 = VDOT( N2, isect->r.r_dir);
 
 	hit2 = 0;
 	reason2 = (char *)NULL;
@@ -905,7 +971,7 @@ tri2:
 	}
 
 	hit2 = 1;
-	dist2 = VDOT( PA, N ) / NdotD2;
+	dist2 = VDOT( PA, N2 ) / NdotD2;
 
 done:
 	if (rt_g.debug & DEBUG_HF && reason2 != (char *)NULL)
@@ -922,26 +988,31 @@ done:
 		int first_tri, second_tri;
 		double first, second;
 		double firstND, secondND;
+		double *firstN, *secondN;
 
 		/* hit both */
 		if (dist1 < dist2) {
 			if (rt_g.debug & DEBUG_HF)
 				bu_log("hit triangles: ss_dist1:%g ss_dist2:%g \n", dist1, dist2);
-			first_tri = TRI1;
+			first_tri = tri1;
 			firstND = NdotD1;
 			first = dist1;
-			second_tri = TRI2;
+			firstN = N1;
+			second_tri = tri2;
 			secondND = NdotD2;
 			second = dist2;
+			secondN = N2;
 		} else {
 			if (rt_g.debug & DEBUG_HF)
 				bu_log("hit triangles: ss_dist2:%g ss_dist1:%g \n", dist2, dist1);
-			first_tri = TRI2;
+			first_tri = tri2;
 			firstND = NdotD2;
 			first = dist2;
-			second_tri = TRI1;
+			firstN = N2;
+			second_tri = tri1;
 			secondND = NdotD1;
 			second = dist1;
+			secondN = N1;
 		}
 
 		if (firstND < 0) {
@@ -971,7 +1042,7 @@ done:
 					isect->ap->a_x, isect->ap->a_y);
 				bu_bomb("");
 			}
-			OUTHIT(isect, first, TRI1, cell);
+			OUTHIT(isect, first, first_tri, cell);
 			HIT_COMMIT(isect);
 			*inside = 0;
 
@@ -999,7 +1070,7 @@ done:
 				bu_bomb("");
 			}
 
-			INHIT(isect, dist1, TRI1, cell);
+			INHIT(isect, dist1, tri1, cell);
 			*inside = 1;
 		} else {
 			/* leaving */
@@ -1012,7 +1083,7 @@ done:
 					isect->ap->a_x, isect->ap->a_y);
 				bu_bomb("");
 			}
-			OUTHIT(isect, dist1, TRI1, cell);
+			OUTHIT(isect, dist1, tri1, cell);
 			HIT_COMMIT(isect);
 			*inside = 0;
 		}
@@ -1031,7 +1102,7 @@ done:
 				bu_bomb("");
 			}
 
-			INHIT(isect, dist2, TRI2, cell);
+			INHIT(isect, dist2, tri2, cell);
 			*inside = 1;
 		} else {
 			/* leaving */
@@ -1044,7 +1115,7 @@ done:
 					isect->ap->a_x, isect->ap->a_y);
 				bu_bomb("");
 			}
-			OUTHIT(isect, dist2, TRI2, cell);
+			OUTHIT(isect, dist2, tri2, cell);
 			HIT_COMMIT(isect);
 			*inside = 0;
 		}
@@ -1171,7 +1242,7 @@ struct isect_stuff *isect;
 double dt;
 int next_surf;
 struct cell_stuff *cs;
-int inside;
+int *inside;
 int rising;
 int (*isect_wall)();
 {
@@ -1196,15 +1267,15 @@ int (*isect_wall)();
 	    (!rising && cs->curr_pt[Z] < cell_min) ) {
 		/* in base */
 		if (rt_g.debug & DEBUG_HF) bu_log("in base\n");
-	    	if (!inside) {
+	    	if (!*inside) {
 	    		INHIT(isect, *cs->curr_dist, *cs->curr_surf, cs->grid_cell);
-	    		inside = 1;
+	    		*inside = 1;
 	    	}
 	    	OUTHIT(isect, (cs->bbin_dist+dt), next_surf, cs->grid_cell);
 
 	    	if (rt_g.debug & DEBUG_HF)
 		    	plot_cell_ray(isect, cs->grid_cell, 
-		    		cs->curr_pt, next_pt, 0, 0.0, 0, 0.0, inside);
+		    		cs->curr_pt, next_pt, 0, 0.0, 0, 0.0, *inside);
 
 
 	} else if (
@@ -1212,13 +1283,13 @@ int (*isect_wall)();
 	    (!rising && next_pt[Z] > cell_max) ) {
 		/* miss above */
 		if (rt_g.debug & DEBUG_HF) bu_log("miss above\n");
-	    	if (inside) {
+	    	if (*inside) {
 	    		HIT_COMMIT(isect);
-	    		inside = 0;
+	    		*inside = 0;
 	    	}
 	    	if (rt_g.debug & DEBUG_HF)
 		    	plot_cell_ray(isect, cs->grid_cell, 
-		    		cs->curr_pt, next_pt, 0, 0.0, 0, 0.0, inside);
+		    		cs->curr_pt, next_pt, 0, 0.0, 0, 0.0, *inside);
 
 
 	} else {
@@ -1270,21 +1341,21 @@ int (*isect_wall)();
 			bu_bomb("bad surface to intersect\n");
 		}
 
-		if (hit && !inside) {
+		if (hit && !*inside) {
 			INHIT(isect, *cs->curr_dist,
 				*cs->curr_surf, cs->grid_cell);
-			inside = 1;
+			*inside = 1;
 		}
 
 		isect_ray_triangles(isect, cs->grid_cell,
 			cs->curr_pt, next_pt,
-			&inside);
+			inside);
 
 
 		hit = isect_wall(isect, cs->grid_cell, next_surf, dt, next_pt);
 
 		if (hit) {
-			if (!inside) {
+			if (!*inside) {
 				bu_log("%s:%d pixel(%d,%d) ", __FILE__, __LINE__, isect->ap->a_x, isect->ap->a_y);
 				bu_log("hit dsp and not inside g_dsp.c line:%d", __LINE__);
 				bu_bomb("");
@@ -1292,7 +1363,7 @@ int (*isect_wall)();
 			if (rt_g.debug & DEBUG_HF)
 				bu_log("hit X out-wall\n");
 			OUTHIT(isect, (cs->bbin_dist+dt), next_surf, cs->grid_cell);
-			inside = 1;
+			*inside = 1;
 		} else {
 			if (rt_g.debug & DEBUG_HF)
 				bu_log("miss X out-wall\n");
@@ -1482,7 +1553,7 @@ grid_cell[X], grid_cell[Y], tX, tY, inside, V3ARGS(t), curr_surf, curr_dist);
 
 		if (tX < tY) {
 
-			cell_isect(isect, tX, outsurfX, &cs, inside, rising,
+			cell_isect(isect, tX, outsurfX, &cs, &inside, rising,
 				&isect_cell_x_wall);
 
 			curr_surf = insurfX;
@@ -1492,7 +1563,7 @@ grid_cell[X], grid_cell[Y], tX, tY, inside, V3ARGS(t), curr_surf, curr_dist);
 			tX += tDX;
 		} else {
 
-			cell_isect(isect, tY, outsurfY, &cs, inside, rising,
+			cell_isect(isect, tY, outsurfY, &cs, &inside, rising,
 				&isect_cell_y_wall);
 
 			curr_surf = insurfY;
@@ -1806,7 +1877,8 @@ register struct xray	*rp;
 		MAT4X3VEC( N, dsp->dsp_i.dsp_stom, 
 			dsp_pl[ BBSURF(hitp->hit_surfno) ] );
 	} else if (dsp->dsp_i.dsp_smooth) {
-		if (  hitp->hit_surfno == TRI2 ||  hitp->hit_surfno == TRI1 ) {
+		if ( hitp->hit_surfno == TRI2 ||  hitp->hit_surfno == TRI1 ||
+		     hitp->hit_surfno == TRI3 ||  hitp->hit_surfno == TRI4 ) {
 			vect_t Anorm, Bnorm, Dnorm, Cnorm, ABnorm, CDnorm;
 			double Xfrac, Yfrac;
 			int x, y;
@@ -1826,17 +1898,29 @@ register struct xray	*rp;
 	
 			MAT4X3PNT(pt, dsp->dsp_i.dsp_mtos, hitp->hit_point);
 	
+
 			Xfrac = (pt[X] - A[X]) / (D[X] - A[X]);
 			Yfrac = (pt[Y] - A[Y]) / (D[Y] - A[Y]);
-	
+
+#if 1
+#define SMOOTHSTEP(x)  ((x)*(x)*(3 - 2*(x)))
+			if (Xfrac < 0.0) Xfrac = 0.0;
+			if (Xfrac > 1.0) Xfrac = 1.0;
+			Xfrac = SMOOTHSTEP( Xfrac );
+
+			if (Yfrac < 0.0) Yfrac = 0.0;
+			if (Yfrac > 1.0) Yfrac = 1.0;
+			Yfrac = SMOOTHSTEP( Yfrac );
+#endif
 			VSCALE(Anorm, Anorm, (1.0-Xfrac) );
 			VSCALE(Bnorm, Bnorm,      Xfrac  );
 			VADD2(ABnorm, Anorm, Bnorm);
+			VUNITIZE(ABnorm);
 
 			VSCALE(Cnorm, Cnorm, (1.0-Xfrac) );
 			VSCALE(Dnorm, Dnorm,      Xfrac  );
 			VADD2(CDnorm, Dnorm, Cnorm);
-
+			VUNITIZE(CDnorm);
 
 			VSCALE(ABnorm, ABnorm, (1.0-Yfrac) );
 			VSCALE(CDnorm, CDnorm, Yfrac );
@@ -1881,9 +1965,15 @@ register struct xray	*rp;
 			bu_bomb("");
 		}
 	} else {
+		/* XXX this section should be replaced with code in
+		 * isect_ray_triangles() to save the normal
+		 * the only thing we should do here is transform the normal
+		 * from solid to model space
+		 */
+
+		cell[X] = hitp->hit_vpriv[X];
+		cell[Y] = hitp->hit_vpriv[Y];
 		if ( hitp->hit_surfno == TRI1 ) {
-			cell[X] = hitp->hit_vpriv[X];
-			cell[Y] = hitp->hit_vpriv[Y];
 		
 			VSET(tmp, cell[X],   cell[Y],   DSP(dsp, cell[X],   cell[Y])  );
 			MAT4X3PNT(A, dsp->dsp_i.dsp_stom, tmp);
@@ -1900,8 +1990,6 @@ register struct xray	*rp;
 
 			VCROSS(N, AB, AD); 
 		} else if ( hitp->hit_surfno == TRI2 ) {
-			cell[X] = hitp->hit_vpriv[X];
-			cell[Y] = hitp->hit_vpriv[Y];
 
 			VSET(tmp, cell[X],   cell[Y],   DSP(dsp, cell[X],   cell[Y])  );
 			MAT4X3PNT(A, dsp->dsp_i.dsp_stom, tmp);
@@ -1915,6 +2003,45 @@ register struct xray	*rp;
 			VSUB2(AD, D, A);
 			VSUB2(AC, C, A);
 
+
+			VCROSS(N, AD, AC); 
+		} else if ( hitp->hit_surfno == TRI3 ) {
+			/* alternate cut cell */
+			
+			VSET(tmp, cell[X]+1,   cell[Y],
+			 DSP(dsp, cell[X]+1,   cell[Y])  );
+			MAT4X3PNT(A, dsp->dsp_i.dsp_stom, tmp);
+
+			VSET(tmp, cell[X]+1, cell[Y]+1,  
+			 DSP(dsp, cell[X]+1, cell[Y]+1)  );
+			MAT4X3PNT(B, dsp->dsp_i.dsp_stom, tmp);
+
+			VSET(tmp, cell[X], cell[Y]+1,
+			 DSP(dsp, cell[X], cell[Y]+1) );
+			MAT4X3PNT(D, dsp->dsp_i.dsp_stom, tmp);
+
+			VSUB2(AB, B, A);
+			VSUB2(AD, D, A);
+
+			VCROSS(N, AB, AD); 
+
+		} else if ( hitp->hit_surfno == TRI4 ) {
+			/* alternate cut cell */
+
+			VSET(tmp, cell[X]+1,   cell[Y],  
+			 DSP(dsp, cell[X]+1,   cell[Y])  );
+			MAT4X3PNT(A, dsp->dsp_i.dsp_stom, tmp);
+
+			VSET(tmp, cell[X],   cell[Y],
+			 DSP(dsp, cell[X],   cell[Y]));
+			MAT4X3PNT(C, dsp->dsp_i.dsp_stom, tmp);
+
+			VSET(tmp, cell[X], cell[Y]+1,
+			 DSP(dsp, cell[X], cell[Y]+1));
+			MAT4X3PNT(D, dsp->dsp_i.dsp_stom, tmp);
+
+			VSUB2(AD, D, A);
+			VSUB2(AC, C, A);
 
 			VCROSS(N, AD, AC); 
 		} else {
