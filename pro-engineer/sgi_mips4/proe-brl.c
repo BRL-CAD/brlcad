@@ -580,7 +580,7 @@ output_part( ProMdl model )
 			/* if the part has a material, add it as an attribute */
 			status = ProPartMaterialNameGet( ProMdlToPart(model), material );
 			if( status == PRO_TK_NO_ERROR ) {
-				fprintf( outfp, "attr %s material_name {%s}\n",
+				fprintf( outfp, "attr set %s material_name {%s}\n",
 					 curr_part_name,
 					 ProWstringToString( str, material ) ); 
 			}
