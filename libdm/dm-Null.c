@@ -12,10 +12,11 @@
 static void	Nu_input();
 void	Nu_void();
 int	Nu_int0();
+struct dm *Nu_open();
 unsigned Nu_unsign();
 
 struct dm dm_Null = {
-  Nu_int0,
+  Nu_open,
   Nu_int0,
   Nu_int0,
   Nu_int0,
@@ -40,9 +41,15 @@ struct dm dm_Null = {
   0,
   0,
   0,
+  0,
+  0,
+  0,
+  0,
+  0,
   0
 };
 
 int Nu_int0() { return TCL_OK; }
 void Nu_void() { ; }
+struct dm *Nu_open(){ return DM_NULL; }
 unsigned Nu_unsign() { return TCL_OK; }
