@@ -116,7 +116,7 @@ CONST int		simplify;
 
 				/* Compare distances from origin */
 				dist = n1[3] - n2[3];
-				if( !NEAR_ZERO(dist, tol->dist) )  continue;
+				if( !NEAR_ZERO(dist, tol->dist) ) continue;
 
 				/*
 				 *  Compare angle between normals.
@@ -124,7 +124,7 @@ CONST int		simplify;
 				 *  because they must point in the same direction.
 				 */
 				dist = VDOT( n1, n2 );
-				if( !(dist >= tol->para) )  continue;
+				if( !(dist >= tol->para) ) continue;
 			}
 
 			/*
@@ -550,7 +550,7 @@ CONST struct rt_tol	*tol;
 		 * and eliminate this redundant face.
 		 */
 		fu1 = nmg_find_fu_with_fg_in_s( s1, fu2 );
-		if( fu1 )  {
+		if( fu1 && fu1->orientation == OT_SAME )  {
 			if (rt_g.NMG_debug & DEBUG_BASIC)
 				rt_log("nmg_js(): shared face_g_plane, doing nmg_jf()\n");
 			nmg_jf( fu1, fu2 );
@@ -3165,7 +3165,10 @@ CONST struct rt_tol	*tol;
 		int	class;
 		/* Loop does not have 3 linearly independent vertices, can't tell. */
 		if (rt_g.NMG_debug & DEBUG_BASIC)
+		{
 			rt_log("nmg_lu_reorient:  unable to determine orientation from geometry\n");
+			nmg_pr_lu_briefly( lu , "\t" );
+		}
 		class = nmg_class_lu_fu( lu, tol );
 		switch( class )  {
 		case NMG_CLASS_AinB:
