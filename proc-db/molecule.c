@@ -47,7 +47,7 @@ int argc;
 char ** argv;
 {
 
-	mk_id( stdout, argv[1], ID_MM_UNIT );
+	mk_id( stdout, argv[1] );
 	read_data();
 }
 
@@ -137,7 +137,7 @@ int	sph_type;
 	sprintf(nm, "SPH.%d", id );
 	sprintf(nm1, "sph.%d", id );
 	mk_sph( stdout, nm1, center, rad );
-	mk_mcomb( stdout, nm, 1, 1, matname, matparm, 1, rgb );
+	mk_comb( stdout, nm, 1, 1, matname, matparm, rgb, 0 );
 	mk_memb( stdout, nm1, m, UNION);
 
 	new->next = ( struct sphere *)0;
@@ -195,7 +195,7 @@ int sp1, sp2;
 
 	mk_rcc( stdout, nm, base, height, 5.0 );
 
-	mk_mcomb( stdout, nm1, 3, 1, matname, matparm, 1, rgb);
+	mk_comb( stdout, nm1, 3, 1, matname, matparm, rgb, 0 );
 	mk_memb( stdout, nm, m, UNION);
 	mk_memb( stdout, s1->s_name, m, SUBTRACT);
 	mk_memb( stdout, s2->s_name, m, SUBTRACT);

@@ -93,25 +93,25 @@ char	*name;
 	VMOVE( verts[1], pt[1] );
 	VMOVE( verts[2], pt[2] );
 	pnorms( norms, verts, centroid, 3 );
-	mk_facet( stdout, 3, verts, norms );
+	mk_poly( stdout, 3, verts, norms );
 
 	VMOVE( verts[0], pt[0] );
 	VMOVE( verts[1], pt[1] );
 	VMOVE( verts[2], pt[3] );
 	pnorms( norms, verts, centroid, 3 );
-	mk_facet( stdout, 3, verts, norms );
+	mk_poly( stdout, 3, verts, norms );
 
 	VMOVE( verts[0], pt[0] );
 	VMOVE( verts[1], pt[2] );
 	VMOVE( verts[2], pt[3] );
 	pnorms( norms, verts, centroid, 3 );
-	mk_facet( stdout, 3, verts, norms );
+	mk_poly( stdout, 3, verts, norms );
 
 	VMOVE( verts[0], pt[1] );
 	VMOVE( verts[1], pt[2] );
 	VMOVE( verts[2], pt[3] );
 	pnorms( norms, verts, centroid, 3 );
-	mk_facet( stdout, 3, verts, norms );
+	mk_poly( stdout, 3, verts, norms );
 }
 
 /*
@@ -169,7 +169,7 @@ int	level;
 		scale *= 2;
 
 	/* len = 4, set region on lowest level */
-	mk_comb( stdout, name, 4, level<=1 );
+	mk_fcomb( stdout, name, 4, level<=1 );
 
 	mat_idn( m );
 	sprintf(nm, "%sL", name);

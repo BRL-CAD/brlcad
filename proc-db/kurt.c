@@ -96,7 +96,7 @@ char	**argv;
 	do_light( "l4", pos, aim, 1, 100.0, white );
 
 	/* Build the overall combination */
-	mk_comb( stdout, "clut", quant*quant+1+4, 0 );
+	mk_fcomb( stdout, "clut", quant*quant+1+4, 0 );
 	mk_memb( stdout, "plane.r", identity, UNION );
 	for( ix=quant-1; ix>=0; ix-- )  {
 		for( iy=quant-1; iy>=0; iy-- )  {
@@ -205,14 +205,14 @@ struct val *a, *b, *c, *d;
 		VSET( verts[2], c->v_x, c->v_y, c->v_z[i] );
 		/* even # faces point up, odd#s point down */
 		pnorms( norms, verts, (i&1)?down:up, 3 );
-		mk_facet( stdout, 3, verts, norms );
+		mk_poly( stdout, 3, verts, norms );
 
 		VSET( verts[0], d->v_x, d->v_y, d->v_z[i] );
 		VSET( verts[1], b->v_x, b->v_y, b->v_z[i] );
 		VSET( verts[2], c->v_x, c->v_y, c->v_z[i] );
 		/* even # faces point up, odd#s point down */
 		pnorms( norms, verts, (i&1)?down:up, 3 );
-		mk_facet( stdout, 3, verts, norms );
+		mk_poly( stdout, 3, verts, norms );
 	}
 	/* If 0 or 1 corners have something above them, nothing needs drawn */
 	if( ndiff == 0 || ndiff == 1 )  return;
@@ -246,7 +246,7 @@ struct val *a, *b, *c, *d;
 				VSUB2( work, centroid, verts[0] );
 				VUNITIZE( work );
 				pnorms( norms, verts, work, 3 );
-				mk_facet( stdout, 3, verts, norms );
+				mk_poly( stdout, 3, verts, norms );
 
 				VSET( verts[0],
 					vp[i]->v_x, vp[i]->v_y,
@@ -261,7 +261,7 @@ struct val *a, *b, *c, *d;
 				VSUB2( work, centroid, verts[0] );
 				VUNITIZE( work );
 				pnorms( norms, verts, work, 3 );
-				mk_facet( stdout, 3, verts, norms );
+				mk_poly( stdout, 3, verts, norms );
 			}
 		}
 	}
@@ -338,6 +338,6 @@ char	*rgb;
 	MAT_DELTAS( xlate, pos[X], pos[Y], pos[Z] );
 	mat_mul( both, xlate, rot );
 
-	mk_mcomb( stdout, name, 1, 1, "light", "shadows=1", 1, rgb );
+	mk_comb( stdout, name, 1, 1, "light", "shadows=1", rgb, 0 );
 	mk_memb( stdout, nbuf, both, UNION );
 }

@@ -77,12 +77,12 @@ char	**argv;
 
 	/* Create the underpinning */
 	VSET( norm, 0, 0, 1 );
-	mk_half( stdout, "plane", -10.0, norm );
+	mk_half( stdout, "plane", norm, -10.0 );
 	rgb[0] = 240;	/* gold/brown */
 	rgb[1] = 180;
 	rgb[2] = 64;
 	mat_idn( identity );
-	mk_mcomb( stdout, "plane.r", 1, 1, "", "", 1, rgb );
+	mk_comb( stdout, "plane.r", 1, 1, "", "", rgb, 0 );
 	mk_memb( stdout, "plane", identity, UNION );
 	(void)mk_addmember( "plane.r", &head );
 
@@ -139,7 +139,7 @@ char	**argv;
 	do_light( "l4", pos, aim, 1, 100.0, white, &head );
 
 	/* Build the overall combination */
-	mk_lfcomb( stdout, "clut", 0, &head );
+	mk_lfcomb( stdout, "clut", &head, 0 );
 }
 
 double
@@ -186,7 +186,7 @@ double	size;
 
 	/* Build the crystal union */
 	sprintf( crystalname, "%scrystal", cname );
-	mk_lfcomb( stdout, crystalname, 0, &head );
+	mk_lfcomb( stdout, crystalname, &head, 0 );
 
 	/* Make the trimming RPP */
 	esz = size*0.5;	/* dist from ctr to edge of base */
@@ -198,7 +198,7 @@ double	size;
 	/* Build the final combination */
 	get_rgb(rgb);
 	i = PICK_MAT;
-	mk_mcomb( stdout, cname, 2, 1, mtab[i].mt_name, mtab[i].mt_param, 1, rgb );
+	mk_comb( stdout, cname, 2, 1, mtab[i].mt_name, mtab[i].mt_param, rgb, 0 );
 	mk_memb( stdout, crystalname, identity, UNION );
 	mk_memb( stdout, rppname, identity, INTERSECT );
 	return(height);
@@ -286,7 +286,7 @@ int	nsolids;	/* number of solids for this layer */
 		}
 	}
 
-	mk_lfcomb( stdout, crname, 0, &head );
+	mk_lfcomb( stdout, crname, &head, 0 );
 	return(height);
 }
 
@@ -312,7 +312,7 @@ double	size;
 	/* Needs to be in a region, with color!  */
 	get_rgb(rgb);
 	i = PICK_MAT;
-	mk_mcomb( stdout, name, 1, 1, mtab[i].mt_name, mtab[i].mt_param, 1, rgb );
+	mk_comb( stdout, name, 1, 1, mtab[i].mt_name, mtab[i].mt_param, rgb, 0 );
 	mk_memb( stdout, sname, identity, UNION );
 }
 
@@ -345,7 +345,7 @@ double	size;
 
 	/* Build the combination */
 	get_rgb(rgb);
-	mk_lcomb( stdout, bname, 1, (char *)0, "", 1, rgb, &head );
+	mk_lcomb( stdout, bname, &head, (char *)0, "", rgb, 0 );
 
 	return( n*size );
 }
@@ -424,9 +424,9 @@ double	size;
 	/* Build the combination */
 	get_rgb( rgb );
 	i = PICK_MAT;
-	mk_lcomb( stdout, pname, 1,
+	mk_lcomb( stdout, pname, &head,
 		mtab[i].mt_name, mtab[i].mt_param,
-		1, rgb, &head );
+		rgb, 0 );
 	return(vpos);
 }
 
@@ -457,11 +457,11 @@ int	n;
 
 		/* Build the region that contains each solid */
 		get_rgb(rgb);
-		mk_mcomb( stdout, rname, 1, 1, "", "", 1, rgb );
+		mk_comb( stdout, rname, 1, 1, "", "", rgb, 0 );
 		mk_memb( stdout, sname, identity, UNION );
 		(void)mk_addmember( rname, &head );
 	}
 
 	/* Build the group that holds all the regions */
-	mk_lfcomb( stdout, ringname, 0, &head );
+	mk_lfcomb( stdout, ringname, &head, 0 );
 }

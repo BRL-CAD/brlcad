@@ -124,13 +124,13 @@ char	**argv;
 	mk_id( stdout, "Procedural Gun Tube with Projectile" );
 
 	VSET( normal, 0, -1, 0 );
-	mk_half( stdout, "cut", 0.0, normal );
+	mk_half( stdout, "cut", normal, 0.0 );
 	VSET( normal, 0, 1, 0 );
-	mk_half( stdout, "bg.s", -1000.0, normal );
+	mk_half( stdout, "bg.s", normal, -1000.0 );
 	(void)mk_addmember( "bg.s", &head );	/* temp use of "head" */
-	mk_lcomb( stdout, "bg.r", 1,
+	mk_lcomb( stdout, "bg.r", &head, 1,
 		"texture", "file=movie128bw.pix w=128",
-		0, (char *)0, &head );
+		(char *)0, 0 );
 
 #ifdef never
 	/* Numbers for a 105-mm M68 gun */
@@ -182,9 +182,9 @@ char	**argv;
 		mk_addmember( "cut", &head )->wm_op = SUBTRACT;
 
 		sprintf( name, "tube%d", frame);
-		mk_lcomb( stdout, name, 1,
+		mk_lcomb( stdout, name, &head, 1,
 			"plastic", "",
-			0, (char *)0, &head );
+			(char *)0, 0 );
 
 		/*  Place the tube region and the ammo together.
 		 *  The origin of the ammo is expected to be the center
@@ -211,7 +211,7 @@ char	**argv;
 		(void)mk_addmember( "bg.r", &ghead );
 
 		sprintf( gname, "g%d", frame);
-		mk_lcomb( stdout, gname, 0,
+		mk_lcomb( stdout, gname, &ghead, 0,
 			(char *)0, "",
 			0, (char *)0, &ghead );
 
@@ -466,10 +466,7 @@ double	radius;
 		mk_tgc( stdout, name, v, h, a, b, a, b );
 		(void)mk_addmember( name, &head );
 	}
-	mk_lcomb( stdout, cname, 0,
-		(char *)0, "",
-		0, (char *)0,
-		&head );
+	mk_lfcomb( stdout, cname, &head, 0 );
 }
 
 /*

@@ -101,11 +101,11 @@ char	**argv;
 
 	/* Create the golden earth */
 	VSET( norm, 0, 0, 1 );
-	mk_half( stdout, "plane", -bthick[Z]-10.0, norm );
+	mk_half( stdout, "plane", norm, -bthick[Z]-10.0 );
 	rgb[0] = 240;	/* gold/brown */
 	rgb[1] = 180;
 	rgb[2] = 64;
-	mk_mcomb( stdout, "plane.r", 1, 1, "", "", 1, rgb );
+	mk_comb( stdout, "plane.r", 1, 1, "", "", rgb, 0 );
 	mk_memb( stdout, "plane", identity, UNION );
 	(void)mk_addmember( "plane.r", &head );
 
@@ -137,7 +137,7 @@ char	**argv;
 #endif
 
 	/* Build the overall combination */
-	mk_lfcomb( stdout, "room", 0, &head );
+	mk_lfcomb( stdout, "room", &head, 0 );
 }
 
 void
@@ -274,14 +274,14 @@ struct wmember *headp;
 	/* Needs to be in a region, with color!  */
 	get_rgb(rgb);
 	i = PICK_MAT;
-	mk_mcomb( stdout, rname, 1, 1,
-		mtab[i].mt_name, mtab[i].mt_param, 1, rgb );
+	mk_comb( stdout, rname, 1, 1,
+		mtab[i].mt_name, mtab[i].mt_param, rgb, 0 );
 	mk_memb( stdout, sname, identity, UNION );
 
 	(void)mk_addmember( rname, &head );
 	wp = mk_addmember( oname, &head );
 	MAT_DELTAS( wp->wm_mat, center[X], center[Y], center[Z]+lwh[Z] );
-	mk_lfcomb( stdout, pilname, 0, &head );
+	mk_lfcomb( stdout, pilname, &head, 0 );
 
 	(void)mk_addmember( pilname, headp );
 }
@@ -305,9 +305,9 @@ struct wmember *headp;
 	sprintf( sname, "%s.s", rname );
 	sprintf( args, "texture file=%s;plastic", file );
 	mk_rpp( stdout, sname, cmin, cmax );
-	mk_mcomb( stdout, rname, 1, 1,
+	mk_comb( stdout, rname, 1, 1,
 		"stack", args,
-		0, (char *)0 );
+		(char *)0, 0 );
 	mk_memb( stdout, sname, identity, UNION );
 
 	(void)mk_addmember( rname, headp );
