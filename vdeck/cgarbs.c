@@ -1,13 +1,10 @@
 /*
- *	@(#) cgarbs.c			retrieved: 8/13/86 at 07:59:43,
- *	@(#) version 1.6		last edit: 10/11/83 at 10:02:36., G S Moss.
+ *	@(#) cgarbs.c			retrieved: 8/13/86 at 07:59:54,
+ *	@(#) version 1.7		last edit: 10/11/83 at 10:57:16., G S Moss.
  *
  *	Written by Keith Applin.
  */
-#include "./ged_types.h"
-#include "./3d.h"
-#include "./vdeck.h"
-extern double	fabs();
+#include "./vextern.h"
 
 /* C G A R B S :   determines COMGEOM arb types from GED general arbs
  */
