@@ -124,7 +124,7 @@ char **argv;
 	}
 	free(arrayd);
 	for (x=y;x<y+ocount+icount;x++){
-		cfree(x->list);
+		free(x->list);
 	}
 	free(y);
 	exit(0);
