@@ -165,6 +165,8 @@ and
 and places them at program memory address specified
 by
 .IR addr\^ .
+.I Fb_read\^
+returns the number of pixels actually read, or -1 on error.
 .PP
 .I Fb_write\^
 writes
@@ -177,10 +179,8 @@ by
 .I x\^
 and
 .IR y\^ .
-.I Fb_read\^
-and
 .I Fb_write\^
-both return the number of pixels actually read or written, or
+returns the number of pixels actually written, or
 -1 on error.
 .PP
 .I Fb_rmap\^
