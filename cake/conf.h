@@ -37,7 +37,7 @@ typedef	long	Cast;
 	 *  cc -E will not work unless the source file name ends in .c
 	 */
 #	define	CPP		"/lib/cpp"
-#	define	CPP_OPTIONS	"-D_AIX"
+#	define	CPP_OPTIONS	"-D__CAKE__ibm"
 #endif
 
 #if __MACHINETYPE__c1
@@ -101,6 +101,11 @@ typedef	long	Cast;
 #	define	CPP		"/lib/cpp"
 #	define	CPP_OPTIONS	"-traditional"
 #	define	CPP_OPTIONS2	"-D__CAKE__next"
+#endif
+
+#if __MACHINETYPE__aux
+#	define	CPP		"/lib/cpp"
+#	define	CPP_OPTIONS	"-D__CAKE__aux"
 #endif
 
 #if __MACHINETYPE__ard
