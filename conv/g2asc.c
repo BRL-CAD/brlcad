@@ -31,8 +31,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "db.h"
 #include "wdb.h"
-#include "raytrace.h"
 #include "rtlist.h"
+#include "raytrace.h"
 #include "rtgeom.h"
 
 
@@ -46,7 +46,7 @@ char *name();
 char *strchop();
 #define CH(x)	strchop(x,sizeof(x))
 
-void	combdump();
+int	combdump();
 void	idendump(), polyhead(), polydata();
 void	soldump();
 void	membdump(), arsadump(), arsbdump();
@@ -62,6 +62,7 @@ char **argv;
 	/* Read database file */
 	while( fread( (char *)&record, sizeof record, 1, stdin ) == 1  &&
 	    !feof(stdin) )  {
+top:
 	    	if( argc > 1 )
 			(void)fprintf(stderr,"0%o (%c)\n", record.u_id, record.u_id);
 		/* Check record type and skip deleted records */
@@ -72,11 +73,10 @@ char **argv;
 			soldump();
 			continue;
 	    	case ID_COMB:
-			combdump();
+			if( combdump() > 0 )  goto top;
 			continue;
 	    	case ID_MEMB:
-	    		/* Just convert them as they are found.  Assume DB is good */
-	    		membdump();
+	    		(void)fprintf(stderr, "g2asc: stray MEMB record, skipped\n");
 	    		continue;
 	    	case ID_ARS_A:
 			arsadump();
@@ -396,14 +396,51 @@ arbn_dump()
 /*
  *			C O M B D U M P
  *
+ *  Note that for compatability with programs such as FRED that
+ *  (inappropriately) read .asc files, the member count has to be
+ *  recalculated here.
+ *
+ *  Returns -
+ *	0	converted OK
+ *	1	converted OK, left next record in global "record" for reuse.
  */
-void
+int
 combdump()	/* Print out Combination record information */
 {
 	register int i;
 	register int length;	/* Keep track of number of members */
 	int	m1, m2;		/* material property flags */
+	struct rt_list	head;
+	struct mchain {
+		struct rt_list	l;
+		union record	r;
+	};
+	struct mchain	*mp;
+	struct mchain	*ret_mp = (struct mchain *)0;
+	int		mcount;
 
+	/*
+	 *  Gobble up all subsequent member records, so that
+	 *  an accurate count of them can be output.
+	 */
+	RT_LIST_INIT( &head );
+	mcount = 0;
+	while(1)  {
+		GETSTRUCT( mp, mchain );
+		if( fread( (char *)&mp->r, sizeof(union record), 1, stdin ) != 1
+		    || feof( stdin ) )
+			break;
+		if( mp->r.u_id != ID_MEMB )  {
+			ret_mp = mp;	/* Handle it later */
+			break;
+		}
+		RT_LIST_INSERT( &head, &(mp->l) );
+		mcount++;
+	}
+
+	/*
+	 *  Output the combination
+	 */
 	(void)printf("%c ", record.c.c_id );		/* C */
 	if( record.c.c_flags == 'R' )			/* set region flag */
 		(void)printf("Y ");			/* Y if `R' */
@@ -412,11 +449,10 @@ combdump()	/* Print out Combination record information */
 	(void)printf("%.16s ", name(record.c.c_name) );	/* unique name */
 	(void)printf("%d ", record.c.c_regionid );	/* region ID code */
 	(void)printf("%d ", record.c.c_aircode );	/* air space code */
+	(void)printf("%d ", mcount );       		/* DEPRECATED: # of members */
 #if 1
-	(void)printf("%d ", 0 );			/* DEPRECATED: # of members */
 	(void)printf("%d ", 0 );			/* DEPRECATED: COMGEOM region # */
 #else
-	(void)printf("%d ", record.c.c_length );        /* DEPRECATED: # of members */
 	(void)printf("%d ", record.c.c_num );           /* DEPRECATED: COMGEOM region # */
 #endif
 	(void)printf("%d ", record.c.c_material );	/* material code */
@@ -448,18 +484,41 @@ combdump()	/* Print out Combination record information */
 		(void)printf("%.32s\n", CH(record.c.c_matname) );
 	if( m2 )
 		(void)printf("%.60s\n", CH(record.c.c_matparm) );
+
+	/*
+	 *  Output the member records now
+	 */
+	while( RT_LIST_WHILE( mp, mchain, &head ) )  {
+		membdump( &mp->r );
+		RT_LIST_DEQUEUE( &mp->l );
+		rt_free( (char *)mp, "mchain");
+	}
+
+	if( ret_mp )  {
+		bcopy( (char *)&ret_mp->r, (char *)&record, sizeof(record) );
+		rt_free( (char *)ret_mp, "mchain");
+		return 1;
+	}
+	return 0;
 }
 
+/*
+ *			M E M B D U M P
+ *
+ *  Print out Member record information.
+ *  Intented to be called by combdump only.
+ */
 void
-membdump()	/* Print out Member record information */
+membdump(rp)
+union record	*rp;
 {
 	register int i;
 
-	(void)printf("%c ", record.M.m_id );		/* M */
-	(void)printf("%c ", record.M.m_relation );	/* Boolean oper. */
-	(void)printf("%.16s ", name(record.M.m_instname) );	/* referred-to obj. */
+	(void)printf("%c ", rp->M.m_id );		/* M */
+	(void)printf("%c ", rp->M.m_relation );	/* Boolean oper. */
+	(void)printf("%.16s ", name(rp->M.m_instname) );	/* referred-to obj. */
 	for( i = 0; i < 16; i++ )			/* homogeneous transform matrix */
-		(void)printf("%.12e ", record.M.m_mat[i] );
+		(void)printf("%.12e ", rp->M.m_mat[i] );
 	(void)printf("%d ", 0 );			/* was COMGEOM solid # */
 	(void)printf("\n");				/* Terminate w/ nl */
 }
