@@ -209,15 +209,15 @@ Turns on interactive mode.  If this flag is off, and your image is
 .TP
 .B \-J#
 The "jitter" flag, is a bit vector.
-If one, randomizes the point from which each ray
+If one (-J1), randomizes the point from which each ray
 is fired by +/- one half of the pixel size.  Useful if doing your own
 post filtering for antialiasing, or to eliminate systematic
 errors.  This has been useful in obtaining more accurate results
-in a volume-calculating raytrace as well.
-If two, shifts the origin of the output frame once for each frame.
+in a volume-calculating raytraces as well.
+If two (-J2), shifts the origin of the output frame once for each frame.
 The shift is along a circular path in the plane of the frame,
-with a period of two seconds, and a radius of 1/2 pixel width.
-If three, performs both operations.
+with a period of ten seconds, and a radius of +/- 1/4 pixel width.
+If three (-J3), performs both operations.
 .TP
 .B \-K#
 sets the final (kill-after) frame number.
