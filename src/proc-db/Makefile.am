@@ -1,7 +1,7 @@
 # $Id$
 
 # apply-mdb was removed due to compile issues... should be readded once those are resolved...
-# nmgexplode was removed because nmgexplode.c doesn't seem to exist
+# nmgxplode was removed because nmgxplode.c doesn't seem to compile
 bin_PROGRAMS = \
 	bottest \
 	brickwall \
@@ -12,7 +12,6 @@ bin_PROGRAMS = \
 	kurt \
 	molecule \
 	nmgmodel \
-	nmgxplode \
 	picket_fence \
 	pipe \
 	pipetest \
@@ -72,8 +71,8 @@ molecule_LDADD = ${WDB}
 nmgmodel_SOURCES = nmgmodel.c 
 nmgmodel_LDADD = ${WDB}
 
-nmgxplode_SOURCES = nmgxplode.c 
-nmgxplode_LDADD = ${WDB}
+#nmgxplode_SOURCES = nmgxplode.c 
+#nmgxplode_LDADD = ${WDB}
 
 picket_fence_SOURCES = picket_fence.c 
 picket_fence_LDADD = ${WDB}
@@ -129,3 +128,4 @@ wall_LDADD = ${WDB}
 wdb_example_SOURCES = wdb_example.c 
 wdb_example_LDADD = ${WDB}
 
+EXTRA_DIST = $(man_MANS)
