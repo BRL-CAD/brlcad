@@ -222,8 +222,23 @@ BU_EXTERN(void		bn_mat_zero, (mat_t m));
 BU_EXTERN(void		bn_mat_idn, (mat_t m));
 BU_EXTERN(void		bn_mat_copy, (register mat_t dest,register CONST mat_t src));
 #else
+#define bn_mat_zero( _m )	{ \
+	(m)[0] = (m)[1] = (m)[2] = (m)[3] = \
+	(m)[4] = (m)[5] = (m)[6] = (m)[7] = \
+	(m)[8] = (m)[9] = (m)[10] = (m)[11] = \
+	(m)[12] = (m)[13] = (m)[14] = (m)[15] = 0.0; }
+  /*
 #define	bn_mat_zero( _m )	(void)memset( (void *)_m, 0, sizeof(mat_t))
+  */
+#define bn_mat_idn( _m )	{ \
+	(m)[1] = (m)[2] = (m)[3] = (m)[4] = \
+	(m)[6] = (m)[7] = (m)[8] = (m)[9] = \
+	(m)[11] = (m)[12] = (m)[13] = (m)[14] = 0.0; \
+	(m)[0] = (m)[5] = (m)[10] = (m)[15] = 1.0; }
+
+  /*
 #define bn_mat_idn( _m )	(void)memcpy( (void *)_m, (CONST void *)bn_mat_identity, sizeof(mat_t))
+  */
 #define bn_mat_copy(_d,_s)	(void)memcpy( (void *)_d, (CONST void *)(_s), sizeof(mat_t))
 #endif /* deprecated */
 

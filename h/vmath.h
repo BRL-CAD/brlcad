@@ -202,13 +202,27 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 
 
 /* Macro versions of librt/mat.c functions, for when speed really matters */
+#define MAT_ZERO(m)	{ \
+	(m)[0] = (m)[1] = (m)[2] = (m)[3] = \
+	(m)[4] = (m)[5] = (m)[6] = (m)[7] = \
+	(m)[8] = (m)[9] = (m)[10] = (m)[11] = \
+	(m)[12] = (m)[13] = (m)[14] = (m)[15] = 0.0;}
+  /*
 #define MAT_ZERO(m)	{\
 	register int _j; \
 	for(_j=0; _j<16; _j++) (m)[_j]=0.0; }
+  */
 
+#define MAT_IDN(m)	{\
+	(m)[1] = (m)[2] = (m)[3] = (m)[4] =\
+	(m)[6] = (m)[7] = (m)[8] = (m)[9] = \
+	(m)[11] = (m)[12] = (m)[13] = (m)[14] = 0.0;\
+	(m)[0] = (m)[5] = (m)[10] = (m)[15] = 1.0;}
+  /*
 #define MAT_IDN(m)	{\
 	int _j;	for(_j=0;_j<16;_j++) (m)[_j]=0.0;\
 	(m)[0] = (m)[5] = (m)[10] = (m)[15] = 1.0;}
+  */
 
 #define MAT_COPY(o,m)   VMOVEN(o,m,16)
 
