@@ -66,6 +66,9 @@ int		using_mlib = 0;		/* Material routines NOT used */
 
 extern FILE	*outfp;			/* optional output file */
 
+extern double	azimuth, elevation;
+extern vect_t	dx_model;		/* view delta-X as model-space vect */
+
 char usage[] = "\
 Usage:  rtg3 [options] model.g objects... >file.ray\n\
 Options:\n\
@@ -255,8 +258,13 @@ char *file, *obj;
 	if( minus_o )
 		rt_bomb("error is only to stdout\n");
 
-        fprintf(stdout,"overall headder\n");
-
+	/*
+	 *  Overall header, to be read by COVART format:
+	 *  9220 FORMAT( BZ, I5, 10A4 )
+	 *	number of views, title
+	 *  Initially, do only one view per run of RTG3.
+	 */
+        fprintf(stdout,"%5d%s %s\n", 1, file, obj);
 
 	return(0);		/* No framebuffer needed */
 }
@@ -287,7 +295,20 @@ struct application	*ap;
 	if( stdout == NULL )
 		rt_bomb("stdout is NULL\n");
 
-	fprintf(stdout, "view header\n");
+	/*
+	 *  Header for each view, to be read by COVART format:
+	 *  9230 FORMAT( BZ, 2( 5X, E15.8), 30X, E10.3 )
+	 *	azimuth, elevation, grid_spacing
+	 * NOTE that GIFT provides several other numbers that are not used
+	 * by COVART;  this should be investigated.
+	 * NOTE that grid_spacing is assumed to be square (by COVART),
+	 * and that (for now), the units are MM.
+	 * NOTE that variables "azimuth and elevation" are not valid
+	 * when the -M flag is used.
+	 */
+	fprintf(stdout,
+		"     %-15.8f     %-15.8f                              %10g\n",
+		azimuth, elevation, MAGNITUDE(dx_model) );
 
 	/*
 	 *  Apply any deltas to reg_regionid values
