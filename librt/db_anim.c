@@ -286,8 +286,7 @@ CONST char	**argv;
 	bzero( (char *)&ts, sizeof(ts) );
 	ts.ts_dbip = dbip;
 	mat_idn( ts.ts_mat );
-	anp->an_path.fp_len = anp->an_path.fp_maxlen = 0;
-	anp->an_path.fp_names = (struct directory **)0;
+	db_full_path_init( &anp->an_path );
 	if( db_follow_path_for_state( &ts, &(anp->an_path), argv[1], LOOKUP_NOISY ) < 0 )
 		goto bad;
 
