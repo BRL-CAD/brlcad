@@ -2,6 +2,7 @@
 lib_LTLIBRARIES = libdm.la
 
 SRCS = \
+	axes.c \
 	clip.c \
 	color.c \
 	dm-Null.c \

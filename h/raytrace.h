@@ -4860,6 +4860,7 @@ BU_EXTERN(int	wdb_showmats_cmd,	(struct rt_wdb *wdbp, Tcl_Interp *interp, int ar
 BU_EXTERN(int	wdb_copyeval_cmd,	(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int	wdb_version_cmd,	(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int	wdb_binary_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_track_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
 BU_EXTERN(int	wdb_smooth_bot_cmd,	(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
 
 /* defined in dg_obj.c */

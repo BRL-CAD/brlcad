@@ -152,6 +152,11 @@ struct wdb_trace_data {
 	int			wtd_flag;
 };
 
+struct wdb_killtree_data {
+  Tcl_Interp	*interp;
+  int		notify;
+};
+
 /* defined in libbn/bn_tcl.c */
 BU_EXTERN(void		bn_tcl_mat_print, (Tcl_Interp *interp, const char *title, const mat_t m));
 
@@ -214,6 +219,7 @@ static int wdb_facetize_tcl(ClientData clientData, Tcl_Interp *interp, int argc,
 static int wdb_find_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_which_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_title_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int wdb_track_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_tree_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_color_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int wdb_prcolor_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
@@ -323,6 +329,7 @@ static struct bu_cmdtab wdb_cmds[] = {
 	{"title",	wdb_title_tcl},
 	{"tol",		wdb_tol_tcl},
 	{"tops",	wdb_tops_tcl},
+	{"track",	wdb_track_tcl},
 	{"tree",	wdb_tree_tcl},
 	{"unhide",	wdb_unhide_tcl},
 	{"units",	wdb_units_tcl},
@@ -2283,7 +2290,10 @@ wdb_kill_cmd(struct rt_wdb	*wdbp,
 				continue;
 
 			/* notify drawable geometry objects associated with this database object */
-			dgo_eraseobjall_callback(wdbp->dbip, interp, dp);
+			if (i == argc-1)
+			  dgo_eraseobjall_callback(wdbp->dbip, interp, dp, 1 /* notify other interested observers */);
+			else
+			  dgo_eraseobjall_callback(wdbp->dbip, interp, dp, 0);
 
 			if (db_delete(wdbp->dbip, dp) < 0 ||
 			    db_dirdelete(wdbp->dbip, dp) < 0) {
@@ -2423,6 +2433,7 @@ wdb_killtree_cmd(struct rt_wdb	*wdbp,
 {
 	register struct directory *dp;
 	register int i;
+	struct wdb_killtree_data ktd;
 
 	WDB_TCL_CHECK_READ_ONLY;
 
@@ -2436,6 +2447,9 @@ wdb_killtree_cmd(struct rt_wdb	*wdbp,
 		return TCL_ERROR;
 	}
 
+	ktd.interp = interp;
+	ktd.notify = 0;
+
 	for (i=1; i<argc; i++) {
 		if ((dp = db_lookup(wdbp->dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL)
 			continue;
@@ -2444,9 +2458,12 @@ wdb_killtree_cmd(struct rt_wdb	*wdbp,
 		if (dp->d_addr == RT_DIR_PHONY_ADDR)
 			continue;
 
+		if (i == argc-1)
+		  ktd.notify = 1;
+
 		db_functree(wdbp->dbip, dp,
 			    wdb_killtree_callback, wdb_killtree_callback,
-			    wdbp->wdb_resp, (genptr_t)interp);
+			    wdbp->wdb_resp, (genptr_t)&ktd);
 	}
 
 	return TCL_OK;
@@ -2475,9 +2492,9 @@ wdb_killtree_tcl(ClientData	clientData,
 static void
 wdb_killtree_callback(struct db_i		*dbip,
 		      register struct directory *dp,
-		      genptr_t			*ptr)
-{
-	Tcl_Interp *interp = (Tcl_Interp *)ptr;
+		      genptr_t			*ptr) {
+	struct wdb_killtree_data *ktdp = (struct wdb_killtree_data *)ptr;
+	Tcl_Interp *interp = ktdp->interp;
 
 	if (dbip == DBI_NULL)
 		return;
@@ -2486,7 +2503,7 @@ wdb_killtree_callback(struct db_i		*dbip,
 			 ":  ", dp->d_namep, "\n", (char *)NULL);
 
 	/* notify drawable geometry objects associated with this database object */
-	dgo_eraseobjall_callback(interp, dbip, dp);
+	dgo_eraseobjall_callback(interp, dbip, dp, ktdp->notify);
 
 	if (db_delete(dbip, dp) < 0 || db_dirdelete(dbip, dp) < 0) {
 		Tcl_AppendResult(interp,
@@ -4644,6 +4661,20 @@ wdb_print_node(struct rt_wdb		*wdbp,
 		if(rt_tree_array) bu_free((char *)rt_tree_array, "printnode: rt_tree_array");
 	}
 	rt_db_free_internal(&intern, &rt_uniresource);
+}
+
+/*
+ * Usage:
+ *        procname track args
+ */
+static int
+wdb_track_tcl(ClientData clientData,
+	      Tcl_Interp *interp,
+	      int        argc,
+	      char       **argv) {
+  struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+
+  return wdb_track_cmd(wdbp, interp, argc-1, argv+1);
 }
 
 int

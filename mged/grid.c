@@ -192,7 +192,7 @@ draw_grid(void)
 	DM_SET_FGCOLOR(dmp,
 		       color_scheme->cs_grid[0], 
 		       color_scheme->cs_grid[1],
-		       color_scheme->cs_grid[2], 1);
+		       color_scheme->cs_grid[2], 1, 1.0);
 	DM_SET_LINE_ATTR(dmp, 1, 0);		/* solid lines */
 
 	/* draw horizontal dots */

@@ -78,6 +78,7 @@ class Db {
     public method title {args}
     public method tol {args}
     public method tops {args}
+    public method track {args}
     public method tree {args}
     public method unhide {args}
     public method units {args}
@@ -279,6 +280,10 @@ body Db::xpush {args} {
 
 body Db::title {args} {
     eval $db title $args
+}
+
+body Db::track {args} {
+    eval $db track $args
 }
 
 body Db::tree {args} {

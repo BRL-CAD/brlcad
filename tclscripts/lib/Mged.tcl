@@ -27,6 +27,8 @@ option add *Mged.height 400 widgetDefault
 itcl::class Mged {
     inherit QuadDisplay
 
+    itk_option define -unitsCallback unitsCallback UnitsCallback ""
+
     constructor {file args} {
 	eval QuadDisplay::constructor
     } {}
@@ -64,6 +66,7 @@ itcl::class Mged {
 	method get {args}
 	method get_eyemodel {viewObj}
 	method hide {args}
+	method how {args}
 	method i {args}
 	method illum {obj}
 	method keep {args}
@@ -93,12 +96,15 @@ itcl::class Mged {
 	method report {args}
 	method rm {args}
 	method rt_gettrees {args}
+	method set_transparency {args}
+	method shaded_mode {args}
 	method shells {args}
 	method showmats {args}
 	method summary {args}
 	method title {args}
 	method tol {args}
 	method tops {args}
+	method track {args}
 	method tree {args}
 	method unhide {args}
 	method units {args}
@@ -125,7 +131,10 @@ itcl::class Mged {
 itcl::body Mged::constructor {file args} {
     set db [Database #auto $file]
     set dg [$db Drawable::get_dgname]
-    addall $dg
+    addAll $dg
+
+    # sync up the units between the Database and QuadDisplay
+    QuadDisplay::units [$db units -s]
 
     catch {eval itk_initialize $args}
 }
@@ -184,6 +193,14 @@ itcl::body Mged::summary {args} {
 
 itcl::body Mged::rt_gettrees {args} {
     eval $db rt_gettrees $args
+}
+
+itcl::body Mged::set_transparency {args} {
+    eval $db set_transparency $args
+}
+
+itcl::body Mged::shaded_mode {args} {
+    eval $db shaded_mode $args
 }
 
 itcl::body Mged::dump {args} {
@@ -298,6 +315,10 @@ itcl::body Mged::title {args} {
     eval $db title $args
 }
 
+itcl::body Mged::track {args} {
+    eval $db track $args
+}
+
 itcl::body Mged::tree {args} {
     eval $db tree $args
 }
@@ -338,6 +359,10 @@ itcl::body Mged::hide {args} {
     eval $db hide $args
 }
 
+itcl::body Mged::how {args} {
+    eval $db how $args
+}
+
 itcl::body Mged::i {args} {
     eval $db i $args
 }
@@ -351,6 +376,17 @@ itcl::body Mged::make_name {args} {
 }
 
 itcl::body Mged::units {args} {
+    set rval [eval QuadDisplay::units $args]
+
+    # must be a "get"
+    if {[llength $args] == 0} {
+	return $rval
+    }
+
+    if {$itk_option(-unitsCallback) != ""} {
+	catch {eval $itk_option(-unitsCallback) $args}
+    }
+
     eval $db units $args
 }
 
@@ -373,21 +409,21 @@ itcl::body Mged::draw {args} {
 
     if {$blank} {
 	# stop observing the Drawable
-	detach_drawableall $dg
+	detach_drawableAll $dg
 	set result [eval $db draw $args]
 	# resume observing the Drawable
-	attach_drawableall $dg
+	attach_drawableAll $dg
 
 	# stop observing the View
-	detach_viewall
-	autoviewall
+	detach_viewAll
+	autoviewAll
 	# resume observing the View
-	attach_viewall
+	attach_viewAll
 
 	# We need to refresh here because nobody was observing
 	# during the changes to the Drawable and the View. This
 	# was done in order to prevent multiple refreshes.
-	refreshall
+	refreshAll
     } else {
 	set result [eval $db draw $args]
     }
@@ -396,7 +432,40 @@ itcl::body Mged::draw {args} {
 }
 
 itcl::body Mged::E {args} {
-    eval $db E $args
+    set who [who]
+
+    if {$who == ""} {
+	set blank 1
+    } else {
+	set blank 0
+    }
+
+    if {$blank} {
+	# stop observing the Drawable
+	detach_drawableAll $dg
+	set result [eval $db E $args]
+	# resume observing the Drawable
+	attach_drawableAll $dg
+
+	# stop observing the View
+	detach_viewAll
+	autoviewall
+	# resume observing the View
+	attach_viewAll
+
+	# We need to refresh here because nobody was observing
+	# during the changes to the Drawable and the View. This
+	# was done in order to prevent multiple refreshes.
+	refreshAll
+    } else {
+	set result [eval $db E $args]
+
+	#XXX This is a temporary hack. I need to look at why
+	#    the Drawable's observers are not being notified.
+	refreshAll
+    }
+
+    return $result
 }
 
 itcl::body Mged::erase {args} {

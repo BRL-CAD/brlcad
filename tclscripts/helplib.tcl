@@ -16,6 +16,9 @@ set helplib_data(dm_drawPoint)		{{x y} {draw point at (x,y)}}
 set helplib_data(dm_drawLine)		{{x1 y1 x2 y2} {draw line from (x1,y1) to (x2,y2)}}
 set helplib_data(dm_drawVList)		{{vlp} {draw vlist represented by the given vlist pointer string}}
 set helplib_data(dm_drawSList)		{{slp} {draw solid list represented by the given solid list pointer string}}
+set helplib_data(dm_drawModelAxes)	{{vsize rmat apos asize acolor lcolor lw v2m_mat doticks tlen ti tcolor} {draw model axes with labels}}
+set helplib_data(dm_drawViewAxes)	{{vsize rmat apos asize acolor lcolor lw} {draw view axes with labels}}
+set helplib_data(dm_drawCenterDot)	{{color} {draw center dot using specified color}}
 set helplib_data(dm_drawGeom)		{{obj(s)} {draw the specified geometry object(s)}}
 set helplib_data(dm_fg)			{{["r g b"]} {Get/set foreground color}}
 set helplib_data(dm_linewidth)		{{[width]} {Set/get line width}}
@@ -23,11 +26,15 @@ set helplib_data(dm_linestyle)		{{[0|1]} {Set/get line style}}
 set helplib_data(dm_zclip)		{{[flag]} {Set/get zclip flag}}
 set helplib_data(dm_zbuffer)		{{[flag]} {Set/get zbuffer flag}}
 set helplib_data(dm_light)		{{[flag]} {Set/get light flag}}
+set helplib_data(dm_transparency)	{{[val]} {Set/get transparency value}}
+set helplib_data(dm_depthMask)		{{[flag]} {Set/get depth mask flag}}
 set helplib_data(dm_perspective)	{{[flag]} {Set/get perspective flag}}
+set helplib_data(dm_png)		{{file} {Dump contents of window to a png file}}
 set helplib_data(dm_listen)		{{[port]} {Set/get the port used to listen for framebuffer clients}}
 set helplib_data(dm_size)		{{[width [height]]} {Set/get the window size}}
 set helplib_data(dm_getaspect)		{{} {Get window's aspect ratio }}
 set helplib_data(dm_observer)		{{cmd [args]} {Attach/detach observer to/from list}}
+set helplib_data(dm_clearBufferAfter)	{{[flag]} {Get/set the clearBufferAfter flag}}
 
 set helplib_data(wdb_adjust)		{{object attr value ?attr value?} {adjust object's attribute(s)}}
 set helplib_data(wdb_attr)        {{ {set|get|show|rm|append} object [args]}
@@ -109,6 +116,7 @@ set helplib_data(wdb_summary)		{{[p r g]}	{count/list primitives/regions/groups}
 set helplib_data(wdb_title)		{{description} {Set/get database title}}
 set helplib_data(wdb_tol)		{{[abs|rel|norm|dist|perp [#]} {Set/get tessellation and calculation tolerances}}
 set helplib_data(wdb_tops)		{{[-n] [-u] [-g]}	{find all top level objects}}
+set helplib_data(wdb_track)		{{args} {create a track}}
 set helplib_data(wdb_tree)		{{object(s)} {print out a tree of all members of an object}}
 set helplib_data(wdb_unhide)            {{[objects]} {unset the "hidden" flag for the specified objects so they will appear in a "t" or "ls" command output}}
 set helplib_data(wdb_units)		{{[mm|cm|m|in|ft|...]}	{change units}}
@@ -161,6 +169,7 @@ set helplib_data(dgo_erase_all)		{{<objects>} {erase all occurrences of objects 
 set helplib_data(dgo_ev)		{{[-dfnstuvwT] [-P #] <objects>}	{evaluate objects via NMG tessellation}}
 set helplib_data(dgo_get_autoview)	{{}	{get view size and center such that all displayed solids would be in view}}
 set helplib_data(dgo_headSolid)		{{} {return pointer to solid list}}
+set helplib_data(dgo_how)		{{obj}	{returns how an object is being displayed}}
 set helplib_data(dgo_illum)		{{[-n] obj} {illuminate/highlight obj}}
 set helplib_data(dgo_nirt)		{{[nirt(1) options] [x y z]}	{trace a single ray from current view}}
 set helplib_data(dgo_observer)		{{cmd [args]} {Attach/detach observer to/from list}}
@@ -174,6 +183,7 @@ set helplib_data(dgo_rtcheck)		{{[options]}	{check for overlaps in current view}
 set helplib_data(dgo_rtedge)		{{[options] [-- objects]}	{do edge rendering of view or specified objects}}
 set helplib_data(dgo_shaded_mode)	{{[0|1|2]}	{get/set shaded mode}}
 set helplib_data(dgo_vdraw)		{{write|insert|delete|read|send|params|open|vlist [args]}	{Expermental drawing (cnuzman)}}
+set helplib_data(dgo_vnirt)		{{[vnirt(1) options] viewX viewY}	{trace a single ray from current view}}
 set helplib_data(dgo_who)		{{[r(eal)|p(hony)|b(oth)]}	{list the top-level objects currently being displayed}}
 set helplib_data(dgo_zap)		{{} {erase all objects from the display}}
 

@@ -323,7 +323,7 @@ scroll_display( int y_top )
 	  DM_SET_FGCOLOR(dmp,
 			 color_scheme->cs_slider_text2[0],
 			 color_scheme->cs_slider_text2[1],
-			 color_scheme->cs_slider_text2[2], 1);
+			 color_scheme->cs_slider_text2[2], 1, 1.0);
 	} else {
 	  if(EDIT_TRAN && mged_variables->mv_transform == 'e'){
 	    switch(mged_variables->mv_coords){
@@ -346,7 +346,7 @@ scroll_display( int y_top )
 	    DM_SET_FGCOLOR(dmp,
 			   color_scheme->cs_slider_text1[0],
 			   color_scheme->cs_slider_text1[1],
-			   color_scheme->cs_slider_text1[2], 1);
+			   color_scheme->cs_slider_text1[2], 1, 1.0);
 	  }else{
 	    if(mged_variables->mv_rateknobs){
 	      if(mged_variables->mv_coords == 'm')
@@ -363,7 +363,7 @@ scroll_display( int y_top )
 	    DM_SET_FGCOLOR(dmp,
 			   color_scheme->cs_slider_text2[0],
 			   color_scheme->cs_slider_text2[1],
-			   color_scheme->cs_slider_text2[2], 1);
+			   color_scheme->cs_slider_text2[2], 1, 1.0);
 	  }
 	}
 	break;
@@ -374,7 +374,7 @@ scroll_display( int y_top )
 	  DM_SET_FGCOLOR(dmp,
 			 color_scheme->cs_slider_text2[0],
 			 color_scheme->cs_slider_text2[1],
-			 color_scheme->cs_slider_text2[2], 1);
+			 color_scheme->cs_slider_text2[2], 1, 1.0);
 	} else {
 	  if(EDIT_TRAN && mged_variables->mv_transform == 'e'){
 	    switch(mged_variables->mv_coords){
@@ -396,7 +396,7 @@ scroll_display( int y_top )
 	    DM_SET_FGCOLOR(dmp,
 			   color_scheme->cs_slider_text1[0],
 			   color_scheme->cs_slider_text1[1],
-			   color_scheme->cs_slider_text1[2], 1);
+			   color_scheme->cs_slider_text1[2], 1, 1.0);
 	  }else{
 	    if(mged_variables->mv_rateknobs){
 	      if(mged_variables->mv_coords == 'm')
@@ -413,7 +413,7 @@ scroll_display( int y_top )
 	    DM_SET_FGCOLOR(dmp,
 			   color_scheme->cs_slider_text2[0],
 			   color_scheme->cs_slider_text2[1],
-			   color_scheme->cs_slider_text2[2], 1);
+			   color_scheme->cs_slider_text2[2], 1, 1.0);
 	  }
 	}
 	break;
@@ -424,7 +424,7 @@ scroll_display( int y_top )
 	  DM_SET_FGCOLOR(dmp,
 			 color_scheme->cs_slider_text2[0],
 			 color_scheme->cs_slider_text2[1],
-			 color_scheme->cs_slider_text2[2], 1);
+			 color_scheme->cs_slider_text2[2], 1, 1.0);
 	} else {
 	  if(EDIT_TRAN && mged_variables->mv_transform == 'e'){
 	    switch(mged_variables->mv_coords){
@@ -446,7 +446,7 @@ scroll_display( int y_top )
 	    DM_SET_FGCOLOR(dmp,
 			   color_scheme->cs_slider_text1[0],
 			   color_scheme->cs_slider_text1[1],
-			   color_scheme->cs_slider_text1[2], 1);
+			   color_scheme->cs_slider_text1[2], 1, 1.0);
 	  }else{
 	    if(mged_variables->mv_rateknobs){
 	      if(mged_variables->mv_coords == 'm')
@@ -463,7 +463,7 @@ scroll_display( int y_top )
 	    DM_SET_FGCOLOR(dmp,
 			   color_scheme->cs_slider_text2[0],
 			   color_scheme->cs_slider_text2[1],
-			   color_scheme->cs_slider_text2[2], 1);
+			   color_scheme->cs_slider_text2[2], 1, 1.0);
 	  }
 	}
 	break;
@@ -474,7 +474,7 @@ scroll_display( int y_top )
 	  DM_SET_FGCOLOR(dmp,
 			 color_scheme->cs_slider_text2[0],
 			 color_scheme->cs_slider_text2[1],
-			 color_scheme->cs_slider_text2[2], 1);
+			 color_scheme->cs_slider_text2[2], 1, 1.0);
 	} else {
 	  if(EDIT_SCALE && mged_variables->mv_transform == 'e'){
 	    if(mged_variables->mv_rateknobs)
@@ -485,7 +485,7 @@ scroll_display( int y_top )
 	    DM_SET_FGCOLOR(dmp,
 			   color_scheme->cs_slider_text1[0],
 			   color_scheme->cs_slider_text1[1],
-			   color_scheme->cs_slider_text1[2], 1);
+			   color_scheme->cs_slider_text1[2], 1, 1.0);
 	  }else{
 	    if(mged_variables->mv_rateknobs)
 	      f = view_state->vs_rate_scale;
@@ -495,7 +495,7 @@ scroll_display( int y_top )
 	    DM_SET_FGCOLOR(dmp,
 			   color_scheme->cs_slider_text2[0],
 			   color_scheme->cs_slider_text2[1],
-			   color_scheme->cs_slider_text2[2], 1);
+			   color_scheme->cs_slider_text2[2], 1, 1.0);
 	  }
 	}
 	break;
@@ -506,7 +506,7 @@ scroll_display( int y_top )
 	  DM_SET_FGCOLOR(dmp,
 			 color_scheme->cs_slider_text2[0],
 			 color_scheme->cs_slider_text2[1],
-			 color_scheme->cs_slider_text2[2], 1);
+			 color_scheme->cs_slider_text2[2], 1, 1.0);
 	} else {
 	  if(EDIT_ROTATE && mged_variables->mv_transform == 'e'){
 	    switch(mged_variables->mv_coords){
@@ -534,7 +534,7 @@ scroll_display( int y_top )
 	    DM_SET_FGCOLOR(dmp,
 			   color_scheme->cs_slider_text1[0],
 			   color_scheme->cs_slider_text1[1],
-			   color_scheme->cs_slider_text1[2], 1);
+			   color_scheme->cs_slider_text1[2], 1, 1.0);
 	  }else{
 	    if(mged_variables->mv_rateknobs){
 	      if(mged_variables->mv_coords == 'm')
@@ -551,7 +551,7 @@ scroll_display( int y_top )
 	    DM_SET_FGCOLOR(dmp,
 			   color_scheme->cs_slider_text2[0],
 			   color_scheme->cs_slider_text2[1],
-			   color_scheme->cs_slider_text2[2], 1);
+			   color_scheme->cs_slider_text2[2], 1, 1.0);
 	  }
 	}
 	break;
@@ -586,7 +586,7 @@ scroll_display( int y_top )
 	    DM_SET_FGCOLOR(dmp,
 			   color_scheme->cs_slider_text1[0],
 			   color_scheme->cs_slider_text1[1],
-			   color_scheme->cs_slider_text1[2], 1);
+			   color_scheme->cs_slider_text1[2], 1, 1.0);
 	  }else{
 	    if(mged_variables->mv_rateknobs){
 	      if(mged_variables->mv_coords == 'm')
@@ -603,7 +603,7 @@ scroll_display( int y_top )
 	    DM_SET_FGCOLOR(dmp,
 			   color_scheme->cs_slider_text2[0],
 			   color_scheme->cs_slider_text2[1],
-			   color_scheme->cs_slider_text2[2], 1);
+			   color_scheme->cs_slider_text2[2], 1, 1.0);
 	  }
 	}
 	break;
@@ -638,7 +638,7 @@ scroll_display( int y_top )
 	    DM_SET_FGCOLOR(dmp,
 			   color_scheme->cs_slider_text1[0],
 			   color_scheme->cs_slider_text1[1],
-			   color_scheme->cs_slider_text1[2], 1);
+			   color_scheme->cs_slider_text1[2], 1, 1.0);
 	  }else{
 	    if(mged_variables->mv_rateknobs){
 	      if(mged_variables->mv_coords == 'm')
@@ -655,7 +655,7 @@ scroll_display( int y_top )
 	    DM_SET_FGCOLOR(dmp,
 			   color_scheme->cs_slider_text2[0],
 			   color_scheme->cs_slider_text2[1],
-			   color_scheme->cs_slider_text2[2], 1);
+			   color_scheme->cs_slider_text2[2], 1, 1.0);
 	  }
 	}
 	break;
@@ -680,7 +680,7 @@ scroll_display( int y_top )
       DM_SET_FGCOLOR(dmp,
 		     color_scheme->cs_slider_line[0],
 		     color_scheme->cs_slider_line[1],
-		     color_scheme->cs_slider_line[2], 1);
+		     color_scheme->cs_slider_line[2], 1, 1.0);
       DM_DRAW_LINE_2D(dmp,
 		      GED2PM1(XMAX), GED2PM1(y),
 		      GED2PM1(MENUXLIM), GED2PM1(y));
@@ -692,7 +692,7 @@ scroll_display( int y_top )
     DM_SET_FGCOLOR(dmp,
 		   color_scheme->cs_slider_line[0],
 		   color_scheme->cs_slider_line[1],
-		   color_scheme->cs_slider_line[2], 1);
+		   color_scheme->cs_slider_line[2], 1, 1.0);
     DM_DRAW_LINE_2D(dmp,
 		    GED2PM1(MENUXLIM), GED2PM1(scroll_top-1),
 		    GED2PM1(MENUXLIM), GED2PM1(y));

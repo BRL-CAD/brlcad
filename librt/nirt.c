@@ -112,15 +112,6 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
 	struct dg_qray_dataList *ndlp;
 	struct dg_qray_dataList HeadQRayData;
 
-	if (argc < 1 || RT_MAXARGS < argc) {
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "helplib_alias dgo_nirt %s", argv[0]);
-		Tcl_Eval(interp, bu_vls_addr(&vls));
-		bu_vls_free(&vls);
-
-		return TCL_ERROR;
-	}
-
 	vp = &dgop->dgo_rt_cmd[0];
 	*vp++ = "nirt";
 
@@ -553,4 +544,69 @@ done:
 		sp->s_wflag = DOWN;
 
 	return TCL_OK;
+}
+
+int
+dgo_vnirt_cmd(struct dg_obj	*dgop,
+	      struct view_obj	*vop,
+	      Tcl_Interp	*interp,
+	      int		argc,
+	      char		**argv) {
+    register int i;
+    int status;
+    fastf_t sf = 1.0 * DG_INV_GED;
+    vect_t view_ray_orig;
+    vect_t center_model;
+    struct bu_vls x_vls;
+    struct bu_vls y_vls;
+    struct bu_vls z_vls;
+    char **av;
+
+    /*
+     * The last two arguments are expected to be x,y in view coordinates.
+     * It is also assumed that view z will be the front of the viewing cube.
+     * These coordinates are converted to x,y,z in model coordinates and then
+     * converted to local units before being handed to nirt. All other
+     * arguments are passed straight through to nirt.
+     */
+    if(sscanf(argv[argc-2], "%lf", &view_ray_orig[X]) != 1 ||
+       sscanf(argv[argc-1], "%lf", &view_ray_orig[Y]) != 1){
+	return TCL_ERROR;
+    }
+    view_ray_orig[Z] = DG_GED_MAX;
+    argc -= 2;
+
+    av = (char **)bu_malloc(sizeof(char *) * (argc + 4), "dgo_vnirt_cmd: av");
+
+    /* Calculate point from which to fire ray */
+    VSCALE(view_ray_orig, view_ray_orig, sf);
+    MAT4X3PNT(center_model, vop->vo_view2model, view_ray_orig);
+    VSCALE(center_model, center_model, dgop->dgo_wdbp->dbip->dbi_base2local);
+
+    bu_vls_init(&x_vls);
+    bu_vls_init(&y_vls);
+    bu_vls_init(&z_vls);
+    bu_vls_printf(&x_vls, "%lf", center_model[X]);
+    bu_vls_printf(&y_vls, "%lf", center_model[Y]);
+    bu_vls_printf(&z_vls, "%lf", center_model[Z]);
+
+    /* pass remaining arguments to nirt */
+    av[0] = "nirt";
+    for(i = 1; i < argc; ++i)
+	av[i] = argv[i];
+
+    /* pass modified coordinates to nirt */
+    av[i++] = bu_vls_addr(&x_vls);
+    av[i++] = bu_vls_addr(&y_vls);
+    av[i++] = bu_vls_addr(&z_vls);
+    av[i] = (char *)NULL;
+
+    status = dgo_nirt_cmd(dgop, vop, interp, argc + 3, av);
+
+    bu_vls_free(&x_vls);
+    bu_vls_free(&y_vls);
+    bu_vls_free(&z_vls);
+    bu_free((genptr_t)av, "dgo_vnirt_cmd: av");
+
+    return status;
 }

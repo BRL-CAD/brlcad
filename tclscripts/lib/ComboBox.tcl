@@ -21,12 +21,12 @@
 #
 
 
-itk::usual ComboBox {
+::itk::usual ComboBox {
     keep -tearoff
 }
 
-class cadwidgets::ComboBox {
-    inherit itk::Widget
+::itcl::class cadwidgets::ComboBox {
+    inherit ::itk::Widget
 
     itk_option define -text text Text ""
 
@@ -50,25 +50,25 @@ class cadwidgets::ComboBox {
     private variable entrytext ""
 }
 
-configbody cadwidgets::ComboBox::text {
+::itcl::configbody cadwidgets::ComboBox::text {
     $itk_component(label) configure -text $itk_option(-text)
 }
 
-body cadwidgets::ComboBox::constructor {args} {
+::itcl::body cadwidgets::ComboBox::constructor {args} {
     itk_component add frame {
-	frame $itk_interior.frame -relief sunken -bd 2
+	::frame $itk_interior.frame -relief sunken -bd 2
     } {
 	usual
     }
 
     itk_component add label {
-	label $itk_interior.label
+	::label $itk_interior.label
     } {
 	usual
     }
 
     itk_component add entry {
-	entry $itk_interior.entry -relief flat -width 12
+	::entry $itk_interior.entry -relief flat -width 12
     } {
 	usual
 	keep -state
@@ -76,14 +76,14 @@ body cadwidgets::ComboBox::constructor {args} {
     }
 
     itk_component add menubutton {
-	menubutton $itk_interior.menubutton -relief raised -bd 2 \
+	::menubutton $itk_interior.menubutton -relief raised -bd 2 \
 		-menu $itk_interior.menubutton.m -indicatoron 1
     } {
 	usual
     }
 
     itk_component add menu {
-	menu $itk_interior.menubutton.m
+	::menu $itk_interior.menubutton.m
     } {
 	usual
 	keep -tearoff
@@ -98,50 +98,50 @@ body cadwidgets::ComboBox::constructor {args} {
     grid columnconfigure $itk_interior 1 -weight 1
 
     # Associate the entrytext variable with the entry component
-    configure -entryvariable [scope entrytext]
+    configure -entryvariable [::itcl::scope entrytext]
     eval itk_initialize $args
 }
 
-body cadwidgets::ComboBox::add {args} {
+::itcl::body cadwidgets::ComboBox::add {args} {
     eval $itk_component(menu) add $args
 }
 
-body cadwidgets::ComboBox::delete {args} {
+::itcl::body cadwidgets::ComboBox::delete {args} {
     eval $itk_component(menu) delete $args
 }
 
-body cadwidgets::ComboBox::menuConfigure {args} {
+::itcl::body cadwidgets::ComboBox::menuConfigure {args} {
     eval $itk_component(menu) configure $args
 }
 
-body cadwidgets::ComboBox::menuEntryConfigure {args} {
+::itcl::body cadwidgets::ComboBox::menuEntryConfigure {args} {
     eval $itk_component(menu) entryconfigure $args
 }
 
-body cadwidgets::ComboBox::index {args} {
+::itcl::body cadwidgets::ComboBox::index {args} {
     eval $itk_component(menu) index $args
 }
 
-body cadwidgets::ComboBox::insert {args} {
+::itcl::body cadwidgets::ComboBox::insert {args} {
     eval $itk_component(menu) insert $args
 }
 
-body cadwidgets::ComboBox::entryConfigure {args} {
+::itcl::body cadwidgets::ComboBox::entryConfigure {args} {
     eval $itk_component(entry) configure $args
 }
 
-body cadwidgets::ComboBox::getText {} {
+::itcl::body cadwidgets::ComboBox::getText {} {
     set ev [cget -entryvariable]
 
     # $-substitution should work, but doesn't
     return [set $ev]
 }
 
-body cadwidgets::ComboBox::setText {val} {
+::itcl::body cadwidgets::ComboBox::setText {val} {
     set ev [cget -entryvariable]
     set $ev $val
 }
 
-body cadwidgets::ComboBox::type {index} {
+::itcl::body cadwidgets::ComboBox::type {index} {
     $itk_component(menu) type $index
 }

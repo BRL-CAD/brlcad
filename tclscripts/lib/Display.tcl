@@ -28,7 +28,38 @@
 # Usual options.
 #
 itk::usual Display {
-    keep -rscale -sscale -type
+    keep -linewidth
+    keep -rscale
+    keep -sscale
+    keep -type
+
+    keep -centerDotEnable
+    keep -centerDotColor
+
+    keep -modelAxesEnable
+    keep -modelAxesLineWidth
+    keep -modelAxesPosition
+    keep -modelAxesSize
+    keep -modelAxesColor
+    keep -modelAxesLabelColor
+    keep -modelAxesTripleColor
+
+    keep -modelAxesTickEnable
+    keep -modelAxesTickLength
+    keep -modelAxesTickMajorLength
+    keep -modelAxesTickInterval
+    keep -modelAxesTicksPerMajor
+    keep -modelAxesTickColor
+    keep -modelAxesTickMajorColor
+    keep -modelAxesTickThreshold
+
+    keep -viewAxesEnable
+    keep -viewAxesLineWidth
+    keep -viewAxesPosition
+    keep -viewAxesSize
+    keep -viewAxesColor
+    keep -viewAxesLabelColor
+    keep -viewAxesTripleColor
 }
 
 class Display {
@@ -36,6 +67,34 @@ class Display {
 
     itk_option define -rscale rscale Rscale 0.4
     itk_option define -sscale sscale Sscale 2.0
+
+    itk_option define -centerDotEnable centerDotEnable CenterDotEnable 1
+    itk_option define -centerDotColor centerDotColor CenterDotColor {255 255 0}
+
+    itk_option define -modelAxesEnable modelAxesEnable AxesEnable 0
+    itk_option define -modelAxesLineWidth modelAxesLineWidth AxesLineWidth 0
+    itk_option define -modelAxesPosition modelAxesPosition AxesPosition {0 0 0}
+    itk_option define -modelAxesSize modelAxesSize AxesSize 2.0
+    itk_option define -modelAxesColor modelAxesColor AxesColor {255 255 255}
+    itk_option define -modelAxesLabelColor modelAxesLabelColor AxesLabelColor {255 255 0}
+    itk_option define -modelAxesTripleColor modelAxesTripleColor AxesTripleColor 0
+
+    itk_option define -modelAxesTickEnable modelAxesTickEnable AxesTickEnable 1
+    itk_option define -modelAxesTickLength modelAxesTickLength AxesTickLength 4
+    itk_option define -modelAxesTickMajorLength modelAxesTickMajorLength AxesTickMajorLength 8
+    itk_option define -modelAxesTickInterval modelAxesTickInterval AxesTickInterval 100
+    itk_option define -modelAxesTicksPerMajor modelAxesTicksPerMajor AxesTicksPerMajor 10
+    itk_option define -modelAxesTickColor modelAxesTickColor AxesTickColor {255 255 0}
+    itk_option define -modelAxesTickMajorColor modelAxesTickMajorColor AxesTickMajorColor {255 0 0}
+    itk_option define -modelAxesTickThreshold modelAxesTickThreshold AxesTickThreshold 8
+
+    itk_option define -viewAxesEnable viewAxesEnable AxesEnable 1
+    itk_option define -viewAxesLineWidth viewAxesLineWidth AxesLineWidth 0
+    itk_option define -viewAxesPosition viewAxesPosition AxesPosition {-0.85 -0.85 0}
+    itk_option define -viewAxesSize viewAxesSize AxesSize 0.2
+    itk_option define -viewAxesColor viewAxesColor AxesColor {255 255 255}
+    itk_option define -viewAxesLabelColor viewAxesLabelColor AxesLabelColor {255 255 0}
+    itk_option define -viewAxesTripleColor viewAxesTripleColor AxesTripleColor 1
 
     constructor {args} {
 	Dm::constructor
@@ -45,6 +104,7 @@ class Display {
 
     public method mouse_nirt {_x _y {gi 0}}
     public method nirt {args}
+    public method vnirt {vx vy {gi 0}}
     public method qray {args}
     public method refresh {}
     public method rt {args}
@@ -68,21 +128,37 @@ class Display {
     public method perspective_angle {args}
 
     # methods that override methods inherited from Dm
+    public method bounds {args}
+    public method depthMask {args}
     public method perspective {args}
     public method fb_active {args}
     public method light {args}
+    public method transparency {args}
     public method zbuffer {args}
     public method zclip {args}
+
+    public method toggle_modelAxesEnable {}
+    public method toggle_modelAxesTickEnable {}
+    public method toggle_viewAxesEnable {}
+    public method toggle_centerDotEnable {}
+
+    public method ? {}
+    public method apropos {key}
+    public method help {args}
+    public method getUserCmds {}
 
     protected method toggle_zclip {}
     protected method toggle_zbuffer {}
     protected method toggle_light {}
     protected method toggle_perspective {}
     protected method toggle_perspective_angle {}
+    protected method toggle_transparency {}
     protected method idle_mode {}
-    protected method rotate_mode {x y}
-    protected method translate_mode {x y}
-    protected method scale_mode {x y}
+
+    public method rotate_mode {x y}
+    public method translate_mode {x y}
+    public method scale_mode {x y}
+
     protected method constrain_rmode {coord x y}
     protected method constrain_tmode {coord x y}
     protected method handle_rotation {x y}
@@ -93,12 +169,20 @@ class Display {
     protected method handle_configure {}
     protected method handle_expose {}
     protected method doBindings {}
+    public method resetBindings {}
+
+    protected variable minScale 0.0001
+    protected variable minAxesSize 0.1
+    protected variable minAxesLineWidth 0
+    protected variable minAxesTickLength 1
+    protected variable minAxesTickMajorLength 1
 
     private variable x ""
     private variable y ""
     private variable geolist ""
     private variable perspective_angle_index 0
     private variable perspective_angles {90 60 45 30}
+    private variable doingInit 1
 }
 
 ########################### Public/Interface Methods ###########################
@@ -108,6 +192,367 @@ body Display::constructor {args} {
     doBindings
     handle_configure
     eval itk_initialize $args
+    set doingInit 0
+}
+
+configbody Display::rscale {
+    if {$itk_option(-rscale) < $minScale} {
+	error "rscale must be >= $minScale"
+    }
+}
+
+configbody Display::sscale {
+    if {$itk_option(-sscale) < $minScale} {
+	error "sscale must be >= $minScale"
+    }
+}
+
+configbody Display::centerDotEnable {
+    if {$itk_option(-centerDotEnable) != 0 &&
+        $itk_option(-centerDotEnable) != 1} {
+	error "value must be 0, 1"
+    }
+
+    refresh
+}
+
+configbody Display::centerDotColor {
+    if {[llength $itk_option(-centerDotColor)] != 3} {
+	error "values must be {r g b} where 0 <= r/g/b <= 255"
+    }
+
+    set r [lindex $itk_option(-centerDotColor) 0]
+    set g [lindex $itk_option(-centerDotColor) 1]
+    set b [lindex $itk_option(-centerDotColor) 2]
+
+    # validate color
+    if {![string is digit $r] ||
+	![string is digit $g] ||
+        ![string is digit $b] ||
+        $r < 0 || 255 < $r ||
+        $g < 0 || 255 < $g ||
+        $b < 0 || 255 < $b} {
+
+	error "values must be {r g b} where 0 <= r/g/b <= 255"
+    }
+
+    refresh
+}
+
+configbody Display::viewAxesEnable {
+    if {$itk_option(-viewAxesEnable) != 0 &&
+        $itk_option(-viewAxesEnable) != 1} {
+	error "value must be 0, 1"
+    }
+
+    refresh
+}
+
+configbody Display::modelAxesEnable {
+    if {$itk_option(-modelAxesEnable) != 0 &&
+        $itk_option(-modelAxesEnable) != 1} {
+	error "value must be 0, 1"
+    }
+
+    refresh
+}
+
+configbody Display::viewAxesSize {
+    # validate size
+    if {![string is double $itk_option(-viewAxesSize)] ||
+        $itk_option(-viewAxesSize) < $minAxesSize} {
+	    error "-viewAxesSize must be >= $minAxesSize"
+    }
+
+    refresh
+}
+
+configbody Display::modelAxesSize {
+    # validate size
+    if {![string is double $itk_option(-modelAxesSize)] ||
+        $itk_option(-modelAxesSize) < $minAxesSize} {
+	    error "-modelAxesSize must be >= $minAxesSize"
+    }
+
+    refresh
+}
+
+configbody Display::viewAxesPosition {
+    if {[llength $itk_option(-viewAxesPosition)] != 3} {
+	error "values must be {x y z} where x, y and z are numeric"
+    }
+
+    set x [lindex $itk_option(-viewAxesPosition) 0]
+    set y [lindex $itk_option(-viewAxesPosition) 1]
+    set z [lindex $itk_option(-viewAxesPosition) 2]
+
+    # validate center
+    if {![string is double $x] ||
+	![string is double $y] ||
+        ![string is double $z]} {
+
+	error "values must be {x y z} where x, y and z are numeric"
+    }
+
+    refresh
+}
+
+configbody Display::modelAxesPosition {
+    if {[llength $itk_option(-modelAxesPosition)] != 3} {
+	error "values must be {x y z} where x, y and z are numeric"
+    }
+
+    set x [lindex $itk_option(-modelAxesPosition) 0]
+    set y [lindex $itk_option(-modelAxesPosition) 1]
+    set z [lindex $itk_option(-modelAxesPosition) 2]
+
+    # validate center
+    if {![string is double $x] ||
+	![string is double $y] ||
+        ![string is double $z]} {
+
+	error "values must be {x y z} where x, y and z are numeric"
+    }
+
+    # convert to mm
+    set local2mm [local2base]
+    set itk_option(-modelAxesPosition) [list [expr {$local2mm * $x}] \
+	                                     [expr {$local2mm * $y}] \
+					     [expr {$local2mm * $z}]]
+
+    refresh
+}
+
+configbody Display::viewAxesLineWidth {
+    # validate line width
+    if {![string is digit $itk_option(-viewAxesLineWidth)] ||
+        $itk_option(-viewAxesLineWidth) < $minAxesLineWidth} {
+	    error "-viewAxesLineWidth must be >= $minAxesLineWidth"
+    }
+
+    refresh
+}
+
+configbody Display::modelAxesLineWidth {
+    # validate line width
+    if {![string is digit $itk_option(-modelAxesLineWidth)] ||
+        $itk_option(-modelAxesLineWidth) < $minAxesLineWidth} {
+	    error "-modelAxesLineWidth must be >= $minAxesLineWidth"
+    }
+
+    refresh
+}
+
+configbody Display::viewAxesTripleColor {
+    if {$itk_option(-viewAxesTripleColor) != 0 &&
+        $itk_option(-viewAxesTripleColor) != 1} {
+	error "value must be 0 or 1"
+    }
+
+    refresh
+}
+
+configbody Display::modelAxesTripleColor {
+    if {$itk_option(-modelAxesTripleColor) != 0 &&
+        $itk_option(-modelAxesTripleColor) != 1} {
+	error "value must be 0 or 1"
+    }
+
+    refresh
+}
+
+configbody Display::viewAxesColor {
+    if {[llength $itk_option(-viewAxesColor)] != 3} {
+	error "values must be {r g b} where 0 <= r/g/b <= 255"
+    }
+
+    set r [lindex $itk_option(-viewAxesColor) 0]
+    set g [lindex $itk_option(-viewAxesColor) 1]
+    set b [lindex $itk_option(-viewAxesColor) 2]
+
+    # validate color
+    if {![string is digit $r] ||
+	![string is digit $g] ||
+        ![string is digit $b] ||
+        $r < 0 || 255 < $r ||
+        $g < 0 || 255 < $g ||
+        $b < 0 || 255 < $b} {
+
+	error "values must be {r g b} where 0 <= r/g/b <= 255"
+    }
+
+    refresh
+}
+
+configbody Display::modelAxesColor {
+    if {[llength $itk_option(-modelAxesColor)] != 3} {
+	error "values must be {r g b} where 0 <= r/g/b <= 255"
+    }
+
+    set r [lindex $itk_option(-modelAxesColor) 0]
+    set g [lindex $itk_option(-modelAxesColor) 1]
+    set b [lindex $itk_option(-modelAxesColor) 2]
+
+    # validate color
+    if {![string is digit $r] ||
+	![string is digit $g] ||
+	![string is digit $b] ||
+        $r < 0 || 255 < $r ||
+        $g < 0 || 255 < $g ||
+        $b < 0 || 255 < $b} {
+
+	error "values must be {r g b} where 0 <= r/g/b <= 255"
+    }
+
+    refresh
+}
+
+configbody Display::viewAxesLabelColor {
+    if {[llength $itk_option(-viewAxesLabelColor)] != 3} {
+	error "values must be {r g b} where 0 <= r/g/b <= 255"
+    }
+
+    set r [lindex $itk_option(-viewAxesLabelColor) 0]
+    set g [lindex $itk_option(-viewAxesLabelColor) 1]
+    set b [lindex $itk_option(-viewAxesLabelColor) 2]
+
+    # validate color
+    if {![string is digit $r] ||
+	![string is digit $g] ||
+        ![string is digit $b] ||
+        $r < 0 || 255 < $r ||
+        $g < 0 || 255 < $g ||
+        $b < 0 || 255 < $b} {
+
+	error "values must be {r g b} where 0 <= r/g/b <= 255"
+    }
+
+    refresh
+}
+
+configbody Display::modelAxesLabelColor {
+    if {[llength $itk_option(-modelAxesLabelColor)] != 3} {
+	error "values must be {r g b} where 0 <= r/g/b <= 255"
+    }
+
+    set r [lindex $itk_option(-modelAxesLabelColor) 0]
+    set g [lindex $itk_option(-modelAxesLabelColor) 1]
+    set b [lindex $itk_option(-modelAxesLabelColor) 2]
+
+    # validate color
+    if {![string is digit $r] ||
+	![string is digit $g] ||
+	![string is digit $b] ||
+        $r < 0 || 255 < $r ||
+        $g < 0 || 255 < $g ||
+        $b < 0 || 255 < $b} {
+
+	error "values must be {r g b} where 0 <= r/g/b <= 255"
+    }
+
+    refresh
+}
+
+configbody Display::modelAxesTickEnable {
+    if {$itk_option(-modelAxesTickEnable) != 0 &&
+        $itk_option(-modelAxesTickEnable) != 1} {
+	error "value must be 0, 1"
+    }
+
+    refresh
+}
+
+configbody Display::modelAxesTickLength {
+    # validate tick length
+    if {![string is digit $itk_option(-modelAxesTickLength)] ||
+        $itk_option(-modelAxesTickLength) < $minAxesTickLength} {
+	    error "-modelAxesTickLength must be >= $minAxesTickLength"
+    }
+
+    refresh
+}
+
+configbody Display::modelAxesTickMajorLength {
+    # validate major tick length
+    if {![string is digit $itk_option(-modelAxesTickMajorLength)] ||
+        $itk_option(-modelAxesTickMajorLength) < $minAxesTickMajorLength} {
+	    error "-modelAxesTickMajorLength must be >= $minAxesTickMajorLength"
+    }
+
+    refresh
+}
+
+configbody Display::modelAxesTickInterval {
+    if {![string is double $itk_option(-modelAxesTickInterval)] ||
+        $itk_option(-modelAxesTickInterval) <= 0} {
+	error "-modelAxesTickInterval must be > 0"
+    }
+
+    # convert to mm
+    set itk_option(-modelAxesTickInterval) [expr {[local2base] * $itk_option(-modelAxesTickInterval)}]
+    refresh
+}
+
+configbody Display::modelAxesTicksPerMajor {
+    if {![string is digit $itk_option(-modelAxesTicksPerMajor)]} {
+	error "-modelAxesTicksPerMajor must be > 0"
+    }
+
+    refresh
+}
+
+configbody Display::modelAxesTickColor {
+    if {[llength $itk_option(-modelAxesTickColor)] != 3} {
+	error "values must be {r g b} where 0 <= r/g/b <= 255"
+    }
+
+    set r [lindex $itk_option(-modelAxesTickColor) 0]
+    set g [lindex $itk_option(-modelAxesTickColor) 1]
+    set b [lindex $itk_option(-modelAxesTickColor) 2]
+
+    # validate color
+    if {![string is digit $r] ||
+	![string is digit $g] ||
+	![string is digit $b] ||
+        $r < 0 || 255 < $r ||
+        $g < 0 || 255 < $g ||
+        $b < 0 || 255 < $b} {
+
+	error "values must be {r g b} where 0 <= r/g/b <= 255"
+    }
+
+    refresh
+}
+
+configbody Display::modelAxesTickMajorColor {
+    if {[llength $itk_option(-modelAxesTickMajorColor)] != 3} {
+	error "values must be {r g b} where 0 <= r/g/b <= 255"
+    }
+
+    set r [lindex $itk_option(-modelAxesTickMajorColor) 0]
+    set g [lindex $itk_option(-modelAxesTickMajorColor) 1]
+    set b [lindex $itk_option(-modelAxesTickMajorColor) 2]
+
+    # validate color
+    if {![string is digit $r] ||
+	![string is digit $g] ||
+	![string is digit $b] ||
+        $r < 0 || 255 < $r ||
+        $g < 0 || 255 < $g ||
+        $b < 0 || 255 < $b} {
+
+	error "values must be {r g b} where 0 <= r/g/b <= 255"
+    }
+
+    refresh
+}
+
+configbody Display::modelAxesTickThreshold {
+    if {![string is digit $itk_option(-modelAxesTickThreshold)]} {
+	error "-modelAxesTickThreshold must be > 1"
+    }
+
+    refresh
 }
 
 body Display::update {obj} {
@@ -115,6 +560,10 @@ body Display::update {obj} {
 }
 
 body Display::refresh {} {
+    if {$doingInit} {
+	return
+    }
+
     Dm::drawBegin
 
     if {$itk_option(-perspective)} {
@@ -132,6 +581,49 @@ body Display::refresh {} {
 	foreach geo $geolist {
 	    Dm::drawGeom $geo
 	}
+
+	Dm::normal
+
+	if {$itk_option(-viewAxesEnable) ||
+	    $itk_option(-modelAxesEnable)} {
+		set vsize [expr {[View::local2base] * [View::size]}]
+		set rmat [View::rmat]
+		set model2view [View::model2view]
+	
+		if {$itk_option(-viewAxesEnable)} {
+		    set x [lindex $itk_option(-viewAxesPosition) 0]
+		    set y [lindex $itk_option(-viewAxesPosition) 1]
+		    set z [lindex $itk_option(-viewAxesPosition) 2]
+		    set y [expr {$y * $invAspect}]
+		    set modVAP "$x $y $z"
+
+		    Dm::drawViewAxes $vsize $rmat $modVAP \
+			    $itk_option(-viewAxesSize) $itk_option(-viewAxesColor) \
+			    $itk_option(-viewAxesLabelColor) $itk_option(-viewAxesLineWidth) \
+			    1 $itk_option(-viewAxesTripleColor)
+		}
+
+		if {$itk_option(-modelAxesEnable)} {
+		    Dm::drawModelAxes $vsize $rmat $itk_option(-modelAxesPosition) \
+			    $itk_option(-modelAxesSize) $itk_option(-modelAxesColor) \
+			    $itk_option(-modelAxesLabelColor) $itk_option(-modelAxesLineWidth) \
+			    0 $itk_option(-modelAxesTripleColor) \
+			    $model2view \
+			    $itk_option(-modelAxesTickEnable) \
+			    $itk_option(-modelAxesTickLength) \
+			    $itk_option(-modelAxesTickMajorLength) \
+			    $itk_option(-modelAxesTickInterval) \
+			    $itk_option(-modelAxesTicksPerMajor) \
+			    $itk_option(-modelAxesTickColor) \
+			    $itk_option(-modelAxesTickMajorColor) \
+			    $itk_option(-modelAxesTickThreshold)
+		}
+	}
+
+	if {$itk_option(-centerDotEnable)} {
+	    Dm::drawCenterDot $itk_option(-centerDotColor)
+	}
+
     } else {
 	# overlay
 	Dm::refreshfb
@@ -152,6 +644,7 @@ body Display::mouse_nirt {_x _y {gi 0}} {
 
     # transform normalized view coordinates into model coordinates
     set mc [mat4x3pnt [view2model] "$nvx $nvy 0"]
+    set mc [vscale $mc [base2local]]
 
     # finally, call nirt (backing out of geometry)
     set v_obj [View::get_viewname]
@@ -176,6 +669,18 @@ body Display::nirt {args} {
     set v_obj [View::get_viewname]
 
     eval $geo nirt $v_obj $args
+}
+
+body Display::vnirt {vx vy {gi 0}} {
+    set geo [lindex $geolist $gi]
+
+    if {$geo == ""} {
+	return "vnirt: bad geometry index - $gi"
+    }
+
+    # finally, call vnirt (backing out of geometry)
+    set v_obj [View::get_viewname]
+    eval $geo vnirt $v_obj -b $vx $vy
 }
 
 body Display::qray {args} {
@@ -409,6 +914,27 @@ body Display::light {args} {
     return $itk_option(-light)
 }
 
+body Display::transparency {args} {
+    eval Dm::transparency $args
+    refresh
+    return $itk_option(-transparency)
+}
+
+body Display::bounds {args} {
+    if {$args == ""} {
+	return [Dm::bounds]
+    }
+
+    eval Dm::bounds $args
+    refresh
+}
+
+body Display::depthMask {args} {
+    eval Dm::depthMask $args
+    refresh
+    return $itk_option(-depthMask)
+}
+
 body Display::zbuffer {args} {
     eval Dm::zbuffer $args
     refresh
@@ -422,6 +948,72 @@ body Display::zclip {args} {
 }
 
 ########################### Protected Methods ###########################
+body Display::toggle_modelAxesEnable {} {
+    if {$itk_option(-modelAxesEnable)} {
+	set itk_option(-modelAxesEnable) 0
+    } else {
+	set itk_option(-modelAxesEnable) 1
+    }
+
+    refresh
+}
+
+body Display::toggle_modelAxesTickEnable {} {
+    if {$itk_option(-modelAxesTickEnable)} {
+	set itk_option(-modelAxesTickEnable) 0
+    } else {
+	set itk_option(-modelAxesTickEnable) 1
+    }
+
+    refresh
+}
+
+body Display::toggle_viewAxesEnable {} {
+    if {$itk_option(-viewAxesEnable)} {
+	set itk_option(-viewAxesEnable) 0
+    } else {
+	set itk_option(-viewAxesEnable) 1
+    }
+
+    refresh
+}
+
+body Display::toggle_centerDotEnable {} {
+    if {$itk_option(-centerDotEnable)} {
+	set itk_option(-centerDotEnable) 0
+    } else {
+	set itk_option(-centerDotEnable) 1
+    }
+
+    refresh
+}
+
+body Display::? {} {
+    return "[View::?][Dm::?]"
+}
+
+body Display::apropos {key} {
+    return "[View::apropos $key] [Dm::apropos $key]"
+}
+
+body Display::help {args} {
+    if {[llength $args] && [lindex $args 0] != {}} {
+	if {[catch {eval View::help $args} result]} {
+	    set result [eval Dm::help $args]
+	}
+
+	return $result
+    }
+
+    # list all help messages for QuadDisplay and Db
+    return "[View::help][Dm::help]"
+}
+
+body Display::getUserCmds {} {
+    eval lappend cmds [View::getUserCmds] [Dm::getUserCmds]
+    return $cmds
+}
+
 body Display::toggle_zclip {} {
     Dm::toggle_zclip
     refresh
@@ -463,6 +1055,12 @@ body Display::toggle_perspective_angle {} {
     if {$itk_option(-perspective)} {
 	View::perspective [lindex $perspective_angles $perspective_angle_index]
     }
+}
+
+body Display::toggle_transparency {} {
+    Dm::toggle_transparency
+    refresh
+    return $itk_option(-transparency)
 }
 
 body Display::idle_mode {} {
@@ -521,8 +1119,8 @@ body Display::handle_rotation {_x _y} {
 }
 
 body Display::handle_translation {_x _y} {
-    set dx [expr ($x - $_x) * $invWidth * $View::size]
-    set dy [expr ($_y - $y) * $invWidth * $View::size]
+    set dx [expr {($x - $_x) * $invWidth * [View::size]}]
+    set dy [expr {($_y - $y) * $invWidth * [View::size]}]
     vtra $dx $dy 0
 
     #update instance variables x and y
@@ -531,10 +1129,10 @@ body Display::handle_translation {_x _y} {
 }
 
 body Display::handle_scale {_x _y} {
-    set dx [expr ($_x - $x) * $invWidth * $itk_option(-sscale)]
-    set dy [expr ($y - $_y) * $invWidth * $itk_option(-sscale)]
+    set dx [expr {($_x - $x) * $invWidth * $itk_option(-sscale)}]
+    set dy [expr {($y - $_y) * $invWidth * $itk_option(-sscale)}]
 
-    if [expr abs($dx) > abs($dy)] {
+    if {[expr {abs($dx) > abs($dy)}]} {
 	set f [expr 1.0 + $dx]
     } else {
 	set f [expr 1.0 + $dy]
@@ -548,8 +1146,8 @@ body Display::handle_scale {_x _y} {
 }
 
 body Display::handle_constrain_rot {coord _x _y} {
-    set dx [expr ($x - $_x) * $itk_option(-rscale)]
-    set dy [expr ($_y - $y) * $itk_option(-rscale)]
+    set dx [expr {($x - $_x) * $itk_option(-rscale)}]
+    set dy [expr {($_y - $y) * $itk_option(-rscale)}]
 
     if [expr abs($dx) > abs($dy)] {
 	set f $dx
@@ -574,10 +1172,10 @@ body Display::handle_constrain_rot {coord _x _y} {
 }
 
 body Display::handle_constrain_tran {coord _x _y} {
-    set dx [expr ($x - $_x) * $invWidth * $View::size]
-    set dy [expr ($_y - $y) * $invWidth * $View::size]
+    set dx [expr {($x - $_x) * $invWidth * [View::size]}]
+    set dy [expr {($_y - $y) * $invWidth * [View::size]}]
 
-    if [expr abs($dx) > abs($dy)] {
+    if {[expr {abs($dx) > abs($dy)}]} {
 	set f $dx
     } else {
 	set f $dy
@@ -666,9 +1264,18 @@ body Display::doBindings {} {
     bind $itk_component(dm) l "$this ae \"90 0 0\"; break"
     bind $itk_component(dm) t "$this ae \"0 90 0\"; break"
     bind $itk_component(dm) b "$this ae \"0 270 0\"; break"
+    bind $itk_component(dm) m "[code $this toggle_modelAxesEnable]; break"
+    bind $itk_component(dm) T "[code $this toggle_modelAxesTickEnable]; break"
+    bind $itk_component(dm) v "[code $this toggle_viewAxesEnable]; break"
     bind $itk_component(dm) <F2> "[code $this toggle_zclip]; break"
     bind $itk_component(dm) <F3> "[code $this toggle_perspective]; break"
     bind $itk_component(dm) <F4> "[code $this toggle_zbuffer]; break"
     bind $itk_component(dm) <F5> "[code $this toggle_light]; break"
     bind $itk_component(dm) <F6> "[code $this toggle_perspective_angle]; break"
+    bind $itk_component(dm) <F10> "[code $this toggle_transparency]; break"
+}
+
+body Display::resetBindings {} {
+    Dm::doBindings
+    doBindings
 }

@@ -38,8 +38,9 @@ class Drawable {
 	method get_autoview {}
 	method get_eyemodel {viewObj}
 	method get_dgname {}
-	method illum {obj}
-	method label {obj}
+	method how {args}
+	method illum {args}
+	method label {args}
 	method nirt {args}
 	method observer {args}
 	method overlay {args}
@@ -49,6 +50,7 @@ class Drawable {
 	method rtabort {args}
 	method rtcheck {args}
 	method rtedge {args}
+	method set_transparency {args}
 	method shaded_mode {args}
 	method vdraw {args}
 	method who {args}
@@ -125,6 +127,10 @@ body Drawable::get_eyemodel {viewObj} {
     return [$dg get_eyemodel $viewObj]
 }
 
+body Drawable::how {args} {
+    eval $dg how $args
+}
+
 body Drawable::illum {args} {
     eval $dg illum $args
 }
@@ -167,6 +173,10 @@ body Drawable::rtcheck {args} {
 
 body Drawable::rtedge {args} {
     eval $dg rtedge $args
+}
+
+body Drawable::set_transparency {args} {
+    eval $dg set_transparency $args
 }
 
 body Drawable::shaded_mode {args} {
@@ -214,6 +224,7 @@ body Drawable::help_init {} {
     $help add erase_all		{{<objects>} {remove all occurrences of object(s) from the screen}}
     $help add ev		{{[-dfnqstuvwT] [-P #] <objects>} {evaluate objects via NMG tessellation}}
     $help add get_autoview	{{} {get view parameters that shows drawn geometry}}
+    $help add how		{{obj} {returns how an object is being displayed}}
     $help add illum		{{name} {illuminate object}}
     $help add label		{{[-n] obj} {label objects}}
     $help add nirt		{{[nirt(1) options] [x y z]}	{trace a single ray from current view}}

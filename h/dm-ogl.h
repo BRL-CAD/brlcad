@@ -26,21 +26,12 @@ struct modifiable_ogl_vars {
   int boundFlag;
 };
 
+struct ogl_vars {
 #ifndef WIN32
-struct ogl_vars {
   GLXContext glxc;
-  GLdouble faceplate_mat[16];
-  int face_flag;
-  int *perspective_mode;
-  int fontOffset;
-  int ovec;		/* Old color map entry number */
-  char is_direct;
-  GLclampf r, g, b;
-  struct modifiable_ogl_vars mvars;
-};
 #else
-struct ogl_vars {
   HGLRC glxc;
+#endif
   GLdouble faceplate_mat[16];
   int face_flag;
   int *perspective_mode;
@@ -50,7 +41,6 @@ struct ogl_vars {
   GLclampf r, g, b;
   struct modifiable_ogl_vars mvars;
 };
-#endif
 
 extern void ogl_fogHint();
 

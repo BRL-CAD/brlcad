@@ -374,6 +374,7 @@ rt_cline_norm(register struct hit *hitp, struct soltab *stp, register struct xra
 			stp->st_name, V3ARGS( rp->r_pt ), V3ARGS( rp->r_dir ) );
 		bu_bomb( "BAD normal\n" );
 	}
+    	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 }
 
 /*

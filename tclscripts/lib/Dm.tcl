@@ -24,6 +24,7 @@ class Dm {
 
     itk_option define -bg bg Bg {0 0 0}
     itk_option define -debug debug Debug 0
+    itk_option define -depthMask depthMask DepthMask 1
     itk_option define -dmsize dmsize Dmsize {512 512}
     itk_option define -fb_active fb_active Fb_active 0
     itk_option define -fb_observe fb_observe Fb_observe 1
@@ -32,6 +33,7 @@ class Dm {
     itk_option define -linewidth linewidth Linewidth 0
     itk_option define -listen listen Listen -1
     itk_option define -perspective perspective Perspective 0
+    itk_option define -transparency transparency Transparency 0
     itk_option define -type type Type X
     itk_option define -zbuffer zbuffer Zbuffer 0
     itk_option define -zclip zclip Zclip 0
@@ -44,6 +46,7 @@ class Dm {
     public method bounds {args}
     public method clear {}
     public method debug {args}
+    public method depthMask {args}
     public method dmsize {args}
     public method drawBegin {}
     public method drawEnd {}
@@ -51,6 +54,9 @@ class Dm {
     public method drawLine {x1 y1 x2 y2}
     public method drawPoint {x y}
     public method drawString {str x y size use_aspect}
+    public method drawModelAxes {args}
+    public method drawViewAxes {args}
+    public method drawCenterDot {args}
     public method fg {args}
     public method flush {}
     public method get_aspect {}
@@ -62,19 +68,27 @@ class Dm {
     public method normal {}
     public method observer {args}
     public method perspective {args}
+    public method png {args}
     public method refreshfb {}
     public method sync {}
+    public method transparency {args}
     public method zbuffer {args}
     public method zclip {args}
 
     public method fb_active {args}
     public method fb_observe {args}
 
+    public method ? {}
+    public method apropos {key}
+    public method help {args}
+    public method getUserCmds {}
+
     # methods for handling window events
     protected method toggle_zclip {}
     protected method toggle_zbuffer {}
     protected method toggle_light {}
     protected method toggle_perspective {}
+    protected method toggle_transparency {}
     protected method handle_configure {}
     protected method doBindings {}
     protected method changeType {type}
@@ -87,28 +101,36 @@ class Dm {
     protected variable invHeight 0.001953125
     protected variable aspect 1.0
     protected variable invAspect 1.0
+
+    private method helpInit {}
+
     private variable initializing 1
     private variable priv_type X
     private variable tkwin
+
+    private variable help
 }
 
 body Dm::constructor {args} {
+    if {[catch {dm_bestXType :0} priv_type]} {
+	set priv_type X
+    }
+
     # process options now (i.e. -type may have been specified)
     eval itk_initialize $args
     set initializing 0
 
+    set itk_option(-type) $priv_type
     createDm $itk_option(-type)
     initDm
+    helpInit
 }
 
 body Dm::destructor {} {
-#    $itk_component(dm) listen -1
-#    $itk_component(dm) close
-
-# Hack around problem that showed up in Itcl3.2
-# 
     $tkwin listen -1
     rename $tkwin ""
+
+    catch {delete object $help}
 }
 
 configbody Dm::dmsize {
@@ -153,6 +175,18 @@ configbody Dm::bg {
 configbody Dm::light {
     if {!$initializing} {
 	Dm::light $itk_option(-light)
+    }
+}
+
+configbody Dm::depthMask {
+    if {!$initializing} {
+	Dm::depthMask $itk_option(-depthMask)
+    }
+}
+
+configbody Dm::transparency {
+    if {!$initializing} {
+	Dm::transparency $itk_option(-transparency)
     }
 }
 
@@ -227,20 +261,32 @@ body Dm::loadmat {mat eye} {
     $itk_component(dm) loadmat $mat $eye
 }
 
-body Dm::drawString {str x y size use_aspect} {
-    $itk_component(dm) drawString $str $x $y $size $use_aspect
-}
-
-body Dm::drawPoint {x y} {
-    $itk_component(dm) drawPoint $x $y
+body Dm::drawGeom {args} {
+    eval $itk_component(dm) drawGeom $args
 }
 
 body Dm::drawLine {x1 y1 x2 y2} {
     $itk_component(dm) drawLine $x1 $y1 $x2 $y2
 }
 
-body Dm::drawGeom {args} {
-    eval $itk_component(dm) drawGeom $args
+body Dm::drawPoint {x y} {
+    $itk_component(dm) drawPoint $x $y
+}
+
+body Dm::drawString {str x y size use_aspect} {
+    $itk_component(dm) drawString $str $x $y $size $use_aspect
+}
+
+body Dm::drawModelAxes {args} {
+    eval $itk_component(dm) drawModelAxes $args
+}
+
+body Dm::drawViewAxes {args} {
+    eval $itk_component(dm) drawViewAxes $args
+}
+
+body Dm::drawCenterDot {args} {
+    eval $itk_component(dm) drawCenterDot $args
 }
 
 # Get/set the background color
@@ -310,6 +356,26 @@ body Dm::light {args} {
     set itk_option(-light) $args
 }
 
+# Get/set depthMask
+body Dm::depthMask {args} {
+    if {$args == ""} {
+	return $itk_option(-depthMask)
+    }
+
+    $itk_component(dm) depthMask $args
+    set itk_option(-depthMask) $args
+}
+
+# Get/set transparency
+body Dm::transparency {args} {
+    if {$args == ""} {
+	return $itk_option(-transparency)
+    }
+
+    $itk_component(dm) transparency $args
+    set itk_option(-transparency) $args
+}
+
 body Dm::perspective {args} {
     if {$args == ""} {
 	return $itk_option(-perspective)
@@ -317,6 +383,10 @@ body Dm::perspective {args} {
 
     $itk_component(dm) perspective $args
     set itk_option(-perspective) $args
+}
+
+body Dm::png {args} {
+    eval $itk_component(dm) png $args
 }
 
 body Dm::bounds {args} {
@@ -453,6 +523,16 @@ body Dm::toggle_perspective {} {
     }
 }
 
+body Dm::toggle_transparency {} {
+    if {$itk_option(-transparency)} {
+	$itk_component(dm) transparency 0
+	set itk_option(-transparency) 0
+    } else {
+	$itk_component(dm) transparency 1
+	set itk_option(-transparency) 1
+    }
+}
+
 body Dm::handle_configure {} {
     $itk_component(dm) configure
 
@@ -501,6 +581,8 @@ body Dm::initDm {} {
     Dm::debug $itk_option(-debug)
     Dm::linewidth $itk_option(-linewidth)
     Dm::linestyle $itk_option(-linestyle)
+    Dm::depthMask $itk_option(-depthMask)
+    Dm::transparency $itk_option(-transparency)
 
     # event bindings
     doBindings
@@ -511,8 +593,31 @@ body Dm::doBindings {} {
     bind $itk_component(dm) <Configure> "[code $this Dm::handle_configure]; break"
 
     # Key Bindings
-    bind $itk_component(dm) <F2> "$this Dm::toggle_zclip; break"
-    bind $itk_component(dm) <F3> "$this Dm::toggle_perspective; break"
-    bind $itk_component(dm) <F4> "$this Dm::toggle_zbuffer; break"
-    bind $itk_component(dm) <F5> "$this Dm::toggle_light; break"
+    bind $itk_component(dm) <F2> "[code $this Dm::toggle_zclip]; break"
+    bind $itk_component(dm) <F3> "[code $this Dm::toggle_perspective]; break"
+    bind $itk_component(dm) <F4> "[code $this Dm::toggle_zbuffer]; break"
+    bind $itk_component(dm) <F5> "[code $this Dm::toggle_light]; break"
+    bind $itk_component(dm) <F10> "[code $this Dm::toggle_transparency]; break"
+}
+
+body Dm::? {} {
+    return [$help ? 20 4]
+}
+
+body Dm::apropos {key} {
+    return [$help apropos $key]
+}
+
+body Dm::help {args} {
+    return [eval $help get $args]
+}
+
+body Dm::getUserCmds {} {
+    return {png}
+}
+
+body Dm::helpInit {} {
+    set help [cadwidgets::Help #auto]
+
+    $help add png		{{file} {Dump contents of window to a png file}}
 }

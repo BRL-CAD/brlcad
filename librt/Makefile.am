@@ -126,6 +126,7 @@ SRCS = \
 	table.c \
 	tcl.c \
 	timer42.c \
+	track.c \
 	tree.c \
 	vdraw.c \
 	view_obj.c \

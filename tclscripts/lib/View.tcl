@@ -20,7 +20,6 @@
 #	The View class wraps LIBRT's view object.
 #
 class View {
-    public variable size 1000
     public variable center {0 0 0}
     public variable ae "0 90 0"
     public variable perspective_angle 0
@@ -34,6 +33,7 @@ class View {
 
     public method ae {args}
     public method arot {args}
+    public method base2local {args}
     public method center {args}
     public method coord {args}
     public method eye {args}
@@ -41,6 +41,7 @@ class View {
     public method get_viewname {}
     public method invSize {args}
     public method keypoint {args}
+    public method local2base {args}
     public method lookat {args}
     public method model2view {args}
     public method mrot {args}
@@ -74,10 +75,6 @@ class View {
 
     private variable view
     private variable help
-}
-
-configbody View::size {
-    View::size $size
 }
 
 configbody View::center {
@@ -147,10 +144,14 @@ body View::arot {args} {
     return
 }
 
+body View::base2local {} {
+    $view base2local
+}
+
 body View::center {args} {
     # get center
     if {$args == ""} {
-	return $center
+      return [$view center]
     }
 
     # set center
@@ -198,12 +199,16 @@ body View::invSize {args} {
 body View::keypoint {args} {
     # get keypoint
     if {$args == ""} {
-	return $keypoint
+        return [list [$view keypoint]]
     }
 
     eval $view keypoint $args
     set keypoint $args
     return
+}
+
+body View::local2base {} {
+    $view local2base
 }
 
 body View::lookat {args} {
@@ -313,15 +318,8 @@ body View::setview {args} {
 }
 
 body View::size {args} {
-    # get size
-    if {$args == ""} {
-	return $size
-    }
-
-    # set size
-    eval $view size $args
-    set size $args
-    return
+    # eval $view size $args
+    return [eval $view size $args]
 }
 
 body View::slew {args} {
@@ -396,7 +394,6 @@ body View::help {args} {
 }
 
 body View::init {} {
-    View::size $size
     eval View::center $center
     eval View::ae $ae
     View::perspective $perspective_angle

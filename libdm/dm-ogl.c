@@ -83,14 +83,18 @@ HIDDEN int	ogl_close(struct dm *dmp);
 HIDDEN int	ogl_drawBegin(struct dm *dmp);
 HIDDEN int      ogl_drawEnd(struct dm *dmp);
 HIDDEN int	ogl_normal(struct dm *dmp), ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye);
-HIDDEN int	ogl_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect), ogl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2);
+HIDDEN int	ogl_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect);
+HIDDEN int	ogl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2);
 HIDDEN int      ogl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y);
 HIDDEN int	ogl_drawVList(struct dm *dmp, register struct bn_vlist *vp);
-HIDDEN int      ogl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict), ogl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
+HIDDEN int      ogl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
+HIDDEN int	ogl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
 HIDDEN int	ogl_setLineAttr(struct dm *dmp, int width, int style);
 HIDDEN int	ogl_configureWin_guts(struct dm *dmp, int force);
 HIDDEN int	ogl_configureWin(struct dm *dmp);
 HIDDEN int	ogl_setLight(struct dm *dmp, int lighting_on);
+HIDDEN int	ogl_setTransparency(struct dm *dmp, int transparency_on);
+HIDDEN int	ogl_setDepthMask(struct dm *dmp, int depthMask_on);
 HIDDEN int	ogl_setZBuffer(struct dm *dmp, int zbuffer_on);
 HIDDEN int	ogl_setWinBounds(struct dm *dmp, int *w), ogl_debug(struct dm *dmp, int lvl);
 HIDDEN int      ogl_beginDList(struct dm *dmp, unsigned int list), ogl_endDList(struct dm *dmp);
@@ -113,6 +117,8 @@ struct dm dm_ogl = {
   ogl_configureWin,
   ogl_setWinBounds,
   ogl_setLight,
+  ogl_setTransparency,
+  ogl_setDepthMask,
   ogl_setZBuffer,
   ogl_debug,
   ogl_beginDList,
@@ -122,7 +128,7 @@ struct dm dm_ogl = {
   0,
   1,				/* has displaylist */
   0,                            /* no stereo by default */
-  IRBOUND,			/* zoom-in limit */
+  1.0,				/* zoom-in limit */
   1,				/* bound flag */
   "ogl",
   "X Windows with OpenGL graphics",
@@ -140,13 +146,15 @@ struct dm dm_ogl = {
   {0, 0, 0, 0, 0},		/* bu_vls short name drawing window */
   {0, 0, 0},			/* bg color */
   {0, 0, 0},			/* fg color */
-  {0.0, 0.0, 0.0},		/* clipmin */
-  {0.0, 0.0, 0.0},		/* clipmax */
+  {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */
+  {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */
   0,				/* no debugging */
   0,				/* no perspective */
   0,				/* no lighting */
+  0,				/* no transparency */
   1,				/* zbuffer */
   0,				/* no zclipping */
+  1,                            /* clear back buffer after drawing and swap */
   0				/* Tcl interpreter */
 };
 
@@ -161,6 +169,10 @@ HIDDEN float amb_three[] = {0.3, 0.3, 0.3, 1.0};
 HIDDEN float light0_direction[] = {0.0, 0.0, 1.0, 0.0};
 HIDDEN float light0_position[] = {100.0, 200.0, 100.0, 0.0};
 HIDDEN float light0_diffuse[] = {1.0, 1.0, 1.0, 1.0}; /* white */
+HIDDEN float wireColor[4];
+HIDDEN float ambientColor[4];
+HIDDEN float specularColor[4];
+HIDDEN float diffuseColor[4];
 
 void
 ogl_fogHint(struct dm *dmp, int fastfog)
@@ -744,6 +756,16 @@ ogl_drawBegin(struct dm *dmp)
     return TCL_ERROR;
   }
 
+  /* clear back buffer */
+  if (!dmp->dm_clearBufferAfter &&
+      ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer) {
+    glClearColor(((struct ogl_vars *)dmp->dm_vars.priv_vars)->r,
+		 ((struct ogl_vars *)dmp->dm_vars.priv_vars)->g,
+		 ((struct ogl_vars *)dmp->dm_vars.priv_vars)->b,
+		 0.0);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  }
+
   if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->face_flag){
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
@@ -784,18 +806,21 @@ ogl_drawEnd(struct dm *dmp)
     glLightfv(GL_LIGHT0, GL_POSITION, light0_direction);
   }
 
-  if(((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer ){
+  if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer){
     glXSwapBuffers(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 		   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win);
-    /* give Graphics pipe time to work */
-    glClearColor(((struct ogl_vars *)dmp->dm_vars.priv_vars)->r,
-		 ((struct ogl_vars *)dmp->dm_vars.priv_vars)->g,
-		 ((struct ogl_vars *)dmp->dm_vars.priv_vars)->b,
-		 0.0);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    if (dmp->dm_clearBufferAfter) {
+      /* give Graphics pipe time to work */
+      glClearColor(((struct ogl_vars *)dmp->dm_vars.priv_vars)->r,
+		   ((struct ogl_vars *)dmp->dm_vars.priv_vars)->g,
+		   ((struct ogl_vars *)dmp->dm_vars.priv_vars)->b,
+		   0.0);
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    }
   }
 
-  if(dmp->dm_debugLevel){
+  if (dmp->dm_debugLevel) {
     int error;
     struct bu_vls tmp_vls;
 
@@ -876,7 +901,12 @@ ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
     bn_mat_mul( newm, nozclip, mat );
     mptr = newm;
   } else {
-    mptr = mat;
+    mat_t       nozclip;
+
+    MAT_IDN(nozclip);
+    nozclip[10] = dmp->dm_bound;
+    bn_mat_mul(newm, nozclip, mat);
+    mptr = newm;
   }
 
   gtmat[0] = *(mptr++);
@@ -919,6 +949,8 @@ ogl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 #if USE_VECTOR_THRESHHOLD
 	static int			nvectors = 0;
 #endif
+	int mflag = 1;
+	float black[4] = {0.0, 0.0, 0.0, 0.0};
 
 	if (dmp->dm_debugLevel)
 		bu_log("ogl_drawVList()\n");
@@ -939,6 +971,18 @@ ogl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 				if (first == 0)
 					glEnd();
 				first = 0;
+
+				if (dmp->dm_light && mflag) {
+				    mflag = 0;
+				    glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, wireColor);
+				    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, black);
+				    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
+				    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
+
+				    if (dmp->dm_transparency)
+					glDisable(GL_BLEND);
+				}
+
 				glBegin(GL_LINE_STRIP);
 				glVertex3dv(*pt);
 				break;
@@ -946,6 +990,18 @@ ogl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 				/* Start poly marker & normal */
 				if (first == 0)
 					glEnd();
+
+				if (dmp->dm_light && mflag) {
+				    mflag = 0;
+				    glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, black);
+				    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambientColor);
+				    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specularColor);
+				    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuseColor);
+
+				    if (dmp->dm_transparency)
+					glEnable(GL_BLEND);
+				}
+
 				glBegin(GL_POLYGON);
 				/* Set surface normal (vl_pnt points outward) */
 				glNormal3dv(*pt);
@@ -1103,7 +1159,7 @@ ogl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 
 
 HIDDEN int
-ogl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict)
+ogl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
 {
   if (dmp->dm_debugLevel)
     bu_log("ogl_setFGColor()\n");
@@ -1115,24 +1171,37 @@ ogl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b
   if(strict){
     glColor3ub( (GLubyte)r, (GLubyte)g, (GLubyte)b );
   }else{
-    float material[4];
   
     if (dmp->dm_light) {
       /* Ambient = .2, Diffuse = .6, Specular = .2 */
 
-      material[0] = ( r / 255.0) * .2;
-      material[1] = ( g / 255.0) * .2;
-      material[2] = ( b / 255.0) * .2;
-      material[3] = 1.0;
+      /* wireColor gets the full rgb */
+      wireColor[0] = r / 255.0;
+      wireColor[1] = g / 255.0;
+      wireColor[2] = b / 255.0;
+      wireColor[3] = transparency;
 
-      glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, material);
-      glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, material);
+      ambientColor[0] = wireColor[0] * 0.2;
+      ambientColor[1] = wireColor[1] * 0.2;
+      ambientColor[2] = wireColor[2] * 0.2;
+      ambientColor[3] = wireColor[3];
 
-      material[0] *= 3.0;
-      material[1] *= 3.0;
-      material[2] *= 3.0;
+      specularColor[0] = ambientColor[0];
+      specularColor[1] = ambientColor[1];
+      specularColor[2] = ambientColor[2];
+      specularColor[3] = ambientColor[3];
 
-      glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, material);
+      diffuseColor[0] = wireColor[0] * 0.6;
+      diffuseColor[1] = wireColor[1] * 0.6;
+      diffuseColor[2] = wireColor[2] * 0.6;
+      diffuseColor[3] = wireColor[3];
+
+#if 1
+      glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambientColor);
+      glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specularColor);
+      glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuseColor);
+#endif
+
     }else{
       glColor3ub( (GLubyte)r,  (GLubyte)g,  (GLubyte)b );
     }
@@ -1206,6 +1275,21 @@ ogl_debug(struct dm *dmp, int lvl)
 HIDDEN int
 ogl_setWinBounds(struct dm *dmp, int *w)
 {
+  if (dmp->dm_debugLevel)
+    bu_log("ogl_setWinBounds()\n");
+
+  dmp->dm_clipmin[0] = w[0];
+  dmp->dm_clipmin[1] = w[2];
+  dmp->dm_clipmin[2] = w[4];
+  dmp->dm_clipmax[0] = w[1];
+  dmp->dm_clipmax[1] = w[3];
+  dmp->dm_clipmax[2] = w[5];
+
+  if (dmp->dm_clipmax[2] <= GED_MAX)
+      dmp->dm_bound = 1.0;
+  else
+      dmp->dm_bound = GED_MAX / dmp->dm_clipmax[2];
+
   return TCL_OK;
 }
 
@@ -1511,7 +1595,7 @@ HIDDEN int
 ogl_setLight(struct dm *dmp, int lighting_on)
 {
   if (dmp->dm_debugLevel)
-    bu_log("ogl_lighting()\n");
+    bu_log("ogl_setLight()\n");
 
   dmp->dm_light = lighting_on;
   ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.lighting_on = dmp->dm_light;
@@ -1542,6 +1626,58 @@ ogl_setLight(struct dm *dmp, int lighting_on)
 
   return TCL_OK;
 }	
+
+HIDDEN int
+ogl_setTransparency(struct dm *dmp,
+		    int transparency_on)
+{
+  if (dmp->dm_debugLevel)
+    bu_log("ogl_setTransparency()\n");
+
+  dmp->dm_transparency = transparency_on;
+  ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.transparency_on = dmp->dm_transparency;
+
+  if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+		      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
+		      ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)){
+    bu_log("ogl_setTransparency: Couldn't make context current\n");
+    return TCL_ERROR;
+  }
+
+  if (transparency_on) {
+    /* Turn it on */
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  } else {
+    /* Turn it off */
+    glDisable(GL_BLEND);
+  }
+
+  return TCL_OK;
+}	
+
+HIDDEN int
+ogl_setDepthMask(struct dm *dmp,
+		 int enable) {
+  if (dmp->dm_debugLevel)
+    bu_log("ogl_setDepthMask()\n");
+
+  dmp->dm_depthMask = enable;
+
+  if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+		      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
+		      ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)){
+    bu_log("ogl_setDepthMask: Couldn't make context current\n");
+    return TCL_ERROR;
+  }
+
+  if (enable)
+    glDepthMask(GL_TRUE);
+  else
+    glDepthMask(GL_FALSE);
+
+  return TCL_OK;
+}
 
 HIDDEN int
 ogl_setZBuffer(struct dm *dmp, int zbuffer_on)

@@ -12,16 +12,22 @@
 
 #define DM_O(_m) offsetof(struct dm, _m)
 
+#define GED_MAX 2047.0
+#define GED_MIN -2048.0
+#define GED_RANGE 4095.0
+#define INV_GED 0.00048828125
+#define INV_4096 0.000244140625
+
 /*
  * Display coordinate conversion:
  *  GED is using -2048..+2048,
  *  X is 0..width,0..height
  */
-#define DIVBY4096(x) (((double)(x))*0.0002441406)
+#define DIVBY4096(x) (((double)(x))*INV_4096)
 #define	GED_TO_Xx(_dmp, x) ((int)((DIVBY4096(x)+0.5)*_dmp->dm_width))
 #define	GED_TO_Xy(_dmp, x) ((int)((0.5-DIVBY4096(x))*_dmp->dm_height))
-#define Xx_TO_GED(_dmp, x) ((int)(((x)/(double)_dmp->dm_width - 0.5) * 4095))
-#define Xy_TO_GED(_dmp, x) ((int)((0.5 - (x)/(double)_dmp->dm_height) * 4095))
+#define Xx_TO_GED(_dmp, x) ((int)(((x)/(double)_dmp->dm_width - 0.5) * GED_RANGE))
+#define Xy_TO_GED(_dmp, x) ((int)((0.5 - (x)/(double)_dmp->dm_height) * GED_RANGE))
 
 #if IR_KNOBS
 #define NOISE 16		/* Size of dead spot on knob */
@@ -133,12 +139,14 @@ struct dm {
   int (*dm_drawLine2D)();	/* formerly dmr_2d_line */
   int (*dm_drawPoint2D)();
   int (*dm_drawVList)();	/* formerly dmr_object */
-  int (*dm_setFGColor)(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict);
+  int (*dm_setFGColor)(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
   int (*dm_setBGColor)(struct dm *, unsigned char, unsigned char, unsigned char);
   int (*dm_setLineAttr)();	/* currently - linewidth, (not-)dashed */
   int (*dm_configureWin)();
   int (*dm_setWinBounds)();
   int (*dm_setLight)();
+  int (*dm_setTransparency)();
+  int (*dm_setDepthMask)();
   int (*dm_setZBuffer)();
   int (*dm_debug)();		/* Set DM debug level */
   int (*dm_beginDList)();
@@ -171,9 +179,11 @@ struct dm {
   int dm_debugLevel;		/* !0 means debugging */
   int dm_perspective;		/* !0 means perspective on */
   int dm_light;			/* !0 means lighting on */
+  int dm_transparency;		/* !0 means transparency on */
+  int dm_depthMask;		/* !0 means depth mask is writable */
   int dm_zbuffer;		/* !0 means zbuffer on */
   int dm_zclip;			/* !0 means zclipping */
-  int dm_depthcue;		/* !0 means depthcueing on (not used, only here for X dm to reference) */
+  int dm_clearBufferAfter;	/* 1 means clear back buffer after drawing and swap */
   Tcl_Interp *dm_interp;	/* Tcl interpreter */
 };
 
@@ -203,12 +213,14 @@ struct dm_obj {
 #define DM_DRAW_LINE_2D(_dmp,_x1,_y1,_x2,_y2) _dmp->dm_drawLine2D(_dmp,_x1,_y1,_x2,_y2)
 #define DM_DRAW_POINT_2D(_dmp,_x,_y) _dmp->dm_drawPoint2D(_dmp,_x,_y)
 #define DM_DRAW_VLIST(_dmp,_vlist) _dmp->dm_drawVList(_dmp,_vlist)
-#define DM_SET_FGCOLOR(_dmp,_r,_g,_b,_strict) _dmp->dm_setFGColor(_dmp,_r,_g,_b,_strict)
+#define DM_SET_FGCOLOR(_dmp,_r,_g,_b,_strict,_transparency) _dmp->dm_setFGColor(_dmp,_r,_g,_b,_strict,_transparency)
 #define DM_SET_BGCOLOR(_dmp,_r,_g,_b) _dmp->dm_setBGColor(_dmp,_r,_g,_b)
 #define DM_SET_LINE_ATTR(_dmp,_width,_dashed) _dmp->dm_setLineAttr(_dmp,_width,_dashed)
 #define DM_CONFIGURE_WIN(_dmp) _dmp->dm_configureWin(_dmp)
 #define DM_SET_WIN_BOUNDS(_dmp,_w) _dmp->dm_setWinBounds(_dmp,_w)
 #define DM_SET_LIGHT(_dmp,_on) _dmp->dm_setLight(_dmp,_on)
+#define DM_SET_TRANSPARENCY(_dmp,_on) _dmp->dm_setTransparency(_dmp,_on)
+#define DM_SET_DEPTH_MASK(_dmp,_on) _dmp->dm_setDepthMask(_dmp,_on)
 #define DM_SET_ZBUFFER(_dmp,_on) _dmp->dm_setZBuffer(_dmp,_on)
 #define DM_DEBUG(_dmp,_lvl) _dmp->dm_debug(_dmp,_lvl)
 #define DM_BEGINDLIST(_dmp,_list) _dmp->dm_beginDList(_dmp,_list)
@@ -244,5 +256,25 @@ extern char dm_version[];
 /* clip.c */
 extern int clip(vect_t, vect_t, vect_t, vect_t);
 extern int vclip(vect_t, vect_t, register fastf_t *, register fastf_t *);
+
+/* axes.c */
+extern void dmo_drawAxes_cmd(struct dm *dmp,
+			     fastf_t viewSize,
+			     mat_t rmat,
+			     point_t axesPos,
+			     fastf_t axesSize,
+			     int *axesColor,
+			     int *labelColor,
+			     int lineWidth,
+			     int posOnly,
+			     int threeColor,
+			     int tickEnable,
+			     int tickLen,
+			     int majorTickLen,
+			     fastf_t tickInterval,
+			     int ticksPerMajor,
+			     int *tickColor,
+			     int *majorTickColor,
+			     int tickThreshold);
 
 #endif /* SEEN_DM_H */

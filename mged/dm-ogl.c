@@ -63,6 +63,7 @@ static int	Ogl_doevent();
 static void     Ogl_colorchange();
 static void     establish_zbuffer();
 static void     establish_lighting();
+static void     establish_transparency();
 static void     dirty_hook();
 static void     zclip_hook();
 static void     debug_hook();
@@ -75,6 +76,7 @@ struct bu_structparse Ogl_vparse[] = {
 	{"%d",  1, "zclip",		Ogl_MV_O(zclipping_on),	zclip_hook },
 	{"%d",  1, "zbuffer",		Ogl_MV_O(zbuffer_on),	establish_zbuffer },
 	{"%d",  1, "lighting",		Ogl_MV_O(lighting_on),	establish_lighting },
+	{"%d",  1, "transparency",	Ogl_MV_O(transparency_on), establish_transparency },
 	{"%d",  1, "fastfog",		Ogl_MV_O(fastfog),	do_fogHint },
 	{"%f",  1, "density",		Ogl_MV_O(fogdensity),	dirty_hook },
 	{"%d",  1, "has_zbuf",		Ogl_MV_O(zbuf),		BU_STRUCTPARSE_FUNC_NULL },
@@ -258,6 +260,13 @@ static void
 establish_lighting()
 {
 	(void)DM_SET_LIGHT(dmp, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.lighting_on);
+	view_state->vs_flag = 1;
+}
+
+static void
+establish_transparency()
+{
+	(void)DM_SET_TRANSPARENCY(dmp, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.transparency_on);
 	view_state->vs_flag = 1;
 }
 

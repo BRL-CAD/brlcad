@@ -58,7 +58,7 @@ static int	plot_normal(struct dm *dmp), plot_loadMatrix(struct dm *dmp, fastf_t 
 static int	plot_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect), plot_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2);
 static int      plot_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y);
 static int	plot_drawVList(struct dm *dmp, register struct bn_vlist *vp);
-static int      plot_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict);
+static int      plot_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
 static int      plot_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
 static int      plot_setLineAttr(struct dm *dmp, int width, int style);
 static int	plot_setWinBounds(struct dm *dmp, register int *w), plot_debug(struct dm *dmp, int lvl);
@@ -78,6 +78,8 @@ struct dm dm_plot = {
   plot_setLineAttr,
   Nu_int0,
   plot_setWinBounds,
+  Nu_int0,
+  Nu_int0,
   Nu_int0,
   Nu_int0,
   plot_debug,
@@ -111,6 +113,7 @@ struct dm dm_plot = {
   0,				/* no debugging */
   0,				/* no perspective */
   0,				/* no lighting */
+  0,				/* no transparency */
   0,				/* no zbuffer */
   0,				/* no zclipping */
   0				/* Tcl interpreter */
@@ -545,7 +548,7 @@ plot_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 
 
 static int
-plot_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict)
+plot_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
 {
 	pl_color(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp, (int)r, (int)g, (int)b);
 	return TCL_OK;

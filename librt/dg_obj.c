@@ -67,19 +67,21 @@ struct dg_client_data {
 	int			fastpath_count;			/* statistics */
 	int			do_not_draw_nmg_solids_during_debugging;
 	struct bn_vlblock	*draw_edge_uses_vbp;
+	int			shaded_mode_override;
+	fastf_t			transparency;
+        int                     dmode;
 };
 
+#define DGO_WIREFRAME 0
 #define DGO_SHADED_MODE_BOTS 1
 #define DGO_SHADED_MODE_ALL 2
+#define DGO_BOOL_EVAL 3
 static union tree *dgo_bot_check_region_end();
 static union tree *dgo_bot_check_leaf();
 
-struct dgo_bot_check_data {
-  struct dg_obj *dgop;
-  Tcl_Interp *interp;
-};
-
 int dgo_shaded_mode_cmd();
+static int dgo_how_tcl();
+static int dgo_set_transparency_tcl();
 static int dgo_shaded_mode_tcl();
 
 /* XXX this should be done else where? */
@@ -118,6 +120,7 @@ extern void	dgo_free_qray(struct dg_obj *dgop);
 
 /* declared in nirt.c */
 extern int	dgo_nirt_cmd(struct dg_obj *dgop, struct view_obj *vop, Tcl_Interp *interp, int argc, char **argv);
+extern int	dgo_vnirt_cmd(struct dg_obj *dgop, struct view_obj *vop, Tcl_Interp *interp, int argc, char **argv);
 
 static int dgo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 #if 0
@@ -151,10 +154,11 @@ extern int dgo_E_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *
 static int dgo_autoview_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dgo_qray_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 static int dgo_nirt_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
+static int dgo_vnirt_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 
 static union tree *dgo_wireframe_region_end(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
 static union tree *dgo_wireframe_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data);
-static int dgo_drawtrees(struct dg_obj *dgop, Tcl_Interp *interp, int argc, char **argv, int kind);
+static int dgo_drawtrees(struct dg_obj *dgop, Tcl_Interp *interp, int argc, char **argv, int kind, struct dg_client_data *_dgcdp);
 int dgo_invent_solid(struct dg_obj *dgop, Tcl_Interp *interp, char *name, struct bu_list *vhead, long int rgb, int copy);
 static void dgo_bound_solid(Tcl_Interp *interp, register struct solid *sp);
 void dgo_drawH_part2(int dashflag, struct bu_list *vhead, struct db_full_path *pathp, struct db_tree_state *tsp, struct solid *existing_sp, struct dg_client_data *dgcdp);
@@ -177,6 +181,7 @@ static void dgo_print_schain_vlcmds(struct dg_obj *dgop, Tcl_Interp *interp);
 struct dg_obj HeadDGObj;		/* head of drawable geometry object list */
 static struct solid FreeSolid;		/* head of free solid list */
 
+
 static struct bu_cmdtab dgo_cmds[] = {
 	{"assoc",		dgo_assoc_tcl},
 	{"autoview",		dgo_autoview_tcl},
@@ -193,6 +198,7 @@ static struct bu_cmdtab dgo_cmds[] = {
 	{"get_autoview",	dgo_get_autoview_tcl},
 	{"get_eyemodel",	dgo_get_eyemodel_tcl},
 	{"headSolid",		dgo_headSolid_tcl},
+	{"how",			dgo_how_tcl},
 	{"illum",		dgo_illum_tcl},
 	{"label",		dgo_label_tcl},
 	{"nirt",		dgo_nirt_tcl},
@@ -204,11 +210,13 @@ static struct bu_cmdtab dgo_cmds[] = {
 	{"rtabort",		dgo_rtabort_tcl},
 	{"rtcheck",		dgo_rtcheck_tcl},
 	{"rtedge",		dgo_rt_tcl},
+	{"set_transparency",	dgo_set_transparency_tcl},
 	{"shaded_mode",		dgo_shaded_mode_tcl},
 #if 0
 	{"tol",			dgo_tol_tcl},
 #endif
 	{"vdraw",		dgo_vdraw_tcl},
+	{"vnirt",		dgo_vnirt_tcl},
 	{"who",			dgo_who_tcl},
 	{"zap",			dgo_zap_tcl},
 	{(char *)0,		(int (*)())0}
@@ -240,8 +248,7 @@ Dgo_Init(Tcl_Interp *interp)
 	BU_LIST_INIT(&HeadDGObj.l);
 	BU_LIST_INIT(&FreeSolid.l);
 
-	(void)Tcl_CreateCommand(interp, "dg_open", dgo_open_tcl,
-				(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+	(void)Tcl_CreateCommand(interp, "dg_open", (Tcl_CmdProc *)dgo_open_tcl, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
 	return TCL_OK;
 }
@@ -598,48 +605,9 @@ dgo_draw_cmd(struct dg_obj	*dgop,
 	 */
 	dgo_eraseobjpath(dgop, interp, argc, argv, LOOKUP_QUIET, 0);
 
-	/*
-	 * If asking for wireframe and in shaded_mode,
-	 * draw shaded polygons for each object's primitives if possible.
-	 *
-	 * Note -
-	 * If shaded_mode is DGO_SHADED_MODE_BOTS, only BOTS and polysolids
-	 * will be shaded. The rest is drawn as wireframe.
-	 * If shaded_mode is DGO_SHADED_MODE_ALL, everything except pipe solids
-	 * are drawn as shaded polygons.
-	 */
-	if (kind == 1 && dgop->dgo_shaded_mode) {
-	  int  i;
-	  int  ac = 1;
-	  char *av[2];
-	  struct directory *dp;
-	  struct dgo_bot_check_data bcd;
+ 	dgo_drawtrees(dgop, interp, argc, argv, kind, (struct dg_client_data *)0);
 
-	  bcd.dgop = dgop;
-	  bcd.interp = interp;
-	  av[1] = (char *)0;
-
-	  for (i = 0; i < argc; ++i) {
-	    if ((dp = db_lookup(dgop->dgo_wdbp->dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL)
-	      continue;
-
-	    av[0] = argv[i];
-
-	    db_walk_tree(dgop->dgo_wdbp->dbip,
-			 ac,
-			 (const char **)av,
-			 1,
-			 &dgop->dgo_wdbp->wdb_initial_tree_state,
-			 0,
-			 dgo_bot_check_region_end,
-			 dgo_bot_check_leaf,
-			 (genptr_t)&bcd);
-	  }
-	} else {
-	  dgo_drawtrees(dgop, interp, argc, argv, kind);
-	}
-
-	dgo_color_soltab(&dgop->dgo_headSolid);
+	dgo_color_soltab((struct solid *)&dgop->dgo_headSolid);
 
 	return TCL_OK;
 }
@@ -771,6 +739,154 @@ dgo_erase_all_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
 	return ret;
 }
 
+struct directory **
+dgo_build_dpp(struct dg_obj	*dgop,
+	      Tcl_Interp        *interp,
+	      char              *path) {
+	register struct directory *dp;
+	struct directory **dpp;
+	int i;
+	char *begin;
+	char *end;
+	char *newstr;
+	char *list;
+	int ac;
+	const char **av;
+	const char **av_orig = NULL;
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+
+	/*
+	 * First, build an array of the object's path components.
+	 * We store the list in av_orig below.
+	 */
+	newstr = strdup(path);
+	begin = newstr;
+	while ((end = strchr(begin, '/')) != NULL) {
+	  *end = '\0';
+	  bu_vls_printf(&vls, "%s ", begin);
+	  begin = end + 1;
+	}
+	bu_vls_printf(&vls, "%s ", begin);
+	free((void *)newstr);
+
+	list = bu_vls_addr(&vls);
+
+	if (Tcl_SplitList((Tcl_Interp *)interp, list, &ac, &av_orig) != TCL_OK) {
+	  Tcl_AppendResult(interp, "-1", (char *)NULL);
+	  bu_vls_free(&vls);
+	  return (struct directory **)NULL;
+	}
+
+	/* skip first element if empty */
+	av = av_orig;
+	if (*av[0] == '\0') {
+	  --ac;
+	  ++av;
+	}
+
+	/* ignore last element if empty */
+	if (*av[ac-1] == '\0')
+	  --ac;
+
+	/*
+	 * Next, we build an array of directory pointers that
+	 * correspond to the object's path.
+	 */
+	dpp = bu_calloc(ac+1, sizeof(struct directory *), "dgo_build_dpp: directory pointers");
+	for (i = 0; i < ac; ++i) {
+	  if ((dp = db_lookup(dgop->dgo_wdbp->dbip, av[i], 0)) != DIR_NULL)
+	    dpp[i] = dp;
+	  else {
+	    /* object is not currently being displayed */
+	    Tcl_AppendResult(interp, "-1", (char *)NULL);
+
+	    bu_free((genptr_t)dpp, "dgo_how_cmd: directory pointers");
+	    Tcl_Free((char *)av_orig);
+	    bu_vls_free(&vls);
+	    return (struct directory **)NULL;
+	  }
+	}
+
+	dpp[i] = DIR_NULL;
+
+	Tcl_Free((char *)av_orig);
+	bu_vls_free(&vls);
+	return dpp;
+}
+
+int
+dgo_how_cmd(struct dg_obj	*dgop,
+	    Tcl_Interp		*interp,
+	    int			argc,
+	    char 		**argv)
+{
+	register struct solid *sp;
+	struct bu_vls vls;
+	int i;
+	struct directory **dpp;
+	register struct directory **tmp_dpp;
+
+	bu_vls_init(&vls);
+
+	if (argc != 2) {
+		bu_vls_printf(&vls, "helplib_alias dgo_how %s", argv[0]);
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	if ((dpp = dgo_build_dpp(dgop, interp, argv[1])) == NULL)
+	  goto good;
+
+	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
+	  for (i = 0, tmp_dpp = dpp;
+	       i <= sp->s_fullpath.fp_len && *tmp_dpp != DIR_NULL;
+	       ++i, ++tmp_dpp) {
+	    if (sp->s_fullpath.fp_names[i] != *tmp_dpp)
+	      break;
+	  }
+
+	  if (*tmp_dpp != DIR_NULL)
+	    continue;
+
+	  /* found a match */
+	  bu_vls_printf(&vls, "%d", sp->s_dmode);
+	  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	  goto good;
+	}
+
+	/* match NOT found */
+	Tcl_AppendResult(interp, "-1", (char *)NULL);
+
+ good:
+	if (dpp != (struct directory **)NULL)
+	  bu_free((genptr_t)dpp, "dgo_how_cmd: directory pointers");
+	bu_vls_free(&vls);
+
+	return TCL_OK;
+}
+
+/*
+ * Returns "how" an object is being displayed.
+ *
+ * Usage:
+ *        procname how obj
+ */
+static int
+dgo_how_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
+{
+	struct dg_obj *dgop = (struct dg_obj *)clientData;
+
+	DGO_CHECK_WDBP_NULL(dgop,interp);
+	return dgo_how_cmd(dgop, interp, argc-1, argv+1);
+}
+
 int
 dgo_who_cmd(struct dg_obj	*dgop,
 	    Tcl_Interp		*interp,
@@ -807,7 +923,7 @@ dgo_who_cmd(struct dg_obj	*dgop,
 			skip_phony = 1;
 			break;
 		default:
-			Tcl_AppendResult(interp,"dgo_who: argument not understood\n", (char *)NULL);
+			Tcl_AppendResult(interp, "dgo_who: argument not understood\n", (char *)NULL);
 			return TCL_ERROR;
 		}
 	}
@@ -1100,6 +1216,9 @@ dgo_get_autoview_cmd(struct dg_obj	*dgop,
 	if (VNEAR_ZERO(radial , SQRT_SMALL_FASTF))
 		VSETALL(radial , 1.0);
 
+	VSCALE(center, center, dgop->dgo_wdbp->dbip->dbi_base2local);
+	radial[X] *= dgop->dgo_wdbp->dbip->dbi_base2local;
+
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "center {%g %g %g} size %g", V3ARGS(center), radial[X] * 2.0);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
@@ -1248,7 +1367,7 @@ dgo_rt_cmd(struct dg_obj	*dgop,
 	if (i == argc) {
 		dgop->dgo_rt_cmd_len = vp - dgop->dgo_rt_cmd;
 		dgop->dgo_rt_cmd_len += dgo_build_tops(interp,
-						       &dgop->dgo_headSolid,
+						       (struct solid *)&dgop->dgo_headSolid,
 						       vp,
 						       &dgop->dgo_rt_cmd[MAXARGS]);
 	} else {
@@ -1863,7 +1982,7 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
 	if (i == argc) {
 		dgop->dgo_rt_cmd_len = vp - dgop->dgo_rt_cmd;
 		dgop->dgo_rt_cmd_len += dgo_build_tops(interp,
-						       &dgop->dgo_headSolid,
+						       (struct solid *)&dgop->dgo_headSolid,
 						       vp,
 						       &dgop->dgo_rt_cmd[MAXARGS]);
 	} else {
@@ -1960,7 +2079,7 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
 	if (i == argc) {
 		dgop->dgo_rt_cmd_len = vp - dgop->dgo_rt_cmd;
 		dgop->dgo_rt_cmd_len += dgo_build_tops(interp,
-						       &dgop->dgo_headSolid,
+						       (struct solid *)&dgop->dgo_headSolid,
 						       vp,
 						       &dgop->dgo_rt_cmd[MAXARGS]);
 	} else {
@@ -2371,6 +2490,118 @@ dgo_nirt_tcl(ClientData	clientData,
 	return dgo_nirt_cmd(dgop, vop, interp, argc-2, argv+2);
 }
 
+static int
+dgo_vnirt_tcl(ClientData	clientData,
+	      Tcl_Interp	*interp,
+	      int		argc,
+	      char		**argv)
+{
+	struct dg_obj	*dgop = (struct dg_obj *)clientData;
+	struct view_obj	*vop;
+	
+	if (argc < 5 || MAXARGS < argc) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib_alias dgo_vnirt %s", argv[0]);
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	DGO_CHECK_WDBP_NULL(dgop,interp);
+
+	/* search for view object */
+	for (BU_LIST_FOR(vop, view_obj, &HeadViewObj.l)) {
+		if (strcmp(bu_vls_addr(&vop->vo_name), argv[2]) == 0)
+			break;
+	}
+
+	if (BU_LIST_IS_HEAD(vop, &HeadViewObj.l)) {
+		Tcl_AppendResult(interp, "dgo_vnirt: bad view object - ", argv[2],
+				 "\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	return dgo_vnirt_cmd(dgop, vop, interp, argc-2, argv+2);
+}
+
+int
+dgo_set_transparency_cmd(struct dg_obj	*dgop,
+			 Tcl_Interp	*interp,
+			 int		argc,
+			 char 		**argv)
+{
+	register struct solid *sp;
+	int i;
+	struct directory **dpp;
+	register struct directory **tmp_dpp;
+	fastf_t transparency;
+
+
+	if (argc != 3) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib_alias dgo_set_transparency %s", argv[0]);
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+
+		return TCL_ERROR;
+	}
+
+	if (sscanf(argv[2], "%lf", &transparency) != 1) {
+		Tcl_AppendResult(interp, "dgo_set_transparency: bad transparency - ",
+				 argv[2], "\n", (char *)NULL);
+		return TCL_ERROR;
+	}
+
+	if ((dpp = dgo_build_dpp(dgop, interp, argv[1])) == NULL) {
+	  return TCL_OK;
+	}
+
+	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
+	  for (i = 0, tmp_dpp = dpp;
+	       i <= sp->s_fullpath.fp_len && *tmp_dpp != DIR_NULL;
+	       ++i, ++tmp_dpp) {
+	    if (sp->s_fullpath.fp_names[i] != *tmp_dpp)
+	      break;
+	  }
+
+	  if (*tmp_dpp != DIR_NULL)
+	    continue;
+
+	  /* found a match */
+	  sp->s_transparency = transparency;
+	}
+
+	if (dpp != (struct directory **)NULL)
+	  bu_free((genptr_t)dpp, "dgo_how_cmd: directory pointers");
+
+	return TCL_OK;
+}
+
+/*
+ * Sets the transparency of obj.
+ *
+ * Usage:
+ *        procname set_transparency obj t
+ */
+static int
+dgo_set_transparency_tcl(ClientData	clientData,
+			 Tcl_Interp	*interp,
+			 int		argc,
+			 char	        **argv)
+{
+	struct dg_obj *dgop = (struct dg_obj *)clientData;
+	int ret;
+
+	if ((ret = dgo_set_transparency_cmd(dgop, interp, argc-1, argv+1)) == TCL_OK)
+		dgo_notify(dgop, interp);
+
+	return ret;
+}
+
 int
 dgo_shaded_mode_cmd(struct dg_obj	*dgop,
 		    Tcl_Interp		*interp,
@@ -2412,7 +2643,7 @@ dgo_shaded_mode_cmd(struct dg_obj	*dgop,
 
 /*
  * Usage:
- *        procname 
+ *        procname shaded_mode [m]
  */
 static int
 dgo_shaded_mode_tcl(ClientData	clientData,
@@ -2783,182 +3014,271 @@ dgo_nmg_region_end(register struct db_tree_state *tsp, struct db_full_path *path
  *	-1	On major error
  */
 static int
-dgo_drawtrees(struct dg_obj *dgop, Tcl_Interp *interp, int argc, char **argv, int kind)
+dgo_drawtrees(struct dg_obj *dgop, Tcl_Interp *interp, int argc, char **argv, int kind, struct dg_client_data *_dgcdp)
 {
-	int		ret = 0;
-	register int	c;
-	int		ncpu = 1;
-	int		dgo_nmg_use_tnurbs = 0;
-	int		dgo_enable_fastpath = 0;
-	struct model	*dgo_nmg_model;
-	struct dg_client_data *dgcdp;
+  int		ret = 0;
+  register int	c;
+  int		ncpu = 1;
+  int		dgo_nmg_use_tnurbs = 0;
+  int		dgo_enable_fastpath = 0;
+  struct model	*dgo_nmg_model;
+  struct dg_client_data *dgcdp;
+  RT_CHECK_DBI(dgop->dgo_wdbp->dbip);
 
-	RT_CHECK_DBI(dgop->dgo_wdbp->dbip);
+  if (argc <= 0)
+    return(-1);	/* FAIL */
 
-	if (argc <= 0)
-		return(-1);	/* FAIL */
+  /* options are already parsed into _dgcdp */
+  if (_dgcdp != (struct dg_client_data *)0) {
+    BU_GETSTRUCT(dgcdp, dg_client_data);
+    *dgcdp = *_dgcdp;            /* struct copy */
+  } else {
 
-	BU_GETSTRUCT(dgcdp, dg_client_data);
-	dgcdp->dgop = dgop;
-	dgcdp->interp = interp;
+    BU_GETSTRUCT(dgcdp, dg_client_data);
+    dgcdp->dgop = dgop;
+    dgcdp->interp = interp;
 
-	/* Initial values for options, must be reset each time */
-	dgcdp->draw_nmg_only = 0;	/* no booleans */
-	dgcdp->nmg_triangulate = 1;
-	dgcdp->draw_wireframes = 0;
-	dgcdp->draw_normals = 0;
-	dgcdp->draw_solid_lines_only = 0;
-	dgcdp->draw_no_surfaces = 0;
-	dgcdp->shade_per_vertex_normals = 0;
-	dgcdp->draw_edge_uses = 0;
-	dgcdp->wireframe_color_override = 0;
-	dgcdp->fastpath_count = 0;
+    /* Initial values for options, must be reset each time */
+    dgcdp->draw_nmg_only = 0;	/* no booleans */
+    dgcdp->nmg_triangulate = 1;
+    dgcdp->draw_wireframes = 0;
+    dgcdp->draw_normals = 0;
+    dgcdp->draw_solid_lines_only = 0;
+    dgcdp->draw_no_surfaces = 0;
+    dgcdp->shade_per_vertex_normals = 0;
+    dgcdp->draw_edge_uses = 0;
+    dgcdp->wireframe_color_override = 0;
+    dgcdp->fastpath_count = 0;
 
-	/* default color - red */
-	dgcdp->wireframe_color[0] = 255;
-	dgcdp->wireframe_color[1] = 0;
-	dgcdp->wireframe_color[2] = 0;
+    /* default color - red */
+    dgcdp->wireframe_color[0] = 255;
+    dgcdp->wireframe_color[1] = 0;
+    dgcdp->wireframe_color[2] = 0;
 
-	dgo_enable_fastpath = 0;
+    /* default transparency - opaque */
+    dgcdp->transparency = 1.0;
 
-	/* Parse options. */
-	bu_optind = 0;		/* re-init bu_getopt() */
-	while ((c = bu_getopt(argc,argv,"dfnqstuvwSTP:C:")) != EOF) {
-		switch (c) {
-		case 'u':
-			dgcdp->draw_edge_uses = 1;
-			break;
-		case 's':
-			dgcdp->draw_solid_lines_only = 1;
-			break;
-		case 't':
-			dgo_nmg_use_tnurbs = 1;
-			break;
-		case 'v':
-			dgcdp->shade_per_vertex_normals = 1;
-			break;
-		case 'w':
-			dgcdp->draw_wireframes = 1;
-			break;
-		case 'S':
-			dgcdp->draw_no_surfaces = 1;
-			break;
-		case 'T':
-			dgcdp->nmg_triangulate = 0;
-			break;
-		case 'n':
-			dgcdp->draw_normals = 1;
-			break;
-		case 'P':
-			ncpu = atoi(bu_optarg);
-			break;
-		case 'q':
-			dgcdp->do_not_draw_nmg_solids_during_debugging = 1;
-			break;
-		case 'd':
-			dgcdp->draw_nmg_only = 1;
-			break;
-		case 'f':
-			dgo_enable_fastpath = 1;
-			break;
-		case 'C':
-			{
-				int		r,g,b;
-				register char	*cp = bu_optarg;
+    /* -1 indicates flag not set */
+    dgcdp->shaded_mode_override = -1;
 
-				r = atoi(cp);
-				while( (*cp >= '0' && *cp <= '9') )  cp++;
-				while( *cp && (*cp < '0' || *cp > '9') ) cp++;
-				g = atoi(cp);
-				while( (*cp >= '0' && *cp <= '9') )  cp++;
-				while( *cp && (*cp < '0' || *cp > '9') ) cp++;
-				b = atoi(cp);
+    dgo_enable_fastpath = 0;
 
-				if( r < 0 || r > 255 )  r = 255;
-				if( g < 0 || g > 255 )  g = 255;
-				if( b < 0 || b > 255 )  b = 255;
+    /* Parse options. */
+    bu_optind = 0;		/* re-init bu_getopt() */
+    while ((c = bu_getopt(argc,argv,"dfm:nqstuvwx:C:STP:")) != EOF) {
+      switch (c) {
+	case 'u':
+	  dgcdp->draw_edge_uses = 1;
+	  break;
+	case 's':
+	  dgcdp->draw_solid_lines_only = 1;
+	  break;
+	case 't':
+	  dgo_nmg_use_tnurbs = 1;
+	  break;
+	case 'v':
+	  dgcdp->shade_per_vertex_normals = 1;
+	  break;
+	case 'w':
+	  dgcdp->draw_wireframes = 1;
+	  break;
+	case 'S':
+	  dgcdp->draw_no_surfaces = 1;
+	  break;
+	case 'T':
+	  dgcdp->nmg_triangulate = 0;
+	  break;
+	case 'n':
+	  dgcdp->draw_normals = 1;
+	  break;
+	case 'P':
+	  ncpu = atoi(bu_optarg);
+	  break;
+	case 'q':
+	  dgcdp->do_not_draw_nmg_solids_during_debugging = 1;
+	  break;
+	case 'd':
+	  dgcdp->draw_nmg_only = 1;
+	  break;
+	case 'f':
+	  dgo_enable_fastpath = 1;
+	  break;
+	case 'C':
+	  {
+	    int		r,g,b;
+	    register char	*cp = bu_optarg;
 
-				dgcdp->wireframe_color_override = 1;
-				dgcdp->wireframe_color[0] = r;
-				dgcdp->wireframe_color[1] = g;
-				dgcdp->wireframe_color[2] = b;
-			}
-			break;
-		default:
-			{
-				struct bu_vls vls;
+	    r = atoi(cp);
+	    while( (*cp >= '0' && *cp <= '9') )  cp++;
+	    while( *cp && (*cp < '0' || *cp > '9') ) cp++;
+	    g = atoi(cp);
+	    while( (*cp >= '0' && *cp <= '9') )  cp++;
+	    while( *cp && (*cp < '0' || *cp > '9') ) cp++;
+	    b = atoi(cp);
 
-				bu_vls_init(&vls);
- 				bu_vls_printf(&vls, "helplib %s", argv[0]);
-				Tcl_Eval(interp, bu_vls_addr(&vls));
-				bu_vls_free(&vls);
-				bu_free((genptr_t)dgcdp, "dgo_drawtrees: dgcdp");
+	    if( r < 0 || r > 255 )  r = 255;
+	    if( g < 0 || g > 255 )  g = 255;
+	    if( b < 0 || b > 255 )  b = 255;
 
-				return TCL_ERROR;
-			}
-		}
-	}
-	argc -= bu_optind;
-	argv += bu_optind;
-
-	switch (kind) {
-	default:
-	  Tcl_AppendResult(interp, "ERROR, bad kind\n", (char *)NULL);
-	  bu_free((genptr_t)dgcdp, "dgo_drawtrees: dgcdp");
-	  return(-1);
-	case 1:		/* Wireframes */
-		ret = db_walk_tree(dgop->dgo_wdbp->dbip, argc, (const char **)argv,
-			ncpu,
-			&dgop->dgo_wdbp->wdb_initial_tree_state,
-			0,			/* take all regions */
-			dgo_wireframe_region_end,
-			dgo_wireframe_leaf, (genptr_t)dgcdp);
-		break;
-	case 2:		/* Big-E */
-		Tcl_AppendResult(interp, "drawtrees:  can't do big-E here\n", (char *)NULL);
-		bu_free((genptr_t)dgcdp, "dgo_drawtrees: dgcdp");
-		return (-1);
-	case 3:
-		{
-		/* NMG */
-	  	dgo_nmg_model = nmg_mm();
-		dgop->dgo_wdbp->wdb_initial_tree_state.ts_m = &dgo_nmg_model;
-	  	if (dgcdp->draw_edge_uses) {
-			Tcl_AppendResult(interp, "Doing the edgeuse thang (-u)\n", (char *)NULL);
-			dgcdp->draw_edge_uses_vbp = rt_vlblock_init();
-	  	}
-
-		ret = db_walk_tree(dgop->dgo_wdbp->dbip, argc, (const char **)argv,
-				   ncpu,
-				   &dgop->dgo_wdbp->wdb_initial_tree_state,
-				   dgo_enable_fastpath ? dgo_nmg_region_start : 0,
-				   dgo_nmg_region_end,
-				   dgo_nmg_use_tnurbs ? nmg_booltree_leaf_tnurb : nmg_booltree_leaf_tess,
-				   (genptr_t)dgcdp);
-
-	  	if (dgcdp->draw_edge_uses) {
-	  		dgo_cvt_vlblock_to_solids(dgop->dgo_wdbp->dbip, interp,
-						  dgcdp->draw_edge_uses_vbp, "_EDGEUSES_", 0);
-	  		rt_vlblock_free(dgcdp->draw_edge_uses_vbp);
-			dgcdp->draw_edge_uses_vbp = (struct bn_vlblock *)NULL;
- 	  	}
-
-		/* Destroy NMG */
-		nmg_km(dgo_nmg_model);
-	  	break;
+	    dgcdp->wireframe_color_override = 1;
+	    dgcdp->wireframe_color[0] = r;
+	    dgcdp->wireframe_color[1] = g;
+	    dgcdp->wireframe_color[2] = b;
 	  }
+	  break;
+	case 'm':
+	  /* clamp it to [-infinity,2] */
+	  dgcdp->shaded_mode_override = atoi(bu_optarg);
+	  if (2 < dgcdp->shaded_mode_override)
+	    dgcdp->shaded_mode_override = 2;
+
+	  break;
+	case 'x':
+	  dgcdp->transparency = atof(bu_optarg);
+
+	  /* clamp it to [0,1] */
+	  if (dgcdp->transparency < 0.0)
+	    dgcdp->transparency = 0.0;
+
+	  if (1.0 < dgcdp->transparency)
+	    dgcdp->transparency = 1.0;
+
+	  break;
+	default:
+	  {
+	    struct bu_vls vls;
+
+	    bu_vls_init(&vls);
+	    bu_vls_printf(&vls, "helplib %s", argv[0]);
+	    Tcl_Eval(interp, bu_vls_addr(&vls));
+	    bu_vls_free(&vls);
+	    bu_free((genptr_t)dgcdp, "dgo_drawtrees: dgcdp");
+
+	    return TCL_ERROR;
+	  }
+      }
+    }
+    argc -= bu_optind;
+    argv += bu_optind;
+	
+    switch (kind) {
+      case 1:
+	if (dgop->dgo_shaded_mode && dgcdp->shaded_mode_override < 0) {
+	  dgcdp->dmode = dgop->dgo_shaded_mode;
+	} else if (0 <= dgcdp->shaded_mode_override)
+	  dgcdp->dmode = dgcdp->shaded_mode_override;
+	else
+	  dgcdp->dmode = DGO_WIREFRAME;
+
+	break;
+      case 2:
+      case 3:
+	dgcdp->dmode = DGO_BOOL_EVAL;
+	break;
+    }
+
+  }
+
+  switch (kind) {
+    default:
+      Tcl_AppendResult(interp, "ERROR, bad kind\n", (char *)NULL);
+      bu_free((genptr_t)dgcdp, "dgo_drawtrees: dgcdp");
+      return(-1);
+    case 1:		/* Wireframes */
+      /*
+       * If asking for wireframe and in shaded_mode and no shaded mode override,
+       * or asking for wireframe and shaded mode is being overridden with a value
+       * greater than 0, then draw shaded polygons for each object's primitives if possible.
+       *
+       * Note -
+       * If shaded_mode is DGO_SHADED_MODE_BOTS, only BOTS and polysolids
+       * will be shaded. The rest is drawn as wireframe.
+       * If shaded_mode is DGO_SHADED_MODE_ALL, everything except pipe solids
+       * are drawn as shaded polygons.
+       */
+      if (DGO_SHADED_MODE_BOTS <= dgcdp->dmode && dgcdp->dmode <= DGO_SHADED_MODE_ALL) {
+	int  i;
+	int  ac = 1;
+	char *av[2];
+#if 0
+	struct directory *dp;
+#endif
+
+	av[1] = (char *)0;
+
+	for (i = 0; i < argc; ++i) {
+#if 0
+	  if ((dp = db_lookup(dgop->dgo_wdbp->dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL)
+	    continue;
+#endif
+
+	  av[0] = argv[i];
+
+	  ret = db_walk_tree(dgop->dgo_wdbp->dbip,
+			     ac,
+			     (const char **)av,
+			     ncpu,
+			     &dgop->dgo_wdbp->wdb_initial_tree_state,
+			     0,
+			     dgo_bot_check_region_end,
+			     dgo_bot_check_leaf,
+			     (genptr_t)dgcdp);
 	}
-	if (dgcdp->fastpath_count) {
-		bu_log("%d region%s rendered through polygon fastpath\n",
-		       dgcdp->fastpath_count, dgcdp->fastpath_count==1?"":"s");
+      } else
+	ret = db_walk_tree(dgop->dgo_wdbp->dbip,
+			   argc,
+			   (const char **)argv,
+			   ncpu,
+			   &dgop->dgo_wdbp->wdb_initial_tree_state,
+			   0,			/* take all regions */
+			   dgo_wireframe_region_end,
+			   dgo_wireframe_leaf,
+			   (genptr_t)dgcdp);
+      break;
+    case 2:		/* Big-E */
+      Tcl_AppendResult(interp, "drawtrees:  can't do big-E here\n", (char *)NULL);
+      bu_free((genptr_t)dgcdp, "dgo_drawtrees: dgcdp");
+      return (-1);
+    case 3:
+      {
+	/* NMG */
+	dgo_nmg_model = nmg_mm();
+	dgop->dgo_wdbp->wdb_initial_tree_state.ts_m = &dgo_nmg_model;
+	if (dgcdp->draw_edge_uses) {
+	  Tcl_AppendResult(interp, "Doing the edgeuse thang (-u)\n", (char *)NULL);
+	  dgcdp->draw_edge_uses_vbp = rt_vlblock_init();
 	}
 
-	bu_free((genptr_t)dgcdp, "dgo_drawtrees: dgcdp");
+	ret = db_walk_tree(dgop->dgo_wdbp->dbip, argc, (const char **)argv,
+			   ncpu,
+			   &dgop->dgo_wdbp->wdb_initial_tree_state,
+			   dgo_enable_fastpath ? dgo_nmg_region_start : 0,
+			   dgo_nmg_region_end,
+			   dgo_nmg_use_tnurbs ? nmg_booltree_leaf_tnurb : nmg_booltree_leaf_tess,
+			   (genptr_t)dgcdp);
 
-	if (ret < 0)
-		return (-1);
+	if (dgcdp->draw_edge_uses) {
+	  dgo_cvt_vlblock_to_solids(dgop, interp, dgcdp->draw_edge_uses_vbp, "_EDGEUSES_", 0);
+	  rt_vlblock_free(dgcdp->draw_edge_uses_vbp);
+	  dgcdp->draw_edge_uses_vbp = (struct bn_vlblock *)NULL;
+	}
 
-	return (0);	/* OK */
+	/* Destroy NMG */
+	nmg_km(dgo_nmg_model);
+	break;
+      }
+  }
+  if (dgcdp->fastpath_count) {
+    bu_log("%d region%s rendered through polygon fastpath\n",
+	   dgcdp->fastpath_count, dgcdp->fastpath_count==1?"":"s");
+  }
+
+  bu_free((genptr_t)dgcdp, "dgo_drawtrees: dgcdp");
+
+  if (ret < 0)
+    return (-1);
+
+  return (0);	/* OK */
 }
 
 
@@ -3188,6 +3508,8 @@ dgo_drawH_part2(int dashflag, struct bu_list *vhead, struct db_full_path *pathp,
 		sp->s_Eflag = 0;	/* This is a solid */
 		db_dup_full_path( &sp->s_fullpath, pathp );
 		sp->s_regionid = tsp->ts_regionid;
+		sp->s_transparency = dgcdp->transparency;
+		sp->s_dmode = dgcdp->dmode;
 
 		/* Add to linked list of solid structs */
 		bu_semaphore_acquire(RT_SEM_MODEL);
@@ -4172,7 +4494,7 @@ dgo_bot_check_leaf(struct db_tree_state		*tsp,
   union tree *curtree;
   int  ac = 1;
   char *av[2];
-  struct dgo_bot_check_data *bcdp = (struct dgo_bot_check_data *)client_data;
+  struct dg_client_data *dgcdp = (struct dg_client_data *)client_data;
 
   av[0] = db_path_to_string(pathp);
   av[1] = (char *)0;
@@ -4182,25 +4504,67 @@ dgo_bot_check_leaf(struct db_tree_state		*tsp,
   curtree->magic = RT_TREE_MAGIC;
   curtree->tr_op = OP_NOP;
 
-  switch (bcdp->dgop->dgo_shaded_mode) {
+  /*
+   * Use dgop->dgo_shaded_mode if set and not being overridden. Otherwise use dgcdp->shaded_mode_override.
+   */
+#if 1
+  switch (dgcdp->dmode) {
+#else
+  switch (dgcdp->dgop->dgo_shaded_mode && dgcdp->shaded_mode_override < 0
+	  ? dgcdp->dgop->dgo_shaded_mode : dgcdp->shaded_mode_override) {
+#endif
   case DGO_SHADED_MODE_BOTS:
     if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD &&
 	(ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_BOT ||
 	 ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_POLY))
-      dgo_drawtrees(bcdp->dgop, bcdp->interp, ac, av, 3);
-    else
-      dgo_drawtrees(bcdp->dgop, bcdp->interp, ac, av, 1);
+      dgo_drawtrees(dgcdp->dgop, dgcdp->interp, ac, av, 3, client_data);
+    else {
+      /* save shaded mode states */
+      int save_dgo_shaded_mode = dgcdp->dgop->dgo_shaded_mode;
+      int save_shaded_mode_override = dgcdp->shaded_mode_override;
+      int save_dmode = dgcdp->dmode;
+
+      /* turn shaded mode off for this non-bot/non-poly object */
+      dgcdp->dgop->dgo_shaded_mode = 0;
+      dgcdp->shaded_mode_override = -1;
+      dgcdp->dmode = DGO_WIREFRAME;
+
+      dgo_drawtrees(dgcdp->dgop, dgcdp->interp, ac, av, 1, client_data);
+
+      /* restore shaded mode states */
+      dgcdp->dgop->dgo_shaded_mode = save_dgo_shaded_mode;
+      dgcdp->shaded_mode_override = save_shaded_mode_override;
+      dgcdp->dmode = save_dmode;
+    }
 
     break;
   case DGO_SHADED_MODE_ALL:
     if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD &&
 	ip->idb_minor_type != DB5_MINORTYPE_BRLCAD_PIPE)
-	 dgo_drawtrees(bcdp->dgop, bcdp->interp, ac, av, 3);
-    else
-      dgo_drawtrees(bcdp->dgop, bcdp->interp, ac, av, 1);
+	 dgo_drawtrees(dgcdp->dgop, dgcdp->interp, ac, av, 3, client_data);
+    else {
+      /* save shaded mode states */
+      int save_dgo_shaded_mode = dgcdp->dgop->dgo_shaded_mode;
+      int save_shaded_mode_override = dgcdp->shaded_mode_override;
+      int save_dmode = dgcdp->dmode;
+
+      /* turn shaded mode off for this pipe object */
+      dgcdp->dgop->dgo_shaded_mode = 0;
+      dgcdp->shaded_mode_override = -1;
+      dgcdp->dmode = DGO_WIREFRAME;
+
+      dgo_drawtrees(dgcdp->dgop, dgcdp->interp, ac, av, 1, client_data);
+
+      /* restore shaded mode states */
+      dgcdp->dgop->dgo_shaded_mode = save_dgo_shaded_mode;
+      dgcdp->shaded_mode_override = save_shaded_mode_override;
+      dgcdp->dmode = save_dmode;
+    }
 
     break;
   }
+
+  bu_free((genptr_t)av[0], "dgo_bot_check_leaf: av[0]");
 
   return curtree;
 }

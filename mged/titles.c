@@ -196,7 +196,7 @@ screen_vls(
   DM_SET_FGCOLOR(dmp,
 		 color_scheme->cs_edit_info[0],
 		 color_scheme->cs_edit_info[1],
-		 color_scheme->cs_edit_info[2], 1);
+		 color_scheme->cs_edit_info[2], 1, 1.0);
 
   start = bu_vls_addr( vp );
   while( *start != '\0' )  {
@@ -338,7 +338,7 @@ dotitles(struct bu_vls *overlay_vls)
 		DM_SET_FGCOLOR(dmp,
 			       color_scheme->cs_geo_label[0],
 			       color_scheme->cs_geo_label[1],
-			       color_scheme->cs_geo_label[2], 1);
+			       color_scheme->cs_geo_label[2], 1, 1.0);
 		for( i=0 ; i<num_lines ; i++ )
 			DM_DRAW_LINE_2D( dmp,
 			   GED2PM1(((int)(lines[i*2][X]*GED_MAX))),
@@ -358,7 +358,7 @@ if(mged_variables->mv_faceplate){
 	DM_SET_FGCOLOR(dmp,
 		       color_scheme->cs_other_line[0],
 		       color_scheme->cs_other_line[1],
-		       color_scheme->cs_other_line[2], 1);
+		       color_scheme->cs_other_line[2], 1, 1.0);
 	DM_DRAW_LINE_2D( dmp,
 			 GED2PM1(XMIN), GED2PM1(TITLE_YBASE-TEXT1_DY),
 			 GED2PM1(XMAX), GED2PM1(TITLE_YBASE-TEXT1_DY) );
@@ -387,7 +387,7 @@ if(mged_variables->mv_faceplate){
 	  DM_SET_FGCOLOR(dmp,
 			 color_scheme->cs_state_text1[0],
 			 color_scheme->cs_state_text1[1],
-			 color_scheme->cs_state_text1[2], 1);
+			 color_scheme->cs_state_text1[2], 1, 1.0);
 	  DM_DRAW_STRING_2D(dmp, state_str[state],
 			    GED2PM1(MENUX), GED2PM1(MENUY - MENU_DY), 1, 0 );
 	}else{
@@ -406,7 +406,7 @@ if(mged_variables->mv_faceplate){
 	      DM_SET_FGCOLOR(dmp,
 			     color_scheme->cs_state_text1[0],
 			     color_scheme->cs_state_text1[1],
-			     color_scheme->cs_state_text1[2], 1);
+			     color_scheme->cs_state_text1[2], 1, 1.0);
 	      DM_DRAW_STRING_2D( dmp, "[MATRIX]",
 				 GED2PM1(x), GED2PM1(y), 0, 0 );
 	      y += MENU_DY;
@@ -414,7 +414,7 @@ if(mged_variables->mv_faceplate){
 	    DM_SET_FGCOLOR(dmp,
 			   color_scheme->cs_state_text2[0],
 			   color_scheme->cs_state_text2[1],
-			   color_scheme->cs_state_text2[2], 1);
+			   color_scheme->cs_state_text2[2], 1, 1.0);
 	    DM_DRAW_STRING_2D( dmp,
 			DB_FULL_PATH_GET(&illump->s_fullpath,i)->d_namep,
 			GED2PM1(x), GED2PM1(y), 0, 0 );
@@ -426,7 +426,7 @@ if(mged_variables->mv_faceplate){
 	  DM_SET_FGCOLOR(dmp,
 			 color_scheme->cs_other_line[0],
 			 color_scheme->cs_other_line[1],
-			 color_scheme->cs_other_line[2], 1);
+			 color_scheme->cs_other_line[2], 1, 1.0);
 	  DM_DRAW_LINE_2D(dmp,
 			  GED2PM1(MENUXLIM), GED2PM1(y),
 			  GED2PM1(MENUXLIM), GED2PM1(YMAX));	/* vert. */
@@ -444,7 +444,7 @@ if(mged_variables->mv_faceplate){
 		DM_SET_FGCOLOR(dmp,
 			       color_scheme->cs_edit_info[0],
 			       color_scheme->cs_edit_info[1],
-			       color_scheme->cs_edit_info[2], 1);
+			       color_scheme->cs_edit_info[2], 1, 1.0);
 		DM_DRAW_LINE_2D(dmp,
 				GED2PM1(xloc-TEXT0_DY), GED2PM1(yloc+TEXT0_DY),
 				GED2PM1(xloc+TEXT0_DY), GED2PM1(yloc-TEXT0_DY));
@@ -488,7 +488,7 @@ if(mged_variables->mv_faceplate){
 	DM_SET_FGCOLOR(dmp,
 		       color_scheme->cs_status_text1[0],
 		       color_scheme->cs_status_text1[1],
-		       color_scheme->cs_status_text1[2], 1);
+		       color_scheme->cs_status_text1[2], 1, 1.0);
 	DM_DRAW_STRING_2D( dmp, bu_vls_addr(&vls),
 			   GED2PM1(TITLE_XBASE), GED2PM1(TITLE_YBASE), 1, 0 );
 } /* if faceplate !0 */
@@ -521,7 +521,7 @@ if(mged_variables->mv_faceplate){
 		  DM_SET_FGCOLOR(dmp,
 				 color_scheme->cs_status_text2[0],
 				 color_scheme->cs_status_text2[1],
-				 color_scheme->cs_status_text2[2], 1);
+				 color_scheme->cs_status_text2[2], 1, 1.0);
 		  DM_DRAW_STRING_2D( dmp, bu_vls_addr(&vls),
 				     GED2PM1(TITLE_XBASE), GED2PM1(TITLE_YBASE + TEXT1_DY), 1, 0 );
 		}
@@ -547,7 +547,7 @@ if(mged_variables->mv_faceplate){
 	    DM_SET_FGCOLOR(dmp,
 			   color_scheme->cs_status_text2[0],
 			   color_scheme->cs_status_text2[1],
-			   color_scheme->cs_status_text2[2], 1);
+			   color_scheme->cs_status_text2[2], 1, 1.0);
 	    DM_DRAW_STRING_2D( dmp, bu_vls_addr(&kp_vls),
 			       GED2PM1(TITLE_XBASE), GED2PM1(TITLE_YBASE + TEXT1_DY), 1, 0 );
 	    ss_line_not_drawn = 0;
@@ -580,7 +580,7 @@ if(mged_variables->mv_faceplate){
 	    DM_SET_FGCOLOR(dmp,
 			   color_scheme->cs_status_text2[0],
 			   color_scheme->cs_status_text2[1],
-			   color_scheme->cs_status_text2[2], 1);
+			   color_scheme->cs_status_text2[2], 1, 1.0);
 	    DM_DRAW_STRING_2D( dmp, bu_vls_addr(&vls),
 			       GED2PM1(TITLE_XBASE), GED2PM1(TITLE_YBASE + TEXT1_DY), 1, 0 );
 
@@ -594,7 +594,7 @@ if(mged_variables->mv_faceplate){
 	  DM_SET_FGCOLOR(dmp,
 			 color_scheme->cs_status_text2[0],
 			 color_scheme->cs_status_text2[1],
-			 color_scheme->cs_status_text2[2], 1);
+			 color_scheme->cs_status_text2[2], 1, 1.0);
 	  DM_DRAW_STRING_2D( dmp, bu_vls_addr(&vls),
 			     GED2PM1(TITLE_XBASE), GED2PM1(TITLE_YBASE + TEXT1_DY), 1, 0 );
 	}

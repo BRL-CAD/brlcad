@@ -153,7 +153,7 @@ draw_rect(void)
   DM_SET_FGCOLOR(dmp,
 	       color_scheme->cs_rubber_band[0],
 	       color_scheme->cs_rubber_band[1],
-	       color_scheme->cs_rubber_band[2], 1);
+	       color_scheme->cs_rubber_band[2], 1, 1.0);
   DM_SET_LINE_ATTR(dmp, rubber_band->rb_linewidth, line_style);
 
   DM_DRAW_LINE_2D(dmp,

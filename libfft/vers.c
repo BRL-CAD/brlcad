@@ -1,4 +1,4 @@
 char fft_version[] = "\
-@(#) BRL-CAD Release 6.0   BRL-CAD FFT Library\n\
-    Mon Apr  1 13:43:17 CST 2002, Compilation 1\n\
-    root@Mustang:/disk1/brlcad6.0/libfft\n";
+@(#) BRL-CAD Release ??.??   BRL-CAD FFT Library\n\
+    Fri May  7 15:18:28 EDT 2004, Compilation 1\n\
+    morrison@hole.arl.army.mil:/vld/morrison/brlcad/libfft\n";

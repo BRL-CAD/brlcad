@@ -180,26 +180,26 @@ mged_highlight_menu_item(struct menu_item *mptr, int y)
       DM_SET_FGCOLOR(dmp,
 		     color_scheme->cs_menu_text1[0],
 		     color_scheme->cs_menu_text1[1],
-		     color_scheme->cs_menu_text1[2], 1);
+		     color_scheme->cs_menu_text1[2], 1, 1.0);
       DM_DRAW_STRING_2D(dmp, "Rate",
 			GED2PM1(MENUX), GED2PM1(y-15), 0, 0);
       DM_SET_FGCOLOR(dmp,
 		     color_scheme->cs_menu_text2[0],
 		     color_scheme->cs_menu_text2[1],
-		     color_scheme->cs_menu_text2[2], 1);
+		     color_scheme->cs_menu_text2[2], 1, 1.0);
       DM_DRAW_STRING_2D(dmp, "/Abs",
 			GED2PM1(MENUX+4*40), GED2PM1(y-15), 0, 0);
     }else{
       DM_SET_FGCOLOR(dmp,
 		     color_scheme->cs_menu_text2[0],
 		     color_scheme->cs_menu_text2[1],
-		     color_scheme->cs_menu_text2[2], 1);
+		     color_scheme->cs_menu_text2[2], 1, 1.0);
       DM_DRAW_STRING_2D(dmp, "Rate/",
 			GED2PM1(MENUX), GED2PM1(y-15), 0, 0);
       DM_SET_FGCOLOR(dmp,
 		     color_scheme->cs_menu_text1[0],
 		     color_scheme->cs_menu_text1[1],
-		     color_scheme->cs_menu_text1[2], 1);
+		     color_scheme->cs_menu_text1[2], 1, 1.0);
       DM_DRAW_STRING_2D(dmp, "Abs",
 			GED2PM1(MENUX+5*40), GED2PM1(y-15), 0, 0);
     }
@@ -228,7 +228,7 @@ mmenu_display(int y_top)
   DM_SET_FGCOLOR(dmp,
 		 color_scheme->cs_menu_line[0],
 		 color_scheme->cs_menu_line[1],
-		 color_scheme->cs_menu_line[2], 1);
+		 color_scheme->cs_menu_line[2], 1, 1.0);
 #if 1
   DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, 0);
 #else
@@ -259,19 +259,19 @@ mmenu_display(int y_top)
 	  DM_SET_FGCOLOR(dmp,
 			 color_scheme->cs_menu_title[0],
 			 color_scheme->cs_menu_title[1],
-			 color_scheme->cs_menu_title[2], 1);
+			 color_scheme->cs_menu_title[2], 1, 1.0);
 	else
 	  DM_SET_FGCOLOR(dmp,
 			 color_scheme->cs_menu_text2[0],
 			 color_scheme->cs_menu_text2[1],
-			 color_scheme->cs_menu_text2[2], 1);
+			 color_scheme->cs_menu_text2[2], 1, 1.0);
 	DM_DRAW_STRING_2D(dmp, mptr->menu_string,
 			  GED2PM1(MENUX), GED2PM1(y-15), 0, 0);
       }
       DM_SET_FGCOLOR(dmp,
 		     color_scheme->cs_menu_line[0],
 		     color_scheme->cs_menu_line[1],
-		     color_scheme->cs_menu_line[2], 1);
+		     color_scheme->cs_menu_line[2], 1, 1.0);
       DM_DRAW_LINE_2D(dmp,
 		      GED2PM1(MENUXLIM), GED2PM1(y+(MENU_DY/2)),
 		      GED2PM1(XMIN), GED2PM1(y+(MENU_DY/2)));
@@ -280,7 +280,7 @@ mmenu_display(int y_top)
 	DM_SET_FGCOLOR(dmp,
 		       color_scheme->cs_menu_arrow[0],
 		       color_scheme->cs_menu_arrow[1],
-		       color_scheme->cs_menu_arrow[2], 1);
+		       color_scheme->cs_menu_arrow[2], 1, 1.0);
 	DM_DRAW_STRING_2D(dmp, "==>",
 			  GED2PM1(XMIN), GED2PM1(y-15), 0, 0);
       }
@@ -293,7 +293,7 @@ mmenu_display(int y_top)
   DM_SET_FGCOLOR(dmp,
 		 color_scheme->cs_menu_line[0],
 		 color_scheme->cs_menu_line[1],
-		 color_scheme->cs_menu_line[2], 1);
+		 color_scheme->cs_menu_line[2], 1, 1.0);
 #if 1
   DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, 0);
 #else

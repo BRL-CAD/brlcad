@@ -271,7 +271,7 @@ adcursor(void)
   DM_SET_FGCOLOR(dmp,
 		 color_scheme->cs_adc_line[0],
 		 color_scheme->cs_adc_line[1],
-		 color_scheme->cs_adc_line[2], 1);
+		 color_scheme->cs_adc_line[2], 1, 1.0);
   DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, 0);
 
   /* Horizontal */
@@ -331,7 +331,7 @@ adcursor(void)
   DM_SET_FGCOLOR(dmp,
 		 color_scheme->cs_adc_tick[0],
 		 color_scheme->cs_adc_tick[1],
-		 color_scheme->cs_adc_tick[2], 1);
+		 color_scheme->cs_adc_tick[2], 1, 1.0);
   draw_ticks(0.0);
   draw_ticks(angle1);
   draw_ticks(angle2);

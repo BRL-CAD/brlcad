@@ -40,6 +40,12 @@ struct solid  {
   unsigned char	s_color[3];	/* color to draw as */
   short	s_regionid;	/* region ID */
   unsigned int s_dlist; /* display list index */
+  fastf_t s_transparency; /* holds a transparency value in the range [0.0, 1.0] */
+  int s_dmode;         	/* draw mode: 0 - wireframe
+			 *	      1 - shaded bots and polysolids only (booleans NOT evaluated)
+			 *	      2 - shaded (booleans NOT evaluated)
+			 *	      3 - shaded (booleans evaluated) 
+			 */
 };
 
 /*

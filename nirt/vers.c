@@ -1,4 +1,4 @@
 char version[] = "\
-@(#) BRL-CAD Release 6.0   Natalie's Interactive Ray Tracer\n\
-    Mon Apr  1 13:58:48 CST 2002, Compilation 1\n\
-    root@Mustang:/disk1/brlcad6.0/nirt\n";
+@(#) BRL-CAD Release ??.??   Natalie's Interactive Ray Tracer\n\
+    Fri May  7 15:32:29 EDT 2004, Compilation 1\n\
+    morrison@hole.arl.army.mil:/vld/morrison/brlcad/nirt\n";

@@ -94,7 +94,7 @@ noinst_HEADERS = \
 
 INCLUDES = @GL_CFLAGS@ @X_CFLAGS@ -I$(top_srcdir)/h
 
-mged_LDADD = @DM@ @FB@ @ITCL_LIBS@ @ITK_LIBS@ @SYSV@ @TERMIO@ @TK_LIBS@ @WDB@ @GL_LIBS@
+mged_LDADD = @DM@ @FB@ @ITCL_LIBS@ @ITK_LIBS@ @SYSV@ @TERMIO@ @TK_LIBS@ @WDB@ @GL_LIBS@ @PNG_LIBS@
 
 cad_parea_LDADD = @BU@
 cad_boundp_LDADD = @BU@

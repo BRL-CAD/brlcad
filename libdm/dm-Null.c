@@ -41,6 +41,8 @@ struct dm dm_Null = {
   Nu_int0,
   Nu_int0,
   Nu_int0,
+  Nu_int0,
+  Nu_int0,
   0,
   0,				/* no displaylist */
   0,				/* no stereo */
@@ -67,8 +69,10 @@ struct dm dm_Null = {
   0,				/* no debugging */
   0,				/* no perspective */
   0,				/* no lighting */
+  0,				/* no transparency */
   0,				/* no zbuffer */
   0,				/* no zclipping */
+  1,                            /* clear back buffer after drawing and swap */
   0				/* Tcl interpreter */
 };
 

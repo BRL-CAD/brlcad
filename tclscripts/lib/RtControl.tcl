@@ -22,15 +22,15 @@
 #	class.
 #
 
-itk::usual RtControl {
+::itk::usual RtControl {
     keep -tearoff
 }
 
 #XXX This should work.
 option add *RtControl*tearoff 0 widgetDefault
 
-class RtControl {
-    inherit itk::Toplevel
+::itcl::class RtControl {
+    inherit ::itk::Toplevel
 
     itk_option define -olist olist Olist {}
     itk_option define -omode omode Omode {}
@@ -49,6 +49,7 @@ class RtControl {
     public method deactivate {}
     public method deactivate_adv {}
     public method center {w gs {cw ""}}
+    public method update_fb_mode {}
 
     private method build_adv {}
     private method set_src {pane}
@@ -107,7 +108,7 @@ class RtControl {
     constructor {args} {}
 }
 
-body RtControl::constructor {args} {
+::itcl::body RtControl::constructor {args} {
     # revive a few ignored options
     #itk_option add hull.screen
 
@@ -143,7 +144,7 @@ body RtControl::constructor {args} {
     } {
 	usual
     }
-    bind $itk_component(fbM) <<MenuSelect>> [code $this menuStatusCB %W]
+    bind $itk_component(fbM) <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
 
     $itk_component(menubar) add cascade -label "Framebuffer" -underline 0 -menu $itk_component(fbM)
 
@@ -157,15 +158,15 @@ body RtControl::constructor {args} {
 	$itk_component(menubar) add cascade -label "Objects" -underline 0 -menu $itk_component(objM)
     }
 
-    $itk_component(fbM) add radiobutton -value 2 -variable [scope fb_mode] \
+    $itk_component(fbM) add radiobutton -value 2 -variable [::itcl::scope fb_mode] \
 	    -label "Overlay" -underline 0 \
-	    -command [code $this fb_mode]
-    $itk_component(fbM) add radiobutton -value 1 -variable [scope fb_mode] \
+	    -command [::itcl::code $this fb_mode]
+    $itk_component(fbM) add radiobutton -value 1 -variable [::itcl::scope fb_mode] \
 	    -label "Underlay" -underline 0 \
-	    -command [code $this fb_mode]
-    $itk_component(fbM) add radiobutton -value 0 -variable [scope fb_mode] \
+	    -command [::itcl::code $this fb_mode]
+    $itk_component(fbM) add radiobutton -value 0 -variable [::itcl::scope fb_mode] \
 	    -label "Inactive" -underline 0 \
-	    -command [code $this fb_mode]
+	    -command [::itcl::code $this fb_mode]
 
     itk_component add srcL {
 	::label $itk_interior.srcL -text "Source" -anchor e
@@ -180,20 +181,20 @@ body RtControl::constructor {args} {
 	rename -state -sourceState sourceState SourceState
     }
     set srcM [$itk_component(srcCB) component menu]
-    bind $srcM <<MenuSelect>> [code $this menuStatusCB %W]
+    bind $srcM <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
 
     # populate source's combobox menu
     $itk_component(srcCB) add command -label "Active Pane" \
-	    -command [code $this set_src active]
+	    -command [::itcl::code $this set_src active]
     $itk_component(srcCB) add separator
     $itk_component(srcCB) add command -label "Upper Left" \
-	    -command [code $this set_src ul]
+	    -command [::itcl::code $this set_src ul]
     $itk_component(srcCB) add command -label "Upper Right" \
-	    -command [code $this set_src ur]
+	    -command [::itcl::code $this set_src ur]
     $itk_component(srcCB) add command -label "Lower Left" \
-	    -command [code $this set_src ll]
+	    -command [::itcl::code $this set_src ll]
     $itk_component(srcCB) add command -label "Lower Right" \
-	    -command [code $this set_src lr]
+	    -command [::itcl::code $this set_src lr]
 
     itk_component add destL {
 	::label $itk_interior.destL -text "Destination" -anchor e
@@ -208,24 +209,24 @@ body RtControl::constructor {args} {
     }
     set destM [$itk_component(destCB) component menu]
     set destE [$itk_component(destCB) component entry]
-    bind $destM <<MenuSelect>> [code $this menuStatusCB %W]
-    bind $destE <Enter> [code $this enterDestCB]
-    bind $destE <Leave> [code $this leaveCB]
+    bind $destM <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
+    bind $destE <Enter> [::itcl::code $this enterDestCB]
+    bind $destE <Leave> [::itcl::code $this leaveCB]
 
     # populate destination's combobox menu
     $itk_component(destCB) add command -label "Active Pane" \
-	    -command [code $this set_dest active]
+	    -command [::itcl::code $this set_dest active]
     $itk_component(destCB) add separator
     $itk_component(destCB) add command -label "Upper Left" \
-	    -command [code $this set_dest ul]
+	    -command [::itcl::code $this set_dest ul]
     $itk_component(destCB) add command -label "Upper Right" \
-	    -command [code $this set_dest ur]
+	    -command [::itcl::code $this set_dest ur]
     $itk_component(destCB) add command -label "Lower Left" \
-	    -command [code $this set_dest ll]
+	    -command [::itcl::code $this set_dest ll]
     $itk_component(destCB) add command -label "Lower Right" \
-	    -command [code $this set_dest lr]
+	    -command [::itcl::code $this set_dest lr]
 
-#    bind [$itk_component(destCB) component entry] <KeyRelease> [code $this cook_dest]
+#    bind [$itk_component(destCB) component entry] <KeyRelease> [::itcl::code $this cook_dest]
 
     itk_component add sizeL {
 	::label $itk_interior.sizeL -text "Size" -anchor e
@@ -240,25 +241,25 @@ body RtControl::constructor {args} {
     }
     set sizeM [$itk_component(sizeCB) component menu]
     set sizeE [$itk_component(sizeCB) component entry]
-    bind $sizeM <<MenuSelect>> [code $this menuStatusCB %W]
-    bind $sizeE <Enter> [code $this enterSizeCB]
-    bind $sizeE <Leave> [code $this leaveCB]
+    bind $sizeM <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
+    bind $sizeE <Enter> [::itcl::code $this enterSizeCB]
+    bind $sizeE <Leave> [::itcl::code $this leaveCB]
 
     # populate size's combobox
     $itk_component(sizeCB) add command -label "Size of Pane" \
-	    -command [code $this set_size "Size of Pane"]
+	    -command [::itcl::code $this set_size "Size of Pane"]
     $itk_component(sizeCB) add command -label "128" \
-	    -command [code $this set_size 128]
+	    -command [::itcl::code $this set_size 128]
     $itk_component(sizeCB) add command -label "256" \
-	    -command [code $this set_size 256]
+	    -command [::itcl::code $this set_size 256]
     $itk_component(sizeCB) add command -label "512" \
-	    -command [code $this set_size 512]
+	    -command [::itcl::code $this set_size 512]
     $itk_component(sizeCB) add command -label "640x480" \
-	    -command [code $this set_size "640x480"]
+	    -command [::itcl::code $this set_size "640x480"]
     $itk_component(sizeCB) add command -label "720x486" \
-	    -command [code $this set_size "720x486"]
+	    -command [::itcl::code $this set_size "720x486"]
     $itk_component(sizeCB) add command -label "1024" \
-	    -command [code $this set_size 1024]
+	    -command [::itcl::code $this set_size 1024]
 
     itk_component add bgcolorL {
 	::label $itk_interior.bgcolorL -text "Background Color" -anchor e
@@ -273,66 +274,66 @@ body RtControl::constructor {args} {
     }
     set colorM [$itk_component(bgcolorCB) component menu]
     set colorE [$itk_component(bgcolorCB) component entry]
-    bind $colorM <<MenuSelect>> [code $this menuStatusCB %W]
-    bind $colorE <Enter> [code $this enterColorCB]
-    bind $colorE <Leave> [code $this leaveCB]
+    bind $colorM <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
+    bind $colorE <Enter> [::itcl::code $this enterColorCB]
+    bind $colorE <Leave> [::itcl::code $this leaveCB]
 
     itk_component add advB {
 	::button $itk_interior.advB -relief raised -text "Advanced Settings..." \
-		-command [code $this activate_adv]
+		-command [::itcl::code $this activate_adv]
     } {
 	usual
     }
-    bind $itk_component(advB) <Enter> [code $this enterAdvCB]
-    bind $itk_component(advB) <Leave> [code $this leaveCB]
+    bind $itk_component(advB) <Enter> [::itcl::code $this enterAdvCB]
+    bind $itk_component(advB) <Leave> [::itcl::code $this leaveCB]
 
     itk_component add okB {
 	::button $itk_interior.okB  -relief raised -text "Ok" \
-		-command [code $this ok]
+		-command [::itcl::code $this ok]
     } {
 	usual
     }
-    bind $itk_component(okB) <Enter> [code $this enterOkCB]
-    bind $itk_component(okB) <Leave> [code $this leaveCB]
+    bind $itk_component(okB) <Enter> [::itcl::code $this enterOkCB]
+    bind $itk_component(okB) <Leave> [::itcl::code $this leaveCB]
 
     itk_component add raytraceB {
 	::button $itk_interior.raytraceB  -relief raised -text "Raytrace" \
-		-command [code $this raytrace]
+		-command [::itcl::code $this raytrace]
     } {
 	usual
     }
-    bind $itk_component(raytraceB) <Enter> [code $this enterRaytraceCB]
-    bind $itk_component(raytraceB) <Leave> [code $this leaveCB]
+    bind $itk_component(raytraceB) <Enter> [::itcl::code $this enterRaytraceCB]
+    bind $itk_component(raytraceB) <Leave> [::itcl::code $this leaveCB]
 
     itk_component add abortB {
 	::button $itk_interior.abortB  -relief raised -text "Abort" \
-		-command [code $this abort]
+		-command [::itcl::code $this abort]
     } {
 	usual
     }
-    bind $itk_component(abortB) <Enter> [code $this enterAbortCB]
-    bind $itk_component(abortB) <Leave> [code $this leaveCB]
+    bind $itk_component(abortB) <Enter> [::itcl::code $this enterAbortCB]
+    bind $itk_component(abortB) <Leave> [::itcl::code $this leaveCB]
 
     itk_component add clearB {
 	::button $itk_interior.clearB  -relief raised -text "Clear" \
-		-command [code $this clear]
+		-command [::itcl::code $this clear]
     } {
 	usual
     }
-    bind $itk_component(clearB) <Enter> [code $this enterClearCB]
-    bind $itk_component(clearB) <Leave> [code $this leaveCB]
+    bind $itk_component(clearB) <Enter> [::itcl::code $this enterClearCB]
+    bind $itk_component(clearB) <Leave> [::itcl::code $this leaveCB]
 
     itk_component add dismissB {
 	::button $itk_interior.dismissB  -relief raised -text "Dismiss" \
-		-command [code $this deactivate]
+		-command [::itcl::code $this deactivate]
     } {
 	usual
     }
-    bind $itk_component(dismissB) <Enter> [code $this enterDismissCB]
-    bind $itk_component(dismissB) <Leave> [code $this leaveCB]
+    bind $itk_component(dismissB) <Enter> [::itcl::code $this enterDismissCB]
+    bind $itk_component(dismissB) <Leave> [::itcl::code $this leaveCB]
 
     itk_component add statusL {
-	::label $itk_interior.statusL -anchor w -relief sunken -bd 2 -textvar [scope msg]
+	::label $itk_interior.statusL -anchor w -relief sunken -bd 2 -textvar [::itcl::scope msg]
     } {
 	usual
     }
@@ -375,17 +376,17 @@ body RtControl::constructor {args} {
     configure -sourceState disabled -jitterState disabled -lmodelState disabled
 
     # Link the ComboBox's entry widgets to this class' variables
-    $itk_component(sizeCB) configure -entryvariable [scope itk_option(-size)]
-    $itk_component(bgcolorCB) configure -entryvariable [scope itk_option(-color)]
-    $itk_component(destCB) configure -entryvariable [scope itk_option(-dest)]
+    $itk_component(sizeCB) configure -entryvariable [::itcl::scope itk_option(-size)]
+    $itk_component(bgcolorCB) configure -entryvariable [::itcl::scope itk_option(-color)]
+    $itk_component(destCB) configure -entryvariable [::itcl::scope itk_option(-dest)]
 
     wm withdraw $itk_component(hull)
     wm title $itk_component(hull) "Raytrace Control Panel"
 }
 
-itcl::body RtControl::build_adv {} {
+::itcl::body RtControl::build_adv {} {
     itk_component add adv {
-	toplevel $itk_interior.adv
+	::toplevel $itk_interior.adv
     }
 
     itk_component add adv_gridF1 {
@@ -408,12 +409,12 @@ itcl::body RtControl::build_adv {} {
 
     itk_component add adv_nprocE {
 	::entry $itk_component(adv).nprocE -relief sunken -bd 2 -width 2 \
-		-textvar [scope itk_option(-nproc)]
+		-textvar [::itcl::scope itk_option(-nproc)]
     } {
 	usual
     }
-    bind $itk_component(adv_nprocE) <Enter> [code $this enterNProcCB]
-    bind $itk_component(adv_nprocE) <Leave> [code $this leaveAdvCB]
+    bind $itk_component(adv_nprocE) <Enter> [::itcl::code $this enterNProcCB]
+    bind $itk_component(adv_nprocE) <Leave> [::itcl::code $this leaveAdvCB]
 
     itk_component add adv_hsampleL {
 	::label $itk_component(adv).hsampleL -text "Hypersample" -anchor e
@@ -423,12 +424,12 @@ itcl::body RtControl::build_adv {} {
 
     itk_component add adv_hsampleE {
 	::entry $itk_component(adv).hsampleE -relief sunken -bd 2 -width 2 \
-		-textvar [scope itk_option(-hsample)]
+		-textvar [::itcl::scope itk_option(-hsample)]
     } {
 	usual
     }
-    bind $itk_component(adv_hsampleE) <Enter> [code $this enterHSampleCB]
-    bind $itk_component(adv_hsampleE) <Leave> [code $this leaveAdvCB]
+    bind $itk_component(adv_hsampleE) <Enter> [::itcl::code $this enterHSampleCB]
+    bind $itk_component(adv_hsampleE) <Leave> [::itcl::code $this leaveAdvCB]
 
     itk_component add adv_jitterL {
 	::label $itk_component(adv).jitterL -text "Jitter" -anchor e
@@ -443,17 +444,17 @@ itcl::body RtControl::build_adv {} {
 	rename -state -jitterState jitterState JitterState
     }
     set jitterM [$itk_component(adv_jitterCB) component menu]
-    bind $jitterM <<MenuSelect>> [code $this menuStatusAdvCB %W]
+    bind $jitterM <<MenuSelect>> [::itcl::code $this menuStatusAdvCB %W]
 
     # populate jitter's combobox menu
     $itk_component(adv_jitterCB) add command -label "None" \
-	    -command [code $this set_jitter 0]
+	    -command [::itcl::code $this set_jitter 0]
     $itk_component(adv_jitterCB) add command -label "Cell" \
-	    -command [code $this set_jitter 1]
+	    -command [::itcl::code $this set_jitter 1]
     $itk_component(adv_jitterCB) add command -label "Frame" \
-	    -command [code $this set_jitter 2]
+	    -command [::itcl::code $this set_jitter 2]
     $itk_component(adv_jitterCB) add command -label "Both" \
-	    -command [code $this set_jitter 3]
+	    -command [::itcl::code $this set_jitter 3]
 
     itk_component add adv_lmodelL {
 	::label $itk_component(adv).lightL -text "Light Model" -anchor e
@@ -468,21 +469,21 @@ itcl::body RtControl::build_adv {} {
 	rename -state -lmodelState lmodelState LmodelState
     }
     set lmodelM [$itk_component(adv_lmodelCB) component menu]
-    bind $lmodelM <<MenuSelect>> [code $this menuStatusAdvCB %W]
+    bind $lmodelM <<MenuSelect>> [::itcl::code $this menuStatusAdvCB %W]
 
     # populate lmodel's combobox menu
     $itk_component(adv_lmodelCB) add command -label "Full" \
-	    -command [code $this set_lmodel 0]
+	    -command [::itcl::code $this set_lmodel 0]
     $itk_component(adv_lmodelCB) add command -label "Diffuse" \
-	    -command [code $this set_lmodel 1]
+	    -command [::itcl::code $this set_lmodel 1]
     $itk_component(adv_lmodelCB) add command -label "Surface Normals" \
-	    -command [code $this set_lmodel 2]
+	    -command [::itcl::code $this set_lmodel 2]
     $itk_component(adv_lmodelCB) add command -label "Diffuse - 3 light" \
-	    -command [code $this set_lmodel 3]
+	    -command [::itcl::code $this set_lmodel 3]
     $itk_component(adv_lmodelCB) add command -label "Curvature - inverse radius" \
-	    -command [code $this set_lmodel 4]
+	    -command [::itcl::code $this set_lmodel 4]
     $itk_component(adv_lmodelCB) add command -label "Curvature - direction vector" \
-	    -command [code $this set_lmodel 5]
+	    -command [::itcl::code $this set_lmodel 5]
 
     itk_component add adv_otherL {
 	::label $itk_component(adv).otherL -text "Other Options" -anchor e
@@ -492,24 +493,24 @@ itcl::body RtControl::build_adv {} {
 
     itk_component add adv_otherE {
 	::entry $itk_component(adv).otherE -relief sunken -bd 2 -width 2 \
-		-textvar [scope itk_option(-other)]
+		-textvar [::itcl::scope itk_option(-other)]
     } {
 	usual
     }
-    bind $itk_component(adv_otherE) <Enter> [code $this enterOtherCB]
-    bind $itk_component(adv_otherE) <Leave> [code $this leaveAdvCB]
+    bind $itk_component(adv_otherE) <Enter> [::itcl::code $this enterOtherCB]
+    bind $itk_component(adv_otherE) <Leave> [::itcl::code $this leaveAdvCB]
 
     itk_component add adv_dismissB {
 	::button $itk_component(adv).buttonB -relief raised -text "Dismiss" \
-		-command [code $this deactivate_adv]
+		-command [::itcl::code $this deactivate_adv]
     } {
 	usual
     }
-    bind $itk_component(adv_dismissB) <Enter> [code $this enterDismissAdvCB]
-    bind $itk_component(adv_dismissB) <Leave> [code $this leaveAdvCB]
+    bind $itk_component(adv_dismissB) <Enter> [::itcl::code $this enterDismissAdvCB]
+    bind $itk_component(adv_dismissB) <Leave> [::itcl::code $this leaveAdvCB]
 
     itk_component add adv_statusL {
-	::label $itk_component(adv).statusL -anchor w -relief sunken -bd 2 -textvar [scope msg_adv]
+	::label $itk_component(adv).statusL -anchor w -relief sunken -bd 2 -textvar [::itcl::scope msg_adv]
     } {
 	usual
     }
@@ -549,35 +550,35 @@ itcl::body RtControl::build_adv {} {
     wm title $itk_component(adv) "Advanced Settings"
 }
 
-configbody RtControl::nproc {
+::itcl::configbody RtControl::nproc {
     if {![regexp "^\[0-9\]+$" $itk_option(-nproc)]} {
 	error "Bad value - $itk_option(-nproc)"
     }
 }
 
-configbody RtControl::hsample {
+::itcl::configbody RtControl::hsample {
     if {![regexp "^\[0-9\]+$" $itk_option(-hsample)]} {
 	error "Bad value - $itk_option(-hsample)"
     }
 }
 
-configbody RtControl::jitter {
+::itcl::configbody RtControl::jitter {
     set_jitter $itk_option(-jitter)
 }
 
-configbody RtControl::lmodel {
+::itcl::configbody RtControl::lmodel {
     set_lmodel $itk_option(-lmodel)
 }
 
-configbody RtControl::size {
+::itcl::configbody RtControl::size {
     set_size $itk_option(-size)
 }
 
-configbody RtControl::color {
+::itcl::configbody RtControl::color {
     eval $itk_component(bgcolorCB) setColor $itk_option(-color)
 }
 
-configbody RtControl::mged {
+::itcl::configbody RtControl::mged {
     if {$itk_option(-mged) == ""} {
 	return
     }
@@ -585,7 +586,7 @@ configbody RtControl::mged {
     update_control_panel
 }
 
-itcl::body RtControl::activate {} {
+::itcl::body RtControl::activate {} {
     raise $itk_component(hull)
 
     # center on screen
@@ -596,7 +597,7 @@ itcl::body RtControl::activate {} {
     wm deiconify $itk_component(hull)
 }
 
-itcl::body RtControl::activate_adv {} {
+::itcl::body RtControl::activate_adv {} {
     raise $itk_component(adv)
 
     # center over control panel
@@ -607,18 +608,18 @@ itcl::body RtControl::activate_adv {} {
     wm deiconify $itk_component(adv)
 }
 
-itcl::body RtControl::deactivate {} {
+::itcl::body RtControl::deactivate {} {
     set win_geom [wm geometry $itk_component(hull)]
     wm withdraw $itk_component(hull)
     deactivate_adv
 }
 
-itcl::body RtControl::deactivate_adv {} {
+::itcl::body RtControl::deactivate_adv {} {
     set win_geom_adv [wm geometry $itk_component(adv)]
     wm withdraw $itk_component(adv)
 }
 
-itcl::body RtControl::center {w gs {cw ""}} {
+::itcl::body RtControl::center {w gs {cw ""}} {
     upvar $gs geom
 
     update idletasks
@@ -635,7 +636,12 @@ itcl::body RtControl::center {w gs {cw ""}} {
     set geom +$x+$y
 }
 
-itcl::body RtControl::set_src {pane} {
+::itcl::body RtControl::update_fb_mode {} {
+    # update the Inactive/Underlay/Overlay radiobutton
+    set fb_mode [$itk_option(-mged) component $itk_option(-dest) fb_active]
+}
+
+::itcl::body RtControl::set_src {pane} {
     if {[catch {$itk_option(-mged) isa Mged} result]} {
 	error "Raytrace Control Panel($this) is not associated with an Mged object"
     }
@@ -647,7 +653,7 @@ itcl::body RtControl::set_src {pane} {
     $itk_component(srcCB) setText $pane
 }
 
-itcl::body RtControl::set_dest {pane} {
+::itcl::body RtControl::set_dest {pane} {
     if {[catch {$itk_option(-mged) isa Mged} result]} {
 	error "Raytrace Control Panel($this) is not associated with an Mged object"
     }
@@ -663,7 +669,7 @@ itcl::body RtControl::set_dest {pane} {
     set fb_mode [$itk_option(-mged) component $itk_option(-dest) fb_active]
 }
 
-itcl::body RtControl::set_size {size} {
+::itcl::body RtControl::set_size {size} {
     if {[catch {$itk_option(-mged) isa Mged} result]} {
 	error "Raytrace Control Panel($this) is not associated with an Mged object"
     }
@@ -679,7 +685,7 @@ itcl::body RtControl::set_size {size} {
     set itk_option(-size) $size
 }
 
-itcl::body RtControl::set_jitter {j} {
+::itcl::body RtControl::set_jitter {j} {
     switch -- $j {
 	0 {
 	    set itk_option(-jitter) 0
@@ -703,7 +709,7 @@ itcl::body RtControl::set_jitter {j} {
     }
 }
 
-itcl::body RtControl::set_lmodel {lm} {
+::itcl::body RtControl::set_lmodel {lm} {
     switch -- $lm {
 	0 {
 	    set itk_option(-lmodel) 0
@@ -740,7 +746,7 @@ itcl::body RtControl::set_lmodel {lm} {
 # Return a port number if possible. Otherwise, return
 # whatever the user specified (i.e. it's already cooked)
 #
-itcl::body RtControl::cook_dest {dest} {
+::itcl::body RtControl::cook_dest {dest} {
     switch -- $dest {
 	ul -
 	ur -
@@ -761,12 +767,12 @@ itcl::body RtControl::cook_dest {dest} {
     }
 }
 
-itcl::body RtControl::fb_mode {} {
+::itcl::body RtControl::fb_mode {} {
     set pane [getPane]
     $itk_option(-mged) component $pane fb_active $fb_mode
 }
 
-itcl::body RtControl::ok {} {
+::itcl::body RtControl::ok {} {
     if {[catch {$itk_option(-mged) isa Mged} result]} {
 	error "Raytrace Control Panel($this) is not associated with an Mged object"
     }
@@ -775,7 +781,7 @@ itcl::body RtControl::ok {} {
     deactivate
 }
 
-itcl::body RtControl::raytrace {} {
+::itcl::body RtControl::raytrace {} {
     if {[catch {$itk_option(-mged) isa Mged} result]} {
 	error "Raytrace Control Panel($this) is not associated with an Mged object"
     }
@@ -830,7 +836,7 @@ itcl::body RtControl::raytrace {} {
     }
 }
 
-itcl::body RtControl::abort {} {
+::itcl::body RtControl::abort {} {
     if {[catch {$itk_option(-mged) isa Mged} result]} {
 	error "Raytrace Control Panel($this) is not associated with an Mged object"
     }
@@ -838,7 +844,7 @@ itcl::body RtControl::abort {} {
     $itk_option(-mged) component [$itk_component(srcCB) getText] rtabort
 }
 
-itcl::body RtControl::clear {} {
+::itcl::body RtControl::clear {} {
     if {[catch {$itk_option(-mged) isa Mged} result]} {
 	error "Raytrace Control Panel($this) is not associated with an Mged object"
     }
@@ -857,7 +863,7 @@ itcl::body RtControl::clear {} {
     }
 }
 
-itcl::body RtControl::get_color {} {
+::itcl::body RtControl::get_color {} {
     if {$itk_option(-color) != ""} {
 	set result [regexp "^\[0-9\]+\[ \]+\[0-9\]+\[ \]+\[0-9\]+$" $itk_option(-color)]
 	if {!$result} {
@@ -868,7 +874,7 @@ itcl::body RtControl::get_color {} {
     return $itk_option(-color)
 }
 
-itcl::body RtControl::get_size {} {
+::itcl::body RtControl::get_size {} {
     return $size
 }
 
@@ -878,7 +884,7 @@ itcl::body RtControl::get_size {} {
 # the user (i.e. hostname:port, or filename). No error
 # checking is performed on user specified strings.
 #
-itcl::body RtControl::get_cooked_dest {} {
+::itcl::body RtControl::get_cooked_dest {} {
     set dest $itk_option(-dest)
     if {$dest == ""} {
 	# use the active pane
@@ -907,17 +913,17 @@ itcl::body RtControl::get_cooked_dest {} {
     return $cooked_dest
 }
 
-itcl::body RtControl::update_control_panel {} {
+::itcl::body RtControl::update_control_panel {} {
     if {[catch {$itk_option(-mged) isa Mged} result]} {
 	error "Raytrace Control Panel($this) is not associated with an Mged object"
     }
 
-    if {![$itk_option(-mged) fb_active]} {
+#    if {![$itk_option(-mged) fb_active]} {
 	# Framebuffer is not active, so activate it
 	# by putting it in "Underlay" mode.
-	$itk_option(-mged) fb_active 1
-	set fb_mode 1
-    }
+#	$itk_option(-mged) fb_active 1
+#	set fb_mode 1
+#    }
 
     set pane [$itk_option(-mged) pane]
     $itk_component(srcCB) setText $pane
@@ -929,7 +935,7 @@ itcl::body RtControl::update_control_panel {} {
     eval $itk_component(bgcolorCB) setColor [$itk_option(-mged) bg]
 }
 
-itcl::body RtControl::menuStatusCB {w} {
+::itcl::body RtControl::menuStatusCB {w} {
     if {[catch {$w entrycget active -label} op]} {
 	# probably a tearoff entry
 	set op ""
@@ -1046,15 +1052,15 @@ itcl::body RtControl::menuStatusCB {w} {
     }
 }
 
-itcl::body RtControl::leaveCB {} {
+::itcl::body RtControl::leaveCB {} {
     set msg ""
 }
 
-itcl::body RtControl::enterAdvCB {} {
+::itcl::body RtControl::enterAdvCB {} {
     set msg "Activate the advanced settings dialog"
 }
 
-itcl::body RtControl::enterOkCB {} {
+::itcl::body RtControl::enterOkCB {} {
     if {[catch {$itk_option(-mged) isa Mged} result]} {
 	set msg "Not associated with an Mged object"
     } else {
@@ -1062,7 +1068,7 @@ itcl::body RtControl::enterOkCB {} {
     }
 }
 
-itcl::body RtControl::enterRaytraceCB {} {
+::itcl::body RtControl::enterRaytraceCB {} {
     if {[catch {$itk_option(-mged) isa Mged} result]} {
 	set msg "Not associated with an Mged object"
     } else {
@@ -1070,7 +1076,7 @@ itcl::body RtControl::enterRaytraceCB {} {
     }
 }
 
-itcl::body RtControl::enterAbortCB {} {
+::itcl::body RtControl::enterAbortCB {} {
     if {[catch {$itk_option(-mged) isa Mged} result]} {
 	set msg "Not associated with an Mged object"
     } else {
@@ -1078,7 +1084,7 @@ itcl::body RtControl::enterAbortCB {} {
     }
 }
 
-itcl::body RtControl::enterClearCB {} {
+::itcl::body RtControl::enterClearCB {} {
     if {[catch {$itk_option(-mged) isa Mged} result]} {
 	set msg "Not associated with an Mged object"
     } else {
@@ -1086,19 +1092,19 @@ itcl::body RtControl::enterClearCB {} {
     }
 }
 
-itcl::body RtControl::enterDismissCB {} {
+::itcl::body RtControl::enterDismissCB {} {
     set msg "Dismiss the raytrace control panel"
 }
 
-itcl::body RtControl::enterDestCB {} {
+::itcl::body RtControl::enterDestCB {} {
     set msg "Specify a destination (i.e. framebuffer or file)"
 }
 
-itcl::body RtControl::enterSizeCB {} {
+::itcl::body RtControl::enterSizeCB {} {
     set msg "Specify an image size" 
 }
 
-itcl::body RtControl::enterColorCB {} {
+::itcl::body RtControl::enterColorCB {} {
     set msg "Specify an RGB color"
 }
 
@@ -1111,7 +1117,7 @@ itcl::body RtControl::enterColorCB {} {
 #        file or some other framebuffer) then the active
 #        pane is returned.
 #
-itcl::body RtControl::getPane {} {
+::itcl::body RtControl::getPane {} {
     if {[catch {$itk_option(-mged) isa Mged}]} {
 	error "Not associated with an Mged object"
     }
@@ -1130,7 +1136,7 @@ itcl::body RtControl::getPane {} {
     }
 }
 
-itcl::body RtControl::getPaneStr {} {
+::itcl::body RtControl::getPaneStr {} {
     if {[catch {getPane} result]} {
 	return $result
     }
@@ -1155,7 +1161,7 @@ itcl::body RtControl::getPaneStr {} {
 #
 #
 #
-itcl::body RtControl::getSize {} {
+::itcl::body RtControl::getSize {} {
     if {[catch {$itk_option(-mged) isa Mged} result]} {
 	error "Not associated with an Mged object"
     }
@@ -1191,7 +1197,7 @@ itcl::body RtControl::getSize {} {
     return "[lindex $size 0]x[lindex $size 1]"
 }
 
-itcl::body RtControl::menuStatusAdvCB {w} {
+::itcl::body RtControl::menuStatusAdvCB {w} {
     if {[catch {$w entrycget active -label} op]} {
 	# probably a tearoff entry
 	set op ""
@@ -1234,22 +1240,22 @@ itcl::body RtControl::menuStatusAdvCB {w} {
     }
 }
 
-itcl::body RtControl::leaveAdvCB {} {
+::itcl::body RtControl::leaveAdvCB {} {
     set msg_adv ""
 }
 
-itcl::body RtControl::enterDismissAdvCB {} {
+::itcl::body RtControl::enterDismissAdvCB {} {
     set msg_adv "Dismiss the advanced settings dialog"
 }
 
-itcl::body RtControl::enterNProcCB {} {
+::itcl::body RtControl::enterNProcCB {} {
     set msg_adv "Requested number of processors"
 }
 
-itcl::body RtControl::enterHSampleCB {} {
+::itcl::body RtControl::enterHSampleCB {} {
     set msg_adv "Extra rays to fire per pixel"
 }
 
-itcl::body RtControl::enterOtherCB {} {
+::itcl::body RtControl::enterOtherCB {} {
     set msg_adv "Other rt options"
 }

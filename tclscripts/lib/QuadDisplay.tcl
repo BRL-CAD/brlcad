@@ -1,4 +1,4 @@
-##                 Q U A D D I S P L A Y . T C L
+#                 Q U A D D I S P L A Y . T C L
 #
 # Author -
 #	Bob Parker
@@ -30,7 +30,8 @@ class QuadDisplay {
     inherit iwidgets::Panedwindow
 
     itk_option define -pane pane Pane ur
-    itk_option define -multi_pane multi_pane Multi_pane 1
+    itk_option define -multi_pane multi_pane Multi_pane 0
+    itk_option define -paneCallback paneCallback PaneCallback ""
 
     constructor {args} {}
     destructor {}
@@ -38,17 +39,19 @@ class QuadDisplay {
     public method pane {args}
     public method multi_pane {args}
     public method refresh {}
-    public method refreshall {}
+    public method refreshAll {}
 
     # methods for controlling the view object
     public method ae {args}
     public method arot {args}
+    public method base2local {}
     public method center {args}
     public method coord {args}
     public method eye {args}
     public method eye_pos {args}
     public method invSize {args}
     public method keypoint {args}
+    public method local2base {}
     public method lookat {args}
     public method model2view {args}
     public method mrot {args}
@@ -64,53 +67,88 @@ class QuadDisplay {
     public method size {args}
     public method slew {args}
     public method tra {args}
+    public method units {args}
     public method view2model {args}
     public method vrot {args}
     public method vtra {args}
     public method zoom {args}
 
     public method autoview {{gindex 0}}
-    public method autoviewall {{gindex 0}}
+    public method autoviewAll {{gindex 0}}
 
     public method add {glist}
-    public method addall {glist}
+    public method addAll {glist}
     public method remove {glist}
-    public method removeall {glist}
+    public method removeAll {glist}
     public method contents {}
 
     public method bg {args}
+    public method bgAll {args}
+    public method bounds {args}
+    public method boundsAll {args}
     public method fb_active {args}
     public method fb_observe {args}
+    public method depthMask {args}
     public method light {args}
     public method linestyle {args}
     public method linewidth {args}
     public method listen {args}
-    public method mouse_nirt {x y}
     public method perspective {args}
     public method perspective_angle {args}
+    public method sync {}
+    public method png {args}
+    public method mouse_nirt {x y}
     public method nirt {args}
+    public method vnirt {vx vy}
     public method qray {args}
     public method rt {args}
     public method rtabort {{gi 0}}
     public method rtcheck {args}
     public method rtedge {args}
+    public method transparency {args}
     public method zbuffer {args}
     public method zclip {args}
 
-    public method resetall {}
+    public method toggle_modelAxesEnable {args}
+    public method toggle_modelAxesEnableAll {}
+    public method toggle_modelAxesTickEnable {args}
+    public method toggle_modelAxesTickEnableAll {}
+    public method toggle_viewAxesEnable {args}
+    public method toggle_viewAxesEnableAll {}
+    public method toggle_centerDotEnable {args}
+    public method toggle_centerDotEnableAll {}
+
+    public method resetAll {}
     public method default_views {}
     public method attach_view {}
-    public method attach_viewall {}
+    public method attach_viewAll {}
     public method attach_drawable {dg}
-    public method attach_drawableall {dg}
+    public method attach_drawableAll {dg}
     public method detach_view {}
-    public method detach_viewall {}
+    public method detach_viewAll {}
     public method detach_drawable {dg}
-    public method detach_drawableall {dg}
+    public method detach_drawableAll {dg}
 
-    public method lightall {args}
-    public method zbufferall {args}
-    public method zclipall {args}
+    public method lightAll {args}
+    public method transparencyAll {args}
+    public method zbufferAll {args}
+    public method zclipAll {args}
+
+    public method setCenterDotEnable {args}
+    public method setViewAxesEnable {args}
+    public method setModelAxesEnable {args}
+    public method setViewAxesPosition {args}
+    public method setModelAxesPosition {args}
+    public method setModelAxesTickEnable {args}
+    public method setModelAxesTickInterval {args}
+    public method setModelAxesTicksPerMajor {args}
+
+    public method rotate_mode {x y}
+    public method translate_mode {x y}
+    public method scale_mode {x y}
+
+    public method resetBindings {}
+    public method resetBindingsAll {}
 
     public method ? {}
     public method apropos {key}
@@ -311,8 +349,12 @@ body QuadDisplay::pane {args} {
 		}
 	    }
 	}
+    }
 
 	set priv_pane $itk_option(-pane)
+
+    if {$itk_option(-paneCallback) != ""} {
+	catch {eval $itk_option(-paneCallback) $args}
     }
 }
 
@@ -333,7 +375,7 @@ body QuadDisplay::multi_pane {args} {
 	    toggle_multi_pane
 	}
 	default {
-	    return -code error "mult_mode: bad value - $args"
+	    return -code error "mult_pane: bad value - $args"
 	}
     }
 }
@@ -342,7 +384,7 @@ body QuadDisplay::refresh {} {
     $itk_component($itk_option(-pane)) refresh
 }
 
-body QuadDisplay::refreshall {} {
+body QuadDisplay::refreshAll {} {
     $itk_component(ul) refresh
     $itk_component(ur) refresh
     $itk_component(ll) refresh
@@ -355,6 +397,10 @@ body QuadDisplay::ae {args} {
 
 body QuadDisplay::arot {args} {
     eval $itk_component($itk_option(-pane)) arot $args
+}
+
+body QuadDisplay::base2local {} {
+    $itk_component($itk_option(-pane)) base2local
 }
 
 body QuadDisplay::center {args} {
@@ -379,6 +425,10 @@ body QuadDisplay::invSize {args} {
 
 body QuadDisplay::keypoint {args} {
     eval $itk_component($itk_option(-pane)) keypoint $args
+}
+
+body QuadDisplay::local2base {} {
+    $itk_component($itk_option(-pane)) local2base
 }
 
 body QuadDisplay::lookat {args} {
@@ -441,6 +491,13 @@ body QuadDisplay::tra {args} {
     eval $itk_component($itk_option(-pane)) tra $args
 }
 
+body QuadDisplay::units {args} {
+    eval $itk_component(ul) units $args
+    eval $itk_component(ur) units $args
+    eval $itk_component(ll) units $args
+    eval $itk_component(lr) units $args
+}
+
 body QuadDisplay::view2model {args} {
     eval $itk_component($itk_option(-pane)) view2model $args
 }
@@ -461,7 +518,7 @@ body QuadDisplay::autoview {{gindex 0}} {
     $itk_component($itk_option(-pane)) autoview $gindex
 }
 
-body QuadDisplay::autoviewall {{gindex 0}} {
+body QuadDisplay::autoviewAll {{gindex 0}} {
     $itk_component(ul) autoview $gindex
     $itk_component(ur) autoview $gindex
     $itk_component(ll) autoview $gindex
@@ -472,7 +529,7 @@ body QuadDisplay::add {glist} {
     $itk_component($itk_option(-pane)) add $glist
 }
 
-body QuadDisplay::addall {glist} {
+body QuadDisplay::addAll {glist} {
     $itk_component(ul) add $glist
     $itk_component(ur) add $glist
     $itk_component(ll) add $glist
@@ -483,7 +540,7 @@ body QuadDisplay::remove {glist} {
     $itk_component($itk_option(-pane)) remove $glist
 }
 
-body QuadDisplay::removeall {glist} {
+body QuadDisplay::removeAll {glist} {
     $itk_component(ul) remove $glist
     $itk_component(ur) remove $glist
     $itk_component(ll) remove $glist
@@ -515,29 +572,221 @@ body QuadDisplay::zclip {args} {
     eval $itk_component($itk_option(-pane)) zclip $args
 }
 
-body QuadDisplay::zclipall {args} {
+body QuadDisplay::toggle_modelAxesEnable {args} {
+    switch -- $args {
+	ul -
+	ur -
+	ll -
+	lr {
+	    eval $itk_component($args) toggle_modelAxesEnable
+	}
+	default {
+	    eval $itk_component($itk_option(-pane)) toggle_modelAxesEnable
+	}
+    }
+}
+
+body QuadDisplay::toggle_modelAxesEnableAll {} {
+    eval $itk_component(ul) toggle_modelAxesEnable
+    eval $itk_component(ur) toggle_modelAxesEnable
+    eval $itk_component(ll) toggle_modelAxesEnable
+    eval $itk_component(lr) toggle_modelAxesEnable
+}
+
+body QuadDisplay::toggle_modelAxesTickEnable {args} {
+    switch -- $args {
+	ul -
+	ur -
+	ll -
+	lr {
+	    eval $itk_component($args) toggle_modelAxesTickEnable
+	}
+	default {
+	    eval $itk_component($itk_option(-pane)) toggle_modelAxesTickEnable
+	}
+    }
+}
+
+body QuadDisplay::toggle_modelAxesTickEnableAll {} {
+    eval $itk_component(ul) toggle_modelAxesTickEnable
+    eval $itk_component(ur) toggle_modelAxesTickEnable
+    eval $itk_component(ll) toggle_modelAxesTickEnable
+    eval $itk_component(lr) toggle_modelAxesTickEnable
+}
+
+body QuadDisplay::toggle_viewAxesEnable {args} {
+    switch -- $args {
+	ul -
+	ur -
+	ll -
+	lr {
+	    eval $itk_component($args) toggle_viewAxesEnable
+	}
+	default {
+	    eval $itk_component($itk_option(-pane)) toggle_viewAxesEnable
+	}
+    }
+}
+
+body QuadDisplay::toggle_viewAxesEnableAll {} {
+    eval $itk_component(ul) toggle_viewAxesEnable
+    eval $itk_component(ur) toggle_viewAxesEnable
+    eval $itk_component(ll) toggle_viewAxesEnable
+    eval $itk_component(lr) toggle_viewAxesEnable
+}
+
+body QuadDisplay::toggle_centerDotEnable {args} {
+    switch -- $args {
+	ul -
+	ur -
+	ll -
+	lr {
+	    eval $itk_component($args) toggle_centerDotEnable
+	}
+	default {
+	    eval $itk_component($itk_option(-pane)) toggle_centerDotEnable
+	}
+    }
+}
+
+body QuadDisplay::toggle_centerDotEnableAll {} {
+    eval $itk_component(ul) toggle_centerDotEnable
+    eval $itk_component(ur) toggle_centerDotEnable
+    eval $itk_component(ll) toggle_centerDotEnable
+    eval $itk_component(lr) toggle_centerDotEnable
+}
+
+body QuadDisplay::zclipAll {args} {
     eval $itk_component(ul) zclip $args
     eval $itk_component(ur) zclip $args
     eval $itk_component(ll) zclip $args
     eval $itk_component(lr) zclip $args
 }
 
+body QuadDisplay::setCenterDotEnable {args} {
+    set ve [eval $itk_component($itk_option(-pane)) configure -centerDotEnable $args]
+
+    # we must be doing a "get"
+    if {$ve != ""} {
+	return [lindex $ve 4]
+    }
+}
+
+body QuadDisplay::setViewAxesEnable {args} {
+    set ve [eval $itk_component($itk_option(-pane)) configure -viewAxesEnable $args]
+
+    # we must be doing a "get"
+    if {$ve != ""} {
+	return [lindex $ve 4]
+    }
+}
+
+body QuadDisplay::setModelAxesEnable {args} {
+    set me [eval $itk_component($itk_option(-pane)) configure -modelAxesEnable $args]
+
+    # we must be doing a "get"
+    if {$me != ""} {
+	return [lindex $me 4]
+    }
+}
+
+body QuadDisplay::setViewAxesPosition {args} {
+    set vap [eval $itk_component($itk_option(-pane)) configure -viewAxesPosition $args]
+
+    # we must be doing a "get"
+    if {$vap != ""} {
+	return [lindex $vap 4]
+    }
+}
+
+body QuadDisplay::setModelAxesPosition {args} {
+    set map [eval $itk_component($itk_option(-pane)) configure -modelAxesPosition $args]
+
+    # we must be doing a "get"
+    if {$map != ""} {
+	set mm2local [$itk_component($itk_option(-pane)) base2local]
+	set map [lindex $map 4]
+	set x [lindex $map 0]
+	set y [lindex $map 1]
+	set z [lindex $map 2]
+
+	return [list [expr {$x * $mm2local}] \
+		     [expr {$y * $mm2local}] \
+		     [expr {$z * $mm2local}]]
+    }
+}
+
+body QuadDisplay::setModelAxesTickEnable {args} {
+    set te [eval $itk_component($itk_option(-pane)) configure -modelAxesTickEnable $args]
+
+    # we must be doing a "get"
+    if {$te != ""} {
+	return [lindex $te 4]
+    }
+}
+
+body QuadDisplay::setModelAxesTickInterval {args} {
+    set ti [eval $itk_component($itk_option(-pane)) configure -modelAxesTickInterval $args]
+
+    # we must be doing a "get"
+    if {$ti != ""} {
+	set ti [lindex $ti 4]
+	return [expr {$ti * [$itk_component($itk_option(-pane)) base2local]}]
+    }
+}
+
+body QuadDisplay::setModelAxesTicksPerMajor {args} {
+    set tpm [eval $itk_component($itk_option(-pane)) configure -modelAxesTicksPerMajor $args]
+
+    # we must be doing a "get"
+    if {$tpm != ""} {
+	return [lindex $tpm 4]
+    }
+}
+
+body QuadDisplay::rotate_mode {x y} {
+    eval $itk_component($itk_option(-pane)) rotate_mode $x $y
+}
+
+body QuadDisplay::translate_mode {x y} {
+    eval $itk_component($itk_option(-pane)) translate_mode $x $y
+}
+
+body QuadDisplay::scale_mode {x y} {
+    eval $itk_component($itk_option(-pane)) scale_mode $x $y
+}
+
+body QuadDisplay::transparency {args} {
+    eval $itk_component($itk_option(-pane)) transparency $args
+}
+
+body QuadDisplay::transparencyAll {args} {
+    eval $itk_component(ul) transparency $args
+    eval $itk_component(ur) transparency $args
+    eval $itk_component(ll) transparency $args
+    eval $itk_component(lr) transparency $args
+}
+
 body QuadDisplay::zbuffer {args} {
     eval $itk_component($itk_option(-pane)) zbuffer $args
 }
 
-body QuadDisplay::zbufferall {args} {
+body QuadDisplay::zbufferAll {args} {
     eval $itk_component(ul) zbuffer $args
     eval $itk_component(ur) zbuffer $args
     eval $itk_component(ll) zbuffer $args
     eval $itk_component(lr) zbuffer $args
 }
 
+body QuadDisplay::depthMask {args} {
+    eval $itk_component($itk_option(-pane)) depthMask $args
+}
+
 body QuadDisplay::light {args} {
     eval $itk_component($itk_option(-pane)) light $args
 }
 
-body QuadDisplay::lightall {args} {
+body QuadDisplay::lightAll {args} {
     eval $itk_component(ul) light $args
     eval $itk_component(ur) light $args
     eval $itk_component(ll) light $args
@@ -552,6 +801,14 @@ body QuadDisplay::perspective_angle {args} {
     eval $itk_component($itk_option(-pane)) perspective_angle $args
 }
 
+body QuadDisplay::sync {} {
+    $itk_component($itk_option(-pane)) sync
+}
+
+body QuadDisplay::png {args} {
+    eval $itk_component($itk_option(-pane)) png $args
+}
+
 body QuadDisplay::bg {args} {
     set result [eval $itk_component($itk_option(-pane)) bg $args]
     if {$args != ""} {
@@ -559,6 +816,31 @@ body QuadDisplay::bg {args} {
 	return
     }
     return $result
+}
+
+body QuadDisplay::bgAll {args} {
+    set result [eval $itk_component(ul) bg $args]
+    eval $itk_component(ur) bg $args
+    eval $itk_component(ll) bg $args
+    eval $itk_component(lr) bg $args
+
+    if {$args != ""} {
+	refreshAll
+	return
+    }
+
+    return $result
+}
+
+body QuadDisplay::bounds {args} {
+    eval $itk_component($itk_option(-pane)) bounds $args
+}
+
+body QuadDisplay::boundsAll {args} {
+    eval $itk_component(ul) bounds $args
+    eval $itk_component(ur) bounds $args
+    eval $itk_component(ll) bounds $args
+    eval $itk_component(lr) bounds $args
 }
 
 body QuadDisplay::fb_active {args} {
@@ -575,6 +857,10 @@ body QuadDisplay::mouse_nirt {x y} {
 
 body QuadDisplay::nirt {args} {
     eval $itk_component($itk_option(-pane)) nirt $args
+}
+
+body QuadDisplay::vnirt {vx vy} {
+    eval $itk_component($itk_option(-pane)) vnirt $vx $vy
 }
 
 body QuadDisplay::qray {args} {
@@ -597,7 +883,7 @@ body QuadDisplay::rtedge {args} {
     eval $itk_component($itk_option(-pane)) rtedge $args
 }
 
-body QuadDisplay::resetall {} {
+body QuadDisplay::resetAll {} {
     reset
     $itk_component(upw) reset
     $itk_component(lpw) reset
@@ -614,7 +900,7 @@ body QuadDisplay::attach_view {} {
     $itk_component($itk_option(-pane)) attach_view
 }
 
-body QuadDisplay::attach_viewall {} {
+body QuadDisplay::attach_viewAll {} {
     $itk_component(ul) attach_view
     $itk_component(ur) attach_view
     $itk_component(ll) attach_view
@@ -625,7 +911,7 @@ body QuadDisplay::attach_drawable {dg} {
     $itk_component($itk_option(-pane)) attach_drawable $dg
 }
 
-body QuadDisplay::attach_drawableall {dg} {
+body QuadDisplay::attach_drawableAll {dg} {
     $itk_component(ul) attach_drawable $dg
     $itk_component(ur) attach_drawable $dg
     $itk_component(ll) attach_drawable $dg
@@ -636,7 +922,7 @@ body QuadDisplay::detach_view {} {
     $itk_component($itk_option(-pane)) detach_view
 }
 
-body QuadDisplay::detach_viewall {} {
+body QuadDisplay::detach_viewAll {} {
     $itk_component(ul) detach_view
     $itk_component(ur) detach_view
     $itk_component(ll) detach_view
@@ -647,7 +933,7 @@ body QuadDisplay::detach_drawable {dg} {
     $itk_component($itk_option(-pane)) detach_drawable $dg
 }
 
-body QuadDisplay::detach_drawableall {dg} {
+body QuadDisplay::detach_drawableAll {dg} {
     $itk_component(ul) detach_drawable $dg
     $itk_component(ur) detach_drawable $dg
     $itk_component(ll) detach_drawable $dg
@@ -700,6 +986,17 @@ body QuadDisplay::toggle_multi_pane {} {
 	    }
 	}
     }
+}
+
+body QuadDisplay::resetBindings {} {
+    $itk_component($itk_option(-pane)) resetBindings
+}
+
+body QuadDisplay::resetBindingsAll {} {
+    $itk_component(ul) resetBindings
+    $itk_component(ur) resetBindings
+    $itk_component(ll) resetBindings
+    $itk_component(lr) resetBindings
 }
 
 body QuadDisplay::? {} {

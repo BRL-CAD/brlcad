@@ -74,7 +74,7 @@ HIDDEN int      X_drawString2D(struct dm *dmp, register char *str, fastf_t x, fa
 HIDDEN int	X_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2);
 HIDDEN int      X_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y);
 HIDDEN int	X_drawVList(struct dm *dmp, register struct bn_vlist *vp);
-HIDDEN int      X_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict);
+HIDDEN int      X_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
 HIDDEN int	X_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
 HIDDEN int	X_setLineAttr(struct dm *dmp, int width, int style);
 HIDDEN int	X_configureWin_guts(struct dm *dmp, int force);
@@ -99,6 +99,8 @@ struct dm dm_X = {
   X_configureWin,
   X_setWinBounds,
   X_setLight,
+  Nu_int0,
+  Nu_int0,
   X_setZBuffer,
   X_debug,
   Nu_int0,
@@ -126,13 +128,15 @@ struct dm dm_X = {
   {0, 0, 0, 0, 0},		/* bu_vls short name drawing window */
   {0, 0, 0},			/* bg color */
   {0, 0, 0},			/* fg color */
-  {0.0, 0.0, 0.0},		/* clipmin */
-  {0.0, 0.0, 0.0},		/* clipmax */
+  {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */
+  {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */
   0,				/* no debugging */
   0,				/* no perspective */
   0,				/* no lighting */
+  0,				/* no transparency */
   0,				/* no zbuffer */
   0,				/* no zclipping */
+  1,                            /* clear back buffer after drawing and swap */
   0				/* Tcl interpreter */
 };
 
@@ -947,7 +951,7 @@ X_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 }
 
 HIDDEN int
-X_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict)
+X_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
 {
   XGCValues gcv;
 

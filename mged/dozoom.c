@@ -210,7 +210,6 @@ bn_mat_print("pmat",pmat);
  */
 static void
 deering_persp_mat(fastf_t *m, const fastf_t *l, const fastf_t *h, const fastf_t *eye)
-     		  
              	  	/* lower left corner of screen */
              	  	/* upper right (high) corner of screen */
              	    	/* eye location.  Traditionally at (0,0,1) */
@@ -243,6 +242,66 @@ deering_persp_mat(fastf_t *m, const fastf_t *l, const fastf_t *h, const fastf_t 
 	m[15] = eye[Z];
 
 /* XXX May need to flip Z ? (lefthand to righthand?) */
+}
+
+static void
+drawSolid(register struct solid *sp,
+	  short r,
+	  short g,
+	  short b) {
+
+  if(sp->s_cflag){
+    if(!DM_SAME_COLOR(r,g,b,
+		      (short)geometry_default_color[0],
+		      (short)geometry_default_color[1],
+		      (short)geometry_default_color[2])){
+      DM_SET_FGCOLOR(dmp,
+		     (short)geometry_default_color[0],
+		     (short)geometry_default_color[1],
+		     (short)geometry_default_color[2],
+		     0,
+		     sp->s_transparency);
+      DM_COPY_COLOR(r,g,b,
+		    (short)geometry_default_color[0],
+		    (short)geometry_default_color[1],
+		    (short)geometry_default_color[2]);
+    }
+  } else {
+    if(!DM_SAME_COLOR(r,g,b,
+		      (short)sp->s_color[0],
+		      (short)sp->s_color[1],
+		      (short)sp->s_color[2])){
+      DM_SET_FGCOLOR(dmp,
+		     (short)sp->s_color[0],
+		     (short)sp->s_color[1],
+		     (short)sp->s_color[2],
+		     0,
+		     sp->s_transparency);
+      DM_COPY_COLOR(r,g,b,
+		    (short)sp->s_color[0],
+		    (short)sp->s_color[1],
+		    (short)sp->s_color[2]);
+    }
+  }
+		
+
+#ifdef DO_DISPLAY_LISTS
+  if (displaylist && mged_variables->mv_dlist) {
+    DM_DRAWDLIST(dmp, sp->s_dlist);
+    sp->s_flag = UP;
+    ndrawn++;
+  } else {
+    if (DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist) == TCL_OK) {
+      sp->s_flag = UP;
+      ndrawn++;
+    }
+  }
+#else
+  if (DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist) == TCL_OK) {
+    sp->s_flag = UP;
+    ndrawn++;
+  }
+#endif
 }
 
 /*
@@ -302,11 +361,11 @@ dozoom(int which_eye)
 
 		VSET( l, -1.0, -1.0, -1.0 );
 		VSET( h, 1.0, 1.0, 200.0 );
-if(which_eye) {
-printf("d=%gscr, d=%gmm, delta=%gscr\n", to_eye_scr, to_eye_scr * SCR_WIDTH_PHYS, eye_delta_scr);
-VPRINT("l", l);
-VPRINT("h", h);
-}
+		if(which_eye) {
+		  printf("d=%gscr, d=%gmm, delta=%gscr\n", to_eye_scr, to_eye_scr * SCR_WIDTH_PHYS, eye_delta_scr);
+		  VPRINT("l", l);
+		  VPRINT("h", h);
+		}
 		VSET( eye, 0.0, 0.0, to_eye_scr );
 #if 0
 		MAT_IDN(tmat);
@@ -314,15 +373,15 @@ VPRINT("h", h);
 		bn_mat_mul( tvmat, tmat, view_state->vs_model2view );
 #endif
 		switch(which_eye)  {
-		case 0:
-			/* Non-stereo case */
-			mat = view_state->vs_vop->vo_model2view;
-/* XXX hack */
+		  case 0:
+		    /* Non-stereo case */
+		    mat = view_state->vs_vop->vo_model2view;
+		    /* XXX hack */
 #define HACK 0
 #if !HACK
-if( 1 ) {
+		    if( 1 ) {
 #else
-if( mged_variables->mv_faceplate > 0 )  {
+		      if( mged_variables->mv_faceplate > 0 )  {
 #endif
 			if( view_state->vs_vop->vo_eye_pos[Z] == 1.0 )  {
 				/* This way works, with reasonable Z-clipping */
@@ -332,16 +391,16 @@ if( mged_variables->mv_faceplate > 0 )  {
 				/* This way does not have reasonable Z-clipping,
 				 * but includes shear, for GDurf's testing.
 				 */
-				deering_persp_mat( perspective_mat, l, h, view_state->vs_vop->vo_eye_pos );
+			  deering_persp_mat( perspective_mat, l, h, view_state->vs_vop->vo_eye_pos );
 			}
-} else {
+		      } else {
 			/* New way, should handle all cases */
 			mike_persp_mat( perspective_mat, view_state->vs_vop->vo_eye_pos );
-}
+		      }
 #if HACK
-bn_mat_print("perspective_mat", perspective_mat);
+		      bn_mat_print("perspective_mat", perspective_mat);
 #endif
-			break;
+		      break;
 		case 1:
 			/* R */
 			mat = view_state->vs_vop->vo_model2view;
@@ -354,18 +413,126 @@ bn_mat_print("perspective_mat", perspective_mat);
 			eye[X] = -eye_delta_scr;
 			deering_persp_mat( perspective_mat, l, h, eye );
 			break;
-                }
-		bn_mat_mul( new, perspective_mat, mat );
-		mat = new;
+		    }
+		    bn_mat_mul( new, perspective_mat, mat );
+		    mat = new;
 		}
 
-	DM_LOADMATRIX( dmp, mat, which_eye );
+		DM_LOADMATRIX( dmp, mat, which_eye );
 
-	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
-		sp->s_flag = DOWN;		/* Not drawn yet */
-		/* If part of object edit, will be drawn below */
-		if( sp->s_iflag == UP )
+		if (dmp->dm_transparency) {
+		  /* First, draw opaque stuff */
+		  FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
+		    sp->s_flag = DOWN;		/* Not drawn yet */
+
+		    /* If part of object edit, will be drawn below */
+		    if( sp->s_iflag == UP )
+		      continue;
+
+		    if (sp->s_transparency < 1.0)
+		      continue;
+
+		    /*
+		     * The vectorThreshold stuff in libdm may turn the
+		     * Tcl-crank causing curr_dm_list to change.
+		     */
+		    if (curr_dm_list != save_dm_list)
+		      curr_dm_list = save_dm_list;
+
+		    if (dmp->dm_boundFlag) {
+		      ratio = sp->s_size * inv_viewsize;
+
+		      /*
+		       * Check for this object being bigger than 
+		       * dmp->dm_bound * the window size, or smaller than a speck.
+		       */
+		      if (ratio < 0.001)
 			continue;
+		    }
+
+		    if(linestyle != sp->s_soldash){
+		      linestyle = sp->s_soldash;
+		      DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, linestyle);
+		    }
+
+		    drawSolid(sp, r, g, b);
+		  }
+
+		  /* disable write to depth buffer */
+		  DM_SET_DEPTH_MASK(dmp, 0);
+
+		  /* Second, draw transparent stuff */
+		  FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
+
+		    /* If part of object edit, will be drawn below */
+		    if( sp->s_iflag == UP )
+		      continue;
+
+		    /* already drawn above */
+		    if (sp->s_transparency == 1.0)
+		      continue;
+
+		    /*
+		     * The vectorThreshold stuff in libdm may turn the
+		     * Tcl-crank causing curr_dm_list to change.
+		     */
+		    if (curr_dm_list != save_dm_list)
+		      curr_dm_list = save_dm_list;
+
+		    if (dmp->dm_boundFlag) {
+		      ratio = sp->s_size * inv_viewsize;
+
+		      /*
+		       * Check for this object being bigger than 
+		       * dmp->dm_bound * the window size, or smaller than a speck.
+		       */
+		      if (ratio < 0.001)
+			continue;
+		    }
+
+		    if(linestyle != sp->s_soldash){
+		      linestyle = sp->s_soldash;
+		      DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, linestyle);
+		    }
+
+		    drawSolid(sp, r, g, b);
+		  }
+
+		  /* re-enable write of depth buffer */
+		  DM_SET_DEPTH_MASK(dmp, 1);
+		} else {
+
+		  FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
+		    sp->s_flag = DOWN;		/* Not drawn yet */
+		    /* If part of object edit, will be drawn below */
+		    if( sp->s_iflag == UP )
+		      continue;
+
+		    /*
+		     * The vectorThreshold stuff in libdm may turn the
+		     * Tcl-crank causing curr_dm_list to change.
+		     */
+		    if (curr_dm_list != save_dm_list)
+		      curr_dm_list = save_dm_list;
+
+		    if (dmp->dm_boundFlag) {
+		      ratio = sp->s_size * inv_viewsize;
+
+		      /*
+		       * Check for this object being smaller than a speck.
+		       */
+		      if (ratio < 0.001)
+			continue;
+		    }
+
+		    if(linestyle != sp->s_soldash){
+		      linestyle = sp->s_soldash;
+		      DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, linestyle);
+		    }
+
+		    drawSolid(sp, r, g, b);
+		  }
+		}
 
 		/*
 		 * The vectorThreshold stuff in libdm may turn the
@@ -374,155 +541,78 @@ bn_mat_print("perspective_mat", perspective_mat);
 		if (curr_dm_list != save_dm_list)
 		  curr_dm_list = save_dm_list;
 
-		if (dmp->dm_boundFlag) {
-			ratio = sp->s_size * inv_viewsize;
-
-			/*
-			 * Check for this object being bigger than 
-			 * dmp->dm_bound * the window size, or smaller than a speck.
-			 */
-			if (ratio >= dmp->dm_bound || ratio < 0.001)
-				continue;
+		/* draw predictor vlist */
+		if(mged_variables->mv_predictor){
+		  DM_SET_FGCOLOR(dmp,
+				 color_scheme->cs_predictor[0],
+				 color_scheme->cs_predictor[1],
+				 color_scheme->cs_predictor[2], 1, 1.0);
+		  DM_DRAW_VLIST(dmp, (struct rt_vlist *)&curr_dm_list->dml_p_vlist);
 		}
-
-		if(linestyle != sp->s_soldash){
-			linestyle = sp->s_soldash;
-			DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, linestyle);
-		}
-
-		if(sp->s_cflag){
-			if(!DM_SAME_COLOR(r,g,b,
-					  (short)geometry_default_color[0],
-					  (short)geometry_default_color[1],
-					  (short)geometry_default_color[2])){
-				DM_SET_FGCOLOR(dmp,
-					       (short)geometry_default_color[0],
-					       (short)geometry_default_color[1],
-					       (short)geometry_default_color[2], 0);
-				DM_COPY_COLOR(r,g,b,
-					      (short)geometry_default_color[0],
-					      (short)geometry_default_color[1],
-					      (short)geometry_default_color[2]);
-			}
-		} else {
-			if(!DM_SAME_COLOR(r,g,b,
-					  (short)sp->s_color[0],
-					  (short)sp->s_color[1],
-					  (short)sp->s_color[2])){
-				DM_SET_FGCOLOR(dmp,
-					       (short)sp->s_color[0],
-					       (short)sp->s_color[1],
-					       (short)sp->s_color[2], 0);
-				DM_COPY_COLOR(r,g,b,
-					      (short)sp->s_color[0],
-					      (short)sp->s_color[1],
-					      (short)sp->s_color[2]);
-			}
-		}
-
-#ifdef DO_DISPLAY_LISTS
-		if (displaylist && mged_variables->mv_dlist) {
-			DM_DRAWDLIST(dmp, sp->s_dlist);
-			sp->s_flag = UP;
-			ndrawn++;
-		} else {
-			if (DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist) == TCL_OK) {
-				sp->s_flag = UP;
-				ndrawn++;
-			}
-		}
-#else
-		if (DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist) == TCL_OK) {
-			sp->s_flag = UP;
-			ndrawn++;
-		}
-#endif
-	}
-
-	/*
-	 * The vectorThreshold stuff in libdm may turn the
-	 * Tcl-crank causing curr_dm_list to change.
-	 */
-	if (curr_dm_list != save_dm_list)
-		curr_dm_list = save_dm_list;
-
-	/* draw predictor vlist */
-	if(mged_variables->mv_predictor){
-	  DM_SET_FGCOLOR(dmp,
-			 color_scheme->cs_predictor[0],
-			 color_scheme->cs_predictor[1],
-			 color_scheme->cs_predictor[2], 1);
-	  DM_DRAW_VLIST(dmp, (struct rt_vlist *)&curr_dm_list->dml_p_vlist);
-	}
-
-	/*
-	 *  Draw all solids involved in editing.
-	 *  They may be getting transformed away from the other solids.
-	 */
-	if( state == ST_VIEW )
-		return;
-
-	if( view_state->vs_vop->vo_perspective <= 0 )  {
-		mat = view_state->vs_model2objview;
-	} else {
-		bn_mat_mul( new, perspective_mat, view_state->vs_model2objview );
-		mat = new;
-	}
-	DM_LOADMATRIX( dmp, mat, which_eye );
-	inv_viewsize /= modelchanges[15];
-	DM_SET_FGCOLOR(dmp,
-		       color_scheme->cs_geo_hl[0],
-		       color_scheme->cs_geo_hl[1],
-		       color_scheme->cs_geo_hl[2], 1);
-
-#if 1
-	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
-#else
-	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
-#endif
-		/* Ignore all objects not being edited */
-		if (sp->s_iflag != UP)
-			continue;
 
 		/*
-		 * The vectorThreshold stuff in libdm may turn the
-		 * Tcl-crank causing curr_dm_list to change.
+		 *  Draw all solids involved in editing.
+		 *  They may be getting transformed away from the other solids.
 		 */
-		if (curr_dm_list != save_dm_list)
-		  curr_dm_list = save_dm_list;
+		if( state == ST_VIEW )
+		  return;
 
-		if (dmp->dm_boundFlag) {
-			ratio = sp->s_size * inv_viewsize;
-			/*
-			 * Check for this object being bigger than 
-			 * dmp->dm_bound * the window size, or smaller than a speck.
-			 */
-			if (ratio >= dmp->dm_bound || ratio < 0.001)
-				continue;
+		if( view_state->vs_vop->vo_perspective <= 0 )  {
+		  mat = view_state->vs_model2objview;
+		} else {
+		  bn_mat_mul( new, perspective_mat, view_state->vs_model2objview );
+		  mat = new;
 		}
+		DM_LOADMATRIX( dmp, mat, which_eye );
+		inv_viewsize /= modelchanges[15];
+		DM_SET_FGCOLOR(dmp,
+			       color_scheme->cs_geo_hl[0],
+			       color_scheme->cs_geo_hl[1],
+			       color_scheme->cs_geo_hl[2], 1, 1.0);
 
-		if (linestyle != sp->s_soldash) {
-			linestyle = sp->s_soldash;
-			DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, linestyle);
-		}
+		FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)  {
+		  /* Ignore all objects not being edited */
+		  if (sp->s_iflag != UP)
+		    continue;
+
+		  /*
+		   * The vectorThreshold stuff in libdm may turn the
+		   * Tcl-crank causing curr_dm_list to change.
+		   */
+		  if (curr_dm_list != save_dm_list)
+		    curr_dm_list = save_dm_list;
+
+		  if (dmp->dm_boundFlag) {
+		    ratio = sp->s_size * inv_viewsize;
+		    /*
+		     * Check for this object being smaller than a speck.
+		     */
+		    if (ratio < 0.001)
+		      continue;
+		  }
+
+		  if (linestyle != sp->s_soldash) {
+		    linestyle = sp->s_soldash;
+		    DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, linestyle);
+		  }
 
 #ifdef DO_DISPLAY_LISTS
-		if (displaylist && mged_variables->mv_dlist) {
-			DM_DRAWDLIST(dmp, sp->s_dlist);
-			sp->s_flag = UP;
-			ndrawn++;
-		} else {
-			/* draw in immediate mode */
-			if (DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist) == TCL_OK) {
-				sp->s_flag = UP;
-				ndrawn++;
-			}
-		}
+		  if (displaylist && mged_variables->mv_dlist) {
+		    DM_DRAWDLIST(dmp, sp->s_dlist);
+		    sp->s_flag = UP;
+		    ndrawn++;
+		  } else {
+		    /* draw in immediate mode */
+		    if (DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist) == TCL_OK) {
+		      sp->s_flag = UP;
+		      ndrawn++;
+		    }
+		  }
 #else
-		if (DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist) == TCL_OK) {
-			sp->s_flag = UP;
-			ndrawn++;
-		}
+		  if (DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist) == TCL_OK) {
+		    sp->s_flag = UP;
+		    ndrawn++;
+		  }
 #endif
 	}
 

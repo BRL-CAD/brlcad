@@ -1748,7 +1748,7 @@ refresh(void)
 	      DM_SET_FGCOLOR(dmp,
 			     color_scheme->cs_center_dot[0],
 			     color_scheme->cs_center_dot[1],
-			     color_scheme->cs_center_dot[2], 1);
+			     color_scheme->cs_center_dot[2], 1, 1.0);
 	      DM_DRAW_POINT_2D(dmp, 0.0, 0.0);
       }
 

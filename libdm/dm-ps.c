@@ -56,7 +56,7 @@ static int	ps_normal(struct dm *dmp), ps_loadMatrix(struct dm *dmp, fastf_t *mat
 static int	ps_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect), ps_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2);
 static int      ps_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y);
 static int	ps_drawVList(struct dm *dmp, register struct bn_vlist *vp);
-static int      ps_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict);
+static int      ps_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
 static int      ps_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
 static int      ps_setLineAttr(struct dm *dmp, int width, int style);
 static int	ps_setWinBounds(struct dm *dmp, register int *w), ps_debug(struct dm *dmp, int lvl);
@@ -76,6 +76,8 @@ struct dm dm_ps = {
   ps_setLineAttr,
   Nu_int0,
   ps_setWinBounds,
+  Nu_int0,
+  Nu_int0,
   Nu_int0,
   Nu_int0,
   ps_debug,
@@ -109,8 +111,10 @@ struct dm dm_ps = {
   0,				/* no debugging */
   0,				/* no perspective */
   0,				/* no lighting */
+  0,				/* no transparency */
   0,				/* no zbuffer */
   0,				/* no zclipping */
+  1,                            /* clear back buffer after drawing and swap */
   0				/* Tcl interpreter */
 };
 
@@ -680,7 +684,7 @@ ps_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 }
 
 static int
-ps_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict)
+ps_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
 {
   return TCL_OK;
 }

@@ -18,11 +18,11 @@
 #
 # Description -
 #       This class comprises a collection of methods for querying/modifying tables.
-#       For the purposes of this class, tables are lists of lists with each sublist
+#       For the purposes of this class, a table is a list of lists with each sublist
 #       being a row in the table.
 #
 
-itcl::class Table {
+::itcl::class Table {
     constructor {args} {}
     destructor {}
 
@@ -39,22 +39,31 @@ itcl::class Table {
 	# methods that operate on rows
 	method getRow {i}
 	method getRows {i1 i2}
-	method setRow {i row}
-	method appendRow {row}
+	method setRow {i rdata}
+	method appendRow {rdata}
 	method deleteRow {i}
-	method insertRow {i row}
+	method insertRow {i rdata}
 
 	# methods that operate on columns
 	method getCol {j}
 	method getCols {j1 j2}
-	method setCol {j col}
-	method appendCol {col}
+	method setCol {j cdata}
+	method appendCol {cdata}
 	method deleteCol {j}
-	method insertCol {j col}
+	method insertCol {j cdata}
+	method initCol {j ival}
+	method initColRange {j i1 i2 ival}
+
+	method isValidRow {i}
+	method isValidCol {j}
+	method getFirstEmptyRow {j}
+
+	method isData {i mark}
+	method countData {i mark}
     }
 }
 
-itcl::configbody Table::table {
+::itcl::configbody Table::table {
     if {![llength $table]} {
 	error "Table: table is zero length"
     }
@@ -72,25 +81,25 @@ itcl::configbody Table::table {
     set cols $j
 }
 
-itcl::configbody Table::rows {
+::itcl::configbody Table::rows {
     error "Table: this option is read-only"
 }
 
-itcl::configbody Table::cols {
+::itcl::configbody Table::cols {
     error "Table: this option is read-only"
 }
 
-itcl::body Table::constructor {args} {
+::itcl::body Table::constructor {args} {
     # process options
     eval configure $args
 }
 
-itcl::body Table::getEntry {i j} {
-    if {![string is digit $i] || $i < 1 || $rows < $i} {
+::itcl::body Table::getEntry {i j} {
+    if {![isValidRow $i]} {
 	error "Table::getEntry: i must be in the range (1,$rows) inclusive"
     }
 
-    if {![string is digit $j] || $j < 1 || $cols < $j} {
+    if {![isValidCol $j]} {
 	error "Table::getEntry: j must be in the range (1,$cols) inclusive"
     }
 
@@ -99,12 +108,12 @@ itcl::body Table::getEntry {i j} {
     lindex [lindex $table $i] $j
 }
 
-itcl::body Table::setEntry {i j val} {
-    if {![string is digit $i] || $i < 1 || $rows < $i} {
+::itcl::body Table::setEntry {i j val} {
+    if {![isValidRow $i]} {
 	error "Table::setEntry: i must be in the range (1,$rows) inclusive"
     }
 
-    if {![string is digit $j] || $j < 1 || $cols < $j} {
+    if {![isValidCol $j]} {
 	error "Table::setEntry: j must be in the range (1,$cols) inclusive"
     }
 
@@ -114,8 +123,8 @@ itcl::body Table::setEntry {i j val} {
     return
 }
 
-itcl::body Table::getRow {i} {
-    if {![string is digit $i] || $i < 1 || $rows < $i} {
+::itcl::body Table::getRow {i} {
+    if {![isValidRow $i]} {
 	error "Table::getRow: i must be in the range (1,$rows) inclusive"
     }
 
@@ -123,12 +132,12 @@ itcl::body Table::getRow {i} {
     lindex $table $i
 }
 
-itcl::body Table::getRows {i1 i2} {
-    if {![string is digit $i1] || $i1 < 1 || $rows < $i1} {
+::itcl::body Table::getRows {i1 i2} {
+    if {![isValidRow $i1]} {
 	error "Table::getRows: i1 must be in the range (1,$rows) inclusive"
     }
 
-    if {![string is digit $i2] || $i2 < 1 || $rows < $i2} {
+    if {![isValidRow $i2]} {
 	error "Table::getRows: i2 must be in the range (1,$rows) inclusive"
     }
 
@@ -137,32 +146,32 @@ itcl::body Table::getRows {i1 i2} {
     lrange $table $i1 $i2
 }
 
-itcl::body Table::setRow {i row} {
-    if {![string is digit $i] || $i < 1 || $rows < $i} {
+::itcl::body Table::setRow {i rdata} {
+    if {![isValidRow $i]} {
 	error "Table::setRow: i must be in the range (1,$rows) inclusive"
     }
 
     incr i -1
-    if {[llength $row] != $cols} {
+    if {[llength $rdata] != $cols} {
 	error "Table::setRow: number of values in row must be $cols"
     }
 
-    set table [lreplace $table $i $i $row]
+    set table [lreplace $table $i $i $rdata]
     return
 }
 
-itcl::body Table::appendRow {row} {
-    if {[llength $row] != $cols} {
+::itcl::body Table::appendRow {rdata} {
+    if {[llength $rdata] != $cols} {
 	error "Table::appendRow: number of values in row must be $cols"
     }
 
-    lappend table $row
+    lappend table $rdata
     incr rows
     return
 }
 
-itcl::body Table::deleteRow {i} {
-    if {![string is digit $i] || $i < 1 || $rows < $i} {
+::itcl::body Table::deleteRow {i} {
+    if {![isValidRow $i]} {
 	error "Table::deleteRow: i must be in the range (1, $rows) inclusive"
     }
 
@@ -176,12 +185,12 @@ itcl::body Table::deleteRow {i} {
     return
 }
 
-itcl::body Table::insertRow {i row} {
-    if {![string is digit $i] || $i < 1 || $rows < $i} {
+::itcl::body Table::insertRow {i rdata} {
+    if {![isValidRow $i]} {
 	error "Table::insertRow: i must be in the range (1, $rows) inclusive"
     }
 
-    if {[llength $row] != $cols} {
+    if {[llength $rdata] != $cols} {
 	error "Table::insertRow: number of values in row must be $cols"
     }
 	
@@ -193,15 +202,15 @@ itcl::body Table::insertRow {i row} {
 	set newtable ""
     }
 
-    lappend newtable $row
+    lappend newtable $rdata
     eval lappend newtable [lrange $table $i end]
     set table $newtable
     incr rows
     return
 }
 
-itcl::body Table::getCol {j} {
-    if {![string is digit $j] || $j < 1 || $cols < $j} {
+::itcl::body Table::getCol {j} {
+    if {![isValidCol $j]} {
 	error "Table::getCol: j must be in the range (1,$cols) inclusive"
     }
 
@@ -213,12 +222,12 @@ itcl::body Table::getCol {j} {
     return $vals
 }
 
-itcl::body Table::getCols {j1 j2} {
-    if {![string is digit $j1] || $j1 < 1 || $cols < $j1} {
+::itcl::body Table::getCols {j1 j2} {
+    if {![isValidCol $j1]} {
 	error "Table::getCols: j must be in the range (1,$cols) inclusive"
     }
 
-    if {![string is digit $j2] || $j2 < 1 || $cols < $j2} {
+    if {![isValidCol $j2]} {
 	error "Table::getCols: j must be in the range (1,$cols) inclusive"
     }
 
@@ -245,31 +254,38 @@ itcl::body Table::getCols {j1 j2} {
     return $vals
 }
 
-itcl::body Table::setCol {j col} {
-    if {![string is digit $j] || $j < 1 || $cols < $j} {
+::itcl::body Table::setCol {j cdata} {
+    if {![isValidCol $j]} {
 	error "Table::setCol: j must be in the range (1,$cols) inclusive"
     }
 
-    if {[llength $col] != $rows} {
-	error "Table::setCol: number of values in column must be $rows"
+    set len [llength $cdata]
+    if {$len < $rows} {
+	# pad cdata
+	for {set i $len} {$i < $rows} {incr i} {
+	    lappend cdata {}
+	}
+    } elseif {$rows < $len} {
+	# truncate cdata
+	set cdata [lrange $cdata 0 [expr {$rows - 1}]]
     }
 
     incr j -1
     set newtable ""
-    foreach row $table val $col {
+    foreach row $table val $cdata {
 	lappend newtable [lreplace $row $j $j $val]
     }
     set table $newtable
     return
 }
 
-itcl::body Table::appendCol {col} {
-    if {[llength $col] != $rows} {
+::itcl::body Table::appendCol {cdata} {
+    if {[llength $cdata] != $rows} {
 	error "Table::appendCol: number of values in column must be $rows"
     }
 
     set newtable ""
-    foreach row $table val $col {
+    foreach row $table val $cdata {
 	lappend newtable [lappend row $val]
     }
     set table $newtable
@@ -277,8 +293,8 @@ itcl::body Table::appendCol {col} {
     return
 }
 
-itcl::body Table::deleteCol {j} {
-    if {![string is digit $j] || $j < 1 || $cols < $j} {
+::itcl::body Table::deleteCol {j} {
+    if {![isValidCol $j]} {
 	error "Table::deleteCol: j must be in the range (1,$cols) inclusive"
     }
 
@@ -296,12 +312,12 @@ itcl::body Table::deleteCol {j} {
     return
 }
 
-itcl::body Table::insertCol {j col} {
-    if {![string is digit $j] || $j < 1 || $cols < $j} {
+::itcl::body Table::insertCol {j cdata} {
+    if {![isValidCol $j]} {
 	error "Table::insertCol: j must be in the range (1,$cols) inclusive"
     }
 
-    if {[llength $col] != $rows} {
+    if {[llength $cdata] != $rows} {
 	error "Table::insertCol: number of values in column must be $rows"
     }
 
@@ -310,14 +326,129 @@ itcl::body Table::insertCol {j col} {
     set newtable ""
     if {0 < $j} {
 	set _j [expr {$j - 1}]
-	foreach row $table val $col {
+	foreach row $table val $cdata {
 	    lappend newtable "[lrange $row 0 $_j] $val [lrange $row $j end]"
 	}
     } else {
-	foreach row $table val $col {
+	foreach row $table val $cdata {
 	    lappend newtable "$val $row"
 	}
     }
     set table $newtable
     return
+}
+
+::itcl::body Table::initCol {j ival} {
+    if {![isValidCol $j]} {
+	error "Table::initCol: j must be in the range (1,$cols) inclusive"
+    }
+
+    incr j -1
+    set newtable ""
+    foreach row $table {
+	lappend newtable [lreplace $row $j $j $ival]
+    }
+    set table $newtable
+    return
+}
+
+::itcl::body Table::initColRange {j i1 i2 ival} {
+    if {![isValidCol $j]} {
+	error "Table::initColRange: j must be in the range (1,$cols) inclusive"
+    }
+
+    if {![isValidRow $i1] ||
+	![isValidRow $i2] ||
+	$i2 < $i1} {
+	error "Table::initColRange: bad values for i1($i1) or i2($i2)"
+    }
+
+    incr j -1
+    incr i1 -1
+    incr i2 -1
+    set i 0
+    set newtable ""
+    foreach row $table {
+	if {$i1 <= $i &&
+	    $i <= $i2} {
+	    lappend newtable [lreplace $row $j $j $ival]
+	} else {
+	    lappend newtable $row
+	}
+	incr i
+    }
+    set table $newtable
+    return
+}
+
+::itcl::body Table::isValidRow {i} {
+    if {![string is digit $i] || $i < 1 || $rows < $i} {
+	return 0
+    }
+
+    return 1
+}
+
+::itcl::body Table::isValidCol {j} {
+    if {![string is digit $j] || $j < 1 || $cols < $j} {
+	return 0
+    }
+
+    return 1
+}
+
+::itcl::body Table::getFirstEmptyRow {j} {
+    if {![isValidCol $j]} {
+	error "Table::getFirstEmptyRow: j must be in the range (1,$cols) inclusive"
+    }
+
+    incr j -1
+    set i 1
+    foreach row $table {
+	set val [lindex $row $j]
+	if {$val != ""} {
+	    incr i
+	    continue
+	}
+
+	return $i
+    }
+
+    # out of range value indicates no empty values in this column
+    return 0
+}
+
+::itcl::body Table::isData {i mark} {
+    if {![isValidRow $i]} {
+	error "Table::isData: i must be in the range (1,$rows) inclusive"
+    }
+
+    incr i -1
+    if {[lindex [lindex [lindex $table $i] 0] 0] != $mark} {
+	return 1
+    }
+
+    return 0
+}
+
+::itcl::body Table::countData {i mark} {
+    if {![isValidRow $i]} {
+	error "Table::countData: i must be in the range (1,$rows) inclusive"
+    }
+
+    set ri 0
+    set dcount 0
+    foreach row $table {
+	if {$i <= $ri} {
+	    break
+	}
+
+	if {[lindex [lindex $row 0] 0] != $mark} {
+	    incr dcount
+	}
+
+	incr ri
+    }
+
+    return $dcount
 }

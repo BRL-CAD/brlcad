@@ -20,8 +20,8 @@
 #	The Command class implements a command window with command line
 #       editing and command history.
 #
-class Command {
-    inherit iwidgets::Scrolledtext
+::itcl::class Command {
+    inherit ::iwidgets::Scrolledtext
 
     constructor {args} {}
     destructor {}
@@ -107,11 +107,11 @@ class Command {
     private variable search_dir ""
 }
 
-configbody Command::edit_style {
+::itcl::configbody Command::edit_style {
     edit_style $itk_option(-edit_style)
 }
 
-configbody Command::cmd_prefix {
+::itcl::configbody Command::cmd_prefix {
     if {$itk_option(-cmd_prefix) == ""} {
 	set cmdlist ""
 	return
@@ -134,33 +134,33 @@ configbody Command::cmd_prefix {
 
 }
 
-configbody Command::selection_color {
+::itcl::configbody Command::selection_color {
 	$itk_component(text) tag configure sel -foreground $itk_option(-selection_color)
 }
 
-configbody Command::prompt_color {
+::itcl::configbody Command::prompt_color {
 	$itk_component(text) tag configure prompt -foreground $itk_option(-prompt_color)
 }
 
-configbody Command::cmd_color {
+::itcl::configbody Command::cmd_color {
 	$itk_component(text) tag configure cmd -foreground $itk_option(-cmd_color)
 }
 
-configbody Command::oldcmd_color {
+::itcl::configbody Command::oldcmd_color {
 	$itk_component(text) tag configure oldcmd -foreground $itk_option(-oldcmd_color)
 }
 
-configbody Command::result_color {
+::itcl::configbody Command::result_color {
 	$itk_component(text) tag configure result -foreground $itk_option(-result_color)
 }
 
-configbody Command::maxlines {
+::itcl::configbody Command::maxlines {
     if {$itk_option(-maxlines) < 1} {
 	error "-maxlines must be greater than zero"
     }
 }
 
-body Command::constructor {args} {
+::itcl::body Command::constructor {args} {
 	eval itk_initialize $args
 
 	doBindings
@@ -181,18 +181,18 @@ body Command::constructor {args} {
 	$itk_component(text) tag configure result -foreground $itk_option(-result_color)
 }
 
-body Command::destructor {} {
+::itcl::body Command::destructor {} {
     # destroy command history object
     rename $hist ""
 }
 
 
 ############################## Public Methods ##############################
-body Command::history {} {
+::itcl::body Command::history {} {
     eval $hist history
 }
 
-body Command::edit_style {args} {
+::itcl::body Command::edit_style {args} {
     if {$args == ""} {
 	return $itk_option(-edit_style)
     }
@@ -209,7 +209,7 @@ body Command::edit_style {args} {
     }
 }
 
-body Command::putstring {str} {
+::itcl::body Command::putstring {str} {
     set w $itk_component(text)
     set promptBegin [$w index {end - 1 l}]
     $w mark set curr insert
@@ -235,7 +235,7 @@ body Command::putstring {str} {
 
 ############################## Protected/Private Methods  ##############################
 
-body Command::invoke {} {
+::itcl::body Command::invoke {} {
     set w $itk_component(text)
 
     set cmd [$w get promptEnd insert]
@@ -284,7 +284,7 @@ body Command::invoke {} {
     $w see insert
 }
 
-body Command::first_char_in_line {} {
+::itcl::body Command::first_char_in_line {} {
     set w $itk_component(text)
     $w mark set insert promptEnd
     set c [$w get insert]
@@ -294,20 +294,20 @@ body Command::first_char_in_line {} {
     cursor_highlight
 }
 
-body Command::beginning_of_line {} {
+::itcl::body Command::beginning_of_line {} {
     set w $itk_component(text)
     $w mark set insert promptEnd
     cursor_highlight
 }
 
-body Command::end_of_line {} {
+::itcl::body Command::end_of_line {} {
     set w $itk_component(text)
     $w mark set insert {end - 2c}
     cursor_highlight
     $w see insert
 }
 
-body Command::backward_char {} {
+::itcl::body Command::backward_char {} {
     set w $itk_component(text)
     if [$w compare insert > promptEnd] {
 	$w mark set insert {insert - 1c}
@@ -315,7 +315,7 @@ body Command::backward_char {} {
     }
 }
 
-body Command::forward_char {} {
+::itcl::body Command::forward_char {} {
     set w $itk_component(text)
     if [$w compare insert < {end - 2c}] {
 	$w mark set insert {insert + 1c}
@@ -323,7 +323,7 @@ body Command::forward_char {} {
     }
 }
 
-body Command::backward_word {} {
+::itcl::body Command::backward_word {} {
     set w $itk_component(text)
     set ti [$w search -backwards -regexp "\[ \t\]\[^ \t\]" {insert - 1c} promptEnd]
     if [string length $ti] {
@@ -335,7 +335,7 @@ body Command::backward_word {} {
     cursor_highlight
 }
 
-body Command::forward_word {} {
+::itcl::body Command::forward_word {} {
     set w $itk_component(text)
     set ti [$w search -forward -regexp "\[ \t\]\[^ \t\]" insert {end - 2c}]
     if [string length $ti] {
@@ -344,7 +344,7 @@ body Command::forward_word {} {
     }
 }
 
-body Command::end_word {} {
+::itcl::body Command::end_word {} {
     set w $itk_component(text)
     set ti [$w search -forward -regexp "\[^ \t\]\[ \t\]" {insert + 1c} {end - 2c}]
     if [string length $ti] {
@@ -356,7 +356,7 @@ body Command::end_word {} {
     cursor_highlight
 }
 
-body Command::backward_delete_char {} {
+::itcl::body Command::backward_delete_char {} {
     set w $itk_component(text)
 #    catch {$w tag remove sel sel.first promptEnd}
     if [$w compare insert > promptEnd] {
@@ -366,7 +366,7 @@ body Command::backward_delete_char {} {
     }
 }
 
-body Command::delete_char {} {
+::itcl::body Command::delete_char {} {
     set w $itk_component(text)
 #    catch {$w tag remove sel sel.first promptEnd}
     if {[$w compare insert >= promptEnd] && [$w compare insert < {end - 2c}]} {
@@ -375,7 +375,7 @@ body Command::delete_char {} {
     }
 }
 
-body Command::backward_delete_word {} {
+::itcl::body Command::backward_delete_word {} {
     set w $itk_component(text)
     set ti [$w search -backwards -regexp "\[ \t\]\[^ \t\]" {insert - 1c} promptEnd]
     if [string length $ti] {
@@ -386,7 +386,7 @@ body Command::backward_delete_word {} {
     cursor_highlight
 }
 
-body Command::delete_word {} {
+::itcl::body Command::delete_word {} {
     set w $itk_component(text)
     set ti [$w search -forward -regexp "\[ \t\]\[^ \t\]" {insert + 1c} {end - 2c}]
     if [string length $ti] {
@@ -398,7 +398,7 @@ body Command::delete_word {} {
     cursor_highlight
 }
 
-body Command::delete_end_word {} {
+::itcl::body Command::delete_end_word {} {
     set w $itk_component(text)
     set ti [$w search -forward -regexp "\[^ \t\]\[ \t\]" {insert + 1c} {end - 2c}]
     if [string length $ti] {
@@ -410,25 +410,25 @@ body Command::delete_end_word {} {
     cursor_highlight
 }
 
-body Command::delete_line {} {
+::itcl::body Command::delete_line {} {
     set w $itk_component(text)
     $w delete promptEnd end-2c
     cursor_highlight
 }
 
-body Command::delete_end_of_line {} {
+::itcl::body Command::delete_end_of_line {} {
     set w $itk_component(text)
     $w delete insert end-2c
     cursor_highlight
 }
 
-body Command::delete_beginning_of_line {} {
+::itcl::body Command::delete_beginning_of_line {} {
     set w $itk_component(text)
     $w delete promptEnd insert
     cursor_highlight
 }
 
-body Command::next {} {
+::itcl::body Command::next {} {
     set w $itk_component(text)
     set result [catch {$hist next} msg]
 
@@ -452,7 +452,7 @@ body Command::next {} {
     }
 }
 
-body Command::prev {} {
+::itcl::body Command::prev {} {
     set w $itk_component(text)
     set result [catch {$hist prev} msg]
 
@@ -473,7 +473,7 @@ body Command::prev {} {
     }
 }
 
-body Command::transpose {} {
+::itcl::body Command::transpose {} {
     set w $itk_component(text)
     if {[$w compare insert > promptEnd] && [$w compare {end - 2c} > {promptEnd + 1c}]} {
 	if [$w compare insert >= {end - 2c}] {
@@ -490,7 +490,7 @@ body Command::transpose {} {
     cursor_highlight
 }
 
-body Command::execute {} {
+::itcl::body Command::execute {} {
     set w $itk_component(text)
     $w mark set insert {end - 2c}
     $w insert insert \n
@@ -503,7 +503,7 @@ body Command::execute {} {
     cursor_highlight
 }
 
-body Command::interrupt {} {
+::itcl::body Command::interrupt {} {
     set w $itk_component(text)
 
     $w insert insert \n
@@ -516,28 +516,28 @@ body Command::interrupt {} {
 #                        VI Specific Callbacks                                   #
 #                                                                                #
 ##################################################################################
-body Command::vi_edit_mode {} {
+::itcl::body Command::vi_edit_mode {} {
     set w $itk_component(text)
-    bind $w <BackSpace> "[code $this backward_char]; break"
-    bind $w <space> "[code $this forward_char]; break"
-    bind $w <KeyPress> "[code $this vi_process_edit %A %s]; break"
+    bind $w <BackSpace> "[::itcl::code $this backward_char]; break"
+    bind $w <space> "[::itcl::code $this forward_char]; break"
+    bind $w <KeyPress> "[::itcl::code $this vi_process_edit %A %s]; break"
 }
 
-body Command::vi_overwrite_mode {} {
+::itcl::body Command::vi_overwrite_mode {} {
     set w $itk_component(text)
-    bind $w <BackSpace> "[code $this backward_delete_char]; break"
-    bind $w <space> "[code $this delete_char]; %W insert insert %A; break"
-    bind $w <KeyPress> "[code $this vi_process_overwrite %A %s]; break"
+    bind $w <BackSpace> "[::itcl::code $this backward_delete_char]; break"
+    bind $w <space> "[::itcl::code $this delete_char]; %W insert insert %A; break"
+    bind $w <KeyPress> "[::itcl::code $this vi_process_overwrite %A %s]; break"
 }
 
-body Command::vi_insert_mode {} {
+::itcl::body Command::vi_insert_mode {} {
     set w $itk_component(text)
-    bind $w <BackSpace> "[code $this backward_delete_char]; break"
+    bind $w <BackSpace> "[::itcl::code $this backward_delete_char]; break"
     bind $w <space> {}
     bind $w <KeyPress> {}
 }
 
-body Command::vi_process_edit {c state} {
+::itcl::body Command::vi_process_edit {c state} {
     set w $itk_component(text)
 
     # Throw away all non-visible characters
@@ -871,7 +871,7 @@ body Command::vi_process_edit {c state} {
     }
 }
 
-body Command::vi_process_overwrite {c state} {
+::itcl::body Command::vi_process_overwrite {c state} {
     set w $itk_component(text)
     # Throw away all non-visible characters
     if {![string match \[!-~\] $c] || $state > 1} {
@@ -884,7 +884,7 @@ body Command::vi_process_overwrite {c state} {
 # End - VI Specific Callbacks
 
 
-body Command::text_op_begin {x y} {
+::itcl::body Command::text_op_begin {x y} {
     set w $itk_component(text)
     global mged_gui
 
@@ -892,7 +892,7 @@ body Command::text_op_begin {x y} {
     $w scan mark $x $y
 }
 
-body Command::text_paste {} {
+::itcl::body Command::text_paste {} {
     set w $itk_component(text)
 
     if {!$moveView} {
@@ -905,14 +905,14 @@ body Command::text_paste {} {
     }
 }
 
-body Command::text_scroll {x y} {
+::itcl::body Command::text_scroll {x y} {
     set w $itk_component(text)
 
     set moveView 1
     $w scan dragto $x $y
 }
 
-body Command::selection_begin {x y} {
+::itcl::body Command::selection_begin {x y} {
     set w $itk_component(text)
     $w mark set anchor [::tk::TextClosestGap $w $x $y]
     $w tag remove sel 0.0 end
@@ -922,7 +922,7 @@ body Command::selection_begin {x y} {
     }
 }
 
-body Command::selection_add {x y} {
+::itcl::body Command::selection_add {x y} {
     set w $itk_component(text)
     set cur [::tk::TextClosestGap $w $x $y]
 
@@ -943,7 +943,7 @@ body Command::selection_add {x y} {
     $w tag remove sel $last end
 }
 
-body Command::select_word {x y} {
+::itcl::body Command::select_word {x y} {
     set w $itk_component(text)
     set cur [::tk::TextClosestGap $w $x $y]
 
@@ -964,7 +964,7 @@ body Command::select_word {x y} {
     $w tag remove sel $last end
 }
 
-body Command::select_line {x y} {
+::itcl::body Command::select_line {x y} {
     set w $itk_component(text)
     set cur [::tk::TextClosestGap $w $x $y]
 
@@ -985,30 +985,30 @@ body Command::select_line {x y} {
     $w tag remove sel $last end
 }
 
-body Command::selection_modify {x y} {
+::itcl::body Command::selection_modify {x y} {
     set w $itk_component(text)
     ::tk::TextResetAnchor $w @$x,$y
     selection_add $x $y
 }
 
-body Command::print {str} {
+::itcl::body Command::print {str} {
     set w $itk_component(text)
     $w insert insert $str
 }
 
-body Command::print_prompt {} {
+::itcl::body Command::print_prompt {} {
     set w $itk_component(text)
     print_tag $itk_option(-prompt) prompt
     $w mark set promptEnd insert
     $w mark gravity promptEnd left
 }
 
-body Command::print_prompt2 {} {
+::itcl::body Command::print_prompt2 {} {
     set w $itk_component(text)
     $w insert insert $itk_option(-prompt2)
 }
 
-body Command::print_tag {str tag} {
+::itcl::body Command::print_tag {str tag} {
     set w $itk_component(text)
     set first [$w index insert]
     $w insert insert $str
@@ -1016,14 +1016,14 @@ body Command::print_tag {str tag} {
     $w tag add $tag $first $last
 }
 
-body Command::cursor_highlight {} {
+::itcl::body Command::cursor_highlight {} {
     set w $itk_component(text)
     $w tag delete hlt
     $w tag add hlt insert
     $w tag configure hlt -background yellow
 }
 
-body Command::doBindings {} {
+::itcl::body Command::doBindings {} {
     set w $itk_component(text)
     bind $w <Enter> "focus $w; break"
 
@@ -1031,51 +1031,51 @@ body Command::doBindings {} {
     doButtonBindings
 }
 
-body Command::doKeyBindings {} {
+::itcl::body Command::doKeyBindings {} {
     set w $itk_component(text)
     switch $itk_option(-edit_style) {
 	vi {
 	    vi_insert_mode
 
-	    bind $w <Escape> "[code $this vi_edit_mode]; break"
+	    bind $w <Escape> "[::itcl::code $this vi_edit_mode]; break"
 	    bind $w <Control-d> "break"
-	    bind $w <Control-u> "[code $this delete_beginning_of_line]; break"
+	    bind $w <Control-u> "[::itcl::code $this delete_beginning_of_line]; break"
 	}
 	default
 	    -
 	emacs {
 	    bind $w <Escape> "break"
-	    bind $w <Control-d> "[code $this delete_char]; break"
-	    bind $w <Control-u> "[code $this delete_line]; break"
-	    bind $w <BackSpace> "[code $this backward_delete_char]; break"
+	    bind $w <Control-d> "[::itcl::code $this delete_char]; break"
+	    bind $w <Control-u> "[::itcl::code $this delete_line]; break"
+	    bind $w <BackSpace> "[::itcl::code $this backward_delete_char]; break"
 	    bind $w <space> {}
 	    bind $w <KeyPress> {}
 	}
     }
 
 # Common Key Bindings
-    bind $w <Return> "[code $this doReturn]; break"
-    bind $w <KP_Enter> "[code $this doReturn]; break"
-    bind $w <Delete> "[code $this backward_delete_char]; break"
-    bind $w <Left> "[code $this doLeft]; break"
-    bind $w <Right> "[code $this doRight]; break"
-    bind $w <Control-a> "[code $this doControl_a]; break"
-    bind $w <Control-b> "[code $this backward_char]; break"
-    bind $w <Control-c> "[code $this doControl_c]; break"
-    bind $w <Control-e> "[code $this end_of_line]; break"
-    bind $w <Control-f> "[code $this forward_char]; break"
-    bind $w <Control-k> "[code $this delete_end_of_line]; break"
-    bind $w <Control-n> "[code $this next]; break"
+    bind $w <Return> "[::itcl::code $this doReturn]; break"
+    bind $w <KP_Enter> "[::itcl::code $this doReturn]; break"
+    bind $w <Delete> "[::itcl::code $this backward_delete_char]; break"
+    bind $w <Left> "[::itcl::code $this doLeft]; break"
+    bind $w <Right> "[::itcl::code $this doRight]; break"
+    bind $w <Control-a> "[::itcl::code $this doControl_a]; break"
+    bind $w <Control-b> "[::itcl::code $this backward_char]; break"
+    bind $w <Control-c> "[::itcl::code $this doControl_c]; break"
+    bind $w <Control-e> "[::itcl::code $this end_of_line]; break"
+    bind $w <Control-f> "[::itcl::code $this forward_char]; break"
+    bind $w <Control-k> "[::itcl::code $this delete_end_of_line]; break"
+    bind $w <Control-n> "[::itcl::code $this next]; break"
     bind $w <Control-o> "break"
-    bind $w <Control-p> "[code $this prev]; break"
-    bind $w <Control-t> "[code $this transpose]; break"
-    bind $w <Control-w> "[code $this backward_delete_word]; break"
-    bind $w <Up> "[code $this prev]; break"
-    bind $w <Down> "[code $this next]; break"
-    bind $w <Home> "[code $this beginning_of_line]; break"
-    bind $w <End> "[code $this end_of_line]; break"
-    bind $w <Meta-d> "[code $this doMeta_d]; break"
-    bind $w <Meta-BackSpace> "[code $this doMeta_BackSpace]; break"
+    bind $w <Control-p> "[::itcl::code $this prev]; break"
+    bind $w <Control-t> "[::itcl::code $this transpose]; break"
+    bind $w <Control-w> "[::itcl::code $this backward_delete_word]; break"
+    bind $w <Up> "[::itcl::code $this prev]; break"
+    bind $w <Down> "[::itcl::code $this next]; break"
+    bind $w <Home> "[::itcl::code $this beginning_of_line]; break"
+    bind $w <End> "[::itcl::code $this end_of_line]; break"
+    bind $w <Meta-d> "[::itcl::code $this doMeta_d]; break"
+    bind $w <Meta-BackSpace> "[::itcl::code $this doMeta_BackSpace]; break"
 
     bind $w <Alt-Key> {
 	::tk::TraverseToMenu %W %A
@@ -1083,13 +1083,13 @@ body Command::doKeyBindings {} {
     }
 }
 
-body Command::doButtonBindings {} {
+::itcl::body Command::doButtonBindings {} {
     set w $itk_component(text)
-    bind $w <1> "[code $this selection_begin %x %y]; break"
-    bind $w <B1-Motion> "[code $this selection_add %x %y]; break"
-    bind $w <Double-1> "[code $this select_word %x %y]; break"
-    bind $w <Triple-1> "[code $this select_line %x %y]; break"
-    bind $w <Shift-1> "[code $this selection_modify %x %y]; break"
+    bind $w <1> "[::itcl::code $this selection_begin %x %y]; break"
+    bind $w <B1-Motion> "[::itcl::code $this selection_add %x %y]; break"
+    bind $w <Double-1> "[::itcl::code $this select_word %x %y]; break"
+    bind $w <Triple-1> "[::itcl::code $this select_line %x %y]; break"
+    bind $w <Shift-1> "[::itcl::code $this selection_modify %x %y]; break"
 
     bind $w <Double-Shift-1> {
 	break
@@ -1115,12 +1115,12 @@ body Command::doButtonBindings {} {
 	break
     }
 
-    bind $w <ButtonRelease-2> "[code $this text_paste]; break"
-    bind $w <2> "[code $this text_op_begin %x %y]; break"
-    bind $w <B2-Motion> "[code $this text_scroll %x %y]; break"
+    bind $w <ButtonRelease-2> "[::itcl::code $this text_paste]; break"
+    bind $w <2> "[::itcl::code $this text_op_begin %x %y]; break"
+    bind $w <B2-Motion> "[::itcl::code $this text_scroll %x %y]; break"
 }
 
-body Command::doControl_a {} {
+::itcl::body Command::doControl_a {} {
     if {$itk_option(-edit_style) == "vi"} {
 	first_char_in_line
     } else {
@@ -1128,42 +1128,42 @@ body Command::doControl_a {} {
     }
 }
 
-body Command::doControl_c {} {
+::itcl::body Command::doControl_c {} {
     interrupt
     if {$itk_option(-edit_style) == "vi"} {
 	vi_insert_mode
     }
 }
 
-body Command::doMeta_d {} {
+::itcl::body Command::doMeta_d {} {
     if [%W compare insert < promptEnd] {
 	break
     }
     cursor_highlight
 }
 
-body Command::doMeta_BackSpace {} {
+::itcl::body Command::doMeta_BackSpace {} {
     if [%W compare insert <= promptEnd] {
 	break
     }
     cursor_highlight
 }
 
-body Command::doReturn {} {
+::itcl::body Command::doReturn {} {
     execute
     if {$itk_option(-edit_style) == "vi"} {
 	vi_insert_mode
     }
 }
 
-body Command::doLeft {} {
+::itcl::body Command::doLeft {} {
     backward_char
     if {$itk_option(-edit_style) == "vi"} {
 	vi_edit_mode
     }
 }
 
-body Command::doRight {} {
+::itcl::body Command::doRight {} {
     forward_char
     if {$itk_option(-edit_style) == "vi"} {
 	vi_edit_mode
