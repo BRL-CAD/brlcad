@@ -5,9 +5,6 @@
 			Maryland 21005-5066
 			(301)278-6647 or AV-298-6647
 */
-#ifndef _POLY9
-#include <math.h>
-#endif
 #ifndef Abs
 #define Abs( a )		((a) > 0 ? (a) : -(a))
 #endif

@@ -8,8 +8,20 @@
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
+#include "conf.h"
+
 #include <stdio.h>
 #include <fcntl.h>
+#include <assert.h>
+#include <math.h>
+
+#include "machine.h"
+#include "externs.h"
+#include "vmath.h"
+#include "raytrace.h"
+#include "fb.h"
+#include "./hmenu.h"
+#include "./lgt.h"
 #include "./extern.h"
 #include "./mat_db.h"
 
@@ -163,7 +175,7 @@ Mat_Db_Entry	*entry;
 	rt_log( "%d bytes allocated for texture map.\n",
 		wid*hgt*sizeof(RGBpixel) );
 #endif
-	if( fb_read( txfbiop, 0, 0, fbmap, wid*hgt ) == -1 )
+	if( fb_read( txfbiop, 0, 0, (unsigned char *)fbmap, wid*hgt ) == -1 )
 		{
 		rt_log( "Read of frame buffer texture failed.\n" );
 		return	NULL;
