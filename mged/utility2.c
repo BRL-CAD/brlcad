@@ -197,10 +197,12 @@ char	**argv;
 	if( strcmp( argv[0], "paths" ) == 0 ) {
 		/* want to list all matching paths */
 		flag = LISTPATH;
-	}
-	if( strcmp( argv[0], "listeval" ) == 0 ) {
+	} else if( strcmp( argv[0], "listeval" ) == 0 ) {
 		/* want to list evaluated solid[s] */
 		flag = LISTEVAL;
+	} else {
+		bu_log("f_pathsum() name=%s?\n", argv[0]);
+		flag = 0;
 	}
 
 	if( argc < 2 )  {

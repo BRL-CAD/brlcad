@@ -261,7 +261,7 @@ union E_tree *
 build_etree( tp )
 union tree *tp;
 {
-	union E_tree *eptr;
+	union E_tree *eptr = NULL;
 	struct soltab *stp;
 	struct directory *dp;
 
@@ -300,6 +300,8 @@ union tree *tp;
 			eptr->magic = E_TREE_MAGIC;
 			eptr->l.m = (struct model *)NULL;
 			break;
+		default:
+			bu_bomb("build_etree() Unknown tr_op\n");
 	}
 	return( eptr );
 }
