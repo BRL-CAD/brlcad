@@ -93,7 +93,6 @@ void	ph_start();
 struct pkg_switch pkgswitch[] = {
 	{ MSG_START, ph_start, "Startup ACK" },
 	{ MSG_MATRIX, ph_default, "Set Matrix" },
-	{ MSG_OPTIONS, ph_default, "Set options" },
 	{ MSG_LINES, ph_default, "Compute lines" },
 	{ MSG_END, ph_default, "End" },
 	{ MSG_PIXELS, ph_pixels, "Pixels" },
@@ -1076,13 +1075,11 @@ register struct frame *fr;
 {
 	char buf[BUFSIZ];
 
-	sprintf(buf, "%s -w%d -n%d -H%d -p%f",
+	sprintf(buf, "opt %s -w%d -n%d -H%d -p%f;",
 		fr->fr_benchmark ? "-B" : "",
 		fr->fr_width, fr->fr_height,
 		fr->fr_hyper, fr->fr_perspective );
-
-	if( pkg_send( MSG_OPTIONS, buf, strlen(buf)+1, sp->sr_pc ) < 0 )
-		dropclient(sp->sr_pc);
+	vls_cat( &fr->fr_cmd, buf );
 
 	if( pkg_send( MSG_MATRIX, fr->fr_cmd.vls_str, fr->fr_cmd.vls_cur, sp->sr_pc ) < 0 )
 		dropclient(sp->sr_pc);
