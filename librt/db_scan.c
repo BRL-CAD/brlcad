@@ -83,8 +83,8 @@ int			do_old_matter;
 	register int	totrec;		/* # records for database */
 	register int	j;
 
+	RT_CK_DBI(dbip);
 	if(rt_g.debug&DEBUG_DB) rt_log("db_scan( x%x, x%x )\n", dbip, handler);
-	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_scan:  bad dbip\n");
 
 	/* In a portable way, read the header (even if not rewound) */
 	rewind( dbip->dbi_fp );
@@ -317,22 +317,26 @@ db_suckin()
  *  Update the IDENT record with new title and units.
  *  To permit using db_get and db_put, a custom directory entry is crafted.
  *
+ *  Note:  Special care is required, because the "title" arg may actually
+ *  be passed in as dbip->dbi_title.
+ *
  * Returns -
  *	 0	Success
  *	-1	Fatal Error
  */
 int
-db_ident( dbip, title, units )
+db_ident( dbip, new_title, units )
 struct db_i	*dbip;
-char		*title;
+char		*new_title;
 int		units;
 {
 	struct directory	dir;
 	union record		rec;
+	char			*old_title;
 
-	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_ident:  bad dbip\n");
-	if(rt_g.debug&DEBUG_DB) rt_log("db_ident( x%x, %s, %d )\n",
-		dbip, title, units );
+	RT_CK_DBI(dbip);
+	if(rt_g.debug&DEBUG_DB) rt_log("db_ident( x%x, '%s', %d )\n",
+		dbip, new_title, units );
 
 	if( dbip->dbi_read_only )
 		return(-1);
@@ -345,12 +349,14 @@ int		units;
 		return(-1);
 
 	rec.i.i_title[0] = '\0';
-	(void)strncpy(rec.i.i_title, title, sizeof(rec.i.i_title)-1 );
+	(void)strncpy(rec.i.i_title, new_title, sizeof(rec.i.i_title)-1 );
 
-	if( dbip->dbi_title )
-		rt_free( dbip->dbi_title, "dbi_title" );
-	dbip->dbi_title = rt_strdup( title );
+	old_title = dbip->dbi_title;
+	dbip->dbi_title = rt_strdup( new_title );
 	dbip->dbi_localunit = rec.i.i_units = units;
+
+	if( old_title )
+		rt_free( old_title, "old dbi_title" );
 
 	return( db_put( dbip, &dir, &rec, 0, 1 ) );
 }
@@ -365,6 +371,8 @@ db_conversions( dbip, local )
 struct db_i	*dbip;
 int local;
 {
+	RT_CK_DBI(dbip);
+
 	/* Base unit is MM */
 	switch( local ) {
 
