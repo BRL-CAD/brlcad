@@ -415,7 +415,7 @@ struct nmg_bool_state *bs;
 			{
 				nmg_ck_lu_orientation( lu, bs->bs_tol );
 			}
-			switch( nmg_eval_action( (genptr_t)lu->l_p, bs ) )  {
+			switch( nmg_eval_action( &lu->l_p->magic, bs ) )  {
 			case BACTION_KILL:
 				/* Kill by demoting loop to edges */
 				if( BU_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )  {
@@ -487,7 +487,7 @@ struct nmg_bool_state *bs;
 			continue;
 		}
 		NMG_CK_LOOP( lu->l_p );
-		switch( nmg_eval_action( (genptr_t)lu->l_p, bs ) )  {
+		switch( nmg_eval_action( &lu->l_p->magic, bs ) )  {
 		case BACTION_KILL:
 			/* Demote the loopuse into wire edges */
 			/* kill loop & mate */
@@ -518,7 +518,7 @@ struct nmg_bool_state *bs;
 
 		/* Consider this edge */
 		NMG_CK_EDGE( eu->e_p );
-		switch( nmg_eval_action( (genptr_t)eu->e_p, bs ) )  {
+		switch( nmg_eval_action( &eu->e_p->magic, bs ) )  {
 		case BACTION_KILL:
 			/* Demote the edegeuse (and mate) into vertices */
 			if( nmg_demote_eu( eu ) == 0 )
@@ -561,7 +561,7 @@ struct nmg_bool_state *bs;
 		vu = BU_LIST_PNEXT( vertexuse, &lu->down_hd );
 		NMG_CK_VERTEXUSE( vu );
 		NMG_CK_VERTEX( vu->v_p );
-		switch( nmg_eval_action( (genptr_t)vu->v_p, bs ) )  {
+		switch( nmg_eval_action( &vu->v_p->magic, bs ) )  {
 		case BACTION_KILL:
 			/* Eliminate the loopuse, and mate */
 			nmg_klu( lu );
@@ -583,7 +583,7 @@ struct nmg_bool_state *bs;
 	if( (vu = s->vu_p) )  {
 		NMG_CK_VERTEXUSE( vu );
 		NMG_CK_VERTEX( vu->v_p );
-		switch( nmg_eval_action( (genptr_t)vu->v_p, bs ) )  {
+		switch( nmg_eval_action( &vu->v_p->magic, bs ) )  {
 		case BACTION_KILL:
 			nmg_kvu( vu );
 			nmg_eval_plot( bs, nmg_eval_count++, 0 );	/* debug */
