@@ -1,11 +1,11 @@
 /*
- *	@(#) vproc.c		retrieved 8/13/86 at 08:23:14,
- *	@(#) version 1.4		  created 3/29/83 at 10:55:05.
+ *	@(#) vproc.c			retrieved: 8/13/86 at 08:23:30,
+ *	@(#) version 1.5		last edit: 10/11/83 at 09:31:36.
  *
  *	Written by Gary S. Moss.
  *	All rights reserved, Ballistic Research Laboratory.
  *
- *	Proceedures for deck.c
+ *	Procedures for vproc.c
  *
  *	Section 1:  Commands
  *		2:  Object Directory Routines
@@ -18,10 +18,12 @@
 #include <stdio.h>
 #include <signal.h>
 #include <setjmp.h>
-#include "ged_types.h"
-#include "3d.h"
-#include "deck.h"
-#include "deck_ext.h"
+#include "./ged_types.h"
+#include "./3d.h"
+#include "./vdeck.h"
+#include "./vextern.h"
+char		*addname();
+Directory	*lookup(), *diradd();
 
 /*
  *	Section 1:	C O M M A N D S
@@ -123,7 +125,7 @@ char *prefix;
 	 * card deck.
 	 */
 	for( i = 0; i < curr_ct; i++ )
-		if( (dp = lookup( curr_list[i], NOISY )) != -1 )
+		if( (dp = lookup( curr_list[i], NOISY )) != DIR_NULL )
 			cgobj( dp, 0, identity );
 
 	/* add number of solids and regions on second card
@@ -362,12 +364,12 @@ register char *str;
 		np = dp->d_namep;
 		for( i = 0; i < 16; i++ ) {
 			if( str[i] != *np )	break;
-			if( *np++ == 0 || i == 15 )	return( dp );
+			if( *np++ == 0 || i == 15 )	return	dp;
 		}
 	}
 	if( flag == NOISY )
 		fprintf( stderr, "Lookup: could not find '%s'.\n", str );
-	return( -1 );
+	return	DIR_NULL;
 }
 
 /*	==== d i r a d d ( )
@@ -382,7 +384,7 @@ long laddr;
 
 	if( ndir >= NDIR )  {
 		fprintf( stderr, "Diradd:  no more dir structs.\n");
-		return( -1 );
+		return	DIR_NULL;
 	}
 
 	dp = &directory[ndir++];
@@ -395,6 +397,7 @@ long laddr;
  *	Given a name, it puts the name in the name buffer, and
  *	returns a pointer to that string.
  */
+char *
 addname( cp )
 register
 char	*cp;
@@ -410,7 +413,7 @@ char	*cp;
 	i = 0;
 	while( *cp != 0 && i++ < 16 )	*dir_last++ = *cp++;
 	*dir_last++ = 0;
-	return( holder );
+	return	holder;
 }
 
 /*
@@ -420,7 +423,6 @@ char	*cp;
  *			col_prt()
  *			insert()
  *			delete()
- *			sort()
  */
 
 /*	==== l i s t _ t o c ( )
@@ -552,32 +554,6 @@ char	*args[];
 				"Object \"%s\" not found.\n", args[i] );
 	}
 	return( curr_ct );
-}
-
-/*	==== s o r t ( )
- *	Sort a list of strings alphabetically stored at 'linebuf'.
- */
-sort( linebuf,	items )
-char *linebuf[];
-register
-int		items;
-{
-	register int	i;
-	register int	change = YES;
-
-	for( i = 0; i < items-1 && change == YES; i++ )
-	{ register int	j;
-	  register char	*p;
-		change = NO;
-		for( j = items-1; j > i; --j ) {
-			if( strcmp( linebuf[j], linebuf[j-1] ) < 0 ) {
-				p = linebuf[j];
-				linebuf[j] = linebuf[j-1];
-				linebuf[j-1] = p;
-				change = YES;
-			}
-		}
-	}
 }
 
 /*
