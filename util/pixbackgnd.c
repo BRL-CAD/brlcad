@@ -213,7 +213,7 @@ register double *hsv;
 {
         double s, v, r, g, b, x;
 	static double h;
-        double dif;
+        double dif = 0.0;
 
         r = rgb[0];
         g = rgb[1];
@@ -305,14 +305,12 @@ register double *rgb;
                 g = m;
                 b = hsv[2];
                 break;
+            default:
             case 5:
                 r = hsv[2];
                 g = m;
                 b = n;
                 break;
-      	default:
-            	printf("hsv2rgb:  gak!\n");
-            	break;
             }
         }
         else

@@ -391,6 +391,7 @@ register int *rgb;
                 g = m;
                 b = hsv[2];
                 break;
+            default:
             case 5:
                 r = hsv[2];
                 g = m;

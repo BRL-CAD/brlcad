@@ -27,9 +27,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "db.h"
 #include "vmath.h"
 #include "rtlist.h"
-#include "wdb.h"
-
 #include "../libspl/b_spline.h"
+#include "wdb.h"			/* after b_spline.h */
 
 extern struct b_spline *spl_new();
 
@@ -212,8 +211,7 @@ char	**argv;
 
 		sprintf( gname, "g%d", frame);
 		mk_lcomb( stdout, gname, &ghead, 0,
-			(char *)0, "",
-			0, (char *)0, &ghead );
+			(char *)0, "", (char *)0, 0 );
 
 		fprintf( stderr, "%d, ", frame );  fflush(stderr);
 	}
@@ -322,7 +320,7 @@ FILE	*fp;
 	char	buf[256];
 	int	i;
 	static float	last_read_time = -5;
-	double	dx;
+	double	dx = 0.0;
 
 	if( feof(fp) )
 		return(-1);
