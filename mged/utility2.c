@@ -233,7 +233,7 @@ f_copyeval( )
 	db_getrec( obj[objpos-1], (char *)&record, 0);
 	if(record.u_id != ID_SOLID && record.u_id != ID_ARS_A &&
 		record.u_id != ID_BSOLID && record.u_id != ID_P_HEAD) {
-		(void)printf("Bottom of path %s is not a solid\n",dp->d_namep);
+		(void)printf("Bottom of path is not a solid\n");
 		return;
 	}
 
