@@ -53,10 +53,9 @@ int	fd;
 	}
 #else	
 	{	static struct timeval	timeout = { 0L, 600L };
-		fd_set		readfds;
+		auto long	readfds = 1 << fd;
 		register int	nfound;
-	FD_ZERO( &readfds );
-	FD_SET( fd, &readfds );
+	readfds = 1<<fd;
 	nfound = select( fd+1, &readfds, (fd_set *)0, (fd_set *)0, &timeout );
 	return	nfound == -1 ? 1 : (nfound == 0);
 	}
