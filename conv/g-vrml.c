@@ -99,7 +99,7 @@ struct structparse vrml_texture_parse[] = {
 RT_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree));
 RT_EXTERN( struct face *nmg_find_top_face , (struct shell *s , long *flags ));
 
-static char	usage[] = "Usage: %s [-v] [-i] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o out_file] brlcad_db.g object(s)\n";
+static char	usage[] = "Usage: %s [-v] [-i] [-xX lvl] [-d tolerance_distance (mm) ] [-a abs_tol (mm)] [-r rel_tol] [-n norm_tol] [-o out_file] brlcad_db.g object(s)\n";
 
 static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
 static int	verbose;
@@ -144,10 +144,10 @@ union tree			*curtree;
 		return( -1 );
 	}
 
-	if( strcmp( rec.c.c_matname, "light" ) )
-		return( -1 );
-	else
+	if( !strcmp( rec.c.c_matname, "light" ) )
 		return( 0 );
+	else
+		return( -1 );
 }
 
 static int
@@ -171,10 +171,10 @@ union tree			*curtree;
 		return( -1 );
 	}
 
-	if( strcmp( rec.c.c_matname, "light" ) )
-		return( 0 );
-	else
+	if( !strcmp( rec.c.c_matname, "light" ) )
 		return( -1 );
+	else
+		return( 0 );
 }
 
 /*
@@ -223,10 +223,14 @@ char	*argv[];
 	RT_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "a:n:o:r:vx:P:X:")) != EOF) {
+	while ((c = getopt(argc, argv, "d:a:n:o:r:vx:P:X:")) != EOF) {
 		switch (c) {
 		case 'a':		/* Absolute tolerance. */
 			ttol.abs = atof(optarg);
+			break;
+		case 'd':		/* calculational tolerance */
+			tol.dist = atof( optarg );
+			tol.dist_sq = tol.dist * tol.dist;
 			break;
 		case 'n':		/* Surface normal tolerance. */
 			ttol.norm = atof(optarg);
@@ -292,15 +296,31 @@ char	*argv[];
 
 	optind++;
 
-	/* walk trees selecting only light source regions */
-	(void)db_walk_tree(dbip, argc-optind, (CONST char **)(&argv[optind]),
-		1,				/* ncpu */
-		&tree_state,
-		select_lights,
-		do_region_end,
-		nmg_booltree_leaf_tess);	/* in librt/nmg_bool.c */
+	for( i=optind ; i<argc ; i++ )
+	{
+		struct directory *dp;
+
+		dp = db_lookup( dbip, argv[i], LOOKUP_QUIET );
+		if( dp == DIR_NULL )
+		{
+			rt_log( "Cannot find %s\n", argv[i] );
+			continue;
+		}
+
+		/* light source must be a combibation */
+		if( !(dp->d_flags & DIR_COMB) )
+			continue;
+
+		/* walk trees selecting only light source regions */
+		(void)db_walk_tree(dbip, 1, (CONST char **)(&argv[i]),
+			1,				/* ncpu */
+			&tree_state,
+			select_lights,
+			do_region_end,
+			nmg_booltree_leaf_tess);	/* in librt/nmg_bool.c */
 
 
+	}
 	/* Walk indicated tree(s).  Each non-light-source region will be output separately */
 	(void)db_walk_tree(dbip, argc-optind, (CONST char **)(&argv[optind]),
 		1,				/* ncpu */
@@ -308,7 +328,6 @@ char	*argv[];
 		select_non_lights,
 		do_region_end,
 		nmg_booltree_leaf_tess);	/* in librt/nmg_bool.c */
-
 
 	/* Release dynamic storage */
 	nmg_km(the_model);
@@ -324,137 +343,168 @@ char	*argv[];
 }
 
 void
-nmg_2_vrml( fp, dp, m )
+nmg_2_vrml( fp, pathp, m, mater )
 FILE *fp;
-struct directory *dp;
+struct db_full_path *pathp;
 struct model *m;
+struct mater_info *mater;
 {
 	struct nmgregion *reg;
 	struct nmg_ptbl verts;
 	int i;
 	int first=1;
 	int is_light=0;
-	union record rec;
 	float r,g,b;
 	point_t ave_pt;
 	fastf_t pt_count=0.0;
+	char *full_path;
 
 	NMG_CK_MODEL( m );
 
-	if( dp->d_flags & DIR_COMB )
+	full_path = db_path_to_string( pathp );
+
+	if( mater->ma_override )
 	{
+		r = mater->ma_color[0];
+		g = mater->ma_color[1];
+		b = mater->ma_color[2];
+	}
+	else
+	{
+		r = g = b = 0.5;
+	}
 
-		if( db_get( dbip, dp, &rec, 0, 1 ) < 0 )
-			rt_log( "Cannot get header record for %s\n" , dp->d_namep );
-		else
+	if( strcmp( "light", mater->ma_matname ) == 0 )
+	{
+		/* this is a light source */
+		is_light = 1;
+		}
+	else if( strcmp( "plastic", mater->ma_matname ) == 0 )
+	{
+		struct vrml_mat mat;
+		struct rt_vls vls;
+
+		mat.shininess = 10;
+		mat.transparency = 0.0;
+
+		if( strlen( mater->ma_matparm ) )
 		{
+			rt_vls_init( &vls );
+			rt_vls_strcpy( &vls, mater->ma_matparm );
+			(void)rt_structparse( &vls, vrml_mat_parse, (char *)&mat );
+			rt_vls_free( &vls );
+		}
+		fprintf( fp, "Separator { # start of %s\n", full_path );
+		fprintf( fp, "\tMaterial {\n" );
+		fprintf( fp, "\t\tdiffuseColor %g %g %g \n", r, g, b );
+		fprintf( fp, "\t\tambientColor %g %g %g \n", r, g, b );
+		fprintf( fp, "\t\tshininess %g\n", 1.0-exp(-(double)mat.shininess/20.0 ) );
+		if( mat.transparency > 0.0 )
+			fprintf( fp, "\t\ttransparency %g\n", mat.transparency );
+		fprintf( fp, "\t\tspecularColor %g %g %g }\n", 1.0, 1.0, 1.0 );
+	}
+	else if( strcmp( "glass", mater->ma_matname ) == 0 )
+	{
+		struct vrml_mat mat;
+		struct rt_vls vls;
 
-			r = (float)rec.c.c_rgb[0]/255.0;
-			g = (float)rec.c.c_rgb[1]/255.0;
-			b = (float)rec.c.c_rgb[2]/255.0;
+		mat.shininess = 4;
+		mat.transparency = 0.8;
 
-			if( strcmp( "light", rec.c.c_matname ) == 0 )
+		if( strlen( mater->ma_matparm ) )
+		{
+			rt_vls_init( &vls );
+			rt_vls_strcpy( &vls, mater->ma_matparm );
+			(void)rt_structparse( &vls, vrml_mat_parse, (char *)&mat );
+			rt_vls_free( &vls );
+		}
+		fprintf( fp, "Separator { # start of %s\n", full_path );
+		fprintf( fp, "\tMaterial {\n" );
+		fprintf( fp, "\t\tdiffuseColor %g %g %g \n", r, g, b );
+		fprintf( fp, "\t\tambientColor %g %g %g \n", r, g, b );
+		fprintf( fp, "\t\tshininess %g\n", 1.0-exp(-(double)mat.shininess/20.0 ) );
+		if( mat.transparency > 0.0 )
+			fprintf( fp, "\t\ttransparency %g\n", mat.transparency );
+		fprintf( fp, "\t\tspecularColor %g %g %g }\n", 1.0, 1.0, 1.0 );
+	}
+	else if( strcmp( "texture", mater->ma_matname ) == 0 )
+	{
+		struct vrml_texture tex;
+		struct rt_vls vls;
+
+		tex.tx_file[0] = '\0';
+		tex.tx_w = (-1);
+		tex.tx_n = (-1);
+
+		if( strlen( mater->ma_matparm ) )
+		{
+			rt_vls_init( &vls );
+			rt_vls_strcpy( &vls, mater->ma_matparm );
+			bzero( tex.tx_file, TXT_NAME_LEN );
+			(void)rt_structparse( &vls, vrml_texture_parse, (char *)&tex );
+			rt_vls_free( &vls );
+		}
+
+		if( tex.tx_w < 0 )
+			tex.tx_w = 512;
+		if( tex.tx_n < 0 )
+			tex.tx_n = 512;
+
+		fprintf( fp, "Separator { # start of %s\n", full_path );
+		if( strlen( tex.tx_file ) )
+		{
+			int tex_fd;
+			int nbytes;
+			long tex_len;
+			long bytes_read=0;
+			int buf_start=0;
+			unsigned char tex_buf[TXT_BUF_LEN*3];
+
+			if( (tex_fd = open( tex.tx_file, O_RDONLY )) == (-1) )
 			{
-				/* this is a light source */
-				is_light = 1;
-				}
-			else if( strcmp( "plastic", rec.c.c_matname ) == 0 ||
-				 strcmp( "glass", rec.c.c_matname ) == 0 )
-			{
-				struct vrml_mat mat;
-				struct rt_vls vls;
-
-				mat.shininess = 10;
-				mat.transparency = 0.0;
-
-				if( strlen( rec.c.c_matparm ) )
-				{
-					rt_vls_init( &vls );
-					rt_vls_strcpy( &vls, rec.c.c_matparm );
-					(void)rt_structparse( &vls, vrml_mat_parse, (char *)&mat );
-					rt_vls_free( &vls );
-				}
-				fprintf( fp, "Separator { # start of %s\n", dp->d_namep );
-				fprintf( fp, "\tMaterial {\n" );
-				fprintf( fp, "\t\tdiffuseColor %g %g %g \n", r, g, b );
-				fprintf( fp, "\t\tambientColor %g %g %g \n", r, g, b );
-				fprintf( fp, "\t\tshininess %g\n", 1.0-exp(-(double)mat.shininess/20.0 ) );
-				if( mat.transparency > 0.0 )
-					fprintf( fp, "\t\ttransparency %g\n", mat.transparency );
-				fprintf( fp, "\t\tspecularColor %g %g %g }\n", 1.0, 1.0, 1.0 );
-			}
-			else if( strcmp( "texture", rec.c.c_matname ) == 0 )
-			{
-				struct vrml_texture tex;
-				struct rt_vls vls;
-
-				tex.tx_file[0] = '\0';
-				tex.tx_w = 0;
-				tex.tx_n = 0;
-
-				if( strlen( rec.c.c_matparm ) )
-				{
-					rt_vls_init( &vls );
-					rt_vls_strcpy( &vls, rec.c.c_matparm );
-					bzero( tex.tx_file, TXT_NAME_LEN );
-					(void)rt_structparse( &vls, vrml_texture_parse, (char *)&tex );
-					rt_vls_free( &vls );
-				}
-
-				fprintf( fp, "Separator { # start of %s\n", dp->d_namep );
-				if( strlen( tex.tx_file ) )
-				{
-					int tex_fd;
-					int nbytes;
-					long tex_len;
-					long bytes_read=0;
-					int buf_start=0;
-					unsigned char tex_buf[TXT_BUF_LEN*3];
-
-					if( (tex_fd = open( tex.tx_file, O_RDONLY )) == (-1) )
-					{
-						rt_log( "Cannot open texture file (%s)\n", tex.tx_file );
-						perror( "g-vrml: " );
-					}
-					else
-					{
-						fprintf( fp, "\tTexture2 {\n" );
-						fprintf( fp, "\t\twrapS REPEAT\n" );
-						fprintf( fp, "\t\twrapT REPEAT\n" );
-						fprintf( fp, "\t\timage %d %d %d\n", tex.tx_w, tex.tx_n, 3 );
-						tex_len = tex.tx_w*tex.tx_n*3;
-						while( bytes_read < tex_len )
-						{
-							long bytes_to_go=tex_len;
-
-							bytes_to_go = tex_len - bytes_read;
-							if( bytes_to_go > TXT_BUF_LEN*3 )
-								bytes_to_go = TXT_BUF_LEN*3;
-							nbytes = 0;
-							while( nbytes < bytes_to_go )
-								nbytes += read( tex_fd, &tex_buf[nbytes],
-									bytes_to_go-nbytes );
-
-							bytes_read += nbytes;
-							for( i=0 ; i<nbytes ; i += 3 )
-								fprintf( fp, "\t\t\t0x%2.2x%2.2x%2.2x\n",
-									tex_buf[i],
-									tex_buf[i+1],
-									tex_buf[i+2] );
-						}
-						fprintf( fp, "\t}\n" );
-					}
-				}
+				rt_log( "Cannot open texture file (%s)\n", tex.tx_file );
+				perror( "g-vrml: " );
 			}
 			else
 			{
-				fprintf( fp, "Separator { # start of %s\n", dp->d_namep );
-				fprintf( fp, "\tMaterial {\n" );
-				fprintf( fp, "\t\tdiffuseColor %g %g %g \n", r, g, b );
-				fprintf( fp, "\t\tambientColor %g %g %g \n", r, g, b );
-				fprintf( fp, "\t\tspecularColor %g %g %g }\n", 1.0, 1.0, 1.0 );
+				fprintf( fp, "\tTexture2Transform {\n" );
+				fprintf( fp, "\t\tscaleFactor 1.33333 1.33333\n" );
+				fprintf( fp, "\t\t}\n" );
+				fprintf( fp, "\tTexture2 {\n" );
+				fprintf( fp, "\t\twrapS REPEAT\n" );
+				fprintf( fp, "\t\twrapT REPEAT\n" );
+				fprintf( fp, "\t\timage %d %d %d\n", tex.tx_w, tex.tx_n, 3 );
+				tex_len = tex.tx_w*tex.tx_n*3;
+				while( bytes_read < tex_len )
+				{
+					long bytes_to_go=tex_len;
+
+					bytes_to_go = tex_len - bytes_read;
+					if( bytes_to_go > TXT_BUF_LEN*3 )
+						bytes_to_go = TXT_BUF_LEN*3;
+					nbytes = 0;
+					while( nbytes < bytes_to_go )
+						nbytes += read( tex_fd, &tex_buf[nbytes],
+							bytes_to_go-nbytes );
+
+					bytes_read += nbytes;
+					for( i=0 ; i<nbytes ; i += 3 )
+						fprintf( fp, "\t\t\t0x%02x%02x%02x\n",
+							tex_buf[i],
+							tex_buf[i+1],
+							tex_buf[i+2] );
+				}
+				fprintf( fp, "\t}\n" );
 			}
 		}
+	}
+	else
+	{
+		fprintf( fp, "Separator { # start of %s\n", full_path );
+		fprintf( fp, "\tMaterial {\n" );
+		fprintf( fp, "\t\tdiffuseColor %g %g %g \n", r, g, b );
+		fprintf( fp, "\t\tambientColor %g %g %g \n", r, g, b );
+		fprintf( fp, "\t\tspecularColor %g %g %g }\n", 1.0, 1.0, 1.0 );
 	}
 
 	if( !is_light )
@@ -465,19 +515,31 @@ struct model *m;
 			struct shell *s;
 
 			NMG_CK_REGION( reg );
-			for( RT_LIST_FOR( s, shell, &reg->s_hd ) )
+			s = RT_LIST_FIRST( shell, &reg->s_hd );
+			while( RT_LIST_NOT_HEAD( s, &reg->s_hd ) )
 			{
+				struct shell *next_s;
 				struct faceuse *fu;
 
 				NMG_CK_SHELL( s );
-				for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )
+				next_s = RT_LIST_PNEXT( shell, &s->l );
+				fu = RT_LIST_FIRST( faceuse, &s->fu_hd );
+				while( RT_LIST_NOT_HEAD( &fu->l, &s->fu_hd ) )
 				{
+					struct faceuse *next_fu;
 					struct loopuse *lu;
+					int shell_is_dead=0;
+					int face_is_dead=0;
 
 					NMG_CK_FACEUSE( fu );
 
+					next_fu = RT_LIST_PNEXT( faceuse, &fu->l );
+
 					if( fu->orientation != OT_SAME )
+					{
+						fu = next_fu;
 						continue;
+					}
 
 					/* check if this faceuse has any holes */
 					for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
@@ -488,12 +550,31 @@ struct model *m;
 							/* this is a hole, so
 							 * triangulate the faceuse
 							 */
-							nmg_triangulate_fu( fu, &tol );
+							if( RT_SETJUMP )
+							{
+								RT_UNSETJUMP;
+								rt_log( "A face has failed triangulation!!!!\n" );
+								if( next_fu == fu->fumate_p )
+									next_fu = RT_LIST_PNEXT( faceuse, &next_fu->l );
+								if( nmg_kfu( fu ) )
+								{
+									(void) nmg_ks( s );
+									shell_is_dead = 1;
+								}
+								face_is_dead = 1;
+							}
+							if( !face_is_dead )
+								nmg_triangulate_fu( fu, &tol );
+							RT_UNSETJUMP;
 							break;
 						}
 
 					}
+					if( shell_is_dead )
+						break;
+					fu = next_fu;
 				}
+				s = next_s;
 			}
 		}
 	}
@@ -519,19 +600,19 @@ struct model *m;
 		NMG_CK_VERTEX_G( vg );
 
 		/* convert to meters */
-		VSCALE( pt_meters, vg->coord, 1.0/1000.0 );
+		VSCALE( pt_meters, vg->coord, 0.001 );
 
 		if( is_light )
 			VADD2( ave_pt, ave_pt, pt_meters )
 		if( first )
 		{
 			if( !is_light )
-				fprintf( fp, " %g %g %g,\n", V3ARGS( pt_meters ) );
+				fprintf( fp, " %10.10e %10.10e %10.10e, # point %d\n", V3ARGS( pt_meters ), i );
 			first = 0;
 		}
 		else
 			if( !is_light )
-				fprintf( fp, "\t\t\t%g %g %g,\n", V3ARGS( pt_meters ) );
+				fprintf( fp, "\t\t\t%10.10e %10.10e %10.10e, # point %d\n", V3ARGS( pt_meters ), i );
 	}
 	if( !is_light )
 		fprintf( fp, "\t\t\t]\n\t\t}\n" );
@@ -606,10 +687,10 @@ struct model *m;
 		v_light.lt_fraction = 0.0;
 		v_light.lt_angle = 180.0;
 		VSETALL( v_light.lt_dir, 0.0 );
-		if( strlen( rec.c.c_matparm ) )
+		if( strlen( mater->ma_matparm ) )
 		{
 			rt_vls_init( &vls );
-			rt_vls_strcpy( &vls, rec.c.c_matparm );
+			rt_vls_strcpy( &vls, mater->ma_matparm );
 			(void)rt_structparse( &vls, vrml_light_parse, (char *)&v_light );
 			rt_vls_free( &vls );
 		}
@@ -697,7 +778,6 @@ union tree		*curtree;
 		*tsp->ts_m = nmg_mm();
 		goto out;
 	}
-	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
 	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol);	/* librt/nmg_bool.c */
 
 	if( ret_tree )
@@ -742,11 +822,8 @@ union tree		*curtree;
 
 		if( !empty_region && !empty_model )
 		{
-			struct directory *dp;
-
 			/* Write the nmgregion to the output file */
-			dp = DB_FULL_PATH_CUR_DIR( pathp );
-			nmg_2_vrml( fp_out, dp, *tsp->ts_m );
+			nmg_2_vrml( fp_out, pathp, r->m_p, &tsp->ts_mater );
 		}
 
 		/* NMG region is no longer necessary */

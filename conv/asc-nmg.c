@@ -33,6 +33,9 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 RT_EXTERN( struct faceuse *nmg_add_loop_to_face, (struct shell *s, struct faceuse *fu, struct vertex **verts, int n, int dir ) );
 RT_EXTERN( fastf_t nmg_loop_plane_area, (CONST struct loopuse *lu, plane_t pl ) );
 
+static int ascii_to_brlcad();
+static void descr_to_nmg();
+
 char		usage[] = "Usage: %s [file]\n";
 extern char	*optarg;
 extern int	optind;
@@ -114,6 +117,7 @@ struct model	*m;
  *
  *	Convert an ascii nmg description into a BRL-CAD data base.
  */
+static int
 ascii_to_brlcad(fpin, fpout, reg_name, grp_name)
 FILE	*fpin, *fpout;
 char	*reg_name, *grp_name;
@@ -157,6 +161,8 @@ char	*reg_name, *grp_name;
 	create_brlcad_db(fpout, m, reg_name, grp_name);
 
 	nmg_km(m);		/* Destroy the nmg model. */
+
+	return( 0 );
 }
 
 /*
@@ -165,6 +171,7 @@ char	*reg_name, *grp_name;
  *	Convert an ascii description of an nmg to an actual nmg.
  *	(This should be done with lex and yacc.)
  */
+static void
 descr_to_nmg(s, fp, Ext)
 struct shell	*s;	/* NMG shell to add loops to. */
 FILE		*fp;	/* File pointer for ascii nmg file. */

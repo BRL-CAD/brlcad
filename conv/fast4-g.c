@@ -68,6 +68,7 @@ static int	debug=0;		/* Debug flag */
 static int	rt_debug=0;		/* rt_g.debug */
 static int	nmg_debug=0;		/* rt_g.NMG_debug */
 static int	polysolids=0;		/* Flag: >0 -> Build polysolids, not NMG's */
+static int	sol_count=0;		/* number of solids, used to create unique solid names */
 static int	comp_count=0;		/* Count of components in FASTGEN4 file */
 static int	conv_count=0;		/* Count of components successfully converted to BRLCAD */
 static int	second_chance=0;	/* Count of PLATE-MODE objects converted on second try */
@@ -222,14 +223,6 @@ struct fast_fus
 	int pos;
 	struct fast_fus *next;
 } *fus_root;
-
-struct shell_list
-{
-	struct shell *s;
-	fastf_t thick;
-	int pos;
-	struct shell_list *next;
-} *shell_root;
 
 struct adjacent_faces
 {
@@ -1985,6 +1978,9 @@ CONST fastf_t thick;
 
 	flags = (long *)rt_calloc( m->maxindex , sizeof( long ) , "Adjust_vertices: flags" );
 
+	if( debug )
+		rt_log( "Adjust_vertices( s=x%x, thick = %g )\n", new_s, thick );
+
 	/* now adjust all the planes, first move them by distance "thick" */
 	for( RT_LIST_FOR( fu , faceuse , &new_s->fu_hd ) )
 	{
@@ -2026,6 +2022,9 @@ CONST fastf_t thick;
 		new_v = (struct vertex *)NMG_TBL_GET( &verts , vert_no );
 		NMG_CK_VERTEX( new_v );
 
+		if( debug )
+			rt_log( "\tMoving vertex x%x from ( %g %g %g ) ", new_v, V3ARGS( new_v->vg_p->coord ) );
+
 		if( nmg_in_vert( new_v , 1 , &tol ) )
 		{
 			rt_log( "Adjust_vertices: Failed to calculate new vertex at v=x%x was ( %f %f %f )\n",
@@ -2033,6 +2032,9 @@ CONST fastf_t thick;
 			rt_log( "\tgroup id %d, component id %d\n" , group_id , comp_id );
 			failures++;
 		}
+
+		if( debug )
+			rt_log( "to ( %g %g %g )\n", V3ARGS( new_v->vg_p->coord ) );
 	}
 
 	nmg_tbl( &verts , TBL_FREE , (long *)NULL );
@@ -2155,7 +2157,10 @@ CONST int center;
 	struct shell *new_s;
 	struct faceuse *fu;
 
+	r = RT_LIST_FIRST( nmgregion, &m->r_hd );
+
 	new_s = nmg_msv( r );
+	s = RT_LIST_LAST( shell, &r->s_hd );
 
 	fus = fus_root;
 	while( fus )
@@ -2830,6 +2835,9 @@ Extrude_faces()
 	/* rebound the region */
 	nmg_rebound( m , &tol );
 
+	if( debug )
+		nmg_stash_model_to_file( "shell.g", m, "shell" );
+
 	/* make array of shells, each with unique combination of "center postion" and thickness */
 	shells = (struct shell **)rt_calloc( num_thicks*2 , sizeof( struct shell *) , "Extrude_faces: shells" );
 
@@ -2884,7 +2892,7 @@ Extrude_faces()
 			if( shells[ thick_no*2 + center - 1 ] == (struct shell *)NULL )
 				continue;
 
-			dup_shells[ thick_no*2 + center - 1 ] = nmg_dup_shell( shells[thick_no*2+center-1],
+			dup_shells[thick_no*2+center-1] = nmg_dup_shell( shells[thick_no*2+center-1],
 									&trans_tbl );
 
 			/* move trans_tbl info to dup_tbl */
@@ -2894,7 +2902,6 @@ Extrude_faces()
 					dup_tbl[i] = trans_tbl[i];
 			}
 
-			rt_free( (char *)trans_tbl , "Extrude_faces: trans_tbl" );
 
 			Glue_shell_faces( dup_shells[ thick_no*2 + center - 1 ] );
 
@@ -2906,8 +2913,22 @@ Extrude_faces()
 				rt_free( (char *)shells , "Extrude_faces: shells" );
 				rt_free( (char *)dup_shells , "Extrude_faces: dup_shells" );
 				rt_free( (char *)dup_tbl , "Extrude_faces: dup_tbl" );
+				rt_free( (char *)trans_tbl , "Extrude_faces: trans_tbl" );
 				return( 1 );
 			}
+			if( nmg_open_shells_connect( shells[thick_no*2 + center - 1 ],
+						dup_shells[ thick_no*2 + center - 1 ],
+						trans_tbl, &tol ) )
+			{
+				rt_log( "Extrude_faces: Failed to connect shells\n" );
+				rt_free( (char *)thicks , "Extrude_faces: thicks" );
+				rt_free( (char *)shells , "Extrude_faces: shells" );
+				rt_free( (char *)dup_shells , "Extrude_faces: dup_shells" );
+				rt_free( (char *)dup_tbl , "Extrude_faces: dup_tbl" );
+				rt_free( (char *)trans_tbl , "Extrude_faces: trans_tbl" );
+				return( 1 );
+			}
+			rt_free( (char *)trans_tbl , "Extrude_faces: trans_tbl" );
 		}
 	}
 
@@ -2933,6 +2954,8 @@ Extrude_faces()
 			Recalc_face_g( s );
 		}
 	}
+
+#if 0
 	s = (struct shell *)NULL;
 
 	/* Now reunite adjacent faces that were seperated in "Get_shell" */
@@ -2974,15 +2997,18 @@ Extrude_faces()
 		rt_log( "Close shell\n" );
 	if( nmg_open_shells_connect( s1 , s2 , dup_tbl , &tol ) )
 		rt_bomb( "Extrude_faces: Could not connect plate mode shells.\n" );
-
+#endif
 	rt_free( (char *)thicks , "Extrude_faces: thicks" );
 	rt_free( (char *)shells , "Extrude_faces: shells" );
 	rt_free( (char *)dup_shells , "Extrude_faces: dup_shells" );
 	rt_free( (char *)dup_tbl , "Extrude_faces: dup_tbl" );
 
 	(void)nmg_kill_zero_length_edgeuses( m );
+
+#if 0
 	s = s1;
 	Glue_shell_faces( s );
+#endif
 
 	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
 		rt_log( "ERROR: rt_mem_barriercheck failed in Extrude_faces\n" );
@@ -3154,6 +3180,9 @@ int max_use_count;
 
 	NMG_CK_SHELL( s_p );
 
+	if( debug )
+		rt_log( "Check_radials( s_p=x%x, max_use_count=%d )\n", s_p, max_use_count );
+
 	nmg_edgeuse_tabulate( &edgeuses , &s_p->l.magic );
 	flags = (int *)rt_calloc( NMG_TBL_END( &edgeuses ) , sizeof( int ) , "Check_radials: flags" );
 
@@ -3224,6 +3253,9 @@ int max_use_count;
 
 			if( use_count > max_use_count )
 			{
+				if( debug )
+					rt_log( "\tUse_count=%d > max_use_count=%d\n",
+							use_count, max_use_count );
 				radials_ok = 0;
 				break;
 			}
@@ -3232,6 +3264,8 @@ int max_use_count;
 
 		if( !max_use_count && use_count%2 )
 		{
+			if( debug )
+				rt_log( "use_count (%d), not even )\n", use_count );
 			radials_ok = 0;
 			break;
 		}
@@ -3249,6 +3283,9 @@ int max_use_count;
 			angles = (double *)rt_calloc( use_count , sizeof( double ) , "Check_radials: angles" );
 
 			/* Check if radial orientation is O.K. */
+			if( debug )
+				rt_log( "\tChecking radial orientation\n" );
+
 			eu = (struct edgeuse *)NMG_TBL_GET( &uses , 0 );
 			NMG_CK_EDGEUSE( eu );
 			fu = nmg_find_fu_of_eu( eu );
@@ -3260,9 +3297,22 @@ int max_use_count;
 
 			for( use_no=0 ; use_no<use_count ; use_no++ )
 			{
+				vect_t norm_jra;
+
 				eu = (struct edgeuse *)NMG_TBL_GET( &uses , use_no );
 				NMG_CK_EDGEUSE( eu );
+				fu = nmg_find_fu_of_eu( eu );
+				NMG_CK_FACEUSE( fu );
+				if( fu->orientation != OT_SAME )
+					rt_bomb( "Check_radials: fu not OT_SAME\n" );
+
+				NMG_GET_FU_NORMAL( norm_jra, fu );			
 				angles[use_no] = nmg_measure_fu_angle( eu, xvec, yvec, zvec );
+				if( debug )
+				{
+					rt_log( "\tangles[%d] = %g (%g)\n", use_no, angles[use_no], angles[use_no]*180/rt_pi );
+					rt_log( "\t\tfu normal = ( %g %g %g )\n", V3ARGS( norm_jra ) );
+				}
 			}
 
 			ang = (-MAX_FASTF);
@@ -3361,6 +3411,267 @@ out:
 	return( !radials_ok );
 }
 
+void
+Fix_normals( sh )
+struct shell *sh;
+{
+	struct faceuse *fu;
+	struct loopuse *lu;
+	struct edgeuse *eu;
+	vect_t out;
+	vect_t norm;
+	fastf_t outdot;
+	fastf_t min_dot=MAX_FASTF;
+	int planar;
+	int missed_faces;
+	long *flags;
+	plane_t pl1,old_pl;
+	point_t centroid;
+	struct nmg_ptbl verts;
+	int i;
+	mat_t matrix,inverse;
+	point_t vsum;
+	fastf_t det;
+	double one_over_vertex_count;
+
+	nmg_tbl( &verts, TBL_INIT, (long *)NULL );
+
+	if( debug )
+		rt_log( "Fix_normals( sh = x%x )\n",sh );
+
+	VSETALL( centroid, 0.0 );
+
+	fu = RT_LIST_FIRST( faceuse, &sh->fu_hd );
+	NMG_GET_FU_PLANE( old_pl, fu );
+
+	nmg_vertex_tabulate( &verts, &sh->l.magic );
+	for( i=0 ; i<NMG_TBL_END( &verts ) ; i++ )
+	{
+		struct vertex *v;
+
+		v = (struct vertex *)NMG_TBL_GET( &verts, i );
+		VADD2( centroid, centroid, v->vg_p->coord );
+	}
+
+	VSCALE( centroid, centroid, (fastf_t)(NMG_TBL_END( &verts ) ) )
+
+	/* build matrix */
+	mat_zero( matrix );
+	VSET( vsum , 0.0 , 0.0 , 0.0 );
+
+	one_over_vertex_count = 1.0/(double)(NMG_TBL_END( &verts ));
+
+	for( i=0 ; i<NMG_TBL_END( &verts ) ; i++ )
+	{
+		struct vertex *v;
+		struct vertex_g *vg;
+
+		v = (struct vertex *)NMG_TBL_GET( &verts , i );
+		vg = v->vg_p;
+
+		matrix[0] += vg->coord[X] * vg->coord[X];
+		matrix[1] += vg->coord[X] * vg->coord[Y];
+		matrix[2] += vg->coord[X] * vg->coord[Z];
+		matrix[5] += vg->coord[Y] * vg->coord[Y];
+		matrix[6] += vg->coord[Y] * vg->coord[Z];
+		matrix[10] += vg->coord[Z] * vg->coord[Z];
+
+		vsum[X] += vg->coord[X];
+		vsum[Y] += vg->coord[Y];
+		vsum[Z] += vg->coord[Z];
+	}
+	matrix[4] = matrix[1];
+	matrix[8] = matrix[2];
+	matrix[9] = matrix[6];
+	matrix[15] = 1.0;
+
+
+	/* Check that we don't have a singular matrix */
+	det = mat_determinant( matrix );
+
+	if( !NEAR_ZERO( det , SMALL_FASTF ) )
+	{
+		fastf_t inv_len_pl;
+
+		/* invert matrix */
+		mat_inv( inverse , matrix );
+
+		/* get normal vector */
+		MAT4X3PNT( pl1 , inverse , vsum );
+
+		/* unitize direction vector */
+		inv_len_pl = 1.0/(MAGNITUDE( pl1 ));
+		HSCALE( pl1 , pl1 , inv_len_pl );
+
+		/* get average vertex coordinates */
+		VSCALE( vsum, vsum, one_over_vertex_count );
+
+		/* get distance from plane to orgin */
+		pl1[H] = VDOT( pl1 , vsum );
+
+		/* make sure it points in the correct direction */
+		if( VDOT( pl1 , old_pl ) < 0.0 )
+			HREVERSE( pl1 , pl1 );
+	}
+	else
+	{
+		struct vertex *v,*v0;
+		int x_same=1;
+		int y_same=1;
+		int z_same=1;
+
+		/* singular matrix, may occur if all vertices have the same zero
+		 * component.
+		 */
+		v0 = (struct vertex *)NMG_TBL_GET( &verts , 0 );
+		for( i=1 ; i<NMG_TBL_END( &verts ) ; i++ )
+		{
+			v = (struct vertex *)NMG_TBL_GET( &verts , i );
+
+			if( v->vg_p->coord[X] != v0->vg_p->coord[X] )
+				x_same = 0;
+			if( v->vg_p->coord[Y] != v0->vg_p->coord[Y] )
+				y_same = 0;
+			if( v->vg_p->coord[Z] != v0->vg_p->coord[Z] )
+				z_same = 0;
+
+			if( !x_same && !y_same && !z_same )
+				break;
+		}
+
+		if( x_same )
+		{
+			VSET( pl1 , 1.0 , 0.0 , 0.0 );
+		}
+		else if( y_same )
+		{
+			VSET( pl1 , 0.0 , 1.0 , 0.0 );
+		}
+		else if( z_same )
+		{
+			VSET( pl1 , 0.0 , 0.0 , 1.0 );
+		}
+
+		if( x_same || y_same || z_same )
+		{
+			/* get average vertex coordinates */
+			VSCALE( vsum, vsum, one_over_vertex_count );
+
+			/* get distance from plane to orgin */
+			pl1[H] = VDOT( pl1 , vsum );
+
+			/* make sure it points in the correct direction */
+			if( VDOT( pl1 , old_pl ) < 0.0 )
+				HREVERSE( pl1 , pl1 );
+		}
+		else
+		{
+			rt_log( "Fix_normals: Cannot calculate plane for fu x%x\n" , fu );
+			nmg_pr_fu_briefly( fu , (char *)NULL );
+			rt_log( "%d verts\n" , NMG_TBL_END( &verts ) );
+		}
+	}
+
+	nmg_tbl( &verts , TBL_FREE , (long *)NULL );
+
+	for( RT_LIST_FOR( fu , faceuse , &sh->fu_hd ) )
+	{
+		struct faceuse *fu1;
+
+		NMG_CK_FACEUSE( fu );
+		if( fu->orientation != OT_SAME )
+			continue;
+
+		NMG_GET_FU_NORMAL( norm , fu );
+		for( RT_LIST_FOR( fu1 , faceuse , &sh->fu_hd ) )
+		{
+			vect_t norm1;
+			fastf_t dot;
+
+			if( fu1->orientation != OT_SAME )
+				continue;
+
+			if( fu == fu1 )
+				continue;
+
+			NMG_GET_FU_NORMAL( norm1 , fu1 );
+			dot = VDOT( norm, norm1 );
+			if( dot < 0.0 )
+				dot = (-dot );
+			if( dot < min_dot )
+				min_dot = dot;
+		}
+	}
+
+	if( min_dot > 0.8 )
+		planar = 1;
+	else
+		planar = 0;
+
+	fu = RT_LIST_FIRST( faceuse, &sh->fu_hd );
+	NMG_CK_FACEUSE( fu );
+
+	/* Create a flags array for the model to make sure each face gets its orientation set */
+	flags = (long *)rt_calloc( m->maxindex , sizeof( long ) , "patch-g: flags" );
+
+	/* loop to catch all faces */
+	missed_faces = 1;
+	while( missed_faces )
+	{
+		struct faceuse *fu1;
+		vect_t normal;
+
+		/* get the normal direction for the first face */
+		if( fu->orientation != OT_SAME )
+			fu = fu->fumate_p;
+		if( fu->orientation != OT_SAME )
+			rt_bomb( "Neither faceuse nor mate have an OT_SAME side\n" );
+		NMG_GET_FU_NORMAL( normal , fu );
+
+		if( !planar )
+		{
+			/* calculate "out" direction, from centroid to face */
+			lu = RT_LIST_FIRST( loopuse , &fu->lu_hd );
+			eu = RT_LIST_FIRST( edgeuse , &lu->down_hd );
+			VSUB2( out , eu->vu_p->v_p->vg_p->coord , centroid );
+			VUNITIZE( out );
+
+			outdot = VDOT( out , normal );
+		}
+		else
+			outdot = VDOT( pl1, normal );
+
+		/* if "normal" and "out" disagree, reverse normal */
+		if( outdot < 0.0 )
+			nmg_reverse_face_and_radials( fu , &tol );
+
+		if( fu->orientation != OT_SAME )
+			fu = fu->fumate_p;
+
+		/* propagate this normal direction throughout the shell */
+		nmg_propagate_normals( fu , flags , &tol );
+
+		/* check if all the faces have been processed */
+		missed_faces = 0;
+		for( RT_LIST_FOR( fu1 , faceuse , &sh->fu_hd ) )
+		{
+			NMG_CK_FACEUSE( fu1 );
+			if( fu1->orientation == OT_SAME )
+			{
+				if( !NMG_INDEX_TEST( flags , fu1->f_p ) )
+				{
+					fu = fu1;
+					missed_faces++;
+					if( debug )
+						rt_log( "\t\tMissed some faces on the first try\n" );
+					break;
+				}
+			}
+		}
+	}
+
+}
+
 int
 make_nmg_objects()
 {
@@ -3393,34 +3704,51 @@ make_nmg_objects()
 		return(0);
 	}
 
-	/* FASTGEN modellers don't always put vertices in the middle of edges where
-	 * another edge ends
-	 */
-	(void)nmg_break_long_edges( s , &tol );
-
 	/* Fuse vertices.
 	 * Don't want to do an overall model fuse here,
 	 * shared face geometry will cause problems during extrusion
 	 */
 	(void)nmg_model_vertex_fuse( m , &tol );
 
+	/* FASTGEN modellers don't always put vertices in the middle of edges where
+	 * another edge ends
+	 */
+
+	(void)nmg_break_edges( &m->magic, &tol );
+
 	nmg_tbl( &faces , TBL_INIT , (long *)NULL );
 
-	for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
 	{
-		NMG_CK_FACEUSE( fu );
+		for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+		{
+			nmg_tbl( &faces, TBL_RST, (long *)NULL );
+			for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+			{
+				NMG_CK_FACEUSE( fu );
 
-		if( fu->orientation != OT_SAME )
-			continue;
+				if( fu->orientation != OT_SAME )
+					continue;
 
-		nmg_tbl( &faces , TBL_INS , (long *)fu );
+				nmg_tbl( &faces , TBL_INS , (long *)fu );
+			}
+			nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
+		}
 	}
 
-	nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
-
-	nmg_fix_normals( s , &tol );
-
-	if( mode == PLATE_MODE && try_count )
+	if( mode == VOLUME_MODE )
+	{
+		for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
+		{
+			for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+			{
+				if( debug )
+					nmg_pr_s_briefly( s, " " );
+				nmg_fix_normals( s , &tol );
+			}
+		}
+	}
+	else if( mode == PLATE_MODE && try_count )
 	{
 		Make_arb6_obj();
 		arb6_worked = 1;
@@ -3442,12 +3770,18 @@ make_nmg_objects()
 		if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
 			rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (before triangulation)\n" );
 
-		if( Check_radials( s , 2 ) )
+		for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
 		{
-			rt_log( "Failed to Extrude group_id = %d, component_id = %d\n" , group_id , comp_id );
-			nmg_tbl( &faces , TBL_FREE , (long *)NULL );
-			failed = 1;
-			goto out;
+			for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+			{
+				if( Check_radials( s , 2 ) )
+				{
+					rt_log( "Failed to Extrude group_id = %d, component_id = %d\n" , group_id , comp_id );
+					nmg_tbl( &faces , TBL_FREE , (long *)NULL );
+					failed = 1;
+					goto out;
+				}
+			}
 		}
 
 		/* make all faces triangular
@@ -3457,6 +3791,21 @@ make_nmg_objects()
 
 		if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
 			rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (after triangulation)\n" );
+
+		if( debug )
+			rt_log( "Fix normals\n" );
+
+		for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
+		{
+			for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+			{
+
+				Fix_normals( s );
+
+				if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+					rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (after fix_normals)\n" );
+			}
+		}
 
 		if( debug )
 			rt_log( "extrude faces\n" );
@@ -3472,33 +3821,30 @@ make_nmg_objects()
 		if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
 			rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (after extrusion)\n" );
 
-		nmg_tbl( &faces , TBL_RST , (long *)NULL );
-
-		for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+		for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
 		{
-			NMG_CK_FACEUSE( fu );
+			for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+			{
+				nmg_tbl( &faces , TBL_RST , (long *)NULL );
 
-			if( fu->orientation != OT_SAME )
-				continue;
+				for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+				{
+					NMG_CK_FACEUSE( fu );
 
-			nmg_tbl( &faces , TBL_INS , (long *)fu );
+					if( fu->orientation != OT_SAME )
+						continue;
+
+					nmg_tbl( &faces , TBL_INS , (long *)fu );
+				}
+				nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
+			}
 		}
 
 		if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
 			rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (after making table of faceuses)\n" );
 
-		nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
-
 		if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
 			rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (after gluefaces)\n" );
-
-		if( debug )
-			rt_log( "Fix normals\n" );
-
-		nmg_fix_normals( s , &tol );
-
-		if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-			rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (after fix_normals)\n" );
 
 	}
 	nmg_tbl( &faces , TBL_FREE , (long *)NULL );
@@ -3512,6 +3858,37 @@ make_nmg_objects()
 	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
 		rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (after rebound)\n" );
 
+	/*  Make sure faces are within tolerance */
+	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
+	{
+		for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+		{
+			nmg_make_faces_within_tol( s, &tol );
+		}
+	}
+
+	if( debug )
+		rt_log( "Coplanar face merge\n" );
+
+	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
+	{
+		for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+		{
+			tmp_shell_coplanar_face_merge( s , &tol , 0 );
+		}
+	}
+
+	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
+		rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (after tmp_shell_coplanar_face_merge)\n" );
+
+	for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
+	{
+		for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+		{
+			Recalc_face_g( s );
+		}
+	}
+
 	if( debug && mode != PLATE_MODE )
 	{
 		char name[NAMESIZE+1];
@@ -3520,19 +3897,6 @@ make_nmg_objects()
 		mk_nmg( fdout , name , m );
 		fflush( fdout );
 	}
-
-	/*  Make sure faces are within tolerance */
-	nmg_make_faces_within_tol( s, &tol );
-
-	if( debug )
-		rt_log( "Coplanar face merge\n" );
-
-	tmp_shell_coplanar_face_merge( s , &tol , 0 );
-
-	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
-		rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (after tmp_shell_coplanar_face_merge)\n" );
-
-	Recalc_face_g( s );
 
 	if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
 		rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (after model_fuse)\n" );
@@ -3544,25 +3908,77 @@ make_nmg_objects()
 
 	if( polysolids )
 	{
-		/* XXXX Need a decompose shell, write out each shell as a polysolid
-		 * and combine them into one object as "name"
-		 */
-		write_shell_as_polysolid( fdout , name , s );
+		char tmp_name[NAMESIZE+1];
+		struct wmember *wmem;
+		struct wmember tmp_head;
+
+		RT_LIST_INIT( &tmp_head.l );
+
+		for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
+		{
+			NMG_CK_REGION( r );
+			for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+			{
+				NMG_CK_SHELL( s );
+
+				if( nmg_simplify_shell( s ) )
+					continue;
+
+				if( nmg_kill_cracks( s ) )
+					continue;
+
+				if( debug )
+					nmg_stash_model_to_file( "shell", m, "shell" );
+
+				sol_count++;
+				sprintf( tmp_name, "s.%d", sol_count );
+				make_unique_name( tmp_name );
+				write_shell_as_polysolid( fdout , tmp_name , s );
+				mk_addmember( tmp_name, &tmp_head, WMOP_UNION );
+			}
+		}
+		mk_lcomb( fdout, name, &tmp_head, 0, (char *)NULL, (char *)NULL, (unsigned char *)NULL, 0 );
 	}
 	else
 	{
+#if 0
 		/* Check radial orientation around all edges */
-		if( Check_radials( s, 0 ) )
+		for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
 		{
-			rt_log( "Shell has bad radial edge orientation\n" );
-			return( 1 );
+			NMG_CK_REGION( r );
+			for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+			{
+				NMG_CK_SHELL( s );
+
+				if( Check_radials( s, 0 ) )
+				{
+					rt_log( "Shell has bad radial edge orientation\n" );
+					return( 1 );
+				}
+			}
 		}
+#endif
 
 		/* Check if a valid closed shell has been produced */
-		if( nmg_ck_closed_surf( s , &tol ) )
+		for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
 		{
-			rt_log( "Final shell is not closed\n" );
-			return( 1 );
+			NMG_CK_REGION( r );
+			for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+			{
+				NMG_CK_SHELL( s );
+
+				if( nmg_simplify_shell( s ) )
+					continue;
+
+				if( nmg_kill_cracks( s ) )
+					continue;
+
+				if( nmg_ck_closed_surf( s , &tol ) )
+				{
+					rt_log( "Final shell is not closed\n" );
+					return( 1 );
+				}
+			}
 		}
 
 		if( debug )
@@ -3570,7 +3986,16 @@ make_nmg_objects()
 
 		nmg_model_fuse( m , &tol );
 
-		nmg_simplify_shell( s );
+		for( RT_LIST_FOR( r, nmgregion, &m->r_hd ) )
+		{
+			NMG_CK_REGION( r );
+			for( RT_LIST_FOR( s, shell, &r->s_hd ) )
+			{
+				NMG_CK_SHELL( s );
+
+				nmg_simplify_shell( s );
+			}
+		}
 
 		if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
 			rt_log( "ERROR: rt_mem_barriercheck failed in make_nmg_objects (before mk_nmg)\n" );
@@ -4230,7 +4655,9 @@ int pos;
 	if( !m )
 	{
 		m = nmg_mm();
+		NMG_CK_MODEL( m );
 		r = nmg_mrsv( m );
+		NMG_CK_REGION( r );
 		s = RT_LIST_FIRST( shell , &r->s_hd );
 	}
 
@@ -4455,7 +4882,6 @@ int final;
 			if( nmgs && make_nmg_objects() )
 			{
 				struct fast_fus *fus;
-				struct shell_list *shell_ptr;
 				struct adjacent_faces *adj;
 
 				rt_log( "***********component %s, group #%d, component #%d failed\n",
@@ -4494,16 +4920,6 @@ int final;
 				if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
 					rt_log( "ERROR: rt_mem_barriercheck failed in Do_section before freeing shell list\n" );
 
-				shell_ptr = shell_root;
-				while( shell_ptr )
-				{
-					struct shell_list *tmp;
-
-					tmp = shell_ptr;
-					shell_ptr = shell_ptr->next;
-					rt_free( (char *)tmp , "Do_section: shell_ptr" );
-				}
-				shell_root = (struct shell_list *)NULL;
 
 				if( rt_g.debug&DEBUG_MEM_FULL &&  rt_mem_barriercheck() )
 					rt_log( "ERROR: rt_mem_barriercheck failed in Do_section before freeing adj_face list\n" );

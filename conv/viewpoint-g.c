@@ -400,24 +400,29 @@ char *argv[];
 		    	fu = next_fu;
 		    }
 
-		/* glue faces together */
-		nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
+		if( NMG_TBL_END( &faces ) )
+		{
+			/* glue faces together */
+			nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
 
-		nmg_rebound( m , &tol );
-		nmg_fix_normals( s , &tol );
+			nmg_rebound( m , &tol );
+			nmg_fix_normals( s , &tol );
 
-		/* restart the list of faces for the next object */
-		nmg_tbl( &faces , TBL_RST , (long *)NULL );
+			nmg_shell_coplanar_face_merge( s , &tol , 1 );
 
-		nmg_shell_coplanar_face_merge( s , &tol , 1 );
+			nmg_rebound( m , &tol );
 
-		nmg_rebound( m , &tol );
-
-		/* write the nmg to the output file */
-		mk_nmg( out_fp , curr_name  , m );
+			/* write the nmg to the output file */
+			mk_nmg( out_fp , curr_name  , m );
+		}
+		else
+			rt_log( "Object %s has no faces\n" , curr_name );
 
 		/* kill the current model */
 		nmg_km( m );
+
+		/* restart the list of faces for the next object */
+		nmg_tbl( &faces , TBL_RST , (long *)NULL );
 
 		/* rewind the elements file for the next object */
 		rewind( elems );

@@ -77,6 +77,7 @@ char *av[];
 	return(optind);
 }
 
+static void
 lu_to_rib(lu, fu_normal, norms, points)
 struct loopuse *lu;
 vect_t fu_normal;

@@ -72,6 +72,188 @@ static int	regions_converted = 0;
 	(_lo1)[Y] >= (_lo2)[Y] && (_hi1)[Y] <= (_hi2)[Y] && \
 	(_lo1)[Z] >= (_lo2)[Z] && (_hi1)[Z] <= (_hi2)[Z] )
 
+/*
+*			D O _ R E G I O N _ E N D
+*
+*  Called from db_walk_tree().
+*
+*  This routine must be prepared to run in parallel.
+*/
+union tree *do_region_end(tsp, pathp, curtree)
+register struct db_tree_state	*tsp;
+struct db_full_path	*pathp;
+union tree		*curtree;
+{
+	extern FILE		*fp_fig;
+	struct nmgregion	*r;
+	struct rt_list		vhead;
+	union tree		*ret_tree;
+	char			*sofar;
+	char nmg_name[16];
+	unsigned char rgb[3];
+	unsigned char *color;
+	struct wmember headp;
+
+	RT_CK_TESS_TOL(tsp->ts_ttol);
+	RT_CK_TOL(tsp->ts_tol);
+	NMG_CK_MODEL(*tsp->ts_m);
+
+	RT_LIST_INIT(&vhead);
+
+	if (rt_g.debug&DEBUG_TREEWALK || verbose) {
+		sofar = db_path_to_string(pathp);
+		rt_log("\ndo_region_end(%d %d%%) %s\n",
+			regions_tried,
+			regions_tried>0 ? (regions_converted * 100) / regions_tried : 0,
+			sofar);
+		rt_free(sofar, "path string");
+	}
+
+	if (curtree->tr_op == OP_NOP)
+		return  curtree;
+
+	regions_tried++;
+	/* Begin rt_bomb() protection */
+	if( RT_SETJUMP )
+	{
+		/* Error, bail out */
+		RT_UNSETJUMP;		/* Relinquish the protection */
+
+		sofar = db_path_to_string(pathp);
+		rt_log( "FAILED: %s\n", sofar );
+		rt_free( (char *)sofar, "sofar" );
+
+		/* Sometimes the NMG library adds debugging bits when
+		 * it detects an internal error, before rt_bomb().
+		 */
+		rt_g.NMG_debug = NMG_debug;	/* restore mode */
+
+		/* Release any intersector 2d tables */
+		nmg_isect2d_final_cleanup();
+
+		/* Release the tree memory & input regions */
+		db_free_tree(curtree);		/* Does an nmg_kr() */
+
+		/* Get rid of (m)any other intermediate structures */
+		if( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )
+		{
+			nmg_km(*tsp->ts_m);
+		}
+		else
+		{
+			rt_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
+		}
+	
+		/* Now, make a new, clean model structure for next pass. */
+		*tsp->ts_m = nmg_mm();
+		goto out;
+	}
+	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
+	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol);	/* librt/nmg_bool.c */
+
+	RT_UNSETJUMP;		/* Relinquish the protection */
+	if( ret_tree )
+		r = ret_tree->tr_d.td_r;
+	else
+		r = (struct nmgregion *)NULL;
+
+	regions_converted++;
+	if (r != 0)
+	{
+		struct shell *s;
+		int empty_region=0;
+		int empty_model=0;
+
+		/* Kill cracks */
+		s = RT_LIST_FIRST( shell, &r->s_hd );
+		while( RT_LIST_NOT_HEAD( &s->l, &r->s_hd ) )
+		{
+			struct shell *next_s;
+
+			next_s = RT_LIST_PNEXT( shell, &s->l );
+			if( nmg_kill_cracks( s ) )
+			{
+				if( nmg_ks( s ) )
+				{
+					empty_region = 1;
+					break;
+				}
+			}
+			s = next_s;
+		}
+
+		/* kill zero length edgeuses */
+		if( !empty_region )
+		{
+			 empty_model = nmg_kill_zero_length_edgeuses( *tsp->ts_m );
+		}
+
+		if( !empty_region && !empty_model )
+		{
+			/* Write the nmgregion to the output file */
+			nmg_count++;
+			sprintf( nmg_name , "nmg.%d" , nmg_count );
+			mk_nmg( fp_out , nmg_name , r->m_p );
+		}
+
+		/* NMG region is no longer necessary */
+		if( !empty_model )
+			nmg_kr(r);
+
+		/* Now make a normal brlcad region */
+		if( tsp->ts_mater.ma_override )
+		{
+			rgb[0] = (int)(tsp->ts_mater.ma_color[0] * 255.0);
+			rgb[1] = (int)(tsp->ts_mater.ma_color[1] * 255.0);
+			rgb[2] = (int)(tsp->ts_mater.ma_color[2] * 255.0);
+			color = rgb;
+		}
+		else
+			color = (unsigned char *)NULL;
+
+		RT_LIST_INIT( &headp.l );
+		(void)mk_addmember( nmg_name , &headp , WMOP_UNION );
+		if( mk_lrcomb( fp_out,
+		    pathp->fp_names[pathp->fp_len-1]->d_namep, &headp, 1,
+		    tsp->ts_mater.ma_matname, tsp->ts_mater.ma_matparm, color,
+		    tsp->ts_regionid, tsp->ts_aircode, tsp->ts_gmater,
+		    tsp->ts_los, tsp->ts_mater.ma_cinherit ) )
+		{
+			rt_log( "G-nmg: error in making region (%s)\n" , pathp->fp_names[pathp->fp_len-1]->d_namep );
+		}
+	}
+	else
+	{
+		RT_LIST_INIT( &headp.l );
+		if( mk_lrcomb( fp_out,
+		    pathp->fp_names[pathp->fp_len-1]->d_namep, &headp, 1,
+		    tsp->ts_mater.ma_matname, tsp->ts_mater.ma_matparm, color,
+		    tsp->ts_regionid, tsp->ts_aircode, tsp->ts_gmater,
+		    tsp->ts_los, tsp->ts_mater.ma_cinherit ) )
+		{
+			rt_log( "G-nmg: error in making region (%s)\n" , pathp->fp_names[pathp->fp_len-1]->d_namep );
+		}
+	}
+
+	/*
+	 *  Dispose of original tree, so that all associated dynamic
+	 *  memory is released now, not at the end of all regions.
+	 *  A return of TREE_NULL from this routine signals an error,
+	 *  so we need to cons up an OP_NOP node to return.
+	 */
+	db_free_tree(curtree);		/* Does an nmg_kr() */
+
+out:
+
+	if( rt_g.debug&DEBUG_MEM_FULL )
+		rt_prmem( "At end of do_region_end()" );
+
+	GETUNION(curtree, tree);
+	curtree->magic = RT_TREE_MAGIC;
+	curtree->tr_op = OP_NOP;
+	return(curtree);
+}
+
 void
 csg_comb_func( dbip , dp )
 struct db_i *dbip;
@@ -79,12 +261,56 @@ struct directory *dp;
 {
 	union record *rp;
 	int comb_len;
-	int i;
+	int i,j;
 	int region_flag;
 	struct wmember headp;
+	struct wmember *wm;
+	unsigned char *color;
+
+	if( dp->d_uses < 0 )
+		return;
+
+	dp->d_uses = (-1);
 
 	if( dp->d_flags & DIR_REGION )
+	{
+		char **name;
+
+		/* convert a region to NMG's */
+
+		the_model = nmg_mm();
+		tree_state = rt_initial_tree_state;	/* struct copy */
+		tree_state.ts_tol = &tol;
+		tree_state.ts_ttol = &ttol;
+		tree_state.ts_m = &the_model;
+
+		ttol.magic = RT_TESS_TOL_MAGIC;
+		/* Defaults, updated by command line options. */
+		ttol.abs = 0.0;
+		ttol.rel = 0.01;
+		ttol.norm = 0.0;
+
+		/* XXX These need to be improved */
+		tol.magic = RT_TOL_MAGIC;
+		tol.dist = 0.005;
+		tol.dist_sq = tol.dist * tol.dist;
+		tol.perp = 1e-6;
+		tol.para = 1 - tol.perp;
+
+		name = (&(dp->d_namep));
+
+		(void) db_walk_tree( dbip, 1, (CONST char **)name,
+			1,
+			&tree_state,
+			0,
+			do_region_end,
+			nmg_booltree_leaf_tess);
+
+		/* Release dynamic storage */
+		nmg_km(the_model);
+
 		return;
+	}
 
 	if( (rp = db_getmrec( dbip, dp )) == (union record *)0 )
                 return;
@@ -103,16 +329,25 @@ struct directory *dp;
 	RT_LIST_INIT( &headp.l );
 
 	for( i=1 ; i<dp->d_len ; i++ )
-		(void)mk_addmember( rp[i].M.m_instname , &headp , rp[i].M.m_relation );
+	{
+		wm = mk_addmember( rp[i].M.m_instname , &headp , rp[i].M.m_relation );
+		for( j=0 ; j<16 ; j++ )
+			wm->wm_mat[j] = rp[i].M.m_mat[j];
+	}
 
 	if( rp[0].c.c_flags == 'R' )
 		region_flag = 1;
 	else
 		region_flag = 0;
 
+	if( rp[0].c.c_override )
+		color = rp[0].c.c_rgb;
+	else
+		color = (unsigned char *)NULL;
+
 	if( mk_lrcomb( fp_out, rp[0].c.c_name, &headp, region_flag,
 	    rp[0].c.c_matname, rp[0].c.c_matparm,
-	    (unsigned char *)rp[0].c.c_rgb, rp[0].c.c_regionid,
+	    color, rp[0].c.c_regionid,
 	    rp[0].c.c_aircode, rp[0].c.c_material,rp[0].c.c_los,
 	    rp[0].c.c_inherit ) )
 		{
@@ -138,32 +373,6 @@ char	*argv[];
 #if MEMORY_LEAK_CHECKING
 	rt_g.debug |= DEBUG_MEM_FULL;
 #endif
-	the_model = nmg_mm();
-	tree_state = rt_initial_tree_state;	/* struct copy */
-	tree_state.ts_tol = &tol;
-	tree_state.ts_ttol = &ttol;
-	tree_state.ts_m = &the_model;
-
-	ttol.magic = RT_TESS_TOL_MAGIC;
-	/* Defaults, updated by command line options. */
-	ttol.abs = 0.0;
-	ttol.rel = 0.01;
-	ttol.norm = 0.0;
-
-	/* XXX These need to be improved */
-	tol.magic = RT_TOL_MAGIC;
-	tol.dist = 0.005;
-	tol.dist_sq = tol.dist * tol.dist;
-	tol.perp = 1e-6;
-	tol.para = 1 - tol.perp;
-
-	/* XXX For visualization purposes, in the debug plot files */
-	{
-		extern fastf_t	nmg_eue_dist;	/* librt/nmg_plot.c */
-		/* XXX This value is specific to the Bradley */
-		nmg_eue_dist = 2.0;
-	}
-
 	RT_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
 	/* Get command line arguments. */
@@ -190,10 +399,14 @@ char	*argv[];
 			break;
 		case 'x':
 			sscanf( optarg, "%x", &rt_g.debug );
+			rt_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
+			rt_log("\n");
 			break;
 		case 'X':
 			sscanf( optarg, "%x", &rt_g.NMG_debug );
 			NMG_debug = rt_g.NMG_debug;
+			rt_printb( "librt rt_g.NMG_debug", rt_g.NMG_debug, NMG_DEBUG_FORMAT );
+			rt_log("\n");
 			break;
 		default:
 			fprintf(stderr, usage, argv[0]);
@@ -235,29 +448,17 @@ char	*argv[];
 	else
 		mk_id( fp_out , dbip->dbi_title );
 
-	/* Walk indicated tree(s).  Each region will be output separately */
-	(void)db_walk_tree(dbip, argc-optind, (CONST char **)(&argv[optind]),
-		1,				/* ncpu */
-		&tree_state,
-		0,				/* select all regions */
-		do_region_end,
-		nmg_booltree_leaf_tess);	/* in librt/nmg_bool.c */
-
-	percent = 0;
-	if( regions_tried > 0 )
-		percent = ((double)regions_converted * 100) / regions_tried;
-	printf( "Tried %d regions, %d converted successfully.  %g%%\n",
-		regions_tried, regions_converted, percent );
-
-	/* Release dynamic storage */
-	nmg_km(the_model);
-
-	/* Now walk the same trees again, but only output groups */
+	/* Walk the trees outputting regions and combinations */
 	for( i=optind ; i<argc ; i++ )
 	{
 		struct directory *dp;
 
-		dp = db_lookup( dbip , argv[i] , 1 );
+		dp = db_lookup( dbip , argv[i] , 0 );
+		if( dp == DIR_NULL )
+		{
+			rt_log( "WARNING!!! Could not find %s, skipping\n", argv[i] );
+			continue;
+		}
 		db_functree( dbip , dp , csg_comb_func , 0 );
 	}
 
@@ -268,158 +469,13 @@ char	*argv[];
 	rt_prmem("After complete G-NMG conversion");
 #endif
 
+	percent = 100;
+	if( regions_tried > 0 )
+		percent = ((double)regions_converted * 100) / regions_tried;
+
+	printf( "Tried %d regions, %d converted successfully.  %g%%\n",
+		regions_tried, regions_converted, percent );
+
 	return 0;
 }
 
-/*
-*			D O _ R E G I O N _ E N D
-*
-*  Called from db_walk_tree().
-*
-*  This routine must be prepared to run in parallel.
-*/
-union tree *do_region_end(tsp, pathp, curtree)
-register struct db_tree_state	*tsp;
-struct db_full_path	*pathp;
-union tree		*curtree;
-{
-	extern FILE		*fp_fig;
-	struct nmgregion	*r;
-	struct rt_list		vhead;
-	union tree		*ret_tree;
-
-	RT_CK_TESS_TOL(tsp->ts_ttol);
-	RT_CK_TOL(tsp->ts_tol);
-	NMG_CK_MODEL(*tsp->ts_m);
-
-	RT_LIST_INIT(&vhead);
-
-	if (rt_g.debug&DEBUG_TREEWALK || verbose) {
-		char	*sofar = db_path_to_string(pathp);
-		rt_log("\ndo_region_end(%d %d%%) %s\n",
-			regions_tried,
-			regions_tried>0 ? (regions_converted * 100) / regions_tried : 0,
-			sofar);
-		rt_free(sofar, "path string");
-	}
-
-	if (curtree->tr_op == OP_NOP)
-		return  curtree;
-
-	regions_tried++;
-	/* Begin rt_bomb() protection */
-	if( RT_SETJUMP )
-	{
-		/* Error, bail out */
-		RT_UNSETJUMP;		/* Relinquish the protection */
-
-		/* Sometimes the NMG library adds debugging bits when
-		 * it detects an internal error, before rt_bomb().
-		 */
-		rt_g.NMG_debug = NMG_debug;	/* restore mode */
-
-		/* Release any intersector 2d tables */
-		nmg_isect2d_final_cleanup();
-
-		/* Release the tree memory & input regions */
-		db_free_tree(curtree);		/* Does an nmg_kr() */
-
-		/* Get rid of (m)any other intermediate structures */
-		if( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )
-		{
-			nmg_km(*tsp->ts_m);
-		}
-		else
-		{
-			rt_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
-		}
-	
-		/* Now, make a new, clean model structure for next pass. */
-		*tsp->ts_m = nmg_mm();
-		goto out;
-	}
-	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
-	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol);	/* librt/nmg_bool.c */
-
-	if( ret_tree )
-		r = ret_tree->tr_d.td_r;
-	else
-		r = (struct nmgregion *)NULL;
-
-	RT_UNSETJUMP;		/* Relinquish the protection */
-	regions_converted++;
-	if (r != 0)
-	{
-		char nmg_name[16];
-		unsigned char rgb[3];
-		struct wmember headp;
-		struct shell *s;
-		int empty_region=0;
-		int empty_model=0;
-
-		/* Kill cracks */
-		s = RT_LIST_FIRST( shell, &r->s_hd );
-		while( RT_LIST_NOT_HEAD( &s->l, &r->s_hd ) )
-		{
-			struct shell *next_s;
-
-			next_s = RT_LIST_PNEXT( shell, &s->l );
-			if( nmg_kill_cracks( s ) )
-			{
-				if( nmg_ks( s ) )
-				{
-					empty_region = 1;
-					break;
-				}
-			}
-			s = next_s;
-		}
-
-		/* kill zero length edgeuses */
-		if( !empty_region )
-		{
-			 empty_model = nmg_kill_zero_length_edgeuses( *tsp->ts_m );
-		}
-
-		if( !empty_region && !empty_model )
-		{
-			/* Write the nmgregion to the output file */
-			nmg_count++;
-			sprintf( nmg_name , "nmg.%d" , nmg_count );
-			mk_nmg( fp_out , nmg_name , *tsp->ts_m );
-		}
-
-		/* NMG region is no longer necessary */
-		if( !empty_model )
-			nmg_kr(r);
-
-		/* Now make a normal brlcad region */
-		RT_LIST_INIT( &headp.l );
-		(void)mk_addmember( nmg_name , &headp , WMOP_UNION );
-		rgb[0] = (int)(tsp->ts_mater.ma_color[0] * 255.0);
-		rgb[1] = (int)(tsp->ts_mater.ma_color[1] * 255.0);
-		rgb[2] = (int)(tsp->ts_mater.ma_color[2] * 255.0);
-		if( mk_lrcomb( fp_out,
-		    pathp->fp_names[pathp->fp_len-1]->d_namep, &headp, 1,
-		    tsp->ts_mater.ma_matname, tsp->ts_mater.ma_matparm, rgb,
-		    tsp->ts_regionid, tsp->ts_aircode, tsp->ts_gmater,
-		    tsp->ts_los, tsp->ts_mater.ma_cinherit ) )
-		{
-			rt_log( "G-nmg: error in making region (%s)\n" , pathp->fp_names[pathp->fp_len-1]->d_namep );
-		}
-	}
-
-	/*
-	 *  Dispose of original tree, so that all associated dynamic
-	 *  memory is released now, not at the end of all regions.
-	 *  A return of TREE_NULL from this routine signals an error,
-	 *  so we need to cons up an OP_NOP node to return.
-	 */
-	db_free_tree(curtree);		/* Does an nmg_kr() */
-
-out:
-	GETUNION(curtree, tree);
-	curtree->magic = RT_TREE_MAGIC;
-	curtree->tr_op = OP_NOP;
-	return(curtree);
-}

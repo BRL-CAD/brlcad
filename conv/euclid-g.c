@@ -62,6 +62,7 @@ static char RCSid[] = "$Header$";
 
 RT_EXTERN( fastf_t nmg_loop_plane_area , ( struct loopuse *lu , plane_t pl ) );
 RT_EXTERN( struct faceuse *nmg_add_loop_to_face , (struct shell *s, struct faceuse *fu, struct vertex *verts[], int n, int dir ) );
+void euclid_to_brlcad();
 
 extern int errno;
 
@@ -90,23 +91,26 @@ struct shell *s;
 		for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )
 		{
 			struct edgeuse *eu;
-			struct vertex_g *vg;
-			int found=1;
+			int found=0;
 
 			if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
 				continue;
 
-			vg = RT_LIST_FIRST( edgeuse, &lu->down_hd )->vu_p->v_p->vg_p;
-
 			for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 			{
-				struct vertex_g *vg1;
+				struct edgeuse *eu_next;
 
-				vg1 = eu->vu_p->v_p->vg_p;
-
-				if( vg1->coord[Y] != vg->coord[Y] || vg1->coord[Z] != vg->coord[Z] )
+				eu_next = RT_LIST_PNEXT_CIRC( edgeuse, &eu->l );
+				if( eu->vu_p->v_p == eu_next->vu_p->v_p )
 				{
-					found = 0;
+					found = 2;
+					break;
+				}
+				eu_next = RT_LIST_PNEXT_CIRC( edgeuse, &eu_next->l );
+
+				if( eu->vu_p->v_p == eu_next->vu_p->v_p )
+				{
+					found = 1;
 					break;
 				}
 			}
@@ -114,7 +118,10 @@ struct shell *s;
 			if( !found )
 				continue;
 
-			rt_log( "Found a crack:\n" );
+			if( found == 1 )
+				rt_log( "Found a crack:\n" );
+			else if( found ==2 )
+				rt_log( "Found a zero length edge:\n" );
 			nmg_pr_fu_briefly( fu, "" );
 		}
 	}
@@ -383,6 +390,7 @@ FILE *fpout;
  *		A, B, C, D are the facet's plane equation coefficients and
  *		<A B C> is an outward pointing surface normal.
  */
+void
 euclid_to_brlcad(fpin, fpout)
 FILE	*fpin, *fpout;
 {
@@ -579,6 +587,9 @@ int	reg_id;
 			cur_id = -1;
 	} while (reg_id == cur_id);
 
+	if( rt_g.debug&DEBUG_MEM_FULL )
+		rt_prmem( "After building faces:\n" );
+
 	/* Associate the vertex geometry, ccw. */
 	if( debug )
 		rt_log( "Associating vertex geometry:\n" );
@@ -592,7 +603,15 @@ int	reg_id;
 		}
 	}
 
-Find_loop_crack( s );
+	if( debug )
+		rt_log( "Calling nmg_model_vertex_fuse()\n" );
+	(void)nmg_model_vertex_fuse( m, &tol );
+
+	/* Break edges on vertices */
+	if( debug )
+		rt_log( "Calling nmg_model_break_e_on_v()\n" );
+	(void)nmg_model_break_e_on_v( m, &tol );
+
 	/* kill zero length edgeuses */
 	if( nmg_kill_zero_length_edgeuses( m ) )
 	{
@@ -616,22 +635,18 @@ Find_loop_crack( s );
 	if( !m )
 		return( cur_id );
 
-	for (i = 0; i < face; i++)
-	{
-		if( outfaceuses[i]->l.magic != NMG_FACEUSE_MAGIC )
-		{
-			face--;
-			for( j=i; j<face; j++ )
-				outfaceuses[j] = outfaceuses[j+1];
-			i--;
-		}
-	}
+	if( rt_g.debug&DEBUG_MEM_FULL )
+		rt_prmem( "Before assoc face geom:\n" );
 
 	/* Associate the face geometry. */
 	if( debug )
 		rt_log( "Associating face geometry:\n" );
 	for (i = 0; i < face; i++)
 	{
+		/* skip faceuses that were killed */
+		if( outfaceuses[i]->l.magic != NMG_FACEUSE_MAGIC )
+			continue;
+
 		/* calculate plane for this faceuse */
 		if( nmg_calc_face_g( outfaceuses[i] ) )
 		{
@@ -645,50 +660,13 @@ Find_loop_crack( s );
 		rt_log( "Rebound\n" );
 	nmg_rebound( m , &tol );
 
-Find_loop_crack( s );
+#if 0
 	/* Break edges on vertices */
 	if( debug )
 		rt_log( "Calling nmg_model_break_e_on_v()\n" );
 	(void)nmg_model_break_e_on_v( m, &tol );
 
-Find_loop_crack( s );
-	/* Glue edges of outward pointing face uses together. */
-#if 0
-	if( debug )
-		rt_log( "Glueing faces\n" );
-	nmg_gluefaces(outfaceuses, face);
-#else
-	(void)nmg_model_edge_fuse( m, &tol );
-#endif
-
 	/* kill cracks */
-	s = RT_LIST_FIRST( shell , &r->s_hd );
-	if( nmg_kill_cracks( s ) )
-	{
-		if( nmg_ks( s ) )
-		{
-			nmg_km( m );
-			m = (struct model *)0;
-		}
-		s = (struct shell *)0;
-	}
-
-	if( !m )
-		return( cur_id );
-
-	/* Compute "geometry" for model, region, and shell */
-	if( debug )
-		rt_log( "Rebound\n" );
-	nmg_rebound( m , &tol );
-
-	/* fix the normals */
-	if( debug )
-		rt_log( "Fix normals\n" );
-	nmg_fix_normals( s, &tol );
-
-	/* Get rid of cracks */
-	if( debug )
-		rt_log( "Kill cracks\n" );
 	s = RT_LIST_FIRST( shell , &r->s_hd );
 	if( nmg_kill_cracks( s ) )
 	{
@@ -710,10 +688,34 @@ Find_loop_crack( s );
 		m = (struct model *)NULL;
 		return( cur_id );
 	}
+#endif
 
-	/* Get rid of cracks */
+	if( rt_g.debug&DEBUG_MEM_FULL )
+		rt_prmem( "Before glueing faces:\n" );
+
+	/* Glue faceuses together. */
 	if( debug )
-		rt_log( "Kill cracks\n" );
+		rt_log( "Glueing faces\n" );
+	(void)nmg_model_edge_fuse( m, &tol );
+
+	/* Compute "geometry" for model, region, and shell */
+	if( debug )
+		rt_log( "Rebound\n" );
+	nmg_rebound( m , &tol );
+
+	/* fix the normals */
+	if( debug )
+		rt_log( "Fix normals\n" );
+	nmg_fix_normals( s, &tol );
+
+	if( rt_g.debug&DEBUG_MEM_FULL )
+		rt_prmem( "After fixing normals:\n" );
+
+	if( debug )
+		rt_log( "nmg_s_join_touchingloops( %x )\n", s );
+	nmg_s_join_touchingloops( s, &tol );
+
+	/* kill cracks */
 	s = RT_LIST_FIRST( shell , &r->s_hd );
 	if( nmg_kill_cracks( s ) )
 	{
@@ -728,16 +730,25 @@ Find_loop_crack( s );
 	if( !m )
 		return( cur_id );
 
-Find_loop_crack( s );
-	if( debug )
-		rt_log( "nmg_s_join_touchingloops( %x )\n", s );
-	nmg_s_join_touchingloops( s, &tol );
 	if( debug )
 		rt_log( "nmg_s_split_touchingloops( %x )\n", s );
-
 	nmg_s_split_touchingloops( s, &tol);
 
-Find_loop_crack( s );
+	/* kill cracks */
+	s = RT_LIST_FIRST( shell , &r->s_hd );
+	if( nmg_kill_cracks( s ) )
+	{
+		if( nmg_ks( s ) )
+		{
+			nmg_km( m );
+			m = (struct model *)0;
+		}
+		s = (struct shell *)0;
+	}
+
+	if( !m )
+		return( cur_id );
+
 	/* verify face plane calculations */
 	if( debug )
 	{
@@ -745,7 +756,14 @@ Find_loop_crack( s );
 		rt_log( "Verify plane equations:\n" );
 	}
 
+	if( rt_g.debug&DEBUG_MEM_FULL )
+		rt_prmem( "Before nmg_make_faces_within_tol():\n" );
+
 	nmg_make_faces_within_tol( s, &tol );
+
+	if( rt_g.debug&DEBUG_MEM_FULL )
+		rt_prmem( "After nmg_make_faces_within_tol():\n" );
+
 	if( debug )
 	{
 		rt_log( "Checking faceuses:\n" );
@@ -798,57 +816,20 @@ Find_loop_crack( s );
 
 	if( debug )
 		rt_log( "%d vertices out of tolerance after fixing out of tolerance faces\n" , nmg_ck_geometry( m , &tol ) );
-
-Find_loop_crack( s );
-	/* Break edges on vertices */
-	if( debug )
-		rt_log( "Calling nmg_model_break_e_on_v()\n" );
-	(void)nmg_model_break_e_on_v( m, &tol );
-
-Find_loop_crack( s );
-	/* Get rid of cracks */
-	if( debug )
-		rt_log( "Kill cracks\n" );
-	s = RT_LIST_FIRST( shell , &r->s_hd );
-	if( nmg_kill_cracks( s ) )
-	{
-		if( nmg_ks( s ) )
-		{
-			nmg_km( m );
-			m = (struct model *)0;
-		}
-		s = (struct shell *)0;
-	}
-
-	if( !m )
-		return( cur_id );
-
-	/* kill zero length edgeuses */
-	if( nmg_kill_zero_length_edgeuses( m ) )
-	{
-		nmg_km( m );
-		m = (struct model *)NULL;
-		return( cur_id );
-	}
-
-#if 1
+#if 0
 	/* Fuse */
 	if( debug )
 	{
 		nmg_stash_model_to_file( "before_fuse.g", m, "before_fuse" );
 		rt_log( "Fuse model:\n" );
 	}
-Find_loop_crack( s );
 	i = nmg_model_fuse( m, &tol );
 	if( debug )
 		rt_log( "\t%d objects fused\n" , i );
+#endif
 
-Find_loop_crack( s );
 	nmg_s_join_touchingloops( s, &tol );
 	nmg_s_split_touchingloops( s, &tol);
-Find_loop_crack( s );
-
-#endif
 
 #if 0
 	/* if the shell we just built has a void shell inside, nmg_fix_normals will
