@@ -581,7 +581,7 @@ struct partition {
 	} else { \
 		(p) = (struct partition *)bu_malloc(sizeof(struct partition), "struct partition"); \
 		(p)->pt_magic = PT_MAGIC; \
-		bu_ptbl_init( &(p)->pt_solids_hit, 42 ); \
+		bu_ptbl_init( &(p)->pt_solids_hit, 42, "pt_solids_hit ptbl" ); \
 		(res)->re_partlen++; \
 	} \
 	res->re_partget++; }
