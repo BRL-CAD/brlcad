@@ -913,8 +913,10 @@ register struct application *ap;
 		return(1);		/* light_visible = 1 */
 	}
 
-	bu_log("light ray missed non-infinite, visible light source\n");
-	bu_log("on pixel: %d %d\n", ap->a_x, ap->a_y);
+	if( rdebug & RDEBUG_LIGHT ) {
+		bu_log("light ray missed non-infinite, visible light source\n");
+		bu_log("on pixel: %d %d\n", ap->a_x, ap->a_y);
+	}
 
 	/* Missed light, either via blockage or dither.  Return black */
 	VSETALL( ap->a_color, 0 );
