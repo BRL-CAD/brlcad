@@ -150,8 +150,8 @@ static struct funtab funtab[] = {
 	f_arced, 3,MAXARGS,TRUE,
 "area", "[endpoint_tolerance]", "calculate presented area of view",
 	f_area, 1, 2, TRUE,
-"attach", "device screen", "attach to a display processor on screen",
-	f_attach,1,MAXARGS,TRUE,
+"attach", "[-d display_string] [-i init_script] [-n name] dev_type", "attach to a display processor of device type X, ogl, or glx",
+	f_attach,2,MAXARGS,TRUE,
 "B", "<objects>", "clear screen, edit objects",
 	f_blast,2,MAXARGS,TRUE,
 "bev",	"[-t] [-P#] new_obj obj1 op obj2 op obj3 op ...", "Boolean evaluation of objects via NMG's",
@@ -2002,6 +2002,7 @@ char *argv[];
   struct cmd_list *save_cclp;
   struct dm_list *dlp;
   struct dm_list *save_cdlp;
+  struct bu_vls vls2;
 
   if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
         return TCL_ERROR;
@@ -2050,15 +2051,25 @@ char *argv[];
     return TCL_OK;
   }
 
+  bu_vls_init(&vls2);
+
+  if(*argv[2] != '.')
+    bu_vls_printf(&vls2, ".%s", argv[2]);
+  else
+    bu_vls_strcpy(&vls2, argv[2]);
+
   for( BU_LIST_FOR(dlp, dm_list, &head_dm_list.l) )
-    if(!strcmp(argv[2], bu_vls_addr(&dlp->_dmp->dm_pathName)))
+    if(!strcmp(bu_vls_addr(&vls2), bu_vls_addr(&dlp->_dmp->dm_pathName)))
       break;
 
   if(dlp == &head_dm_list){
-    Tcl_AppendResult(interp, "f_aim: unrecognized pathName - ", argv[2],
-		     "\n", (char *)NULL);
+    Tcl_AppendResult(interp, "f_aim: unrecognized pathName - ",
+		     bu_vls_addr(&vls2), "\n", (char *)NULL);
+    bu_vls_free(&vls2);
     return TCL_ERROR;
   }
+
+  bu_vls_free(&vls2);
 
   /* already aiming */
   if(clp->aim)
@@ -2066,16 +2077,14 @@ char *argv[];
 
   clp->aim = dlp;
 
-  save_cdlp = curr_dm_list;
-  curr_dm_list = dlp;
-  save_cclp = curr_cmd_list;
-
   /* already being aimed at */
   if(dlp->aim)
     dlp->aim->aim = (struct dm_list *)NULL;
 
   dlp->aim = clp;
 
+  save_cdlp = curr_dm_list;
+  save_cclp = curr_cmd_list;
   curr_dm_list = dlp;
   curr_cmd_list = clp;
   set_scroll();
@@ -2110,10 +2119,10 @@ char *argv[];
 
   /* Load the argument vector */
   av[0] = "attach";
-  av[1] = "ps";
-  for(i = 2; i < argc + 1; ++i)
+  for(i = 1; i < argc + 1; ++i)
     av[i] = argv[i - 1];
-  av[i] = NULL;
+  av[i] = "ps";
+  av[++i] = NULL;
 
   status = f_attach(clientData, interp, i - 1, av);
   if(status == TCL_ERROR){
@@ -2161,10 +2170,10 @@ char *argv[];
 
   /* Load the argument vector */
   av[0] = "attach";
-  av[1] = "plot";
-  for(i = 2; i < argc + 1; ++i)
+  for(i = 1; i < argc + 1; ++i)
     av[i] = argv[i - 1];
-  av[i] = NULL;
+  av[i] = "plot";
+  av[++i] = NULL;
 
   status = f_attach(clientData, interp, i - 1, av);
   if(status == TCL_ERROR){
