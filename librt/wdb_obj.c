@@ -29,9 +29,10 @@
 #else
 #include <strings.h>
 #endif
-#include <fcntl.h>
 #include <math.h>
-#include <sys/errno.h>
+#if unix
+# include <sys/errno.h>
+#endif
 #include "tcl.h"
 #include "machine.h"
 #include "externs.h"
@@ -456,10 +457,14 @@ wdb_prep_dbip(interp, filename)
 		/*
 		 * Check to see if we can access the database
 		 */
+#if unix
 		if (access(filename, R_OK|W_OK) != 0 && errno != ENOENT) {
 			perror(filename);
 			return DBI_NULL;
 		}
+#endif
+#if WIN32
+#endif
 
 		if ((dbip = db_create(filename)) == DBI_NULL) {
 			Tcl_AppendResult(interp,

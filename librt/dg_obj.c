@@ -30,7 +30,6 @@
 
 #include <fcntl.h>
 #include <math.h>
-#include <sys/errno.h>
 #include "conf.h"
 #include "tcl.h"
 #include "machine.h"

@@ -32,10 +32,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "conf.h"
 
-#include <fcntl.h>
-#include <sys/errno.h>
 #include <stdio.h>
-#include <ctype.h>
 #include <math.h>
 #ifdef USE_STRING_H
 #include <string.h>
