@@ -365,7 +365,8 @@ struct rt_dsp_internal{
 	unsigned short	dsp_smooth;		/* bool: surf normal interp */
 	mat_t		dsp_mtos;		/* model to solid space */
 	/* END OF USER SETABLE VARIABLES, BEGIN INTERNAL STUFF */
-	mat_t		dsp_stom;		/* solid to model space */
+	mat_t		dsp_stom;		/* solid to model space 
+						 * computed from dsp_mtos */
 	unsigned short	*dsp_buf;
 	struct bu_mapped_file *dsp_mp;	/* actual data */
 };
