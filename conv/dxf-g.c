@@ -15,11 +15,25 @@ extern int errno;
 
 #define	LINELEN		256	/* max input line length from elements file */
 #define	LAYERLEN	32	/* max length for a layer name */
+#define SKIP_LINE_SEGS	1	/* flag to inhibit creation of wire edges */
 
-static char *usage="dxf-g [-d] [-l] [-n] [-p] [-t tolerance] [-i input_file] [-o output_file_name]";
+struct dxf_verts
+{
+	point_t pt;
+	struct vertex *vp;
+};
+
+static char *usage="dxf-g [-d debug_level] [-l] [-n] [-p] [-t tolerance] [-i input_file] [-o output_file_name]\n\
+\tdebug_level is 1 or 2\n\
+\t-l -> do not process DXF file by layers\n\
+\t-n -> try to fix surface normal directions\n\
+\t-p -> build polysolids instead of NMG's\n\
+\t\tIf an input file is not specified, the -l option must be used\n";
+
 static char *all="all";
 static FILE *dxf;			/* Input DXF file */
 static FILE *out_fp;			/* Output BRLCAD file */
+static char *std_in_name="stdin";	/* Name for standard input */
 static struct rt_tol tol;		/* Tolerance */
 static char line[LINELEN];		/* Buffer for line from input file */
 static char *curr_name;			/* Current layer name */
@@ -32,6 +46,287 @@ static struct nmgregion *r;
 static struct shell *s;
 
 int
+Do_vertex( pt , flags )
+point_t pt;
+int *flags;
+{
+	int done=0;
+	int group_code;
+
+	while( !done )
+	{
+		if( fgets( line , LINELEN , dxf ) == NULL )
+			rt_bomb( "Unexpected EOF in input file\n" );
+		group_code = atoi( line );
+		switch( group_code )
+		{
+			default:
+				if( fgets( line , LINELEN , dxf ) == NULL )
+					rt_bomb( "Unexpected EOF in input file\n" );
+				break;
+			case 70:	/* vertex flags */
+				if( fgets( line , LINELEN , dxf ) == NULL )
+					rt_bomb( "Unexpected EOF in input file\n" );
+				(*flags) = atoi( line );
+				break;
+			case 10:
+			case 20:
+			case 30:	/* Coordinates */
+				if( fgets( line , LINELEN , dxf ) == NULL )
+					rt_bomb( "Unexpected EOF in input file\n" );
+				pt[ group_code/10 - 1 ] = atof( line );
+				break;
+			case 0:
+				done = 1;
+		}
+	}
+	return( group_code );
+}
+
+int
+Do_polyline()
+{
+	int done=0;
+	int group_code;
+	int flags=0;
+	int m_count=0,n_count=0;
+	int mesh_size;
+	int vert_count=0;
+	int i,j;
+	struct dxf_verts *mesh;
+
+	mesh = (struct dxf_verts *)NULL;
+	while( !done )
+	{
+		if( fgets( line , LINELEN , dxf ) == NULL )
+			rt_bomb( "Unexpected EOF in input file\n" );
+		group_code = atoi( line );
+		switch( group_code )
+		{
+			default:
+				if( fgets( line , LINELEN , dxf ) == NULL )
+					rt_bomb( "Unexpected EOF in input file\n" );
+				break;
+			case 8:		/* Layer name */
+				if( fgets( line , LINELEN , dxf ) == NULL )
+					rt_bomb( "Unexpected EOF in input file\n" );
+				line[ strlen( line ) - 1 ] = '\0';
+				if( curr_name != NULL && strcmp( curr_name , line ) )
+				{
+					/* skip this entity */
+					while( !done )
+					{
+						if( fgets( line , LINELEN , dxf ) == NULL )
+							rt_bomb( "Unexpected EOF in input file\n" );
+						group_code = atoi( line );
+						if( fgets( line , LINELEN , dxf ) == NULL )
+							rt_bomb( "Unexpected EOF in input file\n" );
+						if( group_code == 0 && !strncmp( line , "SEQEND" , 6 ) )
+							done = 1;
+					}
+				}
+				else if( debug )
+					rt_log( "Polyline:\n" );
+				break;
+			case 66:	/* vertices follow flag */
+				if( fgets( line , LINELEN , dxf ) == NULL )
+					rt_bomb( "Unexpected EOF in input file\n" );
+				if( atoi( line ) != 1 )
+					rt_bomb( "dxf-g: POLYLINE with 'vertices follow' flag not one\n" );
+				break;
+			case 70:	/* flags */
+				if( fgets( line , LINELEN , dxf ) == NULL )
+					rt_bomb( "Unexpected EOF in input file\n" );
+				flags = atoi( line );
+				break;
+			case 71:	/* Mesh count 'M' */
+				if( fgets( line , LINELEN , dxf ) == NULL )
+					rt_bomb( "Unexpected EOF in input file\n" );
+				m_count = atoi( line );
+				break;
+			case 72:	/* Mesh count 'N' */
+				if( fgets( line , LINELEN , dxf ) == NULL )
+					rt_bomb( "Unexpected EOF in input file\n" );
+				n_count = atoi( line );
+				break;
+			case 0:		/* Start of something (hopefully vertex list) */
+				if( fgets( line , LINELEN , dxf ) == NULL )
+					rt_bomb( "Unexpected EOF in input file\n" );
+				mesh_size = m_count * n_count;
+				if( mesh_size )
+				{
+					struct faceuse *fu;
+
+					/* read and store a mesh */
+					mesh = (struct dxf_verts *)rt_calloc( mesh_size , sizeof( struct dxf_verts ) , "dxf-g: mesh" );
+					while( !strncmp( line , "VERTEX" , 6 ) )
+					{
+						int pt_flags=0;
+
+						group_code = Do_vertex( mesh[vert_count].pt , &pt_flags );
+						mesh[vert_count].vp = (struct vertex *)NULL;
+						if( ++vert_count > mesh_size )
+							rt_bomb( "dxf-g: Too many vertices for mesh size\n" );
+						if( fgets( line , LINELEN , dxf ) == NULL )
+							rt_bomb( "Unexpected EOF in input file\n" );
+					}
+					/* Look for vertices already existing */
+					for( i=0 ; i<vert_count ; i++ )
+					{
+						for( j=0 ; j<NMG_TBL_END( &vertices ) ; j++ )
+						{
+							struct vertex *v;
+
+							v = (struct vertex *)NMG_TBL_GET( &vertices , j );
+							if( rt_pt3_pt3_equal( mesh[i].pt , v->vg_p->coord , &tol) )
+							{
+								mesh[i].vp = v;
+								if( debug == 2 )
+									rt_log( "\tReusing existing vertex at ( %f %f %f )\n" , V3ARGS( mesh[i].vp->vg_p->coord ) );
+								break;
+							}
+						}
+					}
+
+
+					/* make faces */
+					for( i=1 ; i<m_count ; i++ )
+					{
+						for( j=0 ; j<n_count-1 ; j++ )
+						{
+							struct vertex **vp[4];
+							point_t pt[4];
+							int nverts;
+							int k,l,m;
+
+							VMOVE( pt[0] , mesh[i*n_count + j].pt);
+							VMOVE( pt[1] , mesh[i*n_count + j + 1].pt);
+							VMOVE( pt[2] , mesh[(i-1)*n_count + j + 1].pt);
+							VMOVE( pt[3] , mesh[(i-1)*n_count + j].pt);
+							vp[0] = &mesh[i*n_count + j].vp;
+							vp[1] = &mesh[i*n_count + j + 1].vp;
+							vp[2] = &mesh[(i-1)*n_count + j + 1].vp;
+							vp[3] = &mesh[(i-1)*n_count + j].vp;
+							nverts = 4;
+							if( debug == 2 )
+							{
+								rt_log( "Making face:\n" ) ;
+								rt_log( "\t( %f %f %f )\n" , V3ARGS( pt[0] ) );
+								rt_log( "\t( %f %f %f )\n" , V3ARGS( pt[1] ) );
+								rt_log( "\t( %f %f %f )\n" , V3ARGS( pt[2] ) );
+								rt_log( "\t( %f %f %f )\n" , V3ARGS( pt[3] ) );
+							}
+
+							/* check for zero length edges */
+							for( k=0 ; k<nverts-1 ; k++ )
+							{
+								if( rt_pt3_pt3_equal( pt[k] , pt[k+1] , &tol ) )
+								{
+									for( m=k+1 ; m<nverts-1 ; m++ )
+									{
+										VMOVE( pt[m] , pt[m+1] );
+										vp[m] = vp[m+1];
+									}
+									nverts--;
+									k--;
+								}
+							}
+
+							if( debug == 2 )
+							{
+								if( nverts > 2 )
+								{
+									rt_log( "Making face:\n" ) ;
+									for( k=0 ; k<nverts ; k++ )
+										rt_log( "\t( %f %f %f )\n" , V3ARGS( pt[k] ) );
+								}
+								else
+									rt_log( "Skip this face\n" );
+							}
+							if( nverts > 2 )
+							{
+								fu = nmg_cmface( s , vp , nverts );
+								nmg_tbl( &faces , TBL_INS , (long *)fu );
+							}
+						}
+					}
+					/* assign geometry */
+					for( i=0 ; i<mesh_size ; i++ )
+					{
+						if( mesh[i].vp )
+						{
+							if( !mesh[i].vp->vg_p )
+							{
+								nmg_vertex_gv( mesh[i].vp , mesh[i].pt );
+								nmg_tbl( &vertices , TBL_INS , (long *)mesh[i].vp );
+							}
+						}
+					}
+				}
+				else if( !SKIP_LINE_SEGS )
+				{
+					/* just a series of line segments */
+					point_t pt1,pt2;
+					struct vertex *v1,*v2;
+					int first=1;
+
+					if( debug )
+						rt_log( "\tjust a line segment\n" );
+
+					v1 = (struct vertex *)NULL;
+					v2 = (struct vertex *)NULL;
+					while( !strncmp( line , "VERTEX" , 6 ) )
+					{
+						int pt_flags=0;
+
+						group_code = Do_vertex( pt2 , &pt_flags );
+						if( debug == 2 )
+							rt_log( "\t( %f %f %f )\n" , V3ARGS( pt2 ) );
+
+						if( first )
+						{
+							VMOVE( pt1 , pt2 );
+							first = 0;
+						}
+						else
+						{
+							struct edgeuse *eu;
+
+							eu = nmg_me( v1 , v2 , s );
+							nmg_vertex_gv( eu->eumate_p->vu_p->v_p , pt2 );
+							if( !eu->vu_p->v_p->vg_p )
+								nmg_vertex_gv( eu->vu_p->v_p , pt1 );
+							VMOVE( pt1 , pt2 );
+							v1 = v2;
+							v2 = (struct vertex *)NULL;
+						}
+						if( fgets( line , LINELEN , dxf ) == NULL )
+							rt_bomb( "Unexpected EOF in input file\n" );
+					}
+				}
+				if( !strncmp( line , "SEQEND" , 6 ) )
+					done = 1;
+				break;
+		}
+	}
+	if( debug )
+	{
+		int i;
+
+		if( mesh_size )
+		{
+			rt_log( "POLYLINE: %d by %d mesh\n" , m_count , n_count );
+			for( i=0 ; i<vert_count ; i++ )
+				rt_log( "\t( %f %f %f )\n" , V3ARGS( mesh[i].pt ) );
+		}
+	}
+	if( mesh != NULL )
+		rt_free( (char *)mesh , "dxf-g: mesh" );
+
+	return( group_code );
+}
+
+int
 Do_3dface()
 {
 	struct faceuse *fu;
@@ -41,8 +336,6 @@ Do_3dface()
 	int skip_face;
 	int i,j,group_code;
 
-	if( debug )
-		rt_log( "3DFACE\n" );
 	skip_face = 0;
 	no_of_pts = (-1);
 	group_code = 1;
@@ -50,7 +343,7 @@ Do_3dface()
 	{
 		if( fgets( line , LINELEN , dxf ) == NULL )
 			rt_bomb( "Unexpected EOF in input file\n" );
-		sscanf( line , "%d" , &group_code );
+		group_code = atoi( line );
 		switch( group_code )
 		{
 			default:
@@ -63,6 +356,8 @@ Do_3dface()
 				line[ strlen( line ) - 1 ] = '\0';
 				if( curr_name != NULL && strcmp( line , curr_name ) )
 					skip_face = 1;
+				else if( debug )
+					rt_log( "3DFACE\n" );
 				break;
 			case 10:
 			case 20:
@@ -91,7 +386,7 @@ Do_3dface()
 				if( skip_face )
 					break;
 				no_of_pts++;
-				if( debug )
+				if( debug == 2 )
 				{
 					rt_log( "Original FACE:\n" );
 					for( i=0 ; i<no_of_pts ; i++ )
@@ -105,7 +400,7 @@ Do_3dface()
 						{
 							int k;
 
-							if( debug )
+							if( debug == 2 )
 								rt_log( "Combining points %d and %d\n" , i , j );
 							no_of_pts--;
 							for( k=j ; k<no_of_pts ; k++ )
@@ -118,13 +413,13 @@ Do_3dface()
 				}
 				if( no_of_pts != 3 && no_of_pts != 4 )
 				{
-					if( debug )
+					if( debug == 2 )
 						rt_log( "Skipping face with %d vertices\n" , no_of_pts );
 					break;
 				}
 				if( no_of_pts == 3 && rt_3pts_collinear( pt[0],pt[1],pt[2],&tol ) )
 				{
-					if( debug )
+					if( debug == 2 )
 						rt_log( "Skipping triangular face with collinear vertices\n" );
 					break;
 				}
@@ -143,6 +438,8 @@ Do_3dface()
 						if( rt_pt3_pt3_equal( pt[i] , v->vg_p->coord , &tol) )
 						{
 							vp[i] = v;
+							if( debug == 2 )
+								rt_log( "\tRe-using existing vertex at ( %f %f %f )\n" , V3ARGS( vp[i]->vg_p->coord ) );
 							break;
 						}
 					}
@@ -204,12 +501,13 @@ main( int argc , char *argv[] )
 
 	out_fp = stdout;
 	dxf = stdin;
+	dxf_name = std_in_name;
 
 	if( argc < 2 )
 		rt_bomb( usage );
 
 	/* get command line arguments */
-	while ((c = getopt(argc, argv, "dlpt:i:o:")) != EOF)
+	while ((c = getopt(argc, argv, "nd:lpt:i:o:")) != EOF)
 	{
 		switch( c )
 		{
@@ -220,7 +518,7 @@ main( int argc , char *argv[] )
 				do_layers = 0;
 				break;
 			case 'd':	/* debug */
-				debug = 1;
+				debug = atoi( optarg );
 				break;
 			case 't':	/* tolerance */
 				tol.dist = atof( optarg );
@@ -253,7 +551,7 @@ main( int argc , char *argv[] )
 		}
 	}
 
-	if( dxf == NULL )
+	if( dxf == NULL || do_layers && dxf == stdin )
 		rt_bomb( usage );
 
 	ptr1 = strrchr( dxf_name , '/' );
@@ -336,7 +634,8 @@ main( int argc , char *argv[] )
 		}
 
 		/* Find the ENTITIES SECTION */
-		rewind( dxf );
+		if( do_layers )
+			rewind( dxf );
 		while( fgets( line , LINELEN , dxf ) != NULL )
 		{
 			group_code = atoi( line );
@@ -397,6 +696,8 @@ main( int argc , char *argv[] )
 					rt_bomb( "Unexpected EOF in input file\n" );
 				if( !strncmp( line , "3DFACE" , 6 ) )
 					group_code = Do_3dface();
+				else if( !strncmp( line , "POLYLINE" , 8 ) )
+					group_code = Do_polyline();
 				else if( !strncmp( line , "ENDSEC" , 6 ) )
 				{
 					if( debug )
@@ -447,7 +748,8 @@ main( int argc , char *argv[] )
 			mk_nmg( out_fp , curr_name  , m );
 		}
 
-		rt_log( "%d polygons\n" , NMG_TBL_END( &faces ) );
+		if( debug )
+			rt_log( "%d polygons\n" , NMG_TBL_END( &faces ) );
 		nmg_km( m );
 		nmg_tbl( &faces , TBL_RST , NULL );
 		nmg_tbl( &vertices , TBL_RST , NULL );
