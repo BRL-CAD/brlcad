@@ -121,11 +121,11 @@ char	*str;
 ok:	;
 #endif MEMDEBUG
 
+	if(rt_g.debug&DEBUG_MEM) rt_log("%7x free %s\n", ptr, str);
 	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
 	*((int *)ptr) = -1;	/* zappo! */
 	free(ptr);
 	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
-	if(rt_g.debug&DEBUG_MEM) rt_log("%7x freed %s\n", ptr, str);
 }
 
 /*
