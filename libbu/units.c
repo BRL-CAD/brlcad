@@ -34,6 +34,7 @@ static CONST struct cvt_tab {
 } bu_units_tab[] = {
 	0.0,		"none",
 	1.0e-7,		"angstrom",
+	1.0e-7,		"decinanometer",
 	1.0e-6,		"nm",
 	1.0e-6,		"nanometer",
 	1.0e-3,		"um",
