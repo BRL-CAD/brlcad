@@ -19,6 +19,12 @@ static const char RCSid[] = "@(#)$Header";
 
 #include "conf.h"
 
+#ifdef USE_STRING_H
+#include <string.h>
+#else
+#include <strings.h>
+#endif
+
 #include <math.h>
 #include "tk.h"
 
