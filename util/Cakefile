@@ -349,8 +349,8 @@ pixelswap : pixelswap.o
 decimate : decimate.o
 	CC LDFLAGS -o decimate decimate.o
 
-msrandom: msrandom.o
-	CC LDFLAGS -o msrandom msrandom.o LIBRT LIBBU LIBBU_LIBES LIBES
+msrandom: msrandom.o LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS -o msrandom msrandom.o LIBBN LIBBU LIBBU_LIBES LIBES
 
 pixblend:	pixblend.o
 	CC LDFLAGS -o pixblend pixblend.o LIBES
