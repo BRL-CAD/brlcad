@@ -35,10 +35,10 @@ void left_rotate (struct rb_node *x, int order)
     RB_CKMAG(y, RB_NODE_MAGIC, "red-black node");
 
     rb_right_child(x, order) = beta = rb_left_child(y, order);
-    if (beta != RB_NODE_NULL)
+    if (beta != rb_null(tree))
 	rb_parent(beta, order) = x;
     rb_parent(y, order) = x_parent = rb_parent(x, order);
-    if (x_parent == RB_NODE_NULL)
+    if (x_parent == rb_null(tree))
 	rb_root(tree, order) = y;
     else if (x == rb_left_child(x_parent, order))
 	rb_left_child(x_parent, order) = y;
@@ -71,10 +71,10 @@ void right_rotate (struct rb_node *y, int order)
     RB_CKMAG(x, RB_NODE_MAGIC, "red-black node");
 
     rb_left_child(y, order) = beta = rb_right_child(x, order);
-    if (beta != RB_NODE_NULL)
+    if (beta != rb_null(tree))
 	rb_parent(beta, order) = y;
     rb_parent(x, order) = y_parent = rb_parent(y, order);
-    if (y_parent == RB_NODE_NULL)
+    if (y_parent == rb_null(tree))
 	rb_root(tree, order) = x;
     else if (y == rb_left_child(y_parent, order))
 	rb_left_child(y_parent, order) = x;
