@@ -1361,6 +1361,7 @@ AC_CHECK_FUNCS(\
 	setlocale \
 	socket \
 	sqrt \
+	srand48 \
 	strcasecmp \
 	strchr \
 	strcpy \
