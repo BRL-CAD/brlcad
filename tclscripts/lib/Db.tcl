@@ -90,7 +90,7 @@ configbody Db::dbfile {
 body Db::constructor {filename} {
     set dbfile $filename
     set db [subst $this]_db
-    wdb_open $db db $dbfile
+    wdb_open $db $dbfile
     Db::help_init
 }
 
