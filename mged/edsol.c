@@ -34,10 +34,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <string.h>
 #endif
 
-#define RT_NURB_GET_CONTROL_POINT(_s,_u,_v)	((_s)->ctl_points[ \
-	((_v)*(_s)->s_size[1]+(_u))*RT_NURB_EXTRACT_COORDS((_s)->pt_type)])
-
-
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
@@ -53,9 +49,21 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./dm.h"
 #include "./menu.h"
 
+/* From librt/nmg_info.c */
+RT_EXTERN( struct edge *nmg_find_e_nearest_pt2, (long *magic_p,
+			CONST point_t pt2, CONST mat_t mat,
+			CONST struct rt_tol *tol) );
+
+/* XXX Move to rtgeom.h? */
+#define RT_NURB_GET_CONTROL_POINT(_s,_u,_v)	((_s)->ctl_points[ \
+	((_v)*(_s)->s_size[1]+(_u))*RT_NURB_EXTRACT_COORDS((_s)->pt_type)])
+
+extern struct rt_tol		mged_tol;	/* from ged.c */
+
 static int	new_way = 0;	/* Set 1 for import/export handling */
 
 static void	arb8_edge(), ars_ed(), ell_ed(), tgc_ed(), tor_ed(), spline_ed();
+static void	nmg_ed();
 static void	rpc_ed(), rhc_ed(), epa_ed(), ehy_ed(), eto_ed();
 static void	arb7_edge(), arb6_edge(), arb5_edge(), arb4_point();
 static void	arb8_mv_face(), arb7_mv_face(), arb6_mv_face();
@@ -92,8 +100,14 @@ static int	es_mvalid;	/* es_mparam valid.  inpara must = 0 */
 static int	spl_surfno;	/* What surf & ctl pt to edit on spline */
 static int	spl_ui;
 static int	spl_vi;
+
+static struct edgeuse	*es_eu;	/* Currently selected NMG edgeuse */
+
 /* XXX This belongs in sedit.h */
-#define ECMD_VTRANS		17
+#define ECMD_VTRANS		17	/* vertex translate */
+#define ECMD_NMG_EPICK		19	/* edge pick */
+#define ECMD_NMG_EMOVE		20	/* edge move */
+#define ECMD_NMG_EDEBUG		21	/* edge debug */
 
 /*  These values end up in es_menu, as do ARB vertex numbers */
 int	es_menu;		/* item selected from menu */
@@ -268,6 +282,14 @@ struct menu_item  spline_menu[] = {
 	{ "SPLINE MENU", (void (*)())NULL, 0 },
 	{ "pick vertex", spline_ed, -1 },
 	{ "move vertex", spline_ed, ECMD_VTRANS },
+	{ "", (void (*)())NULL, 0 }
+};
+
+struct menu_item  nmg_menu[] = {
+	{ "NMG MENU", (void (*)())NULL, 0 },
+	{ "pick edge", nmg_ed, ECMD_NMG_EPICK },
+	{ "move edge", nmg_ed, ECMD_NMG_EMOVE },
+	{ "debug edge", nmg_ed, ECMD_NMG_EDEBUG },
 	{ "", (void (*)())NULL, 0 }
 };
 
@@ -753,12 +775,46 @@ static void
 spline_ed( arg )
 int arg;
 {
+	/* XXX Why wasn't this done by setting es_edflag = ECMD_SPLINE_VPICK? */
 	if( arg < 0 )  {
 		/* Enter picking state */
 		chg_state( ST_S_EDIT, ST_S_VPICK, "Vertex Pick" );
 		return;
 	}
 	/* For example, this will set es_edflag = ECMD_VTRANS */
+	es_edflag = arg;
+	sedraw = 1;
+}
+
+/*
+ *			N M G _ E D
+ *
+ *  Handler for events in the NMG menu.
+ *  Mostly just set appropriate state flags to prepare us for user's
+ *  next event.
+ */
+/*ARGSUSED*/
+static void
+nmg_ed( arg )
+int arg;
+{
+	switch(arg)  {
+	default:
+		(void)printf("nmg_ed: undefined menu event?\n");
+		return;
+	case ECMD_NMG_EPICK:
+	case ECMD_NMG_EMOVE:
+		break;
+	case ECMD_NMG_EDEBUG:
+		if( !es_eu )  {
+			(void)printf("nmg_ed: no edge selected yet\n");
+			return;
+		}
+		nmg_pr_fu_around_eu( es_eu, &mged_tol );
+		/* no change of state or es_edflag */
+		return;
+	}
+	/* For example, this will set es_edflag = ECMD_NMG_EPICK */
 	es_edflag = arg;
 	sedraw = 1;
 }
@@ -893,6 +949,13 @@ mat_t		mat;
 				spl_surfno, spl_ui, spl_vi );
 			*strp = buf;
 			break;
+		}
+	case ID_NMG:
+		{
+			register struct model *m =
+				(struct model *) es_int.idb_ptr;
+			NMG_CK_MODEL(m);
+			/* XXX Fall through, for now */
 		}
 	default:
 		VSETALL( mpt, 0 );
@@ -1065,6 +1128,8 @@ init_sedit()
 	get_solid_keypoint( es_keypoint, &es_keytag, &es_int, es_mat );
 printf("es_keypoint (%s) (%g, %g, %g)\n", es_keytag, V3ARGS(es_keypoint) );
 
+	es_eu = (struct edgeuse *)NULL;
+
 	sedit_menu();		/* put up menu header */
 
 	/* Finally, enter solid edit state */
@@ -1206,6 +1271,9 @@ sedit_menu()  {
 	case ID_ETO:
 		menu_array[MENU_L1] = eto_menu;
 		break;
+	case ID_NMG:
+		menu_array[MENU_L1] = nmg_menu;
+		break;
 	}
 	es_edflag = IDLE;	/* Drop out of previous edit mode */
 	es_menu = 0;
@@ -1259,6 +1327,9 @@ int type;
  *		if( sedraw > 0 )  sedit();
  *  to process any residual events that the event handlers were too
  *  lazy to handle themselves.
+ *
+ *  A lot of processing is deferred to here, so that the "p" command
+ *  can operate on an equal footing to mouse events.
  */
 void
 sedit()
@@ -1764,6 +1835,9 @@ sedit()
 		mat_idn( incr_change );
 		break;
 
+	case ECMD_NMG_EPICK:
+		break;
+
 	default:
 		(void)printf("sedit():  unknown edflag = %d.\n", es_edflag );
 	}
@@ -1788,6 +1862,12 @@ sedit()
  *			S E D I T _ M O U S E
  *
  *  Mouse (pen) press in graphics area while doing Solid Edit.
+ *
+ *  In order to allow the "p" command to do the same things that
+ *  a mouse event can, the preferred strategy is to store the value
+ *  corresponding to what the "p" command would give in es_mparam,
+ *  set es_mvalid=1, set sedraw=1, and return, allowing sedit()
+ *  to actually do the work.
  */
 void
 sedit_mouse( mousevec )
@@ -1932,11 +2012,49 @@ CONST vect_t	mousevec;
 		calc_pnts( &es_rec.s, es_rec.s.s_cgtype );
 		sedraw = 1;
 		return;
-		
+
+	case ECMD_NMG_EPICK:
+		/* XXX Should just leave desired location in es_mparam for sedit() */
+		{
+			struct model	*m = 
+				(struct model *)es_int.idb_ptr;
+			struct edge	*e;
+			NMG_CK_MODEL(m);
+			if( (e = nmg_find_e_nearest_pt2( &m->magic, mousevec, model2view, &mged_tol )) == (struct edge *)NULL )  {
+				(void)printf("ECMD_NMG_EPICK: unable to find an edge\n");
+				return;
+			}
+			es_eu = e->eu_p;
+			NMG_CK_EDGEUSE(es_eu);
+			(void)printf("edgeuse selected=x%x\n", es_eu);
+			sedraw = 1;
+		}
+		break;
+
+#if 0
+	/* XXX Should just leave desired location in es_mparam for sedit() */
+	/* JRA -- look here! */
+	case ECMD_NMG_EMOVE:
+		/* move edge, through indicated point */
+		MAT4X3PNT( temp, view2model, mousevec );
+		/* apply inverse of es_mat */
+		MAT4X3PNT( pos_model, es_invmat, temp );
+		if( nmg_move_edge_thru_pt( es_eu, pos_model, mged_tol ) < 0 ) {
+			VPRINT("Unable to hit", pos_model);
+		}
+		sedraw = 1;
+		return;
+#endif
+
 	default:
 		(void)printf("mouse press undefined in this solid edit mode\n");
 		break;
 	}
+
+	/* XXX I would prefer to see an explicit call to the guts of sedit()
+	 * XXX here, rather than littering the place with global variables
+	 * XXX for later interpretation.
+	 */
 }
 
 /*
@@ -3132,16 +3250,18 @@ char	**argv;
 	sedraw++;
 	for( i = 1; i < argc && i <= 3 ; i++ )  {
 		es_para[ inpara++ ] = atof( argv[i] );
-		if( es_edflag == PSCALE || es_edflag == SSCALE )  {
-			if(es_para[0] <= 0.0) {
-				(void)printf("ERROR: SCALE FACTOR <= 0\n");
-				inpara = 0;
-				sedraw = 0;
-				return;
-			}
+	}
+
+	if( es_edflag == PSCALE || es_edflag == SSCALE )  {
+		if(es_para[0] <= 0.0) {
+			(void)printf("ERROR: SCALE FACTOR <= 0\n");
+			inpara = 0;
+			sedraw = 0;
+			return;
 		}
 	}
-	/* check if need to convert to the base unit */
+
+	/* check if need to convert input values to the base unit */
 	switch( es_edflag ) {
 
 		case STRANS:
@@ -3160,6 +3280,11 @@ char	**argv;
 		default:
 			return;
 	}
+
+	/* XXX I would prefer to see an explicit call to the guts of sedit()
+	 * XXX here, rather than littering the place with global variables
+	 * XXX for later interpretation.
+	 */
 }
 
 /*
@@ -3596,6 +3721,25 @@ struct rt_db_internal	*ip;
 			fp = &RT_NURB_GET_CONTROL_POINT( surf, surf->s_size[0]-1, surf->s_size[1]-1 );
 			MAT4X3PNT(pos_view, xform, fp);
 			POINT_LABEL_STR( pos_view, " u,v" );
+		}
+		break;
+	case ID_NMG:
+		/* New way only */
+		{
+			register struct model *m =
+				(struct model *) es_int.idb_ptr;
+			NMG_CK_MODEL(m);
+
+			if( es_eu )  {
+				point_t	cent;
+				NMG_CK_EDGEUSE(es_eu);
+				VADD2SCALE( cent,
+					es_eu->vu_p->v_p->vg_p->coord,
+					es_eu->eumate_p->vu_p->v_p->vg_p->coord,
+					0.5 );
+				MAT4X3PNT(pos_view, xform, cent);
+				POINT_LABEL_STR( pos_view, " eu" );
+			}
 		}
 		break;
 	}
