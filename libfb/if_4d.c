@@ -1414,7 +1414,7 @@ out:
 _LOCAL_ int
 sgi_clear( ifp, pp )
 FBIO	*ifp;
-register RGBpixel	*pp;
+register unsigned char	*pp;
 {
 	struct sgi_pixel	bg;
 	register struct sgi_pixel	*sgip;
@@ -1428,10 +1428,10 @@ register RGBpixel	*pp;
 
 	if ( pp != RGBPIXEL_NULL)  {
 		bg.alpha = 0;
-		bg.red   = (*pp)[RED];
-		bg.green = (*pp)[GRN];
-		bg.blue  = (*pp)[BLU];
-		RGBcolor((short)((*pp)[RED]), (short)((*pp)[GRN]), (short)((*pp)[BLU]));
+		bg.red   = (pp)[RED];
+		bg.green = (pp)[GRN];
+		bg.blue  = (pp)[BLU];
+		RGBcolor((short)((pp)[RED]), (short)((pp)[GRN]), (short)((pp)[BLU]));
 	} else {
 		bg.alpha = 0;
 		bg.red   = 0;
@@ -1538,7 +1538,7 @@ _LOCAL_ int
 sgi_read( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
-RGBpixel	*pixelp;
+unsigned char	*pixelp;
 int	count;
 {
 	register short		scan_count;	/* # pix on this scanline */
@@ -1600,7 +1600,7 @@ sgi_write( ifp, xstart, ystart, pixelp, count )
 register FBIO	*ifp;
 int		xstart;
 int		ystart;
-RGBpixel	*pixelp;
+CONST unsigned char	*pixelp;
 int		count;
 {
 	register short		scan_count;	/* # pix on this scanline */
@@ -1725,7 +1725,7 @@ sgi_writerect( ifp, xmin, ymin, width, height, pp )
 FBIO		*ifp;
 int		xmin, ymin;
 int		width, height;
-RGBpixel	*pp;
+CONST unsigned char	*pp;
 {
 	register int		x;
 	register int		y;
@@ -1833,7 +1833,7 @@ register FBIO	*ifp;
 _LOCAL_ int
 sgi_wmap( ifp, cmp )
 register FBIO	*ifp;
-register ColorMap	*cmp;
+register CONST ColorMap	*cmp;
 {
 	register int	i;
 	int		prev;	/* !0 = previous cmap was non-linear */
@@ -1875,7 +1875,7 @@ register ColorMap	*cmp;
 _LOCAL_ int
 sgi_setcursor( ifp, bits, xbits, ybits, xorig, yorig )
 FBIO	*ifp;
-unsigned char	*bits;
+CONST unsigned char	*bits;
 int		xbits, ybits;
 int		xorig, yorig;
 {
