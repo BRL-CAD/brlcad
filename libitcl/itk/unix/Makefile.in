@@ -247,7 +247,7 @@ install-binaries: $(ITK_LIB_FILE) itkwish
 	@chmod 555 $(LIB_INSTALL_DIR)/$(ITK_LIB_FILE)
 	@echo "Installing itkwish"
 	$(INSTALL_PROGRAM) itkwish $(BIN_INSTALL_DIR)/itkwish$(VERSION)
-	rm $(BIN_INSTALL_DIR)/itkwish
+	rm -f $(BIN_INSTALL_DIR)/itkwish
 	ln -s $(BIN_INSTALL_DIR)/itkwish$(VERSION) $(BIN_INSTALL_DIR)/itkwish
 	@echo "Installing itkConfig.sh"
 	@$(INSTALL_DATA) itkConfig.sh $(LIB_INSTALL_DIR)/itkConfig.sh
