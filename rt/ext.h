@@ -27,6 +27,7 @@ extern int		use_air;		/* Handling of air in librt */
 extern double		AmbientIntensity;	/* Ambient light intensity */
 extern double		azimuth, elevation;
 extern int		lightmodel;		/* Select lighting model */
+extern int		rpt_overlap;		/* Warn about overlaps? */
 
 /***** variables declared in rt.c *****/
 extern struct application	ap;
