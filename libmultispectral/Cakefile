@@ -14,11 +14,14 @@
 
 #define FILES	\
 	init \
-	sh_light
+	sh_light sh_plastic
 
 /* Specially compiled versions */
 sh_light.o: ../liboptical/sh_light.c
 	CC CFLAGS -c ../liboptical/sh_light.c
+
+sh_plastic.o: ../liboptical/sh_plastic.c
+	CC CFLAGS -c ../liboptical/sh_plastic.c
 
 #define VERSION_VARIABLE	libmultispectral_version
 #define LIBRARY_TITLE		"The BRL-CAD Multi-Spectral Shader Library"
