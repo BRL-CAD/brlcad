@@ -282,7 +282,7 @@ mat_t	v2m;
 
 		VSET( lp->lt_aim, 0, 0, -1 );	/* any direction: spherical */
 		lp->lt_intensity = 1000.0;
-		lp->lt_radius = 10.0;		/* 10 mm */
+		lp->lt_radius = 0.1;		/* mm, "point" source */
 		lp->lt_implicit = 1;		/* NOT explicitly modeled */
 		lp->lt_shadows = 1;		/* casts shadows */
 		lp->lt_angle = 180;		/* spherical emission */
