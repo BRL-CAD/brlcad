@@ -38,14 +38,6 @@ static const char RCStree[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "./debug.h"
 
-extern int rt_dsp_tclget(Tcl_Interp *interp,
-			 const struct rt_db_internal *intern,
-			 const char		     *attr);
-
-extern int rt_dsp_tcladjust(Tcl_Interp *interp,
-			    struct rt_db_internal *intern,
-			    int		argc,
-			    char	**argv);
 
 const struct bu_structparse rt_nul_parse[] = {
 	{""}
@@ -175,7 +167,8 @@ const struct bu_structparse rt_nul_parse[] = {
 			struct resource *resp)); \
 	BU_EXTERN(int rt_/**/name/**/_describe, (struct bu_vls *str, \
 			const struct rt_db_internal *ip, int verbose, \
-			double mm2local, struct resource *resp)); \
+			double mm2local, struct resource *resp, \
+						 struct db_i *db_i)); \
 	BU_EXTERN(int rt_/**/name/**/_xform, (struct rt_db_internal *op, \
 			const mat_t mat, struct rt_db_internal *ip, \
 			int free, struct db_i *dbip, \
@@ -324,7 +317,7 @@ BU_EXTERN(void rt_binunif_ifree, (struct rt_db_internal *ip,
 		struct resource *resp));
 BU_EXTERN(int rt_binunif_describe, (struct bu_vls *str,
 		const struct rt_db_internal *ip, int verbose,
-		double mm2local, struct resource *resp));
+		double mm2local, struct resource *resp, struct db_i *db_i));
 BU_EXTERN( void rt_binunif_make, (const struct rt_functab *ftp,
 				  struct rt_db_internal	*intern,
 				  double diameter ) );
@@ -375,6 +368,17 @@ BU_EXTERN(int rt_ars_tclget, (Tcl_Interp *interp,
 BU_EXTERN(int rt_ars_tcladjust, (Tcl_Interp *interp,
 		struct rt_db_internal *intern, int argc, char **argv,
 		struct resource *resp));
+
+/* DSP solid */
+extern int rt_dsp_tclget(Tcl_Interp *interp,
+			 const struct rt_db_internal *intern,
+			 const char		     *attr);
+
+extern int rt_dsp_tcladjust(Tcl_Interp *interp,
+			    struct rt_db_internal *intern,
+			    int		argc,
+			    char	**argv,
+			    struct resource *resp);
 
 /* PIPE solid */
 BU_EXTERN(int rt_pipe_tclget, (Tcl_Interp *interp,
@@ -855,7 +859,9 @@ const struct rt_functab rt_functab[] = {
 		rt_dsp_import,	rt_dsp_export,	rt_dsp_ifree,
 		rt_dsp_describe,rt_dsp_xform,	rt_dsp_parse,
 		sizeof(struct rt_dsp_internal), RT_DSP_INTERNAL_MAGIC,
-	        rt_dsp_tclget, rt_dsp_tcladjust, 0,
+	        rt_dsp_tclget,
+	 rt_dsp_tcladjust,
+	 rt_nul_tclform,
 		NULL,
 	},
 
@@ -969,7 +975,7 @@ const struct rt_functab rt_functab[] = {
 		rt_binunif_import5,
 	 rt_binunif_export5,
 		rt_nul_import,	rt_nul_export,	rt_binunif_ifree,
-		rt_binunif_describe,rt_generic_xform, NULL,
+		rt_binunif_describe, rt_generic_xform, NULL,
 		0,				0,
 		rt_nul_tclget,	rt_nul_tcladjust, rt_nul_tclform,
 		rt_binunif_make,
@@ -1091,7 +1097,8 @@ int NDEF(rt_nul_export,(struct bu_external *ep,
 void DEF(rt_nul_ifree,(struct rt_db_internal *ip, struct resource *resp))
 int NDEF(rt_nul_describe,(struct bu_vls *str,
 			const struct rt_db_internal *ip,
-			int verbose, double mm2local, struct resource *resp))
+			int verbose, double mm2local, struct resource *resp,
+			  struct db_i *db_i))
 int NDEF(rt_nul_xform, (struct rt_db_internal *op,
 			const mat_t mat, struct rt_db_internal *ip,
 			int free, struct db_i *dbip, struct resource *resp))
