@@ -227,7 +227,7 @@ struct bu_structparse rt_dsp_ptab[] = {
 
 static int plot_file_num=0;
 static int plot_em=1;
-static int debug_pprint=0;
+
 static void
 dsp_print(vls, dsp_ip)
 struct bu_vls *vls;
@@ -547,135 +547,9 @@ short *cell_max;
 
 
 
-
-
-
-
-
-void
-print_isect_segs(isect, inside)
-struct isect_stuff *isect;
-int *inside;
-{
-	char buf[128];
-	FILE *fd;
-	struct seg *seg_p;
-	point_t in, out, t;
-	point_t in_pt, out_pt;
-
-	RES_ACQUIRE( &rt_g.res_model);
-	sprintf(buf, "dsp%d.pl", plot_file_num++);
-	RES_RELEASE( &rt_g.res_model);
-	bu_log("error plot %s\n", buf);
-
-	bu_log("inside:%d\n", *inside);
-
-	for (BU_LIST_FOR(seg_p, seg, &isect->seglist)) {
-		VJOIN1(t, isect->r.r_pt, seg_p->seg_in.hit_dist,
-			isect->r.r_dir);
-		MAT4X3PNT(in, isect->dsp->dsp_i.dsp_stom, t);
-
-		VJOIN1(t, isect->r.r_pt, seg_p->seg_out.hit_dist,
-			isect->r.r_dir);
-		MAT4X3PNT(out, isect->dsp->dsp_i.dsp_stom, t);
-
-		bu_log("in(%g %g %g)  out(%g %g %g)\n",
-			V3ARGS(in), V3ARGS(out));
-	}
-	if (*inside) {
-		VJOIN1(t, isect->r.r_pt, isect->sp->seg_in.hit_dist,
-			isect->r.r_dir);
-		MAT4X3PNT(in, isect->dsp->dsp_i.dsp_stom, t);
-
-		bu_log("in(%g %g %g)\n", in);
-	}
-
-	RES_ACQUIRE( &rt_g.res_syscall);
-	if ((fd=fopen(buf, "w")) != (FILE *)NULL) {
-		pl_color(fd, 255, 255, 255);
-
-		for (BU_LIST_FOR(seg_p, seg, &isect->seglist)) {
-			VJOIN1(in, isect->r.r_pt, seg_p->seg_in.hit_dist,
-				isect->r.r_dir);
-			MAT4X3PNT(in_pt, isect->dsp->dsp_i.dsp_stom, in);
-
-			VJOIN1(out, isect->r.r_pt, seg_p->seg_out.hit_dist,
-				isect->r.r_dir);
-			MAT4X3PNT(out_pt, isect->dsp->dsp_i.dsp_stom, out);
-
-			pdv_3line(fd, in_pt, out_pt);
-		}
-
-		if (*inside) {
-			pl_color(fd, 128, 128, 128);
-			VJOIN1(in, isect->r.r_pt, isect->sp->seg_in.hit_dist,
-				isect->r.r_dir);
-			MAT4X3PNT(in_pt, isect->dsp->dsp_i.dsp_stom, in);
-			VADD2(out, in, isect->r.r_dir);
-			MAT4X3PNT(out_pt, isect->dsp->dsp_i.dsp_stom, out);
-
-			pdv_3line(fd, in_pt, out_pt);
-		}
-
-		fclose(fd);
-	}
-
-	RES_RELEASE( &rt_g.res_syscall);
-
-}
-
-
-static void
-do_hit(dist, inside, NdotD, isect, TR, ts, cell, line)
-double dist;
-int *inside;
-double NdotD;
-struct isect_stuff *isect;
-int TR;
-char *ts;
-int cell[3];
-int line;
-{
-	/* XXX what if we're inside, leave tri2 before we enter tri1 ? */
-	if (NdotD < 0.0) {
-		/* Entering Solid */
-		if (*inside) {
-			bu_log("%s:%d from %d NdotD:%g pixel(%d,%d)\n",
-				__FILE__, __LINE__, line, NdotD, 
-				isect->ap->a_x, isect->ap->a_y);
-			print_isect_segs(isect, inside);
-			bu_bomb("Can't enter DSP top from inside\n");
-		}
-		if (rt_g.debug & DEBUG_HF) bu_log("hit %s entering\n", ts);
-
-		INHIT(isect, dist, TR, cell);
-
-		*inside = 1;
-
-	} else {
-		/* Leaving Solid */
-		if (! *inside) {
-			bu_log("%s:%d from %d NdotD:%g pixel(%d,%d)\n",
-				__FILE__, __LINE__, line, NdotD,
-				isect->ap->a_x, isect->ap->a_y);
-			print_isect_segs(isect, inside);
-			bu_bomb("Can't leave DSP top from outside\n");
-		}
-
-		if (rt_g.debug & DEBUG_HF) bu_log("hit %s leaving\n", ts);
-
-		OUTHIT(isect, dist, TR, cell);
-
-		HIT_COMMIT(isect);
-
-		*inside = 0;
-	}
-}
-
 static void
 plot_cell_ray(isect, cell,
 	curr_pt, next_pt, hit1, dist1, hit2, dist2, inside)
-
 struct isect_stuff *isect;
 int cell[3];
 vect_t curr_pt, next_pt;
@@ -1183,14 +1057,6 @@ done:
 }
 
 
-/* These macros are for the isect_ray_dsp routine.  These exist as macros
- * only because we can't do inline subroutines in C, and we don't want to
- * pay the overhead of the subroutine call.
- */
-
-
-
-
 
 int
 isect_cell_x_wall(isect, cell, surf, dist, pt)
@@ -1319,13 +1185,6 @@ struct isect_stuff *isect;
 	double	tDX;		/* dist along ray to span 1 cell in X dir */
 	double	tDY;		/* dist along ray to span 1 cell in Y dir */
 	int hit=0;		/* boolean */
-
-	/* tmp values for various macros including:
-	 *	CELL_MIN, CELL_MAX
-	 *	ISECT_ENTRY_WALL()
-	 *	ISECT_{XY}_EXIT_WALL()
-	short	h, i;
-	 */
 
 	double	out_dist;
 
@@ -2232,7 +2091,7 @@ struct soltab		*stp;
 /*
  *  			R T _ D S P _ U V
  *  
- *  For a hit on the surface of an dsp, return the (u,v) coordinates
+ *  For a hit on the surface of a dsp, return the (u,v) coordinates
  *  of the hit point, 0 <= u,v <= 1.
  *  u = azimuth
  *  v = elevation
@@ -2246,14 +2105,49 @@ register struct uvcoord	*uvp;
 {
 	register struct dsp_specific *dsp =
 		(struct dsp_specific *)stp->st_specific;
+	point_t pt;
+	int x, y;
+	vect_t v_m, v_s, tmp;
+	double u, v, r;
 
-	if (rt_g.debug & DEBUG_HF)
-		bu_log("rt_dsp_uv()\n");
+	MAT4X3PNT(pt, dsp->dsp_i.dsp_mtos, hitp->hit_point);
 
-	uvp->uv_u = 0.0;
-	uvp->uv_v = 0.0;
+	x = pt[X];	/* float/int conv */
+	y = pt[Y];	/* float/int conv */
+
+	if (x >= XSIZ(dsp)) x = XSIZ(dsp)-1;
+	if (y >= YSIZ(dsp)) y = YSIZ(dsp)-1;
+
+	u = x / (XSIZ(dsp)-1.0);
+	v = y / (YSIZ(dsp)-1.0);
+
+	uvp->uv_u = u;
+	uvp->uv_v = v;
+
+#ifdef DUDV
+	r = ap->a_rbeam + ap->a_diverge * hitp->hit_dist;
+
+	VSETALL(v_m, r);
+	VUNITIZE(v_m);
+
+	MAT4X3VEC(v_s, dsp->dsp_i.dsp_mtos, v_m);
+
+	/* XXX this is a gross approximation */
+	VSET(tmp, v_s[X], 0.0, 0.0);
+	uvp->uv_du = MAGNITUDE(tmp);
+
+	VSET(tmp, 0.0, v_s[Y], 0.0);
+	uvp->uv_dv = MAGNITUDE(tmp);
+#else
+	/* XXX The texture anti-aliasing stuff doesn't actually work */
 	uvp->uv_du = 0.0;
 	uvp->uv_dv = 0.0;
+#endif
+	if (rt_g.debug & DEBUG_HF)
+		bu_log("rt_dsp_uv(pt:%g,%g siz:%d,%d) u=%g v=%g du=%g dv=%g\n",
+			pt[X], pt[Y], XSIZ(dsp), YSIZ(dsp), 
+			uvp->uv_u, uvp->uv_v,
+			uvp->uv_du, uvp->uv_dv);
 }
 
 /*
