@@ -57,7 +57,7 @@ tp_setup()
 	/* Store start addrs of each stroke list */
 	for( i=040-5; i<128; i++)  {
 		tp_cindex[i+128] = tp_cindex[i] = p;
-		while( (*p++ & 0377) != LAST );
+		while( (*p++) != LAST );
 	}
 	for( i=6; i<040; i++ )  {
 		tp_cindex[i+128] = tp_cindex[i] = tp_cindex['?'];
