@@ -373,9 +373,10 @@ hit_nothing( ap, PartHeadp )
 register struct application *ap;
 struct partition *PartHeadp;
 {
-	if( rdebug&RDEBUG_RAYPLOT )  {
+	if( rdebug&RDEBUG_MISSPLOT )  {
 		vect_t	out;
 
+		/* XXX length should be 1 model diameter */
 		VJOIN1( out, ap->a_ray.r_pt,
 			10000, ap->a_ray.r_dir );	/* to imply direction */
 		pl_color( stdout, 190, 0, 0 );
@@ -383,45 +384,48 @@ struct partition *PartHeadp;
 	}
 
 	if( env_region.reg_mfuncs  /* && ap->a_level > 0 */ )  {
-		struct partition part;
-		struct hit	hit;
-		struct shadework sw;
+		struct gunk {
+			struct partition part;
+			struct hit	hit;
+			struct shadework sw;
+		} u;
 
+		bzero( (char *)&u, sizeof(u) );
 		/* Make "miss" hit the environment map */
 		/* Build up the fakery */
-		part.pt_inhit = part.pt_outhit = &hit;
-		part.pt_regionp = &env_region;
-		hit.hit_dist = 0.0;	/* XXX should be = 1 model diameter */
+		u.part.pt_inhit = u.part.pt_outhit = &u.hit;
+		u.part.pt_regionp = &env_region;
+		u.hit.hit_dist = 0.0;	/* XXX should be = 1 model diameter */
 
-		sw.sw_transmit = sw.sw_reflect = 0.0;
-		sw.sw_refrac_index = 1.0;
-		sw.sw_extinction = 0;
-		sw.sw_xmitonly = 1;		/* don't shade env map! */
+		u.sw.sw_transmit = u.sw.sw_reflect = 0.0;
+		u.sw.sw_refrac_index = 1.0;
+		u.sw.sw_extinction = 0;
+		u.sw.sw_xmitonly = 1;		/* don't shade env map! */
 
 		/* "Surface" Normal points inward, UV is azim/elev of ray */
-		sw.sw_inputs = MFI_NORMAL|MFI_UV;
-		VREVERSE( sw.sw_hit.hit_normal, ap->a_ray.r_dir );
+		u.sw.sw_inputs = MFI_NORMAL|MFI_UV;
+		VREVERSE( u.sw.sw_hit.hit_normal, ap->a_ray.r_dir );
 		/* U is azimuth, atan() range: -pi to +pi */
-		sw.sw_uv.uv_u = mat_atan2( ap->a_ray.r_dir[Y],
+		u.sw.sw_uv.uv_u = mat_atan2( ap->a_ray.r_dir[Y],
 			ap->a_ray.r_dir[X] ) * rt_inv2pi;
-		if( sw.sw_uv.uv_u < 0 )
-			sw.sw_uv.uv_u += 1.0;
+		if( u.sw.sw_uv.uv_u < 0 )
+			u.sw.sw_uv.uv_u += 1.0;
 		/*
 		 *  V is elevation, atan() range: -pi/2 to +pi/2,
 		 *  because sqrt() ensures that X parameter is always >0
 		 */
-		sw.sw_uv.uv_v = mat_atan2( ap->a_ray.r_dir[Z],
+		u.sw.sw_uv.uv_v = mat_atan2( ap->a_ray.r_dir[Z],
 			sqrt( ap->a_ray.r_dir[X] * ap->a_ray.r_dir[X] +
 			ap->a_ray.r_dir[Y] * ap->a_ray.r_dir[Y]) ) *
 			rt_invpi + 0.5;
-		sw.sw_uv.uv_du = sw.sw_uv.uv_dv = 0;
+		u.sw.sw_uv.uv_du = u.sw.sw_uv.uv_dv = 0;
 
-		VSETALL( sw.sw_color, 1 );
-		VSETALL( sw.sw_basecolor, 1 );
+		VSETALL( u.sw.sw_color, 1 );
+		VSETALL( u.sw.sw_basecolor, 1 );
 
-		(void)viewshade( ap, &part, &sw );
+		(void)viewshade( ap, &u.part, &u.sw );
 
-		VMOVE( ap->a_color, sw.sw_color );
+		VMOVE( ap->a_color, u.sw.sw_color );
 		ap->a_user = 1;		/* Signal view_pixel:  HIT */
 		return(1);
 	}
@@ -511,8 +515,9 @@ struct partition *PartHeadp;
 		}
 	}
 	if( rdebug&RDEBUG_RAYPLOT )  {
-		/* There are two parts to plot here.
-		 *  Ray start to in hit, and inhit to outhit.
+		/*  There are two parts to plot here.
+		 *  Ray start to inhit (purple),
+		 *  and inhit to outhit (grey).
 		 */
 		if( hitp->hit_dist > 0.0001 )  {
 			register int i, lvl;
