@@ -177,6 +177,9 @@ genptr_t			client_data;
 	int			shader_len=0;
 	struct rt_i		*rtip;
 	int			i;
+	Tcl_HashTable		*tbl = (Tcl_HashTable *)client_data;
+	Tcl_HashEntry		*entry;
+	matp_t			inv_mat;
 
 	RT_CK_DBI(tsp->ts_dbip);
 	RT_CK_FULL_PATH(pathp);
@@ -250,6 +253,23 @@ genptr_t			client_data;
 
 	rp->reg_bit = rtip->nregions++;	/* Assign bit vector pos. */
 	bu_semaphore_release( RT_SEM_RESULTS );	/* leave critical section */
+
+	if( tbl && bu_avs_get( &tsp->ts_attrs, "ORCA_comp" ) ) {
+		int newentry;
+
+		inv_mat = (matp_t)bu_calloc( 16, sizeof( fastf_t ), "inv_mat" );
+		if( tsp->ts_mat )
+			bn_mat_inv( inv_mat, tsp->ts_mat );
+		else
+			bn_mat_idn( inv_mat );
+		
+		bu_semaphore_acquire( RT_SEM_RESULTS );	/* enter critical section */
+
+		entry = Tcl_CreateHashEntry(tbl, (char *)rp->reg_bit, &newentry);
+		Tcl_SetHashValue( entry, (ClientData)inv_mat );
+
+		bu_semaphore_release( RT_SEM_RESULTS );	/* leave critical section */
+	}
 
 	if( rt_g.debug & DEBUG_REGIONS )  {
 		bu_log("Add Region %s instnum %d\n",
@@ -656,10 +676,12 @@ struct soltab	*stp;
 	bu_free( (char *)stp, "struct soltab" );
 }
 
-/*
- *  			R T _ G E T T R E E S _ A N D _ A T T R S
+/*			R T _ G E T T R E E S _ M U V E S
  *
  *  User-called function to add a set of tree hierarchies to the active set.
+ *
+ *  Includes getting the indicated list of attributes and a Tcl_HashTable
+ *  for use with the ORCA man regions.
  *
  *  This function may run in parallel, but is not multiply re-entrant itself,
  *  because db_walk_tree() isn't multiply re-entrant.
@@ -669,15 +691,27 @@ struct soltab	*stp;
  *	RT_SEM_RESULTS	protects HeadRegion, mdl_min/max, d_uses(reg), nregions
  *	RT_SEM_WORKER	(db_walk_dispatcher, from db_walk_tree)
  *	RT_SEM_STATS	nsolids
+ *
+ *  INPUTS
+ *	rtip	- RT instance pointer
+ *	attrs	- array of pointers (NULL terminated) to strings (attribute names). A corresponding
+ *		  array of "bu_mro" objects containing the attribute values will be attached to region
+ *		  structures ("attr_values")
+ *	tbl	- Uninitialized Tcl_HashTable to hold matrices for transforming hits
+ *		  on regions with a non-NULL "ORCA_comp" attribute to the standard ORCA standing man
+ *	argc	- number of trees to get
+ *	argv	- array of char pointers to the names of the tree tops
+ *	ncpus	- number of cpus to use
  *  
  *  Returns -
  *  	0	Ordinarily
  *	-1	On major error
  */
 int
-rt_gettrees_and_attrs( rtip, attrs, argc, argv, ncpus )
+rt_gettrees_muves( rtip, attrs, tbl, argc, argv, ncpus )
 struct rt_i	*rtip;
 const char	**attrs;
+Tcl_HashTable	*tbl;
 int		argc;
 const char	**argv;
 int		ncpus;
@@ -698,6 +732,9 @@ int		ncpus;
 	}
 
 	if( argc <= 0 )  return(-1);	/* FAIL */
+
+	if( tbl )
+		Tcl_InitHashTable( tbl, TCL_ONE_WORD_KEYS );
 
 	prev_sol_count = rtip->nsolids;
 
@@ -721,11 +758,18 @@ int		ncpus;
 			}
 			tree_state.ts_attrs.count = num_attrs;
 		}
+
+		if( tbl ) {
+			if( num_attrs == 0 )
+				bu_avs_init( &tree_state.ts_attrs, 1, "tree_state" );
+			bu_avs_add( &tree_state.ts_attrs, "ORCA_comp", (char *)NULL );
+		}
+
 		i = db_walk_tree( rtip->rti_dbip, argc, argv, ncpus,
 				  &tree_state,
 				  rt_gettree_region_start,
 				  rt_gettree_region_end,
-				  rt_gettree_leaf, (genptr_t)NULL );
+				  rt_gettree_leaf, (genptr_t)tbl );
 
 		if( attrs )
 			bu_avs_free( &tree_state.ts_attrs );
@@ -810,6 +854,35 @@ again:
 	if( rtip->nsolids <= prev_sol_count )
 		bu_log("rt_gettrees(%s) warning:  no solids found\n", argv[0]);
 	return(0);	/* OK */
+}
+
+/*
+ *  			R T _ G E T T R E E S _ A N D _ A T T R S
+ *
+ *  User-called function to add a set of tree hierarchies to the active set.
+ *
+ *  This function may run in parallel, but is not multiply re-entrant itself,
+ *  because db_walk_tree() isn't multiply re-entrant.
+ *
+ *  Semaphores used for critical sections in parallel mode:
+ *	RT_SEM_TREE*	protects rti_solidheads[] lists, d_uses(solids)
+ *	RT_SEM_RESULTS	protects HeadRegion, mdl_min/max, d_uses(reg), nregions
+ *	RT_SEM_WORKER	(db_walk_dispatcher, from db_walk_tree)
+ *	RT_SEM_STATS	nsolids
+ *  
+ *  Returns -
+ *  	0	Ordinarily
+ *	-1	On major error
+ */
+int
+rt_gettrees_and_attrs( rtip, attrs, argc, argv, ncpus )
+struct rt_i	*rtip;
+const char	**attrs;
+int		argc;
+const char	**argv;
+int		ncpus;
+{
+	return( rt_gettrees_muves( rtip, attrs, NULL, argc, argv, ncpus ) );
 }
 
 /*
