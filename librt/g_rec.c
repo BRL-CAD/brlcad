@@ -437,11 +437,8 @@ struct application	*ap;
 			goto check_plates;
 		root = sqrt(root);
 
-		if( (k1 = (root-b) * 0.5) > (k2 = (root+b) * (-0.5)) )  {
-			root = k2;
-			k2 = k1;
-			k1 = root;
-		}
+		k1 = (root-b) * 0.5;
+		k2 = (root+b) * (-0.5);
 	}
 
 	/*
