@@ -2578,6 +2578,8 @@ f_binary(     ClientData	clientData,
 	struct rt_db_internal intern;
 	struct directory *dp;
 
+	CHECK_DBI_NULL;
+
 	optind = 1;
 	while( (c=getopt(argc, argv, "iou:")) != -1 ) {
 		switch( c ) {
