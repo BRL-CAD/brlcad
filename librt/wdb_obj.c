@@ -8324,6 +8324,7 @@ wdb_combadd(Tcl_Interp			*interp,
 	 * Check to see if we have to create a new combination
 	 */
 	if ((dp = db_lookup(dbip,  combname, LOOKUP_QUIET)) == DIR_NULL) {
+		struct bu_attribute_value_set avs;
 		int flags;
 
 		if (region_flag)
@@ -8337,11 +8338,22 @@ wdb_combadd(Tcl_Interp			*interp,
 		intern.idb_meth = &rt_functab[ID_COMBINATION];
 
 		/* Update the in-core directory */
-		if ((dp = db_diradd(dbip, combname, -1, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL)  {
-			Tcl_AppendResult(interp, "An error has occured while adding '",
-					 combname, "' to the database.\n", (char *)NULL);
-			return DIR_NULL;
+		if( dbip->dbi_version < 5 ) {
+			if ((dp = db_diradd(dbip, combname, -1, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL)  {
+				Tcl_AppendResult(interp, "An error has occured while adding '",
+						 combname, "' to the database.\n", (char *)NULL);
+				return DIR_NULL;
+			}
+		} else {
+			bu_avs_init( &avs, 1, "avs" );
+			if ((dp = db_diradd5(dbip, combname, -1, intern.idb_major_type, intern.idb_type, (unsigned char)'\0', 0, &avs )) == DIR_NULL)  {
+				bu_avs_free( &avs );
+				Tcl_AppendResult(interp, "An error has occured while adding '",
+						 combname, "' to the database.\n", (char *)NULL);
+				return DIR_NULL;
+			}
 		}
+		bu_avs_free( &avs );
 
 		BU_GETSTRUCT(comb, rt_comb_internal);
 		intern.idb_ptr = (genptr_t)comb;
