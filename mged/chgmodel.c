@@ -1512,8 +1512,49 @@ char	**argv;
 
 	CHECK_READ_ONLY;
 
-	if(argc < 3 || 3 < argc){
+	if(argc < 2 || 3 < argc){
 	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help make");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
+	  return TCL_ERROR;
+	}
+
+	if(argc == 2){
+	  struct bu_vls vls;
+
+	  if(argv[1][0] == '-' && argv[1][1] == 't'){
+	    Tcl_AppendElement(interp, "arb8");
+	    Tcl_AppendElement(interp, "arb7");
+	    Tcl_AppendElement(interp, "arb6");
+	    Tcl_AppendElement(interp, "arb5");
+	    Tcl_AppendElement(interp, "arb4");
+	    Tcl_AppendElement(interp, "sph");
+	    Tcl_AppendElement(interp, "grip");
+	    Tcl_AppendElement(interp, "ell");
+	    Tcl_AppendElement(interp, "ellg");
+	    Tcl_AppendElement(interp, "tor");
+	    Tcl_AppendElement(interp, "tgc");
+	    Tcl_AppendElement(interp, "tec");
+	    Tcl_AppendElement(interp, "rec");
+	    Tcl_AppendElement(interp, "trc");
+	    Tcl_AppendElement(interp, "rcc");
+	    Tcl_AppendElement(interp, "half");
+	    Tcl_AppendElement(interp, "rpc");
+	    Tcl_AppendElement(interp, "rhc");
+	    Tcl_AppendElement(interp, "epa");
+	    Tcl_AppendElement(interp, "ehy");
+	    Tcl_AppendElement(interp, "eto");
+	    Tcl_AppendElement(interp, "part");
+	    Tcl_AppendElement(interp, "nmg");
+	    Tcl_AppendElement(interp, "pipe");
+	    Tcl_AppendElement(interp, "extrude");
+	    Tcl_AppendElement(interp, "sketch");
+
+	    return TCL_OK;
+	  }
 
 	  bu_vls_init(&vls);
 	  bu_vls_printf(&vls, "help make");
