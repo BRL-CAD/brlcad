@@ -3006,6 +3006,11 @@ int	startc;
 
 /*
  *			H O S T _ L O O K U P _ B Y _ H O S T E N T
+ *
+ *  We have a hostent structure, of which, the only thing of interest is
+ *  the host name.  Go from name to address back to name, to get formal name.
+ *
+ *  Used by host_lookup_by_addr, too.
  */
 struct ihost *
 host_lookup_by_hostent( addr, enter )
@@ -3013,6 +3018,13 @@ struct hostent	*addr;
 int		enter;
 {
 	register struct ihost	*ihp;
+
+	if( !(addr == gethostbyname(addr->h_name)) )
+		return IHOST_NULL;
+	if( !(addr == gethostbyaddr(addr->h_addr_list[0],
+	    sizeof(struct in_addr), addr->h_addrtype)) )
+		return IHOST_NULL;
+	/* Now addr->h_name points to the "formal" name of the host */
 
 	/* Search list for existing instance */
 	for( ihp = HostHead; ihp != IHOST_NULL; ihp = ihp->ht_next )  {
