@@ -17,6 +17,8 @@
  *     All rights reserved.
  */
 
+#include "conf.h"
+
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
@@ -70,5 +72,5 @@ struct snurb * srf;
 	srf->u_knots.knots = srf->v_knots.knots;
 	srf->v_knots.knots = p_ptr;
 
-	rt_free(tmp);
+	rt_free((char *) tmp, "temporary storage for transpose");
 }
