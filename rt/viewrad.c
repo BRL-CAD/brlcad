@@ -34,6 +34,8 @@ static char RCSppview[] = "@(#)$Header$ (BRL)";
 
 #define	MAXREFLECT	8	/* XXX - should become command line arg */
 
+int		use_air = 0;		/* Handling of air in librt */
+
 extern	FILE	*outfp;
 extern	point_t	viewbase_model;		/* lower_left of viewing plane */
 extern	mat_t	view2model;

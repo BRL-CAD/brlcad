@@ -31,6 +31,8 @@ static char RCSppview[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 
+int		use_air = 0;		/* Handling of air in librt */
+
 char usage[] = "\
 Usage:  rtpp [options] model.g objects... >file.pp\n\
 Options:\n\

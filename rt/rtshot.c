@@ -38,6 +38,7 @@ extern int	optind;
 
 char	usage[] = "\
 Usage:  rtshot [options] model.g objects...\n\
+ -U #		Set use_air flag\n\
  -x #		Set librt debug flags\n\
  -d # # #	Set direction vector\n\
  -p # # #	Set starting point\n\
@@ -58,6 +59,7 @@ int		set_dir = 0;
 int		set_pt = 0;
 int		set_at = 0;
 vect_t		at_vect;
+int		use_air = 0;		/* Handling of air */
 
 extern int hit(), miss();
 
@@ -86,6 +88,11 @@ char **argv;
 	argv++;
 
 	while( argv[0][0] == '-' ) switch( argv[0][1] )  {
+	case 'U':
+		sscanf( argv[1], "%d", &use_air );
+		argc -= 2;
+		argv += 2;
+		break;
 	case 'x':
 		sscanf( argv[1], "%x", &rt_g.debug );
 		fprintf(stderr,"librt rt_g.debug=x%x\n", rt_g.debug);
@@ -146,6 +153,7 @@ err:
 	}
 	ap.a_rt_i = rtip;
 	fprintf(stderr, "db title:  %s\n", idbuf);
+	rtip->useair = use_air;
 
 	/* Walk trees */
 	while( argc > 0 )  {

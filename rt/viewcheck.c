@@ -33,6 +33,8 @@ static char RCScheckview[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 
+int		use_air = 0;		/* Handling of air in librt */
+
 extern FILE	*outfp;
 
 char usage[] = "Usage:  rtcheck [options] model.g objects...\n";
