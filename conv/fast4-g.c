@@ -2447,7 +2447,15 @@ getline()
 		return( 0 );
 
 	len = strlen( line );
-	if( line[len-1] == '\n' )
+	if( line[len-1] != '\n' ) {
+		/* long line skip over remainder of line */
+		int c=1;
+
+		while( c != '\n' && c != EOF )
+			c = getc( fdin );
+		if( c == EOF )
+			return( 0 );
+	} else
 		line[len-1] = '\0';
 
 	return( 1 );
