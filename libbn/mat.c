@@ -494,16 +494,16 @@ double alpha, beta, ggamma;
 
 	mat[0] = cbeta * cgamma;
 	mat[1] = -cbeta * sgamma;
-	mat[2] = -sbeta;
+	mat[2] = sbeta;
 	mat[3] = 0.0;
 
-	mat[4] = -salpha * sbeta * cgamma + calpha * sgamma;
-	mat[5] = salpha * sbeta * sgamma + calpha * cgamma;
+	mat[4] = salpha * sbeta * cgamma + calpha * sgamma;
+	mat[5] = -salpha * sbeta * sgamma + calpha * cgamma;
 	mat[6] = -salpha * cbeta;
 	mat[7] = 0.0;
 
-	mat[8] = calpha * sbeta * cgamma + salpha * sgamma;
-	mat[9] = -calpha * sbeta * sgamma + salpha * cgamma;
+	mat[8] = salpha * sgamma - calpha * sbeta * cgamma;
+	mat[9] = salpha * cgamma + calpha * sbeta * sgamma;
 	mat[10] = calpha * cbeta;
 	mat[11] = 0.0;
 	mat[12] = mat[13] = mat[14] = 0.0;
