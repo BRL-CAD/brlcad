@@ -96,6 +96,7 @@ struct uplot letters[] = {
 };
 
 int	verbose;
+long	counts['z'-'A'+1];	/* for counting command usage */
 
 static char usage[] = "\
 Usage: pldebug [-v] < unix_plot\n";
@@ -106,6 +107,7 @@ char	**argv;
 {
 	register int	c;
 	struct	uplot *up;
+	int	i;
 
 	while( argc > 1 ) {
 		if( strcmp(argv[1], "-v") == 0 ) {
@@ -133,6 +135,8 @@ char	**argv;
 			fprintf( stderr, "Bad command '%c' (0x%02x)\n", c, c );
 			continue;
 		}
+		if( verbose )
+			counts[ c - 'A' ]++;
 
 		putchar( c );
 		if( up->narg > 0 ) {
@@ -157,6 +161,15 @@ char	**argv;
 		if( verbose )
 			printf( " %s", up->desc );
 		putchar( '\n' );
+	}
+
+	if( verbose ) {
+		/* write command usage summary */
+		for( i = 0; i < 'z'-'A'+1; i++ ) {
+			if( counts[i] != 0 ) {
+				fprintf( stderr, "%s %d\n", letters[i].desc, counts[i] );
+			}
+		}
 	}
 }
 
