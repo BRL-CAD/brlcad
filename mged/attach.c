@@ -653,7 +653,6 @@ struct dm_list *initial_dm_list;
   mapped = 1;
   owner = 1;
   am_mode = AMM_IDLE;
-  frametime = 1;
   adc_auto = 1;
   grid_auto_size = 1;
 }
