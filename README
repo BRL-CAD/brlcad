@@ -1,12 +1,13 @@
 .\" $Header$
+.\" troff -t -ms README
 .TL
 README
 .sp
 The Ballistic Research Laboratory CAD Package
 .br
-Release 3.5
+Release 4.0
 .br
-(29-May-1989)
+(October-1991)
 .RT
 .IP "VERSION"
 .sp
@@ -60,86 +61,41 @@ Models", included in the file papers/solid-models.
 .sp
 .IP "DISTRIBUTION DETAILS"
 .sp
-This section is included in the README file for two purposes.
-First, we wish to remind you of the terms of this limited distribution.
-Second, if you have obtained a copy of the printed documentation, and now
-wish to obtain a copy of the software, the procedures are listed here.
+First, you are reminded of the terms of this limited distribution.
+To obtain a copy of the BRL CAD Package distribution materials, there
+are two options:
 .sp
-To obtain a copy of the distribution, you should send the authors:
+1.  Free distribution with no support privileges:  Those users with
+online access to the DARPA InterNet may obtain the BRL-CAD Package via
+FTP file transfer, at no cost, after completing and returning the
+distribution agreement. A blank agreement form is available only via
+anonymous FTP from host ftp.brl.mil (address 128.63.16.158) from file
+"brl-cad/agreement". One printed set of BRL-CAD documentation will be
+mailed to you at no cost. No installation assistance or telephone
+support will be available.
 .sp
-1)  Enough magnetic tape for 20 Mbytes of data. Standard nine-track
-half-inch magtape is the strongly preferred format, and can be written
-at either 1600 or 6250 bpi, in TAR format with 10k byte records. For
-sites with no half-inch tape drives, Silicon Graphics and SUN tape
-cartridges can also be accommodated, using QIC-24 format.
-.sp
-2)  A letter indicating:
-.sp
-.nf
-	-- Who you are
-	-- What the BRL-CAD package is to be used for
-	-- The equipment and operating system(s) you plan on using
-	-- That you agree to the conditions listed below.
-.fi
-.sp
-It is vital that your letter include a sentence acknowledging your
-agreement to the conditions, such as "We agree to the
-conditions of the distribution listed in your letter".
-This software is an unpublished work that is not generally available to the
-public, except through the terms of this limited distribution.
-The United States Department of the Army grants a royalty-free,
-nonexclusive, nontransferable license and right to use,
-free of charge, with the following terms and conditions:
-.sp
-1.  The BRL-CAD package source files will not be disclosed to third
-parties.  BRL needs to know who has what, and what it is being used for.
-.sp
-2.  BRL will be credited should the software be used in a product or written
-about in any publication.  BRL will be referenced as the original
-source in any advertisements.
-.sp
-3.  The software is provided "as is", without warranty by BRL.
-In no event shall BRL be liable for any loss or for any indirect,
-special, punitive, exemplary, incidental, or consequential damages
-arising from use, possession, or performance of the software.
-.sp
-4.  When bugs or problems are found, you will make a reasonable effort
-to report them back to BRL.
-.sp
-5.  Before using the software at additional sites, or for permission to
-use this work as part of a commercial package, you agree to first obtain
-authorization from BRL.
-.sp
-6. You will own full rights to any databases or images you create with this
-package.
-.sp
-All requests from US citizens, or from US government agencies should be
-sent to:
+2.  Full service distribution:  The Survivability/Vulnerability
+Information Analysis Center (SURVIAC) administers the supported BRL-CAD
+distributions and information exchange programs for BRL.  Full service
+distributions a copy of the full distribution materials on your choice
+of magnetic tape media, or you may elect to obtain your copy via FTP.
+One printed set of BRL-CAD documentation will be mailed to you.
+Software upgrades will be provided at no additional charge,
+and you will have access to full technical assistance by phone, FAX,
+letter, or E-mail.  Agencies of the Federal Government may acquire the
+full service distribution with a simple MIPR or OGA funds transfer.
 .sp
 .nf
-.ne 1i
-	Ballistic Research Lab
-	Attn: Mike Muuss
-	APG, MD  21005-5066
+For further details, contact:
+
+	BRL-CAD Distribution
+	SURVIAC Aberdeen Satellite Office
+	1003 Old Philadelphia Road
+	Suite 103
+	Aberdeen MD  21001  USA
+
+or call Mr. Glenn Gillis at (301)-273-7794.
 .fi
-.sp
-If you are not a US citizen (regardless of any affiliation with a
-US industry), or if you represent a foreign-owned or foreign-controlled
-industry, you must send your letter and tape through your Ambassador to
-the United States in Washington DC. Have your Ambassador submit the
-request to:
-.sp
-.nf
-.ne 1i
-	Army Headquarters
-	Attn: DAMI-FL
-	Washington, DC  20310
-.fi
-.sp
-Because distribution tapes are written by various members of the
-development team in their spare time, and because of vagaries in
-the supply of printed manuals, the turnaround time for responding
-to distribution requests varies from 1 to 12 weeks.
 .sp
 .ne 1i
 .IP "COMMUNICATION"
@@ -159,9 +115,6 @@ sending to
 <CAD-REQUEST @ BRL.MIL>.
 .sp .5
 If you find bugs, please report your experiences via E-mail.
-While BRL makes no
-offer of support, we are most interested in hearing about your
-experiences.
 .sp
 .IP "FUTURE EVENTS"
 .sp
@@ -172,11 +125,6 @@ by both paper and electronic mail
 to recipients of this software.
 If your address changes, please let us
 know, so we can update our records.
-.sp
-The BRL-CAD Symposium '88 was a big success.
-If you would be interested in attending the Symposium in '89,
-and especially if you would like to make a presentation, please
-contact Keith Applin <Keith@BRL.MIL>, or call 301-278-6647.
 .sp
 .KS
 .nf
