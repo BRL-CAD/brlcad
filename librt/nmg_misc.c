@@ -1805,7 +1805,10 @@ CONST struct rt_tol	*tol;
 	RT_CK_TOL(tol);
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
+	{
 		rt_log("nmg_purge_unwanted_intersection_points(0x%08x, 0x%08x)\n", vert_list, fu);
+		rt_log("\t%d vertexuses in list\n", vert_list->end );
+	}
 
 	for (i=0 ; i < vert_list->end ; i++) {
 		vu = (struct vertexuse *)vert_list->buffer[i];
@@ -1898,6 +1901,9 @@ CONST struct rt_tol	*tol;
 			--i;
 		}
 	}
+	if (rt_g.NMG_debug & DEBUG_POLYSECT)
+		rt_log("\tAt end of nmg_purge_unwanted_intersection_points, %d vertexuses in list\n",
+				vert_list->end );
 }
 
 
