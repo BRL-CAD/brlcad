@@ -54,6 +54,10 @@ struct rt_tabdata	*cie_z;
 int			use_cie_xyz = 0;	/* Linked with TCL */
 mat_t			xyz2rgb;
 
+struct rt_tabdata	*ntsc_r;
+struct rt_tabdata	*ntsc_g;
+struct rt_tabdata	*ntsc_b;
+
 unsigned char	*pixels;		/* en-route to framebuffer */
 
 fastf_t	maxval, minval;				/* Linked with TCL */
@@ -294,6 +298,11 @@ rt_spect_make_CIE_XYZ( &cie_x, &cie_y, &cie_z, spectrum );
 bu_log("X:\n");rt_pr_table_and_tabdata( "/dev/tty", cie_x );
 bu_log("Y:\n");rt_pr_table_and_tabdata( "/dev/tty", cie_y );
 bu_log("Z:\n");rt_pr_table_and_tabdata( "/dev/tty", cie_z );
+
+rt_spect_make_NTSC_RGB( &ntsc_r, &ntsc_g, &ntsc_b, spectrum );
+bu_log("R:\n");rt_pr_table_and_tabdata( "/dev/tty", ntsc_r );
+bu_log("G:\n");rt_pr_table_and_tabdata( "/dev/tty", ntsc_g );
+bu_log("B:\n");rt_pr_table_and_tabdata( "/dev/tty", ntsc_b );
 
 /* "A flat spectral curve is represente by equal XYZ values".  Hall pg 52 */
 flat = rt_tabdata_get_constval( 42.0, spectrum );
