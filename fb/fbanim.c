@@ -36,45 +36,41 @@ extern int	optind;
 
 void		newframe();
 
-FBIO *fbp;
-int pix_line;		/* Number of pixels/line in frame buffer */
-int zoom;		/* Zoom Factor */
-int xPan, yPan;		/* Pan Location */
-int xoff, yoff;		/* Ikonas farbling */
-int verbose = 0;
-int rocking = 0;
+FBIO	*fbp;
+int	screen_width;		/* Number of pixels/line in frame buffer */
+int	screen_height;
+int	verbose = 0;
+int	rocking = 0;
 
-int w;				/* image width */
-int n;				/* image height */
+int	subimage_width;		/* subimage width */
+int	subimage_height;		/* subimage height */
 int nframes;			/* number of frames */
-int im_line;
+int im_line;			/* Number of images across the screen */
 int fps;			/* frames/sec */
 int passes = 100;		/* limit on number of passes */
 int inverse;			/* for old 4th quadrant sequences */
 
 char Usage[] = "\
-Usage: fbanim [-h -i -r -v] [-s squaresize] [-w width] [-n height]\n\
-        [-p passes] width nframes [fps]\n";
+Usage: fbanim [-h -i -r -v] [-p passes]\n\
+	[-S squarescrsize] [-W scr_width] [-N scr_height]\n\
+	[-s square_subimage_size] [-w subimage_width] [-n subimage_height]\n\
+	subimage_width nframes [fps]\n";
 
 get_args( argc, argv )
 register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "s:w:n:hirvp:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "s:w:n:hirvp:S:W:N:" )) != EOF )  {
 		switch( c )  {
-		case 'h':
-			/* high-res */
-			pix_line = 1024;
-			break;
 		case 's':
-			w = n = atoi(optarg);
+			subimage_width = subimage_height = atoi(optarg);
 			break;
 		case 'w':
-			w = atoi(optarg);
+			subimage_width = atoi(optarg);
 			break;
 		case 'n':
-			n = atoi(optarg);
+			subimage_height = atoi(optarg);
 			break;
 		case 'i':
 			inverse = 1;
@@ -88,6 +84,19 @@ register char **argv;
 			break;
 		case 'v':
 			verbose = 1;
+			break;
+		case 'h':
+			/* high-res screen */
+			screen_width = screen_height = 1024;
+			break;
+		case 'S':
+			screen_height = screen_width = atoi(optarg);
+			break;
+		case 'W':
+			screen_width = atoi(optarg);
+			break;
+		case 'N':
+			screen_height = atoi(optarg);
 			break;
 
 		default:		/* '?' */
@@ -105,16 +114,18 @@ char **argv;
 {
 	register int i;
 
-	pix_line = 512;
 	if ( !get_args( argc, argv ) )  {
 		(void)fputs(Usage, stderr);
 		exit( 1 );
 	}
 
-	w = atoi(argv[optind]);
-	if( w == 0 || n == 0 ) {
-		fprintf(stderr,"fbanim: must specify image size\n");
-		exit( 2 );
+	/* If not given with -s & -n, use (old) positional param (compat) */
+	if( subimage_width <= 0 || subimage_height <= 0 )  {
+		subimage_width = subimage_height = atoi(argv[optind]);
+		if( subimage_width == 0 ) {
+			fprintf(stderr,"fbanim: must specify image size\n");
+			exit( 2 );
+		}
 	}
 	nframes = atoi(argv[optind+1]);
 	if( optind+2 >= argc )
@@ -132,16 +143,16 @@ char **argv;
 	}
 #endif
 
-	if( (fbp = fb_open( NULL, pix_line, pix_line )) == NULL )  {
-		fprintf(stderr,"fb_open failed\n");
+	if( (fbp = fb_open( NULL, screen_width, screen_height )) == NULL )  {
+		fprintf(stderr,"fbanim: fb_open failed\n");
 		exit(12);
 	}
+	screen_width = fb_getwidth(fbp);
+	screen_height = fb_getheight(fbp);
 
-	zoom = pix_line/w;
-	im_line = pix_line/w;	/* number of images across line */
-	xPan = yPan = 0;
+	im_line = screen_width/subimage_width;	/* number of images across line */
 
-	fb_zoom( fbp, pix_line/w, pix_line/n );
+	fb_zoom( fbp, screen_width/subimage_width, screen_height/subimage_height );
 
 	while(passes-- > 0)  {
 		if( !rocking )  {
@@ -163,10 +174,12 @@ void
 newframe(i)
 register int i;
 {
-	xPan = (i%im_line)*w+w/2;
-	yPan = (i/im_line)*n+n/2;
+	register int	xPan, yPan;		/* Pan Location */
+
+	xPan = (i%im_line)*subimage_width+subimage_width/2;
+	yPan = (i/im_line)*subimage_height+subimage_height/2;
 	if( inverse )
-		yPan = pix_line - yPan;
+		yPan = screen_width - yPan;
 	if( verbose )  {
 		printf("%3d: %3d %3d\n", i, xPan, yPan);
 		fflush( stdout );
@@ -174,8 +187,7 @@ register int i;
 	fb_window( fbp, xPan, yPan );
 #ifdef BSD
 	(void)select( 0, 0, 0, 0, &tv );
-#endif
-#ifdef SYSV
+#else
 	(void)sleep(1);	/* best I can do, sorry */
 #endif
 }
