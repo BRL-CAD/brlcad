@@ -207,12 +207,8 @@ X_close()
 
   rt_free(dm_vars, "X_close: dm_vars");
 
-#if 0
-  Tk_DeleteGenericHandler(X_doevent, (ClientData)curr_dm_list);
-#else
   if(RT_LIST_IS_EMPTY(&head_x_vars.l))
     Tk_DeleteGenericHandler(X_doevent, (ClientData)NULL);
-#endif
 }
 
 /*
@@ -842,57 +838,16 @@ char	*name;
 
   rt_vls_printf(&pathName, ".dm_x%d", count++);
 
-#if 0
-  if((tmp_dpy = XOpenDisplay(name)) == NULL){
-    rt_vls_free(&str);
-    return -1;
-  }
-
-  ((struct x_vars *)dm_vars)->width =
-      DisplayWidth(tmp_dpy, DefaultScreen(tmp_dpy)) - 20;
-  ((struct x_vars *)dm_vars)->height =
-      DisplayHeight(tmp_dpy, DefaultScreen(tmp_dpy)) - 20;
-
-  /* Make window square */
-  if(((struct x_vars *)dm_vars)->height < ((struct x_vars *)dm_vars)->width)
-    ((struct x_vars *)dm_vars)->width = ((struct x_vars *)dm_vars)->height;
-  else
-    ((struct x_vars *)dm_vars)->height = ((struct x_vars *)dm_vars)->width;
-
-  XCloseDisplay(tmp_dpy);
-
-  /*
-   * Create the X drawing window by calling create_x which
-   * is defined in xinit.tk
-   */
-  rt_vls_strcpy(&str, "create_x ");
-  rt_vls_printf(&str, "%s %s %d %d\n", name, rt_vls_addr(&pathName),
-		((struct x_vars *)dm_vars)->width,
-		((struct x_vars *)dm_vars)->height);
-
-  if(cmdline(&str, FALSE) == CMD_BAD){
-    rt_vls_free(&str);
-    return -1;
-  }
-
-  rt_vls_free(&str);
-
-  ((struct x_vars *)dm_vars)->xtkwin = Tk_NameToWindow(interp,
-						       rt_vls_addr(&pathName),
-						       tkwin);
-  ((struct x_vars *)dm_vars)->dpy = Tk_Display(((struct x_vars *)dm_vars)->xtkwin);
-
-#else
   /* Make xtkwin a toplevel window */
   ((struct x_vars *)dm_vars)->xtkwin = Tk_CreateWindowFromPath(interp, tkwin,
 						       rt_vls_addr(&pathName), name);
 
+  /*
+   * Create the X drawing window by calling init_x which
+   * is defined in xinit.tcl
+   */
   rt_vls_strcpy(&str, "init_x ");
-#if 0
-  rt_vls_printf(&str, "%s %d\n", rt_vls_addr(&pathName), ((struct x_vars *)dm_vars)->width);
-#else
   rt_vls_printf(&str, "%s\n", rt_vls_addr(&pathName));
-#endif
 
   if(cmdline(&str, FALSE) == CMD_BAD){
     rt_vls_free(&str);
@@ -918,7 +873,6 @@ char	*name;
   Tk_GeometryRequest(((struct x_vars *)dm_vars)->xtkwin,
 		     ((struct x_vars *)dm_vars)->width, 
 		     ((struct x_vars *)dm_vars)->height);
-#endif
 
 #if 0
   /*XXX*/
@@ -941,12 +895,7 @@ char	*name;
   ((struct x_vars *)dm_vars)->white = WhitePixel( ((struct x_vars *)dm_vars)->dpy, a_screen );
 
 #if TRY_COLOR_CUBE
-#if 1
   ((struct x_vars *)dm_vars)->cmap = a_cmap = Tk_Colormap(((struct x_vars *)dm_vars)->xtkwin);
-#else
-  ((struct x_vars *)dm_vars)->cmap = a_cmap = DefaultColormap(((struct x_vars *)dm_vars)->dpy,
-							      a_screen);
-#endif
 #else
   a_cmap = Tk_Colormap(((struct x_vars *)dm_vars)->xtkwin);
 #endif
@@ -1032,11 +981,6 @@ char	*name;
 
 #ifndef CRAY2
     X_configure_window_shape();
-#endif
-
-#if 0    
-    /* Register the file descriptor with the Tk event handler */
-    Tk_CreateGenericHandler(X_doevent, (ClientData)curr_dm_list);
 #endif
 
     Tk_SetWindowBackground(((struct x_vars *)dm_vars)->xtkwin, ((struct x_vars *)dm_vars)->bg);
