@@ -333,6 +333,11 @@ CONST struct rt_tol	*tol;
 /*
  *			R T _ N M G _ T E S S
  *
+ * XXX This routine "destroys" the internal nmg solid.
+ * This means that once you tesselate an NMG solid, your in-memory
+ * copy becomes invalid, and you can't do anything else with it
+ * until you get a new copy from disk.
+ *
  *  Returns -
  *	-1	failure
  *	 0	OK.  *r points to nmgregion that holds this tessellation.
@@ -369,8 +374,13 @@ CONST struct rt_tol	*tol;
 	}
 
 
+	/* XXX The next two lines "destroy" the internal nmg solid.
+	 * This means that once you tesselate an NMG solid, your in-memory
+	 * copy becomes invalid, and you can't do anything else with it
+	 * until you get a new copy from disk.
+	 */
 	nmg_merge_models(m, lm);
-
+	ip->idb_ptr = GENPTR_NULL;
 
 	return(0);
 }
@@ -2031,9 +2041,11 @@ struct rt_db_internal	*ip;
 	register struct model	*m;
 
 	RT_CK_DB_INTERNAL(ip);
-	m = (struct model *)ip->idb_ptr;
-	NMG_CK_MODEL(m);
-	nmg_km( m );
+	if (ip->idb_ptr) {
+		m = (struct model *)ip->idb_ptr;
+		NMG_CK_MODEL(m);
+		nmg_km( m );
+	}
 
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
