@@ -102,6 +102,9 @@ fastf_t		rt_dist_tol = 0;	/* Value for rti_tol.dist */
 fastf_t		rt_perp_tol = 0;	/* Value for rti_tol.perp */
 char		*framebuffer;		/* desired framebuffer */
 
+int		space_partition = 0;	/* space partitioning algorithm
+					   to use. */
+
 #define MAX_WIDTH	(32*1024)
 
 extern struct command_tab	rt_cmdtab[];
@@ -118,10 +121,13 @@ register char **argv;
 	optind = 1;		/* restart */
 
 #define GETOPT_STR	\
-	"a:b:c:d:e:f:g:il:n:o:p:rs:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:RST:U:V:X:"
+	",:a:b:c:d:e:f:g:il:n:o:p:rs:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:RST:U:V:X:"
 
 	while( (c=getopt( argc, argv, GETOPT_STR )) != EOF )  {
 		switch( c )  {
+		case ',':
+			space_partition = atoi(optarg);
+			break;
 		case 'c':
 			(void)rt_do_cmd( (struct rt_i *)0, optarg, rt_cmdtab );
 			break;
