@@ -1,69 +1,52 @@
-/*	@(#)getopt.c	1.5	*/
-/*	3.0 SID #	1.2	*/
-/*LINTLIBRARY*/
-#define NULL	(char *)0
-#define EOF	(-1)
-#define ERR(s, c)	if(opterr){\
-	extern int strlen(), write();\
-	char errbuf[2];\
-	errbuf[0] = c; errbuf[1] = '\n';\
-	(void) write(2, argv[0], (unsigned)strlen(argv[0]));\
-	(void) write(2, s, (unsigned)strlen(s));\
-	(void) write(2, errbuf, 2);}
 
-extern int strcmp();
-#ifdef BSD
-#define strchr index
-#endif BSD
-extern char *strchr();
+#include <stdio.h>
 
-int	opterr = 1;
-int	optind = 1;
-int	optopt;
-char	*optarg;
+/*
+ * get option letter from argument vector
+ */
+int	opterr = 1,		/* useless, never set or used */
+	optind = 1,		/* index into parent argv vector */
+	optopt;			/* character checked for validity */
+char	*optarg;		/* argument associated with option */
 
-int
-getopt(argc, argv, opts)
-int	argc;
-char	**argv, *opts;
+#define BADCH	(int)'?'
+#define EMSG	""
+#define tell(s)	fputs(*nargv,stderr);fputs(s,stderr); \
+		fputc(optopt,stderr);fputc('\n',stderr);return(BADCH);
+
+getopt(nargc,nargv,ostr)
+int	nargc;
+char	**nargv,
+	*ostr;
 {
-	static int sp = 1;
-	register int c;
-	register char *cp;
+	static char	*place = EMSG;	/* option letter processing */
+	register char	*oli;		/* option letter list index */
+	char	*index();
 
-	if(sp == 1)
-		if(optind >= argc ||
-		   argv[optind][0] != '-' || argv[optind][1] == '\0')
-			return(EOF);
-		else if(strcmp(argv[optind], "--") == 0) {
-			optind++;
+	if(!*place) {			/* update scanning pointer */
+		if(optind >= nargc || *(place = nargv[optind]) != '-' || !*++place) return(EOF);
+		if (*place == '-') {	/* found "--" */
+			++optind;
 			return(EOF);
 		}
-	optopt = c = argv[optind][sp];
-	if(c == ':' || (cp=strchr(opts, c)) == NULL) {
-		ERR(": illegal option -- ", c);
-		if(argv[optind][++sp] == '\0') {
-			optind++;
-			sp = 1;
-		}
-		return('?');
+	}				/* option letter okay? */
+	if ((optopt = (int)*place++) == (int)':' || !(oli = index(ostr,optopt))) {
+		if(!*place) ++optind;
+		tell(": illegal option -- ");
 	}
-	if(*++cp == ':') {
-		if(argv[optind][sp+1] != '\0')
-			optarg = &argv[optind++][sp+1];
-		else if(++optind >= argc) {
-			ERR(": option requires an argument -- ", c);
-			sp = 1;
-			return('?');
-		} else
-			optarg = argv[optind++];
-		sp = 1;
-	} else {
-		if(argv[optind][++sp] == '\0') {
-			sp = 1;
-			optind++;
-		}
+	if (*++oli != ':') {		/* don't need argument */
 		optarg = NULL;
+		if (!*place) ++optind;
 	}
-	return(c);
+	else {				/* need an argument */
+		if (*place) optarg = place;	/* no white space */
+		else if (nargc <= ++optind) {	/* no arg */
+			place = EMSG;
+			tell(": option requires an argument -- ");
+		}
+	 	else optarg = nargv[optind];	/* white space */
+		place = EMSG;
+		++optind;
+	}
+	return(optopt);			/* dump back option letter */
 }
