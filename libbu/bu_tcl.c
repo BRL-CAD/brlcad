@@ -917,7 +917,6 @@ Tcl_Interp *interp;
 int argc;
 char **argv;
 {
-	char *out;
 	int i=0;
 
 	for( i=1 ; i<argc ; i += 2 )
