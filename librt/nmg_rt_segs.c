@@ -38,8 +38,8 @@ struct ef_data {
     	struct edgeuse *eu;
 };
 
-static
-struct structparse ef_parsetab[] = {
+static CONST 
+struct structparse rt_ef_parsetab[] = {
 	{"%f", 1, "fdotr", offsetof(struct ef_data, fdotr), FUNC_NULL},
 	{"%f", 1, "fdotl", offsetof(struct ef_data, fdotl), FUNC_NULL},
 	{"%f", 1, "ndotr", offsetof(struct ef_data, ndotr), FUNC_NULL},
@@ -47,8 +47,8 @@ struct structparse ef_parsetab[] = {
 	{"", 0, (char *)NULL,	  0,			  FUNC_NULL}
 };
 
-static
-struct structparse hit_parsetab[] = {
+static CONST
+struct structparse rt_hit_parsetab[] = {
 {"%f", 1, "hit_dist", offsetof(struct hit, hit_dist), FUNC_NULL},
 {"%f", 3, "hit_point", offsetofarray(struct hit, hit_point), FUNC_NULL},
 {"%f", 4, "hit_normal", offsetofarray(struct hit, hit_normal), FUNC_NULL},
@@ -287,7 +287,6 @@ struct application *ap;
 struct rt_tol	*tol;
 {
 	int ret_val = -1;
-	double delta;
 
 	switch (a_hit->in_out) {
 	case HMG_HIT_OUT_ON:
@@ -783,6 +782,8 @@ struct rt_tol	*tol;
 		rt_bomb("Goodbye\n");
 		break;
 	}
+
+	return ret_val;
 }
 
 
@@ -1011,20 +1012,12 @@ struct hitmiss *hd;
 {
 	struct hitmiss *a_hit;
 	struct hitmiss *next_hit;
-	int curr_state;
 	int ibs;
 	int obs;
-	int bad_state;
-	char *a_list;
-	char *next_list;
 	struct nmg_ptbl *a_tbl = (struct nmg_ptbl *)NULL;
 	struct nmg_ptbl *next_tbl = (struct nmg_ptbl *)NULL;
 	struct nmg_ptbl *tbl_p = (struct nmg_ptbl *)NULL;
-	struct nmg_visit_handlers       htab;
 	long *long_ptr;
-
-	htab = nmg_visit_handlers_null;	/* struct copy */
-	htab.vis_face = htab.vis_edge = htab.vis_vertex = visitor;
 
 	/* find that first "OUTSIDE" point */
 	a_hit = RT_LIST_FIRST(hitmiss, &hd->l);
@@ -1048,7 +1041,6 @@ struct hitmiss *hd;
 	nmg_tbl(next_tbl, TBL_INIT, (long *)NULL);
 
 	/* check the state transition on the rest of the hit points */
-	curr_state = HMG_OUTBOUND_STATE(a_hit);
 	while ((next_hit = RT_LIST_PNEXT(hitmiss, &a_hit->l)) != hd) {
 		ibs = HMG_INBOUND_STATE(next_hit);
 		obs = HMG_OUTBOUND_STATE(a_hit);
