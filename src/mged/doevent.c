@@ -281,7 +281,7 @@ XMotionEvent *xmotion;
       /* Constant tracking (e.g. illuminate mode) bound to M mouse */
       bu_vls_printf( &cmd, "M 0 %d %d\n",
 		     (int)(dm_Xx2Normal(dmp, mx) * GED_MAX),
-		     (int)(dm_Xy2Normal(dmp, my, 1) * GED_MAX) );
+		     (int)(dm_Xy2Normal(dmp, my, 0) * GED_MAX) );
     else /* not doing motion */
       goto handled;
 
