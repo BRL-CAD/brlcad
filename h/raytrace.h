@@ -285,6 +285,11 @@ struct xray {
  *  Information about where a ray hits the surface
  *
  * Important Note:  Surface Normals always point OUT of a solid.
+ *
+ *  Statement of intent:
+ *	The hit_point and hit_normal elements will be removed from this
+ *	structure, so as to separate the concept of the solid's normal
+ *	at the hit point from the post-boolean normal at the hit point.
  */
 struct hit {
 	fastf_t		hit_dist;	/* dist from r_pt to hit_point */
@@ -295,6 +300,36 @@ struct hit {
 	int		hit_surfno;	/* solid-specific surface indicator */
 };
 #define HIT_NULL	((struct hit *)0)
+
+/*
+ * Old macro:
+ *  Only the hit_dist field of pt_inhit and pt_outhit are valid
+ *  when a_hit() is called;  to compute both hit_point and hit_normal,
+ *  use RT_HIT_NORM() macro;  to compute just hit_point, use
+ *  VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
+ */
+#define RT_HIT_NORM( _hitp, _stp, _rayp )  { \
+	register int _id = (_stp)->st_id; \
+	RT_CHECK_SOLTAB(_stp); \
+	if( _id <= 0 || _id > ID_MAXIMUM ) { \
+		rt_log("stp=x%x, id=%d. hitp=x%x, rayp=x%x\n", _stp, _id, _hitp, _rayp); \
+		rt_bomb("RT_HIT_NORM:  bad st_id");\
+	} \
+	rt_functab[_id].ft_norm(_hitp, _stp, _rayp); }
+
+/*
+ *  New macro:  Leave _hitp undisturbed, return post-boolean normal into
+ *  caller-provided point.
+ */
+#define RT_HIT_NORMAL( _normal, _hitp, _stp, _rayp, _flipflag )  { \
+	RT_CHECK_SOLTAB(_stp); \
+	rt_functab[(_stp)->st_id].ft_norm(_hitp, _stp, _rayp); \
+	if( _flipflag )  { \
+		VREVERSE( _normal, (_hitp)->hit_normal ); \
+	} else { \
+		VMOVE( _normal, (_hitp)->hit_normal ); \
+	} \
+ }
 
 
 /*
@@ -318,15 +353,23 @@ struct curvature {
 /*
  *  Use this macro after having computed the normal, to
  *  compute the curvature at a hit point.
+ *
+ *  In Release 4.4 and earlier, this was called RT_CURVE().
+ *  When the extra argument was added the name was changed.
  */
-#define RT_CURVE( _curvp, _hitp, _stp )  { \
+#define RT_CURVATURE( _curvp, _hitp, _flipflag, _stp )  { \
 	register int _id = (_stp)->st_id; \
 	RT_CHECK_SOLTAB(_stp); \
 	if( _id <= 0 || _id > ID_MAXIMUM )  { \
 		rt_log("stp=x%x, id=%d.\n", _stp, _id); \
 		rt_bomb("RT_CURVE:  bad st_id"); \
 	} \
-	rt_functab[_id].ft_curve( _curvp, _hitp, _stp ); }
+	rt_functab[_id].ft_curve( _curvp, _hitp, _stp ); \
+	if( _flipflag )  { \
+		(_curvp)->crv_c1 = - (_curvp)->crv_c1; \
+		(_curvp)->crv_c2 = - (_curvp)->crv_c2; \
+	} \
+ }
 
 /*
  *			U V C O O R D
@@ -521,11 +564,6 @@ struct region  {
  *  Partitions of a ray.  Passed from rt_shootray() into user's
  *  a_hit() function.
  *
- *  Only the hit_dist field of pt_inhit and pt_outhit are valid
- *  when a_hit() is called;  to compute both hit_point and hit_normal,
- *  use RT_HIT_NORM() macro;  to compute just hit_point, use
- *  VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
- *
  *  NOTE:  rt_get_pt allows enough storage at the end of the partition
  *  for a bit vector of "rt_i.nsolids" bits in length.
  *
@@ -533,14 +571,6 @@ struct region  {
  *  due to the effect of animations, so partition structures can be expected
  *  to change length over the course of a single application program.
  */
-#define RT_HIT_NORM( _hitp, _stp, _rayp )  { \
-	register int _id = (_stp)->st_id; \
-	RT_CHECK_SOLTAB(_stp); \
-	if( _id <= 0 || _id > ID_MAXIMUM ) { \
-		rt_log("stp=x%x, id=%d. hitp=x%x, rayp=x%x\n", _stp, _id, _hitp, _rayp); \
-		rt_bomb("RT_HIT_NORM:  bad st_id");\
-	} \
-	rt_functab[_id].ft_norm(_hitp, _stp, _rayp); }
 
 struct partition {
 	/* This can be thought of as a struct rt_list */
