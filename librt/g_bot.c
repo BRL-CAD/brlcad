@@ -455,6 +455,9 @@ struct seg		*seghead;
 			}
 		}
 
+		if( nhits == 1 )
+			return( 0 );
+
 		for( i=0 ; i<(nhits&~1) ; i += 2 )
 		{
 			RT_GET_SEG( segp, ap->a_resource );
