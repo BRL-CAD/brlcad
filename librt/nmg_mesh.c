@@ -29,9 +29,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "raytrace.h"
 
-/* XXX move to raytrace.h */
-RT_EXTERN(double nmg_measure_fu_angle, (CONST struct edgeuse *eu, CONST vect_t xvec, CONST vect_t yvec, CONST vect_t zvec));
-
 /*
  *			N M G _ E U _ 2 V E C S _ P E R P
  *
@@ -269,9 +266,20 @@ CONST struct rt_tol	*tol;
 		if (eu2->vu_p->v_p == eu1->vu_p->v_p)
 			eu2 = eu2->eumate_p;
 
-		/* find a place to insert eu2 on eu1's edge */
+		/* find a place to insert eu2 around eu1's edge */
 		for ( iteration2=0; iteration2 < 10000; iteration2++ ) {
-			/* XXX If 2 faces share face geom, this is the place */
+			struct faceuse	*fu1, *fu2, *fur;
+
+			abs1 = abs2 = absr = -rt_twopi;
+
+			fu1 = eu1->up.lu_p->up.fu_p;
+			fu2 = eu2->up.lu_p->up.fu_p;
+			fur = eu1->radial_p->up.lu_p->up.fu_p;
+			NMG_CK_FACEUSE(fu1);
+			NMG_CK_FACEUSE(fu2);
+			NMG_CK_FACEUSE(fur);
+
+			/* Can't check shared fg here, need to check sides */
 
 			abs1 = nmg_measure_fu_angle( eu1, xvec, yvec, zvec );
 			abs2 = nmg_measure_fu_angle( eu2, xvec, yvec, zvec );
@@ -295,6 +303,7 @@ CONST struct rt_tol	*tol;
 				rt_log("    code=%d %s\n", code, (code!=0)?"INSERT_HERE":"skip");
 			if( code != 0 )  break;
 
+cont:
 			if( iteration2 > 9997 )  rt_g.NMG_debug |= DEBUG_MESH_EU;
 			/* If eu1 is only one pair of edgeuses, done */
 			if( eu1 == eu1->radial_p->eumate_p )  break;
@@ -336,10 +345,12 @@ CONST struct rt_tol	*tol;
 		if (nexteu == eu2->eumate_p)
 			nexteu = (struct edgeuse *)NULL;
 
-		if (rt_g.NMG_debug & DEBUG_MESH_EU)
+		if (rt_g.NMG_debug & DEBUG_MESH_EU)  {
+			rt_log("  Inserting.  code=%d\n", code);
 			rt_log("joining eu1=x%x eu2=x%x with abs1=%g, absr=%g\n",
 				eu1, eu2,
 				abs1*rt_radtodeg, absr*rt_radtodeg);
+		}
 
 		/*
 		 *  Make eu2 radial to eu1.
