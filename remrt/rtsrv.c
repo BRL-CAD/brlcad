@@ -131,10 +131,15 @@ int argc;
 char **argv;
 {
 	register int n;
+	int debug = 0;
 
-	if( argc != 2 )  {
-		fprintf(stderr, "Usage: rtsrv control-host\n");
+	if( argc < 2 || argc > 3 )  {
+		fprintf(stderr, "Usage: rtsrv [-d] control-host\n");
 		exit(1);
+	}
+	if( strcmp( argv[1], "-d" ) == 0 )  {
+		argc--; argv++;
+		debug = 1;
 	}
 
 	pkg_nochecking = 1;
@@ -145,28 +150,31 @@ char **argv;
 		fprintf(stderr, "unable to contact %s\n", control_host);
 		exit(1);
 	}
-	for( n=0; n < 20; n++ )
-		if( n != pcsrv->pkc_fd )
-			(void)close(n);
-	(void)open("/dev/null", 0);
-	(void)dup2(0, 1);
-	(void)dup2(0, 2);
-	n = open("/dev/tty", 2);
-	if (n > 0) {
-		ioctl(n, TIOCNOTTY, 0);
-		close(n);
+	if( !debug )  {
+		/* Close off the world */
+		for( n=0; n < 20; n++ )
+			if( n != pcsrv->pkc_fd )
+				(void)close(n);
+		(void)open("/dev/null", 0);
+		(void)dup2(0, 1);
+		(void)dup2(0, 2);
+		n = open("/dev/tty", 2);
+		if (n > 0) {
+			ioctl(n, TIOCNOTTY, 0);
+			close(n);
+		}
+
+		/* A fresh process */
+		if (fork())
+			exit(0);
+
+		/* Go into our own process group */
+		n = getpid();
+		if( setpgrp( n, n ) < 0 )
+			perror("setpgrp");
+
+		(void)setpriority( PRIO_PROCESS, getpid(), 20 );
 	}
-
-	/* A fresh process */
-	if (fork())
-		exit(0);
-
-	/* Go into our own process group */
-	n = getpid();
-	if( setpgrp( n, n ) < 0 )
-		perror("setpgrp");
-
-	(void)setpriority( PRIO_PROCESS, getpid(), 20 );
 
 	while( pkg_block(pcsrv) >= 0 )
 		;
@@ -404,7 +412,7 @@ char *buf;
 		char rbuf[4];
 
 		cur_pixel = y*npts + 0;
-		last_pixel = cur_pixel + npts;
+		last_pixel = cur_pixel + npts - 1;
 #ifdef PARALLEL
 #ifdef cray
 		/* Create any extra worker tasks */
@@ -418,12 +426,14 @@ char *buf;
 #endif
 #ifdef alliant
 		{
-			asm("	cstart	_npsw");
+			asm("	movl		_npsw,d0");
+			asm("	subql		#1,d0");
+			asm("	cstart		d0");
 			asm("super_loop:");
-				asm("	cawait	cs1,#0");
-				asm("	cadvance	cs1");
-				worker();
-			asm("	crepeat	super_loop");
+			asm("	cawait		cs1,#0");
+			worker();
+			asm("	cadvance	cs1");
+			asm("	crepeat		super_loop");
 		}
 #endif
 #else
@@ -606,4 +616,4 @@ register int *p;
 	asm("	bne	loop");
 #endif
 }
-#endif
+#endif alliant
