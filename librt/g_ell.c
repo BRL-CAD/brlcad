@@ -272,7 +272,7 @@ struct rt_i		*rtip;
 	MAT3X3VEC( w2, R, P );		/* map plane to local coord syst */
 	VELMUL( w2, w2, w2 );		/* square each term */
 	f = VDOT( w1, w2 );
-	f = f / sqrt(f);
+	f = sqrt(f);
 	stp->st_min[X] = ell->ell_V[X] - f;	/* V.P +/- f */
 	stp->st_max[X] = ell->ell_V[X] + f;
 
@@ -281,7 +281,7 @@ struct rt_i		*rtip;
 	MAT3X3VEC( w2, R, P );		/* map plane to local coord syst */
 	VELMUL( w2, w2, w2 );		/* square each term */
 	f = VDOT( w1, w2 );
-	f = f / sqrt(f);
+	f = sqrt(f);
 	stp->st_min[Y] = ell->ell_V[Y] - f;	/* V.P +/- f */
 	stp->st_max[Y] = ell->ell_V[Y] + f;
 
@@ -290,7 +290,7 @@ struct rt_i		*rtip;
 	MAT3X3VEC( w2, R, P );		/* map plane to local coord syst */
 	VELMUL( w2, w2, w2 );		/* square each term */
 	f = VDOT( w1, w2 );
-	f = f / sqrt(f);
+	f = sqrt(f);
 	stp->st_min[Z] = ell->ell_V[Z] - f;	/* V.P +/- f */
 	stp->st_max[Z] = ell->ell_V[Z] + f;
 
