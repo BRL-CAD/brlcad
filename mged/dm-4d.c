@@ -325,6 +325,17 @@ Ir_open()
 			ir_has_doublebuffer = 0;
 			ir_has_rgb = 1;
 			break;
+
+                case INV_GR2:		/* Elan Graphics */
+                        if(inv->state & INV_GR2_ELAN)
+                        {
+                                ir_has_rgb = 1;
+                                ir_has_doublebuffer = 1;
+                                ir_has_zbuf = 1;
+                                ir_is_gt = 1;
+                        }
+                        break;
+
 		}
 	}
 	endinvent();		/* frees internal inventory memory */
