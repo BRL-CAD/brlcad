@@ -543,6 +543,26 @@ struct edgeuse		*eu;		/* Edge to be broken */
 	if( rt_pt3_pt3_equal( hit_pt, v1mate->vg_p->coord, &is->tol ) )
 		rt_bomb("nmg_break_3edge_at_plane() hit_pt equal to v1mate\n");
 
+	{
+		vect_t	va, vb;
+		VSUB2( va, hit_pt, eu->vu_p->v_p->vg_p->coord  );
+		VSUB2( vb, eu->eumate_p->vu_p->v_p->vg_p->coord, hit_pt );
+		VUNITIZE(va);
+		VUNITIZE(vb);
+		if( VDOT( va, vb ) <= 0.7071 )  {
+			rt_bomb("nmg_break_3edge_at_plane() eu changes direction?\n");
+		}
+	}
+	{
+		struct rt_tol	t2 = is->tol;	/* Struct copy */
+		t2.dist = is->tol.dist * 4;
+		t2.dist_sq = t2.dist * t2.dist;
+		if( rt_pt3_pt3_equal( hit_pt, v1->vg_p->coord, &t2 ) )
+			rt_log("WARNING: nmg_break_3edge_at_plane() hit_pt nearly equal to v1\n");
+		if( rt_pt3_pt3_equal( hit_pt, v1mate->vg_p->coord, &t2 ) )
+			rt_log("WARNING: nmg_break_3edge_at_plane() hit_pt nearly equal to v1mate\n");
+	}
+
 	/* if we can't find the appropriate vertex in the
 	 * other face, we'll build a new vertex.  Otherwise
 	 * we re-use an old one.
@@ -1467,7 +1487,7 @@ struct faceuse *fu;
 	long		magic1;
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-		rt_log("nmg_isect_loop3p_face3p(, lu=x%x, fu=x%x)\n", lu, fu);
+		rt_log("nmg_isect_loop3p_face3p(, lu=x%x, fu=x%x) START\n", lu, fu);
 		HPRINT("  fg N", fu->f_p->fg_p->N);
 	}
 
@@ -1512,6 +1532,10 @@ struct faceuse *fu;
 
 		nmg_ck_lueu(lu, "nmg_isect_loop3p_face3p");
 	}
+
+	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
+		rt_log("nmg_isect_loop3p_face3p(, lu=x%x, fu=x%x) END\n", lu, fu);
+	}
 }
 
 /*
@@ -1519,6 +1543,9 @@ struct faceuse *fu;
  *
  *	Intersect entirely of planar face 1 with the entirety of planar face 2
  *	given that the two faces are not coplanar.
+ *
+ *  The line of intersection has already been computed,
+ *  and face cutting is handled at a higher level.
  */
 static void
 nmg_isect_face3p_face3p(bs, fu1, fu2)
@@ -1526,8 +1553,9 @@ struct nmg_inter_struct *bs;
 struct faceuse	*fu1;
 struct faceuse	*fu2;
 {
-	struct loopuse	*lu, *fu2lu;
-	struct loop_g	*lg;
+	struct loopuse	*lu1;		/* loopuses in fu1 */
+	struct loopuse	*lu2;		/* loopuses in fu2 */
+	struct loop_g	*lg1;
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
 		rt_log("nmg_isect_face3p_face3p(, fu1=x%x, fu2=x%x) START ++++++++++\n", fu1, fu2);
@@ -1540,31 +1568,39 @@ struct faceuse	*fu2;
 	if( fu2->orientation != OT_SAME )  rt_bomb("nmg_isect_face3p_face3p() fu2 not OT_SAME\n");
 
 	/* process each face loop in face 1 */
-	for( RT_LIST_FOR( lu, loopuse, &fu1->lu_hd ) )  {
-		NMG_CK_LOOPUSE(lu);
-		if (lu->up.fu_p != fu1) {
+	for( RT_LIST_FOR( lu1, loopuse, &fu1->lu_hd ) )  {
+		NMG_CK_LOOPUSE(lu1);
+		if (lu1->up.fu_p != fu1) {
 			rt_bomb("nmg_isect_face3p_face3p() Child loop doesn't share parent!\n");
 		}
-		NMG_CK_LOOP(lu->l_p);
-		lg = lu->l_p->lg_p;
-		NMG_CK_LOOP_G(lg);
+		NMG_CK_LOOP(lu1->l_p);
+		lg1 = lu1->l_p->lg_p;
+		NMG_CK_LOOP_G(lg1);
 
 		/* If the bounding box of a loop doesn't intersect the
 		 * bounding box of a loop in the other face, it doesn't need
 		 * to get cut.
 		 */
-		for (RT_LIST_FOR(fu2lu, loopuse, &fu2->lu_hd )){
-			struct loop_g *fu2lg;
+		for (RT_LIST_FOR(lu2, loopuse, &fu2->lu_hd )){
+			struct loop_g *lg2;	/* loop geom in lu2/fu2 */
 
-			NMG_CK_LOOPUSE(fu2lu);
-			NMG_CK_LOOP(fu2lu->l_p);
-			fu2lg = fu2lu->l_p->lg_p;
-			NMG_CK_LOOP_G(fu2lg);
+			NMG_CK_LOOPUSE(lu2);
+			NMG_CK_LOOP(lu2->l_p);
+			lg2 = lu2->l_p->lg_p;
+			NMG_CK_LOOP_G(lg2);
 
-			if (! V3RPP_OVERLAP_TOL( fu2lg->min_pt, fu2lg->max_pt,
-			    lg->min_pt, lg->max_pt, &bs->tol)) continue;
+			if (! V3RPP_OVERLAP_TOL( lg2->min_pt, lg2->max_pt,
+			    lg1->min_pt, lg1->max_pt, &bs->tol)) continue;
 
-			nmg_isect_loop3p_face3p(bs, lu, fu2);
+			/* These two loops overlap, intersect
+			 * all the edges in lu1 with the plane of fu2.
+			 */
+/* XXX Why are we doing this over and over again?  Or is function wrongly named? */
+			nmg_isect_loop3p_face3p(bs, lu1, fu2);
+#if 0
+			/* XXX Is this the answer? */
+			break;
+#endif
 		}
 	}
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
@@ -1836,6 +1872,8 @@ nmg_region_v_unique( fu2->s_p->r_p, &is->tol );
  *  Handle the complete mutual intersection of
  *  two 3-D non-coplanar planar faces,
  *  including cutjoin and meshing.
+ *
+ *  The line of intersection has already been computed.
  */
 static void
 nmg_isect_two_face3p( is, fu1, fu2 )
@@ -1849,7 +1887,7 @@ struct faceuse		*fu1, *fu2;
 	NMG_CK_FACEUSE(fu2);
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-		rt_log("nmg_isect_two_face3p( fu1=x%x, fu2=x%x )\n", fu1, fu2);
+		rt_log("nmg_isect_two_face3p( fu1=x%x, fu2=x%x )  START12\n", fu1, fu2);
 		VPRINT("isect ray is->pt ", is->pt);
 		VPRINT("isect ray is->dir", is->dir);
 	}
@@ -1892,6 +1930,10 @@ nmg_region_v_unique( fu2->s_p->r_p, &is->tol );
     		nmg_pr_ptbl_vert_list( "vert_list2", &vert_list2 );
     	}
 
+	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
+		rt_log("nmg_isect_two_face3p( fu1=x%x, fu2=x%x )  START21\n", fu1, fu2);
+	}
+
     	is->l2 = &vert_list1;
     	is->l1 = &vert_list2;
 	nmg_isect_face3p_face3p(is, fu2, fu1);
@@ -1918,6 +1960,10 @@ nmg_region_v_unique( fu2->s_p->r_p, &is->tol );
     		/* there were no intersections */
     		goto out;
     	}
+
+	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
+		rt_log("nmg_isect_two_face3p( fu1=x%x, fu2=x%x )  MIDDLE\n", fu1, fu2);
+	}
 
 	nmg_face_cutjoin(&vert_list1, &vert_list2, fu1, fu2, is->pt, is->dir, &is->tol);
 nmg_fu_touchingloops(fu1);
@@ -1946,6 +1992,11 @@ out:
 	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 		nmg_vfu( &fu1->s_p->fu_hd, fu1->s_p );
 		nmg_vfu( &fu2->s_p->fu_hd, fu2->s_p );
+	}
+	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
+		rt_log("nmg_isect_two_face3p( fu1=x%x, fu2=x%x )  END\n", fu1, fu2);
+		VPRINT("isect ray is->pt ", is->pt);
+		VPRINT("isect ray is->dir", is->dir);
 	}
 }
 
@@ -2114,11 +2165,11 @@ struct edgeuse		*eu2;
 	    (vu1a->v_p == vu2b->v_p && vu1b->v_p == vu2a->v_p) )  {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("nmg_isect_edge3p_edge3p: shared edge topology, both ends\n");
-#if 0
-	    	/* Does this make sense to do with wire edges? */
-	    	if( eu1->e_p != eu2->e_p )
+	    	/* Don't mesh wire edges, nmg_radial_join_eu() can't do it. */
+	    	if( eu1->e_p != eu2->e_p &&
+		    *eu1->up.magic_p == NMG_LOOPUSE_MAGIC &&
+		    *eu2->up.magic_p == NMG_LOOPUSE_MAGIC )
 	    		nmg_radial_join_eu(eu1, eu2, &is->tol );
-#endif
 	    	return;
 	}
 	VSUB2( eu1_dir, vu1b->v_p->vg_p->coord, vu1a->v_p->vg_p->coord );
