@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.1  91/10/12  06:53:57  mike
+ * Release_4.0
+ * 
  * Revision 2.4  91/08/30  18:59:46  mike
  * Modifications for clean compilation on the XMP
  * 
@@ -39,6 +42,8 @@ static char RCSid[] = "@(#)$Header$";
 #include "./jove.h"
 
 #include "./termcap.h"
+
+void	message();
 
 char mesgbuf[100];
 
@@ -98,6 +103,7 @@ char	*a, *b, *c, *d, *e;
 	return line;
 }
 
+void
 s_mess(fmt, a, b, c, d)
 char	*fmt;
 char	*a, *b, *c, *d;
@@ -119,6 +125,7 @@ char	*a, *b, *c, *d;
  * message prints the null terminated string onto the bottom line of the
  * terminal.
  */
+void
 message(str)
 char	*str;
 {

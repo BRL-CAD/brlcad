@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.2  93/08/11  20:25:34  mike
+ * Removed 132 column restriction on output displays.
+ * 
  * Revision 10.1  91/10/12  06:53:56  mike
  * Release_4.0
  * 
@@ -46,6 +49,10 @@ static char RCSid[] = "@(#)$Header$";
 #define	TOPGONE	01
 #define	CURGONE	02	/* Topline (curline) of window has been deleted
 			   since the last time a redisplay was called. */
+
+void	DoIDline();
+void	UpdateWindow();
+void	GotoDot();
 
 extern char	mesgbuf[];
 
@@ -119,7 +126,7 @@ int	RingBell = 0;	/* So if we have a lot of errors ...
    line of the screen.  The number of lines that are dirty = 1, so the loop
    that checks to see that all the lines are up-to-date can terminate after
    updating the first line WITHOUT checking the rest of the lines. */
-
+void
 redisplay()
 {
 	register WINDOW	*w = fwind;
@@ -194,6 +201,7 @@ redisplay()
 int	UpdModLine = 0,
 	UpdMesg = 0;
 
+void
 DoIDline(start)
 {
 	register struct scrimage	*np = &nimage[start],
@@ -244,7 +252,7 @@ DoIDline(start)
 /* Make nimage reflect what the screen should look like when we are done
    with the redisplay.  This deals with horizontal scrolling.  Also makes
    sure the current line of the window is in the window. */
-
+void
 UpdateWindow(w, start)
 register WINDOW	*w;
 {
@@ -372,7 +380,7 @@ UpdateMesg()
 /* Goto the current position in the current window.  Presumably redisplay()
    has already been called, and curwind->{w_dotline,w_dotcol} have been set
    correctly. */
-
+void
 GotoDot()
 {
 	if (InputPending)

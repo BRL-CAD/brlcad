@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.1  91/10/12  06:53:59  mike
+ * Release_4.0
+ * 
  * Revision 2.1  91/08/30  17:54:34  mike
  * Changed #include directives to distinguish between local and system header
  * files.
@@ -26,6 +29,8 @@ static char RCSid[] = "@(#)$Header$";
    and to insert lines, and characters into the buffer.  */
 
 #include "./jove.h"
+
+void		c_indent();
 
 /* Make a newline after `after' or course in `buf' */
 
@@ -250,6 +255,7 @@ DoParen()
 	}
 }
 
+void
 c_indent()
 {
 	BUFLOC	*bp;
@@ -285,6 +291,7 @@ TwoBlank()
 			genbuf)[0] == '\0'));
 }
 
+void
 Newline()
 {
 	/* If there is more than 2 blank lines in a row then don't make

@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.1  91/10/12  06:53:57  mike
+ * Release_4.0
+ * 
  * Revision 2.6  91/09/23  03:08:17  mike
  * Eliminated return / return(expr) warning
  * 
@@ -51,6 +54,9 @@ extern char	*Findcom;
 extern int	getch(),
 		getchar();
 
+void		BindSomething();
+void		DoKeyDesc();
+
 min(a, b)
 {
 	return a < b ? a : b;
@@ -66,6 +72,7 @@ BindMac()
 	BindSomething(macros);
 }
 
+void
 BindSomething(funcs)
 struct function	*funcs;
 {
@@ -125,6 +132,7 @@ KeyDesc()
 		s_mess("%c is unbound", key);
 }
 
+void
 DoKeyDesc(map, key)
 struct function	**map;
 {
@@ -236,6 +244,7 @@ char	*prompt;
 	return value;
 }	
 
+void
 PrVar()
 {
 	int	var;
@@ -247,6 +256,7 @@ PrVar()
 				  *(variables[var].f.Var));
 }
 
+void
 SetVar()
 {
 	int	command,

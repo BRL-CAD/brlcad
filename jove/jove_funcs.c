@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 10.1  91/10/12  06:53:58  mike
+ * Release_4.0
+ * 
  * Revision 2.3  91/08/30  19:41:36  mike
  * Added ^Xe to run cake, like ^X^E runs make.
  * 
@@ -24,36 +27,6 @@
 #ifndef lint
 static char RCSid[] = "@(#)$Header$";
 #endif
-
-/*
- *			jove_funcs.c
- *
- * $Revision$
- *
- * $Log$
- * Revision 2.3  91/08/30  19:41:36  mike
- * Added ^Xe to run cake, like ^X^E runs make.
- * 
- * Revision 2.2  91/08/30  17:54:33  mike
- * Changed #include directives to distinguish between local and system header
- * files.
- * 
- * Revision 2.1  91/08/30  17:49:06  mike
- * Paul Stay mods for ANSI C
- * 
- * Revision 2.0  84/12/26  16:46:12  dpk
- * System as distributed to Berkeley 26 Dec 84
- * 
- * Revision 1.2  83/12/16  00:08:08  dpk
- * Added distinctive RCS header
- * 
- * Revision 1.1  83/12/16  00:08:01  dpk
- * Original 4.2 Distribution Source
- * 
- * Revision 1.2  83/12/02  00:22:28  dpk
- * Fixed botch of incremental search modification (mapping)
- * 
- */
 
 /*
    Jonathan Payne at Lincoln-Sudbury Regional High School 4-19-83
@@ -103,6 +76,7 @@ int	*varptr;
 	nvars++;
 }
 
+void
 DefMac(name, macptr)
 char	*name;
 struct macro	*macptr;
@@ -811,14 +785,16 @@ MacGetc()
 	return macstack[stackp]->Body[macstack[stackp]->Offset++];
 }
 
+int
 RunMacro()
 {
 	int	com;
 
 	com = findcom(macros, FuncName());
 	if (com < 0)
-		return;
+		return 0;
 	DoMacro(macros[com].f.Macro);
+	return 0;
 }
 
 WriteMacs()
