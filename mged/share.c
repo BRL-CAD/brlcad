@@ -89,7 +89,7 @@ extern struct bu_structparse mged_vparse[];
  *		ADC AXES COLOR_SCHEMES GRID MENU MGED_VARIABLES RUBBER_BAND VIEW
  *
  * EXAMPLES
- *	share res_type p1 p2	--->	causes 'p1' to share its' resource of type 'res_type' with 'p2'
+ *	share res_type p1 p2	--->	causes 'p1' to share its resource of type 'res_type' with 'p2'
  *	share -u res_type p	--->	causes 'p' to no longer share resource of type 'res_type'
  */
 int
