@@ -35,6 +35,12 @@ esac
 AC_SUBST(CYGPATH)
 AC_SUBST(RELPATH)
 
+# am_init_automake performs a ac_prog_install check so need to handle
+# problematic /usr/brl/bin/install on irix
+if test "x`uname -s`" = "xIRIX64" ; then
+    PATH="`echo $PATH | sed 's/\/brl\/bin/bin/g'`"
+fi
+
 #--------------------------------------------------------------------
 #   See if there was a command-line option for where Tcl is;  if
 #   not, search for Tcl.
@@ -58,17 +64,15 @@ SC_LOAD_TKCONFIG
 #--------------------------------------------------------------------
 
 AC_ARG_WITH(itcl, [  --with-itcl=DIR         use Itcl 3.0 binaries from DIR],
-        itcl_search=$withval, itcl_search=`cd ${IWIDGETS_SRC_DIR}/..; pwd`)
+        itcl_search=$withval, itcl_search=`cd ${IWIDGETS_SRC_DIR}/../incrTcl; pwd`)
 
 ITCL_LIB_DIR=""
 if test -r $itcl_search/itcl/library/itcl.tcl; then
     if test -r $itcl_search/itk/library/itk.tcl; then
-        if test -r $itcl_search/config/mkinstalldirs; then
-            ITCL_LIB_DIR=$itcl_search/itcl/library
-            ITCL_SRC_DIR=$itcl_search/itcl
-            ITK_LIB_DIR=$itcl_search/itk/library
-            ITK_SRC_DIR=$itcl_search/itk
-        fi
+        ITCL_LIB_DIR=$itcl_search/itcl/library
+        ITCL_SRC_DIR=$itcl_search/itcl
+        ITK_LIB_DIR=$itcl_search/itk/library
+        ITK_SRC_DIR=$itcl_search/itk
     fi
 fi
 

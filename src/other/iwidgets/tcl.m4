@@ -53,6 +53,7 @@ AC_DEFUN(SC_PATH_TCLCONFIG, [
 	    # then check for a private Tcl installation
 	    if test x"${ac_cv_c_tclconfig}" = x ; then
 		for i in \
+			../libtcl \
 			../tcl \
 			`ls -dr ../tcl[[8-9]].[[0-9]]* 2>/dev/null` \
 			../../tcl \
@@ -80,6 +81,7 @@ AC_DEFUN(SC_PATH_TCLCONFIG, [
 	    # check in a few other private locations
 	    if test x"${ac_cv_c_tclconfig}" = x ; then
 		for i in \
+			${srcdir}/../libtcl \
 			${srcdir}/../tcl \
 			`ls -dr ${srcdir}/../tcl[[8-9]].[[0-9]]* 2>/dev/null` ; do
 		    if test -f "$i/unix/tclConfig.sh" ; then
@@ -146,6 +148,7 @@ AC_DEFUN(SC_PATH_TKCONFIG, [
 	    # then check for a private Tk library
 	    if test x"${ac_cv_c_tkconfig}" = x ; then
 		for i in \
+			../libtk \
 			../tk \
 			`ls -dr ../tk[[8-9]].[[0-9]]* 2>/dev/null` \
 			../../tk \
@@ -171,6 +174,7 @@ AC_DEFUN(SC_PATH_TKCONFIG, [
 	    # check in a few other private locations
 	    if test x"${ac_cv_c_tkconfig}" = x ; then
 		for i in \
+			${srcdir}/../libtk \
 			${srcdir}/../tk \
 			`ls -dr ${srcdir}/../tk[[8-9]].[[0-9]]* 2>/dev/null` ; do
 		    if test -f "$i/unix/tkConfig.sh" ; then
