@@ -107,6 +107,7 @@ _LOCAL_ int	sgi_open(),
 /* This is the ONLY thing that we "export" */
 FBIO sgi_interface =
 		{
+		0,
 		sgi_open,
 		sgi_close,
 		sgi_clear,
@@ -409,6 +410,7 @@ FBIO	*ifp;
 success:
 	ifp->if_mem = sp;
 	ifp->if_cmap = sp + pixsize;	/* cmap at end of area */
+	i = ifp->if_cmap->cmb[255];	/* try to deref last word */
 
 	/* Provide non-black colormap on creation of new shared mem */
 	if(new)
@@ -791,6 +793,8 @@ int	width, height;
 	static char	title[128];
 	int	mode;
 	inventory_t	*inv;
+
+	FB_CK_FBIO(ifp);
 
 	/*
 	 *  First, attempt to determine operating mode for this open,

@@ -42,6 +42,7 @@ _LOCAL_ int	mem_open(),
 
 /* This is the ONLY thing that we normally "export" */
 FBIO memory_interface =  {
+	0,
 	mem_open,		/* device_open		*/
 	mem_close,		/* device_close		*/
 	mem_clear,		/* device_clear		*/
@@ -124,6 +125,8 @@ int	width, height;
 	int	mode;
 	char	*cp;
 	FBIO	*fbp;
+
+	FB_CK_FBIO(ifp);
 
 	/*
 	 *  First, attempt to determine operating mode for this open,

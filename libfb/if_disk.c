@@ -44,6 +44,7 @@ _LOCAL_ int	dsk_open(),
 		dsk_help();
 
 FBIO disk_interface = {
+	0,
 	dsk_open,
 	dsk_close,
 	dsk_clear,
@@ -94,6 +95,8 @@ char	*file;
 int	width, height;
 {
 	static char zero = 0;
+
+	FB_CK_FBIO(ifp);
 
 	/* check for default size */
 	if( width == 0 )

@@ -71,6 +71,7 @@ _LOCAL_ int	adage_open(),
 		adage_help();
 
 FBIO adage_interface = {
+		0,
 		adage_open,
 		adage_close,
 		adage_clear,
@@ -232,6 +233,8 @@ int	width, height;
 	int	noinit = 0;
 	int	ntsc = 0;
 	int	ext_sync = 0;
+
+	FB_CK_FBIO(ifp);
 
 	/* Only 512 and 1024 opens are available */
 	if( width > 512 || height > 512 )

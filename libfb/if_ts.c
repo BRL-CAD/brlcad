@@ -53,6 +53,7 @@ _LOCAL_ int	ts_open(),
 
 /* This is the ONLY thing that we normally "export" */
 FBIO ts_interface =  {
+	0,
 	ts_open,		/* open device		*/
 	ts_close,		/* close device		*/
 	ts_clear,		/* clear device		*/
@@ -140,6 +141,8 @@ int	width, height;
 {
 	struct point	viewmax;
 	int mode;
+
+	FB_CK_FBIO(ifp);
 
 	/*
 	 *  First, attempt to determine operating mode for this open,

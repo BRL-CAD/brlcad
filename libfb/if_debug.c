@@ -33,6 +33,7 @@ _LOCAL_ int	deb_open(),
 
 /* This is the ONLY thing that we "export" */
 FBIO debug_interface = {
+	0,
 	deb_open,
 	deb_close,
 	deb_clear,
@@ -78,6 +79,7 @@ FBIO	*ifp;
 char	*file;
 int	width, height;
 {
+	FB_CK_FBIO(ifp);
 	if( file == (char *)NULL )
 		fb_log( "fb_open( 0x%lx, NULL, %d, %d )\n",
 			(unsigned long)ifp, width, height );
@@ -111,6 +113,7 @@ _LOCAL_ int
 deb_close( ifp )
 FBIO	*ifp;
 {
+	FB_CK_FBIO(ifp);
 	fb_log( "fb_close( 0x%lx )\n", (unsigned long)ifp );
 	return	0;
 }
@@ -120,6 +123,7 @@ deb_clear( ifp, pp )
 FBIO	*ifp;
 RGBpixel	*pp;
 {
+	FB_CK_FBIO(ifp);
 	if( pp == 0 )
 		fb_log( "fb_clear( 0x%lx, NULL )\n", (unsigned long)ifp );
 	else
@@ -137,6 +141,7 @@ int	x, y;
 RGBpixel	*pixelp;
 int	count;
 {
+	FB_CK_FBIO(ifp);
 	fb_log( "fb_read( 0x%lx,%4d,%4d, 0x%lx, %d )\n",
 		(unsigned long)ifp, x, y,
 		(unsigned long)pixelp, count );
@@ -152,6 +157,7 @@ int	count;
 {
 	int	i;
 
+	FB_CK_FBIO(ifp);
 	fb_log( "fb_write( 0x%lx,%4d,%4d, 0x%lx, %d )\n",
 		(unsigned long)ifp, x, y,
 		(unsigned long)pixelp, count );
@@ -178,6 +184,7 @@ deb_rmap( ifp, cmp )
 FBIO	*ifp;
 ColorMap	*cmp;
 {
+	FB_CK_FBIO(ifp);
 	fb_log( "fb_rmap( 0x%lx, 0x%lx )\n",
 		(unsigned long)ifp, (unsigned long)cmp );
 	return	0;
@@ -190,6 +197,7 @@ ColorMap	*cmp;
 {
 	int	i;
 
+	FB_CK_FBIO(ifp);
 	if( cmp == NULL )
 		fb_log( "fb_wmap( 0x%lx, NULL )\n",
 			(unsigned long)ifp );
@@ -216,6 +224,7 @@ FBIO	*ifp;
 int	xcenter, ycenter;
 int	xzoom, yzoom;
 {
+	FB_CK_FBIO(ifp);
 	fb_log( "fb_view( 0x%lx,%4d,%4d,%4d,%4d )\n",
 		(unsigned long)ifp, xcenter, ycenter, xzoom, yzoom );
 	fb_sim_view( ifp, xcenter, ycenter, xzoom, yzoom );
@@ -228,6 +237,7 @@ FBIO	*ifp;
 int	*xcenter, *ycenter;
 int	*xzoom, *yzoom;
 {
+	FB_CK_FBIO(ifp);
 	fb_log( "fb_getview( 0x%lx, 0x%x, 0x%x, 0x%x, 0x%x )\n",
 		(unsigned long)ifp, xcenter, ycenter, xzoom, yzoom );
 	fb_sim_getview( ifp, xcenter, ycenter, xzoom, yzoom );
@@ -243,6 +253,7 @@ unsigned char *bits;
 int	xbits, ybits;
 int	xorig, yorig;
 {
+	FB_CK_FBIO(ifp);
 	fb_log( "fb_setcursor( 0x%lx, 0x%lx, %d, %d, %d, %d )\n",
 		(unsigned long)ifp, bits, xbits, ybits, xorig, yorig );
 	return	0;
@@ -266,6 +277,7 @@ FBIO	*ifp;
 int	*mode;
 int	*x, *y;
 {
+	FB_CK_FBIO(ifp);
 	fb_log( "fb_getcursor( 0x%lx, 0x%x,0x%x,0x%x )\n",
 		(unsigned long)ifp, mode, x, y );
 	fb_sim_getcursor( ifp, mode, x, y );
@@ -280,6 +292,7 @@ int	xmin, ymin;
 int	width, height;
 RGBpixel	*pp;
 {
+	FB_CK_FBIO(ifp);
 	fb_log( "fb_readrect( 0x%lx, (%4d,%4d), %4d,%4d, 0x%lx )\n",
 		(unsigned long)ifp, xmin, ymin, width, height,
 		(unsigned long)pp );
@@ -293,6 +306,7 @@ int	xmin, ymin;
 int	width, height;
 RGBpixel	*pp;
 {
+	FB_CK_FBIO(ifp);
 	fb_log( "fb_writerect( 0x%lx,%4d,%4d,%4d,%4d, 0x%lx )\n",
 		(unsigned long)ifp, xmin, ymin, width, height,
 		(unsigned long)pp );
@@ -303,6 +317,7 @@ _LOCAL_ int
 deb_poll( ifp )
 FBIO	*ifp;
 {
+	FB_CK_FBIO(ifp);
 	fb_log( "fb_poll( 0x%lx )\n", (unsigned long)ifp );
 	return	0;
 }
@@ -311,6 +326,7 @@ _LOCAL_ int
 deb_flush( ifp )
 FBIO	*ifp;
 {
+	FB_CK_FBIO(ifp);
 	fb_log( "if_flush( 0x%lx )\n", (unsigned long)ifp );
 	return	0;
 }
@@ -319,6 +335,7 @@ _LOCAL_ int
 deb_free( ifp )
 FBIO	*ifp;
 {
+	FB_CK_FBIO(ifp);
 	fb_log( "fb_free( 0x%lx )\n", (unsigned long)ifp );
 	return	0;
 }
@@ -328,6 +345,7 @@ _LOCAL_ int
 deb_help( ifp )
 FBIO	*ifp;
 {
+	FB_CK_FBIO(ifp);
 	fb_log( "Description: %s\n", debug_interface.if_type );
 	fb_log( "Device: %s\n", ifp->if_name );
 	fb_log( "Max width/height: %d %d\n",

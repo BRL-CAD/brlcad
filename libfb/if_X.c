@@ -66,6 +66,7 @@ static int	do_event();
 
 /* This is the ONLY thing that we normally "export" */
 FBIO X_interface = {
+	0,
 	X_open,			/* device_open		*/
 	X_close,		/* device_close		*/
 	X_clear,		/* device_clear		*/
@@ -225,6 +226,8 @@ int	width, height;
 	unsigned char *bytebuf;		/* local copy */
 	unsigned char *bitbuf;		/* local copy */
 	unsigned char *scanbuf;		/* local copy */
+
+	FB_CK_FBIO(ifp);
 
 	/*
 	 *  First, attempt to determine operating mode for this open,

@@ -647,6 +647,8 @@ int	width, height;
 	int x_pos, y_pos;	/* Lower corner of viewport */
 	register int i;
 	
+	FB_CK_FBIO(ifp);
+
 	if( file != NULL )  {
 		register char *cp;
 		int mode;

@@ -86,6 +86,7 @@ _LOCAL_ int	rem_open(),
 		rem_help();
 
 FBIO remote_interface = {
+	0,
 	rem_open,
 	rem_close,
 	rem_clear,
@@ -272,6 +273,8 @@ int	width, height;
 	char	portname[MAX_HOSTNAME];
 	char	device[MAX_HOSTNAME];
 	int	port;
+
+	FB_CK_FBIO(ifp);
 
 	hostname[0] = '\0';
 	portname[0] = '\0';

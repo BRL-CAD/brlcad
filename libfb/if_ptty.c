@@ -46,6 +46,7 @@ _LOCAL_ int	ptty_open(),
 		ptty_help();
 
 FBIO ptty_interface = {
+	0,
 	ptty_open,
 	ptty_close,
 	ptty_clear,
@@ -96,6 +97,8 @@ FBIO	*ifp;
 char	*ptty_name;
 int	width, height;
 {
+	FB_CK_FBIO(ifp);
+
 	/* Check for default size */
 	if( width == 0 )
 		width = ifp->if_width;

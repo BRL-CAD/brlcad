@@ -113,6 +113,7 @@ _LOCAL_ int	sun_open(),
 
 /* This is the ONLY thing that we "export" */
 FBIO sun_interface = {
+		0,
 		sun_open,
 		sun_close,
 		sun_clear,
@@ -891,6 +892,8 @@ int	width, height;
 	struct pr_prpos	where;
 	struct pixfont	*myfont;
 	int	mode;
+
+	FB_CK_FBIO(ifp);
 
 	/*
 	 *  First, attempt to determine operating mode for this open,

@@ -59,6 +59,7 @@ _LOCAL_ int	ab_open(),
 		ab_help();
 
 FBIO abekas_interface = {
+	0,
 	ab_open,
 	ab_close,
 	ab_clear,
@@ -170,6 +171,7 @@ int		width, height;
 	char	message[128];
 	int	mode;
 
+	FB_CK_FBIO(ifp);
 	mode = 0;
 
 	if( file == NULL )  {

@@ -54,6 +54,7 @@ _LOCAL_ int	ug_open(),
 
 /* This is the ONLY thing that we normally "export" */
 FBIO ug_interface =  {
+	0,
 	ug_open,		/* device_open		*/
 	ug_close,		/* device_close		*/
 	ug_clear,		/* device_clear		*/
@@ -128,6 +129,8 @@ int	width, height;
 	register int	i;
 	int	status;
  	FILE	*fp;
+
+	FB_CK_FBIO(ifp);
 
 	ug_param.dx = ug_param.dy = 0;
 	ug_param.buffer = 0;			/* No copy buffer */

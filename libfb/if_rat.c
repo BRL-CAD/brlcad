@@ -73,6 +73,7 @@ _LOCAL_ int	rat_open(),
 
 /* This is the ONLY thing that we normally "export" */
 FBIO rat_interface =  {
+	0,
 	rat_open,			/* device_open		*/
 	rat_close,			/* device_close		*/
 	rat_clear,			/* device_clear		*/
@@ -118,6 +119,7 @@ FBIO	*ifp;
 char	*file;
 int	width, height;
 {
+	FB_CK_FBIO(ifp);
 	if( (ifp->if_fd = open( file, O_RDWR, 0 )) == -1)
 		{
 		perror(file);

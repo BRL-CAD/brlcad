@@ -44,6 +44,7 @@ _LOCAL_ int	stk_open(),
 
 /* This is the ONLY thing that we normally "export" */
 FBIO stk_interface =  {
+	0,
 	stk_open,		/* device_open		*/
 	stk_close,		/* device_close		*/
 	stk_clear,		/* device_clear		*/
@@ -101,6 +102,8 @@ int	width, height;
 	char	*cp;
 	char	devbuf[80];
 
+	FB_CK_FBIO(ifp);
+
 	/* Check for /dev/stack */
 	if( strncmp(file,ifp->if_name,strlen("/dev/stack")) != 0 ) {
 		fb_log( "stack_dopen: Bad device %s\n", file );
@@ -139,6 +142,7 @@ int	width, height;
 			*dp++ = *cp++;
 		*dp = '\0';
 		if( (fbp = fb_open(devbuf, width, height)) != FBIO_NULL )  {
+			FB_CK_FBIO(fbp);
 			/* Track the minimum of all the actual sizes */
 			if( fbp->if_width < ifp->if_width )
 				ifp->if_width = fbp->if_width;
@@ -163,7 +167,9 @@ FBIO	*ifp;
 {
 	register FBIO **ip = SI(ifp)->if_list;
 
+	FB_CK_FBIO(ifp);
 	while( *ip != (FBIO *)NULL ) {
+		FB_CK_FBIO( (*ip) );
 		fb_close( (*ip) );
 		ip++;
 	}

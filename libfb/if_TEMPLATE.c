@@ -42,6 +42,7 @@ _LOCAL_ int	DEVNAME_open(),
 
 /* This is the ONLY thing that we normally "export" */
 FBIO DEVNAME_interface =  {
+	0,			/* magic number slot	*/
 	DEVNAME_open,		/* open device		*/
 	DEVNAME_close,		/* close device		*/
 	DEVNAME_clear,		/* clear device		*/
@@ -87,6 +88,7 @@ FBIO	*ifp;
 char	*file;
 int	width, height;
 {
+	FB_CK_FBIO(ifp);
 	return(0);
 }
 

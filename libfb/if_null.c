@@ -45,6 +45,7 @@ _LOCAL_ int	null_open(),
 
 /* This is the ONLY thing that we normally "export" */
 FBIO null_interface =  {
+	0,
 	null_open,		/* device_open		*/
 	null_close,		/* device_close		*/
 	null_clear,		/* device_clear		*/
@@ -90,6 +91,7 @@ FBIO	*ifp;
 char	*file;
 int	width, height;
 {
+	FB_CK_FBIO(ifp);
 	if( width > 0 )
 		ifp->if_width = width;
 	if( height > 0 )

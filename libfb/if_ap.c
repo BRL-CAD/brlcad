@@ -42,6 +42,7 @@ _LOCAL_ int	ap_open(),
 
 /* This is the ONLY thing that we normally "export" */
 FBIO ap_interface =  {
+	0,
 	ap_open,		/* device_open		*/
 	ap_close,		/* device_close		*/
 	ap_clear,		/* device_clear		*/
@@ -120,6 +121,8 @@ int	width, height;
     gpr_$offset_t		display_bm_size;
     static gpr_$rgb_plane_t	hi_plane = 1;
     status_$t status;
+
+    FB_CK_FBIO(ifp);
 
 /*  Create a window  */
 
