@@ -614,7 +614,7 @@ char *h;
 	MKPAD(h);
 	NMG_CK_EDGEUSE(eu);
 
-	rt_log("%sEDGEUSE %8x, g=%8x\n", h, eu, eu->g.magic_p);
+	rt_log("%sEDGEUSE %8x, g=%8x, e_p=%8x\n", h, eu, eu->g.magic_p, eu->e_p);
 	nmg_pr_vu_briefly(eu->vu_p, h);
 
 	Return;
