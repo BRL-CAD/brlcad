@@ -2,7 +2,8 @@
  *				V I E W _ O B J . C
  *
  * A view object contains the attributes and methods for
- * controlling the view.
+ * controlling viewing transformations. Much of this code
+ * was extracted from MGED and modified to work herein.
  * 
  * Source -
  *	SLAD CAD Team
@@ -184,38 +185,19 @@ vo_close_tcl(clientData, interp, argc, argv)
 }
 
 /*
- * Open a view object.
- *
- * USAGE: v_open [name]
+ * Create an command/object named "oname" in "interp".
  */
-int vo_open_tcl(clientData, interp, argc, argv)
-     ClientData      clientData;
-     Tcl_Interp      *interp;
-     int             argc;
-     char            **argv;
+struct view_obj *
+vo_open_cmd(Tcl_Interp		*interp,
+	    char		*oname)
 {
 	struct view_obj *vop;
 
-	if (argc == 1) {
-		/* get list of view objects */
-		for (BU_LIST_FOR(vop, view_obj, &HeadViewObj.l))
-			Tcl_AppendResult(interp, bu_vls_addr(&vop->vo_name), " ", (char *)NULL);
-
-		return TCL_OK;
-	}
-
-	/* check to see if view object exists */
-	for (BU_LIST_FOR(vop, view_obj, &HeadViewObj.l)) {
-		if (strcmp(argv[1],bu_vls_addr(&vop->vo_name)) == 0) {
-			Tcl_AppendResult(interp, "vo_open: ", argv[1],
-					 " exists.\n", (char *)NULL);
-			return TCL_ERROR;
-		}
-	}
-
 	BU_GETSTRUCT(vop,view_obj);
+
+	/* initialize view_obj */
 	bu_vls_init(&vop->vo_name);
-	bu_vls_strcpy(&vop->vo_name,argv[1]);
+	bu_vls_strcpy(&vop->vo_name, oname);
 	vop->vo_scale = 1.0;
 	vop->vo_size = 2.0 * vop->vo_scale;
 	vop->vo_invSize = 1.0 / vop->vo_size;
@@ -228,12 +210,38 @@ int vo_open_tcl(clientData, interp, argc, argv)
 	vop->vo_coord = 'v';
 	vop->vo_rotate_about = 'v';
 	vo_update(vop, interp, 0);
-
 	BU_LIST_INIT(&vop->vo_observers.l);
 
 	/* append to list of view_obj's */
 	BU_LIST_APPEND(&HeadViewObj.l,&vop->l);
 
+	return vop;
+}
+
+/*
+ * Open a view object.
+ *
+ * USAGE: v_open [name]
+ */
+int vo_open_tcl(ClientData	clientData,
+		Tcl_Interp	*interp,
+		int             argc,
+		char            **argv)
+{
+	struct view_obj *vop;
+
+	if (argc == 1) {
+		/* get list of view objects */
+		for (BU_LIST_FOR(vop, view_obj, &HeadViewObj.l))
+			Tcl_AppendResult(interp, bu_vls_addr(&vop->vo_name), " ", (char *)NULL);
+
+		return TCL_OK;
+	}
+
+	/* first, delete any commands by this name */
+	(void)Tcl_DeleteCommand(interp, argv[1]);
+
+	vop = vo_open_cmd(interp, argv[1]);
 	(void)Tcl_CreateCommand(interp,
 				bu_vls_addr(&vop->vo_name),
 				vo_cmd,
@@ -243,6 +251,7 @@ int vo_open_tcl(clientData, interp, argc, argv)
 	/* Return new function name as result */
 	Tcl_ResetResult(interp);
 	Tcl_AppendResult(interp, bu_vls_addr(&vop->vo_name), (char *)NULL);
+
 	return TCL_OK;
 }
 
