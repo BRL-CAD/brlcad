@@ -92,7 +92,6 @@ extern struct db_i	*dbip;		       /* defined in ged.c */
 extern int		 dbih;		       /* defined in ged.c */
 #define	base2local	(dbip->dbi_base2local)
 #define local2base	(dbip->dbi_local2base)
-#define localunit	(dbip->dbi_localunit)  /* current local unit (index) */
 #define	cur_title	(dbip->dbi_title)      /* current model title */
 
 /* Some useful constants, if they haven't been defined elsewhere. */

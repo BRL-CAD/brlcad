@@ -159,20 +159,6 @@ extern char	version[];		/* from vers.c */
 
 struct bn_tol	mged_tol;		/* calculation tolerance */
 
-static char *units_str[] = {
-	"none",
-	"mm",
-	"um",
-	"cm",
-	"meters",
-	"km",
-	"inches",
-	"feet",
-	"yards",
-	"miles",
-	"extra"
-};
-
 struct bu_vls mged_prompt;
 void pr_prompt(), pr_beep();
 
@@ -2158,7 +2144,7 @@ char	**argv;
   /* Print title/units information */
   if( interactive )
     bu_vls_printf(&msg, "%s (units=%s)\n", dbip->dbi_title,
-		  units_str[dbip->dbi_localunit]);
+		bu_units_string(dbip->dbi_local2base) );
 
   Tcl_ResetResult( interp );
   Tcl_AppendResult(interp, bu_vls_addr(&msg), (char *)NULL);

@@ -130,8 +130,7 @@ genptr_t		client_data;	/* argument for handler */
 			/* Record first IDENT records title string */
 			if( dbip->dbi_title == (char *)0 )  {
 				dbip->dbi_title = bu_strdup( record.i.i_title );
-				dbip->dbi_localunit = record.i.i_units;
-				db_conversions( dbip, dbip->dbi_localunit );
+				db_conversions( dbip, record.i.i_units );
 			}
 			break;
 		case ID_FREE:
@@ -339,6 +338,10 @@ genptr_t		client_data;	/* argument for handler */
  *  Note:  Special care is required, because the "title" arg may actually
  *  be passed in as dbip->dbi_title.
  *
+ *  Note:  requires v4 database code for 'units' parameter.
+ *  Should be changed to accept a local2mm scale factor, and
+ *  cope with it from there.
+ *
  * Returns -
  *	 0	Success
  *	-1	Fatal Error
@@ -374,7 +377,7 @@ int		units;
 
 	old_title = dbip->dbi_title;
 	dbip->dbi_title = bu_strdup( new_title );
-	dbip->dbi_localunit = rec.i.i_units = units;
+	rec.i.i_units = units;
 
 	if( old_title )
 		bu_free( old_title, "old dbi_title" );
@@ -383,9 +386,45 @@ int		units;
 }
 
 /*
+ *			D B _ F W R I T E _ I D E N T
+ *
+ *  Fwrite an IDENT record with given title and editing scale.
+ *  Attempts to map the editing scale into a v4 database unit
+ *  as best it can.  No harm done if it doesn't map.
+ *
+ * Returns -
+ *	 0	Success
+ *	-1	Fatal Error
+ */
+int
+db_fwrite_ident( fp, title, local2mm )
+FILE		*fp;
+CONST char	*title;
+double		local2mm;
+{
+	union record		rec;
+	int			code;
+
+	code = db_v4_get_units_code(bu_units_string(local2mm));
+
+	if(rt_g.debug&DEBUG_DB) bu_log("db_fwrite_ident( x%x, '%s', %g ) code=%d\n",
+		fp, title, local2mm, code );
+
+	bzero( (char *)&rec, sizeof(rec) );
+	rec.i.i_id = ID_IDENT;
+	rec.i.i_units = code;
+	(void)strncpy( rec.i.i_version, ID_VERSION, sizeof(rec.i.i_version) );
+	(void)strncpy(rec.i.i_title, title, sizeof(rec.i.i_title)-1 );
+
+	if( fwrite( (char *)&rec, sizeof(rec), 1, fp ) != 1 )
+		return -1;
+	return 0;
+}
+
+/*
  *			D B _ C O N V E R S I O N S
  *
- *	Builds conversion factors given the local unit
+ *	Initialize conversion factors given the v4 database unit
  */
 void
 db_conversions( dbip, local )
@@ -399,7 +438,6 @@ int local;					/* one of ID_??_UNIT */
 
 	case ID_NO_UNIT:
 		/* no local unit specified ... use the base unit */
-		dbip->dbi_localunit = ID_MM_UNIT;
 		dbip->dbi_local2base = 1.0;
 		break;
 
@@ -450,13 +488,6 @@ int local;					/* one of ID_??_UNIT */
 
 	default:
 		dbip->dbi_local2base = 1.0;
-		/*
-		 *	XXX	dbi_localunit is set to 10 here
-		 *		as a sentinel for out of range!
-		 *		A constant buried in the code as
-		 *		a sentinel??  Yecch!!
-		 */
-		dbip->dbi_localunit = 10;
 		break;
 	}
 	dbip->dbi_base2local = 1.0 / dbip->dbi_local2base;
@@ -477,7 +508,7 @@ int
 db_v4_get_units_code( str )
 CONST char *str;
 {
-	if( !str )  return -1;	/* error */
+	if( !str )  return ID_NO_UNIT;	/* no units specified */
 
 	if( strcmp(str, "mm") == 0 || strcmp(str, "millimeters") == 0 ) 
 		return ID_MM_UNIT;

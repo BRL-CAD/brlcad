@@ -82,8 +82,7 @@ CONST char	*mode;
 		dbip->dbi_Head[i] = DIR_NULL;
 
 	dbip->dbi_eof = -1L;
-	dbip->dbi_localunit = 0;		/* mm */
-	dbip->dbi_local2base = 1.0;
+	dbip->dbi_local2base = 1.0;		/* mm */
 	dbip->dbi_base2local = 1.0;
 	dbip->dbi_title = (char *)0;
 	dbip->dbi_uses = 1;

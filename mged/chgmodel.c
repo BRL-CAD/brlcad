@@ -1361,12 +1361,9 @@ char	**argv;
 	}
 
 	/* See if this is a known v4 database unit */
-
 	if( (new_unit = db_v4_get_units_code(bu_units_string(loc2mm))) >= 0 ) {
 		/* One of the recognized db.h units */
-		/* change to the new local unit */
-		db_conversions( dbip, new_unit );
-
+		/* change database to remember the new local unit */
 		if( dbip->dbi_read_only ||
 		 db_ident( dbip, dbip->dbi_title, new_unit ) < 0 )
 		  Tcl_AppendResult(interp,
@@ -1377,13 +1374,12 @@ char	**argv;
 		 *  Can't stash requested units into the database for next session,
 		 *  but there is no problem with the user editing in these units.
 		 */
-		dbip->dbi_localunit = ID_MM_UNIT;
-		dbip->dbi_local2base = loc2mm;
-		dbip->dbi_base2local = 1.0 / loc2mm;
 		Tcl_AppendResult(interp, "\
 Due to a database restriction in the current format of .g files,\n\
 this choice of units will not be remembered on your next editing session.\n", (char *)NULL);
 	}
+	dbip->dbi_local2base = loc2mm;
+	dbip->dbi_base2local = 1.0 / loc2mm;
 
 	set_localunit_TclVar();
 	sf = dbip->dbi_base2local / sf;
@@ -1412,6 +1408,7 @@ char	**argv;
 {
 	struct bu_vls	title;
 	int bad = 0;
+	int code;
 
 	CHECK_DBI_NULL;
 	CHECK_READ_ONLY;
@@ -1434,7 +1431,8 @@ char	**argv;
 	bu_vls_init( &title );
 	bu_vls_from_argv( &title, argc-1, argv+1 );
 
-	if( db_ident( dbip, bu_vls_addr(&title), dbip->dbi_localunit ) < 0 ) {
+	code = db_v4_get_units_code(bu_units_string(dbip->dbi_base2local));
+	if( db_ident( dbip, bu_vls_addr(&title), code ) < 0 ) {
 	  Tcl_AppendResult(interp, "Error: unable to change database title\n");
 	  bad = 1;
 	}
@@ -2677,40 +2675,16 @@ set_localunit_TclVar()
 {
   struct bu_vls vls;
   struct bu_vls units_vls;
+  CONST char	*str;
 
   bu_vls_init(&vls);
   bu_vls_init(&units_vls);
 
-  switch(localunit){
-  case ID_UM_UNIT:
-    bu_vls_strcpy(&units_vls, "um");
-    break;
-  case ID_MM_UNIT:
-    bu_vls_strcpy(&units_vls, "mm");
-    break;
-  case ID_CM_UNIT:
-    bu_vls_strcpy(&units_vls, "cm");
-    break;
-  case ID_M_UNIT:
-    bu_vls_strcpy(&units_vls, "m");
-    break;
-  case ID_KM_UNIT:
-    bu_vls_strcpy(&units_vls, "km");
-    break;
-  case ID_IN_UNIT:
-    bu_vls_strcpy(&units_vls, "in");
-    break;
-  case ID_FT_UNIT:
-    bu_vls_strcpy(&units_vls, "ft");
-    break;
-  case ID_YD_UNIT:
-    bu_vls_strcpy(&units_vls, "yd");
-    break;
-  case ID_NO_UNIT:
-  default:
-    bu_vls_strcpy(&units_vls, "none");
-    break;
-  }
+  str = bu_units_string(dbip->dbi_local2base);
+  if(str)
+	bu_vls_strcpy(&units_vls, str);
+  else
+	bu_vls_printf(&units_vls, "%gmm", dbip->dbi_local2base);
 
   bu_vls_strcpy(&vls, "localunit");
   Tcl_SetVar(interp, bu_vls_addr(&vls), bu_vls_addr(&units_vls), TCL_GLOBAL_ONLY);

@@ -3877,9 +3877,11 @@ wdb_keep_tcl(clientData, interp, argc, argv)
 	bu_vls_strcat(&title, "Parts of: ");
 	bu_vls_strcat(&title, wdbp->dbip->dbi_title);
 
-	if (mk_id_editunits(keepfp, bu_vls_addr(&title), wdbp->dbip->dbi_local2base) < 0) {
+	/* use same editing preference */
+	if( db_fwrite_ident( keepfp, bu_vls_addr(&title), wdbp->dbip->dbi_local2base ) )  {
 		perror("fwrite");
-		Tcl_AppendResult(interp, "mk_id_editunits() failed\n", (char *)NULL);
+		Tcl_AppendResult(interp, "db_fwrite_ident(", argv[2],
+			") failed\n", (char *)NULL);
 		fclose(keepfp);
 		bu_vls_free(&title);
 		return TCL_ERROR;

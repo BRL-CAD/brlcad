@@ -723,9 +723,8 @@ struct db_i  {
 	FILE			*dbi_fp;	/* STDIO file descriptor */
 	long			dbi_eof;	/* End+1 pos after db_scan() */
 	long			dbi_nrec;	/* # records after db_scan() */
-	int			dbi_localunit;	/* unit currently in effect */
 	int			dbi_uses;	/* # of uses of this struct */
-	double			dbi_local2base;
+	double			dbi_local2base;	/* local2mm */
 	double			dbi_base2local;	/* unit conversion factors */
 	char			*dbi_title;	/* title from IDENT rec */
 	char			*dbi_filename;	/* file name */
