@@ -154,6 +154,44 @@ struct rt_vls tcl_output_hook;
 Tcl_Interp *interp;
 Tk_Window tkwin;
 
+
+/*
+ *			C M D _ L E F T _ M O U S E
+ *
+ *  Default old-MGED binding for left mouse button.
+ */
+int
+cmd_left_mouse(clientData, interp, argc, argv)
+ClientData	clientData;
+Tcl_Interp	*interp;
+int		argc;
+char		*argv[];
+{
+	static char	cmd[] = "zoom 0.5\n";
+	if( atoi(argv[1]) != 0 )
+		return Tcl_Eval( interp, cmd );
+	return TCL_OK;
+}
+
+/*
+ *			C M D _ R I G H T _ M O U S E
+ *
+ *  Default old-MGED binding for right mouse button.
+ */
+int
+cmd_right_mouse(clientData, interp, argc, argv)
+ClientData	clientData;
+Tcl_Interp	*interp;
+int		argc;
+char		*argv[];
+{
+	static char	cmd[] = "zoom 2\n";
+	if( atoi(argv[1]) != 0 )
+		return Tcl_Eval( interp, cmd );
+	return TCL_OK;
+}
+
+
 struct funtab {
     char *ft_name;
     char *ft_parms;
@@ -358,6 +396,8 @@ static struct funtab funtab[] = {
 	f_knob,2,3, FALSE,
 "l", "<objects>", "list attributes (verbose)",
 	f_list,2,MAXARGS, FALSE,
+"L",  "1|0 xpos ypos", "handle a left mouse event",
+	cmd_left_mouse, 4,4, TRUE,
 "labelvert", "object[s]", "label vertices of wireframes of objects",
 	f_labelvert, 2, MAXARGS, FALSE,
 #ifdef XMGED
@@ -370,7 +410,7 @@ static struct funtab funtab[] = {
         cmd_tk, 1, 1, TRUE,
 "ls", "", "table of contents",
 	dir_print,1,MAXARGS, FALSE,
-"M", "1|0 xpos ypos", "handle a mouse event",
+"M", "1|0 xpos ypos", "handle a middle mouse event",
 	f_mouse, 4,4, FALSE,
 "make", "name <arb8|sph|ellg|tor|tgc|rpc|rhc|epa|ehy|eto|part|grip|half|nmg|pipe>", "create a primitive",
 	f_make,3,3,FALSE,
@@ -446,6 +486,8 @@ static struct funtab funtab[] = {
 	f_qvrot, 5, 5,FALSE,
 "r", "region <operation solid>", "create or extend a Region combination",
 	f_region,4,MAXARGS,FALSE,
+"R",  "1|0 xpos ypos", "handle a right mouse event",
+	cmd_right_mouse, 4,4, TRUE,
 "red", "object", "edit a group or region using a text editor",
 	f_red, 2, 2,FALSE,
 "refresh", "", "send new control list",
