@@ -1616,6 +1616,26 @@ Warning: _setoserror: multiply defined
         new (ignored) definition from '/usr/lib/libc_s.a'
 .fi
 These warnings can safely be ignored;  we could find no way to suppress them.
+.PP
+Most importantly, the "moss" and "world" benchmarks no longer produce
+images that match the reference images.
+This results in the "run.sh" script printing these messages:
+.nf
++++++ moss
+pixcmp bytes:  786425 matching,       5 off by 1,       2 off by many
+moss.pix: WRONG WRONG WRONG WRONG WRONG WRONG
++++++ world
+pixcmp bytes:  786417 matching,      12 off by 1,       3 off by many
+world.pix: WRONG WRONG WRONG WRONG WRONG WRONG
+.fi
+The difference seems to occur at three locations where the eye ray
+just grazes the edge of the yellow torus.  Since these differences do
+not occur on other architectures or on more recent SGI software
+releases, our current assumption is that this is probably due to a
+compiler or OS-release specific interaction with the IEEE rounding modes
+of the processor hardware. As we are about to phase out Irix 4.0.5 in
+favor of Irix 5.3 for all ARL SGI machines, this puzzle does not seem
+worth pursuing.
 .NH 3
 SGI IRIX 5.2
 .PP
@@ -1633,9 +1653,22 @@ The documentation states that the \fB-S\fR option given to the loader
 will suppress loader warnings like this, but when specified, causes
 the loader to issue an additional warning stating that the \fB-S\fR
 option is unimplemented.
+.NH 3
+SGI IRIX 6.0
 .PP
-Also note that \fBirprep/firpass.c\fR can not be optimized because
-it is too large.
+The hardware semaphore support needed for running RT and LGT in
+multi-processor mode is broken in Irix 6.0.  SGI claims that this
+is fixed in Irix 6.0.1;  you will need to modify librt/machine.c
+to eliminate the software workaround currently employed.
+.PP
+When building 64-bit executables under Irix 6.0, the SGI graphics
+libarary "GL" is not supported.  SGI tells us that they only intend
+to support Open-GL on 64-bit platforms.  We have OpenGL modules for
+LIBFB and MGED underway, but they are not ready yet.  In the meantime,
+Irix 6.0 platforms are limited to using the remote framebuffer and
+X11 interfaces.
+.PP
+XMGED can not yet be successfully compiled on Irix 6.0, either.  Bummer.
 .NH 2
 ALLIANT WARNINGS
 .PP
@@ -1723,7 +1756,7 @@ try running \fBcsh\fR before starting \fBmged\fR.
 DEC ALPHA PROBLEMS
 .PP
 The DEC Alpha system running DEC OSF/1 V3.0 has a bug in /bin/sh
-which causes the shell to segmentation fault when executing this line:
+which causes the Shell to segmentation fault when executing this line:
 .br
               eval `grep '^RELEASE=' ../gen.sh`
 .br
@@ -1847,24 +1880,38 @@ Release 4.4 is a maintenance release.
 Binary geometry databases (``.g'' files) are upwards compatible from
 Release 4.0 to Release 4.4, but \fInot\fR backwards compatible.
 Many new tools are provided as well.
-.NH 1
-WORK IN PROGRES
 .PP
-We are hard at work on a variety of new features, the most significant are:
-.IP (*)
-making the NMG capability robust, for the forthcomming maintenance release,
-.IP (*)
-additional primitive types,
-.IP (*)
-a new graphical user interface for \fBmged\fR,
-and internal improvements to the editor,
-.IP (*)
-interfaces between BRL-CAD and various Finite-Element (FEM) codes.
+The NMG database support, converters, import/export routines,
+MGED visualization, and MGED editing support are all operational and stable.
+LIBRT is able to ray-trace NMG solids from the database (either imported
+via a converter or created using MGED's \fBfacetize\fR command).
+This code is very young, so if you encounter difficulty please submit a bug
+report.
+The NMG boolean code used by MGED's \fBev\fR command still fails on
+a non-trivial number of cases.  Only about 2/3 of the M-2 Bradley can
+be automaticly converted.  It is anticipated that there will be
+substantial improvements in the robustness of this code as the support
+of the new LIBRT NMG ray-tracer is exploited.
+.PP
+This release contains data structure, import/export, and MGED
+visualization support for trimmed NURBS NMGs ("t-NURBS NMGs"). However
+there is no support for ray-tracing such objects yet. We plan on
+releaseing BRL-CAD Release 5.0 as soon as (1) t-NURBS NMGs can be
+ray-traced by LIBRT, and (2) everything has been converted to the new
+".g" database file format.
+.PP
+Finally, Release 4.4 includes a very polished X-windows version of MGED
+dubbed XMGED, and an experimental TCL version of MGED dubbed TMGED.  TCL
+provides MGED with a powerful interpreted command language that has
+variables and formulas, as well as access to X11 widgets via the Tk
+package and user extensibility.
+When XMGED and TMGED are merged in a future release, expect a quantum
+improvement in the power of MGED!
 .NH 1
 COMMUNICATION
 .PP
-You are invited to participate in the DARPA InterNet (aka "ARPANET")
-electronic mailing list on the BRL-CAD software, which is called
+You are invited to participate in the InterNet electronic mailing list
+on the BRL-CAD software, which is called
 .sp .5
 .ti +1i
 <CAD @ ARL.MIL>.
@@ -1877,7 +1924,25 @@ sending to
 .ti +1i
 <CAD-REQUEST @ ARL.MIL>.
 .sp .5
-If you find bugs, please report your experiences by E-mail.
+If you find bugs, please report your experiences by E-mail,
+preferably by running the "cadbug.sh" script included in this
+distribution.
 While ARL makes no
 offer of support, we are most interested in hearing about your
 experiences.
+All bugs and issues reported using the "cadbug.sh" script will automaticly
+be entered into our bug-tracking database, which is available for
+public inspection on the World-Wide-Web.  The URL to access this
+(and other online BRL-CAD) release information is:
+.sp .5
+.ti +1i
+http://ftp.arl.mil/brl-cad/
+.sp .5
+The URL to access general information and published reports on BRL-CAD is:
+.sp .5
+.ti +1i
+http://web.arl.mil/software/brlcad/
+.sp .5
+.PP
+It is our intention to make substantial additional use of the
+World-Wide-Web in the comming months.
