@@ -627,10 +627,27 @@ refresh()
 }
 
 /*
+ *			F _ V R O T _ C E N T E R
+ *
+ *  Set the center of rotation, either in model coordinates, or
+ *  in view (+/-1) coordinates.
+ *  The default is to rotate around the view center: v=(0,0,0).
+ */
+void
+f_vrot_center( argc, argv )
+int	argc;
+char	**argv;
+{
+	printf("Not ready until tomorrow.\n");
+}
+
+/*
  *			U S E J O Y
  *
- * Apply the "joystick" delta rotation to the viewing direction.
- *  Rotation is performed about the view center.
+ *  Apply the "joystick" delta rotation to the viewing direction,
+ *  where the delta is specified in terms of the *viewing* axes.
+ *  Rotation is performed about the view center, for now.
+ *  Angles are in radians.
  */
 void
 usejoy( xangle, yangle, zangle )
@@ -665,12 +682,30 @@ double	xangle, yangle, zangle;
 }
 
 /*
+ *			A B S V I E W _ V
+ *
+ *  The "angle" ranges from -1 to +1.
+ *  Assume rotation around view center, for now.
+ */
+void
+absview_v( ang )
+CONST point_t	ang;
+{
+	point_t	rad;
+
+	VSCALE( rad, ang, rt_pi );	/* range from -pi to +pi */
+	buildHrot( Viewrot, rad[X], rad[Y], rad[Z] );
+	new_mats();
+}
+
+/*
  *			S E T V I E W
  *
  * Set the view.  Angles are DOUBLES, in degrees.
  *
  * Given that viewvec = scale . rotate . (xlate to view center) . modelvec,
  * we just replace the rotation matrix.
+ * (This assumes rotation around the view center).
  */
 void
 setview( a1, a2, a3 )
