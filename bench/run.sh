@@ -14,7 +14,7 @@ eval `machinetype.sh -b`	# sets MACHINE, UNIXTYPE, HAS_TCP
 
 echo Looking for RT...
 # find RT (environment variable overrides)
-if test x${RT} = x
+if test "x${RT}" = "x"
 then
 	echo ...checking for NFS or local build...
 	# check for NFS build
@@ -37,7 +37,7 @@ fi
 echo Looking for geometry database directory...
 # find geometry database directory if we do not already know where it is
 # DB environment variable overrides
-if test x${DB} = x
+if test "x${DB}" = "x"
 then
 	echo ...checking for NFS or local build...	
 	# check for NFS build
@@ -59,7 +59,7 @@ fi
 echo Checking for pixel comparison utility...
 # find pixel comparison utility
 # CMP environment variable overrides
-if test x${CMP} = x
+if test "x${CMP}" = "x"
 then
 	echo ...checking for NFS of local build...
 	if test -x ../.bench.$MACHINE/pixcmp
@@ -78,7 +78,7 @@ then
 fi
 
 # Alliant NFS hack
-if test x${MACHINE} = xfx
+if test "x${MACHINE}" = "xfx"
 then
 	cp ${RT} /tmp/rt
 	cp ${CMP} /tmp/pixcmp
@@ -88,21 +88,21 @@ fi
 
 
 # print results or choke
-if test x${RT} = x
+if test "x${RT}" = "x"
 then
 	echo "ERROR:  Could not find RT"
 	exit 1
 else
 	echo "Using [$RT] for RT"
 fi
-if test x${DB} = x
+if test "x${DB}" = "x"
 then
 	echo "ERROR:  Could not find database directory"
 	exit 1
 else
 	echo "Using [$DB] for DB"
 fi
-if test x${CMP} = x
+if test "x${CMP}" = "x"
 then
 	echo "ERROR:  Could not find pixel comparison utility"
 	exit 1
