@@ -187,8 +187,8 @@ char **argv;
 	tcp_port = argv[2];
 
 	/* Note that the LIBPKG error logger can not be
-	 * "rt_log", as that can cause rt_log to be entered recursively.
-	 * Given the special version of rt_log in use here,
+	 * "bu_log", as that can cause bu_log to be entered recursively.
+	 * Given the special version of bu_log in use here,
 	 * that will result in a deadlock in RES_ACQUIRE(res_syscall)!
 	 *  libpkg will default to stderr via pkg_errlog(), which is fine.
 	 */
@@ -240,8 +240,8 @@ char **argv;
 #endif
 
 		/* Deal with CPU limits on "those kinds" of systems */
-		if( rt_cpuget() > 0 )  {
-			rt_cpuset( 9999999 );
+		if( bu_cpulimit_get() > 0 )  {
+			bu_cpulimit_set( 9999999 );
 		}
 
 		/* Close off the world */
@@ -275,7 +275,7 @@ char **argv;
 	beginptr = (char *) sbrk(0);
 
 #define PUBLIC_CPUS	"/usr/tmp/public_cpus"
-	max_cpus = avail_cpus = rt_avail_cpus();
+	max_cpus = avail_cpus = bu_avail_cpus();
 	if( (fp = fopen(PUBLIC_CPUS, "r")) != NULL )  {
 		(void)fscanf( fp, "%d", &max_cpus );
 		fclose(fp);
@@ -303,7 +303,7 @@ char **argv;
 			iload = (int)(load + 0.5);	/* round up */
 			max_cpus -= iload;
 			if( max_cpus <= 0 )  {
-				rt_log("This machine is overloaded, load=%g, aborting.\n", load);
+				bu_log("This machine is overloaded, load=%g, aborting.\n", load);
 				exit(9);
 			}
 
@@ -322,9 +322,9 @@ char **argv;
 	RES_INIT( &rt_g.res_stats );
 	RES_INIT( &rt_g.res_results );
 	RES_INIT( &rt_g.res_model );
-	/* DO NOT USE rt_log() before this point! */
+	/* DO NOT USE bu_log() before this point! */
 
-	rt_log("load average = %d, using %d of %d cpus\n",
+	bu_log("load average = %d, using %d of %d cpus\n",
 		load,
 		npsw, avail_cpus );
 	if( max_cpus <= 0 )  {
@@ -352,7 +352,7 @@ char **argv;
 
 		/* First, process any packages in library buffers */
 		if( pkg_process( pcsrv ) < 0 )  {
-			rt_log("pkg_get error\n");
+			bu_log("pkg_get error\n");
 			break;
 		}
 
@@ -368,7 +368,7 @@ char **argv;
 			&tv ) != 0 )  {
 			n = pkg_suckin(pcsrv);
 			if( n < 0 )  {
-				rt_log("pkg_suckin error\n");
+				bu_log("pkg_suckin error\n");
 				break;
 			} else if( n == 0 )  {
 				/* EOF detected */
@@ -380,7 +380,7 @@ char **argv;
 
 		/* Third, process any new packages in library buffers */
 		if( pkg_process( pcsrv ) < 0 )  {
-			rt_log("pkg_get error\n");
+			bu_log("pkg_get error\n");
 			break;
 		}
 
@@ -397,7 +397,7 @@ char *buf;
 {
 	if(debug)fprintf(stderr,"ph_cd %s\n", buf);
 	if( chdir( buf ) < 0 )  {
-		rt_log("ph_cd: chdir(%s) failure\n", buf);
+		bu_log("ph_cd: chdir(%s) failure\n", buf);
 		exit(1);
 	}
 	(void)free(buf);
@@ -410,7 +410,7 @@ char *buf;
 {
 
 	if(debug)fprintf(stderr,"ph_restart %s\n", buf);
-	rt_log("Restarting\n");
+	bu_log("Restarting\n");
 	pkg_close(pcsrv);
 	execlp( "rtnode", "rtnode", control_host, tcp_port, (char *)0);
 	perror("rtnode");
@@ -442,7 +442,7 @@ char			*buf;
 		fb, atoi(buf), atoi(hp) );
 
 	if( (fbp = fb_open( fb, atoi(buf), atoi(hp) ) ) == 0 )  {
-		rt_log("rtnode: fb_open(%s, %s, %s) failed\n", fb, buf, hp );
+		bu_log("rtnode: fb_open(%s, %s, %s) failed\n", fb, buf, hp );
 		exit(1);
 	}
 
@@ -474,16 +474,16 @@ char *buf;
 	}
 
 	if( seen_dirbuild )  {
-		rt_log("rtsync_ph_dirbuild:  MSG_DIRBUILD already seen, ignored\n");
+		bu_log("rtsync_ph_dirbuild:  MSG_DIRBUILD already seen, ignored\n");
 		(void)free(buf);
 		return;
 	}
 
-	title_file = rt_strdup(argv[0]);
+	title_file = bu_strdup(argv[0]);
 
 	/* Build directory of GED database */
 	if( (rtip=rt_dirbuild( title_file, NULL, 0 )) == RTI_NULL )  {
-		rt_log("rtsync_ph_dirbuild:  rt_dirbuild(%s) failure\n", title_file);
+		bu_log("rtsync_ph_dirbuild:  rt_dirbuild(%s) failure\n", title_file);
 		exit(2);
 	}
 	ap.a_rt_i = rtip;
@@ -529,16 +529,16 @@ char *buf;
 		(void)free(buf);
 		return;
 	}
-	title_obj = rt_strdup(argv[0]);
+	title_obj = bu_strdup(argv[0]);
 
 	if( rtip->needprep == 0 )  {
 		/* First clean up after the end of the previous frame */
-		if(debug)rt_log("Cleaning previous model\n");
+		if(debug)bu_log("Cleaning previous model\n");
 		view_end( &ap );
 		view_cleanup( rtip );
 		rt_clean(rtip);
 		if(rdebug&RDEBUG_RTMEM_END)
-			rt_prmem( "After rt_clean" );
+			bu_prmem( "After rt_clean" );
 	}
 
 	/* Load the desired portion of the model */
@@ -565,7 +565,7 @@ char *buf;
 	do_prep( rtip );
 
 	if( rtip->nsolids <= 0 )  {
-		rt_log("ph_matrix: No solids remain after prep.\n");
+		bu_log("ph_matrix: No solids remain after prep.\n");
 		exit(3);
 	}
 
@@ -606,7 +606,7 @@ char			*buf;
 
 	if( (argc = rt_split_cmd( argv_buf, MAXARGS, buf )) <= 0 )  {
 		/* No words in input */
-		rt_log("Null POV command\n");
+		bu_log("Null POV command\n");
 		(void)free(buf);
 		return;
 	}
@@ -648,15 +648,15 @@ char			*buf;
 	if( rt_perspective < 0 || rt_perspective > 179 )  rt_perspective = 0;
 
 	viewsize = 2 * viewscale;
-	mat_idn( Viewrotscale );
+	bn_mat_idn( Viewrotscale );
 	quat_quat2mat( Viewrotscale, orient );
 
-	mat_idn( toViewcenter );
+	bn_mat_idn( toViewcenter );
 	MAT_DELTAS_VEC_NEG( toViewcenter, viewcenter_model );
-	mat_mul( model2view, Viewrotscale, toViewcenter );
+	bn_mat_mul( model2view, Viewrotscale, toViewcenter );
 	Viewrotscale[15] = viewscale;
 	model2view[15] = viewscale;
-	mat_inv( view2model, model2view );
+	bn_mat_inv( view2model, model2view );
 
 	VSET( eye_screen, 0, 0, 1 );
 	MAT4X3PNT( eye_model, view2model, eye_screen );
@@ -692,7 +692,7 @@ char			*buf;
 		(void)fb_getview( fbp, &xcent, &ycent, &xzoom, &yzoom );
 	}
 
-	if(debug) rt_log("done!\n");
+	if(debug) bu_log("done!\n");
 
 	if( pkg_send( RTSYNCMSG_DONE, "1", 2, pcsrv ) < 0 )  {
 		fprintf(stderr,"pkg_send RTSYNCMSG_DONE failed\n");
@@ -721,7 +721,7 @@ char			*buf;
  */
 #if (__STDC__ && !apollo)
 void
-rt_log( char *fmt, ... )
+bu_log( char *fmt, ... )
 {
 	va_list ap;
 	static char buf[512];		/* a generous output line */
@@ -882,7 +882,7 @@ char *buf;
 	for( i=0; pc->pkc_switch[i].pks_handler != NULL; i++ )  {
 		if( pc->pkc_switch[i].pks_type == pc->pkc_type )  break;
 	}
-	rt_log("ctl: unable to handle %s message: len %d",
+	bu_log("ctl: unable to handle %s message: len %d",
 		pc->pkc_switch[i].pks_title, pc->pkc_len);
 	*buf = '*';
 	(void)free(buf);

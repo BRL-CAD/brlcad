@@ -78,7 +78,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "./ihost.h"
 
-#define pkg_send_vls(type,vlsp,pkg)	pkg_send( (type), rt_vls_addr((vlsp)), rt_vls_strlen((vlsp))+1, (pkg) )
+#define pkg_send_vls(type,vlsp,pkg)	pkg_send( (type), bu_vls_addr((vlsp)), bu_vls_strlen((vlsp))+1, (pkg) )
 
 extern int	pkg_permport;	/* libpkg/pkg_permserver() listen port */
 
@@ -182,7 +182,7 @@ static	int	width = 0;		/* use default size */
 static	int	height = 0;
 
 CONST char	*database;
-struct rt_vls	treetops;
+struct bu_vls	treetops;
 
 struct timeval	time_start;
 
@@ -258,11 +258,11 @@ char	*argv[];
 		exit(1);
 	}
 
-	rt_vls_init( &treetops );
-	rt_vls_from_argv( &treetops, argc - optind, argv+optind );
-	rt_log("DB: %s %s\n", database, rt_vls_addr(&treetops) );
+	bu_vls_init( &treetops );
+	bu_vls_from_argv( &treetops, argc - optind, argv+optind );
+	bu_log("DB: %s %s\n", database, bu_vls_addr(&treetops) );
 
-	RT_LIST_INIT( &rt_g.rtg_vlfree );
+	BU_LIST_INIT( &rt_g.rtg_vlfree );
 
 	/* Connect up with framebuffer, for control & size purposes */
 	if( !framebuffer )  framebuffer = getenv("FB_FILE");
@@ -274,29 +274,29 @@ char	*argv[];
 	height = fb_getheight(fbp);
 
 	/* Listen for VRMGR Master PKG connections from MGED */
-	if( (vrmgr_listen_fd = pkg_permserver("5555", "tcp", 8, rt_log)) < 0 )  {
-		rt_log("Unable to listen on 5555\n");
+	if( (vrmgr_listen_fd = pkg_permserver("5555", "tcp", 8, bu_log)) < 0 )  {
+		bu_log("Unable to listen on 5555\n");
 		exit(1);
 	}
 
 	/* Listen for our RTSYNC client's PKG connections */
-	if( (rtsync_listen_fd = pkg_permserver("rtsrv", "tcp", 8, rt_log)) < 0 )  {
+	if( (rtsync_listen_fd = pkg_permserver("rtsrv", "tcp", 8, bu_log)) < 0 )  {
 		int	i;
 		char	num[8];
 		/* Do it by the numbers */
 		for(i=0; i<10; i++ )  {
 			sprintf( num, "%d", 4446+i );
-			if( (rtsync_listen_fd = pkg_permserver(num, "tcp", 8, rt_log)) < 0 )
+			if( (rtsync_listen_fd = pkg_permserver(num, "tcp", 8, bu_log)) < 0 )
 				continue;
 			break;
 		}
 		if( i >= 10 )  {
-			rt_log("Unable to find a port to listen on\n");
+			bu_log("Unable to find a port to listen on\n");
 			exit(1);
 		}
 	}
 	/* Now, pkg_permport has tcp port number */
-	rt_log("%s RTSYNC listening on %s port %d\n",
+	bu_log("%s RTSYNC listening on %s port %d\n",
 		stamp(),
 		get_our_hostname(),
 		pkg_permport);
@@ -344,21 +344,21 @@ char	*argv[];
 		/* Accept any new VRMGR connections.  Only one at a time is permitted. */
 		if( vrmgr_listen_fd > 0 && FD_ISSET(vrmgr_listen_fd, &infds))  {
 			if( vrmgr_pc )  {
-				rt_log("New VRMGR connection received with one still active, dropping old one.\n");
+				bu_log("New VRMGR connection received with one still active, dropping old one.\n");
 				FD_CLR(vrmgr_pc->pkc_fd, &select_list);
 				pkg_close( vrmgr_pc );
 				vrmgr_pc = 0;
 				vrmgr_ihost = IHOST_NULL;
 			}
-			vrmgr_pc = pkg_getclient( vrmgr_listen_fd, vrmgr_pkgswitch, rt_log, 0 );
+			vrmgr_pc = pkg_getclient( vrmgr_listen_fd, vrmgr_pkgswitch, bu_log, 0 );
 			vrmgr_ihost = host_lookup_of_fd(vrmgr_pc->pkc_fd);
 			if( vrmgr_ihost == IHOST_NULL )  {
-				rt_log("Unable to get hostname of VRMGR, abandoning it\n");
+				bu_log("Unable to get hostname of VRMGR, abandoning it\n");
 				FD_CLR(vrmgr_pc->pkc_fd, &select_list);
 				pkg_close( vrmgr_pc );
 				vrmgr_pc = 0;
 			} else {
-				rt_log("%s VRMGR link with %s, fd=%d\n",
+				bu_log("%s VRMGR link with %s, fd=%d\n",
 					stamp(),
 					vrmgr_ihost->ht_name, vrmgr_pc->pkc_fd);
 				FD_SET(vrmgr_pc->pkc_fd, &select_list);
@@ -369,7 +369,7 @@ char	*argv[];
 
 		/* Accept any new RTNODE connections */
 		if( rtsync_listen_fd > 0 && FD_ISSET(rtsync_listen_fd, &infds))  {
-			new_rtnode( pkg_getclient( rtsync_listen_fd, rtsync_pkgswitch, rt_log, 0 ) );
+			new_rtnode( pkg_getclient( rtsync_listen_fd, rtsync_pkgswitch, bu_log, 0 ) );
 		}
 
 		/* Process arrivals from VRMGR link */
@@ -382,7 +382,7 @@ char	*argv[];
 				vrmgr_ihost = IHOST_NULL;
 			} else {
 				if( pkg_process( vrmgr_pc ) < 0 )
-					rt_log("VRMGR pkg_process error\n");
+					bu_log("VRMGR pkg_process error\n");
 			}
 		}
 
@@ -390,7 +390,7 @@ char	*argv[];
 		for( i = MAX_NODES-1; i >= 0; i-- )  {
 			if( rtnodes[i].fd == 0 )  continue;
 			if( pkg_process( rtnodes[i].pkg ) < 0 ) {
-				rt_log("pkg_process error encountered (1)\n");
+				bu_log("pkg_process error encountered (1)\n");
 			}
 			if( ! FD_ISSET( rtnodes[i].fd, &infds ) )  continue;
 			if( pkg_suckin( rtnodes[i].pkg ) <= 0 )  {
@@ -399,7 +399,7 @@ char	*argv[];
 				continue;
 			}
 			if( pkg_process( rtnodes[i].pkg ) < 0 ) {
-				rt_log("pkg_process error encountered (2)\n");
+				bu_log("pkg_process error encountered (2)\n");
 			}
 		}
 
@@ -430,7 +430,7 @@ dispatcher()
 		ncpu += rtnodes[i].ncpus;
 		lowest_index = i;
 	}
-	rt_log("%s dispatcher() has %d cpus\n", stamp(), ncpu);
+	bu_log("%s dispatcher() has %d cpus\n", stamp(), ncpu);
 	if( ncpu <= 0 )  return 0;
 
 	/* Record starting time for this frame */
@@ -441,7 +441,7 @@ dispatcher()
 	for( i = MAX_NODES-1; i >= 0; i-- )  {
 		int	end_line;
 		int	count;
-		struct rt_vls	msg;
+		struct bu_vls	msg;
 
 		if( start_line >= height )  break;
 		if( rtnodes[i].fd <= 0 )  continue;
@@ -455,19 +455,19 @@ dispatcher()
 			if( end_line > height-1 )  end_line = height-1;
 		}
 
-		rt_vls_init( &msg );
-		rt_vls_printf( &msg, "%d %d %d %s\n",
+		bu_vls_init( &msg );
+		bu_vls_printf( &msg, "%d %d %d %s\n",
 			256,
 			start_line, end_line,
 			pending_pov+4 );
 		if( pkg_send_vls( RTSYNCMSG_POV, &msg, rtnodes[i].pkg ) < 0 )  {
 			drop_rtnode( i );
-			rt_vls_free(&msg);
+			bu_vls_free(&msg);
 			continue;	/* Don't update start_line */
 		}
-		rt_log("%s sending %d..%d to %s\n", stamp(), start_line, end_line, rtnodes[i].host->ht_name);
+		bu_log("%s sending %d..%d to %s\n", stamp(), start_line, end_line, rtnodes[i].host->ht_name);
 
-		rt_vls_free(&msg);
+		bu_vls_free(&msg);
 		start_line = end_line + 1;
 		rtnodes[i].busy = 1;
 	}
@@ -491,11 +491,11 @@ struct pkg_conn	*pcp;
 		return;
 
 	if( !(host = host_lookup_of_fd(pcp->pkc_fd)) )  {
-		rt_log("%s Unable to get host name of new connection, dropping\n", stamp() );
+		bu_log("%s Unable to get host name of new connection, dropping\n", stamp() );
 		pkg_close(pcp);
 		return;
 	}
-	rt_log("%s Connection from %s\n", stamp(), host->ht_name);
+	bu_log("%s Connection from %s\n", stamp(), host->ht_name);
 
 	for( i = MAX_NODES-1; i >= 0; i-- )  {
 		if( rtnodes[i].fd != 0 )  continue;
@@ -510,7 +510,7 @@ struct pkg_conn	*pcp;
 		rtnodes[i].host = host;
 		return;
 	}
-	rt_log("rtsync: too many rtnode clients.  My cup runneth over!\n");
+	bu_log("rtsync: too many rtnode clients.  My cup runneth over!\n");
 	pkg_close(pcp);
 }
 
@@ -521,7 +521,7 @@ void
 drop_rtnode( sub )
 int	sub;
 {
-	rt_log("%s Dropping %s\n", stamp(), rtnodes[sub].host->ht_name);
+	bu_log("%s Dropping %s\n", stamp(), rtnodes[sub].host->ht_name);
 
 	if( rtnodes[sub].pkg != PKC_NULL )  {
 		pkg_close( rtnodes[sub].pkg );
@@ -578,11 +578,11 @@ int	i;
 int	old;
 int	new;
 {
-	rt_log("%s %s %s --> %s\n", stamp(),
+	bu_log("%s %s %s --> %s\n", stamp(),
 		rtnodes[i].host->ht_name,
 		states[rtnodes[i].state], states[new] );
 	if( rtnodes[i].state != old )  {
-		rt_log("%s was in state %s, should have been %s, dropping\n",
+		bu_log("%s was in state %s, should have been %s, dropping\n",
 			rtnodes[i].host->ht_name,
 			states[rtnodes[i].state], states[old] );
 		drop_rtnode(i);
@@ -610,17 +610,17 @@ char			*buf;
 	char		*argv[MAXARGS];
 	int		argc;
 
-	rt_log("%s VRMGR host %s, role %s\n",
+	bu_log("%s VRMGR host %s, role %s\n",
 		stamp(),
 		vrmgr_ihost->ht_name, buf);
 
 	argc = rt_split_cmd( argv, MAXARGS, buf );
 	if( argc < 1 )  {
-		rt_log("bad role command\n");
+		bu_log("bad role command\n");
 	}
 
 	if( strcmp( argv[0], "master" ) != 0 )  {
-		rt_log("ERROR %s: bad role '%s', dropping vrmgr\n",
+		bu_log("ERROR %s: bad role '%s', dropping vrmgr\n",
 			vrmgr_ihost->ht_name, buf );
 		FD_CLR(vrmgr_pc->pkc_fd, &select_list);
 		pkg_close( vrmgr_pc );
@@ -643,7 +643,7 @@ char			*buf;
 {
 	register struct servers	*sp;
 
-	rt_log("%s VRMGR unexpectely got event '%s'", stamp(), buf );
+	bu_log("%s VRMGR unexpectely got event '%s'", stamp(), buf );
 	if( buf )  free(buf);
 }
 
@@ -678,7 +678,7 @@ char *buf;
 	for( i=0; pc->pkc_switch[i].pks_handler != NULL; i++ )  {
 		if( pc->pkc_switch[i].pks_type == pc->pkc_type )  break;
 	}
-	rt_log("rtsync: unable to handle %s message: len %d",
+	bu_log("rtsync: unable to handle %s message: len %d",
 		pc->pkc_switch[i].pks_title, pc->pkc_len);
 	*buf = '*';
 	if( buf )  free(buf);
@@ -694,7 +694,7 @@ char			*buf;
 {
 	register int	i;
 	int		ncpu;
-	struct rt_vls	cmd;
+	struct bu_vls	cmd;
 
 	ncpu = atoi(buf);
 	if( buf )  free(buf);
@@ -703,7 +703,7 @@ char			*buf;
 		if( rtnodes[i].pkg != pc )  continue;
 
 		/* Found it */
-		rt_log("%s %s ALIVE %d cpus\n", stamp(),
+		bu_log("%s %s ALIVE %d cpus\n", stamp(),
 			rtnodes[i].host->ht_name,
 			ncpu );
 
@@ -712,15 +712,15 @@ char			*buf;
 		if( change_state( i, STATE_NEWBORN, STATE_ALIVE ) < 0 )
 			return;
 
-		rt_vls_init( &cmd );
-		rt_vls_printf( &cmd, "%d %d %s", width, height, framebuffer );
+		bu_vls_init( &cmd );
+		bu_vls_printf( &cmd, "%d %d %s", width, height, framebuffer );
 
 		if( pkg_send_vls( RTSYNCMSG_OPENFB, &cmd, rtnodes[i].pkg ) < 0 )  {
-			rt_vls_free( &cmd );
+			bu_vls_free( &cmd );
 			drop_rtnode(i);
 		     	return;
 		}
-		rt_vls_free( &cmd );
+		bu_vls_free( &cmd );
 		return;
 	}
 	rt_bomb("ALIVE Message received from phantom pkg?\n");
@@ -773,7 +773,7 @@ char			*buf;
 		if( rtnodes[i].pkg != pc )  continue;
 
 		/* Found it */
-		rt_log("%s %s %s\n", stamp(),
+		bu_log("%s %s %s\n", stamp(),
 			rtnodes[i].host->ht_name, buf );
 		if( buf )  free(buf);
 
@@ -807,7 +807,7 @@ char			*buf;
 		if( rtnodes[i].pkg != pc )  continue;
 
 		/* Found it */
-		rt_log("%s %s %s\n", stamp(),
+		bu_log("%s %s %s\n", stamp(),
 			rtnodes[i].host->ht_name, buf );
 		if( buf )  free(buf);
 
@@ -850,7 +850,7 @@ char			*buf;
 		if( rtnodes[i].pkg != pc )  continue;
 
 		/* Found it */
-		rt_log("%s DONE %s\n", stamp(), rtnodes[i].host->ht_name );
+		bu_log("%s DONE %s\n", stamp(), rtnodes[i].host->ht_name );
 		rtnodes[i].busy = 0;
 		if( buf )  free(buf);
 		goto check_others;
@@ -871,7 +871,7 @@ check_others:
 	(void)gettimeofday( &time_end, (struct timezone *)NULL );
 	interval = tvdiff( &time_end, &time_start );
 	if( interval <= 0 )  interval = 999;
-	rt_log("%s Frame complete in %g seconds (%g fps)\n",
+	bu_log("%s Frame complete in %g seconds (%g fps)\n",
 		stamp(),
 		interval, 1.0/interval );
 }
@@ -910,12 +910,12 @@ char *buf;
 	if(print_on)  {
 		struct ihost	*ihp = host_lookup_of_fd(pc->pkc_fd);
 
-		rt_log("%s %s: %s",
+		bu_log("%s %s: %s",
 			stamp(),
 			ihp ? ihp->ht_name : "NONAME",
 			buf );
 		if( buf[strlen(buf)-1] != '\n' )
-			rt_log("\n");
+			bu_log("\n");
 	}
 	if(buf) (void)free(buf);
 }

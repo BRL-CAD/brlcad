@@ -45,7 +45,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "./ihost.h"
 
-struct rt_list	HostHead;
+struct bu_list	HostHead;
 
 /*
  *			G E T _ O U R _ H O S T N A M E
@@ -65,13 +65,13 @@ get_our_hostname()
 	struct hostent *hp;
 
 	/* Init list head here */
-	RT_LIST_INIT( &HostHead );
+	BU_LIST_INIT( &HostHead );
 
 	gethostname(temp, sizeof(temp));
 
 	hp = gethostbyname(temp);
 
-	return rt_strdup(hp->h_name);
+	return bu_strdup(hp->h_name);
 }
 
 /*
@@ -93,21 +93,21 @@ int		enter;
 
 	addr2 = gethostbyname(addr->h_name);
 	if( addr != addr2 )  {
-		rt_log("host_lookup_by_hostent(%s) got %s?\n",
+		bu_log("host_lookup_by_hostent(%s) got %s?\n",
 			addr->h_name, addr2->h_name );
 		return IHOST_NULL;
 	}
 	addr3 = gethostbyaddr(addr2->h_addr_list[0],
 	    sizeof(struct in_addr), addr2->h_addrtype);
 	if( addr != addr3 )  {
-		rt_log("host_lookup_by_hostent(%s) got %s?\n",
+		bu_log("host_lookup_by_hostent(%s) got %s?\n",
 			addr->h_name, addr3->h_name );
 		return IHOST_NULL;
 	}
 	/* Now addr->h_name points to the "formal" name of the host */
 
 	/* Search list for existing instance */
-	for( RT_LIST_FOR( ihp, ihost, &HostHead ) )  {
+	for( BU_LIST_FOR( ihp, ihost, &HostHead ) )  {
 		CK_IHOST(ihp);
 
 		if( strcmp( ihp->ht_name, addr->h_name ) != 0 )
@@ -135,11 +135,11 @@ char	*name;
 {
 	register struct ihost	*ihp;
 
-	GETSTRUCT( ihp, ihost );
+	BU_GETSTRUCT( ihp, ihost );
 	ihp->l.magic = IHOST_MAGIC;
 
 	/* Make private copy of host name -- callers have static buffers */
-	ihp->ht_name = rt_strdup( name );
+	ihp->ht_name = bu_strdup( name );
 
 	/* Default host parameters */
 	ihp->ht_flags = 0x0;
@@ -148,7 +148,7 @@ char	*name;
 	ihp->ht_path = "/tmp";
 
 	/* Add to linked list of known hosts */
-	RT_LIST_INSERT( &HostHead, &ihp->l );
+	BU_LIST_INSERT( &HostHead, &ihp->l );
 
 	return(ihp);
 }
@@ -182,12 +182,12 @@ int	enter;
 		(addr_tmp>> 8) & 0xff,
 		(addr_tmp    ) & 0xff );
 	if( enter == 0 )  {
-		rt_log("%s: unknown host\n", name);
+		bu_log("%s: unknown host\n", name);
 		return( IHOST_NULL );
 	}
 
 	/* See if this host has been previously entered by number */
-	for( RT_LIST_FOR( ihp, ihost, &HostHead ) )  {
+	for( BU_LIST_FOR( ihp, ihost, &HostHead ) )  {
 		CK_IHOST(ihp);
 		if( strcmp( ihp->ht_name, name ) == 0 )
 			return( ihp );
@@ -218,7 +218,7 @@ int	enter;
 		addr = gethostbyname(name);
 	}
 	if( addr == NULL )  {
-		rt_log("%s:  bad host\n", name);
+		bu_log("%s:  bad host\n", name);
 		return( IHOST_NULL );
 	}
 	return( host_lookup_by_hostent( addr, enter ) );

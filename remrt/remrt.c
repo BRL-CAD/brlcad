@@ -168,26 +168,26 @@ char *frame_script = NULL;
  *  The span is inclusive, from start up to and including stop.
  */
 struct list {
-	struct rt_list	l;
+	struct bu_list	l;
 	struct frame	*li_frame;
 	int		li_start;
 	int		li_stop;
 };
 
-struct rt_list 		FreeList;
+struct bu_list 		FreeList;
 
 #define LIST_NULL	((struct list*)0)
 #define LIST_MAGIC	0x4c494c49
 
-#define GET_LIST(p)	if( RT_LIST_IS_EMPTY( &FreeList ) )  { \
-				GETSTRUCT((p), list); \
+#define GET_LIST(p)	if( BU_LIST_IS_EMPTY( &FreeList ) )  { \
+				BU_GETSTRUCT((p), list); \
 				(p)->l.magic = LIST_MAGIC; \
 			} else { \
-				(p) = RT_LIST_FIRST(list, &FreeList); \
-				RT_LIST_DEQUEUE(&(p)->l); \
+				(p) = BU_LIST_FIRST(list, &FreeList); \
+				BU_LIST_DEQUEUE(&(p)->l); \
 			}
 
-#define FREE_LIST(p)	{ RT_LIST_APPEND( &FreeList, &(p)->l ); }
+#define FREE_LIST(p)	{ BU_LIST_APPEND( &FreeList, &(p)->l ); }
 
 /* -- */
 
@@ -202,16 +202,16 @@ struct frame {
 	/* options */
 	int		fr_width;	/* frame width (pixels) */
 	int		fr_height;	/* frame height (pixels) */
-	struct rt_list	fr_todo;	/* work still to be done */
+	struct bu_list	fr_todo;	/* work still to be done */
 	/* Timings */
 	struct timeval	fr_start;	/* start time */
 	struct timeval	fr_end;		/* end time */
 	long		fr_nrays;	/* rays fired so far */
 	double		fr_cpu;		/* CPU seconds used so far */
 	/* Current view */
-	struct rt_vls	fr_cmd;		/* RT options & command string */
+	struct bu_vls	fr_cmd;		/* RT options & command string */
 	int		fr_needgettree; /* Do we need a gettree message */
-	struct rt_vls	fr_after_cmd;	/* local commands, after frame done */
+	struct bu_vls	fr_after_cmd;	/* local commands, after frame done */
 };
 struct frame FrameHead;
 struct frame *FreeFrame;
@@ -222,10 +222,10 @@ struct frame *FreeFrame;
 
 #define CHECK_IT(_q,_el,_magic,_str)	\
 	if( !(_q) )  { \
-		rt_log("NULL %s in %s line %d\n", _str, __FILE__, __LINE__ ); \
+		bu_log("NULL %s in %s line %d\n", _str, __FILE__, __LINE__ ); \
 		abort(); \
 	} else if( (_q)->_el != _magic )  { \
-		rt_log("ERROR %s=x%x magic was=x%x s/b=x%x in %s line %d\n", \
+		bu_log("ERROR %s=x%x magic was=x%x s/b=x%x in %s line %d\n", \
 			_str, (_q), (_q)->_el, _magic, __FILE__, __LINE__ ); \
 		abort(); \
 	}
@@ -237,18 +237,18 @@ struct frame *FreeFrame;
 
 #define GET_FRAME(p)	{ \
 		if( ((p)=FreeFrame) == FRAME_NULL ) {\
-			GETSTRUCT(p, frame); \
+			BU_GETSTRUCT(p, frame); \
 		} else { \
 			FreeFrame = (p)->fr_forw; (p)->fr_forw = FRAME_NULL; \
 		} \
 		bzero( (char *)(p), sizeof(struct frame) ); \
 		(p)->fr_magic = FRAME_MAGIC; \
-		rt_vls_init( &(p)->fr_cmd ); \
-		rt_vls_init( &(p)->fr_after_cmd ); \
+		bu_vls_init( &(p)->fr_cmd ); \
+		bu_vls_init( &(p)->fr_after_cmd ); \
 	}
 #define FREE_FRAME(p)	{ \
-	rt_vls_free( &(p)->fr_cmd ); \
-	rt_vls_free( &(p)->fr_after_cmd ); \
+	bu_vls_free( &(p)->fr_cmd ); \
+	bu_vls_free( &(p)->fr_after_cmd ); \
 	(p)->fr_forw = FreeFrame; FreeFrame = (p); }
 
 /* Insert "new" partition in front of "old" frame element */
@@ -312,7 +312,7 @@ struct frame *FreeFrame;
 
 struct servers {
 	struct pkg_conn	*sr_pc;		/* PKC_NULL means slot not in use */
-	struct rt_list	sr_work;
+	struct bu_list	sr_work;
 	struct ihost	*sr_host;	/* description of this host */
 	int		sr_lump;	/* # lines to send at once */
 	int		sr_state;	/* Server state, SRST_xxx */
@@ -505,27 +505,27 @@ char	**argv;
 
 	start_helper();
 
-	RT_LIST_INIT( &FreeList );
+	BU_LIST_INIT( &FreeList );
 	FrameHead.fr_forw = FrameHead.fr_back = &FrameHead;
 	for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
-		RT_LIST_INIT( &sp->sr_work );
+		BU_LIST_INIT( &sp->sr_work );
 		sp->sr_pc = PKC_NULL;
 		sp->sr_curframe = FRAME_NULL;
 	}
 
 	/* Listen for our PKG connections */
-	if( (tcp_listen_fd = pkg_permserver("rtsrv", "tcp", 8, rt_log)) < 0 )  {
+	if( (tcp_listen_fd = pkg_permserver("rtsrv", "tcp", 8, bu_log)) < 0 )  {
 		int	i;
 		char	num[8];
 		/* Do it by the numbers */
 		for(i=0; i<10; i++ )  {
 			sprintf( num, "%d", 4446+i );
-			if( (tcp_listen_fd = pkg_permserver(num, "tcp", 8, rt_log)) < 0 )
+			if( (tcp_listen_fd = pkg_permserver(num, "tcp", 8, bu_log)) < 0 )
 				continue;
 			break;
 		}
 		if( i >= 10 )  {
-			rt_log("Unable to find a port to listen on\n");
+			bu_log("Unable to find a port to listen on\n");
 			exit(1);
 		}
 	}
@@ -535,8 +535,8 @@ char	**argv;
 
 	if( argc <= 1 )  {
 		(void)signal( SIGINT, SIG_IGN );
-		rt_log("%s Interactive REMRT on %s\n", stamp(), our_hostname );
-		rt_log("%s Listening at port %d\n", stamp(), pkg_permport);
+		bu_log("%s Interactive REMRT on %s\n", stamp(), our_hostname );
+		bu_log("%s Listening at port %d\n", stamp(), pkg_permport);
 		FD_ZERO(&clients);
 		FD_SET(fileno(stdin), &clients);
 
@@ -556,10 +556,10 @@ char	**argv;
 		 * Might want to see if any work remains, and if so,
 		 * record it somewhere
 		 */
-		rt_log("%s Out of clients\n", stamp());
+		bu_log("%s Out of clients\n", stamp());
 	} else {
-		rt_log("%s Automatic REMRT on %s\n", stamp(), our_hostname );
-		rt_log("%s Listening at port %d, reading script on stdin\n",
+		bu_log("%s Automatic REMRT on %s\n", stamp(), our_hostname );
+		bu_log("%s Listening at port %d, reading script on stdin\n",
 			stamp(), pkg_permport);
 		FD_ZERO(&clients);
 
@@ -595,7 +595,7 @@ char	**argv;
 			GET_FRAME(fr);
 			prep_frame(fr);
 			sprintf(buf, "ae %g %g;", azimuth, elevation);
-			rt_vls_strcat( &fr->fr_cmd, buf);
+			bu_vls_strcat( &fr->fr_cmd, buf);
 			if( create_outputfilename( fr ) < 0 )  {
 				FREE_FRAME(fr);
 			} else {
@@ -611,7 +611,7 @@ char	**argv;
 		/* Compute until no work remains */
 		running = 1;
 		do_work(1);		/* auto start servers */
-		rt_log("%s Task accomplished\n", stamp() );
+		bu_log("%s Task accomplished\n", stamp() );
 	}
 	return(0);			/* exit(0); */
 }
@@ -659,7 +659,7 @@ int	auto_start;
 			cur_serv++;
 		}
 		if( cur_serv == 0 && prev_serv > cur_serv )  {
-			rt_log("%s *** All servers down\n", stamp() );
+			bu_log("%s *** All servers down\n", stamp() );
 			fflush(stdout);
 		}
 		prev_serv = cur_serv;
@@ -736,13 +736,13 @@ int waittime;
 	}
 	if( val==0 )  {
 		/* At this point, ibits==0 */
-		if(rem_debug>1) rt_log("%s select timed out after %d seconds\n", stamp(), waittime);
+		if(rem_debug>1) bu_log("%s select timed out after %d seconds\n", stamp(), waittime);
 		return;
 	}
 
 	/* Third, accept any pending connections */
 	if( FD_ISSET(tcp_listen_fd, &ifdset) )  {
-		pc = pkg_getclient(tcp_listen_fd, pkgswitch, rt_log, 1);
+		pc = pkg_getclient(tcp_listen_fd, pkgswitch, bu_log, 1);
 		if( pc != PKC_NULL && pc != PKC_ERROR )
 			addclient(pc);
 		FD_CLR( tcp_listen_fd, &ifdset );
@@ -810,19 +810,19 @@ struct pkg_conn *pc;
 
 	if( (ihp = host_lookup_by_addr( &from, 1 )) == IHOST_NULL )  {
 		/* Disaster */
-		rt_log("abandoning this unknown server!!\n");
+		bu_log("abandoning this unknown server!!\n");
 		close( fd );
 		/* Maybe free the pkg struct? */
 		return;
 	}
-	if( rem_debug )  rt_log("%s addclient(%s)\n", stamp(), ihp->ht_name);
+	if( rem_debug )  bu_log("%s addclient(%s)\n", stamp(), ihp->ht_name);
 
 	FD_SET( fd, &clients );
 
 	sp = &servers[fd];
 	bzero( (char *)sp, sizeof(*sp) );
 	sp->sr_pc = pc;
-	RT_LIST_INIT( &sp->sr_work );
+	BU_LIST_INIT( &sp->sr_work );
 	sp->sr_state = SRST_NEW;
 	sp->sr_curframe = FRAME_NULL;
 	sp->sr_lump = 32;
@@ -852,7 +852,7 @@ char	*why;
 	int	oldstate;
 
 	if( sp == SERVERS_NULL || sp->sr_host == IHOST_NULL )  {
-		rt_log("drop_server(x%x), sr_host=0\n", sp);
+		bu_log("drop_server(x%x), sr_host=0\n", sp);
 		return;
 	}
 	oldstate = sp->sr_state;
@@ -863,20 +863,20 @@ char	*why;
 	 * This keeps the one-shot commands from blathering here.
 	 */
 	if( oldstate != SRST_NEW )  {
-		rt_log("%s dropping %s (%s)\n",
+		bu_log("%s dropping %s (%s)\n",
 			 stamp(), sp->sr_host->ht_name, why);
 	}
 
 	pc = sp->sr_pc;
 	if( pc == PKC_NULL )  {
-		rt_log("drop_server(x%x), sr_pc=0\n", sp);
+		bu_log("drop_server(x%x), sr_pc=0\n", sp);
 		return;
 	}
 
 	/* Clear the bits from "clients" now, to prevent further select()s */
 	fd = pc->pkc_fd;
 	if( fd <= 3 || fd >= MAXSERVERS )  {
-		rt_log("drop_server: fd=%d is unreasonable, forget it!\n", fd);
+		bu_log("drop_server: fd=%d is unreasonable, forget it!\n", fd);
 		return;
 	}
 	FD_CLR(sp->sr_pc->pkc_fd, &clients);
@@ -884,16 +884,16 @@ char	*why;
 	if( oldstate != SRST_READY && oldstate != SRST_NEED_TREE )  return;
 
 	/* Need to requeue any work that was in progress */
-	while( RT_LIST_WHILE( lp, list, &sp->sr_work ) )  {
+	while( BU_LIST_WHILE( lp, list, &sp->sr_work ) )  {
 		fr = lp->li_frame;
 		CHECK_FRAME(fr);
-		RT_LIST_DEQUEUE( &lp->l );
-		rt_log("%s requeueing fr%d %d..%d\n",
+		BU_LIST_DEQUEUE( &lp->l );
+		bu_log("%s requeueing fr%d %d..%d\n",
 			stamp(),
 			fr->fr_number,
 			lp->li_start, lp->li_stop);
 		/* Stick it at the head */
-		RT_LIST_APPEND( &fr->fr_todo, &lp->l );
+		BU_LIST_APPEND( &fr->fr_todo, &lp->l );
 	}
 }
 
@@ -924,10 +924,10 @@ struct timeval	*nowp;
 	/* Before seeking, note current (brief) status */
 	cd_stat( 0, (char **)0 );
 
-	rt_log("%s Seeking servers to start\n", stamp() );
+	bu_log("%s Seeking servers to start\n", stamp() );
 	hackers_night = is_hackers_night( nowp );
 	night = is_night( nowp );
-	for( RT_LIST_FOR( ihp, ihost, &HostHead ) )  {
+	for( BU_LIST_FOR( ihp, ihost, &HostHead ) )  {
 		CK_IHOST(ihp);
 
 		/* Skip hosts which are not eligible for add/drop */
@@ -968,7 +968,7 @@ struct timeval	*nowp;
 			/* This host is a server */
 			if( add == 0 )  {
 				/* Drop this host -- out of time range */
-				rt_log("%s Auto dropping %s:  out of time range\n",
+				bu_log("%s Auto dropping %s:  out of time range\n",
 					stamp(),
 					ihp->ht_name );
 				drop_server( sp, "outside time-of-day limits for this server" );
@@ -980,7 +980,7 @@ struct timeval	*nowp;
 
 		/* This host is not presently in contact */
 		if( add && !(ihp->ht_flags & HT_HOLD))  {
-			rt_log("%s Auto adding %s\n", stamp(), ihp->ht_name);
+			bu_log("%s Auto adding %s\n", stamp(), ihp->ht_name);
 			add_host( ihp );
 		}
 
@@ -1066,29 +1066,29 @@ FILE	*fp;
 	char		*nsbuf;
 	int		argc;
 	char		*argv[64];
-	struct rt_vls	prelude;
-	struct rt_vls	body;
-	struct rt_vls	finish;
+	struct bu_vls	prelude;
+	struct bu_vls	body;
+	struct bu_vls	finish;
 	int		frame = 0;
 	struct frame	*fr;
 
-	rt_log("%s Starting to scan animation script\n", stamp() );
+	bu_log("%s Starting to scan animation script\n", stamp() );
 
-	rt_vls_init( &prelude );
-	rt_vls_init( &body );
-	rt_vls_init( &finish );
+	bu_vls_init( &prelude );
+	bu_vls_init( &body );
+	bu_vls_init( &finish );
 
 	/* Once only, collect up any prelude */
 	while( (buf = rt_read_cmd( fp )) != (char *)0 )  {
 		if( strncmp( buf, "start", 5 ) == 0 )  break;
 
-		rt_vls_strcat( &prelude, buf );
-		rt_vls_strcat( &prelude, ";" );
+		bu_vls_strcat( &prelude, buf );
+		bu_vls_strcat( &prelude, ";" );
 		rt_free( buf, "prelude line" );
 	}
 	if( buf == (char *)0 )  {
-		rt_log("unexpected EOF while reading script for first frame 'start'\n");
-		rt_vls_free( &prelude );
+		bu_log("unexpected EOF while reading script for first frame 'start'\n");
+		bu_vls_free( &prelude );
 		return;
 	}
 
@@ -1108,12 +1108,12 @@ FILE	*fp;
 			if( strncmp( ebuf, "tree", 4 ) == 0 ) {
 				needtree=1;
 			}
-			rt_vls_strcat( &body, ebuf );
-			rt_vls_strcat( &body, ";" );
+			bu_vls_strcat( &body, ebuf );
+			bu_vls_strcat( &body, ";" );
 			rt_free( ebuf, "script body line" );
 		}
 		if( ebuf == (char *)0 )  {
-			rt_log("unexpected EOF while reading script for frame %d\n", frame);
+			bu_log("unexpected EOF while reading script for frame %d\n", frame);
 			break;
 		}
 
@@ -1122,25 +1122,25 @@ FILE	*fp;
 			if( strncmp( nsbuf, "start", 5 ) == 0 )  {
 				break;
 			}
-			rt_vls_strcat( &finish, nsbuf );
-			rt_vls_strcat( &finish, ";" );
+			bu_vls_strcat( &finish, nsbuf );
+			bu_vls_strcat( &finish, ";" );
 			rt_free( nsbuf, "script trailer line" );
 		}
 
 		/* buf[] has saved "start" line in it */
 		argc = rt_split_cmd( argv, 64, buf );
 		if( argc < 2 )  {
-			rt_log("bad 'start' line\n");
+			bu_log("bad 'start' line\n");
 			rt_free( buf, "bad start line" );
 			goto out;
 		}
 		frame = atoi( argv[1] );
 		if( frame < desiredframe )  {
-			rt_vls_free( &body );
+			bu_vls_free( &body );
 			goto bad;
 		}
 		if( finalframe >= 0 && frame > finalframe ) {
-			rt_vls_free( &body );
+			bu_vls_free( &body );
 			goto bad;
 		}
 		/* Might see if frame file exists 444 mode, then skip also */
@@ -1148,9 +1148,9 @@ FILE	*fp;
 		fr->fr_number = frame;
 		fr->fr_needgettree = needtree;
 		prep_frame(fr);
-		rt_vls_vlscat( &fr->fr_cmd, &prelude );
-		rt_vls_vlscatzap( &fr->fr_cmd, &body );
-		rt_vls_vlscatzap( &fr->fr_after_cmd, &finish );
+		bu_vls_vlscat( &fr->fr_cmd, &prelude );
+		bu_vls_vlscatzap( &fr->fr_cmd, &body );
+		bu_vls_vlscatzap( &fr->fr_after_cmd, &finish );
 		if( create_outputfilename( fr ) < 0 )  {
 			FREE_FRAME(fr);
 		} else {
@@ -1162,12 +1162,12 @@ bad:
 		nsbuf = (char *)0;
 	}
 out:	
-	rt_vls_free( &prelude );
-	rt_vls_free( &body );
-	rt_vls_free( &finish );
+	bu_vls_free( &prelude );
+	bu_vls_free( &body );
+	bu_vls_free( &finish );
 
 	/* For a few hundred frames, it all can take a little while */
-	rt_log("%s Animation script loaded\n", stamp() );
+	bu_log("%s Animation script loaded\n", stamp() );
 }
 
 /*
@@ -1192,7 +1192,7 @@ register char *str;
 	else
 		cnt = sscanf( str, "%d", &ret );
 	if( cnt != 1 )
-		rt_log("string2int(%s) = %d?\n", str, ret );
+		bu_log("string2int(%s) = %d?\n", str, ret );
 	return(ret);
 }
 
@@ -1245,7 +1245,7 @@ FILE *fp;
 	while( pos[i-1]=='\n' && pos[i-2]=='\\' )  {
 		pos += i-2;	/* zap NL and backslash */
 		*pos = '\0';
-		rt_log("-> "); (void)fflush(stderr);
+		bu_log("-> "); (void)fflush(stderr);
 		(void)fgets( pos, sizeof(buf)-strlen(buf), fp );
 		i = strlen(pos);
 	}
@@ -1296,7 +1296,7 @@ register struct frame *fr;
 	fr->fr_width = width;
 	fr->fr_height = height;
 
-	rt_vls_trunc( &fr->fr_cmd, 0 );	/* Start fresh */
+	bu_vls_trunc( &fr->fr_cmd, 0 );	/* Start fresh */
 	sprintf(buf, "opt -w%d -n%d -H%d -p%g -U%d -J%x -A%g -l%d -E%g -x%x -X%x -T%e/%e",
 		fr->fr_width, fr->fr_height,
 		hypersample, rt_perspective,
@@ -1306,14 +1306,14 @@ register struct frame *fr;
 		rt_g.debug, rdebug,
 		rt_dist_tol, rt_perp_tol
 	);
-	rt_vls_strcat( &fr->fr_cmd, buf );
-	if( interactive )  rt_vls_strcat( &fr->fr_cmd, " -I");
-	if( benchmark )  rt_vls_strcat( &fr->fr_cmd, " -B");
+	bu_vls_strcat( &fr->fr_cmd, buf );
+	if( interactive )  bu_vls_strcat( &fr->fr_cmd, " -I");
+	if( benchmark )  bu_vls_strcat( &fr->fr_cmd, " -B");
 	if( aspect != 1.0 )  {
 		sprintf(buf, " -V%g", aspect);
-		rt_vls_strcat( &fr->fr_cmd, buf );
+		bu_vls_strcat( &fr->fr_cmd, buf );
 	}
-	rt_vls_strcat( &fr->fr_cmd, ";" );
+	bu_vls_strcat( &fr->fr_cmd, ";" );
 
 	fr->fr_start.tv_sec = fr->fr_end.tv_sec = 0;
 	fr->fr_start.tv_usec = fr->fr_end.tv_usec = 0;
@@ -1321,12 +1321,12 @@ register struct frame *fr;
 	fr->fr_cpu = 0.0;
 
 	/* Build work list */
-	RT_LIST_INIT( &fr->fr_todo );
+	BU_LIST_INIT( &fr->fr_todo );
 	GET_LIST(lp);
 	lp->li_frame = fr;
 	lp->li_start = 0;
 	lp->li_stop = fr->fr_width*fr->fr_height-1;	/* last pixel # */
-	RT_LIST_INSERT( &fr->fr_todo, &lp->l );
+	BU_LIST_INSERT( &fr->fr_todo, &lp->l );
 }
 
 /*
@@ -1337,15 +1337,15 @@ do_a_frame()
 {
 	register struct frame *fr;
 	if( running )  {
-		rt_log("already running, please wait or STOP\n");
+		bu_log("already running, please wait or STOP\n");
 		return;
 	}
 	if( file_fullname[0] == '\0' )  {
-		rt_log("need LOAD before GO\n");
+		bu_log("need LOAD before GO\n");
 		return;
 	}
 	if( (fr = FrameHead.fr_forw) == &FrameHead )  {
-		rt_log("No frames to do!\n");
+		bu_log("No frames to do!\n");
 		return;
 	}
 	CHECK_FRAME(fr);
@@ -1382,7 +1382,7 @@ register struct frame	*fr;
 
 	CHECK_FRAME(fr);
 
-	rt_log("%s Scanning %s for non-black pixels\n", stamp(),
+	bu_log("%s Scanning %s for non-black pixels\n", stamp(),
 		fr->fr_filename );
 	if( (fp = fopen( fr->fr_filename, "r" )) == NULL )  {
 		perror( fr->fr_filename );
@@ -1415,14 +1415,14 @@ register struct frame	*fr;
 			/* non-black */
 			last = pno-1;
 		}
-		rt_log("%s Deleting non-black pixel range %d to %d inclusive\n",
+		bu_log("%s Deleting non-black pixel range %d to %d inclusive\n",
 			stamp(),
 			first, last );
 		list_remove( &(fr->fr_todo), first, last );
 		nspans++;
 		npix += last-first+1;
 	}
-	rt_log("%s Scanning %s complete, %d non-black spans, %d non-black pixels\n",
+	bu_log("%s Scanning %s complete, %d non-black spans, %d non-black pixels\n",
 		stamp(), fr->fr_filename, nspans, npix );
 	return 0;
 }
@@ -1456,7 +1456,7 @@ register struct frame	*fr;
 		sprintf( name, "remrt.pix.%d", fr->fr_number );
 		fr->fr_tempfile = 1;
 	}
-	fr->fr_filename = rt_strdup( name );
+	fr->fr_filename = bu_strdup( name );
 
 	/*
 	 *  There are several cases:
@@ -1506,23 +1506,23 @@ register struct frame *fr;
 	(void)gettimeofday( &fr->fr_end, (struct timezone *)0 );
 	delta = tvdiff( &fr->fr_end, &fr->fr_start);
 	if( delta < 0.0001 )  delta=0.0001;
-	rt_log("%s Frame %d DONE: %g elapsed sec, %d rays/%g cpu sec\n",
+	bu_log("%s Frame %d DONE: %g elapsed sec, %d rays/%g cpu sec\n",
 		stamp(),
 		fr->fr_number,
 		delta,
 		fr->fr_nrays,
 		fr->fr_cpu );
-	rt_log("%s  RTFM=%g rays/sec (%g rays/cpu sec)\n",
+	bu_log("%s  RTFM=%g rays/sec (%g rays/cpu sec)\n",
 		stamp(),
 		fr->fr_nrays/delta,
 		fr->fr_nrays/fr->fr_cpu );
 
 	/* Do any after-frame commands */
-	if( rt_vls_strlen( &fr->fr_after_cmd ) > 0 )  {
-		rt_log("running after_cmd='%s'\n",
-			RT_VLS_ADDR(&fr->fr_after_cmd) );
+	if( bu_vls_strlen( &fr->fr_after_cmd ) > 0 )  {
+		bu_log("running after_cmd='%s'\n",
+			bu_vls_addr(&fr->fr_after_cmd) );
 		(void)rt_do_cmd( (struct rt_i *)0,
-			RT_VLS_ADDR(&fr->fr_after_cmd), cmd_tab );
+			bu_vls_addr(&fr->fr_after_cmd), cmd_tab );
 	}
 
 	/* Run global end-of-frame script from 'EOFrame' in .remrtrc file */
@@ -1532,7 +1532,7 @@ register struct frame *fr;
 		    20); /* spaces and frame number */
 		(void) sprintf(cmd,"%s %s %d",frame_script,fr->fr_filename,
 		    fr->fr_number);
-		if(rem_debug) rt_log("%s %s\n", stamp(), cmd);
+		if(rem_debug) bu_log("%s %s\n", stamp(), cmd);
 		(void) system(cmd);
 		(void) free(cmd);
 	}
@@ -1568,8 +1568,8 @@ register struct frame	*fr;
 	 *  Need to remove any pending work.
 	 *  What about work already assigned that will dribble in?
 	 */
-	while( RT_LIST_WHILE( lp, list, &fr->fr_todo ) )  {
-		RT_LIST_DEQUEUE( &lp->l );
+	while( BU_LIST_WHILE( lp, list, &fr->fr_todo ) )  {
+		BU_LIST_DEQUEUE( &lp->l );
 		FREE_LIST(lp);
 	}
 
@@ -1606,12 +1606,12 @@ register struct frame	*fr;
 
 	CHECK_FRAME(fr);
 
-	if( RT_LIST_NON_EMPTY( &fr->fr_todo ) )
+	if( BU_LIST_NON_EMPTY( &fr->fr_todo ) )
 		return(1);		/* more work still to be sent */
 
 	for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 		if( sp->sr_pc == PKC_NULL )  continue;
-		for( RT_LIST_FOR( lp, list, &sp->sr_work ) )  {
+		for( BU_LIST_FOR( lp, list, &sp->sr_work ) )  {
 			if( fr != lp->li_frame )  continue;
 			return(0);		/* nope, still more work */
 		}
@@ -1635,7 +1635,7 @@ all_servers_idle()
 		if( sp->sr_pc == PKC_NULL )  continue;
 		if( sp->sr_state != SRST_READY && 
 		    sp->sr_state != SRST_NEED_TREE )  continue;
-		if( RT_LIST_IS_EMPTY( &sp->sr_work ) )  continue;
+		if( BU_LIST_IS_EMPTY( &sp->sr_work ) )  continue;
 		return(0);		/* nope, still more work */
 	}
 	return(1);			/* All done */
@@ -1658,7 +1658,7 @@ all_done()
 
 	for( fr = FrameHead.fr_forw; fr != &FrameHead; fr = fr->fr_forw)  {
 		CHECK_FRAME(fr);
-		if( RT_LIST_IS_EMPTY( &fr->fr_todo ) )
+		if( BU_LIST_IS_EMPTY( &fr->fr_todo ) )
 			continue;
 		return(0);		/* nope, still more work */
 	}
@@ -1724,7 +1724,7 @@ struct timeval	*nowp;
 
 		case SRST_CLOSING:
 			/* Handle final closing */
-			if(rem_debug>1) rt_log("%s Final close on %s\n", stamp(), sp->sr_host->ht_name);
+			if(rem_debug>1) bu_log("%s Final close on %s\n", stamp(), sp->sr_host->ht_name);
 			FD_CLR( sp->sr_pc->pkc_fd, &clients );
 			pkg_close(sp->sr_pc);
 
@@ -1740,7 +1740,7 @@ struct timeval	*nowp;
 	fr = FrameHead.fr_forw;
 	while( fr && fr != &FrameHead )  {
 		CHECK_FRAME(fr);
-		if( RT_LIST_NON_EMPTY( &fr->fr_todo ) )
+		if( BU_LIST_NON_EMPTY( &fr->fr_todo ) )
 			goto next_frame;	/* unassigned work remains */
 
 		if( this_frame_done( fr ) )  {
@@ -1757,7 +1757,7 @@ next_frame: ;
 	if( !running )  goto out;
 	if( all_done() )  {
 		running = 0;
-		rt_log("%s All work done!\n", stamp() );
+		bu_log("%s All work done!\n", stamp() );
 		if( detached )  exit(0);
 		goto out;
 	}
@@ -1769,7 +1769,7 @@ top:
 		nxt_frame=0;
 		do {
 			another_pass = 0;
-			if( RT_LIST_IS_EMPTY( &fr->fr_todo ) )
+			if( BU_LIST_IS_EMPTY( &fr->fr_todo ) )
 				break;	/* none waiting here */
 
 			/*
@@ -1799,7 +1799,7 @@ top:
 		} while( !nxt_frame && another_pass > 0 );
 	}
 	if (nxt_frame == 1 && work_allocate_method > 0) {
-		rt_log("%s Change work allocation method (%s to %s)\n",
+		bu_log("%s Change work allocation method (%s to %s)\n",
 		    stamp(), allocate_method[work_allocate_method],
 		    allocate_method[work_allocate_method-1]);
 		work_allocate_method--;
@@ -1891,7 +1891,7 @@ struct timeval		*nowp;
 	/* Sanity check */
 	if( fr->fr_filename == (char *)0 ||
 	    fr->fr_filename[0] == '\0' )  {
-		rt_log("task_server: fr %d: null filename!\n",
+		bu_log("task_server: fr %d: null filename!\n",
 			fr->fr_number);
 		destroy_frame( fr );	/* will dequeue */
 		return(-1);		/* restart scan */
@@ -1910,7 +1910,7 @@ struct timeval		*nowp;
 	if( server_q_len(sp) > 0 &&
 	    sp->sr_sendtime.tv_sec > 0 && 
 	    tvdiff( nowp, &sp->sr_sendtime ) > TARDY_SERVER_INTERVAL )  {
-		rt_log("%s %s: *TARDY*\n", stamp(), sp->sr_host->ht_name);
+		bu_log("%s %s: *TARDY*\n", stamp(), sp->sr_host->ht_name);
 		drop_server( sp, "tardy" );
 		return(0);	/* not worth giving another assignment */
 	}
@@ -1918,7 +1918,7 @@ struct timeval		*nowp;
 	if( server_q_len(sp) >= N_SERVER_ASSIGNMENTS )
 		return(0);	/* plenty busy */
 
-	if( RT_LIST_IS_EMPTY( &fr->fr_todo ) )  {
+	if( BU_LIST_IS_EMPTY( &fr->fr_todo ) )  {
 		/*  No more work to assign in this frame,
 		 *  on next pass, caller should advance to next frame.
 		 */
@@ -1998,13 +1998,13 @@ struct timeval		*nowp;
 	if (lump > maxlump) lump=maxlump;
 	sp->sr_lump = lump;
 
-	lp = RT_LIST_FIRST( list, &fr->fr_todo );
+	lp = BU_LIST_FIRST( list, &fr->fr_todo );
 	a = lp->li_start;
 	b = a+sp->sr_lump-1;	/* work increment */
 	if( b >= lp->li_stop )  {
 		b = lp->li_stop;
 		sp->sr_lump = b-a+1;	/* Indicate short assignment */
-		RT_LIST_DEQUEUE( &lp->l );
+		BU_LIST_DEQUEUE( &lp->l );
 		FREE_LIST( lp );
 		lp = LIST_NULL;
 	} else
@@ -2015,7 +2015,7 @@ struct timeval		*nowp;
 	lp->li_frame = fr;
 	lp->li_start = a;
 	lp->li_stop = b;
-	RT_LIST_INSERT( &sp->sr_work, &lp->l );
+	BU_LIST_INSERT( &sp->sr_work, &lp->l );
 	send_do_lines( sp, a, b, fr->fr_number );
 
 	/* See if server will need more assignments */
@@ -2037,7 +2037,7 @@ register struct servers	*sp;
 	register int		count;
 
 	count = 0;
-	for( RT_LIST_FOR( lp, list, &sp->sr_work ) )  {
+	for( BU_LIST_FOR( lp, list, &sp->sr_work ) )  {
 		count++;
 	}
 	return(count);
@@ -2067,32 +2067,32 @@ register struct frame *fr;
 	/* Visible part is from -1 to +1 in view space */
 	if( fscanf( fp, "%s", number ) != 1 )  goto eof;
 	sprintf( cmd, "viewsize %s; eye_pt ", number );
-	rt_vls_strcat( &(fr->fr_cmd), cmd );
+	bu_vls_strcat( &(fr->fr_cmd), cmd );
 
 	for( i=0; i<3; i++ )  {
 		if( fscanf( fp, "%s", number ) != 1 )  goto out;
 		sprintf( cmd, "%s ", number );
-		rt_vls_strcat( &fr->fr_cmd, cmd );
+		bu_vls_strcat( &fr->fr_cmd, cmd );
 	}
 
 	sprintf( cmd, "; viewrot " );
-	rt_vls_strcat( &fr->fr_cmd, cmd );
+	bu_vls_strcat( &fr->fr_cmd, cmd );
 
 	for( i=0; i < 16; i++ )  {
 		if( fscanf( fp, "%s", number ) != 1 )  goto out;
 		sprintf( cmd, "%s ", number );
-		rt_vls_strcat( &fr->fr_cmd, cmd );
+		bu_vls_strcat( &fr->fr_cmd, cmd );
 	}
-	rt_vls_strcat( &fr->fr_cmd, "; ");
+	bu_vls_strcat( &fr->fr_cmd, "; ");
 
 	if( feof(fp) ) {
 eof:
-		rt_log("read_matrix: EOF on old style frame file.\n");
+		bu_log("read_matrix: EOF on old style frame file.\n");
 		return(-1);
 	}
 	return(0);			/* OK */
 out:
-	rt_log("read_matrix:  unable to parse old style entry\n");
+	bu_log("read_matrix:  unable to parse old style entry\n");
 	return(-1);
 }
 
@@ -2109,7 +2109,7 @@ char *buf;
 	for( i=0; pc->pkc_switch[i].pks_handler != NULL; i++ )  {
 		if( pc->pkc_switch[i].pks_type == pc->pkc_type )  break;
 	}
-	rt_log("ctl: unable to handle %s message: len %d",
+	bu_log("ctl: unable to handle %s message: len %d",
 		pc->pkc_switch[i].pks_title, pc->pkc_len);
 	*buf = '*';
 	(void)free(buf);
@@ -2130,17 +2130,17 @@ char *buf;
 	register struct servers *sp;
 
 	sp = &servers[pc->pkc_fd];
-	rt_log("%s %s dirbuild OK (%s)\n",
+	bu_log("%s %s dirbuild OK (%s)\n",
 		stamp(),
 		sp->sr_host->ht_name,
 		buf );
 	if(buf) (void)free(buf);
 	if( sp->sr_pc != pc )  {
-		rt_log("unexpected MSG_DIRBUILD_REPLY from fd %d\n", pc->pkc_fd);
+		bu_log("unexpected MSG_DIRBUILD_REPLY from fd %d\n", pc->pkc_fd);
 		return;
 	}
 	if( sp->sr_state != SRST_DOING_DIRBUILD )  {
-		rt_log("MSG_DIRBUILD_REPLY in state %d?\n", sp->sr_state);
+		bu_log("MSG_DIRBUILD_REPLY in state %d?\n", sp->sr_state);
 		drop_server( sp, "wrong state" );
 		return;
 	}
@@ -2162,17 +2162,17 @@ char *buf;
 	register struct servers *sp;
 
 	sp = &servers[pc->pkc_fd];
-	rt_log("%s %s gettrees OK (%s)\n",
+	bu_log("%s %s gettrees OK (%s)\n",
 		stamp(),
 		sp->sr_host->ht_name,
 		buf );
 	if(buf) (void)free(buf);
 	if( sp->sr_pc != pc )  {
-		rt_log("unexpected MSG_GETTREES_REPLY from fd %d\n", pc->pkc_fd);
+		bu_log("unexpected MSG_GETTREES_REPLY from fd %d\n", pc->pkc_fd);
 		return;
 	}
 	if( sp->sr_state != SRST_DOING_GETTREES )  {
-		rt_log("MSG_GETTREES_REPLY in state %s?\n",
+		bu_log("MSG_GETTREES_REPLY in state %s?\n",
 			state_to_string(sp->sr_state) );
 		drop_server( sp, "wrong state" );
 		return;
@@ -2189,12 +2189,12 @@ register struct pkg_conn *pc;
 char *buf;
 {
 	if(print_on)  {
-		rt_log("%s %s: %s",
+		bu_log("%s %s: %s",
 			stamp(),
 			servers[pc->pkc_fd].sr_host->ht_name,
 			buf );
 		if( buf[strlen(buf)-1] != '\n' )
-			rt_log("\n");
+			bu_log("\n");
 	}
 	if(buf) (void)free(buf);
 }
@@ -2211,14 +2211,14 @@ char	*buf;
 
 	sp = &servers[pc->pkc_fd];
 	if( strcmp( PROTOCOL_VERSION, buf ) != 0 )  {
-		rt_log("ERROR %s: protocol version mis-match\n",
+		bu_log("ERROR %s: protocol version mis-match\n",
 			sp->sr_host->ht_name);
-		rt_log("  local='%s'\n", PROTOCOL_VERSION );
-		rt_log(" remote='%s'\n", buf );
+		bu_log("  local='%s'\n", PROTOCOL_VERSION );
+		bu_log(" remote='%s'\n", buf );
 		drop_server( sp, "version mismatch" );
 	} else {
 		if( sp->sr_state != SRST_NEW )  {
-			rt_log("NOTE %s:  VERSION message unexpected\n",
+			bu_log("NOTE %s:  VERSION message unexpected\n",
 				sp->sr_host->ht_name);
 		}
 		sp->sr_state = SRST_VERSOK;
@@ -2237,7 +2237,7 @@ char	*buf;
 	register struct servers	*sp;
 
 	sp = &servers[pc->pkc_fd];
-	rt_log("%s %s: cmd '%s'\n", stamp(), sp->sr_host->ht_name, buf );
+	bu_log("%s %s: cmd '%s'\n", stamp(), sp->sr_host->ht_name, buf );
 	(void)rt_do_cmd( (struct rt_i *)0, buf, cmd_tab );
 	if(buf) (void)free(buf);
 	drop_server( sp, "one-shot command" );
@@ -2262,14 +2262,14 @@ char *buf;
 	int			npix;
 	int			fd;
 	int			cnt;
-	struct	rt_external	ext;
+	struct	bu_external	ext;
 
 	(void)gettimeofday( &tvnow, (struct timezone *)0 );
 
 	sp = &servers[pc->pkc_fd];
 	if( sp->sr_state != SRST_READY && sp->sr_state != SRST_NEED_TREE &&
 	    sp->sr_state != SRST_DOING_GETTREES )  {
-		rt_log("%s Ignoring MSG_PIXELS from %s\n",
+		bu_log("%s Ignoring MSG_PIXELS from %s\n",
 			stamp(), sp->sr_host->ht_name);
 		goto out;
 	}
@@ -2290,24 +2290,24 @@ char *buf;
 
 	/* Consider the next assignment to have been sent "now" */
 	(void)gettimeofday( &sp->sr_sendtime, (struct timezone *)0 );
-	rt_struct_buf(&ext, (genptr_t) buf);
+	bu_struct_wrap_buf(&ext, (genptr_t) buf);
 
-	i = rt_struct_import( (genptr_t)&info, desc_line_info, &ext );
+	i = bu_struct_import( (genptr_t)&info, desc_line_info, &ext );
 	if( i < 0 )  {
-		rt_log("rt_struct_import error, %d\n", i);
-		drop_server( sp, "rt_struct_import error" );
+		bu_log("bu_struct_import error, %d\n", i);
+		drop_server( sp, "bu_struct_import error" );
 		goto out;
 	}
 	if( rem_debug )  {
-		rt_log("%s %s %d/%d..%d, ray=%d, cpu=%.2g, el=%g\n",
+		bu_log("%s %s %d/%d..%d, ray=%d, cpu=%.2g, el=%g\n",
 			stamp(),
 			sp->sr_host->ht_name,
 			info.li_frame, info.li_startpix, info.li_endpix,
 			info.li_nrays, info.li_cpusec, sp->sr_l_elapsed );
 	}
 
-	if( RT_LIST_IS_EMPTY( &sp->sr_work ) )  {
-		rt_log("%s responded with pixels when none were assigned!\n",
+	if( BU_LIST_IS_EMPTY( &sp->sr_work ) )  {
+		bu_log("%s responded with pixels when none were assigned!\n",
 			sp->sr_host->ht_name );
 		drop_server( sp, "server responded, no assignment" );
 		goto out;
@@ -2319,12 +2319,12 @@ char *buf;
 	 *  If the reply deviates in any way from the assignment,
 	 *  then the server is dropped.
 	 */
-	lp = RT_LIST_FIRST( list, &sp->sr_work );
+	lp = BU_LIST_FIRST( list, &sp->sr_work );
 	fr = lp->li_frame;
 	CHECK_FRAME(fr);
 
 	if( info.li_frame != fr->fr_number )  {
-		rt_log("%s: frame number mismatch, got=%d, assigned=%d\n",
+		bu_log("%s: frame number mismatch, got=%d, assigned=%d\n",
 			sp->sr_host->ht_name,
 			info.li_frame, fr->fr_number );
 		drop_server( sp, "frame number mismatch" );
@@ -2332,7 +2332,7 @@ char *buf;
 	}
 	if( info.li_startpix != lp->li_start ||
 	    info.li_endpix != lp->li_stop )  {
-		rt_log("%s:  assignment mismatch, sent %d..%d, got %d..%d\n",
+		bu_log("%s:  assignment mismatch, sent %d..%d, got %d..%d\n",
 			sp->sr_host->ht_name,
 	    		lp->li_start, lp->li_stop,
 	    		info.li_startpix, info.li_endpix );
@@ -2342,7 +2342,7 @@ char *buf;
 
 	if( info.li_startpix < 0 ||
 	    info.li_endpix >= fr->fr_width*fr->fr_height )  {
-		rt_log("pixel numbers out of range\n");
+		bu_log("pixel numbers out of range\n");
 		drop_server( sp, "pixel out of range" );
 		goto out;
 	}
@@ -2351,7 +2351,7 @@ char *buf;
 	npix = info.li_endpix - info.li_startpix + 1;
 	i = npix*3;
 	if( pc->pkc_len - ext.ext_nbytes < i )  {
-		rt_log("short scanline, s/b=%d, was=%d\n",
+		bu_log("short scanline, s/b=%d, was=%d\n",
 			i, pc->pkc_len - ext.ext_nbytes );
 		i = pc->pkc_len - ext.ext_nbytes;
 		drop_server( sp, "short scanline" );
@@ -2370,14 +2370,14 @@ char *buf;
 	}
 	if( (cnt = write( fd, buf+ext.ext_nbytes, i )) != i )  {
 		perror( fr->fr_filename );
-		rt_log("write s/b %d, got %d\n", i, cnt );
+		bu_log("write s/b %d, got %d\n", i, cnt );
 		/*
 		 *  Generally, a write error is caused by lack of disk space.
 		 *  In any case, it is indicative of bad problems.
 		 *  Stop assigning new work.
 		 */
 		/* XXX should re-queue this assignment */
-		rt_log("%s disk write error, preparing graceful STOP\n", stamp() );
+		bu_log("%s disk write error, preparing graceful STOP\n", stamp() );
 		cd_stop( 0, (char **)0 );
 
 		/* Dropping the (innocent) server will requeue the work */
@@ -2471,15 +2471,15 @@ out:
  */
 void
 list_remove( lhp, a, b )
-register struct rt_list *lhp;
+register struct bu_list *lhp;
 int		a, b;
 {
 	register struct list *lp;
 
-	for( RT_LIST_FOR( lp, list, lhp ) )  {
+	for( BU_LIST_FOR( lp, list, lhp ) )  {
 		if( lp->li_start == a )  {
 			if( lp->li_stop == b )  {
-				RT_LIST_DEQUEUE(&lp->l);
+				BU_LIST_DEQUEUE(&lp->l);
 				FREE_LIST(lp);
 				return;
 			}
@@ -2496,7 +2496,7 @@ int		a, b;
 		/* (start..a-1) and (b+1..stop) */
 		{
 			register struct list *lp2;
-			rt_log("splitting range into (%d %d) (%d %d)\n",
+			bu_log("splitting range into (%d %d) (%d %d)\n",
 				lp->li_start, a-1,
 				b+1, lp->li_stop);
 			GET_LIST(lp2);
@@ -2504,7 +2504,7 @@ int		a, b;
 			lp2->li_start = b+1;
 			lp2->li_stop = lp->li_stop;
 			lp->li_stop = a-1;
-			RT_LIST_APPEND( &lp->l, &lp2->l );
+			BU_LIST_APPEND( &lp->l, &lp2->l );
 			return;
 		}
 	}
@@ -2637,7 +2637,7 @@ char *name;
 	while( yy < height )
 		yy <<= 1;
 	if( (fbp = fb_open( name?name:framebuffer, xx, yy )) == FBIO_NULL )  {
-		rt_log("fb_open %d,%d failed\n", xx, yy);
+		bu_log("fb_open %d,%d failed\n", xx, yy);
 		return(-1);
 	}
 	/* New way:  center, zoom */
@@ -2661,7 +2661,7 @@ register struct frame	*fr;
 	if( fbp == FBIO_NULL )
 		return;
 	if( fr->fr_width > fb_getwidth(fbp) )  {
-		rt_log("Warning:  fb not big enough for %d pixels, display truncated\n", fr->fr_width );
+		bu_log("Warning:  fb not big enough for %d pixels, display truncated\n", fr->fr_width );
 		cur_fbwidth = fr->fr_width;
 		fb_view( fbp, fb_getwidth(fbp)/2, fb_getheight(fbp)/2, 1, 1 );
 		return;
@@ -2697,7 +2697,7 @@ register struct servers *sp;
 		/* Conversion into current dir was done when server was started */
 		break;
 	default:
-		rt_log("send_dirbuild: ht_where=%d unimplemented\n", ihp->ht_where);
+		bu_log("send_dirbuild: ht_where=%d unimplemented\n", ihp->ht_where);
 		drop_server(sp, "bad ht_where");
 		return;
 	}
@@ -2751,7 +2751,7 @@ register struct frame *fr;
 	CHECK_FRAME(fr);
 	if( sp->sr_pc == PKC_NULL )  return;
 	if( pkg_send( MSG_MATRIX,
-	    RT_VLS_ADDR(&fr->fr_cmd), rt_vls_strlen(&fr->fr_cmd)+1, sp->sr_pc
+	    bu_vls_addr(&fr->fr_cmd), bu_vls_strlen(&fr->fr_cmd)+1, sp->sr_pc
 	    ) < 0 )
 		drop_server(sp, "MSG_MATRIX pkg_send error");
 }
@@ -2803,16 +2803,16 @@ int		framenum;
  */
 void
 pr_list( lhp )
-register struct rt_list *lhp;
+register struct bu_list *lhp;
 {
 	register struct list *lp;
 
-	for( RT_LIST_FOR( lp, list, lhp ) )  {
+	for( BU_LIST_FOR( lp, list, lhp ) )  {
 		if( lp->li_frame == 0 )  {
-			rt_log("\t%d..%d frame *NULL*??\n",
+			bu_log("\t%d..%d frame *NULL*??\n",
 			lp->li_start, lp->li_stop );
 		} else {
-			rt_log("\t%d..%d frame %d\n",
+			bu_log("\t%d..%d frame %d\n",
 				lp->li_start, lp->li_stop,
 				lp->li_frame->fr_number );
 		}
@@ -2846,7 +2846,7 @@ struct ihost	*ihp;
 		break;
 	case HT_CONVERT:
 		if( file_fullname[0] == '\0' )  {
-			rt_log("unable to add CONVERT host %s until database given\n",
+			bu_log("unable to add CONVERT host %s until database given\n",
 				ihp->ht_name);
 			return;
 		}
@@ -2856,7 +2856,7 @@ struct ihost	*ihp;
 			file_fullname, file_basename );
 		break;
 	default:
-		rt_log("add_host:  ht_where=%d?\n", ihp->ht_where );
+		bu_log("add_host:  ht_where=%d?\n", ihp->ht_where );
 		break;
 	}
 	fflush( helper_fp );
@@ -2917,7 +2917,7 @@ FILE	*fp;
 		cnt = sscanf( line, "%s %d %s %s %s",
 			host, &port, rem_dir, loc_db, rem_db );
 		if( cnt != 3 && cnt != 5 )  {
-			rt_log("host_helper: cnt=%d, aborting\n", cnt);
+			bu_log("host_helper: cnt=%d, aborting\n", cnt);
 			break;
 		}
 
@@ -2926,7 +2926,7 @@ FILE	*fp;
 				"cd %s; rtsrv %s %d",
 				rem_dir, our_hostname, port );
 			if(rem_debug)  {
-				rt_log("%s %s\n", stamp(), cmd);
+				bu_log("%s %s\n", stamp(), cmd);
 				fflush(stdout);
 			}
 
@@ -2966,7 +2966,7 @@ FILE	*fp;
 				rem_dir, rem_db,
 				our_hostname, port );
 			if(rem_debug)  {
-				rt_log("%s %s\n", stamp(), cmd);
+				bu_log("%s %s\n", stamp(), cmd);
 				fflush(stdout);
 			}
 
@@ -3046,7 +3046,7 @@ int	startc;
 	int		len;
 
 	if( startc+2 > argc )  {
-		rt_log("build_start_cmd:  need file and at least one object\n");
+		bu_log("build_start_cmd:  need file and at least one object\n");
 		file_fullname[0] = '\0';
 		return;
 	}
@@ -3081,13 +3081,13 @@ char	**argv;
 	register struct servers *sp;
 
 	if( running )  {
-		rt_log("Can't load while running!!\n");
+		bu_log("Can't load while running!!\n");
 		return -1;
 	}
 
 	/* Really ought to reset here, too */
 	if(file_fullname[0] != '\0' )  {
-		rt_log("Was loaded with %s, restarting all\n", file_fullname);
+		bu_log("Was loaded with %s, restarting all\n", file_fullname);
 		for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 			if( sp->sr_pc == PKC_NULL )  continue;
 			send_restart( sp );
@@ -3112,7 +3112,7 @@ char	**argv;
 	} else {
 		sscanf( argv[1], "%x", &rem_debug );
 	}
-	rt_log("%s Dispatcher debug=x%x\n", stamp(), rem_debug );
+	bu_log("%s Dispatcher debug=x%x\n", stamp(), rem_debug );
 	return 0;
 }
 
@@ -3128,15 +3128,15 @@ char	**argv;
 {
 	register struct servers *sp;
 	int		len;
-	struct rt_vls	cmd;
+	struct bu_vls	cmd;
 
-	rt_vls_init( &cmd );
-	rt_vls_strcpy( &cmd, "opt " );
-	rt_vls_strcat( &cmd, argv[1] );
-	len = rt_vls_strlen( &cmd )+1;
+	bu_vls_init( &cmd );
+	bu_vls_strcpy( &cmd, "opt " );
+	bu_vls_strcat( &cmd, argv[1] );
+	len = bu_vls_strlen( &cmd )+1;
 	for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 		if( sp->sr_pc == PKC_NULL )  continue;
-		if( pkg_send( MSG_OPTIONS, RT_VLS_ADDR(&cmd), len, sp->sr_pc) < 0 )
+		if( pkg_send( MSG_OPTIONS, bu_vls_addr(&cmd), len, sp->sr_pc) < 0 )
 			drop_server(sp, "MSG_OPTIONS pkg_send error");
 	}
 	return 0;
@@ -3150,7 +3150,7 @@ char	**argv;
 	width = height = atoi( argv[1] );
 	if( width < 4 || width > 16*1024 )
 		width = 64;
-	rt_log("width=%d, height=%d, takes effect after next MAT\n",
+	bu_log("width=%d, height=%d, takes effect after next MAT\n",
 		width, height);
 	return 0;
 }
@@ -3164,7 +3164,7 @@ char	**argv;
 		fbwidth = 512;
 	if( fbheight < 4 || fbheight > 16*1024 )
 		fbheight = 512;
-	rt_log("fb width=%d, height=%d, takes effect after next attach\n",
+	bu_log("fb width=%d, height=%d, takes effect after next attach\n",
 		fbwidth, fbheight);
 	return 0;
 }
@@ -3176,7 +3176,7 @@ char	**argv;
 	fbheight = atoi( argv[1] );
 	if( fbheight < 4 || fbheight > 16*1024 )
 		fbheight = 512;
-	rt_log("fb height=%d, takes effect after next attach\n",
+	bu_log("fb height=%d, takes effect after next attach\n",
 		fbheight);
 	return 0;
 }
@@ -3186,7 +3186,7 @@ int	argc;
 char	**argv;
 {
 	hypersample = atoi( argv[1] );
-	rt_log("hypersample=%d, takes effect after next MAT\n", hypersample);
+	bu_log("hypersample=%d, takes effect after next MAT\n", hypersample);
 	return 0;
 }
 
@@ -3195,7 +3195,7 @@ int	argc;
 char	**argv;
 {
 	benchmark = atoi( argv[1] );
-	rt_log("Benchmark flag=%d, takes effect after next MAT\n", benchmark);
+	bu_log("Benchmark flag=%d, takes effect after next MAT\n", benchmark);
 	return 0;
 }
 
@@ -3205,7 +3205,7 @@ char	**argv;
 {
 	rt_perspective = atof( argv[1] );
 	if( rt_perspective < 0.0 )  rt_perspective = 0.0;
-	rt_log("perspective angle=%g, takes effect after next MAT\n", rt_perspective);
+	bu_log("perspective angle=%g, takes effect after next MAT\n", rt_perspective);
 	return 0;
 }
 
@@ -3221,7 +3221,7 @@ char	**argv;
 	}
 	source(fp);
 	fclose(fp);
-	rt_log("%s 'read' command done\n", stamp());
+	bu_log("%s 'read' command done\n", stamp());
 	return 0;
 }
 
@@ -3252,7 +3252,7 @@ int	argc;
 char	**argv;
 {
 	if(outputfile)  rt_free(outputfile, "outputfile");
-	outputfile = rt_strdup( argv[1] );
+	outputfile = bu_strdup( argv[1] );
 	return 0;
 }
 
@@ -3285,7 +3285,7 @@ char	**argv;
 	/* Find the one desired frame */
 	for( i=fr->fr_number; i>=0; i-- )  {
 		if(read_matrix( fp, fr ) <= 0 )  {
-			rt_log("mat: failure\n");
+			bu_log("mat: failure\n");
 			fclose(fp);
 			return -1;
 		}
@@ -3312,11 +3312,11 @@ char	**argv;
 
 	/* movie mat a b */
 	if( running )  {
-		rt_log("already running, please wait\n");
+		bu_log("already running, please wait\n");
 		return -1;
 	}
 	if( file_fullname[0] == '\0' )  {
-		rt_log("need LOAD before MOVIE\n");
+		bu_log("need LOAD before MOVIE\n");
 		return -1;
 	}
 	a = atoi( argv[2] );
@@ -3328,7 +3328,7 @@ char	**argv;
 	/* Skip over unwanted beginning frames */
 	for( i=0; i<a; i++ )  {
 		if(read_matrix( fp, &dummy_frame ) <= 0 )  {
-			rt_log("movie:  error in old style frame list\n");
+			bu_log("movie:  error in old style frame list\n");
 			fclose(fp);
 			return -1;
 		}
@@ -3339,7 +3339,7 @@ char	**argv;
 		fr->fr_number = i;
 		prep_frame(fr);
 		if( (ret=read_matrix( fp, fr )) < 0 )  {
-			rt_log("movie:  frame %d bad\n", i);
+			bu_log("movie:  frame %d bad\n", i);
 			fclose(fp);
 			return -1;
 		}
@@ -3351,7 +3351,7 @@ char	**argv;
 		}
 	}
 	fclose(fp);
-	rt_log("Movie ready\n");
+	bu_log("Movie ready\n");
 	return 0;
 }
 
@@ -3424,7 +3424,7 @@ char **argv;
 	} else if ( strcmp(argv[1], "load") == 0 ) {
 		work_allocate_method = OPT_LOAD;
 	} else {
-		rt_log("%s Bad allocateby type '%s'\n", stamp(), argv[1]);
+		bu_log("%s Bad allocateby type '%s'\n", stamp(), argv[1]);
 		return( -1 );
 	}
 
@@ -3440,7 +3440,7 @@ char	**argv;
 
 	if( argc <= 1 )  {
 		/* Restart all */
-		rt_log("%s Restarting all\n", stamp() );
+		bu_log("%s Restarting all\n", stamp() );
 		for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 			if( sp->sr_pc == PKC_NULL )  continue;
 			send_restart( sp );
@@ -3458,7 +3458,7 @@ cd_stop( argc, argv )
 int	argc;
 char	**argv;
 {
-	rt_log("%s No more scanlines being scheduled, done soon\n", stamp() );
+	bu_log("%s No more scanlines being scheduled, done soon\n", stamp() );
 	running = 0;
 	return 0;
 }
@@ -3470,7 +3470,7 @@ char	**argv;
 	register struct frame *fr;
 
 	if( running )  {
-		rt_log("must STOP before RESET!\n");
+		bu_log("must STOP before RESET!\n");
 		return -1;
 	}
 	do {
@@ -3524,23 +3524,23 @@ char	**argv;
 {
 	register struct frame *fr;
 
-	rt_log("%s Frames waiting:\n", stamp() );
+	bu_log("%s Frames waiting:\n", stamp() );
 	for(fr=FrameHead.fr_forw; fr != &FrameHead; fr=fr->fr_forw) {
 		CHECK_FRAME(fr);
-		rt_log("%5d\twidth=%d, height=%d\n",
+		bu_log("%5d\twidth=%d, height=%d\n",
 			fr->fr_number,
 			fr->fr_width, fr->fr_height );
 
 		if( argc <= 1 )  continue;
 		if( fr->fr_filename )  {
-			rt_log("\tfile=%s%s\n",
+			bu_log("\tfile=%s%s\n",
 				fr->fr_filename,
 				fr->fr_tempfile ? " **TEMPORARY**" : "" );
 		}
-		rt_log("\tnrays = %d, cpu sec=%g\n", fr->fr_nrays, fr->fr_cpu);
+		bu_log("\tnrays = %d, cpu sec=%g\n", fr->fr_nrays, fr->fr_cpu);
 		pr_list( &(fr->fr_todo) );
-		rt_log("\tcmd=%s\n", RT_VLS_ADDR(&fr->fr_cmd) );
-		rt_log("\tafter_cmd=%s\n", RT_VLS_ADDR(&fr->fr_after_cmd) );
+		bu_log("\tcmd=%s\n", bu_vls_addr(&fr->fr_cmd) );
+		bu_log("\tafter_cmd=%s\n", bu_vls_addr(&fr->fr_after_cmd) );
 	}
 	return 0;
 }
@@ -3554,7 +3554,7 @@ char	**argv;
 	} else if (strcmp(argv[1], "off") == 0) {
 		rt_g.debug &= ~(DEBUG_MEM|DEBUG_MEM_FULL);
 	} else {
-		rt_prmem("memprint command");
+		bu_prmem("memprint command");
 	}
 	return 0;
 }
@@ -3577,12 +3577,12 @@ char	**argv;
 	s = stamp();
 
 	/* Print work assignments */
-	if(interactive) rt_log("%s Interactive mode\n", s);
-	rt_log("%s Worker assignment interval=%d seconds:\n",
+	if(interactive) bu_log("%s Interactive mode\n", s);
+	bu_log("%s Worker assignment interval=%d seconds:\n",
 		s, assignment_time() );
-	rt_log("   Server   Last  Last   Average  Cur   Machine\n");
-	rt_log("    State   Lump Elapsed pix/sec Frame   Name \n");
-	rt_log("  -------- ----- ------- ------- ----- -------------\n");
+	bu_log("   Server   Last  Last   Average  Cur   Machine\n");
+	bu_log("    State   Lump Elapsed pix/sec Frame   Name \n");
+	bu_log("  -------- ----- ------- ------- ----- -------------\n");
 	for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 		if( sp->sr_pc == PKC_NULL )  continue;
 
@@ -3603,7 +3603,7 @@ char	**argv;
 				server_q_len(sp) );
 			state = buf;
 		}
-		rt_log("  %8s %5d %7g %7g %5d %s\n",
+		bu_log("  %8s %5d %7g %7g %5d %s\n",
 			state,
 			sp->sr_lump,
 			sp->sr_l_elapsed,
@@ -3630,52 +3630,52 @@ char	**argv;
 	s = stamp();
 
 	if( file_fullname[0] == '\0' )  {
-		rt_log("No model loaded yet\n");
+		bu_log("No model loaded yet\n");
 	} else {
-		rt_log("\n%s %s\n",
+		bu_log("\n%s %s\n",
 			s,
 			running ? "RUNNING" : "Halted" );
-		rt_log("%s %s objects=%s\n",
+		bu_log("%s %s objects=%s\n",
 			s, file_fullname, object_list );
 	}
 
 	if( fbp != FBIO_NULL )
-		rt_log("%s Framebuffer is %s\n", s, fbp->if_name);
+		bu_log("%s Framebuffer is %s\n", s, fbp->if_name);
 	else
-		rt_log("%s No framebuffer\n", s );
+		bu_log("%s No framebuffer\n", s );
 	if( outputfile )
-		rt_log("%s Output file: %s.###\n", s, outputfile );
-	rt_log("%s Printing of remote messages is %s\n",
+		bu_log("%s Output file: %s.###\n", s, outputfile );
+	bu_log("%s Printing of remote messages is %s\n",
 		s, print_on?"ON":"Off" );
-    	rt_log("%s Listening at %s, port %d\n",
+    	bu_log("%s Listening at %s, port %d\n",
 		s, our_hostname, pkg_permport);
 
 	/* Print work assignments */
-	rt_log("%s Worker assignment interval=%d seconds:\n",
+	bu_log("%s Worker assignment interval=%d seconds:\n",
 		s, assignment_time() );
 	for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 		if( sp->sr_pc == PKC_NULL )  continue;
-		rt_log("  %2d  %s %s",
+		bu_log("  %2d  %s %s",
 			sp->sr_pc->pkc_fd, sp->sr_host->ht_name,
 			state_to_string(sp->sr_state) );
 		if( sp->sr_curframe != FRAME_NULL )  {
 			CHECK_FRAME(sp->sr_curframe);
-			rt_log(" frame %d, assignments=%d\n",
+			bu_log(" frame %d, assignments=%d\n",
 				sp->sr_curframe->fr_number,
 				server_q_len(sp) );
 		}  else  {
-			rt_log("\n");
+			bu_log("\n");
 		}
 		num = sp->sr_nsamp<=0 ? 1 : sp->sr_nsamp;
-		rt_log("\tlast:  elapsed=%g, cpu=%g, lump=%d\n",
+		bu_log("\tlast:  elapsed=%g, cpu=%g, lump=%d\n",
 			sp->sr_l_elapsed,
 			sp->sr_l_cpu,
 			sp->sr_lump );
-		rt_log("\t avg:  elapsed=%gp/s, cpu=%g, weighted=%gp/s\n",
+		bu_log("\t avg:  elapsed=%gp/s, cpu=%g, weighted=%gp/s\n",
 			(sp->sr_s_elapsed/num),
 			sp->sr_s_cpu/num,
 			sp->sr_w_elapsed);
-		rt_log("\t r/s:  weighted=%gr/s missed = %d\n",
+		bu_log("\t r/s:  weighted=%gr/s missed = %d\n",
 			sp->sr_w_rays,
 			sp->sr_host->ht_rs_miss );
 
@@ -3710,7 +3710,7 @@ char	**argv;
 		if( sp->sr_pc == PKC_NULL )  continue;
 		send_loglvl( sp );
 	}
-	rt_log("%s Printing of remote messages is %s\n",
+	bu_log("%s Printing of remote messages is %s\n",
 		stamp(),
 		print_on?"ON":"Off" );
 	return 0;
@@ -3752,10 +3752,10 @@ char	**argv;
 		 *  servers to finish their assignments.
 		 */
 		while( !all_servers_idle() )  {
-			rt_log("%s Stopped, waiting for servers to become idle\n", stamp() );
+			bu_log("%s Stopped, waiting for servers to become idle\n", stamp() );
 			check_input( 30 );	/* delay up to 30 secs */
 		}
-		rt_log("%s All servers idle\n", stamp() );
+		bu_log("%s All servers idle\n", stamp() );
 	}
 	FD_SET( fileno(stdin), &clients );
 	return 0;
@@ -3768,7 +3768,7 @@ char	**argv;
 	register struct command_tab	*tp;
 
 	for( tp = cmd_tab; tp->ct_cmd != (char *)0; tp++ )  {
-		rt_log("%s %s\t\t%s\n",
+		bu_log("%s %s\t\t%s\n",
 			tp->ct_cmd, tp->ct_parms,
 			tp->ct_comment );
 	}
@@ -3786,42 +3786,42 @@ char	**argv;
 	int argpoint = 1;
 
 	if( argc < 5 )  {
-		rt_log("%s Registered Host Table:\n", stamp() );
-		for( RT_LIST_FOR( ihp, ihost, &HostHead ) )  {
+		bu_log("%s Registered Host Table:\n", stamp() );
+		for( BU_LIST_FOR( ihp, ihost, &HostHead ) )  {
 			CK_IHOST(ihp);
-			rt_log("  %s 0x%x ", ihp->ht_name, ihp->ht_flags);
+			bu_log("  %s 0x%x ", ihp->ht_name, ihp->ht_flags);
 			switch(ihp->ht_when)  {
 			case HT_ALWAYS:
-				rt_log("always ");
+				bu_log("always ");
 				break;
 			case HT_NIGHT:
-				rt_log("night ");
+				bu_log("night ");
 				break;
 			case HT_HACKNIGHT:
-				rt_log("hacknight ");
+				bu_log("hacknight ");
 				break;
 			case HT_PASSIVE:
-				rt_log("passive ");
+				bu_log("passive ");
 				break;
 			case HT_RS:
-				rt_log("r/s %d ",ihp->ht_rs);
+				bu_log("r/s %d ",ihp->ht_rs);
 				break;
 			case HT_PASSRS:
-				rt_log("passive r/s %d ",ihp->ht_rs);
+				bu_log("passive r/s %d ",ihp->ht_rs);
 				break;
 			default:
-				rt_log("?when? ");
+				bu_log("?when? ");
 				break;
 			}
 			switch(ihp->ht_where)  {
 			case HT_CD:
-				rt_log("cd %s\n", ihp->ht_path);
+				bu_log("cd %s\n", ihp->ht_path);
 				break;
 			case HT_CONVERT:
-				rt_log("convert %s\n", ihp->ht_path);
+				bu_log("convert %s\n", ihp->ht_path);
 				break;
 			default:
-				rt_log("?where?\n");
+				bu_log("?where?\n");
 				break;
 			}
 		}
@@ -3845,7 +3845,7 @@ char	**argv;
 	} else if ( strcmp( argv[argpoint], "passrs" ) == 0 ) {
 		ihp->ht_when = HT_PASSRS;
 	} else {
-		rt_log("unknown 'when' string '%s'\n", argv[argpoint]);
+		bu_log("unknown 'when' string '%s'\n", argv[argpoint]);
 	}
 	++argpoint;
 	if (ihp->ht_when == HT_RS ||
@@ -3861,15 +3861,15 @@ char	**argv;
 	/* Where */
 	if( strcmp( argv[argpoint], "cd" ) == 0 )  {
 		ihp->ht_where = HT_CD;
-		ihp->ht_path = rt_strdup( argv[argpoint+1] );
+		ihp->ht_path = bu_strdup( argv[argpoint+1] );
 	} else if( strcmp( argv[argpoint], "convert" ) == 0 )  {
 		ihp->ht_where = HT_CONVERT;
-		ihp->ht_path = rt_strdup( argv[argpoint+1] );
+		ihp->ht_path = bu_strdup( argv[argpoint+1] );
 	} else if (strcmp( argv[argpoint], "use" ) == 0 ) {
 		ihp->ht_where = HT_USE;
-		ihp->ht_path = rt_strdup( argv[argpoint+1]);
+		ihp->ht_path = bu_strdup( argv[argpoint+1]);
 	} else {
-		rt_log("unknown 'where' string '%s'\n", argv[argpoint] );
+		bu_log("unknown 'where' string '%s'\n", argv[argpoint] );
 	}
 	return 0;
 }
@@ -3905,7 +3905,7 @@ char	**argv;
 	}
 
 	if (strcmp(argv[1], "off") != 0 ) {
-		frame_script = rt_strdup(argv[1]);
+		frame_script = bu_strdup(argv[1]);
 	}
 	return 0;
 }

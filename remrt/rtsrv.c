@@ -58,10 +58,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "./protocol.h"
 
-struct rt_list	WorkHead;
+struct bu_list	WorkHead;
 
 struct pkg_queue {
-	struct rt_list	l;
+	struct bu_list	l;
 	unsigned short	type;
 	char		*buf;
 };
@@ -185,8 +185,8 @@ char **argv;
 	tcp_port = argv[2];
 
 	/* Note that the LIBPKG error logger can not be
-	 * "rt_log", as that can cause rt_log to be entered recursively.
-	 * Given the special version of rt_log in use here,
+	 * "bu_log", as that can cause bu_log to be entered recursively.
+	 * Given the special version of bu_log in use here,
 	 * that will result in a deadlock in RES_ACQUIRE(res_syscall)!
 	 *  libpkg will default to stderr via pkg_errlog(), which is fine.
 	 */
@@ -236,8 +236,8 @@ char **argv;
 #endif
 
 		/* Deal with CPU limits on "those kinds" of systems */
-		if( rt_cpuget() > 0 )  {
-			rt_cpuset( 9999999 );
+		if( bu_cpulimit_get() > 0 )  {
+			bu_cpulimit_set( 9999999 );
 		}
 
 		/*
@@ -247,9 +247,9 @@ char **argv;
 		 */
 		if( !interactive )  {
 #ifdef CRAY
-			rt_pri_set(6);		/* highest "free" priority */
+			bu_nice_set(6);		/* highest "free" priority */
 #else
-			rt_pri_set(19);		/* lowest priority */
+			bu_nice_set(19);		/* lowest priority */
 #endif
 		}
 
@@ -292,7 +292,7 @@ char **argv;
 	beginptr = (char *) sbrk(0);
 
 #define PUBLIC_CPUS	"/usr/tmp/public_cpus"
-	max_cpus = avail_cpus = rt_avail_cpus();
+	max_cpus = avail_cpus = bu_avail_cpus();
 	if( (fp = fopen(PUBLIC_CPUS, "r")) != NULL )  {
 		(void)fscanf( fp, "%d", &max_cpus );
 		fclose(fp);
@@ -318,16 +318,16 @@ char **argv;
 	RES_INIT( &rt_g.res_stats );
 	RES_INIT( &rt_g.res_results );
 	RES_INIT( &rt_g.res_model );
-	/* DO NOT USE rt_log() before this point! */
+	/* DO NOT USE bu_log() before this point! */
 
-	rt_log("using %d of %d cpus\n",
+	bu_log("using %d of %d cpus\n",
 		npsw, avail_cpus );
 	if( max_cpus <= 0 )  {
 		pkg_close(pcsrv);
 		exit(0);
 	}
 
-	RT_LIST_INIT( &WorkHead );
+	BU_LIST_INIT( &WorkHead );
 
 	for(;;)  {
 		register struct pkg_queue	*lp;
@@ -336,21 +336,21 @@ char **argv;
 
 		/* First, process any packages in library buffers */
 		if( pkg_process( pcsrv ) < 0 )  {
-			rt_log("pkg_get error\n");
+			bu_log("pkg_get error\n");
 			break;
 		}
 
 		/* Second, see if any input to read */
 		FD_ZERO(&ifds);
 		FD_SET(pcsrv->pkc_fd, &ifds);
-		tv.tv_sec = RT_LIST_NON_EMPTY( &WorkHead ) ? 0L : 9999L;
+		tv.tv_sec = BU_LIST_NON_EMPTY( &WorkHead ) ? 0L : 9999L;
 		tv.tv_usec = 0L;
 
 		if( select(pcsrv->pkc_fd+1, &ifds, (fd_set *)0, (fd_set *)0,
 			&tv ) != 0 )  {
 			n = pkg_suckin(pcsrv);
 			if( n < 0 )  {
-				rt_log("pkg_suckin error\n");
+				bu_log("pkg_suckin error\n");
 				break;
 			} else if( n == 0 )  {
 				/* EOF detected */
@@ -362,14 +362,14 @@ char **argv;
 
 		/* Third, process any new packages in library buffers */
 		if( pkg_process( pcsrv ) < 0 )  {
-			rt_log("pkg_get error\n");
+			bu_log("pkg_get error\n");
 			break;
 		}
 
 		/* Finally, more work may have just arrived, check our list */
-		if( RT_LIST_NON_EMPTY( &WorkHead ) )  {
-			lp = RT_LIST_FIRST( pkg_queue, &WorkHead );
-			RT_LIST_DEQUEUE( &lp->l );
+		if( BU_LIST_NON_EMPTY( &WorkHead ) )  {
+			lp = BU_LIST_FIRST( pkg_queue, &WorkHead );
+			BU_LIST_DEQUEUE( &lp->l );
 			switch( lp->type )  {
 			case MSG_MATRIX:
 				ph_matrix( (struct pkg_conn *)0, lp->buf );
@@ -384,7 +384,7 @@ char **argv;
 				ph_gettrees( (struct pkg_conn *)0, lp->buf );
 				break;
 			default:
-				rt_log("bad list element, type=%d\n", lp->type );
+				bu_log("bad list element, type=%d\n", lp->type );
 				exit(33);
 			}
 			rt_free( (char *)lp, "struct pkg_queue" );
@@ -411,10 +411,10 @@ char	*buf;
 
 	if( debug )  fprintf(stderr, "ph_enqueue: %s\n", buf );
 
-	GETSTRUCT( lp, pkg_queue );
+	BU_GETSTRUCT( lp, pkg_queue );
 	lp->type = pc->pkc_type;
 	lp->buf = buf;
-	RT_LIST_INSERT( &WorkHead, &lp->l );
+	BU_LIST_INSERT( &WorkHead, &lp->l );
 }
 
 void
@@ -424,7 +424,7 @@ char *buf;
 {
 	if(debug)fprintf(stderr,"ph_cd %s\n", buf);
 	if( chdir( buf ) < 0 )  {
-		rt_log("ph_cd: chdir(%s) failure\n", buf);
+		bu_log("ph_cd: chdir(%s) failure\n", buf);
 		exit(1);
 	}
 	(void)free(buf);
@@ -437,7 +437,7 @@ char *buf;
 {
 
 	if(debug)fprintf(stderr,"ph_restart %s\n", buf);
-	rt_log("Restarting\n");
+	bu_log("Restarting\n");
 	pkg_close(pcsrv);
 	execlp( "rtsrv", "rtsrv", control_host, tcp_port, (char *)0);
 	perror("rtsrv");
@@ -467,16 +467,16 @@ char *buf;
 	}
 
 	if( seen_dirbuild )  {
-		rt_log("ph_dirbuild:  MSG_DIRBUILD already seen, ignored\n");
+		bu_log("ph_dirbuild:  MSG_DIRBUILD already seen, ignored\n");
 		(void)free(buf);
 		return;
 	}
 
-	title_file = rt_strdup(argv[0]);
+	title_file = bu_strdup(argv[0]);
 
 	/* Build directory of GED database */
 	if( (rtip=rt_dirbuild( title_file, idbuf, sizeof(idbuf) )) == RTI_NULL )  {
-		rt_log("ph_dirbuild:  rt_dirbuild(%s) failure\n", title_file);
+		bu_log("ph_dirbuild:  rt_dirbuild(%s) failure\n", title_file);
 		exit(2);
 	}
 	ap.a_rt_i = rtip;
@@ -522,16 +522,16 @@ char *buf;
 		(void)free(buf);
 		return;
 	}
-	title_obj = rt_strdup(argv[0]);
+	title_obj = bu_strdup(argv[0]);
 
 	if( rtip->needprep == 0 )  {
 		/* First clean up after the end of the previous frame */
-		if(debug)rt_log("Cleaning previous model\n");
+		if(debug)bu_log("Cleaning previous model\n");
 		view_end( &ap );
 		view_cleanup( rtip );
 		rt_clean(rtip);
 		if(rdebug&RDEBUG_RTMEM_END)
-			rt_prmem( "After rt_clean" );
+			bu_prmem( "After rt_clean" );
 	}
 
 	/* Load the desired portion of the model */
@@ -580,9 +580,9 @@ char	*buf;
 		while( *cp && *cp != ';' )  cp++;
 		*cp++ = '\0';
 		/* Process this command */
-		if( debug )  rt_log("process_cmd '%s'\n", sp);
+		if( debug )  bu_log("process_cmd '%s'\n", sp);
 		if( rt_do_cmd( ap.a_rt_i, sp, rt_cmdtab ) < 0 )  {
-			rt_log("process_cmd: error on '%s'\n", sp );
+			bu_log("process_cmd: error on '%s'\n", sp );
 			exit(1);
 		}
 		sp = cp;
@@ -607,7 +607,7 @@ char	*buf;
 	if( npsw > MAX_PSW )  npsw = MAX_PSW;
 
 	if( width <= 0 || height <= 0 )  {
-		rt_log("ph_options:  width=%d, height=%d\n", width, height);
+		bu_log("ph_options:  width=%d, height=%d\n", width, height);
 		exit(3);
 	}
 	(void)free(buf);
@@ -664,7 +664,7 @@ prepare()
 	do_prep( rtip );
 
 	if( rtip->nsolids <= 0 )  {
-		rt_log("ph_matrix: No solids remain after prep.\n");
+		bu_log("ph_matrix: No solids remain after prep.\n");
 		exit(3);
 	}
 
@@ -700,17 +700,17 @@ char *buf;
 	auto int		a,b, fr;
 	struct line_info	info;
 	register struct rt_i	*rtip = ap.a_rt_i;
-	struct	rt_external	ext;
+	struct	bu_external	ext;
 
 	RT_CK_RTI(rtip);
 
 	if( debug > 1 )  fprintf(stderr, "ph_lines: %s\n", buf );
 	if( !seen_gettrees )  {
-		rt_log("ph_lines:  no MSG_GETTREES yet\n");
+		bu_log("ph_lines:  no MSG_GETTREES yet\n");
 		return;
 	}
 	if( !seen_matrix )  {
-		rt_log("ph_lines:  no MSG_MATRIX yet\n");
+		bu_log("ph_lines:  no MSG_MATRIX yet\n");
 		return;
 	}
 
@@ -718,7 +718,7 @@ char *buf;
 	b=0;
 	fr=0;
 	if( sscanf( buf, "%d %d %d", &a, &b, &fr ) != 3 )  {
-		rt_log("ph_lines:  %s conversion error\n", buf );
+		bu_log("ph_lines:  %s conversion error\n", buf );
 		exit(2);
 	}
 
@@ -736,8 +736,8 @@ char *buf;
 	info.li_cpusec = rt_read_timer( (char *)0, 0 );
 	info.li_percent = 42.0;	/* for now */
 
-	if (!rt_struct_export( &ext, (genptr_t)&info, desc_line_info ) ) {
-		rt_log("ph_lines: rt_struct_export failure\n");
+	if (!bu_struct_export( &ext, (genptr_t)&info, desc_line_info ) ) {
+		bu_log("ph_lines: bu_struct_export failure\n");
 		exit(98);
 	}
 
@@ -935,7 +935,7 @@ char *buf;
 	for( i=0; pc->pkc_switch[i].pks_handler != NULL; i++ )  {
 		if( pc->pkc_switch[i].pks_type == pc->pkc_type )  break;
 	}
-	rt_log("ph_unexp: unable to handle %s message: len %d",
+	bu_log("ph_unexp: unable to handle %s message: len %d",
 		pc->pkc_switch[i].pks_title, pc->pkc_len);
 	*buf = '*';
 	(void)free(buf);
