@@ -314,6 +314,10 @@ struct mged_variables {
 	int	autosize;
     	int	sgi_win_size;
 	int	sgi_win_origin[2];
+	int	faceplate;
+	int	predictor;
+	double	predictor_advance;
+	double	predictor_length;
 };
 
 extern struct mged_variables mged_variables;
