@@ -1140,7 +1140,7 @@ genptr_t	client_data;
 			curtree = comb->tree;
 			comb->tree = TREE_NULL;
 			if(curtree) RT_CK_TREE(curtree);
-			db_recurse_subtree( curtree, &nts, pathp, region_start_statepp );
+			db_recurse_subtree( curtree, &nts, pathp, region_start_statepp, client_data );
 			if(curtree) RT_CK_TREE(curtree);
 		} else {
 			/* No subtrees in this combination, invent a NOP */
