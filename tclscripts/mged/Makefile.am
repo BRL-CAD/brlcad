@@ -7,5 +7,5 @@ dist_tcl_SCRIPTS = accel.tcl adc.tcl anim.tcl apply_mat.tcl apply.tcl asc2g.tcl 
 dist_tcl_DATA = l_i0_v0_s0.gif l_i0_v0_s1.gif l_i0_v0_s2.gif l_i0_v0_s3.gif l_i0_v0_s4.gif l_i0_v0_s5.gif l_i0_v0_s6.gif l_i0_v0_s7.gif l_i0_v0_s8.gif l_i0_v0_s9.gif l_i0_v1_s0.gif l_i0_v1_s1.gif l_i0_v1_s2.gif l_i0_v1_s3.gif l_i0_v1_s4.gif l_i0_v1_s5.gif l_i0_v1_s6.gif l_i0_v1_s7.gif l_i0_v1_s8.gif l_i0_v1_s9.gif l_i1_v0_s0.gif l_i1_v0_s1.gif l_i1_v0_s2.gif l_i1_v0_s3.gif l_i1_v0_s4.gif l_i1_v0_s5.gif l_i1_v0_s6.gif l_i1_v0_s7.gif l_i1_v0_s8.gif l_i1_v0_s9.gif l_i1_v1_s0.gif l_i1_v1_s1.gif l_i1_v1_s2.gif l_i1_v1_s3.gif l_i1_v1_s4.gif l_i1_v1_s5.gif l_i1_v1_s6.gif l_i1_v1_s7.gif l_i1_v1_s8.gif l_i1_v1_s9.gif mike-dedication.txt mike-tux.ppm
 
 install-data-hook:
-	${bindir}/btclsh $(top_srcdir)/tclscripts/ami.tcl $(PWD) && ${INSTALL_DATA} tclIndex $(tcldir)/tclIndex
+	${top_builddir}/bwish/btclsh $(top_srcdir)/tclscripts/ami.tcl $(PWD) && ${INSTALL_DATA} tclIndex $(tcldir)/tclIndex
 
