@@ -5,12 +5,16 @@
 */
 
 /* library functions */
-#if !defined(__bsdi__)
+#if __STDC__
+# include <stdlib.h>
+#else
+# if !defined(__bsdi__)
 extern	char	*malloc();
-#endif
+# endif
+#endif /* __STDC__ */
+
 #ifdef	ATT
-extern	char	*strchr();
-extern	char	*strrchr();
+# include <string.h>
 #else
 extern	char	*index();
 extern	char	*rindex();
