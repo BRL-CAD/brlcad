@@ -1,3 +1,7 @@
+/* XXX Move to raytrace.h */
+#define	RT_BADNUM(n)	(!((n) >= -INFINITY && (n) <= INFINITY))
+#define RT_BADVEC(v)	(RT_BADNUM((v)[X]) || RT_BADNUM((v)[Y]) || RT_BADNUM((v)[Z]))
+
 #define NUgrid 0
 /*
  *			S H O O T . C
@@ -552,8 +556,9 @@ rt_log("ldexp: box_end=%g, fract=%g, exp=%d\n", ssp->box_end, fraction, exponent
  *  NOTE:  The appliction functions may call rt_shootray() recursively.
  *	Thus, none of the local variables may be static.
  *
- *  An open issue for execution in a PARALLEL environment is locking
- *  of the statistics variables.
+ *  To prevent having to lock the statistics variables in a PARALLEL
+ *  environment, all the statistics variables have been moved into
+ *  the 'resource' structure, which is allocated per-CPU.
  */
 int
 rt_shootray( ap )
@@ -582,10 +587,11 @@ register struct application *ap;
 		rt_uniresource.re_magic = RESOURCE_MAGIC;
 		if(rt_g.debug)rt_log("rt_shootray:  defaulting a_resource to &rt_uniresource\n");
 	}
-	RT_RESOURCE_CHECK(ap->a_resource);
 	ss.ap = ap;
 	rtip = ap->a_rt_i;
+	RT_CK_RTI( rtip );
 	resp = ap->a_resource;
+	RT_RESOURCE_CHECK(resp);
 
 	if(rt_g.debug&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION)) {
 		rt_g.rtg_logindent += 2;
@@ -596,6 +602,16 @@ register struct application *ap;
 			ap->a_purpose != (char *)0 ? ap->a_purpose : "?" );
 		VPRINT("Pnt", ap->a_ray.r_pt);
 		VPRINT("Dir", ap->a_ray.r_dir);
+	}
+	if(RT_BADVEC(ap->a_ray.r_pt)||RT_BADVEC(ap->a_ray.r_dir))  {
+		rt_log("\n**********shootray cpu=%d  %d,%d lvl=%d (%s)\n",
+			resp->re_cpu,
+			ap->a_x, ap->a_y,
+			ap->a_level,
+			ap->a_purpose != (char *)0 ? ap->a_purpose : "?" );
+		VPRINT(" r_pt", ap->a_ray.r_pt);
+		VPRINT("r_dir", ap->a_ray.r_dir);
+		rt_bomb("rt_shootray() bad ray\n");
 	}
 
 	if( rtip->needprep )
@@ -1082,6 +1098,9 @@ register struct resource *res;
 	register char *cp;
 	register int bytes;
 	register int size;		/* size of structure to really get */
+
+	RT_CK_RTI(rtip);
+	RT_RESOURCE_CHECK(res);
 
 	size = rtip->rti_bv_bytes;
 	if( size < 1 )  rt_bomb("rt_get_bitv");
