@@ -247,6 +247,7 @@ char *title;
  *			S E N D
  *
  */
+void
 send(color,val)
 char color;
 int val;

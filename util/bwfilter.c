@@ -69,7 +69,7 @@ int	oflag = 0;	/* Different offset specified */
 char *file_name;
 FILE *infp;
 
-void	select_filter();
+void	select_filter(), dousage();
 
 char	usage[] = "\
 Usage: bwfilter [-f<type>] [-v] [-d#] [-o#]\n\
@@ -248,6 +248,7 @@ char *str;
 		kernoffset = kernel[i].kernoffset;
 }
 
+void
 dousage()
 {
 	int	i;
