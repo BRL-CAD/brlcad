@@ -1074,14 +1074,90 @@ struct vertexuse *vu_p;
  *	The primary purpose of this routine is to find the vertexuses
  *	that should be the parameters to nmg_cut_loop() and nmg_join_loop().
  */
-nmg_first_and_last_vu_in_fu_on_ray(tbl2d, vu, first_vu, last_vu, dir, fu, tol)
+nmg_find_first_and_last_use_of_v_in_fu_on_ray(tbl2d, v, first_vu, last_vu, dir, fu, tol)
 struct rt_list *tbl2d;
-struct vertexuse *vu;
+struct vertex *v;
 struct vertexuse **first_vu;
 struct vertexuse **last_vu;
 vect_t 		dir;
 struct faceuse	*fu;
+struct rt_tol	*tol;
 {
+	struct vertexuse *vu;
+	double dot_max = -2.0;
+	double dot_min = 2.0;
+	double vu_dot;
+	struct edgeuse *eu_next, *eu_last;
+	struct vertexuse *vu_next, *vu_last;
+	vect_t eu_dir;
+
+	NMG_CK_VERTEX(v);
+	NMG_CK_FACEUSE(fu);
+	if (first_vu == (struct vertexuse **)(NULL)) {
+		rt_log("%s: %d first_vu is null ptr\n", __FILE__, __LINE__);
+		rt_bomb("terminating\n");
+	}
+	if (last_vu == (struct vertexuse **)(NULL)) {
+		rt_log("%s: %d last_vu is null ptr\n", __FILE__, __LINE__);
+		rt_bomb("terminating\n");
+	}
+
+
+	/* Look at all the uses of this vertex, and find the uses
+	 * associated with an edgeuse in this faceuse.  
+	 *
+	 * Compute the dot product of the direction vector with the vector
+	 * of the edgeuse, and the PRIOR edgeuse in the loopuse.
+	 *
+	 * We're looking for the vertexuses with the min/max edgeuse
+	 * vector dot product.
+	 */
+	for (RT_LIST_FOR(vu, vertexuse, &v->vu_hd)) {
+		NMG_CK_VERTEXUSE(vu);
+		NMG_CK_VERTEX(vu->v_p);
+		NMG_CK_VERTEX_G(vu->v_p->vg_p);
+
+		if (nmg_find_fu_of_vu(vu) != fu ||
+		    *vu->up.magic_p == NMG_LOOPUSE_MAGIC) continue;
+
+		NMG_CK_EDGEUSE(vu->up.eu_p);
+
+		eu_next = RT_LIST_PNEXT_CIRC(edgeuse, vu->up.eu_p);
+		NMG_CK_EDGEUSE(eu_next);
+		vu_next = eu_next->vu_p;
+		NMG_CK_VERTEXUSE(vu_next);
+		NMG_CK_VERTEX(vu_next->v_p);
+		NMG_CK_VERTEX_G(vu_next->v_p->vg_p);
+		VSUB2(eu_dir, vu_next->v_p->vg_p->coord, vu->v_p->vg_p->coord);
+		if (MAGSQ(eu_dir) >= tol->dist_sq) {
+			if ((vu_dot = VDOT(eu_dir, dir)) > dot_max) {
+				dot_max = vu_dot;
+				*first_vu = vu;
+			}
+			if (vu_dot < dot_min) {
+				dot_min = vu_dot;
+				*last_vu = vu;
+			}
+		}
+
+		eu_last = RT_LIST_PLAST_CIRC(edgeuse, vu->up.eu_p);
+		NMG_CK_EDGEUSE(eu_last);
+		vu_last = eu_last->vu_p;
+		NMG_CK_VERTEXUSE(vu_last);
+		NMG_CK_VERTEX(vu_last->v_p);
+		NMG_CK_VERTEX_G(vu_last->v_p->vg_p);
+		VSUB2(eu_dir, vu->v_p->vg_p->coord, vu_last->v_p->vg_p->coord);
+		if (MAGSQ(eu_dir) >= tol->dist_sq) {
+			if ((vu_dot = VDOT(eu_dir, dir)) > dot_max) {
+				dot_max = vu_dot;
+				*first_vu = vu;
+			}
+			if (vu_dot < dot_min) {
+				dot_min = vu_dot;
+				*last_vu = vu;
+			}
+		}
+	}
 }
 
 
