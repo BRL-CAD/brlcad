@@ -497,6 +497,16 @@ extern CONST float bn_rand_table[BN_RAND_TABSIZE];
 /*----------------------------------------------------------------------*/
 /* wavelet.c */
 
+#define CK_POW_2(dimen) { register unsigned long j; register int ok;\
+	for (ok=0, j=0 ; j < sizeof(unsigned long) * 8 ; j++) { \
+		if ( (1<<j) == dimen) { ok = 1;  break; } \
+	} \
+	if ( ! ok ) { \
+		bu_log("%s:%d value %d should be power of 2 (2^%d)\n", \
+			__FILE__, __LINE__, dimen, j); \
+		bu_bomb("CK_POW_2"); \
+	} \
+}
 
 BU_EXTERN(void	bn_wlt_haar_1d_double_decompose, (double *tbuf, double *buf, \
 			unsigned long dimen, unsigned long depth, \
@@ -633,18 +643,6 @@ BU_EXTERN(void	bn_wlt_haar_2d_long_reconstruct2, (long *tbuf, long *buf, \
 			unsigned long dimen, unsigned long width, \
 			unsigned long height, unsigned long subimage_size, \
 			unsigned long limit ));
-
-
-#define CK_POW_2(dimen) { register unsigned long j; register int ok; \
-                          for (ok=0, j=0 ; j < sizeof(unsigned long) * 8 ; j++) { \
-                            if ( (1<<j) == dimen) { ok = 1;  break; } \
-                          } \
-                          if ( ! ok ) { \
-                            bu_log("%s:%d Dimension %d should be power of 2 (%d)\n", \
-                                   __FILE__, __LINE__, dimen, j); \
-                            bu_bomb("CK_POW_2"); \
-                          } \
-                        }
 
 
 /*----------------------------------------------------------------------*/
