@@ -125,6 +125,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 	((((x)>>24)&0xFF)    )   )
 #endif
 
+#if !HAVE_SYS_ERRLIST_DECL
+extern int      sys_nerr;
+extern char     *sys_errlist[];
+#endif
+
 int pkg_nochecking = 0;	/* set to disable extra checking for input */
 int pkg_permport = 0;	/* TCP port that pkg_permserver() is listening on XXX */
 
