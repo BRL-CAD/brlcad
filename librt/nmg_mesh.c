@@ -436,7 +436,7 @@ insert:
  *
  *  The return is the number of edges meshed.
  */
-static int
+int
 nmg_mesh_two_faces(fu1, fu2, tol)
 register struct faceuse *fu1, *fu2;
 CONST struct rt_tol	*tol;
