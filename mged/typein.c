@@ -418,7 +418,7 @@ f_in()
 		menu = p_half;
 		fn_in = half_in;
 	} else if( strncmp( cmd_args[2], "arb", 3 ) == 0 )  {
-		nvals = atoi(&cmd_args[2][3]);
+		nvals = 3*atoi(&cmd_args[2][3]);
 		menu = p_arb;
 		fn_in = arb_in;
 	} else if( strcmp( cmd_args[2], "sph" ) == 0 )  {
