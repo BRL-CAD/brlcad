@@ -552,6 +552,43 @@ char *h;
 }
 
 /*
+ *			N M G _ P R _ S _ B R I E F L Y
+ */
+void 
+nmg_pr_s_briefly(s, h)
+CONST struct shell *s;
+char *h;
+{
+	CONST struct faceuse	*fu;
+	CONST struct loopuse	*lu;
+	CONST struct edgeuse	*eu;
+
+	MKPAD(h);
+	
+	rt_log("%sSHELL %8x\n", h, s);
+	if (!s || s->l.magic != NMG_SHELL_MAGIC) {
+		rt_log("bad shell magic\n");
+		Return;
+	}
+
+	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
+		nmg_pr_fu_briefly(fu, h);
+	}
+
+	for( RT_LIST_FOR( lu, loopuse, &s->lu_hd ) )  {
+		nmg_pr_lu_briefly(lu, h);
+	}
+
+	for( RT_LIST_FOR( eu, edgeuse, &s->eu_hd ) )  {
+		nmg_pr_eu_briefly(eu, h);
+	}
+	if (s->vu_p)
+		nmg_pr_vu_briefly(s->vu_p, h);
+
+	Return;
+}
+
+/*
  *			N M G _ P R _ F
  */
 void 
