@@ -1285,30 +1285,23 @@ CONST struct rt_tol	*tol;
 			q = eu1->eumate_p->vu_p->v_p->vg_p->coord;
 			rt_log("Radial orientation problem at edge %g %g %g -> %g %g %g\n",
 				p[0], p[1], p[2], q[0], q[1], q[2]);
-rt_pr_tol(tol);
 			rt_log("Problem Edgeuses: eu1=%8x, eur=%8x\n", eu1, eur);
-			if (rt_g.NMG_debug) {
-				nmg_pr_fu_around_eu(eu1, tol);
-				nmg_pr_fu(eu1->up.lu_p->up.fu_p, 0);
-				rt_log("Radial loop:\n");
-				nmg_pr_fu(eur->up.lu_p->up.fu_p, 0);
+
+			/* Plot the edge in yellow, & the loops */
+			rt_g.NMG_debug |= DEBUG_PLOTEM;
+			nmg_face_lu_plot( eu1->up.lu_p, eu1->vu_p,
+				eu1->eumate_p->vu_p );
+			nmg_face_lu_plot( eur->up.lu_p, eur->vu_p,
+				eur->eumate_p->vu_p );
+
+			nmg_pr_fu_around_eu( eu1, tol );
+
+			eur= nmg_findeu( eu1->vu_p->v_p, eu1->eumate_p->vu_p->v_p,
+				(struct shell *)0,  eu1, 0 );
+			if( eur )  {
+				rt_log("nmg_findeu found another eu=x%x\n", eur);
 			}
 			rt_log("nmg_check_radial: unclosed space\n");
-			{
-				/* Plot the edge in yellow, & the loops */
-				rt_g.NMG_debug |= DEBUG_PLOTEM;
-				nmg_face_lu_plot( eu1->up.lu_p, eu1->vu_p,
-					eu1->eumate_p->vu_p );
-				nmg_face_lu_plot( eur->up.lu_p, eur->vu_p,
-					eur->eumate_p->vu_p );
-				nmg_pr_fu_around_eu( eu1, tol );
-				eur= nmg_findeu( eu1->vu_p->v_p, eu1->eumate_p->vu_p->v_p,
-					(struct shell *)0,  eu1, 0 );
-				if( eur )  {
-					rt_log("nmg_findeu found another eu\n");
-					nmg_pr_eu(eur, 0 );
-				}
-			}
 			return(2);
 		}
 
