@@ -127,7 +127,7 @@ The plot dialog is then dismissed."} {see_also pl}}
     grid columnconfigure $top.gridF2 3 -weight 1
 
     grid $top.okB $top.createB x $top.dismissB -sticky "ew" -in $top.gridF3 -pady 4
-    grid columnconfigure $top.gridF3 1 -weight 2
+    grid columnconfigure $top.gridF3 2 -weight 1
 
     pack $top.gridF $top.gridF2 $top.gridF3 -side top -expand 1 -fill both\
 	    -padx 8 -pady 8
