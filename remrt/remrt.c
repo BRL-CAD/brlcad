@@ -186,6 +186,7 @@ struct pkg_switch pkgswitch[] = {
 
 int clients;
 int print_on = 1;
+char *frame_script = NULL;
 
 #define NFD 32
 #define MAXSERVERS	NFD		/* No relay function yet */
@@ -1228,6 +1229,18 @@ register struct frame *fr;
 		perror( fr->fr_filename );
 
 	destroy_frame( fr );
+
+	/* Run any end-of-frame script */
+	if (frame_script) {
+		char *cmd;
+		cmd = malloc(strlen(frame_script) + strlen(fr->fr_filename) +
+		    20); /* spaces and frame number */
+		(void) sprintf(cmd,"%s %s %d",frame_script,fr->fr_filename,
+		    fr->fr_number);
+		if(debug) printf("script %s\n", cmd);
+		(void) system(cmd);
+		(void) free(cmd);
+	}
 }
 
 /*
@@ -3268,11 +3281,38 @@ char	**argv;
 	}
 }
 
+/*
+ *			C D _ E X I T
+ */
 cd_exit( argc, argv )
 int	argc;
 char	**argv;
 {
 	exit(0);
+}
+
+/* 		C D _ F R A M E
+ *
+ * Entry:
+ *	argc	argument count
+ *	argv	argument list
+ *
+ * Exit:
+ *	frame_script is set to the shell script to execute.
+ *
+ */
+cd_EOFrame( argc, argv )
+int	argc;
+char	**argv;
+{
+	if (frame_script) {
+		(void) free(frame_script);
+		frame_script = (char *)0;
+	}
+
+	if (strcmp(argv[1], "off") != 0 ) {
+		frame_script = rt_strdup(argv[1]);
+	}
 }
 
 struct command_tab cmd_tab[] = {
@@ -3310,6 +3350,8 @@ struct command_tab cmd_tab[] = {
 		cd_wait,	1, 1,
 	"exit", "",		"terminate remrt",
 		cd_exit,	1, 1,
+	"EOFrame", "EOFrame command|'off'", "Run command/script on dispatcher at End Of Frame",
+		cd_EOFrame,	2, 2,
 	/* FRAME BUFFER */
 	"attach", "[fb]",	"attach to frame buffer",
 		cd_attach,	1, 2,
@@ -3317,6 +3359,10 @@ struct command_tab cmd_tab[] = {
 		cd_release,	1, 1,
 	"clear", "",		"clear framebuffer",
 		cd_clear,	1, 1,
+	"S", "square_size",	"set square frame buffer size",
+		cd_S,		2, 2,
+	"N", "square_height",	"set height of frame buffer",
+		cd_N,		2, 2,
 	/* FLAGS */
 	"debug", "[hex_flags]",	"set local debugging flag bits",
 		cd_debug,	1, 2,
@@ -3326,10 +3372,6 @@ struct command_tab cmd_tab[] = {
 		cd_f,		2, 2,
 	"s", "square_size",	"set square frame size",
 		cd_f,		2, 2,
-	"S", "square_size",	"set square frame buffer size",
-		cd_S,		2, 2,
-	"N", "square_height",	"set height of frame buffer",
-		cd_N,		2, 2,
 	"-H", "hypersample",	"set number of hypersamples/pixel",
 		cd_hyper,	2, 2,
 	"-B", "0|1",		"set benchmark flag",
