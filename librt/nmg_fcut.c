@@ -273,7 +273,7 @@ rt_log("ang=%g, vec=(%g,%g,%g), x=(%g,%g,%g), y=(%g,%g,%g)\n",
 #define NMG_V_ASSESSMENT_LONE		1
 #define NMG_V_ASSESSMENT_COMBINE(_p,_n)	(((_p)<<2)|(_n))
 
-static char *nmg_e_assessment_names[16] = {
+static char *nmg_v_assessment_names[16] = {
 	"ASSESS_0",
 	"LONE",
 	"ASSESS_2",
@@ -292,7 +292,7 @@ static char *nmg_e_assessment_names[16] = {
 	"On,On"
 };
 
-static char *nmg_v_assessment_names[4] = {
+static char *nmg_e_assessment_names[4] = {
 	"*ERROR*",
 	"LEFT",
 	"RIGHT",
@@ -354,6 +354,7 @@ rt_log("ON: (no edges)\n");
 	 *  then the edge is "on" the ray.
 	 *  There is a slight possibility that loop/face orientation might
 	 *  play a factor in choosing the correct scan direction.
+	/* XXX Need to distinguish between OnForw & OnRev.
 	 */
 /**	for( i=rs->nvu-1; i >= 0; i-- )  { **/
 	for( i=0; i < rs->nvu; i++ )  {
@@ -380,7 +381,7 @@ VPRINT("          to  ", otherv->vg_p->coord);
 out:
 	rt_log("nmg_assess_eu(x%x, fw=%d, pos=%d) v=x%x otherv=x%x: %s\n",
 		eu, forw, pos, v, otherv,
-		nmg_v_assessment_names[ret] );
+		nmg_e_assessment_names[ret] );
 	return ret;
 }
 
@@ -410,6 +411,8 @@ int			pos;
 	next_ass = nmg_assess_eu( this_eu, 1, rs, pos );
 	prev_ass = nmg_assess_eu( this_eu, 0, rs, pos );
 	ass = NMG_V_ASSESSMENT_COMBINE( prev_ass, next_ass );
+	rt_log("nmg_assess_vu() vu[%d]=x%x, v=x%x: %s\n",
+		pos, vu, vu->v_p, nmg_v_assessment_names[ass] );
 	return ass;
 }
 
@@ -485,7 +488,7 @@ rt_log("nmg_face_vu_sort(, %d, %d)\n", start, end);
 		lu = nmg_lu_of_vu( rs->vu[i] );
 		ass = nmg_assess_vu( rs, i );
 		rt_log("vu[%d]=x%x v=x%x assessment=%s\n",
-			i, rs->vu[i], rs->vu[i]->v_p, nmg_e_assessment_names[ass] );
+			i, rs->vu[i], rs->vu[i]->v_p, nmg_v_assessment_names[ass] );
 		/*  Ignore lone vertices, unless that is all that there is,
 		 *  in which case, let just one through.  (return 'start+1');
 		 */
@@ -815,7 +818,7 @@ struct nmg_ray_state	*rs;
 		break;
 	}
 rt_log("nmg_face_state_transition(vu x%x)\n\told=%s, assessed=%s, new=%s, action=%s\n",
-vu, state_names[old], nmg_e_assessment_names[assessment],
+vu, state_names[old], nmg_v_assessment_names[assessment],
 state_names[stp->new_state], action_names[stp->action] );
 
 	switch( stp->action )  {
