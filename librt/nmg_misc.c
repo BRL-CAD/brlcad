@@ -8605,12 +8605,12 @@ top:
 /*	R T _ J O I N _ C N U R B S
  *
  * Join a list of cnurb structs into a single cnurb.
- * The list is destroyed upon succesful completion.
+ * The curves must have matching endpoints, otherwise
+ * nothing is done and (struct cnurb *)NULL is returned.
  *
  * Returns:
  *	A single cnurb structure that joins all the
- *	cnurbs on the list. Linear segments may be added
- *	where consective cnurbs do not have matching endpoints.
+ *	cnurbs on the list.
  */
 struct cnurb *
 rt_join_cnurbs( crv_head )
@@ -8693,13 +8693,30 @@ struct rt_list	*crv_head;
 		rt_bomb( "rt_join_cnurbs: Need to raise order of curve\n" );
 	}
 
-	/* Add linear segments where segment endpoints don't match */
+	/* Check that endponts match */
 	crv = RT_LIST_FIRST( cnurb, crv_head );
 	ncoords = RT_NURB_EXTRACT_COORDS( crv->pt_type );
 	next_crv = RT_LIST_NEXT( cnurb, &crv->l );
 	while( RT_LIST_NOT_HEAD( &next_crv->l, crv_head ) )
 	{
-		if( VEQUAL( &crv->ctl_points[(crv->c_size-1)*ncoords], next_crv->ctl_points ) )
+		int endpoints_equal;
+
+		endpoints_equal = 1;
+
+		for( i=0 ; i<ncoords ; i++ )
+		{
+			/* It is tempting to use a tolerance here, but these coordinates may be
+			 * x/y/z or x/y or u/v, ...
+			 */
+			if( crv->ctl_points[(crv->c_size-1)*ncoords+i] == next_crv->ctl_points[i] )
+				continue;
+			else
+			{
+				endpoints_equal = 0;
+				break;
+			}
+		}
+		if( endpoints_equal )
 		{
 			/* Nothing needed here, go to next curve */
 			crv = next_crv;
@@ -8707,33 +8724,10 @@ struct rt_list	*crv_head;
 			continue;
 		}
 
-		/* Need to add a linear segment here */
-		linear_crv = rt_nurb_new_cnurb( max_order, 2*max_order, 3, pt_type );
-
-		/* Set knots for the correct order */
-		for( i=0 ; i<max_order ; i++ )
-			linear_crv->knot.knots[i] = 0.0;
-		for( i=max_order ; i<2*max_order ; i++ )
-			linear_crv->knot.knots[i] = 1.0;
-
-		/* start point */
-		VMOVE( linear_crv->ctl_points, &crv->ctl_points[(crv->c_size-1)*ncoords] );
-		if( ncoords == 4 )
-			linear_crv->ctl_points[3] = 1.0;
-
-		/* end point */
-		VMOVE( &linear_crv->ctl_points[2*ncoords], next_crv->ctl_points );
-		if( ncoords == 4 )
-			linear_crv->ctl_points[11] = 1.0;
-
-		/* mid point */
-		VBLEND2( &linear_crv->ctl_points[ncoords], 0.5, linear_crv->ctl_points, 0.5, &linear_crv->ctl_points[2*ncoords] );
-		if( ncoords == 4 )
-			linear_crv->ctl_points[7] = 1.0;
-
-		RT_LIST_APPEND( &crv->l, &linear_crv->l );
-		crv = next_crv;
-		next_crv = RT_LIST_NEXT( cnurb, &crv->l );
+		rt_log( "rt_join_cnurbs: Curve endpoints do not match:\n" );
+		rt_nurb_c_print( crv );
+		rt_nurb_c_print( next_crv );
+		return( new_crv );
 	}
 
 	/* Get new knot size and polygon size */
@@ -8782,38 +8776,38 @@ struct rt_list	*crv_head;
 		for( i=1 ; i<crv->c_size ; i++ )
 		{
 			ctl_index++;
-			for( j=0 ; j<ncoords ; j++ )
-				new_crv->ctl_points[ctl_index*ncoords+j] = crv->ctl_points[i*ncoords+j];
+			VMOVEN( &new_crv->ctl_points[ctl_index*ncoords], &crv->ctl_points[i*ncoords], ncoords );
 		}
 	}
 	new_crv->knot.knots[++knot_index] = last_knot;
 
-	/* Free cnurbs in list */
-	while( RT_LIST_WHILE( crv, cnurb, crv_head ) )
-	{
-		RT_LIST_DEQUEUE( &crv->l );
-		rt_nurb_free_cnurb( crv );
-	}
-
 	return( new_crv );
 }
 
-/*	R T _ A R C X Y _ T O _ C N U R B
+/*	R T _ A R C 2 D _ T O _ C N U R B
  *
- * Convert a 2D arc in the XY-plane to a NURB curve
+ * Convert a 2D arc to a NURB curve.
+ *	point_type indicates what type of CNURB is requested.
  *	The arc start, end, and center must be at the same Z
- *	coordinate value. The arc is constructed counter-clockwise
+ *	coordinate value if point_type is RT_NURB_PT_XYZ. For values of
+ *	point_type of RT_NURB_PT_XY or RT_NURB_PT_UV, the Z coordinate
+ *	is ignored. (Note that point_type must be one of the point types
+ *	defined in nurb.h). The arc is constructed counter-clockwise
  *	(as viewed from the +Z direction).
  */
 struct cnurb *
-rt_arcxy_to_cnurb( center, start, end, tol )
-point_t center;
-point_t start;
-point_t end;
+rt_arc2d_to_cnurb( i_center, i_start, i_end, point_type, tol )
+point_t i_center;
+point_t i_start;
+point_t i_end;
+int point_type;
 struct rt_tol *tol;
 {
 	struct cnurb *crv;
 	struct rt_list crv_head;
+	point_t center;
+	point_t start;
+	point_t end;
 	double angle;
 	double angles[3];
 	double radius;
@@ -8823,47 +8817,80 @@ struct rt_tol *tol;
 	vect_t norm;
 	point_t start1;
 	point_t end1;
-	int pt_type;
 	int nsegs;
+	int pt_type;
+	int ncoords;
 	int i;
 
 	RT_CK_TOL( tol );
 
-	/* check for points at same Z-coordinate value */
-	if( center[Z] - start[Z] > tol->dist )
+	VMOVE( start, i_start )
+	VMOVE( center, i_center )
+	VMOVE( end, i_end )
+	switch( point_type )
 	{
-		rt_log( "rt_arcxy_to_cnurb: center and start points not at same Z value (%g vs %g)\n",
-				center[Z], start[Z] );
-		return( (struct cnurb *)NULL );
+		case RT_NURB_PT_XY:
+		case RT_NURB_PT_UV:
+			ncoords = 3;
+			start[Z] = 0.0;
+			center[Z] = 0.0;
+			end[Z] = 0.0;
+			break;
+		case RT_NURB_PT_XYZ:
+		case RT_NURB_PT_DATA:
+		case RT_NURB_PT_PROJ:
+			ncoords = 4;
+			break;
 	}
 
-	if( end[Z] - start[Z] > tol->dist )
+	if( point_type == RT_NURB_PT_XYZ )
 	{
-		rt_log( "rt_arcxy_to_cnurb: end and start points not at same Z value (%g vs %g)\n",
-				end[Z], start[Z] );
-		return( (struct cnurb *)NULL );
+		/* check for points at same Z-coordinate value */
+		if( center[Z] - start[Z] > tol->dist )
+		{
+			rt_log( "rt_arc2d_to_cnurb: center and start points not at same Z value (%g vs %g)\n",
+					center[Z], start[Z] );
+			return( (struct cnurb *)NULL );
+		}
+
+		if( end[Z] - start[Z] > tol->dist )
+		{
+			rt_log( "rt_arc2d_to_cnurb: end and start points not at same Z value (%g vs %g)\n",
+					end[Z], start[Z] );
+			return( (struct cnurb *)NULL );
+		}
+
+		if( end[Z] - center[Z] > tol->dist )
+		{
+			rt_log( "rt_arc2d_to_cnurb: end and center points not at same Z value (%g vs %g)\n",
+					end[Z], center[Z] );
+			return( (struct cnurb *)NULL );
+		}
 	}
 
-	if( end[Z] - center[Z] > tol->dist )
-	{
-		rt_log( "rt_arcxy_to_cnurb: end and center points not at same Z value (%g vs %g)\n",
-				end[Z], center[Z] );
-		return( (struct cnurb *)NULL );
-	}
-
-	/* point type is x, y, z with weighting factor (rational) */
-	pt_type = RT_NURB_MAKE_PT_TYPE( 4, RT_NURB_PT_XYZ, RT_NURB_PT_RATIONAL );
+	/* point type is point_type with weighting factor (rational) */
+	pt_type = RT_NURB_MAKE_PT_TYPE( ncoords, point_type, RT_NURB_PT_RATIONAL );
 
 	/* calculate radius twice */
-	VSUB2( v1, start, center );
-	radius = MAGNITUDE( v1 );
-	VSUB2( v2, end, center );
-	tmp_radius = MAGNITUDE( v2 );
+	if( ncoords == 4 )
+	{
+		VSUB2( v1, start, center );
+		radius = MAGNITUDE( v1 );
+		VSUB2( v2, end, center );
+		tmp_radius = MAGNITUDE( v2 );
+	}
+	else
+	{
+		radius = sqrt( (start[X] - center[X])*(start[X] - center[X]) +
+			(start[Y] - center[Y])*(start[Y] - center[Y]) );
+		tmp_radius = sqrt( (end[X] - center[X])*(end[X] - center[X]) +
+			(end[Y] - center[Y])*(end[Y] - center[Y]) );
+	}
 
 	/* make sure radii are consistent */
-	if( radius - tmp_radius > tol->dist )
+	if( !NEAR_ZERO( radius - tmp_radius, tol->dist ) )
 	{
-		rt_log( "rt_arcxy_to_cnurb: distances from center to start and center to end are different\n" );
+		rt_log( "rt_arc2d_to_cnurb: distances from center to start and center to end are different\n" );
 		rt_log( "                        (%g and %g)\n", radius, tmp_radius );
 		return( (struct cnurb *)NULL );
 	}
@@ -8895,7 +8922,7 @@ struct rt_tol *tol;
 			VREVERSE( t2, t2 );
 		if( (ret_val=rt_isect_line3_line3( &dist1, &dist2, start, t1, end, t2, tol )) < 1 )
 		{
-			rt_log( "rt_arcxy_to_cnurb: Cannot calculate second control point\n" );
+			rt_log( "rt_arc2d_to_cnurb: Cannot calculate second control point\n" );
 			rt_log( "                   rt_isect_line3_line3 returns %d\n" , ret_val );
 			return( (struct cnurb *)NULL );
 		}
@@ -8910,21 +8937,21 @@ struct rt_tol *tol;
 			crv->knot.knots[i] = 1.0;
 
 		/* First and third control points are start and end */
-		VMOVE( crv->ctl_points, start );
-		VMOVE( &crv->ctl_points[8], end );
+		VMOVEN( crv->ctl_points, start, ncoords-1 )
+		VMOVEN( &crv->ctl_points[8], end, ncoords-1 )
 
 		/* weights are 1.0 for the endpoints */
-		crv->ctl_points[3] = 1.0;
-		crv->ctl_points[11] = 1.0;
+		crv->ctl_points[ncoords-1] = 1.0;
+		crv->ctl_points[3*ncoords-1] = 1.0;
 
 		/* second control point is as calculated above */
-		VJOIN1( &crv->ctl_points[4], start, dist1, t1 );
+		VJOIN1N( &crv->ctl_points[ncoords], start, dist1, t1, ncoords-1 )
 
 		/* weight for second control point is cosine of half the arc angle */
-		crv->ctl_points[7] = cos( angle/2.0 );
+		crv->ctl_points[2*ncoords-1] = cos( angle/2.0 );
 
 		/* scale middle point by its weight */
-		VSCALE( &crv->ctl_points[4], &crv->ctl_points[4], crv->ctl_points[7] );
+		VSCALEN( &crv->ctl_points[ncoords], &crv->ctl_points[ncoords], crv->ctl_points[2*ncoords-1], ncoords-1 )
 
 		return( crv );
 	}
@@ -8962,7 +8989,7 @@ struct rt_tol *tol;
 		else
 			VJOIN2( end1, center, radius*cos( angles[i] ), ref1, radius*sin( angles[i] ), ref2 )
 
-		crv = rt_arcxy_to_cnurb( center, start1, end1, tol );
+		crv = rt_arc2d_to_cnurb( center, start1, end1, point_type, tol );
 		RT_LIST_INSERT( &crv_head, &crv->l );
 	}
 
