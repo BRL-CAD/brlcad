@@ -1208,8 +1208,13 @@ nmg_find_e_nearest_pt2(long int *magic_p, const fastf_t *pt2, const fastf_t *mat
                    	     
 {
 	struct model			*m;
-	struct nmg_visit_handlers	htab;
 	struct fen2d_state		st;
+	static const struct nmg_visit_handlers htab = {NULL, NULL, NULL, NULL, NULL, 
+						       NULL, NULL, NULL, NULL, NULL, 
+						       NULL, NULL, NULL, NULL, NULL, 
+						       NULL, NULL, NULL, nmg_find_e_pt2_handler, NULL, 
+						       NULL, NULL, NULL, NULL, NULL};
+	/* htab.vis_edge = nmg_find_e_pt2_handler; */
 
 	BN_CK_TOL(tol);
 	m = nmg_find_model( magic_p );
@@ -1221,9 +1226,6 @@ nmg_find_e_nearest_pt2(long int *magic_p, const fastf_t *pt2, const fastf_t *mat
 	MAT_COPY( st.mat, mat );
 	st.ep = (struct edge *)NULL;
 	st.tol = tol;
-
-	htab = nmg_visit_handlers_null;		/* struct copy */
-	htab.vis_edge = nmg_find_e_pt2_handler;
 
 	nmg_visit( magic_p, &htab, (genptr_t)&st );
 
@@ -2053,7 +2055,12 @@ nmg_vertex_tabulate(struct bu_ptbl *tab, const long int *magic_p)
 {
 	struct model		*m;
 	struct vf_state		st;
-	struct nmg_visit_handlers	handlers;
+	static const struct nmg_visit_handlers	handlers = {NULL, NULL, NULL, NULL, NULL, 
+							    NULL, NULL, NULL, NULL, NULL, 
+							    NULL, NULL, NULL, NULL, NULL, 
+							    NULL, NULL, NULL, NULL, NULL, 
+							    NULL, NULL, NULL, nmg_2rvf_handler, NULL};
+	/* handlers.vertex = nmg_2rvf_handler; */
 
 	m = nmg_find_model( magic_p );
 	NMG_CK_MODEL(m);
@@ -2063,8 +2070,6 @@ nmg_vertex_tabulate(struct bu_ptbl *tab, const long int *magic_p)
 
 	(void)bu_ptbl_init( tab, 64, " tab");
 
-	handlers = nmg_visit_handlers_null;		/* struct copy */
-	handlers.vis_vertex = nmg_2rvf_handler;
 	nmg_visit( magic_p, &handlers, (genptr_t)&st );
 
 	bu_free( (char *)st.visited, "visited[]");
@@ -2105,7 +2110,12 @@ nmg_vertexuse_normal_tabulate(struct bu_ptbl *tab, const long int *magic_p)
 {
 	struct model		*m;
 	struct vf_state		st;
-	struct nmg_visit_handlers	handlers;
+	static const struct nmg_visit_handlers	handlers = {NULL, NULL, NULL, NULL, NULL, 
+							    NULL, NULL, NULL, NULL, NULL, 
+							    NULL, NULL, NULL, NULL, NULL, 
+							    NULL, NULL, NULL, NULL, NULL, 
+							    NULL, NULL, nmg_vert_a_handler, NULL, NULL};
+	/* handlers.vis_vertexuse_a = nmg_vert_a_handler; */
 
 	m = nmg_find_model( magic_p );
 	NMG_CK_MODEL(m);
@@ -2115,8 +2125,6 @@ nmg_vertexuse_normal_tabulate(struct bu_ptbl *tab, const long int *magic_p)
 
 	(void)bu_ptbl_init( tab, 64, " tab");
 
-	handlers = nmg_visit_handlers_null;		/* struct copy */
-	handlers.vis_vertexuse_a = nmg_vert_a_handler;
 	nmg_visit( magic_p, &handlers, (genptr_t)&st );
 
 	bu_free( (char *)st.visited, "visited[]");
@@ -2154,7 +2162,12 @@ nmg_edgeuse_tabulate(struct bu_ptbl *tab, const long int *magic_p)
 {
 	struct model		*m;
 	struct vf_state		st;
-	struct nmg_visit_handlers	handlers;
+	static const struct nmg_visit_handlers	handlers = {NULL, NULL, NULL, NULL, NULL, 
+							    NULL, NULL, NULL, NULL, NULL, 
+							    NULL, NULL, NULL, NULL, NULL, 
+							    NULL, nmg_2edgeuse_handler, NULL, NULL, NULL, 
+							    NULL, NULL, NULL, NULL, NULL};
+	/* handlers.bef_edgeuse = nmg_2edgeuse_handler; */
 
 	m = nmg_find_model( magic_p );
 	NMG_CK_MODEL(m);
@@ -2164,8 +2177,6 @@ nmg_edgeuse_tabulate(struct bu_ptbl *tab, const long int *magic_p)
 
 	(void)bu_ptbl_init( tab, 64, " tab");
 
-	handlers = nmg_visit_handlers_null;		/* struct copy */
-	handlers.bef_edgeuse = nmg_2edgeuse_handler;
 	nmg_visit( magic_p, &handlers, (genptr_t)&st );
 
 	bu_free( (char *)st.visited, "visited[]");
@@ -2203,7 +2214,12 @@ nmg_edge_tabulate(struct bu_ptbl *tab, const long int *magic_p)
 {
 	struct model		*m;
 	struct vf_state		st;
-	struct nmg_visit_handlers	handlers;
+	static const struct nmg_visit_handlers	handlers = {NULL, NULL, NULL, NULL, NULL, 
+							    NULL, NULL, NULL, NULL, NULL, 
+							    NULL, NULL, NULL, NULL, NULL, 
+							    NULL, NULL, NULL, nmg_2edge_handler, NULL, 
+							    NULL, NULL, NULL, NULL, NULL};
+	/* handlers.vis_edge = nmg_2edge_handler; */
 
 	m = nmg_find_model( magic_p );
 	NMG_CK_MODEL(m);
@@ -2213,8 +2229,6 @@ nmg_edge_tabulate(struct bu_ptbl *tab, const long int *magic_p)
 
 	(void)bu_ptbl_init( tab, 64, " tab");
 
-	handlers = nmg_visit_handlers_null;		/* struct copy */
-	handlers.vis_edge = nmg_2edge_handler;
 	nmg_visit( magic_p, &handlers, (genptr_t)&st );
 
 	bu_free( (char *)st.visited, "visited[]");
@@ -2261,7 +2275,12 @@ nmg_edge_g_tabulate(struct bu_ptbl *tab, const long int *magic_p)
 {
 	struct model		*m;
 	struct vf_state		st;
-	struct nmg_visit_handlers	handlers;
+	static const struct nmg_visit_handlers	handlers = {NULL, NULL, NULL, NULL, NULL, 
+							    NULL, NULL, NULL, NULL, NULL, 
+							    NULL, NULL, NULL, NULL, NULL, 
+							    NULL, NULL, NULL, NULL, nmg_edge_g_handler, 
+							    NULL, NULL, NULL, NULL, NULL};
+	/* handlers.vis_edge_g = nmg_edge_g_handler; */
 
 	m = nmg_find_model( magic_p );
 	NMG_CK_MODEL(m);
@@ -2271,8 +2290,6 @@ nmg_edge_g_tabulate(struct bu_ptbl *tab, const long int *magic_p)
 
 	(void)bu_ptbl_init( tab, 64, " tab");
 
-	handlers = nmg_visit_handlers_null;		/* struct copy */
-	handlers.vis_edge_g = nmg_edge_g_handler;
 	nmg_visit( magic_p, &handlers, (genptr_t)&st );
 
 	bu_free( (char *)st.visited, "visited[]");
@@ -2310,7 +2327,12 @@ nmg_face_tabulate(struct bu_ptbl *tab, const long int *magic_p)
 {
 	struct model		*m;
 	struct vf_state		st;
-	struct nmg_visit_handlers	handlers;
+	static const struct nmg_visit_handlers	handlers = {NULL, NULL, NULL, NULL, NULL, 
+							    NULL, NULL, NULL, NULL, NULL, 
+							    nmg_2face_handler, NULL, NULL, NULL, NULL, 
+							    NULL, NULL, NULL, NULL, NULL, 
+							    NULL, NULL, NULL, NULL, NULL};
+	/* handlers.vis_face = nmg_2face_handler; */
 
 	m = nmg_find_model( magic_p );
 	NMG_CK_MODEL(m);
@@ -2320,8 +2342,6 @@ nmg_face_tabulate(struct bu_ptbl *tab, const long int *magic_p)
 
 	(void)bu_ptbl_init( tab, 64, " tab");
 
-	handlers = nmg_visit_handlers_null;		/* struct copy */
-	handlers.vis_face = nmg_2face_handler;
 	nmg_visit( magic_p, &handlers, (genptr_t)&st );
 
 	bu_free( (char *)st.visited, "visited[]");
@@ -2424,7 +2444,12 @@ nmg_edgeuse_on_line_tabulate(struct bu_ptbl *tab, const long int *magic_p, const
 {
 	struct model		*m;
 	struct edge_line_state		st;
-	struct nmg_visit_handlers	handlers;
+	static const struct nmg_visit_handlers	handlers = {NULL, NULL, NULL, NULL, NULL, 
+							    NULL, NULL, NULL, NULL, NULL, 
+							    NULL, NULL, NULL, NULL, NULL, 
+							    NULL, nmg_line_handler, NULL, NULL, NULL, 
+							    NULL, NULL, NULL, NULL, NULL};
+	/* handlers.bef_edgeuse = nmg_line_handler; */
 
 	m = nmg_find_model( magic_p );
 	NMG_CK_MODEL(m);
@@ -2444,8 +2469,6 @@ nmg_edgeuse_on_line_tabulate(struct bu_ptbl *tab, const long int *magic_p, const
 
 	(void)bu_ptbl_init( tab, 64, " tab");
 
-	handlers = nmg_visit_handlers_null;		/* struct copy */
-	handlers.bef_edgeuse = nmg_line_handler;
 	nmg_visit( magic_p, &handlers, (genptr_t)&st );
 
 	bu_free( (char *)st.visited, "visited[]");
@@ -2511,7 +2534,13 @@ nmg_e_and_v_tabulate(struct bu_ptbl *eutab, struct bu_ptbl *vtab, const long int
 {
 	struct model			*m;
 	struct e_and_v_state		st;
-	struct nmg_visit_handlers	handlers;
+	static const struct nmg_visit_handlers	handlers = {NULL, NULL, NULL, NULL, NULL, 
+							    NULL, NULL, NULL, NULL, NULL, 
+							    NULL, NULL, NULL, NULL, NULL, 
+							    NULL, NULL, NULL, nmg_e_handler, NULL, 
+							    NULL, NULL, NULL, nmg_v_handler, NULL};
+	/* handlers.vis_edge = nmg_e_handler; */
+	/* handlers.vis_vertex = nmg_v_handler; */
 
 	m = nmg_find_model( magic_p );
 	NMG_CK_MODEL(m);
@@ -2523,9 +2552,6 @@ nmg_e_and_v_tabulate(struct bu_ptbl *eutab, struct bu_ptbl *vtab, const long int
 	(void)bu_ptbl_init( eutab, 64, " eutab");
 	(void)bu_ptbl_init( vtab, 64, " vtab");
 
-	handlers = nmg_visit_handlers_null;		/* struct copy */
-	handlers.vis_edge = nmg_e_handler;
-	handlers.vis_vertex = nmg_v_handler;
 	nmg_visit( magic_p, &handlers, (genptr_t)&st );
 
 	bu_free( (char *)st.visited, "visited[]");

@@ -37,7 +37,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "raytrace.h"
 
-const struct nmg_visit_handlers	nmg_visit_handlers_null;
 
 /*
  *			N M G _ V I S I T _ V E R T E X

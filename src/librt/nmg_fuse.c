@@ -1376,7 +1376,7 @@ nmg_model_edge_g_fuse(struct model *m, const struct bn_tol *tol)
  *	count	Number of verts *not* on fu2's surface when at least one is
  *		more than TOL_MULTIPLES*tol->dist from fu2.
  *
- *  XXX It would be more efficient to use nmg_vist() for this.
+ *  XXX It would be more efficient to use nmg_visit() for this.
  */
 int
 nmg_ck_fu_verts(struct faceuse *fu1, struct face *f2, const struct bn_tol *tol)

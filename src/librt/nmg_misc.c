@@ -4429,9 +4429,14 @@ int
 nmg_split_loops_into_faces(long int *magic_p, const struct bn_tol *tol)
 {
 	struct model *m;
-	struct nmg_visit_handlers htab;
 	struct nmg_split_loops_state sl_state;
 	int count;
+	static const struct nmg_visit_handlers htab = {NULL, NULL, NULL, NULL, NULL, 
+						       NULL, NULL, NULL, NULL, nmg_split_loops_handler, 
+						       NULL, NULL, NULL, NULL, NULL, 
+						       NULL, NULL, NULL, NULL, NULL, 
+						       NULL, NULL, NULL, NULL, NULL};
+	/* htab.aft_faceuse = nmg_split_loops_handler; */
 
 	if( rt_g.NMG_debug & DEBUG_BASIC )
 		bu_log( "nmg_split_loops_into_faces( magic_p = x%x )\n" , magic_p );
@@ -4442,9 +4447,6 @@ nmg_split_loops_into_faces(long int *magic_p, const struct bn_tol *tol)
 	NMG_CK_MODEL( m );
 
 	BN_CK_TOL( tol );
-
-	htab = nmg_visit_handlers_null;		/* struct copy */
-	htab.aft_faceuse = nmg_split_loops_handler;
 
 	sl_state.split = 0;
 	sl_state.flags = (long *)bu_calloc( m->maxindex*2 , sizeof( long ) , "nmg_split_loops_into_faces: flags" );
@@ -5089,18 +5091,20 @@ int
 nmg_unbreak_region_edges(long int *magic_p)
 {
 	struct model *m;
-	struct nmg_visit_handlers htab;
 	struct nmg_unbreak_state ub_state;
 	int count;
+	static const struct nmg_visit_handlers htab = {NULL, NULL, NULL, NULL, NULL, 
+						       NULL, NULL, NULL, NULL, NULL, 
+						       NULL, NULL, NULL, NULL, NULL, 
+						       NULL, NULL, nmg_unbreak_handler, NULL, NULL, 
+						       NULL, NULL, NULL, NULL, NULL};
+	/* htab.aft_edgeuse = nmg_unbreak_handler; */
 
 	if( rt_g.NMG_debug & DEBUG_BASIC )
 		bu_log( "nmg_unbreak_region_edges( magic_p = x%x )\n" , magic_p );
 
 	m = nmg_find_model( magic_p );
 	NMG_CK_MODEL( m );	
-
-	htab = nmg_visit_handlers_null;		/* struct copy */
-	htab.aft_edgeuse = nmg_unbreak_handler;
 
 	ub_state.unbroken = 0;
 	ub_state.flags = (long *)bu_calloc( m->maxindex*2 , sizeof( long ) , "nmg_unbreak_region_edges: flags" );

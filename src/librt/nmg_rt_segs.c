@@ -984,14 +984,19 @@ visitor(long int *l_p, genptr_t tbl, int after)
 static void
 build_topo_list(long int *l_p, struct bu_ptbl *tbl)
 {
-	struct nmg_visit_handlers htab;
 	struct loopuse *lu;
 	struct edgeuse *eu;
 	struct edgeuse *eu_p;
 	struct vertexuse *vu;
 	struct vertexuse *vu_p;
 	int radial_not_mate=0;
-
+	static const struct nmg_visit_handlers htab = {NULL, NULL, NULL, NULL, NULL, 
+						       NULL, NULL, NULL, NULL, NULL, 
+						       visitor, NULL, NULL, NULL, NULL, 
+						       NULL, NULL, NULL, visitor, NULL, 
+						       NULL, NULL, NULL, visitor, NULL};
+	/* htab.vis_face = htab.vis_edge = htab.vis_vertex = visitor; */
+	
 	if (!l_p) {
 		bu_log("%s:%d NULL l_p\n", __FILE__, __LINE__);
 		nmg_rt_segs_exit("");
@@ -999,8 +1004,6 @@ build_topo_list(long int *l_p, struct bu_ptbl *tbl)
 
 	switch (*l_p) {
 	case NMG_FACEUSE_MAGIC:
-		htab = nmg_visit_handlers_null;
-		htab.vis_face = htab.vis_edge = htab.vis_vertex = visitor;
 		nmg_visit(l_p, &htab, (genptr_t *)tbl);
 		break;
 	case NMG_EDGEUSE_MAGIC:

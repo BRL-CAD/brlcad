@@ -1662,8 +1662,13 @@ nmg_ck_vs_in_region(const struct nmgregion *r, const struct bn_tol *tol)
 {
 	struct model			*m;
 	struct v_ck_state		st;
-	struct nmg_visit_handlers       handlers;
 	struct bu_ptbl			tab;
+	static const struct nmg_visit_handlers handlers = {NULL, NULL, NULL, NULL, NULL, 
+							   NULL, NULL, NULL, NULL, NULL, 
+							   NULL, NULL, NULL, NULL, NULL, 
+							   NULL, NULL, NULL, NULL, NULL, 
+							   NULL, NULL, NULL, nmg_ck_v_in_fus, NULL};
+        /* handlers.vis_vertex = nmg_ck_v_in_fus; */
 
         NMG_CK_REGION(r);
 	BN_CK_TOL( tol );
@@ -1676,8 +1681,6 @@ nmg_ck_vs_in_region(const struct nmgregion *r, const struct bn_tol *tol)
 
         (void)bu_ptbl_init( &tab, 64, " &tab");
 
-        handlers = nmg_visit_handlers_null;             /* struct copy */
-        handlers.vis_vertex = nmg_ck_v_in_fus;
         nmg_visit( &r->l.magic, &handlers, (genptr_t)&st );
 
 	bu_ptbl_free( &tab );

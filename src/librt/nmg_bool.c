@@ -80,8 +80,13 @@ int
 nmg_has_dangling_faces(long int *magic_p, const char *manifolds)
 {
 	struct model			*m;
-	struct nmg_visit_handlers	handlers;
 	struct dangling_faceuse_state	st;
+	static const struct nmg_visit_handlers	handlers = {NULL, NULL, NULL, NULL, NULL, 
+							    NULL, NULL, NULL, nmg_dangling_handler, NULL, 
+							    NULL, NULL, NULL, NULL, NULL, 
+							    NULL, NULL, NULL, NULL, NULL, 
+							    NULL, NULL, NULL, NULL, NULL};
+	/* handlers.bef_faceuse = nmg_dangling_handler; */
 
 	m = nmg_find_model( magic_p );
 	NMG_CK_MODEL(m);
@@ -89,8 +94,6 @@ nmg_has_dangling_faces(long int *magic_p, const char *manifolds)
 	st.manifolds = manifolds;
 	st.count = 0;
 
-	handlers = nmg_visit_handlers_null;		/* struct copy */
-	handlers.bef_faceuse = nmg_dangling_handler;
 	nmg_visit( magic_p, &handlers, (genptr_t)&st );
 
 	bu_free( (char *)st.visited, "visited[]");
