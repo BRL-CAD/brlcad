@@ -6,6 +6,7 @@ proc mged_bind_dm { w } {
     global mged_rotate_factor
     global mged_tran_factor
     global slidersflag
+    global forwarding_key
 
     set hot_key 65478
 
@@ -13,9 +14,21 @@ proc mged_bind_dm { w } {
     bind $w <Enter> "winset $w; focus $w;"
 
 #default mouse bindings
-    do_mouse_bindings $w
+    default_mouse_bindings $w
 
 #default key bindings
+    set forwarding_key($w) 0
+    default_key_bindings $w
+}
+
+proc print_return_val str {
+    if {$str != ""} {
+	distribute_text "" "" $str
+	stuff_str $str
+    }
+}
+
+proc default_key_bindings { w } {
     bind $w a "winset $w; adc"
     bind $w e "winset $w; set e_axes !"
     bind $w v "winset $w; set v_axes !"
@@ -51,7 +64,7 @@ proc mged_bind_dm { w } {
     bind $w <F7> "winset $w; set faceplate !"
     bind $w <F8> "winset $w; set orig_gui !"
 # KeySym for <F9> --> 0xffc6 --> 65478
-    bind $w <F9> "winset $w; set send_key !"
+    bind $w <F9> "toggle_forward_key_bindings $w"
     bind $w <F12> "winset $w; knob zero"
 
     bind $w <Left> "winset $w; knob -i ay -\$mged_rotate_factor"
@@ -71,102 +84,108 @@ proc mged_bind_dm { w } {
     bind $w <Control-p> "winset $w; prev_view"
     bind $w <Control-t> "winset $w; toggle_view"
 
-    bind_troubled_ones $w
-}
+    # troubled ones
+    bind $w <Alt-Key> {
+	break
+    }
 
-proc bind_troubled_ones { w } {
-    bind $w <Alt-A> "break"
-    bind $w <Alt-a> "break"
-    bind $w <Alt-B> "break"
-    bind $w <Alt-b> "break"
-    bind $w <Alt-C> "break"
-    bind $w <Alt-c> "break"
-    bind $w <Alt-D> "break"
-    bind $w <Alt-d> "break"
-    bind $w <Alt-E> "break"
-    bind $w <Alt-e> "break"
-    bind $w <Alt-F> "break"
-    bind $w <Alt-f> "break"
-    bind $w <Alt-G> "break"
-    bind $w <Alt-g> "break"
-    bind $w <Alt-H> "break"
-    bind $w <Alt-h> "break"
-    bind $w <Alt-I> "break"
-    bind $w <Alt-i> "break"
-    bind $w <Alt-J> "break"
-    bind $w <Alt-j> "break"
-    bind $w <Alt-K> "break"
-    bind $w <Alt-k> "break"
-    bind $w <Alt-L> "break"
-    bind $w <Alt-l> "break"
-    bind $w <Alt-M> "break"
-    bind $w <Alt-m> "break"
-    bind $w <Alt-N> "break"
-    bind $w <Alt-n> "break"
-    bind $w <Alt-O> "break"
-    bind $w <Alt-o> "break"
-    bind $w <Alt-P> "break"
-    bind $w <Alt-p> "break"
-    bind $w <Alt-Q> "break"
-    bind $w <Alt-q> "break"
-    bind $w <Alt-R> "break"
-    bind $w <Alt-r> "break"
-    bind $w <Alt-S> "break"
-    bind $w <Alt-s> "break"
-    bind $w <Alt-T> "break"
-    bind $w <Alt-t> "break"
-    bind $w <Alt-U> "break"
-    bind $w <Alt-u> "break"
-    bind $w <Alt-V> "break"
-    bind $w <Alt-v> "break"
-    bind $w <Alt-W> "break"
-    bind $w <Alt-w> "break"
-    bind $w <Alt-X> "break"
-    bind $w <Alt-x> "break"
-    bind $w <Alt-Y> "break"
-    bind $w <Alt-y> "break"
-    bind $w <Alt-Z> "break"
-    bind $w <Alt-z> "break"
+    bind $w <Tab> {
+	break
+    }
 
-#    bind $w <Alt-`> "break"
-    bind $w <Alt-KeyPress-1> "break"
-    bind $w <Alt-KeyPress-2> "break"
-    bind $w <Alt-KeyPress-3> "break"
-    bind $w <Alt-KeyPress-4> "break"
-    bind $w <Alt-KeyPress-5> "break"
-    bind $w <Alt-KeyPress-6> "break"
-    bind $w <Alt-KeyPress-7> "break"
-    bind $w <Alt-KeyPress-8> "break"
-    bind $w <Alt-KeyPress-9> "break"
-    bind $w <Alt-KeyPress-0> "break"
-#    bind $w <Alt--> "break"
-#    bind $w <Alt-=> "break"
-#    bind $w <Alt-~> "break"
-#    bind $w <Alt-!> "break"
-#    bind $w <Alt-@> "break"
-#    bind $w <Alt-#> "break"
-#    bind $w <Alt-$> "break"
-#    bind $w <Alt-%> "break"
-#    bind $w <Alt-^> "break"
-#    bind $w <Alt-&> "break"
-#    bind $w <Alt-*> "break"
-#    bind $w <Alt-(> "break"
-#    bind $w <Alt-)> "break"
-#    bind $w <Alt-_> "break"
-#    bind $w <Alt-+> "break"
-    bind $w <Alt-KeyPress> "break"
-
-    bind $w <Tab> "break"
-}
-
-proc print_return_val str {
-    if {$str != ""} {
-	distribute_text "" "" $str
-	stuff_str $str
+    bind $w <Shift-Tab> {
+	break
     }
 }
 
-proc do_mouse_bindings { w } {
+proc toggle_forward_key_bindings { w } {
+    global forwarding_key
+
+    if {$forwarding_key($w)} {
+	default_key_bindings $w
+	set forwarding_key($w) 0
+    } else {
+	forward_key_bindings $w
+	set forwarding_key($w) 1
+    }
+}
+
+proc forward_key_bindings { w } {
+    set id [get_player_id_dm $w]
+
+    if {$id == "mged"} {
+	return
+    }
+
+# First, unset the default key bindings
+    bind $w a {}
+    bind $w e {}
+    bind $w v {}
+    bind $w w {}
+    bind $w i {}
+    bind $w I {}
+    bind $w p {}
+    bind $w 0 {}
+    bind $w x {}
+    bind $w y {}
+    bind $w z {}
+    bind $w X {}
+    bind $w Y {}
+    bind $w Z {}
+    bind $w 3 {}
+    bind $w 4 {}
+    bind $w f {}
+    bind $w t {}
+    bind $w b {}
+    bind $w l {}
+    bind $w r {}
+    bind $w R {}
+    bind $w s {}
+    bind $w o {}
+    bind $w q {}
+    bind $w u {}
+    bind $w <F1> {}
+    bind $w <F2> {}
+    bind $w <F3> {}
+    bind $w <F4> {}
+    bind $w <F5> {}
+    bind $w <F6> {}
+    bind $w <F7> {}
+    bind $w <F8> {}
+    bind $w <F12> {}
+
+    bind $w <Left> {}
+    bind $w <Right> {}
+    bind $w <Down> {}
+    bind $w <Up> {}
+    bind $w <Shift-Left> {}
+    bind $w <Shift-Right> {}
+    bind $w <Shift-Down> {}
+    bind $w <Shift-Up> {}
+    bind $w <Control-Shift-Left> {}
+    bind $w <Control-Shift-Right> {}
+    bind $w <Control-Shift-Down> {}
+    bind $w <Control-Shift-Up> {}
+
+    bind $w <Control-n> {}
+    bind $w <Control-p> {}
+    bind $w <Control-t> {}
+
+    bind $w <Alt-Key> {}
+    bind $w <Tab> {}
+    bind $w <Shift-Tab> {}
+
+# The focus commands in the binding below are necessary to insure
+# that .$id.t gets the event.
+    bind $w <KeyPress> "\
+	    focus .$id.t;\
+	    set dm_insert_char_flag 1;\
+	    event generate .$id.t <KeyPress> -state %s -keysym %K;\
+	    set dm_insert_char_flag 0;\
+	    focus %W"
+}
+
+proc default_mouse_bindings { w } {
     global transform
 
 # default button bindings
