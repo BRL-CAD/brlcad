@@ -545,7 +545,7 @@ rt_comb_export4(
 				return -1;
 			}
 			if( strlen(endp+1) >= sizeof(rp[0].c.c_matparm) )  {
-				bu_log("ERROR:  Shader parameters '%s' exceed v4 database field, aborting.\nUpgrade to v5 database to store unlimited length strings.\n",
+				bu_log("ERROR:  Shader parameters '%s' exceed database field, aborting.\nUse \"dbupgrade\" to enable unlimited length strings.\n",
 					endp+1);
 				return -1;
 			}

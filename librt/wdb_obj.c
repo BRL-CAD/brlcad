@@ -6509,8 +6509,9 @@ wdb_hide_cmd(struct rt_wdb	*wdbp,
 
 	RT_CK_DBI( dbip );
 	if( dbip->dbi_version < 5 ) {
-		Tcl_AppendResult(interp, "The \"hide\" command is only valid for version 5 databases and later\n",
-				 (char *)NULL );
+	  Tcl_AppendResult(interp, 
+			   "Database was created with a previous release of BRL-CAD.\nSelect \"Tools->Upgrade Database...\" to enable support for this feature.",
+			   (char *)NULL );
 		return TCL_ERROR;
 	}
 
@@ -6650,8 +6651,9 @@ wdb_unhide_cmd(struct rt_wdb	*wdbp,
 
 	RT_CK_DBI( dbip );
 	if( dbip->dbi_version < 5 ) {
-		Tcl_AppendResult(interp, "The \"unhide\" command is only valid for version 5 databases and later\n",
-				 (char *)NULL );
+	  Tcl_AppendResult(interp, 
+			   "Database was created with a previous release of BRL-CAD.\nSelect \"Tools->Upgrade Database...\" to enable support for this feature.",
+			   (char *)NULL );
 		return TCL_ERROR;
 	}
 

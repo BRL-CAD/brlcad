@@ -129,9 +129,10 @@ char **argv;
 		struct db_i	*dbip;
 		struct directory *dp;
 
-		bu_log("Attempting to export v5 database\n" );
+		bu_log("Attempting to export Release 6 database\n" );
 		bu_log("\tNote that the binary format is machine independent\n");
-
+		bu_log("\tConverting to ASCII to move database to a different architecture\n");
+		bu_log("\tis no longer necessary.\n");
 		interp = Tcl_CreateInterp();
 		/* This runs the init.tcl script */
 		if( Tcl_Init(interp) == TCL_ERROR )

@@ -392,10 +392,10 @@ db_update_ident( struct db_i *dbip, const char *new_title, double local2mm )
 
 	if( (v4units = db_v4_get_units_code(bu_units_string(local2mm))) < 0 )  {
 		bu_log("db_update_ident(): \
-Due to a database restriction in the v4 format of .g files, your\n\
+Due to a restriction in previous versions of the BRL-CAD database format, your\n\
 editing units %g will not be remembered on your next editing session.\n\
 This will not harm the integrity of your database.\n\
-You may wish to consider upgrading your database to v5 format.\n",
+You may wish to consider upgrading your database using \"dbupgrade\".\n",
 			local2mm);
 		v4units = ID_MM_UNIT;
 	}
