@@ -398,6 +398,7 @@ int		n;
 	}
 
 	for (i = n-2 ; i >= 0 ; i--) {
+		/* Get the edgeuse most recently created */
 		euold = RT_LIST_FIRST( edgeuse, &lu->down_hd );
 		NMG_CK_EDGEUSE(euold);
 
@@ -409,7 +410,7 @@ int		n;
 		 */
 		if (*verts[i]) {
 			/* look for an existing edge to share */
-			eur = nmg_findeu(*verts[i+1], *verts[i], s, euold);
+			eur = nmg_findeu(*verts[i+1], *verts[i], s, euold, 1);
 			eu = nmg_eusplit(*verts[i], euold);
 			if (eur) {
 				nmg_moveeu(eur, eu);
@@ -433,7 +434,7 @@ int		n;
 		}
 	}
 
-	if (eur = nmg_findeu(*verts[n-1], *verts[0], s, euold))  {
+	if (eur = nmg_findeu(*verts[n-1], *verts[0], s, euold, 1))  {
 		nmg_moveeu(eur, euold);
 	} else  {
 	    if (rt_g.NMG_debug & DEBUG_CMFACE)
@@ -761,10 +762,14 @@ struct edgeuse	*eu;
 	NMG_CK_VERTEX(vB);
 
 	/* vA and vB are the endpoints of the original edge "e" */
-	if( vA == vB )
+	if( vA == vB )  {
 		rt_log("WARNING: nmg_esplit() on edge from&to v=x%x\n", vA);
-	if( v && ( v == vA || v == vB ) )
+		rt_bomb("nmg_esplit() of edge running from&to same v\n");
+	}
+	if( v && ( v == vA || v == vB ) )  {
 		rt_log("WARNING: nmg_esplit(v=x%x) vertex is already an edge vertex\n", v);
+		rt_bomb("nmg_esplit() new vertex is already an edge vertex\n");
+	}
 
 	/* one at a time, we peel out & split an edgeuse pair of this edge.
 	 * when we split an edge that didn't need to be peeled out, we know
@@ -1103,17 +1108,27 @@ int n;
  *			N M G _ F I N D E U
  *
  *  Find an edgeuse in a shell between a given pair of vertex structs.
- *  If "eup" is non-NULL, that specific edgeuse & it's mate will be ignored.
+ *
+ *  If a given shell "s" is specified, then only edgeuses in that shell
+ *  will be considered, otherwise all edgeuses in the model are fair game.
+ *
+ *  If a particular edgeuse "eup" is specified, then that edgeuse
+ *  and it's mate will not be returned as a match.
+ *
+ *  If "dangling_only" is true, then an edgeuse will be matched only if
+ *  there are no other edgeuses on the edge, i.e. the radial edgeuse is
+ *  the same as the mate edgeuse.
  *
  *  Returns -
  *	edgeuse*	Edgeuse which matches the criteria
  *	NULL		Unable to find matching edgeuse
  */
 struct edgeuse *
-nmg_findeu(v1, v2, s, eup)
-struct vertex *v1, *v2;
-struct shell *s;
-struct edgeuse *eup;
+nmg_findeu(v1, v2, s, eup, dangling_only)
+struct vertex	*v1, *v2;
+struct shell	*s;
+struct edgeuse	*eup;
+int		dangling_only;
 {
 	register struct vertexuse	*vu;
 	register struct edgeuse		*eu;
@@ -1122,7 +1137,7 @@ struct edgeuse *eup;
 
 	NMG_CK_VERTEX(v1);
 	NMG_CK_VERTEX(v2);
-	NMG_CK_SHELL(s);
+	if(s) NMG_CK_SHELL(s);
 
 	if(eup)  {
 		NMG_CK_EDGEUSE(eup);
@@ -1138,8 +1153,9 @@ struct edgeuse *eup;
 	}
 
 	if (rt_g.NMG_debug & DEBUG_FINDEU)
-		rt_log("nmg_findeu() seeking eu!=%8x/%8x between (%8x, %8x)\n",
-			eup, eup_mate, v1, v2 );
+		rt_log("nmg_findeu() seeking eu!=%8x/%8x between (%8x, %8x) %s\n",
+			eup, eup_mate, v1, v2,
+			dangling_only ? "[dangling]" : "[any]" );
 
 	for( RT_LIST_FOR( vu, vertexuse, &v1->vu_hd ) )  {
 		NMG_CK_VERTEXUSE(vu);
@@ -1167,16 +1183,36 @@ struct edgeuse *eup;
 		}
 
 		/* See if this edgeuse is in the proper shell */
-		if (*eu->up.magic_p != NMG_LOOPUSE_MAGIC ||
-		    *eu->up.lu_p->up.magic_p != NMG_FACEUSE_MAGIC ||
-		    eu->up.lu_p->up.fu_p->s_p != s) {
-		    	if (rt_g.NMG_debug & DEBUG_FINDEU)
-		    		rt_log("\tIgnoring -- wrong parent\n");
-			continue;
+		if( s )  {
+			struct loopuse	*lu;
+			if( *eu->up.magic_p == NMG_SHELL_MAGIC &&
+			    eu->up.s_p != s )  {
+			    	if (rt_g.NMG_debug & DEBUG_FINDEU)
+			    		rt_log("\tIgnoring -- wire eu in wrong shell s=%x\n", eu->up.s_p);
+				continue;
+			}
+			if( *eu->up.magic_p != NMG_LOOPUSE_MAGIC )
+				rt_bomb("nmg_findeu() eu has bad up\n");
+			lu = eu->up.lu_p;
+			NMG_CK_LOOPUSE(lu);
+			if( *lu->up.magic_p == NMG_SHELL_MAGIC &&
+			    lu->up.s_p != s )  {
+			    	if (rt_g.NMG_debug & DEBUG_FINDEU)
+			    		rt_log("\tIgnoring -- eu of wire loop in wrong shell s=%x\n", lu->up.s_p);
+				continue;
+			}
+			if( *lu->up.magic_p != NMG_FACEUSE_MAGIC )
+				rt_bomb("nmg_findeu() lu->up is bad\n");
+			/* Edgeuse in loop in face, normal case */
+			if( lu->up.fu_p->s_p != s )  {
+			    	if (rt_g.NMG_debug & DEBUG_FINDEU)
+		    		rt_log("\tIgnoring -- eu of lu+fu in wrong shell s=%x\n", lu->up.fu_p->s_p);
+				continue;
+			}
 		}
 
 		/* If it's not a dangling edge, skip on */
-		if( eu->eumate_p != eu->radial_p) {
+		if( dangling_only && eu->eumate_p != eu->radial_p) {
 		    	if (rt_g.NMG_debug & DEBUG_FINDEU)  {
 			    	rt_log("\tIgnoring %8x/%8x (radial=x%x)\n",
 			    		eu, eu->eumate_p,
@@ -1188,7 +1224,9 @@ struct edgeuse *eup;
 	    	if (rt_g.NMG_debug & DEBUG_FINDEU)
 		    	rt_log("\tFound %8x/%8x\n", eu, eu->eumate_p);
 
-	    	if ( eup_orientation != eu->up.lu_p->up.fu_p->orientation)
+		if ( *eu->up.magic_p == NMG_LOOPUSE_MAGIC &&
+		     *eu->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC &&
+		     eup_orientation != eu->up.lu_p->up.fu_p->orientation)
 			eu = eu->eumate_p;	/* Take other orient */
 		goto out;
 	}
