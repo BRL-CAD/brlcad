@@ -544,7 +544,7 @@ fastf_t		rad2;
 	vect_t		hgtv;		/* height vector */
 
 	VMOVE(h_unitv, dirv);
-	VUNITZE(h_unitv);
+	VUNITIZE(h_unitv);
 	VSCALE(hgtv, h_unitv, height);
 
 	/* Now make a, b, c, and d vectors. */
