@@ -1673,7 +1673,7 @@ struct disk_edge {
 #define DISK_EDGE_G_MAGIC	0x4e655f67	/* Ne_g */
 struct disk_edge_g {
 	char			magic[4];
-	long			usage;
+	char			usage[4];
 	char			e_pt[3*8];
 	char			e_dir[3*8];
 };
