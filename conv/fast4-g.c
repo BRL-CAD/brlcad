@@ -56,6 +56,7 @@ static char	field[9];		/* Space for storing one field from an input line */
 static char	vehicle[17];		/* Title for BRLCAD model from VEHICLE card */
 static char	name_name[NAMESIZE+1];	/* Component name built from $NAME card */
 static int	name_count;		/* Count of number of times this name_name has been used */
+static int	pass;			/* Pass number (0 -> only make names, 1-> do geometry ) */
 static struct cline	*cline_last_ptr; /* Pointer to last element in linked list of clines */
 static struct wmember group_head[11];	/* Lists of regions for groups */
 static struct nmg_ptbl stack;		/* Stack for traversing name_tree */
@@ -712,6 +713,9 @@ do_name()
 	char comp_name[25];
 	char tmp_name[25];
 
+	if( pass )
+		return;
+
 	strncpy( field , &line[8] , 8 );
 	g_id = atoi( field );
 
@@ -838,8 +842,9 @@ char type;
 	tmp_name = find_region_name( g_id , c_id , element_id , type );
 	if( tmp_name )
 	{
-		rt_log( "make_region_name: Name for region with g_id=%d, c_id=%d, el_id=%d, and type %c already exists (%s)\n",
-			g_id, c_id, element_id, type , tmp_name );
+		if( !pass )
+			rt_log( "make_region_name: Name for region with g_id=%d, c_id=%d, el_id=%d, and type %c already exists (%s)\n",
+				g_id, c_id, element_id, type , tmp_name );
 		strncpy( name , tmp_name , NAMESIZE );
 		return;
 	}
@@ -892,6 +897,9 @@ do_grid()
 {
 	int grid_no;
 	fastf_t x,y,z;
+
+	if( !pass )	/* not doing geometry yet */
+		return;
 
 	strncpy( field , &line[8] , 8 );
 	grid_no = atoi( field );
@@ -1125,6 +1133,12 @@ do_sphere()
 	strncpy( field , &line[8] , 8 );
 	element_id = atoi( field );
 
+	if( !pass )
+	{
+		make_region_name( name , group_id , comp_id , element_id , CSPHERE );
+		return;
+	}
+
 	strncpy( field , &line[24] , 8 );
 	center_pt = atoi( field );
 
@@ -1187,10 +1201,13 @@ do_section( final )
 int final;
 {
 
-	make_cline_regions();
-	make_comp_group();
-	List_names();
-	Free_tree();
+	if( pass )
+	{
+		make_cline_regions();
+		make_comp_group();
+		List_names();
+		Free_tree();
+	}
 
 	if( !final )
 	{
@@ -1224,8 +1241,10 @@ int final;
 void
 do_vehicle()
 {
-	strncpy( vehicle , &line[8] , 16 );
+	if( !pass )
+		return;
 
+	strncpy( vehicle , &line[8] , 16 );
 	mk_id_units( fdout , vehicle , "in" );
 }
 
@@ -1269,6 +1288,12 @@ do_cline()
 
 	strncpy( field , &line[8] , 8 );
 	element_id = atoi( field );
+
+	if( !pass )
+	{
+		make_region_name( name , group_id , comp_id , element_id , CLINE );
+		return;
+	}
 
 	strncpy( field , &line[24] , 8 );
 	pt1 = atoi( field );
@@ -1340,6 +1365,19 @@ do_ccone1()
 	strncpy( field , &line[8] , 8 );
 	element_id = atoi( field );
 
+	if( !pass )
+	{
+		make_region_name( outer_name , group_id , comp_id , element_id , CCONE1 );
+		if( !getline() )
+		{
+			rt_log( "Unexpected EOF while reading continuation card for CCONE1\n" );
+			rt_log( "\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
+				group_id, comp_id, element_id , c1 );
+			rt_bomb( "CCONE1\n" );
+		}
+		return;
+	}
+
 	strncpy( field , &line[24] , 8 );
 	pt1 = atoi( field );
 
@@ -1360,7 +1398,7 @@ do_ccone1()
 		rt_log( "Unexpected EOF while reading continuation card for CCONE1\n" );
 		rt_log( "\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
 			group_id, comp_id, element_id , c1 );
-		rt_bomb( "CCONE2\n" );
+		rt_bomb( "CCONE1\n" );
 	}
 
 	strncpy( field , line , 8 );
@@ -1532,6 +1570,19 @@ do_ccone2()
 	strncpy( field , &line[8] , 8 );
 	element_id = atoi( field );
 
+	if( !pass )
+	{
+		make_region_name( name , group_id , comp_id , element_id , CCONE2 );
+		if( !getline() )
+		{
+			rt_log( "Unexpected EOF while reading continuation card for CCONE1\n" );
+			rt_log( "\tgroup_id = %d, comp_id = %d, element_id = %d, c1 = %d\n",
+				group_id, comp_id, element_id , c1 );
+			rt_bomb( "CCONE2\n" );
+		}
+		return;
+	}
+
 	strncpy( field , &line[24] , 8 );
 	pt1 = atoi( field );
 
@@ -1682,6 +1733,9 @@ do_hole()
 	int s_len;
 	int col;
 
+	if( !pass )
+		return;
+
 	s_len = strlen( line );
 	if( s_len > 80 )
 		s_len = 80;
@@ -1743,6 +1797,61 @@ getline()
 	return( 1 );
 }
 
+void
+Process_input( pass_number )
+int pass_number;
+{
+
+	if( pass_number != 0 && pass_number != 1 )
+	{
+		rt_log( "Process_input: illegal pass number %d\n" , pass_number );
+		rt_bomb( "Process_input" );
+	}
+
+	pass = pass_number;
+	while( getline() )
+	{
+
+		if( !strncmp( line , "VEHICLE" , 7 ) )
+			do_vehicle();
+		else if( !strncmp( line , "HOLE" , 4 ) )
+			do_hole();
+		else if( !strncmp( line , "WALL" , 4 ) )
+			rt_log( "\twall\n" );
+		else if( !strncmp( line , "SECTION" , 7 ) )
+			do_section( 0 );
+		else if( !strncmp( line , "$NAME" , 5 ) )
+			do_name();
+		else if( !strncmp( line , "$COMMENT" , 8 ) )
+			;
+		else if( !strncmp( line , "GRID" , 4 ) )
+			do_grid();
+		else if( !strncmp( line , "CLINE" , 5 ) )
+			do_cline();
+		else if( !strncmp( line , "CHEX1" , 5 ) )
+			rt_log( "\tchex1\n" );
+		else if( !strncmp( line , "CHEX2" , 5 ) )
+			rt_log( "\tchex2\n" );
+		else if( !strncmp( line , "CTRI" , 4 ) )
+			rt_log( "\tctri\n" );
+		else if( !strncmp( line , "CQUAD" , 5 ) )
+			rt_log( "\tcquad\n" );
+		else if( !strncmp( line , "CCONE1" , 6 ) )
+			do_ccone1();
+		else if( !strncmp( line , "CCONE2" , 6 ) )
+			do_ccone2();
+		else if( !strncmp( line , "CSPHERE" , 7 ) )
+			do_sphere();
+		else if( !strncmp( line , "ENDDATA" , 7 ) )
+		{
+			do_section( 1 );
+			break;
+		}
+		else
+			rt_log( "ERROR: skipping unrecognized data type\n%s\n" , line );
+	}
+}
+
 main( argc , argv )
 int argc;
 char *argv[];
@@ -1788,47 +1897,11 @@ char *argv[];
 	for( i=0 ; i<11 ; i++ )
 		RT_LIST_INIT( &group_head[i].l );
 
-	while( getline() )
-	{
+	Process_input( 0 );
 
-		if( !strncmp( line , "VEHICLE" , 7 ) )
-			do_vehicle();
-		else if( !strncmp( line , "HOLE" , 4 ) )
-			do_hole();
-		else if( !strncmp( line , "WALL" , 4 ) )
-			rt_log( "\twall\n" );
-		else if( !strncmp( line , "SECTION" , 7 ) )
-			do_section( 0 );
-		else if( !strncmp( line , "$NAME" , 5 ) )
-			do_name();
-		else if( !strncmp( line , "$COMMENT" , 8 ) )
-			;
-		else if( !strncmp( line , "GRID" , 4 ) )
-			do_grid();
-		else if( !strncmp( line , "CLINE" , 5 ) )
-			do_cline();
-		else if( !strncmp( line , "CHEX1" , 5 ) )
-			rt_log( "\tchex1\n" );
-		else if( !strncmp( line , "CHEX2" , 5 ) )
-			rt_log( "\tchex2\n" );
-		else if( !strncmp( line , "CTRI" , 4 ) )
-			rt_log( "\tctri\n" );
-		else if( !strncmp( line , "CQUAD" , 5 ) )
-			rt_log( "\tcquad\n" );
-		else if( !strncmp( line , "CCONE1" , 6 ) )
-			do_ccone1();
-		else if( !strncmp( line , "CCONE2" , 6 ) )
-			do_ccone2();
-		else if( !strncmp( line , "CSPHERE" , 7 ) )
-			do_sphere();
-		else if( !strncmp( line , "ENDDATA" , 7 ) )
-		{
-			do_section( 1 );
-			break;
-		}
-		else
-			rt_log( "ERROR: skipping unrecognized data type\n%s\n" , line );
-	}
+	rewind( fdin );
+
+	Process_input( 1 );
 
 	/* make groups */
 	do_groups();
