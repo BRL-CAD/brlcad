@@ -113,6 +113,7 @@
 #	define HAVE_SYS_SELECT_H	1 	/* For fd_set */
 #	define _BSD_TYPES		1
 #	define _BSD_TIME		1	/* for good timeval */
+#	define HAVE_SBRK_DECL		1
 #endif
 
 #if defined(_AIX) || defined(__AIX)
