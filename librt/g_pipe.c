@@ -27,15 +27,8 @@ static char RCSpipe[] = "@(#)$Header$ (BRL)";
 #include "rtlist.h"
 #include "raytrace.h"
 #include "wdb.h"
+#include "rtgeom.h"
 #include "./debug.h"
-
-struct pipe_internal {
-	int		pipe_magic;
-	int		pipe_count;
-	struct wdb_pipeseg pipe_segs;
-};
-#define RT_PIPE_INTERNAL_MAGIC	0x77ddbbe3
-#define RT_PIPE_CK_MAGIC(_p)	RT_CKMAG(_p,RT_PIPE_INTERNAL_MAGIC,"pipe_internal")
 
 struct pipe_specific {
 	vect_t	pipe_V;
@@ -286,9 +279,9 @@ double		norm_tol;
 	pip = (struct pipe_internal *)ip->idb_ptr;
 	RT_PIPE_CK_MAGIC(pip);
 
-	np = RT_LIST_FIRST(wdb_pipeseg, &pip->pipe_segs.l);
+	np = RT_LIST_FIRST(wdb_pipeseg, &pip->pipe_segs_head);
 	ADD_VL( vhead, np->ps_start, 0 );
-	for( RT_LIST( psp, wdb_pipeseg, &pip->pipe_segs.l ) )  {
+	for( RT_LIST( psp, wdb_pipeseg, &pip->pipe_segs_head ) )  {
 		switch( psp->ps_type )  {
 		case WDB_PIPESEG_TYPE_END:
 			/* Previous segment aleady connected to end plate */
@@ -393,7 +386,7 @@ done:	;
 	 *  allocating a linked list of segments in internal format,
 	 *  using exactly the same structures as libwdb.
 	 */
-	RT_LIST_INIT( &pipe->pipe_segs.l );
+	RT_LIST_INIT( &pipe->pipe_segs_head );
 	for( exp = &rp->pw.pw_data[pipe->pipe_count-1]; exp >= &rp->pw.pw_data[0]; exp-- )  {
 		tmp.ps_type = (int)exp->eps_type[0];
 		ntohd( tmp.ps_start, exp->eps_start, 3 );
@@ -412,7 +405,7 @@ done:	;
 		}
 		psp->ps_id = tmp.ps_id / mat[15];
 		psp->ps_od = tmp.ps_od / mat[15];
-		RT_LIST_APPEND( &pipe->pipe_segs.l, &psp->l );
+		RT_LIST_APPEND( &pipe->pipe_segs_head, &psp->l );
 	}
 
 	return(0);			/* OK */
@@ -428,7 +421,7 @@ struct rt_db_internal	*ip;
 double			local2mm;
 {
 	struct pipe_internal	*pip;
-	struct wdb_pipeseg	*headp;
+	struct rt_list		*headp;
 	register struct exported_pipeseg *eps;
 	register struct wdb_pipeseg	*psp;
 	struct wdb_pipeseg		tmp;
@@ -442,20 +435,20 @@ double			local2mm;
 	pip = (struct pipe_internal *)ip->idb_ptr;
 	RT_PIPE_CK_MAGIC(pip);
 
-	headp = &pip->pipe_segs;
+	headp = &pip->pipe_segs_head;
 
 	/* Count number of segments, verify that last seg is an END seg */
 	count = 0;
-	for( RT_LIST( psp, wdb_pipeseg, &headp->l ) )  {
+	for( RT_LIST( psp, wdb_pipeseg, headp ) )  {
 		count++;
 		switch( psp->ps_type )  {
 		case WDB_PIPESEG_TYPE_END:
-			if( RT_LIST_NEXT_NOT_HEAD( psp, &headp->l ) )
+			if( RT_LIST_NEXT_NOT_HEAD( psp, headp ) )
 				return(-1);	/* Inconsistency in list */
 			break;
 		case WDB_PIPESEG_TYPE_LINEAR:
 		case WDB_PIPESEG_TYPE_BEND:
-			if( RT_LIST_NEXT_IS_HEAD( psp, &headp->l ) )
+			if( RT_LIST_NEXT_IS_HEAD( psp, headp ) )
 				return(-2);	/* List ends w/o TYPE_END */
 			break;
 		default:
@@ -480,7 +473,7 @@ double			local2mm;
 
 	/* Convert the pipe segments to external form */
 	eps = &rec->pw.pw_data[0];
-	for( RT_LIST( psp, wdb_pipeseg, &headp->l ), eps++ )  {
+	for( RT_LIST( psp, wdb_pipeseg, headp ), eps++ )  {
 		/* Avoid need for htonl() here */
 		eps->eps_type[0] = (char)psp->ps_type;
 		/* Convert from user units to mm */
@@ -525,7 +518,7 @@ double			mm2local;
 
 	if( !verbose )  return(0);
 
-	for( RT_LIST_FOR( psp, wdb_pipeseg, &pip->pipe_segs.l ) )  {
+	for( RT_LIST_FOR( psp, wdb_pipeseg, &pip->pipe_segs_head ) )  {
 		/* XXX check magic number here */
 		sprintf(buf, "\t%d ", segno++ );
 		rt_vls_strcat( str, buf );
@@ -583,7 +576,7 @@ struct rt_db_internal	*ip;
 	pipe = (struct pipe_internal*)ip->idb_ptr;
 	RT_PIPE_CK_MAGIC(pipe);
 
-	while( RT_LIST_WHILE( psp, wdb_pipeseg, &pipe->pipe_segs.l ) )  {
+	while( RT_LIST_WHILE( psp, wdb_pipeseg, &pipe->pipe_segs_head ) )  {
 		RT_LIST_DEQUEUE( &(psp->l) );
 		rt_free( (char *)psp, "wdb_pipeseg" );
 	}
