@@ -5789,7 +5789,7 @@ struct nmg_inter_struct *is;
 	{
 		struct vertex *v1=(struct vertex *)NULL;
 		struct vertex *v2=(struct vertex *)NULL;
-		struct vertex *end1, *end2;
+		struct vertex *end1 = NULL, *end2 = NULL;
 		fastf_t max_dist = 0.0;
 		vect_t diff;
 		fastf_t *dist_array;
