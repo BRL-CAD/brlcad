@@ -1148,6 +1148,38 @@ register struct vertexuse *vu;
 }
 
 
+/*
+ *			N M G _ K F G
+ *
+ *  Internal routine to release face geometry when no more faces use it.
+ */
+static void
+nmg_kfg( magic_p )
+long	*magic_p;
+{
+	switch( *magic_p ) {
+	case NMG_FACE_G_PLANE_MAGIC:
+		/* If face_g is not referred to by any other face, free it */
+		{
+			struct face_g_plane	*pp;
+			pp = (struct face_g_plane *)magic_p;
+			if( RT_LIST_NON_EMPTY( &(pp->f_hd) ) )  return;
+			FREE_FACE_G_PLANE(pp);
+		}
+		break;
+	case NMG_FACE_G_SNURB_MAGIC:
+		/* If face_g is not referred to by any other face, free it */
+		{
+			struct face_g_snurb *sp;
+			sp = (struct face_g_snurb *)magic_p;
+			if( RT_LIST_NON_EMPTY( &(sp->f_hd) ) )  return;
+			/* XXX */ rt_bomb("nmg_kfg() free snurb insides??\n");
+			FREE_FACE_G_SNURB(sp);
+		}
+		break;
+	}
+}
+
 /*			N M G _ K F U
  *
  *	Kill Faceuse
@@ -1188,17 +1220,11 @@ struct faceuse *fu1;
 		(void)nmg_klu( RT_LIST_FIRST( loopuse, &fu1->lu_hd ) );
 	}
 
-	/* Release the geometry */
-	if (fg = f1->g.plane_p) {
-		NMG_CK_FACE_G_PLANE(fg);
-
-		/* Disassociate this face from face_g_plane */
+	/* Release the face geometry */
+	if (f1->g.magic_p) {
+		/* Disassociate this face from face_g */
 		RT_LIST_DEQUEUE( &f1->l );
-
-		/* If face_g_plane is not referred to by any other face, free it */
-		if( RT_LIST_IS_EMPTY( &fg->f_hd ) )  {
-			FREE_FACE_G_PLANE(fg);
-		}
+		nmg_kfg( f1->g.magic_p );
 	}
 	FREE_FACE(f1);
 	fu1->f_p = fu2->f_p = (struct face *)NULL;
