@@ -41,7 +41,7 @@ struct rt_tor_internal {
 	fastf_t	r_a;		/* radius in A direction */
 	fastf_t	r_b;		/* radius in B direction (typ == r_a) */
 };
-#define RT_TOR_INTERNAL_MAGIC	0x9bffed887
+#define RT_TOR_INTERNAL_MAGIC	0x9bffed87
 #define RT_TOR_CK_MAGIC(_p)	RT_CKMAG(_p,RT_TOR_INTERNAL_MAGIC,"rt_tor_internal")
 
 /*
@@ -89,7 +89,7 @@ struct rt_arb_internal {
  *	ID_ARS
  */
 struct rt_ars_internal {
-	int	magic;
+	long	magic;
 	int	ncurves;
 	int	pts_per_curve;
 	fastf_t	**curves;
@@ -104,7 +104,7 @@ struct rt_half_internal  {
 	long	magic;
 	plane_t	eqn;
 };
-#define RT_HALF_INTERNAL_MAGIC	0xaabbdd87
+#define RT_HALF_INTERNAL_MAGIC	0xaa87bbdd
 #define RT_HALF_CK_MAGIC(_p)	RT_CKMAG(_p,RT_HALF_INTERNAL_MAGIC,"rt_half_internal")
 
 /*
@@ -178,12 +178,12 @@ struct rt_arbn_internal  {
  *	ID_PIPE
  */
 struct rt_pipe_internal {
-	int		pipe_magic;
+	long		pipe_magic;
 	struct rt_list	pipe_segs_head;
 	/* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
 	int		pipe_count;
 };
-#define RT_PIPE_INTERNAL_MAGIC	0x77ddbbe3
+#define RT_PIPE_INTERNAL_MAGIC	0x7dd7bb3e
 #define RT_PIPE_CK_MAGIC(_p)	RT_CKMAG(_p,RT_PIPE_INTERNAL_MAGIC,"rt_pipe_internal")
 
 /*
