@@ -35,16 +35,23 @@
 #
 # Mike Muuss, BRL, 10-May-1988
 # With thanks to Terry Slattery and Bob Reschly for assistance.
-# With thanks to Timmothy Smith for the /bin/uname idea.
+# With thanks to Timothy G. Smith for the /bin/uname idea.
 #
 #  $Header$
 
 # Ensure /bin/sh.  Make no remarks here, just do it.
 export PATH || (sh $0 $*; kill $$)
 
+# A major efficiency for machines running Doug Gwyn's SysV-under-BSD software.
+PATH=$PATH:/usr/5bin
+
 ARG="$1"
 
-if test -x /bin/uname -o -x /usr/bin/uname
+#  Base directory for the entire package.
+#  Modified by newbindir.sh as part of the installation process, if needed.
+BASEDIR=/usr/brlcad
+
+if test -x /bin/uname -o -x /usr/bin/uname -o -x /usr/5bin/uname
 then
 	OS_TYPE=`uname -s`
 	HARDWARE_TYPE=`uname -m`
@@ -56,6 +63,7 @@ then
 	OS_REVISION="$1"
 
 	case "$HARDWARE_TYPE" in
+	# SGI is ugly, returning IP## here.
 	sun3*)  MACHINE=sun3; UNIXTYPE=BSD; HAS_TCP=1; HAS_SYMLINKS=1;;
 	sun4*)  HAS_TCP=1; HAS_SYMLINKS=1;
 		case "$OS_REVISION" in
@@ -63,6 +71,7 @@ then
 		5)  UNIXTYPE=SYSV; MACHINE=sun5;;
 		esac;;
 	alpha)  MACHINE=alpha; UNIXTYPE=BSD; HAS_TCP=1; HAS_SYMLINKS=1;;
+	vax)	MACHINE=vax; UNIXTYPE=BSD; HAS_TCP=1; HAS_SYMLINKS=1;;
 	esac
 fi
 
@@ -425,7 +434,7 @@ x-a)
 	fi
 	exit 0;;
 x-v|x-b)
-	echo "MACHINE=${MACHINE}; UNIXTYPE=${UNIXTYPE}; HAS_TCP=${HAS_TCP}; HAS_SYMLINKS=${HAS_SYMLINKS}"
+	echo "MACHINE=${MACHINE}; UNIXTYPE=${UNIXTYPE}; HAS_TCP=${HAS_TCP}; HAS_SYMLINKS=${HAS_SYMLINKS}; BASEDIR=${BASEDIR}"
 	exit 0;;
 x-d)
 	# This option is used primarily when building CAKE.
