@@ -2021,7 +2021,11 @@ char	**argv;
 	    av[0] = "adc";
 
 	  av[2] = sval;
+#if 1
+	  sprintf(sval, "%f", f);
+#else
 	  sprintf(sval, "%f", 45.0*(1.0-(double)i/2047.0));
+#endif
 	  (void)f_adc(clientData, interp, 3, av);
 	} else if( strcmp( cmd, "ang2" ) == 0 )  {
 	  char *av[4];
@@ -2036,7 +2040,11 @@ char	**argv;
 	    av[0] = "adc";
 
 	  av[2] = sval;
+#if 1
+	  sprintf(sval, "%f", f);
+#else
 	  sprintf(sval, "%f", 45.0*(1.0-(double)i/2047.0));
+#endif
 	  (void)f_adc(clientData, interp, 3, av);
 	} else if( strcmp( cmd, "distadc" ) == 0 )  {
 	  char *av[4];
