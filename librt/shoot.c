@@ -55,6 +55,16 @@ char rt_CopyRight_Notice[] = "@(#) Copyright (C) 1985,1991,2000 by the United St
 struct resource rt_uniresource;		/* Resources for uniprocessor */
 
 extern void	rt_plot_cell();		/* at end of file */
+		
+#define V3PT_DEPARTING_RPP(_step, _lo, _hi, _pt ) \
+		PT_DEPARTING_RPP(_step, _lo, _hi, (_pt)[X], (_pt)[Y], (_pt)[Z] )
+#define PT_DEPARTING_RPP(_step, _lo, _hi, _px, _py, _pz ) \
+		(   ((_step)[X] <= 0 && (_px) < (_lo)[X]) || \
+		    ((_step)[X] >= 0 && (_px) > (_hi)[X]) || \
+		    ((_step)[Y] <= 0 && (_py) < (_lo)[Y]) || \
+		    ((_step)[Y] >= 0 && (_py) > (_hi)[Y]) || \
+		    ((_step)[Z] <= 0 && (_pz) < (_lo)[Z]) || \
+		    ((_step)[Z] >= 0 && (_pz) > (_hi)[Z])   )
 
 /*
  *			R T _ R E S _ P I E C E S _ I N I T
@@ -385,14 +395,12 @@ test:		if( cutp==CUTTER_NULL ) {
 			continue;
 		}
 
-		/* Compute position and bail if we're outside of the
-		   current level. */
+		/* Compute position and bail if we're outside of the current level. */
 		px = ap->a_ray.r_pt[X] + t0*ap->a_ray.r_dir[X];
 		py = ap->a_ray.r_pt[Y] + t0*ap->a_ray.r_dir[Y];
 		pz = ap->a_ray.r_pt[Z] + t0*ap->a_ray.r_dir[Z];
 
-		/* Optimization: when it's a boxnode in a nugrid,
-		   just return. */
+		/* Optimization: when it's a boxnode in a nugrid, just return. */
 		if( cutp->cut_type == CUT_BOXNODE &&
 		    curcut->cut_type == CUT_NUGRIDNODE ) {
 			ssp->newray.r_pt[X] = px;
@@ -402,13 +410,11 @@ test:		if( cutp==CUTTER_NULL ) {
 			ssp->newray.r_max = ssp->tv[ssp->out_axis] - t0;
 			goto done;
 		}
-		
-		if( (ssp->rstep[X] <= 0 && px < ssp->curmin[X]) ||
-		    (ssp->rstep[X] >= 0 && px > ssp->curmax[X]) ||
-		    (ssp->rstep[Y] <= 0 && py < ssp->curmin[Y]) ||
-		    (ssp->rstep[Y] >= 0 && py > ssp->curmax[Y]) ||
-		    (ssp->rstep[Z] <= 0 && pz < ssp->curmin[Z]) ||
-		    (ssp->rstep[Z] >= 0 && pz > ssp->curmax[Z]) ) {
+
+		/*  Given direction of travel, see if point is outside bound.
+		 *  This will be the model RPP for NUBSP.
+		 */
+		if( PT_DEPARTING_RPP( ssp->rstep, ssp->curmin, ssp->curmax, px, py, pz ) )  {
 			cutp = CUTTER_NULL;
 			goto test;
 		}
@@ -450,11 +456,9 @@ test:		if( cutp==CUTTER_NULL ) {
 
 		switch( cutp->cut_type ) {
 		case CUT_BOXNODE:
-			if( rt_g.debug&DEBUG_ADVANCE && (
-			    (px < cutp->bn.bn_min[X]) || (px > cutp->bn.bn_max[X]) ||
-			    (py < cutp->bn.bn_min[Y]) || (py > cutp->bn.bn_max[Y]) ||
-			    (pz < cutp->bn.bn_min[Z]) || (pz > cutp->bn.bn_max[Z]) 
-			) ) {
+			if( rt_g.debug&DEBUG_ADVANCE && 
+			    PT_DEPARTING_RPP( ssp->rstep, ssp->curmin, ssp->curmax, px, py, pz )
+			) {
 				/* This cell is old news. */
 				bu_log(
 	  "rt_advance_to_next_cell(): point not in cell, advancing\n   pt (%.20e,%.20e,%.20e)\n",
