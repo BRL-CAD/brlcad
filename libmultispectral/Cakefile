@@ -14,11 +14,14 @@
 
 #define FILES	\
 	init \
-	sh_light sh_plastic sh_temp sh_stack
+	sh_light sh_plastic sh_temp sh_stack sh_noise
 
 /* Specially compiled versions */
 sh_light.o: ../liboptical/sh_light.c
 	CC CFLAGS -c ../liboptical/sh_light.c
+
+sh_noise.o: ../liboptical/sh_noise.c
+	CC CFLAGS -c ../liboptical/sh_noise.c
 
 sh_plastic.o: ../liboptical/sh_plastic.c
 	CC CFLAGS -c ../liboptical/sh_plastic.c
