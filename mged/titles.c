@@ -360,7 +360,7 @@ dotitles()
 	VSET( work, 0, 0, 1 );
 	MAT3X3VEC( temp, view2model, work );
 	ae_vec( &az, &el, temp );
-	(void)sprintf( cp, "az=%3.0f el=%2.0f ang=(%.2f, %.2f, %.2f)",
+	(void)sprintf( cp, "az=%3.2f el=%2.2f ang=(%.2f, %.2f, %.2f)",
 		az, el,
 		dm_values.dv_xjoy * 6,
 		dm_values.dv_yjoy * 6,
@@ -381,12 +381,22 @@ dotitles()
 
 	if( adcflag ) {
 		/* Angle/Distance cursor */
+		point_t	pt1, pt2, pt3;
+		point_t	center_model;
+
+		VSET(pt1, 
+		    (curs_x / 2047.0) *Viewscale*base2local,
+		    (curs_y / 2047.0) *Viewscale*base2local, 0.0);
+		VSET(center_model, 
+		    -toViewcenter[MDX], -toViewcenter[MDY],
+		    -toViewcenter[MDZ]);
+		MAT4X3VEC(pt2, Viewrot, center_model);
+		VADD2(pt3, pt1, pt2);
 		(void)sprintf( &linebuf[0],
 " curs:  a1=%.1f,  a2=%.1f,  dst=%.3f,  cent=(%.3f, %.3f)",
 			angle1 * radtodeg, angle2 * radtodeg,
 			(c_tdist / 2047.0) *Viewscale*base2local,
-			(curs_x / 2047.0) *Viewscale*base2local,
-			(curs_y / 2047.0) *Viewscale*base2local );
+			pt3[X], pt3[Y]);
 		dmp->dmr_puts( &linebuf[0], TITLE_XBASE, TITLE_YBASE + TEXT1_DY, 1, DM_YELLOW );
 	}
 	else if( illump != SOLID_NULL )  {
