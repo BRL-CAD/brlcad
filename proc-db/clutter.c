@@ -99,8 +99,9 @@ char	**argv;
 	rgb[1] = 180;
 	rgb[2] = 64;
 	bn_mat_idn( identity );
-	mk_comb( stdout, "plane.r", 1, 1, "", "", rgb, 0 );
-	mk_memb( stdout, "plane", identity, WMOP_UNION );
+
+	mk_region1( stdout, "plane.r", "plane", NULL, NULL, rgb );
+
 	(void)mk_addmember( "plane.r", &head, WMOP_UNION );
 
 	/* Create the detail cells */
@@ -180,6 +181,7 @@ double	size;
 	char	crystalname[64];
 	vect_t	minpt, maxpt;
 	struct wmember head;
+	struct wmember reg_head;
 
 	BU_LIST_INIT( &head.l );
 
@@ -215,11 +217,13 @@ double	size;
 	mk_rpp( stdout, rppname, minpt, maxpt );
 
 	/* Build the final combination */
+	BU_LIST_INIT( &reg_head.l );
 	get_rgb(rgb);
 	i = PICK_MAT;
-	mk_comb( stdout, cname, 2, 1, mtab[i].mt_name, mtab[i].mt_param, rgb, 0 );
-	mk_memb( stdout, crystalname, identity, WMOP_UNION );
-	mk_memb( stdout, rppname, identity, WMOP_INTERSECT );
+	(void)mk_addmember( crystalname, &reg_head, WMOP_UNION );
+	(void)mk_addmember( rppname, &reg_head, WMOP_INTERSECT );
+	mk_lcomb( stdout, cname, &reg_head, 1,
+		mtab[i].mt_name, mtab[i].mt_param, rgb, 0 );
 	return(height);
 }
 
@@ -331,8 +335,8 @@ double	size;
 	/* Needs to be in a region, with color!  */
 	get_rgb(rgb);
 	i = PICK_MAT;
-	mk_comb( stdout, name, 1, 1, mtab[i].mt_name, mtab[i].mt_param, rgb, 0 );
-	mk_memb( stdout, sname, identity, WMOP_UNION );
+	mk_region1( stdout, name, sname, 
+		mtab[i].mt_name, mtab[i].mt_param, rgb );
 }
 
 double
@@ -476,8 +480,7 @@ int	n;
 
 		/* Build the region that contains each solid */
 		get_rgb(rgb);
-		mk_comb( stdout, rname, 1, 1, "", "", rgb, 0 );
-		mk_memb( stdout, sname, identity, WMOP_UNION );
+		mk_region1( stdout, rname, sname, NULL, NULL, rgb );
 		(void)mk_addmember( rname, &head, WMOP_UNION );
 	}
 

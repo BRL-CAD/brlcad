@@ -109,7 +109,6 @@ struct wmember	*headp;
 	MAT_DELTAS( xlate, pos[X], pos[Y], pos[Z] );
 	bn_mat_mul( both, xlate, rot );
 
-	mk_comb( stdout, name, 1, 1, "light", "shadows=1", rgb, 0 );
-	mk_memb( stdout, nbuf, both, WMOP_UNION );
+	mk_region1( stdout, name, nbuf, "light", "shadows=1", rgb );
 	(void)mk_addmember( name, headp, WMOP_UNION );
 }
