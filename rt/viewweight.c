@@ -150,7 +150,7 @@ char *file, *obj;
 	ap->a_hit = hit;
 	ap->a_miss = miss;
 	ap->a_overlap = overlap;
-	ap->a_onehit = -1;
+	ap->a_onehit = 0;
 
 	return(0);		/* no framebuffer needed */
 }
