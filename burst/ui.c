@@ -36,7 +36,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 static char promptbuf[LNBUFSZ];
 static char *bannerp = "BURST (%s)";
-static char *pgmverp = "2.1";
+static char *pgmverp = "2.2";
 
 #define AddCmd( nm, f )\
 	{	Trie	*p;\
