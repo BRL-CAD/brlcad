@@ -416,7 +416,7 @@ install-tcl)
 		( cd ${DIRPRE}${dir}${DIRSUF} && cake -k install )
 	done;;
 
-ami)
+tclIndex)
 	( cd tclscripts && cake -k ${TARGET} )
 
 	for dir in ${TSDIRS}; do

@@ -70,7 +70,7 @@ tcl:
 	-@sh gen.sh $@
 install-tcl:
 	-@sh gen.sh $@
-ami:
+tclIndex:
 	-@sh gen.sh $@
 tags:
 	-@sh gen.sh $@
