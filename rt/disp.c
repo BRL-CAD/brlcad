@@ -1,4 +1,6 @@
 /*
+ *			D I S P . C
+ *
  *  Quickie program to display spectral curves on the framebuffer.
  *
  *  Author -
@@ -34,17 +36,17 @@ char	spectrum_name[100];
 
 FBIO	*fbp;
 
-struct rt_spectrum	*spectrum;
+struct rt_table		*spectrum;
 
-struct rt_spect_sample	*ss;
+struct rt_tabdata	*data;
 
-struct rt_spect_sample	*atmosphere_orig;
-struct rt_spect_sample	*atmosphere;
+struct rt_tabdata	*atmosphere_orig;
+struct rt_tabdata	*atmosphere;
 int			use_atmosphere = 0;	/* Linked with TCL */
 
-struct rt_spect_sample	*cie_x;
-struct rt_spect_sample	*cie_y;
-struct rt_spect_sample	*cie_z;
+struct rt_tabdata	*cie_x;
+struct rt_tabdata	*cie_y;
+struct rt_tabdata	*cie_z;
 int			use_cie_xyz = 0;	/* Linked with TCL */
 mat_t			xyz2rgb;
 
@@ -73,10 +75,10 @@ char		*argv[];
 {
 	int	wl;
 
-	RT_CK_SPECTRUM(spectrum);
+	RT_CK_TABLE(spectrum);
 
 	if( argc <= 1 )  {
-		sprintf( interp->result, "%d", spectrum->nwave );
+		sprintf( interp->result, "%d", spectrum->nx );
 		return TCL_OK;
 	}
 	if( argc != 2 )  {
@@ -85,12 +87,12 @@ char		*argv[];
 	}
 	wl = atoi(argv[2]);
 
-	if( wl < 0 || wl > spectrum->nwave )  {
+	if( wl < 0 || wl > spectrum->nx )  {
 		sprintf( interp->result, "getspectrum: wavelength %d out of range 0..%d",
-			wl, spectrum->nwave);
+			wl, spectrum->nx);
 		return TCL_ERROR;
 	}
-	sprintf( interp->result, "%g", spectrum->wavel[wl] );
+	sprintf( interp->result, "%g", spectrum->x[wl] );
 	return TCL_OK;
 }
 
@@ -101,7 +103,7 @@ Tcl_Interp	*interp;
 int		argc;
 char		*argv[];
 {
-	struct rt_spect_sample	*sp;
+	struct rt_tabdata	*sp;
 	int	x, y, wl;
 	char	*cp;
 	fastf_t	val;
@@ -114,23 +116,23 @@ char		*argv[];
 	y = atoi(argv[2]);
 	wl = atoi(argv[3]);
 
-	RT_CK_SPECTRUM(spectrum);
+	RT_CK_TABLE(spectrum);
 
 	if( x < 0 || x > width || y < 0 || y > height )  {
 		interp->result = "x or y out of range";
 		return TCL_ERROR;
 	}
-	if( wl < 0 || wl >= spectrum->nwave )  {
+	if( wl < 0 || wl >= spectrum->nx )  {
 		interp->result = "wavelength out of range";
 		return TCL_ERROR;
 	}
-	cp = (char *)ss;
-	cp = cp + (y * width + x) * RT_SIZEOF_SPECT_SAMPLE(spectrum);
-	sp = (struct rt_spect_sample *)cp;
-	RT_CK_SPECT_SAMPLE(sp);
-	val = sp->val[wl];
+	cp = (char *)data;
+	cp = cp + (y * width + x) * RT_SIZEOF_TABDATA(spectrum);
+	sp = (struct rt_tabdata *)cp;
+	RT_CK_TABDATA(sp);
+	val = sp->y[wl];
 	if( use_atmosphere )
-		val *= atmosphere->val[wl];
+		val *= atmosphere->y[wl];
 	sprintf( interp->result, "%g", val );
 	return TCL_OK;
 }
@@ -236,49 +238,6 @@ Tcl_Interp	*inter;
 	return TCL_OK;
 }
 
-/*
- */
-struct rt_spect_sample *
-rt_spect_sample_binary_read( filename, num, spect )
-CONST char			*filename;
-int				num;
-CONST struct rt_spectrum	*spect;
-{
-	struct rt_spect_sample	*ss;
-	char	*cp;
-	int	nbytes;
-	int	len;
-	int	fd;
-	int	i;
-
-	RT_CK_SPECTRUM(spect);
-
-	nbytes = RT_SIZEOF_SPECT_SAMPLE(spect);
-	len = num * nbytes;
-	ss = (struct rt_spect_sample *)rt_malloc( len+8, "rt_spect_sample[]" );
-
-	if( (fd = open(basename, 0)) <= 0 )  {
-		perror(basename);
-		rt_bomb("Unable to open spectral samples\n");
-	}
-	if( read( fd, (char *)ss, len ) != len )  {
-		rt_bomb("Read of spectral samples failed\n");
-	}
-	close(fd);
-
-	/* Connect ss[i].spectrum pointer to spect */
-	cp = (char *)ss;
-	for( i = num-1; i >= 0; i--, cp += nbytes )  {
-		register struct rt_spect_sample	*sp;
-
-		sp = (struct rt_spect_sample *)cp;
-		RT_CK_SPECT_SAMPLE(sp);
-		sp->spectrum = spect;
-	}
-
-	return ss;
-}
-
 main( argc, argv )
 char	**argv;
 {
@@ -294,18 +253,18 @@ char	**argv;
 
 	/* Read spectrum definition */
 	sprintf( spectrum_name, "%s.spect", basename );
-	spectrum = (struct rt_spectrum *)rt_read_spectrum( spectrum_name );
+	spectrum = (struct rt_table *)rt_table_read( spectrum_name );
 	if( spectrum == NULL )  {
 		rt_bomb("Unable to read spectrum\n");
 	}
 
 	/* Read atmosphere curve -- input is in microns, not nm */
-	atmosphere_orig = rt_read_spectrum_and_samples( "std_day_1km.dat" );
-	rt_spectrum_scale( atmosphere_orig->spectrum, 1000.0 );
-	atmosphere = rt_spect_resample( spectrum, atmosphere_orig );
+	atmosphere_orig = rt_read_table_and_tabdata( "std_day_1km.dat" );
+	rt_table_scale( atmosphere_orig->table, 1000.0 );
+	atmosphere = rt_tabdata_resample( spectrum, atmosphere_orig );
 
 	/* Allocate and read 2-D spectrum array */
-	ss = rt_spect_sample_binary_read( basename, width*height, spectrum );
+	data = rt_tabdata_binary_read( basename, width*height, spectrum );
 
 	/* Allocate framebuffer image buffer */
 	pixels = rt_malloc( width * height * 3, "pixels[]" );
@@ -329,7 +288,7 @@ char		*argv[];
 	int	wl;
 	char	cmd[96];
 
-	for( wl = 0; wl < spectrum->nwave; wl++ )  {
+	for( wl = 0; wl < spectrum->nx; wl++ )  {
 		sprintf( cmd, "doit1 %d", wl );
 		Tcl_Eval( interp, cmd );
 	}
@@ -351,15 +310,15 @@ char		*argv[];
 		return TCL_ERROR;
 	}
 	wl = atoi(argv[1]);
-	if( wl < 0 || wl >= spectrum->nwave )  {
+	if( wl < 0 || wl >= spectrum->nx )  {
 		interp->result = "Wavelength number out of range";
 		return TCL_ERROR;
 	}
 
 	rt_log("%d: %g um to %g um\n",
 		wl,
-		spectrum->wavel[wl] * 0.001,
-		spectrum->wavel[wl+1] * 0.001 );
+		spectrum->x[wl] * 0.001,
+		spectrum->x[wl+1] * 0.001 );
 	if( use_cie_xyz )
 		show_color(wl);
 	else
@@ -370,8 +329,8 @@ char		*argv[];
 	/* export C variables to TCL, one-way */
 	/* These are being traced by Tk, this will cause update */
 	sprintf(buf, "%d", wl);
-	Tcl_SetVar(interp, "wavel", buf, TCL_GLOBAL_ONLY);
-	sprintf(buf, "%g", spectrum->wavel[wl] * 0.001);
+	Tcl_SetVar(interp, "x", buf, TCL_GLOBAL_ONLY);
+	sprintf(buf, "%g", spectrum->x[wl] * 0.001);
 	Tcl_SetVar(interp, "lambda", buf, TCL_GLOBAL_ONLY);
 
 	return TCL_OK;
@@ -387,20 +346,20 @@ find_minmax()
 	int		nbytes;
 	int		j;
 
-	cp = (char *)ss;
-	nbytes = RT_SIZEOF_SPECT_SAMPLE(spectrum);
+	cp = (char *)data;
+	nbytes = RT_SIZEOF_TABDATA(spectrum);
 
 	max = -INFINITY;
 	min =  INFINITY;
 
 	for( todo = width * height; todo > 0; todo--, cp += nbytes )  {
-		struct rt_spect_sample	*sp;
-		sp = (struct rt_spect_sample *)cp;
-		RT_CK_SPECT_SAMPLE(sp);
-		for( j = 0; j < spectrum->nwave; j++ )  {
+		struct rt_tabdata	*sp;
+		sp = (struct rt_tabdata *)cp;
+		RT_CK_TABDATA(sp);
+		for( j = 0; j < spectrum->nx; j++ )  {
 			register fastf_t	v;
 
-			if( (v = sp->val[j]) > max )  max = v;
+			if( (v = sp->y[j]) > max )  max = v;
 			if( v < min )  min = v;
 		}
 	}
@@ -424,26 +383,26 @@ int	wav;
 	fastf_t		scale;
 	fastf_t		atmos_scale;
 
-	cp = (char *)ss;
-	nbytes = RT_SIZEOF_SPECT_SAMPLE(spectrum);
+	cp = (char *)data;
+	nbytes = RT_SIZEOF_TABDATA(spectrum);
 
 	pp = pixels;
 
 	scale = 255 / (maxval - minval);
 
 	if( use_atmosphere )
-		atmos_scale = atmosphere->val[wav];
+		atmos_scale = atmosphere->y[wav];
 	else
 		atmos_scale = 1;
 
 	for( todo = width * height; todo > 0; todo--, cp += nbytes, pp += 3 )  {
-		struct rt_spect_sample	*sp;
+		struct rt_tabdata	*sp;
 		register int		val;
 
-		sp = (struct rt_spect_sample *)cp;
-		RT_CK_SPECT_SAMPLE(sp);
+		sp = (struct rt_tabdata *)cp;
+		RT_CK_TABDATA(sp);
 
-		val = (sp->val[wav] * atmos_scale - minval) * scale;
+		val = (sp->y[wav] * atmos_scale - minval) * scale;
 		if( val > 255 )  val = 255;
 		else if( val < 0 ) val = 0;
 		pp[0] = pp[1] = pp[2] = val;
@@ -466,13 +425,13 @@ int	off;
 	int		todo;
 	int		nbytes;
 	fastf_t		scale;
-	struct rt_spect_sample	*xyzsamp;
+	struct rt_tabdata	*xyzsamp;
 
-	cp = (char *)ss;
-	nbytes = RT_SIZEOF_SPECT_SAMPLE(spectrum);
+	cp = (char *)data;
+	nbytes = RT_SIZEOF_TABDATA(spectrum);
 
 	pp = pixels;
-	RT_GET_SPECT_SAMPLE(xyzsamp, spectrum);
+	RT_GET_TABDATA(xyzsamp, spectrum);
 
 	scale = 255 / (maxval - minval);
 
@@ -480,28 +439,28 @@ int	off;
 	rt_spect_make_CIE_XYZ( &cie_x, &cie_y, &cie_z, spectrum );
 
 	if( use_atmosphere )  {
-		rt_spect_mul( cie_x, cie_x, atmosphere );
-		rt_spect_mul( cie_y, cie_y, atmosphere );
-		rt_spect_mul( cie_z, cie_z, atmosphere );
+		rt_tabdata_mul( cie_x, cie_x, atmosphere );
+		rt_tabdata_mul( cie_y, cie_y, atmosphere );
+		rt_tabdata_mul( cie_z, cie_z, atmosphere );
 	}
 
 	for( todo = width * height; todo > 0; todo--, cp += nbytes, pp += 3 )  {
-		struct rt_spect_sample	*sp;
+		struct rt_tabdata	*sp;
 		point_t			xyz;
 		point_t			rgb;
 		register int		val;
 
-		sp = (struct rt_spect_sample *)cp;
-		RT_CK_SPECT_SAMPLE(sp);
+		sp = (struct rt_tabdata *)cp;
+		RT_CK_TABDATA(sp);
 
-		rt_spect_mul( xyzsamp, sp, cie_x );
-		xyz[X] = rt_spect_area1( xyzsamp );
+		rt_tabdata_mul( xyzsamp, sp, cie_x );
+		xyz[X] = rt_tabdata_area1( xyzsamp );
 
-		rt_spect_mul( xyzsamp, sp, cie_y );
-		xyz[Y] = rt_spect_area1( xyzsamp );
+		rt_tabdata_mul( xyzsamp, sp, cie_y );
+		xyz[Y] = rt_tabdata_area1( xyzsamp );
 
-		rt_spect_mul( xyzsamp, sp, cie_z );
-		xyz[Z] = rt_spect_area1( xyzsamp );
+		rt_tabdata_mul( xyzsamp, sp, cie_z );
+		xyz[Z] = rt_tabdata_area1( xyzsamp );
 
 		MAT3X3VEC( rgb, xyz2rgb, xyz );
 
