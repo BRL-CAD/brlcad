@@ -55,7 +55,7 @@ void
 dozoom()
 {
 	register struct solid *sp;
-	static float ratio;
+	FAST float ratio;
 
 	ndrawn = 0;
 
@@ -87,7 +87,7 @@ dozoom()
 	 * Compute translation vector & scale factor for solids involved in
 	 * Object edits.
 	 */
-	if( 0 )			/* later, check flag here */
+	if( state == ST_VIEW )
 		return;
 
 	/* Output special Rotation matrix, when needed */

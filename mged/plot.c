@@ -307,22 +307,22 @@ char *s;
 	putc('\n',up_fp);
 }
 
-up_line(x0,y0,x1,y1){
+up_line(xval0,yval0,xval1,yval1){
 	putc('l',up_fp);
-	up_putsi(x0);
-	up_putsi(y0);
-	up_putsi(x1);
-	up_putsi(y1);
+	up_putsi(xval0);
+	up_putsi(yval0);
+	up_putsi(xval1);
+	up_putsi(yval1);
 }
 
-up_line3(x0,y0,z0,x1,y1,z1){
+up_line3(xval0,yval0,zval0,xval1,yval1,zval1){
 	putc('L',up_fp);
-	up_putsi(x0);
-	up_putsi(y0);
-	up_putsi(z0);
-	up_putsi(x1);
-	up_putsi(y1);
-	up_putsi(z1);
+	up_putsi(xval0);
+	up_putsi(yval0);
+	up_putsi(zval0);
+	up_putsi(xval1);
+	up_putsi(yval1);
+	up_putsi(zval1);
 }
 
 up_linemod(s)
@@ -334,17 +334,17 @@ char *s;
 	putc('\n',up_fp);
 }
 
-up_move(xi,yi){
+up_move(xvali,yvali){
 	putc('m',up_fp);
-	up_putsi(xi);
-	up_putsi(yi);
+	up_putsi(xvali);
+	up_putsi(yvali);
 }
 
-up_move3(xi,yi,zi){
+up_move3(xvali,yvali,zvali){
 	putc('M',up_fp);
-	up_putsi(xi);
-	up_putsi(yi);
-	up_putsi(zi);
+	up_putsi(xvali);
+	up_putsi(yvali);
+	up_putsi(zvali);
 }
 
 up_putsi(a){
@@ -352,20 +352,20 @@ up_putsi(a){
 	putc((a>>8)&0377,up_fp);	/* DAG */
 }
 
-up_space(x0,y0,x1,y1){
+up_space(xval0,yval0,xval1,yval1){
 	putc('s',up_fp);
-	up_putsi(x0);
-	up_putsi(y0);
-	up_putsi(x1);
-	up_putsi(y1);
+	up_putsi(xval0);
+	up_putsi(yval0);
+	up_putsi(xval1);
+	up_putsi(yval1);
 }
 
-up_space3(x0,y0,z0,x1,y1,z1){
+up_space3(xval0,yval0,zval0,xval1,yval1,zval1){
 	putc('S',up_fp);
-	up_putsi(x0);
-	up_putsi(y0);
-	up_putsi(z0);
-	up_putsi(x1);
-	up_putsi(y1);
-	up_putsi(z1);
+	up_putsi(xval0);
+	up_putsi(yval0);
+	up_putsi(zval0);
+	up_putsi(xval1);
+	up_putsi(yval1);
+	up_putsi(zval1);
 }

@@ -272,10 +272,10 @@ int face;
 	static float temp, area[2], len[6];
 	static vect_t v_temp;
 
-	a = faces[type][face*4+0];
-	b = faces[type][face*4+1];
-	c = faces[type][face*4+2];
-	d = faces[type][face*4+3];
+	a = arb_faces[type][face*4+0];
+	b = arb_faces[type][face*4+1];
+	c = arb_faces[type][face*4+2];
+	d = arb_faces[type][face*4+3];
 
 	if(a == -1)
 		return;
@@ -294,15 +294,15 @@ int face;
 
 	/* find the surface area of this face */
 	for(i=0; i<3; i++) {
-		j = faces[type][face*4+i];
-		k = faces[type][face*4+i+1];
+		j = arb_faces[type][face*4+i];
+		k = arb_faces[type][face*4+i+1];
 		VSUB2(v_temp, &temp_rec.s.s_values[k*3], &temp_rec.s.s_values[j*3]);
 		len[i] = MAGNITUDE( v_temp );
 	}
 	len[4] = len[2];
-	j = faces[type][face*4+0];
+	j = arb_faces[type][face*4+0];
 	for(i=2; i<4; i++) {
-		k = faces[type][face*4+i];
+		k = arb_faces[type][face*4+i];
 		VSUB2(v_temp, &temp_rec.s.s_values[k*3], &temp_rec.s.s_values[j*3]);
 		len[((i*2)-1)] = MAGNITUDE( v_temp );
 	}
@@ -516,7 +516,7 @@ tgc_anal()
 	float maxb, ma, mb, mc, md, mh;
 	float area_base, area_top, area_side, vol;
 	vect_t axb;
-	int type = 0;
+	int cgtype = 0;
 
 	VCROSS(axb, &temp_rec.s.s_values[6], &temp_rec.s.s_values[9]);
 	maxb = MAGNITUDE(axb);
@@ -534,19 +534,19 @@ tgc_anal()
 			if(fabs(mc-md) < .00001) {
 				/* have a circular top */
 				if(fabs(ma-mc) < .00001)
-					type = RCC;
+					cgtype = RCC;
 				else
-					type = TRC;
+					cgtype = TRC;
 			}
 		}
 		else {
 			/* have an elliptical base */
 			if(fabs(ma-mc) < .00001 && fabs(mb-md) < .00001)
-				type = REC;
+				cgtype = REC;
 		}
 	}
 
-	switch( type ) {
+	switch( cgtype ) {
 
 		case RCC:
 			area_base = pi * ma * ma;

@@ -214,14 +214,14 @@ f_inside()
 			}
 			type -= 4;
 			for(i=0; i<6; i++) {
-				if(faces[type][i*4] == -1)
+				if(arb_faces[type][i*4] == -1)
 					break;
-				p1 = faces[type][i*4+0];
-				p2 = faces[type][i*4+1];
-				p3 = faces[type][i*4+2];
+				p1 = arb_faces[type][i*4+0];
+				p2 = arb_faces[type][i*4+1];
+				p3 = arb_faces[type][i*4+2];
 				if(planeqn(i, p1, p2, p3, &newrec.s)) {
 					(void)printf("No eqn for face %d%d%d%d\n",
-						p1+1,p2+1,p3+1,faces[type][i*4+3]+1);
+						p1+1,p2+1,p3+1,arb_faces[type][i*4+3]+1);
 					return;
 				}
 			}

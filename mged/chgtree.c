@@ -54,7 +54,6 @@ f_name()
 {
 	register struct directory *dp;
 	union record record;
-	char *name;
 	long laddr;
 	int flags, len;
 

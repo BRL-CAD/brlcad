@@ -38,6 +38,24 @@ extern int	printf();
 
 static int	compar();
 
+/* face definitions for each arb type */
+int arb_faces[5][24] = {
+	{0,1,2,3, 0,1,4,5, 1,2,4,5, 0,2,4,5, -1,-1,-1,-1, -1,-1,-1,-1},	/* ARB4 */
+	{0,1,2,3, 4,0,1,5, 4,1,2,5, 4,2,3,5, 4,3,0,5, -1,-1,-1,-1},	/* ARB5 */
+	{0,1,2,3, 1,2,4,6, 0,4,6,3, 4,1,0,5, 6,2,3,7, -1,-1,-1,-1},	/* ARB6 */
+	{0,1,2,3, 4,5,6,7, 0,3,4,7, 1,2,6,5, 0,1,5,4, 3,2,6,4},		/* ARB7 */
+	{0,1,2,3, 4,5,6,7, 0,4,7,3, 1,2,6,5, 0,1,5,4, 3,2,6,7},		/* ARB8 */
+};
+
+/* planes to define ARB vertices */
+int arb_planes[5][24] = {
+	{0,1,3, 0,1,2, 0,2,3, 0,1,3, 1,2,3, 1,2,3, 1,2,3, 1,2,3},	/* ARB4 */
+	{0,1,4, 0,1,2, 0,2,3, 0,3,4, 1,2,4, 1,2,4, 1,2,4, 1,2,4},	/* ARB5 */
+	{0,2,3, 0,1,3, 0,1,4, 0,2,4, 1,2,3, 1,2,3, 1,2,4, 1,2,4},	/* ARB6 */
+	{0,2,4, 0,3,4, 0,3,5, 0,2,5, 1,2,4, 1,3,4, 1,3,5, 1,2,4},	/* ARB7 */
+	{0,2,4, 0,3,4, 0,3,5, 0,2,5, 1,2,4, 1,3,4, 1,3,5, 1,2,5},	/* ARB8 */
+};
+
 /*
  *  			E D I T A R B
  *  
@@ -159,8 +177,7 @@ int
 editarb( pos_model )
 vect_t pos_model;
 {
-	static double t;
-	static int pt1, pt2, bp1, bp2, newp, p1, p2, p3, p4;
+	static int pt1, pt2, bp1, bp2, newp, p1, p2, p3;
 	short *edptr;		/* pointer to arb edit array */
 	short *final;		/* location of points to redo */
 	register float *op;
@@ -261,12 +278,12 @@ printf("moving edge: %d%d  bound planes: %d %d\n",pt1+1,pt2+1,bp1+1,bp2+1);
 	newp = *edptr++; 	/* plane to redo */
 	if( newp == 9 ) {
 		/* special flag --> redo all the planes */
-		iptr = &faces[es_type-4][0];
+		iptr = &arb_faces[es_type-4][0];
 		for(i=0; i<6; i++) {
 			p1 = *iptr++;
 			p2 = *iptr++;
 			p3 = *iptr++;
-			p4 = *iptr++;
+			*iptr++;
 /*
 printf("REDO plane %d with points %d %d %d\n",i+1,p1+1,p2+1,p3+1);
 */
@@ -297,7 +314,7 @@ printf("redo plane %d with points %d %d %d\n",newp+1,p1+1,p2+1,p3+1);
 		for(i=0; i<3; i++) {
 			if( (newp = *edptr++) == -1 )
 				break;
-			iptr = &faces[es_type-4][4*newp];
+			iptr = &arb_faces[es_type-4][4*newp];
 			p1 = *iptr++;
 			p2 = *iptr++;
 			p3 = *iptr++;
@@ -443,9 +460,9 @@ struct solidrec *sp;
 
 	j = type - 4;
 
-	i1 = planes[j][loc];
-	i2 = planes[j][loc+1];
-	i3 = planes[j][loc+2];
+	i1 = arb_planes[j][loc];
+	i2 = arb_planes[j][loc+1];
+	i3 = arb_planes[j][loc+2];
 /*
 printf("intersect planes are %d %d %d\n",i1+1,i2+1,i3+1);
 */

@@ -319,7 +319,7 @@ union record *recp;
 void
 init_sedit()
 {
-	union record temprec;	/* copy of solid record to determine type */
+	struct solidrec temprec;	/* copy of solid to determine type */
 	register int i, type, p1, p2, p3;
 	float *op;
 
@@ -344,7 +344,7 @@ init_sedit()
 
 	es_menu = 0;
 
-	temprec = es_rec;
+	temprec = es_rec.s;		/* struct copy */
 
 	if( (type = es_rec.s.s_cgtype) < 0 )
 		type *= -1;
@@ -354,14 +354,14 @@ init_sedit()
 		/* rearrange vectors to correspond to the
 		 *  	"standard" ARB6
 		 */
-		VMOVE(&temprec.s.s_values[3], &es_rec.s.s_values[9]);
-		VMOVE(&temprec.s.s_values[6], &es_rec.s.s_values[21]);
-		VMOVE(&temprec.s.s_values[9], &es_rec.s.s_values[12]);
-		VMOVE(&temprec.s.s_values[12], &es_rec.s.s_values[3]);
-		VMOVE(&temprec.s.s_values[15], &es_rec.s.s_values[6]);
-		VMOVE(&temprec.s.s_values[18], &es_rec.s.s_values[18]);
-		VMOVE(&temprec.s.s_values[21], &es_rec.s.s_values[15]);
-		es_rec = temprec;
+		VMOVE(&temprec.s_values[3], &es_rec.s.s_values[9]);
+		VMOVE(&temprec.s_values[6], &es_rec.s.s_values[21]);
+		VMOVE(&temprec.s_values[9], &es_rec.s.s_values[12]);
+		VMOVE(&temprec.s_values[12], &es_rec.s.s_values[3]);
+		VMOVE(&temprec.s_values[15], &es_rec.s.s_values[6]);
+		VMOVE(&temprec.s_values[18], &es_rec.s.s_values[18]);
+		VMOVE(&temprec.s_values[21], &es_rec.s.s_values[15]);
+		es_rec.s = temprec;	/* struct copy */
 		type = ARB6;
 	}
 	es_rec.s.s_cgtype = type;
@@ -373,25 +373,25 @@ init_sedit()
 			return;
 		}
 
-		temprec = es_rec;
+		temprec = es_rec.s;
 		es_rec.s.s_cgtype = type;
 
 		/* find the plane equations */
 		/* point notation - use temprec record */
 		for(i=3; i<=21; i+=3) {
-			op = &temprec.s.s_values[i];
+			op = &temprec.s_values[i];
 			VADD2(op, op, &es_rec.s.s_values[0]);
 		}
 		type -= 4;	/* ARB4 at location 0, ARB5 at 1, etc */
 		for(i=0; i<6; i++) {
-			if(faces[type][i*4] == -1)
+			if(arb_faces[type][i*4] == -1)
 				break;	/* faces are done */
-			p1 = faces[type][i*4];
-			p2 = faces[type][i*4+1];
-			p3 = faces[type][i*4+2];
-			if(planeqn(i, p1, p2, p3, &temprec.s)) {
+			p1 = arb_faces[type][i*4];
+			p2 = arb_faces[type][i*4+1];
+			p3 = arb_faces[type][i*4+2];
+			if(planeqn(i, p1, p2, p3, &temprec)) {
 				(void)printf("No eqn for face %d%d%d%d\n",
-					p1+1,p2+1,p3+1,faces[type][i*4+3]+1);
+					p1+1,p2+1,p3+1,arb_faces[type][i*4+3]+1);
 				return;
 			}
 /*
@@ -800,36 +800,30 @@ arbcommon:
 					VADD2( work, &local.s_values[i], &local.s_values[0] );
 					PR_PT( i/3, '1'+(i/3), work );
 				}
-			break;
+				break;
 
 			case ARB7:
 				es_nlines = length = 7;
 				goto arbcommon;
-			break;
 
 			case ARB6:
 				es_nlines = length = 6;
 				VMOVE(&local.s_values[15], &local.s_values[18]);
 				goto arbcommon;
-			break;
 
 			case ARB5:
 				es_nlines = length = 5;
 				goto arbcommon;
-			break;
 
 			case ARB4:
 				es_nlines = length = 4;
 				VMOVE(&local.s_values[9], &local.s_values[12]);
 				goto arbcommon;
-			break;
 
 			default:
 				/* use ARB8 */
 				es_nlines = length = 8;
 				goto arbcommon;
-			break;
-
 		}
 		break;
 
@@ -1237,29 +1231,29 @@ init_objedit()
  */
 redo_planes( )
 {
-	union record temprec;
+	struct solidrec temprec;
+	register float *op;
 	register int i, type, p1, p2, p3;
-	float *op;
 
 	type = es_rec.s.s_cgtype;
-	temprec = es_rec;
+	temprec = es_rec.s;		/* struct copy */
 
 	/* find the plane equations */
 	/* point notation - use temprec record */
 	for(i=3; i<=21; i+=3) {
-		op = &temprec.s.s_values[i];
+		op = &temprec.s_values[i];
 		VADD2(op, op, &es_rec.s.s_values[0]);
 	}
 	type -= 4;	/* ARB4 at location 0, ARB5 at 1, etc */
 	for(i=0; i<6; i++) {
-		if(faces[type][i*4] == -1)
+		if(arb_faces[type][i*4] == -1)
 			break;	/* faces are done */
-		p1 = faces[type][i*4];
-		p2 = faces[type][i*4+1];
-		p3 = faces[type][i*4+2];
-		if(planeqn(i, p1, p2, p3, &temprec.s)) {
+		p1 = arb_faces[type][i*4];
+		p2 = arb_faces[type][i*4+1];
+		p3 = arb_faces[type][i*4+2];
+		if(planeqn(i, p1, p2, p3, &temprec)) {
 			(void)printf("No eqn for face %d%d%d%d\n",
-				p1+1,p2+1,p3+1,faces[type][i*4+3]+1);
+				p1+1,p2+1,p3+1,arb_faces[type][i*4+3]+1);
 			return;
 		}
 	}

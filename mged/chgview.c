@@ -244,8 +244,8 @@ f_regdebug()
 
 void
 do_list( dp )
+register struct directory *dp;
 {
-	register struct directory *dp;
 	register int i;
 	union record record;
 
@@ -437,7 +437,7 @@ FILE *fp;
 	vect_t eye_model;
 
 	VSET( temp, 0, 0, 1 );
-	MAT4X3VEC( eye_model, view2model, temp );
+	MAT4X3PNT( eye_model, view2model, temp );
 
 	(void)fprintf(fp, "%.9e\n", VIEWSIZE );
 	(void)fprintf(fp, "%.9e %.9e %.9e\n",
@@ -827,7 +827,6 @@ void
 f_rmats()
 {
 	register FILE *fp;
-	register int i;
 	vect_t eye_model;
 
 	if( (fp = fopen(cmd_args[1], "r")) == NULL )  {

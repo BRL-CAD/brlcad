@@ -351,7 +351,7 @@ f_extrude()
 	case 8:		/* extrude ARB4 face 124 to make ARB6 */
 	case 12:	/* extrude ARB4 face 134 to Make ARB6 */
 a4toa6:
-		ext4to6(pt[0], pt[1], pt[2], dist, &lsolid);
+		ext4to6(pt[0], pt[1], pt[2], &lsolid);
 		es_rec.s.s_cgtype = ARB6;
 		es_edflag = IDLE;
 		es_menu = 0;
@@ -441,14 +441,14 @@ a4toa6:
 
 	/* redo the plane equations */
 	for(i=0; i<6; i++) {
-		if(faces[es_type-4][i*4] == -1)
+		if(arb_faces[es_type-4][i*4] == -1)
 			break;
-		pt[0] = faces[es_type-4][i*4];
-		pt[1] = faces[es_type-4][i*4+1];
-		pt[2] = faces[es_type-4][i*4+2];
+		pt[0] = arb_faces[es_type-4][i*4];
+		pt[1] = arb_faces[es_type-4][i*4+1];
+		pt[2] = arb_faces[es_type-4][i*4+2];
 		if(planeqn(i, pt[0], pt[1], pt[2], &lsolid)) {
 			(void)printf("No equation for face %d%d%d%d\n",
-				pt[0]+1,pt[1]+1,pt[2]+1,faces[es_type-4][i*4+3]);
+				pt[0]+1,pt[1]+1,pt[2]+1,arb_faces[es_type-4][i*4+3]);
 			return;
 		}
 	}
@@ -771,14 +771,14 @@ f_mirface()
 
 	/* redo the plane equations */
 	for(i=0; i<6; i++) {
-		if(faces[es_type-4][i*4] == -1)
+		if(arb_faces[es_type-4][i*4] == -1)
 			break;
-		pt[0] = faces[es_type-4][i*4];
-		pt[1] = faces[es_type-4][i*4+1];
-		pt[2] = faces[es_type-4][i*4+2];
+		pt[0] = arb_faces[es_type-4][i*4];
+		pt[1] = arb_faces[es_type-4][i*4+1];
+		pt[2] = arb_faces[es_type-4][i*4+2];
 		if(planeqn(i, pt[0], pt[1], pt[2], &lsolid)) {
 			(void)printf("No equation for face %d%d%d%d\n",
-				pt[0]+1,pt[1]+1,pt[2]+1,faces[es_type-4][i*4+3]);
+				pt[0]+1,pt[1]+1,pt[2]+1,arb_faces[es_type-4][i*4+3]);
 			return;
 		}
 	}
@@ -1189,9 +1189,9 @@ f_regdef()
 void
 f_edgedir()
 {
-	int i, point;
+	register int i;
 	vect_t work;
-	float rot, fb;
+	FAST float rot, fb;
 
 	if( not_state( ST_S_EDIT, "Edgedir" ) )
 		return;
@@ -1240,14 +1240,12 @@ f_edgedir()
 /*	EXT4TO6():	extrudes face pt1 pt2 pt3 of an ARB4 "distance"
  *			to produce ARB6 using solid record "sp"
  */
-ext4to6(pt1, pt2, pt3, distance, sp)
+ext4to6(pt1, pt2, pt3, sp)
 int pt1, pt2, pt3;
-float distance;
-struct solidrec *sp;
+register struct solidrec *sp;
 {
-
-	static struct solidrec tmp;
-	int i;
+	struct solidrec tmp;
+	register int i;
 
 	VMOVE(&tmp.s_values[0], &sp->s_values[pt1*3]);
 	VMOVE(&tmp.s_values[3], &sp->s_values[pt2*3]);
@@ -1264,8 +1262,6 @@ struct solidrec *sp;
 	for(i=0; i<=21; i+=3) {
 		VMOVE(&sp->s_values[i], &tmp.s_values[i]);
 	}
-
-	return;
 }
 
 

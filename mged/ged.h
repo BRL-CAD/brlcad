@@ -117,10 +117,9 @@ extern int	drawreg;	/* if > 0, process and draw regions */
 extern float	acc_sc_sol;	/* accumulate solid scale factor */
 extern mat_t	acc_rot_sol;	/* accumulate solid rotations */
 
-/* defined in e6.c */
-extern struct directory	*path[];/* 'path' name of this solid */
+/* defined in path.c */
 extern int	regmemb;	/* # of members left to process in a region */
-extern char	memb_oper;	/* operation for present member of proc region */
+extern char	memb_oper;	/* op for present member of proc region */
 extern int	reg_pathpos;	/* pathpos of a processed region */
 
 /* defined in dodraw.c */

@@ -33,7 +33,7 @@ int	regmemb;	/* # of members left to process in a region */
 char	memb_oper;	/* operation for present member of processed region */
 int	reg_pathpos;	/* pathpos of a processed region */
 
-struct directory	*path[MAX_PATH];	/* Record of current path */
+struct directory	*cur_path[MAX_PATH];	/* Record of current path */
 
 /*
  *			D R A W H O B J
@@ -54,7 +54,7 @@ matp_t old_xlate;
 	if( pathpos >= MAX_PATH )  {
 		(void)printf("nesting exceeds %d levels\n", MAX_PATH );
 		for(i=0; i<MAX_PATH; i++)
-			(void)printf("/%s", path[i]->d_namep );
+			(void)printf("/%s", cur_path[i]->d_namep );
 		(void)putchar('\n');
 		return;			/* ERROR */
 	}
@@ -72,7 +72,7 @@ matp_t old_xlate;
 		/*
 		 * Enter new solid (or processed region) into displaylist.
 		 */
-		path[pathpos] = dp;
+		cur_path[pathpos] = dp;
 
 		GET_SOLID( sp );
 		if( sp == SOLID_NULL )
@@ -103,7 +103,7 @@ matp_t old_xlate;
 			(void)printf(
 			"ERROR: region (%s) is member of region (%s)\n",
 				rec.c.c_name,
-				path[reg_pathpos]->d_namep);
+				cur_path[reg_pathpos]->d_namep);
 			return;	/* ERROR */
 		}
 		/* Well, we are processing regions and this is a region */
@@ -121,7 +121,7 @@ matp_t old_xlate;
 
 		db_getrec( dp, &rec, i );
 		mp = &rec.M;
-		path[pathpos] = dp;
+		cur_path[pathpos] = dp;
 		if( regmemb > 0  ) { 
 			regmemb--;
 			memb_oper = rec.M.m_relation;

@@ -48,6 +48,8 @@ struct veclist *vlend = &veclist[NVL]; /* pntr to 1st inval veclist element */
 int	reg_error;	/* error encountered in region processing */
 int	no_memory;	/* flag indicating memory for drawing is used up */
 
+extern struct directory	*cur_path[MAX_PATH];	/* from path.c */
+
 /*
  *			D R A W H S O L I D
  *
@@ -94,7 +96,7 @@ int regionid;
 		if( i < 0 )  {
 			/* error somwhere */
 			(void)printf("will skip region: %s\n",
-					path[reg_pathpos]->d_namep);
+					cur_path[reg_pathpos]->d_namep);
 			reg_error = 1;
 			if(regmemb == 0) {
 				regmemb = -1;
@@ -142,15 +144,15 @@ int regionid;
 			break;
 
 		case ID_ARS_A:
-			draw_ars( &recordp->a, path[pathpos], xform );
+			draw_ars( &recordp->a, cur_path[pathpos], xform );
 			break;
 
 		case ID_B_SPL_HEAD:
-			draw_spline( &recordp->a, path[pathpos], xform );
+			draw_spline( &recordp->a, cur_path[pathpos], xform );
 			break;
 
 		case ID_P_HEAD:
-			draw_poly( path[pathpos], xform );
+			draw_poly( cur_path[pathpos], xform );
 			break;
 
 		default:
@@ -211,7 +213,7 @@ int regionid;
 		}
 		/* Copy path information */
 		for( i=0; i<=sp->s_last; i++ )
-			sp->s_path[i] = path[i];
+			sp->s_path[i] = cur_path[i];
 	}
 	sp->s_materp = (char *)0;
 	sp->s_regionid = regionid;

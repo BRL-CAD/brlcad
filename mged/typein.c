@@ -548,7 +548,7 @@ tor_in()
 		return(1);	/* failure */
 	}
 	/* Check for zero radius 2 */
-	if( (rad1 = atof(cmd_args[10])) <= 0.0 )  {
+	if( (rad2 = atof(cmd_args[10])) <= 0.0 )  {
 		(void)printf("ERROR, radius 2 must be greater than zero!\n");
 		return(1);	/* failure */
 	}
@@ -567,7 +567,6 @@ int
 cyl_in( type )
 int type;
 {
-	float rad1, rad2;
 
 	/* Get vertex and height vectors */
 	while( args < (3 + 6) )  {
@@ -592,7 +591,7 @@ int type;
 			args += argcnt;
 		}
 		/* Check for zero radius */
-		if( (rad1 = atof(cmd_args[9])) <= 0.0 )  {
+		if( atof(cmd_args[9]) <= 0.0 )  {
 			(void)printf("ERROR, radius must be greater than zero!\n");
 			return(1);	/* failure */
 		}
@@ -610,7 +609,7 @@ int type;
 			args += argcnt;
 		}
 		/* Check for zero top radius */
-		if( (rad1 = atof(cmd_args[9])) <= 0.0 )  {
+		if( atof(cmd_args[9]) <= 0.0 )  {
 			(void)printf("ERROR, radius must be greater than zero!\n");
 			return(1);	/* failure */
 		}
@@ -621,8 +620,8 @@ int type;
 			}
 			args += argcnt;
 		}
-		/* Check for zero bottom radius */
-		if( (rad2 = atof(cmd_args[10])) <= 0.0 )  {
+		/* Check for zero bottom radius (rad2)*/
+		if( atof(cmd_args[10]) <= 0.0 )  {
 			(void)printf("ERROR, radius must be greater than zero!\n");
 			return(1);	/* failure */
 		}
@@ -664,7 +663,7 @@ int type;
 			args += argcnt;
 		}
 		/* Check for ratio greater than 1.0 */
-		if( (rad1 = atof(cmd_args[15])) < 1.0 )  {
+		if( atof(cmd_args[15]) < 1.0 )  {
 			(void)printf("ERROR, ratio must be greater than one!\n");
 			return(1);	/* failure */
 		}
@@ -681,12 +680,12 @@ int type;
 			args += argcnt;
 		}
 		/* Check for zero radius */
-		if( (rad1 = atof(cmd_args[15])) <= 0.0 )  {
+		if( atof(cmd_args[15]) <= 0.0 )  {
 			(void)printf("ERROR, must be greater than zero!\n");
 			return(1);	/* failure */
 		}
-		/* Check for zero radius */
-		if( (rad1 = atof(cmd_args[16])) <= 0.0 )  {
+		/* Check for zero radius (rad1) */
+		if( atof(cmd_args[16]) <= 0.0 )  {
 			(void)printf("ERROR, must be greater than zero!\n");
 			return(1);	/* failure */
 		}
@@ -794,7 +793,6 @@ int pos;
 #define MAXARGS		200	/* Maximum number of args per line */
 	register char *lp;
 	register char *lp1;
-	static char line[MAXLINE];
 
 	newargs = 0;
 	/*

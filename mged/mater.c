@@ -232,7 +232,7 @@ f_color()
 void
 f_edcolor()
 {
-	static char tmpfile[] = "/tmp/MGED.aXXXXX";
+	static char tempfile[] = "/tmp/MGED.aXXXXX";
 	register struct mater *mp;
 	register struct mater *zot;
 	register FILE *fp;
@@ -240,9 +240,9 @@ f_edcolor()
 	char hbuf[128];			/* handle buffer for sscanf */
 	static char hdr[] = "LOW\tHIGH\tRed\tGreen\tBlue\tHandle\n";
 
-	(void)mktemp(tmpfile);
-	if( (fp = fopen( tmpfile, "w" )) == NULL )  {
-		perror(tmpfile);
+	(void)mktemp(tempfile);
+	if( (fp = fopen( tempfile, "w" )) == NULL )  {
+		perror(tempfile);
 		return;
 	}
 
@@ -255,14 +255,14 @@ f_edcolor()
 	}
 	(void)fclose(fp);
 
-	if( !editit( tmpfile ) )  {
+	if( !editit( tempfile ) )  {
 		(void)printf("Editor returned bad status.  Aborted\n");
 		return;
 	}
 
 	/* Read file and process it */
-	if( (fp = fopen( tmpfile, "r")) == NULL )  {
-		perror( tmpfile );
+	if( (fp = fopen( tempfile, "r")) == NULL )  {
+		perror( tempfile );
 		return;
 	}
 	if( fgets(line, sizeof (line), fp) == NULL  ||
@@ -295,7 +295,7 @@ f_edcolor()
 		color_putrec( mp );
 	}
 	(void)fclose(fp);
-	(void)unlink( tmpfile );
+	(void)unlink( tempfile );
 	dmp->dmr_colorchange();
 }
 

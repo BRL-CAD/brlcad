@@ -60,9 +60,8 @@ int	movedir;	/* RARROW | UARROW | SARROW | ROTARROW */
 mat_t	acc_rot_sol;
 float	acc_sc_sol;
 
-static	sliceflag;	/* 0 = depth cue mode, !0 = "slice" mode */
-
-static void bv_top(), bv_bottom(), bv_right(), bv_left(), bv_front(), bv_rear();
+static void bv_top(), bv_bottom(), bv_right();
+static void bv_left(), bv_front(), bv_rear();
 static void bv_vrestore(), bv_vsave(), bv_adcursor(), bv_reset();
 static void bv_90_90(), bv_35_25();
 static void be_o_illuminate(), be_s_illuminate();
@@ -530,21 +529,6 @@ static void be_reject()  {
 }
 
 static void bv_slicemode() {
-#ifdef SLICEMODE
-	extern int inten_scale;
-
-	if( sliceflag )  {
-		/* depth cue mode */
-		sliceflag = 0;
-		inten_scale = 0x7FF0;
-		dmp->dmr_light( LIGHT_OFF, BV_SLICEMODE );
-	} else {
-		/* slice mode */
-		sliceflag = 1;
-		inten_scale = 0xFFF0;
-		dmp->dmr_light( LIGHT_ON, BV_SLICEMODE );
-	}
-#endif
 }
 
 static void be_s_edit()  {

@@ -42,7 +42,7 @@ float	angle2;		/* Angle to dashed wiper */
  * Compute and display the angle/distance cursor.
  */
 void
-adcursor( tick_dist )
+adcursor()
 {
 	static double	pi = 3.14159265358979323264;
 	static float	x1, Y1;	/* not "y1", due to conflict with math lib */

@@ -1266,8 +1266,7 @@ static void
 file_put( dp )
 register struct directory *dp;
 {
-	register struct member *mp;
-	struct directory *nextdp;
+	register struct directory *nextdp;
 	register int i;
 
 	/* If this object already sent to keep file, just return */

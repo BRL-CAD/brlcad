@@ -608,6 +608,7 @@ point(xi,yi){
 	tekcont(xi,yi);
 }
 
+/* ARGSUSED */
 void
 Tek_debug(lvl)
 {
