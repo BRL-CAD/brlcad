@@ -333,7 +333,7 @@ do_inside:
 		if(rdebug&RDEBUG_REFRACT)  {
 			bu_log("rr_render: calculating refraction @ exit from %s (green)\n", pp->pt_regionp->reg_name);
 			bu_log("Start point to exit point:\n\
-vdraw o rr;vdraw p c 00ff00; vdraw w n 0 %g %g %g; vdraw w n 1 %g %g %g; vdraw s\n",
+vdraw open rr;vdraw params c 00ff00; vdraw write n 0 %g %g %g; vdraw wwrite n 1 %g %g %g; vdraw send\n",
 				V3ARGS(sub_ap.a_ray.r_pt),
 				V3ARGS(sub_ap.a_uvec) );
 		}
@@ -526,7 +526,7 @@ do_reflection:
 				bu_semaphore_release( BU_SEM_SYSCALL );
 			}
 			bu_log("Surface normal for reflection:\n\
-vdraw o rrnorm;vdraw p c 00ffff;vdraw w n 0 %g %g %g;vdraw w n 1 %g %g %g;vdraw s\n",
+vdraw open rrnorm;vdraw params c 00ffff;vdraw write n 0 %g %g %g;vdraw write n 1 %g %g %g;vdraw send\n",
 				V3ARGS(sub_ap.a_ray.r_pt),
 				V3ARGS(endpt) );
 

@@ -832,7 +832,7 @@ struct seg *finished_segs;
 				bu_semaphore_release( BU_SEM_SYSCALL );
 			}
 			bu_log("From ray start to inhit (purple):\n \
-vdraw o oray;vdraw p c %2.2x%2.2x%2.2x;vdraw w n 0 %g %g %g;vdraw w n 1 %g %g %g;vdraw s\n",
+vdraw open oray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw write n 1 %g %g %g;vdraw send\n",
 				i, 0, i,
 				V3ARGS(ap->a_ray.r_pt),
 				V3ARGS(inhit) );
@@ -849,7 +849,7 @@ vdraw o oray;vdraw p c %2.2x%2.2x%2.2x;vdraw w n 0 %g %g %g;vdraw w n 1 %g %g %g
 				bu_semaphore_release( BU_SEM_SYSCALL );
 			}
 			bu_log("From inhit to outhit (grey):\n \
-vdraw o iray;vdraw p c %2.2x%2.2x%2.2x;vdraw w n 0 %g %g %g;vdraw w n 1 %g %g %g;vdraw s\n",
+vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw write n 1 %g %g %g;vdraw send\n",
 				i, i, i,
 				V3ARGS(inhit), V3ARGS(outhit) );
 		}
