@@ -1636,8 +1636,10 @@ char	**argv;
 	  av[0] = "zap";
 	  av[1] = NULL;
 
-	  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	  if(argc < 2 || 3 < argc){
+	    Tcl_Eval(interp, "help opendb");
 	    return TCL_ERROR;
+	  }
 
 	  /* Clear out anything in the display */
 	  f_zap(clientData, interp, 1, av);

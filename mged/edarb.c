@@ -472,8 +472,10 @@ char	**argv;
 	static fastf_t dist;
 	struct rt_arb_internal larb;	/* local copy of arb for new way */
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 3 || 3 < argc){
+	  Tcl_Eval(interp, "help extrude");
 	  return TCL_ERROR;
+	}
 
 	if( not_state( ST_S_EDIT, "Extrude" ) )
 		return TCL_ERROR;
@@ -676,8 +678,10 @@ char	**argv;
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 4 || 4 < argc){
+	  Tcl_Eval(interp, "help arb");
 	  return TCL_ERROR;
+	}
 
 	if( db_lookup( dbip,  argv[1] , LOOKUP_QUIET ) != DIR_NULL )  {
 	  aexists( interp, argv[1] );
@@ -768,8 +772,10 @@ char	**argv;
 	struct rt_arb_internal *arb;
 	struct rt_arb_internal larb;	/* local copy of solid */
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 3 || 3 < argc){
+	  Tcl_Eval(interp, "help mirface");
 	  return TCL_ERROR;
+	}
 
 	if( not_state( ST_S_EDIT, "Mirface" ) )
 	  return TCL_ERROR;
@@ -947,8 +953,10 @@ char	**argv;
 	vect_t slope;
 	FAST fastf_t rot, fb;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 3 || 4 < argc){
+	  Tcl_Eval(interp, "help edgedir");
 	  return TCL_ERROR;
+	}
 
 	if( not_state( ST_S_EDIT, "Edgedir" ) )
 	  return TCL_ERROR;
@@ -1147,10 +1155,12 @@ char	**argv;
     };
 #define		ARB_VERT_LOC(n,v)	vert_loc[((n) - 4) * 8 + (v) - 1]
 
-	CHECK_READ_ONLY;
+    CHECK_READ_ONLY;
 
-    if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    if(argc < 2 || 2 < argc){
+      Tcl_Eval(interp, "help permute");
       return TCL_ERROR;
+    }
 
     if (not_state(ST_S_EDIT, "Permute"))
       return TCL_ERROR;

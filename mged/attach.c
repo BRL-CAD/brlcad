@@ -236,8 +236,10 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 1 || 2 < argc){
+    Tcl_Eval(interp, "help release");
     return TCL_ERROR;
+  }
 
   if(argc == 2){
     int status;
@@ -312,7 +314,8 @@ char    **argv;
 {
   register struct w_dm *wp;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL)){
+  if(argc < 2 || MAXARGS < argc){
+    Tcl_Eval(interp, "help attach");
     print_valid_dm();
     return TCL_ERROR;
   }
@@ -520,8 +523,10 @@ char	**argv;
     return TCL_ERROR;
   }
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 2 || MAXARGS < argc){
+    Tcl_Eval(interp, "help dm");
     return TCL_ERROR;
+  }
 
   return cmd_hook( argc-1, argv+1 );
 }
@@ -553,8 +558,10 @@ char    **argv;
   struct cmd_list *save_cclp;
   struct bu_vls vls1;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-        return TCL_ERROR;
+  if(argc < 2 || 2 < argc){
+    Tcl_Eval(interp, "help untie");
+    return TCL_ERROR;
+  }
 
   bu_vls_init(&vls1);
 
@@ -628,8 +635,10 @@ char    **argv;
   struct cmd_list *save_cclp;  /* save current cmd_list pointer */
   struct bu_vls vls1, vls2;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 3 || 3 < argc){
+    Tcl_Eval(interp, "help tie");
     return TCL_ERROR;
+  }
 
   bu_vls_init(&vls1);
   bu_vls_init(&vls2);
@@ -959,8 +968,10 @@ char    **argv;
 {
   int i;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 1 || 1 < argc){
+    Tcl_Eval(interp, "help load_dv");
     return TCL_ERROR;
+  }
 
   for(i = 0; i < VIEW_TABLE_SIZE; ++i){
     press(default_view_strings[i]);

@@ -99,8 +99,10 @@ char	**argv;
 	int	xpos = atoi(argv[2]);
 	int	ypos = atoi(argv[3]);
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 4 || 4 < argc){
+	  Tcl_Eval(interp, "help M");
 	  return TCL_ERROR;
+	}
 
 	/* Build floating point mouse vector, -1 to +1 */
 	mousevec[X] =  xpos / 2047.0;
@@ -318,8 +320,10 @@ char *argv[];
   static int count = -1;
   int i;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 1 || 2 < argc){
+    Tcl_Eval(interp, "help aip");
     return TCL_ERROR;
+  }
 
   if(!ndrawn || (state != ST_S_PICK && state != ST_O_PICK  && state != ST_O_PATH))
     return TCL_ERROR;
@@ -542,8 +546,10 @@ char	**argv;
 	char			*cp;
 	register int		j;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 2 || 2 < argc){
+	  Tcl_Eval(interp, "help matpick");
 	  return TCL_ERROR;
+	}
 
 	if( not_state( ST_O_PATH, "Object Edit matrix pick" ) )
 	  return TCL_ERROR;

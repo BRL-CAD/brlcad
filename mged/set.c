@@ -364,8 +364,10 @@ char *argv[];
 	struct bu_vls vls;
 	int bad = 0;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 1 || 2 < argc){
+	  Tcl_Eval(interp, "help vars");
 	  return TCL_ERROR;
+	}
 
 	bu_vls_init(&vls);
 

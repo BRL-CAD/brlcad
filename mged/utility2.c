@@ -62,8 +62,10 @@ char **argv;
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-	  return TCL_ERROR;
+	if(argc < 2 || 2 < argc){
+	      Tcl_Eval(interp, "help shells");
+	          return TCL_ERROR;
+	}
 
 	if( (old_dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 	  return TCL_ERROR;
@@ -165,8 +167,15 @@ char	**argv;
 {
 	int i, flag, pos_in;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 1 || MAXARGS < argc){
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help %s", argv[0]);
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
+	}
 
 	/* pos_in = first member of path entered
 	 *
@@ -272,8 +281,10 @@ char **argv;
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 1 || 27 < argc){
+	  Tcl_Eval(interp, "help copyeval");
 	  return TCL_ERROR;
+	}
 
 	if( argc < 3 )
 	{
@@ -745,8 +756,10 @@ char **argv;
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 2 || MAXARGS < argc){
+	  Tcl_Eval(interp, "help push");
 	  return TCL_ERROR;
+	}
 
 	RT_CHECK_DBI(dbip);
 
@@ -1334,8 +1347,10 @@ char **argv;
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 2 || 2 < argc){
+	  Tcl_Eval(interp, "help xpush");
 	  return TCL_ERROR;
+	}
 
 	/* get directory pointer for arg */
 	if( (old_dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
@@ -1469,8 +1484,10 @@ char **argv;
 	mat_t acc_matrix;
 	struct bu_vls tmp_vls;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 2 || 2 < argc){
+	  Tcl_Eval(interp, "help showmats");
 	  return TCL_ERROR;
+	}
 
 	bu_vls_init(&tmp_vls);
 	MAT_IDN( acc_matrix );
@@ -1563,8 +1580,10 @@ char *argv[];
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 3 || 4 < argc){
+	  Tcl_Eval(interp, "help nmg_simplify");
 	  return TCL_ERROR;
+	}
 
 	RT_INIT_DB_INTERNAL( &new_intern );
 
@@ -1798,8 +1817,10 @@ char **argv;
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 3 || MAXARGS < argc){
+	  Tcl_Eval(interp, "help make_bb");
 	  return TCL_ERROR;
+	}
 
 	/* Since arguments may be paths, make sure first argument isn't */
 	if( strchr( argv[1], '/' ) )
@@ -1998,8 +2019,10 @@ char **argv;
 	struct rt_comb_internal *comb;
 	char id[10];
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-		return TCL_ERROR;
+	if(argc < 2 || MAXARGS < argc){
+	  Tcl_Eval(interp, "help whatid");
+	  return TCL_ERROR;
+	}
 
 	if( (dp=db_lookup( dbip, argv[1], LOOKUP_NOISY )) == DIR_NULL )
 		return TCL_ERROR;
@@ -2034,8 +2057,10 @@ char **argv;
 	int new_argc;
 	int lim;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-		return TCL_ERROR;
+	if(argc < 2 || MAXARGS < argc){
+	  Tcl_Eval(interp, "help eac");
+	  return TCL_ERROR;
+	}
 
 	bu_vls_init( &v );
 

@@ -153,8 +153,10 @@ Tcl_Interp *interp;
 int argc;
 char **argv;
 {
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 1 || 3 < argc){
+    Tcl_Eval(interp, "help journal");
     return TCL_ERROR;
+  }
 
   if (argc < 2) {
     if (journalfp != NULL)
@@ -202,8 +204,10 @@ char **argv;
 {
     struct timeval tv;
 
-    if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    if(argc < 3 || 3 < argc){
+      Tcl_Eval(interp, "help delay");
       return TCL_ERROR;
+    }
 
     tv.tv_sec = atoi(argv[1]);
     tv.tv_usec = atoi(argv[2]);
@@ -231,8 +235,10 @@ char **argv;
     struct bu_vls str;
     struct timeval tvdiff;
 
-    if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    if(argc < 1 || 4 < argc){
+      Tcl_Eval(interp, "help history");
       return TCL_ERROR;
+    }
 
     fp = NULL;
     while( argc >= 2 ) {
@@ -351,8 +357,10 @@ char **argv;
 {
     struct bu_vls *vp;
 
-    if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    if(argc < 1 || 1 < argc){
+      Tcl_Eval(interp, "help hist_prev");
       return TCL_ERROR;
+    }
 
     vp = history_prev();
     if (vp == NULL)
@@ -377,8 +385,10 @@ char **argv;
 {
     struct bu_vls *vp;
 
-    if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    if(argc < 1 || 1 < argc){
+      Tcl_Eval(interp, "help hist_next");
       return TCL_ERROR;
+    }
 
     vp = history_next();
     if (vp == NULL)
@@ -399,8 +409,10 @@ char **argv;
     struct timeval zero;
     struct bu_vls vls;
 
-    if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    if(argc < 1 || 2 < argc){
+      Tcl_Eval(interp, "help cmd_hist_add");
       return TCL_ERROR;
+    }
 
     if (argc < 2)
 	return TCL_OK;

@@ -398,8 +398,10 @@ char **argv;
 				sph_in(), tec_in(), tgc_in(), tor_in(),
 				trc_in(), ebm_in(), vol_in(), hf_in();
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 1 || MAXARGS < argc){
+	  Tcl_Eval(interp, "help in");
 	  return TCL_ERROR;
+	}
 
 	/* Parse options. */
 	optind = 1;		/* re-init getopt() */

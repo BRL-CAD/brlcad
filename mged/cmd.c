@@ -64,8 +64,6 @@ extern int gui_setup();
 struct cmd_list head_cmd_list;
 struct cmd_list *curr_cmd_list;
 
-extern Tcl_CmdProc	cmd_fhelp;
-
 int glob_compat_mode = 1;
 int output_as_return = 1;
 
@@ -90,8 +88,10 @@ char		*argv[];
 {
 	static char	cmd[] = "zoom 0.5\n";
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 4 || 4 < argc){
+	  Tcl_Eval(interp, "help L");
 	  return TCL_ERROR;
+	}
 
 	if( atoi(argv[1]) != 0 )
 	  return Tcl_Eval( interp, cmd );
@@ -113,440 +113,221 @@ char		*argv[];
 {
 	static char	cmd[] = "zoom 2\n";
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 4 || 4 < argc){
+	  Tcl_Eval(interp, "help R");
 	  return TCL_ERROR;
+	}
 
 	if( atoi(argv[1]) != 0 )
 		return Tcl_Eval( interp, cmd );
 	return TCL_OK;
 }
 
-static struct funtab funtab[] = {
-"", "", "Primary command Table.",
-        0, 0, 0, FALSE,
-"?", "", "summary of available commands",
-        cmd_fhelp,0,MAXARGS,TRUE,
-"%", "", "escape to interactive shell",
-	f_comm,1,1,TRUE,
-"3ptarb", "", "makes arb given 3 pts, 2 coord of 4th pt, and thickness",
-	f_3ptarb, 1, 27,TRUE,
-"adc", "[<a1|a2|dst|dh|dv|hv|dx|dy|dz|xyz|reset|help> value(s)]",
-	"control the angle/distance cursor",
-        f_adc, 1, 5, TRUE,
-"ae", "[-i] azim elev [twist]", "set view using azim, elev and twist angles",
-	f_aetview, 3, 5, TRUE,
-"aim", "[command_window [pathName of display window]]", "aims command_window at pathName",
-        f_aim, 1, 3, TRUE,
-"aip", "[fb]", "advance illumination pointer or path position forward or backward",
-        f_aip, 1, 2, TRUE,
-"analyze", "[arbname]", "analyze faces of ARB",
-	f_analyze,1,MAXARGS,TRUE,
-"apropos", "keyword", "finds commands whose descriptions contain the given keyword",
-        cmd_apropos, 2, 2, TRUE,
-"arb", "name rot fb", "make arb8, rotation + fallback",
-	f_arbdef,4,4,TRUE,
-"arced", "a/b ...anim_command...", "edit matrix or materials on combination's arc",
-	f_arced, 3,MAXARGS,TRUE,
-"area", "[endpoint_tolerance]", "calculate presented area of view",
-	f_area, 1, 2, TRUE,
-"attach", "[-d display_string] [-i init_script] [-n name]\n\t\t[-t is_toplevel]\
-[-W width] [-N height]\n\t\t[-S square_size] dev_type", "attach to a display manager",
-	f_attach,2,MAXARGS,TRUE,
-"B", "<objects>", "clear screen, edit objects",
-	f_blast,2,MAXARGS,TRUE,
-"bev",	"[-t] [-P#] new_obj obj1 op obj2 op obj3 op ...", "Boolean evaluation of objects via NMG's",
-	f_bev, 2, MAXARGS, TRUE,
-#if 0
-"button", "number", "simulates a button press, not intended for the user",
-	f_button, 2, 2, FALSE,
-#endif
-"c", "[-gr] comb_name [boolean_expr]", "create or extend a combination using standard notation",
-	f_comb_std,3,MAXARGS,TRUE,
-"cat", "<objects>", "list attributes (brief)",
-	f_cat,2,MAXARGS,TRUE,
-"center", "x y z", "set view center",
-	f_center, 4,4, TRUE,
-"color", "low high r g b str", "make color entry",
-	f_color, 7, 7, TRUE,
-"comb", "comb_name <operation solid>", "create or extend combination w/booleans",
-	f_comb,4,MAXARGS,TRUE,
-"comb_color", "comb R G B", "assign a color to a combination (like 'mater')",
-	f_comb_color, 5,5,TRUE,
-"copyeval", "new_solid path_to_old_solid",
-	"copy an 'evaluated' path solid",
-	f_copyeval, 1, 27, TRUE,
-"copymat", "a/b c/d", "copy matrix from one combination's arc to another's",
-	f_copymat, 3,3,TRUE,
-"cp", "from to", "copy [duplicate] object",
-	f_copy,3,3, TRUE,
-"cpi", "from to", "copy cylinder and position at end of original cylinder",
-	f_copy_inv,3,3,TRUE,
-"d", "<objects>", "remove objects from the screen",
-	f_erase,2,MAXARGS,TRUE,
-"dall", "<objects>", "remove all occurrences of object(s) from the screen",
-	f_erase_all,2,MAXARGS,TRUE,
-"db", "command", "database manipulation routines",
-	cmd_db, 1, MAXARGS, TRUE,
-"dbconcat", "file [prefix]", "concatenate 'file' onto end of present database.  Run 'dup file' first.",
-	f_concat, 2, 3, TRUE,
-"debugbu", "[hex_code]", "Show/set debugging bit vector for libbu",
-	f_debugbu,1,2,TRUE,
-"debugdir", "", "Print in-memory directory, for debugging",
-	f_debugdir, 1, 1, TRUE,
-"debuglib", "[hex_code]", "Show/set debugging bit vector for librt",
-	f_debuglib,1,2,TRUE,
-"debugmem", "", "Print librt memory use map",
-	f_debugmem, 1, 1, TRUE,
-"debugnmg", "[hex code]", "Show/set debugging bit vector for NMG",
-	f_debugnmg,1,2,TRUE,
-"decompose", "nmg_solid [prefix]", "decompose nmg_solid into maximally connected shells",
-	f_decompose, 2, 3, TRUE,
-"delay", "sec usec", "Delay for the specified amount of time",
-	f_delay,3,3,TRUE,
-"dm", "set var [val]", "Do display-manager specific command",
-	f_dm, 2, MAXARGS, TRUE,
-"draw", "<objects>", "draw objects",
-	f_edit,2,MAXARGS,TRUE,
-"dup", "file [prefix]", "check for dup names in 'file'",
-	f_dup, 2, 3, TRUE,
-"E", " [-s] <objects>", "evaluated edit of objects. Option 's' provides a slower, but better fidelity evaluation",
-	f_evedit,2,MAXARGS,TRUE,
-"e", "<objects>", "edit objects",
-	f_edit,2,MAXARGS,TRUE,
-"eac", "Air_code(s)", "display all regions with given air code",
-	f_eac, 2, MAXARGS,TRUE,
-"echo", "[text]", "echo arguments back",
-	cmd_echo, 1, MAXARGS, TRUE,
-"edcodes", "object(s)", "edit region ident codes",
-	f_edcodes, 2, MAXARGS, TRUE,
-"edmater", "comb(s)", "edit combination materials",
-	f_edmater, 2, MAXARGS, TRUE,
-"edcolor", "", "text edit color table",
-	f_edcolor, 1, 1, TRUE,
-"edcomb", "combname Regionflag regionid air los [GIFTmater]", "edit combination record info",
-	f_edcomb,6,7,TRUE,
-"edgedir", "[delta_x delta_y delta_z]|[rot fb]", "define direction of ARB edge being moved",
-	f_edgedir, 3, 4, TRUE,
-"erase", "<objects>", "remove objects from the screen",
-	f_erase,2,MAXARGS,TRUE,
-"erase_all", "<objects>", "remove all occurrences of object(s) from the screen",
-	f_erase_all,2,MAXARGS,TRUE,
-"ev",	"[-dnqstuvwT] [-P #] <objects>", "evaluate objects via NMG tessellation",
-	f_ev, 2, MAXARGS, TRUE,
-"eqn", "A B C", "planar equation coefficients",
-	f_eqn, 4, 4, TRUE,
-"exit", "", "exit",
-	f_quit,1,1,TRUE,
-"extrude", "#### distance", "extrude dist from face",
-	f_extrude,3,3,TRUE,
-"expand", "wildcard expression", "expands wildcard expression",
-        cmd_expand, 1, MAXARGS, TRUE,
-"eye_pt", "mx my mz", "set eye point to given model coordinates (in mm)",
-	f_eye_pt, 4, 4, TRUE,
-"facedef", "####", "define new face for an arb",
-	f_facedef, 2, MAXARGS, TRUE,
-"facetize", "[-tT] [-P#] new_obj old_obj(s)", "convert objects to faceted NMG objects at current tol",
-	f_facetize, 3, MAXARGS, TRUE,
-"find", "<objects>", "find all references to objects",
-	f_find, 1, MAXARGS, TRUE,
-"fix", "", "fix display after hardware error",
-	f_fix,1,1,TRUE,
-"fracture", "NMGsolid [prefix]", "fracture an NMG solid into many NMG solids, each containing one face\n",
-	f_fracture, 2, 3, TRUE,
-"g", "groupname <objects>", "group objects",
-	f_group,3,MAXARGS,TRUE,
-"getknob", "knobname", "Gets the current setting of the given knob",
-        cmd_getknob, 2, 2, TRUE,
-"output_hook", "output_hook_name",
-       "All output is sent to the Tcl procedure \"output_hook_name\"",
-	cmd_output_hook, 1, 2, TRUE,
+struct cmdtab {
+  char *ct_name;
+  int (*ct_func)();
+};
+
+static struct cmdtab cmdtab[] = {
+"%", f_comm,
+"3ptarb", f_3ptarb,
+"adc", f_adc,
+"ae", f_aetview,
+"aim", f_aim,
+"aip", f_aip,
+"analyze", f_analyze,
+"arb", f_arbdef,
+"arced", f_arced,
+"area", f_area,
+"attach", f_attach,
+"B", f_blast,
+"bev", f_bev,
+"c", f_comb_std,
+"cat", f_cat,
+"center", f_center,
+"color", f_color,
+"comb", f_comb,
+"comb_color", f_comb_color,
+"copyeval", f_copyeval,
+"copymat", f_copymat,
+"cp", f_copy,
+"cpi", f_copy_inv,
+"d", f_erase,
+"dall", f_erase_all,
+"db", cmd_db,
+"dbconcat", f_concat,
+"debugbu", f_debugbu,
+"debugdir", f_debugdir,
+"debuglib", f_debuglib,
+"debugmem", f_debugmem,
+"debugnmg", f_debugnmg,
+"decompose", f_decompose,
+"delay", f_delay,
+"dm", f_dm,
+"draw", f_edit,
+"dup", f_dup,
+"E", f_evedit,
+"e", f_edit,
+"eac", f_eac,
+"echo", cmd_echo,
+"edcodes", f_edcodes,
+"edmater", f_edmater,
+"edcolor", f_edcolor,
+"edcomb", f_edcomb,
+"edgedir", f_edgedir,
+"erase", f_erase,
+"erase_all", f_erase_all,
+"ev", f_ev,
+"eqn", f_eqn,
+"exit", f_quit,
+"extrude", f_extrude,
+"expand", cmd_expand,
+"eye_pt", f_eye_pt,
+"facedef", f_facedef,
+"facetize", f_facetize,
+"find", f_find,
+"fix", f_fix,
+"fracture", f_fracture,
+"g", f_group,
+"getknob", cmd_getknob,
+"output_hook", cmd_output_hook,
 #ifdef HIDELINE
-"H", "plotfile [step_size %epsilon]", "produce hidden-line unix-plot",
-	f_hideline,2,4,TRUE,
+"H", f_hideline,
 #endif
-"help", "[commands]", "give usage message for given commands",
-	f_help,0,MAXARGS,TRUE,
-"history", "[-delays]", "list command history",
-	f_history, 1, 4,TRUE,
-"hist_prev", "", "Returns previous command in history",
-        cmd_prev, 1, 1, TRUE,
-"hist_next", "", "Returns next command in history",
-        cmd_next, 1, 1, TRUE,
-"hist_add", "[command]", "Adds command to the history (without executing it)",
-        cmd_hist_add, 1, 2, TRUE,
-"i", "obj combination [operation]", "add instance of obj to comb",
-	f_instance,3,4,TRUE,
-"idents", "file object(s)", "make ascii summary of region idents",
-	f_tables, 3, MAXARGS, TRUE,
-"ill", "name", "illuminate object",
-	f_ill,2,2,TRUE,
-"in", "[-f] [-s] parameters...", "keyboard entry of solids.  -f for no drawing, -s to enter solid edit",
-	f_in, 1, MAXARGS, TRUE,
-"inside", "", "finds inside solid per specified thicknesses",
-	f_inside, 1, MAXARGS, TRUE,
-"item", "region item [air [GIFTmater [los]]]", "set region ident codes",
-	f_itemair,3,6,TRUE,
-"joint", "command [options]", "articulation/animation commands",
-	f_joint, 1, MAXARGS, TRUE,
-"journal", "[-d] fileName", "record all commands and timings to journal",
-	f_journal, 1, 3, TRUE,
-"keep", "keep_file object(s)", "save named objects in specified file",
-	f_keep, 3, MAXARGS, TRUE,
-"keypoint", "[x y z | reset]", "set/see center of editing transformations",
-	f_keypoint,1,4, TRUE,
-"kill", "[-f] <objects>", "delete object[s] from file",
-	f_kill,2,MAXARGS,TRUE,
-"killall", "<objects>", "kill object[s] and all references",
-	f_killall, 2, MAXARGS,TRUE,
-"killtree", "<object>", "kill complete tree[s] - BE CAREFUL",
-	f_killtree, 2, MAXARGS, TRUE,
-"knob", "[-e -i -v] [id [val]]", "emulate knob twist",
-	f_knob,1,MAXARGS, TRUE,
-"l", "<objects>", "list attributes (verbose)",
-	cmd_list,2,MAXARGS, TRUE,
-"L",  "1|0 xpos ypos", "handle a left mouse event",
-	cmd_left_mouse, 4,4, TRUE,
-"labelvert", "object[s]", "label vertices of wireframes of objects",
-	f_labelvert, 2, MAXARGS, TRUE,
-"listeval", "", "lists 'evaluated' path solids",
-	f_pathsum, 1, MAXARGS, TRUE,
-"load_dv", "", "Initializes the view matrices",
-        f_load_dv, 1, 1, TRUE,
-"loadtk", "[DISPLAY]", "Initializes Tk window library",
-        cmd_tk, 1, 2, TRUE,
-"lookat", "x y z", "Adjust view to look at given coordinates",
-	f_lookat, 4,4,TRUE,
-"ls", "", "table of contents",
-	dir_print,1,MAXARGS, TRUE,
-"M", "1|0 xpos ypos", "handle a middle mouse event",
-	f_mouse, 4,4, TRUE,
-"make", "name <arb8|sph|ellg|tor|tgc|rpc|rhc|epa|ehy|eto|part|grip|half|nmg|pipe>", "create a primitive",
-	f_make,3,3,TRUE,
-"make_bb", "new_rpp_name obj1_or_path1 [list of objects or paths ...]", "make a bounding box solid enclosing specified objects/paths",
-	f_make_bb, 3, MAXARGS, TRUE,
-"mater", "comb [material]", "assign/delete material to combination",
-	f_mater,2,8,TRUE,
-"matpick", "# or a/b", "select arc which has matrix to be edited, in O_PATH state",
-	f_matpick, 2,2,TRUE,
-"memprint", "", "print memory maps",
-	f_memprint, 1, 1,TRUE,
-"mirface", "#### axis", "mirror an ARB face",
-	f_mirface,3,3,TRUE,
-"mirror", "old new axis", "mirror solid or combination around axis",
-	f_mirror,4,4,TRUE,
-"model2view", "mx my mz", "convert point in model coords (mm) to view coords",
-	f_model2view, 4, 4, TRUE,
-"mv", "old new", "rename object",
-	f_name,3,3,TRUE,
-"mvall", "oldname newname", "rename object everywhere",
-	f_mvall, 3, 3,TRUE,
-"nirt", "", "trace a single ray from current view",
-	f_nirt,1,MAXARGS,TRUE,
-"nmg_simplify", "[arb|tgc|ell|poly] new_solid nmg_solid", "simplify nmg_solid, if possible",
-	f_nmg_simplify, 3,4,TRUE,
-"oed", "path_lhs path_rhs", "Go from view to object_edit of path_lhs/path_rhs",
-	cmd_oed, 3, 3, TRUE,
-"opendb", "database.g", "Close current .g file, and open new .g file",
-	f_opendb, 2, 3, TRUE,
-"orientation", "x y z w", "Set view direction from quaternion",
-	f_orientation, 5, 5,TRUE,
-"orot", "[-i] xdeg ydeg zdeg", "rotate object being edited",
-	f_rot_obj, 4, 5,TRUE,
-"oscale", "factor", "scale object by factor",
-	f_sc_obj,2,2,TRUE,
-"overlay", "file.plot [name]", "Read UNIX-Plot as named overlay",
-	f_overlay, 2, 3,TRUE,
-"p", "dx [dy dz]", "set parameters",
-	f_param,2,4,TRUE,
-"paths", "pattern", "lists all paths matching input path",
-	f_pathsum, 1, MAXARGS,TRUE,
-"pathlist", "name(s)", "list all paths from name(s) to leaves",
-	cmd_pathlist, 1, MAXARGS,TRUE,
-"permute", "tuple", "permute vertices of an ARB",
-	f_permute,2,2,TRUE,
-"plot", "[-float] [-zclip] [-2d] [-grid] [out_file] [|filter]", "make UNIX-plot of view",
-	f_plot, 2, MAXARGS,TRUE,
-"pl", "[-float] [-zclip] [-2d] [-grid] [out_file] [|filter]", "Experimental - uses dm-plot:make UNIX-plot of view",
-	f_pl, 2, MAXARGS,TRUE,
-"polybinout", "file", "store vlist polygons into polygon file (experimental)",
-	f_polybinout, 2, 2,TRUE,
-"pov", "args", "experimental:  set point-of-view",
-	f_pov, 3+4+1, MAXARGS,TRUE,
-"prcolor", "", "print color&material table",
-	f_prcolor, 1, 1,TRUE,
-"prefix", "new_prefix object(s)", "prefix each occurrence of object name(s)",
-	f_prefix, 3, MAXARGS,TRUE,
-"preview", "[-v] [-d sec_delay] rt_script_file", "preview new style RT animation script",
-	f_preview, 2, MAXARGS,TRUE,
-"press", "button_label", "emulate button press",
-	f_press,2,MAXARGS,TRUE,
-"ps", "[-f font] [-t title] [-c creator] [-s size in inches] [-l linewidth] file", "creates a postscript file of the current view",
-        f_ps, 2, MAXARGS,TRUE,
-"push", "object[s]", "pushes object's path transformations to solids",
-	f_push, 2, MAXARGS,TRUE,
-"putmat", "a/b {I | m0 m1 ... m16}", "replace matrix on combination's arc",
-	f_putmat, 3,MAXARGS,TRUE,
-"q", "", "quit",
-	f_quit,1,1,TRUE,
-"quit", "", "quit",
-	f_quit,1,1,TRUE,
-"qorot", "x y z dx dy dz theta", "rotate object being edited about specified vector",
-	f_qorot, 8, 8,TRUE,
-"qvrot", "dx dy dz theta", "set view from direction vector and twist angle",
-	f_qvrot, 5, 5,TRUE,
-"r", "region <operation solid>", "create or extend a Region combination",
-	f_region,4,MAXARGS,TRUE,
-"R",  "1|0 xpos ypos", "handle a right mouse event",
-	cmd_right_mouse, 4,4, TRUE,
-"rcodes", "filename", "read region ident codes from filename",
-        f_rcodes, 2, 2, TRUE,
-"red", "object", "edit a group or region using a text editor",
-	f_red, 2, 2,TRUE,
-"refresh", "", "send new control list",
-	f_refresh, 1,1,TRUE,
-"regdebug", "", "toggle register print",
-	f_regdebug, 1,2,TRUE,
-"regdef", "item [air [los [GIFTmaterial]]]", "change next region default codes",
-	f_regdef, 2, 5,TRUE,
-"regions", "file object(s)", "make ascii summary of regions",
-	f_tables, 3, MAXARGS,TRUE,
-"release", "[name]", "release display processor",
-	f_release,1,2,TRUE,
-"rfarb", "", "makes arb given point, 2 coord of 3 pts, rot, fb, thickness",
-	f_rfarb, 1, 27,TRUE,
-"rm", "comb <members>", "remove members from comb",
-	f_rm,3,MAXARGS,TRUE,
-"rmater", "filename", "read combination materials from filename",
-        f_rmater, 2, 2, TRUE,
-"rmats", "file", "load view(s) from 'savekey' file",
-	f_rmats,2,MAXARGS,TRUE,
-"rotobj", "[-i] xdeg ydeg zdeg", "rotate object being edited",
-	f_rot_obj, 4, 5,TRUE,
-"rrt", "prog [options]", "invoke prog with view",
-	f_rrt,2,MAXARGS,TRUE,
-"rt", "[options]", "do raytrace of view",
-	f_rt,1,MAXARGS,TRUE,
-"rtcheck", "[options]", "check for overlaps in current view",
-	f_rtcheck,1,MAXARGS,TRUE,
+"history", f_history,
+"hist_prev", cmd_prev,
+"hist_next", cmd_next,
+"hist_add", cmd_hist_add,
+"i", f_instance,
+"idents", f_tables,
+"ill", f_ill,
+"in", f_in,
+"inside", f_inside,
+"item", f_itemair,
+"joint", f_joint,
+"journal", f_journal,
+"keep", f_keep,
+"keypoint", f_keypoint,
+"kill", f_kill,
+"killall", f_killall,
+"killtree", f_killtree,
+"knob", f_knob,
+"l", cmd_list,
+"L", cmd_left_mouse,
+"labelvert", f_labelvert,
+"listeval", f_pathsum,
+"load_dv", f_load_dv,
+"loadtk", cmd_tk,
+"lookat", f_lookat,
+"ls", dir_print,
+"M", f_mouse,
+"make", f_make,
+"make_bb", f_make_bb,
+"mater", f_mater,
+"matpick", f_matpick,
+"memprint", f_memprint,
+"mirface", f_mirface,
+"mirror", f_mirror,
+"model2view", f_model2view,
+"mv", f_name,
+"mvall", f_mvall,
+"nirt", f_nirt,
+"nmg_simplify", f_nmg_simplify,
+"oed", cmd_oed,
+"opendb", f_opendb,
+"orientation", f_orientation,
+"orot", f_rot_obj,
+"oscale", f_sc_obj,
+"overlay", f_overlay,
+"p", f_param,
+"paths", f_pathsum,
+"pathlist", cmd_pathlist,
+"permute", f_permute,
+"plot", f_plot,
+"pl", f_pl,
+"polybinout", f_polybinout,
+"pov", f_pov,
+"prcolor", f_prcolor,
+"prefix", f_prefix,
+"preview", f_preview,
+"press", f_press,
+"ps", f_ps,
+"push", f_push,
+"putmat", f_putmat,
+"q", f_quit,
+"quit", f_quit,
+"qorot", f_qorot,
+"qvrot", f_qvrot,
+"r", f_region,
+"R", cmd_right_mouse,
+"rcodes", f_rcodes,
+"red", f_red,
+"refresh", f_refresh,
+"regdebug", f_regdebug,
+"regdef", f_regdef,
+"regions", f_tables,
+"release", f_release,
+"rfarb", f_rfarb,
+"rm", f_rm,
+"rmater", f_rmater,
+"rmats", f_rmats,
+"rotobj", f_rot_obj,
+"rrt", f_rrt,
+"rt", f_rt,
+"rtcheck", f_rtcheck,
 #if 0
-"savedit", "", "save current edit and remain in edit state",
-	f_savedit, 1, 1,FALSE,
+"savedit", f_savedit,
 #endif
-"savekey", "file [time]", "save keyframe in file (experimental)",
-	f_savekey,2,MAXARGS,TRUE,
-"saveview", "file [args]", "save view in file for RT",
-	f_saveview,2,MAXARGS,TRUE,
-"showmats", "path", "show xform matrices along path",
-	f_showmats,2,2,TRUE,
-"sed", "<path>", "solid-edit named solid",
-	f_sed,2,2,TRUE,
-"setview", "x y z", "set the view given angles x, y, and z in degrees",
-        f_setview,4,4,TRUE,
-"shells", "nmg_model", "breaks model into seperate shells",
-	f_shells, 2,2,TRUE,
-"shader", "comb material [arg(s)]", "assign materials (like 'mater')",
-	f_shader, 3,MAXARGS,TRUE,
-"size", "size", "set view size",
-	f_view, 2,2,TRUE,
-#if 0
-"slider", "slider number, value", "adjust sliders using keyboard",
-	f_slider, 3,3,FALSE,
-#endif
-#if 1
-"sliders", "[{on|off}]", "turns the sliders on or off, or reads current state",
-        cmd_sliders, 1, 2, TRUE,
-#else
-"sliders", "[{on|off}]", "turns the sliders on or off, or reads current state",
-        cmd_sliders, 1, 2, TRUE,
-#endif
-"solids", "file object(s)", "make ascii summary of solid parameters",
-	f_tables, 3, MAXARGS,TRUE,
-"solids_on_ray", "h v", "List all displayed solids along a ray",
-        cmd_solids_on_ray, 1, 3, TRUE,
-"status", "", "get view status",
-	f_status, 1,1,TRUE,
-"summary", "[s r g]", "count/list solid/reg/groups",
-	f_summary,1,2,TRUE,
-"sv", "x y [z]", "Move view center to (x, y, z)",
-	f_slewview, 3, 4,TRUE,
-"svb", "", "set view reference base",
-        f_svbase, 1, 1, TRUE,
-"sync",	"",	"forces UNIX sync",
-	f_sync, 1, 1,TRUE,
-"t", "", "table of contents",
-	dir_print,1,MAXARGS,TRUE,
-#if 0
-"tab", "object[s]", "tabulates objects as stored in database",
-	f_tabobj, 2, MAXARGS,TRUE,
-#endif
-"ted", "", "text edit a solid's parameters",
-	f_tedit,1,1,TRUE,
-"tie", "pathName1 pathName2", "tie display manager pathName1 to display manager pathName2",
-        f_tie, 3,3,TRUE,
-"title", "string", "change the title",
-	f_title,1,MAXARGS,TRUE,
-"tol", "[abs #] [rel #] [norm #] [dist #] [perp #]", "show/set tessellation and calculation tolerances",
-	f_tol, 1, 11,TRUE,
-"tops", "", "find all top level objects",
-	f_tops,1,1,TRUE,
-"track", "<parameters>", "adds tracks to database",
-	f_amtrack, 1, 27,TRUE,
-"tran", "[-i] x y [z]", "absolute translate using view coordinates",
-        f_tran, 3, 5,TRUE,
-"translate", "x y z", "trans object to x,y, z",
-	f_tr_obj,4,4,TRUE,
-"tree",	"object(s)", "print out a tree of all members of an object",
-	f_tree, 2, MAXARGS,TRUE,
-"units", "[mm|cm|m|in|ft|...]", "change units",
-	f_units,1,2,TRUE,
-"untie", "pathName", "untie display manager pathName",
-        f_untie, 2,2,TRUE,
-"mged_update", "", "handle outstanding events and refresh",
-        f_update, 1,1,TRUE,
-"vars",	"[var=opt]", "assign/display mged variables",
-	f_set,1,2,TRUE,
-#if 1
-"vdraw", "write|insert|delete|read|length|show [args]", "Expermental drawing (cnuzman)",
-	cmd_vdraw, 2, 7, TRUE,
-"viewget", "center|size|eye|ypr|quat", "Experimental - return high-precision view parameters.",
-	cmd_viewget, 2, 2, TRUE,
-"viewset","center|eye|size|ypr|quat|aet","Experimental - set several view parameters at once.",
-	cmd_viewset, 3, MAXARGS, TRUE,
-#endif
-"view2model", "mx my mz", "convert point in view coords to model coords (mm)",
-	f_view2model, 4, 4, TRUE,
-"vrmgr", "host {master|slave|overview}", "link with Virtual Reality manager",
-	f_vrmgr, 3, MAXARGS,TRUE,
-"vrot", "xdeg ydeg zdeg", "rotate viewpoint",
-	f_vrot,4,4,TRUE,
-"vrot_center", "v|m x y z", "set center point of viewpoint rotation, in model or view coords",
-	f_vrot_center, 5, 5,TRUE,
-"wcodes", "filename object(s)", "write region ident codes to filename",
-        f_wcodes, 3, MAXARGS, TRUE,
-"whatid", "region_name", "display ident number for region",
-	f_whatid, 2, MAXARGS,TRUE,
-"whichair", "air_codes(s)", "lists all regions with given air code",
-	f_which_air, 2, MAXARGS,TRUE,
-"whichid", "ident(s)", "lists all regions with given ident code",
-	f_which_id, 2, MAXARGS,TRUE,
-"which_shader", "Shader(s)", "lists all combinations using the given shaders",
-	f_which_shader, 2, MAXARGS,TRUE,
-"who", "[r(eal)|p(hony)|b(oth)]", "list the top-level objects currently being displayed",
-	cmd_who,1,2,TRUE,
-"winset", "pathname", "sets the current display manager to pathname",
-        f_winset, 1, 2, TRUE,
-"wmater", "filename comb(s)", "write combination materials to filename",
-        f_wmater, 3, MAXARGS, TRUE,
-"x", "lvl", "print solid table & vector list",
-	f_debug, 1,2,TRUE,
-"xpush", "object", "Experimental Push Command",
-	f_xpush, 2,2,TRUE,
-"Z", "", "zap all objects off screen",
-	f_zap,1,1,TRUE,
-"zoom", "scale_factor", "zoom view in or out",
-	f_zoom, 2,2,TRUE,
-0, 0, 0,
-	0, 0, 0, 0
+"savekey", f_savekey,
+"saveview", f_saveview,
+"showmats", f_showmats,
+"sed", f_sed,
+"setview", f_setview,
+"shells", f_shells,
+"shader", f_shader,
+"size", f_view,
+"sliders", cmd_sliders,
+"solids", f_tables,
+"solids_on_ray", cmd_solids_on_ray,
+"status", f_status,
+"summary", f_summary,
+"sv", f_slewview,
+"svb", f_svbase,
+"sync", f_sync,
+"t", dir_print,
+"ted", f_tedit,
+"tie", f_tie,
+"title", f_title,
+"tol", f_tol,
+"tops", f_tops,
+"track", f_amtrack,
+"tran", f_tran,
+"translate", f_tr_obj,
+"tree", f_tree,
+"units", f_units,
+"untie", f_untie,
+"mged_update", f_update,
+"vars", f_set,
+"vdraw", cmd_vdraw,
+"viewget", cmd_viewget,
+"viewset", cmd_viewset,
+"view2model", f_view2model,
+"vrmgr", f_vrmgr,
+"vrot", f_vrot,
+"vrot_center", f_vrot_center,
+"wcodes", f_wcodes,
+"whatid", f_whatid,
+"whichair", f_which_air,
+"whichid", f_which_id,
+"which_shader", f_which_shader,
+"who", cmd_who,
+"winset", f_winset,
+"wmater", f_wmater,
+"x", f_debug,
+"xpush", f_xpush,
+"Z", f_zap,
+"zoom", f_zoom,
+0, 0
 };
 
 
@@ -614,7 +395,7 @@ Tcl_Interp *interp;		/* Interpreter for application. */
     return TCL_OK;
 }
 
-
+#if 0
 /*			C M D _ W R A P P E R
  *
  * Translates between MGED's "CMD_OK/BAD/MORE" result codes to ones that
@@ -690,6 +471,7 @@ char **argv;
     bu_vls_free(&result);
     return status;
 }
+#endif
 
 /*
  *                            G U I _ O U T P U T
@@ -742,8 +524,10 @@ char **argv;
 {
   int status;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 1 || 2 < argc){
+    Tcl_Eval(interp, "help loadtk");
     return TCL_ERROR;
+  }
 
   if(argc == 1)
     status = gui_setup((char *)NULL);
@@ -770,8 +554,10 @@ char **argv;
     struct bu_vls infocommand;
     int status;
 
-    if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    if(argc < 1 || 2 < argc){
+      Tcl_Eval(interp, "help output_hook");
       return TCL_ERROR;
+    }
 
     if (argc > 2) {
 	Tcl_AppendResult(interp,
@@ -953,42 +739,30 @@ mged_setup()
 void
 cmd_setup()
 {
-    register struct funtab *ftp;
+    register struct cmdtab *ctp;
     struct bu_vls temp;
 
     bu_vls_init(&temp);
 
-    for (ftp = funtab+1; ftp->ft_name != NULL; ftp++) {
+    for (ctp = cmdtab+1; ctp->ct_name != NULL; ctp++) {
 #if 0
 	bu_vls_strcpy(&temp, "info commands ");
-	bu_vls_strcat(&temp, ftp->ft_name);
+	bu_vls_strcat(&temp, ctp->ct_name);
 	if (Tcl_Eval(interp, bu_vls_addr(&temp)) != TCL_OK ||
 	    interp->result[0] != '\0') {
-	    bu_log("WARNING:  '%s' name collision (%s)\n", ftp->ft_name,
+	    bu_log("WARNING:  '%s' name collision (%s)\n", ctp->ct_name,
 		   interp->result);
 	}
 #endif
 	bu_vls_strcpy(&temp, "_mged_");
-	bu_vls_strcat(&temp, ftp->ft_name);
+	bu_vls_strcat(&temp, ctp->ct_name);
 	
-	if (ftp->tcl_converted) {
-	    (void)Tcl_CreateCommand(interp, ftp->ft_name, ftp->ft_func,
-				   (ClientData)ftp, (Tcl_CmdDeleteProc *)NULL);
-	    (void)Tcl_CreateCommand(interp, bu_vls_addr(&temp), ftp->ft_func,
-				   (ClientData)ftp, (Tcl_CmdDeleteProc *)NULL);
-	} else {
-#if 0
-	    (void)Tcl_CreateCommand(interp, ftp->ft_name, cmd_wrapper, 	    
-			           (ClientData)ftp, (Tcl_CmdDeleteProc *)NULL);
-	    (void)Tcl_CreateCommand(interp, bu_vls_addr(&temp), cmd_wrapper,
-				   (ClientData)ftp, (Tcl_CmdDeleteProc *)NULL);
-#else
-	    bu_log("cmd_setup: %s needs to be Tcl converted\n", ftp->ft_name);
-#endif
-	}
+	(void)Tcl_CreateCommand(interp, ctp->ct_name, ctp->ct_func,
+				(ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
+	(void)Tcl_CreateCommand(interp, bu_vls_addr(&temp), ctp->ct_func,
+				(ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
     }
 
-#if 1
     (void)Tcl_CreateCommand(interp, "mged_glob", cmd_mged_glob, (ClientData)NULL,
 			    (Tcl_CmdDeleteProc *)NULL);
     (void)Tcl_CreateCommand(interp, "cmd_init", cmd_init, (ClientData)NULL,
@@ -1003,31 +777,19 @@ cmd_setup()
 			    (Tcl_CmdDeleteProc *)NULL);
     (void)Tcl_CreateCommand(interp, "stuff_str", cmd_stuff_str, (ClientData)NULL,
 			    (Tcl_CmdDeleteProc *)NULL);
-#endif
-
-#if 0
-    /* Link to some internal variables */
-    Tcl_LinkVar(interp, "mged_center_x", (char *)&toViewcenter[MDX],
-		TCL_LINK_DOUBLE);
-    Tcl_LinkVar(interp, "mged_center_y", (char *)&toViewcenter[MDY],
-		TCL_LINK_DOUBLE);
-    Tcl_LinkVar(interp, "mged_center_z", (char *)&toViewcenter[MDZ],
-		TCL_LINK_DOUBLE);
-
-#endif
 
     Tcl_LinkVar(interp, "glob_compat_mode", (char *)&glob_compat_mode,
 		TCL_LINK_BOOLEAN);
     Tcl_LinkVar(interp, "output_as_return", (char *)&output_as_return,
 		TCL_LINK_BOOLEAN);
 
-	/* Provide Tcl interfaces to the fundamental BRL-CAD libraries */
-	bn_tcl_setup(interp);
-	rt_tcl_setup(interp);
+    /* Provide Tcl interfaces to the fundamental BRL-CAD libraries */
+    bn_tcl_setup(interp);
+    rt_tcl_setup(interp);
 
-	Tcl_LinkVar(interp, "dbip", (char *)&dbip, TCL_LINK_INT|TCL_LINK_READ_ONLY);
-	/* XXX Change from .db to "db" & eliminate mged-specific "db" command */
-	(void)Tcl_Eval(interp, "set wdbp [wdb_open .db disk $dbip]" );
+    Tcl_LinkVar(interp, "dbip", (char *)&dbip, TCL_LINK_INT|TCL_LINK_READ_ONLY);
+    /* XXX Change from .db to "db" & eliminate mged-specific "db" command */
+    (void)Tcl_Eval(interp, "set wdbp [wdb_open .db disk $dbip]" );
 
     bu_vls_free(&temp);
     tkwin = NULL;
@@ -1577,7 +1339,10 @@ struct funtab in_functions[];
 
     /* if no function table is provided, use the default mged function table */
     if( in_functions == (struct funtab *)NULL )
-	functions = funtab;
+      {
+	bu_log("mged_cmd: failed to supply function table!\n");
+	return CMD_BAD;
+      }
     else
 	functions = in_functions;
 
@@ -1617,89 +1382,6 @@ struct funtab in_functions[];
     return CMD_BAD;
 }
 
-int
-mged_cmd_arg_check(argc, argv, in_functions)
-int argc;
-char **argv;
-struct funtab in_functions[];
-{
-    register struct funtab *ftp;
-    struct funtab *functions;
-    char *cp;
-
-    if(argc == 0)
-      return 0; /* Good */
-
-    /* if no function table is provided, use the default mged function table */
-    if( in_functions == (struct funtab *)NULL )
-	functions = funtab;
-    else
-    	functions = in_functions;
-
-    if((cp = strstr(argv[0], "_mged_")) == argv[0])
-      cp = cp + 6;
-    else
-      cp = argv[0];
-
-    for (ftp = &functions[1]; ftp->ft_name; ftp++) {
-	if (strcmp(ftp->ft_name, cp) != 0)
-	    continue;
-
-	/* We have a match */
-	if ((ftp->ft_min <= argc) && (argc <= ftp->ft_max))
-	  return 0;  /* Good */
-
-	Tcl_AppendResult(interp, "Usage: ", functions[0].ft_name, ftp->ft_name,
-			 " ", ftp->ft_parms, "\n\t(", ftp->ft_comment,
-			 ")\n", (char *)NULL);
-
-	return 1;    /* Bad */
-    }
-
-    return 0; /* Good */
-}
-
-
-
-/*
- *               C M D _ A P R O P O S
- *
- * Returns a list of commands whose descriptions contain the given keyword
- * contained in argv[1].  This version is case-sensitive.
- */
-
-int
-cmd_apropos(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
-{
-    register struct funtab *ftp;
-    char *keyword;
-
-    if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-      return TCL_ERROR;
-
-    if( argc < 2 )  {
-      Tcl_AppendResult(interp, "apropos: insufficient args", (char *)NULL);
-      return TCL_ERROR;
-    }
-
-    keyword = argv[1];
-    if (keyword == NULL)
-	keyword = "";
-    
-    for (ftp = funtab+1; ftp->ft_name != NULL; ftp++)
-	if (strstr(ftp->ft_name, keyword) != NULL ||
-	    strstr(ftp->ft_parms, keyword) != NULL ||
-	    strstr(ftp->ft_comment, keyword) != NULL)
-	    Tcl_AppendElement(interp, ftp->ft_name);
-	
-    return TCL_OK;
-}
-
-
 /* Let the user temporarily escape from the editor */
 /* Format: %	*/
 
@@ -1714,8 +1396,10 @@ char	**argv;
 	register int pid, rpid;
 	int retcode;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 0 || MAXARGS < argc){
+	  Tcl_Eval(interp, "help ?");
 	  return TCL_ERROR;
+	}
 
 	(void)signal( SIGINT, SIG_IGN );
 	if ( ( pid = fork()) == 0 )  {
@@ -1728,9 +1412,6 @@ char	**argv;
 	while ((rpid = wait(&retcode)) != pid && rpid != -1)
 		;
 
-#if 0
-	(void)signal(SIGINT, cur_sigint);
-#endif
 	Tcl_AppendResult(interp, "!\n", (char *)NULL);
 
 	return TCL_OK;
@@ -1746,8 +1427,15 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 1 || 1 < argc){
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help %s", argv[0]);
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
+  }
 
   if( state != ST_VIEW )
     button( BE_REJECT );
@@ -1767,8 +1455,10 @@ char **argv;
 {
     register int i;
 
-    if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    if(argc < 1 || 1 < argc){
+      Tcl_Eval(interp, "help sync");
       return TCL_ERROR;
+    }
 
     sync();
     
@@ -1819,27 +1509,6 @@ struct funtab *functions;
  *  Print a help message, two lines for each command.
  *  Or, help with the indicated commands.
  */
-int f_help2();
-
-int
-f_help(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
-{
-#if 0
-	/* There needs to be a better way to trigger this */
-	if( argc <= 1 )  {
-		/* User typed just "help" */
-		system("Mosaic http://ftp.arl.mil/ftp/brl-cad/html/mged &");
-	}
-#endif
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-	  return TCL_ERROR;
-
-	return f_help2(argc, argv, &funtab[0]);
-}
 
 int
 f_help2(argc, argv, functions)
@@ -1858,33 +1527,6 @@ struct funtab *functions;
 	  return TCL_OK;
 	}
 	return helpcomm( argc, argv, functions );
-}
-
-/*
- *			F _ F H E L P
- *
- *  Print a fast help message;  just tabulate the commands available.
- */
-int
-cmd_fhelp( clientData, interp, argc, argv )
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
-{
-	register struct funtab *ftp;
-	struct bu_vls		str;
-
-	bu_vls_init(&str);
-	for( ftp = &funtab[1]; ftp->ft_name; ftp++ )  {
-		vls_col_item( &str, ftp->ft_name);
-	}
-	vls_col_eol( &str );
-
-	Tcl_AppendResult(interp, bu_vls_addr( &str), (char *)NULL);
-
-	bu_vls_free(&str);
-	return TCL_OK;
 }
 
 int
@@ -1921,8 +1563,10 @@ char	**argv;
 {
   register int i;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 2 || MAXARGS < argc){
+    Tcl_Eval(interp, "help press");
     return TCL_ERROR;
+  }
 
   for( i = 1; i < argc; i++ )
     press( argv[i] );
@@ -1941,8 +1585,10 @@ char	**argv;
 	int flags = 0;
 	int bad;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 1 || 2 < argc){
+	  Tcl_Eval(interp, "help summary");
 	  return TCL_ERROR;
+	}
 
 	bad = 0;
 	if( argc <= 1 )  {
@@ -1986,8 +1632,10 @@ char	*argv[];
 {
     register int i;
 
-    if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    if(argc < 1 || MAXARGS < argc){
+      Tcl_Eval(interp, "help echo");
       return TCL_ERROR;
+    }
 
     for( i=1; i < argc; i++ )  {
       Tcl_AppendResult(interp, i==1 ? "" : " ", argv[i], (char *)NULL);
@@ -2050,8 +1698,10 @@ char *argv[];
   struct dm_list *save_cdlp;
   struct bu_vls vls2;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-        return TCL_ERROR;
+  if(argc < 1 || 3 < argc){
+    Tcl_Eval(interp, "help aim");
+    return TCL_ERROR;
+  }
 
   if(argc == 1){
     for( BU_LIST_FOR(clp, cmd_list, &head_cmd_list.l) )
@@ -2157,8 +1807,10 @@ char *argv[];
   struct dm_list *dml;
   struct shared_info *sip;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 2 || MAXARGS < argc){
+    Tcl_Eval(interp, "help ps");
     return TCL_ERROR;
+  }
 
   dml = curr_dm_list;
   av = (char **)bu_malloc(sizeof(char *) * (argc + 2), "f_ps: av");
@@ -2208,8 +1860,10 @@ char *argv[];
   struct dm_list *dml;
   struct shared_info *sip;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 2 || MAXARGS < argc){
+    Tcl_Eval(interp, "help pl");
     return TCL_ERROR;
+  }
 
   dml = curr_dm_list;
   av = (char **)bu_malloc(sizeof(char *) * (argc + 2), "f_pl: av");
@@ -2249,8 +1903,10 @@ Tcl_Interp *interp;
 int     argc;
 char    **argv;
 {
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 1 || 1 < argc){
+    Tcl_Eval(interp, "help mged_update");
     return TCL_ERROR;
+  }
 
   event_check(1);  /* non-blocking */
 
@@ -2271,8 +1927,10 @@ char    **argv;
 {
   register struct dm_list *p;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 1 || 2 < argc){
+    Tcl_Eval(interp, "help winset");
     return TCL_ERROR;
+  }
 
   /* print pathname of drawing window with primary focus */
   if( argc == 1 ){

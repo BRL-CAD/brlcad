@@ -65,8 +65,10 @@ char **argv;
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 2 || 2 < argc){
+	  Tcl_Eval(interp, "help red");
 	  return TCL_ERROR;
+	}
 
 	dp = db_lookup( dbip , argv[1] , LOOKUP_QUIET );
 

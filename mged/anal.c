@@ -73,8 +73,10 @@ char	*argv[];
 	struct bu_vls		v;
 	struct rt_db_internal	intern;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 1 || MAXARGS < argc){
+	  Tcl_Eval(interp, "help analyze");
 	  return TCL_ERROR;
+	}
 
 	bu_vls_init(&v);
 

@@ -133,8 +133,10 @@ char **argv;
 {
   struct dm_list *p;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 1 || 2 < argc){
+    Tcl_Eval(interp, "help sliders");
     return TCL_ERROR;
+  }
 
   if (argc == 1) {
     Tcl_AppendResult(interp, mged_variables.scroll_enabled ? "1" : "0", (char *)NULL);

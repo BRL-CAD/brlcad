@@ -151,8 +151,15 @@ char    **argv;
   register struct directory *dp;
   register int i;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 2 || MAXARGS < argc){
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help %s", argv[0]);
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
+  }
 
   for( i = 1; i < argc; i++ )  {
     if( (dp = db_lookup( dbip,  argv[i], LOOKUP_NOISY )) != DIR_NULL )
@@ -172,8 +179,15 @@ char    **argv;
   register struct directory *dp;
   register int i;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 2 || MAXARGS < argc){
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help %s", argv[0]);
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
+  }
 
   for( i = 1; i < argc; i++ )  {
     if( (dp = db_lookup( dbip,  argv[i], LOOKUP_NOISY )) != DIR_NULL )
@@ -193,8 +207,10 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 4 || 4 < argc){
+    Tcl_Eval(interp, "help center");
     return TCL_ERROR;
+  }
 
   /* must convert from the local unit to the base unit */
   toViewcenter[MDX] = -atof( argv[1] ) * local2base;
@@ -281,8 +297,10 @@ char	**argv;
   int status;
   struct bu_vls vls;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 4 || 4 < argc){
+    Tcl_Eval(interp, "help vrot");
     return TCL_ERROR;
+  }
 
   status = mged_vrot(atof(argv[1]), atof(argv[2]), atof(argv[3]));
 
@@ -300,8 +318,10 @@ char	**argv;
 {
 	fastf_t f;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 2 || 2 < argc){
+	  Tcl_Eval(interp, "help size");
 	  return TCL_ERROR;
+	}
 
 	f = atof( argv[1] );
 	if( f < 0.0001 ) f = 0.0001;
@@ -325,8 +345,10 @@ char	**argv;
   av[0] = "Z";
   av[1] = (char *)NULL;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 2 || MAXARGS < argc){
+    Tcl_Eval(interp, "help B");
     return TCL_ERROR;
+  }
 
   if (f_zap(clientData, interp, 1, av) == TCL_ERROR)
     return TCL_ERROR;
@@ -353,8 +375,15 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 2 || MAXARGS < argc){
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help %s", argv[0]);
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
+  }
 
   update_views = 1;
 
@@ -369,8 +398,10 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 2 || MAXARGS < argc){
+    Tcl_Eval(interp, "help ev");
     return TCL_ERROR;
+  }
 
   update_views = 1;
 
@@ -396,8 +427,10 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 2 || MAXARGS < argc){
+    Tcl_Eval(interp, "help E");
     return TCL_ERROR;
+  }
 
   update_views = 1;
 
@@ -560,8 +593,10 @@ char	**argv;
   int	lvl = 0;
   struct bu_vls vls;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 1 || 2 < argc){
+    Tcl_Eval(interp, "help x");
     return TCL_ERROR;
+  }
 
   if( argc > 1 )  lvl = atoi(argv[1]);
 
@@ -590,8 +625,10 @@ char	**argv;
 {
 	static int regdebug = 0;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 1 || 2 < argc){
+	  Tcl_Eval(interp, "help regdebug");
 	  return TCL_ERROR;
+	}
 
 	if( argc == 1 )
 		regdebug = !regdebug;	/* toggle */
@@ -619,8 +656,10 @@ char	**argv;
 {
   struct bu_vls vls;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 1 || 2 < argc){
+    Tcl_Eval(interp, "help debugbu");
     return TCL_ERROR;
+  }
 
   bu_vls_init(&vls);
   start_catching_output(&vls);
@@ -655,8 +694,10 @@ char	**argv;
 {
   struct bu_vls vls;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 1 || 2 < argc){
+    Tcl_Eval(interp, "help debuglib");
     return TCL_ERROR;
+  }
 
   bu_vls_init(&vls);
   start_catching_output(&vls);
@@ -691,8 +732,10 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 1 || 1 < argc){
+    Tcl_Eval(interp, "help debugmem");
     return TCL_ERROR;
+  }
 
   if( setjmp( jmp_env ) == 0 )
     (void)signal( SIGINT, sig3 );	/* allow interupts */
@@ -718,6 +761,11 @@ int	argc;
 char	**argv;
 {
   struct bu_vls vls;
+
+  if(argc < 1 || 2 < argc){
+    Tcl_Eval(interp, "help debugnmg");
+    return TCL_ERROR;
+  }
 
   bu_vls_init(&vls);
   start_catching_output(&vls);
@@ -781,8 +829,10 @@ char	**argv;
   register int arg;
   struct bu_vls str;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 2 || MAXARGS < argc){
+    Tcl_Eval(interp, "help l");
     return TCL_ERROR;
+  }
 
   bu_vls_init( &str );
 
@@ -820,8 +870,10 @@ char	**argv;
   register int arg;
   struct bu_vls str;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 2 || MAXARGS < argc){
+    Tcl_Eval(interp, "help cat");
     return TCL_ERROR;
+  }
 
   bu_vls_init( &str );
 
@@ -885,8 +937,10 @@ char	**argv;
 	register struct solid *nsp;
 	struct directory	*dp;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 1 || 1 < argc){
+	  Tcl_Eval(interp, "help Z");
 	  return TCL_ERROR;
+	}
 
 	update_views = 1;
 	no_memory = 0;
@@ -929,8 +983,10 @@ char	**argv;
 {
   struct bu_vls vls;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 1 || 1 < argc){
+    Tcl_Eval(interp, "help status");
     return TCL_ERROR;
+  }
 
   bu_vls_init(&vls);
   start_catching_output(&vls);
@@ -961,16 +1017,12 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-#if 0
-  attach( dmp->dm_name );	/* reattach */
-  dmaflag = 1;		/* causes refresh() */
-  return CMD_OK;
-#else
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 1 || 1 < argc){
+    Tcl_Eval(interp, "help fix");
     return TCL_ERROR;
+  }
 
   return reattach();
-#endif
 }
 
 int
@@ -980,11 +1032,13 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-	  return TCL_ERROR;
+  if(argc < 1 || 1 < argc){
+    Tcl_Eval(interp, "help refresh");
+    return TCL_ERROR;
+  }
 
-	dmaflag = 1;		/* causes refresh() */
-	return TCL_OK;
+  dmaflag = 1;		/* causes refresh() */
+  return TCL_OK;
 }
 
 /* set view using azimuth, elevation and twist angles */
@@ -1002,8 +1056,10 @@ char	**argv;
   char *av[5];
   struct bu_vls vls;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 3 || 5 < argc){
+    Tcl_Eval(interp, "help ae");
     return TCL_ERROR;
+  }
 
   /* Check for -i option */
   if(argv[1][0] == '-' && argv[1][1] == 'i'){
@@ -1236,8 +1292,10 @@ char	**argv;
 	char	*basename;
 	char	*sname;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 2 || 2 < argc){
+	  Tcl_Eval(interp, "help ill");
 	  return TCL_ERROR;
+	}
 
 	if (state == ST_S_PICK)
 	{
@@ -1355,10 +1413,12 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	CHECK_READ_ONLY;
+  CHECK_READ_ONLY;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 2 || 2 < argc){
+    Tcl_Eval(interp, "help sed");
     return TCL_ERROR;
+  }
 
   if( not_state( ST_VIEW, "keyboard solid edit start") )
     return TCL_ERROR;
@@ -1553,8 +1613,10 @@ char	**argv;
   int edit_flag = 0;  /* force edit interpretation */
   struct bu_vls vls;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 1 || MAXARGS < argc){
+    Tcl_Eval(interp, "help knob");
     return TCL_ERROR;
+  }
 
   /* Check for options */
   {
@@ -2250,8 +2312,10 @@ char	**argv;
 	double	f;
 	int argind=1;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 1 || 11 < argc){
+	  Tcl_Eval(interp, "help tol");
 	  return TCL_ERROR;
+	}
 
 	if( argc < 3 )  {
 	  Tcl_AppendResult(interp, "Current tolerance settings are:\n", (char *)NULL);
@@ -2458,8 +2522,10 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 2 || 2 < argc){
+    Tcl_Eval(interp, "help zoom");
     return TCL_ERROR;
+  }
 
   return mged_zoom(atof(argv[1]));
 }
@@ -2480,8 +2546,10 @@ char	**argv;
   register int	i;
   quat_t		quat;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 5 || 5 < argc){
+    Tcl_Eval(interp, "help orientation");
     return TCL_ERROR;
+  }
 
   for( i=0; i<4; i++ )
     quat[i] = atof( argv[i+1] );
@@ -2508,8 +2576,10 @@ char	**argv;
     double	el;
     double	theta;
 
-    if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    if(argc < 5 || 5 < argc){
+      Tcl_Eval(interp, "help qvrot");
       return TCL_ERROR;
+    }
 
     dx = atof(argv[1]);
     dy = atof(argv[2]);
@@ -2601,8 +2671,10 @@ char    *argv[];
 {
   double x, y, z;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 4 || 4 < argc){
+    Tcl_Eval(interp, "help setview");
     return TCL_ERROR;
+  }
 
   if(sscanf(argv[1], "%lf", &x) < 1){
     Tcl_AppendResult(interp, "f_setview: bad x value - ",
@@ -2668,8 +2740,10 @@ char	*argv[];
   int x, y, z;
   vect_t tranvec;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 3 || 5 < argc){
+    Tcl_Eval(interp, "help tran");
     return TCL_ERROR;
+  }
 
   /* Check for -i option */
   if(argv[1][0] == '-' && argv[1][1] == 'i'){
@@ -2726,8 +2800,10 @@ char	*argv[];
   int x, y, z;
   vect_t slewvec;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 3 || 4 < argc){
+    Tcl_Eval(interp, "help sv");
     return TCL_ERROR;
+  }
 
   if(sscanf(argv[1], "%d", &x) < 1){
     Tcl_AppendResult(interp, "f_slewview: bad x value - ",
@@ -2784,8 +2860,10 @@ Tcl_Interp *interp;
 int     argc;
 char    **argv;
 {
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 1 || 1 < argc){
+    Tcl_Eval(interp, "help svb");
     return TCL_ERROR;
+  }
 
   return mged_svbase();
 }
@@ -2809,8 +2887,10 @@ char **argv;
   fastf_t f;
   char *cp;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 2 || 2 < argc){
+    Tcl_Eval(interp, "help getknob");
     return TCL_ERROR;
+  }
 
   cp  = argv[1];
   len = strlen(cp);
@@ -2950,8 +3030,10 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 5 || 5 < argc){
+    Tcl_Eval(interp, "help vrot_center");
     return TCL_ERROR;
+  }
 
   Tcl_AppendResult(interp, "Not ready until tomorrow.\n", (char *)NULL);
   return TCL_OK;
@@ -3099,8 +3181,10 @@ char	**argv;
 	vect_t	xlate;
 	vect_t	new_cent;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-		return TCL_ERROR;
+	if(argc < 4 || 4 < argc){
+	  Tcl_Eval(interp, "help eye_pt");
+	  return TCL_ERROR;
+	}
 
 	VSET(eye_model, atof(argv[1]), atof(argv[2]), atof(argv[3]) );
 
@@ -3136,8 +3220,10 @@ char	**argv;
 	point_t	view;
 	struct bu_vls	str;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-		return TCL_ERROR;
+	if(argc < 4 || 4 < argc){
+	  Tcl_Eval(interp, "help model2view");
+	  return TCL_ERROR;
+	}
 
 	VSET(model, atof(argv[1]),
 		atof(argv[2]),
@@ -3170,8 +3256,10 @@ char	**argv;
 	point_t	view;
 	struct bu_vls	str;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-		return TCL_ERROR;
+	if(argc < 4 || 4 < argc){
+	  Tcl_Eval(interp, "help view2model");
+	  return TCL_ERROR;
+	}
 
 	VSET(view, atof(argv[1]),
 		atof(argv[2]),
@@ -3203,8 +3291,10 @@ char	**argv;
 	int status;
 	struct bu_vls vls;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-		return TCL_ERROR;
+	if(argc < 4 || 4 < argc){
+	  Tcl_Eval(interp, "help lookat");
+	  return TCL_ERROR;
+	}
 
 	VSET( look, atof(argv[1]),
 		atof(argv[2]),

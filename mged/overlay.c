@@ -49,8 +49,10 @@ char	**argv;
 	int		ret;
 	struct rt_vlblock	*vbp;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 2 || 3 < argc){
+	  Tcl_Eval(interp, "help overlay");
 	  return TCL_ERROR;
+	}
 
 	if( argc == 2 )
 		name = "_PLOT_OVERLAY_";
@@ -91,8 +93,10 @@ char	**argv;
 	mat_t			mat;
 	fastf_t			scale;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 2 || MAXARGS < argc){
+	  Tcl_Eval(interp, "help labelvert");
 	  return TCL_ERROR;
+	}
 
 	vbp = rt_vlblock_init();
 	bn_mat_idn(mat);

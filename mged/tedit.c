@@ -69,8 +69,10 @@ char **argv;
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 1 || 1 < argc){
+	  Tcl_Eval(interp, "help ted");
 	  return TCL_ERROR;
+	}
 
 	/* Only do this if in solid edit state */
 	if( not_state( ST_S_EDIT, "Solid Text Edit" ) )

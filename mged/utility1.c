@@ -106,10 +106,12 @@ char	*argv[];
   char *tmpfil = "/tmp/GED.aXXXXX";
   char **av;
 
-	CHECK_READ_ONLY;
+  CHECK_READ_ONLY;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 2 || MAXARGS < argc){
+    Tcl_Eval(interp, "help edcodes");
     return TCL_ERROR;
+  }
 
   (void)mktemp(tmpfil);
   i=creat(tmpfil, 0600);
@@ -168,8 +170,10 @@ char	*argv[];
   FILE *fp;
   register struct directory *dp;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 3 || MAXARGS < argc){
+    Tcl_Eval(interp, "help wcodes");
     return TCL_ERROR;
+  }
 
   if((fp = fopen(argv[1], "w")) == NULL){
     Tcl_AppendResult(interp, "f_wcodes: Failed to open file - ", argv[1], (char *)NULL);
@@ -200,19 +204,21 @@ Tcl_Interp *interp;
 int		 argc;
 char		*argv[];
 {
-	int item, air, mat, los;
-	char name[MAX_LEVELS * NAMESIZE];
-	char line[LINELEN];
-	char *cp;
-	FILE *fp;
-	register struct directory *dp;
-	struct rt_db_internal intern;
-	struct rt_comb_internal *comb;
+  int item, air, mat, los;
+  char name[MAX_LEVELS * NAMESIZE];
+  char line[LINELEN];
+  char *cp;
+  FILE *fp;
+  register struct directory *dp;
+  struct rt_db_internal intern;
+  struct rt_comb_internal *comb;
 
-	CHECK_READ_ONLY;
+  CHECK_READ_ONLY;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 2 || 2 < argc){
+    Tcl_Eval(interp, "help rcodes");
     return TCL_ERROR;
+  }
 
   if((fp = fopen(argv[1], "r")) == NULL){
     Tcl_AppendResult(interp, "f_rcodes: Failed to read file - ", argv[1], (char *)NULL);
@@ -389,8 +395,10 @@ char	**argv;
 	struct rt_comb_internal *comb;
 	int		item;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-	  return TCL_ERROR;
+	if(argc < 2 || MAXARGS < argc){
+	      Tcl_Eval(interp, "help whichid");
+	          return TCL_ERROR;
+	}
 
 	if( setjmp( jmp_env ) == 0 )
 	  (void)signal( SIGINT, sig3);  /* allow interupts */
@@ -445,8 +453,10 @@ char	**argv;
 	struct rt_comb_internal	*comb;
 	int item;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 2 || MAXARGS < argc){
+	  Tcl_Eval(interp, "help which_shader");
 	  return TCL_ERROR;
+	}
 
 	if( setjmp( jmp_env ) == 0 )
 	  (void)signal( SIGINT, sig3);  /* allow interupts */
@@ -500,8 +510,10 @@ char	**argv;
 	struct rt_db_internal intern;
 	struct rt_comb_internal *comb;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 2 || MAXARGS < argc){
+	  Tcl_Eval(interp, "help whichair");
 	  return TCL_ERROR;
+	}
 
 	if( setjmp( jmp_env ) == 0 )
 	  (void)signal( SIGINT, sig3);  /* allow interupts */
@@ -571,8 +583,10 @@ char	**argv;
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 2 || 3 < argc){
+	  Tcl_Eval(interp, "help decompose");
 	  return TCL_ERROR;
+	}
 
 	if( setjmp( jmp_env ) == 0 )
 	  (void)signal( SIGINT, sig3);  /* allow interupts */
@@ -943,8 +957,16 @@ char	**argv;
 	time_t now;
 	int i;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 3 || MAXARGS < argc){
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help %s", argv[0]);
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
 	  return TCL_ERROR;
+	}
+
 	bu_vls_init(&tmp_vls);
 	bu_vls_init( &cmd );
 	bu_ptbl_init( &cur_path, 8, "f_tables: cur_path" );

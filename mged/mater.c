@@ -81,8 +81,10 @@ char	**argv;
 {
   register struct mater *mp;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 1 || 1 < argc){
+    Tcl_Eval(interp, "help prcolor");
     return TCL_ERROR;
+  }
 
   if( rt_material_head == MATER_NULL )  {
     Tcl_AppendResult(interp, "none\n", (char *)NULL);
@@ -111,8 +113,10 @@ char	**argv;
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 7 || 7 < argc){
+	  Tcl_Eval(interp, "help color");
 	  return TCL_ERROR;
+	}
 
 	/* Delete all color records from the database */
 	newp = rt_material_head;
@@ -176,8 +180,10 @@ char	**argv;
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 1 || 1 < argc){
+	  Tcl_Eval(interp, "help edcolor");
 	  return TCL_ERROR;
+	}
 
 	(void)mktemp(tempfile);
 	if( (fp = fopen( tempfile, "w" )) == NULL )  {

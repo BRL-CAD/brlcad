@@ -1094,8 +1094,10 @@ char	**argv;
 	int start_argc=1;
 	char perf_message[128];
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 2 || MAXARGS < argc){
+	  Tcl_Eval(interp, "help E");
 	  return TCL_ERROR;
+	}
 
 /*	bu_debug = BU_DEBUG_MEM_CHECK; */
 	if( bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck() )

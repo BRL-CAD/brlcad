@@ -105,8 +105,10 @@ char	**argv;
   int status = TCL_OK;
   struct bu_vls vls;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 2 || 3 < argc){
+    Tcl_Eval(interp, "help dup");
     return TCL_ERROR;
+  }
 
   bu_vls_init(&vls);
   if( setjmp( jmp_env ) == 0 )
@@ -346,8 +348,10 @@ char	**argv;
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 2 || 3 < argc){
+	  Tcl_Eval(interp, "help dbconcat");
 	  return TCL_ERROR;
+	}
 
 	/* get any prefix */
 	if( argc < 3 )  {

@@ -88,8 +88,10 @@ char	**argv;
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+        if(argc < 1 || 27 < argc){
+	  Tcl_Eval(interp, "help 3ptarb");
 	  return TCL_ERROR;
+	}
 
 	/* get the arb name */
 	if( argc < 2 ) {
@@ -344,8 +346,10 @@ char	**argv;
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 1 || 27 < argc){
+	  Tcl_Eval(interp, "help rfarb");
 	  return TCL_ERROR;
+	}
 
 	/* get the arb name */
 	if( argc < 2 ) {

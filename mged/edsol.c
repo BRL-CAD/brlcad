@@ -6138,8 +6138,10 @@ char	*argv[];
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 4 || 4 < argc){
+	  Tcl_Eval(interp, "help eqn");
 	  return TCL_ERROR;
+	}
 
 	if( state != ST_S_EDIT ){
 	  Tcl_AppendResult(interp, "Eqn: must be in solid edit\n", (char *)NULL);
@@ -6403,10 +6405,12 @@ char	**argv;
   register int i;
   vect_t argvect;
 
-	CHECK_READ_ONLY;
+  CHECK_READ_ONLY;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 2 || 4 < argc){
+    Tcl_Eval(interp, "help p");
     return TCL_ERROR;
+  }
 
   for( i = 1; i < argc && i <= 3 ; i++ ){
     argvect[i-1] = atof( argv[i] );
@@ -7192,8 +7196,10 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 1 || 4 < argc){
+    Tcl_Eval(interp, "help keypoint");
     return TCL_ERROR;
+  }
   
   if ((state != ST_S_EDIT) && (state != ST_O_EDIT)) {
     state_err("keypoint assignment");

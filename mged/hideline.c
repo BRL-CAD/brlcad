@@ -159,8 +159,10 @@ char	**argv;
 	vect_t last,dir;
 	register struct rt_vlist	*vp;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 2 || 4 < argc){
+	  Tcl_Eval(interp, "help H");
 	  return TCL_ERROR;
+	}
 
 	if ((plotfp = fopen(argv[1],"w")) == NULL) {
 	  Tcl_AppendResult(interp, "f_hideline: unable to open \"", argv[1],

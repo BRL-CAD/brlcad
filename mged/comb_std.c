@@ -505,8 +505,10 @@ char	**argv;
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-		return TCL_ERROR;
+	if(argc < 3 || MAXARGS < argc){
+	  Tcl_Eval(interp, "help c");
+	  return TCL_ERROR;
+	}
 
 	/* Parse options */
 	optind = 1;	/* re-init getopt() */

@@ -81,8 +81,10 @@ char	**argv;
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 3 || 3 < argc){
+	  Tcl_Eval(interp, "help mv");
 	  return TCL_ERROR;
+	}
 
 	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 	  return TCL_ERROR;
@@ -127,8 +129,10 @@ char	**argv;
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 3 || 3 < argc){
+	  Tcl_Eval(interp, "help cp");
 	  return TCL_ERROR;
+	}
 
 	if( (proto = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 	  return TCL_ERROR;
@@ -183,8 +187,10 @@ char	**argv;
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 3 || 4 < argc){
+	  Tcl_Eval(interp, "help i");
 	  return TCL_ERROR;
+	}
 
 	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 	  return TCL_ERROR;
@@ -224,8 +230,10 @@ char	**argv;
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 4 || MAXARGS < argc){
+	  Tcl_Eval(interp, "help r");
 	  return TCL_ERROR;
+	}
 
  	ident = item_default;
  	air = air_default;
@@ -317,8 +325,10 @@ char	**argv;
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 4 || MAXARGS < argc){
+	  Tcl_Eval(interp, "help comb");
 	  return TCL_ERROR;
+	}
 
 	/* Check for odd number of arguments */
 	if( argc & 01 )  {
@@ -383,8 +393,10 @@ char	**argv;
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 2 || MAXARGS < argc){
+	  Tcl_Eval(interp, "help kill");
 	  return TCL_ERROR;
+	}
 
 	if( argc > 1 && strcmp( argv[1], "-f" ) == 0 )  {
 		verbose = LOOKUP_QUIET;
@@ -423,8 +435,10 @@ char	**argv;
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 3 || MAXARGS < argc){
+	  Tcl_Eval(interp, "help g");
 	  return TCL_ERROR;
+	}
 
 	/* get objects to add to group */
 	for( i = 2; i < argc; i++ )  {
@@ -457,8 +471,10 @@ char	**argv;
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-	  return TCL_ERROR;
+	if(argc < 3 || MAXARGS < argc){
+	      Tcl_Eval(interp, "help rm");
+	          return TCL_ERROR;
+	}
 
 	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 	  return TCL_ERROR;
@@ -519,8 +535,10 @@ char	**argv;
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 3 || 3 < argc){
+	  Tcl_Eval(interp, "help cpi");
 	  return TCL_ERROR;
+	}
 
 	if( (proto = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 	  return TCL_ERROR;
@@ -612,8 +630,10 @@ char	**argv;
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 3 || MAXARGS < argc){
+	  Tcl_Eval(interp, "help arced");
 	  return TCL_ERROR;
+	}
 
 	if( not_state( ST_VIEW, "Arc edit" ) )  return TCL_ERROR;
 
@@ -738,8 +758,10 @@ Tcl_Interp	*interp;
 int		argc;
 char	        **argv;
 {
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-	  return TCL_ERROR;
+  if(argc < 1 || MAXARGS < argc){
+    Tcl_Eval(interp, "help pathlist");
+    return TCL_ERROR;
+  }
 
 	mged_initial_tree_state.ts_ttol = &mged_ttol;
 	mged_initial_tree_state.ts_tol = &mged_tol;
@@ -826,8 +848,10 @@ char      	**argv;
 	char			*new_argv[4];
 	char			number[32];
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 3 || 3 < argc){
+	  Tcl_Eval(interp, "help oed");
 	  return TCL_ERROR;
+	}
 
 	if( not_state( ST_VIEW, "Object Illuminate" ) )  {
 		Tcl_AppendResult(interp, "MGED state is not VIEW", (char *)NULL);
@@ -952,10 +976,12 @@ char	**argv;
     char		*newargv[20];
     struct bu_vls	*avp;
 
-	CHECK_READ_ONLY;
+    CHECK_READ_ONLY;
 
-    if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    if(argc < 3 || MAXARGS < argc){
+      Tcl_Eval(interp, "help putmat");
       return TCL_ERROR;
+    }
 
     if (not_state( ST_VIEW, "Command-line matrix replace"))
       return TCL_ERROR;
@@ -1044,10 +1070,12 @@ char **argv;
     struct animate		*anp;
     union tree			*tp;
 
-	CHECK_READ_ONLY;
+    CHECK_READ_ONLY;
 
-    if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    if(argc < 3 || 3 < argc){
+      Tcl_Eval(interp, "help copymat");
       return TCL_ERROR;
+    }
 
     if (not_state( ST_VIEW, "Command-line matrix copy"))
 	return TCL_ERROR;

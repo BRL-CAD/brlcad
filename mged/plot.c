@@ -63,8 +63,10 @@ char	**argv;
 	int floating;			/* 3-D floating point plot */
 	int	is_pipe = 0;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 2 || MAXARGS < argc){
+	  Tcl_Eval(interp, "help plot");
 	  return TCL_ERROR;
+	}
 
 	if( not_state( ST_VIEW, "UNIX Plot of view" ) )
 	  return TCL_ERROR;
@@ -279,8 +281,10 @@ char	**argv;
 	char tol_str[32];
 	char *tol_ptr;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 1 || 2 < argc){
+	  Tcl_Eval(interp, "help area");
 	  return TCL_ERROR;
+	}
 
 	if( not_state( ST_VIEW, "Presented Area Calculation" ) == TCL_ERROR )
 		return TCL_ERROR;

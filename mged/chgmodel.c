@@ -86,8 +86,10 @@ char	**argv;
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 3 || 6 < argc){
+	  Tcl_Eval(interp, "help item");
 	  return TCL_ERROR;
+	}
 
 	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 	  return TCL_ERROR;
@@ -158,8 +160,10 @@ char	**argv;
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 2 || 8 < argc){
+	  Tcl_Eval(interp, "help mater");
 	  return TCL_ERROR;
+	}
 	
 	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 	  return TCL_ERROR;
@@ -304,10 +308,12 @@ char    *argv[];
 
   char **av;
   
-	CHECK_READ_ONLY;
+  CHECK_READ_ONLY;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 2 || MAXARGS < argc){
+    Tcl_Eval(interp, "help edmater");
     return TCL_ERROR;
+  }
 
   (void)mktemp(tmpfil);
   i=creat(tmpfil, 0600);
@@ -356,11 +362,13 @@ char    *argv[];
   int status = TCL_OK;
   FILE *fp;
   register struct directory *dp;
-	struct rt_db_internal	intern;
-	struct rt_comb_internal	*comb;
+  struct rt_db_internal	intern;
+  struct rt_comb_internal	*comb;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 3 || MAXARGS < argc){
+    Tcl_Eval(interp, "help wmater");
     return TCL_ERROR;
+  }
 
   if((fp = fopen(argv[1], "w")) == NULL){
     Tcl_AppendResult(interp, "f_wmater: Failed to open file - ", argv[1], (char *)NULL);
@@ -412,8 +420,8 @@ char    *argv[];
   int status = TCL_OK;
   FILE *fp;
   register struct directory *dp;
-	struct rt_db_internal	intern;
-	struct rt_comb_internal	*comb;
+  struct rt_db_internal	intern;
+  struct rt_comb_internal	*comb;
   char line[LINELEN];
   char name[128];
   char shader[256]; 
@@ -421,10 +429,12 @@ char    *argv[];
   int override;
   int inherit;
 
-	CHECK_READ_ONLY;
+  CHECK_READ_ONLY;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 2 || 2 < argc){
+    Tcl_Eval(interp, "help rmater");
     return TCL_ERROR;
+  }
 
   if((fp = fopen(argv[1], "r")) == NULL){
     Tcl_AppendResult(interp, "f_rcodes: Failed to read file - ", argv[1], (char *)NULL);
@@ -537,13 +547,15 @@ char	**argv;
     int				i;
     int				val;
     register struct directory	*dp;
-	struct rt_db_internal	intern;
-	struct rt_comb_internal	*comb;
+    struct rt_db_internal	intern;
+    struct rt_comb_internal	*comb;
 
-	CHECK_READ_ONLY;
+    CHECK_READ_ONLY;
 
-    if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    if(argc < 5 || 5 < argc){
+      Tcl_Eval(interp, "help comb_color");
       return TCL_ERROR;
+    }
 
     if ((dp = db_lookup(dbip,  argv[1], LOOKUP_NOISY)) == DIR_NULL)
       return TCL_ERROR;
@@ -597,8 +609,10 @@ char	**argv;
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 3 || MAXARGS < argc){
+	  Tcl_Eval(interp, "help shader");
 	  return TCL_ERROR;
+	}
 
 	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 	  return TCL_ERROR;
@@ -643,8 +657,10 @@ char	**argv;
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 4 || 4 < argc){
+	  Tcl_Eval(interp, "help mirror");
 	  return TCL_ERROR;
+	}
 
 	if( (proto = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 	  return TCL_ERROR;
@@ -1154,8 +1170,10 @@ char	**argv;
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 6 || 7 < argc){
+	  Tcl_Eval(interp, "help edcomb");
 	  return TCL_ERROR;
+	}
 
 	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 	  return TCL_ERROR;
@@ -1209,8 +1227,10 @@ char	**argv;
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 1 || 2 < argc){
+	  Tcl_Eval(interp, "help units");
 	  return TCL_ERROR;
+	}
 
 	if( argc < 2 )  {
 	  struct bu_vls tmp_vls;
@@ -1287,8 +1307,10 @@ char	**argv;
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 1 || MAXARGS < argc){
+	  Tcl_Eval(interp, "help title");
 	  return TCL_ERROR;
+	}
 
 	if( argc < 2 )  {
 	  Tcl_AppendResult(interp, dbip->dbi_title, "\n", (char *)NULL);
@@ -1349,8 +1371,10 @@ char	**argv;
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 3 || 3 < argc){
+	  Tcl_Eval(interp, "help make");
 	  return TCL_ERROR;
+	}
 
 	if( db_lookup( dbip,  argv[1], LOOKUP_QUIET ) != DIR_NULL )  {
 	  aexists( argv[1] );
@@ -1797,10 +1821,17 @@ char	**argv;
   mat_t temp;
   vect_t s_point, point, v_work, model_pt;
 
-	CHECK_READ_ONLY;
+  CHECK_READ_ONLY;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 4 || 5 < argc){
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help %s", argv[0]);
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
+  }
 
   if( not_state( ST_O_EDIT, "Object Rotation" ) )
     return TCL_ERROR;
@@ -1835,8 +1866,10 @@ char	**argv;
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 2 || 2 < argc){
+	  Tcl_Eval(interp, "help oscale");
 	  return TCL_ERROR;
+	}
 
 	if( not_state( ST_O_EDIT, "Object Scaling" ) )
 	  return TCL_ERROR;
@@ -1920,8 +1953,10 @@ char	**argv;
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 4 || 4 < argc){
+	  Tcl_Eval(interp, "help translate");
 	  return TCL_ERROR;
+	}
 
 	if( not_state( ST_O_EDIT, "Object Translation") )
 	  return TCL_ERROR;
@@ -1968,8 +2003,10 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 2 || 5 < argc){
+    Tcl_Eval(interp, "help regdef");
     return TCL_ERROR;
+  }
 
   dmaflag = 1;
   item_default = atoi(argv[1]);
@@ -2068,8 +2105,10 @@ char	**argv;
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 2 || 3 < argc){
+	  Tcl_Eval(interp, "help fracture");
 	  return TCL_ERROR;
+	}
 
 	Tcl_AppendResult(interp, "fracture:", (char *)NULL);
 	for (i=0 ; i < argc ; i++)
@@ -2214,8 +2253,10 @@ char	**argv;
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 8 || 8 < argc){
+	  Tcl_Eval(interp, "help qorot");
 	  return TCL_ERROR;
+	}
 
 	if( not_state( ST_O_EDIT, "Object Rotation" ) )
 	  return TCL_ERROR;

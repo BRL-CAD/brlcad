@@ -86,8 +86,10 @@ char **argv;
 	plane_t		planes[6];
 	int status = TCL_OK;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 2 || MAXARGS < argc){
+	  Tcl_Eval(interp, "help facedef");
 	  return TCL_ERROR;
+	}
 
 	if( setjmp( jmp_env ) == 0 )
 	  (void)signal( SIGINT, sig3);  /* allow interupts */

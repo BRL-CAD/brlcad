@@ -117,8 +117,15 @@ char	**argv;
   struct directory **dirp0 = (struct directory **)NULL;
   struct bu_vls vls;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 1 || MAXARGS < argc){
+    struct bu_vls vls;
+
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "help %s", argv[0]);
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
     return TCL_ERROR;
+  }
 
   bu_vls_init(&vls);
   if( setjmp( jmp_env ) == 0 )
@@ -177,8 +184,10 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 1 || 1 < argc){
+    Tcl_Eval(interp, "help memprint");
     return TCL_ERROR;
+  }
 
   Tcl_AppendResult(interp, "Display manager free map:\n", (char *)NULL);
   rt_memprint( &(dmp->dm_map) );
@@ -433,8 +442,10 @@ char	**argv;
 	struct directory **dirp0 = (struct directory **)NULL;
 	struct bu_vls vls;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 1 || 1 < argc){
+	  Tcl_Eval(interp, "help tops");
 	  return TCL_ERROR;
+	}
 
 	bu_vls_init(&vls);
 	if( setjmp( jmp_env ) == 0 )
@@ -614,8 +625,10 @@ char **argv;
     register int i, whicharg;
     int regexp, nummatch, thismatch, backslashed;
 
-    if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    if(argc < 1 || MAXARGS < argc){
+      Tcl_Eval(interp, "help expand");
       return TCL_ERROR;
+    }
 
     nummatch = 0;
     backslashed = 0;
@@ -716,8 +729,10 @@ char	**argv;
   struct rt_db_internal intern;
   register struct rt_comb_internal *comb=(struct rt_comb_internal *)NULL;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 1 || MAXARGS < argc){
+    Tcl_Eval(interp, "help find");
     return TCL_ERROR;
+  }
 
   if( setjmp( jmp_env ) == 0 )
     (void)signal( SIGINT, sig3);	/* allow interupts */
@@ -796,8 +811,10 @@ char	**argv;
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 3 || MAXARGS < argc){
+	  Tcl_Eval(interp, "help prefix");
 	  return TCL_ERROR;
+	}
 
 	/* First, check validity, and change node names */
 	for( i = 2; i < argc; i++) {
@@ -893,8 +910,10 @@ char	**argv;
 	struct bu_vls		units;
 	register int		i;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 3 || MAXARGS < argc){
+	  Tcl_Eval(interp, "help keep");
 	  return TCL_ERROR;
+	}
 
 	/* First, clear any existing counts */
 	for( i = 0; i < RT_DBNHASH; i++ )  {
@@ -976,6 +995,11 @@ char	**argv;
 {
   register struct directory *dp;
   register int j;
+
+  if(argc < 2 || MAXARGS < argc){
+    Tcl_Eval(interp, "help tree");
+    return TCL_ERROR;
+  }
 
   if( setjmp( jmp_env ) == 0 )
     (void)signal( SIGINT, sig3);  /* allow interupts */
@@ -1153,8 +1177,10 @@ char	**argv;
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 3 || 3 < argc){
+	  Tcl_Eval(interp, "help mvall");
 	  return TCL_ERROR;
+	}
 
 	if( (int)strlen(argv[2]) > NAMESIZE ) {
 	  struct bu_vls tmp_vls;
@@ -1273,8 +1299,10 @@ char	**argv;
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-		return TCL_ERROR;
+	if(argc < 2 || MAXARGS < argc){
+	  Tcl_Eval(interp, "help killall");
+	  return TCL_ERROR;
+	}
 
 	if( setjmp( jmp_env ) == 0 )
 		(void)signal( SIGINT, sig3);  /* allow interupts */
@@ -1356,8 +1384,10 @@ char	**argv;
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 2 || MAXARGS < argc){
+	  Tcl_Eval(interp, "help killtree");
 	  return TCL_ERROR;
+	}
 
 	if( setjmp( jmp_env ) == 0 )
 	  (void)signal( SIGINT, sig3);  /* allow interupts */
@@ -1399,9 +1429,11 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-	  return TCL_ERROR;
+  if(argc < 1 || 1 < argc){
+    Tcl_Eval(interp, "help debugdir");
+    return TCL_ERROR;
+  }
 
-	db_pr_dir( dbip );
-	return TCL_OK;
+  db_pr_dir( dbip );
+  return TCL_OK;
 }

@@ -161,8 +161,10 @@ char **argv;
 	int arg = 1;
 	int status = TCL_OK;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 1 || MAXARGS < argc){
+	  Tcl_Eval(interp, "help inside");
 	  return TCL_ERROR;
+	}
 
 	if( setjmp( jmp_env ) == 0 )
 	  (void)signal( SIGINT, sig3);  /* allow interupts */

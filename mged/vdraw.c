@@ -148,8 +148,10 @@ char **argv;
 	char solid_name [VDRW_MAXNAME+VDRW_PREFIX_LEN+1];
 	static int real_flag;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 2 || 7 < argc){
+	  Tcl_Eval(interp, "help vdraw");
 	  return TCL_ERROR;
+	}
 
 	if (!initialized){
 		if (BU_LIST_UNINITIALIZED( &rt_g.rtg_vlfree ))
@@ -617,8 +619,10 @@ char **argv;
 	char result_string[90];
 	point_t pos;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 1 || 1 < argc){
+	  Tcl_Eval(interp, "help read_center");
 	  return TCL_ERROR;
+	}
 
 	MAT_DELTAS_GET_NEG(pos, toViewcenter);
 	sprintf(result_string,"%.12e %.12e %.12e", pos[0], pos[1], pos[2]);
@@ -637,8 +641,10 @@ char **argv;
 	char result_string[90];
 	point_t pos;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 1 || 1 < argc){
+	  Tcl_Eval(interp, "help read_scale");
 	  return TCL_ERROR;
+	}
 
 	sprintf(result_string,"%.12e", Viewscale);
 	Tcl_AppendResult(interp, result_string, (char *)NULL);
@@ -659,8 +665,10 @@ char **argv;
 	mat_t mymat;
 	char c;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 2 || 2 < argc){
+	  Tcl_Eval(interp, "help viewget");
 	  return TCL_ERROR;
+	}
 
 	/* center, size, eye, ypr */
 	c = argv[1][0];
@@ -740,8 +748,10 @@ char **argv;
 	vect_t dir, norm, temp;
 	mat_t mymat;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 3 || MAXARGS < argc){
+	  Tcl_Eval(interp, "help viewset");
 	  return TCL_ERROR;
+	}
 
 	in_quat = in_center = in_eye = in_ypr = in_aet = in_size = 0.0;
 	i = 1;

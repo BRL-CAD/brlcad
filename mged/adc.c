@@ -210,8 +210,10 @@ char	**argv;
 	int	i;
 	int     iadc = 0;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 1 || 5 < argc){
+	  Tcl_Eval(interp, "help adc");
 	  return TCL_ERROR;
+	}
 
 	if(strstr(argv[0], "iadc"))
 	   iadc = 1;

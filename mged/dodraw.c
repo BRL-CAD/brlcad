@@ -1146,8 +1146,10 @@ char	**argv;
 	int			failed;
 	int			mged_nmg_use_tnurbs = 0;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 3 || MAXARGS < argc){
+	  Tcl_Eval(interp, "help facetize");
 	  return TCL_ERROR;
+	}
 
 	RT_CHECK_DBI(dbip);
 
@@ -1335,8 +1337,10 @@ char	**argv;
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 2 || MAXARGS < argc){
+	  Tcl_Eval(interp, "help bev");
 	  return TCL_ERROR;
+	}
 
 	RT_CHECK_DBI( dbip );
 

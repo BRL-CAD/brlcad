@@ -84,8 +84,10 @@ char **argv;
 
 	CHECK_READ_ONLY;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 1 || 27 < argc){
+	  Tcl_Eval(interp, "help track");
 	  return TCL_ERROR;
+	}
 
 	/* interupts */
 	if( setjmp( jmp_env ) == 0 )

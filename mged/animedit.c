@@ -158,8 +158,10 @@ char **argv;
 {
   int status;
 
-  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+  if(argc < 1 || MAXARGS < argc){
+    Tcl_Eval(interp, "help joint");
     return TCL_ERROR;
+  }
 
   argc--;
   argv++;

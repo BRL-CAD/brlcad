@@ -178,8 +178,10 @@ char	*argv[];
 {
 	quat_t		orient;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 8 || MAXARGS < argc){
+	  Tcl_Eval(interp, "help pov");
 	  return TCL_ERROR;
+	}
 
 	if( argc < 1+3+4+1+3+1 )  {
 	  struct bu_vls tmp_vls;
@@ -226,8 +228,10 @@ char	*argv[];
 	struct bu_vls	str;
 	char		*role;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 3 || MAXARGS < argc){
+	  Tcl_Eval(interp, "help vrmgr");
 	  return TCL_ERROR;
+	}
 
 	bu_vls_init(&str);
 

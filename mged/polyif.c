@@ -97,8 +97,10 @@ char	**argv;
 	int	need_normal = 0;
 	struct	bu_external	obuf;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 2 || 2 < argc){
+	  Tcl_Eval(interp, "help polybinout");
 	  return TCL_ERROR;
+	}
 
 	if( (fp = fopen( argv[1], "w" )) == NULL )  {
 	  perror(argv[1]);

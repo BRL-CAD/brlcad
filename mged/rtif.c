@@ -349,8 +349,10 @@ char	**argv;
 	char	pstring[32];
 	struct bu_vls cmd;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 1 || MAXARGS < argc){
+	  Tcl_Eval(interp, "help rt");
 	  return TCL_ERROR;
+	}
 
 	if( not_state( ST_VIEW, "Ray-trace of current view" ) )
 	  return TCL_ERROR;
@@ -393,8 +395,10 @@ char	**argv;
 	char	*dm;
 	struct bu_vls cmd;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 2 || MAXARGS < argc){
+	  Tcl_Eval(interp, "help rrt");
 	  return TCL_ERROR;
+	}
 
 	if( not_state( ST_VIEW, "Ray-trace of current view" ) )
 	  return TCL_ERROR;
@@ -432,8 +436,10 @@ char	**argv;
 	struct solid *sp;
 	struct rt_vlblock	*vbp;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 1 || MAXARGS < argc){
+	  Tcl_Eval(interp, "help rtcheck");
 	  return TCL_ERROR;
+	}
 
 	if( not_state( ST_VIEW, "Overlap check in current view" ) )
 	  return TCL_ERROR;
@@ -558,8 +564,10 @@ char	**argv;
 	register FILE *fp;
 	char *base;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 2 || MAXARGS < argc){
+	  Tcl_Eval(interp, "help saveview");
 	  return TCL_ERROR;
+	}
 
 	if( (fp = fopen( argv[1], "a")) == NULL )  {
 	  perror(argv[1]);
@@ -642,8 +650,10 @@ char	**argv;
 	mat_t	rot;
 	register struct rt_vlist *vp;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 2 || MAXARGS < argc){
+	  Tcl_Eval(interp, "help rmats");
 	  return TCL_ERROR;
+	}
 
 	if( not_state( ST_VIEW, "animate from matrix file") )
 	  return TCL_ERROR;
@@ -801,8 +811,10 @@ char	**argv;
 	vect_t	eye_model;
 	vect_t temp;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 2 || MAXARGS < argc){
+	  Tcl_Eval(interp, "help savekey");
 	  return TCL_ERROR;
+	}
 
 	if( (fp = fopen( argv[1], "a")) == NULL )  {
 	  perror(argv[1]);
@@ -931,8 +943,10 @@ char	**argv;
 	int	c;
 	vect_t	temp;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 2 || MAXARGS < argc){
+	  Tcl_Eval(interp, "help preview");
 	  return TCL_ERROR;
+	}
 
 	if( not_state( ST_VIEW, "animate viewpoint from new RT file") )
 	  return TCL_ERROR;
@@ -1071,8 +1085,10 @@ char	**argv;
 	vect_t	minus, plus;	/* vers of this solid's bounding box */
 	vect_t	unit_H, unit_V;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+	if(argc < 1 || MAXARGS < argc){
+	  Tcl_Eval(interp, "help nirt");
 	  return TCL_ERROR;
+	}
 
 	if( not_state( ST_VIEW, "Single ray-trace from current view" ) )
 	  return TCL_ERROR;
@@ -1475,8 +1491,10 @@ char		**argv;
     point_t			minus, plus;	/* vrts of solid's bnding bx */
     vect_t			unit_H, unit_V;
 
-    if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    if(argc < 1 || 3 < argc){
+      Tcl_Eval(interp, "help solids_on_ray");
       return TCL_ERROR;
+    }
 
     if ((argc != 1) && (argc != 3))
     {
@@ -1591,8 +1609,10 @@ char 		**argv;
 	register struct solid *sp;
 	int skip_real, skip_phony;
 
-	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
-		return TCL_ERROR;
+	if(argc < 1 || 2 < argc){
+	  Tcl_Eval(interp, "help who");
+	  return TCL_ERROR;
+	}
 
 	skip_real = 0;
 	skip_phony = 1;
