@@ -48,7 +48,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 /*	Print the orientation in a nice, english form
  */
 void nmg_pr_orient(o, h)
-char o, *h;
+char	o;
+char	*h;
 {
 	switch (o) {
 	case OT_SAME : rt_log("%s%8s orientation\n", h, "SAME"); break;
@@ -829,7 +830,7 @@ unsigned char R, G, B;
 	NMG_CK_VERTEX(eu->eumate_p->vu_p->v_p);
 	NMG_CK_VERTEX_G(eu->eumate_p->vu_p->v_p->vg_p);
 
-	if (nmg_tbl(b, TBL_LOC, eu) >= 0) return;
+	if (nmg_tbl(b, TBL_LOC, &eu->l.magic) >= 0) return;
 	(void)nmg_tbl(b, TBL_INS, &eu->l.magic);
 
 	nmg_pl_e(fp, eu->e_p, b, R, G, B);
@@ -1156,9 +1157,6 @@ struct nmgregion	*r;
  *	Implicit return:
  *		r->s_p	A new shell containing all the faces from the
  *			polygon file
- *
- *		min	minimum point of the bounding RPP of the shell
- *		max	maximum point of the bounding RPP of the shell
  */
 struct shell *polytonmg(fd, r)
 FILE *fd;
@@ -1221,7 +1219,8 @@ struct nmgregion *r;
 
 		if (pts_this_face > vl_len) {
 			while (vl_len < pts_this_face) vl_len *= 2;
-			rt_realloc(vl, vl_len*sizeof(struct vertex *),
+			vl = (struct vertex **)rt_realloc( (char *)vl,
+				vl_len*sizeof(struct vertex *),
 				"vertex parameter list (realloc)");
 		}
 
