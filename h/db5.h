@@ -116,4 +116,12 @@ struct db5_raw_internal {
 };
 #define DB5_RAW_INTERNAL_MAGIC	0x64357269	/* "d5ri" */
 
+extern const int db5_enc_len[4];	/* convert wid to nbytes */
+
+extern unsigned char *db5_encode_length(
+	unsigned char	*cp,
+	long		val,
+	int		format);
+
+
 #endif	/* DB5_H */
