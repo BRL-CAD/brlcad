@@ -8,7 +8,7 @@
 #define PRODUCTS	pyramid molecule clutter kurt room tube teapot \
 			pipetest nmgmodel brickwall wall tea_nmg \
 			pipe terrain sphflake fence bottest sketch \
-			globe pix2g wdb_example
+			globe pix2g vegitation wdb_example
 
 /* pickett_fence */
 
@@ -99,6 +99,9 @@ pix2g:	pix2g.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
 
 pickett_fence: pickett_fence.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
 	CC LDFLAGS pickett_fence.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o pickett_fence
+
+vegitation:	vegitation.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS vegitation.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o vegitation
 
 #include "../Cakefile.rules"
 
