@@ -14,7 +14,9 @@ line, or in binary from it's standard input.  The
 flag can be used to specify the number of times to repeat the given
 pattern, the default being infinity.
 This program is useful for producing a given grey value or
-color.
+color. Note that
+.I gencolor
+will refuse to write its output to a window, you must redirect the output to a file.
 .SH EXAMPLE
 .I gencolor -r512\ 0\ 255\ 0 \>\ foo.pix
 .br

@@ -34,7 +34,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #define	MAX_BYTES	(128*1024)
 
-char Usage[] = "usage: gencolor [-r#] [val1 .. valN]\n";
+char Usage[] = "usage: gencolor [-r#] [val1 .. valN] > output_file\n";
 
 int	bytes_in_buf, copies_per_buf;
 
