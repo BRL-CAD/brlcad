@@ -82,7 +82,9 @@ static struct funtab {
 	int ft_max;
 } funtab[] = {
 
-"?", "", "help message",
+"?", "", "summary of available commands",
+	f_help,0,MAXARGS,
+"help", "[commands]", "give usage message for given commands",
 	f_help,0,MAXARGS,
 "e", "<objects>", "edit objects",
 	f_edit,2,MAXARGS,
@@ -204,7 +206,7 @@ static struct funtab {
 	f_color, 7, 7,
 "edcolor", "", "text edit color table",
 	f_edcolor, 1, 1,
-"plot", "[-zclip] [-2d] [-grid] [out_file] [|filter]", "make UNIX-plot of view",
+"plot", "[-float] [-zclip] [-2d] [-grid] [out_file] [|filter]", "make UNIX-plot of view",
 	f_plot, 2, MAXARGS,
 "area", "[endpoint_tolerance]", "calculate presented area of view",
 	f_area, 1, 2,
@@ -492,14 +494,27 @@ static void
 f_help()
 {
 	register struct funtab *ftp;
-	
-	(void)printf("?\n");
-	(void)printf("The following commands are available:\n");
-	for( ftp = &funtab[0]; ftp < &funtab[NFUNC]; ftp++ )  {
-		col_item(ftp->ft_name);
-		col_item(ftp->ft_parms);
-		col_item(ftp->ft_comment);
+	register int	i;
+
+	if( numargs <= 1 )  {
+		(void)printf("The following commands are available:\n");
+		for( ftp = &funtab[0]; ftp < &funtab[NFUNC]; ftp++ )  {
+			col_item(ftp->ft_name);
+		}
 		col_eol();
+		return;
+	}
+	/* Help command(s) */
+	for( i=1; i<numargs; i++ )  {
+		for( ftp = &funtab[0]; ftp < &funtab[NFUNC]; ftp++ )  {
+			if( strcmp( ftp->ft_name, cmd_args[i] ) != 0 )
+				continue;
+			(void)printf("Usage: %s %s\n", ftp->ft_name, ftp->ft_parms);
+			(void)printf("\t(%s)\n", ftp->ft_comment);
+			break;
+		}
+		if( ftp == &funtab[NFUNC] )
+			(void)printf("%s: no such command, type ? for help\n", cmd_args[i] );
 	}
 }
 
