@@ -34,8 +34,6 @@ int sol_num = 0;
 char *type = "frame";
 char *units = "mm";
 double unit_conv = 1.0;
-char *color;
-char def_color[3];
 matp_t trans_matrix = (matp_t)NULL; 
 CONST double degtorad =  0.01745329251994329573;
 
@@ -47,8 +45,12 @@ double brick_height = 8.0 * 25.4;
 double brick_width = 2.25 * 25.4;
 double brick_depth = 3.25 * 25.4;
 double min_mortar = 0.25 * 25.4;
+
+unsigned char *color;
+unsigned char def_color[3];
 unsigned char brick_color[3] = {160, 40, 40};
 unsigned char mortar_color[3] = {190, 190, 190};
+
 int rand_brick_color = 0;
 int make_mortar = 1;
 
@@ -58,8 +60,10 @@ double bd_thin = 1.5 * 25.4;
 double beam_height = 5.5 * 25.4;
 double sr_thick = 0.75 * 25.4;	/* sheetrock thickness */
 double stud_spacing = 16.0 * 25.4; /* spacing between vertical studs */
+
 unsigned char sheetrock_color[3] = { 200, 200, 200 };
 unsigned char stud_color[3] = { 250, 178, 108 };
+
 char *stud_properties[] = { "plastic", "sh=10 di=0.7 sp=0.3" };
 
 struct opening {
