@@ -192,6 +192,7 @@ genptr_t			client_data;
 	}
 	
 	rp->reg_treetop = curtree;
+	rp->reg_all_unions = db_is_tree_all_unions( curtree );
 
 	/* Determine material properties */
 	rp->reg_mfuncs = (char *)0;

@@ -1673,10 +1673,52 @@ register int			count;
 		return(count);
 
 	default:
-		bu_log("db_count_subtree_regions: bad op %d\n", tp->tr_op);
-		rt_bomb("db_count_subtree_regions\n");
+		bu_log("db_count_tree_nodes: bad op %d\n", tp->tr_op);
+		rt_bomb("db_count_tree_nodes\n");
 	}
 	return( 0 );
+}
+
+/*
+ *			D B _ I S _ T R E E _ A L L _ U N I O N S
+ *
+ *  Returns -
+ *	1	if this tree contains nothing but union operations.
+ *	0	if at least one subtraction or intersection op exists.
+ */
+int
+db_is_tree_all_unions( tp )
+register CONST union tree	*tp;
+{
+	RT_CK_TREE(tp);
+	switch( tp->tr_op )  {
+	case OP_NOP:
+	case OP_SOLID:
+	case OP_REGION:
+	case OP_DB_LEAF:
+		/* A leaf node */
+		return 1;		/* yep */
+
+	case OP_UNION:
+		if( db_is_tree_all_unions( tp->tr_b.tb_left ) == 0 )
+			return 0;
+		return db_is_tree_all_unions( tp->tr_b.tb_right );
+
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+		return 0;		/* nope */
+
+	case OP_XOR:
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+		return 0;		/* nope */
+
+	default:
+		bu_log("db_is_tree_all_unions: bad op %d\n", tp->tr_op);
+		rt_bomb("db_is_tree_all_unions\n");
+	}
+	return 0;
 }
 
 /*

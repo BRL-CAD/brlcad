@@ -1149,6 +1149,12 @@ CONST struct bu_bitv	*solidbits;
 						regp, regp->reg_bit,
 						regp->reg_name );
 				}
+				if( regp->reg_all_unions )  {
+					if(rt_g.debug&DEBUG_PARTITION) bu_log("TRUE (all union)\n");
+					claiming_regions++;
+					lastregion = regp;
+					continue;
+				}
 				if( rt_booleval( regp->reg_treetop, pp, TrueRg,
 				    ap->a_resource ) == FALSE )  {
 					if(rt_g.debug&DEBUG_PARTITION) bu_log("FALSE\n");
@@ -1157,7 +1163,7 @@ CONST struct bu_bitv	*solidbits;
 					continue;
 				}
 				/* This region claims partition */
-				if(rt_g.debug&DEBUG_PARTITION) bu_log("TRUE\n");
+				if(rt_g.debug&DEBUG_PARTITION) bu_log("TRUE (eval)\n");
 				claiming_regions++;
 				lastregion = regp;
 			}
