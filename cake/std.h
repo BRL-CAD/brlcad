@@ -5,8 +5,6 @@
 */
 
 #define	or		else if
-#define	when		break;case
-#define	otherwise	break;default
 #define	loop		for(;;)
 #define	until(expr)	while(!(expr))
 #ifndef	reg
