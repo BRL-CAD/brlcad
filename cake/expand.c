@@ -34,7 +34,7 @@ reg	char	*str;
 	put_trail("expand_cmds", "start");
 	cmds = 0;
 	stackp = 0;
-	if (strlen(str) >= MAXSIZE)
+	if (strlen(str) >= (unsigned)MAXSIZE)
 	{
 		fprintf(stderr, "cake internal error: command too long %s\n", str);
 		exit_cake(FALSE);
@@ -86,7 +86,7 @@ reg	char	*str;
 			offset = strlen(buf) - 1;
 			strcat(buf, rightbr+2);
 
-			if (strlen(buf) >= MAXSIZE)
+			if (strlen(buf) >= (unsigned)MAXSIZE)
 			{
 				fprintf(stderr, "cake: expansion result '%s' is too long\n", buf);
 				exit_cake(FALSE);
@@ -127,8 +127,7 @@ reg	char	*str;
 	segcpy(buf, leftbr_stack[0], nextbr_stack[0]);
 	for (n = 1; n <= stackp; n++)
 		segcat(buf, leftbr_stack[n], nextbr_stack[n]);
-
-	if (strlen(buf) >= MAXSIZE)
+	if (strlen(buf) >= (unsigned)MAXSIZE)
 	{
 		fprintf(stderr, "cake: expansion result '%s' is too long\n", buf);
 		exit_cake(FALSE);

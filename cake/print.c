@@ -45,7 +45,7 @@ reg	int	flag;
 	if (flag & nf_ORIG)
 		strcat(buf, "orig ");
 
-	if (strlen(buf) > 1)
+	if (strlen(buf) > (unsigned)1)
 		buf[strlen(buf)-1] = '\0';
 
 	strcat(buf, "]");
@@ -70,7 +70,7 @@ reg	int	flag;
 	if (flag & af_SCRIPT)
 		strcat(buf, "script ");
 
-	if (strlen(buf) > 1)
+	if (strlen(buf) > (unsigned)1)
 		buf[strlen(buf)-1] = '\0';
 
 	strcat(buf, "]");

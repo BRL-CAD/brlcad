@@ -310,7 +310,7 @@ yysquare()
 				continue;
 
 			buf[i] = '\0';
-			if (strlen(buf) >= MAXSIZE)
+			if (strlen(buf) >= (unsigned)MAXSIZE)
 			{
 				fprintf(stderr, "cake internal error: buffer overflow in yysquare\n");
 				exit_cake(FALSE);
@@ -377,7 +377,7 @@ yycurly()
 
 			/* overwrite first RBRACE */
 			buf[--i] = '\0';
-			if (strlen(buf) >= MAXSIZE)
+			if (strlen(buf) >= (unsigned)MAXSIZE)
 			{
 				fprintf(stderr, "cake internal error: buffer overflow in yycurly\n");
 				exit_cake(FALSE);
@@ -408,7 +408,7 @@ yycurly()
 
 check_actlen()
 {
-	if (strlen(yytext) >= YYLMAX)
+	if (strlen(yytext) >= (unsigned)YYLMAX)
 	{
 		printf("cake: action '%s' too long\n", yytext);
 		exit_cake(FALSE);
