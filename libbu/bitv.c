@@ -60,9 +60,28 @@ int	nbits;
 }
 
 /*
+ *			B U _ B I T V _ F R E E
+ *
+ *  Release all internal storage for this bit vector.
+ *  It is the caller's responsibility to not use the pointer 'bv' any longer.
+ *  It is the caller's responsibility to dequeue from any linked list first.
+ */
+void
+bu_bitv_free(bv)
+struct bu_bitv *bv;
+{
+	BU_CK_BITV(bv);
+
+	bv->l.forw = bv->.l.back = BU_LIST_NULL;	/* sanity */
+	bu_free( (char *)bv, "struct bu_bitv" );
+}
+
+/*
  *			B U _ B I T V _ C L E A R
  *
  *  Set all the bits in the bit vector to zero.
+ *
+ *  Also available as a macro if you don't desire the pointer checking.
  */
 void
 bu_bitv_clear(bv)
@@ -70,7 +89,7 @@ struct bu_bitv	*bv;
 {
 	BU_CK_BITV(bv);
 
-	bzero( (char *)bv->bits, bv->nbits / 8 );	/* 8 bits/byte */
+	BU_BITV_ZEROALL(bv);
 }
 
 /*
