@@ -78,6 +78,8 @@ in all countries except the USA.  All rights reserved.";
 #define LOGFILE	"/vld/lib/gedlog"	/* usage log */
 #endif
 
+extern void view_ring_init(); /* defined in chgview.c */
+
 extern void draw_e_axes();
 extern void draw_m_axes();
 extern void draw_v_axes();
@@ -343,7 +345,7 @@ char **argv;
 
 	BU_GETSTRUCT(view_state, _view_state);
 	view_state->vs_rc = 1;
-	view_ring_init(curr_dm_list);
+	view_ring_init(curr_dm_list->dml_view_state, (struct _view_state *)NULL);
 	/* init rotation matrix */
 	view_state->vs_Viewscale = 500;		/* => viewsize of 1000mm (1m) */
 	bn_mat_idn( view_state->vs_Viewrot );
@@ -355,10 +357,6 @@ char **argv;
 	am_mode = AMM_IDLE;
 	owner = 1;
 	frametime = 1;
-
-	bu_vls_init(&fps_name);
-	bu_vls_printf(&fps_name, "%s(%S,fps)", MGED_DISPLAY_VAR,
-		      &curr_dm_list->dml_dmp->dm_pathName);
 
 	bn_mat_idn( identity );		/* Handy to have around */
 	bn_mat_idn( modelchanges );
