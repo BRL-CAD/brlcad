@@ -653,7 +653,9 @@ CONST struct db_i		*dbip;
 
 	bu_vls_init( &str );
 	bu_vls_strcpy( &str, rp->ss.ss_args );
+#if 0
 bu_log("rt_submodel_import: '%s'\n", rp->ss.ss_args);
+#endif
 	if( bu_struct_parse( &str, rt_submodel_parse, (char *)sip ) < 0 )  {
 		bu_vls_free( &str );
 fail:
@@ -669,8 +671,10 @@ fail:
 		bu_log("rt_submodel_import() treetop= must be specified\n");
 		goto fail;
 	}
+#if 0
 bu_log("import: file='%s', treetop='%s', meth=%d\n", sip->file, sip->treetop, sip->meth);
 bn_mat_print("root2leaf", sip->root2leaf );
+#endif
 
 	return(0);			/* OK */
 }
