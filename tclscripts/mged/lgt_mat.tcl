@@ -151,3 +151,52 @@ proc apply_lgt_mat { args } {
 	}
     }
 }
+
+proc make_lgt_light { args } {
+    set num_args [llength $args]
+    if { $num_args != 1 && $num_args != 4 } {
+	puts "ERROR: usage:"
+	puts "\tmake_lgt_light light_region [x y z]"
+	return
+    }
+
+    set light [lindex $args 0]
+    if { $num_args == 4 } {
+	set x [lindex $args 1]
+	set y [lindex $args 2]
+	set z [lindex $args 3]
+    } else {
+	set x 2500
+	set y 4330
+	set z 8660
+    }
+
+    if { [catch {db get $light tree} light_tree] } {
+	# light object does not exist, create a new one
+	set light_solid [make_name s.light@]
+	db put $light_solid sph V "$x $y $z" A { 0.1 0 0 } \
+		B { 0 0.1 0 } C { 0 0 0.1 }
+	db put $light comb region yes id 1 shader light tree "l $light_solid"
+    } else {
+	# move existing light to the LGT default position
+	set mged_state [status state]
+
+	if { $mged_state != "VIEWING" } {
+	    puts "This command cannot be run in $mged_state state, must be viewing"
+	    return
+	}
+
+	set operator [lindex $light_tree 0]
+	while { $operator != "l" } {
+	    set light_tree [lindex $light_tree 1]
+	    set operator [lindex $light_tree 0]
+	}
+
+	set member_name [lindex $light_tree 1]
+
+	draw $light
+	oed $light $member_name
+	translate $x $y $z
+	press accept
+    }
+}
