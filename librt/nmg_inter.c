@@ -59,10 +59,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "./debug.h"
 
-/* XXX move to raytrace.h */
-RT_EXTERN(struct edgeuse	*nmg_ebreaker, (struct vertex *v,
-				struct edgeuse *eu, CONST struct rt_tol *tol));
-
 #define ISECT_NONE	0
 #define ISECT_SHARED_V	1
 #define ISECT_SPLIT1	2
@@ -2824,61 +2820,6 @@ struct model		*m;		/* XXX */
 	}
 	nmg_tbl( &eu1_list, TBL_FREE, (long *)0 );
 	return hit_v;
-}
-
-/* XXX move to plane.c */
-/*
- *			R T _ 2 L I N E 3 _ C O L I N E A R
- *
- *  Returns non-zero if the 3 lines are colinear to within tol->dist
- *  over the given distance range.
- *
- *  Range should be at least one model diameter for most applications.
- *  1e5 might be OK for a default for "vehicle sized" models.
- *
- *  The direction vectors do not need to be unit length.
- */
-int
-rt_2line3_colinear( p1, d1, p2, d2, range, tol )
-CONST point_t		p1;
-CONST vect_t		d1;
-CONST point_t		p2;
-CONST vect_t		d2;
-double			range;
-CONST struct rt_tol	*tol;
-{
-	fastf_t		mag1;
-	fastf_t		mag2;
-	point_t		tail;
-
-	RT_CK_TOL(tol);
-
-	if( (mag1 = MAGNITUDE(d1)) < SMALL_FASTF )  rt_bomb("rt_2line3_colinear() mag1 zero\n");
-	if( (mag2 = MAGNITUDE(d2)) < SMALL_FASTF )  rt_bomb("rt_2line3_colinear() mag2 zero\n");
-
-	/* Impose a general angular tolerance to reject 
-	/* tol->para and RT_DOT_TOL are too tight a tolerance.  0.1 is 5 degrees */
-	if( fabs(VDOT(d1, d2)) < 0.9 * mag1 * mag2  )  goto fail;
-
-	/* See if start points are within tolerance of other line */
-	if( rt_distsq_line3_pt3( p1, d1, p2 ) > tol->dist_sq )  goto fail;
-	if( rt_distsq_line3_pt3( p2, d2, p1 ) > tol->dist_sq )  goto fail;
-
-	VJOIN1( tail, p1, range/mag1, d1 );
-	if( rt_distsq_line3_pt3( p2, d2, tail ) > tol->dist_sq )  goto fail;
-
-	VJOIN1( tail, p2, range/mag2, d2 );
-	if( rt_distsq_line3_pt3( p1, d1, tail ) > tol->dist_sq )  goto fail;
-
-	if( rt_g.debug & DEBUG_MATH )  {
-		rt_log("rt_2line3colinear(range=%g) ret=1\n",range);
-	}
-	return 1;
-fail:
-	if( rt_g.debug & DEBUG_MATH )  {
-		rt_log("rt_2line3colinear(range=%g) ret=0\n",range);
-	}
-	return 0;
 }
 
 /*
