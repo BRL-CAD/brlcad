@@ -82,13 +82,11 @@ proc init_edit_solid { id args } {
     frame $w._F$row -relief flat -bd 2
     frame $w.nameF
     label $w.nameL -text "Name:" -anchor e
-    hoc_register_data $w.nameL "Solid Name"\
-	    { { summary "The name of a solid must be unique
+    set hoc_data { { summary "The name of a solid must be unique
 within a database." } }
+    hoc_register_data $w.nameL "Solid Name" $hoc_data
     entry $w.nameE -relief sunken -bd 2 -textvar esol_name($id)
-    hoc_register_data $w.nameE "Solid Name"\
-	    { { summary "Enter a solid name. Note that the
-name must be unique." } }
+    hoc_register_data $w.nameE "Solid Name" $hoc_data
     grid $w.nameL $w.nameE -in $w.nameF
     bind $w.nameE <Return> "esol_reset $id $w 0"
     #
@@ -132,52 +130,42 @@ of the supported solid types." } }
     frame $w._F$row -relief groove -bd 2
     #
     frame $w.decF
-    label $w.decL -text "-operator:" -width 9 -anchor e
-    hoc_register_data $w.decL "Decrement Operator Equation"\
-	    { { summary "The decrement equation is used to modify
+    set hoc_data { { summary "The decrement equation is used to modify
 the solid parameter values. Note that \"$val\"
 represents the current value in a solid
 parameter entry widget and must be present
 somewhere in the equation." } }
+    label $w.decL -text "-operator:" -width 9 -anchor e
+    hoc_register_data $w.decL "Decrement Operator Equation" $hoc_data
     entry $w.decE -relief sunken -bd 2 -textvar esol_dec_operation($id)
-    hoc_register_data $w.decE "Decrement Operator Equation"\
-	    { { summary "Enter the decrement operator equation.
-Note that \"$val\" represents the current value
-in a solid parameter entry widget and must
-be present somewhere in the equation." } }
+    hoc_register_data $w.decE "Decrement Operator Equation" $hoc_data
     grid $w.decL $w.decE -in $w.decF -sticky nsew
     grid columnconfigure $w.decF 0 -weight 0
     grid columnconfigure $w.decF 1 -weight 1
     #
     frame $w.incF
-    label $w.incL -text "+operator:" -width 9 -anchor e
-    hoc_register_data $w.incL "Increment Operator Equation"\
-	    { { summary "The increment equation is used to modify
+    set hoc_data { { summary "The increment equation is used to modify
 the solid parameter values. Note that \"$val\"
 represents the current value in a solid
 parameter entry widget and must be present
 somewhere in the equation." } }
+    label $w.incL -text "+operator:" -width 9 -anchor e
+    hoc_register_data $w.incL "Increment Operator Equation" $hoc_data
     entry $w.incE -relief sunken -bd 2 -textvar esol_inc_operation($id)
-    hoc_register_data $w.incE "Increment Operator Equation"\
-	    { { summary "Enter the increment operator equation.
-Note that \"$val\" represents the current value
-in a solid parameter entry widget and must
-be present somewhere in the equation." } }
+    hoc_register_data $w.incE "Increment Operator Equation" $hoc_data
     grid $w.incL $w.incE -in $w.incF -sticky nsew
     grid columnconfigure $w.incF 0 -weight 0
     grid columnconfigure $w.incF 1 -weight 1
     #
     frame $w.fmtF
-    label $w.fmtL -text "format:" -width 9 -anchor e
-    hoc_register_data $w.fmtL "Format"\
-	    { { summary "This string is used with the Tcl
+    set hoc_data { { summary "This string is used with the Tcl
 format command to format the values
 of the solid parameter entries." }
               { see_also format } }
+    label $w.fmtL -text "format:" -width 9 -anchor e
+    hoc_register_data $w.fmtL "Format" $hoc_data
     entry $w.fmtE -relief sunken -bd 2 -textvar esol_format_string($id)
-    hoc_register_data $w.fmtE "Format"\
-	    { { summary "Enter the format string." }
-              { see_also format } }
+    hoc_register_data $w.fmtE "Format" $hoc_data
     grid $w.fmtL $w.fmtE -in $w.fmtF -sticky nsew
     grid columnconfigure $w.fmtF 0 -weight 0
     grid columnconfigure $w.fmtF 1 -weight 1
