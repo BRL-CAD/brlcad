@@ -211,6 +211,9 @@ int	width, height;
 		fb_readrect( MI(ifp)->fbp, 0, 0,
 			ifp->if_width, ifp->if_height, MI(ifp)->mem );
 	 	fb_rmap( MI(ifp)->fbp, &(MI(ifp)->cmap) );
+	} else {
+		/* Image data begins black, colormap linear */
+		fb_make_linear_cmap( &(MI(ifp)->cmap) );
 	}
 
 	return(0);
@@ -283,8 +286,9 @@ RGBpixel	*pp;
 	}
 	if( MI(ifp)->write_thru ) {
 		return fb_clear( MI(ifp)->fbp, pp );
+	} else {
+		MI(ifp)->mem_dirty = 1;
 	}
-	MI(ifp)->mem_dirty = 1;
 	return(0);
 }
 
@@ -333,8 +337,9 @@ int	count;
 
 	if( MI(ifp)->write_thru ) {
 		return fb_write( MI(ifp)->fbp, x, y, pixelp, count );
+	} else {
+		MI(ifp)->mem_dirty = 1;
 	}
-	MI(ifp)->mem_dirty = 1;
 	return(count);
 }
 
@@ -353,15 +358,16 @@ FBIO	*ifp;
 ColorMap	*cmp;
 {
 	if( cmp == COLORMAP_NULL )  {
-		fb_make_linear_colormap( &(MI(ifp)->cmap) );
+		fb_make_linear_cmap( &(MI(ifp)->cmap) );
 	} else {
 		MI(ifp)->cmap = *cmp;		/* struct copy */
 	}
+
 	if( MI(ifp)->write_thru ) {
-		return fb_wmap( MI(ifp)->fbp, &(MI(ifp)->cmap) );
-		/* Map isn't dirty if already written through */
+		return fb_wmap( MI(ifp)->fbp, cmp );
+	} else {
+		MI(ifp)->cmap_dirty = 1;
 	}
-	MI(ifp)->cmap_dirty = 1;
 	return(0);
 }
 
