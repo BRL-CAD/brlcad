@@ -95,7 +95,7 @@ Options:\n\
  -a Az		Azimuth in degrees	(conflicts with -M)\n\
  -e Elev	Elevation in degrees	(conflicts with -M)\n\
  -M		Read model2view matrix on stdin (conflicts with -a, -e)\n\
- -o model.g	Specify output file (default=stdout)\n\
+ -o output.pl	Specify output file (default=stdout)\n\
  -U #		Set use_air boolean to # (default=1)\n\
  -x #		Set librt debug flags\n\
 ";
