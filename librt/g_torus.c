@@ -28,7 +28,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./complex.h"
 
 static int	stdTorus();
-static void	PtSort(), alignZ(), Zrotat(), Yrotat();
+static void	PtSort();
 
 /*
  * The TORUS has the following input fields:
@@ -58,7 +58,7 @@ static void	PtSort(), alignZ(), Zrotat(), Yrotat();
  *  
  *  X' = S(R( X - V ))
  *  
- *  where R(X) =  ( A/(|A|) )		WRONG!!
+ *  where R(X) =  ( A/(|A|) )
  *  		 (  B/(|B|)  ) . X
  *  		  ( H/(|H|) )
  *  
@@ -168,9 +168,9 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	/*
 	 * Apply 3x3 rotation mat only to A,B,H
 	 */
-	MAT3XVEC( A, mat, SP_A );
-	MAT3XVEC( B, mat, SP_B );
-	MAT3XVEC( Hv, mat, SP_H );
+	MAT4X3VEC( A, mat, SP_A );
+	MAT4X3VEC( B, mat, SP_B );
+	MAT4X3VEC( Hv, mat, SP_H );
 
 	/* Validate that |A| > 0, |B| > 0, |H| > 0 */
 	magsq_a = MAGSQ( A );
@@ -224,7 +224,13 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 
 	/* Compute R and invR matrices */
 	VUNITIZE( Hv );
-	alignZ( R, Hv );
+
+	mat_idn( R );
+	VMOVE( &R[0], A );
+	VUNITIZE( &R[0] );
+	VMOVE( &R[4], B );
+	VUNITIZE( &R[4] );
+	VMOVE( &R[8], Hv );
 	mat_inv( tor->tor_invR, R );
 
 	/* Compute SoR.  Here, S = I / r1 */
@@ -522,53 +528,4 @@ register double	t[];
 		}
 	}
 	return;
-}
-
-/*
- *			A L I G N z
- *
- *  Find the rotation matrix to the Z axis using the components
- *  of the vector normal to the plane of the torus.
- */
-static void
-alignZ( rot, Norm )
-matp_t 		rot;
-register vectp_t Norm;
-{
-	mat_t		rotZ, rotY;
-	double		h;
-
-	h = sqrt(Norm[X]*Norm[X] + Norm[Y]*Norm[Y]);
-
-	mat_idn( rot );
-	if ( NEAR_ZERO(h) )
-		return;		/* No rotation required */
-
-	Zrotat( rotZ, Norm[X]/h, Norm[Y]/h );
-	Yrotat( rotY, Norm[Z], h );
-	mat_mul( rot, rotZ, rotY );
-}
-
-/* Here, theta == Azimuth, like in mat_ae() */
-static void
-Zrotat(mat, cs_theta, sn_theta )
-matp_t	mat;
-double	cs_theta, sn_theta;
-{
-	mat_idn( mat );
-
-	mat[0] =  mat[5] = cs_theta;
-	mat[1] = -(mat[4] = sn_theta);
-}
-
-/* phi here is like elevation in mat_ae(). */
-static void
-Yrotat( mat, cs_phi, sn_phi )
-matp_t	mat;
-double	cs_phi, sn_phi;
-{
-	mat_idn( mat );
-
-	mat[0] =  mat[10] = cs_phi;
-	mat[8] = -(mat[2] = sn_phi);
 }
