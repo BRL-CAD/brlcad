@@ -83,8 +83,8 @@ Mat_Db_Entry	*entry;
 	{	FILE	*iconfp;
 		register struct icon_texture	*iconp;
 		icon_t	*iconmap;
-		int	wid = entry->df_rgb[0] << 2;
-		int	hgt = entry->df_rgb[1] << 2;
+		int	wid = entry->df_rgb[0] << 3;
+		int	hgt = entry->df_rgb[1] << 3;
 	if( (iconfp = fopen( file, "r" )) == NULL )
 		{
 		rt_log( "Can't open icon texture \"%s\" for reading.\n",
@@ -150,8 +150,8 @@ Mat_Db_Entry	*entry;
 	{	FBIO		*txfbiop;
 		register struct fb_texture	*fbp;
 		RGBpixel	*fbmap;
-		int		wid = entry->df_rgb[0] << 2;
-		int		hgt = entry->df_rgb[1] << 2;
+		int		wid = entry->df_rgb[0] << 3;
+		int		hgt = entry->df_rgb[1] << 3;
 	if( (txfbiop = fb_open( file, wid, hgt )) == FBIO_NULL )
 		return	NULL;
 	if(	(fbmap =

@@ -43,7 +43,7 @@ Mat_Db_Entry		mat_nul_entry =
 				MF_NULL,	/* Mode flag.		*/
 				"(null)"	/* Material name.	*/
 				};
-_LOCAL_ int	get_Mat_Entry(), put_Entry();
+_LOCAL_ int	get_Mat_Entry(), put_Mat_Entry();
 
 /*	m a t _ R d _ D b ( )
 	Open material database and read entries into table,
@@ -137,8 +137,8 @@ int		material_id;
 					);
 		else
 			prnt_Scroll( "        texture map : width=%d height=%d\n",
-					entry->df_rgb[0] << 2,
-					entry->df_rgb[1] << 2
+					entry->df_rgb[0] << 3,
+					entry->df_rgb[1] << 3
 					);
 		}
 	return	success;
@@ -254,15 +254,15 @@ int	id;
 	else
 		{
 		(void) sprintf( prompt, "texture : width and height? [0 to 1024](%d %d) ",
-				entry->df_rgb[0]<<2,
-				entry->df_rgb[1]<<2
+				entry->df_rgb[0]<<3,
+				entry->df_rgb[1]<<3
 				);
 		if(	get_Input( input_buf, MAX_LN, prompt ) != NULL
 	 	    &&	sscanf( input_buf, "%d %d", &red, &grn ) == 2
 			)
 			{
-			entry->df_rgb[0] = red >> 2;
-			entry->df_rgb[1] = grn >> 2;
+			entry->df_rgb[0] = red >> 3;
+			entry->df_rgb[1] = grn >> 3;
 			}
 		}
 	entry->mode_flag = MF_USED;
