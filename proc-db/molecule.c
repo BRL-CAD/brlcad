@@ -45,7 +45,9 @@ char * matparm = "shine=100.0 diffuse=.8 specular=.2";
 
 void	read_data(), process_sphere();
 
-CONST static char usage[] = "Usage: molecule db_title\n";
+struct wmember head;
+
+CONST static char usage[] = "Usage: molecule db_title < mol-cube.dat > mol.g\n";
 
 main(argc, argv)
 int argc;
@@ -57,8 +59,12 @@ char ** argv;
 		exit(1);
 	}
 
+	RT_LIST_INIT( &head.l );
 	mk_id( stdout, argv[1] );
 	read_data();
+
+	/* Build the overall combination */
+	mk_lfcomb( stdout, "mol.g", &head, 0 );
 }
 
 /* File format from stdin
@@ -145,6 +151,7 @@ int	sph_type;
 	rgb[2] = atom_list[sph_type].blue;
 
 	sprintf(nm, "SPH.%d", id );
+	(void)mk_addmember( nm, &head, WMOP_UNION );
 	sprintf(nm1, "sph.%d", id );
 	mk_sph( stdout, nm1, center, rad );
 	mk_comb( stdout, nm, 1, 1, matname, matparm, rgb, 0 );
@@ -198,12 +205,19 @@ int sp1, sp2;
 
 	sprintf( nm, "bond.%d.%d", sp1, sp2);
 	sprintf( nm1, "BOND.%d.%d", sp1, sp2);
+	(void)mk_addmember( nm1, &head, WMOP_UNION );
 
 	rgb[0] = 191;
 	rgb[1] = 142;
 	rgb[2] = 57;
 
-	mk_rcc( stdout, nm, base, height, 5.0 );
+#if 1
+	/* Use this for mol-cube.dat */
+	mk_rcc( stdout, nm, base, height, s1->s_rad * 0.15 );
+#else
+	/* Use this for chemical molecules */
+	mk_rcc( stdout, nm, base, height, s1->s_rad * 0.5 );
+#endif
 
 	mk_comb( stdout, nm1, 3, 1, matname, matparm, rgb, 0 );
 	mk_memb( stdout, nm, m, UNION);
