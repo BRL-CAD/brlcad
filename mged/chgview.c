@@ -77,7 +77,6 @@ double		mged_rel_tol = 0.01;		/* 1%, by default */
 double		mged_nrm_tol;			/* normal ang tol, radians */
 
 RT_EXTERN(int	edit_com, (int argc, char **argv, int kind, int catch_sigint));
-int		f_zap();
 
 /* Delete an object or several objects from the display */
 /* Format: d object1 object2 .... objectn */
@@ -144,12 +143,6 @@ char	**argv;
 	if( not_state( ST_VIEW, "View Rotate") )
 	  return TCL_ERROR;
 #endif
-
-	if(!rot_set){
-          rot_x += atof(argv[1]);
-          rot_y += atof(argv[2]);
-          rot_z += atof(argv[3]);
-        }
 
 #if 1
 	mat_idn( newrot );
@@ -403,9 +396,7 @@ int	catch_sigint;
 	      new_mats();
 
 	      MAT_DELTAS_GET(orig_pos, toViewcenter);
-	      tran_x = 0.0;
-	      tran_y = 0.0;
-	      tran_z = 0.0;
+	      VSETALL( absolute_slew, 0.0 );
 	    }
 
 	    dmp->dmr_colorchange();
@@ -1266,21 +1257,18 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	int	i;
-	fastf_t	f;
-	char	*cmd = argv[1];
-	static int aslewflag = 0;
-	vect_t	aslew;
-
-  int iknob;
+  int	i;
+  fastf_t f;
+  char	*cmd = argv[1];
+  static int aslewflag = 0;
+  vect_t	aslew;
+  int iknob = 0;
 
   if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
     return TCL_ERROR;
 
   if(strstr(argv[0], "iknob"))
     iknob = 1;
-  else
-    iknob = 0;
 
   if(argc == 2)  {
     i = 0;
@@ -1341,74 +1329,86 @@ char	**argv;
       goto usage;
     }
   } else if( cmd[0] == 'a' && cmd[1] != '\0' && cmd[2] == '\0' ) {
+    struct rt_vls cmd_vls;
+
 		switch( cmd[1] ) {
 		case 'x':
-			VSETALL(rate_rotate, 0);
+		  if(iknob){
+		    (void)irot(f*180.0, 0.0, 0.0);
+		    absolute_rotate[X] += f;
+		  }else{
+		    (void)irot((f - absolute_rotate[X])*180.0, 0.0, 0.0);
+		    absolute_rotate[X] = f;
+		  }
 
-			if(iknob)
-			  absolute_rotate[X] += f;
-			else
-			  absolute_rotate[X] = f;
+		  /* wrap around */
+		  if(absolute_rotate[X] < -1.0)
+		    absolute_rotate[X] = absolute_rotate[X] + 2.0;
+		  else if(absolute_rotate[X] > 1.0)
+		    absolute_rotate[X] = absolute_rotate[X] - 2.0;
 
-			absview_v( absolute_rotate );
-			break;
+		  break;
 		case 'y':
-			VSETALL(rate_rotate, 0);
+		  if(iknob){
+		    (void)irot(0.0, f*180.0, 0.0);
+		    absolute_rotate[Y] += f;
+		  }else{
+		    (void)irot(0.0, (f - absolute_rotate[Y])*180.0, 0.0);
+		    absolute_rotate[Y] = f;
+		  }
 
-			if(iknob)
-			  absolute_rotate[Y] += f;
-			else
-			  absolute_rotate[Y] = f;
+		  /* wrap around */
+		  if(absolute_rotate[Y] < -1.0)
+		    absolute_rotate[Y] = absolute_rotate[Y] + 2.0;
+		  else if(absolute_rotate[Y] > 1.0)
+		    absolute_rotate[Y] = absolute_rotate[Y] - 2.0;
 
-			absview_v( absolute_rotate );
-			break;
+		  break;
 		case 'z':
-			VSETALL(rate_rotate, 0);
+		  if(iknob){
+		    (void)irot(0.0, 0.0, f*180.0);
+		    absolute_rotate[Z] += f;
+		  }else{
+		    (void)irot(0.0, 0.0, (f - absolute_rotate[Z])*180.0);
+		    absolute_rotate[Z] = f;
+		  }
 
-			if(iknob)
-			  absolute_rotate[Z] += f;
-			else
-			  absolute_rotate[Z] = f;
+		  /* wrap around */
+		  if(absolute_rotate[Z] < -1.0)
+		    absolute_rotate[Z] = absolute_rotate[Z] + 2.0;
+		  else if(absolute_rotate[Z] > 1.0)
+		    absolute_rotate[Z] = absolute_rotate[Z] - 2.0;
 
-			absview_v( absolute_rotate );
-			break;
+		  break;
 		case 'X':
-			aslew[X] = f - absolute_slew[X];
-			aslew[Y] = absolute_slew[Y];
-			aslew[Z] = absolute_slew[Z];
-			slewview( aslew );
+		  if(iknob)
+		    absolute_slew[X] += f;
+		  else
+		    absolute_slew[X] = f;
 
-			if(iknob)
-			  absolute_slew[X] += f;
-			else
-			  absolute_slew[X] = f;
+		  (void)tran( absolute_slew );
 
-			break;
+		  break;
 		case 'Y':
-			aslew[X] = absolute_slew[X];
-			aslew[Y] = f - absolute_slew[Y];
-			aslew[Z] = absolute_slew[Z];
-			slewview( aslew );
+		  if(iknob)
+		    absolute_slew[Y] += f;
+		  else
+		    absolute_slew[Y] = f;
 
-			if(iknob)
-			  absolute_slew[Y] += f;
-			else
-			  absolute_slew[Y] = f;
+		  (void)tran( absolute_slew );
 
-			break;
+		  break;
 		case 'Z':
-			aslew[X] = absolute_slew[X];
-			aslew[Y] = absolute_slew[Y];
-			aslew[Z] = f - absolute_slew[Z];
-			slewview( aslew );
+		  if(iknob)
+		    absolute_slew[Z] += f;
+		  else
+		    absolute_slew[Z] = f;
 
-			if(iknob)
-			  absolute_slew[Z] += f;
-			else
-			  absolute_slew[Z] = f;
-			break;
+		  (void)tran( absolute_slew );
+
+		  break;
 		case 'S':
-			break;
+		  break;
 		default:
 			goto usage;
 		}
@@ -1416,26 +1416,72 @@ char	**argv;
 		VSETALL( absolute_slew, 0.0 );
 		return TCL_OK;
 	} else if( strcmp( cmd, "xadc" ) == 0 )  {
-		rt_vls_printf( &dm_values.dv_string, "adc x %d\n" , i );
-		return TCL_OK;
+	  char    *av[] = {NULL, "x", NULL, NULL};
+	  char    sval[32];
+
+	  if(iknob)
+	    av[0] = "iadc";
+	  else
+	    av[0] = "adc";
+
+	  av[2] = sval;
+	  sprintf(sval, "%d", i);
+	  (void)f_adc(clientData, interp, 3, av);
 	} else if( strcmp( cmd, "yadc" ) == 0 )  {
-		rt_vls_printf( &dm_values.dv_string, "adc y %d\n" , i );
-		return TCL_OK;
+	  char    *av[] = {NULL, "y", NULL, NULL};
+	  char    sval[32];
+
+	  if(iknob)
+	    av[0] = "iadc";
+	  else
+	    av[0] = "adc";
+
+	  av[2] = sval;
+	  sprintf(sval, "%d", i);
+	  (void)f_adc(clientData, interp, 3, av);
 	} else if( strcmp( cmd, "ang1" ) == 0 )  {
-		rt_vls_printf( &dm_values.dv_string, "adc a1 %f\n", 45.0*(1.0-(double)i/2047.0) );
-		return TCL_OK;
+	  char    *av[] = {NULL, "a1", NULL, NULL};
+	  char    sval[32];
+
+	  if(iknob)
+	    av[0] = "iadc";
+	  else
+	    av[0] = "adc";
+
+	  av[2] = sval;
+	  sprintf(sval, "%f", 45.0*(1.0-(double)i/2047.0));
+	  (void)f_adc(clientData, interp, 3, av);
 	} else if( strcmp( cmd, "ang2" ) == 0 )  {
-		rt_vls_printf( &dm_values.dv_string, "adc a2 %f\n", 45.0*(1.0-(double)i/2047.0) );
-		return TCL_OK;
+	  char    *av[] = {NULL, "a2", NULL, NULL};
+	  char    sval[32];
+
+	  if(iknob)
+	    av[0] = "iadc";
+	  else
+	    av[0] = "adc";
+
+	  av[2] = sval;
+	  sprintf(sval, "%f", 45.0*(1.0-(double)i/2047.0));
+	  (void)f_adc(clientData, interp, 3, av);
 	} else if( strcmp( cmd, "distadc" ) == 0 )  {
-		rt_vls_printf( &dm_values.dv_string, "adc dst %f\n",
-			((double)i/2047.0 + 1.0)*Viewscale * base2local * M_SQRT2 );
-		return TCL_OK;
+	  char    *av[] = {NULL, "dst", NULL, NULL};
+	  char    sval[32];
+
+	  if(iknob)
+	    av[0] = "iadc";
+	  else
+	    av[0] = "adc";
+
+	  av[2] = sval;
+	  sprintf(sval, "%f", ((double)i/2047.0 + 1.0)*Viewscale * base2local * M_SQRT2);
+	  (void)f_adc(clientData, interp, 3, av);
 	} else if( strcmp( cmd, "zap" ) == 0 || strcmp( cmd, "zero" ) == 0 )  {
 		char	*av[] = {"adc", "reset", (char *)NULL};
 
 		VSETALL( rate_rotate, 0 );
 		VSETALL( rate_slew, 0 );
+		VSETALL( absolute_rotate, 0 );
+		VSETALL( absolute_slew, 0 );
 		rate_zoom = 0;
 		
 		(void)f_adc( clientData, interp, 2, av );
@@ -1632,18 +1678,16 @@ char	**argv;
 	new_mats();
 
 	if(state == ST_S_EDIT || state == ST_O_EDIT){
-	  tran_x *= val;
-	  tran_y *= val;
-	  tran_z *= val;
+	  absolute_slew[X] *= val;
+	  absolute_slew[Y] *= val;
+	  absolute_slew[Z] *= val;
 	}else{
 	  MAT_DELTAS_GET_NEG(new_pos, toViewcenter);
 	  VSUB2(diff, new_pos, orig_pos);
 	  VADD2(new_pos, old_pos, diff);
 	  VSET(view_pos, new_pos[X], new_pos[Y], new_pos[Z]);
 	  MAT4X3PNT( new_pos, model2view, view_pos);
-	  tran_x = new_pos[X];
-	  tran_y = new_pos[Y];
-	  tran_z = new_pos[Z];
+	  VMOVE( absolute_slew, new_pos );
 	}
 
 	return TCL_OK;
