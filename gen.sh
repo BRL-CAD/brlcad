@@ -30,7 +30,7 @@ NFS=1
 # RCS main Revision number, and date.
 #RELEASE=M.N;	RCS_REVISION=X;		REL=DATE=dd-mmm-yy
 RELEASE=4.6;	RCS_REVISION=11;	REL_DATE=Today		# almost-5.0
-#RELEASE=4.5;	RCS_REVISION=11;	REL_DATE=xx-Jan-98	# 4.4 Maint release
+#RELEASE=4.5;	RCS_REVISION=11;	REL_DATE=28-Jan-98	# 4.4 Maint release
 #RELEASE=4.4;	RCS_REVISION=11;	REL_DATE=5-Jan-95
 #RELEASE=4.3;	RCS_REVISION=10;	REL_DATE=2-Jan-95	# Beta6
 #RELEASE=4.3;	RCS_REVISION=10;	REL_DATE=29-Dec-94	# Beta5
@@ -275,12 +275,12 @@ benchmark)
 	if test x$NFS = x1
 	then	sh $0 relink
 	fi
-	(cd ${DIRPRE}libsysv${DIRSUF} &&  cake -k)
+	(cd ${DIRPRE}libsysv${DIRSUF} && cake -k)
 	(cd ${DIRPRE}bench${DIRSUF} && cake -k)
-	(cd ${DIRPRE}libwdb${DIRSUF} &&  cake -k)
+	(cd ${DIRPRE}libwdb${DIRSUF} && cake -k)
 	if test ${HAS_TCP} = 1
 	then
-		(cd ${DIRPRE}libpkg${DIRSUF} &&  cake -k)  # needed for IF_REMOTE
+		(cd ${DIRPRE}libpkg${DIRSUF} && cake -k)  # needed for IF_REMOTE
 	fi
 	(cd ${DIRPRE}libfb${DIRSUF} && cake -k)
 	(cd ${DIRPRE}libbu${DIRSUF} && cake -k)
