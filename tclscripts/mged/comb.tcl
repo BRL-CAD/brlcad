@@ -11,16 +11,7 @@ check_externs "get_comb put_comb"
 proc init_comb { id } {
     global player_screen
     global mged_active_dm
-    global comb_name
-    global comb_isRegion
-    global comb_id
-    global comb_air
-    global comb_gift
-    global comb_los
-    global comb_color
-    global comb_shader
-    global comb_inherit
-    global comb_comb
+    global comb_control
 
     set top .$id.comb
 
@@ -29,16 +20,17 @@ proc init_comb { id } {
 	return
     }
 
-    set comb_name($id) ""
-    set comb_isRegion($id) "Yes"
-    set comb_id($id) ""
-    set comb_air($id) ""
-    set comb_gift($id) ""
-    set comb_los($id) ""
-    set comb_color($id) ""
-    set comb_shader($id) ""
-    set comb_inherit($id) ""
-    set comb_comb($id) ""
+    set comb_control($id,name) ""
+    set comb_control($id,isRegion) "Yes"
+    set comb_control($id,id) ""
+    set comb_control($id,air) ""
+    set comb_control($id,gift) ""
+    set comb_control($id,los) ""
+    set comb_control($id,color) ""
+    set comb_control($id,inherit) ""
+    set comb_control($id,comb) ""
+    set comb_control($id,shader) ""
+    set comb_control($id,shader_gui) ""
 
     toplevel $top -screen $player_screen($id)
 
@@ -64,7 +56,7 @@ proc init_comb { id } {
     frame $top.combFF -relief sunken -bd 2
 
     label $top.nameL -text "Name" -anchor w
-    entry $top.nameE -relief flat -width 12 -textvar comb_name($id)
+    entry $top.nameE -relief flat -width 12 -textvar comb_control($id,name)
     menubutton $top.nameMB -relief raised -bd 2\
 	    -menu $top.nameMB.m -indicatoron 1
     menu $top.nameMB.m -tearoff 0
@@ -74,55 +66,53 @@ proc init_comb { id } {
 	    -command "winset \$mged_active_dm($id); set mouse_behavior c"
 
     label $top.idL -text "Region Id" -anchor w
-    entry $top.idE -relief flat -width 12 -textvar comb_id($id)
+    entry $top.idE -relief flat -width 12 -textvar comb_control($id,id)
 
     label $top.airL -text "Air Code" -anchor w
-    entry $top.airE -relief flat -width 12 -textvar comb_air($id)
+    entry $top.airE -relief flat -width 12 -textvar comb_control($id,air)
 
     label $top.giftL -text "Gift Material" -anchor w
-    entry $top.giftE -relief flat -width 12 -textvar comb_gift($id)
+    entry $top.giftE -relief flat -width 12 -textvar comb_control($id,gift)
 
     label $top.losL -text "LOS" -anchor w
-    entry $top.losE -relief flat -width 12 -textvar comb_los($id)
+    entry $top.losE -relief flat -width 12 -textvar comb_control($id,los)
 
     label $top.colorL -text "Color" -anchor w
-    entry $top.colorE -relief flat -width 12 -textvar comb_color($id)
+    entry $top.colorE -relief flat -width 12 -textvar comb_control($id,color)
     menubutton $top.colorMB -relief raised -bd 2\
 	    -menu $top.colorMB.m -indicatoron 1
     menu $top.colorMB.m -tearoff 0
     $top.colorMB.m add command -label black\
-	     -command "set comb_color($id) \"0 0 0\"; comb_set_colorMB $id"
+	     -command "set comb_control($id,color) \"0 0 0\"; comb_set_colorMB $id"
     $top.colorMB.m add command -label white\
-	     -command "set comb_color($id) \"220 220 220\"; comb_set_colorMB $id"
+	     -command "set comb_control($id,color) \"220 220 220\"; comb_set_colorMB $id"
     $top.colorMB.m add command -label red\
-	     -command "set comb_color($id) \"220 0 0\"; comb_set_colorMB $id"
+	     -command "set comb_control($id,color) \"220 0 0\"; comb_set_colorMB $id"
     $top.colorMB.m add command -label green\
-	     -command "set comb_color($id) \"0 220 0\"; comb_set_colorMB $id"
+	     -command "set comb_control($id,color) \"0 220 0\"; comb_set_colorMB $id"
     $top.colorMB.m add command -label blue\
-	     -command "set comb_color($id) \"0 0 220\"; comb_set_colorMB $id"
+	     -command "set comb_control($id,color) \"0 0 220\"; comb_set_colorMB $id"
     $top.colorMB.m add command -label yellow\
-	     -command "set comb_color($id) \"220 220 0\"; comb_set_colorMB $id"
+	     -command "set comb_control($id,color) \"220 220 0\"; comb_set_colorMB $id"
     $top.colorMB.m add command -label cyan\
-	    -command "set comb_color($id) \"0 220 220\"; comb_set_colorMB $id"
+	    -command "set comb_control($id,color) \"0 220 220\"; comb_set_colorMB $id"
     $top.colorMB.m add command -label magenta\
-	    -command "set comb_color($id) \"220 0 220\"; comb_set_colorMB $id"
+	    -command "set comb_control($id,color) \"220 0 220\"; comb_set_colorMB $id"
     $top.colorMB.m add separator
     $top.colorMB.m add command -label "Color Tool..."\
 	    -command "comb_choose_color $id $top"
 
     label $top.shaderL -text "Shader" -anchor w
-    entry $top.shaderE -relief flat -width 12 -textvar comb_shader($id)
+    entry $top.shaderE -relief flat -width 12 -textvar comb_control($id,shader)
     menubutton $top.shaderMB -relief raised -bd 2\
 	    -menu $top.shaderMB.m -indicatoron 1
     menu $top.shaderMB.m -tearoff 0
-    $top.shaderMB.m add command -label default\
-	    -command "set comb_shader($id) default"
     $top.shaderMB.m add command -label plastic\
-	    -command "set comb_shader($id) plastic"
+	    -command "comb_shader_gui $id plastic"
     $top.shaderMB.m add command -label mirror\
-	    -command "set comb_shader($id) mirror"
+	    -command "comb_shader_gui $id mirror"
     $top.shaderMB.m add command -label glass\
-	    -command "set comb_shader($id) glass"
+	    -command "comb_shader_gui $id glass"
 
     label $top.combL -text "Boolean Expression:" -anchor w
     text $top.combT -relief sunken -bd 2 -width 40 -height 10\
@@ -133,17 +123,17 @@ proc init_comb { id } {
 #	    -command "comb_select_gift $id"
 
     checkbutton $top.isRegionCB -relief raised -text "Is Region"\
-	    -offvalue No -onvalue Yes -variable comb_isRegion($id)\
+	    -offvalue No -onvalue Yes -variable comb_control($id,isRegion)\
 	    -command "comb_toggle_isRegion $id"
     checkbutton $top.inheritCB -relief raised -text "Inherit"\
-	    -offvalue No -onvalue Yes -variable comb_inherit($id)
+	    -offvalue No -onvalue Yes -variable comb_control($id,inherit)
 
     button $top.applyB -relief raised -text "Apply"\
 	    -command "comb_apply $id"
     button $top.resetB -relief raised -text "Reset"\
 	    -command "comb_reset $id"
     button $top.dismissB -relief raised -text "Dismiss"\
-	    -command "catch { destroy $top }"
+	    -command "comb_dismiss $id $top"
 
     grid $top.nameL -sticky "ew" -in $top.nameF
     grid $top.nameE $top.nameMB -sticky "ew" -in $top.nameFF
@@ -170,7 +160,7 @@ proc init_comb { id } {
     grid columnconfigure $top.airFF 0 -weight 1
 
     grid $top.shaderL -sticky "ew" -in $top.shaderF
-    grid $top.shaderE -sticky "ew" -in $top.shaderFF
+    grid $top.shaderE $top.shaderMB -sticky "ew" -in $top.shaderFF
     grid $top.shaderFF -sticky "ew" -in $top.shaderF
     grid $top.losL -sticky "ew" -in $top.losF
     grid $top.losE -sticky "ew" -in $top.losFF
@@ -202,9 +192,10 @@ proc init_comb { id } {
     grid rowconfigure $top.gridF3 1 -weight 1
     grid columnconfigure $top.gridF3 0 -weight 1
 
-    grid $top.applyB $top.resetB x $top.dismissB -sticky "ew"\
+    grid $top.applyB x $top.resetB x $top.dismissB -sticky "ew"\
 	    -in $top.gridF4 -pady 8
-    grid columnconfigure $top.gridF4 2 -weight 1
+    grid columnconfigure $top.gridF4 1 -weight 1
+    grid columnconfigure $top.gridF4 3 -weight 1
 
     grid $top.gridF -sticky "ew" -padx 8 -pady 8
     grid $top.gridF2 -sticky "ew" -padx 8 -pady 8
@@ -227,22 +218,13 @@ proc init_comb { id } {
 
 proc comb_apply { id } {
     global player_screen
-    global comb_name
-    global comb_isRegion
-    global comb_id
-    global comb_air
-    global comb_gift
-    global comb_los
-    global comb_color
-    global comb_shader
-    global comb_inherit
-    global comb_comb
+    global comb_control
 
     set top .$id.comb
-    set comb_comb($id) [$top.combT get 0.0 end]
+    set comb_control($id,comb) [$top.combT get 0.0 end]
 
-    if {$comb_isRegion($id)} {
-	if {$comb_id($id) < 0} {
+    if {$comb_control($id,isRegion)} {
+	if {$comb_control($id,id) < 0} {
 	    cad_dialog .$id.combDialog $player_screen($id)\
 		    "Bad region id!"\
 		    "Region id must be >= 0"\
@@ -250,7 +232,7 @@ proc comb_apply { id } {
 	    return
 	}
 
-	if {$comb_air($id) < 0} {
+	if {$comb_control($id,air) < 0} {
 	    cad_dialog .$id.combDialog $player_screen($id)\
 		    "Bad air code!"\
 		    "Air code must be >= 0"\
@@ -258,17 +240,17 @@ proc comb_apply { id } {
 	    return
 	}
 
-	if {$comb_id($id) == 0 && $comb_air($id) == 0} {
+	if {$comb_control($id,id) == 0 && $comb_control($id,air) == 0} {
 	    cad_dialog .$id.combDialog $player_screen($id)\
 		    "Warning: both region id and air code are 0"\
 		    "Warning: both region id and air code are 0"\
 		    "" 0 OK
 	}
 
-	set result [catch {put_comb $comb_name($id) $comb_isRegion($id)\
-		$comb_id($id) $comb_air($id) $comb_gift($id) $comb_los($id)\
-		$comb_color($id) $comb_shader($id) $comb_inherit($id)\
-		$comb_comb($id)} comb_error]
+	set result [catch {put_comb $comb_control($id,name) $comb_control($id,isRegion)\
+		$comb_control($id,id) $comb_control($id,air) $comb_control($id,gift) $comb_control($id,los)\
+		$comb_control($id,color) $comb_control($id,shader) $comb_control($id,inherit)\
+		$comb_control($id,comb)} comb_error]
 
 	if {$result} {
 	    return $comb_error
@@ -277,9 +259,9 @@ proc comb_apply { id } {
 	return
     }
 
-    set result [catch {put_comb $comb_name($id) $comb_isRegion($id)\
-	    $comb_color($id) $comb_shader($id) $comb_inherit($id)\
-	    $comb_comb($id)} comb_error]
+    set result [catch {put_comb $comb_control($id,name) $comb_control($id,isRegion)\
+	    $comb_control($id,color) $comb_control($id,shader) $comb_control($id,inherit)\
+	    $comb_control($id,comb)} comb_error]
 
     if {$result} {
 	return $comb_error
@@ -288,20 +270,11 @@ proc comb_apply { id } {
 
 proc comb_reset { id } {
     global player_screen
-    global comb_name
-    global comb_isRegion
-    global comb_id
-    global comb_air
-    global comb_gift
-    global comb_los
-    global comb_color
-    global comb_shader
-    global comb_inherit
-    global comb_comb
+    global comb_control
 
     set top .$id.comb
 
-    if {$comb_name($id) == ""} {
+    if {$comb_control($id,name) == ""} {
 	cad_dialog .$id.combDialog $player_screen($id)\
 		"You must specify a region/combination name!"\
 		"You must specify a region/combination name!"\
@@ -309,8 +282,8 @@ proc comb_reset { id } {
 	return
     }
 
-    set save_isRegion $comb_isRegion($id)
-    set result [catch {get_comb $comb_name($id)} comb_defs]
+    set save_isRegion $comb_control($id,isRegion)
+    set result [catch {get_comb $comb_control($id,name)} comb_defs]
     if {$result == 1} {
 	cad_dialog .$id.combDialog $player_screen($id)\
 		"comb_reset: Error"\
@@ -319,40 +292,47 @@ proc comb_reset { id } {
 	return
     }
 
-    set comb_isRegion($id) [lindex $comb_defs 1]
+    set comb_control($id,isRegion) [lindex $comb_defs 1]
 
-    if {$comb_isRegion($id) == "Yes"} {
-	set comb_id($id) [lindex $comb_defs 2]
-	set comb_air($id) [lindex $comb_defs 3]
-	set comb_gift($id) [lindex $comb_defs 4]
-	set comb_los($id) [lindex $comb_defs 5]
-	set comb_color($id) [lindex $comb_defs 6]
-	set comb_shader($id) [lindex $comb_defs 7]
-	set comb_inherit($id) [lindex $comb_defs 8]
-	set comb_comb($id) [lindex $comb_defs 9]
+    if {$comb_control($id,isRegion) == "Yes"} {
+	set comb_control($id,id) [lindex $comb_defs 2]
+	set comb_control($id,air) [lindex $comb_defs 3]
+	set comb_control($id,gift) [lindex $comb_defs 4]
+	set comb_control($id,los) [lindex $comb_defs 5]
+	set comb_control($id,color) [lindex $comb_defs 6]
+	set comb_control($id,shader) [lindex $comb_defs 7]
+	set comb_control($id,inherit) [lindex $comb_defs 8]
+	set comb_control($id,comb) [lindex $comb_defs 9]
     } else {
-	set comb_color($id) [lindex $comb_defs 2]
-	set comb_shader($id) [lindex $comb_defs 3]
-	set comb_inherit($id) [lindex $comb_defs 4]
-	set comb_comb($id) [lindex $comb_defs 5]
+	set comb_control($id,color) [lindex $comb_defs 2]
+	set comb_control($id,shader) [lindex $comb_defs 3]
+	set comb_control($id,inherit) [lindex $comb_defs 4]
+	set comb_control($id,comb) [lindex $comb_defs 5]
     }
 
-    set_WidgetRGBColor $top.colorMB $comb_color($id)
+    set_WidgetRGBColor $top.colorMB $comb_control($id,color)
     $top.combT delete 0.0 end
-    $top.combT insert end $comb_comb($id)
+    $top.combT insert end $comb_control($id,comb)
 
-    if {$save_isRegion != $comb_isRegion($id)} {
+    if {$save_isRegion != $comb_control($id,isRegion)} {
 	comb_toggle_isRegion $id
     }
 }
 
+proc comb_dismiss { id top } {
+    global comb_control
+
+    catch { destroy $top }
+    catch { destroy $comb_control($id,shader_gui) }
+}
+
 proc comb_toggle_isRegion { id } {
-    global comb_isRegion
+    global comb_control
 
     set top .$id.comb
     grid remove $top.gridF
 
-    if {$comb_isRegion($id) == "Yes"} {
+    if {$comb_control($id,isRegion) == "Yes"} {
 	grid forget $top.nameF $top.colorF $top.shaderF
 
 	frame $top.idF
@@ -365,16 +345,16 @@ proc comb_toggle_isRegion { id } {
 	frame $top.losFF -relief sunken -bd 2
 
 	label $top.idL -text "Region Id" -anchor w
-	entry $top.idE -relief flat -width 12 -textvar comb_id($id)
+	entry $top.idE -relief flat -width 12 -textvar comb_control($id,id)
 
 	label $top.airL -text "Air Code" -anchor w
-	entry $top.airE -relief flat -width 12 -textvar comb_air($id)
+	entry $top.airE -relief flat -width 12 -textvar comb_control($id,air)
 
 	label $top.giftL -text "Gift Material" -anchor w
-	entry $top.giftE -relief flat -width 12 -textvar comb_gift($id)
+	entry $top.giftE -relief flat -width 12 -textvar comb_control($id,gift)
 
 	label $top.losL -text "LOS" -anchor w
-	entry $top.losE -relief flat -width 12 -textvar comb_los($id)
+	entry $top.losE -relief flat -width 12 -textvar comb_control($id,los)
 
 #	button $top.selectGiftB -relief raised -text "Select Gift Material"\
 #		-command "comb_select_gift $id"
@@ -444,28 +424,39 @@ proc comb_choose_color { id parent } {
 }
 
 proc comb_color_ok { id parent w } {
-    global comb_color
+    global comb_control
 
     upvar #0 $w data
 
     $parent.colorMB configure -bg $data(finalColor)
-    set comb_color($id) "$data(red) $data(green) $data(blue)"
+    set comb_control($id,color) "$data(red) $data(green) $data(blue)"
 
     destroy $w
     unset data
 }
 
 proc comb_set_colorMB { id } {
-    global comb_color
+    global comb_control
 
     set top .$id.comb
-    set_WidgetRGBColor $top.colorMB $comb_color($id)
+    set_WidgetRGBColor $top.colorMB $comb_control($id,color)
+}
+
+proc comb_shader_gui { id shader_type } {
+    global comb_control
+
+    set current_shader_type [lindex $comb_control($id,shader) 0]
+
+    if {$current_shader_type != $shader_type} {
+	set comb_control($id,shader) $shader_type
+    }
+
+    set comb_control($id,shader_gui) [do_shader comb_control($id,shader)]
 }
 
 #proc comb_select_gift { id } {
 #    global player_screen
-#    global comb_gift
-#    global comb_gift_list
+#    global comb_control
 #
 #    set top .$id.sel_gift
 #
@@ -484,7 +475,7 @@ proc comb_set_colorMB { id } {
 #    scrollbar $top.giftS -relief flat -command "$top.giftLB yview"
 #
 #    label $top.giftL -text "Gift List:" -anchor w
-#    entry $top.giftE -width 12 -textvar comb_gift_list($id)
+#    entry $top.giftE -width 12 -textvar comb_control($id,gift_list)
 #
 #    button $top.resetB -relief raised -text "Reset"\
 #	    -command "load_gift_material $id"
@@ -511,6 +502,5 @@ proc comb_set_colorMB { id } {
 #}
 #
 #proc load_gift_material { id } {
-#    global comb_gift
-#    global comb_gift_list
+#    global comb_control
 #}
