@@ -149,7 +149,9 @@ static unsigned short *hl_dstmap = NULL;
 	in the root finder.  BEHIND_ME_TOL must be larger than the distance
 	to the exit from these thin segments.
  */
+#ifndef BEHIND_ME_TOL
 #define BEHIND_ME_TOL	0.01
+#endif
 #define PT_EMPTY	0
 #define PT_OHIT		1
 #define PT_BEHIND	2

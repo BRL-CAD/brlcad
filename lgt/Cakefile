@@ -14,7 +14,7 @@
  *	-DSTATIC=
  */
 
-#define CONFIGDEFS	LGT_CONFIG/* -DDEBUG */
+#define CONFIGDEFS	LGT_CONFIG -DBEHIND_ME_TOL=0.05 /* -DDEBUG */
 
 #define SRCDIR	lgt
 #define PRODUCTS	lgt
