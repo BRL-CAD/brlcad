@@ -113,20 +113,20 @@ bu_cmdhist_history(clientData, interp, argc, argv)
 	}
 
 	fp = NULL;
-	while (argc >= 2)  {
-		if (strcmp(argv[1], "-delays") == 0)
+	while (argc >= 3)  {
+		if (strcmp(argv[2], "-delays") == 0)
 			with_delays = 1;
-		else if( strcmp(argv[1], "-outfile") == 0 ) {
+		else if( strcmp(argv[2], "-outfile") == 0 ) {
 			if (fp != NULL) {
 				fclose(fp);
 				Tcl_AppendResult(interp, "history: -outfile option given more than once\n",
 						 (char *)NULL);
 				return TCL_ERROR;
-			} else if (argc < 3 || strcmp(argv[2], "-delays") == 0) {
+			} else if (argc < 4 || strcmp(argv[3], "-delays") == 0) {
 				Tcl_AppendResult(interp, "history: I need a file name\n", (char *)NULL);
 				return TCL_ERROR;
 			} else {
-				fp = fopen( argv[2], "a+" );
+				fp = fopen( argv[3], "a+" );
 				if (fp == NULL) {
 					Tcl_AppendResult(interp, "history: error opening file", (char *)NULL);
 					return TCL_ERROR;
@@ -135,7 +135,7 @@ bu_cmdhist_history(clientData, interp, argc, argv)
 				++argv;
 			}
 		} else {
-			Tcl_AppendResult(interp, "Invalid option ", argv[1], "\n", (char *)NULL);
+			Tcl_AppendResult(interp, "Invalid option ", argv[2], "\n", (char *)NULL);
 		}
 		--argc;
 		++argv;
