@@ -12,13 +12,15 @@
 /*	13 March 1991    - Corrects problem writing out material.  */
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <math.h>
-
-/*  The following are needed when using rt_shootray.  */
+#ifdef SYSV
+# include <string.h>
+#else
+# include <strings.h>
+#endif
 
 #include "machine.h"
+#include "externs.h"
 #include "vmath.h"
 #include "raytrace.h"
 
@@ -81,7 +83,7 @@ double newx,newy,newz;		/*  Point after it has been rotated back.  */
 main(argc,argv)
 
 int argc;
-char **argv[];
+char *argv[];
 
 {
 	int i,j,ii,jj;	/*  variables used in loops  */
@@ -103,7 +105,7 @@ char **argv[];
 	double checkdiff;	/*  actual difference  */
 	int num;		/*  number of regions  */
 	double total;		/*  used in computing different values  */
-	FILE *fp,*fopen();	/*  used for writing output to file  */
+	FILE *fp;		/*  used for writing output to file  */
 	char filename[16];	/*  file name for writing output to  */
 	int iwrite;		/*  0=>write to standard out, 1=>write  */
 				/*  to file  */
@@ -112,13 +114,13 @@ char **argv[];
 				/*  geometric file  */
 	int typeouta;		/*  geometric type file  */
 	double denom;		/*  used when computing normal  */
-	FILE *fp3,*fopen();	/*  used for error file  */
+	FILE *fp3;		/*  used for error file  */
 	char fileerr[16];	/*  used for error file  */
-	FILE *fp4,*fopen();	/*  used for reading material id file  */
+	FILE *fp4;		/*  used for reading material id file  */
 	char fileden[16];	/*  used for reading material id file  */
-	FILE *fp5,*fopen();	/*  used for creating generic file  */
+	FILE *fp5;		/*  used for creating generic file  */
 	char filegen[16];	/*  used for creating generic file  */
-	FILE *fp6,*fopen();	/*  used for creating gemetric file  */
+	FILE *fp6;		/*  used for creating gemetric file  */
 	char filegeo[16];	/*  used for creating gemetric file  */
 	int numadjreg;		/*  used for finding the number of  */
 				/*  adj regions  */
@@ -130,7 +132,7 @@ char **argv[];
 /*************************************************************************/
 
 	/*  Variables used in facet grouping file.  */
-	FILE *fp1,*fopen();	/*  facet grouping file  */
+	FILE *fp1;		/*  facet grouping file  */
 	char facfile[16];	/*  facet grouping file name  */
 	int facnum;		/*  facet number  */
 	char facname[25];	/*  facet name  */
@@ -172,7 +174,7 @@ char **argv[];
 				/*  a time  */
 
 	/*  Variables used in second pass file.  */
-	FILE *fp2,*fopen();	/*  second pass file  */
+	FILE *fp2;		/*  second pass file  */
 	char spfile[16];	/*  second pass file  */
 	double spsarea;		/*  average of shared surface area for  */
 				/*  second pass  */

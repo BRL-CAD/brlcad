@@ -14,6 +14,7 @@
 
 /*  Need the following for rt_shootray.  */
 #include "machine.h"
+#include "externs.h"
 #include "vmath.h"
 #include "raytrace.h"
 
@@ -77,7 +78,7 @@ char **argv;
    int idump;		/*  1=>dump to occur.  */
 
    char line[81];	/*  Used to read one line from a file.  */
-   FILE *fp,*fopen();	/*  Used to open files.  */
+   FILE *fp;		/*  Used to open files.  */
    char outfile[16];	/*  Output file.  */
    double totalsf;	/*  Sum of shape factors.  */
    double totalnh;	/*  Sum of number of hits.  */
@@ -652,4 +653,3 @@ overlap()
 
    return(1);
 }
-

@@ -17,9 +17,8 @@
 #include <string.h>
 #include <math.h>
 
-/*  The following are needed when using rt_shootray.  */
-
 #include "machine.h"
+#include "externs.h"
 #include "vmath.h"
 #include "raytrace.h"
 
@@ -72,7 +71,7 @@ double leavept[3];		/*  point where ray leaves  */
 main(argc,argv)
 
 int argc;
-char **argv[];
+char *argv[];
 
 {	/*  START # 1  */
 
@@ -82,11 +81,11 @@ char **argv[];
 			/*  rt_dirbuild  */
    int index;		/*  index for rt_dirbuild & rt_gettree  */
 
-   FILE *fp,*fopen();	/*  used in opening file for second pass  */
+   FILE *fp;		/*  used in opening file for second pass  */
    char spfile[16];	/*  second pass file name  */
-   FILE *fp1,*fopen();	/*  conductivity file  */
+   FILE *fp1;		/*  conductivity file  */
    char confile[16];	/*  conductivity file  */
-   FILE *fp2,*fopen();	/*  conductivity table file  */
+   FILE *fp2;		/*  conductivity table file  */
    char tblfile[16];	/*  conductivity table file  */
 
    int i,j;		/*  integers used in loops  */
@@ -97,12 +96,12 @@ char **argv[];
 			/*  to file  */
    int typeout;		/*  Type of file to be written, 0 => PRISM file,  */
 			/*  1 => generic file.  */
-   FILE *fp6,*fopen();	/*  Used in writine generic file.  */
+   FILE *fp6;		/*  Used in writine generic file.  */
    char genfile[16];	/*  Generic file name.  */
-   FILE *fp3,*fopen();	/*  used for writing output to file  */
+   FILE *fp3;		/*  used for writing output to file  */
    char filename[16];	/*  output file name  */
 
-   FILE *fp5,*fopen();	/*  material file  */
+   FILE *fp5;		/*  material file  */
    char filemat[16];	/*  material file  */
    char line[150];	/*  used for reading a line from a file  */
    double k[41];	/*  thermal conductivity  */
@@ -117,7 +116,7 @@ char **argv[];
    double a1;		/*  area used in writing conductivity table  */
    double l1,l2,l3,l4;	/*  lengths used in writing conductivity table  */
    int ians;		/*  used for answering questions  */
-   FILE *fp4,*fopen();	/*  error file  */
+   FILE *fp4;		/*  error file  */
    char fileerr[16];	/*  error file  */
 
    double angle[3];	/*  Angles of rotation.  angle[0]-rotation about  */
