@@ -1,15 +1,12 @@
-#define DEBUG_TABDATA	0x08000000	/* 28 tabdata library */
 
 /*
  *			T A B D A T A . C
  *
- * XXX Probably belongs in LIBBN.
- *
  *  Routines for processing tables (curves) of data with one independent
  *  parameter which is common to many sets of dependent data values.
  *
- *  Operates on rt_table (independent var) and
- *  rt_tabdata (dependent variable) structures.
+ *  Operates on bn_table (independent var) and
+ *  bn_tabdata (dependent variable) structures.
  *
  *  One application is for storing spectral curves, see spectrum.c
  *
@@ -39,84 +36,84 @@ static char RCStabdata[] = "@(#)$Header$ (ARL)";
 #include "machine.h"
 #include "vmath.h"
 #include "bu.h"
-#include "raytrace.h"
+/* #include "raytrace.h" */
 #include "tabdata.h"
 #include "../librt/debug.h"
 
 /*
- *			R T _ T A B L E _ F R E E
+ *			B N _ T A B L E _ F R E E
  */
 void
-rt_table_free( tabp )
-struct rt_table	*tabp;
+bn_table_free( tabp )
+struct bn_table	*tabp;
 {
-	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_table_free(x%x)\n", tabp);
-	RT_CK_TABLE(tabp);
+	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_free(x%x)\n", tabp);
+	BN_CK_TABLE(tabp);
 
 	tabp->nx = 0;			/* sanity */
-	bu_free( tabp, "struct rt_table");
+	bu_free( tabp, "struct bn_table");
 }
 
 /*
- *			R T _ T A B D A T A _ F R E E
+ *			B N _ T A B D A T A _ F R E E
  */
 void
-rt_tabdata_free( data )
-struct rt_tabdata *data;
+bn_tabdata_free( data )
+struct bn_tabdata *data;
 {
-	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_free(x%x)\n", data);
+	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_free(x%x)\n", data);
 
-	RT_CK_TABDATA(data);
-	RT_CK_TABLE(data->table);
+	BN_CK_TABDATA(data);
+	BN_CK_TABLE(data->table);
 
 	data->ny = 0;			/* sanity */
 	data->table = NULL;		/* sanity */
-	bu_free( data, "struct rt_tabdata" );
+	bu_free( data, "struct bn_tabdata" );
 }
 
 /*
  *			R T _ C K _ T A B L E
  */
 void
-rt_ck_table( tabp )
-CONST struct rt_table	*tabp;
+bn_ck_table( tabp )
+CONST struct bn_table	*tabp;
 {
 	register int	i;
 
-	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_ck_table(x%x)\n", tabp);
+	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_ck_table(x%x)\n", tabp);
 
-	RT_CK_TABLE(tabp);
+	BN_CK_TABLE(tabp);
 
-	if( tabp->nx < 2 ) rt_bomb("rt_ck_table() less than 2 wavelengths\n");
+	if( tabp->nx < 2 ) bu_bomb("bn_ck_table() less than 2 wavelengths\n");
 
 	for( i=0; i < tabp->nx; i++ )  {
 		if( tabp->x[i] >= tabp->x[i+1] )
-			rt_bomb("rt_ck_table() wavelengths not in strictly ascending order\n");
+			bu_bomb("bn_ck_table() wavelengths not in strictly ascending order\n");
 	}
 }
 
 /*
- *			R T _ T A B L E _ M A K E _ U N I F O R M
+ *			B N _ T A B L E _ M A K E _ U N I F O R M
  *
  *  Set up an independent "table margin" from 'first' to 'last',
  *  inclusive, using 'num' uniformly spaced samples.  Num >= 1.
  */
-struct rt_table *
-rt_table_make_uniform( num, first, last )
+struct bn_table *
+bn_table_make_uniform( num, first, last )
 int	num;
 double	first;
 double	last;
 {
-	struct rt_table	*tabp;
+	struct bn_table	*tabp;
 	fastf_t			*fp;
 	fastf_t			delta;
 	int			j;
 
-	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_table_make_uniform( num=%d, %g, %g )\n", num, first, last );
+	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_make_uniform( num=%d, %g, %g )\n", num, first, last );
 
-	if( first >= last )  rt_bomb("rt_table_make_uniform() first >= last\n");
+	if( first >= last )  bu_bomb("bn_table_make_uniform() first >= last\n");
 
-	RT_GET_TABLE( tabp, num );
+	BN_GET_TABLE( tabp, num );
 
 	delta = (last - first) / (double)num;
 
@@ -131,30 +128,30 @@ double	last;
 }
 
 /*
- *			R T _ T A B D A T A _ A D D
+ *			B N _ T A B D A T A _ A D D
  *
  *  Sum the values from two data tables.
  */
 void
-rt_tabdata_add( out, in1, in2 )
-struct rt_tabdata		*out;
-CONST struct rt_tabdata	*in1;
-CONST struct rt_tabdata	*in2;
+bn_tabdata_add( out, in1, in2 )
+struct bn_tabdata		*out;
+CONST struct bn_tabdata	*in1;
+CONST struct bn_tabdata	*in2;
 {
 	register int		j;
 	register fastf_t	*op;
 	register CONST fastf_t	*i1, *i2;
 
-	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_add(x%x, x%x, x%x)\n", out, in1, in2);
+	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_add(x%x, x%x, x%x)\n", out, in1, in2);
 
-	RT_CK_TABDATA( out );
-	RT_CK_TABDATA( in1 );
-	RT_CK_TABDATA( in2 );
+	BN_CK_TABDATA( out );
+	BN_CK_TABDATA( in1 );
+	BN_CK_TABDATA( in2 );
 
 	if( in1->table != in2->table || in1->table != out->table )
-		rt_bomb("rt_tabdata_add(): samples drawn from different tables\n");
+		bu_bomb("bn_tabdata_add(): samples drawn from different tables\n");
 	if( in1->ny != in2->ny || in1->ny != out->ny )
-		rt_bomb("rt_tabdata_add(): different tabdata lengths?\n");
+		bu_bomb("bn_tabdata_add(): different tabdata lengths?\n");
 
 	op = out->y;
 	i1 = in1->y;
@@ -165,30 +162,30 @@ CONST struct rt_tabdata	*in2;
 }
 
 /*
- *			R T _ T A B D A T A _ M U L
+ *			B N _ T A B D A T A _ M U L
  *
  *  Element-by-element multiply the values from two data tables.
  */
 void
-rt_tabdata_mul( out, in1, in2 )
-struct rt_tabdata		*out;
-CONST struct rt_tabdata	*in1;
-CONST struct rt_tabdata	*in2;
+bn_tabdata_mul( out, in1, in2 )
+struct bn_tabdata		*out;
+CONST struct bn_tabdata	*in1;
+CONST struct bn_tabdata	*in2;
 {
 	register int		j;
 	register fastf_t	*op;
 	register CONST fastf_t	*i1, *i2;
 
-	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_mul(x%x, x%x, x%x)\n", out, in1, in2);
+	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_mul(x%x, x%x, x%x)\n", out, in1, in2);
 
-	RT_CK_TABDATA( out );
-	RT_CK_TABDATA( in1 );
-	RT_CK_TABDATA( in2 );
+	BN_CK_TABDATA( out );
+	BN_CK_TABDATA( in1 );
+	BN_CK_TABDATA( in2 );
 
 	if( in1->table != in2->table || in1->table != out->table )
-		rt_bomb("rt_tabdata_mul(): samples drawn from different tables\n");
+		bu_bomb("bn_tabdata_mul(): samples drawn from different tables\n");
 	if( in1->ny != in2->ny || in1->ny != out->ny )
-		rt_bomb("rt_tabdata_mul(): different tabdata lengths?\n");
+		bu_bomb("bn_tabdata_mul(): different tabdata lengths?\n");
 
 	op = out->y;
 	i1 = in1->y;
@@ -199,32 +196,32 @@ CONST struct rt_tabdata	*in2;
 }
 
 /*
- *			R T _ T A B D A T A _ M U L 3
+ *			B N _ T A B D A T A _ M U L 3
  *
  *  Element-by-element multiply the values from three data tables.
  */
 void
-rt_tabdata_mul3( out, in1, in2, in3 )
-struct rt_tabdata		*out;
-CONST struct rt_tabdata	*in1;
-CONST struct rt_tabdata	*in2;
-CONST struct rt_tabdata	*in3;
+bn_tabdata_mul3( out, in1, in2, in3 )
+struct bn_tabdata		*out;
+CONST struct bn_tabdata	*in1;
+CONST struct bn_tabdata	*in2;
+CONST struct bn_tabdata	*in3;
 {
 	register int		j;
 	register fastf_t	*op;
 	register CONST fastf_t	*i1, *i2, *i3;
 
-	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_mul3(x%x, x%x, x%x, x%x)\n", out, in1, in2, in3);
+	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_mul3(x%x, x%x, x%x, x%x)\n", out, in1, in2, in3);
 
-	RT_CK_TABDATA( out );
-	RT_CK_TABDATA( in1 );
-	RT_CK_TABDATA( in2 );
-	RT_CK_TABDATA( in3 );
+	BN_CK_TABDATA( out );
+	BN_CK_TABDATA( in1 );
+	BN_CK_TABDATA( in2 );
+	BN_CK_TABDATA( in3 );
 
 	if( in1->table != in2->table || in1->table != out->table || in1->table != in2->table )
-		rt_bomb("rt_tabdata_mul(): samples drawn from different tables\n");
+		bu_bomb("bn_tabdata_mul(): samples drawn from different tables\n");
 	if( in1->ny != in2->ny || in1->ny != out->ny )
-		rt_bomb("rt_tabdata_mul(): different tabdata lengths?\n");
+		bu_bomb("bn_tabdata_mul(): different tabdata lengths?\n");
 
 	op = out->y;
 	i1 = in1->y;
@@ -236,35 +233,35 @@ CONST struct rt_tabdata	*in3;
 }
 
 /*
- *			R T _ T A B D A T A _ I N C R _ M U L 3 _ S C A L E
+ *			B N _ T A B D A T A _ I N C R _ M U L 3 _ S C A L E
  *
  *  Element-by-element multiply the values from three data tables and a scalor.
  *
  *	out += in1 * in2 * in3 * scale
  */
 void
-rt_tabdata_incr_mul3_scale( out, in1, in2, in3, scale )
-struct rt_tabdata	*out;
-CONST struct rt_tabdata	*in1;
-CONST struct rt_tabdata	*in2;
-CONST struct rt_tabdata	*in3;
+bn_tabdata_incr_mul3_scale( out, in1, in2, in3, scale )
+struct bn_tabdata	*out;
+CONST struct bn_tabdata	*in1;
+CONST struct bn_tabdata	*in2;
+CONST struct bn_tabdata	*in3;
 register double		scale;
 {
 	register int		j;
 	register fastf_t	*op;
 	register CONST fastf_t	*i1, *i2, *i3;
 
-	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_incr_mul3_scale(x%x, x%x, x%x, x%x, %g)\n", out, in1, in2, in3, scale);
+	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_incr_mul3_scale(x%x, x%x, x%x, x%x, %g)\n", out, in1, in2, in3, scale);
 
-	RT_CK_TABDATA( out );
-	RT_CK_TABDATA( in1 );
-	RT_CK_TABDATA( in2 );
-	RT_CK_TABDATA( in3 );
+	BN_CK_TABDATA( out );
+	BN_CK_TABDATA( in1 );
+	BN_CK_TABDATA( in2 );
+	BN_CK_TABDATA( in3 );
 
 	if( in1->table != in2->table || in1->table != out->table || in1->table != in3->table )
-		rt_bomb("rt_tabdata_mul(): samples drawn from different tables\n");
+		bu_bomb("bn_tabdata_mul(): samples drawn from different tables\n");
 	if( in1->ny != in2->ny || in1->ny != out->ny )
-		rt_bomb("rt_tabdata_mul(): different tabdata lengths?\n");
+		bu_bomb("bn_tabdata_mul(): different tabdata lengths?\n");
 
 	op = out->y;
 	i1 = in1->y;
@@ -275,33 +272,33 @@ register double		scale;
 }
 
 /*
- *			R T _ T A B D A T A _ I N C R _ M U L 2 _ S C A L E
+ *			B N _ T A B D A T A _ I N C R _ M U L 2 _ S C A L E
  *
  *  Element-by-element multiply the values from two data tables and a scalor.
  *
  *	out += in1 * in2 * scale
  */
 void
-rt_tabdata_incr_mul2_scale( out, in1, in2, scale )
-struct rt_tabdata	*out;
-CONST struct rt_tabdata	*in1;
-CONST struct rt_tabdata	*in2;
+bn_tabdata_incr_mul2_scale( out, in1, in2, scale )
+struct bn_tabdata	*out;
+CONST struct bn_tabdata	*in1;
+CONST struct bn_tabdata	*in2;
 register double		scale;
 {
 	register int		j;
 	register fastf_t	*op;
 	register CONST fastf_t	*i1, *i2;
 
-	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_incr_mul2_scale(x%x, x%x, x%x, %g)\n", out, in1, in2, scale);
+	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_incr_mul2_scale(x%x, x%x, x%x, %g)\n", out, in1, in2, scale);
 
-	RT_CK_TABDATA( out );
-	RT_CK_TABDATA( in1 );
-	RT_CK_TABDATA( in2 );
+	BN_CK_TABDATA( out );
+	BN_CK_TABDATA( in1 );
+	BN_CK_TABDATA( in2 );
 
 	if( in1->table != in2->table || in1->table != out->table )
-		rt_bomb("rt_tabdata_mul(): samples drawn from different tables\n");
+		bu_bomb("bn_tabdata_mul(): samples drawn from different tables\n");
 	if( in1->ny != in2->ny || in1->ny != out->ny )
-		rt_bomb("rt_tabdata_mul(): different tabdata lengths?\n");
+		bu_bomb("bn_tabdata_mul(): different tabdata lengths?\n");
 
 	op = out->y;
 	i1 = in1->y;
@@ -311,29 +308,29 @@ register double		scale;
 }
 
 /*
- *			R T _ T A B D A T A _ S C A L E
+ *			B N _ T A B D A T A _ S C A L E
  *
  *  Multiply every element in a data table by a scalar value 'scale'.
  */
 void
-rt_tabdata_scale( out, in1, scale )
-struct rt_tabdata		*out;
-CONST struct rt_tabdata	*in1;
+bn_tabdata_scale( out, in1, scale )
+struct bn_tabdata		*out;
+CONST struct bn_tabdata	*in1;
 register double			scale;
 {
 	register int		j;
 	register fastf_t	*op;
 	register CONST fastf_t	*i1;
 
-	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_scale(x%x, x%x, %g)\n", out, in1, scale);
+	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_scale(x%x, x%x, %g)\n", out, in1, scale);
 
-	RT_CK_TABDATA( out );
-	RT_CK_TABDATA( in1 );
+	BN_CK_TABDATA( out );
+	BN_CK_TABDATA( in1 );
 
 	if( in1->table != out->table )
-		rt_bomb("rt_tabdata_scale(): samples drawn from different tables\n");
+		bu_bomb("bn_tabdata_scale(): samples drawn from different tables\n");
 	if( in1->ny != out->ny )
-		rt_bomb("rt_tabdata_scale(): different tabdata lengths?\n");
+		bu_bomb("bn_tabdata_scale(): different tabdata lengths?\n");
 
 	op = out->y;
 	i1 = in1->y;
@@ -343,21 +340,21 @@ register double			scale;
 }
 
 /*
- *			R T _ T A B L E _ S C A L E
+ *			B N _ T A B L E _ S C A L E
  *
  *  Scale the indepentent axis of a table by 'scale'.
  */
 void
-rt_table_scale( tabp, scale )
-struct rt_table	*tabp;
+bn_table_scale( tabp, scale )
+struct bn_table	*tabp;
 register double		scale;
 {
 	register int		j;
 	register fastf_t	*op, *i1;
 
-	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_table_scale(x%x, %g)\n", tabp, scale );
+	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_scale(x%x, %g)\n", tabp, scale );
 
-	RT_CK_TABLE( tabp );
+	BN_CK_TABLE( tabp );
 
 	op = tabp->x;
 	for( j = tabp->nx+1; j > 0; j-- )
@@ -366,35 +363,35 @@ register double		scale;
 }
 
 /*
- *			R T _ T A B D A T A _ J O I N 1
+ *			B N _ T A B D A T A _ J O I N 1
  *
  *  Multiply every element in data table in2 by a scalar value 'scale',
  *  add it to the element in in1, and store in 'out'.
  *  'out' may overlap in1 or in2.
  */
 void
-rt_tabdata_join1( out, in1, scale, in2 )
-struct rt_tabdata		*out;
-CONST struct rt_tabdata		*in1;
+bn_tabdata_join1( out, in1, scale, in2 )
+struct bn_tabdata		*out;
+CONST struct bn_tabdata		*in1;
 register double			scale;
-CONST struct rt_tabdata		*in2;
+CONST struct bn_tabdata		*in2;
 {
 	register int		j;
 	register fastf_t	*op;
 	register CONST fastf_t	*i1, *i2;
 
-	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_join1(x%x, x%x, %g, x%x)\n", out, in1, scale, in2 );
+	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_join1(x%x, x%x, %g, x%x)\n", out, in1, scale, in2 );
 
-	RT_CK_TABDATA( out );
-	RT_CK_TABDATA( in1 )
-	RT_CK_TABDATA( in2 );
+	BN_CK_TABDATA( out );
+	BN_CK_TABDATA( in1 )
+	BN_CK_TABDATA( in2 );
 
 	if( in1->table != out->table )
-		rt_bomb("rt_tabdata_join1(): samples drawn from different tables\n");
+		bu_bomb("bn_tabdata_join1(): samples drawn from different tables\n");
 	if( in1->table != in2->table )
-		rt_bomb("rt_tabdata_join1(): samples drawn from different tables\n");
+		bu_bomb("bn_tabdata_join1(): samples drawn from different tables\n");
 	if( in1->ny != out->ny )
-		rt_bomb("rt_tabdata_join1(): different tabdata lengths?\n");
+		bu_bomb("bn_tabdata_join1(): different tabdata lengths?\n");
 
 	op = out->y;
 	i1 = in1->y;
@@ -405,7 +402,7 @@ CONST struct rt_tabdata		*in2;
 }
 
 /*
- *			R T _ T A B D A T A _ J O I N 2
+ *			B N _ T A B D A T A _ J O I N 2
  *
  *  Multiply every element in data table in2 by a scalar value 'scale2',
  *  plus in3 * scale3, and
@@ -413,32 +410,32 @@ CONST struct rt_tabdata		*in2;
  *  'out' may overlap in1 or in2.
  */
 void
-rt_tabdata_join2( out, in1, scale2, in2, scale3, in3 )
-struct rt_tabdata		*out;
-CONST struct rt_tabdata		*in1;
+bn_tabdata_join2( out, in1, scale2, in2, scale3, in3 )
+struct bn_tabdata		*out;
+CONST struct bn_tabdata		*in1;
 register double			scale2;
-CONST struct rt_tabdata		*in2;
+CONST struct bn_tabdata		*in2;
 register double			scale3;
-CONST struct rt_tabdata		*in3;
+CONST struct bn_tabdata		*in3;
 {
 	register int		j;
 	register fastf_t	*op;
 	register CONST fastf_t	*i1, *i2, *i3;
 
-	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_join2(x%x, x%x, %g, x%x, %g, x%x)\n", out, in1, scale2, in2, scale3, in3 );
+	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_join2(x%x, x%x, %g, x%x, %g, x%x)\n", out, in1, scale2, in2, scale3, in3 );
 
-	RT_CK_TABDATA( out );
-	RT_CK_TABDATA( in1 )
-	RT_CK_TABDATA( in2 );
+	BN_CK_TABDATA( out );
+	BN_CK_TABDATA( in1 )
+	BN_CK_TABDATA( in2 );
 
 	if( in1->table != out->table )
-		rt_bomb("rt_tabdata_join1(): samples drawn from different tables\n");
+		bu_bomb("bn_tabdata_join1(): samples drawn from different tables\n");
 	if( in1->table != in2->table )
-		rt_bomb("rt_tabdata_join1(): samples drawn from different tables\n");
+		bu_bomb("bn_tabdata_join1(): samples drawn from different tables\n");
 	if( in1->table != in3->table )
-		rt_bomb("rt_tabdata_join1(): samples drawn from different tables\n");
+		bu_bomb("bn_tabdata_join1(): samples drawn from different tables\n");
 	if( in1->ny != out->ny )
-		rt_bomb("rt_tabdata_join1(): different tabdata lengths?\n");
+		bu_bomb("bn_tabdata_join1(): different tabdata lengths?\n");
 
 	op = out->y;
 	i1 = in1->y;
@@ -450,37 +447,37 @@ CONST struct rt_tabdata		*in3;
 }
 
 /*
- *			R T _ T A B D A T A _ B L E N D 3
+ *			B N _ T A B D A T A _ B L E N D 3
  */
 void
-rt_tabdata_blend3( out, scale1, in1, scale2, in2, scale3, in3 )
-struct rt_tabdata		*out;
+bn_tabdata_blend3( out, scale1, in1, scale2, in2, scale3, in3 )
+struct bn_tabdata		*out;
 register double			scale1;
-CONST struct rt_tabdata		*in1;
+CONST struct bn_tabdata		*in1;
 register double			scale2;
-CONST struct rt_tabdata		*in2;
+CONST struct bn_tabdata		*in2;
 register double			scale3;
-CONST struct rt_tabdata		*in3;
+CONST struct bn_tabdata		*in3;
 {
 	register int		j;
 	register fastf_t	*op;
 	register CONST fastf_t	*i1, *i2, *i3;
 
-	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_blend3(x%x, %g, x%x, %g, x%x, %g, x%x)\n", out, scale1, in1, scale2, in2, scale3, in3 );
+	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_blend3(x%x, %g, x%x, %g, x%x, %g, x%x)\n", out, scale1, in1, scale2, in2, scale3, in3 );
 
-	RT_CK_TABDATA( out );
-	RT_CK_TABDATA( in1 )
-	RT_CK_TABDATA( in2 );
-	RT_CK_TABDATA( in3 );
+	BN_CK_TABDATA( out );
+	BN_CK_TABDATA( in1 )
+	BN_CK_TABDATA( in2 );
+	BN_CK_TABDATA( in3 );
 
 	if( in1->table != out->table )
-		rt_bomb("rt_tabdata_blend3(): samples drawn from different tables\n");
+		bu_bomb("bn_tabdata_blend3(): samples drawn from different tables\n");
 	if( in1->table != in2->table )
-		rt_bomb("rt_tabdata_blend3(): samples drawn from different tables\n");
+		bu_bomb("bn_tabdata_blend3(): samples drawn from different tables\n");
 	if( in1->table != in3->table )
-		rt_bomb("rt_tabdata_blend3(): samples drawn from different tables\n");
+		bu_bomb("bn_tabdata_blend3(): samples drawn from different tables\n");
 	if( in1->ny != out->ny )
-		rt_bomb("rt_tabdata_blend3(): different tabdata lengths?\n");
+		bu_bomb("bn_tabdata_blend3(): different tabdata lengths?\n");
 
 	op = out->y;
 	i1 = in1->y;
@@ -492,34 +489,34 @@ CONST struct rt_tabdata		*in3;
 }
 
 /*
- *			R T _ T A B D A T A _ A R E A 1
+ *			B N _ T A B D A T A _ A R E A 1
  *
  *  Following interpretation #1, where y[j] stores the total (integral
  *  or area) value within the interval, return the area under the whole curve.
  *  This is simply totaling up the areas from each of the intervals.
  */
 double
-rt_tabdata_area1( in )
-CONST struct rt_tabdata	*in;
+bn_tabdata_area1( in )
+CONST struct bn_tabdata	*in;
 {
 	FAST fastf_t		area;
 	register CONST fastf_t	*ip;
 	register int		j;
 
-	RT_CK_TABDATA(in);
+	BN_CK_TABDATA(in);
 
 	area = 0;
 	ip = in->y;
 	for( j = in->ny; j > 0; j-- )
 		area += *ip++;
 
-	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_area(x%x) = %g\n", in, area);
+	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_area(x%x) = %g\n", in, area);
 
 	return area;
 }
 
 /*
- *			R T _ T A B D A T A _ A R E A 2
+ *			B N _ T A B D A T A _ A R E A 2
  *
  *  Following interpretation #2, where y[j] stores the average
  *  value for the interval, return the area under
@@ -527,17 +524,17 @@ CONST struct rt_tabdata	*in;
  *  sum the areas of the rectangles.
  */
 double
-rt_tabdata_area2( in )
-CONST struct rt_tabdata	*in;
+bn_tabdata_area2( in )
+CONST struct bn_tabdata	*in;
 {
-	CONST struct rt_table	*tabp;
+	CONST struct bn_table	*tabp;
 	FAST fastf_t		area;
 	fastf_t			width;
 	register int		j;
 
-	RT_CK_TABDATA(in);
+	BN_CK_TABDATA(in);
 	tabp = in->table;
-	RT_CK_TABLE(tabp);
+	BN_CK_TABLE(tabp);
 
 	area = 0;
 	for( j = in->ny-1; j >= 0; j-- )  {
@@ -545,12 +542,12 @@ CONST struct rt_tabdata	*in;
 		area += in->y[j] * width;
 	}
 
-	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_area2(x%x) = %g\n", in, area);
+	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_area2(x%x) = %g\n", in, area);
 	return area;
 }
 
 /*
- *			R T _ T A B D A T A _ M U L _ A R E A 1
+ *			B N _ T A B D A T A _ M U L _ A R E A 1
  *
  *  Following interpretation #1, where y[j] stores the total (integral
  *  or area) value within the interval, return the area under the whole curve.
@@ -559,16 +556,16 @@ CONST struct rt_tabdata	*in;
  *  in1 and in2.
  */
 double
-rt_tabdata_mul_area1( in1, in2 )
-CONST struct rt_tabdata	*in1;
-CONST struct rt_tabdata	*in2;
+bn_tabdata_mul_area1( in1, in2 )
+CONST struct bn_tabdata	*in1;
+CONST struct bn_tabdata	*in2;
 {
 	FAST fastf_t		area;
 	register CONST fastf_t	*i1, *i2;
 	register int		j;
 
-	RT_CK_TABDATA(in1);
-	RT_CK_TABDATA(in2);
+	BN_CK_TABDATA(in1);
+	BN_CK_TABDATA(in2);
 
 	area = 0;
 	i1 = in1->y;
@@ -576,12 +573,12 @@ CONST struct rt_tabdata	*in2;
 	for( j = in1->ny; j > 0; j-- )
 		area += *i1++ * *i2++;
 
-	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_mul_area1(x%x, x%x) = %g\n", in1, in2, area);
+	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_mul_area1(x%x, x%x) = %g\n", in1, in2, area);
 	return area;
 }
 
 /*
- *			R T _ T A B D A T A _ M U L _ A R E A 2
+ *			B N _ T A B D A T A _ M U L _ A R E A 2
  *
  *  Following interpretation #2,
  *  return the area under the whole curve.
@@ -589,19 +586,19 @@ CONST struct rt_tabdata	*in2;
  *  in1 and in2.
  */
 double
-rt_tabdata_mul_area2( in1, in2 )
-CONST struct rt_tabdata	*in1;
-CONST struct rt_tabdata	*in2;
+bn_tabdata_mul_area2( in1, in2 )
+CONST struct bn_tabdata	*in1;
+CONST struct bn_tabdata	*in2;
 {
-	CONST struct rt_table	*tabp;
+	CONST struct bn_table	*tabp;
 	FAST fastf_t		area;
 	fastf_t			width;
 	register int		j;
 
-	RT_CK_TABDATA(in1);
-	RT_CK_TABDATA(in2);
+	BN_CK_TABDATA(in1);
+	BN_CK_TABDATA(in2);
 	tabp = in1->table;
-	RT_CK_TABLE(tabp);
+	BN_CK_TABLE(tabp);
 
 	area = 0;
 	for( j = in1->ny-1; j >= 0; j-- )  {
@@ -609,12 +606,12 @@ CONST struct rt_tabdata	*in2;
 		area += in1->y[j] * in2->y[j] * width;
 	}
 
-	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_mul_area2(x%x, x%x) = %g\n", in1, in2, area);
+	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_mul_area2(x%x, x%x) = %g\n", in1, in2, area);
 	return area;
 }
 
 /*
- *			R T _ T A B L E _ F I N D _ X
+ *			B N _ T A B L E _ F I N D _ X
  *
  *  Return the index in the table's x[] array of the interval which
  *  contains 'xval'.
@@ -625,14 +622,14 @@ CONST struct rt_tabdata	*in2;
  *  are known to be sorted in ascending order.
  */
 int
-rt_table_find_x( tabp, xval )
-CONST struct rt_table	*tabp;
+bn_table_find_x( tabp, xval )
+CONST struct bn_table	*tabp;
 double			xval;
 {
 	register int	i;
 
-	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_table_find_x(x%x, %g)\n", tabp, xval );
-	RT_CK_TABLE(tabp);
+	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_find_x(x%x, %g)\n", tabp, xval );
+	BN_CK_TABLE(tabp);
 
 	if( xval >= tabp->x[tabp->nx-1] )  return -2;
 
@@ -645,55 +642,55 @@ double			xval;
 }
 
 /*
- *			R T _ T A B L E _ L I N _ I N T E R P
+ *			B N _ T A B L E _ L I N _ I N T E R P
  *
  *  Return the value of the curve at independent parameter value 'wl'.
  *  Linearly interpolate between values in the input table.
  *  Zero is returned for values outside the sampled range.
  */
 fastf_t
-rt_table_lin_interp( samp, wl )
-CONST struct rt_tabdata	*samp;
+bn_table_lin_interp( samp, wl )
+CONST struct bn_tabdata	*samp;
 register double			wl;
 {
-	CONST struct rt_table	*tabp;
+	CONST struct bn_table	*tabp;
 	register int		i;
 	register fastf_t	fract;
 	register fastf_t	ret;
 
-	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_table_lin_interp(x%x, %g)\n", samp, wl);
+	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_lin_interp(x%x, %g)\n", samp, wl);
 
-	RT_CK_TABDATA(samp);
+	BN_CK_TABDATA(samp);
 	tabp = samp->table;
-	RT_CK_TABLE(tabp);
+	BN_CK_TABLE(tabp);
 
-	if( (i = rt_table_find_x( tabp, wl )) < 0 )  {
-		if(rt_g.debug&DEBUG_MATH)bu_log("rt_table_lin_interp(%g) out of range %g to %g\n", wl, tabp->x[0], tabp->x[tabp->nx] );
+	if( (i = bn_table_find_x( tabp, wl )) < 0 )  {
+		if(bu_debug&DEBUG_MATH)bu_log("bn_table_lin_interp(%g) out of range %g to %g\n", wl, tabp->x[0], tabp->x[tabp->nx] );
 		return 0;
 	}
 
 	if( wl < tabp->x[i] || wl >= tabp->x[i+1] )  {
-		rt_log("rt_table_lin_interp(%g) assertion1 failed at %g\n", wl, tabp->x[i] );
-		rt_bomb("rt_table_lin_interp() assertion1 failed\n");
+		bu_log("bn_table_lin_interp(%g) assertion1 failed at %g\n", wl, tabp->x[i] );
+		bu_bomb("bn_table_lin_interp() assertion1 failed\n");
 	}
 
 	if( i >= tabp->nx-2 )  {
 		/* Assume value is constant in final interval. */
-		if(rt_g.debug&DEBUG_MATH)bu_log("rt_table_lin_interp(%g)=%g off end of range %g to %g\n", wl, samp->y[tabp->nx-1], tabp->x[0], tabp->x[tabp->nx] );
+		if(bu_debug&DEBUG_MATH)bu_log("bn_table_lin_interp(%g)=%g off end of range %g to %g\n", wl, samp->y[tabp->nx-1], tabp->x[0], tabp->x[tabp->nx] );
 		return samp->y[tabp->nx-1];
 	}
 
 	/* The interval has been found */
 	fract = (wl - tabp->x[i]) / (tabp->x[i+1] - tabp->x[i]);
-	if( fract < 0 || fract > 1 )  rt_bomb("rt_table_lin_interp() assertion2 failed\n");
+	if( fract < 0 || fract > 1 )  bu_bomb("bn_table_lin_interp() assertion2 failed\n");
 	ret = (1-fract) * samp->y[i] + fract * samp->y[i+1];
-	if(rt_g.debug&DEBUG_MATH)bu_log("rt_table_lin_interp(%g)=%g in range %g to %g\n",
+	if(bu_debug&DEBUG_MATH)bu_log("bn_table_lin_interp(%g)=%g in range %g to %g\n",
 		wl, ret, tabp->x[i], tabp->x[i+1] );
 	return ret;
 }
 
 /*
- *			R T _ T A B D A T A _ R E S A M P L E _ M A X
+ *			B N _ T A B D A T A _ R E S A M P L E _ M A X
  *
  *  Given a set of sampled data 'olddata', resample it for different
  *  spacing, by linearly interpolating the values when an output span
@@ -703,34 +700,34 @@ register double			wl;
  *  This assumes interpretation (2) of the data, i.e. that the values
  *  are the average value across the interval.
  */
-struct rt_tabdata *
-rt_tabdata_resample_max( newtable, olddata )
-CONST struct rt_table	*newtable;
-CONST struct rt_tabdata	*olddata;
+struct bn_tabdata *
+bn_tabdata_resample_max( newtable, olddata )
+CONST struct bn_table	*newtable;
+CONST struct bn_tabdata	*olddata;
 {
-	CONST struct rt_table	*oldtable;
-	struct rt_tabdata	*newsamp;
+	CONST struct bn_table	*oldtable;
+	struct bn_tabdata	*newsamp;
 	int			i;
 	int			j, k;
 
-	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_resample_max(x%x, x%x)\n", newtable, olddata);
+	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_resample_max(x%x, x%x)\n", newtable, olddata);
 
-	RT_CK_TABLE(newtable);
-	RT_CK_TABDATA(olddata);
+	BN_CK_TABLE(newtable);
+	BN_CK_TABDATA(olddata);
 	oldtable = olddata->table;
-	RT_CK_TABLE(oldtable);
+	BN_CK_TABLE(oldtable);
 
-	if( oldtable == newtable )  rt_log("rt_tabdata_resample_max() NOTICE old and new rt_table structs are the same\n");
+	if( oldtable == newtable )  bu_log("bn_tabdata_resample_max() NOTICE old and new bn_table structs are the same\n");
 
-	RT_GET_TABDATA( newsamp, newtable );
+	BN_GET_TABDATA( newsamp, newtable );
 
 	for( i = 0; i < newtable->nx; i++ )  {
 		/*
 		 *  Find good value(s) in olddata to represent the span from
 		 *  newtable->x[i] to newtable->x[i+1].
 		 */
-		j = rt_table_find_x( oldtable, newtable->x[i] );
-		k = rt_table_find_x( oldtable, newtable->x[i+1] );
+		j = bn_table_find_x( oldtable, newtable->x[i] );
+		k = bn_table_find_x( oldtable, newtable->x[i+1] );
 		if( k == -1 )  {
 			/* whole new span is off left side of old table */
 			newsamp->y[i] = 0;
@@ -750,8 +747,8 @@ CONST struct rt_tabdata	*olddata;
 			 *  Interpolate for both ends, take max.
 			 *  XXX this could be more efficiently written inline here.
 			 */
-			newsamp->y[i] = rt_table_lin_interp( olddata, newtable->x[i] );
-			tmp = rt_table_lin_interp( olddata, newtable->x[i+1] );
+			newsamp->y[i] = bn_table_lin_interp( olddata, newtable->x[i] );
+			tmp = bn_table_lin_interp( olddata, newtable->x[i+1] );
 			if( tmp > newsamp->y[i] )  newsamp->y[i] = tmp;
 		} else {
 			register fastf_t tmp, n;
@@ -762,8 +759,8 @@ CONST struct rt_tabdata	*olddata;
 			 *  intermediate old samples in span.  Take max.
 			 *  One (but not both) new ends may be off old table.
 			 */
-			n = rt_table_lin_interp( olddata, newtable->x[i] );
-			tmp = rt_table_lin_interp( olddata, newtable->x[i+1] );
+			n = bn_table_lin_interp( olddata, newtable->x[i] );
+			tmp = bn_table_lin_interp( olddata, newtable->x[i+1] );
 			if( tmp > n )  n = tmp;
 			for( s = j+1; s <= k; s++ )  {
 				if( (tmp = olddata->y[s]) > n )
@@ -776,7 +773,7 @@ CONST struct rt_tabdata	*olddata;
 }
 
 /*
- *			R T _ T A B D A T A _ R E S A M P L E _ A V G
+ *			B N _ T A B D A T A _ R E S A M P L E _ A V G
  *
  *  Given a set of sampled data 'olddata', resample it for different
  *  spacing, by linearly interpolating the values when an output span
@@ -786,34 +783,34 @@ CONST struct rt_tabdata	*olddata;
  *  This assumes interpretation (2) of the data, i.e. that the values
  *  are the average value across the interval.
  */
-struct rt_tabdata *
-rt_tabdata_resample_avg( newtable, olddata )
-CONST struct rt_table	*newtable;
-CONST struct rt_tabdata	*olddata;
+struct bn_tabdata *
+bn_tabdata_resample_avg( newtable, olddata )
+CONST struct bn_table	*newtable;
+CONST struct bn_tabdata	*olddata;
 {
-	CONST struct rt_table	*oldtable;
-	struct rt_tabdata	*newsamp;
+	CONST struct bn_table	*oldtable;
+	struct bn_tabdata	*newsamp;
 	int			i;
 	int			j, k;
 
-	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_resample_avg(x%x, x%x)\n", newtable, olddata);
+	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_resample_avg(x%x, x%x)\n", newtable, olddata);
 
-	RT_CK_TABLE(newtable);
-	RT_CK_TABDATA(olddata);
+	BN_CK_TABLE(newtable);
+	BN_CK_TABDATA(olddata);
 	oldtable = olddata->table;
-	RT_CK_TABLE(oldtable);
+	BN_CK_TABLE(oldtable);
 
-	if( oldtable == newtable )  rt_log("rt_tabdata_resample_avg() NOTICE old and new rt_table structs are the same\n");
+	if( oldtable == newtable )  bu_log("bn_tabdata_resample_avg() NOTICE old and new bn_table structs are the same\n");
 
-	RT_GET_TABDATA( newsamp, newtable );
+	BN_GET_TABDATA( newsamp, newtable );
 
 	for( i = 0; i < newtable->nx; i++ )  {
 		/*
 		 *  Find good value(s) in olddata to represent the span from
 		 *  newtable->x[i] to newtable->x[i+1].
 		 */
-		j = rt_table_find_x( oldtable, newtable->x[i] );
-		k = rt_table_find_x( oldtable, newtable->x[i+1] );
+		j = bn_table_find_x( oldtable, newtable->x[i] );
+		k = bn_table_find_x( oldtable, newtable->x[i+1] );
 
 		if( j < 0 || k < 0 || j == k )  {
 			/*
@@ -823,8 +820,8 @@ CONST struct rt_tabdata	*olddata;
 			 *  XXX this could be more efficiently written inline here.
 			 */
 			newsamp->y[i] = 0.5 * (
-			    rt_table_lin_interp( olddata, newtable->x[i] ) +
-			    rt_table_lin_interp( olddata, newtable->x[i+1] ) );
+			    bn_table_lin_interp( olddata, newtable->x[i] ) +
+			    bn_table_lin_interp( olddata, newtable->x[i+1] ) );
 		} else {
 			/*
 			 *  Complex case: find average value.
@@ -841,7 +838,7 @@ CONST struct rt_tabdata	*olddata;
 			int	s;
 
 			/* Partial interval from newx[i] to j+1 */
-			a = rt_table_lin_interp( olddata, newtable->x[i] );	/* in "j" bin */
+			a = bn_table_lin_interp( olddata, newtable->x[i] );	/* in "j" bin */
 			b = olddata->y[j+1];
 			wsum = 0.5 * (a+b) * (oldtable->x[j+1] - newtable->x[i] );
 
@@ -854,7 +851,7 @@ CONST struct rt_tabdata	*olddata;
 
 			/* Partial interval from k to newx[i+1] */
 			a = olddata->y[k];
-			b = rt_table_lin_interp( olddata, newtable->x[i+1] );	/* in "k" bin */
+			b = bn_table_lin_interp( olddata, newtable->x[i+1] );	/* in "k" bin */
 			wsum += 0.5 * (a+b) * (newtable->x[i+1] - oldtable->x[k] );
 
 			/* Adjust the weighted sum by the total width */
@@ -866,23 +863,23 @@ CONST struct rt_tabdata	*olddata;
 }
 
 /*
- *			R T _ T A B L E _ W R I T E 
+ *			B N _ T A B L E _ W R I T E 
  *
  *  Write out the table structure in an ASCII file,
  *  giving the number of values (minus 1), and the
  *  actual values.
  */
 int
-rt_table_write( filename, tabp )
+bn_table_write( filename, tabp )
 CONST char	*filename;
-CONST struct rt_table	*tabp;
+CONST struct bn_table	*tabp;
 {
 	FILE	*fp;
 	int	j;
 
-	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_table_write(%s, x%x)\n", filename, tabp);
+	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_write(%s, x%x)\n", filename, tabp);
 
-	RT_CK_TABLE(tabp);
+	BN_CK_TABLE(tabp);
 
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	fp = fopen( filename, "w" );
@@ -890,7 +887,7 @@ CONST struct rt_table	*tabp;
 
 	if( fp == NULL )  {
 		perror(filename);
-		rt_log("rt_table_write(%s, x%x) FAILED\n", filename, tabp);
+		bu_log("bn_table_write(%s, x%x) FAILED\n", filename, tabp);
 		return -1;
 	}
 
@@ -905,23 +902,23 @@ CONST struct rt_table	*tabp;
 }
 
 /*
- *			R T _ T A B L E _ R E A D
+ *			B N _ T A B L E _ R E A D
  *
  *  Allocate and read in the independent variable values from an ASCII file,
  *  giving the number of samples (minus 1), and the
  *  actual values.
  */
-struct rt_table *
-rt_table_read( filename )
+struct bn_table *
+bn_table_read( filename )
 CONST char	*filename;
 {
-	struct rt_table	*tabp;
+	struct bn_table	*tabp;
 	struct bu_vls		line;
 	FILE	*fp;
 	int	nw;
 	int	j;
 
-	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_table_read(%s)\n", filename);
+	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_read(%s)\n", filename);
 
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	fp = fopen( filename, "r" );
@@ -929,7 +926,7 @@ CONST char	*filename;
 
 	if( fp == NULL )  {
 		perror(filename);
-		rt_log("rt_table_read(%s) FAILED\n", filename);
+		bu_log("bn_table_read(%s) FAILED\n", filename);
 		return NULL;
 	}
 
@@ -939,9 +936,9 @@ CONST char	*filename;
 	sscanf( bu_vls_addr(&line), "%d", &nw );
 	bu_vls_free(&line);
 
-	if( nw <= 0 ) rt_bomb("rt_table_read() bad nw value\n");
+	if( nw <= 0 ) bu_bomb("bn_table_read() bad nw value\n");
 
-	RT_GET_TABLE( tabp, nw );
+	BN_GET_TABLE( tabp, nw );
 
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	for( j=0; j <= tabp->nx; j++ )  {
@@ -951,7 +948,7 @@ CONST char	*filename;
 	fclose(fp);
 	bu_semaphore_release( BU_SEM_SYSCALL );
 
-	rt_ck_table( tabp );
+	bn_ck_table( tabp );
 
 	return tabp;
 }
@@ -962,12 +959,12 @@ CONST char	*filename;
 void
 rt_pr_table( title, tabp )
 CONST char		*title;
-CONST struct rt_table	*tabp;
+CONST struct bn_table	*tabp;
 {
 	int	j;
 
 	bu_log("rt_pr_table(%s):\n", title);
-	RT_CK_TABLE(tabp);
+	BN_CK_TABLE(tabp);
 
 	for( j=0; j <= tabp->nx; j++ )  {
 		bu_log("%3d: %g\n", j, tabp->x[j] );
@@ -980,12 +977,12 @@ CONST struct rt_table	*tabp;
 void
 rt_pr_tabdata( title, data )
 CONST char		*title;
-CONST struct rt_tabdata	*data;
+CONST struct bn_tabdata	*data;
 {
 	int	j;
 
 	bu_log("rt_pr_tabdata(%s): ", title);
-	RT_CK_TABDATA(data);
+	BN_CK_TABDATA(data);
 
 	for( j=0; j < data->ny; j++ )  {
 		bu_log("%g, ", data->y[j] );
@@ -994,7 +991,7 @@ CONST struct rt_tabdata	*data;
 }
 
 /*
- *			R T _ P R _ T A B L E _ A N D _ T A B D A T A
+ *			B N _ P R I N T _ T A B L E _ A N D _ T A B D A T A
  *
  *  Write out a given data table into an ASCII file,
  *  suitable for input to GNUPLOT.
@@ -1003,19 +1000,19 @@ CONST struct rt_tabdata	*data;
  *	(plot "filename" with lines)
  */
 int
-rt_pr_table_and_tabdata( filename, data )
+bn_print_table_and_tabdata( filename, data )
 CONST char			*filename;
-CONST struct rt_tabdata	*data;
+CONST struct bn_tabdata	*data;
 {
 	FILE	*fp;
-	CONST struct rt_table	*tabp;
+	CONST struct bn_table	*tabp;
 	int	j;
 
-	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_pr_table_and_tabdata(%s, x%x)\n", filename, data);
+	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_print_table_and_tabdata(%s, x%x)\n", filename, data);
 
-	RT_CK_TABDATA(data);
+	BN_CK_TABDATA(data);
 	tabp = data->table;
-	RT_CK_TABLE(tabp);
+	BN_CK_TABLE(tabp);
 
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	fp = fopen( filename, "w" );
@@ -1023,7 +1020,7 @@ CONST struct rt_tabdata	*data;
 
 	if( fp == NULL )  {
 		perror(filename);
-		rt_log("rt_pr_table_and_tabdata(%s, x%x) FAILED\n", filename, data );
+		bu_log("bn_print_table_and_tabdata(%s, x%x) FAILED\n", filename, data );
 		return -1;
 	}
 
@@ -1038,28 +1035,28 @@ CONST struct rt_tabdata	*data;
 }
 
 /*
- *			R T _ R E A D _ T A B L E _ A N D _ T A B D A T A
+ *			B N _ R E A D _ T A B L E _ A N D _ T A B D A T A
  *
  *  Read in a file which contains two columns of numbers, the first
  *  column being the waveength, the second column being the sample value
  *  at that wavelength.
- *  A new rt_table structure and one rt_tabdata structure
- *  are created, a pointer to the rt_tabdata structure is returned.
+ *  A new bn_table structure and one bn_tabdata structure
+ *  are created, a pointer to the bn_tabdata structure is returned.
  *  The final wavelength is guessed at.
  */
-struct rt_tabdata *
-rt_read_table_and_tabdata( filename )
+struct bn_tabdata *
+bn_read_table_and_tabdata( filename )
 CONST char	*filename;
 {
-	struct rt_table	*tabp;
-	struct rt_tabdata	*data;
+	struct bn_table	*tabp;
+	struct bn_tabdata	*data;
 	struct bu_vls		line;
 	FILE	*fp;
 	char	buf[128];
 	int	count = 0;
 	int	i;
 
-	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_read_table_and_tabdata(%s)\n", filename);
+	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_read_table_and_tabdata(%s)\n", filename);
 
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	fp = fopen( filename, "r" );
@@ -1067,7 +1064,7 @@ CONST char	*filename;
 
 	if( fp == NULL )  {
 		perror(filename);
-		rt_log("rt_read_table_and_tabdata(%s) FAILED\n", filename);
+		bu_log("bn_read_table_and_tabdata(%s) FAILED\n", filename);
 		return NULL;
 	}
 
@@ -1081,8 +1078,8 @@ CONST char	*filename;
 	bu_semaphore_release( BU_SEM_SYSCALL );
 
 	/* Allocate storage */
-	RT_GET_TABLE( tabp, count );
-	RT_GET_TABDATA( data, tabp );
+	BN_GET_TABLE( tabp, count );
+	BN_GET_TABDATA( data, tabp );
 
 	/* Second pass:  Read only as much data as storage was allocated for */
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
@@ -1090,7 +1087,7 @@ CONST char	*filename;
 	for( i=0; i < count; i++ )  {
 		buf[0] = '\0';
 		if( fgets( buf, sizeof(buf), fp ) == NULL )  {
-			rt_log("rt_read_table_and_tabdata(%s) unexpected EOF on line %d\n", filename, i);
+			bu_log("bn_read_table_and_tabdata(%s) unexpected EOF on line %d\n", filename, i);
 			break;
 		}
 		sscanf( buf, "%lf %lf", &tabp->x[i], &data->y[i] );
@@ -1101,21 +1098,21 @@ CONST char	*filename;
 	/* Complete final interval */
 	tabp->x[count] = 2 * tabp->x[count-1] - tabp->x[count-2];
 
-	rt_ck_table( tabp );
+	bn_ck_table( tabp );
 
 	return data;
 }
 
 /*
- *			R T _ T A B D A T A _ B I N A R Y _ R E A D
+ *			B N _ T A B D A T A _ B I N A R Y _ R E A D
  */
-struct rt_tabdata *
-rt_tabdata_binary_read( filename, num, tabp )
+struct bn_tabdata *
+bn_tabdata_binary_read( filename, num, tabp )
 CONST char			*filename;
 int				num;
-CONST struct rt_table	*tabp;
+CONST struct bn_table	*tabp;
 {
-	struct rt_tabdata	*data;
+	struct bn_tabdata	*data;
 	char	*cp;
 	int	nbytes;
 	int	len;
@@ -1123,11 +1120,11 @@ CONST struct rt_table	*tabp;
 	int	fd;
 	int	i;
 
-	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_binary_read(%s, num=%d, x%x)\n", filename, num, tabp);
+	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_binary_read(%s, num=%d, x%x)\n", filename, num, tabp);
 
-	RT_CK_TABLE(tabp);
+	BN_CK_TABLE(tabp);
 
-	nbytes = RT_SIZEOF_TABDATA(tabp);
+	nbytes = BN_SIZEOF_TABDATA(tabp);
 	len = num * nbytes;
 
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
@@ -1135,27 +1132,27 @@ CONST struct rt_table	*tabp;
 	bu_semaphore_release( BU_SEM_SYSCALL );
 	if( fd <= 0 )  {
 		perror(filename);
-		bu_log("rt_tabdata_binary_read(%s): %m\n", filename);
+		bu_log("bn_tabdata_binary_read(%s): %m\n", filename);
 		bu_semaphore_acquire( BU_SEM_SYSCALL );
 		close(fd);
 		bu_semaphore_release( BU_SEM_SYSCALL );
-		return (struct rt_tabdata *)NULL;
+		return (struct bn_tabdata *)NULL;
 	}
 
 	/* Get a big array of structures for reading all at once */
-	data = (struct rt_tabdata *)bu_malloc( len+8, "rt_tabdata[]" );
+	data = (struct bn_tabdata *)bu_malloc( len+8, "bn_tabdata[]" );
 
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	got = read( fd, (char *)data, len );
 	bu_semaphore_release( BU_SEM_SYSCALL );
 	if( got != len )  {
-		bu_log("rt_tabdata_binary_read(%s) expected %d got %d\n",
+		bu_log("bn_tabdata_binary_read(%s) expected %d got %d\n",
 			filename, len, got);
-		bu_free( data, "rt_tabdata[]" );
+		bu_free( data, "bn_tabdata[]" );
 		bu_semaphore_acquire( BU_SEM_SYSCALL );
 		close(fd);
 		bu_semaphore_release( BU_SEM_SYSCALL );
-		return (struct rt_tabdata *)NULL;
+		return (struct bn_tabdata *)NULL;
 	}
 	bu_semaphore_acquire( BU_SEM_SYSCALL );
 	close(fd);
@@ -1164,10 +1161,10 @@ CONST struct rt_table	*tabp;
 	/* Connect data[i].table pointer to tabp */
 	cp = (char *)data;
 	for( i = num-1; i >= 0; i--, cp += nbytes )  {
-		register struct rt_tabdata	*sp;
+		register struct bn_tabdata	*sp;
 
-		sp = (struct rt_tabdata *)cp;
-		RT_CK_TABDATA(sp);
+		sp = (struct bn_tabdata *)cp;
+		BN_CK_TABDATA(sp);
 		sp->table = tabp;
 	}
 
@@ -1175,39 +1172,39 @@ CONST struct rt_table	*tabp;
 }
 
 /*
- *			R T _ T A B D A T A _ M A L L O C _ A R R A Y
+ *			B N _ T A B D A T A _ M A L L O C _ A R R A Y
  *
  *  Allocate storage for, and initialize, an array of 'num' data table
  *  structures.
- *  This subroutine is provided because the rt_tabdata structures
+ *  This subroutine is provided because the bn_tabdata structures
  *  are variable length.
  */
-struct rt_tabdata *
-rt_tabdata_malloc_array( tabp, num )
-CONST struct rt_table	*tabp;
+struct bn_tabdata *
+bn_tabdata_malloc_array( tabp, num )
+CONST struct bn_table	*tabp;
 int	num;
 {
-	struct rt_tabdata	*data;
+	struct bn_tabdata	*data;
 	char	*cp;
 	int	i;
 	int	nw;
 	int	nbytes;
 
-	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_malloc_array(x%x, num=%d)\n", tabp, num);
+	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_malloc_array(x%x, num=%d)\n", tabp, num);
 
-	RT_CK_TABLE(tabp);
+	BN_CK_TABLE(tabp);
 	nw = tabp->nx;
-	nbytes = RT_SIZEOF_TABDATA(tabp);
+	nbytes = BN_SIZEOF_TABDATA(tabp);
 
-	data = (struct rt_tabdata *)rt_calloc( num,
-		nbytes, "struct rt_tabdata[]" );
+	data = (struct bn_tabdata *)rt_calloc( num,
+		nbytes, "struct bn_tabdata[]" );
 
 	cp = (char *)data;
 	for( i = 0; i < num; i++ ) {
-		register struct rt_tabdata	*sp;
+		register struct bn_tabdata	*sp;
 
-		sp = (struct rt_tabdata *)cp;
-		sp->magic = RT_TABDATA_MAGIC;
+		sp = (struct bn_tabdata *)cp;
+		sp->magic = BN_TABDATA_MAGIC;
 		sp->ny = nw;
 		sp->table = tabp;
 		cp += nbytes;
@@ -1216,87 +1213,87 @@ int	num;
 }
 
 /*
- *			R T _ T A B D A T A _ C O P Y
+ *			B N _ T A B D A T A _ C O P Y
  */
 void
-rt_tabdata_copy( out, in )
-struct rt_tabdata	*out;
-CONST struct rt_tabdata	*in;
+bn_tabdata_copy( out, in )
+struct bn_tabdata	*out;
+CONST struct bn_tabdata	*in;
 {
-	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_copy(x%x, x%x)\n", out, in);
+	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_copy(x%x, x%x)\n", out, in);
 
-	RT_CK_TABDATA( out );
-	RT_CK_TABDATA( in );
+	BN_CK_TABDATA( out );
+	BN_CK_TABDATA( in );
 
 	if( in->table != out->table )
-		rt_bomb("rt_tabdata_copy(): samples drawn from different tables\n");
+		bu_bomb("bn_tabdata_copy(): samples drawn from different tables\n");
 	if( in->ny != out->ny )
-		rt_bomb("rt_tabdata_copy(): different tabdata lengths?\n");
+		bu_bomb("bn_tabdata_copy(): different tabdata lengths?\n");
 
-	bcopy( (CONST char *)in->y, (char *)out->y, RT_SIZEOF_TABDATA_Y(in) );
+	bcopy( (CONST char *)in->y, (char *)out->y, BN_SIZEOF_TABDATA_Y(in) );
 }
 
 /*
- *			R T _ T A B D A T A _ D U P
+ *			B N _ T A B D A T A _ D U P
  */
-struct rt_tabdata *
-rt_tabdata_dup( in )
-CONST struct rt_tabdata	*in;
+struct bn_tabdata *
+bn_tabdata_dup( in )
+CONST struct bn_tabdata	*in;
 {
-	struct rt_tabdata *data;
+	struct bn_tabdata *data;
 
-	RT_CK_TABDATA( in );
-	RT_GET_TABDATA( data, in->table );
+	BN_CK_TABDATA( in );
+	BN_GET_TABDATA( data, in->table );
 
-	bcopy( (CONST char *)in->y, (char *)data->y, RT_SIZEOF_TABDATA_Y(in) );
+	bcopy( (CONST char *)in->y, (char *)data->y, BN_SIZEOF_TABDATA_Y(in) );
 
-	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_dup(x%x) = x%x\n", in, data);
+	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_dup(x%x) = x%x\n", in, data);
 	return data;
 }
 
 /*
- *			R T _ T A B D A T A _ G E T _ C O N S T V A L
+ *			B N _ T A B D A T A _ G E T _ C O N S T V A L
  *
  *  For a given table, allocate and return a tabdata structure
  *  with all elements initialized to 'val'.
  */
-struct rt_tabdata *
-rt_tabdata_get_constval( val, tabp )
+struct bn_tabdata *
+bn_tabdata_get_constval( val, tabp )
 double			val;
-CONST struct rt_table	*tabp;
+CONST struct bn_table	*tabp;
 {
-	struct rt_tabdata	*data;
+	struct bn_tabdata	*data;
 	int			todo;
 	register fastf_t	*op;
 
-	RT_CK_TABLE(tabp);
-	RT_GET_TABDATA( data, tabp );
+	BN_CK_TABLE(tabp);
+	BN_GET_TABDATA( data, tabp );
 
 	op = data->y;
 	for( todo = data->ny-1; todo >= 0; todo-- )
 		*op++ = val;
 
-	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_get_constval(val=%g, x%x)=x%x\n", val, tabp, data);
+	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_get_constval(val=%g, x%x)=x%x\n", val, tabp, data);
 
 	return data;
 }
 
 /*
- *			R T _ T A B D A T A _ C O N S T V A L
+ *			B N _ T A B D A T A _ C O N S T V A L
  *
  *  Set all the tabdata elements to 'val'
  */
 void
-rt_tabdata_constval( data, val )
-struct rt_tabdata	*data;
+bn_tabdata_constval( data, val )
+struct bn_tabdata	*data;
 double			val;
 {
 	int			todo;
 	register fastf_t	*op;
 
-	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_constval(x%x, val=%g)\n", data, val);
+	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_constval(x%x, val=%g)\n", data, val);
 
-	RT_CK_TABDATA(data);
+	BN_CK_TABDATA(data);
 
 	op = data->y;
 	for( todo = data->ny-1; todo >= 0; todo-- )
@@ -1304,27 +1301,27 @@ double			val;
 }
 
 /*
- *			R T _ T A B D A T A _ T O _ T C L
+ *			B N _ T A B D A T A _ T O _ T C L
  *
- *  Convert an rt_tabdata/rt_table pair into a Tcl compatible string
+ *  Convert an bn_tabdata/bn_table pair into a Tcl compatible string
  *  appended to a VLS.  It will have form:
  *	x {...} y {...} nx # ymin # ymax #
  */
 void
-rt_tabdata_to_tcl( vp, data )
+bn_tabdata_to_tcl( vp, data )
 struct bu_vls		*vp;
-CONST struct rt_tabdata	*data;
+CONST struct bn_tabdata	*data;
 {
-	CONST struct rt_table	*tabp;
+	CONST struct bn_table	*tabp;
 	register int i;
-	FAST fastf_t	minval = INFINITY, maxval = -INFINITY;
+	FAST fastf_t	minval = MAX_FASTF, maxval = -MAX_FASTF;
 
-	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_to_tcl(x%x, x%x)\n", vp, data);
+	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_to_tcl(x%x, x%x)\n", vp, data);
 
 	BU_CK_VLS(vp);
-	RT_CK_TABDATA(data);
+	BN_CK_TABDATA(data);
 	tabp = data->table;
-	RT_CK_TABLE(tabp);
+	BN_CK_TABLE(tabp);
 
 	bu_vls_strcat(vp, "x {");
 	for( i=0; i < tabp->nx; i++ )  {
@@ -1342,126 +1339,126 @@ CONST struct rt_tabdata	*data;
 }
 
 /*
- *			R T _ T A B D A T A _ F R O M _ A R R A Y
+ *			B N _ T A B D A T A _ F R O M _ A R R A Y
  *
- *  Given an array of (x,y) pairs, build the relevant rt_table and
- *  rt_tabdata structures.
+ *  Given an array of (x,y) pairs, build the relevant bn_table and
+ *  bn_tabdata structures.
  *  The table is terminated by an x value <= 0.
  *  Consistent with the interpretation of the spans,
  *  invent a final span ending x value.
  */
-struct rt_tabdata *
-rt_tabdata_from_array( array )
+struct bn_tabdata *
+bn_tabdata_from_array( array )
 CONST double *array;
 {
 	register CONST double	*dp;
 	int			len = 0;
-	struct rt_table		*tabp;
-	struct rt_tabdata	*data;
+	struct bn_table		*tabp;
+	struct bn_tabdata	*data;
 	register int		i;
 
 	/* First, find len */
 	for( dp = array; *dp > 0; dp += 2 )	/* NIL */ ;
 	len = (dp - array) >> 1;
 
-	/* Second, build rt_table */
-	RT_GET_TABLE( tabp, len );
+	/* Second, build bn_table */
+	BN_GET_TABLE( tabp, len );
 	for( i = 0; i < len; i++ )  {
 		tabp->x[i] = array[i<<1];
 	}
 	tabp->x[len] = tabp->x[len-1] + 1;	/* invent span end */
 
-	/* Third, build rt_tabdata (last input "y" is ignored) */
-	RT_GET_TABDATA( data, tabp );
+	/* Third, build bn_tabdata (last input "y" is ignored) */
+	BN_GET_TABDATA( data, tabp );
 	for( i = 0; i < len-1; i++ )  {
 		data->y[i] = array[(i<<1)+1];
 	}
 
-	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_from_array(x%x) = x%x\n", array, data);
+	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_from_array(x%x) = x%x\n", array, data);
 	return data;
 }
 
 /*
- *			R T _ T A B D A T A _ F R E Q _ S H I F T
+ *			B N _ T A B D A T A _ F R E Q _ S H I F T
  *
  *  Shift the data by a constant offset in the independent variable
  *  (often frequency), interpolating new sample values.
  */
 void
-rt_tabdata_freq_shift( out, in, offset )
-struct rt_tabdata		*out;
-CONST struct rt_tabdata		*in;
+bn_tabdata_freq_shift( out, in, offset )
+struct bn_tabdata		*out;
+CONST struct bn_tabdata		*in;
 double				offset;
 {
-	CONST struct rt_table	*tabp;
+	CONST struct bn_table	*tabp;
 	register int 		i;
 
-	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_tabdata_freq_shift(x%x, x%x, offset=%g)\n", out, in, offset);
+	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_freq_shift(x%x, x%x, offset=%g)\n", out, in, offset);
 
-	RT_CK_TABDATA( out );
-	RT_CK_TABDATA( in );
+	BN_CK_TABDATA( out );
+	BN_CK_TABDATA( in );
 	tabp = in->table;
 
 	if( tabp != out->table )
-		rt_bomb("rt_tabdata_freq_shift(): samples drawn from different tables\n");
+		bu_bomb("bn_tabdata_freq_shift(): samples drawn from different tables\n");
 	if( in->ny != out->ny )
-		rt_bomb("rt_tabdata_freq_shift(): different tabdata lengths?\n");
+		bu_bomb("bn_tabdata_freq_shift(): different tabdata lengths?\n");
 
 	for( i=0; i < out->ny; i++ ) {
-		out->y[i] = rt_table_lin_interp( in, tabp->x[i]+offset );
+		out->y[i] = bn_table_lin_interp( in, tabp->x[i]+offset );
 	}
 }
 
 /*
- *			R T _ T A B L E _ I N T E R V A L _ N U M _ S A M P L E S
+ *			B N _ T A B L E _ I N T E R V A L _ N U M _ S A M P L E S
  *
  *  Returns number of sample points between 'low' and 'hi', inclusive.
  */
 int
-rt_table_interval_num_samples( tabp, low, hi )
-CONST struct rt_table *tabp;
+bn_table_interval_num_samples( tabp, low, hi )
+CONST struct bn_table *tabp;
 double	low;
 double	hi;
 {
 	register int	i;
 	register int	count = 0;
 
-	RT_CK_TABLE(tabp);
+	BN_CK_TABLE(tabp);
 
 	for( i=0; i < tabp->nx-1; i++ )  {
 		if( tabp->x[i] >= low && tabp->x[i] <= hi )  count++;
 	}
 
-	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_table_interval_num_samples(x%x, low=%g, hi=%g) = %d\n", tabp, low, hi, count);
+	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_interval_num_samples(x%x, low=%g, hi=%g) = %d\n", tabp, low, hi, count);
 	return count;
 }
 
 /*
- *			R T _ T A B L E _ D E L E T E _ S A M P L E _ P T S
+ *			B N _ T A B L E _ D E L E T E _ S A M P L E _ P T S
  *
  *  Remove all sampling points between subscripts i and j, inclusive.
  *  Don't bother freeing the tiny bit of storage at the end of the array.
  *  Returns number of points removed.
  */
 int
-rt_table_delete_sample_pts( tabp, i, j )
-struct rt_table *tabp;
+bn_table_delete_sample_pts( tabp, i, j )
+struct bn_table *tabp;
 int	i;
 int	j;
 {
 	int	tokill;
 	int	k;
 
-	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_table_delete_samples(x%x, %d, %d)\n", tabp, i, j);
+	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_delete_samples(x%x, %d, %d)\n", tabp, i, j);
 
-	RT_CK_TABLE(tabp);
+	BN_CK_TABLE(tabp);
 
-	if( i < 0 || j < 0 )  bu_bomb("rt_table_delete_sample_pts() negative indices\n");
-	if( i >= tabp->nx || j >= tabp->nx )  bu_bomb("rt_table_delete_sample_pts() index out of range\n");
+	if( i < 0 || j < 0 )  bu_bomb("bn_table_delete_sample_pts() negative indices\n");
+	if( i >= tabp->nx || j >= tabp->nx )  bu_bomb("bn_table_delete_sample_pts() index out of range\n");
 
 	tokill = j - i + 1;
-	if( tokill < 1 )  bu_bomb("rt_table_delete_sample_pts(): nothing to delete\n");
-	if( tokill >= tabp->nx ) bu_bomb("rt_table_delete_sample_pts(): you can't kill 'em all!\n");
+	if( tokill < 1 )  bu_bomb("bn_table_delete_sample_pts(): nothing to delete\n");
+	if( tokill >= tabp->nx ) bu_bomb("bn_table_delete_sample_pts(): you can't kill 'em all!\n");
 
 	tabp->nx -= tokill;
 
@@ -1472,23 +1469,23 @@ int	j;
 }
 
 /*
- *			R T _ T A B L E _ M E R G E 2
+ *			B N _ T A B L E _ M E R G E 2
  *
  *  A new table is returned which has sample points at places from
  *  each of the input tables.
  */
-struct rt_table *
-rt_table_merge2( a, b )
-CONST struct rt_table	*a;
-CONST struct rt_table	*b;
+struct bn_table *
+bn_table_merge2( a, b )
+CONST struct bn_table	*a;
+CONST struct bn_table	*b;
 {
-	struct rt_table *new;
+	struct bn_table *new;
 	register int i, j, k;
 
-	RT_CK_TABLE(a);
-	RT_CK_TABLE(b);
+	BN_CK_TABLE(a);
+	BN_CK_TABLE(b);
 
-	RT_GET_TABLE(new, a->nx + b->nx + 2 );
+	BN_GET_TABLE(new, a->nx + b->nx + 2 );
 
 	i = j = 0;		/* input subscripts */
 	k = 0;			/* output subscript */
@@ -1515,9 +1512,9 @@ CONST struct rt_table	*b;
 			new->x[k++] = b->x[j++];
 		}
 	}
-	if( k > new->nx )  bu_bomb("rt_table_merge2() assertion failed, k>nx?\n");
+	if( k > new->nx )  bu_bomb("bn_table_merge2() assertion failed, k>nx?\n");
 	new->nx = k-1;
 
-	if(rt_g.debug&DEBUG_TABDATA) bu_log("rt_table_merge2(x%x, x%x) = x%x\n", a, b, new);
+	if(bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_merge2(x%x, x%x) = x%x\n", a, b, new);
 	return new;
 }
