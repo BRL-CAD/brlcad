@@ -27,11 +27,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
+#include "png.h"
 #include "machine.h"
 #include "externs.h"			/* For getopt */
 #include "bu.h"
 #include "fb.h"
-#include "png.h"
 
 static png_color_16 def_backgrd={ 0,0,0,0,0 };
 static unsigned char **scanline;	/* 1 scanline pixel buffer */
