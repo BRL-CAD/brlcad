@@ -82,9 +82,9 @@ _LOCAL_ int	multiple_windows = 0;	/* someone wants to be ready
 _LOCAL_	XColor	color_cell[256];		/* used to set colormap */
 
 int ogl_refresh();
-int ogl_close_existing();
 int ogl_open_existing();
-_LOCAL_ int _ogl_open_existing();
+int ogl_close_existing();
+int _ogl_open_existing();
 
 _LOCAL_ int	ogl_open(),
 		ogl_close(),
@@ -1055,7 +1055,7 @@ char **argv;
 			    glxc, double_buffer, soft_cmap);
 }
 
-_LOCAL_ int
+int
 _ogl_open_existing(ifp, dpy, win, cmap, vip, width, height, glxc, double_buffer, soft_cmap)
 FBIO *ifp;
 Display *dpy;

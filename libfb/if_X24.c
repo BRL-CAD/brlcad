@@ -106,7 +106,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 int X24_refresh();
 int X24_close_existing();
 int X24_open_existing();
-static int _X24_open_existing();
+int _X24_open_existing();
 
 static int	X24_open(),
 		X24_close(),
@@ -580,7 +580,7 @@ char **argv;
   return _X24_open_existing(ifp, dpy, win, cmap, vip, width, height, gc);
 }
 
-static int
+int
 _X24_open_existing(ifp, dpy, win, cmap, vip, width, height, gc)
 FBIO *ifp;
 Display *dpy;
