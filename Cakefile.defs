@@ -694,29 +694,11 @@ set -S2 "/bin/sh"
 #	endif
 #endif
 
-#if defined(sparc)
-/*	Sun-4 "SparcStation" hardware */
+#if defined(sparc) && !defined(__CAKE__SunOS5)
+/*	Sun-4 "SparcStation" hardware, running SunOS 4 */
 #	undef	sun
 #	undef	sun4
 #	define	MTYPE	sun4
-#   if defined(__CAKE__SunOS5)
-/*	SunOS 5, aka Solaris 2 support.  Looks more like a SysV.  -Xt */
-#	define	UNIXTYPE	SYSV
-
-#	define	HAS_TCP		1
-
-#	define	LIBFB_OBJS	if_remote if_X
-#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_X -I/usr/openwin/include -I''XINCDIR
-#	define	LIBFB_LIBES	LIBPKG -L/usr/openwin/lib -R/usr/openwin/lib -L''XLIBDIR -lX11
-
-#	define	LIBPKG_CONFIG	-DBSD=43 -D_KERNEL
-#	define	LIBRT_TIMER	timerunix
-#	define	CC		cc
-
-#	define	OPTIMIZER	-fast -Xc
-#	define	CC_DEFS		-D_REENTRANT -Dsparc
-#	define	STANDARD_LIBES	-lm  -lsocket -lnsl -lthread
-#   else
 #	define	BSD	43
 #	define	HAS_TCP	1
 #	if 1	/* PRODUCTION=1 */
@@ -725,14 +707,12 @@ set -S2 "/bin/sh"
 #		define	OPTIMIZER	-g
 #	endif
 #	define	CC_DEFS	-PIC -DHAVE_UNISTD_H -DHAVE_STDLIB_H	/* Position independent code, for shared libraries, and unistd.h*/
-# if 1
 /*	Shared library support */
 #	define	ARCH_SUF	so
 #	define	LIBVERS		../sharedlibvers.sh
 #	define	BUILD_LIBRARY	ld -Bdynamic -o
 #	define	RANLIB		/**/
 #	define	STANDARD_LIBES	-L''LIBDIR -lm
-# endif
 #	define	LIBRT_TIMER	timer42
 
 #	if 0	/* PRODUCTION=0 */
@@ -791,10 +771,56 @@ set -S2 "/bin/sh"
 #		define	CC	/usr/lang/cc
 #		define	FC	/usr/lang/f77
 #	endif
-#   endif	/* __STDC__ */
 #   ifndef FC
 #	define FC	/usr/gnu/bin/f77
 #   endif
+#endif
+
+#if defined(sparc) && defined(__CAKE__SunOS5)
+/*	Sun "SparcStation" hardware, running Solaris (SunOS 5) */
+/*	SunOS 5, aka Solaris 2 support.  Looks like a SysV.  */
+/*	For now, we expect /opt/SUNWspro/bin ANSI compiler to be used */
+#	undef	sun
+#	undef	sun5
+#	define	MTYPE	sun5
+#	define	UNIXTYPE	SYSV
+
+#	define	HAS_TCP		1
+
+#	define	LIBFB_OBJS	if_remote if_X
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_X -I/usr/openwin/include -I''XINCDIR
+#	define	LIBFB_LIBES	LIBPKG -L/usr/openwin/lib -R/usr/openwin/lib -L''XLIBDIR -lX11
+
+#	define	LIBPKG_CONFIG	-DBSD=43 -D_KERNEL
+#	define	LIBRT_TIMER	timerunix
+#	define	CC		cc
+
+#	if 1	/* PRODUCTION=1 */
+#		define	OPTIMIZER	-fast
+#	else
+#		define	OPTIMIZER	-g
+#	endif
+#	define	CC_DEFS		-Xc -D_REENTRANT -Dsparc -DSUNOS=52
+/*	Shared library support */
+#	define	ARCH_SUF	so
+#	define	LIBVERS		../sharedlibvers.sh
+#	define	BUILD_LIBRARY	ld -Bdynamic -o
+#	define	RANLIB		/**/
+#	define	STANDARD_LIBES	-L''LIBDIR -lm
+
+#	define	XINCDIR		/usr/openwin/include
+#	define	XLIBDIR		/usr/openwin/lib
+
+#	define	LIBFB_OBJS	if_remote if_ab if_X
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X
+#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
+
+#	define	MGED_OBJS	dm-X
+#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#	define	MGED_LIBES	-L''XLIBDIR -lX11
+
+/*	XMGED requires a Motif license and include/X11/Xm/Xm.h */
+
 #endif
 
 #ifdef NeXT
