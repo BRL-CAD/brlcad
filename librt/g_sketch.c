@@ -79,6 +79,7 @@ int noisey;
 		struct line_seg *lsg;
 		struct carc_seg *csg;
 		struct nurb_seg *nsg;
+		struct bezier_seg *bsg;
 		long *lng;
 
 		lng = (long *)crv->segments[i];
@@ -103,6 +104,15 @@ int noisey;
 				{
 					if( nsg->ctl_points[j] >= skt->vert_count )
 					{
+						ret++;
+						break;
+					}
+				}
+				break;
+			case CURVE_BEZIER_MAGIC:
+				bsg = (struct bezier_seg *)lng;
+				for( j=0 ; j<=bsg->degree ; j++ ) {
+					if( bsg->ctl_points[j] >= skt->vert_count ) {
 						ret++;
 						break;
 					}
@@ -277,6 +287,7 @@ struct curve                    *crv;
 	struct line_seg *lsg;
 	struct carc_seg *csg;
 	struct nurb_seg *nsg;
+	struct bezier_seg *bsg;
 	fastf_t delta;
 	point_t center, start_pt, end_pt;
 	fastf_t pt[4];
@@ -592,6 +603,106 @@ struct curve                    *crv;
 				bu_free( (char *)eg.ctl_points, "eg.ctl_points" );
 				break;
 			}
+			case CURVE_BEZIER_MAGIC: {
+				struct bezier_2d_list *bezier_hd, *bz;
+				fastf_t epsilon;
+
+				bsg = (struct bezier_seg *)lng;
+
+				for( i=0 ; i<=bsg->degree ; i++ ) {
+					if( bsg->ctl_points[i] >= sketch_ip->vert_count ) {
+						ret++;
+						break;
+					}
+				}
+
+				if( bsg->degree < 1 ) {
+					bu_log( "g_sketch: ERROR: Bezier curve with illegal degree (%d)\n",
+						bsg->degree );
+					ret++;
+					break;
+				}
+
+				if( bsg->degree == 1 ) {
+					/* straight line */
+					VJOIN2( start_pt, V, sketch_ip->verts[bsg->ctl_points[0]][0],
+						u_vec, sketch_ip->verts[bsg->ctl_points[0]][1], v_vec );
+					RT_ADD_VLIST( vhead, start_pt, BN_VLIST_LINE_MOVE );
+					for( i=1 ; i<=bsg->degree ; i++ ) {
+						VJOIN2( pt, V, sketch_ip->verts[bsg->ctl_points[i]][0],
+							u_vec, sketch_ip->verts[bsg->ctl_points[i]][1], v_vec );
+						RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_DRAW );
+					}
+					break;
+				}
+
+				/* use tolerance to determine coarseness of plot */
+				epsilon = MAX_FASTF;
+				if( ttol->abs > 0.0 && ttol->abs < epsilon )
+					epsilon = ttol->abs;
+				if( ttol->rel > 0.0 )
+				{
+					point2d_t min_pt, max_pt, tmp_pt;
+					point2d_t diff;
+					fastf_t tmp_epsilon;
+
+					min_pt[0] = MAX_FASTF;
+					min_pt[1] = MAX_FASTF;
+					max_pt[0] = -MAX_FASTF;
+					max_pt[1] = -MAX_FASTF;
+
+					for( i=0 ; i<=bsg->degree ; i++ )
+					{
+						V2MOVE( tmp_pt, sketch_ip->verts[bsg->ctl_points[i]] );
+						if( tmp_pt[0] > max_pt[0] )
+							max_pt[0] = tmp_pt[0];
+						if( tmp_pt[1] > max_pt[1] )
+							max_pt[1] = tmp_pt[1];
+						if( tmp_pt[0] < min_pt[0] )
+							min_pt[0] = tmp_pt[0];
+						if( tmp_pt[1] < min_pt[1] )
+							min_pt[1] = tmp_pt[1];
+					}
+
+					V2SUB2( diff, max_pt, min_pt )
+					tmp_epsilon = ttol->rel * sqrt( MAG2SQ( diff ) );
+					if( tmp_epsilon < epsilon )
+						epsilon = tmp_epsilon;
+					
+				}
+				
+
+				/* Create an initial bezier_2d_list */
+				bezier_hd = (struct bezier_2d_list *)bu_malloc( sizeof( struct bezier_2d_list ),
+									     "g_sketch.c: bezier_hd" );
+				BU_LIST_INIT( &bezier_hd->l );
+				bezier_hd->ctl = (point2d_t *)bu_calloc( bsg->degree + 1, sizeof( point2d_t ),
+									 "g_sketch.c: bezier_hd->ctl" );
+				for( i=0 ; i<=bsg->degree ; i++ ) {
+					V2MOVE( bezier_hd->ctl[i], sketch_ip->verts[bsg->ctl_points[i]] );
+				}
+
+				/* now do subdivision as necessary */
+				bezier_hd = subdivide_bezier( bezier_hd, bsg->degree, epsilon, 0 );
+
+				/* plot the results */
+				bz = BU_LIST_FIRST( bezier_2d_list, &bezier_hd->l );
+				VJOIN2( pt, V, bz->ctl[0][0], u_vec, bz->ctl[0][1], v_vec);
+				RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_MOVE );
+
+				while( BU_LIST_WHILE( bz, bezier_2d_list, &(bezier_hd->l) ) ) {
+					BU_LIST_DEQUEUE( &bz->l );
+					for( i=1 ; i<=bsg->degree ; i++ ) {
+						VJOIN2( pt, V, bz->ctl[i][0], u_vec,
+							bz->ctl[i][1], v_vec);
+						RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_DRAW );
+					}
+					bu_free( (char *)bz->ctl, "g_sketch.c: bz->ctl" );
+					bu_free( (char *)bz, "g_sketch.c: bz" );
+				}
+				bu_free( (char *)bezier_hd, "g_sketch.c: bezier_hd" );
+				break;
+			}
 			default:
 				bu_log( "curve_to_vlist: ERROR: unrecognized segment type!!!!\n" );
 				break;
@@ -721,6 +832,7 @@ const struct db_i		*dbip;
 		struct line_seg *lsg;
 		struct carc_seg *csg;
 		struct nurb_seg *nsg;
+		struct bezier_seg *bsg;
 		int i;
 
 		magic = bu_glong( ptr );
@@ -780,6 +892,18 @@ const struct db_i		*dbip;
 				else
 					nsg->weights = (fastf_t *)NULL;
 				sketch_ip->skt_curve.segments[seg_no] = (genptr_t)nsg;
+				break;
+			case CURVE_BEZIER_MAGIC:
+				bsg = (struct bezier_seg *)bu_malloc( sizeof( struct bezier_seg ), "bsg" );
+				bsg->magic = magic;
+				bsg->degree = bu_glong( ptr );
+				ptr += 4;
+				bsg->ctl_points = (int *)bu_calloc( bsg->degree + 1, sizeof( int ), "bsg->ctl_points" );
+				for( i=0 ; i<=bsg->degree ; i++ ) {
+					bsg->ctl_points[i] = bu_glong( ptr );
+					ptr += 4;
+				}
+				sketch_ip->skt_curve.segments[seg_no] = (genptr_t)bsg;
 				break;
 			default:
 				bu_bomb( "rt_sketch_import: ERROR: unrecognized segment type!!!\n" );
@@ -843,6 +967,7 @@ const struct db_i		*dbip;
 	{
 		long *lng;
 		struct nurb_seg *nseg;
+		struct bezier_seg *bseg;
 
 		lng = (long *)sketch_ip->skt_curve.segments[seg_no];
 		switch( *lng )
@@ -858,6 +983,10 @@ const struct db_i		*dbip;
 				nbytes += 16 + sizeof( struct knot_vector) + nseg->k.k_size * 8 + nseg->c_size * 4;
 				if( RT_NURB_IS_PT_RATIONAL( nseg->pt_type ) )
 					nbytes += nseg->c_size * 8;	/* weights */
+				break;
+			case CURVE_BEZIER_MAGIC:
+				bseg = (struct bezier_seg *)lng;
+				nbytes += 8 + (bseg->degree + 1) * 4;
 				break;
 			default:
 				bu_log( "rt_sketch_export: unsupported segement type (x%x)\n", *lng );
@@ -904,6 +1033,7 @@ const struct db_i		*dbip;
 		struct line_seg *lseg;
 		struct carc_seg *cseg;
 		struct nurb_seg *nseg;
+		struct bezier_seg *bseg;
 		long *lng;
 		fastf_t tmp_fastf;
 
@@ -959,6 +1089,17 @@ const struct db_i		*dbip;
 				{
 					htond( ptr, (const unsigned char *)nseg->weights, nseg->c_size );
 					ptr += 8 * nseg->c_size;
+				}
+				break;
+			case CURVE_BEZIER_MAGIC:
+				bseg = (struct bezier_seg *)lng;
+				(void)bu_plong( ptr, CURVE_BEZIER_MAGIC );
+				ptr += 4;
+				(void)bu_plong( ptr, bseg->degree );
+				ptr += 4;
+				for( i=0 ; i<=bseg->degree ; i++ ) {
+					(void)bu_plong( ptr, bseg->ctl_points[i] );
+					ptr += 4;
 				}
 				break;
 			default:
@@ -1048,6 +1189,7 @@ const struct db_i		*dbip;
 		struct line_seg *lsg;
 		struct carc_seg *csg;
 		struct nurb_seg *nsg;
+		struct bezier_seg *bsg;
 		int i;
 
 		magic = bu_glong( ptr );
@@ -1107,6 +1249,18 @@ const struct db_i		*dbip;
 				else
 					nsg->weights = (fastf_t *)NULL;
 				sketch_ip->skt_curve.segments[seg_no] = (genptr_t)nsg;
+				break;
+			case CURVE_BEZIER_MAGIC:
+				bsg = (struct bezier_seg *)bu_malloc( sizeof( struct bezier_seg ), "bsg" );
+				bsg->magic = magic;
+				bsg->degree = bu_glong( ptr );
+				ptr += SIZEOF_NETWORK_LONG;
+				bsg->ctl_points = (int *)bu_calloc( bsg->degree+1, sizeof( int ), "bsg->ctl_points" );
+				for( i=0 ; i<=bsg->degree ; i++ ) {
+					bsg->ctl_points[i] = bu_glong( ptr );
+					ptr += SIZEOF_NETWORK_LONG;
+				}
+				sketch_ip->skt_curve.segments[seg_no] = (genptr_t)bsg;
 				break;
 			default:
 				bu_bomb( "rt_sketch_import: ERROR: unrecognized segment type!!!\n" );
@@ -1173,6 +1327,7 @@ const struct db_i		*dbip;
 	{
 		long *lng;
 		struct nurb_seg *nseg;
+		struct bezier_seg *bseg;
 
 		lng = (long *)sketch_ip->skt_curve.segments[seg_no];
 		switch( *lng )
@@ -1190,6 +1345,10 @@ const struct db_i		*dbip;
 				ep->ext_nbytes += nseg->c_size * SIZEOF_NETWORK_LONG; /* control point indices */
 				if( RT_NURB_IS_PT_RATIONAL( nseg->pt_type ) )
 					ep->ext_nbytes += nseg->c_size * SIZEOF_NETWORK_DOUBLE;	/* weights */
+				break;
+			case CURVE_BEZIER_MAGIC:
+				bseg = (struct bezier_seg *)lng;
+				ep->ext_nbytes += (bseg->degree + 3) * SIZEOF_NETWORK_LONG;
 				break;
 			default:
 				bu_log( "rt_sketch_export: unsupported segement type (x%x)\n", *lng );
@@ -1231,6 +1390,7 @@ const struct db_i		*dbip;
 		struct line_seg *lseg;
 		struct carc_seg *cseg;
 		struct nurb_seg *nseg;
+		struct bezier_seg *bseg;
 		long *lng;
 		fastf_t tmp_fastf;
 
@@ -1286,6 +1446,17 @@ const struct db_i		*dbip;
 				{
 					htond( cp, (const unsigned char *)nseg->weights, nseg->c_size );
 					cp += SIZEOF_NETWORK_DOUBLE * nseg->c_size;
+				}
+				break;
+			case CURVE_BEZIER_MAGIC:
+				bseg = (struct bezier_seg *)lng;
+				(void)bu_plong( cp, CURVE_BEZIER_MAGIC );
+				cp += SIZEOF_NETWORK_LONG;
+				(void)bu_plong( cp, bseg->degree );
+				cp += SIZEOF_NETWORK_LONG;
+				for( i=0 ; i<=bseg->degree ; i++ ) {
+					(void)bu_plong( cp, bseg->ctl_points[i] );
+					cp += SIZEOF_NETWORK_LONG;
 				}
 				break;
 			default:
@@ -1371,6 +1542,7 @@ double			mm2local;
 		struct line_seg *lsg;
 		struct carc_seg *csg;
 		struct nurb_seg *nsg;
+		struct bezier_seg *bsg;
 
 		lsg = (struct line_seg *)sketch_ip->skt_curve.segments[seg_no];
 		switch( lsg->magic )
@@ -1501,6 +1673,34 @@ double			mm2local;
 					nsg->k.knots[0], nsg->k.knots[nsg->k.k_size-1] );
 				bu_vls_strcat( str, buf );
 				break;
+			case CURVE_BEZIER_MAGIC:
+				bsg = (struct bezier_seg *)sketch_ip->skt_curve.segments[seg_no];
+				bu_vls_strcat( str, "\t\tBezier Curve:\n" );
+				sprintf( buf, "\t\tdegree = %d\n", bsg->degree );
+				bu_vls_strcat( str, buf );
+				if( bsg->ctl_points[0] >= sketch_ip->vert_count ||
+				    bsg->ctl_points[bsg->degree] >= sketch_ip->vert_count ) {
+					if( sketch_ip->skt_curve.reverse[seg_no] ){
+						sprintf( buf, "\t\t\tstarts at vertex #%d\n\t\t\tends at vertex #%d\n",
+							 bsg->ctl_points[bsg->degree],
+							 bsg->ctl_points[0] );
+					} else {
+						sprintf( buf, "\t\t\tstarts at vertex #%d\n\t\t\tends at vertex #%d\n",
+							 bsg->ctl_points[0],
+							 bsg->ctl_points[bsg->degree] );
+					}
+				} else {
+					if( sketch_ip->skt_curve.reverse[seg_no] )
+						sprintf( buf, "\t\t\tstarts at (%g %g)\n\t\t\tends at (%g %g)\n",
+							V2ARGS( sketch_ip->verts[bsg->ctl_points[bsg->degree]]),
+							V2ARGS( sketch_ip->verts[bsg->ctl_points[0]] ) );
+					else
+						sprintf( buf, "\t\t\tstarts at (%g %g)\n\t\t\tends at (%g %g)\n",
+							V2ARGS( sketch_ip->verts[bsg->ctl_points[0]] ),
+							V2ARGS( sketch_ip->verts[bsg->ctl_points[bsg->degree]]));
+				}
+				bu_vls_strcat( str, buf );
+				break;
 			default:
 				bu_bomb( "rt_sketch_describe: ERROR: unrecognized segment type\n" );
 		}
@@ -1574,6 +1774,7 @@ struct curve *crv;
 	{
 		long *lng;
 		struct nurb_seg *nsg;
+		struct bezier_seg *bsg;
 
 		lng = (long *)crv->segments[i];
 		switch( *lng )
@@ -1584,6 +1785,13 @@ struct curve *crv;
 				if( nsg->weights )
 					bu_free( ( char *)nsg->weights, "nsg->weights" );
 				bu_free( ( char *)nsg->k.knots, "nsg->k.knots" );
+				bu_free( (char *)lng, "curve segment" );
+				break;
+			case CURVE_BEZIER_MAGIC:
+				bsg = (struct bezier_seg *)lng;
+				bu_free( (char *)bsg->ctl_points, "bsg->ctl_points" );
+				bu_free( (char *)lng, "curve segment" );
+				break;
 			case CURVE_LSEG_MAGIC:
 			case CURVE_CARC_MAGIC:
 				bu_free( (char *)lng, "curve segment" );
@@ -1614,6 +1822,7 @@ const struct curve *crv_in;
 		struct line_seg *lsg_out, *lsg_in;
 		struct carc_seg *csg_out, *csg_in;
 		struct nurb_seg *nsg_out, *nsg_in;
+		struct bezier_seg *bsg_out, *bsg_in;
 
 		crv_out->reverse[j] = crv_in->reverse[j];
 		lng = (long *)crv_in->segments[j];
@@ -1650,6 +1859,17 @@ const struct curve *crv_in;
 				nsg_out->k.knots = bu_malloc( nsg_in->k.k_size * sizeof( fastf_t ), "nsg_out->k.knots" );
 				for( i=0 ; i<nsg_in->k.k_size ; i++ )
 					nsg_out->k.knots[i] = nsg_in->k.knots[i];
+				break;
+			case CURVE_BEZIER_MAGIC:
+				bsg_in = (struct bezier_seg *)lng;
+				bsg_out = (struct bezier_seg *)bu_malloc( sizeof( struct bezier_seg ), "bezier_seg" );
+				crv_out->segments[j] = (genptr_t)bsg_out;
+				*bsg_out = *bsg_in;
+				bsg_out->ctl_points = (int *)bu_calloc( bsg_out->degree + 1,
+									sizeof( int ), "bsg_out->ctl_points" );
+				for( i=0 ; i<=bsg_out->degree ; i++ ) {
+					bsg_out->ctl_points[i] = bsg_in->ctl_points[i];
+				}
 				break;
 			default:
 				bu_bomb( "rt_copy_sketch: ERROR: unrecognized segment type!!!!\n" );

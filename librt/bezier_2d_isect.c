@@ -378,3 +378,56 @@ FindRoots(
     /* Send back total number of solutions      */
     return (total_count);
 }
+
+struct bezier_2d_list *
+subdivide_bezier( struct bezier_2d_list *bezier_in, int degree, fastf_t epsilon, int depth )
+{
+	struct bezier_2d_list *bz_l, *bz_r, *new_head;
+	struct bezier_2d_list *left_rtrn, *rt_rtrn;
+	point2d_t pt;
+
+	/* create a new head */
+	new_head = (struct bezier_2d_list *)bu_malloc( sizeof( struct bezier_2d_list ),
+						       "subdivide_bezier: new_head" );
+	BU_LIST_INIT( &new_head->l );
+	if( depth >= MAXDEPTH ){
+		BU_LIST_APPEND( &new_head->l, &bezier_in->l );
+		return( new_head );
+	}
+
+	if( ControlPolygonFlatEnough( bezier_in->ctl, degree, epsilon ) ) {
+		BU_LIST_APPEND( &new_head->l, &bezier_in->l );
+		return( new_head );
+	}
+
+	/* allocate memory for left and right curves */
+	bz_l = (struct bezier_2d_list *)bu_malloc( sizeof( struct bezier_2d_list ), "subdivide_bezier: bz_l" );
+	BU_LIST_INIT( &bz_l->l );
+	bz_r = (struct bezier_2d_list *)bu_malloc( sizeof( struct bezier_2d_list ), "subdivide_bezier: bz_r" );
+	BU_LIST_INIT( &bz_r->l );
+	bz_l->ctl = (point2d_t *)bu_calloc( degree + 1, sizeof( point2d_t ),
+					    "subdivide_bezier: bz_l->ctl" );
+	bz_r->ctl = (point2d_t *)bu_calloc( degree + 1, sizeof( point2d_t ),
+					    "subdivide_bezier: bz_r->ctl" );
+
+	/* subdivide at t = 0.5 */
+	Bezier( bezier_in->ctl, degree, 0.5, bz_l->ctl, bz_r->ctl, pt );
+
+	/* eliminate original */
+	BU_LIST_DEQUEUE( &bezier_in->l );
+	bu_free( (char *)bezier_in->ctl, "subdivide_bezier: bezier_in->ctl" );
+	bu_free( (char *)bezier_in, "subdivide_bezier: bezier_in" );
+
+	/* recurse on left curve */
+	left_rtrn = subdivide_bezier( bz_l, degree, epsilon, depth+1 );
+
+	/* recurse on right curve */
+	rt_rtrn = subdivide_bezier( bz_r, degree, epsilon, depth+1 );
+
+	BU_LIST_APPEND_LIST( &new_head->l, &left_rtrn->l );
+	BU_LIST_APPEND_LIST( &new_head->l, &rt_rtrn->l );
+	bu_free( (char *)left_rtrn, "subdivide_bezier: left_rtrn (head)" );
+	bu_free( (char *)rt_rtrn, "subdivide_bezier: rt_rtrn (head)" );
+
+	return( new_head );
+}
