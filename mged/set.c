@@ -49,22 +49,14 @@ struct _mged_variables default_mged_variables = {
 /* orig_gui */                  1,
 /* rt_output */			1,
 /* m_axes */    	        0,
-/* m_axes_color */		{ 100, 255, 100 },
-/* m_axes_label_color */	{ 255, 255, 0 },
 /* m_axes_size */		500,
 /* m_axes_linewidth */		1,
 /* m_axes_pos */		{ 0.0, 0.0, 0.0 },
 /* v_axes */    	        0,
-/* v_axes_color */		{ 100, 100, 255 },
-/* v_axes_label_color */	{ 255, 255, 0 },
 /* v_axes_size */		500,
 /* v_axes_linewidth */		1,
 /* v_axes_pos */                { 0, 0 },
 /* e_axes */            	0,
-/* e_axes_color1 */		{ 255, 255, 255 },
-/* e_axes_color2 */		{ 255, 255, 255 },
-/* e_axes_label_color1 */	{ 255, 255, 0 },
-/* e_axes_label_color2 */	{ 255, 255, 0 },
 /* e_axes_size1 */		500,
 /* e_axes_size2 */		500,
 /* e_axes_linewidth1 */		1,
@@ -82,12 +74,10 @@ struct _mged_variables default_mged_variables = {
 /* fb_all */			0,
 /* fb_overlay */		0,
 /* rubber_band */		0,
-/* rubber_band_color */		{ 255, 255, 255 },
 /* rubber_band_linewidth */	1,
 /* rubber_band_linestyle */	's',
 /* grid_draw */			0,
 /* grid_snap */			0,
-/* grid_color */		{ 255, 255, 255 },
 /* grid_anchor */		{ 0.0, 0.0, 0.0 },
 /* grid_res_h */		1.0,
 /* grid_res_v */		1.0,
@@ -169,32 +159,24 @@ struct bu_structparse mged_vparse[] = {
 	{"%d",	1, "orig_gui",		MV_O(orig_gui),	        set_dirty_flag },
 	{"%d",	1, "rt_output",		MV_O(rt_output),        BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "m_axes",		MV_O(m_axes),		set_dirty_flag },
-	{"%d",  3, "m_axes_color",	MV_OA(m_axes_color),	set_dirty_flag },
-	{"%d",  3, "m_axes_label_color",MV_OA(m_axes_label_color),set_dirty_flag },
 	{"%d",  1, "m_axes_size",	MV_O(m_axes_size),	set_dirty_flag },
 	{"%d",  1, "m_axes_linewidth",	MV_O(m_axes_linewidth),	set_dirty_flag },
 	{"%f",	3, "m_axes_pos",	MV_OA(m_axes_pos),	set_dirty_flag },
 	{"%d",  1, "v_axes",		MV_O(v_axes),		set_dirty_flag },
-	{"%d",  3, "v_axes_color",	MV_OA(v_axes_color),	set_dirty_flag },
-	{"%d",  3, "v_axes_label_color",MV_OA(v_axes_label_color),set_dirty_flag },
 	{"%d",  1, "v_axes_size",	MV_O(v_axes_size),	set_dirty_flag },
 	{"%d",  1, "v_axes_linewidth",	MV_O(v_axes_linewidth),	set_dirty_flag },
-	{"%d",  2, "v_axes_pos",        MV_OA(v_axes_pos),       set_dirty_flag },
+	{"%d",  2, "v_axes_pos",        MV_OA(v_axes_pos),	set_dirty_flag },
 	{"%d",  1, "e_axes",		MV_O(e_axes),		set_dirty_flag },
-	{"%d",  3, "e_axes_color1",	MV_OA(e_axes_color1),	set_dirty_flag },
-	{"%d",  3, "e_axes_color2",	MV_OA(e_axes_color2),	set_dirty_flag },
-	{"%d",  3, "e_axes_label_color1",MV_OA(e_axes_label_color1),set_dirty_flag },
-	{"%d",  3, "e_axes_label_color2",MV_OA(e_axes_label_color2),set_dirty_flag },
 	{"%d",  1, "e_axes_size1",	MV_O(e_axes_size1),	set_dirty_flag },
 	{"%d",  1, "e_axes_size2",	MV_O(e_axes_size2),	set_dirty_flag },
 	{"%d",  1, "e_axes_linewidth1",	MV_O(e_axes_linewidth1),set_dirty_flag },
 	{"%d",  1, "e_axes_linewidth2",	MV_O(e_axes_linewidth2),set_dirty_flag },
 	{"%d",	1, "linewidth",		MV_O(linewidth),	set_dirty_flag },
 	{"%c",	1, "linestyle",		MV_O(linestyle),	set_dirty_flag },
-	{"%d",  1, "send_key",          MV_O(send_key),         BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",  1, "hot_key",           MV_O(hot_key),          BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",  1, "context",           MV_O(context),          BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",  1, "dlist",             MV_O(dlist),            set_dlist },
+	{"%d",  1, "send_key",		MV_O(send_key),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",  1, "hot_key",		MV_O(hot_key),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",  1, "context",		MV_O(context),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",  1, "dlist",		MV_O(dlist),		set_dlist },
 	{"%d",  1, "use_air",		MV_O(use_air),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "listen",		MV_O(listen),		set_port },
 	{"%d",  1, "port",		MV_O(port),		set_port },
@@ -202,12 +184,10 @@ struct bu_structparse mged_vparse[] = {
 	{"%d",  1, "fb_all",		MV_O(fb_all),		set_dirty_flag },
 	{"%d",  1, "fb_overlay",	MV_O(fb_overlay),	set_dirty_flag },
 	{"%d",  1, "rubber_band",	MV_O(rubber_band),	set_dirty_flag },
-	{"%d",  3, "rubber_band_color",	MV_OA(rubber_band_color),set_dirty_flag },
 	{"%d",  1, "rubber_band_linewidth",	MV_O(rubber_band_linewidth),	set_dirty_flag },
 	{"%c",  1, "rubber_band_linestyle",	MV_O(rubber_band_linestyle),	set_dirty_flag },
 	{"%d",  1, "grid_draw",		MV_O(grid_draw),	set_grid_draw },
 	{"%d",  1, "grid_snap",		MV_O(grid_snap),	set_dirty_flag },
-	{"%d",  3, "grid_color",	MV_OA(grid_color),	set_dirty_flag },
 	{"%f",	3, "grid_anchor",	MV_OA(grid_anchor),	set_dirty_flag },
 	{"%f",	1, "grid_res_h",	MV_O(grid_res_h),	set_grid_res },
 	{"%f",	1, "grid_res_v",	MV_O(grid_res_v),	set_grid_res },
@@ -341,17 +321,16 @@ mged_variable_setup(interp)
 Tcl_Interp *interp;    
 {
   register struct bu_structparse *sp;
-  register int i;
 
-    for( sp = &mged_vparse[0]; sp->sp_name != NULL; sp++ ) {
-	read_var( (ClientData)sp, interp, sp->sp_name, (char *)NULL, 0 );
-	Tcl_TraceVar( interp, sp->sp_name, TCL_TRACE_READS|TCL_GLOBAL_ONLY,
-		      read_var, (ClientData)sp );
-	Tcl_TraceVar( interp, sp->sp_name, TCL_TRACE_WRITES|TCL_GLOBAL_ONLY,
-		      write_var, (ClientData)sp );
-	Tcl_TraceVar( interp, sp->sp_name, TCL_TRACE_UNSETS|TCL_GLOBAL_ONLY,
-		      unset_var, (ClientData)sp );
-    }
+  for( sp = &mged_vparse[0]; sp->sp_name != NULL; sp++ ) {
+    read_var( (ClientData)sp, interp, sp->sp_name, (char *)NULL, 0 );
+    Tcl_TraceVar( interp, sp->sp_name, TCL_TRACE_READS|TCL_GLOBAL_ONLY,
+		  read_var, (ClientData)sp );
+    Tcl_TraceVar( interp, sp->sp_name, TCL_TRACE_WRITES|TCL_GLOBAL_ONLY,
+		  write_var, (ClientData)sp );
+    Tcl_TraceVar( interp, sp->sp_name, TCL_TRACE_UNSETS|TCL_GLOBAL_ONLY,
+		  unset_var, (ClientData)sp );
+  }
 }
 
 int
