@@ -582,11 +582,11 @@ struct nmg_ptbl *b;
 /*
  *			N M G _ P L _ E
  */
-static nmg_pl_e(fp, e, b, R, G, B)
-FILE *fp;
-struct edge *e;
-struct nmg_ptbl *b;
-unsigned char R, G, B;
+void nmg_pl_e(fp, e, b, red, green, blue)
+FILE		*fp;
+struct edge	*e;
+struct nmg_ptbl	*b;
+int		red, green, blue;
 {
 	pointp_t p0, p1;
 	point_t end0, end1;
@@ -617,7 +617,7 @@ unsigned char R, G, B;
 
 	VADD2(end1, p1, v);
 
-	pl_color(fp, R, G, B);
+	pl_color(fp, red, green, blue);
 	pdv_3line( fp, end0, end1 );
 
 	nmg_pl_v(fp, e->eu_p->vu_p->v_p, b);
@@ -627,11 +627,11 @@ unsigned char R, G, B;
 /*
  *			M N G _ P L _ E U
  */
-void nmg_pl_eu(fp, eu, b, R, G, B)
-FILE *fp;
-struct edgeuse *eu;
-struct nmg_ptbl *b;
-unsigned char R, G, B;
+void nmg_pl_eu(fp, eu, b, red, green, blue)
+FILE		*fp;
+struct edgeuse	*eu;
+struct nmg_ptbl	*b;
+int		red, green, blue;
 {
 	point_t base, tip;
 	point_t	radial_tip;
@@ -651,24 +651,24 @@ unsigned char R, G, B;
 	if (nmg_tbl(b, TBL_LOC, &eu->l.magic) >= 0) return;
 	(void)nmg_tbl(b, TBL_INS, &eu->l.magic);
 
-	nmg_pl_e(fp, eu->e_p, b, R, G, B);
+	nmg_pl_e(fp, eu->e_p, b, red, green, blue);
 
 	if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC &&
 	    *eu->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC) {
 
 	    	nmg_eu_coords(eu, base, tip);
 	    	if (eu->up.lu_p->up.fu_p->orientation == OT_SAME)
-	    		R += 50;
+	    		red += 50;
 		else if (eu->up.lu_p->up.fu_p->orientation == OT_OPPOSITE)
-			R -= 50;
+			red -= 50;
 	    	else
-	    		R = G = B = (unsigned char)255;
+	    		red = green = blue = 255;
 
-		pl_color(fp, R, G, B);
+		pl_color(fp, red, green, blue);
 	    	pdv_3line( fp, base, tip );
 
 	    	nmg_eu_radial( eu, radial_tip );
-		pl_color(fp, R, G-20, B);
+		pl_color(fp, red, green-20, blue);
 	    	pdv_3line( fp, tip, radial_tip );
 
 		pl_color(fp, 0, 100, 0);
@@ -686,11 +686,11 @@ unsigned char R, G, B;
 /*
  *			N M G _ P L _ L U
  */
-void nmg_pl_lu(fp, lu, b, R, G, B)
-FILE *fp;
-struct loopuse *lu;
-struct nmg_ptbl *b;
-unsigned char R, G, B;
+void nmg_pl_lu(fp, lu, b, red, green, blue)
+FILE		*fp;
+struct loopuse	*lu;
+struct nmg_ptbl	*b;
+int		red, green, blue;
 {
 	struct edgeuse	*eu;
 	long		magic1;
@@ -706,7 +706,7 @@ unsigned char R, G, B;
 	    	nmg_pl_v(fp, NMG_LIST_PNEXT(vertexuse, &lu->down_hd)->v_p, b);
 	} else if (magic1 == NMG_EDGEUSE_MAGIC) {
 		for( NMG_LIST( eu, edgeuse, &lu->down_hd ) )  {
-			nmg_pl_eu(fp, eu, b, R, G, B);
+			nmg_pl_eu(fp, eu, b, red, green, blue);
 		}
 	}
 }
@@ -850,11 +850,11 @@ struct nmg_ptbl *b;
 /*
  *			N M G _ V L B L O C K _ E
  */
-static nmg_vlblock_e(vbp, e, b, R, G, B)
+static nmg_vlblock_e(vbp, e, b, red, green, blue)
 struct vlblock	*vbp;
-struct edge *e;
-struct nmg_ptbl *b;
-unsigned char R, G, B;
+struct edge	*e;
+struct nmg_ptbl	*b;
+int		red, green, blue;
 {
 	pointp_t p0, p1;
 	point_t end0, end1;
@@ -886,7 +886,7 @@ unsigned char R, G, B;
 
 	VADD2(end1, p1, v);
 
-	vh = rt_vlblock_find( vbp, R, G, B );
+	vh = rt_vlblock_find( vbp, red, green, blue );
 	ADD_VL( vh, end0, VL_CMD_LINE_MOVE );
 	ADD_VL( vh, end1, VL_CMD_LINE_DRAW );
 
@@ -897,11 +897,11 @@ unsigned char R, G, B;
 /*
  *			M N G _ V L B L O C K _ E U
  */
-void nmg_vlblock_eu(vbp, eu, b, R, G, B)
+void nmg_vlblock_eu(vbp, eu, b, red, green, blue)
 struct vlblock	*vbp;
-struct edgeuse *eu;
+struct edgeuse	*eu;
 struct nmg_ptbl *b;
-int		R, G, B;
+int		red, green, blue;
 {
 	point_t base, tip;
 	point_t	radial_tip;
@@ -922,25 +922,25 @@ int		R, G, B;
 	if (nmg_tbl(b, TBL_LOC, &eu->l.magic) >= 0) return;
 	(void)nmg_tbl(b, TBL_INS, &eu->l.magic);
 
-	nmg_vlblock_e(vbp, eu->e_p, b, R, G, B);
+	nmg_vlblock_e(vbp, eu->e_p, b, red, green, blue);
 
 	if (*eu->up.magic_p == NMG_LOOPUSE_MAGIC &&
 	    *eu->up.lu_p->up.magic_p == NMG_FACEUSE_MAGIC) {
 
 	    	nmg_eu_coords(eu, base, tip);
 	    	if (eu->up.lu_p->up.fu_p->orientation == OT_SAME)
-	    		R += 50;
+	    		red += 50;
 		else if (eu->up.lu_p->up.fu_p->orientation == OT_OPPOSITE)
-			R -= 50;
+			red -= 50;
 	    	else
-	    		R = G = B = (unsigned char)255;
+	    		red = green = blue = 255;
 
-		vh = rt_vlblock_find( vbp, R, G, B );
+		vh = rt_vlblock_find( vbp, red, green, blue );
 		ADD_VL( vh, base, VL_CMD_LINE_MOVE );
 		ADD_VL( vh, tip, VL_CMD_LINE_DRAW );
 
 	    	nmg_eu_radial( eu, radial_tip );
-		vh = rt_vlblock_find( vbp, R, G-20, B );
+		vh = rt_vlblock_find( vbp, red, green-20, blue );
 		ADD_VL( vh, tip, VL_CMD_LINE_MOVE );
 		ADD_VL( vh, radial_tip, VL_CMD_LINE_DRAW );
 
@@ -954,11 +954,11 @@ int		R, G, B;
 /*
  *			N M G _ V L B L O C K _ L U
  */
-void nmg_vlblock_lu(vbp, lu, b, R, G, B)
+void nmg_vlblock_lu(vbp, lu, b, red, green, blue)
 struct vlblock	*vbp;
-struct loopuse *lu;
-struct nmg_ptbl *b;
-unsigned char R, G, B;
+struct loopuse	*lu;
+struct nmg_ptbl	*b;
+int		red, green, blue;
 {
 	struct edgeuse	*eu;
 	long		magic1;
@@ -974,7 +974,7 @@ unsigned char R, G, B;
 	    	nmg_vlblock_v(vbp, NMG_LIST_PNEXT(vertexuse, &lu->down_hd)->v_p, b);
 	} else if (magic1 == NMG_EDGEUSE_MAGIC) {
 		for( NMG_LIST( eu, edgeuse, &lu->down_hd ) )  {
-			nmg_vlblock_eu(vbp, eu, b, R, G, B);
+			nmg_vlblock_eu(vbp, eu, b, red, green, blue);
 		}
 	}
 }
