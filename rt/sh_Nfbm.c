@@ -165,7 +165,7 @@ char	*dp;
 	double cos_angle;
 	double new_cos_angle;
 	double tmp;
-	double area;
+	double radius;
 
 	RT_AP_CHECK(ap);
 	RT_CHECK_PT(pp);
@@ -175,7 +175,7 @@ char	*dp;
 		rt_structprint( "foo", Nfbm_parse, (char *)Nfbm_sp );
 
 	/* compute the footprint of the ray intersect point */
-	area = ap->a_rbeam + ap->a_diverge * swp->sw_hit.hit_dist;
+	radius = ap->a_rbeam + ap->a_diverge * swp->sw_hit.hit_dist;
 
 	/* get angle between ray and original surface normal */
 	cos_angle = VDOT(swp->sw_hit.hit_normal, ap->a_ray.r_dir);
