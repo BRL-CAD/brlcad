@@ -71,7 +71,7 @@ char **argv;
 		int fd;
 
 		if( read( 0, in1, scanbytes ) != scanbytes )
-			exit(0);
+			break;
 		sprintf(name, "%s.%d", basename, framenumber);
 		if( (fd=creat(name,0444))<0 )  {
 			perror(name);
@@ -83,4 +83,5 @@ char **argv;
 		(void)close(fd);
 		printf("wrote %s\n", name);
 	}
+	exit(0);
 }
