@@ -2608,7 +2608,7 @@ rt_log("force next eu to ray\n");
 		nmg_edge_geom_isect_line( first_new_eu->e_p, rs );
 
 		/* Recompute loop geometry.  Bounding box may have expanded */
-		nmg_loop_g(nmg_lu_of_vu(rs->vu[pos])->l_p);
+		nmg_loop_g(nmg_lu_of_vu(rs->vu[pos])->l_p, rs->tol);
 
 		if(rt_g.NMG_debug&DEBUG_FCUT)  {
 			rt_log("After LONE_V_JAUNT, the final loop:\n");
@@ -2641,6 +2641,8 @@ rt_log("force next eu to ray\n");
 			if(rt_g.NMG_debug&DEBUG_FCUT)
 				rt_log("nmg_cut_loop(prev_vu=x%x, vu=x%x) is_crack=%d\n", prev_vu, vu, is_crack);
 			prev_lu = nmg_cut_loop( prev_vu, vu );
+			nmg_loop_g( lu->l_p, rs->tol );
+			nmg_loop_g( prev_lu->l_p, rs->tol );
 			if(is_crack)  {
 				struct face_g	*fg;
 				fg = fu->f_p->fg_p;
@@ -2730,7 +2732,7 @@ rt_log("force next eu to ray\n");
 		}
 
 		/* Recompute loop geometry.  Bounding box may have expanded */
-		nmg_loop_g(lu->l_p);
+		nmg_loop_g(lu->l_p, rs->tol);
 
 		if(rt_g.NMG_debug&DEBUG_FCUT)  {
 			rt_log("After JOIN, the final loop:\n");

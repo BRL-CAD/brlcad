@@ -185,7 +185,7 @@ struct faceuse		*fu2;
 	}
 	/* Insert copy of this vertex into other face, as self-loop. */
 	plu = nmg_mlv(&fu2->l.magic, v, OT_UNSPEC);
-	nmg_loop_g(plu->l_p);
+	nmg_loop_g(plu->l_p, &is->tol);
 	vu2 = RT_LIST_FIRST( vertexuse, &plu->down_hd );
 	NMG_CK_VERTEXUSE(vu2);
 	(void)nmg_tbl(lp, TBL_INS_UNIQUE, &vu2->l.magic);
@@ -343,7 +343,7 @@ struct face		*f1;
 		PLPRINT("N", fg->N);
 	}
 
-	m = nmg_find_model( &f1->magic );
+	m = nmg_find_model( &f1->l.magic );
 
 	is->maxindex = ( 2 * m->maxindex );
 	is->vert2d = (fastf_t *)rt_malloc( is->maxindex * 3 * sizeof(fastf_t), "vert2d[]");
@@ -547,7 +547,7 @@ struct faceuse		*fu2;
 	    	VPRINT("Making vertexloop", pt);
 
 	lu2 = nmg_mlv(&fu2->l.magic, vu1->v_p, OT_UNSPEC);
-	nmg_loop_g( lu2->l_p );
+	nmg_loop_g( lu2->l_p, &is->tol );
 }
 
 /*
@@ -622,7 +622,7 @@ struct faceuse *fu;
 	    	VPRINT("nmg_isect_3vertex_3face() making vertexloop", vu->v_p->vg_p->coord);
 
 	plu = nmg_mlv(&fu->l.magic, vu->v_p, OT_UNSPEC);
-	nmg_loop_g(plu->l_p);
+	nmg_loop_g(plu->l_p, &is->tol);
 	vup = RT_LIST_FIRST(vertexuse, &plu->down_hd);
 	NMG_CK_VERTEXUSE(vup);
 	(void)nmg_tbl(is->l1, TBL_INS_UNIQUE, &vu->l.magic);
@@ -799,7 +799,7 @@ rt_log("%%%%%% point is outside face loop, no need to break eu1?\n");
 		plu2 = nmg_mlv(&fu2->l.magic, vu1_final->v_p, OT_UNSPEC);
 		vu2_final = RT_LIST_FIRST( vertexuse, &plu2->down_hd );
 		NMG_CK_VERTEXUSE(vu2_final);
-		nmg_loop_g(plu2->l_p);
+		nmg_loop_g(plu2->l_p, &is->tol);
 
 		if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 			rt_log("Made vertexloop in other face. lu=x%x vu=x%x on v=x%x\n",
@@ -1237,7 +1237,7 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 				if (rt_g.NMG_debug & DEBUG_POLYSECT)
 					rt_log("\t\tIntersect point is vu2a, make self-loop in fu1\n");
 				plu = nmg_mlv(&fu1->l.magic, vu2a->v_p, OT_UNSPEC);
-				nmg_loop_g(plu->l_p);
+				nmg_loop_g(plu->l_p, &is->tol);
 				vu = RT_LIST_FIRST( vertexuse, &plu->down_hd );
 			}
 			NMG_CK_VERTEXUSE(vu);
@@ -1252,7 +1252,7 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 				if (rt_g.NMG_debug & DEBUG_POLYSECT)
 					rt_log("\t\tIntersect point is vu2b, make self-loop in fu1\n");
 				plu = nmg_mlv(&fu1->l.magic, vu2b->v_p, OT_UNSPEC);
-				nmg_loop_g(plu->l_p);
+				nmg_loop_g(plu->l_p, &is->tol);
 				vu = RT_LIST_FIRST( vertexuse, &plu->down_hd );
 			}
 			NMG_CK_VERTEXUSE(vu);
@@ -1369,7 +1369,7 @@ topo:
 	} else {
 		struct loopuse *plu;
 		plu = nmg_mlv(&fu2->l.magic, vu1a->v_p, OT_UNSPEC);
-		nmg_loop_g(plu->l_p);
+		nmg_loop_g(plu->l_p, &is->tol);
 		vu = RT_LIST_FIRST( vertexuse, &plu->down_hd );
 		NMG_CK_VERTEXUSE(vu);
 		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu->l.magic);
@@ -1385,7 +1385,7 @@ topo:
 	} else {
 		struct loopuse *plu;
 		plu = nmg_mlv(&fu2->l.magic, vu1b->v_p, OT_UNSPEC);
-		nmg_loop_g(plu->l_p);
+		nmg_loop_g(plu->l_p, &is->tol);
 		vu = RT_LIST_FIRST( vertexuse, &plu->down_hd );
 		NMG_CK_VERTEXUSE(vu);
 		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu->l.magic);
@@ -1654,7 +1654,7 @@ struct faceuse		*fu2;
 			    		v1a->vg_p->coord);
 
 			plu = nmg_mlv(&fu2->l.magic, v1a, OT_UNSPEC);
-			nmg_loop_g(plu->l_p);
+			nmg_loop_g(plu->l_p, &is->tol);
 			vu2_final = RT_LIST_FIRST( vertexuse, &plu->down_hd );
 			NMG_CK_VERTEXUSE(vu2_final);
 			(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2_final->l.magic);
@@ -1711,7 +1711,7 @@ struct faceuse		*fu2;
 			    		v1b->vg_p->coord);
 
 			plu = nmg_mlv(&fu2->l.magic, v1b, OT_UNSPEC);
-			nmg_loop_g(plu->l_p);
+			nmg_loop_g(plu->l_p, &is->tol);
 			vu2_final = RT_LIST_FIRST( vertexuse, &plu->down_hd );
 			NMG_CK_VERTEXUSE(vu2_final);
 			(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2_final->l.magic);

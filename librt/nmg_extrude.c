@@ -137,7 +137,7 @@ struct rt_tol	*tol;	/* NMG tolerances. */
 	nmg_gluefaces(outfaceuses, nfaces+2);
 
 	/* Compute geometry for region and shell. */
-	nmg_region_a(fu->s_p->r_p);
+	nmg_region_a(fu->s_p->r_p, tol);
 
 	/* Free memory. */
 	rt_free((char *)outfaceuses, "faces");

@@ -357,8 +357,9 @@ struct nmg_ptbl *b;
  *  computing the loops first, and working up to the nmgregions.
  */
 void
-nmg_rebound( m )
-struct model	*m;
+nmg_rebound( m, tol )
+struct model		*m;
+CONST struct rt_tol	*tol;
 {
 	struct nmgregion	*r;
 	struct shell		*s;
@@ -369,6 +370,7 @@ struct model	*m;
 	register int		*flags;
 
 	NMG_CK_MODEL(m);
+	RT_CK_TOL(tol);
 
 	flags = (int *)rt_calloc( m->maxindex, sizeof(int), "rebound flags[]" );
 
@@ -386,7 +388,7 @@ struct model	*m;
 					l = lu->l_p;
 					NMG_CK_LOOP(l);
 					if( NMG_INDEX_FIRST_TIME(flags,l) )
-						nmg_loop_g(l);
+						nmg_loop_g(l, tol);
 				}
 			}
 			/* Faces in shell */
@@ -397,7 +399,7 @@ struct model	*m;
 
 				/* Rebound the face */
 				if( NMG_INDEX_FIRST_TIME(flags,f) )
-					nmg_face_bb( f );
+					nmg_face_bb( f, tol );
 			}
 
 			/* Wire loops in shell */
@@ -406,7 +408,7 @@ struct model	*m;
 				l = lu->l_p;
 				NMG_CK_LOOP(l);
 				if( NMG_INDEX_FIRST_TIME(flags,l) )
-					nmg_loop_g(l);
+					nmg_loop_g(l, tol);
 			}
 
 			/*
@@ -414,11 +416,11 @@ struct model	*m;
 			 *  This routine handles wire edges and lone vertices.
 			 */
 			if( NMG_INDEX_FIRST_TIME(flags,s) )
-				nmg_shell_a( s );
+				nmg_shell_a( s, tol );
 		}
 
 		/* Rebound the nmgregion */
-		nmg_region_a( r );
+		nmg_region_a( r, tol );
 	}
 
 	rt_free( (char *)flags, "rebound flags[]" );

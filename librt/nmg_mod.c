@@ -1096,6 +1096,9 @@ register struct faceuse	*src_fu;
  *  distinct (new) vertex and vertex_g structs.
  *  They will start out being geometricly coincident, but it is anticipated
  *  that the caller will modify the geometry, e.g. as in an extrude operation.
+ *
+ *  It is the caller's responsibility to re-bound the new face after
+ *  making any modifications.
  */
 struct faceuse *
 nmg_dup_face(fu, s)
@@ -1466,6 +1469,8 @@ struct vertexuse	*vu1, *vu2;
  *  list of edgeuses.  The edgeuse for the new edge  (connecting
  *  the verticies indicated by vu1 and vu2) will be the LAST edgeuse on the
  *  new loopuse's list of edgeuses.
+ *
+ *  It is the caller's responsibility to re-bound the loops.
  */
 struct loopuse *
 nmg_cut_loop(vu1, vu2)
@@ -1591,10 +1596,6 @@ struct vertexuse *vu1, *vu2;
 		(void)fclose(fd);
 		rt_free( (char *)tab, "nmg_cut_loop flag[] 2" );
 	}
-
-	/* Recalculate bounding boxes, if they were present */
-	nmg_loop_g(oldlu->l_p);
-	nmg_loop_g(lu->l_p);
 	return lu;
 }
 
@@ -1604,7 +1605,7 @@ struct vertexuse *vu1, *vu2;
  *  In a loop which has at least two distinct uses of a vertex,
  *  split off the edges from "split_vu" to the second occurance of
  *  the vertex into a new loop.
- *  The bounding boxes of both old and new loops will be updated.
+ *  It is the caller's responsibility to re-bound the loops, if desired.
  *
  *  Intended primarily for use by nmg_split_touchingloops().
  *
@@ -1670,10 +1671,6 @@ begin:
 		if( vu->v_p == split_v )  break;
 	}
 	if( iteration >= 10000 )  rt_bomb("nmg_split_lu_at_vu:  infinite loop\n");
-
-	/* Create new bounding boxes for both old & new loops */
-	nmg_loop_g(lu->l_p);
-	nmg_loop_g(newlu->l_p);
 
 	return newlu;
 }
@@ -2021,7 +2018,6 @@ long	**trans_tbl;
 			/* Build a different vertex_g with same coordinates */
 			nmg_vertex_gv(new_v, old_v->vg_p->coord);
 		}
-		nmg_loop_g(new_lu->l_p);
 		return new_lu;
 	}
 
@@ -2111,7 +2107,6 @@ long	**trans_tbl;
 		if( new_eu->e_p->eg_p )  continue;
 		nmg_edge_g(new_eu->e_p);
 	}
-	nmg_loop_g(new_lu->l_p);
 	return (new_lu);
 }
 
@@ -2857,7 +2852,6 @@ register struct vertexuse	*vu;
 	lu = nmg_mlv( &(dest->l.magic), vu->v_p, OT_SAME );
 	if (vu->v_p->vg_p) {
 		NMG_CK_VERTEX_G(vu->v_p->vg_p);
-		nmg_loop_g(lu->l_p);
 	}
 	nmg_kvu( vu );
 }
