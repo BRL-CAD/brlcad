@@ -198,7 +198,7 @@ CONST struct rt_tol	*tol;
 	struct loopuse		*lu;
 	CONST struct loop_g	*lg;
 	CONST struct loopuse	*fu2lu;
-	CONST struct loop_g	*fu2lg;
+	CONST struct loop_g	*fu2lg = (CONST struct loop_g *)NULL;
 	int			overlap = 0;
 
 	NMG_CK_FACEUSE(fu);
