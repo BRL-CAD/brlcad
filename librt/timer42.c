@@ -210,7 +210,7 @@ register char *cp;
 		sprintf(cp,"%d", i / 60);
 		END(cp);
 	}
-	i %= 60;
+	i = i % 60; /* GSM: bug in Alliant CE optimization prohibits "%=" here */
 	*cp++ = ':';
 	sprintf(cp,"%d%d", i / 10, i % 10);
 }
