@@ -335,6 +335,17 @@ do_reflection:
 		/* I have been told this has unit length */
 		VSUB2( sub_ap.a_ray.r_dir, work, to_eye );
 		sub_ap.a_purpose = "reflected ray";
+
+		if( rdebug&RDEBUG_RAYPLOT )  {
+			point_t		endpt;
+			/* Plot the surface normal */
+			pl_color( stdout, 0, 255, 0 );
+			f = sub_ap.a_rt_i->rti_radius * 0.02;
+			VJOIN1( endpt, sub_ap.a_ray.r_pt,
+				f, swp->sw_hit.hit_normal );
+			pdv_3line( stdout, sub_ap.a_ray.r_pt, endpt );
+		}
+
 		(void)rt_shootray( &sub_ap );
 
 		/* a_user has hit/miss flag! */
