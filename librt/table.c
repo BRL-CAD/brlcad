@@ -197,7 +197,7 @@ struct rt_functab rt_functab[ID_MAXIMUM+2] = {
 	"ID_ELL",	1,		/* 3 */
 		rt_ell_prep,	rt_ell_shot,	rt_ell_print,	rt_ell_norm,
 		rt_ell_uv,	rt_ell_curve,	rt_ell_class,	rt_ell_free,
-		rt_ell_plot,	rt_ell_vshot,	rt_ell_tess,	rt_nul_tnurb,
+		rt_ell_plot,	rt_ell_vshot,	rt_ell_tess,	rt_ell_tnurb,
 		rt_ell_import,	rt_ell_export,	rt_ell_ifree,
 		rt_ell_describe,rt_ell_xform,
 
@@ -246,7 +246,7 @@ struct rt_functab rt_functab[ID_MAXIMUM+2] = {
 	"ID_SPH",	1,		/* 10 */
 		rt_sph_prep,	rt_sph_shot,	rt_sph_print,	rt_sph_norm,
 		rt_sph_uv,	rt_sph_curve,	rt_sph_class,	rt_sph_free,
-		rt_ell_plot,	rt_sph_vshot,	rt_ell_tess,	rt_nul_tnurb,
+		rt_ell_plot,	rt_sph_vshot,	rt_ell_tess,	rt_ell_tnurb,
 		rt_ell_import,	rt_ell_export,	rt_ell_ifree,
 		rt_ell_describe,rt_sph_xform,
 
