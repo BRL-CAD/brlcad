@@ -631,7 +631,7 @@ plane_t	planes[6];
 			s = RT_LIST_FIRST( shell , &r->s_hd );
 			for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
 			{
-				struct face_g *fg;
+				struct face_g_plane *fg;
 				plane_t pl;
 
 				NMG_CK_FACEUSE( fu );
@@ -643,8 +643,8 @@ plane_t	planes[6];
 				{
 					/* found the NMG face geometry that matches arb face i */
 					found = 1;
-					fg = fu->f_p->fg_p;
-					NMG_CK_FACE_G( fg );
+					fg = fu->f_p->g.plane_p;
+					NMG_CK_FACE_G_PLANE( fg );
 
 					/* move the face by distance "thick[i]" */
 					if( fu->f_p->flip )
