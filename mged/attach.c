@@ -362,8 +362,7 @@ char	**argv;
 		rt_log("'dm' command requires an argument.\n");
 		return CMD_BAD;
 	}
-	(void)dmp->dmr_cmd( argc-1, argv+1 );
-	return CMD_OK;
+	return dmp->dmr_cmd( argc-1, argv+1 );
 }
 
 /*
