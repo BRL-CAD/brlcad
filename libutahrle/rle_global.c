@@ -36,11 +36,6 @@
 #     define  __EXTENSIONS__          1       /* To define "stdout" */
 #endif
 #include <stdio.h>
-/* stdin/stdout is not defined in some environments and under certain
- * situations.  define as null to appease the weary */
-#ifndef stdout
-#	define stdout ((FILE *)NULL)
-#endif
 
 #include "machine.h"
 #include "rle_put.h"
@@ -88,7 +83,7 @@ rle_hdr rle_dflt_hdr = {
     8,				/* cmaplen (log2 of length of color map) */
     NULL,			/* pointer to color map */
     NULL,			/* pointer to comment strings */
-    stdout,			/* output file */
+    0,				/* output file */
     { 7 }			/* RGB channels only */
     /* Can't initialize the union */
 };
