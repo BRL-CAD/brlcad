@@ -566,6 +566,10 @@ spacend:
 					- (long)space.bottom;
 				if ( deltao2 > delta )
 					delta = deltao2;
+				if( delta <= 0 )  {
+					fprintf( stderr, "plot-fb: delta = %d, bad space()\n", delta);
+					return Foo( -42 );
+				}
 				deltao2 = (delta + 1L) / 2L;
 				if( debug )
 					fprintf( stderr,"Space: X=(%d,%d) Y=(%d,%d) delta=%d\n",
