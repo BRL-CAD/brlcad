@@ -168,7 +168,7 @@ static struct cmdtab cmdtab[] = {
 	{"bev", f_bev},
 	{"import_body", cmd_import_body},
 	{"export_body", cmd_export_body},
-	{"binary", f_binary},
+	{"dbbinary", f_binary},
 	{"bot_face_fuse", f_bot_face_fuse},
 	{"bot_vertex_fuse", f_bot_fuse},
 	{"bot_condense", f_bot_condense},
