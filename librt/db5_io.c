@@ -134,7 +134,7 @@ int			format;
 		*lenp = BU_GLONG(cp);
 		return 4;
 	case DB5HDR_WIDTHCODE_64BIT:
-#if 0
+#if defined(IRIX64)
 		if( sizeof(long) >= 8 )  {
 			*lenp = BU_GLONGLONG(cp);
 			return 8;
@@ -211,6 +211,8 @@ db5_encode_length(
 	case DB5HDR_WIDTHCODE_32BIT:
 		return bu_plong( cp, val );
 	case DB5HDR_WIDTHCODE_64BIT:
+#if defined(IRIX64)
+#endif
 		bu_bomb("db5_encode_length(): encountered 64-bit length\n");
 	}
 	bu_bomb("db5_encode_length(): unknown width code\n");
