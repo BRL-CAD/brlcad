@@ -27,8 +27,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./polyno.h"
 #include "./complex.h"
 
-HIDDEN int	stdTorus();
-static void	PtSort();
+static void	TorPtSort();
 
 /*
  * The TORUS has the following input fields:
@@ -389,7 +388,7 @@ register struct xray *rp;
 	 *  if the root finder returns other than 4 roots, error.
 	 */
 	if ( (i = polyRoots( &C, val )) != 4 ){
-		fprintf(stderr,"stdTorus:  polyRoots() 4!=%d\n", i);
+		fprintf(stderr,"tor:  polyRoots() 4!=%d\n", i);
 		pr_roots( i, val );
 		return(SEG_NULL);		/* MISS */
 	}
@@ -413,10 +412,14 @@ register struct xray *rp;
 		return(SEG_NULL);		/* No hit */
 	}
 
-	/* Most distant to least distant */
-	PtSort( k, i );
+	/* Sort most distant to least distant. */
+	TorPtSort( k, i );
 
-	/* k[1] is entry point, and k[0] is exit point */
+	/* Now, t[0] > t[npts-1].  See if this is an easy out. */
+	if( k[0] <= 0.0 )
+		return(SEG_NULL);		/* No hit out front. */
+
+	/* k[1] is entry point, and k[0] is farthest exit point */
 	GET_SEG(segp);
 	segp->seg_stp = stp;
 
@@ -510,12 +513,12 @@ register struct tor_specific *tor;
 
 /*	>>>  s o r t ( )  <<<
  *
- *  Sorts the values of 't' in descending order.  The sort is
- *  simplified to deal with only 4 values.  Returns the address
- *  of the first 't' in the array.
+ *  Sorts the values of 't' in descending order.
+ *  When done, t[0] > t[npts-1]
+ *  The sort is simplified to deal with only 4 values.
  */
 static void
-PtSort( t, npts )
+TorPtSort( t, npts )
 register double	t[];
 {
 	LOCAL double	u;

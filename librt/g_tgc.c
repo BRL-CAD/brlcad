@@ -26,7 +26,7 @@
 #include <math.h>
 
 HIDDEN int	stdCone();
-static void	rotate(), shear(), PtSort(), tgcnormal();
+static void	rotate(), shear(), TgcPtSort(), tgcnormal();
 
 struct  tgc_specific {
 	vect_t	tgc_V;		/*  Vector to center of base of TGC	*/
@@ -402,7 +402,11 @@ register struct xray	*rp;
 	}
 
 	/* Most distant to least distant	*/
-	PtSort( k, npts );
+	TgcPtSort( k, npts );
+
+	/* Now, t[0] > t[npts-1].  See if this is an easy out. */
+	if( k[0] <= 0.0 )
+		return(SEG_NULL);		/* No hit out front. */
 
 	/* General Cone may have 4 intersections, but	*
 	 * Truncated Cone may only have 2.		*/
@@ -689,7 +693,7 @@ double		t[];
  *  address of the first 't' in the array.
  */
 static void
-PtSort( t, npts )
+TgcPtSort( t, npts )
 register double	t[];
 
 {
