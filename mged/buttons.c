@@ -236,32 +236,32 @@ label_button(bnum)
 
 static void bv_top()  {
 	/* Top view */
-	setview( 0, 0, 0 );
+	setview( 0.0, 0.0, 0.0 );
 }
 
 static void bv_bottom()  {
 	/* Bottom view */
-	setview( 180, 0, 0 );
+	setview( 180.0, 0.0, 0.0 );
 }
 
 static void bv_right()  {
 	/* Right view */
-	setview( 270, 0, 0 );
+	setview( 270.0, 0.0, 0.0 );
 }
 
 static void bv_left()  {
 	/* Left view */
-	setview( 270, 0, 180 );
+	setview( 270.0, 0.0, 180.0 );
 }
 
 static void bv_front()  {
 	/* Front view */
-	setview( 270, 0, 270 );
+	setview( 270.0, 0.0, 270.0 );
 }
 
 static void bv_rear()  {
 	/* Rear view */
-	setview( 270, 0, 90 );
+	setview( 270.0, 0.0, 90.0 );
 }
 
 static void bv_vrestore()  {
@@ -300,16 +300,16 @@ static void bv_adcursor()  {
 static void bv_reset()  {
 	/* Reset view such that all solids can be seen */
 	size_reset();
-	setview( 0, 0, 0 );
+	setview( 0.0, 0.0, 0.0 );
 }
 
 static void bv_45_45()  {
-	setview( 270+45, 0, 270-45 );
+	setview( 270.0+45.0, 0.0, 270.0-45.0 );
 }
 
 static void bv_35_25()  {
 	/* Use Azmuth=35, Elevation=25 in GIFT's backwards space */
-	setview( 270+25, 0, 270-35 );
+	setview( 270.0+25.0, 0.0, 270.0-35.0 );
 }
 
 /* returns 0 if error, !0 if success */
