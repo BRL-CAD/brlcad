@@ -55,7 +55,7 @@ char	*argv[];
 		int		get_flags;
 		int		scan_bytes;
 
-	if( ! pars_Argv( argc, argv ) )
+	if( ! pars_Argv( argc, argv ) || isatty(fileno(stdout)) )
 		{
 		prnt_Usage();
 		return	1;
