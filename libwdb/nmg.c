@@ -48,3 +48,75 @@ struct model	*m;
 
 	return mk_export_fwrite( filep, name, (genptr_t)m, ID_NMG );
 }
+
+/*	W R I T E _ S H E L L _ A S _ P O L Y S O L I D
+ *
+ *	This routine take an NMG shell and writes it out to the file
+ *	out_fp as a polysolid with the indicated name.  Obviously,
+ *	the shell should be a 3-manifold (winged edge).
+ *	since polysolids may only have up to 5 vertices per face,
+ *	any face with a loop of more than 5 vertices is triangulated
+ *	using "nmg_triangulate_face" prior to output.
+ */
+void
+write_shell_as_polysolid( FILE *out_fp , char *name , struct shell *s )
+{
+	struct faceuse *fu;
+	struct loopuse *lu;
+	struct edgeuse *eu;
+	point_t verts[5];
+	int count_npts;
+	int max_count;
+	int i;
+
+	NMG_CK_SHELL( s );
+
+	mk_polysolid( out_fp , name );
+
+	for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+	{
+		NMG_CK_FACEUSE( fu );
+
+		/* only do OT_SAME faces */
+		if( fu->orientation != OT_SAME )
+			continue;
+
+		/* count vertices in loops */
+		max_count = 0;
+		for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+		{
+			NMG_CK_LOOPUSE( lu );
+			if( RT_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC )
+				continue;
+
+			count_npts = 0;
+			for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+				count_npts++;
+
+			if( count_npts > max_count )
+				max_count = count_npts;
+		}
+
+		/* if any loop has more than 5 vertices, triangulate the face */
+		if( max_count > 5 )
+			nmg_triangulate_face( fu );
+
+		for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
+		{
+			NMG_CK_LOOPUSE( lu );
+			if( RT_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC )
+				continue;
+
+			count_npts = 0;
+			for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
+			{
+				for( i=0 ; i<3 ; i++ )
+					verts[count_npts][i] = eu->vu_p->v_p->vg_p->coord[i];
+				count_npts++;
+			}
+
+			if( mk_fpoly( out_fp , count_npts , verts ) )
+				rt_log( "write_shell_as_polysolid: mk_fpoly failed for object %s\n" , name );
+		}
+	}
+}
