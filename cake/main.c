@@ -52,166 +52,15 @@ int	cppargc = 0;
 
 extern	int	yydebug;
 
-main(argc, argv)
-int	argc;
-char	**argv;
+/*
+**	Tell the unfortunate user how to use cake.
+*/
+void
+usage()
 {
-	extern		cake_abort(), cake_finish();
-	extern	int	parse_args(), process_args();
-	extern	Node	*chase();
-	extern	char	*getenv();
-	extern	char	*dir_setup();
-#if !defined(__convex__)
-	extern	Pwent	*getpwuid();
-#endif
-	extern	int	geteuid();
-	extern	FILE	*cake_popen();
-	extern	FILE	*yyin;
-	Stat		statbuf;
-	int		envc;
-	char		*envv[MAXARGS];
-	reg	Pwent	*pwent;
-	reg	char	*envstr;
-	reg	int	status;
-	reg	Node	*rootnode;
-
-	signal(SIGINT,  cake_finish);
-	signal(SIGQUIT, cake_finish);
-	if(cakedebug)  {
-		/* If debugging enabled, catch signals to do get_trail() */
-		signal(SIGILL,  cake_abort);
-		signal(SIGTRAP, cake_abort);
-		signal(SIGIOT,  cake_abort);
-		signal(SIGEMT,  cake_abort);
-		signal(SIGFPE,  cake_abort);
-		signal(SIGBUS,  cake_abort);
-		signal(SIGSEGV, cake_abort);
-		signal(SIGSYS,  cake_abort);
-	}
-	signal(SIGPIPE, cake_abort);
-	signal(SIGALRM, cake_abort);
-
-	yydebug = FALSE;
-	active_procs = makelist0();
-
-	if (rindex(argv[0], 'f') != NULL
-	&&  streq(rindex(argv[0], 'f'), "fake"))
-		cakedebug = TRUE;
-
-	init_sym();
-	cppargv[cppargc++] = new_name(CPP);
-#if defined(CPP_OPTIONS)
-	cppargv[cppargc++] = new_name(CPP_OPTIONS);	
-#endif
-	strcpy(cakeflagbuf, "-DCAKEFLAGS=");
-
-	if ((envstr = getenv("CAKE")) != NULL)
-	{
-		envc = parse_args(envstr, envv);
-		process_args(envv, &envc, 0);
-		if (envc > 0)
-			fprintf(stderr, "cake: non-options in environment ignored\n");
-	}
-
-	argv += process_args(argv, &argc, 1);
-
-#if defined(CAKEDEBUG) && !defined(ATT)
-	if (cakedebug || entrydebug || patdebug || lexdebug)
-		setlinebuf(stdout);
-#endif
-
-	if (cakefile == NULL)
-	{
-		if (stat("cakefile", &statbuf) == 0)
-			cakefile = "cakefile";
-		or (stat("Cakefile", &statbuf) == 0)
-			cakefile = "Cakefile";
-		or (stat("recipe", &statbuf) == 0)
-			cakefile = "recipe";
-		or (stat("Recipe", &statbuf) == 0)
-			cakefile = "Recipe";
-		else
-		{
-			fprintf(stderr, "cake: cannot locate a cakefile\n");
-			exit(1);
-		}
-	}
-
-	if (gflag)
-		cakefile = dir_setup(cakefile);
-
-	if( (pwent = getpwuid(geteuid())) == (Pwent *)0 )  {
-		printf("cake: Warning: unable to get home directory for uid %d\n",
-			geteuid() );
-	} else {
-		strcpy(scratchbuf, "-I");
-		strcat(scratchbuf, pwent->pw_dir);
-		strcat(scratchbuf, ULIB);
-		cppargv[cppargc++] = new_name(scratchbuf);
-	}
-	strcpy(scratchbuf, "-I");
-	strcat(scratchbuf, SLIB);
-	cppargv[cppargc++] = new_name(scratchbuf);
-	cppargv[cppargc++] = cakeflagbuf;
-	cppargv[cppargc++] = cakefile;
-	cppargv[cppargc]   = NULL;
-
-	if (cakedebug)
-	{
-		reg	int	i;
-
-		for (i = 0; i < cppargc; i++)
-			printf("%s\n", cppargv[i]);
-	}
-
-	if ((yyin = cake_popen(cppargv, "r")) == NULL)
-	{
-		fprintf(stderr, "cake: cannot open cpp filter\n");
-		exit(1);
-	}
-
-	if (Zflag)
-	{
-		reg	int	c;
-
-		while ((c = getc(yyin)) != EOF)
-			putchar(c);
-
-		cake_pclose(yyin);
-		exit(0);
-	}
-
-	yyinit();
-	init_entry();
-	if (yyparse())
-	{
-		fprintf(stderr, "cake: cannot parse %s\n", cakefile);
-		exit(1);
-	}
-
-	shell_setup(shellfile[0], 0);
-	shell_setup(shellfile[1], 1);
-	meta_setup(metachars);
-
-	cake_pclose(yyin);
-	dir_start();
-	prep_entries();
-	final_entry(argc, argv);
-
-	rootnode = chase(CHASEROOT, 0, (Entry *) NULL);
-
-	if (! qflag)
-		execute(rootnode);
-	
-	dir_finish();
-	cleanup();
-#ifdef	STATS_FILE
-	statistics();
-#endif
-
-	status = (off_node(rootnode, nf_ERR) && is_ok(rootnode))? 0: 1;
-	cdebug("exit status %d\n", status);
-	exit(status);
+	fprintf(stderr, "Usage: cake [-abcdgiknqrstvwxzGLRXZ] [-ffile]\n");
+	fprintf(stderr, "       [-Ddefn] [-Idir] [-Uname] [-S shell] [-T metachars] [file ...]\n");
+	exit(1);
 }
 
 int
@@ -406,17 +255,7 @@ reg	char	*flag;
 	}
 }
 
-/*
-**	Tell the unfortunate user how to use cake.
-*/
-
-usage()
-{
-	fprintf(stderr, "Usage: cake [-abcdgiknqrstvwxzGLRXZ] [-ffile]\n");
-	fprintf(stderr, "       [-Ddefn] [-Idir] [-Uname] [-S shell] [-T metachars] [file ...]\n");
-	exit(1);
-}
-
+void
 exit_cake(needtrail)
 reg	int	needtrail;
 {
@@ -431,7 +270,7 @@ reg	int	needtrail;
 /*
 **	Handle bus errors and segmentation violations.
 */
-
+void
 cake_abort(signo)
 int	signo;
 {
@@ -451,6 +290,7 @@ int	signo;
 **	Handle user interrupts.
 */
 
+void
 cake_finish()
 {
 	reg	List	*ptr;
@@ -470,6 +310,169 @@ cake_finish()
 
 	exit_cake(FALSE);
 }
+
+main(argc, argv)
+int	argc;
+char	**argv;
+{
+	extern	int	parse_args();
+	extern	Node	*chase();
+	extern	char	*getenv();
+	extern	char	*dir_setup();
+#if !defined(__convex__)
+	extern	Pwent	*getpwuid();
+#endif
+	extern	int	geteuid();
+	extern	FILE	*cake_popen();
+	extern	FILE	*yyin;
+	Stat		statbuf;
+	int		envc;
+	char		*envv[MAXARGS];
+	reg	Pwent	*pwent;
+	reg	char	*envstr;
+	reg	int	status;
+	reg	Node	*rootnode;
+
+	signal(SIGINT,  cake_finish);
+	signal(SIGQUIT, cake_finish);
+	if(cakedebug)  {
+		/* If debugging enabled, catch signals to do get_trail() */
+		signal(SIGILL,  cake_abort);
+		signal(SIGTRAP, cake_abort);
+		signal(SIGIOT,  cake_abort);
+		signal(SIGEMT,  cake_abort);
+		signal(SIGFPE,  cake_abort);
+		signal(SIGBUS,  cake_abort);
+		signal(SIGSEGV, cake_abort);
+		signal(SIGSYS,  cake_abort);
+	}
+	signal(SIGPIPE, cake_abort);
+	signal(SIGALRM, cake_abort);
+
+	yydebug = FALSE;
+	active_procs = makelist0();
+
+	if (rindex(argv[0], 'f') != NULL
+	&&  streq(rindex(argv[0], 'f'), "fake"))
+		cakedebug = TRUE;
+
+	init_sym();
+	cppargv[cppargc++] = new_name(CPP);
+#if defined(CPP_OPTIONS)
+	cppargv[cppargc++] = new_name(CPP_OPTIONS);	
+#endif
+	strcpy(cakeflagbuf, "-DCAKEFLAGS=");
+
+	if ((envstr = getenv("CAKE")) != NULL)
+	{
+		envc = parse_args(envstr, envv);
+		process_args(envv, &envc, 0);
+		if (envc > 0)
+			fprintf(stderr, "cake: non-options in environment ignored\n");
+	}
+
+	argv += process_args(argv, &argc, 1);
+
+#if defined(CAKEDEBUG) && !defined(ATT)
+	if (cakedebug || entrydebug || patdebug || lexdebug)
+		setlinebuf(stdout);
+#endif
+
+	if (cakefile == NULL)
+	{
+		if (stat("cakefile", &statbuf) == 0)
+			cakefile = "cakefile";
+		or (stat("Cakefile", &statbuf) == 0)
+			cakefile = "Cakefile";
+		or (stat("recipe", &statbuf) == 0)
+			cakefile = "recipe";
+		or (stat("Recipe", &statbuf) == 0)
+			cakefile = "Recipe";
+		else
+		{
+			fprintf(stderr, "cake: cannot locate a cakefile\n");
+			exit(1);
+		}
+	}
+
+	if (gflag)
+		cakefile = dir_setup(cakefile);
+
+	if( (pwent = getpwuid(geteuid())) == (Pwent *)0 )  {
+		printf("cake: Warning: unable to get home directory for uid %d\n",
+			geteuid() );
+	} else {
+		strcpy(scratchbuf, "-I");
+		strcat(scratchbuf, pwent->pw_dir);
+		strcat(scratchbuf, ULIB);
+		cppargv[cppargc++] = new_name(scratchbuf);
+	}
+	strcpy(scratchbuf, "-I");
+	strcat(scratchbuf, SLIB);
+	cppargv[cppargc++] = new_name(scratchbuf);
+	cppargv[cppargc++] = cakeflagbuf;
+	cppargv[cppargc++] = cakefile;
+	cppargv[cppargc]   = NULL;
+
+	if (cakedebug)
+	{
+		reg	int	i;
+
+		for (i = 0; i < cppargc; i++)
+			printf("%s\n", cppargv[i]);
+	}
+
+	if ((yyin = cake_popen(cppargv, "r")) == NULL)
+	{
+		fprintf(stderr, "cake: cannot open cpp filter\n");
+		exit(1);
+	}
+
+	if (Zflag)
+	{
+		reg	int	c;
+
+		while ((c = getc(yyin)) != EOF)
+			putchar(c);
+
+		cake_pclose(yyin);
+		exit(0);
+	}
+
+	yyinit();
+	init_entry();
+	if (yyparse())
+	{
+		fprintf(stderr, "cake: cannot parse %s\n", cakefile);
+		exit(1);
+	}
+
+	shell_setup(shellfile[0], 0);
+	shell_setup(shellfile[1], 1);
+	meta_setup(metachars);
+
+	cake_pclose(yyin);
+	dir_start();
+	prep_entries();
+	final_entry(argc, argv);
+
+	rootnode = chase(CHASEROOT, 0, (Entry *) NULL);
+
+	if (! qflag)
+		execute(rootnode);
+	
+	dir_finish();
+	cleanup();
+#ifdef	STATS_FILE
+	statistics();
+#endif
+
+	status = (off_node(rootnode, nf_ERR) && is_ok(rootnode))? 0: 1;
+	cdebug("exit status %d\n", status);
+	exit(status);
+}
+
+
 
 #ifdef	STATS_FILE
 #ifdef	ATT
