@@ -414,9 +414,20 @@ int		y;
 		   	 * Now, make the beginning point and the ending point.
 			 */
 
+		   	/* To make sure that all the vertical lines are in the
+		   	 * correct place, if cellp is the same as botp, then
+		   	 * to start,move half a cell right to start, else move half a
+		   	 * cell left; and to end, move right and up one half cell.
+		   	 */
 
-		   	VJOIN2(beg, cellp->c_hit, 0.5, dx_model, -0.5, dy_model);
-		   	VJOIN2(end, cellp->c_hit, 0.5, dx_model, 0.5, dy_model);
+		   	if(botp == cellp)  {
+		   		VJOIN2(beg, cellp->c_hit, 0.5, dx_model, -0.5, dy_model);
+		   		VJOIN2(end, cellp->c_hit, 0.5, dx_model, 0.5, dy_model);
+		   	} else {
+			   	VJOIN2(beg, cellp->c_hit, -0.5, dx_model, -0.5, dy_model);
+		   		VJOIN2(end, cellp->c_hit, -0.5, dx_model, 0.5, dy_model);
+		   	}
+
 
 		   	/* Now fashion the starting and stopping vectors. */
 
@@ -475,15 +486,23 @@ int		y;
 	for (x=0; x < mem_width; x++, botp++, topp++)  {
 		if (botp->c_id != topp->c_id ||
 		   ( botp->c_id != 0 && 
-		   (VDOT(botp->c_normal, (botp + 1)->c_normal) < MAXANGLE)))  {
+		   (VDOT(botp->c_normal, topp->c_normal) < MAXANGLE)))  {
 			if( state == FOUND_START_PT ) {
 				continue;
 			} else {
 				/* find the correct cell. */
 				start_cellp = find_cell(botp, topp);		
 
-				/* Move to and remember left point */
-				VJOIN2(beg, start_cellp->c_hit, -0.5, dx_model, 0.5, dy_model);
+				/* Move to and remember left point.  If start_cellp
+				 * is botp, then move left and up half a cell.
+				 */
+
+				if(botp == start_cellp)  {
+					VJOIN2(beg, start_cellp->c_hit, -0.5, dx_model, 0.5, dy_model);
+				} else  {
+					VJOIN2(beg, start_cellp->c_hit, -0.5, dx_model, -0.5, dy_model);
+				}
+
 				VJOIN1(start, beg, start_cellp->c_dist, start_cellp->c_rdir);
 				state = FOUND_START_PT;
 			}
@@ -493,7 +512,7 @@ int		y;
 			if (state == FOUND_START_PT) {
 
 				/* Draw to current left edge 
-				/* Note that x and y must be converted back
+				 * Note that x and y must be converted back
 				 * to file coordinates so that the file
 				 * picture gets plotted.  The 0.5 factors
 				 * are for centering. This is for (x-1-0.5),
@@ -503,11 +522,22 @@ int		y;
 				 * subtracting 0.5 cell for centering.
 				 */
 
-				cellp = find_cell( start_cellp, find_cell( (botp-1), (topp-1) ) );
-				VJOIN2(end, cellp->c_hit, -0.5, dx_model, 0.5, dy_model);
+				cellp = find_cell( (botp-1), (topp-1) );
+
+				/* If botp-1 is cellp, then move right and up
+				 * by half a cell.  Otherwise, move right and down
+				 * by half a cell.
+				 */
+
+				if( (botp-1) == cellp)  {
+					VJOIN2(end, cellp->c_hit, 0.5, dx_model, 0.5, dy_model);
+				} else {
+					VJOIN2(end, cellp->c_hit, 0.5, dx_model, -0.5, dy_model);
+				}
+
 				VJOIN1(stop, end, cellp->c_dist, cellp->c_rdir);
 				pdv_3line(plotfp, start, stop);
-					state = SEEKING_START_PT;
+				state = SEEKING_START_PT;
 			} else {
 				continue;
 			}
@@ -528,7 +558,18 @@ int		y;
 			 */
 
 		cellp = find_cell( (botp-1), (topp-1) );
-		VJOIN2(end, cellp->c_hit, -0.5, dx_model, 0.5, dy_model);
+
+			/* If botp-1 is cellp, then move right and up
+			 * by half a cell.  Otherwise, move right and down
+			 * by half a cell.
+			 */
+
+		if( (botp-1) == cellp)  {
+			VJOIN2(end, cellp->c_hit, 0.5, dx_model, 0.5, dy_model);
+		} else {
+			VJOIN2(end, cellp->c_hit, 0.5, dx_model, -0.5, dy_model);
+		}
+
 		VJOIN1(stop, end, cellp->c_dist, cellp->c_rdir);
 
 		pdv_3line(plotfp, start, stop);
