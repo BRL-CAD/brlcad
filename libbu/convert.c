@@ -29,6 +29,9 @@
 #ifndef line
 static char RCSid[] = "$Header$ (BRL)";
 #endif
+#include <stdio.h>
+
+typedef void *genptr_t;
 /*
  * Theses should be moved to a header file soon.
  */
@@ -50,6 +53,14 @@ static char RCSid[] = "$Header$ (BRL)";
 #define CV_CLIP		0x0000
 #define CV_NORMAL	0x2000
 #define CV_LIT		0x4000
+
+#define	IND_NOTSET	0
+#define IND_BIG		1
+#define IND_LITTLE	2
+#define IND_ILL		3		/* Vax ish ? */
+#define IND_CRAY	4
+
+static int Indian = IND_NOTSET;
 
 /* cv_cookie	Set's a bit vector after parsing an input string.
  *
@@ -81,6 +92,7 @@ char *in;			/* input format */
 	if (!in) return(NULL);
 	if (!*in) return(NULL);
 
+
 	collector = 0;
 	for (p=in; *p && isdigit(*p); ++p) collector = collector*10 + (*p - '0');
 	if (collector > 255) {
@@ -105,7 +117,7 @@ char *in;			/* input format */
 	} else if (*p == 's') {	/* could be 'signed' or 'short' */
 		char *p2;
 		p2 = p+1;
-		if (*p2 && (islower(*p2) || isdigit(*p2)) {
+		if (*p2 && (islower(*p2) || isdigit(*p2))) {
 			result |= CV_SIGNED_MASK;
 			++p;
 		}
@@ -173,7 +185,7 @@ cv(out, outfmt, size, in, infmt, count)
 genptr_t out;
 char	*outfmt;
 int	size;
-getptr_t in;
+genptr_t in;
 char	*infmt;
 int	count;
 {
@@ -201,12 +213,34 @@ int	incookie;
 int	count;
 {
 	int number_converted = 0;
-	int host_size_table[5] = {sizeof(char), sizeof(short), sizeof(int),
+	static int host_size_table[5] = {sizeof(char), sizeof(short), sizeof(int),
 		sizeof(long int), sizeof(double)};
-	int net_size_table[5] = {1,2,4,8,8};
+	static int net_size_table[5] = {1,2,4,8,8};
 	int bytes_per;
 	double *working;
-	int	work_count = 500;
+	unsigned long int *hostnet;
+	int i;
+	int	work_count = 4096;
+	int inputconvert = 0;
+
+	if (work_count > count) work_count = count;
+
+	if (Indian == IND_NOTSET) {
+		unsigned long int	testval;
+		for (i=0; i<4; i++) {
+			((char *)&testval)[i] = i+1;
+		}
+		if (sizeof (long int) == 8) {
+			Indian = IND_CRAY;	/* is this good enough? */
+		} else if (testval == 0x01020304) {
+			Indian = IND_BIG;
+		} else if (testval == 0x04030201) {
+			Indian = IND_LITTLE;
+		} else if (testval == 0x02010403) {
+			Indian = IND_ILL;
+		}
+	}
+
 
 	working = (double *) malloc(work_count*sizeof(double));
 
@@ -214,10 +248,17 @@ int	count;
 	    host_size_table[ (outcookie & CV_TYPE_MASK) >> CV_TYPE_SHIFT] :
 	    net_size_table[ (outcookie & CV_TYPE_MASK) >> CV_TYPE_SHIFT] ;
 
+	if (Indian != IND_BIG && !(incookie & CV_HOST_MASK)) {
+		inputconvert = 1;
+		hostnet = (unsigned long int *) malloc(work_count*sizeof(double));
+	}
+		
 /*
  * Currently we assume that all machines are big-indian - XXX
  */
 	while (size>= bytes_per && number_converted < count) {
+		int remaining;
+
 		remaining = size / bytes_per;
 		if (remaining > count-number_converted) {
 			remaining = count - number_converted;
@@ -226,7 +267,20 @@ int	count;
 /*
  * net to host
  */
-
+		if (inputconvert) {
+			register int j;
+			if (Indian == IND_LITTLE) {
+				for (j=0; j<work_count; j++) {
+					for (i=0; i<bytes_per; i++) {
+						((char *)&hostnet[j])[i] =
+						    ((char *)&in[j])[bytes_per - i - 1];
+					}
+				}
+			} 
+/* else IND_CRAY and IND_ILL */
+		} else {
+			hostnet = (unsigned long int *) in;
+		}
 /*
  * to double.
  */
