@@ -3,10 +3,17 @@
  *
  *  Routines to assign values to elements of arbitrary structures.
  *  The layout of a structure to be processed is described by
- *  a structure of type "structparse", giving element names, element
+ *  a structure of type "bu_structparse", giving element names, element
  *  formats, an offset from the beginning of the structure, and
  *  a pointer to an optional "hooked" function that is called whenever
  *  that structure element is changed.
+ *
+ *  There are four basic operations supported:
+ *	print	struct elements to ASCII
+ *	parse	ASCII to struct elements
+ *	export	struct elements to machine-independent binary
+ *	import	machine-independent binary to struct elements
+ *
  *
  *  Authors -
  *	Michael John Muuss
@@ -38,8 +45,566 @@ static char RCSparse[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "externs.h"
-#include "vmath.h"
 #include "bu.h"
+
+
+#define CKMEM( _len )	{  \
+	register int	offset; \
+	if( (offset = (ep - cp) - (_len)) < 0 )  { \
+		do  { \
+			offset += ext->ext_nbytes;	/* decr by new growth */ \
+			ext->ext_nbytes <<= 1; \
+		} while( offset < 0 ); \
+		offset = cp - (char *)ext->ext_buf; \
+		ext->ext_buf = (genptr_t)bu_realloc( (char *) ext->ext_buf, \
+		     ext->ext_nbytes, "bu_struct_export" ); \
+		ep = (char *) ext->ext_buf + ext->ext_nbytes; \
+		cp = (char *) ext->ext_buf + offset; \
+	} }
+
+#define	BU_GETPUT_MAGIC_1	0x15cb
+#define BU_GETPUT_MAGIC_2	0xbc51
+#define BU_INIT_GETPUT_1(_p)	{ \
+	BU_CK_EXTERNAL(_p); \
+	((unsigned char *) _p->ext_buf)[1] = (BU_GETPUT_MAGIC_1 & 0xFF); \
+	((unsigned char *) _p->ext_buf)[0] = (BU_GETPUT_MAGIC_1 >> 8) & 0xFF; \
+	}
+#define BU_INIT_GETPUT_2(_p,_l)	{\
+	BU_CK_EXTERNAL(_p); \
+	((unsigned char *) _p->ext_buf)[_l-1] = (BU_GETPUT_MAGIC_2 & 0xFF); \
+	((unsigned char *) _p->ext_buf)[_l-2] = (BU_GETPUT_MAGIC_2 >> 8) & 0xFF; \
+	}
+
+#define	BU_CK_GETPUT(_p) {\
+	register long _i; \
+	register long _len; \
+	BU_CK_EXTERNAL(_p); \
+	if ( !(_p->ext_buf) ) { \
+		bu_log("ERROR: BU_CK_GETPUT null ext_buf, file %s, line %d\n", \
+		    __FILE__, __LINE__); \
+		bu_bomb("NULL pointer"); \
+	} \
+	if ( _p->ext_nbytes < 6 ) { \
+		bu_log("ERROR: BU_CK_GETPUT buffer only %d bytes, file %s, line %d\n", \
+		    _p->ext_nbytes, __FILE__, __LINE__); \
+		bu_bomb("getput buffer too small"); \
+	} \
+	_i = (((unsigned char *)(_p->ext_buf))[0] << 8) | \
+	      ((unsigned char *)(_p->ext_buf))[1]; \
+	if ( _i != BU_GETPUT_MAGIC_1)  { \
+		bu_log("ERROR: BU_CK_GETPUT buffer x%x, magic1 s/b x%x, was %s(x%x), file %s, line %d\n", \
+		    _p->ext_buf, BU_GETPUT_MAGIC_1, \
+		    bu_identify_magic( _i), _i, __FILE__, __LINE__); \
+		bu_bomb("Bad getput buffer"); \
+	} \
+	_len = (((unsigned char *)(_p->ext_buf))[2] << 24) | \
+	       (((unsigned char *)(_p->ext_buf))[3] << 16) | \
+	       (((unsigned char *)(_p->ext_buf))[4] <<  8) | \
+		((unsigned char *)(_p->ext_buf))[5]; \
+	if (_len > _p->ext_nbytes) { \
+		bu_log("ERROR: BU_CK_GETPUT buffer x%x, expected len=%d, ext_nbytes=%d, file %s, line %d\n", \
+		    _p->ext_buf, _len, _p->ext_nbytes, \
+		    __FILE__, __LINE__); \
+		bu_bomb("Bad getput buffer"); \
+	} \
+	_i = (((unsigned char *)(_p->ext_buf))[_len-2] << 8) | \
+	      ((unsigned char *)(_p->ext_buf))[_len-1]; \
+	if ( _i != BU_GETPUT_MAGIC_2) { \
+		bu_log("ERROR: BU_CK_GETPUT buffer x%x, magic2 s/b x%x, was %s(x%x), file %s, line %d\n", \
+		    _p->ext_buf, BU_GETPUT_MAGIC_2, \
+		    bu_identify_magic( _i), _i, __FILE__, __LINE__); \
+		bu_bomb("Bad getput buffer"); \
+	} \
+}
+	
+/*
+ *			R T _ S T R U C T _ E X P O R T
+ */
+int
+bu_struct_export( ext, base, imp )
+struct bu_external	*ext;
+CONST genptr_t		base;
+CONST struct bu_structparse *imp;
+{
+	register char	*cp;		/* current possition in buffer */
+	char		*ep;		/* &ext->ext_buf[ext->ext_nbytes] */
+	CONST struct bu_structparse *ip;	/* current imexport structure */
+	char		*loc;		/* where host-format data is */
+	int		len;
+	register int	i;
+
+	BU_INIT_EXTERNAL(ext);
+
+	ext->ext_nbytes = 480;
+	ext->ext_buf = (genptr_t)bu_malloc( ext->ext_nbytes,
+	    "bu_struct_export output ext->ext_buf" );
+	BU_INIT_GETPUT_1(ext);
+	cp = (char *) ext->ext_buf + 6; /* skip magic and length */
+	ep = cp + ext->ext_nbytes;
+
+	for( ip = imp; ip->sp_fmt[0] != '\0'; ip++ )  {
+
+#if CRAY && !__STDC__
+		loc = ((char *)base) + ((int)ip->sp_offset*sizeof(int));
+#else
+		loc = ((char *)base) + ((int)ip->sp_offset);
+#endif
+
+		switch( ip->sp_fmt[0] )  {
+		case 'i':
+			/* Indirect to another structure */
+			/* deferred */
+			bu_free( (char *) ext->ext_buf, "output ext_buf" );
+			return( 0 );
+		case '%':
+			/* See below */
+			break;
+		default:
+			/* Unknown */
+			bu_free( (char *) ext->ext_buf, "output ext_buf" );
+			return( 0 );
+		}
+		/* [0] == '%', use printf-like format char */
+		switch( ip->sp_fmt[1] )  {
+		case 'f':
+			/* Double-precision floating point */
+			len = ip->sp_count * 8;
+			CKMEM( len );
+			htond( cp, loc, ip->sp_count );
+			cp += len;
+			continue;
+		case 'd':
+			/* 32-bit network integer, from "int" */
+			CKMEM( ip->sp_count * 4 ); 
+			{
+				register unsigned long	l;
+				for( i = ip->sp_count-1; i >= 0; i-- )  {
+					l = *((int *)loc);
+					cp[3] = l;
+					cp[2] = l >> 8;
+					cp[1] = l >> 16;
+					cp[0] = l >> 24;
+					loc += sizeof(int);
+					cp += 4;
+				}
+			}
+			continue;
+		case 'i':
+			/* 16-bit integer, from "int" */
+			CKMEM( ip->sp_count * 2 );
+			{
+				register unsigned short	s;
+				for( i = ip->sp_count-1; i >= 0; i-- )  {
+					s = *((int *)loc);
+					cp[1] = s;
+					cp[0] = s >> 8;
+					loc += sizeof(int);
+					cp += 2;
+				}
+			}
+			continue;
+		case 's':
+			{
+				/* char array is transmitted as a
+				 * 4 byte character count, followed by a
+				 * null terminated, word padded char array.
+				 * The count includes any pad bytes,
+				 * but not the count itself.
+				 *
+				 * ip->sp_count == sizeof(char array)
+				 */
+				register int lenstr;
+
+				/* include the terminating null */
+				lenstr = strlen( loc ) + 1;
+
+				len = lenstr;
+
+				/* output an integer number of words */
+				if ((len & 0x03) != 0)
+					len += 4 - (len & 0x03);
+
+				CKMEM( len + 4 );
+
+				/* put the length on the front
+				 * of the string
+				 */
+				cp[3] = len;
+				cp[2] = len >> 8;
+				cp[1] = len >> 16;
+				cp[0] = len >> 24;
+
+				cp += 4;
+
+				bcopy( loc, cp, lenstr );
+				cp += lenstr;
+				while (lenstr++ < len) *cp++ = '\0';
+			}
+			continue;
+		case 'c':
+			{
+				CKMEM( ip->sp_count + 4 );
+				cp[3] = ip->sp_count;
+				cp[2] = ip->sp_count >> 8;
+				cp[1] = ip->sp_count >> 16;
+				cp[0] = ip->sp_count >> 24;
+				cp += 4;
+				bcopy( loc, cp, ip->sp_count);
+				cp += ip->sp_count;
+			}
+			continue;
+		default:
+			bu_free( (char *) ext->ext_buf, "output ext_buf" );
+			return( 0 );
+		}
+	}
+	CKMEM( 2);	/* get room for the trailing magic number */
+	cp += 2;
+
+	i = cp - (char *)ext->ext_buf;
+	/* Fill in length in external buffer */
+	((char *)ext->ext_buf)[5] = i;
+	((char *)ext->ext_buf)[4] = i >> 8;
+	((char *)ext->ext_buf)[3] = i >>16;
+	((char *)ext->ext_buf)[2] = i >>24;
+	BU_INIT_GETPUT_2(ext, i);
+	ext->ext_nbytes = i;	/* XXX this changes nbytes if i < 480 ? */
+	return( 1 );
+}
+
+/*
+ *			R T _ S T R U C T _ I M P O R T
+ */
+int
+bu_struct_import( base, imp, ext )
+genptr_t		base;
+CONST struct bu_structparse	*imp;
+CONST struct bu_external	*ext;
+{
+	register CONST unsigned char	*cp;	/* current possition in buffer */
+	CONST struct bu_structparse	*ip;	/* current imexport structure */
+	char		*loc;		/* where host-format data is */
+	int		len;
+	int		bytes_used;
+	register int	i;
+
+	BU_CK_GETPUT(ext);
+	
+	cp = (unsigned char *)ext->ext_buf+6;
+	bytes_used = 0;
+	for( ip = imp; ip->sp_fmt[0] != '\0'; ip++ )  {
+
+#if CRAY && !__STDC__
+		loc = ((char *)base) + ((int)ip->sp_offset*sizeof(int));
+#else
+		loc = ((char *)base) + ((int)ip->sp_offset);
+#endif
+
+		switch( ip->sp_fmt[0] )  {
+		case 'i':
+			/* Indirect to another structure */
+			/* deferred */
+			return( -1 );
+		case '%':
+			/* See below */
+			break;
+		default:
+			/* Unknown */
+			return( -1 );
+		}
+		/* [0] == '%', use printf-like format char */
+		switch( ip->sp_fmt[1] )  {
+		case 'f':
+			/* Double-precision floating point */
+			len = ip->sp_count * 8;
+			ntohd( loc, cp, ip->sp_count );
+			cp += len;
+			bytes_used += len;
+			continue;
+		case 'd':
+			/* 32-bit network integer, from "int" */
+			{
+				register long	l;
+				for( i = ip->sp_count-1; i >= 0; i-- )  {
+					l =	(cp[0] << 24) |
+						(cp[1] << 16) |
+						(cp[2] <<  8) |
+						 cp[3];
+					*(int *)loc = l;
+					loc += sizeof(int);
+					cp += 4;
+				}
+				bytes_used += ip->sp_count * 4;
+			}
+			continue;
+		case 'i':
+			/* 16-bit integer, from "int" */
+			for( i = ip->sp_count-1; i >= 0; i-- )  {
+				*(int *)loc =	(cp[0] <<  8) |
+						 cp[1];
+				loc += sizeof(int);
+				cp += 2;
+			}
+			bytes_used += ip->sp_count * 2;
+			continue;
+		case 's': 
+			{	/* char array transmitted as a
+				 * 4 byte character count, followed by a
+				 * null terminated, word padded char array
+				 *
+				 * ip->sp_count == sizeof(char array)
+				 */
+				register unsigned long lenstr;
+
+				lenstr = (cp[0] << 24) |
+					 (cp[1] << 16) |
+					 (cp[2] <<  8) |
+					  cp[3];
+
+				cp += 4;
+
+				/* don't read more than the buffer can hold */
+				if (ip->sp_count < lenstr)
+					bcopy( cp, loc, ip->sp_count);
+				else
+					bcopy( cp, loc, lenstr );
+
+				/* ensure proper null termination */
+				loc[ip->sp_count-1] = '\0';
+
+				cp += lenstr;
+				bytes_used += lenstr;
+			}
+			continue;
+		case 'c':
+			{
+				register unsigned long lenarray;
+
+				lenarray = (cp[0] << 24) |
+					   (cp[1] << 16) |
+					   (cp[2] <<  8) |
+					    cp[3];
+				cp += 4;
+
+				if (ip->sp_count < lenarray) {
+					bcopy( cp, loc, ip->sp_count);
+				} else {
+					bcopy( cp, loc, lenarray );
+				}
+				cp += lenarray;
+				bytes_used += lenarray;
+			}
+			continue;
+		default:
+			return( -1 );
+		}
+		if ( ip->sp_hook ) {
+
+			ip->sp_hook (ip, ip->sp_name, base, (char *)NULL);
+		}
+	}
+
+	/* This number may differ from that stored as "claimed_length" */
+	return( bytes_used );
+}
+
+/*
+ *			R T _ S T R U C T _ P U T
+ *
+ *  Put a structure in external form to a stdio file.
+ *  All formatting must have been accomplished previously.
+ */
+int
+bu_struct_put( fp, ext )
+FILE *fp;
+CONST struct bu_external	*ext;
+{
+	BU_CK_GETPUT(ext);
+
+	return(fwrite(ext->ext_buf, 1, ext->ext_nbytes, fp));
+}
+
+/*
+ *			R T _ S T R U C T _ G E T
+ *
+ *  Obtain the next structure in external form from a stdio file.
+ */
+int
+bu_struct_get( ext, fp )
+struct bu_external *ext;
+FILE *fp;
+{
+	register long i, len;
+
+	BU_INIT_EXTERNAL(ext);
+	ext->ext_buf = (genptr_t) bu_malloc( 6, "bu_struct_get buffer head");
+	bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
+
+	i=fread( (char *) ext->ext_buf, 1, 6, fp);	/* res_syscall */
+	bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
+
+	if (i != 6 ) {
+		if (i == 0) return(0);
+		bu_log("ERROR: bu_struct_get bad fread (%d), file %s, line %d\n",
+		    i, __FILE__, __LINE__);
+		bu_bomb("Bad fread");
+	}
+	i = (((unsigned char *)(ext->ext_buf))[0] << 8) |
+	     ((unsigned char *)(ext->ext_buf))[1];
+	len = (((unsigned char *)(ext->ext_buf))[2] << 24) |
+	      (((unsigned char *)(ext->ext_buf))[3] << 16) |
+	      (((unsigned char *)(ext->ext_buf))[4] <<  8) |
+	       ((unsigned char *)(ext->ext_buf))[5];
+	if ( i != BU_GETPUT_MAGIC_1) {
+		bu_log("ERROR: bad getput buffer header x%x, s/b x%x, was %s(x%x), file %s, line %d\n",
+		    ext->ext_buf, BU_GETPUT_MAGIC_1,
+		    bu_identify_magic( i), i, __FILE__, __LINE__);
+		bu_bomb("bad getput buffer");
+	}
+	ext->ext_nbytes = len;
+	ext->ext_buf = (genptr_t) bu_realloc((char *) ext->ext_buf, len,
+	    "bu_struct_get full buffer");
+	bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
+	i=fread((char *) ext->ext_buf + 6, 1 , len-6, fp);	/* res_syscall */
+	bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
+	if (i != len-6) {
+		bu_log("ERROR: bu_struct_get bad fread (%d), file %s, line %d\n",
+		    i, __FILE__, __LINE__);
+		bu_bomb("Bad fread");
+	}
+	i = (((unsigned char *)(ext->ext_buf))[len-2] <<8) | 
+	     ((unsigned char *)(ext->ext_buf))[len-1];
+	if ( i != BU_GETPUT_MAGIC_2) {
+		bu_log("ERROR: bad getput buffer x%x, s/b x%x, was %s(x%x), file %s, line %d\n",
+		    ext->ext_buf, BU_GETPUT_MAGIC_2,
+		    bu_identify_magic( i), i, __FILE__, __LINE__);
+		bu_bomb("Bad getput buffer");
+	}
+	return(1);
+}
+
+/*
+ *  Routines to insert/extract short/long's into char arrays,
+ *  independend of machine byte order and word-alignment.
+ *  Uses encoding compatible with routines found in libpkg,
+ *  and BSD system routines ntohl(), ntons(), ntohl(), ntohs().
+ */
+
+/*
+ *			R T _ G S H O R T
+ */
+unsigned short
+bu_gshort(msgp)
+CONST unsigned char *msgp;
+{
+	register CONST unsigned char *p = msgp;
+#ifdef vax
+	/*
+	 * vax compiler doesn't put shorts in registers
+	 */
+	register unsigned long u;
+#else
+	register unsigned short u;
+#endif
+
+	u = *p++ << 8;
+	return ((unsigned short)(u | *p));
+}
+
+/*
+ *			R T _ G L O N G
+ */
+unsigned long
+bu_glong(msgp)
+CONST unsigned char *msgp;
+{
+	register CONST unsigned char *p = msgp;
+	register unsigned long u;
+
+	u = *p++; u <<= 8;
+	u |= *p++; u <<= 8;
+	u |= *p++; u <<= 8;
+	return (u | *p);
+}
+
+/*
+ *			R T _ P S H O R T
+ */
+unsigned char *
+bu_pshort(msgp, s)
+register unsigned char *msgp;
+register int s;
+{
+
+	msgp[1] = s;
+	msgp[0] = s >> 8;
+	return(msgp+2);
+}
+
+/*
+ *			R T _ P L O N G
+ */
+unsigned char *
+bu_plong(msgp, l)
+register unsigned char *msgp;
+register unsigned long l;
+{
+
+	msgp[3] = l;
+	msgp[2] = (l >>= 8);
+	msgp[1] = (l >>= 8);
+	msgp[0] = l >> 8;
+	return(msgp+4);
+}
+
+/*
+ *			R T _ S T R U C T _ B U F
+ *
+ *  Given a buffer with an external representation of a structure
+ *  (e.g. the ext_buf portion of the output from bu_struct_export),
+ *  check it for damage in shipment, and if it's OK,
+ *  wrap it up in an bu_external structure, suitable for passing
+ *  to bu_struct_import().
+ */
+void
+bu_struct_buf( ext, buf )
+struct bu_external *ext;
+genptr_t buf;
+{
+	register long i, len;
+
+	BU_INIT_EXTERNAL(ext);
+	ext->ext_buf = buf;
+	i = (((unsigned char *)(ext->ext_buf))[0] << 8) |
+	     ((unsigned char *)(ext->ext_buf))[1];
+	len = (((unsigned char *)(ext->ext_buf))[2] << 24) |
+	      (((unsigned char *)(ext->ext_buf))[3] << 16) |
+	      (((unsigned char *)(ext->ext_buf))[4] <<  8) |
+	       ((unsigned char *)(ext->ext_buf))[5];
+	if ( i != BU_GETPUT_MAGIC_1) {
+		bu_log("ERROR: bad getput buffer header x%x, s/b x%x, was %s(x%x), file %s, line %d\n",
+		    ext->ext_buf, BU_GETPUT_MAGIC_1,
+		    bu_identify_magic( i), i, __FILE__, __LINE__);
+		bu_bomb("bad getput buffer");
+	}
+	ext->ext_nbytes = len;
+	i = (((unsigned char *)(ext->ext_buf))[len-2] <<8) | 
+	     ((unsigned char *)(ext->ext_buf))[len-1];
+	if ( i != BU_GETPUT_MAGIC_2) {
+		bu_log("ERROR: bad getput buffer x%x, s/b x%x, was %s(x%x), file %s, line %s\n",
+		    ext->ext_buf, BU_GETPUT_MAGIC_2,
+		    bu_identify_magic( i), i, __FILE__, __LINE__);
+		bu_bomb("Bad getput buffer");
+	}
+}
+
+
+
+
+
+
+
+
 
 
 /*
@@ -283,7 +848,7 @@ CONST char				*value;	/* string containing value */
  *	 0	OK
  */
 int
-bu_structparse( in_vls, desc, base )
+bu_struct_parse( in_vls, desc, base )
 CONST struct bu_vls		*in_vls;	/* string to parse through */
 CONST struct bu_structparse	*desc;		/* structure description */
 char				*base;		/* base addr of users struct */
@@ -361,7 +926,7 @@ char				*base;		/* base addr of users struct */
 		if( retval == -1 ) {
 		    bu_log("bu_structparse:  '%s=%s', element name not found in:\n",
 			   name, value);
-		    bu_structprint( "troublesome one", desc, base );
+		    bu_struct_print( "troublesome one", desc, base );
 		} else if( retval == -2 ) {
 		    bu_vls_free( &vls );
 		    return -2;
@@ -382,7 +947,7 @@ char				*base;		/* base addr of users struct */
 HIDDEN void
 bu_matprint(name, mat)
 CONST char		*name;
-register CONST matp_t	mat;
+register CONST double	*mat;
 {
 	int	delta = strlen(name)+2;
 
@@ -404,13 +969,17 @@ register CONST matp_t	mat;
 		mat[12], mat[13], mat[14], mat[15]);
 }
 
-
-HIDDEN void
-bu_vls_item_print_core( vp, sdp, base, sep_char )
+/*
+ *	
+ *	Convert a structure element (indicated by sdp) to its ASCII
+ *	representation in a VLS
+ */
+void
+bu_vls_struct_item( vp, sdp, base, sep_char )
 struct bu_vls *vp;
 CONST struct bu_structparse *sdp;    /* item description */
 CONST char *base;                 /* base address of users structure */
-char sep_char;                    /* value separator */
+int sep_char;                    /* value separator */
 {
     register char *loc;
 
@@ -431,7 +1000,7 @@ char sep_char;                    /* value separator */
     }
 
     if ( sdp->sp_fmt[0] != '%')  {
-	bu_log("bu_vls_item_print:  %s: unknown format '%s'\n",
+	bu_log("bu_vls_struct_item:  %s: unknown format '%s'\n",
 	       sdp->sp_name, sdp->sp_fmt );
 	return;
     }
@@ -487,90 +1056,36 @@ char sep_char;                    /* value separator */
 
 
 /*
- *                     B U _ V L S _ I T E M _ P R I N T
+ *	B U _ V L S _ S T R U C T _ I T E M _ N A M E D
  *
- * Takes the single item pointed to by "sp", and prints its value into a
- * vls.
+ *	Convert a structure element called "name" to an ASCII representation
+ *	in a VLS.
  */
-
-void
-bu_vls_item_print( vp, sdp, base )
-struct bu_vls *vp;
-CONST struct bu_structparse *sdp;     /* item description */
-CONST char *base;                 /* base address of users structure */
-{
-    bu_vls_item_print_core( vp, sdp, base, ',' );
-}
-
-/*
- *    B U _ V L S _ I T E M _ P R I N T _ N C
- *
- *    A "no-commas" version of the bu_vls_item_print() routine.
- */
-
-void
-bu_vls_item_print_nc( vp, sdp, base )
-struct bu_vls *vp;
-CONST struct bu_structparse *sdp;     /* item description */
-CONST char *base;                 /* base address of users structure */
-{
-    bu_vls_item_print_core( vp, sdp, base, ' ' );
-}
-
-/*                  B U _ V L S _ N A M E _ P R I N T
- *
- * A version of bu_vls_item_print that allows you to select by name.
- */
-
 int
-bu_vls_name_print( vp, parsetab, name, base )
+bu_vls_struct_item_named( vp, parsetab, name, base, sep_char )
 struct bu_vls *vp;
 CONST struct bu_structparse *parsetab;
 CONST char *name;
 CONST char *base;
+int sep_char;
 {
     register CONST struct bu_structparse *sdp;
 
     for( sdp = parsetab; sdp->sp_name != NULL; sdp++ )
 	if( strcmp(sdp->sp_name, name) == 0 ) {
-	    bu_vls_item_print( vp, sdp, base );
+	    bu_vls_struct_item( vp, sdp, base, sep_char );
 	    return 0;
 	}
 
     return -1;
 }
-
-/*                  B U _ V L S _ N A M E _ P R I N T _ N C
- *
- * A "no-commas" version of bu_vls_name_print
- */
-
-int
-bu_vls_name_print_nc( vp, parsetab, name, base )
-struct bu_vls *vp;
-CONST struct bu_structparse *parsetab;
-CONST char *name;
-CONST char *base;
-{
-    register CONST struct bu_structparse *sdp;
-
-    for( sdp = parsetab; sdp->sp_name != NULL; sdp++ )
-	if( strcmp(sdp->sp_name, name) == 0 ) {
-	    bu_vls_item_print_nc( vp, sdp, base );
-	    return 0;
-	}
-
-    return -1;
-}
-
-
 
 
 /*
  *			B U _ S T R U C T P R I N T
  */
 void
-bu_structprint( title, parsetab, base )
+bu_struct_print( title, parsetab, base )
 CONST char			*title;
 CONST struct bu_structparse	*parsetab;/* structure description */
 CONST char			*base;	  /* base address of users structure */
@@ -600,20 +1115,20 @@ CONST char			*base;	  /* base address of users structure */
 #endif
 
 		if (sdp->sp_fmt[0] == 'i' )  {
-			bu_structprint( sdp->sp_name,
+			bu_struct_print( sdp->sp_name,
 				(struct bu_structparse *)sdp->sp_count,
 				base );
 			continue;
 		}
 
 		if ( sdp->sp_fmt[0] != '%')  {
-			bu_log("bu_structprint:  %s: unknown format '%s'\n",
+			bu_log("bu_struct_print:  %s: unknown format '%s'\n",
 				sdp->sp_name, sdp->sp_fmt );
 			continue;
 		}
 #if 0
 		bu_vls_trunc( &vls, 0 );
-		bu_vls_item_print( &vls, sdp, base );
+		bu_vls_struct_item( &vls, sdp, base, ',' );
 		bu_log( " %s=%s\n", sdp->sp_name, bu_vls_addr(&vls) );
 #else
 		switch( sdp->sp_fmt[1] )  {
@@ -668,9 +1183,9 @@ CONST char			*base;	  /* base address of users structure */
 			{	register int i = sdp->sp_count;
 				register double *dp = (double *)loc;
 
-				if (sdp->sp_count == ELEMENTS_PER_MAT) {
-					bu_matprint(sdp->sp_name, (matp_t)dp);
-				} else if (sdp->sp_count <= ELEMENTS_PER_VECT){
+				if (sdp->sp_count == 16) {
+					bu_matprint(sdp->sp_name, dp);
+				} else if (sdp->sp_count <= 3){
 					bu_log( " %s=%.25G", sdp->sp_name, *dp++ );
 
 					while (--i > 0)
@@ -704,7 +1219,7 @@ CONST char			*base;	  /* base address of users structure */
 			}
 			break;
 		default:
-			bu_log( " bu_structprint: Unknown format: %s=%s??\n",
+			bu_log( " bu_struct_print: Unknown format: %s=%s??\n",
 				sdp->sp_name, sdp->sp_fmt );
 			break;
 		}
@@ -744,11 +1259,11 @@ register CONST double	*dp;
 /*
  *			B U _ V L S _ S T R U C T P R I N T
  *
- *	This differs from bu_structprint in that this output is less readable
+ *	This differs from bu_struct_print in that this output is less readable
  *	by humans, but easier to parse with the computer.
  */
 void
-bu_vls_structprint( vls, sdp, base)
+bu_vls_struct_print( vls, sdp, base)
 struct	bu_vls				*vls;	/* vls to print into */
 register CONST struct bu_structparse	*sdp;	/* structure description */
 CONST char				*base;	/* structure ponter */
@@ -781,7 +1296,7 @@ CONST char				*base;	/* structure ponter */
 			struct bu_vls sub_str;
 
 			bu_vls_init(&sub_str);
-			bu_vls_structprint( &sub_str,
+			bu_vls_struct_print( &sub_str,
 				(struct bu_structparse *)sdp->sp_count,
 				base );
 
@@ -791,7 +1306,7 @@ CONST char				*base;	/* structure ponter */
 		}
 
 		if ( sdp->sp_fmt[0] != '%' )  {
-			bu_log("bu_structprint:  %s: unknown format '%s'\n",
+			bu_log("bu_struct_print:  %s: unknown format '%s'\n",
 				sdp->sp_name, sdp->sp_fmt );
 			break;
 		}
@@ -918,3 +1433,12 @@ CONST char				*base;	/* structure ponter */
 		}
 	}
 }
+
+
+
+
+
+
+
+
+
