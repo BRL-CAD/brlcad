@@ -147,7 +147,7 @@ BN_EXPORT BU_EXTERN(int bn_common_file_size,
 BN_EXPORT BU_EXTERN(int bn_common_name_size,
 		    (int *width,
 		     int *height,
-		     char *name));
+		     const char *name));
 BN_EXPORT BU_EXTERN(int bn_common_image_size,
 		    (int *width,
 		     int *height,
