@@ -40,6 +40,7 @@ class Drawable {
     public method overlay {args}
     public method report {args}
     public method rt {args}
+    public method rtabort {args}
     public method rtcheck {args}
     public method vdraw {args}
     public method who {args}
@@ -116,6 +117,10 @@ body Drawable::report {args} {
 
 body Drawable::rt {args} {
     eval $dg rt $args
+}
+
+body Drawable::rtabort {} {
+    $dg rtabort
 }
 
 body Drawable::rtcheck {args} {
