@@ -656,7 +656,7 @@ re_expand_map(void)
     int resort_compare(histogram_t **c1, histogram_t **c2);
     histogram_t *tmp, **hist_ptr;
 
-    qsort( hist, hist_size, sizeof( histogram_t * ), resort_compare );
+    qsort( hist, hist_size, sizeof( histogram_t * ), (int(*)(const void *, const void *))resort_compare );
     hist_ptr = &(hist[hist_size-1]);
     for ( i = hist_size-1; i >= 0; i-- )
     {
@@ -970,7 +970,7 @@ radix_sort (color_box_t *bbox, int start_bit, int num_bits)
     mask = ~(~0 << num_bits) << start_bit;
 
     qsort( (char *)bbox->hist, bbox->hsize,
-	   sizeof(histogram_t *), cmp_radices );
+	   sizeof(histogram_t *), (int(*)(const void *, const void *))cmp_radices );
 }
 
 
