@@ -26,7 +26,6 @@ struct mater {
 	unsigned char	mt_r;		/* color */
 	unsigned char	mt_g;
 	unsigned char	mt_b;
-	char		*mt_handle;	/* strdup()ed handle */
 	long		mt_daddr;	/* db address, for updating */
 	struct mater	*mt_forw;	/* next in chain */
 };
