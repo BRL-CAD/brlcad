@@ -551,8 +551,10 @@ double			mm2local;
 					rt_tree_array[i].tl_tree->tr_l.tl_mat[13],
 					rt_tree_array[i].tl_tree->tr_l.tl_mat[14] );
 			}
-		bu_vls_printf( vls, "\n" );
+			bu_vls_printf( vls, "\n" );
 		}
+
+		if( rt_tree_array ) bu_free( (genptr_t)rt_tree_array, "rt_tree_array" );
 	}
 	else
 	{
