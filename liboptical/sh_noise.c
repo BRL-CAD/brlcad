@@ -209,6 +209,9 @@ struct mfuncs noise_mfuncs[] = {
 	{MF_MAGIC,	"fbmcombo",	0,	MFI_NORMAL|MFI_HIT|MFI_UV, 0,
 	noise_setup,	fractal_render,	noise_print,	noise_free },
 
+	{MF_MAGIC,	"flash",	0,	MFI_NORMAL|MFI_HIT|MFI_UV, 0,
+	noise_setup,	fractal_render, noise_print,	noise_free },
+
 	{0,		(char *)0,	0,	0,		0,
 	0,		0,		0,		0 }
 };
@@ -486,6 +489,17 @@ char			*dp;	/* ptr to the shader-specific struct */
 		if (val < noise_sp->minval )  val = noise_sp->minval;
 		VSCALE(swp->sw_color, swp->sw_color, val);
 		norm_noise(pt, val, noise_sp, bn_noise_fbm, swp, 1);
+		break;
+
+	case 8: /* flash */
+		val = bn_noise_fbm(pt, noise_sp->h_val,
+			noise_sp->lacunarity, noise_sp->octaves);
+
+		val = 1.0 - val;
+		if (val < noise_sp->minval )  val = noise_sp->minval;
+
+		VSCALE(swp->sw_color, swp->sw_color, val);
+		break;
 		break;
 	}
 
