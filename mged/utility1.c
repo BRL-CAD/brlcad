@@ -1323,7 +1323,7 @@ f_which_id( )
 					continue;
 				if( rec.c.c_regionid != item )
 					continue;
-				(void)printf("   %s\n",record.c.c_name);
+				(void)printf("   %s\n",rec.c.c_name);
 			}
 		}
 	}
