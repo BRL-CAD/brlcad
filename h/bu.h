@@ -1567,6 +1567,10 @@ BU_EXTERN(void			bu_struct_print, ( const char *title,
 BU_EXTERN(void			bu_vls_struct_print, (struct bu_vls *vls,
 				const struct bu_structparse *sdp,
 				const char *base));
+BU_EXTERN(void			bu_vls_struct_print2, (struct bu_vls *vls,
+						       const char *title,
+						       const struct bu_structparse *sdp,
+						       const char *base));
 BU_EXTERN(void			bu_vls_struct_item, (struct bu_vls *vp,
 				const struct bu_structparse *sdp,
 				const char *base,
