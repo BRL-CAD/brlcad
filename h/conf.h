@@ -122,6 +122,7 @@
 #	define HAVE_SBRK_DECL		1
 #	define HAVE_REGEX_DECL		1
 #	define HAVE_POSIX_REGEXEC	1
+#	define HAVE_DLOPEN		1
 #endif
 
 #if defined(_AIX) || defined(__AIX)
