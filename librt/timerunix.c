@@ -24,14 +24,18 @@
 static char RCStimer[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
+#ifdef HAVE_MEMORY_H
 #include <memory.h>
+#endif
 #include <sys/types.h>
 #include <sys/times.h>
 #include <sys/param.h>
 
-#ifdef CRAY1
-# include <sys/machd.h>		/* XMP only, for HZ */
+#ifdef HAVE_SYS_MACHD_H
+# include <sys/machd.h>
 #endif
 
 #ifndef HZ
@@ -41,10 +45,10 @@ static char RCStimer[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "machine.h"
+#include "externs.h"
 #include "rtstring.h"
 
 /* Standard System V stuff */
-extern long time();
 static long time0;
 static struct tms tms0;
 
