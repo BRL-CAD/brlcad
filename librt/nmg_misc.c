@@ -47,11 +47,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 /*	Print the orientation in a nice, english form
  */
-void nmg_pr_orient(o, h)
-char	o;
+void nmg_pr_orient(orientation, h)
+int	orientation;
 char	*h;
 {
-	switch (o) {
+	switch (orientation) {
 	case OT_SAME : rt_log("%s%8s orientation\n", h, "SAME"); break;
 	case OT_OPPOSITE : rt_log("%s%8s orientation\n", h, "OPPOSITE"); break;
 	case OT_NONE : rt_log("%s%8s orientation\n", h, "NONE"); break;

@@ -1824,9 +1824,9 @@ long *p;
  *	The loopuse is inserted at the head of the appropriate list.
  */
 struct loopuse *nmg_mlv(magic, v, orientation)
-long *magic;
-struct vertex *v;
-char orientation;
+long		*magic;
+struct vertex	*v;
+int		orientation;
 {
 	struct loop *l;
 	struct loopuse *lu1, *lu2;
