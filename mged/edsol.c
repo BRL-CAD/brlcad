@@ -5799,7 +5799,7 @@ CONST vect_t	mousevec;
 	pos_view[X] = mousevec[X];
 	pos_view[Y] = mousevec[Y];
 
-  	tmp_vert = bot_find_v_nearest_pt2( bot, pos_view, view_state->vs_model2view );
+  	tmp_vert = rt_bot_find_v_nearest_pt2( bot, pos_view, view_state->vs_model2view );
   	if( tmp_vert < 0 )
   	{
   		Tcl_AppendResult(interp, "ECMD_BOT_PICKV: unable to find a vertex!!!\n", (char *)NULL );
@@ -5827,7 +5827,7 @@ CONST vect_t	mousevec;
 	pos_view[X] = mousevec[X];
 	pos_view[Y] = mousevec[Y];
 
-    	if( bot_find_e_nearest_pt2( &vert1, &vert2, bot, pos_view, view_state->vs_model2view ) )
+    	if( rt_bot_find_e_nearest_pt2( &vert1, &vert2, bot, pos_view, view_state->vs_model2view ) )
   	{
   		Tcl_AppendResult(interp, "ECMD_BOT_PICKE: unable to find an edge!!!\n", (char *)NULL );
   		mged_print_result( TCL_ERROR );
