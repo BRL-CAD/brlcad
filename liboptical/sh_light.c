@@ -1165,7 +1165,7 @@ int have;
 #if RT_MULTISPECTRAL
 		los.inten = (void *)&swp->msw_intensity[i];
 #else
-		los.inten = (void *)&swp->sw_intensity[i];
+		los.inten = (void *)&swp->sw_intensity[3*i];
 #endif
 
 		/* create a coordinate system about the light center
