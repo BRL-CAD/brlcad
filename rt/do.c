@@ -309,7 +309,6 @@ CONST char	**argv;
 {
 	register struct rt_i *rtip = ap.a_rt_i;
 	struct rt_vls	times;
-	register int	i;
 
 	if( argc <= 1 )  {
 		def_tree( rtip );		/* Load the default trees */
@@ -485,7 +484,6 @@ def_tree( rtip )
 register struct rt_i	*rtip;
 {
 	struct rt_vls	times;
-	register int	i;
 
 	if( rtip->rti_magic != RTI_MAGIC )  {
 		rt_log("rtip=x%x, rti_magic=x%x s/b x%x\n", rtip,
