@@ -39,7 +39,7 @@ extern int tgc_prep(),	tgc_print();
 extern int ell_prep(),	ell_print();
 extern int arb_prep(),	arb_print();
 extern int haf_prep(),	haf_print();
-extern int ars_prep();
+extern int ars_prep(),  ars_print();
 extern int rec_print();
 
 extern struct seg *nul_shot();
@@ -47,6 +47,7 @@ extern struct seg *tor_shot();
 extern struct seg *tgc_shot();
 extern struct seg *ell_shot();
 extern struct seg *arb_shot();
+extern struct seg *ars_shot();
 extern struct seg *haf_shot();
 extern struct seg *rec_shot();
 
@@ -56,7 +57,7 @@ struct functab functab[] = {
 	tgc_prep,	tgc_shot,	tgc_print,	"ID_TGC",
 	ell_prep,	ell_shot,	ell_print,	"ID_ELL",
 	arb_prep,	arb_shot,	arb_print,	"ID_ARB8",
-	ars_prep,	arb_shot,	arb_print,	"ID_ARS",
+	ars_prep,	ars_shot,	ars_print,	"ID_ARS",
 	haf_prep,	haf_shot,	haf_print,	"ID_HALF",
 	nul_prep,	nul_shot,	nul_print,	">ID_NULL"
 };
