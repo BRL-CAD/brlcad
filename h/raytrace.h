@@ -64,7 +64,7 @@ extern "C" {
  *
  *  A few non-ANSI systems have (and need) these headers anyway.
  */
-#if __STDC__ || (sgi && mips) || (ultrix && mips)
+#if HAVE_STDLIB_H || (sgi && mips) || (ultrix && mips)
 /*	NOTE:  Nested includes, gets malloc(), offsetof(), etc */
 #	include <stdlib.h>
 #	include <stddef.h>
