@@ -56,8 +56,8 @@ extern double tran_z;
 
 int ignore_scroll_and_menu = 0;
 
-void f_aip();
 #endif
+int f_aip();
 
 /*	Degree <-> Radian conversion factors	*/
 double	degtorad =  0.01745329251994329573;
@@ -329,13 +329,12 @@ illuminate( y )  {
 #endif
 }
 
-#ifdef XMGED
 /*
  *                        A I L L
  *
  *   advance illump or ipathpos
  */
-void
+int
 f_aip(argc, argv)
 int argc;
 char *argv[];
@@ -345,7 +344,7 @@ char *argv[];
   int i;
 
   if(!ndrawn || (state != ST_S_PICK && state != ST_O_PICK  && state != ST_O_PATH))
-    return;
+    return CMD_BAD;
 
   if(state == ST_O_PATH){
     if(argc == 1 || *argv[1] == 'f'){
@@ -358,35 +357,24 @@ char *argv[];
 	ipathpos = illump->s_last;
     }else{
       rt_log("aill: bad parameter - %s\n", argv[1]);
-      return;
+      return CMD_BAD;
     }
   }else{
-
-    if(argc == 1 || *argv[1] == 'f')
-      ++count;
-    else if(*argv[1] == 'b'){
-      --count;
-      if(count < 0)
-	count = ndrawn - 1;
+    sp = illump;
+    sp->s_iflag = DOWN;
+    if(argc == 1 || *argv[1] == 'f'){
+      if(sp->s_forw == &HeadSolid)
+	sp = HeadSolid.s_forw;
+      else
+	sp = sp->s_forw;
+    }else if(*argv[1] == 'b'){
+      if(sp->s_back == &HeadSolid)
+	sp = HeadSolid.s_back;
+      else
+	sp = sp->s_back;
     }else{
       rt_log("aill: bad parameter - %s\n", argv[1]);
-      return;
-    }
-
-    for(i = 0, sp = HeadSolid.s_forw; i < count; ++i){
-      sp->s_iflag = DOWN;
-      sp = sp->s_forw;
-      if(sp == &HeadSolid){
-	count = 0;
-	sp = HeadSolid.s_forw;
-      }
-    }
-
-    if(argc == 2 && *argv[1] == 'b'){
-      if(sp->s_forw == &HeadSolid)
-	HeadSolid.s_forw->s_iflag = DOWN;
-      else
-	sp->s_forw->s_iflag = DOWN;
+      return CMD_BAD;
     }
 
     sp->s_iflag = UP;
@@ -394,10 +382,12 @@ char *argv[];
     illump = sp;
   }
 
+#if 0
   update_views = 1;
-  dmaflag = 1;
-}
 #endif
+  dmaflag = 1;
+  return CMD_OK;
+}
 
 /*
  *			B U I L D H R O T
