@@ -16,7 +16,7 @@
 	sh_marble sh_wood sh_stxt sh_points sh_toyota \
 	sh_camo sh_scloud sh_air sh_fire sh_cs sh_rtrans sh_brdf \
 	sh_gauss sh_noise sh_prj sh_grass \
-	sh_xxx
+	turb
 
 /*
  *  sh_xxx is included at the end of the list to ensure that it compiles.
