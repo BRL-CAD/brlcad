@@ -205,6 +205,11 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
+	if (rpt_overlap)
+		ap.a_logoverlap = ((void (*)())0);
+	else
+		ap.a_logoverlap = rt_silent_logoverlap;
+
 	/* If user gave no sizing info at all, use 512 as default */
 	if( width <= 0 && cell_width <= 0 )
 		width = 512;
