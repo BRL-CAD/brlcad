@@ -962,17 +962,18 @@ vect_t d;
 
 /* ANIM_MAT_PRINT - print out 4X4 matrix, with optional colon
  */
-void anim_mat_print(m,s_colon)
+void anim_mat_print(fp,m,s_colon)
+FILE *fp;
 mat_t m;
 int s_colon;
 {
-        bu_log("%.10g %.10g %.10g %.10g\n", m[0], m[1], m[2], m[3]);
-        bu_log("%.10g %.10g %.10g %.10g\n", m[4], m[5], m[6], m[7]);
-        bu_log("%.10g %.10g %.10g %.10g\n", m[8], m[9], m[10], m[11]);
-        bu_log("%.10g %.10g %.10g %.10g", m[12], m[13], m[14], m[15]);
+        bu_flog( fp,"%.10g %.10g %.10g %.10g\n", m[0], m[1], m[2], m[3]);
+        bu_flog( fp,"%.10g %.10g %.10g %.10g\n", m[4], m[5], m[6], m[7]);
+        bu_flog( fp,"%.10g %.10g %.10g %.10g\n", m[8], m[9], m[10], m[11]);
+        bu_flog( fp,"%.10g %.10g %.10g %.10g", m[12], m[13], m[14], m[15]);
         if (s_colon)
-                bu_log(";");
-        bu_log("\n");
+                bu_flog( fp,";");
+        bu_flog( fp,"\n");
 }
 
 
@@ -980,7 +981,8 @@ int s_colon;
 /* ANIM_MAT_PRINTF - print out 4X4 matrix
  * formstr must be less than twenty chars
  */
-void anim_mat_printf(m,formstr,linestr,endstr)
+void anim_mat_printf(fp,m,formstr,linestr,endstr)
+FILE *fp;
 mat_t m;
 char *formstr;
 char *linestr;
@@ -988,10 +990,10 @@ char *endstr;
 {
 	char mystr[80];
 	sprintf(mystr,"%s%s%s%s%%s",formstr,formstr,formstr,formstr);
-        bu_log(mystr, m[0], m[1], m[2], m[3], linestr);
-        bu_log(mystr, m[4], m[5], m[6], m[7], linestr);
-        bu_log(mystr, m[8], m[9], m[10], m[11], linestr);
-        bu_log(mystr, m[12], m[13], m[14], m[15], endstr);
+        bu_flog( fp,mystr, m[0], m[1], m[2], m[3], linestr);
+        bu_flog( fp,mystr, m[4], m[5], m[6], m[7], linestr);
+        bu_flog( fp,mystr, m[8], m[9], m[10], m[11], linestr);
+        bu_flog( fp,mystr, m[12], m[13], m[14], m[15], endstr);
 }
 
 /* ANIM_VIEW_REV - Reverse the direction of a view matrix, keeping it
