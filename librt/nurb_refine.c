@@ -59,15 +59,7 @@ struct resource *res;
 		nurb_srf->s_size[0] = srf->s_size[0];
 		nurb_srf->s_size[1] = kv->k_size - srf->order[0];
 		nurb_srf->pt_type = srf->pt_type;
-		if( res )
-			nurb_srf->ctl_points = (fastf_t *)
-				rt_pmalloc( sizeof (fastf_t) * 
-				nurb_srf->s_size[0] *
-				nurb_srf->s_size[1] *
-				RT_NURB_EXTRACT_COORDS( nurb_srf->pt_type),
-				&res->re_pmem);
-		else
-			nurb_srf->ctl_points = (fastf_t *)
+		nurb_srf->ctl_points = (fastf_t *)
 				bu_malloc( sizeof (fastf_t) * 
 				nurb_srf->s_size[0] *
 				nurb_srf->s_size[1] *
@@ -109,15 +101,7 @@ struct resource *res;
 		nurb_srf->s_size[1] = srf->s_size[1];
 
 		nurb_srf->pt_type = srf->pt_type;
-		if( res )
-			nurb_srf->ctl_points = (fastf_t *)
-				rt_pmalloc( sizeof (fastf_t) * 
-				nurb_srf->s_size[0] *
-				nurb_srf->s_size[1] *
-				RT_NURB_EXTRACT_COORDS( nurb_srf->pt_type),
-				&res->re_pmem);
-		else
-			nurb_srf->ctl_points = (fastf_t *)
+		nurb_srf->ctl_points = (fastf_t *)
 				bu_malloc( sizeof (fastf_t) * 
 				nurb_srf->s_size[0] *
 				nurb_srf->s_size[1] *

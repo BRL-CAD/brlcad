@@ -489,12 +489,7 @@ top:
 						MAGNITUDE( diff ), V3ARGS( p1 ), V3ARGS( p2 ) );
 				}
 
-                        	if( res )
-	                        	hit = (struct rt_nurb_uv_hit *) rt_pmalloc(
-	                        		sizeof( struct rt_nurb_uv_hit), 
-	                        		&res->re_pmem);
-                        	else
-                        		hit = (struct rt_nurb_uv_hit *) bu_malloc(
+                       		hit = (struct rt_nurb_uv_hit *) bu_malloc(
 						sizeof( struct rt_nurb_uv_hit),  "hit" );
 
                         	hit->next = (struct rt_nurb_uv_hit *)0;
