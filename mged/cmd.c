@@ -473,9 +473,9 @@ char **argv;
 		rt_vls_strcpy( &argstr, "" );
 	}
 
-	if( strlen(rt_vls_addr(&argstr)) > 0 ) {
+	if( rt_vls_strlen(&argstr) > 0 ) {
 		/* Remove newline */
-		rt_vls_trunc( &argstr, strlen(rt_vls_addr(&argstr))-1 );
+		rt_vls_trunc( &argstr, rt_vls_strlen(&argstr)-1 );
 		rt_vls_strcat( &argstr, " " );
 	}
 
@@ -486,7 +486,7 @@ char **argv;
 		if( strcmp(interp->result, "MGED_Ok") != 0 )
 			rt_log( interp->result );
 			    /* If the command was more than just \n, record. */
-		if( strlen(rt_vls_addr(&argstr)) > 1 )
+		if( rt_vls_strlen(&argstr) > 1 )
 			rt_vls_vlscat( &history, &argstr );
 		rt_vls_trunc( &argstr, 0 );
 		pr_prompt();
@@ -769,7 +769,7 @@ struct rt_vls	*vp;
 			rt_vls_gets( &str, stdin );
 
 			/* Remove newline */
-			rt_vls_trunc( &cmd, strlen(rt_vls_addr(&cmd))-1 );
+			rt_vls_trunc( &cmd, rt_vls_strlen(&cmd)-1 );
 
 			rt_vls_strcat( &cmd, " " );
 			rt_vls_vlscatzap( &cmd, &str );
