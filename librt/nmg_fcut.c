@@ -127,75 +127,79 @@ vect_t		dir;
 fastf_t		*mag;
 fastf_t		dist_tol;
 {
-	union {
-		struct vertexuse **vu;
-		long **magic_p;
-	} p;
+	register struct vertexuse	**vu;
 	register int i, j;
 
-	p.magic_p = b->buffer;
+	vu = (struct vertexuse **)b->buffer;
 	/* check vertexuses and compute distance from start of line */
 	for(i = 0 ; i < b->end ; ++i) {
 		vect_t		vect;
-		NMG_CK_VERTEXUSE(p.vu[i]);
+		NMG_CK_VERTEXUSE(vu[i]);
 
-		VSUB2(vect, p.vu[i]->v_p->vg_p->coord, pt);
+		VSUB2(vect, vu[i]->v_p->vg_p->coord, pt);
 		mag[i] = VDOT( vect, dir );
-		if( mag[i] < 0 )  {
-			if( mag[i] < -dist_tol )  {
-				/* Code later depends on positive mag's */
-				VPRINT("coord", p.vu[i]->v_p->vg_p->coord);
-				VPRINT("pt", pt);
-				VPRINT("vect", vect);
-				rt_log("magnitude=%e\n", mag[i]);
-				rt_bomb("ptbl_vsort: negative dist\n");
+
+		/* Find previous vu's at "same" distance, within dist_tol */
+		for( j = 0; j < i; j++ )  {
+			register fastf_t	tmag;
+
+			tmag = mag[i] - mag[j];
+			if( tmag < -dist_tol )  continue;
+			if( tmag > dist_tol )  continue;
+			/* Nearly equal at same vertex */
+			if( mag[i] != mag[j] &&
+			    vu[i]->v_p == vu[j]->v_p )  {
+rt_log("ptbl_vsort: forcing vu=x%x & vu=x%x mag equal\n", vu[i], vu[j]);
+				mag[j] = mag[i]; /* force equal */
 			}
-			mag[i] = 0;
 		}
 	}
 
 	for(i=0 ; i < b->end - 1 ; ++i) {
 		for (j=i+1; j < b->end ; ++j) {
-			register struct vertexuse *tvu;
-			register fastf_t	tmag;
 
-			if( mag[i] < mag[j]-dist_tol )  continue;
-			tmag = mag[i] - mag[j];
-			if( NEAR_ZERO( tmag, dist_tol ) )  {
-				mag[j] = mag[i];	/* force equal */
-				if( p.vu[i]->v_p < p.vu[j]->v_p )  continue;
-				if( p.vu[i]->v_p == p.vu[j]->v_p )  {
-					if( p.vu[i] < p.vu[j] )  continue;
-					if( p.vu[i] == p.vu[j] )  {
+			if( mag[i] < mag[j] )  continue;
+			if( mag[i] == mag[j] )  {
+				if( vu[i]->v_p < vu[j]->v_p )  continue;
+				if( vu[i]->v_p == vu[j]->v_p )  {
+					if( vu[i] < vu[j] )  continue;
+					if( vu[i] == vu[j] )  {
 						int	last = b->end - 1;
 						/* vu duplication, eliminate! */
+rt_log("ptbl_vsort: vu duplication eliminated\n");
 						if( j >= last )  {
 							/* j is last element */
 							b->end--;
 							break;
 						}
 						/* rewrite j with last element */
-						p.vu[j] = p.vu[last];
+						vu[j] = vu[last];
 						mag[j] = mag[last];
 						b->end--;
 						/* Repeat this index */
 						j--;
 						continue;
 					}
-					/* p.vu[i] > p.vu[j], fall through */
+					/* vu[i] > vu[j], fall through */
 				}
-				/* p.vu[i]->v_p > p.vu[j]->v_p, fall through */
+				/* vu[i]->v_p > vu[j]->v_p, fall through */
 			}
 			/* mag[i] > mag[j] */
 
 			/* exchange [i] and [j] */
-			tvu = p.vu[i];
-			p.vu[i] = p.vu[j];
-			p.vu[j] = tvu;
+			{
+				register struct vertexuse *tvu;
+				tvu = vu[i];
+				vu[i] = vu[j];
+				vu[j] = tvu;
+			}
 
-			tmag = mag[i];
-			mag[i] = mag[j];
-			mag[j] = tmag;
+			{
+				register fastf_t	tmag;
+				tmag = mag[i];
+				mag[i] = mag[j];
+				mag[j] = tmag;
+			}
 		}
 	}
 }
@@ -657,7 +661,7 @@ vect_t		dir;
 	register int	j;
 	int		k;
 	int		m;
-	fastf_t		dist_tol = 0.05;	/* XXX */
+	fastf_t		dist_tol = 0.005;	/* XXX */
 	struct nmg_ray_state	rs;
 
 rt_log("\nnmg_face_combine(fu1=x%x, fu2=x%x)\n", fu1, fu2);
@@ -708,7 +712,7 @@ VPRINT("left", rs.left);
 	/* Print list of intersections */
 	rt_log("Ray vu intersection list:\n");
 	for( i=0; i < b->end; i++ )  {
-		rt_log(" %d ", i );
+		rt_log(" %d %e ", i, mag[i] );
 		nmg_pr_vu_briefly( vu[i], (char *)0 );
 	}
 
@@ -1102,7 +1106,9 @@ nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]));
 		eu = nmg_eu_with_vu_in_lu( lu, vu );
 		/* XXX Need better check.  If prev_lu is found around
 		 * this edge, but is not "first hop" radial in both
-		 * directions, may not want to do any joining.
+		 * directions, can not do any joining,
+		 * and need to go to state = out_internal if new_state=out.
+		 * (as opposed to out_external).
 		 */
 		if( eu->radial_p->up.lu_p == prev_lu &&
 		    eu->eumate_p->radial_p->up.lu_p == prev_lu )  {
