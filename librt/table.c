@@ -86,6 +86,8 @@ extern void	sph_vshot();
 extern void	hlf_vshot();
 extern void	rec_vshot();
 extern void	arb_vshot();
+extern void	tgc_vshot();
+extern void	tor_vshot();
 extern void	rt_vstub();	/* XXX vshoot.c */
 
 struct rt_functab rt_functab[ID_MAXIMUM+2] = {
@@ -97,12 +99,12 @@ struct rt_functab rt_functab[ID_MAXIMUM+2] = {
 	"ID_TOR",	1,
 		tor_prep,	tor_shot,	tor_print,	tor_norm,
 		tor_uv,		tor_curve,	tor_class,	tor_free,
-		tor_plot,	rt_vstub,
+		tor_plot,	tor_vshot,
 
 	"ID_TGC",	1,
 		tgc_prep,	tgc_shot,	tgc_print,	tgc_norm,
 		tgc_uv,		tgc_curve,	tgc_class,	tgc_free,
-		tgc_plot,	rt_vstub,
+		tgc_plot,	tgc_vshot,
 
 	"ID_ELL",	1,
 		ell_prep,	ell_shot,	ell_print,	ell_norm,
