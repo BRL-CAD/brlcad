@@ -2906,6 +2906,8 @@ struct shell *s;
  *			N M G _ D U P _ L O O P
  *
  *  A support routine for nmg_dup_face()
+ *
+ *  trans_tbl may be NULL.
  */
 struct loopuse *
 nmg_dup_loop(lu, parent, trans_tbl)
@@ -2930,7 +2932,10 @@ long	**trans_tbl;
 		old_v = old_vu->v_p;
 
 		/* Obtain new duplicate of old vertex.  May be null 1st time. */
-		new_v = NMG_INDEX_GETP(vertex, trans_tbl, old_v);
+		if( trans_tbl )
+			new_v = NMG_INDEX_GETP(vertex, trans_tbl, old_v);
+		else
+			new_v = (struct vertex *)NULL;
 		new_lu = nmg_mlv(parent, new_v, lu->orientation);
 		if (new_lu->orientation != lu->orientation) {
 			rt_log("%s %d: I asked for a %s loop not a %s loop.\n",
@@ -2950,7 +2955,8 @@ long	**trans_tbl;
 		new_vu = RT_LIST_FIRST(vertexuse, &new_lu->down_hd);
 		new_v = new_vu->v_p;
 		/* Give old_v entry a pointer to new_v */
-		NMG_INDEX_ASSIGN( trans_tbl, old_v, (long *)new_v );
+		if( trans_tbl )
+			NMG_INDEX_ASSIGN( trans_tbl, old_v, (long *)new_v );
 		if (old_v->vg_p) {
 			/* Build a different vertex_g with same coordinates */
 			nmg_vertex_gv(new_v, old_v->vg_p->coord);
@@ -2973,7 +2979,10 @@ long	**trans_tbl;
 		old_v = eu->vu_p->v_p;
 
 		/* Obtain new duplicate of old vertex.  May be null 1st time. */
-		new_v = NMG_INDEX_GETP(vertex, trans_tbl, old_v);
+		if( trans_tbl )
+			new_v = NMG_INDEX_GETP(vertex, trans_tbl, old_v);
+		else
+			new_v = (struct vertex *)NULL;
 		if (new_lu == (struct loopuse *)NULL) {
 			/* this is the first edge in the new loop */
 			new_lu = nmg_mlv(parent, new_v, lu->orientation);
@@ -2990,7 +2999,7 @@ long	**trans_tbl;
 			NMG_CK_VERTEXUSE(new_vu);
 			NMG_CK_VERTEX(new_vu->v_p);
 
-			if( !new_v )  {
+			if( !new_v && trans_tbl )  {
 				/* Give old_v entry a pointer to new_v */
 				NMG_INDEX_ASSIGN( trans_tbl, old_v,
 					(long *)new_vu->v_p );
@@ -3006,7 +3015,7 @@ long	**trans_tbl;
 			new_eu = nmg_eusplit(new_v, new_eu, 0);
 			new_vu = new_eu->vu_p;
 
-			if( !new_v )  {
+			if( !new_v && trans_tbl )  {
 				/* Give old_v entry a pointer to new_v */
 				NMG_INDEX_ASSIGN( trans_tbl, old_v,
 					(long *)new_vu->v_p );
@@ -3022,27 +3031,34 @@ long	**trans_tbl;
 		/* Prepare to glue edges */
 		/* Use old_e as subscript, to get 1st new_eu (for new_e) */
 		/* Use old_eu to get mapped new_eu */
-		tbl_eu = NMG_INDEX_GETP(edgeuse, trans_tbl, eu->e_p );
-		if( !tbl_eu )  {
+		if( trans_tbl )
+			tbl_eu = NMG_INDEX_GETP(edgeuse, trans_tbl, eu->e_p );
+		else
+			tbl_eu = (struct edgeuse *)NULL;
+		if( !tbl_eu && trans_tbl )  {
 			/* Establishes map from old edge to new edge(+use) */
 			NMG_INDEX_ASSIGN( trans_tbl, eu->e_p, (long *)new_eu );
 		}
-		NMG_INDEX_ASSIGN( trans_tbl, eu, (long *)new_eu );
+		if( trans_tbl )
+			NMG_INDEX_ASSIGN( trans_tbl, eu, (long *)new_eu );
 	}
 
 #if 0
 /* XXX untested */
-	/* All vertex structs are shared.  Make shared edges be shared */
-	for(RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-		/* Use old_e as subscript, to get 1st new_eu (for new_e) */
-		/* Use old_eu to get mapped new_eu */
-		tbl_eu = NMG_INDEX_GETP(edgeuse, trans_tbl, eu->e_p );
-		new_eu = NMG_INDEX_GETP(edgeuse, trans_tbl, eu );
-		if( tbl_eu->e_p == new_eu->e_p )  continue;
+	if( trans_tbl )
+	{
+		/* All vertex structs are shared.  Make shared edges be shared */
+		for(RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
+			/* Use old_e as subscript, to get 1st new_eu (for new_e) */
+			/* Use old_eu to get mapped new_eu */
+			tbl_eu = NMG_INDEX_GETP(edgeuse, trans_tbl, eu->e_p );
+			new_eu = NMG_INDEX_GETP(edgeuse, trans_tbl, eu );
+			if( tbl_eu->e_p == new_eu->e_p )  continue;
 
-		/* new_eu isn't sharing edge with tbl_eu, join them */
-		/* XXX Is radial relationship preserved (enough)? */
-		nmg_je( tbl_eu, new_eu );
+			/* new_eu isn't sharing edge with tbl_eu, join them */
+			/* XXX Is radial relationship preserved (enough)? */
+			nmg_je( tbl_eu, new_eu );
+		}
 	}
 #endif
 
@@ -3051,9 +3067,7 @@ long	**trans_tbl;
 	 * XXX This ought to be optional, as most callers will immediately
 	 * XXX change the vertex geometry anyway (e.g. by extrusion dist).
 	 */
-	for(RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-		NMG_CK_EDGEUSE( eu );
-		new_eu = NMG_INDEX_GETP(edgeuse, trans_tbl, eu );
+	for(RT_LIST_FOR(new_eu, edgeuse, &new_lu->down_hd)) {
 		NMG_CK_EDGEUSE(new_eu);
 		NMG_CK_EDGE(new_eu->e_p);
 		if( new_eu->g.magic_p )  continue;
