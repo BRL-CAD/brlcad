@@ -1690,6 +1690,7 @@ vect_t dir;
     VMOVE(last_out, out);
     ++i;
   }
+  return 42;
 }
 
 cm_start(argc, argv)
