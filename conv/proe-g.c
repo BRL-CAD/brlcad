@@ -1019,7 +1019,8 @@ char line[MAX_LINE_LEN];
 
 			while( !endloop )
 			{
-				fgets( line1, MAX_LINE_LEN, fd_in );
+				if( fgets( line1, MAX_LINE_LEN, fd_in ) == NULL )
+					bu_bomb( "Unexpected EOF while reading a loop in a part!!!\n" );
 				
 				start = (-1);
 				while( isspace( line1[++start] ) );
@@ -1399,7 +1400,7 @@ Convert_input()
 	if( !do_reorient && !stl_format )
 		conv_factor = 1.0;
 
-	while( fgets( line, MAX_LINE_LEN, fd_in ) )
+	while( fgets( line, MAX_LINE_LEN, fd_in ) != NULL )
 	{
 		if( !strncmp( line , "assembly" , 8 ) || !strncmp( line , "ASSEMBLY" , 8 ) )
 			Convert_assy( line );
