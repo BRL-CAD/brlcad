@@ -43,12 +43,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 int Plot_dm_init();
 
 int
-Plot_dm_init(argc, argv)
-int argc;
-char *argv[];
+Plot_dm_init()
 {
-  if(dmp->dm_init(dmp, argc, argv) == TCL_ERROR)
-    return TCL_ERROR;
-
-  return dmp->dm_open(dmp);
+  return TCL_OK;
 }
