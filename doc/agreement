@@ -128,8 +128,10 @@ SURVIAC personnel unless indicated otherwise, below.  If RECIPIENT
 grants permission to release this information, ARL and SURVIAC will make
 it available to BRL-CAD related hardware vendors and service providers.
 
-1. RECIPIENT [ ] grants ([ ] does not grant) ARL and SURVIAC permission to
-   release information on this "Recipient Survey Form" to outside parties.
+1. [ ] RECIPIENT grants ARL and SURVIAC permission to release information
+   on this "Recipient Survey Form" to outside parties.
+   [ ] RECIPIENT considers this information to be proprietary and does not
+   grant permission to release this information to outside parties.
 
 2. BRL-CAD is being obtained [ ] free without support privileges
    [ ] with full service support.
@@ -224,8 +226,8 @@ BRL-CAD on (check all that are appropriate):
 12. Please specify which edition of BRL-CAD you desire:
 
  [ ]	Source code edition.
- [ ]	Binary executable edition (includes support for SGI-IRIX,
-	Solaris-SPARC, RedHat Linux-86, and FreeBSD-86 architectures).
+ [ ]	Binary executable edition (runs on SGI-IRIX, Solaris-SPARC,
+	RedHat Linux-86, and FreeBSD-86 architectures).
 
 13. If you are purchasing physical media from SURVIAC, please specify
 the format:
