@@ -18,7 +18,7 @@
 	readcnv evalxform readmatrix makegroup block2 \
 	sphere wedge tor cyl cone ell convinst \
 	extrude extrudcirc extrudcon getcurve \
-	revolve splinef readdbl brlabs docolor spline spl convsurf \
+	revolve splinef readdbl brlabs docolor spline convsurf \
 	b-spline
 
 #include "../Cakefile.defs"
