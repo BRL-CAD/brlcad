@@ -121,7 +121,7 @@ char	**argv;
 }
 
 /* Modify material information */
-/* Usage:  mater name */
+/* Usage:  mater region_name shader r g b inherit */
 int
 f_mater(clientData, interp, argc, argv)
 ClientData clientData;
@@ -130,10 +130,11 @@ int	argc;
 char	**argv;
 {
 	register struct directory *dp;
-	union record record;
 	int r=0, g=0, b=0;
 	int skip_args = 0;
 	char inherit;
+	struct rt_db_internal	intern;
+	struct rt_comb_internal	*comb;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
@@ -145,91 +146,67 @@ char	**argv;
 	  return TCL_ERROR;
 	}
 
-	if( db_get( dbip, dp, &record, 0 , 1) < 0 ) {
-	  TCL_READ_ERR_return;
+	if( rt_get_comb( &intern, dp, (mat_t *)NULL, dbip ) < 0 )  {
+		Tcl_AppendResult(interp, "rt_get_comb(", dp->d_namep,
+			") failure", (char *)NULL );
+		return TCL_ERROR;
 	}
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
 
 	if( argc >= 3 )  {
 	  if( strncmp( argv[2], "del", 3 ) != 0 )  {
-	    /* Material */
-	    strcpy( record.c.c_matname, argv[2]);
+		/* Material */
+	  	bu_vls_strcpy( &comb->shader, argv[2] );
 	  }else{
-	    if(record.c.c_matname[0] != '\0'){
-#if 0
-	      Tcl_AppendResult(interp, "Was ", record.c.c_matname, " ",
-			       record.c.c_matparm, "\n", (char *)NULL);
-#endif
-	      record.c.c_matname[0] = '\0';
-	      record.c.c_override = 0;
-#if 0
-	      goto out;
-#endif
-	    }
+	  	bu_vls_free( &comb->shader );
 	  }
 	}else{
-	  /* Material */
-	  Tcl_AppendResult(interp, "Material = ", record.c.c_matname, "\n", MORE_ARGS_STR,
-			   "Material?  ('del' to delete, CR to skip) ", (char *)NULL);
+	  /* Shader */
+	  curr_cmd_list->quote_string = 1;
+	  Tcl_AppendResult(interp, "Shader = ", bu_vls_addr(&comb->shader),
+			"\n", MORE_ARGS_STR,
+			"Shader?  ('del' to delete, CR to skip) ", (char *)NULL);
 
-	  if(record.c.c_matname[0] == '\0')
+	  if( bu_vls_strlen( &comb->shader ) == 0 )
 	    bu_vls_printf(&curr_cmd_list->more_default, "del");
 	  else
-	    bu_vls_printf(&curr_cmd_list->more_default, "%s", record.c.c_matname);
+	    bu_vls_vlscat(&curr_cmd_list->more_default, &comb->shader);
 
 	  return TCL_ERROR;
 	}
 
 	if(argc >= 4){
-	  if( strncmp(argv[3],  "del", 3) == 0  )
-	    record.c.c_matparm[0] = '\0';
-	  else
-	    strcpy( record.c.c_matparm, argv[3]);
-	}else{
-	  /* Parameters */
-	  curr_cmd_list->quote_string = 1;
-	  Tcl_AppendResult(interp, "Param = ", record.c.c_matparm, "\n", MORE_ARGS_STR,
-			   "Parameter string? ('del' to delete, CR to skip) ", (char *)NULL);
-
-	  if(record.c.c_matparm[0] == '\0')
-	    bu_vls_printf(&curr_cmd_list->more_default, "del");
-	  else
-	    bu_vls_printf(&curr_cmd_list->more_default, "\"%s\"", record.c.c_matparm);
-
-	  return TCL_ERROR;
-	}
-
-	if(argc >= 5){
-	  if( strncmp(argv[4], "del", 3) == 0 ){
+	  if( strncmp(argv[3], "del", 3) == 0 ){
 	    /* leave color as is */
-	    record.c.c_override = 0;
-	    skip_args = 2;
-	  }else if(argc < 7){	/* prompt for color */
+	  	comb->rgb_valid = 0;
+		skip_args = 2;
+	  }else if(argc < 6){	/* prompt for color */
 	    goto color_prompt;
 	  }else{	/* change color */
-	    sscanf(argv[4], "%d", &r);
-	    sscanf(argv[5], "%d", &g);
-	    sscanf(argv[6], "%d", &b);
-	    record.c.c_rgb[0] = r;
-	    record.c.c_rgb[1] = g;
-	    record.c.c_rgb[2] = b;
-	    record.c.c_override = 1;
+	    sscanf(argv[3], "%d", &r);
+	    sscanf(argv[4], "%d", &g);
+	    sscanf(argv[5], "%d", &b);
+	    comb->rgb[0] = r;
+	    comb->rgb[1] = g;
+	    comb->rgb[2] = b;
+	    comb->rgb_valid = 1;
 	  }
 	}else{
 	/* Color */
 color_prompt:
-	  if( record.c.c_override ){
+	  if( comb->rgb_valid ){
 	    struct bu_vls tmp_vls;
 	    
 	    bu_vls_init(&tmp_vls);
 	    bu_vls_printf(&tmp_vls, "Color = %d %d %d\n",
-			  record.c.c_rgb[0], record.c.c_rgb[1], record.c.c_rgb[2] );
+			  comb->rgb[0], comb->rgb[1], comb->rgb[2] );
 	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	    bu_vls_free(&tmp_vls);
 
 	    bu_vls_printf(&curr_cmd_list->more_default, "%d %d %d",
-			  record.c.c_rgb[0],
-			  record.c.c_rgb[1],
-			  record.c.c_rgb[2] );
+			  comb->rgb[0],
+			  comb->rgb[1],
+			  comb->rgb[2] );
 	  }else{
 	    Tcl_AppendResult(interp, "Color = (No color specified)\n", (char *)NULL);
 	    bu_vls_printf(&curr_cmd_list->more_default, "del");
@@ -240,20 +217,16 @@ color_prompt:
 	  return TCL_ERROR;
 	}
 
-	if(argc >= 8 - skip_args){
-	  inherit = *argv[7 - skip_args];
+	if(argc >= 7 - skip_args){
+	  inherit = *argv[6 - skip_args];
 	}else{
 	  /* Inherit */
-	  switch( record.c.c_inherit )  {
-	  default:
-	    /* This is necessary to clean up old databases with grunge here */
-	    record.c.c_inherit = DB_INH_LOWER;
-	    /* Fall through */
-	  case DB_INH_LOWER:
+	  switch( comb->inherit )  {
+	  case 0:
 	    Tcl_AppendResult(interp, "Inherit = 0:  lower nodes (towards leaves) override\n",
 			     (char *)NULL);
 	    break;
-	  case DB_INH_HIGHER:
+	  default:
 	    Tcl_AppendResult(interp, "Inherit = 1:  higher nodes (towards root) override\n",
 			     (char *)NULL);
 	    break;
@@ -261,12 +234,11 @@ color_prompt:
 
 	  Tcl_AppendResult(interp, MORE_ARGS_STR,
 			   "Inheritance (0|1)? (CR to skip) ", (char *)NULL);
-	  switch( record.c.c_inherit ) {
-	  case DB_INH_HIGHER:
+	  switch( comb->inherit ) {
+	  default:
 	    bu_vls_printf(&curr_cmd_list->more_default, "1");
 	    break;
-	  case DB_INH_LOWER:
-	  default:
+	  case 0:
 	    bu_vls_printf(&curr_cmd_list->more_default, "0");
 	    break;
 	  }
@@ -276,10 +248,10 @@ color_prompt:
 
 	switch( inherit )  {
 	case '1':
-		record.c.c_inherit = DB_INH_HIGHER;
+		comb->inherit = 1;
 		break;
 	case '0':
-		record.c.c_inherit = DB_INH_LOWER;
+		comb->inherit = 0;
 		break;
 	case '\0':
 	case '\n':
@@ -289,10 +261,9 @@ color_prompt:
 	  break;
 	}		
 out:
-	if( db_put( dbip, dp, &record, 0, 1 ) < 0 ) {
-	  TCL_WRITE_ERR_return;
+	if( rt_db_put_internal( dp, dbip, &intern ) < 0 )  {
+		TCL_WRITE_ERR_return;
 	}
-
 	return TCL_OK;
 }
 
