@@ -17,6 +17,10 @@
 *           This software is Copyright (C) 1989 by the Department of Energy.
 *           All rights reserved.
 *
+*  BRL NOTE: This is only the scant beginnings of an Apollo interface.
+*   We have no way of testing this, and given the changes in LIBFB this
+*   code may not even compile any longer.  If you make improvements to
+*   this please let us know. <phil@brl.mil>
 */
 
 #include <time.h>
@@ -25,38 +29,36 @@
 #include "fb.h"
 #include "./fblocal.h"
 
-_LOCAL_ int	ap_dopen(),
-		ap_dclose(),
-		ap_dreset(),
-		ap_dclear(),
-		ap_bread(),
-		ap_bwrite(),
-		ap_cmread(),
-		ap_cmwrite(),
-		ap_viewport_set(),
-		ap_window_set(),
-		ap_zoom_set(),
-		ap_curs_set(),
-		ap_cmemory_addr(),
-		ap_cscreen_addr(),
+_LOCAL_ int	ap_open(),
+		ap_close(),
+		ap_clear(),
+		ap_read(),
+		ap_write(),
+		ap_rmap(),
+		ap_wmap(),
+		ap_setcursor(),
+		ap_cursor(),
 		ap_help();
 
 /* This is the ONLY thing that we normally "export" */
 FBIO ap_interface =  {
-	ap_dopen,		/* device_open		*/
-	ap_dclose,		/* device_close		*/
-	ap_dreset,		/* device_reset		*/
-	ap_dclear,		/* device_clear		*/
-	ap_bread,		/* buffer_read		*/
-	ap_bwrite,		/* buffer_write		*/
-	ap_cmread,		/* colormap_read	*/
-	ap_cmwrite,		/* colormap_write	*/
-	ap_viewport_set,		/* viewport_set		*/
-	ap_window_set,		/* window_set		*/
-	ap_zoom_set,		/* zoom_set		*/
-	ap_curs_set,		/* curs_set		*/
-	ap_cmemory_addr,		/* cursor_move_memory_addr */
-	ap_cscreen_addr,		/* cursor_move_screen_addr */
+	ap_open,		/* device_open		*/
+	ap_close,		/* device_close		*/
+	ap_clear,		/* device_clear		*/
+	ap_read,		/* buffer_read		*/
+	ap_write,		/* buffer_write		*/
+	ap_rmap,		/* colormap_read	*/
+	ap_wmap,		/* colormap_write	*/
+	fb_sim_view,		/* set view		*/
+	fb_sim_getview,		/* get view		*/
+	ap_setcursor,		/* define cursor	*/
+	ap_cursor,		/* set cursor		*/
+	fb_sim_getcursor,	/* get cursor		*/
+	fb_sim_readrect,
+	fb_sim_writerect,
+	fb_null,			/* poll */
+	fb_null,			/* flush */
+	fb_null,			/* free */
 	ap_help,			/* help message		*/
 	"Apollo General Primitive Resource",/* device description	*/
 	1280,				/* max width		*/
@@ -64,7 +66,11 @@ FBIO ap_interface =  {
 	"/dev/shortname",		/* short device name	*/
 	1280,				/* default/current width  */
 	1024,				/* default/current height */
+	-1,				/* select fd		*/
 	-1,				/* file descriptor	*/
+	1, 1,				/* zoom			*/
+	640, 512,			/* window center	*/
+	0, 0, 0,			/* cursor		*/
 	PIXEL_NULL,			/* page_base		*/
 	PIXEL_NULL,			/* page_curp		*/
 	PIXEL_NULL,			/* page_endp		*/
@@ -74,6 +80,7 @@ FBIO ap_interface =  {
 	0L,				/* page_pixels		*/
 	0				/* debug		*/
 };
+
 gpr_$bitmap_desc_t	display_bm;
 static char window_id	'1';
 gpr_$event_t		event_type;
@@ -102,7 +109,7 @@ int	count;
 }
 
 _LOCAL_ int
-ap_dopen( ifp, file, width, height )
+ap_open( ifp, file, width, height )
 FBIO	*ifp;
 char	*file;
 int	width, height;
@@ -136,7 +143,7 @@ int	width, height;
 }
 
 _LOCAL_ int
-ap_dclose( ifp )
+ap_close( ifp )
 FBIO	*ifp;
 {
     status_$t status;
@@ -145,14 +152,7 @@ FBIO	*ifp;
 }
 
 _LOCAL_ int
-ap_dreset( ifp )
-FBIO	*ifp;
-{
-	return(0);
-}
-
-_LOCAL_ int
-ap_dclear( ifp, pp )
+ap_clear( ifp, pp )
 FBIO	*ifp;
 RGBpixel	*pp;
 {
@@ -165,7 +165,7 @@ RGBpixel	*pp;
 }
 
 _LOCAL_ int
-ap_bread( ifp, x, y, pixelp, count )
+ap_read( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
 RGBpixel	*pixelp;
@@ -183,7 +183,7 @@ int	count;
 }
 
 _LOCAL_ int
-ap_bwrite( ifp, x, y, pixelp, count )
+ap_write( ifp, x, y, pixelp, count )
 FBIO	*ifp;
 int	x, y;
 RGBpixel	*pixelp;
@@ -193,7 +193,7 @@ int	count;
 }
 
 _LOCAL_ int
-ap_cmread( ifp, cmp )
+ap_rmap( ifp, cmp )
 FBIO	*ifp;
 ColorMap	*cmp;
 {
@@ -201,7 +201,7 @@ ColorMap	*cmp;
 }
 
 _LOCAL_ int
-ap_cmwrite( ifp, cmp )
+ap_wmap( ifp, cmp )
 FBIO	*ifp;
 ColorMap	*cmp;
 {
@@ -209,31 +209,7 @@ ColorMap	*cmp;
 }
 
 _LOCAL_ int
-ap_viewport_set( ifp, left, top, right, bottom )
-FBIO	*ifp;
-int	left, top, right, bottom;
-{
-	return(0);
-}
-
-_LOCAL_ int
-ap_window_set( ifp, x, y )
-FBIO	*ifp;
-int	x, y;
-{
-	return(0);
-}
-
-_LOCAL_ int
-ap_zoom_set( ifp, x, y )
-FBIO	*ifp;
-int	x, y;
-{
-	return(0);
-}
-
-_LOCAL_ int
-ap_curs_set( ifp, bits, xbits, ybits, xorig, yorig )
+ap_setcursor( ifp, bits, xbits, ybits, xorig, yorig )
 FBIO	*ifp;
 unsigned char *bits;
 int	xbits, ybits;
@@ -243,20 +219,12 @@ int	xorig, yorig;
 }
 
 _LOCAL_ int
-ap_cmemory_addr( ifp, mode, x, y )
+ap_cursor( ifp, mode, x, y )
 FBIO	*ifp;
 int	mode;
 int	x, y;
 {
-	return(0);
-}
-
-_LOCAL_ int
-ap_cscreen_addr( ifp, mode, x, y )
-FBIO	*ifp;
-int	mode;
-int	x, y;
-{
+	fb_sim_cursor( ifp, mode, x, y );
 	return(0);
 }
 
