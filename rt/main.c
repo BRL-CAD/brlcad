@@ -64,8 +64,7 @@ int		stereo = 0;		/* stereo viewing */
 vect_t		left_eye_delta;
 int		hypersample=0;		/* number of extra rays to fire */
 int		jitter=0;		/* jitter ray starting positions */
-int		rt_perspective=0;	/* perspective view -vs- parallel */
-fastf_t		persp_angle = 90;	/* prespective angle (degrees X) */
+fastf_t		rt_perspective=0;	/* presp (degrees X) 0 => ortho */
 fastf_t		aspect = 1;		/* view aspect ratio X/Y */
 vect_t		dx_model;		/* view delta-X as model-space vect */
 vect_t		dy_model;		/* view delta-Y as model-space vect */
@@ -145,11 +144,9 @@ register char **argv;
 			break;
 		case 'x':
 			sscanf( optarg, "%x", &rt_g.debug );
-			fprintf(stderr,"librt rt_g.debug=x%x\n", rt_g.debug);
 			break;
 		case 'X':
 			sscanf( optarg, "%x", &rdebug );
-			fprintf(stderr,"rt rdebug=x%x\n", rdebug);
 			break;
 
 		case 'f':
@@ -202,10 +199,11 @@ register char **argv;
 			hex_out = 0;
 			break;
 		case 'p':
-			rt_perspective = 1;
-			persp_angle = atof( optarg );
-			if( persp_angle <= 1 )  persp_angle = 90;
-			if( persp_angle > 179 )  persp_angle = 90;
+			rt_perspective = atof( optarg );
+			if( rt_perspective < 0 || rt_perspective > 179 ) {
+				fprintf(stderr,"persp=%d out of range\n", rt_perspective);
+				rt_perspective = 0;
+			}
 			break;
 		case 'E':
 			eye_backoff = atof( optarg );
@@ -327,7 +325,6 @@ char **argv;
 
 	/*
 	 *  Handle parallel initialization, if applicable.
-	 *  Do not use rt_log() or rt_malloc() before this point.
 	 */
 #ifndef PARALLEL
 	npsw = 1;			/* force serial */
@@ -341,6 +338,18 @@ char **argv;
 	RES_INIT( &rt_g.res_worker );
 	RES_INIT( &rt_g.res_stats );
 	RES_INIT( &rt_g.res_results );
+	/*
+	 *  Do not use rt_log() or rt_malloc() before this point!
+	 */
+
+	if( rt_g.debug )  {
+		rt_printb( "librt rt_g.debug", rt_g.debug, DEBUG_FORMAT );
+		rt_log("\n");
+	}
+	if( rdebug )  {
+		rt_printb( "rt rdebug", rdebug, RDEBUG_FORMAT );
+		rt_log("\n");
+	}
 
 	title_file = argv[optind];
 	title_obj = argv[optind+1];
@@ -389,7 +398,7 @@ char **argv;
 		def_tree( rtip );		/* Load the default trees */
 		do_ae( azimuth, elevation );
 		(void)do_frame( curframe );
-	} else if( old_way( stdin ) )  {
+	} else if( !isatty(fileno(stdin)) && old_way( stdin ) )  {
 		; /* All is done */
 	} else {
 		/*
