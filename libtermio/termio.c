@@ -18,7 +18,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #ifdef SYSV
-/**#ifndef	TANDEM	/* USG derivatives */
 #include <termio.h>
 #include <memory.h>
 
