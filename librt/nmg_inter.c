@@ -1059,25 +1059,19 @@ struct nmg_inter_struct	*is;
 		}
 	}
 
-	/* Enlist the original endpoints */
-	if( vu[0]->v_p == vu[2]->v_p )  {
-		nmg_enlist_vu( is, vu[0], vu[2] );
-	} else if( vu[0]->v_p == vu[3]->v_p )  {
-		nmg_enlist_vu( is, vu[0], vu[3] );
-	} else {
-		nmg_enlist_vu( is, vu[0], 0 );
+	/* Enlist all four of the original endpoints */
+	for( i=0; i < 4; i++ )  {
+		for( j=0; j < 4; j++ )  {
+			if( i==j )  continue;
+			if( vu[i]->v_p == vu[j]->v_p )  {
+				nmg_enlist_vu( is, vu[i], vu[j] );
+				goto next_i;
+			}
+		}
+		/* No match, let subroutine hunt for dual */
+		nmg_enlist_vu( is, vu[i], 0 );
+next_i:		;
 	}
-
-	if( vu[1]->v_p == vu[2]->v_p )  {
-		nmg_enlist_vu( is, vu[1], vu[2] );
-	} else if( vu[1]->v_p == vu[3]->v_p ) {
-		nmg_enlist_vu( is, vu[1], vu[3] );
-	} else {
-		nmg_enlist_vu( is, vu[1], 0 );
-	}
-	/* XXX Might miss adding vu[2] and vu[3] otherwise! */
-	nmg_enlist_vu( is, vu[2], 0 );
-	nmg_enlist_vu( is, vu[3], 0 );
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 		rt_log("nmg_isect_2colinear_edge2p(eu1=x%x, eu2=x%x) #eu=%d\n",
