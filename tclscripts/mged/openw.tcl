@@ -1,8 +1,8 @@
- Author -
+# Author -
 #	Bob Parker
 #
 # Source -
-#	The U. S. Army Ballistic Research Laboratory
+#	The U. S. Army Research Laboratory
 #	Aberdeen Proving Ground, Maryland  21005
 #
 # Distribution Notice -
@@ -11,7 +11,7 @@
 #       The BRL-CAD Package" agreement.
 #
 # Copyright Notice -
-#       This software is Copyright (C) 1995 by the United States Army
+#       This software is Copyright (C) 1998 by the United States Army
 #       in all countries except the USA.  All rights reserved.
 #
 # Description -
@@ -82,14 +82,6 @@ if ![info exists mged_default_comb] {
 
 if ![info exists mged_default_edit_style] {
     set mged_default_edit_style emacs
-}
-
-if ![info exists mged_gui_create] {
-    set mged_gui_create gui_create_default
-}
-
-if ![info exists mged_default_gui_destroy] {
-    set mged_gui_destroy gui_destroy_default
 }
 
 set do_tearoffs 0
