@@ -34,6 +34,8 @@ class QuadDisplay {
     public method pane {args}
     public method multi_pane {args}
     public method toggle_multi_pane {}
+    public method refresh {}
+    public method refreshall {}
 
     # methods for controlling the view object
     public method aet {args}
@@ -63,6 +65,15 @@ class QuadDisplay {
     public method dm_name {}
     public method margin {val}
     public method resetall {}
+    public method default_views {}
+    public method attach_view {}
+    public method attach_viewall {}
+    public method attach_drawable {dg}
+    public method attach_drawableall {dg}
+    public method detach_view {}
+    public method detach_viewall {}
+    public method detach_drawable {dg}
+    public method detach_drawableall {dg}
 
     private variable initializing 1
     private variable priv_multi_pane 0
@@ -102,10 +113,7 @@ body QuadDisplay::constructor {type args} {
     Display $lr $type
 
     # initialize the views
-    $ul aet 0 90 0
-    $ur aet 35 25 0
-    $ll aet 0 0 0
-    $lr aet 90 0 0
+    default_views
 
     pack $ul -fill both -expand yes
     pack $ur -fill both -expand yes
@@ -340,6 +348,17 @@ body QuadDisplay::toggle_multi_pane {} {
     }
 }
 
+body QuadDisplay::refresh {} {
+    [subst $[subst $itk_option(-pane)]] refresh
+}
+
+body QuadDisplay::refreshall {} {
+    $ul refresh
+    $ur refresh
+    $ll refresh
+    $lr refresh
+}
+
 body QuadDisplay::aet {args} {
     eval [subst $[subst $itk_option(-pane)]] aet $args
 }
@@ -448,4 +467,55 @@ body QuadDisplay::resetall {} {
     reset
     $upper reset
     $lower reset
+}
+
+body QuadDisplay::default_views {} {
+    $ul aet 0 90 0
+    $ur aet 35 25 0
+    $ll aet 0 0 0
+    $lr aet 90 0 0
+}
+
+body QuadDisplay::attach_view {} {
+    [subst $[subst $itk_option(-pane)]] attach_view
+}
+
+body QuadDisplay::attach_viewall {} {
+    $ul attach_view
+    $ur attach_view
+    $ll attach_view
+    $lr attach_view
+}
+
+body QuadDisplay::attach_drawable {dg} {
+    [subst $[subst $itk_option(-pane)]] attach_drawable $dg
+}
+
+body QuadDisplay::attach_drawableall {dg} {
+    $ul attach_drawable $dg
+    $ur attach_drawable $dg
+    $ll attach_drawable $dg
+    $lr attach_drawable $dg
+}
+
+body QuadDisplay::detach_view {} {
+    [subst $[subst $itk_option(-pane)]] detach_view
+}
+
+body QuadDisplay::detach_viewall {} {
+    $ul detach_view
+    $ur detach_view
+    $ll detach_view
+    $lr detach_view
+}
+
+body QuadDisplay::detach_drawable {dg} {
+    [subst $[subst $itk_option(-pane)]] detach_drawable $dg
+}
+
+body QuadDisplay::detach_drawableall {dg} {
+    $ul detach_drawable $dg
+    $ur detach_drawable $dg
+    $ll detach_drawable $dg
+    $lr detach_drawable $dg
 }
