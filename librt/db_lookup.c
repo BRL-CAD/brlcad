@@ -177,7 +177,7 @@ register struct directory	*dp;
 	if( *headp == dp )  {
 		rt_free( dp->d_namep, "dir name" );
 		*headp = dp->d_forw;
-		rt_free( dp, "struct directory" );
+		rt_free( (char *)dp, "struct directory" );
 		return(0);
 	}
 	for( findp = *headp; findp != DIR_NULL; findp = findp->d_forw )  {
@@ -185,7 +185,7 @@ register struct directory	*dp;
 			continue;
 		rt_free( dp->d_namep, "dir name" );
 		findp->d_forw = dp->d_forw;
-		rt_free( dp, "struct directory" );
+		rt_free( (char *)dp, "struct directory" );
 		return(0);
 	}
 	return(-1);
