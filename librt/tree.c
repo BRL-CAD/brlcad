@@ -113,7 +113,7 @@ static char idmap[] = {
 
 HIDDEN char *rt_path_str();
 
-static struct material rt_no_mater;
+static struct mater_info rt_no_mater;
 
 /*
  *  			R T _ G E T _ T R E E
@@ -317,7 +317,7 @@ rt_draw_obj( dp, argregion, pathpos, old_xlate, materp )
 struct directory *dp;
 struct region *argregion;
 matp_t old_xlate;
-struct material *materp;
+struct mater_info *materp;
 {
 	auto union record rec;		/* local copy of this record */
 	register int i;
@@ -328,7 +328,7 @@ struct material *materp;
 	int subtreecount;		/* number of non-null subtrees */
 	struct tree_list *trees;	/* ptr to array of structs */
 	struct tree_list *tlp;		/* cur tree_list */
-	struct material curmater;
+	struct mater_info curmater;
 
 	if( pathpos >= MAXLEVELS )  {
 		rt_log("%s: nesting exceeds %d levels\n",
