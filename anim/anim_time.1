@@ -54,6 +54,14 @@ column will be printed.
 .B -q
 Query the total distance. If this option is specified, the only output
 will be a number representing the total length of the input path.
+.SH BUGS
+The algorithm fits a cubic polynomial to the distance vs time graph, and then
+uses Newton's method to find the times corresponding to each given distance.
+If for some reason convergence is not reached, 
+.I anim_time 
+will print a warning on standard error. If the 
+.B -d 
+option is specified, the results of each iteration will be printed.
 .SH AUTHOR
 Carl J. Nuzman
 .SH COPYRIGHT
