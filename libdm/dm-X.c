@@ -67,13 +67,12 @@ static int	X_drawBegin(), X_drawEnd();
 static int	X_normal(), X_newrot();
 static int	X_drawLine2D();
 static int      X_drawVertex2D();
-static int	X_drawVlist();
+static int	X_drawVList();
 static int      X_setColor(), X_setLineAttr();
 static unsigned X_cvtvecs(), X_load();
 static int	X_setWinBounds(), X_debug();
 
 struct dm dm_X = {
-  X_open,
   X_close,
   X_drawBegin,
   X_drawEnd,
@@ -82,7 +81,7 @@ struct dm dm_X = {
   X_drawString2D,
   X_drawLine2D,
   X_drawVertex2D,
-  X_drawVlist,
+  X_drawVList,
   X_setColor,
   X_setLineAttr,
   X_cvtvecs,
@@ -92,12 +91,13 @@ struct dm dm_X = {
   Nu_int0,
   0,				/* no displaylist */
   PLOTBOUND,
-  "X", "X Window System (X11)",
+  "X",
+  "X Window System (X11)",
+  DM_TYPE_X,
   1,
   0,
   0,
   1.0, /* aspect ratio */
-  0,
   0,
   0,
   0,
@@ -134,6 +134,7 @@ char *argv[];
   Colormap  a_cmap;
   struct bu_vls str;
   struct bu_vls top_vls;
+  struct bu_vls init_proc_vls;
   Display *tmp_dpy;
   struct dm *dmp;
 
@@ -159,13 +160,9 @@ char *argv[];
   bu_vls_init(&dmp->dm_pathName);
   bu_vls_init(&dmp->dm_tkName);
   bu_vls_init(&dmp->dm_dName);
-  bu_vls_init(&dmp->dm_initWinProc);
+  bu_vls_init(&init_proc_vls);
 
-  i = dm_process_options(dmp,
-			 &dmp->dm_width,
-			 &dmp->dm_height,
-			 argc,
-			 argv);
+  i = dm_process_options(dmp, &init_proc_vls, --argc, ++argv);
 
   if(bu_vls_strlen(&dmp->dm_pathName) == 0)
     bu_vls_printf(&dmp->dm_pathName, ".dm_x%d", count);
@@ -180,8 +177,8 @@ char *argv[];
     else
       bu_vls_strcpy(&dmp->dm_dName, ":0.0");
   }
-  if(bu_vls_strlen(&dmp->dm_initWinProc) == 0)
-    bu_vls_strcpy(&dmp->dm_initWinProc, "bind_dm");
+  if(bu_vls_strlen(&init_proc_vls) == 0)
+    bu_vls_strcpy(&init_proc_vls, "bind_dm");
 
   /* initialize dm specific variables */
   ((struct x_vars *)dmp->dm_vars)->perspective_angle = 3;
@@ -244,7 +241,7 @@ char *argv[];
 
   bu_vls_init(&str);
   bu_vls_printf(&str, "_init_dm %S %S\n",
-		&dmp->dm_initWinProc,
+		&init_proc_vls,
 		&dmp->dm_pathName);
 
   if(Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR){
@@ -254,6 +251,7 @@ char *argv[];
     return DM_NULL;
   }
 
+  bu_vls_free(&init_proc_vls);
   bu_vls_free(&str);
 
   ((struct x_vars *)dmp->dm_vars)->dpy =
@@ -380,7 +378,6 @@ struct dm *dmp;
   bu_vls_free(&dmp->dm_pathName);
   bu_vls_free(&dmp->dm_tkName);
   bu_vls_free(&dmp->dm_dName);
-  bu_vls_free(&dmp->dm_initWinProc);
   bu_free(dmp->dm_vars, "X_close: x_vars");
   bu_free(dmp, "X_close: dmp");
   return TCL_OK;
@@ -451,7 +448,7 @@ mat_t mat;
 
 /* ARGSUSED */
 static int
-X_drawVlist( dmp, vp, mat )
+X_drawVList( dmp, vp, mat )
 struct dm *dmp;
 register struct rt_vlist *vp;
 mat_t mat;
