@@ -42,13 +42,13 @@ typedef	long	Cast;
 #define	rindex(s, c)	strrchr(s, c)
 #endif
 
-#define	MAXARGS		128		/* BRL, was 64 */
-#define	MAXGSTACK	128
-#define	MAXARGSIZE	128
-#define	MAXPATSIZE	(8*1024)	/* BRL, was 512 */
+#define	MAXARGS		(8*1024)	/* size of argv[] array.  BRL, was 64 */
+#define	MAXGSTACK	128		/* size of goal stack */
+#define	MAXARGSIZE	1024		/* length of one arg.  BRL, was 128 */
+#define	MAXPATSIZE	(8*1024)	/* max pattern size. BRL, was 512 */
 #define	MAXLEXBUF	(8*1024)	/* BRL, was 2048 */
-#define	MAXSIZE		(16*1024)	/* BRL, was 2048 */
-#define	MAXSCRIPT	16384
+#define	MAXSIZE		(16*1024)	/* general buffer size. BRL, was 2048 */
+#define	MAXSCRIPT	16384		/* max script (rule action text) */
 #define	MAXNEST		8
 #define	SIZE		97		/* size of tables */
 #define	CHARSETSIZE	256
