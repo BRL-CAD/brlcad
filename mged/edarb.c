@@ -545,7 +545,7 @@ vect_t	dir;
 
 /* Extrude command - project an arb face */
 /* Format: extrude face distance	*/
-void
+int
 f_extrude( argc, argv )
 int	argc;
 char	**argv;
@@ -558,16 +558,16 @@ char	**argv;
 	static struct solidrec lsolid;	/* local copy of solid */
 
 	if( not_state( ST_S_EDIT, "Extrude" ) )
-		return;
+		return CMD_BAD;
 
 	if( es_rec.s.s_type != GENARB8 )  {
 		(void)printf("Extrude: solid type must be ARB\n");
-		return;
+		return CMD_BAD;
 	}
 
 	if(es_type != ARB8 && es_type != ARB6 && es_type != ARB4) {
 		(void)printf("ARB%d: extrusion of faces not allowed\n",es_type);
-		return;
+		return CMD_BAD;
 	}
 
 	face = atoi( argv[1] );
@@ -629,14 +629,14 @@ char	**argv;
 		pt[i]--;
 		if( pt[i] > 7 )  {
 			(void)printf("bad face: %d\n",face);
-			return;
+			return CMD_BAD;
 		}
 	}
 
 	/* find plane containing this face */
 	if( planeqn(6, pt[0], pt[1], pt[2], &lsolid) ) {
 		(void)printf("face: %d is not a plane\n",face);
-		return;
+		return CMD_BAD;
 	}
 	/* get normal vector of length == dist */
 	for( i = 0; i < 3; i++ )
@@ -648,7 +648,7 @@ char	**argv;
 	case 24:   /* protrude face 1234 */
 		if(es_type == ARB6) {
 			(void)printf("ARB6: extrusion of face %d not allowed\n",face);
-			return;
+			return CMD_BAD;
 		}
 		if(es_type == ARB4)
 			goto a4toa6;	/* extrude face 234 of ARB4 to make ARB6 */
@@ -744,11 +744,11 @@ a4toa6:
 	case 120:
 	case 180:
 		(void)printf("ARB6: extrusion of face %d not allowed\n",face);
-		return;
+		return CMD_BAD;
 
 	default:
 		(void)printf("bad face: %d\n", face );
-		return;
+		return CMD_BAD;
 	}
 
 	/* redo the plane equations */
@@ -761,7 +761,7 @@ a4toa6:
 		if(planeqn(i, pt[0], pt[1], pt[2], &lsolid)) {
 			(void)printf("No equation for face %d%d%d%d\n",
 				pt[0]+1,pt[1]+1,pt[2]+1,arb_faces[es_type-4][i*4+3]);
-			return;
+			return CMD_BAD;
 		}
 	}
 
@@ -774,11 +774,13 @@ a4toa6:
 	/* draw the updated solid */
 	replot_editing_solid();
 	dmaflag = 1;
+
+	return CMD_OK;
 }
 
 /* define an arb8 using rot fb angles to define a face */
 /* Format: a name rot fb	*/
-void
+int
 f_arbdef( argc, argv )
 int	argc;
 char	**argv;
@@ -791,7 +793,7 @@ char	**argv;
 
 	if( db_lookup( dbip,  argv[1] , LOOKUP_QUIET ) != DIR_NULL )  {
 		aexists( argv[1] );
-		return;
+		return CMD_BAD;
 	}
 
 	/* get rotation angle */
@@ -802,7 +804,8 @@ char	**argv;
 
 	if( (dp = db_diradd( dbip,  argv[1], -1, 1, DIR_SOLID )) == DIR_NULL ||
 	    db_alloc( dbip, dp, 1 ) < 0 )  {
-	    	ALLOC_ERR_return;
+		ALLOC_ERR;
+		return CMD_BAD;
 	}
 	NAMEMOVE( argv[1], record.s.s_name );
 	record.s.s_id = ID_SOLID;
@@ -848,21 +851,25 @@ char	**argv;
 	}
 
 	/* update dbip->dbi_fd and draw new arb8 */
-	if( db_put( dbip, dp, &record, 0, 1 ) < 0 )  WRITE_ERR_return;
+	if( db_put( dbip, dp, &record, 0, 1 ) < 0 ) {
+		WRITE_ERR;
+		return CMD_BAD;
+	}
+
 	if( no_memory )  {
 		(void)printf(
 			"ARB8 (%s) created but no memory left to draw it\n",
 			argv[1] );
-		return;
+		return CMD_BAD;
 	}
 
 	/* draw the "made" solid */
-	f_edit( 2, argv );	/* depends on name being in argv[1] */
+	return f_edit( 2, argv );	/* depends on name being in argv[1] */
 }
 
 /* Mirface command - mirror an arb face */
 /* Format: mirror face axis	*/
-void
+int
 f_mirface( argc, argv )
 int	argc;
 char	**argv;
@@ -875,21 +882,21 @@ char	**argv;
 	static struct solidrec lsolid;	/* local copy of solid */
 
 	if( not_state( ST_S_EDIT, "Mirface" ) )
-		return;
+		return CMD_BAD;
 
 	if( es_rec.s.s_type != GENARB8 )  {
 		(void)printf("Mirface: solid type must be ARB\n");
-		return;
+		return CMD_BAD;
 	}
 
 	if(es_type != ARB8 && es_type != ARB6) {
 		(void)printf("ARB%d: mirroring of faces not allowed\n",es_type);
-		return;
+		return CMD_BAD;
 	}
 	face = atoi( argv[1] );
 	if( face > 9999 || (face < 1000 && es_type != ARB6) ) {
 		(void)printf("ERROR: %d bad face\n",face);
-		return;
+		return CMD_BAD;
 	}
 	/* check which axis */
 	k = -1;
@@ -901,7 +908,7 @@ char	**argv;
 		k = 2;
 	if( k < 0 ) {
 		(void)printf("axis must be x, y or z\n");
-		return;
+		return CMD_BAD;
 	}
 
 	work[0] = work[1] = work[2] = 1.0;
@@ -947,7 +954,7 @@ char	**argv;
 		pt[i]--;
 		if( pt[i] > 7 )  {
 			(void)printf("bad face: %d\n",face);
-			return;
+			return CMD_BAD;
 		}
 	}
 
@@ -957,7 +964,7 @@ char	**argv;
 	case 24:   /* mirror face 1234 */
 		if(es_type == ARB6) {
 			(void)printf("ARB6: mirroring of face %d not allowed\n",face);
-			return;
+			return CMD_BAD;
 		}
 		for( i = 0; i < 4; i++ )  {
 			j = i + 4;
@@ -1041,11 +1048,11 @@ char	**argv;
 	case 120:
 	case 180:
 		(void)printf("ARB6: mirroring of face %d not allowed\n",face);
-		return;
+		return CMD_BAD;
 
 	default:
 		(void)printf("bad face: %d\n", face );
-		return;
+		return CMD_BAD;
 	}
 
 	/* redo the plane equations */
@@ -1058,7 +1065,7 @@ char	**argv;
 		if(planeqn(i, pt[0], pt[1], pt[2], &lsolid)) {
 			(void)printf("No equation for face %d%d%d%d\n",
 				pt[0]+1,pt[1]+1,pt[2]+1,arb_faces[es_type-4][i*4+3]);
-			return;
+			return CMD_BAD;
 		}
 	}
 
@@ -1071,6 +1078,8 @@ char	**argv;
 	/* draw the updated solid */
 	replot_editing_solid();
 	dmaflag = 1;
+
+	return CMD_OK;
 }
 
 /* Edgedir command:  define the direction of an arb edge being moved
@@ -1078,7 +1087,7 @@ char	**argv;
 	     OR  edgedir rot fb
  */
 
-void
+int
 f_edgedir( argc, argv )
 int	argc;
 char	**argv;
@@ -1088,16 +1097,16 @@ char	**argv;
 	FAST fastf_t rot, fb;
 
 	if( not_state( ST_S_EDIT, "Edgedir" ) )
-		return;
+		return CMD_BAD;
 
 	if( es_edflag != EARB ) {
 		(void)printf("Not moving an ARB edge\n");
-		return;
+		return CMD_BAD;
 	}
 
 	if( es_rec.s.s_type != GENARB8 ) {
 		(void)printf("Edgedir: solid type must be an ARB\n");
-		return;
+		return CMD_BAD;
 	}
 
 	/* set up slope -
@@ -1110,7 +1119,7 @@ char	**argv;
 		slope[0] = cos(fb) * cos(rot);
 		slope[1] = cos(fb) * sin(rot);
 		slope[2] = sin(fb);
-	}
+	} 
 	else {
 		for(i=0; i<3; i++) {
 			/* put edge slope in slope[] array */
@@ -1120,13 +1129,14 @@ char	**argv;
 
 	if(MAGNITUDE(slope) == 0) {
 		(void)printf("BAD slope\n");
-		return;
+		return CMD_BAD;
 	}
 
 	/* get it done */
 	newedge = 1;
 	editarb( slope );
 	sedraw++;
+	return CMD_OK;
 
 }
 
@@ -1175,7 +1185,7 @@ register struct solidrec *sp;
  *	ARB8		3		    4
  *     ------------------------------------------------
  */
-void
+int
 f_permute( argc, argv )
 
 int	argc;
@@ -1276,17 +1286,17 @@ char	**argv;
 #define		ARB_VERT_LOC(n,v)	vert_loc[((n) - 4) * 8 + (v) - 1]
 
     if (not_state(ST_S_EDIT, "Permute"))
-	return;
+	return CMD_BAD;
     if (es_rec.s.s_type != GENARB8)
     {
 	(void) printf("Permute: solid type must be an ARB\n");
-	return;
+	return CMD_BAD;
     }
     if ((es_type < 4) || (es_type > 8))
     {
 	(void) printf("Permute: es_type=%d\nThis shouldn't happen\n",
-	es_type);
-	return;
+		      es_type);
+	return CMD_BAD;
     }
 
     /*
@@ -1302,7 +1312,7 @@ char	**argv;
 	(void) printf(s, argv[1], es_type);
 	(void) printf("Need at least %d vertices\n",
 	min_tuple_size[es_type]);
-	return;
+	return CMD_BAD;
     }
     face_size = (es_type == 4) ? 3 : 4;
     if (arglen > face_size)
@@ -1311,13 +1321,13 @@ char	**argv;
 	
 	s = "ERROR: tuple '%s' length exceeds ARB%d face size of %d\n";
 	(void) printf(s, argv[1], es_type, face_size);
-	return;
+	return CMD_BAD;
     }
     vertex = argv[1][0] - '1';
     if ((vertex < 0) || (vertex >= es_type))
     {
 	(void) printf("ERROR: invalid vertex %c\n", argv[1][0]);
-	return;
+	return CMD_BAD;
     }
     p = (es_type == 4) ? perm4[vertex] :
 	(es_type == 5) ? perm5[vertex] :
@@ -1328,7 +1338,7 @@ char	**argv;
 	if (*p == 0)
 	{
 	    (void) printf("ERROR: invalid vertex tuple: '%s'\n", argv[1]);
-	    return;
+	    return CMD_BAD;
 	}
 	if (strncmp(*p, argv[1], arglen) == 0)
 	    break;
@@ -1412,7 +1422,7 @@ char	**argv;
 	default:
 	    (void) printf("%s: %d: This shouldn't happen\n",
 		__FILE__, __LINE__);
-	    return;
+	    return CMD_BAD;
     }
 
     /* Convert back to point&vector notation */
@@ -1426,4 +1436,6 @@ char	**argv;
     /* draw the updated solid */
     replot_editing_solid();
     dmaflag = 1;
+
+    return CMD_OK;
 }
