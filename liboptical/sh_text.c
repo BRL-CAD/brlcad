@@ -24,6 +24,7 @@ static char RCStext[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "./material.h"
+#include "./mathtab.h"
 
 struct txt_specific {
 	char	tx_transp[4];	/* RGB for transparency */
@@ -313,5 +314,36 @@ register struct region *rp;
 {
 	rp->reg_ufunc = testmap_render;
 	rp->reg_udata = (char *)0;
+	return(1);
+}
+
+/*
+ *			S T A R _ R E N D E R
+ */
+HIDDEN
+star_render( ap, pp )
+register struct application *ap;
+register struct partition *pp;
+{
+	/* Probably want to diddle parameters based on what part of sky */
+	if( rand0to1() > 0.95 )  {
+		/* Stars have color.  may overflow 1.0 */
+		VSET( ap->a_color,
+			rand0to1()+0.5,
+			rand0to1()+0.5,
+			rand0to1()+0.5 );
+	} else {
+		VSETALL( ap->a_color, 0 );
+	}
+}
+
+/*
+ *			S T A R _ S E T U P
+ */
+int
+star_setup( rp )
+register struct region *rp;
+{
+	rp->reg_ufunc = star_render;
 	return(1);
 }

@@ -33,6 +33,7 @@ extern int cloud_setup();
 extern int mirror_setup();
 extern int glass_setup();
 extern int ckr_setup();
+extern int star_setup();
 
 struct matlib {
 	char	*ml_name;
@@ -45,6 +46,7 @@ struct matlib {
 	"mirror",	mirror_setup,
 	"glass",	glass_setup,
 	"checker",	ckr_setup,
+	"fakestar",	star_setup,
 	(char *)0,	0			/* END */
 };
 
