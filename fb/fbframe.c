@@ -22,29 +22,79 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include "fb.h"
+extern int	getopt();
+extern char	*optarg;
+extern int	optind;
 
+char *Usage="[-h] [-F framebuffer]\n\
+	[-s squareframesize] [-w frame_width] [-n frame_height]\n";
+
+#define USAGE_EXIT(p) { fprintf(stderr, "Usage: %s %s\n", (p), Usage); \
+			exit(-1); }
 
 main(argc, argv)
 char **argv;
 {
+	register int c;
 	register int	x, y;
 	FBIO		*fbp;
 	int	xsize, ysize;
+	int		 len;
+	char	*framebuffer = (char *)NULL;
+	register RGBpixel *line;
 	static RGBpixel white = { 255, 255, 255 };
 	static RGBpixel red = { 255, 0, 0 };
 	static RGBpixel green = { 0, 255, 0 };
 	static RGBpixel blue = { 0, 0, 255 };
-	int		len;
-	register RGBpixel *line;
 
-	if( argc > 1 && strcmp( argv[1], "-h" ) == 0 )
-		xsize = ysize = 1024;
-	else
-		xsize = ysize = 0;
-	if( (fbp = fb_open( NULL, xsize, ysize )) == FBIO_NULL )
+	xsize = ysize = 0;
+	while ( (c = getopt( argc, argv, "ahF:s:w:n:S:W:N:" )) != EOF )  {
+		switch( c )  {
+		case 'h':
+			/* high-res */
+			xsize = ysize = 1024;
+			break;
+		case 'F':
+			framebuffer = optarg;
+			break;
+		case 's':
+		case 'S':
+			/* square file size */
+			if ((len=atoi(optarg)) > 0)
+				xsize = ysize = len;
+			else
+				USAGE_EXIT(*argv);
+
+			break;
+		case 'w':
+		case 'W':
+			if ((len=atoi(optarg)) > 0)
+				xsize = len;
+			else
+				USAGE_EXIT(*argv);
+			break;
+		case 'n':
+		case 'N':
+			if ((len=atoi(optarg)) > 0)
+				ysize = len;
+			else
+				USAGE_EXIT(*argv);
+			break;
+		default:	/* '?' */
+			USAGE_EXIT(*argv);
+			break;
+		}
+	}
+
+	if( (fbp = fb_open( framebuffer, xsize, ysize )) == FBIO_NULL )
 		exit( 1 );
-	xsize = fb_getwidth(fbp);
-	ysize = fb_getheight(fbp);
+
+	if (xsize <= 0)
+		xsize = fb_getwidth(fbp);
+	if (ysize <= 0)
+		ysize = fb_getheight(fbp);
+
+	/* malloc buffer for pixel lines */
 	len = (xsize > ysize) ? xsize : ysize;
 	if( (line = (RGBpixel *)malloc(len*sizeof(RGBpixel))) == (RGBpixel *)0 )  {
 		fprintf(stderr, "fbframe:  malloc failure\n");
