@@ -5813,7 +5813,7 @@ sedit_mouse( const vect_t mousevec )
   	bot_verts[0] = tmp_vert;
   	bot_verts[1] = -1;
   	bot_verts[2] = -1;
-	sprintf( tmp_msg, "picked point at (%g %g %g)\n", V3ARGS( &bot->vertices[tmp_vert*3] ) );
+	sprintf( tmp_msg, "picked point at (%g %g %g), vertex #%d\n", V3ARGS( &bot->vertices[tmp_vert*3] ), tmp_vert );
     	Tcl_AppendResult(interp, tmp_msg, (char *)NULL );
 	mged_print_result( TCL_OK );
     }
