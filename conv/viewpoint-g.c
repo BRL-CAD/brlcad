@@ -37,6 +37,8 @@
 #include "wdb.h"
 #include "../librt/debug.h"
 
+RT_EXTERN( fastf_t nmg_loop_plane_area , (struct loopuse *lu , plane_t pl ) );
+
 extern int errno;
 
 #define START_ARRAY_SIZE	64
@@ -85,7 +87,7 @@ main( int argc , char *argv[] )
 
         /* XXX These need to be improved */
         tol.magic = RT_TOL_MAGIC;
-        tol.dist = 0.0005;
+        tol.dist = 0.01;
         tol.dist_sq = tol.dist * tol.dist;
         tol.perp = 1e-6;
         tol.para = 1 - tol.perp;
@@ -338,12 +340,40 @@ main( int argc , char *argv[] )
 		for (RT_LIST_FOR(s, shell, &r->s_hd))
 		{
 		    NMG_CK_SHELL( s );
-		    for (RT_LIST_FOR(fu, faceuse, &s->fu_hd))
+		    fu = RT_LIST_FIRST( faceuse , &s->fu_hd );
+		    while( RT_LIST_NOT_HEAD( fu , &s->fu_hd))
 		    {
+		    	struct faceuse *next_fu;
+
 		        NMG_CK_FACEUSE( fu );
+
+		    	next_fu = RT_LIST_NEXT( faceuse , &fu->l );
 		        if( fu->orientation == OT_SAME )
+		    	{
 		                if( nmg_fu_planeeqn( fu , &tol ) )
-		                        rt_log( "Failed to calculate plane eqn\n" );
+		    		{
+		    			struct loopuse *lu;
+		    			fastf_t area;
+		    			plane_t pl;
+
+		    			lu = RT_LIST_FIRST( loopuse , &fu->lu_hd );
+		    			area = nmg_loop_plane_area( lu , pl );
+		    			if( area <= 0.0 )
+		    			{
+		    				struct faceuse *kill_fu;
+
+		    				rt_log( "ERROR: Can't get plane for face\n" );
+
+		    				kill_fu = fu;
+		    				if( next_fu == kill_fu->fumate_p )
+		    					next_fu = RT_LIST_NEXT( faceuse , &next_fu->l );
+		    				nmg_kfu( kill_fu );
+		    			}
+
+		    			nmg_face_g( fu , pl );
+		    		}
+		    	}
+		    	fu = next_fu;
 		    }
 		}
 
