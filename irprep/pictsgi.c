@@ -2,9 +2,9 @@
 /*  S.Coates - 22 April 1992  */
 /*  Compile:  cc pictsgi.c -o pictsgi  */
 
-/*  This is an sgi program that will raytrace a BRL-CAD mged  */
+/*  This is a program that will raytrace a BRL-CAD mged  */
 /*  model and/or display it using the PRISM temperature output  */
-/*  file.  */
+/*  file, using auxiliary program "see2".  */
 
 /*  Include files.  */
 #include<stdio.h>
