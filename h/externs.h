@@ -28,11 +28,13 @@
  */
 #if USE_PROTOTYPES
 extern int	bsdselect( long readfds, int sec, int us );
+#if !defined(__stardent)
 extern int	getopt( int argc, char **argv, char *optstr );
+#endif
 extern char	*re_comp( char *s );
 extern int	re_exec( char *s );
 extern char	*strchr( CONST char *sp, int c );
-#if defined(vax) && !defined(SYSV) && BSD < 44
+#if defined(vax) && !defined(SYSV) && (BSD < 44)
 extern char	*strrchr( CONST char *sp, int c );
 #endif
 
@@ -42,7 +44,7 @@ extern int	getopt();
 extern char	*re_comp();
 extern int	re_exec();
 extern char	*strchr();
-#if defined(vax) && !defined(SYSV) && BSD < 44
+#if defined(vax) && !defined(SYSV) && (BSD < 44)
 extern char	*strrchr();
 #endif
 
