@@ -92,10 +92,10 @@ FBIO X_interface = {
 	X_flush,		/* flush		*/
 	X_close,		/* free			*/
 	X_help,			/* help message		*/
-	"X Window System (X11)",/* device description	*/
+	"X Window System (X11) 8-bit and 1-bit visuals only",
 	2048,			/* max width		*/
 	2048,			/* max height		*/
-	"/dev/X",		/* short device name	*/
+	"/dev/xold",		/* short device name	*/
 	512,			/* default/current width  */
 	512,			/* default/current height */
 	-1,			/* select file desc	*/
