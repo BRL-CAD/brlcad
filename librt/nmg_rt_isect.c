@@ -19,6 +19,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include <math.h>
 #include "machine.h"
 #include "vmath.h"
 #include "nmg.h"
@@ -27,6 +28,52 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 static void 	vertex_neighborhood RT_ARGS((struct ray_data *rd, struct vertexuse *vu_p, struct hitmiss *myhit));
 RT_EXTERN(void	nmg_isect_ray_model, (struct ray_data *rd));
+
+static void
+plfu( fu, pt, plane_pt )
+struct faceuse *fu;
+point_t pt;
+point_t plane_pt;
+{
+	static int file_number=0;
+	FILE *fd;
+	char name[25];
+	char buf[80];
+	long *b;
+	struct loopuse *lu;
+	struct edgeuse *eu;
+	struct vertexuse *vu;
+
+	NMG_CK_FACEUSE(fu);
+	
+	sprintf(name, "ray%02d.pl", file_number++);
+	if ((fd=fopen(name, "w")) == (FILE *)NULL) {
+		perror(name);
+		abort();
+	}
+
+	rt_log("\tplotting %s\n", name);
+	b = (long *)rt_calloc( fu->s_p->r_p->m_p->maxindex,
+		sizeof(long), "bit vec"),
+
+	pl_erase(fd);
+	pd_3space(fd,
+		fu->f_p->min_pt[0]-1.0,
+		fu->f_p->min_pt[1]-1.0,
+		fu->f_p->min_pt[2]-1.0,
+		fu->f_p->max_pt[0]+1.0,
+		fu->f_p->max_pt[1]+1.0,
+		fu->f_p->max_pt[2]+1.0);
+	
+	nmg_pl_fu(fd, fu, b, 255, 255, 255);
+
+	pl_color(fd, 255, 50, 50);
+	pdv_3line(fd, pt, plane_pt);
+
+	rt_free((char *)b, "bit vec");
+	fclose(fd);
+}
+
 
 static void print_hitlist(hl)
 struct hitmiss *hl;
@@ -386,8 +433,6 @@ struct vertexuse *vu_p;
  * colinear.  It handles marking the verticies as hit, remembering that this
  * is a seg_in/seg_out pair, and builds the hit on the edge.
  *
- * XXX Is there something we could remember for the "closest hit" algorithm?
- *
  */
 static void
 colinear_edge_ray(rd, eu_p)
@@ -493,10 +538,6 @@ double dist_along_ray;
  *	Intersect ray with edgeuse.  If they pass within tolerance, a hit
  *	is generated.
  *
- *	If the edgeuse is part of a face, (plane_pt is set) then we also
- *	compute the distance from the edge to the plane_pt.  If this is
- *	less than the previous "closest" value then record this edgeuse as
- *	the "plane_closest" object.
  */
 static void
 isect_ray_edgeuse(rd, eu_p)
@@ -633,205 +674,6 @@ struct edgeuse *eu_p;
 
 
 
-/*
- *	Find the distance from a point (rd->plane_pt) in the plane of a face
- *	to a vertexuse in the plane of the face.  The distance is stored in
- *	rd->plane_dist if it is less than the current value.  If the value
- *	is stored, rd->plane_closest gets vu_p and rd->plane_dist_type is
- *	set to NMG_PCA_VERTEX.
- *
- *	Uses:
- *	CONST	rd->tol
- *	CONST	rd->plane_pt
- *		rd->plane_dist
- *		rd->plane_dist_type
- *		rd->plane_closest
- */
-static void
-dist_plane_pt_vu(rd, vu_p)
-struct ray_data *rd;
-struct vertexuse *vu_p;
-{
-	vect_t v;
-	fastf_t dist;
-
-	/* Form a vector from the vertexuse to the plane_pt.
-	 * Take the magnitude of the vector to find the distance
-	 * between the two points.
-	 */
-    	VSUB2(v, rd->plane_pt, vu_p->v_p->vg_p->coord);	
-	dist = MAGNITUDE(v);
-
-#if 0
-	/* make sure there is a hit on the vertex */
-#endif
-
-	if (dist < rd->plane_dist) {
-		if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-			rt_log("Vertex (%g %g %g) is new closest\n",
-				vu_p->v_p->vg_p->coord[0],
-				vu_p->v_p->vg_p->coord[1],
-				vu_p->v_p->vg_p->coord[2]);
-		rd->plane_dist = dist;
-		rd->plane_dist_type = NMG_PCA_VERTEX;
-		rd->plane_closest = (long *)vu_p->v_p;
-	}
-}
-
-/*
- *	Find the distance from a point (rd->plane_pt) in the plane of a 
- *	face to an edgeuse in the plane of the face.  Store the distance 
- *	result in rd->plane_dist and eu_p in rd->plane_closest if this
- *	distance is less than rd->plane_dist at the time of calling.
- *
- *	Uses:
- *	CONST	rd->tol
- *	CONST	rd->plane_pt
- *		rd->plane_dist
- *		rd->plane_dist_type
- *		rd->plane_closest
- */
-static void
-dist_plane_pt_eu(rd, eu_p)
-struct ray_data *rd;
-struct edgeuse *eu_p;
-{
-	fastf_t dist;
-	point_t pca;
-	int status;
-	struct edgeuse *eu;
-
-	if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
-		rt_log(
-		"dist_plane_pt_eu((%g %g %g), 0x%08x(%g %g %g -> %g %g %g)\n",
-				rd->plane_pt[0],
-				rd->plane_pt[1],
-				rd->plane_pt[2],
-				eu_p,
-				eu_p->vu_p->v_p->vg_p->coord[0],
-				eu_p->vu_p->v_p->vg_p->coord[1],
-				eu_p->vu_p->v_p->vg_p->coord[2],
-				eu_p->eumate_p->vu_p->v_p->vg_p->coord[0],
-				eu_p->eumate_p->vu_p->v_p->vg_p->coord[1],
-				eu_p->eumate_p->vu_p->v_p->vg_p->coord[2]);
-		rt_log("\told plane_dist = %g\n", rd->plane_dist);
-		switch(rd->plane_dist_type) {
-		case NMG_PCA_EDGE	:
-			rt_log("\told plane_dist_type NMG_PCA_EDGE\n"); break;
-		case NMG_PCA_EDGE_VERTEX :
-			rt_log("\told plane_dist_type NMG_PCA_EDGE_VERTEX\n"); break;
-		case NMG_PCA_VERTEX	:
-			rt_log("\told plane_dist_type NMG_PCA_VERTEX\n"); break;
-		default:
-			rt_log("\told plane_dist_type UNDEFINED\n"); break;
-		}
-	}
-
-	/* Determine if the plane intercept is closer to this edgeuse than
-	 * the previously closest edge/vertex
-	 */
-	dist = 0.0;
-	status = rt_dist_pt3_lseg3(&dist, pca,
-		eu_p->vu_p->v_p->vg_p->coord,
-		eu_p->eumate_p->vu_p->v_p->vg_p->coord, rd->plane_pt,
-		rd->tol);
-
-	switch (status) {
-	case 0: /* we hit the edge(use) with the plane_pt,
-		 * store edgeuse ptr in plane_closest,
-		 * set plane_dist = 0.0
-		 *
-		 * dist is the parametric distance along the edge where
-		 * the PCA occurrs!
-		 */
-
-		rd->plane_dist = 0.0;
-		rd->plane_closest = &eu_p->l.magic;
-		rd->plane_dist_type = NMG_PCA_EDGE;
-		if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-			rt_log(	"\tplane_pt on eu, (new dist: %g)\n",
-				rd->plane_dist);
-		break;
-	case 1:	/* within tolerance of endpoint at eu_p->vu_p.
-		   store vertexuse ptr in plane_closest,
-		   set plane_dist = 0.0 */
-		if (dist < rd->plane_dist) {
-			rd->plane_dist = 0.0;
-			rd->plane_closest = &eu_p->vu_p->l.magic;
-			rd->plane_dist_type = NMG_PCA_EDGE_VERTEX;
-			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-				rt_log("\tplane_pt on vu (new dist %g)\n",
-					rd->plane_dist);
-		} else {
-			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-				rt_log("\tplane_pt on vu(dist %g) keeping old dist %g)\n",
-					dist, rd->plane_dist);
-		}
-		break;
-	case 2:	/* within tolerance of endpoint at eu_p->eumate_p
-		   store vertexuse ptr (eu->next) in plane_closest,
-		   set plane_dist = 0.0 */
-		if (dist < rd->plane_dist) {
-			eu = RT_LIST_PNEXT_CIRC(edgeuse, &(eu_p->l));
-			rd->plane_dist = 0.0;
-			rd->plane_closest = &eu->vu_p->l.magic;
-			rd->plane_dist_type = NMG_PCA_EDGE_VERTEX;
-			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-				rt_log("\tplane_pt on next(eu_p)->vu (new dist %g)\n",
-					rd->plane_dist);
-		} else {
-			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-				rt_log("\tplane_pt on next(eu_p)->vu(dist %g) keeping old dist %g)\n",
-					dist, rd->plane_dist);
-		}
-
-		break;
-	case 3: /* PCA of pt on line is "before" eu_p->vu_p of seg */
-		if (dist < rd->plane_dist) {
-			rd->plane_dist = dist;
-			rd->plane_closest = &eu_p->vu_p->l.magic;
-			rd->plane_dist_type = NMG_PCA_EDGE_VERTEX;
-			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-				rt_log("\vu of eu is new \"closest to plane_pt\" (new dist %g)\n", rd->plane_dist);
-		} else {
-			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-				rt_log("\vu of eu is PCA (dist %g).  keeping old dist %g\n", dist, rd->plane_dist);
-		}
-		break;
-	case 4: /* PCA of pt on line is "after" eu_p->eumate_p->vu_p of seg */
-		if (dist < rd->plane_dist) {
-			eu = RT_LIST_PNEXT_CIRC(edgeuse, &(eu_p->l));
-			rd->plane_dist = dist;
-			rd->plane_closest = &eu->vu_p->l.magic;
-			rd->plane_dist_type = NMG_PCA_EDGE_VERTEX;
-			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-				rt_log("\tvu of next(eu) is new \"closest to plane_pt\" (new dist %g)\n", rd->plane_dist);
-		} else {
-			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-				rt_log("\vu of next(eu) is PCA (dist %g).  keeping old dist %g\n", dist, rd->plane_dist);
-		}
-		break;
-	case 5: /* PCA is along length of edge, but point is NOT on edge.
-		 *  if edge is closer to plane_pt than any previous item,
-		 *  store edgeuse ptr in plane_closest and set plane_dist
-		 */
-		if (dist < rd->plane_dist) {
-			rd->plane_dist = dist;
-			rd->plane_closest = &eu_p->l.magic;
-			rd->plane_dist_type = NMG_PCA_EDGE;
-			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-				rt_log("\teu is new \"closest to plane_pt\" (new dist %g)\n", rd->plane_dist);
-		} else {
-			if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-				rt_log("\teu dist is %g, keeping old dist %g)\n", dist, rd->plane_dist);
-		}
-		break;
-	default :
-		nmg_rt_bomb(rd, "Look, there has to be SOMETHING about this edge/plane_pt\n");
-		break;
-	}
-}
-
 
 /*	I S E C T _ R A Y _ L O O P U S E
  *
@@ -851,22 +693,8 @@ struct loopuse *lu_p;
 	NMG_CK_LOOP_G(lu_p->l_p->lg_p);
 
 	if (RT_LIST_FIRST_MAGIC(&lu_p->down_hd) == NMG_EDGEUSE_MAGIC) {
-		if (rd->plane_pt) {
-			for (RT_LIST_FOR(eu_p, edgeuse, &lu_p->down_hd)) {
-				/* first we determine if the ray hits
-				 * the edge
-				 */
-				isect_ray_edgeuse(rd, eu_p);
-
-				/* now we determine if the distance of the
-				 * ray-plane intercept to the edge(use)
-				 */
-				dist_plane_pt_eu(rd, eu_p);
-			}
-		} else {
-			for (RT_LIST_FOR(eu_p, edgeuse, &lu_p->down_hd)) {
-				isect_ray_edgeuse(rd, eu_p);
-			}
+		for (RT_LIST_FOR(eu_p, edgeuse, &lu_p->down_hd)) {
+			isect_ray_edgeuse(rd, eu_p);
 		}
 		return;
 
@@ -879,9 +707,6 @@ struct loopuse *lu_p;
 
 	(void) isect_ray_vertexuse(rd,
 		RT_LIST_FIRST(vertexuse, &lu_p->down_hd));
-	if (rd->plane_pt)
-		dist_plane_pt_vu(rd,
-			RT_LIST_FIRST(vertexuse, &lu_p->down_hd));
 }
 
 
@@ -1126,7 +951,7 @@ struct vertexuse *vu;
 				goto got_fu;
 		}
 		nmg_rt_bomb(rd, "didn't find faceuse from plane_closest vertex\n");
-		got_fu:
+got_fu:
 		vu = vu_p;
 	}
 
@@ -1148,7 +973,9 @@ struct vertexuse *vu;
 			nmg_rt_bomb(rd, "goodnight\n");
 		}
 	} else if (*vu->up.magic_p == NMG_EDGEUSE_MAGIC) {
-		/* if parent is edgeuse, do left/right computation */
+		/* if parent is edgeuse, do left/right computation 
+		 * XXX
+		 */
 	} else {
 		rt_log("vertexuse has strange parent at: %s %d\n",
 			__FILE__, __LINE__);
@@ -1156,6 +983,38 @@ struct vertexuse *vu;
 	}
 
 }
+
+static void
+eu_touch_func(eu, fpi)
+struct edgeuse *eu;
+struct fu_pt_info *fpi;
+{
+	struct edgeuse *eu_p;
+
+	eu_p = RT_LIST_PNEXT_CIRC(edgeuse, eu);
+
+	rt_log("eu_touch(%g %g %g -> %g %g %g\n",
+		eu->vu_p->v_p->vg_p->coord[0],
+		eu->vu_p->v_p->vg_p->coord[1],
+		eu->vu_p->v_p->vg_p->coord[2],
+		eu_p->vu_p->v_p->vg_p->coord[0],
+		eu_p->vu_p->v_p->vg_p->coord[1],
+		eu_p->vu_p->v_p->vg_p->coord[2]);
+}
+
+
+static void
+vu_touch_func(vu, fpi)
+struct vertexuse *vu;
+struct fu_pt_info *fpi;
+{
+	rt_log("vu_touch(%g %g %g)\n",
+		vu->v_p->vg_p->coord[0],
+		vu->v_p->vg_p->coord[1],
+		vu->v_p->vg_p->coord[2]);
+}
+
+
 
 /*	I S E C T _ R A Y _ F A C E U S E
  *
@@ -1166,12 +1025,13 @@ isect_ray_faceuse(rd, fu_p)
 struct ray_data *rd;
 struct faceuse *fu_p;
 {
-	fastf_t dist;
-	struct loopuse *lu_p;
-	point_t plane_pt;
-	struct hitmiss *myhit;
-	int code;
-	plane_t		norm;
+	fastf_t			dist;
+	struct loopuse		*lu_p;
+	point_t			plane_pt;
+	struct hitmiss		*myhit;
+	int			code;
+	plane_t			norm;
+	struct fu_pt_info	*fpi;
 
 	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
 		rt_log("isect_ray_faceuse(0x%08x, face:0x%08x)\n",
@@ -1259,6 +1119,7 @@ struct faceuse *fu_p;
 	rd->plane_dist = MAX_FASTF;
 	rd->ray_dist_to_plane = dist;
 
+
 	if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
 		rt_log("\tray (%g %g %g) (-> %g %g %g)\n",
 			rd->rp->r_pt[0],
@@ -1275,38 +1136,25 @@ struct faceuse *fu_p;
 	}
 
 
-	/* determine if the plane point is in or out of the face */
+	/* determine if the plane point is in or out of the face, and
+	 * if it is within tolerance of any of the elements of the faceuse.
+	 */
+	fpi = nmg_class_pt_fu_except(rd->plane_pt, fu_p, (struct loopuse *)NULL,
+		eu_touch_func, vu_touch_func, (char *)rd, 1, rd->tol);
 
-
-	/* intersect the ray with the edges/verticies of the face */
-
-
-
-
-	/* check each loopuse in the faceuse to determine hit/miss. */
-	for ( RT_LIST_FOR(lu_p, loopuse, &fu_p->lu_hd) )
-		isect_ray_loopuse(rd, lu_p);
-
-	/* find the object which is "closest" to the ray/plane intercept. */
-#if 0
-	class = nmg_class_pt_fu_except(rd->plane_pt, fu,
-		(struct loopuse *)NULL,
-		&dist, &type, &magic_p rd->tol);
-#endif
-
-	/* find the sub-element that was closest to the point of intersection.
+	/* find the object which is "closest" to the ray/plane intercept.
 	 * If this element was hit, we don't need to generate a hit point on
 	 * the surface of the face.  If it was a miss, we may need to generate
 	 * a hit on the surface of the face.
 	 */
-	switch (*rd->plane_closest) {
+	switch (*fpi->closest) {
 	case NMG_VERTEXUSE_MAGIC:
 		face_closest_is_vu(rd, fu_p,
-			(struct vertexuse *)rd->plane_closest);
+			(struct vertexuse *)fpi->closest);
 		break;
 	case NMG_EDGEUSE_MAGIC:
 		face_closest_is_eu(rd, fu_p,
-			(struct edgeuse *)rd->plane_closest);
+			(struct edgeuse *)fpi->closest);
 		break;
 	default:
 		rt_log("%s %d Bogus magic (0x%08x/%dfor element closest to plane/face intercept\n",
@@ -1316,6 +1164,12 @@ struct faceuse *fu_p;
 	}
 
 	rd->plane_pt = (pointp_t)NULL;
+
+	/* intersect the ray with the edges/verticies of the face */
+	for ( RT_LIST_FOR(lu_p, loopuse, &fu_p->lu_hd) )
+		isect_ray_loopuse(rd, lu_p);
+
+
 }
 
 
