@@ -1,17 +1,17 @@
 /*
- *			T A N K I L L - G
+ *                      T A N K I L L - G
  *
  *  Program to convert the UK TANKILL format to BRL-CAD.
  *
  *  Author -
- *	John R. Anderson
+ *      John R. Anderson
  *  
  *  Source -
- *	The US Army Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
+ *      The US Army Research Laboratory
+ *      Aberdeen Proving Ground, Maryland  21005-5066
  *  
  *  Distribution Status -
- *	Public Domain, Distribution Unlimitied.
+ *      Public Domain, Distribution Unlimitied.
  */
 #ifndef lint
 static char RCSid[] = "$Header$";
@@ -48,77 +48,6 @@ struct comp_idents
 	struct comp_idents *next;
 } *id_root;
 
-/*	W R I T E _ S H E L L _ A S _ P O L Y S O L I D
- *
- *	This routine take an NMG shell and writes it out to the file
- *	out_fp as a polysolid with the indicated name.  Obviously,
- *	the shell should be a 3-manifold (winged edge).
- *	since polysolids may only have up to 5 vertices per face,
- *	any face with a loop of more than 5 vertices is triangulated
- *	using "nmg_triangulate_face" prior to output.
- */
-void
-write_shell_as_polysolid( FILE *out_fp , char *name , struct shell *s )
-{
-	struct faceuse *fu;
-	struct loopuse *lu;
-	struct edgeuse *eu;
-	point_t verts[5];
-	int count_npts;
-	int max_count;
-	int i;
-
-	NMG_CK_SHELL( s );
-
-	mk_polysolid( out_fp , name );
-
-	for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
-	{
-		NMG_CK_FACEUSE( fu );
-
-		/* only do OT_SAME faces */
-		if( fu->orientation != OT_SAME )
-			continue;
-
-		/* count vertices in loops */
-		max_count = 0;
-		for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
-		{
-			NMG_CK_LOOPUSE( lu );
-			if( RT_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC )
-				continue;
-
-			count_npts = 0;
-			for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
-				count_npts++;
-
-			if( count_npts > max_count )
-				max_count = count_npts;
-		}
-
-		/* if any loop has more than 5 vertices, triangulate the face */
-		if( max_count > 5 )
-			nmg_triangulate_face( fu );
-
-		for( RT_LIST_FOR( lu , loopuse , &fu->lu_hd ) )
-		{
-			NMG_CK_LOOPUSE( lu );
-			if( RT_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC )
-				continue;
-
-			count_npts = 0;
-			for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
-			{
-				for( i=0 ; i<3 ; i++ )
-					verts[count_npts][i] = eu->vu_p->v_p->vg_p->coord[i];
-				count_npts++;
-			}
-
-			if( mk_fpoly( out_fp , count_npts , verts ) )
-				rt_log( "write_shell_as_polysolid: mk_fpoly failed for object %s\n" , name );
-		}
-	}
-}
 
 /*	Adds another solid to the list of solids for each component code number.
  *	Returns the number of solids in this component (including the one just added)
@@ -254,7 +183,6 @@ main( int argc , char *argv[] )
 
 	id_root = (struct comp_idents *)NULL;
 
-	/* make a table for the outward pointing faceuses (for nmg_gluefaces) */
 	nmg_tbl( &faces , TBL_INIT , NULL );
 
 	if( input_file == (char *)NULL )
@@ -382,7 +310,7 @@ main( int argc , char *argv[] )
 		 */
 
 		s = RT_LIST_FIRST( shell , &r->s_hd );
-		(void)nmg_break_long_edges( s , &tol );
+		nmg_break_long_edges( s , &tol );
 
 		/* glue all the faces together */
 		nmg_gluefaces( (struct faceuse **)NMG_TBL_BASEADDR( &faces) , NMG_TBL_END( &faces ) );
@@ -391,7 +319,7 @@ main( int argc , char *argv[] )
 		nmg_tbl( &faces , TBL_RST , NULL );
 
 		/* Calculate bounding boxes */
-		nmg_region_a( r );
+		nmg_region_a( r , &tol );
 
 		/* fix the normals */
 		s = RT_LIST_FIRST( shell , &r->s_hd );
