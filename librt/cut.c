@@ -206,8 +206,8 @@ CONST genptr_t p1, p2;
 }
 
 static struct cmp_pair {
-	int (*cmp_min)();
-	int (*cmp_max)();
+	int (*cmp_min) BU_ARGS((CONST void *, CONST void *));
+	int (*cmp_max) BU_ARGS((CONST void *, CONST void *));
 } pairs[] = {
 	{ rt_projXmin_comp, rt_projXmax_comp },
 	{ rt_projYmin_comp, rt_projYmax_comp },
