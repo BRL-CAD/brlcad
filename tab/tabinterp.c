@@ -55,6 +55,8 @@ struct chan {
 #define	INTERP_SPLINE	3
 #define INTERP_RATE	4
 #define INTERP_ACCEL	5
+#define	INTERP_QUAT	6	/* first chan of 4 that define a quaternion */
+#define INTERP_QUAT2	7	/* an additional quaterion chan (2,3,4) */
 	int	c_periodic;	/* cyclic end conditions? */
 };
 
@@ -78,7 +80,7 @@ struct command_tab cmdtab[] = {
 		cm_file,	3, 999,
 	"times", "start stop fps", "specify time range and fps rate",
 		cm_times,	4, 4,
-	"interp", "{step|linear|spline|cspline} chan_num(s)", "set interpolation type",
+	"interp", "{step|linear|spline|cspline|quat} chan_num(s)", "set interpolation type",
 		cm_interp,	3, 999,
 	"idump", "[chan_num(s)]", "dump input channel values",
 		cm_idump,	1, 999,
@@ -440,6 +442,9 @@ char	**argv;
 	} else if( strcmp( argv[1], "cspline" ) == 0 )  {
 		interp = INTERP_SPLINE;
 		periodic = 1;
+	} else if( strcmp( argv[1], "quat" ) == 0 )  {
+		interp = INTERP_QUAT;
+		periodic = 0;
 	} else {
 		fprintf( stderr, "interpolation type '%s' unknown\n", argv[1] );
 		interp = INTERP_LINEAR;
@@ -452,8 +457,28 @@ char	**argv;
 			fprintf(stderr,"error: attempt to set interpolation type on unallocated channel %d\n", ch);
 			continue;
 		}
+		if( chp->c_interp > 0 )  {
+			fprintf(stderr,"error: attempt to modify channel %d already specified by 'interp'\n", i);
+			continue;
+		}
 		chp->c_interp = interp;
 		chp->c_periodic = periodic;
+		if( interp == INTERP_QUAT )  {
+			int	j;
+			for( j = 1; j < 4; j++ )  {
+				chp = &chan[ch+j];
+				if( chp->c_ilen <= 0 )  {
+					fprintf(stderr,"error: attempt to set interpolation type on unallocated channel %d\n", ch);
+				continue;
+				}
+				if( chp->c_interp > 0 )  {
+					fprintf(stderr,"error: attempt to modify channel %d already specified by 'interp'\n", i);
+					continue;
+				}
+				chp->c_interp = INTERP_QUAT2;
+				chp->c_periodic = periodic;
+			}
+		}
 	}
 	return(0);
 }
@@ -478,6 +503,7 @@ go()
 
 	times = (fastf_t *)rt_malloc( o_len*sizeof(fastf_t), "periodic times");
 
+	/* First, get memory for all output channels */
 	for( ch=0; ch < nchans; ch++ )  {
 		chp = &chan[ch];
 		if( chp->c_ilen <= 0 )
@@ -486,6 +512,12 @@ go()
 		/* Allocate memory for all the output values */
 		chan[ch].c_oval = (fastf_t *)rt_malloc(
 			o_len * sizeof(fastf_t), "c_oval[]");
+	}
+
+	for( ch=0; ch < nchans; ch++ )  {
+		chp = &chan[ch];
+		if( chp->c_ilen <= 0 )
+			continue;
 
 		/*  As a service to interpolators, if this is a periodic
 		 *  interpolation, build the mapped time array.
@@ -535,6 +567,12 @@ again:
 		case INTERP_ACCEL:
 			accel_interpolate( chp, times );
 			break;
+		case INTERP_QUAT:
+			quat_interpolate( chp, &chan[ch+1], &chan[ch+2], &chan[ch+3], times );
+			break;
+		case INTERP_QUAT2:
+			/* Don't touch these here, handled above */
+			continue;
 		}
 	}
 	rt_free( (char *)times, "loc times");
@@ -564,18 +602,21 @@ register fastf_t	*times;
 			chp->c_oval[t] = chp->c_ival[0];
 			continue;
 		}
-		/* Check for above final time */
-		if( times[t] > chp->c_itime[chp->c_ilen-1] )  {
-			chp->c_oval[t] = chp->c_ival[chp->c_ilen-1];
-			continue;
-		}
-		/* Find time range in input data.  Could range check? */
+
+		/* Find time range in input data. */
 		while( i < chp->c_ilen-1 )  {
 			if( times[t] >= chp->c_itime[i] && 
 			    times[t] <  chp->c_itime[i+1] )
 				break;
 			i++;
 		}
+
+		/* Check for above final time */
+		if( i >= chp->c_ilen-1 )  {
+			chp->c_oval[t] = chp->c_ival[chp->c_ilen-1];
+			continue;
+		}
+
 		/* Select value at beginning of interval */
 		chp->c_oval[t] = chp->c_ival[i];
 	}
@@ -606,18 +647,21 @@ register fastf_t	*times;
 			chp->c_oval[t] = chp->c_ival[0];
 			continue;
 		}
-		/* Check for above final time */
-		if( times[t] > chp->c_itime[chp->c_ilen-1] )  {
-			chp->c_oval[t] = chp->c_ival[chp->c_ilen-1];
-			continue;
-		}
-		/* Find time range in input data.  Could range check? */
+
+		/* Find time range in input data. */
 		while( i < chp->c_ilen-1 )  {
 			if( times[t] >= chp->c_itime[i] && 
 			    times[t] <  chp->c_itime[i+1] )
 				break;
 			i++;
 		}
+
+		/* Check for above final time */
+		if( i >= chp->c_ilen-1 )  {
+			chp->c_oval[t] = chp->c_ival[chp->c_ilen-1];
+			continue;
+		}
+
 		/* Perform actual interpolation */
 		chp->c_oval[t] = chp->c_ival[i] +
 			(times[t] - chp->c_itime[i]) *
@@ -886,4 +930,101 @@ char	**argv;
 	chp->c_ival[0] = atof(argv[2]);
 	chp->c_ival[1] = atof(argv[3]);
 	return(0);
+}
+
+/*
+ *			Q U A T _ I N T E R P O L A T E
+ *
+ *  Do linear interpolation for first and last span.
+ *  Use Bezier interpolation for all the rest.
+ *
+ *  This routine depends on the four input channels having identical
+ *  time stamps, because only the "x" input times are used.
+ */
+quat_interpolate( x, y, z, w, times )
+struct chan	*x, *y, *z, *w;
+register fastf_t	*times;
+{
+	register int	t;		/* output time index */
+	register int	i;		/* input time index */
+
+#define QIGET(_q,_it)  QSET( (_q), x->c_ival[(_it)], y->c_ival[(_it)], z->c_ival[(_it)], w->c_ival[(_it)] );
+#define QPUT(_q)	{ x->c_oval[t] = (_q)[X]; y->c_oval[t] = (_q)[Y]; \
+			z->c_oval[t] = (_q)[Z]; w->c_oval[t] = (_q)[W]; }
+
+	i = 0;
+	for( t=0; t<o_len; t++ )  {
+		register fastf_t	now = times[t];
+
+		/* Check for below initial time */
+		if( now <= x->c_itime[0] )  {
+			quat_t	q1;
+
+			QIGET( q1, 0 );
+			QUNITIZE( q1 );
+			QPUT( q1 );
+			continue;
+		}
+
+		/* Find time range in input data. */
+		while( i < x->c_ilen-1 )  {
+			if( now >= x->c_itime[i] && 
+			    now <  x->c_itime[i+1] )
+				break;
+			i++;
+		}
+
+		/* Check for above final time */
+		if( i >= x->c_ilen-1 )  {
+			quat_t	q1;
+
+			i = x->c_ilen-1;
+			QIGET( q1, i );
+			QUNITIZE( q1 );
+			QPUT( q1 );
+			continue;
+		}
+
+		/* Check for being in first or last two time spans */
+#if 0
+		if( i == 0 || i >= x->c_ilen-3 )
+#endif
+		{
+			fastf_t	f;
+			quat_t	qout, q1, q2;
+
+			f = (now - x->c_itime[i]) /
+			    (x->c_itime[i+1] - x->c_itime[i]);
+
+			QIGET( q1, i );
+			QIGET( q2, i+1 );
+			QUNITIZE( q1 );
+			QUNITIZE( q2 );
+			quat_slerp( qout, q1, q2, f );
+			QPUT( qout );
+			continue;
+		}
+#if 0
+		/* XXX This does not work.  q1 needs to be start of THIS span,
+		 * XXX (e.g. [i], not [i-1]),
+		 * XXX and q4 the end of this span, with the two in the
+		 * XXX middle somehow specially chosen.
+		 */
+		/* In an intermediate time span */
+		{
+			fastf_t	f;
+			quat_t	qout, q1, q2, q3, q4;
+
+			f = (now - x->c_itime[i]) /
+			    (x->c_itime[i+1] - x->c_itime[i]);
+
+			QIGET( q1, i-1 );
+			QIGET( q2, i );
+			QIGET( q3, i+1 );
+			QIGET( q4, i+2 );
+			quat_sberp( qout, q1, q2, q3, q4, f );
+			QPUT( qout );
+		}
+#endif
+	}
 }
