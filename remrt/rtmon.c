@@ -89,6 +89,8 @@ char		*our_hostname;
 FILE		*ifp;
 FILE		*ofp;
 
+char		*start_dir;
+
 static char	usage[] = "\
 Usage:  rtmon [-d#]\n\
 ";
@@ -153,20 +155,18 @@ CONST char *rtnode_paths[] = {
 };
 
 /*
+ *			R U N _ R T N O D E
  */
 void
-run_rtnode(fd, cmd)
+run_rtnode(fd, argv)
 int	fd;
-struct bu_vls	*cmd;
+char	**argv;
 {
 	CONST char **pp;
 	struct bu_vls	path;
-#define MAX_ARGS	50
-	char	*argv[MAX_ARGS+2];
 
 	bu_vls_init(&path);
 
-	(void)bu_argv_from_string( argv, MAX_ARGS, bu_vls_addr(cmd) );
 	argv[0] = "rtnode";
 
 	/* Set up environment variables appropriately */
@@ -203,18 +203,79 @@ struct bu_vls	*cmd;
 	fflush(ofp);
 }
 
+char *find_paths[] = {
+	"start_dir",		/* replaced at runtime */
+	"/m/cad",
+	"/n/vapor/m/cad",
+	"/vld/mike",
+	"/vld/butler",
+	"/r/mike",
+	NULL
+};
+
+/*
+ *			F I N D
+ *
+ *  Given a partial path specification (e.g. ../.db.6d/moss.g) of a file,
+ *  rummage around and try to find it in likely places,
+ *  and change into its directory, so that
+ *  texture maps and stuff from the same directory will all be found.
+ *  A nasty huristic, and fairly ARL-specific, but necessary.
+ */
+void
+find(fd, argv)
+int	fd;
+char	**argv;
+{
+	char	**pp;
+	char	*slash;
+
+	find_paths[0] = start_dir;
+
+	for( pp = find_paths; *pp != NULL; pp++ )  {
+		if( chdir(*pp) < 0 )  {
+			perror(*pp);
+			continue;
+		}
+		if( access( argv[1], R_OK ) )  continue;
+
+		/* OK, the path looks good, now get into the directory */
+		if( (slash = strrchr( argv[1], '/' )) != NULL )  {
+			*slash = '\0';
+			if( chdir( argv[1] ) < 0 )  {
+				perror(argv[1]);
+				fprintf(ofp, "FAIL Unable to cd %s after cd %s\n", argv[1], *pp);
+				fflush(ofp);
+				return;
+			}
+			fprintf(ofp, "OK %s/%s %s\n", *pp, argv[1], slash+1 );
+			fflush(ofp);
+			return;
+		}
+
+		fprintf(ofp, "OK %s %s\n", *pp, argv[1] );
+		fflush(ofp);
+		return;
+	}
+	fprintf(ofp, "FAIL Unable to locate file %s\n", argv[1]);
+	fflush(ofp);
+}
+
 /*
  *			S E R V E R _ P R O C E S S
  *
  *  Manage all conversation on one connection.
  *  There will be a separate process for each open connection.
  *  Each command will be acknowledged by a single line response.
+ *  For security reasons, this does NOT want to be done via TCL.
  */
 void
 server_process(fd)
 int	fd;
 {
 	struct bu_vls	str;
+#define MAX_ARGS	50
+	char	*argv[MAX_ARGS+2];
 
 	ifp = fdopen( fd, "r" );
 	ofp = fdopen( fd, "w" );
@@ -226,15 +287,21 @@ int	fd;
 		bu_vls_trunc( &str, 0 );
 		if( bu_vls_gets( &str, ifp ) < 0 )  break;
 
-		if( strncmp( bu_vls_addr(&str), "status", 6 ) == 0 )  {
+		(void)bu_argv_from_string( argv, MAX_ARGS, bu_vls_addr(&str) );
+
+		if( strcmp( argv[0], "status" ) == 0 )  {
 			send_status(fd);
 			continue;
 		}
-		if( strncmp( bu_vls_addr(&str), "rtnode", 6 ) == 0 )  {
-			run_rtnode(fd, &str);
+		if( strcmp( argv[0], "rtnode" ) == 0 )  {
+			run_rtnode(fd, argv);
 			continue;
 		}
-		if( strncmp( bu_vls_addr(&str), "quit", 4 ) == 0 )
+		if( strcmp( argv[0], "find" ) == 0 )  {
+			find(fd, argv);
+			continue;
+		}
+		if( strcmp( argv[0], "quit" ) == 0 )
 			exit(0);
 		fprintf( ofp, "ERROR Unknown command: %s\n", bu_vls_addr(&str) );
 	}
@@ -292,6 +359,12 @@ char	*argv[];
 	/* If "cmike" in /etc/passwd", use that, else use "mike" */
 	setgid(42);
 	setuid(53);
+
+	/* Find current directory */
+	if( (start_dir = getcwd(NULL,4096-8)) == NULL )  {
+		perror("getcwd");
+		start_dir = ".";
+	}
 
 	/* Hang a listen */
 	bzero((char *)&sinme, sizeof(sinme));
