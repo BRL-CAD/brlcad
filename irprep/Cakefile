@@ -24,4 +24,9 @@ secpass:        secpass.o subroutines.o LIBRT
 shapefact:  shapefact.o LIBRT
         CC LDFLAGS -g shapefact.o LIB_PRE''LIBRT RT_LIBES LIBMALLOC LIBES -o shapefact
 
+lint:
+	lint LFLAGS -I''INCDIR ../irprep/firpass.c ../irprep/subroutines.c > SRCDIR.lint
+	lint LFLAGS -I''INCDIR ../irprep/secpass.c ../irprep/subroutines.c >> SRCDIR.lint
+	lint LFLAGS -I''INCDIR ../irprep/shapefact.c ../irprep/subroutines.c >> SRCDIR.lint
+
 #include "../Cakefile.rules"
