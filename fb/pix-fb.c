@@ -227,7 +227,8 @@ char **argv;
 		for( y = scr_yoff; y < scr_yoff + yout; y += streamline )  {
 			n = mread( infd, (char *)scanline, scanbytes );
 			if( n <= 0 ) break;
-			m = fb_write( fbp, 0, y, scanline, n/sizeof(RGBpixel));
+			m = fb_writerect( fbp, 0, y, scr_width, streamline,
+				scanline );
 			if( n/sizeof(RGBpixel) != m )
 				fprintf(stderr,
 					"pix-fb: fb_write failure y=%d %d %d\n",
