@@ -14,48 +14,101 @@ typedef	int	Cast;
 /* suffix (after $HOME) of personal libraries */
 #define	ULIB		"/lib/cake"
 
-/* command to invoke the C preprocessor */
-#if _AIX
+/*
+ * Machine-specific commands to invoke the C preprocessor
+ */
+#if __MACHINETYPE__vax
+	/* VAX 11/780, mircoVAX, etc. */
+#	define	CPP		"cc"
+#	define	CPP_OPTIONS	"-E"
+#	define	CPP_OPTIONS2	"-D__CAKE__vax"
+#endif
+
+#if __MACHINETYPE__mips
+	/* DECStation with MIPS chip */
+#	define	CPP		"cc"
+#	define	CPP_OPTIONS	"-E"
+#	define	CPP_OPTIONS2	"-D__CAKE__mips"
+#endif
+
+#if __MACHINETYPE__ibm
 	/*
 	 *  Using CPP is necessary for the IBM RS/6000, because their
 	 *  cc -E will not work unless the source file name ends in .c
 	 */
 #	define	CPP		"/lib/cpp"
-#	define	CPP_OPTIONS	"-D_AIX=1"
+#	define	CPP_OPTIONS	"-D_AIX"
 #endif
-#if defined(convex) || defined(__convex__)
+
+#if __MACHINETYPE__c1
 	/* CPP is necessary on the Convex, cc -E needs .c suffix */
 #	define	CPP		"/lib/cpp"
+#	define	CPP_OPTIONS	"-D__CAKE__c1"
 #endif
-#if defined(i386) && defined(__bsdi__)
-#	define	CPP	"/usr/bin/cpp"
+
+#if __MACHINETYPE__bsdi
+	/* BSDI from Rob Colstad */
+#	define	CPP		"/usr/bin/cpp"
+#	define	CPP_OPTIONS	"-D__CAKE__bsdi"
 #endif
-#if defined(__386BSD__)
-#	define	CPP	"/usr/bin/cpp"
+
+#if __MACHINETYPE__386
+	/* 386BSD from Jolitz */
+#	define	CPP		"/usr/bin/cpp"
+#	define	CPP_OPTIONS	"-D__CAKE__386"
 #endif
-#if defined(__NetBSD__)
-#	define	CPP	"/usr/bin/cpp"
+
+#if __MACHINETYPE__nb
+	/* NetBSD */
+#	define	CPP		"/usr/bin/cpp"
+#	define	CPP_OPTIONS	"-D__CAKE__nb"
 #endif
-#if defined(i386) && !defined(__bsdi__) && !defined(__386BSD__) && !defined(__NetBSD__)
-	/* CPP is necessary on the PC/AT, cc -E needs .c suffix */
+
+#if __MACHINETYPE__nb86
+	/* NetBSD 86 */
+#	define	CPP		"/usr/bin/cpp"
+#	define	CPP_OPTIONS	"-D__CAKE__nb86"
+#endif
+
+#if __MACHINETYPE__at
+	/* CPP is necessary on the PC/AT with Interactive Systems Unix,
+	 * cc -E needs .c suffix */
 #	define	CPP		"/lib/cpp"
+#	define	CPP_OPTIONS	"-D__CAKE__at"
 #endif
-#if defined(NeXT)
+
+#if __MACHINETYPE__next
 	/* Gnu CPP */
 #	define	CPP		"/lib/cpp"
 #	define	CPP_OPTIONS	"-traditional"
-#endif
-#if defined(ardent)
-	/* Stardent 3000 Series running UNIX 4.1 */
-#	define	CPP		"/lib/cpp"
-#endif
-#if !defined(alliant) && defined(i860) && defined(unix) && __STDC__ == 0
-	/* Stardent i860 machine.  cc -E puts spaces around substitutions */
-#	define	CPP		"/lib/cpp"
-#	define	CPP_OPTIONS	"-D__stardent=1"
+#	define	CPP_OPTIONS1	"-D__CAKE__next"
 #endif
 
-#if ((defined(sun) && defined(sparc)) || defined(__sparc)) && defined(ATT)
+#if __MACHINETYPE__ard
+	/* Stardent 3000 Series running UNIX 4.1 */
+#	define	CPP		"/lib/cpp"
+#	define	CPP_OPTIONS	"-D__CAKE__ard"
+#endif
+
+#if __MACHINETYPE__stad
+	/* Stardent i860 machine.  cc -E puts spaces around substitutions */
+#	define	CPP		"/lib/cpp"
+#	define	CPP_OPTIONS	"-D__CAKE__stad"
+#endif
+
+#if __MACHINETYPE__sun3
+#	define	CPP		"cc"
+#	define	CPP_OPTIONS	"-E"
+#	define	CPP_OPTIONS2	"-D__CAKE__sun3"
+#endif
+
+#if __MACHINETYPE__sun4
+#	define	CPP		"cc"
+#	define	CPP_OPTIONS	"-E"
+#	define	CPP_OPTIONS2	"-D__CAKE__sun4"
+#endif
+
+#if __MACHINETYPE__sun5
 	/* SunOS 5 with unbundled compilers */
 #	undef __STDC__
 #	define __STDC__ 1	/* hack! */
@@ -68,28 +121,32 @@ typedef	int	Cast;
 	 */
 #	define	CPP_OPTIONS	"-E"
 #	define	CPP_OPTIONS2	"-Xs"
-#	define	CPP_OPTIONS3	"-D__CAKE__SunOS5=1"
+/* XXX This next symbol is irregular, and needs to be changed */
+#	define	CPP_OPTIONS3	"-D__CAKE__SunOS5"
 #endif
 
 /*
  *  The SGI story:
- *	On Irix 3, "cc main.c" does only sgi, and not __sgi.
- *	On Irix 4, "cc main.c" does not have __STDC__ defined.
- *	On Irix 5, "cc main.c" has sgi=1, __sgi=1, __STDC__=1.
+ *	4d: On Irix 3, "cc main.c" does only sgi, and not __sgi.
+ *	5d: On Irix 4, "cc main.c" does not have __STDC__ defined.
+ *	6d: On Irix 5, "cc main.c" has sgi=1, __sgi=1, __STDC__=1.
  *  Use this fact to pass a flag on to Cakefile.defs.
  *  cc -E appends a bloody space after each substitution.
  */
-#if defined(sgi) || defined(__sgi)
+#if __MACHINETYPE__4d
 #	define	CPP		"/lib/cpp"
-#	if __STDC__
-#		define	CPP_OPTIONS	"-D__CAKE__irix5"
-#	else
-#		if defined(__sgi)
-#			define	CPP_OPTIONS	"-D__CAKE__irix4"
-#		else
-#			define	CPP_OPTIONS	"-D__CAKE__irix3"
-#		endif
-#	endif
+#	define	CPP_OPTIONS	"-D__CAKE__4d"
+#	define	CPP_OPTIONS2	"-D__CAKE__irix3"
+#endif
+#if __MACHINETYPE__5d
+#	define	CPP		"/lib/cpp"
+#	define	CPP_OPTIONS	"-D__CAKE__5d"
+#	define	CPP_OPTIONS2	"-D__CAKE__irix4"
+#endif
+#if __MACHINETYPE__6d
+#	define	CPP		"/lib/cpp"
+#	define	CPP_OPTIONS	"-D__CAKE__6d"
+#	define	CPP_OPTIONS2	"-D__CAKE__irix5"
 #endif
 
 #if !defined(CPP)
@@ -112,7 +169,7 @@ typedef	int	Cast;
 
 /* location of the statistics file - if not defined, no stats kept */
 /*#define	STATS_FILE	"/u/pgrad/zs/lib/cake_stats" **BRL*/
-#define	STATS_FILE	"/usr/brlcad/lib/cake_stats"
+/* #define	STATS_FILE	"/usr/brlcad/lib/cake_stats" **BRL*/
 
 /* characters always requiring shell attention */
 #define	METACHARS	"*?!&|;<>()[]{}'`\"%$~#"
