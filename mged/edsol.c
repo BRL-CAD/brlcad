@@ -586,140 +586,140 @@ static void
 arb8_edge( arg )
 int arg;
 {
-	es_menu = arg;
-	es_edflag = EARB;
-	if(arg == 12)  {
-		es_edflag = ECMD_ARB_MAIN_MENU;
-		sedraw = 1;
-	}
+  es_menu = arg;
+  es_edflag = EARB;
+  if(arg == 12)  {
+    es_edflag = ECMD_ARB_MAIN_MENU;
+    sedit();
+  }
 
-	set_e_axes_pos(1);
+  set_e_axes_pos(1);
 }
 
 static void
 arb7_edge( arg )
 int arg;
 {
-	es_menu = arg;
-	es_edflag = EARB;
-	if(arg == 11) {
-		/* move point 5 */
-		es_edflag = PTARB;
-		es_menu = 4;	/* location of point */
-	}
-	if(arg == 12)  {
-		es_edflag = ECMD_ARB_MAIN_MENU;
-		sedraw = 1;
-	}
+  es_menu = arg;
+  es_edflag = EARB;
+  if(arg == 11) {
+    /* move point 5 */
+    es_edflag = PTARB;
+    es_menu = 4;	/* location of point */
+  }
+  if(arg == 12)  {
+    es_edflag = ECMD_ARB_MAIN_MENU;
+    sedit();
+  }
 
-	set_e_axes_pos(1);
+  set_e_axes_pos(1);
 }
 
 static void
 arb6_edge( arg )
 int arg;
 {
-	es_menu = arg;
-	es_edflag = EARB;
-	if(arg == 8) {
-		/* move point 5   location = 4 */
-		es_edflag = PTARB;
-		es_menu = 4;
-	}
-	if(arg == 9) {
-		/* move point 6   location = 6 */
-		es_edflag = PTARB;
-		es_menu = 6;
-	}
-	if(arg == 10)  {
-		es_edflag = ECMD_ARB_MAIN_MENU;
-		sedraw = 1;
-	}
+  es_menu = arg;
+  es_edflag = EARB;
+  if(arg == 8) {
+    /* move point 5   location = 4 */
+    es_edflag = PTARB;
+    es_menu = 4;
+  }
+  if(arg == 9) {
+    /* move point 6   location = 6 */
+    es_edflag = PTARB;
+    es_menu = 6;
+  }
+  if(arg == 10)  {
+    es_edflag = ECMD_ARB_MAIN_MENU;
+    sedit();
+  }
 
-	set_e_axes_pos(1);
+  set_e_axes_pos(1);
 }
 
 static void
 arb5_edge( arg )
 int arg;
 {
-	es_menu = arg;
-	es_edflag = EARB;
-	if(arg == 8) {
-		/* move point 5 at loaction 4 */
-		es_edflag = PTARB;
-		es_menu = 4;
-	}
-	if(arg == 9)  {
-		es_edflag = ECMD_ARB_MAIN_MENU;
-		sedraw = 1;
-	}
+  es_menu = arg;
+  es_edflag = EARB;
+  if(arg == 8) {
+    /* move point 5 at loaction 4 */
+    es_edflag = PTARB;
+    es_menu = 4;
+  }
+  if(arg == 9)  {
+    es_edflag = ECMD_ARB_MAIN_MENU;
+    sedit();
+  }
 
-	set_e_axes_pos(1);
+  set_e_axes_pos(1);
 }
 
 static void
 arb4_point( arg )
 int arg;
 {
-	es_menu = arg;
-	es_edflag = PTARB;
-	if(arg == 5)  {
-		es_edflag = ECMD_ARB_MAIN_MENU;
-		sedraw = 1;
-	}
+  es_menu = arg;
+  es_edflag = PTARB;
+  if(arg == 5)  {
+    es_edflag = ECMD_ARB_MAIN_MENU;
+    sedit();
+  }
 
-	set_e_axes_pos(1);
+  set_e_axes_pos(1);
 }
 
 static void
 ebm_ed( arg )
 int arg;
 {
-	es_menu = arg;
-	sedraw = 1;
+  es_menu = arg;
 
-	switch( arg )
-	{
-		case MENU_EBM_FNAME:
-			es_edflag = ECMD_EBM_FNAME;
-			break;
-		case MENU_EBM_FSIZE:
-			es_edflag = ECMD_EBM_FSIZE;
-			break;
-		case MENU_EBM_HEIGHT:
-			es_edflag = ECMD_EBM_HEIGHT;
-			break;
-	}
-	set_e_axes_pos(1);
+  switch( arg ){
+  case MENU_EBM_FNAME:
+    es_edflag = ECMD_EBM_FNAME;
+    break;
+  case MENU_EBM_FSIZE:
+    es_edflag = ECMD_EBM_FSIZE;
+    break;
+  case MENU_EBM_HEIGHT:
+    es_edflag = ECMD_EBM_HEIGHT;
+    break;
+  }
+
+  sedit();
+  set_e_axes_pos(1);
 }
 
 static void
 vol_ed( arg )
 int arg;
 {
-	es_menu = arg;
-	sedraw = 1;
+  es_menu = arg;
 
-	switch( arg )
-	{
-		case MENU_VOL_FNAME:
-			es_edflag = ECMD_VOL_FNAME;
-			break;
-		case MENU_VOL_FSIZE:
-			es_edflag = ECMD_VOL_FSIZE;
-			break;
-		case MENU_VOL_CSIZE:
-			es_edflag = ECMD_VOL_CSIZE;
-			break;
-		case MENU_VOL_THRESH_LO:
-			es_edflag = ECMD_VOL_THRESH_LO;
-			break;
-		case MENU_VOL_THRESH_HI:
-			es_edflag = ECMD_VOL_THRESH_HI;
-			break;
-	}
-	set_e_axes_pos(1);
+  switch( arg ){
+  case MENU_VOL_FNAME:
+    es_edflag = ECMD_VOL_FNAME;
+    break;
+  case MENU_VOL_FSIZE:
+    es_edflag = ECMD_VOL_FSIZE;
+    break;
+  case MENU_VOL_CSIZE:
+    es_edflag = ECMD_VOL_CSIZE;
+    break;
+  case MENU_VOL_THRESH_LO:
+    es_edflag = ECMD_VOL_THRESH_LO;
+    break;
+  case MENU_VOL_THRESH_HI:
+    es_edflag = ECMD_VOL_THRESH_HI;
+    break;
+  }
+
+  sedit();
+  set_e_axes_pos(1);
 }
 
 static void
@@ -748,10 +748,10 @@ int arg;
 			  return;
 			}
 			es_pipept = next;
-			sedraw = 1;
 			rt_pipept_print( es_pipept, base2local );
 			es_menu = arg;
 			es_edflag = IDLE;
+			sedit();
 		break;
 		case MENU_PIPE_PREV_PT:
 			if( !es_pipept )
@@ -766,10 +766,10 @@ int arg;
 			  return;
 			}
 			es_pipept = prev;
-			sedraw = 1;
 			rt_pipept_print( es_pipept, base2local );
 			es_menu = arg;
 			es_edflag = IDLE;
+			sedit();
 		break;
 		case MENU_PIPE_SPLIT:
 			/* not used */
@@ -811,9 +811,9 @@ int arg;
 			es_edflag = ECMD_PIPE_PT_INS;
 		break;
 		case MENU_PIPE_DEL_PT:
-			sedraw = 1;
 			es_menu = arg;
 			es_edflag = ECMD_PIPE_PT_DEL;
+			sedit();
 		break;
 	}
 	set_e_axes_pos(1);
@@ -919,7 +919,7 @@ int arg;
 	es_edflag = ECMD_ARB_MOVE_FACE;
 	if(arg == 7)  {
 		es_edflag = ECMD_ARB_MAIN_MENU;
-		sedraw = 1;
+		sedit();
 	}
 
 	set_e_axes_pos(1);
@@ -933,7 +933,7 @@ int arg;
 	es_edflag = ECMD_ARB_MOVE_FACE;
 	if(arg == 7)  {
 		es_edflag = ECMD_ARB_MAIN_MENU;
-		sedraw = 1;
+		sedit();
 	}
 
 	set_e_axes_pos(1);
@@ -947,7 +947,7 @@ int arg;
 	es_edflag = ECMD_ARB_MOVE_FACE;
 	if(arg == 6)  {
 		es_edflag = ECMD_ARB_MAIN_MENU;
-		sedraw = 1;
+		sedit();
 	}
 
 	set_e_axes_pos(1);
@@ -957,102 +957,97 @@ static void
 arb5_mv_face( arg )
 int arg;
 {
-	es_menu = arg - 1;
-	es_edflag = ECMD_ARB_MOVE_FACE;
-	if(arg == 6)  {
-		es_edflag = ECMD_ARB_MAIN_MENU;
-		sedraw = 1;
-	}
+  es_menu = arg - 1;
+  es_edflag = ECMD_ARB_MOVE_FACE;
+  if(arg == 6)  {
+    es_edflag = ECMD_ARB_MAIN_MENU;
+    sedit();
+  }
 
-	set_e_axes_pos(1);
+  set_e_axes_pos(1);
 }
 
 static void
 arb4_mv_face( arg )
 int arg;
 {
-	es_menu = arg - 1;
-	es_edflag = ECMD_ARB_MOVE_FACE;
-	if(arg == 5)  {
-		es_edflag = ECMD_ARB_MAIN_MENU;
-		sedraw = 1;
-	}
+  es_menu = arg - 1;
+  es_edflag = ECMD_ARB_MOVE_FACE;
+  if(arg == 5)  {
+    es_edflag = ECMD_ARB_MAIN_MENU;
+    sedit();
+  }
 
-	set_e_axes_pos(1);
+  set_e_axes_pos(1);
 }
 
 static void
 arb8_rot_face( arg )
 int arg;
 {
-	es_menu = arg - 1;
-	es_edflag = ECMD_ARB_SETUP_ROTFACE;
-	sedraw = 1;
-	if(arg == 7)  {
-		es_edflag = ECMD_ARB_MAIN_MENU;
-		sedraw = 1;
-	}
+  es_menu = arg - 1;
+  es_edflag = ECMD_ARB_SETUP_ROTFACE;
+  if(arg == 7)
+    es_edflag = ECMD_ARB_MAIN_MENU;
+
+  sedit();
 }
 
 static void
 arb7_rot_face( arg )
 int arg;
 {
-	es_menu = arg - 1;
-	es_edflag = ECMD_ARB_SETUP_ROTFACE;
-	sedraw = 1;
-	if(arg == 7)  {
-		es_edflag = ECMD_ARB_MAIN_MENU;
-		sedraw = 1;
-	}
+  es_menu = arg - 1;
+  es_edflag = ECMD_ARB_SETUP_ROTFACE;
+  if(arg == 7)
+    es_edflag = ECMD_ARB_MAIN_MENU;
+
+  sedit();
 }		
 
 static void
 arb6_rot_face( arg )
 int arg;
 {
-	es_menu = arg - 1;
-	es_edflag = ECMD_ARB_SETUP_ROTFACE;
-	sedraw = 1;
-	if(arg == 6)  {
-		es_edflag = ECMD_ARB_MAIN_MENU;
-		sedraw = 1;
-	}
+  es_menu = arg - 1;
+  es_edflag = ECMD_ARB_SETUP_ROTFACE;
+  if(arg == 6)
+    es_edflag = ECMD_ARB_MAIN_MENU;
+
+  sedit();
 }
 
 static void
 arb5_rot_face( arg )
 int arg;
 {
-	es_menu = arg - 1;
-	es_edflag = ECMD_ARB_SETUP_ROTFACE;
-	sedraw = 1;
-	if(arg == 6)  {
-		es_edflag = ECMD_ARB_MAIN_MENU;
-		sedraw = 1;
-	}
+  es_menu = arg - 1;
+  es_edflag = ECMD_ARB_SETUP_ROTFACE;
+  if(arg == 6)
+    es_edflag = ECMD_ARB_MAIN_MENU;
+
+  sedit();
 }
 
 static void
 arb4_rot_face( arg )
 int arg;
 {
-	es_menu = arg - 1;
-	es_edflag = ECMD_ARB_SETUP_ROTFACE;
-	sedraw = 1;
-	if(arg == 5)  {
-		es_edflag = ECMD_ARB_MAIN_MENU;
-		sedraw = 1;
-	}
+  es_menu = arg - 1;
+  es_edflag = ECMD_ARB_SETUP_ROTFACE;
+  if(arg == 5)
+    es_edflag = ECMD_ARB_MAIN_MENU;
+
+  sedit();
 }
 
 static void
 arb_control( arg )
 int arg;
 {
-	es_menu = arg;
-	es_edflag = ECMD_ARB_SPECIFIC_MENU;
-	sedraw = 1;
+  es_menu = arg;
+  es_edflag = ECMD_ARB_SPECIFIC_MENU;
+  sedit();
 }
 
 /*ARGSUSED*/
@@ -1060,8 +1055,8 @@ static void
 ars_ed( arg )
 int arg;
 {
-	es_edflag = arg;
-	sedraw = 1;
+  es_edflag = arg;
+  sedit();
 }
 
 
@@ -1070,15 +1065,15 @@ static void
 spline_ed( arg )
 int arg;
 {
-	/* XXX Why wasn't this done by setting es_edflag = ECMD_SPLINE_VPICK? */
-	if( arg < 0 )  {
-		/* Enter picking state */
-		chg_state( ST_S_EDIT, ST_S_VPICK, "Vertex Pick" );
-		return;
-	}
-	/* For example, this will set es_edflag = ECMD_VTRANS */
-	es_edflag = arg;
-	sedraw = 1;
+  /* XXX Why wasn't this done by setting es_edflag = ECMD_SPLINE_VPICK? */
+  if( arg < 0 )  {
+    /* Enter picking state */
+    chg_state( ST_S_EDIT, ST_S_VPICK, "Vertex Pick" );
+    return;
+  }
+  /* For example, this will set es_edflag = ECMD_VTRANS */
+  es_edflag = arg;
+  sedit();
 
 	set_e_axes_pos(1);
 }
@@ -1157,7 +1152,7 @@ int arg;
 		  bu_vls_free(&tmp_vls);
 		}
 
-		sedraw = 1;
+		sedit();
 		return;
 	case ECMD_NMG_BACK:
 		if( !es_eu )  {
@@ -1178,7 +1173,7 @@ int arg;
 		  bu_vls_free(&tmp_vls);
 		}
 
-		sedraw = 1;
+		sedit();
 		return;
 	case ECMD_NMG_RADIAL:
 		if( !es_eu )  {
@@ -1199,7 +1194,7 @@ int arg;
 		  bu_vls_free(&tmp_vls);
 		}
 
-		sedraw = 1;
+		sedit();
 		return;
 	case ECMD_NMG_LEXTRU:
 		{
@@ -1367,7 +1362,7 @@ int arg;
 	}
 	/* For example, this will set es_edflag = ECMD_NMG_EPICK */
 	es_edflag = arg;
-	sedraw = 1;
+	sedit();
 }
 
 /*
@@ -1979,8 +1974,10 @@ int both;    /* if(!both) then set only curr_e_axes_pos, otherwise
       VSETALL( edit_absolute_rotate, 0.0 )
     else if(EDIT_TRAN)
       VSETALL( edit_absolute_tran, 0.0 )
-    else if(SEDIT_SCALE)
+    else if(SEDIT_SCALE){
       edit_absolute_scale = 0;
+      acc_sc_sol = 1;
+    }
 
     mat_idn(acc_rot_sol);
 
@@ -2130,7 +2127,7 @@ init_sedit()
 	(void)chg_state( ST_S_PICK, ST_S_EDIT, "Keyboard illuminate");
 	chg_l2menu(ST_S_EDIT);
 	es_edflag = IDLE;
-	sedraw = 1;
+	sedit();
 
 	button( BE_S_EDIT );	/* Drop into edit menu right away */
 }
@@ -2154,7 +2151,17 @@ replot_editing_solid()
 
 	(void)replot_modified_solid( illump, ip, es_mat );
 #else
-	(void)replot_modified_solid( illump, &es_int, es_mat );
+	{
+	  mat_t mat;
+	  register struct solid *sp;
+
+	  FOR_ALL_SOLIDS(sp, &HeadSolid.l) {
+	    if(sp->s_path[sp->s_last]->d_addr == illump->s_path[illump->s_last]->d_addr){
+	      pathHmat( sp, mat, sp->s_last-1 );
+	      (void)replot_modified_solid( sp, &es_int, mat );
+	    }
+	  }
+	}
 #endif
 }
 
@@ -2868,6 +2875,7 @@ sedit()
 		/* scale the solid uniformly about it's vertex point */
 		{
 			mat_t	scalemat;
+			mat_t   mat, mat2;
 
 			es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
 			es_pipept = (struct wdb_pipept *)NULL; /* Reset es_pipept */
@@ -2878,7 +2886,9 @@ sedit()
 			}
 
 			mat_scale_about_pt( scalemat, es_keypoint, es_scale );
-			transform_editing_solid(&es_int, scalemat, &es_int, 1);
+			mat_mul(mat2, scalemat, es_mat);
+			mat_mul(mat, es_invmat, mat2);
+			transform_editing_solid(&es_int, mat, &es_int, 1);
 
 			/* reset solid scale factor */
 			es_scale = 1.0;
@@ -2898,9 +2908,7 @@ sedit()
 				 * to desired new location.
 				 */
 #ifdef TRY_EDIT_NEW_WAY
-#if 1
-			  /* move solid so that es_keypoint is at position es_para */
-			  {
+			  if(mged_variables.context){ /* move solid so that es_keypoint is at position es_para */
 			    vect_t raw_para;
 
 			    MAT4X3PNT(raw_para, es_invmat, es_para);
@@ -2908,14 +2916,13 @@ sedit()
 			    VSUB2( delta, work, raw_para );
 			    mat_idn( xlatemat );
 			    MAT_DELTAS_VEC_NEG( xlatemat, delta );
+			  }else{ /* move solid to position es_para */
+			    /* move solid to position es_para */
+			    MAT4X3PNT(work, es_invmat, es_keypoint);
+			    VSUB2( delta, work, es_para );
+			    mat_idn( xlatemat );
+			    MAT_DELTAS_VEC_NEG( xlatemat, delta );
 			  }
-#else
-			  /* move solid to position es_para */
-			  MAT4X3PNT(work, es_invmat, es_keypoint);
-			  VSUB2( delta, work, es_para );
-			  mat_idn( xlatemat );
-			  MAT_DELTAS_VEC_NEG( xlatemat, delta );
-#endif
 #else
 				VSUB2( delta, es_para, es_keypoint );
 				mat_idn( xlatemat );
@@ -3071,20 +3078,24 @@ sedit()
 			}
 			/* Apply changes to solid */
 			/* xlate keypoint to origin, rotate, then put back. */
-#if 0
-			MAT4X3PNT(work, es_invmat, es_keypoint);
-			mat_xform_about_pt( mat, incr_change, work );
-#else
-			/* calculate rotations about keypoint */
-			mat_xform_about_pt( edit, incr_change, es_keypoint );
+#ifdef TRY_EDIT_NEW_WAY
+			if(mged_variables.context){
+			  /* calculate rotations about keypoint */
+			  mat_xform_about_pt( edit, incr_change, es_keypoint );
 
-			/* We want our final matrix (mat) to xform the original solid
-			 * to the position of this instance of the solid, perform the
-			 * current edit operations, then xform back.
-			 *	mat = es_invmat * edit * es_mat
-			 */
-			mat_mul( mat1, edit, es_mat );
-			mat_mul( mat, es_invmat, mat1 );
+			  /* We want our final matrix (mat) to xform the original solid
+			   * to the position of this instance of the solid, perform the
+			   * current edit operations, then xform back.
+			   *	mat = es_invmat * edit * es_mat
+			   */
+			  mat_mul( mat1, edit, es_mat );
+			  mat_mul( mat, es_invmat, mat1 );
+			}else{
+			  MAT4X3PNT(work, es_invmat, es_keypoint);
+			  mat_xform_about_pt( mat, incr_change, work );
+			}
+#else
+			mat_xform_about_pt( mat, incr_change, es_keypoint);
 #endif
 			transform_editing_solid(&es_int, mat, &es_int, 1);
 
@@ -4137,7 +4148,7 @@ sedit()
 	}
 
 	/* If the keypoint changed location, find about it here */
-	if (! es_keyfixed)
+	if (!es_keyfixed)
 		get_solid_keypoint( es_keypoint, &es_keytag, &es_int, es_mat );
 
 	set_e_axes_pos(0);
@@ -4209,12 +4220,10 @@ CONST vect_t	mousevec;
       point_t	pt;
       vect_t	delta;
       mat_t	xlatemat;
-
 #ifdef TRY_EDIT_NEW_WAY
-      MAT4X3PNT( pos_view, model2view, es_keypoint );
-      pos_view[X] = mousevec[X];
-      pos_view[Y] = mousevec[Y];
-      MAT4X3PNT( pt, view2model, pos_view );
+      MAT4X3PNT( pos_view, model2view, e_axes_pos );
+      mousevec[Z] = pos_view[Z];
+      MAT4X3PNT( pt, view2model, mousevec );
 
       /* Need vector from current vertex/keypoint
        * to desired new location.
@@ -4225,20 +4234,20 @@ CONST vect_t	mousevec;
       mat_idn( xlatemat );
       MAT_DELTAS_VEC_NEG( xlatemat, delta );
 #else
-      MAT4X3PNT( temp, es_mat, es_keypoint );
-      MAT4X3PNT( pos_view, model2view, temp );
-      pos_view[X] = mousevec[X];
-      pos_view[Y] = mousevec[Y];
-      MAT4X3PNT( temp, view2model, pos_view );
-      MAT4X3PNT( pt, es_invmat, temp );
+	MAT4X3PNT( temp, es_mat, es_keypoint );
+	MAT4X3PNT( pos_view, model2view, temp );
+	pos_view[X] = mousevec[X];
+	pos_view[Y] = mousevec[Y];
+	MAT4X3PNT( temp, view2model, pos_view );
+	MAT4X3PNT( pt, es_invmat, temp );
 
-      /* Need vector from current vertex/keypoint
-       * to desired new location.
-       */
+	/* Need vector from current vertex/keypoint
+	 * to desired new location.
+	 */
 
-      VSUB2( delta, es_keypoint, pt );
-      mat_idn( xlatemat );
-      MAT_DELTAS_VEC_NEG( xlatemat, delta );
+	VSUB2( delta, es_keypoint, pt );
+	mat_idn( xlatemat );
+	MAT_DELTAS_VEC_NEG( xlatemat, delta );
 #endif
       transform_editing_solid(&es_int, xlatemat, &es_int, 1);
     }
@@ -4255,10 +4264,9 @@ CONST vect_t	mousevec;
      */
 
 #ifdef TRY_EDIT_NEW_WAY
-    MAT4X3PNT( pos_view, model2view, es_keypoint );
-    pos_view[X] = mousevec[X];
-    pos_view[Y] = mousevec[Y];
-    MAT4X3PNT( temp, view2model, pos_view );
+    MAT4X3PNT( pos_view, model2view, e_axes_pos );
+    mousevec[Z] = pos_view[Z];
+    MAT4X3PNT( temp, view2model, mousevec );
     MAT4X3PNT( es_mparam, es_invmat, temp );
     es_mvalid = 1;	/* es_mparam is valid */
 #else
@@ -4282,6 +4290,13 @@ CONST vect_t	mousevec;
 	(struct rt_tgc_internal *)es_int.idb_ptr;
       RT_TGC_CK_MAGIC(tgc);
 
+#ifdef TRY_EDIT_NEW_WAY
+      MAT4X3PNT(pos_view, model2view, e_axes_pos);
+      mousevec[Z] = pos_view[Z];
+      MAT4X3PNT(temp, view2model, mousevec);
+      MAT4X3PNT( tr_temp, es_invmat, temp );
+      VSUB2( tgc->h, tr_temp, tgc->v );
+#else
       VADD2( temp, tgc->v, tgc->h );
       MAT4X3PNT(pos_model, es_mat, temp);
       MAT4X3PNT( pos_view, model2view, pos_model );
@@ -4291,6 +4306,7 @@ CONST vect_t	mousevec;
       MAT4X3PNT( temp, view2model, pos_view );
       MAT4X3PNT( tr_temp, es_invmat, temp );
       VSUB2( tgc->h, tr_temp, tgc->v );
+#endif
     }
 
     update_edit_absolute_tran(pos_view);
@@ -4298,6 +4314,12 @@ CONST vect_t	mousevec;
   case PTARB:
     /* move an arb point to indicated point */
     /* point is located at es_values[es_menu*3] */
+#ifdef TRY_EDIT_NEW_WAY
+    MAT4X3PNT(pos_view, model2view, e_axes_pos);
+    mousevec[Z] = pos_view[Z];
+    MAT4X3PNT(temp, view2model, mousevec);
+    MAT4X3PNT(pos_model, es_invmat, temp);
+#else
     {
       struct rt_arb_internal *arb=
 	(struct rt_arb_internal *)es_int.idb_ptr;
@@ -4312,24 +4334,39 @@ CONST vect_t	mousevec;
     pos_view[Y] = mousevec[Y];
     MAT4X3PNT(temp, view2model, pos_view);
     MAT4X3PNT(pos_model, es_invmat, temp);
+#endif
     editarb( pos_model );
 
     update_edit_absolute_tran(pos_view);
     break;
   case EARB:
+#ifdef TRY_EDIT_NEW_WAY
+    MAT4X3PNT(pos_view, model2view, e_axes_pos);
+    mousevec[Z] = pos_view[Z];
+    MAT4X3PNT(temp, view2model, mousevec);
+    MAT4X3PNT(pos_model, es_invmat, temp);
+#else
     /* move arb edge, through indicated point */
     MAT4X3PNT( temp, view2model, mousevec );
     /* apply inverse of es_mat */
     MAT4X3PNT( pos_model, es_invmat, temp );
+#endif
     editarb( pos_model );
 
     update_edit_absolute_tran(mousevec);
     break;
   case ECMD_ARB_MOVE_FACE:
+#ifdef TRY_EDIT_NEW_WAY
+    MAT4X3PNT(pos_view, model2view, e_axes_pos);
+    mousevec[Z] = pos_view[Z];
+    MAT4X3PNT(temp, view2model, mousevec);
+    MAT4X3PNT(pos_model, es_invmat, temp);
+#else
     /* move arb face, through  indicated  point */
     MAT4X3PNT( temp, view2model, mousevec );
     /* apply inverse of es_mat */
     MAT4X3PNT( pos_model, es_invmat, temp );
+#endif
     /* change D of planar equation */
     es_peqn[es_menu][3]=VDOT(&es_peqn[es_menu][0], pos_model);
     /* calculate new vertices, put in record as vectors */
@@ -4399,9 +4436,16 @@ CONST vect_t	mousevec;
   case ECMD_ARS_MOVE_PT:
   case ECMD_ARS_MOVE_CRV:
   case ECMD_ARS_MOVE_COL:
+#ifdef TRY_EDIT_NEW_WAY
+    MAT4X3PNT(pos_view, model2view, e_axes_pos);
+    mousevec[Z] = pos_view[Z];
+    MAT4X3PNT(temp, view2model, mousevec);
+    MAT4X3PNT(es_mparam, es_invmat, temp);
+#else
     MAT4X3PNT( temp, view2model, mousevec );
     /* apply inverse of es_mat */
     MAT4X3PNT( es_mparam, es_invmat, temp );
+#endif
     es_mvalid = 1;
 
     update_edit_absolute_tran(mousevec);
@@ -4615,6 +4659,8 @@ vect_t tvec;
   sedit();
 }
 
+#define MGED_SMALL_SCALE 1.0e-10
+
 void
 sedit_abs_scale()
 {
@@ -4629,11 +4675,14 @@ sedit_abs_scale()
     acc_sc_sol = 1.0;
   else if(edit_absolute_scale > 0.0)
     acc_sc_sol = 1.0 + edit_absolute_scale * 3.0;
-  else
+  else{
+    if((edit_absolute_scale - MGED_SMALL_SCALE) < -1.0)
+      edit_absolute_scale = -1.0 + MGED_SMALL_SCALE;
+    
     acc_sc_sol = 1.0 + edit_absolute_scale;
+  }
 
   es_scale = acc_sc_sol / old_acc_sc_sol;
-
   sedit();
 }
 
@@ -4781,8 +4830,12 @@ oedit_abs_scale()
     scale = 1;
   else if(edit_absolute_scale > 0.0)
     scale = 1.0 + edit_absolute_scale * 3.0;
-  else
+  else{
+    if((edit_absolute_scale - MGED_SMALL_SCALE) < -1.0)
+      edit_absolute_scale = -1.0 + MGED_SMALL_SCALE;
+
     scale = 1.0 + edit_absolute_scale;
+  }
 
   /* switch depending on scaling option selected */
   switch( edobj ) {
@@ -5873,8 +5926,16 @@ sedit_reject()
 		lu_copy = (struct loopuse *)NULL;
 	}
 
-	/* Restore the original solid */
-	replot_original_solid( illump );
+	/* Restore the original solid everywhere */
+	{
+	  mat_t mat;
+	  register struct solid *sp;
+
+	  FOR_ALL_SOLIDS(sp, &HeadSolid.l) {
+	    if(sp->s_path[sp->s_last]->d_addr == illump->s_path[illump->s_last]->d_addr)
+	      (void)replot_original_solid( sp );
+	  }
+	}
 
 	menuflag = 0;
 	movedir = 0;
@@ -5910,7 +5971,6 @@ vect_t argvect;
   }
 
   inpara = 0;
-  sedraw++;
   for( i = 0; i < argc; i++ )  {
     es_para[ inpara++ ] = argvect[i];
   }
@@ -5922,7 +5982,6 @@ vect_t argvect;
 	  {
 	    Tcl_AppendResult(interp, "ERROR: SCALE FACTOR < 0\n", (char *)NULL);
 	    inpara = 0;
-	    sedraw = 0;
 	    return TCL_ERROR;
 	  }
       }
@@ -5931,7 +5990,6 @@ vect_t argvect;
 	if(es_para[0] <= 0.0) {
 	  Tcl_AppendResult(interp, "ERROR: SCALE FACTOR <= 0\n", (char *)NULL);
 	  inpara = 0;
-	  sedraw = 0;
 	  return TCL_ERROR;
 	}
       }
