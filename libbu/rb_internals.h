@@ -35,6 +35,7 @@
     }
 #define	RB_TREE_MAGIC		0x72627472
 #define	RB_NODE_MAGIC		0x72626e6f
+#define	RB_PKG_MAGIC		0x7262504b
 
 /*			R B _ C K O R D E R ( )
  *
@@ -58,7 +59,7 @@
 #define	rb_parent(n, o)		(((n) -> rbn_parent)[o])
 #define	rb_left_child(n, o)	(((n) -> rbn_left)[o])
 #define	rb_right_child(n, o)	(((n) -> rbn_right)[o])
-#define	rb_data(n, o)		(((n) -> rbn_data)[o])
+#define	rb_data(n, o)		(((n) -> rbn_package)[o] -> rbp_data)
 #define	RB_LEFT			0
 #define	RB_RIGHT		1
 #define	rb_child(n, o, d)	(((d) == RB_LEFT)		? 	\
@@ -83,16 +84,9 @@
 }
 #define	RB_RED			0
 #define	RB_BLACK		1
+#define rb_current(t)		((t) -> rbt_current)
 #define rb_null(t)		((t) -> rbt_empty_node)
-
-/*
- *	Global variables within LIBREDBLACK
- */
-#ifdef RB_CREATE
-    struct rb_node		*current_node = RB_NODE_NULL;
-#else
-    extern struct rb_node	*current_node;
-#endif
+#define	rb_print(t,p)		(((t) -> rbt_print)((p) -> rbp_data))
 
 /*
  *	Functions internal to LIBREDBLACK
