@@ -41,6 +41,14 @@ proc cad_dialog { w screen title text bitmap default args } {
 	return
     }
 
+    # The screen parameter can be the pathname of some
+    # widget where the screen value can be obtained.
+    # Otherwise, it is assumed to be a genuine X DISPLAY
+    # string.
+    if [winfo exists $screen] {
+	set screen [winfo screen $screen]
+    }
+
     toplevel $w -screen $screen
     wm title $w $title
     wm iconname $w Dialog
@@ -126,6 +134,14 @@ proc cad_input_dialog { w screen title text entryvar defaultentry default entry_
 
     set entry$w $defaultentry
     
+    # The screen parameter can be the pathname of some
+    # widget where the screen value can be obtained.
+    # Otherwise, it is assumed to be a genuine X DISPLAY
+    # string.
+    if [winfo exists $screen] {
+	set screen [winfo screen $screen]
+    }
+
     toplevel $w -screen $screen
     wm title $w $title
     wm iconname $w Dialog
