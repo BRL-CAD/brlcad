@@ -27,42 +27,39 @@ static char RCSebm[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
+#include "rtlist.h"
+#include "rtgeom.h"
 #include "raytrace.h"
 #include "./debug.h"
 #include "./fixpt.h"
 
-#define EBM_NAME_LEN 128
-struct ebm_specific {
-	char		ebm_file[EBM_NAME_LEN];
-	unsigned char	*ebm_map;
-	int		ebm_xdim;	/* X dimension */
-	int		ebm_ydim;	/* Y dimension */
-	double		ebm_tallness;	/* Z dimension */
+struct rt_ebm_specific {
+	struct rt_ebm_internal	ebm_i;
 	vect_t		ebm_xnorm;	/* local +X norm in model coords */
 	vect_t		ebm_ynorm;
 	vect_t		ebm_znorm;
 	vect_t		ebm_cellsize;	/* ideal coords: size of each cell */
-	mat_t		ebm_mat;	/* model to ideal space */
 	vect_t		ebm_origin;	/* local coords of grid origin (0,0,0) for now */
 	vect_t		ebm_large;	/* local coords of XYZ max */
+	mat_t		ebm_mat;	/* model to ideal space */
 };
-#define EBM_NULL	((struct ebm_specific *)0)
-#define EBM_O(m)	offsetof(struct ebm_specific, m)
+#define RT_EBM_NULL	((struct rt_ebm_specific *)0)
+
+#define RT_EBM_O(m)	offsetof(struct rt_ebm_internal, m)
 
 struct structparse rt_ebm_parse[] = {
 #if CRAY && !__STDC__
-	"%s",	EBM_NAME_LEN, "file",	0,		FUNC_NULL,
+	"%s",	RT_EBM_NAME_LEN, "file",	1,	FUNC_NULL,
 #else
-	"%s",	EBM_NAME_LEN, "file",	offsetofarray(struct ebm_specific, ebm_file), FUNC_NULL,
+	"%s",	RT_EBM_NAME_LEN, "file", offsetofarray(struct rt_ebm_internal, file), FUNC_NULL,
 #endif
-	"%d",	1, "w",		EBM_O(ebm_xdim),	FUNC_NULL,
-	"%d",	1, "n",		EBM_O(ebm_ydim),	FUNC_NULL,
-	"%f",	1, "d",		EBM_O(ebm_tallness),	FUNC_NULL,
+	"%d",	1, "w",		RT_EBM_O(xdim),		FUNC_NULL,
+	"%d",	1, "n",		RT_EBM_O(ydim),		FUNC_NULL,
+	"%f",	1, "d",		RT_EBM_O(tallness),	FUNC_NULL,
 	/* XXX might have option for ebm_origin */
 	"",	0, (char *)0, 0,			FUNC_NULL
 };
 
-struct ebm_specific	*rt_ebm_import();
 RT_EXTERN(int rt_ebm_dda,(struct xray *rp, struct soltab *stp,
 	struct application *ap, struct seg *seghead));
 RT_EXTERN(int rt_seg_planeclip,(struct seg *out_hd, struct seg *in_hd,
@@ -90,8 +87,9 @@ RT_EXTERN(int rt_seg_planeclip,(struct seg *out_hd, struct seg *in_hd,
  */
 #define	BIT_XWIDEN	2
 #define	BIT_YWIDEN	2
-#define BIT(xx,yy)	ebmp->ebm_map[((yy)+BIT_YWIDEN)*(ebmp->ebm_xdim + \
-				BIT_XWIDEN*2)+(xx)+BIT_XWIDEN]
+#define BIT(_eip,_xx,_yy)	\
+	(_eip)->map[((_yy)+BIT_YWIDEN)*((_eip)->xdim + \
+	BIT_XWIDEN*2)+(_xx)+BIT_XWIDEN]
 
 /*
  *			R T _ S E G _ P L A N E C L I P
@@ -206,8 +204,8 @@ struct soltab		*stp;
 struct application	*ap;
 struct seg		*seghead;
 {
-	register struct ebm_specific *ebmp =
-		(struct ebm_specific *)stp->st_specific;
+	register struct rt_ebm_specific *ebmp =
+		(struct rt_ebm_specific *)stp->st_specific;
 	vect_t	invdir;
 	double	t0;	/* in point of cell */
 	double	t1;	/* out point of cell */
@@ -259,13 +257,13 @@ if(rt_g.debug&DEBUG_EBM)rt_log("[shoot: r_min=%g, r_max=%g]\n", rp->r_min, rp->r
 	igrid[Y] = (P[Y] - ebmp->ebm_origin[Y]) / ebmp->ebm_cellsize[Y];
 	if( igrid[X] < 0 )  {
 		igrid[X] = 0;
-	} else if( igrid[X] >= ebmp->ebm_xdim ) {
-		igrid[X] = ebmp->ebm_xdim-1;
+	} else if( igrid[X] >= ebmp->ebm_i.xdim ) {
+		igrid[X] = ebmp->ebm_i.xdim-1;
 	}
 	if( igrid[Y] < 0 )  {
 		igrid[Y] = 0;
-	} else if( igrid[Y] >= ebmp->ebm_ydim ) {
-		igrid[Y] = ebmp->ebm_ydim-1;
+	} else if( igrid[Y] >= ebmp->ebm_i.ydim ) {
+		igrid[Y] = ebmp->ebm_i.ydim-1;
 	}
 if(rt_g.debug&DEBUG_EBM)rt_log("g[X] = %d, g[Y] = %d\n", igrid[X], igrid[Y]);
 
@@ -277,7 +275,7 @@ if(rt_g.debug&DEBUG_EBM)rt_log("g[X] = %d, g[Y] = %d\n", igrid[X], igrid[Y]);
 		 *  Depend on higher level to clip ray to Z extent.
 		 */
 if(rt_g.debug&DEBUG_EBM)rt_log("ray on local Z axis\n");
-		if( BIT( igrid[X], igrid[Y] ) == 0 )
+		if( BIT( &ebmp->ebm_i, igrid[X], igrid[Y] ) == 0 )
 			return(0);	/* MISS */
 		RT_GET_SEG(segp, ap->a_resource);
 		segp->seg_stp = stp;
@@ -372,7 +370,7 @@ if(rt_g.debug&DEBUG_EBM)rt_log("Exit t[X]=%g, t[Y]=%g\n", t[X], t[Y] );
 		t1 = t[out_index];
 
 		/* Ray passes through cell igrid[XY] from t0 to t1 */
-		val = BIT( igrid[X], igrid[Y] );
+		val = BIT( &ebmp->ebm_i, igrid[X], igrid[Y] );
 if(rt_g.debug&DEBUG_EBM)rt_log("igrid [%d %d] from %g to %g, val=%d\n",
 			igrid[X], igrid[Y],
 			t0, t1, val );
@@ -471,19 +469,39 @@ if(rt_g.debug&DEBUG_EBM)rt_log("Exit index is %s, t[X]=%g, t[Y]=%g\n",
 
 /*
  *			R T _ E B M _ I M P O R T
+ *
+ *  Read in the information from the string solid record.
+ *  Then, as a service to the application, read in the bitmap
+ *  and set up some of the associated internal variables.
+ *
+ *  XXX no way to deal with mat !!!
  */
-HIDDEN struct ebm_specific *
-rt_ebm_import( rp )
-union record	*rp;
+int
+rt_ebm_import( ip, ep, mat )
+struct rt_db_internal	*ip;
+struct rt_external	*ep;
+mat_t			mat;
 {
-	register struct ebm_specific *ebmp;
+	union record	*rp;
+	register struct rt_ebm_internal *eip;
 	struct rt_vls	str;
-	FILE	*fp;
-	int	nbytes;
+	FILE		*fp;
+	int		nbytes;
 	register int	y;
-	char	*cp;
+	char		*cp;
 
-	GETSTRUCT( ebmp, ebm_specific );
+	RT_CK_EXTERNAL( ep );
+	rp = (union record *)ep->ext_buf;
+	if( rp->u_id != DBID_STRSOL )  {
+		rt_log("rt_ebm_import: defective strsol record\n");
+		return(-1);
+	}
+
+	RT_INIT_DB_INTERNAL( ip );
+	ip->idb_type = ID_EBM;
+	ip->idb_ptr = rt_calloc(1, sizeof(struct rt_ebm_internal), "rt_ebm_internal");
+	eip = (struct rt_ebm_internal *)ip->idb_ptr;
+	eip->magic = RT_EBM_INTERNAL_MAGIC;
 
 	rt_vls_init( &str );
 	cp = rp->ss.ss_str;
@@ -493,37 +511,127 @@ union record	*rp;
 	while( *cp && isspace(*cp) )  cp++;
 
 	rt_vls_strcpy( &str, cp );
-	rt_structparse( &str, rt_ebm_parse, (char *)ebmp );
+	rt_structparse( &str, rt_ebm_parse, (char *)eip );
 	rt_vls_free( &str );
 
 	/* Check for reasonable values */
-	if( ebmp->ebm_file[0] == '\0' || ebmp->ebm_xdim < 1 ||
-	    ebmp->ebm_ydim < 1 ||
-	    ebmp->ebm_tallness <= 0.0 )  {
+	if( eip->file[0] == '\0' || eip->xdim < 1 ||
+	    eip->ydim < 1 ||
+	    eip->tallness <= 0.0 )  {
 	    	rt_log("Unreasonable EBM parameters\n");
-		rt_free( (char *)ebmp, "ebm_specific" );
-		return( EBM_NULL );
+		return -1;
 	}
 
 	/* Get bit map from .bw(5) file */
-	nbytes = (ebmp->ebm_xdim+BIT_XWIDEN*2)*(ebmp->ebm_ydim+BIT_YWIDEN*2);
-	ebmp->ebm_map = (unsigned char *)rt_malloc( nbytes, "ebm_import bitmap" );
-#ifdef SYSV
-	memset( ebmp->ebm_map, 0, nbytes );
-#else
-	bzero( ebmp->ebm_map, nbytes );
-#endif
-	if( (fp = fopen(ebmp->ebm_file, "r")) == NULL )  {
-		perror(ebmp->ebm_file);
-		rt_free( (char *)ebmp, "ebm_specific" );
-		return( EBM_NULL );
+	nbytes = (eip->xdim+BIT_XWIDEN*2)*(eip->ydim+BIT_YWIDEN*2);
+	eip->map = (unsigned char *)rt_calloc(
+		1, nbytes, "rt_ebm_import bitmap" );
+
+	if( (fp = fopen(eip->file, "r")) == NULL )  {
+		perror(eip->file);
+		return(-1);
 	}
 
 	/* Because of in-memory padding, read each scanline separately */
-	for( y=0; y < ebmp->ebm_ydim; y++ )
-		(void)fread( &BIT(0, y), ebmp->ebm_xdim, 1, fp );
+	for( y=0; y < eip->ydim; y++ )  {
+		if( fread( &BIT( eip, 0, y), eip->xdim, 1, fp ) != 1 )  {
+			rt_log("rt_ebm_import(%s): fread error, y=%d\n",
+				eip->file, y );
+		}
+	}
 	fclose(fp);
-	return( ebmp );
+	return( 0 );
+}
+
+/*
+ *			R T _ E B M _ E X P O R T
+ *
+ *  The name will be added by the caller.
+ *  Generally, only libwdb will set conv2mm != 1.0
+ *  XXX no way to deal with local2mm !!
+ */
+int
+rt_ebm_export( ep, ip, local2mm )
+struct rt_external	*ep;
+struct rt_db_internal	*ip;
+double			local2mm;
+{
+	struct rt_ebm_internal	*eip;
+	union record		*rec;
+	register int		i;
+	struct rt_vls		str;
+
+	RT_CK_DB_INTERNAL(ip);
+	if( ip->idb_type != ID_EBM )  return(-1);
+	eip = (struct rt_ebm_internal *)ip->idb_ptr;
+	RT_EBM_CK_MAGIC(eip);
+
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_nbytes = sizeof(union record);
+	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "ebm external");
+	rec = (union record *)ep->ext_buf;
+
+	RT_VLS_INIT( &str );
+	rt_vls_structprint( &str, rt_ebm_parse, (char *)eip );
+
+	rec->ss.ss_id = DBID_STRSOL;
+	(void)sprintf( rec->ss.ss_str, "ebm %s", rt_vls_addr( & str ) );
+
+	rt_vls_free( &str );
+	return(0);
+}
+
+/*
+ *			R T _ E B M _ D E S C R I B E
+ *
+ *  Make human-readable formatted presentation of this solid.
+ *  First line describes type of solid.
+ *  Additional lines are indented one tab, and give parameter values.
+ */
+int
+rt_ebm_describe( str, ip, verbose, mm2local )
+struct rt_vls		*str;
+struct rt_db_internal	*ip;
+int			verbose;
+double			mm2local;
+{
+	register int			j;
+	register struct rt_ebm_internal	*eip =
+		(struct rt_ebm_internal *)ip->idb_ptr;
+	char				buf[256];
+	int				i;
+
+	RT_EBM_CK_MAGIC(eip);
+	rt_vls_strcat( str, "extruded bitmap (EBM)\n\t");
+
+	rt_vls_structprint( str, rt_ebm_parse, (char *)eip );
+	rt_vls_strcat( str, "\n" );
+
+	return(0);
+}
+
+/*
+ *			R T _ E B M _ I F R E E
+ *
+ *  Free the storage associated with the rt_db_internal version of this solid.
+ */
+void
+rt_ebm_ifree( ip )
+struct rt_db_internal	*ip;
+{
+	register struct rt_ebm_internal	*eip;
+	register int			i;
+
+	RT_CK_DB_INTERNAL(ip);
+	eip = (struct rt_ebm_internal *)ip->idb_ptr;
+	RT_EBM_CK_MAGIC(eip);
+
+	if( eip->map) rt_free( (char *)eip->map, "ebm bitmap" );
+
+	eip->magic = 0;			/* sanity */
+	eip->map = (unsigned char *)0;
+	rt_free( (char *)eip, "ebm ifree" );
+	ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
 
 /*
@@ -566,23 +674,52 @@ vect_t	imin, imax;
  *	!0	Failure
  *
  *  Implicit return -
- *	A struct ebm_specific is created, and it's address is stored
+ *	A struct rt_ebm_specific is created, and it's address is stored
  *	in stp->st_specific for use by rt_ebm_shot().
  */
+#if NEW_IF
 int
-rt_ebm_prep( stp, rp, rtip )
+rt_ebm_prep( stp, ip, rtip )
+struct soltab		*stp;
+struct rt_db_internal	*ip;
+struct rt_i		*rtip;
+{
+#else
+int
+rt_ebm_prep( stp, rec, rtip )
 struct soltab	*stp;
-union record	*rp;
+union record	*rec;
 struct rt_i	*rtip;
 {
-	register struct ebm_specific *ebmp;
+	struct rt_external	ext, *ep;
+	struct rt_db_internal	intern, *ip;
+#endif
+	struct rt_ebm_internal	*eip;
+	register struct rt_ebm_specific *ebmp;
 	vect_t	norm;
 	vect_t	radvec;
 	vect_t	diam;
 	vect_t	small;
 
-	if( (ebmp = rt_ebm_import( rp )) == EBM_NULL )
-		return(-1);	/* ERROR */
+
+#if NEW_IF
+	/* All set */
+#else
+	ep = &ext;
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_buf = (genptr_t)rec;
+	ep->ext_nbytes = stp->st_dp->d_len*sizeof(union record);
+	ip = &intern;
+	if( rt_ebm_import( ip, ep, stp->st_pathmat ) < 0 )
+		return(-1);		/* BAD */
+	RT_CK_DB_INTERNAL( ip );
+#endif
+	eip = (struct rt_ebm_internal *)ip->idb_ptr;
+	RT_EBM_CK_MAGIC(eip);
+
+	GETSTRUCT( ebmp, rt_ebm_specific );
+	ebmp->ebm_i = *eip;		/* struct copy */
+	eip->map = (unsigned char *)0;	/* "steal" the bitmap storage */
 
 	/* build Xform matrix from model(world) to ideal(local) space */
 	mat_inv( ebmp->ebm_mat, stp->st_pathmat );
@@ -599,7 +736,7 @@ struct rt_i	*rtip;
 
 	/* Find bounding RPP of rotated local RPP */
 	VSETALL( small, 0 );
-	VSET( ebmp->ebm_large, ebmp->ebm_xdim, ebmp->ebm_ydim, ebmp->ebm_tallness );
+	VSET( ebmp->ebm_large, ebmp->ebm_i.xdim, ebmp->ebm_i.ydim, ebmp->ebm_i.tallness );
 	rt_rot_bound_rpp( stp->st_min, stp->st_max, stp->st_pathmat,
 		small, ebmp->ebm_large );
 
@@ -625,13 +762,13 @@ void
 rt_ebm_print( stp )
 register struct soltab	*stp;
 {
-	register struct ebm_specific *ebmp =
-		(struct ebm_specific *)stp->st_specific;
+	register struct rt_ebm_specific *ebmp =
+		(struct rt_ebm_specific *)stp->st_specific;
 
-	rt_log("ebm file = %s\n", ebmp->ebm_file );
+	rt_log("ebm file = %s\n", ebmp->ebm_i.file );
 	rt_log("dimensions = (%d, %d, %g)\n",
-		ebmp->ebm_xdim, ebmp->ebm_ydim,
-		ebmp->ebm_tallness );
+		ebmp->ebm_i.xdim, ebmp->ebm_i.ydim,
+		ebmp->ebm_i.tallness );
 	VPRINT("model cellsize", ebmp->ebm_cellsize);
 	VPRINT("model grid origin", ebmp->ebm_origin);
 }
@@ -654,8 +791,8 @@ register struct xray	*rp;
 struct application	*ap;
 struct seg		*seghead;
 {
-	register struct ebm_specific *ebmp =
-		(struct ebm_specific *)stp->st_specific;
+	register struct rt_ebm_specific *ebmp =
+		(struct rt_ebm_specific *)stp->st_specific;
 	vect_t		norm;
 	struct xray	ideal_ray;
 	struct seg	myhead;
@@ -676,7 +813,7 @@ ideal_ray.r_dir[X], ideal_ray.r_dir[Y], ideal_ray.r_dir[Z] );
 		return(0);
 
 	VSET( norm, 0, 0, -1 );		/* letters grow in +z, which is "inside" the halfspace */
-	i = rt_seg_planeclip( seghead, &myhead, norm, 0.0, ebmp->ebm_tallness,
+	i = rt_seg_planeclip( seghead, &myhead, norm, 0.0, ebmp->ebm_i.tallness,
 		&ideal_ray, ap );
 #if 0
 	if( segp )  {
@@ -705,8 +842,8 @@ register struct hit	*hitp;
 struct soltab		*stp;
 register struct xray	*rp;
 {
-	register struct ebm_specific *ebmp =
-		(struct ebm_specific *)stp->st_specific;
+	register struct rt_ebm_specific *ebmp =
+		(struct rt_ebm_specific *)stp->st_specific;
 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 
@@ -751,8 +888,8 @@ register struct curvature	*cvp;
 register struct hit		*hitp;
 struct soltab			*stp;
 {
-	register struct ebm_specific *ebmp =
-		(struct ebm_specific *)stp->st_specific;
+	register struct rt_ebm_specific *ebmp =
+		(struct rt_ebm_specific *)stp->st_specific;
 
 	vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 	cvp->crv_c1 = cvp->crv_c2 = 0;
@@ -771,8 +908,8 @@ struct soltab		*stp;
 register struct hit	*hitp;
 register struct uvcoord	*uvp;
 {
-	register struct ebm_specific *ebmp =
-		(struct ebm_specific *)stp->st_specific;
+	register struct rt_ebm_specific *ebmp =
+		(struct rt_ebm_specific *)stp->st_specific;
 
 	/* XXX uv should be xy in ideal space */
 }
@@ -784,11 +921,11 @@ void
 rt_ebm_free( stp )
 struct soltab	*stp;
 {
-	register struct ebm_specific *ebmp =
-		(struct ebm_specific *)stp->st_specific;
+	register struct rt_ebm_specific *ebmp =
+		(struct rt_ebm_specific *)stp->st_specific;
 
-	rt_free( (char *)ebmp->ebm_map, "ebm_map" );
-	rt_free( (char *)ebmp, "ebm_specific" );
+	rt_free( (char *)ebmp->ebm_i.map, "ebm_map" );
+	rt_free( (char *)ebmp, "rt_ebm_specific" );
 }
 
 int
@@ -800,34 +937,64 @@ rt_ebm_class()
 /*
  *			R T _ E B M _ P L O T
  */
+#if NEW_IF
 int
-rt_ebm_plot( rp, matp, vhead, dp )
+rt_ebm_plot( vhead, mat, ip, abs_tol, rel_tol, norm_tol )
+struct vlhead	*vhead;
+mat_t		mat;
+struct rt_db_internal *ip;
+double		abs_tol;
+double		rel_tol;
+double		norm_tol;
+{
+#else
+int
+rt_ebm_plot( rp, mat, vhead, dp )
 union record	*rp;
-matp_t		matp;
+mat_t		mat;
 struct vlhead	*vhead;
 struct directory *dp;
 {
-	register struct ebm_specific *ebmp;
+	struct rt_external	ext, *ep;
+	struct rt_db_internal	intern, *ip;
+#endif
+	register struct rt_ebm_internal *eip;
 	register int	x,y;
 	register int	following;
 	register int	base;
+	int		i;
 
-	if( (ebmp = rt_ebm_import( rp )) == EBM_NULL )
-		return(-1);
+#if NEW_IF
+	/* All set */
+#else
+	ep = &ext;
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_buf = (genptr_t)rp;
+	ep->ext_nbytes = dp->d_len*sizeof(union record);
+	i = rt_ebm_import( &intern, ep, mat );
+	if( i < 0 )  {
+		rt_log("rt_ebm_plot(): db import failure\n");
+		return(-1);		/* BAD */
+	}
+	ip = &intern;
+#endif
+	RT_CK_DB_INTERNAL(ip);
+	eip = (struct rt_ebm_internal *)ip->idb_ptr;
+	RT_EBM_CK_MAGIC(eip);
 
 	/* Find vertical lines */
 	base = 0;	/* lint */
-	for( x=0; x <= ebmp->ebm_xdim; x++ )  {
+	for( x=0; x <= eip->xdim; x++ )  {
 		following = 0;
-		for( y=0; y <= ebmp->ebm_ydim; y++ )  {
+		for( y=0; y <= eip->ydim; y++ )  {
 			if( following )  {
-				if( (BIT( x-1, y )==0) != (BIT( x, y )==0) )
+				if( (BIT( eip, x-1, y )==0) != (BIT( eip, x, y )==0) )
 					continue;
-				rt_ebm_plate( x, base, x, y, ebmp->ebm_tallness,
-					matp, vhead );
+				rt_ebm_plate( x, base, x, y, eip->tallness,
+					mat, vhead );
 				following = 0;
 			} else {
-				if( (BIT( x-1, y )==0) == (BIT( x, y )==0) )
+				if( (BIT( eip, x-1, y )==0) == (BIT( eip, x, y )==0) )
 					continue;
 				following = 1;
 				base = y;
@@ -836,25 +1003,23 @@ struct directory *dp;
 	}
 
 	/* Find horizontal lines */
-	for( y=0; y <= ebmp->ebm_ydim; y++ )  {
+	for( y=0; y <= eip->ydim; y++ )  {
 		following = 0;
-		for( x=0; x <= ebmp->ebm_xdim; x++ )  {
+		for( x=0; x <= eip->xdim; x++ )  {
 			if( following )  {
-				if( (BIT( x, y-1 )==0) != (BIT( x, y )==0) )
+				if( (BIT( eip, x, y-1 )==0) != (BIT( eip, x, y )==0) )
 					continue;
-				rt_ebm_plate( base, y, x, y, ebmp->ebm_tallness,
-					matp, vhead );
+				rt_ebm_plate( base, y, x, y, eip->tallness,
+					mat, vhead );
 				following = 0;
 			} else {
-				if( (BIT( x, y-1 )==0) == (BIT( x, y )==0) )
+				if( (BIT( eip, x, y-1 )==0) == (BIT( eip, x, y )==0) )
 					continue;
 				following = 1;
 				base = x;
 			}
 		}
 	}
-	rt_free( (char *)ebmp->ebm_map, "ebm_map" );
-	rt_free( (char *)ebmp, "ebm_specific" );
 	return(0);
 }
 
@@ -863,7 +1028,7 @@ rt_ebm_plate( x1, y1, x2, y2, t, mat, vhead )
 int			x1, y1;
 int			x2, y2;
 double			t;
-register matp_t		mat;
+register mat_t		mat;
 register struct vlhead	*vhead;
 {
 	LOCAL point_t	s, p;
@@ -888,6 +1053,63 @@ register struct vlhead	*vhead;
 	ADD_VL( vhead, srot, 1 );
 }
 
+/*
+ *			R T _ E B M _ T E S S
+ */
+#if NEW_IF
+int
+rt_ebm_tess( r, m, ip, mat, abs_tol, rel_tol, norm_tol )
+struct nmgregion	**r;
+struct model		*m;
+struct rt_db_internal	*ip;
+register mat_t		mat;
+double		abs_tol;
+double		rel_tol;
+double		norm_tol;
+{
+#else
+int
+rt_ebm_tess( r, m, rp, mat, dp, abs_tol, rel_tol )
+struct nmgregion	**r;
+struct model		*m;
+register union record	*rp;
+register mat_t		mat;
+struct directory	*dp;
+double			abs_tol;
+double			rel_tol;
+{
+	struct rt_external	ext, *ep;
+	struct rt_db_internal	intern, *ip;
+#endif
+	struct rt_ebm_internal	*eip;
+	register int	i;
+	struct shell	*s;
+	struct vertex	**verts;	/* dynamic array of pointers */
+	struct vertex	***vertp;	/* dynam array of ptrs to pointers */
+	struct faceuse	*fu;
+
+#if NEW_IF
+	/* All set */
+#else
+	ep = &ext;
+	RT_INIT_EXTERNAL(ep);
+	ep->ext_buf = (genptr_t)rp;
+	ep->ext_nbytes = dp->d_len*sizeof(union record);
+	i = rt_ebm_import( &intern, ep, mat );
+	if( i < 0 )  {
+		rt_log("rt_ebm_tess(): db import failure\n");
+		return(-1);		/* BAD */
+	}
+	ip = &intern;
+#endif
+	RT_CK_DB_INTERNAL(ip);
+	eip = (struct rt_ebm_internal *)ip->idb_ptr;
+	RT_EBM_CK_MAGIC(eip);
+
+	/* XXX tess routine needed */
+	return(-1);
+}
+
 /******** Test Driver *********/
 #ifdef TEST_DRIVER
 
@@ -896,7 +1118,7 @@ FILE			*plotfp;
 struct soltab		Tsolid;
 struct directory	Tdir;
 struct application	Tappl;
-struct ebm_specific	*bmsp;
+struct rt_ebm_specific	*bmsp;
 struct resource		resource;
 
 main( argc, argv )
@@ -908,7 +1130,7 @@ char	**argv;
 	register int	x, y;
 	fastf_t		xx, yy;
 	mat_t		mat;
-	register struct ebm_specific	*ebmp;
+	register struct rt_ebm_specific	*ebmp;
 	int		arg;
 	FILE		*fp;
 	union record	rec;
@@ -933,7 +1155,7 @@ char	**argv;
 		exit(1);
 	}
 	rt_ebm_print( &Tsolid );
-	ebmp = bmsp = (struct ebm_specific *)Tsolid.st_specific;
+	ebmp = bmsp = (struct rt_ebm_specific *)Tsolid.st_specific;
 
 	outline( Tsolid.st_pathmat, &rec );
 
@@ -953,7 +1175,7 @@ char	**argv;
 #endif
 #if 0
 	y = arg;
-	for( x=0; x<=ebmp->ebm_xdim; x++ )  {
+	for( x=0; x<=ebmp->ebm_i.xdim; x++ )  {
 		VSET( pt1, 0, y, 1 );
 		VSET( pt2, x, 0, 1 );
 		trial( pt1, pt2 );
@@ -961,15 +1183,15 @@ char	**argv;
 #endif
 #if 0
 	y = arg;
-	for( x=0; x<=ebmp->ebm_xdim; x++ )  {
+	for( x=0; x<=ebmp->ebm_i.xdim; x++ )  {
 		VSET( pt1, 0, y, 2 );
 		VSET( pt2, x, 0, 4 );
 		trial( pt1, pt2 );
 	}
 #endif
 #if 0
-	for( y=0; y<=ebmp->ebm_ydim; y++ )  {
-		for( x=0; x<=ebmp->ebm_xdim; x++ )  {
+	for( y=0; y<=ebmp->ebm_i.ydim; y++ )  {
+		for( x=0; x<=ebmp->ebm_i.xdim; x++ )  {
 			VSET( pt1, 0, y, 2 );
 			VSET( pt2, x, 0, 4 );
 			trial( pt1, pt2 );
@@ -977,8 +1199,8 @@ char	**argv;
 	}
 #endif
 #if 0
-	for( y= -1; y<=ebmp->ebm_ydim; y++ )  {
-		for( x= -1; x<=ebmp->ebm_xdim; x++ )  {
+	for( y= -1; y<=ebmp->ebm_i.ydim; y++ )  {
+		for( x= -1; x<=ebmp->ebm_i.xdim; x++ )  {
 			VSET( pt1, x, y, 10 );
 			VSET( pt2, x+2, y+3, -4 );
 			trial( pt1, pt2 );
@@ -986,10 +1208,10 @@ char	**argv;
 	}
 #endif
 #if 0
-	for( y=0; y<=ebmp->ebm_ydim; y++ )  {
-		for( x=0; x<=ebmp->ebm_xdim; x++ )  {
-			VSET( pt1, ebmp->ebm_xdim, y, 2 );
-			VSET( pt2, x, ebmp->ebm_ydim, 4 );
+	for( y=0; y<=ebmp->ebm_i.ydim; y++ )  {
+		for( x=0; x<=ebmp->ebm_i.xdim; x++ )  {
+			VSET( pt1, ebmp->ebm_i.xdim, y, 2 );
+			VSET( pt2, x, ebmp->ebm_i.ydim, 4 );
 			trial( pt1, pt2 );
 		}
 	}
@@ -1003,8 +1225,8 @@ char	**argv;
 	}
 #endif
 #if 0
-	for( yy=0; yy<=ebmp->ebm_ydim; yy += 0.3 )  {
-		for( xx=0; xx<=ebmp->ebm_xdim; xx += 0.3 )  {
+	for( yy=0; yy<=ebmp->ebm_i.ydim; yy += 0.3 )  {
+		for( xx=0; xx<=ebmp->ebm_i.xdim; xx += 0.3 )  {
 			VSET( pt1, 0, yy, 2 );
 			VSET( pt2, xx, 0, 4 );
 			trial( pt1, pt2 );
@@ -1012,10 +1234,10 @@ char	**argv;
 	}
 #endif
 #if 0
-	for( yy=0; yy<=ebmp->ebm_ydim; yy += 0.3 )  {
-		for( xx=0; xx<=ebmp->ebm_xdim; xx += 0.3 )  {
-			VSET( pt1, ebmp->ebm_xdim, yy, 2 );
-			VSET( pt2, xx, ebmp->ebm_ydim, 4 );
+	for( yy=0; yy<=ebmp->ebm_i.ydim; yy += 0.3 )  {
+		for( xx=0; xx<=ebmp->ebm_i.xdim; xx += 0.3 )  {
+			VSET( pt1, ebmp->ebm_i.xdim, yy, 2 );
+			VSET( pt2, xx, ebmp->ebm_i.ydim, 4 );
 			trial( pt1, pt2 );
 		}
 	}
@@ -1036,8 +1258,8 @@ char	**argv;
 	 * were especially troublesome */
 	xx=0;
 	yy=0.3;
-	VSET( pt1, ebmp->ebm_xdim, yy, 2 );
-	VSET( pt2, xx, ebmp->ebm_ydim, 4 );
+	VSET( pt1, ebmp->ebm_i.xdim, yy, 2 );
+	VSET( pt2, xx, ebmp->ebm_i.ydim, 4 );
 	trial( pt1, pt2 );
 #endif
 
@@ -1059,8 +1281,8 @@ char	**argv;
 	 */
 	VSET( pt1, 0.75, 1.1, 0 );
 	{
-		for( yy=0; yy<=ebmp->ebm_ydim; yy += 0.3 )  {
-			for( xx=0; xx<=ebmp->ebm_xdim; xx += 0.3 )  {
+		for( yy=0; yy<=ebmp->ebm_i.ydim; yy += 0.3 )  {
+			for( xx=0; xx<=ebmp->ebm_i.xdim; xx += 0.3 )  {
 				VSET( pt2, xx, yy, 4 );
 				trial( pt1, pt2 );
 			}
@@ -1068,7 +1290,7 @@ char	**argv;
 	}
 #endif
 #if 0
-	for( x=0; x<ebmp->ebm_xdim; x++ )  {
+	for( x=0; x<ebmp->ebm_i.xdim; x++ )  {
 		VSET( pt1, x+0.75, 1.1, -10 );
 		VSET( pt2, x+0.75, 1.1, 4 );
 		trial( pt1, pt2 );
@@ -1084,7 +1306,7 @@ vect_t	p1, p2;
 	struct seg	*segp, *next;
 	fastf_t		lastk;
 	struct xray	ray;
-	register struct ebm_specific *ebmp = bmsp;
+	register struct rt_ebm_specific *ebmp = bmsp;
 
 	VMOVE( ray.r_pt, p1 );
 	VSUB2( ray.r_dir, p2, p1 );
@@ -1119,16 +1341,16 @@ outline(mat, rp)
 mat_t	mat;
 union record	*rp;
 {
-	register struct ebm_specific *ebmp = bmsp;
+	register struct rt_ebm_specific *ebmp = bmsp;
 	register struct vlist	*vp;
 	struct vlhead	vhead;
 
 	vhead.vh_first = vhead.vh_last = VL_NULL;
 
 	pl_3space( plotfp, -BIT_XWIDEN,-BIT_YWIDEN,-BIT_XWIDEN,
-		 ebmp->ebm_xdim+BIT_XWIDEN, ebmp->ebm_ydim+BIT_YWIDEN, (int)(ebmp->ebm_tallness+1.99) );
+		 ebmp->ebm_i.xdim+BIT_XWIDEN, ebmp->ebm_i.ydim+BIT_YWIDEN, (int)(ebmp->ebm_i.tallness+1.99) );
 	pl_3box( plotfp, -BIT_XWIDEN,-BIT_YWIDEN,-BIT_XWIDEN,
-		 ebmp->ebm_xdim+BIT_XWIDEN, ebmp->ebm_ydim+BIT_YWIDEN, (int)(ebmp->ebm_tallness+1.99) );
+		 ebmp->ebm_i.xdim+BIT_XWIDEN, ebmp->ebm_i.ydim+BIT_YWIDEN, (int)(ebmp->ebm_i.tallness+1.99) );
 
 	/* Get vlist, then just draw the vlist */
 	rt_ebm_plot( rp, mat, &vhead, 0 );
