@@ -27,8 +27,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "mater.h"
+#include "raytrace.h"
 #include "./ged.h"
-#include "./objdir.h"
 #include "./solid.h"
 #include "./dm.h"
 
@@ -265,7 +265,7 @@ f_area()
 		sprintf( buf, "boundp -t %s | parea", cmd_args[1] );
 		(void)printf("Tolerance is %s\n", cmd_args[1] );
 	}  else  {
-		double tol = maxview * 0.001;
+		double tol = VIEWSIZE * 0.001;
 		sprintf( buf, "boundp -t %e | parea", tol );
 		(void)printf("Auto-tolerance of 0.1%% is %e\n", tol );
 	}
