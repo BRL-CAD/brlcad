@@ -28,6 +28,7 @@ extern double		AmbientIntensity;	/* Ambient light intensity */
 extern double		azimuth, elevation;
 extern int		lightmodel;		/* Select lighting model */
 extern int		rpt_overlap;		/* Warn about overlaps? */
+extern int		rpt_dist;		/* Output depth along w/ RGB? */
 
 /***** variables declared in rt.c *****/
 extern struct application	ap;
