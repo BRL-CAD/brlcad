@@ -1,0 +1,101 @@
+.\" -*- Text -*-
+.\" Copyright (c) 1990, University of Michigan
+.TH RLECAT 1 "November 12, 1990" 1
+.UC 4 
+.SH NAME
+rlecat \- concatenate and repeat images.
+.SH SYNOPSIS
+.B rlecat
+[
+.B \-c
+] [
+.B \-n
+.I repeat-count
+] [
+.B \-o 
+.I outfile
+] [ 
+.I files ...
+]
+.SH DESCRIPTION
+This program will concatenate all the input 
+.IR RLE (5)
+images, adding titles, and
+optionally repeating the images a specified number of times.
+For each input file, it copies all images to the output file.  If an
+image does not have a 
+.I title
+or
+.I TITLE
+comment, and the input is not coming from the standard input, then the
+file name (and an image number, if it is not the first image in the
+file) is added as a
+.I TITLE
+comment.  If the input file were named 'images.rle', the first image
+would be given a comment
+.IR TITLE=images.rle ,
+the second would get a comment
+.IR TITLE=images.rle(2) ,
+and so on.
+.SH OPTIONS
+.TP
+.B \-c
+With 
+.BR \-n ,
+specifies that the output images should be "collated".  In other
+words, the repeat sequence will be 1 2 3 ... 1 2 3 ... instead of the
+default of 1 1 ... 2 2 ... 3 3 ...
+.TP
+.BI \-n " repeat-count"
+Specifies that each input image should be repeated
+.I repeat-count
+times.  The "repeat unit" (if 
+.B \-c
+is specified, this is the entire concatenated sequence of input
+images, otherwise it is just each image, separately) is written to a
+temporary file, and then copied to the output the requisite number of
+times.
+.TP
+.BI \-o " outfile"
+If specified, the output will be written to this file.  If 
+.I outfile
+is "\-", or if it is not specified, the output will be written to the
+standard output stream.
+.TP
+.I files
+The input will be read from these files.  If
+a file name
+is "\-", or none are specified, the input will be read from the standard
+input stream.
+.SH EXAMPLES
+.TP
+rlebg 128 128 128 | rlecat -n 25
+Generates 25 copies of a gray background; useful for using
+.IR rlecomp (1)
+to put background on an animation sequence (with 25 or fewer frames).
+.TP
+rlecat *.rle | <some processing> | getx11
+Adds 
+.I TITLE 
+comments so the individual images are correctly identified by 
+.IR getx11 (1).
+.TP
+rlecat -c -r 3 anim*.rle
+Generates an animation with 3 repeats of the action.
+.TP
+rlecat -r 3 anim*.rle
+Generates a "triple-framed" animation \- each frame is repeated 3
+times.
+.SH FILES
+/tmp/rlecatXXXXXXXX
+.SH SEE ALSO
+.IR rleaddcom (1),
+.IR rlehdr (1),
+.IR urt (1),
+.IR RLE (5).
+.SH AUTHOR
+Spencer W. Thomas, University of Michigan
+.SH BUGS
+If the /tmp directory is not writable, or if there is not sufficient
+space on /tmp to hold a repeat unit, the program will not work
+correctly.  

@@ -1,0 +1,57 @@
+.\" Copyright (c) 1986, University of Utah
+.\" Template man page.  Taken from wtm's page for getcx3d
+.TH REPOS 1 "Month DD, YYYY" 1
+.UC 4 
+.SH NAME
+repos \- reposition an RLE image
+.SH SYNOPSIS
+.B repos
+[
+.B \-p
+.I "xpos ypos"
+]
+[
+.B \-P
+.I "xinc yinc"
+] [
+.B \-o
+.I outfile
+] [ 
+.I infile
+] 
+.SH DESCRIPTION
+.IR repos
+repositions an RLE image.  Repos just changes the coordinates stored in
+the RLE header (see
+.IR RLE(5)),
+no modification is made to the image itself.
+.SH OPTIONS
+If neither of the following flags are specified,
+.B \-p
+0 0 is assumed.
+.TP
+.BI \-p " xpos ypos"
+Reposition the image to the absolute coordinates
+.I xpos ypos.
+.TP
+.BI \-P " xinc yinc"
+Move the image by 
+.I xinc yinc
+pixels from where it currently is (relative movement).
+.TP
+.I infile
+The input will be read from this file, otherwise, input will
+be taken from stdin.
+.TP
+.BI \-o " outfile"
+If specified, output will be written to this file, otherwise it will
+go to stdout.
+.SH DIAGNOSTICS
+.IR Repos
+does not allow the image origin to have negative coordinates.
+.SH SEE ALSO
+.IR rlesetbg (1),
+.IR urt (1),
+.IR RLE (5).
+.SH AUTHORS
+Rod Bogart, John W. Peterson

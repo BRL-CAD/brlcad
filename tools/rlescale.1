@@ -1,0 +1,48 @@
+.\" Copyright (c) 1988, University of Utah
+.TH RLESCALE 1 "Jun 15, 1988" 1
+.UC 4 
+.SH NAME
+rlescale \- produce gray scale images.
+.SH SYNOPSIS
+.B rlescale
+[
+.B \-c
+] [
+.B \-n
+.I nsteps
+] [
+.B \-o
+.I outfile
+] [
+.I xsize
+] [
+.I ysize
+]
+.SH DESCRIPTION
+.I Rlescale
+produces an RLE image containing a (more-or-less) standard gray scale
+image.  Along the bottom are 8 colored patches (in the standard
+primary and secondary colors).  Above these are a sequences of
+logarithmically scaled gray patches.  By default, a 16 step scale is
+produced.  The size of the output file (default 512 by 480) can be
+set with the 
+.I xsize
+and
+.I ysize
+arguments.
+.SH OPTIONS
+.TP
+.B \-c
+Produce red, green, blue, and gray scales.
+.TP
+.BI \-n " nsteps"
+Specify the number of steps to be produced.
+.SH SEE ALSO
+.IR urt (1),
+.IR RLE (5).
+.SH AUTHOR
+Spencer W. Thomas, University of Michigan.
+.SH BUGS
+Can't make an image narrower than 3 * 
+.I nsteps 
+pixels wide.

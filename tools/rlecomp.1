@@ -1,0 +1,86 @@
+.\" Copyright (c) 1986, University of Utah
+.TH RLECOMP 1 "December 20, 1986" 1
+.UC 4 
+.SH NAME
+rlecomp \- Digital image compositor
+.SH SYNOPSIS
+.B rlecomp
+[
+.B \-o
+.I outfile
+]
+.I Afile operator Bfile 
+.SH DESCRIPTION
+.IR rlecomp
+implements an image compositor based on presence of an alpha, or matte channel
+the image.  This extra channel usually defines
+a mask which represents a sort of a cookie-cutter for the image.  This is the 
+case when alpha is 255 (full coverage) for pixels inside the shape, zero
+outside, and between zero and 255 on the boundary.  
+If \fIAfile\fP or \fIBfile\fP is just a single \-, then 
+.IR rlecomp 
+reads that file from the standard input.
+
+The operations behave as follows (assuming the operation is
+"\fIA operator B\fP"):
+.TP
+.B over
+The result will be the union of the two
+image shapes, with \fIA\fP obscuring \fIB\fP in the region of overlap.
+.TP
+.B in
+The result is simply the image \fIA\fP cut by the shape of \fIB\fP.
+None of the image data of \fIB\fP will be in the result.
+.TP
+.B atop
+The result is the same shape as image \fIB\fP, with \fIA\fP obscuring
+\fIB\fP where the image shapes overlap.  Note this differs from
+.B over
+because the portion of \fIA\fP outside \fIB\fP's shape does not appear
+in the result. 
+.TP
+.B out
+The result image is image \fIA\fP with the shape of \fIB\fP cut out.
+.TP
+.B xor
+The result is the image data from both images that is
+outside the overlap region.  The overlap region will be blank.
+.TP
+.B plus
+The result is just the sum of the image data.  Output values are
+clipped to 255 (no overflow).  This
+operation is actually independent of the alpha channels.
+.TP
+.B minus
+The result of \fIA\fP \- \fIB\fP, with underflow clipped to zero.  The
+alpha channel is ignored (set to 255, full coverage).
+.TP
+.B diff
+The result of abs(\fIA\fP \- \fIB\fP).
+This is useful for comparing two very similar images.
+.TP
+.B add
+The result of \fIA\fP + \fIB\fP, with overflow wrapping
+around (\fImod\fP 256).
+.TP
+.B subtract
+The result of \fIA\fP - \fIB\fP, with underflow wrapping around
+(\fImod\fP 256).  The \fBadd\fP and \fBsubtract\fP operators can be
+used to perform reversible transformations.
+.LP
+.SH SEE ALSO
+.IR urt (1),
+.IR RLE (5),
+.br
+"Compositing Digital Images", Porter and Duff,
+.I "Proceedings of SIGGRAPH '84"
+p.255
+.SH AUTHORS
+Rod Bogart and John W. Peterson
+.SH BUGS
+The other operations could be optimized as much as 
+.B over
+is.
+
+.I Rlecomp
+assumes both input files have the same number of channels.

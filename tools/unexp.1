@@ -1,0 +1,98 @@
+.\" Copyright (c) 1986, University of Utah
+.\" Template man page.  Taken from wtm's page for getcx3d
+.TH UNEXP 1 "November 8, 1987" 1
+.UC 4 
+.SH NAME
+unexp \- Convert "exponential" files into normal files.
+.SH SYNOPSIS
+.B unexp
+[
+.B \-m
+.I maxval
+] [
+.B \-o
+.I outfile
+] [
+.B \-p
+] [
+.B \-s
+] [
+.B \-v
+] 
+.I infile
+.SH DESCRIPTION
+.IR Unexp
+Converts a file of "exponential" floating point values into an 
+.IR RLE (5)
+file containing integer valued bytes.  Exponential files have N-1 channels of
+eight bit data, with the Nth channel containing a common exponent for
+the other channels.  This allows the values represented by the pixels to have 
+a wider dynamic range.
+
+If no maximum value is specified, 
+.I unexp
+first reads the RLE file to find
+the dynamic range of the whole file.  It then rewinds the file and scales
+the output to fit within that dynamic range.  If a maximum value is specified,
+.I unexp
+runs in one pass, and clamps any values exceeding the maximum.  
+
+Files containing exponential data are expected to have a 
+"exponential_data" comment; 
+.I unexp
+prints a warning if such a comment
+doesn't exist.  An exponential file should be \fIunexp\fP'ed before
+attempting to use any tools that perform arithmetic on pixels (e.g.,
+.IR rlecomp (1),
+.IR avg4 (1),
+.IR fant (1),
+or
+.IR applymap (1))
+or displaying the image.
+
+.I Unexp
+does not allow piped input.  The
+.I infile
+must be a real file; the special filenames described in 
+.IR urt (1)
+are not allowed.  ("\-" does work, as long as the input is coming from
+a real file; this is of minimal utility, therefore, as typing 
+.I "unexp - <foo.rle"
+is harder than typing
+.IR "unexp foo.rle" .)
+.SH OPTIONS
+.TP
+.BI \-m " maxval"
+Specify the maximum value (i.e., the data in the file is assumed to be in the 
+range 0..maxval).  Only the conversion pass is executed, and values found 
+exceeding the maximum are clamped.
+.TP
+.BI \-o \ outfile
+If specified, the output will be written to this file.  If 
+.I outfile
+is "\-", or if it is not specified, the output will be written to the
+standard output stream.
+.TP
+.B \-p
+Print the maximum value found during the scanning phase
+.TP
+.B \-s
+Just scan the file to find the maximum, don't generate any output.
+.TP
+.B \-v
+Verbose mode, print a message to stderr after scanning or converting every 
+hundred scanlines.
+.SH SEE ALSO
+.IR float_to_exp (3),
+.IR urt (1),
+.IR RLE (5).
+.SH AUTHOR
+John W. Peterson
+.SH BUGS
+.I Unexp
+is provided because of the lack of floating point or extended
+precision RLE files.
+
+The 
+.B \-v
+flag is a historical relict from the slow CPU days.
