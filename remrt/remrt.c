@@ -33,9 +33,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 
 #include <sys/types.h>
-#include <sys/time.h>		/* for struct timeval */
 #include <sys/socket.h>
 #include <netinet/in.h>
+#ifndef CRAY
+#include <sys/time.h>		/* for struct timeval */
+#endif
 
 #include "machine.h"
 #include "vmath.h"
@@ -199,20 +201,20 @@ struct ihost		*host_lookup_by_addr();
 struct ihost		*host_lookup_by_hostent();
 
 /* RT Options */
-int		width = 64;
-int		height = 64;
+extern int	width;
+extern int	height;
 extern int	hypersample;
 extern int	matflag;
 extern double	rt_perspective;
 int		benchmark = 0;
 int		rdebug;
 int		use_air = 0;
-char		*outputfile;		/* output file name */
-char		*framebuffer;
+extern char	*outputfile;		/* output file name */
+extern char	*framebuffer;
 extern double	azimuth, elevation;
-int		desiredframe;
+extern int	desiredframe;
 
-struct rt_g	rt_g;
+extern struct rt_g	rt_g;
 
 extern struct command_tab cmd_tab[];	/* given at end */
 
@@ -280,6 +282,7 @@ char	**argv;
 
 	/* Random inits */
 	gethostname( ourname, sizeof(ourname) );
+	width = height = 64;
 
 	start_helper();
 
@@ -1653,11 +1656,13 @@ int	enter;
 
 #ifdef CRAY
 	addr_tmp = from->sin_addr;
+	addr = gethostbyaddr(&addr_tmp, sizeof (struct in_addr),
+		from->sin_family);
 #else
 	addr_tmp = from->sin_addr.s_addr;
-#endif
 	addr = gethostbyaddr(&from->sin_addr, sizeof (struct in_addr),
 		from->sin_family);
+#endif
 	if( addr == NULL )  {
 		/* Potentially, print up a hostent structure here */
 		addr_tmp = ntohl(addr_tmp);
@@ -1678,13 +1683,14 @@ int	enter;
 {
 	struct sockaddr_in	sin;
 	struct hostent		*addr;
+	unsigned long		addr_tmp;
 
 	/* Determine name to be found */
 	if( isdigit( *name ) )  {
 		/* Numeric */
 		sin.sin_family = AF_INET;
 #ifdef CRAY
-		sin.sin_addr = inet_addr(name);
+		addr_tmp = sin.sin_addr = inet_addr(name);
 		addr = gethostbyaddr( &addr_tmp, sizeof(struct in_addr),
 			sin.sin_family );
 #else
