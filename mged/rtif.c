@@ -451,7 +451,7 @@ char	**argv;
 		sp->s_iflag = DOWN;
 
 	/* Add overlay */
-	cvt_vlblock_to_solids( vbp, "OVERLAPS" );
+	cvt_vlblock_to_solids( vbp, "OVERLAPS", 0 );
 	rt_vlblock_free(vbp);
 	dmaflag = 1;
 }
@@ -816,7 +816,7 @@ char	**argv;
 	}
 	fclose(fp);
 
-	cvt_vlblock_to_solids( rtif_vbp, "EYE_PATH" );
+	cvt_vlblock_to_solids( rtif_vbp, "EYE_PATH", 0 );
 	rt_vlblock_free(rtif_vbp);
 }
 
