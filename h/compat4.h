@@ -268,6 +268,20 @@ extern "C" {
 #define CxDiv			bn_cx_div
 #define CxSqrt( cp )		bn_cx_sqrt( cp, cp )
 
+/* poly.c */
+/* WARNING:  The argument order has been changed, outputs now on the left */
+#define poly				bn_poly_t	/* typedef */
+#define rt_poly_mul(a,b,prod)		bn_poly_mul(prod,a,b)
+#define rt_poly_scale			bn_poly_scale
+#define rt_poly_add(a,b,sum)		bn_poly_add(sum,a,b)
+#define rt_poly_sub(a,b,diff)		bn_poly_sub(diff,a,b)
+#define rt_poly_synthetic_division(dvdend,dvsor,quo,rem)	\
+		bn_poly_synthetic_division(quo, rem, dvdend, dvsor)
+#define rt_poly_quadratic_roots(p,root)	bn_poly_quadratic_roots(root,p)
+#define rt_poly_cubic_roots(p,root)	bn_poly_cubic_roots(root,p)
+#define rt_poly_quartic_roots(p,root)	bn_poly_quartic_roots(root,p)
+#define rt_pr_poly			bn_pr_poly
+#define rt_pr_roots			bn_pr_roots
 
 
 #ifdef __cplusplus
