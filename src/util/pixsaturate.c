@@ -1,5 +1,24 @@
-/*
- *			P I X S A T U R A T E . C
+/*                   P I X S A T U R A T E . C
+ * BRL-CAD
+ *
+ * Copyright (c) 2004 United States Government as represented by the
+ * U.S. Army Research Laboratory.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file pixsaturate.c
  *
  *  A saturation value of 0 gives monochrome,
  *  1.0 gives the original image,
@@ -13,9 +32,6 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005-5066
- *  
- *  Distribution Status -
- *	Public Domain, Distribution Unlimitied.
  *
  *  Remarks from Haeberli's routine:
  *	saturate-

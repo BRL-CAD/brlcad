@@ -1,5 +1,24 @@
-/*
- *			P L - H P G L . C
+/*                       P L - H P G L . C
+ * BRL-CAD
+ *
+ * Copyright (c) 2004 United States Government as represented by the
+ * U.S. Army Research Laboratory.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as
+ * published by the Free Software Foundation; either version 2 of the
+ * License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file pl-hpgl.c
  *
  * Description -
  *	Convert a unix-plot file to hpgl codes.
@@ -13,9 +32,6 @@
  *	Huntsville, AL  35899
  *	(205) 895-6467 UAH
  *	(205) 876-1089 Redstone Arsenal
- *  
- *  Distribution Status -
- *	Public Domain, Distribution Unlimitied.
  */
 #ifndef lint
 static const char RCSid[] = "@(#)$Header$ (BRL)";
