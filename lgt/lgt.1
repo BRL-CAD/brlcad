@@ -198,6 +198,12 @@ and
 .I b\^
 in the sub-grid.
 .TP
+.BI \-z n\^
+Set shadow computation to
+.IR n\^ .
+When set to zero, no shadows will be computed.
+This is useful when computing a view from inside the model.
+.TP
 .BI \-X n\^
 Set the overlap reporting flag to
 .IR n\^ .
@@ -330,10 +336,17 @@ Input key-frame from
 This command reads a saved view as output by
 .IR mged\^ (1)
 when using the
-.I saveview\^
-or
 .I savekey\^
-commands.
+command.
+When using
+.I savekey\^
+the user must be sure not to specify the time field,
+otherwise he must remove the resultant lines from the output file
+either manually or as a side-effect of running an interpolation
+program.
+If these time stamps remain in the file,
+.I lgt\^
+will likely get sick as the input gets out of phase.
 .TP
 .BR L "\ id"
 Modify light source data base entry
@@ -406,15 +419,6 @@ Save light source data base in
 .BR W "\ [file]"
 Save material data base in
 .IR file\^ .
-.TP
-.BR z "\ ulen vlen [width]"
-Specify size of texture map as
-.I ulen\^
-by
-.IR vlen\^ .
-The optional
-.I width\^
-is for specification of the length of padded scan lines in the texture map file.
 .TP
 .BR N "\ [temperature]"
 Specify temperature for IR painting.
