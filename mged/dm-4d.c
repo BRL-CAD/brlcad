@@ -66,17 +66,32 @@ int	Ir_object();
 unsigned Ir_cvtvecs(), Ir_load();
 void	Ir_statechange(), Ir_viewchange(), Ir_colorchange();
 void	Ir_window(), Ir_debug();
+int	Ir_dm();
+
+/*
+ * These variables are visible and modifiable via a "dm set" command.
+ */
+static int	cueing_on = 1;		/* Depth cueing flag - for colormap work */
+static int	zclipping_on = 1;	/* Z Clipping flag */
+static int	zbuffer_on = 1;		/* Hardware Z buffer is on */
+static int	lighting_on = 0;	/* Lighting model on */
+static int	ir_debug;		/* 2 for basic, 3 for full */
+static int	no_faceplate = 0;	/* Don't draw faceplate */
+/*
+ * These are derived from the hardware inventory -- user can change them,
+ * but the results may not be pleasing.  Mostly, this allows them to be seen.
+ */
+static int	ir_is_gt;		/* 0 for non-GT machines */
+static int	ir_has_zbuf;		/* 0 if no Z buffer */
+static int	ir_has_rgb;		/* 0 if mapped mode must be used */
+static int	ir_has_doublebuffer;	/* 0 if singlebuffer mode must be used */
+/* End modifiable variables */
 
 
 static char ir_title[] = "BRL MGED";
-static int cueing_on = 1;	/* Depth cueing flag - for colormap work */
-static int zclipping_on = 1;	/* Z Clipping flag */
-static int zbuffer_on = 1;	/* Hardware Z buffer is on */
 static int perspective_mode = 0;	/* Perspective flag */
 static int perspective_angle =3;	/* Angle of perspective */
 static int perspective_table[] = { 30, 45, 60, 90 };
-static int lighting_on = 0;	/* Lighting model on */
-static int no_faceplate = 0;	/* Don't draw faceplate */
 static int ovec = -1;		/* Old color map entry number */
 static int kblights();
 static double	xlim_view = 1.0;	/* args for ortho() */
@@ -157,16 +172,35 @@ struct dm dm_4d = {
 	0,			/* no "displaylist", per. se. */
 	0,			/* multi-window */
 	IRBOUND,
-	"sgi", "SGI 4d"
+	"sgi", "SGI 4d",
+	0,			/* mem map */
+	Ir_dm
 };
 
 extern struct device_values dm_values;	/* values read from devices */
 
-static int	ir_debug;		/* 2 for basic, 3 for full */
-static int	ir_is_gt;		/* 0 for non-GT machines */
-static int	ir_has_zbuf;		/* 0 if no Z buffer */
-static int	ir_has_rgb;		/* 0 if mapped mode must be used */
-static int	ir_has_doublebuffer;	/* 0 if singlebuffer mode must be used */
+static void	establish_lighting();
+static void	establish_zbuffer();
+
+
+static void
+refresh_hook()
+{
+	dmaflag = 1;
+}
+struct structparse Ir_vparse[] = {
+	{"%d",  1, "depthcue",		(int)&cueing_on,	Ir_colorchange },
+	{"%d",  1, "zclip",		(int)&zclipping_on,	refresh_hook },
+	{"%d",  1, "zbuffer",		(int)&zbuffer_on,	establish_zbuffer },
+	{"%d",  1, "lighting",		(int)&lighting_on,	establish_lighting },
+	{"%d",  1, "no_faceplate",	(int)&no_faceplate,	refresh_hook },
+	{"%d",  1, "has_zbuf",		(int)&ir_has_zbuf,	refresh_hook },
+	{"%d",  1, "has_rgb",		(int)&ir_has_rgb,	Ir_colorchange },
+	{"%d",  1, "has_doublebuffer",	(int)&ir_has_doublebuffer, refresh_hook },
+	{"%d",  1, "debug",		(int)&ir_debug,		FUNC_NULL },
+	{"",	0,  (char *)0,		0,			FUNC_NULL }
+};
+
 static int	ir_oldmonitor;		/* Old monitor type */
 long gr_id;
 long win_l, win_b, win_r, win_t;
@@ -229,11 +263,7 @@ Ir_configure_window_shape()
 	/* Write enable all the bloody bits after resize! */
 	viewport(0, winx_size, 0, winy_size);
 
-	if( ir_has_zbuf && zbuffer_on ) 
-	{
-		zbuffer(1);
-		lsetdepth(0, 0x07fffff );
-	}
+	if( ir_has_zbuf ) establish_zbuffer();
 
 	if( ir_has_doublebuffer)
 	{
@@ -1201,8 +1231,8 @@ checkevents()  {
 					continue;
 				}
 				/* toggle depthcueing and remake colormap */
-				cueing_on = cueing_on ? 0 : 1;
-				Ir_colorchange();
+				rt_vls_printf(&dm_values.dv_string,
+					"dm set depthcue=!\n");
 				continue;
 			} else if(ret == F2KEY)  {
 				if(!valp[1]) continue; /* Ignore release */
@@ -1212,8 +1242,8 @@ checkevents()  {
 					continue;
 				}
 				/* toggle zclipping */
-				zclipping_on = zclipping_on ? 0 : 1;
-				dmaflag = 1;
+				rt_vls_printf(&dm_values.dv_string,
+					"dm set zclip=!\n");
 				continue;
 			} else if(ret == F3KEY)  {
 				if(!valp[1]) continue; /* Ignore release */
@@ -1237,15 +1267,9 @@ checkevents()  {
 					ir_dbtext("Zbuffing");
 					continue;
 				}
-				if( ir_has_zbuf == 0 )  {
-					printf("dm-4d: This machine has no Zbuffer to enable\n");
-					continue;
-				}
 				/* toggle zbuffer status */
-				zbuffer_on = zbuffer_on ? 0 : 1;
-				zbuffer( zbuffer_on );
-				if( zbuffer_on) lsetdepth(0, 0x007fffff);
-				dmaflag = 1;
+				rt_vls_printf(&dm_values.dv_string,
+					"dm set zbuffer=!\n");
 				continue;
 			} else if(ret == F5KEY)  {
 				if(!valp[1]) continue; /* Ignore release */
@@ -1255,50 +1279,8 @@ checkevents()  {
 					continue;
 				}
 				/* toggle status */
-				if( lighting_on )  {
-					/* Turn it off */
-					mmode(MVIEWING);
-					lmbind(MATERIAL,0);
-					lmbind(LMODEL,0);
-					lighting_on = 0;
-					mmode(MSINGLE);
-				} else {
-					/* Turn it on */
-					if( cueing_on )  {
-						/* Has to be off for lighting */
-						cueing_on = 0;
-						Ir_colorchange();
-					}
-
-					mmode(MVIEWING);
-					/* Define material properties */
-					make_materials();
-
-					lmbind(LMODEL, 2);	/* infinite */
-
-					lmbind(LIGHT2,2);
-					lmbind(LIGHT3,3);
-					lmbind(LIGHT4,4);
-					lmbind(LIGHT5,5);
-
-					/* RGB color commands & lighting */
-#if 1
-					/* Good for debugging */
-					/* Material color does not apply,
-					 * when lighting is on */
-					lmcolor( LMC_COLOR );	/* default */
-#else
-					/* Good for looking.
-					 * RGBcolor() values go to emissions
-					 * durring lighting calculations.
-					 */
-					lmcolor( LMC_EMISSION );
-#endif
-
-					mmode(MSINGLE);
-					lighting_on = 1;
-				}
-				dmaflag = 1;
+				rt_vls_printf(&dm_values.dv_string,
+					"dm set lighting=!\n");
 				continue;
 			} else if (ret == F6KEY) {
 				if (!valp[1]) continue; /* Ignore release */
@@ -1845,6 +1827,19 @@ kblights()
 }
 #endif
 
+static void
+establish_zbuffer()
+{
+	if( ir_has_zbuf == 0 )  {
+		printf("dm-4d: This machine has no Zbuffer to enable\n");
+		zbuffer_on = 0;
+		continue;
+	}
+	zbuffer( zbuffer_on );
+	if( zbuffer_on) lsetdepth(0, 0x007fffff);
+	dmaflag = 1;
+}
+
 ir_clear_to_black()
 {
 	/* Re-enable the full viewport */
@@ -1873,6 +1868,54 @@ usinit()	{ printf("usinit\n"); }
 usnewlock()	{ printf("usnewlock\n"); }
 taskcreate()	{ printf("taskcreate\n"); }
 #endif
+
+/*
+ *  The structparse will change the value of the variable.
+ *  Just implement it, here.
+ */
+static void
+establish_lighting()
+{
+	if( !lighting_on )  {
+		/* Turn it off */
+		mmode(MVIEWING);
+		lmbind(MATERIAL,0);
+		lmbind(LMODEL,0);
+		mmode(MSINGLE);
+	} else {
+		/* Turn it on */
+		if( cueing_on )  {
+			/* Has to be off for lighting */
+			cueing_on = 0;
+			Ir_colorchange();
+		}
+			mmode(MVIEWING);
+		/* Define material properties */
+		make_materials();
+			lmbind(LMODEL, 2);	/* infinite */
+			lmbind(LIGHT2,2);
+		lmbind(LIGHT3,3);
+		lmbind(LIGHT4,4);
+		lmbind(LIGHT5,5);
+
+		/* RGB color commands & lighting */
+#if 1
+		/* Good for debugging */
+		/* Material color does not apply,
+		 * when lighting is on */
+		lmcolor( LMC_COLOR );	/* default */
+#else
+		/* Good for looking.
+		 * RGBcolor() values go to emissions
+		 * durring lighting calculations.
+		 */
+		lmcolor( LMC_EMISSION );
+#endif
+
+		mmode(MSINGLE);
+	}
+	dmaflag = 1;
+}
 
 /*
  *  Some initial lighting model stuff
@@ -2249,4 +2292,38 @@ sgi_has_stereo()
 	/* IRIX 4 systems */
 	return getgdesc(GD_STEREO);
 #endif
+}
+
+/*
+ *			I R _ D M
+ * 
+ *  Implement display-manager specific commands, from MGED "dm" command.
+ */
+int
+Ir_dm(argc, argv)
+int	argc;
+char	**argv;
+{
+	struct rt_vls	vls;
+
+	if( argc < 1 )  return -1;
+
+	/* For now, only "set" command is implemented */
+	if( strcmp( argv[0], "set" ) != 0 )  {
+		printf("dm: command is not 'set'\n");
+		return -1;
+	}
+
+	rt_vls_init(&vls);
+	if( argc < 2 )  {
+		/* Bare set command, print out current settings */
+		rt_structprint("dm_4d internal variables", Ir_vparse, (char *)0 );
+		printf("%s", rt_vls_addr(&vls) );
+		fflush(stdout);
+	} else {
+		rt_vls_from_argv( &vls, argc-1, argv+1 );
+		rt_structparse( &vls, Ir_vparse, (char *)0 );
+	}
+	rt_vls_free(&vls);
+	return 0;
 }
