@@ -4,6 +4,9 @@ dunnsnap \- expose film in a Dunn Model 631 camera
 .SH SYNOPSIS
 .B dunnsnap
 .RB [ \-F\  framebuffer]
+.RB [ \-{sS}\  squarescrsize]
+.RB [ \-{wW}\  scr_width]
+.RB [ \-{nN}\  scr_height]
 [num_frames]
 .SH DESCRIPTION
 .I Dunnsnap
@@ -33,6 +36,24 @@ cause the image to blanket the whole screen, or
 change the video output to some other frequency.
 The behavior of the framebuffer options are specific to the
 type of device being used.
+.PP
+The
+.BI \-w\  scr_width
+and
+.BI \-W\  scr_width
+flags specifies the width of each scanline for the display device,
+in pixels.
+.PP
+The
+.BI \-n\  scr_height
+and
+.BI \-N\  scr_height
+flags specifies the height of each scanline for the display device.
+.PP
+.BI \-s\  squarescrsize
+and
+.BI \-S\  squarescrsize
+set both the height and width to the size given.
 .PP
 The Dunn camera has been successfully operated while attached to
 an Adage (Ikonas) RDS-3000 frambuffer in both low-res (512\u2\d 60 Hz)

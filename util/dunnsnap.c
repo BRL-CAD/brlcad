@@ -41,14 +41,15 @@ static int	scr_height = 0;
 
 static char usage[] = "\
 Usage: dunnsnap [-h] [-F framebuffer]\n\
-	[-S squarescrsize] [-W scr_width] [-N scr_height] [num_frames]\n";
+	[-{sS} squarescrsize] [-{wW} scr_width] [-{nN} scr_height]\n\
+	[num_frames]\n";
 
 get_args( argc, argv )
 register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "hF:S:W:N:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "hF:s:S:w:W:n:N:" )) != EOF )  {
 		switch( c )  {
 		case 'h':
 			/* high-res */
@@ -57,12 +58,15 @@ register char **argv;
 		case 'F':
 			framebuffer = optarg;
 			break;
+		case 's':
 		case 'S':
 			scr_height = scr_width = atoi(optarg);
 			break;
+		case 'w':
 		case 'W':
 			scr_width = atoi(optarg);
 			break;
+		case 'n':
 		case 'N':
 			scr_height = atoi(optarg);
 			break;
