@@ -23,6 +23,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 
+#ifdef SYSV
+#define bzero(str,n)		memset( str, '\0', n )
+#endif
+
 unsigned char	obuf[3*1024];
 unsigned char	red[1024], green[1024], blue[1024];
 
