@@ -120,7 +120,7 @@ int			id;
 	dashflag = (tsp->ts_sofar & (TS_SOFAR_MINUS|TS_SOFAR_INTER) );
 
 	if( rt_functab[id].ft_plot( rp, tsp->ts_mat, &vhead,
-	    DB_FULL_PATH_CUR_DIR(pathp) ) < 0 )  {
+	    DB_FULL_PATH_CUR_DIR(pathp), mged_abs_tol, mged_rel_tol ) < 0 )  {
 		printf("%s: plot failure\n",
 			DB_FULL_PATH_CUR_DIR(pathp)->d_namep );
 	    	return(TREE_NULL);		/* ERROR */
@@ -231,7 +231,8 @@ int			id;
 
 	/* Tessellate Solid to NMG */
 	if( rt_functab[id].ft_tessellate(
-	    &r1, mged_nmg_model, rp, tsp->ts_mat, dp ) < 0 )  {
+	    &r1, mged_nmg_model, rp, tsp->ts_mat, dp,
+	    mged_abs_tol, mged_rel_tol ) < 0 )  {
 		rt_log("%s tessellation failure\n", dp->d_namep);
 	    	return(TREE_NULL);
 	}
@@ -372,18 +373,28 @@ int	kind;
 
 	if( argc <= 0 )  return(-1);	/* FAIL */
 
+	/* XXX could parse options here.  eg, -P ncpu, etc */
+
 	switch( kind )  {
 	default:
 		rt_log("ERROR, bad kind\n");
 		return(-1);
 	case 1:		/* Wireframes */
-	case 2:		/* Big-E */
 		i = db_walk_tree( dbip, argc, argv,
 			1,	/* # cpus */
 			&mged_initial_tree_state,
 			0,			/* take all regions */
 			mged_wireframe_region_end,
 			mged_wireframe_leaf );
+		if( i < 0 )  return(-1);
+		break;
+	case 2:		/* Big-E */
+		i = db_walk_tree( dbip, argc, argv,
+			1,	/* # cpus */
+			&mged_initial_tree_state,
+			0,			/* take all regions */
+			mged_bigE_region_end,
+			mged_bigE_leaf );
 		if( i < 0 )  return(-1);
 		break;
 	case 3:
@@ -638,7 +649,7 @@ mat_t		mat;
 
 	/* Draw (plot) a normal solid */
 	if( rt_functab[id].ft_plot( recp, mat, &vhead,
-	    sp->s_path[sp->s_last] ) < 0 )  {
+	    sp->s_path[sp->s_last], mged_abs_tol, mged_rel_tol ) < 0 )  {
 		(void)printf("%s: plot failure\n",
 			sp->s_path[sp->s_last]->d_namep );
 	    	return(-1);

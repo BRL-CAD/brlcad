@@ -78,6 +78,7 @@ void	f_tabobj(), f_pathsum(), f_copyeval(), f_push(), f_facedef(), f_eqn();
 void	f_overlay(), f_rtcheck(), f_comb();
 void	f_preview();
 void	f_enmg(), f_nmgtest();
+void	f_tol();
 
 static struct funtab {
 	char *ft_name;
@@ -278,6 +279,8 @@ static struct funtab {
 	f_tedit,1,1,
 "title", "string", "change the title",
 	f_title,2,MAXARGS,
+"tol", "[abs #]|[rel #]", "show/set absolute or relative tolerance for tessellation",
+	f_tol, 1, 3,
 "tops", "", "find all top level objects",
 	f_tops,1,1,
 "track", "<parameters>", "adds tracks to database",

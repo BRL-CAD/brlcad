@@ -64,6 +64,9 @@ extern long	nvectors;	/* from dodraw.c */
 
 int		drawreg;	/* if > 0, process and draw regions */
 
+double		mged_abs_tol;
+double		mged_rel_tol = 0.01;		/* 1%, by default */
+
 static void	eedit();
 void	f_zap();
 
@@ -138,7 +141,7 @@ int	argc;
 char	**argv;
 {
 
-	f_zap();
+	f_zap(argc, argv);
 
 	if( dmp->dmr_displaylist )  {
 		/*
@@ -866,7 +869,8 @@ char	**argv;
 	/* Tessellate Solid to NMG */
 	printf(" tess %s\n", dp->d_namep );
 	if( rt_functab[rt_id_solid(recp)].ft_tessellate(
-	    &r1, m, recp, mat, dp ) < 0 )  {
+	    &r1, m, recp, mat, dp,
+	    mged_abs_tol, mged_rel_tol ) < 0 )  {
 		rt_log("%s tessellation failure\n", dp->d_namep);
 	    	return;
 	}
@@ -974,4 +978,57 @@ out:
 	dmp->dmr_viewchange( DM_CHGV_ADD, sp );
 
 	dmaflag = 1;
+}
+
+/*
+ *			F _ T O L
+ *
+ *  "tol"	displays current settings
+ *  "tol abs #"	sets absolute tolerance.  # > 0.0
+ *  "tol rel #"	sets relative tolerance.  0.0 < # < 1.0
+ */
+void
+f_tol( argc, argv )
+int	argc;
+char	**argv;
+{
+	double	f;
+
+	if( argc != 3 )  {
+		(void)printf("Current tolerance settings are:\n");
+		if( mged_abs_tol > 0.0 )  {
+			(void)printf("\tabs %g %s\n",
+				mged_abs_tol * base2local,
+				local_unit[localunit] );
+		} else {
+			(void)printf("\tabs None\n");
+		}
+		if( mged_rel_tol > 0.0 )  {
+			(void)printf("\trel %g (%g%%)\n",
+				mged_rel_tol, mged_rel_tol * 100.0 );
+		} else {
+			(void)printf("\trel None\n");
+		}
+		return;
+	}
+
+	f = atof(argv[2]);
+	if( strcmp( argv[1], "abs" ) == 0 )  {
+		if( f <= 0.0 )  {
+			mged_abs_tol = 0.0;	/* None */
+			return;
+		}
+		mged_abs_tol = f * local2base;
+		return;
+	}
+	if( strcmp( argv[1], "rel" ) == 0 )  {
+		if( f < 0.0 || f >= 1.0 )  {
+			(void)printf("relative tolerance must be between 0 and 1, not changed\n");
+			return;
+		}
+		/* Note that a value of 0.0 will disable relative tolerance */
+		mged_rel_tol = f;
+		return;
+	}
+	(void)printf("Error, tolerance '%s' unknown\n", argv[1] );
 }
