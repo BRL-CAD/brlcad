@@ -76,6 +76,10 @@ struct taskcontrol {
 	int	tsk_value;
 } taskcontrol[MAX_PSW];
 #endif
+
+#ifdef alliant
+#define MAX_PSW	8
+#endif
 #endif
 /***** end variables shared with worker() */
 
@@ -415,7 +419,18 @@ do_more:
 		TSKWAIT( &taskcontrol[x] );
 	}
 #endif
+#ifdef alliant
+	{
+		asm("	cstart	_npsw");
+		asm("super_loop:");
+			asm("	cawait	cs1,#0");
+			asm("	cadvance	cs1");
+			worker();
+		asm("	crepeat	super_loop");
+	}
+#endif
 #else
+	/* Simple serial case */
 	worker();
 #endif
 	utime = rt_read_timer( outbuf, sizeof(outbuf) );	/* final time */
@@ -598,4 +613,111 @@ double a,b;
 	extern double sqrt();
 	return(sqrt(a*a+b*b));
 }
+#endif
+
+#ifdef PARALLEL
+#ifdef alliant
+
+RES_ACQUIRE(p)
+register int *p;
+{
+	asm("loop:");
+	while( *p )  ;
+	asm("	tas	a5@");
+	asm("	bne	loop");
+}
+#ifdef never
+MAT4X3PNT( o, m, i )
+register fastf_t *o;	/* a5 */
+register fastf_t *m;	/* a4 */
+register fastf_t *i;	/* a3 */
+{
+#ifdef NON_VECTOR
+	FAST fastf_t f;
+	f = 1.0/((m)[12]*(i)[X] + (m)[13]*(i)[Y] + (m)[14]*(i)[Z] + (m)[15]);
+	(o)[X]=((m)[0]*(i)[X] + (m)[1]*(i)[Y] + (m)[ 2]*(i)[Z] + (m)[3]) * f;
+	(o)[Y]=((m)[4]*(i)[X] + (m)[5]*(i)[Y] + (m)[ 6]*(i)[Z] + (m)[7]) * f;
+	(o)[Z]=((m)[8]*(i)[X] + (m)[9]*(i)[Y] + (m)[10]*(i)[Z] + (m)[11])* f;
+#else
+	register int i;		/* d7 */
+	register int vm;	/* d6, vector mask */
+	register int vi;	/* d5, vector increment */
+	register int vl;	/* d4, vector length */
+
+	vm = -1;
+	vi = 4;
+	vl = 4;
+
+	asm("fmoved	a3@, fp0");
+	asm("vmuld	a4@, fp0, v7");
+
+	asm("fmoved	a3@(8), fp0");
+	asm("vmuadd	fp0, a4@(8), v7, v7");
+
+	asm("fmoved	a3@(16), fp0");
+	asm("vmuadd	fp0, a4@(16), v7, v7");
+
+	asm("vaddd	a4@(24), v7, v7");
+
+#ifdef RECIPROCAL
+	asm("moveq	#1, d0");
+	asm("fmoveld	d0, fp0");
+	asm("fdivd	a4@(120), fp0, fp0");
+	asm("vmuld	v7, fp0, v7");
+#else
+	asm("fmovedd	a4@(120), fp7");
+	asm("vrdivd	v7, fp7, v7");
+#endif
+
+	vi = 1;
+	asm("vmoved	v7, a5@");
+#endif
+}
+/* Apply a 4x4 matrix to a 3-tuple which is a relative Vector in space */
+MAT4X3VEC( o, m, i )
+register fastf_t *o;
+register fastf_t *m;
+register fastf_t *i;
+{
+#ifdef NON_VECTOR
+	FAST fastf_t f;
+	f = 1.0/((m)[15]);
+	(o)[X] = ((m)[0]*(i)[X] + (m)[1]*(i)[Y] + (m)[ 2]*(i)[Z]) * f;
+	(o)[Y] = ((m)[4]*(i)[X] + (m)[5]*(i)[Y] + (m)[ 6]*(i)[Z]) * f;
+	(o)[Z] = ((m)[8]*(i)[X] + (m)[9]*(i)[Y] + (m)[10]*(i)[Z]) * f;
+#else
+	register int i;		/* d7 */
+	register int vm;	/* d6, vector mask */
+	register int vi;	/* d5, vector increment */
+	register int vl;	/* d4, vector length */
+
+	vm = -1;
+	vi = 4;
+	vl = 3;
+
+	asm("fmoved	a3@, fp0");
+	asm("vmuld	a4@, fp0, v7");
+
+	asm("fmoved	a3@(8), fp0");
+	asm("vmuadd	fp0, a4@(8), v7, v7");
+
+	asm("fmoved	a3@(16), fp0");
+	asm("vmuadd	fp0, a4@(16), v7, v7");
+
+#ifdef RECIPROCAL
+	asm("moveq	#1, d0");
+	asm("fmoveld	d0, fp0");
+	asm("fdivd	a4@(120), fp0, fp0");
+	asm("vmuld	v7, fp0, v7");
+#else
+	asm("fmovedd	a4@(120), fp7");
+	asm("vrdivd	v7, fp7, v7");
+#endif
+
+	vi = 1;
+	asm("vmoved	v7, a5@");
+#endif
+}
+#endif never
+#endif
 #endif
