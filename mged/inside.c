@@ -229,9 +229,13 @@ f_inside()
 
 	/* newrec is now loaded with the outside solid data */
 
+
 	/* get the inside solid name */
-	(void)printf("Enter name of the inside solid: ");
-	argcnt = getcmd(args);
+	argcnt=0;
+	while( !argcnt ){		/* no command yet */
+		(void)printf("Enter name of the inside solid: ");
+		argcnt = getcmd(args);
+	}
 	if( lookup( cmd_args[args], LOOKUP_QUIET ) != DIR_NULL ) {
 		(void)aexists( cmd_args[args] );
 		return;
@@ -386,10 +390,16 @@ arbin()
 	for(i=0; i<8; i++) {
 		if( intersect(np, i*3, i, &newrec.s) ) {
 			(void)printf("cannot find inside arb\n");
+			/* restore es_peqn for anyone else */
+			for(i=0; i<nface; i++)
+				es_peqn[i][3] -= thick[i];
 			return(1);
 		}
 	}
 
+	/* restore es_peqn for anyone else */
+	for(i=0; i<nface; i++)
+		es_peqn[i][3] -= thick[i];
 	return(0);
 }
 
