@@ -48,9 +48,9 @@ PATH=/bin:/usr/bin:/usr/5bin:$PATH
 ARG="$1"
 
 #  Base directory for the entire package.
-if test "$BRLCAD_BASEDIR" != ""
+if test "$BRLCAD_ROOT" != ""
 then
-	BASEDIR=$BRLCAD_BASEDIR
+	BASEDIR=$BRLCAD_ROOT
 else
 	#  Modified by newbindir.sh as part of the installation process, if needed.
 	BASEDIR=/usr/brlcad
@@ -373,7 +373,7 @@ x-d)
 	else	echo "-D__SYSV -DATT -DSYSV"
 	fi
 	echo "-D__MACHINETYPE__${MACHINE}"
-	echo "-DBRLCAD_BASEDIR=${BASEDIR}"
+	echo "-DBRLCAD_ROOT_STRING=\"${BASEDIR}\""
 	exit 0;;
 *)
 	echo "$0:  Unknown argument /$ARG/" 1>&2; break;;
