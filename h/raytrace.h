@@ -1224,6 +1224,7 @@ struct view_obj {
 	struct bu_observer	vo_observers;
 	void 			(*vo_callback)();	/* called in vo_update with vo_clientData and vop */
 	genptr_t		vo_clientData;		/* passed to vo_callback */
+	int			vo_zclip;
 };
 extern struct view_obj HeadViewObj;		/* head of view object list */
 #define RT_VIEW_OBJ_NULL		((struct view_obj *)NULL)
