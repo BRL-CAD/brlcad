@@ -52,7 +52,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 int
 bn_decode_mat(m, str)
 mat_t m;
-char *str;
+const char *str;
 {
 	if( strcmp( str, "I" ) == 0 )  {
 		bn_mat_idn( m );
@@ -69,7 +69,7 @@ char *str;
 int
 bn_decode_quat(q, str)
 quat_t q;
-char *str;
+const char *str;
 {
 	if( *str == '{' )  str++;
 	return sscanf(str, "%lf %lf %lf %lf", &q[0], &q[1], &q[2], &q[3]);
@@ -78,7 +78,7 @@ char *str;
 int
 bn_decode_vect(v, str)
 vect_t v;
-char *str;
+const char *str;
 {
 	if( *str == '{' )  str++;
 	return sscanf(str, "%lf %lf %lf", &v[0], &v[1], &v[2]);
@@ -87,7 +87,7 @@ char *str;
 int
 bn_decode_hvect(v, str)
 hvect_t v;
-char *str;
+const char *str;
 {
 	if( *str == '{' )  str++;
 	return sscanf(str, "%lf %lf %lf %lf", &v[0], &v[1], &v[2], &v[3]);
@@ -96,7 +96,7 @@ char *str;
 void
 bn_encode_mat(vp, m)
 struct bu_vls *vp;
-mat_t m;
+const mat_t m;
 {
 	if( m == NULL )  {
 		bu_vls_putc(vp, 'I');
@@ -111,7 +111,7 @@ mat_t m;
 void
 bn_encode_quat(vp, q)
 struct bu_vls *vp;
-quat_t q;
+const quat_t q;
 {
 	bu_vls_printf(vp, "%g %g %g %g", V4ARGS(q));
 }
@@ -119,7 +119,7 @@ quat_t q;
 void
 bn_encode_vect(vp, v)
 struct bu_vls *vp;
-vect_t v;
+const vect_t v;
 {
 	bu_vls_printf(vp, "%g %g %g", V3ARGS(v));
 }
@@ -127,7 +127,7 @@ vect_t v;
 void
 bn_encode_hvect(vp, v)
 struct bu_vls *vp;
-hvect_t v;
+const hvect_t v;
 {
 	bu_vls_printf(vp, "%g %g %g %g", V4ARGS(v));
 }
@@ -542,40 +542,40 @@ static struct math_func_link {
 	char *name;
 	void (*func)();
 } math_funcs[] = {
-	"mat_mul",            bn_mat_mul,
-	"mat_inv",            bn_mat_inv,
-	"mat_trn",            bn_mat_trn,
-	"matXvec",            bn_matXvec,
-	"mat4x3vec",          bn_mat4x3vec,
-	"mat4x3pnt",          bn_mat4x3pnt,
-	"hdivide",            bn_hdivide,
-	"vjoin1",	      bn_vjoin1,
-	"mat_ae",             bn_mat_ae,
-	"mat_ae_vec",         bn_ae_vec,
-	"mat_aet_vec",        bn_aet_vec,
-	"mat_angles",         bn_mat_angles,
-	"mat_eigen2x2",       bn_eigen2x2,
-	"mat_fromto",         bn_mat_fromto,
-	"mat_xrot",           bn_mat_xrot,
-	"mat_yrot",           bn_mat_yrot,
-	"mat_zrot",           bn_mat_zrot,
-	"mat_lookat",         bn_mat_lookat,
-	"mat_vec_ortho",      bn_vec_ortho,
-	"mat_vec_perp",       bn_vec_perp,
-	"mat_scale_about_pt", bn_mat_scale_about_pt_wrapper,
-	"mat_xform_about_pt", bn_mat_xform_about_pt,
-	"mat_arb_rot",        bn_mat_arb_rot,
-	"quat_mat2quat",      quat_mat2quat,
-	"quat_quat2mat",      quat_quat2mat,
-	"quat_distance",      bn_quat_distance_wrapper,
-	"quat_double",        quat_double,
-	"quat_bisect",        quat_bisect,
-	"quat_slerp",         quat_slerp,
-	"quat_sberp",         quat_sberp,
-	"quat_make_nearest",  quat_make_nearest,
-	"quat_exp",           quat_exp,
-	"quat_log",           quat_log,
-	0, 0
+	{"mat_mul",            bn_mat_mul},
+	{"mat_inv",            bn_mat_inv},
+	{"mat_trn",            bn_mat_trn},
+	{"matXvec",            bn_matXvec},
+	{"mat4x3vec",          bn_mat4x3vec},
+	{"mat4x3pnt",          bn_mat4x3pnt},
+	{"hdivide",            bn_hdivide},
+	{"vjoin1",	      bn_vjoin1},
+	{"mat_ae",             bn_mat_ae},
+	{"mat_ae_vec",         bn_ae_vec},
+	{"mat_aet_vec",        bn_aet_vec},
+	{"mat_angles",         bn_mat_angles},
+	{"mat_eigen2x2",       bn_eigen2x2},
+	{"mat_fromto",         bn_mat_fromto},
+	{"mat_xrot",           bn_mat_xrot},
+	{"mat_yrot",           bn_mat_yrot},
+	{"mat_zrot",           bn_mat_zrot},
+	{"mat_lookat",         bn_mat_lookat},
+	{"mat_vec_ortho",      bn_vec_ortho},
+	{"mat_vec_perp",       bn_vec_perp},
+	{"mat_scale_about_pt", bn_mat_scale_about_pt_wrapper},
+	{"mat_xform_about_pt", bn_mat_xform_about_pt},
+	{"mat_arb_rot",        bn_mat_arb_rot},
+	{"quat_mat2quat",      quat_mat2quat},
+	{"quat_quat2mat",      quat_quat2mat},
+	{"quat_distance",      bn_quat_distance_wrapper},
+	{"quat_double",        quat_double},
+	{"quat_bisect",        quat_bisect},
+	{"quat_slerp",         quat_slerp},
+	{"quat_sberp",         quat_sberp},
+	{"quat_make_nearest",  quat_make_nearest},
+	{"quat_exp",           quat_exp},
+	{"quat_log",           quat_log},
+	{0, 0}
 };
 
 /*
