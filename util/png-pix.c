@@ -122,10 +122,9 @@ char *argv[];
 		png_set_gray_to_rgb( png_p );
 	}
 
+	png_set_expand( png_p );
 	bit_depth = png_get_bit_depth( png_p, info_p );
-	if( bit_depth < 8 )
-		png_set_packing( png_p );
-	else if( bit_depth == 16 )
+	if( bit_depth == 16 )
 		png_set_strip_16( png_p );
 
 	file_width = png_get_image_width( png_p, info_p );
