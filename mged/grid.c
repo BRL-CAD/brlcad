@@ -6,7 +6,7 @@
  * Functions -
  *	draw_grid			Draw the grid according to user specification
  *	snap_to_grid			Snap values to the nearest grid point
- *	snap_grid_to_view_center	Make the grid point nearest the view center
+ *	snap_view_center_to_grid	Make the grid point nearest the view center
  *					the new view center.
  *
  * Source -
@@ -37,6 +37,8 @@ static char RCSid[] = "";
 #include "raytrace.h"
 #include "./ged.h"
 #include "./mged_dm.h"
+
+extern vect_t curr_e_axes_pos;  /* from edsol.c */
 
 void draw_grid();
 void snap_to_grid();
@@ -179,10 +181,31 @@ fastf_t *my;		/* input and return values */
 }
 
 void
-snap_grid_to_view_center()
+snap_keypoint_to_grid()
+{
+  point_t view_pt;
+  point_t model_pt;
+  struct bu_vls cmd;
+
+  MAT4X3PNT(view_pt, model2view, curr_e_axes_pos);
+  snap_to_grid(&view_pt[X], &view_pt[Y]);
+  MAT4X3PNT(model_pt, view2model, view_pt);
+  VSCALE(model_pt, model_pt, base2local);
+
+  bu_vls_init(&cmd);
+  bu_vls_printf(&cmd, "p %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
+  (void)Tcl_Eval(interp, bu_vls_addr(&cmd));
+  bu_vls_free(&cmd);
+
+  /* save model_pt in local units */
+  VMOVE(dml_work_pt, model_pt);
+  dml_mouse_dx = dml_mouse_dy = 0;
+}
+
+void
+snap_view_center_to_grid()
 {
   point_t view_pt, model_pt;
-  struct bu_vls vls;
 
   MAT_DELTAS_GET_NEG(model_pt, toViewcenter);
   MAT4X3PNT(view_pt, model2view, model_pt);
@@ -199,13 +222,14 @@ snap_grid_to_view_center()
   dml_mouse_dx = dml_mouse_dy = 0;
 }
 
+/*
+ * Expect values in the +-2.0 range,
+ * Return values in the +-2.0 range that have been snapped to the nearest grid distance.
+ */
 void
-snap_view_to_grid(view_dx, view_dy)
-fastf_t view_dx, view_dy;
+round_to_grid(view_dx, view_dy)
+fastf_t *view_dx, *view_dy;
 {
-  struct bu_vls vls;
-  point_t model_pt, view_pt;
-  point_t vcenter, diff;
   fastf_t grid_units_h, grid_units_v;
   fastf_t sf, inv_sf;
   fastf_t dx, dy;
@@ -219,29 +243,45 @@ fastf_t view_dx, view_dy;
   inv_sf = 1 / sf;
 
   /* convert mouse distance to grid units */
-  grid_units_h = view_dx * sf / mged_variables->grid_res_h;
-  grid_units_v = view_dy * sf /  mged_variables->grid_res_v;
+  grid_units_h = *view_dx * sf / mged_variables->grid_res_h;
+  grid_units_v = *view_dy * sf /  mged_variables->grid_res_v;
   nh = grid_units_h;
   nv = grid_units_v;
   grid_units_h -= nh;
   grid_units_v -= nv;
 
   if(grid_units_h <= -0.5)
-    dx = (nh - 1) * mged_variables->grid_res_h;
+    *view_dx = (nh - 1) * mged_variables->grid_res_h;
   else if(0.5 <= grid_units_h)
-    dx = (nh + 1) * mged_variables->grid_res_h;
+    *view_dx = (nh + 1) * mged_variables->grid_res_h;
   else
-    dx = nh * mged_variables->grid_res_h;
+    *view_dx = nh * mged_variables->grid_res_h;
 
   if(grid_units_v <= -0.5)
-    dy = (nv - 1) * mged_variables->grid_res_v;
+    *view_dy = (nv - 1) * mged_variables->grid_res_v;
   else if(0.5 <= grid_units_v)
-    dy = (nv + 1) * mged_variables->grid_res_v;
+    *view_dy = (nv + 1) * mged_variables->grid_res_v;
   else
-    dy = nv * mged_variables->grid_res_v;
+    *view_dy = nv * mged_variables->grid_res_v;
 
-  VSET(view_pt, dx, dy, 0.0);
-  VSCALE(view_pt, view_pt, inv_sf);
+  *view_dx *= inv_sf;
+  *view_dy *= inv_sf;
+}
+
+void
+snap_view_to_grid(view_dx, view_dy)
+fastf_t view_dx, view_dy;
+{
+  point_t model_pt, view_pt;
+  point_t vcenter, diff;
+
+  if(NEAR_ZERO(mged_variables->grid_res_h, (fastf_t)SMALL_FASTF) ||
+     NEAR_ZERO(mged_variables->grid_res_v, (fastf_t)SMALL_FASTF))
+    return;
+
+  round_to_grid(&view_dx, &view_dy);
+
+  VSET(view_pt, view_dx, view_dy, 0.0);
   MAT4X3PNT(model_pt, view2model, view_pt);
 
   MAT_DELTAS_GET_NEG(vcenter, toViewcenter);
