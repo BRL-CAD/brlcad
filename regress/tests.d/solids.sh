@@ -928,10 +928,10 @@ echo 'rendering solids...'
 if [ ! -f solids.pix ] ; then
 	echo raytrace failed
 else
-	if [ ! -f $REGRESS_DIR/regress/tests.d/ref/solids.pix ] ; then
+	if [ ! -f $REGRESS_DIR/brlcad/regress/tests.d/ref/solids.pix ] ; then
 		echo No reference file for solids.pix
 	else
-		$BIN/pixdiff solids.pix $REGRESS_DIR/regress/tests.d/ref/solids.pix \
+		$BIN/pixdiff solids.pix $REGRESS_DIR/brlcad/regress/tests.d/ref/solids.pix \
 		> solids.pix.diff \
 		2>> solids-diff.log
 
@@ -957,11 +957,11 @@ EOF
 if [ ! -f moss.pix ] ; then
 	echo raytrace failed
 else
-	if [ ! -f $REGRESS_DIR/regress/tests.d/ref/moss.pix ] ; then
+	if [ ! -f $REGRESS_DIR/brlcad/regress/tests.d/ref/moss.pix ] ; then
 		echo No reference file for moss.pix
 	else
 		$BIN/pixdiff moss.pix \
-			$REGRESS_DIR/regress/tests.d/ref/moss.pix \
+			$REGRESS_DIR/brlcad/regress/tests.d/ref/moss.pix \
 			> moss.pix.diff \
 			2> moss-diff.log
 
