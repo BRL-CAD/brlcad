@@ -26,6 +26,7 @@
  *	f_sed		simulate pressing "solid edit" then illuminate
  *	f_knob		simulate knob twist
  *	f_rmats		load views from a file
+ *	f_savekey	save keyframe in file
  *
  *  Author -
  *	Michael John Muuss
@@ -466,7 +467,7 @@ mat_t mat;
 	double d;
 
 	if( fscanf( fp, "%f", &d ) != 1 )  return(-1);
-	*scale = d;
+	*scale = d*0.5;
 	if( fscanf( fp, "%f", &d ) != 1 )  return(-1);
 	eye[X] = d;
 	if( fscanf( fp, "%f", &d ) != 1 )  return(-1);
@@ -848,4 +849,24 @@ f_rmats()
 		refresh();	/* Draw new display */
 	}
 	fclose(fp);
+}
+
+/* Save a keyframe to a file */
+void
+f_savekey()
+{
+	register int i;
+	register FILE *fp;
+	float	time;
+
+	if( (fp = fopen( cmd_args[1], "a")) == NULL )  {
+		perror(cmd_args[1]);
+		return;
+	}
+	if( numargs > 2 ) {
+		time = atof( cmd_args[2] );
+		(void)fprintf(fp,"%f\n", time);
+	}
+	rt_write(fp);
+	(void)fclose( fp );
 }
