@@ -3,6 +3,7 @@
 lib_LTLIBRARIES = libpng.la
 
 libpng_la_LDFLAGS = -version-info 3:5:2
+libpng_la_LIBADD = ${LIBZ}
 libpng_la_SOURCES = \
 	png.c \
 	pngerror.c \
