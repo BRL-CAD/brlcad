@@ -546,6 +546,7 @@ char	**argv;
 		clients = 0;
 
 		/* parse command line args for sizes, etc */
+		finalframe=-1;
 		if( !get_args( argc, argv ) )  {
 			fprintf(stderr,"remrt:  bad arg list\n");
 			exit(1);
@@ -1100,7 +1101,7 @@ FILE	*fp;
 			rt_vls_free( &body );
 			goto bad;
 		}
-		if( frame > finalframe ) {
+		if( finalframe >= 0 && frame > finalframe ) {
 			rt_vls_free( &body );
 			goto bad;
 		}
