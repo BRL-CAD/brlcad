@@ -260,7 +260,11 @@ Ir_open()
 
 	winattach( );
 
-	if( ir_has_zbuf && zbuffer_on )  zbuffer(1);
+	if( ir_has_zbuf && zbuffer_on ) 
+	{
+		zbuffer(1);
+		lsetdepth(0, 768 );
+	}
 
 	/* Clear out image from windows underneath */
 	frontbuffer(1);
@@ -909,6 +913,7 @@ checkevents()  {
 				/* toggle zbuffer status */
 				zbuffer_on = zbuffer_on ? 0 : 1;
 				zbuffer( zbuffer_on );
+				if( zbuffer_on) lsetdepth(0, 768);
 				dmaflag = 1;
 				kblights();
 				continue;
