@@ -242,7 +242,7 @@ CONST struct db_full_path	*pathp;
  *  user should call db_free_full_path() first.
  *
  *  Returns -
- *	-1	failure (shouldn't happen)
+ *	-1	One or more components of path did not exist in the directory.
  *	 0	OK
  */
 int
@@ -301,7 +301,7 @@ CONST char			*str;
 		} else {
 			*slashp = '\0';
 		}
-		if( (dp = db_lookup( dbip, cp, 1 )) == DIR_NULL )  {
+		if( (dp = db_lookup( dbip, cp, LOOKUP_NOISY )) == DIR_NULL )  {
 			bu_log("db_string_to_path() of '%s' failed on '%s'\n",
 				str, cp );
 			ret = -1;	/* FAILED */
@@ -311,6 +311,50 @@ CONST char			*str;
 		cp = slashp+1;
 	}
 	bu_free( copy, "db_string_to_path() rt_strdip");
+	return ret;
+}
+
+/*
+ *			D B _ A R G V _ T O _ P A T H
+ *
+ *  Treat elements from argv[0] to argv[argc-1] as a path specification.
+ *
+ *  The path structure will be fully initialized.  If it was already in use,
+ *  user should call db_free_full_path() first.
+ *
+ *  Returns -
+ *	-1	One or more components of path did not exist in the directory.
+ *	 0	OK
+ */
+int
+db_argv_to_path( pp, dbip, argc, argv )
+register struct db_full_path	*pp;
+struct db_i			*dbip;
+int				argc;
+CONST char			*CONST*argv;
+{
+	struct directory	*dp;
+	int			ret = 0;
+	int			i;
+
+	RT_CK_DBI(dbip);
+
+	/* Make a path structure just big enough */
+	pp->magic = DB_FULL_PATH_MAGIC;
+	pp->fp_maxlen = pp->fp_len = argc;
+	pp->fp_names = (struct directory **)bu_malloc(
+		pp->fp_maxlen * sizeof(struct directory *),
+		"db_argv_to_path path array" );
+
+	for( i=0; i<argc; i++ )  {
+		if( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY )) == DIR_NULL )  {
+			bu_log("db_argv_to_path() failed on element %d='%s'\n",
+				i, argv[i] );
+			ret = -1;	/* FAILED */
+			/* Fall through, storing null dp in this location */
+		}
+		pp->fp_names[i] = dp;
+	}
 	return ret;
 }
 
