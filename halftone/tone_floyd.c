@@ -32,6 +32,9 @@ extern int width;
  *	Christopher T. Johnson	- 90/03/21
  *
  * $Log$
+ * Revision 1.1  90/04/10  05:23:24  cjohnson
+ * Initial revision
+ * 
  */
 tone_floyd(Pix,X,Y,NX,NY,New)
 int	Pix;
@@ -61,13 +64,16 @@ int	New;
 
 	Pix += thisline[X];
 	thisline[X] = 0;
-	if (Pix > 127) {
+	value = (Pix*Levels + 127) / 255;
+	diff =  Pix - (value * 255 /Levels);
+/*	if (Pix > 127) {
 		value=Levels;
 		diff = Pix - 255;
 	} else {
 		value = 0;
 		diff = Pix;
 	}
+*/
 	if (X+Dir < width && X+Dir >= 0) {
 		thisline[X+Dir] += diff*7/16;
 		error[X+Dir] += diff/16;

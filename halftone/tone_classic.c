@@ -39,6 +39,9 @@ static unsigned char	ordered[6][6] = {
  *	Christopher T. Johnson	- 90/03/21
  *
  * $Log$
+ * Revision 1.3  90/04/10  03:31:25  cjohnson
+ * Add intensity levels.
+ * 
  * Revision 1.2  90/04/10  01:02:29  cjohnson
  * Fix order indices.  Works now.
  * 
@@ -51,5 +54,5 @@ int	Pix;
 int	X, Y, NX, NY;
 int	New;
 {
-	return (Pix*Levels / (14*ordered[( X + 3 ) % 6 ][ Y % 6] ));
+	return ((Pix*Levels + 14*ordered[( X + 3 ) % 6 ][ Y % 6])/255);
 }

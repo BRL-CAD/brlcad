@@ -31,6 +31,9 @@ extern int Levels;
  *	Christopher T. Johnson	- 90/03/21
  *
  * $Log$
+ * Revision 1.3  90/04/10  01:32:02  cjohnson
+ * Add Intensity Levels
+ * 
  * Revision 1.2  90/04/09  17:05:37  cjohnson
  * define Pix to be of type integer.
  * 
@@ -38,11 +41,10 @@ extern int Levels;
  * Initial revision
  * 
  */
-double
 tone_simple(Pix,X,Y,NX,NY,New)
 int	Pix;
 int	X, Y, NX, NY;
 int	New;
 {
-	return(1.0/Levels * (Pix*Levels / 255) );
+	return((Pix*Levels + THRESHOLD) / 255 );
 }

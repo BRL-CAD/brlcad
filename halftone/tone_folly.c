@@ -36,6 +36,9 @@ static unsigned char	ordered[4][4] = {
  *	Christopher T. Johnson	- 90/03/21
  *
  * $Log$
+ * Revision 1.2  90/04/10  03:30:45  cjohnson
+ * add intensity levels.
+ * 
  * Revision 1.1  90/04/10  01:01:51  cjohnson
  * Initial revision
  * 
@@ -46,5 +49,5 @@ int	Pix;
 int	X, Y, NX, NY;
 int	New;
 {
-	return (Pix*Levels / (16*ordered[ X % 4][ Y % 4] ));
+	return ((Pix*Levels + 16*ordered[ X % 4][ Y % 4] )/255);
 }
