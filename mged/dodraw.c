@@ -1070,6 +1070,7 @@ char	**argv;
 	struct directory	*dp;
 	int			ngran;
 	int			failed;
+	int			mged_nmg_use_tnurbs = 0;
 
 	RT_CHECK_DBI(dbip);
 
@@ -1091,25 +1092,33 @@ char	**argv;
 
 	/* Parse options. */
 	optind = 1;		/* re-init getopt() */
-	while( (c=getopt(argc,argv,"tP:")) != EOF )  {
+	while( (c=getopt(argc,argv,"tTP:")) != EOF )  {
 		switch(c)  {
 		case 'P':
 			ncpu = atoi(optarg);
 			break;
-		case 't':
+		case 'T':
 			triangulate = 1;
+			break;
+		case 't':
+			mged_nmg_use_tnurbs = 1;
 			break;
 		default:
 			rt_log("option '%c' unknown\n", c);
+			rt_log("Usage: facetize [-tT] [-P ncpu] object(s)\n\
+	-t Perform CSG-to-tNURBS conversion\n\
+	-T enable triangulator\n");
 			break;
 		}
 	}
 	argc -= optind;
 	argv += optind;
+	if( argc < 0 )  {rt_log("facetize: missing argument\n"); return CMD_BAD;}
 
 	newname = argv[0];
 	argv++;
 	argc--;
+	if( argc < 0 )  {rt_log("facetize: missing argument\n"); return CMD_BAD;}
 
 	if( db_lookup( dbip, newname, LOOKUP_QUIET ) != DIR_NULL )  {
 		rt_log("error: solid '%s' already exists, aborting\n", newname);
@@ -1127,7 +1136,11 @@ char	**argv;
 		&mged_initial_tree_state,
 		0,			/* take all regions */
 		mged_facetize_region_end,
-		nmg_booltree_leaf_tess );
+  		mged_nmg_use_tnurbs ?
+  			nmg_booltree_leaf_tnurb :
+			nmg_booltree_leaf_tess
+		);
+
 
 	if( i < 0 )  {
 		rt_log("facetize: error in db_walk_tree()\n");
