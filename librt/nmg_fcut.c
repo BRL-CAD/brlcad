@@ -1429,7 +1429,7 @@ CONST struct rt_tol	*tol;
 			struct loopuse	*lu;
 			lu = nmg_find_lu_of_vu(vs[i].vu);
 			rt_log("\tvu[%d]=x%x, lu=x%x\n", i, vs[i].vu, lu);
-			nmg_vlblock_lu(vbp, lu, b, 255, 0, 0, 0 );
+			nmg_vlblock_lu(vbp, lu, b, 255, 0, 0, 0, 0 );
 		}
 		for( i=start; i < end; i++ )  {
 			struct loopuse	*lu;
