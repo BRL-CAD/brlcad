@@ -237,90 +237,113 @@ XMotionEvent *xmotion;
 
     break;
   case AMM_ROT:
-    if((state == ST_S_EDIT || state == ST_O_EDIT) &&
-       mged_variables->mv_transform == 'e'){
+    {
       char save_coords;
 
       save_coords = mged_variables->mv_coords;
       mged_variables->mv_coords = 'v';
 
-      if(state == ST_S_EDIT){
-	save_edflag = es_edflag;
-	if(!SEDIT_ROTATE)
-	  es_edflag = SROT;
-      }else{
-	save_edflag = edobj;
-	edobj = BE_O_ROTATE;
+      if((state == ST_S_EDIT || state == ST_O_EDIT) &&
+	 mged_variables->mv_transform == 'e'){
+
+	if(state == ST_S_EDIT){
+	  save_edflag = es_edflag;
+	  if(!SEDIT_ROTATE)
+	    es_edflag = SROT;
+	}else{
+	  save_edflag = edobj;
+	  edobj = BE_O_ROTATE;
+	}
+
+	if(mged_variables->mv_rateknobs)
+	  bu_vls_printf(&cmd, "knob -i x %lf y %lf\n",
+			dy / (fastf_t)dmp->dm_height * RATE_ROT_FACTOR * 2.0,
+			dx / (fastf_t)dmp->dm_width * RATE_ROT_FACTOR * 2.0);
+	else
+	  bu_vls_printf(&cmd, "knob -i ax %lf ay %lf\n",
+			dy * 0.25, dx * 0.25);
+      } else {
+	if(mged_variables->mv_rateknobs)
+	  bu_vls_printf(&cmd, "knob -i -v x %lf y %lf\n",
+			dy / (fastf_t)dmp->dm_height * RATE_ROT_FACTOR * 2.0,
+			dx / (fastf_t)dmp->dm_width * RATE_ROT_FACTOR * 2.0);
+	else
+	  bu_vls_printf(&cmd, "knob -i -v ax %lf ay %lf\n",
+			dy * 0.25, dx * 0.25);
       }
 
-      if(mged_variables->mv_rateknobs)
-	bu_vls_printf(&cmd, "knob -i x %lf y %lf\n",
-		      dy / (fastf_t)dmp->dm_height * RATE_ROT_FACTOR * 2.0,
-		      dx / (fastf_t)dmp->dm_width * RATE_ROT_FACTOR * 2.0);
-      else
-	bu_vls_printf(&cmd, "knob -i ax %lf ay %lf\n",
-		      dy * 0.25, dx * 0.25);
       (void)Tcl_Eval(interp, bu_vls_addr(&cmd));
       mged_variables->mv_coords = save_coords;
 
       goto reset_edflag;
     }
-
-    if(mged_variables->mv_rateknobs)
-      bu_vls_printf(&cmd, "knob -i -v x %lf y %lf\n",
-		    dy / (fastf_t)dmp->dm_height * RATE_ROT_FACTOR * 2.0,
-		    dx / (fastf_t)dmp->dm_width * RATE_ROT_FACTOR * 2.0);
-    else
-      bu_vls_printf(&cmd, "knob -i -v ax %lf ay %lf\n",
-		    dy * 0.25, dx * 0.25);
-
-    break;
   case AMM_TRAN:
-    fx = dx / (fastf_t)dmp->dm_width * 2.0;
-    fy = -dy / (fastf_t)dmp->dm_height / dmp->dm_aspect * 2.0;
-      
-    if((state == ST_S_EDIT || state == ST_O_EDIT) &&
-       mged_variables->mv_transform == 'e'){
+    {
       char save_coords;
 
       save_coords = mged_variables->mv_coords;
       mged_variables->mv_coords = 'v';
 
-      if(state == ST_S_EDIT){
-	save_edflag = es_edflag;
-	if(!SEDIT_TRAN)
-	  es_edflag = STRANS;
+      fx = dx / (fastf_t)dmp->dm_width * 2.0;
+      fy = -dy / (fastf_t)dmp->dm_height / dmp->dm_aspect * 2.0;
+
+      if((state == ST_S_EDIT || state == ST_O_EDIT) &&
+	 mged_variables->mv_transform == 'e'){
+
+	if(state == ST_S_EDIT){
+	  save_edflag = es_edflag;
+	  if(!SEDIT_TRAN)
+	    es_edflag = STRANS;
+	}else{
+	  save_edflag = edobj;
+	  edobj = BE_O_XY;
+	}
+
+	if(mged_variables->mv_rateknobs)
+	  bu_vls_printf(&cmd, "knob -i X %lf Y %lf\n", fx, fy);
+	else{
+	  if(grid_state->gr_snap){
+	    point_t view_pt;
+	    point_t model_pt;
+	    point_t vcenter, diff;
+
+	    /* accumulate distance mouse moved since starting to translate */
+	    dml_mouse_dx += dx;
+	    dml_mouse_dy += dy;
+
+	    view_pt[X] = dml_mouse_dx / (fastf_t)dmp->dm_width * 2.0;
+	    view_pt[Y] = -dml_mouse_dy / (fastf_t)dmp->dm_height / dmp->dm_aspect * 2.0;
+	    view_pt[Z] = 0.0;
+	    round_to_grid(&view_pt[X], &view_pt[Y]);
+
+	    MAT4X3PNT(model_pt, view_state->vs_view2model, view_pt);
+	    MAT_DELTAS_GET_NEG(vcenter, view_state->vs_toViewcenter);
+	    VSUB2(diff, model_pt, vcenter);
+	    VSCALE(diff, diff, base2local);
+	    VADD2(model_pt, dml_work_pt, diff);
+	    bu_vls_printf(&cmd, "p %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
+	  }else
+	    bu_vls_printf(&cmd, "knob -i aX %lf aY %lf\n",
+			  fx*view_state->vs_Viewscale*base2local, fy*view_state->vs_Viewscale*base2local);
+	}
       }else{
-	save_edflag = edobj;
-	edobj = BE_O_XY;
-      }
+	if(mged_variables->mv_rateknobs)      /* otherwise, drag to translate the view */
+	  bu_vls_printf( &cmd, "knob -i -v X %lf Y %lf\n", fx, fy );
+	else{
+	  if(grid_state->gr_snap){
+	    /* accumulate distance mouse moved since starting to translate */
+	    dml_mouse_dx += dx;
+	    dml_mouse_dy += dy;
 
-      if(mged_variables->mv_rateknobs)
-	bu_vls_printf(&cmd, "knob -i X %lf Y %lf\n", fx, fy);
-      else{
-	if(grid_state->gr_snap){
-	  point_t view_pt;
-	  point_t model_pt;
-	  point_t vcenter, diff;
+	    snap_view_to_grid(dml_mouse_dx / (fastf_t)dmp->dm_width * 2.0,
+			      -dml_mouse_dy / (fastf_t)dmp->dm_height / dmp->dm_aspect * 2.0);
 
-	  /* accumulate distance mouse moved since starting to translate */
-	  dml_mouse_dx += dx;
-	  dml_mouse_dy += dy;
-
-	  view_pt[X] = dml_mouse_dx / (fastf_t)dmp->dm_width * 2.0;
-	  view_pt[Y] = -dml_mouse_dy / (fastf_t)dmp->dm_height / dmp->dm_aspect * 2.0;
-	  view_pt[Z] = 0.0;
-	  round_to_grid(&view_pt[X], &view_pt[Y]);
-
-	  MAT4X3PNT(model_pt, view_state->vs_view2model, view_pt);
-	  MAT_DELTAS_GET_NEG(vcenter, view_state->vs_toViewcenter);
-	  VSUB2(diff, model_pt, vcenter);
-	  VSCALE(diff, diff, base2local);
-	  VADD2(model_pt, dml_work_pt, diff);
-	  bu_vls_printf(&cmd, "p %lf %lf %lf", model_pt[X], model_pt[Y], model_pt[Z]);
-	}else
-	  bu_vls_printf(&cmd, "knob -i aX %lf aY %lf\n",
-			fx*view_state->vs_Viewscale*base2local, fy*view_state->vs_Viewscale*base2local);
+	    mged_variables->mv_coords = save_coords;
+	    goto handled;
+	  }else
+	    bu_vls_printf( &cmd, "knob -i -v aX %lf aY %lf\n",
+			   fx*view_state->vs_Viewscale*base2local, fy*view_state->vs_Viewscale*base2local );
+	}
       }
 
       (void)Tcl_Eval(interp, bu_vls_addr(&cmd));
@@ -328,26 +351,6 @@ XMotionEvent *xmotion;
 
       goto reset_edflag;
     }
-
-    /* otherwise, drag to translate the view */
-    if(mged_variables->mv_rateknobs)
-      bu_vls_printf( &cmd, "knob -i -v X %lf Y %lf\n", fx, fy );
-    else{
-      if(grid_state->gr_snap){
-	/* accumulate distance mouse moved since starting to translate */
-	dml_mouse_dx += dx;
-	dml_mouse_dy += dy;
-
-	snap_view_to_grid(dml_mouse_dx / (fastf_t)dmp->dm_width * 2.0,
-			  -dml_mouse_dy / (fastf_t)dmp->dm_height / dmp->dm_aspect * 2.0);
-
-	goto handled;
-      }else
-	bu_vls_printf( &cmd, "knob -i -v aX %lf aY %lf\n",
-		       fx*view_state->vs_Viewscale*base2local, fy*view_state->vs_Viewscale*base2local );
-    }
-
-    break;
   case AMM_SCALE:
     if((state == ST_S_EDIT || state == ST_O_EDIT) &&
        mged_variables->mv_transform == 'e'){
