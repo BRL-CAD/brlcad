@@ -113,11 +113,11 @@ struct dm dm_ogl = {
   ogl_setLineAttr,
   ogl_setWinBounds,
   ogl_debug,
-  Nu_int0,
   ogl_beginDList,
   ogl_endDList,
   ogl_drawDList,
   ogl_freeDLists,
+  0,
   1,				/* has displaylist */
   0,                            /* no stereo by default */
   IRBOUND,
@@ -175,8 +175,7 @@ struct dm *dmp;
  *
  */
 struct dm *
-ogl_open(eventHandler, argc, argv)
-int (*eventHandler)();
+ogl_open(argc, argv)
 int argc;
 char *argv[];
 {
@@ -204,7 +203,6 @@ char *argv[];
     return DM_NULL;
 
   *dmp = dm_ogl; /* struct copy */
-  dmp->dm_eventHandler = eventHandler;
   dmp->dm_vp = &tmp_vp;
 
   /* Only need to do this once for this display manager */
@@ -257,13 +255,6 @@ char *argv[];
   ((struct ogl_vars *)dmp->dm_vars)->mvars.dummy_perspective = 1;
   ((struct ogl_vars *)dmp->dm_vars)->mvars.fastfog = 1;
   ((struct ogl_vars *)dmp->dm_vars)->mvars.fogdensity = 1.0;
-
-#if 0
-  if(BU_LIST_IS_EMPTY(&head_ogl_vars.l))
-#else
-  if(dmp->dm_eventHandler != DM_EVENT_HANDLER_NULL)
-#endif
-    Tk_CreateGenericHandler(dmp->dm_eventHandler, (ClientData)DM_TYPE_OGL);
 
   BU_LIST_APPEND(&head_ogl_vars.l, &((struct ogl_vars *)dmp->dm_vars)->l);
 
@@ -382,6 +373,7 @@ char *argv[];
 
   ((struct ogl_vars *)dmp->dm_vars)->win =
     Tk_WindowId(((struct ogl_vars *)dmp->dm_vars)->xtkwin);
+  dmp->dm_id = ((struct ogl_vars *)dmp->dm_vars)->win;
 
   /* open GLX context */
   /* If the sgi display manager has been used, then we must use
@@ -557,9 +549,6 @@ struct dm *dmp;
 
     if(((struct ogl_vars *)dmp->dm_vars)->xtkwin)
       Tk_DestroyWindow(((struct ogl_vars *)dmp->dm_vars)->xtkwin);
-
-    if(BU_LIST_IS_EMPTY(&head_ogl_vars.l))
-      Tk_DeleteGenericHandler(dmp->dm_eventHandler, (ClientData)DM_TYPE_OGL);
   }
 
   if(((struct ogl_vars *)dmp->dm_vars)->l.forw != BU_LIST_NULL)

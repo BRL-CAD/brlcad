@@ -146,11 +146,11 @@ struct dm dm_glx = {
   glx_setLineAttr,
   glx_setWinBounds,
   glx_debug,
-  Nu_int0,
   glx_beginDList,
   glx_endDList,
   glx_drawDList,
   glx_freeDLists,
+  0,
   1,			/* has displaylist */
   0,                    /* no stereo by default */
   IRBOUND,
@@ -180,8 +180,7 @@ struct dm dm_glx = {
  *  message. It doesn't hurt anything.  Silly MEX.
  */
 struct dm *
-glx_open(eventHandler, argc, argv)
-int (*eventHandler)();
+glx_open(argc, argv)
 int argc;
 char *argv[];
 {
@@ -209,7 +208,6 @@ char *argv[];
     return DM_NULL;
 
   *dmp = dm_glx;
-  dmp->dm_eventHandler = eventHandler;
 
   /* Only need to do this once for this display manager */
   if(!count){
@@ -259,13 +257,6 @@ char *argv[];
   ((struct glx_vars *)dmp->dm_vars)->mvars.zbuffer_on = 1;         /* Hardware Z buffer is on */
   ((struct glx_vars *)dmp->dm_vars)->mvars.linewidth = 1;      /* Line drawing width */
   ((struct glx_vars *)dmp->dm_vars)->mvars.dummy_perspective = 1;
-
-#if 0
-  if(BU_LIST_IS_EMPTY(&head_glx_vars.l))
-#else
-  if(dmp->dm_eventHandler != DM_EVENT_HANDLER_NULL)
-#endif
-    Tk_CreateGenericHandler(dmp->dm_eventHandler, (ClientData)DM_TYPE_GLX);
 
   BU_LIST_APPEND(&head_glx_vars.l, &((struct glx_vars *)dmp->dm_vars)->l);
 
@@ -389,6 +380,7 @@ char *argv[];
   Tk_MakeWindowExist(((struct glx_vars *)dmp->dm_vars)->xtkwin);
   ((struct glx_vars *)dmp->dm_vars)->win =
     Tk_WindowId(((struct glx_vars *)dmp->dm_vars)->xtkwin);
+  dmp->dm_id = (unsigned long)((struct glx_vars *)dmp->dm_vars)->win;
   set_window(GLX_NORMAL, ((struct glx_vars *)dmp->dm_vars)->win, glx_config);
 
   /* Inform the GL that you intend to render GL into an X window */
@@ -614,9 +606,6 @@ struct dm *dmp;
 		((struct glx_vars *)dmp->dm_vars)->win);
       Tk_DestroyWindow(((struct glx_vars *)dmp->dm_vars)->xtkwin);
     }
-
-    if(BU_LIST_IS_EMPTY(&head_glx_vars.l))
-      Tk_DeleteGenericHandler(dmp->dm_eventHandler, (ClientData)DM_TYPE_GLX);
   }
 
   if(((struct glx_vars *)dmp->dm_vars)->l.forw != BU_LIST_NULL)
