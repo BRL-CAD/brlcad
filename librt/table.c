@@ -164,6 +164,8 @@ RT_DECLARE_INTERFACE(eto)
 RT_DECLARE_INTERFACE(grp)
 #define rt_hf_xform rt_generic_xform
 RT_DECLARE_INTERFACE(hf)
+#define rt_fbm_xform rt_generic_xform
+RT_DECLARE_INTERFACE(fbm)
 
 /* from db_comb.c */
 RT_EXTERN(int rt_comb_import, (struct rt_db_internal *ip,
@@ -359,6 +361,13 @@ struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_hf_import,	rt_hf_export,	rt_hf_ifree,
 		rt_hf_describe,rt_hf_xform,
 
+	"ID_FBM",	0,		/* 25  */
+		rt_nul_prep,	rt_nul_shot,	rt_nul_print,	rt_nul_norm,
+		rt_nul_uv,	rt_nul_curve,	rt_nul_class,	rt_nul_free,
+		rt_nul_plot,	rt_nul_vshot,	rt_nul_tess,	rt_nul_tnurb,
+		rt_fbm_import,	rt_fbm_export,	rt_fbm_ifree,
+		rt_nul_describe,rt_nul_xform,
+
 	/* ID_MAXIMUM.  Add new solids _above_ this point */
 
 	"ID_COMBINATION",	0,
@@ -482,6 +491,7 @@ static char idmap[] = {
 	ID_EHY,		/* HACK: EHY 29: elliptical hyperboloid */
 	ID_ETO,		/* HACK: ETO 29: elliptical torus */
 	ID_GRIP,	/* HACK: GRP 30: grip pseudo solid */
+	ID_FBM,		/* HACK: FBM 32: fBm sphere solid */
 	ID_NULL		/* n+1 */
 };
 
