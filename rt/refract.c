@@ -67,7 +67,7 @@ char	*dp;
 #endif
 		goto finish;
 	}
-	VMOVE( filter_color, swp->sw_color );
+	VMOVE( filter_color, swp->sw_basecolor );
 
 	/*
 	 *  Diminish base color appropriately, and add in

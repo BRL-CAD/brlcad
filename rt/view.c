@@ -285,6 +285,7 @@ static struct shadework shade_default = {
 	0.0,				/* reflect */
 	1.0,				/* refractive index */
 	1.0, 1.0, 1.0,			/* color: white */
+	1.0, 1.0, 1.0,			/* basecolor: white */
 	/* rest are zeros */
 };
 
@@ -449,6 +450,7 @@ register struct shadework *swp;
 	if( rp->reg_mater.ma_override )  {
 		VMOVE( swp->sw_color, rp->reg_mater.ma_color );
 	}
+	VMOVE( swp->sw_basecolor, swp->sw_color );
 
 	if( swp->sw_hit.hit_dist < 0.0 )
 		swp->sw_hit.hit_dist = 0.0;	/* Eye inside solid */
