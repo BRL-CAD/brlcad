@@ -12,7 +12,7 @@ Display - create and manipulate a display widget.
 <P>
 
 <H2><A NAME="sect2" HREF="#toc2"><B>SYNOPSIS</B></A></H2>
-<B>Display</B> <I>pathName</I> ?<I>options</I>?
+<B>Display</B> <I>pathName</I> ?<I>type</I> ?<I>options</I>??
 <P>
 
 <H2><A NAME="sect3" HREF="#toc3"><B>INHERITANCE</B></A></H2>
@@ -80,6 +80,12 @@ Specifies how sensitive the mouse is when scaling the view.
 The <B>Display</B> command creates a new window
 (given by the <I>pathName</I> argument) and makes it into
 a display widget for displaying geometry.
+The display widget also inherits from 
+<A HREF="View.html">View</A>, so it can
+manipulate the view parameters.
+This widget also maintains a list of
+<A HREF="../librt/dg_obj.html">drawable geometry objects</A>
+which it can draw.
 Additional options, described above, may be specified on the
 command line or in the option database to configure aspects
 of the display manager widget.
@@ -156,7 +162,7 @@ Methods inherited from <A HREF="Dm.html#sect13">Dm</A>:<BR>
 to this object's list of drawable geometry objects.
 </DD>
 <P>
-<DT><I>pathName</I> <A NAME="attach_view"><B>attach_view</B></A> [<I></I>]</DT>
+<DT><I>pathName</I> <A NAME="attach_view"><B>attach_view</B></A></DT>
 <DD>Cause this object to observe it's view (i.e. whenever the view changes, this
 object is notified).
 </DD>
@@ -167,7 +173,7 @@ object (i.e. whenever the drawable geometry object changes, this
 object is notified).
 </DD>
 <P>
-<DT><I>pathName</I> <A NAME="autoview"><B>autoview</B></A> [<I>gindex</I>]</DT>
+<DT><I>pathName</I> <A NAME="autoview"><B>autoview</B></A> ?<I>gindex</I>?</DT>
 <DD>
 The first order of business is to decide which drawable geometry
 object in the list will be used to invoke it's 
@@ -180,29 +186,29 @@ to obtain optimal viewing parameters for it's geometry.
 These parameters are then used to set this object's view.
 </DD>
 <P>
-<DT><I>pathName</I> <A NAME="contents"><B>contents</B></A> [<I></I>]</DT>
+<DT><I>pathName</I> <A NAME="contents"><B>contents</B></A></DT>
 <DD>Return the list of drawable geometry objects referenced by this object.
 </DD>
 <P>
-<DT><I>pathName</I> <A NAME="detach_drawable"><B>detach_drawable</B></A> [<I>dg</I>]</DT>
+<DT><I>pathName</I> <A NAME="detach_drawable"><B>detach_drawable</B></A> ?<I>dg</I>?</DT>
 <DD>Cause this object to stop observing the specified drawable geometry
 object (i.e. <I>dg</I>).
 </DD>
 <P>
-<DT><I>pathName</I> <A NAME="detach_view"><B>detach_view</B></A> [<I></I>]</DT>
+<DT><I>pathName</I> <A NAME="detach_view"><B>detach_view</B></A></DT>
 <DD>Cause this object to stop observing it's view.
 </DD>
 <P>
-<DT><I>pathName</I> <A NAME="refresh"><B>refresh</B></A> [<I></I>]</DT>
+<DT><I>pathName</I> <A NAME="refresh"><B>refresh</B></A></DT>
 <DD>Causes this object to draw it's list of drawable geometry objects.
 </DD>
 <P>
-<DT><I>pathName</I> <A NAME="remove"><B>remove</B></A> [<I>glist</I>]</DT>
+<DT><I>pathName</I> <A NAME="remove"><B>remove</B></A> ?<I>glist</I>?</DT>
 <DD>Remove the specified list of drawable geometry objects (i.e. <I>glist</I>)
 from this object's list of drawable geometry objects.
 </DD>
 <P>
-<DT><I>pathName</I> <A NAME="rt"><B>rt</B></A> [<I>-geo gindex</I>] [<I>args</I>]</DT>
+<DT><I>pathName</I> <A NAME="rt"><B>rt</B></A> ?<I>-geo gindex</I>? ?<I>args</I>?</DT>
 <DD>
 The first order of business is to decide which drawable geometry
 object in the list will be used to invoke it's 
@@ -215,7 +221,7 @@ with this object's <A HREF="../librt/view_obj.html">view object</A> as the
 first argument.
 </DD>
 <P>
-<DT><I>pathName</I> <A NAME="rtcheck"><B>rtcheck</B></A> [<I>-geo gindex</I>] [<I>args</I>]</DT>
+<DT><I>pathName</I> <A NAME="rtcheck"><B>rtcheck</B></A> ?<I>-geo gindex</I>? ?<I>args</I>?</DT>
 <DD>
 The first order of business is to decide which drawable geometry
 object in the list will be used to invoke it's 
@@ -237,11 +243,25 @@ calls <A HREF="#refresh">refresh</A>.
 <P>
 
 <H2><A NAME="sect14" HREF="#toc14"><B>NOTES</B></A></H2>
-
+If optional arguments are provided to the Display
+command, the first such argument must be
+either <I>X</I> or <I>ogl</I> (i.e. the display manager type).
 <P>
 
 <H2><A NAME="sect15" HREF="#toc15"><B>EXAMPLE</B></A></H2>
-
+cwish> Display .d X -dmsize 400
+<BR>
+.d
+<BR>
+cwish> pack .d -expand yes -fill both
+<BR>
+cwish> Database db moss.g
+<BR>
+db
+<BR>
+cwish> db draw all.g
+<BR>
+cwish> .d add [db get_dgname]
 <P>
 
 <H2><A NAME="sect16" HREF="#toc16"><B>ACKNOWLEDGEMENTS:</B></A></H2>
