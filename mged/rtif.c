@@ -321,7 +321,7 @@ static void
 rt_set_eye_model(eye_model)
 vect_t eye_model;
 {
-  if((zclip_ptr != NULL && *zclip_ptr) || mged_variables->mv_perspective_mode){
+  if(dmp->dm_zclip || mged_variables->mv_perspective_mode){
     vect_t temp;
 
     VSET( temp, 0.0, 0.0, 1.0 );

@@ -171,7 +171,7 @@ end:
       VSET(view_pt, fx, fy, 1.0);
       MAT4X3PNT(model_pt, view_state->vs_view2model, view_pt);
       VSCALE(model_pt, model_pt, base2local);
-      if(*zclip_ptr)
+      if(dmp->dm_zclip)
 	bu_vls_printf(&vls, "qray_nirt %lf %lf %lf",
 		      model_pt[X], model_pt[Y], model_pt[Z]);
       else
@@ -620,7 +620,6 @@ end:
 
   if(!strcmp(argv[0], "bg")){
     int r, g, b;
-    struct bu_vls vls;
 
     if(argc != 1 && argc != 4){
       bu_vls_init(&vls);
@@ -631,8 +630,18 @@ end:
       return TCL_ERROR;
     }
 
-    if(argc == 1)
-      return DM_GET_BGCOLOR(dmp, interp);
+    /* return background color of current display manager */
+    if (argc == 1) {
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "%d %d %d",
+		    dmp->dm_bg[0],
+		    dmp->dm_bg[1],
+		    dmp->dm_bg[2]);
+      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+      bu_vls_free(&vls);
+      
+      return TCL_OK;
+    }
 
     if(sscanf(argv[1], "%d", &r) != 1 ||
        sscanf(argv[2], "%d", &g) != 1 ||
