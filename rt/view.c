@@ -90,6 +90,7 @@ int	ibackground[3];			/* integer 0..255 version */
 #define MAX_BOUNCE	4	/* Maximum recursion level */
 
 static int	buf_mode=0;	/* 0=pixel, 1=line, 2=frame */
+static int	*npix_left;	/* only used in buf_mode=2 */
 
 /*
  *  			V I E W _ P I X E L
@@ -190,6 +191,7 @@ register struct application *ap;
 		}
 	} else {
 		register char *pixelp;
+		register int do_eol = 0;
 
 		if( buf_mode == 1 )  {
 			/* Here, the buffer is only one line long */
@@ -219,8 +221,16 @@ register struct application *ap;
 			*pixelp++ = r ;
 			*pixelp++ = g ;
 			*pixelp++ = b ;
+			if( buf_mode == 2 && --(npix_left[ap->a_y]) <= 0 )
+				do_eol = 1;
 		}
 		RES_RELEASE( &rt_g.res_results );
+
+		if( do_eol && fbp != FBIO_NULL )  {
+			RES_ACQUIRE( &rt_g.res_syscall );
+			fb_write( fbp, 0, ap->a_y, scanbuf+ap->a_y*width*3, width );
+			RES_RELEASE( &rt_g.res_syscall );
+		}
 	}
 }
 
@@ -237,18 +247,17 @@ register struct application *ap;
 	if( buf_mode <= 0 || fbp == FBIO_NULL )
 		return;
 
-	RES_ACQUIRE( &rt_g.res_syscall );
 	switch( buf_mode )  {
 	case 3:
 		break;
 	case 2:
-		fb_write( fbp, 0, ap->a_y, scanbuf+ap->a_y*width*3, width );
 		break;
 	default:
+		RES_ACQUIRE( &rt_g.res_syscall );
 		fb_write( fbp, 0, ap->a_y, scanbuf, width );
+		RES_RELEASE( &rt_g.res_syscall );
 		break;
 	}
-	RES_RELEASE( &rt_g.res_syscall );
 }
 
 /*
@@ -261,7 +270,13 @@ struct application *ap;
 
 	if( buf_mode == 3 )  {
 		/* Dump full screen */
-		fb_write( fbp, 0, 0, scanbuf, width*height );
+		if( fb_getwidth(fbp) == width && fb_getheight(fbp) == height )  {
+			fb_write( fbp, 0, 0, scanbuf, width*height );
+		} else {
+			register int y;
+			for( y=0; y<height; y++ )
+				fb_write( fbp, 0, y, scanbuf+y*width*3, width );
+		}
 		if( incr_level < incr_nlevel )
 			return(0);		 /* more res to come */
 	}
@@ -684,6 +699,7 @@ view_init( ap, file, obj, minus_o )
 register struct application *ap;
 char *file, *obj;
 {
+	register int i;
 
 #ifndef RTSRV
 	if( incr_mode )  {
@@ -709,6 +725,9 @@ char *file, *obj;
 		break;
 	case 2:
 		scanbuf = rt_malloc( width*height*3 + sizeof(long), "scanbuf [frame]" );
+		npix_left = (int *)rt_malloc( height*sizeof(int), "npix_left[]" );
+		for( i=0; i<height; i++ )
+			npix_left[i] = width;
 		rt_log("Buffering full frames, fb write at end of line\n");
 		break;
 	case 3:

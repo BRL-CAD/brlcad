@@ -249,7 +249,6 @@ char **argv;
 	width = height = 512;
 	azimuth = -35.0;			/* GIFT defaults */
 	elevation = -25.0;
-
 #ifdef cray
 	npsw = 1;			/* >1 on GOS crashes system */
 #endif cray
@@ -274,12 +273,16 @@ char **argv;
 		incr_nlevel = 1;
 		while( (1<<incr_nlevel) < x )
 			incr_nlevel++;
-		rt_log("incremental resolution, nlevels = %d\n", incr_nlevel);
+		fprintf(stderr, "incremental resolution, nlevels = %d\n",
+			incr_nlevel);
 	}
 
-	/* Handle parallel initialization, if applicable */
+	/*
+	 *  Handle parallel initialization, if applicable.
+	 *  Do not use rt_log() or rt_malloc() before this point.
+	 */
 #ifndef PARALLEL
-	npsw = 1;		/* serial */
+	npsw = 1;			/* force serial */
 #endif
 	if( npsw > 1 )
 		parallel = 1;
