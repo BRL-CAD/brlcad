@@ -81,13 +81,12 @@ CFLAGS="$CFLAGS "'-I$(top_srcdir)/h -fno-strict-aliasing'
 case "$target" in
 	*-*-linux*)
 		PTHREAD_LIBS="-lpthread"
-		AC_SUBST(PTHREAD_LIBS)
 		;;
 	*-*-*BSD*)
 		PTHREAD_LIBS="-pthread"
-		AC_SUBST(PTHREAD_LIBS)
 		;;
 esac
+AC_SUBST(PTHREAD_LIBS)
 
 dnl autosearch fink paths
 AC_MSG_CHECKING([for fink])
@@ -106,8 +105,16 @@ AC_ARG_WITH(jdk,
         JAVA_CFLAGS="-I$withval/include -I$withval/include/`uname | tr [A-Z] [a-z]`"
         have_java=yes
         ])
+case "$target" in
+	*-*-darwin*)
+		JAVA_CFLAGS=""
+		JAVA_LDFLAGS="-shrext .jnilib"
+		have_java=yes
+		;;
+esac
 AM_CONDITIONAL(JAVA, test x$have_java = xyes)
 AC_SUBST(JAVA_CFLAGS)
+AC_SUBST(JAVA_LDFLAGS)
 AC_SUBST(JAVARTSERVER)
 
 AC_DEFINE(DM_X,1,[Display for X])
