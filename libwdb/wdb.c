@@ -68,6 +68,30 @@ double		d;
 }
 
 /*
+ *			M K _ G R I P
+ *
+ *  Make a grip psuedo solid.  Specified by a center, normal vector, and
+ *  magnitude.
+ */
+int
+mk_grip( fp, name, center, normal, magnitude )
+FILE		*fp;
+char		*name;
+CONST point_t	center;
+CONST vect_t	normal;
+CONST fastf_t	magnitude;
+{
+	struct rt_grip_internal		grip;
+
+	grip.magic = RT_GRIP_INTERNAL_MAGIC;
+	VMOVE( grip.center, center );
+	VMOVE( grip.normal, normal );
+	grip.mag = magnitude;
+
+	return mk_export_fwrite( fp, name, (genptr_t)&grip, ID_GRIP );
+}
+
+/*
  *			M K _ R P P
  *
  *  Make a right parallelpiped.  Specified by minXYZ, maxXYZ.
