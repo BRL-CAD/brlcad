@@ -92,6 +92,7 @@ int	width, height;
 
 	ifp->if_width = width;
 	ifp->if_height = height;
+	over_sampl = ifp->if_width / MAX_DIMENSION;
 	if( (ifp->if_fd = open( ptty_name, O_RDWR, 0 )) == -1 )
 		return	-1;
 	(void) ptty_setsize( ifp, width, height );
@@ -122,7 +123,6 @@ long		ct;
 	{	static char	ptty_buf[10];
 		register int	scan_ct;
 /*	y = ifp->if_width-1-y;		/* 1st quadrant */
-	over_sampl = ifp->if_width / MAX_DIMENSION;
 	(void) sprintf( ptty_buf, "%c%04d%04d", PT_SEEK, CVT2DMD( x ), CVT2DMD( y ));
 	if( write( ifp->if_fd, ptty_buf, 9 ) < 9 )
 		return	-1;
@@ -186,7 +186,7 @@ FBIO	*ifp;
 int	x, y;
 	{	static char	ptty_buf[10];
 /*	y = ifp->if_width-1-y;		/* 1st quadrant */
-	(void) sprintf(	ptty_buf, "%c%04d%04d", PT_WINDOW, CVT2DMD( x ),	CVT2DMD( y ) );
+	(void) sprintf(	ptty_buf, "%c%04d%04d", PT_WINDOW, CVT2DMD( x ), CVT2DMD( y ) );
 	return	write( ifp->if_fd, ptty_buf, 9 ) == 9 ? 0 : -1;
 	}
 
@@ -195,6 +195,8 @@ ptty_zoom_set( ifp, x, y )
 FBIO	*ifp;
 int	x, y;
 	{	static char	ptty_buf[10];
+	x /= over_sampl; /* Correct for scale-down.	*/
+	y /= over_sampl;
 	(void) sprintf( ptty_buf, "%c%04d%04d", PT_ZOOM, x, y );
 	return	write( ifp->if_fd, ptty_buf, 9 ) == 9 ? 0 : -1;
 	}
