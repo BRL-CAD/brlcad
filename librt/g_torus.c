@@ -515,20 +515,17 @@ struct resource         *resp; /* pointer to a list of free segs */
 	LOCAL vect_t	work;		/* temporary vector */
 	LOCAL poly	*C;		/* The final equation */
 	LOCAL complex	(*val)[MAXP];	/* The complex roots */
-	LOCAL double	k[4];		/* The real roots */
-	LOCAL int	j;
 	LOCAL int	num_roots;
 	LOCAL int	num_zero;
 	LOCAL poly	A, Asqr;
 	LOCAL poly	X2_Y2;		/* X**2 + Y**2 */
 	LOCAL vect_t	cor_pprime;	/* new ray origin */
 	LOCAL fastf_t	*cor_proj;
-	LOCAL poly      tmp;
 
 	/* Allocate space for polys and roots */
         C = (poly *)rt_malloc(n * sizeof(poly), "tor poly");
 	val = (complex (*)[MAXP])rt_malloc(n * sizeof(complex (*)[MAXP]), "tor complex");
-	cor_proj = (fastf_t *)malloc(n * sizeof(fastf_t), "tor proj");
+	cor_proj = (fastf_t *)rt_malloc(n * sizeof(fastf_t), "tor proj");
 
 	/* Initialize seg_stp to assume hit (zero will then flag miss) */
 #	include "noalias.h"
