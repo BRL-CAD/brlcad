@@ -497,7 +497,7 @@ set -S2 "/bin/sh"
 #		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
 #		define	MGED_OBJS	dm-X
 #		define	MGED_CONFIG	-DDM_X -I''XINCDIR
-#		define	MGED_LIBES	-L''XLIBDIR -lX11
+#		define	MGED_LIBES	-L''XLIBDIR -lX11 -ly
 #	else
 /*		Sun with site-provided MIT X11. */
 #		define	XINCDIR		/usr/X11/include
@@ -508,7 +508,7 @@ set -S2 "/bin/sh"
 #		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
 #		define	MGED_OBJS	dm-X
 #		define	MGED_CONFIG	-DDM_X -I''XINCDIR
-#		define	MGED_LIBES	-L''XLIBDIR -lX11
+#		define	MGED_LIBES	-L''XLIBDIR -lX11 -ly
 
 /*		XMGED requires a Motif license and include/X11/Xm/Xm.h */
 #		if 0
