@@ -176,9 +176,9 @@ ____________________________________________________________
 					Internet E-mail Address
 
 4. Please indicate the type of your organization:
- [ ] Academic
- [ ] Government
- [ ] Industry
+ [ ] Academic ........ Students should register as individuals.
+ [ ] Government: [ ] Air Force  [ ] Army  [ ] Navy  [ ] Other ___________
+ [ ] Industry ........ Governement contractors should register as Industry
  [ ] Private Individual
 
 5. Number of people in work group _________
@@ -230,10 +230,10 @@ BRL-CAD on (check all that are appropriate):
 
 12. Please specify which edition of BRL-CAD you desire:
 
- [ ]	Binary executable edition (versions exist for SGI-IRIX,
+ [ ]	5.0 Binary executable edition (versions exist for SGI-IRIX,
 	RedHat Linux-86, and FreeBSD-86 architectures).
-
- [ ]	Source code edition (answer question 13 below).
+ [ ]	5.0 Source code edition (answer question 13 below).
+ [ ]	4.5 Source code edition (answer question 13 below).
 
 13. If you desire the source code edition, please indicate briefly your
 reasons and the ways you envision using the source code:
