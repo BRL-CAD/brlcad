@@ -54,6 +54,9 @@ struct ee_2d_state {
 	vect_t	dir;
 };
 
+RT_EXTERN(void		nmg_isect2d_prep, (struct nmg_inter_struct *is, struct face *f1));
+
+
 /*
  *			N M G _ G E T _ 2 D _ V E R T E X
  *
@@ -1443,6 +1446,8 @@ struct faceuse		*eu_fu;		/* fu that eu is from */
     	    	nmg_pl_2fu( "Isect_faces%d.pl", fno++, fu, eu_fu, 0 );
     	}
 
+nmg_fu_touchingloops(fu);
+nmg_fu_touchingloops(eu_fu);
 	for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
 		struct edgeuse	*eu2;
 
@@ -1459,6 +1464,8 @@ struct faceuse		*eu_fu;		/* fu that eu is from */
 			/* isect eu with eu */
 			/* XXX same question here */
 			nmg_isect_edge2p_edge2p( is, eu, eu2, eu_fu, fu );
+nmg_fu_touchingloops(fu);
+nmg_fu_touchingloops(eu_fu);
 		}
 	}
 
@@ -1482,12 +1489,18 @@ struct faceuse		*eu_fu;		/* fu that eu is from */
     		goto out;
     	}
 
+nmg_fu_touchingloops(fu);
+nmg_fu_touchingloops(eu_fu);
 	nmg_face_cutjoin(&vert_list1, &vert_list2, fu, eu_fu, is->pt, is->dir, &is->tol);
+nmg_fu_touchingloops(fu);		/* XXX r410 dies here */
+nmg_fu_touchingloops(eu_fu);
 	nmg_mesh_faces(fu, eu_fu);
 
 out:
 	(void)nmg_tbl(&vert_list1, TBL_FREE, (long *)NULL);
 	(void)nmg_tbl(&vert_list2, TBL_FREE, (long *)NULL);
+nmg_fu_touchingloops(fu);
+nmg_fu_touchingloops(eu_fu);
 }
 
 /*
@@ -1524,6 +1537,8 @@ struct faceuse		*fu1, *fu2;
 
 	/* For every edge in f1, intersect with f2, incl. cutjoin */
 f1_again:
+nmg_fu_touchingloops(fu1);
+nmg_fu_touchingloops(fu2);
 	for( RT_LIST_FOR( lu, loopuse, &fu1->lu_hd ) )  {
 		NMG_CK_LOOPUSE(lu);
 		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )  {
@@ -1545,6 +1560,8 @@ f1_again:
 
 	/* For every edge in f2, intersect with f1, incl. cutjoin */
 f2_again:
+nmg_fu_touchingloops(fu1);
+nmg_fu_touchingloops(fu2);
 	for( RT_LIST_FOR( lu, loopuse, &fu2->lu_hd ) )  {
 		NMG_CK_LOOPUSE(lu);
 		if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) == NMG_VERTEXUSE_MAGIC )  {
@@ -1560,6 +1577,8 @@ f2_again:
 			if(eu->up.lu_p != lu )  goto f2_again;
 		}
 	}
+nmg_fu_touchingloops(fu1);
+nmg_fu_touchingloops(fu2);
 }
 
 /*
@@ -1590,6 +1609,8 @@ struct faceuse		*fu1, *fu2;
 		nmg_vfu( &fu1->s_p->fu_hd, fu1->s_p );
 		nmg_vfu( &fu2->s_p->fu_hd, fu2->s_p );
 	}
+nmg_fu_touchingloops(fu1);
+nmg_fu_touchingloops(fu2);
 
 	(void)nmg_tbl(&vert_list1, TBL_INIT,(long *)NULL);
 	(void)nmg_tbl(&vert_list2, TBL_INIT,(long *)NULL);
@@ -1604,6 +1625,8 @@ struct faceuse		*fu1, *fu2;
     	}
 
 	nmg_isect_face3p_face3p(is, fu1, fu2);
+nmg_fu_touchingloops(fu1);
+nmg_fu_touchingloops(fu2);
 
 	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 		nmg_vfu( &fu1->s_p->fu_hd, fu1->s_p );
@@ -1619,6 +1642,8 @@ struct faceuse		*fu1, *fu2;
     	is->l2 = &vert_list1;
     	is->l1 = &vert_list2;
 	nmg_isect_face3p_face3p(is, fu2, fu1);
+nmg_fu_touchingloops(fu1);
+nmg_fu_touchingloops(fu2);
 
 	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 		nmg_vfu( &fu1->s_p->fu_hd, fu1->s_p );
@@ -1640,6 +1665,8 @@ struct faceuse		*fu1, *fu2;
     	}
 
 	nmg_face_cutjoin(&vert_list1, &vert_list2, fu1, fu2, is->pt, is->dir, &is->tol);
+nmg_fu_touchingloops(fu1);
+nmg_fu_touchingloops(fu2);
 
 	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 		nmg_vfu( &fu1->s_p->fu_hd, fu1->s_p );
@@ -1647,6 +1674,8 @@ struct faceuse		*fu1, *fu2;
 	}
 
 	nmg_mesh_faces(fu1, fu2);
+nmg_fu_touchingloops(fu1);
+nmg_fu_touchingloops(fu2);
 
 #if 0
 	show_broken_stuff((long *)fu1, (long **)NULL, 1, 0);
@@ -1705,6 +1734,8 @@ CONST struct rt_tol	*tol;
 			pl1[0], pl1[1], pl1[2], pl1[3],
 			pl2[0], pl2[1], pl2[2], pl2[3]);
 	}
+nmg_fu_touchingloops(fu1);
+nmg_fu_touchingloops(fu2);
 
 	if ( !V3RPP_OVERLAP_TOL(f2->fg_p->min_pt, f2->fg_p->max_pt,
 	    f1->fg_p->min_pt, f1->fg_p->max_pt, &bs.tol) )  return;
@@ -1737,6 +1768,8 @@ rt_log("co-planar faces.\n");
 	}
 
 	if(bs.vert2d)  rt_free( (char *)bs.vert2d, "vert2d" );
+nmg_fu_touchingloops(fu1);
+nmg_fu_touchingloops(fu2);
 }
 
 /*
@@ -1854,4 +1887,90 @@ CONST struct rt_tol	*tol;
 		nmg_vshell( &s1->r_p->s_hd, s1->r_p );
 		nmg_vshell( &s2->r_p->s_hd, s2->r_p );
 	}
+}
+
+
+/*
+ *			N M G _ F U _ T O U C H I N G L O O P S
+ */
+int
+nmg_fu_touchingloops(fu)
+CONST struct faceuse	*fu;
+{
+	CONST struct loopuse	*lu;
+
+	NMG_CK_FACEUSE(fu);
+	for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
+		NMG_CK_LOOPUSE(lu);
+		if( nmg_touchingloops( lu ) )  return 1;
+	}
+	return 0;
+}
+
+/*
+ *			N M G _ T O U C H I N G L O O P S
+ *
+ *  Search through all the vertices in a loop.
+ *  If there are two distinct uses of one vertex in the loop,
+ *  return true.
+ *  This is useful for detecting "accordian pleats"
+ *  unexpectedly showing up in a loop.
+ *  Intended for specific debugging tasks, rather than as a
+ *  routine used generally.
+ *  Derrived from nmg_split_touchingloops().
+ *
+ *  Returns -
+ *	1	Yes, the loop touches itself at least once.
+ *	0	No, the loop does not touch itself.
+ */
+int
+nmg_touchingloops( lu )
+CONST struct loopuse	*lu;
+{
+	CONST struct edgeuse	*eu;
+	CONST struct vertexuse	*vu;
+	CONST struct vertex	*v;
+
+	if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
+		return 0;
+
+	/* For each edgeuse, get vertexuse and vertex */
+	for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )  {
+		CONST struct vertexuse	*tvu;
+
+		vu = eu->vu_p;
+		NMG_CK_VERTEXUSE(vu);
+		v = vu->v_p;
+		NMG_CK_VERTEX(v);
+
+		/*
+		 *  For each vertexuse on vertex list,
+		 *  check to see if it points up to the this loop.
+		 *  If so, then there is a duplicated vertex.
+		 *  Ordinarily, the vertex list will be *very* short,
+		 *  so this strategy is likely to be faster than
+		 *  a table-based approach, for most cases.
+		 */
+		for( RT_LIST_FOR( tvu, vertexuse, &v->vu_hd ) )  {
+			CONST struct edgeuse		*teu;
+			CONST struct loopuse		*tlu;
+			CONST struct loopuse		*newlu;
+
+			if( tvu == vu )  continue;
+			if( *tvu->up.magic_p != NMG_EDGEUSE_MAGIC )  continue;
+			teu = tvu->up.eu_p;
+			NMG_CK_EDGEUSE(teu);
+			if( *teu->up.magic_p != NMG_LOOPUSE_MAGIC )  continue;
+			tlu = teu->up.lu_p;
+			NMG_CK_LOOPUSE(tlu);
+			if( tlu != lu )  continue;
+			/*
+			 *  Repeated vertex exists.
+			 */
+nmg_pr_lu_briefly(lu,0);
+rt_bomb("nmg_touchingloops()\n");
+			return 1;
+		}
+	}
+	return 0;
 }
