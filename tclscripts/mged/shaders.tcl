@@ -57,22 +57,30 @@ proc do_extern { shade_var id } {
 			In this shader, all the parameters are stored in an outboard file. The format of the file\n\
 			is:\n\
 				shader_name key_word1=value keyword2=value...\n\
+			\n\
 			This shader is actually a variant of the stack shader, so you can supply more than one\n\
 			shader in the file by using the ';' as a separator. For example:\n\
 			\n\
 				camo s=200 t1=-.3 t2=.125;plastic di=.8\n\
-			will apply the 'camo' shader, then the 'plastic' shader."}
+			\n\
+			will apply the 'camo' shader, then the 'plastic' shader.\n\
+			\n\
+			Enter the name of the outboard file here."}
 	}
 	hoc_register_data $shader_params($id,window).fr.file_e "File" {
 		{summary "The 'extern' shader is merely another way of assigning shaders to combinations.\n\
 			In this shader, all the parameters are stored in an outboard file. The format of the file\n\
 			is:\n\
 				shader_name key_word1=value keyword2=value...\n\
+			\n\
 			This shader is actually a variant of the stack shader, so you can supply more than one\n\
 			shader in the file by using the ';' as a separator. For example:\n\
 			\n\
 				camo s=200 t1=-.3 t2=.125;plastic di=.8\n\
-			will apply the 'camo' shader, then the 'plastic' shader."}
+			\n\
+			will apply the 'camo' shader, then the 'plastic' shader.\n\
+			\n\
+			Enter the name of the outboard file here."}
 	}
 
 	set_extern_values $shader_str $id
@@ -1583,6 +1591,58 @@ proc do_texture { shade_var id } {
 			triple. For the 'bwtexture' shader, a single value is sufficient\n\
 			This is ignored for the 'bump' shader"}
 		{ range "RGB values must be integers from 0 to 255"}
+	}
+
+	hoc_register_data $shader_params($id,window).fr.mirror Mirror {
+		{ summary "Turn this option on to get smooth transitions between adjacent tiles\n\
+			of the texture by mirroring. This only has an effect when texture\n\
+			replication is greater than 1"}
+	}
+
+	hoc_register_data $shader_params($id,window).fr.mirror_e Mirror {
+		{ summary "Turn this option on to get smooth transitions between adjacent tiles\n\
+			of the texture by mirroring. This only has an effect when texture\n\
+			replication is greater than 1"}
+	}
+
+	hoc_register_data $shader_params($id,window).fr.u_scale "Texture Replication" {
+		{summary "Each object being shaded has UV coordinates from 0 through 1.0 used to\n\
+			lookup which part of the texture should be applied where.  Normally,\n\
+			one entire copy of the texture is stretched or compressed to fit the object.\n\
+			This is changed when a value other than 1 is entered here. The value entered here\n\
+			specifies the number of texture patterns to be used across the object in the U\n\
+			parameter direction"}
+		{ range "Real numbers greater than 0.0" }
+	}
+
+	hoc_register_data $shader_params($id,window).fr.u_scale_e "Texture Replication" {
+		{summary "Each object being shaded has UV coordinates from 0 through 1.0 used to\n\
+			lookup which part of the texture should be applied where.  Normally,\n\
+			one entire copy of the texture is stretched or compressed to fit the object.\n\
+			This is changed when a value other than 1 is entered here. The value entered here\n\
+			specifies the number of texture patterns to be used across the object in the U\n\
+			parameter direction"}
+		{ range "Real numbers greater than 0.0" }
+	}
+
+	hoc_register_data $shader_params($id,window).fr.v_scale "Texture Replication" {
+		{summary "Each object being shaded has UV coordinates from 0 through 1.0 used to\n\
+			lookup which part of the texture should be applied where.  Normally,\n\
+			one entire copy of the texture is stretched or compressed to fit the object.\n\
+			This is changed when a value other than 1 is entered here. The value entered here\n\
+			specifies the number of texture patterns to be used across the object in the V\n\
+			parameter direction"}
+		{ range "Real numbers greater than 0.0" }
+	}
+
+	hoc_register_data $shader_params($id,window).fr.v_scale_e "Texture Replication" {
+		{summary "Each object being shaded has UV coordinates from 0 through 1.0 used to\n\
+			lookup which part of the texture should be applied where.  Normally,\n\
+			one entire copy of the texture is stretched or compressed to fit the object.\n\
+			This is changed when a value other than 1 is entered here. The value entered here\n\
+			specifies the number of texture patterns to be used across the object in the V\n\
+			parameter direction"}
+		{ range "Real numbers greater than 0.0" }
 	}
 
 	hoc_register_data $shader_params($id,window).fr.valid_e Transparency {
