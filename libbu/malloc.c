@@ -297,11 +297,11 @@ const char		*str;
 			ptr == original_ptr ? "[grew in place]" : "[moved]" );
 		bu_semaphore_release(BU_SEM_SYSCALL);
 	}
-	if( ptr==(char *)0 )  {
+	if( ptr==(char *)0 && cnt > 0 )  {
 		fprintf(stderr,"bu_realloc: Insufficient memory available, sbrk(0)=x%lx\n", (long)sbrk(0));
 		bu_bomb("bu_realloc: malloc failure");
 	}
-	if( bu_debug&BU_DEBUG_MEM_CHECK )  {
+	if( bu_debug&BU_DEBUG_MEM_CHECK && ptr )  {
 		/* Even if ptr didn't change, need to update cnt & barrier */
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
 		mp->mdb_addr = ptr;
