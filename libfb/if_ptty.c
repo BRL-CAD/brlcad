@@ -102,7 +102,7 @@ FBIO	*ifp;
 _LOCAL_ int
 ptty_device_clear( ifp, bgpp )
 FBIO	*ifp;
-Pixel	*bgpp;
+RGBpixel	*bgpp;
 	{	static char	ptty_buf[2] = { PT_CLEAR, NULL };
 	return	write( ifp->if_fd, ptty_buf, 1 ) < 1 ? -1 : 0;
 	}
@@ -111,7 +111,7 @@ _LOCAL_ int
 ptty_buffer_write( ifp, x, y, pixelp, ct )
 register FBIO	*ifp;
 int		x, y;
-Pixel		*pixelp;
+RGBpixel		*pixelp;
 long		ct;
 	{	static char	ptty_buf[10];
 		register int	scan_ct;
@@ -137,13 +137,13 @@ _LOCAL_ int
 ptty_buffer_read( ifp, x, y, pixelp, ct )
 FBIO	*ifp;
 int	x, y;
-Pixel	*pixelp;
+RGBpixel	*pixelp;
 long	ct;
 	{
 	y = ifp->if_width-1-y;		/* 1st quadrant */
 #if 0 /* Not yet implemented. */
-	if( read( ifp->if_fd, (char *) pixelp, (int)(sizeof(Pixel)*ct) )
-		< sizeof(Pixel)*ct
+	if( read( ifp->if_fd, (char *) pixelp, (int)(sizeof(RGBpixel)*ct) )
+		< sizeof(RGBpixel)*ct
 		)
 		return	-1;
 #endif
@@ -229,7 +229,7 @@ int	nframes, framesz, fps;
 _LOCAL_
 output_Scan( ifp, pixels, ct )
 FBIO		*ifp;
-register Pixel	*pixels;
+register RGBpixel	*pixels;
 int		ct;
 	{	register int	i, j;
 		static char	output_buf[MAX_DIMENSION+1];
@@ -299,7 +299,8 @@ int		val;
 
 _LOCAL_
 rgb_To_Dither_Val( pixel )
-register Pixel	*pixel;
+register RGBpixel	*pixel;
 	{
-	return	(R_NTSC*pixel->red + G_NTSC*pixel->green + B_NTSC*pixel->blue);
+	return	(R_NTSC * (*pixel)[RED] + G_NTSC * (*pixel)[GRN]
+		+ B_NTSC * (*pixel)[BLU]);
 	}
