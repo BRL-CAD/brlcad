@@ -1074,6 +1074,17 @@ struct bu_rb_node
 #define	INORDER		1
 #define	POSTORDER	2
 
+/*
+ *			B U _ O B S E R V E R
+ *
+ */
+struct bu_observer {
+  struct bu_list	l;
+  struct bu_vls		observer;
+  struct bu_vls		cmd;
+};
+#define BU_OBSERVER_NULL	((struct bu_observer *)0)
+
 /*----------------------------------------------------------------------*/
 /* Miscellaneous macros */
 #define bu_made_it()		bu_log("Made it to %s:%d\n",	\
@@ -1457,6 +1468,10 @@ BU_EXTERN(unsigned char *	bu_plong, (register unsigned char *msgp,
 
 /* association.c */
 BU_EXTERN(struct bu_vls *bu_association, (CONST char *fname, CONST char *value, int field_sep));
+
+/* These things live in libbu/observer.c */
+extern void bu_observer_notify();
+extern struct bu_cmdtab bu_observer_cmds[];
 
 #ifdef __cplusplus
 }
