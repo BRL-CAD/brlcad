@@ -52,7 +52,7 @@ extern int dm_pipe[];
 
 static void	label();
 static void	draw();
-static int	xsetup();
+static int	X_setup();
 static void     x_var_init();
 static void     establish_perspective();
 static void     set_perspective();
@@ -170,7 +170,7 @@ X_open()
 {
   x_var_init();
 
-  return xsetup(dname);
+  return X_setup(dname);
 }
 
 /*
@@ -775,7 +775,7 @@ static XWMHints xwmh = {
 };
 
 static int
-xsetup( name )
+X_setup( name )
 char	*name;
 {
   static int count = 0;
@@ -793,12 +793,16 @@ char	*name;
 
   /* Only need to do this once */
   if(tkwin == NULL){
+#if 1
+    gui_setup();
+#else
     rt_vls_printf(&str, "loadtk %s\n", name);
 
     if(cmdline(&str, FALSE) == CMD_BAD){
       rt_vls_free(&str);
       return -1;
     }
+#endif
   }
 
 
