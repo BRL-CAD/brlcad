@@ -2816,11 +2816,21 @@ extern int rt_bound_tree( const union tree	*tp,
 
 
 /* vlist.c */
+/* XXX Has some stuff mixed in here that should go in LIBBN */
+struct bn_vlblock *
+bn_vlblock_init(
+	struct bu_list	*free_vlist_hd,		/* where to get/put free vlists */
+	int		max_ent);
 BU_EXTERN(struct bn_vlblock *	rt_vlblock_init, () );
 BU_EXTERN(void			rt_vlblock_free, (struct bn_vlblock *vbp) );
 BU_EXTERN(struct bu_list *	rt_vlblock_find, (struct bn_vlblock *vbp,
 				int r, int g, int b) );
+const char *rt_vlist_cmd_descriptions[];
+int rt_ck_vlist( const struct bu_list *vhead );
+void rt_vlist_copy( struct bu_list *dest, const struct bu_list *src );
+void bn_vlist_cleanup( struct bu_list *hd );
 BU_EXTERN(void			rt_vlist_cleanup, () );
+void bn_vlist_rpp( struct bu_list *hd, const point_t minn, CONST point_t maxx );
 BU_EXTERN(void			rt_vlist_export, (struct bu_vls *vls,
 				struct bu_list *hp,
 				CONST char *name));
@@ -2831,14 +2841,14 @@ BU_EXTERN(void			rt_plot_vlblock, (FILE *fp,
 				CONST struct bn_vlblock	*vbp) );
 BU_EXTERN(void			rt_vlist_to_uplot, (FILE *fp,
 				CONST struct bu_list *vhead));
+BU_EXTERN(int			rt_process_uplot_value,
+				(struct bu_list **vhead, struct bn_vlblock *vbp,
+				FILE *fp, int c, double char_size) );
 BU_EXTERN(int			rt_uplot_to_vlist, (struct bn_vlblock *vbp,
 				FILE *fp, double char_size) );
 BU_EXTERN(void			rt_label_vlist_verts, (struct bn_vlblock *vbp,
 				struct bu_list *src, mat_t mat,
 				double sz, double mm2local) );
-BU_EXTERN(int			rt_process_uplot_value,
-				(struct bu_list **vhead, struct bn_vlblock *vbp,
-				FILE *fp, int c, double char_size) );
 
 /* pmalloc.c */
 BU_EXTERN(char *rt_pmalloc, (long nbytes, struct rt_pm_res *pmem));

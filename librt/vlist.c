@@ -44,9 +44,9 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
  *			B N _ V L B L O C K _ I N I T
  */
 struct bn_vlblock *
-bn_vlblock_init( free_vlist_hd, max_ent )
-struct bu_list	*free_vlist_hd;		/* where to get/put free vlists */
-int		max_ent;
+bn_vlblock_init(
+	struct bu_list	*free_vlist_hd,		/* where to get/put free vlists */
+	int		max_ent)
 {
 	struct bn_vlblock *vbp;
 	int	i;
@@ -75,6 +75,9 @@ int		max_ent;
 	return(vbp);
 }
 
+/*
+ *			R T _ V L B L O C K _ I N I T
+ */
 struct bn_vlblock *
 rt_vlblock_init()
 {
@@ -178,7 +181,7 @@ int	r, g, b;
  *			Generic BN_VLIST routines			*
  *									*
  ************************************************************************/
-CONST char *rt_vlist_cmd_descriptions[] = {
+const char *rt_vlist_cmd_descriptions[] = {
 	"line move ",
 	"line draw ",
 	"poly start",
@@ -199,8 +202,7 @@ CONST char *rt_vlist_cmd_descriptions[] = {
  *	npts	Number of point/command sets in use.
  */
 int
-rt_ck_vlist( vhead )
-CONST struct bu_list	*vhead;
+rt_ck_vlist( const struct bu_list *vhead )
 {
 	register struct bn_vlist	*vp;
 	int			npts = 0;
@@ -250,9 +252,7 @@ CONST struct bu_list	*vhead;
  *  densely packed than the source.
  */
 void
-rt_vlist_copy( dest, src )
-struct bu_list	*dest;
-CONST struct bu_list	*src;
+rt_vlist_copy( struct bu_list *dest, const struct bu_list *src )
 {
 	struct bn_vlist	*vp;
 
@@ -274,8 +274,7 @@ CONST struct bu_list	*src;
  *  Now, give those structures back to bu_free().
  */
 void
-bn_vlist_cleanup(hd)
-struct bu_list	*hd;
+bn_vlist_cleanup( struct bu_list *hd )
 {
 	register struct bn_vlist	*vp;
 
@@ -299,12 +298,12 @@ rt_vlist_cleanup()
 }
 
 /*
+ *			B N _ V L I S T _ R P P
+ *
+ *  Given an RPP, draw the outline of it into the vlist.
  */
 void
-bn_vlist_rpp(hd, minn, maxx)
-struct bu_list	*hd;
-CONST point_t	minn;
-CONST point_t	maxx;
+bn_vlist_rpp( struct bu_list *hd, const point_t minn, CONST point_t maxx )
 {
 	point_t	p;
 
