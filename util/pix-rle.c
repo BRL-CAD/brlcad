@@ -16,17 +16,17 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char RCSid[] = "@(#)$Id$ (BRL)";
 #endif
 
 #include <stdio.h>
 #include <time.h>
 
 #include "fb.h"
-#include "svfb_global.h"
+#include "rle.h"
 
-static struct sv_globals	outrle;
-#define		outfp		outrle.svfb_fd
+static rle_hdr	outrle;
+#define		outfp		outrle.rle_file
 static char			comment[128];
 static char			host[128];
 static rle_pixel		**rows;
@@ -144,20 +144,20 @@ char	*argv[];
 	}
 	scan_buf = (RGBpixel *)malloc( sizeof(RGBpixel) * file_width );
 
-	outrle.sv_ncolors = 3;
-	SV_SET_BIT(outrle, SV_RED);
-	SV_SET_BIT(outrle, SV_GREEN);
-	SV_SET_BIT(outrle, SV_BLUE);
-	outrle.sv_background = 2;		/* use background */
-	outrle.sv_bg_color = background;
-	outrle.sv_alpha = 0;		/* no alpha channel */
-	outrle.sv_ncmap = 0;		/* no color map */
-	outrle.sv_cmaplen = 0;
-	outrle.sv_cmap = (rle_map *)0;
-	outrle.sv_xmin = outrle.sv_ymin = 0;
-	outrle.sv_xmax = file_width-1;
-	outrle.sv_ymax = file_height-1;
-	outrle.sv_comments = (char **)0;
+	outrle.ncolors = 3;
+	RLE_SET_BIT(outrle, RLE_RED);
+	RLE_SET_BIT(outrle, RLE_GREEN);
+	RLE_SET_BIT(outrle, RLE_BLUE);
+	outrle.background = 2;		/* use background */
+	outrle.bg_color = background;
+	outrle.alpha = 0;		/* no alpha channel */
+	outrle.ncmap = 0;		/* no color map */
+	outrle.cmaplen = 0;
+	outrle.cmap = (rle_map *)0;
+	outrle.xmin = outrle.ymin = 0;
+	outrle.xmax = file_width-1;
+	outrle.ymax = file_height-1;
+	outrle.comments = (char **)0;
 
 	/* Add comments to the header file, since we have one */
 	sprintf( comment, "converted_from=%s", infile );
@@ -180,7 +180,7 @@ char	*argv[];
 	rle_putcom( strdup(comment), &outrle );
 #	endif
 
-	sv_setup( RUN_DISPATCH, &outrle );
+	rle_put_setup( &outrle );
 	rle_row_alloc( &outrle, &rows );
 
 	/* Read image a scanline at a time, and encode it */
@@ -206,9 +206,9 @@ char	*argv[];
 				*bp++ = *pp++;
 			}
 		}
-		sv_putrow( rows, file_width, &outrle );
+		rle_putrow( rows, file_width, &outrle );
 	}
-	sv_puteof( &outrle );
+	rle_puteof( &outrle );
 
 	fclose( infp );
 	fclose( outfp );
