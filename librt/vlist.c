@@ -131,3 +131,24 @@ CONST unsigned char	*buf;
 		RT_ADD_VLIST( hp, point, cmd );
 	}
 }
+
+/* XXX move to raytrace.h */
+#define RT_CK_VLIST(_p)		RT_CKMAG(_p, RT_VLIST_MAGIC, "rt_vlist")
+
+/*
+ *			R T _ V L I S T _ C L E A N U P
+ *
+ *  The macro RT_FREE_VLIST() simply appends to the list &rt_g.rtg_vlfree.
+ *  Now, give those structures back to rt_free().
+ */
+void
+rt_vlist_cleanup()
+{
+	register struct rt_vlist	*vp;
+
+	while( RT_LIST_WHILE( vp, rt_vlist, &rt_g.rtg_vlfree ) )  {
+		RT_CK_VLIST( vp );
+		RT_LIST_DEQUEUE( &(vp->l) );
+		rt_free( (char *)vp, "rt_vlist" );
+	}
+}
