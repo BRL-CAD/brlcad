@@ -61,7 +61,7 @@
 
 /* LIBRT is needed to get htond, parser, etc */
 remrt:	remrt.o ihost.o OBJS
-	sh ../sh/newvers.sh version "Network-Distributed RT (REMRT)"
+	newvers.sh version "Network-Distributed RT (REMRT)"
 	CC CFLAGS -c vers.c
 	CC LDFLAGS -o remrt remrt.o vers.o OBJS REMRT_PIECES
 
