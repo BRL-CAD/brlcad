@@ -73,9 +73,9 @@ vect_t new, old;
 }
 
 /*
- *  			H A L F _ P R E P
+ *  			H L F _ P R E P
  */
-half_prep( vec, stp, mat )
+hlf_prep( vec, stp, mat )
 fastf_t *vec;
 struct soltab *stp;
 matp_t mat;
@@ -120,9 +120,9 @@ matp_t mat;
 }
 
 /*
- *  			H A L F _ P R I N T
+ *  			H L F _ P R I N T
  */
-half_print( stp )
+hlf_print( stp )
 register struct soltab *stp;
 {
 	register struct half_specific *halfp =
@@ -140,7 +140,7 @@ register struct soltab *stp;
 }
 
 /*
- *			H A L F _ S H O T
+ *			H L F _ S H O T
  *  
  * Function -
  *	Shoot a ray at a HALFSPACE
@@ -153,7 +153,7 @@ register struct soltab *stp;
  *  	segp	HIT
  */
 struct seg *
-half_shot( stp, rp )
+hlf_shot( stp, rp )
 struct soltab *stp;
 register struct xray *rp;
 {
@@ -202,11 +202,11 @@ register struct xray *rp;
 }
 
 /*
- *  			H A L F _ N O R M
+ *  			H L F _ N O R M
  *
  *  Given ONE ray distance, return the normal and entry/exit point.
  */
-half_norm( hitp, stp, rp )
+hlf_norm( hitp, stp, rp )
 register struct hit *hitp;
 struct soltab *stp;
 register struct xray *rp;
@@ -237,7 +237,7 @@ double x,y;
 }
 
 /*
- *  			H A L F _ U V
+ *  			H L F _ U V
  *  
  *  For a hit on a face of an HALF, return the (u,v) coordinates
  *  of the hit point.  0 <= u,v <= 1.
@@ -246,7 +246,7 @@ double x,y;
  *  Note that a "toroidal" map is established, varying each from
  *  0 up to 1 and then back down to 0 again.
  */
-half_uv( stp, hitp, uvp )
+hlf_uv( stp, hitp, uvp )
 struct soltab *stp;
 register struct hit *hitp;
 register fastf_t *uvp;
