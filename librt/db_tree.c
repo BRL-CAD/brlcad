@@ -690,7 +690,7 @@ struct combined_tree_state	**region_start_statepp;
 {
 	struct directory	*dp;
 	struct rt_external	ext;
-	register int		i;
+	int			i;
 	struct tree_list	*tlp;		/* cur elem of trees[] */
 	struct tree_list	*trees = TREE_LIST_NULL;	/* array */
 	union tree		*curtree = TREE_NULL;
@@ -728,8 +728,10 @@ struct combined_tree_state	**region_start_statepp;
 		/*  Handle inheritance of material property. */
 		nts = *tsp;	/* struct copy */
 
-		if( (is_region = db_apply_state_from_comb( &nts, pathp, &ext )) < 0 )
-			goto fail;
+		if( (is_region = db_apply_state_from_comb( &nts, pathp, &ext )) < 0 )  {
+			curtree = TREE_NULL;		/* FAIL */
+			goto out;
+		}
 
 		if( is_region > 0 )  {
 			struct combined_tree_state	*ctsp;
@@ -739,8 +741,10 @@ struct combined_tree_state	**region_start_statepp;
 			 *  This might be used for ignoring air regions.
 			 */
 			if( tsp->ts_region_start_func && 
-			    tsp->ts_region_start_func( &nts, pathp ) < 0 )
-				goto fail;
+			    tsp->ts_region_start_func( &nts, pathp ) < 0 )  {
+				curtree = TREE_NULL;		/* FAIL */
+				goto out;
+			}
 
 			if( tsp->ts_stop_at_regions )  {
 				goto region_end;
@@ -750,7 +754,8 @@ struct combined_tree_state	**region_start_statepp;
 			if( *region_start_statepp != (struct combined_tree_state *)0 ) {
 				rt_log("db_recurse() ERROR at start of a region, *region_start_statepp = x%x\n",
 					*region_start_statepp );
-				goto fail;
+				curtree = TREE_NULL;		/* FAIL */
+				goto out;
 			}
 			ctsp =  db_new_combined_tree_state( &nts, pathp );
 			*region_start_statepp = ctsp;
@@ -838,7 +843,8 @@ region_end:
 			rt_log("db_functree(%s): defective database record, addr=x%x\n",
 				dp->d_namep,
 				dp->d_addr );
-			goto fail;
+			curtree = TREE_NULL;		/* FAIL */
+			goto out;
 		}
 
 		/*
@@ -858,7 +864,8 @@ region_end:
 			rt_log("db_functree(%s):  matrix does not preserve axis perpendicularity.\n  X.Y=%g, Y.Z=%g, X.Z=%g\n",
 				dp->d_namep, fx, fy, fz );
 			mat_print("bad matrix", tsp->ts_mat);
-			goto fail;
+			curtree = TREE_NULL;		/* FAIL */
+			goto out;
 		}
 
 		if( (tsp->ts_sofar & TS_SOFAR_REGION) == 0 &&
@@ -873,7 +880,8 @@ region_end:
 			if( *region_start_statepp != (struct combined_tree_state *)0 ) {
 				rt_log("db_recurse(%s) ERROR at start of a region (bare solid), *region_start_statepp = x%x\n",
 					sofar, *region_start_statepp );
-				goto fail;
+				curtree = TREE_NULL;		/* FAIL */
+				goto out;
 			}
 			if( rt_g.debug & DEBUG_REGIONS )  {
 			    	rt_log("WARNING: db_recurse(): solid '%s' not contained in a region\n",
@@ -892,7 +900,10 @@ region_end:
 		}
 
 		/* Hand the solid off for leaf processing */
-		if( !tsp->ts_leaf_func )  goto fail;
+		if( !tsp->ts_leaf_func )  {
+			curtree = TREE_NULL;		/* FAIL */
+			goto out;
+		}
 		curtree = tsp->ts_leaf_func( tsp, pathp, &ext, id );
 		if(curtree) RT_CK_TREE(curtree);
 	} else {
@@ -911,9 +922,6 @@ out:
 		rt_free(sofar, "path string");
 	}
 	return(curtree);
-fail:
-	curtree = TREE_NULL;
-	goto out;
 }
 
 /*
