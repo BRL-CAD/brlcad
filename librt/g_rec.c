@@ -273,7 +273,7 @@ struct rt_i		*rtip;
 		/* 1st end ellipse (no Z part) */
 		tmp = magsq_a * w1[X] * w1[X] + magsq_b * w1[Y] * w1[Y];
 		if( tmp > SMALL )
-			f = tmp/sqrt(tmp);	/* XY part */
+			f = sqrt(tmp);		/* XY part */
 		else
 			f = 0;
 		stp->st_min[X] = rec->rec_V[X] - f;	/* V.P +/- f */
@@ -282,7 +282,7 @@ struct rt_i		*rtip;
 		z = w1[Z] * mag_h;		/* Z part */
 		tmp = magsq_c * w1[X] * w1[X] + magsq_d * w1[Y] * w1[Y];
 		if( tmp > SMALL )
-			f = tmp/sqrt(tmp);	/* XY part */
+			f = sqrt(tmp);		/* XY part */
 		else
 			f = 0;
 		if( rec->rec_V[X] - f + z < stp->st_min[X] )
@@ -296,7 +296,7 @@ struct rt_i		*rtip;
 		/* 1st end ellipse (no Z part) */
 		tmp = magsq_a * w1[X] * w1[X] + magsq_b * w1[Y] * w1[Y];
 		if( tmp > SMALL )
-			f = tmp/sqrt(tmp);	/* XY part */
+			f = sqrt(tmp);		/* XY part */
 		else
 			f = 0;
 		stp->st_min[Y] = rec->rec_V[Y] - f;	/* V.P +/- f */
@@ -305,7 +305,7 @@ struct rt_i		*rtip;
 		z = w1[Z] * mag_h;		/* Z part */
 		tmp = magsq_c * w1[X] * w1[X] + magsq_d * w1[Y] * w1[Y];
 		if( tmp > SMALL )
-			f = tmp/sqrt(tmp);	/* XY part */
+			f = sqrt(tmp);		/* XY part */
 		else
 			f = 0;
 		if( rec->rec_V[Y] - f + z < stp->st_min[Y] )
@@ -319,7 +319,7 @@ struct rt_i		*rtip;
 		/* 1st end ellipse (no Z part) */
 		tmp = magsq_a * w1[X] * w1[X] + magsq_b * w1[Y] * w1[Y];
 		if( tmp > SMALL )
-			f = tmp/sqrt(tmp);	/* XY part */
+			f = sqrt(tmp);		/* XY part */
 		else
 			f = 0;
 		stp->st_min[Z] = rec->rec_V[Z] - f;	/* V.P +/- f */
@@ -328,7 +328,7 @@ struct rt_i		*rtip;
 		z = w1[Z] * mag_h;		/* Z part */
 		tmp = magsq_c * w1[X] * w1[X] + magsq_d * w1[Y] * w1[Y];
 		if( tmp > SMALL )
-			f = tmp/sqrt(tmp);	/* XY part */
+			f = sqrt(tmp);		/* XY part */
 		else
 			f = 0;
 		if( rec->rec_V[Z] - f + z < stp->st_min[Z] )
