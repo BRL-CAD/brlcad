@@ -14,12 +14,21 @@
  *  Distribution Status -
  *	Public Domain, Distribution Unlimited.
  */
+
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include <stdio.h>
 #include <math.h>
+
+#ifdef HAVE_UNISTD_H
+# include "unistd.h"
+#endif
 
 #include "machine.h"
 #include "bu.h"
