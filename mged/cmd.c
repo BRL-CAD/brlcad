@@ -159,6 +159,7 @@ int	mged_cmd();
 int	f_sync();
 int	f_shells();
 int	f_arced();
+int	f_xpush();
 
 #ifdef MGED_TCL
 int	f_gui();
@@ -567,6 +568,8 @@ static struct funtab funtab[] = {
 	f_which_id, 2, MAXARGS,
 "x", "lvl", "print solid table & vector list",
 	f_debug, 1,2,
+"xpush", "object", "Experimental Push Command",
+	f_xpush, 2,2,
 "Z", "", "zap all objects off screen",
 	f_zap,1,1,
 #ifdef XMGED
