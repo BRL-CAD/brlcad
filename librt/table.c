@@ -542,7 +542,7 @@ CONST struct rt_functab rt_functab[] = {
 		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_nmg_uv,	rt_nmg_curve,	rt_nmg_class,	rt_nmg_free,
 		rt_nmg_plot,	rt_nmg_vshot,	rt_nmg_tess,	rt_nul_tnurb,
-		rt_nul_import5, rt_nul_export5,
+		rt_nmg_import5, rt_nmg_export5,
 		rt_nmg_import,	rt_nmg_export,	rt_nmg_ifree,
 		rt_nmg_describe,rt_nmg_xform,	NULL,
 		sizeof(struct model), NMG_MODEL_MAGIC,
