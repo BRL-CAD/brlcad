@@ -2324,7 +2324,8 @@ f_opendb(
 
 	/* Establish LIBWDB TCL access to both disk and in-memory databases */
 	/* This creates "db" and ".inmem" Tcl objects */
-	if (wdb_init_obj(interp, wdbp, MGED_DB_NAME) != TCL_OK) {
+	if (wdb_init_obj(interp, wdbp, MGED_DB_NAME) != TCL_OK ||
+	    wdb_create_cmd(interp, wdbp, MGED_DB_NAME) != TCL_OK) {
 		bu_vls_printf(&msg, "%s\n%s\n",
 			      interp->result,
 			      Tcl_GetVar(interp,"errorInfo", TCL_GLOBAL_ONLY) );
