@@ -16,6 +16,23 @@ static Tk_CustomOption tagsOption = {
     (Tk_OptionParseProc *) Tk_CanvasTagsParseProc,
     Tk_CanvasTagsPrintProc, (ClientData) NULL
 };
+static Tk_CustomOption dashOption = {
+    (Tk_OptionParseProc *) TkCanvasDashParseProc,
+    TkCanvasDashPrintProc, (ClientData) NULL
+};
+static Tk_CustomOption pixelOption = {
+    (Tk_OptionParseProc *) TkPixelParseProc,
+    TkPixelPrintProc, (ClientData) NULL
+};
+static Tk_CustomOption offsetOption = {
+    (Tk_OptionParseProc *) TkOffsetParseProc,
+    TkOffsetPrintProc,
+    (ClientData) (TK_OFFSET_RELATIVE|TK_OFFSET_INDEX)
+};
+static Tk_CustomOption stateOption = {
+    (Tk_OptionParseProc *) TkStateParseProc,
+    TkStatePrintProc, (ClientData) 2
+};
 
 static double BezierToPoint( Tk_Canvas canvas, Tk_Item *itemPtr, double *pointPtr);
 static void TranslateBezier( Tk_Canvas canvas, Tk_Item *itemPtr, double deltaX, double deltaY);
@@ -35,8 +52,52 @@ static int ConfigureBezier( Tcl_Interp *interp, Tk_Canvas canvas, Tk_Item *itemP
 			    int argc, Tcl_Obj *const argv[], int flags );
 
 static Tk_ConfigSpec configSpecs[] = {
+    {TK_CONFIG_CUSTOM, "-activedash", (char *) NULL, (char *) NULL,
+	(char *) NULL, Tk_Offset(BezierItem, outline.activeDash),
+	TK_CONFIG_NULL_OK, &dashOption},
+    {TK_CONFIG_COLOR, "-activefill", (char *) NULL, (char *) NULL,
+	(char *) NULL, Tk_Offset(BezierItem, outline.activeColor),
+	TK_CONFIG_NULL_OK},
+    {TK_CONFIG_BITMAP, "-activestipple", (char *) NULL, (char *) NULL,
+	(char *) NULL, Tk_Offset(BezierItem, outline.activeStipple),
+	TK_CONFIG_NULL_OK},
+    {TK_CONFIG_CUSTOM, "-activewidth", (char *) NULL, (char *) NULL,
+	"0.0", Tk_Offset(BezierItem, outline.activeWidth),
+	TK_CONFIG_DONT_SET_DEFAULT, &pixelOption},
+    {TK_CONFIG_COLOR, "-fill", (char *) NULL, (char *) NULL,
+	"black", Tk_Offset(BezierItem, outline.color), TK_CONFIG_NULL_OK},
+    {TK_CONFIG_CUSTOM, "-dash", (char *) NULL, (char *) NULL,
+	(char *) NULL, Tk_Offset(BezierItem, outline.dash),
+	TK_CONFIG_NULL_OK, &dashOption},
+    {TK_CONFIG_PIXELS, "-dashoffset", (char *) NULL, (char *) NULL,
+	"0", Tk_Offset(BezierItem, outline.offset),
+	TK_CONFIG_DONT_SET_DEFAULT},
+    {TK_CONFIG_CUSTOM, "-disableddash", (char *) NULL, (char *) NULL,
+	(char *) NULL, Tk_Offset(BezierItem, outline.disabledDash),
+	TK_CONFIG_NULL_OK, &dashOption},
+    {TK_CONFIG_COLOR, "-disabledfill", (char *) NULL, (char *) NULL,
+	(char *) NULL, Tk_Offset(BezierItem, outline.disabledColor),
+	TK_CONFIG_NULL_OK},
+    {TK_CONFIG_BITMAP, "-disabledstipple", (char *) NULL, (char *) NULL,
+	(char *) NULL, Tk_Offset(BezierItem, outline.disabledStipple),
+	TK_CONFIG_NULL_OK},
+    {TK_CONFIG_CUSTOM, "-disabledwidth", (char *) NULL, (char *) NULL,
+	"0.0", Tk_Offset(BezierItem, outline.disabledWidth),
+	TK_CONFIG_DONT_SET_DEFAULT, &pixelOption},
+    {TK_CONFIG_CUSTOM, "-offset", (char *) NULL, (char *) NULL,
+	"0,0", Tk_Offset(BezierItem, outline.tsoffset),
+	TK_CONFIG_DONT_SET_DEFAULT, &offsetOption},
+    {TK_CONFIG_CUSTOM, "-state", (char *) NULL, (char *) NULL,
+	(char *) NULL, Tk_Offset(Tk_Item, state), TK_CONFIG_NULL_OK,
+	&stateOption},
+    {TK_CONFIG_BITMAP, "-stipple", (char *) NULL, (char *) NULL,
+	(char *) NULL, Tk_Offset(BezierItem, outline.stipple),
+	TK_CONFIG_NULL_OK},
     {TK_CONFIG_CUSTOM, "-tags", (char *) NULL, (char *) NULL,
 	(char *) NULL, 0, TK_CONFIG_NULL_OK, &tagsOption},
+    {TK_CONFIG_CUSTOM, "-width", (char *) NULL, (char *) NULL,
+	"1.0", Tk_Offset(BezierItem, outline.width),
+	TK_CONFIG_DONT_SET_DEFAULT, &pixelOption},
     {TK_CONFIG_END, (char *) NULL, (char *) NULL, (char *) NULL,
 	(char *) NULL, 0, 0}
 };
@@ -606,7 +667,7 @@ int factorial( int n, int r )
 	int end = n - r;
 
 	if( n == 0 )
-		return( 0 );
+		return( 1 );
 
 	while( n > end ) {
 		ret *= n;
@@ -655,7 +716,7 @@ static Point2 *ConvertToBezierForm(P, degree, V)
     cdTable = (double *)ckalloc( degree * (degree + 1) * sizeof( double ) );
     z = (double *)ckalloc( degree * (degree + 1) * sizeof( double ) );
 
-    n = degree + 1;
+    n = degree;
     for( i=0 ; i<degree ; i++ ) {
 	    for( j=0 ; j<degree+1 ; j++ ) {
 		    z[IND(i,j)] = (double)comb(n,j) * (double)comb(n-1,i) /
@@ -671,7 +732,7 @@ static Point2 *ConvertToBezierForm(P, degree, V)
     /* Determine the d's -- these are vectors created by subtracting*/
     /* each control point from the next					*/
     for (i = 0; i <= degree - 1; i++) { 
-		d[i] = V2ScaleII(V2Sub(&V[i+1], &V[i], &d[i]), 3.0);
+		d[i] = V2ScaleII(V2Sub(&V[i+1], &V[i], &d[i]), (double)degree);
     }
 
     /* Create the c,d table -- this is a table of dot products of the */
@@ -687,7 +748,7 @@ static Point2 *ConvertToBezierForm(P, degree, V)
     w = (Point2 *)ckalloc((unsigned)(w_degree+1) * sizeof(Point2));
     for (i = 0; i <= w_degree; i++) {
 		w[i].y = 0.0;
-		w[i].x = (double)(i) / w_degree;
+		w[i].x = (double)(i) / (double)w_degree;
     }
 
     n = degree;
@@ -976,25 +1037,25 @@ static Point2 Bezier(V, degree, t, Left, Right)
     /* Triangle computation	*/
     for (i = 1; i <= degree; i++) {	
 		for (j =0 ; j <= degree - i; j++) {
-	    	Vtemp[i*degree + j].x =
-	      		(1.0 - t) * Vtemp[(i-1)*degree + j].x + t * Vtemp[(i-1)*degree + j+1].x;
-	    	Vtemp[i*degree + j].y =
-	      		(1.0 - t) * Vtemp[(i-1)*degree + j].y + t * Vtemp[(i-1)*degree + j+1].y;
+	    	Vtemp[i*(degree+1) + j].x =
+	      		(1.0 - t) * Vtemp[(i-1)*(degree+1) + j].x + t * Vtemp[(i-1)*(degree+1) + j+1].x;
+	    	Vtemp[i*(degree+1) + j].y =
+	      		(1.0 - t) * Vtemp[(i-1)*(degree+1) + j].y + t * Vtemp[(i-1)*(degree+1) + j+1].y;
 		}
     }
     
     if (Left != NULL) {
 		for (j = 0; j <= degree; j++) {
-	    	Left[j]  = Vtemp[j*degree];
+	    	Left[j]  = Vtemp[j*(degree+1)];
 		}
     }
     if (Right != NULL) {
 		for (j = 0; j <= degree; j++) {
-	    	Right[j] = Vtemp[(degree-j)*degree + j];
+	    	Right[j] = Vtemp[(degree-j)*(degree+1) + j];
 		}
     }
 
-    ret_pt = Vtemp[degree*degree];
+    ret_pt = Vtemp[degree*(degree+1)];
     ckfree( (char *) Vtemp );
 
     return (ret_pt);
