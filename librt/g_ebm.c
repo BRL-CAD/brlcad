@@ -56,7 +56,7 @@ struct structparse rt_ebm_parse[] = {
 	"%d",	1, "w",		RT_EBM_O(xdim),		FUNC_NULL,
 	"%d",	1, "n",		RT_EBM_O(ydim),		FUNC_NULL,
 	"%f",	1, "d",		RT_EBM_O(tallness),	FUNC_NULL,
-	/* XXX might have option for ebm_origin */
+	"%f",	16, "mat", offsetofarray(struct rt_ebm_internal,mat), FUNC_NULL,
 	"",	0, (char *)0, 0,			FUNC_NULL
 };
 
@@ -473,8 +473,6 @@ if(rt_g.debug&DEBUG_EBM)rt_log("Exit index is %s, t[X]=%g, t[Y]=%g\n",
  *  Read in the information from the string solid record.
  *  Then, as a service to the application, read in the bitmap
  *  and set up some of the associated internal variables.
- *
- *  XXX no way to deal with mat !!!
  */
 int
 rt_ebm_import( ip, ep, mat )
@@ -488,7 +486,7 @@ mat_t			mat;
 	FILE		*fp;
 	int		nbytes;
 	register int	y;
-	char		*cp;
+	mat_t		tmat;
 
 	RT_CK_EXTERNAL( ep );
 	rp = (union record *)ep->ext_buf;
@@ -503,14 +501,11 @@ mat_t			mat;
 	eip = (struct rt_ebm_internal *)ip->idb_ptr;
 	eip->magic = RT_EBM_INTERNAL_MAGIC;
 
-	rt_vls_init( &str );
-	cp = rp->ss.ss_str;
-	/* First word is name of solid type (eg, "ebm") -- skip over it */
-	while( *cp && !isspace(*cp) )  cp++;
-	/* Skip all white space */
-	while( *cp && isspace(*cp) )  cp++;
+	/* Provide default orientation info */
+	mat_idn( eip->mat );
 
-	rt_vls_strcpy( &str, cp );
+	rt_vls_init( &str );
+	rt_vls_strcpy( &str, rp->ss.ss_args );
 	if( rt_structparse( &str, rt_ebm_parse, (char *)eip ) < 0 )  {
 		rt_vls_free( &str );
 		return -2;
@@ -519,11 +514,16 @@ mat_t			mat;
 
 	/* Check for reasonable values */
 	if( eip->file[0] == '\0' || eip->xdim < 1 ||
-	    eip->ydim < 1 ||
+	    eip->ydim < 1 || eip->mat[15] <= 0.0 ||
 	    eip->tallness <= 0.0 )  {
-	    	rt_log("Unreasonable EBM parameters\n");
+	    	rt_structprint( "Unreasonable EBM parameters", rt_ebm_parse,
+	    		(char *)eip );
 		return -1;
 	}
+
+	/* Apply any modeling transforms to get final matrix */
+	mat_mul( tmat, mat, eip->mat );
+	mat_copy( eip->mat, tmat );
 
 	/* Get bit map from .bw(5) file */
 	nbytes = (eip->xdim+BIT_XWIDEN*2)*(eip->ydim+BIT_YWIDEN*2);
@@ -550,8 +550,6 @@ mat_t			mat;
  *			R T _ E B M _ E X P O R T
  *
  *  The name will be added by the caller.
- *  Generally, only libwdb will set conv2mm != 1.0
- *  XXX no way to deal with local2mm !!
  */
 int
 rt_ebm_export( ep, ip, local2mm )
@@ -560,6 +558,7 @@ struct rt_db_internal	*ip;
 double			local2mm;
 {
 	struct rt_ebm_internal	*eip;
+	struct rt_ebm_internal	ebm;	/* scaled version */
 	union record		*rec;
 	register int		i;
 	struct rt_vls		str;
@@ -568,19 +567,24 @@ double			local2mm;
 	if( ip->idb_type != ID_EBM )  return(-1);
 	eip = (struct rt_ebm_internal *)ip->idb_ptr;
 	RT_EBM_CK_MAGIC(eip);
+	ebm = *eip;			/* struct copy */
+
+	/* Apply scale factor */
+	ebm.mat[15] /= local2mm;
 
 	RT_INIT_EXTERNAL(ep);
-	ep->ext_nbytes = sizeof(union record);
+	ep->ext_nbytes = sizeof(union record)*DB_SS_NGRAN;
 	ep->ext_buf = (genptr_t)rt_calloc( 1, ep->ext_nbytes, "ebm external");
 	rec = (union record *)ep->ext_buf;
 
 	RT_VLS_INIT( &str );
-	rt_vls_structprint( &str, rt_ebm_parse, (char *)eip );
+	rt_vls_structprint( &str, rt_ebm_parse, (char *)&ebm );
 
 	rec->ss.ss_id = DBID_STRSOL;
-	(void)sprintf( rec->ss.ss_str, "ebm %s", rt_vls_addr( & str ) );
-
+	strncpy( rec->ss.ss_keyword, "ebm", NAMESIZE-1 );
+	strncpy( rec->ss.ss_args, rt_vls_addr(&str), DB_SS_LEN-1 );
 	rt_vls_free( &str );
+
 	return(0);
 }
 
@@ -701,24 +705,23 @@ CONST struct rt_tol	*tol;
 	ebmp->ebm_i = *eip;		/* struct copy */
 	eip->map = (unsigned char *)0;	/* "steal" the bitmap storage */
 
-	/* XXX this should be handled in import, not here XXX */
 	/* build Xform matrix from model(world) to ideal(local) space */
-	mat_inv( ebmp->ebm_mat, stp->st_pathmat );
+	mat_inv( ebmp->ebm_mat, eip->mat );
 
-	/* Pre-compute the necessary normals */
+	/* Pre-compute the necessary normals.  Rotate only. */
 	VSET( norm, 1, 0 , 0 );
-	MAT4X3VEC( ebmp->ebm_xnorm, stp->st_pathmat, norm );
+	MAT3X3VEC( ebmp->ebm_xnorm, eip->mat, norm );
 	VSET( norm, 0, 1, 0 );
-	MAT4X3VEC( ebmp->ebm_ynorm, stp->st_pathmat, norm );
+	MAT3X3VEC( ebmp->ebm_ynorm, eip->mat, norm );
 	VSET( norm, 0, 0, 1 );
-	MAT4X3VEC( ebmp->ebm_znorm, stp->st_pathmat, norm );
+	MAT3X3VEC( ebmp->ebm_znorm, eip->mat, norm );
 
 	stp->st_specific = (genptr_t)ebmp;
 
 	/* Find bounding RPP of rotated local RPP */
 	VSETALL( small, 0 );
 	VSET( ebmp->ebm_large, ebmp->ebm_i.xdim, ebmp->ebm_i.ydim, ebmp->ebm_i.tallness );
-	rt_rot_bound_rpp( stp->st_min, stp->st_max, stp->st_pathmat,
+	rt_rot_bound_rpp( stp->st_min, stp->st_max, eip->mat,
 		small, ebmp->ebm_large );
 
 	/* for now, EBM origin in ideal coordinates is at origin */
@@ -931,9 +934,6 @@ struct rt_tol		*tol;
 	register int	following;
 	register int	base;
 	int		i;
-	mat_t		mat;
-
-	mat_idn(mat);	/* XXX hack */
 
 	RT_CK_DB_INTERNAL(ip);
 	eip = (struct rt_ebm_internal *)ip->idb_ptr;
@@ -948,7 +948,7 @@ struct rt_tol		*tol;
 				if( (BIT( eip, x-1, y )==0) != (BIT( eip, x, y )==0) )
 					continue;
 				rt_ebm_plate( x, base, x, y, eip->tallness,
-					mat, vhead );
+					eip->mat, vhead );
 				following = 0;
 			} else {
 				if( (BIT( eip, x-1, y )==0) == (BIT( eip, x, y )==0) )
@@ -967,7 +967,7 @@ struct rt_tol		*tol;
 				if( (BIT( eip, x, y-1 )==0) != (BIT( eip, x, y )==0) )
 					continue;
 				rt_ebm_plate( base, y, x, y, eip->tallness,
-					mat, vhead );
+					eip->mat, vhead );
 				following = 0;
 			} else {
 				if( (BIT( eip, x, y-1 )==0) == (BIT( eip, x, y )==0) )
@@ -1074,7 +1074,8 @@ char	**argv;
 	Tappl.a_resource = &resource;
 	mat_idn( Tsolid.st_pathmat );
 
-	strcpy( rec.ss.ss_str, "ebm file=bm.bw w=6 n=6 d=6.0" );
+	strcpy( rec.ss.ss_keyword, "ebm" );
+	strcpy( rec.ss.ss_args, "file=bm.bw w=6 n=6 d=6.0" );
 
 	if( rt_ebm_prep( &Tsolid, &rec, 0 ) != 0 )  {
 		printf("prep failed\n");
