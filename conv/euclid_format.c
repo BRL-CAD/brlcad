@@ -30,14 +30,14 @@ int
 main()
 {
 	char str[1024];
-	point_t *pts;
+	point_t *pts=NULL;
 	int ident,face_type,npts,face_no;
 	plane_t pl;
 	int tmp_i;
 	float tmp_a;
 	float a,b,c,d;
 	int old_id=(-1);
-	int face_count;
+	int face_count=0;
 
 	if( scanf( "%s" , str ) == EOF )
 		rt_bomb( "Unexpected EOF\n" );

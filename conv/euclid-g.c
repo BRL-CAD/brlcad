@@ -52,6 +52,10 @@ static const char RCSid[] = "$Header$";
 #define INVERT_SHELL	0x00000004
 
 void euclid_to_brlcad();
+int find_vert();
+int store_vert();
+int read_euclid_face();
+int cvt_euclid_region();
 
 extern int errno;
 
