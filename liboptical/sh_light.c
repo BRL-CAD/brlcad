@@ -125,7 +125,7 @@ struct bu_structparse light_print_tab[] = {
 {"%f",	1, "bright",	LIGHT_O(lt_intensity),	BU_STRUCTPARSE_FUNC_NULL },
 {"%f",	1, "angle",	LIGHT_O(lt_angle),	BU_STRUCTPARSE_FUNC_NULL },
 {"%f",	1, "fract",	LIGHT_O(lt_fraction),	BU_STRUCTPARSE_FUNC_NULL },
-{"%f",	3, "dir",	LIGHT_OA(lt_dir),	aim_set },
+{"%f",	3, "target",	LIGHT_OA(lt_target),	aim_set },
 {"%d",	1, "shadows",	LIGHT_O(lt_shadows),	BU_STRUCTPARSE_FUNC_NULL },
 {"%d",	1, "infinite",	LIGHT_O(lt_infinite),	BU_STRUCTPARSE_FUNC_NULL },
 {"%d",	1, "visible",	LIGHT_O(lt_visible),	BU_STRUCTPARSE_FUNC_NULL },
@@ -144,9 +144,9 @@ struct bu_structparse light_parse[] = {
 {"%f",	1, "fract",	LIGHT_O(lt_fraction),	BU_STRUCTPARSE_FUNC_NULL },
 {"%f",	1, "f",		LIGHT_O(lt_fraction),	BU_STRUCTPARSE_FUNC_NULL },
 
-{"%f",	3, "dir",	LIGHT_OA(lt_dir),	aim_set },
-{"%f",	3, "d",		LIGHT_OA(lt_dir),	aim_set },
-{"%f",	3, "aim",	LIGHT_OA(lt_dir),	aim_set },
+{"%f",	3, "target",	LIGHT_OA(lt_target),	aim_set },
+{"%f",	3, "t",		LIGHT_OA(lt_target),	aim_set },
+{"%f",	3, "aim",	LIGHT_OA(lt_target),	aim_set },
 
 {"%d",	1, "shadows",	LIGHT_O(lt_shadows),	BU_STRUCTPARSE_FUNC_NULL },
 {"%d",	1, "s",		LIGHT_O(lt_shadows),	BU_STRUCTPARSE_FUNC_NULL },
@@ -221,7 +221,9 @@ CONST char *base;
 char *value;
 {
 	register struct light_specific *lsp = (struct light_specific *)base;
-
+	if (rdebug & RDEBUG_LIGHT )  {
+		VPRINT("lt_target: ", lsp->lt_target);
+	}
 	lsp->lt_exaim = 1;
 }
 
@@ -676,7 +678,7 @@ light_setup(register struct region *rp,
 		if ((matp = stp->st_matp) == (matp_t)0 )
 			matp = (matp_t)bn_mat_identity;
 		if (lsp->lt_exaim) {
-			VSUB2 (work, lsp->lt_dir, lsp->lt_pos);
+			VSUB2 (work, lsp->lt_target, lsp->lt_pos);
 			VUNITIZE (work);
 		}
 		else VSET( work, 0, 0, -1 );

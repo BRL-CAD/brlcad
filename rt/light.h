@@ -24,7 +24,7 @@ struct light_pt {
 struct light_specific {
 	struct bu_list	l;	/* doubly linked list */
 	/* User-specified fields */
-	vect_t	lt_dir;		/* explicit coordinate aim */
+	vect_t	lt_target;	/* explicit coordinate aim point */
 	fastf_t	lt_intensity;	/* Intensity Lumens (cd*sr): total output */
 	fastf_t	lt_angle;	/* beam dispersion angle (degrees) 0..180 */
 	fastf_t	lt_fraction;	/* fraction of total light */
@@ -32,7 +32,7 @@ struct light_specific {
 	int	lt_infinite;	/* !0 if infinitely distant */
 	int	lt_visible;	/* 0 if implicitly modeled or invisible */
 	int	lt_invisible;	/* 0 if implicitly modeled or invisible */
-	int	lt_exaim;	/* !0 if explicit aim in lt_dir */
+	int	lt_exaim;	/* !0 if explicit aim in lt_target */
 	fastf_t lt_obscure;	/* percentage obscuration of light */
 	/* Internal fields */
 #if RT_MULTISPECTRAL
