@@ -882,7 +882,7 @@ int framenumber;
 
 	if(rdebug&RDEBUG_STATS)  {
 		/* Print additional statistics */
-		lock_pr();
+		rt_pr_lock_stats();
 		res_pr();
 	}
 
