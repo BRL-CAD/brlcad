@@ -1,55 +1,58 @@
 /*
- *			J O V E _ T E R M . C 
+ *			J O V E _ T E R M . C
  *
  * $Revision$
  *
  * $Log$
+ * Revision 11.1  95/01/04  10:35:24  mike
+ * Release_4.4
+ *
  * Revision 10.3  93/12/10  06:43:37  mike
  * More POSIX foolishness, this time with the baud rate.
  * Can only use symbolic values like B9600, not numbers.
- * 
+ *
  * Revision 10.2  93/10/26  05:43:27  mike
  * POSIX and termios
- * 
+ *
  * Revision 10.1  91/10/12  06:54:06  mike
  * Release_4.0
- * 
+ *
  * Revision 2.6  91/08/30  20:24:18  mike
  * global var "ospeed" clashed with some library on the Stardent.
- * 
+ *
  * Revision 2.5  91/08/30  17:54:40  mike
  * Changed #include directives to distinguish between local and system header
  * files.
- * 
+ *
  * Revision 2.4  91/08/30  17:49:16  mike
  * Paul Stay mods for ANSI C
- * 
+ *
  * Revision 2.3  88/03/10  05:25:30  phil
  * ignore ll if li != winsize
- * 
+ *
  * Revision 2.2  87/04/14  21:58:07  dpk
  * Added TERMINFO fix for sys5.  Strips %p# strings.
- * 
+ *
  * Revision 2.1  85/05/14  01:44:34  dpk
  * Added changes to support System V (conditional on SYS5)
- * 
+ *
  * Revision 2.0  84/12/26  16:50:32  dpk
  * Version as sent to Berkeley 26 December 84
- * 
+ *
  * Revision 1.5  84/11/07  20:57:18  dpk
  * Changed  code that handles initializing of scrolling regions.
  * The implied default of newline for  scroll up is not supported.
- * 
+ *
  * Revision 1.4  84/10/03  21:51:40  dpk
  * Added code to disable use of scrolling regions if you dont have
  * both SR and SF (and CS for that matter).
- * 
+ *
  * Revision 1.3  84/10/03  21:48:13  dpk
  * Numerous bug fixes/enhancements.
- * 
+ *
  * Revision 1.2  83/12/16  00:09:50  dpk
  * Added distinctive RCS header
- * 
+ *
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$";
@@ -134,7 +137,6 @@ char	**meas[] = {
 	&DC, &EI, &LL, &SF, &SR, &VB, &KS, &KE,
 	&TI, &TE, &M_AL, &M_DL, &M_IC, &M_DC, 0
 };
-char	*sprint();
 
 TermError(str)
 char	*str;
@@ -149,7 +151,7 @@ char	*str;
 getTERM()
 {
 	char	*getenv();
-#if defined(HAS_TERMIOS)
+#if HAS_TERMIOS
 	struct termios	tty;
 #else
 # ifndef SYS5
@@ -164,7 +166,7 @@ getTERM()
 		tbuff[1024];
 	int	i;
 
-#if defined(HAS_TERMIOS)
+#if HAS_TERMIOS
 	if (tcgetattr( 0, &tty ) < 0 )
 #else
 # ifdef SYS5
@@ -174,7 +176,8 @@ getTERM()
 # endif
 #endif	/* HAS_TERMIOS */
 		TermError("ioctl fails");
-#if defined(HAS_TERMIOS)
+
+#if HAS_TERMIOS
 #	if defined(TAB3)
 		TABS = !((tty.c_oflag & TAB3) == TAB3);
 #	else
@@ -183,7 +186,11 @@ getTERM()
 	jove_ospeed = cfgetospeed( &tty );
 #else
 # ifdef SYS5
-	TABS = !((tty.c_oflag & TAB3) == TAB3);
+#	if defined(TAB3)
+		TABS = !((tty.c_oflag & TAB3) == TAB3);
+#	else
+		TABS = 0;
+#	endif
 	jove_ospeed = tty.c_cflag & CBAUD;
 # else
 	TABS = !(tty.sg_flags & XTABS);
@@ -262,7 +269,7 @@ char *cp;
 #endif
 /*
    Deals with output to the terminal, setting up the amount of characters
-   to be buffered depending on the output baud rate.  Why it's in a 
+   to be buffered depending on the output baud rate.  Why it's in a
    separate file I don't know ...
  */
 
@@ -331,11 +338,11 @@ settout()
 		100,	/* 4800	*/
 		200,	/* 9600	*/
 		150,	/* EXTA	(7200?) */
-		200	/* EXT	(19.2?) */
+		200	/* EXTB (19.2?) */
 	};
 	int	val;
 
-#if !defined(HAS_TERMIOS)
+#if !HAS_TERMIOS
 	val = speeds[jove_ospeed & 0xF];
 #else
 	/* In POSIX, this is a vendor-specific code, not a useful number. */
