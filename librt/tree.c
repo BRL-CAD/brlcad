@@ -65,6 +65,7 @@ static char *path_str();
 get_tree(node)
 char *node;
 {
+	register union tree *curtree;
 	register struct directory *dp;
 	mat_t	mat;
 
@@ -73,7 +74,27 @@ char *node;
 	dp = dir_lookup( node, LOOKUP_NOISY );
 	if( dp == DIR_NULL )
 		return;		/* ERROR */
-	(void)drawHobj( dp, REGION_NULL, 0, mat );
+
+	curtree = drawHobj( dp, REGION_NULL, 0, mat );
+	if( curtree != TREE_NULL )  {
+		/*  Subtree has not been contained by a region.
+		 *  This should only happen when a top-level solid
+		 *  is encountered.  Build a special region for it.
+		 */
+		register struct region *regionp;	/* XXX */
+		GETSTRUCT( regionp, region );
+		regionp->reg_active = REGION_NULL;
+		printf("Warning:  Top level solid, region %s created\n",
+			path_str(0) );
+		if( curtree->tr_op != OP_SOLID )
+			bomb("root subtree not Solid");
+		curtree->tr_stp->st_regionp = regionp;
+		regionp->reg_treetop = curtree;
+		regionp->reg_name = strdup(path_str(0));
+		regionp->reg_forw = HeadRegion;
+		HeadRegion = regionp;
+		nregions++;
+	}
 
 	if( debug & DEBUG_REGIONS )  {
 		register struct region *rp = HeadRegion;	/* XXX */
@@ -193,6 +214,7 @@ matp_t old_xlate;
 		(void)lseek( ged_fd, savepos, 0);	/* restore pos */
 		if( stp == SOLTAB_NULL )
 			return( TREE_NULL );
+
 		/**GETSTRUCT( curtree, union tree ); **/
 		curtree = (union tree *)malloc(sizeof(union tree));
 		if( curtree == TREE_NULL )
@@ -200,21 +222,7 @@ matp_t old_xlate;
 		bzero( (char *)curtree, sizeof(union tree) );
 		curtree->tr_op = OP_SOLID;
 		curtree->tr_stp = stp;
-		if( argregion != REGION_NULL )
-			return( curtree );	/* Leaf node within region */
-
-		/* Found solid that is not in a region;  invent a region */
-		GETSTRUCT( regionp, region );
-		regionp->reg_active = REGION_NULL;
-		regionp->reg_treetop = curtree;
-		regionp->reg_name = strdup(path_str(pathpos));
-		regionp->reg_forw = HeadRegion;
-		HeadRegion = regionp;
-		nregions++;
-		stp->st_regionp = regionp;
-		/** if( debug&DEBUG_REGIONS) */
-		printf("Warning:  Created dummy region %s\n", regionp->reg_name);
-		return( TREE_NULL );	/* No proper leaf encountered */
+		return( curtree );
 	}
 
 	if( rec.u_id != COMB )  {
@@ -226,8 +234,8 @@ matp_t old_xlate;
 	regionp = argregion;
 	if( rec.c.c_flags == 'R' )  {
 		if( argregion != REGION_NULL )  {
-			printf("Warning: region %s within region (ignored)\n",
-				path_str(pathpos) );
+			printf("Warning:  region %s within region %s (ignored)\n",
+				path_str(pathpos), argregion->reg_name );
 		} else {
 			/* Start a new region here */
 			GETSTRUCT( regionp, region );
@@ -265,8 +273,21 @@ matp_t old_xlate;
 		subtree = drawHobj( nextdp, regionp, pathpos+1, new_xlate );
 		if( subtree == TREE_NULL )
 			continue;	/* no valid subtree, keep on going */
-		if( regionp == REGION_NULL )
-			continue; /* ignore subtree, we are ABOVE a region */
+		if( regionp == REGION_NULL )  {
+			/*
+			 * Found subtree that is not contained in a region;
+			 * invent a region to hold it.  Reach down into
+			 * subtree and "fix" first solid's region pointer.
+			 */
+			GETSTRUCT( regionp, region );
+			regionp->reg_forw = regionp->reg_active = REGION_NULL;
+			printf("Warning:  Forced to create region %s\n",
+				path_str(pathpos) );
+			if(subtree->tr_op != OP_SOLID )
+				bomb("subtree not Solid");
+			subtree->tr_stp->st_regionp = regionp;
+		}
+
 		if( curtree == TREE_NULL )  {
 			curtree = subtree;
 		} else {
@@ -305,6 +326,7 @@ matp_t old_xlate;
 			nregions++;
 			if( debug & DEBUG_REGIONS )
 				printf("Add Region %s\n", regionp->reg_name);
+			curtree = TREE_NULL;
 		}
 	} else {
 		/* Null result tree, release region struct */
