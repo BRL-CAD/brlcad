@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
+#include <stdlib.h>
 
 #if defined USE_STRING_H
 #include <string.h>
