@@ -195,8 +195,9 @@ char **argv;
 	if( !inverse && !zoom &&
 	    xout == scr_width &&
 	    file_xoff == 0 &&
-	    file_width == scr_width )  {
-		streamline = 8;
+	    file_width == scr_width &&
+	    (file_height%16) == 0  )  {
+		streamline = 16;
 	    	scanpix *= streamline;
 	}
 
@@ -224,15 +225,24 @@ char **argv;
 
 	if( streamline )  {
 		/* Bottom to top with multi-line reads & writes */
+		int	height;
 		for( y = scr_yoff; y < scr_yoff + yout; y += streamline )  {
 			n = mread( infd, (char *)scanline, scanbytes );
 			if( n <= 0 ) break;
-			m = fb_writerect( fbp, 0, y, scr_width, streamline,
-				scanline );
-			if( n/sizeof(RGBpixel) != m )
+			height = streamline;
+			if( n != scanbytes )  {
 				fprintf(stderr,
-					"pix-fb: fb_write failure y=%d %d %d\n",
-					y, n/sizeof(RGBpixel), m );
+					"pix-fb: short read, y=%d, nbytes=%d s/b=%d\n",
+					y, n, scanbytes);
+				height = n/(xout*sizeof(RGBpixel));
+				if( height <= 0 )  break;
+			}
+			m = fb_writerect( fbp, 0, y, scr_width, height,
+				scanline );
+			if( m != scr_width*height )
+				fprintf(stderr,
+					"pix-fb: fb_writerect(x=0, y=%d, w=%d, h=%d) failure, ret=%d, s/b=%d\n",
+					y, scr_width, height, m, scanbytes );
 		}
 	} else if( !inverse )  {
 		/* Normal way -- bottom to top */
