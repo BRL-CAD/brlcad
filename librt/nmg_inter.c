@@ -207,12 +207,13 @@ struct faceuse *fu;
 {
 	struct vertexuse *vu;
 	point_t		hit_pt;
-	fastf_t		vect_len;	/* MAGNITUDE(vect) */
-	pointp_t p1, p2, p3;
-	vect_t vect, delta;
-	fastf_t dist, mag;
-	int status;
-	struct loopuse *plu;
+	vect_t		edge_vect;
+	fastf_t		edge_len;	/* MAGNITUDE(edge_vect) */
+	pointp_t	p1, p2;
+	fastf_t		dist;		/* parametric dist to hit point */
+	fastf_t		dist_to_plane;	/* distance to hit point, in mm */
+	int		status;
+	struct loopuse	*plu;
 
 	NMG_CK_EDGEUSE(eu);
 	NMG_CK_VERTEXUSE(eu->vu_p);
@@ -292,14 +293,14 @@ VPRINT("\t\t (next): ", eu->next->vu_p->v_p->vg_p->coord);
 	 */
 	p1 = eu->vu_p->v_p->vg_p->coord;
 	p2 = eu->eumate_p->vu_p->v_p->vg_p->coord;
-	VSUB2(vect, p2, p1);
+	VSUB2(edge_vect, p2, p1);
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
 		rt_log("Testing %g, %g, %g -> %g, %g, %g\n",
 			p1[X], p1[Y], p1[Z], p2[X], p2[Y], p2[Z]);
 
 
-	status = rt_isect_ray_plane(&dist, p1, vect, fu->f_p->fg_p->N);
+	status = rt_isect_ray_plane(&dist, p1, edge_vect, fu->f_p->fg_p->N);
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 		if (status >= 0)
@@ -316,28 +317,32 @@ VPRINT("\t\t (next): ", eu->next->vu_p->v_p->vg_p->coord);
 	if (status < 0)
 		return;
 
-	/* the ray defined by the edgeuse intersects the plane 
+	/* The ray defined by the edgeuse intersects the plane 
 	 * of the other face.  Check to see if the distance to
          * intersection is between limits of the endpoints of
 	 * this edge(use).
+	 * The edge exists over values of 0 <= dist <= 1, ie,
+	 * over values of 0 <= dist_to_plane <= edge_len.
+	 * The tolerance, an absolute distance, can only be compared
+	 * to other absolute distances like dist_to_plane & edge_len.
+	 * The vertices are "fattened" by +/- bs->tol units.
 	 */
-	VJOIN1( hit_pt, p1, dist, vect );
-	vect_len = MAGNITUDE(vect);
-	VSCALE(delta, vect, dist);
-	mag = MAGNITUDE(delta);
+	VJOIN1( hit_pt, p1, dist, edge_vect );
+	edge_len = MAGNITUDE(edge_vect);
+	dist_to_plane = edge_len * dist;
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
-		rt_log("\tmag of vect:%g  Dist to plane:%g\n",
-			MAGNITUDE(vect), mag);
+		rt_log("\edge_len=%g, dist=%g, dist_to_plane=%g\n",
+			edge_len, dist, dist_to_plane);
 
-	if ( dist < -(bs->tol) )  {
+	if ( dist_to_plane < -(bs->tol) )  {
 		/* Hit is behind first point */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\tplane behind first point\n");
 		return;
 	}
 
-	if ( mag < bs->tol )  {
+	if ( dist_to_plane < bs->tol )  {
 		/* First point is on plane of face, by geometry */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\tedge starts at plane intersect\n");
@@ -349,6 +354,7 @@ VPRINT("\t\t (next): ", eu->next->vu_p->v_p->vg_p->coord);
 		/* If face doesn't have a "very similar" point, give it one */
 		vu = nmg_find_vu_in_face(p1, fu, bs->tol);
 		if (vu) {
+			register pointp_t	p3;
 			/* Face has a vertex very similar to this one.
 			 * Add vertex to face's list of vertices on
 			 * intersection line.
@@ -383,7 +389,7 @@ VPRINT("\t\t (next): ", eu->next->vu_p->v_p->vg_p->coord);
 		}
 		return;
 	}
-	if ( mag < vect_len - bs->tol) {
+	if ( dist_to_plane < edge_len - bs->tol) {
 		/* Intersection is between first and second vertex points.
 		 * Insert new vertex at intersection point.
 		 */
@@ -494,7 +500,7 @@ VPRINT("\t\t (next): ", eu->next->vu_p->v_p->vg_p->coord);
 		(void)nmg_tbl(bs->l1, TBL_INS, &eu->next->vu_p->magic);
 		return;
 	}
-	if ( mag < vect_len + bs->tol) {
+	if ( dist_to_plane < edge_len + bs->tol) {
 		/* Second point is on plane of face, by geometry */
 		/* Make no entries in intersection lists,
 		 * because it will be handled on the next call.
@@ -508,6 +514,7 @@ VPRINT("\t\t (next): ", eu->next->vu_p->v_p->vg_p->coord);
 		/* If face has a "very similar" point, connect up with it */
 		vu = nmg_find_vu_in_face(p2, fu, bs->tol);
 		if (vu) {
+			register pointp_t	p3;
 			/* new coordinates are the midpoint between
 			 * the two existing coordinates
 			 */
