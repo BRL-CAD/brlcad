@@ -1516,8 +1516,10 @@ RT_EXTERN(void rt_bomb, (char *str) );	/* Fatal error */
 RT_EXTERN(void rt_putchar, (int c) );	/* Log a character, no flushing */
 #if __STDC__
 RT_EXTERN(void rt_log, (char *, ... ) ); /* Log message */
+RT_EXTERN(void rt_flog, (FILE *, char *, ... ) ); /* Log message */
 #else
 RT_EXTERN(void rt_log, () );		/* Log message */
+RT_EXTERN(void rt_flog, () );		/* Log message */
 #endif
 					/* Read named MGED db, build toc */
 RT_EXTERN(struct rt_i *rt_dirbuild, (char *filename, char *buf, int len) );
