@@ -625,6 +625,7 @@ char	*str;
 }
 
 #define	FONT	"6x10"
+#define FONT2	"-adobe-courier-medium-r-normal--10-100-75-75-m-60-iso8859-1"
 
 static XWMHints xwmh = {
 	(InputHint|StateHint),		/* flags */
@@ -683,15 +684,18 @@ char	*name;
 	else
 #endif
 		cp = FONT;
-#ifndef CRAY2
-/* The Cray2 never returns from this call.  sigh.
- * Use the default font until the Cray libX11 is fixed.
- */
-	if( (fontstruct = XLoadQueryFont(dpy, cp)) == NULL ) {
-		fprintf( stderr, "dm-X: Can't open font\n" );
-		return -1;
-	}
+
+#ifdef ultrix
+	cp = FONT2;	/* XXX Is this still necessary? */
 #endif
+
+	if( (fontstruct = XLoadQueryFont(dpy, cp)) == NULL ) {
+		/* Try hardcoded backup font */
+		if( (fontstruct = XLoadQueryFont(dpy, FONT2)) == NULL ) {
+			fprintf( stderr, "dm-X: Can't open font '%s' or '%s'\n", cp, FONT2 );
+			return -1;
+		}
+	}
 
 	/* Get color map inddices for the colors we use. */
 	black = BlackPixel( dpy, DefaultScreen(dpy) );
