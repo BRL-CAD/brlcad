@@ -117,6 +117,7 @@ union tree			*curtree;
 	}
 
 	GETSTRUCT( rp, region );
+	rp->reg_magic = RT_REGION_MAGIC;
 	rp->reg_forw = REGION_NULL;
 	rp->reg_regionid = tsp->ts_regionid;
 	rp->reg_aircode = tsp->ts_aircode;
