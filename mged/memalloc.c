@@ -53,10 +53,6 @@ static struct mem_map *freemap = MAP_NULL;	/* Freelist of buffers */
 #define	M_BMTCH	00002	/* Bottom match */
 #define	M_TOVFL	00004	/* Top overflow */
 #define	M_BOVFL	00010	/* Bottom overflow */
-#define M_TWRAR	00020	/* Top wrap-around */
-#define	M_BWRAR	00040	/* Bottom wrap-around */
-
-#define	MAXINT	((unsigned long)((int)(-1)))	/* Maximum integer */
 
 /*
  *			M E M A L L O C
@@ -201,19 +197,15 @@ unsigned long addr;
 			type |= M_BOVFL;
 		if( il == addr )
 			type |= M_BMTCH;
-		if( il > MAXINT )
-			type |= M_BWRAR;
 	}
 	if( curp )  {
 		if( (il=addr+size) > curp->m_addr )
 			type |= M_TOVFL;
 		if( il == curp->m_addr )
 			type |= M_TMTCH;
-		if( il > MAXINT )
-			type |= M_TWRAR;
 	}
 
-	if( type & (M_TOVFL|M_BOVFL|M_TWRAR|M_BWRAR) )  {
+	if( type & (M_TOVFL|M_BOVFL) )  {
 		(void)printf("mfree(addr=%d,size=%d)  error type=0%o\n",
 			addr, size, type );
 		if( prevp )
