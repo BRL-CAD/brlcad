@@ -116,16 +116,8 @@ char *argv[];
   *dmp = dm_Plot;
   dmp->dm_eventHandler = eventHandler;
 
-#if 0
-  /* Only need to do this once for this display manager */
-  if(!count){
-    bzero((void *)&head_plot_vars, sizeof(struct plot_vars));
-    BU_LIST_INIT( &head_plot_vars.l );
-  }
-#endif
-
-  BU_GETSTRUCT(dmp->dm_vars, plot_vars);
-  if(dmp->dm_vars == (struct plot_vars *)NULL){
+  dmp->dm_vars = (genptr_t)bu_calloc(1, sizeof(struct plot_vars), "Plot_init: plot_vars");
+  if(dmp->dm_vars == (genptr_t)NULL){
     bu_free(dmp, "Plot_open: dmp");
     return DM_NULL;
   }
@@ -236,11 +228,6 @@ struct dm *dmp;
     pclose(((struct plot_vars *)dmp->dm_vars)->up_fp); /* close pipe, eat dead children */
   else
     fclose(((struct plot_vars *)dmp->dm_vars)->up_fp);
-
-#if 0
-  if(((struct plot_vars *)dmp->dm_vars)->l.forw != BU_LIST_NULL)
-    BU_LIST_DEQUEUE(&((struct plot_vars *)dmp->dm_vars)->l);
-#endif
 
   bu_vls_free(&dmp->dm_pathName);
   bu_free(dmp->dm_vars, "Plot_close: plot_vars");

@@ -119,8 +119,10 @@ static int	Glx_setWinBounds(), Glx_debug();
 
 static GLXconfig glx_config_wish_list [] = {
   { GLX_NORMAL, GLX_WINDOW, GLX_NONE },
+  { GLX_NORMAL, GLX_VISUAL, GLX_NONE},
   { GLX_NORMAL, GLX_DOUBLE, TRUE },
   { GLX_NORMAL, GLX_RGB, TRUE },
+  { GLX_NORMAL, GLX_RGBSIZE, GLX_NOCONFIG},
   { GLX_NORMAL, GLX_ZSIZE, GLX_NOCONFIG },
   { 0, 0, 0 }
 };
@@ -237,7 +239,9 @@ char *argv[];
   }
 
   BU_GETSTRUCT(dmp->dm_vars, glx_vars);
-  if(dmp->dm_vars == (struct glx_vars *)NULL){
+  dmp->dm_vars = (genptr_t)bu_calloc(1, sizeof(struct glx_vars),
+				     "Glx_init: struct glx_vars");
+  if(dmp->dm_vars == (genptr_t)NULL){
     bu_free(dmp, "Glx_open: dmp");
     return DM_NULL;
   }
@@ -426,10 +430,13 @@ char *argv[];
   ((struct glx_vars *)dmp->dm_vars)->depth = visual_info->depth;
   ((struct glx_vars *)dmp->dm_vars)->cmap = extract_value(GLX_NORMAL, GLX_COLORMAP,
 							   glx_config);
-  Tk_SetWindowVisual(((struct glx_vars *)dmp->dm_vars)->xtkwin,
-		     ((struct glx_vars *)dmp->dm_vars)->vis,
-		     ((struct glx_vars *)dmp->dm_vars)->depth,
-		     ((struct glx_vars *)dmp->dm_vars)->cmap);
+  if(Tk_SetWindowVisual(((struct glx_vars *)dmp->dm_vars)->xtkwin,
+			((struct glx_vars *)dmp->dm_vars)->vis,
+			((struct glx_vars *)dmp->dm_vars)->depth,
+			((struct glx_vars *)dmp->dm_vars)->cmap) == 0){
+    (void)Glx_close(dmp);
+    return DM_NULL;
+  }
 
   Tk_MakeWindowExist(((struct glx_vars *)dmp->dm_vars)->xtkwin);
   ((struct glx_vars *)dmp->dm_vars)->win =

@@ -234,8 +234,8 @@ char *argv[];
     BU_LIST_INIT( &head_ogl_vars.l );
   }
 
-  BU_GETSTRUCT(dmp->dm_vars, ogl_vars);
-  if(dmp->dm_vars == (struct ogl_vars *)NULL){
+  dmp->dm_vars = (genptr_t)bu_calloc(1, sizeof(struct ogl_vars), "Ogl_init: ogl_vars");
+  if(dmp->dm_vars == (genptr_t)NULL){
     bu_free(dmp, "Ogl_open: dmp");
     return DM_NULL;
   }
@@ -1211,7 +1211,7 @@ Tk_Window tkwin;
 	  dm_copy_cmap(((struct ogl_vars *)dmp->dm_vars)->dpy,
 		       ((struct ogl_vars *)dmp->dm_vars)->cmap, /* destination */
 		       default_cmap,                            /* source */
-		       /* low - 0,  high - CMAP_BASE,  use XAllocColor */
+		       /* low, high,  use XAllocColor */
 		       0, CMAP_BASE, 0);
 	}
 
@@ -1243,7 +1243,7 @@ Tk_Window tkwin;
     if ( m_stereo ){
       m_stereo = 0;
       Tcl_AppendResult(interp, "Stereo not available.\n", (char *)NULL);
-    } else
+    }
 #endif
 #if 0
       XFree((void *)vibase);

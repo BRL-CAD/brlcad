@@ -117,23 +117,11 @@ char *argv[];
   *dmp = dm_PS;  /* struct copy */
   dmp->dm_eventHandler = eventHandler;
 
-#if 0
-  /* Only need to do this once for this display manager */
-  if(!count){
-    bzero((void *)&head_ps_vars, sizeof(struct ps_vars));
-    BU_LIST_INIT( &head_ps_vars.l );
-  }
-#endif
-
-  BU_GETSTRUCT(dmp->dm_vars, ps_vars);
-  if(dmp->dm_vars == (struct ps_vars *)NULL){
+  dmp->dm_vars = (genptr_t)bu_calloc(1, sizeof(struct ps_vars), "PS_init: ps_vars");
+  if(dmp->dm_vars == (genptr_t)NULL){
     bu_free(dmp, "PS_open: dmp");
     return DM_NULL;
   }
-
-#if 0
-  BU_LIST_APPEND(&head_x_vars.l, &((struct x_vars *)dmp->dm_vars)->l);
-#endif
 
   bu_vls_init(&dmp->dm_pathName);
   bu_vls_init(&dmp->dm_tkName);
@@ -314,11 +302,6 @@ struct dm *dmp;
 
   fputs("%end(plot)\n", ((struct ps_vars *)dmp->dm_vars)->ps_fp);
   (void)fclose(((struct ps_vars *)dmp->dm_vars)->ps_fp);
-
-#if 0
-  if(((struct ps_vars *)dmp->dm_vars)->l.forw != BU_LIST_NULL)
-    BU_LIST_DEQUEUE(&((struct ps_vars *)dmp->dm_vars)->l);
-#endif
 
   bu_vls_free(&dmp->dm_pathName);
   bu_vls_free(&dmp->dm_tkName);

@@ -150,8 +150,8 @@ char *argv[];
     BU_LIST_INIT( &head_x_vars.l );
   }
 
-  BU_GETSTRUCT(dmp->dm_vars, x_vars);
-  if(dmp->dm_vars == (struct x_vars *)NULL){
+  dmp->dm_vars = (genptr_t)bu_calloc(1, sizeof(struct x_vars), "X_open: x_vars");
+  if(dmp->dm_vars == (genptr_t)NULL){
     bu_free(dmp, "X_open: dmp");
     return DM_NULL;
   }
@@ -861,8 +861,8 @@ struct dm *dmp;
     struct bu_vls vls;
 
     bu_vls_init(&vls);
-     bu_vls_printf( &vls, "set perspective %d\n",
-		    perspective_table[((struct x_vars *)dmp->dm_vars)->perspective_angle] );
+    bu_vls_printf(&vls, "set perspective %d\n",
+		  perspective_table[((struct x_vars *)dmp->dm_vars)->perspective_angle]);
 
     Tcl_Eval(interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
@@ -887,52 +887,50 @@ int *depth;
   int num, i, j;
   int tries, baddepth;
 
-  /* Try to satisfy the above desires with a color visual of the
-   * greatest depth */
-
   vibase = XGetVisualInfo(dpy, 0, &vitemp, &num);
 
-  while (1) {
-    for (i=0, j=0, vip=vibase; i<num; i++, vip++){
-      /* requirements */
-      if (vip->class != PseudoColor) {
-	/* if index mode, accept only read/write*/
-	continue;
-      }
+  for (i=0, j=0, vip=vibase; i<num; i++, vip++){
+#if 1
+    /* requirements */
+    if (vip->class != PseudoColor) {
+      /* if index mode, accept only read/write*/
+      continue;
+    }
+#endif
 			
-      /* this visual meets criteria */
-      good[j++] = i;
-    }
+    /* this visual meets criteria */
+    good[j++] = i;
+  }
 
-    /* j = number of acceptable visuals under consideration */
-    if (j >= 1){
-      baddepth = 1000;
-      for(tries = 0; tries < j; ++tries) {
-	maxvip = vibase + good[0];
-	for (i=1; i<j; i++) {
-	  vip = vibase + good[i];
-	  if ((vip->depth > maxvip->depth)&&(vip->depth < baddepth)){
-	    maxvip = vip;
-	  }
-	}
+  /* j = number of acceptable visuals under consideration */
+  if(j < 1)
+    return(0); /* failure */
 
-	/* make sure Tk handles it */
-	*cmap = XCreateColormap(dpy, RootWindow(dpy, maxvip->screen),
-				maxvip->visual, AllocAll);
-
-	if (Tk_SetWindowVisual(tkwin, maxvip->visual, maxvip->depth, *cmap)){
-	  *depth = maxvip->depth;
-	  return 1; /* success */
-	} else { 
-	  /* retry with lesser depth */
-	  baddepth = maxvip->depth;
-	  XFreeColormap(dpy, *cmap);
-	}
+  baddepth = 1000;
+  for(tries = 0; tries < j; ++tries) {
+    maxvip = vibase + good[0];
+    for (i=1; i<j; i++) {
+      vip = vibase + good[i];
+      if ((vip->depth > maxvip->depth)&&(vip->depth < baddepth)){
+	maxvip = vip;
       }
     }
 
-    return(0); /* failure */
+    /* make sure Tk handles it */
+    *cmap = XCreateColormap(dpy, RootWindow(dpy, maxvip->screen),
+			    maxvip->visual, AllocAll);
+
+    if (Tk_SetWindowVisual(tkwin, maxvip->visual, maxvip->depth, *cmap)){
+      *depth = maxvip->depth;
+      return 1; /* success */
+    } else { 
+      /* retry with lesser depth */
+      baddepth = maxvip->depth;
+      XFreeColormap(dpy, *cmap);
+    }
   }
+
+  return(0); /* failure */
 }
 
 
