@@ -990,6 +990,42 @@ char **argv;
 }
 
 /*
+ *			B U _ T C L _ U N I T S _ C O N V E R S I O N
+ *
+ *	Tcl access to bu_units_comversion()
+ */
+int
+bu_tcl_units_conversion( clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	double conv_factor;
+	struct bu_vls result;
+
+	if( argc != 2 )  {
+		Tcl_AppendResult(interp, "Usage: bu_units_conversion units_string\n",
+			(char *)NULL );
+		return TCL_ERROR;
+	}
+
+	conv_factor = bu_units_conversion( argv[1] );
+	if( conv_factor == 0.0 )
+	{
+		Tcl_AppendResult(interp, "ERROR: bu_units_conversion: Unrecognized units string: ",
+			argv[1], "\n", (char *)NULL );
+			return TCL_ERROR;
+	}
+
+	bu_vls_init( &result );
+	bu_vls_printf( &result, "%.12e", conv_factor );
+	Tcl_AppendResult(interp, bu_vls_addr( &result ), (char *)NULL );
+	bu_vls_free( &result );
+	return TCL_OK;
+}
+
+/*
  *			B U _ T C L _ S E T U P
  *
  *  Add all the supported Tcl interfaces to LIBBU routines to
@@ -999,6 +1035,9 @@ void
 bu_tcl_setup(interp)
 Tcl_Interp *interp;
 {
+	(void)Tcl_CreateCommand(interp,
+		"bu_units_conversion",	bu_tcl_units_conversion,
+		(ClientData)0, (Tcl_CmdDeleteProc *)NULL);
 	(void)Tcl_CreateCommand(interp,
 		"bu_brlcad_path",	bu_tcl_brlcad_path,
 		(ClientData)0, (Tcl_CmdDeleteProc *)NULL);
