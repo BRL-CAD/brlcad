@@ -2122,7 +2122,8 @@ CONST struct bn_tol	*tol;
 
 	/* get nunber and placement of intermediate ellipses */
 	{
-		fastf_t ratios[4],max_ratio,new_ratio;
+		fastf_t ratios[4],max_ratio;
+		fastf_t new_ratio = 0;
 		int which_ratio;
 		fastf_t len_ha,len_hb;
 		vect_t ha,hb;
