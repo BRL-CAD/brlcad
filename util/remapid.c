@@ -1,11 +1,13 @@
 /*
  *			R E M A P I D . C
  *
- *	Perform batch modifications of region IDs for BRL-CAD geometry
+ *	Perform batch modifications of region IDs for BRL-CAD
+ *	(or TANKILL) geometry
  *
- *	The program reads a .g file and a spec file indicating which
- *	region IDs to change to which new values.  It makes the
- *	specified changes in the .g file.
+ *	The program reads a .g (or TANKILL) file and a spec file
+ *	indicating which region IDs to change to which new values.
+ *	For a .g file, the specified changes are made to that file;
+ *	For a TANKILL file, a modified model is written to stdout.
  *
  *  Author -
  *	Paul J. Tanenbaum
@@ -677,8 +679,10 @@ void print_usage (void)
 {
 #define OPT_STRING	"gt?"
 
-    bu_log("Usage: 'remapid [-{g|t}] [file.g|file.tankill] [spec_file]'\n\
-	Note that the '-t' option sends the modified TANKILL model to stdout\n");
+    bu_log("Usage: 'remapid [-{g|t}] {file.g|file.tankill} [spec_file]'\n\
+	%sNote: The '-g' option modifies file.g in place\n\
+	%sthe '-t' option writes a modified file.tankill to stdout\n",
+	"  ", "        ");
 }
 
 /*
@@ -747,6 +751,9 @@ char	*argv[];
      */
     read_spec (sfp, sf_name);
 
+    /*
+     *	Make the specified reassignment
+     */
     if( tankill )
 	tankill_reassign( db_name );
     else
@@ -754,8 +761,8 @@ char	*argv[];
 	db_init(db_name);
 
 	if (debug)
-		rb_walk1(assignment, print_nonempty_curr_id, INORDER);
+	    rb_walk1(assignment, print_nonempty_curr_id, INORDER);
 	else
-		rb_walk1(assignment, write_assignment, INORDER);
+	    rb_walk1(assignment, write_assignment, INORDER);
     }
 }
