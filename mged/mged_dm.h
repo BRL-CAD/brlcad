@@ -89,7 +89,7 @@ struct shared_info {
   struct view_list *_current_view;
   struct view_list *_last_view;
 
-/* Angle/distance cursor stuff */
+  /* Angle/distance cursor stuff */
   int	  _dv_xadc;
   int	  _dv_yadc;
   int	  _dv_1adc;
@@ -103,7 +103,7 @@ struct shared_info {
   fastf_t _adc_a1_deg;
   fastf_t _adc_a2_deg;
 
-/* Rate stuff */
+  /* Rate stuff */
   int     _rateflag_model_tran;
   vect_t  _rate_model_tran;
 
@@ -121,7 +121,7 @@ struct shared_info {
   int	  _rateflag_scale;
   fastf_t _rate_scale;
 
-/* Absolute stuff */
+  /* Absolute stuff */
   vect_t  _absolute_tran;
   vect_t  _absolute_model_tran;
   vect_t  _last_absolute_tran;
@@ -132,7 +132,7 @@ struct shared_info {
   vect_t  _last_absolute_model_rotate;
   fastf_t _absolute_scale;
 
-/* Virtual trackball stuff */
+  /* Virtual trackball stuff */
   point_t _orig_pos;
 
   int _dmaflag;
@@ -147,10 +147,14 @@ struct shared_info {
 
   /* Tcl variable names for sliders */
   struct bu_vls _rate_tran_vls[3];
+  struct bu_vls _rate_model_tran_vls[3];
   struct bu_vls _rate_rotate_vls[3];
+  struct bu_vls _rate_model_rotate_vls[3];
   struct bu_vls _rate_scale_vls;
   struct bu_vls _absolute_tran_vls[3];
+  struct bu_vls _absolute_model_tran_vls[3];
   struct bu_vls _absolute_rotate_vls[3];
+  struct bu_vls _absolute_model_rotate_vls[3];
   struct bu_vls _absolute_scale_vls;
   struct bu_vls _xadc_vls;
   struct bu_vls _yadc_vls;
@@ -313,10 +317,14 @@ struct dm_list {
 #define adc_name curr_dm_list->s_info->_adc_name
 
 #define rate_tran_vls curr_dm_list->s_info->_rate_tran_vls
+#define rate_model_tran_vls curr_dm_list->s_info->_rate_model_tran_vls
 #define rate_rotate_vls curr_dm_list->s_info->_rate_rotate_vls
+#define rate_model_rotate_vls curr_dm_list->s_info->_rate_model_rotate_vls
 #define rate_scale_vls curr_dm_list->s_info->_rate_scale_vls
 #define absolute_tran_vls curr_dm_list->s_info->_absolute_tran_vls
+#define absolute_model_tran_vls curr_dm_list->s_info->_absolute_model_tran_vls
 #define absolute_rotate_vls curr_dm_list->s_info->_absolute_rotate_vls
+#define absolute_model_rotate_vls curr_dm_list->s_info->_absolute_model_rotate_vls
 #define absolute_scale_vls curr_dm_list->s_info->_absolute_scale_vls
 #define xadc_vls curr_dm_list->s_info->_xadc_vls
 #define yadc_vls curr_dm_list->s_info->_yadc_vls
