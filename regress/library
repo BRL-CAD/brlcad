@@ -268,7 +268,7 @@ setHostName ( ) {
 	VAR="$1"
 	# do not forget to check system
 	initializeVariable $VAR "$HOST"
-	if [ x$VAR = x ] ; then export $VAR=$HOSTNAME ; fi
+	if [ x$VAR = x ] ; then $VAR=$HOSTNAME ; export $VAR ; fi
     fi
     if [ "x$2" = x ] ; then DEFVAL="unknown" ; else DEFVAL=$2 ; fi
 
@@ -327,7 +327,7 @@ acquireLock ( ) {
     # save the PID of the acquiring process to the lock file
     log "PID: $$" "${PREFIX}$LOCK"
     # keep a list of the acquired locks up to date
-    export _ACQUIRED_LOCKS="$_ACQUIRED_LOCKS ${PREFIX}$NAME"
+    _ACQUIRED_LOCKS="$_ACQUIRED_LOCKS ${PREFIX}$NAME" ; export _ACQUIRED_LOCKS
     log "Acquired $LOCK"
 
     return 0
@@ -368,7 +368,7 @@ releaseLock ( ) {
 		    NEW_AL="$NEW_AL $CL"
 		fi
 	    done
-	    export _ACQUIRED_LOCKS="$NEW_AL"
+	    _ACQUIRED_LOCKS="$NEW_AL" ; export _ACQUIRED_LOCKS
 	fi
 	return 1
     fi
@@ -387,7 +387,7 @@ releaseLock ( ) {
 	if [ x$FOUND_LOCK = x0 ] ; then
 	    warn "bad bookkeeping -- _ACQUIRED_LOCKS is missing entry $NAME"
 	fi
-	export _ACQUIRED_LOCKS="$NEW_AL"
+	_ACQUIRED_LOCKS="$NEW_AL" ; export _ACQUIRED_LOCKS
     else
 	warn "bad bookkeeping -- _ACQUIRED_LOCKS is empty prior to a release of $NAME"
     fi
@@ -446,7 +446,7 @@ acquireSemaphore ( ) {
         warn "Unable to write to semaphore file $SEMAPHORE in ${PREFIX}?"
     fi    
     log "HOLDING PID: $$" "${PREFIX}${SEMAPHORE}.acquired"
-    export _ACQUIRED_SEMAPHORES="$_ACQUIRED_SEMAPHORES ${PREFIX}$NAME"
+    _ACQUIRED_SEMAPHORES="$_ACQUIRED_SEMAPHORES ${PREFIX}$NAME" ; export _ACQUIRED_SEMAPHORES
     log "Acquired $SEMAPHORE"
 
     return 0
@@ -497,7 +497,7 @@ releaseSemaphore ( ) {
 		NEW_AS="$NEW_AS $SEM"
 	    fi
 	done
-	export _ACQUIRED_SEMAPHORES="$NEW_AS"
+	_ACQUIRED_SEMAPHORES="$NEW_AS" ; export _ACQUIRED_SEMAPHORES
 
 	if [ x$FOUND_SEM = x0 ] ; then
 	    warn "bad bookkeeping -- _ACQUIRED_SEMAPHORES is missing entry $NAME"
@@ -532,13 +532,13 @@ releaseAllSemaphores ( ) {
 
 
 #
-# mail {addressList} [subject] [body]
+# mail {addressList} [subject] [body] [{attachmentList}]
 #
 # mailer sends out a mail message with a given subject and given body to an address list
 # addressList is required only if USER is not set
 ###
 mail ( ) {
-    if [ ! "x$DEBUG" = "x" ] ; then log "mail( \$1=[$1] \$2=[$2] \$3=[$3] )" ; fi
+    if [ ! "x$DEBUG" = "x" ] ; then log "mail( \$1=[$1] \$2=[$2] \$3=[$3] \$4=[$4])" ; fi
 
     if [ "x$1" = x ] ; then 
 	if [ ! "x$USER" = x ] ; then
@@ -552,24 +552,71 @@ mail ( ) {
     fi
     if [ "x$2" = x ] ; then SUBJECT="" ; else SUBJECT="$2" ; fi
     if [ "x$3" = x ] ; then BODY="" ; else BODY=`echo $3` ; fi
+    if [ ! "x$4" = x ] ; then MULTI="yes"; FILES="$4" ; else MULTI="no"; FILES="" ; fi
     if [ "x$MAILER" = x ] ; then 
 	MAILER=""
-	for MAILER in /bin/mail /usr/bin/mail ; do
+	for MAILER in /bin/sendmail /usr/bin/sendmail /usr/lib/sendmail /bin/mail /usr/bin/mail ; do
 	    if [ -f $MAILER ] && [ -x $MAILER ] ; then
 		break
 	    fi
 	done
     fi
 
-    if [ ! "x$DEBUG" = "x" ] ; then log "mail: MAILER=[$MAILER] ADDRESS=[$ADDRESS] SUBJECT=[$SUBJECT]" ; fi
+    if [ ! "x$DEBUG" = "x" ] ; then log "mail: MAILER=[$MAILER] ADDRESS=[$ADDRESS] SUBJECT=[$SUBJECT] ATTACHMENTS=[$MUTLI]" ; fi
 
     # !!! should test validity of mail program existance
 
     MAILRUN="$MAILER -s \"$SUBJECT\" $ADDRESS"
-    
-    $MAILER -s "$SUBJECT" $ADDRESS <<EOF
-$BODY 
+
+    # if we have attachments, we need to loop over them and add them properly
+    if [ "x$MULTI" = "xyes" ] ; then
+	ATTACH=""
+        for FILE in $FILES ; do
+echo "Processing: $FILE"
+	    if [ -f $FILE ] ; then
+		ATTACH="$ATTACH
+--xxxx
+Content-Type: text/plain; charset=US-ASCII; name=\"`basename $FILE`\"
+Content-Disposition: attachment; filename=\"`basename $FILE`\"
+Content-Transfer-Encoding: 7bit
+
+`cat $FILE`
+"
+	    fi
+	done
+
+
+	$MAILER $ADDRESS <<EOF
+Subject: $SUBJECT
+MIME-Version: 1.0
+Content-type: multipart/mixed; boundary=\"xxxx\"
+Content-Transfer-Encoding: 7bit
+
+--xxxx
+Content-Type: text/plain; charset=US-ASCII; name=\"main_body\"
+Content-Disposition: inline; filename=\"main_body\"
+Content-Transfer-Encoding: 7bit
+
+$BODY
+
+$ATTACH
+
 EOF
+
+echo "[[$MAILER $ADDRESS]]"
+
+    # otherwise we are not sending attachments
+    else
+	$MAILER $ADDRESS <<EOF
+Subject: ${SUBJECT}
+Content-Type: text/plain; charset=US-ASCII; name="body"
+Content-Disposition: inline; filename="body"
+Content-Transfer-Encoding: 7bit
+
+${BODY}
+
+EOF
+    fi
 
     if [ $? != 0 ] ; then
 	log "ERROR: mail failed"
