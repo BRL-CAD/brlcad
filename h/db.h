@@ -402,6 +402,7 @@ union record  {
 		char		bot_id;
 		char		bot_pad;
 		char		bot_name[NAMESIZE];
+		unsigned char	bot_nrec[4];		/* number of additional records required */
 		unsigned char	bot_orientation;	/* unoriented, ccw, or cw */
 		unsigned char	bot_mode;		/* surface or volume */
 		unsigned char	bot_err_mode;
@@ -409,7 +410,10 @@ union record  {
 		unsigned char	bot_num_triangles[4];	/* number of triangles */
 		unsigned char	bot_data[1];		/* the start of the data:
 							 * num_verts*3*8 for the vertex floats
-							 * num_triangles*3*4 for the triangle ints */
+							 * num_triangles*3*4 for the triangle ints
+							 * if mode is RT_BOT_PLATE, then additional data is:
+							 * num_triangles*8 for the face thicknesses
+							 * followed by a null terminated hex digit string "face_mode" (bit vector) */
 	} bot;
 
 };
