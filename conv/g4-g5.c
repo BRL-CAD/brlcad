@@ -9,6 +9,8 @@
 #include "raytrace.h"
 #include "rtgeom.h"
 
+
+
 int
 main(argc, argv)
 int	argc;
@@ -19,6 +21,14 @@ char	**argv;
 	struct directory	*dp;
 	int	i;
 	long	errors = 0;
+	struct bn_tol tol;
+
+        /* XXX These need to be improved */
+        tol.magic = BN_TOL_MAGIC;
+        tol.dist = 0.005;
+        tol.dist_sq = tol.dist * tol.dist;
+        tol.perp = 1e-6;
+        tol.para = 1 - tol.perp;
 
 	bu_debug = BU_DEBUG_COREDUMP;
 
@@ -58,6 +68,16 @@ char	**argv;
 					argv[0], dp->d_namep);
 				errors++;
 				continue;
+			}
+			if( id == ID_POLY)
+			{
+				if( pg_bot( &intern, &tol ) )
+				{
+					fprintf( stderr, "%s: Conversion from polysolid to BOT failed for solid %s\n",
+						argv[0], dp->d_namep );
+					errors++;
+					continue;
+				}
 			}
 			ret = rt_fwrite_internal5( fp, dp->d_namep, &intern, 1.0, NULL );
 			if( ret < 0 )  {
