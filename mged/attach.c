@@ -263,23 +263,6 @@ char	**argv;
     return release((char *)NULL, 1);
 }
 
-
-int
-reattach()
-{
-  char *av[6];
-
-  av[0] = "attach";
-  av[1] = "-d";
-  av[2] = bu_vls_addr(&dName);
-  av[3] = "-n";
-  av[4] = dmp->dm_name;
-  av[5] = NULL;
-
-  return f_attach((ClientData)NULL, interp, 5, av);
-}
-
-
 static int
 do_2nd_attach_prompt()
 {
