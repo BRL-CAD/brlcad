@@ -245,7 +245,7 @@ int			id;
 	}
 	/* debug */
 	NMG_CK_REGION( r1 );
-	if( nmg_ck_closed_surf( r1->s_p ) != 0 )  {
+	if( nmg_ck_closed_region( r1 ) != 0 )  {
 #if 0
 		nmg_kr( r1 );
 		return(TREE_NULL);
@@ -317,8 +317,8 @@ com:
 	/* debug */
 	NMG_CK_REGION( r );
 	NMG_CK_REGION( l );
-	if( nmg_ck_closed_surf( r->s_p ) != 0 ||
-	    nmg_ck_closed_surf( l->s_p ) != 0 )  {
+	if( nmg_ck_closed_region( r ) != 0 ||
+	    nmg_ck_closed_region( l ) != 0 )  {
 	    	rt_log("mged_nmg_doit:  non-closed shell, skipped\n");
 	    	nmg_kr( r );
 	    	nmg_kr( l );
@@ -351,7 +351,7 @@ com:
 
 	/* debug */
 	NMG_CK_REGION( r );
-	(void)nmg_ck_closed_surf( r->s_p );
+	(void)nmg_ck_closed_region( r );
 	return( r );
 }
 
@@ -379,19 +379,21 @@ union tree		*curtree;
 
 	r = mged_nmg_doit( curtree );
 	if( r != 0 )  {
+		int	style;
 		/* Convert NMG to vlist */
 		NMG_CK_REGION(r);
 
 		if( mged_draw_normals )  {
+			style = 2;
 			/* 0 = vectors, 1 = w/polygon markers, 2 = polys with normals */
-			nmg_s_to_vlist( &vhead, r->s_p, 2 );
 		} else if( mged_draw_wireframes )  {
 			/* Draw in vector form */
-			nmg_s_to_vlist( &vhead, r->s_p, 0 );
+			style = 0;
 		} else {
 			/* Default -- draw polygons */
-			nmg_s_to_vlist( &vhead, r->s_p, 1 );
+			style = 1;
 		}
+		nmg_r_to_vlist( &vhead, r, style );
 
 		drawH_part2( 0, vhead.vh_first, pathp, tsp, SOLID_NULL );
 	}

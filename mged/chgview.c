@@ -896,7 +896,7 @@ char	**argv;
 		rt_log("%s tessellation failure\n", dp->d_namep);
 	    	return;
 	}
-	nmg_ck_closed_surf( r1->s_p );	/* debug */
+	nmg_ck_closed_region( r1 );	/* debug */
 	NMG_CK_REGION( r1 );
 	rt_free( (char *)recp, "record");
 
@@ -917,7 +917,7 @@ char	**argv;
 			continue;
 		}
 		NMG_CK_REGION( r2 );
-		nmg_ck_closed_surf( r2->s_p );	/* debug */
+		nmg_ck_closed_region( r2 );	/* debug */
 		rt_free( (char *)recp, "record");
 
 		/* Bool */
@@ -939,13 +939,13 @@ char	**argv;
 		/* input r1 and r2 are destroyed, output is new r1 */
 		r1 = nmg_do_bool( r1, r2, op, 0.1 );
 		NMG_CK_REGION( r1 );
-		nmg_ck_closed_surf( r1->s_p );	/* debug */
+		nmg_ck_closed_region( r1 );	/* debug */
 	}
 
 out:
 	/* Convert NMG to vlist */
 	/* 0 = vectors, 1 = w/polygon markers, 2 = polys with normals */
-	nmg_s_to_vlist( &vhead, r1->s_p, 2 );
+	nmg_r_to_vlist( &vhead, r1, 2 );
 
 	/* Destroy NMG */
 	nmg_km( m );
