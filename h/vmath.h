@@ -46,6 +46,8 @@
 #ifndef VMATH_H
 #define VMATH_H seen
 
+#define NEAR_ZERO(val,epsilon)	( ((val) > -epsilon) && ((val) < epsilon) )
+
 /*
  * Types for matrixes and vectors.
  */
