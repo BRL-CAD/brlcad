@@ -31,10 +31,9 @@
 void rt_nurb_pbound();
 
 struct face_g_snurb *
-rt_nurb_project_srf( srf, plane1, plane2, res)
+rt_nurb_project_srf( srf, plane1, plane2)
 CONST struct face_g_snurb *srf;
 plane_t plane1, plane2;
-struct resource *res;
 {
 
 	register struct face_g_snurb *psrf;
@@ -43,17 +42,13 @@ struct resource *res;
 	int	rational;
 	int	i;
 
-	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-		bu_log( "rt_nurb_project_srf: projecting surface, planes = (%g %g %g %g) (%g %g %g %g)\n",
-			V4ARGS( plane1 ), V4ARGS( plane2 ) );
-
 	rational = RT_NURB_IS_PT_RATIONAL( srf->pt_type);
 
 	n_pt_type = RT_NURB_MAKE_PT_TYPE( 2, RT_NURB_PT_PROJ, 0);
 
 	psrf = (struct face_g_snurb *) rt_nurb_new_snurb( srf->order[0], srf->order[1],
 	    srf->u.k_size, srf->v.k_size,
-	    srf->s_size[0], srf->s_size[1], n_pt_type, res);
+	    srf->s_size[0], srf->s_size[1], n_pt_type);
 
 	psrf->dir = RT_NURB_SPLIT_COL;
 
@@ -85,14 +80,6 @@ struct resource *res;
 			    mp1[2] * plane1[2] - plane1[3];
 			mp2[1] = mp1[0] * plane2[0] + mp1[1] * plane2[1] + 
 			    mp1[2] * plane2[2] - plane2[3];
-		}
-
-		if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-		{
-			if( rational )
-				bu_log( "\tmesh pt (%g %g %g %g), becomes (%g %g)\n", V4ARGS( mp1 ), mp2[0], mp2[1] );
-			else
-				bu_log( "\tmesh pt (%g %g %g), becomes (%g %g)\n", V3ARGS( mp1 ), mp2[0], mp2[1] );
 		}
 
 		mp1 += RT_NURB_EXTRACT_COORDS(srf->pt_type);
@@ -291,11 +278,10 @@ fastf_t *min, *max;
  *			R T _ N U R B _ R E G I O N _ F R O M _ S R F
  */
 struct face_g_snurb *
-rt_nurb_region_from_srf( srf, dir, param1, param2, res)
+rt_nurb_region_from_srf( srf, dir, param1, param2)
 CONST struct face_g_snurb *srf;
 int	dir;
 fastf_t param1, param2;
-struct resource *res;
 {
 	register int	i;
 	struct face_g_snurb *region;
@@ -325,7 +311,7 @@ struct resource *res;
 	}
 	if( new_knots.k_size >= 40 )  rt_bomb("rt_nurb_region_from_srf() local kv overflow\n");
 
-	region = rt_nurb_s_refine( srf, dir, &new_knots, res);
+	region = rt_nurb_s_refine( srf, dir, &new_knots);
 
 	return region;
 }
@@ -334,12 +320,11 @@ struct resource *res;
  *			R T _ N U R B _ I N T E R S E C T
  */
 struct rt_nurb_uv_hit *
-rt_nurb_intersect( srf, plane1, plane2, uv_tol, res )
+rt_nurb_intersect( srf, plane1, plane2, uv_tol )
 CONST struct face_g_snurb * srf;
 plane_t plane1;
 plane_t plane2;
 double	uv_tol;
-struct resource *res;
 {
 	struct rt_nurb_uv_hit * h;
 	struct face_g_snurb 	* psrf,
@@ -360,7 +345,7 @@ struct resource *res;
 
 	/* project the surface to a 2 dimensional problem */
 	/* NOTE that this gives a single snurb back, NOT a list */
-	psrf = rt_nurb_project_srf( srf, plane2, plane1, res );
+	psrf = rt_nurb_project_srf( srf, plane2, plane1 );
 	psrf->dir = 1;
 	BU_LIST_APPEND( &plist, &psrf->l );
 
@@ -396,10 +381,8 @@ top:
 			if( !(vmin[0] <= 0.0 && vmin[1] <= 0.0 &&
 				vmax[0] >= 0.0 && vmax[1] >= 0.0 ))
 			{
-				if( rt_g.debug & DEBUG_SPLINE )
-					bu_log( "this srf doesn't include the origin\n" );
 				flat = 1;
-				rt_nurb_free_snurb( psrf, res );
+				rt_nurb_free_snurb( psrf );
 				continue;
 			}
 
@@ -408,18 +391,14 @@ top:
 			if( (smax - smin) > .8)  {
 				/* Split surf, requeue both sub-surfs at head */
 				/* New surfs will have same dir as arg, here */
-				if( rt_g.debug & DEBUG_SPLINE )
-					bu_log( "splitting this surface\n" );
-				rt_nurb_s_split( &plist, psrf, dir, res );
-				rt_nurb_free_snurb( psrf, res );
+				rt_nurb_s_split( &plist, psrf, dir );
+				rt_nurb_free_snurb( psrf );
 				goto top;
 			}
 			if( smin > 1.0 || smax < 0.0 )
 			{
-				if( rt_g.debug & DEBUG_SPLINE )
-					bu_log( "eliminating this surface (smin=%g, smax=%g)\n", smin, smax );
 				flat = 1;
-				rt_nurb_free_snurb( psrf, res );
+				rt_nurb_free_snurb( psrf );
 				continue;
 			}
 			if ( dir == RT_NURB_SPLIT_ROW)
@@ -442,16 +421,10 @@ top:
 
 			osrf = psrf;
 			psrf = (struct face_g_snurb *)	rt_nurb_region_from_srf(
-				osrf, dir, smin, smax, res);
+				osrf, dir, smin, smax);
 
 			psrf->dir = dir;
-			rt_nurb_free_snurb(osrf, res);
-
-			if( rt_g.debug & DEBUG_SPLINE )
-			{
-				bu_log( "After call to rt_nurb_region_from_srf() (smin=%g, smax=%g)\n", smin, smax );
-				rt_nurb_s_print("psrf", psrf);
-			}
+			rt_nurb_free_snurb(osrf);
 
 			u[0] = psrf->u.knots[0];
 			u[1] = psrf->u.knots[psrf->u.k_size -1];
@@ -462,41 +435,9 @@ top:
                         if( (u[1] - u[0]) < uv_tol && (v[1] - v[0]) < uv_tol)
                         {
 				struct rt_nurb_uv_hit * hit;
-
-				if( rt_g.debug & DEBUG_SPLINE )
-				{
-					fastf_t p1[4], p2[4];
-					int coords;
-					vect_t diff;
-
-					coords = RT_NURB_EXTRACT_COORDS( srf->pt_type );
-					rt_nurb_s_eval( srf, u[0], v[0], p1 );
-					rt_nurb_s_eval( srf, u[1], v[1], p2 );
-
-					if( RT_NURB_IS_PT_RATIONAL( srf->pt_type ) )
-					{
-						fastf_t inv_w;
-
-						inv_w = 1.0 / p1[coords-1];
-						VSCALE( p1, p1, inv_w )
-
-						inv_w = 1.0 / p2[coords-1];
-						VSCALE( p2, p2, inv_w )
-					}
-
-					VSUB2( diff, p1, p2 )
-					bu_log( "Precision of hit point = %g (%f %f %f) <-> (%f %f %f)\n",
-						MAGNITUDE( diff ), V3ARGS( p1 ), V3ARGS( p2 ) );
-				}
-
-                        	if( res )
-	                        	hit = (struct rt_nurb_uv_hit *) rt_pmalloc(
-	                        		sizeof( struct rt_nurb_uv_hit), 
-	                        		&res->re_pmem);
-                        	else
-                        		hit = (struct rt_nurb_uv_hit *) bu_malloc(
-						sizeof( struct rt_nurb_uv_hit),  "hit" );
-
+                        	hit = (struct rt_nurb_uv_hit *) rt_malloc(
+                        		sizeof( struct rt_nurb_uv_hit), 
+                        		"rt_nurb_intersect:rt_nurb_uv_hit structure");
                         	hit->next = (struct rt_nurb_uv_hit *)0;
                         	hit->sub = sub;
                         	hit->u = (u[0] + u[1])/2.0;
@@ -510,7 +451,7 @@ top:
                         		h = hit;
                         	}
                         	flat = 1;
-                        	rt_nurb_free_snurb( psrf, res );
+                        	rt_nurb_free_snurb( psrf );
                         }
 			if( (u[1] - u[0]) > (v[1] - v[0]) )
 				dir = 1;

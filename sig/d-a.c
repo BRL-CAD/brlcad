@@ -28,7 +28,7 @@ int argc; char **argv;
 		long	n;
 		n = 0;
 		while( fread(&d, sizeof(d), 1, stdin) == 1 ) {
-			printf( "%ld %9g\n", n++, d );
+			printf( "%d %9g\n", n++, d );
 		}
 	} else {
 		while( fread(&d, sizeof(d), 1, stdin) == 1 ) {
@@ -36,4 +36,3 @@ int argc; char **argv;
 		}
 	}
 }
-

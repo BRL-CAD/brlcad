@@ -350,7 +350,7 @@ fail:
 			exit(1);
 		}
 	}
-	fprintf( stderr, "pixmatte: %ld element comparisons true, %ld false (width=%d)\n",
+	fprintf( stderr, "pixmatte: %d element comparisons true, %d false (width=%d)\n",
 		true_cnt, false_cnt, width );
 	return(0);
 }

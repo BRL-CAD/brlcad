@@ -37,7 +37,7 @@ extern int errno;
 
 #define	made_it()	bu_log("%s:%d\n", __FILE__, __LINE__);
 
-void print_usage ()
+void print_usage (void)
 {
 #define OPT_STRING	"c:d:#:?"
 
@@ -215,7 +215,7 @@ char	*argv[];
     }
     if (num < 0)
     {
-	perror("pixdsplit");
+	bu_log("pixdsplit: %s\n", strerror(errno));
 	exit (1);
     }
 }

@@ -1226,7 +1226,6 @@ CONST struct bn_tol *tol;
 /*
  *			N M G _ M O D E L _ E D G E _ F U S E
  */
-#if 0
 int
 nmg_model_edge_fuse( m, tol )
 struct model		*m;
@@ -1234,7 +1233,6 @@ CONST struct bn_tol	*tol;
 {
 	struct bu_ptbl	eutab;
 	int		total = 0;
-	int		non_lseg=0;
 	register int	i,j;
 
 	NMG_CK_MODEL(m);
@@ -1249,6 +1247,9 @@ again:
 		struct edgeuse		*eu1;
 		struct edge		*e1;
 		register struct vertex	*v1a, *v1b;
+		struct pt_list		pt_head;
+		struct face_g_snurb	*snrb1;
+		struct edge_g_cnurb	*cnrb1;
 		int			lseg1=0;
 		int lseg2;
 
@@ -1262,6 +1263,8 @@ again:
 		v1b = eu1->eumate_p->vu_p->v_p;
 		NMG_CK_VERTEX(v1a);
 		NMG_CK_VERTEX(v1b);
+
+		BU_LIST_INIT( &pt_head.l );
 
 		if( v1a == v1b )  {
 			if( *eu1->g.magic_p == NMG_EDGE_G_LSEG_MAGIC )  {
@@ -1289,11 +1292,50 @@ again:
 			lseg1 = 1;
 		else if( *eu1->g.magic_p == NMG_EDGE_G_CNURB_MAGIC )
 		{
-			non_lseg++;
-			continue;
+			struct faceuse *fu1;
+			struct face *f1;
+			int planar1=0;
+			int linear1=0;
+
+			cnrb1 = eu1->g.cnurb_p;
+			NMG_CK_EDGE_G_CNURB( cnrb1 );
+
+			if( cnrb1->order <= 0 )
+				linear1 = 1;
+			else
+				linear1 = nmg_cnurb_is_linear( cnrb1 );
+
+			fu1 = nmg_find_fu_of_eu( eu1 );
+			if( !fu1 )
+			{
+				bu_log( "nmg_model_edge_fuse() WARNING: CNURB eu (x%x) is not in a FU\n", eu1 );
+				continue;
+			}
+
+			f1 = fu1->f_p;
+			NMG_CK_FACE( f1 );
+
+			if( !f1->g.magic_p )
+			{
+				bu_log( "nmg_model_edge_fuse() WARNING: FU (x%x) of CNURB EU (x%x) has no geometry\n",
+						fu1, eu1 );
+				continue;
+			}
+
+			if( *f1->g.magic_p == NMG_FACE_G_PLANE_MAGIC )
+				planar1 = 1;
+			else if( *f1->g.magic_p == NMG_FACE_G_SNURB_MAGIC )
+			{
+				snrb1 = f1->g.snurb_p;
+				NMG_CK_FACE_G_SNURB( snrb1 );
+
+				planar1 = nmg_snurb_is_planar( snrb1, tol );
+			}
+
+			if( linear1 && planar1 )
+				lseg1 = 1;
 		}
 		else
-
 		{
 			bu_log( "nmg_model_edge_fuse() WARNING: eu (x%x) has unknown geometry\n" , eu1 );
 			continue;
@@ -1303,6 +1345,8 @@ again:
 		for( j = i-1; j >= 0; j-- )  {
 			register struct edgeuse	*eu2;
 			register struct vertex	*v2a, *v2b;
+			struct face_g_snurb *snrb2;
+			struct edge_g_cnurb *cnrb2;
 			int eus_are_coincident=0;
 
 
@@ -1333,7 +1377,50 @@ again:
 			if( *eu2->g.magic_p == NMG_EDGE_G_LSEG_MAGIC )
 				lseg2 = 1;
 			else if( *eu2->g.magic_p == NMG_EDGE_G_CNURB_MAGIC )
-				continue;
+			{
+				struct faceuse *fu2;
+				struct face *f2;
+				int planar2=0;
+				int linear2=0;
+
+				cnrb2 = eu2->g.cnurb_p;
+				NMG_CK_EDGE_G_CNURB( cnrb2 );
+
+				if( cnrb2->order <= 0 )
+					linear2 = 1;
+				else
+					linear2 = nmg_cnurb_is_linear( cnrb2 );
+
+				fu2 = nmg_find_fu_of_eu( eu2 );
+				if( !fu2 )
+				{
+					bu_log( "nmg_model_edge_fuse() WARNING: CNURB eu (x%x) is not in a FU\n", eu2 );
+					continue;
+				}
+
+				f2 = fu2->f_p;
+				NMG_CK_FACE( f2 );
+
+				if( !f2->g.magic_p )
+				{
+					bu_log( "nmg_model_edge_fuse() WARNING: FU (x%x) of CNURB EU (x%x) has no geometry\n",
+							fu2, eu2 );
+					continue;
+				}
+
+				if( *f2->g.magic_p == NMG_FACE_G_PLANE_MAGIC )
+					planar2 = 1;
+				else if( *f2->g.magic_p == NMG_FACE_G_SNURB_MAGIC )
+				{
+					snrb2 = f2->g.snurb_p;
+					NMG_CK_FACE_G_SNURB( snrb2 );
+
+					planar2 = nmg_snurb_is_planar( snrb2, tol );
+				}
+
+				if( linear2 && planar2 )
+					lseg2 = 1;
+			}
 			else
 			{
 				bu_log( "nmg_model_edge_fuse() WARNING: eu (x%x) has unknown geometry\n" , eu2 );
@@ -1347,76 +1434,125 @@ again:
 				nmg_radial_join_eu(eu1, eu2, tol);
 			     	total++;
 			}
+			else
+			{
+				struct face *f2;
+				struct faceuse *fu2;
+				point_t pt1;
+				point_t pt2;
+
+				/* at least one EU is cnurb */
+				if( lseg1 )
+				{
+					NMG_CK_VERTEX_G( v1a->vg_p );
+					NMG_CK_VERTEX_G( v1b->vg_p );
+
+					VMOVE( pt1 , v1a->vg_p->coord );
+					VMOVE( pt2 , v1b->vg_p->coord );
+
+					/* Evaluate eu2 at some points and compare with linear eu1 */
+					eus_are_coincident = nmg_cnurb_lseg_coincident(
+						eu2, cnrb2, snrb2, pt1, pt2, tol );
+				}
+				else if( lseg2 )
+				{
+					NMG_CK_VERTEX_G( v2a->vg_p );
+					NMG_CK_VERTEX_G( v2b->vg_p );
+
+					VMOVE( pt1 , v2a->vg_p->coord );
+					VMOVE( pt2 , v2b->vg_p->coord );
+					/* Evaluate eu1 at some points and compare with linear eu2 */
+					eus_are_coincident = nmg_cnurb_lseg_coincident(
+						eu1, cnrb1, snrb1, pt1, pt2, tol );
+				}
+				else
+				{
+					/* neither EU is a line segment */
+					if( BU_LIST_IS_EMPTY( &pt_head.l ) )
+					{
+						if( cnrb1->order > 0 )
+						{
+							fastf_t t0, t1;
+
+							t0 = cnrb1->k.knots[0];
+							t1 = cnrb1->k.knots[cnrb1->k.k_size-1];
+
+							nmg_eval_trim_to_tol( cnrb1, snrb1,
+								t0, t1, &pt_head.l, tol );
+						}
+						else
+						{
+							point_t uvw1,uvw2;
+							struct vertexuse *vu1a,*vu1b;
+							struct vertexuse_a_cnurb *vu1a_a,*vu1b_a;
+
+							vu1a = eu1->vu_p;
+							NMG_CK_VERTEXUSE( vu1a );
+							if( !vu1a->a.magic_p )
+							{
+								bu_log( "nmg_model_edge_fuse: VU (x%x) of CNURB EU (x%x) has no attributes\n",
+									vu1a, eu1 );
+								rt_bomb( "nmg_model_edge_fuse: VU of CNURB EU has no attributes\n" );
+							}
+							if( *vu1a->a.magic_p != NMG_VERTEXUSE_A_CNURB_MAGIC )
+							{
+								bu_log( "nmg_model_edge_fuse: VU (x%x) of CNURB EU (x%x) is not CNURB\n",
+									vu1a, eu1 );
+								rt_bomb( "nmg_model_edge_fuse: VU of CNURB EU is not CNURB\n" );
+							}
+							vu1a_a = vu1a->a.cnurb_p;
+							NMG_CK_VERTEXUSE_A_CNURB( vu1a_a );
+
+							vu1b = eu1->eumate_p->vu_p;
+							NMG_CK_VERTEXUSE( vu1b );
+							if( !vu1b->a.magic_p )
+							{
+								bu_log( "nmg_model_edge_fuse: VU (x%x) of CNURB EU (x%x) has no attributes\n",
+									vu1b, eu1->eumate_p );
+								rt_bomb( "nmg_model_edge_fuse: VU of CNURB EU has no attributes\n" );
+							}
+							if( *vu1b->a.magic_p != NMG_VERTEXUSE_A_CNURB_MAGIC )
+							{
+								bu_log( "nmg_model_edge_fuse: VU (x%x) of CNURB EU (x%x) is not CNURB\n",
+									vu1b, eu1->eumate_p );
+								rt_bomb( "nmg_model_edge_fuse: VU of CNURB EU is not CNURB\n" );
+							}
+							vu1b_a = vu1b->a.cnurb_p;
+							NMG_CK_VERTEXUSE_A_CNURB( vu1b_a );
+
+							nmg_eval_linear_trim_to_tol( cnrb1, snrb1,
+								 vu1a_a->param, vu1b_a->param,
+								 &pt_head.l, tol );
+						}
+					}
+
+					/* Evaluate some points on eu2 and compare to evaluated eu1 */
+					eus_are_coincident = nmg_cnurb_is_on_crv( eu2,
+						cnrb2, snrb2, &pt_head.l, tol );
+				}
+
+				if( eus_are_coincident )
+				{
+					nmg_radial_join_eu(eu1, eu2, tol);
+				     	total++;
+				}
+			}
 		}
 
+		while( BU_LIST_NON_EMPTY( &pt_head.l ) )
+		{
+			struct pt_list *pt;
+
+			pt = BU_LIST_FIRST( pt_list, &pt_head.l );
+			BU_LIST_DEQUEUE( &pt->l );
+			rt_free( (char *)pt, "nmg_model_edge_fuse: pt" );
+		}
 	}
 	if( rt_g.NMG_debug & DEBUG_BASIC && total > 0 )
 		bu_log("nmg_model_edge_fuse(): %d edges fused\n", total);
 	bu_ptbl_free( &eutab);
-
-	if( non_lseg )
-		bu_log( "Warning: CNURB edges not fused!!!\n" );
-
 	return total;
 }
-#else
-int
-nmg_model_edge_fuse( m, tol )
-struct model *m;
-struct bn_tol *tol;
-{
-	struct bu_ptbl edges;
-	int i, j;
-	int count=0;
-
-	NMG_CK_MODEL( m );
-	BN_CK_TOL( tol );
-
-	nmg_edge_tabulate( &edges, &m->magic );
-
-	for( i=0 ; i<BU_PTBL_END( &edges )-1 ; i++ )
-	{
-		struct edge *e1;
-		struct edgeuse *eu1;
-
-		e1 = (struct edge *)BU_PTBL_GET( &edges, i );
-		if(!e1 || !e1->index || e1->magic != NMG_EDGE_MAGIC )
-			continue;
-		eu1 = e1->eu_p;
-		if( !eu1 )
-			continue;
-		if( *eu1->g.magic_p != NMG_EDGE_G_LSEG_MAGIC )
-			continue;
-
-		for( j=i+1 ; j<BU_PTBL_END( &edges ) ; j++ )
-		{
-			struct edge *e2;
-			struct edgeuse *eu2;
-
-			e2 = (struct edge *)BU_PTBL_GET( &edges, j );
-			if( !e2 || !e2->index || e2->magic != NMG_EDGE_MAGIC )
-				continue;
-			eu2 = e2->eu_p;
-			if( !eu2 )
-				continue;
-			if( *eu2->g.magic_p != NMG_EDGE_G_LSEG_MAGIC )
-				continue;
-
-			if( NMG_ARE_EUS_ADJACENT( eu1, eu2 ) )
-			{
-				count++;
-				nmg_radial_join_eu(eu1, eu2, tol);
-				if( !e2->magic )
-					bu_ptbl_zero( &edges, (long *)e2 );
-			}
-		}
-	}
-
-	bu_ptbl_free( &edges );
-
-	return( count );
-}
-#endif
 
 /* XXX move to nmg_info.c */
 /*
@@ -1932,7 +2068,6 @@ CONST struct bn_tol *tol;
 	for( i=0 ; i<BU_PTBL_END( &eus ) ; i++ )
 	{
 		struct edgeuse *eu;
-		struct edgeuse *eu_next, *eu_prev;
 		struct vertex *va;
 		struct vertex *vb;
 		fastf_t dist;
@@ -1950,15 +2085,6 @@ CONST struct bn_tol *tol;
 
 		if( va == v ) continue;
 		if( vb == v ) continue;
-
-		eu_next = BU_LIST_PNEXT_CIRC( edgeuse, &eu->l );
-		eu_prev = BU_LIST_PPREV_CIRC( edgeuse, &eu->l );
-
-		if( eu_prev->vu_p->v_p == v )
-			continue;
-
-		if( eu_next->eumate_p->vu_p->v_p == v )
-			continue;
 
 		code = bn_isect_pt_lseg( &dist, va->vg_p->coord, vb->vg_p->coord,
 			v->vg_p->coord, tol );
@@ -3562,20 +3688,6 @@ CONST struct bn_tol	*tol;
 	{
 		/* Only joining two edges, let's keep it simple */
 		nmg_je( eu1, eu2 );
-		if( eu1->g.magic_p && eu2->g.magic_p )
-		{
-			if( eu1->g.magic_p != eu2->g.magic_p )
-				nmg_jeg( eu1->g.lseg_p, eu2->g.lseg_p );
-		}
-		else if( eu1->g.magic_p && !eu2->g.magic_p )
-			(void)nmg_use_edge_g( eu2, eu1->g.magic_p );
-		else if( !eu1->g.magic_p && eu2->g.magic_p )
-			(void)nmg_use_edge_g( eu1, eu2->g.magic_p );
-		else
-		{
-			nmg_edge_g( eu1 );
-			nmg_use_edge_g( eu2, eu1->g.magic_p );
-		}
 		return;
 	}
 

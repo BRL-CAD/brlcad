@@ -2948,15 +2948,6 @@ struct nmg_ray_state *rs;
 		if( class == NMG_CLASS_AoutB )
 			continue;
 
-		/* Check if mid-point is in fu2. If fu2 is disjoint loops, this point
-		 * may be outside fu2, and we don't want to cut fu1 here.
-		 */
-		class = nmg_class_pt_fu_except( mid_pt, rs->fu2, (struct loopuse *)NULL,
-			(void (*)())NULL, (void (*)())NULL, (char *)NULL, 0, 0, rs->tol );
-
-		if( class == NMG_CLASS_AoutB )
-			continue;
-
 		/* See if there is an edge joining the 2 vertices already, this
 		 * will be used for radial join later */
 		old_eu = nmg_findeu( vu1->v_p, vu2->v_p, (struct shell *)NULL,
@@ -3004,11 +2995,7 @@ struct nmg_ray_state *rs;
 
 				new_lu = nmg_cut_loop( vu1, vu2 );
 				new_eu1 = BU_LIST_LAST( edgeuse, &new_lu->down_hd );
-
 				NMG_CK_EDGEUSE( new_eu1 );
-
-				/* make intersection edges real */
-				new_eu1->e_p->is_real = 1;
 
 				nmg_loop_g( lu1->l_p, rs->tol );
 				nmg_loop_g( new_lu->l_p, rs->tol );
@@ -3057,9 +3044,6 @@ struct nmg_ray_state *rs;
 			new_eu1 = new_vu2->up.eu_p;
 			NMG_CK_EDGEUSE( new_eu1 );
 
-			/* make intersection edges real */
-			new_eu1->e_p->is_real = 1;
-
 			nmg_loop_g( lu1->l_p, rs->tol );
 			lu1->orientation = OT_SAME;
 			lu1->lumate_p->orientation = OT_SAME;
@@ -3097,9 +3081,6 @@ struct nmg_ray_state *rs;
 			new_vu1 = nmg_join_singvu_loop( vu2, vu1 );
 			new_eu1 = new_vu1->up.eu_p;
 			NMG_CK_EDGEUSE( new_eu1 );
-
-			/* make intersection edges real */
-			new_eu1->e_p->is_real = 1;
 
 			nmg_loop_g( lu2->l_p, rs->tol );
 			lu2->orientation = orient2;
@@ -3142,9 +3123,6 @@ struct nmg_ray_state *rs;
 			new_eu1 = new_vu2->up.eu_p;
 			NMG_CK_EDGEUSE( new_eu1 );
 
-			/* make intersection edges real */
-			new_eu1->e_p->is_real = 1;
-
 			nmg_loop_g( lu1->l_p, rs->tol );
 			lu1->orientation = orient1;
 			lu1->lumate_p->orientation = orient1;
@@ -3182,9 +3160,6 @@ struct nmg_ray_state *rs;
 			new_vu2 = nmg_join_2loops( vu1, vu2 );
 			new_eu1 = new_vu2->up.eu_p;
 			NMG_CK_EDGEUSE( new_eu1 );
-
-			/* make intersection edges real */
-			new_eu1->e_p->is_real = 1;
 
 			nmg_loop_g( lu1->l_p, rs->tol );
 

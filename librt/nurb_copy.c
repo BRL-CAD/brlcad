@@ -25,9 +25,8 @@
 #include "nurb.h"
 
 struct face_g_snurb *
-rt_nurb_scopy( srf, res )
+rt_nurb_scopy( srf )
 CONST struct face_g_snurb * srf;
-struct resource *res;
 {
 	register struct face_g_snurb * n;
 	int i;
@@ -37,7 +36,7 @@ struct resource *res;
 	n = (struct face_g_snurb *) rt_nurb_new_snurb( srf->order[0], srf->order[1],
 		srf->u.k_size, srf->v.k_size, 
 		srf->s_size[0],srf->s_size[1],
-		srf->pt_type, res);
+		srf->pt_type);
 
 	for( i = 0; i < srf->u.k_size; i++)
 		n->u.knots[i] =  srf->u.knots[i];

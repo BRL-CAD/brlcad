@@ -3,7 +3,13 @@
  */
 
 #define SRCDIR	canon
-#define PRODUCTS	canonize pix-ipu ipustat ipuscan png-ipu
+#define PRODUCTS	canonize pix-ipu ipustat ipuscan
+
+#if defined(__CAKE__irix4) || defined(__CAKE__irix5) || defined( __CAKE__irix6)
+#	define DSLIB	-lds
+#else
+#	define DSLIB
+#endif
 
 #define	SRCSUFF	.c
 #define MANSECTION	1
@@ -13,23 +19,17 @@
 
 #include "../Cakefile.defs"
 
-#if defined(__CAKE__5d) || defined(__CAKE__6d) || defined(__CAKE__7d) || defined(__CAKE__irix4) || defined(__CAKE__irix5) || defined( __CAKE__irix6) 
-#	define DSLIB	-lds
-#else
-#	define DSLIB
-#endif
-
 /* XXX
  * The following is necessary because SGI's <sys/dsreq.h> won't pass the
  * -ansiposix flag on their own compiler under Irix 4.0.1 or 5.  Sigh.
  */
 
-#if defined(__CAKE__5d) || defined(__CAKE__irix4)
+#if defined(__CAKE__irix4)
 # undef CFLAGS
 # define CFLAGS -O -DIRIX=4 -I../h
 #endif
 
-#if defined(__CAKE__6d) || defined(__CAKE__irix5)
+#if defined(__CAKE__irix5)
 # undef CFLAGS
 # define CFLAGS -O -I../h -DIRIX=5 -DHAVE_REGEX_DECL=1
 #endif
@@ -43,9 +43,6 @@ canonize : canonize.o canonlib.o asize.o
 
 pix-ipu : pix-ipu.o canonlib.o asize.o
 	CC LDFLAGS -o pix-ipu pix-ipu.o canonlib.o asize.o DSLIB LIBES
-
-png-ipu : png-ipu.o canonlib.o asize.o
-	CC LDFLAGS -o png-ipu png-ipu.o canonlib.o asize.o LIBPNG LIBZ LIBBU LIBBU_LIBES DSLIB LIBES
 
 /* XXX Probably should be called ipu-pix */
 ipuscan : ipuscan.o canonlib.o asize.o

@@ -12,8 +12,6 @@
 */
 /**
 	<Tc.h> -- MUVES "Tc" (terminal control) package definitions
-
-	Rewritten to use BRL-CAD's libtermio
 **/
 
 /**
@@ -24,8 +22,6 @@
 **/
 #ifndef Tc_H_INCLUDE
 #define Tc_H_INCLUDE
-
-#if 0
 
 /**
 
@@ -90,23 +86,6 @@ extern void	TcSetEcho();
 extern void	TcSetHUPCL();
 extern void	TcSetRaw();
 extern void	TcSetTabs();
-#endif
-
-#else
-
-#define TcClrCRNL	clr_CRNL
-#define TcClrCbreak	clr_Cbreak
-#define TcClrEcho	clr_Echo
-#define TcClrRaw	clr_Raw
-#define TcClrTabs	clr_Tabs
-#define TcResetTty	reset_Tty
-#define TcSaveTty	save_Tty
-#define TcSetCbreak	set_Cbreak
-#define TcSetEcho	set_Echo
-#define TcSetHUPCL	set_HUPCL
-#define TcSetRaw	set_Raw
-#define TcSetTabs	set_Tabs
-
 #endif
 
 #endif		/* Tc_H_INCLUDE */

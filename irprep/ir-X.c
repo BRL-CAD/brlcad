@@ -189,7 +189,7 @@ main()
 	(void)fflush(stdout);
 	if(MAXCOL > 1280.)
 	{
-	   (void)printf("Maximum number of colors, %d, is ",MAXCOL);
+	   (void)printf("Maximum number of colors, %s, is ",MAXCOL);
 	   (void)printf("greater than 1280.\n");
 	   (void)printf("This may create problems.\n");
 	}
@@ -254,7 +254,7 @@ main()
 	(void)fflush(stdout);
 	if(MAXCOL > 1280.)
 	{
-	   (void)printf("Maximum number of colors, %d, is ",MAXCOL);
+	   (void)printf("Maximum number of colors, %s, is ",MAXCOL);
 	   (void)printf("greater than 1280.\n");
 	   (void)printf("This may create problems.\n");
 	}

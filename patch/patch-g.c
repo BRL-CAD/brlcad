@@ -2734,7 +2734,6 @@ int cnt;
 	char shflg,mrflg,ctflg;
 	int count=0;
 	int make_basic_solids;
-	int scratch_num;
 	char scratch_name1[17];
 	char scratch_name2[17];
 	char scratch_name3[17];
@@ -2927,7 +2926,6 @@ int cnt;
 					(void)mk_addmember( scratch_name1, &donut_head, WMOP_UNION );
 					(void)mk_addmember( scratch_name2, &donut_head, WMOP_SUBTRACT );
 					(void)mk_addmember( scratch_name3, &donut_head, WMOP_UNION );
-					(void)mk_addmember( scratch_name2, &donut_head, WMOP_SUBTRACT );
 				}
 				else
 				{
@@ -2944,7 +2942,6 @@ int cnt;
 					(void)mk_addmember( scratch_name1, &donut_head, WMOP_UNION );
 					(void)mk_addmember( scratch_name2, &donut_head, WMOP_SUBTRACT );
 					(void)mk_addmember( scratch_name4, &donut_head, WMOP_UNION );
-					(void)mk_addmember( scratch_name2, &donut_head, WMOP_SUBTRACT );
 				}
 				else
 				{

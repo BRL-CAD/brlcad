@@ -46,7 +46,7 @@ extern int	LI, CO;
 #define Alloc(p_,t_,s_)\
 		if( ((p_) = (t_ *) malloc((unsigned)(s_))) == (t_ *) 0 )\
 		{\
-		(void) fprintf( stderr, "\"%s\"(%d): Alloc of %ld bytes failed.\n",\
+		(void) fprintf( stderr, "\"%s\"(%d): Alloc of %d bytes failed.\n",\
 				__FILE__, __LINE__, s_ );\
 		exit( 1 );\
 		} else	 ;
@@ -101,13 +101,13 @@ HMitem	*itemp;
 		return;
 	(void) fprintf( stderr, "text=\"%s\"\n", itemp->text );
 	(void) fprintf( stderr, "help=\"%s\"\n", itemp->help == NULL ? "(null)" : itemp->help );
-	(void) fprintf( stderr, "next=0x%lx\n", itemp->next );
+	(void) fprintf( stderr, "next=0x%x\n", itemp->next );
 #ifndef sgi
 	(void) fprintf( stderr, "dfn=0x%x\n", itemp->dfn );
 	(void) fprintf( stderr, "bfn=0x%x\n", itemp->bfn );
 #endif
-	(void) fprintf( stderr, "hfn=0x%lx\n", itemp->hfn );
-	(void) fprintf( stderr, "data=%ld\n--\n", itemp->data );
+	(void) fprintf( stderr, "hfn=0x%x\n", itemp->hfn );
+	(void) fprintf( stderr, "data=%d\n--\n", itemp->data );
 	return;
 	}
 

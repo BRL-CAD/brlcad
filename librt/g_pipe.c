@@ -1039,8 +1039,6 @@ int *nh;
 {
 	register int i, j;
 	struct hit_list *hitp;
-	struct hit_list *first;
-	struct hit_list *second;
 	LOCAL struct hit temp;
 
 	hitp = RT_LIST_FIRST( hit_list, &h->l );
@@ -1081,8 +1079,7 @@ int *nh;
 
 		next_hit = RT_LIST_NEXT( hit_list, &hitp->l );
 
-		if( NEAR_ZERO( hitp->hitp->hit_dist - next_hit->hitp->hit_dist, 0.00001) &&
-			       hitp->hitp->hit_surfno == next_hit->hitp->hit_surfno )
+		if( NEAR_ZERO( hitp->hitp->hit_dist - next_hit->hitp->hit_dist, 0.00001  ) )
 		{
 			struct hit_list *tmp;
 
@@ -1106,74 +1103,6 @@ int *nh;
 			rt_free( (char *)hitp, "pipe_hitsort: hitp" );
 		}
 		(*nh) = 0;
-		return;
-	}
-
-	if( *nh == 0 )
-		return;
-
-	/* look for overlaps */
-	first = RT_LIST_FIRST( hit_list, &h->l );
-	while( RT_LIST_NOT_HEAD( &first->l, &h->l ) )
-	{
-		struct hit_list *third;
-		struct hit_list *fourth;
-
-		second = RT_LIST_NEXT( hit_list, &first->l );
-		if( RT_LIST_IS_HEAD( &second->l, &h->l ) )
-			break;
-		else
-		{
-			third = RT_LIST_NEXT( hit_list, &second->l );
-			if( RT_LIST_IS_HEAD( &third->l, &h->l ) )
-				break;
-			else
-			{
-				fourth = RT_LIST_NEXT( hit_list, &third->l );
-				if( RT_LIST_IS_HEAD( &fourth->l, &h->l ) )
-					break;
-			}
-		}
-
-		if( first->hitp->hit_surfno == second->hitp->hit_surfno )
-		{
-			first = third;
-			continue;
-		}
-
-		if( first->hitp->hit_surfno == fourth->hitp->hit_surfno )
-		{
-			if( second->hitp->hit_surfno == third->hitp->hit_surfno )
-			{
-				/* "second" to "third" is entirely inside "first" to "fourth" */
-				RT_LIST_DEQUEUE( &second->l );
-				rt_free( (char *)second->hitp, "pipe_hitsort: hitp->hitp" );
-				rt_free( (char *)second, "pipe_hitsort: hitp" );
-				RT_LIST_DEQUEUE( &third->l );
-				rt_free( (char *)third->hitp, "pipe_hitsort: hitp->hitp" );
-				rt_free( (char *)third, "pipe_hitsort: hitp" );
-
-				first = RT_LIST_NEXT( hit_list, &fourth->l );
-				continue;
-			}
-		}
-
-		if( first->hitp->hit_surfno == third->hitp->hit_surfno )
-		{
-			if( second->hitp->hit_surfno == fourth->hitp->hit_surfno )
-			{
-				/* segemnts overlap */
-				RT_LIST_DEQUEUE( &second->l );
-				rt_free( (char *)second->hitp, "pipe_hitsort: hitp->hitp" );
-				rt_free( (char *)second, "pipe_hitsort: hitp" );
-				RT_LIST_DEQUEUE( &third->l );
-				rt_free( (char *)third->hitp, "pipe_hitsort: hitp->hitp" );
-				rt_free( (char *)third, "pipe_hitsort: hitp" );
-
-				first = RT_LIST_NEXT( hit_list, &fourth->l );
-				continue;
-			}
-		}
 	}
 }
 

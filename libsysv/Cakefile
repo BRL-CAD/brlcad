@@ -20,10 +20,6 @@
 
 #include "../Cakefile.defs"
 
-#ifndef HAVE_POSIX_REGEXEC
-#	define	EXTRA_OBJ	regcomp.o regexec.o regfree.o regerror.o
-#endif
-
 #ifdef	LIBSYSV_SETUP
 #	define	EXTRA_SETUP	LIBSYSV_SETUP
 #endif

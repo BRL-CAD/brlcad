@@ -97,7 +97,7 @@ char **argv;
 	scalefactor = 511.0 / ((double)max);
 
 	/* Display the max? */
-	printf("Max bin count=%ld.  %g count/pixel\n", max, scalefactor );
+	printf("Max bin count=%d.  %g count/pixel\n", max, scalefactor );
 
 	if( (fbp = fb_open( NULL, 512, 512 )) == NULL )  {
 		fprintf(stderr,"fb_open failed\n");
@@ -108,7 +108,7 @@ char **argv;
 	for( i = 0; i < 256; i++ ) {
 		register int j;
 		register int level;
-		register long npix;
+		register int npix;
 
 		level = (int)((double)bin_r[i]*scalefactor);
 		if( level > 511 )  level = 511;
@@ -131,7 +131,7 @@ char **argv;
 		fb_write( fbp, 0, 2*i, line, npix );
 		fb_write( fbp, 0, 2*i+1, line, npix );
 		if( verbose )
-			printf( "%3d: %10ld %10ld %10ld  (%ld)\n",
+			printf( "%3d: %10d %10d %10d  (%d)\n",
 				i, bin_r[i], bin_g[i], bin_b[i], npix );
 	}
 	fb_close( fbp );

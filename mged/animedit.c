@@ -484,9 +484,6 @@ char **argv;
 	register struct hold *hp;
 	int joints, holds;
 
-	if(dbip == DBI_NULL)
-	  return CMD_OK;
-
 	db_free_anim(dbip);
 	holds = 0;
 	while (BU_LIST_WHILE(hp, hold, &hold_head)) {
@@ -1968,11 +1965,8 @@ char **argv;
 	struct	joint *jp;
 	struct	hold *hp;
 
-	if(dbip == DBI_NULL)
-	  return CMD_OK;
-
-	bu_optind = 1;
-	while ((c=bu_getopt(argc,argv,"uam")) != EOF ) {
+	optind = 1;
+	while ((c=getopt(argc,argv,"uam")) != EOF ) {
 		switch (c) {
 		case 'u': no_unload = 1;break;
 		case 'a': no_apply = 1; break;
@@ -1982,8 +1976,8 @@ char **argv;
 		  break;
 		}
 	}
-	argv += bu_optind;
-	argc -= bu_optind;
+	argv += optind;
+	argc -= optind;
 	if (!no_unload) f_junload(0, (char **)0);
 
 	base2mm = dbip->dbi_base2local;
@@ -2125,9 +2119,6 @@ char **argv;
 	register int i;
 	FILE *fop;
 
-	if(dbip == DBI_NULL)
-	  return CMD_OK;
-
 	--argc;
 	++argv;
 
@@ -2227,8 +2218,8 @@ char **argv;
 	int c;
 	int no_mesh = 0;
 
-	bu_optind=1;
-	while ( (c=bu_getopt(argc,argv, "m")) != EOF) {
+	optind=1;
+	while ( (c=getopt(argc,argv, "m")) != EOF) {
 		switch (c) {
 		case 'm': no_mesh=1;break;
 		default:
@@ -2236,8 +2227,8 @@ char **argv;
 		  break;
 		}
 	}
-	argc -= bu_optind;
-	argv += bu_optind;
+	argc -= optind;
+	argv += optind;
 
 	for (BU_LIST_FOR(jp, joint, &joint_head)) {
 		if (argc) {
@@ -2264,8 +2255,8 @@ char **argv;
 	int c;
 	int no_mesh = 0;
 
-	bu_optind=1;
-	while ( (c=bu_getopt(argc,argv, "m")) != EOF) {
+	optind=1;
+	while ( (c=getopt(argc,argv, "m")) != EOF) {
 		switch (c) {
 		case 'm': no_mesh=1;break;
 		default:
@@ -2273,8 +2264,8 @@ char **argv;
 		  break;
 		}
 	}
-	argc -= bu_optind;
-	argv += bu_optind;
+	argc -= optind;
+	argv += optind;
 
 	for (BU_LIST_FOR(jp, joint, &joint_head)) {
 		if (argc) {
@@ -2305,9 +2296,6 @@ struct hold_point *hp;
 	struct rt_db_internal	es_int;
 	int id;
 
-	if(dbip == DBI_NULL)
-	  return 1;
-
 	VSETALL(loc, 0.0);	/* default is the origin. */
 	switch (hp->type) {
 	case ID_FIXED:
@@ -2326,7 +2314,7 @@ struct hold_point *hp;
 		    hp->path.fp_names[hp->path.fp_len-1], dbip) < 0) return 0;
 		id = rt_id_solid( &es_ext);
 		if (id != ID_GRIP) return 0;
-		if (rt_functab[id].ft_import( &es_int, &es_ext, mat, dbip) < 0) {
+		if (rt_functab[id].ft_import( &es_int, &es_ext, mat) < 0) {
 			db_free_external(&es_ext);
 			return 0;
 		}
@@ -3037,23 +3025,23 @@ char **argv;
 	domesh = 1;
 
 	/*
-	 * reset bu_getopt.
+	 * reset getopt.
 	 */
-	bu_optind=1;
-	while ((count=bu_getopt(argc,argv,"l:e:d:m")) != EOF) {
+	optind=1;
+	while ((count=getopt(argc,argv,"l:e:d:m")) != EOF) {
 		switch (count) {
-		case 'l': loops = atoi(bu_optarg);break;
-		case 'e': epsilon = atof(bu_optarg);break;
-		case 'd': delta =  atof(bu_optarg);break;
+		case 'l': loops = atoi(optarg);break;
+		case 'e': epsilon = atof(optarg);break;
+		case 'd': delta =  atof(optarg);break;
 		case 'm': domesh = 1-domesh;
 		}
 	}
 
 	/*
-	 * skip the command and any options that bu_getopt ate.
+	 * skip the command and any options that getopt ate.
 	 */
-	argc -= bu_optind;
-	argv += bu_optind;
+	argc -= optind;
+	argv += optind;
 
 	for (BU_LIST_FOR(hp, hold, &hold_head)) hold_clear_flags(hp);
 	found = -1;
@@ -3295,9 +3283,6 @@ struct joint *jp;
 	quat_t	q1;
 	int i;
 
-	if(dbip == DBI_NULL)
-	  return;
-
 	/*
 	 * If no animate structure, cons one up.
 	 */
@@ -3430,9 +3415,6 @@ char **argv;
 	struct joint *jp;
 	int i;
 	double tmp;
-
-	if(dbip == DBI_NULL)
-	  return CMD_OK;
 
 	/*
 	 * find the joint.
@@ -3608,7 +3590,7 @@ int			id;
  * get the grip information.
  */
 	RT_INIT_DB_INTERNAL(&internal);
-	if ( rt_functab[id].ft_import( &internal, ep, tsp->ts_mat, dbip) < 0 ) {
+	if ( rt_functab[id].ft_import( &internal, ep, tsp->ts_mat) < 0 ) {
 	  Tcl_AppendResult(interp, dp->d_namep, ": solid import failure\n", (char *)NULL);
 	  if (internal.idb_ptr) rt_functab[id].ft_ifree(&internal);
 	  return curtree;
@@ -3690,9 +3672,6 @@ char **argv;
 	int i;
 	char			**topv[2000];
 	int			topc;
-
-	if(dbip == DBI_NULL)
-	  return CMD_OK;
 
 	if( argc <= 2) {
 		name = "_ANIM_";

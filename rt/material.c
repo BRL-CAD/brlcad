@@ -32,33 +32,30 @@ static char RCSmaterial[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "externs.h"
-#include "bu.h"
 #include "vmath.h"
 #include "rtstring.h"
 #include "raytrace.h"
-#include "shadefuncs.h"
+#include "./material.h"
 #include "./rdebug.h"
 
-static CONST char *mdefault = "default"; /* Name of default material */
+struct mfuncs *mfHead = MF_NULL;	/* Head of list of materials */
+
+static char *mdefault = "default";	/* Name of default material */
 
 /*
- *			M L I B _ A D D _ S H A D E R
+ *			M L I B _ A D D
  *
- *  Routine to add an array of mfuncs structures to the linked
- *  list of material (shader) routines.
+ *  Internal routine to add an array of mfuncs structures to the linked
+ *  list of material routines.
  */
 void
-mlib_add_shader( headp, mfp1 )
-struct mfuncs **headp;
-struct mfuncs *mfp1;
+mlib_add( mfp )
+register struct mfuncs *mfp;
 {
-	register struct mfuncs *mfp;
-
-	RT_CK_MF(mfp1);
-	for( mfp = mfp1; mfp->mf_name != (char *)0; mfp++ )  {
-		RT_CK_MF(mfp);
-		mfp->mf_forw = *headp;
-		*headp = mfp;
+	for( ; mfp->mf_name != (char *)0; mfp++ )  {
+		mfp->mf_magic = MF_MAGIC;
+		mfp->mf_forw = mfHead;
+		mfHead = mfp;
 	}
 }
 
@@ -71,16 +68,15 @@ struct mfuncs *mfp1;
  *	 1	success
  */
 int
-mlib_setup( headp, rp, rtip )
-struct mfuncs		**headp;
+mlib_setup( rp, rtip )
 register struct region	*rp;
 struct rt_i		*rtip;
 {
-	register CONST struct mfuncs *mfp;
-	int		ret;
+	register struct mfuncs *mfp;
+	int	ret;
 	struct rt_vls	param;
-	CONST char	*material;
-	int		mlen;
+	char	*material;
+	int	mlen;
 
 	RT_CK_REGION(rp);
 	RT_CK_RTI(rtip);
@@ -105,7 +101,7 @@ struct rt_i		*rtip;
 		}
 	}
 retry:
-	for( mfp = *headp; mfp != MF_NULL; mfp = mfp->mf_forw )  {
+	for( mfp=mfHead; mfp != MF_NULL; mfp = mfp->mf_forw )  {
 		if( material[0] != mfp->mf_name[0]  ||
 		    strncmp( material, mfp->mf_name, mlen ) != 0 )
 			continue;
@@ -127,7 +123,7 @@ found:
 
 	if(rdebug&RDEBUG_MATERIAL)
 		bu_log("mlib_setup(%s) shader=%s\n", rp->reg_name, mfp->mf_name);
-	if( (ret = mfp->mf_setup( rp, &param, &rp->reg_udata, mfp, rtip, headp )) < 0 )  {
+	if( (ret = mfp->mf_setup( rp, &param, &rp->reg_udata, mfp, rtip )) < 0 )  {
 		rt_log("ERROR mlib_setup(%s) failed. Material='%s', param='%s'.\n",
 			rp->reg_name, material, RT_VLS_ADDR(&param) );
 		if( material != mdefault )  {
@@ -153,7 +149,7 @@ void
 mlib_free( rp )
 register struct region *rp;
 {
-	register CONST struct mfuncs *mfp = (struct mfuncs *)rp->reg_mfuncs;
+	register struct mfuncs *mfp = (struct mfuncs *)rp->reg_mfuncs;
 
 	if( mfp == MF_NULL )  {
 		rt_log("mlib_free(%s):  reg_mfuncs NULL\n", rp->reg_name);
@@ -203,4 +199,37 @@ mlib_one()
 void
 mlib_void()
 {
+}
+
+/*
+ *			P R _ S H A D E W O R K
+ *
+ *  Pretty print a shadework structure.
+ */
+void
+pr_shadework( str, swp )
+char *str;
+register struct shadework *swp;
+{
+	int	i;
+
+	rt_log( "Shadework %s: 0x%x\n", str, swp );
+	rt_log( " sw_transmit %f\n", swp->sw_transmit );
+	rt_log( " sw_reflect %f\n", swp->sw_reflect );
+	rt_log( " sw_refract_index %f\n", swp->sw_refrac_index );
+	rt_log( " sw_extinction %f\n", swp->sw_extinction );
+	VPRINT( " sw_color", swp->sw_color );
+	VPRINT( " sw_basecolor", swp->sw_basecolor );
+	rt_log( " sw_uv  %f %f\n", swp->sw_uv.uv_u, swp->sw_uv.uv_v );
+	rt_log( " sw_xmitonly %d\n", swp->sw_xmitonly );
+	rt_printb( " sw_inputs", swp->sw_inputs,
+		"\020\4HIT\3LIGHT\2UV\1NORMAL" );
+	rt_log( "\n");
+	for( i=0; i < SW_NLIGHTS; i++ )  {
+		if( swp->sw_visible[i] == (char *)0 )  continue;
+		rt_log("   light %d visible, intensity=%g, dir=(%g,%g,%g)\n",
+			i,
+			swp->sw_intensity[i],
+			V3ARGS(&swp->sw_tolight[i*3]) );
+	}
 }

@@ -124,14 +124,14 @@ void
 view_eol( ap )
 register struct application *ap;
 {
-	bu_semaphore_acquire( BU_SEM_SYSCALL );
+	RES_ACQUIRE( &rt_g.res_syscall );
 	if( outfp != NULL )
 		fwrite( scanbuf, 1, width, outfp );
 #if 0
 	else if( fbp != FBIO_NULL )
 		fb_write( fbp, 0, ap->a_y, scanbuf, width );
 #endif
-	bu_semaphore_release( BU_SEM_SYSCALL );
+	RES_RELEASE( &rt_g.res_syscall );
 }
 
 /*
@@ -180,9 +180,9 @@ rayhit( ap, PartHeadp )
 register struct application *ap;
 struct partition *PartHeadp;
 {
-	bu_semaphore_acquire( RT_SEM_RESULTS );
+	RES_ACQUIRE( &rt_g.res_results );
 	scanbuf[ap->a_x] = 1;
-	bu_semaphore_release( RT_SEM_RESULTS );
+	RES_RELEASE( &rt_g.res_results );
 	return(1);	/* report hit to main routine */
 }
 
@@ -195,9 +195,9 @@ int
 raymiss( ap )
 register struct application *ap;
 {
-	bu_semaphore_acquire( RT_SEM_RESULTS );
+	RES_ACQUIRE( &rt_g.res_results );
 	scanbuf[ap->a_x] = 255;
-	bu_semaphore_release( RT_SEM_RESULTS );
+	RES_RELEASE( &rt_g.res_results );
 	return(0);
 }
 

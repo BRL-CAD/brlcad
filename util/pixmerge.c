@@ -249,7 +249,7 @@ fail:
 		}
 		fwrite( b3, width, len, stdout );
 	}
-	fprintf( stderr, "pixmerge: %ld foreground, %ld background\n",
+	fprintf( stderr, "pixmerge: %d foreground, %d background\n",
 		fg_cnt, bg_cnt );
 	exit(0);
 }

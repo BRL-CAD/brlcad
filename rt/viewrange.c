@@ -33,8 +33,9 @@ static char RCSrayrange[] = "@(#)$Header$";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "./material.h"
 #include "./ext.h"
-#include "./rdebug.h"
+#include "rdebug.h"
 
 #define CELLNULL ( (struct cell *) 0)
 

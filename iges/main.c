@@ -77,8 +77,9 @@ surfaces in the IGES file may be combined into a single BRL-CAD spline solid by\
 
 static char *msg4=
 "\nThis IGES file contains trimmed surfaces, but no solid model entities.\n\
-Try the '-t' option to convert all the trimmed surfaces into one BRL-CAD solid.\n\
-'iges-g -t -o file.g %s'\n";
+A '-t' option for 'iges-g' is under construction that will eventually allow you\n\
+to convert all the trimmed surfaces in an IGES file into one BRL-CAD solid.\n\
+Sorry this isn't complete yet.\n";
 
 void
 Suggestions()
@@ -158,10 +159,6 @@ char *argv[];
 				break;
 			case 'x':
 				sscanf( optarg, "%x", &rt_g.debug );
-				if( rt_g.debug & DEBUG_MEM )
-					bu_debug |= BU_DEBUG_MEM_LOG;
-				if( rt_g.debug & DEBUG_MEM_FULL )
-					bu_debug |= BU_DEBUG_MEM_CHECK;
 				break;
 			case 'X':
 				sscanf( optarg, "%x", &rt_g.NMG_debug );

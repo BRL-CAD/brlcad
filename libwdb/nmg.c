@@ -106,13 +106,6 @@ struct shell *s;
 			if( RT_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC )
 				continue;
 
-			if( lu->orientation != OT_SAME )
-			{
-				/* must triangulate if there is a hole */
-				max_count = 6;
-				break;
-			}
-
 			count_npts = 0;
 			for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
 				count_npts++;
@@ -120,9 +113,8 @@ struct shell *s;
 			if( count_npts > max_count )
 				max_count = count_npts;
 
-			if( !nmg_lu_is_convex( lu, &tol ) )
+			if( max_count < 5 && !nmg_lu_is_convex( lu, &tol ) )
 			{
-				/* must triangulate non-convex faces */
 				max_count = 6;
 				break;
 			}
@@ -148,14 +140,8 @@ struct shell *s;
 				count_npts++;
 			}
 
-			if( count_npts < 3 )
-				continue;
-
 			if( mk_fpoly( out_fp , count_npts , verts ) )
-			{
 				rt_log( "write_shell_as_polysolid: mk_fpoly failed for object %s\n" , name );
-				rt_bomb( "write_shell_as_polysolid: mk_fpoly failed\n" );
-			}
 		}
 	}
 }

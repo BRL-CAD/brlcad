@@ -395,7 +395,7 @@ void
 prnt_Scroll( char *fmt, ... )
 	{	va_list		ap;
 	/* We use the same lock as malloc.  Sys-call or mem lock, really */
-	bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
+	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
 	va_start( ap, fmt );
 	if( tty )
 		{ /* Only move cursor and scroll if newline is output.	*/
@@ -432,7 +432,7 @@ prnt_Scroll( char *fmt, ... )
 	else
 		(void)vfprintf( stderr, fmt, ap );
 	va_end( ap );
-	bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
+	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
 	return;
 	}
 
@@ -442,7 +442,7 @@ void
 prnt_Scroll(fmt, a,b,c,d,e,f,g,h,i)
 char *fmt;
 {
-	bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
+	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
 	if( tty )
 		{ /* Only move cursor and scroll if newline is output.	*/
 			static int	newline = 1;
@@ -477,7 +477,7 @@ char *fmt;
 		}
 	else
 		(void) fprintf( stdout, fmt, a,b,c,d,e,f,g,h,i );
-	bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
+	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
 }
 #else
 /*	p r n t _ S c r o l l ( )					*/
@@ -488,7 +488,7 @@ char	*fmt;
 va_dcl
 	{	va_list		ap;
 	/* We use the same lock as malloc.  Sys-call or mem lock, really */
-	bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
+	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
 	va_start( ap );
 	if( tty )
 		{ /* Only move cursor and scroll if newline is output.	*/
@@ -525,7 +525,7 @@ va_dcl
 	else
 		(void) _doprnt( fmt, ap, stderr );
 	va_end( ap );
-	bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
+	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
 	return;
 	}
 #endif /* HAVE_STDARG_H */

@@ -54,15 +54,15 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #define MAXOBJECTS	3000
 
-#define VIEWSIZE	(2*view_state->vs_Viewscale)
+#define VIEWSIZE	(2*Viewscale)
 #define TRUE	1
 #define FALSE	0
 
 #define MOVE(v)	  VMOVE(last_move,(v))
 
 #define DRAW(v)	{ vect_t a,b;\
-		  MAT4X3PNT(a,view_state->vs_model2view,last_move);\
-		  MAT4X3PNT(b,view_state->vs_model2view,(v));\
+		  MAT4X3PNT(a,model2view,last_move);\
+		  MAT4X3PNT(b,model2view,(v));\
 		  pdv_3line(plotfp, a, b ); }
 
 extern struct db_i *dbip;	/* current database instance */
@@ -159,9 +159,6 @@ char	**argv;
 	vect_t last,dir;
 	register struct rt_vlist	*vp;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
 	if(argc < 2 || 4 < argc){
 	  struct bu_vls vls;
 
@@ -177,7 +174,7 @@ char	**argv;
 			   "\" for writing.\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
-	pl_space(plotfp,(int)GED_MIN,(int)GED_MIN,(int)GED_MAX,(int)GED_MAX);
+	pl_space(plotfp,-2048,-2048,2048,2048);
 
 	/*  Build list of objects being viewed */
 	numobjs = 0;
@@ -213,12 +210,12 @@ char	**argv;
 
 	if (argc > 2) {
 		sscanf(argv[2],"%f",&step);
-		step = view_state->vs_Viewscale/step;
+		step = Viewscale/step;
 		sscanf(argv[3],"%f",&epsilon);
-		epsilon *= view_state->vs_Viewscale/100;
+		epsilon *= Viewscale/100;
 	} else {
-		step = view_state->vs_Viewscale/256;
-		epsilon = 0.1*view_state->vs_Viewscale;
+		step = Viewscale/256;
+		epsilon = 0.1*Viewscale;
 	}
 
 	for (i = 0; i < numobjs; i++)
@@ -227,8 +224,8 @@ char	**argv;
 			     objname[i], "\"\n", (char *)NULL);
 
 	/* Crawl along the vectors raytracing as we go */
-	VSET(temp, 0.0, 0.0, -1.0);				/* looking at model */
-	MAT4X3VEC(a.a_ray.r_dir,view_state->vs_view2model,temp);
+	VSET(temp,0,0,-1);				/* looking at model */
+	MAT4X3VEC(a.a_ray.r_dir,view2model,temp);
 	VUNITIZE(a.a_ray.r_dir);
 
 	FOR_ALL_SOLIDS(sp) {
@@ -273,9 +270,9 @@ char	**argv;
 					}
 					for (u = 0; u <= len; u += step) {
 						VJOIN1(aim_point,last,u,dir);
-						MAT4X3PNT(temp,view_state->vs_model2view,aim_point);
+						MAT4X3PNT(temp,model2view,aim_point);
 						temp[Z] = 100;			/* parallel project */
-						MAT4X3PNT(a.a_ray.r_pt,view_state->vs_view2model,temp);
+						MAT4X3PNT(a.a_ray.r_pt,view2model,temp);
 						if (rt_shootray(&a)) {
 							if (!visible) {
 								visible = TRUE;

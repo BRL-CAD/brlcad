@@ -49,12 +49,6 @@ bn_decode_mat(m, str)
 mat_t m;
 char *str;
 {
-	if( strcmp( str, "I" ) == 0 )  {
-		bn_mat_idn( m );
-		return 16;
-	}
-	if( *str == '{' )  str++;
-
 	return sscanf(str,
 	    "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf",
 	    &m[0], &m[1], &m[2], &m[3], &m[4], &m[5], &m[6], &m[7],
@@ -66,7 +60,6 @@ bn_decode_quat(q, str)
 quat_t q;
 char *str;
 {
-	if( *str == '{' )  str++;
 	return sscanf(str, "%lf %lf %lf %lf", &q[0], &q[1], &q[2], &q[3]);
 }
 
@@ -75,17 +68,7 @@ bn_decode_vect(v, str)
 vect_t v;
 char *str;
 {
-	if( *str == '{' )  str++;
 	return sscanf(str, "%lf %lf %lf", &v[0], &v[1], &v[2]);
-}
-
-int
-bn_decode_hvect(v, str)
-hvect_t v;
-char *str;
-{
-	if( *str == '{' )  str++;
-	return sscanf(str, "%lf %lf %lf %lf", &v[0], &v[1], &v[2], &v[3]);
 }
 
 void
@@ -93,11 +76,6 @@ bn_encode_mat(vp, m)
 struct bu_vls *vp;
 mat_t m;
 {
-	if( m == NULL )  {
-		bu_vls_putc(vp, 'I');
-		return;
-	}
-
 	bu_vls_printf(vp, "%g %g %g %g  %g %g %g %g  %g %g %g %g  %g %g %g %g",
 	    m[0], m[1], m[2], m[3], m[4], m[5], m[6], m[7],
 	    m[8], m[9], m[10], m[11], m[12], m[13], m[14], m[15]);
@@ -120,14 +98,6 @@ vect_t v;
 }
 
 void
-bn_encode_hvect(vp, v)
-struct bu_vls *vp;
-hvect_t v;
-{
-	bu_vls_printf(vp, "%g %g %g %g", V4ARGS(v));
-}
-
-void
 bn_quat_distance_wrapper(dp, q1, q2)
 double *dp;
 quat_t q1, q2;
@@ -145,29 +115,6 @@ CONST double scale;
 	*statusp = bn_mat_scale_about_pt(mat, pt, scale);
 }
 
-static void
-bn_mat4x3pnt(o, m, i)
-point_t i, o;
-mat_t m;
-{
-	MAT4X3PNT(o, m, i);
-}
-
-static void
-bn_mat4x3vec(o, m, i)
-vect_t i, o;
-mat_t m;
-{
-	MAT4X3VEC(o, m, i);
-}
-
-static void
-bn_hdivide(o, i)
-hvect_t i;
-vect_t o;
-{
-	HDIVIDE(o, i);
-}
 
 
 /*
@@ -210,45 +157,6 @@ char **argv;
 		}
 		(*math_func)(o, a);
 		bn_encode_mat(&result, o);
-	} else if (math_func == bn_matXvec) {
-		mat_t m;
-		hvect_t i, o;
-		if (argc < 3 || bn_decode_mat(m, argv[1]) < 16 ||
-		    bn_decode_hvect(i, argv[2]) < 4) {
-			bu_vls_printf(&result, "usage: %s mat hvect", argv[0]);
-			goto error;
-		}
-		bn_matXvec(o, m, i);
-		bn_encode_hvect(&result, o);
-	} else if (math_func == bn_mat4x3pnt) {
-		mat_t m;
-		point_t i, o;
-		if (argc < 3 || bn_decode_mat(m, argv[1]) < 16 ||
-		    bn_decode_vect(i, argv[2]) < 3) {
-			bu_vls_printf(&result, "usage: %s mat point", argv[0]);
-			goto error;
-		}
-		bn_mat4x3pnt(o, m, i);
-		bn_encode_vect(&result, o);
-	} else if (math_func == bn_mat4x3vec) {
-		mat_t m;
-		vect_t i, o;
-		if (argc < 3 || bn_decode_mat(m, argv[1]) < 16 ||
-		    bn_decode_vect(i, argv[2]) < 3) {
-			bu_vls_printf(&result, "usage: %s mat vect", argv[0]);
-			goto error;
-		}
-		bn_mat4x3vec(o, m, i);
-		bn_encode_vect(&result, o);
-	} else if (math_func == bn_hdivide) {
-		hvect_t i;
-		vect_t o;
-		if (argc < 2 || bn_decode_hvect(i, argv[1]) < 4) {
-			bu_vls_printf(&result, "usage: %s hvect", argv[0]);
-			goto error;
-		}
-		bn_hdivide(o, i);
-		bn_encode_vect(&result, o);
 	} else if (math_func == bn_mat_ae) {
 		mat_t o;
 		double az, el;
@@ -516,10 +424,6 @@ static struct math_func_link {
 	"mat_mul",            bn_mat_mul,
 	"mat_inv",            bn_mat_inv,
 	"mat_trn",            bn_mat_trn,
-	"matXvec",            bn_matXvec,
-	"mat4x3vec",          bn_mat4x3vec,
-	"mat4x3pnt",          bn_mat4x3pnt,
-	"hdivide",            bn_hdivide,
 	"mat_ae",             bn_mat_ae,
 	"mat_ae_vec",         bn_ae_vec,
 	"mat_aet_vec",        bn_aet_vec,

@@ -52,7 +52,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 
 #include "../librt/debug.h"
-#include "../rt/mathtab.h"
+#include "../rt/material.h"
 #include "../rt/ext.h"
 #include "../rt/rdebug.h"
 
@@ -187,7 +187,7 @@ char **argv;
 	/* Note that the LIBPKG error logger can not be
 	 * "bu_log", as that can cause bu_log to be entered recursively.
 	 * Given the special version of bu_log in use here,
-	 * that will result in a deadlock in bu_semaphore_acquire(res_syscall)!
+	 * that will result in a deadlock in RES_ACQUIRE(res_syscall)!
 	 *  libpkg will default to stderr via pkg_errlog(), which is fine.
 	 */
 	pcsrv = pkg_open( control_host, tcp_port, "tcp", "", "",
@@ -291,8 +291,21 @@ char **argv;
 
 	beginptr = (char *) sbrk(0);
 
-	avail_cpus = bu_avail_cpus();
-	max_cpus = bu_get_public_cpus();
+#define PUBLIC_CPUS	"/usr/tmp/public_cpus"
+	max_cpus = avail_cpus = bu_avail_cpus();
+	if( (fp = fopen(PUBLIC_CPUS, "r")) != NULL )  {
+		(void)fscanf( fp, "%d", &max_cpus );
+		fclose(fp);
+		if( max_cpus < 0 )  max_cpus = avail_cpus + max_cpus;
+		if( max_cpus > avail_cpus )  max_cpus = avail_cpus;
+	} else {
+		(void)unlink(PUBLIC_CPUS);
+		if( (fp = fopen(PUBLIC_CPUS, "w")) != NULL )  {
+			fprintf(fp, "%d\n", avail_cpus);
+			fclose(fp);
+			(void)chmod(PUBLIC_CPUS, 0666);
+		}
+	}
 
 	/* Need to set rtg_parallel non_zero here for RES_INIT to work */
 	npsw = max_cpus;
@@ -300,22 +313,18 @@ char **argv;
 		rt_g.rtg_parallel = 1;
 	} else
 		rt_g.rtg_parallel = 0;
-	bu_semaphore_init( RT_SEM_LAST );
+	RES_INIT( &rt_g.res_syscall );
+	RES_INIT( &rt_g.res_worker );
+	RES_INIT( &rt_g.res_stats );
+	RES_INIT( &rt_g.res_results );
+	RES_INIT( &rt_g.res_model );
+	/* DO NOT USE bu_log() before this point! */
 
 	bu_log("using %d of %d cpus\n",
 		npsw, avail_cpus );
 	if( max_cpus <= 0 )  {
 		pkg_close(pcsrv);
 		exit(0);
-	}
-
-	/*
-	 *  Initialize all the per-CPU memory resources.
-	 *  Go for the max, as TCL interface may change npsw as we run.
-	 */
-	for( n=0; n < MAX_PSW; n++ )  {
-		rt_init_resource( &resource[n], n );
-		rand_init( resource[n].re_randptr, n );
 	}
 
 	BU_LIST_INIT( &WorkHead );
@@ -771,25 +780,30 @@ void
 bu_log( char *fmt, ... )
 {
 	va_list ap;
-	char buf[512];		/* a generous output line.  Must be AUTO, else non-PARALLEL. */
+	static char buf[512];		/* a generous output line */
+	static char *cp = buf+1;
 
 	if( print_on == 0 )  return;
-	bu_semaphore_acquire( BU_SEM_SYSCALL );
+	RES_ACQUIRE( &rt_g.res_syscall );
 	va_start( ap, fmt );
-	(void)vsprintf( buf, fmt, ap );
+	(void)vsprintf( cp, fmt, ap );
 	va_end(ap);
 
+	while( *cp++ )  ;		/* leaves one beyond null */
+	if( cp[-2] != '\n' )
+		goto out;
 	if( pcsrv == PKC_NULL || pcsrv == PKC_ERROR )  {
-		fprintf(stderr, "%s", buf);
+		fprintf(stderr, "%s", buf+1);
 		goto out;
 	}
-	if(debug) fprintf(stderr, "%s", buf);
-	if( pkg_send( MSG_PRINT, buf, strlen(buf)+1, pcsrv ) < 0 )  {
+	if(debug) fprintf(stderr, "%s", buf+1);
+	if( pkg_send( MSG_PRINT, buf+1, strlen(buf+1)+1, pcsrv ) < 0 )  {
 		fprintf(stderr,"pkg_send MSG_PRINT failed\n");
 		exit(12);
 	}
+	cp = buf+1;
 out:
-	bu_semaphore_release( BU_SEM_SYSCALL );
+	RES_RELEASE( &rt_g.res_syscall );
 }
 #else /* __STDC__ */
 
@@ -810,14 +824,14 @@ va_dcl
 {
 	va_list		ap;
 	char		*fmt;
-	char		buf[512];
+	static char	buf[512];
+	static char	*cp;
 	FILE		strbuf;
-	static char	*cp;			/* NON-PARALLEL */
 
 	if( print_on == 0 )  return;
-	if( cp == (char *)0 )  cp = buf;
+	if( cp == (char *)0 )  cp = buf+1;
 
-	bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
+	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
 	va_start(ap);
 	fmt = va_arg(ap,char *);
 #if defined(mips) || (defined(alliant) && defined(i860))
@@ -835,21 +849,21 @@ va_dcl
 #endif
 	va_end(ap);
 
-	if(debug) fprintf(stderr, "%s", buf);
+	if(debug) fprintf(stderr, "%s", buf+1);
 	while( *cp++ )  ;		/* leaves one beyond null */
 	if( cp[-2] != '\n' )
 		goto out;
 	if( pcsrv == PKC_NULL || pcsrv == PKC_ERROR )  {
-		fprintf(stderr, "%s", buf);
+		fprintf(stderr, "%s", buf+1);
 		goto out;
 	}
-	if( pkg_send( MSG_PRINT, buf, strlen(buf)+1, pcsrv ) < 0 )  {
+	if( pkg_send( MSG_PRINT, buf+1, strlen(buf+1)+1, pcsrv ) < 0 )  {
 		fprintf(stderr,"pkg_send MSG_PRINT failed\n");
 		exit(12);
 	}
-	cp = buf;
+	cp = buf+1;
 out:
-	bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
+	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
 }
 #else
 /* VARARGS */
@@ -858,23 +872,27 @@ bu_log( str, a, b, c, d, e, f, g, h )
 char	*str;
 int	a, b, c, d, e, f, g, h;
 {
-	char	buf[512];		/* a generous output line */
+	static char buf[512];		/* a generous output line */
+	static char *cp = buf+1;
 
 	if( print_on == 0 )  return;
-	bu_semaphore_acquire( BU_SEM_SYSCALL );
-	(void)sprintf( buf, str, a, b, c, d, e, f, g, h );
-
+	RES_ACQUIRE( &rt_g.res_syscall );
+	(void)sprintf( cp, str, a, b, c, d, e, f, g, h );
+	while( *cp++ )  ;		/* leaves one beyond null */
+	if( cp[-2] != '\n' )
+		goto out;
 	if( pcsrv == PKC_NULL || pcsrv == PKC_ERROR )  {
-		fprintf(stderr, "%s", buf);
+		fprintf(stderr, "%s", buf+1);
 		goto out;
 	}
-	if(debug) fprintf(stderr, "%s", buf);
-	if( pkg_send( MSG_PRINT, buf, strlen(buf)+1, pcsrv ) < 0 )  {
+	if(debug) fprintf(stderr, "%s", buf+1);
+	if( pkg_send( MSG_PRINT, buf+1, strlen(buf+1)+1, pcsrv ) < 0 )  {
 		fprintf(stderr,"pkg_send MSG_PRINT failed\n");
 		exit(12);
 	}
+	cp = buf+1;
 out:
-	bu_semaphore_release( BU_SEM_SYSCALL );
+	RES_RELEASE( &rt_g.res_syscall );
 }
 #endif /* not BSD */
 #endif /* not __STDC__ */

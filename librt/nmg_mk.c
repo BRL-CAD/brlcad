@@ -1934,7 +1934,7 @@ fastf_t		*points;
 		eg->k.knots = kv;
 	} else {
 		/* Give a default curve, no interior knots */
-		rt_nurb_kvknot( &eg->k, order, 0.0, 1.0, n_knots - (2 * order), (struct resource *)NULL );
+		rt_nurb_kvknot( &eg->k, order, 0.0, 1.0, n_knots - (2 * order) );
 	}
 
 	if( n_pts < 2 )  rt_bomb("nmg_edge_g_cnurb() n_pts < 2\n");
@@ -2509,7 +2509,7 @@ CONST struct bn_tol	*tol;
 		rt_nurb_s_bound( fu->f_p->g.snurb_p, fu->f_p->g.snurb_p->min_pt,
 			fu->f_p->g.snurb_p->max_pt);
 		VMIN(f->min_pt, fu->f_p->g.snurb_p->min_pt );
-		VMAX(f->max_pt, fu->f_p->g.snurb_p->max_pt );
+		VMIN(f->max_pt, fu->f_p->g.snurb_p->max_pt );
 	}
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
@@ -3103,6 +3103,7 @@ struct edge_g_lseg	*src_eg;
 	vect_t				dir_src;
 	vect_t				dir_dest;
 	fastf_t				deg;
+	double				cos_ang;
 
 	NMG_CK_EDGE_G_LSEG(src_eg);
 	NMG_CK_EDGE_G_LSEG(dest_eg);
@@ -3111,7 +3112,6 @@ struct edge_g_lseg	*src_eg;
 			src_eg, dest_eg );
 	}
 
-#if 0
 	/* Sanity check */
 	VMOVE( dir_src, src_eg->e_dir );
 	VUNITIZE( dir_src );
@@ -3127,7 +3127,7 @@ struct edge_g_lseg	*src_eg;
 		bu_log("Angle between lines is %g degrees\n", deg );
 		/* This can happen while fixing mistakes, don't bomb. */
 	}
-#endif
+
 	while( BU_LIST_NON_EMPTY( &src_eg->eu_hd2 ) )  {
 		struct bu_list	*midway;	/* &eu->l2, midway into edgeuse */
 

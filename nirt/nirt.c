@@ -20,6 +20,7 @@
 static char RCSid[] = "$Header$";
 #endif
 
+/*	INCLUDES	*/
 #include "conf.h"
 
 #include <stdio.h>
@@ -32,8 +33,6 @@ static char RCSid[] = "$Header$";
 #include <math.h>
 
 #include "machine.h"
-#include "externs.h"
-#include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "./nirt.h"
@@ -54,7 +53,7 @@ com_table	ComTab[] =
 		    { "xyz", target_coor, "set/query target coordinates", 
 			"X Y Z" },
 		    { "s", shoot, "shoot a ray at the target" },
-		    { "backout", backout, "back out of model" },
+		    { "backout", backout, "Back out of model" },
 		    { "useair", use_air, "set/query use of air",
 			"<0|1|2|...>" },
 		    { "units", nirt_units, "set/query local units",
@@ -78,9 +77,7 @@ com_table	ComTab[] =
 		    { "?", show_menu, "display this help menu" },
 		    { 0 }
 		};
-int		do_backout = 0;			/* Backout before shooting? */
 int		silent_flag = SILENT_UNSET;	/* Refrain from babbling? */
-int		nirt_debug = 0;			/* Control of diagnostics */
 
 /* Parallel structures needed for operation w/ and w/o air */
 struct rt_i		*rti_tab[2];
@@ -90,126 +87,11 @@ struct resource		res_tab[2];
 struct application	ap;
 struct nirt_obj		object_list = {"", 0};
 
-struct script_rec
-{
-    struct bu_list	l;
-    int			sr_type;	/* Direct or indirect */
-    struct bu_vls	sr_script;	/* Literal or file name */
-};
-#define	SCRIPT_REC_NULL	((struct script_rec *) 0)
-#define SCRIPT_REC_MAGIC	0x73637270
-#define	sr_magic		l.magic
-
-static void enqueue_script (qp, type, string)
-
-struct bu_list	*qp;
-int		type;
-char		*string;	/* Literal or file name */
-
-{
-    struct script_rec	*srp;
-
-    BU_CK_LIST_HEAD(qp);
-
-    srp = (struct script_rec *)
-	    bu_malloc(sizeof(struct script_rec), "script record");
-    srp -> sr_magic = SCRIPT_REC_MAGIC;
-    srp -> sr_type = type;
-    bu_vls_init(&(srp -> sr_script));
-    bu_vls_strcat(&(srp -> sr_script), string);
-
-    BU_LIST_INSERT(qp, &(srp -> l));
-}
-
-static void show_scripts (sl, text)
-
-struct bu_list	*sl;
-char		*text;		/* for title line */
-
-{
-    int			i;
-    struct script_rec	*srp;
-
-    BU_CK_LIST_HEAD(sl);
-
-    i = 0;
-    bu_log("- - - - - - - The command-line scripts %s\n");
-    for (BU_LIST_FOR(srp, script_rec, sl))
-    {
-	BU_CKMAG(srp, SCRIPT_REC_MAGIC, "script record");
-
-	bu_log("%d. script %s '%s'\n",
-	    ++i,
-	    (srp -> sr_type == READING_STRING) ? "string" :
-	    (srp -> sr_type == READING_FILE) ? "file" : "???",
-	    bu_vls_addr(&(srp -> sr_script)));
-    }
-    bu_log("- - - - - - - - - - - - - - - - - - - - - - - - - -\n");
-}
-
-static void free_script (srp)
-
-struct script_rec	*srp;
-
-{
-    BU_CKMAG(srp, SCRIPT_REC_MAGIC, "script record");
-
-    bu_vls_free(&(srp -> sr_script));
-    bu_free((genptr_t) srp, "script record");
-}
-
-static void run_scripts (sl)
-
-struct bu_list	*sl;
-
-{
-    struct script_rec	*srp;
-    char		*cp;
-    FILE		*fPtr;
-
-    if (nirt_debug & DEBUG_SCRIPTS)
-	show_scripts(sl, "before running them");
-    while (BU_LIST_WHILE(srp, script_rec, sl))
-    {
-	BU_LIST_DEQUEUE(&(srp -> l));
-	BU_CKMAG(srp, SCRIPT_REC_MAGIC, "script record");
-	cp = bu_vls_addr(&(srp -> sr_script));
-	if (nirt_debug & DEBUG_SCRIPTS)
-	    bu_log("  Attempting to run %s '%s'\n",
-		(srp -> sr_type == READING_STRING) ? "literal" :
-		(srp -> sr_type == READING_FILE) ? "file" : "???",
-		cp);
-	switch (srp -> sr_type)
-	{
-	    case READING_STRING:
-		interact(READING_STRING, cp);
-		break;
-	    case READING_FILE:
-		if ((fPtr = fopen(cp, "r")) == NULL)
-		    bu_log("Cannot open script file '%s'\n", cp);
-		else
-		{
-		    interact(READING_FILE, fPtr);
-		    fclose(fPtr);
-		}
-		break;
-	    default:
-		bu_log("%s:%d: script of type %d.  This shouldn't happen\n",
-		    __FILE__, __LINE__, srp -> sr_type);
-		exit (1);
-	}
-	free_script(srp);
-    }
-    if (nirt_debug & DEBUG_SCRIPTS)
-	show_scripts(sl, "after running them");
-}
-
 main (argc, argv)
 int argc;
 char **argv;
 {
     char                db_title[TITLE_LEN+1];/* title from MGED file      */
-    char		*sp;
     extern char		*local_unit[];
     extern char		local_u_name[];
     extern double	base2local;
@@ -220,8 +102,6 @@ char **argv;
     int			mat_flag = 0;	/* Read matrix from stdin? */
     int			use_of_air = 0;
     outval		*vtp;
-    struct bu_list	script_list;	/* For -e and -f options */
-    struct script_rec	*srp;
     extern outval	ValTab[];
     extern int 		optind;		/* index from getopt(3C) */
     extern char		*optarg;	/* argument from getopt(3C) */
@@ -230,6 +110,7 @@ char **argv;
     int                    if_overlap();    /* routine if you overlap         */
     int             	   if_hit();        /* routine if you hit target      */
     int             	   if_miss();       /* routine if you miss target     */
+    void                   interact();      /* handle user interaction        */
     void                   do_rt_gettree();
     void                   printusage();
     void		   grid2targ();
@@ -249,36 +130,10 @@ char **argv;
     void		   print_item();
     void		   shoot();
 
-    BU_LIST_INIT(&script_list);
-
     /* Handle command-line options */
     while ((Ch = getopt(argc, argv, OPT_STRING)) != EOF)
         switch (Ch)
         {
-	    case 'b':
-		do_backout = 1;
-		break;
-	    case 'E':
-		if (nirt_debug & DEBUG_SCRIPTS)
-		    show_scripts(&script_list, "before erasure");
-		while (BU_LIST_WHILE(srp, script_rec, &script_list))
-		{
-		    BU_LIST_DEQUEUE(&(srp -> l));
-		    free_script(srp);
-		}
-		if (nirt_debug & DEBUG_SCRIPTS)
-		    show_scripts(&script_list, "after erasure");
-		break;
-	    case 'e':
-		enqueue_script(&script_list, READING_STRING, optarg);
-		if (nirt_debug & DEBUG_SCRIPTS)
-		    show_scripts(&script_list, "after enqueueing a literal");
-		break;
-	    case 'f':
-		enqueue_script(&script_list, READING_FILE, optarg);
-		if (nirt_debug & DEBUG_SCRIPTS)
-		    show_scripts(&script_list, "after enqueueing a file name");
-		break;
 	    case 'M':
 		mat_flag = 1;
 		break;
@@ -290,9 +145,6 @@ char **argv;
 		break;
             case 'x':
 		sscanf( optarg, "%x", &rt_g.debug );
-		break;
-            case 'X':
-		sscanf( optarg, "%x", &nirt_debug );
 		break;
             case 'u':
                 if (sscanf(optarg, "%d", &use_of_air) != 1)
@@ -391,6 +243,13 @@ char **argv;
     base2local = rtip -> rti_dbip -> dbi_base2local;
     local2base = rtip -> rti_dbip -> dbi_local2base;
 
+    /* Run the run-time configuration file, if it exists */
+    if ((fPtr = fopenrc()) != NULL)
+    {
+	interact(fPtr);
+	fclose(fPtr);
+    }
+
     if (silent_flag != SILENT_YES)
     {
 	printf("Database title: '%s'\n", db_title);
@@ -404,16 +263,6 @@ char **argv;
 	    rtip -> mdl_max[Z] * base2local);
     }
 
-    /* Run the run-time configuration file, if it exists */
-    if ((fPtr = fopenrc()) != NULL)
-    {
-	interact(READING_FILE, fPtr);
-	fclose(fPtr);
-    }
-
-    /*	Run all scripts specified on the command line */
-    run_scripts(&script_list);
-
     /* Perform the user interface */
     if (mat_flag)
     {
@@ -421,22 +270,23 @@ char **argv;
 	exit (0);
     }
     else
-	interact(READING_FILE, stdin);
+	interact(stdin);
 }
  
 char	usage[] = "\
 Usage: 'nirt [options] model.g objects...'\n\
 Options:\n\
- -b        back out of geometry before first shot\n\
- -e script run script before interacting\n\
- -f sfile  run script sfile before interacting\n\
- -M        read matrix, cmds on stdin\n\
- -s        run in short (non-verbose) mode\n\
- -u n      set use_air=n (default 0)\n\
- -v        run in verbose mode\n\
- -x v      set librt(3) diagnostic flag=v\n\
- -X v      set nirt diagnostic flag=v\n\
+ -M      read matrix, cmds on stdin\n\
+ -s      run in short (non-verbose) mode\n\
+ -u n    set use_air=n (default 0)\n\
+ -v      run in verbose mode\n\
+ -x v    set librt(3) diagnostic flag=v\n\
 ";
+#if 0
+char	usage[] = "\
+Usage: 'nirt [-u n] [-x f] model.g objects...'\n\
+";
+#endif
 
 void printusage() 
 {

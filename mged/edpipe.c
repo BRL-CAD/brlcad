@@ -332,11 +332,11 @@ CONST point_t pt;
 	tmp_tol.dist = 0.0;
 	tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
 	tmp_tol.perp = 0.0;
-	tmp_tol.para = 1.0 - tmp_tol.perp;
+	tmp_tol.para = 1 - tmp_tol.perp;
 
 	/* get a direction vector in model space corresponding to z-direction in view */
-	VSET( work, 0.0, 0.0, 1.0 )
-	MAT4X3VEC( dir, view_state->vs_view2model, work )
+	VSET( work, 0, 0, 1 )
+	MAT4X3VEC( dir, view2model, work )
 
 	for( BU_LIST_FOR( ps, wdb_pipept, pipe_hd ) )
 	{

@@ -48,14 +48,8 @@ PATH=/bin:/usr/bin:/usr/5bin:$PATH
 ARG="$1"
 
 #  Base directory for the entire package.
-if test "$BRLCAD_ROOT" != ""
-then
-	BASEDIR=$BRLCAD_ROOT
-else
-	#  This next line may be / may have been modified by
-	#  newbindir.sh or setup.sh as part of the installation process.
-	BASEDIR=/usr/brlcad
-fi
+#  Modified by newbindir.sh as part of the installation process, if needed.
+BASEDIR=/usr/brlcad
 
 if test -x /bin/uname -o -x /usr/bin/uname -o -x /usr/5bin/uname
 then
@@ -95,7 +89,7 @@ then
 		BSD/OS)	MACHINE=bsdi ;;
 		esac ;;
 	# SGI is ugly, returning IP## here.
-	IP?*) 
+	IP??) 
 		case "$OS_TYPE" in
 		IRIX)  	UNIXTYPE=SYSV; HAS_TCP=1; HAS_SYMLINKS=1;
 			case "$OS_REVISION" in
@@ -112,6 +106,7 @@ then
 			esac ;;
 		esac ;;
 	esac
+
 fi
 
 if test "$MACHINE" = ""
@@ -368,13 +363,12 @@ x-v|x-b)
 	exit 0;;
 x-d)
 	# This option is used primarily when building CAKE.
-	# This depends on sh `machinetype.sh -d` discarding the newline.
+	# This depends on `machinetype.sh -d` discarding the newline.
 	if test ${UNIXTYPE} = BSD
 	then	echo "-D__BSD -D_BSD -DBSD"
 	else	echo "-D__SYSV -DATT -DSYSV"
 	fi
 	echo "-D__MACHINETYPE__${MACHINE}"
-	echo "-DBRLCAD_ROOT_STRING=\"${BASEDIR}\""
 	exit 0;;
 *)
 	echo "$0:  Unknown argument /$ARG/" 1>&2; break;;

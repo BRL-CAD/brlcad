@@ -28,7 +28,7 @@ static void Afreestack(),Sfreestack();
 static char *Apop();
 
 /* Some junk for this routines private node stack */
-struct node **sstk_p;
+struct node **sstk;
 int sjtop,sstklen;
 
 /* some junk for this routines private character string stack */
@@ -192,8 +192,8 @@ Initsstack() /* initialize the stack */
 
 	sjtop = (-1);
 	sstklen = STKBLK;
-	sstk_p = (struct node **)rt_malloc( sstklen*sizeof( struct node * ), "Initsstack: sstk_p" );
-	if( sstk_p == NULL )
+	sstk = (struct node **)rt_malloc( sstklen*sizeof( struct node * ), "Initsstack: sstk" );
+	if( sstk == NULL )
 	{
 		rt_log( "Cannot allocate stack space\n" );
 		perror( "Initsstack" );
@@ -212,15 +212,15 @@ struct node *ptr;
 	if( sjtop == sstklen )
 	{
 		sstklen += STKBLK;
-		sstk_p = (struct node **)rt_realloc( (char *)sstk_p , sstklen*sizeof( struct node *), "Spush: sstk_p" );
-		if( sstk_p == NULL )
+		sstk = (struct node **)rt_realloc( (char *)sstk , sstklen*sizeof( struct node *), "Spush: sstk" );
+		if( sstk == NULL )
 		{
 			rt_log( "Cannot reallocate stack space\n" );
 			perror( "Spush" );
 			exit( 1 );
 		}
 	}
-	sstk_p[sjtop] = ptr;
+	sstk[sjtop] = ptr;
 }
 
 
@@ -236,7 +236,7 @@ Spop()
 		ptr=NULL;
 	else
 	{
-		ptr = sstk_p[sjtop];
+		ptr = sstk[sjtop];
 		sjtop--;
 	}
 
@@ -248,6 +248,6 @@ static void
 Sfreestack()
 {
 	sjtop = (-1);
-	rt_free( (char *)sstk_p, "Sfreestack: sstk_p" );
+	rt_free( (char *)sstk, "Sfreestack: sstk" );
 	return;
 }

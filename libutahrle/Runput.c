@@ -196,8 +196,7 @@ register rle_hdr * the_hdr;
     if ( the_hdr->ncmap > 0 && the_hdr->cmap == NULL )
     {
 	fprintf( stderr,
-		 "Color map of size %d*%d specified, but not supplied\n",
-			the_hdr->ncmap, the_hdr->cmaplen );
+		 "Color map of size %d*%d specified, but not supplied\n" );
 	the_hdr->ncmap = 0;
     }
     setup.h_cmaplen = the_hdr->cmaplen;	/* log2 of color map size */

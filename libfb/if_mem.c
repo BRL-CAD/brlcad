@@ -62,8 +62,6 @@ FBIO memory_interface =  {
 	mem_getcursor,		/* get cursor		*/
 	fb_sim_readrect,	/* rectangle read	*/
 	fb_sim_writerect,	/* rectangle write	*/
-	fb_sim_bwreadrect,
-	fb_sim_bwwriterect,
 	mem_poll,		/* poll			*/
 	mem_flush,		/* flush		*/
 	mem_close,		/* free			*/
@@ -220,16 +218,9 @@ int	width, height;
 	if( (MI(ifp)->fbp != FBIO_NULL)
 	 && (mode & MODE_2MASK) == MODE_2PREREAD ) {
 		/* Pre read all of the image data and cmap */
-	 	int got;
-		got = fb_readrect( MI(ifp)->fbp, 0, 0,
-			ifp->if_width, ifp->if_height,
-			(unsigned char *)MI(ifp)->mem );
-	 	if( got != ifp->if_width * ifp->if_height )  {
-	 		fb_log("if_mem:  WARNING: pre-read of %d only got %d, your image is truncated.\n",
-	 			ifp->if_width * ifp->if_height, got );
-	 	}
-		if( fb_rmap( MI(ifp)->fbp, &(MI(ifp)->cmap) ) < 0 )
-			fb_make_linear_cmap( &(MI(ifp)->cmap) );
+		fb_readrect( MI(ifp)->fbp, 0, 0,
+			ifp->if_width, ifp->if_height, (unsigned char *)MI(ifp)->mem );
+	 	fb_rmap( MI(ifp)->fbp, &(MI(ifp)->cmap) );
 	} else {
 		/* Image data begins black, colormap linear */
 		fb_make_linear_cmap( &(MI(ifp)->cmap) );

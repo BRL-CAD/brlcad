@@ -596,7 +596,7 @@ int	numeric;	/* Use indices instead of labels? */
 /*
  *			   P R I N T _ U S A G E ( )
  */
-void print_usage ()
+void print_usage (void)
 {
 #define OPT_STRING	"n?"
 
@@ -709,7 +709,7 @@ char	*argv[];
 	{
 	    BU_CKMAG(vcp, VERTEX_MAGIC, "vertex");
 	    if (numeric)
-		(void) printf("%ld %ld %g\n",
+		(void) printf("%d %d %g\n",
 		    vcp -> v_index, vup -> v_index, bp -> b_weight);
 	    else
 		(void) printf("%s %s %g\n",

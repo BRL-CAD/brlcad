@@ -454,8 +454,7 @@ struct application	*ap;
 	hit_octant( ap, &ir_octree, &leafp, inv_dir, 0 );
 	if( leafp != OCTREE_NULL )
 		/* Hit model.						*/
-		/* a_hit is f_IR_Model(), uses 2nd arg as (Octree *) */
-		return	ap->a_hit( ap, (struct partition *)leafp, RT_SEG_NULL );
+		return	ap->a_hit( ap, leafp );
 	else	/* Missed it.						*/
 		return	ap->a_miss( ap );		
 	}

@@ -176,7 +176,7 @@ char	**argv;
 	/* write command usage summary */
 	for( i = 0; i < 'z'-'A'+1; i++ ) {
 		if( counts[i] != 0 ) {
-			fprintf( stderr, "%s %ld\n", letters[i].desc, counts[i] );
+			fprintf( stderr, "%s %d\n", letters[i].desc, counts[i] );
 		}
 	}
 }

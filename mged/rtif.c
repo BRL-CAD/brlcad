@@ -48,11 +48,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_solid.h"
 #include "./mged_dm.h"
 #include "./mgedtcl.h"
-#include "./qray.h"
 
-extern void mged_update();
-extern void reset_input_strings();
-extern int event_check();
 extern int mged_svbase();
 void		setup_rt();
 
@@ -115,7 +111,7 @@ vect_t eye_model;
 	(void)fprintf(fp, "%.9e %.9e %.9e\n",
 		eye_model[X], eye_model[Y], eye_model[Z] );
 	for( i=0; i < 16; i++ )  {
-		(void)fprintf( fp, "%.9e ", view_state->vs_Viewrot[i] );
+		(void)fprintf( fp, "%.9e ", Viewrot[i] );
 		if( (i%4) == 3 )
 			(void)fprintf(fp, "\n");
 	}
@@ -142,13 +138,13 @@ vect_t eye_model;
 #if 0
 	(void)fprintf(fp, "viewrot ");
 	for( i=0; i < 16; i++ )  {
-		(void)fprintf( fp, "%.15e ", view_state->vs_Viewrot[i] );
+		(void)fprintf( fp, "%.15e ", Viewrot[i] );
 		if( (i%4) == 3 )
 			(void)fprintf(fp, "\n");
 	}
 	(void)fprintf(fp, ";\n");
 #else
-	quat_mat2quat( quat, view_state->vs_Viewrot );
+	quat_mat2quat( quat, Viewrot );
 	(void)fprintf(fp, "orientation %.15e %.15e %.15e %.15e;\n",
 		V4ARGS( quat ) );
 #endif
@@ -267,42 +263,18 @@ static int	rt_cmd_vec_len;
 static char	rt_cmd_storage[MAXARGS*9];
 
 void
-setup_rt( vp, printcmd )
+setup_rt( vp )
 register char	**vp;
-int printcmd;
 {
   rt_cmd_vec_len = vp - rt_cmd_vec;
   rt_cmd_vec_len += build_tops(vp, &rt_cmd_vec[MAXARGS]);
 
-  if(printcmd){
-    /* Print out the command we are about to run */
-    vp = &rt_cmd_vec[0];
-    while( *vp )
-      Tcl_AppendResult(interp, *vp++, " ", (char *)NULL);
+  /* Print out the command we are about to run */
+  vp = &rt_cmd_vec[0];
+  while( *vp )
+    Tcl_AppendResult(interp, *vp++, " ", (char *)NULL);
 
-    Tcl_AppendResult(interp, "\n", (char *)NULL);
-  }
-}
-
-static void
-rt_output_handler(clientData, mask)
-ClientData clientData;
-int mask;
-{
-  int fd = (int)clientData;
-  int count;
-  char line[MAXLINE];
-
-  /* Get data from rt */
-  if((count = read((int)fd, line, MAXLINE)) == 0){
-    Tcl_DeleteFileHandler(fd);
-    return;
-  }
-
-  line[count] = '\0';
-
-  /*XXX For now just blather to stderr */
-  bu_log("%s", line);
+  Tcl_AppendResult(interp, "\n", (char *)NULL);
 }
 
 /*
@@ -314,107 +286,50 @@ run_rt()
 	register int i;
 	int pid, rpid;
 	int retcode;
-	FILE *fp_in;
-	int pipe_in[2];
-	int pipe_err[2];
-	char line[MAXLINE];
-	struct bu_vls vls;
-	vect_t eye_model;
+	int o_pipe[2];
+	FILE *fp;
 
-	(void)pipe( pipe_in );
-	(void)pipe( pipe_err );
+	(void)pipe( o_pipe );
 	(void)signal( SIGINT, SIG_IGN );
 	if ( ( pid = fork()) == 0 )  {
-	  /* Redirect stdin, stdout, stderr */
-	  (void)close(0);
-	  (void)dup( pipe_in[0] );
-	  (void)close(2);
-	  (void)dup ( pipe_err[1] );
-
-	  /* close pipes */
-	  (void)close(pipe_in[0]);
-	  (void)close(pipe_in[1]);
-	  (void)close(pipe_err[0]);
-	  (void)close(pipe_err[1]);
-
-	  for( i=3; i < 20; i++ )
-	    (void)close(i);
-
-	  (void)signal( SIGINT, SIG_DFL );
-	  (void)execvp( rt_cmd_vec[0], rt_cmd_vec );
-	  perror( rt_cmd_vec[0] );
-	  exit(16);
+		(void)close(0);
+		(void)dup( o_pipe[0] );
+		for( i=3; i < 20; i++ )
+			(void)close(i);
+		(void)signal( SIGINT, SIG_DFL );
+		(void)execvp( rt_cmd_vec[0], rt_cmd_vec );
+		perror( rt_cmd_vec[0] );
+		exit(16);
 	}
 
 	/* As parent, send view information down pipe */
-	(void)close( pipe_in[0] );
-	fp_in = fdopen( pipe_in[1], "w" );
+	(void)close( o_pipe[0] );
+	fp = fdopen( o_pipe[1], "w" );
+	{
+		vect_t temp;
+		vect_t eye_model;
 
-	(void)close( pipe_err[1] );
-
-	if(*zclip_ptr || mged_variables->mv_perspective_mode){
-	  vect_t temp;
-
-	  VSET( temp, 0.0, 0.0, 1.0 );
-	  MAT4X3PNT( eye_model, view_state->vs_view2model, temp );
-	}else{ /* not doing zclipping, so back out of geometry */
-	  double  t;
-	  double  t_in;
-	  vect_t  direction;
-	  vect_t  extremum[2];
-	  vect_t  minus, plus;    /* vers of this solid's bounding box */
-	  vect_t  unit_H, unit_V;
-
-	  VSET(eye_model, -view_state->vs_toViewcenter[MDX],
-	        -view_state->vs_toViewcenter[MDY], -view_state->vs_toViewcenter[MDZ]);
-
-	  for (i = 0; i < 3; ++i){
-	    extremum[0][i] = INFINITY;
-	    extremum[1][i] = -INFINITY;
-	  }
-	  FOR_ALL_SOLIDS (sp, &HeadSolid.l){
-	    minus[X] = sp->s_center[X] - sp->s_size;
-	    minus[Y] = sp->s_center[Y] - sp->s_size;
-	    minus[Z] = sp->s_center[Z] - sp->s_size;
-	    VMIN( extremum[0], minus );
-	    plus[X] = sp->s_center[X] + sp->s_size;
-	    plus[Y] = sp->s_center[Y] + sp->s_size;
-	    plus[Z] = sp->s_center[Z] + sp->s_size;
-	    VMAX( extremum[1], plus );
-	  }
-	  VMOVEN(direction, view_state->vs_Viewrot + 8, 3);
-	  VSCALE(direction, direction, -1.0);
-	  for(i = 0; i < 3; ++i)
-	    if (NEAR_ZERO(direction[i], 1e-10))
-	      direction[i] = 0.0;
-	  if ((eye_model[X] >= extremum[0][X]) &&
-	      (eye_model[X] <= extremum[1][X]) &&
-	      (eye_model[Y] >= extremum[0][Y]) &&
-	      (eye_model[Y] <= extremum[1][Y]) &&
-	      (eye_model[Z] >= extremum[0][Z]) &&
-	      (eye_model[Z] <= extremum[1][Z])){
-	    t_in = -INFINITY;
-	    for(i = 0; i < 6; ++i){
-	      if (direction[i%3] == 0)
-		continue;
-	      t = (extremum[i/3][i%3] - eye_model[i%3]) /
-		direction[i%3];
-	      if ((t < 0) && (t > t_in))
-		t_in = t;
-	    }
-	    VJOIN1(eye_model, eye_model, t_in, direction);
-	  }
+		VSET( temp, 0, 0, 1 );
+		MAT4X3PNT( eye_model, view2model, temp );
+		rt_write(fp, eye_model );
 	}
-	rt_write(fp_in, eye_model);
-	(void)fclose( fp_in );
+	(void)fclose( fp );
+
+	/* Wait for program to finish */
+	while ((rpid = wait(&retcode)) != pid && rpid != -1)
+		;	/* NULL */
+
+	if( retcode != 0 )
+		pr_wait_status( retcode );
+
+#if 0
+	(void)signal(SIGINT, cur_sigint);
+#endif
 
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)
 		sp->s_iflag = DOWN;
 
-	Tcl_CreateFileHandler(pipe_err[0], TCL_READABLE,
-			      rt_output_handler, (ClientData)pipe_err[0]);
-
-	return 0;
+	return(retcode);
 }
 
 /*
@@ -434,9 +349,6 @@ char	**argv;
 	char	pstring[32];
 	struct bu_vls cmd;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
 	if(argc < 1 || MAXARGS < argc){
 	  struct bu_vls vls;
 
@@ -454,15 +366,15 @@ char	**argv;
 	*vp++ = "rt";
 	*vp++ = "-s50";
 	*vp++ = "-M";
-	if( mged_variables->mv_perspective > 0 )  {
-		(void)sprintf(pstring, "-p%g", mged_variables->mv_perspective);
+	if( mged_variables.perspective > 0 )  {
+		(void)sprintf(pstring, "-p%g", mged_variables.perspective);
 		*vp++ = pstring;
 	}
 	for( i=1; i < argc; i++ )
 		*vp++ = argv[i];
 	*vp++ = dbip->dbi_filename;
 
-	setup_rt( vp, 1 );
+	setup_rt( vp );
 	retcode = run_rt();
 
 	return TCL_OK;
@@ -488,9 +400,6 @@ char	**argv;
 	char	*dm;
 	struct bu_vls cmd;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
 	if(argc < 2 || MAXARGS < argc){
 	  struct bu_vls vls;
 
@@ -509,7 +418,7 @@ char	**argv;
 		*vp++ = argv[i];
 	*vp++ = dbip->dbi_filename;
 
-	setup_rt( vp, 1 );
+	setup_rt( vp );
 	retcode = run_rt();
 
 	return TCL_OK;
@@ -537,9 +446,6 @@ char	**argv;
 	struct solid *sp;
 	struct rt_vlblock	*vbp;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
 	if(argc < 1 || MAXARGS < argc){
 	  struct bu_vls vls;
 
@@ -561,7 +467,7 @@ char	**argv;
 		*vp++ = argv[i];
 	*vp++ = dbip->dbi_filename;
 
-	setup_rt( vp, 1 );
+	setup_rt( vp );
 
 	(void)pipe( o_pipe );			/* output from mged */
 	(void)pipe( i_pipe );			/* input back to mged */
@@ -587,8 +493,8 @@ char	**argv;
 		vect_t temp;
 		vect_t eye_model;
 
-		VSET( temp, 0.0, 0.0, 1.0 );
-		MAT4X3PNT( eye_model, view_state->vs_view2model, temp );
+		VSET( temp, 0, 0, 1 );
+		MAT4X3PNT( eye_model, view2model, temp );
 #if 0
 		/* This old way is no longer needed for RT */
 		rt_oldwrite(fp, eye_model );
@@ -601,7 +507,7 @@ char	**argv;
 	(void)close(i_pipe[1]);
 	fp = fdopen(i_pipe[0], "r");
 	vbp = rt_vlblock_init();
-	(void)rt_uplot_to_vlist( vbp, fp, view_state->vs_Viewscale * 0.01 );
+	(void)rt_uplot_to_vlist( vbp, fp, Viewscale * 0.01 );
 	fclose(fp);
 
 	/* Wait for program to finish */
@@ -626,7 +532,7 @@ char	**argv;
 	/* Add overlay */
 	cvt_vlblock_to_solids( vbp, "OVERLAPS", 0 );
 	rt_vlblock_free(vbp);
-	view_state->vs_flag = 1;
+	dmaflag = 1;
 
 	(void)signal( SIGINT, SIG_IGN );
 	return TCL_OK;
@@ -673,9 +579,6 @@ char	**argv;
 	register FILE *fp;
 	char *base;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
 	if(argc < 2 || MAXARGS < argc){
 	  struct bu_vls vls;
 
@@ -694,8 +597,8 @@ char	**argv;
 	base = basename( argv[1], ".sh" );
 	(void)chmod( argv[1], 0755 );	/* executable */
 	(void)fprintf(fp, "#!/bin/sh\nrt -M ");
-	if( mged_variables->mv_perspective > 0 )
-		(void)fprintf(fp, "-p%g", mged_variables->mv_perspective);
+	if( mged_variables.perspective > 0 )
+		(void)fprintf(fp, "-p%g", mged_variables.perspective);
 	for( i=2; i < argc; i++ )
 		(void)fprintf(fp,"%s ", argv[i]);
 	(void)fprintf(fp,"\\\n -o %s.pix\\\n $*\\\n", base);
@@ -725,8 +628,8 @@ char	**argv;
 		vect_t temp;
 		vect_t eye_model;
 
-		VSET( temp, 0.0, 0.0, 1.0 );
-		MAT4X3PNT( eye_model, view_state->vs_view2model, temp );
+		VSET( temp, 0, 0, 1 );
+		MAT4X3PNT( eye_model, view2model, temp );
 		rt_write(fp, eye_model);
 	}
 	(void)fprintf(fp,"\nEOF\n");
@@ -766,9 +669,6 @@ char	**argv;
 	fastf_t	scale;
 	mat_t	rot;
 	register struct rt_vlist *vp;
-
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
 
 	if(argc < 2 || MAXARGS < argc){
 	  struct bu_vls vls;
@@ -830,26 +730,26 @@ work:
 	    	switch(mode)  {
 	    	case -1:
 	    		/* First step:  put eye in center */
-		       	view_state->vs_Viewscale = scale;
-		       	bn_mat_copy( view_state->vs_Viewrot, rot );
-			MAT_DELTAS( view_state->vs_toViewcenter,
+		       	Viewscale = scale;
+		       	bn_mat_copy( Viewrot, rot );
+			MAT_DELTAS( toViewcenter,
 				-eye_model[X],
 				-eye_model[Y],
 				-eye_model[Z] );
 	    		new_mats();
 	    		/* Second step:  put eye in front */
-	    		VSET( xlate, 0.0, 0.0, -1.0 );	/* correction factor */
-	    		MAT4X3PNT( eye_model, view_state->vs_view2model, xlate );
-			MAT_DELTAS( view_state->vs_toViewcenter,
+	    		VSET( xlate, 0, 0, -1 );	/* correction factor */
+	    		MAT4X3PNT( eye_model, view2model, xlate );
+			MAT_DELTAS( toViewcenter,
 				-eye_model[X],
 				-eye_model[Y],
 				-eye_model[Z] );
 	    		new_mats();
 	    		break;
 	    	case 0:
-		       	view_state->vs_Viewscale = scale;
-			bn_mat_idn(view_state->vs_Viewrot);	/* top view */
-			MAT_DELTAS( view_state->vs_toViewcenter,
+		       	Viewscale = scale;
+			bn_mat_idn(Viewrot);	/* top view */
+			MAT_DELTAS( toViewcenter,
 				-eye_model[X],
 				-eye_model[Y],
 				-eye_model[Z] );
@@ -885,7 +785,7 @@ work:
 			}
 	    		break;
 	    	}
-		view_state->vs_flag = 1;
+		dmaflag = 1;
 		refresh();	/* Draw new display */
 	}
 	if( mode == 1 )  {
@@ -957,8 +857,8 @@ char	**argv;
 	/*
 	 *  Eye is in conventional place.
 	 */
-	VSET( temp, 0.0, 0.0, 1.0 );
-	MAT4X3PNT( eye_model, view_state->vs_view2model, temp );
+	VSET( temp, 0, 0, 1 );
+	MAT4X3PNT( eye_model, view2model, temp );
 	rt_oldwrite(fp, eye_model);
 	(void)fclose( fp );
 
@@ -1045,13 +945,10 @@ static void
 rtif_sigint( num )
 int	num;
 {
-	if(dbip == DBI_NULL)
-	  return;
-
 	write( 2, "rtif_sigint\n", 12);
 
 	/* Restore state variables */
-	*mged_variables = rtif_saved_state;	/* struct copy */
+	mged_variables = rtif_saved_state;	/* struct copy */
 
 	if(rtif_vbp)  {
 		rt_vlblock_free(rtif_vbp);
@@ -1076,9 +973,6 @@ char	**argv;
 	int	c;
 	vect_t	temp;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
 	if(argc < 2 || MAXARGS < argc){
 	  struct bu_vls vls;
 
@@ -1093,8 +987,8 @@ char	**argv;
 	  return TCL_ERROR;
 
 	/* Save any state variables we plan on changing */
-	rtif_saved_state = *mged_variables;	/* struct copy */
-	mged_variables->mv_autosize = 0;
+	rtif_saved_state = mged_variables;	/* struct copy */
+	mged_variables.autosize = 0;
 
 	rtif_delay = 0;			/* Full speed, by default */
 	rtif_mode = 1;			/* wireframe drawing */
@@ -1102,17 +996,17 @@ char	**argv;
 	rtif_finalframe = 0;
 
 	/* Parse options */
-	bu_optind = 1;			/* re-init bu_getopt() */
-	while( (c=bu_getopt(argc,argv,"d:vD:K:")) != EOF )  {
+	optind = 1;			/* re-init getopt() */
+	while( (c=getopt(argc,argv,"d:vD:K:")) != EOF )  {
 		switch(c)  {
 		case 'd':
-			rtif_delay = atof(bu_optarg);
+			rtif_delay = atof(optarg);
 			break;
 		case 'D':
-			rtif_desiredframe = atof(bu_optarg);
+			rtif_desiredframe = atof(optarg);
 			break;
 		case 'K':
-			rtif_finalframe = atof(bu_optarg);
+			rtif_finalframe = atof(optarg);
 			break;
 		case 'v':
 			rtif_mode = 3;	/* Like "ev" */
@@ -1134,8 +1028,8 @@ char	**argv;
 		  break;
 		}
 	}
-	argc -= bu_optind-1;
-	argv += bu_optind-1;
+	argc -= optind-1;
+	argv += optind-1;
 
 	/* If file is still open from last cmd getting SIGINT, close it */
 	if(rtif_fp)  fclose(rtif_fp);
@@ -1146,7 +1040,7 @@ char	**argv;
 
 	/* Build list of top-level objects in view, in rt_cmd_vec[] */
 	rt_cmd_vec[0] = "tree";
-	setup_rt( &rt_cmd_vec[1], 1 );
+	setup_rt( &rt_cmd_vec[1] );
 
 	rtif_vbp = rt_vlblock_init();
 
@@ -1156,9 +1050,9 @@ char	**argv;
 	 *  Initialize the view to the current one in MGED
 	 *  in case a view specification is never given.
 	 */
-	bn_mat_copy(rtif_viewrot, view_state->vs_Viewrot);
-	VSET(temp, 0.0, 0.0, 1.0);
-	MAT4X3PNT(rtif_eye_model, view_state->vs_view2model, temp);
+	bn_mat_copy(rtif_viewrot, Viewrot);
+	VSET(temp, 0, 0, 1);
+	MAT4X3PNT(rtif_eye_model, view2model, temp);
 
 	if( setjmp( jmp_env ) == 0 )
 	  /* If user hits ^C, preview will stop, and clean up */
@@ -1191,7 +1085,7 @@ char	**argv;
 	db_free_anim(dbip);	/* Forget any anim commands */
 
 	/* Restore state variables */
-	*mged_variables = rtif_saved_state;	/* struct copy */
+	mged_variables = rtif_saved_state;	/* struct copy */
 
 	(void)mged_svbase();
 
@@ -1202,7 +1096,7 @@ char	**argv;
 /*
  *			F _ N I R T
  *
- *  Invoke nirt with the current view & stuff
+ *  Invoke NIRT with the current view & stuff
  */
 int
 f_nirt(clientData, interp, argc, argv)
@@ -1212,207 +1106,47 @@ int	argc;
 char	**argv;
 {
 	register char **vp;
-	FILE *fp_in;
-	FILE *fp_out, *fp_err;
-	int pid, rpid;
-	int retcode;
-	int pipe_in[2];
-	int pipe_out[2];
-	int pipe_err[2];
-	int use_input_orig = 0;
-	int use_air;
-	vect_t	center_model;
-	vect_t dir;
 	register int i;
 	register struct solid *sp;
-	char line[MAXLINE];
-	char *val;
-	struct bu_vls vls;
-	struct bu_vls o_vls;
-	struct bu_vls p_vls;
-	struct bu_vls t_vls;
-	struct rt_vlblock *vbp;
-	struct qray_dataList *ndlp;
-	struct qray_dataList HeadQRayData;
-
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
+	double	t;
+	double	t_in;
+	FILE *fp;
+	int pid, rpid;
+	int retcode;
+	int o_pipe[2];
+	vect_t	center_model;
+	vect_t	direction;
+	vect_t	extremum[2];
+	vect_t	minus, plus;	/* vers of this solid's bounding box */
+	vect_t	unit_H, unit_V;
 
 	if(argc < 1 || MAXARGS < argc){
+	  struct bu_vls vls;
+
 	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help %s", argv[0]);
+	  bu_vls_printf(&vls, "help nirt");
 	  Tcl_Eval(interp, bu_vls_addr(&vls));
 	  bu_vls_free(&vls);
-
 	  return TCL_ERROR;
 	}
+
+	if( not_state( ST_VIEW, "Single ray-trace from current view" ) )
+	  return TCL_ERROR;
 
 	vp = &rt_cmd_vec[0];
 	*vp++ = "nirt";
 	*vp++ = "-M";
-
-	/* swipe x, y, z off the end if present */
-	if(argc > 3){
-	  if(sscanf(argv[argc-3], "%lf", &center_model[X]) == 1 &&
-	     sscanf(argv[argc-2], "%lf", &center_model[Y]) == 1 &&
-	     sscanf(argv[argc-1], "%lf", &center_model[Z]) == 1){
-	    use_input_orig = 1;
-	    argc -= 3;
-	    VSCALE(center_model, center_model, local2base);
-	  }else if(adc_state->adc_draw)
-	    *vp++ = "-b";
-	}else if(adc_state->adc_draw)
-	  *vp++ = "-b";
-
-	if(mged_variables->mv_use_air){
-	  *vp++ = "-u";
-	  *vp++ = "1";
-	}
-
-	/* Calculate point from which to fire ray */
-	if(!use_input_orig && adc_state->adc_draw){
-	  vect_t  view_ray_orig;
-
-	  VSET(view_ray_orig, (fastf_t)adc_state->adc_dv_x, (fastf_t)adc_state->adc_dv_y, GED_MAX);
-	  VSCALE(view_ray_orig, view_ray_orig, INV_GED);
-	  MAT4X3PNT(center_model, view_state->vs_view2model, view_ray_orig);
-	}else if(!use_input_orig){
-	  VSET(center_model, -view_state->vs_toViewcenter[MDX],
-	       -view_state->vs_toViewcenter[MDY], -view_state->vs_toViewcenter[MDZ]);
-	}
-
-	i = 0;
-	if(QRAY_GRAPHICS){
-	  vect_t cml;
-
-	  VSCALE(cml, center_model, base2local);
-	  VMOVEN(dir, view_state->vs_Viewrot + 8, 3);
-	  VSCALE(dir, dir, -1.0);
-
-	  *vp++ = "-e";
-	  *vp++ = QRAY_FORMAT_NULL;
-
-	  /* first ray  ---- returns partitions */
-	  *vp++ = "-e";
-	  *vp++ = QRAY_FORMAT_P;
-
-	  bu_vls_init(&p_vls);
-	  bu_vls_printf(&p_vls, "xyz %lf %lf %lf;",
-			cml[X], cml[Y], cml[Z]);
-	  bu_vls_printf(&p_vls, "dir %lf %lf %lf;",
-			dir[X], dir[Y], dir[Z]);
-	  bu_vls_printf(&p_vls, "s; fmt r \"\\n\"");
-	  *vp++ = "-e";
-	  *vp++ = bu_vls_addr(&p_vls);
-
-	  /* second ray  ---- returns overlaps */
-	  *vp++ = "-e";
-	  *vp++ = QRAY_FORMAT_O;
-
-	  if(QRAY_TEXT){
-	    char *cp;
-	    int count;
-
-	    bu_vls_init(&o_vls);
-	    bu_vls_printf(&o_vls, "xyz %lf %lf %lf;",
-			  cml[X], cml[Y], cml[Z]);
-	    bu_vls_printf(&o_vls, "dir %lf %lf %lf;",
-			  dir[X], dir[Y], dir[Z]);
-
-	    /* get 'r' format now; prepend its' format string with a newline */
-	    val = bu_vls_addr(&qray_fmts[0].fmt);
-
-	    /* find first '"' */
-	    while(*val != '"' && *val != '\0')
-	      ++val;
-
-	    if(*val == '\0')
-	      goto done;
-	    else
-	      ++val;	    /* skip first '"' */
-
-	    /* find last '"' */
-	    cp = (char *)strrchr(val, '"');
-
-	    if(cp != (char *)NULL) /* found it */
-	      count = cp - val;
-	    else
-	      count = 0;
-
-done:
-	    if(*val == '\0')
-	      bu_vls_printf(&o_vls, "s; fmt r \"\\n\" ");
-	    else{
-	      bu_vls_printf(&o_vls, "s; fmt r \"\\n%*s\" ", count, val);
-	      if(count)
-		val += count + 1;
-	      bu_vls_printf(&o_vls, "%s", val);
-	    }
-
-	    i = 1;
-
-	    *vp++ = "-e";
-	    *vp++ = bu_vls_addr(&o_vls);
-	  }
-	}
-
-	if(QRAY_TEXT){
-	  int j;
-
-	  bu_vls_init(&t_vls);
-
-	  /* load vp with formats for printing */
-	  for(; qray_fmts[i].type != (char)NULL; ++i)
-	    bu_vls_printf(&t_vls, "fmt %c %s; ",
-			  qray_fmts[i].type,
-			  bu_vls_addr(&qray_fmts[i].fmt));
-
-	  *vp++ = "-e";
-	  *vp++ = bu_vls_addr(&t_vls);
-
-	  /* nirt does not like the trailing ';' */
-	  bu_vls_trunc(&t_vls, -2);
-	}
-
 	for( i=1; i < argc; i++ )
 		*vp++ = argv[i];
 	*vp++ = dbip->dbi_filename;
 
-	setup_rt( vp, qray_cmd_echo );
+	setup_rt( vp );
 
-	if(use_input_orig){
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "\nFiring from (%lf, %lf, %lf)...\n",
-			center_model[X], center_model[Y], center_model[Z]);
-	  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-	  bu_vls_free(&vls);
-	}else if(adc_state->adc_draw)
-	  Tcl_AppendResult(interp, "\nFiring through angle/distance cursor...\n",
-			   (char *)NULL);
-	else
-	  Tcl_AppendResult(interp, "\nFiring from view center...\n", (char *)NULL);
-
-
-	(void)pipe( pipe_in );
-	(void)pipe( pipe_out );
-	(void)pipe( pipe_err );
+	(void)pipe( o_pipe );
 	(void)signal( SIGINT, SIG_IGN );
 	if ( ( pid = fork()) == 0 )  {
- 	        /* Redirect stdin, stdout, stderr */
 		(void)close(0);
-		(void)dup( pipe_in[0] );
-		(void)close(1);
-		(void)dup( pipe_out[1] );
-		(void)close(2);
-		(void)dup ( pipe_err[1] );
-
-		/* close pipes */
-		(void)close(pipe_in[0]);
-		(void)close(pipe_in[1]);
-		(void)close(pipe_out[0]);
-		(void)close(pipe_out[1]);
-		(void)close(pipe_err[0]);
-		(void)close(pipe_err[1]);
+		(void)dup( o_pipe[0] );
 		for( i=3; i < 20; i++ )
 			(void)close(i);
 		(void)signal( SIGINT, SIG_DFL );
@@ -1421,87 +1155,83 @@ done:
 		exit(16);
 	}
 
-	/* use fp_in to feed view info to nirt */
-	(void)close( pipe_in[0] );
-	fp_in = fdopen( pipe_in[1], "w" );
-
-	/* use fp_out to read back the result */
-	(void)close( pipe_out[1] );
-	fp_out = fdopen( pipe_out[0], "r" );
-
-	/* use fp_err to read any error messages */
-	(void)close( pipe_err[1] );
-	fp_err = fdopen( pipe_err[0], "r" );
-
 	/* As parent, send view information down pipe */
-	rt_write(fp_in, center_model );
-	(void)fclose( fp_in );
-
-	if(QRAY_GRAPHICS){
-#if 1
-	  bu_vls_free(&p_vls);   /* use to form "partition" part of nirt command above */
+	(void)close( o_pipe[0] );
+	fp = fdopen( o_pipe[1], "w" );
+	{
+		VSET(center_model, -toViewcenter[MDX],
+		    -toViewcenter[MDY], -toViewcenter[MDZ]);
+		if (mged_variables.adcflag)
+		{
+		   Tcl_AppendResult(interp, "Firing through angle/distance cursor...\n",
+				    (char *)NULL);
+		    /*
+		     * Compute bounding box of all objects displayed.
+		     * Borrowed from size_reset() in chgview.c
+		     */
+		    for (i = 0; i < 3; ++i)
+		    {
+			extremum[0][i] = INFINITY;
+			extremum[1][i] = -INFINITY;
+		    }
+		    FOR_ALL_SOLIDS (sp, &HeadSolid.l)
+		    {
+			    minus[X] = sp->s_center[X] - sp->s_size;
+			    minus[Y] = sp->s_center[Y] - sp->s_size;
+			    minus[Z] = sp->s_center[Z] - sp->s_size;
+			    VMIN( extremum[0], minus );
+			    plus[X] = sp->s_center[X] + sp->s_size;
+			    plus[Y] = sp->s_center[Y] + sp->s_size;
+			    plus[Z] = sp->s_center[Z] + sp->s_size;
+			    VMAX( extremum[1], plus );
+#if 0
+			    bu_log("(%g,%g,%g)+-%g->(%g,%g,%g)(%g,%g,%g)->(%g,%g,%g)(%g,%g,%g)\n",
+				sp->s_center[X], sp->s_center[Y], sp->s_center[Z],
+				sp->s_size,
+				minus[X], minus[Y], minus[Z],
+				plus[X], plus[Y], plus[Z],
+				extremum[0][X], extremum[0][Y], extremum[0][Z],
+				extremum[1][X], extremum[1][Y], extremum[1][Z]);
 #endif
-	  if(QRAY_TEXT)
-	    bu_vls_free(&o_vls); /* used to form "overlap" part of nirt command above */
+		    }
+		    VMOVEN(direction, Viewrot + 8, 3);
+		    VSCALE(direction, direction, -1.0);
+		    for (i = 0; i < 3; ++i)
+			if (NEAR_ZERO(direction[i], 1e-10))
+			    direction[i] = 0.0;
+		    if ((center_model[X] >= extremum[0][X]) &&
+			(center_model[X] <= extremum[1][X]) &&
+			(center_model[Y] >= extremum[0][Y]) &&
+			(center_model[Y] <= extremum[1][Y]) &&
+			(center_model[Z] >= extremum[0][Z]) &&
+			(center_model[Z] <= extremum[1][Z]))
+		    {
+			t_in = -INFINITY;
+			for (i = 0; i < 6; ++i)
+			{
+			    if (direction[i%3] == 0)
+				continue;
+			    t = (extremum[i/3][i%3] - center_model[i%3]) /
+				    direction[i%3];
+			    if ((t < 0) && (t > t_in))
+				t_in = t;
+			}
+			VJOIN1(center_model, center_model, t_in, direction);
+		    }
 
-	  BU_LIST_INIT(&HeadQRayData.l);
+		    VMOVEN(unit_H, model2view, 3);
+		    VMOVEN(unit_V, model2view + 4, 3);
+		    VJOIN1(center_model,
+			center_model, curs_x * Viewscale / 2047.0, unit_H);
+		    VJOIN1(center_model,
+			center_model, curs_y * Viewscale / 2047.0, unit_V);
+		}
+		else
+		  Tcl_AppendResult(interp, "Firing from view center...\n", (char *)NULL);
 
-	  /* handle partitions */
-	  while(fgets(line, MAXLINE, fp_out) != (char *)NULL){
-	    if(line[0] == '\n'){
-	      Tcl_AppendResult(interp, line+1, (char *)NULL);
-	      break;
-	    }
-
-	    BU_GETSTRUCT(ndlp, qray_dataList);
-	    BU_LIST_APPEND(HeadQRayData.l.back, &ndlp->l);
-
-	    if(sscanf(line, "%le %le %le %le",
-		      &ndlp->x_in, &ndlp->y_in, &ndlp->z_in, &ndlp->los) != 4)
-	      break;
-	  }
-
-	  vbp = rt_vlblock_init();
-	  qray_data_to_vlist(vbp, &HeadQRayData, dir, 0);
-	  bu_list_free(&HeadQRayData.l);
-	  cvt_vlblock_to_solids(vbp, bu_vls_addr(&qray_basename), 0);
-	  rt_vlblock_free(vbp);
-
-	  /* handle overlaps */
-	  while(fgets(line, MAXLINE, fp_out) != (char *)NULL){
-	    if(line[0] == '\n'){
-	      Tcl_AppendResult(interp, line+1, (char *)NULL);
-	      break;
-	    }
-
-	    BU_GETSTRUCT(ndlp, qray_dataList);
-	    BU_LIST_APPEND(HeadQRayData.l.back, &ndlp->l);
-
-	    if(sscanf(line, "%le %le %le %le",
-		      &ndlp->x_in, &ndlp->y_in, &ndlp->z_in, &ndlp->los) != 4)
-	      break;
-	  }
-	  vbp = rt_vlblock_init();
-	  qray_data_to_vlist(vbp, &HeadQRayData, dir, 1);
-	  bu_list_free(&HeadQRayData.l);
-	  cvt_vlblock_to_solids(vbp, bu_vls_addr(&qray_basename), 0);
-	  rt_vlblock_free(vbp);
-
-	  update_views = 1;
+		rt_write(fp, center_model );
 	}
-
-	if(QRAY_TEXT){
-	  bu_vls_free(&t_vls);
-
-	  while(fgets(line, MAXLINE, fp_out) != (char *)NULL)
-	    Tcl_AppendResult(interp, line, (char *)NULL);
-	}
-
-	(void)fclose(fp_out);
-
-	while(fgets(line, MAXLINE, fp_err) != (char *)NULL)
-	  Tcl_AppendResult(interp, line, (char *)NULL);
-	(void)fclose(fp_err);
+	(void)fclose( fp );
 
 	/* Wait for program to finish */
 	while ((rpid = wait(&retcode)) != pid && rpid != -1)
@@ -1518,90 +1248,6 @@ done:
 		sp->s_iflag = DOWN;
 
 	return TCL_OK;
-}
-
-int
-f_vnirt(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int     argc;
-char    **argv;
-{
-  register int i;
-  int status;
-  fastf_t sf = 1.0 * INV_GED;
-  vect_t view_ray_orig;
-  vect_t center_model;
-  struct bu_vls vls;
-  struct bu_vls x_vls;
-  struct bu_vls y_vls;
-  struct bu_vls z_vls;
-  char **av;
-
-  if(dbip == DBI_NULL)
-    return TCL_OK;
-
-  if(argc < 3 || MAXARGS < argc){
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help %s", argv[0]);
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-
-    return TCL_ERROR;
-  }
-
-  /*
-   * The last two arguments are expected to be x,y in view coordinates.
-   * It is also assumed that view z will be the front of the viewing cube.
-   * These coordinates are converted to x,y,z in model coordinates and then
-   * converted to local units before being handed to nirt. All other
-   * arguments are passed straight through to nirt.
-   */
-  if(sscanf(argv[argc-2], "%lf", &view_ray_orig[X]) != 1 ||
-     sscanf(argv[argc-1], "%lf", &view_ray_orig[Y]) != 1){
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help %s", argv[0]);
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-
-    return TCL_ERROR;
-  }
-  view_ray_orig[Z] = GED_MAX;
-  argc -= 2;
-
-  av = (char **)bu_malloc(sizeof(char *) * (argc + 4), "f_vnirt: av");
-
-  /* Calculate point from which to fire ray */
-  VSCALE(view_ray_orig, view_ray_orig, sf);
-  MAT4X3PNT(center_model, view_state->vs_view2model, view_ray_orig);
-  VSCALE(center_model, center_model, base2local);
-
-  bu_vls_init(&x_vls);
-  bu_vls_init(&y_vls);
-  bu_vls_init(&z_vls);
-  bu_vls_printf(&x_vls, "%lf", center_model[X]);
-  bu_vls_printf(&y_vls, "%lf", center_model[Y]);
-  bu_vls_printf(&z_vls, "%lf", center_model[Z]);
-
-  /* pass remaining arguments to nirt */
-  av[0] = "nirt";
-  for(i = 1; i < argc; ++i)
-    av[i] = argv[i];
-
-  /* pass modified coordinates to nirt */
-  av[i++] = bu_vls_addr(&x_vls);
-  av[i++] = bu_vls_addr(&y_vls);
-  av[i++] = bu_vls_addr(&z_vls);
-  av[i] = (char *)NULL;
-
-  status = f_nirt(clientData, interp, argc + 3, av);
-
-  bu_vls_free(&x_vls);
-  bu_vls_free(&y_vls);
-  bu_vls_free(&z_vls);
-  bu_free((genptr_t)av, "f_vnirt: av");
-
-  return status;
 }
 
 cm_start(argc, argv)
@@ -1621,7 +1267,7 @@ int	argc;
 {
 	if( argc < 2 )
 		return(-1);
-	view_state->vs_Viewscale = atof(argv[1])*0.5;
+	Viewscale = atof(argv[1])*0.5;
 	return(0);
 }
 
@@ -1731,18 +1377,18 @@ int	argc;
 	}
 	
 	/* First step:  put eye at view center (view 0,0,0) */
-       	bn_mat_copy( view_state->vs_Viewrot, rtif_viewrot );
-	MAT_DELTAS_VEC_NEG( view_state->vs_toViewcenter, rtif_eye_model );
+       	bn_mat_copy( Viewrot, rtif_viewrot );
+	MAT_DELTAS_VEC_NEG( toViewcenter, rtif_eye_model );
 	new_mats();
 
 	/*
 	 * Compute camera orientation notch to right (+X) and up (+Y)
 	 * Done here, with eye in center of view.
 	 */
-	VSET( xv, 0.05, 0.0, 0.0 );
-	VSET( yv, 0.0, 0.05, 0.0 );
-	MAT4X3PNT( xm, view_state->vs_view2model, xv );
-	MAT4X3PNT( ym, view_state->vs_view2model, yv );
+	VSET( xv, 0.05, 0, 0 );
+	VSET( yv, 0, 0.05, 0 );
+	MAT4X3PNT( xm, view2model, xv );
+	MAT4X3PNT( ym, view2model, yv );
 	RT_ADD_VLIST( vhead, xm, RT_VLIST_LINE_DRAW );
 	RT_ADD_VLIST( vhead, rtif_eye_model, RT_VLIST_LINE_MOVE );
 	RT_ADD_VLIST( vhead, ym, RT_VLIST_LINE_DRAW );
@@ -1751,9 +1397,9 @@ int	argc;
 	/*  Second step:  put eye at view 0,0,1.
 	 *  For eye to be at 0,0,1, the old 0,0,-1 needs to become 0,0,0.
 	 */
-	VSET( xlate, 0.0, 0.0, -1.0 );	/* correction factor */
-	MAT4X3PNT( new_cent, view_state->vs_view2model, xlate );
-	MAT_DELTAS_VEC_NEG( view_state->vs_toViewcenter, new_cent );
+	VSET( xlate, 0, 0, -1 );	/* correction factor */
+	MAT4X3PNT( new_cent, view2model, xlate );
+	MAT_DELTAS_VEC_NEG( toViewcenter, new_cent );
 	new_mats();
 
 	/* If new treewalk is needed, get new objects into view. */
@@ -1767,9 +1413,9 @@ int	argc;
 	  edit_com( rt_cmd_vec_len, rt_cmd_vec, rtif_mode, 0 );
 	}
 
-	view_state->vs_flag = 1;
+	dmaflag = 1;
 	refresh();	/* Draw new display */
-	view_state->vs_flag = 1;
+	dmaflag = 1;
 	if( rtif_delay > 0 )  {
 		struct timeval tv;
 		fd_set readfds;
@@ -1800,9 +1446,6 @@ cm_anim(argc, argv)
 int	argc;
 char	**argv;
 {
-
-  if(dbip == DBI_NULL)
-    return 0;
 
   if( db_parse_anim( dbip, argc, argv ) < 0 )  {
     Tcl_AppendResult(interp, "cm_anim:  ", argv[1], " ", argv[2], " failed\n", (char *)NULL);
@@ -1849,9 +1492,6 @@ cm_clean(argc, argv)
 char	**argv;
 int	argc;
 {
-	if(dbip == DBI_NULL)
-	  return 0;
-
 	/*f_zap( (ClientData)NULL, interp, 0, (char **)0 );*/
 
 	/* Free animation structures */
@@ -1914,15 +1554,15 @@ char		**argv;
 	return (TCL_ERROR);
     }
 
-    if (((int)GED_MIN > h)  || (h > (int)GED_MAX) || ((int)GED_MIN > v)  || (v > (int)GED_MAX))
+    if ((-2047 > h)  || (h > 2047) || (-2047 > v)  || (v > 2047))
     {
 	Tcl_AppendResult(interp, "Screen coordinates out of range\n",
 	    "Must be between +/-2048", NULL);
 	return (TCL_ERROR);
     }
 
-    VSET(ray_orig, -view_state->vs_toViewcenter[MDX],
-	-view_state->vs_toViewcenter[MDY], -view_state->vs_toViewcenter[MDZ]);
+    VSET(ray_orig, -toViewcenter[MDX],
+	-toViewcenter[MDY], -toViewcenter[MDZ]);
     /*
      * Compute bounding box of all objects displayed.
      * Borrowed from size_reset() in chgview.c
@@ -1943,7 +1583,7 @@ char		**argv;
 	    plus[Z] = sp->s_center[Z] + sp->s_size;
 	    VMAX( extremum[1], plus );
     }
-    VMOVEN(ray_dir, view_state->vs_Viewrot + 8, 3);
+    VMOVEN(ray_dir, Viewrot + 8, 3);
     VSCALE(ray_dir, ray_dir, -1.0);
     for (i = 0; i < 3; ++i)
 	if (NEAR_ZERO(ray_dir[i], 1e-10))
@@ -1968,10 +1608,10 @@ char		**argv;
 	VJOIN1(ray_orig, ray_orig, t_in, ray_dir);
     }
 
-    VMOVEN(unit_H, view_state->vs_model2view, 3);
-    VMOVEN(unit_V, view_state->vs_model2view + 4, 3);
-    VJOIN1(ray_orig, ray_orig, h * view_state->vs_Viewscale * INV_GED, unit_H);
-    VJOIN1(ray_orig, ray_orig, v * view_state->vs_Viewscale * INV_GED, unit_V);
+    VMOVEN(unit_H, model2view, 3);
+    VMOVEN(unit_V, model2view + 4, 3);
+    VJOIN1(ray_orig, ray_orig, h * Viewscale / 2047.0, unit_H);
+    VJOIN1(ray_orig, ray_orig, v * Viewscale / 2047.0, unit_V);
 
     /*
      *	Build a list of all the top-level objects currently displayed

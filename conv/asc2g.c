@@ -80,6 +80,17 @@ char **argv;
 	ofp = stdout;
 
 #if 0
+	/*  Because LIBWDB uses LIBRT routines (esp. rt_log), must init */
+	rt_g.rtg_parallel = 0;
+	RES_INIT( &rt_g.res_syscall );
+	RES_INIT( &rt_g.res_worker );
+	RES_INIT( &rt_g.res_stats );
+	RES_INIT( &rt_g.res_results );
+	RES_INIT( &rt_g.res_model );
+	/* Do not use rt_log() or rt_malloc() before here. */
+#endif
+
+#if 0
 (void)fprintf(stderr, "About to call rt_log\n");
 rt_log("Hello cold cruel world!\n");
 (void)fprintf(stderr, "About to begin\n");
@@ -250,7 +261,7 @@ nmgbld()
 	}
 
 	cp = buf;
-	sscanf( buf , "%c %d %s %ld" , &nmg_id, &version, name, &granules );
+	sscanf( buf , "%c %d %s %d" , &nmg_id, &version, name, &granules );
 
 	if( fgets( buf, BUFSIZE, ifp ) == (char *)0 )
 	{

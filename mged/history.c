@@ -81,11 +81,11 @@ int status;   /* Either CMD_OK or CMD_BAD */
 
     new_hist = (struct mged_hist *)bu_malloc(sizeof(struct mged_hist),
 					     "mged history");
-    bu_vls_init(&(new_hist->mh_command));
-    bu_vls_vlscat(&(new_hist->mh_command), cmdp);
-    new_hist->mh_start = *start;
-    new_hist->mh_finish = *finish;
-    new_hist->mh_status = status;
+    bu_vls_init(&(new_hist->command));
+    bu_vls_vlscat(&(new_hist->command), cmdp);
+    new_hist->start = *start;
+    new_hist->finish = *finish;
+    new_hist->status = status;
     BU_LIST_INSERT(&(mged_hist_head.l), &(new_hist->l));
 
     /* As long as this isn't our first command to record after setting
@@ -95,7 +95,7 @@ int status;   /* Either CMD_OK or CMD_BAD */
     if (journalfp != NULL && !firstjournal)
 	history_journalize(new_hist);
 
-    curr_cmd_list->cl_cur_hist = &mged_hist_head;
+    curr_cmd_list->cur_hist = &mged_hist_head;
     firstjournal = 0;
 }
 
@@ -127,12 +127,12 @@ struct mged_hist *hptr;
 
     lasthptr = BU_LIST_PREV(mged_hist, &(hptr->l));
 
-    if (journal_delay && timediff(&tvdiff, &(lasthptr->mh_finish), &(hptr->mh_start)) >= 0)
-	fprintf(journalfp, "delay %d %ld\n", tvdiff.tv_sec, tvdiff.tv_usec);
+    if (journal_delay && timediff(&tvdiff, &(lasthptr->finish), &(hptr->start)) >= 0)
+	fprintf(journalfp, "delay %d %d\n", tvdiff.tv_sec, tvdiff.tv_usec);
 
-    if (hptr->mh_status == CMD_BAD)
+    if (hptr->status == CMD_BAD)
 	fprintf(journalfp, "# ");
-    fprintf(journalfp, "%s", bu_vls_addr(&hptr->mh_command));
+    fprintf(journalfp, "%s", bu_vls_addr(&hptr->command));
 
     if (journal_delay)
       fprintf(journalfp, "mged_update\n");
@@ -288,14 +288,14 @@ char **argv;
 	bu_vls_trunc(&str, 0);
 	hp_prev = BU_LIST_PREV(mged_hist, &(hp->l));
 	if (with_delays && BU_LIST_NOT_HEAD(hp_prev, &(mged_hist_head.l))) {
-	    if (timediff(&tvdiff, &(hp_prev->mh_finish), &(hp->mh_start)) >= 0)
+	    if (timediff(&tvdiff, &(hp_prev->finish), &(hp->start)) >= 0)
 		bu_vls_printf(&str, "delay %d %d\n", tvdiff.tv_sec,
 			      tvdiff.tv_usec);
 	}
 
-	if (hp->mh_status == CMD_BAD)
+	if (hp->status == CMD_BAD)
 	    bu_vls_printf(&str, "# ");
-	bu_vls_vlscat(&str, &(hp->mh_command));
+	bu_vls_vlscat(&str, &(hp->command));
 
 	if (fp != NULL)
 	    bu_vls_fwrite(fp, &str);
@@ -316,12 +316,12 @@ history_prev()
 {
     struct mged_hist *hp;
 
-    hp = BU_LIST_PREV(mged_hist, &(curr_cmd_list->cl_cur_hist->l));
+    hp = BU_LIST_PREV(mged_hist, &(curr_cmd_list->cur_hist->l));
     if (BU_LIST_IS_HEAD(hp, &(mged_hist_head.l)))
 	return NULL;
     else {
-	curr_cmd_list->cl_cur_hist = hp;
-	return &(hp->mh_command);
+	curr_cmd_list->cur_hist = hp;
+	return &(hp->command);
     }
 }
 
@@ -330,10 +330,10 @@ history_prev()
 struct bu_vls *
 history_cur()
 {
-    if (BU_LIST_IS_HEAD(curr_cmd_list->cl_cur_hist, &(mged_hist_head.l)))
+    if (BU_LIST_IS_HEAD(curr_cmd_list->cur_hist, &(mged_hist_head.l)))
 	return NULL;
     else
-	return &(curr_cmd_list->cl_cur_hist->mh_command);
+	return &(curr_cmd_list->cur_hist->command);
 }
 
 /*      H I S T O R Y _ N E X T
@@ -343,17 +343,17 @@ history_next()
 {
     struct mged_hist *hp;
 
-    if (BU_LIST_IS_HEAD(curr_cmd_list->cl_cur_hist, &(mged_hist_head.l))) {
+    if (BU_LIST_IS_HEAD(curr_cmd_list->cur_hist, &(mged_hist_head.l))) {
 	return 0;
     }
     
-    hp = BU_LIST_NEXT(mged_hist, &(curr_cmd_list->cl_cur_hist->l));
+    hp = BU_LIST_NEXT(mged_hist, &(curr_cmd_list->cur_hist->l));
     if (BU_LIST_IS_HEAD(hp, &(mged_hist_head.l))) {
-	curr_cmd_list->cl_cur_hist = hp;
+	curr_cmd_list->cur_hist = hp;
 	return 0;
     } else {
-	curr_cmd_list->cl_cur_hist = hp;
-	return &(hp->mh_command);
+	curr_cmd_list->cur_hist = hp;
+	return &(hp->command);
     }
 }
 
@@ -384,7 +384,7 @@ char **argv;
 
     vp = history_prev();
     if (vp == NULL)
-      return TCL_ERROR;
+	vp = &(curr_cmd_list->cur_hist->command);
 
     Tcl_AppendResult(interp, bu_vls_addr(vp), (char *)NULL);
     return TCL_OK;
@@ -417,7 +417,7 @@ char **argv;
 
     vp = history_next();
     if (vp == NULL)
-      return TCL_ERROR;
+	vp = &(curr_cmd_list->cur_hist->command);
 
     Tcl_AppendResult(interp, bu_vls_addr(vp), (char *)NULL);
     return TCL_OK;
@@ -466,11 +466,11 @@ void
 history_setup()
 {
     BU_LIST_INIT(&(mged_hist_head.l));
-    curr_cmd_list->cl_cur_hist = &mged_hist_head;
-    bu_vls_init(&(mged_hist_head.mh_command));
-    mged_hist_head.mh_start.tv_sec = mged_hist_head.mh_start.tv_usec =
-	mged_hist_head.mh_finish.tv_sec = mged_hist_head.mh_finish.tv_usec = 0L;
-    mged_hist_head.mh_status = CMD_OK;
+    curr_cmd_list->cur_hist = &mged_hist_head;
+    bu_vls_init(&(mged_hist_head.command));
+    mged_hist_head.start.tv_sec = mged_hist_head.start.tv_usec =
+	mged_hist_head.finish.tv_sec = mged_hist_head.finish.tv_usec = 0L;
+    mged_hist_head.status = CMD_OK;
     journalfp = NULL;
 }
     

@@ -42,11 +42,7 @@ int	digits;		/* # digits wide */
 
 	if( digits < 1 )
 		digits = 1;
-#if 0
 	sprintf( fmt, "%%%dg", digits, digits );
-#else
-	sprintf( fmt, "%%%dg", digits );
-#endif
 	sprintf( buf, fmt, input );
 	tp_2symbol( fp, buf, (double)x, (double)y, (double)cscale, theta );
 }

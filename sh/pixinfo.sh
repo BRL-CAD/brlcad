@@ -63,8 +63,6 @@ dbw)
 	eval `pixautosize -b 8 -f $FILE`;;	# Sets WIDTH, HEIGHT
 yuv)
 	eval `pixautosize -b 2 -f $FILE`;;	# Sets WIDTH, HEIGHT
-png)
-	eval `png-fb -H $FILE`;;		# Sets WIDTH, HEIGHT
 jpg|jpeg)
 	ARGS=`jpeg-fb -h $FILE` ;;
 rle)

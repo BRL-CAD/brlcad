@@ -106,9 +106,6 @@ char	*argv[];
   char *tmpfil = "/tmp/GED.aXXXXX";
   char **av;
 
-  if(dbip == DBI_NULL)
-    return TCL_OK;
-
   CHECK_READ_ONLY;
 
   if(argc < 2 || MAXARGS < argc){
@@ -178,9 +175,6 @@ char	*argv[];
   FILE *fp;
   register struct directory *dp;
 
-  if(dbip == DBI_NULL)
-    return TCL_OK;
-
   if(argc < 3 || MAXARGS < argc){
     struct bu_vls vls;
 
@@ -228,9 +222,6 @@ char		*argv[];
   register struct directory *dp;
   struct rt_db_internal intern;
   struct rt_comb_internal *comb;
-
-  if(dbip == DBI_NULL)
-    return TCL_OK;
 
   CHECK_READ_ONLY;
 
@@ -341,9 +332,6 @@ int pathpos;
 	struct rt_comb_internal *comb;
 	int id;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
 	if(pathpos >= MAX_LEVELS)
 	{
 		regflag = ABORTED;
@@ -406,17 +394,6 @@ register char *a, *b;
 
 }
 
-struct id_names {
-	struct bu_list l;
-	struct bu_vls name;		/* name associated with region id */
-};
-
-struct id_to_names {
-	struct bu_list l;
-	int rid;			/* starting region id */
-	struct id_names headName;	/* head of list of names */
-};
-
 /*
  *	F _ W H I C H _ I D ( ) :	finds all regions with given idents
  */
@@ -432,15 +409,8 @@ char	**argv;
 	struct rt_db_internal intern;
 	struct rt_comb_internal *comb;
 	int		item;
-	register int sflag = 0;
-	struct id_to_names headIdName;
-	struct id_to_names *itnp;
-	struct id_names *inp;
 
-	if (dbip == DBI_NULL)
-	  return TCL_OK;
-
-	if (argc < 2 || MAXARGS < argc){
+	if(argc < 2 || MAXARGS < argc){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
@@ -450,142 +420,41 @@ char	**argv;
 	  return TCL_ERROR;
 	}
 
-	if (strcmp(argv[1], "-s") == 0){
-	  --argc;
-	  ++argv;
-
-	  if(argc < 2){
-	    struct bu_vls vls;
-
-	    bu_vls_init(&vls);
-	    bu_vls_printf(&vls, "help whichid");
-	    Tcl_Eval(interp, bu_vls_addr(&vls));
-	    bu_vls_free(&vls);
-	    return TCL_ERROR;
-	  }
-
-	  sflag = 1;
-	}
-
-	if ( setjmp( jmp_env ) == 0 )
+	if( setjmp( jmp_env ) == 0 )
 	  (void)signal( SIGINT, sig3);  /* allow interupts */
         else
 	  return TCL_OK;
 
-	BU_LIST_INIT(&headIdName.l);
+	for( j=1; j<argc; j++) {
+		item = atoi( argv[j] );
+		Tcl_AppendResult(interp, "Region[s] with ident ", argv[j],
+				 ":\n", (char *)NULL);
 
-	/* Build list of id_to_names */
-	for ( j=1; j<argc; j++ ) {
-		int n;
-		int start, end;
-		int range;
-		int k;
-
-		n = sscanf(argv[j], "%d%*[:-]%d", &start, &end);
-		switch(n) {
-		case 1:
-			for ( BU_LIST_FOR(itnp,id_to_names,&headIdName.l) )
-				if (itnp->rid == start)
-					break;
-
-			/* rid not found */
-			if (BU_LIST_IS_HEAD(itnp,&headIdName.l)) {
-				BU_GETSTRUCT(itnp,id_to_names);
-				itnp->rid = start;
-				BU_LIST_INSERT(&headIdName.l,&itnp->l);
-				BU_LIST_INIT(&itnp->headName.l);
-			}
-
-			break;
-		case 2:
-			if (start < end)
-				range = end - start + 1;
-			else if (end < start) {
-				range = start - end + 1;
-				start = end;
-			} else
-				range = 1;
-
-			for ( k = 0; k < range; ++k ) {
-				int rid = start + k;
-
-				for ( BU_LIST_FOR(itnp,id_to_names,&headIdName.l) )
-					if (itnp->rid == rid)
-						break;
-
-				/* rid not found */
-				if (BU_LIST_IS_HEAD(itnp,&headIdName.l)) {
-					BU_GETSTRUCT(itnp,id_to_names);
-					itnp->rid = rid;
-					BU_LIST_INSERT(&headIdName.l,&itnp->l);
-					BU_LIST_INIT(&itnp->headName.l);
+		/* Examine all COMB nodes */
+		for( i = 0; i < RT_DBNHASH; i++ )  {
+			for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )  {
+				if( !(dp->d_flags & DIR_REGION) )
+					continue;
+				if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
+				{
+					(void)signal( SIGINT, SIG_IGN );
+					TCL_READ_ERR_return;
 				}
+				comb = (struct rt_comb_internal *)intern.idb_ptr;
+				if( comb->region_id != item )
+					continue;
+
+				Tcl_AppendResult(interp, "   ", dp->d_namep,
+						 "\n", (char *)NULL);
+
+				rt_comb_ifree( &intern );
 			}
-
-			break;
 		}
-	}
-
-	/* Examine all COMB nodes */
-	for ( i = 0; i < RT_DBNHASH; i++ )  {
-		for ( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )  {
-			if ( !(dp->d_flags & DIR_REGION) )
-				continue;
-
-			if ( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
-			{
-				(void)signal( SIGINT, SIG_IGN );
-				TCL_READ_ERR_return;
-			}
-			comb = (struct rt_comb_internal *)intern.idb_ptr;
-
-			/* check to see if region id matches one in our list */
-			for ( BU_LIST_FOR(itnp,id_to_names,&headIdName.l) ) {
-				if ( comb->region_id == itnp->rid ) {
-					/* add region name to our name list for this region */
-					BU_GETSTRUCT(inp,id_names);
-					bu_vls_init(&inp->name);
-					bu_vls_strcpy(&inp->name, dp->d_namep);
-					BU_LIST_INSERT(&itnp->headName.l,&inp->l);
-					break;
-				}
-			}
-
-			rt_comb_ifree( &intern );
-		}
-	}
-
-	/* place data in interp and free memory */
-	 while ( BU_LIST_WHILE(itnp,id_to_names,&headIdName.l) ) {
-		if (!sflag) {
-			struct bu_vls vls;
-
-			bu_vls_init(&vls);
-			bu_vls_printf(&vls, "Region[s] with ident %d:\n", itnp->rid);
-			Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-			bu_vls_free(&vls);
-		}
-
-		while ( BU_LIST_WHILE(inp,id_names,&itnp->headName.l) ) {
-			if (sflag)
-				Tcl_AppendElement(interp, bu_vls_addr(&inp->name));
-			else
-				Tcl_AppendResult(interp, "   ", bu_vls_addr(&inp->name),
-							"\n", (char *)NULL);
-
-			BU_LIST_DEQUEUE(&inp->l);
-			bu_vls_free(&inp->name);
-			bu_free((genptr_t)inp, "f_which_id: inp");
-		}
-
-		BU_LIST_DEQUEUE(&itnp->l);
-		bu_free((genptr_t)itnp, "f_which_id: itnp");
 	}
 
 	(void)signal( SIGINT, SIG_IGN );
 	return TCL_OK;
 }
-
 /*		F _ W H I C H _ S H A D E R
  *
  *	Finds all combinations using the given shaders
@@ -602,10 +471,6 @@ char	**argv;
 	struct rt_db_internal	intern;
 	struct rt_comb_internal	*comb;
 	int item;
-	int sflag = 0;
-
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
 
 	if(argc < 2 || MAXARGS < argc){
 	  struct bu_vls vls;
@@ -617,23 +482,6 @@ char	**argv;
 	  return TCL_ERROR;
 	}
 
-	if(strcmp(argv[1], "-s") == 0){
-	  --argc;
-	  ++argv;
-
-	  if(argc < 2){
-	    struct bu_vls vls;
-
-	    bu_vls_init(&vls);
-	    bu_vls_printf(&vls, "help which_shader");
-	    Tcl_Eval(interp, bu_vls_addr(&vls));
-	    bu_vls_free(&vls);
-	    return TCL_ERROR;
-	  }
-
-	  sflag = 1;
-	}
-
 	if( setjmp( jmp_env ) == 0 )
 	  (void)signal( SIGINT, sig3);  /* allow interupts */
         else
@@ -641,10 +489,8 @@ char	**argv;
 
 	for( j=1; j<argc; j++) {
 		item = atoi( argv[j] );
-
-		if(!sflag)
-		  Tcl_AppendResult(interp, "Combination[s] with shader ", argv[j],
-				   ":\n", (char *)NULL);
+		Tcl_AppendResult(interp, "Combination[s] with shader ", argv[j],
+				 ":\n", (char *)NULL);
 
 		/* Examine all COMB nodes */
 		for( i = 0; i < RT_DBNHASH; i++ )  {
@@ -661,11 +507,8 @@ char	**argv;
 				if( !strstr( bu_vls_addr( &comb->shader ), argv[j] ) )
 					continue;
 
-				if(sflag)
-				  Tcl_AppendElement(interp, dp->d_namep);
-				else
-				  Tcl_AppendResult(interp, "   ", dp->d_namep,
-						   "\n", (char *)NULL);
+				Tcl_AppendResult(interp, "   ", dp->d_namep,
+						 "\n", (char *)NULL);
 				rt_comb_ifree( &intern );
 			}
 		}
@@ -690,10 +533,6 @@ char	**argv;
 	int		item;
 	struct rt_db_internal intern;
 	struct rt_comb_internal *comb;
-	int sflag = 0;
-
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
 
 	if(argc < 2 || MAXARGS < argc){
 	  struct bu_vls vls;
@@ -705,23 +544,6 @@ char	**argv;
 	  return TCL_ERROR;
 	}
 
-	if(strcmp(argv[1], "-s") == 0){
-	  --argc;
-	  ++argv;
-
-	  if(argc < 2){
-	    struct bu_vls vls;
-
-	    bu_vls_init(&vls);
-	    bu_vls_printf(&vls, "help whichair");
-	    Tcl_Eval(interp, bu_vls_addr(&vls));
-	    bu_vls_free(&vls);
-	    return TCL_ERROR;
-	  }
-
-	  sflag = 1;
-	}
-
 	if( setjmp( jmp_env ) == 0 )
 	  (void)signal( SIGINT, sig3);  /* allow interupts */
         else
@@ -729,10 +551,8 @@ char	**argv;
 
 	for( j=1; j<argc; j++) {
 		item = atoi( argv[j] );
-
-		if(!sflag)
-		  Tcl_AppendResult(interp, "Region[s] with air code ", argv[j],
-				   ":\n", (char *)NULL);
+		Tcl_AppendResult(interp, "Region[s] with air code ", argv[j],
+				 ":\n", (char *)NULL);
 
 		/* Examine all COMB nodes */
 		for( i = 0; i < RT_DBNHASH; i++ )  {
@@ -748,11 +568,8 @@ char	**argv;
 				if( comb->region_id != 0 || comb->aircode != item )
 					continue;
 
-				if(sflag)
-				  Tcl_AppendElement(interp, dp->d_namep);
-				else
-				  Tcl_AppendResult(interp, "   ", dp->d_namep,
-						   "\n", (char *)NULL);
+				Tcl_AppendResult(interp, "   ", dp->d_namep,
+						 "\n", (char *)NULL);
 			}
 		}
 	}
@@ -791,9 +608,6 @@ char	**argv;
 	struct shell *kill_s;
 	struct directory *dp;
 	struct rt_db_internal nmg_intern;
-
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
 
 	CHECK_READ_ONLY;
 
@@ -995,9 +809,6 @@ int flag;
 	int actual_count;
 	int i,k;
 
-	if(dbip == DBI_NULL)
-	  return;
-
 	RT_CK_DIR( dp );
 	BU_CK_PTBL( cur_path );
 
@@ -1093,12 +904,8 @@ int flag;
 				}
 				else
 				{
-					if( tree_list[i].tl_tree->tr_l.tl_mat )  {
-						bn_mat_mul( temp_mat, old_mat,
-							tree_list[i].tl_tree->tr_l.tl_mat );
-					} else {
-						bn_mat_copy( temp_mat, old_mat );
-					}
+					bn_mat_mul( temp_mat, old_mat,
+						tree_list[i].tl_tree->tr_l.tl_mat );
 					if( rt_db_get_internal( &sol_intern, sol_dp, dbip, temp_mat ) < 0 )
 					{
 						bu_log( "Could not import %s\n", tree_list[i].tl_tree->tr_l.tl_name );
@@ -1141,10 +948,7 @@ int flag;
 	}
 	else if( dp->d_flags & DIR_COMB )
 	{
-		int cur_length;
-
 		bu_ptbl_ins( cur_path, (long *)dp );
-		cur_length = BU_PTBL_END( cur_path );
 
 		for( i=0 ; i<actual_count ; i++ )
 		{
@@ -1159,13 +963,8 @@ int flag;
 			}
 
 			/* recurse */
-			if( tree_list[i].tl_tree->tr_l.tl_mat )  {
-				bn_mat_mul( new_mat, old_mat, tree_list[i].tl_tree->tr_l.tl_mat );
-			} else {
-				bn_mat_copy( new_mat, old_mat );
-			}
+			bn_mat_mul( new_mat, old_mat, tree_list[i].tl_tree->tr_l.tl_mat );
 			new_tables( nextdp, cur_path, new_mat, flag );
-			bu_ptbl_trunc( cur_path, cur_length );
 		}
 	}
 	else
@@ -1197,9 +996,6 @@ char	**argv;
 	char *timep;
 	time_t now;
 	int i;
-
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
 
 	if(argc < 3 || MAXARGS < argc){
 	  struct bu_vls vls;

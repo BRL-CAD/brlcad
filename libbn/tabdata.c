@@ -37,7 +37,6 @@ static char RCStabdata[] = "@(#)$Header$ (ARL)";
 #include "bu.h"
 #include "raytrace.h"
 #include "tabdata.h"
-#include "./debug.h"
 
 /*
  *			R T _ C K _ T A B L E
@@ -244,49 +243,6 @@ CONST struct rt_tabdata		*in2;
 }
 
 /*
- *			R T _ T A B D A T A _ J O I N 2
- *
- *  Multiply every element in data table in2 by a scalar value 'scale2',
- *  plus in3 * scale3, and
- *  add it to the element in in1, and store in 'out'.
- *  'out' may overlap in1 or in2.
- */
-void
-rt_tabdata_join2( out, in1, scale2, in2, scale3, in3 )
-struct rt_tabdata		*out;
-CONST struct rt_tabdata		*in1;
-register double			scale2;
-CONST struct rt_tabdata		*in2;
-register double			scale3;
-CONST struct rt_tabdata		*in3;
-{
-	register int		j;
-	register fastf_t	*op;
-	register CONST fastf_t	*i1, *i2, *i3;
-
-	RT_CK_TABDATA( out );
-	RT_CK_TABDATA( in1 )
-	RT_CK_TABDATA( in2 );
-
-	if( in1->table != out->table )
-		rt_bomb("rt_tabdata_join1(): samples drawn from different tables\n");
-	if( in1->table != in2->table )
-		rt_bomb("rt_tabdata_join1(): samples drawn from different tables\n");
-	if( in1->table != in3->table )
-		rt_bomb("rt_tabdata_join1(): samples drawn from different tables\n");
-	if( in1->ny != out->ny )
-		rt_bomb("rt_tabdata_join1(): different tabdata lengths?\n");
-
-	op = out->y;
-	i1 = in1->y;
-	i2 = in2->y;
-	i3 = in3->y;
-	for( j = in1->ny; j > 0; j-- )
-		*op++ = *i1++ + scale2 * *i2++ + scale3 * *i3++;
-	/* VJOIN2N( out->y, in1->y, scale2, in2->y, scale3, in3->y ); */
-}
-
-/*
  *			R T _ T A B D A T A _ B L E N D 3
  */
 void
@@ -443,41 +399,14 @@ CONST struct rt_tabdata	*in2;
 }
 
 /*
- *			R T _ T A B L E _ F I N D _ X
- *
- *  Return the index in the table's x[] array of the interval which
- *  contains 'xval'.
- *
- *  Returns -1 if less than start value, -2 if greater than end value.
- *
- *  A binary search would be more efficient, as the wavelengths (x values)
- *  are known to be sorted in ascending order.
- */
-int
-rt_table_find_x( tabp, xval )
-CONST struct rt_table	*tabp;
-double			xval;
-{
-	register int	i;
-
-	RT_CK_TABLE(tabp);
-
-	if( xval >= tabp->x[tabp->nx-1] )  return -2;
-
-	/* Search for proper interval in input spectrum */
-	for( i = tabp->nx-2; i >=0; i-- )  {
-		if( xval >= tabp->x[i] )  return i;
-	}
-	/* if( xval < tabp->x[0] )  return -1; */
-	return -1;
-}
-
-/*
  *			R T _ T A B L E _ L I N _ I N T E R P
  *
  *  Return the value of the curve at independent parameter value 'wl'.
  *  Linearly interpolate between values in the input table.
  *  Zero is returned for values outside the sampled range.
+ *
+ *  A binary search would be more efficient, as the wavelengths
+ *  are known to be sorted in ascending order.
  */
 fastf_t
 rt_table_lin_interp( samp, wl )
@@ -485,204 +414,64 @@ CONST struct rt_tabdata	*samp;
 register double			wl;
 {
 	CONST struct rt_table	*tabp;
-	register int		i;
-	register fastf_t	fract;
-	register fastf_t	ret;
+	register int			i;
 
 	RT_CK_TABDATA(samp);
 	tabp = samp->table;
 	RT_CK_TABLE(tabp);
 
-	if( (i = rt_table_find_x( tabp, wl )) < 0 )  {
-		if(rt_g.debug&DEBUG_MATH)bu_log("rt_table_lin_interp(%g) out of range %g to %g\n", wl, tabp->x[0], tabp->x[tabp->nx] );
+	if( wl < tabp->x[0] || wl > tabp->x[tabp->nx] )
 		return 0;
+
+	/* Search for proper interval in input spectrum */
+	for( i = 0; i < tabp->nx-1; i++ )  {
+		FAST fastf_t	fract;		/* fraction from [i] to [i+1] */
+
+		if( wl < tabp->x[i] )  rt_bomb("rt_table_lin_interp() assertion1 failed\n");
+		if( wl >= tabp->x[i+1] )  continue;
+
+		/* The interval has been found */
+		fract = (wl - tabp->x[i]) /
+			(tabp->x[i+1] - tabp->x[i]);
+		if( fract < 0 || fract > 1 )  rt_bomb("rt_table_lin_interp() assertion2 failed\n");
+		return (1-fract) * samp->y[i] + fract * samp->y[i+1];
 	}
 
-	if( wl < tabp->x[i] || wl >= tabp->x[i+1] )  {
-		rt_log("rt_table_lin_interp(%g) assertion1 failed at %g\n", wl, tabp->x[i] );
-		rt_bomb("rt_table_lin_interp() assertion1 failed\n");
-	}
-
-	if( i >= tabp->nx-2 )  {
-		/* Assume value is constant in final interval. */
-		if(rt_g.debug&DEBUG_MATH)bu_log("rt_table_lin_interp(%g)=%g off end of range %g to %g\n", wl, samp->y[tabp->nx-1], tabp->x[0], tabp->x[tabp->nx] );
-		return samp->y[tabp->nx-1];
-	}
-
-	/* The interval has been found */
-	fract = (wl - tabp->x[i]) / (tabp->x[i+1] - tabp->x[i]);
-	if( fract < 0 || fract > 1 )  rt_bomb("rt_table_lin_interp() assertion2 failed\n");
-	ret = (1-fract) * samp->y[i] + fract * samp->y[i+1];
-	if(rt_g.debug&DEBUG_MATH)bu_log("rt_table_lin_interp(%g)=%g in range %g to %g\n",
-		wl, ret, tabp->x[i], tabp->x[i+1] );
-	return ret;
+	/* Assume value is constant in final interval. */
+	if( !( wl >= tabp->x[tabp->nx-1] ) )
+		rt_bomb("rt_table_lin_interp() assertion3 failed\n");
+	return samp->y[tabp->nx-1];
 }
 
 /*
- *			R T _ T A B D A T A _ R E S A M P L E _ M A X
+ *			R T _ T A B D A T A _ R E S A M P L E
  *
  *  Given a set of sampled data 'olddata', resample it for different
- *  spacing, by linearly interpolating the values when an output span
- *  is entirely contained within an input span, and by taking the
- *  maximum when an output span covers more than one input span.
+ *  spacing, by linearly interpolating the values.
  *
  *  This assumes interpretation (2) of the data, i.e. that the values
  *  are the average value across the interval.
  */
 struct rt_tabdata *
-rt_tabdata_resample_max( newtable, olddata )
+rt_tabdata_resample( newtable, olddata )
 CONST struct rt_table	*newtable;
 CONST struct rt_tabdata	*olddata;
 {
 	CONST struct rt_table	*oldtable;
-	struct rt_tabdata	*newsamp;
-	int			i;
-	int			j, k;
+	struct rt_tabdata		*newsamp;
+	int				i;
 
 	RT_CK_TABLE(newtable);
 	RT_CK_TABDATA(olddata);
 	oldtable = olddata->table;
 	RT_CK_TABLE(oldtable);
 
-	if( oldtable == newtable )  rt_log("rt_tabdata_resample_max() NOTICE old and new rt_table structs are the same\n");
+	if( oldtable == newtable )  rt_log("rt_tabdata_resample() NOTICE old and new rt_table structs are the same\n");
 
 	RT_GET_TABDATA( newsamp, newtable );
 
 	for( i = 0; i < newtable->nx; i++ )  {
-		/*
-		 *  Find good value(s) in olddata to represent the span from
-		 *  newtable->x[i] to newtable->x[i+1].
-		 */
-		j = rt_table_find_x( oldtable, newtable->x[i] );
-		k = rt_table_find_x( oldtable, newtable->x[i+1] );
-		if( k == -1 )  {
-			/* whole new span is off left side of old table */
-			newsamp->y[i] = 0;
-			continue;
-		}
-		if( j == -2 )  {
-			/* whole new span is off right side of old table */
-			newsamp->y[i] = 0;
-			continue;
-		}
-
-		if( j == k && j > 0 )  {
-			register fastf_t tmp;
-			/*
-			 *  Simple case, ends of output span are completely
-			 *  contained within one input span.
-			 *  Interpolate for both ends, take max.
-			 *  XXX this could be more efficiently written inline here.
-			 */
-			newsamp->y[i] = rt_table_lin_interp( olddata, newtable->x[i] );
-			tmp = rt_table_lin_interp( olddata, newtable->x[i+1] );
-			if( tmp > newsamp->y[i] )  newsamp->y[i] = tmp;
-		} else {
-			register fastf_t tmp, n;
-			register int	s;
-			/*
-			 *  Complex case: find good representative value.
-			 *  Interpolate both ends, and consider all
-			 *  intermediate old samples in span.  Take max.
-			 *  One (but not both) new ends may be off old table.
-			 */
-			n = rt_table_lin_interp( olddata, newtable->x[i] );
-			tmp = rt_table_lin_interp( olddata, newtable->x[i+1] );
-			if( tmp > n )  n = tmp;
-			for( s = j+1; s <= k; s++ )  {
-				if( (tmp = olddata->y[s]) > n )
-					n = tmp;
-			}
-			newsamp->y[i] = n;
-		}
-	}
-	return newsamp;
-}
-
-/*
- *			R T _ T A B D A T A _ R E S A M P L E _ A V G
- *
- *  Given a set of sampled data 'olddata', resample it for different
- *  spacing, by linearly interpolating the values when an output span
- *  is entirely contained within an input span, and by taking the
- *  average when an output span covers more than one input span.
- *
- *  This assumes interpretation (2) of the data, i.e. that the values
- *  are the average value across the interval.
- */
-struct rt_tabdata *
-rt_tabdata_resample_avg( newtable, olddata )
-CONST struct rt_table	*newtable;
-CONST struct rt_tabdata	*olddata;
-{
-	CONST struct rt_table	*oldtable;
-	struct rt_tabdata	*newsamp;
-	int			i;
-	int			j, k;
-
-	RT_CK_TABLE(newtable);
-	RT_CK_TABDATA(olddata);
-	oldtable = olddata->table;
-	RT_CK_TABLE(oldtable);
-
-	if( oldtable == newtable )  rt_log("rt_tabdata_resample_avg() NOTICE old and new rt_table structs are the same\n");
-
-	RT_GET_TABDATA( newsamp, newtable );
-
-	for( i = 0; i < newtable->nx; i++ )  {
-		/*
-		 *  Find good value(s) in olddata to represent the span from
-		 *  newtable->x[i] to newtable->x[i+1].
-		 */
-		j = rt_table_find_x( oldtable, newtable->x[i] );
-		k = rt_table_find_x( oldtable, newtable->x[i+1] );
-
-		if( j < 0 || k < 0 || j == k )  {
-			/*
-			 *  Simple case, ends of output span are completely
-			 *  contained within one input span.
-			 *  Interpolate for both ends, take average.
-			 *  XXX this could be more efficiently written inline here.
-			 */
-			newsamp->y[i] = 0.5 * (
-			    rt_table_lin_interp( olddata, newtable->x[i] ) +
-			    rt_table_lin_interp( olddata, newtable->x[i+1] ) );
-		} else {
-			/*
-			 *  Complex case: find average value.
-			 *  Interpolate both end, and consider all
-			 *  intermediate old spans.
-			 *  There are three parts to sum:
-			 *	Partial interval from newx[i] to j+1
-			 *	Full intervals from j+1 to k
-			 *	Partial interval from k to newx[i+1]
-			 */
-			fastf_t	w_frac;
-			fastf_t wsum;		/* weighted sum */
-			fastf_t	a,b;		/* values being averaged */
-			int	s;
-
-			/* Partial interval from newx[i] to j+1 */
-			a = rt_table_lin_interp( olddata, newtable->x[i] );	/* in "j" bin */
-			b = olddata->y[j+1];
-			wsum = 0.5 * (a+b) * (oldtable->x[j+1] - newtable->x[i] );
-
-			/* Full intervals from j+1 to k */
-			for( s = j+1; s < k; s++ )  {
-				a = olddata->y[s];
-				b = olddata->y[s+1];
-				wsum += 0.5 * (a+b) * (oldtable->x[s+1] - oldtable->x[s] );
-			}
-
-			/* Partial interval from k to newx[i+1] */
-			a = olddata->y[k];
-			b = rt_table_lin_interp( olddata, newtable->x[i+1] );	/* in "k" bin */
-			wsum += 0.5 * (a+b) * (newtable->x[i+1] - oldtable->x[k] );
-
-			/* Adjust the weighted sum by the total width */
-			newsamp->y[i] =
-				wsum / (newtable->x[i+1] - newtable->x[i]);
-		}
+		newsamp->y[i] = rt_table_lin_interp( olddata, newtable->x[i] );
 	}
 	return newsamp;
 }
@@ -704,9 +493,9 @@ CONST struct rt_table	*tabp;
 
 	RT_CK_TABLE(tabp);
 
-	bu_semaphore_acquire( BU_SEM_SYSCALL );
+	RES_ACQUIRE( &rt_g.res_syscall );
 	fp = fopen( filename, "w" );
-	bu_semaphore_release( BU_SEM_SYSCALL );
+	RES_RELEASE( &rt_g.res_syscall );
 
 	if( fp == NULL )  {
 		perror(filename);
@@ -714,13 +503,13 @@ CONST struct rt_table	*tabp;
 		return -1;
 	}
 
-	bu_semaphore_acquire( BU_SEM_SYSCALL );
+	RES_ACQUIRE( &rt_g.res_syscall );
 	fprintf(fp, "  %d sample starts, and one end.\n", tabp->nx );
 	for( j=0; j <= tabp->nx; j++ )  {
 		fprintf( fp, "%g\n", tabp->x[j] );
 	}
 	fclose(fp);
-	bu_semaphore_release( BU_SEM_SYSCALL );
+	RES_RELEASE( &rt_g.res_syscall );
 	return 0;
 }
 
@@ -741,9 +530,9 @@ CONST char	*filename;
 	int	nw;
 	int	j;
 
-	bu_semaphore_acquire( BU_SEM_SYSCALL );
+	RES_ACQUIRE( &rt_g.res_syscall );
 	fp = fopen( filename, "r" );
-	bu_semaphore_release( BU_SEM_SYSCALL );
+	RES_RELEASE( &rt_g.res_syscall );
 
 	if( fp == NULL )  {
 		perror(filename);
@@ -761,13 +550,13 @@ CONST char	*filename;
 
 	RT_GET_TABLE( tabp, nw );
 
-	bu_semaphore_acquire( BU_SEM_SYSCALL );
+	RES_ACQUIRE( &rt_g.res_syscall );
 	for( j=0; j <= tabp->nx; j++ )  {
 		/* XXX assumes fastf_t == double */
 		fscanf( fp, "%lf", &tabp->x[j] );
 	}
 	fclose(fp);
-	bu_semaphore_release( BU_SEM_SYSCALL );
+	RES_RELEASE( &rt_g.res_syscall );
 
 	rt_ck_table( tabp );
 
@@ -796,9 +585,9 @@ CONST struct rt_tabdata	*data;
 	tabp = data->table;
 	RT_CK_TABLE(tabp);
 
-	bu_semaphore_acquire( BU_SEM_SYSCALL );
+	RES_ACQUIRE( &rt_g.res_syscall );
 	fp = fopen( filename, "w" );
-	bu_semaphore_release( BU_SEM_SYSCALL );
+	RES_RELEASE( &rt_g.res_syscall );
 
 	if( fp == NULL )  {
 		perror(filename);
@@ -806,13 +595,12 @@ CONST struct rt_tabdata	*data;
 		return -1;
 	}
 
-	bu_semaphore_acquire( BU_SEM_SYSCALL );
+	RES_ACQUIRE( &rt_g.res_syscall );
 	for( j=0; j < tabp->nx; j++ )  {
 		fprintf( fp, "%g %g\n", tabp->x[j], data->y[j] );
 	}
-	fprintf( fp, "%g (novalue)\n", tabp->x[tabp->nx] );
 	fclose(fp);
-	bu_semaphore_release( BU_SEM_SYSCALL );
+	RES_RELEASE( &rt_g.res_syscall );
 	return 0;
 }
 
@@ -838,9 +626,9 @@ CONST char	*filename;
 	int	count = 0;
 	int	i;
 
-	bu_semaphore_acquire( BU_SEM_SYSCALL );
+	RES_ACQUIRE( &rt_g.res_syscall );
 	fp = fopen( filename, "r" );
-	bu_semaphore_release( BU_SEM_SYSCALL );
+	RES_RELEASE( &rt_g.res_syscall );
 
 	if( fp == NULL )  {
 		perror(filename);
@@ -849,20 +637,20 @@ CONST char	*filename;
 	}
 
 	/* First pass:  Count number of lines */
-	bu_semaphore_acquire( BU_SEM_SYSCALL );
+	RES_ACQUIRE( &rt_g.res_syscall );
 	for(;;)  {
 		if( fgets( buf, sizeof(buf), fp ) == NULL )  break;
 		count++;
 	}
 	fclose(fp);
-	bu_semaphore_release( BU_SEM_SYSCALL );
+	RES_RELEASE( &rt_g.res_syscall );
 
 	/* Allocate storage */
 	RT_GET_TABLE( tabp, count );
 	RT_GET_TABDATA( data, tabp );
 
 	/* Second pass:  Read only as much data as storage was allocated for */
-	bu_semaphore_acquire( BU_SEM_SYSCALL );
+	RES_ACQUIRE( &rt_g.res_syscall );
 	fp = fopen( filename, "r" );
 	for( i=0; i < count; i++ )  {
 		buf[0] = '\0';
@@ -873,7 +661,7 @@ CONST char	*filename;
 		sscanf( buf, "%lf %lf", &tabp->x[i], &data->y[i] );
 	}
 	fclose(fp);
-	bu_semaphore_release( BU_SEM_SYSCALL );
+	RES_RELEASE( &rt_g.res_syscall );
 
 	/* Complete final interval */
 	tabp->x[count] = 2 * tabp->x[count-1] - tabp->x[count-2];
@@ -983,101 +771,4 @@ CONST struct rt_tabdata	*in;
 		rt_bomb("rt_tabdata_copy(): different tabdata lengths?\n");
 
 	bcopy( (char *)in->y, (char *)out->y, in->ny * sizeof(fastf_t) );
-}
-
-/*
- *			R T _ T A B D A T A _ D U P
- */
-struct rt_tabdata *
-rt_tabdata_dup( in )
-CONST struct rt_tabdata	*in;
-{
-	struct rt_tabdata *data;
-
-	RT_CK_TABDATA( in );
-	RT_GET_TABDATA( data, in->table );
-
-	bcopy( (char *)in->y, (char *)data->y, in->ny * sizeof(fastf_t) );
-	return data;
-}
-
-/*
- *			R T _ T A B D A T A _ G E T _ C O N S T V A L
- *
- *  For a given table, allocate and return a tabdata structure
- *  with all elements initialized to 'val'.
- */
-struct rt_tabdata *
-rt_tabdata_get_constval( val, tabp )
-double			val;
-CONST struct rt_table	*tabp;
-{
-	struct rt_tabdata	*data;
-	int			todo;
-	register fastf_t	*op;
-
-	RT_CK_TABLE(tabp);
-	RT_GET_TABDATA( data, tabp );
-
-	op = data->y;
-	for( todo = data->ny-1; todo >= 0; todo-- )
-		*op++ = val;
-
-	return data;
-}
-
-/*
- *			R T _ T A B D A T A _ C O N S T V A L
- *
- *  Set all the tabdata elements to 'val'
- */
-void
-rt_tabdata_constval( data, val )
-struct rt_tabdata	*data;
-double			val;
-{
-	int			todo;
-	register fastf_t	*op;
-
-	RT_CK_TABDATA(data);
-
-	op = data->y;
-	for( todo = data->ny-1; todo >= 0; todo-- )
-		*op++ = val;
-}
-
-/*
- *			R T _ T A B D A T A _ T O _ T C L
- *
- *  Convert an rt_tabdata/rt_table pair into a Tcl compatible string
- *  appended to a VLS.  It will have form:
- *	x {...} y {...} nx # ymin # ymax #
- */
-void
-rt_tabdata_to_tcl( vp, data )
-struct bu_vls		*vp;
-CONST struct rt_tabdata	*data;
-{
-	CONST struct rt_table	*tabp;
-	register int i;
-	FAST fastf_t	minval = INFINITY, maxval = -INFINITY;
-
-	BU_CK_VLS(vp);
-	RT_CK_TABDATA(data);
-	tabp = data->table;
-	RT_CK_TABLE(tabp);
-
-	bu_vls_strcat(vp, "x {");
-	for( i=0; i < tabp->nx; i++ )  {
-		bu_vls_printf( vp, "%g ", tabp->x[i] );
-	}
-	bu_vls_strcat(vp, "} y {");
-	for( i=0; i < data->ny; i++ )  {
-		register fastf_t val = data->y[i];
-		bu_vls_printf( vp, "%g ", val );
-		if( val < minval )  minval = val;
-		if( val > maxval )  maxval = val;
-	}
-	bu_vls_printf( vp, "} nx %d ymin %g ymax %g",
-		tabp->nx, minval, maxval );
 }

@@ -233,7 +233,7 @@ reg	int	pid;
 		mutex_unlock();
 	}
 
-	fprintf(stderr, "cake internal error: waiting for nonactive process pid=%d\n", pid);
+	fprintf(stderr, "cake internal error: waiting for nonactive process %s\n", pid);
 	exit_cake(TRUE);
 	return status.w_status;	/* to shut up lint */
 }

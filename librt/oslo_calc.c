@@ -39,11 +39,10 @@
 #define AMIN(i,j)    ( (i) < (j) ? (i) : (j) )
 
 struct oslo_mat *
-rt_nurb_calc_oslo(order, tau_kv, t_kv, res )
+rt_nurb_calc_oslo(order, tau_kv, t_kv )
 register int order;
 register CONST struct knot_vector * tau_kv;	/* old knot vector */
 register struct knot_vector * t_kv;		/* new knot vector */
-struct resource *res;
 {
 	register fastf_t	*t_p;
 	register CONST fastf_t	*tau_p;
@@ -70,15 +69,9 @@ struct resource *res;
 
 	mu = 0;				/* initialize mu */
 
-	if( res )
-		head = (struct oslo_mat *) rt_pmalloc (
-		    sizeof( struct oslo_mat),
-		    &res->re_pmem );
-	else
-		head = (struct oslo_mat *) rt_malloc (
-		    sizeof( struct oslo_mat),
-		    "rt_nurb_calc_oslo: oslo mat head" );
-
+	head = (struct oslo_mat *) rt_malloc (
+	    sizeof( struct oslo_mat),
+	    "rt_nurb_calc_oslo: oslo mat head" );
 	o_ptr = head;
 
 	for (j = 0; j < n1; j++) {
@@ -86,15 +79,9 @@ struct resource *res;
 
 		if ( j != 0 )
 		{
-			if( res )
-				new_o = (struct oslo_mat *) rt_pmalloc ( 
-				    sizeof( struct oslo_mat), 
-				    &res->re_pmem );
-			else
-				new_o = (struct oslo_mat *) rt_malloc ( 
-				    sizeof( struct oslo_mat), 
-				    "rt_nurb_calc_oslo: oslo mat struct" );
-
+			new_o = (struct oslo_mat *) rt_malloc ( 
+			    sizeof( struct oslo_mat), 
+			    "rt_nurb_calc_oslo: oslo mat struct" );
 			o_ptr->next = new_o;
 			o_ptr = new_o;
 		}
@@ -169,12 +156,8 @@ struct resource *res;
 			}
 		}
 
-		if( res )
-			o_ptr->o_vec = (fastf_t *) rt_pmalloc ( sizeof( fastf_t) * (v+1),
-			    &res->re_pmem);
-		else
-			o_ptr->o_vec = (fastf_t *) rt_malloc ( sizeof( fastf_t) * (v+1),
-			    "rt_nurb_calc_oslo: oslo vector");
+		o_ptr->o_vec = (fastf_t *) rt_malloc ( sizeof( fastf_t) * (v+1),
+		    "rt_nurb_calc_oslo: oslo vector");
 
 		o_ptr->offset = AMAX(muprim -v,0);
 		o_ptr->osize = v;
@@ -200,7 +183,7 @@ struct oslo_mat * om;
 
 	for( omp = om; omp!= ( struct oslo_mat *) 0; omp = omp->next)
 	{
-		fprintf( stderr, "%lx offset %d osize %d next %lx\n",  omp,
+		fprintf( stderr, "%x offset %d osize %d next %x\n",  omp,
 		    omp->offset,  omp->osize,  omp->next);
 
 		fprintf(stderr,"\t%f",  omp->o_vec[0]);
@@ -216,9 +199,8 @@ struct oslo_mat * om;
  */
 
 void
-rt_nurb_free_oslo( om, res )
+rt_nurb_free_oslo( om )
 struct oslo_mat * om;
-struct resource *res;
 {
 	register struct oslo_mat * omp;
 
@@ -226,15 +208,7 @@ struct resource *res;
 	{
 		omp = om;
 		om = om->next;
-		if( res )
-		{
-			rt_pfree( (char *)omp->o_vec, &res->re_pmem);
-			rt_pfree( (char *)omp, &res->re_pmem);
-		}
-		else
-		{
-			rt_free( (char *)omp->o_vec, "rt_nurb_free_oslo: ovec");
-			rt_free( (char *)omp, "rt_nurb_free_oslo: struct oslo");
-		}
+		rt_free( (char *)omp->o_vec, "rt_nurb_free_oslo: ovec");
+		rt_free( (char *)omp, "rt_nurb_free_oslo: struct oslo");
 	}
 }

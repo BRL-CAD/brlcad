@@ -293,10 +293,8 @@ view:	printf("Title: ");
 				while((c=gc())!='\n') putchar(c);
 				putchar('\n');
 				if((i%20)==19){
-					char cbuf[16];
 					printf("(c)ontine,(s)top? ");
-					scanf("%1s", cbuf);
-					c = cbuf[0];
+					scanf("%1s",&c);
 					if(c=='s') break;
 				}
 			}

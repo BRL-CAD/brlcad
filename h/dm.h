@@ -2,17 +2,7 @@
 #define SEEN_DM_H
 
 #define DM_NULL (struct dm *)NULL
-
-/*
- * Display coordinate conversion:
- *  GED is using -2048..+2048,
- *  X is 0..width,0..height
- */
-#define DIVBY4096(x) (((double)(x))*0.0002441406)
-#define	GED_TO_Xx(_dmp, x) ((int)((DIVBY4096(x)+0.5)*_dmp->dm_width))
-#define	GED_TO_Xy(_dmp, x) ((int)((0.5-DIVBY4096(x))*_dmp->dm_height))
-#define Xx_TO_GED(_dmp, x) ((int)(((x)/(double)_dmp->dm_width - 0.5) * 4095))
-#define Xy_TO_GED(_dmp, x) ((int)((0.5 - (x)/(double)_dmp->dm_height) * 4095))
+#define DM_EVENT_HANDLER_NULL (int (*)())NULL
 
 #if IR_KNOBS
 #define NOISE 16		/* Size of dead spot on knob */
@@ -27,7 +17,6 @@
 #define FONT9	"9x15"
 
 /* Display Manager Types */
-#define DM_TYPE_BAD     -1
 #define DM_TYPE_NULL	0
 #define DM_TYPE_PLOT	1
 #define DM_TYPE_PS	2
@@ -79,11 +68,11 @@
 #define DM_WHITE_R	DM_COLOR_HI
 #define DM_WHITE_G	DM_COLOR_HI
 #define DM_WHITE_B	DM_COLOR_HI
-#define DM_BLACK	DM_BLACK_R, DM_BLACK_G, DM_BLACK_B
-#define DM_RED		DM_RED_R, DM_RED_G, DM_RED_B
-#define DM_BLUE		DM_BLUE_R, DM_BLUE_G, DM_BLUE_B
-#define DM_YELLOW	DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B
-#define DM_WHITE	DM_WHITE_R, DM_WHITE_G, DM_WHITE_B
+#define DM_BLACK	DM_BLACK_R,DM_BLACK_G,DM_BLACK_B
+#define DM_RED		DM_RED_R,DM_RED_G,DM_RED_B
+#define DM_BLUE		DM_BLUE_R,DM_BLUE_G,DM_BLUE_B
+#define DM_YELLOW	DM_YELLOW_R,DM_YELLOW_G,DM_YELLOW_B
+#define DM_WHITE	DM_WHITE_R,DM_WHITE_G,DM_WHITE_B
 #define DM_COPY_COLOR(_dr,_dg,_db,_sr,_sg,_sb){\
 	(_dr) = (_sr);\
 	(_dg) = (_sg);\
@@ -108,36 +97,25 @@
 #define LIGHT_ON	1
 #define LIGHT_RESET	2		/* all lights out */
 
-
-struct dm_vars {
-  genptr_t pub_vars;
-  genptr_t priv_vars;
-};
-
 /* Interface to a specific Display Manager */
 struct dm {
   int (*dm_close)();
   int (*dm_drawBegin)();	/* formerly dmr_prolog */
   int (*dm_drawEnd)();		/* formerly dmr_epilog */
   int (*dm_normal)();
-  int (*dm_loadMatrix)();
+  int (*dm_newrot)();
   int (*dm_drawString2D)();	/* formerly dmr_puts */
   int (*dm_drawLine2D)();	/* formerly dmr_2d_line */
-  int (*dm_drawPoint2D)();
+  int (*dm_drawVertex2D)();
   int (*dm_drawVList)();	/* formerly dmr_object */
-  int (*dm_setFGColor)();
-  int (*dm_setBGColor)();
-  int (*dm_getBGColor)();
+  int (*dm_setColor)();
   int (*dm_setLineAttr)();	/* currently - linewidth, (not-)dashed */
+  unsigned (*dm_cvtvecs)();	/* returns size requirement of subr */
+  unsigned (*dm_load)();	/* DMA the subr to device */
   int (*dm_setWinBounds)();
   int (*dm_debug)();		/* Set DM debug level */
-  int (*dm_beginDList)();
-  int (*dm_endDList)();
-  int (*dm_drawDList)();
-  int (*dm_freeDLists)();
-  unsigned long dm_id;          /* window id */
+  int (*dm_eventHandler)();	/* application provided dm-specific event handler */
   int dm_displaylist;		/* !0 means device has displaylist */
-  int dm_stereo;                /* stereo flag */
   double dm_bound;		/* zoom-in limit */
   char *dm_name;		/* short name of device */
   char *dm_lname;		/* long name of device */
@@ -149,49 +127,39 @@ struct dm {
   int dm_lineStyle;
   fastf_t dm_aspect;
   fastf_t *dm_vp;		/* XXX--ogl still depends on this--Viewscale pointer */
-  struct dm_vars dm_vars;	/* display manager dependant variables */
+  genptr_t dm_vars;		/* pointer to display manager dependant variables */
+  struct mem_map *dm_map;	/* displaylist mem map */
   struct bu_vls dm_pathName;	/* full Tcl/Tk name of drawing window */
   struct bu_vls dm_tkName;	/* short Tcl/Tk name of drawing window */
   struct bu_vls dm_dName;	/* Display name */
 };
 
-#define DM_OPEN(_type,_argc,_argv) dm_open(_type,_argc,_argv)
 #define DM_CLOSE(_dmp) _dmp->dm_close(_dmp)
 #define DM_DRAW_BEGIN(_dmp) _dmp->dm_drawBegin(_dmp)
 #define DM_DRAW_END(_dmp) _dmp->dm_drawEnd(_dmp)
 #define DM_NORMAL(_dmp) _dmp->dm_normal(_dmp)
-#define DM_LOADMATRIX(_dmp,_mat,_eye) _dmp->dm_loadMatrix(_dmp,_mat,_eye)
+#define DM_NEWROT(_dmp,_mat,_eye) _dmp->dm_newrot(_dmp,_mat,_eye)
 #define DM_DRAW_STRING_2D(_dmp,_str,_x,_y,_size,_use_aspect)\
      _dmp->dm_drawString2D(_dmp,_str,_x,_y,_size,_use_aspect)
-#define DM_DRAW_LINE_2D(_dmp,_x1,_y1,_x2,_y2) _dmp->dm_drawLine2D(_dmp,_x1,_y1,_x2,_y2)
-#define DM_DRAW_POINT_2D(_dmp,_x,_y) _dmp->dm_drawPoint2D(_dmp,_x,_y)
-#define DM_DRAW_VLIST(_dmp,_vlist,_persp) _dmp->dm_drawVList(_dmp,_vlist,_persp)
-#define DM_SET_FGCOLOR(_dmp,_r,_g,_b,_strict) _dmp->dm_setFGColor(_dmp,_r,_g,_b,_strict)
-#define DM_SET_BGCOLOR(_dmp,_r,_g,_b) _dmp->dm_setBGColor(_dmp,_r,_g,_b)
-#define DM_GET_BGCOLOR(_dmp,_interp) _dmp->dm_getBGColor(_dmp,_interp)
-#define DM_SET_LINE_ATTR(_dmp,_width,_dashed) _dmp->dm_setLineAttr(_dmp,_width,_dashed)
+#define DM_DRAW_LINE_2D(_dmp,_x1,_y1,_x2,_y2)\
+     _dmp->dm_drawLine2D(_dmp,_x1,_y1,_x2,_y2)
+#define DM_DRAW_VERTEX_2D(_dmp,_x,_y) _dmp->dm_drawVertex2D(_dmp,_x,_y)
+#define DM_DRAW_VLIST(_dmp,_vlist,_mat) _dmp->dm_drawVList(_dmp,_vlist,_mat)
+#define DM_SET_COLOR(_dmp,_r,_g,_b,_strict) _dmp->dm_setColor(_dmp,_r,_g,_b,_strict)
+#define DM_SET_LINE_ATTR(_dmp,_width,_dashed)\
+     _dmp->dm_setLineAttr(_dmp,_width,_dashed)
+#define DM_CVTVECS(_dmp,_sp) _dmp->dm_cvtvecs(_dmp,_sp)
+#define DM_LOAD(_dmp,_saddr,_sbytes) _dmp->dm_load(_dmp,_saddr,_sbytes)
 #define DM_SET_WIN_BOUNDS(_dmp,_w) _dmp->dm_setWinBounds(_dmp,_w)
 #define DM_DEBUG(_dmp,_lvl) _dmp->dm_debug(_dmp,_lvl)
-#define DM_BEGINDLIST(_dmp,_list) _dmp->dm_beginDList(_dmp,_list)
-#define DM_ENDDLIST(_dmp) _dmp->dm_endDList(_dmp)
-#define DM_DRAWDLIST(_dmp,_list) _dmp->dm_drawDList(_dmp,_list)
-#define DM_FREEDLISTS(_dmp,_list,_range) _dmp->dm_freeDLists(_dmp,_list,_range)
 
-extern int dm_tclInit();
 extern struct dm *dm_open();
-extern fastf_t dm_Xx2Normal();
-extern int dm_Normal2Xx();
-extern fastf_t dm_Xy2Normal();
-extern int dm_Normal2Xy();
-extern int dm_processOptions();
+extern int dm_process_options();
 extern int dm_limit();
 extern int dm_unlimit();
 extern fastf_t dm_wrap();
 extern void Nu_void();
 extern int Nu_int0();
 extern unsigned Nu_unsign();
-extern void dm_configureWindowShape();
-extern void dm_zbuffer();
-extern void dm_lighting();
 extern Tcl_Interp *interp;   /* This must be defined by the application */
 #endif /* SEEN_DM_H */

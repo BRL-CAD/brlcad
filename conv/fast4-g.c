@@ -1003,7 +1003,7 @@ struct faceuse *fu;
 	while( dup_count > dup_size-1 )
 	{
 		dup_size += DUP_BLOCK;
-		dup_fu = (struct faceuse **)bu_realloc( (char *)dup_fu, dup_size, "realloc dup_fu" );
+		dup_fu = (struct faceuse **)bu_realloc( dup_fu, dup_size, "realloc dup_fu" );
 	}
 
 	dup_fu[dup_count] = fu;
@@ -4346,53 +4346,7 @@ struct shell *sh;
 			}
 		}
 	}
-}
 
-void
-Check_edge_uses()
-{
-	struct bu_ptbl edges;
-	int i;
-	int use_count;
-
-	if( !m )
-		return;
-
-	bu_ptbl_init( &edges, 64, "edge list" );
-
-	nmg_edge_tabulate( &edges, &m->magic );
-
-	for( i=0 ; i<BU_PTBL_END( &edges ) ; i++ )
-	{
-		struct edge *e;
-		struct edgeuse *eu_start;
-		struct edgeuse *eu;
-
-		e = (struct edge *)BU_PTBL_GET( &edges, i );
-
-		use_count = 1;
-		eu_start = e->eu_p;
-		eu = eu_start->radial_p->eumate_p;
-		while( eu != eu_start && eu->eumate_p != eu_start )
-		{
-			eu = eu->radial_p->eumate_p;
-			use_count++;
-		}
-
-		if( use_count != 2 )
-		{
-			struct vertex_g *vg1, *vg2;
-
-			vg1 = eu->vu_p->v_p->vg_p;
-			vg2 = eu->eumate_p->vu_p->v_p->vg_p;
-
-			bu_log( "\tedge has %d uses (should always be 2!!!)\n", use_count );
-			bu_log( "\t\t(%g %g %g) <-> (%g %g %g)\n",
-				V3ARGS( vg1->coord ), V3ARGS( vg2->coord ) );
-		}
-	}
-
-	bu_ptbl_free( &edges );
 }
 
 int
@@ -4462,9 +4416,6 @@ make_nmg_objects()
 
 	if( mode == VOLUME_MODE )
 	{
-		/* check for edges with wrong number of uses */
-		Check_edge_uses();
-
 		/* check for extra internal faces based on list of duplicates */
 		Rm_internal_faces();
 

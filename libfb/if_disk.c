@@ -64,8 +64,6 @@ FBIO disk_interface = {
 	fb_sim_getcursor,	/* get cursor */
 	fb_sim_readrect,
 	fb_sim_writerect,
-	fb_sim_bwreadrect,
-	fb_sim_bwwriterect,
 	fb_null,		/* poll */
 	fb_null,		/* flush */
 	dsk_free,
@@ -117,7 +115,7 @@ int	width, height;
 		 *  If it does not, then this can be stacked with /dev/mem,
 		 *  i.e.	/dev/mem -
 		 */
-		ifp->if_fd = 1;		/* fileno(stdout) */
+		ifp->if_fd = 1;		/* fileno(stdin) */
 		ifp->if_width = width;
 		ifp->if_height = height;
 		ifp->if_seekpos = 0L;
@@ -188,40 +186,28 @@ int	count;
 	register long todo;
 	long		got;
 	long		dest;
-	long		bytes_read = 0;
-	int		fd = ifp->if_fd;
-
-	/* Reads on stdout make no sense.  Take reads from stdin. */
-	if( fd == 1 )  fd = 0;
 
 	dest = (((long) y * (long) ifp->if_width) + (long) x)
 	     * (long) sizeof(RGBpixel);
-	if( ifp->if_seekpos != dest && lseek(fd, (off_t)dest, 0) == -1L ) {
+	if( lseek(ifp->if_fd, (off_t)dest, 0) == -1L ) {
 		fb_log( "disk_buffer_read : seek to %ld failed.\n", dest );
 		return	-1;
 	}
 	ifp->if_seekpos = dest;
 	while( bytes > 0 ) {
 		todo = bytes;
-		if( (got = read( fd, (char *) pixelp, todo )) != todo )  {
-			if( got == 0 )  {
-				if( bytes_read <= 0 )
-					return -1;	/* error */
-				/* early EOF -- indicate what we got */
-				return bytes_read/sizeof(RGBpixel);
+		if( (got = read( ifp->if_fd, (char *) pixelp, todo )) != todo )  {
+			if( got != 0 )  {
+				fb_log("disk_buffer_read: read failed\n");
+				return	-1;
 			}
-			if( fd != 0 )  {
-				/* This happens all the time reading from pipes */
-				fb_log("disk_buffer_read(fd=%d): y=%d read of %d got %d bytes\n",
-					fd, y, todo, got);
-			}
+			return  0;
 		}
-		bytes -= got;
-		pixelp += got;
-		ifp->if_seekpos += got;
-		bytes_read += got;
+		bytes -= todo;
+		pixelp += todo / sizeof(RGBpixel);
+		ifp->if_seekpos += todo;
 	}
-	return	bytes_read/sizeof(RGBpixel);
+	return	count;
 }
 
 _LOCAL_ int
@@ -262,18 +248,12 @@ dsk_rmap( ifp, cmap )
 FBIO	*ifp;
 ColorMap	*cmap;
 {
-	int		fd = ifp->if_fd;
-
-	/* Reads on stdout make no sense.  Take reads from stdin. */
-	if( fd == 1 )  fd = 0;
-
-	if( ifp->if_seekpos != FILE_CMAP_ADDR &&
-	    lseek( fd, (off_t)FILE_CMAP_ADDR, 0 ) == -1 ) {
+	if( lseek( ifp->if_fd, (off_t)FILE_CMAP_ADDR, 0 ) == -1 ) {
 		fb_log(	"disk_colormap_read : seek to %ld failed.\n",
 				FILE_CMAP_ADDR );
 	   	return	-1;
 	}
-	if( read( fd, (char *) cmap, sizeof(ColorMap) )
+	if( read( ifp->if_fd, (char *) cmap, sizeof(ColorMap) )
 		!= sizeof(ColorMap) ) {
 		/* Not necessarily an error.  It is not required
 		 * that a color map be saved and the standard 
@@ -366,12 +346,8 @@ FBIO	*ifp;
 	fb_log( "Default width/height: %d %d\n",
 		disk_interface.if_width,
 		disk_interface.if_height );
-	if( ifp->if_fd == 1 )  {
-		fb_log("File \"-\" reads from stdin, writes to stdout\n");
-	} else {
-		fb_log( "Note: you may have just created a disk file\n" );
-		fb_log( "called \"%s\" by running this.\n", ifp->if_name );
-	}
+	fb_log( "Note: you may have just created a disk file\n" );
+	fb_log( "called \"%s\" by running this.\n", ifp->if_name );
 
 	return(0);
 }

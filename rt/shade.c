@@ -33,12 +33,13 @@ static char RCSview[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "rtlist.h"
 #include "raytrace.h"
-#include "shadefuncs.h"
-#include "shadework.h"
 #include "./ext.h"
 #include "./rdebug.h"
+#include "./material.h"
 #include "./mathtab.h"
 #include "./light.h"
+
+extern int	light_hit(), light_miss();	/* in light.c */
 
 HIDDEN void	shade_inputs();
 
@@ -260,48 +261,4 @@ register int	want;
 		rt_log("shade_inputs:  unable to satisfy request for x%x\n", want);
 }
 
-/*
- *			P R _ S H A D E W O R K
- *
- *  Pretty print a shadework structure.
- */
-void
-pr_shadework( str, swp )
-CONST char *str;
-register CONST struct shadework *swp;
-{
-	int	i;
 
-	rt_log( "Shadework %s: 0x%x\n", str, swp );
-	if (swp->sw_inputs && MFI_HIT)
-		rt_log( " sw_hit.dist:%g  sw_hit.point(%g %g %g)\n",
-			swp->sw_hit.hit_dist, 
-			V3ARGS(swp->sw_hit.hit_point));
-	else
-		rt_log( " sw_hit.dist:%g\n", swp->sw_hit.hit_dist);
-
-	if (swp->sw_inputs && MFI_NORMAL) 
-		rt_log(" sw_hit.normal(%g %g %g)\n",
-			V3ARGS(swp->sw_hit.hit_normal));
-
-
-	rt_log( " sw_transmit %f\n", swp->sw_transmit );
-	rt_log( " sw_reflect %f\n", swp->sw_reflect );
-	rt_log( " sw_refract_index %f\n", swp->sw_refrac_index );
-	rt_log( " sw_extinction %f\n", swp->sw_extinction );
-	VPRINT( " sw_color", swp->sw_color );
-	VPRINT( " sw_basecolor", swp->sw_basecolor );
-	rt_log( " sw_uv  %f %f\n", swp->sw_uv.uv_u, swp->sw_uv.uv_v );
-	rt_log( " sw_dudv  %f %f\n", swp->sw_uv.uv_du, swp->sw_uv.uv_dv );
-	rt_log( " sw_xmitonly %d\n", swp->sw_xmitonly );
-	rt_printb( " sw_inputs", swp->sw_inputs,
-		"\020\4HIT\3LIGHT\2UV\1NORMAL" );
-	rt_log( "\n");
-	for( i=0; i < SW_NLIGHTS; i++ )  {
-		if( swp->sw_visible[i] == (char *)0 )  continue;
-		rt_log("   light %d visible, intensity=%g, dir=(%g,%g,%g)\n",
-			i,
-			swp->sw_intensity[i],
-			V3ARGS(&swp->sw_tolight[i*3]) );
-	}
-}

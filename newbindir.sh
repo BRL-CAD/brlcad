@@ -12,13 +12,6 @@
 #  Once this script is run, the "master" definition of BASEDIR is
 #  kept in "machinetype.sh"
 #
-#  Changed since Release 4.5:
-#  Nearly everything responds to the environment variable BRLCAD_ROOT,
-#  and either obtains it in C by calling bu_brlcad_path(),
-#  or in scripts via "machinetype.sh -v".
-#  Cake has been modified to pluck BRLCAD_ROOT out of it's envinronment
-#  and send it through to CPP, so even the Cakefiles can see it.
-#
 #  $Header$
 
 eval `grep "^BASEDIR=" sh/machinetype.sh`		# sets BASEDIR
@@ -45,21 +38,21 @@ echo
 #  Replace one path with another, in all the files that matter.
 
 for i in \
-	libbu/brlcad_path.c \
-	canon/canonserver.c
+	sh/machinetype.sh \
+	Cakefile.defs \
+	cake/Makefile cakeaux/Makefile \
+	remrt/remrt.c libbu/vfont.c \
+	fb/cat-fb.c canon/canonserver.c \
+	h/tcl.h libtk/tkInt.h \
+	mged/cmd.c \
+	brlman/awf brlman/brlman
 do
-	if [ -f $i ] ; then
-
-		mv -f $i ${i}.oldbindir
-		cp ${i}.oldbindir {$i}
-		chmod 775 $i
-		ed - $i << EOF
+	chmod 775 $i
+	ed - $i << EOF
 f
-g,$BASEDIR,s,,$NEW,gp
+g,$BASEDIR,s,,$NEW,p
 w
 q
 EOF
-		chmod 555 $i
-	fi
-
+	chmod 555 $i
 done

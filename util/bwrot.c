@@ -186,8 +186,6 @@ int argc; char **argv;
 	while( yin < nyin ) {
 		/* Fill buffer */
 		fill_buffer();
-		if( !buflines )
-			break;
 		if( reverse )
 			reverse_buffer();
 		if( plus90 ) {

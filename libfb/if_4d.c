@@ -1,11 +1,10 @@
 /*
  *			I F _ 4 D . C
  *
- *  BRL-CAD Frame Buffer Library interface for SGI Iris-4D
- *  running the IRIX32 operating system with the GL graphics library.
+ *  BRL Frame Buffer Library interface for SGI Iris-4D, and
+ *  SGI Iris-4D with Graphics Turbo.
  *  Support for the 3030/2400 series ("Iris-3D") is in if_sgi.c
- *  However, both are called /dev/sgi
- *  Support for OpenGL is found in if_ogl.c
+ *  However, all are called /dev/sgi
  *
  *  In order to use a large chunck of memory with the shared memory 
  *  system it is necessary to increase the shmmax and shmall paramaters
@@ -88,8 +87,6 @@ _LOCAL_ void	gt_zbuf_to_screen(FBIO	*ifp, int one_y);
 #else
 _LOCAL_ void	gt_zbuf_to_screen();
 #endif
-_LOCAL_ void	fake_rectwrite();
-_LOCAL_ void	sgi_clipper();
 
 /* Exported routines */
 _LOCAL_ int	sgi_open(),
@@ -127,8 +124,6 @@ FBIO sgi_interface =
 		fb_sim_getcursor,
 		fb_sim_readrect,
 		sgi_writerect,
-		fb_sim_bwreadrect,
-		fb_sim_bwwriterect,
 		sgi_poll,		/* handle events */
 		sgi_flush,		/* flush */
 		sgi_free,		/* free*/
@@ -263,9 +258,9 @@ struct sgiinfo {
 #define MODE_10NORMAL	(0<<9)
 #define MODE_10SYNC_ON_GREEN	(1<<9)
 
-#define MODE_12MASK	(1<<11)
-#define MODE_12NORMAL	(0<<11)
-#define MODE_12DELAY_WRITES_TILL_FLUSH	(1<<11)
+#define MODE_11MASK	(1<<10)
+#define MODE_11NORMAL	(0<<10)
+#define MODE_11DELAY_WRITES_TILL_FLUSH	(1<<10)
 
 #define MODE_15MASK	(1<<14)
 #define MODE_15NORMAL	(0<<14)
@@ -297,7 +292,7 @@ static struct modeflags {
 		"Don't use GT & Z-buffer hardware, if present (debug)" },
 	{ 's',	MODE_9MASK, MODE_9SINGLEBUF,
 		"On GT, single buffer, don't double buffer" },
-	{ 'D',	MODE_12DELAY_WRITES_TILL_FLUSH, MODE_12DELAY_WRITES_TILL_FLUSH,
+	{ 'd',	MODE_11DELAY_WRITES_TILL_FLUSH, MODE_11DELAY_WRITES_TILL_FLUSH,
 		"Don't update screen until fb_flush() is called.  (Double buffer sim)" },
 	{ 'z',	MODE_15MASK, MODE_15ZAP,
 		"Zap (free) shared memory.  Can also be done with fbfree command" },
@@ -1117,7 +1112,7 @@ int	width, height;
 	/*
 	 *  Set the operating mode for the newly created window.
 	 */
-	if( (ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH )
+	if( (ifp->if_mode & MODE_11MASK) == MODE_11DELAY_WRITES_TILL_FLUSH )
 		SGI(ifp)->mi_is_gt = 0;
 	if( SGI(ifp)->mi_is_gt )  {
 		if( (ifp->if_mode & MODE_9MASK) == MODE_9SINGLEBUF )  {
@@ -1212,7 +1207,7 @@ int	width, height;
 	 *  Display the existing contents of the memory segment.
 	 *  Make no assumptions about the state of the window.
 	 */
-	if( (ifp->if_mode & MODE_12MASK) != MODE_12DELAY_WRITES_TILL_FLUSH )  {
+	if( (ifp->if_mode & MODE_11MASK) != MODE_11DELAY_WRITES_TILL_FLUSH )  {
 		sgi_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
 		if( SGI(ifp)->mi_is_gt )  {
 			gt_zbuf_to_screen( ifp, -1 );
@@ -1726,7 +1721,7 @@ int		count;
 	if( qtest() )
 		sgi_inqueue(ifp);
 
-	if( (ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH )
+	if( (ifp->if_mode & MODE_11MASK) == MODE_11DELAY_WRITES_TILL_FLUSH )
 		return ret;
 
 	if( xstart + count <= ifp->if_width  )  {
@@ -1800,7 +1795,7 @@ CONST unsigned char	*pp;
 	if( qtest() )
 		sgi_inqueue(ifp);
 
-	if( (ifp->if_mode & MODE_12MASK) != MODE_12DELAY_WRITES_TILL_FLUSH )  {
+	if( (ifp->if_mode & MODE_11MASK) != MODE_11DELAY_WRITES_TILL_FLUSH )  {
 		sgi_xmit_scanlines( ifp, ymin, height, 0, ifp->if_width );
 		if( SGI(ifp)->mi_is_gt )  {
 			/* repaint screen from Z buffer */
@@ -2094,7 +2089,7 @@ _LOCAL_ int
 sgi_flush( ifp )
 FBIO	*ifp;
 {
-	if( (ifp->if_mode & MODE_12MASK) != MODE_12DELAY_WRITES_TILL_FLUSH )
+	if( (ifp->if_mode & MODE_11MASK) != MODE_11DELAY_WRITES_TILL_FLUSH )
 		return 0;
 
 	winset(ifp->if_fd);
@@ -2192,7 +2187,6 @@ int		one_y;
  *  The screen coordinates of the lower left pixle in view are:
  *	(xscroff, yscroff)
  */
-_LOCAL_ void
 sgi_clipper( ifp, clp )
 register FBIO	*ifp;
 register struct sgi_clip	*clp;
@@ -2249,7 +2243,6 @@ register struct sgi_clip	*clp;
  * is more inefficient than is necessary.  However, this required the
  * calling sequences to be somewhat altered -vs- the lrectwrite() replaced.
  */
-_LOCAL_ void
 fake_rectwrite( x1, y1, x2, y2, pixels)
 short	x1, y1;
 short	x2, y2;

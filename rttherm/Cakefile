@@ -1,14 +1,14 @@
 /*
- *			rttherm/Cakefile
+ *			rt/Cakefile
  *
  *  $Header$
  */
+#define CONFIGDEFS	RT_CONFIG
 
-/* This shows up in CFLAGS */
-#define CONFIGDEFS	RT_CONFIG -DRT_MULTISPECTRAL
-
-#define SRCDIR	rttherm
-#define PRODUCTS	rttherm disp
+#define SRCDIR	rt
+#define PRODUCTS	rt rtrad rtpp rtray rtshot rtwalk rtcheck \
+			rtg3 rtcell rtxray rthide rtfrac rtrange \
+			rtregis rtscale rtsil
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
@@ -17,35 +17,159 @@
 
 /* light.h material.h mathtab.h rad.h rdebug.h */
 #define FILES	\
-	viewtherm disp
+	rtshot \
+	main opt do worker \
+	view viewpp viewray viewrad viewcheck viewg3 \
+	shade sh_text sh_cloud mathtab \
+	material refract sh_stack \
+	sh_plastic sh_cook wray sh_spm sh_light \
+	turb sh_marble sh_wood sh_stxt sh_points sh_toyota \
+	sh_camo sh_scloud sh_air sh_fire sh_cs sh_rtrans sh_brdf \
+	sh_gauss sh_paint sh_noise sh_prj
 
-#if NFS
-#	define	RTDIR	../.rt.MTYPE
-#else
-#	define	RTDIR	../rt
-#endif
 
 /*  The "top-half" (user interface) for the RT family of programs */
-#define RTUIF	RTDIR/main.o RTDIR/opt.o RTDIR/do.o RTDIR/worker.o RTDIR/mathtab.o
-
-/* Specially compiled versions */
-refract.o: ../rt/refract.c
-	CC CFLAGS -c ../rt/refract.c
+#define RTUIF	main.o opt.o do.o worker.o mathtab.o
 
 /* Explicit composition of each product */
 
-#define RTTHERM_OBJ	RTUIF viewtherm.o RTDIR/wray.o spectrum.o
+#define	RT_OBJ	RTUIF view.o wray.o material.o refract.o \
+		shade.o sh_text.o sh_cloud.o sh_stack.o sh_plastic.o \
+		sh_cook.o sh_spm.o sh_light.o turb.o sh_marble.o sh_wood.o \
+		sh_stxt.o sh_points.o sh_toyota.o \
+		sh_camo.o sh_scloud.o sh_air.o \
+		sh_fire.o sh_cs.o sh_rtrans.o sh_brdf.o \
+		sh_gauss.o sh_paint.o sh_noise.o sh_prj.o
 
-rttherm:	RTTHERM_OBJ LIBMULTISPECTRAL_DEP LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
+rt:	RT_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	newvers.sh version "Ray-Tracer"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS RT_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBTK LIBTCL LIBTCL_LIBES LIBES -o rt
+
+
+#define RTRAY_OBJ	RTUIF viewray.o wray.o
+
+rtray:	RTRAY_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	newvers.sh version "RT Ray"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS RTRAY_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rtray
+
+#define RTPP_OBJ	RTUIF viewpp.o
+
+rtpp:	RTPP_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	newvers.sh version "RT pretty-picture"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS RTPP_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rtpp
+
+#define RTXRAY_OBJ	RTUIF viewxray.o
+
+rtxray:	RTXRAY_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	newvers.sh version "RT X-Ray"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS RTXRAY_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rtxray
+
+#define RTRAD_OBJ	RTUIF viewrad.o
+
+rtrad:	RTRAD_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	newvers.sh version "RT Rad"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS RTRAD_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rtrad
+
+#define RTSCAT_OBJ	RTUIF viewscat.o
+
+rtbscat: RTSCAT_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	newvers.sh version "RT BackScatter"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS RTSCAT_OBJ vers.o LIBRAD LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rtbscat
+
+#define RTCHECK_OBJ	RTUIF viewcheck.o
+
+rtcheck: RTCHECK_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	newvers.sh version "RT Check"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS RTCHECK_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rtcheck
+
+rtshot:	rtshot.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS rtshot.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o rtshot
+
+rtwalk:	rtwalk.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS rtwalk.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o rtwalk
+
+#define RTG3_OBJ	RTUIF viewg3.o
+
+rtg3:	RTG3_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	newvers.sh version "RTG3"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS RTG3_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rtg3
+
+#define RTCELL_OBJ	RTUIF viewcell.o
+
+rtcell:	RTCELL_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	newvers.sh version "RTCELL"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS RTCELL_OBJ vers.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBFB LIBFB_LIBES LIBES -o rtcell
+
+#define RTHIDE_OBJ	RTUIF viewhide.o
+
+rthide:	RTHIDE_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	newvers.sh version "RT Hidden-Line Plot"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS RTHIDE_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rthide
+
+#define RTFRAC_OBJ	RTUIF viewfrac.o
+
+rtfrac:	RTFRAC_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	newvers.sh version "RT Volume Fractions"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS RTFRAC_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rtfrac
+
+#define RTRANGE_OBJ	RTUIF viewrange.o
+
+rtrange:	RTRANGE_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	newvers.sh version "RT Range Plot"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS RTRANGE_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rtrange
+
+#define RTDUMMY_OBJ	RTUIF viewdummy.o
+
+rtdummy:	RTDUMMY_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	newvers.sh version "RT Dummy"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS RTDUMMY_OBJ vers.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBFB LIBFB_LIBES LIBES -o rtdummy
+
+#define RT3D_OBJ  RTUIF view3d.o
+
+rt3d:	RT3D_OBJ  LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	newvers.sh version "RT 3D"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS RT3D_OBJ vers.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBFB LIBFB_LIBES LIBES -o rt3d
+
+
+rtexample:	rtexample.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	CC LDFLAGS rtexample.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBFB LIBFB_LIBES LIBES -o rtexample
+
+rtregis:	rtregis.o read-rtlog.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS rtregis.o read-rtlog.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o rtregis
+
+rtscale:	rtscale.o read-rtlog.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS rtscale.o read-rtlog.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBWDB LIBES -o rtscale
+
+#define RTTHERM_OBJ	RTUIF viewtherm.o wray.o spectrum.o
+
+rttherm:	RTTHERM_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
 	newvers.sh version "Thermal RT"
 	CC CFLAGS -c vers.c
-	CC LDFLAGS RTTHERM_OBJ vers.o LIBMULTISPECTRAL LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rttherm
+	CC LDFLAGS RTTHERM_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rttherm
+
+#define RTSIL_OBJ	RTUIF viewsil.o
+
+rtsil:	RTSIL_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	newvers.sh version "RT Silhouette"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS RTSIL_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rtsil
 
 /* Temp hack -Mike */
 disp:	disp.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP LIBTCL_DEP LIBTK_DEP spectrum.o
-	CC LDFLAGS disp.o spectrum.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBWDB LIBTK LIBTCL LIBTCL_LIBES LIBFB LIBFB_LIBES LIBES -o disp
-
-pixtest: pixtest.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP LIBTK_DEP spectrum.o
-	CC LDFLAGS pixtest.o spectrum.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBWDB LIBTK LIBTCL LIBTCL_LIBES LIBFB LIBFB_LIBES LIBES -o pixtest
+	CC LDFLAGS disp.o spectrum.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBWDB LIBFB LIBFB_LIBES LIBTK LIBTCL LIBTCL_LIBES LIBES -o disp
 
 #include "../Cakefile.rules"

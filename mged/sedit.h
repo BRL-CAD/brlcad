@@ -21,8 +21,6 @@
  *  $Header$
  */
 
-#define MGED_SMALL_SCALE 1.0e-10
-
 /* These EDIT_CLASS_ values go in es_edclass. */
 #define EDIT_CLASS_NULL 0
 #define EDIT_CLASS_TRAN 1
@@ -156,54 +154,25 @@
 		     es_edflag == ECMD_PIPE_PT_INS || \
 		     es_edflag == ECMD_ARS_PICK))
 
-extern vect_t edit_absolute_model_rotate; 
-extern vect_t edit_absolute_object_rotate;
-extern vect_t edit_absolute_view_rotate;
-extern vect_t last_edit_absolute_model_rotate;
-extern vect_t last_edit_absolute_object_rotate;
-extern vect_t last_edit_absolute_view_rotate;
-extern vect_t edit_rate_model_rotate;
-extern vect_t edit_rate_object_rotate;
-extern vect_t edit_rate_view_rotate;
-extern int edit_rateflag_model_rotate;
-extern int edit_rateflag_object_rotate;
-extern int edit_rateflag_view_rotate;
+extern vect_t edit_absolute_rotate;
+extern vect_t last_edit_absolute_rotate;
+extern vect_t edit_rate_rotate;
+extern int edit_rateflag_rotate;
 
-extern vect_t edit_absolute_model_tran;
-extern vect_t edit_absolute_view_tran;
-extern vect_t last_edit_absolute_model_tran;
-extern vect_t last_edit_absolute_view_tran;
-extern vect_t edit_rate_model_tran;
-extern vect_t edit_rate_view_tran;
-extern int edit_rateflag_model_tran;
-extern int edit_rateflag_view_tran;
+extern vect_t edit_absolute_tran;
+extern vect_t edit_rate_tran;
+extern int edit_rateflag_tran;
 
 extern fastf_t edit_absolute_scale;
 extern fastf_t edit_rate_scale;
 extern int edit_rateflag_scale;
 
-extern char edit_rate_model_origin;
-extern char edit_rate_object_origin;
-extern char edit_rate_view_origin;
-extern char edit_rate_coords;
-extern struct dm_list *edit_rate_mr_dm_list;
-extern struct dm_list *edit_rate_or_dm_list;
-extern struct dm_list *edit_rate_vr_dm_list;
-extern struct dm_list *edit_rate_mt_dm_list;
-extern struct dm_list *edit_rate_vt_dm_list;
-
 extern struct bu_vls edit_info_vls;
-extern struct bu_vls edit_rate_model_tran_vls[3];
-extern struct bu_vls edit_rate_view_tran_vls[3];
-extern struct bu_vls edit_rate_model_rotate_vls[3];
-extern struct bu_vls edit_rate_object_rotate_vls[3];
-extern struct bu_vls edit_rate_view_rotate_vls[3];
+extern struct bu_vls edit_rate_tran_vls[3];
+extern struct bu_vls edit_rate_rotate_vls[3];
 extern struct bu_vls edit_rate_scale_vls;
-extern struct bu_vls edit_absolute_model_tran_vls[3];
-extern struct bu_vls edit_absolute_view_tran_vls[3];
-extern struct bu_vls edit_absolute_model_rotate_vls[3];
-extern struct bu_vls edit_absolute_object_rotate_vls[3];
-extern struct bu_vls edit_absolute_view_rotate_vls[3];
+extern struct bu_vls edit_absolute_tran_vls[3];
+extern struct bu_vls edit_absolute_rotate_vls[3];
 extern struct bu_vls edit_absolute_scale_vls;
 
 extern fastf_t	es_scale;		/* scale factor */

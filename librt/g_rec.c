@@ -400,9 +400,8 @@ struct seg		*seghead;
 	LOCAL vect_t	pprime;		/* P' */
 	LOCAL fastf_t	k1, k2;		/* distance constants of solution */
 	LOCAL vect_t	xlated;		/* translated vector */
-	LOCAL struct hit hits[4];	/* 4 potential hit points */
+	LOCAL struct hit hits[3];	/* 4 potential hit points */
 	register struct hit *hitp;	/* pointer to hit point */
-	int		nhits = 0;	/* Number of hit points */
 
 	hitp = &hits[0];
 
@@ -439,21 +438,21 @@ struct seg		*seghead;
 	if( hitp->hit_vpriv[Z] >= 0.0 && hitp->hit_vpriv[Z] <= 1.0 ) {
 		hitp->hit_dist = k1;
 		hitp->hit_surfno = REC_NORM_BODY;	/* compute N */
-		hitp++; nhits++;
+		hitp++;
 	}
 
 	VJOIN1( hitp->hit_vpriv, pprime, k2, dprime );		/* hit' */
 	if( hitp->hit_vpriv[Z] >= 0.0 && hitp->hit_vpriv[Z] <= 1.0 )  {
 		hitp->hit_dist = k2;
 		hitp->hit_surfno = REC_NORM_BODY;	/* compute N */
-		hitp++; nhits++;
+		hitp++;
 	}
 
 	/*
 	 * Check for hitting the end plates.
 	 */
 check_plates:
-	if( nhits < 2  &&  !NEAR_ZERO(dprime[Z], SMALL) )  {
+	if( hitp < &hits[2]  &&  !NEAR_ZERO(dprime[Z], SMALL) )  {
 		/* 0 or 1 hits so far, this is worthwhile */
 		k1 = -pprime[Z] / dprime[Z];		/* bottom plate */
 		k2 = (1.0 - pprime[Z]) / dprime[Z];	/* top plate */
@@ -463,7 +462,7 @@ check_plates:
 		    hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] <= 1.0 )  {
 			hitp->hit_dist = k1;
 			hitp->hit_surfno = REC_NORM_BOT;	/* -H */
-			hitp++; nhits++;
+			hitp++;
 		}
 
 		VJOIN1( hitp->hit_vpriv, pprime, k2, dprime );	/* hit' */
@@ -471,76 +470,32 @@ check_plates:
 		    hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] <= 1.0 )  {
 			hitp->hit_dist = k2;
 			hitp->hit_surfno = REC_NORM_TOP;	/* +H */
-			hitp++; nhits++;
+			hitp++;
 		}
 	}
-	if( nhits == 0 )  return 0;	/* MISS */
-	if( nhits == 2 )  {
-hit:
-		if( hits[0].hit_dist < hits[1].hit_dist )  {
-			/* entry is [0], exit is [1] */
-			register struct seg *segp;
+	if( hitp != &hits[2] )
+		return(0);	/* MISS */
 
-			RT_GET_SEG(segp, ap->a_resource);
-			segp->seg_stp = stp;
-			segp->seg_in = hits[0];		/* struct copy */
-			segp->seg_out = hits[1];	/* struct copy */
-			RT_LIST_INSERT( &(seghead->l), &(segp->l) );
-		} else {
-			/* entry is [1], exit is [0] */
-			register struct seg *segp;
+	if( hits[0].hit_dist < hits[1].hit_dist )  {
+		/* entry is [0], exit is [1] */
+		register struct seg *segp;
 
-			RT_GET_SEG(segp, ap->a_resource);
-			segp->seg_stp = stp;
-			segp->seg_in = hits[1];		/* struct copy */
-			segp->seg_out = hits[0];	/* struct copy */
-			RT_LIST_INSERT( &(seghead->l), &(segp->l) );
-		}
-		return 2;			/* HIT */
-	}
-	if( nhits == 1 )  {
-		if( hits[0].hit_surfno != REC_NORM_BODY )
-			rt_log("rt_rec_shot(%s): 1 intersection with end plate?\n", stp->st_name );
-		/*
-		 *  Ray is tangent to body of cylinder,
-		 *  or a single hit on on an end plate (??)
-		 *  This could be considered a MISS,
-		 *  but to signal the condition, return 0-thickness hit.
-		 */
-		hits[1] = hits[0];	/* struct copy */
-		nhits++;
-		goto hit;
-	}
-	if( nhits == 3 )  {
-		fastf_t tol_dist = ap->a_rt_i->rti_tol.dist;
-		/*
-		 *  Check for case where two of the three hits
-		 *  have the same distance, e.g. hitting at the rim.
-		 */
-		k1 = hits[0].hit_dist - hits[1].hit_dist;
-		if( NEAR_ZERO( k1, tol_dist ) )  {
-			if(rt_g.debug&DEBUG_ARB8)rt_log("rt_rec_shot(%s): 3 hits, collapsing 0&1\n", stp->st_name);
-			hits[1] = hits[2];	/* struct copy */
-			nhits--;
-			goto hit;
-		}
-		k1 = hits[1].hit_dist - hits[2].hit_dist;
-		if( NEAR_ZERO( k1, tol_dist ) )  {
-			if(rt_g.debug&DEBUG_ARB8)rt_log("rt_rec_shot(%s): 3 hits, collapsing 1&2\n", stp->st_name);
-			nhits--;
-			goto hit;
-		}
-	}
-	/*  nhits >= 3 */
-	rt_log("rt_rec_shot(%s): %d unique hits?!?  %g, %g, %g, %g\n",
-		stp->st_name, nhits,
-		hits[0].hit_dist,
-		hits[1].hit_dist,
-		hits[2].hit_dist,
-		hits[3].hit_dist);
+		RT_GET_SEG(segp, ap->a_resource);
+		segp->seg_stp = stp;
+		segp->seg_in = hits[0];		/* struct copy */
+		segp->seg_out = hits[1];	/* struct copy */
+		RT_LIST_INSERT( &(seghead->l), &(segp->l) );
+	} else {
+		/* entry is [1], exit is [0] */
+		register struct seg *segp;
 
-	/* count just the first two, to have something */
-	goto hit;
+		RT_GET_SEG(segp, ap->a_resource);
+		segp->seg_stp = stp;
+		segp->seg_in = hits[1];		/* struct copy */
+		segp->seg_out = hits[0];	/* struct copy */
+		RT_LIST_INSERT( &(seghead->l), &(segp->l) );
+	}
+	return(2);			/* HIT */
 }
 
 #define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;	

@@ -7,9 +7,7 @@
 #define SRCDIR	proc-db
 #define PRODUCTS	pyramid molecule clutter kurt room tube teapot \
 			pipetest nmgmodel brickwall wall tea_nmg \
-			pipe terrain sphflake
-/* pickett_fence */
-
+			pipe terrain
 #define STATIC_PRODUCTS		\
 	../SRCDIR/mol-data.dat ../SRCDIR/mol-data1.dat \
 	../SRCDIR/mol-data2.dat \
@@ -59,25 +57,19 @@ teapot:		tea.o
 terrain: terrain.o
 	CC LDFLAGS terrain.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o terrain
 
-tea_nmg:	tea_nmg.o LIBWDB_DEP LIBRT_DEP LIBBN_DEP LIBBU_DEP
+tea_nmg:	tea_nmg.o LIBWDB_DEP LIBRT_DEP LIBBN_DEP
 	CC LDFLAGS tea_nmg.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o tea_nmg
 
-pipetest:	pipetest.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
+pipetest:	pipetest.o
 	CC LDFLAGS pipetest.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o pipetest
 
-nmgmodel:	nmgmodel.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
+nmgmodel:	nmgmodel.o
 	CC LDFLAGS nmgmodel.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o nmgmodel
 
-brickwall:	brickwall.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
+brickwall:	brickwall.o
 	CC LDFLAGS brickwall.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o brickwall
 
-wall:	wall.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
+wall:	wall.o
 	CC LDFLAGS wall.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o wall
-
-sphflake: sphflake.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
-	CC LDFLAGS sphflake.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o sphflake
-
-pickett_fence: pickett_fence.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
-	CC LDFLAGS pickett_fence.o LIBWDB LIBRT LIBBN LIBBU LIBU_LIBES LIBES -o pickett_fence
 
 #include "../Cakefile.rules"

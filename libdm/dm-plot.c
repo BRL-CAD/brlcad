@@ -34,7 +34,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "bu.h"
 #include "vmath.h"
-#include "bn.h"
 #include "mater.h"
 #include "raytrace.h"
 #include "dm.h"
@@ -47,12 +46,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 struct dm	*plot_open();
 static int	plot_close();
 static int	plot_drawBegin(), plot_drawEnd();
-static int	plot_normal(), plot_loadMatrix();
+static int	plot_normal(), plot_newrot();
 static int	plot_drawString2D(), plot_drawLine2D();
-static int      plot_drawPoint2D();
+static int      plot_drawVertex2D();
 static int	plot_drawVList();
-static int      plot_setFGColor();
+static int      plot_setColor();
 static int      plot_setLineAttr();
+static unsigned plot_cvtvecs(), plot_load();
 static int	plot_setWinBounds(), plot_debug();
 
 struct dm dm_plot = {
@@ -60,24 +60,19 @@ struct dm dm_plot = {
   plot_drawBegin,
   plot_drawEnd,
   plot_normal,
-  plot_loadMatrix,
+  plot_newrot,
   plot_drawString2D,
   plot_drawLine2D,
-  plot_drawPoint2D,
+  plot_drawVertex2D,
   plot_drawVList,
-  plot_setFGColor,
-  Nu_int0,
-  Nu_int0,
+  plot_setColor,
   plot_setLineAttr,
+  plot_cvtvecs,
+  plot_load,
   plot_setWinBounds,
   plot_debug,
   Nu_int0,
-  Nu_int0,
-  Nu_int0,
-  Nu_int0,
-  0,
   0,			/* no displaylist */
-  0,                    /* no stereo */
   PLOTBOUND,
   "plot",
   "Screen to UNIX-Plot",
@@ -89,14 +84,14 @@ struct dm dm_plot = {
   0,
   1.0, /* aspect ratio */
   0,
-  {0, 0},
+  0,
+  0,
   0,
   0,
   0
 };
 
 struct plot_vars head_plot_vars;
-static mat_t plotmat;
 
 /*
  *			P L O T _ O P E N
@@ -105,7 +100,8 @@ static mat_t plotmat;
  *
  */
 struct dm *
-plot_open(argc, argv)
+plot_open(eventHandler, argc, argv)
+int (*eventHandler)();
 int argc;
 char *argv[];
 {
@@ -117,15 +113,15 @@ char *argv[];
     return DM_NULL;
 
   *dmp = dm_plot; /* struct copy */
+  dmp->dm_eventHandler = eventHandler;
 
-  dmp->dm_vars.priv_vars = (genptr_t)bu_calloc(1, sizeof(struct plot_vars), "plot_open: plot_vars");
-  BU_GETSTRUCT(dmp->dm_vars.priv_vars, plot_vars);
-  if(dmp->dm_vars.priv_vars == (genptr_t)NULL){
+  dmp->dm_vars = (genptr_t)bu_calloc(1, sizeof(struct plot_vars), "plot_open: plot_vars");
+  if(dmp->dm_vars == (genptr_t)NULL){
     bu_free(dmp, "plot_open: dmp");
     return DM_NULL;
   }
 
-  bu_vls_init(&((struct plot_vars *)dmp->dm_vars.priv_vars)->vls);
+  bu_vls_init(&((struct plot_vars *)dmp->dm_vars)->vls);
   bu_vls_init(&dmp->dm_pathName);
   bu_vls_init(&dmp->dm_tkName);
   bu_vls_printf(&dmp->dm_pathName, ".dm_plot%d", count++);
@@ -135,26 +131,28 @@ char *argv[];
   --argc; ++argv;
 
   /* Process any options */
-  ((struct plot_vars *)dmp->dm_vars.priv_vars)->is_3D = 1;          /* 3-D w/color, by default */
+  ((struct plot_vars *)dmp->dm_vars)->is_3D = 1;          /* 3-D w/color, by default */
   while( argv[0] != (char *)0 && argv[0][0] == '-' )  {
     switch( argv[0][1] )  {
     case '3':
       break;
     case '2':
-      ((struct plot_vars *)dmp->dm_vars.priv_vars)->is_3D = 0;		/* 2-D, for portability */
+      ((struct plot_vars *)dmp->dm_vars)->is_3D = 0;		/* 2-D, for portability */
       break;
     case 'g':
-      ((struct plot_vars *)dmp->dm_vars.priv_vars)->grid = 1;
+      ((struct plot_vars *)dmp->dm_vars)->grid = 1;
       break;
+#if 0
     case 'f':
-      ((struct plot_vars *)dmp->dm_vars.priv_vars)->floating = 1;
+      ((struct plot_vars *)dmp->dm_vars)->floating = 1;
       break;
     case 'z':
     case 'Z':
       /* Enable Z clipping */
       Tcl_AppendResult(interp, "Clipped in Z to viewing cube\n", (char *)NULL);
-      ((struct plot_vars *)dmp->dm_vars.priv_vars)->zclip = 1;
+      ((struct plot_vars *)dmp->dm_vars)->zclip = 1;
       break;
+#endif
     default:
       Tcl_AppendResult(interp, "bad PLOT option ", argv[0], "\n", (char *)NULL);
       (void)plot_close(dmp);
@@ -169,52 +167,50 @@ char *argv[];
   }
 
   if( argv[0][0] == '|' )  {
-    bu_vls_strcpy(&((struct plot_vars *)dmp->dm_vars.priv_vars)->vls, &argv[0][1]);
-    while( (++argv)[0] != (char *)0 ) {
-      bu_vls_strcat( &((struct plot_vars *)dmp->dm_vars.priv_vars)->vls, " " );
-      bu_vls_strcat( &((struct plot_vars *)dmp->dm_vars.priv_vars)->vls, argv[0] );
+    bu_vls_strcpy(&((struct plot_vars *)dmp->dm_vars)->vls, &argv[0][1]);
+    while( (++argv)[1] != (char *)0 ) {
+      bu_vls_strcat( &((struct plot_vars *)dmp->dm_vars)->vls, " " );
+      bu_vls_strcat( &((struct plot_vars *)dmp->dm_vars)->vls, argv[0] );
     }
 
-    ((struct plot_vars *)dmp->dm_vars.priv_vars)->is_pipe = 1;
+    ((struct plot_vars *)dmp->dm_vars)->is_pipe = 1;
   }else{
-    bu_vls_strcpy(&((struct plot_vars *)dmp->dm_vars.priv_vars)->vls, argv[0]);
+    bu_vls_strcpy(&((struct plot_vars *)dmp->dm_vars)->vls, argv[0]);
   }
 
-  if(((struct plot_vars *)dmp->dm_vars.priv_vars)->is_pipe){
-    if((((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp =
-	popen( bu_vls_addr(&((struct plot_vars *)dmp->dm_vars.priv_vars)->vls), "w")) == NULL){
-      perror( bu_vls_addr(&((struct plot_vars *)dmp->dm_vars.priv_vars)->vls));
+  if(((struct plot_vars *)dmp->dm_vars)->is_pipe){
+    if((((struct plot_vars *)dmp->dm_vars)->up_fp =
+	popen( bu_vls_addr(&((struct plot_vars *)dmp->dm_vars)->vls), "w")) == NULL){
+      perror( bu_vls_addr(&((struct plot_vars *)dmp->dm_vars)->vls));
       (void)plot_close(dmp);
       return DM_NULL;
     }
     
     Tcl_AppendResult(interp, "piped to ",
-		     bu_vls_addr(&((struct plot_vars *)dmp->dm_vars.priv_vars)->vls),
+		     bu_vls_addr(&((struct plot_vars *)dmp->dm_vars)->vls),
 		     "\n", (char *)NULL);
   }else{
-    if((((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp =
-	fopen( bu_vls_addr(&((struct plot_vars *)dmp->dm_vars.priv_vars)->vls), "w" )) == NULL){
-      perror(bu_vls_addr(&((struct plot_vars *)dmp->dm_vars.priv_vars)->vls));
+    if((((struct plot_vars *)dmp->dm_vars)->up_fp =
+	fopen( bu_vls_addr(&((struct plot_vars *)dmp->dm_vars)->vls), "w" )) == NULL){
+      perror(bu_vls_addr(&((struct plot_vars *)dmp->dm_vars)->vls));
       (void)plot_close(dmp);
       return DM_NULL;
     }
 
     Tcl_AppendResult(interp, "plot stored in ",
-		     bu_vls_addr(&((struct plot_vars *)dmp->dm_vars.priv_vars)->vls),
+		     bu_vls_addr(&((struct plot_vars *)dmp->dm_vars)->vls),
 		     "\n", (char *)NULL);
   }
 
-  setbuf(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp,
-	  ((struct plot_vars *)dmp->dm_vars.priv_vars)->ttybuf);
+  setbuf(((struct plot_vars *)dmp->dm_vars)->up_fp,
+	  ((struct plot_vars *)dmp->dm_vars)->ttybuf);
 
-  if(((struct plot_vars *)dmp->dm_vars.priv_vars)->is_3D)
-    pl_3space( ((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp,
+  if(((struct plot_vars *)dmp->dm_vars)->is_3D)
+    pl_3space( ((struct plot_vars *)dmp->dm_vars)->up_fp,
 	       -2048, -2048, -2048, 2048, 2048, 2048 );
   else
-    pl_space( ((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp,
+    pl_space( ((struct plot_vars *)dmp->dm_vars)->up_fp,
 	      -2048, -2048, 2048, 2048 );
-
-  bn_mat_idn(plotmat);
 
   return dmp;
 }
@@ -228,15 +224,15 @@ static int
 plot_close(dmp)
 struct dm *dmp;
 {
-  (void)fflush(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp);
+  (void)fflush(((struct plot_vars *)dmp->dm_vars)->up_fp);
 
-  if(((struct plot_vars *)dmp->dm_vars.priv_vars)->is_pipe)
-    pclose(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp); /* close pipe, eat dead children */
+  if(((struct plot_vars *)dmp->dm_vars)->is_pipe)
+    pclose(((struct plot_vars *)dmp->dm_vars)->up_fp); /* close pipe, eat dead children */
   else
-    fclose(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp);
+    fclose(((struct plot_vars *)dmp->dm_vars)->up_fp);
 
   bu_vls_free(&dmp->dm_pathName);
-  bu_free(dmp->dm_vars.priv_vars, "plot_close: plot_vars");
+  bu_free(dmp->dm_vars, "plot_close: plot_vars");
   bu_free(dmp, "plot_close: dmp");
   return TCL_OK;
 }
@@ -262,43 +258,23 @@ static int
 plot_drawEnd(dmp)
 struct dm *dmp;
 {
-  pl_flush( ((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp ); /* BRL-specific command */
-  pl_erase( ((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp ); /* forces drawing */
-  (void)fflush( ((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp );
+  pl_flush( ((struct plot_vars *)dmp->dm_vars)->up_fp ); /* BRL-specific command */
+  pl_erase( ((struct plot_vars *)dmp->dm_vars)->up_fp ); /* forces drawing */
+  (void)fflush( ((struct plot_vars *)dmp->dm_vars)->up_fp );
 
   return TCL_OK;
 }
 
 /*
- *  			P L O T _ L O A D M A T R I X
- *
- *  Load a new transformation matrix.  This will be followed by
- *  many calls to plot_drawVList().
+ *  			P L O T _ N E W R O T
+ *  Stub.
  */
+/* ARGSUSED */
 static int
-plot_loadMatrix(dmp, mat, which_eye)
+plot_newrot(dmp, mat)
 struct dm *dmp;
 mat_t mat;
-int which_eye;
 {
-  if(((struct plot_vars *)dmp->dm_vars.priv_vars)->debug){
-    struct bu_vls tmp_vls;
-
-    Tcl_AppendResult(interp, "plot_loadMatrix()\n", (char *)NULL);
-
-    bu_vls_init(&tmp_vls);
-    bu_vls_printf(&tmp_vls, "which eye = %d\t", which_eye);
-    bu_vls_printf(&tmp_vls, "transformation matrix = \n");
-    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[0], mat[4], mat[8],mat[12]);
-    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[1], mat[5], mat[9],mat[13]);
-    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[2], mat[6], mat[10],mat[14]);
-    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[3], mat[7], mat[11],mat[15]);
-
-    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-    bu_vls_free(&tmp_vls);
-  }
-
-  bn_mat_copy(plotmat, mat);
   return TCL_OK;
 }
 
@@ -311,35 +287,22 @@ int which_eye;
  *
  *  Returns 0 if object could be drawn, !0 if object was omitted.
  */
+/* ARGSUSED */
 static int
-plot_drawVList( dmp, vp, perspective )
+plot_drawVList( dmp, vp, mat )
 struct dm *dmp;
 register struct rt_vlist *vp;
-double perspective;
+mat_t mat;
 {
   static vect_t			last;
   register struct rt_vlist	*tvp;
-  register point_t		*pt_prev=NULL;
-  register fastf_t		dist_prev=1.0;
-  register fastf_t		dist;
-  fastf_t			delta;
   int useful = 0;
 
-  if(((struct plot_vars *)dmp->dm_vars.priv_vars)->floating){
-    rt_vlist_to_uplot(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp, &vp->l);
-		      
-    return TCL_OK;
-  }
-
-    /* delta is used in clipping to insure clipped endpoint is slightly
-     * in front of eye plane (perspective mode only).
-     * This value is a SWAG that seems to work OK.
-     */
-    delta = plotmat[15]*0.0001;
-    if( delta < 0.0 )
-	delta = -delta;
-    if( delta < SQRT_SMALL_FASTF )
-	delta = SQRT_SMALL_FASTF;
+#if 0
+  if( illum )  {
+    pl_linmod( ((struct plot_vars *)dmp->dm_vars)->up_fp, "longdashed" );
+  } else
+#endif
 
   for( BU_LIST_FOR( tvp, rt_vlist, &vp->l ) )  {
     register int	i;
@@ -355,93 +318,25 @@ double perspective;
       case RT_VLIST_POLY_MOVE:
       case RT_VLIST_LINE_MOVE:
 	/* Move, not draw */
-		if( perspective > 0.0 )
-	    	{
-	    		/* cannot apply perspective transformation to
-			 * points behind eye plane!!!!
-	    		 */
-	    		dist = VDOT( *pt, &plotmat[12] ) + plotmat[15];
-	    		if( dist <= 0.0 )
-	    		{
-	    			pt_prev = pt;
-	    			dist_prev = dist;
-	    			continue;
-	    		}
-	    		else
-	    		{
-	    			MAT4X3PNT( last, plotmat, *pt );
-	    			dist_prev = dist;
-	    			pt_prev = pt;
-	    		}
-	    	}
-		else
-			MAT4X3PNT( last, plotmat, *pt );
+	MAT4X3PNT( last, mat, *pt );
 	continue;
       case RT_VLIST_POLY_DRAW:
       case RT_VLIST_POLY_END:
       case RT_VLIST_LINE_DRAW:
 	/* draw */
-		if( perspective > 0.0 )
-	    	{
-	    		/* cannot apply perspective transformation to
-			 * points behind eye plane!!!!
-	    		 */
-	    		dist = VDOT( *pt, &plotmat[12] ) + plotmat[15];
-	    		if( dist <= 0.0 )
-	    		{
-	    			if( dist_prev <= 0.0 )
-	    			{
-	    				/* nothing to plot */
-		    			dist_prev = dist;
-		    			pt_prev = pt;
-		    			continue;
-	    			}
-	    			else
-	    			{
-	    				fastf_t alpha;
-	    				vect_t diff;
-	    				point_t tmp_pt;
-
-	    				/* clip this end */
-	    				VSUB2( diff, *pt, *pt_prev );
-	    				alpha = (dist_prev - delta) / ( dist_prev - dist );
-	    				VJOIN1( tmp_pt, *pt_prev, alpha, diff );
-	    				MAT4X3PNT( fin, plotmat, tmp_pt );
-	    			}
-	    		}
-	    		else
-	    		{
-	    			if( dist_prev <= 0.0 )
-	    			{
-	    				fastf_t alpha;
-	    				vect_t diff;
-	    				point_t tmp_pt;
-
-	    				/* clip other end */
-	    				VSUB2( diff, *pt, *pt_prev );
-	    				alpha = (-dist_prev + delta) / ( dist - dist_prev );
-	    				VJOIN1( tmp_pt, *pt_prev, alpha, diff );
-	    				MAT4X3PNT( last, plotmat, tmp_pt );
-	    				MAT4X3PNT( fin, plotmat, *pt );
-	    			}
-	    			else
-	    			{
-	    				MAT4X3PNT( fin, plotmat, *pt );
-	    			}
-	    		}
-	    	}
-		else
-			MAT4X3PNT( fin, plotmat, *pt );
+	MAT4X3PNT( fin, mat, *pt );
 	VMOVE( start, last );
 	VMOVE( last, fin );
 	break;
       }
-      if(vclip(start, fin, ((struct plot_vars *)dmp->dm_vars.priv_vars)->clipmin,
-		((struct plot_vars *)dmp->dm_vars.priv_vars)->clipmax) == 0)
+      if(vclip(start, fin, ((struct plot_vars *)dmp->dm_vars)->clipmin,
+		((struct plot_vars *)dmp->dm_vars)->clipmax) == 0)
 	continue;
-
-      if(((struct plot_vars *)dmp->dm_vars.priv_vars)->is_3D)
-	pl_3line( ((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp, 
+#if 0      
+      pl_color( ((struct plot_vars *)dmp->dm_vars)->up_fp, r, g, b );
+#endif
+      if(((struct plot_vars *)dmp->dm_vars)->is_3D)
+	pl_3line( ((struct plot_vars *)dmp->dm_vars)->up_fp, 
 		  (int)( start[X] * 2047 ),
 		  (int)( start[Y] * 2047 ),
 		  (int)( start[Z] * 2047 ),
@@ -449,7 +344,7 @@ double perspective;
 		  (int)( fin[Y] * 2047 ),
 		  (int)( fin[Z] * 2047 ) );
       else
-	pl_line( ((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp, 
+	pl_line( ((struct plot_vars *)dmp->dm_vars)->up_fp, 
 		 (int)( start[X] * 2047 ),
 		 (int)( start[Y] * 2047 ),
 		 (int)( fin[X] * 2047 ),
@@ -491,16 +386,12 @@ static int
 plot_drawString2D( dmp, str, x, y, size, use_aspect )
 struct dm *dmp;
 register char *str;
-fastf_t x, y;
+int x, y;
 int size;
 int use_aspect;
 {
-  int sx, sy;
-
-  sx = x * 2047;
-  sy = y + 2047;
-  pl_move( ((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp, sx, sy);
-  pl_label( ((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp, str);
+  pl_move( ((struct plot_vars *)dmp->dm_vars)->up_fp, x,y);
+  pl_label( ((struct plot_vars *)dmp->dm_vars)->up_fp, str);
 
   return TCL_OK;
 }
@@ -512,39 +403,32 @@ int use_aspect;
 static int
 plot_drawLine2D( dmp, x1, y1, x2, y2 )
 struct dm *dmp;
-fastf_t x1, y1;
-fastf_t x2, y2;
+int x1, y1;
+int x2, y2;
 {
-  int sx1, sy1;
-  int sx2, sy2;
-
-  sx1 = x1 * 2047;
-  sx2 = x2 * 2047;
-  sy1 = y1 + 2047;
-  sy2 = y2 + 2047;
-  pl_move( ((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp, sx1, sy1);
-  pl_cont( ((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp, sx2, sy2);
+  pl_move( ((struct plot_vars *)dmp->dm_vars)->up_fp, x1,y1);
+  pl_cont( ((struct plot_vars *)dmp->dm_vars)->up_fp, x2,y2);
 
   return TCL_OK;
 }
 
 
 static int
-plot_drawPoint2D(dmp, x, y)
+plot_drawVertex2D(dmp, x, y)
 struct dm *dmp;
-fastf_t x, y;
+int x, y;
 {
   return plot_drawLine2D( dmp, x, y, x, y );
 }
 
 
 static int
-plot_setFGColor(dmp, r, g, b, strict)
+plot_setColor(dmp, r, g, b, strict)
 struct dm *dmp;
 register short r, g, b;
 int strict;
 {
-  pl_color( ((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp,  (int)r, (int)g, (int)b );
+  pl_color( ((struct plot_vars *)dmp->dm_vars)->up_fp,  (int)r, (int)g, (int)b );
   return TCL_OK;
 }
 
@@ -559,11 +443,38 @@ int style;
   dmp->dm_lineStyle = style;
 
   if(style == DM_DASHED_LINE)
-    pl_linmod( ((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp, "dotdashed");
+    pl_linmod( ((struct plot_vars *)dmp->dm_vars)->up_fp, "dotdashed");
   else
-    pl_linmod( ((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp, "solid");
+    pl_linmod( ((struct plot_vars *)dmp->dm_vars)->up_fp, "solid");
 
   return TCL_OK;
+}
+
+
+/* ARGSUSED */
+static unsigned
+plot_cvtvecs( dmp, sp )
+struct dm *dmp;
+struct solid *sp;
+{
+  return( 0 );
+}
+
+/*
+ * Loads displaylist
+ */
+static unsigned
+plot_load( dmp, addr, count )
+struct dm *dmp;
+unsigned addr, count;
+{
+  struct bu_vls tmp_vls;
+
+  bu_vls_init(&tmp_vls);
+  bu_vls_printf(&tmp_vls, "plot_load(x%x, %d.)\n", addr, count);
+  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+  bu_vls_free(&tmp_vls);
+  return( 0 );
 }
 
 /* ARGSUSED */
@@ -571,7 +482,7 @@ static int
 plot_debug(dmp, lvl)
 struct dm *dmp;
 {
-  (void)fflush(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp);
+  (void)fflush(((struct plot_vars *)dmp->dm_vars)->up_fp);
   Tcl_AppendResult(interp, "flushed\n", (char *)NULL);
 
   return TCL_OK;
@@ -583,18 +494,12 @@ struct dm *dmp;
 register int w[];
 {
   /* Compute the clipping bounds */
-  ((struct plot_vars *)dmp->dm_vars.priv_vars)->clipmin[0] = w[0] / 2048.;
-  ((struct plot_vars *)dmp->dm_vars.priv_vars)->clipmax[0] = w[1] / 2047.;
-  ((struct plot_vars *)dmp->dm_vars.priv_vars)->clipmin[1] = w[2] / 2048.;
-  ((struct plot_vars *)dmp->dm_vars.priv_vars)->clipmax[1] = w[3] / 2047.;
-
-  if(((struct plot_vars *)dmp->dm_vars.priv_vars)->zclip){
-    ((struct plot_vars *)dmp->dm_vars.priv_vars)->clipmin[2] = w[4] / 2048.;
-    ((struct plot_vars *)dmp->dm_vars.priv_vars)->clipmax[2] = w[5] / 2047.;
-  }else{
-    ((struct plot_vars *)dmp->dm_vars.priv_vars)->clipmin[2] = -1.0e20;
-    ((struct plot_vars *)dmp->dm_vars.priv_vars)->clipmax[2] = 1.0e20;
-  }
+  ((struct plot_vars *)dmp->dm_vars)->clipmin[0] = w[1] / 2048.;
+  ((struct plot_vars *)dmp->dm_vars)->clipmin[1] = w[3] / 2048.;
+  ((struct plot_vars *)dmp->dm_vars)->clipmin[2] = w[5] / 2048.;
+  ((struct plot_vars *)dmp->dm_vars)->clipmax[0] = w[0] / 2047.;
+  ((struct plot_vars *)dmp->dm_vars)->clipmax[1] = w[2] / 2047.;
+  ((struct plot_vars *)dmp->dm_vars)->clipmax[2] = w[4] / 2047.;
 
   return TCL_OK;
 }

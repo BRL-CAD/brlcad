@@ -1,8 +1,6 @@
 /*
  *			libbu/Cakefile
  */
-#define       CONFIGDEFS	LIBBU_CONFIG
-
 #define SRCDIR	libbu
 #define PRODUCTS	libbu.ARCH_SUF
 #define	SRCSUFF	.c
@@ -15,8 +13,8 @@
 	getopt hist ispar linebuf list \
 	log magic malloc mappedfile memset \
 	parallel parse printb ptbl semaphore \
-	vfont brlcad_path \
-	vls htond units bu_tcl file color
+	vfont \
+	vls htond units
 
 #define VERSION_VARIABLE	bu_version
 #define LIBRARY_TITLE		"The BRL-CAD Utility Library"

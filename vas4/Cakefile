@@ -16,7 +16,7 @@
 
 /* Explicit composition of each product */
 
-vas4:	OBJ LIBFB_DEP LIBBU_DEP
-	CC LDFLAGS -o vas4 OBJ LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES
+vas4:	OBJ
+	CC LDFLAGS -o vas4 OBJ LIBFB LIBFB_LIBES LIBES
 
 #include "../Cakefile.rules"

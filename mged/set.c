@@ -3,7 +3,6 @@
  *  Authors -
  *	Lee A. Butler
  *      Glenn Durfee
- *	Robert G. Parker
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -27,121 +26,62 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./sedit.h"
 #include "./ged.h"
-#include "./mged_solid.h"
 #include "./mged_dm.h"
 
 #include "tcl.h"
 
-extern void predictor_hook();		/* in ged.c */
-
-extern void set_port();
-extern void mged_fb_open();
-extern void mged_fb_close();
-extern void set_scroll();
-
-static void set_dirty_flag();
-static void nmg_eu_dist_set();
-static void set_fb();
-static void set_dlist();
-static void set_perspective();
-static void establish_perspective();
-static void toggle_perspective();
-
-static char *read_var();
-static char *write_var();
-static char *unset_var();
-
-void set_scroll_private();
-void set_absolute_tran();
-void set_absolute_view_tran();
-void set_absolute_model_tran();
-
-static int perspective_table[] = { 90, 30, 45, 60 };
+extern void	predictor_hook();		/* in ged.c */
+extern void	reattach();			/* in attach.c */
 
 struct _mged_variables default_mged_variables = {
-/* mv_rc */			1,
-/* mv_autosize */		1,
-/* mv_rateknobs */		0,
-/* mv_slidersflag */		0,
-/* mv_faceplate */		1,
-/* mv_orig_gui */		1,
-/* mv_rt_output */		1,
-/* mv_linewidth */		1,
-/* mv_linestyle */		's',
-/* mv_send_key */		0,
-/* mv_hot_key */		0,
-/* mv_context */		1,
-/* mv_dlist */			1,
-/* mv_use_air */		0,
-/* mv_listen */			0,
-/* mv_port */			0,
-/* mv_fb */			0,
-/* mv_fb_all */			0,
-/* mv_fb_overlay */		0,
-/* mv_mouse_behavior */		'd',
-/* mv_coords */			'v',
-/* mv_rotate_about */		'v',
-/* mv_transform */		'v',
-/* mv_predictor */		0,
-/* mv_predictor_advance */	1.0,
-/* mv_predictor_length */	2.0,
-/* mv_perspective */		-1,
-/* mv_perspective_mode */	0,
-/* mv_toggle_perspective */	1,
-/* mv_nmg_eu_dist */		0.05,
-/* mv_eye_sep_dist */		0.0,
-/* mv_union lexeme */		"u",
-/* mv_intersection lexeme */	"n",
-/* mv_difference lexeme */	"-"
+/* autosize */			1,
+/* rateknobs */			1,
+/* adcflag */                   0,
+/* slidersflag */            0,
+/* sgi_win_size */		0,
+/* sgi_win_origin */		{ 0, 0 },
+/* faceplate */			1,
+/* show_menu */                 1,
+/* w_axes */    	        0,
+/* v_axes */    	        0,
+/* e_axes */            	0,
+/* send_key */                  0,
+/* hot_key */                   0,
+/* view */                      0,
+/* edit */                      0,
+/* context */                   1,
+/* eyerot */                    0,
+/* predictor */			0,
+/* predictor_advance */		1.0,
+/* predictor_length */		2.0,
+/* perspective */		-1,
+/* nmg_eu_dist */		0.05,
+/* eye_sep_dist */		0.0,
+/* union lexeme */		"u",
+/* intersection lexeme */	"n",
+/* difference lexeme */		"-"
 };
 
-#define MV_O(_m)	offsetof(struct _mged_variables, _m)
-#define MV_OA(_m)	offsetofarray(struct _mged_variables, _m)
-struct bu_structparse mged_vparse[] = {
-	{"%d",	1, "autosize",		MV_O(mv_autosize),		BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",	1, "rateknobs",		MV_O(mv_rateknobs),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",	1, "slidersflag",	MV_O(mv_slidersflag),      set_scroll_private },
-	{"%d",	1, "faceplate",		MV_O(mv_faceplate),	set_dirty_flag },
-	{"%d",	1, "orig_gui",		MV_O(mv_orig_gui),	        set_dirty_flag },
-	{"%d",	1, "rt_output",		MV_O(mv_rt_output),        BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",	1, "linewidth",		MV_O(mv_linewidth),	set_dirty_flag },
-	{"%c",	1, "linestyle",		MV_O(mv_linestyle),	set_dirty_flag },
-	{"%d",  1, "send_key",		MV_O(mv_send_key),		BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",  1, "hot_key",		MV_O(mv_hot_key),		BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",  1, "context",		MV_O(mv_context),		BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",  1, "dlist",		MV_O(mv_dlist),		set_dlist },
-	{"%d",  1, "use_air",		MV_O(mv_use_air),		BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",  1, "listen",		MV_O(mv_listen),		set_port },
-	{"%d",  1, "port",		MV_O(mv_port),		set_port },
-	{"%d",  1, "fb",		MV_O(mv_fb),		set_fb },
-	{"%d",  1, "fb_all",		MV_O(mv_fb_all),		set_dirty_flag },
-	{"%d",  1, "fb_overlay",	MV_O(mv_fb_overlay),	set_dirty_flag },
-	{"%c",  1, "mouse_behavior",	MV_O(mv_mouse_behavior),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%c",  1, "coords",            MV_O(mv_coords),           BU_STRUCTPARSE_FUNC_NULL },
-	{"%c",  1, "rotate_about",      MV_O(mv_rotate_about),     BU_STRUCTPARSE_FUNC_NULL },
-	{"%c",  1, "transform",         MV_O(mv_transform),        BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",	1, "predictor",		MV_O(mv_predictor),	predictor_hook },
-	{"%f",	1, "predictor_advance",	MV_O(mv_predictor_advance),predictor_hook },
-	{"%f",	1, "predictor_length",	MV_O(mv_predictor_length),	predictor_hook },
-	{"%f",	1, "perspective",	MV_O(mv_perspective),	set_perspective },
-	{"%d",  1, "perspective_mode",  MV_O(mv_perspective_mode),establish_perspective },
-	{"%d",  1, "toggle_perspective",MV_O(mv_toggle_perspective),toggle_perspective },
-	{"%f",  1, "nmg_eu_dist",	MV_O(mv_nmg_eu_dist),	nmg_eu_dist_set },
-	{"%f",  1, "eye_sep_dist",	MV_O(mv_eye_sep_dist),	set_dirty_flag },
-	{"%s",  MAXLINE, "union_op",	MV_O(mv_union_lexeme[0]),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%s",  MAXLINE, "intersection_op",MV_O(mv_intersection_lexeme[0]),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%s",  MAXLINE, "difference_op",	MV_O(mv_difference_lexeme[0]),	BU_STRUCTPARSE_FUNC_NULL },
-	{"",	0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
-};
+static void set_view();
+static void set_v_axes();
+void set_scroll();
+void set_rateknobs();
+void set_adcflag();
+
+
+/*
+ *  Cause screen to be refreshed when all cmds have been processed.
+ */
+static void
+refresh_hook()
+{
+	dmaflag = 1;
+}
 
 static void
-set_dirty_flag()
+dirty_hook()
 {
-  struct dm_list *dmlp;
-
-  FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
-    if(dmlp->dml_mged_variables == mged_variables)
-      dmlp->dml_dirty = 1;
+  dirty = 1;
 }
 
 static void
@@ -150,13 +90,44 @@ nmg_eu_dist_set()
   extern double nmg_eue_dist;
   struct bu_vls tmp_vls;
 
-  nmg_eue_dist = mged_variables->mv_nmg_eu_dist;
+  nmg_eue_dist = mged_variables.nmg_eu_dist;
 
   bu_vls_init(&tmp_vls);
   bu_vls_printf(&tmp_vls, "New nmg_eue_dist = %g\n", nmg_eue_dist);
   Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
   bu_vls_free(&tmp_vls);
 }
+
+#define MV_O(_m)	offsetof(struct _mged_variables, _m)
+struct bu_structparse mged_vparse[] = {
+	{"%d",	1, "autosize",		MV_O(autosize),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	1, "rateknobs",		MV_O(rateknobs),	set_rateknobs },
+	{"%d",	1, "adcflag",		MV_O(adcflag),          set_adcflag },
+	{"%d",	1, "slidersflag",	MV_O(slidersflag),   set_scroll },
+	{"%d",	1, "sgi_win_size",	MV_O(sgi_win_size),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	2, "sgi_win_origin",	MV_O(sgi_win_origin[0]),BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",	1, "faceplate",		MV_O(faceplate),	dirty_hook },
+	{"%d",	1, "show_menu",		MV_O(show_menu),	dirty_hook },
+	{"%d",  1, "w_axes",            MV_O(w_axes),           dirty_hook },
+	{"%d",  1, "v_axes",            MV_O(v_axes),           set_v_axes },
+	{"%d",  1, "e_axes",            MV_O(e_axes),           dirty_hook },
+	{"%d",  1, "send_key",          MV_O(send_key),         BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",  1, "hot_key",           MV_O(hot_key),          BU_STRUCTPARSE_FUNC_NULL },
+	{"%d",  1, "view",              MV_O(view),             set_view },
+	{"%d",  1, "edit",              MV_O(edit),             set_scroll },
+	{"%d",  1, "context",           MV_O(context),          dirty_hook },
+	{"%d",  1, "mged_rotate_view_around_eye",           MV_O(eyerot),          refresh_hook },
+	{"%d",	1, "predictor",		MV_O(predictor),	predictor_hook },
+	{"%f",	1, "predictor_advance",	MV_O(predictor_advance),predictor_hook },
+	{"%f",	1, "predictor_length",	MV_O(predictor_length),	predictor_hook },
+	{"%f",	1, "perspective",	MV_O(perspective),	dirty_hook },
+	{"%f",  1, "nmg_eu_dist",	MV_O(nmg_eu_dist),	nmg_eu_dist_set },
+	{"%f",  1, "eye_sep_dist",	MV_O(eye_sep_dist),	reattach },
+	{"%s",  MAXLINE, "union_op",	MV_O(union_lexeme[0]),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%s",  MAXLINE, "intersection_op",MV_O(intersection_lexeme[0]),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%s",  MAXLINE, "difference_op",	MV_O(difference_lexeme[0]),	BU_STRUCTPARSE_FUNC_NULL },
+	{"",	0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+};
 
 /**
  **            R E A D _ V A R
@@ -166,13 +137,30 @@ nmg_eu_dist_set()
  **
  **/
 
-static char *
+char *
 read_var(clientData, interp, name1, name2, flags)
 ClientData clientData;       /* Contains pointer to bu_struct_parse entry */
 Tcl_Interp *interp;
 char *name1, *name2;
 int flags;
 {
+#if TRY_NEW_MGED_VARS
+    struct bu_structparse *sp = (struct bu_structparse *)clientData;
+    struct bu_vls str;
+    register int i = (int)clientData;
+
+    /* Ask the libbu structparser for the value of the variable */
+
+    bu_vls_init( &str );
+    bu_vls_struct_item( &str, &mged_vparse[i], (CONST char *)&mged_variables, ' ');
+
+    /* Next, set the Tcl variable to this value */
+    (void)Tcl_SetVar(interp, bu_vls_addr(&curr_dm_list->s_info->mged_variable_names[i]),
+		     bu_vls_addr(&str), (flags&TCL_GLOBAL_ONLY)|TCL_LEAVE_ERR_MSG);
+
+    bu_vls_free(&str);
+    return NULL;
+#else
     struct bu_structparse *sp = (struct bu_structparse *)clientData;
     struct bu_vls str;
     register int i;
@@ -180,15 +168,14 @@ int flags;
     /* Ask the libbu structparser for the value of the variable */
 
     bu_vls_init( &str );
-    bu_vls_struct_item( &str, sp, (CONST char *)mged_variables, ' ');
+    bu_vls_struct_item( &str, sp, (CONST char *)&mged_variables, ' ');
 
     /* Next, set the Tcl variable to this value */
     (void)Tcl_SetVar(interp, sp->sp_name, bu_vls_addr(&str),
 		     (flags&TCL_GLOBAL_ONLY)|TCL_LEAVE_ERR_MSG);
 
-    bu_vls_free(&str);
-
     return NULL;
+#endif
 }
 
 /**
@@ -198,13 +185,31 @@ int flags;
  **
  **/
 
-static char *
+char *
 write_var(clientData, interp, name1, name2, flags)
 ClientData clientData;
 Tcl_Interp *interp;
 char *name1, *name2;
 int flags;
 {
+#if TRY_NEW_MGED_VARS
+    struct bu_vls str;
+    char *newvalue;
+    register int i = (int)clientData;
+
+    newvalue = Tcl_GetVar(interp,
+			  bu_vls_addr(&curr_dm_list->s_info->mged_variable_names[i]),
+			  (flags&TCL_GLOBAL_ONLY)|TCL_LEAVE_ERR_MSG);
+    bu_vls_init( &str );
+    bu_vls_printf( &str, "%s=\"%s\"", mged_vparse[i].sp_name, newvalue );
+    if( bu_struct_parse( &str, mged_vparse, (char *)&mged_variables ) < 0) {
+      Tcl_AppendResult(interp, "ERROR OCCURED WHEN SETTING ", mged_vparse[i].sp_name,
+		       " TO ", newvalue, "\n", (char *)NULL);
+    }
+    bu_vls_free(&str);
+    return read_var(clientData, interp, name1, name2,
+		    (flags&(~TCL_TRACE_WRITES))|TCL_TRACE_READS);
+#else
     struct bu_structparse *sp = (struct bu_structparse *)clientData;
     struct bu_vls str;
     char *newvalue;
@@ -213,14 +218,13 @@ int flags;
 			  (flags&TCL_GLOBAL_ONLY)|TCL_LEAVE_ERR_MSG);
     bu_vls_init( &str );
     bu_vls_printf( &str, "%s=\"%s\"", name1, newvalue );
-    if( bu_struct_parse( &str, mged_vparse, (char *)mged_variables ) < 0) {
+    if( bu_struct_parse( &str, mged_vparse, (char *)&mged_variables ) < 0) {
       Tcl_AppendResult(interp, "ERROR OCCURED WHEN SETTING ", name1,
 		       " TO ", newvalue, "\n", (char *)NULL);
     }
-
-    bu_vls_free(&str);
     return read_var(clientData, interp, name1, name2,
 		    (flags&(~TCL_TRACE_WRITES))|TCL_TRACE_READS);
+#endif
 }
 
 /**
@@ -230,13 +234,29 @@ int flags;
  **
  **/
 
-static char *
+char *
 unset_var(clientData, interp, name1, name2, flags)
 ClientData clientData;
 Tcl_Interp *interp;
 char *name1, *name2;
 int flags;
 {
+#if TRY_NEW_MGED_VARS
+  if( flags & TCL_INTERP_DESTROYED )
+            return NULL;
+
+  Tcl_AppendResult(interp, "mged variables cannot be unset\n", (char *)NULL);
+  Tcl_TraceVar( interp, name1, TCL_TRACE_READS, read_var,
+		clientData );
+  Tcl_TraceVar( interp, name1, TCL_TRACE_WRITES, write_var,
+		clientData );
+  Tcl_TraceVar( interp, name1, TCL_TRACE_UNSETS, unset_var,
+		clientData );
+  read_var(clientData, interp, name1, name2,
+	   (flags&(~TCL_TRACE_UNSETS))|TCL_TRACE_READS);
+
+  return NULL;
+#else
     struct bu_structparse *sp = (struct bu_structparse *)clientData;
 
     if( flags & TCL_INTERP_DESTROYED )
@@ -252,6 +272,7 @@ int flags;
     read_var(clientData, interp, name1, name2,
 	     (flags&(~TCL_TRACE_UNSETS))|TCL_TRACE_READS);
     return NULL;
+#endif
 }
 
 
@@ -263,22 +284,75 @@ int flags;
  **
  **/
 
+#if TRY_NEW_MGED_VARS
+void
+mged_variable_setup(p)
+struct dm_list *p;
+{
+  register int i;
+
+  for(i = 0; mged_vparse[i].sp_name != NULL; ++i){
+    bu_vls_init(&p->s_info->mged_variable_names[i]);
+    bu_vls_printf(&p->s_info->mged_variable_names[i], "mged_variable(%S,%s)",
+		  &p->_dmp->dm_pathName, mged_vparse[i].sp_name);
+    read_var( (ClientData)i, interp,
+	      bu_vls_addr(&p->s_info->mged_variable_names[i]), (char *)NULL, 0 );
+    Tcl_TraceVar( interp, bu_vls_addr(&p->s_info->mged_variable_names[i]),
+		  TCL_TRACE_READS|TCL_GLOBAL_ONLY,
+		  read_var, (ClientData)i );
+    Tcl_TraceVar( interp, bu_vls_addr(&p->s_info->mged_variable_names[i]),
+		  TCL_TRACE_WRITES|TCL_GLOBAL_ONLY,
+		  write_var, (ClientData)i );
+    Tcl_TraceVar( interp, bu_vls_addr(&p->s_info->mged_variable_names[i]),
+		  TCL_TRACE_UNSETS|TCL_GLOBAL_ONLY,
+		  unset_var, (ClientData)i );
+  }
+}
+
+
+mged_variable_free_vls(p)
+struct dm_list *p;
+{
+  register int i;
+
+  for(i = 0; mged_vparse[i].sp_name != NULL; ++i){
+    Tcl_UntraceVar( interp, bu_vls_addr(&p->s_info->mged_variable_names[i]),
+		    TCL_TRACE_READS|TCL_GLOBAL_ONLY,
+		    read_var, (ClientData)i);
+    Tcl_UntraceVar( interp, bu_vls_addr(&p->s_info->mged_variable_names[i]),
+		    TCL_TRACE_WRITES|TCL_GLOBAL_ONLY,
+		    write_var, (ClientData)i);
+    Tcl_UntraceVar( interp, bu_vls_addr(&p->s_info->mged_variable_names[i]),
+		    TCL_TRACE_UNSETS|TCL_GLOBAL_ONLY,
+		    unset_var, (ClientData)i);
+    bu_vls_free(&p->s_info->mged_variable_names[i]);
+  }
+}
+
+
+
+
+
+#else
 void
 mged_variable_setup(interp)
 Tcl_Interp *interp;    
 {
   register struct bu_structparse *sp;
+  register int i;
 
-  for( sp = &mged_vparse[0]; sp->sp_name != NULL; sp++ ) {
-    read_var( (ClientData)sp, interp, sp->sp_name, (char *)NULL, 0 );
-    Tcl_TraceVar( interp, sp->sp_name, TCL_TRACE_READS|TCL_GLOBAL_ONLY,
-		  read_var, (ClientData)sp );
-    Tcl_TraceVar( interp, sp->sp_name, TCL_TRACE_WRITES|TCL_GLOBAL_ONLY,
-		  write_var, (ClientData)sp );
-    Tcl_TraceVar( interp, sp->sp_name, TCL_TRACE_UNSETS|TCL_GLOBAL_ONLY,
-		  unset_var, (ClientData)sp );
-  }
+    for( sp = &mged_vparse[0]; sp->sp_name != NULL; sp++ ) {
+	read_var( (ClientData)sp, interp, sp->sp_name, (char *)NULL, 0 );
+	Tcl_TraceVar( interp, sp->sp_name, TCL_TRACE_READS|TCL_GLOBAL_ONLY,
+		      read_var, (ClientData)sp );
+	Tcl_TraceVar( interp, sp->sp_name, TCL_TRACE_WRITES|TCL_GLOBAL_ONLY,
+		      write_var, (ClientData)sp );
+	Tcl_TraceVar( interp, sp->sp_name, TCL_TRACE_UNSETS|TCL_GLOBAL_ONLY,
+		      unset_var, (ClientData)sp );
+    }
 }
+#endif
+
 
 int
 f_set(clientData, interp, argc, argv)
@@ -287,197 +361,126 @@ Tcl_Interp *interp;
 int argc;
 char *argv[];
 {
+	struct bu_vls vls;
+	int bad = 0;
+
+	if(argc < 1 || 2 < argc){
+	  struct bu_vls vls;
+
+	  bu_vls_init(&vls);
+	  bu_vls_printf(&vls, "help vars");
+	  Tcl_Eval(interp, bu_vls_addr(&vls));
+	  bu_vls_free(&vls);
+	  return TCL_ERROR;
+	}
+
+	bu_vls_init(&vls);
+
+	if (argc == 1) {
+	  struct bu_vls tmp_vls;
+
+	  bu_vls_init(&tmp_vls);
+	  start_catching_output(&tmp_vls);
+	  bu_struct_print("mged variables", mged_vparse, (CONST char *)&mged_variables);
+	  bu_log("%s", bu_vls_addr(&vls) );
+	  stop_catching_output(&tmp_vls);
+	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+	  bu_vls_free(&tmp_vls);
+	} else if (argc == 2) {
+		bu_vls_strcpy(&vls, argv[1]);
+		bu_struct_parse(&vls, mged_vparse, (char *)&mged_variables);
+	}
+
+	bu_vls_free(&vls);
+
+	dmaflag = 1;
+	return bad ? TCL_ERROR : TCL_OK;
+}
+
+static void
+set_view()
+{
+  point_t model_pos;
+  point_t new_pos;
+
+  /* save current view */
+  bn_mat_copy(viewrot_table[current_view], Viewrot);
+
+  /* save current Viewscale */
+  viewscale_table[current_view] = Viewscale;
+
+  /* toggle forward */
+  if(mged_variables.view){
+    if(++current_view > VIEW_TABLE_SIZE - 1)
+      current_view = 0;
+  }else{
+    /* toggle backward */
+    if(--current_view < 0)
+      current_view = VIEW_TABLE_SIZE - 1;
+  }
+
+  /* restore previously saved view and Viewscale */
+  bn_mat_copy(Viewrot, viewrot_table[current_view]);
+  Viewscale = viewscale_table[current_view];
+  new_mats();
+
+  (void)mged_svbase();
+}
+
+void
+set_scroll()
+{
   struct bu_vls vls;
+
+  if(es_edclass && mged_variables.edit)
+    scroll_edit = es_edclass;
+  else
+    scroll_edit = EDIT_CLASS_NULL;
+
+  if(!strcmp("nu", bu_vls_addr(&pathName)))
+    return;
 
   bu_vls_init(&vls);
 
-  if(argc < 1 || 2 < argc){
-    bu_vls_printf(&vls, "help vars");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-
-    return TCL_ERROR;
-  }
-
-  mged_vls_struct_parse_old(&vls, "mged variables", mged_vparse,
-			    (CONST char *)mged_variables, argc, argv);
-  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-  bu_vls_free(&vls);
-
-  return TCL_OK;
-}
-
-void
-set_scroll_private()
-{
-  struct dm_list *dmlp;
-  struct dm_list *save_dmlp;
-
-  save_dmlp = curr_dm_list;
-
-  FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
-    if (dmlp->dml_mged_variables == save_dmlp->dml_mged_variables) {
-      curr_dm_list = dmlp;
-
-      if (mged_variables->mv_faceplate && mged_variables->mv_orig_gui) {
-	if (mged_variables->mv_slidersflag)	/* zero slider variables */
-	  mged_svbase();
-
-	set_scroll();		/* set scroll_array for drawing the scroll bars */
-	dirty = 1;
-      }
-    }
-
-  curr_dm_list = save_dmlp;
-}
-
-void
-set_absolute_tran()
-{
-  /* calculate absolute_tran */
-  set_absolute_view_tran();
-
-  /* calculate absolute_model_tran */
-  set_absolute_model_tran();
-}
-
-void
-set_absolute_view_tran()
-{
-  /* calculate absolute_tran */
-  MAT4X3PNT(view_state->vs_absolute_tran, view_state->vs_model2view, view_state->vs_orig_pos);
-  /* This is used in f_knob()  ---- needed in case absolute_tran is set from Tcl */
-  VMOVE(view_state->vs_last_absolute_tran, view_state->vs_absolute_tran);
-}
-
-void
-set_absolute_model_tran()
-{
-  point_t new_pos;
-  point_t diff;
-
-  /* calculate absolute_model_tran */
-  MAT_DELTAS_GET_NEG(new_pos, view_state->vs_toViewcenter);
-  VSUB2(diff, view_state->vs_orig_pos, new_pos);
-  VSCALE(view_state->vs_absolute_model_tran, diff, 1/view_state->vs_Viewscale);
-  /* This is used in f_knob()  ---- needed in case absolute_model_tran is set from Tcl */
-  VMOVE(view_state->vs_last_absolute_model_tran, view_state->vs_absolute_model_tran);
-}
-
-static void
-set_dlist()
-{
-  struct dm_list *dmlp;
-  struct dm_list *save_dmlp;
-
-  save_dmlp = curr_dm_list;
-
-#ifdef DO_DISPLAY_LISTS
-  if(mged_variables->mv_dlist){
-    /* create display lists */
-    FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
-      if(dmlp->dml_mged_variables != save_dmlp->dml_mged_variables)
-	continue;
-
-      curr_dm_list = dmlp;
-
-      /* if display manager supports display lists */
-      if(displaylist){
-	dirty = 1;
-#ifdef DO_SINGLE_DISPLAY_LIST
-	createDList(&HeadSolid);
-#else
-	createDLists(&HeadSolid); 
-#endif
-      }
-    }
-  }else{
-    /* free display lists */
-    FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
-      if(dmlp->dml_mged_variables != save_dmlp->dml_mged_variables)
-	continue;
-
-      curr_dm_list = dmlp;
-
-      /* if display manager supports display lists */
-      if(displaylist){
-	dirty = 1;
-#ifdef DO_SINGLE_DISPLAY_LIST
-	DM_FREEDLISTS(dmp, HeadSolid.s_dlist, 1);
-#else
-	DM_FREEDLISTS(dmp, HeadSolid.s_dlist,
-			   BU_LIST_LAST(solid, &HeadSolid.l)->s_dlist -
-			   HeadSolid.s_dlist + 1);
-#endif
-      }
-    }
-  }
-#endif
-
-  /* restore */
-  curr_dm_list = save_dmlp;
-}
-
-static void
-set_perspective()
-{
-  if(mged_variables->mv_perspective > 0)
-    mged_variables->mv_perspective_mode = 1;
+  if( mged_variables.slidersflag )
+    bu_vls_printf(&vls, "sliders on");
   else
-    mged_variables->mv_perspective_mode = 0;
+    bu_vls_printf(&vls, "sliders off");
 
-  set_dirty_flag();
+  Tcl_Eval(interp, bu_vls_addr(&vls));
+  bu_vls_free(&vls);
+}
+
+
+void
+set_rateknobs()
+{
+  (void)Tcl_SetVar(interp, "rateknobs", mged_variables.rateknobs ? "1" : "0",
+		   TCL_GLOBAL_ONLY);
+  set_scroll();
+}
+
+
+void
+set_adcflag()
+{
+  (void)Tcl_SetVar(interp, "adcflag", mged_variables.adcflag ? "1" : "0",
+		   TCL_GLOBAL_ONLY);
+  set_scroll();
 }
 
 static void
-establish_perspective()
+set_v_axes()
 {
-  mged_variables->mv_perspective = mged_variables->mv_perspective_mode ?
-    perspective_table[perspective_angle] : -1;
+  dirty = 1;
 
-  set_dirty_flag();
-}
-
-/*
-   This routine toggles the perspective_angle if the
-   toggle_perspective value is 0 or less. Otherwise, the
-   perspective_angle is set to the value of (toggle_perspective - 1).
-*/
-static void
-toggle_perspective()
-{
-  /* set perspective matrix */
-  if(mged_variables->mv_toggle_perspective > 0)
-    perspective_angle = mged_variables->mv_toggle_perspective <= 4 ?
-      mged_variables->mv_toggle_perspective - 1: 3;
-  else if (--perspective_angle < 0) /* toggle perspective matrix */
-    perspective_angle = 3;
-
-  /*
-     Just in case the "!" is used with the set command. This
-     allows us to toggle through more than two values.
-   */
-  mged_variables->mv_toggle_perspective = 1;
-
-  if(!mged_variables->mv_perspective_mode)
+  if(mged_variables.v_axes == 0)
     return;
 
-  mged_variables->mv_perspective = perspective_table[perspective_angle];
-
-  set_dirty_flag();
-}
-
-static void
-set_fb()
-{
-  if(mged_variables->mv_fb && !fbp){
-    mged_fb_open();
-    if(!fbp)
-      mged_variables->mv_fb = 0;
-  }else if(!mged_variables->mv_fb && fbp){
-    set_port();
-    mged_fb_close();
+  if(mged_variables.v_axes == 1){
+    mged_variables.v_axes = last_v_axes;
+    return;
   }
 
-  set_dirty_flag();
+  last_v_axes = mged_variables.v_axes;
 }

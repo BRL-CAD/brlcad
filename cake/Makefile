@@ -20,6 +20,9 @@ LEX = lex
 LEXOPTS=
 # LEXOPTS= -l
 
+BINDIR=/usr/brlcad/bin
+MANDIR=/usr/brlcad/man/man1
+
 #LDFLAGS=-k 64k
 
 HDR   =	cake.h conf.h port.h
@@ -43,28 +46,20 @@ cake:		$(OBJ) $(GOBJ)
 
 all:		cake lint tags
 
-# This needs to be run all as one line, so variables are not lost.
 install:	cake
-		eval `machinetype.sh -v` ; \
-		BINDIR=$${BASEDIR}/bin; \
-		MANDIR=$${BASEDIR}/man/man1; \
-		echo BINDIR=$${BINDIR}; \
-		if test -f $${BINDIR}/cake; then \
-			mv -f $${BINDIR}/cake $${BINDIR}/cake.bak; fi; \
-		mv cake $${BINDIR}/cake; \
-		rm -f $${BINDIR}/fake; \
-		ln -s $${BINDIR}/cake $${BINDIR}/fake; \
-		rm -f $${MANDIR}/cake.1 $${MANDIR}/fake.1; \
-		cp cake.1 $${MANDIR}; \
-		ln -s $${MANDIR}/cake.1 $${MANDIR}/fake.1
+		-if test -f $(BINDIR)/cake; then \
+			mv -f $(BINDIR)/cake $(BINDIR)/cake.bak; fi
+		mv cake $(BINDIR)/cake
+		rm -f $(BINDIR)/fake
+		ln -s $(BINDIR)/cake $(BINDIR)/fake
+		rm -f $(MANDIR)/cake.1 $(MANDIR)/fake.1
+		cp cake.1 $(MANDIR)
+		ln -s $(MANDIR)/cake.1 $(MANDIR)/fake.1
 
 $(OBJ):		$(HDR)
 $(GOBJ):	$(HDR)
 
 cake_g.c:	cake_g.y
-# for bison instead of yacc, use the following line, you may need to remove the "void" declaration for
-# yyerror() in "cake_g.y"
-#		bison -ydv cake_g.y
 		yacc -dv cake_g.y
 		mv -f y.tab.h cake_g.h
 		mv -f y.tab.c cake_g.c

@@ -20,8 +20,6 @@ struct ps_vars {
   struct bu_vls creator;
   fastf_t scale;
   int linewidth;
-  int zclip;
-  int debug;
 };
 
 extern struct ps_vars head_ps_vars;

@@ -263,8 +263,8 @@ char	*argv[];
 		regions_written, percent );
 	}
 
-	rt_log( "%ld triangles written\n", tot_polygons );
-	fprintf( fpe, "%ld triangles written\n", tot_polygons );
+	rt_log( "%d triangles written\n", tot_polygons );
+	fprintf( fpe, "%d triangles written\n", tot_polygons );
 /* XXX Write out number of facet entities to .facet file */
 
 	rewind(fp);
@@ -376,15 +376,13 @@ int material_id;
 						rt_bomb( "Can't find vertex in list!!!" );
 					}
 				}
-				if( vert_count > 3 )
+				if( vert_count != 3 )
 				{
 		/*XXX*/			nmg_tbl( &verts, TBL_FREE, (long *)NULL );
 		/*XXX*/			rt_free( region_name, "region name" );
 					rt_log( "lu x%x has %d vertices!!!!\n", lu, vert_count );
 					rt_bomb( "LU is not a triangle" );
 				}
-				else if( vert_count < 3 )
-					continue;
 				numtri++;
 			}
 		}
@@ -471,15 +469,13 @@ int material_id;
 
 				fprintf( fp, " %d    %d    %d\n", 0, region_id, ++tricount);
 
-				if( vert_count > 3 )
+				if( vert_count != 3 )
 				{
 					nmg_tbl( &verts, TBL_FREE, (long *)NULL );
 					rt_free( region_name, "region name" );
 					rt_log( "lu x%x has %d vertices!!!!\n", lu, vert_count );
 					rt_bomb( "LU is not a triangle" );
 				}
-				else if( vert_count < 3 )
-					continue;
 				tot_polygons++;
 			}
 		}

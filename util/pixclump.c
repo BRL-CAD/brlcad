@@ -25,7 +25,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "externs.h"		/* For getopt(), etc. */
 #include "bu.h"
-#include "vmath.h"
 
 #define	RED			0
 #define	GRN			1
@@ -52,7 +51,7 @@ static void print_usage ()
     (void) bu_log("%s", usage);
 }
 
-static void print_debug_usage ()
+static void print_debug_usage (void)
 {
     static char	*flag_denotation[] =
 		{
@@ -69,9 +68,11 @@ static void print_debug_usage ()
 	bu_log("0x%04x	%s\n", 1 << (i-1), flag_denotation[i]);
 }
 
-static void add_to_table (rgb)
+static void add_to_table (red, grn, blu)
 
-unsigned char	*rgb;
+int	red;
+int	grn;
+int	blu;
 
 {
     /*
@@ -85,7 +86,9 @@ unsigned char	*rgb;
 			color_tbl_size * 3 * sizeof(unsigned char),
 			"color table");
     }
-    VMOVE(color_tbl[next_color], rgb);
+    color_tbl[next_color][RED] = red;
+    color_tbl[next_color][GRN] = grn;
+    color_tbl[next_color][BLU] = blu;
     ++next_color;
 }
 
@@ -97,7 +100,9 @@ char	*f_name;
     char		*bp;
     FILE		*fp;
     int			line_nm;
-    unsigned char	rgb[3];
+    int 		red;
+    int			grn;
+    int			blu;
     int			len;
     struct bu_vls	v;
 
@@ -115,13 +120,20 @@ char	*f_name;
 	    ;
 	if ((*bp == '#') || (*bp == '\0'))
 	    continue;
-	if (! bu_str_to_rgb(bp, rgb))
+	if (sscanf(bp, "%d%d%d", &red, &grn, &blu) != 3)
 	{
-	    bu_log("Illegal color: '%s' on line %d of file '%s'\n",
+	    bu_log("Invalid color: '%s' on line %d of file '%s'\n",
 		bp, line_nm, f_name);
 	    exit (1);
 	}
-	add_to_table(rgb);
+	if ((red <   0) || (grn <   0) || (blu <   0)
+	 || (red > 255) || (grn > 255) || (blu > 255))
+	{
+	    bu_log("Illegal color: %d %d %d on line %d of file '%s'\n",
+		red, grn, blu, line_nm, f_name);
+	    exit (1);
+	}
+	add_to_table(red, grn, blu);
     }
 }
 
@@ -175,7 +187,7 @@ char	*argv[];
     FILE		*outfp = NULL;	/* output   "   */
     int			ch;		/* current char in command line */
     int			i, j;		/* dummy loop indices */
-    unsigned char	rgb[3];		/* Specified color */
+    int			red, grn, blu;	/* Specified color */
     int			best_color;	/* index of best match to pixbuf */
     int			best_diff;	/* error in best match */
     int			this_diff;	/* pixel-color_tbl difference */
@@ -198,13 +210,20 @@ char	*argv[];
 	switch (ch)
 	{
 	    case 'c':
-		if (! bu_str_to_rgb(optarg, rgb))
+		if (sscanf(optarg, "%d/%d/%d", &red, &grn, &blu) != 3)
+		{
+		    bu_log("Invalid color: '%s'\n", optarg);
+		    print_usage();
+		    exit (1);
+		}
+		if ((red <   0) || (grn <   0) || (blu <   0)
+		 || (red > 255) || (grn > 255) || (blu > 255))
 		{
 		    bu_log("Illegal color: '%s'\n", optarg);
 		    print_usage();
 		    exit (1);
 		}
-		add_to_table(rgb);
+		add_to_table(red, grn, blu);
 		cf_name = 0;
 		break;
 	    case 'f':
@@ -314,7 +333,7 @@ char	*argv[];
 		    color_tbl[best_color][GRN],
 		    color_tbl[best_color][BLU]);
 	}
-	if (fwrite((genptr_t) color_tbl[best_color],
+	if (fwrite((const void *) color_tbl[best_color],
 		    3 * sizeof(unsigned char), 1, outfp) != 1)
 	{
 	    bu_log("pixclump:  Error writing pixel to file '%s'\n", outf_name);

@@ -60,18 +60,6 @@ In the above listing:
 	for commands 2 and 6 they represent normal vectors
 
 author - Carl Nuzman
-
-Example Use -
-	vdraw open rays
-	vdraw delete all
-	foreach partition $ray {
-		...stuff...
-		vdraw write next 0 $inpt
-		vdraw write next 1 $outpt
-	}
-	vdraw send
-
-
 ********************************************************************/
 #include "conf.h"
 
@@ -133,9 +121,6 @@ struct bu_list *hp;
 }
 #endif
 
-/*
- *			C M D _ V D R A W
- */
 int
 cmd_vdraw(clientData, interp, argc, argv)
 ClientData clientData;
@@ -184,11 +169,11 @@ char **argv;
 	switch ( argv[1][0] ) {
 	case 'w': /*write*/
 		if (!curhead) {
-			Tcl_AppendResult(interp, "vdraw write: no vlist is currently open.", (char *)NULL);
+			Tcl_AppendResult(interp, "vdraw: no vlist is currently open.", (char *)NULL);
 			return TCL_ERROR;
 		}
-		if (argc < 5){
-			Tcl_AppendResult(interp, "vdraw write: not enough args\n", (char *)NULL);
+		if (argc < 7){
+			Tcl_AppendResult(interp, "vdraw: not enough args\n", (char *)NULL);
 			return TCL_ERROR;
 		}
 		if (argv[2][0] == 'n') { /* next */
@@ -252,18 +237,9 @@ char **argv;
 			Tcl_AppendResult(interp, "vdraw: cmd not an integer\n", (char *)NULL);
 			return TCL_ERROR;
 		}
-		if( argc == 7 )  {
-			cp->pt[index][0] = atof(argv[4]);
-			cp->pt[index][1] = atof(argv[5]);
-			cp->pt[index][2] = atof(argv[6]);
-		} else {
-			if( argc != 5 ||
-			    bn_decode_vect( cp->pt[index], argv[4] ) != 3 )  {
-				Tcl_AppendResult(interp,
-					"vdraw write: wrong # args, need either x y z or {x y z}\n", (char *)NULL);
-				return TCL_ERROR;
-			}
-		}
+		cp->pt[index][0] = atof(argv[4]);
+		cp->pt[index][1] = atof(argv[5]);
+		cp->pt[index][2] = atof(argv[6]);
 		/* increment counter only if writing onto end */
 		if (index == cp->nused)
 			cp->nused++;
@@ -658,7 +634,7 @@ char **argv;
 	  return TCL_ERROR;
 	}
 
-	MAT_DELTAS_GET_NEG(pos, view_state->vs_toViewcenter);
+	MAT_DELTAS_GET_NEG(pos, toViewcenter);
 	sprintf(result_string,"%.12e %.12e %.12e", pos[0], pos[1], pos[2]);
 	Tcl_AppendResult(interp, result_string, (char *)NULL);
 	return TCL_OK;
@@ -685,7 +661,7 @@ char **argv;
 	  return TCL_ERROR;
 	}
 
-	sprintf(result_string,"%.12e", view_state->vs_Viewscale);
+	sprintf(result_string,"%.12e", Viewscale);
 	Tcl_AppendResult(interp, result_string, (char *)NULL);
 	return TCL_OK;
 
@@ -718,23 +694,23 @@ char **argv;
 	c = argv[1][0];
 	switch(	c ) {
 	case 'c': 	/*center*/
-		MAT_DELTAS_GET_NEG(pos, view_state->vs_toViewcenter);
+		MAT_DELTAS_GET_NEG(pos, toViewcenter);
 		sprintf(result_string,"%.12g %.12g %.12g", pos[0], pos[1], pos[2]);
 		Tcl_AppendResult(interp, result_string, (char *)NULL);
 		return TCL_OK;
 	case 's':	/*size*/
 		/* don't use base2local, because rt doesn't */
-		sprintf(result_string,"%.12g", view_state->vs_Viewscale * 2.0);
+		sprintf(result_string,"%.12g", Viewscale * 2.0);
 		Tcl_AppendResult(interp, result_string, (char *)NULL);
 		return TCL_OK;
 	case 'e':	/*eye*/
-		VSET(temp, 0.0, 0.0, 1.0);
-		MAT4X3PNT(pos, view_state->vs_view2model, temp);
+		VSET(temp, 0, 0, 1);
+		MAT4X3PNT(pos, view2model, temp);
 		sprintf(result_string,"%.12g %.12g %.12g",pos[0],pos[1],pos[2]);
 		Tcl_AppendResult(interp, result_string, (char *)NULL);
 		return TCL_OK;
 	case 'y':	/*ypr*/
-		bn_mat_trn( mymat, view_state->vs_Viewrot);
+		bn_mat_trn( mymat, Viewrot);
 		anim_v_unpermute(mymat);
 		c = anim_mat2ypr(temp, mymat);
 		if (c==2) { 
@@ -746,7 +722,7 @@ char **argv;
 		Tcl_AppendResult(interp, result_string, (char *)NULL);
 		return TCL_OK;
 	case 'a': 	/* aet*/
-		bn_mat_trn(mymat,view_state->vs_Viewrot);
+		bn_mat_trn(mymat,Viewrot);
 		anim_v_unpermute(mymat);
 		c = anim_mat2ypr(temp, mymat);
 		if (c==2) { 
@@ -762,7 +738,7 @@ char **argv;
 		Tcl_AppendResult(interp, result_string, (char *)NULL);
 		return TCL_OK;
 	case 'q':	/*quat*/
-		quat_mat2quat(quat,view_state->vs_Viewrot);
+		quat_mat2quat(quat,Viewrot);
 		sprintf(result_string,"%.12g %.12g %.12g %.12g", quat[0],quat[1],quat[2],quat[3]);
 		Tcl_AppendResult(interp, result_string, (char *)NULL);
 		return TCL_OK;
@@ -905,7 +881,7 @@ char **argv;
 	/* do size set - don't use units (local2base) because rt doesn't */
 	if (in_size) {
 		if (size < 0.0001) size = 0.0001;
-		view_state->vs_Viewscale = size * 0.5;
+		Viewscale = size * 0.5;
 	}
 
 
@@ -915,34 +891,34 @@ char **argv;
 	}
 
 	if (in_quat) {
-		quat_quat2mat( view_state->vs_Viewrot, quat);
+		quat_quat2mat( Viewrot, quat);
 	} else if (in_ypr) {
 		anim_dy_p_r2mat(mymat, ypr[0], ypr[1], ypr[2]);
 		anim_v_permute(mymat);
-		bn_mat_trn(view_state->vs_Viewrot, mymat);
+		bn_mat_trn(Viewrot, mymat);
 	} else if (in_aet) {
 		anim_dy_p_r2mat(mymat, aet[0]+180.0, -aet[1], -aet[2]);
 		anim_v_permute(mymat);
-		bn_mat_trn(view_state->vs_Viewrot, mymat);
+		bn_mat_trn(Viewrot, mymat);
 	} else if (in_center && in_eye) {
 		VSUB2( dir, center, eye);
-		view_state->vs_Viewscale = MAGNITUDE(dir);
-		if (view_state->vs_Viewscale < 0.00005) view_state->vs_Viewscale = 0.00005;
+		Viewscale = MAGNITUDE(dir);
+		if (Viewscale < 0.00005) Viewscale = 0.00005;
 		/* use current eye norm as backup if dir vertical*/
-		VSET(norm, -view_state->vs_Viewrot[0], -view_state->vs_Viewrot[1], 0.0);
+		VSET(norm, -Viewrot[0], -Viewrot[1], 0.0);
 		anim_dirn2mat(mymat, dir, norm);
 		anim_v_permute(mymat);
-		bn_mat_trn(view_state->vs_Viewrot, mymat);
+		bn_mat_trn(Viewrot, mymat);
 	}
 
 	if (in_center) {
-		MAT_DELTAS_VEC_NEG( view_state->vs_toViewcenter, center);
+		MAT_DELTAS_VEC_NEG( toViewcenter, center);
 	} else if (in_eye) {
-		VSET(temp, 0.0, 0.0, view_state->vs_Viewscale);
-		bn_mat_trn(mymat, view_state->vs_Viewrot);
+		VSET(temp, 0.0, 0.0, Viewscale);
+		bn_mat_trn(mymat, Viewrot);
 		MAT4X3PNT( dir, mymat, temp);
 		VSUB2(temp, dir, eye);
-		MAT_DELTAS_VEC( view_state->vs_toViewcenter, temp);
+		MAT_DELTAS_VEC( toViewcenter, temp);
 	}
 
 	new_mats();

@@ -29,8 +29,7 @@ NFS=1
 # Label number for this CAD Release,
 # RCS main Revision number, and date.
 #RELEASE=M.N;	RCS_REVISION=X;		REL=DATE=dd-mmm-yy
-RELEASE=4.6;	RCS_REVISION=11;	REL_DATE=Today		# almost-5.0
-#RELEASE=4.5;	RCS_REVISION=11;	REL_DATE=14-Feb-98	# 4.4 "Porting release"
+RELEASE=4.5;	RCS_REVISION=11;	REL_DATE=Today
 #RELEASE=4.4;	RCS_REVISION=11;	REL_DATE=5-Jan-95
 #RELEASE=4.3;	RCS_REVISION=10;	REL_DATE=2-Jan-95	# Beta6
 #RELEASE=4.3;	RCS_REVISION=10;	REL_DATE=29-Dec-94	# Beta5
@@ -130,8 +129,6 @@ done
 
 # This will set Shell variables MACHINE, UNIXTYPE, HAS_TCP, and BASEDIR
 eval `machinetype.sh -b`
-BRLCAD_ROOT=${BASEDIR}
-export BRLCAD_ROOT
 
 DISTDIR=/m/dist/.
 ARCHDIR=/m/.
@@ -143,6 +140,7 @@ TOP_FILES="Copyright* README Cakefile* Makefile Acknowledgements \
 		gen.sh setup.sh newbindir.sh"
 
 # Has Cakefile, but no compilation or tools needed, not machine specific
+# XXX MGED won't run unless "cake install" installs /usr/brlcad/html !!
 ADIRS="h doc pix vfont whetstone awf brlman tclscripts"
 
 # Has no Cakefile, just copy it (and all sub-directories!) verbatim.
@@ -161,12 +159,9 @@ BDIRS="bench \
 	libtcl \
 	libtk \
 	libdm \
-	libz \
-	libpng \
+	rfbd \
 	fbserv \
 	librt \
-	liboptical \
-	libmultispectral \
 	libredblack \
 	libtermio \
 	libtclcad \
@@ -203,9 +198,10 @@ BDIRS="bench \
 	jove \
 	canon \
 	burst \
-"			# This ends the list.
+	tcl \
+	tk \
+	dhrystone"
 
-TSDIRS="mged nirt pl-dm"
 TDIRS="libtk libtkGLX"
 
 # If there is no TCP networking, eliminate network-only directories.
@@ -213,7 +209,8 @@ if test "${HAS_TCP}" = "0"
 then
 	BDIRS=`echo ${BDIRS} | sed -e  's/libpkg//
 					s/remrt//
-					s/fbserv//'`
+					s/fbserv//
+					s/rfbd//'`
 fi
 
 # If this is not an SGI 4D with GL, eliminate SGI GL-specific directories
@@ -242,7 +239,6 @@ fi
 
 echo
 echo "This Release = ${RELEASE} of ${REL_DATE}      Making Target: ${TARGET}"
-echo " BRLCAD_ROOT = ${BRLCAD_ROOT}"
 echo "Has Symlinks = ${HAS_SYMLINKS}"
 echo "   UNIX Type = ${UNIXTYPE}"
 echo "     Has TCP = ${HAS_TCP}"
@@ -278,12 +274,12 @@ benchmark)
 	if test x$NFS = x1
 	then	sh $0 relink
 	fi
-	(cd ${DIRPRE}libsysv${DIRSUF} && cake -k)
+	(cd ${DIRPRE}libsysv${DIRSUF} &&  cake -k)
 	(cd ${DIRPRE}bench${DIRSUF} && cake -k)
-	(cd ${DIRPRE}libwdb${DIRSUF} && cake -k)
+	(cd ${DIRPRE}libwdb${DIRSUF} &&  cake -k)
 	if test ${HAS_TCP} = 1
 	then
-		(cd ${DIRPRE}libpkg${DIRSUF} && cake -k)  # needed for IF_REMOTE
+		(cd ${DIRPRE}libpkg${DIRSUF} &&  cake -k)  # needed for IF_REMOTE
 	fi
 	(cd ${DIRPRE}libfb${DIRSUF} && cake -k)
 	(cd ${DIRPRE}libbu${DIRSUF} && cake -k)
@@ -337,11 +333,8 @@ install|install-nobak|uninstall)
 	for dir in ${BDIRS}; do
 		echo -------------------------------- ${DIRPRE}${dir}${DIRSUF};
 		( cd ${DIRPRE}${dir}${DIRSUF} && cake -k ${TARGET} )
-	done
-	for dir in ${TSDIRS}; do
-		echo -------------------------------- ${dir};
-		( cd tclscripts/${dir} && cake -k ${TARGET} )
 	done;;
+
 #  These directives operate in the source directory
 #
 #  inst-dist	BRL-only:  inst sources in dist tree without inst products
@@ -405,25 +398,6 @@ install-tcl)
 	for dir in ${TDIRS}; do
 		echo -------------------------------- ${DIRPRE}${dir}${DIRSUF};
 		( cd ${DIRPRE}${dir}${DIRSUF} && cake -k install )
-	done;;
-
-ami)
-	( cd tclscripts && cake -k ${TARGET} )
-
-	for dir in ${TSDIRS}; do
-	    ( cd tclscripts/$dir && cake -k ${TARGET} )
-	done;;
-
-tags)
-	for dir in ${BDIRS}; do
-		echo -------------------------------- ${dir};
-		( cd $dir && cake -k ${TARGET} )
-	done;;
-
-TAGS)
-	for dir in ${BDIRS}; do
-		echo -------------------------------- ${dir};
-		( cd $dir && cake -k ${TARGET} )
 	done;;
 
 shell)
@@ -525,7 +499,7 @@ arch)
 	echo "${ARCHIVE} created"
 
 	# The FTP images:
-	FTP_ARCHIVE=/n/wolf/usr/spool/ftp/brl-cad/Rel${RELEASE}/src/cad${RELEASE}.tar
+	FTP_ARCHIVE=/usr/spool/ftp/brl-cad/Rel${RELEASE}/src/cad${RELEASE}.tar
 	echo "Enter encryption key:"
 	read KEY
 	echo "encryption key is /$KEY/"

@@ -461,33 +461,33 @@ CONST mat_t			mat;
 		(vip->zdim+VOL_ZWIDEN*2);
 	vip->map = (unsigned char *)rt_calloc( 1, nbytes, "vol_import bitmap" );
 
-	bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
+	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
 	if( (fp = fopen(vip->file, "r")) == NULL )  {
 		perror(vip->file);
-		bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
+		RES_RELEASE( &rt_g.res_syscall );		/* unlock */
 		return(-1);
 	}
-	bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
+	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
 
 	/* Because of in-memory padding, read each scanline separately */
 	for( z=0; z < vip->zdim; z++ )  {
 		for( y=0; y < vip->ydim; y++ )  {
-			bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
+			RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
 			ret = fread( &VOL(vip, 0, y, z), vip->xdim, 1, fp ); /* res_syscall */
-			bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
+			RES_RELEASE( &rt_g.res_syscall );		/* unlock */
 			if( ret < 1 )  {
 				rt_log("rt_vol_import(%s): Unable to read whole VOL, y=%d, z=%d\n",
 					vip->file, y, z);
-				bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
+				RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
 				fclose(fp);
-				bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
+				RES_RELEASE( &rt_g.res_syscall );		/* unlock */
 				return -1;
 			}
 		}
 	}
-	bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
+	RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
 	fclose(fp);
-	bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
+	RES_RELEASE( &rt_g.res_syscall );		/* unlock */
 	return( 0 );
 }
 

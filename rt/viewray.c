@@ -35,6 +35,7 @@ static char RCSrayview[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "./material.h"
 
 #include "rdebug.h"
 
@@ -61,6 +62,9 @@ Options:\n\
  -x #		Set librt debug flags\n\
 ";
 
+/* Null function -- handle a miss */
+int	raymiss() { return(0); }
+
 void	view_pixel() {}
 
 void	view_setup() {}
@@ -73,14 +77,6 @@ void	view_cleanup() {}
 #define PAINT_FINAL_EXIT	(-996)
 #define PAINT_AIR		(-1)
 
-/* Handle a miss */
-int
-raymiss(ap)
-struct application *ap;
-{
-	return(0);
-}
-
 /*
  *			R A Y H I T
  *
@@ -88,10 +84,9 @@ struct application *ap;
  *  Also generate various forms of "paint".
  */
 int
-rayhit( ap, PartHeadp, segHeadp )
+rayhit( ap, PartHeadp )
 struct application *ap;
 register struct partition *PartHeadp;
-struct seg		*segHeadp;
 {
 	register struct partition *pp = PartHeadp->pt_forw;
 	struct partition	*np;	/* next partition */

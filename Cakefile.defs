@@ -120,7 +120,7 @@ set -S2 "/bin/sh"
  *	FC							*
  *	GETHOST							*
  *	RANLIB							*
- *	BASEDIR BINDIR, LIBDIR, ETCDIR, INCLUDE_DIR		*
+ *	BINDIR, LIBDIR, ETCDIR, INCLUDE_DIR			*
  *	XLIBDIR, XINCDIR					*
  *	ARCH_SUF						*
  *	MANDIR							*
@@ -171,7 +171,7 @@ set -S2 "/bin/sh"
 #	if 0	/* PRODUCTION=1 */
 /*		This version for production: optimization & shared libraries */
 /*		SGI's netinet/tcp.h flunks ANSI conformance.  Silence the warnings */
-#		define	OPTIMIZER	-O2 -Olimit 1500 -woff 658 -Wl,-w1
+#		define	OPTIMIZER	-O2 -Olimit 1400 -woff 658 -Wl,-w1
 /*		Use shared libraries */
 #		define	SHARED	_s
 #	else
@@ -221,7 +221,6 @@ set -S2 "/bin/sh"
 /* -ansiposix	ANSI+POSIX mode is used over ANSI, to get fdopen(), etc, defined. */
 #	define  CC_OPTS		GFLAG -ansiposix -DIRIX=5
 #	define	LGT_CONFIG	GFLAG
-#	define	LIBBU_CONFIG    -DBRLCAD_ROOT='"'BASEDIR'"'
 #	define	TCL_DEFS OPTIMIZER -DTCL_LIBRARY='"'TCLLIBDIR'"' -DTCL_PACKAGE_PATH='"'TCLLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_SYS_TIME_H=1 -DTIME_WITH_SYS_TIME=1 -DHAVE_TZNAME=1 -DHAVE_TIMEZONE_VAR=1 -DSTDC_HEADERS=1 -DNEED_MATHERR=1 -Dvfork=fork -DHAVE_BSDGETTIMEOFDAY=1 -DHAVE_SYS_IOCTL_H=1 -DHAVE_SYS_FILIO_H=1
 #	define	TK_DEFS	OPTIMIZER -DTK_LIBRARY='"'TKLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_LIMITS_H=1 -DSTDC_HEADERS=1 -D__CHAR_UNSIGNED__=1 -DTK_NO_SECURITY=1
 
@@ -229,10 +228,11 @@ set -S2 "/bin/sh"
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_4D -DIF_5D -DIF_OGL -DBSD=43 -DIF_X -I''XINCDIR
 
 #	define	LIBMESA_CONFIG	-DFBIND=2
-#	define  LIBDM_OBJS	dm-X dm-ogl
-#	define	LIBDM_CONFIG	-DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -DUSE_RT_ASPECT
-#	define	MGED_OBJS	dm-X dm-ogl dm-generic
-#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -I''XINCDIR
+#	define  LIBDM_OBJS	dm-X dm-ogl dm-glx
+#	define	LIBDM_CONFIG	-DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -DDM_GLX
+#	define	MGED_OBJS	dm-X dm-ogl dm-glx
+#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -DDM_GLX -I''XINCDIR -DBRLCAD_TCL_LIBRARY='"'TCLSCRIPTSDIR'"'
+
 #	define	HAS_TCP	1
 #	define	CC	/usr/bin/cc
 #	define	GETHOST	hostname
@@ -250,20 +250,19 @@ set -S2 "/bin/sh"
 /*		Warning 1174 is "variable declared but never referenced". */
 /*		Warning 1032 is "expression must have arithmetic type". */
 /*		Warning 1203 is "nonstandard type for a bit field" (libpkg). */
-/*		Warning 1209 is "controlling expression is constant */
 /*		Warning 1048 is "cast between pointer-to-object and pointer-to-function */
 /*		Warning 1110 is "statement is unreachable" */
 /*		Warning 1048 is "cast between pointer-to-object and pointer-to-function" */
 #		define	OPTIMIZER	-O2 -OPT:fold_arith_limit=16000 \
 					-OPT:const_copy_limit=16000 \
 					-use_readonly_const \
-					-woff 1203,1048,1110,1209
+					-woff 1203,1048,1110
 #	else
 /*		This version for debugging with DBX */
 /*		-fullwarn is pretty verbose */
 #		define	OPTIMIZER	-g -use_readonly_const
 #	endif
-#	define	GFLAG	-n32 -mips3 -KPIC -G 7
+#	define	GFLAG		-mips3 -KPIC -G 7
 #	define  XINCDIR /usr/include/X11
 #	define	XLIBDIR /usr/lib32
 #	if 0	/* PRODUCTION=1 */
@@ -289,16 +288,15 @@ set -S2 "/bin/sh"
 /* -ansiposix	ANSI+POSIX mode is used over ANSI, to get fdopen(), etc, defined. */
 #	define  CC_OPTS		GFLAG -xansi -DIRIX=6 -Wl,-woff,1048
 #	define	LGT_CONFIG	GFLAG
-#       define  LIBBU_CONFIG    -DBRLCAD_ROOT='"'BASEDIR'"'
-#	define	LIBFB_OBJS	if_remote if_ab if_X if_X24 if_ogl
-#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DBSD=43 -DIF_X -I''XINCDIR -DIF_OGL
-#       define  LIBFB_LIBES     LIBPKG -L''XLIBDIR -lX11 -lGL
-#	define	LIBDM_OBJS	dm-X dm-ogl
-#	define	LIBDM_CONFIG	-DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL
+#	define	LIBFB_OBJS	if_remote if_ab if_X if_4d if_X24 if_ogl
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DBSD=43 -DIF_X -I''XINCDIR -DIF_4D -DIF_5D -DIF_OGL
+#       define  LIBFB_LIBES     LIBPKG -L''XLIBDIR -lX11 -lgl -lGL
+#	define	LIBDM_OBJS	dm-X dm-ogl dm-glx
+#	define	LIBDM_CONFIG	-DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -DDM_GLX
 #	define	LIBDM_LIBES	LIBTK LIBTCL LIBTCL_LIBES
-#	define	MGED_OBJS	dm-X dm-ogl dm-generic
-#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -I''XINCDIR
-#	define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext 
+#	define	MGED_OBJS	dm-X dm-ogl
+#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -I''XINCDIR -DBRLCAD_TCL_LIBRARY='"'TCLSCRIPTSDIR'"'
+#	define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -lgl -lGL
 #	define	LIBDM_SAMPLER_LIBES MGED_LIBES
 #	define	HAS_TCP	1
 #	define	CC	cc
@@ -354,16 +352,15 @@ set -S2 "/bin/sh"
 #	define	TK_DEFS -woff 1048,1233,1412,1110 OPTIMIZER -DTK_LIBRARY='"'TKLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_LIMITS_H=1 -DSTDC_HEADERS=1 -D__CHAR_UNSIGNED__=1
 #	define  CC_OPTS		GFLAG -xansi -DIRIX=6 -DIRIX64=62
 #	define	LGT_CONFIG	GFLAG
-#       define  LIBBU_CONFIG    -DBRLCAD_ROOT='"'BASEDIR'"'
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24 if_ogl
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DBSD=43 -DIF_X -I''XINCDIR -DIF_OGL
 #       define  LIBFB_LIBES     LIBPKG -L''XLIBDIR -lX11 -lGL
 #	define	LIBDM_OBJS	dm-X dm-ogl
 #	define	LIBDM_CONFIG	-DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL
 #	define	LIBDM_LIBES	LIBTK LIBTCL LIBTCL_LIBES
-#	define	MGED_OBJS	dm-X dm-ogl dm-generic
-#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -I''XINCDIR
-#	define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext 
+#	define	MGED_OBJS	dm-X dm-ogl
+#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -I''XINCDIR -DBRLCAD_TCL_LIBRARY='"'TCLSCRIPTSDIR'"'
+#	define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -lGL
 #	define	LIBDM_SAMPLER_LIBES MGED_LIBES
 #	define	HAS_TCP	1
 #	define	CC	cc
@@ -397,18 +394,14 @@ set -S2 "/bin/sh"
 /*		-fullwarn is pretty verbose */
 #		define	OPTIMIZER	-g -use_readonly_const
 #	endif
-#if 0
 #	define	GFLAG		-64 -mips4 -KPIC -G 7
-#else
-#	define	GFLAG		-64 -mips4 -KPIC -avoid_gp_overflow
-#endif
 #	define  XINCDIR /usr/include/X11
 #	define	XLIBDIR /usr/lib64
 #	if 0	/* PRODUCTION=1 */
 /*		Shared library version support */
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sh/sharedlibvers.sh
-#		define	BUILD_LIBRARY	ld -64 -mips4 -shared -o
+#		define	BUILD_LIBRARY	ld -mips4 -shared -o
 #		define	RANLIB	true
 #		define	STANDARD_LIBES	-lm -lmalloc -lc -rpath LIBDIR:/usr/lib64
 /*		When debugging libraries, -m and -v are helpful LD_OPTS */
@@ -423,16 +416,15 @@ set -S2 "/bin/sh"
 #	define	TK_DEFS -woff 1048,1233,1412,1110 OPTIMIZER -DTK_LIBRARY='"'TKLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_LIMITS_H=1 -DSTDC_HEADERS=1 -D__CHAR_UNSIGNED__=1
 #	define  CC_OPTS		GFLAG -xansi -DIRIX=6 -DIRIX64=62
 #	define	LGT_CONFIG	GFLAG
-#       define  LIBBU_CONFIG    -DBRLCAD_ROOT='"'BASEDIR'"'
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24 if_ogl
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DBSD=43 -DIF_X -I''XINCDIR -DIF_OGL
 #       define  LIBFB_LIBES     LIBPKG -L''XLIBDIR -lX11 -lGL
 #	define	LIBDM_OBJS	dm-X dm-ogl
 #	define	LIBDM_CONFIG	-DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL
 #	define	LIBDM_LIBES	LIBTK LIBTCL LIBTCL_LIBES
-#	define	MGED_OBJS	dm-X dm-ogl dm-generic
-#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -I''XINCDIR
-#	define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext 
+#	define	MGED_OBJS	dm-X dm-ogl
+#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -I''XINCDIR -DBRLCAD_TCL_LIBRARY='"'TCLSCRIPTSDIR'"'
+#	define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -lGL
 #	define	LIBDM_SAMPLER_LIBES MGED_LIBES
 #	define	HAS_TCP	1
 #	define	CC	cc
@@ -473,31 +465,30 @@ set -S2 "/bin/sh"
 /*		Shared library version support */
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sh/sharedlibvers.sh
-#		define	BUILD_LIBRARY	ld -64 -mips4 -shared -o
+#		define	BUILD_LIBRARY	ld -mips4 -shared -o
 #		define	RANLIB	true
 #		define	STANDARD_LIBES	-lm -lmalloc -lc -rpath LIBDIR:/usr/lib64
 /*		When debugging libraries, -m and -v are helpful LD_OPTS */
-#		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85 -Wl,-woff,134
+#		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85
 #	else
 /*		Static linked executables */
 #		define	RANLIB	ranlib5.sh
 #		define	STANDARD_LIBES	-lm -lmalloc -lc
-#		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85 -Wl,-woff,134
+#		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85
 #	endif
 #	define	TCL_DEFS -woff 1048,1233,1412,1110 OPTIMIZER -DTCL_LIBRARY='"'TCLLIBDIR'"' -DTCL_PACKAGE_PATH='"'TCLLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_SYS_TIME_H=1 -DTIME_WITH_SYS_TIME=1 -DHAVE_TZNAME=1 -DHAVE_TIMEZONE_VAR=1 -DSTDC_HEADERS=1 -DNEED_MATHERR=1 -Dvfork=fork -DHAVE_BSDGETTIMEOFDAY=1 -DHAVE_SYS_IOCTL_H=1 -DHAVE_SYS_FILIO_H=1
 #	define	TK_DEFS -woff 1048,1233,1412,1110 OPTIMIZER -DTK_LIBRARY='"'TKLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_LIMITS_H=1 -DSTDC_HEADERS=1 -D__CHAR_UNSIGNED__=1
 #	define  CC_OPTS		GFLAG -xansi -DIRIX=6 -DIRIX64=64
 #	define	LGT_CONFIG	GFLAG
-#	define	LIBBU_CONFIG	-DBRLCAD_ROOT='"'BASEDIR'"'
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24 if_ogl
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DBSD=43 -DIF_X -I''XINCDIR -DIF_OGL
 #       define  LIBFB_LIBES     LIBPKG -L''XLIBDIR -lX11 -lGL
 #	define	LIBDM_OBJS	dm-X dm-ogl
-#	define	LIBDM_CONFIG	-DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -DUSE_RT_ASPECT
+#	define	LIBDM_CONFIG	-DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL
 #	define	LIBDM_LIBES	LIBTK LIBTCL LIBTCL_LIBES
-#	define	MGED_OBJS	dm-X dm-ogl dm-generic
-#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -I''XINCDIR
-#	define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext 
+#	define	MGED_OBJS	dm-X dm-ogl
+#	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_X -DDM_OGL -I''XINCDIR -DBRLCAD_TCL_LIBRARY='"'TCLSCRIPTSDIR'"'
+#	define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -lGL
 #	define	LIBDM_SAMPLER_LIBES MGED_LIBES
 #	define	HAS_TCP	1
 #	define	CC	cc
@@ -539,7 +530,6 @@ set -S2 "/bin/sh"
 #	define	TCL_COMPAT_FILES strtoul fixstrtod
 #	define	TK_DEFS	OPTIMIZER -DTK_LIBRARY='"'TKLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_LIMITS_H=1 -DNO_STDLIB_H=1 -Dmemmove=memcpy -Dstrtod=fixstrtod
 
-#       define  LIBBU_CONFIG    -DBRLCAD_ROOT='"'BASEDIR'"'
 #	if 0	/* PRODUCTION=1 */
 /*		Sun with X11 (aka "openwin") Default for SunOS 41.1 */
 #		define	XINCDIR		/usr/openwin/include
@@ -551,7 +541,7 @@ set -S2 "/bin/sh"
 #		define	LIBDM_OBJS	dm-X
 #		define	LIBDM_CONFIG	-DDM_X -I''XINCDIR
 #		define  LIBDM_LIBES     LIBTK LIBTCL LIBTCL_LIBES
-#		define	MGED_OBJS	dm-X dm-generic
+#		define	MGED_OBJS	dm-X
 #		define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #		define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly
 		define  LIBDM_SAMPLER_LIBES     MGED_LIBES
@@ -568,16 +558,16 @@ set -S2 "/bin/sh"
 #			define	LIBDM_CONFIG	-DUSE_MESA_GL -DDM_X -DDM_OGL -I''XINCDIR
 #			define  LIBDM_LIBES     LIBTK LIBTCL LIBTCL_LIBES
 #			define  LIBMESA_CONFIG  -DFBIND=2 -I''XINCDIR
-#			define	MGED_CONFIG	-DUSE_MESA_GL -DDM_X -DDM_OGL -I''XINCDIR
-#			define	MGED_OBJS	dm-X dm-ogl dm-generic
+#			define	MGED_CONFIG	-DUSE_MESA_GL -DDM_X -DDM_OGL -I''XINCDIR -DBRLCAD_TCL_LIBRARY='"'TCLSCRIPTSDIR'"' -DDOUBLE_BUFFERING_WITH_PIXMAPS
+#			define	MGED_OBJS	dm-X dm-ogl
 $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../.libMesa.sun4 -lMesaGL
 #			define  LIBDM_SAMPLER_LIBES	MGED_LIBES
 #		else
 #			define	LIBDM_OBJS	dm-X
 #			define	LIBDM_CONFIG	-DDM_X -I''XINCDIR
 #			define  LIBDM_LIBES     LIBTK LIBTCL LIBTCL_LIBES
-#			define	MGED_CONFIG	-DDM_X -I''XINCDIR
-#			define	MGED_OBJS	dm-X dm-generic
+#			define	MGED_CONFIG	-DDM_X -I''XINCDIR -DBRLCAD_TCL_LIBRARY='"'TCLSCRIPTSDIR'"' -DDOUBLE_BUFFERING_WITH_PIXMAPS
+#			define	MGED_OBJS	dm-X
 #			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly
 #			define  LIBDM_SAMPLER_LIBES	MGED_LIBES
 #		endif
@@ -607,7 +597,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 
 #	if defined( __GNUC__ )
 #		define	CC		gcc
-#		if 1	/* PRODUCTION=1 */
+#		if 0	/* PRODUCTION=1 */
 #			define	OPTIMIZER	-O2 -fwritable-strings
 #		else
 #			define	OPTIMIZER	-g -fwritable-strings
@@ -617,7 +607,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	else
 /*		For now, we expect /opt/SUNWspro/bin ANSI compiler to be used */
 #		define	CC		/opt/SUNWspro/bin/cc
-#		if 0	/* PRODUCTION=1 */
+#		if 1	/* PRODUCTION=1 */
 #			define	OPTIMIZER	-dalign -xcg92 -xO4
 #		else
 #			define	OPTIMIZER	-g
@@ -632,16 +622,10 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define	ARCH_SUF	so
 #		define	LIBVERS		../sh/sharedlibvers.sh
 #		define	BUILD_LIBRARY	ld -Bdynamic -G -h PRODUCTS[[LIBVERS]] -o
-#		define	RANLIB		true
-#		define	STANDARD_LIBES	-lm -lnsl -lsocket -ldl -R /usr/lib:LIBDIR
-#	else
-#		define  ARCH_SUF	a
-#		define	LIBVERS		../sh/newvers.sh
-#		define	RANLIB		ranlib
-#		define	STANDARD_LIBES	-lm -lnsl -lsocket -ldl
 #	endif
+#	define	RANLIB		true
 
-#       define  LIBBU_CONFIG    -DBRLCAD_ROOT='"'BASEDIR'"'
+#	define	STANDARD_LIBES	-lm -lnsl -lsocket -ldl -R /usr/lib:LIBDIR
 
 #	define	LIBPKG_CONFIG	-DBSD=43 -D_KERNEL
 #	define	LIBPKG_LIBES	-lnsl -lsocket
@@ -657,25 +641,19 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	TK_DEFS		-DTK_LIBRARY='"'TKLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_LIMITS_H=1 -DSTDC_HEADERS=1 -Dstrtod=fixstrtod
 #	define	LIBTK_CONFIG	-I''XINCDIR
 
-#       define  LIBBU_CONFIG    -DBRLCAD_ROOT='"'BASEDIR'"'
-
 #  if 1	/* PRODUCTION=1 */
 #	define	LIBMESA_CONFIG	-DFBIND=2
 #	define	LIBDM_OBJS	dm-X
-#	define	LIBDM_CONFIG	-DDM_X -I''XINCDIR
+#	define	LIBDM_CONFIG	-DDM_x  -I''XINCDIR
 #	define	LIBDM_LIBES	LIBTK LIBTCL LIBTCL_LIBES
-#	define	MGED_OBJS	dm-X dm-generic
+#	define	MGED_OBJS	dm-X
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
-#if 0
 #	define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -R''XLIBDIR -lX11 -lnsl -lsocket
-#else
-#	define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -lnsl -lsocket
-#endif
 #	define	LIBDM_SAMPLER_LIBES MGED_LIBES
 #  else
 /*	Compiling XGL requires SDK (Solaris Developer's Kit) */
 #	define	XGLHOME		/opt/SUNWits/Graphics-sw/xgl-3.0
-#	define	MGED_OBJS	dm-X dm-xgl dm-generic
+#	define	MGED_OBJS	dm-X dm-xgl
 #	define	MGED_CONFIG	-DDM_X -DDM_XGL -I''XINCDIR -I''XGLHOME/include
 #	define	MGED_LIBES	-L''XLIBDIR -L''XGLHOME/lib -R''XLIBDIR \
 				-R''XGLHOME/lib \
@@ -714,7 +692,6 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	endif
 #	define	RANLIB	true
 #	define	LIBRT_TIMER	timerunix
-#       define  LIBBU_CONFIG    -DBRLCAD_ROOT='"'BASEDIR'"'
 #	define	LIBBU_LIBES	-lu
 #	define	LGT_CONFIG	-Dcray
 #	define	LIBTERMLIB	-lcurses
@@ -726,7 +703,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBFB_LIBES	LIBPKG -lX11
 #	define	LIBPKG_CONFIG	-DBSD=43
 #	define	RFBD_CONFIG	-DBSD=43
-#	define	MGED_OBJS	dm-X dm-generic
+#	define	MGED_OBJS	dm-X
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #	define	MGED_LIBES	-lX11
 #endif
@@ -755,7 +732,6 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	FC	/bin/cf77
 #	define	RANLIB	true
 #	define	LIBRT_TIMER	timerunix
-#       define  LIBBU_CONFIG    -DBRLCAD_ROOT='"'BASEDIR'"'
 #	define	LIBBU_LIBES	-lmt
 #	define	LGT_CONFIG	-Dcray
 #	define	LIBPKG_LIBES	-lnet
@@ -767,7 +743,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_X -I''XINCDIR
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
 #	define	LIBFB_LIBES	LIBPKG -lX11
-#	define	MGED_OBJS	dm-X dm-generic
+#	define	MGED_OBJS	dm-X
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #	define	MGED_LIBES	-lX11 -lnet
 #endif
@@ -796,7 +772,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define	CC_OPTS -fPIC
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sh/sharedlibvers.sh
-#		define	BUILD_LIBRARY	gcc -shared -o
+#		define	BUILD_LIBRARY	gcc -b i486-linuxelf -shared -o
 #		define	RANLIB	true
 #		define	STANDARD_LIBES	-lm -lc -Wl,-rpath -Wl,LIBDIR:/usr/lib
 #	endif
@@ -806,19 +782,18 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBRT_TIMER	timer42
 /*	for "ncurses" change "-lcurses" to "-lncurses" (Caldera OpenLinux, RedHat) */
 #	define	LIBTERMLIB	-lncurses
-#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X
+#	define	LIBFB_CONFIG	-DIF_REMOTE -I''XINCDIR -DIF_X
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
 #	define	LIBDM_OBJS	dm-X
 #	define	LIBDM_CONFIG	-DDM_X -I''XINCDIR
 #	define 	LIBDM_LIBES	LIBTK LIBTCL LIBTCL_LIBES -L''XLIBDIR -lXi
-#	define	MGED_OBJS	dm-X dm-generic
-#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#	define	MGED_OBJS	dm-X
+#	define	MGED_CONFIG	-DDM_X -I''XINCDIR -DBRLCAD_TCL_LIBRARY='"'TCLSCRIPTSDIR'"'
 #	define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lX11
 #	define	TCL_DEFS	OPTIMIZER -DTCL_LIBRARY='"'TCLLIBDIR'"' -DTCL_PACKAGE_PATH='"'TCLLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_SYS_TIME_H=1 -DTIME_WITH_SYS_TIME=1 -DHAVE_TZNAME=1 -DHAVE_TIMEZONE_VAR=1 -DSTDC_HEADERS=1 -DHAVE_SYS_IOCTL_H=1 -DNO_DLFCN_H=1
 #	define	TK_DEFS		OPTIMIZER -DTK_LIBRARY='"'TKLIBDIR'"' -DTK_PACKAGE_PATH='"'TKLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_LIMITS_H=1 -DSTDC_HEADERS=1
 #	define	LIBDM_SAMPLER_LIBES MGED_LIBES
-#       define  LIBBU_CONFIG    -DBRLCAD_ROOT='"'BASEDIR'"'
 #	define	LIBBU_LIBES	LIBTCL LIBTCL_LIBES
 #	define	LIBTCL_LIBES	-ldl
 #endif
@@ -834,7 +809,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	XINCDIR	/usr/X11R6/include
 #	define	XLIBDIR	/usr/X11R6/lib
 
-#	if 1	/* PRODUCTION=0 */
+#	if 0
 /*		Static linked executables */
 #		define	CC	gcc
 #		define	GFLAG	/**/
@@ -851,17 +826,16 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define	STANDARD_LIBES	-lm -lc -Wl,-rpath -Wl,LIBDIR:/usr/lib
 #	endif
 
-#       define  LIBBU_CONFIG    -DBRLCAD_ROOT='"'BASEDIR'"'
 #	define	LIBRT_TIMER	timer42
-#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X
+#	define	LIBFB_CONFIG	-DIF_REMOTE -I''XINCDIR -DIF_X
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
 #	define	LIBDM_OBJS	dm-X
 #	define	LIBDM_CONFIG	-DDM_X -I''XINCDIR
 #       define  LIBDM_LIBES     LIBTK LIBTCL LIBTCL_LIBES
-#	define	MGED_OBJS	dm-X dm-generic
-#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
-#	define	MGED_LIBES	LIBDM LIBDM_LIBES LIBFB LIBFB_LIBES -lXi -lXext
+#	define	MGED_OBJS	dm-X
+#	define	MGED_CONFIG	-DDM_X -I''XINCDIR -DBRLCAD_TCL_LIBRARY='"'TCLSCRIPTSDIR'"'
+#	define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lX11 -lipc
 #	define	TCL_DEFS	OPTIMIZER -DTCL_LIBRARY='"'TCLLIBDIR'"' -DTCL_PACKAGE_PATH='"'TCLLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_SYS_TIME_H=1 -DTIME_WITH_SYS_TIME=1 -DHAVE_TM_ZONE=1 -DHAVE_TM_GMTOFF=1 -DHAVE_TIMEZONE_VAR=1 -DSTDC_HEADERS=1 -DHAVE_SYS_IOCTL_H=1 -DHAVE_SYS_FILIO_H=1
 /* #	define	LIBTCL_LIBES	-ldl */
 #	define	TK_DEFS		-DTK_LIBRARY='"'TKLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_LIMITS_H=1 -DSTDC_HEADERS=1  -I''XINCDIR
@@ -881,16 +855,15 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	XINCDIR	/usr/X11/include
 #	define	XLIBDIR	/usr/X11/lib
 
-#       define  LIBBU_CONFIG    -DBRLCAD_ROOT='"'BASEDIR'"'
 #	define	LIBRT_TIMER	timer42
-#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X
+#	define	LIBFB_CONFIG	-DIF_REMOTE -I''XINCDIR -DIF_X
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11 -lipc
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
 #	define	LIBDM_OBJS	dm-X
 #	define	LIBDM_CONFIG	-DDM_X -I''XINCDIR
 #       define  LIBDM_LIBES     LIBTK LIBTCL LIBTCL_LIBES
-#	define	MGED_OBJS	dm-X dm-generic
-#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#	define	MGED_OBJS	dm-X
+#	define	MGED_CONFIG	-DDM_X -I''XINCDIR -DBRLCAD_TCL_LIBRARY='"'TCLSCRIPTSDIR'"'
 #	define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lX11 -lipc
 #	define	TCL_DEFS	OPTIMIZER -DTCL_LIBRARY='"'TCLLIBDIR'"' -DTCL_PACKAGE_PATH='"'TCLLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_SYS_TIME_H=1 -DTIME_WITH_SYS_TIME=1 -DHAVE_TM_ZONE=1 -DHAVE_TM_GMTOFF=1 -DHAVE_TIMEZONE_VAR=1 -DSTDC_HEADERS=1 -DHAVE_SYS_IOCTL_H=1 -DHAVE_SYS_FILIO_H=1
 #	define	LIBTCL_LIBES	-ldl
@@ -920,11 +893,10 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define  LIBFB_CONFIG    -DIF_REMOTE
 #		define	LIBFB_LIBES	LIBPKG
 #	endif
-#       define  LIBBU_CONFIG    -DBRLCAD_ROOT='"'BASEDIR'"'
 #       define  LIBDM_OBJS      dm-X
 #       define  LIBDM_CONFIG    -DDM_X
 #       define  LIBDM_LIBES     LIBTK LIBTCL LIBTCL_LIBES
-#	define	MGED_OBJS	dm-X dm-generic
+#	define	MGED_OBJS	dm-X
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #	define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lX11
 #	define	LIBDM_SAMPLER_LIBES MGED_LIBES
@@ -974,17 +946,17 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11''SHARED LIBPKG -lgl''SHARED
 #	if 0	/* PRODUCTION=1 */
 /*		X11 for MGED */
-#		define	MGED_OBJS	dm-4d dm-X dm-ogl dm-generic
-#		define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR -DDM_OGL
+#		define	MGED_OBJS	dm-4d dm-X dm-ogl dm-glx
+#		define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR -DDM_OGL -DDM_GLX
 #		define	MGED_LIBES	-L''XLIBDIR -lX11''SHARED -lgl''SHARED
 #	else
 #if 0
 /*		Lee Butler experimental version */
-#		define	MGED_OBJS	dm-4d mged_widget dm-X dm-generic
+#		define	MGED_OBJS	dm-4d mged_widget dm-X
 #		define	MGED_CONFIG	GFLAG -DIR_WIDGETS=1 -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR
 #		define	MGED_LIBES	-L../libforms/FORMS -lforms -lfm''SHARED -L''XLIBDIR -lX11''SHARED -lgl''SHARED
 #else
-#		define MGED_OBJS	dm-X dm-generic
+#		define MGED_OBJS	dm-glx dm-X
 #		define MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR -DMGED_TCL_LIBRARY=\\\\"/n/vapor/m/cad/tclscripts/mged\\\\"
 #		define MGED_LIBES	-L''XLIBDIR -lX11 -lgl_s
 #endif
@@ -1066,7 +1038,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB \
 			-I''XINCDIR -DIF_X
 #		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
-#		define	MGED_OBJS	dm-X dm-generic
+#		define	MGED_OBJS	dm-X
 #		define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #		define	MGED_LIBES	-L''XLIBDIR -lX11
 #	endif
@@ -1075,10 +1047,10 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define	XINCDIR		/usr/X11/include
 #		define	XLIBDIR		/usr/X11/lib
 #		define	LIBFB_OBJS	if_remote if_ab if_sun if_X if_X24
-#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_SUN \
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB \
 			-I''XINCDIR -DIF_X
 #		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
-#		define	MGED_OBJS	dm-X dm-generic
+#		define	MGED_OBJS	dm-X
 #		define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #		define	MGED_LIBES	-L''XLIBDIR -lX11
 #	endif
@@ -1087,7 +1059,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define	LIBFB_OBJS	if_remote if_ab if_sun
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_SUN
 #		define	LIBFB_LIBES	LIBPKG -lsuntool -lsunwindow -lpixrect
-#		define	MGED_OBJS	dm-sun 
+#		define	MGED_OBJS	dm-sun
 #		define	MGED_CONFIG	-DDM_SUNPW
 #		define	MGED_LIBES	-lsuntool -lsunwindow -lpixrect
 #	endif
@@ -1100,7 +1072,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 			-I''XINCDIR -DIF_X
 #		define	LIBFB_LIBES	LIBPKG -lsuntool -lsunwindow -lpixrect \
 			-L''XLIBDIR -lX11 -lgds
-#		define	MGED_OBJS	dm-sun dm-X dm-generic
+#		define	MGED_OBJS	dm-sun dm-X
 #		define	MGED_CONFIG	-DDM_SUNPW -DDM_X -I''XINCDIR
 #		define	MGED_LIBES	-lsuntool -lsunwindow -lpixrect \
 			-L''XLIBDIR -lX11
@@ -1152,7 +1124,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
 #	define	LIBRT_TIMER	timer42
-#	define 	MGED_OBJS	dm-X dm-generic
+#	define 	MGED_OBJS	dm-X
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #	define	MGED_LIBES	-L''XLIBDIR -lX11
 #	define	FC	/usr/convex/fc
@@ -1194,7 +1166,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define  LIBFB_CONFIG    -DIF_REMOTE
 #		define	LIBFB_LIBES	LIBPKG
 #	endif
-#	define	MGED_OBJS	dm-X dm-generic
+#	define	MGED_OBJS	dm-X
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #	define	MGED_LIBES	-L''XLIBDIR -lX11
 #endif
@@ -1257,13 +1229,13 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #endif
 #	endif
 
-#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X
+#	define	LIBFB_CONFIG	-DIF_REMOTE -I''XINCDIR -DIF_X
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
 
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #	define	MGED_LIBES	-L''XLIBDIR -lX11
-#	define	MGED_OBJS	dm-X dm-generic
+#	define	MGED_OBJS	dm-X
 #endif
 
 #ifdef ipsc860
@@ -1358,7 +1330,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define  LIBFB_OBJS      if_remote if_X if_X24
 #	define  LIBFB_CONFIG    -DIF_REMOTE -DIF_X -I''XINCDIR
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11 -lresolv -lsocket -lnsl -L/usr/ucblib -lucb
-#	define	MGED_OBJS	dm-X dm-generic
+#	define	MGED_OBJS	dm-X
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #	define	MGED_LIBES	-L''XLIBDIR -lX11 -lresolv -lsocket -lnsl -L/usr/ucblib -lucb
 #endif
@@ -1381,7 +1353,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	endif
 #	if 1
 /*		Normal Configuration */
-#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_PTTY -DIF_AB
 #		define	LIBFB_OBJS	if_remote if_ab
 #		define	LIBFB_LIBES	LIBPKG
 #	else
@@ -1389,7 +1361,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_X -I/m/X11/core
 #		define	LIBFB_OBJS	if_remote if_ab if_X if_X24
 #		define	LIBFB_LIBES	LIBPKG /usr/local/lib/libX11.a
-#		define	MGED_OBJS	dm-X dm-generic
+#		define	MGED_OBJS	dm-X
 #		define	MGED_CONFIG	-DDM_X -I/m/X11/core
 #		define	MGED_LIBES	/usr/local/lib/libX11.a
 #	endif
@@ -1421,7 +1393,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_X
 #		define	LIBFB_OBJS	if_remote if_ab if_X if_X24
 #		define	LIBFB_LIBES	LIBPKG /usr/local/lib/libX11.a
-#		define	MGED_OBJS	dm-X dm-generic
+#		define	MGED_OBJS	dm-X
 #		define	MGED_CONFIG	-DDM_X
 #		define	MGED_LIBES	/usr/local/lib/libX11.a
 #	endif
@@ -1441,7 +1413,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define LIBFB_LIBES	LIBPKB -lX11
 #	define LIBRT_TIMER	timer42
 #	define MGED_CONFIG	-DDM_X
-#	define MGED_OBJS	dm-X dm-generic
+#	define MGED_OBJS	dm-X
 #	define MGED_LIBES	LIBPKG -lX11
 #endif
 
@@ -1464,7 +1436,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_X -I''XINCDIR
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
-#	define	MGED_OBJS	dm-X dm-generic
+#	define	MGED_OBJS	dm-X
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #	define	MGED_LIBES	-L''XLIBDIR -lX11
 #endif
@@ -1488,7 +1460,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBFB_OBJS	if_remote if_X if_X24
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_X -I''XINCDIR
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
-#	define	MGED_OBJS	dm-X dm-generic
+#	define	MGED_OBJS	dm-X
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #	define	MGED_LIBES	/usr/lib/X11/libX11.a
 #endif
@@ -1522,7 +1494,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	        define  LIBFB_CONFIG    -DIF_REMOTE -I''XINCDIR
 #	        define  LIBFB_LIBES     LIBPKG
 #	endif
-#	define  MGED_OBJS       dm-X dm-generic
+#	define  MGED_OBJS       dm-X
 #	define  MGED_CONFIG     -DDM_X -I''XINCDIR
 /* XXX MGED_LIBES shouldn't need Motif stuff at all. */
 #	define  MGED_LIBES      -L/usr/lib/Motif1.2 -L''XLIBDIR  -lXm  -lXt -lX11 -lm
@@ -1549,7 +1521,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_X -I''XINCDIR
 #	define	LIBFB_OBJS	if_remote if_X if_X24
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
-#	define	MGED_OBJS	dm-X dm-generic
+#	define	MGED_OBJS	dm-X
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #	define	MGED_LIBES	-L''XLIBDIR -lX11
 #endif
@@ -1565,7 +1537,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBFB_CONFIG	-DIF_X -I''XINCDIR
 #	define	LIBFB_OBJS	if_X if_X24
 #	define	LIBFB_LIBES	-L''XLIBDIR -lX11
-#	define	MGED_OBJS	dm-X dm-generic
+#	define	MGED_OBJS	dm-X
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #	define	MGED_LIBES	-L''XLIBDIR -lX11
 #endif
@@ -1583,7 +1555,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBFB_CONFIG	-DIF_X -I''XINCDIR
 #	define	LIBFB_OBJS	if_X if_X24
 #	define	LIBFB_LIBES	-L''XLIBDIR -lX11
-#	define	MGED_OBJS	dm-X dm-generic
+#	define	MGED_OBJS	dm-X
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #	define	MGED_LIBES	-L''XLIBDIR -lX11
 #endif
@@ -1792,26 +1764,19 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #if	!defined(BINDIR)
 /*	Define places where users can find "installed" copies of things */
 /*	Note that MANDIR is handled separately */
-#	if defined(BRLCAD_ROOT)
-		/*
-		 *  The value of BRLCAD_ROOT is passed along by CAKE from
-		 *  the output of "machinetype.sh -d" at the time that
-		 *  CAKE was compiled.
-		 *  If it has become wrong, re-run setup.sh & rebuild all.
-		 */
-#		define BASEDIR BRLCAD_ROOT
-#	else
-#		include "The CAKE program failed to define the variable BRLCAD_ROOT.  Fatal ERROR"
-#		define BASEDIR /very/very/bad/error/
-#	endif
-#	define	BINDIR	BASEDIR/bin
-#	define	LIBDIR	BASEDIR/lib
-#	define	ETCDIR	BASEDIR/etc
-#	define	INCLUDE_DIR	BASEDIR/include/brlcad
-#	define	VFONTDIR	BASEDIR/vfont
-#	define	TCLLIBDIR	BASEDIR/tcl
-#	define	TKLIBDIR	BASEDIR/tk
-#	define	TCLSCRIPTSDIR	BASEDIR/tclscripts
+#	define	BINDIR	/usr/brlcad/bin
+#	define	LIBDIR	/usr/brlcad/lib
+#	define	ETCDIR	/usr/brlcad/etc
+#	define	INCLUDE_DIR	/usr/brlcad/include/brlcad
+#	define	VFONTDIR	/usr/brlcad/vfont
+#	define	TCLLIBDIR	/usr/brlcad/tcl
+#	define	TKLIBDIR	/usr/brlcad/tk
+#if 0	/* PRODUCTION=1 */
+#	define	TCLSCRIPTSDIR	/usr/brlcad/tclscripts
+#else
+/*XXX For development only */
+#	define	TCLSCRIPTSDIR	/m/cad/tclscripts
+#endif
 #endif
 
 #if	!defined(XLIBDIR)
@@ -1823,7 +1788,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #endif
 
 #if !defined(MANDIR)
-#	define	MANDIR	BASEDIR/man/man
+#	define	MANDIR	/usr/brlcad/man/man
 #endif
 
 /* Permissions for "installed" files of various types */
@@ -1847,24 +1812,12 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 
 #if !NFS
 /*	Local style, binaries in source directories */
-#	define	LIBZ_DIR	../libz
-#	define	LIBZ		-L''LIBZ_DIR -lz
-#	define	LIBZ_DEP	[[LIBVERS ../libz/libz.ARCH_SUF]]
-#	define	LIBPNG_DIR	../libpng
-#	define	LIBPNG		-L''LIBPNG_DIR -lpng
-#	define	LIBPNG_DEP	[[LIBVERS ../libpng/libpng.ARCH_SUF]]
 #	define	LIBFB_DIR	../libfb
 #	define	LIBFB		-L''LIBFB_DIR -lfb
 #	define	LIBFB_DEP	[[LIBVERS ../libfb/libfb.ARCH_SUF]]
 #	define	LIBRT_DIR	../librt
 #	define	LIBRT		-L''LIBRT_DIR -lrt
 #	define	LIBRT_DEP	[[LIBVERS ../librt/librt.ARCH_SUF]]
-#	define	LIBOPTICAL_DIR	../liboptical
-#	define	LIBOPTICAL	-L''LIBOPTICAL_DIR -loptical
-#	define	LIBOPTICAL_DEP	[[LIBVERS ../liboptical/liboptical.ARCH_SUF]]
-#	define	LIBMULTISPECTRAL_DIR	../libmultispectral
-#	define	LIBMULTISPECTRAL	-L''LIBMULTISPECTRAL_DIR -lmultispectral
-#	define	LIBMULTISPECTRAL_DEP	[[LIBVERS ../libmultispectral/libmultispectral.ARCH_SUF]]
 #	define	LIBBU_DIR	../libbu
 #	define	LIBBU		-L''LIBBU_DIR -lbu
 #	define	LIBBU_DEP	[[LIBVERS ../libbu/libbu.ARCH_SUF]]
@@ -1935,24 +1888,12 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 
 #else
 /*	NFS style, append machine name */
-#	define	LIBZ_DIR	../.libz.MTYPE
-#	define	LIBZ		-L''LIBZ_DIR -lz
-#	define	LIBZ_DEP	[[LIBVERS ../.libz.MTYPE/libz.ARCH_SUF]]
-#	define	LIBPNG_DIR	../.libpng.MTYPE
-#	define	LIBPNG		-L''LIBPNG_DIR -lpng
-#	define	LIBPNG_DEP	[[LIBVERS ../.libpng.MTYPE/libpng.ARCH_SUF]]
 #	define	LIBFB_DIR	../.libfb.MTYPE
 #	define	LIBFB		-L''LIBFB_DIR -lfb
 #	define	LIBFB_DEP	[[LIBVERS ../.libfb.MTYPE/libfb.ARCH_SUF]]
 #	define	LIBRT_DIR	../.librt.MTYPE
 #	define	LIBRT		-L''LIBRT_DIR -lrt
 #	define	LIBRT_DEP	[[LIBVERS ../.librt.MTYPE/librt.ARCH_SUF]]
-#	define	LIBOPTICAL_DIR	../.liboptical.MTYPE
-#	define	LIBOPTICAL	-L''LIBOPTICAL_DIR -loptical
-#	define	LIBOPTICAL_DEP	[[LIBVERS ../.liboptical.MTYPE/liboptical.ARCH_SUF]]
-#	define	LIBMULTISPECTRAL_DIR	../.libmultispectral.MTYPE
-#	define	LIBMULTISPECTRAL	-L''LIBMULTISPECTRAL_DIR -lmultispectral
-#	define	LIBMULTISPECTRAL_DEP	[[LIBVERS ../.libmultispectral.MTYPE/libmultispectral.ARCH_SUF]]
 #	define	LIBBU_DIR	../.libbu.MTYPE
 #	define	LIBBU		-L''LIBBU_DIR -lbu
 #	define	LIBBU_DEP	[[LIBVERS ../.libbu.MTYPE/libbu.ARCH_SUF]]
@@ -2013,6 +1954,11 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	define	LIBREDBLACK_DIR	../.libredblack.MTYPE
 #	define	LIBREDBLACK	-L''LIBREDBLACK_DIR -lredblack
 #	define	LIBREDBLACK_DEP	[[LIBVERS ../.libredblack.MTYPE/libredblack.ARCH_SUF]]
+#if 0
+#	define	LIBTKGLX_DIR	../.libtkGLX.MTYPE
+#	define	LIBTKGLX	-L''LIBTKGLX_DIR -ltkGLX
+#	define	LIBTKGLX_DEP	[[LIBVERS ../.libtkGLX.MTYPE/libtkGLX.ARCH_SUF]]
+#endif
 #	if HAS_TCP
 #		define	LIBPKG_DIR	../.libpkg.MTYPE
 #		define	LIBPKG	-L''LIBPKG_DIR -lpkg
@@ -2129,7 +2075,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
  *  Even if you have lots of disk space, you don't want that	
  *  to happen.							
  */
-#define	MASTERHOST	vapor.arl.mil
+#define	MASTERHOST	wolf.arl.mil
 #define	DISTRIBUTION	/m/dist
 
 /* Symbols that should be defined in individual Cakefiles */

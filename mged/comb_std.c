@@ -402,9 +402,6 @@ struct directory *dp;
 	int errors=0;
 	short last_tok=TOK_NULL;
 
-	if(dbip == DBI_NULL)
-	  return 0;
-
 	for( BU_LIST_FOR( tok, tokens, hp ) )
 	{
 		switch( tok->type )
@@ -498,16 +495,13 @@ char	**argv;
 	register struct directory	*dp;
     	struct rt_db_internal		intern;
 	struct rt_comb_internal		*comb;
-	extern int			bu_optind;
-	extern char			*bu_optarg;
+	extern int			optind;
+	extern char			*optarg;
 	struct tokens			tok_hd;
 	struct tokens			*tok;
 	short				last_tok;
 	int				i;
 	union tree			*final_tree;
-
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
 
 	CHECK_READ_ONLY;
 
@@ -522,8 +516,8 @@ char	**argv;
 	}
 
 	/* Parse options */
-	bu_optind = 1;	/* re-init bu_getopt() */
-	while ((ch = bu_getopt(argc, argv, "gr?")) != EOF)
+	optind = 1;	/* re-init getopt() */
+	while ((ch = getopt(argc, argv, "gr?")) != EOF)
 	{
 		switch (ch)
 		{
@@ -539,8 +533,8 @@ char	**argv;
 			return TCL_OK;
 		}
 	}
-	argc -= (bu_optind + 1);
-	argv += bu_optind;
+	argc -= (optind + 1);
+	argv += optind;
 
 	comb_name = *argv++;
 	if (argc == -1)

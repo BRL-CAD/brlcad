@@ -33,13 +33,12 @@
  */
 
 void
-rt_nurb_kvknot( new_knots, order, lower, upper, num, res)
+rt_nurb_kvknot( new_knots, order, lower, upper, num)
 register struct knot_vector *new_knots;
 int	order;
 fastf_t lower;
 fastf_t upper;
 int	num;
-struct resource *res;
 {
 	register int	i;
 	int	total;
@@ -51,12 +50,8 @@ struct resource *res;
 
 	new_knots->k_size = total;
 
-	if( res )
-		new_knots->knots = (fastf_t * ) rt_pmalloc ( sizeof( fastf_t) * total,
-		    &res->re_pmem);
-	else
-		new_knots->knots = (fastf_t * ) rt_malloc ( sizeof( fastf_t) * total,
-		    "rt_nurb_kvknot: new knots values");
+	new_knots->knots = (fastf_t * ) rt_malloc ( sizeof( fastf_t) * total,
+	    "rt_nurb_kvknot: new knots values");
 
 	for ( i = 0; i < order; i++)
 		new_knots->knots[i] = lower;
@@ -75,12 +70,11 @@ struct resource *res;
  * val already is a multiple knot. 
  */
 void
-rt_nurb_kvmult( new_kv, kv, num, val, res)
+rt_nurb_kvmult( new_kv, kv, num, val)
 struct knot_vector	*new_kv;
 CONST struct knot_vector *kv;
 int			num;
 register fastf_t	val;
-struct resource *res;
 {
 	int	n;
 	register int	i;
@@ -95,24 +89,16 @@ struct resource *res;
 		rt_nurb_pr_kv(kv);
 		rt_bomb("rt_nurb_kvmult\n");
 	}
-
-	if( res )
-		check.knots = (fastf_t * ) rt_pmalloc( sizeof(fastf_t) * check.k_size,
-		    &res->re_pmem);
-	else
-		check.knots = (fastf_t * ) rt_malloc( sizeof(fastf_t) * check.k_size,
-		    "rt_nurb_kvmult: check knots");
+	check.knots = (fastf_t * ) rt_malloc( sizeof(fastf_t) * check.k_size,
+	    "rt_nurb_kvmult: check knots");
 
 	for ( i = 0; i < num - n; i++)
 		check.knots[i] = val;
 
-	rt_nurb_kvmerge( new_kv, &check, kv, res);
+	rt_nurb_kvmerge( new_kv, &check, kv);
 
 	/* free up old knot values */
-	if( res )
-		rt_pfree((char *)check.knots, &res->re_pmem);
-	else
-		rt_free((char *)check.knots, "rt_nurb_kvmult:check knots");
+	rt_free((char *)check.knots, "rt_nurb_kvmult:check knots");
 }
 
 
@@ -122,11 +108,10 @@ struct resource *res;
  */
 
 void
-rt_nurb_kvgen( kv, lower, upper, num, res)
+rt_nurb_kvgen( kv, lower, upper, num)
 register struct knot_vector *kv;
 int	num;
 fastf_t lower, upper;
-struct resource *res;
 {
 	register int	i;
 	register fastf_t inc;
@@ -134,13 +119,8 @@ struct resource *res;
 	inc = (upper - lower) / ( num + 1 );
 
 	kv->k_size = num;
-
-	if( res )
-		kv->knots = (fastf_t * ) rt_pmalloc ( sizeof( fastf_t) * num, 
-		    &res->re_pmem);
-	else
-		kv->knots = (fastf_t * ) rt_malloc ( sizeof( fastf_t) * num, 
-		    "rt_nurb_kvgen: kv knots");
+	kv->knots = (fastf_t * ) rt_malloc ( sizeof( fastf_t) * num, 
+	    "rt_nurb_kvgen: kv knots");
 
 	for ( i = 1; i <= num; i++)
 		kv->knots[i-1] = lower + i * inc;
@@ -153,11 +133,10 @@ struct resource *res;
  */
 
 void
-rt_nurb_kvmerge( new_knots, kv1, kv2, res )
+rt_nurb_kvmerge( new_knots, kv1, kv2 )
 struct knot_vector *new_knots;
 CONST struct knot_vector *kv1;
 CONST struct knot_vector *kv2;
-struct resource *res;
 {
 	int	kv1_ptr = 0;
 	int	kv2_ptr = 0;
@@ -165,14 +144,9 @@ struct resource *res;
 
 	new_knots->k_size = kv1->k_size + kv2->k_size;
 
-	if( res )
-		new_knots->knots = (fastf_t * ) rt_pmalloc( 
-		    sizeof (fastf_t) * new_knots->k_size,
-		    &res->re_pmem);
-	else
-		new_knots->knots = (fastf_t * ) rt_malloc( 
-		    sizeof (fastf_t) * new_knots->k_size,
-		    "rt_nurb_kvmerge: new knot values");
+	new_knots->knots = (fastf_t * ) rt_malloc( 
+	    sizeof (fastf_t) * new_knots->k_size,
+	    "rt_nurb_kvmerge: new knot values");
 
 	for ( new_ptr = 0; new_ptr < new_knots->k_size; new_ptr++) {
 		if ( kv1_ptr >= kv1->k_size )
@@ -215,24 +189,17 @@ register CONST struct knot_vector *kv;
  */
 
 void
-rt_nurb_kvextract( new_kv, kv, lower, upper, res)
+rt_nurb_kvextract( new_kv, kv, lower, upper)
 struct knot_vector	*new_kv;
 register CONST struct knot_vector *kv;
 int	upper, lower;
-struct resource *res;
 {
 	register int	i;
 	register fastf_t *ptr;
 
-	if( res )
-		new_kv->knots = (fastf_t * ) rt_pmalloc ( 
-		    sizeof (fastf_t) * (upper - lower),
-		    &res->re_pmem );
-	else
-		new_kv->knots = (fastf_t * ) rt_malloc ( 
-		    sizeof (fastf_t) * (upper - lower),
-		    "spl_kvextract: nkw kv values" );
-
+	new_kv->knots = (fastf_t * ) rt_malloc ( 
+	    sizeof (fastf_t) * (upper - lower),
+	    "spl_kvextract: nkw kv values" );
 	new_kv->k_size = upper - lower;
 	ptr = new_kv->knots;
 
@@ -246,21 +213,15 @@ struct resource *res;
  */
 
 void
-rt_nurb_kvcopy( new_kv, old_kv, res )
+rt_nurb_kvcopy( new_kv, old_kv )
 struct knot_vector	*new_kv;
 register CONST struct knot_vector *old_kv;
-struct resource *res;
 {
 	register int	i;
 
 	new_kv->k_size = old_kv->k_size;
-
-	if( res )
-		new_kv->knots = (fastf_t * ) rt_pmalloc( sizeof( fastf_t) * 
-		    new_kv->k_size, &res->re_pmem);
-	else
-		new_kv->knots = (fastf_t * ) rt_malloc( sizeof( fastf_t) * 
-		    new_kv->k_size, "spl_kvcopy: new knot values");
+	new_kv->knots = (fastf_t * ) rt_malloc( sizeof( fastf_t) * 
+	    new_kv->k_size, "spl_kvcopy: new knot values");
 
 	for ( i = 0; i < new_kv->k_size; i++)
 		new_kv->knots[i] = old_kv->knots[i];
@@ -343,12 +304,11 @@ int	order;
  */
 
 void
-rt_nurb_gen_knot_vector( new_knots, order, lower, upper, res)
+rt_nurb_gen_knot_vector( new_knots, order, lower, upper)
 register struct knot_vector *new_knots;
 int		order;
 fastf_t		lower;
 fastf_t		upper;
-struct resource *res;
 {
     register int i;
     int total;
@@ -357,11 +317,7 @@ struct resource *res;
 
     new_knots->k_size = total;
 
-    if( res )
-	    new_knots->knots = (fastf_t *) rt_pmalloc ( sizeof( fastf_t) * total,
-		&res->re_pmem);
-    else
-	    new_knots->knots = (fastf_t *) rt_malloc ( sizeof( fastf_t) * total,
+    new_knots->knots = (fastf_t *) rt_malloc ( sizeof( fastf_t) * total,
 		"rt_nurb_gen_knot_vector: new knots values");
 
     for ( i = 0; i < order; i++)

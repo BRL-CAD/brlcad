@@ -35,13 +35,22 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./sedit.h"
 #include "./mged_dm.h"
 
+#ifdef DM_X
+extern int X_drawString2D();
+#endif
+
+#define W_AXES 0
+#define V_AXES 1
+#define E_AXES 2
+
+extern point_t e_axes_pos;
+extern point_t curr_e_axes_pos;
+static void draw_axes();
+
 mat_t	perspective_mat;
 mat_t	incr_change;
 mat_t	modelchanges;
 mat_t	identity;
-
-/* This is a holding place for the current display managers default wireframe color */
-extern unsigned char geometry_default_color[];		/* defined in dodraw.c */
 
 /* Screen coords of actual eye position.  Usually it is at (0,0,+1),
  * but in head-tracking and VR applications, it can move.
@@ -163,27 +172,27 @@ VPRINT("sheared_eye", sheared_eye);
 bn_mat_print("pmat",pmat);
 
 	/* Some quick checking */
-	VSET( a, 0.0, 0.0, -1.0 );
+	VSET( a, 0, 0, -1 );
 	MAT4X3PNT( b, pmat, a );
 	VPRINT("0,0,-1 ->", b);
 
-	VSET( a, 1.0, 1.0, -1.0 );
+	VSET( a, 1, 1, -1 );
 	MAT4X3PNT( b, pmat, a );
 	VPRINT("1,1,-1 ->", b);
 
-	VSET( a, 0.0, 0.0, 0.0 );
+	VSET( a, 0, 0, 0 );
 	MAT4X3PNT( b, pmat, a );
 	VPRINT("0,0,0 ->", b);
 
-	VSET( a, 1.0, 1.0, 0.0 );
+	VSET( a, 1, 1, 0 );
 	MAT4X3PNT( b, pmat, a );
 	VPRINT("1,1,0 ->", b);
 
-	VSET( a, 1.0, 1.0, 1.0 );
+	VSET( a, 1, 1, 1 );
 	MAT4X3PNT( b, pmat, a );
 	VPRINT("1,1,1 ->", b);
 
-	VSET( a, 0.0, 0.0, 1.0 );
+	VSET( a, 0, 0, 1 );
 	MAT4X3PNT( b, pmat, a );
 	VPRINT("0,0,1 ->", b);
 #endif
@@ -265,7 +274,7 @@ int	which_eye;
 	mat_t		tmat, tvmat;
 	mat_t		new;
 	matp_t		mat;
-	int linestyle = -1;  /* not dashed */
+	int linestyle = 0;  /* not dashed */
 	short r = -1;
 	short g = -1;
 	short b = -1;
@@ -276,8 +285,8 @@ int	which_eye;
 	/*
 	 * Draw all solids not involved in an edit.
 	 */
-	if( mged_variables->mv_perspective <= 0 && eye_pos_scr[Z] == 1.0 )  {
-		mat = view_state->vs_model2view;
+	if( mged_variables.perspective <= 0 && eye_pos_scr[Z] == 1.0 )  {
+		mat = model2view;
 	} else {
 		/*
 		 *  There are two strategies that could be used:
@@ -292,39 +301,39 @@ int	which_eye;
 		point_t	l, h, eye;
 
 		/* Determine where eye should be */
-		to_eye_scr = 1 / tan(mged_variables->mv_perspective * bn_degtorad * 0.5);
+		to_eye_scr = 1 / tan(mged_variables.perspective * bn_degtorad * 0.5);
 
 #define SCR_WIDTH_PHYS	330	/* Assume a 330 mm wide screen */
 
-		eye_delta_scr = mged_variables->mv_eye_sep_dist * 0.5 / SCR_WIDTH_PHYS;
+		eye_delta_scr = mged_variables.eye_sep_dist * 0.5 / SCR_WIDTH_PHYS;
 
-		VSET( l, -1.0, -1.0, -1.0 );
-		VSET( h, 1.0, 1.0, 200.0 );
+		VSET( l, -1, -1, -1 );
+		VSET( h, 1, 1, 200.0 );
 if(which_eye) {
 printf("d=%gscr, d=%gmm, delta=%gscr\n", to_eye_scr, to_eye_scr * SCR_WIDTH_PHYS, eye_delta_scr);
 VPRINT("l", l);
 VPRINT("h", h);
 }
-		VSET( eye, 0.0, 0.0, to_eye_scr );
+		VSET( eye, 0, 0, to_eye_scr );
 #if 0
 		bn_mat_idn(tmat);
-		tmat[11] = -1.0;
-		bn_mat_mul( tvmat, tmat, view_state->vs_model2view );
+		tmat[11] = -1;
+		bn_mat_mul( tvmat, tmat, model2view );
 #endif
 		switch(which_eye)  {
 		case 0:
 			/* Non-stereo case */
-			mat = view_state->vs_model2view;
+			mat = model2view;
 /* XXX hack */
 #define HACK 0
 #if !HACK
 if( 1 ) {
 #else
-if( mged_variables->mv_faceplate > 0 )  {
+if( mged_variables.faceplate > 0 )  {
 #endif
 			if( eye_pos_scr[Z] == 1.0 )  {
 				/* This way works, with reasonable Z-clipping */
-				persp_mat( perspective_mat, mged_variables->mv_perspective,
+				persp_mat( perspective_mat, mged_variables.perspective,
 					1.0, 0.01, 1.0e10, 1.0 );
 			} else {
 				/* This way does not have reasonable Z-clipping,
@@ -342,26 +351,27 @@ bn_mat_print("perspective_mat", perspective_mat);
 			break;
 		case 1:
 			/* R */
-			mat = view_state->vs_model2view;
+			mat = model2view;
 			eye[X] = eye_delta_scr;
 			deering_persp_mat( perspective_mat, l, h, eye );
 			break;
 		case 2:
 			/* L */
-			mat = view_state->vs_model2view;
+			mat = model2view;
 			eye[X] = -eye_delta_scr;
 			deering_persp_mat( perspective_mat, l, h, eye );
 			break;
-                }
+		}
 		bn_mat_mul( new, perspective_mat, mat );
 		mat = new;
-		}
+	}
 
-	DM_LOADMATRIX( dmp, mat, which_eye );
+	dmp->dm_newrot( dmp, mat, which_eye );
 
+	dmp->dm_setLineAttr(dmp, 1, linestyle); /* linewidth - 1, not dashed */
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
 	  sp->s_flag = DOWN;		/* Not drawn yet */
-	  /* If part of object edit, will be drawn below */
+	  /* If part of object rotation, will be drawn below */
 	  if( sp->s_iflag == UP )
 	    continue;
 
@@ -376,77 +386,44 @@ bn_mat_print("perspective_mat", perspective_mat);
 
 	  if(linestyle != sp->s_soldash){
 	    linestyle = sp->s_soldash;
-	    DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, linestyle);
+	    dmp->dm_setLineAttr(dmp, 1, linestyle);
 	  }
 
-	  if(sp->s_cflag){
-	    if(!DM_SAME_COLOR(r,g,b,
-			      (short)geometry_default_color[0],
-			      (short)geometry_default_color[1],
-			      (short)geometry_default_color[2])){
-	      DM_SET_FGCOLOR(dmp,
-			     (short)geometry_default_color[0],
-			     (short)geometry_default_color[1],
-			     (short)geometry_default_color[2], 0);
-	      DM_COPY_COLOR(r,g,b,
-			    (short)geometry_default_color[0],
-			    (short)geometry_default_color[1],
-			    (short)geometry_default_color[2]);
+	  if(sp==illump){
+	    if(!DM_SAME_COLOR(r,g,b,DM_WHITE_R,DM_WHITE_G,DM_WHITE_B)){
+	      dmp->dm_setColor(dmp, DM_WHITE, 1);
+	      DM_COPY_COLOR(r,g,b,DM_WHITE_R,DM_WHITE_G,DM_WHITE_B);
 	    }
-	  } else {
+	    if(dmp->dm_drawVList( dmp, (struct rt_vlist *)&sp->s_vlist, mat ) == TCL_OK){
+	      sp->s_flag = UP;
+	      ndrawn++;
+	    }
+	  }else{
 	    if(!DM_SAME_COLOR(r,g,b,
 			      (short)sp->s_color[0],
 			      (short)sp->s_color[1],
 			      (short)sp->s_color[2])){
-	      DM_SET_FGCOLOR(dmp,
-			     (short)sp->s_color[0],
-			     (short)sp->s_color[1],
-			     (short)sp->s_color[2], 0);
+	      dmp->dm_setColor(dmp,
+			       (short)sp->s_color[0],
+			       (short)sp->s_color[1],
+			       (short)sp->s_color[2], 0);
 	      DM_COPY_COLOR(r,g,b,
-			    (short)sp->s_color[0],
-			    (short)sp->s_color[1],
-			    (short)sp->s_color[2]);
+			      (short)sp->s_color[0],
+			      (short)sp->s_color[1],
+			      (short)sp->s_color[2]);
 	    }
-	  }
-
-#ifdef DO_DISPLAY_LISTS
-	  if(displaylist && mged_variables->mv_dlist){
-#ifdef DO_SINGLE_DISPLAY_LIST
-	    /* don't draw anything here --- just update variables */
-#else
-	    DM_DRAWDLIST(dmp, sp->s_dlist);
-#endif
-	    sp->s_flag = UP;
-	    ndrawn++;
-	  }else{
-	    if(DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist, mged_variables->mv_perspective ) == TCL_OK){
+	    if(dmp->dm_drawVList( dmp, (struct rt_vlist *)&sp->s_vlist, mat ) == TCL_OK) {
 	      sp->s_flag = UP;
 	      ndrawn++;
 	    }
 	  }
-#else
-	  if(DM_DRAW_VLIST( dmp, (struct rt_vlist *)&sp->s_vlist, mged_variables->mv_perspective ) == TCL_OK) {
-	    sp->s_flag = UP;
-	    ndrawn++;
-	  }
-#endif
 	}
 
-#ifdef DO_SINGLE_DISPLAY_LIST
-	if(displaylist && mged_variables->mv_dlist){
-	  /* draw single display list containing all solids */
-	  DM_DRAWDLIST(dmp, 1);
-	}
-#endif
+  if(mged_variables.w_axes)
+    draw_axes(W_AXES);  /* draw world view axis */
 
-	/* draw predictor vlist */
-	if(mged_variables->mv_predictor){
-	  DM_SET_FGCOLOR(dmp,
-			 color_scheme->cs_predictor[0],
-			 color_scheme->cs_predictor[1],
-			 color_scheme->cs_predictor[2], 1);
-	  DM_DRAW_VLIST(dmp, (struct rt_vlist *)&curr_dm_list->dml_p_vlist, mged_variables->mv_perspective);
-	}
+  if(mged_variables.v_axes)
+    draw_axes(V_AXES);  /* draw view axis */
 
 	/*
 	 *  Draw all solids involved in editing.
@@ -455,21 +432,18 @@ bn_mat_print("perspective_mat", perspective_mat);
 	if( state == ST_VIEW )
 		return;
 
-	if( mged_variables->mv_perspective <= 0 )  {
-		mat = view_state->vs_model2objview;
+	if( mged_variables.perspective <= 0 )  {
+		mat = model2objview;
 	} else {
-		bn_mat_mul( new, perspective_mat, view_state->vs_model2objview );
+		bn_mat_mul( new, perspective_mat, model2objview );
 		mat = new;
 	}
-	DM_LOADMATRIX( dmp, mat, which_eye );
+	dmp->dm_newrot( dmp, mat, which_eye );
 	inv_viewsize /= modelchanges[15];
-	DM_SET_FGCOLOR(dmp,
-		       color_scheme->cs_geo_hl[0],
-		       color_scheme->cs_geo_hl[1],
-		       color_scheme->cs_geo_hl[2], 1);
+	dmp->dm_setColor(dmp, DM_WHITE, 1);
 
 	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
-	  /* Ignore all objects not being edited */
+	  /* Ignore all objects not being rotated */
 	  if( sp->s_iflag != UP )
 	    continue;
 
@@ -484,105 +458,228 @@ bn_mat_print("perspective_mat", perspective_mat);
 
 	  if(linestyle != sp->s_soldash){
 	    linestyle = sp->s_soldash;
-	    DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, linestyle);
+	    dmp->dm_setLineAttr(dmp, 1, linestyle);
 	  }
 
-#ifdef DO_DISPLAY_LISTS
-#ifdef DO_SINGLE_DISPLAY_LIST
-	  /* draw in immediate mode */
-	  if(DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist, mged_variables->mv_perspective) == TCL_OK){
+	  if( dmp->dm_drawVList( dmp, (struct rt_vlist *)&sp->s_vlist, mat ) == TCL_OK){
 	    sp->s_flag = UP;
 	    ndrawn++;
 	  }
-#else
-	  if(displaylist && mged_variables->mv_dlist){
-	    DM_DRAWDLIST(dmp, sp->s_dlist);
-	    sp->s_flag = UP;
-	    ndrawn++;
-	  }else{
-	    /* draw in immediate mode */
-	    if(DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist, mged_variables->mv_perspective) == TCL_OK){
-	      sp->s_flag = UP;
-	      ndrawn++;
-	    }
-	  }
-#endif
-#else
-	  if( DM_DRAW_VLIST( dmp, (struct rt_vlist *)&sp->s_vlist, mged_variables->mv_perspective ) == TCL_OK){
-	    sp->s_flag = UP;
-	    ndrawn++;
-	  }
-#endif
 	}
+
+  if(mged_variables.e_axes)
+    draw_axes(E_AXES); /* draw edit axis */
 }
 
-#ifdef DO_DISPLAY_LISTS
-#ifdef DO_SINGLE_DISPLAY_LIST
 /*
- * Create Display List
+ * Draw view, edit or world axes.
  */
-void
-createDList(hsp)
-struct solid *hsp;
+static void
+draw_axes(axes)
+int axes;
 {
-  register struct solid *sp;
-  int linestyle = -1;  /* not dashed */
-  short r = -1;
-  short g = -1;
-  short b = -1;
+  short r, g, b;
+  short index;
+  struct rt_vlist h_vlist;
+  struct rt_vlist vlist;
+  int i, j;
+  double ox, oy;
+  point_t a1, a2;
+  point_t m1, m2;
+  point_t m3, m4;
+  point_t r_m3, r_m4;
+  point_t   v1, v2;
+  mat_t mr_mat;   /* model rotations */
+  static char *labels[] = {"X", "Y", "Z"};
 
-  DM_BEGINDLIST(dmp, 1);
+  BU_LIST_INIT(&h_vlist.l);
+  BU_LIST_APPEND(&h_vlist.l, &vlist.l);
 
-  FOR_ALL_SOLIDS(sp, &hsp->l){
-    if(linestyle != sp->s_soldash){
-      linestyle = sp->s_soldash;
-      DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, linestyle);
+  bn_mat_idn(mr_mat);
+  dmp->dm_newrot(dmp, mr_mat, 0);
+
+  if(axes_color_hook)
+    (*axes_color_hook)(axes, &r, &g, &b, &index);
+  else{/* use default color */
+    switch(axes){
+    case E_AXES:
+      r = DM_WHITE_R;
+      g = DM_WHITE_G;
+      b = DM_WHITE_B;
+      index = 1;
+      break;
+    case W_AXES:
+      r = 150;
+      g = 230;
+      b = 150;
+      index = 1;
+      break;
+    case V_AXES:
+    default:
+      r = 150;
+      g = 150;
+      b = 230;
+      index = 1;
+      break;
     }
-
-    if(!DM_SAME_COLOR(r,g,b,
-		      (short)sp->s_color[0],
-		      (short)sp->s_color[1],
-		      (short)sp->s_color[2])){
-      DM_SET_FGCOLOR(dmp,
-		       (short)sp->s_color[0],
-		       (short)sp->s_color[1],
-		       (short)sp->s_color[2], 0);
-      DM_COPY_COLOR(r,g,b,
-		    (short)sp->s_color[0],
-		    (short)sp->s_color[1],
-		    (short)sp->s_color[2]);
-    }
-
-    DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist, mged_variables->mv_perspective);
   }
 
-  DM_ENDDLIST(dmp);
-}
-#else
-/*
- * Create Display List
- */
-void
-createDList(sp)
-struct solid *sp;
-{
-  DM_BEGINDLIST(dmp, sp->s_dlist);
-  DM_DRAW_VLIST(dmp, (struct rt_vlist *)&sp->s_vlist, mged_variables->mv_perspective);
-  DM_ENDDLIST(dmp);
-}
+  if(axes == E_AXES)
+    vlist.nused = 12;
+  else
+    vlist.nused = 6;
 
-/*
- * Create Display Lists
- */
-void
-createDLists(hsp)
-struct solid *hsp;
-{
-  register struct solid *sp;
+  /* set the vertex label color */
+  dmp->dm_setColor(dmp, DM_YELLOW, 1);
 
-  FOR_ALL_SOLIDS(sp, &hsp->l){
-    createDList(sp);
+  /* load vlist with axes */
+  for(i = 0; i < 3; ++i){
+
+    for(j = 0; j < 3; ++j){
+      if(i == j){
+	if(axes == V_AXES){
+	  a1[j] = -0.125;
+	  a2[j] = 0.125;
+	}else{
+	  a1[j] = -0.25;
+	  a2[j] = 0.25;
+	}
+      }else{
+	a1[j] = 0.0;
+	a2[j] = 0.0;
+      }
+    }
+
+    if(axes == W_AXES){ /* world axes */
+      m1[X] = Viewscale*a1[X];
+      m1[Y] = Viewscale*a1[Y];
+      m1[Z] = Viewscale*a1[Z];
+      m2[X] = Viewscale*a2[X];
+      m2[Y] = Viewscale*a2[Y];
+      m2[Z] = Viewscale*a2[Z];
+    }else if(axes == V_AXES){  /* create view axes */
+      /* build axes in view coodinates */
+
+      /* apply rotations */
+      MAT4X3PNT(v1, Viewrot, a1);
+      MAT4X3PNT(v2, Viewrot, a2);
+
+      /* possibly translate */
+      if(mged_variables.v_axes > 2){
+	switch(mged_variables.v_axes){
+	case 3:     /* lower left */
+	  ox = -0.8 / dmp->dm_aspect;
+	  oy = -0.8;
+	  break;
+	case 4:     /* upper left */
+	  ox = -0.8 / dmp->dm_aspect;
+	  oy = 0.8;
+	  break;
+	case 5:     /* upper right */
+	  ox = 0.8 / dmp->dm_aspect;
+	  oy = 0.8;
+	  break;
+	case 6:     /* lower right */
+	  ox = 0.8 / dmp->dm_aspect;
+	  oy = -0.8;
+	  break;
+	default:    /* center */
+	  ox = 0;
+	  oy = 0;
+	  break;
+	}
+
+	v1[X] += ox;
+	v1[Y] += oy;
+	v2[X] += ox;
+	v2[Y] += oy;
+      }
+
+      /* convert view to model coordinates */
+      MAT4X3PNT(m1, view2model, v1);
+      MAT4X3PNT(m2, view2model, v2);
+    }else{  /* create edit axes */
+      if(state == ST_S_EDIT || state == ST_O_EDIT){
+	/* build edit axes in model coordinates */
+
+	/* apply rotations */
+	MAT4X3PNT(m1, acc_rot_sol, a1);
+	MAT4X3PNT(m2, acc_rot_sol, a2);
+
+	/* apply scale and translations */
+	m1[X] = Viewscale*m1[X] + curr_e_axes_pos[X];
+	m1[Y] = Viewscale*m1[Y] + curr_e_axes_pos[Y];
+	m1[Z] = Viewscale*m1[Z] + curr_e_axes_pos[Z];
+	m2[X] = Viewscale*m2[X] + curr_e_axes_pos[X];
+	m2[Y] = Viewscale*m2[Y] + curr_e_axes_pos[Y];
+	m2[Z] = Viewscale*m2[Z] + curr_e_axes_pos[Z];
+	m3[X] = Viewscale*a1[X] + e_axes_pos[X];
+	m3[Y] = Viewscale*a1[Y] + e_axes_pos[Y];
+	m3[Z] = Viewscale*a1[Z] + e_axes_pos[Z];
+	m4[X] = Viewscale*a2[X] + e_axes_pos[X];
+	m4[Y] = Viewscale*a2[Y] + e_axes_pos[Y];
+	m4[Z] = Viewscale*a2[Z] + e_axes_pos[Z];
+
+	if(OEDIT_TRAN){
+	  vect_t delta;
+
+	  MAT_DELTAS_GET(delta, modelchanges);
+	  VADD2(m1, delta, m1);
+	  VADD2(m2, delta, m2);
+	}
+      }else
+	return;
+    }
+
+    /* load axes */
+    if(axes == E_AXES){
+      VMOVE(vlist.pt[i*4], m1);
+      vlist.cmd[i*4] = RT_VLIST_LINE_MOVE;
+      VMOVE(vlist.pt[i*4 + 1], m2);
+      vlist.cmd[i*4 + 1] = RT_VLIST_LINE_DRAW;
+
+      VMOVE(vlist.pt[i*4 + 2], m3);
+      vlist.cmd[i*4 + 2] = RT_VLIST_LINE_MOVE;
+      VMOVE(vlist.pt[i*4 + 3], m4);
+      vlist.cmd[i*4 + 3] = RT_VLIST_LINE_DRAW;
+
+      /* convert point m4 from model to view space */
+      MAT4X3PNT(v2, model2view, m4);
+
+#ifdef DM_X
+      /* label axes */
+      if(dmp->dm_drawString2D == X_drawString2D)
+	dmp->dm_drawString2D(dmp, labels[i], ((int)(2048.0 * v2[X])) + 15,
+			     ((int)(2048.0 * v2[Y])) + 15, 1, 1);
+      else
+#endif
+	dmp->dm_drawString2D(dmp, labels[i], ((int)(2048.0 * v2[X])) + 15,
+			     ((int)(2048.0 * v2[Y])) + 15, 1, 0);
+    }else{
+      VMOVE(vlist.pt[i*2], m1);
+      vlist.cmd[i*2] = RT_VLIST_LINE_MOVE;
+      VMOVE(vlist.pt[i*2 + 1], m2);
+      vlist.cmd[i*2 + 1] = RT_VLIST_LINE_DRAW;
+    }
+
+    /* convert point m2 from model to view space */
+    MAT4X3PNT(v2, model2view, m2);
+
+#ifdef DM_X
+    /* label axes */
+    if(dmp->dm_drawString2D == X_drawString2D)
+      dmp->dm_drawString2D(dmp, labels[i], ((int)(2048.0 * v2[X])) + 15,
+			   ((int)(2048.0 * v2[Y])) + 15, 1, 1);
+    else
+#endif
+      dmp->dm_drawString2D(dmp, labels[i], ((int)(2048.0 * v2[X])) + 15,
+			   ((int)(2048.0 * v2[Y])) + 15, 1, 0);
   }
+
+  dmp->dm_newrot(dmp, model2view, 0);
+
+  /* draw axes */
+  dmp->dm_setColor(dmp, r, g, b, 1);
+  dmp->dm_setLineAttr(dmp, 1, 0);  /* linewidth - 1, not dashed */
+  dmp->dm_drawVList(dmp, &h_vlist, model2view);
 }
-#endif
-#endif

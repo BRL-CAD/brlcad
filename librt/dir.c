@@ -31,6 +31,46 @@ static char RCSdir[] = "@(#)$Header$";
 #include "./debug.h"
 
 /*
+ *			R T _ N E W _ R T I
+ *
+ *  Given a db_i database instance, create an rt_i instance.
+ *
+ *  XXX Perhaps the db_i structure should be reference counted?
+ */
+struct rt_i *
+rt_new_rti( dbip )
+struct db_i	*dbip;
+{
+	register struct rt_i	*rtip;
+	register int		i;
+
+	RT_CK_DBI( dbip );
+
+	BU_GETSTRUCT( rtip, rt_i );
+	rtip->rti_magic = RTI_MAGIC;
+	for( i=0; i < RT_DBNHASH; i++ )  {
+		BU_LIST_INIT( &(rtip->rti_solidheads[i]) );
+	}
+	rtip->rti_dbip = dbip;
+	rtip->needprep = 1;
+
+	VSETALL( rtip->mdl_min,  INFINITY );
+	VSETALL( rtip->mdl_max, -INFINITY );
+	VSETALL( rtip->rti_inf_box.bn.bn_min, -0.1 );
+	VSETALL( rtip->rti_inf_box.bn.bn_max,  0.1 );
+	rtip->rti_inf_box.bn.bn_type = CUT_BOXNODE;
+
+	/* XXX These need to be improved */
+	rtip->rti_tol.magic = BN_TOL_MAGIC;
+	rtip->rti_tol.dist = 0.005;
+	rtip->rti_tol.dist_sq = rtip->rti_tol.dist * rtip->rti_tol.dist;
+	rtip->rti_tol.perp = 1e-6;
+	rtip->rti_tol.para = 1 - rtip->rti_tol.perp;
+
+	return rtip;
+}
+
+/*
  *			R T _ D I R B U I L D
  *
  *  Builds a directory of the object names.
@@ -44,21 +84,23 @@ static char RCSdir[] = "@(#)$Header$";
  */
 struct rt_i *
 rt_dirbuild(filename, buf, len)
-CONST char	*filename;
-char		*buf;
-int		len;
+char	*filename;
+char	*buf;
+int	len;
 {
 	register struct rt_i	*rtip;
 	register struct db_i	*dbip;		/* Database instance ptr */
+
+	if( BU_LIST_FIRST( rt_list, &rt_g.rtg_vlfree ) == 0 )  {
+		BU_LIST_INIT( &rt_g.rtg_vlfree );
+	}
 
 	if( (dbip = db_open( filename, "r" )) == DBI_NULL )
 	    	return( RTI_NULL );		/* FAIL */
 	RT_CK_DBI(dbip);
 
-	if( db_scan( dbip, (int (*)())db_diradd, 1 ) < 0 )  {
-		db_close( dbip );
+	if( db_scan( dbip, (int (*)())db_diradd, 1 ) < 0 )
 	    	return( RTI_NULL );		/* FAIL */
-	}
 
 	rtip = rt_new_rti( dbip );
 
@@ -66,6 +108,27 @@ int		len;
 		strncpy( buf, dbip->dbi_title, len );
 
 	return( rtip );				/* OK */
+}
+
+/*
+ *			R T _ F R E E _ R T I
+ *
+ *  Release all the dynamic storage acquired by rt_dirbuild() and
+ *  any subsequent ray-tracing operations.
+ *
+ *  Note that any PARALLEL resource structures have to be freed separately.
+ *  Note that the rt_g structure needs to be cleaned separately.
+ */
+void
+rt_free_rti( rtip )
+struct rt_i	*rtip;
+{
+	RT_CK_RTI(rtip);
+
+	rt_clean( rtip );
+	db_close( rtip->rti_dbip );
+	rtip->rti_dbip = (struct db_i *)NULL;
+	rt_free( (char *)rtip, "struct rt_i" );
 }
 
 /*
@@ -93,15 +156,14 @@ CONST mat_t		mat;
 	if( db_get_external( &ext, dp, dbip ) < 0 )
 		return -2;		/* FAIL */
 
-	if( dp->d_flags & DIR_COMB )  {
-		id = ID_COMBINATION;
-	} else {
-		/* As a convenience to older ft_import routines */
-		if( mat == NULL )  mat = bn_mat_identity;
-		id = rt_id_solid( &ext );
-	}
+	if( mat == NULL )  mat = bn_mat_identity;
 
-	if( rt_functab[id].ft_import( ip, &ext, mat, dbip ) < 0 )  {
+	if( dp->d_flags & DIR_COMB )
+		id = ID_COMBINATION;
+	else
+		id = rt_id_solid( &ext );
+
+	if( rt_functab[id].ft_import( ip, &ext, mat ) < 0 )  {
 		bu_log("rt_db_get_internal(%s):  import failure\n",
 			dp->d_namep );
 	    	if( ip->idb_ptr )  rt_functab[id].ft_ifree( ip );
@@ -137,7 +199,7 @@ struct db_i		*dbip;
 	RT_CK_DB_INTERNAL( ip );
 
 	/* Scale change on export is 1.0 -- no change */
-	ret = rt_functab[ip->idb_type].ft_export( &ext, ip, 1.0, dbip );
+	ret = rt_functab[ip->idb_type].ft_export( &ext, ip, 1.0 );
 	if( ret < 0 )  {
 		bu_log("rt_db_put_internal(%s):  solid export failure\n",
 			dp->d_namep);

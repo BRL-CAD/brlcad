@@ -1638,7 +1638,7 @@ register struct faceuse	*fu;
 	fumate = fu->fumate_p;
 	NMG_CK_FACEUSE(fumate);
 	NMG_CK_FACE(fu->f_p);
-	NMG_CK_FACE_G_EITHER(fu->f_p->g.magic_p);
+	NMG_CK_FACE_G_PLANE(fu->f_p->g.plane_p);
 
 	/* reverse face normal vector */
 	fu->f_p->flip = !fu->f_p->flip;

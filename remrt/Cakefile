@@ -7,7 +7,7 @@
 #define CONFIGDEFS	RFBD_CONFIG
 
 #define SRCDIR	remrt
-#define PRODUCTS	remrt rtsrv
+#define PRODUCTS	remrt rtsrv rtsync rtnode
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
@@ -29,13 +29,30 @@
 
 #define	RTSRV_PIECES	\
 		RTDIR/opt.o RTDIR/do.o RTDIR/worker.o \
-		RTDIR/shade.o \
+		RTDIR/shade.o RTDIR/sh_text.o RTDIR/sh_cloud.o \
 		RTDIR/mathtab.o \
 		RTDIR/material.o RTDIR/refract.o \
+		RTDIR/sh_stack.o \
+		RTDIR/sh_plastic.o RTDIR/sh_cook.o \
 		RTDIR/wray.o \
+		RTDIR/sh_spm.o RTDIR/sh_light.o \
 		RTDIR/turb.o \
+		RTDIR/sh_marble.o \
+		RTDIR/sh_wood.o \
+		RTDIR/sh_stxt.o \
+		RTDIR/sh_points.o RTDIR/sh_toyota.o \
+		RTDIR/sh_camo.o \
+		RTDIR/sh_scloud.o \
+		RTDIR/sh_air.o \
+		RTDIR/sh_fire.o \
+		RTDIR/sh_cs.o \
+		RTDIR/sh_rtrans.o \
+		RTDIR/sh_brdf.o \
+		RTDIR/sh_gauss.o \
+		RTDIR/sh_paint.o \
+		RTDIR/sh_noise.o \
+		RTDIR/sh_prj.o \
 		LIBPKG LIBPKG_LIBES \
-		LIBOPTICAL \
 		LIBRT LIBBN LIBBU LIBBU_LIBES LIBTCL LIBTCL_LIBES LIBES
 
 #define OBJS	/**/
@@ -44,7 +61,7 @@
 
 /* LIBRT is needed to get htond, parser, etc */
 remrt:	remrt.o ihost.o OBJS
-	newvers.sh version "Network-Distributed RT (REMRT)"
+	sh ../sh/newvers.sh version "Network-Distributed RT (REMRT)"
 	CC CFLAGS -c vers.c
 	CC LDFLAGS -o remrt remrt.o vers.o OBJS REMRT_PIECES
 
@@ -55,7 +72,14 @@ view.o:	../rt/view.c
 sh_tcl.o:	../rt/sh_tcl.c
 	CC CFLAGS -DRTSRV -c ../rt/sh_tcl.c
 
-rtsrv:	rtsrv.o view.o LIBOPTICAL_DEP LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP LIBFB_DEP OBJS
+rtsrv:	rtsrv.o view.o OBJS
 	CC LDFLAGS -o rtsrv rtsrv.o view.o OBJS RTSRV_PIECES
+
+rtsync:  rtsync.o ihost.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP LIBFB_DEP
+	CC LDFLAGS -o rtsync rtsync.o ihost.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBTK LIBTCL LIBFB LIBFB_LIBES LIBES
+
+/* Uses standard view.o */
+rtnode:  rtnode.o sh_tcl.o RTDIR/view.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP LIBFB_DEP
+	CC LDFLAGS -o rtnode rtnode.o sh_tcl.o RTDIR/view.o RTSRV_PIECES LIBFB LIBFB_LIBES
 
 #include "../Cakefile.rules"

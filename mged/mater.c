@@ -40,6 +40,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_solid.h"
 #include "./mged_dm.h"
 
+extern void color_soltab();
 /*
  *  It is expected that entries on this mater list will be sorted
  *  in strictly ascending order, with no overlaps (ie, monotonicly
@@ -47,7 +48,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  */
 extern struct mater *rt_material_head;	/* now defined in librt/mater.c */
 
-void color_soltab();
 void color_putrec(), color_zaprec();
 
 static void
@@ -116,9 +116,6 @@ char	**argv;
 {
 	register struct mater *newp,*next_mater;
 
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
 	CHECK_READ_ONLY;
 
 	if(argc < 7 || 7 < argc){
@@ -162,6 +159,9 @@ char	**argv;
 	}
 
 	color_soltab();
+#if 0
+	dmp->dm_colorchange(dmp);
+#endif
 
 	return TCL_OK;
 }
@@ -187,9 +187,6 @@ char	**argv;
 	register FILE *fp;
 	char line[128];
 	static char hdr[] = "LOW\tHIGH\tRed\tGreen\tBlue\n";
-
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
 
 	CHECK_READ_ONLY;
 
@@ -268,6 +265,9 @@ char	**argv;
 	(void)unlink( tempfile );
 
 	color_soltab();
+#if 0
+	dmp->dm_colorchange(dmp);
+#endif
 
 	return TCL_OK;
 }
@@ -284,9 +284,6 @@ register struct mater *mp;
 {
 	struct directory dir;
 	union record rec;
-
-	if(dbip == DBI_NULL)
-	  return;
 
 	if( dbip->dbi_read_only )
 		return;
@@ -323,9 +320,6 @@ register struct mater *mp;
 {
 	struct directory dir;
 
-	if(dbip == DBI_NULL)
-	  return;
-
 	if( dbip->dbi_read_only || mp->mt_daddr == MATER_NO_ADDR )
 		return;
 	dir.d_magic = RT_DIR_MAGIC;
@@ -342,6 +336,7 @@ register struct mater *mp;
  *
  *  Pass through the solid table and set pointer to appropriate
  *  mater structure.
+ *  Called by the display manager anytime the color mappings change.
  */
 void
 color_soltab()
@@ -349,17 +344,7 @@ color_soltab()
 	register struct solid *sp;
 	register struct mater *mp;
 
-	FOR_ALL_SOLIDS( sp, &HeadSolid.l )  {
-		sp->s_cflag = 0;
-
-	        /* the user specified the color, so use it */
-		if( sp->s_uflag ) {
-			sp->s_color[0] = sp->s_basecolor[0];
-			sp->s_color[1] = sp->s_basecolor[1];
-			sp->s_color[2] = sp->s_basecolor[2];
-			goto done;
-		}
-
+	FOR_ALL_SOLIDS(sp, &HeadSolid.l)  {
 		for( mp = rt_material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
 			if( sp->s_regionid <= mp->mt_high &&
 			    sp->s_regionid >= mp->mt_low ) {
@@ -369,25 +354,16 @@ color_soltab()
 				goto done;
 			}
 		}
-
 		/*
 		 *  There is no region-id-based coloring entry in the
-		 *  table, so use the combination-record ("mater"
-		 *  command) based color if one was provided. Otherwise,
-		 *  use the default wireframe color.
+		 *  table, so use the combination-record ("matter"
+		 *  command) based color instead.
 		 *  This is the "new way" of coloring things.
 		 */
-
-		/* use wireframe_default_color */
-		if (sp->s_dflag)
-		  sp->s_cflag = 1;
-		else {
-		  /* Using a combination-record based color */
-		  sp->s_color[0] = sp->s_basecolor[0];
-		  sp->s_color[1] = sp->s_basecolor[1];
-		  sp->s_color[2] = sp->s_basecolor[2];
-		}
+		sp->s_color[0] = sp->s_basecolor[0];
+		sp->s_color[1] = sp->s_basecolor[1];
+		sp->s_color[2] = sp->s_basecolor[2];
 done: ;
 	}
-	update_views = 1;		/* re-write control list with new colors */
+	dmaflag = 1;		/* re-write control list with new colors */
 }

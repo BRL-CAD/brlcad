@@ -8,7 +8,7 @@
 #define SRCDIR	rt
 #define PRODUCTS	rt rtrad rtpp rtray rtshot rtwalk rtcheck \
 			rtg3 rtcell rtxray rthide rtfrac rtrange \
-			rtregis rtscale rtsil rtweight
+			rtregis rtscale rtsil
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
@@ -20,9 +20,13 @@
 	rtshot \
 	main opt do worker \
 	view viewpp viewray viewrad viewcheck viewg3 \
-	shade mathtab \
-	material refract \
-	wray turb
+	shade sh_text sh_cloud mathtab \
+	material refract sh_stack \
+	sh_plastic sh_cook wray sh_spm sh_light \
+	turb sh_marble sh_wood sh_stxt sh_points sh_toyota \
+	sh_camo sh_scloud sh_air sh_fire sh_cs sh_rtrans sh_brdf \
+	sh_gauss sh_paint sh_noise sh_prj
+
 
 /*  The "top-half" (user interface) for the RT family of programs */
 #define RTUIF	main.o opt.o do.o worker.o mathtab.o
@@ -30,13 +34,17 @@
 /* Explicit composition of each product */
 
 #define	RT_OBJ	RTUIF view.o wray.o material.o refract.o \
-		shade.o \
-		turb.o
+		shade.o sh_text.o sh_cloud.o sh_stack.o sh_plastic.o \
+		sh_cook.o sh_spm.o sh_light.o turb.o sh_marble.o sh_wood.o \
+		sh_stxt.o sh_points.o sh_toyota.o \
+		sh_camo.o sh_scloud.o sh_air.o \
+		sh_fire.o sh_cs.o sh_rtrans.o sh_brdf.o \
+		sh_gauss.o sh_paint.o sh_noise.o sh_prj.o
 
-rt:	RT_OBJ LIBOPTICAL_DEP LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
-	newvers.sh version "The BRL-CAD Ray-Tracer RT"
+rt:	RT_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	newvers.sh version "Ray-Tracer"
 	CC CFLAGS -c vers.c
-	CC LDFLAGS RT_OBJ vers.o LIBOPTICAL LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES  LIBES -o rt
+	CC LDFLAGS RT_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBTK LIBTCL LIBTCL_LIBES LIBES -o rt
 
 
 #define RTRAY_OBJ	RTUIF viewray.o wray.o
@@ -146,6 +154,13 @@ rtregis:	rtregis.o read-rtlog.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
 rtscale:	rtscale.o read-rtlog.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
 	CC LDFLAGS rtscale.o read-rtlog.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBWDB LIBES -o rtscale
 
+#define RTTHERM_OBJ	RTUIF viewtherm.o wray.o spectrum.o
+
+rttherm:	RTTHERM_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	newvers.sh version "Thermal RT"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS RTTHERM_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rttherm
+
 #define RTSIL_OBJ	RTUIF viewsil.o
 
 rtsil:	RTSIL_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
@@ -153,11 +168,8 @@ rtsil:	RTSIL_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
 	CC CFLAGS -c vers.c
 	CC LDFLAGS RTSIL_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rtsil
 
-#define RTWEIGHT_OBJ	RTUIF viewweight.o
-
-rtweight:	RTWEIGHT_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
-	newvers.sh version "RT Weight"
-	CC CFLAGS -c vers.c
-	CC LDFLAGS RTWEIGHT_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rtweight
+/* Temp hack -Mike */
+disp:	disp.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP LIBTCL_DEP LIBTK_DEP spectrum.o
+	CC LDFLAGS disp.o spectrum.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBWDB LIBFB LIBFB_LIBES LIBTK LIBTCL LIBTCL_LIBES LIBES -o disp
 
 #include "../Cakefile.rules"

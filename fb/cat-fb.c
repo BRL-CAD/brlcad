@@ -42,6 +42,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define MAXF			4	/* Max fonts mounted in C/A/T -- a constant */
 
 #define LOCAL_RAILMAG		".railmag"
+#define GLOBAL_RAILMAG		"/usr/brlcad/vfont/railmag"
 
 /* The vfonts are scaled for 200 dpi */
 #define CONVERT(n)		((n)*(200./432.))
@@ -494,7 +495,7 @@ readrailmag()
 	char c;
 
 	if ((rmfd = open(LOCAL_RAILMAG, 0)) < 0)
-		if ((rmfd = open(bu_brlcad_path("vfont/railmag"), 0)) < 0) {
+		if ((rmfd = open(GLOBAL_RAILMAG, 0)) < 0) {
 			/*
 			 *  Provide reasonable default font choices.
 			 *  In the Berkeley VFONT set, the Times

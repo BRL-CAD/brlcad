@@ -334,8 +334,7 @@ double warpfrac, pb;
  */
 
 void
-lines_headerinfo(fp, ap, bp, pp, np)
-FILE *fp; double *ap; double *bp; double *pp; int *np;
+lines_headerinfo(FILE *fp, double *ap, double *bp, double *pp, int *np)
 {
     if (fscanf(fp, "%lf %lf %lf %d ", ap, bp, pp, np) < 4) {
 	fprintf(stderr, "pixmorph: cannot read header info in lines file\n");
@@ -473,7 +472,7 @@ char **argv;
 	
 	if (pa_width > 0) {
 	    pa_height = sb.st_size/(3*pa_width);
-	    fprintf(stderr, "width = %d, size = %ld, so height = %d\n",
+	    fprintf(stderr, "width = %d, size = %d, so height = %d\n",
 		   pa_width, sb.st_size, pa_height);
 	} else if (pa_height > 0) pa_width = sb.st_size/(3*pa_height);
 

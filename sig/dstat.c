@@ -97,7 +97,7 @@ char **argv;
 	/*
 	 * Display the results.
 	 */
-	printf( "Values  %14ld (%.0f x %.0f)\n", num_values,
+	printf( "Values  %14d (%.0f x %.0f)\n", num_values,
 		sqrt((double)num_values), sqrt((double)num_values) );
 	printf( "Min     %14.6g\n", min );
 	printf( "Max     %14.6g\n", max );

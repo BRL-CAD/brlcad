@@ -28,10 +28,10 @@ then
 	MORE="${MANPAGER}"
 fi
 
-eval `machinetype.sh -v`		# sets $BASEDIR
-
-# Ensure that MANPATH is set and has BRL-CAD materials listed first.
-MANPATH=${BASEDIR}/man:${MANPATH}
+if test "${MANPATH}" = ""
+then
+	MANPATH=/usr/brlcad/man
+fi
 
 PATH_ELEMENTS=`echo ${MANPATH} | sed 's/^://
 				s/:://g

@@ -73,8 +73,6 @@ FBIO ts_interface =  {
 	ts_getcursor,		/* get cursor		*/
 	ts_readrect,		/* read rectangle	*/
 	ts_writerect,		/* write rectangle	*/
-	fb_sim_bwreadrect,
-	fb_sim_bwwriterect,
 	fb_null,		/* handle events	*/
 	ts_flush,		/* flush output		*/
 	ts_free,		/* free resources	*/

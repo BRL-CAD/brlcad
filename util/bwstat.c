@@ -131,11 +131,11 @@ char **argv;
 	/*
 	 * Display the results.
 	 */
-	printf( "Pixels  %14ld (%.0f x %.0f)\n", num_pixels,
+	printf( "Pixels  %14d (%.0f x %.0f)\n", num_pixels,
 		sqrt((double)num_pixels), sqrt((double)num_pixels) );
 	printf( "Min     %14d\n", min );
 	printf( "Max     %14d\n", max );
-	printf( "Mode    %14d (%ld pixels)\n", mode, bin[mode] );
+	printf( "Mode    %14d (%d pixels)\n", mode, bin[mode] );
 	printf( "Median  %14d\n", median );
 	printf( "Mean    %14.3f\n", mean );
 	printf( "s.d.    %14.3f\n", sqrt( var ) );
@@ -159,6 +159,6 @@ int sum;
 	printf( "Histogram:\n" );
 
 	for( i = 0; i < 256; i++ ) {
-		printf( "%3d: %10ld (%10f)\n", i, bin[i], (float)bin[i]/sum * 100.0 );
+		printf( "%3d: %10d (%10f)\n", i, bin[i], (float)bin[i]/sum * 100.0 );
 	}
 }

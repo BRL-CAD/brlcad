@@ -49,13 +49,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "db.h"
-#include "wdb.h"
 
 #include "./debug.h"
-
-#ifndef SEEK_SET
-# define SEEK_SET	0
-#endif
 
 /*
  *  This constant determines what the maximum size database is that
@@ -96,8 +91,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  */
 struct db_i *
 db_open( name, mode )
-CONST char	*name;
-CONST char	*mode;
+char	*name;
+char	*mode;
 {
 	register struct db_i	*dbip;
 	register int		i;
@@ -117,7 +112,6 @@ CONST char	*mode;
 	dbip->dbi_local2base = 1.0;
 	dbip->dbi_base2local = 1.0;
 	dbip->dbi_title = (char *)0;
-	dbip->dbi_uses = 1;
 
 #ifdef HAVE_UNIX_IO
 	if( stat( name, &sb ) < 0 )
@@ -148,7 +142,7 @@ CONST char	*mode;
 #		endif
 
 		if( !dbip->dbi_inmem && sb.st_size <= INMEM_LIM )  {
-			dbip->dbi_inmem = bu_malloc( sb.st_size,
+			dbip->dbi_inmem = rt_malloc( sb.st_size,
 				"in-memory database" );
 			if( read( dbip->dbi_fd, dbip->dbi_inmem,
 			    sb.st_size ) != sb.st_size )
@@ -192,7 +186,7 @@ CONST char	*mode;
 fail:
 	if(rt_g.debug&DEBUG_DB)
 		bu_log("db_open(%s) FAILED\n", name);
-	bu_free( (char *)dbip, "struct db_i" );
+	rt_free( (char *)dbip, "struct db_i" );
 	return DBI_NULL;
 }
 
@@ -210,7 +204,7 @@ fail:
  */
 struct db_i *
 db_create( name )
-CONST char *name;
+char *name;
 {
 	union record new;
 
@@ -248,7 +242,6 @@ CONST char *name;
  *			D B _ C L O S E
  *
  *  Close a database, releasing dynamic memory
- *  Wait until last user is done, though.
  */
 void
 db_close( dbip )
@@ -257,20 +250,18 @@ register struct db_i	*dbip;
 	register int		i;
 	register struct directory *dp, *nextdp;
 
-	RT_CK_DBI(dbip);
-	if(rt_g.debug&DEBUG_DB) bu_log("db_close(%s) x%x uses=%d\n",
-		dbip->dbi_filename, dbip, dbip->dbi_uses );
-
-	if( (--dbip->dbi_uses) > 0 )  return;
+	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_close:  bad dbip\n");
+	if(rt_g.debug&DEBUG_DB) bu_log("db_close(%s) x%x\n",
+		dbip->dbi_filename, dbip );
 
 #ifdef HAVE_UNIX_IO
 	(void)close( dbip->dbi_fd );
 #endif
 	fclose( dbip->dbi_fp );
 	if( dbip->dbi_title )
-		bu_free( dbip->dbi_title, "dbi_title" );
+		rt_free( dbip->dbi_title, "dbi_title" );
 	if( dbip->dbi_filename )
-		bu_free( dbip->dbi_filename, "dbi_filename" );
+		rt_free( dbip->dbi_filename, "dbi_filename" );
 
 	db_free_anim( dbip );
 	rt_color_free();		/* Free MaterHead list */
@@ -286,56 +277,13 @@ register struct db_i	*dbip;
 		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; )  {
 			RT_CK_DIR(dp);
 			nextdp = dp->d_forw;
-			bu_free( dp->d_namep, "d_namep" );
+			rt_free( dp->d_namep, "d_namep" );
 			dp->d_namep = (char *)NULL;
-			bu_free( (char *)dp, "dir");
+			rt_free( (char *)dp, "dir");
 			dp = nextdp;
 		}
 		dbip->dbi_Head[i] = DIR_NULL;	/* sanity*/
 	}
 
-	bu_free( (char *)dbip, "struct db_i" );
-}
-
-/*
- *			D B _ D U M P
- *
- *  Dump a full copy of one database into another.
- *  This is a good way of committing a ".inmem" database to a ".g" file.
- *  The input is a database instance, the output is a LIBWDB object,
- *  which could be a disk file or another database instance.
- *
- *  Returns -
- *	-1	error
- *	0	success
- */
-int
-db_dump( wdbp, dbip )
-struct rt_wdb	*wdbp;		/* output */
-struct db_i	*dbip;		/* input */
-{
-	register int		i;
-	register struct directory *dp, *nextdp;
-	struct bu_external	ext;
-
-	RT_CK_DBI(dbip);
-	RT_CK_WDB(wdbp);
-
-	/* Output all directory entries */
-	for( i=0; i < RT_DBNHASH; i++ )  {
-		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )  {
-			RT_CK_DIR(dp);
-			if( db_get_external( &ext, dp, dbip ) < 0 )  {
-				bu_log("db_dump() read failed on %s, skipping\n", dp->d_namep );
-				continue;
-			}
-			if( wdb_export_external( wdbp, &ext, dp->d_namep, dp->d_flags ) < 0 )  {
-				bu_log("db_dump() write failed on %s, aborting\n", dp->d_namep);
-				db_free_external( &ext );
-				return -1;
-			}
-			db_free_external( &ext );
-		}
-	}
-	return 0;
+	rt_free( (char *)dbip, "struct db_i" );
 }

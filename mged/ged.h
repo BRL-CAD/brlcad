@@ -89,7 +89,6 @@ extern double	degtorad, radtodeg;	/* Defined in usepen.c */
  * These factors convert database unit to local (or working) units.
  */
 extern struct db_i	*dbip;		       /* defined in ged.c */
-extern int		 dbih;		       /* defined in ged.c */
 #define	base2local	(dbip->dbi_base2local)
 #define local2base	(dbip->dbi_local2base)
 #define localunit	(dbip->dbi_localunit)  /* current local unit (index) */
@@ -409,21 +408,20 @@ struct funtab {
 };
 
 struct mged_hist {
-  struct bu_list	l;
-  struct bu_vls		mh_command;
-  struct timeval	mh_start;
-  struct timeval	mh_finish;
-  int			mh_status;
+  struct bu_list l;
+  struct bu_vls command;
+  struct timeval start, finish;
+  int status;
 };
 
 /* internal variables related to the command window(s) */
 struct cmd_list {
-  struct bu_list	l;
-  struct dm_list	*cl_tie;        /* the drawing window that we're tied to */
-  struct mged_hist	*cl_cur_hist;
-  struct bu_vls		cl_more_default;
-  struct bu_vls		cl_name;
-  int			cl_quote_string;
+  struct bu_list l;
+  struct dm_list *aim;        /* the drawing window being aimed at */
+  struct mged_hist *cur_hist;
+  struct bu_vls more_default;
+  struct bu_vls name;
+  int quote_string;
 };
 #define CMD_LIST_NULL ((struct cmd_list *)NULL)
 
@@ -432,11 +430,49 @@ extern Tcl_Interp *interp;
 extern struct cmd_list head_cmd_list;
 extern struct cmd_list *curr_cmd_list;
 
+/* mged command variables for affecting the user environment */
+struct _mged_variables {
+	int	autosize;
+	int	rateknobs;
+        int     adcflag;
+        int     slidersflag;
+    	int	sgi_win_size;
+	int	sgi_win_origin[2];
+	int	faceplate;
+        int     show_menu;
+	int     w_axes;  /* world view axes */
+	int     v_axes;  /* view axes */
+	int     e_axes;  /* edit axes */
+        int     send_key;
+        int     hot_key;
+	int	edit;
+        int     context;
+        int     eyerot;
+	int	predictor;
+	double	predictor_advance;
+	double	predictor_length;
+	double	perspective;	/* >0 implies perspective viewing is on. */
+	double	nmg_eu_dist;
+	double	eye_sep_dist;	/* >0 implies stereo.  units = "room" mm */
+	char	union_lexeme[1024];
+	char	intersection_lexeme[1024];
+	char	difference_lexeme[1024];
+};
+
 #define	MAXARGS		9000	/* Maximum number of args per line */
 
 #define MGED_PROMPT "\rmged> "
 
+/* Flags indicating whether the ogl and sgi display managers have been
+ * attached. Defined in dm-ogl.c. 
+ * These are necessary to decide whether or not to use direct rendering
+ * with ogl.
+ */
+extern	char	ogl_ogl_used;
+extern	char	ogl_sgi_used;
+
 /* Command return codes */
+
 #define CMD_OK		919
 #define CMD_BAD		920
 #define CMD_MORE	921

@@ -86,8 +86,6 @@ typedef struct FBIO_ {
 	int	(*if_getcursor)FB_ARGS((struct FBIO_ *ifp, int *mode, int *x, int *y));	/* get cursor		*/
 	int	(*if_readrect)FB_ARGS((struct FBIO_ *ifp, int xmin, int ymin, int width, int height, unsigned char *pp));	/* read rectangle 	*/
 	int	(*if_writerect)FB_ARGS((struct FBIO_ *ifp, int xmin, int ymin, int width, int height, CONST unsigned char *pp));	/* write rectangle 	*/
-	int	(*if_bwreadrect)FB_ARGS((struct FBIO_ *ifp, int xmin, int ymin, int width, int height, unsigned char *pp));	/* read monochrome rectangle 	*/
-	int	(*if_bwwriterect)FB_ARGS((struct FBIO_ *ifp, int xmin, int ymin, int width, int height, CONST unsigned char *pp));	/* write rectangle 	*/
 	int	(*if_poll)FB_ARGS((struct FBIO_ *ifp));		/* handle events 	*/
 	int	(*if_flush)FB_ARGS((struct FBIO_ *ifp));	/* flush output 	*/
 	int	(*if_free)FB_ARGS((struct FBIO_ *ifp));		/* free resources 	*/
@@ -162,10 +160,6 @@ typedef struct FBIO_ {
 		(*_ifp->if_readrect)(_ifp,_xmin,_ymin,_width,_height,_pp)
 #define fb_writerect(_ifp,_xmin,_ymin,_width,_height,_pp) \
 		(*_ifp->if_writerect)(_ifp,_xmin,_ymin,_width,_height,_pp)
-#define fb_bwreadrect(_ifp,_xmin,_ymin,_width,_height,_pp) \
-		(*_ifp->if_bwreadrect)(_ifp,_xmin,_ymin,_width,_height,_pp)
-#define fb_bwwriterect(_ifp,_xmin,_ymin,_width,_height,_pp) \
-		(*_ifp->if_bwwriterect)(_ifp,_xmin,_ymin,_width,_height,_pp)
 
 /* Library entry points which are true functions. */
 #ifdef USE_PROTOTYPES
@@ -203,9 +197,7 @@ extern int	_fb_pgout();
 extern int	_fb_pgflush();
 extern int	_fb_disk_enable;
 extern int	fb_sim_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp);
-extern int	fb_sim_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, CONST unsigned char *pp);
-extern int	fb_sim_bwreadrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp);
-extern int	fb_sim_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, CONST unsigned char *pp);
+extern int	fb_sim_writerect(FBIO *ifp, int	xmin, int ymin, int width, int height, CONST unsigned char *pp);
 extern int	fb_sim_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom);
 extern int	fb_sim_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom);
 extern int	fb_sim_cursor(FBIO *ifp, int mode, int x, int y);
@@ -245,8 +237,6 @@ extern int	_fb_pgflush();
 extern int	_fb_disk_enable;
 extern int	fb_sim_readrect();
 extern int	fb_sim_writerect();
-extern int	fb_sim_bwreadrect();
-extern int	fb_sim_bwwriterect();
 extern int	fb_sim_view();
 extern int	fb_sim_getview();
 extern int	fb_sim_cursor();

@@ -283,13 +283,13 @@ char	*argv[];
 			(void) fputs("Illegal -a option\n", stderr);
 			goto error;
 		    }
-		    if ((sscanf(argv[1], "%lf", &arc_min) != 1) || (arc_min < 0))
+		    if ((sscanf(argv[1], "%F", &arc_min) != 1) || (arc_min < 0))
 		    {
 			(void) fprintf(stderr, "Illegal -a value: %s\n",
 			    argv[1]);
 			goto error;
 		    }
-		    if ((sscanf(argv[2], "%lf", &arc_max) != 1) ||
+		    if ((sscanf(argv[2], "%F", &arc_max) != 1) ||
 			(arc_max > 360))
 		    {
 			(void) fprintf(stderr, "Illegal -a value: %s\n",
@@ -311,7 +311,7 @@ char	*argv[];
 			(void) fputs("Illegal -t option\n", stderr);
 			goto error;
 		    }
-		    if (sscanf(argv[1], "%lf", &twist) != 1)
+		    if (sscanf(argv[1], "%F", &twist) != 1)
 		    {
 			(void) fprintf(stderr, "Illegal -t value: %s\n",
 			    argv[1]);
@@ -383,7 +383,7 @@ char	*argv[];
 			(intensity < 0) || (intensity > 255))
 		    {
 			(void) fprintf(stderr, "Illegal -i value: %s\n",
-			    argv[1]);
+			    *Opt, argv[1]);
 			goto error;
 		    }
 		    Color[C_INTERIOR][RED] = intensity;
@@ -391,7 +391,7 @@ char	*argv[];
 			(intensity < 0) || (intensity > 255))
 		    {
 			(void) fprintf(stderr, "Illegal -i value: %s\n",
-			    argv[2]);
+			    *Opt, argv[2]);
 			goto error;
 		    }
 		    Color[C_INTERIOR][GRN] = intensity;
@@ -399,7 +399,7 @@ char	*argv[];
 			(intensity < 0) || (intensity > 255))
 		    {
 			(void) fprintf(stderr, "Illegal -i value: %s\n",
-			    argv[3]);
+			    *Opt, argv[3]);
 			goto error;
 		    }
 		    Color[C_INTERIOR][BLU] = intensity;
@@ -418,7 +418,7 @@ char	*argv[];
 			(intensity < 0) || (intensity > 255))
 		    {
 			(void) fprintf(stderr, "Illegal -l value: %s\n",
-			    argv[1]);
+			    *Opt, argv[1]);
 			goto error;
 		    }
 		    Color[C_RAMP][RED] = intensity;
@@ -426,7 +426,7 @@ char	*argv[];
 			(intensity < 0) || (intensity > 255))
 		    {
 			(void) fprintf(stderr, "Illegal -l value: %s\n",
-			    argv[2]);
+			    *Opt, argv[2]);
 			goto error;
 		    }
 		    Color[C_RAMP][GRN] = intensity;
@@ -434,7 +434,7 @@ char	*argv[];
 			(intensity < 0) || (intensity > 255))
 		    {
 			(void) fprintf(stderr, "Illegal -l value: %s\n",
-			    argv[3]);
+			    *Opt, argv[3]);
 			goto error;
 		    }
 		    Color[C_RAMP][BLU] = intensity;
@@ -751,8 +751,8 @@ double	arc_max;	/* Last    "    "     "    */
 	*(Table + npf_index(angle)) = -1.0;
     
     /* Fill the table */
-    while ((fscanf(fPtr, "%lf", &theta) == 1) &&
-	(fscanf(fPtr, "%lf", &rho) == 1))
+    while ((fscanf(fPtr, "%F", &theta) == 1) &&
+	(fscanf(fPtr, "%F", &rho) == 1))
     {
 	theta *= convert;
 	if ((theta < 0.0) || (npf_index(theta / Deg2Rad) * Quantum > 360))
