@@ -81,6 +81,8 @@ struct partition 	*part_head;
 		    + n_exit(Y) * (-sin(er)) * sin(ar)
 		    + n_exit(Z) * cos(er);
 	ValTab[VTI_LOS].value.fval = r_entry(D) - r_exit(D);
+	ValTab[VTI_SLOS].value.fval = 0.01 * ValTab[VTI_LOS].value.fval *
+	    part -> pt_regionp -> reg_los;
 	ValTab[VTI_PATH_NAME].value.sval =
 	    (char *)(part -> pt_regionp -> reg_name);
 	ValTab[VTI_REG_NAME].value.sval =
