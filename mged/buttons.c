@@ -36,14 +36,16 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_dm.h"
 #include "./sedit.h"
 
-extern void stateChange();	/* defined in dm-generic.c */
+extern void stateChange();		/* defined in dm-generic.c */
 extern int mged_svbase();
 extern void set_e_axes_pos();
 extern int mged_zoom();
-extern void set_scroll();  /* defined in set.c */
-extern void set_absolute_tran(); /* defined in set.c */
+extern void set_absolute_tran();	/* defined in set.c */
+extern void set_scroll_private();	/* defined in set.c */
+extern void adc_set_scroll();		/* defined in adc.c */
 
-/* This flag indicates that SOLID editing is in effect.
+/*
+ * This flag indicates that SOLID editing is in effect.
  * edobj may not be set at the same time.
  * It is set to the 0 if off, or the value of the button function
  * that is currently in effect (eg, BE_S_SCALE).
@@ -244,7 +246,7 @@ char *str;{
 		return;
 	}
 
-	for( menu=0, m=menu_array; m - menu_array < NMENU; m++,menu++ )  {
+	for( menu=0, m=menu_state->ms_menus; m - menu_state->ms_menus < NMENU; m++,menu++ )  {
 		if( *m == MENU_NULL )  continue;
 		for( item=0, mptr = *m;
 		     mptr->menu_string[0] != '\0';
@@ -252,10 +254,10 @@ char *str;{
 		    if ( strcmp( str, mptr->menu_string ) != 0 )
 			continue;
 			
-		    cur_item = item;
-		    cur_menu = menu;
-		    menuflag = 1;
-		    /* It's up to the menu_func to set menuflag=0
+		    menu_state->ms_cur_item = item;
+		    menu_state->ms_cur_menu = menu;
+		    menu_state->ms_flag = 1;
+		    /* It's up to the menu_func to set menu_state->ms_flag=0
 		     * if no arrow is desired */
 		    if( mptr->menu_func != ((void (*)())0) )
 			(*(mptr->menu_func))(mptr->menu_arg, menu, item);
@@ -313,8 +315,8 @@ bv_zoomout()
 static void
 bv_rate_toggle()
 {
-  mged_variables->rateknobs = !mged_variables->rateknobs;
-  set_scroll();
+  mged_variables->mv_rateknobs = !mged_variables->mv_rateknobs;
+  set_scroll_private();
 }
 
 static void
@@ -364,16 +366,12 @@ bv_vrestore()
 {
   /* restore to saved view */
   if ( vsaved )  {
-    Viewscale = sav_vscale;
-    bn_mat_copy( Viewrot, sav_viewrot );
-    bn_mat_copy( toViewcenter, sav_toviewcenter );
+    view_state->vs_Viewscale = sav_vscale;
+    bn_mat_copy( view_state->vs_Viewrot, sav_viewrot );
+    bn_mat_copy( view_state->vs_toViewcenter, sav_toviewcenter );
     new_mats();
 
     (void)mged_svbase();
-
-#ifdef DO_SCROLL_UPDATES
-    set_scroll();
-#endif
   }
 }
 
@@ -381,24 +379,24 @@ static void
 bv_vsave()
 {
   /* save current view */
-  sav_vscale = Viewscale;
-  bn_mat_copy( sav_viewrot, Viewrot );
-  bn_mat_copy( sav_toviewcenter, toViewcenter );
+  sav_vscale = view_state->vs_Viewscale;
+  bn_mat_copy( sav_viewrot, view_state->vs_Viewrot );
+  bn_mat_copy( sav_toviewcenter, view_state->vs_toViewcenter );
   vsaved = 1;
 }
 
 static void
 bv_adcursor()
 {
-  if (adc_draw)  {
+  if (adc_state->adc_draw)  {
     /* Was on, turn off */
-    adc_draw = 0;
+    adc_state->adc_draw = 0;
   }  else  {
     /* Was off, turn on */
-    adc_draw = 1;
+    adc_state->adc_draw = 1;
   }
 
-  set_scroll();
+  adc_set_scroll();
 }
 
 static void
@@ -407,10 +405,6 @@ bv_reset()  {
   size_reset();
   setview( 0.0, 0.0, 0.0 );
   (void)mged_svbase();
-
-#ifdef DO_SCROLL_UPDATES
-  set_scroll();
-#endif
 }
 
 static void
@@ -611,8 +605,8 @@ be_accept()  {
 	}
 
 	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
-	  if(dmlp->_mged_variables->transform == 'e')
-	    dmlp->_mged_variables->transform = 'v';
+	  if(dmlp->dml_mged_variables->mv_transform == 'e')
+	    dmlp->dml_mged_variables->mv_transform = 'v';
 
 	{
 	  struct bu_vls vls;
@@ -659,7 +653,7 @@ be_reject()  {
 		break;
 	}
 
-	menuflag = 0;
+	menu_state->ms_flag = 0;
 	movedir = 0;
 	edsol = 0;
 	edobj = 0;
@@ -673,8 +667,8 @@ be_reject()  {
 	(void)chg_state( state, ST_VIEW, "Edit Reject" );
 
 	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
-	  if(dmlp->_mged_variables->transform == 'e')
-	    dmlp->_mged_variables->transform = 'v';
+	  if(dmlp->dml_mged_variables->mv_transform == 'e')
+	    dmlp->dml_mged_variables->mv_transform = 'v';
 
 	{
 	  struct bu_vls vls;
@@ -795,16 +789,16 @@ char *str;
       fastf_t o_Viewscale;
 
       /* save toViewcenter and Viewscale */
-      bn_mat_copy(o_toViewcenter, toViewcenter);
-      o_Viewscale = Viewscale;
+      bn_mat_copy(o_toViewcenter, view_state->vs_toViewcenter);
+      o_Viewscale = view_state->vs_Viewscale;
 
       /* get new orig_pos */
       size_reset();
-      MAT_DELTAS_GET_NEG(orig_pos, toViewcenter);
+      MAT_DELTAS_GET_NEG(view_state->vs_orig_pos, view_state->vs_toViewcenter);
 
       /* restore old toViewcenter and Viewscale */
-      bn_mat_copy(toViewcenter, o_toViewcenter);
-      Viewscale = o_Viewscale;
+      bn_mat_copy(view_state->vs_toViewcenter, o_toViewcenter);
+      view_state->vs_Viewscale = o_Viewscale;
     }
 #endif
     new_mats();
@@ -844,7 +838,7 @@ void
 	button(arg);
 	if( menu == MENU_GEN && 
 	    ( arg != BE_O_ILLUMINATE && arg != BE_S_ILLUMINATE) )
-		menuflag = 0;
+		menu_state->ms_flag = 0;
 }
 
 /*
