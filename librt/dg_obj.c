@@ -1151,6 +1151,8 @@ char	**argv;
 		return TCL_ERROR;
 	}
 
+	/* copy command name into argv[2], could be rt or rtedge  */
+	argv[2] = argv[1];
 	return dgo_rt_cmd(dgop, vop, interp, argc-2, argv+2);
 }
 
