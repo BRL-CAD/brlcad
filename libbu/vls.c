@@ -869,3 +869,21 @@ char *fmt;
 
 #  endif
 #endif
+
+/*
+ *			B U _ V L S _ S P A C E S
+ *
+ *  Efficiently append 'cnt' spaces to the current vls.
+ */
+void
+bu_vls_spaces( vp, cnt )
+register struct bu_vls	*vp;
+int			cnt;
+{
+	BU_CK_VLS(vp);
+	if( cnt <= 0 )  return;
+	if( vp->vls_offset + vp->vls_len + cnt+1 >= vp->vls_max )
+		bu_vls_extend( vp, cnt );
+	memset( vp->vls_str + vp->vls_offset + vp->vls_len, ' ', cnt );
+	vp->vls_len += cnt;
+}

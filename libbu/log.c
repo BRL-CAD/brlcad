@@ -66,18 +66,7 @@ void
 bu_log_indent_vls( v )
 struct bu_vls	*v;
 {
-	register int	i, todo;
-	static CONST char	spaces[65] = "                                                                ";
-
-	BU_CK_VLS( v );
-
-	i = bu_indent_cur_level;
-	while( i > 0 )  {
-		todo = i;
-		if( todo > 64 )  todo = 64;
-		bu_vls_strncat( v, spaces, todo );
-		i -= todo;
-	}
+	bu_vls_spaces( v, bu_indent_cur_level );
 }
 
 
