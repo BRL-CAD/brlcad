@@ -795,7 +795,8 @@ set -S2 "/bin/sh"
 #		define	OPTIMIZER	-g
 #	endif
 #	define	CC_OPTS		-Xc -K PIC
-#	define	CC_DEFS		-D_REENTRANT -DSUNOS=52
+/*	SunPro C 2.0.1 does not define __sparc or sparc.  3.0 on does */
+#	define	CC_DEFS		-D_REENTRANT -D__sparc -DSUNOS=52
 
 /*	Shared library support */
 #	define	ARCH_SUF	so
