@@ -218,8 +218,8 @@ int			do_old_matter;
 				fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp );
 			break;
 		case DBID_ARBN:
-			j = record.n.n_grans;
-			nrec += record.n.n_grans;
+			j = rt_glong(record.n.n_grans);
+			nrec += j;
 			while( j-- > 0 )
 				fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp );
 			next = ftell(dbip->dbi_fp);
@@ -231,8 +231,8 @@ int			do_old_matter;
 				DIR_SOLID );
 			break;
 		case DBID_PIPE:
-			j = record.pw.pw_count-1;
-			nrec += record.pw.pw_count-1;
+			j = rt_glong(record.pw.pw_count);
+			nrec += j;
 			while( j-- > 0 )
 				fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp );
 			next = ftell(dbip->dbi_fp);
@@ -240,7 +240,7 @@ int			do_old_matter;
 				DIR_SOLID );
 			break;
 		case DBID_NMG:
-			j = record.nmg.N_count;
+			j = rt_glong(record.nmg.N_count);
 			nrec += j;
 			while( j-- > 0 )
 				(void)fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp );
