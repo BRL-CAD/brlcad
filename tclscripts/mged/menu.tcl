@@ -8,6 +8,8 @@
 proc mmenu_set { w id i menu } {
     global mmenu
 
+#    do_edit_pulldown $id $i $menu
+
     if {![winfo exists $w]} {
 	return
     }
@@ -75,7 +77,7 @@ proc mmenu_init { id } {
 	incr i
     }
 
-    wm title $w "$id\'s MGED Button Menu"
+    wm title $w "MGED Button Menu ($id)"
     wm protocol $w WM_DELETE_WINDOW "toggle_button_menu $id"
     wm resizable $w 0 0
 
@@ -114,5 +116,200 @@ proc reconfig_mmenu { id } {
 	mmenu_set $w $id $i $menu
 
 	incr i
+    }
+}
+
+proc do_arb_edit_menu { menu1 menu2 menu3 } {
+    global mged_players
+    global edit_type
+    global transform_what
+    global rotate_about_what
+    global coord_type
+
+    set edit_type "none of above"
+    foreach id $mged_players {
+	.$id.m.options.m.cm_transform entryconfigure 3 -state normal
+	set transform_what($id) "e"
+	set_transform $id
+
+	.$id.m.options.m.cm_origin entryconfigure 4 -state normal
+	set rotate_about_what($id) "k"
+	set_rotate_about $id
+
+	.$id.m.options.m.cm_coord entryconfigure 3 -state normal
+	set coord_type($id) "o"
+	set_coords $id
+
+	.$id.m.edit.m entryconfigure 1 -state disabled
+	.$id.m.edit.m entryconfigure 2 -state disabled
+	.$id.m.edit.m entryconfigure 3 -state disabled
+
+	.$id.m.edit.m insert 1 cascade -label "move edges" \
+		-menu .$id.m.edit.m.cm_mvedges
+	.$id.m.edit.m insert 2 cascade -label "move faces" \
+		-menu .$id.m.edit.m.cm_mvfaces
+	.$id.m.edit.m insert 3 cascade -label "rotate faces" \
+		-menu .$id.m.edit.m.cm_rotfaces
+	.$id.m.edit.m insert 4 separator
+	.$id.m.edit.m insert 5 radiobutton -variable edit_type \
+		-label "Rotate" -underline 0 -command "press srot"
+	.$id.m.edit.m insert 6 radiobutton -variable edit_type \
+		-label "Translate" -underline 0 -command "press sxy"
+	.$id.m.edit.m insert 7 radiobutton -variable edit_type \
+		-label "Scale" -underline 0 -command "press sscale"
+	.$id.m.edit.m insert 8 radiobutton -variable edit_type \
+		 -label "none of above" -command "press \"edit menu\""
+	.$id.m.edit.m insert 9 separator
+	.$id.m.edit.m insert 10 command -label "Reject" -underline 0 \
+		-command "press reject"
+	.$id.m.edit.m insert 11 command -label "Accept" -underline 0 \
+		-command "press accept"
+	.$id.m.edit.m insert 12 separator
+
+	menu .$id.m.edit.m.cm_mvedges
+	foreach item $menu1 {
+	    if {$item != "RETURN"} {
+		.$id.m.edit.m.cm_mvedges add radiobutton -variable edit_type -label $item \
+			-command "press \"edit menu\"; press \"move edges\"; \
+			press \"$item\""
+	    }
+	}
+
+	menu .$id.m.edit.m.cm_mvfaces
+	foreach item $menu2 {
+	    if {$item != "RETURN"} {
+		.$id.m.edit.m.cm_mvfaces add radiobutton -variable edit_type -label $item \
+			-command "press \"edit menu\"; press \"move faces\"; \
+			press \"$item\""
+	    }
+	}
+    
+	menu .$id.m.edit.m.cm_rotfaces
+	foreach item $menu3 {
+	    if {$item != "RETURN"} {
+		.$id.m.edit.m.cm_rotfaces add radiobutton -variable edit_type -label $item \
+			-command "press \"edit menu\"; press \"rotate faces\"; \
+			press \"$item\""
+	    }
+	}
+    }
+}
+
+proc do_edit_menu { menu1 } {
+    global mged_display
+    global mged_players
+    global edit_type
+    global transform_what
+    global rotate_about_what
+    global coord_type
+
+    set edit_type "none of above"
+    foreach id $mged_players {
+	.$id.m.options.m.cm_transform entryconfigure 3 -state normal
+	set transform_what($id) "e"
+	set_transform $id
+
+	.$id.m.options.m.cm_origin entryconfigure 4 -state normal
+	set rotate_about_what($id) "k"
+	set_rotate_about $id
+
+	.$id.m.options.m.cm_coord entryconfigure 3 -state normal
+	set coord_type($id) "o"
+	set_coords $id
+
+	.$id.m.edit.m entryconfigure 1 -state disabled
+	.$id.m.edit.m entryconfigure 2 -state disabled
+	.$id.m.edit.m entryconfigure 3 -state disabled
+
+	set i 1
+	foreach item $menu1 {
+	    if {$item != "RETURN"} {
+		.$id.m.edit.m insert $i radiobutton -variable edit_type \
+			-label $item -command "press \"$item\""
+		incr i
+	    }
+	}
+
+	if {[llength $menu1]} {
+	    .$id.m.edit.m insert $i separator
+	    incr i
+	}
+
+	if {$mged_display(state) == "SOL EDIT"} {
+	    .$id.m.edit.m insert $i radiobutton -variable edit_type \
+		    -label "Rotate" -underline 0 -command "press srot"
+	    incr i
+	    .$id.m.edit.m insert $i radiobutton -variable edit_type \
+		    -label "Translate" -underline 0 -command "press sxy"
+	    incr i
+	    .$id.m.edit.m insert $i radiobutton -variable edit_type \
+		    -label "Scale" -underline 0 -command "press sscale"
+	    incr i
+	    .$id.m.edit.m insert $i radiobutton -variable edit_type \
+		    -label "none of above" -command "press \"edit menu\""
+	    incr i
+	    .$id.m.edit.m insert $i separator
+	    incr i
+	}
+
+	.$id.m.edit.m insert $i command -label "Reject" -underline 0 \
+		-command "press reject"
+
+	incr i
+	.$id.m.edit.m insert $i command -label "Accept" -underline 0 \
+		-command "press accept"
+
+	incr i
+	.$id.m.edit.m insert $i separator
+    }
+}
+
+proc undo_edit_menu {} {
+    global mged_players
+    global transform_what
+    global rotate_about_what
+    global coord_type
+
+    foreach id $mged_players {
+	while {1} {
+	    if {[.$id.m.edit.m type 1] == "separator"} {
+		.$id.m.edit.m delete 1
+		continue
+	    }
+
+	    if {[.$id.m.edit.m entrycget 1 -label] != "Add"} {
+		.$id.m.edit.m delete 1
+	    } else {
+		break
+	    }
+	}
+
+	if {[winfo exists .$id.m.edit.m.cm_mvedges]} {
+	    destroy .$id.m.edit.m.cm_mvedges
+	    destroy .$id.m.edit.m.cm_mvfaces
+	    destroy .$id.m.edit.m.cm_rotfaces
+	}
+
+	.$id.m.edit.m entryconfigure 1 -state normal
+	.$id.m.edit.m entryconfigure 2 -state normal
+	.$id.m.edit.m entryconfigure 3 -state normal
+
+	.$id.m.options.m.cm_transform entryconfigure 3 -state disabled
+	if {$transform_what($id) == "e"} {
+	    set transform_what($id) "v"
+	    set_transform $id
+	}
+
+	.$id.m.options.m.cm_origin entryconfigure 4 -state disabled
+	if {$rotate_about_what($id) == "k"} {
+	    set rotate_about_what($id) "v"
+	    set_rotate_about $id
+	}
+
+	.$id.m.options.m.cm_coord entryconfigure 3 -state disabled
+	if {$coord_type($id) == "o"} {
+	    set coord_type($id) "v"
+	    set_coords $id
+	}
     }
 }
