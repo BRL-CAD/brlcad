@@ -218,6 +218,7 @@ usepen()
 			 * replace X,Y (but NOT Z) components, and
 			 * project result back to model space.
 			 */
+			/* XXX this makes bad assumptions about format of es_rec !! */
 			MAT4X3PNT( temp, es_mat, es_rec.s.s_values );
 			MAT4X3PNT( pos_view, model2view, temp );
 			pos_view[X] = dm_values.dv_xpen / 2047.0;
@@ -367,6 +368,7 @@ usepen()
 			/* Have scaling take place with respect to a point,
 			 * NOT the view center.
 			 */
+			/* XXX should have an es_keypoint for this */
 			MAT4X3PNT(temp, es_mat, es_rec.s.s_values);
 			MAT4X3PNT(pos_model, modelchanges, temp);
 			wrt_point(modelchanges, incr_change, modelchanges, pos_model);
@@ -374,6 +376,7 @@ usepen()
 			static mat_t oldchanges;	/* temporary matrix */
 
 			/* Vector from object center to cursor */
+			/* XXX should have an es_keypoint for this */
 			MAT4X3PNT( temp, es_mat, es_rec.s.s_values );
 			MAT4X3PNT( pos_view, model2objview, temp );
 			if( movedir & RARROW )

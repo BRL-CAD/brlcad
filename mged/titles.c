@@ -121,6 +121,7 @@ dotitles()
 	/* print parameter locations on screen */
 	if( state == ST_O_EDIT && illump->s_Eflag ) {
 		/* region is a processed region */
+		/* XXX should have an es_keypoint for this ??? */
 		MAT4X3PNT(temp, model2objview, es_rec.s.s_values);
 		xloc = (int)(temp[X]*2048);
 		yloc = (int)(temp[Y]*2048);
@@ -328,6 +329,7 @@ dotitles()
 
 		if( state == ST_O_EDIT && illump->s_Eflag ) {
 			/* region has been evaluated */
+			/* XXX should have an es_keypoint for this */
 			MAT4X3PNT(work, modelchanges, es_rec.s.s_values);
 			(void)sprintf( &linebuf[0],
 					"CENTER : %.4f %.4f %.4f",
