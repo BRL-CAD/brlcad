@@ -69,9 +69,13 @@ static void     establish_lighting();
 static void     establish_perspective();
 static void     set_perspective();
 static void     refresh_hook();
+static void     set_linewidth();
+static void     set_linestyle();
 static void     set_knob_offset();
 
 struct bu_structparse Glx_vparse[] = {
+	{"%d",  1, "linewidth",		Glx_MV_O(linewidth),	set_linewidth },
+	{"%d",  1, "linestyle",		Glx_MV_O(linestyle),	set_linestyle },
 	{"%d",	1, "depthcue",		Glx_MV_O(cueing_on),	Glx_colorchange },
 	{"%d",  1, "zclip",		Glx_MV_O(zclipping_on),	refresh_hook },
 	{"%d",  1, "zbuffer",		Glx_MV_O(zbuffer_on),	establish_zbuffer },
@@ -79,7 +83,6 @@ struct bu_structparse Glx_vparse[] = {
 	{"%d",  1, "perspective",       Glx_MV_O(perspective_mode), establish_perspective },
 	{"%d",  1, "set_perspective",Glx_MV_O(dummy_perspective),  set_perspective },
 	{"%d",  1, "debug",		Glx_MV_O(debug),	BU_STRUCTPARSE_FUNC_NULL },
-	{"%d",  1, "linewidth",		Glx_MV_O(linewidth),	refresh_hook },
 	{"%d",  1, "has_zbuf",		Glx_MV_O(zbuf),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "has_rgb",		Glx_MV_O(rgb),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",  1, "has_doublebuffer",	Glx_MV_O(doublebuffer), BU_STRUCTPARSE_FUNC_NULL },
@@ -166,7 +169,7 @@ char *argv[];
 
   bu_free(av, "Glx_dm_init: av");
   dmp->dm_eventHandler = Glx_doevent;
-  curr_dm_list->s_info->opp = &tkName;
+  curr_dm_list->s_info->opp = &pathName;
   Tk_CreateGenericHandler(Glx_doevent, (ClientData)DM_TYPE_GLX);
   glx_configure_window_shape(dmp);
 
@@ -1041,6 +1044,24 @@ static void
 set_perspective()
 {
   glx_set_perspective(dmp);
+  ++dmaflag;
+}
+
+static void
+set_linewidth()
+{
+  dmp->dm_setLineAttr(dmp,
+		      ((struct glx_vars *)dmp->dm_vars)->mvars.linewidth,
+		      dmp->dm_lineStyle);
+  ++dmaflag;
+}
+
+static void
+set_linestyle()
+{
+  dmp->dm_setLineAttr(dmp,
+		      dmp->dm_lineWidth,
+		      ((struct glx_vars *)dmp->dm_vars)->mvars.linestyle);
   ++dmaflag;
 }
 
