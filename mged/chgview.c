@@ -137,6 +137,11 @@ mged_vrot(x, y, z)
 double x, y, z;
 {
   mat_t newrot;
+  point_t model_pos;
+  point_t new_pos;
+
+  if(EDIT_TRAN)
+    MAT4X3PNT(model_pos, view2model, absolute_slew);
 
   mat_idn( newrot );
   buildHrot( newrot, x * degtorad, y * degtorad, z * degtorad);
@@ -149,6 +154,13 @@ double x, y, z;
     wrt_view( ModelDelta, newinv, ModelDelta );
   }
   new_mats();
+
+  if(EDIT_TRAN){
+    MAT4X3PNT(absolute_slew, model2view, model_pos);
+  }else{
+    VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
+    MAT4X3PNT(absolute_slew, model2view, new_pos);
+  }
 
   return TCL_OK;
 }
@@ -166,16 +178,7 @@ char	**argv;
   if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
     return TCL_ERROR;
 
-#if 1
   status = mged_vrot(atof(argv[1]), atof(argv[2]), atof(argv[3]));
-#else
-  /* run through knob to possibly update GUI sliders */
-  bu_vls_init(&vls);
-  bu_vls_printf(&vls, "knob -i ax %s ay %s az %s\n",
-		argv[1], argv[2], argv[3]);
-  status = Tcl_Eval(interp, bu_vls_addr(&vls));
-  bu_vls_free(&vls);
-#endif
 
   return status;
 }
@@ -1132,7 +1135,7 @@ char	**argv;
 
   if(argc == 4){ /* twist angle supplied */
     twist = atof(argv[3]);
-#if 1
+#if 0
     if(iflag)
       status = mged_vrot(0.0, 0.0, -o_twist - twist);
     else
