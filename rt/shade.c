@@ -106,13 +106,15 @@ register struct shadework *swp;
 	if( !(want & MFI_LIGHT) )  {
 		register int	i;
 
-		for( i = ap->a_rt_i->rti_nlights*3 - 1; i >= 0; i-- )
-			swp->sw_intensity[i] = 1;
-
+		/* sanity */
 		i=0;
 		for( RT_LIST_FOR( lp, light_specific, &(LightHead.l) ) )  {
 			RT_CK_LIGHT(lp);
 			swp->sw_visible[i++] = (char *)lp;
+		}
+		for( ; i < SW_NLIGHTS; i++ )  {
+			swp->sw_intensity[i] = -1;
+			swp->sw_visible[i] = (char *)NULL;
 		}
 	}
 
@@ -122,8 +124,17 @@ register struct shadework *swp;
 			swp->sw_hit.hit_dist, ap->a_ray.r_dir );
 		swp->sw_inputs |= MFI_HIT;
 	}
-	if( (swp->sw_inputs & want) != want )
+	if( (swp->sw_inputs & want) != want )  {
 		shade_inputs( ap, pp, swp, want );
+	} else if( !(want & MFI_LIGHT) )  {
+		register int	i;
+
+		/* sanity */
+		for( i = SW_NLIGHTS-1; i >= 0; i-- )  {
+			swp->sw_intensity[i] = -1;
+			swp->sw_visible[i] = (char *)NULL;
+		}
+	}
 
 	if( rdebug&RDEBUG_SHADE ) {
 		rt_log("About to shade %s: using \"%s\" shader\n",
