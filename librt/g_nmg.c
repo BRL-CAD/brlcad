@@ -1019,6 +1019,10 @@ double		local2mm;
 			NMG_CK_EDGEUSE(eu);
 			PUTMAGIC( DISK_EDGEUSE_MAGIC );
 			INDEXL( d, eu, l );
+			/* NOTE The pointers in l2 point at other l2's.
+			 * nmg_index_of_struct() will point 'em back
+			 * at the top of the edgeuse.  Beware on import.
+			 */
 			INDEXL( d, eu, l2 );
 			rt_plong( d->up, rt_nmg_reindex((genptr_t)(eu->up.magic_p), ecnt) );
 			INDEX( d, eu, eumate_p );
@@ -1379,9 +1383,11 @@ mat_t		mat;
 	case NMG_KIND_EDGEUSE:
 		{
 			struct edgeuse	*eu = (struct edgeuse *)op;
+			struct edgeuse	*eu2;
 			struct disk_edgeuse	*d;
 			int			up_index;
 			int			up_kind;
+			int			sub;
 
 			d = &((struct disk_edgeuse *)ip)[iindex];
 			NMG_CK_EDGEUSE(eu);
@@ -1405,7 +1411,24 @@ mat_t		mat;
 			NMG_CK_EDGEUSE(eu->radial_p);
 			NMG_CK_VERTEXUSE(eu->vu_p);
 			NMG_CK_EDGE_G_LSEG(eu->g.lseg_p);	/* XXX */
-			INDEXL_HD( d, eu, l2, eu->g.lseg_p->eu_hd2 );	/* pun for g.cnurb_p->eu_hd2 also */
+
+			/* Note that l2 subscripts will be for edgeuse, not l2 */
+			/* g.lseg_p->eu_hd2 is a pun for g.cnurb_p->eu_hd2 also */
+			/* inline INDEXL_HD( d, eu, l2, eu->g.lseg_p->eu_hd2 ); */
+			if( (sub = rt_glong(d->l2.forw)) < 0 )  {
+				eu->l2.forw = &(eu->g.lseg_p->eu_hd2);
+			} else  {
+				eu2 = (struct edgeuse *)ptrs[sub];
+				NMG_CK_EDGEUSE(eu2);
+				eu->l2.forw = &eu2->l2;
+			}
+			if( (sub = rt_glong(d->l2.back)) < 0 )  {
+				eu->l2.back = &(eu->g.lseg_p->eu_hd2);
+			} else  {
+				eu2 = (struct edgeuse *)ptrs[sub];
+				NMG_CK_EDGEUSE(eu2);
+				eu->l2.back = &eu2->l2;
+			}
 		}
 		return 0;
 	case NMG_KIND_EDGE:
