@@ -8,7 +8,24 @@
 
 check_externs "get_comb put_comb"
 
+proc toggle_my_tab { id which_frame } {
+
+    set top .$id.comb
+
+    if { $which_frame == "Bool" } {
+	grid forget $top.my_tabbed.shade_frame
+	grid $top.my_tabbed.bool_frame -sticky nsew
+    } else {
+	grid forget $top.my_tabbed.bool_frame
+	grid $top.my_tabbed.shade_frame -sticky nsew
+	grid rowconfigure $top.my_tabbed.shade_frame 0 -weight 0
+	grid rowconfigure $top.my_tabbed.shade_frame 1 -weight 1
+	grid columnconfigure $top.my_tabbed.shade_frame 0 -weight 1
+    }
+}
+
 proc init_comb { id } {
+    package require Iwidgets
     global mged_gui
     global comb_control
     global shader_params
@@ -54,24 +71,42 @@ proc init_comb { id } {
     trace vdelete comb_control($id,name) w "comb_handle_trace $id"
     trace variable comb_control($id,name) w "comb_handle_trace $id"
 
+    # set this variable to one to use the tabbed notebook version
+    set use_notebook 0
+
     toplevel $top -screen $mged_gui($id,screen)
 
-    frame $top.gridF1
-    frame $top.gridF2 -relief groove -bd 2
-    frame $top.gridF3
-    frame $top.gridF4
-    frame $top.gridF5
-    frame $top.nameF -relief sunken -bd 2
-    frame $top.idF -relief sunken -bd 2
-    frame $top.airF -relief sunken -bd 2
-    frame $top.materialF -relief sunken -bd 2
-    frame $top.losF -relief sunken -bd 2
-    frame $top.shaderF1
-    frame $top.shaderF2
-    frame $top.shaderEF -relief sunken -bd 2
-    frame $top.combF
+    set my_tabbed_frame [frame $top.my_tabbed]
+    set bool_frame [frame $my_tabbed_frame.bool_frame -relief raised -bd 3]
+    set shade_frame [frame $my_tabbed_frame.shade_frame -relief raised -bd 3]
+    set tabs_frame [frame $my_tabbed_frame.tabs_frame]
+    set comb_control($id,which_frame) "Bool"
+    set bool_but_frame [frame $tabs_frame.bool_but_frame -relief groove -borderwidth 3]
+    radiobutton $bool_but_frame.show_bool -value "Bool" \
+	-variable comb_control($id,which_frame) \
+	-command "toggle_my_tab $id Bool"
+    label $bool_but_frame.bool_label -text "Show Boolean"
+    set shade_but_frame [frame $tabs_frame.shade_but_frame -relief groove -borderwidth 3]
+    radiobutton $shade_but_frame.show_shade -value "Shade" \
+	-variable comb_control($id,which_frame) \
+	-command "toggle_my_tab $id Shade"
+    label $shade_but_frame.shade_label -text "Show Shader"
+    grid $bool_but_frame.bool_label $bool_but_frame.show_bool
+    grid $shade_but_frame.shade_label $shade_but_frame.show_shade
 
-    set comb_control($id,shader_frame) $top.shaderF2
+    frame $top.name_stuff
+    frame $top.id_los_air_mater 
+    frame $top.color_frame 
+    frame $top.shader_top_frame -relief groove -bd 2 
+    frame $top.region_inherit_frame 
+    frame $top.bool_expr_frame 
+    frame $top.control_buttons_frame 
+    frame $top.name_entry_and_menu_frame -relief sunken -bd 2 
+    frame $top.shader_label_entry_frame 
+    frame $top.shader_frame 
+    frame $top.shader_entry_and_menu_frame -relief sunken -bd 2 
+
+    set comb_control($id,shader_frame) $top.shader_frame
     set shader_params($id,shader_name) ""
     set shader_params($id,window) $comb_control($id,shader_frame)
 
@@ -83,7 +118,7 @@ Note that a region defines a space containing
 homogeneous material. In contrast, a group can
 contain many different materials." } }
     hoc_register_data $top.nameL "Combination Name" $hoc_data
-    entry $top.nameE -relief flat -width 12 -textvar comb_control($id,name)
+    entry $top.nameE -relief flat -width 35 -textvar comb_control($id,name)
     hoc_register_data $top.nameE "Combination Name" $hoc_data
     menubutton $top.nameMB -relief raised -bd 2\
 	    -menu $top.nameMB.m -indicatoron 1
@@ -142,7 +177,7 @@ name of the form 'comb@' where '@' represents
 the counter used by make_name." }
               { see_also "make_name" } }
 
-    label $top.idL -text "Region Id" -anchor e
+    label $top.idL -text "Region Id:" -anchor e
     set hoc_data { { summary "The region id (i.e. item code) is a number
 that is typically used for grouping regions
 belonging to a particular component. If the
@@ -151,10 +186,10 @@ a model component. Otherwise, it is considered
 to be air. The air code is then used to designate
 the kind of air." } }
     hoc_register_data $top.idL "Region Id" $hoc_data
-    entry $top.idE -relief flat -width 12 -textvar comb_control($id,id)
+    entry $top.idE -relief sunken -width 5 -textvar comb_control($id,id)
     hoc_register_data $top.idE "Region Id" $hoc_data
 
-    label $top.airL -text "Air Code" -anchor e
+    label $top.airL -text " Air Code:" -anchor e
     set hoc_data { { summary "The air code is a number that is typically
 used to designate the kind of air a region
 represents. An air code of \"1\" signifies
@@ -163,20 +198,20 @@ than \"1\" signifies some other kind of air.
 While an air code of \"0\" means that the
 region represents a component." } }
     hoc_register_data $top.airL "Air Code" $hoc_data
-    entry $top.airE -relief flat -width 12 -textvar comb_control($id,air)
+    entry $top.airE -relief sunken -width 2 -textvar comb_control($id,air)
     hoc_register_data $top.airE "Air Code" $hoc_data
 
-    label $top.materialL -text "Material Id" -anchor e
+    label $top.materialL -text " Material Id:" -anchor e
     set hoc_data { { summary "The material id represents a particular
 material type as identified by a material
 database. In the past, the gift material
 database was used to identify the material
 type." } }
     hoc_register_data $top.materialL "Material Id" $hoc_data
-    entry $top.materialE -relief flat -width 12 -textvar comb_control($id,material)
+    entry $top.materialE -relief sunken -width 2 -textvar comb_control($id,material)
     hoc_register_data $top.materialE "Material Id" $hoc_data
 
-    label $top.losL -text "LOS" -anchor e
+    label $top.losL -text " LOS:" -anchor e
     set hoc_data { { summary "LOS is a number that represents the
 percentage of material a component region
 is composed of. For example, if some component
@@ -185,7 +220,7 @@ designated by its material id, with an LOS of 20
 then the region is considered to be composed of
 20% \"mild steel\"."  } }
     hoc_register_data $top.losL "LOS" $hoc_data
-    entry $top.losE -relief flat -width 12 -textvar comb_control($id,los)
+    entry $top.losE -relief sunken -width 3 -textvar comb_control($id,los)
     hoc_register_data $top.losE "LOS" $hoc_data
 
     label $top.colorL -text "Color" -anchor e
@@ -365,71 +400,131 @@ from the combination." } }
     hoc_register_data $top.dismissB "Dismiss" \
 	    { { summary "Dismiss (close) the \"Combination Editor\"." } }
 
-    grid $top.nameE $top.nameMB -sticky "ew" -in $top.nameF
-    grid columnconfigure $top.nameF 0 -weight 1
-    grid $top.idE -sticky "ew" -in $top.idF
-    grid columnconfigure $top.idF 0 -weight 1
-    grid $top.nameL $top.nameF x $top.idL $top.idF \
-	    -sticky "ew" -in $top.gridF1 -pady $comb_control($id,pady)
+    # put name label, entry, and menu button in "name_stuff" frame
+    grid $top.nameE $top.nameMB -sticky "ew" -in $top.name_entry_and_menu_frame
+    grid columnconfigure $top.name_entry_and_menu_frame 0 -weight 1
+    grid $top.nameL -sticky "e" -in $top.name_stuff -pady $comb_control($id,pady) -row 0 -column 0
+    grid $top.name_entry_and_menu_frame -sticky "ew" -in $top.name_stuff -pady $comb_control($id,pady) -row 0 -column 1
+    grid columnconfigure $top.name_stuff 1 -weight 1
 
-    grid $top.airE -sticky "ew" -in $top.airF
-    grid columnconfigure $top.airF 0 -weight 1
-    grid $top.colorL $top.colorF x $top.airL $top.airF \
-	    -sticky "ew" -in $top.gridF1 -pady $comb_control($id,pady)
+    # put ident, los, air code, and material id into "id_los_air_mater" frame
+    grid $top.idL -in $top.id_los_air_mater -pady $comb_control($id,pady) -row 0 -column 0 -sticky ew
+    grid $top.idE -in $top.id_los_air_mater -pady $comb_control($id,pady) -row 0 -column 1 -sticky ew
+    grid $top.airL -in $top.id_los_air_mater -pady $comb_control($id,pady) -row 0 -column 2 -sticky ew
+    grid $top.airE -in $top.id_los_air_mater -pady $comb_control($id,pady) -row 0 -column 3 -sticky ew
+    grid $top.materialL -in $top.id_los_air_mater -pady $comb_control($id,pady) -row 0 -column 4 -sticky ew
+    grid $top.materialE -in $top.id_los_air_mater -pady $comb_control($id,pady) -row 0 -column 5 -sticky ew
+    grid $top.losL -in $top.id_los_air_mater -pady $comb_control($id,pady) -row 0 -column 6 -sticky ew
+    grid $top.losE -in $top.id_los_air_mater -pady $comb_control($id,pady) -row 0 -column 7 -sticky ew
+    grid rowconfigure $top.id_los_air_mater 0 -weight 1
+    grid columnconfigure $top.id_los_air_mater 1 -weight 1
+    grid columnconfigure $top.id_los_air_mater 3 -weight 1
+    grid columnconfigure $top.id_los_air_mater 5 -weight 1
+    grid columnconfigure $top.id_los_air_mater 7 -weight 1
+    grid columnconfigure $top.id_los_air_mater 0 -weight 0
+    grid columnconfigure $top.id_los_air_mater 2 -weight 0
+    grid columnconfigure $top.id_los_air_mater 4 -weight 0
+    grid columnconfigure $top.id_los_air_mater 6 -weight 0
 
-    grid $top.materialE -sticky "ew" -in $top.materialF
-    grid columnconfigure $top.materialF 0 -weight 1
-    grid $top.losE -sticky "ew" -in $top.losF
-    grid columnconfigure $top.losF 0 -weight 1
-    grid $top.materialL $top.materialF x $top.losL $top.losF \
-	    -sticky "ew" -in $top.gridF1 -pady $comb_control($id,pady)
 
-    grid columnconfigure $top.gridF1 1 -weight 100
-    grid columnconfigure $top.gridF1 2 -weight 1
-    grid columnconfigure $top.gridF1 4 -weight 100
+    # put id_los_air_mater into the "Boolean" frame
+    grid $top.id_los_air_mater -in $bool_frame \
+             -padx $comb_control($id,padx) \
+             -pady $comb_control($id,pady) \
+             -sticky new -row 0 -column 0
+    grid $top.bool_expr_frame -in $bool_frame \
+             -padx $comb_control($id,padx) \
+             -pady $comb_control($id,pady) \
+             -sticky nsew -row 1 -column 0
+    grid columnconfigure $bool_frame 0 -weight 1
+    grid rowconfigure $bool_frame 0 -weight 0
+    grid rowconfigure $bool_frame 1 -weight 1
+
+    grid $top.colorL $top.colorF \
+	    -sticky "e" -in $top.color_frame -pady $comb_control($id,pady)
+
+    grid columnconfigure $top.color_frame 1 -weight 100
+    grid columnconfigure $top.color_frame 2 -weight 1
+    grid columnconfigure $top.color_frame 4 -weight 100
 
     grid $top.shaderE $top.shaderMB \
 	    -sticky "ew" \
-	    -in $top.shaderEF
-    grid columnconfigure $top.shaderEF 0 -weight 1
+	    -in $top.shader_entry_and_menu_frame
+    grid columnconfigure $top.shader_entry_and_menu_frame 0 -weight 1
 
-    grid $top.shaderL $top.shaderEF \
+    grid $top.shaderL $top.shader_entry_and_menu_frame \
 	    -sticky "ew" \
-	    -in $top.shaderF1
-    grid columnconfigure $top.shaderF1 1 -weight 1
+	    -in $top.shader_label_entry_frame
+    grid columnconfigure $top.shader_label_entry_frame 1 -weight 1
 
-    grid $top.shaderF1 \
+    grid $top.shader_label_entry_frame \
 	    -sticky "ew" \
-	    -in $top.gridF2\
+	    -in $top.shader_top_frame\
 	    -padx $comb_control($id,padx) \
 	    -pady $comb_control($id,pady)
-#    grid $top.shaderF2 \
-#	    -sticky "ew" \
-#	    -in $top.gridF2 \
-#	    -padx $comb_control($id,padx) \
-#	    -pady $comb_control($id,pady)
-    grid columnconfigure $top.gridF2 0 -weight 1
+    grid columnconfigure $top.shader_top_frame 0 -weight 1
 
-    grid $top.isRegionCB $top.inheritCB x -sticky "ew" -in $top.gridF3\
+    # puts color frame into "Shader" notebook page
+    grid $top.color_frame -in $shade_frame \
+             -padx $comb_control($id,padx) \
+             -pady $comb_control($id,pady) \
+             -sticky nw -row 0 -column 0
+    grid $top.shader_top_frame -in $shade_frame \
+             -padx $comb_control($id,padx) \
+             -pady $comb_control($id,pady) \
+             -sticky nsew -row 1 -column 0
+
+    grid rowconfigure $shade_frame 0 -weight 0
+    grid rowconfigure $shade_frame 1 -weight 1
+    grid columnconfigure $shade_frame 0 -weight 1
+
+    grid $top.isRegionCB $top.inheritCB x -sticky "ew" -in $top.region_inherit_frame\
 	    -ipadx 4 -ipady 4
-    grid columnconfigure $top.gridF3 2 -weight 1
+    grid columnconfigure $top.region_inherit_frame 2 -weight 1
 
-    grid $top.combL x -sticky "w" -in $top.gridF4
-    grid $top.combT $top.combS -sticky "nsew" -in $top.gridF4
-    grid rowconfigure $top.gridF4 1 -weight 1
-    grid columnconfigure $top.gridF4 0 -weight 1
+    grid $top.combL -sticky "w" -in $top.bool_expr_frame -row 0 -column 0
+    grid $top.combT -sticky "nsew" -in $top.bool_expr_frame -row 1 -column 0
+    grid $top.combS -sticky "ns" -in $top.bool_expr_frame -row 1 -column 1
+    grid rowconfigure $top.bool_expr_frame 0 -weight 0
+    grid rowconfigure $top.bool_expr_frame 1 -weight 1
+    grid columnconfigure $top.bool_expr_frame 0 -weight 1
+    grid columnconfigure $top.bool_expr_frame 1 -weight 0
 
     grid $top.okB $top.applyB x $top.resetB x $top.dismissB -sticky "ew"\
-	    -in $top.gridF5 -pady $comb_control($id,pady)
-    grid columnconfigure $top.gridF5 2 -weight 1
-    grid columnconfigure $top.gridF5 4 -weight 1
+	    -in $top.control_buttons_frame -pady $comb_control($id,pady)
+    grid columnconfigure $top.control_buttons_frame 2 -weight 1
+    grid columnconfigure $top.control_buttons_frame 4 -weight 1
 
-    grid $top.gridF1 -sticky "ew" -padx $comb_control($id,padx) -pady $comb_control($id,pady)
-    grid $top.gridF2 -sticky "ew" -padx $comb_control($id,padx) -pady $comb_control($id,pady)
-    grid $top.gridF3 -sticky "ew" -padx $comb_control($id,padx) -pady $comb_control($id,pady)
-    grid $top.gridF4 -sticky "nsew" -padx $comb_control($id,padx) -pady $comb_control($id,pady)
-    grid $top.gridF5 -sticky "ew" -padx $comb_control($id,padx) -pady $comb_control($id,pady)
-    grid rowconfigure $top 3 -weight 1
+    grid $top.name_stuff \
+         -sticky "ew" \
+         -padx $comb_control($id,padx) \
+         -pady $comb_control($id,pady) \
+         -row 0 -column 0
+
+    grid $top.region_inherit_frame \
+         -padx $comb_control($id,padx) \
+         -pady $comb_control($id,pady) \
+         -sticky new -row 1 -column 0
+
+    grid $bool_but_frame x  x $shade_but_frame -sticky nw
+    grid $tabs_frame -sticky nw
+    toggle_my_tab $id $comb_control($id,which_frame)
+    grid $my_tabbed_frame \
+          -sticky "nsew" \
+          -padx $comb_control($id,padx) \
+          -pady $comb_control($id,pady) \
+          -row 2 -column 0
+    grid rowconfigure $my_tabbed_frame 1 -weight 1
+    grid columnconfigure $my_tabbed_frame 0 -weight 1
+
+    grid $top.control_buttons_frame \
+         -sticky "ew" \
+         -padx $comb_control($id,padx) \
+         -pady $comb_control($id,pady) \
+         -row 3 -column 0
+
+    grid rowconfigure $top 0 -weight 0
+    grid rowconfigure $top 2 -weight 1
     grid columnconfigure $top 0 -weight 1
 
     bind $top.nameE <Return> "comb_reset $id; break"
@@ -437,6 +532,7 @@ from the combination." } }
     place_near_mouse $top
     wm protocol $top WM_DELETE_WINDOW "catch {comb_dismiss $id $top}"
     wm title $top "Combination Editor ($id)"
+
 }
 
 proc comb_ok {id top} {
@@ -672,7 +768,7 @@ proc comb_reset { id } {
 	grid $comb_control($id,shader_frame) \
 		-row 1 \
 		-sticky "ew" \
-		-in $top.gridF2 \
+		-in $top.shader_top_frame \
 		-padx $comb_control($id,padx) \
 		-pady $comb_control($id,pady)
     } else {
@@ -695,59 +791,16 @@ proc comb_toggle_isRegion { id } {
     global comb_control
 
     set top .$id.comb
-    grid remove $top.gridF1
+    grid remove $top.id_los_air_mater
 
     if {$comb_control($id,isRegion) == "Yes"} {
-	grid forget $top.nameL $top.nameF $top.colorL $top.colorF
-
-	frame $top.idF -relief sunken -bd 2
-	label $top.idL -text "Region Id" -anchor w
-	entry $top.idE -relief flat -width 12 -textvar comb_control($id,id)
-	grid $top.idE -sticky "ew" -in $top.idF
-	grid columnconfigure $top.idF 0 -weight 1
-
-	frame $top.airF -relief sunken -bd 2
-	label $top.airL -text "Air Code" -anchor w
-	entry $top.airE -relief flat -width 12 -textvar comb_control($id,air)
-	grid $top.airE -sticky "ew" -in $top.airF
-	grid columnconfigure $top.airF 0 -weight 1
-
-	frame $top.materialF -relief sunken -bd 2
-	label $top.materialL -text "Material" -anchor w
-	entry $top.materialE -relief flat -width 12 -textvar comb_control($id,material)
-	grid $top.materialE -sticky "ew" -in $top.materialF
-	grid columnconfigure $top.materialF 0 -weight 1
-
-	frame $top.losF -relief sunken -bd 2
-	label $top.losL -text "LOS" -anchor w
-	entry $top.losE -relief flat -width 12 -textvar comb_control($id,los)
-	grid $top.losE -sticky "ew" -in $top.losF
-	grid columnconfigure $top.losF 0 -weight 1
-
-	grid $top.nameL $top.nameF x $top.idL $top.idF \
-		-sticky "ew" -in $top.gridF1 -pady $comb_control($id,pady)
-	grid $top.colorL $top.colorF x $top.airL $top.airF \
-		-sticky "ew" -in $top.gridF1 -pady $comb_control($id,pady)
-	grid $top.materialL $top.materialF x $top.losL $top.losF \
-		-sticky "ew" -in $top.gridF1 -pady $comb_control($id,pady)
+	grid $top.id_los_air_mater -in $top.my_tabbed.bool_frame \
+	    -padx $comb_control($id,padx) \
+	    -pady $comb_control($id,pady) \
+	    -sticky new -row 0 -column 0
     } else {
-	grid forget $top.nameL $top.nameF \
-		$top.idL $top.idF \
-		$top.colorL $top.colorF \
-		$top.airL $top.airF \
-		$top.materialL $top.materialF \
-		$top.losL $top.losF
-
-	destroy $top.idL $top.idE $top.idF \
-		$top.airL $top.airE $top.airF \
-		$top.materialL $top.materialE $top.materialF\
-		$top.losL $top.losE $top.losF
-
-	grid $top.nameL $top.nameF x $top.colorL $top.colorF \
-		-sticky "ew" -row 0 -in $top.gridF1 -pady $comb_control($id,pady)
+	grid forget $top.id_los_air_mater
     }
-
-    grid $top.gridF1 -row 0
 }
 
 proc comb_shader_gui { id shader_type } {
@@ -765,7 +818,7 @@ proc comb_shader_gui { id shader_type } {
     grid $comb_control($id,shader_frame) \
 	    -row 1 \
 	    -sticky "ew" \
-	    -in $top.gridF2 \
+	    -in $top.shader_top_frame \
 	    -padx $comb_control($id,padx) \
 	    -pady $comb_control($id,pady)
 }
