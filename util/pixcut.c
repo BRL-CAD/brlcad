@@ -36,8 +36,10 @@ static int	new_height = 512;
 static int	base_x = 0;		/* Default to lower left corner */
 static int	base_y = 0;
 static int	Verbose = 0;
+static int	num_bytes = 3;
 
-static unsigned char background[3];	/* Holds the fill background color */
+#define SIZEBACK	256
+static unsigned char background[SIZEBACK];	/* Holds the fill background color */
 
 static FILE	*input;
 static char	*in_name;
@@ -47,7 +49,7 @@ static int	isfile = 0;
 static char usage[] = "\
 pixcut: Copyright (C) 1992 Paladin Software\n\
 pixcut: All rights reserved\n\
-pixcut: Usage:	[-v] [-h] [-H] [-a] [-C red/green/blue]\n\
+pixcut: Usage:	[-v] [-h] [-H] [-a] [-# num_bytes] [-C red/green/blue]\n\
 		[-s in_square_size] [-w in_width] [-n in_height]\n\
 		[-S out_square_size] [-W out_width] [-N out_height]\n\
 		[-x horizontal] [-y vertical] [file_in]\n";
@@ -73,7 +75,7 @@ register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt(argc, argv, "vahHC:s:w:n:S:W:N:x:y:" )) != EOF) {
+	while ( (c = getopt(argc, argv, "vahHC:s:w:n:S:W:N:x:y:#:" )) != EOF) {
 		switch (c) {
 		case 'v':
 			Verbose = 1;
@@ -118,6 +120,9 @@ register char **argv;
 		case 'C':
 			parse_color(background, optarg);
 			break;
+		case '#':
+			num_bytes = atoi(optarg);
+			break;
 		default:		/* '?' */
 			return(0);
 		}
@@ -158,7 +163,7 @@ int argc; char **argv;
 	register unsigned char *cp;
 	int finish, row, result;
 
-	background[0] = background[1] = 0;
+	for (i=0;i<SIZEBACK;i++) background[i] = 0;
 	background[2] = 1;
 
 	if (!get_args(argc,argv)) {
@@ -168,7 +173,7 @@ int argc; char **argv;
 	/* Should we autosize the input? */
 	if (isfile && autosize) {
 		int w,h;
-		if (fb_common_file_size(&w, &h, in_name, 3)) {
+		if (fb_common_file_size(&w, &h, in_name, num_bytes)) {
 			org_width = w;
 			org_height = h;
 		} else {
@@ -180,7 +185,7 @@ int argc; char **argv;
  * Make a buffer will hold a single scan line of assuming a worst
  * case cut of 1 pixel of the edge.
  */
-	if ((buffer = (unsigned char *)malloc((org_width+new_width)*3)) == (unsigned char *)NULL ) {
+	if ((buffer = (unsigned char *)malloc((org_width+new_width)*num_bytes)) == (unsigned char *)NULL ) {
 		(void) fprintf(stderr, "pixcut: Out of memory (malloc failed)\n");
 		exit(2);
 	}
@@ -258,19 +263,20 @@ int argc; char **argv;
  */
 	if (base_x < 0) {
 		outbuf = buffer;
-		inbuf = buffer - base_x*3;	/* base_x < 0 so - not + */
+		inbuf = buffer - base_x*num_bytes;	/* base_x < 0 so - not + */
 	} else {
-		outbuf = buffer + base_x*3;
+		outbuf = buffer + base_x*num_bytes;
 		inbuf = buffer;
 	}
 /*
  * Now fill the output buffer with the background color if needed.
  */
 	if (base_x < 0 || base_y < 0 || base_x+new_width > org_width) {
-		for (i=0, cp = outbuf; i<new_width; i++,cp+=3) {
-			cp[0] = background[0];
-			cp[1] = background[1];
-			cp[2] = background[2];
+		for (i=0, cp = outbuf; i<new_width; i++,cp+=num_bytes) {
+			register int jj;
+			for (jj=0; jj<num_bytes && jj<SIZEBACK; jj++) {
+				cp[jj]=background[jj];
+			}
 		}
 	}
 	finish = base_y + new_height;
@@ -283,7 +289,7 @@ int argc; char **argv;
  * Now sync the input file to the output file.
  */
 	while (row < 0 && row < finish) {
-		result = fwrite(outbuf, 3, new_width, stdout);
+		result = fwrite(outbuf, num_bytes, new_width, stdout);
 		if (result != new_width) {
 			perror("pixcut: fwrite");
 			exit(3);
@@ -292,23 +298,24 @@ int argc; char **argv;
 	}
 
 	while(row < base_y) {
-		result = fread(inbuf, 3, org_width, input);
+		result = fread(inbuf, num_bytes, org_width, input);
 		row++;
 	}
 /*
  * At this point "row" is an index into the original file.
  */
 	while (row < finish && row < org_height) {
-		result = fread(inbuf, 3, org_width, input);
+		result = fread(inbuf, num_bytes, org_width, input);
 		if (result != org_width) {
-			for (cp=inbuf+result*3; result < org_width; cp+=3,++result) {
-				cp[0] = background[0];
-				cp[1] = background[1];
-				cp[2] = background[2];
+			for (cp=inbuf+result*num_bytes; result < org_width; cp+=num_bytes,++result) {
+				register int jj;
+				for (jj=0; jj<num_bytes && jj<SIZEBACK; jj++) {
+					cp[jj] = background[jj];
+				}
 			}
 			org_height = row-1;
 		}
-		result = fwrite(outbuf, 3, new_width, stdout);
+		result = fwrite(outbuf, num_bytes, new_width, stdout);
 		if (result != new_width) {
 			perror("pixcut: fwrite");
 			exit(3);
@@ -320,10 +327,11 @@ int argc; char **argv;
  * lines.
  */
 	if (row >= org_height) {
-		for (cp=outbuf,i=0;i<new_width;cp+=3,i++) {
-			cp[0] = background[0];
-			cp[1] = background[1];
-			cp[2] = background[2];
+		for (cp=outbuf,i=0;i<new_width;cp+=num_bytes,i++) {
+			register int jj;
+			for (jj=0; jj<num_bytes && jj<SIZEBACK;jj++) {
+				cp[jj] = background[jj];
+			}
 		}
 	}
 /*
@@ -331,7 +339,7 @@ int argc; char **argv;
  * output the remaining background lines (if any).
  */
 	while (row < finish) {
-		result = fwrite(outbuf,3, new_width, stdout);
+		result = fwrite(outbuf,num_bytes, new_width, stdout);
 		if (result != new_width) {
 			perror("pixcut: fwrite");
 			exit(3);
