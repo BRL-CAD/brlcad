@@ -54,21 +54,21 @@
 #define DEBUG_PL_ANIM	0x00000001	/* 1 mged animated evaluation */
 #define DEBUG_PL_SLOW	0x00000002	/* 2 add delays to animation */
 
-#define DEBUG_CUTLOOP	0x00000010	/* 5 cutting loops in two */
-#define DEBUG_POLYSECT	0x00000020	/* 6 combine() */
-#define DEBUG_PLOTEM	0x00000040	/* 7 combine() */
-#define DEBUG_BOOL	0x00000080	/* 8 combine() */
-#define DEBUG_CLASSIFY	0x00000100	/* 9 combine() */
-#define DEBUG_BOOLEVAL	0x00000200	/* 10 boolean evaluation steps */
-#define DEBUG_GRAZING	0x00000400	/* 11 combine() */
-#define DEBUG_MESH	0x00000800	/* 12 combine() */
-#define DEBUG_MESH_EU	0x00001000	/* 13 combine() */
-#define DEBUG_POLYTO	0x00002000	/* 14 combine() */
+#define DEBUG_CUTLOOP	0x00000010	/* 5 nmg_mod: nmg_cut_loop */
+#define DEBUG_POLYSECT	0x00000020	/* 6 nmg_inter: face intersection */
+#define DEBUG_PLOTEM	0x00000040	/* 7 make plots in debugged routined */
+#define DEBUG_BOOL	0x00000080	/* 8 nmg_bool:  */
+#define DEBUG_CLASSIFY	0x00000100	/* 9 nmg_class: */
+#define DEBUG_BOOLEVAL	0x00000200	/* 10 nmg_eval: what to retain */
+#define DEBUG_UNUSED	0x00000400	/* 11 UNUSED */
+#define DEBUG_MESH	0x00000800	/* 12 nmg_mesh: describe edge search */
+#define DEBUG_MESH_EU	0x00001000	/* 13 nmg_mesh: list edges meshed */
+#define DEBUG_POLYTO	0x00002000	/* 14 nmg_misc: polytonmg */
 #define DEBUG_LABEL_PTS 0x00004000	/* 15 label points in plot files */
 #define DEBUG_INS	0x00008000	/* 16 nmg_tbl table insert */
 #define DEBUG_NMGRT     0x00010000	/* 17 ray tracing */
-#define DEBUG_FINDEU	0x00020000	/* 18 findeu (find edge[use]) */
-#define DEBUG_CMFACE	0x00040000	/* 19 nmg_cmface() */
+#define DEBUG_FINDEU	0x00020000	/* 18 nmg_mod: nmg_findeu() */
+#define DEBUG_CMFACE	0x00040000	/* 19 nmg_mod: nmg_cmface() */
 #define DEBUG_GRAPHCL	0x00080000	/* 20 graphic classification */
 #define DEBUG_VU_SORT	0x00100000	/* 025 nmg_fcut: coincident vu sort */
 #define DEBUG_FCUT	0x00200000	/* 026 nmg_fcut: face cutter */
@@ -280,6 +280,21 @@ struct nmgregion_a {
 
 /*
  *			S H E L L
+ *
+ *  When a shell encloses volume, it's done entirely by the list of faceuses.
+ *
+ *  The wire loopuses (each of which heads a list of edges) define a
+ *  set of connected line segments which form a closed path, but do not
+ *  enclose either volume or surface area.
+ *
+ *  The wire edgeuses are disconnected line segments.
+ *  There is a special interpetation to the eu_hd list of wire edgeuses.
+ *  Unlike edgeuses seen in loops, the eu_hd list contains eu1, eu1mate,
+ *  eu2, eu2mate, ..., where each edgeuse and it's mate comprise a
+ *  *non-connected* "wire" edge which starts at eu1->vu_p->v_p and ends
+ *  at eu1mate->vu_p->v_p.  There is no relationship between the pairs
+ *  of edgeuses at all, other than that they all live on the same linked
+ *  list.
  */
 struct shell {
 	struct rt_list		l;	/* shells, in region's s_hd list */
@@ -287,7 +302,7 @@ struct shell {
 	struct shell_a		*sa_p;	/* attribs */
 
 	struct rt_list		fu_hd;	/* list of face uses in shell */
-	struct rt_list		lu_hd;	/* loop uses (edge groups) in shell */
+	struct rt_list		lu_hd;	/* wire loopuses (edge groups) */
 	struct rt_list		eu_hd;	/* wire list (shell has wires) */
 	struct vertexuse	*vu_p;	/* internal ptr to single vertexuse */
 	long			index;	/* struct # in this model */
