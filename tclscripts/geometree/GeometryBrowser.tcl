@@ -1,4 +1,5 @@
 # !!! do not forget to remove this line when we are done
+global glob_compat_mode
 set prevGlobCompatMode [ set glob_compat_mode ]
 set glob_compat_mode 0
 
@@ -92,8 +93,8 @@ body GeometryBrowser::constructor {} {
 	global port
 	global mged_players
 
-	# set to 1/0 to turn simple call debug messages on/off
-	set _debug 1
+	# set to 1/0 to turn call path debug messages on/off
+	set _debug 0
 
 	set _showAllGeometry 0
 	set _autoRender 0
@@ -573,7 +574,10 @@ body GeometryBrowser::displayNode { { node "" } { display "appended" } } {
 	}
 	
 	puts "e $nodeName"
-	set retval [ e $nodeName ]
+	if { [ catch { e $nodeName } retval ] } {
+		puts $retval
+		return
+	}
 	$this checkAutoRender
 	return $retval
 }
