@@ -856,11 +856,19 @@ struct directory  {
 		bu_free((_dp)->d_namep, "d_namep"); \
 	(_dp)->d_namep = NULL; }
 
+#if 1
+/* The efficient way */
 #define RT_GET_DIRECTORY(_p,_res)    { \
 	while( ((_p) = (_res)->re_directory_hd) == NULL ) \
 		db_get_directory(_res); \
 	(_res)->re_directory_hd = (_p)->d_forw; \
 	(_p)->d_forw = NULL; }
+#else
+/* XXX Conservative, for testing parallel problems with Ft. AP Hill */
+#define RT_GET_DIRECTORY(_p,_res)    {BU_GETSTRUCT(_p, directory); \
+	(_p)->d_magic = RT_DIR_MAGIC; \
+	BU_LIST_INIT( &((_p)->d_use_hd) ); }
+#endif
 
 	
 
@@ -2461,35 +2469,31 @@ BU_EXTERN(struct animate	*db_parse_1anim, (struct db_i *dbip,
 void			db_free_1anim( struct animate *anp );
 
 /* db_path.c */
-extern int db_argv_to_path(register struct db_full_path	*pp,
+void db_full_path_init( struct db_full_path *pathp );
+void db_add_node_to_full_path( struct db_full_path *pp, struct directory *dp );
+void db_dup_full_path(struct db_full_path *newp,
+	const struct db_full_path *oldp );
+void db_extend_full_path( struct db_full_path *pathp, int incr );
+void db_append_full_path( struct db_full_path *dest, const struct db_full_path *src );
+void db_dup_path_tail(struct db_full_path	*newp,
+			     const struct db_full_path	*oldp,
+			     int			start);
+char *db_path_to_string( const struct db_full_path *pp );
+void db_path_to_vls( struct bu_vls *str, const struct db_full_path *pp );
+void db_pr_full_path( const char *msg, const struct db_full_path *pathp );
+int db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *str);
+int db_argv_to_path(register struct db_full_path	*pp,
 			   struct db_i			*dbip,
 			   int				argc,
 			   CONST char			*CONST*argv);
-
-BU_EXTERN(void db_add_node_to_full_path, (struct db_full_path *pp,
-	struct directory *dp) );
-BU_EXTERN(void db_dup_full_path, (struct db_full_path *newp,
-	CONST struct db_full_path *oldp) );
-BU_EXTERN(char *db_path_to_string, (CONST struct db_full_path *pp) );
-BU_EXTERN(void db_free_full_path, (struct db_full_path *pp) );
-int db_region_mat(
-	mat_t		m,		/* result */
-	struct db_i	*dbip,
-	const char	*name,
-	struct resource *resp);
-int db_shader_mat(
-	mat_t			model_to_shader,	/* result */
-	const struct rt_i	*rtip,
-	const struct region	*rp,
-	point_t			p_min,	/* input/output: shader/region min point */
-	point_t			p_max,	/* input/output: shader/region max point */
-	struct resource		*resp);
-int db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *str);
-void db_full_path_init( struct db_full_path *pathp );
-void db_append_full_path( struct db_full_path *dest, const struct db_full_path *src );
-extern void db_dup_path_tail(struct db_full_path	*newp,
-			     const struct db_full_path	*oldp,
-			     int			start);
+void db_free_full_path(struct db_full_path *pp);
+int db_identical_full_paths( const struct db_full_path *a,
+				const struct db_full_path *b );
+int db_full_path_subset(
+	const struct db_full_path *a,
+	const struct db_full_path *b );
+int db_full_path_search( const struct db_full_path *a,
+	const struct directory *dp );
 
 
 /* db_open.c */
@@ -2821,6 +2825,18 @@ BU_EXTERN(void db_apply_anims, (struct db_full_path *pathp,
 	struct directory *dp, mat_t stck, mat_t arc,
 	struct mater_info *materp));
 /* XXX db_shader_mat, should be called rt_shader_mat */
+int db_region_mat(
+	mat_t		m,		/* result */
+	struct db_i	*dbip,
+	const char	*name,
+	struct resource *resp);
+int db_shader_mat(
+	mat_t			model_to_shader,	/* result */
+	const struct rt_i	*rtip,
+	const struct region	*rp,
+	point_t			p_min,	/* input/output: shader/region min point */
+	point_t			p_max,	/* input/output: shader/region max point */
+	struct resource		*resp);
 
 /* dir.c */
 extern struct rt_i *rt_dirbuild( const char *filename, char *buf, int len );
