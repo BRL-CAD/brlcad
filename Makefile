@@ -40,6 +40,7 @@ DIRS		= h \
 		  libcursor \
 		  libplot3 \
 		  libtig \
+		  libwdb \
 		  librle \
 		  libspl librt rt \
 		  mged \
@@ -112,8 +113,8 @@ inst-dist:
 		(cd $$dir; make -k inst-dist) \
 	done
 
-MESSAGE		= "-mRelease 2.0"
-REV_NO		= -r6
+MESSAGE		= "-mRelease 2.3"
+REV_NO		= -r7
 TOP_FILES	= README Makefile Makefile.defs Makefile.rules
 checkin:
 	rcs -l ${TOP_FILES}
@@ -160,24 +161,18 @@ dist:
 	(cd bench; make clobber; make install)
 	cd ${DISTDIR}; du -a > Contents
 
-# Use as step 3 of making a distribution -- write the tape and/or FTP archive
-tape0:
-	cd ${DISTDIR}; tar cvf /dev/rmt0 *
-
-tape1:
-	cd ${DISTDIR}; tar cvf /dev/rmt1 *
-
+# Use as step 3 of making a distribution -- write the archive or tape
 arch:
 	-mv -f ${ARCHDIR}/cad.tar ${ARCHDIR}/cad.tar.bak
 	cd ${DISTDIR}; tar cfv ${ARCHDIR}/cad.tar *
 	chmod 444 ${ARCHDIR}/cad*.tar
 	echo "Please rename this tar file with the release number"
 
-ftp:
-	-rm -f ${FTPDIR}/cad.tar ${FTPDIR}/cad2.tar
-	cd ${DISTDIR}; tar cfv ${FTPDIR}/cad.tar *
-#	cd ${DISTDIR}; tar cfv ${FTPDIR}/cad2.tar [A-Za-oq-z]* paper
-	chmod 444 ${FTPDIR}/cad*.tar
+tape0:
+	cd ${DISTDIR}; tar cvf /dev/rmt0 *
+
+tape1:
+	cd ${DISTDIR}; tar cvf /dev/rmt1 *
 
 # Here, we assume that all the machine-specific files have been set up.
 #

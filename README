@@ -8,8 +8,8 @@ and
 RAY-TRACING BENCHMARK
 .sp
 DISTRIBUTION PACKAGE
-Release 2.2
-(28-Oct-87)
+Release 2.3
+(2-Nov-87)
 .fi
 .sp
 .sp "VERSION"
@@ -115,10 +115,10 @@ This distribution does NOT include the various BRL-specific model
 analysis tools such as GIFT, SAR, SLAVE, VAST, etc.
 .sp
 For overview information on the whole package, consult the brlcad(1)
-manual page, in the util/ directory. For a discussion of the
-significance of this software, read the paper "Understanding the
-Preparation and Analysis of Solid Models", included in the paper/
-directory.
+manual page, in the util/ directory, and the overview paper in
+paper/overview. For a discussion of the significance of this software,
+read the paper "Understanding the Preparation and Analysis of Solid
+Models", included in the paper/ directory.
 .sp
 The first sections of this file discuss how to configure and compile
 just enough software to run the benchmark.  After the benchmark results
@@ -201,15 +201,29 @@ VAX-11/780 (with hardware FPA) times which are given in the
 .sp
 .IP "BENCHMARK CONFIGURATION"
 .sp
-1)  The first configuration step is to edit the "Makefile.defs"
-file in the top directory of the distribution.  In a future version
-of the distribution, the main alternatives for this file
-will all be provided;  right now, a variety of things need to
-be tailored.  Everything is clearly marked;  #SYSV# appears near
-symbols that need to be changed to run on a System V UNIX.
-Certain vendor-specific settings are similarly marked, e.g.,
-#SGI#, #GOULD#, #ALLIANT#, #XMP#, #CRAY2#, etc.  As distributed, this file
-is configured for a 4.n BSD Berkeley UNIX system on a VAX.
+1)  Compilations in each directory involve four Makefiles, "Makefile"
+which invokes \fImake\fR with three \fB-f\fR arguments,
+"../Makefile.defs", "./Makefile.loc", and "../Makefile.rules".
+This structure allows all configuration of this package to be
+concentrated in Makefile.defs, with per-directory configuration
+information in Makefile.loc files in each sub-directory, and
+overall compilation and installation rules spelled out in Makefile.rules.
+While this structure may seem overwhelming at first, it generally makes
+the task of configuration very simple.
+.sp
+The first configuration step is to edit the "Makefile.defs" file in
+the top directory of the distribution. As distributed, this file is
+configured for a 4.n BSD Berkeley UNIX system on a VAX. In a future
+version of the distribution, the main alternatives for this file will
+all be provided; right now, a variety of things generally will need to
+be tailored. Makefile.defs.xmp, Makefile.defs.gould, Makefile.defs.sun,
+and Makefile.defs.sgi can be used as examples, but please do not just
+use them without careful review.
+.sp
+Everything is clearly marked;  #SYSV# appears near symbols that need to
+be changed to run on a System V UNIX. Certain vendor-specific settings
+are similarly marked, e.g., #SGI#, #GOULD#, #ALLIANT#, #XMP#, #CRAY2#,
+etc.
 .sp
 Select the correct value for SYSTEM.
 .sp
@@ -334,6 +348,7 @@ nrtc-785	VAX 785, FPA, VMS+Eunice_4.1
 nrtc-dryer	Ridge 330, ROS
 nrtc-gremlin	ISI 68020, no FP hardware, 4.2 BSD
 snm2	Cray 1-M, SN2, UNICOS 2.0
+tek4132	Tektronix 4132, 32082 fpp, UTek 2.3
 utah-gr	VAX 785, FPA, 4.3 BSD
 utah-ug	VAX 8600, FPA, 4.3 BSD
 violet	VaxStationII GPX, Ultrix 1.2
@@ -346,11 +361,13 @@ center box;
 c s c s
 c c c l
 n n n l.
-FILE:  "bench/moss.log"	Release 1.25
+FILE:  "bench/moss.log"	Release 2.3
 =
 Pix/sec	Ray/sec	*780	Machine & OS
 _
-  89.4	  127.7	  1.00	brl-vgr
+  83.2	  118.8	  1.00	brl-vgr
+ 262.8	  375.4	  3.16	brl-vmb, UTX 2.0
+2420.2	 3456.5	 29.10	brl-patton, 1 CPU, no vectors, UNICOS 2.1
 .TE
 .sp
 .TS
@@ -363,6 +380,7 @@ FILE:  "bench/moss.log"	Release 1.20
 Pix/sec	Ray/sec	*780	Machine & OS
 _
   12.3			nrtc-gremlin
+  56.4	   80.5	  0.72	tek4132
   57.2	   81.6	  0.73	brl-vat
   75.4	  107.7	  0.96	violet
   78.5	  112.1	  1.00	brl-vgr
@@ -394,11 +412,11 @@ _
 1722.5	 2364.1	 21.08	brl-vector, 5 CEs, no vectors (4.80X)
 1745.0	 2492.9	 22.24	snm2, no vectors, no optim
 1752.1	  	 22.32	hep, 1 PEM, npsw=10
-2040.8	2811.4	25.08	brl-vector, 6 CEs, no vectors (5.7X)
-2330.7	3248.8	28.98	brl-vector, 7 CEs, no vectors (6.5X)
+2040.8	 2811.4	 25.08	brl-vector, 6 CEs, no vectors (5.7X)
+2330.7	 3248.8	 28.98	brl-vector, 7 CEs, no vectors (6.5X)
 2418.3	 3453.3	 30.81	brl-patton, 1 CPU, no vectors, no optim (1.00X)
-2632.2	3677.3	32.8	brl-vector, 8 CEs, no vecotrs (7.46X)
-2786.0	3972.9	35.44	alliant, 8 CEs, no vectors
+2632.2	 3677.3	 32.80	brl-vector, 8 CEs, no vecotrs (7.46X)
+2786.0	 3972.9	 35.44	alliant, 8 CEs, no vectors
 2840.3	  	 36.18	hep, 1 PEM, npsw=40
 4802.1	 6856.5	 61.16	brl-patton, 2 CPUs, no vectors, no optim (1.99X)
 7148.1	10205.1	 91.04	brl-patton, 3 CPUs, no vectors, no optim (2.96X)
@@ -410,11 +428,13 @@ center box;
 c s c s
 c c c l
 n n n l.
-FILE:  "bench/world.log"	Release 1.25
+FILE:  "bench/world.log"	Release 2.3
 =
 Pix/sec	Ray/sec	*780	Machine & OS
 _
-  41.2	   73.2	  1.00	brl-vgr
+  36.0	   64.9	  1.00	brl-vgr
+ 121.3	  218.6	  3.37	brl-vmb, UTX 2.0
+ 938.4	 1691.8	 26.07	brl-patton, 1 CPU, no vectors, UNICOS 2.1
 .TE
 .sp
 .TS
@@ -426,6 +446,7 @@ FILE:  "bench/world.log"	Release 1.20
 =
 Pix/sec	Ray/sec	*780	Machine & OS
 _
+  24.4	   44.0	 0.69	tek4132
   32.3	   57.3	 0.90	violet
   35.5	   63.0	 0.99	violet, w/fast_sqrt
   35.9	   63.6	 1.00	brl-vgr
@@ -464,11 +485,13 @@ center box;
 c s c s
 c c c l
 n n n l.
-FILE:  "bench/star.log"	Release 1.25
+FILE:  "bench/star.log"	Release 2.3
 =
 Pix/sec	Ray/sec	*780	Machine & OS
 _
-  48.9	   58.4	 1.00	brl-vgr
+  30.5	   36.5	 1.00	brl-vgr
+ 156.0	  186.4	 5.11	brl-vmb, UTX 2.0
+ 978.2	 1169.0	32.03	brl-patton, 1 CPU, no vectors, UNICOS 2.1
 .TE
 .sp
 .TS
@@ -480,6 +503,7 @@ FILE:  "bench/star.log"	Release 1.20
 =
 Pix/sec	Ray/sec	*780	Machine & OS
 _
+  28.4	   33.9	 0.62	tek4132
   37.4	   44.7	 0.81	violet
   41.9	   50.0	 0.91	violet, w/fast_sqrt
   46.0	   55.0	 1.00	brl-vgr
@@ -518,11 +542,13 @@ center box;
 c s c s
 c c c l
 n n n l.
-FILE:  "bench/bldg391.log"	Release 1.25
+FILE:  "bench/bldg391.log"	Release 2.3
 =
 Pix/sec	Ray/sec	*780	Machine & OS
 _
-  36.2	   53.9	  1.00	brl-vgr
+  23.0	   34.2	  1.00	brl-vgr
+ 132.0	  196.2	  5.74	brl-vgr, UTX 2.0
+ 702.1	 1043.6	 30.51	brl-patton, 1 CPU, no vectors, UNICOS 2.1
 .TE
 .sp
 .TS
@@ -534,6 +560,7 @@ FILE:  "bench/bldg391.log"	Release 1.20
 =
 Pix/sec	Ray/sec	*780	Machine & OS
 _
+  21.1	   31.4	 0.62	tek4132
   29.7	   44.1	 0.87	violet
   31.1	   46.3	 0.91	violet, w/fast_sqrt
   34.1	   50.7	 1.00	brl-vgr
@@ -719,6 +746,7 @@ sgi	SGI Iris display
 sun	SunView interface
 ptty	AT&T 5620 w/special Moss layer
 ug	Ultra Graphics
+rat	Raster Technology One/80
 .TE
 .sp
 In the case of no display hardware at all, the
@@ -847,7 +875,8 @@ ir	SGI IRIS 2400, 3030
 sun	SUN 3.2 Pixwin
 vg	Vector General 3300
 mg	Megatek 7250
-rat	Raster Tech One/80
+rat	Raster Tech One/180,380
+rat80	Raster Tech One/80
 ps	E&S Picture System 300
 mer	Megatek Merlin 9200 [Marginal]
 sab	Saber w/GOPS [Marginal]
@@ -1025,16 +1054,45 @@ managers for devices similar to yours, and proceed from there.
 We would be most interested in obtaining any additional display modules
 that you might develop.
 .sp
-.IP "UPGRADING FROM RELEASE 1.20"
+.IP "UPGRADING FROM RELEASE 1.20 to 2.0"
 .sp
 This release contains only minor external changes from Release 1.20,
 but for complete safety, you should save the old binary to "conv/g2asc"
-someplace safe,
-so that if you find the binary format of the database incompatable
-you can convert your old databases from binary to ASCII form. Having to
-do this is system dependent (only Sun, SGI, and Alliant users are
-likely to be affected), but it difficult to recover from without having
-saved the old converter.
+someplace safe, so that if you find the binary format of the database
+incompatable you can convert your old databases from binary to ASCII
+form. Having to do this is system dependent (only Sun, SGI, and Alliant
+users are likely to be affected), but it difficult to recover from
+without having saved the old converter (or your old distribution tape).
+.sp
+.IP "UPGRADING FROM RELEASE 2.0"
+.sp
+Primarily, this release is a maintenance release, with lots of little
+nits resolved, along with a few new features.  The major weak area is
+still Sun display support.  In particular, using RT from within MGED
+fails miserably.
+.sp
+This release contains different and better support for multiple lights
+in RT, along with a standardized shader interface, and stackable
+shaders. Support for polygonal objects is now correct, but slow. The
+spline code has been significantly improved. Some contributed code for
+the Raster Technologies One/80 has been included, but is untested.  The
+library for procedurally generating databases ``libwdb'' is now
+included, along with some example uses in the directory ``proc-db''.
+The program ``rtwalk'' generates a viewpoint animation control script
+that takes the eye between given start and end points, without walking
+through any geometry.  This is especially interesting when used on
+complex scenes like those made by proc-db/clutter.c.
+.sp
+.IP "WORK IN PROGRESS"
+.sp
+We are hard at work on a variety of new features, the most significant are:
+(*) a substantial package for animation specification and preview,
+(*) code to replace the "big-E" command, to convert the CSG model into
+a polygonal approximation, for certain analysis codes, and to drive
+display hardware with fast polygon rendering,
+(*) additional primitive types,
+(*) MGED improvements, including merging common database-handling code
+with librt, and a consolidation of the MGED and LIBRT geometry modules.
 .sp
 .IP "COMMUNICATION"
 .sp
@@ -1057,6 +1115,11 @@ offer of support, we are most interested in hearing about your
 experiences. Enough people have been pestering us by phone with the most
 basic questions that we can no longer offer telephone assistance.
 Therefore, electronic mail is vastly preferred over telephone contact.
+.sp
+We are currently trying to organize a BRL CAD Package Conference, to
+be held in the spring of 1988.  If you are interested in attending,
+and especially if you would like to make a presentation, please
+contact Keith Applin <Keith@BRL.ARPA>, or call 301-278-6647.
 .sp
 .KS
 .nf

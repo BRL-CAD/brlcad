@@ -52,3 +52,5 @@ clean:
 
 clobber:
 	echo "pix: clobber ignored"
+
+SHELL		= /bin/sh

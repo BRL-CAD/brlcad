@@ -8,6 +8,8 @@
 PRODUCTS	= bldg391.asc crod.asc demo.asc ktank.asc moss.asc prim.asc \
 		  star.asc truck.asc world.asc cube.asc axis.asc
 
+SHELL		= /bin/sh
+
 DISTDIR		= /m/dist/db
 
 ##.asc.g: ; $(A2G) < $? > $@
