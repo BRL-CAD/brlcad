@@ -16,67 +16,82 @@
 # Description -
 #	helper proc to build input files for the "prj" shader
 #
+# Modifications -
+#	Bob Parker:
+#	     Added code to prompt user for input using the
+#		   "more arguments needed::" hack.
+#	     Replaced combination of "puts" and return with "error"
+#		   so that a calling script will know an error occured.
 #
 # Usage: prj_add shaderfile image_filename image_width image_height
 #
 proc prj_add {args} {
-	set prompts { {shaderfile: } {image_file: } {width: } {height: }}
-	set usage  {Usage prj_add [-t] [-n] [-b] shaderfile [image_file] [width] [height]\n}
-
-	if {[llength $args] == 0} {
-		puts $usage
-		puts {Appends image filename + current view parameters to shader}
-		return
-	}
-
-	set through "0"
-	set behind "0"
-	set antialias "1"
+	set prompts {{shaderfile: } {image_file: } {width: } {height: }}
+	set usage "Usage:
+\tprj_add \[-t\] \[-n\] \[-b\] shaderfile \[image_file\] \[width\] \[height\]
+\tAppends image filename + current view parameters to shader"
 
 	set argc [llength $args]
-	set n 0
-	set opt [lindex $args $n]
-	while { [string match "-*" $opt ] } {
-		switch -- $opt {
-			"-t" { set through "1" }
-			"-b" { set behind "1" }
-			"-n" { set antialias "0" }
-			default {
-				error "Unrecognized option ($opt)\n$usage"
-			}
-		}
-		incr n
-		if { $n >= $argc } break
-		set opt [lindex $args $n]
+	if {7 < $argc} {
+	    error $usage
 	}
 
-	set need [expr $n + 4]
-	if { $need != $argc } {
-		error $usage
+	set through 0
+	set behind 0
+	set antialias 1
+
+	set n 0
+	foreach opt $args {
+	    switch -- $opt {
+		"-t" {
+		    set through 1
+		}
+		"-b" {
+		    set behind 1
+		}
+		"-n" {
+		    set antialias 0
+		}
+		default {
+		    break
+		}
+	    }
+
+	    incr n
+	}
+
+	set i [expr {$argc - $n}]
+	switch -- $i {
+	    0 {
+		error "more arguments needed::[lindex $prompts $i]"
+	    }
+	    1 {
+		error "more arguments needed::[lindex $prompts $i]"
+	    }
+	    2 {
+		error "more arguments needed::[lindex $prompts $i]"
+	    }
+	    3 {
+		error "more arguments needed::[lindex $prompts $i]"
+	    }
 	}
 
 	set shaderfile [lindex $args $n]
-	incr n
-	set image [lindex $args $n]
-	incr n
-	set width [lindex $args $n]
-	incr n
-	set height [lindex $args $n]
+	set image [lindex $args [expr {$n + 1}]]
+	set width [lindex $args [expr {$n + 2}]]
+	set height [lindex $args [expr {$n + 3}]]
 
 	if ![file exists $image] {
-		puts "Image file $image does not exist"
-		return
+		error "Image file $image does not exist"
 	}
 
 	if [file exists $shaderfile] {
 		if [catch {open $shaderfile a} fd] {
-			puts "error appending to $shaderfile: $fd"
-			return
+		    error "error appending to $shaderfile: $fd"
 		}
 	} else {
 		if [catch {open $shaderfile w} fd] {
-			puts "error opening $shaderfile: $fd"
-			return
+		    error "error opening $shaderfile: $fd"
 		}
 	}
 
