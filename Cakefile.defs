@@ -729,7 +729,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #	if 1 /* PRODUCTION=1 */
 #		define	ARCH_SUF	so
 #		define	LIBVERS		../sh/sharedlibvers.sh
-#		define	BUILD_LIBRARY	ld -Bdynamic -G -h PRODUCTS[[LIBVERS]] -o
+#		define	BUILD_LIBRARY	ld -Bdynamic -G -o
 #		define	RANLIB		true
 #		define	STANDARD_LIBES	-lm -lnsl -lsocket -ldl -R /usr/lib:LIBDIR:XLIBDIR
 #	else
