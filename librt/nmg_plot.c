@@ -10,16 +10,20 @@
  *	Michael John Muuss
  *  
  *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
+ *  Distribution Notice -
+ *	Re-distribution of this software is restricted, as described in
+ *	your "Statement of Terms and Conditions for the Release of
+ *	The BRL-CAD Pacakge" agreement.
+ *
  *  Copyright Notice -
- *	This software is Copyright (C) 1990 by the United States Army.
- *	All rights reserved.
+ *	This software is Copyright (C) 1993 by the United States Army
+ *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include <stdio.h>
@@ -32,18 +36,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "plot3.h"
 #include "rtstring.h"
 
-
-
 #define US_DELAY	10	/* Additional delay between frames */
-
-#define NMG_TAB_RETURN_IF_SET_ELSE_SET(_tab,_index)	\
-	{ if( (_tab)[_index] )  return; \
-	  else (_tab)[_index] = 1; }
 
 void		(*nmg_plot_anim_upcall)();	/* For I/F with MGED */
 void		(*nmg_vlblock_anim_upcall)();	/* For I/F with MGED */
 void		(*nmg_mged_debug_display_hack)();
 double nmg_eue_dist = 0.05;
+
 /************************************************************************
  *									*
  *			Generic VLBLOCK routines			*
@@ -702,7 +701,7 @@ long			*b;
 	pointp_t p;
 	static char label[128];
 
-	NMG_TAB_RETURN_IF_SET_ELSE_SET(b, v->index);
+	NMG_INDEX_RETURN_IF_SET_ELSE_SET(b, v->index);
 
 	NMG_CK_VERTEX(v);
 	NMG_CK_VERTEX_G(v->vg_p);
@@ -731,7 +730,7 @@ int			red, green, blue;
 	point_t		end0, end1;
 	vect_t		v;
 
-	NMG_TAB_RETURN_IF_SET_ELSE_SET(b, e->index);
+	NMG_INDEX_RETURN_IF_SET_ELSE_SET(b, e->index);
 	
 	NMG_CK_EDGEUSE(e->eu_p);
 	NMG_CK_VERTEXUSE(e->eu_p->vu_p);
@@ -784,7 +783,7 @@ int			red, green, blue;
 	NMG_CK_VERTEX(eu->eumate_p->vu_p->v_p);
 	NMG_CK_VERTEX_G(eu->eumate_p->vu_p->v_p->vg_p);
 
-	NMG_TAB_RETURN_IF_SET_ELSE_SET(b, eu->index);
+	NMG_INDEX_RETURN_IF_SET_ELSE_SET(b, eu->index);
 
 	nmg_pl_e(fp, eu->e_p, b, red, green, blue);
 
@@ -832,7 +831,7 @@ int			red, green, blue;
 	long		magic1;
 
 	NMG_CK_LOOPUSE(lu);
-	NMG_TAB_RETURN_IF_SET_ELSE_SET(b, lu->index);
+	NMG_INDEX_RETURN_IF_SET_ELSE_SET(b, lu->index);
 
 	magic1 = RT_LIST_FIRST_MAGIC( &lu->down_hd );
 	if (magic1 == NMG_VERTEXUSE_MAGIC &&
@@ -859,7 +858,7 @@ int			red, green, blue;
 
 	NMG_CK_FACEUSE(fu);
 
-	NMG_TAB_RETURN_IF_SET_ELSE_SET(b, fu->index);
+	NMG_INDEX_RETURN_IF_SET_ELSE_SET(b, fu->index);
 
 	for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
 		nmg_pl_lu(fp, lu, b, red, green, blue);
@@ -971,7 +970,7 @@ long				*tab;
 	struct rt_list	*vh;
 
 	NMG_CK_VERTEX(v);
-	NMG_TAB_RETURN_IF_SET_ELSE_SET( tab, v->index );
+	NMG_INDEX_RETURN_IF_SET_ELSE_SET( tab, v->index );
 
 	NMG_CK_VERTEX_G(v->vg_p);
 	p = v->vg_p->coord;
@@ -1005,7 +1004,7 @@ int			fancy;
 	struct rt_list	*vh;
 
 	NMG_CK_EDGE(e);
-	NMG_TAB_RETURN_IF_SET_ELSE_SET( tab, e->index );
+	NMG_INDEX_RETURN_IF_SET_ELSE_SET( tab, e->index );
 	
 	NMG_CK_EDGEUSE(e->eu_p);
 	NMG_CK_VERTEXUSE(e->eu_p->vu_p);
@@ -1052,7 +1051,7 @@ int				fancy;
 	struct rt_list	*vh;
 
 	NMG_CK_EDGEUSE(eu);
-	NMG_TAB_RETURN_IF_SET_ELSE_SET( tab, eu->index );
+	NMG_INDEX_RETURN_IF_SET_ELSE_SET( tab, eu->index );
 
 	NMG_CK_EDGE(eu->e_p);
 	NMG_CK_VERTEXUSE(eu->vu_p);
@@ -1119,7 +1118,7 @@ int			fancy;
 	struct vertexuse *vu;
 
 	NMG_CK_LOOPUSE(lu);
-	NMG_TAB_RETURN_IF_SET_ELSE_SET( tab, lu->index );
+	NMG_INDEX_RETURN_IF_SET_ELSE_SET( tab, lu->index );
 
 	magic1 = RT_LIST_FIRST_MAGIC( &lu->down_hd );
 	if (magic1 == NMG_VERTEXUSE_MAGIC &&
@@ -1147,7 +1146,7 @@ int			fancy;
 	struct loopuse *lu;
 
 	NMG_CK_FACEUSE(fu);
-	NMG_TAB_RETURN_IF_SET_ELSE_SET( tab, fu->index );
+	NMG_INDEX_RETURN_IF_SET_ELSE_SET( tab, fu->index );
 
 	for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
 		/* Draw in pale blue / purple */
@@ -1532,7 +1531,7 @@ CONST struct vertexuse *vu;
 	NMG_CK_VERTEX(v);
 	NMG_CK_VERTEX_G(v->vg_p);
 
-	NMG_TAB_RETURN_IF_SET_ELSE_SET( broken_tab, v->index );
+	NMG_INDEX_RETURN_IF_SET_ELSE_SET( broken_tab, v->index );
 
 	NMG_CK_VERTEX_G(v->vg_p);
 	p = v->vg_p->coord;
