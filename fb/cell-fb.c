@@ -455,8 +455,7 @@ long	ncells;
 
     if (compute_fb_height)
     {
-	dy = ((ymax - ymin) / cell_size + 1.0) * (hgt + grid_flag)
-	    - grid_flag;
+	dy = ((ymax - ymin) / cell_size + 1.0) * (hgt + grid_flag);
 	if (compute_fb_height == SNUG_FIT)
 	    fb_height = dy + (key_flag * 2 * hgt) + yorigin;
 	else if (dy > LORES)	/* LOOSE_FIT */
@@ -466,8 +465,7 @@ long	ncells;
     }
     if (compute_fb_width)
     {
-	dx = ((xmax - xmin) / cell_size + 1.0) * (wid + grid_flag)
-	    - grid_flag;
+	dx = ((xmax - xmin) / cell_size + 1.0) * (wid + grid_flag);
 	if (compute_fb_width == SNUG_FIT)
 	    fb_width = dx + xorigin;
 	else if (dx > LORES)	/* LOOSE_FIT */
