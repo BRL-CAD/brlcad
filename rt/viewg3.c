@@ -36,6 +36,7 @@ static char RCSrayg3[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include <math.h>
 
 #include "machine.h"
 #include "vmath.h"
@@ -43,6 +44,8 @@ static char RCSrayg3[] = "@(#)$Header$ (BRL)";
 #include "./material.h"
 
 #include "rdebug.h"
+
+extern double	mat_radtodeg;
 
 /***** view.c variables imported from rt.c *****/
 extern mat_t	view2model;
@@ -148,20 +151,17 @@ register struct partition *PartHeadp;
 	 *  In GIFT-3 output files, ray distances are relative to
 	 *  the screen plane translated so that it contains the origin.
 	 *  A distance correction is required to convert between the two.
+	 *  XXX This really should be computed only once, not every time.
 	 */
 	{
-#if 0
 		vect_t	tmp;
 		vect_t	viewZdir;
 
 		VSET( tmp, 0, 0, -1 );		/* viewing direction */
 		MAT4X3VEC( viewZdir, view2model, tmp );
-VPRINT("viewZdir", viewZdir);
+		VUNITIZE( viewZdir );
+		/* dcorrection will typically be negative */
 		dcorrection = VDOT( ap->a_ray.r_pt, viewZdir );
-printf("dcorr=%g\n", dcorrection);
-#else
-dcorrection = 0.0;	/* hack, for now */
-#endif
 	}
 	dfirst = PartHeadp->pt_forw->pt_inhit->hit_dist + dcorrection;
 	dlast = PartHeadp->pt_back->pt_outhit->hit_dist + dcorrection;
@@ -197,122 +197,76 @@ dcorrection = 0.0;	/* hack, for now */
 		 * &			kspac(i),slos(i),i=icomp,iend)
 		 * 636	format(1x,3(i4,f6.1,2f5.1,i1,f5.0))
 		 */
-		fprintf(stdout," component and air data for '%s'\n",
-			pp->pt_regionp->reg_name );
-	}
+		fastf_t	comp_thickness;	/* component line of sight thickness */
+		fastf_t	in_obliq;	/* in obliquity angle */
+		fastf_t	out_obliq;	/* out obliquity angle */
+		int	region_id;	/* solid region's id */
+		int	air_id;		/* air id */
+		fastf_t	air_thickness;	/* air line of sight thickness */
+		register struct partition	*nextpp = pp->pt_forw;
 
-#if 0
-	/* "1st entry" paint */
-	RT_HIT_NORM( pp->pt_inhit, pp->pt_inseg->seg_stp, &(ap->a_ray) );
-	if( pp->pt_inflip )  {
-		VREVERSE( pp->pt_inhit->hit_normal, pp->pt_inhit->hit_normal );
-		pp->pt_inflip = 0;
-	}
+		if( (region_id = pp->pt_regionp->reg_regionid) <= 0 )  {
+			rt_log("air region found when solid region expected, using id=111\n");
+			region_id = 111;
+		}
+		comp_thickness = pp->pt_outhit->hit_dist -
+				 pp->pt_inhit->hit_dist;
+		if( nextpp == PartHeadp )  {
+			/* Last partition, no air follows, use code 9 */
+			air_id = 9;
+			air_thickness = 0.0;
+		} else if( nextpp->pt_regionp->reg_regionid <= 0 &&
+			nextpp->pt_regionp->reg_aircode != 0 )  {
+			/* Next partition is air region */
+			air_id = nextpp->pt_regionp->reg_aircode;
+			air_thickness = nextpp->pt_outhit->hit_dist -
+				nextpp->pt_inhit->hit_dist;
+		} else {
+			/* 2 solid regions, maybe with gap */
+			air_id = 0;
+			air_thickness = nextpp->pt_inhit->hit_dist -
+				pp->pt_outhit->hit_dist;
+			if( !NEAR_ZERO( air_thickness, 0.1 ) )  {
+				air_id = 1;	/* air gap */
+				rt_log("air gap added\n");
+			} else {
+				air_thickness = 0.0;
+			}
+		}
 
-	wraypaint( pp->pt_inhit->hit_point, pp->pt_inhit->hit_normal,
-		PAINT_FIRST_ENTRY, ap, outfp );
-
-	for( ; pp != PartHeadp; pp = pp->pt_forw )  {
-		/* Write the ray for this partition */
-		RT_HIT_NORM( pp->pt_inhit, pp->pt_inseg->seg_stp, &(ap->a_ray) );
+		/*
+		 *  Compute the obliquity angles in degrees, ie,
+		 *  the "elevation/declension" angle off the normal vector.
+		 *  RT normals always point outwards, but the obliquity
+		 *  angle seems be interpreted differently between
+		 *  in_obliq and out_obliq, hence the sign change.  Check this.
+		 *  XXX this should probably be done with atan2()
+		 */
+		RT_HIT_NORM( pp->pt_inhit,
+			pp->pt_inseg->seg_stp, &(ap->a_ray) );
 		if( pp->pt_inflip )  {
 			VREVERSE( pp->pt_inhit->hit_normal,
 				  pp->pt_inhit->hit_normal );
 			pp->pt_inflip = 0;
 		}
-
-		if( pp->pt_outhit->hit_dist < INFINITY )  {
-			RT_HIT_NORM( pp->pt_outhit,
-				pp->pt_outseg->seg_stp, &(ap->a_ray) );
-			if( pp->pt_outflip )  {
-				VREVERSE( pp->pt_outhit->hit_normal,
-					  pp->pt_outhit->hit_normal );
-				pp->pt_outflip = 0;
-			}
+		in_obliq = acos( -VDOT( ap->a_ray.r_dir,
+			pp->pt_inhit->hit_normal ) ) * mat_radtodeg;
+		RT_HIT_NORM( pp->pt_outhit,
+			pp->pt_outseg->seg_stp, &(ap->a_ray) );
+		if( pp->pt_outflip )  {
+			VREVERSE( pp->pt_outhit->hit_normal,
+				  pp->pt_outhit->hit_normal );
+			pp->pt_outflip = 0;
 		}
-		wray( pp, ap, outfp );
+		out_obliq = acos( VDOT( ap->a_ray.r_dir,
+			pp->pt_outhit->hit_normal ) ) * mat_radtodeg;
 
-
-		/*
-		 * If there is a subsequent partition that does not
-		 * directly join this one, output an invented
-		 * "air" partition between them.
-		 */
-		if( (np = pp->pt_forw) == PartHeadp )
-			break;		/* end of list */
-
-		/* Obtain next inhit normals & hit point, for code below */
-		RT_HIT_NORM( np->pt_inhit, np->pt_inseg->seg_stp, &(ap->a_ray) );
-		if( np->pt_inflip )  {
-			VREVERSE( np->pt_inhit->hit_normal,
-				  np->pt_inhit->hit_normal );
-			np->pt_inflip = 0;
-		}
-
-		if( rt_fdiff( pp->pt_outhit->hit_dist,
-			      np->pt_inhit->hit_dist) >= 0 )  {
-			/*
-			 *  The two partitions touch (or overlap!).
-			 *  If both are air, or both are solid, then don't
-			 *  output any paint.
-			 */
-			if( pp->pt_regionp->reg_regionid > 0 )  {
-				/* Exiting a solid */
-				if( np->pt_regionp->reg_regionid > 0 )
-					continue;	/* both are solid */
-				/* output "internal exit" paint */
-/*				 wraypaint( pp->pt_outhit->hit_point,
- *			       		pp->pt_outhit->hit_normal,
- *				 	PAINT_INTERN_EXIT, ap, outfp );
-*/				
-
-			} else {
-				/* Exiting air */
-				if( np->pt_regionp->reg_regionid <= 0 )
-					continue;	/* both are air */
-				/* output "internal entry" paint */
-/*				 wraypaint( np->pt_inhit->hit_point,
- *				 	np->pt_inhit->hit_normal,
-*/					PAINT_INTERN_ENTRY, ap, outfp );
-
-			}
-			continue;
-		}
-
-		/*
-		 *  The two partitions do not touch.
-		 *  Put "internal exit" paint on out point,
-		 *  Install "general air" in between,
-		 *  and put "internal entry" paint on in point.
-		 */
-/*		 wraypaint( pp->pt_outhit->hit_point,
- *		 	pp->pt_outhit->hit_normal,
- *		 	PAINT_INTERN_EXIT, ap, outfp );
-*/		
-
-		wraypts( pp->pt_outhit->hit_point,
-			pp->pt_outhit->hit_normal,
-			np->pt_inhit->hit_point,
-			PAINT_AIR, ap, outfp );
-
-/*		 wraypaint( np->pt_inhit->hit_point,
- *		 	np->pt_inhit->hit_normal,
- *		 	PAINT_INTERN_ENTRY, ap, outfp );
-*/		
-
+		fprintf(stdout,"%4d%6.2f%5.1f%5.1f%1d%5.1f\n",
+			region_id,
+			comp_thickness,
+			in_obliq, out_obliq,
+			air_id, air_thickness );
 	}
-
-#endif
-
-
-	/* "final exit" paint -- ray va(r)nishes off into the sunset */
-	pp = PartHeadp->pt_back;
-/*	if( pp->pt_outhit->hit_dist < INFINITY )  {
- *		wraypaint( pp->pt_outhit->hit_point,
- *			pp->pt_outhit->hit_normal,
- *			PAINT_FINAL_EXIT, ap, outfp );
- *	}
-*/
 
 	return(0);
 }
