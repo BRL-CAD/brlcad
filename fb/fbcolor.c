@@ -258,7 +258,7 @@ pars_Argv( argc, argv )
 register char	**argv;
 {
 	register int	c;
-	while( (c = getopt( argc, argv, "h" )) != EOF )  {
+	while( (c = getopt( argc, argv, "F:s:S:w:W:n:N:h" )) != EOF )  {
 		switch( c )  {
 		case 'F':
 			framebuffer = optarg;
