@@ -20,7 +20,6 @@ AUTOCONF_MAJOR_VERSION=2
 AUTOCONF_MINOR_VERSION=57
 AUTOCONF_PATCH_VERSION=0
 
-# unused for now but informative
 AUTOMAKE_MAJOR_VERSION=1
 AUTOMAKE_MINOR_VERSION=6
 AUTOMAKE_PATCH_VERSION=0
@@ -29,6 +28,19 @@ AUTOMAKE_PATCH_VERSION=0
 LIBTOOL_MAJOR_VERSION=1
 LIBTOOL_MINOR_VERSION=5
 LIBTOOL_PATCH_VERSION=0
+
+
+##################
+# argument check #
+##################
+HELP=no
+[ "x$ARGS" = "x--help" ] && HELP=yes
+QUIET=no
+[ "x$ARGS" = "x--quiet" ] && QUIET=yes
+[ "x$ARGS" = "x-Q" ] && QUIET=yes
+VERBOSE=no
+[ "x$ARGS" = "x--verbose" ] && VERBOSE=yes
+[ "x$ARGS" = "x-V" ] && VERBOSE=yes
 
 
 #####################
@@ -51,12 +63,27 @@ if [ $? = 0 ] ; then
     TAIL_N="n "
 fi
 
+VERBOSE_ECHO=:
+ECHO=:
+if [ "x$QUIET" = "xyes" ] ; then
+  if [ "x$VERBOSE" = "xyes" ] ; then
+    echo "Verbose output quelled by quiet option.  Further output disabled."
+  fi
+else
+  ECHO=echo
+  if [ "x$VERBOSE" = "xyes" ] ; then
+    echo "Verbose output enabled"
+    VERBOSE_ECHO=echo
+  fi
+fi
+
 
 ##########################
 # autoconf version check #
 ##########################
 _acfound=no
 for AUTOCONF in autoconf ; do
+  $VERBOSE_ECHO "Checking autoconf version: $AUTOCONF --version"
   $AUTOCONF --version > /dev/null 2>&1
   if [ $? = 0 ] ; then
     _acfound=yes
@@ -66,7 +93,7 @@ done
 
 _report_error=no
 if [ ! "x$_acfound" = "xyes" ] ; then
-  echo "ERROR:  Unable to locate GNU Autoconf."
+  $ECHO "ERROR:  Unable to locate GNU Autoconf."
   _report_error=yes
 else
   _version_line="`$AUTOCONF --version | head -${TAIL_N}1`"
@@ -81,20 +108,20 @@ else
 	_report_error=yes
       fi
     fi
-    echo "Found GNU Autoconf version $_maj_version.$_min_version"
+    $ECHO "Found GNU Autoconf version $_maj_version.$_min_version"
   else
-    echo "Warning:  sed is not available to properly detect version of GNU Autoconf"
+    $ECHO "Warning:  sed is not available to properly detect version of GNU Autoconf"
   fi
-  echo
+  $ECHO
 fi
 if [ "x$_report_error" = "xyes" ] ; then
-  echo "ERROR:  To prepare the ${SUITE} build system from scratch,"
-  echo "        at least version $AUTOCONF_MAJOR_VERSION.$AUTOCONF_MINOR_VERSION.$AUTOCONF_PATCH_VERSION of GNU Autoconf must be installed."
-  echo 
-  echo "$PATH_TO_AUTOGEN/autogen.sh does not need to be run on the same machine that will"
-  echo "run configure or make.  Either the GNU Autotools will need to be installed"
-  echo "or upgraded on this system, or $PATH_TO_AUTOGEN/autogen.sh must be run on the source"
-  echo "code on another system and then transferred to here. -- Cheers!"
+  $ECHO "ERROR:  To prepare the ${SUITE} build system from scratch,"
+  $ECHO "        at least version $AUTOCONF_MAJOR_VERSION.$AUTOCONF_MINOR_VERSION.$AUTOCONF_PATCH_VERSION of GNU Autoconf must be installed."
+  $ECHO 
+  $ECHO "$PATH_TO_AUTOGEN/autogen.sh does not need to be run on the same machine that will"
+  $ECHO "run configure or make.  Either the GNU Autotools will need to be installed"
+  $ECHO "or upgraded on this system, or $PATH_TO_AUTOGEN/autogen.sh must be run on the source"
+  $ECHO "code on another system and then transferred to here. -- Cheers!"
   exit 1
 fi
 
@@ -104,6 +131,7 @@ fi
 ##########################
 _amfound=no
 for AUTOMAKE in automake ; do
+  $VERBOSE_ECHO "Checking automake version: $AUTOMAKE --version"
   $AUTOMAKE --version > /dev/null 2>&1
   if [ $? = 0 ] ; then
     _amfound=yes
@@ -113,7 +141,7 @@ done
 
 _report_error=no
 if [ ! "x$_amfound" = "xyes" ] ; then
-  echo "ERROR: Unable to locate GNU Automake."
+  $ECHO "ERROR: Unable to locate GNU Automake."
   _report_error=yes
 else
   _version_line="`$AUTOMAKE --version | head -${TAIL_N}1`"
@@ -130,20 +158,20 @@ else
 	_report_error=yes
       fi
     fi
-    echo "Found GNU Automake version $_maj_version.$_min_version.$_pat_version"
+    $ECHO "Found GNU Automake version $_maj_version.$_min_version.$_pat_version"
   else
-    echo "Warning:  sed is not available to properly detect version of GNU Automake"
+    $ECHO "Warning:  sed is not available to properly detect version of GNU Automake"
   fi
-  echo
+  $ECHO
 fi
 if [ "x$_report_error" = "xyes" ] ; then
-  echo "ERROR:  To prepare the ${SUITE} build system from scratch,"
-  echo "        at least version $AUTOMAKE_MAJOR_VERSION.$AUTOMAKE_MINOR_VERSION.$AUTOMAKE_PATCH_VERSION of GNU Automake must be installed."
-  echo 
-  echo "$PATH_TO_AUTOGEN/autogen.sh does not need to be run on the same machine that will"
-  echo "run configure or make.  Either the GNU Autotools will need to be installed"
-  echo "or upgraded on this system, or $PATH_TO_AUTOGEN/autogen.sh must be run on the source"
-  echo "code on another system and then transferred to here. -- Cheers!"
+  $ECHO "ERROR:  To prepare the ${SUITE} build system from scratch,"
+  $ECHO "        at least version $AUTOMAKE_MAJOR_VERSION.$AUTOMAKE_MINOR_VERSION.$AUTOMAKE_PATCH_VERSION of GNU Automake must be installed."
+  $ECHO 
+  $ECHO "$PATH_TO_AUTOGEN/autogen.sh does not need to be run on the same machine that will"
+  $ECHO "run configure or make.  Either the GNU Autotools will need to be installed"
+  $ECHO "or upgraded on this system, or $PATH_TO_AUTOGEN/autogen.sh must be run on the source"
+  $ECHO "code on another system and then transferred to here. -- Cheers!"
   exit 1
 fi
 
@@ -153,6 +181,7 @@ fi
 ########################
 HAVE_AUTORECONF=no
 for AUTORECONF in autoreconf ; do
+  $VERBOSE_ECHO "Checking autoreconf version: $AUTORECONF --version"
   $AUTORECONF --version > /dev/null 2>&1
   if [ $? = 0 ] ; then
     HAVE_AUTORECONF=yes
@@ -165,6 +194,7 @@ done
 # check for aclocal #
 #####################
 for ACLOCAL in aclocal ; do
+  $VERBOSE_ECHO "Checking aclocal version: $ACLOCAL --version"
   $ACLOCAL --version > /dev/null 2>&1
   if [ $? = 0 ] ; then
     break
@@ -178,39 +208,41 @@ done
 HAVE_LIBTOOLIZE=yes
 HAVE_ALTLIBTOOLIZE=no
 LIBTOOLIZE=libtoolize
+$VERBOSE_ECHO "Checking libtoolize version: $LIBTOOLIZE --version"
 $LIBTOOLIZE --version > /dev/null 2>&1
 if [ ! $? = 0 ] ; then
   HAVE_LIBTOOLIZE=no
   if [ "x$HAVE_AUTORECONF" = "xno" ] ; then
-    echo "Warning:  libtoolize does not appear to be available."
+    $ECHO "Warning:  libtoolize does not appear to be available."
   else
-    echo "Warning:  libtoolize does not appear to be available.  This means that"
-    echo "autoreconf cannot be used."
+    $ECHO "Warning:  libtoolize does not appear to be available.  This means that"
+    $ECHO "autoreconf cannot be used."
   fi
 
   # look for some alternates
   for tool in glibtoolize libtoolize15 libtoolize13 ; do
+    $VERBOSE_ECHO "Checking libtoolize alternate: $tool --version"
     _glibtoolize="`$tool --version > /dev/null 2>&1`"
     if [ $? = 0 ] ; then
       HAVE_ALTLIBTOOLIZE=yes
       LIBTOOLIZE="$tool"
-      echo 
-      echo "Fortunately, $tool was found which means that your system may simply"
-      echo "have a non-standard or incomplete GNU Autotools install.  If you have"
-      echo "sufficient system access, it may be possible to quell this warning by"
-      echo "running:"
-      echo
+      $ECHO 
+      $ECHO "Fortunately, $tool was found which means that your system may simply"
+      $ECHO "have a non-standard or incomplete GNU Autotools install.  If you have"
+      $ECHO "sufficient system access, it may be possible to quell this warning by"
+      $ECHO "running:"
+      $ECHO
       sudo -V > /dev/null 2>&1
       if [ $? = 0 ] ; then
 	_glti="`which $tool`"
 	_gltidir="`dirname $_glti`"
-	echo "   sudo ln -s $_glti $_gltidir/libtoolize"
+	$ECHO "   sudo ln -s $_glti $_gltidir/libtoolize"
       else
-	echo "   ln -s $glti $_gltidir/libtoolize"
-	echo 
-	echo "Run that as root or with proper permissions to the $_gltidir directory"
+	$ECHO "   ln -s $glti $_gltidir/libtoolize"
+	$ECHO 
+	$ECHO "Run that as root or with proper permissions to the $_gltidir directory"
       fi
-      echo
+      $ECHO
       break
     fi
   done
@@ -221,6 +253,7 @@ fi
 # check for autoheader #
 ########################
 for AUTOHEADER in autoheader ; do
+  $VERBOSE_ECHO "Checking autoheader version: $AUTOHEADER --version"
   $AUTOHEADER --version > /dev/null 2>&1
   if [ $? = 0 ] ; then
     break
@@ -248,6 +281,8 @@ fi
 _aux_dir="`cat $_configure_file | grep AC_CONFIG_AUX_DIR | tail -${TAIL_N}1 | sed 's/^[ ]*AC_CONFIG_AUX_DIR(\(.*\)).*/\1/'`"
 if test ! -d "$_aux_dir" ; then
   _aux_dir=.
+else
+  $VERBOSE_ECHO "Detected auxillary directory: $_aux_dir"
 fi
 
 
@@ -269,6 +304,7 @@ for file in COPYING INSTALL ; do
   if test -f $file ; then
     if test -d "${_aux_dir}" ; then
       if test ! -f "${_aux_dir}/${file}.backup" ; then
+	$VERBOSE_ECHO "cp -pf ${file} \"${_aux_dir}/${file}.backup\""
 	cp -pf ${file} "${_aux_dir}/${file}.backup"
       fi
     fi
@@ -281,6 +317,7 @@ done
 ##################################################
 for file in config.guess config.sub ltmain.sh ; do
   if test -f "${_aux_dir}/${file}" ; then
+    $VERBOSE_ECHO "mv -f \"${_aux_dir}/${file}\" \"${_aux_dir}/${file}.backup\""
     mv -f "${_aux_dir}/${file}" "${_aux_dir}/${file}.backup"
   fi
 done
@@ -293,6 +330,7 @@ SEARCH_DIRS=""
 for dir in m4 ; do
 # /usr/local/share/aclocal /sw/share/aclocal m4 ; do
   if [ -d $dir ] ; then
+    $VERBOSE_ECHO "Found extra aclocal search directory: $dir"
     SEARCH_DIRS="$SEARCH_DIRS -B $dir"
   fi
 done
@@ -303,17 +341,22 @@ done
 ############################################
 reconfigure_manually=no
 if [ "x$HAVE_AUTORECONF" = "xyes" ] && [ "x$HAVE_LIBTOOLIZE" = "xyes" ] ; then
-  echo $ECHO_N "Automatically preparing build ... $ECHO_C"
+  $ECHO $ECHO_N "Automatically preparing build ... $ECHO_C"
 
-  $AUTORECONF $SEARCH_DIRS -i -f > /dev/null 2>&1
+  if [ "x$VERBOSE" = "xyes" ] ; then
+    $VERBOSE_ECHO "$AUTORECONF $SEARCH_DIRS -i -f"
+    $AUTORECONF $SEARCH_DIRS -i -f
+  else
+    $AUTORECONF $SEARCH_DIRS -i -f > /dev/null 2>&1
+  fi
   if [ ! $? = 0 ] ; then
-    echo "Warning: $AUTORECONF failed"
+    $ECHO "Warning: $AUTORECONF failed"
 
     if test -f ltmain.sh ; then
-      echo "libtoolize being run by autoreconf is not creating ltmain.sh in the auxillary directory like it should"
+      $ECHO "libtoolize being run by autoreconf is not creating ltmain.sh in the auxillary directory like it should"
     fi
 
-    echo "Attempting to run the configuration steps individually"
+    $ECHO "Attempting to run the configuration steps individually"
     reconfigure_manually=yes
   fi
 else
@@ -330,46 +373,54 @@ fi
 #  automake -a -c -f
 ####
 if [ "x$reconfigure_manually" = "xyes" ] ; then
-  echo $ECHO_N "Preparing build ... $ECHO_C"
+  $ECHO $ECHO_N "Preparing build ... $ECHO_C"
 
+  $VERBOSE_ECHO "$ACLOCAL $SEARCH_DIRS"
   $ACLOCAL $SEARCH_DIRS
 
-  [ ! $? = 0 ] && echo "ERROR: $ACLOCAL failed" && exit 2
+  [ ! $? = 0 ] && $ECHO "ERROR: $ACLOCAL failed" && exit 2
   if [ "x$HAVE_LIBTOOLIZE" = "xyes" ] ; then 
+    $VERBOSE_ECHO "$LIBTOOLIZE --automake -c -f"
     $LIBTOOLIZE --automake -c -f
-    [ ! $? = 0 ] && echo "ERROR: $LIBTOOLIZE failed" && exit 2
+    [ ! $? = 0 ] && $ECHO "ERROR: $LIBTOOLIZE failed" && exit 2
   else
     if [ "x$HAVE_ALTLIBTOOLIZE" = "xyes" ] ; then
+      $VERBOSE_ECHO "$LIBTOOLIZE --automake --copy --force"
       $LIBTOOLIZE --automake --copy --force
-      [ ! $? = 0 ] && echo "ERROR: $LIBTOOLIZE failed" && exit 2
+      [ ! $? = 0 ] && $ECHO "ERROR: $LIBTOOLIZE failed" && exit 2
     fi
   fi
 
   # re-run again as instructed by libtoolize
+  $VERBOSE_ECHO "$ACLOCAL"
   $ACLOCAL
 
   # libtoolize might put ltmain.sh in the wrong place
   if test -f ltmain.sh ; then
     if test ! -f "${_aux_dir}/ltmain.sh" ; then
-      echo
-      echo "Warning:  $LIBTOOLIZE is creating ltmain.sh in the wrong directory"
-      echo
-      echo "Fortunately, the problem can be worked around by simply copying the"
-      echo "file to the appropriate location (${_aux_dir}/).  This has been done for you."
-      echo
+      $ECHO
+      $ECHO "Warning:  $LIBTOOLIZE is creating ltmain.sh in the wrong directory"
+      $ECHO
+      $ECHO "Fortunately, the problem can be worked around by simply copying the"
+      $ECHO "file to the appropriate location (${_aux_dir}/).  This has been done for you."
+      $ECHO
+      $VERBOSE_ECHO "cp ltmain.sh \"${_aux_dir}/ltmain.sh\""
       cp ltmain.sh "${_aux_dir}/ltmain.sh"
-      echo $ECHO_N "Continuing build preparation ... $ECHO_C"
+      $ECHO $ECHO_N "Continuing build preparation ... $ECHO_C"
     fi
   fi
 
+  $VERBOSE_ECHO "$AUTOCONF -f"
   $AUTOCONF -f
-  [ ! $? = 0 ] && echo "ERROR: $AUTOCONF failed" && exit 2
-  
-  $AUTOHEADER
-  [ ! $? = 0 ] && echo "ERROR: $AUTOHEADER failed" && exit 2
+  [ ! $? = 0 ] && $ECHO "ERROR: $AUTOCONF failed" && exit 2
 
+  $VERBOSE_ECHO "$AUTOHEADER"
+  $AUTOHEADER
+  [ ! $? = 0 ] && $ECHO "ERROR: $AUTOHEADER failed" && exit 2
+
+  $VERBOSE_ECHO "$AUTOMAKE -a -c -f"
   $AUTOMAKE -a -c -f
-  [ ! $? = 0 ] && echo "ERROR: $AUTOMAKE failed" && exit 2
+  [ ! $? = 0 ] && $ECHO "ERROR: $AUTOMAKE failed" && exit 2
 fi
 
 
@@ -379,6 +430,7 @@ fi
 for file in COPYING INSTALL ; do
   if test -f $file ; then
     if test -f "${_aux_dir}/${file}.backup" ; then
+      $VERBOSE_ECHO "cp -pf \"${_aux_dir}/${file}.backup\" ${file}"
       cp -pf "${_aux_dir}/${file}.backup" ${file}
     fi
   fi
@@ -389,40 +441,30 @@ done
 # restore path #
 ################
 cd "$_prev_path"
-echo "done"
-echo
+$ECHO "done"
+$ECHO
 
 
 ###############################################
 # check for help arg, and bypass running make #
 ###############################################
-_help=no
-[ "x$HAVE_SED" = "xyes" ] && [ "x`echo $ARGS | sed 's/.*help.*/help/'`" = "xhelp" ] && _help=yes
-[ "x$ARGS" = "x--help" ] && _help=yes
-if [ "x$_help" = "xyes" ] ; then
+[ "x$HAVE_SED" = "xyes" ] && [ "x`echo $ARGS | sed 's/.*[hH][eE][lL][pP].*/help/'`" = "xhelp" ] && _help=yes
+if [ "x$HELP" = "xyes" ] ; then
   echo "Help was requested.  No configuration and compilation will be done."
   echo "Running: $PATH_TO_AUTOGEN/configure $ARGS"
+  $VERBOSE_ECHO "$PATH_TO_AUTOGEN/configure $ARGS"
   $PATH_TO_AUTOGEN/configure $ARGS
   exit 0
 fi
 
 
-##################################################
-# summarize.  actually build if arg was provided #
-##################################################
-if [ ! "x$ARGS" = "x" ] ; then
-  echo "The ${SUITE} build system is now prepared.  Building here with:"
-  echo "$PATH_TO_AUTOGEN/configure $ARGS"
-  $PATH_TO_AUTOGEN/configure $ARGS
-  [ ! $? = 0 ] && echo "ERROR: configure failed" && exit $?
-  make
-  [ ! $? = 0 ] && echo "ERROR: make failed" && exit $?
-  exit 0
-fi
+#############
+# summarize #
+#############
+$ECHO "The ${SUITE} build system is now prepared.  To build here, run:"
+$ECHO "  $PATH_TO_AUTOGEN/configure"
+$ECHO "  make"
 
-echo "The ${SUITE} build system is now prepared.  To build here, run:"
-echo "  $PATH_TO_AUTOGEN/configure"
-echo "  make"
 
 # Local Variables:
 # mode: sh
