@@ -13,8 +13,11 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#if HAS_SGIGL
+#include "conf.h"
+
 #include <stdio.h>
+
+#if HAS_SGIGL
 #include <gl.h>
 #include <device.h>
 #include <string.h>
