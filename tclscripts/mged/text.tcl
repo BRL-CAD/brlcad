@@ -408,6 +408,7 @@ proc transpose { w } {
 }
 
 proc execute_cmd { w } {
+    global mged_edit_style
     global freshline
 
     $w mark set insert {end - 2c}
@@ -415,6 +416,12 @@ proc execute_cmd { w } {
     ia_invoke $w
     set freshline($w) 1
     cursor_highlight $w
+
+    set win [winset]
+    set id [get_player_id_dm $win]
+    if {$id != "mged" && $mged_edit_style($id) == "vi"} {
+	vi_insert_mode $w
+    }
 }
 
 proc interrupt_cmd { w } {
@@ -457,9 +464,31 @@ proc vi_insert_mode { w } {
 
 proc vi_process_edit_cmd { w c iskeysym } {
     global vi_delete_flag
+    global vi_search_flag
     global vi_debug
 
     set vi_debug($w) $c
+
+    switch $vi_search_flag($w) {
+	f {
+	    set newindex [$w search $c {insert + 1c} {end - 2c}]
+	    if {$newindex != ""} {
+		$w mark set insert $newindex
+		cursor_highlight $w
+	    }
+	    set vi_search_flag($w) 0
+	    return
+	}
+	F {
+	    set newindex [$w search -backwards $c {insert - 1c} promptEnd]
+	    if {$newindex != ""} {
+		$w mark set insert $newindex
+		cursor_highlight $w
+	    }
+	    set vi_search_flag($w) 0
+	    return
+	}
+    }
 
     switch $c {
 	0 {
@@ -493,6 +522,10 @@ proc vi_process_edit_cmd { w c iskeysym } {
 	    } else {
 		end_word $w
 	    }
+	    set vi_delete_flag($w) 0
+	}
+	f {
+	    set vi_search_flag($w) f
 	    set vi_delete_flag($w) 0
 	}
 	h {
@@ -534,6 +567,10 @@ proc vi_process_edit_cmd { w c iskeysym } {
 	}
 	D {
 	    delete_end_of_line $w
+	    set vi_delete_flag($w) 0
+	}
+	F {
+	    set vi_search_flag($w) F
 	    set vi_delete_flag($w) 0
 	}
 	I {
@@ -898,6 +935,8 @@ proc set_text_key_bindings { id } {
 		backward_delete_char %W
 		break
 	    }
+
+	    bind $w <KeyPress> {}
 	}
     }
 
