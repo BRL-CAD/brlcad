@@ -5,8 +5,7 @@
  *  framebuffer, an entire image worth of memory is saved using SysV
  *  shared memory.  This image exists across invocations of frame buffer
  *  utilities, and allows the full resolution of an image to be retained,
- *  and captured, even with the 1-bit deep 3/50 displays.  Be sure to
- *  set the BITSDEEP parameter below under CONFIGURATION NOTES.
+ *  and captured, even with the 1-bit deep 3/50 displays.
  *
  *  In order to use this large a chunk of memory with the shared memory
  *  system, it is necessary to reconfigure your kernel to authorize this.
@@ -59,32 +58,27 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/file.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
-#include <pixrect/pixrect_hs.h>
-#include <sunwindow/window_hs.h>
+#include <suntool/sunview.h>
+#include <suntool/canvas.h>
 
 #include "fb.h"
 #include "./fblocal.h"
 extern char	*calloc(), *malloc();
 extern int	errno;
 extern char	*shmat();
+static int	linger();
 
 /* CONFIGURATION NOTES:
 
-	1] If you have 4 Megabytes of memory, best limit the window sizes
+	If you have 4 Megabytes of memory, best limit the window sizes
 	to 512-by-512 (whether or not your using shared memory) because a
 	24-bit image is stored in memory and we don't want our systems to
 	thrash do we).
-
-	2] Change the BITSDEEP parameter below to match your particular
-	Sun.
  */
 #define XMAXSCREEN	1152	/* Physical screen width in pixels. */
 #define YMAXSCREEN	896	/* Physical screen height in pixels. */
 #define XMAXWINDOW	512	/* Max. width of frame buffer in pixels. */
 #define YMAXWINDOW	512	/* Max. height of frame buffer in pixels. */
-#ifndef BITSDEEP
-#define BITSDEEP	1	/* No. of bit planes, same as su_depth. */
-#endif
 #define BANNER		18	/* Height of title bar at top of window. */
 #define BORDER		2	/* Border thickness of window. */
 #define PARENTBORDER	4	/* Border thickness of parent window. */
@@ -153,11 +147,20 @@ FBIO            sun_interface = {
 static int	is_linear_cmap();
 
 /*
+ * Our image (window) pixwin
+ * WARNING: this should be in suninfo but isn't there yet
+ * because of signal routines the need to find it.
+ */
+static Pixwin	*imagepw;
+
+/*
  *  Per SUN (window or device) state information
  *  Too much for just the if_u[1-6] area now.
  */
 struct suninfo
 	{
+	Window	frame;
+	Window	canvas;
 	short	su_curs_on;
 	short	su_cmap_flag;
 	short	su_xzoom;
@@ -168,13 +171,11 @@ struct suninfo
 	short	su_ycursor;
 	short	su_depth;
 	int	su_shmid;	/* shared memory ID */
-	Pixwin	*su_windowpw;	/* f. b. window Pixwin pointer under SUNTOOLS. */
 	int	su_mode;
 	};
 #define if_mem		u2.p	/* shared memory pointer */
 #define if_cmap		u3.p	/* color map in shared memory */
 #define if_windowfd	u4.l	/* f. b. window file descriptor under SUNTOOLS */
-#define if_parentfd	u6.l	/* parent window file descriptor under SUNTOOLS */
 #define sunrop(dx,dy,w,h,op,pix,sx,sy) \
 		if( sun_pixwin ) \
 			pw_rop(SUNPW(ifp),dx,dy,w,h,op,pix,sx,sy); \
@@ -242,17 +243,8 @@ typedef unsigned char uchar;
 EXTERN struct pixrect *redscr;	/* red screen */
 EXTERN struct pixrect *grnscr;	/* green screen */
 EXTERN struct pixrect *bluscr;	/* blue screen */
-#endif DIT
+#endif
 
-EXTERN struct pixrect *redmem;	/* red memory pixrect */
-EXTERN struct pixrect *grnmem;	/* grn memory pixrect */
-EXTERN struct pixrect *blumem;	/* blu memory pixrect */
-EXTERN unsigned char others[256];	/* unused colors */
-EXTERN unsigned char redmap8[256];	/* red 8bit color map */
-EXTERN unsigned char grnmap8[256];	/* green 8bit color map */
-EXTERN unsigned char blumap8[256];	/* blue 8bit color map */
-
-unsigned char   others[256];	/* unused colors */
 unsigned char   red8Amap[256];	/* red 8bit dither color map */
 unsigned char   grn8Amap[256];	/* green 8bit dither color map */
 unsigned char   blu8Amap[256];	/* blue 8bit dither color map */
@@ -263,7 +255,9 @@ static unsigned char redmap[256], grnmap[256], blumap[256];
 #define GR	7
 #define BR	6
 
+#ifdef DIT
 static int      biggest = RR * GR * BR - 1;
+#endif
 
 #define COLOR_APPROX(p) \
 	(((p)[RED] * RR ) / 256) * GR*BR + \
@@ -278,9 +272,6 @@ static int      biggest = RR * GR * BR - 1;
 		(o)[BLU] = CMB(ifp)[(*p)[BLU]];\
 		}\
 	else	COPYRGB( o, *p );
-
-static Pixwin	*windowpw;
-static Pixwin	*imagepw;
 
 /*
  *  The mode has several independent bits:
@@ -324,16 +315,13 @@ sun_sigwinch( sig )
 _LOCAL_ int
 sun_sigalarm( sig )
 	{
-	if( windowpw == (Pixwin *) NULL || imagepw == (Pixwin *) NULL )
+	if( imagepw == (Pixwin *) NULL )
 		return	sig;
 	(void) signal( SIGALRM, sun_sigalarm );
 	if( sun_damaged )
 		{
-		pw_damaged( windowpw );
 		pw_damaged( imagepw );
-		pw_repairretained( windowpw );
 		pw_repairretained( imagepw );
-		pw_donedamaged( windowpw );
 		pw_donedamaged( imagepw );
 		sun_damaged = FALSE;
 		}
@@ -402,18 +390,13 @@ FBIO	*ifp;
 	return;
 	}
 
-/* Dither pattern pixrect for fast raster ops. */
-static char	dither_mpr_buf[8*BITSDEEP];
-mpr_static( dither_mpr, DITHERSZ, DITHERSZ, BITSDEEP, (short *)dither_mpr_buf );
+/* Dither pattern pixrect for fast raster ops.  (1bit displays) */
+static char	dither_mpr_buf[8];
+mpr_static( dither_mpr, DITHERSZ, DITHERSZ, 1, (short *)dither_mpr_buf );
 
-/* Scanline dither pattern pixrect, if DITHERSZ or BITSDEEP > sizeof(char)
-	you must extend the length of scan_mpr_buf accordingly. */
-static char	scan_mpr_buf[XMAXWINDOW];
-mpr_static( scan_mpr, XMAXWINDOW, DITHERSZ, BITSDEEP, (short *)scan_mpr_buf );
-
-/* Straight pixrect for grey-scale and color devices. */
+/* Straight pixrect for grey-scale and color devices. (8bit) */
 static char	pixel_mpr_buf[1];
-mpr_static( pixel_mpr, 1, 1, BITSDEEP, (short *)pixel_mpr_buf );
+mpr_static( pixel_mpr, 1, 1, 8, (short *)pixel_mpr_buf );
 
 _LOCAL_ void
 sun_rectclear( ifp, xlft, ytop, width, height, pp )
@@ -423,6 +406,7 @@ RGBpixel	*pp;
 	{	static int		lastvalue = 0;
 		register int		value;
 		RGBpixel		v;
+
 	/*fb_log( "sun_rectclear(%d,%d,%d,%d)\n", xlft, ytop, width, height ); /* XXX-debug */
 	/* Get color map value for pixel. */
 	SUN_CMAPVAL( pp, v );
@@ -463,6 +447,15 @@ RGBpixel	*pp;
 	return;
 	}
 
+/*
+ * Scanline dither pattern pixrect.  One each for 1bit, and 8bit
+ * deep displays.  If DITHERSZ or BITSDEEP > sizeof(char) you must
+ * extend the length of scan_mpr_buf accordingly.
+ */
+static char	scan_mpr_buf[XMAXWINDOW];
+mpr_static( scan1_mpr, XMAXWINDOW, DITHERSZ, 1, (short *)scan_mpr_buf );
+mpr_static( scan8_mpr, XMAXWINDOW, DITHERSZ, 8, (short *)scan_mpr_buf );
+
 _LOCAL_ void
 sun_scanwrite( ifp, xlft, ybtm, xrgt, pp )
 FBIO		*ifp;
@@ -473,6 +466,7 @@ RGBpixel	*pp;
 	{	register int	sy = YIMAGE2SCR( ybtm+1 ) + 1;
 		register int	xzoom = SUN(ifp)->su_xzoom;
 		int		xl = XIMAGE2SCR( xlft );
+
 	/*fb_log( "sun_scanwrite(%d,%d,%d,0x%x)\n", xlft, ybtm, xrgt, pp );
 		/* XXX-debug */
  	if( SUN(ifp)->su_depth == 1 )
@@ -508,7 +502,7 @@ RGBpixel	*pp;
 			}
 		sunreplrop( xl, sy,
 			(xrgt-xlft+1)*xzoom, yzoom,
-			PIX_SRC, &scan_mpr,
+			PIX_SRC, &scan1_mpr,
 			xl, 0
 			);
 		}
@@ -527,7 +521,7 @@ RGBpixel	*pp;
 			}
 		sunreplrop( xl, sy,
 			(xrgt-xlft+1)*xzoom, SUN(ifp)->su_yzoom,
-			PIX_SRC, &scan_mpr,
+			PIX_SRC, &scan8_mpr,
 			xl, 0
 			);
 		}
@@ -671,6 +665,9 @@ FBIO	*ifp;
 		goto	common;
 fail:
 		fb_log("sun_getmem:  Unable to attach to shared memory.\nConsult comment in cad/libfb/if_sun.c for details\n");
+		/* Change it to local */
+		SUN(ifp)->su_mode = (SUN(ifp)->su_mode & ~MODE_1MASK)
+			| MODE_1MALLOC;
 localmem:
 		if( (sp = malloc( size )) == NULL )
 			{
@@ -839,71 +836,42 @@ int	width, height;
 	myfont = pf_open( "/usr/lib/fonts/fixedwidthfonts/screen.b.14" );
 
 	/* Create window. */
-        if( sun_pixwin = (we_getgfxwindow(sun_parentwinname) == 0) )
-		{	int	parentno;
-			int	parentfd;
-			Rect	parentrect;
-			int	windowfd;
-		if( (parentfd = open( sun_parentwinname, 2 )) < 0 )
-			{
-			fb_log( "sun_dopen, couldn't open parent window.\n" );
-			return	-1;	/* FAIL */
-			}
-		win_getrect( parentfd, &parentrect );
+        if( sun_pixwin = (we_getgfxwindow(sun_parentwinname) == 0) ) {
+        	/************** SunView Open **************/
+		Window	frame;
+		Canvas	canvas;
 
-        	/* Running under SunView, with windows */
-		if( (windowfd = win_getnewwindow()) == -1 )
-			{
-			fb_log("sun_dopen:  win_getnewwindow failed\n");
-			return	-1;     /* FAIL */
-			}
-		winrect.r_left = rect_right(&parentrect) -
-				(width+BORDER*2+PARENTBORDER);
-		winrect.r_top = rect_bottom(&parentrect) -
-				(height+BANNER+BORDER*3+PARENTBORDER+13);
-		winrect.r_width = width+BORDER*2;
-		winrect.r_height = height+BANNER+BORDER*3;
-		win_setrect( windowfd, &winrect );
-		parentno = win_nametonumber( sun_parentwinname );
-		win_setlink( windowfd, WL_PARENT, parentno );
-		win_insert( windowfd );
-		windowpw = pw_open(windowfd);
-		imagepw = pw_region(	windowpw,
-					BORDER, BANNER+BORDER*2,
-					width, height
-					);
+		/* Make a frame and a canvas to go in it */
+		frame = window_create(NULL, FRAME,
+			      FRAME_LABEL, "Frame Buffer", 0);
+		/* XXX - "command line" args? pg.51 */
+		canvas = window_create(frame, CANVAS,
+			      WIN_WIDTH, width,
+			      WIN_HEIGHT, height, 0);
+		/* Fit window to canvas (width+10, height+20) */
+		window_fit(frame);
+
+		/* get the canvas pixwin to draw in */
+		imagepw = canvas_pixwin(canvas);
 		SUNPWL(ifp) = (char *) imagepw;
+
+		winrect = *((Rect *)window_get(canvas, WIN_RECT));
 		if( width > winrect.r_width )
 			width = winrect.r_width;
 		if( height > winrect.r_height )
 			height = winrect.r_height;
 
-		ifp->if_windowfd = windowfd;
-		ifp->if_parentfd = parentfd;
-		SUN(ifp)->su_windowpw = windowpw;
+		ifp->if_windowfd = imagepw->pw_clipdata->pwcd_windowfd;
 		SUN(ifp)->su_depth = SUNPW(ifp)->pw_pixrect->pr_depth;
-#ifdef SUN_USE_AGENT
-		/* Register pixwin with Agent so it can manage repaints. */
-		win_register(	(Notify_client) ifp->if_type,
-				SUNPW(ifp),
-				event_func, destroy_func,
-				PW_RETAIN | PW_REPAINT_ALL
-				);
-#else
-		imagepw->pw_prretained = mem_create(	width,
-							height,
-							SUN(ifp)->su_depth
-							);
-		windowpw->pw_prretained = mem_create(	winrect.r_width,
-							winrect.r_height,
-							SUN(ifp)->su_depth
-							);
-		pw_exposed( imagepw ); /* is this REALLY necessary??? */
-		pw_exposed( windowpw ); /* is this REALLY necessary??? */
-		(void) signal( SIGWINCH, sun_sigwinch );
-		(void) signal( SIGALRM, sun_sigalarm );
-		alarm( TIMEOUT );
-#endif
+		SUN(ifp)->frame = frame;
+		SUN(ifp)->canvas = canvas;
+
+		/* set up window input */
+		/*window_set(canvas, WIN_EVENT_PROC, input_eater, 0);*/
+
+		window_set(frame, WIN_SHOW, TRUE, 0);	/* display it! */
+		(void) notify_dispatch();		/* process event */
+
 		if( SUN(ifp)->su_depth == 8 )
 			{
 			if( dither_flg )
@@ -921,8 +889,6 @@ int	width, height;
 				x = pw_setcmsname(imagepw, "libfb");
 				for (x = 0; x < (RR * GR * BR); x++)
 					{	RGBpixel        q;
-						RGBpixel       *qq = (RGBpixel *) q;
-
 					blumap[x + 1] = ((x % BR)) * (255 / (BR - 1));
 					grnmap[x + 1] = (((x / BR) % GR)) * (255 / (GR - 1));
 					redmap[x + 1] = ((x / (BR * GR))) * (255 / (RR - 1));
@@ -930,29 +896,47 @@ int	width, height;
 					q[GRN] = grnmap[x + 1];
 					q[BLU] = blumap[x + 1];
 					}
+				/*
+				 * set first (background) and last (foreground)
+				 * entries the same so suntools will fill them
+				 * in for us.
+				 */
+				redmap[0] = redmap[255] = 0;
+				grnmap[0] = grnmap[255] = 0;
+				blumap[0] = blumap[255] = 0;
+				x = pw_putcolormap(imagepw, 0, 256, redmap, grnmap, blumap);
+				x = pw_getcolormap(imagepw, 0, 256, redmap, grnmap, blumap);
+				/*
+				 * save the filled in foreground color in
+				 * last-1 since this is where the usual
+				 * monochrome colormap segment lives.
+				 */
+				redmap[254] = redmap[0];
+				grnmap[254] = grnmap[0];
+				blumap[254] = blumap[0];
 				x = pw_putcolormap(imagepw, 0, 256, redmap, grnmap, blumap);
 				}
 			}
-		/* Outer border is black. */
-		pw_rop( windowpw, 0, 0,
-			winrect.r_width, winrect.r_height,
-			PIX_SET, (Pixrect *) NULL, 0, 0 );
-		/* Inner border is white. */
-		pw_rop( windowpw, 1, 1,
-			winrect.r_width-2, winrect.r_height-2,
-			PIX_CLR, (Pixrect *) NULL, 0, 0 );
-		/* Black out title bar. */
-		pw_rop( windowpw, BORDER, BORDER,
-			width, BANNER,
-			PIX_SET, (Pixrect *) NULL, 0, 0 );
-		/* Draw title in title bar (banner). */
-		pw_ttext( windowpw, TITLEXOFFSET, BANNER - TITLEYOFFSET,
-			  PIX_CLR,
-			  myfont, "BRL libfb Frame Buffer" );
+#ifdef SHOULDNOTNEEDTHIS
+		(void) signal( SIGWINCH, sun_sigwinch );
+		(void) signal( SIGALRM, sun_sigalarm );
+		alarm( TIMEOUT );
+#endif
+#ifdef SUN_USE_AGENT
+		/* Register pixwin with Agent so it can manage repaints. */
+		win_register(	(Notify_client) ifp->if_type,
+				SUNPW(ifp),
+				event_func, destroy_func,
+				PW_RETAIN | PW_REPAINT_ALL
+				);
+#endif SUN_USE_AGENT
 		}
 	else
-		{	static Pixrect	*screenpr = NULL;
-			static Pixrect	*windowpr;
+		{
+        	/************ Raw Screen Open ************/
+		static Pixrect	*screenpr = NULL;
+		static Pixrect	*windowpr;
+
 		if( screenpr == (Pixrect *) NULL )
 			{
 			screenpr = pr_open( "/dev/fb" );
@@ -991,6 +975,7 @@ int	width, height;
 				myfont, "BRL libfb Frame Buffer" );
 		SUN(ifp)->su_depth = SUNPR(ifp)->pr_depth;
 		}
+
 	pf_close( myfont );
 	ifp->if_width = width;
 	ifp->if_height = height;
@@ -1004,8 +989,16 @@ int	width, height;
 		space for the color map.				*/
 	SUN(ifp)->su_cmap_flag = !is_linear_cmap(ifp);
 
-	/* Redraw 24-bit image from memory. */
-	sun_repaint( ifp );
+	if( (SUN(ifp)->su_mode & MODE_1MASK) == MODE_1SHARED ) {
+		/* Redraw 24-bit image from shared memory */
+		sun_repaint( ifp );
+	}
+
+	if( (SUN(ifp)->su_depth != 1) && (SUN(ifp)->su_depth != 8) ) {
+		fb_log( "if_sun: Can only handle 1bit and 8bit deep displays (not %d)\n",
+			SUN(ifp)->su_depth );
+		return	-1;
+	}
 
 	return	0;		/* "Success" */
 	}
@@ -1016,33 +1009,31 @@ int	width, height;
 _LOCAL_ int
 sun_dclose(ifp)
 FBIO	*ifp;
-	{
-	if( SUNL(ifp) == (char *) NULL )
-		{
+{
+	if( SUNL(ifp) == (char *) NULL ) {
 		fb_log( "sun_dclose: frame buffer not open.\n" );
 		return	-1;
+	}
+	if( sun_pixwin ) {
+		if( (SUN(ifp)->su_mode & MODE_2MASK) == MODE_2LINGERING ) {
+			if( linger(ifp) )
+				return	0;  /* parent leaves the display */
 		}
-	if( sun_pixwin )
-		{
+		/* child or single process */
 #ifdef SUN_USE_AGENT
 		win_unregister( ifp->if_type );
 #endif
 		alarm( 0 ); /* Turn off window redraw daemon. */
-		pw_close( SUNPW(ifp) );
-		pw_close( SUN(ifp)->su_windowpw );
-		win_remove( ifp->if_windowfd );
-		(void) close( ifp->if_windowfd );
-		(void) close( ifp->if_parentfd );
-		windowpw = imagepw = NULL;
-		}
-	else
-		{
+		window_set(SUN(ifp)->frame, FRAME_NO_CONFIRM, TRUE, 0);
+		window_destroy(SUN(ifp)->frame);
+		imagepw = NULL;
+	} else {
 		pr_close( SUNPR(ifp) );
-		}
+	}
 	(void) free( (char *) SUNL(ifp) );
 	SUNL(ifp) = NULL;
 	return	0;
-	}
+}
 
 /*
  *			S U N _ D C L E A R 
@@ -1561,4 +1552,58 @@ FBIO	*ifp;
 	}
 
 	return(0);
+}
+
+static int window_not_destroyed = 1;
+
+static Notify_value
+my_real_destroy(frame, status)
+Frame	frame;
+Destroy_status	status;
+{
+	if( status != DESTROY_CHECKING ) {
+		window_not_destroyed = 0;
+	}
+	/* Let frame get destroy event */
+	return( notify_next_destroy_func(frame, status) );
+}
+
+/*
+ *  Lingering Window.
+ *  Wait around until a "quit" is selected.  Ideally this would
+ *  happen in a child process with a fork done to free the original
+ *  program and return control to the shell.  However, something
+ *  in Suntools seems to stop notifying this window of repaints, etc.
+ *  as soon as the PID changes.  Until we figure out how to get around
+ *  this the parent will have to keep hanging on.
+ */
+static int
+linger( ifp )
+FBIO	*ifp;
+{
+	struct timeval  timeout;
+
+#ifdef DOFORK
+	/* allow child to inherit input events */
+	window_release_event_lock(SUN(ifp)->frame);
+	window_release_event_lock(SUN(ifp)->canvas);
+	pw_unlock(SUNPW(ifp));
+
+	notify_dispatch();
+
+	printf("forking\n");
+	if( fork() )
+		return 1;	/* release the parent */
+#endif
+
+	notify_interpose_destroy_func(SUN(ifp)->frame,my_real_destroy);
+
+	timeout.tv_sec = 0;
+	timeout.tv_usec = 250000;
+
+	while( window_not_destroyed ) {
+		(void) select(0, (long *)0, (long *)0, (long *)0, &timeout);
+		notify_dispatch();
+	}
+	return	0;
 }
