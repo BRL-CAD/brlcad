@@ -73,7 +73,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 
 #include "./list.h"
-#include "./inout.h"
 #include "./protocol.h"
 
 extern int	getopt();
@@ -2119,10 +2118,10 @@ char *buf;
 	/* Consider the next assignment to have been sent "now" */
 	(void)gettimeofday( &sp->sr_sendtime, (struct timezone *)0 );
 
-	i = struct_import( (char *)&info, desc_line_info, buf );
+	i = rt_struct_import( (char *)&info, desc_line_info, buf );
 	if( i < 0 || i != info.li_len )  {
-		rt_log("struct_import error, %d, %d\n", i, info.li_len);
-		drop_server( sp, "struct_import error" );
+		rt_log("rt_struct_import error, %d, %d\n", i, info.li_len);
+		drop_server( sp, "rt_struct_import error" );
 		goto out;
 	}
 	if( debug )  {

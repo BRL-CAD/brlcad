@@ -48,7 +48,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "../rt/rdebug.h"
 
 #include "./list.h"
-#include "./inout.h"
 #include "./protocol.h"
 
 struct list	*FreeList;
@@ -654,9 +653,9 @@ char *buf;
 	info.li_percent = 42.0;	/* for now */
 
 	len = 0;
-	cp = struct_export( &len, (char *)&info, desc_line_info );
+	cp = rt_struct_export( &len, (char *)&info, desc_line_info );
 	if( cp == (char *)0 )  {
-		rt_log("ph_lines: struct_export failure\n");
+		rt_log("ph_lines: rt_struct_export failure\n");
 		exit(98);
 	}
 
