@@ -77,7 +77,7 @@ void	f_rmats(),f_prefix(), f_keep(), f_tree(), f_inside(), f_mvall(), f_amtrack(
 void	f_tabobj(), f_pathsum(), f_copyeval(), f_push(), f_facedef(), f_eqn();
 void	f_overlay(), f_rtcheck(), f_comb();
 void	f_preview();
-void	f_enmg();
+void	f_enmg(), f_nmgtest();
 
 static struct funtab {
 	char *ft_name;
@@ -202,6 +202,8 @@ static struct funtab {
 	f_name,3,3,
 "mvall", "oldname newname", "rename object everywhere",
 	f_mvall, 3, 3,
+"nmgtest", "solid <op solid>", "test booleans on NMG (experimental)",
+	f_nmgtest, 2, MAXARGS,
 "overlay", "file.plot [name]", "Read UNIX-Plot as named overlay",
 	f_overlay, 2, 3,
 "p", "dx [dy dz]", "set parameters",
@@ -288,8 +290,8 @@ static struct funtab {
 	f_vrot,4,4,
 "whichid", "ident(s)", "lists all regions with given ident code",
 	f_which_id, 1, 27,
-"x", "", "list drawn objects",
-	f_debug, 1,1,
+"x", "lvl", "print solid table & vector list",
+	f_debug, 1,2,
 "Z", "", "zap all objects off screen",
 	f_zap,1,1,
 };
