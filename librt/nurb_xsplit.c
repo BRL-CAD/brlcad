@@ -199,7 +199,7 @@ int dir;
 	
 	srf1->next = srf2;
 
-	/* XXX Who frees new_kv.knots ? */
+	rt_free( (char *) new_kv.knots, "rt_nurb_s_xsplit: new_kv.knots");
 
 	rt_nurb_free_oslo(oslo);
 
@@ -272,7 +272,7 @@ fastf_t param;
 
 	rt_nurb_free_oslo( oslo );
 
-	/* XXX Who frees new_kv.knots ? */
+	rt_free( (char *) new_kv.knots, "rt_nurb_c_xsplit: new_kv.knots");
 
 	crv1->next = crv2;
 	return (struct cnurb *) crv1;
