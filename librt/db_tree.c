@@ -2038,7 +2038,9 @@ genptr_t	arg;
  *	rtip		rt_i structure to database (open with rt_dirbuild())
  *	argc		# of tree-tops named
  *	argv		names of tree-tops to process
- *	init_state	XXX ????
+ *	init_state	Input parameter: initial state of the tree.
+ *			For example:  rt_initial_tree_state,
+ *			and mged_initial_tree_state.
  *
  *	reg_start_func	Func returns 0 if region should be skipped,
  *			 otherwise non-zero.  DO NOT USE FOR OTHER PURPOSES!
@@ -2093,9 +2095,25 @@ int		argc;
 CONST char	**argv;
 int		ncpu;
 CONST struct db_tree_state *init_state;
-int		(*reg_start_func)();
-union tree *	(*reg_end_func)();
-union tree *	(*leaf_func)();
+int		(*reg_start_func) BU_ARGS((
+			struct db_tree_state * /*tsp*/,
+			struct db_full_path * /*pathp*/,
+			CONST struct rt_comb_internal * /* combp */,
+			genptr_t client_data
+		));
+union tree *	(*reg_end_func) BU_ARGS((
+			struct db_tree_state * /*tsp*/,
+			struct db_full_path * /*pathp*/,
+			union tree * /*curtree*/,
+			genptr_t client_data
+		));
+union tree *	(*leaf_func) BU_ARGS((
+			struct db_tree_state * /*tsp*/,
+			struct db_full_path * /*pathp*/,
+			struct bu_external * /*ep*/,
+			int /*id*/,
+			genptr_t client_data
+		));
 genptr_t	client_data;
 {
 	union tree		*whole_tree = TREE_NULL;
