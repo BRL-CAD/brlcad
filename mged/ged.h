@@ -154,12 +154,12 @@ extern void		db_getrec(), db_putrec(), db_delete(), db_alloc(),
 			sig2(), dir_print(),
 			usepen(), vtoh_move(), setview(),
 			adcursor(), menu_display(),
-			col_item(), col_putchar(), col_eol();
+			col_item(), col_putchar(), col_eol(), col_pr4v();
 extern void		sedit_menu();
 extern void		(*cur_sigint)();	/* Current SIGINT status */
 extern char		*addname(), *strdup();
 extern int		clip(), getname(), use_pen(), drawHsolid();
-extern struct directory	*combadd(), *dir_add(), *lookup();
+extern struct directory	*combadd(), *dir_add(), *lookup(), **dir_getspace();
 extern struct solid *redraw();
 extern void		ellipse(), memfree(), mempurge();
 extern unsigned long	memalloc(), memget();
