@@ -89,7 +89,7 @@ delete_OcList(OcList **oclistp)
 	}
 
 Trie	*
-add_Trie(register char *name, register Trie **triepp)
+add_Trie(const char *name, register Trie **triepp)
 {	register Trie	*curp;
 	if( *name == NUL )
 		{ /* See if name already exists.			*/
