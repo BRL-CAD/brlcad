@@ -99,6 +99,8 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
 
+#include <ctype.h>
+
 #define SHMEM_KEY	42
 
 int X24_refresh();
