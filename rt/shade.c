@@ -315,7 +315,8 @@ register int	want;
 			}
 			sub_ap.a_hit = light_hit;
 			sub_ap.a_miss = light_miss;
-			sub_ap.a_user = (int)lp;	/* so we can tell.. */
+			sub_ab.a_user = -1;		/* sanity */
+			sub_ap.a_uptr = (genptr_t)lp;	/* so we can tell.. */
 			sub_ap.a_level = 0;
 			/* Will need entry & exit pts, for filter glass */
 			sub_ap.a_onehit = 2;

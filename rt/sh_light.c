@@ -503,7 +503,7 @@ struct partition *PartHeadp;
 	regp = pp->pt_regionp;
 
 	/* Check to see if we hit the light source */
-	lp = (struct light_specific *)(ap->a_user);
+	lp = (struct light_specific *)(ap->a_uptr);
 	RT_CK_LIGHT(lp);
 	if( lp->lt_rp == regp )  {
 		VSETALL( ap->a_color, 1 );
@@ -591,7 +591,7 @@ light_miss(ap, PartHeadp)
 register struct application *ap;
 struct partition *PartHeadp;
 {
-	struct light_specific *lp = (struct light_specific *)(ap->a_user);
+	struct light_specific *lp = (struct light_specific *)(ap->a_uptr);
 
 	RT_CK_LIGHT(lp);
 	if( lp->lt_invisible || lp->lt_infinite ) {
