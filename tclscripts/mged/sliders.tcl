@@ -1,8 +1,7 @@
 #
 # Modifications -
 #        (Bob Parker):
-#             Generalized to accommodate multiple instances of the
-#             user interface.
+#             Generalized to accommodate multiple slider instances.
 #
 #=============================================================================
 # When the sliders exist, pressing the "sliders" button makes them go away.
@@ -20,6 +19,8 @@ set sliders(scale) 2048.0;
 set sliders(max) [expr $sliders(scale) + $sliders(NOISE)];
 set sliders(min) [expr $sliders(max) * -1];
 set sliders(range) [expr $sliders(max) * 2];
+set sliders(width) 10
+set sliders(show_value) 0
 
 proc sliders args {
     global sliders
@@ -53,25 +54,32 @@ proc sliders args {
 		label $w.f.ratelabel -text "Rate Based Sliders" -anchor c
 		scale $w.f.kX -label "X Translate" -showvalue no \
 			-from $sliders(min) -to $sliders(max) -orient horizontal \
-			-length 400 -command "sliders_change $id X" -variable sliders($id,X)
+			-length 400 -command "sliders_change $id X" -variable sliders($id,X) \
+			-width $sliders(width) -showvalue $sliders(show_value)
 		scale $w.f.kY -label "Y Translate" -showvalue no \
 			-from $sliders(min) -to $sliders(max) -orient horizontal \
-			-length 400 -command "sliders_change $id Y" -variable sliders($id,Y)
+			-length 400 -command "sliders_change $id Y" -variable sliders($id,Y) \
+			-width $sliders(width) -showvalue $sliders(show_value)
 		scale $w.f.kZ -label "Z Translate" -showvalue no \
 			-from $sliders(min) -to $sliders(max) -orient horizontal \
-			-length 400 -command "sliders_change $id Z" -variable sliders($id,Z)
+			-length 400 -command "sliders_change $id Z" -variable sliders($id,Z) \
+			-width $sliders(width) -showvalue $sliders(show_value)
 		scale $w.f.kS -label "Zoom" -showvalue no \
 			-from $sliders(min) -to $sliders(max) -orient horizontal -length 400 \
-			-command "sliders_change $id S" -variable sliders($id,S)
+			-command "sliders_change $id S" -variable sliders($id,S) \
+			-width $sliders(width) -showvalue $sliders(show_value)
 		scale $w.f.kx -label "X Rotate" -showvalue no \
 			-from $sliders(min) -to $sliders(max) -orient horizontal -length 400 \
-			-command "sliders_change $id x" -variable sliders($id,x)
+			-command "sliders_change $id x" -variable sliders($id,x) \
+			-width $sliders(width) -showvalue $sliders(show_value)
 		scale $w.f.ky -label "Y Rotate" -showvalue no \
 			-from $sliders(min) -to $sliders(max) -orient horizontal -length 400 \
-			-command "sliders_change $id y" -variable sliders($id,y)
+			-command "sliders_change $id y" -variable sliders($id,y) \
+			-width $sliders(width) -showvalue $sliders(show_value)
 		scale $w.f.kz -label "Z Rotate" -showvalue no \
 			-from $sliders(min) -to $sliders(max) -orient horizontal -length 400 \
-			-command "sliders_change $id z" -variable sliders($id,z)
+			-command "sliders_change $id z" -variable sliders($id,z) \
+			-width $sliders(width) -showvalue $sliders(show_value)
 
 		foreach knob { X Y Z S x y z } {
 		    set sliders($id,$knob) [sliders_add_tol [expr [getknob $knob] * $sliders(scale)]]
@@ -85,25 +93,32 @@ proc sliders args {
 		label $w.f.abslabel -text "Absolute Sliders" -anchor c
 		scale $w.f.kaX -label "X Translate" -showvalue no \
 			-from $sliders(min) -to $sliders(max) -orient horizontal \
-			-length 400 -command "sliders_change $id aX" -variable sliders($id,aX)
+			-length 400 -command "sliders_change $id aX" \
+			-variable sliders($id,aX) -width $sliders(width) -showvalue $sliders(show_value)
 		scale $w.f.kaY -label "Y Translate" -showvalue no \
 			-from $sliders(min) -to $sliders(max) -orient horizontal \
-			-length 400 -command "sliders_change $id aY" -variable sliders($id,aY)
+			-length 400 -command "sliders_change $id aY" \
+			-variable sliders($id,aY) -width $sliders(width) -showvalue $sliders(show_value)
 		scale $w.f.kaZ -label "Z Translate" -showvalue no \
 			-from $sliders(min) -to $sliders(max) -orient horizontal \
-			-length 400 -command "sliders_change $id aZ" -variable sliders($id,aZ)
+			-length 400 -command "sliders_change $id aZ" \
+			-variable sliders($id,aZ) -width $sliders(width) -showvalue $sliders(show_value)
 		scale $w.f.kaS -label "Zoom" -showvalue no \
 			-from $sliders(min) -to $sliders(max) -orient horizontal -length 400 \
-			-command "sliders_change $id aS" -variable sliders($id,aS)
+			-command "sliders_change $id aS" -variable sliders($id,aS) \
+			-width $sliders(width) -showvalue $sliders(show_value)
 		scale $w.f.kax -label "X Rotate" -showvalue no \
 			-from $sliders(min) -to $sliders(max) -orient horizontal -length 400 \
-			-command "sliders_change $id ax" -variable sliders($id,ax)
+			-command "sliders_change $id ax" -variable sliders($id,ax) \
+			-width $sliders(width) -showvalue $sliders(show_value)
 		scale $w.f.kay -label "Y Rotate" -showvalue no \
 			-from $sliders(min) -to $sliders(max) -orient horizontal -length 400 \
-			-command "sliders_change $id ay" -variable sliders($id,ay)
+			-command "sliders_change $id ay" -variable sliders($id,ay) \
+			-width $sliders(width) -showvalue $sliders(show_value)
 		scale $w.f.kaz -label "Z Rotate" -showvalue no \
 			-from $sliders(min) -to $sliders(max) -orient horizontal -length 400 \
-			-command "sliders_change $id az" -variable sliders($id,az)
+			-command "sliders_change $id az" -variable sliders($id,az) \
+			-width $sliders(width) -showvalue $sliders(show_value)
 
 		foreach knob { aX aY aZ aS ax ay az } {
 		    set sliders($id,$knob) [sliders_add_tol [expr [getknob $knob] * $sliders(scale)]]
@@ -117,7 +132,7 @@ proc sliders args {
 
 	    scale $w.f.fov -label "Field of view" -showvalue yes \
 		    -from -1 -to 120 -orient horizontal -length 400 \
-		    -variable perspective
+		    -variable perspective -width $sliders(width) -showvalue $sliders(show_value)
 
 	    global perspective
 	    $w.f.fov set $perspective
@@ -127,19 +142,24 @@ proc sliders args {
 		label $w.f.adclabel -text "Adc Sliders" -anchor c
 		scale $w.f.kxadc -label "X adc" -showvalue no \
 			-from $sliders(min) -to $sliders(max) -orient horizontal \
-			-length 400 -command "sliders_change $id xadc" -variable sliders($id,xadc)
+			-length 400 -command "sliders_change $id xadc" \
+			-variable sliders($id,xadc) -width $sliders(width) -showvalue $sliders(show_value)
 		scale $w.f.kyadc -label "Y adc" -showvalue no \
 			-from $sliders(min) -to $sliders(max) -orient horizontal \
-			-length 400 -command "sliders_change $id yadc" -variable sliders($id,yadc)
+			-length 400 -command "sliders_change $id yadc" \
+			-variable sliders($id,yadc) -width $sliders(width) -showvalue $sliders(show_value)
 		scale $w.f.kang1 -label "Angle 1" -showvalue no \
 			-from $sliders(min) -to $sliders(max) -orient horizontal -length 400 \
-			-command "sliders_change $id ang1" -variable sliders($id,ang1)
+			-command "sliders_change $id ang1" -variable sliders($id,ang1) \
+			-width $sliders(width) -showvalue $sliders(show_value)
 		scale $w.f.kang2 -label "Angle 2" -showvalue no \
 			-from $sliders(min) -to $sliders(max) -orient horizontal -length 400 \
-			-command "sliders_change $id ang2" -variable sliders($id,ang2)
+			-command "sliders_change $id ang2" -variable sliders($id,ang2) \
+			-width $sliders(width) -showvalue $sliders(show_value)
 		scale $w.f.kdistadc -label "Adc distance" -showvalue no \
 			-from $sliders(min) -to $sliders(max) -orient horizontal -length 400 \
-			-command "sliders_change $id distadc" -variable sliders($id,distadc)
+			-command "sliders_change $id distadc" -variable sliders($id,distadc) \
+			-width $sliders(width) -showvalue $sliders(show_value)
 
 		foreach knob { xadc yadc ang1 ang2 distadc } {
 		    set sliders($id,$knob) [sliders_add_tol [getknob $knob]]
