@@ -792,7 +792,10 @@ genptr_t                user_ptr1, user_ptr2, user_ptr3;
 	found = (int *)user_ptr3;
 
 	(*found) = 1;
-	bn_mat_copy( xmat, comb_leaf->tr_l.tl_mat );
+	if( comb_leaf->tr_l.tl_mat )
+		bn_mat_copy( xmat, comb_leaf->tr_l.tl_mat );
+	else
+		bn_mat_idn( xmat );
 }
 
 /*
