@@ -1774,12 +1774,10 @@ BU_EXTERN(double rt_read_timer, (char *str, int len) );
 BU_EXTERN(int rt_plot_solid, (FILE *fp, struct rt_i *rtip, struct soltab *stp) );
 					/* Release storage assoc with rt_i */
 BU_EXTERN(void rt_clean, (struct rt_i *rtip) );
-BU_EXTERN(void rt_add_res_stats, (struct rt_i *rtip, struct resource *resp) );
-					/* Tally stats into struct rt_i */
-
-/* The matrix math routines */
-
-/* Routines from qmath.h */
+BU_EXTERN(int rt_del_regtree, (struct rt_i *rtip, struct region *delregp));
+					/* Check in-memory data structures */
+BU_EXTERN(void rt_ck, (struct rt_i *rtip));
+BU_EXTERN(void rt_pr_library_version, () );
 
 /*****************************************************************
  *                                                               *
@@ -1831,6 +1829,7 @@ BU_EXTERN(void rt_fr_cut, (struct rt_i *rtip, union cutter *cutp) );
 BU_EXTERN(void rt_region_color_map, (struct region *regp) );
 					/* process ID_MATERIAL record */
 BU_EXTERN(void rt_color_addrec, () );
+BU_EXTERN(void rt_color_free, () );
 					/* extend a cut box */
 BU_EXTERN(void rt_cut_extend, (union cutter *cutp, struct soltab *stp) );
 					/* find RPP of one region */
@@ -1998,6 +1997,9 @@ BU_EXTERN(void rt_pr_fallback_angle, (struct bu_vls *str, CONST char *prefix,
 	CONST double angles[5]));
 BU_EXTERN(void rt_find_fallback_angle, (double angles[5], CONST vect_t vec));
 
+/* regionfix.c */
+BU_EXTERN(void rt_regionfix, (struct rt_i *rtip));
+
 /* table.c */
 BU_EXTERN(int rt_id_solid, (struct bu_external *ep));
 BU_EXTERN(CONST struct rt_functab *rt_get_functab_by_label, (CONST char *label));
@@ -2006,6 +2008,12 @@ BU_EXTERN(CONST struct rt_functab *rt_get_functab_by_label, (CONST char *label))
 /* prep.c */
 BU_EXTERN(void rt_plot_all_bboxes, (FILE *fp, struct rt_i *rtip));
 BU_EXTERN(void rt_plot_all_solids, (FILE *fp, struct rt_i *rtip));
+BU_EXTERN(void rt_init_resource, (struct resource *resp, int cpu_num));
+BU_EXTERN(void rt_clean_resource, (struct rt_i *rtip, struct resource *resp));
+
+/* shoot.c */
+BU_EXTERN(void rt_add_res_stats, (struct rt_i *rtip, struct resource *resp) );
+					/* Tally stats into struct rt_i */
 
 /* vlist.c */
 BU_EXTERN(struct bn_vlblock *	rt_vlblock_init, () );
