@@ -233,8 +233,11 @@ struct hit {
 	rt_functab[_id].ft_norm(_hitp, _stp, (_hitp)->hit_rayp); }
 
 /*
- *  New macro:  Leave _hitp undisturbed, return post-boolean normal into
- *  caller-provided point.
+ *  New macro:  Compute normal into (_hitp)->hit_normal, but leave
+ *  it un-flipped, as one hit may be shared between multiple partitions
+ *  with different flip status.
+ *  (Example:  box.r = box.s - sph.s; sph.r = sph.s)
+ *  Return the post-boolean normal into caller-provided _normal vector.
  */
 #define RT_HIT_NORMAL( _normal, _hitp, _stp, _rayp, _flipflag )  { \
 	RT_CK_HIT(_hitp); \
