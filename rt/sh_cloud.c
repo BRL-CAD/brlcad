@@ -35,10 +35,10 @@ struct cloud_specific {
 };
 #define CL_NULL	((struct cloud_specific *)0)
 
-struct matparse cloud_parse[] = {
-	"thresh",	(mp_off_ty)&(CL_NULL->cl_thresh),	"%f",
-	"range",	(mp_off_ty)&(CL_NULL->cl_range),	"%f",
-	(char *)0,	(mp_off_ty)0,				(char *)0
+struct structparse cloud_parse[] = {
+	"%f",	"thresh",	(stroff_t)&(CL_NULL->cl_thresh),	FUNC_NULL,
+	"%f",	"range",	(stroff_t)&(CL_NULL->cl_range),		FUNC_NULL,
+	(char *)0,(char *)0,	(stroff_t)0,				FUNC_NULL
 };
 
 HIDDEN int	cloud_setup(), cloud_render();
@@ -121,7 +121,7 @@ char	**dpp;
 
 	cp->cl_thresh = 0.35;
 	cp->cl_range = 0.3;
-	mlib_parse( matparm, cloud_parse, (mp_off_ty)cp );
+	rt_structparse( matparm, cloud_parse, (stroff_t)cp );
 	return(1);
 }
 
@@ -133,7 +133,7 @@ cloud_print( rp, dp )
 register struct region *rp;
 char	*dp;
 {
-	mlib_print( rp->reg_name, cloud_parse, (mp_off_ty)dp );
+	rt_structprint( rp->reg_name, cloud_parse, (stroff_t)dp );
 }
 
 /*
