@@ -2858,6 +2858,15 @@ extern int rt_comb_import5( struct rt_db_internal   *ip,
         struct resource         *resp,
 	const int		minor_type);
 
+/* g_extrude.c */
+extern int rt_extrude_import5(
+	struct rt_db_internal		*ip,
+	const struct bu_external	*ep,
+	register const mat_t		mat,
+	const struct db_i		*dbip,
+	struct resource			*resp,
+	const int			minor_type );
+
 
 /* db_lookup.c */
 extern int db_get_directory_size( const struct db_i	*dbip );
