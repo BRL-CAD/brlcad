@@ -1,4 +1,5 @@
 # $Id$
+
 lib_LTLIBRARIES = libfb.la
 
 SRCS = \
@@ -23,7 +24,10 @@ SRCS = \
 	server.c \
 	tcl.c
 
-libfb_la_SOURCES = $(SRCS) vers.c
+libfb_la_SOURCES = \
+	$(SRCS) \
+	vers.c
+
 libfb_la_LDFLAGS = -version-info 19:1
 
 include_HEADERS = \
@@ -37,11 +41,13 @@ include_HEADERS = \
 	pkgtypes.h \
 	sgicursor.h
 
+dist_man_MANS = libfb.3
+
 AM_CFLAGS = @X_CFLAGS@ -I$(top_srcdir)/h -DIF_REMOTE -DIF_AB -DIF_X -DIF_OGL
+
 libfb_la_LIBADD = @PKG@ @X_LIBS@
 
 BUILT_SOURCES = vers.c
 vers.c: $(SRCS)
-	sh $(top_srcdir)/sh/vers.sh fb_version libfb > $@
+	sh $(top_srcdir)/sh/vers.sh fb_version "The BRL-CAD Framebuffer Library" > $@
 
-dist_man_MANS = libfb.3

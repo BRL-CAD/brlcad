@@ -3,8 +3,15 @@
 lib_LTLIBRARIES = libfft.la
 
 AM_CFLAGS=-I$(top_srcdir)/h
-noinst_PROGRAMS = fftc ifftc
-SRCS = fftfast.c splitdit.c ditsplit.c
+
+noinst_PROGRAMS = \
+	fftc \
+	ifftc
+
+SRCS = \
+	fftfast.c \
+	splitdit.c \
+	ditsplit.c
 
 BUILT_SOURCES = \
 	irfft128.c \
@@ -21,14 +28,24 @@ BUILT_SOURCES = \
 	rfft64.c \
 	vers.c
 
-libfft_la_SOURCES = $(SRCS) $(BUILT_SOURCES)
-noinst_HEADERS = complex.h fft.h
+libfft_la_SOURCES = \
+	$(SRCS) \
+	$(BUILT_SOURCES)
+
+noinst_HEADERS = \
+	complex.h \
+	fft.h
+
 libfft_la_LDFLAGS = -version-info 19:1
 
-fftc_SOURCES = fftc.c splitditc.c
+fftc_SOURCES = \
+	fftc.c \
+	splitditc.c
 fftc_LDADD = -lm
 
-ifftc_SOURCES = ifftc.c ditsplitc.c
+ifftc_SOURCES = \
+	ditsplitc.c \
+	ifftc.c
 ifftc_LDADD = -lm
 
 rfft16.c:	fftc

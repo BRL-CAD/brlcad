@@ -1,4 +1,5 @@
 # $Id$
+
 lib_LTLIBRARIES = libbn.la
 
 SRCS = \
@@ -45,4 +46,4 @@ libbn_la_LDFLAGS = -version-info 19:1
 BUILT_SOURCES = vers.c
 
 vers.c: $(SRCS)
-	sh $(top_srcdir)/sh/vers.sh bn_version libbn > $@
+	sh $(top_srcdir)/sh/vers.sh bn_version "The BRL-CAD Numerical Computation Library" > $@

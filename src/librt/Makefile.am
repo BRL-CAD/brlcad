@@ -1,4 +1,5 @@
 # $Id$
+
 lib_LTLIBRARIES = librt.la
 
 SRCS = \
@@ -135,7 +136,9 @@ SRCS = \
 	wdb_comb_std.c \
 	wdb_obj.c
 
-librt_la_SOURCES = $(SRCS) vers.c
+librt_la_SOURCES = \
+	$(SRCS) \
+	vers.c
 
 librt_la_LDFLAGS = -version-info 19:1
 
@@ -146,14 +149,12 @@ include_HEADERS = \
 	plane.h \
 	qray.h
 
-EXTRA_DIST = \
-	g_bot_include.c
+dist_man_MANS = librt.3
+
+EXTRA_DIST = g_bot_include.c
 
 AM_CFLAGS = -I$(top_srcdir)/h
 
 BUILT_SOURCES = vers.c
-
 vers.c: $(SRCS)
-	sh $(top_srcdir)/sh/vers.sh rt_version librt > $@
-
-dist_man_MANS = librt.3
+	sh $(top_srcdir)/sh/vers.sh rt_version "The BRL-CAD Ray-Tracing Library" > $@

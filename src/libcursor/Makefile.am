@@ -2,10 +2,17 @@
 
 lib_LTLIBRARIES = libcursor.la
 
-libcursor_la_SOURCES = cursor.c
+SRCS =	cursor.c
+
+libcursor_la_SOURCES = \
+	$(SRCS) \
+	vers.c
+
 libcursor_la_LDFLAGS = -version-info 19:1
 
 man_MANS = libcursor.3
 EXTRA_DIST = $(man_MANS)
 
-
+BUILT_SOURCES = vers.c
+vers.c: $(SRCS)
+	sh $(top_srcdir)/sh/vers.sh libcursor_version "The BRL-CAD Curses Library" > $@

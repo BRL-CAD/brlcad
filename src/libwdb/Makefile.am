@@ -1,4 +1,5 @@
 # $Id$
+
 lib_LTLIBRARIES = libwdb.la
 
 SRCS = \
@@ -19,12 +20,16 @@ SRCS = \
 	mater.c \
 	nurb.c
 
-libwdb_la_SOURCES = $(SRCS) vers.c
+libwdb_la_SOURCES = \
+	$(SRCS) \
+	vers.c
+
 libwdb_la_LDFLAGS = -version-info 19:1
 
 AM_CFLAGS = -I$(top_srcdir)/h
 
 man_MANS = libwdb.3
+
 EXTRA_DIST = $(man_MANS)
 
 BUILT_SOURCES = vers.c
