@@ -541,7 +541,7 @@ char	**argv;
 	/* convert from the local unit (as input) to the base unit */
 	dist = dist * es_mat[15] * local2base;
 
-	bcopy( es_int.idb_ptr , &larb , sizeof( struct rt_arb_internal ) );
+	bcopy( (char *)es_int.idb_ptr , (char *)&larb , sizeof( struct rt_arb_internal ) );
 
 	if( (es_type == ARB6 || es_type == ARB4) && face < 1000 ) {
 		/* 3 point face */
@@ -685,7 +685,7 @@ a4toa6:
 	}
 
 	/* copy local copy back to original */
-	bcopy( &larb , es_int.idb_ptr , sizeof( struct rt_arb_internal ) );
+	bcopy( (char *)&larb , (char *)es_int.idb_ptr , sizeof( struct rt_arb_internal ) );
 		
 	/* draw the updated solid */
 	replot_editing_solid();
@@ -838,7 +838,7 @@ char	**argv;
 	work[k] = -1.0;
 
 	/* make local copy of arb */
-	bcopy( arb , &larb , sizeof( struct rt_arb_internal ) );
+	bcopy( (char *)arb , (char *)&larb , sizeof( struct rt_arb_internal ) );
 
 	if(es_type == ARB6 && face < 1000) { 	/* 3 point face */
 		pt[0] = face / 100;
@@ -944,7 +944,7 @@ char	**argv;
 		return CMD_BAD;
 
 	/* copy to original */
-	bcopy( &larb , arb , sizeof( struct rt_arb_internal ) );
+	bcopy( (char *)&larb , (char *)arb , sizeof( struct rt_arb_internal ) );
 
 	/* draw the updated solid */
 	replot_editing_solid();
@@ -1202,7 +1202,7 @@ char	**argv;
 	RT_ARB_CK_MAGIC( arb );
 
 	/* make a local copy of the solid */
-	bcopy( arb , &larb , sizeof( struct rt_arb_internal ) );
+	bcopy( (char *)arb , (char *)&larb , sizeof( struct rt_arb_internal ) );
 
     /*
      *	Find the encoded form of the specified permutation,
@@ -1320,7 +1320,7 @@ char	**argv;
     }
 
 	/* copy back to original arb */
-	bcopy( &larb , arb , sizeof( struct rt_arb_internal ) );
+	bcopy( (char *)&larb , (char *)arb , sizeof( struct rt_arb_internal ) );
 
     /* draw the updated solid */
     replot_editing_solid();

@@ -86,7 +86,7 @@ char	**argv;
 {
 	register struct directory *dp;
 	register int	i;
-	long		stime, etime;	/* start & end times */
+	time_t		stime, etime;	/* start & end times */
 	static int	first_time = 1;
 
 	drawreg = 1;
