@@ -189,14 +189,12 @@ int	count;
 		if ( count >= ifp->if_width )  {
 			scan_count = ifp->if_width;
 			count -= scan_count;
-			x_pos = 0;
-			ypos++;
 		} else	{
 			scan_count = 0;
 			count = 0;
-			x_pos = 0;
-			ypos++;
 		}
+		x_pos = 0;
+		ypos--;		/* LEFTOVER from 1st quadrant days */
 	}
 }
 
@@ -229,7 +227,7 @@ short	count;
 			ypos = y;
 		}
 
-		cmov2s( xpos, ypos++ );		/* move to current position */
+		cmov2s( xpos, ypos );		/* move to current position */
 
 		for( i = 0; i < scan_count; i++, pixptr++)
 		{
@@ -260,6 +258,7 @@ short	count;
 			count = 0;
 		}
 		xpos = 0;
+		ypos--;		/* LEFTOVER from 1st quadrant days */
 	}
 }
 
