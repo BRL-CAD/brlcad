@@ -107,11 +107,15 @@ register struct combined_tree_state	*ctsp;
  *	 1	success, this is the top of a new region.
  */
 int
-db_apply_state_from_comb( tsp, pathp, rp )
+db_apply_state_from_comb( tsp, pathp, ep )
 struct db_tree_state	*tsp;
 struct db_full_path	*pathp;
-union record		*rp;
+struct rt_external	*ep;
 {
+	register union record	*rp;
+
+	RT_CK_EXTERNAL( ep );
+	rp = (union record *)ep->ext_buf;
 	if( rp->u_id != ID_COMB )  {
 		char	*sofar = db_path_to_string(pathp);
 		rt_log("db_apply_state_from_comb() defective record at '%s'\n",
@@ -276,7 +280,7 @@ struct db_full_path	*pathp;
 char			*orig_str;
 int			noisy;
 {
-	register union record	*rp = (union record *)0;
+	struct rt_external	ext;
 	register int		i;
 	register char		*cp;
 	register char		*ep;
@@ -296,6 +300,7 @@ int			noisy;
 
 	if( *orig_str == '\0' )  return(0);		/* Null string */
 
+	RT_INIT_EXTERNAL( &ext );
 	cp = str = rt_strdup( orig_str );
 
 	/*  Handle each path element */
@@ -369,14 +374,16 @@ int			noisy;
 		}
 
 		/* Load the entire combination into contiguous memory */
-		if( (rp = db_getmrec( tsp->ts_dbip, comb_dp )) == (union record *)0 )
+		if( db_get_external( &ext, comb_dp, tsp->ts_dbip ) < 0 )
 			goto fail;
 
 		/* Apply state changes from new combination */
-		if( db_apply_state_from_comb( tsp, pathp, rp ) < 0 )
+		if( db_apply_state_from_comb( tsp, pathp, &ext ) < 0 )
 			goto fail;
 
 		for( i=1; i < comb_dp->d_len; i++ )  {
+			register union record *rp =
+				(union record *)ext.ext_buf;
 			mp = &(rp[i].M);
 
 			/* If this is not the desired element, skip it */
@@ -408,9 +415,7 @@ found_it:
 			/* Handle as a union */
 		}
 
-		/* Free record */
-		rt_free( (char *)rp, "db_follow_path_for_state record[]" );
-		rp = (union record *)0;
+		db_free_external( &ext );
 
 		/* Advance to next path element */
 		cp = ep+1;
@@ -418,7 +423,7 @@ found_it:
 	} while( oldc != '\0' );
 
 out:
-	if( rp )  rt_free( (char *)rp, "db_follow_path_for_state record[] out" );
+	db_free_external( &ext );
 	rt_free( str, "dupped path" );
 	if(rt_g.debug&DEBUG_TREEWALK)  {
 		char	*sofar = db_path_to_string(pathp);
@@ -428,7 +433,7 @@ out:
 	}
 	return(0);		/* SUCCESS */
 fail:
-	if( rp )  rt_free( (char *)rp, "db_follow_path_for_state record[] fail" );
+	db_free_external( &ext );
 	rt_free( str, "dupped path" );
 	return(-1);		/* FAIL */
 }
@@ -580,7 +585,7 @@ struct db_full_path	*pathp;
 struct combined_tree_state	**region_start_statepp;
 {
 	struct directory	*dp;
-	register union record	*rp = (union record *)0;
+	struct rt_external	ext;
 	register int		i;
 	struct tree_list	*tlp;		/* cur elem of trees[] */
 	struct tree_list	*trees = TREE_LIST_NULL;	/* array */
@@ -603,10 +608,11 @@ struct combined_tree_state	**region_start_statepp;
 	/*
 	 * Load the entire object into contiguous memory.
 	 */
-	if( (rp = db_getmrec( tsp->ts_dbip, dp )) == (union record *)0 )
+	if( db_get_external( &ext, dp, tsp->ts_dbip ) < 0 )
 		return(TREE_NULL);		/* FAIL */
 
 	if( dp->d_flags & DIR_COMB )  {
+		register union record	*rp = (union record *)ext.ext_buf;
 		struct db_tree_state	nts;
 		int			is_region;
 
@@ -619,7 +625,7 @@ struct combined_tree_state	**region_start_statepp;
 		/*  Handle inheritance of material property. */
 		nts = *tsp;	/* struct copy */
 
-		if( (is_region = db_apply_state_from_comb( &nts, pathp, rp )) < 0 )
+		if( (is_region = db_apply_state_from_comb( &nts, pathp, &ext )) < 0 )
 			goto fail;
 
 		if( is_region > 0 )  {
@@ -723,10 +729,10 @@ region_end:
 		fastf_t	fx, fy, fz;
 
 		/* Get solid ID */
-		if( (id = rt_id_solid( rp )) == ID_NULL )  {
-			rt_log("db_functree(%s): defective database record, type '%c' (0%o), addr=x%x\n",
+		if( (id = rt_id_solid( &ext )) == ID_NULL )  {
+			rt_log("db_functree(%s): defective database record, addr=x%x\n",
 				dp->d_namep,
-				rp->u_id, rp->u_id, dp->d_addr );
+				dp->d_addr );
 			goto fail;
 		}
 
@@ -784,14 +790,14 @@ region_end:
 
 		/* Hand the solid off for leaf processing */
 		if( !tsp->ts_leaf_func )  goto fail;
-		curtree = tsp->ts_leaf_func( tsp, pathp, rp, id );
+		curtree = tsp->ts_leaf_func( tsp, pathp, &ext, id );
 	} else {
 		rt_log("db_functree:  %s is neither COMB nor SOLID?\n",
 			dp->d_namep );
 		curtree = TREE_NULL;
 	}
 out:
-	if( rp )  rt_free( (char *)rp, "db_recurse record[]" );
+	db_free_external( &ext );
 	if( trees )  rt_free( (char *)trees, "tree_list array" );
 	if(rt_g.debug&DEBUG_TREEWALK)  {
 		char	*sofar = db_path_to_string(pathp);
