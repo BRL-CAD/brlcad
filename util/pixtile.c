@@ -1,23 +1,23 @@
 /*
- *  			S L U R P . C
+ *  			P I X T I L E . C
  *  
  *  Given multiple .pix files with ordinary lines of pixels,
  *  produce a single image with each image side-by-side,
- *  right to left, top to bottom.
+ *  right to left, top to bottom on STDOUT.
  */
 #include <stdio.h>
 
-#include "/vld/include/fb.h"
-
 char ibuf[512*3];		/* Input line */
 
-struct pixel obuf[1024*1024];		/* Output screen */
+char obuf[3*1024*1024];		/* Output screen */
 
 int pix_line;		/* number of pixels/line (512, 1024) */
 int scanbytes;		/* bytes per input line */
 int w;			/* width of sub-images in pixels */
 int im_line;		/* number of images across output scanline */
 int image;		/* current sub-image number */
+
+char usage[] = "Usage: pixtile [-h] basename width [startframe] >file.pix\n";
 
 main( argc, argv )
 char **argv;
@@ -27,8 +27,8 @@ char **argv;
 	int framenumber;
 	char name[128];
 
-	if( argc < 2 )  {
-		printf("Usage: nslurp [-h] basename width [startframe]\n");
+	if( argc < 2 || isatty(fileno(stdout)) )  {
+		fprintf(stderr, "%s", usage);
 		exit(12);
 	}
 
@@ -48,22 +48,15 @@ char **argv;
 		framenumber = atoi(argv[3]);
 	else	framenumber = 0;
 
-	if( pix_line > 512 )
-		fbsetsize(pix_line);
-	if( fbopen( NULL, CREATE ) < 0 )
-		exit(12);
-
 	scanbytes = w * 3;
 	im_line = pix_line/w;	/* number of images across line */
 	for( image=0; ; image++, framenumber++ )  {
-		register char *in;
-		register struct pixel *out;
-		register int j;
+		register char *out;
 		int fd;
 
-		printf("%d ", framenumber);  fflush(stdout);
+		fprintf(stderr,"%d ", framenumber);  fflush(stdout);
 		if(image >= im_line*im_line )  {
-			printf("full\n");
+			fprintf(stderr,"full\n");
 			break;
 		}
 		sprintf(name,"%s.%d", basename, framenumber);
@@ -73,33 +66,27 @@ char **argv;
 		}
 		/* Read in .pix file.  Bottom to top */
 		for( i=0; i<w; i++ )  {
-			in = ibuf;
-			out = &obuf[(
-				/* virtual image start line*/
-				((image/im_line)*w*pix_line) +
-				/* virtual image l/r offset */
-				((image%im_line)*w) +
-				/* scanline */
-				((w-i-1)*pix_line)
-			)];
-			if( read( fd, ibuf, scanbytes ) != scanbytes )
+			register int j;
+
+			/* Vertical position, recalling bottom-to-top */
+			/* virtual image starting line*/
+			/* First image goes in upper right corner of output,
+			 * which is last part of output buffer. */
+			/*   maxscanline     back up # of images */
+			j = (pix_line) - (((image/im_line)+1)*w);
+			j = j * pix_line;
+
+			/* virtual image l/r offset */
+			j += ((image%im_line)*w);
+
+			/* select proper scanline within image */
+			j += i*pix_line;
+
+			if( read( fd, &obuf[j*3], scanbytes ) != scanbytes )
 				break;
-			for( j=0; j<w; j++ )  {
-				out->red = *in++;
-				out->green = *in++;
-				out->blue = *in++;
-				(out++)->spare = 0;
-			}
 		}
 		close(fd);
 	}
 done:
-	printf("done\n");
-	doit();
-}
-
-doit()
-{
-
-	fbwrite( 0, 0, obuf, pix_line*pix_line );
+	(void)write( 1, obuf, pix_line*pix_line*3 );
 }

@@ -1,5 +1,5 @@
 /*
- * pixdiff.c
+ *			P I X D I F F . C
  *
  *  Compute the difference between two .pix files.
  *  To establish context, a monochrome image is produced when there
@@ -27,13 +27,15 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 
+char usage[] = "Usage: pixdiff f1.pix f2.pix >file.pix\n";
+
 main(argc, argv)
 char **argv;
 {
 	register FILE *f1, *f2;
 
-	if( argc != 3 )  {
-		fprintf(stderr,"Usage: pixdiff i1 i2\n");
+	if( argc != 3 || isatty(fileno(stdout)) )  {
+		fprintf(stderr, "%s", usage);
 		exit(0);
 	}
 

@@ -1,16 +1,27 @@
 /*
- *  			P I X - F B . C
+ *  			F B - P I X . C
  *  
  *  Dumb little program to take a frame buffer image and
  *  write a .pix image.
  *  
- *  Mike Muuss, BRL.
- *
- *  $Revision$
+ *  Author -
+ *	Michael John Muuss
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1986 by the United States Army.
+ *	All rights reserved.
  */
-#include <stdio.h>
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
 
-#include "/vld/include/fb.h"
+#include <stdio.h>
+#include "fb.h"
 
 #define MAX_LINE	1024		/* Max pixels/line */
 static char scanline[MAX_LINE*3];	/* 1 scanline pixel buffer */
@@ -20,39 +31,42 @@ struct pixel outline[MAX_LINE];
 
 int inverse = 0;			/* Draw upside-down */
 
-char usage[] = "Usage: fb-pix [-h] [-i] file.pix [width]\n";
+char usage[] = "Usage: fb-pix [-h] [-i] [width] > file.pix\n";
 
 main(argc, argv)
 int argc;
 char **argv;
 {
 	static int y;
-	static int diskfd;
 	static int nlines;		/* Square:  nlines, npixels/line */
 	static int fbsize;
 
-	if( argc < 2 )  {
+	if( argc < 1 || isatty(fileno(stdout)) )  {
 		fprintf(stderr,"%s", usage);
 		exit(1);
 	}
 
 	fbsize = 512;
 	nlines = 512;
-	if( strcmp( argv[1], "-h" ) == 0 )  {
-		fbsize = 1024;
-		nlines = 1024;
-		argc--; argv++;
+	while( argv[1][0] == '-' )  {
+		if( strcmp( argv[1], "-h" ) == 0 )  {
+			fbsize = 1024;
+			nlines = 1024;
+			argc--; argv++;
+			continue;
+		}
+		if( strcmp( argv[1], "-i" ) == 0 )  {
+			inverse = 1;
+			argc--; argv++;
+			continue;
+		}
 	}
-	if( strcmp( argv[1], "-i" ) == 0 )  {
-		inverse = 1;
-		argc--; argv++;
+	if( argc == 2 )
+		nlines = atoi(argv[1]);
+	if( argc > 2 )  {
+		fprintf(stderr,"%s", usage);
+		exit(1);
 	}
-	if( (diskfd = creat( argv[1], 0444 )) < 0 )  {
-		perror( argv[1] );
-		exit(3);
-	}
-	if( argc >= 3 )
-		nlines = atoi(argv[2] );
 	if( nlines > 512 )
 		fbsetsize(fbsize);
 
@@ -80,7 +94,7 @@ char **argv;
 				*in++ = out->blue;
 				out++;
 			}
-			if( write( diskfd, (char *)scanline, scanbytes ) != scanbytes )  {
+			if( write( 1, (char *)scanline, scanbytes ) != scanbytes )  {
 				perror("write");
 				exit(1);
 			}
@@ -102,7 +116,7 @@ char **argv;
 				*in++ = out->blue;
 				out++;
 			}
-			if( write( diskfd, (char *)scanline, scanbytes ) != scanbytes )  {
+			if( write( 1, (char *)scanline, scanbytes ) != scanbytes )  {
 				perror("write");
 				exit(1);
 			}

@@ -4,15 +4,31 @@
  *	Checks status of the Dunn camera and exposes the number of frames
  *	of film specified in the argument (default is 1 frame).
  *
+ *  Author -
  *	Don Merritt
  *	August 1985
- *
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1986 by the United States Army.
+ *	All rights reserved.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
 
-
-#include <sys/time.h>
+#include <stdio.h>
 #include <sgtty.h>
+
+#ifdef BSD
+#include <sys/time.h>
 #include <sys/file.h>
+#endif
+
 struct	sgttyb	tty;
 int fd;
 char cmd;

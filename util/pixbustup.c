@@ -1,11 +1,26 @@
 /*
- *  Bustup.c -- take concatenated .pix files, and write them one
- *  per file.
- *  
- *  Mike Muuss, BRL.
+ *			P I X B U S T U P . C
  *
- *  $Revision$
+ *	Take concatenated .pix files, and write them into individual files.
+ *	Mostly a holdover from the days when RT wrote animations into
+ *	one huge file, but still occasionally useful.
+ *
+ *  Author -
+ *	Michael John Muuss
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1986 by the United States Army.
+ *	All rights reserved.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
+
 #include <stdio.h>
 
 static int scanbytes;			/* # of bytes of scanline */
@@ -16,7 +31,7 @@ static int nlines;		/* Number of input lines */
 static int pix_line;		/* Number of pixels/line */
 
 char usage[] = 
-"Usage: bustup basename.pix width [image_offset] [first_number] <input.pix\n";
+"Usage: pixbustup basename.pix width [image_offset] [first_number] <input.pix\n";
 
 int infd;
 

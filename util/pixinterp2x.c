@@ -1,5 +1,5 @@
 /*
- *  			P I X - I N T E R P . C
+ *  			P I X I N T E R P 2 X . C
  *  
  *  Read a .pix file of a given resolution, and produce one with
  *  twice as many pixels by interpolating between the pixels.
@@ -7,11 +7,23 @@
  *  This program is prepared for the .pix files to be comming from
  *  and/or going to a raw
  *  magtape with a block size of 24k, regardless of image resolution.
- *  
- *  Mike Muuss, BRL.
  *
- *  $Revision$
+ *  Author -
+ *	Michael John Muuss
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1986 by the United States Army.
+ *	All rights reserved.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
+
 #include <stdio.h>
 
 #define BLOCKSIZE	(24*1024)	/* Size of tape record */
@@ -24,7 +36,7 @@ int outsize;				/* size of output buffer */
 char *outbuf;				/* ptr to output image buffer */
 extern char *malloc();
 
-char usage[] = "Usage: pix-interp file.pix [in_width]\n";
+char usage[] = "Usage: pixinterp2x file.pix [in_width]\n";
 
 main(argc, argv)
 int argc;
