@@ -5,7 +5,7 @@
  *
  *
  *  Author -
- *	Philip Dykstra
+ *	Phillip Dykstra
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -75,10 +75,10 @@ float Contrast, initFx, initFy;
 	 * Compute initial Phases and Frequencies
 	 * Freq "1" goes through 2Pi as x or y go thru 0.0 -> 1.0
 	 */
-	Fx = twopi * initFx;
-	Fy = twopi * initFy;
-	Px = halfpi * tab_sin( 0.5 * Fy * y );
-	Py = halfpi * tab_sin( 0.5 * Fx * x );
+	Fx = rt_twopi * initFx;
+	Fy = rt_twopi * initFy;
+	Px = rt_halfpi * tab_sin( 0.5 * Fy * y );
+	Py = rt_halfpi * tab_sin( 0.5 * Fx * x );
 	C = 1.0;	/* ??? */
 
 	for( i = 0; i < NUMSINES; i++ ) {
@@ -92,8 +92,8 @@ float Contrast, initFx, initFy;
 		 * Compute the new phases and frequencies.
 		 * N.B. The phases shouldn't vary the same way!
 		 */
-		Px = halfpi * tab_sin( Fy * y );
-		Py = halfpi * tab_sin( Fx * x );
+		Px = rt_halfpi * tab_sin( Fy * y );
+		Py = rt_halfpi * tab_sin( Fx * x );
 		Fx *= 2.0;
 		Fy *= 2.0;
 		C  *= 0.707;

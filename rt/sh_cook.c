@@ -35,9 +35,6 @@ static char RCScook[] = "@(#)$Header$ (BRL)";
 /* from view.c */
 extern double AmbientIntensity;
 
-/* from mathtab.c */
-extern double pi;
-
 /* Local information */
 struct cook_specific {
 	double	m;		/* rms slope - should be a vector of these XXX*/
@@ -130,9 +127,9 @@ char	**dpp;
 		   / (1.0 - sqrt(rp->reg_mater.ma_color[1]*.99));
 	pp->n[2] = (1.0 + sqrt(rp->reg_mater.ma_color[2]*.99))
 		   / (1.0 - sqrt(rp->reg_mater.ma_color[2]*.99));
-	pp->rd[0] = fresnel( 0.0, pp->n[0] ) / pi;
-	pp->rd[1] = fresnel( 0.0, pp->n[1] ) / pi;
-	pp->rd[2] = fresnel( 0.0, pp->n[2] ) / pi;
+	pp->rd[0] = fresnel( 0.0, pp->n[0] ) / rt_pi;
+	pp->rd[1] = fresnel( 0.0, pp->n[1] ) / rt_pi;
+	pp->rd[2] = fresnel( 0.0, pp->n[2] ) / rt_pi;
 
 	rt_structparse( matparm, cook_parse, (char *)pp );
 
@@ -168,9 +165,9 @@ char	**dpp;
 	pp->n[0] = (1.0 + sqrt(pp->reflect*.99))
 		   / (1.0 - sqrt(pp->reflect*.99));
 	pp->n[1] = pp->n[2] = pp->n[0];
-	pp->rd[0] = fresnel( 0.0, pp->n[0] ) / pi;
-	pp->rd[1] = fresnel( 0.0, pp->n[1] ) / pi;
-	pp->rd[2] = fresnel( 0.0, pp->n[2] ) / pi;
+	pp->rd[0] = fresnel( 0.0, pp->n[0] ) / rt_pi;
+	pp->rd[1] = fresnel( 0.0, pp->n[1] ) / rt_pi;
+	pp->rd[2] = fresnel( 0.0, pp->n[2] ) / rt_pi;
 
 	rt_structparse( matparm, cook_parse, (char *)pp );
 
@@ -206,9 +203,9 @@ char	**dpp;
 
 	pp->n[0] = pp->refrac_index;
 	pp->n[1] = pp->n[2] = pp->n[0];
-	pp->rd[0] = fresnel( 0.0, pp->n[0] ) / pi;
-	pp->rd[1] = fresnel( 0.0, pp->n[1] ) / pi;
-	pp->rd[2] = fresnel( 0.0, pp->n[2] ) / pi;
+	pp->rd[0] = fresnel( 0.0, pp->n[0] ) / rt_pi;
+	pp->rd[1] = fresnel( 0.0, pp->n[1] ) / rt_pi;
+	pp->rd[2] = fresnel( 0.0, pp->n[2] ) / rt_pi;
 
 	rt_structparse( matparm, cook_parse, (char *)pp );
 
