@@ -160,7 +160,7 @@ int entityno;
 					Readint( &j , "" );
 
 				/* skip knot vector */
-				for( i=0 ; i<num_pts+degree ; i++ )
+				for( i=0 ; i<num_pts+degree+1 ; i++ )
 					Readdbl( &a , "" );
 
 				/* skip weights */
@@ -292,6 +292,7 @@ int entityno;
 				int coords;
 				int pt_type;
 				fastf_t *kv;
+				fastf_t knot_min,knot_max;
 				fastf_t *points;
 				int j;
 				double a;
@@ -311,12 +312,26 @@ int entityno;
 				coords = RT_NURB_EXTRACT_COORDS( pt_type );
 
 				/* knot vector */
-				num_knots = num_pts + degree;
+				num_knots = num_pts + degree + 1;
 				kv = (fastf_t *)rt_calloc( num_knots , sizeof( fastf_t ) , "set_edge_vertices_p: kv" );
+				knot_min = MAX_FASTF;
+				knot_max = (-knot_min);
 				for( i=0 ; i<num_knots ; i++ )
 				{
 					Readdbl( &a , "" );
 					kv[i] = a;
+					V_MIN( knot_min , kv[i] );
+					V_MAX( knot_max , kv[i] );
+				}
+
+				/* normalize knot vector */
+				for( i=0 ; i<num_knots ; i++ )
+				{
+					kv[i] = (kv[i] - knot_min)/(knot_max - knot_min);
+					if( kv[i] < 0.0 )
+						kv[i] = 0.0;
+					if( kv[i] > 1.0 )
+						kv[i] = 1.0;
 				}
 
 				points = (fastf_t *)rt_calloc( num_pts*coords , sizeof( fastf_t ) , "set_edge_vertices_p: points" );
@@ -358,6 +373,7 @@ int entityno;
 				Readdbl( &z , "" );
 				VSET( pt , (x-u_min)/(u_max-u_min) , (y-v_min)/(v_max-v_min) , z );
 				MAT4X3PNT( &points[num_pts-1] , *dir[entityno]->rot , pt );
+
 				(*vert_count)++;
 				VMOVE( nurb_v[*vert_count].uvw , &points[num_pts-1] );
 				for( RT_LIST_FOR( vu , vertexuse , &nurb_v[*vert_count].v->vu_hd ) )
