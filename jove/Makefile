@@ -4,11 +4,14 @@
 #  $Revision$
 #  @(#)$Header$;
 #
+#CFLAGS=	-O -DBRL -pg
 CFLAGS=	-O -DBRL
 CC = cc
+#LDFLAGS = -pg
+LDFLAGS =
 #BRL CC = cc -7
 
-LB=	-ltermlib -lc
+LB=	-ltermlib
 #BRL LB=	-ltermlib7
 
 BINDIR=/usr/brl/bin
@@ -35,8 +38,7 @@ OBJECTS =	jove_buf.o \
 all:	xjove xfindcom
 
 xjove:	$(OBJECTS)
-	$(CC) -z -o xjove $(OBJECTS) $(LB)
-#PDP	$(CC) -i -o xjove $(OBJECTS) $(LB)
+	$(CC) $(LDFLAGS) -o xjove $(OBJECTS) $(LB)
 	size xjove
 
 xfindcom:	findcom.c jove_tune.h
