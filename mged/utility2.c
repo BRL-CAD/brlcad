@@ -1973,6 +1973,9 @@ char **argv;
 	int item;
 	struct directory *dp;
 	union record rec;
+	struct rt_vls v;
+	int new_argc;
+	int lim;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 		return TCL_ERROR;
@@ -1982,6 +1985,11 @@ char **argv;
         else
 	  return TCL_OK;
 
+	rt_vls_init( &v );
+
+	rt_vls_strcat( &v, "e" );
+	lim = 1;
+
 	for( j=1; j<argc; j++)
 	{
 		item = atoi( argv[j] );
@@ -1990,8 +1998,6 @@ char **argv;
 		{
 			for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )
 			{
-				char *av[3];
-
 				if( (dp->d_flags & DIR_COMB|DIR_REGION) !=
 				    (DIR_COMB|DIR_REGION) )
 					continue;
@@ -2001,15 +2007,29 @@ char **argv;
 				if( rec.c.c_regionid != item )
 					continue;
 
-				av[0] = "e";
-				av[1] = dp->d_namep;
-				av[2] = (char *)NULL;
-
-				(void) f_edit( clientData, interp, 2, av );
+				rt_vls_strcat( &v, " " );
+				rt_vls_strcat( &v, dp->d_namep );
+				lim++;
 			}
 		}
 	}
-	return TCL_OK;
+	if( lim > 1 )
+	{
+		int retval;
+		char **new_argv;
+
+		new_argv = (char **)rt_calloc( lim+1, sizeof( char *), "f_eac: new_argv" );
+		new_argc = rt_split_cmd( new_argv, lim+1, rt_vls_addr( &v ) );
+		retval = f_edit( clientData, interp, new_argc, new_argv );
+		rt_vls_free( &v );
+		rt_free( (char *)new_argv, "f_eac: new_argv" );
+		return retval;
+	}
+	else
+	{
+		rt_vls_free( &v );
+		return TCL_OK;
+	}
 }
 
 int
