@@ -7,6 +7,10 @@
  *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1985 by the United States Army.
+ *	All rights reserved.
  *
  *  $Header$
  */
@@ -82,7 +86,7 @@ extern struct veclist *vlend;	/* pointer to first invalid veclist element */
  * Record an absolute vector and "pen" position in veclist array.
  */
 #define DM_GOTO(p,pen)	if(vlp>=vlend) \
-	printf("%s/%d:  veclist overrun\n", __FILE__, __LINE__); \
+	(void)printf("%s/%d:  veclist overrun\n", __FILE__, __LINE__); \
 	else { VMOVE( vlp->vl_pnt, p ); (vlp++)->vl_pen = pen; }
 
 /* Virtual Pen settings */
