@@ -58,7 +58,9 @@
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
+#include "bu.h"
 #include "vmath.h"
+#include "bn.h"
 #include "anim.h"
 
 #ifndef	M_PI
@@ -181,7 +183,7 @@ vect_t angle;
                 return_value = ERROR1;
                 angle[0] = 0.0;
                 angle[2] = atan2(viewrot[4],viewrot[5]);
-                /*fprintf(stderr,"Warning: x arbitrarily set to 0.0; z set to %f.\n",angle[2]);*/
+                /*bu_log("Warning: x arbitrarily set to 0.0; z set to %f.\n",angle[2]);*/
         }
         else {
                 return_value = NORMAL;
@@ -250,7 +252,7 @@ vect_t angle;
                 return_value = ERROR1;
                 angle[2] = 0.0;
                 angle[0] = atan2(-viewrot[1],viewrot[5]);
-                /*fprintf(stderr,"Warning: roll arbitrarily set to 0.0; yaw set to %f radians.\n",angle[0]);*/
+                /*bu_log("Warning: roll arbitrarily set to 0.0; yaw set to %f radians.\n",angle[0]);*/
         }
         else {
                 return_value = NORMAL;
@@ -804,7 +806,7 @@ vect_t dx,dn;
 	sign = 1.0;
 	mag = MAGNITUDE(dx);
 	if (mag < VDIVIDE_TOL) {
-		fprintf(stderr,"anim_dirn2mat: Need non-zero vector");
+		bu_log("anim_dirn2mat: Need non-zero vector");
 		return;
 	}
 	inv = 1.0/mag;
@@ -964,13 +966,13 @@ void anim_mat_print(m,s_colon)
 mat_t m;
 int s_colon;
 {
-        printf("%.10g %.10g %.10g %.10g\n", m[0], m[1], m[2], m[3]);
-        printf("%.10g %.10g %.10g %.10g\n", m[4], m[5], m[6], m[7]);
-        printf("%.10g %.10g %.10g %.10g\n", m[8], m[9], m[10], m[11]);
-        printf("%.10g %.10g %.10g %.10g", m[12], m[13], m[14], m[15]);
+        bu_log("%.10g %.10g %.10g %.10g\n", m[0], m[1], m[2], m[3]);
+        bu_log("%.10g %.10g %.10g %.10g\n", m[4], m[5], m[6], m[7]);
+        bu_log("%.10g %.10g %.10g %.10g\n", m[8], m[9], m[10], m[11]);
+        bu_log("%.10g %.10g %.10g %.10g", m[12], m[13], m[14], m[15]);
         if (s_colon)
-                printf(";");
-        printf("\n");
+                bu_log(";");
+        bu_log("\n");
 }
 
 
@@ -986,10 +988,10 @@ char *endstr;
 {
 	char mystr[80];
 	sprintf(mystr,"%s%s%s%s%%s",formstr,formstr,formstr,formstr);
-        printf(mystr, m[0], m[1], m[2], m[3], linestr);
-        printf(mystr, m[4], m[5], m[6], m[7], linestr);
-        printf(mystr, m[8], m[9], m[10], m[11], linestr);
-        printf(mystr, m[12], m[13], m[14], m[15], endstr);
+        bu_log(mystr, m[0], m[1], m[2], m[3], linestr);
+        bu_log(mystr, m[4], m[5], m[6], m[7], linestr);
+        bu_log(mystr, m[8], m[9], m[10], m[11], linestr);
+        bu_log(mystr, m[12], m[13], m[14], m[15], endstr);
 }
 
 /* ANIM_VIEW_REV - Reverse the direction of a view matrix, keeping it
@@ -1005,6 +1007,3 @@ mat_t m;
         m[8] = -m[8];
         m[9] = -m[9];
 }
-
-
-
