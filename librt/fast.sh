@@ -64,12 +64,17 @@ cake \
  global.o \
  mater.o \
  memalloc.o \
- units.o \
+ tabdata.o \
+ font.o \
+ rtassoc.o \
+ tcl.o \
  &
 
 cake \
  pr.o \
  db_tree.o \
+ db_comb.o \
+ db_match.o \
  g_vol.o \
  g_rpc.o \
  g_rhc.o \
