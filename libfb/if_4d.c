@@ -793,7 +793,8 @@ int	width, height;
 
 		signal( SIGUSR1, sigkid);
 
-		if(((f = fork()) != 0 ) && ( f != -1))   {
+		if( (f = fork()) > 0 )  {
+			/* Parent process */
 			int k;
 			for(k=0; k< 20; k++)  {
 				(void) close(k);
@@ -808,7 +809,11 @@ int	width, height;
 				/* NULL */ ;
 
 			exit(0);
+		} else if( f < 0 )  {
+			fb_log("sgi_dopen:  linger-mode fork failure\n");
+			return(-1);
 		}
+		/* Child Process falls through */
 	}
 
 	/*
@@ -1079,7 +1084,7 @@ FBIO	*ifp;
 	if(sgi_mpfail(ifp, "close", 0)) return(-1);
 	winset(ifp->if_fd);
 
-	if( sgi_nwindows > 0 ||
+	if( sgi_nwindows > 1 ||
 	    (ifp->if_mode & MODE_2MASK) == MODE_2TRANSIENT )
 		goto out;
 
