@@ -29,8 +29,8 @@
  */
 
 #include <stdio.h>
-#include <rle.h>
 #include <math.h>
+#include "rle.h"
 
 /*****************************************************************
  * TAG( float_to_exp )

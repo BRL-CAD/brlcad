@@ -29,8 +29,8 @@
  */
 
 #include <stdio.h>
-#include <rle.h>
-#include <rle_raw.h>
+#include "rle.h"
+#include "rle_raw.h"
 
 #ifndef VOID_STAR
 extern char * malloc();

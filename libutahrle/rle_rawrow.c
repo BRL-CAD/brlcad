@@ -8,8 +8,8 @@
  * Copyright (c) 1990, University of Michigan
  */
 
-#include <rle.h>
-#include <rle_raw.h>
+#include "rle.h"
+#include "rle_raw.h"
 #ifdef USE_STDLIB_H
 #include <stdlib.h>
 #endif /* USE_STDLIB_H */

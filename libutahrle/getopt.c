@@ -23,7 +23,6 @@
  * getopt - get option letter from argv
  */
 
-#include "rle_config.h"
 #include <stdio.h>
 #ifdef USE_STRING_H
 #include <string.h>
@@ -31,6 +30,7 @@
 #else
 #include <strings.h>
 #endif
+#include "rle_config.h"
 
 char	*optarg;	/* Global argument pointer. */
 int	optind = 0;	/* Global argv index. */

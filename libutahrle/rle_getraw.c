@@ -32,11 +32,11 @@ static char rcs_ident[] = "$Id$";
 #endif
 
 #include <stdio.h>
-#include <rle.h>
-#include <rle_raw.h>
 #ifdef USE_STDLIB_H
 #include <stdlib.h>
 #else
+#include "rle.h"
+#include "rle_raw.h"
 
 #ifndef VOID_STAR
 extern char * malloc();

@@ -32,9 +32,9 @@ static char rcs_ident[] = "$Id$";
 #endif
 
 #include <stdio.h>
-#include <rle_put.h>
-#include <rle.h>
-#include <rle_raw.h>
+#include "rle_put.h"
+#include "rle.h"
+#include "rle_raw.h"
 
 /*****************************************************************
  * TAG( rle_putraw )

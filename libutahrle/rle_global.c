@@ -31,8 +31,8 @@
  */
 
 #include <stdio.h>
-#include <rle_put.h>
-#include <rle.h>
+#include "rle_put.h"
+#include "rle.h"
 
 extern int	RunSetup( ARB_ARGS ),
 		RunSkipBlankLines( ARB_ARGS ),

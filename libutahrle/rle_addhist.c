@@ -25,7 +25,6 @@
  * Copyright (c) 1988, Curtin University of Technology
  */
 
-#include "rle.h"
 #include <stdio.h>
 #ifdef USE_STRING_H
 #include <string.h>
@@ -38,6 +37,7 @@
 #else
 #include <time.h>
 #endif
+#include "rle.h"
 
 /*****************************************************************
  * TAG( rle_addhist )

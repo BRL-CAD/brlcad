@@ -26,7 +26,7 @@
  */
 
 #include <stdio.h>
-#include <rle.h>
+#include "rle.h"
 
 /*****************************************************************
  * TAG( match )

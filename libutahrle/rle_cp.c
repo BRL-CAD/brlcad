@@ -25,9 +25,9 @@
  * Copyright (c) 1990, University of Michigan
  */
 
-#include <rle.h>
-#include <rle_code.h>
-#include <rle_put.h>
+#include "rle.h"
+#include "rle_code.h"
+#include "rle_put.h"
 
 /* Read a two-byte "short" that started in VAX (LITTLE_ENDIAN) order */
 #define VAXSHORT( var, fp )\
