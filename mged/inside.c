@@ -458,7 +458,7 @@ plane_t	planes[6];
 {
 	struct rt_arb_internal	*arb = (struct rt_arb_internal *)ip->idb_ptr;
 	point_t		center_pt;
-	int		num_pts=8;
+	int		num_pts=8;	/* number of points to solve using rt_arb_3face_intersect */
 	int		i;
 
 	RT_ARB_CK_MAGIC(arb);
@@ -466,15 +466,21 @@ plane_t	planes[6];
 	/* find reference point (center_pt[3]) to find direction of normals */
 	rt_arb_centroid( center_pt, arb, cgtype );
 
-	/* move new face planes for the desired thicknesses */
-	for(i=0; i<nface; i++) {
-		if( (planes[i][3] - VDOT(center_pt, &planes[i][0])) > 0.0 )
-			thick[i] *= -1.0;
-		planes[i][3] += thick[i];
+	/* move new face planes for the desired thicknesses
+	 * don't do this yet for an arb7 */
+	if( cgtype != 7 )
+	{
+		for(i=0; i<nface; i++) {
+			if( (planes[i][3] - VDOT(center_pt, &planes[i][0])) > 0.0 )
+				thick[i] *= -1.0;
+			planes[i][3] += thick[i];
+		}
 	}
 
-	if( cgtype == 5 )
-		num_pts = 4;
+	if( cgtype == 5 ) 
+		num_pts = 4;	/* use rt_arb_3face_intersect for first 4 points */
+	else if( cgtype == 7 )
+		num_pts = 0;	/* don't use rt_arb_3face_intersect for any points */
 
 	/* find the new vertices by intersecting the new face planes */
 	for(i=0; i<num_pts; i++) {
@@ -484,57 +490,84 @@ plane_t	planes[6];
 		}
 	}
 
+	/* The following is code for the special cases of arb5 and arb7
+	 * These arbs have a vertex that is the intersection of four planes, and
+	 * the inside solid may have a single vertex or an edge replacing this vertex
+	 */
 	if( cgtype == 5 )
 	{
+		/* Here we are only concerned with the one vertex where 4 planes intersect
+		 * in the original solid
+		 */
 		point_t pt[4];
-		fastf_t min_dist=MAX_FASTF;
-		int min_pt;
+		fastf_t dist0,dist1;
 
-		for( i=0 ; i<4 ; i++ )
+		/* calculate the four possible intersect points */
+		if( rt_mkpoint_3planes( pt[0] , planes[1] , planes[2] , planes[3] ) )
 		{
-			int j,k,l;
-
-			j = i+1;
-			if( j > 4 )
-				j -= 4;
-			k = i+2;
-			if( k > 4 )
-				k -= 4;
-			l = i+3;
-			if( l > 4 )
-				l -= 4;
-
-			if( rt_mkpoint_3planes( pt[i] , planes[j] , planes[k] , planes[l] ) )
-			{
-				(void)printf( "Cannot find inside arb5\n" );
-				return( 1 );
-			}
-			
+			(void)printf( "Cannot find inside arb5\n" );
+			(void)printf( "Cannot find intersection of three planes for point 0:\n" );
+			(void)printf( "\t%f %f %f %f\n" , V4ARGS( planes[1] ) );
+			(void)printf( "\t%f %f %f %f\n" , V4ARGS( planes[2] ) );
+			(void)printf( "\t%f %f %f %f\n" , V4ARGS( planes[3] ) );
+			return( 1 );
 		}
+		if( rt_mkpoint_3planes( pt[1] , planes[2] , planes[3] , planes[4] ) )
+		{
+			(void)printf( "Cannot find inside arb5\n" );
+			(void)printf( "Cannot find intersection of three planes for point 1:\n" );
+			(void)printf( "\t%f %f %f %f\n" , V4ARGS( planes[2] ) );
+			(void)printf( "\t%f %f %f %f\n" , V4ARGS( planes[3] ) );
+			(void)printf( "\t%f %f %f %f\n" , V4ARGS( planes[4] ) );
+			return( 1 );
+		}
+		if( rt_mkpoint_3planes( pt[2] , planes[3] , planes[4] , planes[1] ) )
+		{
+			(void)printf( "Cannot find inside arb5\n" );
+			(void)printf( "Cannot find intersection of three planes for point 2:\n" );
+			(void)printf( "\t%f %f %f %f\n" , V4ARGS( planes[3] ) );
+			(void)printf( "\t%f %f %f %f\n" , V4ARGS( planes[4] ) );
+			(void)printf( "\t%f %f %f %f\n" , V4ARGS( planes[1] ) );
+			return( 1 );
+		}
+		if( rt_mkpoint_3planes( pt[3] , planes[4] , planes[1] , planes[2] ) )
+		{
+			(void)printf( "Cannot find inside arb5\n" );
+			(void)printf( "Cannot find intersection of three planes for point 3:\n" );
+			(void)printf( "\t%f %f %f %f\n" , V4ARGS( planes[4] ) );
+			(void)printf( "\t%f %f %f %f\n" , V4ARGS( planes[1] ) );
+			(void)printf( "\t%f %f %f %f\n" , V4ARGS( planes[2] ) );
+			return( 1 );
+		}
+			
 		if( rt_pt3_pt3_equal( pt[0] , pt[1] , &mged_tol ) )
 		{
+			/* if any two of the calculates intersection points are equal,
+			 * then all four must be equal
+			 */
 			for( i=4 ; i<8 ; i++ )
 				VMOVE( arb->pt[i] , pt[0] );
 
 			return( 0 );
 		}
 
-		for( i=0 ; i<4 ; i++ )
-		{
-			fastf_t dist;
+		/* There will be an edge where the four planes come together
+		 * Two edges of intersection have been calculated
+		 *     pt[0]<->pt[2]
+		 *     pt[1]<->pt[3]
+		 * the one closest to the non-invloved plane (planes[0]) is the
+		 * one we want
+		 */
 
-			dist = DIST_PT_PLANE( pt[i] , planes[0] );
-			if( dist < 0.0 )
-				dist = (-dist);
+		dist0 = DIST_PT_PLANE( pt[0] , planes[0] );
+		if( dist0 < 0.0 )
+			dist0 = (-dist0);
 
-			if( dist < min_dist )
-			{
-				min_dist = dist;
-				min_pt = i;
-			}
-		}
+		dist1 = DIST_PT_PLANE( pt[1] , planes[0] );
+		if( dist1 < 0.0 )
+			dist1 = (-dist1);
 
-		if( min_pt == 0 || min_pt == 2 )
+		if( dist0 < dist1 )
 		{
 			VMOVE( arb->pt[5] , pt[0] );
 			VMOVE( arb->pt[6] , pt[0] );
@@ -548,6 +581,101 @@ plane_t	planes[6];
 			VMOVE( arb->pt[6] , pt[1] );
 			VMOVE( arb->pt[7] , pt[1] );
 		}
+	}
+	else if( cgtype == 7 )
+	{
+		struct model *m;
+		struct nmgregion *r;
+		struct shell *s;
+		struct faceuse *fu;
+		struct rt_tess_tol ttol;
+		struct nmg_ptbl vert_tab;
+
+		ttol.magic = RT_TESS_TOL_MAGIC;
+		ttol.abs = mged_abs_tol;
+		ttol.rel = mged_rel_tol;
+		ttol.norm = mged_nrm_tol;
+
+		/* Make a model to hold the inside solid */
+		m = nmg_mm();
+
+		/* get an NMG version of this arb7 */
+		if( rt_functab[ip->idb_type].ft_tessellate( &r , m , ip , &ttol , &mged_tol ) )
+		{
+			(void)printf( "Cannot tessellate arb7\n" );
+			rt_functab[ip->idb_type].ft_ifree( ip );
+			return( 1 );
+		}
+
+		/* move face planes */
+		for( i=0 ; i<nface ; i++ )
+		{
+			int found=0;
+
+			/* look for the face plane with the same geometry as the arb7 planes */
+			s = RT_LIST_FIRST( shell , &r->s_hd );
+			for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
+			{
+				struct face_g *fg;
+				plane_t pl;
+
+				NMG_CK_FACEUSE( fu );
+				if( fu->orientation != OT_SAME )
+					continue;
+
+				NMG_GET_FU_PLANE( pl , fu );
+				if( rt_coplanar( planes[i] , pl , &mged_tol ) > 0 )
+				{
+					/* found the NMG face geometry that matches arb face i */
+					found = 1;
+					fg = fu->f_p->fg_p;
+					NMG_CK_FACE_G( fg );
+
+					/* move the face by distance "thick[i]" */
+					if( fu->f_p->flip )
+						fg->N[3] += thick[i];
+					else
+						fg->N[3] -= thick[i];
+
+					break;
+				}
+			}
+			if( !found )
+			{
+				(void)printf( "Could not move face plane for arb7, face #%d\n" , i );
+				nmg_km( m );
+				return( 1 );
+			}
+		}
+
+		/* solve for new vertex geometry
+		 * This does all the vertices
+		 */
+		nmg_tbl( &vert_tab , TBL_INIT , (long *)NULL );
+		nmg_vertex_tabulate( &vert_tab , &m->magic );
+		for( i=0 ; i<NMG_TBL_END( &vert_tab ) ; i++ )
+		{
+			struct vertex *v;
+
+			v = (struct vertex *)NMG_TBL_GET( &vert_tab , i );
+			NMG_CK_VERTEX( v );
+
+			if( nmg_in_vert( v , &mged_tol ) )
+			{
+				(void)printf( "Could not find coordinates for inside arb7\n" );
+				nmg_km( m );
+				nmg_tbl( &vert_tab , TBL_FREE , (long *)NULL );
+				return( 1 );
+			}
+		}
+		nmg_tbl( &vert_tab , TBL_FREE , (long *)NULL );
+
+		/* free old ip pointer */
+		rt_db_free_internal( ip );
+
+		/* put new solid in "ip" */
+		ip->idb_type = ID_NMG;
+		ip->idb_ptr = (genptr_t)m;
 	}
 
 	return(0);
@@ -896,7 +1024,7 @@ fastf_t thick;
 
 	if( RT_LIST_IS_EMPTY( &m->r_hd ) )
 	{
-		rt_log( "No inside created\n" );
+		(void)printf( "No inside created\n" );
 		nmg_km( m );
 		return( 1 );
 	}
