@@ -103,6 +103,7 @@ _LOCAL_ int	sgi_open(),
 		sgi_writerect(),
 		sgi_poll(),
 		sgi_free(),
+		sgi_flush(),
 		sgi_help();
 
 /* This is the ONLY thing that we "export" */
@@ -124,7 +125,7 @@ FBIO sgi_interface =
 		fb_sim_readrect,
 		sgi_writerect,
 		sgi_poll,		/* handle events */
-		fb_null,		/* flush */
+		sgi_flush,		/* flush */
 		sgi_free,		/* free*/
 		sgi_help,
 		"Silicon Graphics Iris '4D'",
@@ -180,7 +181,6 @@ struct sgi_pixel {
  */
 struct sgiinfo {
 	short	mi_curs_on;
-	int	mi_rgb_ct;
 	short	mi_cmap_flag;
 	int	mi_shmid;
 	int	mi_memwidth;		/* width of scanline in if_mem */
@@ -258,6 +258,10 @@ struct sgiinfo {
 #define MODE_10NORMAL	(0<<9)
 #define MODE_10SYNC_ON_GREEN	(1<<9)
 
+#define MODE_11MASK	(1<<10)
+#define MODE_11NORMAL	(0<<10)
+#define MODE_11DELAY_WRITES_TILL_FLUSH	(1<<10)
+
 #define MODE_15MASK	(1<<14)
 #define MODE_15NORMAL	(0<<14)
 #define MODE_15ZAP	(1<<14)
@@ -288,6 +292,8 @@ static struct modeflags {
 		"Don't use GT & Z-buffer hardware, if present (debug)" },
 	{ 's',	MODE_9MASK, MODE_9SINGLEBUF,
 		"On GT, single buffer, don't double buffer" },
+	{ 'd',	MODE_11DELAY_WRITES_TILL_FLUSH, MODE_11DELAY_WRITES_TILL_FLUSH,
+		"Don't update screen until fb_flush() is called.  (Double buffer sim)" },
 	{ 'z',	MODE_15MASK, MODE_15ZAP,
 		"Zap (free) shared memory.  Can also be done with fbfree command" },
 	{ '\0', 0, 0, "" }
@@ -1106,6 +1112,8 @@ int	width, height;
 	/*
 	 *  Set the operating mode for the newly created window.
 	 */
+	if( (ifp->if_mode & MODE_11MASK) == MODE_11DELAY_WRITES_TILL_FLUSH )
+		SGI(ifp)->mi_is_gt = 0;
 	if( SGI(ifp)->mi_is_gt )  {
 		if( (ifp->if_mode & MODE_9MASK) == MODE_9SINGLEBUF )  {
 			singlebuffer();
@@ -1199,9 +1207,11 @@ int	width, height;
 	 *  Display the existing contents of the memory segment.
 	 *  Make no assumptions about the state of the window.
 	 */
-	sgi_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
-	if( SGI(ifp)->mi_is_gt )  {
-		gt_zbuf_to_screen( ifp, -1 );
+	if( (ifp->if_mode & MODE_11MASK) != MODE_11DELAY_WRITES_TILL_FLUSH )  {
+		sgi_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
+		if( SGI(ifp)->mi_is_gt )  {
+			gt_zbuf_to_screen( ifp, -1 );
+		}
 	}
 
 	/* Make the file descriptor available for selecting on */
@@ -1331,6 +1341,8 @@ FBIO	*ifp;
 	FILE *fp = NULL;
 
 	winset(ifp->if_fd);
+
+	sgi_flush(ifp);
 
 	if( sgi_nwindows > 1 ||
 	    (ifp->if_mode & MODE_2MASK) == MODE_2TRANSIENT )
@@ -1709,6 +1721,9 @@ int		count;
 	if( qtest() )
 		sgi_inqueue(ifp);
 
+	if( (ifp->if_mode & MODE_11MASK) == MODE_11DELAY_WRITES_TILL_FLUSH )
+		return ret;
+
 	if( xstart + count <= ifp->if_width  )  {
 		/* "Fast path" case for writes of less than one scanline */
 		if( SGI(ifp)->mi_doublebuffer )  {
@@ -1780,10 +1795,12 @@ CONST unsigned char	*pp;
 	if( qtest() )
 		sgi_inqueue(ifp);
 
-	sgi_xmit_scanlines( ifp, ymin, height, 0, ifp->if_width );
-	if( SGI(ifp)->mi_is_gt )  {
-		/* repaint screen from Z buffer */
-		gt_zbuf_to_screen( ifp, -1 );
+	if( (ifp->if_mode & MODE_11MASK) != MODE_11DELAY_WRITES_TILL_FLUSH )  {
+		sgi_xmit_scanlines( ifp, ymin, height, 0, ifp->if_width );
+		if( SGI(ifp)->mi_is_gt )  {
+			/* repaint screen from Z buffer */
+			gt_zbuf_to_screen( ifp, -1 );
+		}
 	}
 	return(width*height);
 }
@@ -2049,12 +2066,42 @@ FBIO	*ifp;
 		ifp->if_height );
 	fb_log( "Usage: /dev/sgi[option letters]\n" );
 	for( mfp = modeflags; mfp->c != '\0'; mfp++ ) {
-		fb_log( "   %c   %s\n", mfp->c, mfp->help );
+		fb_log( "%c  %c   %s\n",
+			((ifp->if_mode & mfp->mask) == mfp->value) ? 'Y' : ' ',
+			mfp->c, mfp->help );
 	}
+
+	fb_log( "\nCurrent internal state:\n");
+	fb_log( "	mi_doublebuffer=%d\n", SGI(ifp)->mi_doublebuffer );
+	fb_log( "	mi_cmap_flag=%d\n", SGI(ifp)->mi_cmap_flag );
+	fb_log( "	mi_is_gt=%d\n", SGI(ifp)->mi_is_gt );
 
 	return(0);
 }
 
+/*
+ *			S G I _ F L U S H
+ *
+ *  When simulating a double-buffered display, don't send any updated
+ *  pixels to the screen until explicitly flushed.
+ */
+_LOCAL_ int
+sgi_flush( ifp )
+FBIO	*ifp;
+{
+	if( (ifp->if_mode & MODE_11MASK) != MODE_11DELAY_WRITES_TILL_FLUSH )
+		return 0;
+
+	winset(ifp->if_fd);
+
+	/* Send entire in-memory buffer to the screen, all at once */
+	sgi_xmit_scanlines( ifp, 0, ifp->if_height, 0, ifp->if_width );
+	if( SGI(ifp)->mi_is_gt )  {
+		/* repaint screen from Z buffer */
+		gt_zbuf_to_screen( ifp, -1 );
+	}
+	return 0;
+}
 
 /***************************************************************************/
 /***************************************************************************/
