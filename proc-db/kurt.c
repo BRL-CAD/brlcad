@@ -32,6 +32,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 mat_t	identity;
 double degtorad = 0.0174532925199433;
 
+static vect_t	up = {0, 0, 1};
+static vect_t	down = {0, 0, -1};
+
 struct val {
 	double	v_z[3];
 	double	v_x;
@@ -42,7 +45,6 @@ struct val {
 main(argc, argv)
 char	**argv;
 {
-	vect_t	norm;
 	char	rgb[3];
 	int	ix, iy;
 	double	x, y;
@@ -150,42 +152,125 @@ double	xc, yc;		/* center coordinates, z=0+ */
 draw_rect( a, b, c, d )
 struct val *a, *b, *c, *d;
 {
-	register int lvl;
+	int min, max;
 	register int i;
+	point_t	centroid, work;
 	point_t pt[4];
 	fastf_t	verts[5][3];
 	fastf_t	norms[5][3];
 	static struct val v[3];
+	int	ndiff;
+	int	lvl;
+	int	j;
+	struct val	*vp[4];
 
-	/* Find max # of points at any of the 4 vertices */
-	lvl = a->v_n;
-	if( b->v_n > lvl )  lvl = b->v_n;
-	if( c->v_n > lvl )  lvl = c->v_n;
-	if( d->v_n > lvl )  lvl = d->v_n;
+	/* Find min and max # of points at the 4 vertices */
+	max = a->v_n;
+	if( b->v_n > max )  max = b->v_n;
+	if( c->v_n > max )  max = c->v_n;
+	if( d->v_n > max )  max = d->v_n;
+	min = a->v_n;
+	if( b->v_n < min )  min = b->v_n;
+	if( c->v_n < min )  min = c->v_n;
+	if( d->v_n < min )  min = d->v_n;
 
-	if( a->vn == lvl && b->vn == lvl && 
-	    c->vn == lvl && d->vn == lvl )  {
-		for( i=0; i<lvl; i++ )  {
-			VSET( verts[0], a->v_x, a->v_y, a->v_z[i] );
-			VSET( verts[1], b->v_x, b->v_y, b->v_z[i] );
-			VSET( verts[2], c->v_x, c->v_y, c->v_z[i] );
-			/* even # faces point up, odd#s point down */
-			pnorms( norms, verts, i&1, 3 );
-			mk_facet( stdout, 3, verts, norms );
-		}
+	ndiff = 0;
+	if( a->v_n > min )  vp[ndiff++] = a;
+	if( b->v_n > min )  vp[ndiff++] = b;
+	if( c->v_n > min )  vp[ndiff++] = c;
+	if( d->v_n > min )  vp[ndiff++] = d;
+
+	
+	VSET( work, a->v_x, a->v_y, a->v_z[0] );
+	VMOVE( centroid, work );
+	VSET( work, b->v_x, b->v_y, b->v_z[0] );
+	VADD2( centroid, centroid, work );
+	VSET( work, c->v_x, c->v_y, c->v_z[0] );
+	VADD2( centroid, centroid, work );
+	VSET( work, d->v_x, d->v_y, d->v_z[0] );
+	VADD2( centroid, centroid, work );
+	VSCALE( centroid, centroid, 0.25 );
+
+	/* First, the simple part.  Assume that all 4-way shared levels
+	 * are stacked plates.  Do them now, then worry about oddities.
+	 * For general functions, this may be dangerous, but works fine here.
+	 */
+	for( i=0; i<min; i++ )  {
+		VSET( verts[0], a->v_x, a->v_y, a->v_z[i] );
+		VSET( verts[1], b->v_x, b->v_y, b->v_z[i] );
+		VSET( verts[2], c->v_x, c->v_y, c->v_z[i] );
+		/* even # faces point up, odd#s point down */
+		pnorms( norms, verts, (i&1)?down:up, 3 );
+		mk_facet( stdout, 3, verts, norms );
+
+		VSET( verts[0], d->v_x, d->v_y, d->v_z[i] );
+		VSET( verts[1], b->v_x, b->v_y, b->v_z[i] );
+		VSET( verts[2], c->v_x, c->v_y, c->v_z[i] );
+		/* even # faces point up, odd#s point down */
+		pnorms( norms, verts, (i&1)?down:up, 3 );
+		mk_facet( stdout, 3, verts, norms );
+	}
+	/* If 0 or 1 corners have something above them, nothing needs drawn */
+	if( ndiff == 0 || ndiff == 1 )  return;
+	/* Harder case:  handle different depths on corners */
+	if( ndiff == 2 &&
+	    vp[0]->v_x != vp[1]->v_x &&
+	    vp[0]->v_y != vp[1]->v_y )  {
+		fprintf(stderr, "2 corners on diagonal differ?\n");
 	    	return;
 	}
-	/* Harder case:  handle different depths on corners */
+
+	/* Draw 1 or 2 extra faces to close off each new upper zone */
+	for( lvl = min; lvl < max; lvl += 2 )  {
+		for( i=0; i<ndiff-1; i++ )  {
+			for( j=i; j<ndiff; j++ )  {
+				/* Reject diagonals */
+				if( vp[i]->v_x != vp[j]->v_x &&
+				    vp[i]->v_y != vp[j]->v_y )
+					continue;
+
+				VSET( verts[0],
+					vp[i]->v_x, vp[i]->v_y,
+					vp[i]->v_z[lvl] );
+				VSET( verts[1],
+					vp[j]->v_x, vp[j]->v_y,
+					vp[j]->v_z[lvl] );
+				VSET( verts[2],
+					vp[i]->v_x, vp[i]->v_y,
+					vp[i]->v_z[lvl+1] );
+
+				VSUB2( work, centroid, verts[0] );
+				VUNITIZE( work );
+				pnorms( norms, verts, work, 3 );
+				mk_facet( stdout, 3, verts, norms );
+
+				VSET( verts[0],
+					vp[i]->v_x, vp[i]->v_y,
+					vp[i]->v_z[lvl+1] );
+				VSET( verts[1],
+					vp[j]->v_x, vp[j]->v_y,
+					vp[j]->v_z[lvl] );
+				VSET( verts[2],
+					vp[j]->v_x, vp[j]->v_y,
+					vp[j]->v_z[lvl+1] );
+
+				VSUB2( work, centroid, verts[0] );
+				VUNITIZE( work );
+				pnorms( norms, verts, work, 3 );
+				mk_facet( stdout, 3, verts, norms );
+			}
+		}
+	}
 }
 
 /*
  *  Find the single outward pointing normal for a facet.
  *  Assumes all points are coplanar (they better be!).
  */
-pnorms( norms, verts, down, npts )
+pnorms( norms, verts, out, npts )
 fastf_t	norms[5][3];
 fastf_t	verts[5][3];
-int	down;		/* 0 = norms up, 1 = norms down */
+vect_t	out;
 int	npts;
 {
 	register int i;
@@ -198,15 +283,9 @@ int	npts;
 	VCROSS( n, ab, ac );
 	VUNITIZE( n );
 
-	/* If normal points opposite to flag, flip it */
-	if( down )  {
-		if( n[Z] > 0 )  {
-			VREVERSE( n, n );
-		}
-	} else {
-		if( n[Z] < 0 )  {
-			VREVERSE( n, n );
-		}
+	/* If normal points inwards, flip it */
+	if( VDOT( n, out ) < 0 )  {
+		VREVERSE( n, n );
 	}
 
 	/* Use same normal for all vertices (flat shading) */
