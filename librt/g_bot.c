@@ -334,7 +334,8 @@ int			pieces_flag;	/* !0 if more pieces still to come */
 				BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 			}
 		}
-		return( nhits );
+		/* Every hit turns into two, and makes a seg.  No leftovers */
+		return( nhits*2 );
 	}
 
 	if( bot->bot_mode == RT_BOT_SURFACE )
@@ -356,6 +357,8 @@ int			pieces_flag;	/* !0 if more pieces still to come */
 			segp->seg_out.hit_vpriv[Z] = -1;
 			BU_LIST_INSERT( &(seghead->l), &(segp->l) );
 		}
+		/* Every hit turns into two, and makes a seg.  No leftovers */
+		return( nhits*2 );
 	}
 
 	if( bot->bot_mode == RT_BOT_SOLID )
