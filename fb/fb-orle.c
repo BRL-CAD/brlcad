@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) fb-rle.c	1.8
-	Last edit: 	10/15/85 at 14:54:04
-	Retrieved: 	8/13/86 at 03:11:15
+	SCCS id:	@(#) fb-rle.c	1.9
+	Last edit: 	10/15/85 at 15:10:57
+	Retrieved: 	8/13/86 at 03:11:24
 	SCCS archive:	/m/cad/fb_utils/RCS/s.fb-rle.c
 
 	Author:		Gary S. Moss
@@ -12,7 +12,7 @@
  */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) fb-rle.c	1.8	last edit 10/15/85 at 14:54:04";
+char	sccsTag[] = "@(#) fb-rle.c	1.9	last edit 10/15/85 at 15:10:57";
 #endif
 #include <stdio.h>
 #include <fb.h>
@@ -27,7 +27,7 @@ char	sccsTag[] = "@(#) fb-rle.c	1.8	last edit 10/15/85 at 14:54:04";
 #define PIXEL_OFFSET	((scan_ln%dma_scans)*_fbsize)
 static char	*usage[] = {
 "",
-"fb-rle (1.8)",
+"fb-rle (1.9)",
 "",
 "Usage: fb-rle [-CScdhvw][-l X Y][-p X Y][file.rle]",
 "",
@@ -166,7 +166,7 @@ register char	**argv;
 			setfbsize( 1024 );
 			break;
 		case 'l' : /* Length in x and y.			*/
-			if( argc - optind < 2 )
+			if( argc - optind < 1 )
 				{
 				(void) fprintf( stderr,
 				"-l option requires an X and Y argument!\n"
@@ -177,7 +177,7 @@ register char	**argv;
 			ylen = atoi( argv[optind++] );
 			break;
 		case 'p' : /* Position of bottom-left corner.		*/
-			if( argc - optind < 2 )
+			if( argc - optind < 1 )
 				{
 				(void) fprintf( stderr,
 				"-p option requires an X and Y argument!\n"
