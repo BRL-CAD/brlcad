@@ -9,7 +9,7 @@
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
-#define FILES	main msran sharpen tone_classic tone_floyd tone_folly \
+#define FILES	main sharpen tone_classic tone_floyd tone_folly \
 		tone_simple tonescale
 
 #include "../Cakefile.defs"
@@ -18,6 +18,6 @@
 /* Explicit composition of each product */
 
 halftone:	OBJ 
-	CC LDFLAGS -o halftone OBJ LIBES
+	CC LDFLAGS -o halftone OBJ  LIB_PRE''LIBRT LIB_PRE''LIBFB LIBFB_LIBES LIBRT_LIBES LIBMALLOC LIBES
 
 #include "../Cakefile.rules"
