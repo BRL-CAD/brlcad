@@ -46,8 +46,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 extern int	newargs;
 extern char	**promp;
 
-static int	cgarbs();
-
 char *p_arb3pt[] = {
 	"Enter X, Y, Z for point 1: ",
 	"Enter Y, Z: ",
