@@ -86,7 +86,8 @@ int len;
 		    || feof(rt_i.fp) )
 			break;
 
-		if( record.u_id == ID_IDENT )  {
+		switch( record.u_id )  {
+		case ID_IDENT:
 			if( strcmp( record.i.i_version, ID_VERSION) != 0 )  {
 				rt_log("WARNING: File is Version %s, Program is version %s\n",
 					record.i.i_version, ID_VERSION );
@@ -94,74 +95,65 @@ int len;
 			if( buf[0] == '\0' )
 				strncpy( buf, record.i.i_title, len );
 			continue;
-		}
-		if( record.u_id == ID_FREE )  {
+		case ID_FREE:
 			continue;
-		}
-		if( record.u_id == ID_ARS_A )  {
+		case ID_ARS_A:
 			rt_dir_add( record.a.a_name, addr );
-
-			/* Skip remaining B type records.	*/
-			(void)fseek( rt_i.fp,
-				(long)(record.a.a_totlen) *
-				(long)(sizeof record),
-				1 );
 			continue;
-		}
-
-		if( record.u_id == ID_SOLID )  {
+		case ID_ARS_B:
+			continue;
+		case ID_SOLID:
 			rt_dir_add( record.s.s_name, addr );
 			continue;
-		}
-		if( record.u_id == ID_MATERIAL )  {
+		case ID_MATERIAL:
 			rt_color_addrec( &record, addr );
 			continue;
-		}
-		if( record.u_id == ID_P_HEAD )  {
-			union record rec;
-			register int nrec;
+		case ID_P_HEAD:
+			{
+				union record rec;
+				register int nrec;
 
-			nrec = 1;
-			while(1) {
-				register int here;
-				here = ftell( rt_i.fp );
-				if( fread( (char *)&rec, sizeof(rec), 1,
-				    rt_i.fp ) != 1 )
-					break;
-				if( rec.u_id != ID_P_DATA )  {
-					fseek( rt_i.fp, here, 0 );
-					break;
+				nrec = 1;
+				while(1) {
+					register int here;
+					here = ftell( rt_i.fp );
+					if( fread( (char *)&rec, sizeof(rec), 1,
+					    rt_i.fp ) != 1 )
+						break;
+					if( rec.u_id != ID_P_DATA )  {
+						fseek( rt_i.fp, here, 0 );
+						break;
+					}
+					nrec++;
 				}
-				nrec++;
+				rt_dir_add( record.p.p_name, addr );
+				continue;
 			}
-			rt_dir_add( record.p.p_name, addr );
-			continue;
-		}
-		if( record.u_id == ID_BSOLID )  {
+		case ID_BSOLID:
 			rt_dir_add( record.B.B_name, addr );
 			continue;
-		}
-		if( record.u_id == ID_BSURF )  {
-			register int j;
-			/* Just skip over knots and control mesh */
-			j = (record.d.d_nknots + record.d.d_nctls) *
-				sizeof(union record);
-			fseek( rt_i.fp, j, 1 );
-			rt_dir_add( record.p.p_name, addr );
+		case ID_BSURF:
+			{
+				register int j;
+				/* Just skip over knots and control mesh */
+				j = (record.d.d_nknots + record.d.d_nctls) *
+					sizeof(union record);
+				/****** NON-PORTABLE ******/
+				fseek( rt_i.fp, j, 1 );
+				rt_dir_add( record.p.p_name, addr );
+				continue;
+			}
+		case ID_MEMB:
 			continue;
-		}
-		if( record.u_id != ID_COMB )  {
-			rt_log("rt_dirbuild:  unknown record %c (0%o)\n",
-				record.u_id, record.u_id );
+		case ID_COMB:
+			rt_dir_add( record.c.c_name, addr );
+			continue;
+		default:
+			rt_log("rt_dirbuild:  unknown record %c (0%o), addr=x%x\n",
+				record.u_id, record.u_id, addr );
 			/* skip this record */
 			continue;
 		}
-
-		rt_dir_add( record.c.c_name, addr );
-		/* Skip over member records */
-		(void)fseek( rt_i.fp,
-			(long)record.c.c_length * (long)sizeof record,
-			1 );
 	}
 	/* Eventually, we will malloc() this on a per-db basis */
 	return( &rt_i );	/* OK */
