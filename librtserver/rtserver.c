@@ -1,9 +1,10 @@
 /*
- *		L I B R T S E R V E R . C
+ *		R T S E R V E R . C
  *
  *	library for BRL-CAD raytrace server
  *
- *  Author: John R. Anderson
+ *  Author -
+ *      John R. Anderson
  *
  *  Source -
  *      The U. S. Army Research Laboratory
