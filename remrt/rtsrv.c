@@ -216,8 +216,13 @@ char **argv;
 
 		/* Go into our own process group */
 		n = getpid();
+/* SysV uses setprgrp with no args and it can't fail */
+#ifndef SYSV
 		if( setpgrp( n, n ) < 0 )
 			perror("setpgrp");
+#else
+		setpgrp();
+#endif
 
 		/* Deal with CPU limits on "those kinds" of systems */
 		if( rt_cpuget() > 0 )  {
