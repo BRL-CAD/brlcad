@@ -524,7 +524,7 @@ etags)
 	for dir in ${BDIRS} pro-engineer; do
 		echo -------------------------------- ${dir};
 #		etags -a -o etags ${dir}/*.c
-		find ${dir} -name \*.c -exec etags -a -o etags {} \;
+		find ${dir} -name \*.c -a \! -name vshoot.c -exec etags -a -o etags {} \;
 	done;;
 shell)
 	for dir in ${BDIRS}; do
