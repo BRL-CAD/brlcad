@@ -890,6 +890,32 @@ struct edge *e;
 }
 
 /*
+ *			N M G _ E B R E A K
+ *
+ *	break an edge in two.
+ *
+ *	This splits an edge into two parts.  The two resultant parts share
+ *	the same edge geometry.
+ */
+nmg_ebreak(v, e)
+struct vertex *v;
+struct edge *e;
+{
+	struct edge *e_p;
+	
+	e_p = nmg_esplit(v, e);
+
+	/* now that the edge has been split, let's make sure the two edges
+	 * share the same geometry.  This gives me the heebie-geebies. XXX
+	 */
+
+	if (!e->eg_p) return;
+
+	e_p->eg_p = e->eg_p;
+	e_p->eg_p->usage++;
+}
+
+/*
  *			N M G _ E I N S
  *
  *	Insert a new (zero length) edge at the begining of (ie, before)
