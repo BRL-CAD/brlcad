@@ -265,56 +265,109 @@ proc default_mouse_bindings { w } {
     set adcflag [adc draw]
 
     if {$adcflag == "1" && $transform == "a"} {
-	bind $w <Shift-ButtonPress-1> "winset $w; dm adc t %x %y; break"
-	bind $w <Shift-ButtonPress-2> "winset $w; dm adc t %x %y; break"
-	bind $w <Shift-ButtonPress-3> "winset $w; dm adc d %x %y; break"
+	bind $w <Shift-ButtonPress-1> "winset $w; dm adc t %x %y; \
+		shift_grip_hints $w \"Translate ADC\"; break"
+	bind $w <Shift-ButtonPress-2> "winset $w; dm adc t %x %y; \
+		shift_grip_hints $w \"Translate ADC\"; break"
+	bind $w <Shift-ButtonPress-3> "winset $w; dm adc d %x %y; \
+		shift_grip_hints $w \"Translate Tick Distance\"; break"
 
-	bind $w <Control-ButtonPress-1> "winset $w; dm adc 1 %x %y; break"
-	bind $w <Control-ButtonPress-2> "winset $w; dm adc 2 %x %y; break"
-	bind $w <Control-ButtonPress-3> "winset $w; dm adc d %x %y; break"
+	bind $w <Control-ButtonPress-1> "winset $w; dm adc 1 %x %y; \
+		shift_grip_hints $w \"Rotate Angle 1\"; break"
+	bind $w <Control-ButtonPress-2> "winset $w; dm adc 2 %x %y; \
+		shift_grip_hints $w \"Rotate Angle 2\"; break"
+	bind $w <Control-ButtonPress-3> "winset $w; dm adc d %x %y; \
+		shift_grip_hints $w \"Translate Tick Distance\"; break"
 
-	bind $w <Shift-Control-ButtonPress-1> "winset $w; dm adc d %x %y; break"
-	bind $w <Shift-Control-ButtonPress-2> "winset $w; dm adc d %x %y; break"
-	bind $w <Shift-Control-ButtonPress-3> "winset $w; dm adc d %x %y; break"
+	bind $w <Shift-Control-ButtonPress-1> "winset $w; dm adc d %x %y; \
+		shift_grip_hints $w \"Translate Tick Distance\"; break"
+	bind $w <Shift-Control-ButtonPress-2> "winset $w; dm adc d %x %y; \
+		shift_grip_hints $w \"Translate Tick Distance\"; break"
+	bind $w <Shift-Control-ButtonPress-3> "winset $w; dm adc d %x %y; \
+		shift_grip_hints $w \"Translate Tick Distance\"; break"
 
 #constrained adc defaults
-	bind $w <Alt-Shift-ButtonPress-1> "winset $w; dm con a x %x %y; break"
-	bind $w <Alt-Shift-ButtonPress-2> "winset $w; dm con a y %x %y; break"
-	bind $w <Alt-Shift-ButtonPress-3> "winset $w; dm con a d %x %y; break"
+	bind $w <Alt-Shift-ButtonPress-1> "winset $w; dm con a x %x %y; \
+		shift_grip_hints $w \"X Translate ADC\"; break"
+	bind $w <Alt-Shift-ButtonPress-2> "winset $w; dm con a y %x %y; \
+		shift_grip_hints $w \"Y Translate ADC\"; break"
+	bind $w <Alt-Shift-ButtonPress-3> "winset $w; dm con a d %x %y; \
+		shift_grip_hints $w \"Translate Tick Distance\"; break"
 
-	bind $w <Alt-Control-ButtonPress-1> "winset $w; dm con a 1 %x %y; break"
-	bind $w <Alt-Control-ButtonPress-2> "winset $w; dm con a 2 %x %y; break"
-	bind $w <Alt-Control-ButtonPress-3> "winset $w; dm con a d %x %y; break"
+	bind $w <Alt-Control-ButtonPress-1> "winset $w; dm con a 1 %x %y; \
+		shift_grip_hints $w \"Rotate Angle 1\"; break"
+	bind $w <Alt-Control-ButtonPress-2> "winset $w; dm con a 2 %x %y; \
+		shift_grip_hints $w \"Rotate Angle 2\"; break"
+	bind $w <Alt-Control-ButtonPress-3> "winset $w; dm con a d %x %y; \
+		shift_grip_hints $w \"Translate Tick Distance\"; break"
 
-	bind $w <Alt-Shift-Control-ButtonPress-1> "winset $w; dm con a d %x %y; break"
-	bind $w <Alt-Shift-Control-ButtonPress-2> "winset $w; dm con a d %x %y; break"
-	bind $w <Alt-Shift-Control-ButtonPress-3> "winset $w; dm con a d %x %y; break"
+	bind $w <Alt-Shift-Control-ButtonPress-1> "winset $w; dm con a d %x %y; \
+		shift_grip_hints $w \"Translate Tick Distance\"; break"
+	bind $w <Alt-Shift-Control-ButtonPress-2> "winset $w; dm con a d %x %y; \
+		shift_grip_hints $w \"Translate Tick Distance\"; break"
+	bind $w <Alt-Shift-Control-ButtonPress-3> "winset $w; dm con a d %x %y; \
+		shift_grip_hints $w \"Translate Tick Distance\"; break"
     } else {
-	bind $w <Shift-ButtonPress-1> "winset $w; dm am t %x %y; break"
-	bind $w <Shift-ButtonPress-2> "winset $w; dm am t %x %y; break"
-	bind $w <Shift-ButtonPress-3> "winset $w; dm am t %x %y; break"
+	bind $w <Shift-ButtonPress-1> "winset $w; dm am t %x %y; \
+		shift_grip_hints $w Translate; break"
+	bind $w <Shift-ButtonPress-2> "winset $w; dm am t %x %y; \
+		shift_grip_hints $w Translate; break"
+	bind $w <Shift-ButtonPress-3> "winset $w; dm am t %x %y; \
+		shift_grip_hints $w Translate; break"
 
-	bind $w <Control-ButtonPress-1> "winset $w; dm am r %x %y; break"
-	bind $w <Control-ButtonPress-2> "winset $w; dm am r %x %y; break"
-	bind $w <Control-ButtonPress-3> "winset $w; dm am r %x %y; break"
+	bind $w <Control-ButtonPress-1> "winset $w; dm am r %x %y; \
+		shift_grip_hints $w Rotate; break"
+	bind $w <Control-ButtonPress-2> "winset $w; dm am r %x %y; \
+		shift_grip_hints $w Rotate; break"
+	bind $w <Control-ButtonPress-3> "winset $w; dm am r %x %y; \
+		shift_grip_hints $w Rotate; break"
 
-	bind $w <Shift-Control-ButtonPress-1> "winset $w; dm am s %x %y; break"
-	bind $w <Shift-Control-ButtonPress-2> "winset $w; dm am s %x %y; break"
-	bind $w <Shift-Control-ButtonPress-3> "winset $w; dm am s %x %y; break"
+	bind $w <Shift-Control-ButtonPress-1> "winset $w; dm am s %x %y; \
+		shift_grip_hints $w Scale/Zoom; break"
+	bind $w <Shift-Control-ButtonPress-2> "winset $w; dm am s %x %y; \
+		shift_grip_hints $w Scale/Zoom; break"
+	bind $w <Shift-Control-ButtonPress-3> "winset $w; dm am s %x %y; \
+		shift_grip_hints $w Scale/Zoom; break"
 
 #constrained defaults
-	bind $w <Alt-Shift-ButtonPress-1> "winset $w; dm con t x %x %y; break"
-	bind $w <Alt-Shift-ButtonPress-2> "winset $w; dm con t y %x %y; break"
-	bind $w <Alt-Shift-ButtonPress-3> "winset $w; dm con t z %x %y; break"
+	bind $w <Alt-Shift-ButtonPress-1> "winset $w; dm con t x %x %y; \
+		shift_grip_hints $w \"X Translation\"; break"
+	bind $w <Alt-Shift-ButtonPress-2> "winset $w; dm con t y %x %y; \
+		shift_grip_hints $w \"Y Translation\"; break"
+	bind $w <Alt-Shift-ButtonPress-3> "winset $w; dm con t z %x %y; \
+		shift_grip_hints $w \"Z Translation\"; break"
 
-	bind $w <Alt-Control-ButtonPress-1> "winset $w; dm con r x %x %y; break"
-	bind $w <Alt-Control-ButtonPress-2> "winset $w; dm con r y %x %y; break"
-	bind $w <Alt-Control-ButtonPress-3> "winset $w; dm con r z %x %y; break"
+	bind $w <Alt-Control-ButtonPress-1> "winset $w; dm con r x %x %y; \
+		shift_grip_hints $w \"X Rotation\"; break"
+	bind $w <Alt-Control-ButtonPress-2> "winset $w; dm con r y %x %y; \
+		shift_grip_hints $w \"Y Rotation\"; break"
+	bind $w <Alt-Control-ButtonPress-3> "winset $w; dm con r z %x %y; \
+		shift_grip_hints $w \"Z Rotation\"; break"
 
-	bind $w <Alt-Shift-Control-ButtonPress-1> "winset $w; dm con s x %x %y; break"
-	bind $w <Alt-Shift-Control-ButtonPress-2> "winset $w; dm con s y %x %y; break"
-	bind $w <Alt-Shift-Control-ButtonPress-3> "winset $w; dm con s z %x %y; break"
+	bind $w <Alt-Shift-Control-ButtonPress-1> "winset $w; dm con s x %x %y; \
+		scale_shift_grip_hints $w X; break"
+	bind $w <Alt-Shift-Control-ButtonPress-2> "winset $w; dm con s y %x %y; \
+		scale_shift_grip_hints $w Y; break"
+	bind $w <Alt-Shift-Control-ButtonPress-3> "winset $w; dm con s z %x %y; \
+		scale_shift_grip_hints $w Z; break"
     }   
+}
+
+proc shift_grip_hints { w hint } {
+    global mged_display
+    global mged_gui
+    global win_to_id
+
+    set id $win_to_id($w)
+    set mged_gui($id,illum_label) $hint
+}
+
+proc scale_shift_grip_hints { w axis } {
+    if {[status state] == "OBJ EDIT"} {
+	shift_grip_hints $w "$axis Scale"
+    } else {
+	shift_grip_hints $w "Scale/Zoom"
+    }
 }
 
 proc update_gui { w vname val } {
@@ -328,3 +381,4 @@ proc update_gui { w vname val } {
 	}
     }
 }
+
