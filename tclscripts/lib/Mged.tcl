@@ -389,8 +389,8 @@ body Mged::erase {args} {
     eval $db erase $args
 }
 
-body Mged::who {} {
-    $db who
+body Mged::who {args} {
+    eval $db who $args
 }
 
 body Mged::xpush {args} {
