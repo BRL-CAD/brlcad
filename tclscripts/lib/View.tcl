@@ -45,6 +45,7 @@ class View {
 	$view close
     }
 
+    public method observer {args}
     public method aet {args}
     public method center {args}
     public method rot {args}
@@ -53,6 +54,7 @@ class View {
     public method size {args}
     public method scale {args}
     public method zoom {sf}
+    public method model2view {}
 }
 
 configbody View::size {
@@ -71,35 +73,36 @@ configbody View::aet {
     aet $aet
 }
 
-body View::aet {args} {
-    set len [llength $args]
+body View::observer {args} {
+    eval $view observer $args
+}
 
+body View::aet {args} {
     # get aet
-    if {$len == 0} {
+    if {$args == ""} {
 	return $aet
     }
 
     # set aet
     $view aet $args
-    set aet [$view aet]
+    set aet $args
 }
 
 body View::center {args} {
-    set len [llength $args]
-
     # get center
-    if {$len == 0} {
+    if {$args == ""} {
 	return $center
     }
 
     # set center
     $view center $args
-    set center [$view center]
+    set center $args
 }
 
 body View::rot {args} {
     # rotate view
     $view rot $args
+
     set aet [$view aet]
 }
 
@@ -113,29 +116,26 @@ body View::slew {args} {
 body View::tra {args} {
     # translate view
     $view tra $args
+
     set center [$view center]
 }
 
 body View::size {args} {
-    set len [llength $args]
-
     # get size
-    if {$len == 0} {
+    if {$args == ""} {
 	return $size
     }
 
     # set size
     $view size $args
 
-    set size [$view size]
     set scale [$view scale]
+    set size $args
 }
 
 body View::scale {args} {
-    set len [llength $args]
-
     # get scale
-    if {$len == 0} {
+    if {$args == ""} {
 	return $scale
     }
 
@@ -143,7 +143,7 @@ body View::scale {args} {
     $view scale $args
 
     set size [$view size]
-    set scale [$view scale]
+    set scale $args
 }
 
 body View::zoom {sf} {
@@ -151,4 +151,8 @@ body View::zoom {sf} {
 
     set size [$view size]
     set scale [$view scale]
+}
+
+body View::model2view {} {
+    $view model2view
 }
