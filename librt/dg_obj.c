@@ -1394,7 +1394,10 @@ dgo_assoc_tcl(clientData, interp, argc, argv)
 
 	/* Get associated database object */
 	if (argc == 2) {
-		Tcl_AppendResult(interp, bu_vls_addr(&dgop->dgo_wdbp->wdb_name), (char *)NULL);
+		if (dgop->dgo_wdbp == RT_WDB_NULL)
+			Tcl_AppendResult(interp, (char *)NULL);
+		else
+			Tcl_AppendResult(interp, bu_vls_addr(&dgop->dgo_wdbp->wdb_name), (char *)NULL);
 		return TCL_OK;
 	}
 
@@ -1406,15 +1409,8 @@ dgo_assoc_tcl(clientData, interp, argc, argv)
 				break;
 		}
 
-		if (BU_LIST_IS_HEAD(wdbp, &rt_g.rtg_headwdb.l)) {
-#if 0
-			Tcl_AppendResult(interp, "dgo_open: bad database object - ", argv[2],
-					 "\n", (char *)NULL);
-			return TCL_ERROR;
-#else
+		if (BU_LIST_IS_HEAD(wdbp, &rt_g.rtg_headwdb.l))
 			wdbp = RT_WDB_NULL;
-#endif
-		}
 
 		if (dgop->dgo_wdbp != RT_WDB_NULL)
 			dgo_zap(dgop, interp);
@@ -2722,6 +2718,20 @@ dgo_impending_wdb_close(wdbp, interp)
 		if (dgop->dgo_wdbp == wdbp) {
 			dgo_zap(dgop, interp);
 			dgop->dgo_wdbp = RT_WDB_NULL;
+			dgo_notify(dgop, interp);
+		}
+}
+
+void
+dgo_zapall(wdbp, interp)
+     struct rt_wdb *wdbp;
+     Tcl_Interp *interp;
+{
+	struct dg_obj *dgop;
+
+	for (BU_LIST_FOR(dgop, dg_obj, &HeadDGObj.l))
+		if (dgop->dgo_wdbp == wdbp) {
+			dgo_zap(dgop, interp);
 			dgo_notify(dgop, interp);
 		}
 }
