@@ -829,6 +829,7 @@ static void
 vls_solid_pts( v, pts, npts, name, num, kind )
 struct rt_vls	*v;
 CONST point_t	pts[];
+CONST int	npts;
 CONST char	*name;
 CONST int	num;
 CONST char	*kind;
@@ -886,21 +887,21 @@ int			num;
 	/* Print the solid parameters.					*/
 	switch( cgtype )  {
 	case 8:
-		vls_solid_pts( v, pts, 8, name, num, "arb8 " );
+		vls_solid_pts( v, (CONST point_t *)pts, 8, name, num, "arb8 " );
 		break;
 	case 7:
-		vls_solid_pts( v, pts, 7, name, num, "arb7 " );
+		vls_solid_pts( v, (CONST point_t *)pts, 7, name, num, "arb7 " );
 		break;
 	case 6:
 		VMOVE( pts[5], pts[6] );
-		vls_solid_pts( v, pts, 6, name, num, "arb6 " );
+		vls_solid_pts( v, (CONST point_t *)pts, 6, name, num, "arb6 " );
 		break;
 	case 5:
-		vls_solid_pts( v, pts, 5, name, num, "arb5 " );
+		vls_solid_pts( v, (CONST point_t *)pts, 5, name, num, "arb5 " );
 		break;
 	case 4:
 		VMOVE( pts[3], pts[4] );
-		vls_solid_pts( v, pts, 4, name, num, "arb4 " );
+		vls_solid_pts( v, (CONST point_t *)pts, 4, name, num, "arb4 " );
 		break;
 
 		/* Currently, cgarbs() will not return RAW, BOX, or RPP */
