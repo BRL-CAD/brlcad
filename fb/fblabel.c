@@ -194,13 +194,24 @@ register char	*line;
 	for( char_count = 0; char_count < len; char_count++ )  {
 		char_id = (int) line[char_count] & 0377;
 
+		/* Obtain the dimensions for the character */
+		width = SWABV(dir[char_id].right) + SWABV(dir[char_id].left);
+		height = SWABV(dir[char_id].up) + SWABV(dir[char_id].down);
+
 		/*
 		 *  Space characters are frequently not represented
 		 *  in the font set, so leave white space here.
 		 */
-	 	if( isascii(char_id) && isspace(char_id) )  {
+	 	if( width <= 1 )  {
 	 		char_id = 'n';	/* 1-en space */
 			width = SWABV(dir[char_id].right) + SWABV(dir[char_id].left);
+	 		if( width <= 1 )  {
+		 		char_id = 'N';	/* 1-en space */
+				width = SWABV(dir[char_id].right) +
+					SWABV(dir[char_id].left);
+	 			if( width <= 1 )
+	 				width = 16;	/* punt */
+	 		}
 	 		currx += width;
 	 		continue;
 	 	}
@@ -215,10 +226,6 @@ register char	*line;
 			     );
 			 return;
 		}
-
-		/* Obtain the dimensions for the character */
-		width = SWABV(dir[char_id].right) + SWABV(dir[char_id].left);
-		height = SWABV(dir[char_id].up) + SWABV(dir[char_id].down);
 
 		if( currx + width > fb_getwidth(fbp) - 1 )
 			 break;		/* won't fit on screen */
