@@ -271,7 +271,7 @@ STATIC void	Catch(), FreeUp(), InitDesc(), Queue(),
 		Requeue(),
 		Raster(), SetSigs();
 
-char usage[] = "plot-fb:  [-h] [-d] [-o] [file.plot]\n";
+char usage[] = "Usage: plot-fb [-h] [-d] [-o] [file.plot]\n";
 
 /*
  *  M A I N
@@ -322,12 +322,14 @@ char **argv;
 	if ( filename == NULL || filename[0] == 0 )  {
 		if( isatty(fileno(stdin)) )  {
 			fprintf(stderr,usage);
-			exit(Foo(-3));
+			exit(-3);
 		}
 		filename = "-";
 		pfin = stdin;
-	} else if( (pfin = fopen( filename, "r" )) == NULL )
-		exit(Foo(-2));
+	} else if( (pfin = fopen( filename, "r" )) == NULL ) {
+		fprintf(stderr,"Can't open file \"%s\"\n", filename);
+		exit(-2);
+	}
 
 	/*
 	 * Handle image-size specific initializations
