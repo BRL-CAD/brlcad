@@ -570,8 +570,13 @@ set -S2 "/bin/sh"
 #			define M4I65_USE_N32
 #		endif /* else use 32 (o32) */
 #	endif
-#	if 1 /*	PRODUCTION=1	*/
+#	if 1 /*	PRODUCTION	*/
 #		define	M4I65_PRODUCTION
+#		define	M4I65_SHARED_LIB
+#	else /* DEBUG		*/
+#		if 1
+#			define	M4I65_SHARED_LIB
+#		endif
 #	endif
 #	define	MTYPE	m4i65
 #	ifdef M4I65_PRODUCTION
@@ -626,7 +631,7 @@ set -S2 "/bin/sh"
 #			define	XLIBDIR /usr/lib
 #		endif
 #	endif
-#	ifdef M4I65_PRODUCTION
+#	ifdef M4I65_SHARED_LIB
 /*		Shared library version support */
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sh/sharedlibvers.sh
@@ -970,7 +975,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 /*	for "ncurses" change "-lcurses" to "-lncurses" (Caldera OpenLinux, RedHat) */
 #	define	LIBTERMLIB	-lncurses
 #	define	LIBBU_LIBES	LIBTCL LIBTCL_LIBES -ldl
-#	if 0	/* Use MESA  and GLX */
+#	if 1	/* Use MESA  and GLX */
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X -DIF_OGL
 #		define	LIBFB_LIBES	LIBPKG -lGL -L''XLIBDIR -lX11  -lXi -lXmu -lpthread
 #		define	LIBFB_OBJS	if_remote if_ab if_X if_X24 if_ogl
