@@ -2453,10 +2453,6 @@ BU_EXTERN(int db_regexp_match_all, (struct bu_vls *dest, struct db_i *dbip, CONS
 /* db_alloc.c */
 					/* allocate "count" granules */
 BU_EXTERN(int db_alloc, ( struct db_i *, struct directory *dp, int count ) );
-					/* grow by "count" granules */
-BU_EXTERN(int db_grow, ( struct db_i *, struct directory *dp, int count ) );
-					/* truncate by "count" */
-BU_EXTERN(int db_trunc, ( struct db_i *, struct directory *dp, int count ) );
 					/* delete "recnum" from entry */
 BU_EXTERN(int db_delrec, ( struct db_i *, struct directory *dp, int recnum ) );
 					/* delete all granules assigned dp */

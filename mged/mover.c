@@ -297,14 +297,6 @@ int air;				/* Air code */
 	/* rebuild the tree */
 	comb->tree = (union tree *)db_mkgift_tree( tree_list, node_count, (struct db_tree_state *)NULL );
 
-	/* increase the length of this record */
-	if( db_grow( dbip, dp, 1 ) < 0 )
-	{
-		Tcl_AppendResult(interp, "db_grow error, aborting\n", (char *)NULL);
-		TCL_ERROR_RECOVERY_SUGGESTION;
-		return DIR_NULL;
-	}
-
 	/* and finally, write it out */
 	if( rt_db_put_internal( dp, dbip, &intern ) < 0 )
 	{

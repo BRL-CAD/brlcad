@@ -405,15 +405,13 @@ struct db_i		*dbip;
 		int	ngran;
 
 		ngran = (ep->ext_nbytes+sizeof(union record)-1)/sizeof(union record);
-		if( ngran != dp->d_len || dp->d_addr == -1L )  {
-			if( ngran < dp->d_len )  {
-				if( db_trunc( dbip, dp, dp->d_len - ngran ) < 0 )
-				    	return(-2);
-			} else if( ngran > dp->d_len )  {
-				if( db_delete( dbip, dp ) < 0 || 
-				    db_alloc( dbip, dp, ngran ) < 0 )  {
-				    	return(-3);
-				}
+		if( ngran != dp->d_len )  {
+			if( dp->d_addr != -1L )  {
+				if( db_delete( dbip, dp ) < 0 )
+					return -2;
+			}
+			if( db_alloc( dbip, dp, ngran ) < 0 )  {
+			    	return -3;
 			}
 		}
 		/* Sanity check */
