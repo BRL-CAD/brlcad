@@ -8,7 +8,7 @@
 #define SRCDIR	rt
 #define PRODUCTS	rt rtrad rtpp rtray rtshot rtwalk rtcheck \
 			rtg3 rtcell rtxray rthide rtfrac rtrange \
-			rtregis rtscale rtsil rtweight rtedge
+			rtregis rtscale rtsil rtweight rtedge rt_simple
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
@@ -163,5 +163,9 @@ rtweight:	RTWEIGHT_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
 	newvers.sh version "RT Weight"
 	CC CFLAGS -c vers.c
 	CC LDFLAGS RTWEIGHT_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rtweight
+
+rt_simple:	rt_simple.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS rt_simple.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o rt_simple
+
 
 #include "../Cakefile.rules"
