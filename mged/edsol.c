@@ -96,15 +96,6 @@ static int	spl_vi;
 
 static struct edgeuse	*es_eu;	/* Currently selected NMG edgeuse */
 
-/* XXX This belongs in sedit.h */
-#define ECMD_VTRANS		17	/* vertex translate */
-#define ECMD_NMG_EPICK		19	/* edge pick */
-#define ECMD_NMG_EMOVE		20	/* edge move */
-#define ECMD_NMG_EDEBUG		21	/* edge debug */
-#define ECMD_NMG_FORW		22	/* next eu */
-#define ECMD_NMG_BACK		23	/* prev eu */
-#define ECMD_NMG_RADIAL		24	/* radial+mate eu */
-
 /*  These values end up in es_menu, as do ARB vertex numbers */
 int	es_menu;		/* item selected from menu */
 #define MENU_TOR_R1		21
@@ -286,6 +277,7 @@ struct menu_item  nmg_menu[] = {
 	{ "pick edge", nmg_ed, ECMD_NMG_EPICK },
 	{ "move edge", nmg_ed, ECMD_NMG_EMOVE },
 	{ "debug edge", nmg_ed, ECMD_NMG_EDEBUG },
+	{ "split edge", nmg_ed, ECMD_NMG_ESPLIT },
 	{ "next eu", nmg_ed, ECMD_NMG_FORW },
 	{ "prev eu", nmg_ed, ECMD_NMG_BACK },
 	{ "radial eu", nmg_ed, ECMD_NMG_RADIAL },
@@ -803,6 +795,7 @@ int arg;
 		return;
 	case ECMD_NMG_EPICK:
 	case ECMD_NMG_EMOVE:
+	case ECMD_NMG_ESPLIT:
 		break;
 	case ECMD_NMG_EDEBUG:
 		if( !es_eu )  {
@@ -818,16 +811,19 @@ int arg;
 			m = nmg_find_model( &es_eu->l.magic );
 			NMG_CK_MODEL(m);
 
-			/* get space for list of items processed */
-			tab = (long *)rt_calloc( m->maxindex+1, sizeof(long),
-				"nmg_ed tab[]");
-			vbp = rt_vlblock_init();
+			if( es_eu->g.magic_p )
+			{
+				/* get space for list of items processed */
+				tab = (long *)rt_calloc( m->maxindex+1, sizeof(long),
+					"nmg_ed tab[]");
+				vbp = rt_vlblock_init();
 
-			nmg_vlblock_around_eu(vbp, es_eu, tab, 1, &mged_tol);
-			cvt_vlblock_to_solids( vbp, "_EU_", 0 );	/* swipe vlist */
+				nmg_vlblock_around_eu(vbp, es_eu, tab, 1, &mged_tol);
+				cvt_vlblock_to_solids( vbp, "_EU_", 0 );	/* swipe vlist */
 
-			rt_vlblock_free(vbp);
-			rt_free( (char *)tab, "nmg_ed tab[]" );
+				rt_vlblock_free(vbp);
+				rt_free( (char *)tab, "nmg_ed tab[]" );
+			}
 			dmaflag = 1;
 		}
 		if( *es_eu->up.magic_p == NMG_LOOPUSE_MAGIC )  {
@@ -865,7 +861,6 @@ int arg;
 		(void)printf("edgeuse selected=x%x\n", es_eu);
 		sedraw = 1;
 		return;
-
 	}
 	/* For example, this will set es_edflag = ECMD_NMG_EPICK */
 	es_edflag = arg;
@@ -2105,6 +2100,38 @@ sedit()
 		/* XXX Nothing to do here (yet), all done in mouse routine. */
 		break;
 
+	case ECMD_NMG_ESPLIT:
+		{
+			struct vertex *v=(struct vertex *)NULL;
+			struct model *m;
+			point_t new_pt;
+
+			if( !es_eu )
+			{
+				printf( "No edge selected!\n" );
+				break;
+			}
+			NMG_CK_EDGEUSE( es_eu );
+			m = nmg_find_model( &es_eu->l.magic );
+			NMG_CK_MODEL( m );
+			if( es_mvalid )
+				VMOVE( new_pt , es_mparam )
+			else if( inpara == 3 )
+				VMOVE( new_pt , es_para )
+			else if( inpara && inpara != 3 )
+			{
+				(void)printf( "x y z coordinates required for edge split\n" );
+				return;
+			}
+			else if( !es_mvalid && !inpara )
+				return;
+
+			es_eu = nmg_esplit( v , es_eu , 0 );
+			nmg_vertex_gv( es_eu->vu_p->v_p , new_pt );
+			nmg_rebound( m , &mged_tol );
+		}
+		break;
+
 	default:
 		(void)printf("sedit():  unknown edflag = %d.\n", es_edflag );
 	}
@@ -2308,6 +2335,12 @@ CONST vect_t	mousevec;
 		if( nmg_move_edge_thru_pt( es_eu, pos_model, &mged_tol ) < 0 ) {
 			VPRINT("Unable to hit", pos_model);
 		}
+		sedraw = 1;
+		return;
+
+	case ECMD_NMG_ESPLIT:
+		MAT4X3PNT( es_mparam , view2model, mousevec );
+		es_mvalid = 1;
 		sedraw = 1;
 		return;
 
@@ -3285,6 +3318,7 @@ char	**argv;
 		case ECMD_TGC_MV_H:
 		case ECMD_TGC_MV_HH:
 		case PTARB:
+		case ECMD_NMG_ESPLIT:
 			/* must convert to base units */
 			es_para[0] *= local2base;
 			es_para[1] *= local2base;
