@@ -806,6 +806,7 @@ char *file, *obj;
 		extern struct mfuncs fire_mfuncs[];
 		extern struct mfuncs brdf_mfuncs[];
 		extern struct mfuncs gauss_mfuncs[];
+		extern struct mfuncs paint_mfuncs[];
 
 		mlib_add( phg_mfuncs );
 		mlib_add( light_mfuncs );
@@ -827,6 +828,7 @@ char *file, *obj;
 		mlib_add( fire_mfuncs );
 		mlib_add( brdf_mfuncs );
 		mlib_add( gauss_mfuncs );
+		mlib_add( paint_mfuncs );
 	}
 
 	if( minus_o )  {
