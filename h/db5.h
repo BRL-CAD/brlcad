@@ -75,10 +75,9 @@ struct db5_ondisk_header {
 
 /* major_type */
 #define DB5HDR_MAJORTYPE_RESERVED			0
-#define DB5HDR_MAJORTYPE_BRLCAD_NONGEOM			1
-#define DB5HDR_MAJORTYPE_BRLCAD_GEOMETRY		2
-#define DB5HDR_MAJORTYPE_OPAQUE_BINARY			3
-#define DB5HDR_MAJORTYPE_ATTRIBUTE_ONLY			4
+#define DB5HDR_MAJORTYPE_BRLCAD				1
+#define DB5HDR_MAJORTYPE_ATTRIBUTE_ONLY			2
+#define DB5HDR_MAJORTYPE_OPAQUE_BINARY			8
 
 /*************************************************************************
  *
