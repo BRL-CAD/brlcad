@@ -338,14 +338,9 @@ install|install-nobak|uninstall)
 		echo -------------------------------- ${DIRPRE}${dir}${DIRSUF};
 		( cd ${DIRPRE}${dir}${DIRSUF} && cake -k ${TARGET} )
 	done
-
-	# This runs Tcl's auto_mkindex to create an directory index
-	$BRLCAD_ROOT/tclscripts/ami.tcl $BRLCAD_ROOT/tclscripts
-
 	for dir in ${TSDIRS}; do
 		echo -------------------------------- ${dir};
 		( cd tclscripts/${dir} && cake -k ${TARGET} )
-		$BRLCAD_ROOT/tclscripts/ami.tcl $BRLCAD_ROOT/tclscripts/$dir
 	done;;
 #  These directives operate in the source directory
 #
