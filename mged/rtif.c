@@ -1119,7 +1119,7 @@ char	**argv;
 		}
 		else
 		    rt_log("Firing from view center...\n");
-		fflush(stdout);
+
 		rt_write(fp, center_model );
 	}
 	(void)fclose( fp );
