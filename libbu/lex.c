@@ -189,7 +189,7 @@ bu_lex(
 			for (cp=unit; *cp && *cp>='0' && *cp <='7'; cp++);
 			if (!*cp) {	/* We have an octal value */
 				token->type = BU_LEX_INT;
-				sscanf(unit,"%o",&token->t_int.value);
+				sscanf(unit,"%o", (unsigned int *)&token->t_int.value);
 				bu_free(unit,"unit token");
 				return used;
 			}
@@ -203,7 +203,7 @@ bu_lex(
 				for(;*cp && isxdigit(*cp);cp++);
 				if (!*cp) {
 					token->type = BU_LEX_INT;
-					sscanf(unit,"%x",&token->t_int.value);
+					sscanf(unit,"%x",(unsigned int *)&token->t_int.value);
 					bu_free(unit, "unit token");
 					return used;
 				}
