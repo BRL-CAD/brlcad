@@ -352,11 +352,11 @@ CONST char *str;
 		if( mp->mdb_len <= 0 )  continue;
 		ip = (long *)(((char *)mp->mdb_addr)+mp->mdb_len-sizeof(long));
 		if( mp->mdb_str == bu_strdup_message )  {
-			fprintf(stderr,"%8lx %6d bu_strdup: %s\n",
+			fprintf(stderr,"%8lx %6d bu_strdup: \"%s\"\n",
 				(long)(mp->mdb_addr), mp->mdb_len,
 				((char *)mp->mdb_addr) );
 		} else if( mp->mdb_str == bu_vls_message )  {
-			fprintf(stderr,"%8lx %6d bu_vls: %s\n",
+			fprintf(stderr,"%8lx %6d bu_vls: \"%s\"\n",
 				(long)(mp->mdb_addr), mp->mdb_len,
 				((char *)mp->mdb_addr) );
 		} else {
@@ -384,14 +384,14 @@ register CONST char *cp;
 	register char	*base;
 	register int	len;
 
-	if(bu_debug&BU_DEBUG_MEM_LOG) {
-		bu_semaphore_acquire(BU_SEM_SYSCALL);
-		fprintf(stderr,"bu_strdup(%s) x%lx\n", cp, (long)cp);
-		bu_semaphore_release(BU_SEM_SYSCALL);
-	}
-
 	len = strlen( cp )+2;
 	base = bu_malloc( len, bu_strdup_message );
+
+	if(bu_debug&BU_DEBUG_MEM_LOG) {
+		bu_semaphore_acquire(BU_SEM_SYSCALL);
+		fprintf(stderr, "%8lx strdup%7d \"%s\"\n", (long)base, len, cp );
+		bu_semaphore_release(BU_SEM_SYSCALL);
+	}
 
 	memcpy( base, cp, len );
 	return(base);
