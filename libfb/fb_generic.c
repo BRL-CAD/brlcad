@@ -314,7 +314,7 @@ register char *s;
  */
 int
 fb_is_linear_cmap(cmap)
-register ColorMap	*cmap;
+register CONST ColorMap	*cmap;
 {
 	register int i;
 
