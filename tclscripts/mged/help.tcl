@@ -39,7 +39,7 @@ set mged_help_data(attr_rm)     {{object attr_name [attr_name attr_name ...]}
 set mged_help_data(autoview)	{{}	{set view size and center so that all displayed solids are in view}}
 set mged_help_data(B)		{{-C#/#/# <objects>}	{clear screen, edit objects}}
 set mged_help_data(bev)		{{[-t] [-P#] new_obj obj1 op obj2 op obj3 op ...}	{boolean evaluation of objects via NMG's}}
-set mged_help_data(binary)      {{[-i|-o] -u type source dest}
+set mged_help_data(binary)      {{[-i|-o] -u type dest source}
                 {manipulate opaque objects.
                  Must specify one of -i (for creating or adjusting objects (input))
                  or -o for extracting objects (output)
