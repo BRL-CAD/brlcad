@@ -289,18 +289,19 @@ matp_t old_xlate;
 	regionp = argregion;
 	if( rec.c.c_flags == 'R' )  {
 		if( argregion != REGION_NULL )  {
-			fprintf(stderr,"Warning:  region %s within region %s (ID ignored)\n",
-				path_str(pathpos), argregion->reg_name );
-		} else {
-			/* Start a new region here */
-			GETSTRUCT( regionp, region );
-			regionp->reg_forw = regionp->reg_active = REGION_NULL;
-			regionp->reg_regionid = rec.c.c_regionid;
-			regionp->reg_aircode = rec.c.c_aircode;
-			regionp->reg_material = rec.c.c_material;
-			regionp->reg_los = rec.c.c_los;
-			regionp->reg_name = "being created";
+			fprintf(stderr,"Warning:  region %s within region %s (ID %d overrides)\n",
+				path_str(pathpos), argregion->reg_name,
+				rec.c.c_regionid );
+			argregion = REGION_NULL;	/* override! */
 		}
+		/* Start a new region here */
+		GETSTRUCT( regionp, region );
+		regionp->reg_forw = regionp->reg_active = REGION_NULL;
+		regionp->reg_regionid = rec.c.c_regionid;
+		regionp->reg_aircode = rec.c.c_aircode;
+		regionp->reg_material = rec.c.c_material;
+		regionp->reg_los = rec.c.c_los;
+		regionp->reg_name = "being created";
 	}
 	curtree = TREE_NULL;
 	nparts = rec.c.c_length;		/* save in an auto var */
