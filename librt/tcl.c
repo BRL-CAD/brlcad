@@ -51,6 +51,8 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "raytrace.h"
 #include "externs.h"
 
+#include "./debug.h"
+
 #define RT_CK_DBI_TCL(_p)	BU_CKMAG_TCL(interp,_p,(long)DBI_MAGIC,"struct db_i")
 #define RT_CK_RTI_TCL(_p)	BU_CKMAG_TCL(interp,_p,(long)RTI_MAGIC,"struct rt_i")
 #define RT_CK_WDB_TCL(_p)	BU_CKMAG_TCL(interp,_p,(long)RT_WDB_MAGIC,"struct rt_wdb")
@@ -110,6 +112,137 @@ struct rt_solid_type_lookup {
 	{ ID_DSP,     sizeof(struct rt_dsp_internal), (long)RT_DSP_INTERNAL_MAGIC, "dsp", rt_dsp_parse },
 	{ 0, 0, 0, 0 }
 };
+
+struct dbcmdstruct {
+	char *cmdname;
+	int (*cmdfunc)();
+};
+
+/*
+ */
+int
+rt_tcl_a_hit( ap, PartHeadp, segHeadp )
+struct application	*ap;
+struct partition	*PartHeadp;
+struct seg		*segHeadp;
+{
+	Tcl_Interp *interp = (Tcl_Interp *)ap->a_uptr;
+
+	Tcl_AppendResult( interp, "hit!\n", (char *)NULL );
+
+	return 0;
+}
+
+/*
+ */
+int
+rt_tcl_a_miss( ap )
+struct application	*ap;
+{
+	Tcl_Interp *interp = (Tcl_Interp *)ap->a_uptr;
+
+	Tcl_AppendResult( interp, "miss!\n", (char *)NULL );
+
+	return 0;
+}
+
+
+/*
+ *			R T _ T C L _ S H O O T R A Y
+ *
+ *  Usage:
+ *	.rt shootray {P} {V}
+ */
+int
+rt_tcl_rt_shootray( clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	struct application	*ap = (struct application *)clientData;
+	struct rt_i		*rtip;
+
+	if( argc != 4 )  {
+		Tcl_AppendResult( interp,
+				"wrong # args: should be \"",
+				argv[0], " ", argv[1], " {P} {V}\"",
+				(char *)NULL );
+		return TCL_ERROR;
+	}
+
+	/* Could core dump */
+	RT_AP_CHECK(ap);
+	rtip = ap->a_rt_i;
+	RT_CK_RTI_TCL(rtip);
+
+	if( bn_decode_vect( ap->a_ray.r_pt,  argv[2] ) != 3 ||
+	    bn_decode_vect( ap->a_ray.r_dir, argv[3] ) != 3 )  {
+		Tcl_AppendResult( interp,
+			"badly formatted vector\n", (char *)NULL );
+		return TCL_ERROR;
+	}
+	VUNITIZE( ap->a_ray.r_dir );	/* sanity */
+	ap->a_hit = rt_tcl_a_hit;
+	ap->a_miss = rt_tcl_a_miss;
+	ap->a_uptr = (genptr_t)interp;
+
+rt_g.debug |= DEBUG_ALLRAYS;
+	(void)rt_shootray( ap );
+
+	return TCL_OK;
+}
+
+static struct dbcmdstruct rt_tcl_rt_cmds[] = {
+	"shootray",	rt_tcl_rt_shootray,
+#if 0
+	"prep",		rt_tcl_rt_prep,		/* haste | efficient */
+	"useair",	rt_tcl_useair,
+#endif
+	(char *)0,	(int (*)())0
+};
+
+/*
+ *			R T _ T C L _ R T
+ *
+ * Generic interface for the database_class manipulation routines.
+ * Usage:
+ *        widget_command dbCmdName ?args?
+ * Returns: result of cmdName database command.
+ */
+int
+rt_tcl_rt( clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	struct dbcmdstruct	*dbcmd;
+
+	if( argc < 2 ) {
+		Tcl_AppendResult( interp,
+				  "wrong # args: should be \"", argv[0],
+				  " command [args...]\"",
+				  (char *)NULL );
+		return TCL_ERROR;
+	}
+
+	for( dbcmd = rt_tcl_rt_cmds; dbcmd->cmdname != NULL; dbcmd++ ) {
+		if( strcmp(dbcmd->cmdname, argv[1]) == 0 ) {
+			return (*dbcmd->cmdfunc)( clientData, interp,
+						  argc, argv );
+		}
+	}
+
+
+	Tcl_AppendResult( interp, "unknown LIBRT command; must be one of:",
+			  (char *)NULL );
+	for( dbcmd = rt_tcl_rt_cmds; dbcmd->cmdname != NULL; dbcmd++ ) {
+		Tcl_AppendResult( interp, " ", dbcmd->cmdname, (char *)NULL );
+	}
+	Tcl_AppendResult( interp, "\n", (char *)NULL );
+	return TCL_ERROR;
+}
 
 /*
  *		R T _ G E T _ P A R S E T A B _ B Y _ I D
@@ -1097,30 +1230,6 @@ error:
 }
 
 /*
- *			R T _ D B _ C L O S E
- */
-int
-rt_db_close( clientData, interp, argc, argv )
-ClientData clientData;
-Tcl_Interp *interp;
-int argc;
-char **argv;
-{
-	struct rt_wdb		        *wdbp = (struct rt_wdb *)clientData;
-
-	RT_CK_WDB_TCL(wdbp);
-
-	wdb_close(wdbp);		/* frees memory */
-	wdbp = NULL;
-
-	/* De-register Tcl command */
-bu_log("De-registering Tcl command '%s'\n", argv[0] );
-	Tcl_DeleteCommand( interp, argv[0] );
-	return TCL_OK;
-}
-
-
-/*
  *			R T _ D B _ T O P S
  */
 
@@ -1151,17 +1260,101 @@ char	      **argv;
 	return TCL_OK;
 }
 
-static struct dbcmdstruct {
-	char *cmdname;
-	int (*cmdfunc)();
-} rt_db_cmds[] = {
+/*
+ *			R T _ T C L _ D E L E T E P R O C _ R T
+ *
+ *  Called when the named proc created by rt_gettrees() is destroyed.
+ */
+void
+rt_tcl_deleteproc_rt(clientData)
+ClientData clientData;
+{
+	struct application	*ap = (struct application *)clientData;
+	struct rt_i		*rtip;
+
+	RT_AP_CHECK(ap);
+	rtip = ap->a_rt_i;
+	RT_CK_RTI(rtip);
+
+#if 0
+	/* Warning!  This calls db_close()!  Clobber city. */
+	rt_free_rti(rtip);
+#else
+	rt_clean( rtip );
+	rtip->rti_dbip = (struct db_i *)NULL;
+	bu_free( (genptr_t)rtip, "struct rt_i" );
+#endif
+	bu_free( (genptr_t)ap, "struct application" );
+}
+
+/*
+ *			R T _ D B _ R T _ G E T T R E E S
+ *
+ *  Given an instance of a database and the name of some treetops,
+ *  create a named "ray-tracing" object which will respond to
+ *  subsequent operations.
+ *  Returns new function name as result.
+ *
+ *  Example:
+ *	.inmem rt_gettrees .rt all.g light.r
+ */
+int
+rt_db_rt_gettrees( clientData, interp, argc, argv )
+ClientData	clientData;
+Tcl_Interp     *interp;
+int		argc;
+char	      **argv;
+{
+	struct rt_wdb *wdp = (struct rt_wdb *)clientData;
+	struct rt_i	*rtip;
+	struct application	*ap;
+	char		buf[64];
+
+	RT_CK_WDB_TCL( wdp );
+	RT_CK_DBI_TCL( wdp->dbip );
+
+	if( argc < 4 )  {
+		Tcl_AppendResult( interp,
+			"rt_gettrees: wrong # args: should be \"",
+			argv[0], " ", argv[1],
+			"widgetname treetops...\"\n", (char *)NULL );
+		return TCL_ERROR;
+	}
+
+	rtip = rt_new_rti( wdp->dbip );
+
+	if( rt_gettrees( rtip, argc-3, (CONST char **)&argv[3], 1 ) < 0 )  {
+		Tcl_AppendResult( interp,
+			"rt_gettrees() returned error\n", (char *)NULL );
+		rt_free_rti( rtip );
+		return TCL_ERROR;
+	}
+
+	BU_GETSTRUCT( ap, application );
+	ap->a_rt_i = rtip;
+	ap->a_purpose = "Conquest!";
+
+	/* Instantiate the widget_command, with clientData of wdb */
+	/* XXX should we see if it exists first? default=overwrite */
+	/* Beware, returns a "token", not TCL_OK. */
+	(void)Tcl_CreateCommand( interp, argv[2], rt_tcl_rt,
+				 (ClientData)ap, rt_tcl_deleteproc_rt );
+
+	/* Return new function name as result */
+	Tcl_AppendResult( interp, argv[2], (char *)NULL );
+	
+	return TCL_OK;
+
+}
+
+static struct dbcmdstruct rt_db_cmds[] = {
 	"match",	rt_db_match,
 	"get",		rt_db_get,
 	"put",		rt_db_put,
 	"adjust",	rt_db_adjust,
 	"form",		rt_db_form,
 	"tops",		rt_db_tops,
-	"close",	rt_db_close,
+	"rt_gettrees",	rt_db_rt_gettrees,
 	(char *)0,	(int (*)())0
 };
 
@@ -1195,18 +1388,20 @@ char **argv;
 	/* Could core dump */
 	RT_CK_WDB_TCL(wdb);
 
-	Tcl_AppendResult( interp, "unknown database command; must be one of:",
-			  (char *)NULL );
 	for( dbcmd = rt_db_cmds; dbcmd->cmdname != NULL; dbcmd++ ) {
 		if( strcmp(dbcmd->cmdname, argv[1]) == 0 ) {
-			/* hack: dispose of error msg if OK */
-			Tcl_ResetResult( interp );
 			return (*dbcmd->cmdfunc)( clientData, interp,
 						  argc, argv );
 		}
-		Tcl_AppendResult( interp, " ", dbcmd->cmdname, (char *)NULL );
 	}
 
+
+	Tcl_AppendResult( interp, "unknown database command; must be one of:",
+			  (char *)NULL );
+	for( dbcmd = rt_db_cmds; dbcmd->cmdname != NULL; dbcmd++ ) {
+		Tcl_AppendResult( interp, " ", dbcmd->cmdname, (char *)NULL );
+	}
+	Tcl_AppendResult( interp, "\n", (char *)NULL );
 	return TCL_ERROR;
 }
 
@@ -1214,6 +1409,7 @@ char **argv;
  *			R T _ T C L _ D E L E T E P R O C _ W D B
  *
  *  Called when the named proc created by wdb_open() is destroyed.
+ *  This is used instead of a "close" operation on the object.
  */
 void
 rt_tcl_deleteproc_wdb(clientData)
@@ -1295,7 +1491,6 @@ Usage: wdb_open widget_command file filename\n\
 
 	/* Instantiate the widget_command, with clientData of wdb */
 	/* XXX should we see if it exists first? default=overwrite */
-	/* XXX Should provide CmdDeleteProc also, to free up wdb */
 	/* Beware, returns a "token", not TCL_OK. */
 	(void)Tcl_CreateCommand( interp, argv[1], rt_db,
 				 (ClientData)wdb, rt_tcl_deleteproc_wdb );
