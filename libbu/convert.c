@@ -45,8 +45,8 @@ static char libbu_convert_RCSid[] = "@(#)$Header$ (ARL)";
 #define CV_CHANNEL_MASK	0x00ff
 #define CV_HOST_MASK	0x0100
 #define CV_SIGNED_MASK	0x0200
-#define CV_TYPE_MASK	0x1c00
-#define CV_CONVERT_MASK 0x6000
+#define CV_TYPE_MASK	0x1c00  /* 0001 1100 0000 0000 */
+#define CV_CONVERT_MASK 0x6000  /* 0110 0000 0000 0000 */
 
 #define CV_TYPE_SHIFT	10
 #define CV_CONVERT_SHIFT 13
