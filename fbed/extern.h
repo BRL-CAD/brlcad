@@ -5,24 +5,10 @@
 			Maryland 21005-5066
 			(301)278-6651 or DSN 298-6651
 */
-#if ! defined( INCL_FB )
-#include "fb.h"
-#endif
-#if ! defined( _VLD_STD_H_ )
-#include "./std.h"
-#endif
-#if ! defined( INCL_ASCII )
-#include "./ascii.h"
-#endif
-#if ! defined( INCL_FONT )
-#include "./font.h"
-#endif
-#if ! defined( INCL_TRY )
-#include "./try.h"
-#endif
 
 /* Set pre-processor switch for getting signal() handler declarations right.
  */
+
 #if defined(sun) && ! defined(SunOS4)
 /* For Suns running older releases, compile with -DSunOS4=0 to suppress
 	bogus warning messages. */
