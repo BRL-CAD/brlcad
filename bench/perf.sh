@@ -93,15 +93,25 @@ CURVALS=`grep RTFM $NEW_FILES | \
 
 RATIO_LIST=""
 
+if test "x$VGRREF" = "x" ; then
+  echo "Cannot locate VGR reference values, aborting"
+  exit 1
+fi
+
+if test "x$CURVALS" = "x" ; then
+  CURVALS="0	0	0	0	0	0	"
+fi
+
 # Trick:  Force args $1 through $6 to the numbers in $CURVALS
 # This should be "set -- $CURVALS", but 4.2BSD /bin/sh can't handle it,
 # and CURVALS are all positive (ie, no leading dashes), so this is safe.
+
 set $CURVALS
 
 while test $# -lt 6 ; do
- echo "${NAME}: Warning, only $# times found, adding a zero."
- CURVALS="${CURVALS}0	"
- set $CURVALS
+  echo "${NAME}: Warning, only $# times found, adding a zero."
+  CURVALS="${CURVALS}0	"
+  set $CURVALS
 done
 
 _have_dc=yes
