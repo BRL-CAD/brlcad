@@ -1738,6 +1738,10 @@ double	*offcenter_p;
 		 * try splitting the range instead
 		 */
 		where = (max + min) / 2.0;
+		offcenter = where - middle;
+		if( offcenter < 0 ) {
+			offcenter = -offcenter;
+		}
 	}
 
 	if( where <= left || where >= right )
