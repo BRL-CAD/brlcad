@@ -719,6 +719,7 @@ next_one:
 
 found_it:
 	GETUNION( curtree, tree );
+	curtree->magic = RT_TREE_MAGIC;
 	curtree->tr_op = OP_SOLID;
 	curtree->tr_a.tu_stp = stp;
 	curtree->tr_a.tu_regionp = (struct region *)0;
