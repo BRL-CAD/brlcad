@@ -413,15 +413,15 @@ struct id_names {
 
 struct id_to_names {
 	struct bu_list l;
-	int rid;			/* starting region id */
+	int id;				/* starting id (i.e. region id or air code) */
 	struct id_names headName;	/* head of list of names */
 };
 
 /*
- *	F _ W H I C H _ I D ( ) :	finds all regions with given idents
+ *      F _ W H I C H ( ) :	finds all regions with given region ids or air codes
  */
 int
-f_which_id(clientData, interp, argc, argv )
+f_which(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
 int	argc;
@@ -436,21 +436,27 @@ char	**argv;
 	struct id_to_names headIdName;
 	struct id_to_names *itnp;
 	struct id_names *inp;
+	int isAir;
 
-	if (dbip == DBI_NULL)
+	if(dbip == DBI_NULL)
 	  return TCL_OK;
 
-	if (argc < 2 || MAXARGS < argc){
+	if(argc < 2 || MAXARGS < argc){
 	  struct bu_vls vls;
 
 	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help whichid");
+	  bu_vls_printf(&vls, "help %s", argv[0]);
 	  Tcl_Eval(interp, bu_vls_addr(&vls));
 	  bu_vls_free(&vls);
 	  return TCL_ERROR;
 	}
 
-	if (strcmp(argv[1], "-s") == 0){
+	if (!strcmp(argv[0], "whichair"))
+	  isAir = 1;
+	else
+	  isAir = 0;
+
+	if(strcmp(argv[1], "-s") == 0){
 	  --argc;
 	  ++argv;
 
@@ -458,7 +464,7 @@ char	**argv;
 	    struct bu_vls vls;
 
 	    bu_vls_init(&vls);
-	    bu_vls_printf(&vls, "help whichid");
+	    bu_vls_printf(&vls, "help %s", argv[0]);
 	    Tcl_Eval(interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	    return TCL_ERROR;
@@ -467,7 +473,7 @@ char	**argv;
 	  sflag = 1;
 	}
 
-	if ( setjmp( jmp_env ) == 0 )
+	if( setjmp( jmp_env ) == 0 )
 	  (void)signal( SIGINT, sig3);  /* allow interupts */
         else
 	  return TCL_OK;
@@ -485,13 +491,13 @@ char	**argv;
 		switch(n) {
 		case 1:
 			for ( BU_LIST_FOR(itnp,id_to_names,&headIdName.l) )
-				if (itnp->rid == start)
+				if (itnp->id == start)
 					break;
 
-			/* rid not found */
+			/* id not found */
 			if (BU_LIST_IS_HEAD(itnp,&headIdName.l)) {
 				BU_GETSTRUCT(itnp,id_to_names);
-				itnp->rid = start;
+				itnp->id = start;
 				BU_LIST_INSERT(&headIdName.l,&itnp->l);
 				BU_LIST_INIT(&itnp->headName.l);
 			}
@@ -507,16 +513,16 @@ char	**argv;
 				range = 1;
 
 			for ( k = 0; k < range; ++k ) {
-				int rid = start + k;
+				int id = start + k;
 
 				for ( BU_LIST_FOR(itnp,id_to_names,&headIdName.l) )
-					if (itnp->rid == rid)
+					if (itnp->id == id)
 						break;
 
-				/* rid not found */
+				/* id not found */
 				if (BU_LIST_IS_HEAD(itnp,&headIdName.l)) {
 					BU_GETSTRUCT(itnp,id_to_names);
-					itnp->rid = rid;
+					itnp->id = id;
 					BU_LIST_INSERT(&headIdName.l,&itnp->l);
 					BU_LIST_INIT(&itnp->headName.l);
 				}
@@ -538,10 +544,17 @@ char	**argv;
 				TCL_READ_ERR_return;
 			}
 			comb = (struct rt_comb_internal *)intern.idb_ptr;
+			if( comb->region_id != 0 && comb->aircode != 0 )
+			{
+				Tcl_AppendResult(interp, "ERROR: ", dp->d_namep,
+					" has id and aircode!!!\n", (char *)NULL );
+				continue;
+			}
 
-			/* check to see if region id matches one in our list */
+			/* check to see if the region id or air code matches one in our list */
 			for ( BU_LIST_FOR(itnp,id_to_names,&headIdName.l) ) {
-				if ( comb->region_id == itnp->rid ) {
+				if ( (!isAir && comb->region_id == itnp->id) ||
+				     (isAir && comb->aircode == itnp->id) ) {
 					/* add region name to our name list for this region */
 					BU_GETSTRUCT(inp,id_names);
 					bu_vls_init(&inp->name);
@@ -561,7 +574,8 @@ char	**argv;
 			struct bu_vls vls;
 
 			bu_vls_init(&vls);
-			bu_vls_printf(&vls, "Region[s] with ident %d:\n", itnp->rid);
+			bu_vls_printf(&vls, "Region[s] with %s %d:\n",
+				      isAir ? "air code" : "ident", itnp->id);
 			Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 			bu_vls_free(&vls);
 		}
@@ -575,11 +589,11 @@ char	**argv;
 
 			BU_LIST_DEQUEUE(&inp->l);
 			bu_vls_free(&inp->name);
-			bu_free((genptr_t)inp, "f_which_id: inp");
+			bu_free((genptr_t)inp, "f_which: inp");
 		}
 
 		BU_LIST_DEQUEUE(&itnp->l);
-		bu_free((genptr_t)itnp, "f_which_id: itnp");
+		bu_free((genptr_t)itnp, "f_which: itnp");
 	}
 
 	(void)signal( SIGINT, SIG_IGN );
@@ -667,98 +681,6 @@ char	**argv;
 				  Tcl_AppendResult(interp, "   ", dp->d_namep,
 						   "\n", (char *)NULL);
 				rt_comb_ifree( &intern );
-			}
-		}
-	}
-
-	(void)signal( SIGINT, SIG_IGN );
-	return TCL_OK;
-}
-
-/*
- *	F _ W H I C H _ A I R ( ) :	finds all regions with given air codes
- */
-int
-f_which_air(clientData, interp, argc, argv )
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
-{
-	register int	i,j;
-	register struct directory *dp;
-	int		item;
-	struct rt_db_internal intern;
-	struct rt_comb_internal *comb;
-	int sflag = 0;
-
-	if(dbip == DBI_NULL)
-	  return TCL_OK;
-
-	if(argc < 2 || MAXARGS < argc){
-	  struct bu_vls vls;
-
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help whichair");
-	  Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	  return TCL_ERROR;
-	}
-
-	if(strcmp(argv[1], "-s") == 0){
-	  --argc;
-	  ++argv;
-
-	  if(argc < 2){
-	    struct bu_vls vls;
-
-	    bu_vls_init(&vls);
-	    bu_vls_printf(&vls, "help whichair");
-	    Tcl_Eval(interp, bu_vls_addr(&vls));
-	    bu_vls_free(&vls);
-	    return TCL_ERROR;
-	  }
-
-	  sflag = 1;
-	}
-
-	if( setjmp( jmp_env ) == 0 )
-	  (void)signal( SIGINT, sig3);  /* allow interupts */
-        else
-	  return TCL_OK;
-
-	for( j=1; j<argc; j++) {
-		item = atoi( argv[j] );
-
-		if(!sflag)
-		  Tcl_AppendResult(interp, "Region[s] with air code ", argv[j],
-				   ":\n", (char *)NULL);
-
-		/* Examine all COMB nodes */
-		for( i = 0; i < RT_DBNHASH; i++ )  {
-			for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )  {
-				if( !(dp->d_flags & DIR_REGION) )
-					continue;
-				if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
-				{
-					(void)signal( SIGINT, SIG_IGN );
-					TCL_READ_ERR_return;
-				}
-				comb = (struct rt_comb_internal *)intern.idb_ptr;
-				if( comb->region_id != 0 && comb->aircode != 0 )
-				{
-					Tcl_AppendResult(interp, "ERROR: ", dp->d_namep,
-						" has id and aircode!!!\n", (char *)NULL );
-					continue;
-				}
-				if( comb->region_id != 0 || comb->aircode != item )
-					continue;
-
-				if(sflag)
-				  Tcl_AppendElement(interp, dp->d_namep);
-				else
-				  Tcl_AppendResult(interp, "   ", dp->d_namep,
-						   "\n", (char *)NULL);
 			}
 		}
 	}
