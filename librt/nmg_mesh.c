@@ -44,13 +44,15 @@ RT_EXTERN(double nmg_measure_fu_angle, (CONST struct edgeuse *eu, CONST vect_t x
  *  for measuring the angles of other edges and faces with.
  */
 void
-nmg_eu_2vecs_perp( xvec, yvec, zvec, eu )
+nmg_eu_2vecs_perp( xvec, yvec, zvec, eu, tol )
 vect_t		xvec;
 vect_t		yvec;
 vect_t		zvec;
 CONST struct edgeuse	*eu;
+CONST struct rt_tol	*tol;
 {
 	CONST struct vertex	*v1, *v2;
+	fastf_t			len;
 
 	NMG_CK_EDGEUSE(eu);
 	v1 = eu->vu_p->v_p;
@@ -58,13 +60,16 @@ CONST struct edgeuse	*eu;
 	v2 = eu->eumate_p->vu_p->v_p;
 	NMG_CK_VERTEX(v2);
 	if( v1 == v2 )  rt_bomb("nmg_eu_2vecs_perp() start&end vertex of edge are the same!\n");
-
-	/* XXX Could really use 'tol' arg here, to see if v1~=v2, within tol */
+	RT_CK_TOL(tol);
 
 	NMG_CK_VERTEX_G(v1->vg_p);
 	NMG_CK_VERTEX_G(v2->vg_p);
 	VSUB2( zvec, v2->vg_p->coord, v1->vg_p->coord );
-	VUNITIZE( zvec );
+	len = MAGNITUDE(zvec);
+	/* See if v1 == v2, within tol */
+	if( len < tol->dist )  rt_bomb("nmg_eu_2vecs_perp(): 0-length edge (geometry)\n");
+	len = 1 / len;
+	VSCALE( zvec, zvec, len );
 
 	mat_vec_perp( xvec, zvec );
 	VCROSS( yvec, zvec, xvec );
@@ -190,8 +195,10 @@ double	t;
  *  can't be used here -- that only applies to faceuses from the same shell.
  */
 void
-nmg_radial_join_eu(eu1, eu2)
-struct edgeuse *eu1, *eu2;
+nmg_radial_join_eu(eu1, eu2, tol)
+struct edgeuse		*eu1;
+struct edgeuse		*eu2;
+CONST struct rt_tol	*tol;
 {
 	struct edgeuse	*original_eu1 = eu1;
 	struct edgeuse	*nexteu;
@@ -207,6 +214,7 @@ struct edgeuse *eu1, *eu2;
 	NMG_CK_EDGEUSE(eu2);
 	NMG_CK_EDGEUSE(eu2->radial_p);
 	NMG_CK_EDGEUSE(eu2->eumate_p);
+	RT_CK_TOL(tol);
 
 	if( eu1->e_p == eu2->e_p )  return;
 
@@ -222,12 +230,15 @@ struct edgeuse *eu1, *eu2;
 		rt_bomb("nmg_radial_join_eu(): edgeuses don't share both vertices\n");
 	}
 
-	if( eu1->vu_p->v_p == eu1->eumate_p->vu_p->v_p )  rt_bomb("nmg_radial_join_eu(): 0 length edge\n");
+	if( eu1->vu_p->v_p == eu1->eumate_p->vu_p->v_p )  rt_bomb("nmg_radial_join_eu(): 0 length edge (topology)\n");
+
+	if( rt_pt3_pt3_equal( eu1->vu_p->v_p->coord, eu1->eumate_p->vu_p->v_p->coord, tol ) )
+		rt_bomb("nmg_radial_join_eu(): 0 length edge (geometry)\n");
 
 	/*  Construct local coordinate system for this edge,
 	 *  so all angles can be measured relative to a common reference.
 	 */
-	nmg_eu_2vecs_perp( xvec, yvec, zvec, original_eu1 );
+	nmg_eu_2vecs_perp( xvec, yvec, zvec, original_eu1, tol );
 
 	if (rt_g.NMG_debug & (DEBUG_MESH_EU|DEBUG_MESH) ) {
 		rt_log("nmg_radial_join_eu(eu1=x%x, eu2=x%x) e1=x%x, e2=x%x\n",
@@ -347,8 +358,9 @@ struct edgeuse *eu1, *eu2;
  *  The return is the number of edges meshed.
  */
 static int
-nmg_mesh_two_faces(fu1, fu2)
+nmg_mesh_two_faces(fu1, fu2, tol)
 register struct faceuse *fu1, *fu2;
+CONST struct rt_tol	*tol;
 {
 	struct loopuse	*lu1;
 	struct loopuse	*lu2;
@@ -361,6 +373,7 @@ register struct faceuse *fu1, *fu2;
 
 	NMG_CK_FACEUSE(fu1);
 	NMG_CK_FACEUSE(fu2);
+	RT_CK_TOL(tol);
 
 	/* Visit all the loopuses in faceuse 1 */
 	for (RT_LIST_FOR(lu1, loopuse, &fu1->lu_hd)) {
@@ -411,7 +424,7 @@ register struct faceuse *fu1, *fu2;
 					     eu2->eumate_p->vu_p->v_p == v1b) ||
 					    (eu2->eumate_p->vu_p->v_p == v1a &&
 					     eu2->vu_p->v_p == v1b) )  {
-						nmg_radial_join_eu(eu1, eu2);
+						nmg_radial_join_eu(eu1, eu2, tol);
 					     	count++;
 					 }
 				}
@@ -431,13 +444,16 @@ register struct faceuse *fu1, *fu2;
  *  XXX probably should return(count);
  */
 void
-nmg_mesh_faces(fu1, fu2)
-struct faceuse *fu1, *fu2;
+nmg_mesh_faces(fu1, fu2, tol)
+struct faceuse		*fu1;
+struct faceuse		*fu2;
+CONST struct rt_tol	*tol;
 {
 	int	count = 0;
 
 	NMG_CK_FACEUSE(fu1);
 	NMG_CK_FACEUSE(fu2);
+	RT_CK_TOL(tol);
 
     	if (rt_g.NMG_debug & DEBUG_MESH && rt_g.NMG_debug & DEBUG_PLOTEM) {
     		static int fnum=1;
@@ -446,15 +462,15 @@ struct faceuse *fu1, *fu2;
 
 	if (rt_g.NMG_debug & DEBUG_MESH)
 		rt_log("meshing self (fu1 %8x)\n", fu1);
-	count += nmg_mesh_two_faces( fu1, fu1 );
+	count += nmg_mesh_two_faces( fu1, fu1, tol );
 
 	if (rt_g.NMG_debug & DEBUG_MESH)
 		rt_log("meshing self (fu2 %8x)\n", fu2);
-	count += nmg_mesh_two_faces( fu2, fu2 );
+	count += nmg_mesh_two_faces( fu2, fu2, tol );
 
 	if (rt_g.NMG_debug & DEBUG_MESH)
 		rt_log("meshing to other (fu1:%8x fu2:%8x)\n", fu1, fu2);
-	count += nmg_mesh_two_faces( fu1, fu2 );
+	count += nmg_mesh_two_faces( fu1, fu2, tol );
 
     	if (rt_g.NMG_debug & DEBUG_MESH && rt_g.NMG_debug & DEBUG_PLOTEM) {
     		static int fno=1;
@@ -468,21 +484,23 @@ struct faceuse *fu1, *fu2;
  *  The return is the number of edges meshed.
  */
 int
-nmg_mesh_face_shell( fu1, s )
+nmg_mesh_face_shell( fu1, s, tol )
 struct faceuse	*fu1;
 struct shell	*s;
+CONST struct rt_tol	*tol;
 {
 	register struct faceuse	*fu2;
 	int		count = 0;
 
 	NMG_CK_FACEUSE(fu1);
 	NMG_CK_SHELL(s);
+	RT_CK_TOL(tol);
 
 	count += nmg_mesh_two_faces( fu1, fu1 );
 	for( RT_LIST_FOR( fu2, faceuse, &s->fu_hd ) )  {
 		NMG_CK_FACEUSE(fu2);
-		count += nmg_mesh_two_faces( fu2, fu2 );
-		count += nmg_mesh_two_faces( fu1, fu2 );
+		count += nmg_mesh_two_faces( fu2, fu2, tol );
+		count += nmg_mesh_two_faces( fu1, fu2, tol );
 	}
 	/* XXX What about wire edges in the shell? */
 	return count;
@@ -498,9 +516,10 @@ struct shell	*s;
  *  to the absolute minimum necessary.
  */
 int
-nmg_mesh_shell_shell( s1, s2 )
+nmg_mesh_shell_shell( s1, s2, tol )
 struct shell	*s1;
 struct shell	*s2;
+CONST struct rt_tol	*tol;
 {
 	struct faceuse	*fu1;
 	struct faceuse	*fu2;
@@ -508,11 +527,12 @@ struct shell	*s2;
 
 	NMG_CK_SHELL(s1);
 	NMG_CK_SHELL(s2);
+	RT_CK_TOL(tol);
 
 	/* First, mesh all faces of shell 2 with themselves */
 	for( RT_LIST_FOR( fu2, faceuse, &s2->fu_hd ) )  {
 		NMG_CK_FACEUSE(fu2);
-		count += nmg_mesh_two_faces( fu2, fu2 );
+		count += nmg_mesh_two_faces( fu2, fu2, tol );
 	}
 
 	/* Visit every face in shell 1 */
@@ -520,12 +540,12 @@ struct shell	*s2;
 		NMG_CK_FACEUSE(fu1);
 
 		/* First, mesh each face in shell 1 with itself */
-		count += nmg_mesh_two_faces( fu1, fu1 );
+		count += nmg_mesh_two_faces( fu1, fu1, tol );
 
 		/* Visit every face in shell 2 */
 		for( RT_LIST_FOR( fu2, faceuse, &s2->fu_hd ) )  {
 			NMG_CK_FACEUSE(fu2);
-			count += nmg_mesh_two_faces( fu1, fu2 );
+			count += nmg_mesh_two_faces( fu1, fu2, tol );
 		}
 	}
 	/* XXX What about wire edges in the shell? */

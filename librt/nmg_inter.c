@@ -28,9 +28,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "raytrace.h"
 
-/* XXX move to raytrace.h */
-RT_EXTERN(struct faceuse	*nmg_find_fu_of_eu, (struct edgeuse *eu));
-
 /* Was nmg_boolstruct, but that name has appeared in nmg.h */
 struct nmg_inter_struct {
 	long		magic;
@@ -1551,7 +1548,7 @@ nmg_fu_touchingloops(eu_fu);
 	nmg_face_cutjoin(&vert_list1, &vert_list2, fu, eu_fu, is->pt, is->dir, &is->tol);
 nmg_fu_touchingloops(fu);		/* XXX r410 dies here */
 nmg_fu_touchingloops(eu_fu);
-	nmg_mesh_faces(fu, eu_fu);
+	nmg_mesh_faces(fu, eu_fu, &is->tol);
 
 out:
 	(void)nmg_tbl(&vert_list1, TBL_FREE, (long *)NULL);
@@ -1730,7 +1727,7 @@ nmg_fu_touchingloops(fu2);
 		nmg_vfu( &fu2->s_p->fu_hd, fu2->s_p );
 	}
 
-	nmg_mesh_faces(fu1, fu2);
+	nmg_mesh_faces(fu1, fu2, &is->tol);
 nmg_fu_touchingloops(fu1);
 nmg_fu_touchingloops(fu2);
 
