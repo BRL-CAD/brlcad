@@ -46,8 +46,10 @@ static char RCSparse[] = "@(#)$Header$ (BRL)";
  *			R T _ P A R S E _ D O U B L E
  *
  *  Parse an array of one or more doubles.
+ *  Return value: 0 when successful
+ *               <0 upon failure
  */
-HIDDEN void
+HIDDEN int
 rt_parse_double(str, count, loc)
 CONST char	*str;
 int		count;
@@ -80,7 +82,7 @@ double		*loc;
 
 		/* If no mantissa seen, then there is no float here */
 		if (str == (numstart + dot_seen) )
-			return;
+			return -1;
 
 		/* there was a mantissa, so we may have an exponent */
 		if  (*str == 'E' || *str == 'e') {
@@ -98,19 +100,21 @@ double		*loc;
 		buf[len] = '\0';
 
 		if( sscanf( buf, "%lf", &tmp_double ) != 1 )
-			return;
+			return -1;
 
 		*loc++ = tmp_double;
 
 		/* skip the separator */
 		if (*str) str++;
 	}
+	return 0;
 }
 
 /*
  *			R T _ S T R U C T _ L O O K U P
  *
  *  Returns -
+ *      -2      parse error
  *	-1	not found
  *	 0	entry found and processed
  */
@@ -122,13 +126,14 @@ char					*base;	/* begining of structure */
 CONST char				*value;	/* string containing value */
 {
 	register char *loc;
-	int i;
+	int i, retval = 0;
 
 	for( ; sdp->sp_name != (char *)0; sdp++ )  {
 
 		if( strcmp( sdp->sp_name, name ) != 0	/* no name match */
 		    && sdp->sp_fmt[0] != 'i' )		/* no include desc */
-			continue;
+
+		    continue;
 
 		/* if we get this far, we've got a name match
 		 * with a name in the structure description
@@ -202,9 +207,10 @@ CONST char				*value;	/* string containing value */
 					 */
 					if (cp == value ||
 					    (cp == value+1 &&
-					    (*value == '+' || *value == '-')))
-						break;
-					else {
+					    (*value == '+' || *value == '-'))){
+					    retval = -2;
+					    break;
+					} else {
 						*(ip++) = tmpi;
 						value = cp;
 					}
@@ -239,9 +245,10 @@ CONST char				*value;	/* string containing value */
 					 */
 					if (cp == value ||
 					    (cp == value+1 &&
-					    (*value == '+' || *value == '-')))
-						break;
-					else {
+					    (*value == '+' || *value == '-'))){
+					    retval = -2;
+					    break;
+					} else {
 						*(ip++) = tmpi;
 						value = cp;
 					}
@@ -251,7 +258,8 @@ CONST char				*value;	/* string containing value */
 			}
 			break;
 		case 'f':
-			rt_parse_double(value, sdp->sp_count, (double *)loc);
+			retval = rt_parse_double(value, sdp->sp_count,
+						 (double *)loc);
 			break;
 		default:
 			rt_log("rt_struct_lookup(%s): unknown format '%s'\n",
@@ -261,7 +269,7 @@ CONST char				*value;	/* string containing value */
 		if( sdp->sp_hook )  {
 			sdp->sp_hook( sdp, name, base, value );
 		}
-		return(0);		/* OK */
+		return(retval);		/* OK or parse error */
 	}
 	return(-1);			/* Not found */
 }
@@ -286,6 +294,7 @@ char				*base;		/* base addr of users struct */
 	register char *cp;
 	char	*name;
 	char	*value;
+	int retval;
 
 	RT_VLS_CHECK(in_vls);
 	if (desc == (struct structparse *)NULL) {
@@ -349,12 +358,17 @@ char				*base;		/* base addr of users struct */
 		if( *cp != '\0' )
 			*cp++ = '\0';
 
-		/* Lookup name in desc table */
-		if( rt_struct_lookup( desc, name, base, value ) < 0 )  {
-			rt_log("rt_structparse:  '%s=%s', element name not found in:\n",
-				name, value);
-			rt_structprint( "troublesome one", desc, base );
+		/* Lookup name in desc table and modify */
+		retval = rt_struct_lookup( desc, name, base, value );
+		if( retval == -1 ) {
+		    rt_log("rt_structparse:  '%s=%s', element name not found in:\n",
+			   name, value);
+		    rt_structprint( "troublesome one", desc, base );
+		} else if( retval == -2 ) {
+		    rt_vls_free( &vls );
+		    return -2;
 		}
+
 	}
 	rt_vls_free( &vls );
 	return(0);
@@ -390,18 +404,12 @@ register CONST matp_t	mat;
 		mat[12], mat[13], mat[14], mat[15]);
 }
 
-/*
- *                     R T _ V L S _ I T E M _ P R I N T
- *
- * Takes the single item pointed to by "sp", and prints its value into a
- * vls.
- */
-
-void
-rt_vls_item_print( vp, sdp, base )
+HIDDEN void
+rt_vls_item_print_core( vp, sdp, base, sep_char )
 struct rt_vls *vp;
-CONST struct structparse *sdp;     /* item description */
+CONST struct structparse *sdp;    /* item description */
 CONST char *base;                 /* base address of users structure */
+char sep_char;                    /* value separator */
 {
     register char *loc;
 
@@ -422,7 +430,7 @@ CONST char *base;                 /* base address of users structure */
     }
 
     if ( sdp->sp_fmt[0] != '%')  {
-	rt_log("rt_structprint:  %s: unknown format '%s'\n",
+	rt_log("rt_vls_item_print:  %s: unknown format '%s'\n",
 	       sdp->sp_name, sdp->sp_fmt );
 	return;
     }
@@ -447,33 +455,114 @@ CONST char *base;                 /* base address of users structure */
 	register short *sp = (short *)loc;
 
 	rt_vls_printf( vp, "%hd", *sp++ );
-	while( --i > 0 ) rt_vls_printf( vp, ",%hd", *sp++ ); }
+	while( --i > 0 ) rt_vls_printf( vp, "%c%hd", sep_char, *sp++ ); }
 	break;
     case 'd': {
 	register int i = sdp->sp_count;
 	register int *dp = (int *)loc;
 
 	rt_vls_printf( vp, "%d", *dp++ );
-	while( --i > 0 ) rt_vls_printf( vp, ",%d", *dp++ ); }
+	while( --i > 0 ) rt_vls_printf( vp, "%c%d", sep_char, *dp++ ); }
 	break;
     case 'f': {
 	register int i = sdp->sp_count;
 	register double *dp = (double *)loc;
 
 	rt_vls_printf( vp, "%.25G", *dp++ );
-	while( --i > 0 ) rt_vls_printf( vp, ",%.25G", *dp++ ); }
+	while( --i > 0 ) rt_vls_printf( vp, "%c%.25G", sep_char, *dp++ ); }
 	break;
     case 'x': {
 	register int i = sdp->sp_count;
 	register int *dp = (int *)loc;
 
 	rt_vls_printf( vp, "%08x", *dp++ );
-	while( --i > 0 ) rt_vls_printf( vp, ",%08x", *dp++ );  }
+	while( --i > 0 ) rt_vls_printf( vp, "%c%08x", sep_char, *dp++ );  }
 	break;
     default:
 	break;
     }
-}    
+}
+
+
+
+/*
+ *                     R T _ V L S _ I T E M _ P R I N T
+ *
+ * Takes the single item pointed to by "sp", and prints its value into a
+ * vls.
+ */
+
+void
+rt_vls_item_print( vp, sdp, base )
+struct rt_vls *vp;
+CONST struct structparse *sdp;     /* item description */
+CONST char *base;                 /* base address of users structure */
+{
+    rt_vls_item_print_core( vp, sdp, base, ',' );
+}
+
+/*
+ *    R T _ V L S _ I T E M _ P R I N T _ N C
+ *
+ *    A "no-commas" version of the rt_vls_item_print() routine.
+ */
+
+void
+rt_vls_item_print_nc( vp, sdp, base )
+struct rt_vls *vp;
+CONST struct structparse *sdp;     /* item description */
+CONST char *base;                 /* base address of users structure */
+{
+    rt_vls_item_print_core( vp, sdp, base, ' ' );
+}
+
+/*                  R T _ V L S _ N A M E _ P R I N T
+ *
+ * A version of rt_vls_item_print that allows you to select by name.
+ */
+
+int
+rt_vls_name_print( vp, parsetab, name, base )
+struct rt_vls *vp;
+CONST struct structparse *parsetab;
+CONST char *name;
+CONST char *base;
+{
+    register CONST struct structparse *sdp;
+
+    for( sdp = parsetab; sdp->sp_name != NULL; sdp++ )
+	if( strcmp(sdp->sp_name, name) == 0 ) {
+	    rt_vls_item_print( vp, sdp, base );
+	    return 0;
+	}
+
+    return -1;
+}
+
+/*                  R T _ V L S _ N A M E _ P R I N T _ N C
+ *
+ * A "no-commas" version of rt_vls_name_print
+ */
+
+int
+rt_vls_name_print_nc( vp, parsetab, name, base )
+struct rt_vls *vp;
+CONST struct structparse *parsetab;
+CONST char *name;
+CONST char *base;
+{
+    register CONST struct structparse *sdp;
+
+    for( sdp = parsetab; sdp->sp_name != NULL; sdp++ )
+	if( strcmp(sdp->sp_name, name) == 0 ) {
+	    rt_vls_item_print_nc( vp, sdp, base );
+	    return 0;
+	}
+
+    return -1;
+}
+
+
 
 
 /*
@@ -521,7 +610,7 @@ CONST char			*base;	  /* base address of users structure */
 				sdp->sp_name, sdp->sp_fmt );
 			continue;
 		}
-#if 1
+#if 0
 		rt_vls_trunc( &vls, 0 );
 		rt_vls_item_print( &vls, sdp, base );
 		rt_log( " %s=%s\n", sdp->sp_name, rt_vls_addr(&vls) );
