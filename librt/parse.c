@@ -37,9 +37,6 @@ static char RCSparse[] = "@(#)$Header$ (BRL)";
 # include <string.h>
 #endif
 
-extern void	rt_structparse();
-extern void	rt_structprint();
-
 /*
  *			R T _ P A R S E _ R G B
  *
@@ -114,7 +111,7 @@ HIDDEN int
 rt_struct_lookup( spp, name, base, value )
 register struct structparse	*spp;
 register char			*name;
-stroff_t			base;
+char				*base;
 char				*value;		/* string containing value */
 {
 	register char *loc;
@@ -180,7 +177,7 @@ void
 rt_structparse( cp, parsetab, base )
 register char		*cp;
 struct structparse	*parsetab;
-stroff_t		base;		/* base address of users structure */
+char			*base;		/* base address of users structure */
 {
 	char	*name;
 	char	*value;
@@ -226,11 +223,11 @@ void
 rt_structprint( title, parsetab, base )
 char			*title;
 struct structparse	*parsetab;
-stroff_t		base;		/* base address of users structure */
+char			*base;		/* base address of users structure */
 {
 	register struct structparse	*spp;
 	register char			*loc;
-	register stroff_t		lastoff = (stroff_t)(-1);
+	register int			lastoff = -1;
 
 	rt_log( "%s\n", title );
 	for( spp = parsetab; spp->sp_name != (char *)0; spp++ )  {
