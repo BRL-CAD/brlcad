@@ -171,9 +171,15 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	 * If the shader needs to operate in a coordinate system which stays
 	 * fixed on the region when the region is moved (as in animation)
 	 * we need to get a matrix to perform the appropriate transform(s).
+	 *
+	 * db_shader_mat returns a matrix which maps points on/in the region
+	 * into the unit cube.  This unit cube is formed by first mapping from
+	 * world coordinates into "region coordinates" (the coordinate system
+	 * in which the region is defined).  Then the bounding box of the 
+	 * region is used to establish a mapping to the unit cube
 	 */
 
-	db_shader_mat(xxx_sp->xxx_m_to_sh, rtip->rti_dbip, rp);
+	db_shader_mat(xxx_sp->xxx_m_to_sh, rtip, rp);
 
 
 	if( rdebug&RDEBUG_SHADE) {

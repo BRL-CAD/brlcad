@@ -142,7 +142,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	 * we need to get a matrix to perform the appropriate transform(s).
 	 */
 
-	db_shader_mat(cs_sp->cs_m_to_sh, rtip->rti_dbip, rp);
+	db_shader_mat(cs_sp->cs_m_to_sh, rtip, rp);
 
 	if( rdebug&RDEBUG_SHADE) {
 		cs_sp->cs_reg_name = rt_strdup(rp->reg_name);

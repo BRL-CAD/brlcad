@@ -251,7 +251,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	 * we need to get a matrix to perform the appropriate transform(s).
 	 */
 
-	db_shader_mat(fire_sp->fire_m_to_sh, rtip->rti_dbip, rp);
+	db_shader_mat(fire_sp->fire_m_to_sh, rtip, rp);
 
 	/* Build matrix to map shader space to noise space.
 	 * XXX If only we could get the frametime at this point

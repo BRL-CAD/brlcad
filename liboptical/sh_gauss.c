@@ -348,7 +348,7 @@ struct rt_i		*rtip;	/* New since 4.4 release */
 	 * matrix to rotate it into alignment.  We're going to have to do
 	 * computation in the space defined by this ellipsoid.
 	 */
-/*	db_shader_mat(gauss_sp->gauss_m_to_sh, rtip->rti_dbip, rp); */
+/*	db_shader_mat(gauss_sp->gauss_m_to_sh, rtip, rp); */
 
 
 	if( rdebug&RDEBUG_SHADE) {
