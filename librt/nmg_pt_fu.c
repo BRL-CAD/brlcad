@@ -87,7 +87,7 @@ static void	pl_pt_e(struct fpi *fpi, struct edge_info *ei);
 static struct edge_info *nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list);
 static int	compute_loop_class(struct fpi *fpi,struct loopuse *lu,struct edge_info *edge_list);
 static int	nmg_class_pt_lu(struct loopuse *lu, struct fpi *fpi);
-int		nmg_class_pt_fu_except(point_t pt, CONST struct faceuse *fu, CONST struct loopuse *ignore_lu, void (*eu_func)(), void (*vu_func)(), CONST char *priv, CONST int call_on_hits, CONST struct rt_tol *tol);
+int		nmg_class_pt_fu_except(CONST point_t pt, CONST struct faceuse *fu, CONST struct loopuse *ignore_lu, void (*eu_func)(), void (*vu_func)(), CONST char *priv, CONST int call_on_hits, CONST struct rt_tol *tol);
 #endif
 /*
  *	N M G _ C L A S S _ P T _ V U 
@@ -741,7 +741,7 @@ struct fpi	*fpi;
 int
 nmg_class_pt_fu_except(pt, fu, ignore_lu,
 	eu_func, vu_func, priv, call_on_hits, tol)
-point_t pt;
+CONST point_t pt;
 CONST struct faceuse *fu;
 CONST struct loopuse    *ignore_lu;
 void                    (*eu_func)();   /* func to call when pt on edgeuse */
