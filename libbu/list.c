@@ -198,27 +198,29 @@ CONST long		magic;
 {
 	register CONST struct bu_list	*cur;
 	int	head_count = 0;
+	int	item = 0;
 
 	cur = hd;
 	do  {
 		if( cur->magic == BU_LIST_HEAD_MAGIC )  {
 			head_count++;
 		} else if( cur->magic != magic ) {
-			bu_log("nmg_ck_list(%s) cur magic=(%s)x%x, cur->forw magic=(%s)x%x, hd magic=(%s)x%x\n",
+			bu_log("bu_ck_list(%s) cur magic=(%s)x%x, cur->forw magic=(%s)x%x, hd magic=(%s)x%x, item=%d\n",
 				str, bu_identify_magic(cur->magic), cur->magic,
 				bu_identify_magic(cur->forw->magic), cur->forw->magic,
-				bu_identify_magic(hd->magic), hd->magic);
+				bu_identify_magic(hd->magic), hd->magic,
+				item);
 			bu_bomb("bu_ck_list_magic() cur->magic\n");
 		}
 
 		if( !cur->forw )  {
-			bu_log("bu_ck_list_magic(%s) cur=x%x, cur->forw=x%x, hd=x%x\n",
-				str, cur, cur->forw, hd );
+			bu_log("bu_ck_list_magic(%s) cur=x%x, cur->forw=x%x, hd=x%x, item=%d\n",
+				str, cur, cur->forw, hd, item );
 			bu_bomb("bu_ck_list_magic() forw NULL\n");
 		}
 		if( cur->forw->back != cur )  {
-			bu_log("bu_ck_list_magic(%s) cur=x%x, cur->forw=x%x, cur->forw->back=x%x, hd=x%x\n",
-				str, cur, cur->forw, cur->forw->back, hd );
+			bu_log("bu_ck_list_magic(%s) cur=x%x, cur->forw=x%x, cur->forw->back=x%x, hd=x%x, item=%d\n",
+				str, cur, cur->forw, cur->forw->back, hd, item );
 			bu_log(" cur=%s, cur->forw=%s, cur->forw->back=%s\n",
 				bu_identify_magic(cur->magic),
 				bu_identify_magic(cur->forw->magic),
@@ -226,20 +228,21 @@ CONST long		magic;
 			bu_bomb("bu_ck_list_magic() cur->forw->back != cur\n");
 		}
 		if( !cur->back )  {
-			bu_log("bu_ck_list_magic(%s) cur=x%x, cur->back=x%x, hd=x%x\n",
-				str, cur, cur->back, hd );
+			bu_log("bu_ck_list_magic(%s) cur=x%x, cur->back=x%x, hd=x%x, item=%d\n",
+				str, cur, cur->back, hd, item );
 			bu_bomb("bu_ck_list_magic() back NULL\n");
 		}
 		if( cur->back->forw != cur )  {
-			bu_log("bu_ck_list_magic(%s) cur=x%x, cur->back=x%x, cur->back->forw=x%x, hd=x%x\n",
-				str, cur, cur->back, cur->back->forw, hd );
+			bu_log("bu_ck_list_magic(%s) cur=x%x, cur->back=x%x, cur->back->forw=x%x, hd=x%x, item=%d\n",
+				str, cur, cur->back, cur->back->forw, hd, item );
 			bu_bomb("bu_ck_list_magic() cur->back->forw != cur\n");
 		}
 		cur = cur->forw;
+		item++;
 	} while( cur != hd );
 
 	if( head_count != 1 )  {
-		bu_log("bu_ck_list_magic(%s) head_count = %d, hd=x%x\n", str, head_count, hd);
+		bu_log("bu_ck_list_magic(%s) head_count = %d, hd=x%x, items=%d\n", str, head_count, hd, item);
 		bu_bomb("bu_ck_list_magic() headless!\n");
 	}
 }
