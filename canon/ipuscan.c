@@ -68,9 +68,8 @@ struct chore	*await1;
 struct chore	*await2;
 struct chore	*await3;
 
-void step1(aa,bb)
+void step1(aa)
 void	*aa;
-size_t	bb;
 {
 	struct chore	*chorep;
 	int		pix_y;
@@ -111,9 +110,8 @@ size_t	bb;
 	exit(0);	/* exit this thread */
 }
 
-void step2(aa,bb)
+void step2(aa)
 void	*aa;
-size_t	bb;
 {
 	struct chore	*chorep;
 	register unsigned char	*cp;
@@ -173,9 +171,8 @@ size_t	bb;
  *  or busy disk drive or (worse yet) is on an NFS partition,
  *  this can take a long time.
  */
-void step3(aa,bb)
+void step3(aa)
 void	*aa;
-size_t	bb;
 {
 	struct chore	*chorep;
 

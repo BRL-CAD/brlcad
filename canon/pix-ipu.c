@@ -121,9 +121,8 @@ struct chore	*await3;
  *  or busy disk drive or (worse yet) is on an NFS partition,
  *  this can take a long time.
  */
-void step1(aa,bb)
-void	*aa;
-size_t	bb;
+void step1(aa)
+void *aa;
 {
 	struct chore	*chorep;
 	int		pix_y;
@@ -167,9 +166,8 @@ size_t	bb;
 }
 
 /* format conversion */
-void step2(aa,bb)
+void step2(aa)
 void	*aa;
-size_t	bb;
 {
 	struct chore	*chorep;
 	register unsigned char	*cp;
@@ -223,9 +221,8 @@ size_t	bb;
 }
 
 /* output via SCSI bus to IPU.  This is the time consuming step. */
-void step3(aa,bb)
+void step3(aa)
 void	*aa;
-size_t	bb;
 {
 	struct chore	*chorep;
 	int		canon_y;
