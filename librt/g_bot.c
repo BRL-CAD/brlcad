@@ -48,6 +48,8 @@ struct bot_specific
 	struct tri_specific **bot_facearray;	/* head of face array */
 };
 
+int rt_bot_minpieces = 32;
+
 /*
  *  			R T _ B O T _ P R E P
  *  
@@ -144,10 +146,13 @@ struct rt_i		*rtip;
 	 *
 	 *  If the number of triangles is too small,
 	 *  don't bother making pieces, the overhead isn't worth it.
+	 *
+	 *  To disable BoT pieces, on the RT command line specify:
+	 *	-c "set rt_bot_minpieces=0"
 	 */
-	if( ntri < 32 )  return 0;
+	if( rt_bot_minpieces <= 0 )  return 0;
+	if( ntri < rt_bot_minpieces )  return 0;
 
-#if 1	/* Set this to '1' to enable BoT pieces */
 	stp->st_npieces = ntri;
 
 	bot->bot_facearray = (struct tri_specific **)
@@ -232,7 +237,6 @@ struct rt_i		*rtip;
 		}
 
 	}
-#endif
 
 	return 0;
 }

@@ -418,6 +418,9 @@ char	**argv;
 /* viewing module specific variables */
 extern struct bu_structparse view_parse[];
 
+/* from librt/g_bot.c */
+extern int rt_bot_minpieces;
+
 /*
  *  Generic settable parameters.
  *  By setting the "base address" to zero in the bu_structparse call,
@@ -449,6 +452,7 @@ struct bu_structparse set_parse[] = {
 	{"%d",	1, "height",	byteoffset(height),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",	1, "perspective", byteoffset(rt_perspective),	BU_STRUCTPARSE_FUNC_NULL },
 	{"%f",	1, "angle",	byteoffset(rt_perspective),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%f",  1, "rt_bot_minpieces", byteoffset(rt_bot_minpieces),BU_STRUCTPARSE_FUNC_NULL },
 	{"i", byteoffset(view_parse[0]),"View_Module-Specific Parameters", 0, BU_STRUCTPARSE_FUNC_NULL },
 #endif
 	{"",	0, (char *)0,	0,				BU_STRUCTPARSE_FUNC_NULL }
