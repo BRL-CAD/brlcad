@@ -467,7 +467,7 @@ struct partition *PartHeadp;
 struct seg *finished_segs;
 {
 	register struct partition *pp;
-	register struct region	*regp;
+	register struct region	*regp = NULL;
 	struct application	sub_ap;
 	struct shadework	sw;
 	CONST struct light_specific	*lp;
@@ -475,8 +475,11 @@ struct seg *finished_segs;
 	vect_t	filter_color;
 	int	light_visible;
 	int	air_sols_seen = 0;
+	char	*reason = "???";
 
 	RT_CK_LIST_HEAD(&finished_segs->l);
+
+	VSETALL( filter_color, 1 );
 
 	/*XXX Bogus with Air.  We should check to see if it is the same 
 	 * surface.
@@ -494,8 +497,23 @@ struct seg *finished_segs;
 	 */
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )  {
 		if( pp->pt_regionp->reg_aircode != 0 )  {
-			/* XXX Should be accumulating transmission through each */
+			/* Accumulate transmission through each air lump */
 			air_sols_seen++;
+
+			/* Obtain opacity of this region, multiply */
+			sw.sw_inputs = 0;
+			sw.sw_transmit = sw.sw_reflect = 0.0;
+			sw.sw_refrac_index = 1.0;
+			sw.sw_xmitonly = 1;	/* only want sw_transmit */
+			sw.sw_segs = finished_segs;
+			VSETALL( sw.sw_color, 1 );
+			VSETALL( sw.sw_basecolor, 1 );
+
+			(void)viewshade( ap, pp, &sw );
+			/* sw_transmit is only return */
+
+			/* Clouds don't yet attenuate differently based on freq */
+			VSCALE( filter_color, filter_color, sw.sw_transmit );
 			continue;
 		}
 		if( pp->pt_inhit->hit_dist >= ap->a_rt_i->rti_tol.dist )
@@ -507,7 +525,13 @@ struct seg *finished_segs;
 		pp=PartHeadp->pt_forw;
 		RT_CK_PT(pp);
 
-		if( air_sols_seen > 0 )  return 1;	/* light_visible = 1 */
+		if( air_sols_seen > 0 )  {
+			light_visible = 1;
+			VMOVE( ap->a_color, filter_color );
+/* XXXXXXX This seems to happen with *every* light vis ray through air */
+			reason = "Off end of partition list, air was seen";
+			goto out;
+		}
 
 		if (pp->pt_inhit->hit_dist <= ap->a_rt_i->rti_tol.dist) {
 			int retval;
@@ -539,6 +563,7 @@ struct seg *finished_segs;
 			ap->a_return = sub_ap.a_return;
 
 			light_visible = retval;
+			reason = "pressed on past start point";
 			goto out;
 		}
 
@@ -547,7 +572,9 @@ struct seg *finished_segs;
 			ap->a_x, ap->a_y,
 			ap->a_rt_i->rti_tol.dist);
 		rt_pr_partitions(ap->a_rt_i, PartHeadp, "light_hit pt list");
-		return(0);		/* light_visible = 0 */
+		light_visible = 0;
+		reason = "error, nothing hit";
+		goto out;
 	}
 	regp = pp->pt_regionp;
 
@@ -555,9 +582,9 @@ struct seg *finished_segs;
 	lp = (struct light_specific *)(ap->a_uptr);
 	RT_CK_LIGHT(lp);
 	if( lp->lt_rp == regp )  {
-		VSETALL( ap->a_color, 1 );
+		VMOVE( ap->a_color, filter_color );
 		light_visible = 1;
-		/* XXX Need to tally up air attenuation here */
+		reason = "hit light";
 		goto out;
 	}
 
@@ -566,9 +593,9 @@ struct seg *finished_segs;
 		vect_t	tolight;
 		VSUB2( tolight, lp->lt_pos, ap->a_ray.r_pt );
 		if( pp->pt_inhit->hit_dist >= MAGNITUDE(tolight) ) {
-			VSETALL( ap->a_color, 1 );
+			VMOVE( ap->a_color, filter_color );
 			light_visible = 1;
-			/* XXX Need to tally up air attenuation here */
+			reason = "hit behind invisible light ==> hit light";
 			goto out;
 		}
 	}
@@ -578,6 +605,7 @@ struct seg *finished_segs;
 	    (regp->reg_transmit == 0 /* XXX && Not procedural shader */) )  {
 		VSETALL( ap->a_color, 0 );
 		light_visible = 0;
+	    	reason = "hit opaque object";
 		goto out;
 	}
 
@@ -586,10 +614,9 @@ struct seg *finished_segs;
 	    	/* Any light energy is "fully" attenuated by here */
 		VSETALL( ap->a_color, 0 );
 		light_visible = 0;
+		reason = "light fully attenuated before shading";
 		goto out;
 	}
-
-	/* XXX Need to tally up air attenuation here */
 
 	/*
 	 *  Determine transparency parameters of this object.
@@ -605,12 +632,14 @@ struct seg *finished_segs;
 	VSETALL( sw.sw_basecolor, 1 );
 
 	(void)viewshade( ap, pp, &sw );
+	/* sw_transmit is output */
 
-	VSCALE( filter_color, sw.sw_color, sw.sw_transmit );
+	VSCALE( filter_color, filter_color, sw.sw_transmit );
 	if( filter_color[0] + filter_color[1] + filter_color[2] < 0.01 )  {
 	    	/* Any recursion won't be significant */
 		VSETALL( ap->a_color, 0 );
 		light_visible = 0;
+		reason = "light fully attenuated after shading";
 		goto out;
 	}
 
@@ -630,8 +659,11 @@ struct seg *finished_segs;
 	light_visible = rt_shootray( &sub_ap );
 
 	VELMUL( ap->a_color, sub_ap.a_color, filter_color );
+	reason = "after filtering";
 out:
-	if( rdebug & RDEBUG_LIGHT ) rt_log("light %s vis=%d\n", regp->reg_name, light_visible);
+	if( rdebug & RDEBUG_LIGHT ) rt_log("light %s vis=%d (%4.2f, %4.2f, %4.2f) %s\n",
+		regp ? regp->reg_name : "-miss-",
+		light_visible, V3ARGS(ap->a_color), reason );
 	return(light_visible);
 }
 
