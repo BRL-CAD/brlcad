@@ -24,8 +24,6 @@ last_name_sort (void *v1, void *v2)
     record *r1 = v1;
     record *r2 = v2;
 
-    fprintf(stderr, "last_name_sort('%s', '%s')\n", r1 -> last, r2 -> last);
-    fflush(stderr);
     return(strcmp(r1 -> last, r2 -> last));
 }
 
@@ -34,8 +32,6 @@ first_name_sort (void *v1, void *v2)
     record *r1 = v1;
     record *r2 = v2;
 
-    fprintf(stderr, "first_name_sort('%s', '%s')\n", r1 -> first, r2 -> first);
-    fflush(stderr);
     return(strcmp(r1 -> first, r2 -> first));
 }
 
@@ -44,8 +40,6 @@ party_sort (void *v1, void *v2)
     record *r1 = v1;
     record *r2 = v2;
 
-    fprintf(stderr, "party_sort(%d, %d)\n", r1 -> party, r2 -> party);
-    fflush(stderr);
     return ((r1 -> party < r2 -> party) ? -1 :
 	    (r1 -> party > r2 -> party) ? 1 : 0);
 }
@@ -61,18 +55,30 @@ party_sort (void *v1, void *v2)
  */
 main ()
 {
-    int		i;
-    rb_tree	*tree;
-    record	pres[6];
-    record	*r;
-    static char	*order_string[] =
-		{
-		    "last name", "first name", "party"
-		};
-    static int	(*comp_func[])() =
-		{
-		    last_name_sort, first_name_sort, party_sort
-		};
+    int			i;
+    rb_tree		*tree;
+    static record	pres[10] = 
+			{
+			    {RECORD_MAGIC, "Roosevelt", "Franklin", DEMOCRAT},
+			    {RECORD_MAGIC, "Truman", "Harry", DEMOCRAT},
+			    {RECORD_MAGIC, "Eisenhower", "Dwight", REPUBLICAN},
+			    {RECORD_MAGIC, "Kennedy", "John", DEMOCRAT},
+			    {RECORD_MAGIC, "Johnson", "Lyndon", DEMOCRAT},
+			    {RECORD_MAGIC, "Nixon", "Richard", REPUBLICAN},
+			    {RECORD_MAGIC, "Ford", "Gerald", REPUBLICAN},
+			    {RECORD_MAGIC, "Carter", "Jimmy", DEMOCRAT},
+			    {RECORD_MAGIC, "Reagan", "Ronald", REPUBLICAN},
+			    {RECORD_MAGIC, "Bush", "George", REPUBLICAN}
+			};
+    record		*r;
+    static char		*order_string[] =
+			{
+			    "last name", "first name", "party"
+			};
+    static int		(*comp_func[])() =
+			{
+			    last_name_sort, first_name_sort, party_sort
+			};
 
     comp_func[0] = last_name_sort;
     if ((tree = rb_create("First test", 3, comp_func)) == RB_TREE_NULL)
@@ -80,54 +86,13 @@ main ()
 	fputs("rb_create() bombed\n", stderr);
 	exit (1);
     }
-    rb_describe(tree);
 
-    /*
-     *	Fill the records
-     */
-    pres[0].magic = RECORD_MAGIC;
-    strcpy(pres[0].last, "Roosevelt");
-    strcpy(pres[0].first, "Franklin");
-    pres[0].party = DEMOCRAT;
-    /* */
-    pres[1].magic = RECORD_MAGIC;
-    strcpy(pres[1].last, "Truman");
-    strcpy(pres[1].first, "Harry");
-    pres[1].party = DEMOCRAT;
-    /* */
-    pres[2].magic = RECORD_MAGIC;
-    strcpy(pres[2].last, "Eisenhower");
-    strcpy(pres[2].first, "Dwight");
-    pres[2].party = REPUBLICAN;
-    /* */
-    pres[3].magic = RECORD_MAGIC;
-    strcpy(pres[3].last, "Kennedy");
-    strcpy(pres[3].first, "John");
-    pres[3].party = DEMOCRAT;
-    /* */
-    pres[4].magic = RECORD_MAGIC;
-    strcpy(pres[4].last, "Johnson");
-    strcpy(pres[4].first, "Lyndon");
-    pres[4].party = DEMOCRAT;
-    /* */
-    pres[5].magic = RECORD_MAGIC;
-    strcpy(pres[5].last, "Nixon");
-    strcpy(pres[5].first, "Richard");
-    pres[5].party = REPUBLICAN;
-
-    printf("pres = %x = (void *) %x\n", pres, (void *) pres);
-    for (i = 0; i < 6; ++i)
-    {
+    for (i = 0; i < 10; ++i)
 	rb_insert(tree, (void *) &(pres[i]));
-	fprintf(stderr, "Reached line %d\n", __LINE__);fflush(stderr);
-    }
-    rb_describe(tree);
-    fprintf(stderr, "Reached line %d\n", __LINE__);fflush(stderr);
 
     for (i = 0; i < 3; ++i)
     {
 	r = (record *) rb_min(tree, i);
-	fprintf(stderr, "Reached line %d\n", __LINE__);fflush(stderr);
 
 	printf("Smallest %s is for %s %s\n",
 	    order_string[i], r -> first, r -> last);
