@@ -361,6 +361,24 @@ int			poly_markers;
 	}
 }
 
+/*
+ *			N M G _ M _ T O _ V L I S T
+ *
+ */
+void
+nmg_m_to_vlist( vhead, m, poly_markers )
+struct rt_list	*vhead;
+struct model	*m;
+int		poly_markers;
+{
+	register struct region	*r;
+
+	NMG_CK_MODEL( m );
+	for( RT_LIST_FOR( r, region, &m->r_hd ) )  {
+		NMG_CK_REGION( r );
+		nmg_r_to_vlist( vhead, r, poly_markers );
+	}
+}
 /************************************************************************
  *									*
  *		NMG to UNIX-Plot routines, for visualization		*
