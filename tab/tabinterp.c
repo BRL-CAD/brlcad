@@ -583,13 +583,14 @@ register struct chan	*chp;
 				while( cur_t < chp->c_itime[0] );
 					cur_t += chp->c_itime[chp->c_ilen-1];
 			}
-			if( cur_t > chp->c_ival[i+1] )
+			if( cur_t > chp->c_itime[i+1] )
 				continue;
-			if( cur_t < chp->c_ival[i] )
+			if( cur_t < chp->c_itime[i] )
 				continue;
-			x0 = (cur_t - chp->c_ival[i]) /
-			    (chp->c_ival[i+1] - chp->c_ival[i]);
-			x1 = 1 - x0;
+			x1 = (cur_t - chp->c_itime[i]) /
+			    (chp->c_itime[i+1] - chp->c_itime[i]);
+			x0 = 1 - x1;
+			/* Linear interpolation, with correction */
 			yy = D2yi * (x0 - x0*x0*x0) + D2yi1 * (x1 - x1*x1*x1);
 			yy = chp->c_ival[i] * x0 + chp->c_ival[i+1] * x1 - 
 				hi1 * hi1 * yy / 6;
