@@ -63,7 +63,9 @@ double a,b;
 	return(sqrt(a*a+b*b));
 }
 #else
+#ifdef HAVE_MALLOC_H
 #include <malloc.h>		/* not needed on SGI 3030s */
+#endif
 #endif /* sgi */
 
 void	proc_label();
