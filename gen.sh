@@ -163,7 +163,6 @@ BDIRS="bench \
 	libnurb librt \
 	libredblack \
 	conv \
-	off \
 	db \
 	rt \
 	remrt \
@@ -183,6 +182,7 @@ BDIRS="bench \
 	sig \
 	tab \
 	tools \
+	off \
 	halftone \
 	edpix \
 	nirt irprep \
