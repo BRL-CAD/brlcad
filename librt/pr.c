@@ -176,7 +176,7 @@ register CONST struct partition *pp;
 	bu_vls_strcat( v, "\n" );
 
 	bu_log_indent_vls( v );
-	bu_vls_strcat( v, "  Untrimmed Segments Contributing:\n" );
+	bu_vls_strcat( v, "  Untrimmed Segments spanning this interval:\n" );
 	bu_log_indent_delta( 4 );
 	for( BU_PTBL_FOR( segpp, (struct seg **), &pp->pt_seglist ) )  {
 		RT_CK_SEG(*segpp)
