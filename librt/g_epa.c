@@ -1191,7 +1191,7 @@ struct rt_tol		*tol;
 	vells = (struct vertex ***)
 		rt_malloc(nell*sizeof(struct vertex **), "vertex [][]");
 	if (!vells) {
-		fprintf(stderr, "rt_epa_tess: no memory\!");
+		fprintf(stderr, "rt_epa_tess: no memory!\n");
 		goto fail;
 	}
 	j = nseg;
@@ -1199,7 +1199,7 @@ struct rt_tol		*tol;
 	        vells[i] = (struct vertex **)
 	        	rt_malloc(j*sizeof(struct vertex *), "vertex []");
 		if (!vells[i]) {
-			fprintf(stderr, "rt_epa_tess: no memory\!");
+			fprintf(stderr, "rt_epa_tess: no memory!\n");
 			goto fail;
 		}
 		if (i && pts_dbl[i])
