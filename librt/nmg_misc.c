@@ -420,6 +420,13 @@ long *flags;
 		eu = vu->up.eu_p;
 		NMG_CK_EDGEUSE( eu );
 
+		if( rt_g.NMG_debug & DEBUG_BASIC )
+		{
+			rt_log( "Checking edge (%g %g %g)<->(%g %g %g)\n",
+				V3ARGS( eu->vu_p->v_p->vg_p->coord ),
+				V3ARGS( eu->eumate_p->vu_p->v_p->vg_p->coord ) );
+		}
+
 		/* skip wire edges */
 		if( *eu->up.magic_p != NMG_LOOPUSE_MAGIC )
 			continue;
@@ -448,6 +455,15 @@ long *flags;
 		VSUB2( edge , vu1->v_p->vg_p->coord , vu->v_p->vg_p->coord );
 		VUNITIZE( edge );
 
+		if( rt_g.NMG_debug & DEBUG_BASIC )
+		{
+			rt_log( "Checking edge (%g %g %g)<->(%g %g %g)\n",
+				V3ARGS( eu->vu_p->v_p->vg_p->coord ),
+				V3ARGS( eu->eumate_p->vu_p->v_p->vg_p->coord ) );
+			rt_log( "\tedge direction = (%g %g %g)\n", V3ARGS( edge ) );
+			rt_log( "\t\textreme slope = %g\n", extreme_slope );
+		}
+
 		/* check against current maximum slope */
 		if( bottommost )
 		{
@@ -461,6 +477,8 @@ long *flags;
 		{
 			if( edge[dir] > extreme_slope )
 			{
+				if( rt_g.NMG_debug & DEBUG_BASIC )
+					rt_log( "New top edge!\n" );
 				extreme_slope = edge[dir];
 				e_top = eu->e_p;
 			}
@@ -472,11 +490,13 @@ long *flags;
 		return( (struct face *)NULL );
 	}
 
-	/* if the top edge is a free edge, don't use it */
 	eu = e_top->eu_p;
+
+#if 0
+	/* if the top edge is a free edge, don't use it */
 	if( eu->eumate_p == eu->radial_p )
 		return( (struct face *)NULL );
-
+#endif
 	v1 = eu->vu_p->v_p;
 	NMG_CK_VERTEX( v1 );
 	v2 = eu->eumate_p->vu_p->v_p;
@@ -3368,6 +3388,7 @@ CONST struct bn_tol *tol;
  * returns:
  *	0 - shell is exterior shell
  *	1 - shell is a void shell
+ *	-1 - cannot determine
  *
  * It is expected that this shell is the result of nmg_decompose_shells.
  */
@@ -3394,7 +3415,7 @@ CONST struct shell *s;
 	rt_free( (char *)flags , "nmg_shell_is_void: flags" );
 
 	if( f == (struct face *)NULL )
-		rt_bomb( "nmg_shell_is_void: Cannot determine if shell is void\n" );
+		return( -1 );
 
 	NMG_CK_FACE( f );
 	NMG_CK_FACE_G_PLANE( f->g.plane_p );
@@ -3404,12 +3425,12 @@ CONST struct shell *s;
 	if( fu->orientation != OT_SAME )
 		fu = fu->fumate_p;
 	if( fu->orientation != OT_SAME )
-		rt_bomb( "nmg_shell_is_void: Neither faceuse nor mate have OT_SAME orient\n" );
+		return( -1 );
 
 	NMG_GET_FU_NORMAL( normal , fu );
 
 	if( normal[dir] == 0.0 )
-		rt_bomb( "nmg_shell_is_void: Cannot determine if shell is void\n" );
+		return( -1 );
 	if( normal[dir] < 0.0)
 		return( 1 );
 	else
