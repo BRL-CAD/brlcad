@@ -1513,8 +1513,13 @@ CONST struct rt_tol *tol;
 	struct edgeuse *eu;
 	struct edgeuse *eu_ref;
 	struct edgeuse *eu_start,*eu_tmp;
+	struct faceuse *fu_of_lu;
 	vect_t left;
 	vect_t left_ref;
+
+	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
+		rt_log( "class_shared_lu: classifying lu x%x w.r.t. lu_ref x%x\n",
+				lu, lu_ref );
 
 	NMG_CK_LOOPUSE( lu );
 	NMG_CK_LOOPUSE( lu_ref );
@@ -1547,48 +1552,112 @@ CONST struct rt_tol *tol;
 
 	if( VDOT( left, left_ref ) > 0.0 )
 	{
+		if (rt_g.NMG_debug & DEBUG_CLASSIFY)
+		{
+			rt_log( "eu x%x goes form v x%x to v x%x\n", eu, eu->vu_p->v_p, eu->eumate_p->vu_p->v_p );
+			rt_log( "eu_ref x%x goes form v x%x to v x%x\n", eu_ref, eu_ref->vu_p->v_p, eu_ref->eumate_p->vu_p->v_p );
+		}
+
 		/* loop is either shared or anti */
 		if( eu->vu_p->v_p == eu_ref->vu_p->v_p ) 
+		{
+			if (rt_g.NMG_debug & DEBUG_CLASSIFY)
+				rt_log( "class_shared_lu returning NMG_CLASS_AonBshared\n" );
 			return( NMG_CLASS_AonBshared );
+		}
 		else
+		{
+			if (rt_g.NMG_debug & DEBUG_CLASSIFY)
+				rt_log( "class_shared_lu returning NMG_CLASS_AonBanti\n" );
 			return( NMG_CLASS_AonBanti );
+		}
 	}
 
 	/* loop is either in or out
 	 * look at next radial edge from lu_ref shell if that faceuse
 	 * is OT_OPPOSITE, then we are "in", else "out"
 	 */
-
 	s_ref = nmg_find_s_of_eu( eu_ref );
-	eu_start = eu;
-	eu_tmp = eu_start->eumate_p->radial_p;
-	while( eu_tmp != eu_start )
-	{
-		vect_t left_tmp;
-		struct faceuse *fu;
+	fu_of_lu = nmg_find_fu_of_lu( lu );
 
-		fu = nmg_find_fu_of_eu( eu_tmp );
-		if( fu->s_p == s_ref )
+	for( RT_LIST_FOR( eu_start, edgeuse, &lu->down_hd ) )
+	{
+		int use_this_eu=1;
+
+		eu_tmp = eu_start->eumate_p->radial_p;
+		while( eu_tmp != eu_start )
 		{
-			if( nmg_find_eu_leftvec( left_tmp, eu_tmp ) )
+			struct faceuse *fu_tmp;
+			struct loopuse *lu_tmp;
+			int class;
+
+			fu_tmp = nmg_find_fu_of_eu( eu_tmp );
+			if( fu_tmp != fu_of_lu && fu_tmp->fumate_p != fu_of_lu )
 			{
-				rt_log( "class_shared_lu() couldn't get a left vector for EU x%x\n", eu_tmp );
-				rt_bomb( "class_shared_lu() couldn't get a left vector for EU\n" );
+				eu_tmp = eu_tmp->eumate_p->radial_p;
+				continue;
 			}
 
-			if( VDOT( left, left_tmp ) < tol->para )
+			/* radial edge is part of same face
+			 * make sure it is part of a loop */
+			if( *eu_tmp->up.magic_p != NMG_LOOPUSE_MAGIC )
 			{
-				if( fu->orientation == OT_SAME )
+				eu_tmp = eu_tmp->eumate_p->radial_p;
+				continue;
+			}
+			lu_tmp = eu_tmp->up.lu_p;
+			if( fu_tmp->fumate_p == fu_of_lu )
+				lu_tmp == lu_tmp->lumate_p;
+
+			if( lu_tmp == lu )
+			{
+				/* cannot classify based on this edgeuse */
+				use_this_eu = 0;
+				break;
+			}
+
+			class = nmg_classify_lu_lu( lu_tmp, lu, tol );
+			if( lu->orientation == OT_OPPOSITE && class == NMG_CLASS_AoutB )
+			{
+				/* cannot classify based on this edgeuse */
+				use_this_eu = 0;
+				break;
+			}
+			else if( lu->orientation == OT_SAME && class == NMG_CLASS_AinB )
+			{
+				/* cannot classify based on this edgeuse */
+				use_this_eu = 0;
+				break;
+			}
+
+			eu_tmp = eu_tmp->eumate_p->radial_p;
+		}
+		if( !use_this_eu )
+			continue;
+
+		/* O.K. we can classify using this eu, look radially for a faceuse
+		 * from the reference shell
+		 */
+		eu_tmp = eu_start->eumate_p->radial_p;
+		while( eu_tmp != eu_start )
+		{
+			struct faceuse *fu_tmp;
+
+			if( nmg_find_s_of_eu( eu_tmp ) == s_ref )
+			{
+				fu_tmp = nmg_find_fu_of_eu( eu_tmp );
+				if( fu_tmp->orientation == OT_SAME )
 					return( NMG_CLASS_AoutB );
 				else
 					return( NMG_CLASS_AinB );
 			}
-			else
-				return( NMG_CLASS_Unknown );
+
+			eu_tmp = eu_tmp->eumate_p->radial_p;
 		}
-		eu_tmp = eu_tmp->eumate_p->radial_p;
 	}
 
+	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
+		rt_log( "class_shared_lu returning NMG_CLASS_Unknown at end\n" );
 	return( NMG_CLASS_Unknown );
 }
 
@@ -1617,9 +1686,19 @@ CONST struct rt_tol	*tol;
 	int		seen_error = 0;
 	int		status = 0;
 
+	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
+		rt_log( "class_lu_vs_s( lu=x%x, s=x%x )\n", lu, s );
+
 	NMG_CK_LOOPUSE(lu);
 	NMG_CK_SHELL(s);
 	RT_CK_TOL(tol);
+
+	if( nmg_find_s_of_lu( lu ) == s )
+	{
+		rt_log( "class_lu_vs_s() is trying to classify lu x%x vs its own shell (x%x)\n",
+			lu, s );
+		rt_bomb( "class_lu_vs_s() is trying to classify lu vs its own shell" );
+	}
 
 	/* check to see if loop is already in one of the lists */
 	if( NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], lu->l_p) )  {
@@ -1964,6 +2043,9 @@ retry:
 
 			if (rt_g.NMG_debug & DEBUG_CLASSIFY)
 				rt_log( "\tclass set to %s\n",  nmg_class_name( class ) );
+
+			if( class == NMG_CLASS_AonBshared )
+				break;
 		}
 
 	}
@@ -1991,6 +2073,12 @@ retry:
 	 * if the faceuse normal is pointing into the shell, we are inside.
 	 */
 
+	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
+	{
+		rt_log( "Checking radial faces:\n" );
+		nmg_pr_fu_around_eu( eu, tol );
+	}
+
 	for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 
 		p = eu->radial_p;
@@ -2003,7 +2091,7 @@ retry:
 			    		NMG_INDEX_SET(classlist[NMG_CLASS_AinB],
 			    			lu->l_p );
 					if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-						rt_log("Loop is INSIDE\n");
+						rt_log("Loop is INSIDE of fu x%x\n", p->up.lu_p->up.fu_p);
 			    		reason = "radial faceuse is OT_OPPOSITE";
 			    		class = NMG_CLASS_AinB;
 			    		status = INSIDE;
@@ -2012,7 +2100,7 @@ retry:
 			    		NMG_INDEX_SET(classlist[NMG_CLASS_AoutB],
 			    			lu->l_p );
 					if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-						rt_log("Loop is OUTSIDE\n");
+						rt_log("Loop is OUTSIDEof fu x%x\n", p->up.lu_p->up.fu_p);
 			    		reason = "radial faceuse is OT_SAME";
 			    		class = NMG_CLASS_AoutB;
 			    		status = OUTSIDE;
