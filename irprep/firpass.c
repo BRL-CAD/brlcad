@@ -2,7 +2,7 @@
  *			F I R P A S S . C
  *
  *  Author -
- *	S.Coates - 8 July 1991
+ *	S.Coates - 10 March 1992
  *  
  *  Source -
  *	The U. S. Army Ballistic Research Laboratory
@@ -24,6 +24,27 @@
 /*	19 February 1991 - No defaults for material properties.  */
 /*	 5 March 1991    - Creates PRISM, generic, or geometric file.  */
 /*	13 March 1991    - Corrects problem writing out material.  */
+/*	23 October 1991  - Writes out region # & name file.  */
+/*	30 October 1991  - Make region numbering sceme the same for all  */
+/*			   files, i.e. region numbers start at 1.  */
+/*	 5 November 1991 - Print engine air area in radius field.  Give  */
+/*			   user a choice of a PRISM 2.0 or 3.0 file.  */
+/*	 3 December 1991 - Put in closed compartment surface area, exhaust  */
+/*			   surface area, generic air 1 surface area, &  */
+/*			   generic air 2 surface area.  */
+/*	12 February 1992 - Add an additional line at the end of the facet  */
+/*			   file to signify the end.  Correct second line  */
+/*			   of facet file for PRISM 3.0 format.  */
+/*	18 February 1992 - Write out total surface area when there is no  */
+/*			   exterior surface area & if surface area is small  */
+/*			   (< .001) set to .001.  This is done only in the  */
+/*			   PRISM output file since PRISM will not accept a  */
+/*			   a zero for exterior surface area.  It seems that  */
+/*			   FRED does the same thing.  (If there are exterior  */
+/*			   polygons FRED uses this for the area.  If there  */
+/*			   are no exterior polygons FRED sums the area over  */
+/*			   the interior polygons.)  */
+/*	10 March 1992    - Print out PRISM release being used.  */
 
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
@@ -37,10 +58,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 # include <strings.h>
 #endif
 
-#include "machine.h"
-#include "externs.h"
-#include "vmath.h"
-#include "raytrace.h"
+#include "/n/walrus/usr/brlcad/include/machine.h"
+#include "/n/walrus/usr/brlcad/include/externs.h"
+#include "/n/walrus/usr/brlcad/include/vmath.h"
+#include "/n/walrus/usr/brlcad/include/raytrace.h"
 
 #define BLANK " "	/*  Define a blank.  */
 #define ADJTOL 1.e-1	/*  Tolerance for adjacent regions.  */
@@ -72,10 +93,20 @@ struct table
 	double cumvol[3];	/*  cummulative volume sums for each  */
 				/*  direction fired  */
 	double centroid[3];	/*  centroid calculation  */
-	double cumfs[3];	/*  cummulative surface area for */
+	double cumfs[7];	/*  cummulative surface area for */
 				/*  each air type, 0-exterior air,  */
 				/*  1-crew compartment air, 2-engine  */
-				/*  compartment air  */
+				/*  compartment air, 3-closed compartment  */
+				/*  air, 4-exhaust air, 5-generic air 1,  */
+				/*  6-generic air 2.  Air MUST be designated  */
+				/*  in the following way in the mged file.  */
+				/*  1 => exterior air  */
+				/*  2 => crew compartment air  */
+				/*  5 => engine compartment air  */
+				/*  6 => closed compartment air  */
+				/*  7 => exhaust air  */
+				/*  8 => generic air 1  */
+				/*  9 => generic air 2  */
 	int *adjreg;		/*  adjacent region, 0=>no touch,  */
 				/*  1=>touch  */
 	double *ssurarea[3];	/*  cummulative sum of shared surface  */
@@ -103,7 +134,7 @@ int argc;
 char *argv[];
 
 {
-	int i,j,ii;	/*  variables used in loops  */
+	int i,j,k,ii;	/*  variables used in loops  */
 	int ia;		/*  variable used to set short to int  */
 
 	int index;	/*  Index for rt_dirbuild and  */
@@ -135,6 +166,8 @@ char *argv[];
 	char filegen[16];	/*  used for creating generic file  */
 	FILE *fp6;		/*  used for creating gemetric file  */
 	char filegeo[16];	/*  used for creating gemetric file  */
+	FILE *fp7;		/*  Used for creating region # & name file.  */
+	char filernn[16];	/*  Used for creating region # & name file.  */
 	int numadjreg;		/*  used for finding the number of  */
 				/*  adj regions  */
 	double diagonal;	/*  Length of diagonal of bounding rpp.  */
@@ -204,6 +237,7 @@ char *argv[];
 	int numext;		/*  Number of exterior surfaces.  */
 	int numint;		/*  Number of interior surfaces.  */
 	int numsol;		/*  Number of solar loaded surfaces.  */
+	int prmrel;		/*  PRISM release number 2=>2.0 & 3=>3.0.  */
 
    /*  Check to see if arguments implimented correctly.  */
    if(argv[1]==NULL || argv[2]==NULL)
@@ -242,6 +276,12 @@ char *argv[];
 	(void)fflush(stdout);
 	(void)scanf("%s",spfile);
 
+	/*  Get region # & name file (for use w/shapefact).  */
+	(void)printf("Enter name of region # & name file to be  ");
+	(void)printf("created (15 char max).  ");
+	(void)fflush(stdout);
+	(void)scanf("%s",filernn);
+
 	/*  Get name of material id file.  */
 	(void)printf("Enter name of material id file to be read ");
 	(void)printf("(15 char max).  ");
@@ -263,6 +303,16 @@ char *argv[];
 	   (void)printf("(15 char max)  ");
 	   (void)fflush(stdout);
 	   (void)scanf("%s",facfile);
+
+	   /*  Find which PRISM release is being used.  The facet number  */
+	   /*  in release 3.0 is written with an I6 & in release 2.0 it  */
+	   /*  is written with I3.  */
+	   prmrel = 2;
+	   (void)printf("Which release of PRISM is being used, 2.0 (2) ");
+	   (void)printf("or 3.0 (3)?  ");
+	   (void)fflush(stdout);
+	   (void)scanf("%d",&prmrel);
+	   if(prmrel != 3) prmrel = 2;
 	}
 
 	/*  Get generic file name.  */
@@ -421,9 +471,10 @@ char *argv[];
 		region[i].centroid[0]=0.;
 		region[i].centroid[1]=0.;
 		region[i].centroid[2]=0.;
-		region[i].cumfs[0]=0.;
-		region[i].cumfs[1]=0.;
-		region[i].cumfs[2]=0.;
+		for(k=0; k<7; k++)
+		{
+		   region[i].cumfs[k] = 0.;
+		}
 		region[i].surarea[0]=0.;
 		region[i].surarea[1]=0.;
 		region[i].surarea[2]=0.;
@@ -711,10 +762,12 @@ char *argv[];
 		/*  free surface.  */
 
 		/*  Print out normal before normalizing.  */
-		(void)printf("Normal before normalizing\n");
-		(void)printf("  %f, %f, %f\n",region[i].cumnorm[X],
-			region[i].cumnorm[Y],region[i].cumnorm[Z]);
-		(void)fflush(stdout);
+/*
+ *		(void)printf("Normal before normalizing\n");
+ *		(void)printf("  %f, %f, %f\n",region[i].cumnorm[X],
+ *			region[i].cumnorm[Y],region[i].cumnorm[Z]);
+ *		(void)fflush(stdout);
+ */
 
 		if( ( (-NORMTOL < region[i].cumnorm[X]) &&
 			(region[i].cumnorm[X] < NORMTOL) ) &&
@@ -756,7 +809,8 @@ char *argv[];
 	i=0;
 	while( i < num )
 	{
-		(void)printf("region #:  %d, name:  %s\n",i,region[i].regname);
+		(void)printf("region #:  %d, name:  %s\n",(i+1),
+			region[i].regname);
 		(void)printf("\tmaterial code:  %d\n",region[i].mat);
 		(void)fflush(stdout);
 
@@ -802,12 +856,21 @@ char *argv[];
 			region[i].cumfs[1]);
 		(void)printf("\tengine compartment air:  %f\n",
 			region[i].cumfs[2]);
+		(void)printf("\tclosed compartment air:  %f\n",
+			region[i].cumfs[3]);
+		(void)printf("\texhaust air:  %f\n",
+			region[i].cumfs[4]);
+		(void)printf("\tgeneric air 1:  %f\n",
+			region[i].cumfs[5]);
+		(void)printf("\tgeneric air 2:  %f\n",
+			region[i].cumfs[6]);
 		(void)fflush(stdout);
 		for(j=0; j<num; j++)
 		{
 		   if(region[i].adjreg[j] == 1)
 		   {
-			(void)printf("\tadjreg[%d]=%d, ",j,region[i].adjreg[j]);
+			(void)printf("\tadjreg[%d]=%d, ",
+				(j+1),region[i].adjreg[j]);
 			(void)printf("shared surface area:  %f\n",
 			   region[i].ssurarea[0][j]);
 			(void)fflush(stdout);
@@ -831,7 +894,7 @@ char *argv[];
 	while( i < num )
 	{
 		(void)fprintf(fp,"region #:  %d, name:  %s\n",
-		   i,region[i].regname);
+		   (i+1),region[i].regname);
 		(void)fprintf(fp,"\tmaterial code:  %d\n",region[i].mat);
 
 		if(region[i].cumvol[1] == 1)
@@ -877,13 +940,21 @@ char *argv[];
 			region[i].cumfs[1]);
 		(void)fprintf(fp,"\tengine compartment air:  %f\n",
 			region[i].cumfs[2]);
+		(void)fprintf(fp,"\tclosed compartment air:  %f\n",
+			region[i].cumfs[3]);
+		(void)fprintf(fp,"\texhaust air:  %f\n",
+			region[i].cumfs[4]);
+		(void)fprintf(fp,"\tgeneric air 1:  %f\n",
+			region[i].cumfs[5]);
+		(void)fprintf(fp,"\tgeneric air 2:  %f\n",
+			region[i].cumfs[6]);
 		(void)fflush(fp);
 		for(j=0; j<num; j++)
 		{
 		   if(region[i].adjreg[j] == 1)
 		   {
 			(void)fprintf(fp,"\tadjreg[%d]=%d, ",
-			   j,region[i].adjreg[j]);
+			   (j+1),region[i].adjreg[j]);
 			(void)fprintf(fp,"shared surface area:  %f;\n",
 			   region[i].ssurarea[0][j]);
 			(void)fflush(fp);
@@ -923,16 +994,30 @@ char *argv[];
 	}
 	(void)fprintf(fp,"\tsecond pass file created:  %s\n",spfile);
 	(void)fprintf(fp,"\terror file created:  %s\n",fileerr);
-	if( typeout == 0 ) (void)fprintf(fp,
-	   "\tfacet file created:  %s\n",facfile);
+	(void)fprintf(fp,"\tregion # & name file created:  %s\n",
+		filernn);
+	if( typeout == 0 )
+	{
+	   (void)fprintf(fp,"\tfacet file created:  %s\n",facfile);
+	   (void)fprintf(fp,"\t  (format is PRISM %d.0)\n",prmrel);
+	}
 	if( typeout == 1 ) (void)fprintf(fp,
 	   "\tgeneric file created:  %s\n",filegen);
-	if( typeout == 2 ) (void)fprintf(fp,
+	if( (typeout == 2) || (typeout == 3) ) (void)fprintf(fp,
 	   "\tgeometric file created:  %s\n",filegeo);
 	(void)fflush(fp);
 
 	(void)fclose(fp); }
 
+/****************************************************************************/
+	/*  Write region # & name file, for use with shapefact.  */
+	fp7 = fopen(filernn,"w");
+	for(i=0; i<num; i++)
+	{
+	   (void)fprintf(fp7,"%d\t%s\n",(i+1),region[i].regname);
+	   (void)fflush(fp7);
+	}
+	(void)fclose(fp7);
 /****************************************************************************/
 	if( typeout == 0 ) {			/*  START # 11 */
 
@@ -943,7 +1028,8 @@ char *argv[];
 	(void)fprintf(fp1,"02\tFacet file for use with PRISM.\n");
 	(void)fflush(fp1);
 
-	/*  Print header information for facedt file.  */
+	/*  Print header information for facet file.  (Note:  header  */
+	/*  info is the same for PRISM 2.0 & 3.0.)  */
 	(void)fprintf(fp1," FN DESCRIPTION               TY");
 	(void)fprintf(fp1,"    AREA    MASS  SPHEAT      E1");
 	(void)fprintf(fp1,"      E2   ABSOR\n");
@@ -1000,11 +1086,32 @@ char *argv[];
  */
 
 		/*  Find area of facet or as it has been called  */
-		/*  exterior surface area (sq meters).  If exterior  */
-		/*  surface area is 0 print engine compartment area.  */
+		/*  exterior surface area (sq meters).  */
 		facarea = region[i].cumfs[0] * (1.e-6);
-		if( (-ZEROTOL < facarea) && (facarea < ZEROTOL) )
-		   facarea = region[i].cumfs[2] * (1.e-6);
+
+		/*  If there is no exterior surface area, i.e. the  */
+		/*  surface normal is (0,0,0) set the area of the  */
+		/*  facet to the total surface area.  If the exterior  */
+		/*  surface area is small (< .001) set the area of the  */
+		/*  facet to .001.  This is done since PRISM will not  */
+		/*  accept a 0 surface area.  */
+		if( (region[i].cumnorm[0] == 0.) &&
+		    (region[i].cumnorm[1] == 0.) &&
+		    (region[i].cumnorm[2] == 0.) )
+		{
+		   facarea = region[i].surarea[0] * (1.e-6);
+		   (void)printf("There are no exterior surfaces on region ");
+		   (void)printf("%d.  Setting exterior surface area\n",(i+1));
+		   (void)printf("\tto total surface area %f\n",facarea);
+		   (void)fflush(stdout);
+		}
+		if(facarea < .001)
+		{
+		   facarea = .001;
+		   (void)printf("Small surface area for region %d.  ",(i+1));
+		   (void)printf("Setting exterior surface area");
+		   (void)printf("\tto %f.\n",facarea);
+		}
 /*
  *		(void)printf("area:  %8.3f  ",facarea);
  *		(void)fflush(stdout);
@@ -1068,8 +1175,12 @@ char *argv[];
 		/*  (between 0 & 1).  Currently set to 0.  */
 		facshape = 0.;
 
-		/*  Hub radius (m).  Currently set to 0.  */
+		/*  Hub radius (m).  Currently set to 0 unless engine  */
+		/*  air area exist then print engine air area in square  */
+		/*  meters.  */
 		facradius = 0.;
+		if(region[i].cumfs[2] > ZEROTOL)
+			facradius = region[i].cumfs[2] * (1.e-6);
 
 		/*  Bearing friction constant (J) for wheels.  */
 		/*  Currently set to 0.  */
@@ -1081,7 +1192,11 @@ char *argv[];
  */
 
 		/*  Print information to the facet file.  */
-		(void)fprintf(fp1,"%3d %.25s%3d%8.3f%8.3f%8.3f",
+		if(prmrel == 2)
+		    (void)fprintf(fp1,"%3d %.25s%3d%8.3f%8.3f%8.3f",
+		    facnum,facname,factype,facarea,facmass,facspheat);
+		if(prmrel == 3)
+		    (void)fprintf(fp1,"%6d %.25s%3d%8.3f%8.3f%8.3f",
 		    facnum,facname,factype,facarea,facmass,facspheat);
 		(void)fprintf(fp1,"%8.3f%8.3f%8.3f\n",face1,
 		    face2,facabs);
@@ -1094,6 +1209,13 @@ char *argv[];
 		(void)fflush(fp1);
 
 	}
+
+	/*  Write last line to signify end of facet information.  */
+	if(prmrel == 2)(void)fprintf(fp1,"%3d END OF REGIONS           999\n",
+		(facnum+1));
+	if(prmrel == 3)(void)fprintf(fp1,"%6d END OF REGIONS           999\n",
+		(facnum+1));
+	(void)fflush(fp1);
 
 	/*  Close facet file.  */
 	(void)fclose(fp1);
@@ -1169,6 +1291,10 @@ char *argv[];
 		numint = 0;
 		if(region[i].cumfs[1] > ZEROTOL) numint += 1;
 		if(region[i].cumfs[2] > ZEROTOL) numint += 1;
+		if(region[i].cumfs[3] > ZEROTOL) numint += 1;
+		if(region[i].cumfs[4] > ZEROTOL) numint += 1;
+		if(region[i].cumfs[5] > ZEROTOL) numint += 1;
+		if(region[i].cumfs[6] > ZEROTOL) numint += 1;
 
 		(void)fprintf(fp5,"2 %6d   %3d          %3d\n",
 			(i+1),numext,numint);
@@ -1188,6 +1314,22 @@ char *argv[];
 		   if(region[i].cumfs[2] > ZEROTOL)
 		   {
 			(void)fprintf(fp5," %.3e",(region[i].cumfs[2]*1.e-6));
+		   }
+		   if(region[i].cumfs[3] > ZEROTOL)
+		   {
+			(void)fprintf(fp5," %.3e",(region[i].cumfs[3]*1.e-6));
+		   }
+		   if(region[i].cumfs[4] > ZEROTOL)
+		   {
+			(void)fprintf(fp5," %.3e",(region[i].cumfs[4]*1.e-6));
+		   }
+		   if(region[i].cumfs[5] > ZEROTOL)
+		   {
+			(void)fprintf(fp5," %.3e",(region[i].cumfs[5]*1.e-6));
+		   }
+		   if(region[i].cumfs[6] > ZEROTOL)
+		   {
+			(void)fprintf(fp5," %.3e",(region[i].cumfs[6]*1.e-6));
 		   }
 		   (void)fprintf(fp5,"\n");
 		   (void)fflush(stdout);
@@ -1238,7 +1380,10 @@ char *argv[];
 	   /*	region #  ext surface area (m**2)  ...  */
 	   /*		engine surface area (m**2)  ...  */
 	   /*		crew surface area (m**2)  ...  */
-	   /*		closed compartment surface area (m**2)  */
+	   /*		closed compartment surface area (m**2)  ...  */
+	   /*		exhaust surface area (m**2)  ...  */
+	   /*		generic 1 surface area (m**2)  ...  */
+	   /*		generic 2 surface area (m**2)  */
 	   /*						      */
 	   /*	region #  material code  density (kg/m3)  ...  */
 	   /*		specific heat  absorptivity  emissivity  ...  */
@@ -1308,17 +1453,26 @@ char *argv[];
 	   }
 
 	   (void)fprintf(fp6,"\n\n\nregion   exterior sur   engine sur    ");
-	   (void)fprintf(fp6,"crew sur      closed compartment\n");
+	   (void)fprintf(fp6,"crew sur      closed compartment");
+	   (void)fprintf(fp6,"   exhaust sur   generic 1 sur   ");
+	   (void)fprintf(fp6,"generic 2 sur\n");
 	   (void)fprintf(fp6,"number   area (m**2)    area (m**2)   ");
-	   (void)fprintf(fp6,"area (m**2)   sur area (m**2)\n");
+	   (void)fprintf(fp6,"area (m**2)   sur area (m**2)");
+	   (void)fprintf(fp6,"      area (m**2)   area (m**2)     ");
+	   (void)fprintf(fp6,"area (m**2)\n");
 	   (void)fflush(fp6);
 
 	   for(i=0; i<num; i++)
 	   {
-		(void)fprintf(fp6,"%6d   %.3e      %.3e     %.3e    \n",
+		(void)fprintf(fp6,"%6d   %.3e      %.3e     %.3e    ",
 			(i+1),(region[i].cumfs[0]*1.e-6),
 			(region[i].cumfs[2]*1.e-6),
 			(region[i].cumfs[1]*1.e-6));
+		(void)fprintf(fp6," %.3e            %.3e     %.3e       %.3e\n",
+			(region[i].cumfs[3]*1.e-6),
+			(region[i].cumfs[4]*1.e-6),
+			(region[i].cumfs[5]*1.e-6),
+			(region[i].cumfs[6]*1.e-6));
 		(void)fflush(fp6);
 	   }
 
@@ -1339,7 +1493,7 @@ char *argv[];
 		(void)fprintf(fp6,"%.3e    %.3e      %.3e    %.3e",
 			matprop[ia].sh,matprop[ia].a,matprop[ia].e1,
 			matprop[ia].tc);
-		(void)fprintf(fp6,"    %s\n",matprop[ia].m);
+		(void)fprintf(fp6,"           %s\n",matprop[ia].m);
 		(void)fflush(fp6);
 	   }
 
@@ -1368,6 +1522,9 @@ char *argv[];
 	   /*	region #, region name, centroid-X, Y, Z, volume,  ...  */
 	   /*		mass, exterior surface area,  ...  */
 	   /*		crew surface area, engine surface area,  ...  */
+	   /*		closed compartment surface area,  ...  */
+	   /*		exhaust surface area, generic 1 surface area,  ...  */
+	   /*		generic 2 surface area,  ...  */
 	   /*		material code, density, specific heat,  ...  */
 	   /*		absorptivity, emissivity, thermal conductivity,  ...  */
 	   /*		all adjacent regions  */
@@ -1411,6 +1568,11 @@ char *argv[];
 			(region[i].cumvol[X]*1.e-9),facmass,
 			(region[i].cumfs[0]*1.e-6),(region[i].cumfs[1]*1.e-6),
 			(region[i].cumfs[2]*1.e-6));
+		(void)fprintf(fp6,"%.3e,%.3e,%.3e,%.3e,",
+			(region[i].cumfs[3]*1.e-6),
+			(region[i].cumfs[4]*1.e-6),
+			(region[i].cumfs[5]*1.e-6),
+			(region[i].cumfs[6]*1.e-6));
 		(void)fflush(fp6);
 
 		(void)fprintf(fp6,"%d,%.3e,%.3e,%.3e,%.3e,%.3e,",
@@ -1462,7 +1624,7 @@ char *argv[];
 		/*  Write region number, centroid & material id  */
 		/*  to 2nd pass file.  */
 		(void)fprintf(fp2,"%8d  %.6e  %.6e  %.6e  %3d\n",
-		   i,region[i].centroid[0],region[i].centroid[1],
+		   (i+1),region[i].centroid[0],region[i].centroid[1],
 		   region[i].centroid[2],region[i].mat);
 		(void)fflush(fp2);
 
@@ -1471,7 +1633,7 @@ char *argv[];
 		{
 		   spsarea = region[i].ssurarea[0][j];
 		   (void)fprintf(fp2,"%8d  %.6e\n",
-		      j,spsarea);
+		      (j+1),spsarea);
 		   (void)fflush(fp2);
 		}
 	}
@@ -1486,6 +1648,18 @@ char *argv[];
 
 	/*  Write errors to error file.  */
 	(void)fprintf(fp3,"\nERRORS from firpass\n\n");
+	/*  Write type of file created to error file.  */
+	if(typeout == 0)
+	{
+	   (void)fprintf(fp3,"Facet file, %s, PRISM %d.0 was created.\n\n",
+		facfile,prmrel);
+	}
+	if(typeout == 1) (void)fprintf(fp3,"Generic file, %s, was created.\n\n",
+		filegen);
+	if(typeout == 2)
+	{
+	   (void)fprintf(fp3,"Geometric file, %s, was created.\n\n",filegeo);
+	}
 	(void)fflush(fp3);
 	for(i=0; i<num; i++)
 	{
@@ -1555,7 +1729,7 @@ char *argv[];
 	   {
 		if(region[i].adjreg[j] == 1) numadjreg++;
 	   }
-	   (void)fprintf(fp3,"        %5d                          ",i);
+	   (void)fprintf(fp3,"        %5d                          ",(i+1));
 	   (void)fprintf(fp3,"%5d\n",numadjreg);
 	   (void)fflush(fp3);
 	}
@@ -1579,11 +1753,15 @@ char *argv[];
 	}
 	(void)printf("\tsecond pass file created:  %s\n",spfile);
 	(void)printf("\terror file created:  %s\n",fileerr);
-	if( typeout == 0 ) (void)printf(
-	   "\tfacet file created:  %s\n\n\n",facfile);
+	(void)printf("\tregion # & name file created:  %s\n",filernn);
+	if( typeout == 0 )
+	{
+	   (void)printf("\tfacet file created:  %s\n",facfile);
+	   (void)printf("\t  (format is PRISM %d.0)\n\n\n",prmrel);
+	}
 	if( typeout == 1 ) (void)printf(
 	   "\tgeneric file created:  %s\n\n\n",filegen);
-	if( typeout == 2 ) (void)printf(
+	if( (typeout == 2) || (typeout == 3) ) (void)printf(
 	   "\tgeometric file created:  %s\n\n\n",filegeo);
 	(void)fflush(stdout);
 
@@ -1713,7 +1891,7 @@ struct partition *PartHeadp;
 
 		{
 			/*  Find adjacent regions.  Occasionally a  */
-			/*  a region will semm to be adjacent to self,  */
+			/*  a region will seem to be adjacent to self,  */
 			/*  disreguard this.  */
 			if( icur != iprev)
 			{
@@ -1756,8 +1934,8 @@ struct partition *PartHeadp;
 
 		/*  Compute cummulative free surface normal,  */
 		/*  free surface area, crew compartment area,  */
-		/*  & engine compartment area when ray enters  */
-		/*  from another region.  */
+		/*  engine compartment area, & other air areas  */
+		/*   when ray enters from another region.  */
 		if(
 		  (-ADJTOL < (hitp->hit_point[X] - leavept[X])) &&
 			((hitp->hit_point[X] - leavept[X]) < ADJTOL) &&
@@ -1795,6 +1973,26 @@ struct partition *PartHeadp;
 			{
 			   if(costheta2 > COSTOL)
 				region[icur].cumfs[2] += (area/costheta2);
+			}
+			else if(prevair == 6)	/*  Closed compartment.  */
+			{
+			   if(costheta2 > COSTOL)
+				region[icur].cumfs[3] += (area/costheta2);
+			}
+			else if(prevair == 7)	/*  Exhaust air.  */
+			{
+			   if(costheta2 > COSTOL)
+				region[icur].cumfs[4] += (area/costheta2);
+			}
+			else if(prevair == 8)	/*  Generic air 1.  */
+			{
+			   if(costheta2 > COSTOL)
+				region[icur].cumfs[5] += (area/costheta2);
+			}
+			else if(prevair == 9)	/*  Generic air 2.  */
+			{
+			   if(costheta2 > COSTOL)
+				region[icur].cumfs[6] += (area/costheta2);
 			}
 		   }
 		}
@@ -1860,6 +2058,26 @@ struct partition *PartHeadp;
 		   {
 			if(costheta2 > COSTOL)
 			   region[iprev].cumfs[2] += (area/costheta2);
+		   }
+		   else if(pp->pt_regionp->reg_aircode == 6)
+		   {
+			if(costheta2 > COSTOL)
+			   region[iprev].cumfs[3] += (area/costheta2);
+		   }
+		   else if(pp->pt_regionp->reg_aircode == 7)
+		   {
+			if(costheta2 > COSTOL)
+			   region[iprev].cumfs[4] += (area/costheta2);
+		   }
+		   else if(pp->pt_regionp->reg_aircode == 8)
+		   {
+			if(costheta2 > COSTOL)
+			   region[iprev].cumfs[5] += (area/costheta2);
+		   }
+		   else if(pp->pt_regionp->reg_aircode == 9)
+		   {
+			if(costheta2 > COSTOL)
+			   region[iprev].cumfs[6] += (area/costheta2);
 		   }
 		}
 
