@@ -426,7 +426,7 @@ struct partition *PartHeadp;
 	if( pp == PartHeadp )  {
 		pp=PartHeadp->pt_forw;
 
-		if (pp->pt_inhit->hit_dist <= 0.0) {
+		if (pp->pt_inhit->hit_dist <= ap->a_rt_i->rti_tol.dist) {
 			int retval;
 
 			/* What has probably happened is that the shadow ray
