@@ -224,10 +224,39 @@ may be any one of
 .I PREORDER, INORDER,
 and
 .I POSTORDER.
+The macro
+.I rb_walk1(tree, visit, trav_type),
+available in
+\fI"redblack.h"\fR,
+is similar,
+except that it walks the first (perhaps only) order.
+.PP
+.I rb_diagnose_tree
+traverses
+.I tree
+according to the comparison function specified by
+.I order,
+printing information about the various structures.
+The application may optionally store in the
+.I rbt_print
+member of the
+.I rb_tree
+structure
+the address of an application-specific print routine.
+If this pointer is nonzero,
+.I rb_diagnose_tree
+dereferences it to print information for the data at each node.
+The type of tree traversal to perform,
+specified by
+.I trav_type,
+may be any one of
+.I PREORDER, INORDER,
+and
+.I POSTORDER.
 .PP
 The
 .I rb_tree
-structure includes a pointer to
+structure contains a pointer to
 the node most recently accessed
 (e.g., inserted or discovered in a search).
 The following commands make use of
