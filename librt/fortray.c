@@ -149,11 +149,12 @@ int		objlen;
 	*fail = rt_gettree( *rtip, obj );
 }
 
-#define CONTEXT_LEN	5	/* Reserve 5 FORTRAN Doubles for each */
+#define CONTEXT_LEN	6	/* Reserve this many FORTRAN Doubles for each */
 struct context {
 	double		co_vpriv[3];
 	struct soltab	*co_stp;
 	char		*co_priv;
+	int		co_inflip;
 };
 
 /*
@@ -238,6 +239,7 @@ double		*dir;
 		ctp->co_stp = pp->pt_inseg->seg_stp;
 		VMOVE( ctp->co_vpriv, pp->pt_inhit->hit_vpriv);
 		ctp->co_priv = pp->pt_inhit->hit_private;
+		ctp->co_inflip = pp->pt_inflip;
 	}
 	*nloc = i;	/* Will have been incremented above, if successful */
 
@@ -318,11 +320,7 @@ double		*dir;
 	VMOVE( hit.hit_vpriv, ctp->co_vpriv );
 	hit.hit_private = ctp->co_priv;
 	
-	RT_HIT_NORM( &hit, stp, &ray );
-	
-	normal[0] = hit.hit_normal[X];
-	normal[1] = hit.hit_normal[Y];
-	normal[2] = hit.hit_normal[Z];
+	RT_HIT_NORMAL( normal, &hit, stp, &ray, ctp->co_inflip );
 }
 
 /*
@@ -346,6 +344,7 @@ struct rt_i	**rtip;
  *
  *  XXX buflen is provided "automaticly" on the Apollo.
  */
+void
 F(frname,FRNAME)( fbuf, region_num, rtip, fbuflen )
 char		*fbuf;
 int		*region_num;
