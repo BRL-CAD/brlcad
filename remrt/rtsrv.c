@@ -291,21 +291,8 @@ char **argv;
 
 	beginptr = (char *) sbrk(0);
 
-#define PUBLIC_CPUS	"/usr/tmp/public_cpus"
-	max_cpus = avail_cpus = bu_avail_cpus();
-	if( (fp = fopen(PUBLIC_CPUS, "r")) != NULL )  {
-		(void)fscanf( fp, "%d", &max_cpus );
-		fclose(fp);
-		if( max_cpus < 0 )  max_cpus = avail_cpus + max_cpus;
-		if( max_cpus > avail_cpus )  max_cpus = avail_cpus;
-	} else {
-		(void)unlink(PUBLIC_CPUS);
-		if( (fp = fopen(PUBLIC_CPUS, "w")) != NULL )  {
-			fprintf(fp, "%d\n", avail_cpus);
-			fclose(fp);
-			(void)chmod(PUBLIC_CPUS, 0666);
-		}
-	}
+	avail_cpus = bu_avail_cpus();
+	max_cpus = bu_get_public_cpus();
 
 	/* Need to set rtg_parallel non_zero here for RES_INIT to work */
 	npsw = max_cpus;
