@@ -40,10 +40,8 @@ echo
 for i in \
 	sh/machinetype.sh \
 	Cakefile.defs \
-	cake/Makefile cakeaux/Makefile \
-	remrt/remrt.c libbu/vfont.c \
+	libbu/vfont.c \
 	fb/cat-fb.c canon/canonserver.c \
-	mged/cmd.c \
 	brlman/awf brlman/brlman \
 	libtcl/Cakefile libtk/Cakefile
 do
