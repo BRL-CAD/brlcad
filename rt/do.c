@@ -282,10 +282,14 @@ char	**argv;
 	struct animate *anp;
 	struct directory **dir;
 	int i;
+	int	rooted = 0;
 
-	/* Eventually might want to note leading slash or not */
+	if( argv[1][0] == '/' )
+		rooted = 1;
 	if( (i = rt_plookup( rtip, &dir, argv[1], LOOKUP_NOISY )) <= 0 )
 		return(-1);		/* error */
+	if( rooted && i == 1 )
+		i = 0;		/* special ROOTED flag to rt_add_anim */
 
 	GETSTRUCT( anp, animate );
 	anp->an_path = dir;
