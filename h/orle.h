@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) rle.h	1.4
-	Last edit: 	3/22/85 at 14:23:00	G S M
-	Retrieved: 	8/13/86 at 10:31:04
+	SCCS id:	@(#) rle.h	1.5
+	Last edit: 	3/26/85 at 17:47:49	G S M
+	Retrieved: 	8/13/86 at 10:31:09
 	SCCS archive:	/m/cad/librle/RCS/s.rle.h
 
 	Modified for by :	Gary S. Moss
@@ -21,14 +21,19 @@
  */
 
 /* Opcode definitions.							*/
-#define	    RSkipLinesOp	1
-#define	    RSetColorOp		2
-#define	    RSkipPixelsOp	3
-#define	    RByteDataOp		5
-#define	    RRunDataOp		6
+#define	RSkipLinesOp	1
+#define	RSetColorOp	2
+#define	RSkipPixelsOp	3
+#define	RByteDataOp	5
+#define	RRunDataOp	6
 
 /* If this bit is set in inst.opcode, we have a long instruction.	*/
-#define     LONG                0x40
+#define LONG            0x40
+
+/* Flags returned by 'rle_rhdr()'.					*/
+#define NO_BOX_SAVE	(1<<0)	/* Saved with backgr.== H_CLEARFIRST	*/
+#define NO_COLORMAP	(1<<1)	/* Color map not saved.			*/
+#define NO_IMAGE	(1<<2)	/* Only color map saved.		*/
 
 typedef struct	/* Extended format RLE header.				*/
 	{
@@ -36,6 +41,7 @@ typedef struct	/* Extended format RLE header.				*/
         short	h_xlen, h_ylen;	/* Size of saved box.			*/
 	char	h_flags;	/* Some flags.				*/
 #define	H_CLEARFIRST	0x1	/* Clear the fb to background first.	*/
+#define H_BOXSAVE	0x0	/* Straight box save.			*/
 	char	h_ncolors;	/* Number of color channels.		*/
 #define H_LD_CMAP_ONLY	0	/* Load only the color map (if present).*/
 #define H_B_W		1	/* We have a black and white image.	*/
@@ -46,21 +52,36 @@ typedef struct	/* Extended format RLE header.				*/
 	unsigned char  h_background[3]; /* Background color.		*/
 } Xtnd_Rle_Header;
 
-typedef struct	/* Old format RLE header.				 */
+typedef struct	/* Old format RLE header minus magic number field.	*/
 	{
-	short	magic;
+/***	short	magic;  Read seperately ***/
 	short	xpos, ypos;	/* Lower-left corner of image.		*/
 	short	xsize, ysize;	/* Size of saved box.			*/
 	unsigned char 	bg_r;	/* Background colors.			*/
 	unsigned char	bg_g;
 	unsigned char	bg_b;
 	char	map;		/* Flag for map presence.		*/
-	} Rle_Header;
+	} Old_Rle_Header;
 
 typedef struct /* Old RLE format instruction.				*/
 	{
-	unsigned short datum: 12, opcode:4;
-	} Rle_Word;
+	unsigned short datum:12, opcode:4;
+	} Old_Inst;
+
+typedef struct /* Old RLE format instruction.				*/
+	{
+	short	opcode:8, datum:8;
+	} Xtnd_Inst;
+
+#define OPCODE(inst) (inst.opcode & ~LONG)
+#define LONGP(inst) (inst.opcode & LONG)
+#define DATUM(inst) (0x00ff & inst.datum)
+
+#ifdef BIGENDIAN
+#define SWAB(shrt)  (shrt = ((shrt >> 8) & 0xff) | ((shrt << 8) & 0xff00))
+#else
+#define	SWAB(shrt)
+#endif
 
 /* Old RLE format magic numbers.					*/
 #define	    RMAGIC	('R' << 8)	/* Top half of magic number.	*/
@@ -69,8 +90,6 @@ typedef struct /* Old RLE format instruction.				*/
 #define	    XtndRMAGIC	((short)0xcc52) /* Extended RLE magic number.	*/
 
 #define STRIDE (sizeof(Pixel))	/* Distance (bytes) to next pixel.	*/
-#define _Get_Inst( _fp, _inst ) \
-	(fread( (char *)_inst, sizeof(Rle_Word), 1, _fp ) != 1 ? EOF : 1)
 
 /* Global data intended mainly for internal (library) use.		*/
 extern int	_bg_flag;
