@@ -211,6 +211,10 @@ char	*dp;
 			pr_shadework( tmp, swp );
 		}
 
+		/*
+		 *  Every shader takes the shadework structure as its
+		 *  input and updates it as the "output".
+		 */
 		ret_status = sp->mfuncs[i]->mf_render( ap, pp, swp,
 			sp->udata[i] );
 
