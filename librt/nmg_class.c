@@ -124,6 +124,11 @@ int	status;
  *
  *	The ray hit an edge.  We have to decide whether it hit the
  *	edge, or missed it.
+ *
+ *  XXX DANGER:  This routine does not work well.
+ *
+ *  Called by -
+ *	nmg_class_pt_e
  */
 static void 
 joint_hitmiss2(closest, eu, pt, code)
@@ -190,6 +195,8 @@ int			code;
 /*
  *			N M G _ C L A S S _ P T _ E
  *
+ *  XXX DANGER:  This routine does not work well.
+ *
  *  Given the Cartesian coordinates of a point, determine if the point
  *  is closer to this edgeuse than the previous neighbor(s) as given
  *  in the "closest" structure.
@@ -200,6 +207,9 @@ int			code;
  *
  *  Implicit Return -
  *	Updated "closest" structure if appropriate.
+ *
+ *  Called by -
+ *	nmg_class_pt_l
  */
 static void
 nmg_class_pt_e(closest, pt, eu, tol)
@@ -387,12 +397,20 @@ out:
 /*
  *			N M G _ C L A S S _ P T _ L
  *
+ *  XXX DANGER:  This routine does not work well.
+ *
  *  Given the coordinates of a point which lies on the plane of the face
  *  containing a loopuse, determine if the point is IN, ON, or OUT of the
  *  area enclosed by the loop.
  *
  *  Implicit Return -
  *	Updated "closest" structure if appropriate.
+ *
+ *  Called by -
+ *	nmg_class_pt_loop()
+ *		from: nmg_extrude.c / nmg_fix_overlapping_loops()
+ *	nmg_classify_lu_lu()
+ *		from: nmg_misc.c / nmg_split_loops_handler()
  */
 static void
 nmg_class_pt_l(closest, pt, lu, tol)
@@ -467,106 +485,6 @@ CONST struct rt_tol	*tol;
 }
 
 /*
- *			N M G _ C L A S S _ P T _ F _ E X C E P T
- *
- *  This is intended as a general user interface routine.
- *  Given the Cartesian coordinates for a point which is known to
- *  lie on a face, return the classification for that point
- *  with respect to all the loops on that face.
- *
- *  The algorithm used is to find the edge which the point is closest
- *  to, and classifiy with respect to that.
- *
- *  All loops have to be searched together, to account for holes inside
- *  exterior loops, potentially with solid parts inside those holes.
- *
- *  "ignore_lu" is optional.  When non-null, it points to a loopuse (and it's
- *  mate) which will not be considered in the assessment of this point.
- *  This is used by nmg_lu_reorient() to work on one lu in the face.
- *
- *  The point is "A", and the face is "B".
- *
- *  Returns -
- *	NMG_CLASS_AinB		pt is INSIDE the area of the face.
- *	NMG_CLASS_AonBshared	pt is ON a loop boundary.
- *	NMG_CLASS_AoutB		pt is OUTSIDE the area of the face.
- */
-int
-nmg_class_pt_f_except(pt, fu, ignore_lu, tol)
-CONST point_t		pt;
-CONST struct faceuse	*fu;
-CONST struct loopuse	*ignore_lu;
-CONST struct rt_tol	*tol;
-{
-	struct loopuse *lu;
-	struct neighbor closest;
-	fastf_t		dist;
-	plane_t		n;
-
-	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
-		VPRINT("nmg_class_pt_f\tPt:", pt);
-	}
-	NMG_CK_FACEUSE(fu);
-	NMG_CK_FACE(fu->f_p);
-	NMG_CK_FACE_G_PLANE(fu->f_p->g.plane_p);
-	if(ignore_lu) NMG_CK_LOOPUSE(ignore_lu);
-	RT_CK_TOL(tol);
-
-	/* Validate distance from point to plane */
-	NMG_GET_FU_PLANE( n, fu );
-	if( (dist=fabs(DIST_PT_PLANE( pt, n ))) > tol->dist )  {
-		rt_log("nmg_class_pt_f() ERROR, point (%g,%g,%g) not on face, dist=%g\n",
-			V3ARGS(pt), dist );
-	}
-
-	/* find the closest approach in this face to the projected point */
-	closest.dist = MAX_FASTF;
-	closest.p.eu = (struct edgeuse *)NULL;
-	closest.class = NMG_CLASS_AoutB;	/* default return */
-
-	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-		if( ignore_lu && (ignore_lu == lu || ignore_lu == lu->lumate_p) )
-			continue;
-
-		nmg_class_pt_l( &closest, pt, lu, tol );
-		/* If point lies ON loop edge, we are done */
-		if( closest.class == NMG_CLASS_AonBshared )  break;
-	}
-
-	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
-		rt_log("nmg_class_pt_f\tdist=%g, return=%s\n",
-			closest.dist,
-			nmg_class_name(closest.class) );
-	}
-	return closest.class;
-}
-
-/*
- *			N M G _ C L A S S _ P T _ F
- *
- *  Compatability wrapper.
- */
-int
-nmg_class_pt_f(pt, fu, tol)
-CONST point_t		pt;
-CONST struct faceuse	*fu;
-CONST struct rt_tol	*tol;
-{
-#if 0
-	return nmg_class_pt_f_except(pt, fu, (struct loopuse *)0, tol);
-#else
-
-	point_t tmp_pt;
-
-	VMOVE( tmp_pt, pt );
-	return nmg_class_pt_fu_except(tmp_pt, fu, (struct loopuse *)0,
-			(void (*)())NULL, (void (*)())NULL, (char *)NULL, 0,
-			tol);
-#endif                                                                        
-
-}
-
-/*
  *			N M G _ C L A S S _ L U _ F U
  *
  *  This is intended as an internal routine to support nmg_lu_reorient().
@@ -585,6 +503,9 @@ CONST struct rt_tol	*tol;
  *	NMG_CLASS_AinB		lu is INSIDE the area of the face.
  *	NMG_CLASS_AonBshared	ALL of lu is ON other loop boundaries.
  *	NMG_CLASS_AoutB		lu is OUTSIDE the area of the face.
+ *
+ *  Called by -
+ *	nmg_mod.c, nmg_lu_reorient()
  */
 int
 nmg_class_lu_fu(lu, tol)
@@ -763,7 +684,9 @@ retry:
 			/* Point lies on this plane, it may be possible to
 			 * short circuit everything.
 			 */
-			class = nmg_class_pt_f( pt, fu, tol );
+			class = nmg_class_pt_fu_except(pt, fu, (struct loopuse *)0,
+				(void (*)())NULL, (void (*)())NULL, (char *)NULL, 0,
+				tol);
 			if( class == NMG_CLASS_AonBshared )  {
 				/* Point is ON face, therefore it must be
 				 * ON the shell also.
@@ -1355,6 +1278,9 @@ int		newclass;
 
 /*
  *			C L A S S _ L U _ V S _ S
+ *
+ *  Called by -
+ *	class_fu_vs_s
  */
 static int 
 class_lu_vs_s(lu, s, classlist, tol)
@@ -1660,6 +1586,9 @@ out:
 
 /*
  *			C L A S S _ F U _ V S _ S
+ *
+ *  Called by -
+ *	nmg_class_shells()
  */
 static void 
 class_fu_vs_s(fu, s, classlist, tol)
@@ -1694,6 +1623,9 @@ CONST struct rt_tol	*tol;
  *  Implicit return -
  *	Each element's classification will be represented by a
  *	SET entry in the appropriate classlist[] array.
+ *
+ *  Called by -
+ *	nmg_bool.c
  */
 void
 nmg_class_shells(sA, sB, classlist, tol)
@@ -1768,6 +1700,11 @@ CONST struct rt_tol	*tol;
  *
  *	returns the classification from nmg_class_pt_l
  *	or a (-1) on error
+ *
+ *  Called by -
+ *	nmg_extrude.c / nmg_fix_overlapping_loops()
+ *
+ *  XXX DANGER:  Calls nmg_class_pt_l(), which does not work well.
  */
 int
 nmg_classify_pt_loop( pt , lu , tol )
@@ -1783,6 +1720,7 @@ CONST struct rt_tol *tol;
 	NMG_CK_LOOPUSE( lu );
 	RT_CK_TOL( tol );
 
+rt_log("DANGER: nmg_classify_pt_loop() is calling nmg_class_pt_l(), which does not work well\n");
 	if( *lu->up.magic_p != NMG_FACEUSE_MAGIC )
 	{
 		rt_log( "nmg_classify_pt_loop: lu not part of a faceuse!!\n" );
@@ -1816,6 +1754,11 @@ CONST struct rt_tol *tol;
  *	determining if one loop is within another
  *
  *	returns classification based on nmg_class_pt_l results
+ *
+ *  Called by -
+ *	nmg_misc.c / nmg_split_loops_handler()
+ *
+ *  XXX DANGER:  Calls nmg_class_pt_l(), which does not work well.
  */
 int
 nmg_classify_lu_lu( lu1 , lu2 , tol )
@@ -1833,6 +1776,7 @@ CONST struct rt_tol *tol;
 
 	if( rt_g.NMG_debug & DEBUG_CLASSIFY )
 		rt_log( "nmg_classify_lu_lu( lu1=x%x , lu2=x%x )\n", lu1, lu2 );
+rt_log("DANGER: nmg_classify_lu_lu() is calling nmg_class_pt_l(), which does not work well\n");
 
 	if( lu1 == lu2 || lu1 == lu2->lumate_p )
 		return( NMG_CLASS_AonBshared );
