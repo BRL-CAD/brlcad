@@ -1013,11 +1013,11 @@ process_entities_polyline_code( int code )
 						for( i=1 ; i<mesh_m_count ; i++ ) {
 							add_triangle( polyline_vert_indices[PVINDEX(i-1,j-1)],
 								      polyline_vert_indices[PVINDEX(i-1,j)],
-								      polyline_vert_indices[PVINDEX(i,j)],
-								      curr_layer );
-							add_triangle( polyline_vert_indices[PVINDEX(i,j)],
 								      polyline_vert_indices[PVINDEX(i,j-1)],
-								      polyline_vert_indices[PVINDEX(i-1,j-1)],
+								      curr_layer );
+							add_triangle( polyline_vert_indices[PVINDEX(i-1,j-1)],
+								      polyline_vert_indices[PVINDEX(i,j-1)],
+								      polyline_vert_indices[PVINDEX(i,j)],
 								      curr_layer );
 						}
 					}
@@ -1029,38 +1029,39 @@ process_entities_polyline_code( int code )
 				struct edgeuse *eu;
 				struct vertex *v0=NULL, *v1=NULL, *v2=NULL;
 
-				if( !layers[curr_layer]->m ) {
-					create_nmg();
-				}
-
-				for( i=0 ; i<polyline_vertex_count-1 ; i++ ) {
-					eu = nmg_me( v1, v2, layers[curr_layer]->s );
-					if( i == 0 ) {
-						v1 = eu->vu_p->v_p;
-						nmg_vertex_gv( v1, polyline_verts );
-						v0 = v1;
+				if( polyline_vertex_count > 1 ) {
+					if( !layers[curr_layer]->m ) {
+						create_nmg();
 					}
-					v2 = eu->eumate_p->vu_p->v_p;
-					nmg_vertex_gv( v2, &polyline_verts[(i+1)*3] );
-					if( verbose ) {
-						bu_log( "Wire edge (polyline): (%g %g %g) <-> (%g %g %g)\n",
-							V3ARGS( v1->vg_p->coord ),
-							V3ARGS( v2->vg_p->coord ) );
-					}
-					v1 = v2;
-					v2 = NULL;
-				}
 
-				if( polyline_flag & POLY_CLOSED ) {
-					v2 = v0;
-					(void)nmg_me( v1, v2, layers[curr_layer]->s );
-					if( verbose ) {
-						bu_log( "Wire edge (closing polyline): (%g %g %g) <-> (%g %g %g)\n",
-							V3ARGS( v1->vg_p->coord ),
-							V3ARGS( v2->vg_p->coord ) );
+					for( i=0 ; i<polyline_vertex_count-1 ; i++ ) {
+						eu = nmg_me( v1, v2, layers[curr_layer]->s );
+						if( i == 0 ) {
+							v1 = eu->vu_p->v_p;
+							nmg_vertex_gv( v1, polyline_verts );
+							v0 = v1;
+						}
+						v2 = eu->eumate_p->vu_p->v_p;
+						nmg_vertex_gv( v2, &polyline_verts[(i+1)*3] );
+						if( verbose ) {
+							bu_log( "Wire edge (polyline): (%g %g %g) <-> (%g %g %g)\n",
+								V3ARGS( v1->vg_p->coord ),
+								V3ARGS( v2->vg_p->coord ) );
+						}
+						v1 = v2;
+						v2 = NULL;
+					}
+
+					if( polyline_flag & POLY_CLOSED ) {
+						v2 = v0;
+						(void)nmg_me( v1, v2, layers[curr_layer]->s );
+						if( verbose ) {
+							bu_log( "Wire edge (closing polyline): (%g %g %g) <-> (%g %g %g)\n",
+								V3ARGS( v1->vg_p->coord ),
+								V3ARGS( v2->vg_p->coord ) );
+						}
 					}
 				}
-
 				polyline_vert_indices_count=0;	
 				polyline_vertex_count = 0;
 			}
