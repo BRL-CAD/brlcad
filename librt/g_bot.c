@@ -2794,6 +2794,11 @@ rt_bot_face_fuse( struct rt_bot_internal *bot )
 	return( count );
 }
 
+/*
+ *
+ *
+ *  Get rid of unused verticies
+ */
 int
 rt_bot_condense( struct rt_bot_internal *bot )
 {
@@ -2806,6 +2811,9 @@ rt_bot_condense( struct rt_bot_internal *bot )
 
 	num_verts = bot->num_vertices;
 	verts = (int *)bu_calloc( num_verts, sizeof( int ), "VERTEX LIST" );
+
+	/* walk the list of verticies, and mark each one if it is used */
+
 	for( i=0 ; i<bot->num_faces*3 ; i++ )
 	{
 		j = bot->faces[i];
@@ -2817,6 +2825,9 @@ rt_bot_condense( struct rt_bot_internal *bot )
 		verts[j] = 1;
 	}
 
+	/* Walk the list of verticies, eliminate each unused vertex by
+	 * copying the rest of the array downwards
+	 */
 	i = 0;
 	while( i < num_verts-dead_verts )
 	{
@@ -2841,6 +2852,9 @@ rt_bot_condense( struct rt_bot_internal *bot )
 	if( !dead_verts )
 		return( 0 );
 
+	/* Reallocate the vertex array (which should free the space 
+	 * we are no longer using)
+	 */
 	bot->num_vertices -= dead_verts;
 	bot->vertices = (fastf_t *)bu_realloc( bot->vertices, bot->num_vertices*3*sizeof( fastf_t ), "bot verts realloc" );
 
