@@ -352,8 +352,8 @@ int			id;
 	}
 
 	GETUNION( curtree, tree );
-	curtree->tr_op = OP_REGION;	/* tag for nmg */
-	curtree->tr_c.tc_ctsp = (struct combined_tree_state *)r1;
+	curtree->tr_op = OP_NMG_TESS;
+	curtree->tr_d.td_r = r1;
 
 	if(rt_g.debug&DEBUG_TREEWALK)
 		rt_log("mged_nmg_leaf()\n");
@@ -365,8 +365,9 @@ int			id;
  *			M G E D _ N M G _ D O I T
  */
 HIDDEN struct nmgregion *
-mged_nmg_doit( tp )
+mged_nmg_doit( tp, ttol )
 register union tree	*tp;
+struct rt_tess_tol	*ttol;
 {
 	register struct nmgregion	*l;
 	register struct nmgregion	*r;
@@ -375,14 +376,16 @@ register union tree	*tp;
 	int			op;
 	struct rt_tol		tol;
 
+	RT_CK_TESS_TOL(ttol);
+
 	switch( tp->tr_op )  {
 	case OP_NOP:
 		return( 0 );
 
-	case OP_REGION:
-		r = (struct nmgregion *)tp->tr_c.tc_ctsp;
-		tp->tr_c.tc_ctsp = (struct combined_tree_state *)0;/* Disconnect */
-		tp->tr_op = OP_NOP;	/* Keep our use of OP_REGION quiet */
+	case OP_NMG_TESS:
+		r = tp->tr_d.td_r;
+		tp->tr_d.td_r = (struct nmgregion *)NULL;	/* Disconnect */
+		tp->tr_op = OP_NOP;	/* Keep quiet */
 		return( r );
 
 	case OP_UNION:
@@ -426,16 +429,16 @@ com:
 	 *  The geometry is guaranteed to contain no errors larger than
 	 *  this tolerance value.
 	 */
-	tol.dist = mged_abs_tol;
-	if( mged_rel_tol > 0.0 )  {
+	tol.dist = ttol->abs;
+	if( ttol->rel > 0.0 )  {
 		if( l->ra_p )  {
 			VSUB2( diag, l->ra_p->max_pt, l->ra_p->min_pt );
-			rel = MAGNITUDE(diag) * mged_rel_tol;
+			rel = MAGNITUDE(diag) * ttol->rel;
 			if( tol.dist <= 0.0 || rel < tol.dist )  tol.dist = rel;
 		}
 		if( r->ra_p )  {
 			VSUB2( diag, r->ra_p->max_pt, r->ra_p->min_pt );
-			rel = MAGNITUDE(diag) * mged_rel_tol;
+			rel = MAGNITUDE(diag) * ttol->rel;
 			if( tol.dist <= 0.0 || rel < tol.dist )  tol.dist = rel;
 		}
 	}
@@ -469,6 +472,7 @@ union tree		*curtree;
 {
 	struct nmgregion	*r;
 	struct rt_list		vhead;
+	struct rt_tess_tol	ttol;
 
 	RT_LIST_INIT( &vhead );
 
@@ -481,7 +485,12 @@ union tree		*curtree;
 
 	if( curtree->tr_op == OP_NOP )  return  curtree;
 
-	r = mged_nmg_doit( curtree );
+	ttol.magic = RT_TESS_TOL_MAGIC;
+	ttol.abs = mged_abs_tol;
+	ttol.rel = mged_rel_tol;
+	ttol.norm = mged_nrm_tol;
+
+	r = mged_nmg_doit( curtree, &ttol );
 
 	if( mged_do_not_draw_nmg_solids_during_debugging && r )  {
 		nmg_kr(r);
@@ -1148,6 +1157,7 @@ char	**argv;
 	struct directory	*dp;
 	struct nmgregion	*r;
 	int			ngran;
+	struct rt_tess_tol	ttol;
 
 	RT_CHECK_DBI(dbip);
 
@@ -1201,7 +1211,13 @@ char	**argv;
 
 	/* Now, evaluate the boolean tree into ONE region */
 	rt_log("facetize:  evaluating boolean expressions\n");
-	r = mged_nmg_doit( mged_facetize_tree );
+
+	ttol.magic = RT_TESS_TOL_MAGIC;
+	ttol.abs = mged_abs_tol;
+	ttol.rel = mged_rel_tol;
+	ttol.norm = mged_nrm_tol;
+
+	r = mged_nmg_doit( mged_facetize_tree, &ttol );
 	if( r == 0 )  {
 		rt_log("facetize:  no resulting region, aborting\n");
 		nmg_km( mged_nmg_model );
