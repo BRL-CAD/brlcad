@@ -38,7 +38,7 @@ INSTALL_ROOT =
 # Directory from which applications will reference the library of Tcl
 # scripts (note: you can set the TK_LIBRARY environment variable at
 # run-time to override the compiled-in location):
-TK_LIBRARY =		$(prefix)/lib/tk$(VERSION)
+TK_LIBRARY =		$(prefix)/tk
 
 # Path name to use when installing library scripts:
 SCRIPT_INSTALL_DIR =	$(INSTALL_ROOT)$(TK_LIBRARY)
