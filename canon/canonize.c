@@ -31,6 +31,8 @@ FILE *fd;
 	if (ipu_debug)
 		fprintf(stderr, "pipe open\n");
 
+	fprintf(pfd, "CLC500"); /* magic cookie */
+
 	/* write the command line options out to the data stream */
 	for (args=1 ; args < arg_c ; args++) {
 
@@ -62,7 +64,6 @@ FILE *fd;
 		fprintf(stderr, "image written\n");
 
 	pclose(pfd);
-	free(img_buffer);
 
 	if (ipu_debug)
 		fprintf(stderr, "image queued\n");
@@ -111,5 +112,5 @@ char *av[];
 		queue(fd);
 		fclose(fd);
 	}
-
+	return(0);
 }
