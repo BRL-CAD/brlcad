@@ -345,7 +345,10 @@ void
 group_write()
 {
 	register struct wmember	*wp;
+	struct wmember		allhead;
 	register int	i;
+
+	RT_LIST_INIT( &allhead.l );
 
 	for( i=0; i < ngroups; i++ )  {
 		wp = &groups[i].grp_wm;
@@ -355,7 +358,11 @@ group_write()
 		/* Make a non-region combination */
 		mk_lfcomb( outfp, wp->wm_name, wp, 0 );
 
+		/* Add it to "all.g" */
+		(void)mk_addmember( wp->wm_name, &allhead, WMOP_UNION );
+
 		if(verbose) col_pr( wp->wm_name );
 	}
-	/* Could make all-encompasing "all.g" group here */
+	/* Make all-encompasing "all.g" group here */
+	mk_lfcomb( outfp, "all.g", &allhead, 0 );
 }
