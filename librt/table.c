@@ -253,6 +253,14 @@ BU_EXTERN(int rt_bot_tcladjust, (Tcl_Interp *interp,
 /* SKETCH */
 BU_EXTERN(int rt_sketch_tclget, (Tcl_Interp *interp,
 		CONST struct rt_db_internal *intern, CONST char *attr));
+BU_EXTERN(int rt_sketch_tcladjust, (Tcl_Interp *interp,
+		struct rt_db_internal *intern, int argc, char **argv));
+
+/* EXTRUSION */
+BU_EXTERN(int rt_extrude_tclget, (Tcl_Interp *interp,
+		CONST struct rt_db_internal *intern, CONST char *attr));
+BU_EXTERN(int rt_extrude_tcladjust, (Tcl_Interp *interp,
+		struct rt_db_internal *intern, int argc, char **argv));
 
 /* XXX from shoot.c / vshoot.c */
 RT_EXTERN(void rt_vstub, (struct soltab *stp[], struct xray *rp[],
@@ -635,7 +643,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_sketch_import, rt_sketch_export, rt_sketch_ifree,
 		rt_sketch_describe,rt_sketch_xform, NULL,
 		sizeof(struct rt_sketch_internal), RT_SKETCH_INTERNAL_MAGIC,
-		rt_sketch_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
+		rt_sketch_tclget, rt_sketch_tcladjust, rt_parsetab_tclform,
 		NULL,
 	},
 
@@ -647,7 +655,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_extrude_import,	rt_extrude_export,	rt_extrude_ifree,
 		rt_extrude_describe,rt_extrude_xform, NULL,
 		sizeof(struct rt_extrude_internal), RT_EXTRUDE_INTERNAL_MAGIC,
-		rt_parsetab_tclget, rt_parsetab_tcladjust, rt_parsetab_tclform,
+		rt_extrude_tclget, rt_extrude_tcladjust, rt_parsetab_tclform,
 		NULL,
 	},
 
