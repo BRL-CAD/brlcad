@@ -102,7 +102,7 @@ register char **argv;
 		infp = stdin;
 	} else {
 		file_name = argv[optind];
-		if( (infp = fopen(file_name, "r")) < 0 )  {
+		if( (infp = fopen(file_name, "r")) == NULL )  {
 			(void)fprintf( stderr,
 				"bw-ps: cannot open \"%s\" for reading\n",
 				file_name );
