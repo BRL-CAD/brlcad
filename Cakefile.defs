@@ -420,7 +420,8 @@ set -S2 "/bin/sh"
 #	endif
 #	define	GFLAG		-G 15
 /*	ANSI+POSIX mode is used over ANSI, to get fdopen(), etc, defined. */
-#	define  CC_OPTS		GFLAG -ansiposix
+/*	Warning 293 is a nuissance, and shouldn't even be printed */
+#	define  CC_OPTS		GFLAG -ansiposix -woff 293
 #	define	STANDARD_LIBES	-lm -lmalloc -lc''SHARED
 #	define	LIBRT_LIBES	-lmpc
 #	define	LGT_CONFIG	GFLAG -lmpc
