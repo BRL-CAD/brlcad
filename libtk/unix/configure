@@ -2101,11 +2101,13 @@ if test "$ok" = "yes" -a "${SHLIB_SUFFIX}" != ""; then
     eval "TK_LIB_FILE=libtk${TCL_SHARED_LIB_SUFFIX}"
     MAKE_LIB="\${SHLIB_LD} -o ${TK_LIB_FILE} \${OBJS} \$(TK_LD_SEARCH_FLAGS) ${SHLIB_LD_LIBS}"
     RANLIB=":"
+    AFTER_MAKE="mv libtk.so libtk.so.11; ../sh/sharedliblink.sh libtk.so.11"
 else
     TK_SHARED_BUILD=0
     TK_SHLIB_CFLAGS=""
     eval "TK_LIB_FILE=libtk${TCL_UNSHARED_LIB_SUFFIX}"
     MAKE_LIB="ar cr ${TK_LIB_FILE} \${OBJS}"
+    AFTER_MAKE=""
 fi
 
 # Note:  in the following variable, it's important to use the absolute
@@ -2293,6 +2295,7 @@ s%@TK_VERSION@%$TK_VERSION%g
 s%@XINCLUDES@%$XINCLUDES%g
 s%@XLIBSW@%$XLIBSW%g
 s%@TK_SHARED_BUILD@%$TK_SHARED_BUILD%g
+s%@AFTER_MAKE@%$AFTER_MAKE%g
 
 CEOF
 EOF

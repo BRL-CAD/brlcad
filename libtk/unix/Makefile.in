@@ -289,6 +289,7 @@ all: wish
 	rm -f @TK_LIB_FILE@
 	@MAKE_LIB@
 	$(RANLIB) @TK_LIB_FILE@
+	@AFTER_MAKE@
 
 # Make target which outputs the list of the .o contained in the Tk lib
 # usefull to build a single big shared library containing Tcl/Tk and other

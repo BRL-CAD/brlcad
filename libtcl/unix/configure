@@ -4329,6 +4329,7 @@ if test "$tcl_ok" = "yes" -a "${SHLIB_SUFFIX}" != "" ; then
     fi
 else
     TCL_SHARED_BUILD=0
+    AFTER_MAKE=""
     case $system in
         BSD/OS*)
 	    ;;

@@ -32,7 +32,6 @@
 
 PRODUCTS: Makefile.MTYPE cache.MTYPE
 	make -f Makefile.MTYPE
-	AFTER_MAKE
 
 Makefile.MTYPE cache.MTYPE:		if not exist Makefile.MTYPE or not exist cache.MTYPE
 	( \C\F\L\A\G\S=\"GFLAG OPTIMIZER PROFILER -DTK_NO_SECURITY\"; \
