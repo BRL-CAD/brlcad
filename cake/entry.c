@@ -282,22 +282,22 @@ reg	Test	*test;
 	switch (test->t_kind)
 	{
 
-when t_TRUE:
+case t_TRUE:
 case t_FALSE:	put_trail("ground_test", "finish");
 		return test;
 
-when t_AND:
+case t_AND:
 case t_OR:	put_trail("ground_test", "finish");
 		return make_test_b(test->t_kind,
 			ground_test(env, test->t_left), ground_test(env, test->t_right));
 
-when t_NOT:	put_trail("ground_test", "finish");
+case t_NOT:	put_trail("ground_test", "finish");
 		return make_test_u(test->t_kind, ground_test(env, test->t_left));
 
-when t_CMD:	put_trail("ground_test", "finish");
+case t_CMD:	put_trail("ground_test", "finish");
 		return make_test_c(ground(env, test->t_cmd));
 
-when t_MATCH:	pat = ground_pat(env, test->t_pat);
+case t_MATCH:	pat = ground_pat(env, test->t_pat);
 		newtest = make_test_mm(pat);
 		for_list (ptr, test->t_list)
 		{
@@ -309,7 +309,7 @@ when t_MATCH:	pat = ground_pat(env, test->t_pat);
 		put_trail("ground_test", "finish");
 		return newtest;
 
-when t_LIST:	pat = ground_pat(env, test->t_pat);
+case t_LIST:	pat = ground_pat(env, test->t_pat);
 		newtest = make_test_l(pat, makelist0());
 		for_list (ptr, test->t_list)
 		{
@@ -321,21 +321,20 @@ when t_LIST:	pat = ground_pat(env, test->t_pat);
 		put_trail("ground_test", "finish");
 		return newtest;
 
-when t_EXIST:	newpat = ground_pat(env, test->t_pat);
+case t_EXIST:	newpat = ground_pat(env, test->t_pat);
 		put_trail("ground_test", "finish");
 		return make_test_s(t_EXIST, newpat);
 
-when t_CANDO:	newpat = ground_pat(env, test->t_pat);
+case t_CANDO:	newpat = ground_pat(env, test->t_pat);
 		put_trail("ground_test", "finish");
 		return make_test_s(t_CANDO, newpat);
 
-when t_OK:	newpat = ground_pat(env, test->t_pat);
+case t_OK:	newpat = ground_pat(env, test->t_pat);
 		put_trail("ground_test", "finish");
 		return make_test_s(t_OK, newpat);
 
-otherwise:	printf("cake internal error: bad test type %x in ground_test\n", test->t_kind);
-		put_trail("ground_test", "finish");
-		return (Test *) NULL;
+default:	printf("cake internal error: bad test type %x in ground_test\n", test->t_kind);
+		break;
 	}
 
 	put_trail("ground_test", "finish");
@@ -397,25 +396,25 @@ reg	Test	*test;
 	switch (test->t_kind)
 	{
 
-when t_TRUE:
+case t_TRUE:
 case t_FALSE:	put_trail("deref_test", "finish");
 		return test;
 
-when t_AND:
+case t_AND:
 case t_OR:	test->t_left  = deref_test(test->t_left);
 		test->t_right = deref_test(test->t_right);
 		put_trail("deref_test", "finish");
 		return test;
 
-when t_NOT:	test->t_left  = deref_test(test->t_left);
+case t_NOT:	test->t_left  = deref_test(test->t_left);
 		put_trail("deref_test", "finish");
 		return test;
 
-when t_CMD:	test->t_cmd = expand_cmds(test->t_cmd);
+case t_CMD:	test->t_cmd = expand_cmds(test->t_cmd);
 		put_trail("deref_test", "finish");
 		return test;
 
-when t_MATCH:	deref(test->t_pat, FALSE);
+case t_MATCH:	deref(test->t_pat, FALSE);
 		for_list (ptr, test->t_list)
 		{
 			pat = (Pat *) ldata(ptr);
@@ -425,7 +424,7 @@ when t_MATCH:	deref(test->t_pat, FALSE);
 		put_trail("deref_test", "finish");
 		return test;
 
-when t_LIST:	deref(test->t_pat, FALSE);
+case t_LIST:	deref(test->t_pat, FALSE);
 		newlist = makelist0();
 		for_list (ptr, test->t_list)
 		{
@@ -443,21 +442,20 @@ when t_LIST:	deref(test->t_pat, FALSE);
 		put_trail("deref_test", "finish");
 		return test;
 
-when t_EXIST:	deref(test->t_pat, FALSE);
+case t_EXIST:	deref(test->t_pat, FALSE);
 		put_trail("deref_test", "finish");
 		return test;
 
-when t_CANDO:	deref(test->t_pat, FALSE);
+case t_CANDO:	deref(test->t_pat, FALSE);
 		put_trail("deref_test", "finish");
 		return test;
 
-when t_OK:	deref(test->t_pat, FALSE);
+case t_OK:	deref(test->t_pat, FALSE);
 		put_trail("deref_test", "finish");
 		return test;
 
-otherwise:	printf("cake internal error: bad test type %x in deref_test\n", test->t_kind);
-		put_trail("deref_test", "finish");
-		return (Test *) NULL;
+default:	printf("cake internal error: bad test type %x in deref_test\n", test->t_kind);
+		break;
 	}
 
 	put_trail("deref_test", "finish");
