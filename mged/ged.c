@@ -15,6 +15,7 @@
  *	quit		General Exit routine
  *	sig2		user interrupt catcher
  *	new_mats	derive inverse and editing matrices, as required
+ *	f_source	Open a file and process the commands within
  *
  *  Authors -
  *	Michael John Muuss
@@ -976,4 +977,31 @@ char	**argv;
 			units_str[dbip->dbi_localunit] );
 	
 	return CMD_OK;
+}
+
+/*
+ *			F _ S O U R C E
+ *
+ *  Open a file and process the commands within.
+ *
+ *  argv[1] is the filename.
+ *
+ */
+int
+f_source (argc, argv)
+int	argc;
+char	**argv;
+{
+    FILE	*fp;
+    char	*path;
+
+    if((fp = fopen(argv[1], "r")) == NULL)
+    {
+	(void) fprintf(stderr,
+	    "f_source: Cannot open command file %s\n", argv[1]);
+	return(CMD_BAD);
+    }
+    mged_source_file(fp);
+    fclose(fp);
+    return(CMD_OK);
 }

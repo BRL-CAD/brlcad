@@ -451,6 +451,7 @@ MGED_EXTERN(int f_saveview, (int argc, char **argv));
 MGED_EXTERN(int f_sc_obj, (int argc, char **argv));
 MGED_EXTERN(int f_sed, (int argc, char **argv));
 MGED_EXTERN(int f_set, (int argc, char **argv));
+MGED_EXTERN(int f_source, (int argc, char **argv));
 MGED_EXTERN(int f_status, (int argc, char **argv));
 MGED_EXTERN(int f_summary, (int argc, char **argv));
 MGED_EXTERN(int f_tables, (int argc, char **argv));
