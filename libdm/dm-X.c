@@ -92,7 +92,7 @@ struct dm dm_X = {
   Nu_int0,
   Nu_int0,
   Nu_int0,
-  Nu_int0,
+  0,
   0,				/* no displaylist */
   0,                            /* no stereo */
   PLOTBOUND,
@@ -129,8 +129,7 @@ static mat_t xmat;
  *
  */
 struct dm *
-X_open(eventHandler, argc, argv)
-int (*eventHandler)();
+X_open(argc, argv)
 int argc;
 char *argv[];
 {
@@ -153,7 +152,6 @@ char *argv[];
     return DM_NULL;
 
   *dmp = dm_X; /* struct copy */
-  dmp->dm_eventHandler = eventHandler;
 
   /* Only need to do this once for this display manager */
   if(!count){
@@ -196,13 +194,6 @@ char *argv[];
 
   /* initialize modifiable variables */
   ((struct x_vars *)dmp->dm_vars)->mvars.dummy_perspective = 1;
-
-#if 0  
-  if(BU_LIST_IS_EMPTY(&head_x_vars.l))
-#else
-  if(dmp->dm_eventHandler != DM_EVENT_HANDLER_NULL)
-#endif
-    Tk_CreateGenericHandler(dmp->dm_eventHandler, (ClientData)DM_TYPE_X);
 
   BU_LIST_APPEND(&head_x_vars.l, &((struct x_vars *)dmp->dm_vars)->l);
 
@@ -310,11 +301,10 @@ char *argv[];
     return DM_NULL;
   }
 
-  Tcl_AppendResult(interp, "X_open: end synchronous execution\n", (char *)NULL);
-
   Tk_MakeWindowExist(((struct x_vars *)dmp->dm_vars)->xtkwin);
   ((struct x_vars *)dmp->dm_vars)->win =
       Tk_WindowId(((struct x_vars *)dmp->dm_vars)->xtkwin);
+  dmp->dm_id = ((struct x_vars *)dmp->dm_vars)->win;
 
   ((struct x_vars *)dmp->dm_vars)->pix =
     Tk_GetPixmap(((struct x_vars *)dmp->dm_vars)->dpy,
@@ -397,9 +387,6 @@ struct dm *dmp;
 
     if(((struct x_vars *)dmp->dm_vars)->xtkwin)
       Tk_DestroyWindow(((struct x_vars *)dmp->dm_vars)->xtkwin);
-
-    if(BU_LIST_IS_EMPTY(&head_x_vars.l))
-      Tk_DeleteGenericHandler(dmp->dm_eventHandler, (ClientData)DM_TYPE_X);
   }
 
   if(((struct x_vars *)dmp->dm_vars)->l.forw != BU_LIST_NULL)
