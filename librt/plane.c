@@ -548,7 +548,52 @@ point_t		b;
 }
 
 /*
- * Still to come:
- *	Closest Distance between a line and the origin,
- *	Closest Distance between a line and a point.
+ *			R T _ D I S T _ L I N E _ P O I N T
+ *
+ *  Given a parametric line defined by PT + t * DIR and a point A,
+ *  return the closest distance between the line and the point.
+ *  It is necessary that DIR have unit length.
+ *
+ *  Return -
+ *	Distance
  */
+double
+rt_dist_line_point( pt, dir, a )
+point_t	pt;
+vect_t	dir;
+point_t	a;
+{
+	LOCAL vect_t		f;
+	register fastf_t	FdotD;
+
+	VSUB2( f, pt, a );
+	FdotD = VDOT( f, dir );
+	if( (FdotD = VDOT( f, f ) - FdotD * FdotD ) <= 0 ||
+	    (FdotD = sqrt( FdotD )) < SQRT_SMALL_FASTF )
+		return(0.0);
+	return( FdotD );
+}
+
+/*
+ *			R T _ D I S T _ L I N E _ O R I G I N
+ *
+ *  Given a parametric line defined by PT + t * DIR,
+ *  return the closest distance between the line and the origin.
+ *  It is necessary that DIR have unit length.
+ *
+ *  Return -
+ *	Distance
+ */
+double
+rt_dist_line_origin( pt, dir )
+point_t	pt;
+vect_t	dir;
+{
+	register fastf_t	PTdotD;
+
+	PTdotD = VDOT( pt, dir );
+	if( (PTdotD = VDOT( pt, pt ) - PTdotD * PTdotD ) <= 0 ||
+	    (PTdotD = sqrt( PTdotD )) < SQRT_SMALL_FASTF )
+		return(0.0);
+	return( PTdotD );
+}
