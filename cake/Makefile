@@ -1,12 +1,13 @@
 #	Makefile for Cake
 #
 #$Header$
+SHELL=/bin/sh
 
 # -DATT for SystemV, -DBSD for Berkeley, done by machinetype.sh
 #
 COPTS = -DCAKEDEBUG -DYYDEBUG -DCAREFUL -D`machinetype.sh -a`
 
-DEST  = /usr/brlcad/bin
+BINDIR=/usr/brlcad/bin
 
 #LDFLAGS=-k 64k
 
@@ -32,8 +33,8 @@ cake:		$(OBJ) $(GOBJ)
 all:		cake lint tags
 
 install:	cake
-		-mv -f $(DEST)/cake $(DEST)/cake.bak
-		mv cake $(DEST)/cake
+		-mv -f $(BINDIR)/cake $(BINDIR)/cake.bak
+		mv cake $(BINDIR)/cake
 
 $(OBJ):		$(HDR)
 $(GOBJ):	$(HDR)
