@@ -17,7 +17,7 @@
  *	Aberdeen Proving Ground, Maryland  21005 USA
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1993 by the United States Army.
+ *	This software is Copyright (C) 1993-2004 by the United States Army.
  *	All rights reserved.
  *
  *  Include Sequencing -
@@ -2140,7 +2140,7 @@ struct rt_shootray_status {
  *	The BRL-CAD Package" agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1994 by the United States Army
+ *	This software is Copyright (C) 1994-2004 by the United States Army
  *	in all countries except the USA.  All rights reserved.
  *
  *  $Header$
@@ -2857,6 +2857,15 @@ extern int rt_comb_import5( struct rt_db_internal   *ip,
         const struct db_i       *dbip,
         struct resource         *resp,
 	const int		minor_type);
+
+/* g_extrude.c */
+extern int rt_extrude_import5(
+	struct rt_db_internal		*ip,
+	const struct bu_external	*ep,
+	register const mat_t		mat,
+	const struct db_i		*dbip,
+	struct resource			*resp,
+	const int			minor_type );
 
 
 /* db_lookup.c */
