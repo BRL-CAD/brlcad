@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.2  87/04/14  20:47:47  dpk
+ * Changes for CRAY compatability.
+ * 
  * Revision 2.1  86/09/23  22:28:20  mike
  * Externs now declared properly.
  * I/O fixes for SysV
@@ -24,7 +27,7 @@
 
 #include <setjmp.h>
 
-#ifdef SYSV
+#ifdef SYS5
 #define	bcopy(f, t, c)	memcpy((t), (f), (c))
 #endif
 
