@@ -203,13 +203,14 @@ case ${MACHINE} in
 		# This is definitely an SGI sw Release 3.? system
 		if test ! -x /tmp/gt
 		then
-			echo 'main(){char b[50];gversion(b);exit(strncmp(b+4,"GT",2));}'>/tmp/gt.c
+			echo 'main(){char b[50];gversion(b);printf("%2.2s\\n",b+4);exit(0);}'>/tmp/gt.c
 			cc /tmp/gt.c -lgl -o /tmp/gt
 		fi
-		if /tmp/gt
-		then	MACHINE=4gt;
-		else	MACHINE=4d;
-		fi
+		case `/tmp/gt` in
+		GT)	MACHINE=4gt;;
+		PI)	MACHINE=4gt;;	# Personal Iris
+		*)	MACHINE=4d;;
+		esac
 	else
 		# This is an SGI sw Release 2 system
 		MACHINE=4d2
