@@ -112,6 +112,7 @@ register CONST struct db_tree_state	*tsp;
 		tsp->ts_mater.ma_color[2] );
 	rt_log(" ts_mater.ma_matname=%s\n", tsp->ts_mater.ma_matname );
 	rt_log(" ts_mater.ma_matparam=%s\n", tsp->ts_mater.ma_matparm );
+	mat_print("ts_mat", tsp->ts_mat );
 }
 
 /*
@@ -238,7 +239,7 @@ CONST struct member	*mp;
 
 	if( mp->m_id != ID_MEMB )  {
 		char	*sofar = db_path_to_string(pathp);
-		rt_log("db_follow_path_for_state:  defective member rec in '%s'\n", sofar);
+		rt_log("db_apply_state_from_memb:  defective member rec in '%s'\n", sofar);
 		rt_free(sofar, "path string");
 		return(-1);
 	}
@@ -344,12 +345,12 @@ int			noisy;
 	RT_INIT_EXTERNAL( &ext );
 	cp = str = rt_strdup( orig_str );
 
-	/*  Handle each path element */
-	if( pathp->fp_len > 0 )
+	/* Prime the pumps, and get the starting combination */
+	if( pathp->fp_len > 0 )  {
 		comb_dp = DB_FULL_PATH_CUR_DIR(pathp);
-	else
-		comb_dp = DIR_NULL;
-	do  {
+	}  else  {
+		/* Peel out first path element & look it up. */
+
 		/* Skip any leading slashes */
 		while( *cp && *cp == '/' )  cp++;
 
@@ -362,56 +363,51 @@ int			noisy;
 		if( (dp = db_lookup( tsp->ts_dbip, cp, noisy )) == DIR_NULL )
 			goto fail;
 
-		/* If first element, push it, and go on */
-		if( pathp->fp_len <= 0 )  {
-			db_add_node_to_full_path( pathp, dp );
+		/* Process animations located at the root */
+		if( tsp->ts_dbip->dbi_anroot )  {
+			register struct animate *anp;
+			mat_t	old_xlate, xmat;
 
-			/* Process animations located at the root */
-			if( tsp->ts_dbip->dbi_anroot )  {
-				register struct animate *anp;
-				mat_t	old_xlate, xmat;
-
-				for( anp=tsp->ts_dbip->dbi_anroot; anp != ANIM_NULL; anp = anp->an_forw ) {
-					if( dp != anp->an_path.fp_names[0] )
-						continue;
-					mat_copy( old_xlate, tsp->ts_mat );
-					mat_idn( xmat );
-					db_do_anim( anp, old_xlate, xmat, &(tsp->ts_mater) );
-					mat_mul( tsp->ts_mat, old_xlate, xmat );
-				}
+			for( anp=tsp->ts_dbip->dbi_anroot; anp != ANIM_NULL; anp = anp->an_forw ) {
+				if( dp != anp->an_path.fp_names[0] )
+					continue;
+				mat_copy( old_xlate, tsp->ts_mat );
+				mat_idn( xmat );
+				db_do_anim( anp, old_xlate, xmat, &(tsp->ts_mater) );
+				mat_mul( tsp->ts_mat, old_xlate, xmat );
 			}
-
-			/* Advance to next path element */
-			cp = ep+1;
-			comb_dp = dp;
-			continue;
 		}
 
-		if( (dp->d_flags & DIR_COMB) == 0 )  {
-			/* Object is a leaf */
-			db_add_node_to_full_path( pathp, dp );
-			if( oldc == '\0' )  {
-				/* No more path was given, all is well */
-				goto out;
-			}
-			/* Additional path was given, this is wrong */
-			if( noisy )  {
-				char	*sofar = db_path_to_string(pathp);
-				rt_log("db_follow_path_for_state(%s) ERROR: found leaf early at '%s'\n",
-					cp, sofar );
-				rt_free(sofar, "path string");
-			}
-			goto fail;
-		}
+		if( (dp->d_flags & DIR_COMB) == 0 )  goto is_leaf;
 
-		/* Object is a combination */
-		if( dp->d_len <= 1 )  {
-			/* Combination has no members */
-			if( noisy )  {
-				rt_log("db_follow_path_for_state(%s) ERROR: combination '%s' has no members\n",
-					cp, dp->d_namep );
-			}
+		db_add_node_to_full_path( pathp, dp );
+
+		/* Advance to next path element */
+		cp = ep+1;
+		comb_dp = dp;
+	}
+	/*
+	 *  Process two things at once: the combination, and it's member.
+	 */
+	do  {
+		if( oldc == '\0' )  break;
+
+		/* Skip any leading slashes */
+		while( *cp && *cp == '/' )  cp++;
+		if( *cp == '\0' )  break;
+
+		/* Find end of this path element and null terminate */
+		ep = cp;
+		while( *ep != '\0' && *ep != '/' )  ep++;
+		oldc = *ep;
+		*ep = '\0';
+
+		if( (dp = db_lookup( tsp->ts_dbip, cp, noisy )) == DIR_NULL )
 			goto fail;
+
+		/* At this point, comb_db is the comb, dp is the member */
+		if(rt_g.debug&DEBUG_TREEWALK)  {
+			rt_log("db_follow_path_for_state() at %s/%s\n", comb_dp->d_namep, dp->d_namep );
 		}
 
 		/* Load the entire combination into contiguous memory */
@@ -431,11 +427,13 @@ int			noisy;
 			if( strncmp( mp->m_instname, cp, sizeof(mp->m_instname)) == 0 )
 				goto found_it;
 		}
-		if(noisy) rt_log("db_follow_path_for_state() ERROR: unable to find element '%s'\n", cp );
+		if(noisy) rt_log("db_follow_path_for_state() ERROR: unable to find '%s/%s'\n", comb_dp->d_namep, cp );
 		goto fail;
 found_it:
-		if( db_apply_state_from_memb( tsp, pathp, mp ) < 0 )
+		if( db_apply_state_from_memb( tsp, pathp, mp ) < 0 )  {
+			rt_log("db_follow_path_for_state() ERROR: unable to apply member %s state\n", dp->d_namep);
 			goto fail;
+		}
 		/* directory entry was pushed */
 
 		/* If not first element of comb, take note of operation */
@@ -455,8 +453,36 @@ found_it:
 		} else {
 			/* Handle as a union */
 		}
-
 		db_free_external( &ext );
+
+		/* If member is a leaf, handle leaf processing too. */
+		if( (dp->d_flags & DIR_COMB) == 0 )  {
+is_leaf:
+			/* Object is a leaf */
+			db_add_node_to_full_path( pathp, dp );
+			if( oldc == '\0' )  {
+				/* No more path was given, all is well */
+				goto out;
+			}
+			/* Additional path was given, this is wrong */
+			if( noisy )  {
+				char	*sofar = db_path_to_string(pathp);
+				rt_log("db_follow_path_for_state(%s) ERROR: found leaf early at '%s'\n",
+					cp, sofar );
+				rt_free(sofar, "path string");
+			}
+			goto fail;
+		}
+
+		/* Member is itself a combination */
+		if( dp->d_len <= 1 )  {
+			/* Combination has no members */
+			if( noisy )  {
+				rt_log("db_follow_path_for_state(%s) ERROR: combination '%s' has no members\n",
+					cp, dp->d_namep );
+			}
+			goto fail;
+		}
 
 		/* Advance to next path element */
 		cp = ep+1;
@@ -715,7 +741,7 @@ struct combined_tree_state	**region_start_statepp;
 			if( i > 1 )  {
 				switch( mp->m_relation )  {
 				default:
-					rt_log("%s: bad m_relation '%c'\n",
+				rt_log("%s: bad m_relation '%c'\n",
 						dp->d_namep, mp->m_relation );
 					tlp->tl_op = OP_UNION;
 					break;
