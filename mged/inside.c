@@ -138,6 +138,14 @@ f_inside()
 					es_mat,
 					&es_rec.s.s_values[i*3] );
 		}
+
+		if(newrec.s.s_type == GENARB8) {
+			/* must find new plane equations to account for
+			 *	any editing in the es_mat matrix
+			 */
+			calc_planes( &newrec.s, newrec.s.s_cgtype );
+		}
+
 		(void)printf("Outside solid: ");
 		for(i=0; i <= illump->s_last; i++) {
 			(void)printf("/%s",illump->s_path[i]->d_namep);
@@ -162,6 +170,14 @@ f_inside()
 					newmat,
 					&es_rec.s.s_values[i*3] );
 		}
+
+		if(newrec.s.s_type == GENARB8) {
+			/* must find new plane equations to account for
+			 *	any editing done in the path to this solid
+			 */
+			calc_planes( &newrec.s, newrec.s.s_cgtype );
+		}
+
 		(void)printf("Outside solid: ");
 		for(i=0; i <= illump->s_last; i++) {
 			(void)printf("/%s",illump->s_path[i]->d_namep);
@@ -207,30 +223,7 @@ f_inside()
 			newrec.s.s_cgtype = type;
 
 			/* find the plane equations */
-			for(i=3; i<=21; i+=3) {
-				VADD2(	&newrec.s.s_values[i],
-					&newrec.s.s_values[i],
-					&newrec.s.s_values[0] );
-			}
-			type -= 4;
-			for(i=0; i<6; i++) {
-				if(arb_faces[type][i*4] == -1)
-					break;
-				p1 = arb_faces[type][i*4+0];
-				p2 = arb_faces[type][i*4+1];
-				p3 = arb_faces[type][i*4+2];
-				if(planeqn(i, p1, p2, p3, &newrec.s)) {
-					(void)printf("No eqn for face %d%d%d%d\n",
-						p1+1,p2+1,p3+1,arb_faces[type][i*4+3]+1);
-					return;
-				}
-			}
-			/* back to vector notation */
-			for(i=3; i<=21; i+=3) {
-				VSUB2(	&newrec.s.s_values[i],
-					&newrec.s.s_values[i],
-					&newrec.s.s_values[0] );
-			}
+			calc_planes( &newrec.s, type );
 		}
 	}
 
@@ -433,6 +426,8 @@ tgcin()
 	float dt, h1, h2, ht, dtha, dthb, s, d4, d5, ctan, t3;
 	int i, j, k;
 	double ratio;
+
+	thick[3] = thick[2];
 
 	for(i=0; i<5; i++) {
 		j = (i+1) * 3;

@@ -377,27 +377,7 @@ init_sedit()
 		es_rec.s.s_cgtype = type;
 
 		/* find the plane equations */
-		/* point notation - use temprec record */
-		for(i=3; i<=21; i+=3) {
-			op = &temprec.s_values[i];
-			VADD2(op, op, &es_rec.s.s_values[0]);
-		}
-		type -= 4;	/* ARB4 at location 0, ARB5 at 1, etc */
-		for(i=0; i<6; i++) {
-			if(arb_faces[type][i*4] == -1)
-				break;	/* faces are done */
-			p1 = arb_faces[type][i*4];
-			p2 = arb_faces[type][i*4+1];
-			p3 = arb_faces[type][i*4+2];
-			if(planeqn(i, p1, p2, p3, &temprec)) {
-				(void)printf("No eqn for face %d%d%d%d\n",
-					p1+1,p2+1,p3+1,arb_faces[type][i*4+3]+1);
-				return;
-			}
-/*
-printf("peqn[%d][]: %.4f %.4f %.4f %.4f\n",i,es_peqn[i][0],es_peqn[i][1],es_peqn[i][2],es_peqn[i][3]);
-*/
-		}
+		calc_planes( &es_rec.s, type );
 	}
 
 
@@ -674,7 +654,7 @@ sedit()
 
 	/* must re-calculate the face plane equations for arbs */
 	if( es_rec.s.s_type == GENARB8 )
-		redo_planes();
+		calc_planes( &es_rec.s, es_rec.s.s_cgtype );
 
 	illump = redraw( illump, &es_rec );
 
@@ -1226,23 +1206,22 @@ init_objedit()
 }
 
 
-/* 	REDO_PLANES()
- *		redo the plane (face) equations for an arb
+/* 	CALC_PLANES()
+ *		calculate the plane (face) equations for an arb
+ *		in solidrec pointed at by sp
  */
-redo_planes( )
+calc_planes( sp, type )
+struct solidrec *sp;
+int type;
 {
 	struct solidrec temprec;
-	register float *op;
-	register int i, type, p1, p2, p3;
-
-	type = es_rec.s.s_cgtype;
-	temprec = es_rec.s;		/* struct copy */
+	register int i, p1, p2, p3;
 
 	/* find the plane equations */
 	/* point notation - use temprec record */
+	VMOVE( &temprec.s_values[0], &sp->s_values[0] );
 	for(i=3; i<=21; i+=3) {
-		op = &temprec.s_values[i];
-		VADD2(op, op, &es_rec.s.s_values[0]);
+		VADD2( &temprec.s_values[i], &sp->s_values[i], &sp->s_values[0] );
 	}
 	type -= 4;	/* ARB4 at location 0, ARB5 at 1, etc */
 	for(i=0; i<6; i++) {
