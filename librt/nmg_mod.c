@@ -3577,7 +3577,7 @@ int		share_geom;
 	/* vA and vB are the endpoints of the original edge "e" */
 	if( vA == vB )  {
 		rt_log("WARNING: nmg_esplit() on edge from&to v=x%x\n", vA);
-		rt_bomb("nmg_esplit() of edge running from&to same v\n");
+/*		rt_bomb("nmg_esplit() of edge running from&to same v\n");	*/
 	}
 	if( v && ( v == vA || v == vB ) )  {
 		rt_log("WARNING: nmg_esplit(v=x%x) vertex is already an edge vertex\n", v);
@@ -3645,6 +3645,13 @@ int		share_geom;
 				v, eu, share_geom, neu2);
 		}
 		return neu2;
+	}
+	else if( neu1->vu_p->v_p == v && neu1->eumate_p->vu_p->v_p == vB )  {
+		if (rt_g.NMG_debug & DEBUG_BASIC)  {
+			rt_log("nmg_esplit(v=x%x, eu=x%x, share=%d) neu1=x%x\n",
+				v, eu, share_geom, neu1);
+		}
+		return neu1;
 	}
 
 	rt_bomb("nmg_esplit() unable to find eu starting at new v\n");
