@@ -32,6 +32,11 @@ struct wmember  {
 #define WMEMBER_NULL	((struct wmember *)0)
 #define WMEMBER_MAGIC	0x43128912
 
+/* Values for wm_op.  These must track db.h */
+#define WMOP_INTERSECT	'+'
+#define WMOP_SUBTRACT	'-'
+#define WMOP_UNION		'u'
+
 /* Convienient definitions */
 #define mk_lfcomb(fp,name,headp,region)		mk_lcomb( fp, name, headp, \
 	region, (char *)0, (char *)0, (char *)0, 0 );
