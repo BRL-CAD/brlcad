@@ -52,6 +52,29 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <strings.h>
 #endif
 
+static int
+mread(fd, bufp, n)
+int	fd;
+register char	*bufp;
+int	n;
+{
+	register int	count = 0;
+	register int	nread;
+
+	do {
+		nread = read(fd, bufp, (unsigned)n-count);
+		if(nread < 0)  {
+			return nread;
+		}
+		if(nread == 0)
+			return((int)count);
+		count += (unsigned)nread;
+		bufp += nread;
+	 } while(count < n);
+
+	return((int)count);
+}
+
 #if defined(IRIX) && (IRIX == 4 || IRIX == 5)
 #include <sys/types.h>
 #include <fcntl.h>
@@ -111,7 +134,7 @@ char *av[];
 		fprintf(stderr, "Image is %dx%d (%d)\n", width, height, img_bytes);
 
 	/* bring the image into memory */
-	if ((i=read(0, &img_buffer[0], img_bytes)) != img_bytes) {
+	if ((i=mread(0, &img_buffer[0], img_bytes)) != img_bytes) {
 		(void)fprintf(stderr, "%s: Error reading image at %d of %d bytes read\n", progname, i, img_bytes);
 		return(-1);
 	}
