@@ -46,6 +46,7 @@ static int new_xZoom, new_yZoom;
 
 static int	scr_width = 0;		/* screen size */
 static int	scr_height = 0;
+static int	toggle_pan = 0;		/* Reverse sense of pan commands? */
 static char	*framebuffer = NULL;
 static FBIO	*fbp;
 
@@ -177,6 +178,9 @@ doKeyPad()
 		(void) fprintf( stdout, "\r\n%s", help );
 		break;
 
+	case 'T' :
+		toggle_pan = 1 - toggle_pan;
+		break;
 	case '\r' :				/* Done, leave "as is" */
 	case '\n' :
 	case 'q' :
@@ -246,36 +250,36 @@ doKeyPad()
 		break;
 
 	case 'F' :
-	case 'l' :				/* move LEFT.	*/
-		++new_xPan;
+	case 'l' :				/* move RIGHT.	*/
+		new_xPan += 1 - 2 * toggle_pan;
 		break;
 	case ctl('f') :
 	case 'L' :
-		new_xPan += PanFactor;
+		new_xPan += PanFactor * (1 - 2 * toggle_pan);
 		break;
 	case 'N' :
-	case 'k' :				/* move DOWN.	*/
-		--new_yPan;
+	case 'j' :				/* move DOWN.	*/
+		new_yPan -= 1 - 2 * toggle_pan;
 		break;
 	case ctl('n') :
-	case 'K' :
-		new_yPan -= PanFactor;
+	case 'J' :
+		new_yPan -= PanFactor * (1 - 2 * toggle_pan);
 		break;
 	case 'P' :
-	case 'j' :				/* move UP.	*/
-		++new_yPan;
+	case 'k' :				/* move UP.	*/
+		new_yPan += 1 - 2 * toggle_pan;
 		break;
 	case ctl('p') :
-	case 'J' :
-		new_yPan += PanFactor;
+	case 'K' :
+		new_yPan += PanFactor * (1 - 2 * toggle_pan);
 		break;
 	case 'B' :
-	case 'h' :				/* move RIGHT.	*/
-		--new_xPan;
+	case 'h' :				/* move LEFT.	*/
+		new_xPan -= 1 - 2 * toggle_pan;
 		break;
 	case ctl('b') :
 	case 'H' :
-		new_xPan -= PanFactor;
+		new_xPan -= PanFactor * (1 - 2 * toggle_pan);
 		break;
 	}
 	return	1;		/* keep going */
@@ -289,11 +293,15 @@ register char	**argv;
 {
 	register int	c;
 
-	while( (c = getopt( argc, argv, "hF:s:S:w:W:n:N:" )) != EOF )  {
+	while( (c = getopt( argc, argv, "hTF:s:S:w:W:n:N:" )) != EOF )  {
 		switch( c )  {
 		case 'h':
 			/* high-res */
 			scr_height = scr_width = 1024;
+			break;
+		case 'T':
+			/* reverse the sense of pan commands */
+			toggle_pan = 1;
 			break;
 		case 'F':
 			framebuffer = optarg;
