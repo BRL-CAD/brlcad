@@ -55,6 +55,7 @@ static char	line[LINELEN+1];		/* Space for input line */
 static FILE	*fdin;			/* Input FASTGEN4 file pointer */
 static FILE	*fdout;			/* Output BRL-CAD file pointer */
 static FILE	*fd_plot=NULL;		/* file for plot output */
+static FILE	*fd_muves=NULL;		/* file for MUVES data, output CBAR and CBACKING data */
 static int	grid_size;		/* Number of points that will fit in current grid_pts array */
 static int	max_grid_no=0;		/* Maximum grid number used */
 static int	mode=0;			/* Plate mode (1) or volume mode (2) */
@@ -93,11 +94,12 @@ static int	int_list_count=0;	/* Number of ints in above array */
 static int	int_list_length=0;	/* Length of int_list array */
 #define		INT_LIST_BLOCK	256	/* Number of int_list array slots to allocate */
 
-static char	*usage="Usage:\n\tfast4-g [-dwq] [-c component_list] [-o plot_file] [-b BU_DEBUG_FLAG] [-x RT_DEBUG_FLAG] fastgen4_bulk_data_file output.g\n\
+static char	*usage="Usage:\n\tfast4-g [-dwq] [-c component_list] [-m muves_file] [-o plot_file] [-b BU_DEBUG_FLAG] [-x RT_DEBUG_FLAG] fastgen4_bulk_data_file output.g\n\
 	d - print debugging info\n\
 	q - quiet mode (don't say anyhing except error messages\n\
 	w - print warnings about creating default names\n\
 	c - process only the listed region ids, may be a list (3001,4082,5347) or a range (2314-3527)\n\
+	m - create a MUVES input file containing CBAR and CBACKING elements\n\
 	o - create a 'plot_file' containing a libplot3 plot file of all CTRI and CQUAD elements processed\n\
 	b - set LIBBU debug flag\n\
 	x - set RT debug flag\n";
@@ -3285,6 +3287,42 @@ Process_hole_wall()
 	}
 }
 
+void
+do_cbacking()
+{
+	int gr1, co1, gr2, co2, material;
+	fastf_t thickness, probability;
+
+	if( !pass )
+		return;
+
+	if( !fd_muves )
+		return;
+
+	strncpy( field, &line[8], 8 );
+	gr1 = atoi( field );
+
+	strncpy( field, &line[16], 8 );
+	co1 = atoi( field );
+
+	strncpy( field, &line[24], 8 );
+	gr2 = atoi( field );
+
+	strncpy( field, &line[32], 8 );
+	co2 = atoi( field );
+
+	strncpy( field, &line[40], 8 );
+	thickness = atof( field ) * 25.4;
+
+	strncpy( field, &line[48], 8 );
+	probability = atof( field );
+
+	strncpy( field, &line[56], 8 );
+	material = atoi( field );
+
+	fprintf( fd_muves, "CBACKING %d %d %g %g %d\n", gr1*1000+co1, gr2*1000+co2, thickness, probability, material );
+}
+
 int
 Process_input( pass_number )
 int pass_number;
@@ -3315,6 +3353,8 @@ int pass_number;
 			;
 		else if( !strncmp( line , "COMPSPLT", 8 ) )
 			;
+		else if( !strncmp( line, "CBACKING", 8 ) )
+			do_cbacking();
 		else if( !strncmp( line , "SECTION" , 7 ) )
 			do_section( 0 );
 		else if( !strncmp( line , "$NAME" , 5 ) )
@@ -3534,12 +3574,19 @@ char *argv[];
 	char *output_file;
 	char *plot_file=NULL;
 
-	while( (c=getopt( argc , argv , "qo:c:dwx:b:X:" ) ) != EOF )
+	while( (c=getopt( argc , argv , "qm:o:c:dwx:b:X:" ) ) != EOF )
 	{
 		switch( c )
 		{
 			case 'q':	/* quiet mode */
 				quiet = 1;
+				break;
+			case 'm':
+				if( (fd_muves=fopen( optarg, "w" )) == (FILE *)NULL )
+				{
+					bu_log( "Unable to open MUVES file (%s)\n\tno MUVES file created\n",
+						optarg );
+				}
 				break;
 			case 'o':	/* output a plotfile of original FASTGEN4 elements */
 				do_plot = 1;
