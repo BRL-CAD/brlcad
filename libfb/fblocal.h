@@ -41,6 +41,4 @@ extern void	free();
 #define	strrchr	rindex
 #endif
 
-extern	int	_disk_enable;		/* disk file interface enable */
-
 #endif INCL_FBLOCAL
