@@ -63,7 +63,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern struct bn_tol mged_tol;
 
-
+void update_grids();
+void set_localunit_TclVar();
 void set_tran();
 void	aexists();
 
@@ -1313,6 +1314,7 @@ char	**argv;
 	int	new_unit = 0;
 	struct bu_vls vls;
 	CONST char	*str;
+	fastf_t sf;
 
 	if(dbip == DBI_NULL)
 	  return TCL_OK;
@@ -1363,6 +1365,7 @@ char	**argv;
 	if( strcmp(argv[1],"mi")==0 || strcmp(argv[1],"miles")==0 || strcmp(argv[1],"mile")==0 ) 
 		new_unit = ID_MI_UNIT;
 
+	sf = dbip->dbi_base2local;
 	if( new_unit ) {
 		/* One of the recognized db.h units */
 		/* change to the new local unit */
@@ -1389,12 +1392,17 @@ char	**argv;
 Due to a database restriction in the current format of .g files,\n\
 this choice of units will not be remembered on your next editing session.\n", (char *)NULL);
 	}
+
+	set_localunit_TclVar();
+	sf = dbip->dbi_base2local / sf;
+	update_grids(sf);
+
 	str = rt_units_string(dbip->dbi_local2base);
 	bu_vls_printf(&vls, "You will now be editing in '%s'.  1 %s = %g mm \n",
 			str, str, dbip->dbi_local2base );
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
-	dmaflag = 1;
+	update_views = 1;
 
 	return TCL_OK;
 }
@@ -2462,4 +2470,51 @@ char	**argv;
 #endif
 
 	return TCL_OK;
+}
+
+void
+set_localunit_TclVar()
+{
+  struct bu_vls vls;
+  struct bu_vls units_vls;
+
+  bu_vls_init(&vls);
+  bu_vls_init(&units_vls);
+
+  switch(localunit){
+  case ID_UM_UNIT:
+    bu_vls_strcpy(&units_vls, "um");
+    break;
+  case ID_MM_UNIT:
+    bu_vls_strcpy(&units_vls, "mm");
+    break;
+  case ID_CM_UNIT:
+    bu_vls_strcpy(&units_vls, "cm");
+    break;
+  case ID_M_UNIT:
+    bu_vls_strcpy(&units_vls, "m");
+    break;
+  case ID_KM_UNIT:
+    bu_vls_strcpy(&units_vls, "km");
+    break;
+  case ID_IN_UNIT:
+    bu_vls_strcpy(&units_vls, "in");
+    break;
+  case ID_FT_UNIT:
+    bu_vls_strcpy(&units_vls, "ft");
+    break;
+  case ID_YD_UNIT:
+    bu_vls_strcpy(&units_vls, "yd");
+    break;
+  case ID_NO_UNIT:
+  default:
+    bu_vls_strcpy(&units_vls, "none");
+    break;
+  }
+
+  bu_vls_strcpy(&vls, "localunit");
+  Tcl_SetVar(interp, bu_vls_addr(&vls), bu_vls_addr(&units_vls), TCL_GLOBAL_ONLY);
+
+  bu_vls_free(&vls);
+  bu_vls_free(&units_vls);
 }
