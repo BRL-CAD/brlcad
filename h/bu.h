@@ -431,6 +431,16 @@ struct bu_list *bu_list_pop( struct bu_list *hp );
 	(cur)->back->forw = (cur)->forw; \
 	(cur)->forw = (cur)->back = BU_LIST_NULL;  /* sanity */ }
 
+/* Dequeue "cur" but do not fix its links */
+#define BU_LIST_DQ(cur) {\
+	(cur)->forw->back = (cur)->back; \
+	(cur)->back->forw = (cur)->forw; }
+
+#define BU_LIST_DQ_T(cur, type) (\
+	(cur)->forw->back = (cur)->back, \
+	(cur)->back->forw = (cur)->forw, \
+	(type *)(cur) )
+
 /* This version of BU_LIST_DEQUEUE uses the comma operator
  * inorder to return a typecast version of the dequeued pointer
  */
@@ -453,15 +463,14 @@ struct bu_list *bu_list_pop( struct bu_list *hp );
 
 #define BU_LIST_POP(structure,hp,p)				\
 	{							\
-	    if( BU_LIST_NON_EMPTY(hp))				\
-	    {							\
-	        (p) = ((struct structure *)((hp)->forw));	\
-	        BU_LIST_DEQUEUE((struct bu_list *)(p));		\
-	    }							\
-	    else						\
-	     (p) = (struct structure *) 0;			\
+		if (BU_LIST_NON_EMPTY(hp))				\
+		{							\
+		    (p) = ((struct structure *)((hp)->forw));		\
+		    BU_LIST_DEQUEUE((struct bu_list *)(p));		\
+		}							\
+		else							\
+		     (p) = (struct structure *) 0;			\
 	}
-
 
 #define BU_LIST_POP_T(hp, type )				\
 	(type *)bu_list_pop( hp )
