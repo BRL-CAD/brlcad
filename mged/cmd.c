@@ -773,7 +773,6 @@ Tcl_Interp *interp;
 int argc;
 char **argv;
 {
-/*XXX I need to come back later and fix this */
     register int i;
 
     static struct {
@@ -829,15 +828,11 @@ char **argv;
 	return TCL_ERROR;
     }
 
-#if 0
-    for (i = 0; i < sizeof(knobs); i++)
-#else
-      for (i = 0; i < 19; ++i)
-#endif
-	if (strcmp(knobs[i].knobname, argv[1]) == 0) {
-	    sprintf(interp->result, "%lf", *(knobs[i].variable));
-	    return TCL_OK;
-	}
+    for (i = 0; i < 19; ++i)
+      if (strcmp(knobs[i].knobname, argv[1]) == 0) {
+	sprintf(interp->result, "%lf", *(knobs[i].variable));
+	return TCL_OK;
+      }
     
     Tcl_AppendResult(interp, "getknob: invalid knob name", (char *)NULL);
     return TCL_ERROR;
@@ -1147,13 +1142,7 @@ char **argv;
   rt_vls_init(&clp->more_default);
   rt_vls_init(&clp->name);
   rt_vls_strcpy(&clp->name, argv[1]);
-#if 0
-  sscanf(argv[2], "%x", &clp->id);
-  clp->sp = (void *)Tk_Display(Tk_NameToWindow(interp, argv[3], tkwin));
-#else
-  rt_vls_init(&clp->path);
-  rt_vls_strcpy(&clp->path, argv[2]);
-#endif
+
   return TCL_OK;
 }
 
