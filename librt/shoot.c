@@ -537,7 +537,8 @@ register fastf_t *max;
 			return(0);	/* MISS */;
 	}
 
-	if( rp->r_min >= rp->r_max )
+	/* If equal, RPP is actually a plane */
+	if( rp->r_min > rp->r_max )
 		return(0);	/* MISS */
 	return(1);		/* HIT */
 }
