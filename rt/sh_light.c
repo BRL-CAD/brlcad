@@ -348,11 +348,13 @@ light_init()
 	inten *= (1 + AmbientIntensity*0.5);
 
 	for( RT_LIST_FOR( lp, light_specific, &(LightHead.l) ) )  {
+		RT_CK_LIGHT(lp);
 		if( lp->lt_fraction > 0 )  continue;	/* overridden */
 		lp->lt_fraction = lp->lt_intensity / inten;
 	}
 	rt_log("Lighting: Ambient = %d%%\n", (int)(AmbientIntensity*100));
 	for( RT_LIST_FOR( lp, light_specific, &(LightHead.l) ) )  {
+		RT_CK_LIGHT(lp);
 		rt_log( "  %s: (%g, %g, %g), aimed at (%g, %g, %g)\n",
 			lp->lt_name,
 			lp->lt_pos[X], lp->lt_pos[Y], lp->lt_pos[Z],
@@ -402,7 +404,7 @@ struct partition *PartHeadp;
 	register struct region	*regp;
 	struct application	sub_ap;
 	struct shadework	sw;
-	struct light_specific	*lp;
+	CONST struct light_specific	*lp;
 	extern int	light_render();
 	vect_t	filter_color;
 	int	light_visible;
@@ -427,6 +429,7 @@ struct partition *PartHeadp;
 	}
 	if( pp == PartHeadp )  {
 		pp=PartHeadp->pt_forw;
+		RT_CK_PT(pp);
 
 		if (pp->pt_inhit->hit_dist <= ap->a_rt_i->rti_tol.dist) {
 			int retval;
@@ -439,7 +442,9 @@ struct partition *PartHeadp;
 
 			sub_ap = *ap;	/* struct copy */
 			sub_ap.a_level++;
-			VMOVE(sub_ap.a_ray.r_pt, pp->pt_outhit->hit_point);
+			/* pt_outhit->hit_point has not been calculated */
+			VJOIN1(sub_ap.a_ray.r_pt, ap->a_ray.r_pt,
+				pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
 
 			retval = rt_shootray( &sub_ap );
 
