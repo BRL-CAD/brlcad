@@ -391,8 +391,8 @@ char *argv[];
 			if( report_status )
 				prnt_Status();
 			}
-		(void) f_Quit( (char *) NULL );
 		}
+	(void) f_Quit( (char *) NULL );
 	}
 
 STATIC bool
