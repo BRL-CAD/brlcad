@@ -525,8 +525,9 @@ struct seg		*seghead;
 	t_scale = 1/MAGNITUDE( dprime );
 	VSCALE( dprime, dprime, t_scale );	/* VUNITIZE( dprime ); */
 
-	if( NEAR_ZERO( dprime[Z], RT_PCOEF_TOL ) )
+	if( NEAR_ZERO( dprime[Z], RT_PCOEF_TOL ) )  {
 		dprime[Z] = 0.0;	/* prevent rootfinder heartburn */
+	}
 
 	VSUB2( work, rp->r_pt, tgc->tgc_V );
 	MAT4X3VEC( pprime, tgc->tgc_ScShR, work );
@@ -535,9 +536,24 @@ struct seg		*seghead;
 	 * pt. to origin of solids coordinate system, new ray origin
 	 * is 'cor_pprime'.
 	 */
-	cor_proj = VDOT( pprime, dprime );
-	VSCALE( cor_pprime, dprime, cor_proj );
-	VSUB2( cor_pprime, pprime, cor_pprime );
+	cor_proj = -VDOT( pprime, dprime );
+	VJOIN1( cor_pprime, pprime, cor_proj, dprime );
+
+	/*
+	 * The TGC is defined in "unit" space, so the parametric distance
+	 * from one side of the TGC to the other is on the order of 2.
+	 * Therefore, any vector/point coordinates that are very small
+	 * here may be considered to be zero,
+	 * since double precision only has 18 digits of significance.
+	 * If these tiny values were left in, then as they get
+	 * squared (below) they will cause difficulties.
+	 */
+	for( i=0; i<3; i++ )  {
+		/* Direction cosines */
+		if( NEAR_ZERO( dprime[i], 1e-10 ) )  dprime[i] = 0;
+		/* Position in -1..+1 coordinates */
+		if( NEAR_ZERO( cor_pprime[i], 1e-20 ) )  cor_pprime[i] = 0;
+	}
 
 	/*
 	 *  Given a line and the parameters for a standard cone, finds
@@ -626,21 +642,22 @@ struct seg		*seghead;
 		 *  of 't' for the intersections
 		 */
 		for ( l=0, npts=0; l < nroots; l++ ){
-			if ( NEAR_ZERO( val[l].im, 0.0001 ) )
+			if ( NEAR_ZERO( val[l].im, 1e-10 ) )
 				k[npts++] = val[l].re;
 		}
 		/* Here, 'npts' is number of points being returned */
 		if ( npts != 0 && npts != 2 && npts != 4 ){
 			rt_log("tgc:  reduced %d to %d roots\n",nroots,npts);
-			rt_pr_roots( nroots, val );
+			rt_pr_roots( stp->st_name, val, nroots );
 		}
 	}
 
 	/*
 	 * Reverse above translation by adding distance to all 'k' values.
 	 */
-	for( i = 0; i < npts; ++i )
-		k[i] -= cor_proj;
+	for( i = 0; i < npts; ++i )  {
+		k[i] += cor_proj;
+	}
 
 	if ( npts != 0 && npts != 2 && npts != 4 ){
 		rt_log("tgc(%s):  %d intersects != {0,2,4}\n",
@@ -683,8 +700,9 @@ struct seg		*seghead;
 		if ( zval < 1.0 && zval > 0.0 ){
 			if ( ++intersect == 2 )  {
 				pt[IN] = k[i];
-			}  else
+			}  else  {
 				pt[OUT] = k[i];
+			}
 		}
 	}
 	if ( intersect == 2 ){
@@ -1059,7 +1077,7 @@ struct resource         *resp; /* pointer to a list of free segs */
 		/* Here, 'npts' is number of points being returned */
 		if ( npts != 0 && npts != 2 && npts != 4 ){
 			rt_log("tgc:  reduced %d to %d roots\n",nroots,npts);
-			rt_pr_roots( nroots, val );
+			rt_pr_roots( "tgc", val, nroots );
 		}
 	}
 
