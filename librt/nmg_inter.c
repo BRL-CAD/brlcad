@@ -107,6 +107,8 @@ RT_EXTERN(struct vertexuse *	nmg_enlist_vu, (struct nmg_inter_struct	*is,
 				CONST struct vertexuse *vu,
 				struct vertexuse *dualvu));
 RT_EXTERN(void			nmg_isect2d_cleanup, (struct nmg_inter_struct *is));
+RT_EXTERN(struct vertexuse *	nmg_isect_vert2p_face2p, (struct nmg_inter_struct *is,
+				struct vertexuse *vu1, struct faceuse *fu2));
 
 
 static struct nmg_inter_struct	*nmg_hack_last_is;	/* see nmg_isect2d_final_cleanup() */
@@ -3081,8 +3083,8 @@ struct faceuse		*fu1, *fu2;
 	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 		nmg_vfu( &fu1->s_p->fu_hd, fu1->s_p );
 		nmg_vfu( &fu2->s_p->fu_hd, fu2->s_p );
-nmg_fu_touchingloops(fu1);
-nmg_fu_touchingloops(fu2);
+		nmg_fu_touchingloops(fu1);
+		nmg_fu_touchingloops(fu2);
 	}
 
 	/* Verify that line is within tolerance of both planes */
@@ -3107,8 +3109,8 @@ nmg_fu_touchingloops(fu2);
 	(void)nmg_isect_line2_face2p(is, fu1, 0, 0);
 
 	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
-nmg_fu_touchingloops(fu1);
-nmg_fu_touchingloops(fu2);
+		nmg_fu_touchingloops(fu1);
+		nmg_fu_touchingloops(fu2);
 		nmg_vfu( &fu1->s_p->fu_hd, fu1->s_p );
 		nmg_vfu( &fu2->s_p->fu_hd, fu2->s_p );
 	}
@@ -3135,8 +3137,8 @@ nmg_fu_touchingloops(fu2);
 	(void)nmg_isect_line2_face2p(is, fu2, 0, 0);
 
 	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
-nmg_fu_touchingloops(fu1);
-nmg_fu_touchingloops(fu2);
+		nmg_fu_touchingloops(fu1);
+		nmg_fu_touchingloops(fu2);
 		nmg_vfu( &fu1->s_p->fu_hd, fu1->s_p );
 		nmg_vfu( &fu2->s_p->fu_hd, fu2->s_p );
 	}
@@ -3162,18 +3164,18 @@ nmg_fu_touchingloops(fu2);
 	nmg_face_cutjoin(&vert_list1, &vert_list2, fu1, fu2, is->pt, is->dir, &is->tol);
 
 	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
-nmg_fu_touchingloops(fu1);
-nmg_fu_touchingloops(fu2);
-nmg_region_v_unique( fu1->s_p->r_p, &is->tol );
-nmg_region_v_unique( fu2->s_p->r_p, &is->tol );
+		nmg_fu_touchingloops(fu1);
+		nmg_fu_touchingloops(fu2);
+		nmg_region_v_unique( fu1->s_p->r_p, &is->tol );
+		nmg_region_v_unique( fu2->s_p->r_p, &is->tol );
 		nmg_vfu( &fu1->s_p->fu_hd, fu1->s_p );
 		nmg_vfu( &fu2->s_p->fu_hd, fu2->s_p );
 	}
 
 	nmg_mesh_faces(fu1, fu2, &is->tol);
 	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
-nmg_fu_touchingloops(fu1);
-nmg_fu_touchingloops(fu2);
+		nmg_fu_touchingloops(fu1);
+		nmg_fu_touchingloops(fu2);
 	}
 
 #if 0
