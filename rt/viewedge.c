@@ -101,7 +101,11 @@ RGBpixel bg_color;
  * edge pixels are splatted. This allows rtedge to overlay edges
  * directly rather than having to use pixmerge.
  */
-int    overlay = 0;
+#define OVERLAY_MODE_UNSET 0
+#define OVERLAY_MODE_DOIT  1
+#define OVERLAY_MODE_FORCE 2
+
+int    overlay = OVERLAY_MODE_UNSET;
 
 /*
  * Blend Mode
@@ -135,6 +139,7 @@ int    region_colors = 0;
 #define OCCLUSION_MODE_NONE 0
 #define OCCLUSION_MODE_EDGES 1
 #define OCCLUSION_MODE_HITS 2
+#define OCCLUSION_MODE_DITHER 3
 #define OCCLUSION_MODE_DEFAULT 2
 
 int occlusion_mode = OCCLUSION_MODE_NONE;
@@ -330,12 +335,23 @@ view_init( struct application *ap, char *file, char *obj, int minus_o )
      */
     if (occlusion_mode == OCCLUSION_MODE_NONE) {
       occlusion_mode = OCCLUSION_MODE_DEFAULT;
-      bu_log ("rtedge: occlusion mode = %d\n", 
-	      occlusion_mode);
+      bu_log ("rtedge: occlusion mode = %d\n", occlusion_mode);
+    }
+
+    if ((occlusion_mode != OCCLUSION_MODE_NONE) && 
+	(overlay == OVERLAY_MODE_UNSET)) {
+      bu_log ("rtedge: automagically activating overlay mode.\n");
+      overlay = OVERLAY_MODE_DOIT;
     }
 
   }
  
+  if (occlusion_mode != OCCLUSION_MODE_NONE &&
+      bu_vls_strlen(&occlusion_objects) == 0) {
+    bu_bomb ("rtedge: occlusion mode set, but no objects were specified.\n");
+  }
+
+
   if( minus_o ) {
     /*
      * Output is to a file stream.
@@ -871,8 +887,8 @@ handle_main_ray( struct application *ap, register struct partition *PartHeadp,
    * Note that we must check on edges as well since right side and
    * top edges are actually misses.
    */
-  if (me.c_ishit || edge) {
-    if (occlusion_mode != OCCLUSION_MODE_NONE) {
+  if (occlusion_mode != OCCLUSION_MODE_NONE) {
+    if (me.c_ishit || edge) {
       oc = occludes (ap, &me);
     }
   }
@@ -893,6 +909,32 @@ handle_main_ray( struct application *ap, register struct partition *PartHeadp,
       
     if ( (me.c_ishit || edge) && oc) {
       writeable[cpu][ap->a_x] = 1;
+    } 
+    else {
+      writeable[cpu][ap->a_x] = 0;
+    }
+  }
+  else if (occlusion_mode == OCCLUSION_MODE_DITHER) {
+      
+    if (edge && oc) {
+      writeable[cpu][ap->a_x] = 1;
+    }
+    else if (me.c_ishit && oc) {
+      /*
+       * Dither mode.
+       *
+       * For occluding non-edges, only write every 
+       * other pixel.
+       */
+      if (oc == 1 && ((ap->a_x + ap->a_y) % 2) == 0) {
+	writeable[cpu][ap->a_x] = 1;
+      } 
+      else if (oc == 2) {
+	writeable[cpu][ap->a_x] = 1;
+      }
+      else {
+	writeable[cpu][ap->a_x] = 0;
+      }
     } 
     else {
       writeable[cpu][ap->a_x] = 0;
@@ -1018,9 +1060,13 @@ static int occludes (struct application *ap, struct cell *here)
   if (!oc_hit) {
     /*
      * The occlusion ray missed, therefore this 
-     * pixel occludes the second geometry.
+     * pixel occludes the second geometry. 
+     * 
+     * Return 2 so that the fact that there is no
+     * geometry behind can be conveyed to the 
+     * OCCLUSION_MODE_DITHER section.
      */
-    return 1;
+    return 2;
   }
 
   if (occlusion_apps[cpu]->a_dist < here->c_dist) {

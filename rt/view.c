@@ -139,6 +139,14 @@ fastf_t	gamma_corr = 0.0;			/* gamma correction if !0 */
  */
 int a_onehit = -1;
 
+/*
+ * Overlay
+ *
+ * If in overlay mode, and writeing to a framebuffer, 
+ * only write non-background pixels.
+ */
+int overlay = 0;
+
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
 #if !defined(__alpha)   /* XXX Alpha does not support this initialization! */
@@ -147,6 +155,8 @@ struct bu_structparse view_parse[] = {
 	{"%d",	1, "ireflect",	bu_byteoffset(max_ireflect),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "a_onehit",	bu_byteoffset(a_onehit),		BU_STRUCTPARSE_FUNC_NULL },
 	{"%f", ELEMENTS_PER_VECT, "background",bu_byteoffset(background[0]),	BU_STRUCTPARSE_FUNC_NULL },
+	{"%d", 1, "overlay",	bu_byteoffset(overlay),		BU_STRUCTPARSE_FUNC_NULL },
+	{"%d", 1, "ov", bu_byteoffset(overlay),	BU_STRUCTPARSE_FUNC_NULL },
 #endif
 	{"",	0, (char *)0,	0,				BU_STRUCTPARSE_FUNC_NULL }
 };
