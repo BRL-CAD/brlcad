@@ -21,6 +21,8 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
+#include "machine.h"
+
 #include <stdio.h>
 #include <ctype.h>
 #include <X11/Xlib.h>
@@ -689,8 +691,8 @@ int	save;
 		for( i = 0; i < count; i++ ) {
 			/* Best possible 8-bit NTSC weights */
 			/* Use three tables if this gets to be a bottleneck */
-			cp[i] = (77*pixelp[i][RED] + 150*pixelp[i][GRN]
-				+ 29*pixelp[i][BLU]) >> 8;
+			cp[i] = (77*(int)pixelp[i][RED] + 150*(int)pixelp[i][GRN]
+				+ 29*(int)pixelp[i][BLU]) >> 8;
 		}
 	}
 
@@ -722,7 +724,7 @@ int	save;
 				/*val = (30*(*pixelp)[RED] + 59*(*pixelp)[GRN] + 11*(*pixelp)[BLU] + 200) / 400;*/
 				/*pixelp++;*/
 				/*if( dither_bw(val, col, row) ) {*/
-				if( *cp++ > (dm[((row&7)<<3)+(col&7)]<<2)+1 ) {
+				if( (int)*cp++ > (dm[((row&7)<<3)+(col&7)]<<2)+1 ) {
 					mvalue |= bits[bit];
 				} else {
 					mvalue &= ~bits[bit];
@@ -1223,7 +1225,7 @@ int method;
 			for( bit=0; (bit < 8) && (col < width); bit++,col++ ) {
 				/*if( dither_bw(val, col, row) ) {*/
 				if( method == 0 ) {
-					if( *mpbuffer > (dm[((row&7)<<3)+(col&7)]<<2)+1 ) {
+					if( (int)*mpbuffer > (dm[((row&7)<<3)+(col&7)]<<2)+1 ) {
 						mvalue |= bits[bit];
 					}
 				} else if( method == 1 ) {
@@ -1235,7 +1237,7 @@ int method;
 						mvalue |= bits[bit];
 					}
 				} else if( method == 3 ) {
-					if( *mpbuffer > (dm4[(row&3)][(col&3)]<<4)+7 ) {
+					if( (int)*mpbuffer > (dm4[(row&3)][(col&3)]<<4)+7 ) {
 						mvalue |= bits[bit];
 					}
 				}
@@ -1303,15 +1305,15 @@ register RGBpixel *v;
 {
 	register int r, g, b;
 
-	r = ( (*v)[RED]+26 ) / 51;
-	g = ( (*v)[GRN]+26 ) / 51;
-	b = ( (*v)[BLU]+26 ) / 51;
+	r = (int)( (*v)[RED]+26 ) / 51;
+	g = (int)( (*v)[GRN]+26 ) / 51;
+	b = (int)( (*v)[BLU]+26 ) / 51;
 
 	/*printf("Pixel r = %d, g = %d, b = %d\n",(*v)[RED],(*v)[GRN],(*v)[BLU]);*/
 	if ( r == g )  {
 		if( r == b )  {
 			/* all grey, take average */
-			return greyvec[( ((*v)[RED]+(*v)[GRN]+(*v)[BLU]) / 3 ) /16];
+			return greyvec[( ((int)(*v)[RED]+(int)(*v)[GRN]+(int)(*v)[BLU]) / 3 ) /16];
 		}
 		else if (r == 0)  {
 			/* r=g=0, all blue */
