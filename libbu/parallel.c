@@ -69,7 +69,7 @@ typedef __uint64_t k_sigset_t;  /* signal set type */
 
 #include <sys/wait.h>
 #if IRIX >= 6
-# include <sched.h>
+# include <sys/sched.h>
 static struct sched_param bu_param;
 #endif
 
