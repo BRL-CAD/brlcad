@@ -22,12 +22,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <signal.h>
 #include <errno.h>
+#include <varargs.h>
+
+#ifdef BSD
+#include <syslog.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>		/* For htonl(), etc */
-#include <syslog.h>
-#include <sys/uio.h>		/* for struct iovec */
-#include <varargs.h>
+#endif
 
 #include "fb.h"
 #include "pkg.h"
@@ -208,11 +210,11 @@ fb_log(s);
 	}
 #endif
 	ret = fbp == FBIO_NULL ? -1 : 0;
-	(void)putlong( ret, &rbuf[0*4] );
-	(void)putlong( fbp->if_max_width, &rbuf[1*4] );
-	(void)putlong( fbp->if_max_height, &rbuf[2*4] );
-	(void)putlong( fbp->if_width, &rbuf[3*4] );
-	(void)putlong( fbp->if_height, &rbuf[4*4] );
+	(void)fbputlong( ret, &rbuf[0*4] );
+	(void)fbputlong( fbp->if_max_width, &rbuf[1*4] );
+	(void)fbputlong( fbp->if_max_height, &rbuf[2*4] );
+	(void)fbputlong( fbp->if_width, &rbuf[3*4] );
+	(void)fbputlong( fbp->if_height, &rbuf[4*4] );
 
 	pkg_send( MSG_RETURN, rbuf, 5*4, pcp );
 	if( buf ) (void)free(buf);
