@@ -529,6 +529,7 @@ static void be_reject()  {
 }
 
 static void bv_slicemode() {
+#ifdef SLICEMODE
 	extern int inten_scale;
 
 	if( sliceflag )  {
@@ -542,6 +543,7 @@ static void bv_slicemode() {
 		inten_scale = 0xFFF0;
 		dmp->dmr_light( LIGHT_ON, BV_SLICEMODE );
 	}
+#endif
 }
 
 static void be_s_edit()  {

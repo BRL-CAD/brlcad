@@ -280,11 +280,15 @@ f_edcolor()
 	}
 
 	while( fgets(line, sizeof (line), fp) != NULL )  {
+		int low, hi, r, g, b;
 		GETSTRUCT( mp, mater );
 		(void)sscanf( line, "%d %d %d %d %d %s",
-			&mp->mt_low, &mp->mt_high,
-			&mp->mt_r, &mp->mt_g, &mp->mt_b,
-			hbuf );
+			&low, &hi, &r, &g, &b, hbuf );
+		mp->mt_low = low;
+		mp->mt_high = hi;
+		mp->mt_r = r;
+		mp->mt_g = g;
+		mp->mt_b = b;
 		mp->mt_handle = strdup( hbuf );
 		mp->mt_daddr = MATER_NO_ADDR;
 		insert_color( mp );

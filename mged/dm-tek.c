@@ -87,6 +87,8 @@ static int second_fd;		/* fd of Tektronix if not /dev/tty */
 static FILE *outfp;		/* Tektronix device to output on */
 static char ttybuf[BUFSIZ];
 
+static void tekmove(), tekcont();
+
 /*
  * Display coordinate conversion:
  *  Tektronix is using 0..4096
@@ -179,7 +181,7 @@ Tek_epilog()
 {
 	if( !dmaflag )
 		return;
-	move( TITLE_XBASE, SOLID_YBASE );
+	tekmove( TITLE_XBASE, SOLID_YBASE );
 	(void)putc(US,outfp);
 }
 
@@ -242,9 +244,9 @@ double ratio;
 				vclip( start, fin, clipmin, clipmax ) == 0
 			)  continue;
 
-			move(	(int)( start[0] * 2047 ),
+			tekmove(	(int)( start[0] * 2047 ),
 				(int)( start[1] * 2047 ) );
-			cont(	(int)( fin[0] * 2047 ),
+			tekcont(	(int)( fin[0] * 2047 ),
 				(int)( fin[1] * 2047 ) );
 			useful = 1;
 		}
@@ -293,7 +295,7 @@ void
 Tek_puts( str, x, y, size, color )
 register u_char *str;
 {
-	move(x,y);
+	tekmove(x,y);
 	label(str);
 }
 
@@ -311,8 +313,8 @@ int dashed;
 		linemod("dotdashed");
 	else
 		linemod("solid");
-	move(x1,y1);
-	cont(x2,y2);
+	tekmove(x1,y1);
+	tekcont(x2,y2);
 }
 
 /*
@@ -499,7 +501,8 @@ int oextra = -1;
 
 /* The input we see is -2048..+2047 */
 /* Continue motion from last position */
-cont(x,y)
+static void
+tekcont(x,y)
 register int x,y;
 {
 	int hix,hiy,lox,loy,extra;
@@ -543,10 +546,11 @@ register int x,y;
 		(void)putc(0,outfp);
 }
 
-move(xi,yi)
+static void
+tekmove(xi,yi)
 {
 	(void)putc(GS,outfp);			/* Next vector blank */
-	cont(xi,yi);
+	tekcont(xi,yi);
 }
 
 erase()
@@ -600,8 +604,8 @@ register char *s;
 }
 
 point(xi,yi){
-	move(xi,yi);
-	cont(xi,yi);
+	tekmove(xi,yi);
+	tekcont(xi,yi);
 }
 
 void

@@ -539,3 +539,11 @@ new_mats()
 	}
 	dmaflag = 1;
 }
+
+#ifndef BSD42
+/* Scum-bag System V */
+select( n, iv, ov, ev, timeout )
+{
+	return(n);
+}
+#endif
