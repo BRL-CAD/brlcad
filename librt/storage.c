@@ -64,6 +64,9 @@ char	*str;
 {
 	register struct memdebug *mp;
 top:
+	if( rt_g.rtg_parallel )  {
+		RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
+	}
 	if( rt_memdebug )  {
 		mp = &rt_memdebug[rt_memdebug_len-1];
 		for( ; mp >= rt_memdebug; mp-- )  {
@@ -72,14 +75,14 @@ top:
 			mp->mdb_addr = ptr;
 			mp->mdb_len = cnt;
 			mp->mdb_str = str;
+			if( rt_g.rtg_parallel ) {
+				RES_RELEASE( &rt_g.res_syscall ); /* unlock */
+			}
 			return;
 		}
 	}
 
 	/* Need to make more slots */
-	if( rt_g.rtg_parallel )  {
-		RES_ACQUIRE( &rt_g.res_syscall );		/* lock */
-	}
 	if( rt_memdebug_len <= 0 )  {
 		rt_memdebug_len = 510;
 		rt_memdebug = (struct memdebug *)calloc(
