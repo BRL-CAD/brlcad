@@ -11571,6 +11571,51 @@ struct bn_tol *tol;
 
 #define EDGE_COLLAPSE_DEBUG 0
 
+int
+select_collapse( max_dist1, max_dot1, flip1, max_dist2, max_dot2, flip2, max_dot, tol_dist )
+CONST fastf_t max_dist1, max_dot1, max_dist2, max_dot2, max_dot, tol_dist;
+CONST int flip1, flip2;
+{
+	unsigned int ret;
+
+	ret = 1 | 2;
+
+	if( flip1 )
+		ret = ret & ~1;
+
+	if( flip2 )
+		ret = ret & ~2;
+
+	if( max_dist1 > tol_dist )
+		ret = ret & ~1;
+
+	if( max_dist2 > tol_dist )
+		ret = ret & ~2;
+
+	if( max_dot1 > max_dot )
+		ret = ret & ~1;
+
+	if( max_dot2 > max_dot )
+		ret = ret & ~2;
+
+	if( ret == (1 | 2) )
+	{
+		if( max_dot1 < max_dot2 )
+			ret = 1;
+		else
+			ret =  2;
+	}
+
+#if EDGE_COLLAPSE_DEBUG
+bu_log( "\nmax_dot=%g, tol_coll=%g\n", max_dot, tol_dist );
+bu_log( "max_dist1, max_dot1, flip1: %g %g %d\n", max_dist1, max_dot1, flip1 );
+bu_log( "max_dist2, max_dot2, flip2: %g %g %d\n", max_dist2, max_dot2, flip2 );
+bu_log( "choice = %d\n", ret );
+#endif
+
+	return( ret );
+}
+
 /*	 	N M G _ E D G E _ C O L L A P S E
  *
  * Routine to decimate an NMG model through edge collapse
@@ -11584,19 +11629,24 @@ struct bn_tol *tol;
  * returns number of edges collapsed
  */
 int
-nmg_edge_collapse( m, tol, tol_coll )
+nmg_edge_collapse( m, tol, tol_coll, min_angle )
 struct model *m;
 CONST struct bn_tol *tol;
 CONST fastf_t tol_coll;
+CONST fastf_t min_angle;
 {
+	fastf_t max_dot;
 	struct bu_ptbl edge_table;
 	long edge_no=0;
 	long count=0;
 	long sub_count=1;
+	int choice;
 	int i;
 
 	NMG_CK_MODEL( m );
 	BN_CK_TOL( tol );
+
+	max_dot = cos( min_angle * bn_pi / 180.0 );
 
 	/* Each triangle must be its own face */
 	(void)nmg_split_loops_into_faces( &m->magic, tol );
@@ -11619,6 +11669,7 @@ CONST fastf_t tol_coll;
 			vect_t edge_dir;
 			fastf_t min_dist1, min_dist2;
 			fastf_t max_dist1, max_dist2;
+			fastf_t max_dot1, max_dot2;
 			fastf_t dot;
 			int flip1, flip2;
 			int no_collapse;
@@ -11627,6 +11678,8 @@ CONST fastf_t tol_coll;
 			min_dist2 = MAX_FASTF;
 			max_dist1 = -1.0;
 			max_dist2 = -1.0;
+			max_dot1 = -1.0;
+			max_dot2 = -1.0;
 
 			e = (struct edge *)BU_PTBL_GET( &edge_table, edge_no );
 			if( !e )
@@ -11748,11 +11801,12 @@ CONST fastf_t tol_coll;
 			for( BU_LIST_FOR( vu, vertexuse, &v1->vu_hd ) )
 			{
 				struct edgeuse *eu1, *eu2;
-				vect_t vec1, vec2;
+				vect_t vec1, vec2, vec3;
 				vect_t norma;
 				struct vertex_g *vg1, *vg2;
 				plane_t normb;
 				fastf_t dist;
+				fastf_t dot1;
 
 				if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
 					continue;
@@ -11780,6 +11834,20 @@ CONST fastf_t tol_coll;
 #endif
 				VSUB2( vec1, v2->vg_p->coord, vg1->coord )
 				VCROSS( normb, vec1, vec2 )
+				VSUB2( vec3, v2->vg_p->coord, vg2->coord )
+				VUNITIZE( vec1 );
+				VUNITIZE( vec2 );
+				VUNITIZE( vec3 );
+
+				dot1 = VDOT( vec1, vec2 );
+				if( dot1 > max_dot1 )
+					max_dot1 = dot1;
+				dot1 = VDOT( vec1, vec3 );
+				if( dot1 > max_dot1 )
+					max_dot1 = dot1;
+				dot1 = -VDOT( vec2, vec3 );
+				if( dot1 > max_dot1 )
+					max_dot1 = dot1;
 #if EDGE_COLLAPSE_DEBUG
 				bu_log( "\t\tnew tri (%g %g %g) (%g %g %g) (%g %g %g)\n",
 					V3ARGS( v2->vg_p->coord ),
@@ -11824,11 +11892,11 @@ CONST fastf_t tol_coll;
 			for( BU_LIST_FOR( vu, vertexuse, &v2->vu_hd ) )
 			{
 				struct edgeuse *eu1, *eu2;
-				vect_t vec1, vec2;
+				vect_t vec1, vec2, vec3;
 				vect_t norma;
 				plane_t normb;
 				struct vertex_g *vg1, *vg2;
-				fastf_t dist;
+				fastf_t dist, dot1;
 
 				if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
 					continue;
@@ -11857,6 +11925,21 @@ CONST fastf_t tol_coll;
 
 				VSUB2( vec1, v1->vg_p->coord, vg1->coord )
 				VCROSS( normb, vec1, vec2 )
+				VSUB2( vec3, v1->vg_p->coord, vg2->coord );
+				VSUB2( vec3, v2->vg_p->coord, vg2->coord )
+				VUNITIZE( vec1 );
+				VUNITIZE( vec2 );
+				VUNITIZE( vec3 );
+
+				dot1 = VDOT( vec1, vec2 );
+				if( dot1 > max_dot2 )
+					max_dot2 = dot1;
+				dot1 = VDOT( vec1, vec3 );
+				if( dot1 > max_dot2 )
+					max_dot2 = dot1;
+				dot1 = -VDOT( vec2, vec3 );
+				if( dot1 > max_dot2 )
+					max_dot2 = dot1;
 #if EDGE_COLLAPSE_DEBUG
 				bu_log( "\t\tnew tri (%g %g %g) (%g %g %g) (%g %g %g)\n",
 					V3ARGS( v1->vg_p->coord ),
@@ -11956,6 +12039,13 @@ CONST fastf_t tol_coll;
 #endif
 				continue;
 			}
+
+			choice = select_collapse( max_dist1, max_dot1, flip1,
+						  max_dist2, max_dot2, flip2,
+						  max_dot, tol_coll );
+
+			if( !choice )
+				continue;
 #if EDGE_COLLAPSE_DEBUG
 			bu_log( "\tCollapsing edge\n" );
 #endif
@@ -11994,7 +12084,7 @@ CONST fastf_t tol_coll;
 				eu2 = next;
 			}
 
-			if( ((max_dist1 <= max_dist2) && !flip1) || flip2 )
+			if( choice == 1 )
 			{
 				struct edgeuse *eu1,*eu2;
 				struct vertexuse *vu2;
@@ -12075,7 +12165,7 @@ CONST fastf_t tol_coll;
 					}
 				}
 			}
-			else
+			else if( choice == 2 )
 			{
 				struct edgeuse *eu1,*eu2;
 				struct vertexuse *vu2;
@@ -12154,6 +12244,8 @@ CONST fastf_t tol_coll;
 					}
 				}
 			}
+			else
+				continue;
 		}
 		count += sub_count;
 	}
