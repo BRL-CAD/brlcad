@@ -3,7 +3,7 @@
 			U. S. Army Ballistic Research Laboratory
 			Aberdeen Proving Ground
 			Maryland 21005-5066
-			(301)278-6647 or AV-298-6647
+			(301)278-6651 or DSN 298-6651
 */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
@@ -22,7 +22,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define SCROLL_PR_MOVE()	MvCursor( 1, PROMPT_LINE - 1 )
 #define SCROLL_DL_MOVE()	MvCursor( 1, BOTTOM_STATUS_AREA + 1 )
 
-static char	*usage[] =
+static char *usage[] =
 	{
 	"",
 	"fbed (2.1)",
@@ -34,22 +34,22 @@ static char	*usage[] =
 	0
 	};
 
-void	init_Status();
-void	prnt_Status(), prnt_Usage();
+void init_Status();
+void prnt_Status(), prnt_Usage();
 #if __STDC__
-void	prnt_Event(char *fmt, ...);
+void prnt_Event(char *fmt, ...);
 #else
-void	prnt_Event();
+void prnt_Event();
 #endif
-void	prnt_Prompt();
-void	prnt_Macro();
-void	prnt_Rectangle();
-/**void	prnt_FBC();**/
+void prnt_Prompt();
+void prnt_Macro();
+void prnt_Rectangle();
+/**void prnt_FBC();**/
 
-/*	p r n t _ S t a t u s ( )					*/
+/*	p r n t _ S t a t u s ( ) */
 void
 prnt_Status()
-	{	RGBpixel		pixel;
+	{	RGBpixel pixel;
 	if( ! tty )
 		return;
 	fb_Get_Pixel( pixel );
@@ -70,7 +70,7 @@ prnt_Status()
 	return;
 	}
 	
-static char	*screen_template[] = {
+static char *screen_template[] = {
 /*        1         2         3         4         5         6         7         8
 012345678901234567890123456789012345678901234567890123456789012345678901234567890
  */
@@ -79,13 +79,13 @@ static char	*screen_template[] = {
 0
 };		
 
-/*	i n i t _ S t a t u s ( )					*/
+/*	i n i t _ S t a t u s ( ) */
 void
 init_Status()
-	{	register char	**p = screen_template;
-		register int	template_co;
-		char		buf[MAX_LN];
-		extern int	CO;
+	{	register char **p = screen_template;
+		register int template_co;
+		char buf[MAX_LN];
+		extern int CO;
 	template_co = Min( CO, MAX_LN );
 	if( ! tty )
 		return;
@@ -97,7 +97,7 @@ init_Status()
 		buf[template_co-1] = '\0';
 		(void) printf( "%s\n\r", buf );
 		}
-	/* Last line is reverse-video if possible.			*/
+	/* Last line is reverse-video if possible. */
 	(void) SetStandout();
 	(void) strncpy( buf, *p++, template_co );
 	buf[template_co-1] = '\0';
@@ -112,18 +112,18 @@ init_Status()
  */
 void
 prnt_Usage()
-	{	register char	**p = usage;
+	{	register char **p = usage;
 	while( *p )
 		(void) fprintf( stderr, "%s\n", *p++ );
 	return;
 	}
 
 
-/*	p r n t _ P i x e l ( )						*/
+/*	p r n t _ P i x e l ( ) */
 void
 prnt_Pixel( msg, pixelp )
-char	*msg;
-RGBpixel	*pixelp;
+char *msg;
+RGBpixel *pixelp;
 	{
 	prnt_Scroll(	"%s {%03d,%03d,%03d}",
 			msg,
@@ -157,7 +157,7 @@ RGBpixel	*pixelp;
 /* VARARGS */
 void
 Va_Decl( fb_log )
-	{	extern char	*DL, *CS;
+	{	extern char *DL, *CS;
 	Va_Start();
 	if( tty )
 		{
@@ -195,7 +195,7 @@ Va_Decl( fb_log )
 /* VARARGS */
 void
 Va_Decl( prnt_Scroll )
-	{	extern char	*DL, *CS;
+	{	extern char *DL, *CS;
 	Va_Start();
 	if( tty )
 		{
@@ -229,7 +229,7 @@ Va_Decl( prnt_Scroll )
 	return;
 	}
 
-/*	p r n t _ D e b u g ( )						*/
+/*	p r n t _ D e b u g ( ) */
 /* VARARGS */
 void
 Va_Decl( prnt_Debug )
@@ -314,7 +314,7 @@ prnt_FBC()
 
 void
 prnt_Prompt( msg )
-char	*msg;
+char *msg;
 	{
 	PROMPT_MOVE();
 	(void) ClrEOL();
@@ -325,9 +325,9 @@ char	*msg;
 
 void
 prnt_Macro( bufp )
-register char	*bufp;
-	{	char	prnt_buf[BUFSIZ];
-		register char	*p;
+register char *bufp;
+	{	char prnt_buf[BUFSIZ];
+		register char *p;
 	for( p = prnt_buf; *bufp != '\0'; bufp++ )
 		{
 		switch( *bufp )
@@ -357,7 +357,7 @@ register char	*bufp;
 void
 prnt_Rectangle( str, rectp )
 char *str;
-register Rectangle	*rectp;
+register Rectangle *rectp;
 	{
 	prnt_Scroll(	"%s {<%d,%d>,<%d,%d>}\n",
 			str,

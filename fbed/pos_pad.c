@@ -9,11 +9,11 @@
 			U. S. Army Ballistic Research Laboratory
 			Aberdeen Proving Ground
 			Maryland 21005-5066
-			(301)278-6647 or AV-298-6647
+			(301)278-6651 or DSN 298-6651
 */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) pos_pad.c 2.1, modified 12/9/86 at 15:54:52, archive /vld/moss/src/fbed/s.pos_pad.c";
+char sccsTag[] = "@(#) pos_pad.c 2.1, modified 12/9/86 at 15:54:52, archive /vld/moss/src/fbed/s.pos_pad.c";
 #endif
 
 #include <stdio.h>
@@ -28,23 +28,23 @@ char	sccsTag[] = "@(#) pos_pad.c 2.1, modified 12/9/86 at 15:54:52, archive /vld
 
 #define	PADSIZE		2200
 
-static	int	pfd;
-static	char	*padfile = "/dev/pad";
-static	int	npoints;
+static	int pfd;
+static	char *padfile = "/dev/pad";
+static	int npoints;
 
 pad_open(n)
-int	n;
+int n;
 	{
 	if( (pfd = open(padfile, 2)) < 0 )
 		{
 		perror( padfile );
-		return	-1;
+		return -1;
 		}
 	save_Tty( pfd );
 	set_HUPCL( pfd );
 	set_Raw( pfd );
 	npoints = n;
-	return	pfd;
+	return pfd;
 	}
 
 void
@@ -56,21 +56,21 @@ pad_close()
 	}
 
 getpos( pos )
-Point	*pos;
-	{	static char	str[1024];
-		int		buttons;
-		static int	nread = 0;
-		register int	just_read;
-		register char	*cp;
-		register char	*cend;
-		char	*last;
+Point *pos;
+	{	static char str[1024];
+		int buttons;
+		static int nread = 0;
+		register int just_read;
+		register char *cp;
+		register char *cend;
+		char *last;
 	while( nread < 9 )
 		{
 		if(	empty( pfd )
 		     ||	(just_read = read (pfd, str+nread, (sizeof str) - nread))
 		     ==	0
 			)
-			return	-1;
+			return -1;
 		nread += just_read;
 		}
 	cend = str + nread - 4;
@@ -88,5 +88,5 @@ Point	*pos;
 			) * (long)npoints) / PADSIZE);
 	pos->p_y = npoints - (int)(((long)((last[2]&P_DATA) | ((last[3]&P_DATA)<<6)
 			) * (long)npoints) / PADSIZE);
-	return	buttons;
+	return buttons;
 	}

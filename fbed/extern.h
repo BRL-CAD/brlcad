@@ -1,14 +1,9 @@
 /*
-	SCCS id:	@(#) extern.h	2.2
-	Modified: 	1/5/87 at 16:57:32
-	Retrieved: 	1/5/87 at 16:58:18
-	SCCS archive:	/vld/moss/src/fbed/s.extern.h
-
 	Author:		Gary S. Moss
 			U. S. Army Ballistic Research Laboratory
 			Aberdeen Proving Ground
 			Maryland 21005-5066
-			(301)278-6647 or AV-298-6647
+			(301)278-6651 or DSN 298-6651
 */
 #if ! defined( INCL_FB )
 #include "fb.h"
@@ -34,73 +29,78 @@
 #define STD_SIGNAL_DECLS 0
 #endif
 
+/* For production use, set to "static" */
+#ifndef STATIC
+#define STATIC static
+#endif
+
 typedef struct
 	{
-	int	p_x;
-	int	p_y;
+	int p_x;
+	int p_y;
 	}
 Point;
 
 typedef struct
 	{
-	Point	r_origin;
-	Point	r_corner;
+	Point r_origin;
+	Point r_corner;
 	}
 Rectangle;
 
 typedef struct
 	{
-	RGBpixel  *n_buf;
-	int	n_wid;
-	int	n_hgt;
+	RGBpixel *n_buf;
+	int n_wid;
+	int n_hgt;
 	}
 Panel;
 
-extern FBIO	*fbp;
-extern RGBpixel	*menu_addr;
-extern RGBpixel	paint;
-extern Point	cursor_pos;
-extern Point	image_center;
-extern Point	windo_center;
-extern Point	windo_anchor;
-extern Try	*try_rootp;
-extern char	cread_buf[BUFSIZ*10], *cptr;
-extern char	macro_buf[];
-extern char	*macro_ptr;
-extern int	brush_sz;
-extern int	gain;
-extern int	pad_flag;
-extern int	remembering;
-extern int	report_status;
-extern int	reposition_cursor;
-extern int	tty;
-extern int	tty_fd;
-extern int	zoom_factor;
-extern int	LI, CO;
+extern FBIO *fbp;
+extern RGBpixel *menu_addr;
+extern RGBpixel paint;
+extern Point cursor_pos;
+extern Point image_center;
+extern Point windo_center;
+extern Point windo_anchor;
+extern Try *try_rootp;
+extern char cread_buf[BUFSIZ*10], *cptr;
+extern char macro_buf[];
+extern char *macro_ptr;
+extern int brush_sz;
+extern int gain;
+extern int pad_flag;
+extern int remembering;
+extern int report_status;
+extern int reposition_cursor;
+extern int tty;
+extern int tty_fd;
+extern int zoom_factor;
+extern int LI, CO;
 
 extern Func_Tab	*get_Func_Name();
-extern RGBpixel	*get_Fb_Panel();
-extern char	*char_To_String();
-extern char	*getenv();
-extern char	*malloc();
-extern int	add_Try();
-extern int	bitx();
-extern int	fb_Init_Menu();
-extern int	getpos();
-extern int	get_Input();
-extern void	fb_Get_Pixel();
-extern void	pos_close();
-extern void	init_Status();
-extern void	init_Tty(), restore_Tty();
-extern void	prnt_Status();
-extern void	prnt_Usage();
+extern RGBpixel *get_Fb_Panel();
+extern char *char_To_String();
+extern char *getenv();
+extern char *malloc();
+extern int add_Try();
+extern int bitx();
+extern int fb_Init_Menu();
+extern int getpos();
+extern int get_Input();
+extern void fb_Get_Pixel();
+extern void pos_close();
+extern void init_Status();
+extern void init_Tty(), restore_Tty();
+extern void prnt_Status();
+extern void prnt_Usage();
 #if __STDC__
-extern void	prnt_Scroll( char * fmt, ... );
+extern void prnt_Scroll( char * fmt, ... );
 #else
-extern void	prnt_Scroll();
+extern void prnt_Scroll();
 #endif
-extern void	prnt_Rectangle();
-extern void	do_Key_Cmd();
+extern void prnt_Rectangle();
+extern void do_Key_Cmd();
 
 #define MAX_LN			81
 #define Toggle(f)		(f) = ! (f)
@@ -113,9 +113,4 @@ extern void	do_Key_Cmd();
 		fb_log(	"\"%s\"(%d) Malloc() no more space.\n", \
 				__FILE__, __LINE__ \
 				); \
-		return	0;
-
-#ifndef _LOCAL_
-/* For production use, set to "static" */
-#define _LOCAL_ /**/
-#endif
+		return 0;

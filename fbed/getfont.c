@@ -10,11 +10,11 @@
 			U. S. Army Ballistic Research Laboratory
 			Aberdeen Proving Ground
 			Maryland 21005-5066
-			(301)278-6647 or AV-298-6647
+			(301)278-6651 or DSN 298-6651
 */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) getfont.c 2.1, modified 12/9/86 at 15:54:45, archive /vld/moss/src/fbed/s.getfont.c";
+char sccsTag[] = "@(#) getfont.c 2.1, modified 12/9/86 at 15:54:45, archive /vld/moss/src/fbed/s.getfont.c";
 #endif
 /* 
 	getfont.c - Load a new font by reading in the header and directory.
@@ -23,11 +23,11 @@ char	sccsTag[] = "@(#) getfont.c 2.1, modified 12/9/86 at 15:54:45, archive /vld
 #include "./font.h"
 
 /* Variables controlling the font itself */
-FILE		*ffdes;		/* File pointer for current font.	*/
-int		offset;		/* Current offset to character data.	*/
-struct header	hdr;		/* Header for font file.		*/
-struct dispatch	dir[256];	/* Directory for character font.	*/
-int		width = 0,	/* Size of current character.		*/
+FILE		*ffdes;		/* File pointer for current font. */
+int offset;		/* Current offset to character data. */
+struct header	hdr;		/* Header for font file. */
+struct dispatch	dir[256];	/* Directory for character font. */
+int width = 0,	/* Size of current character. */
 		height = 0;
 
 
@@ -35,7 +35,7 @@ get_Font( fontname )
 char *fontname;
 	{	FILE		*newff;
 		struct header	lochdr;
-		static char	fname[FONTNAMESZ];
+		static char fname[FONTNAMESZ];
 	if( fontname == NULL )
 		fontname = FONTNAME;
 	if( fontname[0] != '/' )		/* absolute path */
@@ -48,7 +48,7 @@ char *fontname;
 		{
 		fb_log( "Error opening font file '%s'\n", fname );
 		ffdes = NULL;
-		return	0;
+		return 0;
     		}
 	if( ffdes != NULL )
 		(void) fclose(ffdes);
@@ -57,7 +57,7 @@ char *fontname;
 		{
 		fb_log( "get_Font() read failed!\n" );
 		ffdes = NULL;
-		return	0;
+		return 0;
 		}
 	SWAB( lochdr.magic );
 	SWAB( lochdr.size );
@@ -71,7 +71,7 @@ char *fontname;
 			fname, (int) lochdr.magic
 			);
 		ffdes = NULL;
-		return	0;
+		return 0;
 		}
 	hdr = lochdr;
 
@@ -80,12 +80,12 @@ char *fontname;
 		{
 		fb_log( "get_Font() read failed!\n" );
 		ffdes = NULL;
-		return	0;
+		return 0;
 		}
 	/* Addresses of characters in the file are relative to
 		point in the file after the directory, so grab the
 		current position.
 	 */
  	offset = ftell( ffdes );
-	return	1;
+	return 1;
 	}

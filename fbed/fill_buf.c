@@ -8,14 +8,14 @@
 			U. S. Army Ballistic Research Laboratory
 			Aberdeen Proving Ground
 			Maryland 21005-5066
-			(301)278-6640 or AV-298-6640
+			(301)278-6640 or DSN 298-6640
 */
 /* 
  * fill_buf.c - Two routines for filling the buffers used in the filtering.
  */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) fill_buf.c 2.1, modified 12/9/86 at 15:55:48, archive /vld/moss/src/fbed/s.fill_buf.c";
+char sccsTag[] = "@(#) fill_buf.c 2.1, modified 12/9/86 at 15:55:48, archive /vld/moss/src/fbed/s.fill_buf.c";
 #endif
 
 #include <stdio.h>
@@ -28,8 +28,8 @@ char	sccsTag[] = "@(#) fill_buf.c 2.1, modified 12/9/86 at 15:55:48, archive /vl
  */
 void
 fill_buf( wid, buf )
-register int	wid;
-register int	*buf;
+register int wid;
+register int *buf;
 	{
 	char    bitrow[FONTBUFSZ];
 	register int     j;
@@ -70,12 +70,12 @@ register int	*buf;
  */
 void
 clear_buf( wid, buf )
-int		wid;
-register int	*buf;
+int wid;
+register int *buf;
 	{
 	register int     i, w = wid + 4;
 
-	/* Clear each value in the row.					*/
+	/* Clear each value in the row. */
 	for( i = 0; i < w; i++ )
 		buf[i] = 0;
 	return;

@@ -3,7 +3,7 @@
 			U. S. Army Ballistic Research Laboratory
 			Aberdeen Proving Ground
 			Maryland 21005-5066
-			(301)278-6651 or AV-298-6651
+			(301)278-6651 or DSN 298-6651
 */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
@@ -32,9 +32,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  */
 void
 squash( buf0, buf1, buf2, ret_buf, n )
-register int	*buf0, *buf1, *buf2;	
+register int *buf0, *buf1, *buf2;	
 register float	*ret_buf;
-register int	n;
+register int n;
 	{	register int     j;
 #if DEBUG_SQUASH
 	fb_log( "squash: buf0=0x%x buf1=0x%x buf2=0x%x ret_buf=0x%x n=%d\n",

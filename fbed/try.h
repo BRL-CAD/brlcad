@@ -8,14 +8,14 @@
 			U. S. Army Ballistic Research Laboratory
 			Aberdeen Proving Ground
 			Maryland 21005-5066
-			(301)278-6647 or AV-298-6647
+			(301)278-6651 or DSN 298-6651
 */
 #define INCL_TRY
 typedef struct
 	{
-	int	(*f_func)();		/* Function pointer.		*/
-	char	*f_buff;		/* Macro key-stroke buffer.	*/
-	char	*f_name;		/* Function/macro name.		*/
+	int (*f_func)();		/* Function pointer. */
+	char *f_buff;		/* Macro key-stroke buffer. */
+	char *f_name;		/* Function/macro name. */
 	}
 Func_Tab;
 #define FT_NULL	(Func_Tab *) NULL
@@ -24,16 +24,16 @@ typedef union try
 	{
 	struct
 		{
-		int		t_curr;  /* Current letter.		*/
-		union try	*t_altr; /* Alternate letter node link.	*/
-		union try	*t_next; /* Next letter node link.	*/
+		int t_curr;  /* Current letter. */
+		union try	*t_altr; /* Alternate letter node link. */
+		union try	*t_next; /* Next letter node link. */
 		}
 	n;
 	struct
 		{
-		Func_Tab	*t_ftbl; /* Function table pointer.	*/
-		union try	*t_altr; /* Alternate letter node link.	*/
-		union try	*t_next; /* Next letter node link.	*/
+		Func_Tab	*t_ftbl; /* Function table pointer. */
+		union try	*t_altr; /* Alternate letter node link. */
+		union try	*t_next; /* Next letter node link. */
 		}
 	l;
 	}

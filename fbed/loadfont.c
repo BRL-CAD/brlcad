@@ -6,7 +6,7 @@
 */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) loadfont.c 1.14, modified 5/6/86 at 15:33:42, archive /vld/moss/src/fbed/s.loadfont.c";
+char sccsTag[] = "@(#) loadfont.c 1.14, modified 5/6/86 at 15:33:42, archive /vld/moss/src/fbed/s.loadfont.c";
 #endif
 /* 
  * loadfont.c - Load a new font by reading in the header and directory.
@@ -32,7 +32,7 @@ char *ff;
 		MvCursor( 1, 4 );
 		prnt_Debug( "Error opening font file '%s'", ff );
 		ffdes = NULL;
-		return	0;
+		return 0;
     		}
 	if( ffdes != NULL )
 		(void) fclose(ffdes);
@@ -41,14 +41,14 @@ char *ff;
 		{
 		(void) fprintf( stderr, "loadfont() read failed!\n" );
 		ffdes = NULL;
-		return	0;
+		return 0;
 		}
 
 	if( lochdr.magic != 0436 )
     		{
 		prnt_Debug( "Not a font file: %s", ff );
 		ffdes = NULL;
-		return	0;
+		return 0;
 		}
 	hdr = lochdr;
 
@@ -57,12 +57,12 @@ char *ff;
 		{
 		(void) fprintf( stderr, "loadfont() read failed!\n" );
 		ffdes = NULL;
-		return	0;
+		return 0;
 		}
 	/* Addresses of characters in the file are relative to
 		point in the file after the directory, so grab the
 		current position.
 	 */
  	offset = ftell( ffdes );
-	return	1;
+	return 1;
 	}

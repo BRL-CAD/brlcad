@@ -1,24 +1,19 @@
 /*
-	SCCS id:	@(#) getinput.c	2.1
-	Modified: 	12/9/86 at 15:56:41
-	Retrieved: 	12/26/86 at 21:54:22
-	SCCS archive:	/vld/moss/src/fbed/s.getinput.c
-
 	Author:		Gary S. Moss
 			U. S. Army Ballistic Research Laboratory
 			Aberdeen Proving Ground
 			Maryland 21005-5066
-			(301)278-6647 or AV-298-6647
+			(301)278-6651 or DSN 298-6651
 */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) getinput.c 2.1, modified 12/9/86 at 15:56:41, archive /vld/moss/src/fbed/s.getinput.c";
+char sccsTag[] = "@(#) getinput.c 2.1, modified 12/9/86 at 15:56:41, archive /vld/moss/src/fbed/s.getinput.c";
 #endif
 
 #include <stdio.h>
 #include "./extern.h"
 
-extern char	*char_To_String();
+extern char *char_To_String();
 
 void
 ring_Bell()
@@ -31,12 +26,12 @@ ring_Bell()
 	Get a line of input.
  */
 get_Input( inbuf, bufsz, msg )
-char	 *inbuf;
-int	 bufsz;
-char	*msg;
-	{	static char	buffer[BUFSIZ];
-		register char	*p = buffer;
-		register int	c;
+char  *inbuf;
+int  bufsz;
+char *msg;
+	{	static char buffer[BUFSIZ];
+		register char *p = buffer;
+		register int c;
 	if( *cptr != NUL && *cptr != '@' )
 		{
 		for( ; *cptr != NUL && *cptr != CR && *cptr != LF; cptr++ )
@@ -47,7 +42,7 @@ char	*msg;
 				fb_log( "get_Input() over-ran internal buffer.\n" );
 				prnt_Prompt( "" );
 				buffer[BUFSIZ-1] = NUL;
-				return	0;
+				return 0;
 				}
 			if( *cptr != Ctrl('V') )
 				*p++ = *cptr;
@@ -58,10 +53,10 @@ char	*msg;
 			cptr++;
 		*p = NUL;
 		(void) strncpy( inbuf, buffer, bufsz );
-		return	1;
+		return 1;
 		}
 	else
-	/* Skip over '@' and LF, which means "prompt user".		*/
+	/* Skip over '@' and LF, which means "prompt user". */
 	if( *cptr == '@' )
 		cptr += 2;
 	prnt_Prompt( msg );
@@ -77,7 +72,7 @@ char	*msg;
 			}
 		switch( c )
 			{
-		case Ctrl('A') : /* Cursor to beginning of line.	*/
+		case Ctrl('A') : /* Cursor to beginning of line. */
 			if( p == buffer )
 				{
 				ring_Bell();
@@ -87,7 +82,7 @@ char	*msg;
 				(void) putchar( BS );
 			break;
 		case Ctrl('B') :
-		case BS : /* Move cursor back one character.		*/
+		case BS : /* Move cursor back one character. */
 			if( p == buffer )
 				{
 				ring_Bell();
@@ -96,8 +91,8 @@ char	*msg;
 			(void) putchar( BS );
 			--p;
 			break;
-		case Ctrl('D') : /* Delete character under cursor.	*/
-			{	register char	*q = p;
+		case Ctrl('D') : /* Delete character under cursor. */
+			{	register char *q = p;
 			if( *p == NUL )
 				{
 				ring_Bell();
@@ -112,7 +107,7 @@ char	*msg;
 				(void) putchar( BS );
 			break;
 			}
-		case Ctrl('E') : /* Cursor to end of line.		*/
+		case Ctrl('E') : /* Cursor to end of line. */
 			if( *p == NUL )
 				{
 				ring_Bell();
@@ -121,7 +116,7 @@ char	*msg;
 			(void) printf( "%s", p );
 			p += strlen( p );
 			break;
-		case Ctrl('F') : /* Cursor forward one character.	*/
+		case Ctrl('F') : /* Cursor forward one character. */
 			if( *p == NUL || p-buffer >= bufsz-2 )
 				{
 				ring_Bell();
@@ -129,12 +124,12 @@ char	*msg;
 				}
 			putchar( *p++ );
 			break;
-		case Ctrl('G') : /* Abort input.			*/
+		case Ctrl('G') : /* Abort input. */
 			ring_Bell();
 			fb_log( "Aborted.\n" );
 			prnt_Prompt( "" );
-			return	0;
-		case Ctrl('K') : /* Erase from cursor to end of line.	*/
+			return 0;
+		case Ctrl('K') : /* Erase from cursor to end of line. */
 			if( *p == NUL )
 				{
 				ring_Bell();
@@ -143,8 +138,8 @@ char	*msg;
 			ClrEOL();
 			*p = NUL;
 			break;
-		case Ctrl('P') : /* Yank previous contents of "inbuf".	*/
-			{	register int	len = strlen( inbuf );
+		case Ctrl('P') : /* Yank previous contents of "inbuf". */
+			{	register int len = strlen( inbuf );
 			if( (p + len) - buffer >= BUFSIZ )
 				{
 				ring_Bell();
@@ -155,14 +150,14 @@ char	*msg;
 			p += len;
 			break;
 			}
-		case Ctrl('U') : /* Erase from start of line to cursor.	*/
+		case Ctrl('U') : /* Erase from start of line to cursor. */
 			if( p == buffer )
 				{
 				ring_Bell();
 				break;
 				}
 			for( ; p > buffer; --p )
-				{	register char	*q = p;
+				{	register char *q = p;
 				(void) putchar( BS );
 				for( ; *(q-1) != NUL; ++q )
 					{
@@ -173,8 +168,8 @@ char	*msg;
 					(void) putchar( BS );
 				}
 			break;
-		case Ctrl('R') : /* Print line, cursor doesn't move.	*/
-			{	register int	i;
+		case Ctrl('R') : /* Print line, cursor doesn't move. */
+			{	register int i;
 			if( buffer[0] == NUL )
 				break;
 			for( i = p - buffer; i > 0; i-- )
@@ -184,8 +179,8 @@ char	*msg;
 				(void) putchar( BS );
 			break;
 			}
-		case DEL : /* Delete character behind cursor.		*/
-			{	register char	*q = p;
+		case DEL : /* Delete character behind cursor. */
+			{	register char *q = p;
 			if( p == buffer )
 				{
 				ring_Bell();
@@ -207,25 +202,25 @@ char	*msg;
 		case EOF :
 			(void) strncpy( inbuf, buffer, bufsz );
 			prnt_Prompt( "" );
-			return	1;
+			return 1;
 		case Ctrl('V') :
-			/* Escape character, do not process next char.	*/
+			/* Escape character, do not process next char. */
 			c = get_Char();
 			if( remembering )
 				{
 				*macro_ptr++ = c;
 				*macro_ptr = NUL;
 				}
-			/* Fall through to default case!		*/
-		default : /* Insert character at cursor.		*/
-			{	register char	*q = p;
-				register int	len = strlen( p );
-			/* Print control characters as strings.		*/
+			/* Fall through to default case! */
+		default : /* Insert character at cursor. */
+			{	register char *q = p;
+				register int len = strlen( p );
+			/* Print control characters as strings. */
 			if( c >= NUL && c < SP )
 				(void) printf( "%s", char_To_String( c ) );
 			else
 				(void) putchar( c );
-			/* Scroll characters forward.			*/
+			/* Scroll characters forward. */
 			for( ; len >= 0; len--, q++ )
 				(void) putchar( *q == NUL ? SP : *q );
 			for( ; q > p; q-- )
@@ -243,7 +238,7 @@ char	*msg;
 	ring_Bell();
 	fb_log( "Buffer full.\n" );
 	prnt_Prompt( "" );
-	return	0;
+	return 0;
 	}
 
 /*	g e t _ F u n c _ N a m e ( )
@@ -251,14 +246,14 @@ char	*msg;
  */
 Func_Tab *
 get_Func_Name( inbuf, bufsz, msg )
-char	 *inbuf;
-int	 bufsz;
-char	*msg;
+char  *inbuf;
+int  bufsz;
+char *msg;
 	{	extern Try	*try_rootp;
 		extern Func_Tab	*get_Try();
-		static char	buffer[BUFSIZ];
-		register char	*p = buffer;
-		register int	c;
+		static char buffer[BUFSIZ];
+		register char *p = buffer;
+		register int c;
 		Func_Tab	*ftbl = FT_NULL;
 	if( *cptr != NUL && *cptr != '@' )
 		{
@@ -270,7 +265,7 @@ char	*msg;
 				fb_log( "get_Func_Name() over-ran internal buffer.\n" );
 				prnt_Prompt( "" );
 				buffer[BUFSIZ-1] = NUL;
-				return	0;
+				return 0;
 				}
 			if( *cptr != Ctrl('V') )
 				*p++ = *cptr;
@@ -284,10 +279,10 @@ char	*msg;
 			(void) putchar( BEL );
 		else
 			(void) strncpy( inbuf, buffer, bufsz );
-		return	ftbl;
+		return ftbl;
 		}
 	else
-	/* Skip over '@' and LF, which means "prompt user".		*/
+	/* Skip over '@' and LF, which means "prompt user". */
 	if( *cptr == '@' )
 		cptr += 2;
 	prnt_Prompt( msg );
@@ -315,7 +310,7 @@ char	*msg;
 			p += strlen( buffer );
 			break;
 			}
-		case Ctrl('A') : /* Cursor to beginning of line.	*/
+		case Ctrl('A') : /* Cursor to beginning of line. */
 			if( p == buffer )
 				{
 				ring_Bell();
@@ -325,7 +320,7 @@ char	*msg;
 				(void) putchar( BS );
 			break;
 		case Ctrl('B') :
-		case BS : /* Move cursor back one character.		*/
+		case BS : /* Move cursor back one character. */
 			if( p == buffer )
 				{
 				ring_Bell();
@@ -334,8 +329,8 @@ char	*msg;
 			(void) putchar( BS );
 			--p;
 			break;
-		case Ctrl('D') : /* Delete character under cursor.	*/
-			{	register char	*q = p;
+		case Ctrl('D') : /* Delete character under cursor. */
+			{	register char *q = p;
 			if( *p == NUL )
 				{
 				ring_Bell();
@@ -350,7 +345,7 @@ char	*msg;
 				(void) putchar( BS );
 			break;
 			}
-		case Ctrl('E') : /* Cursor to end of line.		*/
+		case Ctrl('E') : /* Cursor to end of line. */
 			if( *p == NUL )
 				{
 				ring_Bell();
@@ -359,7 +354,7 @@ char	*msg;
 			(void) printf( "%s", p );
 			p += strlen( p );
 			break;
-		case Ctrl('F') : /* Cursor forward one character.	*/
+		case Ctrl('F') : /* Cursor forward one character. */
 			if( *p == NUL || p-buffer >= bufsz-2 )
 				{
 				ring_Bell();
@@ -367,12 +362,12 @@ char	*msg;
 				}
 			putchar( *p++ );
 			break;
-		case Ctrl('G') : /* Abort input.			*/
+		case Ctrl('G') : /* Abort input. */
 			ring_Bell();
 			fb_log( "Aborted.\n" );
 			prnt_Prompt( "" );
-			return	ftbl;
-		case Ctrl('K') : /* Erase from cursor to end of line.	*/
+			return ftbl;
+		case Ctrl('K') : /* Erase from cursor to end of line. */
 			if( *p == NUL )
 				{
 				ring_Bell();
@@ -381,8 +376,8 @@ char	*msg;
 			ClrEOL();
 			*p = NUL;
 			break;
-		case Ctrl('P') : /* Yank previous contents of "inbuf".	*/
-			{	register int	len = strlen( inbuf );
+		case Ctrl('P') : /* Yank previous contents of "inbuf". */
+			{	register int len = strlen( inbuf );
 			if( (p + len) - buffer >= BUFSIZ )
 				{
 				ring_Bell();
@@ -393,14 +388,14 @@ char	*msg;
 			p += len;
 			break;
 			}
-		case Ctrl('U') : /* Erase from start of line to cursor.	*/
+		case Ctrl('U') : /* Erase from start of line to cursor. */
 			if( p == buffer )
 				{
 				ring_Bell();
 				break;
 				}
 			for( ; p > buffer; --p )
-				{	register char	*q = p;
+				{	register char *q = p;
 				(void) putchar( BS );
 				for( ; *(q-1) != NUL; ++q )
 					{
@@ -411,8 +406,8 @@ char	*msg;
 					(void) putchar( BS );
 				}
 			break;
-		case Ctrl('R') : /* Print line, cursor doesn't move.	*/
-			{	register int	i;
+		case Ctrl('R') : /* Print line, cursor doesn't move. */
+			{	register int i;
 			if( buffer[0] == NUL )
 				break;
 			for( i = p - buffer; i > 0; i-- )
@@ -422,8 +417,8 @@ char	*msg;
 				(void) putchar( BS );
 			break;
 			}
-		case DEL : /* Delete character behind cursor.		*/
-			{	register char	*q = p;
+		case DEL : /* Delete character behind cursor. */
+			{	register char *q = p;
 			if( p == buffer )
 				{
 				ring_Bell();
@@ -453,21 +448,21 @@ char	*msg;
 				(void) strncpy( inbuf, buffer, bufsz );
 				prnt_Prompt( "" );
 				prnt_Event( "" );
-				return	ftbl;
+				return ftbl;
 				}
 		case Ctrl('V') :
-			/* Escape character, do not process next char.	*/
+			/* Escape character, do not process next char. */
 			c = get_Char();
 			if( remembering )
 				{
 				*macro_ptr++ = c;
 				*macro_ptr = NUL;
 				}
-			/* Fall through to default case!		*/
-		default : /* Insert character at cursor.		*/
-			{	register char	*q = p;
-				register int	len = strlen( p );
-			/* Scroll characters forward.			*/
+			/* Fall through to default case! */
+		default : /* Insert character at cursor. */
+			{	register char *q = p;
+				register int len = strlen( p );
+			/* Scroll characters forward. */
 			if( c >= NUL && c < SP )
 				(void) printf( "%s", char_To_String( c ) );
 			else
@@ -488,5 +483,5 @@ char	*msg;
 	ring_Bell();
 	fb_log( "Buffer full.\n" );
 	prnt_Prompt( "" );
-	return	ftbl;
+	return ftbl;
 	}
