@@ -28,6 +28,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define	UPPER_CASE(c)	((c)-32)
 #define	COPY(n)	{fread(cbuf,1,n,fp); fwrite(cbuf,1,n,stdout);}
 #define	SKIP(n)	{fread(cbuf,1,n,fp);}
+#define LEN 265
 
 #define	putsi(s) {putchar(s); putchar((s)>>8);}
 
@@ -43,6 +44,8 @@ mat_t	rmat;			/* rotation matrix to be applied */
 double	scale;			/* scale factor to be applied */
 int	doscale;
 int	verbose;
+int	space;			/* take center and space values from space option */
+point_t	space_min, space_max;	/* min and max coordinates */
 
 int	rpp;			/* indicates new center and space values */
 double	centx, centy, centz;	/* new center of rotation values */
@@ -62,18 +65,21 @@ Usage: plrot [options] [file1 ... fileN] > file.plot\n\
    -g		  MGED front view to display coordinates (usually last)\n\
    -M             Autoscale space command like RT model RPP\n\
    -m#		  Takes a 4X4 matrix as an argument\n\
-   -v		  Verbose\n";
+   -v		  Verbose\n\
+   -S#		  Space: takes a quoted string of four integers\n";
 
 get_args( argc, argv )
 register char **argv;
 {
 	register int c;
 	mat_t	tmp, m;
+	int	i, num;
+	double	mtmp[16];
 
 	mat_idn( rmat );
 	scale = 1.0;
 
-	while ( (c = getopt( argc, argv, "m:vMga:e:x:y:z:X:Y:Z:s:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "S:m:vMga:e:x:y:z:X:Y:Z:s:" )) != EOF )  {
 		switch( c )  {
 		case 'M':
 			/* model RPP! */
@@ -112,7 +118,24 @@ register char **argv;
 			mat_mul( rmat, tmp, m );
 			break;
 		case 'm':
-			fprintf(stderr, "Planning to load input into rmat\n");
+			num = sscanf(&optarg[0], "%lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf %lf", 
+				&mtmp[0], &mtmp[1], &mtmp[2], &mtmp[3],
+				&mtmp[4], &mtmp[5], &mtmp[6], &mtmp[7],
+				&mtmp[8], &mtmp[9], &mtmp[10], &mtmp[11],
+				&mtmp[12], &mtmp[13], &mtmp[14], &mtmp[15]);
+
+			if( num != 16)  {
+				fprintf(stderr, "Num of arguments to -m only %d, should be 16\n", num);
+				exit(1);
+			}
+
+			/* Now copy the array of doubles into mat. */
+			for(i=0; i < 16; i++ )  {
+				rmat[i] = mtmp[i];
+			}
+fprintf(stderr, "rmat[0]=%g, rmat[1]=%g, rmat[3]=%g\n", rmat[0], rmat[1], rmat[3]);
+
+mat_print("rmat", rmat);
 			break;
 		case 'X':
 			mat_idn( tmp );
@@ -138,6 +161,17 @@ register char **argv;
 			break;
 		case 'v':
 			verbose++;
+			break;
+		case 'S':
+			num = sscanf(optarg, "%lf %lf %lf %lf %lf %lf",
+				&mtmp[0], &mtmp[1], &mtmp[2],
+				&mtmp[3], &mtmp[4], &mtmp[5]);
+			VSET(space_min, mtmp[0], mtmp[1], mtmp[2]);
+			VSET(space_max, mtmp[3], mtmp[4], mtmp[5]);
+VPRINT("space_min", space_min);
+VPRINT("space_max", space_max);
+
+			space++;
 			break;
 		default:		/* '?' */
 			return(0);	/* Bad */
@@ -191,6 +225,7 @@ dofile( fp )
 FILE	*fp;
 {
 	register int	c;
+	int		num;
 
 	while( (c = getc(fp)) != EOF ) {
 		switch( c ) {
@@ -260,6 +295,8 @@ FILE	*fp;
 					/* output viewsize cube */
 					v = viewsize/2.0 + 0.5;
 					pl_3space( stdout, -v, -v, -v, v, v, v );
+				} else if (space)  {
+					pdv_3space(stdout, space_min, space_max);
 				} else {
 					pl_3space( stdout, minx, miny, -1, maxx, maxy, 1 );
 				}
@@ -283,6 +320,9 @@ FILE	*fp;
 				/* output viewsize cube */
 				v = viewsize/2.0 + 0.5;
 				pl_3space( stdout, -v, -v, -v, v, v, v );
+			} else if (space)  {
+				SKIP(6*2);
+				pdv_3space(stdout, space_min, space_max);
 			} else {
 				/* leave it unchanged */
 				putchar(c);
@@ -312,6 +352,8 @@ FILE	*fp;
 					/* output viewsize cube */
 					v = viewsize/2.0;
 					pd_3space( stdout, -v, -v, -v, v, v, v );
+				} else if (space)  {
+					pdv_3space(stdout, space_min, space_max);
 				} else {
 					pd_3space( stdout, minx, miny, -1.0, maxx, maxy, 1.0 );
 				}
@@ -335,6 +377,11 @@ FILE	*fp;
 				/* output viewsize cube */
 				v = viewsize/2.0;
 				pd_3space( stdout, -v, -v, -v, v, v, v );
+			} else if (space)  {
+				SKIP(6*8);
+				pdv_3space(stdout, space_min, space_max);
+VPRINT("space_min", space_min);
+VPRINT("space_max", space_max);
 			} else {
 				/* leave it unchanged */
 				putchar(c);
@@ -410,7 +457,7 @@ double	minx, miny, minz, maxx, maxy, maxz;
 		fprintf(stderr, "space (%g, %g, %g) (%g, %g, %g)\n",
 			minx, miny, minz,
 			maxx, maxy, maxz);
-		fprintf(stderr, "  center=(%g, %g, %g, size=%g)\n",
+		fprintf(stderr, "  center=(%g, %g, %g), size=%g\n",
 			centx, centy, centz, viewsize);
 	}
 
@@ -477,7 +524,7 @@ FILE	*fp;
 mat_t	m;
 {
 	char	buf[2*8];
-	point_t	p1; 
+	double	p1[3];
 	double	p2[3];
 
 	fread( buf, 1, 2*8, fp );
@@ -502,7 +549,7 @@ FILE	*fp;
 mat_t	m;
 {
 	char	buf[3*8];
-	point_t	p1;
+	double	p1[3];
 	double	p2[3];
 
 	fread( buf, 1, 3*8, fp );
@@ -547,3 +594,4 @@ FILE	*fp;
 	ntohd( &d, buf, 1 );
 	return( d );
 }
+
