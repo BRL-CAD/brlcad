@@ -107,16 +107,21 @@ db5_realloc( struct db_i *dbip, struct directory *dp, struct bu_external *ep )
 
 	BU_ASSERT_LONG( ep->ext_nbytes&7, ==, 0 );
 
-	if( ep->ext_nbytes == dp->d_len )  return 0;
+	if( dp->d_addr != -1L && ep->ext_nbytes == dp->d_len )  {
+		if(rt_g.debug&DEBUG_DB) bu_log("db5_realloc(%s) current allocation is exactly right.\n", dp->d_namep);
+		return 0;
+	}
 
 	baseaddr = dp->d_addr;
 	baselen = dp->d_len;
 
 	if( dp->d_flags & RT_DIR_INMEM )  {
 		if( dp->d_un.ptr )  {
+			if(rt_g.debug&DEBUG_DB) bu_log("db5_realloc(%s) bu_realloc()ing memory resident object\n", dp->d_namep);
 			dp->d_un.ptr = bu_realloc( dp->d_un.ptr,
 				ep->ext_nbytes, "db5_realloc() d_un.ptr" );
 		} else {
+			if(rt_g.debug&DEBUG_DB) bu_log("db5_realloc(%s) bu_malloc()ing memory resident object\n", dp->d_namep);
 			dp->d_un.ptr = bu_malloc( ep->ext_nbytes, "db5_realloc() d_un.ptr" );
 		}
 		dp->d_len = ep->ext_nbytes;
