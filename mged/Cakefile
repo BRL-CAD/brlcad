@@ -19,7 +19,7 @@
 			concat utility1 utility2 track arbs \
 			facedef set animedit comb_std \
 			solids_on_ray history \
-			TCP_FILES attach dm-plot dm-ps \
+			TCP_FILES attach dm-plot dm-ps doevent muves \
 			MGED_OBJS vdraw
 
 /*#define USING_NEW_SO*/
