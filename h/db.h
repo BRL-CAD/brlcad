@@ -63,11 +63,7 @@ typedef float dbfloat_t;
 #define NAMEMOVE(from,to)	(void)strncpy(to, from, NAMESIZE)
 extern char *strncpy();
 
-#if defined(sgi) || defined(alliant) || defined(sun)
-#define DB_MINREC	126
-#else
 #define DB_MINREC	128
-#endif
 
 union record  {
 
