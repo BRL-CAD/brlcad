@@ -119,10 +119,37 @@ struct hf_specific {
 int
 hf_to_dsp(struct rt_db_internal *db_intern)
 {
-	struct rt_hf_internal *hip = (struct rt_hf_internal *)db_intern;
-	struct rt_dsp_internal *dsp;
+	struct rt_hf_internal	*hip = (struct rt_hf_internal *)db_intern;
+	struct rt_db_internal	intern;
+	struct rt_dsp_internal	*dsp;
+	mat_t 			tmp, mat, matA, matB, matC;
+
 
 	return -1;
+
+	dsp = (struct rt_dsp_internal *)&intern;
+	dsp->dsp_xcnt = hip->w;
+	dsp->dsp_ycnt = hip->n;
+
+	if (! hip->shorts) {
+		bu_log("cannot convert float HF to DSP\n");
+		return -1;
+	}
+	bn_mat_idn(matA);
+	MAT_DELTAS_VEC(matA,  hip->v);	/* translate */
+
+	/* Apply modeling transformations */
+	MAT4X3PNT( tmp, mat, hip->v );
+	VMOVE( hip->v, tmp );
+	MAT4X3VEC( tmp, mat, hip->x );
+	VMOVE( hip->x, tmp );
+	MAT4X3VEC( tmp, mat, hip->y );
+	VMOVE( hip->y, tmp );
+	hip->xlen /= mat[15];
+	hip->ylen /= mat[15];
+	hip->zscale /= mat[15];
+
+
 }
 
 

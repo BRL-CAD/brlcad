@@ -159,6 +159,21 @@ static CONST vect_t	dsp_pl[BBOX_PLANES] = {
 	{0.0, 0.0,  1.0},
 };
 
+/*
+ * This function computes the DSP mtos matrix from the stom matrix
+ * whenever the stom matrix is parsed using a bu_structparse.
+ */
+static void
+hook_mtos_from_stom(
+		    const struct bu_structparse	*ip,
+		    const char 			*sp_name,
+		    genptr_t			base,		    
+		    char			*p)
+{
+	struct rt_dsp_internal *dsp_ip = (struct rt_dsp_internal *)base;
+
+	bn_mat_inv(dsp_ip->dsp_mtos, dsp_ip->dsp_stom);
+}
 
 
 #define DSP_O(m) offsetof(struct rt_dsp_internal, m)
@@ -169,8 +184,8 @@ CONST struct bu_structparse rt_dsp_parse[] = {
 	{"%d",  1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "w", DSP_O(dsp_xcnt), BU_STRUCTPARSE_FUNC_NULL },
 	{"%d",	1, "n", DSP_O(dsp_ycnt), BU_STRUCTPARSE_FUNC_NULL },
-	{"%f", 16, "stom", DSP_AO(dsp_stom), BU_STRUCTPARSE_FUNC_NULL },
-	{"",	0, (char *)0, 0,			BU_STRUCTPARSE_FUNC_NULL }
+	{"%f", 16, "stom", DSP_AO(dsp_stom), hook_mtos_from_stom },
+	{"",	0, (char *)0, 0,	BU_STRUCTPARSE_FUNC_NULL }
 };
 
 CONST struct bu_structparse rt_dsp_ptab[] = {
@@ -192,15 +207,21 @@ CONST struct rt_dsp_internal *dsp_ip;
 {
 	point_t pt, v;
 	RT_DSP_CK_MAGIC(dsp_ip);
+	BU_CK_VLS(&dsp_ip->dsp_file);
 
 	bu_vls_init( vls );
 
-	bu_vls_printf( vls, "Displacement Map\n  file='%s' w=%d n=%d sm=%d\n",
-		bu_vls_addr(&dsp_ip->dsp_file), dsp_ip->dsp_xcnt, dsp_ip->dsp_ycnt, dsp_ip->dsp_smooth);
+	bu_vls_printf( vls, "Displacement Map\n  file='%s' w=%d n=%d sm=%d ",
+		       bu_vls_addr(&dsp_ip->dsp_file),
+		       dsp_ip->dsp_xcnt,
+		       dsp_ip->dsp_ycnt,
+		       dsp_ip->dsp_smooth);
 
 	VSETALL(pt, 0.0);
+
 	MAT4X3PNT(v, dsp_ip->dsp_stom, pt);
-	bu_vls_printf( vls, "  V=(%g %g %g)mm\n", v);
+
+	bu_vls_printf( vls, " (origin at %g %g %g)mm\n", V3ARGS(v));
 
 	bu_vls_printf( vls, "  stom=\n");
 	bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n",
@@ -214,7 +235,6 @@ CONST struct rt_dsp_internal *dsp_ip;
 
 	bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n",
 		V4ARGS( &dsp_ip->dsp_stom[12]) );
-
 }
 
 /*
@@ -230,11 +250,13 @@ register CONST struct soltab *stp;
  
 
 	RT_DSP_CK_MAGIC(dsp);
+	BU_CK_VLS(&dsp->dsp_i.dsp_file);
 
 	dsp_print(&vls, &(dsp->dsp_i) );
 
 	bu_log("%s", bu_vls_addr( &vls));
-	bu_vls_free( &vls );
+
+	if (BU_VLS_IS_INITIALIZED( &vls )) bu_vls_free( &vls );
 
 }
 
@@ -274,6 +296,8 @@ struct rt_i		*rtip;
 	RT_CK_DB_INTERNAL(ip);
 	dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
 	RT_DSP_CK_MAGIC(dsp_ip);
+	BU_CK_VLS(&dsp_ip->dsp_file);
+
 	BU_CK_MAPPED_FILE(dsp_ip->dsp_mp);
 
 	BU_GETSTRUCT( dsp, dsp_specific );
@@ -1902,6 +1926,7 @@ struct seg		*seghead;
 			ap->a_x, ap->a_y);
 	}
 	RT_DSP_CK_MAGIC(dsp);
+	BU_CK_VLS(&dsp->dsp_i.dsp_file);
 	BU_CK_MAPPED_FILE(dsp->dsp_i.dsp_mp);
 
 
@@ -2136,6 +2161,11 @@ register struct xray	*rp;
 	double dot;
 	double len;
 	FILE *fd = (FILE *)NULL;
+
+	RT_DSP_CK_MAGIC(dsp);
+	BU_CK_VLS(&dsp->dsp_i.dsp_file);
+	BU_CK_MAPPED_FILE(dsp->dsp_i.dsp_mp);
+
 
  	if (rt_g.debug & DEBUG_HF)
 		bu_log("rt_dsp_norm(%g %g %g)\n", V3ARGS(hitp->hit_normal));
@@ -2788,7 +2818,8 @@ CONST struct db_i		*dbip;
 	bu_vls_init( &str );
 	bu_vls_strcpy( &str, rp->ss.ss_args );
 	if (bu_struct_parse( &str, rt_dsp_parse, (char *)dsp_ip ) < 0) {
-		bu_vls_free( &str );
+		if (BU_VLS_IS_INITIALIZED( &str )) bu_vls_free( &str );
+
 		IMPORT_FAIL("parse error");
 	}
 
@@ -2808,7 +2839,8 @@ CONST struct db_i		*dbip;
 		bu_log("  imported as(%s)\n", bu_vls_addr(&str));
 
 	}
-	bu_vls_free( &str );
+
+	if (BU_VLS_IS_INITIALIZED( &str )) bu_vls_free( &str );
 	return(0);			/* OK */
 }
 
@@ -2835,6 +2867,8 @@ CONST struct db_i		*dbip;
 	if (ip->idb_type != ID_DSP )  return(-1);
 	dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
 	RT_DSP_CK_MAGIC(dsp_ip);
+	BU_CK_VLS(&dsp_ip->dsp_file);
+
 
 	BU_CK_EXTERNAL(ep);
 	ep->ext_nbytes = sizeof(union record)*DB_SS_NGRAN;
@@ -2859,8 +2893,7 @@ CONST struct db_i		*dbip;
 	strncpy( rec->ss.ss_args, bu_vls_addr(&str), DB_SS_LEN-1 );
 
 
-	bu_vls_free( &str );
-
+	if (BU_VLS_IS_INITIALIZED( &str )) bu_vls_free( &str );
 
 	return(0);
 }
@@ -3020,7 +3053,8 @@ double			mm2local;
 
 	dsp_print(&vls, dsp_ip);
 	bu_vls_vlscat( str, &vls );
-	bu_vls_free( &vls );
+
+	if (BU_VLS_IS_INITIALIZED( &vls )) bu_vls_free( &vls );
 
 	return(0);
 }
@@ -3051,7 +3085,11 @@ struct rt_db_internal	*ip;
 	dsp_ip->magic = 0;			/* sanity */
 	dsp_ip->dsp_mp = (struct bu_mapped_file *)0;
 
-	bu_vls_free(  &dsp_ip->dsp_file );
+	if (BU_VLS_IS_INITIALIZED(&dsp_ip->dsp_file)) 
+		bu_vls_free(  &dsp_ip->dsp_file );
+	else
+		bu_log("Freeing Bogus DSP, VLS string not initialized\n");
+
 
 	bu_free( (char *)dsp_ip, "dsp ifree" );
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
