@@ -231,8 +231,6 @@ void
 rt_bot_print( stp )
 register CONST struct soltab *stp;
 {
-	register CONST struct bot_specific *bot =
-		(struct bot_specific *)stp->st_specific;
 }
 
 /*
@@ -493,7 +491,6 @@ struct seg		*seghead;
 		
 		{
 			register int i, j;
-			LOCAL struct hit temp;
 
 			for( i=0 ; i<nhits-1 ; i++ )
 			{
@@ -683,9 +680,6 @@ register struct curvature *cvp;
 register struct hit	*hitp;
 struct soltab		*stp;
 {
-	register struct bot_specific *bot =
-		(struct bot_specific *)stp->st_specific;
-
  	cvp->crv_c1 = cvp->crv_c2 = 0;
 
 	/* any tangent direction */
@@ -707,8 +701,6 @@ struct soltab		*stp;
 register struct hit	*hitp;
 register struct uvcoord	*uvp;
 {
-	register struct bot_specific *bot =
-		(struct bot_specific *)stp->st_specific;
 }
 
 /*
@@ -1046,7 +1038,9 @@ CONST struct db_i		*dbip;
 	{
 		for( i=0 ; i<bot_ip->num_faces ; i++ )
 		{
-			htond( (unsigned char *)&rec->bot.bot_data[chars_used], (CONST unsigned char *)&bot_ip->thickness[i], 1 );
+			fastf_t tmp;
+			tmp = bot_ip->thickness[i] * local2mm;
+			htond( (unsigned char *)&rec->bot.bot_data[chars_used], (CONST unsigned char *)&tmp, 1 );
 			chars_used += 8;
 		}
 		strcpy( (char *)&rec->bot.bot_data[chars_used], bu_vls_addr( &face_mode ) );
@@ -2092,8 +2086,10 @@ struct rt_bot_internal *bot;
 	num_faces = bot->num_faces;
 	for( i=0 ; i<num_faces ; i++ )
 	{
-		for( j=i+1 ; j<num_faces ; j++ )
+		j = i+1;
+		while( j<num_faces )
 		{
+			/* each pass through this loop either increments j or decrements num_faces */
 			int match=0;
 			int elim;
 
@@ -2110,7 +2106,10 @@ struct rt_bot_internal *bot;
 			}
 
 			if( match != 3 )
+			{
+				j++;
 				continue;
+			}
 
 			/* these two faces have the same vertices */
 			elim = -1;
@@ -2142,7 +2141,10 @@ struct rt_bot_internal *bot;
 			}
 
 			if( elim < 0 )
+			{
+				j++;
 				continue;
+			}
 
 			/* we are eliminating face number "elim" */
 			for( l=elim ; l< num_faces-1 ; l++ )
@@ -2193,7 +2195,6 @@ bot_condense( bot )
 struct rt_bot_internal *bot;
 {
 	int i,j,k;
-	int count=0;
 	int num_verts;
 	int dead_verts=0;
 	int *verts;

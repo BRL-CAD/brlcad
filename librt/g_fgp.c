@@ -77,11 +77,9 @@ struct rt_i		*rtip;
 {
 	struct rt_fgp_internal			*fgp_ip;
 	register struct fgp_specific		*fgp;
-	CONST struct bn_tol			*tol = &rtip->rti_tol;
 	struct directory			*ref_dp;
 	struct rt_db_internal			ref_int;
 	struct soltab				*ref_stp;
-	struct db_full_path			*ref_path;
 	int					ref_id;
 	int					ref_ret;
 
@@ -194,9 +192,8 @@ struct seg		*seghead;
 	register struct seg	*segp, *new_seg;
 	int			ref_ret, hit_count=0;
 	fastf_t			cos_in, cos_out;
-	fastf_t			dist1, dist2;
+	fastf_t			dist1;
 	vect_t			norm_in, norm_out;
-	CONST struct bn_tol	*tol = &ap->a_rt_i->rti_tol;
 
 	BU_LIST_INIT( &ref_seghead.l );
 

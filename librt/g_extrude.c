@@ -195,8 +195,6 @@ void
 rt_extrude_print( stp )
 register CONST struct soltab *stp;
 {
-	register CONST struct extrude_specific *extrude =
-		(struct extrude_specific *)stp->st_specific;
 }
 
 /*
@@ -249,9 +247,6 @@ register struct hit	*hitp;
 struct soltab		*stp;
 register struct xray	*rp;
 {
-	register struct extrude_specific *extrude =
-		(struct extrude_specific *)stp->st_specific;
-
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 }
 
@@ -266,9 +261,6 @@ register struct curvature *cvp;
 register struct hit	*hitp;
 struct soltab		*stp;
 {
-	register struct extrude_specific *extrude =
-		(struct extrude_specific *)stp->st_specific;
-
  	cvp->crv_c1 = cvp->crv_c2 = 0;
 
 	/* any tangent direction */
@@ -290,8 +282,6 @@ struct soltab		*stp;
 register struct hit	*hitp;
 register struct uvcoord	*uvp;
 {
-	register struct extrude_specific *extrude =
-		(struct extrude_specific *)stp->st_specific;
 }
 
 /*
@@ -329,15 +319,10 @@ CONST struct bn_tol	*tol;
 	LOCAL struct rt_extrude_internal	*extrude_ip;
 	struct curve			*crv=(struct curve *)NULL;
 	int				curve_no;
-	struct directory		*dp;
 	struct rt_sketch_internal	*sketch_ip;
-	long				*lng;
-	int				seg_no;
-	struct line_seg			*lsg;
-	int				first=1;
-	int				start, end, prev=-1;
-	point_t				pt;
 	point_t				end_of_h;
+	int				i1, i2, nused1, nused2;
+	struct bn_vlist			*vp1, *vp2, *vp2_start;
 
 	RT_CK_DB_INTERNAL(ip);
 	extrude_ip = (struct rt_extrude_internal *)ip->idb_ptr;
@@ -364,106 +349,47 @@ CONST struct bn_tol	*tol;
 	}
 
 	/* plot bottom curve */
-	for( seg_no=0 ; seg_no < crv->seg_count ; seg_no++ )
-	{
-		lng = (long *)crv->segments[seg_no];
-		switch( *lng )
-		{
-			case CURVE_LSEG_MAGIC:
-				lsg = (struct line_seg *)lng;
-				if( crv->reverse[seg_no] )
-				{
-					end = lsg->start;
-					start = lsg->end;
-				}
-				else
-				{
-					start = lsg->start;
-					end = lsg->end;
-				}
-				if( first || start != prev )
-				{
-					VJOIN2( pt, extrude_ip->V, sketch_ip->verts[start][0], extrude_ip->u_vec, sketch_ip->verts[start][1], extrude_ip->v_vec);
-					RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_MOVE )
-				}
-				VJOIN2( pt, extrude_ip->V, sketch_ip->verts[end][0], extrude_ip->u_vec, sketch_ip->verts[end][1], extrude_ip->v_vec);
-				RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_DRAW );
-				prev = end;
-				break;
-			default:
-			{
-				bu_log( "rt_extrude_plot: ERROR: unrecognized segment type!!!!\n" );
-				return( -1 );
-			}
-		}
-		first = 0;
-	}
+	vp1 = BU_LIST_LAST( bn_vlist, vhead );
+	nused1 = vp1->nused;
+	curve_to_vlist( vhead, ttol, extrude_ip->V, extrude_ip->u_vec, extrude_ip->v_vec, sketch_ip, crv );
 
 	/* plot top curve */
-	first = 1;
 	VADD2( end_of_h, extrude_ip->V, extrude_ip->h );
-	for( seg_no=0 ; seg_no < crv->seg_count ; seg_no++ )
-	{
-		lng = (long *)crv->segments[seg_no];
-		switch( *lng )
-		{
-			case CURVE_LSEG_MAGIC:
-				lsg = (struct line_seg *)lng;
-				if( crv->reverse[seg_no] )
-				{
-					end = lsg->start;
-					start = lsg->end;
-				}
-				else
-				{
-					start = lsg->start;
-					end = lsg->end;
-				}
-				if( first || start != prev )
-				{
-					VJOIN2( pt, end_of_h, sketch_ip->verts[start][0], extrude_ip->u_vec, sketch_ip->verts[start][1], extrude_ip->v_vec);
-					RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_MOVE )
-				}
-				VJOIN2( pt, end_of_h, sketch_ip->verts[end][0], extrude_ip->u_vec, sketch_ip->verts[end][1], extrude_ip->v_vec);
-				RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_DRAW );
-				prev = end;
-				break;
-			default:
-			{
-				bu_log( "rt_extrude_plot: ERROR: unrecognized segment type!!!!\n" );
-				return( -1 );
-			}
-		}
-		first = 0;
-	}
-
+	vp2 = BU_LIST_LAST( bn_vlist, vhead );
+	nused2 = vp2->nused;
+	curve_to_vlist( vhead, ttol, end_of_h, extrude_ip->u_vec, extrude_ip->v_vec, sketch_ip, crv );
+	
 	/* plot connecting lines */
-	for( seg_no=0 ; seg_no < crv->seg_count ; seg_no++ )
+	vp2_start = vp2;
+	i1 = nused1;
+	if( i1 >= vp1->nused )
 	{
-		point_t pt2;
-
-		lng = (long *)crv->segments[seg_no];
-		switch( *lng )
+		i1 = 0;
+		vp1 = BU_LIST_NEXT( bn_vlist, &vp1->l );
+	}
+	i2 = nused2;
+	if( i2 >= vp2->nused )
+	{
+		i2 = 0;
+		vp2 = BU_LIST_NEXT( bn_vlist, &vp2->l );
+		nused2--;
+	}
+	while( vp1 != vp2_start || i1 != nused2 )
+	{
+		RT_ADD_VLIST( vhead, vp1->pt[i1], BN_VLIST_LINE_MOVE );
+		RT_ADD_VLIST( vhead, vp2->pt[i2], BN_VLIST_LINE_DRAW );
+		i1++;
+		if( i1 >= vp1->nused )
 		{
-			case CURVE_LSEG_MAGIC:
-				lsg = (struct line_seg *)lng;
-				if( crv->reverse[seg_no] )
-					end = lsg->start;
-				else
-					end = lsg->end;
-				VJOIN2( pt, extrude_ip->V, sketch_ip->verts[end][0], extrude_ip->u_vec, sketch_ip->verts[end][1], extrude_ip->v_vec);
-				VJOIN2( pt2, end_of_h, sketch_ip->verts[end][0], extrude_ip->u_vec, sketch_ip->verts[end][1], extrude_ip->v_vec);
-				RT_ADD_VLIST( vhead, pt, BN_VLIST_LINE_MOVE )
-				RT_ADD_VLIST( vhead, pt2, BN_VLIST_LINE_DRAW );
-				prev = end;
-				break;
-			default:
-			{
-				bu_log( "rt_extrude_plot: ERROR: unrecognized segment type!!!!\n" );
-				return( -1 );
-			}
+			i1 = 0;
+			vp1 = BU_LIST_NEXT( bn_vlist, &vp1->l );
 		}
-		first = 0;
+		i2++;
+		if( i2 >= vp2->nused )
+		{
+			i2 = 0;
+			vp2 = BU_LIST_NEXT( bn_vlist, &vp2->l );
+		}
 	}
 
 	return(0);
@@ -501,7 +427,6 @@ register CONST mat_t		mat;
 CONST struct db_i		*dbip;
 {
 	LOCAL struct rt_extrude_internal	*extrude_ip;
-	struct rt_sketch_internal		*sketch_ip;
 	struct rt_db_internal			tmp_ip;
 	struct directory			*dp;
 	char					*sketch_name;
@@ -625,8 +550,6 @@ double			mm2local;
 {
 	register struct rt_extrude_internal	*extrude_ip =
 		(struct rt_extrude_internal *)ip->idb_ptr;
-	int curve_no;
-	int seg_no;
 	char	buf[256];
 
 	RT_EXTRUDE_CK_MAGIC(extrude_ip);
@@ -657,10 +580,6 @@ struct rt_db_internal	*ip;
 {
 	register struct rt_extrude_internal	*extrude_ip;
 	struct rt_db_internal			tmp_ip;
-	struct curve				*crv;
-	int					curve_no;
-	genptr_t				*seg_ptr;
-	int					seg_no;
 
 	RT_CK_DB_INTERNAL(ip);
 	extrude_ip = (struct rt_extrude_internal *)ip->idb_ptr;

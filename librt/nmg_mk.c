@@ -3100,9 +3100,6 @@ struct edge_g_lseg	*dest_eg;
 struct edge_g_lseg	*src_eg;
 {
 	register struct edgeuse		*eu;
-	vect_t				dir_src;
-	vect_t				dir_dest;
-	fastf_t				deg;
 
 	NMG_CK_EDGE_G_LSEG(src_eg);
 	NMG_CK_EDGE_G_LSEG(dest_eg);
