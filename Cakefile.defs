@@ -1556,6 +1556,9 @@ set -S2 "/bin/sh"
 #	define	LIBTK_DIR	../libtk
 #	define	LIBTK		-L''LIBTK_DIR -ltk
 #	define	LIBTK_DEP	[[LIBVERS ../libtk/libtk.ARCH_SUF]]
+#	define  LIBTCLCAD_DIR	../libtclcad
+#	define  LIBTCLCAD	-L''LIBTCLCAD_DIR -ltclcad
+#	define	LIBTCLCAD_DEP	[[LIBVERS ../libtclcad/libtclcad.ARCH_SUF]]
 #	define	LIBREDBLACK_DIR	../libredblack
 #	define	LIBREDBLACK	-L''LIBREDBLACK_DIR -lredblack
 #	define	LIBREDBLACK_DEP	[[LIBVERS ../libredblack/libredblack.ARCH_SUF]]
@@ -1618,6 +1621,9 @@ set -S2 "/bin/sh"
 #	define	LIBTK_DIR	../.libtk.MTYPE
 #	define	LIBTK		-L''LIBTK_DIR -ltk
 #	define	LIBTK_DEP	[[LIBVERS ../.libtk.MTYPE/libtk.ARCH_SUF]]
+#	define	LIBTCLCAD_DIR	../.libtclcad.MTYPE
+#	define	LIBTCLCAD	-L''LIBTCLCAD_DIR -ltclcad
+#	define	LIBTCLCAD_DEP	[[LIBVERS ../.libtclcad.MTYPE/libtclcad.ARCH_SUF]]
 #	define	LIBREDBLACK_DIR	../.libredblack.MTYPE
 #	define	LIBREDBLACK	-L''LIBREDBLACK_DIR -lredblack
 #	define	LIBREDBLACK_DEP	[[LIBVERS ../.libredblack.MTYPE/libredblack.ARCH_SUF]]
