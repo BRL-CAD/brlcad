@@ -452,7 +452,9 @@ struct _mged_variables {
         int     context;
 	int	dlist;
 	char	coords;
+	char	ecoords;
 	char	rotate_about;
+	char	erotate_about;
         char    transform;
 	int	predictor;
 	double	predictor_advance;
