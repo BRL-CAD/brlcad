@@ -17,16 +17,20 @@ then
 	exit 1
 fi
 
-cd `dirname $1`
+ONENUM="$1"
+DIR=`dirname $ONENUM`
+BASE=`basename $ONENUM`
 
-NONUM=`basename $1 | sed -e 's/\\.so\\..*/.so/`
-TWONUM=`basename $1`.1			# Minor version 1
+cd $DIR
+
+NONUM=`echo $BASE | sed -e 's/\\.so\\..*/.so/' `
+TWONUM=$BASE.1			# Minor version 1
 
 # If the shared library has a version number, link numbered to unnumbered.
 # If no version number, don't do anything.
-if test `basename $1` != "$NONUM"
+if test "$BASE" != "$NONUM"
 then
 	rm -f $NONUM $TWONUM
-	ln -s $1 $NONUM
-	ln -s $1 $TWONUM
+	ln -s $ONENUM $NONUM
+	ln -s $ONENUM $TWONUM
 fi
