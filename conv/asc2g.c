@@ -51,62 +51,64 @@ char **argv;
 	/* Read ASCII input file, each record on a line */
 	while( ( fgets( buf, BUFSIZE, stdin ) ) != (char *)0 )  {
 
-		/* Clear the output record */
+		/* Clear the output record -- vital! */
 		(void)bzero( (char *)&record, sizeof(record) );
 
 		/* Check record type */
 		if( debug )
 			fprintf(stderr,"rec %c\n", buf[0] );
-		if( buf[0] == ID_SOLID )  {
-			/* Build the record */
+		switch( buf[0] )  {
+		case ID_SOLID:
 			solbld();
-		}
-		else if( buf[0] == ID_COMB )  {
-			/* Build the record */
+			continue;
+
+		case ID_COMB:
 			combbld();
-		}
-		else if( buf[0] == ID_MEMB )  {
-			/* Build the record */
+			continue;
+
+		case ID_MEMB:
 			membbld();
-		}
-		else if( buf[0] == ID_ARS_A )  {
-			/* Build the record */
+			continue;
+
+		case ID_ARS_A:
 			arsabld();
-		}
-		else if( buf[0] == ID_ARS_B )  {
-			/* Build the record */
+			continue;
+
+		case ID_ARS_B:
 			arsbbld();
-		}
-		else if( buf[0] == ID_P_HEAD )  {
-			/* Build the record */
+			continue;
+
+		case ID_P_HEAD:
 			polyhbld();
-		}
-		else if( buf[0] == ID_P_DATA )  {
-			/* Build the record */
+			continue;
+
+		case ID_P_DATA:
 			polydbld();
-		}
-		else if( buf[0] == ID_IDENT )  {
-			/* Build the record */
+			continue;
+
+		case ID_IDENT:
 			identbld();
-		}
-		else if( buf[0] == ID_MATERIAL )  {
-			/* Build the record */
+			continue;
+
+		case ID_MATERIAL:
 			materbld();
-		}
-		else if( buf[0] == ID_BSOLID )  {
-			/* Build the record */
+			continue;
+
+		case ID_BSOLID:
 			bsplbld();
-		}
-		else if( buf[0] == ID_BSURF )  {
-			/* Build the record */
+			continue;
+
+		case ID_BSURF:
 			bsurfbld();
-		}
-		else  {
-			(void)fprintf(stderr,"ASC2G: bad record type '%c'\n", buf[0]);
-			exit(1);
+			continue;
+
+		default:
+			(void)fprintf(stderr,"ASC2G: bad record type '%c' (0%o), skipping\n", buf[0], buf[0]);
+			(void)fprintf(stderr,"%s\n", buf );
+			continue;
 		}
 	}
-	return(0);
+	exit(0);
 }
 
 void
