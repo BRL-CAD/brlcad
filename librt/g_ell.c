@@ -693,6 +693,14 @@ double			norm_tol;
 	return(0);
 }
 
+static point_t	octa_verts[6] = {
+	{ 1, 0, 0 },	/* XPLUS */
+	{-1, 0, 0 },	/* XMINUS */
+	{ 0, 1, 0 },	/* YPLUS */
+	{ 0,-1, 0 },	/* YMINUS */
+	{ 0, 0, 1 },	/* ZPLUS */
+	{ 0, 0,-1 }	/* ZMINUS */
+};
 #define XPLUS 0
 #define XMIN  1
 #define YPLUS 2
@@ -717,10 +725,30 @@ static struct usvert {
     { YMIN , XPLUS, ZMIN  }
 };
 
+struct ell_state {
+	struct shell	*s;
+	struct ell_internal	ei;
+	mat_t		invRinvS;
+	mat_t		invRoS;
+	fastf_t		hunt_tol;
+	fastf_t		hunt_tol_sq;
+	vect_t		theta_tol;
+	fastf_t		normal_theta;
+};
+
 /*
  *			R T _ E L L _ T E S S
  *
  *  Tessellate an ellipsoid.
+ *
+ *  The strategy is based upon the approach of Jon Leech 3/24/89,
+ *  from program "sphere", which generates a polygon mesh
+ *  approximating a sphere by
+ *  recursive subdivision. First approximation is an octahedron;
+ *  each level of refinement increases the number of polygons by
+ *  a factor of 4.
+ *  Level 3 (128 polygons) is a good tradeoff if gouraud
+ *  shading is used to render the database.
  *
  *  Returns -
  *	-1	failure
@@ -737,67 +765,294 @@ double			abs_tol;
 double			rel_tol;
 double			norm_tol;
 {
-	struct shell		*s;
-	struct ell_internal	ei;
+	LOCAL mat_t	R;
+	LOCAL mat_t	S;
+	LOCAL mat_t	invR;
+	LOCAL mat_t	invS;
+	LOCAL vect_t	Au, Bu, Cu;	/* A,B,C with unit length */
+	LOCAL fastf_t	Alen, Blen, Clen;
+	LOCAL fastf_t	invAlen, invBlen, invClen;
+	LOCAL fastf_t	magsq_a, magsq_b, magsq_c;
+	LOCAL fastf_t	f;
+	struct ell_state	state;
 	register int		i;
-	struct faceuse		*outfaceuses[8];
-	struct vertex		*verts[6];
-	struct vertex		*vertlist[6];
-	struct vertex		**vertp[4];
-	struct edgeuse		*eu;
-	int			face;
-	plane_t			plane;
-	point_t			pt;
+	fastf_t		radius;
 
-	if( rt_ell_import( &ei, rp, mat ) < 0 )  {
+	if( rt_ell_import( &state.ei, rp, mat ) < 0 )  {
 		rt_log("rt_ell_tess(%s): import failure\n", dp->d_namep);
 		return(-1);
 	}
 
-	for( i=0; i<6; i++ )  verts[i] = (struct vertex *)0;
+	/* Validate that |A| > 0, |B| > 0, |C| > 0 */
+	magsq_a = MAGSQ( state.ei.a );
+	magsq_b = MAGSQ( state.ei.b );
+	magsq_c = MAGSQ( state.ei.c );
+	if( magsq_a < 0.005 || magsq_b < 0.005 || magsq_c < 0.005 ) {
+		rt_log("rt_ell_tess(%s):  zero length A, B, or C vector\n",
+			dp->d_namep );
+		return(-2);		/* BAD */
+	}
+
+	/* Create unit length versions of A,B,C */
+	invAlen = 1.0/(Alen = sqrt(magsq_a));
+	VSCALE( Au, state.ei.a, invAlen );
+	invBlen = 1.0/(Blen = sqrt(magsq_b));
+	VSCALE( Bu, state.ei.b, invBlen );
+	invClen = 1.0/(Clen = sqrt(magsq_c));
+	VSCALE( Cu, state.ei.c, invClen );
+rt_log("ell radii A=%g, B=%g, C=%g\n", Alen, Blen, Clen);
+
+	/* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
+	f = VDOT( Au, Bu );
+	if( ! NEAR_ZERO(f, 0.005) )  {
+		rt_log("ell(%s):  A not perpendicular to B, f=%f\n",dp->d_namep, f);
+		return(-3);		/* BAD */
+	}
+	f = VDOT( Bu, Cu );
+	if( ! NEAR_ZERO(f, 0.005) )  {
+		rt_log("ell(%s):  B not perpendicular to C, f=%f\n",dp->d_namep, f);
+		return(-3);		/* BAD */
+	}
+	f = VDOT( Au, Cu );
+	if( ! NEAR_ZERO(f, 0.005) )  {
+		rt_log("ell(%s):  A not perpendicular to C, f=%f\n",dp->d_namep, f);
+		return(-3);		/* BAD */
+	}
+
+	/* Compute R and Rinv matrices */
+	mat_idn( R );
+	VMOVE( &R[0], Au );
+	VMOVE( &R[4], Bu );
+	VMOVE( &R[8], Cu );
+	mat_trn( invR, R );			/* inv of rot mat is trn */
+
+	/* Compute S and invS matrices */
+	/* invS is just 1/diagonal elements */
+	mat_idn( S );
+	S[ 0] = invAlen;
+	S[ 5] = invBlen;
+	S[10] = invClen;
+	mat_inv( invS, S );
+
+	/* invRinvS, for converting points from unit sphere to model */
+	mat_mul( state.invRinvS, invR, invS );
+#if 0
+mat_print("R", R);
+mat_print("invR", invR);
+mat_print("S", S);
+mat_print("invS", invS);
+mat_print("invRinvS", state.invRinvS);
+#endif
+
+	/* invRoS, for converting normals from unit sphere to model */
+	mat_mul( state.invRoS, invR, S );
+
+	/* Compute radius of bounding sphere */
+	f = magsq_a;
+	if( magsq_b > f )
+		f = magsq_b;
+	if( magsq_c > f )
+		f = magsq_c;
+	radius = sqrt(f);
+
+	/*
+	 *  Establish tolerances
+	 */
+	if( rel_tol <= 0.0 || rel_tol >= 1.0 )  {
+		rel_tol = 0.0;		/* none */
+	} else {
+		/* Convert rel to absolute by scaling by diameter */
+		rel_tol *= 2*radius;
+	}
+	if( abs_tol <= 0.0 )  {
+		if( rel_tol <= 0.0 )  {
+			/* No tolerance given, use a default */
+			abs_tol = 0.2*radius;	/* 10% */
+		} else {
+			/* Use absolute-ized relative tolerance */
+			abs_tol = rel_tol;
+		}
+	} else {
+		/* Absolute tolerance was given, pick smaller */
+		if( rel_tol > 0.0 && rel_tol < abs_tol )
+			abs_tol = rel_tol;
+	}
+rt_log("ell abs_tol=%g\n", abs_tol);
+	VSET( state.theta_tol,
+		2 * acos( 1.0 - abs_tol / Alen ),
+		2 * acos( 1.0 - abs_tol / Blen ),
+		2 * acos( 1.0 - abs_tol / Clen ) );
+VPRINT("state.theta_tol", state.theta_tol );
+
+	if( norm_tol > 0.0 )  {
+		/* To ensure normal tolerance, remain below this angle */
+		state.normal_theta = norm_tol;
+	} else {
+		state.normal_theta = rt_twopi;	/* monsterously large */
+	}
+rt_log("normal_theta = %g (%g deg)\n", state.normal_theta, state.normal_theta * rt_radtodeg);
+
+	state.hunt_tol = abs_tol * 0.01;
+	state.hunt_tol_sq = state.hunt_tol * state.hunt_tol;
+rt_log("hunt_tol = %g, hunt_tol_sq=%g\n", state.hunt_tol, state.hunt_tol_sq);
 
 	*r = nmg_mrsv( m );	/* Make region, empty shell, vertex */
-	s = m->r_p->s_p;
+	state.s = m->r_p->s_p;
 
-	/* Build all 8 faces of the octahedron, 3 verts each */
+	/* Recurse on each of the 8 faces of the octahedron */
 	for( i=0; i<8; i++ )  {
 		register struct usvert *ohp = &octahedron[i];
-		vertp[0] = &verts[ohp->a];
-		vertp[1] = &verts[ohp->b];
-		vertp[2] = &verts[ohp->c];
-		outfaceuses[i] = nmg_cmface(s, vertp, 3 );
+		rt_ell_refine(
+			octa_verts[ohp->a],
+			octa_verts[ohp->b],
+			octa_verts[ohp->c],
+			&state, 0 );
 	}
-
-	/* Associate initial vertex geometry:
-	 * Six points lying on the ellipsoid.
-	 */
-	VADD2( pt, ei.v, ei.a );
-	nmg_vertex_gv(verts[XPLUS], pt );
-	VSUB2( pt, ei.v, ei.a );
-	nmg_vertex_gv(verts[XMIN], pt );
-
-	VADD2( pt, ei.v, ei.b );
-	nmg_vertex_gv(verts[YPLUS], pt );
-	VSUB2( pt, ei.v, ei.b );
-	nmg_vertex_gv(verts[YMIN], pt );
-
-	VADD2( pt, ei.v, ei.c );
-	nmg_vertex_gv(verts[ZPLUS], pt );
-	VSUB2( pt, ei.v, ei.c );
-	nmg_vertex_gv(verts[ZMIN], pt );
-
-	/* Associate face geometry */
-	for (i=0 ; i < 8 ; ++i) {
-		rt_mk_nmg_planeeqn( outfaceuses[i] );
-	}
-
-	/* Glue the edges of different outward pointing face uses together */
-	nmg_gluefaces( outfaceuses, 8 );
 
 	/* Compute "geometry" for region and shell */
 	nmg_region_a( *r );
+rt_log("ell done\n");
 
 	return(0);
+}
+
+extern struct vertex *rt_nmg_find_pt_in_shell(); /* XXX from g_pg.c */
+
+struct faceuse *
+rt_ell_generate_face( a, b, c, s )
+struct vertex	**a, **b, **c;
+struct shell	*s;
+{
+	struct vertex		**vertp[4];
+	struct faceuse		*fu;
+
+	vertp[0] = a;
+	vertp[1] = b;
+	vertp[2] = c;
+	if( (fu = nmg_cmface(s, vertp, 3 )) == 0 )  {
+		rt_log("rt_ell_generate_face() nmg_cmface failure\n");
+		return(NULL);
+	}
+	return(fu);
+}
+
+rt_ell_refine( a, b, c, statep, lvl )
+point_t	a;
+point_t	b;
+point_t	c;
+struct ell_state	*statep;
+int	lvl;
+{
+	point_t			d, e, f;
+	struct vertex		*verts[6];
+	struct faceuse		*fu1, *fu2, *fu3, *fu4;
+	point_t			model[6];
+	int			i;
+	point_t			midpt;
+	fastf_t			max_theta;
+	fastf_t			dot, cos_max_theta, rhs;
+
+rt_log("rt_ell_refine(%g,%g,%g) (%g,%g,%g) (%g,%g,%g)\n",
+a[X], a[Y], a[Z], b[X], b[Y], b[Z], c[X], c[Y], c[Z] );
+	/*
+	 *  At the start, points ABC lie on surface of the unit sphere.
+	 *  Pick DEF as the midpoints of the three edges of ABC.
+	 *  Normalize the new points to lie on surface of the unit sphere.
+	 *
+	 *	  1
+	 *	  B
+	 *	 /\
+	 *    3 /  \ 4
+	 *    D/____\E
+	 *    /\    /\
+	 *   /	\  /  \
+	 *  /____\/____\
+	 * A      F     C
+	 * 0      5     2
+	 */
+	VADD2SCALE( d, a, b, 0.5 );
+	VADD2SCALE( e, b, c, 0.5 );
+	VADD2SCALE( f, a, c, 0.5 );
+	/* Normalize */
+	VUNITIZE( d );
+	VUNITIZE( e );
+	VUNITIZE( f );
+
+	/* At the midpoint between D and E, find the appropriate
+	 * angular tolerance to use.  X in the unit sphere is A in
+	 * model space, and Y -> B, Z -> C.  Thus, the correct angular
+	 * tolerance is a linear combination of the tolerances needed
+	 * when exactly along the A, B, or C axis.
+	 */
+	VADD2SCALE( midpt, d, e, 0.5 );
+	VUNITIZE( midpt );
+	if( midpt[X] < 0 )  midpt[X] = -midpt[X];
+	if( midpt[Y] < 0 )  midpt[Y] = -midpt[Y];
+	if( midpt[Z] < 0 )  midpt[Z] = -midpt[Z];
+	/* Reduction sum of product of elements, not a vector dot product */
+	max_theta = VDOT( midpt, statep->theta_tol );
+
+	/* Account for normal tolerance */
+	if( max_theta > statep->normal_theta )  max_theta = statep->normal_theta;
+
+	/*  Measure angle between D and E in model space.
+	 *  Don't bother adding and then subtracting the center, V.
+	 *  If angle is greater than the angle tolerance, recurse.
+	 */
+	MAT4X3PNT( model[3], statep->invRinvS, d );
+	MAT4X3PNT( model[4], statep->invRinvS, e );
+	{
+		point_t	p3, p4;
+		VMOVE( p3, model[3] );
+		VMOVE( p4, model[4] );
+		VUNITIZE( p3 );
+		VUNITIZE( p4 );
+		dot = VDOT( p3, p4 );
+		/* as 'dot' becomes less than 1, the angle increases */
+	}
+	cos_max_theta = cos(max_theta);
+	rhs = cos_max_theta;
+
+	if( lvl < 4 && dot < cos_max_theta )  {
+		/* Refine further */
+		rt_ell_refine( a, d, f, statep, lvl+1 );
+		rt_ell_refine( d, b, e, statep, lvl+1 );
+		rt_ell_refine( e, c, f, statep, lvl+1 );
+		rt_ell_refine( f, d, e, statep, lvl+1 );
+		return;
+	}
+
+	/* Convert rest of points to model space */
+	MAT4X3PNT( model[0], statep->invRinvS, a );
+	MAT4X3PNT( model[1], statep->invRinvS, b );
+	MAT4X3PNT( model[2], statep->invRinvS, c );
+	/* 3 and 4 are already done */
+	MAT4X3PNT( model[5], statep->invRinvS, f );
+	for( i=0; i<6; i++ )  {
+		VADD2( model[i], model[i], statep->ei.v );
+	}
+
+	/* Attempt to share vertices with other faces */
+	for( i=0; i<6; i++ )  {
+		verts[i] = rt_nmg_find_pt_in_shell( statep->s, model[i], statep->hunt_tol_sq );
+	}
+
+	/* Generate the 4 faces, 3 verts each */
+	fu1 = rt_ell_generate_face( &verts[0], &verts[3], &verts[5], statep->s );
+	fu2 = rt_ell_generate_face( &verts[3], &verts[1], &verts[4], statep->s );
+	fu3 = rt_ell_generate_face( &verts[4], &verts[2], &verts[5], statep->s );
+	fu4 = rt_ell_generate_face( &verts[5], &verts[3], &verts[4], statep->s );
+
+	/* Associate vertex geometry */
+	for( i=0; i<6; i++ )  {
+		if( ! verts[i]->vg_p )  nmg_vertex_gv( verts[i], model[i] );
+	}
+
+	/* Associate face geometry */
+	rt_mk_nmg_planeeqn( fu1 );
+	rt_mk_nmg_planeeqn( fu2 );
+	rt_mk_nmg_planeeqn( fu3 );
+	rt_mk_nmg_planeeqn( fu4 );
 }
 
 #if 0
