@@ -502,7 +502,6 @@ double				local2mm;
 	struct rt_vol_internal	*vip;
 	struct rt_vol_internal	vol;	/* scaled version */
 	union record		*rec;
-	register int		i;
 	struct rt_vls		str;
 
 	RT_CK_DB_INTERNAL(ip);
@@ -544,11 +543,8 @@ struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {
-	register int			j;
 	register struct rt_vol_internal	*vip =
 		(struct rt_vol_internal *)ip->idb_ptr;
-	char				buf[256];
-	int				i;
 
 	RT_VOL_CK_MAGIC(vip);
 	rt_vls_strcat( str, "thresholded volumetric solid (VOL)\n\t");
@@ -569,7 +565,6 @@ rt_vol_ifree( ip )
 struct rt_db_internal	*ip;
 {
 	register struct rt_vol_internal	*vip;
-	register int			i;
 
 	RT_CK_DB_INTERNAL(ip);
 	vip = (struct rt_vol_internal *)ip->idb_ptr;
@@ -724,8 +719,8 @@ register struct curvature	*cvp;
 register struct hit		*hitp;
 struct soltab			*stp;
 {
-	register struct rt_vol_specific *volp =
-		(struct rt_vol_specific *)stp->st_specific;
+/*	register struct rt_vol_specific *volp =
+		(struct rt_vol_specific *)stp->st_specific; */
 
 	vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 	cvp->crv_c1 = cvp->crv_c2 = 0;
@@ -744,8 +739,8 @@ struct soltab		*stp;
 register struct hit	*hitp;
 register struct uvcoord	*uvp;
 {
-	register struct rt_vol_specific *volp =
-		(struct rt_vol_specific *)stp->st_specific;
+/*	register struct rt_vol_specific *volp =
+		(struct rt_vol_specific *)stp->st_specific;*/
 
 	/* XXX uv should be xy in ideal space */
 }
@@ -784,7 +779,6 @@ struct rt_tol		*tol;
 	register short	x,y,z;
 	register short	v1,v2;
 	point_t		a,b,c,d;
-	int		i;
 	mat_t		mat;
 
 	mat_idn(mat);	/* XXX hack */
@@ -918,11 +912,11 @@ CONST struct rt_tess_tol *ttol;
 struct rt_tol		*tol;
 {
 	struct rt_vol_internal	*vip;
-	register int	i;
-	struct shell	*s;
-	struct vertex	**verts;	/* dynamic array of pointers */
-	struct vertex	***vertp;	/* dynam array of ptrs to pointers */
-	struct faceuse	*fu;
+/*	register int	i; */
+/*	struct shell	*s; */
+/*	struct vertex	**verts;	/* dynamic array of pointers */
+/*	struct vertex	***vertp;	/* dynam array of ptrs to pointers */
+/*	struct faceuse	*fu; */
 
 	RT_CK_DB_INTERNAL(ip);
 	vip = (struct rt_vol_internal *)ip->idb_ptr;

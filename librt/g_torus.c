@@ -724,7 +724,7 @@ struct application	*ap;
 
 	/* Process each two segment hit */
 	for(i = 0; i < n; i++){
-		register struct seg *seg2p;
+		register struct seg;
 
 		if( segp[i].seg_stp == 0) continue;	/* Skip */
 		if( C[i].dgr != 4 )  continue;  /* Not two segment */
@@ -1399,11 +1399,9 @@ struct rt_db_internal	*ip;
 int			verbose;
 double			mm2local;
 {
-	register int			j;
 	register struct rt_tor_internal	*tip =
 		(struct rt_tor_internal *)ip->idb_ptr;
 	char				buf[256];
-	int				i;
 	double				r3, r4;
 
 	RT_TOR_CK_MAGIC(tip);
