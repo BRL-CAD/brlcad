@@ -174,7 +174,7 @@ int			code;
 	rt_log("joint_hitmiss2: NO CODE HERE, assuming miss\n");
 
 	if (rt_g.NMG_debug & (DEBUG_CLASSIFY|DEBUG_NMGRT) )  {
-		EUPRINT("Hard question time", eu);
+		nmg_euprint("Hard question time", eu);
 		rt_log(" eu_rinf=x%x, eu->eumate_p=x%x, eu=x%x\n", eu_rinf, eu->eumate_p, eu);
 		rt_log(" eu lu orient=%s, eu_rinf lu orient=%s\n",
 			nmg_orientation(eu->up.lu_p->orientation),
@@ -226,7 +226,7 @@ CONST struct rt_tol	*tol;
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
 		VPRINT("nmg_class_pt_e\tPt", pt);
-		EUPRINT("          \tvs. eu", eu);
+		nmg_euprint("          \tvs. eu", eu);
 	}
 	/*
 	 * Note that "pca" can be one of the edge endpoints,
@@ -977,7 +977,7 @@ CONST struct rt_tol	*tol;
 	int	class;
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-		EUPRINT("class_eu_vs_s\t", eu);
+		nmg_euprint("class_eu_vs_s\t", eu);
 
 	NMG_CK_EDGEUSE(eu);	
 	NMG_CK_SHELL(s);	
@@ -1026,7 +1026,7 @@ CONST struct rt_tol	*tol;
 			rt_g.NMG_debug |= DEBUG_CLASSIFY;
 			(void)class_vu_vs_s(eu->vu_p, s, classlist, tol);
 			(void)class_vu_vs_s(eu->eumate_p->vu_p, s, classlist, tol);
-		    	EUPRINT("didn't this edge get cut?", eu);
+		    	nmg_euprint("didn't this edge get cut?", eu);
 		    	nmg_pr_eu(eu, "  ");
 	    	}
 
@@ -1082,7 +1082,7 @@ CONST struct rt_tol	*tol;
 			rt_bomb("class_eu_vs_s:  classifier found edge midpoint ON, edge topology should have been shared\n");
 		}  else  {
 			rt_log("class=%s\n", nmg_class_name(class) );
-			EUPRINT("Why wasn't this edge in or out?", eu);
+			nmg_euprint("Why wasn't this edge in or out?", eu);
 			rt_bomb("class_eu_vs_s: nmg_class_pt_s() midpoint failure\n");
 		}
 		goto out;
@@ -1195,13 +1195,13 @@ retry:
 
 			for(RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 				if (NMG_INDEX_TEST(classlist[NMG_CLASS_AinB], eu->e_p))
-					EUPRINT("In:  edgeuse", eu);
+					nmg_euprint("In:  edgeuse", eu);
 				else if (NMG_INDEX_TEST(classlist[NMG_CLASS_AoutB], eu->e_p))
-					EUPRINT("Out: edgeuse", eu);
+					nmg_euprint("Out: edgeuse", eu);
 				else if (NMG_INDEX_TEST(classlist[NMG_CLASS_AonBshared], eu->e_p))
-					EUPRINT("On:  edgeuse", eu);
+					nmg_euprint("On:  edgeuse", eu);
 				else
-					EUPRINT("BAD: edgeuse", eu);
+					nmg_euprint("BAD: edgeuse", eu);
 			}
 
 			sprintf(buf, "badloop%d.pl", num++);

@@ -247,8 +247,8 @@ CONST struct rt_tol	*tol;
 		rt_log("nmg_radial_join_eu(eu1=x%x, eu2=x%x) e1=x%x, e2=x%x\n",
 			eu1, eu2,
 			eu1->e_p, eu2->e_p);
-		EUPRINT("\tJoining", eu1);
-		EUPRINT("\t     to", eu2);
+		nmg_euprint("\tJoining", eu1);
+		nmg_euprint("\t     to", eu2);
 		rt_log( "Faces around eu1:\n" );
 		nmg_pr_fu_around_eu_vecs( eu1, xvec, yvec, zvec, tol );
 		rt_log( "Faces around eu2:\n" );
