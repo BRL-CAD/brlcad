@@ -1375,15 +1375,13 @@ do_feature_visit( ProFeature *feat, ProError status, ProAppData data )
 
 	if( (ret=ProFeatureDimensionVisit( feat, check_dimension, dimension_filter, data ) ) !=
 	    PRO_TK_NO_ERROR ) {
-		fprintf( stderr, "ProFeatureDimensionVisit Failed for %s!!\n", curr_part_name );
+		return( ret );
 	}
 
 	if( curr_feat_type == PRO_FEAT_HOLE ) {
 		/* need more info to recreate holes */
 		if( (ret=ProFeatureGeomitemVisit( feat, PRO_AXIS, geomitem_visit,
 				    geomitem_filter, data ) ) != PRO_TK_NO_ERROR ) {
-			fprintf( stderr, "ProFeatureGeomitemVisit failed for feature %d of %s\n",
-				 feat->id, curr_part_name );
 			return ret;
 		}
 	}
@@ -1561,7 +1559,6 @@ output_part( ProMdl model )
 	/* tessellate part */
 	status = ProPartTessellate( ProMdlToPart(model), max_error/proe_to_brl_conv,
 			   angle_cntrl, PRO_B_TRUE, &tess  );
-
 	if( status != PRO_TK_NO_ERROR ) {
 		/* Failed!!! */
 
@@ -1607,6 +1604,9 @@ output_part( ProMdl model )
 			int vert_no;
 			int stat;
 			ProName material;
+			ProMassProperty mass_prop;
+			ProMaterialProps material_props;
+			int got_density;
 			struct bu_vls tree;
 
 			curr_tri = 0;
@@ -1730,11 +1730,33 @@ output_part( ProMdl model )
 			}
 
 			/* if the part has a material, add it as an attribute */
+			got_density = 0;
 			status = ProPartMaterialNameGet( ProMdlToPart(model), material );
 			if( status == PRO_TK_NO_ERROR ) {
 				fprintf( outfp, "attr set %s material_name {%s}\n",
 					 curr_part_name,
 					 ProWstringToString( str, material ) ); 
+
+				/* get the density for this material */
+				status = ProPartMaterialdataGet( ProMdlToPart(model), material, &material_props );
+				if( status == PRO_TK_NO_ERROR ) {
+					got_density = 1;
+					fprintf( outfp, "attr set %s density %g\n",
+						 curr_part_name,
+						 material_props.mass_density );
+				}
+			}
+
+			if( !got_density ) {
+				/* check if material has a density assigned */
+				status = ProSolidMassPropertyGet( ProMdlToSolid( model ), NULL, &mass_prop );
+				if( status == PRO_TK_NO_ERROR ) {
+					if( mass_prop.density > 0.0 ) {
+						fprintf( outfp, "attr set %s density %g\n",
+							 curr_part_name,
+							 mass_prop.density );
+					}
+				}
 			}
 
 			/* increment the region id */
@@ -1788,7 +1810,7 @@ output_part( ProMdl model )
 			}
 
 			feat_id_count = 0;
-			return ret;
+			return 0;
 		}
 		fprintf( stderr, "features unsuppressed!!\n" );
 		feat_id_count = 0;
