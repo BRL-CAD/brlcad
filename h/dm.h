@@ -17,6 +17,7 @@
 #define FONT9	"9x15"
 
 /* Display Manager Types */
+#define DM_TYPE_BAD     -1
 #define DM_TYPE_NULL	0
 #define DM_TYPE_PLOT	1
 #define DM_TYPE_PS	2
@@ -153,7 +154,10 @@ struct dm {
 #define DM_SET_WIN_BOUNDS(_dmp,_w) _dmp->dm_setWinBounds(_dmp,_w)
 #define DM_DEBUG(_dmp,_lvl) _dmp->dm_debug(_dmp,_lvl)
 
+extern int dm_Tcl_Init();
 extern struct dm *dm_open();
+extern fastf_t dm_X2Normal();
+extern fastf_t dm_Y2Normal();
 extern int dm_process_options();
 extern int dm_limit();
 extern int dm_unlimit();
