@@ -292,7 +292,7 @@ char		*argv[];
   	{
   		Tcl_AppendResult(interp, "Database write error, aborting.\n", (char *)NULL );
   		TCL_ERROR_RECOVERY_SUGGESTION;
-  		rt_comb_ifree( comb );
+  		rt_db_free_internal( &intern );
   		return TCL_ERROR;
   	}
 
@@ -932,7 +932,7 @@ int flag;
 		if( db_ck_v4gift_tree( comb->tree ) < 0 )
 		{
 			Tcl_AppendResult(interp, "Cannot flatten tree for editing\n", (char *)NULL );
-			rt_comb_ifree( comb );
+			rt_comb_ifree( &intern );
 			return;
 		}
 	}
