@@ -539,7 +539,7 @@ char *Pole_name;
 		dotA = VDOT(leftA, VtoPole_prj);
 		dotB = VDOT(leftB, VtoPole_prj);
 		
-		if (dotA > dotB) {
+		if (dotA < dotB) {
 			if (dotA >= 0.0) {
 				/* Point is "inside" face,
 				 * PCA is plane projection point.
