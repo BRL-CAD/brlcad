@@ -45,6 +45,9 @@ static const char libbu_vls_RCSid[] = "@(#)$Header$ (BRL)";
 BU_EXTERN(void	bu_vls_vprintf, (struct bu_vls *vls, CONST char *fmt, va_list ap));
 #endif
 
+const char bu_vls_message[] = "bu_vls_str";
+extern const char bu_strdup_message[];
+
 /*
  *			B U _ V L S _ I N I T
  *
@@ -146,8 +149,7 @@ int			extra;
 	if( extra < 40 )  extra = 40;
 	if( vp->vls_max <= 0 || vp->vls_str == (char *)0 )  {
 		vp->vls_max = extra;
-		vp->vls_str = (char *)bu_malloc( vp->vls_max,
-			"bu_vls_extend (initial)" );
+		vp->vls_str = (char *)bu_malloc( vp->vls_max, bu_vls_message );
 		vp->vls_len = 0;
 		vp->vls_offset = 0;
 		*vp->vls_str = '\0';
@@ -157,7 +159,7 @@ int			extra;
 		vp->vls_max += extra;
 		if( vp->vls_max < 120 )  vp->vls_max = 120;
 		vp->vls_str = (char *)bu_realloc( vp->vls_str, vp->vls_max,
-			 "bu_vls_extend (grow)" );
+			bu_vls_message );
 	}
 }
 
@@ -306,7 +308,7 @@ register CONST struct bu_vls *vp;
 	register int len;
 
 	len = bu_vls_strlen(vp);
-	str = bu_malloc(len+1, "bu_vls_strdup");
+	str = bu_malloc(len+1, bu_strdup_message );
 	strncpy(str, bu_vls_addr(vp), len);
 	str[len] = '\0';
 	return str;

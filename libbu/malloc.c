@@ -57,6 +57,9 @@ static struct memdebug	*bu_memdebug_lowat = (struct memdebug *)NULL;
 static size_t		bu_memdebug_len = 0;
 #define MEMDEBUG_NULL	((struct memdebug *)0)
 
+const char bu_strdup_message[] = "bu_strdup string";
+extern const char bu_vls_message[];	/* from vls.c */
+
 /*
  *			B U _ M E M D E B U G _ A D D
  *
@@ -163,6 +166,7 @@ CONST char	*str;
  *			B U _ M A L L O C
  *
  *  This routine only returns on successful allocation.
+ *  We promise never to return a NULL pointer; caller doesn't have to check.
  *  Failure results in bu_bomb() being called.
  */
 genptr_t
@@ -347,8 +351,19 @@ CONST char *str;
 		if( mp->magic != MDB_MAGIC )  bu_bomb("bu_memdebug_check() malloc tracing table corrupted!\n");
 		if( mp->mdb_len <= 0 )  continue;
 		ip = (long *)(((char *)mp->mdb_addr)+mp->mdb_len-sizeof(long));
-		fprintf(stderr,"%8lx %6d %s\n",
-			(long)(mp->mdb_addr), mp->mdb_len, mp->mdb_str);
+		if( mp->mdb_str == bu_strdup_message )  {
+			fprintf(stderr,"%8lx %6d bu_strdup: %s\n",
+				(long)(mp->mdb_addr), mp->mdb_len,
+				((char *)mp->mdb_addr) );
+		} else if( mp->mdb_str == bu_vls_message )  {
+			fprintf(stderr,"%8lx %6d bu_vls: %s\n",
+				(long)(mp->mdb_addr), mp->mdb_len,
+				((char *)mp->mdb_addr) );
+		} else {
+			fprintf(stderr,"%8lx %6d %s\n",
+				(long)(mp->mdb_addr), mp->mdb_len,
+				mp->mdb_str);
+		}
 		if( *ip != MDB_MAGIC )  {
 			fprintf(stderr,"\tCorrupted end marker was=x%lx\ts/b=x%x\n",
 				*ip, MDB_MAGIC);
@@ -376,8 +391,7 @@ register CONST char *cp;
 	}
 
 	len = strlen( cp )+2;
-	if( (base = bu_malloc( len, "bu_strdup duplicate string" )) == (char *)0 )
-		bu_bomb("bu_strdup:  unable to allocate memory");
+	base = bu_malloc( len, bu_strdup_message );
 
 	memcpy( base, cp, len );
 	return(base);
