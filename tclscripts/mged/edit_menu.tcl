@@ -27,6 +27,7 @@
 #
 proc init_solid_edit_menus { stype menu } {
     global mged_players
+    global mged_gui
     global edit_type
 
     if ![info exists mged_players] {
@@ -134,7 +135,6 @@ proc build_solid_edit_menus { w id pos cmds menu } {
 # Routine that build object edit menus.
 #
 proc init_object_edit_menus {} {
-    global mged_display
     global mged_players
     global mged_gui
     global edit_type
