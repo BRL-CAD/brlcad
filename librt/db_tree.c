@@ -618,12 +618,6 @@ struct combined_tree_state	**region_start_statepp;
 		struct db_tree_state	nts;
 		int			is_region;
 
-		if( dp->d_len <= 1 )  {
-			rt_log("Warning: combination with zero members \"%s\".\n",
-				dp->d_namep );
-			goto fail;
-		}
-
 		/*  Handle inheritance of material property. */
 		nts = *tsp;	/* struct copy */
 
@@ -662,7 +656,7 @@ struct combined_tree_state	**region_start_statepp;
 		}
 
 		tlp = trees = (struct tree_list *)rt_malloc(
-			sizeof(struct tree_list) * (dp->d_len-1),
+			sizeof(struct tree_list) * (dp->d_len),
 			"tree_list array" );
 
 		for( i=1; i < dp->d_len; i++ )  {
@@ -710,20 +704,22 @@ struct combined_tree_state	**region_start_statepp;
 			DB_FULL_PATH_POP(pathp);
 		}
 		if( tlp <= trees )  {
-			/* No subtrees */
-			goto fail;
+			/* No subtrees in this region, invent a NOP */
+			GETUNION( curtree, tree );
+			curtree->tr_op = OP_NOP;
+		} else {
+			curtree = db_mkgift_tree( trees, tlp-trees, tsp );
 		}
-
-		curtree = db_mkgift_tree( trees, tlp-trees, tsp );
 
 region_end:
 		if( is_region > 0 )  {
 			/*
 			 *  This is the end of processing for a region.
 			 */
-			if( tsp->ts_region_end_func )
+			if( tsp->ts_region_end_func )  {
 				curtree = tsp->ts_region_end_func(
 					&nts, pathp, curtree );
+			}
 		}
 	} else if( dp->d_flags & DIR_SOLID )  {
 		int	id;
@@ -928,7 +924,7 @@ union tree	*tp;
 
 top:
 	/* If this is a leaf, done */
-	if( tp->tr_op == OP_REGION )  return;
+	if( tp->tr_op == OP_REGION || tp->tr_op == OP_SOLID )  return;
 
 	/* This node is known to be a binary op */
 	if( tp->tr_op == OP_UNION )  {
@@ -1172,7 +1168,9 @@ struct combined_tree_state	**region_start_statepp;
 		if( curtree == TREE_NULL )  {
 			rt_log("db_walk_subtree()/db_recurse() FAIL\n");
 			db_free_combined_tree_state( ctsp );
+			/* Result is an empty tree */
 			tp->tr_op = OP_NOP;
+			tp->tr_a.tu_stp = 0;
 			return;
 		}
 		/* replace *tp with new subtree */
@@ -1233,12 +1231,11 @@ db_walk_dispatcher()
 		if( (curtree = db_reg_trees[mine]) == TREE_NULL )
 			continue;
 		db_walk_subtree( curtree, &region_start_statep );
-		if( curtree->tr_op == OP_NOP )  {
-			/* Entire tree vanished, nothing to make region from */
-			if( region_start_statep )
-				db_free_combined_tree_state( region_start_statep );
-			continue;
-		}
+
+		/*  curtree->tr_op may be OP_NOP here.
+		 *  It is up to db_reg_end_func() to deal with this,
+		 *  either by discarding it, or making a null region.
+		 */
 
 		if( !region_start_statep )
 			rt_bomb("ERROR db_walk_dispatcher() region started with no state?\n");
