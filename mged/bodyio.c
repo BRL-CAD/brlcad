@@ -303,7 +303,7 @@ char	*argv[];
 	(void)signal( SIGINT, SIG_IGN );
 	TCL_READ_ERR_return;
     }
-    if ( db5_get_raw_internal_ptr( &raw, ext.ext_buf ) < 0 )
+    if (db5_get_raw_internal_ptr(&raw, ext.ext_buf) == NULL)
     {
 	bu_free_external( &ext );
 	(void)signal( SIGINT, SIG_IGN );

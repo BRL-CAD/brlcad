@@ -497,7 +497,7 @@ rt_retrieve_binunif(struct rt_db_internal *intern,
 	     != ID_BINUNIF     || db_get_external( &ext, dp, dbip ) < 0 )
 		return -1;
 
-	if ( db5_get_raw_internal_ptr( &raw, ext.ext_buf ) < 0 ) {
+	if (db5_get_raw_internal_ptr(&raw, ext.ext_buf) == NULL) {
 	    bu_log("%s:%d\n", __FILE__, __LINE__);
 		bu_free_external( &ext );
 		return -1;

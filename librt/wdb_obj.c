@@ -5395,7 +5395,7 @@ wdb_hide_cmd(struct rt_wdb	*wdbp,
 			continue;
 		}
 
-		if( db5_get_raw_internal_ptr( &raw, ext.ext_buf ) < 0 ) {
+		if (db5_get_raw_internal_ptr(&raw, ext.ext_buf) == NULL) {
 			Tcl_AppendResult(interp, "db5_get_raw_internal_ptr() failed for ",
 					 dp->d_namep, " \n", (char *)NULL );
 			bu_free_external( &ext );
@@ -5487,7 +5487,7 @@ wdb_unhide_cmd(struct rt_wdb	*wdbp,
 			continue;
 		}
 
-		if( db5_get_raw_internal_ptr( &raw, ext.ext_buf ) < 0 ) {
+		if (db5_get_raw_internal_ptr(&raw, ext.ext_buf) == NULL) {
 			Tcl_AppendResult(interp, "db5_get_raw_internal_ptr() failed for ",
 					 dp->d_namep, " \n", (char *)NULL );
 			bu_free_external( &ext );

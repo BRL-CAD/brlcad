@@ -285,7 +285,7 @@ bu_log("NOTICE:  %s is BRL-CAD v5 format.\n", dbip->dbi_filename);
 		}
 		BU_INIT_EXTERNAL(&ext);
 		if( db_get_external( &ext, dp, dbip ) < 0 ||
-		    db5_get_raw_internal_ptr( &raw, ext.ext_buf ) < 0 )  {
+		    db5_get_raw_internal_ptr( &raw, ext.ext_buf ) == NULL )  {
 			bu_log("db_dirbuild(%s): improper v5 database, unable to read %s object\n",
 				dbip->dbi_filename, DB5_GLOBAL_OBJECT_NAME );
 			return -1;

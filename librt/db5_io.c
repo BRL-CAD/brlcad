@@ -871,7 +871,7 @@ db5_update_attributes( struct directory *dp, struct bu_attribute_value_set *avsp
 	if( db_get_external( &ext, dp, dbip ) < 0 )
 		return -2;		/* FAIL */
 
-	if( db5_get_raw_internal_ptr( &raw, ext.ext_buf ) < 0 )  {
+	if (db5_get_raw_internal_ptr(&raw, ext.ext_buf) == NULL) {
 		bu_log("db5_update_attributes(%s):  import failure\n",
 			dp->d_namep );
 		bu_free_external( &ext );
@@ -1351,7 +1351,7 @@ rt_db_external5_to_internal5(
 
 	BU_ASSERT_LONG( dbip->dbi_version, ==, 5 );
 
-	if( db5_get_raw_internal_ptr( &raw, ep->ext_buf ) < 0 )  {
+	if (db5_get_raw_internal_ptr(&raw, ep->ext_buf) == NULL) {
 		bu_log("rt_db_external5_to_internal5(%s):  import failure\n",
 			name );
 		return -3;
@@ -1543,7 +1543,7 @@ db5_get_attributes( const struct db_i *dbip, struct bu_attribute_value_set *avs,
 	if( db_get_external( &ext, dp, dbip ) < 0 )
 		return -1;		/* FAIL */
 
-	if( db5_get_raw_internal_ptr( &raw, ext.ext_buf ) < 0 ) {
+	if (db5_get_raw_internal_ptr(&raw, ext.ext_buf) == NULL) {
 		bu_free_external( &ext );
 		return -2;
 	}
