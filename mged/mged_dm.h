@@ -2,7 +2,7 @@
 #define SEEN_MGED_DM_H
 
 /*
- *			D M . H
+ *			M G E D _ D M . H
  *
  * Header file for communication with the display manager.
  *  
@@ -34,6 +34,8 @@
 #if !defined(PI)      /* sometimes found in math.h */
 #define PI 3.14159265358979323846264338327950288419716939937511
 #endif
+
+#define MGED_DISPLAY_VAR "mged_display"
 
 #define GED_MAX 2047.0
 #define GED_MIN -2048.0
