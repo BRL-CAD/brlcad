@@ -133,9 +133,7 @@ register struct application *ap;
 	/* Verify that direction vector has unit length */
 	if(rt_g.debug) {
 		FAST fastf_t f, diff;
-		f = ap->a_ray.r_dir[X] * ap->a_ray.r_dir[X] +
-			ap->a_ray.r_dir[Y] * ap->a_ray.r_dir[Y] +
-			ap->a_ray.r_dir[Z] * ap->a_ray.r_dir[Z];
+		f = MAGSQ(ap->a_ray.r_dir);
 		if( NEAR_ZERO(f, 0.0001) )  {
 			rt_bomb("rt_shootray:  zero length dir vector\n");
 			return(0);
