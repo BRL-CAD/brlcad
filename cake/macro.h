@@ -4,7 +4,9 @@
 **	$Header$
 */
 
-#define	checkpatlen(p)	if (strlen(p) > MAXPATSIZE) \
+/* XXX Ugh, these macros should be upper case */
+
+#define	checkpatlen(p)	if (strlen(p) > (unsigned)MAXPATSIZE) \
 			printf("Pattern %s too long\n", p), exit_cake(FALSE)
 #define	cdebug		if (cakedebug) printf
 
