@@ -1269,7 +1269,7 @@ proc rt_init_vars { id win } {
 	set rt_control($id,topAS) .$id.rtAS
 	set rt_control($id,topOLE) .$id.rtOLE
 	set rt_control($id,olist) {}
-	set rt_control($id,nproc) 1
+	set rt_control($id,nproc) 16
 	set rt_control($id,hsample) 0
 	set rt_control($id,jitter) 0
 	set rt_control($id,jitterTitle) "None"
