@@ -32,5 +32,9 @@ d-a <testdouble3.bin >d-a.log
 if [ ! -f d-a.log ] ; then
   echo "ERROR: d-a output not found"
 fi
+d-a <testlongtestdouble0123456789012345679890123456789012345678901234567890.txt >d-a.log
+if [ ! -f d-a.log ] ; then
+  echo "ERROR: d-a broken on long file name"
+fi
 
 echo "done checking d-a"

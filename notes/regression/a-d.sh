@@ -31,5 +31,9 @@ a-d <testasciidouble.txt >a-d.log
 if [ ! -f a-d.log ] ; then
   echo "ERROR: a-d output not found"
 fi
+a-d <testlongtestasciiint012345678901234567890123456789012345678901234567890.txt >a-d.log
+if [ ! -f a-d.log ] ; then
+  echo "ERROR: a-d broken on long file name"
+fi
 
 echo "done checking a-d"
