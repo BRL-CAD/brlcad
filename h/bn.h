@@ -120,7 +120,6 @@ BU_EXTERN(int			bn_common_image_zie, (int *width,
 int bn_decode_mat(mat_t m, const char *str);
 int bn_decode_tol(struct bn_tol *tol, const char *str);
 int bn_decode_quat(quat_t q, const char *str);
-int bn_decode_quat(quat_t q, const char *str);
 int bn_decode_vect( vect_t v, const char *str );
 int bn_decode_hvect(hvect_t v, const char *str);
 int bn_decode_plane(plane_t v, const char *str);
