@@ -123,6 +123,8 @@ matp_t xlate;
 			found = 1;
 			if( tp->tr_l.tl_mat )
 				bn_mat_mul2( xlate, tp->tr_l.tl_mat );
+			else
+				tp->tr_l.tl_mat = xlate;
 			if( rt_db_put_internal( cdp, dbip, &intern ) < 0 )
 			{
 				Tcl_AppendResult(interp, "rt_db_put_internal failed for ",
