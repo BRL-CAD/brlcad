@@ -1,4 +1,20 @@
+/*
+ *  Author -
+ *	Lee A. Butler
+ *  
+ *  Source -
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  
+ *  Distribution Status -
+ *	Public Domain, Distribution Unlimited.
+ */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (ARL)";
+#endif
+
 #include "conf.h"
+#include "machine.h"
 
 #include <stdio.h>
 #include <sys/types.h>
