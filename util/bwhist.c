@@ -1,5 +1,5 @@
 /*
- *		B W H I S T . C
+ *			B W H I S T . C
  *
  * Display, and optionally dump to tty, a histogram of a
  * black and white file.  Black is top of screen, white bottom.
@@ -40,7 +40,7 @@ char **argv;
 	static double scale;
 	unsigned char buf[512];
 	register unsigned char *bp;
-	Pixel white[512];
+	RGBpixel white[512];
 	FILE *fp;
 
 	/* check for verbose flag */
@@ -68,7 +68,7 @@ char **argv;
 	}
 
 	for( i = 0; i < 512; i++ )
-		white[i].red = white[i].green = white[i].blue = 255;
+		white[i][RED] = white[i][GRN] = white[i][BLU] = 255;
 
 	while( (n = fread(buf, sizeof(*buf), sizeof(buf), fp)) > 0 ) {
 		bp = &buf[0];
@@ -95,8 +95,8 @@ char **argv;
 		register int	value;
 		value = bin[i]*scale;
 		if( value == 0 && bin[i] != 0 ) value = 1;
-		fb_write( fbp, 0, 2*i, &white[0], value );
-		fb_write( fbp, 0, 2*i+1, &white[0], value );
+		fb_write( fbp, 0, 2*i, white, value );
+		fb_write( fbp, 0, 2*i+1, white, value );
 		if( verbose )
 			printf( "%3d: %10d (%10f)\n", i, bin[i], (float)bin[i]/(float)max );
 	}
