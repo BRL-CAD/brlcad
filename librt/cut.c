@@ -119,17 +119,6 @@ register struct rt_i *rtip;
 		rtip->rti_pmax[0] = rtip->mdl_max[0] + diff;
 		rtip->rti_pmax[1] = rtip->mdl_max[1] + diff;
 		rtip->rti_pmax[2] = rtip->mdl_max[2] + diff;
-
-		/* These calcuations no longer needed, kept for compat. */
-#define PL_MIN	(-32767L)
-#define PL_MAX	 (32767L)
-#define PL_DIFF	(PL_MAX-PL_MIN)
-		diff = PL_DIFF / (rtip->rti_pmax[X] - rtip->rti_pmin[X]);
-		f = PL_DIFF / (rtip->rti_pmax[Y] - rtip->rti_pmin[Y]);
-		if( f < diff )  diff = f;
-		f = PL_DIFF / (rtip->rti_pmax[Z] - rtip->rti_pmin[Z]);
-		if( f < diff )  diff = f;
-		rtip->rti_pconv = diff;
 	}
 
 	if( rt_g.debug&DEBUG_PLOTBOX )  {
