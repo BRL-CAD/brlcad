@@ -1,0 +1,86 @@
+.\" Set the interparagraph spacing to 1 (default is 0.4)
+.PD 1v
+.\"
+.\" The man page begins...
+.\"
+.TH BARY 1
+.SH NAME
+bary \- compute weighted sums of points
+.SH SYNOPSIS
+.BR "bary  [ -nt ] [ -s " "'x y z'" " ] [ " "file" " ] "
+.SH DESCRIPTION
+.I Bary
+computes weighted sums of a set of sites in Euclidean 3-space,
+writing them on the standard output.
+The site weights are read from
+.I file
+if it is specified;
+otherwise,
+.I bary
+reads from the standard input.
+A line of input must be either
+(1) entirely white space,
+(2) white space followed by a comment (begun with the '#' character),
+or (3) white-space-separated weights, one per site.
+
+By default,
+.I bary
+uses the three sites (1, 0, 0), (0, 1, 0), and (0, 0, 1).
+One or more occurences of the
+.B -s
+option cause
+.I bary
+to replace
+the default sites with all the sites
+(\fIx\fR, \fIy\fR, \fIz\fR)
+.\".RI "(" "x" ", " "y" ", " "z" ")" " " "huh?"
+so specified.
+
+The
+.B -n
+option causes
+.I bary
+to normalize each tuple of weights to sum to one.
+This has the effect of computing
+barycentric combinations of the sites.
+
+If any line of weights in the input stream
+contains more fields than the number of sites,
+.I bary
+will, by default,
+ignore the excess fields.
+The
+.B -t
+option causes
+.I bary
+to copy all such trailing fields verbatim onto the tail of
+the corresponding line of output.
+
+.SH EXAMPLE
+The command
+
+.nf
+.in +4
+bary -tn -s '0 0 0' -s '1 0 0' -s '0.5 0.866 0' <<EOF
+#------------------------------
+# x   y   z     aux. data
+#------------------------------
+ 1.0 2.5 3.6    58 alpha
+ 0.0 1.0 2.0    37 bravo
+13.0 9.2 6.3    69 charlie delta
+EOF
+.in -4
+.fi
+
+maps the triples to points in an equilateral triangle in the \fIxy\fR-plane,
+producing the following output:
+
+.nf
+.in +4
+0.605634 0.439099 0    58 alpha
+0.666667 0.577333 0    37 bravo
+0.433333 0.191432 0    69 charlie delta
+.in -4
+.fi
+.SH AUTHOR
+Paul Tanenbaum

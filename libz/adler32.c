@@ -1,9 +1,9 @@
 /* adler32.c -- compute the Adler-32 checksum of a data stream
- * Copyright (C) 1995-1996 Mark Adler
+ * Copyright (C) 1995-2002 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h 
  */
 
-/* $Id$ */
+/* @(#) $Id$ */
 
 #include "zlib.h"
 
@@ -18,7 +18,7 @@
 #define DO16(buf)   DO8(buf,0); DO8(buf,8);
 
 /* ========================================================================= */
-uLong adler32(adler, buf, len)
+uLong ZEXPORT adler32(adler, buf, len)
     uLong adler;
     const Bytef *buf;
     uInt len;

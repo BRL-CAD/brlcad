@@ -596,7 +596,7 @@ fi
 fi
 
 
-subdirs="itcl itk iwidgets2.2.0 iwidgets3.0.0"
+subdirs="itcl itk"
 
 
 
@@ -878,7 +878,7 @@ if test "$no_recursion" != yes; then
     esac
   done
 
-  for ac_config_dir in itcl itk iwidgets2.2.0 iwidgets3.0.0; do
+  for ac_config_dir in itcl itk; do
 
     # Do not complain, so a configure script can configure whichever
     # parts of a large source tree are present.

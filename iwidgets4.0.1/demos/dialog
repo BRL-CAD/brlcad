@@ -1,0 +1,47 @@
+# ----------------------------------------------------------------------
+#  DEMO: dialog in [incr Widgets]
+# ----------------------------------------------------------------------
+package require Iwidgets 4.0
+
+iwidgets::radiobox .rb -labelpos nw \
+  -labeltext "Use modality to\nlock up your\napplication:"
+pack .rb -padx 4 -pady 4
+
+.rb add none -text "-modality none"
+.rb add application -text "-modality application"
+.rb add global -text "-modality global"
+.rb select none
+
+button .activate -text "Push Me" -command {
+    .d configure -modality [.rb get]
+    .d activate
+}
+pack .activate
+
+#
+# Build a generic dialog
+#
+iwidgets::dialog .d
+.d buttonconfigure OK -command {
+    puts "pushed: OK"
+   .d deactivate 1
+}
+.d buttonconfigure Apply -command {
+    puts "pushed: Apply"
+}
+.d buttonconfigure Cancel -command {
+    puts "pushed: Cancel"
+    .d deactivate 0
+}
+.d buttonconfigure Help -command {
+    puts "pushed: Help"
+}
+ 
+#
+# Add something to the top of the dialog...
+#
+set win [.d childsite]
+label $win.ex -text "Standard Dialog\n(put your widgets here)" \
+    -background black -foreground white \
+    -width 40 -height 5
+pack $win.ex -expand yes -fill both -padx 4 -pady 4

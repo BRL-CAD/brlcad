@@ -7,7 +7,16 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #if defined(_MSC_VER)
+    /* Only do this when MSVC++ is compiling us. */
 #   define DllEntryPoint DllMain
+#   if defined(USE_TCL_STUBS) && (!defined(_MT) || !defined(_DLL) || defined(_DEBUG))
+	/*
+	 * This fixes a bug with how the Stubs library was compiled.
+	 * The requirement for msvcrt.lib from tclstubXX.lib should
+	 * be removed.
+	 */
+#	pragma comment(linker, "-nodefaultlib:msvcrt.lib")
+#   endif
 #endif
 
 /*

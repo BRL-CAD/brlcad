@@ -2012,3 +2012,30 @@
   from.  But it doesn't..  so hard code it for an 8.1 minimum to make the
   Itcl library have a better version range with the core as specific
   version tracking with the core isn't needed (at this time).
+
+==========================================================================
+ ------------------------ RELEASE 3.2 - 08/18/00 ------------------------
+==========================================================================
+
+9/22/00 (stubs cleanup) <davygrvy@ajubasolutions.com>
+  Itcl_InitStub prototype in itcl/generic/itcl.h was getting name mangled
+  by c++ compilers.  Fixed with an 'extern "C"' appropriately applied.
+
+4/07/01 (bug fix) <davygrvy@pobox.com>
+  Tcl's internal header, tclInt.h, in 8.4a2 got a small change in the Command
+  structure that needed 2 changes in Itcl to resolve.  1) #if/#else/#endif blocks
+  added in itcl_class.c and itc_ensemble.c allowing Itcl to compile. 2) added
+  a global variable called itclCompatFlags that's sets a flag in Itcl_Init()
+  that will modify the logic around access to cmdPtr->flags/deleted.  This
+  way, any core compile will yield a fully forward/backward compatible
+  binary (correct logic set at runtime).
+
+5/22/01 (bug fixes) <davygrvy@pobox.com>
+  makefile.vc lives again!  Brought back from it's death to conquere windows
+  once again for users who prefer to avoid (or can't understand or get the tools
+  installed for) the TEA build system.
+
+  Also, numerous fixes relating to Kevin Kenny's Tcl API mods for better CONST
+  support.  The latest headers for Tcl where throwing warnings all over the place
+  about type errors.  I fixed the sources, but haven't checked against older
+  headers yet.

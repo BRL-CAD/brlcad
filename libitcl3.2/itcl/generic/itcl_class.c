@@ -51,6 +51,8 @@ static void ItclFreeClass _ANSI_ARGS_((char* cdata));
 static Tcl_Var ItclClassRuntimeVarResolver _ANSI_ARGS_((
     Tcl_Interp *interp, Tcl_ResolvedVarInfo *vinfoPtr));
 
+extern int itclCompatFlags;
+
 
 /*
  * ------------------------------------------------------------------------
@@ -294,12 +296,24 @@ Itcl_DeleteClass(interp, cdefnPtr)
     entry = Tcl_FirstHashEntry(&cdefnPtr->info->objects, &place);
     while (entry) {
         contextObj = (ItclObject*)Tcl_GetHashValue(entry);
+
         if (contextObj->classDefn == cdefnPtr) {
             if (Itcl_DeleteObject(interp, contextObj) != TCL_OK) {
                 cdPtr = cdefnPtr;
                 goto deleteClassFail;
             }
+
+	    /*
+	     * Fix 227804: Whenever an object to delete was found we
+	     * have to reset the search to the beginning as the
+	     * current entry in the search was deleted and accessing it
+	     * is therefore not allowed anymore.
+	     */
+
+	    entry = Tcl_FirstHashEntry(&cdefnPtr->info->objects, &place);
+	    continue;
         }
+
         entry = Tcl_NextHashEntry(&place);
     }
 
@@ -398,6 +412,15 @@ ItclDestroyClassNamesp(cdata)
         contextObj = (ItclObject*)Tcl_GetHashValue(entry);
         if (contextObj->classDefn == cdefnPtr) {
             Tcl_DeleteCommandFromToken(cdefnPtr->interp, contextObj->accessCmd);
+	    /*
+	     * Fix 227804: Whenever an object to delete was found we
+	     * have to reset the search to the beginning as the
+	     * current entry in the search was deleted and accessing it
+	     * is therefore not allowed anymore.
+	     */
+
+	    entry = Tcl_FirstHashEntry(&cdefnPtr->info->objects, &place);
+	    continue;
         }
         entry = Tcl_NextHashEntry(&place);
     }
@@ -837,6 +860,8 @@ Itcl_HandleClass(clientData, interp, objc, objv)
                  *  incrementing a counter until a valid name is found.
                  */
                 do {
+		    Tcl_CmdInfo dummy;
+
                     sprintf(unique,"%.200s%d", cdefnPtr->name,
                         cdefnPtr->unique++);
                     unique[0] = tolower(unique[0]);
@@ -847,10 +872,16 @@ Itcl_HandleClass(clientData, interp, objc, objv)
                     Tcl_DStringAppend(&buffer, start+5, -1);
 
                     objName = Tcl_DStringValue(&buffer);
-                    if (Itcl_FindObject(interp, objName, &newObj) != TCL_OK) {
+
+		    /*
+		     * [Fix 227811] Check for any command with the
+		     * given name, not only objects.
+		     */
+
+                    if (Tcl_GetCommandInfo (interp, objName, &dummy) == 0) {
                         break;  /* if an error is found, bail out! */
                     }
-                } while (newObj != NULL);
+                } while (1);
 
                 *start = tmp;       /* undo null-termination */
                 objName = Tcl_DStringValue(&buffer);
@@ -903,7 +934,7 @@ Itcl_HandleClass(clientData, interp, objc, objv)
 int
 Itcl_ClassCmdResolver(interp, name, context, flags, rPtr)
     Tcl_Interp *interp;       /* current interpreter */
-    char* name;               /* name of the command being accessed */
+    CONST char* name;               /* name of the command being accessed */
     Tcl_Namespace *context;   /* namespace performing the resolution */
     int flags;                /* TCL_LEAVE_ERR_MSG => leave error messages
                                *   in interp if anything goes wrong */
@@ -914,6 +945,7 @@ Itcl_ClassCmdResolver(interp, name, context, flags, rPtr)
     Tcl_HashEntry *entry;
     ItclMemberFunc *mfunc;
     Command *cmdPtr;
+    int isCmdDeleted;
 
     /*
      *  If the command is a member function, and if it is
@@ -960,16 +992,39 @@ Itcl_ClassCmdResolver(interp, name, context, flags, rPtr)
      *    it--as it is being resolved again by the compiler.
      */
     cmdPtr = (Command*)mfunc->accessCmd;
-    if (!cmdPtr || cmdPtr->deleted) {
-        mfunc->accessCmd = NULL;
+    
+    /*
+     * The following #if is needed so itcl can be compiled with
+     * all versions of Tcl.  The integer "deleted" was renamed to
+     * "flags" in tcl8.4a2.  This #if is also found in itcl_ensemble.c .
+     * We're using a runtime check with itclCompatFlags to adjust for
+     * the behavior of this change, too.
+     *
+     */
+#if (TCL_MAJOR_VERSION == 8) && (TCL_MINOR_VERSION < 4)
+#   define CMD_IS_DELETED 0x1  /* If someone ever changes this from tcl.h,
+				* we must change our logic here, too */
+	isCmdDeleted = (!cmdPtr ||
+		(itclCompatFlags & ITCL_COMPAT_USECMDFLAGS ?
+		(cmdPtr->deleted & CMD_IS_DELETED) :
+		cmdPtr->deleted));
+#else
+	isCmdDeleted = (!cmdPtr ||
+		(itclCompatFlags & ITCL_COMPAT_USECMDFLAGS ?
+		(cmdPtr->flags & CMD_IS_DELETED) :
+		cmdPtr->flags));
+#endif
 
-        if ((flags & TCL_LEAVE_ERR_MSG) != 0) {
-            Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
-                "can't access \"", name, "\": deleted or redefined\n",
-                "(use the \"body\" command to redefine methods/procs)",
-                (char*)NULL);
-        }
-        return TCL_ERROR;   /* disallow access! */
+    if (isCmdDeleted) {
+	mfunc->accessCmd = NULL;
+
+	if ((flags & TCL_LEAVE_ERR_MSG) != 0) {
+	    Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+		"can't access \"", name, "\": deleted or redefined\n",
+		"(use the \"body\" command to redefine methods/procs)",
+		(char*)NULL);
+	}
+	return TCL_ERROR;   /* disallow access! */
     }
 
     *rPtr = mfunc->accessCmd;

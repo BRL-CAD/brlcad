@@ -1,0 +1,58 @@
+BRL-CAD Release 4.6   The BRL-CAD Ray-Tracer RT
+    Wed Dec 30 23:53:51 EST 1998, Compilation 1
+    morrison@window.arl.mil:/n/cad/vld/morrison/programming/brlcad/.rt.6d
+BRL-CAD Release 4.6   The BRL-CAD Ray-Tracing Library
+    Wed Dec 30 23:37:49 EST 1998, Compilation 1
+    morrison@window.arl.mil:/n/cad/vld/morrison/programming/brlcad/.librt.6d
+BRL-CAD Release 4.6   The BRL-CAD Numerical Computation Library
+    Wed Dec 30 23:00:29 EST 1998, Compilation 1
+    morrison@window.arl.mil:/n/cad/vld/morrison/programming/brlcad/.libbn.6d
+BRL-CAD Release 4.6   The BRL-CAD Utility Library
+    Wed Dec 30 22:59:12 EST 1998, Compilation 1
+    morrison@window.arl.mil:/n/cad/vld/morrison/programming/brlcad/.libbu.6d
+
+Planning to run with 2 processors
+db title:  SphereFlake
+100bb288 TOL 5.000000e-03 (sq=2.500000e-05) perp=1.000000e-06, para=9.999990e-01
+BRL-CAD Release 4.6   The BRL-CAD Optical Shader Library
+    Wed Dec 30 23:40:28 EST 1998, Compilation 1
+    morrison@window.arl.mil:/n/cad/vld/morrison/programming/brlcad/.liboptical.6d
+initial dynamic memory use=131072.
+GETTREE: cpu = 0.132987 sec, elapsed = 0.268198 sec
+    parent: 0.0user 0.0sys 0:00real 14% 0i+0d 216maxrss 1+24pf 12+1csw
+  children: 0.0user 0.0sys 0:00real 29% 0i+0d 464maxrss 0+13pf 6+0csw
+Additional dynamic memory used=524288. bytes
+
+...................Frame     0...................
+PREP: cpu = 0.034682 sec, elapsed = 0.035548 sec
+    parent: 0.0user 0.0sys 0:00real 100% 0i+0d 264maxrss 0+4pf 0+1csw
+  children: 0.0user 0.0sys 0:00real 0% 0i+0d 464maxrss 0+0pf 0+0csw
+Additional dynamic memory used=0. bytes
+Tree: 823 solids in 8 regions
+Model: X(-18202,18202), Y(-18000,16914), Z(-10300,157000)
+View: 352.851 azimuth, 16.905 elevation off of front view
+Orientation: 0.440681, 0.400509, 0.522645, 0.61011
+Eye_pos: 24185, -3328.56, 8489.93
+Size: 25562.8mm
+Grid: (49.9274, 49.9274) mm, (512, 512) pixels
+Beam: radius=24.9637 mm, divergence=0 mm/1mm
+Output file is 'sflake.pix'
+Dynamic scanline buffering
+Lighting: Ambient = 40%
+  /scene.r/light1.r: (13000, -13000, 152000), aimed at (0, 0, -1)
+  /scene.r/light1.r: visible, casts shadows, 5000 lumens (50%), halfang=180
+  /scene.r/light0.r: (5000, -5000, 150000), aimed at (0, 0, -1)
+  /scene.r/light0.r: visible, casts shadows, 10000 lumens (83%), halfang=180
+
+SHOT: cpu = 176.367 sec, elapsed = 90.6839 sec
+    parent: 88.5user 0.2sys 1:30real 97% 0i+0d 1880maxrss 0+1pf 547+2160csw
+  children: 87.8user 0.2sys 1:30real 97% 0i+0d 1880maxrss 0+2pf 200+0csw
+Additional dynamic memory used=131072. bytes
+4019960 solid/ray intersections: 3395228 hits + 624732 miss
+pruned 84.5%:  0 model RPP, 5336614 dups skipped, 11163251 solid RPP
+ 1323178 empty boxnodes (NUBSPT)
+Frame     0:   262144 pixels in      88.18 sec =    2972.71 pixels/sec
+Frame     0:  1307010 rays   in      88.18 sec =   14821.48 rays/sec (RTFM)
+Frame     0:  1307010 rays   in     176.37 sec =    7410.74 rays/CPU_sec
+Frame     0:  1307010 rays   in      90.68 sec =   14412.81 rays/sec (wallclock)
+

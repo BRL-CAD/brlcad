@@ -1,0 +1,179 @@
+.TH pcd-pix 1 " 28 November 1992"
+.IX pcd-pix
+.SH NAME
+pcd-pix \- convert a Photo-CD (tm) file into a pix(5) file
+.SH SYNOPSIS
+.B pcd-pix
+[options] file.pcd
+.SH DESCRIPTION
+pcd-pix reads a Photo-CD (tm) Image file or Overview file and
+extracts the desired image at one of six resolutions.
+By default, the
+.IR pix (5)
+or
+.IR bw (5)
+file will be written to stdout.
+By giving the optional
+.B \-p
+flag, the image will be displayed onto the current framebuffer instead.
+(See
+.IR pix\-fb (1)
+for details).
+.PP
+Photo-CD disks are recorded in ISO 9660 format,
+and can be mounted as part of the normal filesystem on most machines.
+The primary Image files are located in
+photo_cd/images/img####.pcd, where #### is the 4-digit frame number.
+The Overview file is found one level up, in "photo_cd/overview.pcd".
+.PP
+File names may be specified by their full name, or they
+may be specified as a positive integer.
+When given in this shortened form,
+.IR pcd-pix (1)
+will look for the file "img####.pcd" in the current directory.
+Note that Photo-CD files are just data files, and can be copied from
+the CD-ROM onto another filesystem with impunity.
+.PP
+Photo-CD images are recorded in a three-channel luminance and
+chrominance format called YCC,
+similar to the YUV format used in CCIR 601 ("D-1")
+digital television.
+The chrominance data is sampled at half the bandwidth of the chrominance
+data.
+The image data is gamma corrected during the scanning process
+before being recorded on the CD-ROM, so any additional gamma correction
+in your display should be disabled, typically by giving the command
+.br
+    fbgamma 1
+.br
+If this is not done, the image will be gamma-corrected twice, resulting
+in a very washed-out looking picture.
+You may need to experiment with values ranging from 0.7 to 1.4,
+depending on your monitor.
+It is believed that the original gamma correction was 2.2 as per
+the NTSC television specification.
+.PP
+The choice of resolutions,
+the reduced chrominance resolution, and the early gamma correction
+all seem to be a result of Kodak's having originally intended the home
+Photo-CD player and television set combination to be the replacement
+for the 35mm slide projector.
+These choices are less than
+optimal for serious professional applications,
+but good results can still be obtained
+by being aware of them.
+.SH OPTIONS
+.TP
+.B -b
+The
+.B -b
+flag will skip the color reconstitution process, and output the
+unmodified luminance (Y) data as a
+.IR bw (5)
+file.
+.TP
+.B -i
+Print five lines of information from the fileheader to stderr.
+This option works only for 
+Image files.
+The first line (Id1) describes the file format, and is alway PCD_IPI.
+The second line (Id2) describes the film type, speed, and 
+frame number from the original film roll.
+The third line (Id3) describes the scanning hardware used,
+and the fourth line (Id4) gives the name of the processing house.
+The fifth line (Id5) is usually blank.
+.TP
+.B -x
+Extended color resolution mode, or "Overskip Mode".
+Works on Base/16, Base/4, Base and 4Base, but not 16Base.
+In Photo-CD images the luma channel is stored in full resolution, the
+two chroma channels are stored in half resolution only and have to be
+interpolated. In the Overskip Mode the chroma channels of the next
+higher resolution are used, instead of interpolating. This gives
+more accurate results because all the lower resolution images are digitally
+derived from the original 16Base scan.
+.TP
+.B -1 | -Base/16 | -128x192
+Extract the Base/16 size picture.
+.TP
+.B -2 | -Base/4 | -256x384
+Extract the Base/4 size picture.
+.TP
+.B -3 | -Base | -512x768
+Extract the Base size picture.
+When no size option is given, this is the default resolution.
+.TP
+.B -4 | -4Base | -1024x1536
+Extract the 4Base size picture.
+.TP
+.B -5 | -16Base | -2048x3072
+Extract the 16Base size picture.
+.TP
+.B -0 | -Overview | -O
+Extract all pictures from an Overview file, and write them
+as a stream of Base/16 (192 by 128) images on stdout.
+The file must be "photo_cd/overview.pcd".
+For example, to view the overview images:
+.sp .5
+   pcd-pix -0 overview.pcd | pixtile -w192 -n128 -S1024 -- - | pix-fb -h
+.sp .5
+Similarly,
+.IR pixbustup (1)
+could be used to write the overview stream into a set of numbered files.
+.TP
+.B -p
+This flag causes
+.IR pix\-fb (1)
+to be run via
+.IR popen (3)
+to immediately display the image on the current framebuffer.
+This option was implemented in lieu of creating a separate
+.IR pcd-fb (1)
+program.
+.TP
+.B -h
+This flag, when given in conjunction with other flags and a file name,
+will output a BRL-CAD format option string
+of the form
+.br
+    -w768 -n512
+.br
+for the currently selected image size.
+This is useful when writing shell scripts that may operate on
+several Photo-CD resolutions interchangeably.
+In this way,
+the Photo-CD sizes don't need to be hard coded into the shell script.
+.SH BUGS
+I still don't have enough information about the Photo-CD to
+take care of all data structures. The information I have is
+quite vague and this program was developed by starring at
+hex-dumps and the famous trial-and-error-method. :-)
+.PP
+No assurance is made that this program will read any particular
+Photo-CD CD-ROM, although in practice it has done well, so far.
+It has not been tested with multi-session CD-ROMs.
+.PP
+When processing 4Base and 16Base images, a substantial amount of dynamic
+memory is used.  If
+.IR pcd-pix (1)
+fails with an "out of memory" error, you may need to configure more
+swap space on your machine, or add more RAM, or both.
+As a general guide, for 16Base images 32 MBytes is not enough, 64 MBytes is.
+.SH "SEE ALSO"
+hpcdtoppm(1), 
+brlcad(1), pix-fb(1), bw-fb(1), fbscanplot(1), pix(5), bw(5)
+.SH AUTHOR
+.IR pcd-pix (1)
+is derived from
+.IR hpcdtoppm (1)
+which is
+copyright (c) 1992 by Hadmut Danisch (danisch@ira.uka.de).
+Permission to use and distribute this software and its
+documentation for noncommercial use and without fee is hereby granted,
+provided that the above copyright notice appear in all copies and that
+both that copyright notice and this permission notice appear in
+supporting documentation. It is not allowed to sell this software in 
+any way. This software is not public domain.
+.SH TRADEMARK
+The name Photo-CD and the "film and disk" Photo-CD symbol are both
+trademarks of Kodak.

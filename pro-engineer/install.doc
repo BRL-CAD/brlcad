@@ -1,0 +1,41 @@
+	The Pro/Engineer to BRL-CAD conversion is a two step process.
+First, in Pro/Engineer, you must select "Proe-brl" under the "File"
+menu.  You will be prompted for an output file name, a starting region
+ident number, a maximum allowed error for the facetization
+approximation, and an angle control. The recomended value for the
+angle control is 0.5.  After all prompts have been satisfied, the
+currently displayed model will be output to a file in BRL-CAD ACSII
+format (actually a Tcl script). The output file can then be converted
+to BRL-CAD by using "asc2g" or by sourcing the file in MGED using the
+"source" command.
+
+
+	To inform Pro/Engineer about the Pro/Toolkit code that
+produces ASCII file, you need to create a "protk.dat" file as
+follows:
+
+line 1:name proe-brl
+line 2:startup spawn
+line 3:exec_file 'full path to wherever you install the proe-brl executable'
+line 4:text_dir 'full path to the "text" directory'
+line 5:revision 2001
+line 5:description Convert currently displayed model to BRL-CAD
+line 7:end
+
+	See "protk.dat" in this directory for an example. The
+exec_file must inlcude the name of the executable file, and the
+text_dir must include the name of the "text" directory. In the "text"
+directory Pro/Engineer will look for a subdirectory named "usascii"
+for a file named "usermsg.txt". The "text" directory in this directory
+should be used or at least copied verbatim to where you want to use it.
+
+	The "protk.dat" file must be located where Pro/Engineer will look for it.
+Pro/Engineer will look in your current directory and in Pro/Engineer's "text"
+directory (as well as a few other places).
+
+	If the "protk.dat" file, the "proe-brl" executable, and the
+"usermsg.txt" files are installed properly, you will see the message
+"Installation of Proe-BRL converter succeeded" in the Pro/Engineer
+message window when Pro/E starts.
+
+

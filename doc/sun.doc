@@ -1,0 +1,27 @@
+Some notes on using BRL-CAD on Sun Workstations (Release 3.0):
+
+As of Release 3.0 MGED is much improved on the Suns.  It now opens
+its own window which can be resized, iconified, etc., like other
+windows under SunTools.
+
+While a generic replacement for knobs and buttons was not completed,
+the function keys F1-F7 help somewhat.  Pressing these keys attaches
+certain "knob" functions to the mouse X or Y motions:
+
+F#	Function	Mouse
+ 1	Zoom		y
+ 2	Z Slew		y
+ 3	X Slew		x
+ 4	Y Slew		y
+ 5	X Rotate	x
+ 6	Y Rotate	y
+ 7	Z Rotate	y
+
+These keys can be used as "chords", e.g. pressing F3 and F4 together
+will give you X and Y translates on the mouse.
+
+Frame buffer support has also been greatly enhanced, but the released
+version does not yet open its own window for display.  Rather, it
+covers the window a frame buffer command was invoked from with the
+display.  Panning and Zooming are now supported, as is shared memory.
+"/dev/sunp" can be used to get private memory.

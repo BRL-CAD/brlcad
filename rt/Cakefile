@@ -1,0 +1,185 @@
+/*
+ *			rt/Cakefile
+ *
+ *  $Header$
+ */
+#define CONFIGDEFS	RT_CONFIG
+
+#define SRCDIR	rt
+#define PRODUCTS	rt rtrad rtpp rtray rtshot rtwalk rtcheck \
+			rtg3 rtcell rtxray rthide rtfrac rtrange \
+			rtregis rtscale rtsil rtweight rtedge rt_simple rtarea \
+			rt_bot_faces
+#define	SRCSUFF	.c
+#define MANSECTION	1
+
+#include "../Cakefile.defs"
+#include "../Cakefile.prog"
+
+/* light.h material.h mathtab.h rad.h rdebug.h */
+#define FILES	\
+	rtshot \
+	main opt do worker \
+	view viewpp viewray viewrad viewcheck viewg3 \
+	shade \
+	material refract \
+	wray
+
+/*  The "top-half" (user interface) for the RT family of programs */
+#define RTUIF	main.o opt.o do.o worker.o
+
+/* Explicit composition of each product */
+
+#define	RT_OBJ	RTUIF view.o wray.o material.o refract.o \
+		shade.o
+
+
+rt:	RT_OBJ LIBOPTICAL_DEP LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	newvers.sh version "The BRL-CAD Ray-Tracer RT"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS RT_OBJ vers.o LIBOPTICAL LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES  LIBES -o rt
+
+#define RT_BOT_FACES_OBJ	RTUIF view_bot_faces.o
+
+rt_bot_faces:	RT_BOT_FACES_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	newvers.sh version "RT BOT FACES"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS RT_BOT_FACES_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rt_bot_faces
+
+#define RTRAY_OBJ	RTUIF viewray.o wray.o
+
+rtray:	RTRAY_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	newvers.sh version "RT Ray"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS RTRAY_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rtray
+
+#define RTAREA_OBJ	RTUIF viewarea.o
+
+rtarea:	RTAREA_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	newvers.sh version "RT Area"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS RTAREA_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rtarea
+
+#define RTPP_OBJ	RTUIF viewpp.o
+
+rtpp:	RTPP_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	newvers.sh version "RT pretty-picture"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS RTPP_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rtpp
+
+#define RTXRAY_OBJ	RTUIF viewxray.o
+
+rtxray:	RTXRAY_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	newvers.sh version "RT X-Ray"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS RTXRAY_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rtxray
+
+#define RTRAD_OBJ	RTUIF viewrad.o
+
+rtrad:	RTRAD_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	newvers.sh version "RT Rad"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS RTRAD_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rtrad
+
+#define RTSCAT_OBJ	RTUIF viewscat.o
+
+rtbscat: RTSCAT_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	newvers.sh version "RT BackScatter"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS RTSCAT_OBJ vers.o LIBRAD LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rtbscat
+
+#define RTCHECK_OBJ	RTUIF viewcheck.o
+
+rtcheck: RTCHECK_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	newvers.sh version "RT Check"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS RTCHECK_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rtcheck
+
+rtshot:	rtshot.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS rtshot.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o rtshot
+
+rtwalk:	rtwalk.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS rtwalk.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o rtwalk
+
+#define RTG3_OBJ	RTUIF viewg3.o
+
+rtg3:	RTG3_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	newvers.sh version "RTG3"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS RTG3_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rtg3
+
+#define RTCELL_OBJ	RTUIF viewcell.o
+
+rtcell:	RTCELL_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	newvers.sh version "RTCELL"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS RTCELL_OBJ vers.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBFB LIBFB_LIBES LIBES -o rtcell
+
+#define RTHIDE_OBJ	RTUIF viewhide.o
+
+rthide:	RTHIDE_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	newvers.sh version "RT Hidden-Line Plot"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS RTHIDE_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rthide
+
+#define RTEDGE_OBJ	RTUIF viewedge.o
+
+rtedge:	RTEDGE_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	newvers.sh version "RT LGT-Style Hidden-Line Renderer"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS RTEDGE_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rtedge
+
+#define RTFRAC_OBJ	RTUIF viewfrac.o
+
+rtfrac:	RTFRAC_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	newvers.sh version "RT Volume Fractions"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS RTFRAC_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rtfrac
+
+#define RTRANGE_OBJ	RTUIF viewrange.o
+
+rtrange:	RTRANGE_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	newvers.sh version "RT Range Plot"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS RTRANGE_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rtrange
+
+#define RTDUMMY_OBJ	RTUIF viewdummy.o
+
+rtdummy:	RTDUMMY_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	newvers.sh version "RT Dummy"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS RTDUMMY_OBJ vers.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBFB LIBFB_LIBES LIBES -o rtdummy
+
+#define RT3D_OBJ  RTUIF view3d.o
+
+rt3d:	RT3D_OBJ  LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	newvers.sh version "RT 3D"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS RT3D_OBJ vers.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBFB LIBFB_LIBES LIBES -o rt3d
+
+
+rtregis:	rtregis.o read-rtlog.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS rtregis.o read-rtlog.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o rtregis
+
+rtscale:	rtscale.o read-rtlog.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS rtscale.o read-rtlog.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBWDB LIBES -o rtscale
+
+#define RTSIL_OBJ	RTUIF viewsil.o
+
+rtsil:	RTSIL_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	newvers.sh version "RT Silhouette"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS RTSIL_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rtsil
+
+#define RTWEIGHT_OBJ	RTUIF viewweight.o
+
+rtweight:	RTWEIGHT_OBJ LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBFB_DEP
+	newvers.sh version "RT Weight"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS RTWEIGHT_OBJ vers.o LIBRT LIBBN LIBFB LIBFB_LIBES LIBBU LIBBU_LIBES LIBES -o rtweight
+
+rt_simple:	rt_simple.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS rt_simple.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o rt_simple
+
+
+#include "../Cakefile.rules"

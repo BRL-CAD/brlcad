@@ -29,7 +29,7 @@ ItkStubs itkStubs = {
     TCL_STUB_MAGIC,
     NULL,
     Itk_Init, /* 0 */
-    NULL, /* 1 */
+    Itk_SafeInit, /* 1 */
     Itk_ConfigBodyCmd, /* 2 */
     Itk_UsualCmd, /* 3 */
     Itk_ClassOptionDefineCmd, /* 4 */

@@ -1,0 +1,46 @@
+/*
+ *			liboptical/Cakefile
+ */
+#define SRCDIR	liboptical
+#define PRODUCTS	liboptical.ARCH_SUF
+#define	SRCSUFF	.c
+#define MANSECTION	3
+
+#include "../Cakefile.defs"
+
+#define FILES	\
+	init \
+	photonmap \
+	sh_air \
+	sh_brdf \
+	sh_billboard \
+	sh_camo \
+	sh_cloud \
+	sh_cook \
+	sh_fire \
+	sh_flat \
+	sh_gauss \
+	sh_grass \
+	sh_light \
+	sh_noise \
+	sh_null \
+	sh_plastic \
+	sh_points \
+	sh_prj \
+	sh_rtrans \
+	sh_scloud \
+	sh_spm \
+	sh_stack \
+	sh_stxt \
+	sh_tcl\
+	sh_text \
+	sh_toyota \
+	sh_treetherm \
+	sh_wood \
+	turb
+
+#define VERSION_VARIABLE	liboptical_version
+#define LIBRARY_TITLE		"The BRL-CAD Optical Shader Library"
+
+#include "../Cakefile.lib"
+#include "../Cakefile.rules"
