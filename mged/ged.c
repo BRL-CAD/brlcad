@@ -248,6 +248,10 @@ char **argv;
 	adc_a1_deg = adc_a2_deg = 45.0;
 	curr_dm_list->s_info->opp = &tkName;
 
+	bu_vls_init(&fps_name);
+	bu_vls_printf(&fps_name, "mged_display(%S,fps)",
+		      &curr_dm_list->_dmp->dm_tkName);
+
 	bn_mat_idn( identity );		/* Handy to have around */
 	/* init rotation matrix */
 	Viewscale = 500;		/* => viewsize of 1000mm (1m) */
@@ -1431,7 +1435,13 @@ new_mats()
 		       temp , temp1 , (fastf_t)0.005 );
 	}
 #endif
-
+#ifdef DO_NEW_EDIT_MATS
+	if( state != ST_VIEW ) {
+	  bn_mat_mul( model2objview, model2view, modelchanges );
+	  bn_mat_inv( objview2model, model2objview );
+	}
+	dmaflag = 1;
+#else
 	if( state != ST_VIEW ) {
 	    register struct dm_list *p;
 	    struct dm_list *save_dm_list;
@@ -1451,7 +1461,30 @@ new_mats()
 	    update_views = 1;
 	}else
 	  dmaflag = 1;
+#endif
 }
+
+#ifdef DO_NEW_EDIT_MATS
+void
+new_edit_mats()
+{
+  register struct dm_list *p;
+  struct dm_list *save_dm_list;
+
+  save_dm_list = curr_dm_list;
+  for( BU_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+    if(!p->_owner)
+      continue;
+
+    curr_dm_list = p;
+    bn_mat_mul( model2objview, model2view, modelchanges );
+    bn_mat_inv( objview2model, model2objview );
+    dmaflag = 1;
+  }
+
+  curr_dm_list = save_dm_list;
+}
+#endif
 
 /*
  *			D O _ R C
