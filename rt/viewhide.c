@@ -158,8 +158,6 @@ struct application	*ap;
 		npsw = 1;		/* Disable parallel processing */
 	}
 
-/***	regionfix( ap, "rtray.regexp" );		/* XXX */
-
 	/* malloc() two buffers that have room for as many struct cell 's
 	 * as the incoming file is wide (width), plus two for the border.
 	 * Rather than using malloc(), though, rt_malloc() is used.  This
