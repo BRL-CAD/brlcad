@@ -34,12 +34,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./sedit.h"
 #include "./dm.h"
 
-#define W_AXIS 0
-#define V_AXIS 1
-#define E_AXIS 2
+#define W_AXES 0
+#define V_AXES 1
+#define E_AXES 2
 
-extern point_t e_axis_pos;
-static void draw_axis();
+extern point_t e_axes_pos;
+static void draw_axes();
 
 mat_t	incr_change;
 mat_t	modelchanges;
@@ -380,11 +380,11 @@ mat_print("pmat", pmat);
 		}
 	}
 
-  if(mged_variables.w_axis)
-    draw_axis(W_AXIS);  /* draw world view axis */
+  if(mged_variables.w_axes)
+    draw_axes(W_AXES);  /* draw world view axis */
 
-  if(mged_variables.v_axis)
-    draw_axis(V_AXIS);  /* draw view axis */
+  if(mged_variables.v_axes)
+    draw_axes(V_AXES);  /* draw view axis */
 
 	/*
 	 *  Draw all solids involved in editing.
@@ -422,16 +422,16 @@ mat_print("pmat", pmat);
 		}
 	}
 
-  if(mged_variables.e_axis)
-    draw_axis(E_AXIS); /* draw edit axis */
+  if(mged_variables.e_axes)
+    draw_axes(E_AXES); /* draw edit axis */
 }
 
 /*
- * Draw view axis or edit axis.
+ * Draw view, edit or world axes.
  */
 static void
-draw_axis(axis)
-int axis;
+draw_axes(axes)
+int axes;
 {
   struct solid sp;
   struct rt_vlist vlist;
@@ -452,8 +452,8 @@ int axis;
   RT_LIST_APPEND(&sp.s_vlist, (struct rt_list *)&vlist);
   sp.s_soldash = 0;
 
-  if(axis_color_hook)
-    (*axis_color_hook)(axis, sp.s_color);
+  if(axes_color_hook)
+    (*axes_color_hook)(axes, sp.s_color);
   else{/* use highlight color */
     color = 1;
   }
@@ -465,7 +465,7 @@ int axis;
 
     for(j = 0; j < 3; ++j){
       if(i == j){
-	if(axis == V_AXIS && mged_variables.v_axis > 1){
+	if(axes == V_AXES && mged_variables.v_axes > 1){
 	  a1[j] = -0.125;
 	  a2[j] = 0.125;
 	}else{
@@ -478,38 +478,38 @@ int axis;
       }
     }
 
-    if(axis == W_AXIS){ /* world axis */
+    if(axes == W_AXES){ /* world axes */
       m1[X] = Viewscale*a1[X];
       m1[Y] = Viewscale*a1[Y];
       m1[Z] = Viewscale*a1[Z];
       m2[X] = Viewscale*a2[X];
       m2[Y] = Viewscale*a2[Y];
       m2[Z] = Viewscale*a2[Z];
-    }else if(axis == V_AXIS){  /* create view axis */
-      /* build axis in view coodinates */
+    }else if(axes == V_AXES){  /* create view axes */
+      /* build axes in view coodinates */
 
       /* apply rotations */
       MAT4X3PNT(v1, Viewrot, a1);
       MAT4X3PNT(v2, Viewrot, a2);
 
       /* possibly translate */
-      if(mged_variables.v_axis > 1){
-	switch(mged_variables.v_axis){
+      if(mged_variables.v_axes > 1){
+	switch(mged_variables.v_axes){
 	case 2:     /* lower left */
 	  ox = -0.8;
-	  oy = -0.6;
+	  oy = -0.7;
 	  break;
 	case 3:     /* upper left */
-	  ox = -0.8;
-	  oy = 0.6;
+	  ox = -0.425;
+	  oy = 0.8;
 	  break;
 	case 4:     /* upper right */
 	  ox = 0.8;
-	  oy = 0.6;
+	  oy = 0.8;
 	  break;
 	case 5:     /* lower right */
 	  ox = 0.8;
-	  oy = -0.6;
+	  oy = -0.7;
 	  break;
 	default:    /* center */
 	  ox = 0;
@@ -526,21 +526,21 @@ int axis;
       /* convert view to model coordinates */
       MAT4X3PNT(m1, view2model, v1);
       MAT4X3PNT(m2, view2model, v2);
-    }else{  /* create edit axis */
+    }else{  /* create edit axes */
       if(state == ST_S_EDIT || state == ST_O_EDIT){
-	/* build edit axis in model coordinates */
+	/* build edit axes in model coordinates */
 
 	  /* apply rotations */
 	  MAT4X3PNT(m1, acc_rot_sol, a1);
 	  MAT4X3PNT(m2, acc_rot_sol, a2);
 #if 1
 	  /* apply scale and translations */
-	  m1[X] = Viewscale*m1[X] + e_axis_pos[X];
-	  m1[Y] = Viewscale*m1[Y] + e_axis_pos[Y];
-	  m1[Z] = Viewscale*m1[Z] + e_axis_pos[Z];
-	  m2[X] = Viewscale*m2[X] + e_axis_pos[X];
-	  m2[Y] = Viewscale*m2[Y] + e_axis_pos[Y];
-	  m2[Z] = Viewscale*m2[Z] + e_axis_pos[Z];
+	  m1[X] = Viewscale*m1[X] + e_axes_pos[X];
+	  m1[Y] = Viewscale*m1[Y] + e_axes_pos[Y];
+	  m1[Z] = Viewscale*m1[Z] + e_axes_pos[Z];
+	  m2[X] = Viewscale*m2[X] + e_axes_pos[X];
+	  m2[Y] = Viewscale*m2[Y] + e_axes_pos[Y];
+	  m2[Z] = Viewscale*m2[Z] + e_axes_pos[Z];
 #else
 	  m1[X] = Viewscale*m1[X] + es_keypoint[X];
 	  m1[Y] = Viewscale*m1[Y] + es_keypoint[Y];
@@ -553,7 +553,7 @@ int axis;
 	return;
     }
 
-    /* load axis */
+    /* load axes */
     VMOVE(vlist.pt[i*2], m1);
     vlist.cmd[i*2] = RT_VLIST_LINE_MOVE;
     VMOVE(vlist.pt[i*2 + 1], m2);
@@ -562,13 +562,13 @@ int axis;
     /* convert point m2 from model to view space */
     MAT4X3PNT(v2, model2view, m2);
 
-    /* label axis */
+    /* label axes */
     dmp->dmr_puts(labels[i], ((int)(2048.0 * v2[X])) + 15,
 		  ((int)(2048.0 * v2[Y])) + 15, 1, DM_YELLOW);
   }
 
   dmp->dmr_newrot(model2view, 0);
 
-  /* draw axis */
+  /* draw axes */
   dmp->dmr_object( &sp, model2view, (double)1.0, color );
 }
