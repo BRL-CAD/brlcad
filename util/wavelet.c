@@ -146,9 +146,9 @@ void
 wlt_decompose_1d()
 {
 	genptr_t buf, tbuf;
-	int i, n;
-	int sample_size;	/* size of data type x #values/sample */
-	int scanline_size;	/* # bytes in a scanline */
+	unsigned long int i, n;
+	unsigned long int sample_size;	/* size of data type x #values/sample */
+	unsigned long int scanline_size;	/* # bytes in a scanline */
 	
 	sample_size = value_size * channels;
 	scanline_size = sample_size * width;
@@ -166,7 +166,7 @@ wlt_decompose_1d()
 		n = fread(buf, sample_size, width, stdin);
 		if (n  != width ) {
 			fprintf(stderr, 
-				"read failed line %d got %d not %lu\n",
+				"read failed line %lu got %lu not %lu\n",
 				 i, n, width);
 			exit(-1);
 		}
@@ -206,8 +206,8 @@ void
 wlt_decompose_2d()
 {
 	genptr_t buf, tbuf;
-	int sample_size;
-	int scanline_size;
+	unsigned long int sample_size;
+	unsigned long int scanline_size;
 
 	sample_size = value_size * channels;
 	scanline_size = sample_size * width;
@@ -227,8 +227,7 @@ wlt_decompose_2d()
 	}
 
 	if (fread(buf, scanline_size, height, stdin) != height) {
-		fprintf(stderr, "read error getting %dx%lu bytes\n",
-			scanline_size, height);
+		fprintf(stderr, "read error getting %lux%lu bytes\n", scanline_size, height);
 		exit(-1);
 	}
 
@@ -272,9 +271,9 @@ void
 wlt_reconstruct_1d()
 {
 	genptr_t buf, tbuf;
-	int i, n;
-	int sample_size;	/* size of data type x #values/sample */
-	int scanline_size;	/* # bytes in a scanline */
+	unsigned long int i, n;
+	unsigned long int sample_size;	/* size of data type x #values/sample */
+	unsigned long int scanline_size;	/* # bytes in a scanline */
 	
 	sample_size = value_size * channels;
 	scanline_size = sample_size * width;
@@ -293,7 +292,7 @@ wlt_reconstruct_1d()
 		n = fread(buf, sample_size, width, stdin);
 		if (n  != width ) {
 			fprintf(stderr, 
-				"read failed line %d got %d not %lu\n",
+				"read failed line %lu got %lu not %lu\n",
 				 i, n, width);
 			exit(-1);
 		}
@@ -337,8 +336,8 @@ void
 wlt_reconstruct_2d()
 {
 	genptr_t buf, tbuf;
-	int sample_size;
-	int scanline_size;
+	unsigned long int sample_size;
+	unsigned long int scanline_size;
 
 	sample_size = value_size * channels;
 	scanline_size = sample_size * width;
@@ -357,7 +356,7 @@ wlt_reconstruct_2d()
 	}
 
 	if (fread(buf, scanline_size, height, stdin) != height) {
-		fprintf(stderr, "read error getting %dx%lu bytes\n", scanline_size, height);
+		fprintf(stderr, "read error getting %lux%lu bytes\n", scanline_size, height);
 		exit(-1);
 	}
 
@@ -433,4 +432,6 @@ char *av[];
 	usage("must specify either decompose (-d) or reconstruct (-r)\n");
 	return -1;
 }
+
+
 
