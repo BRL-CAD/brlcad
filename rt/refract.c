@@ -203,8 +203,10 @@ do_inside:
 		 *  and returns next RI in sub_ap.a_refrac_index
 		 */
 		if( rdebug&RDEBUG_RAYWRITE )  {
-			wraypts( sub_ap.a_ray.r_pt, sub_ap.a_uvec,
-				ap, stdout );
+			wraypts( sub_ap.a_ray.r_pt,
+				sub_ap.a_ray.r_dir,
+				sub_ap.a_uvec,
+				2, ap, stdout );	/* 2 = ?? */
 		}
 		if( rdebug&RDEBUG_RAYPLOT )  {
 			pl_color( stdout, 0, 255, 0 );
