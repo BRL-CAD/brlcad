@@ -1047,6 +1047,7 @@ union tree	*tp;
 			 * left to someone else.
 			 * It would be rude to zap all the other regions here.
 			 */
+#if 0
 			if( r->l.magic == (-1L) )  {
 				rt_log("db_free_tree: OP_NMG_TESS, r = -1, skipping\n");
 			} else if( r->l.magic != NMG_REGION_MAGIC )  {
@@ -1054,6 +1055,9 @@ union tree	*tp;
 				rt_log("db_free_tree: OP_NMG_TESS, bad magic x%x (s/b x%x), skipping\n",
 					r->l.magic, NMG_REGION_MAGIC );
 			} else {
+#endif
+			if( r->l.magic == NMG_REGION_MAGIC )
+			{
 				NMG_CK_REGION(r);
 				nmg_kr(r);
 			}
@@ -1064,7 +1068,8 @@ union tree	*tp;
 	case OP_NOT:
 	case OP_GUARD:
 	case OP_XNOP:
-		db_free_tree( tp->tr_b.tb_left );
+		if( tp->tr_b.tb_left->magic == RT_TREE_MAGIC )
+			db_free_tree( tp->tr_b.tb_left );
 		tp->tr_b.tb_left = TREE_NULL;
 		break;
 
@@ -1073,9 +1078,11 @@ union tree	*tp;
 	case OP_SUBTRACT:
 	case OP_XOR:
 		/* This node is known to be a binary op */
-		db_free_tree( tp->tr_b.tb_left );
+		if( tp->tr_b.tb_left->magic == RT_TREE_MAGIC )
+			db_free_tree( tp->tr_b.tb_left );
 		tp->tr_b.tb_left = TREE_NULL;
-		db_free_tree( tp->tr_b.tb_right );
+		if( tp->tr_b.tb_right->magic == RT_TREE_MAGIC )
+			db_free_tree( tp->tr_b.tb_right );
 		tp->tr_b.tb_right = TREE_NULL;
 		break;
 
