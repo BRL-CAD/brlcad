@@ -416,6 +416,7 @@ int	kind;
 
 	/* Initial vaues for options, must be reset each time */
 	ncpu = 1;
+	mged_draw_nmg_only = 0;	/* no booleans */
 	mged_nmg_triangulate = 1;
 	mged_draw_wireframes = 0;
 	mged_draw_normals = 0;
