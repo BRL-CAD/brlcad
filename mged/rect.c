@@ -240,9 +240,10 @@ rt_rect_area()
   }
 
   bu_vls_init(&vls);
-  bu_vls_printf(&vls, "rt -w %d -n %d -V %lf -F %d -j %d,%d,%d,%d",
+  bu_vls_printf(&vls, "rt -w %d -n %d -V %lf -F %d -j %d,%d,%d,%d -C%d/%d/%d",
 		dmp->dm_width, dmp->dm_height, dmp->dm_aspect,
-		mged_variables->mv_port, xmin, ymin, xmax, ymax);
+		mged_variables->mv_port, xmin, ymin, xmax, ymax,
+		color_scheme->cs_bg[0], color_scheme->cs_bg[1], color_scheme->cs_bg[2]);
   (void)Tcl_Eval(interp, bu_vls_addr(&vls));
   (void)Tcl_ResetResult(interp);
   bu_vls_free(&vls);
