@@ -624,8 +624,11 @@ struct seg		*seghead;
 	 *  If the eccentricities of the two ellipses are the same,
 	 *  then the cone equation reduces to a much simpler quadratic
 	 *  form.  Otherwise it is a (gah!) quartic equation.
+	 *
+	 *  this can only be done when C.cf[0] is not too small!!!! (JRA)
 	 */
-	if ( tgc->tgc_AD_CB ){
+	C.cf[0] = Xsqr.cf[0] + Ysqr.cf[0] - Rsqr.cf[0];
+	if( tgc->tgc_AD_CB && !NEAR_ZERO( C.cf[0], 1.0e-10 )  ) {
 		FAST fastf_t roots;
 
 		/*
@@ -633,7 +636,6 @@ struct seg		*seghead;
 		 *  (void) rt_poly_sub( &sum, &Rsqr, &C );
 		 */
 		C.dgr = 2;
-		C.cf[0] = Xsqr.cf[0] + Ysqr.cf[0] - Rsqr.cf[0];
 		C.cf[1] = Xsqr.cf[1] + Ysqr.cf[1] - Rsqr.cf[1];
 		C.cf[2] = Xsqr.cf[2] + Ysqr.cf[2] - Rsqr.cf[2];
 
@@ -820,6 +822,10 @@ struct seg		*seghead;
 		} else {
 			/* intersection apparently invalid  */
 			bu_log("tgc(%s):  only 1 intersect\n", stp->st_name);
+			bu_log( "\t (%d %d): ray pt = (%g %g %g), dir = (%g %g %g)\n",
+				ap->a_x, ap->a_y,
+				V3ARGS( ap->a_ray.r_pt ),
+				V3ARGS( ap->a_ray.r_dir ) );
 			return(0);
 		}
 
