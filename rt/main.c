@@ -30,6 +30,7 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 #include "./mathtab.h"
 #include "./rdebug.h"
+#include "../librt/debug.h"
 
 #ifdef HEP
 # include <synch.h>
@@ -83,8 +84,7 @@ fastf_t		zoomout=1;	/* >0 zoom out, 0..1 zoom in */
 char		*scanbuf;	/*** Output buffering, for parallelism */
 #endif
 
-/* Eventually, npsw = MAX_PSW by default */
-int		npsw = 1;		/* number of worker PSWs to run */
+int		npsw = MAX_PSW;		/* number of worker PSWs to run */
 struct resource	resource[MAX_PSW];	/* memory resources */
 /***** end variables shared with worker() */
 
@@ -340,6 +340,9 @@ char **argv;
 		rtip->mdl_min[X], rtip->mdl_max[X],
 		rtip->mdl_min[Y], rtip->mdl_max[Y],
 		rtip->mdl_min[Z], rtip->mdl_max[Z] );
+
+	if(rdebug&RDEBUG_RTMEM)
+		rt_g.debug |= DEBUG_MEM;
 
 #ifdef PARALLEL
 	/* Get enough dynamic memory to keep from making malloc sbrk() */
