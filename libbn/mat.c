@@ -47,7 +47,6 @@ static char RCSmat[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 
-extern int	fprintf();
 extern double	sin(), cos();
 
 static double degtorad = 0.0174532925;
@@ -213,7 +212,7 @@ register matp_t output;
 		}
 
 		if( fabs(y) < 0.000001 )  {
-			(void)fprintf(stderr, "mat_inv:  error!\n");
+			rt_log("mat_inv:  error!\n");
 			return;		/* ERROR */
 		}
 		y = 1.0 / y;
@@ -317,10 +316,10 @@ mat_t m;
 {
 	register int i;
 
-	fprintf(stderr,"MATRIX %s:\n  ", title);
+	rt_log("MATRIX %s:\n  ", title);
 	for(i=0; i<16; i++)  {
-		fprintf(stderr," %8.3f", m[i]);
-		if( (i&3) == 3 ) fprintf(stderr,"\n  ");
+		rt_log(" %8.3f", m[i]);
+		if( (i&3) == 3 ) rt_log("\n  ");
 	}
 }
 
