@@ -164,6 +164,7 @@ register char **argv;
 			break;
 		case 'N':
 			sscanf( optarg, "%x", &rt_g.NMG_debug);
+			rt_log("NMG_debug=0x%x\n", rt_g.NMG_debug);
 			break;
 		case 'M':
 			matflag = 1;
