@@ -22,10 +22,6 @@ static char RCSid[] = "$Header$";
 #include "./nirt.h"
 #include "./usrfmt.h"
 
-char		*local_unit[] = {
-		    "none", "mm", "um", "cm", "m", "km",
-		    "in", "ft", "yd", "mi", "unknown"
-		};
 char		local_u_name[64];
 double		base2local;		/* from db_i struct, not fastf_t */
 double		local2base;		/* from db_i struct, not fastf_t */
@@ -416,14 +412,13 @@ com_table	*ctp;
     }
     else if (strcmp(buffer + i, "default") == 0)
     {
-	strncpy(local_u_name, local_unit[rtip -> rti_dbip -> dbi_localunit],
-	    64);
 	base2local = rtip -> rti_dbip -> dbi_base2local;
 	local2base = rtip -> rti_dbip -> dbi_local2base;
+	strncpy(local_u_name, bu_units_string(base2local), 64);
     }
     else
     {
-	if ((tmp_dbl = mk_cvt_factor(buffer + i)) == 0.0)
+	if ((tmp_dbl = bu_units_conversion(buffer + i)) == 0.0)
 	{
 	    bu_log("Invalid unit specification: '%s'\n", buffer + i);
 	    return;
@@ -432,97 +427,6 @@ com_table	*ctp;
 	local2base = tmp_dbl;
 	base2local = 1.0 / tmp_dbl;
     }
-}
-static struct cvt_tab {
-	double	val;
-	char	name[32];
-} mk_cvt_tab[] = {
-	1.0e-7,		"angstrom",
-	1.0e-7,		"angstroms",
-	1.0e-7,		"decinanometer",
-	1.0e-7,		"decinanometers",
-	1.0e-6,		"nm",
-	1.0e-6,		"nanometer",
-	1.0e-6,		"nanometers",
-	1.0e-3,		"micron",
-	1.0e-3,		"microns",
-	1.0e-3,		"micrometer",
-	1.0e-3,		"micrometers",
-	1.0,		"mm",
-	1.0,		"millimeter",
-	1.0,		"millimeters",
-	10.0,		"cm",
-	10.0,		"centimeter",
-	10.0,		"centimeters",
-	1000.0,		"m",
-	1000.0,		"meter",
-	1000.0,		"meters",
-	1000000.0,	"km",
-	1000000.0,	"kilometer",
-	1000000.0,	"kilometers",
-	25.4,		"in",
-	25.4,		"inche",
-	25.4,		"inches",
-	304.8,		"ft",
-	304.8,		"foot",
-	304.8,		"feet",
-	456.2,		"cubit",
-	456.2,		"cubits",
-	914.4,		"yd",
-	914.4,		"yard",
-	914.4,		"yards",
-	5029.2,		"rd",
-	5029.2,		"rod",
-	5029.2,		"rods",
-	1609344.0,	"mi",
-	1609344.0,	"mile",
-	1609344.0,	"miles",
-	1852000.0,	"nmile",
-	1852000.0,	"nautical mile",
-	0.0,		"",			/* LAST ENTRY */
-};
-
-/*
- *			M K _ C V T _ F A C T O R
- *
- *  Given a string representation of a unit of distance (eg, "feet"),
- *  return the number which will convert that unit into milimeters.
- *
- *  Returns -
- *	0.0	error
- *	>0.0	success
- */
-double
-mk_cvt_factor(str)
-char	*str;
-{
-	register char	*ip, *op;
-	register int	c;
-	register struct cvt_tab	*tp;
-	char		ubuf[64];
-
-	if( strlen(str) >= sizeof(ubuf)-1 )  str[sizeof(ubuf)-1] = '\0';
-
-	/* Copy the given string, making it lower case */
-	ip = str;
-	op = ubuf;
-	while( (c = *ip++) )  {
-		if( !isascii(c) )
-			*op++ = '_';
-		else if( isupper(c) )
-			*op++ = tolower(c);
-		else
-			*op++ = c;
-	}
-	*op = '\0';
-
-	/* Search for this string in the table */
-	for( tp=mk_cvt_tab; tp->name[0]; tp++ )  {
-		if( ubuf[0] != tp->name[0] )  continue;
-		if( strcmp( ubuf, tp->name ) != 0 )  continue;
-		return( tp->val );
-	}
-	return(0.0);		/* Unable to find it */
 }
 
 void

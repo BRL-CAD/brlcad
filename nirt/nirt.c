@@ -389,9 +389,9 @@ char **argv;
     default_ospec();
 
     /* initialize NIRT's local units */
-    strncpy(local_u_name, local_unit[rtip -> rti_dbip -> dbi_localunit], 64);
     base2local = rtip -> rti_dbip -> dbi_base2local;
     local2base = rtip -> rti_dbip -> dbi_local2base;
+    strncpy(local_u_name, bu_units_string(base2local), 64);
 
     if (silent_flag != SILENT_YES)
     {
