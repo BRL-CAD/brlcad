@@ -21,6 +21,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <gl.h>
+#include <gl2/immed.h>
 #undef RED
 
 #include "fb.h"
@@ -44,6 +45,10 @@ union gepipe {
 #endif
 #define GEP_END(p)	((union gepipe *)(((char *)p)-0x1000))	/* 68000 efficient 0xFd4000 */
 
+static Cursor	cursor =
+	{
+#include "./sgicursor.h"
+	};
 
 _LOCAL_ int	sgi_dopen(),
 		sgi_dclose(),
@@ -74,8 +79,8 @@ FBIO sgi_interface =
 		sgi_viewport_set,
 		sgi_window_set,
 		sgi_zoom_set,
-		fb_null,
-		fb_null,
+		sgi_curs_set,
+		sgi_cmemory_addr,
 		fb_null,
 		"Silicon Graphics IRIS",
 		1024,			/* max width */
@@ -140,6 +145,9 @@ int	width, height;
 
 #define if_pixsize	u1.l
 	ifp->if_pixsize = 1;	/* for zoom fakeout */
+	/* Setup default cursor.					*/
+	defcursor( 1, cursor );
+	curorigin( 1, 0, 0 );
 	return(0);
 }
 
@@ -351,7 +359,7 @@ sgi_viewport_set( ifp, left, top, right, bottom )
 FBIO	*ifp;
 int	left, top, right, bottom;
 {
-	viewport( left, right, top, bottom );
+/*	viewport( left, right, top, bottom );*/
 	return(0);
 }
 
@@ -398,3 +406,55 @@ register ColorMap	*cmp;
 	_sgi_cmap_flag = TRUE;
 	return(0);
 }
+
+_LOCAL_ int
+sgi_curs_set( ifp, bits, xbits, ybits, xorig, yorig )
+FBIO	*ifp;
+unsigned char	*bits;
+int		xbits, ybits;
+int		xorig, yorig;
+	{	register int	y;
+		register int	xbytes;
+		Cursor		newcursor;
+	/* Check size of cursor.					*/
+	if( xbits < 0 )
+		return	-1;
+	if( xbits > 16 )
+		xbits = 16;
+	if( ybits < 0 )
+		return	-1;
+	if( ybits > 16 )
+		ybits = 16;
+	if( (xbytes = xbits / 8) * 8 != xbits )
+		xbytes++;
+	for( y = 0; y < ybits; y++ )
+		{
+		newcursor[y] = bits[(y*xbytes)+0] << 8 & 0xFF00;
+		if( xbytes == 2 )
+			newcursor[y] |= bits[(y*xbytes)+1] & 0x00FF;
+		}
+	defcursor( 1, newcursor );
+	curorigin( 1, (short) xorig, (short) yorig );
+	return	0;
+	}
+
+_LOCAL_ int
+sgi_cmemory_addr( ifp, mode, x, y )
+FBIO	*ifp;
+int	mode;
+int	x, y;
+	{	static Colorindex	cursor_color = YELLOW;
+	if( ! mode )
+		{
+		cursoff();
+		setcursor( 0, 1, 0xFFFF );
+		return	0;
+		}
+	x *= ifp->if_pixsize;
+	y *= ifp->if_pixsize;
+	curson();
+	setcursor( 1, cursor_color, 0xFFFF );
+	setvaluator( MOUSEX, x, 0, 1023 );
+	setvaluator( MOUSEY, y, 0, 1023 );
+	return	0;
+	}
