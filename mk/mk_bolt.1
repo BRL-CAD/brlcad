@@ -1,0 +1,87 @@
+.TH MK_BOLT 1 BRL/CAD
+.SH NAME
+mk_bolt \- creates an mged file containing bolts
+.SH SYNOPSIS
+.B mk_bolt
+[ options... ]
+.SH DESCRIPTION
+Mk_bolt is a program to create an mged data base of one of four
+different kinds of bolts.  Up to twenty-six bolts of one type
+and size may
+be created.  Mk_bolt uses libwdb to create an mged data base.  This
+program may be run interactively or the user may specify options on
+a command line.  If the user chooses to run the program interactively
+he answers the questions as the program prompts him.  Below are the
+options that can be used on the command line.
+.SS Options
+.TP "\w'-G ``n cflag gflag vsize\'\'\     |'u"
+.BI \-o#\^
+Type of bolt to be created:  1=>bolt head; 2=>bolt head and washer;
+3=>bolt head, washer, and bolt stem; and 4=>bolt head and bolt stem.
+.TP
+.BI \-fname.g\^
+Mged file name.
+.TP
+.BI \-n#\^
+The number of bolts to be created.  This number must be less than or
+equal to 26 (or it will be set to 26).
+.TP
+.BI \-hd#\^
+Diameter of bolt head flat edge to flat edge in millimeters.
+.TP
+.BI \-hh#\^
+Height of bolt head in millimeters.
+.TP
+.BI \-wd#\^
+Diameter of washer in millimeters.
+.TP
+.BI \-wh#\^
+Height of washer in millimeters.
+.TP
+.BI \-sd#\^
+Diameter of bolt stem in millimeters.
+.TP
+.BI \-sh#\^
+Height of bolt stem in millimeters.
+.SH EXAMPLE
+The following is an example from an interactive session.
+.sp
+.nf
+$ mk_bolt
+Enter option:
+	1 - bolt head
+	2 - bolt head & washer
+	3 - bolt head, washer, & stem
+	4 - bolt head & stem
+1
+Enter name of mged file to be created (25 char max).
+	bolt.g
+Enter the number of bolts to be created (26 max).
+	3
+Enter diameter (flat edge to flat edge) & height of bolt head.
+	30 10
+
+option:  1 - bolt head
+.g file:  bolt.g
+head diameter:  30.000000, & height:  10.000000
+washer diameter:  0.000000, & height:  0.000000
+stem diameter:  0.000000, & height:  0.000000
+number of bolts:  3
+
+.fi
+The following is the same example where all dimensions are on the
+command line.
+.nf
+
+	mk_bolt -o1 -fbolt.g -n3 -hd30 -hh10
+
+.fi
+In both these examples three bolt heads (option 1) are created with
+a diameter of 30mm and a height of 10mm.  The mged file created in
+each case is bolt.g.
+
+.SH SEE ALSO
+mk_handle(1), mk_window(1), mk_winfrm(1), mk_gastank(1)
+
+.SH AUTHOR
+Susan A. Coates

@@ -1,0 +1,614 @@
+.TH LGT 1 BRL/CAD
+'\"	@(#)$Header$ (BRL)
+.SH NAME
+lgt \- produce a shaded image of an
+.I mged\^
+model
+.SH SYNOPSIS
+.B lgt
+[ options... ] model.g objects...
+.SH DESCRIPTION
+.P
+.I Lgt\^
+is an image rendering tool for the
+.IR mged\^ (1)
+solids modeling data base.
+The program can run interactively or detached from a terminal session
+(batch mode).
+The interactive user interface consists of a terminal independent pop-up
+hierarchical menu system (though IRIS users have the option of using the
+mouse-driven graphics menus instead).
+The experienced user may wish to exit this menu system (by typing a `q')
+and use the single-letter command interface as described below.
+For information on the hierarchical menus and detailed information on the
+commands and overall usage of \fIlgt\^\fR please refer to the paper
+\fBThe ``lgt'' Lighting Model\fR which is included in the BRL CAD
+documentation.
+.B Note
+that specifying the
+.B viewing direction
+involves setting up light source zero,
+see the
+.B L
+command below for more information.
+There are numerous command-line options.
+.SS Options
+.TP "\w'-G ``n cflag gflag vsize\'\'\    |'u"
+.BI \-a n\^
+Set the number of degrees of roll on the grid to
+.IR n\^ .
+This is a rotation of the viewing grid about the viewing axis.
+.TP
+.BI \-A n\^
+Set over-sampling factor to
+.IR n\^ .
+This is a simple anti-aliasing technique which ray traces an
+.I n\^
+by
+.I n\^
+array of pixels and then outputs a linear average of the result.
+.TP
+.BI \-b "``R G B''"\^
+Set the background color to
+.I R G B\^
+which are intensity values from 0 to 255 of the red, green, and blue
+channels respectively.
+.TP
+.BI \-c n\^
+Set the tracking-cursor flag to
+.IR n\^ .
+When set to non-zero, this causes an
+arrow cursor to point at the current scan line being ray traced, assuming that
+a graphics device is being used.  The default is to disable the tracking-cursor.
+.TP
+.BI \-d "``x y''"\^
+Set automatic mapping offsets to
+.I x\^
+and
+.I y\^
+in the IR Module.
+.TP
+.BI \-t "``x y''"\^
+Set the grid translation to
+.I x\^
+and
+.IR y\^ .
+This offsets the grid within the grid plane (perpendicular to the viewing axis).
+.TP
+.BI \-D "``x y''"\^
+Set the image translation to
+.I x\^
+and
+.IR y\^ .
+This offsets the image relative to the display origin.
+.TP
+.BI \-e n\^
+Set the debug flag to
+.IR n\^ .
+This flag is for the developer/maintainer of
+.IR lgt\^ (1)
+and
+.IR librt\^ (3),
+and sets a hexidecimal bitmask to
+turn on or off diagnostics.
+.TP
+.BI \-f n\^
+Specify the distance from the origin of the grid to the model centroid as
+.I n\^ 
+millimeters.
+This command will interact with the
+.B \-p
+option.
+If perspective is set to a positive number,
+the user-specified grid distance is ignored,
+because automatic perspective adjusts both the grid and observer
+distances according to the desired degree of perspective.
+Conversely, if perspective is negative,
+the user-specified grid distance,
+coupled with the observer distance and the view size,
+will effect the apparent degree of perspective.
+If perspective is set to zero,
+the grid distance
+.I will\^
+be used to position the grid; if the distance is small enough so
+that the grid intersects the model,
+the model will appear sliced,
+that is,
+only the portion of the model beyond the grid will be visible.
+.TP
+.BI \-G "``n cflag gflag vsize''"\^
+Configure the grid.  If
+.I cflag\^
+is set to zero,
+.I n\^
+refers to the grid size.
+The grid is square, so this number represents the number of rays (or cells)
+across the grid in both the
+.I X\^
+and
+.I Y\^
+directions.
+However, if
+.I cflag\^
+is set to non-zero,
+.I n\^
+refers to the cell size (ray separation) in millimeters.
+If
+.I gflag\^
+is set to zero,
+the grid origin will be aligned with respect to the model RPP,
+otherwise it will be aligned with the model origin.
+.I Vsize\^
+is a floating-point number which represents the view size.
+If it is greater than zero,
+the field of view will be set to take in an object of that size.
+Otherwise, the view size will be set relative to the model RPP.
+The grid size and cell size are related; when perspective is set
+to zero (see the
+.B \-p
+option), grid size times cell size equals view size.
+When perspective is non-zero, the grid and eye distance are also
+involved, so the relationship is less pertinent.
+The defaults for this command are;
+.IR "G 32 0 0 0.0"  ,
+which means grid size of 32, centered WRT the model RPP and view size
+set relative to the model RPP.
+.TP
+.BI \-i n\^
+Set noise threshold for the Infrared (IR) Module to
+.IR n\^ .
+.TP
+.BI \-I file\^
+Read and display infrared data from
+.IR file\^ .
+.TP
+.BI \-k n\^
+Set hidden-line flag to
+.IR n\^ .
+When set to non-zero, this causes a hidden-line drawing to be produced rather
+than the usual shaded color image.  If
+.I n\^
+is set to 1, the drawing will be black-on-white, and if set to 2,
+white lines will be drawn on a black background.
+The default is to disable this feature.
+.TP
+.BI \-K n\^
+Set maximum number of bounces (levels of recursion) in ray tracing.
+For instance, it requires one bounce to get the first reflection off of
+a mirrored surface, and several to get through a transparent object.
+If no transparent objects or mirrors are modeled,
+it is more efficient to leave this at the default of zero,
+but, if such objects
+.I are\^
+modeled, it is best to be safe and use at least 6 bounces, better yet
+a dozen or so since multiple mirrors or critical angles encountered
+in refraction can lead to many bounces for a given ray.
+.TP
+.BI \-j file\^
+Input key-frame from
+.IR file\^ .
+This command reads a saved view as output by
+.IR mged\^ (1)
+when using the
+.I savekey\^
+command.
+When using
+.I savekey\^
+the user must be sure not to specify the time field,
+otherwise he must remove the resultant lines from the output file
+either manually or as a side-effect of running an interpolation
+program.
+If these time stamps remain in the file,
+.I lgt\^
+will likely get sick as the input gets out of phase.
+Specifying this command without a file argument will disable key-frame
+input.
+.TP
+.BI \-n n\^
+Set number of processors to use for ray tracing to
+.IR n\^ .
+This parameter is only meaningful when running in a parallel processing
+environment.
+The default is set, in a host-dependent manner,
+to the maximum number of processors available in a parallel configuration.
+.TP
+.BI \-o file\^
+Write image output in
+.I file\^
+or display on
+.IR device\^ .
+By default the output is displayed on a frame buffer.  The default frame buffer
+is configured by the frame buffer library (see
+.IR libfb\^ (3B)),
+based on available graphics devices.  The default may be overridden more generally
+with the environment variable
+.SM
+.B FB_FILE
+(see
+.IR brlcad\^ (1)).
+.TP
+.BI \-O file\^
+Write errors to
+.I file\^
+rather than the terminal.  The default is to write to the standard output in a
+scrolling window (sub-section of the terminal screen), if the standard
+input is attached to the terminal; or to standard error, if input has been
+redirected.
+.TP
+.BI \-p n\^
+Set the relative perspective to
+.IR n\^ .
+When this number is positive, the relative distance of the grid and the observer
+from the model centroid (or origin) will be adjusted automatically to yield the specified ray
+divergence factor (rays emanating from a point, the observer position, to the
+respective grid cells).
+When set to zero, there is no perspective (parallel rays).
+Perspective increases in direct proportion to this number; the default is 0.25.
+When
+.I n\^
+is negative, perspective is governed by the position of the observer (eye)
+and the grid, and by the view size.
+.TP
+.BI \-s n\^
+If
+.I n\^
+is non-zero, enter the Infrared Module.
+.TP
+.BI \-v file\^
+Read light source data base from
+.IR file\^ .
+.TP
+.BI \-w file\^
+Read material data base from
+.IR file\^ .
+.TP
+.BI \-x "``a b''"\^
+Set the starting and ending pixel to
+.I a\^
+and
+.IR b\^ .
+This sets up left and right boundaries within the grid to limit the ray trace
+to a rectangular sub-grid.
+.TP
+.BI \-X n\^
+Set the overlap reporting flag to
+.IR n\^ .
+When set to non-zero, this causes overlaps to be reported to the log file
+or terminal (see the
+.B \-O
+option).
+The default is to report overlaps.
+.TP
+.BI \-y "``a b''"\^
+Set the starting and ending scan line to
+.I a\^
+and
+.I b\^
+in the sub-grid.
+.TP
+.BI \-z n\^
+Set shadow computation to
+.IR n\^ .
+When set to zero, no shadows will be computed.
+This is useful when computing a view from inside the model.
+.P
+Required arguments to the program are
+.I model.g\^
+which is the name of the
+.IR mged\^ (1)
+data base, followed by one or more
+.I objects\^
+which are names of regions or groups in the geometry hierarchy which
+are to be rendered.
+Commands are read from the standard input, whether in batch mode or interactive.
+In general, all command-line options can be invoked as commands,
+by using the identical option letter,
+but there are a few commands that are not available as command-line options.
+.SS "Commands (not available as options)"
+Arguments that appear in brackets are optional.
+In general, when an optional file argument is left out, the user will be prompted;
+and if a flag is omitted, the state will be toggled (unless otherwise specified
+below):
+.TP "\w'! [command [arg...]]    |'u"
+.B ?
+Print the menu of available commands.
+.TP
+.BR ! "\ [command [arg...]]"
+Execute
+.I command\^
+from the shell.
+If the environment variable $SHELL is set, it will be executed, otherwise
+.I /bin/sh\^
+is the default shell.
+If a
+.I command\^
+is specified, the shell will be fed it as input (along with any arguments),
+otherwise, an interactive shell is spawned.
+.TP
+.BR . "\ [flag]"
+Set buffered pixel I/O to
+.IR flag\^ .
+The values for specifying the buffering scheme are as follows:
+.RS
+.TP
+.B 0
+Programmed I/O.
+Each pixel is output immediately after it is calculated.
+.TP
+.B 1
+Paged I/O.
+This is generally the most efficient I/O scheme, but only updates the image
+as it crosses a page boundary.  Page sizes vary with the graphics device
+and host, but range from 8 to 42 scan lines.
+.TP
+.B 2
+Scan line I/O.
+Each row of pixels is output when ready.
+.P
+In the absence of
+.IR flag\^ ,
+the state is cyclicly incremented.
+.RE
+.TP
+.BR # "\ [comment]"
+This is the comment command, useful for preparing input files.
+The entire line is copied to the log file or terminal (see the
+.B \-O
+option).
+.TP
+.B B
+Submit a batch run.  The current parameters are used to build a script
+in a temporary file, and this is submitted to the batch queue (see
+.IR batch\^ (1)),
+subject to MDQS availability.
+The user will be sent mail when the job is finished.
+.TP
+.B C
+Enter cursor input module.  The user can manipulate the cursor to specify
+rectangular portions of the screen or specific pixels to ray trace.  This
+module has a help facility, accessible by typing a
+.IR `?'\^ .
+.sp
+When using the Silicon Graphics IRIS in local mode, the user can use the
+mouse to position the cursor and sweep out rectangular areas.
+These operations require the user to press the middle mouse button to control
+sweeping operations and the selection of positions.
+The cursor module implementation on the IRIS also has a
+.I window-in\^
+and
+.I window-out\^
+command which allows the user to specify a translation and scaling of the grid
+to include a smaller or larger, respectively, area of the model to ray trace.
+.TP
+.B E
+Erase frame buffer.  Fill grid area of frame buffer with black.
+.TP
+.B F
+Animate on-screen movie.
+This command is currently only implemented on the IRIS,
+and displays movies such as those generated with this program (see the
+.B J
+command).
+.TP
+.BR H "\ [file]"
+Save frame buffer image.
+Stores the image on the current frame buffer in
+.IR file\^ .
+This can also be used to transfer the image to another graphics device.
+.TP
+.BR h "\ [file]"
+Restore a saved image from
+.IR file\^ .
+Reads the image from the specified file or device and displays it on the
+current frame buffer.
+.TP
+.B J
+Make a movie.
+This command prompts for information necessary to set up a movie.
+Both
+.I full\-screen\^
+and
+.I postage\-stamp\^
+movies are supported.
+In specifying the number and size of frames to shoot for a
+.I postage\-stamp\^
+movie,
+the user is limited by the graphics device's display memory
+(the entire movie must fit in the frame buffer).
+.I Full\-screen\^
+movies are saved on the disk,
+1 frame per file,
+so they can be any displayable size given you have the disk space.
+.TP
+.BR L "\ id"
+Modify light source data base entry
+.IR id\^ .
+The user will be prompted for information necessary to position and describe
+the light source.
+Light source zero has special significance and a dual purpose.
+It simulates an ambient light source and,
+its position specifies the position of the observer (the eye).  Note that only
+the program's (in-core) copy of the data base is modified until another command
+(see the
+.B V
+command) is used to write it to a file.
+.TP
+.BR l "\ id"
+Print light source data base entry
+.IR id\^ .
+Display the current copy of the specified entry on the terminal's screen.
+If no entry is specified, all entries will be displayed.
+.TP
+.BR M "\ id"
+Modify the material data base entry
+.IR id\^ .
+The user will be prompted for information necessary to describe the properties
+of the material necessary for the lighting model calculations.  As with the
+light source data base, a seperate command (see the
+.B W
+command) is used to save the
+current modifications in a file.
+.TP
+.BR m "\ id"
+Print material data base entry
+.IR id\^ .
+Display the current copy of the specified entry.
+The
+.I id\^
+should match the material id in the
+.IR mged (1)
+data base.
+If no entry is specified, all entries will be displayed.
+.TP
+.BR N "\ [temperature]"
+Specify temperature for IR painting.
+.TP
+.B P
+Print
+.IR mged\^ (1)
+regions  and associated IR temperature mappings.
+.TP
+.B Q
+Assign IR temperature to
+.IR mged\^ (1)
+region or group.
+.TP
+\fBq \fIor \fB^D
+Quit. Normal exit from the program.
+.TP
+.B R
+Ray trace current view.
+Initiate a run.
+During a batch mode run,
+this command will be given automatically on encountering an
+.I end-of-file\^
+if
+it hasn't been given explicitly.
+Note that if an explicit
+.I quit\^
+command is given,
+an
+.I end-of-file\^
+condition will not be encountered.
+.TP
+.B r
+Redraw the terminal screen.
+.TP
+.BR S "\ [file]"
+Save an executable script in
+.IR file\^ .
+Writes out a Bourne shell script which will restart the program with the current
+set of options.  Note that the user should also use the commands (see below) to save
+the light source and material data bases before quitting.
+.TP
+.BR T "\ [fbsize]"
+Specify the frame buffer size as
+.IR fbsize\^ .
+On windowing systems, a frame buffer window will, by default, be opened which
+just fits the image.
+This command allows one to specify a larger window.
+If the window is a multiple of the image size,
+zooming will be used to enlarge the image to fit the window.
+It is desirable to specify an exact multiple, so that the image will fill
+the window.
+On graphics hardware that does not have a windowed environment,
+there may be only fixed window sizes such as 512 and 1024, in which case,
+you will get the best match.
+Specifying zero for
+.I fbsize\^
+will restore the default behavior.
+.TP
+.BR U "\ [file]"
+Save IR data base in
+.IR file\^ .
+.TP
+.BR u "\ [file]"
+Read IR data base from
+.IR file\^ .
+.TP
+.BR V "\ [file]"
+Save light source data base in
+.IR file\^ .
+.TP
+.BR W "\ [file]"
+Save material data base in
+.IR file\^ .
+.TP
+.B Z
+Display pseudo-color IR mapping scale.
+.SH HINTS
+This program is designed to be used in two modes; interactively for setting
+up parameters, and in batch mode for rendering high-resolution images.
+First, the user should invoke the program in the interactive mode without options.
+While in this mode,
+the user should set up parameters for a low resolution ray trace,
+perhaps by using the default resolution (32x32 grid),
+ray trace that view, tweak parameters as necessary, and iterate.
+As the user converges on the acceptable combination of parameters,
+there is a command which will save a UNIX shell script.
+This command generates a shell
+script that will invoke the program with the current set of parameters,
+data bases, objects, etc.  When everything is to the user's liking, he or
+she should increase the resolution, change the output device to a file name
+so as not to tie up a graphics device,
+make sure that the error output is being re-directed to a file as well,
+and that all changes to the material or light data bases
+have been written out.  Finally, the user can either spawn a batch run with
+a command, or use the above mentioned command to save a shell script and
+either quit or proceed to set up another view.  The command to create
+a batch run actually executes the
+.IR batch\^ (1)
+command (subject to
+.I MDQS\^
+availability), with the current set of parameters, etc.  As an alternative
+to generating a batch run from the program, the script files can be fed
+by hand to the
+.IR batch\^ (1)
+command or can just be detached as background jobs (see EXAMPLES for
+the proper method) with their input redirected from a file or
+.IR /dev/null\^.
+If the program is detached without re-directing its input, the full-screen
+display will be generated which will tie up that terminal or layer (in
+a windowed environment).
+If the program is running in batch mode,
+and it detects an
+.I end-of-file\^
+before the command is
+given to generate an image, it will generate one automatically.
+.SH EXAMPLES
+The following command will start up an interactive session which will
+use the Silicon Graphics IRIS's default frame buffer device (/dev/sgi)
+on a host address 
+.I viva.brl.mil\^
+to display the
+.I hull\^
+and 
+.I turret\^
+of the target description in file
+.IR tank.g\^ .
+.RS
+$ \|\fIlgt \|\-o \|viva.brl.mil: \|tank.g \|hull \|turret\fR
+.RE
+.sp
+This command will start up an interactive session on an alternate device
+on a remote host and will begin at the 251st scan line and complete a
+512x512 image (handy in the event that the computer goes down in the
+middle of ray tracing an image).  Note that since the
+.I -y\^
+and
+.I -G\^
+options take multiple arguments, they must appear in double-quotes.
+.RS
+$ \|\fIlgt \|\-G \|``512 0 0 0.0'' \|\-o \|vgr.brl.mil:/dev/ik1l \|\-y \|``250 511'' \|tank.g \|hull \|turret\fR
+.RE
+.sp
+This will run the program as a detached process by executing a saved script called
+.IR tankscript\^ .
+.RS
+$ \|\fItankscript \|< \|/dev/null \|&\fR
+.RE
+.SH "SEE ALSO"
+\fBThe ``lgt'' Lighting Model\fR,
+mged(1), pix-fb(1), librt(3), libfb(3)
+.SH AUTHOR
+Gary S. Moss

@@ -1,0 +1,41 @@
+.TH GIF2FB 1 BRL-CAD
+.SH NAME
+gif2fb \- display GIF file on frame buffer
+.SH SYNOPSIS
+.CW gif2fb
+[-h] [-v] [-F "frame buffer name"] "GIF file name"
+.SH DESCRIPTION
+.CW gif2fb
+displays on a frame buffer the images described by a
+CompuServe GIF (Graphics Interchange Format) file.
+The
+.I -F
+option outputs to the specified frame buffer
+instead of the one specified by the
+.I FB_FILE
+environment variable
+(or the default frame buffer, if
+.I FB_FILE
+is not set).
+The frame buffer size requested will be the same as
+the input GIF screen size.
+The actual size obtained depends on details of the specific frame buffer.
+The
+.I -h
+option prints the GIF screen size on stderr. The
+.I -v
+option printd additional information about the GIF file on stderr.
+The
+.I "GIF file name"
+Specifies the GIF input file to be translated,
+rather than reading the file from the standard input.
+.SH "SEE ALSO"
+``A Standard Defining a Mechanism for the Storage and Transmission of
+Raster-Based Graphics Information'',
+June 15, 1987 (CompuServe Incorporated).
+.br
+libfb(3),gif-fb(1).
+.SH DIAGNOSTICS
+Error messages are intended to be self-explanatory.
+.SH AUTHOR
+Christopher T. Johnson

@@ -1,0 +1,377 @@
+.TH CELL-FB 1 BRL/CAD
+'\"	RCS ID:	$Header$
+.SH NAME
+cell-fb \- display cell-by-cell data on a frame buffer
+.SH SYNOPSIS
+.B cell-fb
+[ options... ] [ file ]
+.SH DESCRIPTION
+.P
+.I Cell-fb\^
+reads a stream of cell-by-cell data
+and displays the data, one view at a time, on a frame buffer.
+If
+.I file
+is specified, then
+.I cell-fb
+tries to read the data from it.
+Otherwise, the standard input is read.
+.SS Options
+The command-line options and their meanings are given below.
+.TP "\w'-m ``n color\'\'    |'u"
+.B \-C\^
+Interpret the first three fields for each cell as an explicit color
+(see the
+.SM
+DEFINITIONS
+section below).
+The default behavior is to interpret a specified field as an indirect
+reference, which, through a color map, corresponds to a color.
+.TP
+.BI \-F fbfile\^
+Write graphics output to
+.I fbfile,\^
+which may be any UNIX file (or frame-buffer device).
+In the absence of the
+.B \-F\^
+option,
+if the shell variable
+.B FB_FILE\^
+is defined,
+its value is used
+(see
+.IR brlcad\^ (1)).
+Otherwise, the host's default frame buffer is used
+(see
+.IR libfb\^ (3B)).
+.TP
+.BI \-N scr_height\^
+Set screen (frame-buffer) height to
+.I scr_height
+pixels.
+.I Scr_height
+may legally be any integer greater than -2.
+See the discussion of autosizing below.
+.TP
+.BI \-S scr_size\^
+Set screen (frame-buffer) width and height to
+.I scr_size
+pixels.
+.I Scr_size
+may legally be any integer greater than -2.
+See the discussion of autosizing below.
+.TP
+.BI \-W scr_width\^
+Set screen (frame-buffer) width to
+.I scr_width
+pixels.
+.I Scr_width
+may legally be any integer greater than -2.
+See the discussion of autosizing below.
+.TP
+.BI \-X n\^
+Set the local debug flag to the hexadecimal value
+.I n.
+.TP
+.BI \-a "``h v''"\^
+Do not display the data,
+simply print out the frame-buffer coordinates of the grid-plane point
+.RI ( "h, v" ).
+This option is useful for outboard manipulation of the
+.IR pix\^ (5)
+data created by
+.I cell-fb.
+.TP
+.BI \-b n\^
+Ignore values not equal to
+.I n.
+All other cell-data values are mapped to the background color.
+.TP
+.BI \-c n\^
+Assume a cell size of
+.IR n\^
+user units.
+The default cell size is 100 user units.
+.TP
+.BI \-d "``m n''"\^
+Scale the data values from the interval
+.RI [ "m, n" ]
+into the unit interval [0, 1].
+The scaling is performed before values are mapped to colors,
+so the
+.B \-i,
+.B \-k,
+and
+.B \-m\^
+options always deal with the
+discrete values listed in the description below of the
+.B \-k
+option.
+The default domain is [0, 1],
+for which no scaling is necessary.
+.TP
+.B \-e
+Erase the frame buffer before displaying each view.
+.TP
+.BI \-f n\^
+Display field number
+.I n\^
+of the cell-by-cell data
+(see the
+.SM
+DEFINITIONS
+section below).
+By default, field 1 is displayed.
+.TP
+.B \-g
+Display the grid.
+Causes a 1-pixel spacing between cells in the output.
+.TP
+.B \-h
+Force high-resolution display (1024\(mu1024 pixels).
+See the discussion of autosizing below.
+.TP
+.B \-i
+Round values to the nearest discrete value
+listed in the description of the 
+.B \-k
+option below.
+By default, output colors are chosen by interpolation between
+those values.
+.TP
+.B \-k
+Display the color key.
+This option displays the color mappings for 11 discrete values underneath
+the picture.
+The values represented are, from left to right:
+0.0, 0.1, 0.2, ..., 0.9, and 1.0.
+Given this option
+and snug-fit autosizing for height,
+the frame buffer that
+.I cell-fb
+opens will be taller to accommodate the key.
+See the discussion of autosizing below.
+.TP
+.BI \-l "``az el''"\^
+Write log information to the standard output.
+When given this option,
+.I cell-fb
+produces a header comment and one line each reporting
+an azimuth/elevation pair (viz.
+.RI "(" az ", " el ")"
+) to associate with this view;
+the coordinates (in user units) of
+the lower-left and upper-right corners of the frame buffer;
+and the width and height (in pixels) of the frame buffer.
+This information may be useful in registering other images
+on top of a cell plot.
+If a single view has not been specified,
+this option causes an implicit
+.BR \-v " 1,"
+which may, of course, be overridden explicitly.
+.RI N.B.\(em Cell-fb
+makes no use whatever of the values
+.IR az " and " el ,
+it merely writes them to the log.
+.TP
+.BI \-m "``n color''"\^
+Map cell data value
+.I n\^
+to
+.I color.
+The value
+.I n\^
+will be truncated, if necessary, to
+the nearest lower of the discrete values listed in the description of the
+.B \-k
+option above.
+The background color can be indexed by specifying the value 1.1 for
+.I n.
+For the meaning and format of
+.I color,
+see the
+.SM
+DEFINITIONS
+section below.
+.TP
+.BI \-M "``color1 color2''"\^
+Define the color map
+to be a ramp between
+.IR color1 " and " color2.
+This allows frugality with the colors in an image:
+if, for example, cell data is plotted in gray scale,
+then many other colors remain for use in
+text, call outs, and sundry markings on top of the cell data.
+The default color map
+is a typical cold-to-hot, blue-to-red scale,
+excepting that the smallest value in the input domain
+is mapped to white.
+For the meaning and format of
+.IR color1 " and " color2,
+see the
+.SM
+DEFINITIONS
+section below.
+.TP
+.BI \-p "``h v''"\^
+Offset the picture from the lower-left corner of the frame buffer display
+by
+.I h\^
+pixels horizontally, and
+.I v\^
+pixels vertically.
+If this option is specified with only one argument,
+then the horizontal and vertical offsets are both set to this value.
+.TP
+.BI \-s "``w h''"\^
+Plot each cell as a rectangle of width
+.I w\^
+pixels and height
+.IR h\^ pixels.
+This option has the effect of scaling the picture independently in the
+horizontal and vertical dimensions.
+The default is 10 pixels per cell in each dimension, not including the
+grid.
+If this option is specified with only one argument,
+then the width and height are both set to this value.
+.TP
+.BI \-v n\^
+Display only view number
+.I n.
+Views are numbered starting at 1.
+If
+.IR n " = 0,"
+all views are displayed sequentially,
+which is the default behavior.
+The option
+.BR \-v " 0"
+implicitly turns off logging.
+(see the
+.B \-l
+option above).
+.TP
+.BI \-x n\^
+Set the
+.IR libbu (3)
+debug flag to the hexadecimal value
+.I n.
+This option is useful primarily in debugging
+memory allocation.
+.SH HINT
+If multiple views are input,
+the user will be asked between views whether he wants to see the next view.
+While being prompted, the user can save the previous image by using a
+utility such as
+.IR fb\-rle (1).
+.SH DISCUSSION
+.I Cell-fb
+determines the appropriate width and height of the frame buffer
+independently.
+For each there are three methods.
+If the sizes are provided explicitly, with the
+.B \-N,
+.B \-S,
+or
+.B \-W
+options,
+.I cell-fb
+will use exactly the specified values.
+Otherwise,
+it performs autosizing for each view.
+.IR Cell-fb "'s"
+original behavior is called loose-fit autosizing.
+In that case, a frame-buffer dimension will be set to 512 pixels
+unless the image will not fit,
+in which case a 1024-pixel dimension is used.
+Loose-fit autosizing may be specified by any of
+.BR \-N "0,"
+.BR \-S "0,"
+or
+.BR \-W "0."
+The third method is another form of autosizing,
+called snug-fit.
+For this method,
+.I cell-fb
+computes the minimum measurement required to display the plot,
+given the data and whatever values have been specified for the
+.B \-c,
+.B \-g,
+.B \-k,
+.B \-p,
+and
+.B \-s
+options.
+Snug-fit autosizing is the default method for both width and height
+of the frame buffer,
+and it may be explicitly specified by any of
+.BR \-N "-1,"
+.BR \-S "-1,"
+or
+.BR \-W "-1."
+Whenever autosizing is performed,
+.I cell-fb
+prints to the standard error the actual width and height used for each view.
+.SH DEFINITIONS
+A stream of cell-by-cell data contains one or more views,
+each of which may start with view-header information and contains
+one line of data for each cell in the view.
+Each line of cell data must be in the following format:
+.sp
+.ce
+.I "coords fields"
+.sp
+where
+.I coords\^
+is two real numbers and
+.I fields\^
+is one or more real numbers.
+All the numbers on a line of cell data are separated by
+non-empty strings of white space (blanks and tabs)
+and there may be leading white space on the line.
+.I Coords\^
+are the grid-plane coordinates of the cell,
+which must be spaced consistently with the cell size,
+and
+.I fields\^
+may have arbitrary significance.
+If the
+.BI \-f n\^
+option is specified, then there must be at least
+.I n\^
+fields of cell data,
+and if the
+.B \-C\^
+option is specified, then there must be at least three fields of cell data.
+The view-header information may span multiple lines, and the only restriction
+on its format is that it not pass for data.
+.PP
+A color is specified as a triple
+.sp
+.ce
+.I "r g b"
+.sp
+of integers, each between 0 and 255 (inclusive).
+These values represent intensities of red, green, and blue, respectively.
+.SH EXAMPLE
+The following invocation will display the cell-by-cell data from
+.I inputs\^
+on the default frame buffer on the network host
+.IR viva.brl.mil .
+It will display all views with the grid turned
+on (space between cells),
+positioned with the left-most cell 20 cells to the right
+of the display origin (lower left),
+and the lowest cell 30 cells above the display origin,
+the color key will appear underneath the
+grid of cells, and the display will be erased before each view is drawn.
+.sp
+.RS
+$ \|\fIcell-fb \|\-F \|viva.brl.mil: \|\-gek \|\-p \|``20 30'' \|inputs
+.RE
+.SH "SEE ALSO"
+fb-rle(1), rtregis(1), libfb(3), pix(5)
+.SH AUTHORS
+.TP
+Gary S. Moss, BRL/VLD-VMB
+.TP
+Paul J. Tanenbaum, BRL/VLD-GSB

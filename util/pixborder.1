@@ -1,0 +1,114 @@
+.\" Set the interparagraph spacing to 1 (default is 0.4)
+.PD 1v
+.\"
+.\" The man page begins...
+.\"
+.TH PIXBORDER 1
+.SH NAME
+pixborder \- add a 1-pixel-wide border to regions of a specified color
+.SH SYNOPSIS
+.B pixborder
+.RB [ \-b\  "'R\ G\ B']"
+.RB [ \-e\  "'R\ G\ B']"
+.RB [ \-i\  "'R\ G\ B']"
+.RB [ \-t\  "'R\ G\ B']"
+.RB [ \-B\  "'H\ S\ V']"
+.RB [ \-E\  "'H\ S\ V']"
+.RB [ \-I\  "'H\ S\ V']"
+.RB [ \-T\  "'H\ S\ V']"
+.RB [ \-x\  left_edge]
+.RB [ \-y\  bottom_edge]
+.RB [ \-X\  right_edge]
+.RB [ \-Y\  top_edge]
+.RB [ \-ah ]
+.RB [ \-n\  file_height]
+.RB [ \-s\  squaresize]
+.RB [ \-w\  file_width]
+[file.pix]
+.SH DESCRIPTION
+.I Pixborder
+reads an input stream of
+.I pix
+data,
+looking for maximal contiguous regions of
+a specified interior color,
+and writes out the
+.I pix
+data
+with all pixels on the boundaries of these regions changed to
+a specified border color.
+
+The way
+.I pixborder
+decides if a given pixel is on the boundary
+depends on how the user specified the interior and exterior.
+The
+.B -i
+option causes
+.I pixborder
+to replace
+the default interior color of 255 255 255 by
+.IR "R G B" ,
+while the
+.B -I
+replaces it by
+.IR "H S V" ,
+which are reals,
+with
+\fIH\fR in [0,\ 360)
+and
+\fIS\fR, \fIV\fR in [0,\ 1].
+Similarly,
+the
+.BR -e " and " -E
+options
+replace the default exterior color of 1 1 1.
+If the user specified colors for both or neither
+of the interior and exterior,
+then a pixel is on the boundary provided that
+it has the interior color
+and at least one of its four neighbors
+(left, right, above, and below) has the exterior color.
+If,
+on the other hand,
+the user specifed only the interior (exterior) color,
+then a pixel is on the boundary provided that
+it has the interior color (does not have the exterior color)
+and at least one of its neighbors
+does not have the interior color (has the exterior color).
+
+Variability in the interior and exterior colors
+may be accomodated by the
+.BR -t " and " -T
+options,
+with which one specifies a symmetric tolerance
+for each of the red, green, and blue channels
+or hue, saturation, and value.
+Any color
+within the specified tolerance of the nominal interior (exterior) color
+is treated as though it were the nominal color.
+
+Changes are restricted to a specified rectangular portion of the image,
+which defaults to the entire image.
+The
+.B -x
+option sets the left edge of that rectangle:
+no pixels to the left of this edge are changed.
+The
+.BR -X ", " y ",  and " Y
+options respectively
+set the right, bottom, and top edges
+in the same manner.
+
+.SH HINT
+To obtain borders more than one pixel wide,
+one can run several copies of
+.I pixborder
+in a pipeline.
+In doing this
+to get, for instance, a border made up of constant-thickness
+segments of different colors,
+one should produce all the segments of a given layer
+before beginning any segments of the next inner layer.
+.SH AUTHOR
+Paul Tanenbaum

@@ -1,0 +1,365 @@
+#
+#			util/Makefile.loc
+#  Makefile for a variety of framebuffer utilities
+#
+#  Source -
+#	SECAD/VLD Computing Consortium, Bldg 394
+#	The U. S. Army Ballistic Research Laboratory
+#	Aberdeen Proving Ground, Maryland  21005
+
+# Make null for default, or specify -p or -pg for profiling
+PROFILE		=
+
+PRODUCTS	= fbanim loop pix-fb fb-pix \
+		pixbustup pixdiff pixinterp2x pixtile pixuntile \
+		pp-fb fbclear fbgrid \
+		rle-fb fb-rle rle-pix pix-rle \
+		fbcmap fb-cmap cmap-fb fbgamma \
+		fbscanplot fbzoom fbpoint fblabel fbline\
+		pl-fb fbcolor fbcmrot pixbackgnd fbframe ap-pix \
+		bw-fb bw-pix bw3-pix bwcrop bwdiff bwfilter bw-impress \
+		bwhist bwhisteq bwmod bwrect bwrot bwscale bwstat fb-bw \
+		gencolor pix-bw pix-bw3 pixfilter pixhist \
+		pixhist3d pixhist3d-pl \
+		pixrect pixrot pixscale pixstat fbcbars \
+		sun-pix mac-pix pixmerge op-bw \
+		pl-sgi pldebug plgetframe plrot \
+		dunncolor dunnsnap
+
+SRCDIR		= util
+VPATH		= ../util
+MANSECTION	= 1
+ 
+CFILES		= dunncolor.c dunnsnap.c fbanim.c loop.c pix-fb.c fb-pix.c \
+		pixbustup.c pixdiff.c pixinterp2x.c pixtile.c pixuntile.c \
+		pp-fb.c fbclear.c fbgrid.c \
+		rle-fb.c fb-rle.c rle-pix.c pix-rle.c \
+		fbcmap.c fb-cmap.c cmap-fb.c fbgamma.c \
+		fbscanplot.c fbzoom.c fbpoint.c fblabel.c fbline.c pl-fb.c \
+		fbcolor.c fbcmrot.c pixbackgnd.c fbframe.c ap-pix.c \
+		bw-fb.c bw-pix.c bw3-pix.c bwcrop.c bwdiff.c bwfilter.c \
+		bw-impress.c bwhist.c bwhisteq.c \
+		bwmod.c bwrect.c bwrot.c bwscale.c bwstat.c fb-bw.c \
+		gencolor.c pix-bw.c pix-bw3.c pixfilter.c pixhist.c \
+		pixhist3d.c pixhist3d-pl.c \
+		sun-pix.c mac-pix.c pixmerge.c fbcbars.c \
+		pixrect.c pixrot.c pixscale.c pixstat.c op-bw.c \
+		pl-sgi.c pldebug.c plgetframe.c plrot.c
+
+all:		${PRODUCTS}
+
+# This is how to make the product.  ${LIBES} should be listed last.
+#${PRODUCTS}:	$$@.o
+#	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBFB} ${LIBES}
+
+dunncolor:	dunncolor.o dunncomm.o
+	$(CC) ${LDFLAGS} -o $@ $@.o dunncomm.o ${LIBES}
+
+dunnsnap:	dunnsnap.o dunncomm.o
+	$(CC) ${LDFLAGS} -o $@ $@.o dunncomm.o ${LIBES}
+
+fbanim:		fbanim.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBES}
+
+pl-fb:		pl-fb.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBFB} ${LIBPLOT} ${LIBES}
+
+loop:		loop.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES}
+
+mac-pix:	mac-pix.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBES}
+
+sun-pix:	sun-pix.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBES}
+
+pixmerge:	pixmerge.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBES}
+
+fbcbars:	fbcbars.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBES}
+
+pix-fb:		pix-fb.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBES}
+
+fb-pix:		fb-pix.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBES}
+
+pixbustup:	pixbustup.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES}
+
+pixdiff:	pixdiff.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES}
+
+pixinterp2x:	pixinterp2x.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBES}
+
+pixtile:	pixtile.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBES}
+
+pixuntile:	pixuntile.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBES}
+
+pp-fb:		pp-fb.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBTERMIO} ${LIBES}
+
+fbclear:	fbclear.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBFB} ${LIBES}
+
+fbgrid:		fbgrid.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBES}
+
+rle-fb:		rle-fb.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBRLE} ${LIBES}
+
+fb-rle:		fb-rle.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBRLE} ${LIBES}
+
+rle-pix:	rle-pix.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBRLE} ${LIBES}
+
+pix-rle:	pix-rle.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBRLE} ${LIBES}
+
+fbcmap:		fbcmap.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBES}
+
+fb-cmap:	fb-cmap.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBES}
+
+cmap-fb:	cmap-fb.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBES}
+
+fbgamma:	fbgamma.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBES}
+
+fbscanplot:	fbscanplot.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBES}
+
+fbzoom:		fbzoom.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBTERMIO} ${LIBES} 
+
+fbpoint:	fbpoint.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBTERMIO} ${LIBES} 
+
+fblabel:	fblabel.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBES} 
+
+fbline:		fbline.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBES} 
+
+fbcolor:	fbcolor.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBTERMIO} ${LIBES} 
+
+ap-pix:		ap-pix.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES}
+
+fbcmrot:	fbcmrot.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBES}
+
+pixbackgnd:	pixbackgnd.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBES}
+
+fbframe:	fbframe.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBFB} ${LIBES}
+
+bw-fb:		bw-fb.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBES}
+
+bw-impress:	bw-impress.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBES}
+
+bw-pix:		bw-pix.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES}
+
+bw3-pix:	bw3-pix.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES}
+
+bwcrop:		bwcrop.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES}
+
+bwdiff:		bwdiff.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES}
+
+bwfilter:	bwfilter.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBES}
+
+bwhist:		bwhist.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBFB} ${LIBES}
+
+bwhisteq:	bwhisteq.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES}
+
+bwmod:		bwmod.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBES}
+
+bwrect:		bwrect.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES}
+
+bwrot:		bwrot.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES}
+
+bwscale:	bwscale.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES}
+
+bwstat:		bwstat.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES}
+
+fb-bw:		fb-bw.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBES}
+
+gencolor:	gencolor.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES}
+
+pix-bw:		pix-bw.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES}
+
+pix-bw3:	pix-bw3.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES}
+
+pixfilter:	pixfilter.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBES}
+
+pixhist:	pixhist.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBFB} ${LIBES}
+
+pixhist3d:	pixhist3d.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBFB} ${LIBES}
+
+pixrect:	pixrect.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES}
+
+pixrot:		pixrot.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES}
+
+pixscale:	pixscale.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES}
+
+pixstat:	pixstat.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES}
+
+pixhist3d-pl:	pixhist3d-pl.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBPLOT} ${LIBES}
+
+pl-sgi:		pl-sgi.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBPLOT} ${LIBFB} ${LIBES}
+
+pldebug:	pldebug.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBPLOT} ${LIBES}
+
+plgetframe:	plgetframe.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBPLOT} ${LIBES}
+
+plrot:		plrot.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBPLOT} ${LIBES}
+
+op-bw:		op-bw.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES}
+
+# DO NOT DELETE THIS LINE -- make depend uses it
+dunncolor.o: dunncolor.c
+dunnsnap.o: dunnsnap.c
+fbanim.o: fbanim.c
+fbanim.o: ../h/fb.h
+loop.o: loop.c
+pix-fb.o: pix-fb.c
+pix-fb.o: ../h/fb.h
+fb-pix.o: fb-pix.c
+fb-pix.o: ../h/fb.h
+pixbustup.o: pixbustup.c
+pixdiff.o: pixdiff.c
+pixinterp2x.o: pixinterp2x.c
+pixtile.o: pixtile.c
+pixuntile.o: pixuntile.c
+pp-fb.o: pp-fb.c
+pp-fb.o: ../h/fb.h
+fbclear.o: fbclear.c
+fbclear.o: ../h/fb.h
+fbgrid.o: fbgrid.c
+fbgrid.o: ../h/fb.h
+rle-fb.o: rle-fb.c
+rle-fb.o: ../h/fb.h
+rle-fb.o: ../h/rle.h
+fb-rle.o: fb-rle.c
+fb-rle.o: ../h/fb.h
+fb-rle.o: ../h/rle.h
+rle-pix.o: rle-pix.c
+rle-pix.o: ../h/fb.h
+rle-pix.o: ../h/rle.h
+pix-rle.o: pix-rle.c
+pix-rle.o: ../h/fb.h
+pix-rle.o: ../h/rle.h
+fbcmap.o: fbcmap.c
+fbcmap.o: ../h/fb.h
+fb-cmap.o: fb-cmap.c
+fb-cmap.o: ../h/fb.h
+cmap-fb.o: cmap-fb.c
+cmap-fb.o: ../h/fb.h
+fbgamma.o: fbgamma.c
+fbgamma.o: ../h/fb.h
+fbscanplot.o: fbscanplot.c
+fbscanplot.o: ../h/fb.h
+fbzoom.o: fbzoom.c
+fbzoom.o: ../h/fb.h
+fbpoint.o: fbpoint.c
+fbpoint.o: ../h/../h/fb.h
+fblabel.o: fblabel.c
+fblabel.o: ../h/fb.h
+fbline.o: fbline.c
+fbline.o: ../h/fb.h
+pl-fb.o: pl-fb.c
+pl-fb.o: ../h/fb.h
+fbcolor.o: fbcolor.c
+fbcolor.o: ../h/fb.h
+fbcmrot.o: fbcmrot.c
+fbcmrot.o: ../h/fb.h
+pixbackgnd.o: pixbackgnd.c
+fbframe.o: fbframe.c
+fbframe.o: ../h/fb.h
+ap-pix.o: ap-pix.c
+bw-fb.o: bw-fb.c
+bw-fb.o: ../h/fb.h
+bw-pix.o: bw-pix.c
+bw3-pix.o: bw3-pix.c
+bwcrop.o: bwcrop.c
+bwdiff.o: bwdiff.c
+bwfilter.o: bwfilter.c
+bw-impress.o: bw-impress.c
+bwhist.o: bwhist.c
+bwhist.o: ../h/fb.h
+bwhisteq.o: bwhisteq.c
+bwmod.o: bwmod.c
+bwrect.o: bwrect.c
+bwrot.o: bwrot.c
+bwscale.o: bwscale.c
+bwstat.o: bwstat.c
+fb-bw.o: fb-bw.c
+fb-bw.o: ../h/fb.h
+gencolor.o: gencolor.c
+pix-bw.o: pix-bw.c
+pix-bw3.o: pix-bw3.c
+pixfilter.o: pixfilter.c
+pixhist.o: pixhist.c
+pixhist.o: ../h/fb.h
+pixhist3d.o: pixhist3d.c
+pixhist3d.o: ../h/fb.h
+pixhist3d-pl.o: pixhist3d-pl.c
+sun-pix.o: sun-pix.c
+mac-pix.o: mac-pix.c
+pixmerge.o: pixmerge.c
+fbcbars.o: fbcbars.c
+fbcbars.o: ../h/fb.h
+pixrect.o: pixrect.c
+pixrot.o: pixrot.c
+pixscale.o: pixscale.c
+pixstat.o: pixstat.c
+op-bw.o: op-bw.c
+pl-sgi.o: pl-sgi.c
+pldebug.o: pldebug.c
+plgetframe.o: plgetframe.c
+plrot.o: plrot.c
+plrot.o: ../h/machine.h
+plrot.o: ../h/vmath.h
+# DEPENDENCIES MUST END AT END OF FILE
+# IF YOU PUT STUFF HERE IT WILL GO AWAY
+# see make depend above

@@ -1,0 +1,43 @@
+.\" Copyright (c) 1990, University of Michigan
+.TH RLE_RAWTOROW 3 "July, 1990" 3
+.UC 4
+.SH NAME
+rle_rawtorow \- Convert "raw" RLE data to scanline form.
+.SH SYNOPSIS
+.B
+#include <rle.h>
+.br
+.B
+#include <rle_raw.h>
+.sp
+.B
+rle_rawtorow( the_hdr, raw, nraw, outrows )
+.br
+.B rle_hdr *the_hdr;
+.br
+.B rle_op **raw;
+.br
+.B int *nraw;
+.br
+.B rle_pixel **outrows;
+.SH DESCRIPTION
+.I Rle_rawtorow
+interprets the "raw" run-length encoded data in
+.IR raw ,
+such as might be returned by
+.IR rle_getraw (3),
+and produces the corresponding scanline data in
+.IR outrows ,
+such as would have been returned by
+.IR rle_getrow (3).
+.SH SEE ALSO
+.na
+.IR rle_hdr (3),
+.IR rle_op (3),
+.IR rle_getraw (3),
+.IR rle_getrow (3),
+.IR librle (3),
+.IR RLE (5).
+.ad b
+.SH AUTHOR
+Spencer W. Thomas, after code by Rod G. Bogart and John W. Peterson.

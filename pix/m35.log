@@ -1,0 +1,43 @@
+BRL-CAD Release 3.26   Ray-Tracer
+    Mon Aug 26 22:39:04 EDT 1991, Compilation 1
+    butler@vgr.brl.mil:/usr/src/tmpcad/rt
+
+db title:  M35   2 1/2 ton truck
+initial dynamic memory use=907472.
+GETTREE: 53.9user 12.3sys 1:32real 71% 414i+3731d 2618maxrss 24+55pf 24+929csw
+Additional dynamic memory used=1352576. bytes
+
+...................Frame     0...................
+PREP: 17.2user 6.2sys 1:00real 38% 542i+5508d 3283maxrss 1+14pf 1+372csw
+Additional dynamic memory used=658960. bytes
+Tree: 1126 solids in 893 regions
+Model: X(-1828,4893), Y(-2302,1311), Z(0,5234)
+View: 33.0779 azimuth, 35.7436 elevation off of front view
+Orientation: 0.22019, 0.399295, 0.785465, 0.418479
+Eye_pos: 3974.53, 1503.32, 2874.63
+Size: 6787.39mm
+Grid: (13.2566, 13.2566) mm, (512, 512) pixels
+Beam: radius=6.62831 mm, divergence=0 mm/1mm
+Output file is 'm35.pix'
+Dynamic scanline buffering
+Lighting: Ambient = 40%
+  /all.g/light2: (-1088.72, -2291.44, 5223.76), aimed at (0, 0, -1)
+  /all.g/light2: visible, casts shadows, 1000 lumens (83%), halfang=45
+  /all.g/light1: (4800, 1300, 2600), aimed at (-0.855372, -0.231663, -0.463326)
+  /all.g/light1: visible, casts shadows, 1000 lumens (83%), halfang=180
+
+light_hit:  ERROR, nothing hit, sxy=460,369, dtol=5.000000e-03
+------light_hit pt list
+003c78b8: PT s960 (ARB8#65) s852 (ARB8#2) (-0.005,0.00231937)
+  InHIT dist=-0.005 (surf 2)
+ OutHIT dist=0.00231937 (surf 3)
+  Solids: (2, 65) 
+------
+SHOT: 9264.9user 383.3sys 4:41:16real 57% 593i+1653d 3353maxrss 4+48pf 207+137762csw
+Additional dynamic memory used=41752. bytes
+5741785 solid/ray intersections: 1858444 hits + 3883341 miss
+pruned 32.4%:  0 model RPP, 0 dups skipped, 625549 solid RPP
+Frame     0:   262144 pixels in    9264.91 sec =      28.29 pixels/sec
+Frame     0:   654979 rays   in    9264.91 sec =      70.69 rays/sec (RTFM)
+
+    17058.7 real      9343.0 user       414.1 sys  

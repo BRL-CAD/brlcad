@@ -1,0 +1,278 @@
+<HTML>
+<HEAD>
+<TITLE>Command Class Documentation</TITLE>
+</HEAD>
+<BODY>
+<A HREF="#toc">Table of Contents</A><P>
+_________________________________________________________________
+<P>
+
+<H2><A NAME="sect1" HREF="#toc1"><B>NAME</B></A></H2>
+Command - create and manipulate a Command widget.
+<P>
+
+<H2><A NAME="sect2" HREF="#toc2"><B>SYNOPSIS</B></A></H2>
+<B>Command</B> <I>pathName</I> ?<I>options</I>?
+<P>
+
+<H2><A NAME="sect3" HREF="#toc3"><B>INHERITANCE</B></A></H2>
+itk::Archetype &lt;- itk::Widget &lt;- iwidgets::Labeledwidget &lt;- iwidgets::Scrolledwidget &lt;- iwidgets::Scrolledtext &lt;- Command
+<P>
+
+<H2><A NAME="sect4" HREF="#toc4"><B>STANDARD OPTIONS</B></A></H2>
+<DL>
+<DD><B>activebackground background borderwidth
+cursor disabledforeground exportselection foreground
+highlightcolor highlightthickness insertbackground
+insertborderwidth insertofftime insertontime insertwidth
+jump padx pady relief selectbackground selectborderwidth
+selectforeground setgrid </B>
+</DD>
+</DL>
+See the &quot;options&quot; manual entry for details on the standard
+options.
+<P>
+
+<H2><A NAME="sect5" HREF="#toc5"><B>ASSOCIATED OPTIONS</B></A></H2>
+Options associated with the scrollbar widget:<BR>
+<DL>
+<DD><B>activerelief elementborderwidth troughcolor</B>
+</DD>
+</DL>
+<P>
+Options associated with the text widget:<BR>
+<DL>
+<DD><B>spacing1 spacing2 spacing3 state wrap</B>
+</DD>
+</DL>
+<P>
+
+<H2><A NAME="sect6" HREF="#toc6"><B>INHERITED OPTIONS</B></A></H2>
+Options inherited from itk::Archetype:<BR>
+<DL>
+<DD><B>clientdata</B>
+</DD>
+</DL>
+<P>
+Options inherited from iwidgets::Labeledwidget:<BR>
+<DL>
+<DD><B>labelbitmap labelfont labelimage labelmargin labelpos
+labeltext labelvariable state</B>
+</DD>
+</DL>
+<P>
+Options inherited from iwidgets::Scrolledwidget:<BR>
+<DL>
+<DD><B>hscrollmode sbwidth scrollmargin
+vscrollmode</B>
+</DD>
+</DL>
+<P>
+Options inherited from iwidgets::Scrolledtext:<BR>
+<DL>
+<DD><B>height textbackground textfont visibleitems width</B>
+</DD>
+</DL>
+<P>
+
+<H2><A NAME="sect7" HREF="#toc7"><B>WIDGET-SPECIFIC OPTIONS</B></A></H2>
+<DL>
+<DT>Name: <DD>          <B>edit_style</B>
+</DD>
+<P>
+<DT>Class: <DD>         <B>Edit_style</B>
+</DD>
+<P>
+<DT>Command-Line Switch: <DD>          <B>-edit_style</B>
+</DD>
+<P>
+Specifies the command line edit style. The possible
+values are <I>emacs</I> and <I>vi</I>.
+<DT>Name: <DD>          <B>prompt</B>
+</DD>
+<P>
+<DT>Class: <DD>         <B>Prompt</B>
+</DD>
+<P>
+<DT>Command-Line Switch: <DD>          <B>-prompt</B>
+</DD>
+<P>
+Specifies the prompt string.
+<DT>Name: <DD>          <B>cmd_prefix</B>
+</DD>
+<P>
+<DT>Class: <DD>         <B>Cmd_prefix</B>
+</DD>
+<P>
+<DT>Command-Line Switch: <DD>          <B>-cmd_prefix</B>
+</DD>
+<P>
+Specifies the command prefix. If non-empty and the object specified
+by the cmd_prefix has a command that matches the first word of the
+command string, the cmd_prefix is prepended to the command and executed.
+Otherwise the command is executed as is.
+<DT>Name: <DD>          <B>selection_color</B>
+</DD>
+<P>
+<DT>Class: <DD>         <B>TextColor</B>
+</DD>
+<P>
+<DT>Command-Line Switch: <DD>          <B>-selection_color</B>
+</DD>
+<P>
+Specifies the selection color.
+<DT>Name: <DD>          <B>prompt_color</B>
+</DD>
+<P>
+<DT>Class: <DD>         <B>TextColor</B>
+</DD>
+<P>
+<DT>Command-Line Switch: <DD>          <B>-prompt_color</B>
+</DD>
+<P>
+Specifies the prompt color.
+<DT>Name: <DD>          <B>cmd_color</B>
+</DD>
+<P>
+<DT>Class: <DD>         <B>TextColor</B>
+</DD>
+<P>
+<DT>Command-Line Switch: <DD>          <B>-cmd_color</B>
+</DD>
+<P>
+Specifies the color of the current command.
+<DT>Name: <DD>          <B>oldcmd_color</B>
+</DD>
+<P>
+<DT>Class: <DD>         <B>TextColor</B>
+</DD>
+<P>
+<DT>Command-Line Switch: <DD>          <B>-oldcmd_color</B>
+</DD>
+<P>
+Specifies the color of old/previous commands.
+<DT>Name: <DD>          <B>result_color</B>
+</DD>
+<P>
+<DT>Class: <DD>         <B>TextColor</B>
+</DD>
+<P>
+<DT>Command-Line Switch: <DD>          <B>-result_color</B>
+</DD>
+<P>
+Specifies the result color.
+</DL>
+<P>
+
+<H2><A NAME="sect8" HREF="#toc8"><B>DESCRIPTION</B></A></H2>
+The <B>Command</B> command creates a new window
+(given by the <I>pathName</I> argument) and makes it into
+a command window.
+Additional options, described above, may be specified on the
+command line or in the option database to configure aspects
+of the command window widget.
+The <B>Command</B> command returns its <I>pathName</I> argument.
+At the time this command is invoked, there must not exist a
+window named <I>pathName</I>, but pathName's parent must exist.
+<P>
+
+<H2><A NAME="sect9" HREF="#toc9"><B>METHODS</B></A></H2>
+The <B>Comand</B> command creates a new Tcl command whose name
+is <I>pathName</I>. This command may be used to invoke various
+operations on the Command widget. It has the following general
+form: 
+<P>
+<I>pathName</I> <I>option</I> ?<I>arg</I> <I>arg</I> ...?
+<P>
+<I>Option</I> and the <I>arg</I>s determine the exact behavior of the command.
+The following commands are possible for Command widgets:
+<P>
+
+<H3><A NAME="sect10" HREF="#toc10"><B>BUILT-IN METHODS</B></A></H3>
+<DL>
+<DD><B>isa info</B>
+</DD>
+</DL>
+<P>
+
+<H3><A NAME="sect11" HREF="#toc11"><B>ASSOCIATED METHODS</B></A></H3>
+Methods associated with
+<A HREF="../libbu/cmdhist_obj.html#sect9">LIBBU's command history object</A>:<BR>
+<DL>
+<DD><B>add curr history next prev</B>
+</DD>
+</DL>
+<P>
+Methods associated with the Tk text widget:<BR>
+<DL>
+<DD><B>bbox compare debug delete dlineinfo get index
+insert mark scan search see tag window xview yview</B>
+</DD>
+</DL>
+<P>
+
+<H3><A NAME="sect12" HREF="#toc12"><B>INHERITED METHODS</B></A></H3>
+Methods inherited from Archetype:<BR>
+<DL>
+<DD>
+<B>cget component configure</B>
+</DD>
+</DL>
+<P>
+Methods inherited from iwidgets::Scrolledtext:<BR>
+<DL>
+<DD><B>childsite clear export import</B>
+</DD>
+</DL>
+
+<P>
+
+<H3><A NAME="sect13" HREF="#toc13"><B>WIDGET-SPECIFIC METHODS</B></A></H3>
+<DL>
+<DT><I>pathName</I> <A NAME = "edit_style"><B>edit_style</B> [emacs | vi]</DT>
+<DD>Set/get the edit style. 
+</DD>
+<P>
+<DT><I>pathName</I> <A NAME = "history"><B>history</B></DT>
+<DD>Return the history list.
+</DD>
+<P>
+</DL>
+<P>
+
+<H2><A NAME="sect17" HREF="#toc17"><B>ACKNOWLEDGEMENTS:</B></A></H2>
+
+Mark L. Ulferts &lt;mulferts@austin.dsccc.com&gt;
+<PRE>        Basic layout for documenting classes.</PRE>
+<P>
+
+<H2><A NAME="sect18" HREF="#toc18"><B>AUTHOR</B></A></H2>
+<P>
+Robert G. Parker
+<P>
+
+<H2><A NAME="sect19" HREF="#toc19"><B>KEYWORDS</B></A></H2>
+<P>
+
+<HR><P>
+<A NAME="toc"><B>Table of Contents</B></A><P>
+<UL>
+<LI><A NAME="toc1" HREF="#sect1">NAME</A></LI>
+<LI><A NAME="toc2" HREF="#sect2">SYNOPSIS</A></LI>
+<LI><A NAME="toc3" HREF="#sect3">INHERITANCE</A></LI>
+<LI><A NAME="toc4" HREF="#sect4">STANDARD OPTIONS</A></LI>
+<LI><A NAME="toc5" HREF="#sect5">ASSOCIATED OPTIONS</A></LI>
+<LI><A NAME="toc6" HREF="#sect6">INHERITED OPTIONS</A></LI>
+<LI><A NAME="toc7" HREF="#sect7">WIDGET-SPECIFIC OPTIONS</A></LI>
+<LI><A NAME="toc8" HREF="#sect8">DESCRIPTION</A></LI>
+<LI><A NAME="toc9" HREF="#sect9">METHODS</A></LI>
+<LI><A NAME="toc10" HREF="#sect10">BUILT-IN METHODS</A></LI>
+<LI><A NAME="toc11" HREF="#sect11">ASSOCIATED METHODS</A></LI>
+<LI><A NAME="toc12" HREF="#sect12">INHERITED METHODS</A></LI>
+<LI><A NAME="toc13" HREF="#sect13">WIDGET-SPECIFIC METHODS</A></LI>
+<LI><A NAME="toc17" HREF="#sect17">ACKNOWLEDGEMENTS</A></LI>
+<LI><A NAME="toc18" HREF="#sect18">AUTHOR</A></LI>
+<LI><A NAME="toc19" HREF="#sect19">KEYWORDS</A></LI>
+</UL>
+</BODY>
+</HTML>

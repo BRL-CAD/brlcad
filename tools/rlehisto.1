@@ -1,0 +1,63 @@
+.\" Copyright (c) 1986, University of Utah
+.\" additions by Gregg Townsend, University of Arizona
+.TH RLEHISTO 1 "June 25, 1990" 1
+.UC 4 
+.SH NAME
+rlehisto \- generate histogram of RLE image.
+.SH SYNOPSIS
+.B rlehisto
+[
+.B \-b
+] [
+.B \-c
+] [
+.B \-t
+] [
+.B \-h
+.I height
+] [
+.B \-o
+.I outfile
+] [ 
+.I infile
+]
+.SH DESCRIPTION
+.I Rlehisto
+counts the pixel values in an RLE file,
+producing an RLE file graphing frequency of occurrence.
+The horizontal axis runs from pixel value 0 on the left
+to pixel value 255 on the right.
+The height indicates the number of pixels seen for each pixel value.
+Histograms are computed independently for each channel,
+scaled identically, and then overlaid.
+.LP
+The following options are available:
+.TP
+.B \-b
+Don't count the background pixel values when scaling the histogram.
+This is useful if most pixels are colored the background color, so
+that the interesting part of the histogram would be too small.  This
+option is ignored if
+.B \-c
+is specified.
+.TP
+.B \-c
+Output cumulative values instead of discrete values.
+.TP
+.B \-t
+Print the totals instead of generating the histogram as an RLE file.
+.TP
+.B \-h 
+.I height
+Scale the output image to the specified height.
+The default is 256.
+.TP
+.BI \-o " outfile"
+Direct the output to
+.I outfile.
+.SH SEE ALSO
+.IR urt (1),
+.IR RLE (5).
+.SH AUTHORS
+Gregg Townsend, University of Arizona;
+Rod Bogart, University of Utah.

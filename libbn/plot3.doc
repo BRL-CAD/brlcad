@@ -1,0 +1,16 @@
+		2d	3d	2df	3df
+space		s	S	w	W
+move		m	M	o	O
+cont		n	N	q	Q
+point		p	P	x	X
+line		l	L	v	V
+circle		c		i
+arc		a		r
+linmod		f
+label		t
+erase		e
+color		C
+flush		F
+
+ bd gh jk  uyz
+ABDEGHIJKRTUYZ

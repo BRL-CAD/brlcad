@@ -1,0 +1,52 @@
+.\" Copyright (c) 1986, University of Utah
+.TH PAINTTORLE 1 "December 20, 1986" 1
+.UC 4 
+.SH NAME
+painttorle \- Convert MacPaint images to RLE format.
+.SH SYNOPSIS
+.B painttorle
+[
+.B \-c
+[
+.I red
+] [
+.I green
+] [
+.I blue
+] [
+.I  alpha
+] ] [
+.B \-r
+] [
+.B \-o
+.I outfile.rle
+] [
+.I infile.paint
+]
+.SH DESCRIPTION
+.I Painttorle
+converts a file from MacPaint format into RLE format.  Because MacPaint and
+RLE disagree on which end is up, the output should be sent through
+.IR rleflip
+to preserve orientation. 
+.SH OPTIONS
+.TP
+.BI \-c "[red] [green] [blue] [alpha]"
+Allows the color values to be specified (the default is 255).
+.TP
+.B \-r
+Invert the color of the MacPaint pixels (reverse video).
+.TP
+.I infile.paint
+The input paint data will be read from this file, otherwise, input will
+be taken from stdin.
+.TP
+.BI \-o " outfile.rle"
+If specified, output will be written to this file, otherwise it will
+go to stdout.
+.SH SEE ALSO
+.IR rletopaint (1),
+.IR urt (1),
+.IR RLE (5).
+.SH AUTHOR
+John W. Peterson

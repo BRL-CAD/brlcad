@@ -1,0 +1,59 @@
+.\" Copyright (c) 1986, 1987, University of Utah
+.TH RLE_PUTRAW 3 2/2/87 3
+.UC 4 
+.SH NAME
+rle_putraw \- write run length encoded data to an RLE file.
+.SH SYNOPSIS
+.B
+#include <rle.h>
+.br
+.B
+#include <rle_raw.h>
+.sp
+.B
+rle_putraw( scanraw, nraw, the_hdr );
+.br
+.B
+rle_op ** scanraw;
+.br
+.B
+int * nraw;
+.br
+.B
+rle_hdr * the_hdr;
+.SH DESCRIPTION
+The function
+.I rle_putraw
+provides a structured method for creating 
+run length encoded output.  It is passed an array,
+.IR scanraw ,
+of pointers to arrays of 
+.IR rle_op (3)
+structures, and an array of lengths.  Each
+.I rle_op
+structure specifies a run or sequence of pixel values.  The array
+.I nraw
+gives the number of 
+.I rle_op
+structures for each channel.  I.e.,
+.I nraw[i]
+is the length of the array pointed to by
+.IR scanraw[i] .
+.SH SEE ALSO
+.na
+.IR rle_hdr (3),
+.IR rle_op (3),
+.IR rle_put_setup (3),
+.IR rle_puteof (3),
+.IR rle_skiprow (3),
+.IR rle_raw_alloc (3),
+.IR rle_raw_free (3),
+.IR rle_getraw (3),
+.IR rle_freeraw (3),
+.IR librle (3),
+.IR RLE (5).
+.ad b
+.SH AUTHOR
+Spencer W. Thomas
+.br
+University of Utah

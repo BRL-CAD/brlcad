@@ -1,0 +1,79 @@
+.\" Set the interparagraph spacing to 1 (default is 0.4)
+.PD 1v
+.\"
+.\" The man page begins...
+.\"
+.TH IMGDIMS 1
+.SH NAME
+imgdims \- guess the width and height of an image file
+.SH SYNOPSIS
+.B imgdims
+.RB [ -ns ]
+.RB [ \-#\  bytes_per_pixel]
+file_name
+.br
+.B imgdims
+.RB [ \-#\  bytes_per_pixel]
+num_bytes
+
+.SH DESCRIPTION
+.I Imgdims
+uses the autosizing capability of
+.IR libbn "(5)"
+to guess the dimensions (in pixels)
+of an image.
+The image size may be expressed either implicitly,
+by specifying the name of the file,
+or explicitly,
+by specifying a number of bytes.
+
+The
+.B -n
+option
+specifies that
+the dimensions should be extracted directly from
+.IR file_name ,
+in the form of any of the standard BRL-CAD command-line options.
+Given the
+.B -s
+option,
+.I imgdims
+ignores any dimensions encoded in
+.I file_name
+and uses the size of the file in bytes
+to compute the number of pixels in the image
+and then guess the image's width and height.
+The
+.B -#
+option
+specifies the size of each pixel (in bytes).
+
+If
+.I file_name
+is specified with neither of the
+.BR -s " and " -n
+options,
+.I imgdims
+tries to extract the dimensions from
+.I file_name,
+and if that fails
+it computes the image size and guesses the width and height.
+If the
+.B -#
+option is not specified,
+.I imgdims
+determines the pixel size based on the extension on
+.I file_name.
+If, additionally,
+.I num_bytes
+was specified or
+.I file_name
+contains none of the recognized extensions,
+.I imgdims
+assumes that there are 3-byte-wide pixels.
+
+.SH SEE ALSO
+.IR libbn "(3)"
+
+.SH AUTHOR
+Paul Tanenbaum

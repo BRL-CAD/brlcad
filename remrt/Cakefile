@@ -1,0 +1,59 @@
+/*
+ *			remrt/Cakefile
+ *
+ *  $Header$
+ */
+
+#define CONFIGDEFS	RFBD_CONFIG
+
+#define SRCDIR	remrt
+#define PRODUCTS	remrt rtsrv
+#define	SRCSUFF	.c
+#define MANSECTION	1
+
+#define FILES	remrt rtsrv
+
+
+#include "../Cakefile.defs"
+#include "../Cakefile.prog"
+
+#if NFS
+#	define	RTDIR	../.rt.MTYPE
+#else
+#	define	RTDIR	../rt
+#endif
+
+#define REMRT_PIECES	\
+		ihost.o RTDIR/opt.o \
+		LIBRT LIBBN LIBBU LIBBU_LIBES LIBFB LIBFB_LIBES LIBES
+
+#define	RTSRV_PIECES	\
+		RTDIR/opt.o RTDIR/do.o RTDIR/worker.o \
+		RTDIR/shade.o \
+		RTDIR/material.o RTDIR/refract.o \
+		RTDIR/wray.o \
+		LIBPKG LIBPKG_LIBES \
+		LIBOPTICAL \
+		LIBRT LIBBN LIBBU LIBBU_LIBES LIBTCL LIBTCL_LIBES LIBES
+
+#define OBJS	/**/
+
+/* Explicit composition of each product */
+
+/* LIBRT is needed to get htond, parser, etc */
+remrt:	remrt.o ihost.o OBJS
+	newvers.sh version "Network-Distributed RT (REMRT)"
+	CC CFLAGS -c vers.c
+	CC LDFLAGS -o remrt remrt.o vers.o OBJS REMRT_PIECES
+
+/* Specially compiled version of RT view.c */
+view.o:	../rt/view.c
+	CC CFLAGS -DRTSRV -c ../rt/view.c
+
+sh_tcl.o:	../rt/sh_tcl.c
+	CC CFLAGS -DRTSRV -c ../rt/sh_tcl.c
+
+rtsrv:	rtsrv.o view.o LIBOPTICAL_DEP LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP LIBFB_DEP OBJS
+	CC LDFLAGS -o rtsrv rtsrv.o view.o OBJS RTSRV_PIECES
+
+#include "../Cakefile.rules"

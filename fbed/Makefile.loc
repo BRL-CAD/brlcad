@@ -1,0 +1,68 @@
+#
+#			fbed/Makefile.loc
+#
+#  Source -
+#	SECAD/VLD Computing Consortium, Bldg 394
+#	The U. S. Army Ballistic Research Laboratory
+#	Aberdeen Proving Ground, Maryland  21005
+
+# Make null for default, or specify -p or -pg for profiling
+PROFILE		=
+CONFIGDEFS	= -D_LOCAL_=static
+LIBES		= ${LIBFB} ${LIBTERMIO} ${LIBCURSOR} ${LIBTERMLIB} -lm\
+		${LIBSYSV}
+
+PRODUCTS	= fbed
+SRCDIR		= fbed
+MANSECTION	= 1
+
+HEADERS		= ascii.h extern.h cursorbits.h font.h popup.h try.h
+
+CFILES		= ${PRODUCTS}.c char.c sgi_dep.c \
+		empty.c execshell.c getfont.c\
+		getinput.c glob.c fill_buf.c \
+		pos_pad.c prnt.c \
+		squash.c try.c
+
+OBJS		= ${PRODUCTS}.o char.o sgi_dep.o \
+		empty.o execshell.o getfont.o \
+		getinput.o glob.o fill_buf.o \
+		pos_pad.o prnt.o \
+		squash.o try.o
+
+all:		${PRODUCTS}
+
+fbed:	${OBJS}
+	$(CC) ${CFLAGS} -o $@ ${OBJS} ${LIBES}
+#	touch $@
+# DO NOT DELETE THIS LINE -- make depend uses it
+fbed.o: fbed.c
+fbed.o: extern.h
+fbed.o: cursorbits.h
+char.o: char.c
+char.o: extern.h
+sgi_dep.o: sgi_dep.c
+sgi_dep.o: ../h/fb.h
+sgi_dep.o: extern.h
+empty.o: empty.c
+empty.o: ../h/fb.h
+execshell.o: execshell.c
+execshell.o: extern.h
+getfont.o: getfont.c
+getfont.o: font.h
+getinput.o: getinput.c
+getinput.o: extern.h
+glob.o: glob.c
+glob.o: extern.h
+fill_buf.o: fill_buf.c
+fill_buf.o: extern.h
+pos_pad.o: pos_pad.c
+pos_pad.o: extern.h
+prnt.o: prnt.c
+prnt.o: extern.h
+squash.o: squash.c
+try.o: try.c
+try.o: extern.h
+# DEPENDENCIES MUST END AT END OF FILE
+# IF YOU PUT STUFF HERE IT WILL GO AWAY
+# see make depend above

@@ -1,0 +1,111 @@
+'\"	@(#)$Header$ (BRL)
+'\" Edit the next two lines to configure for your system:
+.ds ms 1\" utility manual section, normally 1B -- alternatives are 1, 1L, etc.
+.ds ls 3\" library manual section, normally 3B -- alternatives are 3, 3L, etc.
+.ie t .ds pf B\" "printout" font, normally (CW -- use B if you don't have one
+.el .ds pf 1
+'\"
+.de CW
+.lg 0
+\%\&\\$3\f\*(pf\\$1\fP\&\\$2
+.lg
+..
+.TH GIF-FB \*(ms "BRL CAD package"
+.SH NAME
+gif-fb \- display GIF file on frame buffer
+.SH SYNOPSIS
+.CW gif-fb
+[
+.CW -F
+.I "frame buffer name"
+] [
+.CW -c
+] [
+.CW -i
+.I "image number"
+] [
+.CW -o
+] [
+.CW -v
+] [
+.CW -z
+] [
+.I "GIF file name"
+]
+.SH DESCRIPTION
+.CW gif-fb
+displays on a frame buffer the images described by a
+CompuServe GIF (Graphics Interchange Format) file.
+.SS Options
+.TP "\w'\f\*(pf-f\fP \fIframe buffer name\fP\ \ \ 'u"
+\f\*(pf-F\fP \fIframe buffer name\fP
+Outputs to the specified frame buffer
+instead of the one specified by the
+.CW FB_FILE
+environment variable
+(or the default frame buffer, if
+.CW FB_FILE
+is not set).
+The frame buffer size requested will be the same as
+the input GIF screen size.
+The actual size obtained depends on details of the specific frame buffer.
+.TP
+.CW -c
+Uses all 8 bits per channel for color maps supplied in the GIF file,
+overriding the color resolution specified in the GIF file.
+(While technically a violation of the GIF ``standard'',
+apparently some GIF implementations assume this interpretation.)
+.TP
+\f\*(pf-i\fP \fIimage number\fP
+Displays just the specified image
+(starting counting with 1),
+rather than displaying all images as the GIF specification requires.
+.TP
+.CW -o
+(``overlay'')\ 
+Skips the initial clearing of the frame buffer
+to the background color specified in the GIF file.
+.TP
+.CW -v
+(``verbose'')\ 
+Also prints information about the GIF images
+on the standard error output.
+.TP
+.CW -z
+(``zoom'')\ 
+Uses the zoom capability of the current framebuffer to
+make the image as large as possible on the screen while
+preserving a square aspect ratio to the pixels.
+This means that the zoom factor in X and Y will be equal to
+the smaller of the two possible zooms.
+.TP
+.I "GIF file name"
+Specifies the GIF input file to be translated,
+rather than reading the file from the standard input.
+.SH DISCUSSION
+The GIF ``standard'' is far from an ideal specification for frame buffer images,
+but it has been widely accepted in the personal computer arena,
+and consequently there are a large number of images stored in GIF format
+on bulletin-board systems and other information services.
+Since most personal computer systems have GIF translators available for them,
+.CW gif-fb
+provides a means of converting most images from such systems
+into a form suitable for processing with other BRL-CAD utilities.
+.P
+Notice that multiple images within a single GIF file
+can achieve animation effects.
+.SH EXAMPLE
+The following is a typical invocation:
+.RS
+\fI$\fP \|\f\*(pfgif-fb \|image.gif\fP
+.RE
+.SH "SEE ALSO"
+``A Standard Defining a Mechanism for the Storage and Transmission of
+Raster-Based Graphics Information'',
+June 15, 1987 (CompuServe Incorporated).
+.br
+libfb(\*(ls).
+.SH DIAGNOSTICS
+Error messages are intended to be self-explanatory.
+.SH AUTHOR
+Douglas A.\& Gwyn, BRL/VLD-VMB

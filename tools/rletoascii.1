@@ -1,0 +1,67 @@
+.\" Copyright (c) 1990, University of Michigan
+.TH RLETOASCII 1 "Jun 18, 1990" 1
+.UC 4 
+.SH NAME
+rletoascii \- Print an RLE image as ASCII chars.
+.SH SYNOPSIS
+.B rletoascii
+[
+.B \-S
+.I asciistr
+] [
+.B \-r
+] [
+.B \-o
+.I outfile
+] [
+.I infile
+]
+.SH DESCRIPTION
+.I Rletoascii
+reads a file in
+.IR RLE (5)
+format, converts it to black and white, then dumps it as ASCII characters. 
+The 0 to 255 range of pixel values in
+the image is scaled to the length of
+.I asciistr
+and a the character at that position in the string is printed for each pixel.
+Input will be read from
+.I infile
+if specified, from standard input, otherwise.  Output dumps to 
+standard output, or
+.I outfile, 
+if specified.
+
+Usually, the input will need to be resized by
+.IR fant (1)
+or
+.IR rlezoom (1)
+to make it small enough to fit on the screen and to adjust the pixel aspect
+ratio to the "character aspect ratio" of the terminal.  To get it
+"right side up", use
+.IR rleflip (1)
+with the
+.B \-v
+option.  Finally, it may be helpful to maximize the dynamic range with
+.IR rlespiff (1).
+.SH OPTIONS
+.TP
+.BI \-S \ asciistr
+Specifies the range of ascii characters for conversion.  The default string
+(\fB@BR*#$PX0woIcv:+!~"., \fP)
+was designed to look good with the X 6x13 font.  
+.TP
+.B \-r
+Reverse video.  This causes the 0 to 255 range to be mapped to the reverse of
+the ascii string.
+.SH SEE ALSO
+.IR fant (1),
+.IR rleflip (1),
+.IR rlespiff (1),
+.IR rlezoom (1),
+.IR urt (1),
+.IR RLE (5).
+.SH AUTHOR
+Rod G. Bogart, University of Michigan.
+.SH DEFICIENCIES
+Could be rewritten to use overprinting for output to a real printer.

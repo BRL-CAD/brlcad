@@ -1,0 +1,332 @@
+# third pass:  setting lines and pages
+# The input language of this pass is basically <width, word> pairs, where
+# "word" may have imbedded strangeness (backspaces, etc.) for font changes
+# and special characters.  Zero width is not special.  A third field may
+# appear to indicate that this is a fragment of a word that can be
+# hyphenated; the third field is the width of the hyphen that would have
+# to be added if the line broke after this fragment.
+# Negative widths denote special operations.  -3 is an error message, the
+# second field being the message.  -1 and -2 are control messages to this
+# pass, the difference being whether a break is implied or not.  The second
+# field is a message type string; more fields may appear as arguments.  The
+# semantics of control messages are often -- but not always! -- similar to
+# those of troff commands.  For example, "linelen" is .ll, but "center" is
+# not semantically equivalent to .ce -- it is related but more primitive.
+BEGIN {
+	# input and output details
+	FS = "\t"
+	nobreak = -1
+	dobreak = -2
+	message = -3
+	errs = "awf.errs"	# default only, normally changed by "errsto"
+
+	# page setup -- some are defaults only, normally altered by pass 2
+	nextlineno = 1
+	thispageno = 1
+	topmargin = 5
+	botmargin = 5
+	ind = 0			# current indent
+	tmpind = 0
+	pageoffset = ""		# string to emit at start of each line
+	nospacemode = 1
+	hdrs["CH"] = "- % -"
+	nop = split("LH,CH,RH,LF,CF,RF", hdrnames, ",")
+	fph = 0			# print header on first page?
+	fill = 1
+	adj = "both"
+	pagelen = 66
+	linelen = 78
+
+	# line-builder setup
+	line = ""		# line so far, without padding
+	paddable = ""		# x means corresp. char in "line" is paddable
+	thislinelen = -1	# -1 means nothing there
+	cont = " "		# thing to append to continue line
+	contlen = 1
+	eol = ""		# thing to append to break line
+	eollen = 0
+	padfrom = "R"		# "L" or "R", alternating for river avoidance
+
+	# many spaces, so we can use substr to get any number we need
+	sps = "                                                     "
+	sps = sps sps sps sps sps sps sps sps sps sps
+}
+{
+	# process word, if any, causing a break if appropriate
+	if ($1 >= 0 && thislinelen < 0) {	# word, and first on line
+		line = $2
+		paddable = substr(sps, 1, length($2))
+		thislinelen = $1
+	} else if ($1 >= 0 && thislinelen+contlen+$1+$3 <= linelen-ind-tmpind) {
+		# word, and it fits on line
+		line = line cont $2
+		if (cont == " ")
+			paddable = paddable "x"
+		else
+			paddable = paddable substr(sps, 1, length(cont))
+		paddable = paddable substr(sps, 1, length($2))
+		thislinelen += contlen + $1
+	} else if ($1 == nobreak || $1 == message)
+		nop = 0		# no attention (i.e. break) needed here
+	else if ($1 == dobreak && $2 == "need" && \
+				nextlineno + $3 < pagelen + 1 - botmargin)
+		nop = 0		# enough space is available, no action needed
+	else if ($1 == dobreak && $2 == "toindent" && \
+					ind + tmpind + thislinelen < ind) {
+		# move to indent position within line; there is room
+		n = ind - (ind + tmpind + thislinelen)
+		line = line substr(sps, 1, n)
+		# nothing before this is paddable
+		paddable = substr(sps, 1, length(line))
+		thislinelen += n
+		# prevent padding immediately after this point
+		cont = ""
+		contlen = 0
+	} else if (thislinelen >= 0 || ($1 == dobreak && $2 == "need")) {
+		# must emit output, either due to break or "need"
+
+		# if at top of page, header
+		if (nextlineno == 1) {
+			for (i = int((topmargin-1)/2); i > 0; i--) {
+				print ""
+				nextlineno++
+			}
+			for (hno in hdrnames) {
+				h = hdrnames[hno]
+				if (hdrs[h] ~ /%/) {
+					n = split(hdrs[h], t, "%")
+					thispagehdrs[h] = t[1] thispageno t[2]
+				} else
+					thispagehdrs[h] = hdrs[h]
+			}
+			if (fph || thispageno > 1) {
+				lh = thispagehdrs["LH"]
+				ch = thispagehdrs["CH"]
+				rh = thispagehdrs["RH"]
+				lsp = int((linelen - length(lh ch rh)) / 2)
+				rsp = linelen - length(lh ch rh) - lsp
+				print pageoffset lh substr(sps, 1, lsp) ch substr(sps, 1, rsp) rh
+			} else
+				print ""
+			nextlineno++
+			while (nextlineno <= topmargin) {
+				print ""
+				nextlineno++
+			}
+		}
+
+		# the current line
+		# first, add a trailing hyphen if any
+		line = line eol
+		paddable = paddable substr(sps, 1, length(eol))
+		thislinelen += eollen
+
+		# trim trailing spaces if any
+		while (line ~ / $/) {
+			line = substr(line, 1, length(line)-1)
+			paddable = substr(paddable, 1, length(line))
+			thislinelen--
+		}
+
+		# print it in a suitable way
+		if (line == "")		# empty always prints as nothing
+			print ""
+		else if ($1 < 0 && $2 == "center") {
+			# center it
+			hsp = int((linelen - thislinelen) / 2)
+			if (hsp < 0)
+				hsp = 0
+			print pageoffset substr(sps, 1, ind+tmpind+hsp) line
+		} else if (adj == "left" || (adj == "both" && \
+					($1 < 0 || index(paddable, "x") == 0)))
+			# no right-margin adjustment (disabled, inappropriate
+			# (line ended by break), or impossible)
+			print pageoffset substr(sps, 1, ind+tmpind) line
+		else if (adj == "both") {
+			# hard case -- adjust right margin
+			# sanity check
+			if (length(paddable) != length(line))	# aieeeee
+				printf "awf: %f != %f!\n", length(paddable), \
+							length(line) >errs
+
+			# compute parameters
+			textlen = linelen - (ind+tmpind)
+			mustadd = textlen - thislinelen
+			npad = 0	# number of paddable spaces
+			for (tmp = paddable; (i = index(tmp, "x")) > 0; \
+							tmp = substr(tmp, i+1))
+				npad++
+			addatall = int(mustadd/npad)	# all grow this much
+			spall = substr(sps, 1, addatall)
+			nmore = mustadd - addatall*npad	# this many grow more
+
+			# build padded output text
+			out = substr(sps, 1, ind+tmpind)
+			padno = 0
+			while ((i = index(paddable, "x")) > 0) {
+				out = out substr(line, 1, i)
+				padno++
+				out = out spall
+				if (padfrom == "L") {
+					if (padno <= nmore)
+						out = out " "
+				} else {
+					if (padno > npad-nmore)
+						out = out " "
+				}
+				line = substr(line, i+1)
+				paddable = substr(paddable, i+1)
+			}
+
+			# print it, plus remnant not processed by loop
+			print pageoffset out line
+
+			# tidy up
+			if (padfrom == "L")
+				padfrom = "R"
+			else
+				padfrom = "L"
+		}
+
+		# tidy up after output line
+		nextlineno++
+		line = ""
+		paddable = ""
+		thislinelen = -1
+		tmpind = 0
+		nospacemode = 0
+
+		# if we broke from a "need", go to bottom of page
+		if ($1 == dobreak && $2 == "need")
+			while (nextlineno < pagelen + 1 - botmargin) {
+				print ""
+				nextlineno++
+			}
+
+		# footer, if at bottom of page
+		if (nextlineno >= pagelen + 1 - botmargin) {
+			for (i = int((botmargin-1)/2); i > 0; i--) {
+				print ""
+				nextlineno++
+			}
+			# header code prepared thispagehdrs
+			lf = thispagehdrs["LF"]
+			cf = thispagehdrs["CF"]
+			rf = thispagehdrs["RF"]
+			lsp = int((linelen - length(lf cf rf)) / 2)
+			rsp = linelen - length(lf cf rf) - lsp
+			print pageoffset lf substr(sps, 1, lsp) cf substr(sps, 1, rsp) rf
+			nextlineno++
+			while (nextlineno <= pagelen) {
+				print ""
+				nextlineno++
+			}
+			nextlineno = 1
+			thispageno++
+
+			# after page break, should not space unnecessarily,
+			# and should pad first line from right
+			nospacemode = 1
+			padfrom = "R"
+		}
+
+		# we are finally done with emitting output
+		# pick up input word, if any
+		if ($1 >= 0) {
+			line = $2
+			paddable = substr(sps, 1, length($2))
+			thislinelen = $1
+		}
+	}
+
+	# if we broke, next line should pad from right
+	if ($1 == dobreak)
+		padfrom = "R"
+
+	# cleanup and post-break command processing
+	if ($1 >= 0 || $2 == "nohyphen") {
+		# reset hyphenation trickery after each word (fragment)
+		cont = " "
+		contlen = 1
+		eol = ""
+		eollen = 0
+	} else if ($2 == "need" || $2 == "toindent")
+		nop = 0		# dealt with above
+	else if ($2 == "flush" || $2 == "center")
+		nop = 0		# exist only to cause break
+	else if ($1 == message)
+		print "awf: " $2 >errs
+	else if ($2 == "gap") {
+		# gap between last word and next one should be >= $3
+		if (thislinelen >= 0) {
+			line = line substr(sps, 1, $3-1)
+			paddable = paddable substr(sps, 1, $3-1)
+			thislinelen += $3-1
+		}
+	} else if ($2 == "tabto") {
+		# move to tab stop at $3
+		if (thislinelen < 0)
+			thislinelen = 0		# make line exist
+		n = $3 - thislinelen
+		if (n > 0) {			# must emit some space
+			line = line substr(sps, 1, n)
+			# nothing before a tab is paddable
+			paddable = substr(sps, 1, length(line))
+			thislinelen += n
+			# suppress space following
+			cont = ""
+			contlen = 0
+		}
+	} else if ($2 == "errsto")
+		errs = $3
+	else if ($2 ~ /^[LCR][HF]$/)
+		hdrs[$2] = $3
+	else if ($2 == "fph")
+		fph = $3
+	else if ($2 == "space") {
+		if (!nospacemode) {
+			# generate an empty line, which will be flushed by
+			# the next word; NB we know "space" caused a flush
+			line = ""
+			paddable = ""
+			thislinelen = linelen + 1
+			nospacemode = 0
+		}
+	} else if ($2 == "left")
+		adj = "left"
+	else if ($2 == "both")
+		adj = "both"
+	else if ($2 == "indent")
+		ind = $3
+	else if ($2 == "tempindent")
+		tmpind = $3
+	else if ($2 == "linelen")
+		linelen = $3
+	else if ($2 == "pagelen")
+		pagelen = $3
+	else if ($2 == "nospace")
+		nospacemode = 1
+	else if ($2 == "yesspace")
+		nospacemode = 0
+	else if ($2 == "hyphen") {
+		# discretionary hyphen at this point
+		cont = ""
+		contlen = 0
+		eol = $3
+		eollen = $4
+	} else if ($2 == "userhyphen") {
+		# user-supplied hyphen at this point
+		cont = $3
+		contlen = $4
+		eol = $3
+		eollen = $4
+	} else if ($2 == "pageoffset")
+		pageoffset = substr(sps, 1, $3)
+	else
+		print "awf: URK -- INTERNAL OPCODE `" $2 "' UNKNOWN" >errs
+}
+END {
+	# second pass is supposed to fake a .ne to flush the last page
+	if (nextlineno != 1)
+		print "awf: last page not flushed!" >errs
+}

@@ -1,0 +1,23 @@
+/*
+ *	$Header$
+ *
+ *			halftone/Cakefile
+ */
+
+#define SRCDIR	halftone
+#define PRODUCTS	halftone
+#define	SRCSUFF	.c
+#define MANSECTION	1
+
+#define FILES	main sharpen tone_classic tone_floyd tone_folly \
+		tone_simple tonescale
+
+#include "../Cakefile.defs"
+#include "../Cakefile.prog"
+
+/* Explicit composition of each product */
+
+halftone:	OBJ 
+	CC LDFLAGS -o halftone OBJ LIBRT LIBFB LIBFB_LIBES LIBBN LIBBU LIBBU_LIBES LIBES
+
+#include "../Cakefile.rules"
