@@ -933,9 +933,9 @@ struct nmg_inter_struct	*is;
 	}
 
 	/* Map to 2d */
-	nmg_get_2d_vertex( a, v1a, is, fu );
-	nmg_get_2d_vertex( b, v1b, is, fu );
-	nmg_get_2d_vertex( p, v2, is, fu );
+	nmg_get_2d_vertex( a, v1a, is, &fu->l.magic );
+	nmg_get_2d_vertex( b, v1b, is, &fu->l.magic );
+	nmg_get_2d_vertex( p, v2, is, &fu->l.magic );
 
 	dist = -INFINITY;
 	code = rt_isect_pt2_lseg2( &dist, a, b, p, &(is->tol) );
@@ -1256,12 +1256,12 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 	 *  while the intersection line has to satisfy different constraints.
 	 *  Don't confuse the two!
 	 */
-	nmg_get_2d_vertex( eu1_start, vu1a->v_p, is, fu2 );	/* 2D line */
-	nmg_get_2d_vertex( eu1_end, vu1b->v_p, is, fu2 );
+	nmg_get_2d_vertex( eu1_start, vu1a->v_p, is, &fu2->l.magic );	/* 2D line */
+	nmg_get_2d_vertex( eu1_end, vu1b->v_p, is, &fu2->l.magic );
 	VSUB2_2D( eu1_dir, eu1_end, eu1_start );
 
-	nmg_get_2d_vertex( eu2_start, vu2a->v_p, is, fu2 );
-	nmg_get_2d_vertex( eu2_end, vu2b->v_p, is, fu2 );
+	nmg_get_2d_vertex( eu2_start, vu2a->v_p, is, &fu2->l.magic );
+	nmg_get_2d_vertex( eu2_end, vu2b->v_p, is, &fu2->l.magic );
 	VSUB2_2D( eu2_dir, eu2_end, eu2_start );
 
 	dist[0] = dist[1] = 0;	/* for clean prints, below */
@@ -2341,8 +2341,8 @@ struct faceuse		*fu2;
 	/*
 	 *  The 3D line in is->pt and is->dir is prepared by the caller.
 	 */
-	nmg_get_2d_vertex( eu1_start, vu1a->v_p, is, fu1 );
-	nmg_get_2d_vertex( eu1_end, vu1b->v_p, is, fu1 );
+	nmg_get_2d_vertex( eu1_start, vu1a->v_p, is, &fu1->l.magic );
+	nmg_get_2d_vertex( eu1_end, vu1b->v_p, is, &fu1->l.magic );
 	VSUB2_2D( eu1_dir, eu1_end, eu1_start );
 
 	dist[0] = dist[1] = 0;	/* for clean prints, below */
@@ -2626,8 +2626,8 @@ struct vertex *
 nmg_repair_v_near_v( hit_v, v, eg1, eg2, bomb, tol )
 struct vertex		*hit_v;
 struct vertex		*v;
-struct edge_g_lseg		*eg1;		/* edge_g_lseg of hit_v */
-struct edge_g_lseg		*eg2;		/* edge_g_lseg of v */
+CONST struct edge_g_lseg		*eg1;		/* edge_g_lseg of hit_v */
+CONST struct edge_g_lseg		*eg2;		/* edge_g_lseg of v */
 int			bomb;
 CONST struct rt_tol	*tol;
 {
@@ -2978,7 +2978,7 @@ fixup:
 force_isect:
 			/* Force things to be consistent, use geom from hit_v */
 			VMOVE(hit3d, hit_v->vg_p->coord);
-			nmg_get_2d_vertex( hit2d, hit_v, is, fu1 );
+			nmg_get_2d_vertex( hit2d, hit_v, is, &fu1->l.magic );
 		}
 
 eu_search:
@@ -3047,8 +3047,8 @@ hit_b:
 			}
 
 			/* Third, a geometry check of the HITPT -vs- the line segment */
-			nmg_get_2d_vertex( eu1_pt2d, vu1a->v_p, is, fu1 );
-			nmg_get_2d_vertex( eu1_end2d, vu1b->v_p, is, fu1 );
+			nmg_get_2d_vertex( eu1_pt2d, vu1a->v_p, is, &fu1->l.magic );
+			nmg_get_2d_vertex( eu1_end2d, vu1b->v_p, is, &fu1->l.magic );
 			ldist = 0;
 			code = rt_isect_pt2_lseg2( &ldist, eu1_pt2d, eu1_end2d, hit2d, &(is->tol) );
 			if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
