@@ -184,7 +184,9 @@ struct region			*reg2;
     new_ovlp -> forw -> backw = new_ovlp;
     ovlp_list.forw = new_ovlp;
 
-    return(1);
+    /* Match BRL-CAD 4.4's accidental behavior: take higher bit */
+    if( reg1->reg_bit > reg2->reg_bit )  return 1;
+    else return 2;
 }
 
 /*
