@@ -53,11 +53,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "./debug.h"
 
-#define RT_CK_DBI_TCL(_p)	BU_CKMAG_TCL(interp,_p,DBI_MAGIC,"struct db_i")
-#define RT_CK_RTI_TCL(_p)	BU_CKMAG_TCL(interp,_p,RTI_MAGIC,"struct rt_i")
-#define RT_CK_WDB_TCL(_p)	BU_CKMAG_TCL(interp,_p,RT_WDB_MAGIC,"struct rt_wdb")
-#define RT_CK_COMB_TCL(_p)	BU_CKMAG_TCL(interp,_p,RT_COMB_MAGIC, "rt_comb_internal" )
-
 /************************************************************************
  *									*
  *		Tcl interface to Ray-tracing				*
@@ -215,7 +210,7 @@ char **argv;
 	/* Could core dump */
 	RT_AP_CHECK(ap);
 	rtip = ap->a_rt_i;
-	RT_CK_RTI_TCL(rtip);
+	RT_CK_RTI_TCL(interp,rtip);
 
 	if( bn_decode_vect( ap->a_ray.r_pt,  argv[2] ) != 3 ||
 	    bn_decode_vect( ap->a_ray.r_dir, argv[4] ) != 3 )  {
@@ -276,7 +271,7 @@ char **argv;
 	/* Could core dump */
 	RT_AP_CHECK(ap);
 	rtip = ap->a_rt_i;
-	RT_CK_RTI_TCL(rtip);
+	RT_CK_RTI_TCL(interp,rtip);
 
 	if( argc == 3 )  {
 		ap->a_onehit = atoi(argv[2]);
@@ -314,7 +309,7 @@ char **argv;
 	/* Could core dump */
 	RT_AP_CHECK(ap);
 	rtip = ap->a_rt_i;
-	RT_CK_RTI_TCL(rtip);
+	RT_CK_RTI_TCL(interp,rtip);
 
 	if( argc == 3 )  {
 		ap->a_no_booleans = atoi(argv[2]);
@@ -354,7 +349,7 @@ char **argv;
 	/* Could core dump */
 	RT_AP_CHECK(ap);
 	rtip = ap->a_rt_i;
-	RT_CK_RTI_TCL(rtip);
+	RT_CK_RTI_TCL(interp,rtip);
 
 	rt_ck(rtip);
 
@@ -393,7 +388,7 @@ char **argv;
 	/* Could core dump */
 	RT_AP_CHECK(ap);
 	rtip = ap->a_rt_i;
-	RT_CK_RTI_TCL(rtip);
+	RT_CK_RTI_TCL(interp,rtip);
 
 	if( argc >= 3 && !rtip->needprep )  {
 		Tcl_AppendResult( interp,
@@ -758,7 +753,7 @@ CONST char			*item;
 
 	RT_CK_DB_INTERNAL(intern);
 	comb = (struct rt_comb_internal *)intern->idb_ptr;
-	RT_CK_COMB_TCL(comb);
+	RT_CK_COMB_TCL(interp,comb);
 
 	if( item==0 ) {
 		/* Print out the whole combination. */
@@ -1085,7 +1080,7 @@ char	      **argv;
 	--argc;
 	++argv;
 
-	RT_CK_WDB_TCL(wdb);
+	RT_CK_WDB_TCL(interp,wdb);
 	
 	/* Verify that this wdb supports lookup operations
 	   (non-null dbip) */
@@ -1559,7 +1554,7 @@ char	      **argv;
 	name = argv[2];
 
 	/* Verify that this wdb supports lookup operations (non-null dbip) */
-	RT_CK_DBI_TCL(wdb->dbip);
+	RT_CK_DBI_TCL(interp,wdb->dbip);
 
 	dp = db_lookup( wdb->dbip, name, LOOKUP_QUIET );
 	if( dp == DIR_NULL ) {
@@ -1661,8 +1656,8 @@ char	      **argv;
 	register struct directory *dp;
 	register int i;
 
-	RT_CK_WDB_TCL( wdp );
-	RT_CK_DBI_TCL( wdp->dbip );
+	RT_CK_WDB_TCL(interp, wdp );
+	RT_CK_DBI_TCL(interp, wdp->dbip );
 
 	/* Can this be executed only sometimes?
 	   Perhaps a "dirty bit" on the database? */
@@ -1724,8 +1719,8 @@ char	      **argv;
 	char		*newprocname;
 	char		buf[64];
 
-	RT_CK_WDB_TCL( wdp );
-	RT_CK_DBI_TCL( wdp->dbip );
+	RT_CK_WDB_TCL(interp, wdp );
+	RT_CK_DBI_TCL(interp, wdp->dbip );
 
 	if( argc < 4 )  {
 		Tcl_AppendResult( interp,
@@ -1818,8 +1813,8 @@ char	      **argv;
 	struct rt_wdb	*op;
 	int		ret;
 
-	RT_CK_WDB_TCL( wdp );
-	RT_CK_DBI_TCL( wdp->dbip );
+	RT_CK_WDB_TCL(interp, wdp );
+	RT_CK_DBI_TCL(interp, wdp->dbip );
 
 	if( argc != 3 )  {
 		Tcl_AppendResult( interp,
@@ -1885,7 +1880,7 @@ char **argv;
 	}
 
 	/* Could core dump */
-	RT_CK_WDB_TCL(wdb);
+	RT_CK_WDB_TCL(interp,wdb);
 
 	for( dbcmd = rt_db_cmds; dbcmd->cmdname != NULL; dbcmd++ ) {
 		if( strcmp(dbcmd->cmdname, argv[1]) == 0 ) {
@@ -1970,7 +1965,7 @@ Usage: wdb_open newprocname file filename\n\
 
 		dbip = (struct db_i *)atol( argv[3] );
 		/* Could core dump */
-		RT_CK_DBI_TCL(dbip);
+		RT_CK_DBI_TCL(interp,dbip);
 
 		if( strcmp( argv[2], "disk" ) == 0 )  {
 			wdb = wdb_dbopen( dbip, RT_WDB_TYPE_DB_DISK );
