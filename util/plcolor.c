@@ -4,7 +4,7 @@
  *  Output a color in UNIX plot format, for inclusion in a plot file.
  *
  *  Author -
- *	Phil Dkystra
+ *	Phillip Dykstra
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
