@@ -1403,6 +1403,9 @@ proc set_texture_values { shader_str id } {
 	set shader_params($id,file) ""
 	set shader_params($id,width) $shader_params($id,def_width)
 	set shader_params($id,height) $shader_params($id,def_height)
+	set shader_params($id,mirror) 0
+	set shader_params($id,tx_scale_u) 1
+	set shader_params($id,tx_scale_v) 1
 
 	if { [llength $shader_str] > 1 } then {
 		set params [lindex $shader_str 1]
@@ -1446,6 +1449,16 @@ proc set_texture_values { shader_str id } {
 				file {
 						set shader_params($id,file) $value
 				}
+
+				m {
+					set shader_params($id,mirror) $value
+				}
+
+				uv {
+					set uv_list [string map {","  " " } $value]
+					set shader_params($id,tx_scale_u) [lindex $uv_list 0]
+					set shader_params($id,tx_scale_v) [lindex $uv_list 1]
+				}
 			}
 		}
 	}
@@ -1488,6 +1501,16 @@ proc do_texture_apply { shade_var id } {
 			} else {
 				lappend params trans_valid 1 }
 	}
+	if { [string length $shader_params($id,mirror)] > 0 } then {
+		if { $shader_params($id,mirror) != 0 } {
+			lappend params m $shader_params($id,mirror)
+		}
+	}
+	if { [string length $shader_params($id,tx_scale_u)] > 0 || [string length $shader_params($id,tx_scale_v)] > 0 } then {
+		if { $shader_params($id,tx_scale_u) != 1 || $shader_params($id,tx_scale_v) != 1 } {
+			lappend params uv $shader_params($id,tx_scale_u),$shader_params($id,tx_scale_v)
+		}
+	}
 
 	set shader [list $shader_params($id,shader_name) $params ]
 }
@@ -1516,6 +1539,16 @@ proc do_texture { shade_var id } {
 	label $shader_params($id,window).fr.height -text "File height (pixels)"
 	entry $shader_params($id,window).fr.height_e -width 5 -textvariable shader_params($id,height)
 	bind $shader_params($id,window).fr.height_e <KeyRelease> "do_shader_apply $shade_var $id"
+	label $shader_params($id,window).fr.mirror -text "Mirror Adjacent tiles"
+	checkbutton $shader_params($id,window).fr.mirror_e \
+		-variable shader_params($id,mirror) \
+		-command "do_shader_apply $shade_var $id"
+	label $shader_params($id,window).fr.u_scale -text "Texture Replication in U-direction"
+	entry $shader_params($id,window).fr.u_scale_e -width 4 -textvariable shader_params($id,tx_scale_u)
+	bind $shader_params($id,window).fr.u_scale_e <KeyRelease> "do_shader_apply $shade_var $id"
+	label $shader_params($id,window).fr.v_scale -text "V-direction"
+	entry $shader_params($id,window).fr.v_scale_e -width 4 -textvariable shader_params($id,tx_scale_v)
+	bind $shader_params($id,window).fr.v_scale_e <KeyRelease> "do_shader_apply $shade_var $id"
 	label $shader_params($id,window).fr.trans -text "Transparency (RGB)"
 	entry $shader_params($id,window).fr.trans_e -width 15 -textvariable shader_params($id,transp)
 	bind $shader_params($id,window).fr.trans_e <KeyRelease> "do_shader_apply $shade_var $id"
@@ -1597,15 +1630,21 @@ proc do_texture { shade_var id } {
 	set_texture_values $shader_str $id
 
 	grid $shader_params($id,window).fr.file -row 0 -column 0 -sticky e
-	grid $shader_params($id,window).fr.file_e -row 0 -column 1 -columnspan 3 -sticky w
+	grid $shader_params($id,window).fr.file_e -row 0 -column 1 -columnspan 5 -sticky w
 	grid $shader_params($id,window).fr.width -row 1 -column 0 -sticky e
 	grid $shader_params($id,window).fr.width_e -row 1 -column 1 -sticky w
 	grid $shader_params($id,window).fr.height -row 1 -column 2 -sticky e
 	grid $shader_params($id,window).fr.height_e -row 1 -column 3 -sticky w
-	grid $shader_params($id,window).fr.trans -row 2 -column 0 -sticky e
-	grid $shader_params($id,window).fr.trans_e -row 2 -column 1 -sticky w
-	grid $shader_params($id,window).fr.valid_e -row 2 -column 2 -sticky e
-	grid $shader_params($id,window).fr.valid -row 2 -column 3 -sticky w
+	grid $shader_params($id,window).fr.u_scale -row 2 -column 0 -sticky e
+	grid $shader_params($id,window).fr.u_scale_e -row 2 -column 1 -sticky w
+	grid $shader_params($id,window).fr.v_scale -row 2 -column 2 -sticky e
+	grid $shader_params($id,window).fr.v_scale_e -row 2 -column 3 -sticky w
+	grid $shader_params($id,window).fr.mirror_e -row 2 -column 4 -sticky e
+	grid $shader_params($id,window).fr.mirror -row 2 -column 5 -sticky w
+	grid $shader_params($id,window).fr.trans -row 3 -column 0 -sticky e
+	grid $shader_params($id,window).fr.trans_e -row 3 -column 1 -sticky w
+	grid $shader_params($id,window).fr.valid_e -row 3 -column 2 -sticky e
+	grid $shader_params($id,window).fr.valid -row 3 -column 3 -sticky w
 
 	grid $shader_params($id,window).fr -columnspan 4 -sticky ew -ipadx 3 -ipady 3
 
