@@ -1824,7 +1824,7 @@ int		lvl;			/* debug level */
 		  sp->s_center[Z]*base2local,
 		  sp->s_size*base2local );
     bu_vls_printf(&vls, "reg=%d\n",sp->s_regionid );
-    bu_vls_printf(&vls, "  color=(%d,%d,%d) %d,%d,%d\n",
+    bu_vls_printf(&vls, "  basecolor=(%d,%d,%d) color=(%d,%d,%d)\n",
 		  sp->s_basecolor[0],
 		  sp->s_basecolor[1],
 		  sp->s_basecolor[2],
