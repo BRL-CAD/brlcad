@@ -4,8 +4,8 @@
 Installing The BRL-CAD Package
 .br
 Release 3.0
-.br
-30-August-1988
+.sp
+4-Sept-1988
 .AU
 Michael John Muuss
 .AI
@@ -27,37 +27,150 @@ DISTRIBUTION TERMS
 This software is an unpublished work that is not generally available
 to the public, except through the terms of a limited distribution
 agreement.
-more...
+Please recall that to obtain this software, you agreed that
+before using the software at additional sites, or for permission to
+use this work as part of a commercial package, you would first obtain
+authorization from BRL.
+The full terms of the distribution agreement are in the file "README".
 .NH 1
 INTRODUCTION
 .PP
+The BRL-CAD Package software is distributed only in source code form.
+There are quite a number of advantages to this.
+The most important advantage is that a single distribution tape
+has to be prepared;  this distribution tape contains the complete
+software for all currently supported machines.
+All the recipient of this software has to do is compile the source
+code, and install the resulting binaries.
+The second most important advantage of a source-code-only distribution
+is that it gives you complete control of your destiny.
+If you need to add a feature, change something, or fix a bug,
+you have everything required.
+Since BRL is unable to offer any kind of support of this software
+non-Government recipients, distributing full source code ensures
+that you need not become "stuck".
+.PP
 This software is generally used in one of three ways:
-1)  For the RT benchmark,
-2)  For experimentation or to get acquainted with the software,
-3)  For production use.
-
-The machines which are known to be supported by this release are
-listed in this table:
+.IP a)
+For production use,
+.IP b)
+For the RT benchmark, or
+.IP c)
+For exploration, to get acquainted with the software.
+.PP
+Each of these different types of use will require slightly different
+treatment of the software as it is configured.
+By default, the software is pre-configured for production use,
+to make installation most convenient for the primary user community.
+However, the modifications required for non-production use are
+slight, and are called out in great detail in the ensuing sections.
+.PP
+The BRL-CAD Package has been ported to a great many different
+machines throughout its lifetime.
+Every machine / software version combination will fall into
+one of these three categories:
+.IP a)
+For every configuration that we have available to test with at BRL,
+the software has been designed to install automaticly, without
+need for any modifications to the configuration files.
+The hardware/software configurations
+which are known to have "automatic support" in this release
+are listed in this table:
 .TS
 center box;
-l l.
+l l l.
 MTYPE	Hardware	Software
 _
 fx	Alliant FX/8, /80	Concentrix 3.0, 4.0
 xmp	Cray X-M/P	UNICOS 3.0.10
-cr2	Cray-2		UNICOS 3
+cr2	Cray-2	UNICOS 3
 vax	DEC VAX-11	Berkeley 4.2 BSD, 4.3 BSD
 sel	Gould PN6080, PN9080	UTX/30 Rel 2.0
+pyr	Pyramid	??
 3d	SGI 3030	Version 3.5, 3.6
-4d	SGI 4D		Version 2
-4d??	SGI 4D		Version 3
-4d??	SGI 4D/GT	Version 3.1
+4d	SGI 4D	Version 2
 sun3	Sun-3/*	SunOS 3.4
 .TE
-Porting this software to a machine which is not in the ``supported''
-list will require additional effort which is generally small.
-See the section on
-``SUPPORTING A NEW MACHINE'', below, for details.
+.IP b)
+With slight modifications to the configuration files, these
+additional hardware/software configurations can be easily supported.
+In many cases, these differences are due to slight variations in
+the hardware options installed, or the version of the software
+being used.
+.TS
+center box;
+l l l.
+MTYPE	Hardware	Software
+_
+vax	DEC VAX-11	Berkeley 4.1 BSD
+3d	SGI 3030	Version 3.4 (TCP or XNS)
+4d	SGI 4D/GT	Version 3.1 + 4Sight
+.TE
+.IP c)
+Porting this software to a machine which is not
+in one of the ``supported'' lists above
+will require some additional configuration or programming effort.
+See the section on ``SUPPORTING A NEW MACHINE'', below, for details.
+.PP
+There are some machine/display combinations which are supported
+that are not part of the default configuration.
+Optional framebuffer support is:
+.TS
+center box;
+l l.
+remote	Network access to remote display
+adage	Adage RDS-3000 ("Ikonas")
+sgi	SGI Iris display
+sun	SunView interface
+ptty	AT&T 5620 w/special Moss layer
+ug	Ultra Graphics
+rat	Raster Technology One/80
+.TE
+.PP
+At present, all versions of \fBmged\fR have support for these types of
+display devices by default:
+.TS
+center box;
+l l.
+plot	any UNIX-plot filter
+tek	Tektronix 4014 and family
+tek4109	Tektronix 4109
+ps	PostScript
+.TE
+These optional display devices are also supported,
+when specifically configured:
+.TS
+center box;
+l l.
+ir	SGI 2400, 3030
+4d	SGI 4-D
+gt	SGI 4-D/GT
+sun	SUN 3.2 Pixwin
+vg	Vector General 3300
+mg	Megatek 7250
+rat	Raster Tech One/180,380
+rat80	Raster Tech One/80
+ps300	E&S Picture System 300
+.TE
+.PP
+This table shows the default configuration specified in \fBCakefile.defs\fR
+for each supported processor.
+.TS
+center box;
+l l l.
+MTYPE	Framebuffer	MGED
+_
+vax	adage, net	mg, vg
+3d	sgi, net	sgi
+4d	sgi, net	sgi
+sun3	sun, net	sun
+alliant	net	-
+sel	net	-
+xmp	net	-
+cr2	net	-
+eta10	-	-
+pyramid	-	-
+.TE
 .NH 1
 LOADING THE SOFTWARE
 .IP 1)
@@ -125,16 +238,119 @@ in order to have the Sun workstation read the tape using the industry
 standard QIC-24 format, rather than the default Sun behavior of reading
 the tape in QIC-11 format.
 .NH 1
+SOFTWARE ORGANIZATION
+.PP
+The tape that you just read contains numerous subdirectories,
+each one of which holds a collection of related software.
+For more details on what this software is, please read
+the "BRL-CAD Overview" paper located in "papers/overview",
+and consult the \fBbrlcad\fR(1)
+manual page, located in "util/brlcad.1".
+For a discussion of the significance of this software,
+read the paper "Understanding the Preparation and Analysis of Solid
+Models", located in "papers/solid-models".
+A fairly disorganized and occasionally incomplete collection of
+often helpful tidbits exists in the "doc/" directory.
+.sp
+.TS
+center;
+l s
+l l.
+PROGRAMS
+_
+rt	A ray-tracing lighting model, for rendering
+mged	A solid-model editor
+conv	ASCII/binary database converters
+rfbd	Remote network frame-buffer daemon
+util	Zillions of image-handling utilities and tools
+fbed	Frame-buffer image editor
+vdeck	Convert mged models to GIFT-format card decks.
+tools	Utah Raster Toolkit tools
+.TE
+.TS
+center;
+l s
+l l.
+LIBRARIES
+_
+librt	A solid-model ray-tracing library
+libspl	A B-spline library
+libsysv	Some System-V compatibility routines
+libpkg	A "message-passing" interface to TCP network links
+libfb	A generic frame-buffer library
+libtermio	A library to handle terminal mode setting
+libplot3	A public-domain 2-D and 3-D UNIX-Plot library
+libtig	Some plotting routines built on libplot3
+librle	A Run-Length-Encoding library (originally from UofUtah)
+libmalloc	The Princeton malloc(3) -- a better malloc
+libwdb	A library for procedurally writing databases
+.TE
+.TS
+center;
+l s
+l l.
+MISC
+_
+papers	Full-length papers
+doc	Various smaller documents of lower quality
+db	Several solid-model databases, in ASCII form
+bench	Scripts to drive the RT benchmark
+pix	Reference images for the RT benchmark
+dmdfb	libfb support for layers in Teletype 5620 DMD terminal
+whetstone	FORTRAN Whetstone benchmark
+dhrystone	"C" Dhyrstone benchmark
+.TE
+.PP
+Please note that
+this distribution package does \fInot\fR include the various
+military-specific model
+analysis tools such as GIFT, SAR, SLAVE, VAST, etc., nor does it
+include any military databases.
+If you desire to have access to this material, please contact
+Keith Applin at (301)-278-6647.
+.NH 1
+CONFIGURATION
+.PP
+If you are configuring the software for more than one type of computer,
+you will have to go through this configuration procedure separately for
+each kind of system.
+Configuration question apply only to the hardware available on the
+particular system presently being configured.
+.PP
+If you have several types of machines sharing a single filesystem
+using NFS, and you wish to share the BRL-CAD source tree while
+maintaining separate binaries for each type of machine, this
+can be easily accomodated.
+XXX more
+
+.NH 1
 INSTALLATION DIRECTORIES
 .PP
-At this stage, it is necessary to decide what directory the BRL-CAD Pacakge
+At this stage, it is necessary to decide
+what UNIX directory the BRL-CAD Pacakge
 executable programs are going to be installed in, and to make certain
 that the binary (program) installation directory is in your Shell
 search path.
-This is necessary because certain programs (such as "cake")
-and some Shell scripts (such as "machinetype.sh") need
+This is necessary because certain programs (such as the \fBcake\fR program)
+and some Shell scripts (such as \fBmachinetype.sh\fR) need
 to be placed in a location generally accessible to you, before
 the BRL-CAD sources can be compiled.
+.PP
+A full production installation done with \fBcake install\fR
+will require three directories for installing the compiled software in.
+These three directories are known symbolicly as BINDIR, LIBDIR, and ETCDIR.
+BINDIR is where executable ("binary") programs and scripts are installed,
+LIBDIR is where all the libraries are installed, for you to use when
+writing additional software for this environment, and
+ETCDIR is where a few additional ("etc") programs,
+such as network server daemons,
+are installed.
+A non-production installation only requires that BINDIR exist.
+LIBDIR and ETCDIR are made the same as BINDIR, in case an accidental
+\fBcake install\fR is performed.
+.PP
+In all cases, it is necessary for the BINDIR string to be in your
+search path, before the BRL-CAD software can be set up.
 .NH 2
 INSTALLATION DIRECTORIES \(em BENCHMARKING or EXPLORATION USE
 .PP
@@ -160,63 +376,7 @@ If you don't have some kind of "bin" directory yet, run:
 For this example, assume that the path to your "bin"
 directory (as printed by \fBpwd\fR above)
 was "/a/d/mike/bin".
-.NH 3
-Bourne Shell (/bin/sh)
-.PP
-If you are a Bourne Shell user (/bin/sh,
-generally the default shell on most systems),
-you will need to edit your ".profile" file, and modify the PATH
-variable to include the full path name of your "bin" directory.
-In the editor, look for a line that looks something like:
-.ft B
-.sp .5
-	PATH=/usr/ucb:/bin:/usr/bin:/usr/local/bin::
-.sp .5
-.ft R
-and add the path name of your "bin" directory after the equals ("=") sign.
-In this example, the new form would look like:
-.ft B
-.sp .5
-	PATH=/a/d/mike/bin:/usr/ucb:/bin:/usr/bin:/usr/local/bin::
-.sp .5
-.ft R
-where the full path name for the "bin" directory has been added to the
-front of your PATH specification.
-Then, you must run:
-.ft B
-.sp .5
-	.   .profile
-.sp .5
-.ft R
-(dot space dot-profile) to have the Shell set up your new PATH specification.
-.NH 3
-C-Shell (/bin/csh)
-.PP
-If you are a C-Shell user (/bin/csh), you will need to edit your ".cshrc"
-file, and modify the "set path" directive to include the full path name of
-your "bin" directory.
-In the editor, look for a line that looks something like:
-.ft B
-.sp .5
-	set path=(/usr/ucb /bin /usr/bin /usr/local/bin .)
-.sp .5
-.ft R
-and add the path name of your "bin" directory after the open paren ("("),
-followed by a space.
-In this example, the new form would look like:
-.ft B
-.sp .5
-	set path=(/a/d/mike/bin /usr/ucb /bin /usr/bin /usr/local/bin  .)
-.sp .5
-.ft R
-where the full path name for the "bin" directory has been added to the
-front of your search path.  Then, you must run:
-.ft B
-.sp .5
-	source .cshrc
-.sp .5
-.ft R
-to have this change take effect.
+Use this path string as BINDIR.
 .PP
 Using the full path name of your "bin" directory,
 update the definitions for BINDIR,
@@ -233,6 +393,7 @@ to make these directories, or have a superuser make them for you:
 .ft B
 .nf
 .sp .5
+	mkdir /usr/include/brlcad
 	mkdir /usr/brlcad
 	cd /usr/brlcad
 	mkdir bin lib etc
@@ -249,6 +410,71 @@ If you wish to install the software somewhere else, create the "bin",
 "lib", and "etc" directories, and update the definitions for BINDIR,
 LIBDIR, and ETCDIR in the files "Cakefile.defs", "setup.sh", and
 "cray.sh". Then, add your choice for BINDIR to your search path. 
+.NH 2
+Updating Your Search Path \(em Bourne Shell (/bin/sh)
+.PP
+If you are a Bourne Shell user (/bin/sh,
+generally the default shell on most systems),
+you will need to edit your ".profile" file, and modify the PATH
+variable to include the full path name of your "bin" directory (BINDIR).
+In the editor, look for a line that looks something like:
+.ft B
+.sp .5
+	PATH=/usr/ucb:/bin:/usr/bin:/usr/local/bin::
+.sp .5
+.ft R
+and add the path name of your "bin" directory after the equals ("=") sign.
+In this example, the new form would look like one of the two lines
+below;  the first line is the example non-production form, and
+the second line is the production form.
+.ft B
+.sp .5
+	PATH=/a/d/mike/bin:/usr/ucb:/bin:/usr/bin:/usr/local/bin::
+.sp .5
+	PATH=/usr/brlcad/bin:/usr/ucb:/bin:/usr/bin:/usr/local/bin::
+.sp .5
+.ft R
+where the full path name for the "bin" directory has been added to the
+front of your PATH specification.
+Then, you must run:
+.ft B
+.sp .5
+	.   .profile
+.sp .5
+.ft R
+(dot space dot-profile) to have the Shell set up your new PATH specification.
+.NH 2
+Updating Your Search Path \(em C-Shell (/bin/csh)
+.PP
+If you are a C-Shell user (/bin/csh), you will need to edit your ".cshrc"
+file, and modify the "set path" directive to include the full path name of
+your "bin" directory.
+In the editor, look for a line that looks something like:
+.ft B
+.sp .5
+	set path=(/usr/ucb /bin /usr/bin /usr/local/bin .)
+.sp .5
+.ft R
+and add the path name of your "bin" directory after the open paren ("("),
+followed by a space.
+In this example, the new form would look like one of the two lines
+below;  the first line is the example non-production form, and
+the second line is the production form.
+.ft B
+.sp .5
+	set path=(/a/d/mike/bin /usr/ucb /bin /usr/bin /usr/local/bin  .)
+.sp .5
+	set path=(/usr/brlcad/bin /usr/ucb /bin /usr/bin /usr/local/bin  .)
+.sp .5
+.ft R
+where the full path name for the "bin" directory has been added to the
+front of your search path.  Then, you must run:
+.ft B
+.sp .5
+	source   .cshrc
+.sp .5
+.ft R
+to have this change take effect.
 .NH 1
 ONE-TIME SETUP
 .PP
@@ -295,15 +521,837 @@ Next, run:
 .ft R
 to make directories for all of the binaries.
 .NH 1
-THE BENCHMARK
+COMPILING AND RUNNING THE BENCHMARK
 .PP
-To just compile and run the benchmark, run:
+To compile just enough of the BRL-CAD software to run the benchmark,
+and then to conduct the actual benchmark test, run:
 .ft B
 .sp .5
-	make benchmark
+	cake benchmark
 .br
 	cd bench
 .br
-	sh bench
+	sh run
 .sp .5
 .ft R
+The \fBcake benchmark\fR will process just the directories
+that are needed to run the benchmark:
+libsysv, libmalloc, conv, db, libpkg (if HAS_TCP==1),
+libfb, libplot3, libspl, librt, rt.
+If any fatal errors occur during this process,
+consult the section on ``SUPPORTING A NEW MACHINE''.
+.PP
+Running the benchmark takes several hours on a DEC VAX-11/780 machine,
+so scale your expectations accordingly.
+For details on
+the background of the benchmark,
+the BRL-CAD Benchmark Test Methodology,
+the Ray-Tracing Figure of Merit (RTFM) used to judge the
+computational performance of different computer systems,
+and for data on the measured performance of various machines, please
+consult the document in "doc/benchmark.doc".
+.NH 2
+Obtaining Correct Results
+.PP
+The benchmark timings are not considered valid unless
+the correct results are given.
+Make sure that the answers match the reference files
+to within plus-or-minus one in each color (see pixdiff(1)).
+You may wish to
+compare the execution times and log file remarks
+from your tests (in the "bench/xxx.log" files) with the
+VAX-11/780 (with hardware FPA) times which are given in the
+"pix/xxx.log" files.
+The reference images are also located in the "pix/" directory.
+.PP
+For example,
+if you are running the benchmark on a Cray XMP, as I'm sure all of you
+are, the world.pix and bldg391.pix images will have a single byte in the
+blue channel off by 1, out in the cloud background.  This is not to be
+considered an error.
+.NH 1
+COMPILING THE FULL PACKAGE
+.PP
+To compile the full BRL-CAD Package on a supported configuration,
+sit in the top ("cad") directory, and run:
+.sp .5
+.ft B
+	cake all
+.br
+	cake install
+.ft R
+.sp .5
+.NH 2
+Installing Network Framebuffer Service
+.PP
+To offer in-bound remote framebuffer service, you may wish to compile
+"rfbd", the remote-framebuffer daemon. If you wish to do this, you must
+also add the IF_REMOTE capability to libfb. If your system does not support
+inetd(8), then rfbd should be started in /etc/rc.local. However, if your
+system does support inetd(8), then rfbd must be started with this
+/etc/inetd.conf entry:
+.sp
+.nf
+remotefb stream tcp     nowait  nobody  /usr/brl/etc/rfbd       rfbd
+.sp
+This depends on having a ``nobody'' user, so be certain that your
+/etc/passwd file contains a line like this.  (The choice of UID and
+GID of -2 is intentional).
+.sp
+nobody:*:-2:-2:NFS Unprivileged user:/nonexistent:/dev/null
+.sp
+Also, be certain to add this line to /etc/services:
+.sp
+remotefb        5558/tcp                        # Remote Frame Buffer
+.fi
+.NH 1
+SUPPORTING A NEW MACHINE
+.PP
+This rather lengthy section attempts to document
+how to add support for a new type of machine.
+It may also prove useful to study this material if
+you experience difficulties with one of the existing configurations.
+.NH 2
+machinetype.sh
+.PP
+The first step is enhancing \fBmachinetype.sh\fR and \fBCakefile.defs\fR
+to recognize the type of machine that you are using.
+Both of these files use the same technique:
+they directly run the C Preprocessor (/lib/cpp) and
+test for the existance of a vendor-specific pre-defined symbol that
+identifies the machine type,
+using C \fB#ifdef\fR constructions.
+For example, on a DEC VAX, the test \fB#ifdef vax\fR is true,
+while on an Alliant, the test \fB#ifdef alliant\fR is true.
+The documentation for the C Compiler \fBcc\fR(1)
+will often mention the vendor-specific symbol to test for.
+If not, a little playful experimentation with the vendor's name
+and the machine model name/number will usually suffice.
+Sometimes two symbols need to be checked (eg, on the Cray and SGI machines)
+to tell certain incompatible models apart.
+.PP
+Update \fBmachinetype.sh\fR first;  it is easier to experiment with
+than the full \fBCakefile.defs\fR file.
+The code that will need to be added will be of the form:
+.ft B
+.nf
+.sp .5
+	#ifdef eta10
+	/*	ETA-10 running UNIX System V. */
+	#	undef	eta
+		MACHINE=eta;
+		UNIXTYPE=SYSV;
+		HAS_TCP=0;
+	#endif
+.sp .5
+.fi
+.ft R
+All systems have a small block of code that will look much like the example
+above.
+Your first task is to select a "nickname" for the machine that is
+four characters long, or shorter, in the MACHINE= line.
+In the example case of the ETA-10, the string "eta10" was shortened to "eta".
+Note the \fB#undef eta\fR to ensure that the "nickname" is not also a
+C Preprocessor builtin symbol.
+In the UNIXTYPE= line, only two choices are currently valid,
+"SYSV" for variants of AT&T System V, and "BSD" for Berkeley UNIX 4.2 BSD
+and 4.3 BSD.
+Finally, if the machine supports the TCP network protocols
+using the Berkeley \fIsocket\fR interface, then define
+HAS_TCP=1, otherwise define HAS_TCP=0.
+Extending the network support for non-TCP environments,
+or TCP implementations that use some other interface,
+will probably only require changes to \fBlibfb\fR(3)
+and \fBrfbd\fR(1),
+and will not be elaborated on here.
+Check how you did by running:
+.ft B
+.sp .5
+	sh machinetype.sh -v
+.sp .5
+.ft R
+and making any necessary corrections.
+.PP
+If \fBmachinetype.sh\fR reports that HAS_TCP=0, ie, 
+this is a machine without TCP network capability,
+the \fBgen.sh\fR script will automaticly delete
+\fBrfbd\fR and \fBlibpkg\fR from the PRODUCTS list,
+as they serve no purpose in a non-networked environment.
+.NH 2
+Cakefile.defs
+.PP
+There are a great many additional symbols which may be defined
+to specify additional details of the configuration.
+.NH 3
+
+.PP
+Next, edit the file \fBCakefile.defs\fR and
+start by making the same general kind of additions as were done
+for \fBmachinetype.sh\fR.
+When porting the BRL-CAD software to a new machine,
+it is wise to start with a configuration that does not
+attempt to use the network, and which does not try to access any
+display hardware.
+Once all the basic software compiles, and the benchmark produces correct
+results, then a \fBcake clobber\fR can be done,
+the configuration edited to add more complexity,
+and a full \fBcake all\fR can be run.
+.PP
+As an example, the additions to support the ETA-10 are simply:
+.ft B
+.sp .5
+.nf
+	#ifdef eta10
+	#	undef	eta
+	#	define	MTYPE	eta
+	#	define	UNIXTYPE	SYSV
+	#	define	HAS_TCP        0
+	#	define	LIBRT_TIMER    timerunix
+	#endif
+.fi
+.sp .5
+.ft R
+The values for MTYPE, UNIXTYPE, and HAS_TCP should match those
+values placed in \fBmachinetype.sh\fR.
+This definition for the ETA-10 will build a package with minimal
+graphics display support, and no network support.
+.PP
+The timer configuration LIBRT_TIMER must be specified, based on the
+version of UNIX you are using. This timer module is for providing CPU
+and elapsed time indications.  If your system has a vendor-specific clock
+with more resolution than the normal UNIX library provides, you should
+eventually create your own system-specific timerXXX.c module,
+although timerunix.c is a fine starting point for any UNIX system.
+The full range of choices for LIBRT_TIMER are:
+.TS
+center box;
+l l.
+timerunix	Generic UNIX
+timer42	4.2 BSD, 4.3 BSD (Berkeley UNIX)
+timercray	Cray X-MP running UNICOS (UNIX)
+timercos	Cray X-MP running COS
+timer52brl	For BRL's System 5-under-4.n BSD
+timerhep	Denelcor HEP
+.TE
+.NH 3
+C Compiler Configuration
+.PP
+The symbols CC, CC_DEFS, and CC_OPTS can be set to
+define various features used with the C compiler.
+CC is the full path to the C compiler,
+CC_OPTS is used to select the most appropriate kind of optimization
+for this configuration, and
+CC_DEFS is used to pass definitions to the compiler.
+For example, if the C compiler can not support "void" functions,
+this can be bypassed with:
+.sp .5
+.ft B
+	#	define	CC_DEFS	-Dvoid=int
+.ft R
+.sp .5
+If the compiler needs a special optimization switch,
+this can be done with something like this:
+.sp .5
+.ft B
+	#	define	CC_OPTS	-f68881
+.ft R
+.sp .5
+For most systems, the default values should be fine.
+.NH 3
+FORTRAN Compiler Configuration
+.PP
+The full path to the FORTRAN compiler is specified in the symbol FC.
+The default value is /usr/bin/f77.
+.NH 3
+Host Name
+.PP
+The program to run to obtain the name of the current host is
+specified by the symbol GETHOST.
+If this symbol is not defined, the appropriate default is
+chosen based on BSD or SYSV with this code:
+.sp .5
+.nf
+.ft B
+#if	!defined(GETHOST)
+#	if	UNIXTYPE == BSD
+#		define	GETHOST	hostname
+#	else
+#		define	GETHOST	uname -n
+#	endif
+#endif
+.ft R
+.fi
+.sp .5
+.NH 3
+Library post-processing (ranlib)
+.PP
+The program to run to properly post-process an archive which is
+intended to be a subroutine library is specified by the symbol GETHOST.
+The default values are chosen with the code below.
+Note that on System V, no post-processing is necessary,
+so the command \fBecho\fR is substituted.
+.sp .5
+.nf
+.ft B
+#if	!defined(RANLIB)
+#	if	UNIXTYPE == BSD
+#		define	RANLIB	ranlib
+#	else
+#		define	RANLIB	echo
+#	endif
+#endif
+.ft R
+.fi
+.sp .5
+.NH 3
+libfb configuration
+.PP
+The configuration for the framebuffer library is specified
+by the two symbols LIBFB_CONFIG, LIBFB_OBJS.
+If these two symbols are not defined in the configuration that you
+provide, then they will be defaulted using this code:
+.sp .5
+.nf
+.ft B
+#if !defined(LIBFB_OBJS) || !defined(LIBFB_CONFIG)
+#	if HAS_TCP == 0
+#		define	LIBFB_OBJS	if_ptty
+#		define	LIBFB_CONFIG	-DIF_PTTY
+#	else
+#		define	LIBFB_OBJS	if_remote pkg if_ptty
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_PTTY
+#	endif
+#endif
+.ft R
+.fi
+.sp .5
+If this is a TCP-capable system,
+the defaults provide for including the "remote" network framebuffer
+capability, in addition to the terminal-line AT&T 5620 "ptty" interface.
+The LIBFB_OBJS symbol is given the base name of all the object modules
+to be included, and the LIBFB_CONFIG symbol is given all the C compiler
+definitions necessary to incorporate the \fBextern\fR linkages to
+the desired object modules, via the array in libfb/fb_generic.c.
+.PP
+Even if your configuration has no display hardware specified,
+this library is necessary, as the debug and disk-file interfaces are
+always useful.
+Lacking any displays at all, you may be able to utilize
+the bw-impress(1) program to produce pictures on an Imagen
+laser-printer.
+.PP
+The philosophy of \fBlibfb\fR is that it is a fully self-contained
+library.
+An applications program that desires to have framebuffer support
+need only link with \fBlibfb\fR, and all subroutines that may be
+needed on that machine will be provided.
+Frequenctly, this means that \fBlibfb\fR will have to include
+object modules drawn from one or more vendor-specific libraries,
+as well as the object modules from the BRL-CAD source files.
+If the symbol LIBFB_SETUP is defined, then libfb/Cakefile will
+run that string as a Shell command before creating the \fBlibfb\fR archive.
+This is used to add object modules from vendor-specific libraries.
+For an example of how this is used, see the SGI or Cray configurations.
+.sp
+.TS
+center box;
+l l.
+_
+remote	Network access to remote display
+adage	Adage RDS-3000 ("Ikonas")
+sgi	SGI Iris 3-D display
+4d	SGI 4-D display
+gt	SGI 4-D/GT display
+sun	SunView interface
+ptty	AT&T 5620 w/special Moss layer
+ug	Ultra Graphics
+rat	Raster Technology One/80
+X	MIT X-window X11R2
+.TE
+.sp
+For example, to configure a system to support the Raster Technology
+display attached to a parallel port,
+these lines would be added to the system-specific configuration:
+.sp .5
+.nf
+.ft B
+#	define	LIBFB_CONFIG	-DIF_RAT
+#	define	LIBFB_OBJS	if_rat
+.ft R
+.fi
+.sp .5
+No vendor-specific library is required for the Raster Technology support.
+.PP
+As another example, for
+a SUN system of release 3.2 or higher,
+configuring both the display and also the network framebuffer capability
+(since all SUN systems support TCP/IP networking),
+these definitions would be used.
+This is taken directly from Cakefile.defs:
+.sp .5
+.nf
+.ft B
+#	define	LIBFB_OBJS	if_remote pkg if_sun
+#	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_SUN
+#	define	LIBFB_SETUP	(rm -fr tmp;  mkdir tmp; \\
+		rm -f libfb.a; cd tmp; \\
+		AR x /usr/lib/libsuntool.a; \\
+		AR x /usr/lib/libsunwindow.a; \\
+		AR x /usr/lib/libpixrect.a; \\
+		AR uv ../libfb.a *; \\
+		cd ..; rm -fr tmp)
+.ft R
+.fi
+.sp .5
+The first important thing to note is that when adding support for
+the network "remote" framebuffer capability, \fItwo\fR object files
+are added to the LIBFB_OBJS definition:  "if_remote" for the actual
+interface code and "pkg" for the network interface routines (drawn
+from \fBlibpkg\fR).
+The second important thing to note is the definition of LIBFB_SETUP,
+which includes the entire contents of three SUN-specific libraries
+in \fBlibfb\fR, so that \fBlibfb\fR is completely self-contained.
+
+.sp
+When using the framebuffer library on the SGI, it is necessary to modify
+certain kernel limits in the binary image of your kernel to be able to
+use a large block of shared memory.  Follow the directions in
+libfb/if_sgi.c, and then reboot your workstation to allow the changes to
+take effect.  There are claims that on some SGI machines, this may
+cause unreliable operation, so be certain to keep a backup kernel.
+.sp
+Note that systems with multiple display devices, or for systems that
+have a display and also wish to use the remote capability, multiple
+entries should be made.  For example, on
+a TCP-capable SGI system of release 3.5, the typical configuration is:
+.sp
+.nf
+	LIBFB_CFILES	= if_sgi.c if_remote.c
+	LIBFB_OBJS	= if_sgi.o if_remote.o ../libpkg/pkg.o
+	LIBFB_CONFIG	= -DIF_SGI -DIF_REMOTE
+.fi
+.sp
+If you change the configuration of libfb
+partway through building the system, be certain to run
+.sp .5
+.nf
+.ft B
+	cd libfb
+	cake clobber
+	cake
+.ft R
+.fi
+.sp .5
+before recompiling other programs, because the
+external symbols compiled into the binaries
+change based on the configuration options in
+\fBCakefile.defs\fR.
+.NH 2
+Mged configuration
+.PP
+The \fBmged\fR (multi-device model editor) needs to be configured.
+At present, all versions of \fBmged\fR have support for
+the four display devices listed at the beginning of this document.
+In addition, a variety of optional display devices are also supported;
+this list also appears at the beginning of this document.
+.PP
+Necessary vendor-supplied libraries must be listed on the MGED_LIBES line.
+.sp
+To configure just the default set of displays, specify:
+.sp
+.nf
+.ta 0.5i 2i 3i 4i 5i 6i
+	MGED_CFILES	=
+	MGED_OBJS	=
+	MGED_CONFIG	=
+	MGED_LIBES	=
+.sp
+To configure an SGI Iris ("ir") running 3.5 with TCP networking, specify:
+.sp
+	MGED_CFILES	= dm-ir.c
+	MGED_OBJS	= dm-ir.o
+	MGED_CONFIG	= -DDM_IR
+	MGED_LIBES	= -lbsd -lgl2
+.sp
+To configure an SGI Iris ("ir") running 3.5 with XNS networking, specify:
+.sp
+	MGED_CFILES	= dm-ir.c
+	MGED_OBJS	= dm-ir.o
+	MGED_CONFIG	= -DDM_IR -DNONBLOCK
+	MGED_LIBES	= -lbsd -lgl2
+.sp
+To configure an SGI Iris ("ir") running 3.4, specify:
+.sp
+	MGED_CFILES	= dm-ir.c
+	MGED_OBJS	= dm-ir.o
+	MGED_CONFIG	= -DDM_IR
+	MGED_LIBES	= ../libfb/sgiselect.o -lgl2
+.sp
+To configure a SUN, specify:
+.sp
+	MGED_CFILES	= dm-sunpw.c
+	MGED_OBJS	= dm-sunpw.o
+	MGED_CONFIG	= -DDM_SUNPW
+	MGED_LIBES	= -lsuntool -lsunwindow -lpixrect
+.fi
+and remember always to run MGED under a gfxtool window.
+Also note that SUN support is still rudamentary, and there are problems
+with (a) running RT from within MGED, and (b) using MGED on a color SUN.
+.sp
+In all cases,
+be certain to properly define the MGED_VERS variable.
+.NH 2
+h/machine.h
+.PP
+The file "h/machine.h" has a number of configuration
+options, including the setting of:
+.sp
+.TS
+center box;
+l l.
+fastf_t	fastest "C" floating point type (\fBfloat\fR or \fBdouble\fR)
+LOCAL	\fBstatic\fR or \fBauto\fR, for fastest local data type.
+FAST	LOCAL or register, for FAST fastf_t variables.
+PARALLEL	Defined for parallel processors.
+.TE
+.sp
+VAX, GOULD, Cray, Alliant and HEP examples are provided. The defaults
+should be correct for reasonable 32-bit serial computers.  Note that
+K&R ``C'' specifies that all floating point calculations must be done
+as \fBdouble\fR, so it is usually fastest to set fastf_t to
+\fBdouble\fR. Also note that when fastf_t is \fBfloat\fR in 32-bit IEEE
+or IBM style floating point, not enough accuracy is carried to correctly
+process large models. See the "Silicon Graphics Warnings" section for
+more information.
+.NH 2
+h/rle.h
+.PP
+The file h/rle.h has a #\fBif\fR statement that will need modification if
+your machine is a "Little-Endian" machine and your machine is not
+a VAX.  "Big-Endian" machines will work without modification.
+A Big-Endian machine has byte [0] on the left of the word, like IBM,
+while a Little-Endian machine has byte [0] on the right side of the word,
+like DEC.  Some of the RLE code needs to know.
+.NH 2
+libplot3/htond.c
+.PP
+XXX
+.NH 2
+Potential Optimizations
+.PP
+After initial testing, you may wish to go back and enable the special
+assembler version of sqrt(), by uncommenting and editing the FAST_SQRT
+line in "librt/Makefile.loc".  4.2BSD VAX and Gould UTX 1.2 versions
+are provided.  Note that the 4.3BSD VAX library sqrt() is even faster
+than this one by more than 40%.
+.sp
+The file "h/vmath.h" has macros for numerous common vector operations;
+if your system has hardware support for vector operations, after getting
+the program working you would profit greatly from changing these macros
+to machine-specific code.  The most important macros are MAT4X3VEC and
+MAT4X3PNT.
+See also "librt/machine.c".
+If you do this, please submit the "rays/sec" figures for the
+original as well as the optimized runs.
+.sp
+BRL is currently attempting explicit vector extensions to the C language,
+as well as working with compilers that detect implicit vectorization.
+This work will be included in a subsequent release.
+.NH 1
+VARIATIONS ON SUPPORTED MACHINES
+.PP
+First, review the section in ``SUPPORTING A NEW MACHINE'' on
+editing \fBCakefile.defs\fR to become familiar with
+the various important symbols in this file.
+.NH 2
+SGI 3-D, Version 3.4
+.NH 2
+DEC VAX, 4.1 BSD and DEC Ultrix
+.PP
+The C compiler on 4.1 BSD UNIX systems, and on DEC Ultrix systems
+is unable to handle pointers to functions which return \fBvoid\fR.
+In the section of \fBCakefile.defs\fR for the VAX, it is necessary
+to uncomment this definition,
+which maps all \fBvoid\fR objects to \fBint\fR objects, a harmless
+workaround:
+.sp .5
+.nf
+.ft B
+	#	define	CC_DEFS	-Dvoid=int
+.ft R
+.fi
+.sp .5
+.NH 2
+SGI 4-D/GT, Version 3.0
+.PP
+Note that in this release there is no support for a non-GT
+4-D running Version 3.0 of the software.
+The switch to the 4Sight window system required more changes than
+could be managed for this release.
+.PP
+Silicon Graphics Iris 4-D systems with the ``Graphics Turbo'' (GT)
+hardware require a completely different set of vendor-specific
+support code, due to the significant changes in the underlying hardware.
+In the section of \fBCakefile.defs\fR, change the LIBFB_OBJS and
+MGED_OBJS definitions from:
+.sp .5
+.nf
+.ft B
+#	define	LIBFB_OBJS	if_remote pkg if_4d
+#	define	MGED_OBJS	dm-4d
+.ft R
+.fi
+.sp .5
+to the alternate, GT versions:
+.sp .5
+.nf
+.ft B
+#	define	LIBFB_OBJS	if_remote pkg if_gt
+#	define	MGED_OBJS	dm-gt
+.ft R
+.fi
+.sp .5
+We regret that we were unable to determine a way to detect if a 4-D
+contained a GT boardset, either at compile time, or at runtime.
+Because the 4-D and 4-D/GT are incompatible, this configuration
+change is required.
+.PP
+Note that if you have a 4-D with the GTX or MP (multi-processor)
+hardware, the parallel support is already included in \fBlibrt\fR;
+merely add this line:
+.sp .5
+.nf
+.ft B
+	#	define	CC_DEFS	-DPARALLEL
+.ft R
+.fi
+.sp .5
+(A search of a vendor library may need to be added to RT_CONFIG).
+.NH 1
+DIFFICULTIES
+.PP
+If you are experiencing difficulty with one of the provided
+configurations, \fBCakefile.defs\fR is the most important file
+to scrutinize.
+See ``SUPPORTING A NEW MACHINE''.
+.NH 2
+Extreme difficulty with libfb
+.PP
+In the case of extreme difficulty, a no-op stub version of libfb
+is provided in rt/libfb-dummy.c.
+This can be substituted for "libfb.a" in order to run the \fBrt\fR
+benchmark.
+.NH 2
+Changing Configurations of libfb, mged, librt
+.PP
+For \fBlibfb\fR, \fBmged\fR,
+and \fBlibrt\fR,
+it is also necessary to run "\fBcake clean\fR" in those directories
+after making related changes to \fBCakefile\fR or \fB../Cakefile.defs\fR,
+because the compiled binaries
+of some modules depend on configuration options selected in the Cakefiles.
+Failure to do this is the single most common cause of difficulty
+when experimenting with the configuration of this software.
+To be ultra conservative,
+after each major change of a configuration file,
+it would be wise to run \fBcake clobber\fR in the top directory,
+and then recompiling.
+.NH 1
+GENERAL STRUCTURE OF THE SOFTWARE
+.PP
+In the top level directory (\fBcad\fR),
+a dummy Makefile and Cakefile exist, both of which simply invoke the
+Shell script \fBgen.sh\fR with their argument.
+\fBgen.sh\fR is used to control the processing of all commonly used
+operations, to see that operations are performed on the proper set of
+directories.
+.PP
+The operations supported by \fBgen.sh\fR are:
+.TS
+center box;
+l l.
+Keyword	Description
+_
+benchmark	Special:  Make only benchmark
+all	Makes all software
+clean	rm *.o, leave products
+noprod	rm products, leave *.o
+clobber	rm products and *.o
+lint	run lint
+install	install all products
+uninstall	remove all products
+print	print all sources to stdout
+typeset	troff all manual pages
+nroff	nroff all manual pages
+mkdir	NFS: create binary dirs
+relink	NFS: relink Cakefile
+rmdir	NFS: remove binary dirs
+.TE
+.PP
+Within each directory is a \fBCakefile\fR that includes
+\fB../Cakefile.defs\fR, either
+\fB../Cakefile.lib\fR (if the directory makes a library) or
+\fB../Cakefile.prog\fR (if the directory makes programs),
+and finally \fB../Cakefile.rules\fR.
+This structure allows all configuration of this package to be
+concentrated in the single file \fBCakefile.defs\fR,
+with per-product structural information in the individual
+\fBCakefile\fRs located in each sub-directory.
+\fBCakefile.rules\fR contains all the rules which are used to
+implement the ancilliary operations (such as "typeset", "install", etc),
+and these rules then apply uniformly in all product directories.
+While this complex structure may seem overwhelming at first,
+once established, it makes the task of configuration very simple.
+.NH 1
+ENHANCEMENTS
+.PP
+If you develop additional software for the BRL CAD environment that
+you would be willing to share, please send it to us for inclusion
+in the next release.
+The first such inclusion is the Utah Raster Toolkit, included "as is"
+in the directory utah-raster.  Note that the current BRL CAD
+distribution uses Edition-2 of the Utah RLE file format, while the
+Utah Raster Toolkit uses Edition-3.  In a subsequent release, all
+the BRL CAD tools will have been converted to use the Edition-3
+format and library interface.  Image conversion aids exist in the
+programs utah-raster/get/getfb.c to display Edition-3 RLE images
+on libfb supported displays, and utah-raster/tools/jwp/pixtorle.c
+to convert pix(5) images into Edition-3 RLE images.
+Note that BRL considers the RLE format a long-term image storage format,
+with pix(5) format used for image manipulation, while Utah uses RLE
+format for all manipulation stages as well.
+.NH 1
+ADDING SUPPORT FOR NEW DISPLAYS
+.PP
+If you desire to add support for a new display, there are only two
+modules that you will have to create.  The first will be for the
+framebuffer library (see libfb(3) for more details).  A template for
+creating interfaces to new devices is provided as libfb/if_TEMPLATE.c.
+The second module needed is an MGED display manager, like mged/dm-XX.c.
+Here, the task is somewhat harder, as two major modes of behavior are
+supported:  displaylist and refresh.  You should examine display
+managers for devices similar to yours, and proceed from there.
+We would be most interested in obtaining any additional display modules
+that you might develop.
+.NH 1
+UPGRADING FROM RELEASE 1.20 to 2.0
+.PP
+This release contains only minor external changes from Release 1.20,
+but for complete safety, you should save the old binary to "conv/g2asc"
+someplace safe, so that if you find the binary format of the database
+incompatable you can convert your old databases from binary to ASCII
+form. Having to do this is system dependent (only Sun, SGI, and Alliant
+users are likely to be affected), but it difficult to recover from
+without having saved the old converter (or your old distribution tape).
+.NH 1
+UPGRADING FROM RELEASE 2.0 to 2.3
+.PP
+Primarily, this release is a maintenance release, with lots of little
+nits resolved, along with a few new features.  The major weak area is
+still Sun display support.  In particular, using RT from within MGED
+fails miserably.
+.PP
+This release contains different and better support for multiple lights
+in RT, along with a standardized shader interface, and stackable
+shaders. Support for polygonal objects is now correct, but slow. The
+spline code has been significantly improved. Some contributed code for
+the Raster Technologies One/80 has been included, but is untested.  The
+library for procedurally generating databases ``libwdb'' is now
+included, along with some example uses in the directory ``proc-db''.
+The program ``rtwalk'' generates a viewpoint animation control script
+that takes the eye between given start and end points, without walking
+through any geometry.  This is especially interesting when used on
+complex scenes like those made by proc-db/clutter.c.
+.NH 1
+UPGRADING FROM RELEASE 2.3 to 3.0
+.PP
+Well?
+.NH 1
+WORK IN PROGRES
+.PP
+We are hard at work on a variety of new features, the most significant are:
+.IP (*)
+a substantial package for animation specification and preview,
+.IP (*)
+code to replace the "big-E" command, to convert the CSG model into
+a polygonal approximation, for certain analysis codes, and to drive
+display hardware with fast polygon rendering,
+.IP (*)
+additional primitive types,
+.IP (*)
+MGED improvements, including merging common database-handling code
+with librt, and a consolidation of the MGED and LIBRT geometry modules.
+.NH 1
+COMMUNICATION
+.PP
+You are invited to participate in the DARPA InterNet (aka "ARPANET")
+electronic mailing list on the BRL-CAD software, which is called
+.sp .5
+.ti +1i
+<CAD @ BRL.MIL>.
+.sp .5
+Bug reports and discussions of new features
+are the main topics;  volume of messages has been light (so far).
+Direct your bug reports to this address.  Request a subscription by
+sending to
+.sp .5
+.ti +1i
+<CAD-REQUEST @ BRL.MIL>.
+.sp .5
+If you find bugs, please report your experiences by E-mail.
+While BRL makes no
+offer of support, we are most interested in hearing about your
+experiences.
+.NH 1
+KNOWN PROBLEMS
+.NH 2
+C to FORTRAN Linkage
+.PP
+The Whetstone benchmark is written in FORTRAN, with a subroutine
+in C for determining timings.  The linkage between the two languages
+is very system dependent, and you are likely to have to fiddle with
+the C code to obtain correct operation.  It was felt that the benefit
+of having this well known benchmark on the tape was worth braving
+the non-portability for.
+.NH 2
+SILICON GRAPHICS WARNINGS
+.PP
+If you are attempting to run the benchmark on an SGI IRIS
+of the 2400, 2400 Turbo, or 3000 series (the machines nicknamed "3d"),
+beware of the
+\fBlong float\fR -vs- \fBdouble\fR controversy.  The SGI C compiler
+converts both \fBfloat\fR and \fBdouble\fR to 32-bit single-precision
+numbers.
+While the current release of \fBlibrt\fR is believed to generally
+operate correctly in spite of this, beware of the \fBrt\fR program failing to
+find roots, or being unable to perform a "box push". Unfortunately, the
+"star.pix" \fBrt\fR benchmark will will fail due to lack of floating point
+precision, and generate lots of diagnostics, filling your disk.
+.sp
+SGI software release version 3.3.1, 3.4, and 3.5 have a defective
+library version of hypot();  be aware of the (slower) substitute in
+"rt/machine.c".
+.sp
+Operations of the form "*fp += incr;" are known to compile incorrectly
+on release 3.5 when "fp" is declared as "\fBregister double\fR *fp"
+(or \fBregister float\fR).  The one known instance of this in
+util/bwmod.c has been "fixed" with a #\fBifdef\fR sgi.
+.sp
+When running MGED on a 3.5 Iris with XNS networking, there is no
+select() capability, so non-blocking I/O has to be used instead.
+This has two undesirable side effects.  First, it puts MGED into
+a hard loop polling the workstation keyboard.  Second, it seems to
+have an interaction with control-S/control-Q flow control -- if you
+suspend output, most of it will be discarded.  However, MGED is
+still somewhat usable in this configuraition.
+.sp
+Currently there are no good solutions to these problems.  Voice your
+opinions to the vendor.
+.sp
+It is very useful to add a "gclear" account to each SGI 3-d system,
+so that after
+using the screen in 24-bit mode you can regain control of the screen by
+typing "gclear", whether or not you are logged in.  Add this line
+to /etc/passwd:
+.sp
+gclear::4:5::/tmp:/usr/bin/gclear
