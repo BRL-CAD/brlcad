@@ -103,7 +103,15 @@ char	*mode;
 	if(rt_g.debug&DEBUG_DB) rt_log("db_open(%s, %s)\n", name, mode );
 
 	GETSTRUCT( dbip, db_i );
-	dbip->dbi_magic = DBI_MAGIC;
+
+	for( i=0; i<RT_DBNHASH; i++ )
+		dbip->dbi_Head[i] = DIR_NULL;
+
+	dbip->dbi_eof = -1L;
+	dbip->dbi_localunit = 0;		/* mm */
+	dbip->dbi_local2base = 1.0;
+	dbip->dbi_base2local = 1.0;
+	dbip->dbi_title = (char *)0;
 
 #ifdef HAVE_UNIX_IO
 	if( stat( name, &sb ) < 0 )
@@ -121,6 +129,7 @@ char	*mode;
 
 #ifdef HAVE_SYS_MMAN_H
 		/* Attempt to access as memory-mapped file */
+		dbip->dbi_eof = sb.st_size;	/* needed by db_read() */
 		if( (dbip->dbi_inmem = mmap(
 		    (caddr_t)0, sb.st_size, PROT_READ, MAP_PRIVATE,
 		    dbip->dbi_fd, (off_t)0 )) == (caddr_t)-1 )  {
@@ -162,15 +171,8 @@ char	*mode;
 		dbip->dbi_read_only = 0;
 	}
 
-	for( i=0; i<RT_DBNHASH; i++ )
-		dbip->dbi_Head[i] = DIR_NULL;
-
-	dbip->dbi_eof = -1L;
-	dbip->dbi_localunit = 0;		/* mm */
-	dbip->dbi_local2base = 1.0;
-	dbip->dbi_base2local = 1.0;
-	dbip->dbi_title = (char *)0;
 	dbip->dbi_filename = rt_strdup(name);
+	dbip->dbi_magic = DBI_MAGIC;		/* Now it's valid */
 
 	return(dbip);
 fail:

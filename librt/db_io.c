@@ -190,6 +190,13 @@ long		offset;		/* byte offset from start of file */
 		return(-1);
 	}
 	if( dbip->dbi_inmem )  {
+		if( offset+count > dbip->dbi_eof )  {
+			/* Attempt to read off the end of the (mapped) file */
+			rt_log("db_read(%s) ERROR offset=%d, count=%d, dbi_eof=%d\n",
+				dbip->dbi_filename,
+				offset, count, dbip->dbi_eof );
+			return -1;
+		}
 		memcpy( addr, dbip->dbi_inmem + offset, count );
 		return(0);
 	}
@@ -206,6 +213,7 @@ long		offset;		/* byte offset from start of file */
 	got = fread( addr, 1, count, dbip->dbi_fp );
 #endif
 	RES_RELEASE( &rt_g.res_syscall );
+out:
 	if( got != count )  {
 		perror("db_read");
 		rt_log("db_read(%s):  read error.  Wanted %d, got %d bytes\n",
