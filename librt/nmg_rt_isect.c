@@ -1015,7 +1015,8 @@ int status;
 	vect_t v;
 
 	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-		rt_log("ray_hit_vertex\n");
+		rt_log("ray_hit_vertex x%x (%g %g %g)\n",
+			vu_p->v_p, V3ARGS( vu_p->v_p->vg_p->coord ));
 
 	if (myhit = NMG_INDEX_GET(rd->hitmiss, vu_p->v_p)) {
 		if (RT_LIST_MAGIC_OK((struct rt_list *)myhit, NMG_RT_HIT_MAGIC))
@@ -1030,10 +1031,14 @@ int status;
 	}
 
 	/* v = vector from ray point to hit vertex */
-	VSUB2( v, rd->rp->r_pt, vu_p->v_p->vg_p->coord);
-	myhit->hit.hit_dist = MAGNITUDE(v);	/* distance along ray */
+	VSUB2( v, vu_p->v_p->vg_p->coord, rd->rp->r_pt);
+	myhit->hit.hit_dist = VDOT( v, rd->rp->r_dir );	/* distance along ray */
 	VMOVE(myhit->hit.hit_point, vu_p->v_p->vg_p->coord);
 	myhit->hit.hit_private = (genptr_t) vu_p->v_p;
+
+	if (rt_g.NMG_debug & DEBUG_RT_ISECT)
+		rt_log( "\tray = ( %g %g %g ), dir=(%g %g %g ), dist=%g\n",
+			V3ARGS( rd->rp->r_pt ), V3ARGS( rd->rp->r_dir ), myhit->hit.hit_dist );
 
 	RT_LIST_MAGIC_SET(&myhit->l, NMG_RT_HIT_MAGIC);
 
