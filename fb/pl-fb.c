@@ -114,7 +114,7 @@ typedef int	bool;			/* boolean data type */
 #define false	0
 #define true	1
 
-RGBpixel	color = { 255, 255, 255 };
+RGBpixel	cur_color = { 255, 255, 255 };
 
 typedef struct
 	{
@@ -536,11 +536,13 @@ spacend:
 				continue;
 
 			case 'C':	/* color */
-				if( fread( &color[0], 1, 3, pfin) != 3 )
+				if( fread( cur_color, 1, 3, pfin) != 3 )
 					return Foo( -11 );
 				if( debug )
 					fprintf( stderr,"Color is R%d G%d B%d\n",
-						color[0], color[1], color[2]);
+						cur_color[RED],
+						cur_color[GRN],
+						cur_color[BLU]);
 				continue;
 						
 			case 't':	/* label */
@@ -797,7 +799,7 @@ BuildStr( pt1, pt2 )			/* returns true unless bug */
 	vp->major = pt2->y - vp->pixel.y;	/* always nonnegative */
 	vp->ysign = vp->major ? 1 : 0;
 	vp->minor = pt2->x - vp->pixel.x;
-	COPYRGB( vp->col, color );
+	COPYRGB( vp->col, cur_color );
 	if ( (vp->xsign = vp->minor ? (vp->minor > 0 ? 1 : -1) : 0) < 0
 	   )
 		vp->minor = -vp->minor;
