@@ -36,6 +36,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "../rt/rdebug.h"
 
 #include "./rtsrv.h"
+#include "./inout.h"
+#include "./protocol.h"
 
 extern char	*sbrk();
 extern double atof();
@@ -533,15 +535,25 @@ char *buf;
 	}
 
 	for( y = a; y <= b; y++)  {
-		char rbuf[4];
+		struct line_info	info;
+		int	len;
+		char	*cp;
 
 		do_run( y*width + 0, y*width + width - 1 );
 
-		rbuf[0] = y&0xFF;
-		rbuf[1] = (y>>8);
-		if( pkg_2send( MSG_PIXELS, rbuf, 2,
+		info.li_y = y;
+		info.li_nrays = 0;
+		info.li_cpusec = 0.0;
+		cp = struct_export( desc_line_info, (stroff_t)&info, &len );
+		if( cp == (char *)0 )  {
+			rt_log("struct_export failure\n");
+			break;
+		}
+
+		if( pkg_2send( MSG_PIXELS, cp, len,
 			scanbuf, width*3, pcsrv ) < 0 )
 			fprintf(stderr,"MSG_PIXELS send error\n");
+		(void)free(cp);
 	}
 	(void)free(buf);
 }
