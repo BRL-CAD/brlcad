@@ -134,13 +134,30 @@ int	width, height;
 	return(0);
 }
 
+/*
+ *			S G I _ D C L O S E
+ *
+ *  Finishing with a gexit() is mandatory.
+ *  If we do a tpon() greset(), the text port pops up right
+ *  away, spoiling the image.  Just doing the greset() causes
+ *  the region of the text port to be disturbed, although the
+ *  text port does not become readable.
+ *
+ *  Unfortunately, this means that the user has to run the
+ *  "gclear" program before the screen can be used again,
+ *  which is certainly a nuisance.  On the other hand, this
+ *  means that images can be created AND READ BACK from
+ *  separate programs, just like we do on the real framebuffers.
+ */
 _LOCAL_ int
 sgi_dclose( ifp )
 FBIO	*ifp;
 {
+#ifdef Ruins_Images
 	tpon();			/* Turn on textport */
 	greset();
 	/* could be ginit(), gconfig() */
+#endif
 	gexit();
 	return(0);
 }
