@@ -554,7 +554,12 @@ double a, b;
 	FAST double d;
 
 	diff = a - b;
-	d = Max( Abs( a ), Abs( b ) );	/* NOTE: not efficient */
+	/* d = Max(Abs(a),Abs(b)) */
+	d = (a >= 0.0) ? a : -a;
+	if( b >= 0.0 )
+		if( b > d )  d = b;
+	else
+		if( (-b) > d )  d = (-b);
 	if( d <= EPSILON )
 		return(0);	/* both nearly zero */
 	if( Abs(diff) < EPSILON * d )
