@@ -433,7 +433,6 @@ extern int	jgetchar();
 
 #ifdef CRAY2
 /* Common SYSV definitions not supported on the CRAY2 */
-#define SIGIOT  SIGHWE
 #define SIGBUS  SIGPRE
 #define SIGSEGV SIGORE
 
@@ -456,5 +455,4 @@ extern int	jgetchar();
 #define CBAUD   0000017
 
 #define	ISIG	0000001		/* line disc. 0 modes */
-#define TCSETAW TCSETA
 #endif
