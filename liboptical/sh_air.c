@@ -19,6 +19,8 @@ struct air_specific {
 	long	magic;
 	double	d_p_mm;	/* density per unit mm */
 	double	B;
+	double	scale;
+	double	delta;
 	double	color[3];
 };
 #define CK_air_SP(_p) RT_CKMAG(_p, air_MAGIC, "air_specific")
@@ -27,7 +29,9 @@ static struct air_specific air_defaults = {
 	air_MAGIC,
 	1e-7,		/* d_p_pp */	
 	1.0,
-	{ .25, .25, .8 }
+	.01,
+	0.0,
+	{ .5, .5, .625 }
 	};
 
 #define SHDR_NULL	((struct air_specific *)0)
@@ -37,6 +41,8 @@ static struct air_specific air_defaults = {
 struct structparse air_parse[] = {
 	{"%f",  1, "dpmm",		SHDR_O(d_p_mm),		FUNC_NULL },
 	{"%f",  1, "B",			SHDR_O(B),		FUNC_NULL },
+	{"%f",  1, "scale",		SHDR_O(scale),		FUNC_NULL },
+	{"%f",  1, "s",			SHDR_O(scale),		FUNC_NULL },
 	{"",	0, (char *)0,		0,			FUNC_NULL }
 };
 
@@ -44,13 +50,13 @@ HIDDEN int	air_setup(), air_render(), fog_render(), emist_render();
 HIDDEN void	air_print(), air_free();
 
 struct mfuncs air_mfuncs[] = {
-	{"air",	0,	0,		MFI_NORMAL|MFI_HIT|MFI_UV,
+	{"air",	0,	0,		MFI_HIT,
 	air_setup,	air_render,	air_print,	air_free },
 
-	{"fog",	0,	0,		MFI_NORMAL|MFI_HIT|MFI_UV,
+	{"fog",	0,	0,		MFI_HIT,
 	air_setup,	fog_render,	air_print,	air_free },
 
-	{"emist",0,	0,		MFI_NORMAL|MFI_HIT|MFI_UV,
+	{"emist",0,	0,		MFI_HIT,
 	air_setup,	emist_render,	air_print,	air_free },
 
 	{(char *)0,	0,		0,		0,
@@ -207,9 +213,10 @@ char	*dp;
 	/* extinction = 1. - transmission.  Extinguished part replaced by
 	 * color of the air
 	 */
+#if 0
 	VMOVE(swp->sw_color, air_sp->color);
 	VMOVE(swp->sw_basecolor, air_sp->color);
-
+#endif
 	if( rdebug&RDEBUG_SHADE)
 		rt_log("fog o dist:%gmm tau:%g transmit:%g color(%g %g %g)\n",
 			dist, tau, swp->sw_transmit, V3ARGS(swp->sw_color) );
@@ -234,7 +241,7 @@ char	*dp;
 {
 	register struct air_specific *air_sp =
 		(struct air_specific *)dp;
-	point_t pt;
+	point_t in_pt, out_pt;
 	double tau;
 	double Zo, Ze, Zd, te;
 
@@ -242,39 +249,80 @@ char	*dp;
 	RT_CHECK_PT(pp);
 	CK_air_SP(air_sp);
 
-	if( rdebug&RDEBUG_SHADE) {
-		rt_structprint( "emist_specific", air_parse, (char *)air_sp );
-
-		rt_log("air in(%g) out%g)\n",
-			pp->pt_inhit->hit_dist,
-			pp->pt_outhit->hit_dist);
-	}
-
-	/* Exponential Mist */
-
-	/* d_p_mm = overall fog density
-	 * B = density falloff with altitude
+	/*
+	 * te = dist from pt to end of ray (out hit point)
 	 * Zo = elevation at ray start
 	 * Ze = elevation at ray end
 	 * Zd = Z component of normalized ray vector 
-	 * te = dist from pt to end of ray (out hit point)
+	 * d_p_mm = overall fog density
+	 * B = density falloff with altitude
 	 */
+
+	if (pp->pt_inhit->hit_dist < 0.0) {
+		VMOVE(in_pt, ap->a_ray.r_pt);
+		te = pp->pt_outhit->hit_dist;
+	} else {
+		VJOIN1(in_pt, ap->a_ray.r_pt,
+			pp->pt_inhit->hit_dist, ap->a_ray.r_dir);
+		te = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
+	}
+
+	VJOIN1(out_pt,
+		ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
+
+	Zo = (air_sp->delta + in_pt[Z]) * air_sp->scale;
+	Ze = (air_sp->delta + out_pt[Z]) * air_sp->scale;
 	Zd = ap->a_ray.r_dir[Z];
-	Zo = pp->pt_inhit->hit_point[Z];
-	Ze = pp->pt_outhit->hit_point[Z];
-	te = pp->pt_outhit->hit_dist;
 
-	if (Zd < SQRT_SMALL_FASTF)
+	if( rdebug&RDEBUG_SHADE) {
+		rt_structprint( "emist_specific", air_parse, (char *)air_sp );	
+
+		rt_log("emist in pt (%g %g %g) out pt (%g %g %g)\n",
+			V3ARGS(in_pt), V3ARGS(out_pt));
+	}
+
+	if ( NEAR_ZERO( Zd, SQRT_SMALL_FASTF ) ) {
 		tau = air_sp->d_p_mm * te * exp( -air_sp->B * Zo);
-	else
+		if( rdebug&RDEBUG_SHADE)
+			rt_log("emist tau = %g * %g * exp( %g * %g )\n",
+				air_sp->d_p_mm, te, air_sp->B, Zo);
+	} else {
 		tau = ((air_sp->d_p_mm * te) / (air_sp->B * Zd)) * 
-			(exp( -(Zo+Zd*te) ) - exp(-Zo) );
+			( exp( -Zo ) - exp( -Ze ) );
 
+		if( rdebug&RDEBUG_SHADE) {
+
+			rt_log("emist       %7g * %7g\n",
+air_sp->d_p_mm, te);
+			rt_log("emist tau = ----------------- * ( %g - %g )\n",
+exp( -Zo ),  exp( -Ze ) );
+			rt_log("emist       %7g * %7g\n",
+air_sp->B, Zd);
+
+			rt_log(" emist tau = %g * %g * %g = %g\n",
+				air_sp->d_p_mm / air_sp->d_p_mm,
+				te / Zd,
+				exp( -Zo ) - exp( -Ze ),
+				tau );
+		}
+	}
 	/* extinction = 1. - transmission.  Extinguished part replaced by
 	 * color of the air
 	 */
-	 VMOVE(swp->sw_color, air_sp->color);
+	/* transmission = e^(-tau) */
+	swp->sw_transmit = exp(-tau);
 
+	if (swp->sw_transmit > 1.0) {
+		swp->sw_transmit = 1.0;
+	} else if (swp->sw_transmit < 0.0) {
+		swp->sw_transmit = 0.0;
+	}
+
+	if( rdebug&RDEBUG_SHADE) {
+		rt_log("emist transmit = %g\n", swp->sw_transmit);
+
+
+	}
 
 	return(1);
 }
