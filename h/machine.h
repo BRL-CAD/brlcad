@@ -521,7 +521,7 @@ typedef long    bitv_t;         /* could use long long */
 #define DEFAULT_PSW     1
 #define PARALLEL        1
 /* #define MALLOC_NOT_MP_SAFE 1 -- not confirmed */
-#endif#ifdef __ppc__
+#endif
 
 #ifndef LOCAL
 /********************************
