@@ -125,7 +125,8 @@ int	status;
  *	The ray hit an edge.  We have to decide whether it hit the
  *	edge, or missed it.
  */
-static void joint_hitmiss2(closest, eu, pt, code)
+static void 
+joint_hitmiss2(closest, eu, pt, code)
 struct neighbor		*closest;
 CONST struct edgeuse	*eu;
 CONST point_t		pt;
@@ -707,6 +708,7 @@ CONST struct rt_tol	*tol;
 	int		class;
 	vect_t		projection_dir;
 	int		try;
+	struct xray	rp;
 
 	NMG_CK_SHELL(s);
 	RT_CK_TOL(tol);
@@ -751,9 +753,6 @@ retry:
 		/* Only consider the outward pointing faceuses */
 		if( fu->orientation != OT_SAME )  continue;
 
-		/* Mark this face as having been processed */
-		NMG_INDEX_SET(faces_seen, fu->f_p);
-
 		/* See if this point lies on this face */
 		NMG_GET_FU_PLANE( n, fu );
 		if( (dist = fabs(DIST_PT_PLANE(pt, n))) < tol->dist)  {
@@ -778,91 +777,22 @@ retry:
 			/* Point is OUTside face, its undecided. */
 		}
 
-#if 0
-/* XXX Need to get manifolds table from caller! */
-/* For now, assume there aren't any.  Real ray-tracer knows how to do this better. */
-		/* Dangling faces don't participate in Jordan Curve calc */
-		if (nmg_dangling_face(fu,manifolds))  continue;
-#endif
-
-/* XXX Adding this code in breaks Test1.r! */
-#if 0
-		/* Un-mark this face, handle it in the second pass */
-		NMG_INDEX_CLEAR(faces_seen, fu->f_p);
-	}
-
-	/*
-	 *  Second pass:  Jordan Curve algorithm.
-	 *  Fire a ray in "projection_dir", and count face crossings.
-	 */
-	for( RT_LIST_FOR(fu, faceuse, &s->fu_hd) )  {
-		plane_t	n;
-
-		/* If this face processed before, skip on */
-		if( NMG_INDEX_TEST( faces_seen, fu->f_p ) )  continue;
-
 		/* Mark this face as having been processed */
 		NMG_INDEX_SET(faces_seen, fu->f_p);
-#endif
-
-		/* Only consider the outward pointing faceuses */
-		if( fu->orientation != OT_SAME )  continue;
-
-		/* Find point where ray hits the plane. */
-		NMG_GET_FU_PLANE( n, fu );
-		stat = rt_isect_line3_plane(&dist, pt, projection_dir,
-			n, tol);
-
-		if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
-			rt_log("\tray/plane: stat:%d dist:%g\n", stat, dist);
-			PLPRINT("\tplane", n);
-		}
-
-		if( stat < 0 )  continue;	/* Ray missed */
-		if( dist < 0 )  continue;	/* Hit was behind start pt. */
-
-		/* XXX This case needs special handling */
-		if( stat == 0 )  rt_bomb("nmg_class_pt_s: ray is ON face!\n");
-
-		/*
-		 *  The ray hit the face.  Determine if this is a reasonable
-		 *  hit distance by comparing with the region diameter.
-		 */
-		if( dist > region_diameter )  {
-			if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-				rt_log("\tnmg_class_pt_s: hit plane outside region, skipping\n");
-			continue;
-		}
-
-		/*
-		 * Construct coordinates of hit point, and classify.
-		 * XXX In the case of an ON result,
-		 * XXX this really needs to be a ray/edge classification,
-		 * XXX not a point/edge classification.
-		 * XXX The ray can go in/in, out/out, in/out, out/in,
-		 * XXX with different meanings.  Can't tell the difference here.
-		 */
-	    	VJOIN1(plane_pt, pt, dist, projection_dir);
-		if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-			rt_log("\tClassify ray/face intercept point\n");
-		class = nmg_class_pt_f( plane_pt, fu, tol );
-		if( class == NMG_CLASS_AinB )  hitcount++;
-		else if( class == NMG_CLASS_AonBshared )  {
-			/* XXX Can't handle this case.
-			 * XXX Keep picking different directions until
-			 * XXX no "hard" cases come up.  (Limit 10 per customer).
-			 */
-			if( try < 10 )  {
-				rt_log("nmg_class_pt_s(%g, %g, %g) try=%d, grazed edge\n", V3ARGS(pt), try);
-				goto retry;
-			}
-			hitcount++;
-			rt_bomb("nmg_class_pt_s: ray grazed an edge, could be 1 hit (in/out) or 2 hits (in/in, out/out), can't tell which!\n");
-		}
-		if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-			rt_log("nmg_class_pt_s:\t ray hitcount=%d\n", hitcount);
 	}
-	rt_free( (char *)faces_seen, "nmg_class_pt_s faces_seen[]" );
+
+
+	/* If we got here, the point isn't ON any of the faces.
+	 * Time to do the Jordan Curve Theorem.  We fire an arbitrary
+	 * ray and count the number of crossings (in the positive direction)
+	 * If that number is even, we're outside the shell, otherwise we're
+	 * inside the shell.
+	 */
+	
+	VMOVE(rp.r_pt, pt);
+	VMOVE(rp.r_dir, projection_dir);
+	hitcount = nmg_ray_vs_shell(&rp, s, tol);
+
 
 	/*  Using Jordan Curve Theorem, if hitcount is even, point is OUT.
 	 *  If hiscount is odd, point is IN.
@@ -873,6 +803,7 @@ retry:
 		class = NMG_CLASS_AoutB;
 	}
 out:
+	rt_free( (char *)faces_seen, "nmg_class_pt_s faces_seen[]" );
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY || try > 1)
 		rt_log("nmg_class_pt_s: returning %s, s=x%x\n",
 			nmg_class_name(class), s );
@@ -885,7 +816,8 @@ out:
  *
  *	Classify a loopuse/vertexuse from shell A WRT shell B.
  */
-static int class_vu_vs_s(vu, sB, classlist, tol)
+static int 
+class_vu_vs_s(vu, sB, classlist, tol)
 struct vertexuse	*vu;
 struct shell		*sB;
 long			*classlist[4];
@@ -1004,7 +936,8 @@ out:
 /*
  *			C L A S S _ E U _ V S _ S
  */
-static int class_eu_vs_s(eu, s, classlist, tol)
+static int 
+class_eu_vs_s(eu, s, classlist, tol)
 struct edgeuse	*eu;
 struct shell	*s;
 long		*classlist[4];
@@ -1281,7 +1214,8 @@ out:
 /*
  *			C L A S S _ L U _ V S _ S
  */
-static int class_lu_vs_s(lu, s, classlist, tol)
+static int 
+class_lu_vs_s(lu, s, classlist, tol)
 struct loopuse		*lu;
 struct shell		*s;
 long			*classlist[4];
@@ -1564,7 +1498,8 @@ out:
 /*
  *			C L A S S _ F U _ V S _ S
  */
-static void class_fu_vs_s(fu, s, classlist, tol)
+static void 
+class_fu_vs_s(fu, s, classlist, tol)
 struct faceuse		*fu;
 struct shell		*s;
 long			*classlist[4];
