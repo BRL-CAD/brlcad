@@ -1056,8 +1056,9 @@ char	**argv;
     int			result = TCL_OK;	/* Return code */
     char		*ep;			/* Matrix element */
     char		*eep;			/* End of element */
-    char		*newargv[20];
+    char		*newargv[20+2];
     struct bu_vls	*avp;
+    int			got;
 
     CHECK_DBI_NULL;
     CHECK_READ_ONLY;
@@ -1094,9 +1095,14 @@ char	**argv;
 		bu_vls_printf(avp, "1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 ");
 		break;
 	    }
-	    /* This case falls through intentionally */
+    	    /* Sometimes the matrix is sent through Tcl as one long string.
+    	     * Copy it so we can crack it, below.
+    	     */
+	    avp = bu_vls_vlsinit();
+    	    bu_vls_strcat(avp, argv[2]);
+    	    break;
 	default:
-	  Tcl_AppendResult(interp, "error in matrix specification\n", (char *)NULL);
+	  Tcl_AppendResult(interp, "putmat: error in matrix specification (wrong number of args)\n", (char *)NULL);
 	  return TCL_ERROR;
     }
     newargv[0] = "arced";
@@ -1104,26 +1110,17 @@ char	**argv;
     newargv[2] = "matrix";
     newargv[3] = "rarc";
 
-    ep = bu_vls_addr(avp);
-    for (i = 0; i < 16; ++i)
-    {
-	if ((eep = strchr(ep, ' ')) == NULL && i < 15)
-	{
+    /* 16+1 allows space for final NULL entry in argv[] */
+    got = bu_argv_from_string( &newargv[4], 16+1, bu_vls_addr(avp) );
+    if( got != 16 )  {
 	  struct bu_vls tmp_vls;
 
 	  bu_vls_init(&tmp_vls);
-	  bu_vls_printf(&tmp_vls, "%s:%d: bad matrix.  This shouldn't happen\n",
-			__FILE__, __LINE__);
+	  bu_vls_printf(&tmp_vls, "putmat: %s:%d: bad matrix, only got %d elements: %s\n",
+			__FILE__, __LINE__, got, bu_vls_addr(&tmp_vls));
 	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+    	  bu_vls_free(&tmp_vls);
 	  result = TCL_ERROR;
-	  break;
-	}
-	newargv[4 + i] = ep;
-    	if( eep )
-    	{
-		*eep = '\0';
-		ep = eep + 1;
-    	}
     }
 
     if (result != TCL_ERROR)
