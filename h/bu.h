@@ -334,10 +334,12 @@ extern int	bu_debug;
  *  because of the limitations placed on compile-time initializers.
  */
 #if __STDC__ && !defined(ipsc860)
-#	define bu_offsetofarray(_t, _m)	bu_offsetof(_t, _m[0])
+#	define bu_offsetofarray(_t, _m)	offsetof(_t, _m[0])
 #else
-#	if !defined(bu_offsetof)
+#	if !defined(offsetof)
 #		define bu_offsetof(_t, _m)		(int)(&(((_t *)0)->_m))
+#	else
+#		define bu_offsetof(_t, _m)	offsetof(_t, _m)
 #	endif
 #	define bu_offsetofarray(_t, _m)	(int)( (((_t *)0)->_m))
 #endif
