@@ -2075,10 +2075,12 @@ char	**argv;
 	} else {
 usage:
 	  Tcl_AppendResult(interp,
-		"knob: x,y,z for rotation, S for scale, X,Y,Z for slew (rates, range -1..+1)\n",
-		"knob: ax,ay,az for absolute rotation, aS for absolute scale,\n",
+		"knob: x,y,z for rotation in degrees\n",
+		"knob: S for scale, X,Y,Z for slew (rates, range -1..+1)\n",
+		"knob: ax,ay,az for absolute rotation in degrees, aS for absolute scale,\n",
 		"knob: aX,aY,aZ for absolute slew.  calibrate to set current slew to 0\n",
-		"knob: xadc, yadc, ang1, ang2, distadc (values, range -2048..+2047)\n",
+		"knob: xadc, yadc, distadc (values, range -2048..+2047)\n",
+		"knob: ang1, ang2 for adc angles in degrees\n",
 		"knob: zero (cancel motion)\n", (char *)NULL);
 
 	  return TCL_ERROR;
