@@ -146,7 +146,6 @@ main( argc, argv)
 int argc;
 char ** argv;
 {
-	FBIO	*fbp;
 	register int i;
 	int	file_width;		/* unclipped width of rectangle */
 	int	file_skiplen;		/* # of pixels to skip on l.h.s. */

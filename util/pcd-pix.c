@@ -87,8 +87,9 @@ static enum ERRORS readplain();
 static void interpolate();
 static void halve();
 static void ycctorgb();
-static void writepicture();
+#if 0
 static void readlpt();
+#endif
 static void readhqt();
 static void decode();
 static void druckeid();
@@ -928,7 +929,6 @@ struct ph1
 
 static void druckeid()
 {
-	int i;
 	struct ph1 *d;
 	char ss[100];
 
@@ -962,6 +962,7 @@ static void druckeid()
 
 
 
+#if 0
 struct pcdword
 { 
 	uBYTE high,low;
@@ -987,7 +988,7 @@ dim w,h;
 
 
 }
-
+#endif
 
 
 struct pcdquad { 
