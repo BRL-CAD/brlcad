@@ -195,6 +195,7 @@ struct dm_list {
   int _am_mode;    /* alternate mouse mode */
   int _ndrawn;
   int _perspective_angle;
+  int *_zclip_ptr;
   double _frametime;/* time needed to draw last frame */
   struct bu_vls _fps_name;
   struct cmd_list *aim;
@@ -207,9 +208,7 @@ struct dm_list {
   int _scroll_top;
   int _scroll_active;
   int _scroll_y;
-  int _scroll_edit;
   struct scroll_item *_scroll_array[6];
-  struct bu_vls _scroll_edit_vls;
 
   void (*_knob_hook)();
   void (*_axes_color_hook)();
@@ -217,6 +216,11 @@ struct dm_list {
   void (*_state_hook)();
   void (*_viewpoint_hook)();
   int (*_eventHandler)();
+};
+
+struct dm_char_queue {
+  struct bu_list l;
+  struct dm_list *dlp;
 };
 
 #define DM_LIST_NULL ((struct dm_list *)NULL)
@@ -231,6 +235,7 @@ struct dm_list {
 #define am_mode curr_dm_list->_am_mode
 #define ndrawn curr_dm_list->_ndrawn
 #define perspective_angle curr_dm_list->_perspective_angle
+#define zclip_ptr curr_dm_list->_zclip_ptr
 #define frametime curr_dm_list->_frametime
 #define fps_name curr_dm_list->_fps_name
 #define knob_hook curr_dm_list->_knob_hook
@@ -336,9 +341,7 @@ struct dm_list {
 #define scroll_top curr_dm_list->_scroll_top
 #define scroll_active curr_dm_list->_scroll_active
 #define scroll_y curr_dm_list->_scroll_y
-#define scroll_edit curr_dm_list->_scroll_edit
 #define scroll_array curr_dm_list->_scroll_array
-#define scroll_edit_vls curr_dm_list->_scroll_edit_vls
 
 #define MINVIEW		0.001				
 #define VIEWSIZE	(2.0*Viewscale)	/* Width of viewing cube */
@@ -420,6 +423,7 @@ extern int dm_pipe[];  /* defined in ged.c */
 extern int update_views;   /* defined in ged.c */
 extern struct dm_list head_dm_list;  /* list of active display managers */
 extern struct dm_list *curr_dm_list;
+extern struct dm_char_queue head_dm_char_queue;
 
 struct w_dm {
   int type;
