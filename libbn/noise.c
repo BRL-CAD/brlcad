@@ -27,7 +27,7 @@
  *	Public Domain, Distribution Unlimited.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (ARL)";
+static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "conf.h"
@@ -758,7 +758,7 @@ double offset;
 	struct fbm_spec		*ep;
 	double			result, weight, signal, *spec_wgts;
 	point_t			pt;
-	int			i, oct;
+	int			i;
 	
 	/* The first order of business is to see if we have pre-computed
 	 * the spectral weights table for these parameters in a previous
@@ -825,7 +825,7 @@ double offset;
 	struct fbm_spec		*ep;
 	double			result, weight, signal, *spec_wgts;
 	point_t			pt;
-	int			i, oct;
+	int			i;
 	
 	/* The first order of business is to see if we have pre-computed
 	 * the spectral weights table for these parameters in a previous

@@ -20,7 +20,7 @@
  *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (ARL)";
+static const char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 
@@ -585,44 +585,44 @@ static struct math_func_link_void {
 	char *name;
 	void (*func)();
 } math_funcs_void[] = {
-	"mat_mul",            bn_mat_mul,
-	"mat_inv",            bn_mat_inv,
-	"mat_trn",            bn_mat_trn,
-	"matXvec",            bn_matXvec,
-	"mat4x3vec",          bn_mat4x3vec,
-	"mat4x3pnt",          bn_mat4x3pnt,
-	"hdivide",            bn_hdivide,
-	"vjoin1",	      bn_vjoin1,
-	"mat_ae",             bn_mat_ae,
-	"mat_ae_vec",         bn_ae_vec,	/* wrong name! */
-	"bn_ae_vec",          bn_ae_vec,
-	"mat_aet_vec",        bn_aet_vec,
-	"bn_aet_vec",         bn_aet_vec,	/* wrong name! */
-	"mat_angles",         bn_mat_angles,
-	"mat_eigen2x2",       bn_eigen2x2,
-	"mat_fromto",         bn_mat_fromto,
-	"mat_xrot",           bn_mat_xrot,
-	"mat_yrot",           bn_mat_yrot,
-	"mat_zrot",           bn_mat_zrot,
-	"mat_lookat",         bn_mat_lookat,
-	"mat_vec_ortho",      bn_vec_ortho,	/* wrong name! */
-	"bn_vec_ortho",       bn_vec_ortho,
-	"mat_vec_perp",       bn_vec_perp,	/* wrong name! */
-	"bn_vec_perp",        bn_vec_perp,
-	"mat_scale_about_pt", bn_mat_scale_about_pt_wrapper,
-	"mat_xform_about_pt", bn_mat_xform_about_pt,
-	"mat_arb_rot",        bn_mat_arb_rot,
-	"quat_mat2quat",      quat_mat2quat,
-	"quat_quat2mat",      quat_quat2mat,
-	"quat_distance",      bn_quat_distance_wrapper,
-	"quat_double",        quat_double,
-	"quat_bisect",        quat_bisect,
-	"quat_slerp",         quat_slerp,
-	"quat_sberp",         quat_sberp,
-	"quat_make_nearest",  quat_make_nearest,
-	"quat_exp",           quat_exp,
-	"quat_log",           quat_log,
-	0, 0
+	{"mat_mul",            bn_mat_mul},
+	{"mat_inv",            bn_mat_inv},
+	{"mat_trn",            bn_mat_trn},
+	{"matXvec",            bn_matXvec},
+	{"mat4x3vec",          bn_mat4x3vec},
+	{"mat4x3pnt",          bn_mat4x3pnt},
+	{"hdivide",            bn_hdivide},
+	{"vjoin1",	       bn_vjoin1},
+	{"mat_ae",             bn_mat_ae},
+	{"mat_ae_vec",         bn_ae_vec},	/* wrong name! */
+	{"bn_ae_vec",          bn_ae_vec},
+	{"mat_aet_vec",        bn_aet_vec},
+	{"bn_aet_vec",         bn_aet_vec},	/* wrong name! */
+	{"mat_angles",         bn_mat_angles},
+	{"mat_eigen2x2",       bn_eigen2x2},
+	{"mat_fromto",         bn_mat_fromto},
+	{"mat_xrot",           bn_mat_xrot},
+	{"mat_yrot",           bn_mat_yrot},
+	{"mat_zrot",           bn_mat_zrot},
+	{"mat_lookat",         bn_mat_lookat},
+	{"mat_vec_ortho",      bn_vec_ortho},	/* wrong name! */
+	{"bn_vec_ortho",       bn_vec_ortho},
+	{"mat_vec_perp",       bn_vec_perp},	/* wrong name! */
+	{"bn_vec_perp",        bn_vec_perp},
+	{"mat_scale_about_pt", bn_mat_scale_about_pt_wrapper},
+	{"mat_xform_about_pt", bn_mat_xform_about_pt},
+	{"mat_arb_rot",        bn_mat_arb_rot},
+	{"quat_mat2quat",      quat_mat2quat},
+	{"quat_quat2mat",      quat_quat2mat},
+	{"quat_distance",      bn_quat_distance_wrapper},
+	{"quat_double",        quat_double},
+	{"quat_bisect",        quat_bisect},
+	{"quat_slerp",         quat_slerp},
+	{"quat_sberp",         quat_sberp},
+	{"quat_make_nearest",  quat_make_nearest},
+	{"quat_exp",           quat_exp},
+	{"quat_log",           quat_log},
+	{0, 0}
 };
 
 
@@ -690,8 +690,8 @@ static struct math_func_link_int {
 	char *name;
 	int (*func)();
 } math_funcs_int[] = {
-	"bn_isect_2planes",	bn_isect_2planes,
-	0, 0
+	{"bn_isect_2planes",	bn_isect_2planes},
+	{0, 0}
 };
 
 

@@ -19,7 +19,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCScomplex[] = "@(#)$Header$ (BRL)";
+static const char RCScomplex[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"
