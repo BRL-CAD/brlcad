@@ -9,7 +9,9 @@
 static
 char sccsTag[] = "@(#) try.c 2.1, modified 12/9/86 at 15:54:34, archive /vld/moss/src/fbed/s.try.c";
 #endif
+
 #include <stdio.h>
+#include <assert.h>
 #include "./extern.h"
 #define NewTry( p ) \
 		if( ((p) = (Try *) malloc( sizeof(Try) )) == TRY_NULL ) \
@@ -53,7 +55,7 @@ Func_Tab *
 get_Try( name, tryp )
 register char *name;
 register Try	*tryp;
-	{	register Try	*curp;
+	{	register Try *curp = NULL; /* initialize to shutup compiler. */
 	/* Traverse next links to end of function name. */
 	for( ; tryp != TRY_NULL; tryp = tryp->n.t_next )
 		{
@@ -88,6 +90,8 @@ register Try	*tryp;
 				name++;
 			}
 		}
+	assert( curp != NULL ); /* can't happen */
+
 	/* Clobber key-stroke, and return it. */
 	--name;
 	*name = NUL;

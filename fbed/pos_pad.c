@@ -58,19 +58,19 @@ pad_close()
 getpos( pos )
 Point *pos;
 	{	static char str[1024];
-		int buttons;
+		int buttons = -1;
 		static int nread = 0;
-		register int just_read;
+		register int just_read = 0;
 		register char *cp;
 		register char *cend;
-		char *last;
+		char *last = NULL;
 	while( nread < 9 )
 		{
 		if(	empty( pfd )
-		     ||	(just_read = read (pfd, str+nread, (sizeof str) - nread))
+		     ||	(just_read = read(pfd, str+nread, (sizeof str) - nread))
 		     ==	0
 			)
-			return -1;
+			return -1; /* no input available */
 		nread += just_read;
 		}
 	cend = str + nread - 4;
@@ -83,10 +83,13 @@ Point *pos;
 		if (buttons = (cp[0]&P_BUTTONS) >> 2)
 			break;
 		}
+	if( last == NULL )
+		return buttons;	/* no position parsed */
 	last++;
 	pos->p_x = (int)(((long)((last[0]&P_DATA) | ((last[1]&P_DATA)<<6)
 			) * (long)npoints) / PADSIZE);
-	pos->p_y = npoints - (int)(((long)((last[2]&P_DATA) | ((last[3]&P_DATA)<<6)
+	pos->p_y = npoints -
+			(int)(((long)((last[2]&P_DATA) | ((last[3]&P_DATA)<<6)
 			) * (long)npoints) / PADSIZE);
 	return buttons;
 	}
