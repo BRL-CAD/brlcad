@@ -210,9 +210,16 @@ WDB_EXTERN(int mk_set_conversion, (double val) );
 extern double	mk_conv2mm;		/* Conversion factor to mm */
 
 /*
+ *  Set this variable to either 4 or 5, depending on which version of
+ *  the database you wish to write. 
+ */
+extern int	mk_version;		/* Which version database to write */
+
+/*
  *  Internal routines
  */
 WDB_EXTERN(int mk_freemembers, (struct wmember *headp) );
+WDB_EXTERN(int mk_fwrite_internal, (FILE *fp, const char *name, struct rt_db_internal *ip) );
 WDB_EXTERN(int mk_export_fwrite, (FILE *fp, CONST char *name, genptr_t gp, int id));
 
 #ifdef __cplusplus
