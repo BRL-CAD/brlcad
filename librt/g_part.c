@@ -2,7 +2,10 @@
  *			G _ P A R T . C
  *
  *  Purpose -
- *	Intersect a ray with a "particle" solid.
+ *	Intersect a ray with a "particle" solid, which can have
+ *	three main forms:  sphere, hemisphere-tipped cylinder (lozenge),
+ *	and hemisphere-tipped cone.
+ *	This code draws on the examples of g_rec (Davisson) & g_sph (Dykstra).
  *
  *  Author -
  *	Michael John Muuss
@@ -15,6 +18,151 @@
  *  Copyright Notice -
  *	This software is Copyright (C) 1990 by the United States Army.
  *	All rights reserved.
+ *
+ *  Algorithm for the hemisphere-tipped cylinder and cone cases -
+ *  
+ *  Given V, H, vrad, and hrad, there is a set of points on this cylinder
+ *  
+ *  { (x,y,z) | (x,y,z) is on cylinder }
+ *  
+ *  Through a series of Affine Transformations, this set of points will be
+ *  transformed into a set of points on a unit cylinder (or cone)
+ *  with the transformed base (V') located at the origin
+ *  with a transformed radius of 1 (vrad').
+ *  The height of the cylinder (or cone) along the +Z axis is +1
+ *  (ie, H' = (0,0,1) ), with a transformed radius of hrad/vrad.
+ *  
+ *  
+ *  { (x',y',z') | (x',y',z') is on cylinder at origin }
+ *  
+ *  The transformation from X to X' is accomplished by:
+ *
+ *  finding two unit vectors A and B mutually perpendicular, and perp. to H.
+ *
+ *  X' = S(R( X - V ))
+ *
+ *  where R(X) rotates H to the +Z axis, and S(X) scales vrad' to 1
+ *  and |H'| to 1.
+ *
+ *  where R(X) =  ( A/(|A|) )
+ *  		 (  B/(|B|)  ) . X
+ *  		  ( H/(|H|) )
+ *  
+ *  and S(X) =	 (  1/|A|   0     0   )
+ *  		(    0    1/|B|   0    ) . X
+ *  		 (   0      0   1/|H| )
+ *  
+ *  To find the intersection of a line with the surface of the cylinder,
+ *  consider the parametric line L:
+ *  
+ *  	L : { P(n) | P + t(n) . D }
+ *  
+ *  Call W the actual point of intersection between L and the cylinder.
+ *  Let W' be the point of intersection between L' and the unit cylinder.
+ *  
+ *  	L' : { P'(n) | P' + t(n) . D' }
+ *  
+ *  W = invR( invS( W' ) ) + V
+ *  
+ *  Where W' = k D' + P'.
+ *  
+ *  If Dx' and Dy' are both 0, then there is no hit on the cylinder;
+ *  but the end spheres need checking.
+ *
+ *  The equation for the unit cylinder ranging along Z is
+ *
+ *	x**2 + y**2 - r**2 = 0
+ *
+ *  and the equation for a unit cone ranging along Z is
+ *
+ *	x**2 + y**2 - f(z)**2 = 0
+ *
+ *  where in this case f(z) linearly interpolates the radius of the
+ *  cylinder from vrad (r1) to hrad (r2) as z ranges from 0 to 1, i.e.:
+ *
+ *	f(z) = (r2-r1) * z + r1
+ *
+ *  let m = r2-r1, and substitute:
+ *
+ *	x**2 + y**2 - (m*z+r1)**2 = 0 .
+ *
+ *  The parametric formulation for line L' is P' + t * D', or
+ *
+ *	x = Px' + t * Dx'
+ *	y = Py' + t * Dy'
+ *	z = Pz' + t * Dz' .
+ *
+ *  Substituting these definitions into the formula for the unit cone gives
+ *
+ *	(Px'+t*Dx')**2 + (Py'+t*Dy')**2 + (m*(Pz'+t*Dz')+r1)**2 = 0
+ *
+ *  Expanding and regrouping terms gives a quadratic in "t"
+ *  which has the form
+ *
+ *	a * t**2 + b * t + c = 0
+ *
+ *  where
+ *
+ *	a = Dx'**2 + Dy'**2 - m**2 * Dz'**2
+ *	b = 2 * (Px'*Dx' + Py'*Dy' - m**2 * Pz'*Dz' - m*r1*Dz')
+ *	c = Px'**2 + Py'**2 - m**2 * Pz'**2 - 2*m*r1*Pz' - r1**2
+ *
+ *  Line L' hits the infinitely tall unit cone at point(s) W'
+ *  which correspond to the roots of the quadratic.
+ *  The quadratic formula yields values for "t"
+ *
+ *	t = [ -b +/- sqrt( b** - 4 * a * c ) ] / ( 2 * a )
+ *
+ *  This parameter "t" can be substituted into the formulas for either
+ *  L' or L, because affine transformations preserve distances along lines.
+ *  
+ *  Now, D' = S( R( D ) )
+ *  and  P' = S( R( P - V ) )
+ *  
+ *  Substituting,
+ *  
+ *  W = V + invR( invS[ k *( S( R( D ) ) ) + S( R( P - V ) ) ] )
+ *    = V + invR( ( k * R( D ) ) + R( P - V ) )
+ *    = V + k * D + P - V
+ *    = k * D + P
+ *  
+ *  Note that ``t'' is constant, and is the same in the formulations
+ *  for both W and W'.
+ *
+ *  The hit at ``t'' is a hit on the height=1 unit cylinder IFF
+ *  0 <= Wz' <= 1.
+ *  
+ *  NORMALS.  Given the point W on the surface of the cylinder,
+ *  what is the vector normal to the tangent plane at that point?
+ *  
+ *  Map W onto the unit cylinder, ie:  W' = S( R( W - V ) ).
+ *  
+ *  Plane on unit cylinder at W' has a normal vector N' of the same value
+ *  as W' in x and y, with z set to zero, ie, (Wx', Wy', 0)
+ *  
+ *  The plane transforms back to the tangent plane at W, and this
+ *  new plane (on the original cylinder) has a normal vector of N, viz:
+ *  
+ *  N = inverse[ transpose(invR o invS) ] ( N' )
+ *    = inverse[ transpose(invS) o transpose(invR) ] ( N' )
+ *    = inverse[ inverse(S) o R ] ( N' )
+ *    = invR o S ( N' )
+ *
+ *  Note that the normal vector produced above will not have unit length.
+ *
+ *  THE END PLATES.
+ *
+ *  If Dz' == 0, line L' is parallel to the end plates, so there is no hit.
+ *
+ *  Otherwise, the line L' hits the bottom plate with k = (0 - Pz') / Dz',
+ *  and hits the top plate with k = (1 - Pz') / Dz'.
+ *
+ *  The solution W' is within the end plate IFF
+ *
+ *	Wx'**2 + Wy'**2 <= 1.0
+ *
+ *  The normal for a hit on the bottom plate is -Hunit, and
+ *  the normal for a hit on the top plate is +Hunit.
  */
 #ifndef lint
 static char RCSpart[] = "@(#)$Header$ (BRL)";
@@ -40,8 +188,14 @@ struct part_internal {
 #define RT_PARTICLE_TYPE_CONE		3
 
 struct part_specific {
-	vect_t	part_V;
+	struct part_internal	part_int;
+	mat_t			part_SoR;	/* Scale(Rot(vect)) */
 };
+
+/* hit_private flags for which end was hit */
+#define RT_PARTICLE_SURF_VSPHERE	1
+#define RT_PARTICLE_SURF_BODY		2
+#define RT_PARTICLE_SURF_HSPHERE	3
 
 /*
  *  			R T _ P A R T _ P R E P
@@ -67,6 +221,11 @@ struct rt_i		*rtip;
 	register struct part_specific *part;
 	struct part_internal	pi;
 	int			i;
+	vect_t		Hunit;
+	vect_t		a, b;
+	mat_t		R, Rinv;
+	mat_t		S;
+	vect_t		max, min;
 
 	if( rec == (union record *)0 )  {
 		rec = db_getmrec( rtip->rti_dbip, stp->st_dp );
@@ -80,7 +239,76 @@ struct rt_i		*rtip;
 		return(-1);		/* BAD */
 	}
 
-	return(-1);	/* unfinished */
+	GETSTRUCT( part, part_specific );
+	stp->st_specific = (genptr_t)part;
+	part->part_int = pi;		/* struct copy */
+
+	if( pi.part_type == RT_PARTICLE_TYPE_SPHERE )  {
+		/* Compute bounding sphere and RPP */
+		VMOVE( stp->st_center, pi.part_V );
+		stp->st_aradius = stp->st_bradius = pi.part_vrad;
+		stp->st_min[X] = pi.part_V[X] - pi.part_vrad;
+		stp->st_max[X] = pi.part_V[X] + pi.part_vrad;
+		stp->st_min[Y] = pi.part_V[Y] - pi.part_vrad;
+		stp->st_max[Y] = pi.part_V[Y] + pi.part_vrad;
+		stp->st_min[Z] = pi.part_V[Z] - pi.part_vrad;
+		stp->st_max[Z] = pi.part_V[Z] + pi.part_vrad;
+		return(0);		/* OK */
+	}
+
+	VMOVE( Hunit, pi.part_H );
+	VUNITIZE( Hunit );
+	vec_ortho( a, Hunit );
+	VCROSS( b, Hunit, a );
+
+	/* Compute R and Rinv */
+	mat_idn( R );
+	VMOVE( &R[0], a );		/* has unit length */
+	VMOVE( &R[4], b );		/* has unit length */
+	VMOVE( &R[8], Hunit );
+	mat_trn( Rinv, R );
+
+	/* Compute scale matrix S */
+	mat_idn( S );
+	S[ 0] = 1.0 / pi.part_vrad;	/* |A| = |B| */
+	S[ 5] = S[0];
+	S[10] = MAGNITUDE( pi.part_H );
+
+	mat_mul( part->part_SoR, S, R );
+
+	/* RPP and bounding sphere */
+	VJOIN1( stp->st_center, pi.part_V, 0.5, pi.part_H );
+
+	stp->st_aradius = stp->st_bradius = pi.part_vrad;
+
+	stp->st_min[X] = pi.part_V[X] - pi.part_vrad;
+	stp->st_max[X] = pi.part_V[X] + pi.part_vrad;
+	stp->st_min[Y] = pi.part_V[Y] - pi.part_vrad;
+	stp->st_max[Y] = pi.part_V[Y] + pi.part_vrad;
+	stp->st_min[Z] = pi.part_V[Z] - pi.part_vrad;
+	stp->st_max[Z] = pi.part_V[Z] + pi.part_vrad;
+
+	min[X] = pi.part_V[X] - pi.part_hrad;
+	max[X] = pi.part_V[X] + pi.part_hrad;
+	min[Y] = pi.part_V[Y] - pi.part_hrad;
+	max[Y] = pi.part_V[Y] + pi.part_hrad;
+	min[Z] = pi.part_V[Z] - pi.part_hrad;
+	max[Z] = pi.part_V[Z] + pi.part_hrad;
+	VMIN( stp->st_min, min );
+	VMAX( stp->st_max, max );
+
+	/* Determine bounding sphere from the RPP */
+	{
+		register fastf_t	f;
+		vect_t			work;
+		VSUB2SCALE( work, stp->st_max, stp->st_min, 0.5 );	/* radius */
+		f = work[X];
+		if( work[Y] > f )  f = work[Y];
+		if( work[Z] > f )  f = work[Z];
+		stp->st_aradius = f;
+		stp->st_bradius = MAGNITUDE(work);
+	}
+	return(0);			/* OK */
 }
 
 /*
@@ -115,7 +343,154 @@ struct seg		*seghead;
 	register struct part_specific *part =
 		(struct part_specific *)stp->st_specific;
 	register struct seg *segp;
+	LOCAL vect_t	dprime;		/* D' */
+	LOCAL point_t	pprime;		/* P' */
+	LOCAL point_t	xlated;		/* translated ray start point */
+	LOCAL fastf_t	k1, k2;		/* distance constants of solution */
+	LOCAL struct hit hits[3];	/* 4 potential hit points */
+	register struct hit *hitp = &hits[0];
 
+	if( part->part_int.part_type == RT_PARTICLE_TYPE_SPHERE )  {
+		LOCAL vect_t	ov;		/* ray orgin to center (V - P) */
+		FAST fastf_t	vrad_sq;
+		FAST fastf_t	magsq_ov;	/* length squared of ov */
+		FAST fastf_t	b;		/* second term of quadratic eqn */
+		FAST fastf_t	root;		/* root of radical */
+
+		VSUB2( ov, part->part_int.part_V, rp->r_pt );
+		b = VDOT( rp->r_dir, ov );
+		magsq_ov = MAGSQ(ov);
+
+		if( magsq_ov >= (vrad_sq = part->part_int.part_vrad *
+		    part->part_int.part_vrad) ) {
+			/* ray origin is outside of sphere */
+			if( b < 0 ) {
+				/* ray direction is away from sphere */
+				return(0);		/* No hit */
+			}
+			root = b*b - magsq_ov + vrad_sq;
+			if( root <= 0 ) {
+				/* no real roots */
+				return(0);		/* No hit */
+			}
+		} else {
+			root = b*b - magsq_ov + vrad_sq;
+		}
+		root = sqrt(root);
+
+		RT_GET_SEG(segp, ap->a_resource);
+		segp->seg_stp = stp;
+
+		/* we know root is positive, so we know the smaller t */
+		segp->seg_in.hit_dist = b - root;
+		segp->seg_in.hit_private = (genptr_t)RT_PARTICLE_SURF_VSPHERE;
+		segp->seg_out.hit_dist = b + root;
+		segp->seg_out.hit_private = (genptr_t)RT_PARTICLE_SURF_VSPHERE;
+		RT_LIST_INSERT( &(seghead->l), &(segp->l) );
+		return(2);			/* HIT */
+	}
+
+	/* Transform ray to coordinate system of unit cone at origin */
+	MAT4X3VEC( dprime, part->part_SoR, rp->r_dir );
+	VSUB2( xlated, rp->r_pt, part->part_int.part_V );
+	MAT4X3VEC( pprime, part->part_SoR, xlated );
+
+	if( NEAR_ZERO(dprime[X], SMALL) && NEAR_ZERO(dprime[Y], SMALL) )
+		goto check_hemispheres;
+
+	/* Find roots of the equation, using forumla for quadratic */
+	{
+		FAST fastf_t	a, b, c;
+		FAST fastf_t	root;		/* root of radical */
+		FAST fastf_t	m, msq;
+
+		m = part->part_int.part_hrad - part->part_int.part_vrad;
+
+
+		a = dprime[X]*dprime[X] + dprime[Y]*dprime[Y] -
+			(msq = m*m) * dprime[Z]*dprime[Z];
+		b = 2 * (dprime[X]*pprime[X] + dprime[Y]*pprime[Y] -
+			msq * dprime[Z]*pprime[Z] -
+			m * part->part_int.part_vrad * dprime[Z] );
+		c = pprime[X]*pprime[X] + pprime[Y]*pprime[Y] -
+			msq * pprime[Z]*pprime[Z] -
+			2 * m * part->part_int.part_vrad * pprime[Z] -
+			part->part_int.part_vrad * part->part_int.part_vrad;
+
+		if( (root = b*b - 4 * a * c) <= 0 )
+			goto check_hemispheres;
+		root = sqrt(root);
+
+		k1 = (root-b) * 0.5 / a;
+		k2 = (root+b) * (-0.5 / a);
+	}
+
+	/*
+	 *  k1 and k2 are potential solutions to intersection with side.
+	 *  See if they fall in range.
+	 */
+	VJOIN1( hitp->hit_vpriv, pprime, k1, dprime );		/* hit' */
+	if( hitp->hit_vpriv[Z] >= 0.0 && hitp->hit_vpriv[Z] <= 1.0 ) {
+		hitp->hit_dist = k1;
+		hitp->hit_private = (genptr_t)RT_PARTICLE_SURF_BODY;
+		hitp++;
+	}
+
+	VJOIN1( hitp->hit_vpriv, pprime, k2, dprime );		/* hit' */
+	if( hitp->hit_vpriv[Z] >= 0.0 && hitp->hit_vpriv[Z] <= 1.0 )  {
+		hitp->hit_dist = k2;
+		hitp->hit_private = (genptr_t)RT_PARTICLE_SURF_BODY;
+		hitp++;
+	}
+
+	/*
+	 * Check for hitting the end hemispheres.
+	 */
+check_hemispheres:
+	if( hitp < &hits[2]  &&  !NEAR_ZERO(dprime[Z], SMALL) )  {
+		/* 0 or 1 hits so far, this is worthwhile */
+/* XXXX */
+		k1 = -pprime[Z] / dprime[Z];		/* bottom plate */
+		k2 = (1.0 - pprime[Z]) / dprime[Z];	/* top plate */
+
+		VJOIN1( hitp->hit_vpriv, pprime, k1, dprime );	/* hit' */
+		if( hitp->hit_vpriv[X] * hitp->hit_vpriv[X] +
+		    hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] <= 1.0 )  {
+			hitp->hit_dist = k1;
+			hitp->hit_private = (genptr_t)RT_PARTICLE_SURF_VSPHERE;
+			hitp++;
+		}
+
+		VJOIN1( hitp->hit_vpriv, pprime, k2, dprime );	/* hit' */
+		if( hitp->hit_vpriv[X] * hitp->hit_vpriv[X] +
+		    hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] <= 1.0 )  {
+			hitp->hit_dist = k2;
+			hitp->hit_private = (genptr_t)RT_PARTICLE_SURF_HSPHERE;
+			hitp++;
+		}
+	}
+	if( hitp != &hits[2] )
+		return(0);	/* MISS */
+
+	if( hits[0].hit_dist < hits[1].hit_dist )  {
+		/* entry is [0], exit is [1] */
+		register struct seg *segp;
+
+		RT_GET_SEG(segp, ap->a_resource);
+		segp->seg_stp = stp;
+		segp->seg_in = hits[0];		/* struct copy */
+		segp->seg_out = hits[1];	/* struct copy */
+		RT_LIST_INSERT( &(seghead->l), &(segp->l) );
+	} else {
+		/* entry is [1], exit is [0] */
+		register struct seg *segp;
+
+		RT_GET_SEG(segp, ap->a_resource);
+		segp->seg_stp = stp;
+		segp->seg_in = hits[1];		/* struct copy */
+		segp->seg_out = hits[0];	/* struct copy */
+		RT_LIST_INSERT( &(seghead->l), &(segp->l) );
+	}
 	return(2);			/* HIT */
 }
 
@@ -152,6 +527,20 @@ register struct xray	*rp;
 		(struct part_specific *)stp->st_specific;
 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
+	switch( (int)hitp->hit_private )  {
+	case RT_PARTICLE_SURF_VSPHERE:
+		VSUB2( hitp->hit_normal, hitp->hit_point, part->part_int.part_V );
+		VUNITIZE( hitp->hit_normal );
+		break;
+	case RT_PARTICLE_SURF_HSPHERE:
+		VSUB2( hitp->hit_normal, hitp->hit_point, part->part_int.part_H );
+		VUNITIZE( hitp->hit_normal );
+		break;
+	case RT_PARTICLE_SURF_BODY:
+		/* XXX unfinished */
+		VSET( hitp->hit_normal, 1, 0, 0 );
+		break;
+	}
 }
 
 /*
