@@ -7,7 +7,7 @@
  *	Michael John Muuss
  *
  *  Source -
-v *	SECAD/VLD Computing Consortium, Bldg 394
+ *	SECAD/VLD Computing Consortium, Bldg 394
  *	The U. S. Army Ballistic Research Laboratory
  *	Aberdeen Proving Ground, Maryland  21005
  *  
@@ -42,6 +42,43 @@ struct matparse txt_parse[] = {
 	(char *)0,	0,				(char *)0
 };
 
+/*
+ *			T X T _ R E A D
+ *
+ *  Load the texture into memory.
+ *  Returns 0 on failure, 1 on success.
+ */
+HIDDEN int
+txt_read( tp )
+register struct txt_specific *tp;
+{
+	char *linebuf;
+	register FILE *fp;
+	register int i;
+
+	if( (fp = fopen(tp->tx_file, "r")) == NULL )  {
+		rt_log("txt_render(%s):  can't open\n", tp->tx_file);
+		tp->tx_file[0] = '\0';
+		return(0);
+	}
+	linebuf = rt_malloc(tp->tx_fw*3,"texture file line");
+	tp->tx_pixels = rt_malloc(
+		tp->tx_w * tp->tx_l * 3,
+		tp->tx_file );
+	for( i=0; i<tp->tx_l; i++ )  {
+		if( fread(linebuf,1,tp->tx_fw*3,fp) != tp->tx_fw*3 ) {
+			rt_log("txt_read: read error on %s\n", tp->tx_file);
+			tp->tx_file[0] = '\0';
+			(void)fclose(fp);
+			rt_free(linebuf,"file line, error");
+			return(0);
+		}
+		bcopy( linebuf, tp->tx_pixels + i*tp->tx_w*3, tp->tx_w*3 );
+	}
+	(void)fclose(fp);
+	rt_free(linebuf,"texture file line");
+	return(1);	/* OK */
+}
 
 /*
  *  			T X T _ R E N D E R
@@ -59,50 +96,25 @@ register struct partition *pp;
 {
 	register struct txt_specific *tp =
 		(struct txt_specific *)pp->pt_regionp->reg_udata;
-	auto fastf_t uv[2];
+	auto struct uvcoord uv;
 	register unsigned char *cp;
 
 	rt_functab[pp->pt_inseg->seg_stp->st_id].ft_uv(
-		pp->pt_inseg->seg_stp, pp->pt_inhit, uv );
+		ap, pp->pt_inseg->seg_stp, pp->pt_inhit, &uv );
 
-	/* If File could not be opened -- give debug colors */
-top:
-	if( tp->tx_file[0] == '\0' )  {
-		VSET( ap->a_color, uv[0]*255, 0, uv[1]*255 );
+	/*
+	 * If no texture file present, or if
+	 * texture isn't and can't be read, give debug colors
+	 */
+	if( tp->tx_file[0] == '\0'  ||
+	    ( tp->tx_pixels == (char *)0 && txt_read(tp) == 0 ) )  {
+		VSET( ap->a_color, uv.uv_u*255, 0, uv.uv_v*255 );
 		return(1);
-	}
-	/* Dynamic load of file -- don't read until first pixel needed */
-	if( tp->tx_pixels == (char *)0 )  {
-		char *linebuf;
-		register FILE *fp;
-		register int i;
-
-		if( (fp = fopen(tp->tx_file, "r")) == NULL )  {
-			rt_log("txt_render(%s):  can't open\n", tp->tx_file);
-			tp->tx_file[0] = '\0';
-			goto top;
-		}
-		linebuf = rt_malloc(tp->tx_fw*3,"texture file line");
-		tp->tx_pixels = rt_malloc(
-			tp->tx_w * tp->tx_l * 3,
-			tp->tx_file );
-		for( i=0; i<tp->tx_l; i++ )  {
-			if( fread(linebuf,1,tp->tx_fw*3,fp) != tp->tx_fw*3 ) {
-				rt_log("text_uvget: read error on %s\n", tp->tx_file);
-				tp->tx_file[0] = '\0';
-				(void)fclose(fp);
-				rt_free(linebuf,"file line, error");
-				goto top;
-			}
-			bcopy( linebuf, tp->tx_pixels + i*tp->tx_w*3, tp->tx_w*3 );
-		}
-		(void)fclose(fp);
-		rt_free(linebuf,"texture file line");
 	}
 	/* u is left->right index, v is line number */
 	cp = (unsigned char *)tp->tx_pixels +
-	     ((int) (uv[1]*(tp->tx_l-1))) * tp->tx_w * 3 +	/* v */
-	     ((int) (uv[0]*(tp->tx_w-1))) * 3;
+	     ((int) (uv.uv_v*(tp->tx_l-1))) * tp->tx_w * 3 +	/* v */
+	     ((int) (uv.uv_u*(tp->tx_w-1))) * 3;
 	VSET( ap->a_color, *cp++/255., *cp++/255., *cp++/255.);
 	return(1);
 }
@@ -156,13 +168,13 @@ register struct partition *pp;
 {
 	register struct ckr_specific *ckp =
 		(struct ckr_specific *)pp->pt_regionp->reg_udata;
-	auto fastf_t uv[2];
+	auto struct uvcoord uv;
 
 	rt_functab[pp->pt_inseg->seg_stp->st_id].ft_uv(
-		pp->pt_inseg->seg_stp, pp->pt_inhit, uv );
+		ap, pp->pt_inseg->seg_stp, pp->pt_inhit, &uv );
 
-	if( (uv[0] < 0.5 && uv[1] < 0.5) ||
-	    (uv[0] >=0.5 && uv[1] >=0.5) )  {
+	if( (uv.uv_u < 0.5 && uv.uv_v < 0.5) ||
+	    (uv.uv_u >=0.5 && uv.uv_v >=0.5) )  {
 		VSET( ap->a_color, ckp->ckr_r[0], ckp->ckr_g[0], ckp->ckr_b[0] );
 	} else {
 		VSET( ap->a_color, ckp->ckr_r[1], ckp->ckr_g[1], ckp->ckr_b[1] );
@@ -190,18 +202,18 @@ register struct region *rp;
  *			T E S T M A P _ R E N D E R
  *
  *  Render a map which varries red with U and blue with V values.
- *  Mostly useful for debugging ft_fv() routines.
+ *  Mostly useful for debugging ft_uv() routines.
  */
 HIDDEN
 testmap_render( ap, pp )
 register struct application *ap;
 register struct partition *pp;
 {
-	auto fastf_t uv[2];
+	auto struct uvcoord uv;
 
 	rt_functab[pp->pt_inseg->seg_stp->st_id].ft_uv(
-		pp->pt_inseg->seg_stp, pp->pt_inhit, uv );
-	VSET( ap->a_color, uv[0], 0, uv[1] );
+		ap, pp->pt_inseg->seg_stp, pp->pt_inhit, &uv );
+	VSET( ap->a_color, uv.uv_u, 0, uv.uv_v );
 	return(1);
 }
 
