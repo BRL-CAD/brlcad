@@ -207,6 +207,7 @@ struct	xinfo {
 	GC		xi_gc;		/* current graphics context */
 	GC		xi_cgc;		/* graphics context for clipping */
 	Region		xi_reg;		/* Valid displayed region */
+	int		xi_usereg;	/* Flag determining whether or not to use regions */
 	Colormap	xi_cmap;	/* Colormap */
 	XImage		*xi_image;	/* XImage (size of screen) */
 	Window		xi_curswin;	/* Cursor Window ID */
@@ -599,7 +600,9 @@ int height;
 GC gc;
 {
   struct xinfo *xi;
+#if 0
   XRectangle rect;
+#endif
 
   ifp->if_width = width;
   ifp->if_height = height;
@@ -709,6 +712,7 @@ GC gc;
     return -1;
   }
 
+#if 0
   /* Initialize the valid region */
   xi->xi_reg = XCreateRegion();
   rect.x = 0;
@@ -716,6 +720,11 @@ GC gc;
   rect.width = xi->xi_xwidth;
   rect.height = xi->xi_xheight;
   XUnionRectWithRegion(&rect, xi->xi_reg, xi->xi_reg);
+#else
+  /* We're not using Region's */
+  xi->xi_reg = (Region)0;
+  xi->xi_usereg = 0;
+#endif
 
   /* this will be reallocated in the call to X24_configureWindow */
   if ((xi->xi_pix = (unsigned char *) calloc(1, 1)) == NULL) {
@@ -1903,7 +1912,7 @@ printf("Creating window\n");
 		GCForeground | GCBackground, &gcv);
 
 	/* Initialize the valid region */
-
+	xi->xi_usereg = 1;
 	xi->xi_reg = XCreateRegion();
 	rect.x = 0;
 	rect.y = 0;
@@ -2179,13 +2188,15 @@ int width, height;
   ifp->if_ycenter = height/2;
 
   /* redo region */
-  XDestroyRegion(xi->xi_reg);
-  xi->xi_reg = XCreateRegion();
-  rect.x = 0;
-  rect.y = 0;
-  rect.width = xi->xi_xwidth;
-  rect.height = xi->xi_xheight;
-  XUnionRectWithRegion(&rect, xi->xi_reg, xi->xi_reg);
+  if (xi->xi_usereg) {
+	  XDestroyRegion(xi->xi_reg);
+	  xi->xi_reg = XCreateRegion();
+	  rect.x = 0;
+	  rect.y = 0;
+	  rect.width = xi->xi_xwidth;
+	  rect.height = xi->xi_xheight;
+	  XUnionRectWithRegion(&rect, xi->xi_reg, xi->xi_reg);
+  }
 
   X24_updstate(ifp);
 
@@ -3750,11 +3761,10 @@ printf("blit: PutImage of %dx%d to (%d, %d)\n", xwd, xht, ox, oy - xht + 1);
 
 	/* If we changed the valid region, make a new one. */
 
-	if (flags & (BLIT_PZ | BLIT_RESIZE))
+	if (xi->xi_usereg && (flags & (BLIT_PZ | BLIT_RESIZE)))
 	{
 		XRectangle rect;
 		Region Nreg = XCreateRegion();
-
 
 		rect.x = ox;
 		rect.y = oy - xht + 1;
