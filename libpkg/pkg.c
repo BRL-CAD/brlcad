@@ -539,7 +539,11 @@ void (*errlog)();
 	}
 #endif
 	do  {
+#if defined(__convexc__)
+		s2 = accept(fd, (struct sockaddr *)&from, &fromlen);
+#else
 		s2 = accept(fd, (char *)&from, &fromlen);
+#endif
 		if (s2 < 0) {
 			if(errno == EINTR)
 				continue;
