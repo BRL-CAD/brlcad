@@ -25,6 +25,9 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <errno.h>
+
+#include <string.h>	/* for strerror() */
+
 #ifndef WIN32
 #ifdef BSD
 #undef BSD
