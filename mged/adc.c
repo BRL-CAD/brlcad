@@ -105,8 +105,10 @@ calc_adc_a1()
     dx = view_pt[X] * GED_MAX - dv_xadc;
     dy = view_pt[Y] * GED_MAX - dv_yadc;
 
-    if(dx != 0.0 || dy != 0.0)
+    if(dx != 0.0 || dy != 0.0){
       adc_a1 = RAD2DEG*atan2(dy, dx);
+      dv_1adc = (1.0 - (adc_a1 / 45.0)) * GED_MAX;
+    }
   }
 }
 
@@ -122,8 +124,10 @@ calc_adc_a2()
     dx = view_pt[X] * GED_MAX - dv_xadc;
     dy = view_pt[Y] * GED_MAX - dv_yadc;
 
-    if(dx != 0.0 || dy != 0.0)
+    if(dx != 0.0 || dy != 0.0){
       adc_a2 = RAD2DEG*atan2(dy, dx);
+      dv_2adc = (1.0 - (adc_a2 / 45.0)) * GED_MAX;
+    }
   }
 }
 
@@ -141,7 +145,7 @@ calc_adc_dst()
     dy = view_pt[Y] * GED_MAX - dv_yadc;
     dist = sqrt(dx * dx + dy * dy);
     adc_dst = dist * INV_GED;
-    dv_distadc = (dist / M_SQRT2_DIV2) - 2047.0;
+    dv_distadc = (dist / M_SQRT2_DIV2) - GED_MAX;
   }else
     adc_dst = (dv_distadc * INV_GED + 1.0) * M_SQRT2_DIV2;
 }
@@ -161,7 +165,7 @@ fastf_t angle;
    */
   /* map -2048 - 2047 into 0 - 2048 * sqrt (2) */
   /* Tick distance */
-  c_tdist = ((fastf_t)(dv_distadc) + 2047.0) * M_SQRT2_DIV2;
+  c_tdist = ((fastf_t)(dv_distadc) + GED_MAX) * M_SQRT2_DIV2;
 
   d1 = c_tdist * cos (angle);
   d2 = c_tdist * sin (angle);
@@ -235,7 +239,10 @@ adcursor()
   calc_adc_a2();
   calc_adc_dst();
 
-  DM_SET_FGCOLOR(dmp, DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B, 1);
+  DM_SET_FGCOLOR(dmp,
+		 color_scheme->adc_line[0],
+		 color_scheme->adc_line[1],
+		 color_scheme->adc_line[2], 1);
   DM_SET_LINE_ATTR(dmp, mged_variables->linewidth, 0);
   DM_DRAW_LINE_2D(dmp,
 		  GED2PM1(GED_MIN), GED2PM1(dv_yadc),
@@ -288,6 +295,10 @@ adcursor()
 		  GED2PM1(x4), GED2PM1(y4) * dmp->dm_aspect);
   DM_SET_LINE_ATTR(dmp, mged_variables->linewidth, 0);
 
+  DM_SET_FGCOLOR(dmp,
+		 color_scheme->adc_tick[0],
+		 color_scheme->adc_tick[1],
+		 color_scheme->adc_tick[2], 1);
   draw_ticks(0.0);
   draw_ticks(angle1);
   draw_ticks(angle2);
@@ -387,7 +398,7 @@ char	**argv;
       adc_auto = 0;
     }
 
-    dirty = 1;
+    set_scroll();
     return TCL_OK;
   }
 
@@ -422,7 +433,7 @@ char	**argv;
       else
 	adc_draw = 0;
 
-      dirty = 1;
+      set_scroll();
       return TCL_OK;
     }
 
@@ -445,6 +456,7 @@ char	**argv;
 	else
 	  adc_a1 = user_pt[0];
 
+	dv_1adc = (1.0 - (adc_a1 / 45.0)) * GED_MAX;
 	dirty = 1;
       }
 
@@ -470,6 +482,7 @@ char	**argv;
 	else
 	  adc_a2 = user_pt[0];
 
+	dv_2adc = (1.0 - (adc_a2 / 45.0)) * GED_MAX;
 	dirty = 1;
       }
 
@@ -504,6 +517,32 @@ char	**argv;
     }
 
     Tcl_AppendResult(interp, "The 'adc dst' command accepts 0 or 1 argument\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  if(strcmp(parameter, "odst") == 0){
+    if(argc == 0){
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "%d", dv_distadc);
+      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+      bu_vls_free(&vls);
+
+      return TCL_OK;
+    }else if(argc == 1){
+      if(!adc_anchor_dst){
+	if(incr_flag)
+	  dv_distadc += user_pt[0];
+	else
+	  dv_distadc = user_pt[0];
+
+	adc_dst = (dv_distadc * INV_GED + 1.0) * M_SQRT2_DIV2;
+	dirty = 1;
+      }
+
+      return TCL_OK;
+    }
+
+    Tcl_AppendResult(interp, "The 'adc odst' command accepts 0 or 1 argument\n", (char *)NULL);
     return TCL_ERROR;
   }
 
@@ -656,6 +695,68 @@ char	**argv;
     }
 
     Tcl_AppendResult(interp, "The 'adc xyz' command requires 0 or 3 arguments\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  if(strcmp(parameter, "x") == 0){
+    if(argc == 0){
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "%d", dv_xadc);
+      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+      bu_vls_free(&vls);
+
+      return TCL_OK;
+    }else if(argc == 1) {
+      if(!adc_anchor_pos){
+	if(incr_flag){
+	  dv_xadc += user_pt[0];
+	}else{
+	  dv_xadc = user_pt[0];
+	}
+
+	adc_pos_view[X] = dv_xadc * INV_GED;
+	adc_pos_view[Y] = dv_yadc * INV_GED;
+	adc_view_To_adc_grid();
+	MAT4X3PNT(adc_pos_model, view2model, adc_pos_view);
+
+	dirty = 1;
+      }
+
+      return TCL_OK;
+    }
+
+    Tcl_AppendResult(interp, "The 'adc x' command requires 0 or 1 argument\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  if(strcmp(parameter, "y") == 0){
+    if(argc == 0){
+      bu_vls_init(&vls);
+      bu_vls_printf(&vls, "%d", dv_yadc);
+      Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+      bu_vls_free(&vls);
+
+      return TCL_OK;
+    }else if(argc == 1) {
+      if(!adc_anchor_pos){
+	if(incr_flag){
+	  dv_yadc += user_pt[0];
+	}else{
+	  dv_yadc = user_pt[0];
+	}
+
+	adc_pos_view[X] = dv_xadc * INV_GED;
+	adc_pos_view[Y] = dv_yadc * INV_GED;
+	adc_view_To_adc_grid();
+	MAT4X3PNT(adc_pos_model, view2model, adc_pos_view);
+
+	dirty = 1;
+      }
+
+      return TCL_OK;
+    }
+
+    Tcl_AppendResult(interp, "The 'adc y' command requires 0 or 1 argument\n", (char *)NULL);
     return TCL_ERROR;
   }
 
