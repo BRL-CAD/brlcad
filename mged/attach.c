@@ -967,7 +967,7 @@ struct dm_list *initial_dm_list;
   owner = 1;
   frametime = 1;
   mapped = 1;
-  mged_variables->adc_a1 = mged_variables->adc_a2 = 45.0;
+  adc_a1 = adc_a2 = 45.0;
   mged_view_init(curr_dm_list);
 
   BU_GETSTRUCT(curr_dm_list->menu_vars, menu_vars);

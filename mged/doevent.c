@@ -789,7 +789,7 @@ XDeviceMotionEvent *dmep;
   fastf_t f;
 
   if(button0){
-    common_dbtext((mged_variables->adcflag ? kn1_knobs:kn2_knobs)[dmep->first_axis]);
+    common_dbtext((adc_draw ? kn1_knobs:kn2_knobs)[dmep->first_axis]);
     return;
   }
 
@@ -797,7 +797,7 @@ XDeviceMotionEvent *dmep;
 
   switch(DIAL0 + dmep->first_axis){
   case DIAL0:
-    if(mged_variables->adcflag){
+    if(adc_draw){
       if(-NOISE <= dml_knobs[dmep->first_axis] &&
 	 dml_knobs[dmep->first_axis] <= NOISE &&
 	 !dv_1adc )
@@ -879,7 +879,7 @@ XDeviceMotionEvent *dmep;
     }
     break;
   case DIAL2:
-    if(mged_variables->adcflag){
+    if(adc_draw){
       if(-NOISE <= dml_knobs[dmep->first_axis] &&
 	 dml_knobs[dmep->first_axis] <= NOISE &&
 	 !dv_2adc )
@@ -977,7 +977,7 @@ XDeviceMotionEvent *dmep;
     }
     break;
   case DIAL3:
-    if(mged_variables->adcflag){
+    if(adc_draw){
       if(-NOISE <= dml_knobs[dmep->first_axis] &&
 	 dml_knobs[dmep->first_axis] <= NOISE &&
 	 !dv_distadc)
@@ -1071,7 +1071,7 @@ XDeviceMotionEvent *dmep;
     }
     break;
   case DIAL4:
-    if(mged_variables->adcflag){
+    if(adc_draw){
       if(-NOISE <= dml_knobs[dmep->first_axis] &&
 	 dml_knobs[dmep->first_axis] <= NOISE &&
 	 !dv_yadc)
@@ -1249,7 +1249,7 @@ XDeviceMotionEvent *dmep;
     }
     break;
   case DIAL6:
-    if(mged_variables->adcflag){
+    if(adc_draw){
       if(-NOISE <= dml_knobs[dmep->first_axis] &&
 	 dml_knobs[dmep->first_axis] <= NOISE &&
 	 !dv_xadc)
