@@ -52,7 +52,7 @@ HIDDEN int	air_setup(), airtest_render(), air_render(), emist_render();
 HIDDEN void	air_print(), air_free();
 
 struct mfuncs air_mfuncs[] = {
-	{"airtest",	0,		0,		MFI_HIT,	0,
+	{"airtest",	0,		0,		MFI_HIT, MFF_PROC,
 	air_setup,	airtest_render,	air_print,	air_free },
 
 	{"air",		0,		0,		MFI_HIT, MFF_PROC,
@@ -64,7 +64,7 @@ struct mfuncs air_mfuncs[] = {
 	{"emist",	0,		0,		MFI_HIT, MFF_PROC,
 	air_setup,	emist_render,	air_print,	air_free },
 
-	{(char *)0,	0,		0,		0,		0,
+	{(char *)0,	0,		0,		0,	0,
 	0,		0,		0,		0 }
 };
 
@@ -228,10 +228,12 @@ char	*dp;
 	/* extinction = 1. - transmission.  Extinguished part replaced by
 	 * the "color of the air".
 	 */
+
 #if 0
 	VMOVE(swp->sw_color, air_sp->color);
 	VMOVE(swp->sw_basecolor, air_sp->color);
 #endif
+
 	if( rdebug&RDEBUG_SHADE)
 		rt_log("air o dist:%gmm tau:%g transmit:%g color(%g %g %g)\n",
 			dist, tau, swp->sw_transmit, V3ARGS(swp->sw_color) );
