@@ -3,7 +3,7 @@
 fast4-g \- FASTGEN4 Translator (FASTGEN4 to BRL-CAD)
 .SH SYNOPSIS
 .B fast4-g
-[-dnwp] [-o plot_file] [-c id_list] [-a min_angle] [-x RT_DEBUG_FLAG] [-X NMG_DEBUG_FLAG] [-D tol_dist] [-P tol_cosine] file.fastgen4 file.g
+[-dwq] [-o plot_file] [-c id_list] [-x RT_DEBUG_FLAG] [-b BU_DEBUG_FLAG] file.fastgen4 file.g
 .SH DESCRIPTION
 .I fast4-g\^
 converts the specified
@@ -18,19 +18,11 @@ option prints debugging information and the
 option prints warnings whenever an object is assigned a default name (no
 name specified in the FASTGEN4 file).
 The
-.I -n
-option results in a BRL-CAD model built from NMGs instead of the default polysolids.
+.I -q
+option requests quiet mode, so that nothing will be printed except errors.
 The
-.I min_angle
-is the smallest angle (degrees) between two adjacent faces that will not be considered
-an error in a PLATE-MODE component. If a PLATE_MODE component has two adjacent faces
-that make an angle smaller than
-the minimum, then that component will be converted using an ARB6 solid for each
-PLATE-MODE triangle.
-The
-.I -p
-option indicates that all plate-mode components should be converted as a group of ARB6 solids (one ARB6
-for each triangle in the plate).
+.I -b
+option specifies a value for a debug flag for libbu.
 The
 .I -o
 option indicates that all CTRI and CQUAD elements that get processed should be output to the
@@ -46,14 +38,6 @@ may be a comma separated list of ident numbers and ranges. For example,
 .I -c 3002,5678,9213,1002-1100
 will convert only the regions with idents of 3002,5678,9213, and everything from 1002 through 1100.
 The
-.I tol_dist
-is the maximum distance (in mm) between two vertices at which the two vertices
-will be considered to be the same vertex.
-The
-.I tol_cosine
-is the maximum cosine of the angle between two planes at which the two planes
-will be considered to be parallel.
-The
 .I file.fastgen4
 file is expected to be in the FASTGEN 4.1 format as defined in the
 FASTGEN 4.1 User Manual.
@@ -61,10 +45,7 @@ FASTGEN 4.1 User Manual.
 and
 .I CCONE2
 elements are converted to BRL-CAD truncated right cylinders
-.I (TRC).
-.I CHEX1
-and
-.I CHEX2
+.I (TRC). CHEX2
 elements are converted to BRL-CAD arbitrary convex polyhedrons
 .I (ARB8).
 .I CLINE
@@ -74,20 +55,11 @@ and two or more CLINES originating or terminating at the same vertex
 are joined with a BRL-CAD sphere
 .I (SPH).
 .I CQUAD
-and
+,
 .I CTRI
-elements are converted to faces of a BRL-CAD n-manifold geometry
-.I (NMG)
-object. For plate mode, these faces are copied and extruded by
-the indicated thickness to create a real surface where one is only
-implied in the FASTGEN4 data.  The default is to convert these objects
-to BRL-CAD polysolids.  The
-.I -n
-option results in these
-.I NMG
-objects being output directly as
-.I NMG
-solids.
+, and
+.I CHEX1
+elements are converted to faces of a BRL-CAD BOT (Bag Of Triangles).
 .I CSPHERE
 elements are converted to BRL-CAD spheres
 .I (SPH)
