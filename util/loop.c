@@ -22,8 +22,13 @@
 static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
+
+#include "machine.h"
+#include "externs.h"
 
 #define	INTEGER 0
 #define	REAL	1
@@ -47,7 +52,7 @@ char	**argv;
 
 	/* determine if any arguments are real */
 	for (i = 1; i < argc; i++) {
-		if (atof(argv[i]) != atoi(argv[i])) {	
+		if (atof(argv[i]) != ((double)atoi(argv[i]))) {	
 			status = REAL;
 			break;
 		}
