@@ -422,6 +422,86 @@ double mm2local;
 }
 
 void
+vls_pipeseg( vp, seg_no, ip, mm2local )
+struct rt_vls *vp;
+int seg_no;
+CONST struct rt_db_internal *ip;
+double mm2local;
+{
+	point_t p1,p2;
+	fastf_t radius;
+	struct rt_pipe_internal *pint;
+	struct wdb_pipeseg *pipe;
+	struct wdb_pipeseg *next;
+	int seg_count=0;
+	char buf[256];
+
+	pint = (struct rt_pipe_internal *)ip->idb_ptr;
+	RT_PIPE_CK_MAGIC( pint );
+
+	pipe = RT_LIST_FIRST( wdb_pipeseg, &pint->pipe_segs_head );
+	while( ++seg_count != seg_no && RT_LIST_NOT_HEAD( &pipe->l, &pint->pipe_segs_head ) )
+		pipe = RT_LIST_NEXT( wdb_pipeseg, &pipe->l );
+
+	next = RT_LIST_NEXT( wdb_pipeseg, &pipe->l );
+	switch( pipe->ps_type )
+	{
+		case WDB_PIPESEG_TYPE_LINEAR:
+			sprintf( buf, "Linear Pipe Segment:\n" );
+			rt_vls_strcat( vp, buf );
+			VSCALE( p1, pipe->ps_start, mm2local );
+			VSCALE( p2, next->ps_start, mm2local );
+			sprintf( buf, "\tfrom (%g %g %g) to (%g %g %g)\n" ,
+				V3ARGS( p1 ), V3ARGS( p2 ) );
+			rt_vls_strcat( vp, buf );
+			if( pipe->ps_id > 0.0 )
+				sprintf( buf, "\tat start: od=%g, id=%g\n",
+					pipe->ps_od*mm2local,
+					pipe->ps_id*mm2local );
+			else
+				sprintf( buf, "\tat start: od=%g\n",
+					pipe->ps_od*mm2local );
+			rt_vls_strcat( vp, buf );
+			if( next->ps_id > 0.0 )
+				sprintf( buf, "\tat end: od=%g, id=%g\n",
+					next->ps_od*mm2local,
+					next->ps_id*mm2local );
+			else
+				sprintf( buf, "\tat end: od=%g\n",
+					next->ps_od*mm2local );
+			rt_vls_strcat( vp, buf );
+			break;
+		case WDB_PIPESEG_TYPE_BEND:
+			sprintf( buf, "Bend Pipe Segment:\n" );
+			rt_vls_strcat( vp, buf );
+			VSCALE( p1, pipe->ps_start, mm2local );
+			VSCALE( p2, next->ps_start, mm2local );
+			sprintf( buf, "\tfrom (%g %g %g) to (%g %g %g)\n" ,
+				V3ARGS( p1 ), V3ARGS( p2 ) );
+			rt_vls_strcat( vp, buf );
+			VSUB2( p2, pipe->ps_start, pipe->ps_bendcenter );
+			radius = MAGNITUDE( p2 );
+			VSCALE( p1, pipe->ps_bendcenter, mm2local );
+			sprintf( buf, "\tBend center at (%g %g %g), bend radius = %g\n",
+				V3ARGS( p1 ), radius*mm2local );
+			rt_vls_strcat( vp, buf );
+			if( pipe->ps_id > 0.0 )
+				sprintf( buf, "\tod=%g, id=%g\n",
+					pipe->ps_od*mm2local,
+					pipe->ps_id*mm2local );
+			else
+				sprintf( buf, "\tod=%g\n", pipe->ps_od*mm2local );
+			rt_vls_strcat( vp, buf );
+			break;
+		case WDB_PIPESEG_TYPE_END:
+			sprintf( buf, "End Pipe Segment\n" );
+			rt_vls_strcat( vp, buf );
+			break;
+	}
+
+}
+
+void
 bend_pipe_shot( stp, rp, ap, seghead, pipe, hit_headp, hit_count, seg_no )
 struct soltab           *stp;
 register struct xray    *rp;
