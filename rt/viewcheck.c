@@ -41,7 +41,6 @@ static char RCScheckview[] = "@(#)$Header$ (BRL)";
 
 extern int	rpt_overlap;		/* report overlapping region names */
 int		use_air = 0;		/* Handling of air in librt */
-int		using_mlib = 0;		/* Material routines NOT used */
 
 /* Viewing module specific "set" variables */
 struct structparse view_parse[] = {
@@ -246,4 +245,5 @@ void view_pixel() {}
 
 void view_eol() {}
 
+void view_setup() {}
 void view_cleanup() {}

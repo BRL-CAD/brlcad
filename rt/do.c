@@ -52,7 +52,6 @@ extern FILE	*outfp;			/* optional pixel output file */
 extern double	azimuth, elevation;
 extern mat_t	view2model;
 extern mat_t	model2view;
-extern int	using_mlib;		/* !0 = material routines used */
 /***** end of sharing with viewing model *****/
 
 extern void	grid_setup();
@@ -376,19 +375,11 @@ cm_clean( argc, argv )
 int	argc;
 char	**argv;
 {
-	register struct region	*regp;
+	/* Allow lighting model to clean up (e.g. lights, materials, etc) */
+	view_cleanup( ap.a_rt_i );
 
-	/* The linkage here needs to be much better for things
-	 * like rtrad, etc. XXXX
-	 */
-	for( regp=ap.a_rt_i->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )  {
-		mlib_free( regp );
-	}
-	if( env_region.reg_mfuncs )  {
-		mlib_free( &env_region );
-	}
 	rt_clean( ap.a_rt_i );
-	view_cleanup();
+
 	if(rdebug&RDEBUG_RTMEM_END)
 		rt_prmem( "After rt_clean" );
 	return(0);
@@ -509,47 +500,12 @@ void
 do_prep( rtip )
 struct rt_i	*rtip;
 {
-	register struct region *regp;
 	char	outbuf[132];
 
+	RT_CHECK_RTI(rtip);
 	if( rtip->needprep )  {
-
-		/*
-		 *  Initialize the material library for all regions.
-		 *  As this may result in some regions being dropped,
-		 *  (eg, light solids that become "implicit" -- non drawn),
-		 *  this must be done before allowing the library to prep
-		 *  itself.  This is a slight layering violation;  later it
-		 *  may be clear how to repackage this operation.
-		 */
-		for( regp=rtip->HeadRegion; regp != REGION_NULL; )  {
-			if(using_mlib) switch( mlib_setup( regp ) )  {
-			case -1:
-			default:
-				rt_log("mlib_setup failure on %s\n", regp->reg_name);
-				break;
-			case 0:
-				if(rdebug&RDEBUG_MATERIAL)
-					rt_log("mlib_setup: drop region %s\n", regp->reg_name);
-				{
-					struct region *r = regp->reg_forw;
-					/* zap reg_udata? beware of light structs */
-					rt_del_regtree( rtip, regp );
-					regp = r;
-					continue;
-				}
-			case 1:
-				/* Full success */
-				if( rdebug&RDEBUG_MATERIAL &&
-				    ((struct mfuncs *)(regp->reg_mfuncs))->mf_print )  {
-					((struct mfuncs *)(regp->reg_mfuncs))->
-						mf_print( regp, regp->reg_udata );
-				}
-				/* Perhaps this should be a function? */
-				break;
-			}
-			regp = regp->reg_forw;
-		}
+		/* Allow lighting model to set up (e.g. lights, materials, etc) */
+		view_setup(rtip);
 
 		/* Allow RT library to prepare itself */
 		rt_prep_timer();

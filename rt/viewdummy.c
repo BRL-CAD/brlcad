@@ -70,6 +70,8 @@ register struct application *ap;
 /* end of a frame */
 void	view_end() {}
 
+void	view_setup() {}
+
 /* Associated with "clean" command, before new tree is loaded  */
 void	view_cleanup() {}
 

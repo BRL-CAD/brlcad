@@ -56,7 +56,6 @@ static char RCSview[] = "@(#)$Header$ (BRL)";
 #include "./light.h"
 
 int		use_air = 0;		/* Handling of air in librt */
-int		using_mlib = 1;		/* Material routines used */
 
 char usage[] = "\
 Usage:  rt [options] model.g objects...\n\
@@ -340,13 +339,74 @@ struct application *ap;
 }
 
 /*
- *			V I E W _ C L E A N U P
+ *			V I E W _ S E T U P
  *
- *  Called after rt_clean() in do.c
+ *  Called before rt_prep() in do.c
  */
 void
-view_cleanup()
+view_setup(rtip)
+struct rt_i	*rtip;
 {
+	register struct region *regp;
+
+	RT_CHECK_RTI(rtip);
+	/*
+	 *  Initialize the material library for all regions.
+	 *  As this may result in some regions being dropped,
+	 *  (eg, light solids that become "implicit" -- non drawn),
+	 *  this must be done before allowing the library to prep
+	 *  itself.  This is a slight layering violation;  later it
+	 *  may be clear how to repackage this operation.
+	 */
+	for( regp=rtip->HeadRegion; regp != REGION_NULL; )  {
+		switch( mlib_setup( regp ) )  {
+		case -1:
+		default:
+			rt_log("mlib_setup failure on %s\n", regp->reg_name);
+			break;
+		case 0:
+			if(rdebug&RDEBUG_MATERIAL)
+				rt_log("mlib_setup: drop region %s\n", regp->reg_name);
+			{
+				struct region *r = regp->reg_forw;
+				/* zap reg_udata? beware of light structs */
+				rt_del_regtree( rtip, regp );
+				regp = r;
+				continue;
+			}
+		case 1:
+			/* Full success */
+			if( rdebug&RDEBUG_MATERIAL &&
+			    ((struct mfuncs *)(regp->reg_mfuncs))->mf_print )  {
+				((struct mfuncs *)(regp->reg_mfuncs))->
+					mf_print( regp, regp->reg_udata );
+			}
+			/* Perhaps this should be a function? */
+			break;
+		}
+		regp = regp->reg_forw;
+	}
+}
+
+/*
+ *			V I E W _ C L E A N U P
+ *
+ *  Called before rt_clean() in do.c
+ */
+void
+view_cleanup(rtip)
+struct rt_i	*rtip;
+{
+	register struct region	*regp;
+
+	RT_CHECK_RTI(rtip);
+	for( regp=rtip->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )  {
+		mlib_free( regp );
+	}
+	if( env_region.reg_mfuncs )  {
+		mlib_free( &env_region );
+	}
+
 	light_cleanup();
 }
 

@@ -163,8 +163,9 @@ register struct application *ap;
 	}
 }
 
+void	view_setup() {}
 /* end of a frame, called after rt_clean() */
-void view_cleanup() {}
+void	view_cleanup() {}
 
 /* end of each frame */
 int

@@ -276,10 +276,8 @@ view_pixel()
 	return;
 }
 
-void view_cleanup()
-{
-
-}
+void view_setup() {}
+void view_cleanup() {}
 
 
 /*

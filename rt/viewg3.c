@@ -490,4 +490,5 @@ view_end()
 	fflush(outfp);
 }
 
+void view_setup() {}
 void view_cleanup() {}

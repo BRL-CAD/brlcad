@@ -65,6 +65,7 @@ int	raymiss() { return(0); }
 
 void	view_pixel() {}
 
+void	view_setup() {}
 void	view_cleanup() {}
 
 /* "paint" types are negative ==> interpret as "special" air codes */
