@@ -11,16 +11,20 @@
  *	Michael John Muuss
  *  
  *  Source -
- *	SECAD/VLD Computing Consortium, Bldg 394
- *	The U. S. Army Ballistic Research Laboratory
- *	Aberdeen Proving Ground, Maryland  21005-5066
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
  *  
+ *  Distribution Notice -
+ *	Re-distribution of this software is restricted, as described in
+ *	your "Statement of Terms and Conditions for the Release of
+ *	The BRL-CAD Package" agreement.
+ *
  *  Copyright Notice -
- *	This software is Copyright (C) 1988 by the United States Army.
- *	All rights reserved.
+ *	This software is Copyright (C) 1994 by the United States Army
+ *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "conf.h"
@@ -291,27 +295,6 @@ int			do_old_matter;
 
 	return( 0 );			/* OK */
 }
-
-#ifdef never
-db_suckin()
-{
-	/*
-	 * Obtain in-core copy of database, rather than doing lots of
-	 * random-access reads.  Here, "addr" is really "nrecords".
-	 */
-	if( (rtip->rti_db = (union record *)rt_malloc(
-	    addr*sizeof(union record), "in-core database"))
-	    == (union record *)0 )
-	    	rt_bomb("in-core database malloc failure");
-	rewind(dbip->dbi_fp);
-	if( fread( (char *)rtip->rti_db, sizeof(union record), addr,
-	    dbip->dbi_fp) != addr )  {
-	    	rt_log("rt_dirbuild:  problem reading db on 2nd pass\n");
-	    	goto bad;
-	}
-}
-#endif
-
 
 /*
  *			D B _ I D E N T
