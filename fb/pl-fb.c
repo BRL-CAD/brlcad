@@ -44,7 +44,11 @@ Acknowledgment:
 	Based rather heavily on Doug Gwyn's Versatec PLOT rasterizer VPL.C
 	which was
 	Based very loosely on Mike Muuss's Versatec TIGpack interpreter.
-*/
+ *
+ *  Note:
+ *	UNIX-Plot files are defined to be machine-independent, with
+ *	"little-endian" (eg, VAX) byte-ordering.
+ */
 
 #define STATIC	/* nothing, for debugging */
 
@@ -145,16 +149,6 @@ STATIC struct
 	short		right;
 	short		top;
 	}	space;	 		/* plot scale data */
-
-STATIC struct
-	{
-	short		left;		/* 3d window edges */
-	short		bottom;
-	short		front;
-	short		right;
-	short		top;
-	short		back;
-	}	space3;
 
 struct	relvect {
 	char	x,y;			/* x, y values (255,255 is end) */
@@ -497,28 +491,40 @@ DoFile( )	/* returns vpl status code */
 				continue;
 
 			case 'S':
+				{
+					unsigned char buf[6*2];
 				if( debug )
 					fprintf( stderr,"space3\n");
-				if( fread( (char *)&space3,
-					   (int)sizeof space3, 1, pfin)
+				if( fread( (char *)buf,
+					   (int)sizeof buf, 1, pfin)
 					   != 1
 				  )
 				  	return Foo( -11 );
-				/* turn 3 space into 2 space */
-				space.right = space3.right;
-				space.left  = space3.left;
-				space.top   = space3.top;
-				space.bottom= space3.bottom;
+				/* Only need X and Y, ignore Z */
+				space.left  = (buf[1]<<8) | buf[0]; /* x1 */
+				space.bottom= (buf[3]<<8) | buf[2]; /* y1 */
+				/* z1 */
+				space.right = (buf[7]<<8) | buf[6]; /* x2 */
+				space.top   = (buf[9]<<8) | buf[8]; /* y2 */
+				/* z2 */
 				goto spacend;
+				}
 				
 			case 's':	/* space */
 				if( debug )
 					fprintf( stderr,"space\n");
-				if ( fread( (char *)&space,
-					    (int)sizeof space, 1, pfin
+				{
+					unsigned char buf[4*2];
+				if ( fread( (char *)buf,
+					    (int)sizeof buf, 1, pfin
 					  ) != 1
 				   )
 					return Foo( -11 );
+				space.left  = (buf[1]<<8) | buf[0]; /* x1 */
+				space.bottom= (buf[3]<<8) | buf[2]; /* y1 */
+				space.right = (buf[5]<<8) | buf[4]; /* x2 */
+				space.top   = (buf[7]<<8) | buf[6]; /* y2 */
+				}
 
 spacend:
 				delta = (long)space.right
@@ -638,7 +644,7 @@ register coords *ppos;
 STATIC bool Get3Coords( coop )
 register coords	*coop;
 {
-	short	trash;
+	char	trash[2];
 	register bool	ret;
 
 	ret = GetCoords( coop );
@@ -650,14 +656,15 @@ STATIC bool
 GetCoords( coop )
 	register coords	*coop;		/* -> input coordinates */
 	{
+	unsigned char buf[4];
 	register long x,y;
 
 	/* read coordinates */
-	if ( fread( (char *)coop, (int)sizeof (coords), 1, pfin ) != 1 )
+	if ( fread( (char *)buf, (int)sizeof (buf), 1, pfin ) != 1 )
 		return false;
 
-	x = coop->x;	/* get them into longs */
-	y = coop->y;
+	x = (buf[1]<<8) | buf[0];
+	y = (buf[3]<<8) | buf[2];
 
 	/* limit left, bottom */
 	if( debug )  fprintf(stderr,"Coord: (%d,%d) ", coop->x, coop->y);
@@ -912,11 +919,8 @@ Raster( vp, np )
 		register RGBpixel *pp;
 
 		/* set the appropriate pixel in the buffer */
-		pp = (RGBpixel *)&buffer[(dy*Npixels) + vp->pixel.x][RED];
+		pp = (RGBpixel *)buffer[(dy*Npixels) + vp->pixel.x];
 		COPYRGB( *pp, vp->col );
-/**		*((long *)buffer[dy][vp->pixel.x]) = *((long *)vp->col); **/
-/**		*((long *)(buffer+(((dy*Npixels)+vp->pixel.x)*sizeof(RGBpixel)))) =
-			*((long *)vp->col);  **/
 
 		if ( vp->major-- == 0 ) /* done! */
 			{
