@@ -333,7 +333,7 @@ CONST struct rt_tol	*tol;
 		NMG_CK_VERTEX_G(vg);
 
 		dist = DIST_PT_PLANE(vg->coord, fg2->N);
-		if( dist > tol->dist )  {
+		if( dist > tol->dist || dist < (-tol->dist) )  {
 			if (rt_g.NMG_debug & DEBUG_MESH)  {
 				rt_log("nmg_ck_fu_verts(x%x, x%x) v x%x off face by %e\n",
 					fu1, f2,
@@ -342,6 +342,8 @@ CONST struct rt_tol	*tol;
 				PLPRINT(" fg2", fg2->N);
 			}
 			count++;
+			if( dist < 0.0 )
+				dist = (-dist);
 			if( dist > worst )  worst = dist;
 		}
 	}
