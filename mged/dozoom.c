@@ -46,6 +46,34 @@ struct solid	HeadSolid;	/* Head of solid table */
 int		ndrawn;
 
 /*
+ *			P E R S P _ M A T
+ *
+ *  Compute a perspective matrix.
+ *  Reference: SGI Graphics Reference Appendix C
+ */
+static void
+persp_mat( m, fovy, aspect, near, far, backoff )
+mat_t	m;
+fastf_t	fovy, aspect, near, far, backoff;
+{
+	mat_t	m2, tran;
+
+	fovy *= 3.1415926535/180.0;
+
+	mat_idn( m2 );
+	m2[5] = cos(fovy/2.0) / sin(fovy/2.0);
+	m2[0] = m2[5]/aspect;
+	m2[10] = -(far+near) / (far-near);	/* negate Z! */
+	m2[11] = -2*far*near / (far-near);
+	m2[14] = -1;
+	m2[15] = 0;
+
+	mat_idn( tran );
+	tran[11] = -backoff;
+	mat_mul( m, m2, tran );
+}
+
+/*
  *			D O Z O O M
  *
  *	This routine reviews all of the solids in the solids table,
@@ -59,6 +87,9 @@ dozoom()
 	register struct solid *sp;
 	FAST fastf_t ratio;
 	fastf_t		inv_viewsize;
+	mat_t		pmat;
+	mat_t		new;
+	matp_t		mat;
 
 	ndrawn = 0;
 	inv_viewsize = 1 / VIEWSIZE;
@@ -66,7 +97,16 @@ dozoom()
 	/*
 	 * Draw all solids not involved in an edit.
 	 */
-	dmp->dmr_newrot( model2view );
+	if( mged_variables.perspective <= 0 )  {
+		mat = model2view;
+	} else {
+		persp_mat( pmat, mged_variables.perspective,
+			1.0, 0.01, 1.0e10, 1.0 );
+		mat_mul( new, pmat, model2view );
+		mat = new;
+	}
+	dmp->dmr_newrot( mat );
+
 	FOR_ALL_SOLIDS( sp )  {
 		/* If part of object rotation, will be drawn below */
 		if( sp->s_iflag == UP )
@@ -82,7 +122,7 @@ dozoom()
 		 if( ratio >= dmp->dmr_bound || ratio < 0.001 )
 		 	continue;
 
-		if( dmp->dmr_object( sp, model2view, ratio, sp==illump ) )  {
+		if( dmp->dmr_object( sp, mat, ratio, sp==illump ) )  {
 			sp->s_flag = UP;
 			ndrawn++;
 		}
@@ -95,14 +135,21 @@ dozoom()
 	if( state == ST_VIEW )
 		return;
 
-	dmp->dmr_newrot( model2objview );
+	if( mged_variables.perspective <= 0 )  {
+		mat = model2objview;
+	} else {
+		mat_mul( new, pmat, model2objview );
+		mat = new;
+	}
+	dmp->dmr_newrot( mat );
+	inv_viewsize /= modelchanges[15];
 
 	FOR_ALL_SOLIDS( sp )  {
 		/* Ignore all objects not being rotated */
 		if( sp->s_iflag != UP )
 			continue;
 
-		ratio = (sp->s_size / modelchanges[15]) * inv_viewsize;
+		ratio = sp->s_size * inv_viewsize;
 		sp->s_flag = DOWN;		/* Not drawn yet */
 
 		/*
@@ -112,7 +159,7 @@ dozoom()
 		 if( ratio >= dmp->dmr_bound || ratio < 0.001 )
 		 	continue;
 
-		if( dmp->dmr_object( sp, model2objview, ratio, 1 ) )  {
+		if( dmp->dmr_object( sp, mat, ratio, 1 ) )  {
 			sp->s_flag = UP;
 			ndrawn++;
 		}
