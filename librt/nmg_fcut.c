@@ -470,20 +470,21 @@ struct nmg_vu_stuff {
 	int			loop_index;
 	struct nmg_loop_stuff	*lsp;
 	fastf_t			vu_angle;
+	fastf_t			min_vu_dot;
+	int			seq;		/* seq # after lsp->min_vu */
 };
 struct nmg_loop_stuff {
 	struct loopuse		*lu;
-	fastf_t			max_angle;
+	fastf_t			min_dot;
+	struct vertexuse	*min_vu;
+	int			n_vu_in_loop;	/* # ray vu's in this loop */
 };
 
 /*
  *			N M G _ F A C E _ V U _ C O M P A R E
  *
- *  Support routine for nmg_face_vu_sort(), via qsort().
+ *  Support routine for nmg_fact_coincident_vu_sort(), via qsort().
  *
- *  If vu's are from same loop, sort is from larger to smaller vu_angle.
- *  If vu's are from different loops,
- *  sort is from small to large loop max_angle.
  */
 static int
 nmg_face_vu_compare( a, b )
@@ -492,25 +493,105 @@ CONST genptr_t	b;
 {
 	register CONST struct nmg_vu_stuff *va = (CONST struct nmg_vu_stuff *)a;
 	register CONST struct nmg_vu_stuff *vb = (CONST struct nmg_vu_stuff *)b;
+	register double	diff;
 
 	if( va->loop_index == vb->loop_index )  {
-		/* Sort from larger to smaller vu_angle */
-		if( va->vu_angle > vb->vu_angle )  return -1;
+		/* Within a loop, sort by vu sequence number */
+		if( va->seq < vb->seq )  return -1;
+		if( va->seq == vb->seq )  return 0;
 		return 1;
 	}
-	/* Sort from small to large max_angle */
-	if( va->lsp->max_angle > vb->lsp->max_angle )
+	/* Between two loops each with a single vertex, use min angle */
+	if( va->lsp->n_vu_in_loop <= 1 && vb->lsp->n_vu_in_loop <= 1 )  {
+		diff = va->vu_angle - vb->vu_angle;
+		if( diff < 0 )  return -1;
+		if( diff == 0 )  {
+			/* Gak, this really means trouble! */
+			rt_log("nmg_face_vu_compare(): two loops (single vertex) have same vu_angle%g?\n",
+				va->vu_angle);
+			return 0;
+		}
 		return 1;
-	if( va->lsp->max_angle == vb->lsp->max_angle )
-		return 0;
-	return -1;
+	}
+
+	/* Between loops, sort by minimum dot product of the loops */
+	/* XXX This is almost certainly wrong */
+	diff = va->lsp->min_dot - vb->lsp->min_dot;
+	if( NEAR_ZERO( diff, RT_DOT_TOL) )  {
+		/* Dot product is the same, edges are parallel.
+		 * Take min angle first.
+		 */
+		diff = va->vu_angle - vb->vu_angle;
+		if( diff < 0 )  return -1;
+		if( diff == 0 )  {
+			/* Gak, this really means trouble! */
+			rt_log("nmg_face_vu_compare(): two loops have same min_dot %g, vu_angle%g?\n",
+				va->lsp->min_dot, va->vu_angle);
+			return 0;
+		}
+		return 1;
+	}
+	if( diff < 0 )  return -1;
+	return 1;
 }
 
 /*
- *			N M G _ F A C E _ V U _ S O R T
+ *			N M G _ F A C E _ V U _ D O T
+ */
+static void
+nmg_face_vu_dot( vsp, lu, rs )
+struct nmg_vu_stuff		*vsp;
+struct loopuse			*lu;
+CONST struct nmg_ray_state	*rs;
+{
+	struct edgeuse	*this_eu;
+	struct edgeuse	*othereu;
+	vect_t		vec;
+	fastf_t		dot;
+	struct vertexuse	*vu;
+
+	vu = vsp->vu;
+	NMG_CK_VERTEXUSE(vu);
+	NMG_CK_LOOPUSE(lu);
+	this_eu = nmg_eu_with_vu_in_lu( lu, vu );
+
+	/* First, consider the edge inbound into this vertex */
+	othereu = RT_LIST_PLAST_CIRC( edgeuse, this_eu );
+	if( vu->v_p != othereu->vu_p->v_p )  {
+		/* Vector from othereu to this_eu */
+		VSUB2( vec, vu->v_p->vg_p->coord,
+			othereu->vu_p->v_p->vg_p->coord );
+		VUNITIZE(vec);
+		vsp->min_vu_dot = VDOT( vec, rs->dir );
+	} else {
+		vsp->min_vu_dot = 99;		/* larger than +1 */
+	}
+
+	/* Second, consider the edge outbound from this vertex (forw) */
+	othereu = RT_LIST_PNEXT_CIRC( edgeuse, this_eu );
+	if( vu->v_p != othereu->vu_p->v_p )  {
+		/* Vector from this_eu to othereu */
+		VSUB2( vec, othereu->vu_p->v_p->vg_p->coord,
+			vu->v_p->vg_p->coord );
+		VUNITIZE(vec);
+		dot = VDOT( vec, rs->dir );
+#if 0
+rt_log("dot vu=x%x dots %g %g\n", vu, vsp->min_vu_dot, dot );
+#endif
+		if( dot < vsp->min_vu_dot )  {
+			vsp->min_vu_dot = dot;
+		}
+	}
+}
+
+/*
+ *			N M G _ F A C E _ C O I N C I D E N T _ V U _ S O R T
+ *
+ *  Given co-incident vertexuses (same distance along the ray),
+ *  sort them into the "proper" order for driving the state machine.
  */
 int
-nmg_face_vu_sort( rs, start, end )
+nmg_fact_coincident_vu_sort( rs, start, end )
 struct nmg_ray_state	*rs;
 int			start;		/* first index */
 int			end;		/* last index + 1 */
@@ -526,7 +607,7 @@ int			end;		/* last index + 1 */
 	int		l;
 
 	if(rt_g.NMG_debug&DEBUG_COMBINE)
-		rt_log("nmg_face_vu_sort(, %d, %d)\n", start, end);
+		rt_log("nmg_fact_coincident_vu_sort(, %d, %d)\n", start, end);
 	num = end - start;
 	vs = (struct nmg_vu_stuff *)rt_malloc( sizeof(struct nmg_vu_stuff)*num,
 		"nmg_vu_stuff" );
@@ -557,9 +638,17 @@ int			end;		/* last index + 1 */
 			continue;
 		}
 		vs[nvu].vu = rs->vu[i];
+		vs[nvu].seq = -1;		/* Not assigned yet */
+
 		/* x_dir is -dir, y_dir is -left */
 		vs[nvu].vu_angle = nmg_vu_angle_measure( rs->vu[i],
 			rs->ang_x_dir, rs->ang_y_dir, ass ) * rt_radtodeg;
+
+		/* Check entering and departing edgeuse angle w.r.t. ray */
+		/* This is already done once in nmg_assess_vu();  reuse? */
+		/* Computes vs[nvu].min_vu_dot */
+		nmg_face_vu_dot( &vs[nvu], lu, rs );
+
 		/* Search for loopuse table entry */
 		for( l = 0; l < nloop; l++ )  {
 			if( ls[l].lu == lu )  goto got_loop;
@@ -567,24 +656,64 @@ int			end;		/* last index + 1 */
 		/* didn't find loopuse in table, add to table */
 		l = nloop++;
 		ls[l].lu = lu;
-		ls[l].max_angle = 0;
+		ls[l].n_vu_in_loop = 0;
+		ls[l].min_dot = 99;		/* > +1 */
 got_loop:
+		ls[l].n_vu_in_loop++;
 		vs[nvu].loop_index = l;
 		vs[nvu].lsp = &ls[l];
-		if( vs[nvu].vu_angle > ls[l].max_angle )
-			ls[l].max_angle = vs[nvu].vu_angle;
+		if( vs[nvu].min_vu_dot < ls[l].min_dot )  {
+			ls[l].min_dot = vs[nvu].min_vu_dot;
+			ls[l].min_vu = vs[nvu].vu;
+		}
 		nvu++;
 	}
-#if 0
-	rt_log("Loop table (before sort):\n");
+
+	/*
+	 *  For each loop which has more than one vertexuse present on the
+	 *  ray, start at the vu which has the smallest angle off the ray,
+	 *  and walk the edges of the loop, marking off the vu sequence for
+	 *  those vu's on the ray (those vu's found in vs[].vu).
+	 */
 	for( l=0; l < nloop; l++ )  {
-		rt_log("  index=%d, lu=x%x, max_angle=%g\n",
-			l, ls[l].lu, ls[l].max_angle );
+		register struct edgeuse	*eu;
+		struct edgeuse	*first_eu;
+		int		seq = 0;
+
+		if( ls[l].n_vu_in_loop <= 1 )  continue;
+
+		first_eu = nmg_eu_with_vu_in_lu( ls[l].lu, ls[l].min_vu );
+		for( eu = RT_LIST_PNEXT_CIRC(edgeuse,first_eu);
+		     eu != first_eu;
+		     eu = RT_LIST_PNEXT_CIRC(edgeuse,eu)
+		)  {
+			register struct vertexuse *vu = eu->vu_p;
+			NMG_CK_VERTEXUSE(vu);
+			for( i=0; i < nvu; i++ )  {
+				if( vs[i].vu != vu )  continue;
+				vs[i].seq = seq++;
+				break;
+			}
+		}
 	}
-	rt_log("Vertexuse table:\n");
-	for( i=0; i < nvu; i++ )  {
-		rt_log("  vu=x%x, loop_index=%d, vu_angle=%g\n",
-			vs[i].vu, vs[i].loop_index, vs[i].vu_angle );
+
+#if 0
+/**
+	if(rt_g.NMG_debug&DEBUG_COMBINE)
+**/
+	{
+		rt_log("Loop table (before sort):\n");
+		for( l=0; l < nloop; l++ )  {
+			rt_log("  index=%d, lu=x%x, min_dot=%g, #vu=%d\n",
+				l, ls[l].lu, ls[l].min_dot,
+				ls[l].n_vu_in_loop );
+		}
+		rt_log("Vertexuse table:\n");
+		for( i=0; i < nvu; i++ )  {
+			rt_log("  vu=x%x, loop_index=%d, vu_angle=%g, min_vu_dot=%g, seq=%d\n",
+				vs[i].vu, vs[i].loop_index,
+				vs[i].vu_angle, vs[i].min_vu_dot, vs[i].seq );
+		}
 	}
 #endif
 
@@ -595,11 +724,13 @@ got_loop:
 #else
 	qsort( (genptr_t)vs, nvu, sizeof(*vs), nmg_face_vu_compare );
 #endif
-	if(rt_g.NMG_debug&DEBUG_COMBINE)  {
+	if(rt_g.NMG_debug&DEBUG_COMBINE)
+	{
 		rt_log("Vertexuse table (after sort):\n");
 		for( i=0; i < nvu; i++ )  {
-			rt_log("  vu=x%x, loop_index=%d, vu_angle=%g\n",
-				vs[i].vu, vs[i].loop_index, vs[i].vu_angle );
+			rt_log("  vu=x%x, loop_index=%d, vu_angle=%g, min_vu_dot=%g, seq=%d\n",
+				vs[i].vu, vs[i].loop_index,
+				vs[i].vu_angle, vs[i].min_vu_dot, vs[i].seq );
 		}
 	}
 
@@ -733,7 +864,7 @@ VPRINT("left", rs.left);
 				if( vu[k]->v_p != v )  rt_bomb("nmg_face_combine: vu block with differing vertices\n");
 			}
 			/* All vu's point to the same vertex, sort them */
-			m = nmg_face_vu_sort( &rs, i, j );
+			m = nmg_fact_coincident_vu_sort( &rs, i, j );
 			/* Process vu list, up to cutoff index 'm' */
 			for( k = i; k < m; k++ )  {
 				nmg_face_state_transition( vu[k], &rs, k, 1 );
