@@ -3100,16 +3100,31 @@ rt_log("force next eu to ray\n");
 			is_crack = nmg_loop_is_a_crack(lu);
 			if(rt_g.NMG_debug&DEBUG_FCUT)
 				rt_log("Calling nmg_cut_loop(prev_vu=x%x, vu=x%x) is_crack=%d, old_eu=x%x\n", prev_vu, vu, is_crack, old_eu);
-			prev_lu = nmg_cut_loop( prev_vu, vu );
+			if( prev_vu->v_p == vu->v_p )  {
+				/* The loop touches itself already */
+				lu = nmg_split_lu_at_vu( prev_lu, prev_vu );
+			} else {
+				lu = nmg_cut_loop( prev_vu, vu );
 
-			/* New edge has been created between 2 verts, fuse */
-#if 0
-			first_new_eu = RT_LIST_PREV( edgeuse, &prev_lu->down_hd );
-			NMG_CK_EDGEUSE(first_new_eu);
-/* XXX Need to pick proper value for first_new_eu! */
-			nmg_edge_geom_isect_line( first_new_eu->e_p, rs );
-			if( old_eu )  nmg_radial_join_eu( old_eu, first_new_eu, rs->tol );
-#endif
+				/* New edge has been created between 2 verts, fuse */
+				/* first_new_eu starts at vu, ends at prev_vu */
+				/* second_new_eu starts at prev_vu, ends at vu */
+				first_new_eu = RT_LIST_PPREV_CIRC( edgeuse, &prev_vu->up.eu_p->l );
+				second_new_eu = RT_LIST_PPREV_CIRC( edgeuse, &vu->up.eu_p->l );
+				NMG_CK_EDGEUSE(first_new_eu);
+				NMG_CK_EDGEUSE(second_new_eu);
+				if( first_new_eu->vu_p->v_p != vu->v_p || first_new_eu->eumate_p->vu_p->v_p != prev_vu->v_p )  {
+					nmg_pr_vu_briefly(prev_vu, 0);
+					nmg_pr_vu_briefly(vu, 0);
+					nmg_pr_eu_endpoints(first_new_eu, 0);
+					nmg_pr_eu_endpoints(second_new_eu, 0);
+					if(old_eu)	nmg_pr_eu_endpoints(old_eu, 0);
+					rt_bomb("nmg_face_state_transition() cut loop bafflement\n");
+				}
+				/* Fuse new edge to intersect line, old edge */
+				nmg_edge_geom_isect_line( first_new_eu->e_p, rs );
+				if( old_eu )  nmg_radial_join_eu( old_eu, first_new_eu, rs->tol );
+			}
 
 			nmg_loop_g( lu->l_p, rs->tol );
 			nmg_loop_g( prev_lu->l_p, rs->tol );
