@@ -30,7 +30,6 @@
  *	#include <stdio.h>
  *	#include <math.h>
  *	#include "machine.h"	/_* For fastf_t definition on this machine *_/
- *	#include "externs.h"	/_* OPTIONAL, for defining syscalls *_/
  *	#include "bu.h"
  *	#include "vmath.h"	/_* For vect_t definition *_/
  *	#include "bn.h"
