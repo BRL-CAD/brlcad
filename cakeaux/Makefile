@@ -18,7 +18,7 @@ base:		base.o pattern_s.o
 		cc -o base base.o pattern_s.o
 
 cakeinclude:	cakeinclude.o ../libsysv/getopt.c
-		cc -o cakeinclude cakeinclude.o ../libsysv/getopt.c
+		cc -D`machinetype.sh -s` -o cakeinclude cakeinclude.o ../libsysv/getopt.c
 
 ccincl:		ccincl.o ccincl_s.o
 		cc -o ccincl ccincl.o ccincl_s.o
