@@ -58,6 +58,14 @@ struct sph_specific {
 	mat_t	sph_SoR;	/* Rotate and scale for UV mapping */
 };
 
+/* Should be in a header file to share betwee g_ell.c and g_sph.c */
+struct ell_internal  {
+	point_t	v;
+	vect_t	a;
+	vect_t	b;
+	vect_t	c;
+};
+
 /*
  *  			S P H _ P R E P
  *  
@@ -82,32 +90,28 @@ union record		*rec;
 {
 	register struct sph_specific *sph;
 	LOCAL fastf_t	magsq_a, magsq_b, magsq_c;
-	LOCAL vect_t	A, B, C;
 	LOCAL vect_t	Au, Bu, Cu;	/* A,B,C with unit length */
 	LOCAL fastf_t	f;
-	fastf_t		vec[3*4];
+	struct ell_internal ei;
+	int		i;
 
-	rt_fastf_float( vec, rec->s.s_values, 4 );
-
-#define ELL_V	&vec[0*ELEMENTS_PER_VECT]
-#define ELL_A	&vec[1*ELEMENTS_PER_VECT]
-#define ELL_B	&vec[2*ELEMENTS_PER_VECT]
-#define ELL_C	&vec[3*ELEMENTS_PER_VECT]
-
-	/*
-	 * Apply rotation only to A,B,C
-	 */
-	MAT4X3VEC( A, stp->st_pathmat, ELL_A );
-	MAT4X3VEC( B, stp->st_pathmat, ELL_B );
-	MAT4X3VEC( C, stp->st_pathmat, ELL_C );
+	if( rec == (union record *)0 )  {
+		rec = db_getmrec( rtip->rti_dbip, stp->st_dp );
+		i = ell_import( &ei, rec, stp->st_pathmat );
+		rt_free( (char *)rec, "ell record" );
+	} else {
+		i = ell_import( &ei, rec, stp->st_pathmat );
+	}
+	if( i < 0 )  {
+		rt_log("sph_setup(%s): db import failure\n", stp->st_name);
+		return(-1);		/* BAD */
+	}
 
 	/* Validate that |A| > 0, |B| > 0, |C| > 0 */
-	magsq_a = MAGSQ( A );
-	magsq_b = MAGSQ( B );
-	magsq_c = MAGSQ( C );
-	if( NEAR_ZERO(magsq_a, 0.005) ||
-	     NEAR_ZERO(magsq_b, 0.005) ||
-	     NEAR_ZERO(magsq_c, 0.005) ) {
+	magsq_a = MAGSQ( ei.a );
+	magsq_b = MAGSQ( ei.b );
+	magsq_c = MAGSQ( ei.c );
+	if( magsq_a < 0.005 || magsq_b < 0.005 || magsq_c < 0.005 ) {
 		rt_log("sph(%s):  zero length A, B, or C vector\n",
 			stp->st_name );
 		return(1);		/* BAD */
@@ -116,18 +120,21 @@ union record		*rec;
 	/* Validate that |A|, |B|, and |C| are nearly equal */
 	if( fabs(magsq_a - magsq_b) > 0.0001
 	    || fabs(magsq_a - magsq_c) > 0.0001 ) {
-		/*rt_log("sph(%s):  non-equal length A, B, C vectors\n",
-			stp->st_name );*/
+#if 0	    	
+	    	/* Ordinarily, don't say anything here, will handle as ELL */
+		rt_log("sph(%s):  non-equal length A, B, C vectors\n",
+			stp->st_name );
+#endif
 		return(1);		/* ELL, not SPH */
 	}
 
 	/* Create unit length versions of A,B,C */
 	f = 1.0/sqrt(magsq_a);
-	VSCALE( Au, A, f );
+	VSCALE( Au, ei.a, f );
 	f = 1.0/sqrt(magsq_b);
-	VSCALE( Bu, B, f );
+	VSCALE( Bu, ei.b, f );
 	f = 1.0/sqrt(magsq_c);
-	VSCALE( Cu, C, f );
+	VSCALE( Cu, ei.c, f );
 
 	/* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
 	f = VDOT( Au, Bu );
@@ -155,8 +162,7 @@ union record		*rec;
 	GETSTRUCT( sph, sph_specific );
 	stp->st_specific = (int *)sph;
 
-	/* Apply full 4x4mat to V */
-	MAT4X3PNT( sph->sph_V, stp->st_pathmat, ELL_V );
+	VMOVE( sph->sph_V, ei.v );
 
 	sph->sph_radsq = magsq_a;
 	sph->sph_rad = sqrt(sph->sph_radsq);
@@ -169,9 +175,9 @@ union record		*rec;
 	 * See ell.c for details.
 	 */
 	mat_idn( sph->sph_SoR );
-	VSCALE( &sph->sph_SoR[0], A, 1.0/magsq_a );
-	VSCALE( &sph->sph_SoR[4], B, 1.0/magsq_b );
-	VSCALE( &sph->sph_SoR[8], C, 1.0/magsq_c );
+	VSCALE( &sph->sph_SoR[0], ei.a, 1.0/magsq_a );
+	VSCALE( &sph->sph_SoR[4], ei.b, 1.0/magsq_b );
+	VSCALE( &sph->sph_SoR[8], ei.c, 1.0/magsq_c );
 
 	/* Compute bounding sphere */
 	VMOVE( stp->st_center, sph->sph_V );
@@ -431,7 +437,14 @@ sph_class()
 	return(0);
 }
 
+/* This routine is not used;  ell_plot() is used instead */
 void
 sph_plot()
+{
+}
+
+/* This routine is not used;  ell_tess() is used instead */
+int
+sph_tess()
 {
 }
