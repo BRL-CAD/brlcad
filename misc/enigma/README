@@ -1,11 +1,13 @@
-enigma is a one-rotor machine designed along the lines of Enigma but
-considerably trivialized.  It is a public domain replacement for the
-UNIX "crypt" command.
+enigma is a one-rotor machine designed along the lines of the original
+Enigma mechanical cipher system, only considerably trivialized.  It is
+a public domain drop-in replacement for the UNIX "crypt" command.
 
 This version has been upgraded to function properly on 64-bit
-machines, as well as providing backwards compatibility with cyprt()
-rather than an MD5 version.  Also, this version is modified to detect
-illegal salt characters.
+machines.  It has been upgrade to use an makekey and to test for
+backwards-compatible operation of crypt(), rather than the MD5
+version.  Also, this version is modified to detect illegal
+salt/password characters.
 
 Run ./build.sh to process the autotools, configure the build, and
-compile engima all in one swoop.  Result should be an enigma binary.
+compile engima all in one swoop.  If all goes well, there will be an
+enigma binary waiting for you.  See the manpage for more details.
