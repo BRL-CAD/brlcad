@@ -83,6 +83,13 @@ extern int	cm_accel();
 extern int	cm_next();
 extern int	cm_help();
 
+void		linear_interpolate();
+void		rate_interpolate();
+void		accel_interpolate();
+void		go();
+void		output();
+void		pr_ichan();
+
 struct command_tab cmdtab[] = {
 	"file", "filename chan_num(s)", "load channels from file",
 		cm_file,	3, 999,
@@ -164,9 +171,10 @@ char	**argv;
 				ctp->ct_cmd, ctp->ct_parms,
 				ctp->ct_comment );
 		}
-		return;
+		return 0;
 	}
 	/* XXX What here? */
+	return -1;
 }
 
 /*
@@ -380,6 +388,7 @@ char	**argv;
  *
  *  Print input channel values.
  */
+void
 pr_ichan( ch )
 register int		ch;
 {
@@ -402,6 +411,7 @@ register int		ch;
 /*
  *			O U T P U T
  */
+void
 output()
 {
 	register int		ch;
@@ -530,6 +540,7 @@ char	**argv;
  *
  *  Perform the requested interpolation on each channel
  */
+void
 go()
 {
 	int	ch;
@@ -707,6 +718,7 @@ register fastf_t	*times;
  *  This routine takes advantage of (and depends on) the fact that
  *  the input and output arrays are sorted in increasing time values.
  */
+void
 linear_interpolate( chp, times )
 register struct chan	*chp;
 register fastf_t	*times;
@@ -756,6 +768,7 @@ register fastf_t	*times;
  *  unspecified units per second.
  *  This is really just a hack to allow multiplying the time by a constant.
  */
+void
 rate_interpolate( chp, times )
 register struct chan	*chp;
 register fastf_t	*times;
@@ -781,6 +794,7 @@ register fastf_t	*times;
  *			A C C E L _ I N T E R P O L A T E
  *
  */
+void
 accel_interpolate( chp, times )
 register struct chan	*chp;
 register fastf_t	*times;
@@ -812,7 +826,12 @@ register fastf_t	*times;
  *  Fit an interpolating spline to the data points given.
  *  Time in the independent (x) variable, and the single channel
  *  of data values is the dependent (y) variable.
+ *
+ *  Returns -
+ *	0	bad
+ *	1	OK
  */
+int
 spline( chp, times )
 register struct chan	*chp;
 fastf_t			*times;
