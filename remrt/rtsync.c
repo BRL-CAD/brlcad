@@ -578,12 +578,6 @@ char	*argv[];
 
 	(void)signal( SIGPIPE, SIG_IGN );
 
-#if 0
-	Tcl_CreateFileHandler(
-		Tcl_GetFile((ClientData)STDIN_FILENO, TCL_UNIX_FD),
-		TCL_READABLE|TCL_EXCEPTION, stdin_input,
-		(ClientData)STDIN_FILENO);
-#endif
 	if( fbp && fbp->if_selfd > 0 )  {
 		Tcl_CreateFileHandler(
 			Tcl_GetFile((ClientData)fbp->if_selfd, TCL_UNIX_FD),
@@ -593,117 +587,9 @@ char	*argv[];
 
 	Tcl_DoWhenIdle( dispatcher, (ClientData)0 );
 
-#if 0
-	/* Establish select_list and maxfd, to poll critical fd's */
-	FD_ZERO(&select_list);
-	FD_SET(vrmgr_listen_fd, &select_list);
-	FD_SET(rtsync_listen_fd, &select_list);
-	max_fd = vrmgr_listen_fd;
-	if( rtsync_listen_fd > max_fd )  max_fd = rtsync_listen_fd;
-
-	if( fbp->if_selfd > 0 )  {
-		FD_SET(fbp->if_selfd, &select_list);
-		if( fbp->if_selfd > max_fd )  max_fd = fbp->if_selfd;
-	}
-
-	/*
-	 *  Main loop
-	 */
-	for(;;)  {
-		fd_set infds;
-		struct timeval tv;
-		register int	i;
-
-		infds = select_list;	/* struct copy */
-
-		tv.tv_sec = 3L;
-		tv.tv_usec = 0L;
-		if( (select( max_fd+1, &infds, (fd_set *)0, (fd_set *)0, 
-			     &tv )) == 0 ) {
-			/* printf("select timeout\n"); */
-			if(fbp) fb_poll(fbp);
-			dispatcher( (ClientData)0 );
-			continue;
-		}
-#if 0
-		printf("infds = x%x, select_list=x%x\n", infds.fds_bits[0], select_list.fds_bits[0] );
-#endif
-		/* Handle any events from the framebuffer */
-		if (fbp && fbp->if_selfd > 0 && FD_ISSET(fbp->if_selfd, &infds))
-			fb_poll(fbp);
-
-		/* Accept any new VRMGR connections.  Only one at a time is permitted. */
-		if( vrmgr_listen_fd > 0 && FD_ISSET(vrmgr_listen_fd, &infds))  {
-			if( vrmgr_pc )  {
-				bu_log("New VRMGR connection received with one still active, dropping old one.\n");
-				FD_CLR(vrmgr_pc->pkc_fd, &select_list);
-				pkg_close( vrmgr_pc );
-				vrmgr_pc = 0;
-				vrmgr_ihost = IHOST_NULL;
-			}
-			vrmgr_pc = pkg_getclient( vrmgr_listen_fd, vrmgr_pkgswitch, bu_log, 0 );
-			vrmgr_ihost = host_lookup_of_fd(vrmgr_pc->pkc_fd);
-			if( vrmgr_ihost == IHOST_NULL )  {
-				bu_log("Unable to get hostname of VRMGR, abandoning it\n");
-				FD_CLR(vrmgr_pc->pkc_fd, &select_list);
-				pkg_close( vrmgr_pc );
-				vrmgr_pc = 0;
-			} else {
-				bu_log("%s VRMGR link with %s, fd=%d\n",
-					stamp(),
-					vrmgr_ihost->ht_name, vrmgr_pc->pkc_fd);
-				FD_SET(vrmgr_pc->pkc_fd, &select_list);
-				if( vrmgr_pc->pkc_fd > max_fd )  max_fd = vrmgr_pc->pkc_fd;
-				setup_socket( vrmgr_pc->pkc_fd );
-			}
-		}
-
-		/* Accept any new RTNODE connections */
-		if( rtsync_listen_fd > 0 && FD_ISSET(rtsync_listen_fd, &infds))  {
-			new_rtnode( pkg_getclient( rtsync_listen_fd, rtsync_pkgswitch, bu_log, 0 ) );
-		}
-
-		/* Process arrivals from VRMGR link */
-		if( vrmgr_pc && FD_ISSET(vrmgr_pc->pkc_fd, &infds) )  {
-			if( pkg_suckin( vrmgr_pc ) <= 0 )  {
-				/* Probably an EOF */
-				FD_CLR(vrmgr_pc->pkc_fd, &select_list);
-				pkg_close( vrmgr_pc );
-				vrmgr_pc = 0;
-				vrmgr_ihost = IHOST_NULL;
-			} else {
-				if( pkg_process( vrmgr_pc ) < 0 )
-					bu_log("VRMGR pkg_process error\n");
-			}
-		}
-
-		/* Process arrivals from existing rtnodes */
-		for( i = MAX_NODES-1; i >= 0; i-- )  {
-			if( rtnodes[i].fd == 0 )  continue;
-			if( pkg_process( rtnodes[i].pkg ) < 0 ) {
-				bu_log("pkg_process error encountered (1)\n");
-			}
-			if( ! FD_ISSET( rtnodes[i].fd, &infds ) )  continue;
-			if( pkg_suckin( rtnodes[i].pkg ) <= 0 )  {
-				/* Probably EOF */
-				drop_rtnode( i );
-				continue;
-			}
-			if( pkg_process( rtnodes[i].pkg ) < 0 ) {
-				bu_log("pkg_process error encountered (2)\n");
-			}
-		}
-
-		/* Dispatch work */
-		dispatcher( (ClientData)0 );
-
-	}
-#else
 	for(;;)  {
 		Tcl_DoOneEvent(0);
-bu_log("Tcl_DoOneEvent() returned\n");
 	}
-#endif
 }
 
 /*
