@@ -241,7 +241,7 @@ int a;
 	register int i;
 	LOCAL vect_t work;
 	LOCAL vect_t P_A;		/* new point - A */
-	LOCAL fastf_t f;
+	FAST fastf_t f;
 
 	/* Verify that this point is not the same as an earlier point */
 	for( i=0; i < arb_npts; i++ )  {
