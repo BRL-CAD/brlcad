@@ -870,6 +870,11 @@ struct edge *e;
 	NMG_CK_VERTEX(eu->eumate_p->vu_p->v_p);
 	v2 = eu->eumate_p->vu_p->v_p;
 
+	if( v1 == v2 )
+		rt_log("WARNING: nmg_esplit() on edge from&to v=x%x\n", v1);
+	if( v && ( v == v1 || v == v2 ) )
+		rt_log("WARNING: nmg_esplit(v=x%x) vertex is already an edge vertex\n", v);
+
 	/* one at a time, we peel out & split an edgeuse pair of this edge.
 	 * when we split an edge that didn't need to be peeled out, we know
 	 * we've split the last edge
