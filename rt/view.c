@@ -594,6 +594,41 @@ struct rt_i	*rtip;
 }
 
 /*
+ *			V I E W _ R E _ S E T U P
+ *
+ *	This routine is used to do a "mlib_setup" on reprepped regions.
+ *	only regions whose bit number is greater than "old_nregions" will be processed.
+ */
+void
+view_re_setup( struct rt_i *rtip, int old_nregions, struct resource *resp )
+{
+	struct region *rp;
+
+	rp = BU_LIST_FIRST( region, &(rtip->HeadRegion) );
+	while( BU_LIST_NOT_HEAD( rp, &(rtip->HeadRegion) ) ) {
+		if( rp->reg_bit >= old_nregions ) {
+			switch( mlib_setup( &mfHead, rp, rtip ) ) {
+			default:
+			case -1:
+				bu_log( "view_re_setup(): mlib_setup failed for region %s\n", rp->reg_name );
+				break;
+			case 0:
+				{
+					struct region *r = BU_LIST_NEXT( region, &rp->l );
+					/* zap reg_udata? beware of light structs */
+					rt_del_regtree( rtip, rp, &rt_uniresource );
+					rp = r;
+					continue;
+				}
+			case 1:
+				break;
+			}
+		}
+		rp = BU_LIST_NEXT( region, &rp->l );
+	}
+}
+
+/*
  *			V I E W _ C L E A N U P
  *
  *  Called before rt_clean() in do.c
