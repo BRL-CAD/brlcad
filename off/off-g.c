@@ -30,6 +30,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "rtlist.h"
 
+static struct bn_tol tol;
+
 /*
  *         R E A D _ F A C E S 
  *
@@ -48,7 +50,6 @@ FILE *fgeom;
 	struct faceuse 	 **outfaceuses;
 	struct nmgregion  *r;
 	struct shell 	  *s;
-	struct rt_tol 	   tol;
 
 		/* Get numbers of vertices and faces, and grab the appropriate amount of memory */
 	if (fscanf(fgeom, "%d %d %d", &nverts, &nfaces, &nedges) != 3)
@@ -109,12 +110,6 @@ FILE *fgeom;
 		else
 			fprintf(stderr, "Warning: vertex %d unused.\n", i+1);
 
-	tol.magic = RT_TOL_MAGIC;	/* Copied from proc-db/nmgmodel.c */
-	tol.dist = 0.01;
-	tol.dist_sq = 0.01 * 0.01;
-	tol.perp = 0.001;
-	tol.para = 0.999;
-
 	for (i = 0; i < nfaces; i++) {
 		plane_t pl;
 
@@ -128,7 +123,7 @@ FILE *fgeom;
 
 	if (fail) return (-1);
 
-	nmg_gluefaces(outfaceuses, nfaces);
+	nmg_gluefaces(outfaceuses, nfaces, &tol);
 	nmg_region_a(r, &tol);
 
 	rt_free((char *)pts, "points list");
@@ -199,6 +194,12 @@ char **argv;
 {
 	FILE *fpin, *fpout;
 	char title[64], buf[200], *bp;
+
+	tol.magic = RT_TOL_MAGIC;	/* Copied from proc-db/nmgmodel.c */
+	tol.dist = 0.01;
+	tol.dist_sq = 0.01 * 0.01;
+	tol.perp = 0.001;
+	tol.para = 0.999;
 
 	/* Get filenames and open the files. */
 	if (argc < 2) {
