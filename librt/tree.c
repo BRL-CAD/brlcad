@@ -185,10 +185,9 @@ struct directory *dp;
 matp_t		mat;
 {
 	register struct soltab *stp;
-	static vect_t v[8];
-	static vect_t A, B, C;
-	static fastf_t fx, fy, fz;
-	FAST fastf_t f;
+	static vect_t	A, B, C;
+	static fastf_t	fx, fy, fz;
+	FAST fastf_t	f;
 	register struct soltab *nsp;
 	int id;
 
