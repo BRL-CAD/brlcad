@@ -37,6 +37,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define M_SQRT2		1.41421356237309504880
 #endif
 
+#ifndef M_SQRT2_DIV2
+#define M_SQRT2_DIV2       0.70710678118654752440
+#endif
+
 /*
  *			A D C U R S O R
  *
@@ -122,7 +126,7 @@ adcursor()
 	 */
 	/* map -2048 - 2047 into 0 - 2048 * sqrt (2) */
 	/* Tick distance */
-	c_tdist = ((fastf_t)(dv_distadc) + 2047.0) * 0.5 * M_SQRT2;
+	c_tdist = ((fastf_t)(dv_distadc) + 2047.0) * M_SQRT2_DIV2;
 
 	d1 = c_tdist * cos (angle1);
 	d2 = c_tdist * sin (angle1);
@@ -267,10 +271,10 @@ char	**argv;
 	  if (argc == 1) {
 	    if(iadc)
 	      dv_distadc += (pt[0] /
-			  (Viewscale * base2local * M_SQRT2) - 1.0) * 2047.0;
+			  (Viewscale * base2local * M_SQRT2_DIV2) - 1.0) * 2047.0;
 	    else
 	      dv_distadc = (pt[0] /
-			    (Viewscale * base2local * M_SQRT2) - 1.0) * 2047.0;
+			    (Viewscale * base2local * M_SQRT2_DIV2) - 1.0) * 2047.0;
 
 	    dmaflag = 1;
 	    return TCL_OK;
