@@ -183,6 +183,8 @@ static struct mater_info rt_no_mater = {
 	0			/* override */
 };
 
+double		rt_inv255 = 1.0/255.0;
+
 /*
  *  			R T _ G E T _ T R E E
  *
@@ -501,9 +503,9 @@ struct mater_info *materp;
 		} else {
 			if( rec.c.c_override == 1 )  {
 				curmater.ma_override = 1;
-				curmater.ma_color[0] = rec.c.c_rgb[0]/255.;
-				curmater.ma_color[1] = rec.c.c_rgb[1]/255.;
-				curmater.ma_color[2] = rec.c.c_rgb[2]/255.;
+				curmater.ma_color[0] = (rec.c.c_rgb[0]+0.5)*rt_inv255;
+				curmater.ma_color[1] = (rec.c.c_rgb[1]+0.5)*rt_inv255;
+				curmater.ma_color[2] = (rec.c.c_rgb[2]+0.5)*rt_inv255;
 			}
 			if( rec.c.c_matname[0] != '\0' )  {
 				strncpy( curmater.ma_matname, rec.c.c_matname, sizeof(rec.c.c_matname) );
