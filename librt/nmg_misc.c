@@ -3577,8 +3577,6 @@ CONST struct rt_tol *tol;
 	struct model *m;
 	struct nmgregion *r;
 	struct rt_tol tol_tmp;
-	point_t min_pt,max_pt;
-	vect_t diag;
 	int done=0;
 	int edge_no;
 
@@ -3603,11 +3601,6 @@ CONST struct rt_tol *tol;
 	r = RT_LIST_FIRST( nmgregion , &m->r_hd );
 	NMG_CK_REGION( r );
 	NMG_CK_REGION_A( r->ra_p );
-
-	/* create a large (3X) bounding box for the model */
-	VSUB2( diag , r->ra_p->max_pt , r->ra_p->min_pt );
-	VADD2( max_pt , r->ra_p->max_pt , diag );
-	VSUB2( min_pt , r->ra_p->min_pt , diag );
 
 	/* look for a dangling edge emanating from this vertex */
 	eu1 = (struct edgeuse *)NULL;
@@ -3767,25 +3760,6 @@ CONST struct rt_tol *tol;
 			}
 			/* Make the start point at closest approach to old vertex */
 			(void)rt_dist_pt3_line3( &dist , start , start , dir , new_v->vg_p->coord , tol );
-
-			/* Check if the start point is reasonably near the model!! */
-			if( !V3PT_IN_RPP( start , min_pt , max_pt ) )
-			{
-				/* Again, an incorrectly modelled FASTGEN object can trigger this
-				 * check
-				 */
-				rt_log( "nmg_get_edge_lines: edge start point is outside region bounding box\n" );
-
-				for( edge_no=0 ; edge_no<NMG_TBL_END( int_faces ) ; edge_no++ )
-				{
-					struct intersect_fus *i_fus;
-
-					i_fus = (struct intersect_fus *)NMG_TBL_GET( int_faces , edge_no );
-
-					rt_free( (char *)i_fus , "nmg_get_edge_lines: i_fus" );
-				}
-				return( 1 );
-			}
 
 			/* Make sure the calculated direction is away from the vertex */
 			if( VDOT( eu_dir , dir ) < 0.0 )
