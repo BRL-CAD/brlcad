@@ -1213,12 +1213,6 @@ char	**argv;
 		TCL_WRITE_ERR_return;
 	}
 
-	if( no_memory )  {
-	  Tcl_AppendResult(interp, "Mirror image (", argv[2],
-			   ") created but NO memory left to draw it\n", (char *)NULL);
-	  return TCL_ERROR;
-	}
-
 	{
 	  char *av[3];
 
