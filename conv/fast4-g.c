@@ -5827,8 +5827,6 @@ make_bot_object()
 		return;
 	}
 
-	printf( "make_bot_object with %d faces\n", face_count );
-
 	for( i=0 ; i<face_count ; i++ )
 	{
 		V_MIN( min_pt, faces[i*3] );
