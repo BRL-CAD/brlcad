@@ -1,0 +1,13 @@
+rleClock
+
+A program to create a clock face in Utah RLE format.  Lots of parameters, type
+"rleClock -help" for a listing.
+
+
+Example
+-------
+rleClock -Fc 255 0 0 -Hc 0 0 255 -lw 3 -ty 32 -tc 0 255 0 -Tc 128 128 128 | getsun
+
+
+Bob Brown
+RIACS
