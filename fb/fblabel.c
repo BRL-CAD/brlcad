@@ -135,11 +135,13 @@ register char **argv;
 		}
 	}
 
+	if( optind+3 > argc )
+		return(0);
 	xpos = atoi( argv[optind++]);
 	ypos = atoi( argv[optind++]);
 	textstring = argv[optind++];
 
-	if ( argc > ++optind )
+	if ( argc > optind )
 		(void)fprintf( stderr, "pix-fb: excess argument(s) ignored\n" );
 
 	return(1);		/* OK */
