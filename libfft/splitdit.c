@@ -5,7 +5,8 @@
  *
  *	[ Re(0), Re(1), ..., Re(N/2), Im(N/2-1), ..., Im(1) ]
  */
-int	adds, mults;
+int	rfft_adds, rfft_mults;
+
 #include <math.h>
 #include "./complex.h"	/* for TWOPI */
 #define	INVSQ2	0.70710678118654752440
@@ -21,7 +22,7 @@ int	N;
 	double	cc1, ss1, cc3, ss3, xt;
 	int	i, j, k, ni;
 	int	n2, n4;
-adds = mults = 0;
+rfft_adds = rfft_mults = 0;
 
 	/* bit reverse counter */
 	j = 1;
@@ -47,7 +48,7 @@ adds = mults = 0;
 			r1 = X[i0-1];
 			X[i0-1] = r1 + X[i1-1];
 			X[i1-1] = r1 - X[i1-1];
-adds += 2;
+rfft_adds += 2;
 		}
 	}
 
@@ -67,7 +68,7 @@ adds += 2;
 				X[i3-1] = X[i2-1] - X[i3-1];
 				X[i2-1] = X[i0-1] - t0;
 				X[i0-1] += t0;
-adds += 4;
+rfft_adds += 4;
 			}
 		}
 		if( n4 < 2 ) continue;
@@ -83,7 +84,7 @@ adds += 4;
 				X[i3-1] = t2 + X[i1-1];
 				X[i1-1] = X[i0-1] - t1;
 				X[i0-1] += t1;
-mults += 2; adds += 6;
+rfft_mults += 2; rfft_adds += 6;
 			}
 		}
 		e = TWOPI/n2;
@@ -110,7 +111,7 @@ mults += 2; adds += 6;
 					d2 = -(X[a2-1]*ss1 + X[b2-1]*cc1);
 					c3 = X[a3-1]*cc3 - X[b3-1]*ss3;
 					d3 = -(X[a3-1]*ss3 + X[b3-1]*cc3);
-mults += 8; adds += 4;
+rfft_mults += 8; rfft_adds += 4;
 					t1 = c2 + c3;
 					c3 = c2 - c3;
 					t2 = d2 - d3;
@@ -123,7 +124,7 @@ mults += 8; adds += 4;
 					X[b0-1] = X[a0-1] - t1;
 					X[a0-1] += t1;
 					X[a1-1] -= t2;
-adds += 12;
+rfft_adds += 12;
 				}
 			}
 		}

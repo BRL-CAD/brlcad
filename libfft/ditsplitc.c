@@ -11,7 +11,7 @@
 #define	INVSQ2	0.70710678118654752440
 #define	SQRT2	1.4142136
 
-int	adds, mults;
+int	irfft_adds, irfft_mults;
 
 ditsplit( x, n, m )
 double x[];
@@ -23,7 +23,7 @@ int	m;	/* n = 2^m */
 	int	is, id;
 	double	t1, t2, t3, t4, t5, r1, xt;
 	double	cc1, ss1, cc3, ss3, e, a, a3;
-adds = mults = 0;
+irfft_adds = irfft_mults = 0;
 
 printf("/* Machine Generated Real Split Radix Decimation in Freq Inverse FFT */\n" );
 printf("#define	INVSQ2	0.70710678118654752440\n" );
@@ -56,7 +56,7 @@ printf( "x[%d] += x[%d];\n", i1-1, i3-1 );
 printf( "x[%d] *= 2.0;\n", i2-1 );
 printf( "x[%d] = t1 - 2.0 * x[%d];\n", i3-1, i4-1 );
 printf( "x[%d] = t1 + 2.0 * x[%d];\n", i4-1, i4-1 );
-adds += 4; mults += 3;
+irfft_adds += 4; irfft_mults += 3;
 
 			if( n4 == 1 )
 				continue;
@@ -71,7 +71,7 @@ printf( "x[%d] += x[%d];\n", i1-1, i2-1 );
 printf( "x[%d] = x[%d] - x[%d];\n", i2-1, i4-1, i3-1 );
 printf( "x[%d] = -2.0 * ( t2 + t1 );\n", i3-1 );
 printf( "x[%d] = 2.0 * ( -t2 + t1 );\n", i4-1 );
-adds += 6; mults += 4;
+irfft_adds += 6; irfft_mults += 4;
 
 		}
 		is = 2 * id - n2;
@@ -116,7 +116,7 @@ printf( "x[%d] = t5 * %.24f + t4 * %.24f;\n", i3-1, cc1, ss1 );
 printf( "x[%d] = - t4 * %.24f + t5 * %.24f;\n", i7-1, cc1, ss1 );
 printf( "x[%d] = t1 * %.24f - t2 * %.24f;\n", i4-1, cc3, ss3 );
 printf( "x[%d] = t2 * %.24f + t1 * %.24f;\n", i8-1, cc3, ss3 );
-adds += 16; mults += 8;
+irfft_adds += 16; irfft_mults += 8;
 
 			}
 			is = 2 * id - n2;
@@ -137,7 +137,7 @@ l70:
 printf( "t1 = x[%d];\n", i0-1 );
 printf( "x[%d] = t1 + x[%d];\n", i0-1, i1-1 );
 printf( "x[%d] = t1 - x[%d];\n", i1-1, i1-1 );
-adds += 2;
+irfft_adds += 2;
 
 	}
 	is = 2 * id - 1;

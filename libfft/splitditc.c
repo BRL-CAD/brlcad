@@ -5,7 +5,7 @@
 #include "./complex.h"	/* for TWOPI */
 #define	INVSQ2	0.70710678118654752440
 
-int	adds, mults;
+int	rfft_adds, rfft_mults;
 
 splitdit( X, N, M )
 double	X[];
@@ -18,7 +18,7 @@ int	N, M;
 	double	cc1, ss1, cc3, ss3, xt;
 	int	i, j, k, ni;
 	int	n2, n4;
-adds = mults = 0;
+rfft_adds = rfft_mults = 0;
 
 printf("/* Machine Generated Real Split Radix Decimation in Time FFT */\n" );
 printf("#define	INVSQ2	0.70710678118654752440\n" );
@@ -55,7 +55,7 @@ printf("/* length two xforms */\n");
 printf("t0 = X[%d];\n", i0-1 );
 printf("X[%d] += X[%d];\n", i0-1, i1-1 );
 printf("X[%d] = t0 - X[%d];\n", i1-1, i1-1 );
-adds += 2;
+rfft_adds += 2;
 		}
 	}
 
@@ -76,7 +76,7 @@ printf("t0 = X[%d] + X[%d];\n", i3-1, i2-1 );
 printf("X[%d] = X[%d] - X[%d];\n", i3-1, i2-1, i3-1 );
 printf("X[%d] = X[%d] - t0;\n", i2-1, i0-1 );
 printf("X[%d] += t0;\n", i0-1 );
-adds += 4;
+rfft_adds += 4;
 			}
 		}
 		if( n4 < 2 ) continue;
@@ -92,7 +92,7 @@ printf("X[%d] = t1 - X[%d];\n", i2-1, i1-1 );
 printf("X[%d] = t1 + X[%d];\n", i3-1, i1-1 );
 printf("X[%d] = X[%d] - t0;\n", i1-1, i0-1 );
 printf("X[%d] += t0;\n", i0-1 );
-mults += 2; adds += 6;
+rfft_mults += 2; rfft_adds += 6;
 			}
 		}
 		e = TWOPI/n2;
@@ -119,7 +119,7 @@ printf("c2 = X[%d]*%.24g - X[%d]*%.24g;\n", a2-1, cc1, b2-1, ss1 );
 printf("d2 = -(X[%d]*%.24g + X[%d]*%.24g);\n", a2-1, ss1, b2-1, cc1 );
 printf("c3 = X[%d]*%.24g - X[%d]*%.24g;\n", a3-1, cc3, b3-1, ss3 );
 printf("d3 = -(X[%d]*%.24g + X[%d]*%.24g);\n", a3-1, ss3, b3-1, cc3 );
-mults += 8; adds += 4;
+rfft_mults += 8; rfft_adds += 4;
 printf("t0 = c2 + c3;\n" );
 printf("c3 = c2 - c3;\n" );
 printf("t1 = d2 - d3;\n" );
@@ -132,7 +132,7 @@ printf("X[%d] = X[%d] + t1;\n", b1-1, a1-1 );
 printf("X[%d] = X[%d] - t0;\n", b0-1, a0-1 );
 printf("X[%d] += t0;\n", a0-1 );
 printf("X[%d] -= t1;\n", a1-1 );
-adds += 12;
+rfft_adds += 12;
 				}
 			}
 		}

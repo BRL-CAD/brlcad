@@ -1,7 +1,8 @@
 /*
  *  Split Radix Decimation in Freq Inverse FFT C code generator.
  */
-extern int adds, mults;
+extern int irfft_adds, irfft_mults;
+
 #include <stdio.h>
 #include <math.h>
 
@@ -24,6 +25,6 @@ char	**argv;
 	m = log((double)n)/log(2.0) + 0.5;	/* careful truncation */
 
 	ditsplit( x, n, m );
-fprintf( stderr, "adds = %d, mults = %d\n", adds, mults );
+fprintf( stderr, "adds = %d, mults = %d\n", irfft_adds, irfft_mults );
 	return(0);
 }

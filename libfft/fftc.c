@@ -1,7 +1,8 @@
 /*
  *	Split Radix Decimation in Time FFT C code generator.
  */
-extern int adds, mults;
+extern int rfft_adds, rfft_mults;
+
 #include <stdio.h>
 #include <math.h>
 
@@ -24,6 +25,6 @@ char	**argv;
 	m = log((double)n)/log(2.0) + 0.5;	/* careful truncation */
 
 	splitdit( x, n, m );
-(void)fprintf( stderr, "adds = %d, mults = %d\n", adds, mults );
+(void)fprintf( stderr, "adds = %d, mults = %d\n", rfft_adds, rfft_mults );
 	return(0);
 }

@@ -10,7 +10,7 @@
 #define	INVSQ2	0.70710678118654752440
 #define	SQRT2	1.4142136
 
-int	adds, mults;
+int	irfft_adds, irfft_mults;
 
 irfft( x, n )
 double x[];
@@ -21,7 +21,7 @@ int	n;	/* length */
 	int	is, id;
 	double	t1, t2, t3, t4, t5, r1, xt;
 	double	cc1, ss1, cc3, ss3, e, a, a3;
-adds = mults = 0;
+irfft_adds = irfft_mults = 0;
 
 	/* L shaped butterflies */
 	n2 = n << 1;
@@ -45,7 +45,7 @@ l17:
 			x[i2-1] *= 2.0;
 			x[i3-1] = t1 - 2.0 * x[i4-1];
 			x[i4-1] = t1 + 2.0 * x[i4-1];
-adds += 4; mults += 3;
+irfft_adds += 4; irfft_mults += 3;
 
 			if( n4 == 1 )
 				continue;
@@ -60,7 +60,7 @@ adds += 4; mults += 3;
 			x[i2-1] = x[i4-1] - x[i3-1];
 			x[i3-1] = -2.0 * ( t2 + t1 );
 			x[i4-1] = 2.0 * ( -t2 + t1 );
-adds += 6; mults += 4;
+irfft_adds += 6; irfft_mults += 4;
 
 		}
 		is = 2 * id - n2;
@@ -105,7 +105,7 @@ l40:
 				x[i7-1] = - t4 * cc1 + t5 * ss1;
 				x[i4-1] = t1 * cc3 - t2 * ss3;
 				x[i8-1] = t2 * cc3 + t1 * ss3;
-adds += 16; mults += 8;
+irfft_adds += 16; irfft_mults += 8;
 
 			}
 			is = 2 * id - n2;
@@ -125,7 +125,7 @@ l70:
 		t1 = x[i0-1];
 		x[i0-1] = t1 + x[i1-1];
 		x[i1-1] = t1 - x[i1-1];
-adds += 2;
+irfft_adds += 2;
 
 	}
 	is = 2 * id - 1;
