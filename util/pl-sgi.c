@@ -28,7 +28,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"		/* to define "sgi" on ANSI compilers */
 #include "externs.h"
 
-#ifdef sgi
+#if HAS_SGIGL
 # include "gl.h"
 # include "device.h"
 #   ifdef mips
@@ -158,7 +158,7 @@ main( argc, argv )
 int	argc;
 char	**argv;
 {
-#ifdef sgi
+#if HAS_SGIGL
 	Coord	max[3], min[3];
 	char	*file;
 	FILE	*fp;
@@ -262,7 +262,7 @@ char	**argv;
 #endif
 }
 
-#ifdef sgi
+#if SGI_GL
 /* 
  *	V I E W _ L O O P
  */

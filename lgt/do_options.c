@@ -529,7 +529,7 @@ f_Buffer( itemp, args )
 HMitem	*itemp;
 char	**args;
 	{
-#ifdef sgi
+#if HAS_SGIGL
 	if( (args == NULL || args[1] == NULL) && sgi_usemouse )
 		{	extern long	buffering_menu;
 			int		rc;
@@ -594,7 +594,7 @@ f_Debug( itemp, args )
 HMitem	*itemp;
 char	**args;
 	{
-#ifdef sgi
+#if HAS_SGIGL
 	if( (args == NULL || args[1] == NULL) && sgi_usemouse )
 		{	extern long	debugging_menu;
 			int		flag;
@@ -706,10 +706,6 @@ char	**args;
 	{	static char	tmp_file[L_tmpnam];
 		static char	*batch_com[8];
 		char		*script = tmpnam( tmp_file ), **p;
-#ifdef sgi
-	rt_log( "Sorry, no batch queue on the IRIS yet.\n" );
-	return	1;
-#else
 #ifdef cray
 	rt_log( "Sorry, no batch queue on the Cray yet.\n" );
 	return	1;
@@ -727,7 +723,6 @@ char	**args;
 	(void) exec_Shell( batch_com );
 	(void) unlink( script );
 	return	1;
-#endif
 #endif
 	}
 
@@ -888,7 +883,7 @@ char	**args;
 			int		in_windowing = FALSE;
 			int		out_windowing = FALSE;
 			HMitem		*itemptr;
-#ifdef sgi
+#if HAS_SGIGL
 		if( sgi_usemouse )
 			{
 			switch( sgi_Cursor_Input( x, y, &mx, &my, xx0, yy0, origin ) )
@@ -942,7 +937,7 @@ char	**args;
 			Toggle( query_region );
 			break;
 			}
-#ifdef sgi
+#if HAS_SGIGL
 keybd_input :
 #endif
 		prnt_Event( "" );
@@ -1299,7 +1294,7 @@ char	**args;
 		close_Output_Device( 0 );
 		return	1;
 		}
-#ifdef sgi
+#if HAS_SGIGL
 	{	extern void	sgi_Animate();
 		static int	fps = 30;
 	(void) sprintf( prompt, "Frame size ? (%d) ", movie.m_frame_sz );
@@ -1616,7 +1611,7 @@ f_Prnt_Lgt_Db( itemp, args )
 HMitem	*itemp;
 char	**args;
 	{	static int	light_id = -1;
-#ifdef sgi
+#if HAS_SGIGL
 	if( (args == NULL || args[1] == NULL) && sgi_usemouse )
 		{	extern long	lgts_prnt_menu;
 		light_id = dopup( lgts_prnt_menu );
@@ -2550,7 +2545,7 @@ char	**args;
 				*args[0] );
 			return	-1;
 			}
-#ifdef sgi
+#if HAS_SGIGL
 		if( sgi_usemouse )
 			{	extern long	irflags_menu;
 			menuval = dopup( irflags_menu );
@@ -2924,7 +2919,7 @@ f_Entr_Lgt_Db( itemp, args )
 HMitem	*itemp;
 char	**args;
 	{	static int	light_id = 0;
-#ifdef sgi
+#if HAS_SGIGL
 	if( (args == NULL || args[1] == NULL) && sgi_usemouse )
 		{	extern long	lgts_edit_menu;
 			int		rc;
@@ -3002,7 +2997,7 @@ f_Set_IR_Paint( itemp, args )
 HMitem	*itemp;
 char	**args;
 	{
-#ifdef sgi
+#if HAS_SGIGL
 	if( (args == NULL || args[1] == NULL) && sgi_usemouse )
 		{	extern long	irpaint_menu;
 		ir_doing_paint = dopup( irpaint_menu );
@@ -3292,7 +3287,7 @@ exec_start :
 			}
 		(void) f_Redraw( (HMitem *) 0, (char **) 0 );
 		}
-#ifdef sgi
+#if HAS_SGIGL
 	if( SGI_USEKEYBD )
 		{
 		qreset();
@@ -3357,7 +3352,7 @@ user_Interaction()
 		register int	ret;
 	local_argv[1] = NULL; /* Truncate argument list initially. */
 	/* Set up user options. */
-#ifdef sgi
+#if HAS_SGIGL
 	if( sgi_usemouse )
 		sgi_User_Input( local_argv );
 	else
@@ -3939,7 +3934,7 @@ char	 *inbuf;
 int	 bufsz;
 char	*msg;
 	{
-#ifdef sgi
+#if HAS_SGIGL
 		extern char	*sgi_GetInput();
 	if( sgi_console && sgi_usemouse )
 		return	sgi_GetInput( inbuf, bufsz, msg );
@@ -3962,7 +3957,7 @@ char	*msg;
 int
 hm_getchar()
 	{
-#ifdef sgi		
+#if HAS_SGIGL		
 	if( SGI_USEKEYBD )
 		return	sgi_Getchar();
 #endif
@@ -3977,7 +3972,7 @@ int
 hm_ungetchar( c )
 int	c;
 	{
-#ifdef sgi
+#if HAS_SGIGL
 	if( SGI_USEKEYBD )
 		return	sgi_Ungetchar();
 #endif
