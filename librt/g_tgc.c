@@ -466,10 +466,10 @@ register struct soltab	*stp;
 	rt_log( "(|B|**2)/(|D|**2) = %f\n", tgc->tgc_BBdDD );
 }
 
-/* To be clean, hit_private (a genptr_t), is set to one of these */
-#define	TGC_NORM_BODY	((genptr_t)0)
-#define	TGC_NORM_TOP	((genptr_t)1)	/* copy tgc_N */
-#define	TGC_NORM_BOT	((genptr_t)2)	/* copy reverse tgc_N */
+/* hit_surfno is set to one of these */
+#define	TGC_NORM_BODY	(1)		/* compute normal */
+#define	TGC_NORM_TOP	(2)		/* copy tgc_N */
+#define	TGC_NORM_BOT	(3)		/* copy reverse tgc_N */
 
 /*
  *			R T _ T G C _ S H O T
@@ -690,18 +690,18 @@ struct seg		*seghead;
 		segp->seg_stp = stp;
 
 		segp->seg_in.hit_dist = pt[IN] * t_scale;
-		segp->seg_in.hit_private = TGC_NORM_BODY;	/* compute N */
+		segp->seg_in.hit_surfno = TGC_NORM_BODY;	/* compute N */
 		VJOIN1( segp->seg_in.hit_vpriv, pprime, pt[IN], dprime );
 
 		segp->seg_out.hit_dist = pt[OUT] * t_scale;
-		segp->seg_out.hit_private = TGC_NORM_BODY;	/* compute N */
+		segp->seg_out.hit_surfno = TGC_NORM_BODY;	/* compute N */
 		VJOIN1( segp->seg_out.hit_vpriv, pprime, pt[OUT], dprime );
 
 		RT_LIST_INSERT( &(seghead->l), &(segp->l) );
 		return(2);
 	}
 	if ( intersect == 1 )  {
-		genptr_t	nflag;
+		int	nflag;
 		/*
 		 *  If only one between-plane intersection exists (pt[OUT]),
 		 *  then the other intersection must be on
@@ -746,20 +746,20 @@ struct seg		*seghead;
 		/* pt[OUT] on skin, pt[IN] on end */
 		if ( pt[OUT] >= pt[IN] )  {
 			segp->seg_in.hit_dist = pt[IN] * t_scale;
-			segp->seg_in.hit_private = nflag;
+			segp->seg_in.hit_surfno = nflag;
 
 			segp->seg_out.hit_dist = pt[OUT] * t_scale;
-			segp->seg_out.hit_private = TGC_NORM_BODY;	/* compute N */
+			segp->seg_out.hit_surfno = TGC_NORM_BODY;	/* compute N */
 			/* transform-space vector needed for normal */
 			VJOIN1( segp->seg_out.hit_vpriv, pprime, pt[OUT], dprime );
 		} else {
 			segp->seg_in.hit_dist = pt[OUT] * t_scale;
 			/* transform-space vector needed for normal */
-			segp->seg_in.hit_private = TGC_NORM_BODY;	/* compute N */
+			segp->seg_in.hit_surfno = TGC_NORM_BODY;	/* compute N */
 			VJOIN1( segp->seg_in.hit_vpriv, pprime, pt[OUT], dprime );
 
 			segp->seg_out.hit_dist = pt[IN] * t_scale;
-			segp->seg_out.hit_private = nflag;
+			segp->seg_out.hit_surfno = nflag;
 		}
 		RT_LIST_INSERT( &(seghead->l), &(segp->l) );
 		return(2);
@@ -809,16 +809,16 @@ struct seg		*seghead;
 	 */
 	if ( dir > 0.0 ){
 		segp->seg_in.hit_dist = b * t_scale;
-		segp->seg_in.hit_private = TGC_NORM_BOT;	/* reverse normal */
+		segp->seg_in.hit_surfno = TGC_NORM_BOT;	/* reverse normal */
 
 		segp->seg_out.hit_dist = t * t_scale;
-		segp->seg_out.hit_private = TGC_NORM_TOP;	/* normal */
+		segp->seg_out.hit_surfno = TGC_NORM_TOP;	/* normal */
 	} else {
 		segp->seg_in.hit_dist = t * t_scale;
-		segp->seg_in.hit_private = TGC_NORM_TOP;	/* normal */
+		segp->seg_in.hit_surfno = TGC_NORM_TOP;	/* normal */
 
 		segp->seg_out.hit_dist = b * t_scale;
-		segp->seg_out.hit_private = TGC_NORM_BOT;	/* reverse normal */
+		segp->seg_out.hit_surfno = TGC_NORM_BOT;	/* reverse normal */
 	}
 	RT_LIST_INSERT( &(seghead->l), &(segp->l) );
 	return(2);
@@ -1126,14 +1126,14 @@ struct resource         *resp; /* pointer to a list of free segs */
 		 *  the hit points for the ray.
 		 */
 		segp[ix].seg_in.hit_dist = pt[IN] * t_scale;
-		segp[ix].seg_in.hit_private = TGC_NORM_BODY;	/* compute N */
+		segp[ix].seg_in.hit_surfno = TGC_NORM_BODY;	/* compute N */
 		VJOIN1( segp[ix].seg_in.hit_vpriv, pprime, pt[IN], dprime );
 
 		segp[ix].seg_out.hit_dist = pt[OUT] * t_scale;
-		segp[ix].seg_out.hit_private = TGC_NORM_BODY;	/* compute N */
+		segp[ix].seg_out.hit_surfno = TGC_NORM_BODY;	/* compute N */
 		VJOIN1( segp[ix].seg_out.hit_vpriv, pprime, pt[OUT], dprime );
 	} else if ( intersect == 1 ) {
-		genptr_t	nflag;
+		int	nflag;
 		/*
 		 *  If only one between-plane intersection exists (pt[OUT]),
 		 *  then the other intersection must be on
@@ -1182,20 +1182,20 @@ struct resource         *resp; /* pointer to a list of free segs */
 		/* pt[OUT] on skin, pt[IN] on end */
 		if ( pt[OUT] >= pt[IN] )  {
 			segp[ix].seg_in.hit_dist = pt[IN] * t_scale;
-			segp[ix].seg_in.hit_private = nflag;
+			segp[ix].seg_in.hit_surfno = nflag;
 
 			segp[ix].seg_out.hit_dist = pt[OUT] * t_scale;
-			segp[ix].seg_out.hit_private = TGC_NORM_BODY;	/* compute N */
+			segp[ix].seg_out.hit_surfno = TGC_NORM_BODY;	/* compute N */
 			/* transform-space vector needed for normal */
 			VJOIN1( segp[ix].seg_out.hit_vpriv, pprime, pt[OUT], dprime );
 		} else {
 			segp[ix].seg_in.hit_dist = pt[OUT] * t_scale;
 			/* transform-space vector needed for normal */
-			segp[ix].seg_in.hit_private = TGC_NORM_BODY;	/* compute N */
+			segp[ix].seg_in.hit_surfno = TGC_NORM_BODY;	/* compute N */
 			VJOIN1( segp[ix].seg_in.hit_vpriv, pprime, pt[OUT], dprime );
 
 			segp[ix].seg_out.hit_dist = pt[IN] * t_scale;
-			segp[ix].seg_out.hit_private = nflag;
+			segp[ix].seg_out.hit_surfno = nflag;
 		}
 	} else {
 
@@ -1246,16 +1246,16 @@ struct resource         *resp; /* pointer to a list of free segs */
 	 */
 	if ( dir > 0.0 ){
 		segp[ix].seg_in.hit_dist = b * t_scale;
-		segp[ix].seg_in.hit_private = TGC_NORM_BOT;	/* reverse normal */
+		segp[ix].seg_in.hit_surfno = TGC_NORM_BOT;	/* reverse normal */
 
 		segp[ix].seg_out.hit_dist = t * t_scale;
-		segp[ix].seg_out.hit_private = TGC_NORM_TOP;	/* normal */
+		segp[ix].seg_out.hit_surfno = TGC_NORM_TOP;	/* normal */
 	} else {
 		segp[ix].seg_in.hit_dist = t * t_scale;
-		segp[ix].seg_in.hit_private = TGC_NORM_TOP;	/* normal */
+		segp[ix].seg_in.hit_surfno = TGC_NORM_TOP;	/* normal */
 
 		segp[ix].seg_out.hit_dist = b * t_scale;
-		segp[ix].seg_out.hit_private = TGC_NORM_BOT;	/* reverse normal */
+		segp[ix].seg_out.hit_surfno = TGC_NORM_BOT;	/* reverse normal */
 	}
 	}
     } /* end for each ray/cone pair */
@@ -1354,7 +1354,7 @@ register struct xray *rp;
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 
 	/* Hits on the end plates are easy */
-	switch( (int)(hitp->hit_private) )  {
+	switch( hitp->hit_surfno )  {
 	case 1:	/* TGC_NORM_TOP */
 		VMOVE( hitp->hit_normal, tgc->tgc_N );
 		break;
@@ -1376,7 +1376,7 @@ register struct xray *rp;
 		VUNITIZE( hitp->hit_normal );
 		break;
 	default:
-		rt_log("rt_tgc_norm: bad flag x%x\n", (int)hitp->hit_private);
+		rt_log("rt_tgc_norm: bad surfno=%d\n", hitp->hit_surfno);
 		break;
 	}
 }
@@ -1403,7 +1403,7 @@ register struct uvcoord	*uvp;
 	VSUB2( work, hitp->hit_point, tgc->tgc_V );
 	MAT4X3VEC( pprime, tgc->tgc_ScShR, work );
 
-	switch( (int)(hitp->hit_private) )  {
+	switch( hitp->hit_surfno )  {
 	case 0:	/* TGC_NORM_BODY */
 		/* Skin.  x,y coordinates define rotation.  radius = 1 */
 		uvp->uv_u = acos(pprime[Y]) * rt_inv2pi;
@@ -1547,7 +1547,7 @@ struct soltab *stp;
 	fastf_t	a, b, c, scale;
 	vect_t	vec1, vec2;
 
-	if( hitp->hit_private != TGC_NORM_BODY ) {
+	if( hitp->hit_surfno != TGC_NORM_BODY ) {
 		/* We hit an end plate.  Choose any tangent vector. */
 		vec_ortho( cvp->crv_pdir, hitp->hit_normal );
 		cvp->crv_c1 = cvp->crv_c2 = 0;

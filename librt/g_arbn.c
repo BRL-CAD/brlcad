@@ -227,10 +227,10 @@ struct seg		*seghead;
 		RT_GET_SEG( segp, ap->a_resource );
 		segp->seg_stp = stp;
 		segp->seg_in.hit_dist = in;
-		segp->seg_in.hit_private = (char *)iplane;
+		segp->seg_in.hit_surfno = iplane;
 
 		segp->seg_out.hit_dist = out;
-		segp->seg_out.hit_private = (char *)oplane;
+		segp->seg_out.hit_surfno = oplane;
 		RT_LIST_INSERT( &(seghead->l), &(segp->l) );
 	}
 	return(2);			/* HIT */
@@ -266,9 +266,9 @@ register struct xray *rp;
 	int	h;
 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
-	h = (int)hitp->hit_private;
+	h = hitp->hit_surfno;
 	if( h < 0 || h > aip->neqn )  {
-		rt_log("rt_arbn_norm(%s): hit_private=x%x?\n", h );
+		rt_log("rt_arbn_norm(%s): hit_surfno=%d?\n", h );
 		VSETALL( hitp->hit_normal, 0 );
 		return;
 	}

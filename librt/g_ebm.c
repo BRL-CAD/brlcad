@@ -175,12 +175,12 @@ struct application *ap;
 		if( curr->seg_in.hit_dist <= kmin )  {
 			if(rt_g.debug&DEBUG_EBM)rt_log("seg_in = kmin %g\n", kmin );
 			curr->seg_in.hit_dist = kmin;
-			curr->seg_in.hit_private = (char *)out_norm_code;
+			curr->seg_in.hit_surfno = out_norm_code;
 		}
 		if( curr->seg_out.hit_dist >= kmax )  {
 			if(rt_g.debug&DEBUG_EBM)rt_log("seg_out= kmax %g\n", kmax );
 			curr->seg_out.hit_dist = kmax;
-			curr->seg_out.hit_private = (char *)(-out_norm_code);
+			curr->seg_out.hit_surfno = (-out_norm_code);
 		}
 		RT_LIST_INSERT( &(out_hd->l), &(curr->l) );
 		count += 2;
@@ -283,11 +283,11 @@ if(rt_g.debug&DEBUG_EBM)rt_log("ray on local Z axis\n");
 		segp->seg_in.hit_dist = 0;
 		segp->seg_out.hit_dist = INFINITY;
 		if( rp->r_dir[Z] < 0 )  {
-			segp->seg_in.hit_private = (char *)NORM_ZPOS;
-			segp->seg_out.hit_private = (char *)NORM_ZNEG;
+			segp->seg_in.hit_surfno = NORM_ZPOS;
+			segp->seg_out.hit_surfno = NORM_ZNEG;
 		} else {
-			segp->seg_in.hit_private = (char *)NORM_ZNEG;
-			segp->seg_out.hit_private = (char *)NORM_ZPOS;
+			segp->seg_in.hit_surfno = NORM_ZNEG;
+			segp->seg_out.hit_surfno = NORM_ZPOS;
 		}
 		RT_LIST_INSERT( &(seghead->l), &(segp->l) );
 		return(2);			/* HIT */
@@ -392,17 +392,17 @@ if(rt_g.debug&DEBUG_EBM)rt_log("Exit index is %s, t[X]=%g, t[Y]=%g\n",
 				/* Compute entry normal */
 				if( rp->r_dir[in_index] < 0 )  {
 					/* Go left, entry norm goes right */
-					segp->seg_in.hit_private = (char *)
+					segp->seg_in.hit_surfno =
 						ebm_normtab[in_index];
 				}  else  {
 					/* go right, entry norm goes left */
-					segp->seg_in.hit_private = (char *)
+					segp->seg_in.hit_surfno =
 						(-ebm_normtab[in_index]);
 				}
 				RT_LIST_INSERT( &(seghead->l), &(segp->l) );
 
-				if(rt_g.debug&DEBUG_EBM) rt_log("START t=%g, n=%d\n",
-					t0, segp->seg_in.hit_private);
+				if(rt_g.debug&DEBUG_EBM) rt_log("START t=%g, surfno=%d\n",
+					t0, segp->seg_in.hit_surfno);
 			} else {
 				/* Do nothing, marching through void */
 			}
@@ -421,15 +421,15 @@ if(rt_g.debug&DEBUG_EBM)rt_log("Exit index is %s, t[X]=%g, t[Y]=%g\n",
 				/* Compute exit normal */
 				if( rp->r_dir[in_index] < 0 )  {
 					/* Go left, exit normal goes left */
-					tail->seg_out.hit_private = (char *)
+					tail->seg_out.hit_surfno =
 						(-ebm_normtab[in_index]);
 				}  else  {
 					/* go right, exit norm goes right */
-					tail->seg_out.hit_private = (char *)
+					tail->seg_out.hit_surfno =
 						ebm_normtab[in_index];
 				}
-				if(rt_g.debug&DEBUG_EBM) rt_log("END t=%g, n=%d\n",
-					t0, tail->seg_out.hit_private );
+				if(rt_g.debug&DEBUG_EBM) rt_log("END t=%g, surfno=%d\n",
+					t0, tail->seg_out.hit_surfno );
 			}
 		}
 
@@ -454,15 +454,13 @@ if(rt_g.debug&DEBUG_EBM)rt_log("Exit index is %s, t[X]=%g, t[Y]=%g\n",
 		/* Compute exit normal.  Previous out_index is now in_index */
 		if( rp->r_dir[in_index] < 0 )  {
 			/* Go left, exit normal goes left */
-			tail->seg_out.hit_private = (char *)
-				(-ebm_normtab[in_index]);
+			tail->seg_out.hit_surfno = (-ebm_normtab[in_index]);
 		}  else  {
 			/* go right, exit norm goes right */
-			tail->seg_out.hit_private = (char *)
-				ebm_normtab[in_index];
+			tail->seg_out.hit_surfno = ebm_normtab[in_index];
 		}
-		if(rt_g.debug&DEBUG_EBM) rt_log("closed END t=%g, n=%d\n",
-			tmax, tail->seg_out.hit_private );
+		if(rt_g.debug&DEBUG_EBM) rt_log("closed END t=%g, surfno=%d\n",
+			tmax, tail->seg_out.hit_surfno );
 	}
 
 	if( RT_LIST_IS_EMPTY( &(seghead->l) ) )
@@ -710,7 +708,7 @@ register struct xray	*rp;
 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 
-	switch( (int) hitp->hit_private )  {
+	switch( hitp->hit_surfno )  {
 	case NORM_XPOS:
 		VMOVE( hitp->hit_normal, ebmp->ebm_xnorm );
 		break;
@@ -733,8 +731,8 @@ register struct xray	*rp;
 		break;
 
 	default:
-		rt_log("ebm_norm(%s): norm code %d bad\n",
-			stp->st_name, hitp->hit_private );
+		rt_log("ebm_norm(%s): surfno=%d bad\n",
+			stp->st_name, hitp->hit_surfno );
 		VSETALL( hitp->hit_normal, 0 );
 		break;
 	}

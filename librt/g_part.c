@@ -193,7 +193,7 @@ struct part_specific {
 	mat_t			part_invRoS;	/* invRot(Scale(vect)) */
 };
 
-/* hit_private flags for which end was hit */
+/* hit_surfno flags for which end was hit */
 #define RT_PARTICLE_SURF_VSPHERE	1
 #define RT_PARTICLE_SURF_BODY		2
 #define RT_PARTICLE_SURF_HSPHERE	3
@@ -411,9 +411,9 @@ struct seg		*seghead;
 
 		/* we know root is positive, so we know the smaller t */
 		segp->seg_in.hit_dist = b - root;
-		segp->seg_in.hit_private = (genptr_t)RT_PARTICLE_SURF_VSPHERE;
+		segp->seg_in.hit_surfno = RT_PARTICLE_SURF_VSPHERE;
 		segp->seg_out.hit_dist = b + root;
-		segp->seg_out.hit_private = (genptr_t)RT_PARTICLE_SURF_VSPHERE;
+		segp->seg_out.hit_surfno = RT_PARTICLE_SURF_VSPHERE;
 		RT_LIST_INSERT( &(seghead->l), &(segp->l) );
 		return(2);			/* HIT */
 	}
@@ -465,14 +465,14 @@ struct seg		*seghead;
 	VJOIN1( hitp->hit_vpriv, pprime, k1, dprime );		/* hit' */
 	if( hitp->hit_vpriv[Z] >= 0.0 && hitp->hit_vpriv[Z] <= 1.0 ) {
 		hitp->hit_dist = k1;
-		hitp->hit_private = (genptr_t)RT_PARTICLE_SURF_BODY;
+		hitp->hit_surfno = RT_PARTICLE_SURF_BODY;
 		hitp++;
 	}
 
 	VJOIN1( hitp->hit_vpriv, pprime, k2, dprime );		/* hit' */
 	if( hitp->hit_vpriv[Z] >= 0.0 && hitp->hit_vpriv[Z] <= 1.0 )  {
 		hitp->hit_dist = k2;
-		hitp->hit_private = (genptr_t)RT_PARTICLE_SURF_BODY;
+		hitp->hit_surfno = RT_PARTICLE_SURF_BODY;
 		hitp++;
 	}
 
@@ -515,13 +515,13 @@ check_hemispheres:
 		/* see if hit'[Z] is below end of cylinder */
 		if( pprime[Z] + t * dprime[Z] <= 0.0 )  {
 			hitp->hit_dist = t;
-			hitp->hit_private = (genptr_t)RT_PARTICLE_SURF_VSPHERE;
+			hitp->hit_surfno = RT_PARTICLE_SURF_VSPHERE;
 			hitp++;
 		}
 		t = b + root;
 		if( pprime[Z] + t * dprime[Z] <= 0.0 )  {
 			hitp->hit_dist = t;
-			hitp->hit_private = (genptr_t)RT_PARTICLE_SURF_VSPHERE;
+			hitp->hit_surfno = RT_PARTICLE_SURF_VSPHERE;
 			hitp++;
 		}
 	}
@@ -561,13 +561,13 @@ check_h:
 		t = b - root;
 		if( pprime[Z] + t * dprime[Z] >= 1.0 )  {
 			hitp->hit_dist = t;
-			hitp->hit_private = (genptr_t)RT_PARTICLE_SURF_HSPHERE;
+			hitp->hit_surfno = RT_PARTICLE_SURF_HSPHERE;
 			hitp++;
 		}
 		t = b + root;
 		if( pprime[Z] + t * dprime[Z] >= 1.0 )  {
 			hitp->hit_dist = t;
-			hitp->hit_private = (genptr_t)RT_PARTICLE_SURF_HSPHERE;
+			hitp->hit_surfno = RT_PARTICLE_SURF_HSPHERE;
 			hitp++;
 		}
 	}
@@ -630,7 +630,7 @@ register struct xray	*rp;
 		(struct part_specific *)stp->st_specific;
 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
-	switch( (int)hitp->hit_private )  {
+	switch( hitp->hit_surfno )  {
 	case RT_PARTICLE_SURF_VSPHERE:
 		VSUB2( hitp->hit_normal, hitp->hit_point, part->part_int.part_V );
 		VUNITIZE( hitp->hit_normal );

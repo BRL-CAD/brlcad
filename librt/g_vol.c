@@ -313,16 +313,16 @@ if(rt_g.debug&DEBUG_VOL)rt_log("Exit index is %s, t[]=(%g, %g, %g)\n",
 				/* Compute entry normal */
 				if( rp->r_dir[in_index] < 0 )  {
 					/* Go left, entry norm goes right */
-					segp->seg_in.hit_private = (char *)
+					segp->seg_in.hit_surfno =
 						vol_normtab[in_index];
 				}  else  {
 					/* go right, entry norm goes left */
-					segp->seg_in.hit_private = (char *)
+					segp->seg_in.hit_surfno =
 						(-vol_normtab[in_index]);
 				}
 				RT_LIST_INSERT( &(seghead->l), &(segp->l) );
-				if(rt_g.debug&DEBUG_VOL) rt_log("START t=%g, n=%d\n",
-					t0, segp->seg_in.hit_private);
+				if(rt_g.debug&DEBUG_VOL) rt_log("START t=%g, surfno=%d\n",
+					t0, segp->seg_in.hit_surfno);
 			} else {
 				/* Do nothing, marching through void */
 			}
@@ -341,15 +341,15 @@ if(rt_g.debug&DEBUG_VOL)rt_log("Exit index is %s, t[]=(%g, %g, %g)\n",
 				/* Compute exit normal */
 				if( rp->r_dir[in_index] < 0 )  {
 					/* Go left, exit normal goes left */
-					tail->seg_out.hit_private = (char *)
+					tail->seg_out.hit_surfno =
 						(-vol_normtab[in_index]);
 				}  else  {
 					/* go right, exit norm goes right */
-					tail->seg_out.hit_private = (char *)
+					tail->seg_out.hit_surfno =
 						vol_normtab[in_index];
 				}
-				if(rt_g.debug&DEBUG_VOL) rt_log("END t=%g, n=%d\n",
-					t0, tail->seg_out.hit_private );
+				if(rt_g.debug&DEBUG_VOL) rt_log("END t=%g, surfno=%d\n",
+					t0, tail->seg_out.hit_surfno );
 			}
 		}
 
@@ -374,15 +374,13 @@ if(rt_g.debug&DEBUG_VOL)rt_log("Exit index is %s, t[]=(%g, %g, %g)\n",
 		/* Compute exit normal.  Previous out_index is now in_index */
 		if( rp->r_dir[in_index] < 0 )  {
 			/* Go left, exit normal goes left */
-			tail->seg_out.hit_private = (char *)
-				(-vol_normtab[in_index]);
+			tail->seg_out.hit_surfno = (-vol_normtab[in_index]);
 		}  else  {
 			/* go right, exit norm goes right */
-			tail->seg_out.hit_private = (char *)
-				vol_normtab[in_index];
+			tail->seg_out.hit_surfno = vol_normtab[in_index];
 		}
-		if(rt_g.debug&DEBUG_VOL) rt_log("closed END t=%g, n=%d\n",
-			tmax, tail->seg_out.hit_private );
+		if(rt_g.debug&DEBUG_VOL) rt_log("closed END t=%g, surfno=%d\n",
+			tmax, tail->seg_out.hit_surfno );
 	}
 
 	if( RT_LIST_IS_EMPTY( &(seghead->l) ) )
@@ -561,7 +559,7 @@ register struct xray	*rp;
 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
 
-	switch( (int) hitp->hit_private )  {
+	switch( hitp->hit_surfno )  {
 	case NORM_XPOS:
 		VMOVE( hitp->hit_normal, volp->vol_xnorm );
 		break;
@@ -584,8 +582,8 @@ register struct xray	*rp;
 		break;
 
 	default:
-		rt_log("vol_norm(%s): norm code %d bad\n",
-			stp->st_name, hitp->hit_private );
+		rt_log("vol_norm(%s): surfno=%d bad\n",
+			stp->st_name, hitp->hit_surfno );
 		VSETALL( hitp->hit_normal, 0 );
 		break;
 	}

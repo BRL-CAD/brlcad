@@ -620,10 +620,10 @@ struct seg		*seghead;
 		RT_GET_SEG( segp, ap->a_resource );
 		segp->seg_stp = stp;
 		segp->seg_in.hit_dist = in;
-		segp->seg_in.hit_private = (char *)iplane;
+		segp->seg_in.hit_surfno = iplane;
 
 		segp->seg_out.hit_dist = out;
-		segp->seg_out.hit_private = (char *)oplane;
+		segp->seg_out.hit_surfno = oplane;
 		RT_LIST_INSERT( &(seghead->l), &(segp->l) );
 	}
 	return(2);			/* HIT */
@@ -653,10 +653,10 @@ struct resource         *resp; /* pointer to a list of free segs */
 #	include "noalias.h"
 	for(i = 0; i < n; i++){
 		segp[i].seg_stp = stp[i];	/* Assume hit, if 0 then miss */
-                segp[i].seg_in.hit_dist = -INFINITY;        /* used as in */
-                segp[i].seg_in.hit_private = (char *) -1;   /* used as iplane */
-                segp[i].seg_out.hit_dist = INFINITY;        /* used as out */
-                segp[i].seg_out.hit_private = (char *) -1;  /* used as oplane */
+                segp[i].seg_in.hit_dist = -INFINITY;    /* used as in */
+                segp[i].seg_in.hit_surfno = -1;		/* used as iplane */
+                segp[i].seg_out.hit_dist = INFINITY;    /* used as out */
+                segp[i].seg_out.hit_surfno = -1;	/* used as oplane */
 /**                segp[i].seg_next = SEG_NULL;**/
 	}
 
@@ -679,13 +679,13 @@ struct resource         *resp; /* pointer to a list of free segs */
 			   /* exit point, when dir.N < 0.  out = min(out,s) */
 			   if( segp[i].seg_out.hit_dist > (s = dxbdn/dn) )  {
 			   	   segp[i].seg_out.hit_dist = s;
-				   segp[i].seg_out.hit_private = (char *) j;
+				   segp[i].seg_out.hit_surfno = j;
 			   }
 			} else if ( dn > SQRT_SMALL_FASTF )  {
 			   /* entry point, when dir.N > 0.  in = max(in,s) */
 			   if( segp[i].seg_in.hit_dist < (s = dxbdn/dn) )  {
 				   segp[i].seg_in.hit_dist = s;
-				   segp[i].seg_in.hit_private = (char *) j;
+				   segp[i].seg_in.hit_surfno = j;
 			   }
 		        }  else  {
 			   /* ray is parallel to plane when dir.N == 0.
@@ -710,8 +710,8 @@ struct resource         *resp; /* pointer to a list of free segs */
 		if (stp[i] == 0) continue;		/* skip this ray */
 		if ( segp[i].seg_stp == 0 ) continue;	/* missed */
 
-		if( segp[i].seg_in.hit_private == (char *) -1 ||
-		    segp[i].seg_out.hit_private == (char *) -1 )  {
+		if( segp[i].seg_in.hit_surfno == -1 ||
+		    segp[i].seg_out.hit_surfno == -1 )  {
 			SEG_MISS(segp[i]);		/* MISS */
 		}
 		else if(segp[i].seg_in.hit_dist >= segp[i].seg_out.hit_dist ||
@@ -734,10 +734,10 @@ register struct xray *rp;
 {
 	register struct arb_specific *arbp =
 		(struct arb_specific *)stp->st_specific;
-	int	h;
+	register int	h;
 
 	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
-	h = (int)hitp->hit_private;
+	h = hitp->hit_surfno;
 	VMOVE( hitp->hit_normal, arbp->arb_face[h].peqn );
 }
 
@@ -776,9 +776,9 @@ register struct uvcoord *uvp;
 {
 	register struct arb_specific *arbp =
 		(struct arb_specific *)stp->st_specific;
-	int	h;
-	LOCAL vect_t P_A;
-	LOCAL fastf_t r;
+	struct oface	*ofp;
+	LOCAL vect_t	P_A;
+	LOCAL fastf_t	r;
 
 	if( arbp->arb_opt == (struct oface *)0 )  {
 		register int	ret = 0;
@@ -803,12 +803,12 @@ register struct uvcoord *uvp;
 		if(rt_g.debug&DEBUG_SOLIDS)  rt_pr_soltab( stp );
 	}
 
-	h = (int)hitp->hit_private;
+	ofp = &arbp->arb_opt[hitp->hit_surfno];
 
-	VSUB2( P_A, hitp->hit_point, arbp->arb_opt[h].arb_UVorig );
+	VSUB2( P_A, hitp->hit_point, ofp->arb_UVorig );
 	/* Flipping v is an artifact of how the faces are built */
-	uvp->uv_u = VDOT( P_A, arbp->arb_opt[h].arb_U );
-	uvp->uv_v = 1.0 - VDOT( P_A, arbp->arb_opt[h].arb_V );
+	uvp->uv_u = VDOT( P_A, ofp->arb_U );
+	uvp->uv_v = 1.0 - VDOT( P_A, ofp->arb_V );
 	if( uvp->uv_u < 0 || uvp->uv_v < 0 || uvp->uv_u > 1 || uvp->uv_v > 1 )  {
 		rt_log("arb_uv: bad uv=%g,%g\n", uvp->uv_u, uvp->uv_v);
 		/* Fix it up */
@@ -816,8 +816,8 @@ register struct uvcoord *uvp;
 		if( uvp->uv_v < 0 )  uvp->uv_v = (-uvp->uv_v);
 	}
 	r = ap->a_rbeam + ap->a_diverge * hitp->hit_dist;
-	uvp->uv_du = r * arbp->arb_opt[h].arb_Ulen;
-	uvp->uv_dv = r * arbp->arb_opt[h].arb_Vlen;
+	uvp->uv_du = r * ofp->arb_Ulen;
+	uvp->uv_dv = r * ofp->arb_Vlen;
 }
 
 /*
