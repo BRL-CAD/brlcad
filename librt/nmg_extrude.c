@@ -197,6 +197,9 @@ struct rt_tol	*tol;
 	struct vertex	*v;
 	struct faceuse	*fu_tmp;
 	plane_t pl;
+	struct nmg_ptbl	edge_g_tbl;
+
+	nmg_tbl( &edge_g_tbl , TBL_INIT , (long *)NULL );
 
 	cur = 0;
 	cnt = verts_in_nmg_face(fu);
@@ -233,6 +236,29 @@ struct rt_tol	*tol;
 	fu_tmp = fu;
 	if( fu_tmp->orientation != OT_SAME )
 		fu_tmp = fu_tmp->fumate_p;
+
+	/* Move edge geometry */
+	nmg_edge_g_tabulate( &edge_g_tbl , &fu->l.magic );
+	for( i=0 ; i<NMG_TBL_END( &edge_g_tbl ) ; i++ )
+	{
+		long *ep;
+		struct edge_g_lseg *eg;
+
+		ep = NMG_TBL_GET( &edge_g_tbl , i );
+		switch( *ep )
+		{
+			case NMG_EDGE_G_LSEG_MAGIC:
+				eg = (struct edge_g_lseg *)ep;
+				NMG_CK_EDGE_G_LSEG( eg );
+				VADD2( eg->e_pt , eg->e_pt , Vec );
+				break;
+			case NMG_EDGE_G_CNURB_MAGIC:
+				/* XXX Move cnurb edge geometry??? */
+				break;
+		}
+	}
+
+	nmg_tbl( &edge_g_tbl , TBL_FREE , (long *)NULL );
 
 	if(nmg_loop_plane_area( RT_LIST_FIRST( loopuse , &fu_tmp->lu_hd ) , pl ) < 0.0 )
 	{
