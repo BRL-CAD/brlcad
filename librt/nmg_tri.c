@@ -1280,6 +1280,7 @@ CONST struct rt_tol	*tol;
 int void_ok;
 {
 	struct loopuse *new_lu;
+	struct loopuse *old_lu;
 	struct edgeuse *eu;
 	struct vertexuse *vu;
 	struct vertex *v;
@@ -1298,7 +1299,7 @@ int void_ok;
 
 	if (p1->vu_p->up.eu_p->up.lu_p != p2->vu_p->up.eu_p->up.lu_p) {
 		rt_log("parent loops are not the same %s %d\n", __FILE__, __LINE__);
-		rt_bomb("goodnight\n");
+		rt_bomb("cut_mapped_loop() goodnight 1\n");
 	}
 	collect_and_sort_vu(tbl2d, &p1, &p2, tol);
 	if (p1->vu_p->up.eu_p->up.lu_p != p2->vu_p->up.eu_p->up.lu_p) {
@@ -1308,7 +1309,7 @@ int void_ok;
 			return (struct pt2d *)NULL;
 		}
 		rt_log("parent loops are not the same %s %d\n", __FILE__, __LINE__);
-		rt_bomb("goodnight\n");
+		rt_bomb("cut_mapped_loop() goodnight 2\n");
 	}
 
 	if (plot_fd) {
@@ -1316,8 +1317,14 @@ int void_ok;
 		pdv_3line(plot_fd, p1->coord, p2->coord);
 	}
 
+	old_lu = p1->vu_p->up.eu_p->up.lu_p;
+	NMG_CK_LOOPUSE(old_lu);
 	new_lu = nmg_cut_loop(p1->vu_p, p2->vu_p);
 	NMG_CK_LOOPUSE(new_lu);
+
+	/* XXX Does anyone care about loopuse orientations at this stage? */
+	nmg_lu_reorient( old_lu, tol );
+	nmg_lu_reorient( new_lu, tol );
 
 	/* get the edgeuse of the new vertexuse we just created */
 	eu = RT_LIST_PREV(edgeuse, &new_lu->down_hd);
@@ -1742,9 +1749,7 @@ CONST struct rt_tol	*tol;
 
 	RT_CK_TOL(tol);
 	NMG_CK_FACEUSE(fu);
-	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-		nmg_split_touchingloops(lu);
-	}
+	nmg_s_split_touchingloops(fu->s_p, tol);
 
 	/* convert 3D face to face in the X-Y plane */
 	tbl2d = nmg_flatten_face(fu, TformMat);
