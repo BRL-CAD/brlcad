@@ -803,7 +803,6 @@ char line[MAX_LINE_LEN];
 	struct render_verts verts[3];
 	struct vertex   **vts[3];
 	float colr[3]={0.5, 0.5, 0.5};
-	float part_conv_factor;
 	unsigned char color[3]={ 128, 128, 128 };
 	char *brlcad_name;
 	struct wmember head;
@@ -1329,10 +1328,8 @@ Convert_input()
 
 		sscanf( line, "%f", &conv_factor );
 	}
-	else
-		conv_factor = 1.0;
 
-	if( !do_reorient )
+	if( !do_reorient && !stl_format )
 		conv_factor = 1.0;
 
 	while( fgets( line, MAX_LINE_LEN, fd_in ) )
@@ -1523,6 +1520,7 @@ char	*argv[];
 		/* this code was called as stl-g */
 		stl_format = 1;
 		do_reorient = 0;
+		conv_factor = 1.0;	/* default */
 		usage = stl_usage;
 	}
 	else
@@ -1535,8 +1533,18 @@ char	*argv[];
 	}
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "Si:rsdax:X:nu:N:")) != EOF) {
+	while ((c = getopt(argc, argv, "Si:rsdax:X:nu:N:c:")) != EOF) {
 		switch (c) {
+		case 'c':	/* convert from units */
+			conv_factor = bu_units_conversion( optarg );
+			if( conv_factor == 0.0 )
+			{
+				bu_log( "Illegal units: (%s)\n", optarg );
+				bu_bomb( "Illegal units!!\n" );
+			}
+			else
+				bu_log( "Converting units from %s to mm (conversion factor is %g)\n", optarg, conv_factor );
+			break;
 		case 'N':	/* force a name on this object */
 			strncpy( forced_name, optarg, NAME_LENGTH );
 			if( strlen( optarg ) > NAME_LENGTH )
