@@ -1236,8 +1236,11 @@ struct loop *l;
 		NMG_CK_VERTEX_G(vg);
 		VMOVE(lg->min_pt, vg->coord);
 		VMOVE(lg->max_pt, vg->coord);
-	} else
+	} else {
+		rt_log("nmg_loop_g() loopuse down is %s (x%x)\n",
+			rt_identify_magic(magic1), magic1 );
 		rt_bomb("nmg_loop_g() loopuse has bad child\n");
+	}
 }
 
 /*			N M G _ F A C E _ G
