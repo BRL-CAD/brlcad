@@ -51,7 +51,6 @@ extern char	**promp;
 static union record record;
 static int	cgarbs();
 
-#define MAXLINE	512
 #define XCOORD 0
 #define YCOORD 1
 #define ZCOORD 2

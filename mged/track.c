@@ -40,8 +40,6 @@ static union record record;
 void		crname(), slope(), crdummy(), trcurve();
 void		bottom(), top(), crregion(), itoa();
 
-#define MAXLINE	512
-
 /*
  *
  *	F _ A M T R A C K ( ) :	adds track given "wheel" info
