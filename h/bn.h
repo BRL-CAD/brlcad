@@ -839,8 +839,8 @@ BU_EXTERN(struct bn_table	*bn_table_merge2, (CONST struct bn_table *a,
 struct bn_vlist  {
 	struct bu_list	l;			/* magic, forw, back */
 	int		nused;			/* elements 0..nused active */
-	int		cmd[RT_VLIST_CHUNK];	/* VL_CMD_* */
-	point_t		pt[RT_VLIST_CHUNK];	/* associated 3-point/vect */
+	int		cmd[BN_VLIST_CHUNK];	/* VL_CMD_* */
+	point_t		pt[BN_VLIST_CHUNK];	/* associated 3-point/vect */
 };
 #define BN_VLIST_NULL	((struct bn_vlist *)0)
 #define BN_VLIST_MAGIC	0x98237474
@@ -883,7 +883,7 @@ struct bn_vlist  {
 	register struct bn_vlist *_vp; \
 	BU_CK_LIST_HEAD( _dest_hd ); \
 	_vp = BU_LIST_LAST( bn_vlist, (_dest_hd) ); \
-	if( BU_LIST_IS_HEAD( _vp, (_dest_hd) ) || _vp->nused >= RT_VLIST_CHUNK )  { \
+	if( BU_LIST_IS_HEAD( _vp, (_dest_hd) ) || _vp->nused >= BN_VLIST_CHUNK )  { \
 		BN_GET_VLIST(_free_hd, _vp); \
 		BU_LIST_INSERT( (_dest_hd), &(_vp->l) ); \
 	} \
