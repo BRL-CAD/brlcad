@@ -1,7 +1,7 @@
 /*
 	gif-fb -- convert a GIF file to (overlaid) frame buffer images
 
-	created:	89/04/26	D A Gwyn
+	created:	89/04/29	D A Gwyn
 
 	Typical compilation:	cc -O -I/usr/include/brlcad -o gif2fb \
 					gif2fb.c /usr/brlcad/lib/libfb.a
@@ -21,14 +21,9 @@
 
 	Options:
 
-	-d		"debug": prints information about the images on
-			the standard error output
-
-	-f fb_file	outputs to the specified frame buffer file instead
+	-F fb_file	outputs to the specified frame buffer file instead
 			of the one specified by the FB_FILE environment
 			variable (the default frame buffer, if no FB_FILE)
-
-	-F fb_file	same as -f fb_file (BRL-CAD package compatibility)
 
 	-i image#	outputs just the specified image number (starting
 			at 1) to the frame buffer, instead of all images
@@ -36,16 +31,19 @@
 	-o		"overlay": skips the initial clearing of the frame
 			buffer to the background color
 
+	-v		"verbose": prints information about the images on
+			the standard error output
+
 	gif_file	GIF input file to be translated (standard input if
 			no explicit GIF file name is specified)
 */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
-static char	SCCSid[] = "%W% %E%";	/* for "what" utility */
+static char	RCSid[] =		/* for "what" utility */
+	"@(#)$Header$ (BRL)";
 #endif
 
-#define	USAGE	"gif-fb [ -d ] [ -f fb_file ] [ -i image# ] [ -o ] [ gif_file ]"
-#define	OPTSTR	"df:F:i:o"
+#define	USAGE	"gif-fb [ -F fb_file ] [ -i image# ] [ -o ] [ -v ] [ gif_file ]"
+#define	OPTSTR	"F:i:ov"
 
 #ifdef BSD	/* BRL-CAD */
 #define	NO_VFPRINTF	1
@@ -57,6 +55,10 @@ static char	SCCSid[] = "%W% %E%";	/* for "what" utility */
 #define	NO_VFPRINTF	1
 #endif
 
+#ifndef DEBUG
+#define	NDEBUG
+#endif
+#include	<assert.h>
 #include	<signal.h>
 #include	<stdio.h>
 #include	<string.h>
@@ -66,40 +68,10 @@ static char	SCCSid[] = "%W% %E%";	/* for "what" utility */
 #define	RBMODE	"rb"			/* "b" not really necessary for POSIX */
 #else
 #ifdef NO_STRRCHR
-#define	strrchr( s, c )	rindex( s, c )
+#define	strrchr( s, c )		rindex( s, c )
 #endif
 #ifdef NO_MEMCPY
-static char *
-memcpy( s1, s2, n )			/* not a complete implementation! */
-	register char	*s1, *s2;
-	int		n;
-	{
-	register int	m = (n + 7) / 8;	/* wide-path loop counter */
-
-	switch ( n & 7 )		/* same as ( n % 8 ) */
-		/* Loop unrolling a la "Duff's device": */
-		do	{
-	case 0:
-			*s1++ = *s2++;
-	case 7:
-			*s1++ = *s2++;
-	case 6:
-			*s1++ = *s2++;
-	case 5:
-			*s1++ = *s2++;
-	case 4:
-			*s1++ = *s2++;
-	case 3:
-			*s1++ = *s2++;
-	case 2:
-			*s1++ = *s2++;
-	case 1:
-			*s1++ = *s2++;
-			}
-		while ( --m > 0 );
-
-	return 0;
-	}
+#define	memcpy( s1, s2, n )	bcopy( s2, s1, n )
 #else
 #include	<memory.h>
 #endif
@@ -125,7 +97,7 @@ typedef int	bool;
 
 static char	*arg0;			/* argv[0] for error message */
 static bool	clear = true;		/* set iff clear to background wanted */
-static bool	debug = false;		/* set for GIF-file debugging info */
+static bool	verbose = false;	/* set for GIF-file info printout */
 static int	image = 0;		/* # of image to display (0 => all) */
 static char	*gif_file = NULL;	/* GIF file name */
 static FILE	*gfp = NULL;		/* GIF input stream handle */
@@ -340,8 +312,8 @@ static int	compress_code;		/* first compression code value */
 static int	k;			/* extension character */
 static struct
 	{
-	int		pfx;		/* prefix string's table index */
-	int		ext;		/* extension value */
+	short		pfx;		/* prefix string's table index */
+	short		ext;		/* extension value */
 	}	table[1 << 12];		/* big enough for 12-bit codes */
 /* Unlike the example in Welch's paper, our table contains no atomic values. */
 
@@ -396,7 +368,9 @@ GetCode()
 	}
 
 
-/* WARNING:  This recursion could get pretty deep (4093 nested calls)! */
+#ifdef	USE_RECURSION
+
+/* WARNING:  This recursion could get pretty deep (2047 nested calls)! */
 static void
 Expand( c )
 	register int	c;		/* LZW code */
@@ -408,6 +382,34 @@ Expand( c )
 		PutPixel( table[c].ext );
 		}
 	}
+
+#else	/* The non-recursive version is usually faster. */
+
+static short	exp_buffer[(1 << 11) - 2];	/* reverse-order atomic codes */
+
+/* Non-recursive version, for wimpy systems: */
+static void
+Expand( c )
+	register int	c;		/* LZW code */
+	{
+	register short	*bp = exp_buffer;
+
+	while ( c >= compress_code )	/* "molecular"; follow chain */
+		{
+		assert(bp < &exp_buffer[2046]);	
+		*bp++ = table[c].ext;
+		c = table[c].pfx;
+		}
+
+	/* current `c' is "atomic", i.e. raw color index */
+
+	PutPixel( k = c );		/* first atom in string */
+
+	while ( bp > exp_buffer )
+		PutPixel( (int)*--bp );
+	}
+
+#endif	/* USE_RECURSION */
 
 
 static void
@@ -562,16 +564,10 @@ main( argc, argv )
 		while ( (c = getopt( argc, argv, OPTSTR )) != EOF )
 			switch( c )
 				{
-			default:	/* just in case */
-			case '?':	/* invalid option */
+			default:	/* '?': invalid option */
 				errors = true;
 				break;
 
-			case 'd':	/* -d */
-				debug = true;
-				break;
-
-			case 'f':	/* -f fb_file */
 			case 'F':	/* -F fb_file */
 				fb_file = optarg;
 				break;
@@ -582,6 +578,10 @@ main( argc, argv )
 
 			case 'o':	/* -o */
 				clear = false;
+				break;
+
+			case 'v':	/* -v */
+				verbose = true;
 				break;
 				}
 
@@ -639,7 +639,7 @@ main( argc, argv )
 		g_pixel = (desc[4] & 0x07) + 1;
 		background = desc[5];
 
-		if ( debug )
+		if ( verbose )
 			{
 			Message( "screen %dx%d", width, height );
 
@@ -675,7 +675,7 @@ main( argc, argv )
 
 		/* Read in global color map. */
 
-		if ( debug )
+		if ( verbose )
 			Message( "global color map has %d entries", entries );
 
 		if ( fread( g_cmap, 3, entries, gfp ) != entries )
@@ -698,7 +698,7 @@ main( argc, argv )
 		/* Set up default linear grey scale global color map.
 		   GIF specs for this case are utterly nonsensical. */
 
-		if ( debug )
+		if ( verbose )
 			Message( "default global color map has %d grey values",
 				 entries
 			       );
@@ -726,6 +726,11 @@ main( argc, argv )
 			Fatal( "Frame buffer too small (%dx%d); %dx%d needed",
 			       wt, ht, width, height
 			     );
+
+		if ( verbose && (wt > width || ht > height) )
+			Message( "Frame buffer (%dx%d) larger than GIF screen",
+				 wt, ht
+			       );
 
 		ht = height - 1;	/* for later use as (ht - row) */
 	}
@@ -815,7 +820,7 @@ main( argc, argv )
 
 				pixel = M_bit ? (desc[8] & 0x07) + 1 : g_pixel;
 
-				if ( debug )
+				if ( verbose )
 					{
 					Message( "image (%d,%d,%d,%d)",
 						 left, top, right, bottom
@@ -854,7 +859,7 @@ main( argc, argv )
 
 				/* Read in local color map. */
 
-				if ( debug )
+				if ( verbose )
 					Message(
 					       "local color map has %d entries",
 						 entries
@@ -878,7 +883,7 @@ main( argc, argv )
 
 				/* Use default global color map. */
 
-				if ( debug )
+				if ( verbose )
 					Message( "global color map used" );
 
 				(void)memcpy( cmap, g_cmap, 3 * entries );

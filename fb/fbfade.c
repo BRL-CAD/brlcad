@@ -1,7 +1,7 @@
 /*
 	fbfade -- "twinkle" fade in or out a frame buffer image
 
-	created:	89/04/26	D A Gwyn with help from G S Moss
+	created:	89/04/29	D A Gwyn with help from G S Moss
 
 	Typical compilation:	cc -O -I/usr/include/brlcad -o fbfade \
 					fbfade.c /usr/brlcad/lib/libfb.a
@@ -15,27 +15,38 @@
 
 	Options:
 
-	-h		assumes 1024x1024 frame buffer instead of 512x512
+	-h		assumes 1024x1024 default input size instead of 512x512
 
-	-i in_fb_file	reads from the specified frame buffer file instead
+	-f in_fb_file	reads from the specified frame buffer file instead
 			of assuming constant black ("fade out") value
 
-	-f out_fb_file	writes to the specified frame buffer file instead
+	-s size		input size (width & height)
+
+	-w width	input width
+
+	-n height	input height
+
+	-F out_fb_file	writes to the specified frame buffer file instead
 			of the one specified by the FB_FILE environment
 			variable (the default frame buffer, if no FB_FILE)
 
-	-F out_fb_file	same as -f fb_file (BRL-CAD package compatibility)
+	-S size		output size (width & height)
 
-	out_fb_file	same as -f fb_file, for convenience
+	-W width	output width
+
+	-N height	output height
+
+	out_fb_file	same as -F out_fb_file, for convenience
 */
 #ifndef lint
-static char	SCCSid[] = "%W% %E%";	/* for "what" utility */
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char	RCSid[] =		/* for "what" utility */
+	"@(#)$Header$ (BRL)";
 #endif
 
-#define	USAGE	\
-	 "fbfade [ -h ] [ -i in_fb_file ] [ out_fb_file ]"
-#define	OPTSTR	"hi:f:F:"
+#define	USAGE1 "fbfade [ -s size ] [ -w width ] [ -n height ] [ -f in_fb_file ]"
+#define	USAGE2	\
+	"\t[ -h ] [ -S size ] [ -W width ] [ -N height ] [ [ -F ] out_fb_file ]"
+#define	OPTSTR	"f:F:hn:N:s:S:w:W:"
 
 #ifdef BSD	/* BRL-CAD */
 #define	NO_DRAND48	1
@@ -64,7 +75,7 @@ extern double	drand48( void );	/* in UNIX System V C library */
 #define	SIZE_T	unsigned
 extern void	exit();
 extern char	*malloc();
-extern int	getopt();
+extern int	atoi(), getopt();
 extern double	drand48();
 #endif
 #ifndef EXIT_SUCCESS
@@ -87,7 +98,10 @@ static bool	hires = false;		/* set for 1Kx1K; clear for 512x512 */
 static char	*in_fb_file = NULL;	/* input frame buffer name */
 static char	*out_fb_file = NULL;	/* output frame buffer name */
 static FBIO	*fbp = FBIO_NULL;	/* input/output frame buffer handle */
-static int	width, height;		/* full frame buffer size */
+static int	src_width = 0,
+		src_height = 0;		/* input image size */
+static int	dst_width = 0,
+		dst_height = 0;		/* output frame buffer size */
 static RGBpixel	*pix;			/* input image */
 static RGBpixel	bg = { 0, 0, 0 };	/* background */
 
@@ -239,34 +253,72 @@ main( argc, argv )
 		while ( (c = getopt( argc, argv, OPTSTR )) != EOF )
 			switch( c )
 				{
-			default:	/* just in case */
-			case '?':	/* invalid option */
+			default:	/* '?': invalid option */
 				errors = true;
+				break;
+
+			case 'f':	/* -f in_fb_file */
+				in_fb_file = optarg;
+				break;
+
+			case 'F':	/* -F out_fb_file */
+				out_fb_file = optarg;
 				break;
 
 			case 'h':	/* -h */
 				hires = true;
 				break;
 
-			case 'i':	/* -i in_fb_file */
-				in_fb_file = optarg;
+			case 'n':	/* -n height */
+				if ( (src_height = atoi( optarg )) <= 0 )
+					errors = true;
+
 				break;
 
-			case 'f':	/* -f out_fb_file */
-			case 'F':	/* -F out_fb_file */
-				out_fb_file = optarg;
+			case 'N':	/* -N height */
+				if ( (dst_height = atoi( optarg )) <= 0 )
+					errors = true;
+
+				break;
+
+			case 's':	/* -s size */
+				if ( (src_height = src_width = atoi( optarg ))
+				  <= 0
+				   )
+					errors = true;
+
+				break;
+
+			case 'S':	/* -S size */
+				if ( (dst_height = dst_width = atoi( optarg ))
+				  <= 0
+				   )
+					errors = true;
+
+				break;
+
+			case 'w':	/* -w width */
+				if ( (src_width = atoi( optarg )) <= 0 )
+					errors = true;
+
+				break;
+
+			case 'W':	/* -W width */
+				if ( (dst_width = atoi( optarg )) <= 0 )
+					errors = true;
+
 				break;
 				}
 
 		if ( errors )
-			Fatal( "Usage: %s", USAGE );
+			Fatal( "Usage: %s\n%s", USAGE1, USAGE2 );
 	}
 
 	if ( optind < argc )		/* out_fb_file */
 		{
 		if ( optind < argc - 1 || out_fb_file != NULL )
 			{
-			Message( "Usage: %s", USAGE );
+			Message( "Usage: %s\n%s", USAGE1, USAGE2 );
 			Fatal( "Can't handle multiple output frame buffers!" );
 			}
 
@@ -275,37 +327,52 @@ main( argc, argv )
 
 	/* Open frame buffer for unbuffered input. */
 
-	width = height = hires ? 1024 : 512;	/* starting default */
+	if ( src_width == 0 )
+		src_width = hires ? 1024 : 512;		/* starting default */
 
+	if ( src_height == 0 )
+		src_height = hires ? 1024 : 512;	/* starting default */
+
+/*XXX*/Message( "Requested source %dx%d", src_width, src_height );
 	if ( in_fb_file != NULL )
-		if ( (fbp = fb_open( in_fb_file, width, height )) == FBIO_NULL )
+		if ( (fbp = fb_open( in_fb_file, src_width, src_height ))
+		  == FBIO_NULL
+		   )
 			Fatal( "Couldn't open input frame buffer" );
 		else	{
 			register int	y;
 			register int	wt = fb_getwidth( fbp );
 			register int	ht = fb_getheight( fbp );
 
-			/* Use actual input image size instead of 512/1024. */
+			/* Use smaller input image size instead of 512/1024. */
 
-			width = wt;
-			height = ht;
+			if ( wt < src_width )
+				src_width = wt;
 
-			if ( (long)(SIZE_T)((long)wt * (long)ht
+			if ( ht < src_height )
+				src_height = ht;
+
+/*XXX*/Message( "Final source %dx%d", src_width, src_height );
+			if ( (long)(SIZE_T)((long)src_width * (long)src_height
 					   * (long)sizeof(RGBpixel)
 					   )
-			  != (long)wt * (long)ht * (long)sizeof(RGBpixel)
+			  != (long)src_width * (long)src_height
+					     * (long)sizeof(RGBpixel)
 			   )
 				Fatal( "Integer overflow, malloc unusable" );
 
-			if ( (pix = (RGBpixel *)malloc( (SIZE_T)wt * (SIZE_T)ht
+			if ( (pix = (RGBpixel *)malloc( (SIZE_T)src_width
+						      * (SIZE_T)src_height
 						      * sizeof(RGBpixel)
 						      )
 			     ) == NULL
 			   )
 				Fatal( "Not enough memory for pixel array" );
 
-			for ( y = 0; y < ht; ++y )
-				if ( fb_read( fbp, 0, y, pix[y * wt], wt ) == -1
+			for ( y = 0; y < src_height; ++y )
+				if ( fb_read( fbp, 0, y, pix[y * src_width],
+					      src_width
+					    ) == -1
 				   )
 					Fatal( "Error reading raster" );
 
@@ -318,51 +385,72 @@ main( argc, argv )
 
 	/* Open frame buffer for unbuffered output. */
 
-	if ( (fbp = fb_open( out_fb_file, width, height )) == FBIO_NULL )
+	if ( dst_width == 0 )
+		dst_width = src_width;		/* default */
+
+	if ( dst_height == 0 )
+		dst_height = src_height;	/* default */
+
+/*XXX*/Message( "Requested destination %dx%d", dst_width, dst_height );
+	if ( (fbp = fb_open( out_fb_file, dst_width, dst_height )) == FBIO_NULL
+	   )
 		Fatal( "Couldn't open output frame buffer" );
 	else	{
 		register int	wt = fb_getwidth( fbp );
 		register int	ht = fb_getheight( fbp );
 
-		if ( in_fb_file == NULL )
-			{
-			/* Use actual frame buffer size instead of 512/1024. */
+		/* Use smaller frame buffer size for output. */
 
-			width = wt;
-			height = ht;
-			}
-		else
-			if ( wt < width || ht < height )
-				Fatal(
-			  "Output frame buffer too small (%dx%d); %dx%d needed",
-				       wt, ht, width, height
-				     );
+		if ( wt < dst_width )
+			dst_width = wt;
+
+		if ( ht < dst_height )
+			dst_height = ht;
+
+		/* Don't select pixels outside input image. */
+
+		if ( dst_width > src_width )
+			dst_width = src_width;
+
+		if ( dst_height > src_height )
+			dst_height = src_height;
+/*XXX*/Message( "Final destination %dx%d", dst_width, dst_height );
 		}
 
 	/* The following is probably an optimally fast shuffling algorithm;
-	   unfortunately, it requires a huge auxiliary array. */
+	   unfortunately, it requires a huge auxiliary array.  The way it
+	   works is to start with an array of all pixel indices, then repeat:
+	   select entry at random from the array, output that index, replace
+	   the entry with the last array entry, and reduce the array size. */
 	{
 	register long	*loc;		/* keeps track of pixel shuffling */
-	register long	wxh = (long)width * (long)height;
+	register long	wxh = (long)dst_width * (long)dst_height;
 					/* down-counter */
+
+	if ( (long)(SIZE_T)(wxh * (long)sizeof(long))
+	  != wxh * (long)sizeof(long)
+	   )
+		Fatal( "Integer overflow, malloc unusable" );
 
 	if ( (loc = (long *)malloc( (SIZE_T)wxh * sizeof(long) )) == NULL )
 		Fatal( "Not enough memory for location array" );
 
 	/* Initialize pixel location array to sequential order. */
 
-	for ( wxh = (long)width * (long)height; --wxh >= 0L; )
+	while ( --wxh >= 0L )
 		loc[wxh] = wxh;
 
 	/* Select a pixel at random, paint it, and adjust the location array. */
 
-	for ( wxh = (long)width * (long)height; --wxh >= 0L; )
+	for ( wxh = (long)dst_width * (long)dst_height; --wxh >= 0L; )
 		{
 		register long	r = (long)((double)wxh * drand48());
+		register long	x = loc[r] % dst_width;
+		register long	y = loc[r] / dst_width;
 
-		if ( fb_write( fbp,
-			       (int)(loc[r] % width), (int)(loc[r] / width),
-			       in_fb_file == NULL ? bg : pix[loc[r]],
+		if ( fb_write( fbp, (int)x, (int)y,
+			       in_fb_file == NULL ? bg
+						  : pix[x + y * src_width],
 			       1
 			     ) == -1
 		   )

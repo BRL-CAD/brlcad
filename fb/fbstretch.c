@@ -1,7 +1,7 @@
 /*
 	fbstretch -- stretch a frame buffer image
 
-	created:	89/04/26	D A Gwyn
+	created:	89/04/29	D A Gwyn
 
 	Typical compilation:	cc -O -I/usr/include/brlcad -o fbstretch \
 					fbstretch.c /usr/brlcad/lib/libfb.a
@@ -21,34 +21,49 @@
 
 	Options:
 
-	-h		assumes 1024x1024 frame buffer instead of 512x512
+	-a		"no averaging": samples for compression instead of
+			averaging pixels
 
-	-s		samples for compression instead of averaging pixels
+	-v		"verbose": prints information about sizes and scaling
+			on the standard error output
 
-	-x x_scale	horizontal scaling factor (default 1.0)
+	-x x_scale	horizontal scaling factor (default: out width/in width)
 
-	-y y_scale	vertical scaling factor (default 1.0)
+	-y y_scale	vertical scaling factor (default: out height/in height)
 
-	-i in_fb	reads from the specified frame buffer file instead
+	-f in_fb	reads from the specified frame buffer file instead
 			of modifying the one specified by the -f option "in
 			place"
 
-	-f out_fb	writes to the specified frame buffer file instead
+	-F out_fb	writes to the specified frame buffer file instead
 			of the one specified by the FB_FILE environment
 			variable (the default frame buffer, if no FB_FILE)
 
-	-F out_fb	same as -f out_fb (BRL-CAD package compatibility)
+	-h		assumes 1024x1024 default input size instead of 512x512
 
-	out_fb		same as -f out_fb, for convenience
+	-s size		input size (width & height)
+
+	-w width	input width
+
+	-n height	input height
+
+	-S size		output size (width & height)
+
+	-W width	output width
+
+	-N height	output height
+
+	out_fb		same as -F out_fb, for convenience
 */
 #ifndef lint
-static char	SCCSid[] = "%W% %E%";	/* for "what" utility */
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char	RCSid[] =		/* for "what" utility */
+	"@(#)$Header$ (BRL)";
 #endif
 
-#define	USAGE	\
-       "fbstretch [ -h ] [ -s ] [ -x x_sc ] [ -y y_sc ] [ -i in_fb ] [ out_fb ]"
-#define	OPTSTR	"hsx:y:i:f:F:"
+#define	USAGE1	"fbstretch [ -h ] [ -s size ] [ -w width ] [ -n height ]"
+#define	USAGE2	"\t[ -f in_fb_file ] [ -a ] [ -v ] [ -x x_sc ] [ -y y_sc ]"
+#define	USAGE3 "\t[ -S size ] [ -W width ] [ -N height ] [ [ -F ] out_fb_file ]"
+#define	OPTSTR	"af:F:hn:N:s:S:vw:W:x:y:"
 
 #ifdef BSD	/* BRL-CAD */
 #define	NO_VFPRINTF	1
@@ -77,7 +92,7 @@ extern int	getopt( int, char const * const *, char const * );
 #include	<varargs.h>
 extern void	exit();
 extern char	*calloc(), *getenv();
-extern int	getopt();
+extern int	atoi(), getopt();
 extern double	atof();
 #endif
 #ifndef EXIT_SUCCESS
@@ -100,16 +115,19 @@ typedef int	bool;
 static char	*arg0;			/* argv[0] for error message */
 static bool	hires = false;		/* set for 1Kx1K; clear for 512x512 */
 static bool	sample = false;		/* set: sampling; clear: averaging */
-static float	x_scale = 1;		/* horizontal scaling factor */
-static float	y_scale = 1;		/* vertical scaling factor */
+static bool	verbose = false;	/* set for size info printout */
+static float	x_scale = -1.0;		/* horizontal scaling factor */
+static float	y_scale = -1.0;		/* vertical scaling factor */
 static bool	x_compress;		/* set iff compressing horizontally */
 static bool	y_compress;		/* set iff compressing vertically */
 static char	*src_file = NULL;	/* source frame buffer name */
 static FBIO	*src_fbp = FBIO_NULL;	/* source frame buffer handle */
 static char	*dst_file = NULL;	/* destination frame buffer name */
 static FBIO	*dst_fbp = FBIO_NULL;	/* destination frame buffer handle */
-static int	src_width, src_height;	/* source image size */
-static int	dst_width, dst_height;	/* destination image size */
+static int	src_width = 0,
+		src_height = 0;		/* source image size */
+static int	dst_width = 0,
+		dst_height = 0;		/* destination image size */
 static RGBpixel	bg = { 0, 0, 0 };	/* background */
 static RGBpixel	*src_buf;		/* calloc()ed input scan line buffer */
 static RGBpixel	*dst_buf;		/* calloc()ed output scan line buffer */
@@ -134,7 +152,9 @@ VMessage( format, ap )
 #ifdef NO_VFPRINTF
 	(void)fprintf( stderr, format,	/* kludge city */
 		       ((int *)ap)[0], ((int *)ap)[1],
-		       ((int *)ap)[2], ((int *)ap)[3]
+		       ((int *)ap)[2], ((int *)ap)[3],
+		       ((int *)ap)[4], ((int *)ap)[5],
+		       ((int *)ap)[6], ((int *)ap)[7]
 		     );
 #else
 	(void)vfprintf( stderr, format, ap );
@@ -250,17 +270,68 @@ main( argc, argv )
 		while ( (c = getopt( argc, argv, OPTSTR )) != EOF )
 			switch( c )
 				{
-			default:	/* just in case */
-			case '?':	/* invalid option */
+			default:	/* '?': invalid option */
 				errors = true;
+				break;
+
+			case 'a':	/* -a */
+				sample = true;
+				break;
+
+			case 'f':	/* -f in_fb */
+				src_file = optarg;
+				break;
+
+			case 'F':	/* -F out_fb */
+				dst_file = optarg;
 				break;
 
 			case 'h':	/* -h */
 				hires = true;
 				break;
 
-			case 's':	/* -s */
-				sample = true;
+			case 'n':	/* -n height */
+				if ( (src_height = atoi( optarg )) <= 0 )
+					errors = true;
+
+				break;
+
+			case 'N':	/* -N height */
+				if ( (dst_height = atoi( optarg )) <= 0 )
+					errors = true;
+
+				break;
+
+			case 's':	/* -s size */
+				if ( (src_height = src_width = atoi( optarg ))
+				  <= 0
+				   )
+					errors = true;
+
+				break;
+
+			case 'S':	/* -S size */
+				if ( (dst_height = dst_width = atoi( optarg ))
+				  <= 0
+				   )
+					errors = true;
+
+				break;
+
+			case 'v':
+				verbose = true;
+				break;
+
+			case 'w':	/* -w width */
+				if ( (src_width = atoi( optarg )) <= 0 )
+					errors = true;
+
+				break;
+
+			case 'W':	/* -W width */
+				if ( (dst_width = atoi( optarg )) <= 0 )
+					errors = true;
+
 				break;
 
 			case 'x':	/* -x x_scale */
@@ -269,6 +340,7 @@ main( argc, argv )
 					Message( "Nonpositive x scale factor" );
 					errors = true;
 					}
+
 				break;
 
 			case 'y':	/* -y y_scale */
@@ -277,27 +349,19 @@ main( argc, argv )
 					Message( "Nonpositive y scale factor" );
 					errors = true;
 					}
-				break;
 
-			case 'i':	/* -i in_fb */
-				src_file = optarg;
-				break;
-
-			case 'f':	/* -f out_fb */
-			case 'F':	/* -F out_fb */
-				dst_file = optarg;
 				break;
 				}
 
 		if ( errors )
-			Fatal( "Usage: %s", USAGE );
+			Fatal( "Usage: %s\n%s\n%s", USAGE1, USAGE2, USAGE3 );
 	}
 
 	if ( optind < argc )		/* dst_file */
 		{
 		if ( optind < argc - 1 || dst_file != NULL )
 			{
-			Message( "Usage: %s", USAGE );
+			Message( "Usage: %s\n%s\n%s", USAGE1, USAGE2, USAGE3 );
 			Fatal( "Can't handle multiple output frame buffers!" );
 			}
 
@@ -307,9 +371,30 @@ main( argc, argv )
 	if ( dst_file == NULL )
 		dst_file = getenv( "FB_FILE" );	/* needed for later strcmp */
 
+	/* Figure out what scale factors to use before messing up size info. */
+
+	if ( x_scale < 0.0 )
+		if ( src_width == 0 || dst_width == 0 )
+			x_scale = 1.0;
+		else
+			x_scale = (double)dst_width / (double)src_width;
+			
+	if ( y_scale < 0.0 )
+		if ( src_height == 0 || dst_height == 0 )
+			y_scale = 1.0;
+		else
+			y_scale = (double)dst_height / (double)src_height;
+
+	if ( verbose )
+		Message( "Scale factors %gx%g", x_scale, y_scale );
+
 	/* Open frame buffer(s) for unbuffered input/output. */
 
-	src_width = src_height = hires ? 1024 : 512;	/* starting default */
+	if ( src_width == 0 )
+		src_width = hires ? 1024 : 512;		/* starting default */
+
+	if ( src_height == 0 )
+		src_height = hires ? 1024 : 512;	/* starting default */
 
 	if ( (src_fbp = fb_open( src_file == NULL ? dst_file : src_file,
 				 src_width, src_height
@@ -317,42 +402,61 @@ main( argc, argv )
 	     ) == FBIO_NULL
 	   )
 		Fatal( "Couldn't open input frame buffer" );
+	else	{
+		register int	wt = fb_getwidth( src_fbp );
+		register int	ht = fb_getheight( src_fbp );
 
-	/* Use actual input size in preference to 512/1024 default. */
+		/* Use smaller input image size instead of 512/1024. */
 
-	src_width = fb_getwidth( src_fbp );
-	src_height = fb_getheight( src_fbp );
-#ifdef DEBUG
-	Message( "Source image %dx%d", src_width, src_height );
-#endif
+		if ( wt < src_width )
+			src_width = wt;
+
+		if ( ht < src_height )
+			src_height = ht;
+
+		if ( verbose )
+			Message( "Source image %dx%d", src_width, src_height );
+		}
 
 	if ( src_file == NULL
 	  || dst_file != NULL && strcmp( src_file, dst_file ) == 0
 	   )	{
-		dst_width = src_width;	/* don't try to change the image size */
+		dst_width = src_width;	/* don't try to change existing size */
 		dst_height = src_height;
 
 		dst_fbp = src_fbp;	/* use same f.b. for input & output */
 		}
 	else	{
-		dst_width = src_width * x_scale + EPSILON;
-		dst_height = src_height * y_scale + EPSILON;
-#ifdef DEBUG
-		Message( "Requested output size %dx%d", dst_width, dst_height );
-#endif
+		register int	wt, ht;
+
+		if ( dst_width == 0 )
+			dst_width = src_width * x_scale + EPSILON;
+
+		if ( dst_height == 0 )
+			dst_height = src_height * y_scale + EPSILON;
+
+		if ( verbose )
+			Message( "Requested output size %dx%d",
+				 dst_width, dst_height
+			       );
 
 		if ( (dst_fbp = fb_open( dst_file, dst_width, dst_height ))
 		  == FBIO_NULL
 		   )
 			Fatal( "Couldn't open output frame buffer" );
 
-		/* Use actual output size in preference to requested size. */
+		/* Use smaller output size in preference to requested size. */
 
-		dst_width = fb_getwidth( dst_fbp );
-		dst_height = fb_getheight( dst_fbp );
-#ifdef DEBUG
-		Message( "Destination image %dx%d", dst_width, dst_height );
-#endif
+		if ( (wt = fb_getwidth( dst_fbp )) < dst_width )
+			dst_width = wt;
+
+		if ( (ht = fb_getheight( dst_fbp )) < dst_height )
+			dst_height = ht;
+
+		if ( verbose )
+			Message( "Destination image %dx%d",
+				 dst_width, dst_height
+			       );
 		}
 
 	/* Determine compression/expansion directions. */
@@ -362,7 +466,8 @@ main( argc, argv )
 
 	/* Allocate input/output scan line buffers.  These could overlap, but
 	   I decided to keep them separate for simplicity.  The algorithms are
-	   arranged so that source and destination can access the same image.
+	   arranged so that source and destination can access the same image; if
+	   at some future time offsets are supported, that would no longer hold.
 	   calloc is used instead of malloc just to avoid integer overflow. */
 
 	if ( (src_buf = (RGBpixel *)calloc(
