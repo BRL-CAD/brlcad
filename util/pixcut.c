@@ -41,6 +41,10 @@ static int	num_bytes = 3;
 #define SIZEBACK	256
 static unsigned char background[SIZEBACK];	/* Holds the fill background color */
 
+#if defined(SYSV)
+static char	stdiobuf[4*1024*1024];
+#endif
+
 static FILE	*input;
 static char	*in_name;
 static int	autosize = 0;
@@ -180,6 +184,15 @@ int argc; char **argv;
 			(void) fprintf(stderr, "pixcut: unable to autosize\n");
 		}
 	}
+
+/*
+ * On the assumption that there will be lots more input to paw through
+ * than there will be output to write, give STDIO a big input buffer
+ * to allow decent sized transfers from the filesystem.
+ */
+#if defined( SYSV )
+	(void) setvbuf( input, stdiobuf, _IOFBF, sizeof(stdiobuf) );
+#endif
 
 /*
  * Make a buffer will hold a single scan line of assuming a worst
