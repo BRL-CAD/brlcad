@@ -485,7 +485,7 @@ unsigned rayno;		/* ray number for this burst point */
 		azim = atan2( cosyr, cosxr );
 	sinelev = Dot( gridver, raydir );
 	if(	fprintf( outfp,
-			"%c % 8.3f % 8.3f % 6u\n",
+			"%c %8.3f %8.3f %6u\n",
 			PB_RAY_HEADER,
 			azim,   /* ray azimuth angle WRT shotline (radians). */
 			sinelev, /* sine of ray elevation angle WRT shotline. */
