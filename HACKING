@@ -319,7 +319,7 @@ Generic platform checks (e.g. ifdef unix) are highly discouraged and
 should not be used.  Replace those checks with tests for the actual
 facility being utilized instead.
 
-C features:
+Coding Standards:
 
 Features of C that conform to the ISO/IEC 9899-1990 C standard (C90)
 are generally the baseline for strict language conformance.
@@ -327,18 +327,21 @@ Particulars of the usage of the language calls special attention to
 the following:
 
 globals are discouraged - globals are often the easy way around a hard
-coding problem, try to find another solution.
+coding problem, try to find another solution unless there is a good
+reason.
 
 "//" style comments are not allowed.  This is mainly to cause less
-grief for those porting to the older systems where such support is not
-available.
+grief when porting to the older systems where such support is
+frequently not available.
 
-Source coding standards:
+Code Formatting Conventions:
 
 The code should strive to achieve conformance with the GNU coding
 standard with a few exceptions, omissions, and reminders listed below.
 The following should be more strictly adhered to, if only for the sake
-of being consistent:
+of being consistent.
+
+1) Whitespace
 
 Indents are 2 characters, tabs are 8 characters.  There should be an
 emacs and vi setting at the end of each file to adopt, enforce, and
@@ -355,24 +358,53 @@ and header files at the end of the file:
  * ex: shiftwidth=2 tabstop=8
  */
 
-Local variables should be named so that they are not easily confused to be
-C++ class names or private member data.
-  double localVariable; // ok
-  double LocalVariable; // bad (looks like class or constructor) 
-  double _localVar;     // bad (looks like member variable)
+Space around operators.
+  a = (b + c) * d;  /* ok */
 
-Variables are not to be "decorated" to show their type (i.e. do not use
-Hungarian notation or variations thereof).  The name should use a concise,
-meaningful name that is not cryptic.
-  char *name;    // ok
-  char *pName;   // discouraged, but okay
-  char *fooPtr;  // bad
-  char *lpszFoo; // bad
+No space around parentheses.
+  while (1) { ...   /* ok */
+
+Commas and semicolons are followed by whitespace.
+  int main(int argc, char *argv[]); /* ok */
+  for (i = 0; i < max; i++) { ...   /* ok */
+
+2) Braces
+
+Opening braces should be on the same line as their statement, close
+braces should line up with that same statement.
+  for (i = 0; i < 100; i++) {
+    if (i % 10 == 0) {
+      j += 1;
+    } else {
+      j -= 1;
+    }
+  }
+      
+3) Names
+
+Prefer mixed-case names over underscore-separated ones. (this one is
+less important, as there are vast majorities of both in the code)
+Variable names should start with a lowercase letter.
+  double localVariable; /* ok */
+  double LocalVariable; /* bad (looks like class or constructor) */
+  double _localVar;     /* bad (looks like member variable)      */
+
+Variables are not to be "decorated" to show their type (i.e. do not
+use Hungarian notation or variations thereof) with a slight exception
+for pointers on occasion.  The name should use a concise, meaningful
+name that is not cryptic (you typing a descriptive name is preferred
+over someone else hunting down what it meant).
+  char *name;    /* ok  */
+  char *pName;   /* discouraged, but okay */
+  char *fooPtr;  /* bad */
+  char *lpszFoo; /* bad */
 
 Constants should be all upper-case with word boundaries separated by
 underscores.
-  static const int MAX_READ = 2;  // ok
-  static const int arraySize = 8; // bad
+  static const int MAX_READ = 2;  /* ok  */
+  static const int arraySize = 8; /* bad */
+
+4) Debugging
 
 Compilation preprocessor defines should never change the size of structures.
   struct Foo {
@@ -381,12 +413,14 @@ Compilation preprocessor defines should never change the size of structures.
   #endif
   };
 
-Use libbu's memory allocation routines (bu_malloc(), bu_free())
-instead of malloc() and free().
+Use libbu's memory allocation and logging routines.  Use bu_malloc(),
+bu_free(), bu_log() instead of malloc(), free(), printf(), etc.
+
+---
 
 Violations of these rules in the existing code are not excuses to
 follow suit.  If code is seen that doesn't conform, it may and should
-be fixed.
+be fixed.  ;-)
 
 
 DOCUMENTATION
