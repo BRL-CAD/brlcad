@@ -1,6 +1,7 @@
 #!/bin/sh
 
 # Regardless of file type, show it on the framebuffer.
+# The flags are for the display program.
 
 if test "$1" = ""
 then
@@ -26,10 +27,12 @@ pix)
 	pix-fb -w$WIDTH -n$HEIGHT $FLAGS $FILE;;
 bw)
 	bw-fb -w$WIDTH -n$HEIGHT $FLAGS $FILE;;
+rle)
+	rle-fb $FLAGS $FILE;;
 jpg|jpeg)
 	jpeg-fb $FLAGS $FILE;;
 gif)
-	gif-fb $FLAGS $FILE;;
+	gif-fb -co $FLAGS $FILE;;
 *)
 	echo "$SUFFIX is not supported by this script"
 	exit 1
