@@ -147,4 +147,6 @@ main( int argc , char *argv[] ) {
 		rt_db_free_internal( &ip, &rt_uniresource );
 
 	}
+
+	return 0;
 }
