@@ -100,8 +100,8 @@ int argc; char * argv[];
 
 interpolate_data()
 {
-	struct snurb srf;
-	struct snurb *srf2, *srf3;
+	struct face_g_snurb srf;
+	struct face_g_snurb *srf2, *srf3;
 	struct knot_vector new_kv;
 	fastf_t * data;
 	fastf_t rt_nurb_par_edge();
@@ -111,8 +111,8 @@ interpolate_data()
 	data = &grid[0][0][0];
 
 	rt_nurb_sinterp( &srf, 4, data, 10, 10 );
-	rt_nurb_kvnorm( &srf.u_knots );
-	rt_nurb_kvnorm( &srf.v_knots );
+	rt_nurb_kvnorm( &srf.u );
+	rt_nurb_kvnorm( &srf.v );
 
 	mk_bsurf(stdout, &srf);
 
