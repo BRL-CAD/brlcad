@@ -95,6 +95,17 @@ selects auto-sizing, and gives the view elevation in degrees.  Used with
 and conflicts with
 .B \-M
 .TP
+.B -f#
+sets the expected playback rate in frames-per-second.  
+The default is 30fps.
+Several time-evolving shaders
+such as 
+.I fire
+and 
+.I grass
+need to know the time at which each frame and pixel occurs to drive their
+evolution.
+.TP
 .B \-g#
 is used to set the grid cell width, in millimeters.
 Ordinarily, the cell width is computed by dividing the view size by
@@ -230,6 +241,7 @@ The final colors of all rays are averaged together.
 Better results can be obtained by simply increasing the resolution,
 and decimating the results with a filter such as
 .IR pixhalve (1).
+.TP
 .B \-I
 Turns on interactive mode.  If this flag is off, and your image is
 "large" (>= 256x256) it will lower the priority of the rt process.
@@ -257,6 +269,10 @@ Conflicts with
 .B \-a
 and
 .B \-e
+.TP
+.B \-N#
+Sets the NMG_debug flags to the given hexadecimalbit vector.
+See h/nmg.h for the bit definitions.
 .TP
 .B \-O
 .B output.dpix
