@@ -486,7 +486,8 @@ register long	newindex;
 	}
 
 #if 1
- rt_log("nmg_m_reindex() oldmax=%d, newmax=%d\n", m->maxindex, newindex );
+ rt_log("nmg_m_reindex() oldmax=%d, new%d=>%d\n",
+ 	m->maxindex, m->index, newindex );
 #endif
 	m->maxindex = newindex;
 }
