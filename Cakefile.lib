@@ -52,7 +52,7 @@
 
 #if !defined(BUILD_LIBRARY)
 PRODUCTS::	EXTRA_OBJ OBJ
-	../newvers.sh VERSION_VARIABLE LIBRARY_TITLE
+	newvers.sh VERSION_VARIABLE LIBRARY_TITLE
 	CC CFLAGS -c vers.c
 	rm -f PRODUCTS; EXTRA_SETUP
 	AR r PRODUCTS OBJ EXTRA_OBJ EXTRA_OBJ_NO_DEPENDENCY vers.o
@@ -70,14 +70,14 @@ PRODUCTS::	EXTRA_OBJ OBJ
 	 */
 #	define	SHARED_PRODUCT	PRODUCTS''[[LIBVERS]]
 PRODUCTS&::	EXTRA_OBJ OBJ
-	../newvers.sh VERSION_VARIABLE LIBRARY_TITLE
+	newvers.sh VERSION_VARIABLE LIBRARY_TITLE
 	CC CFLAGS -c vers.c
 	rm -f PRODUCTS*; EXTRA_SETUP
 	BUILD_LIBRARY SHARED_PRODUCT OBJ EXTRA_OBJ EXTRA_OBJ_NO_DEPENDENCY vers.o
-	../sharedliblink.sh SHARED_PRODUCT
+	sharedliblink.sh SHARED_PRODUCT
 
 	/* Use this opportunity to build the symlink on install */
-#	define AFTERINSTALL	../sharedliblink.sh
+#	define AFTERINSTALL	sharedliblink.sh
 #endif
 
 %.o&:	SRCDIR,,%,o			if exist ../SRCDIR/%.c
