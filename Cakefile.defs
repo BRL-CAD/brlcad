@@ -913,7 +913,7 @@ $#			define	MGED_LIBES	LIBDM LIBDM_LIBES -L''XLIBDIR -lXi -lXext -lX11 -ly -L../
 #		define	LIBTK		-ltk8.0
 #		define	LIBTK_DEP	/**/
 #	endif
-#	define LIBTCL_DL_LIBES	-ldl
+#	define LIBTCL_DL_LIBES	LIBTCL_LIBES -ldl
 #	define	LIBZ_DIR	_use_system_z_
 #	define	LIBZ		-lz
 #	define	LIBZ_DEP	/**/
