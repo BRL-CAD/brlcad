@@ -659,9 +659,10 @@ extern int rt_rpp_region();		/* find RPP of one region */
 extern void rt_pr_roots();		/* print complex roots */
 
 /*
- *  Variables and constants used by the RT library, not for external use.
+ *  Constants provided and used by the RT library.
  */
-extern double rt_invpi, rt_inv2pi;
+extern double	rt_invpi, rt_inv2pi;
+extern double	rt_inv255;
 
 /*
  *  System library routines used by the RT library.
