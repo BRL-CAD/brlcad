@@ -432,7 +432,7 @@ getsolid()
 				*fp-- = atof( scard.sc_fields[i] );
 			}
 		}
-		convert( solidp );
+		convert( solidp, solidp->s_name );
 		return(1);		/* input is valid */
 	}
 }
@@ -483,8 +483,9 @@ getsolid()
  *
  *  This routine is expected to write the records out itself.
  */
-convert( in )
+convert( in, name )
 struct solids *in;
+char	*name;
 {
 	static struct solids out;
 	register float *iv;
@@ -495,6 +496,8 @@ struct solids *in;
 	static float m5, m6;	/* TOR temporaries */
 	static float r3,r4; /* magnitude temporaries */
 	static int i;
+
+	col_pr( name );
 
 	iv = &in->s_values[0];
 	ov = &out.s_values[0];
@@ -634,12 +637,13 @@ struct solids *in;
 		break;
 
 	case SPH:
-		r1 = iv[3];		/* R */
-		VSET( F2, r1, 0, 0 );
-		VSET( F3, 0, r1, 0 );
-		VSET( F4, 0, 0, r1 );
-		in->s_type = GENELL;
-		break;
+		{
+			double	center[3], radius;
+			VMOVE( center, iv );
+			radius = iv[3];		/* R */
+			mk_sph( outfp, name, center, radius );
+			return;
+		}
 
 	case ELL:
 		if( version == 4 )  {
@@ -736,6 +740,4 @@ struct solids *in;
 	/* Common code to write out the record */
 	/* XXX error checking? */
 	fwrite( (char *)in, sizeof(union record), 1, outfp );
-
-	col_pr( in->s_name );
 }
