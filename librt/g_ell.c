@@ -1108,7 +1108,7 @@ rt_log("hunt_tol = %g, hunt_tol_sq=%g\n", state.hunt_tol, state.hunt_tol_sq);
 	}
 	/* All strips have faces, except for equator */
 	for( i=0; i < nstrips; i++ )  {
-		if( strips[i].fu == (struct faceuse *)0 )  continue;
+		if( strips[i].fu == (struct faceuse **)0 )  continue;
 		rt_free( (char *)strips[i].fu, "strip faceuse[]" );
 	}
 	rt_free( (char *)strips, "strips[]" );
@@ -1121,7 +1121,7 @@ fail:
 	}
 	/* All strips have faces, except for equator */
 	for( i=0; i < nstrips; i++ )  {
-		if( strips[i].fu == (struct faceuse *)0 )  continue;
+		if( strips[i].fu == (struct faceuse **)0 )  continue;
 		rt_free( (char *)strips[i].fu, "strip faceuse[]" );
 	}
 	rt_free( (char *)strips, "strips[]" );
