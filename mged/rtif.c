@@ -117,6 +117,7 @@ vect_t eye_model;
 {
 	register int	i;
 	quat_t		quat;
+	register struct solid *sp;
 
 	(void)fprintf(fp, "viewsize %.15e;\n", VIEWSIZE );
 	(void)fprintf(fp, "eye_pt %.15e %.15e %.15e;\n",
@@ -134,7 +135,33 @@ vect_t eye_model;
 	(void)fprintf(fp, "orientation %.15e %.15e %.15e %.15e;\n",
 		V4ARGS( quat ) );
 #endif
-	(void)fprintf(fp, "start 0;\nend;\n");
+#define DIR_USED	0x80
+	(void)fprintf(fp, "start 0; clean;\n");
+	FOR_ALL_SOLIDS(sp) {
+		for (i=0;i<=sp->s_last;i++) {
+			sp->s_path[i]->d_flags &= ~DIR_USED;
+		}
+	}
+	FOR_ALL_SOLIDS(sp) {
+		for (i=0; i<=sp->s_last; i++ ) {
+			if (!(sp->s_path[i]->d_flags & DIR_USED)) {
+				register struct animate *anp;
+				for (anp = sp->s_path[i]->d_animate; anp;
+				    anp=anp->an_forw) {
+					db_write_anim(fp, anp);
+				}
+				sp->s_path[i]->d_flags |= DIR_USED;
+			}
+		}
+	}
+
+	FOR_ALL_SOLIDS(sp) {
+		for (i=0;i<=sp->s_last;i++) {
+			sp->s_path[i]->d_flags &= ~DIR_USED;
+		}
+	}
+#undef DIR_USED
+	(void)fprintf(fp, "end;\n");
 }
 
 /*
