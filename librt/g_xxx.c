@@ -277,7 +277,7 @@ register mat_t		mat;
 }
 
 /*
- *			R T _ T G C _ E X P O R T
+ *			R T _ X X X _ E X P O R T
  *
  *  The name is added by the caller, in the usual place.
  */
@@ -307,7 +307,7 @@ double			local2mm;
 }
 
 /*
- *			R T _ T G C _ D E S C R I B E
+ *			R T _ X X X _ D E S C R I B E
  *
  *  Make human-readable formatted presentation of this solid.
  *  First line describes type of solid.
@@ -337,7 +337,7 @@ double			mm2local;
 }
 
 /*
- *			R T _ T G C _ I F R E E
+ *			R T _ X X X _ I F R E E
  *
  *  Free the storage associated with the rt_db_internal version of this solid.
  */
