@@ -19,6 +19,9 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 THESE ARE LOWER PRIORITY
 
+* fix reference to a "Create Solid" submenu on pdf page 18 (page 6) of
+  volume II
+
 * recheck AquaTk useability so we can decouple mac build from X11
 
 * converter support for common simple formats like nff and bzw
