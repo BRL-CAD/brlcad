@@ -77,7 +77,7 @@ EOF
 echo ./gen.sh -s all		  >> ${REGRESS_DIR}/.regress.${ARCH}/MAKE_LOG
 ./gen.sh -s all			  >> ${REGRESS_DIR}/.regress.${ARCH}/MAKE_LOG 2>&1
 
-echo "Compilation complete" >> ${REGRESS_DIR}/.regress.${ARCH}/MAKE_LOG
+echo "Compilation Complete" >> ${REGRESS_DIR}/.regress.${ARCH}/MAKE_LOG
 
 echo ./gen.sh -s install	  >> ${REGRESS_DIR}/.regress.${ARCH}/MAKE_LOG
 ./gen.sh -s install		  >> ${REGRESS_DIR}/.regress.${ARCH}/MAKE_LOG 2>&1
