@@ -130,7 +130,8 @@ int num_in_list;
 		for( j=0; j < 4; j++) {
 			this_one = j * lines + i;
 			/* Restrict the print to 16 chars per spec. */
-			rt_log( "%.16s", list_of_names[this_one]->d_namep);
+			rt_log( "%.16s", list_of_names[this_one]->d_namep); 
+/*			printf( "%.16s", list_of_names[this_one]->d_namep);  */
 			namelen = strlen( list_of_names[this_one]->d_namep);
 			if( namelen > 16)
 				namelen = 16;
@@ -142,11 +143,11 @@ int num_in_list;
 			 * decision on where to place them before now.
 			 */
 			if(list_of_names[this_one]->d_flags & DIR_COMB) {
-				putchar('/');
+				rt_log("/");
 				namelen++;
 			}
 			if(list_of_names[this_one]->d_flags & DIR_REGION) {
-				putchar('R');
+				rt_log("R");
 				namelen++;
 			}
 			/*
@@ -155,7 +156,7 @@ int num_in_list;
 			 * that are full too.
 			 */
 			if( this_one + lines >= num_in_list) {
-				putchar('\n');
+				rt_log("\n");
 				break;
 			} else {
 				/*
@@ -163,7 +164,7 @@ int num_in_list;
 				 * another entry to the right of this one. 
 				 */
 				while( namelen++ < 20)
-					putchar(' ');
+					rt_log(" ");
 			}
 		}
 	}
