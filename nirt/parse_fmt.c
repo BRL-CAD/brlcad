@@ -79,7 +79,7 @@ char		*dest_string = def_dest_string;
 static char	def_sf_name[] = DEF_SF_NAME;	
 char		*sf_name = def_sf_name;		/* Name of state file */
 
-FILE		*outf = stdout;
+FILE		*outf = (FILE *)NULL;
 char		*def_fmt[] =
 		{
 		    "\"Origin (x y z) = (%.2f %.2f %.2f)  (h v d) = (%.2f %.2f %.2f)\nDirection (x y z) = (%.4f %.4f %.4f)  (az el) = (%.2f %.2f)\n\" x_orig y_orig z_orig h v d_orig x_dir y_dir z_dir a e",
@@ -382,6 +382,7 @@ int	outcom_type;
 	    outcom_type);
 	return;
     }
+    if( outf == (FILE *)NULL )  outf = stdout;
     for (oip = oi_list[outcom_type]; oip != OUTITEM_NULL; oip = oip -> next)
 	switch (ValTab[oip -> code_nm].type)
 	{
@@ -652,7 +653,7 @@ com_table	*ctp;
     }
 
     /* Clean up from previous output destination */
-    if (outf != stdout)
+    if (outf != (FILE *)NULL && outf != stdout)
 	fclose(outf);
 
     if (dest_string != def_dest_string)
