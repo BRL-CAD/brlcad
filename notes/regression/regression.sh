@@ -1,10 +1,9 @@
 #!/bin/sh
 #			R E G R E S S I O N . S H		#
 #  Author -						 	#
-#	Michael John Muuss					#
+#	Christopher Sean Morrison      				#
 #								#
 # Source -							#
-#	SECAD/VLD Computing Consortium, Bldg 394		#
 #	The U. S. Army Ballistic Research Laboratory		#
 #	Aberdeen Proving Ground, Maryland  21005-5066		#
 #								#
@@ -453,14 +452,18 @@ PATH_ELEMENTS=`echo $PATH | sed 's/^://
 				s/:/ /g'`
 PATH_ELEMENTS="${PATH_ELEMENTS} ."
 
+# if non-zero, we don't perform the regression testing
+showStopperFound=0
+
 #
 # Existence check -- make sure that all the necessary programs
 # have made it into the search path (including "dot").  Otherwise, 
 # they can't be checked for validity.
 #
+echo "$0 Checking for program existence"
 for CMD in ${COMMANDS}
 do
-	not_found=1		# Assume cmd not found
+	commandNotFound=1		# Assume cmd not found
 	for PREFIX in ${PATH_ELEMENTS}
 	do
 		if test -f ${PREFIX}/${CMD}
@@ -469,28 +472,74 @@ do
 			if test -s ${PREFIX}/${CMD}
 			then
 				# all is well
-				not_found=0
+				commandNotFound=0
 				break
 			fi
-			echo "$0 WARNING:  ${PREFIX}/${CMD} exists, but is not executable."
+			echo "WARNING:  ${PREFIX}/${CMD} exists, but is not executable."
 		fi
 	done
-	if test ${not_found} -ne 0
+	if test ${commandNotFound} -ne 0
 	then
 		echo "$0 ERROR:  ${CMD} is not in your search path or current directory!"
-		exit 1		# Die
+		showStopperFound=1
 	fi
 done
 
 
-
+#
+# Logfile check -- make sure there are no log files laying around.  
+# if there are, we croak since the user may want those log(s)
+#
+echo "$0 Checking for stale logfiles"
 for CMD in ${COMMANDS}
 do
 	if [ -f ${CMD}.log ]
 	then
-		echo "$0 ERROR: the log file ${CMD}.log must be removed before
+		echo "$0 ERROR: the log file ${CMD}.log must be removed before running!"
+		showStopperFound=1
 	fi
 done
 
+#
+# Conflict check -- check and see if there are any other files that may
+# cause a conflict/clobbering later on in the regression test.
+# **This should actually check for any files used during the test
+# (.pix,etc) and croak rather than warn.
+#
+echo "$0 Checking for potential conflicting files"
+for CMD in ${COMMANDS}
+do
+	potentialConflicters=`ls ${CMD}.* 2> /dev/null`
+	for FILE in ${potentialConflicters}
+	do
+		echo "WARNING: ${FILE} may conflict with testing and get clobbered"
+	done
+done
 
 
+#
+# croak if we ran into an error
+#
+if test ${showStopperFound} -ne 0
+then
+	echo "$0 ERRORS FOUND -- BAILING OUT"
+	exit 1
+fi
+
+echo "$0 Proceeding with regression test"
+
+
+
+
+
+#
+# Cleanup -- under normal termination, clean up any remaining log or
+# other files that we may have generated.
+#
+for CMD in ${COMMANDS}
+do
+	if [ -f ${CMD}.* ]
+	then
+		rm ${CMD}.*
+	fi
+done
