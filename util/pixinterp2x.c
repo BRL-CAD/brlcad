@@ -64,7 +64,7 @@ char **argv;
 		register char *in;
 		if( read( infd, (char *)tapebuf, BLOCKSIZE ) != BLOCKSIZE ) {
 			perror("pix-interp read");
-			exit(0);
+			break;
 		}
 		in = tapebuf;
 
