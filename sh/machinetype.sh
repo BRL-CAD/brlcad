@@ -141,7 +141,7 @@ trap '/bin/rm -f ${FILE}; exit 1' 1 2 3 15	# Clean up temp file
 	HAS_SYMLINKS=0;
 #endif
 
-#ifdef convex
+#if defined(convex) || defined(__convex__)
 #	undef	c1
 	MACHINE=c1;
 	UNIXTYPE=BSD;
