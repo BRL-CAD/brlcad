@@ -494,7 +494,11 @@ light_init()
 	for( BU_LIST_FOR( lp, light_specific, &(LightHead.l) ) )  {
 		RT_CK_LIGHT(lp);
 		if (lp->lt_fraction > 0 )  continue;	/* overridden */
+#if RT_MULTISPECTRAL
+		lp->lt_fraction = 1.0;	/* always use honest intensity values */
+#else
 		lp->lt_fraction = lp->lt_intensity / inten;
+#endif
 	}
 	if (rt_verbosity & VERBOSE_LIGHTINFO) {
 		bu_log("Lighting: Ambient = %d%%\n", (int)(AmbientIntensity*100));
@@ -1101,6 +1105,7 @@ struct light_obs_stuff *los;
  *
  *	Determine the visibility of each light source in the scene from a
  *	particular location.
+ *	It is up to the caller to apply sw_lightfract[] to lp_color, etc.
  *
  *	Sets 
  *	swp:	sw_tolight[]
@@ -1122,9 +1127,6 @@ int have;
 {
 	register struct light_specific *lp;
 	register int	i;
-#if !RT_MULTISPECTRAL
-	register fastf_t *intensity;
-#endif
 	register fastf_t *tl_p;
 	int vis_ray;
 	int tot_vis_rays;
@@ -1222,13 +1224,6 @@ int have;
 		}
 
 		/* Advance to next light */
-#if RT_MULTISPECTRAL
-		/* Release sub_ap? */
-		bn_tabdata_scale(swp->msw_intensity[i], swp->msw_intensity[i],
-			swp->sw_lightfract[i]);
-#else
-		intensity += 3;
-#endif
 		tl_p += 3;
 		i++;
 	}

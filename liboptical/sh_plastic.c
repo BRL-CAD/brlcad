@@ -322,7 +322,6 @@ char	*dp;
 	register struct light_specific *lp;
 #if !RT_MULTISPECTRAL
 	register fastf_t *intensity;
-	vect_t  inten;
 	register fastf_t refl;
 #endif
 	register fastf_t *to_light;
@@ -401,8 +400,6 @@ char	*dp;
 		/* Light is not shadowed -- add this contribution */
 #if !RT_MULTISPECTRAL
 		intensity = swp->sw_intensity+3*i;
-		/* Scale for the amount of the light we could actually see */
-		VSCALE(inten, intensity, swp->sw_lightfract[i]);
 #endif
 		to_light = swp->sw_tolight+3*i;
 
@@ -413,17 +410,17 @@ char	*dp;
 					ap->a_x, ap->a_y, ap->a_level);
 				cosine = 1;
 			}
+			refl = ps->wgt_diffuse * swp->sw_lightfract[i] *
+					cosine * lp->lt_fraction;
 #if RT_MULTISPECTRAL
 			bn_tabdata_incr_mul3_scale( swp->msw_color,
 				lp->lt_spectrum,
 				swp->msw_intensity[i],
 				ms_matcolor,
-				cosine * ps->wgt_diffuse );
+				refl );
 #else
-			refl = cosine * lp->lt_fraction * ps->wgt_diffuse;
-			VELMUL3( work, matcolor, lp->lt_color, inten );
-			VJOIN1( swp->sw_color, swp->sw_color,
-				refl, work );
+			VELMUL3( work, matcolor, lp->lt_color, intensity );
+			VJOIN1( swp->sw_color, swp->sw_color, refl, work );
 #endif
 		}
 
@@ -440,14 +437,8 @@ char	*dp;
 					ap->a_x, ap->a_y, ap->a_level);
 				cosine = 1;
 			}
-#if RT_MULTISPECTRAL
-			bn_tabdata_incr_mul2_scale( swp->msw_color,
-				lp->lt_spectrum,
-				swp->msw_intensity[i],
-				ps->wgt_specular * cosine /
-				(ps->shine - ps->shine*cosine + cosine) );
-#else
-			refl = ps->wgt_specular * lp->lt_fraction *
+			refl = ps->wgt_specular * swp->sw_lightfract[i] *
+				lp->lt_fraction *
 #ifdef PHAST_PHONG
 				/* It is unnecessary to compute the actual
 				 * exponential here since phong is just a
@@ -460,7 +451,13 @@ char	*dp;
 #else
 				phg_ipow(cosine, ps->shine);
 #endif /* PHAST_PHONG */
-			VELMUL( work, lp->lt_color, inten );
+#if RT_MULTISPECTRAL
+			bn_tabdata_incr_mul2_scale( swp->msw_color,
+				lp->lt_spectrum,
+				swp->msw_intensity[i],
+				refl );
+#else
+			VELMUL( work, lp->lt_color, intensity );
 			VJOIN1( swp->sw_color, swp->sw_color, refl, work );
 #endif
 		}
