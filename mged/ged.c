@@ -441,6 +441,10 @@ if( cmdline_hook )  {if( (*cmdline_hook)(&str)) pr_prompt();} else
 			need_penup = 0;
 			rt_vls_printf( &dm_values.dv_string, "M 0 %d %d\n",
 				dm_values.dv_xpen, dm_values.dv_ypen);
+		} else if( state == ST_S_PICK || state == ST_O_PICK ||
+		    state == ST_O_PATH )  {
+			rt_vls_printf( &dm_values.dv_string, "M 0 %d %d\n",
+				dm_values.dv_xpen, dm_values.dv_ypen);
 		}
 		break;
 	default:
