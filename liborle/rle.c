@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) librle.c	1.6
-	Last edit: 	3/26/85 at 17:47:29	G S M
-	Retrieved: 	8/13/86 at 10:27:49
+	SCCS id:	@(#) librle.c	1.7
+	Last edit: 	3/27/85 at 20:47:02	G S M
+	Retrieved: 	8/13/86 at 10:28:04
 	SCCS archive:	/m/cad/librle/RCS/s.librle.c
 
 	Author : Gary S. Moss, BRL.
@@ -15,98 +15,53 @@
  */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) librle.c	1.6	last edit 3/26/85 at 17:47:29";
+char	sccsTag[] = "@(#) librle.c	1.7	last edit 3/27/85 at 20:47:02";
 #endif
 #include <stdio.h>
 #include <fb.h>
 #include <rle.h>
 typedef unsigned char	u_char;
 
+#define PRNT_A1_DEBUG(_op,_n) \
+	if(rle_debug) (void)fprintf(stderr,"%s(%d)\n",_op,_n)
+#define PRNT_A2_DEBUG(_op,_n,_c) \
+	if(rle_debug) (void)fprintf(stderr,"%s(%d,%d)\n",_op,_n,_c)
 #define CUR red		/* Must be rightmost part of Pixel.		*/
 
 /*	States for run detection					*/
 #define	DATA	0
 #define	RUN2	1
 #define	INRUN	2
+#define UPPER 255			/* anything bigger ain't a byte */
 
 /* An addition to the STDIO suite, to avoid using fwrite() for
 	writing 2 bytes of data.
  */
 #define putshort(s) \
-	do { register int v = s; \
-		(void) putc( v & 0xFF, fp ); \
-		(void) putc( (v>>8) & 0xFF, fp ); \
-		if( rle_debug ) \
-			{ \
-			(void) putc( v & 0xFF, stderr ); \
-			(void) putc( (v>>8) & 0xFF, stderr ); \
-			} \
-	} while( 0 )
-
-#define UPPER 255			/* anything bigger ain't a byte */
+	{register int v = s; \
+	(void) putc( v & 0xFF, fp ); (void) putc( (v>>8) & 0xFF, fp );}
 
 /* short instructions */
 #define mk_short_1(oper,a1)		/* one argument short */ \
-	do { \
-		(void) putc( oper, fp ); \
-		(void) putc( a1, fp ); \
-		if( rle_debug ) \
-			{ \
-			(void) putc( oper, stderr ); \
-			(void) putc( a1, stderr ); \
-			} \
-	} while( 0 )
+	{(void) putc( oper, fp ); (void) putc( a1, fp );}
 
 #define mk_short_2(oper,a1,a2)		/* two argument short */ \
-	do { \
-		(void) putc( oper, fp ); \
-		(void) putc( a1, fp ); \
-		if( rle_debug ) \
-			{ \
-			(void) putc( oper, stderr ); \
-			(void) putc( a1, stderr ); \
-			} \
-		putshort( a2 ); \
-	} while( 0 )
+	{(void) putc( oper, fp ); (void) putc( a1, fp ); putshort( a2 )}
 
 /* long instructions */
-#define mk_long_1(oper,a1) \
-	do { /* one argument long */ \
-		(void) putc( LONG|(oper), fp ); \
-		(void) putc( 0, fp ); \
-		if( rle_debug ) \
-			{ \
-			(void) putc( LONG|(oper), stderr ); \
-			(void) putc( 0, stderr ); \
-			} \
-		putshort( a1 ); \
-	} while( 0 )
+#define mk_long_1(oper,a1)		/* one argument long */ \
+	{(void) putc( LONG|oper, fp ); (void) putc( 0, fp ); putshort( a1 )}
 
-#define mk_long_2(oper,a1,a2) \
-	do { /* two argument long */ \
-		if( rle_debug ) \
-			{ \
-			(void) putc( LONG|(oper), stderr ); \
-			(void) putc( 0, stderr ); \
-			} \
-		(void) putc( LONG|(oper), fp ); \
-		(void) putc( 0, fp ); \
-		putshort( a1 ); \
-		putshort( a2 ); \
-	} while( 0 )
+#define mk_long_2(oper,a1,a2)		/* two argument long */ \
+	{(void) putc( LONG|oper, fp ); (void) putc( 0, fp ); putshort( a1 )\
+		putshort( a2 )}
 
 /* Choose between long and short format instructions.			*/
 #define mk_inst_1(oper,a1)    /* one argument inst */ \
-	do { \
-		if( a1 > UPPER )	mk_long_1(oper,a1); \
-		else			mk_short_1(oper,a1); \
-	} while( 0 )
+	{if( a1 > UPPER ) mk_long_1(oper,a1) else mk_short_1(oper,a1)}
 
 #define mk_inst_2(oper,a1,a2) /* two argument inst */ \
-	do { \
-		if( a1 > UPPER )	mk_long_2(oper,a1,a2); \
-		else			mk_short_2(oper,a1,a2); \
-	} while( 0 )
+	{if( a1 > UPPER ) mk_long_2(oper,a1,a2)	else mk_short_2(oper,a1,a2)}
 
 /* Skip one or more blank lines in the RLE file.			*/
 #define SkipBlankLines(nblank)	RSkipLines(nblank)
@@ -124,46 +79,19 @@ typedef unsigned char	u_char;
 
 /* Opcode definitions.							*/
 #define	RSkipLines(_n) \
-		do { \
-			if( rle_debug ) \
-				(void)fprintf(stderr,"RSkipLines(%d)\n",(_n)); \
-		  	mk_inst_1(RSkipLinesOp,(_n)); \
-		} while( 0 )
+	{PRNT_A1_DEBUG("Skip-Lines",_n); mk_inst_1(RSkipLinesOp,(_n))}
 
 #define	RSetColor(_c) \
-		do { \
-			if( rle_debug ) \
-				(void)fprintf(stderr,"RSetColor(%d)\n",(_c)); \
-			mk_short_1(RSetColorOp,(_c)); \
-		} while( 0 )
+	{PRNT_A1_DEBUG("Set-Color",_c); mk_short_1(RSetColorOp,(_c))}
 
 #define	RSkipPixels(_n) \
-		do { \
-			if( rle_debug ) \
-				(void)fprintf(stderr,"RSkipPixels(%d)\n",(_n)); \
-			mk_inst_1(RSkipPixelsOp,(_n)); \
-		} while( 0 )
-
-#define	RNewLine() \
-		do { \
-			if( rle_debug ) \
-				(void)fprintf(stderr,"RNewLine()\n"); \
-			RSkipLines(1); \
-		} while( 0 )
+	{PRNT_A1_DEBUG("Skip-Pixels",_n); mk_inst_1(RSkipPixelsOp,(_n))}
 
 #define	RByteData(_n) \
-		do { \
-			if( rle_debug ) \
-				(void)fprintf(stderr,"RByteData(%d)\n",_n); \
-			mk_inst_1(RByteDataOp,_n); \
-		} while( 0 )
+	{PRNT_A1_DEBUG("Byte-Data",_n); mk_inst_1(RByteDataOp,_n)}
+
 #define	RRunData(_n,_c) \
-		do { \
-			if( rle_debug ) \
-				(void)fprintf(stderr, \
-					"RRunData(%d,%d)\n",_n,_c); \
-			mk_inst_2(RRunDataOp,(_n),(_c)); \
-		} while( 0 )
+	{PRNT_A2_DEBUG("Run-Data",_n,_c); mk_inst_2(RRunDataOp,(_n),(_c))}
 
 #define NSEG	1024/3		/* Number of run segments of storage */
 static struct runs
@@ -247,15 +175,16 @@ Pixel		*bgpixel;
 		(void) fprintf( stderr, "Write of magic number failed!\n" );
 		return	-1;
 		}
-	if( rle_debug )
-		(void) fprintf( stderr, "Magic=0x%x\n", x_magic );
 	if( fwrite( (char *) &w_setup, sizeof w_setup, 1, fp ) != 1 )
 		{
 		(void) fprintf( stderr, "Write of RLE header failed!\n" );
 		return	-1;
 		}
 	if( rle_debug )
+		{
+		(void) fprintf( stderr, "Magic=0x%x\n", x_magic );
 		prnt_XSetup( "Setup structure written", &w_setup );
+		}
 	_bg_flag = bgflag;
 	_bw_flag = ncolors == 1;
 	_cm_flag = cmflag;
@@ -300,8 +229,6 @@ int		*xpos, *ypos;
 		(void) fprintf( stderr, "Read of magic word failed!\n" );
 		return	-1;
 		}
-	if( rle_debug )
-		(void) fprintf( stderr, "Magic=0x%x\n", x_magic );
 	if( x_magic != XtndRMAGIC )
 		{ Old_Rle_Header	setup;
 		if( fread( (char *) &setup, sizeof(setup), 1, fp ) != 1 )
@@ -404,7 +331,10 @@ int		*xpos, *ypos;
 	*xpos = r_setup.h_xpos;
 	*ypos = r_setup.h_ypos;
 	if( rle_debug )
+		{
+		(void) fprintf( stderr, "Magic=0x%x\n", x_magic );
 		prnt_XSetup( "Setup structure read", &r_setup );
+		}
 	return	0;
 	}
 
@@ -467,7 +397,7 @@ ColorMap	*cmap;
 	and 0 if untouched.
  */
 rle_decode_ln( fp, scan_buf )
-FILE	*fp;
+register FILE	*fp;
 Pixel	*scan_buf;
 	{
 	static int	lines_to_skip = 0;
@@ -487,153 +417,125 @@ Pixel	*scan_buf;
 		{
 		switch( opcode )
 			{
-			case RSkipLinesOp :
-				lines_to_skip = datum;
-				if( rle_debug )
-					(void) fprintf( stderr,
-							"Skip Lines %d\n",
-							lines_to_skip
-							);
-				if( lines_to_skip-- < 1 )
-					return	-1;
-				else
-					return	dirty_flag;
-			case RSetColorOp:
-				if( rle_debug )
-					(void) fprintf( stderr,
-							"Set Color %d\n",
-							datum
-							);
-			/*
-			 * Select "color channel" that following ops go to.
-			 *
-			 * Set `pp' to point to starting pixel element;
-			 * by adding STRIDE to pp, will move to corresponding
-			 * color element in next pixel.
-			 * If Black & White image:  point to left-most
-			 * byte (Red for Ikonas) in long,
-			 * and Run and Data will ignore strides below.
-			 */
-				if( _bw_flag )
-					n = 0;
-				else
-					n = datum;
-				switch( n )
-					{
-					case 0:
-						pp = &(scan_buf->red);
-						break;
-					case 1:
-						pp = &(scan_buf->green);
-						break;
-					case 2:
-						pp = &(scan_buf->blue);
-						break;
-					default:
-						(void) fprintf( stderr,
-							"Bad color %d\n",
-								n
-								);
-						return	-1;
-					}
-				break;
-			case RSkipPixelsOp:
-				n = datum;
-				if( rle_debug )
-					(void) fprintf( stderr,
-							"Skip Pixels %d\n",
-							n
-							);
-				pp += n * STRIDE; /* advance pixel ptr */
-				break;
-			case RByteDataOp:
-				{ register int bytes = 0;
-				n = datum + 1;
-				if( rle_debug )
-					(void) fprintf( stderr,
-						"Byte Data, count=%d.\n",
-							n
-							);
-	
-				if( ! _bw_flag )
-					{
-					while( n-- > 0 )
-						{
-						*pp = getc( fp );
-						pp += STRIDE;
-						bytes++;
-						}
-					}
-				else
-					{ /* Ugh, black & white.	*/
-					register u_char c;
-					while( n-- > 0 )
-						{
-						*pp++ = c = getc( fp );
-						*pp++ = c;
-						*pp++ = c;
-						*pp++ = c;
-						}
-					}
-				if( feof( fp ) )
-					{
-					(void) fprintf( stderr,
-				"unexpected EOF while reading BYTE DATA\N"
-							);
-					return	-1;
-					}
-				if( (datum + 1) & 1 )
-					{
-					/* word align file ptr */
-					(void) getc( fp );
-					bytes++;
-					}
-				dirty_flag = 1;
-				if( rle_debug )
-					(void) fprintf( stderr, "%d bytes read.\n", bytes );
-				break;
-			}
-			case RRunDataOp:
-				n = datum + 1;
+		case RSkipLinesOp :
+			lines_to_skip = datum;
+			PRNT_A1_DEBUG( "Skip-Lines", lines_to_skip );
+			if( lines_to_skip-- < 1 )
+				return	-1;
+			return	dirty_flag;
+		case RSetColorOp:
+			/* Select "color channel" that following ops go to.
+				Set `pp' to point to starting pixel element;
+		 		by adding STRIDE to pp, will move to
+				corresponding color element in next pixel.
+				If Black & White image:  point to left-most
+				byte (Red for Ikonas) in long, and Run and
+				Data will ignore strides below.
+		 	*/
+			PRNT_A1_DEBUG( "Set-Color", datum );
+			switch( (n = _bw_flag ? 0 : datum) )
 				{
-				register char *p = (char *) &word;
-				*p++ = getc( fp );
-				*p++ = getc( fp );
-				}
-				if(rle_debug)
-					(void) fprintf( stderr,	
-						"Run-Data(len=%d,inten=%d)\n",
-							n,
-							word
-							);
-	
-				if( ! _bw_flag )
-					{
-					register u_char inten = (u_char)word;
-					while( n-- > 0 )
-						{
-						*pp = inten;
-						pp += STRIDE;
-						}
-					}
-				else
-					{ /* Ugh, black & white.		*/
-					while( n-- > 0 )
-						{
-						*pp++ = (u_char) word;
-						*pp++ = (u_char) word;
-						*pp++ = (u_char) word;
-						}
-					}
-				dirty_flag = 1;
+			case 0:
+				pp = &(scan_buf->red);
+				break;
+			case 1:
+				pp = &(scan_buf->green);
+				break;
+			case 2:
+				pp = &(scan_buf->blue);
 				break;
 			default:
-				(void) fprintf( stderr,
-					"Unrecognized opcode: %d (x%x x%x)\n",
-						opcode, opcode, datum
-						);
+				(void) fprintf( stderr,	"Bad color %d\n", n );
 				if( ! rle_debug )
 					return	-1;
+				}
+			break;
+		case RSkipPixelsOp: /* advance pixel ptr */
+			n = datum;
+			PRNT_A1_DEBUG( "Skip-Pixels", n );
+			pp += n * STRIDE;
+			break;
+		case RByteDataOp:
+			n = datum + 1;
+			PRNT_A1_DEBUG( "Byte-Data", n );
+			if( ! _bw_flag )
+				{
+				/*
+				 * This is the most common region of code.
+				 * The STDIO getc() macro is actually quite
+				 * expensive.  We utilize our knowledge of
+				 * the bulk nature of this copy and the
+				 * STDIO internals (sorry) to improve speed.
+				 */
+				if( fp->_cnt >= n )
+					{ register u_char *cp = fp->_ptr;
+					fp->_cnt -= n;
+					while( n-- > 0 )
+						{
+						*pp = *cp++;
+						pp += STRIDE;
+						}
+					fp->_ptr = cp;
+					}
+				else
+				while( n-- > 0 )
+					{
+					*pp = getc(fp);
+					pp += STRIDE;
+					}
+				}
+			else
+				{ /* Ugh, black & white.		*/
+				register u_char c;
+				while( n-- > 0 )
+					{
+					*pp++ = c = getc( fp );
+					*pp++ = c;
+					*pp++ = c;
+					*pp++ = c;
+					}
+				}
+			if( (datum + 1) & 1 )
+				{ /* word align file ptr		*/
+				(void) getc( fp );
+				}
+			dirty_flag = 1;
+			break;
+		case RRunDataOp:
+			n = datum + 1;
+			{ register char *p = (char *) &word;
+			*p++ = getc( fp );
+			*p++ = getc( fp );
+			}
+			PRNT_A2_DEBUG( "Run-Data", n,	word );
+			if( ! _bw_flag )
+				{
+				register u_char inten = (u_char)word;
+				while( n-- > 0 )
+					{
+					*pp = inten;
+					pp += STRIDE;
+					}
+				}
+			else
+				{ /* Ugh, black & white.		*/
+				while( n-- > 0 )
+					{
+					*pp++ = (u_char) word;
+					*pp++ = (u_char) word;
+					*pp++ = (u_char) word;
+					*pp++ = (u_char) word;
+					}
+				}
+			dirty_flag = 1;
+			break;
+		default:
+			(void) fprintf( stderr,
+					"Unrecognized opcode: %d (x%x x%x)\n",
+					opcode, opcode, datum
+					);
+			if( ! rle_debug )
+				return	-1;
 			}
 		}
 	return	dirty_flag;
@@ -644,7 +546,7 @@ Pixel	*scan_buf;
 	Returns -1 upon failure, 0 otherwise.
  */
 rle_encode_ln( fp, scan_buf )
-FILE	*fp;
+register FILE	*fp;
 Pixel	*scan_buf;
 	{
 	register Pixel *scan_p = scan_buf;
@@ -700,7 +602,7 @@ Pixel	*scan_buf;
 				SkipPixels( runs[i+1].first-runs[i].last-1 );
 			}
 		}
-	RNewLine();
+	RSkipLines(1);
 	return	0;
 	}
 
@@ -759,8 +661,8 @@ register Pixel *endpix;
  */
 _encode_Seg_Color( fp, seg, color )
 FILE	*fp;
-int	color;
 register int	seg;
+register int	color;
 	{
 	static Pixel *data_p;
 	static Pixel *last_p;
@@ -792,8 +694,8 @@ FILE		*fp;
 register Pixel	*data_p;
 register Pixel	*last_p;
 	{
-	register Pixel	*runs_p = data_p;
 	register Pixel	*pixelp;
+	register Pixel	*runs_p = data_p;
 	register int	state = DATA;
 	register u_char	runval = data_p->CUR;
 
@@ -801,70 +703,61 @@ register Pixel	*last_p;
 		{
 		switch( state )
 			{
-			case DATA :
-				if( runval == pixelp->CUR )
-					{
-					/* 2 in a row, may be a run */
-					state = RUN2;
-					}
-				else
-					{
-					/* continue accumulating data, look
-						for a new run starting here,
-						too
-					 */
-					runval = pixelp->CUR;
-					runs_p = pixelp;
-					}
-				break;
-			case RUN2:
-				if( runval == pixelp->CUR )
-					{
-					/* 3 in a row is a run */
-					state = INRUN;
-					/* Flush out data sequence
-						encountered before this run
-					 */
-					_put_Data(	fp,
-							&(data_p->CUR),
-						 	runs_p-data_p
-						 	);
-					}
-				else
-					{
-					/* not a run, */
-					/* but maybe this starts one */
-					state = DATA;
-					runval = pixelp->CUR;
-					runs_p = pixelp;
-					}
-				break;
-			case INRUN:
-				if( runval != pixelp->CUR )
-					{
-					/* if run out */
-					state = DATA;
-					PutRun(	runval,
-						pixelp - runs_p
-						);
-					/* who knows, might be more */
-					runval = pixelp->CUR;
-					runs_p = pixelp;
-					/* starting new 'data' run */
-					data_p = pixelp;
-					}
-				break;
+		case DATA :
+			if( runval == pixelp->CUR )
+				/* 2 in a row, may be a run.		*/
+				state = RUN2;
+			else
+				{
+				/* Continue accumulating data, look for a
+					new run starting here, too
+				 */
+				runval = pixelp->CUR;
+				runs_p = pixelp;
 				}
-			}
+				break;
+		case RUN2:
+			if( runval == pixelp->CUR )
+				{
+				/* 3 in a row is a run.			*/
+				state = INRUN;
+				/* Flush out data sequence encountered
+					before this run
+				 */
+				_put_Data(	fp,
+						&(data_p->CUR),
+					 	runs_p-data_p
+					 	);
+				}
+			else
+				{ /* Not a run, but maybe this starts one. */
+				state = DATA;
+				runval = pixelp->CUR;
+				runs_p = pixelp;
+				}
+			break;
+		case INRUN:
+			if( runval != pixelp->CUR )
+				{
+				/* If run out				*/
+				state = DATA;
+				PutRun(	runval,	pixelp - runs_p );
+				/* who knows, might be more */
+				runval = pixelp->CUR;
+				runs_p = pixelp;
+				/* starting new 'data' run */
+				data_p = pixelp;
+				}
+			break;
+			} /* end switch */
+		} /* end for */
 		/* Write out last portion of section being encoded.	*/
 		if( state == INRUN )
 			{
 			PutRun( runval, pixelp - runs_p );
 			}
 		else
-			{
 			_put_Data( fp, &data_p->CUR, pixelp - data_p );
-			}
 	return;
 	}
 
@@ -878,24 +771,29 @@ register u_char *cp;
 int	n;
 	{
 	register int	count = n;
-	register int	bytes = 0;
 	if( count == 0 )
 		return;
 	RByteData(n-1);
 
+	/* More STDIO optimization, watch out...			*/
+	if( fp->_cnt >= count )
+		{ register u_char *op = fp->_ptr;
+		fp->_cnt -= count;
+		while( count-- > 0 )
+			{
+			*op++ = *cp;
+			cp += STRIDE;
+			}
+		fp->_ptr = op;
+		}
+	else
 	while( count-- > 0 )
 		{
 		(void) putc( (int) *cp, fp );
 		cp += STRIDE;
-		++bytes;
 		}
 	if( n & 1 )
-		{
 		(void) putc( 0, fp );	/* short align output */
-		++bytes;
-		}
-	if( rle_debug )
-		(void) fprintf( stderr, "%d bytes written.\n", bytes );
 	return;
 	}
 
@@ -909,7 +807,7 @@ _get_Color_Map_Seg( fp, cmap_seg )
 FILE	*fp;
 register u_char	*cmap_seg;
 	{
-	short	rle_cmap[256];
+	static short	rle_cmap[256];
 	register short	*cm = rle_cmap;
 	register int	i;
 
@@ -933,7 +831,7 @@ _put_Color_Map_Seg( fp, cmap_seg )
 FILE	*fp;
 register u_char	*cmap_seg;
 	{
-	short		rle_cmap[256];
+	static short	rle_cmap[256];
 	register short	*cm = rle_cmap;
 	register int	i;
 
@@ -958,7 +856,7 @@ HIDDEN
 _put_Std_Map( fp )
 FILE	*fp;
 	{
-	short		rle_cmap[256*3];
+	static short	rle_cmap[256*3];
 	register short	*cm = rle_cmap;
 	register int	i, segment;
 
@@ -978,72 +876,46 @@ FILE	*fp;
 	}
 
 _get_New_Inst( fp, opcode, datum )
-FILE	*fp;
-int	*opcode;
-int	*datum;
+register FILE	*fp;
+register int	*opcode;
+register int	*datum;
 	{
-	Xtnd_Inst	instruction;
-	if( fread( (char *) &instruction, sizeof(instruction), 1, fp ) != 1 )
-		{
-		return	EOF;
-		}
-	if( LONGP(instruction) )
-		{ short	long_data;
-		*opcode = OPCODE(instruction);
-		if( _get_Short( fp, &long_data ) == EOF )
-			return	EOF;
+	static short	long_data;
+
+	*opcode = getc( fp );
+	*datum = getc( fp );
+	if( *opcode & LONG )
+		{ register char	*p = (char *) &long_data;
+		*opcode &= ~LONG;
+		*p++ = getc( fp );
+		*p++ = getc( fp );
+		SWAB(long_data);
 		*datum = long_data;
 		}
-	else
-		{
-		*opcode = instruction.opcode;
-		*datum = DATUM(instruction);
-		}
-	if( rle_debug )
-		(void) fprintf( stderr,
-				"op %d, datum %d\n",
-				*opcode,
-				*datum
-				);
+	if( feof( fp ) )
+		return	EOF;
 	return	1;
 	}
 
 _get_Old_Inst( fp, opcode, datum )
-FILE	*fp;
-int	*opcode;
-int	*datum;
+register FILE	*fp;
+register int	*opcode;
+register int	*datum;
 	{
-	Old_Inst	instruction;
-	if( _get_Short( fp, (short *) &instruction ) == EOF )
+	static Old_Inst	instruction;
+	register char	*p;
+
+	p = (char *) &instruction;
+
+	*p++ = getc( fp );
+	*p++ = getc( fp );
+	if( feof( fp ) )
 		return	EOF;
 	*opcode = instruction.opcode;
 	*datum = instruction.datum;
-	if( rle_debug )
-		(void) fprintf( stderr,
-				"op %d, datum %d\n",
-				*opcode,
-				*datum
-				);
 	return	1;
 	}
 	
-
-/*	_ g e t _ S h o r t ( )
- */
-HIDDEN int
-_get_Short( fp, word )
-FILE	*fp;
-short	*word;
-	{
-	if( fread( (char *) word, sizeof(short), 1, fp ) != 1 )
-		{
-		(void) fprintf( stderr, "get_Short() Read failed!\n" );
-		return	EOF;
-		}
-	SWAB( *word );
-	return	1;
-	}
-
 prnt_XSetup( msg, setup )
 char				*msg;
 register Xtnd_Rle_Header	*setup;
