@@ -80,7 +80,7 @@ typedef struct  {
 	int	(*if_viewport_set)();
 	int	(*if_window_set)();
 	int	(*if_zoom_set)();
-	int	(*if_cinit_bitmap)();
+	int	(*if_curs_set)();
 	int	(*if_cmemory_addr)();
 	int	(*if_cscreen_addr)();
 	char	*if_type;	/* what "open" claims it is. */
@@ -131,7 +131,7 @@ typedef struct  {
 #define	fb_viewport(_ifp,_l,_t,_r,_b)	(*_ifp->if_viewport_set)(_ifp,_l,_t,_r,_b)
 #define fb_window(_ifp,_x,_y)		(*_ifp->if_window_set)(_ifp,_x,_y)
 #define fb_zoom(_ifp,_x,_y)		(*_ifp->if_zoom_set)(_ifp,_x,_y)
-#define fb_setcursor(_ifp,_bitmap)	(*_ifp->if_cinit_bitmap)(_ifp,_bitmap)
+#define fb_setcursor(_ifp,_bits,_xb,_yb,_xo,_yo) (*_ifp->if_curs_set)(_ifp,_bits,_xb,_yb,_xo,_yo)
 #define fb_cursor(_ifp,_mode,_x,_y)	(*_ifp->if_cmemory_addr)(_ifp,_mode,_x,_y)
 #define fb_scursor(_ifp,_mode,_x,_y)	(*_ifp->if_cscreen_addr)(_ifp,_mode,_x,_y)
 
