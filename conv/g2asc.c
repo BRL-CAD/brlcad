@@ -129,7 +129,8 @@ char **argv;
 		struct db_i	*dbip;
 		struct directory *dp;
 
-		bu_log("Attempting to export v5 database\n");
+		bu_log("Attempting to export v5 database\n" );
+		bu_log("\tNote that the binary format is machine independent\n");
 
 		interp = Tcl_CreateInterp();
 		/* This runs the init.tcl script */
@@ -160,18 +161,39 @@ char **argv;
 			struct rt_db_internal	intern;
 			struct bu_attribute_value_set *avs;
 
+			/* Skip GLOBAL object */
+			if( dp->d_major_type == 2 && dp->d_minor_type == 0 )
+				continue;
+
 			if( rt_db_get_internal( &intern, dp, dbip, NULL, &rt_uniresource ) < 0 )  {
 				bu_log("Unable to read '%s', skipping\n", dp->d_namep);
 				continue;
 			}
-			if( intern.idb_meth->ft_tclget( interp, &intern, NULL ) != TCL_OK )  {
-				rt_db_free_internal( &intern, &rt_uniresource );
-				bu_log("Unable to export '%s', skipping\n", dp->d_namep );
-				continue;
+			if( dp->d_flags & DIR_COMB ) {
+				if( intern.idb_meth->ft_tclget( interp, &intern, "tree" ) != TCL_OK )  {
+					rt_db_free_internal( &intern, &rt_uniresource );
+					bu_log("Unable to export '%s', skipping\n", dp->d_namep );
+					continue;
+				}
+				if( dp->d_flags & DIR_REGION ) {
+					fprintf( ofp, "db put %s comb region yes tree {%s}\n",
+						 dp->d_namep,
+						 interp->result );
+				} else {
+					fprintf( ofp, "db put %s comb region no tree {%s}\n",
+						 dp->d_namep,
+						 interp->result );
+				}
+			} else {
+				if( intern.idb_meth->ft_tclget( interp, &intern, NULL ) != TCL_OK )  {
+					rt_db_free_internal( &intern, &rt_uniresource );
+					bu_log("Unable to export '%s', skipping\n", dp->d_namep );
+					continue;
+				}
+				fprintf( ofp, "db put %s %s\n",
+					 dp->d_namep,
+					 interp->result );
 			}
-			fprintf( ofp, "db put %s %s\n",
-				dp->d_namep,
-				interp->result );
 			avs = &intern.idb_avs;
 			if( avs->magic == BU_AVS_MAGIC && avs->count > 0 ) {
 				int i;
