@@ -210,8 +210,8 @@ yywrap()
 	return 1;
 }
 #else
-/* GNU lex (flex) does not define yylineno */
-int yylineno=1;
+/* GNU lex (flex) USED to not define yylineno... may need to set yylineno=1 */
+extern int yylineno;
 yywrap()
 {
 	return 1;
