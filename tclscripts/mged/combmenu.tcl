@@ -119,7 +119,7 @@ proc build_comb_menu { id combs } {
 	    matrix_illum \$spath \$path_pos; break"
     bind_listbox $top "<Double-1>"\
 	    "set comb_name($id) \[%W get @%x,%y\];\
-	    comb_load_defaults $id;\
+	    comb_reset $id;\
 	    destroy $top; break"
     bind_listbox $top "<ButtonRelease-1>"\
 	    "%W selection clear 0 end;\

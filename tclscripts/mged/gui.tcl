@@ -23,7 +23,7 @@ if ![info exists mged_gui_create] {
     set mged_gui_create gui_create_default
 }
 
-if ![info exists mged_default_gui_destroy] {
+if ![info exists mged_gui_destroy] {
     set mged_gui_destroy gui_destroy_default
 }
 
