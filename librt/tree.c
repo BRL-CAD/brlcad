@@ -378,20 +378,24 @@ struct mater_info *materp;
 	/*
 	 * Load the first record of the object into local record buffer
 	 */
+#ifdef DB_MEM
+	rec = rt_i.rti_db[dp->d_addr];	/* struct copy */
+#else DB_MEM
 #ifdef CRAY_COS
 	/* CRAY COS can't fseek() properly, hence this hideous I/O hack */
 	rewind(rt_i.fp);
 	while( !feof(rt_i.fp) && ftell(rt_i.fp) <= dp->d_addr  &&
 	    fread( (char *)&rec, sizeof rec, 1, rt_i.fp ) == 1 )
 		/* NULL */ ;
-#else
+#else CRAY_COS
 	if( fseek( rt_i.fp, dp->d_addr, 0 ) < 0 ||
 	    fread( (char *)&rec, sizeof rec, 1, rt_i.fp ) != 1 )  {
 		rt_log("rt_drawobj: %s record read error\n",
 			rt_path_str(pathpos) );
 		return(TREE_NULL);
 	}
-#endif
+#endif CRAY_COS
+#endif DB_MEM
 
 	/*
 	 *  Draw a solid
@@ -490,12 +494,17 @@ struct mater_info *materp;
 	    (struct tree_list *)0 )
 		rt_bomb("rt_drawobj:  malloc failure\n");
 
+#ifdef DB_MEM
+	/* For now, the "members" struct array is simply ignored */
+#else DB_MEM
+	/* Read in all members of this combination before recursing */
 	if( fread( (char *)members, sizeof(union record), rec.c.c_length,
 	    rt_i.fp ) != rec.c.c_length )  {
 		rt_log("rt_drawobj:  %s member read error\n",
 			rt_path_str(pathpos) );
 		return(TREE_NULL);
 	}
+#endif DB_MEM
 
 	/* Process and store all the sub-trees */
 	subtreecount = 0;
@@ -505,7 +514,11 @@ struct mater_info *materp;
 		auto struct directory *nextdp;
 		auto mat_t new_xlate;		/* Accum translation mat */
 
+#ifdef DB_MEM
+		mp = &(rt_i.rti_db[dp->d_addr+i+1].M);
+#else DB_MEM
 		mp = &(members[i].M);
+#endif DB_MEM
 		if( mp->m_id != ID_MEMB )  {
 			rt_log("rt_drawobj:  defective member of %s\n", dp->d_namep);
 			continue;
@@ -1116,6 +1129,11 @@ register struct rt_i *rtip;
 	if( rtip->nsolids <= 0 )
 		rt_bomb("rt_prep:  no solids to prep");
 
+	if( rt_i.rti_db )  {
+		rt_free( (char *)rt_i.rti_db, "in-core database");
+		rt_i.rti_db = (union record *)0;
+	}
+
 	/*
 	 *  Allocate space for a per-solid bit of rtip->nregions length.
 	 */
@@ -1184,6 +1202,8 @@ register vect_t min, max;
 	VSETALL( min,  INFINITY );
 
 	for( stp=rt_i.HeadSolid; stp != 0; stp=stp->st_forw ) {
+		if( stp->st_aradius >= INFINITY )
+			continue;
 		MAT4X3PNT( xlated, m2v, stp->st_center );
 #define VBMIN(v,t) {FAST fastf_t rt; rt=(t); if(rt<v) v = rt;}
 #define VBMAX(v,t) {FAST fastf_t rt; rt=(t); if(rt>v) v = rt;}
@@ -1193,6 +1213,13 @@ register vect_t min, max;
 		VBMAX( max[Y], xlated[1]+stp->st_bradius );
 		VBMIN( min[Z], xlated[2]-stp->st_bradius );
 		VBMAX( max[Z], xlated[2]+stp->st_bradius );
+	}
+
+	if( min[X] >= INFINITY )  {
+		/* Only infinite solids (or none), hard to judge */
+		VSETALL( min, -10 );
+		VSETALL( max,  10 );
+		return;
 	}
 
 	/* Provide a slight border */
