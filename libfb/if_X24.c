@@ -2568,17 +2568,33 @@ printf("blit: output to (%d, %d)\n", ox, oy);
 				if (xi->xi_flags & (FLG_XCMAP | FLG_LINCMAP))
 					for (k = x2 - x1 + 1; k; k--) {
 if( ImageByteOrder(xi->xi_dpy) == MSBFirst )  {
+	if( xi->xi_visual->red_mask & 0xFF)  {
 {static int before=1; if(before) {write(2,"FB1a\n", 5); before=0;} }
 						*p++ = 0;
 						*p++ = line_irgb[BLU];
 						*p++ = line_irgb[GRN];
 						*p++ = line_irgb[RED];
-} else {
+	} else {
 {static int before=1; if(before) {write(2,"FB1b\n", 5); before=0;} }
+						*p++ = 0;
+						*p++ = line_irgb[RED];
+						*p++ = line_irgb[GRN];
+						*p++ = line_irgb[BLU];
+	}
+} else {
+	if( xi->xi_visual->red_mask & 0xFF)  {
+{static int before=1; if(before) {write(2,"FB1c\n", 5); before=0;} }
+						*p++ = line_irgb[RED];
+						*p++ = line_irgb[GRN];
+						*p++ = line_irgb[BLU];
+						*p++ = 0;
+	} else {
+{static int before=1; if(before) {write(2,"FB1d\n", 5); before=0;} }
 						*p++ = line_irgb[BLU];
 						*p++ = line_irgb[GRN];
 						*p++ = line_irgb[RED];
 						*p++ = 0;
+	}
 }
 						line_irgb += sizeof (RGBpixel);
 					}
