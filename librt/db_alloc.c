@@ -64,13 +64,24 @@ int		count;
 	RT_CK_DIR(dp);
 	if(rt_g.debug&DEBUG_DB) bu_log("db_alloc(%s) x%x, x%x, count=%d\n",
 		dp->d_namep, dbip, dp, count );
+	if( count <= 0 )  {
+		bu_log("db_alloc(0)\n");
+		return(-1);
+	}
+
+	if( dp->d_flags & RT_DIR_INMEM )  {
+		if( dp->d_un.ptr )  {
+			dp->d_un.ptr = bu_realloc( dp->d_un.ptr,
+				count * sizeof(union record), "db_alloc() d_un.ptr" );
+		} else {
+			dp->d_un.ptr = bu_malloc( count * sizeof(union record), "db_alloc() d_un.ptr" );
+		}
+		dp->d_len = count;
+		return 0;
+	}
 
 	if( dbip->dbi_read_only )  {
 		bu_log("db_alloc on READ-ONLY file\n");
-		return(-1);
-	}
-	if( count <= 0 )  {
-		bu_log("db_alloc(0)\n");
 		return(-1);
 	}
 	while(1)  {
@@ -105,6 +116,7 @@ int		count;
  *  
  *  Increase the database size of an object by "count",
  *  by duplicating in a new area if necessary.
+ *  XXX deprecated.  Only used by mged/mover.c
  *
  *  Returns:
  *	-1	on error
@@ -127,6 +139,7 @@ int		count;
 	RT_CK_DIR(dp);
 	if(rt_g.debug&DEBUG_DB) bu_log("db_grow(%s) x%x, x%x, count=%d\n",
 		dp->d_namep, dbip, dp, count );
+	if( dp->d_flags & RT_DIR_INMEM )  bu_bomb("db_grow() called on RT_DIR_INMEM object\n");
 
 	if( dbip->dbi_read_only )  {
 		bu_log("db_grow on READ-ONLY file\n");
@@ -188,7 +201,7 @@ hard:
  *  
  *  Remove "count" granules from the indicated database entry.
  *  Stomp on them with ID_FREE's.
- *  Later, we will add them to a freelist.
+ *  Add them to the freelist.
  */
 int
 db_trunc( dbip, dp, count )
@@ -203,6 +216,11 @@ int			 count;
 	if(rt_g.debug&DEBUG_DB) bu_log("db_trunc(%s) x%x, x%x, count=%d\n",
 		dp->d_namep, dbip, dp, count );
 
+	if( dp->d_flags & RT_DIR_INMEM )  {
+		/* Decrease d_len, but don't bother with bu_realloc() */
+		dp->d_len -= count;
+		return 0;
+	}
 	if( dbip->dbi_read_only )  {
 		bu_log("db_trunc on READ-ONLY file\n");
 		return(-1);
@@ -218,6 +236,7 @@ int			 count;
  *			D B _ D E L R E C
  *
  *  Delete a specific record from database entry
+ *  No longer supported.
  */
 int
 db_delrec( dbip, dp, recnum )
@@ -256,6 +275,13 @@ struct directory *dp;
 	if(rt_g.debug&DEBUG_DB) bu_log("db_delete(%s) x%x, x%x\n",
 		dp->d_namep, dbip, dp );
 
+	if( dp->d_flags & RT_DIR_INMEM )  {
+		bu_free( dp->d_un.ptr, "db_delete d_un.ptr");
+		dp->d_un.ptr = NULL;
+		dp->d_len = 0;
+		return 0;
+	}
+
 	i = db_zapper( dbip, dp, 0 );
 
 	rt_memfree( &(dbip->dbi_freep), (unsigned)dp->d_len,
@@ -291,6 +317,8 @@ int		start;
 	RT_CK_DIR(dp);
 	if(rt_g.debug&DEBUG_DB) bu_log("db_zapper(%s) x%x, x%x, start=%d\n",
 		dp->d_namep, dbip, dp, start );
+
+	if( dp->d_flags & RT_DIR_INMEM )  bu_bomb("db_zapper() called on RT_DIR_INMEM object\n");
 
 	if( dbip->dbi_read_only )
 		return(-1);

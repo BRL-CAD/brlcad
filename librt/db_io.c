@@ -69,6 +69,11 @@ CONST struct directory	*dp;
 		dp->d_len * sizeof(union record),
 		"db_getmrec record[]");
 
+	if( dp->d_flags & RT_DIR_INMEM )  {
+		bcopy( dp->d_un.ptr, (char *)where, dp->d_len * sizeof(union record) );
+		return where;
+	}
+
 	if( db_read( dbip, (char *)where,
 	    (long)dp->d_len * sizeof(union record),
 	    dp->d_addr ) < 0 )  {
@@ -113,6 +118,13 @@ int		len;
 		return(-1);
 	}
 
+	if( dp->d_flags & RT_DIR_INMEM )  {
+		bcopy( ((char *)dp->d_un.ptr) + offset * sizeof(union record),
+			(char *)where,
+			len * sizeof(union record) );
+		return 0;		/* OK */
+	}
+
 	if( db_read( dbip, (char *)where, (long)len * sizeof(union record),
 	    dp->d_addr + offset * sizeof(union record) ) < 0 )  {
 		where->u_id = '\0';	/* undefined id */
@@ -145,14 +157,22 @@ int		len;
 	if(rt_g.debug&DEBUG_DB) bu_log("db_put(%s) x%x, x%x x%x off=%d len=%d\n",
 		dp->d_namep, dbip, dp, where, offset, len );
 
-	if( dbip->dbi_read_only )  {
-		bu_log("db_put(%s):  READ-ONLY file\n",
-			dbip->dbi_filename);
-		return(-1);
-	}
 	if( offset < 0 || offset+len > dp->d_len )  {
 		bu_log("db_put(%s):  xfer %d..%x exceeds 0..%d\n",
 			dp->d_namep, offset, offset+len, dp->d_len );
+		return(-1);
+	}
+
+	if( dp->d_flags & RT_DIR_INMEM )  {
+		bcopy( (char *)where,
+			((char *)dp->d_un.ptr) + offset * sizeof(union record),
+			len * sizeof(union record) );
+		return 0;		/* OK */
+	}
+
+	if( dbip->dbi_read_only )  {
+		bu_log("db_put(%s):  READ-ONLY file\n",
+			dbip->dbi_filename);
 		return(-1);
 	}
 
@@ -174,6 +194,7 @@ int		len;
  *	 0	OK
  *	-1	failure
  */
+/* should be HIDDEN */
 int
 db_read( dbip, addr, count, offset )
 CONST struct db_i	*dbip;
@@ -237,6 +258,7 @@ long		offset;		/* byte offset from start of file */
  *	 0	OK
  *	-1	failure
  */
+/* should be HIDDEN */
 int
 db_write( dbip, addr, count, offset )
 CONST struct db_i	*dbip;
@@ -299,13 +321,18 @@ CONST struct db_i		*dbip;
 	if(rt_g.debug&DEBUG_DB) bu_log("db_get_external(%s) ep=x%x, dbip=x%x, dp=x%x\n",
 		dp->d_namep, ep, dbip, dp );
 
-	if( dp->d_addr < 0 )
+	if( (dp->d_flags & RT_DIR_INMEM) == 0 && dp->d_addr < 0 )
 		return( -1 );		/* was dummy DB entry */
 
 	BU_INIT_EXTERNAL(ep);
 	ep->ext_nbytes = dp->d_len * sizeof(union record);
 	ep->ext_buf = (genptr_t)bu_malloc(
 		ep->ext_nbytes, "db_get_ext ext_buf");
+
+	if( dp->d_flags & RT_DIR_INMEM )  {
+		bcopy( dp->d_un.ptr, (char *)ep->ext_buf, ep->ext_nbytes );
+		return 0;
+	}
 
 	if( db_read( dbip, (char *)ep->ext_buf,
 	    (long)ep->ext_nbytes, dp->d_addr ) < 0 )  {
@@ -366,6 +393,11 @@ struct db_i		*dbip;
 	/* Add name.  Depends on solid names always being in the same place */
 	rec = (union record *)ep->ext_buf;
 	NAMEMOVE( dp->d_namep, rec->s.s_name );
+
+	if( dp->d_flags & RT_DIR_INMEM )  {
+		bcopy( (char *)ep->ext_buf, dp->d_un.ptr, ep->ext_nbytes );
+		return 0;
+	}
 
 	if( db_put( dbip, dp, (union record *)(ep->ext_buf), 0, ngran ) < 0 )
 		return(-1);
