@@ -5,7 +5,7 @@
  */
 
 /* This shows up in CFLAGS */
-#define CONFIGDEFS	RT_CONFIG -DRT_MULTISPECTRAL
+#define CONFIGDEFS	-DRT_MULTISPECTRAL -I''XINCDIR
 
 #define SRCDIR	rttherm
 #define PRODUCTS	rttherm disp
