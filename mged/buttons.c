@@ -43,7 +43,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  * It is set to the 0 if off, or the value of the button function
  * that is currently in effect (eg, BE_S_SCALE).
  */
-static	edsol;
+static int	edsol;
 
 /* This flag indicates that OBJECT editing is in effect.
  * edsol may not be set at the same time.
