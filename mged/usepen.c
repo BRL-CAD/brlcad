@@ -578,7 +578,7 @@ f_matpick(
 	if( not_state( ST_O_PATH, "Object Edit matrix pick" ) )
 	  return TCL_ERROR;
 
-	if( cp = strchr( argv[1], '/' ) )  {
+	if( (cp = strchr( argv[1], '/' )) != NULL )  {
 		struct directory	*d0, *d1;
 		if( (d1 = db_lookup( dbip, cp+1, LOOKUP_NOISY )) == DIR_NULL )
 		  return TCL_ERROR;
