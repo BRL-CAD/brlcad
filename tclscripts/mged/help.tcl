@@ -139,7 +139,6 @@ set mged_help_data(pl)		{{[-float] [-zclip] [-2d] [-grid] [out_file] [|filter]}	
 set mged_help_data(polybinout)	{{file}	{store vlist polygons into polygon file (experimental)}}
 set mged_help_data(pov)		{{args}	{experimental:  set point-of-view}}
 set mged_help_data(prcolor)	{{}	{print color&material table}}
-set mged_help_data(print_tree)	{{file obj(s)}	{print obj(s)' tree(s) to file}}
 set mged_help_data(prefix)	{{new_prefix object(s)}	{prefix each occurrence of object name(s)}}
 set mged_help_data(press)	{{button_label}	{emulate button press}}
 set mged_help_data(prj_add)	{{shaderfile [image_file] [image_width] [image_height]} {Appends image filename + current view parameters to shaderfile}}
@@ -199,7 +198,7 @@ set mged_help_data(tops)	{{}	{find all top level objects}}
 set mged_help_data(tra)		{{dx dy dz} {translate by (dx,dy,dz)}}
 set mged_help_data(track)	{{<parameters>}	{adds tracks to database}}
 set mged_help_data(translate)	{{x y z}	{trans object to x,y, z}}
-set mged_help_data(tree)	{{object(s)}	{print out a tree of all members of an object}}
+set mged_help_data(tree)	{{[-c] [-i n] [-o outfile] object(s)}	{print out a tree of all members of an object}}
 set mged_help_data(t_muves)	{{}	{list all the known MUVES components/systems}}
 set mged_help_data(units)	{{[mm|cm|m|in|ft|...]}	{change units}}
 set mged_help_data(vars)	{{[var=opt]}	{get/set mged variables}}
