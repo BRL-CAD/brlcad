@@ -19,7 +19,7 @@
  *	Public Domain, Distribution Unlimited
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char libbu_vfont_RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

@@ -16,7 +16,7 @@
  */
 
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char libbu_asize_RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"

@@ -12,7 +12,7 @@
  *	Public Domain, Distribution Unlimited.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (ARL)";
+static char libbu_printb_RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 

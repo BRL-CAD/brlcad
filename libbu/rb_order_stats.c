@@ -19,7 +19,7 @@
  *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#) $Header$";
+static char libbu_rb_order_stats_RCSid[] = "@(#) $Header$";
 #endif
 
 #include "conf.h"

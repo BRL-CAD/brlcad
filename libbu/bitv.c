@@ -21,7 +21,7 @@
  *	Public Domain, Distribution Unlimited.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (ARL)";
+static char libbu_bitv_RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 #include "conf.h"

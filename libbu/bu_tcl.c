@@ -23,7 +23,7 @@
  *	in all countries except the USA.  All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (ARL)";
+static char libbu_bu_tcl_RCSid[] = "@(#)$Header$ (ARL)";
 #endif
 
 
