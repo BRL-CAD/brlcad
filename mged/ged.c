@@ -115,6 +115,15 @@ extern struct _mged_variables default_mged_variables;
 /* defined in color_scheme.c */
 extern struct _color_scheme default_color_scheme;
 
+/* defined in grid.c */
+extern struct _grid_state default_grid_state;
+
+/* defined in axes.c */
+extern struct _axes_state default_axes_state;
+
+/* defined in rect.c */
+extern struct _rubber_band default_rubber_band;
+
 int pipe_out[2];
 int pipe_err[2];
 struct db_i *dbip = DBI_NULL;	/* database instance pointer */
@@ -283,8 +292,8 @@ char **argv;
 
 	bzero((void *)&head_cmd_list, sizeof(struct cmd_list));
 	BU_LIST_INIT(&head_cmd_list.l);
-	bu_vls_init(&head_cmd_list.name);
-	bu_vls_strcpy(&head_cmd_list.name, "mged");
+	bu_vls_init(&head_cmd_list.cl_name);
+	bu_vls_strcpy(&head_cmd_list.cl_name, "mged");
 	curr_cmd_list = &head_cmd_list;
 
 	bzero((void *)&head_dm_list, sizeof(struct dm_list));
@@ -298,7 +307,7 @@ char **argv;
 	}
 
 	/* initialize predictor stuff */
-	BU_LIST_INIT(&curr_dm_list->p_vlist);
+	BU_LIST_INIT(&curr_dm_list->dml_p_vlist);
 	predictor_init();
 
 	BU_GETSTRUCT(dmp, dm);
@@ -308,34 +317,51 @@ char **argv;
 	bu_vls_init(&dName);
 	bu_vls_strcpy(&pathName, "nu");
 	bu_vls_strcpy(&tkName, "nu");
-	BU_GETSTRUCT(curr_dm_list->s_info, shared_info);
+
+	BU_GETSTRUCT(rubber_band, _rubber_band);
+	*rubber_band = default_rubber_band;		/* struct copy */
+
 	BU_GETSTRUCT(mged_variables, _mged_variables);
 	*mged_variables = default_mged_variables;	/* struct copy */
+
 	BU_GETSTRUCT(color_scheme, _color_scheme);
 	*color_scheme = default_color_scheme;		/* struct copy */
+
+	BU_GETSTRUCT(grid_state, _grid_state);
+	*grid_state = default_grid_state;		/* struct copy */
+
+	BU_GETSTRUCT(axes_state, _axes_state);
+	*axes_state = default_axes_state;		/* struct copy */
+
+	BU_GETSTRUCT(adc_state, _adc_state);
+	adc_state->adc_rc = 1;
+	adc_state->adc_a1 = adc_state->adc_a2 = 45.0;
+
+	BU_GETSTRUCT(menu_state, _menu_state);
+	menu_state->ms_rc = 1;
+
+	BU_GETSTRUCT(view_state, _view_state);
+	view_state->vs_rc = 1;
+	view_ring_init(curr_dm_list);
+	/* init rotation matrix */
+	view_state->vs_Viewscale = 500;		/* => viewsize of 1000mm (1m) */
+	bn_mat_idn( view_state->vs_Viewrot );
+	bn_mat_idn( view_state->vs_toViewcenter );
+	bn_mat_idn( view_state->vs_ModelDelta );
+	MAT_DELTAS_GET_NEG(view_state->vs_orig_pos, view_state->vs_toViewcenter);
+	view_state->vs_i_Viewscale = view_state->vs_Viewscale;
+
 	am_mode = AMM_IDLE;
-	rc = 1;
 	owner = 1;
 	frametime = 1;
-	curr_dm_list->s_info->opp = &pathName;
-	mged_view_init(curr_dm_list);
-	BU_GETSTRUCT(curr_dm_list->menu_vars, menu_vars);
 
 	bu_vls_init(&fps_name);
 	bu_vls_printf(&fps_name, "%s(%S,fps)", MGED_DISPLAY_VAR,
-		      &curr_dm_list->_dmp->dm_pathName);
+		      &curr_dm_list->dml_dmp->dm_pathName);
 
 	bn_mat_idn( identity );		/* Handy to have around */
-	/* init rotation matrix */
-	Viewscale = 500;		/* => viewsize of 1000mm (1m) */
-	bn_mat_idn( Viewrot );
-	bn_mat_idn( toViewcenter );
 	bn_mat_idn( modelchanges );
-	bn_mat_idn( ModelDelta );
 	bn_mat_idn( acc_rot_sol );
-
-	MAT_DELTAS_GET_NEG(orig_pos, toViewcenter);
-	i_Viewscale = Viewscale;
 
 	state = ST_VIEW;
 	es_edflag = -1;
@@ -355,7 +381,7 @@ char **argv;
 
 	es_edflag = -1;		/* no solid editing just now */
 
-	bu_vls_init( &curr_cmd_list->more_default );
+	bu_vls_init( &curr_cmd_list->cl_more_default );
 	bu_vls_init(&input_str);
 	bu_vls_init(&input_str_prefix);
 	bu_vls_init(&scratchline);
@@ -429,8 +455,6 @@ char **argv;
 	   * Initialze variables here in case the user specified changes
 	   * to the defaults in their .mgedrc file.
 	   */
-	  *mged_variables = default_mged_variables;	/* struct copy */
-	  *color_scheme = default_color_scheme;		/* struct copy */
 #endif
 
 	  if(classic_mged)
@@ -587,23 +611,23 @@ int mask;
 	   over from a CMD_MORE), then prepend them to the new input. */
 
 	/* If no input and a default is supplied then use it */
-	if(!bu_vls_strlen(&input_str) && bu_vls_strlen(&curr_cmd_list->more_default))
+	if(!bu_vls_strlen(&input_str) && bu_vls_strlen(&curr_cmd_list->cl_more_default))
 	  bu_vls_printf(&input_str_prefix, "%s%S\n",
 			bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
-			&curr_cmd_list->more_default);
+			&curr_cmd_list->cl_more_default);
 	else
 	  bu_vls_printf(&input_str_prefix, "%s%S\n",
 			bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
 			&input_str);
 
-	bu_vls_trunc(&curr_cmd_list->more_default, 0);
+	bu_vls_trunc(&curr_cmd_list->cl_more_default, 0);
 
 	/* If a complete line was entered, attempt to execute command. */
 	
 	if (Tcl_CommandComplete(bu_vls_addr(&input_str_prefix))) {
 	    curr_cmd_list = &head_cmd_list;
-	    if(curr_cmd_list->aim)
-	      curr_dm_list = curr_cmd_list->aim;
+	    if(curr_cmd_list->cl_tie)
+	      curr_dm_list = curr_cmd_list->cl_tie;
 	    if (cmdline_hook != NULL) {
 		if ((*cmdline_hook)(&input_str))
 		    pr_prompt();
@@ -720,12 +744,12 @@ char ch;
        over from a CMD_MORE), then prepend them to the new input. */
 
     /* If no input and a default is supplied then use it */
-    if(!bu_vls_strlen(&input_str) && bu_vls_strlen(&curr_cmd_list->more_default))
+    if(!bu_vls_strlen(&input_str) && bu_vls_strlen(&curr_cmd_list->cl_more_default))
       bu_vls_printf(&input_str_prefix, "%s%S\n",
 		    bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
-		    &curr_cmd_list->more_default);
+		    &curr_cmd_list->cl_more_default);
     else {
-      if (curr_cmd_list->quote_string)
+      if (curr_cmd_list->cl_quote_string)
 	bu_vls_printf(&input_str_prefix, "%s\"%S\"\n",
 		      bu_vls_strlen(&input_str_prefix) > 0 ? " " : "",
 		      &input_str);
@@ -735,16 +759,16 @@ char ch;
 		      &input_str);
     }
 
-    curr_cmd_list->quote_string = 0;
-    bu_vls_trunc(&curr_cmd_list->more_default, 0);
+    curr_cmd_list->cl_quote_string = 0;
+    bu_vls_trunc(&curr_cmd_list->cl_more_default, 0);
 
     /* If this forms a complete command (as far as the Tcl parser is
        concerned) then execute it. */
 	
     if (Tcl_CommandComplete(bu_vls_addr(&input_str_prefix))) {
       curr_cmd_list = &head_cmd_list;
-      if(curr_cmd_list->aim)
-	curr_dm_list = curr_cmd_list->aim;
+      if(curr_cmd_list->cl_tie)
+	curr_dm_list = curr_cmd_list->cl_tie;
       if (cmdline_hook) {  /* Command-line hooks don't do CMD_MORE */
 	reset_Tty(fileno(stdin));
 
@@ -1208,8 +1232,8 @@ int	non_blocking;
       char save_coords;
 
       curr_dm_list = edit_rate_mr_dm_list;
-      save_coords = mged_variables->coords;
-      mged_variables->coords = 'm';
+      save_coords = mged_variables->mv_coords;
+      mged_variables->mv_coords = 'm';
 
       if(state == ST_S_EDIT){
 	save_edflag = es_edflag;
@@ -1231,7 +1255,7 @@ int	non_blocking;
       Tcl_Eval(interp, bu_vls_addr(&vls));
       bu_vls_free(&vls);
 
-      mged_variables->coords = save_coords;
+      mged_variables->mv_coords = save_coords;
 
       if(state == ST_S_EDIT)
 	es_edflag = save_edflag;
@@ -1243,8 +1267,8 @@ int	non_blocking;
       char save_coords;
 
       curr_dm_list = edit_rate_or_dm_list;
-      save_coords = mged_variables->coords;
-      mged_variables->coords = 'o';
+      save_coords = mged_variables->mv_coords;
+      mged_variables->mv_coords = 'o';
 
       if(state == ST_S_EDIT){
 	save_edflag = es_edflag;
@@ -1266,7 +1290,7 @@ int	non_blocking;
       Tcl_Eval(interp, bu_vls_addr(&vls));
       bu_vls_free(&vls);
 
-      mged_variables->coords = save_coords;
+      mged_variables->mv_coords = save_coords;
 
       if(state == ST_S_EDIT)
 	es_edflag = save_edflag;
@@ -1278,8 +1302,8 @@ int	non_blocking;
       char save_coords;
 
       curr_dm_list = edit_rate_vr_dm_list;
-      save_coords = mged_variables->coords;
-      mged_variables->coords = 'v';
+      save_coords = mged_variables->mv_coords;
+      mged_variables->mv_coords = 'v';
 
       if(state == ST_S_EDIT){
 	save_edflag = es_edflag;
@@ -1301,7 +1325,7 @@ int	non_blocking;
       Tcl_Eval(interp, bu_vls_addr(&vls));
       bu_vls_free(&vls);
 
-      mged_variables->coords = save_coords;
+      mged_variables->mv_coords = save_coords;
 
       if(state == ST_S_EDIT)
 	es_edflag = save_edflag;
@@ -1313,8 +1337,8 @@ int	non_blocking;
       struct bu_vls vls;
 
       curr_dm_list = edit_rate_mt_dm_list;
-      save_coords = mged_variables->coords;
-      mged_variables->coords = 'm';
+      save_coords = mged_variables->mv_coords;
+      mged_variables->mv_coords = 'm';
 
       if(state == ST_S_EDIT){
 	save_edflag = es_edflag;
@@ -1328,14 +1352,14 @@ int	non_blocking;
       non_blocking++;
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "knob -i -e aX %f aY %f aZ %f\n",
-		    edit_rate_model_tran[X] * 0.05 * Viewscale * base2local,
-		    edit_rate_model_tran[Y] * 0.05 * Viewscale * base2local,
-		    edit_rate_model_tran[Z] * 0.05 * Viewscale * base2local);
+		    edit_rate_model_tran[X] * 0.05 * view_state->vs_Viewscale * base2local,
+		    edit_rate_model_tran[Y] * 0.05 * view_state->vs_Viewscale * base2local,
+		    edit_rate_model_tran[Z] * 0.05 * view_state->vs_Viewscale * base2local);
 	
       Tcl_Eval(interp, bu_vls_addr(&vls));
       bu_vls_free(&vls);
 
-      mged_variables->coords = save_coords;
+      mged_variables->mv_coords = save_coords;
 
       if(state == ST_S_EDIT)
 	es_edflag = save_edflag;
@@ -1347,8 +1371,8 @@ int	non_blocking;
       struct bu_vls vls;
 
       curr_dm_list = edit_rate_vt_dm_list;
-      save_coords = mged_variables->coords;
-      mged_variables->coords = 'v';
+      save_coords = mged_variables->mv_coords;
+      mged_variables->mv_coords = 'v';
 
       if(state == ST_S_EDIT){
 	save_edflag = es_edflag;
@@ -1362,14 +1386,14 @@ int	non_blocking;
       non_blocking++;
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "knob -i -e aX %f aY %f aZ %f\n",
-		    edit_rate_view_tran[X] * 0.05 * Viewscale * base2local,
-		    edit_rate_view_tran[Y] * 0.05 * Viewscale * base2local,
-		    edit_rate_view_tran[Z] * 0.05 * Viewscale * base2local);
+		    edit_rate_view_tran[X] * 0.05 * view_state->vs_Viewscale * base2local,
+		    edit_rate_view_tran[Y] * 0.05 * view_state->vs_Viewscale * base2local,
+		    edit_rate_view_tran[Z] * 0.05 * view_state->vs_Viewscale * base2local);
 	
       Tcl_Eval(interp, bu_vls_addr(&vls));
       bu_vls_free(&vls);
 
-      mged_variables->coords = save_coords;
+      mged_variables->mv_coords = save_coords;
 
       if(state == ST_S_EDIT)
 	es_edflag = save_edflag;
@@ -1403,72 +1427,72 @@ int	non_blocking;
     }
 
     FOR_ALL_DISPLAYS(p, &head_dm_list.l){
-      if(!p->_owner)
+      if(!p->dml_owner)
 	continue;
 
       curr_dm_list = p;
 
-      if( rateflag_model_rotate ) {
+      if( view_state->vs_rateflag_model_rotate ) {
 	struct bu_vls vls;
 
 	non_blocking++;
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "knob -o %c -i -m ax %f ay %f az %f\n",
-		      rate_model_origin,
-		      rate_model_rotate[X],
-		      rate_model_rotate[Y],
-		      rate_model_rotate[Z]);
+		      view_state->vs_rate_model_origin,
+		      view_state->vs_rate_model_rotate[X],
+		      view_state->vs_rate_model_rotate[Y],
+		      view_state->vs_rate_model_rotate[Z]);
 	
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
       }
-      if( rateflag_model_tran ) {
+      if( view_state->vs_rateflag_model_tran ) {
 	struct bu_vls vls;
 
 	non_blocking++;
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "knob -i -m aX %f aY %f aZ %f\n",
-		      rate_model_tran[X] * 0.05 * Viewscale * base2local,
-		      rate_model_tran[Y] * 0.05 * Viewscale * base2local,
-		      rate_model_tran[Z] * 0.05 * Viewscale * base2local);
+		      view_state->vs_rate_model_tran[X] * 0.05 * view_state->vs_Viewscale * base2local,
+		      view_state->vs_rate_model_tran[Y] * 0.05 * view_state->vs_Viewscale * base2local,
+		      view_state->vs_rate_model_tran[Z] * 0.05 * view_state->vs_Viewscale * base2local);
 
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
       }
-      if( rateflag_rotate )  {
+      if( view_state->vs_rateflag_rotate )  {
 	struct bu_vls vls;
 
 	non_blocking++;
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "knob -o %c -i -v ax %f ay %f az %f\n",
-		      rate_origin,
-		      rate_rotate[X],
-		      rate_rotate[Y],
-		      rate_rotate[Z]);
+		      view_state->vs_rate_origin,
+		      view_state->vs_rate_rotate[X],
+		      view_state->vs_rate_rotate[Y],
+		      view_state->vs_rate_rotate[Z]);
 
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
       }
-      if( rateflag_tran )  {
+      if( view_state->vs_rateflag_tran )  {
 	struct bu_vls vls;
 
 	non_blocking++;
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "knob -i -v aX %f aY %f aZ %f",
-		      rate_tran[X] * 0.05 * Viewscale * base2local,
-		      rate_tran[Y] * 0.05 * Viewscale * base2local,
-		      rate_tran[Z] * 0.05 * Viewscale * base2local);
+		      view_state->vs_rate_tran[X] * 0.05 * view_state->vs_Viewscale * base2local,
+		      view_state->vs_rate_tran[Y] * 0.05 * view_state->vs_Viewscale * base2local,
+		      view_state->vs_rate_tran[Z] * 0.05 * view_state->vs_Viewscale * base2local);
 
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
       }
-      if( rateflag_scale )  {
+      if( view_state->vs_rateflag_scale )  {
 	struct bu_vls vls;
 
 	non_blocking++;
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "zoom %f",
-		      1.0 / (1.0 - (rate_scale / 10.0)));
+		      1.0 / (1.0 - (view_state->vs_rate_scale / 10.0)));
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
       }
@@ -1512,8 +1536,8 @@ refresh()
      * Otherwise, we are happy with the view we have
      */
     curr_dm_list = p;
-    if(mapped && (update_views || dmaflag || dirty)) {
-      VMOVE(geometry_default_color,color_scheme->geo_def);
+    if(mapped && (update_views || view_state->vs_flag || dirty)) {
+      VMOVE(geometry_default_color,color_scheme->cs_geo_def);
 
       if(dbip != DBI_NULL){
 	if(do_overlay){
@@ -1527,10 +1551,10 @@ refresh()
 	if( viewpoint_hook )  (*viewpoint_hook)();
       }
 
-      if( mged_variables->predictor )
+      if( mged_variables->mv_predictor )
 	predictor_frame();
 
-#if 1
+#if 0
       rt_prep_timer();
       elapsed_time = -1;		/* timer running */
 #endif
@@ -1539,10 +1563,10 @@ refresh()
 
       if(dbip != DBI_NULL){
 	/* do framebuffer underlay */
-	if(mged_variables->fb && !mged_variables->fb_overlay){
-	  if(mged_variables->fb_all)
+	if(mged_variables->mv_fb && !mged_variables->mv_fb_overlay){
+	  if(mged_variables->mv_fb_all)
 	    fb_refresh(fbp, 0, 0, dmp->dm_width, dmp->dm_height);
-	  else if(mged_variables->mouse_behavior != 'z')
+	  else if(mged_variables->mv_mouse_behavior != 'z')
 	    paint_rect_area();
 	}
 
@@ -1550,7 +1574,7 @@ refresh()
 	 *  by applying zoom, rotation, & translation.
 	 *  Calls DM_LOADMATRIX() and DM_DRAW_VLIST().
 	 */
-	if( dmp->dm_stereo == 0 || mged_variables->eye_sep_dist <= 0 )  {
+	if( dmp->dm_stereo == 0 || mged_variables->mv_eye_sep_dist <= 0 )  {
 	  /* Normal viewing */
 	  dozoom(0);
 	} else {
@@ -1560,33 +1584,33 @@ refresh()
 	}
 
 	/* do framebuffer overlay */
-	if(mged_variables->fb && mged_variables->fb_overlay){
-	  if(mged_variables->fb_all)
+	if(mged_variables->mv_fb && mged_variables->mv_fb_overlay){
+	  if(mged_variables->mv_fb_all)
 	    fb_refresh(fbp, 0, 0, dmp->dm_width, dmp->dm_height);
-	  else if(mged_variables->mouse_behavior != 'z')
+	  else if(mged_variables->mv_mouse_behavior != 'z')
 	    paint_rect_area();
 	}
 
 	/* Restore to non-rotated, full brightness */
 	DM_NORMAL(dmp);
 
-	if(rubber_band_active || mged_variables->rubber_band)
+	if(rubber_band->rb_active || rubber_band->rb_draw)
 	  draw_rect();
 
-	if(mged_variables->grid_draw)
+	if(grid_state->gr_draw)
 	  draw_grid();
 
 	/* Compute and display angle/distance cursor */
-	if (adc_draw)
+	if (adc_state->adc_draw)
 	  adcursor();
 
-	if(mged_variables->v_axes)
+	if(axes_state->ax_view_draw)
 	  draw_v_axes();
 
-	if(mged_variables->m_axes)
+	if(axes_state->ax_model_draw)
 	  draw_m_axes();
 
-	if(mged_variables->e_axes &&
+	if(axes_state->ax_edit_draw &&
 	   (state == ST_S_EDIT || state == ST_O_EDIT))
 	  draw_e_axes();
 
@@ -1598,9 +1622,9 @@ refresh()
 
       /* Draw center dot */
       DM_SET_FGCOLOR(dmp,
-		     color_scheme->fp_center_dot[0],
-		     color_scheme->fp_center_dot[1],
-		     color_scheme->fp_center_dot[2], 1);
+		     color_scheme->cs_center_dot[0],
+		     color_scheme->cs_center_dot[1],
+		     color_scheme->cs_center_dot[2], 1);
       DM_DRAW_POINT_2D(dmp, 0.0, 0.0);
 
       DM_DRAW_END(dmp);
@@ -1632,7 +1656,7 @@ refresh()
 #endif
 
   FOR_ALL_DISPLAYS(p, &head_dm_list.l)
-    p->s_info->_dmaflag = 0;
+    p->dml_view_state->vs_flag = 0;
 
   curr_dm_list = save_dm_list;
   update_views = 0;
@@ -1743,10 +1767,10 @@ reset_input_strings()
     /* Truncate input string */
     bu_vls_trunc(&input_str, 0);
     bu_vls_trunc(&input_str_prefix, 0);
-    bu_vls_trunc(&curr_cmd_list->more_default, 0);
+    bu_vls_trunc(&curr_cmd_list->cl_more_default, 0);
     input_str_index = 0;
 
-    curr_cmd_list->quote_string = 0;
+    curr_cmd_list->cl_quote_string = 0;
     bu_vls_strcpy(&mged_prompt, MGED_PROMPT);
     bu_log("\n");
     pr_prompt();
@@ -1770,9 +1794,9 @@ reset_input_strings()
 void
 new_mats()
 {
-	bn_mat_mul( model2view, Viewrot, toViewcenter );
-	model2view[15] = Viewscale;
-	bn_mat_inv( view2model, model2view );
+	bn_mat_mul( view_state->vs_model2view, view_state->vs_Viewrot, view_state->vs_toViewcenter );
+	view_state->vs_model2view[15] = view_state->vs_Viewscale;
+	bn_mat_inv( view_state->vs_view2model, view_state->vs_model2view );
 
 #if 1
 	{
@@ -1781,39 +1805,39 @@ new_mats()
 
 	  /* Find current azimuth, elevation, and twist angles */
 	  VSET( work , 0.0, 0.0, 1.0 );       /* view z-direction */
-	  MAT4X3VEC( temp , view2model , work );
+	  MAT4X3VEC( temp , view_state->vs_view2model , work );
 	  VSET( work1 , 1.0, 0.0, 0.0 );      /* view x-direction */
-	  MAT4X3VEC( temp1 , view2model , work1 );
+	  MAT4X3VEC( temp1 , view_state->vs_view2model , work1 );
 
 	  /* calculate angles using accuracy of 0.005, since display
 	   * shows 2 digits right of decimal point */
-	  bn_aet_vec( &curr_dm_list->s_info->azimuth,
-		       &curr_dm_list->s_info->elevation,
-		       &curr_dm_list->s_info->twist,
+	  bn_aet_vec( &view_state->vs_azimuth,
+		       &view_state->vs_elevation,
+		       &view_state->vs_twist,
 		       temp , temp1 , (fastf_t)0.005 );
 #if 1
 	  /* Force azimuth range to be [0,360] */
-	  if((NEAR_ZERO(curr_dm_list->s_info->elevation - 90.0,(fastf_t)0.005) ||
-	     NEAR_ZERO(curr_dm_list->s_info->elevation + 90.0,(fastf_t)0.005)) &&
-	     curr_dm_list->s_info->azimuth < 0 &&
-	     !NEAR_ZERO(curr_dm_list->s_info->azimuth,(fastf_t)0.005))
-	    curr_dm_list->s_info->azimuth += 360.0;
-	  else if(NEAR_ZERO(curr_dm_list->s_info->azimuth,(fastf_t)0.005))
-	    curr_dm_list->s_info->azimuth = 0.0;
+	  if((NEAR_ZERO(view_state->vs_elevation - 90.0,(fastf_t)0.005) ||
+	     NEAR_ZERO(view_state->vs_elevation + 90.0,(fastf_t)0.005)) &&
+	     view_state->vs_azimuth < 0 &&
+	     !NEAR_ZERO(view_state->vs_azimuth,(fastf_t)0.005))
+	    view_state->vs_azimuth += 360.0;
+	  else if(NEAR_ZERO(view_state->vs_azimuth,(fastf_t)0.005))
+	    view_state->vs_azimuth = 0.0;
 #else
 	  /* Force azimuth range to be [-180,180] */
-	  if(!NEAR_ZERO(curr_dm_list->s_info->elevation - 90.0,(fastf_t)0.005) &&
-	      !NEAR_ZERO(curr_dm_list->s_info->elevation + 90.0,(fastf_t)0.005))
-	    curr_dm_list->s_info->azimuth -= 180;
+	  if(!NEAR_ZERO(view_state->vs_elevation - 90.0,(fastf_t)0.005) &&
+	      !NEAR_ZERO(view_state->vs_elevation + 90.0,(fastf_t)0.005))
+	    view_state->vs_azimuth -= 180;
 #endif
 	}
 #endif
 
 	if( state != ST_VIEW ) {
-	  bn_mat_mul( model2objview, model2view, modelchanges );
-	  bn_mat_inv( objview2model, model2objview );
+	  bn_mat_mul( view_state->vs_model2objview, view_state->vs_model2view, modelchanges );
+	  bn_mat_inv( view_state->vs_objview2model, view_state->vs_model2objview );
 	}
-	dmaflag = 1;
+	view_state->vs_flag = 1;
 }
 
 #ifdef DO_NEW_EDIT_MATS
@@ -1825,13 +1849,13 @@ new_edit_mats()
 
   save_dm_list = curr_dm_list;
   FOR_ALL_DISPLAYS(p, &head_dm_list.l){
-    if(!p->_owner)
+    if(!p->dml_owner)
       continue;
 
     curr_dm_list = p;
-    bn_mat_mul( model2objview, model2view, modelchanges );
-    bn_mat_inv( objview2model, model2objview );
-    dmaflag = 1;
+    bn_mat_mul( view_state->vs_model2objview, view_state->vs_model2view, modelchanges );
+    bn_mat_inv( view_state->vs_objview2model, view_state->vs_model2objview );
+    view_state->vs_flag = 1;
   }
 
   curr_dm_list = save_dm_list;
@@ -2024,7 +2048,7 @@ char	**argv;
 	dbip = save_dbip;
 	Tcl_AppendResult(interp, MORE_ARGS_STR, "Create new database (y|n)[n]? ",
 			 (char *)NULL);
-	bu_vls_printf(&curr_cmd_list->more_default, "n");
+	bu_vls_printf(&curr_cmd_list->cl_more_default, "n");
 	return TCL_ERROR;
       }
 
