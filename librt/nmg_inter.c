@@ -4350,9 +4350,9 @@ struct shell		*s2;
 		neu2 = nmg_eusplit( eu1->eumate_p->vu_p->v_p, neu1, 0 );
 		NMG_CK_EDGEUSE(eu1);
 		/* Attach new edge in s2 to original edge in s1 */
-		nmg_je( eu1, neu2 );
-		nmg_je( eu1, neu1 );
-	}
+		nmg_je( eu1, neu2 );	/* join new wire edge to existing edge */
+		nmg_je( eu1, neu1 );	/* join new wire edge to existing edge */
+}
 	nmg_loop_g(lu2->l_p, &is->tol);
 	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 		rt_log("nmg_isect_edge3p_shell(, eu1=x%x, s2=x%x) Added wire lu=x%x\n",
