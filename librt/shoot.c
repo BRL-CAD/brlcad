@@ -344,6 +344,8 @@ if(rt_g.debug&DEBUG_ADVANCE)bu_log("Exit axis is %s, t1=%g\n", ssp->out_axis==X 
 	return(CUTTER_NULL);
 }
 #else
+
+#define MUCHO_DIAGS	0
 /*
  *			R T _ A D V A N C E _ T O _ N E X T _ C E L L
  *
@@ -428,13 +430,13 @@ top:
 		    py < cutp->bn.bn_min[Y] || py > cutp->bn.bn_max[Y] ||
 		    pz < cutp->bn.bn_min[Z] || pz > cutp->bn.bn_max[Z] )  {
 			bu_log("rt_advance_to_next_cell(): point not in cell, advancing\n");
-#if 0
-		    	bu_log(" pt (%.20e,%.20e,%.20e)\n", px, py, pz );
-		    	bu_log("  min (%.20e,%.20e,%.20e)\n", V3ARGS(cutp->bn.bn_min) );
-		    	bu_log("  max (%.20e,%.20e,%.20e)\n", V3ARGS(cutp->bn.bn_max) );
-			bu_log("pt=(%g,%g,%g)\n", px, py, pz );
-		     	rt_pr_cut( cutp, 0 );
-#endif
+		     	if( rt_g.debug & DEBUG_ADVANCE )  {
+			    	bu_log(" pt (%.20e,%.20e,%.20e)\n", px, py, pz );
+			    	bu_log("  min (%.20e,%.20e,%.20e)\n", V3ARGS(cutp->bn.bn_min) );
+			    	bu_log("  max (%.20e,%.20e,%.20e)\n", V3ARGS(cutp->bn.bn_max) );
+				bu_log("pt=(%g,%g,%g)\n", px, py, pz );
+			     	rt_pr_cut( cutp, 0 );
+		     	}
 			/*
 			 * Move newray point further into new box.  Try again.
 			 */
@@ -445,27 +447,28 @@ top:
 		/* Don't get stuck within the same box for long */
 		if( cutp==ssp->lastcut )  {
 push:			;
-#if 0
-			bu_log("%d,%d box push odist_corr=%.20e n=%.20e model_end=%.20e\n",
-				ap->a_x, ap->a_y,
-				ssp->odist_corr, ssp->dist_corr, ssp->model_end );
-			bu_log("box_start o=%.20e n=%.20e, box_end o=%.20e n=%.20e\n",
-				ssp->obox_start, ssp->box_start,
-				ssp->obox_end, ssp->box_end );
+		     	if( rt_g.debug & DEBUG_ADVANCE )  {
+				bu_log("%d,%d box push odist_corr=%.20e n=%.20e model_end=%.20e\n",
+					ap->a_x, ap->a_y,
+					ssp->odist_corr, ssp->dist_corr, ssp->model_end );
+				bu_log("box_start o=%.20e n=%.20e, box_end o=%.20e n=%.20e\n",
+					ssp->obox_start, ssp->box_start,
+					ssp->obox_end, ssp->box_end );
+				bu_log("Point=(%g,%g,%g)\n", px, py, pz );
+				VPRINT("Dir", ssp->newray.r_dir);
+#if MUCHO_DIAGS
+			     	rt_pr_cut( cutp, 0 );
 #endif
-#if 0
-			VPRINT("a_ray.r_pt", ap->a_ray.r_pt);
-			bu_log("Point=(%g,%g,%g)\n", px, py, pz );
-			VPRINT("Dir", ssp->newray.r_dir);
-		     	rt_pr_cut( cutp, 0 );
-#endif
+		     	}
 
 			/* Advance 1mm, or smallest value that hardware
 			 * floating point resolution will allow.
 			 */
 			fraction = frexp( ssp->box_end, &exponent );
-#if 0
-bu_log("frexp: box_end=%g, fract=%g, exp=%d\n", ssp->box_end, fraction, exponent);
+#if MUCHO_DIAGS
+		     	if( rt_g.debug & DEBUG_ADVANCE )  {
+				bu_log("frexp: box_end=%g, fract=%g, exp=%d\n", ssp->box_end, fraction, exponent);
+		     	}
 #endif
 			if( exponent <= 0 )  {
 				/* Never advance less than 1mm */
@@ -479,8 +482,10 @@ bu_log("frexp: box_end=%g, fract=%g, exp=%d\n", ssp->box_end, fraction, exponent
 				else
 					fraction += 1.0e-14;
 				ssp->box_start = ldexp( fraction, exponent );
-#if 0
-bu_log("ldexp: box_end=%g, fract=%g, exp=%d\n", ssp->box_end, fraction, exponent);
+#if MUCHO_DIAGS
+		     	if( rt_g.debug & DEBUG_ADVANCE )  {
+				bu_log("ldexp: box_end=%g, fract=%g, exp=%d\n", ssp->box_end, fraction, exponent);
+		     	}
 #endif
 			}
 			if( rt_g.debug & DEBUG_ADVANCE )  {
@@ -488,15 +493,20 @@ bu_log("ldexp: box_end=%g, fract=%g, exp=%d\n", ssp->box_end, fraction, exponent
 					ssp->box_end, ssp->box_start);
 			}
 			push_flag++;
+			if( push_flag > 7 )  {
+		     		bu_log("rt_advance_to_next_cell(): internal ERROR: infinite loop aborted, ray %d,%d truncated\n",
+					ap->a_x, ap->a_y);
+				return CUTTER_NULL;
+			}
 			continue;
 		}
 		if( push_flag )  {
 			push_flag = 0;
-#if 0
-			bu_log("%d,%d Escaped %d. dist_corr=%g, box_start=%g, box_end=%g\n",
-				ap->a_x, ap->a_y, push_flag,
-				ssp->dist_corr, ssp->box_start, ssp->box_end );
-#endif
+		     	if( rt_g.debug & DEBUG_ADVANCE )  {
+				bu_log("%d,%d Escaped %d. dist_corr=%g, box_start=%g, box_end=%g\n",
+					ap->a_x, ap->a_y, push_flag,
+					ssp->dist_corr, ssp->box_start, ssp->box_end );
+		     	}
 		}
 		ssp->lastcut = cutp;
 
