@@ -95,7 +95,7 @@ static fastf_t xbase, ybase, zbase;
 static fastf_t deltas;
 extern double atof();
 
-double AmbientIntensity = 0.15;		/* Ambient light intensity */
+double AmbientIntensity = 0.1;		/* Ambient light intensity */
 vect_t l0vec;		/* 0th light vector */
 vect_t l1vec;		/* 1st light vector */
 vect_t l2vec;		/* 2st light vector */
@@ -109,13 +109,14 @@ char **argv;
 	register struct ray *rayp;
 	register int xscreen, yscreen;
 	static int npts;		/* # of points to shoot: x,y */
-	static mat_t viewrot;
-	static mat_t invview;
+	static mat_t view2model;
+	static mat_t model2view;
 	static mat_t mat1, mat2;	/* temporary matrices */
 	static vect_t tempdir;
 	static struct partition *PartHeadp, *pp;
 	static fastf_t distsq;
 	static double azimuth, elevation;
+	static int matflag = 0;		/* read matrix from stdin */
 
 	npts = 512;
 	azimuth = -35.0;			/* GIFT defaults */
@@ -129,6 +130,9 @@ char **argv;
 	argc--; argv++;
 	while( argv[0][0] == '-' )  {
 		switch( argv[0][1] )  {
+		case 'M':
+			matflag = 1;
+			break;
 		case 'A':
 			AmbientIntensity = atof( &argv[0][2] );
 			break;
@@ -146,10 +150,12 @@ char **argv;
 		case 'a':
 			/* Set azimuth */
 			azimuth = atof( &argv[0][2] );
+			matflag = 0;
 			break;
 		case 'e':
 			/* Set elevation */
 			elevation = atof( &argv[0][2] );
+			matflag = 0;
 			break;
 		case 'l':
 			/* Select lighting model # */
@@ -217,39 +223,51 @@ char **argv;
 
 	timer_prep();	/* start timing actual run */
 
-	/* Determine a view */
+	/*
+	 * Determine the view
+	 */
 	GETSTRUCT(rayp, ray);
 
-	/*
-	 * Unrotated view is TOP.
-	 * Rotation of 270,0,270 takes us to a front view.
-	 * Standard GIFT view is -35 azimuth, -25 elevation off front.
-	 */
-	mat_angles( invview, 270.0-elevation, 0.0, 270.0+azimuth );
-	printf("Viewing %f azimuth, %f elevation off of front view\n",
-		azimuth, elevation);
+	VSET( tempdir, 0, 0, -1 );
+	if( !matflag )  {
+		/*
+		 * Unrotated view is TOP.
+		 * Rotation of 270,0,270 takes us to a front view.
+		 * Standard GIFT view is -35 azimuth, -25 elevation off front.
+		 */
+		mat_idn( model2view );
+		mat_angles( model2view, 270.0-elevation, 0.0, 270.0+azimuth );
+		printf("Viewing %f azimuth, %f elevation off of front view\n",
+			azimuth, elevation);
+		mat_inv( view2model, model2view );
 
-	mat_trn( viewrot, invview );		/* inverse */
+		if( !(debug&DEBUG_QUICKIE) )  {
+			autosize( view2model, npts );
+		} else {
+			xbase = -3;
+			ybase = -3;
+			zbase = -10;
+			deltas = 1;
+			npts = 8;
+			VSET( tempdir, 0, 0, 1 );
+		}
+	}  else  {
+		static int i;
 
-	if( !(debug&DEBUG_QUICKIE) )  {
-		autosize( viewrot, npts );
-		VSET( tempdir, 0, 0, -1 );
-	} else {
-		xbase = -3;
-		ybase = -3;
-		zbase = -10;
-		deltas = 1;
-		npts = 8;
-		VSET( tempdir, 0, 0, 1 );
+		/* Visible part is from -1 to +1 */
+		for( i=0; i < 16; i++ )
+			scanf( "%f", &model2view[i] );
+
+		xbase = ybase = zbase = -1;
+		deltas = 2.0 / ((double)npts);
+		mat_inv( view2model, model2view );
 	}
-	MAT3XVEC( rayp->r_dir, viewrot, tempdir );
-	/* Sanity check */
-	distsq = MAGSQ(rayp->r_dir) - 1.0;
-	if( !NEAR_ZERO(distsq) )
-		printf("ERROR: |r_dir|**2 - 1 = %f != 0\n", distsq);
+
+	MAT4X3VEC( rayp->r_dir, view2model, tempdir );
+	VUNITIZE( rayp->r_dir );
 
 	VSET( tempdir, 	xbase, ybase, zbase );
-	MAT3XVEC( rayp->r_pt, viewrot, tempdir );
+	MAT4X3PNT( rayp->r_pt, view2model, tempdir );
 
 	printf("Ambient light at %f%%\n", AmbientIntensity * 100.0 );
 
@@ -258,21 +276,21 @@ char **argv;
 	tempdir[0] = 2 * (xbase);
 	tempdir[1] = (2/2) * (ybase);
 	tempdir[2] = 2 * (zbase + npts*deltas);
-	MAT3XVEC( l0vec, viewrot, tempdir );
+	MAT4X3VEC( l0vec, view2model, tempdir );
 	VUNITIZE(l0vec);
 
 	/* 1: Red, at right edge, 1/2 high */
 	tempdir[0] = 2 * (xbase + npts*deltas);
 	tempdir[1] = (2/2) * (ybase);
 	tempdir[2] = 2 * (zbase + npts*deltas);
-	MAT3XVEC( l1vec, viewrot, tempdir );
+	MAT4X3VEC( l1vec, view2model, tempdir );
 	VUNITIZE(l1vec);
 
 	/* 2:  Grey, behind, and overhead */
 	tempdir[0] = 2 * (xbase + (npts/2)*deltas);
 	tempdir[1] = 2 * (ybase + npts*deltas);
 	tempdir[2] = 2 * (zbase + (npts/2)*deltas);
-	MAT3XVEC( l2vec, viewrot, tempdir );
+	MAT4X3VEC( l2vec, view2model, tempdir );
 	VUNITIZE(l2vec);
 
 	fflush(stdout);
@@ -283,7 +301,7 @@ char **argv;
 				xbase + xscreen * deltas,
 				ybase + (npts-yscreen-1) * deltas,
 				zbase +  2*npts*deltas );
-			MAT3XVEC( rayp->r_pt, viewrot, tempdir );
+			MAT4X3PNT( rayp->r_pt, view2model, tempdir );
 
 			shootray( rayp );
 			/* Implicit return of HeadSeg chain */
@@ -363,9 +381,9 @@ int npts;
 	static fastf_t ymin, ymax;
 	static fastf_t zmin, zmax;
 	static vect_t xlated;
-	static mat_t invrot;
+	static mat_t invrot;		/* model2view */
 
-	mat_trn( invrot, rot );		/* Inverse rotation matrix */
+	mat_inv( invrot, rot );		/* Inverse rotation matrix */
 
 	/* init maxima and minima */
 	xmax = ymax = zmax = -100000000.0;
@@ -375,7 +393,7 @@ int npts;
 		FAST fastf_t rad;
 
 		rad = sqrt(stp->st_radsq);
-		MAT3XVEC( xlated, invrot, stp->st_center );
+		MAT4X3PNT( xlated, invrot, stp->st_center );
 #define MIN(v,t) {FAST fastf_t rt; rt=(t); if(rt<v) v = rt;}
 #define MAX(v,t) {FAST fastf_t rt; rt=(t); if(rt>v) v = rt;}
 		MIN( xmin, xlated[0]-rad );
