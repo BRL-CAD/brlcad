@@ -92,7 +92,6 @@ MGED_EXTERN( struct wdb_pipept *add_pipept, (struct rt_pipe_internal *pipe, stru
 /* data for solid editing */
 int			sedraw;	/* apply solid editing changes */
 
-struct bu_external	es_ext;
 struct rt_db_internal	es_int;
 struct rt_db_internal	es_int_orig;
 
@@ -2320,23 +2319,15 @@ init_sedit()
 	  return;
 	}
 
-	/* Read solid description.  Save copy of original data */
-	BU_INIT_EXTERNAL(&es_ext);
-	if( db_get_external( &es_ext, illump->s_path[illump->s_last], dbip ) < 0 ){
-	  TCL_READ_ERR;
-	  return;
-	}
-
-	RT_INIT_DB_INTERNAL(&es_int);
-	id = rt_id_solid( &es_ext );
-	if( rt_functab[id].ft_import( &es_int, &es_ext, bn_mat_identity, dbip ) < 0 )  {
+	/* Read solid description into es_int */
+	if( rt_db_get_internal( &es_int, illump->s_path[illump->s_last], dbip, NULL ) < 0 )  {
 	  Tcl_AppendResult(interp, "init_sedit(", illump->s_path[illump->s_last]->d_namep,
 			   "):  solid import failure\n", (char *)NULL);
 	  rt_db_free_internal( &es_int );
-	  db_free_external( &es_ext );
 	  return;				/* FAIL */
 	}
 	RT_CK_DB_INTERNAL( &es_int );
+	id = es_int.idb_type;
 
 	es_menu = 0;
 	if( id == ID_ARB8 )
@@ -2353,7 +2344,6 @@ init_sedit()
 		{
 		  Tcl_AppendResult(interp,"Cannot calculate plane equations for ARB8\n",
 				   (char *)NULL);
-		  db_free_external( &es_ext );
 		  rt_db_free_internal( &es_int );
 		  return;
 		}
@@ -7328,22 +7318,15 @@ init_oedit_guts()
 	}
 
 	/* Not an evaluated region - just a regular path ending in a solid */
-	if (db_get_external(&es_ext, illump->s_path[illump->s_last], dbip) < 0) {
-		Tcl_AppendResult(interp, "init_oedit(", illump->s_path[illump->s_last]->d_namep,
-				 "): db_get_external failure\n", (char *)NULL);
-		button(BE_REJECT);
-		return;
-	}
-
-	id = rt_id_solid(&es_ext);
-	if (rt_functab[id].ft_import(&es_int, &es_ext, bn_mat_identity, dbip) < 0) {
+	if( rt_db_get_internal( &es_int, illump->s_path[illump->s_last], dbip, NULL ) < 0 )  {
 		Tcl_AppendResult(interp, "init_oedit(", illump->s_path[illump->s_last]->d_namep,
 				 "):  solid import failure\n", (char *)NULL);
 		rt_db_free_internal( &es_int );
-		db_free_external(&es_ext);
+		button(BE_REJECT);
 		return;				/* FAIL */
 	}
 	RT_CK_DB_INTERNAL(&es_int);
+	id = es_int.idb_type;
 
 	if (id == ID_ARB8) {
 		struct rt_arb_internal *arb;
@@ -7504,7 +7487,6 @@ void
 oedit_reject()
 {
 	rt_db_free_internal(&es_int);
-	db_free_external(&es_ext);
 }
 
 /* 			F _ E Q N ( )
@@ -7632,23 +7614,13 @@ sedit_apply(accept_flag)
 	}
 
 	/* Scale change on export is 1.0 -- no change */
-	if (rt_functab[es_int.idb_type].ft_export( &es_ext, &es_int, 1.0, dbip) < 0)  {
+	if( rt_db_put_internal( dp, dbip, &es_int ) < 0 )  {
 		Tcl_AppendResult(interp, "sedit_apply(", dp->d_namep,
 				 "):  solid export failure\n", (char *)NULL);
 		if (accept_flag) {
 			rt_db_free_internal(&es_int);
-			db_free_external(&es_ext);
 		}
 		return TCL_ERROR;				/* FAIL */
-	}
-
-    	if (accept_flag)
-		rt_db_free_internal(&es_int);
-
-	if (db_put_external(&es_ext, dp, dbip) < 0) {
-		if (accept_flag)
-			db_free_external(&es_ext);
-		TCL_WRITE_ERR_return;
 	}
 
 	if (accept_flag) {
@@ -7658,7 +7630,6 @@ sedit_apply(accept_flag)
 		es_edclass = EDIT_CLASS_NULL;
 
 		rt_db_free_internal(&es_int);
-		db_free_external(&es_ext);
 	}
 
 	return TCL_OK;
@@ -7729,7 +7700,6 @@ sedit_reject()
 	es_edclass = EDIT_CLASS_NULL;
 
 	rt_db_free_internal( &es_int );
-	db_free_external( &es_ext );
 }
 
 int
@@ -9135,6 +9105,9 @@ char **argv;
   return TCL_OK;
 }
 
+/*
+ *			F _ S E D I T _ R E S E T
+ */
 int
 f_sedit_reset(clientData, interp, argc, argv)
 ClientData clientData;
@@ -9142,7 +9115,6 @@ Tcl_Interp *interp;
 int argc;
 char **argv;
 {
-  int id;
   struct bu_vls vls;
 
   if(state != ST_S_EDIT)
@@ -9160,13 +9132,9 @@ char **argv;
   rt_db_free_internal( &es_int );
 
   /* read in a fresh copy */
-  RT_INIT_DB_INTERNAL(&es_int);
-  id = rt_id_solid( &es_ext );
-  if( rt_functab[id].ft_import( &es_int, &es_ext, bn_mat_identity, dbip ) < 0 )  {
-    Tcl_AppendResult(interp, "init_sedit(", illump->s_path[illump->s_last]->d_namep,
+  if( rt_db_get_internal( &es_int, illump->s_path[illump->s_last], dbip, NULL ) < 0 )  {
+    Tcl_AppendResult(interp, "sedit_reset(", illump->s_path[illump->s_last]->d_namep,
 		     "):  solid import failure\n", (char *)NULL);
-    rt_db_free_internal( &es_int );
-    db_free_external( &es_ext );
     return TCL_ERROR;				/* FAIL */
   }
   RT_CK_DB_INTERNAL( &es_int );
