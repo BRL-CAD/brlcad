@@ -45,6 +45,5 @@ exec $EXEC_COMMAND
 
 foreach arg $argv {
     catch {auto_mkindex $arg *.tcl *.itcl *.itk}
-    catch {pkg_mkIndex $arg *.tcl *.itcl *.itk}
     puts $arg
 }
