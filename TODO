@@ -5,28 +5,38 @@ Included below is a list of things that are scheduled or desireable to
 be done at some point.  More important, easy, and most recently added
 items are on top, older topics are on the bottom.
 
+THESE SHOULD HAPPEN BEFORE SOURCEFORGE UPLOAD
 
-THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
+* ensure successful build on solaris with gcc and sunwpro compiler
 
-* handle multiple threading models (irix) via configure
+* ensure successful build on windows 
+
+* write up initial README
+
+* write up initial HACKING
 
 * write up the history of brlcad
 
 * revise cvs policy document to reflect desired and practical public
   use
 
+* modify file headers to add license info
+
+* make make dist work (need to add distdir target to Makefile.in files
+  in libtcl/libtk for starters)
+
+
+THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
+
+* handle multiple threading models (irix) via configure
+
 * obliterate compilation warnings
 
 * clean up code comments, add more of them, and doxygenify them 
   (minimally, use /** */ in major comment blocks)
 
-* add license files and modify file headers
-
 * add checks for system libs and optionally build our libs only if
   they don't have suitable system libs (namely, libtcl)
-
-* add distdir target to Makefile.in files in libtcl/libtk so make
-  dist can work.
 
 
 THESE ARE LOWER PRIORITY
@@ -47,7 +57,7 @@ THESE ARE LOWER PRIORITY
 
 THESE BREAK PROTOCOL AND ARE BACKWARDS INCOMPATIBLE
 
-* fix the database IO writing to properly support the addition of new
+* fix the database I/O writing to properly support the addition of new
   primitive types.  this includes modifying the major/minor code or
   combinations/regions and binary objects
 
