@@ -18,8 +18,10 @@
 #define HMG_HIT_OUT_OUT 0x44	/* edge/vertex graze */
 #define HMG_HIT_IN_ON	0x12
 #define HMG_HIT_ON_IN	0x21
+#define HMG_HIT_ON_ON	0x22
 #define HMG_HIT_OUT_ON	0x42
 #define HMG_HIT_ON_OUT	0x24
+#define HMG_HIT_ANY_ANY	0x88	/* hit on non-3-mainifold */
 
 #define	NMG_VERT_ENTER 1
 #define NMG_VERT_ENTER_LEAVE 0
@@ -36,6 +38,8 @@ struct hitmiss {
 	int		in_out;		/* status of ray as it transitions
 					 * this hit point.
 					 */
+	long		*inbound_use;
+	long		*outbound_use;
 	int		start_stop;	/* is this a seg_in or seg_out */
 	struct hitmiss	*other;		/* for keeping track of the other
 					 * end of the segment when we know
