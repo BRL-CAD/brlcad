@@ -37,6 +37,7 @@ struct solid  {
   char s_uflag;		/* 1 - the user specified the color */
   char s_dflag;		/* 1 - s_basecolor is derived from the default */
   char s_cflag;		/* 1 - use the default color */
+  char s_wflag;		/* work flag */
   unsigned char	s_basecolor[3];	/* color from containing region */
   unsigned char	s_color[3];	/* color to draw as */
   short	s_regionid;	/* region ID */
