@@ -577,6 +577,8 @@ menu .$id.menubar.settings -tearoff $do_tearoffs
 	-menu .$id.menubar.settings.grid_spacing
 .$id.menubar.settings add cascade -label "Framebuffer" -underline 0\
 	-menu .$id.menubar.settings.fb
+.$id.menubar.settings add cascade -label "Pane Background Color" -underline 0\
+	-menu .$id.menubar.settings.bgColor
 
 menu .$id.menubar.settings.applyTo -tearoff $do_tearoffs
 .$id.menubar.settings.applyTo add radiobutton -value 0 -variable mged_apply_to($id)\
@@ -660,6 +662,27 @@ menu .$id.menubar.settings.fb -tearoff $do_tearoffs
 .$id.menubar.settings.fb add checkbutton -offvalue 0 -onvalue 1 -variable mged_listen($id)\
 	-label "Listen For Clients" -underline 0\
 	-command "set_listen $id" -state disabled
+
+menu .$id.menubar.settings.bgColor -tearoff $do_tearoffs
+.$id.menubar.settings.bgColor add command -label black\
+	-command "mged_apply $id \"dm bg 0 0 0\""
+.$id.menubar.settings.bgColor add command -label white\
+	-command "mged_apply $id \"dm bg 255 255 255\""
+.$id.menubar.settings.bgColor add command -label red\
+	-command "mged_apply $id \"dm bg 255 0 0\""
+.$id.menubar.settings.bgColor add command -label green\
+	-command "mged_apply $id \"dm bg 0 255 0\""
+.$id.menubar.settings.bgColor add command -label blue\
+	-command "mged_apply $id \"dm bg 0 0 255\""
+.$id.menubar.settings.bgColor add command -label yellow\
+	-command "mged_apply $id \"dm bg 255 255 0\""
+.$id.menubar.settings.bgColor add command -label cyan\
+	-command "mged_apply $id \"dm bg 0 255 255\""
+.$id.menubar.settings.bgColor add command -label magenta\
+	-command "mged_apply $id \"dm bg 255 0 255\""
+.$id.menubar.settings.bgColor add separator
+.$id.menubar.settings.bgColor add command -label "Color Tool..."\
+	-command "choosePaneColor $id"
 
 menu .$id.menubar.settings.grid -tearoff $do_tearoffs
 .$id.menubar.settings.grid add command -label "Anchor..." -underline 0\
@@ -919,7 +942,7 @@ if {$use_grid_gm} {
 }
 scrollbar .$id.s -relief flat -command ".$id.t yview"
 
-bind .$id.t <Enter> "focus .$id.t"
+bind .$id.t <Enter> "focus .$id.t; break"
 
 set mged_edit_style($id) $mged_default_edit_style
 set dm_insert_char_flag(.$id.t) 0
@@ -1062,6 +1085,9 @@ share_menu $mged_top($id).ul $mged_top($id).lr
 do_rebind_keys $id
 bind $mged_dmc($id) <Configure> "setmv $id"
 
+# Throw away key events
+bind $mged_top($id) <KeyPress> { break }
+
 set dbname [_mged_opendb]
 set_wm_title $id $dbname
 
@@ -1082,7 +1108,7 @@ if { $comb } {
     wm geometry .$id +8+32
     update
 
-    # Prevent command window from resizing itself
+    # Prevent command window from resizing itself as labels change
     set geometry [wm geometry .$id]
     wm geometry .$id $geometry
 }
@@ -1850,20 +1876,20 @@ proc set_transform { id } {
 proc do_rebind_keys { id } {
     global mged_top
 
-    bind $mged_top($id).ul <Control-n> "winset $mged_top($id).ul; do_next_view $id" 
-    bind $mged_top($id).ur <Control-n> "winset $mged_top($id).ur; do_next_view $id" 
-    bind $mged_top($id).ll <Control-n> "winset $mged_top($id).ll; do_next_view $id" 
-    bind $mged_top($id).lr <Control-n> "winset $mged_top($id).lr; do_next_view $id" 
+    bind $mged_top($id).ul <Control-n> "winset $mged_top($id).ul; do_next_view $id; break" 
+    bind $mged_top($id).ur <Control-n> "winset $mged_top($id).ur; do_next_view $id; break" 
+    bind $mged_top($id).ll <Control-n> "winset $mged_top($id).ll; do_next_view $id; break" 
+    bind $mged_top($id).lr <Control-n> "winset $mged_top($id).lr; do_next_view $id; break" 
 
-    bind $mged_top($id).ul <Control-p> "winset $mged_top($id).ul; do_prev_view $id" 
-    bind $mged_top($id).ur <Control-p> "winset $mged_top($id).ur; do_prev_view $id" 
-    bind $mged_top($id).ll <Control-p> "winset $mged_top($id).ll; do_prev_view $id" 
-    bind $mged_top($id).lr <Control-p> "winset $mged_top($id).lr; do_prev_view $id" 
+    bind $mged_top($id).ul <Control-p> "winset $mged_top($id).ul; do_prev_view $id; break" 
+    bind $mged_top($id).ur <Control-p> "winset $mged_top($id).ur; do_prev_view $id; break" 
+    bind $mged_top($id).ll <Control-p> "winset $mged_top($id).ll; do_prev_view $id; break" 
+    bind $mged_top($id).lr <Control-p> "winset $mged_top($id).lr; do_prev_view $id; break" 
 
-    bind $mged_top($id).ul <Control-t> "winset $mged_top($id).ul; do_toggle_view $id" 
-    bind $mged_top($id).ur <Control-t> "winset $mged_top($id).ur; do_toggle_view $id" 
-    bind $mged_top($id).ll <Control-t> "winset $mged_top($id).ll; do_toggle_view $id" 
-    bind $mged_top($id).lr <Control-t> "winset $mged_top($id).lr; do_toggle_view $id" 
+    bind $mged_top($id).ul <Control-t> "winset $mged_top($id).ul; do_toggle_view $id; break" 
+    bind $mged_top($id).ur <Control-t> "winset $mged_top($id).ur; do_toggle_view $id; break" 
+    bind $mged_top($id).ll <Control-t> "winset $mged_top($id).ll; do_toggle_view $id; break" 
+    bind $mged_top($id).lr <Control-t> "winset $mged_top($id).lr; do_toggle_view $id; break" 
 }
 
 proc adc { args } {
@@ -1940,4 +1966,34 @@ proc get_cmd_win_height { id } {
     set fh [get_font_height .$id.t]
 
     return [expr $fh * $mged_num_lines($id)]
+}
+
+proc choosePaneColor { id } {
+    global mged_top
+    global mged_active_dm
+
+    winset $mged_active_dm($id)
+    set rgb_str [_mged_dm bg]
+    set rgb [format "#%02x%02x%02x" [lindex $rgb_str 0] [lindex $rgb_str 1] [lindex $rgb_str 2]]
+
+    cadColorWidget dialog $mged_top($id) -title "Pane Color"\
+	    -initialcolor $rgb\
+	    -ok "pane_color_ok $id $mged_top($id).colorWidget"\
+	    -cancel "pane_color_cancel $id $mged_top($id).colorWidget"
+}
+
+proc pane_color_ok { id w } {
+    upvar #0 $w data
+
+    mged_apply $id "dm bg $data(red) $data(green) $data(blue)"
+
+    destroy $w
+    unset data
+}
+
+proc pane_color_cancel { id w } {
+    upvar #0 $w data
+
+    destroy $w
+    unset data
 }
