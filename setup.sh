@@ -108,6 +108,7 @@ cd ..
 #
 ############################################################################
 echo Compiling cake and cakeaux
+echo machintype.sh -d returns `machinetype.sh -d`
 if test x$1 != x-f
 then
 	cd cake
@@ -173,6 +174,7 @@ ${OUT_FILE}:
 EOF
 
 # Run the file through CAKE.
+## echo cake -f ${IN_FILE} ${OUT_FILE}
 cake -f ${IN_FILE} ${OUT_FILE} > /dev/null
 if test $? -ne 0
 then
@@ -189,9 +191,10 @@ then
 fi
 
 # Source the output file as a shell script, to set C_* variables here.
+## cat ${OUT_FILE}
 . ${OUT_FILE}
 
-/bin/rm -f ${IN_FILE} ${OUT_FILE}
+####/bin/rm -f ${IN_FILE} ${OUT_FILE}
 
 # See if things match up
 if test x${MACHINE} != x${C_MACHINE} -o \
@@ -209,7 +212,7 @@ fi
 #  Make final preparations to ready things for compilation.
 #
 ############################################################################
-make mkdir		# Won't have any effect unless NFS is set.
+sh gen.sh mkdir		# Won't have any effect unless NFS is set.
 
 # Congratulations.  Everything is fine.
 echo "BRL-CAD initial setup is complete."
