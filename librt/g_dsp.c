@@ -735,7 +735,7 @@ struct isect_stuff *isect;
 		/* we've hit the bounding box for the two triangles that
 		 * make up this cell.
 		 */
-		isect_ray_triangles(isect, grid_cell)
+		isect_ray_triangles(isect, grid_cell);
 
 
 next_iter:
