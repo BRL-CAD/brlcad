@@ -926,124 +926,131 @@ char	**argv;
  */
 int
 f_tree(clientData, interp, argc, argv)
-ClientData clientData;
-Tcl_Interp *interp;
-int	argc;
-char	**argv;
+     ClientData	clientData;
+     Tcl_Interp	*interp;
+     int	argc;
+     char	**argv;
 {
-  register struct directory *dp;
-  register int j;
+	register struct directory	*dp;
+	register int			j;
+	int				cflag = 0;
 
-  CHECK_DBI_NULL;
+	CHECK_DBI_NULL;
 
-  if(argc < 2 || MAXARGS < argc){
-    struct bu_vls vls;
+	if (argc < 2 || MAXARGS < argc) {
+		struct bu_vls vls;
 
-    bu_vls_init(&vls);
-    bu_vls_printf(&vls, "help tree");
-    Tcl_Eval(interp, bu_vls_addr(&vls));
-    bu_vls_free(&vls);
-    return TCL_ERROR;
-  }
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "help tree");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
 
-  if( setjmp( jmp_env ) == 0 )
-    (void)signal( SIGINT, sig3);  /* allow interupts */
-  else
-    return TCL_OK;
+	if (setjmp(jmp_env) == 0)
+		(void)signal( SIGINT, sig3);  /* allow interupts */
+	else
+		return TCL_OK;
 
-  for ( j = 1; j < argc; j++) {
-    if( j > 1 )
-      Tcl_AppendResult(interp, "\n", (char *)NULL);
-    if( (dp = db_lookup( dbip, argv[j], LOOKUP_NOISY )) == DIR_NULL )
-      continue;
-    printnode(dp, 0, 0);
-  }
+	if (argv[1][0] == '-' && argv[1][1] == 'c') {
+		cflag = 1;
+		--argc;
+		++argv;
+	}
 
-  (void)signal( SIGINT, SIG_IGN );
-  return TCL_OK;
+	for (j = 1; j < argc; j++) {
+		if (j > 1)
+			Tcl_AppendResult(interp, "\n", (char *)NULL);
+		if ((dp = db_lookup(dbip, argv[j], LOOKUP_NOISY)) == DIR_NULL)
+			continue;
+		printnode(dp, 0, 0, cflag);
+	}
+
+	(void)signal(SIGINT, SIG_IGN);
+	return TCL_OK;
 }
 
 /*
  *			P R I N T N O D E
  */
 static void
-printnode( dp, pathpos, prefix )
-register struct directory *dp;
-int pathpos;
-char prefix;
+printnode(dp, pathpos, prefix, cflag)
+     register struct directory	*dp;
+     int			pathpos;
+     char			prefix;
+     int			cflag;
 {	
-  register int	i;
-  register struct directory *nextdp;
-  struct rt_db_internal intern;
-  struct rt_comb_internal *comb;
+	register int			i;
+	register struct directory	*nextdp;
+	struct rt_db_internal		intern;
+	struct rt_comb_internal		*comb;
 
-  if(dbip == DBI_NULL)
-    return;
+	if (dbip == DBI_NULL)
+		return;
 
-  for( i=0; i<pathpos; i++) 
-    Tcl_AppendResult(interp, "\t", (char *)NULL);
+	if (cflag && !(dp->d_flags & DIR_COMB))
+		return;
 
-  if( prefix ) {
-    struct bu_vls tmp_vls;
+	for (i=0; i<pathpos; i++) 
+		Tcl_AppendResult(interp, "\t", (char *)NULL);
 
-    bu_vls_init(&tmp_vls);
-    bu_vls_printf(&tmp_vls, "%c ", prefix);
-    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-    bu_vls_free(&tmp_vls);
-  }
+	if (prefix) {
+		struct bu_vls	tmp_vls;
 
-  Tcl_AppendResult(interp, dp->d_namep, (char *)NULL);
-  /* Output Comb and Region flags (-F?) */
-  if( dp->d_flags & DIR_COMB )
-    Tcl_AppendResult(interp, "/", (char *)NULL);
-  if( dp->d_flags & DIR_REGION )
-    Tcl_AppendResult(interp, "R", (char *)NULL);
+		bu_vls_init(&tmp_vls);
+		bu_vls_printf(&tmp_vls, "%c ", prefix);
+		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		bu_vls_free(&tmp_vls);
+	}
 
-  Tcl_AppendResult(interp, "\n", (char *)NULL);
+	Tcl_AppendResult(interp, dp->d_namep, (char *)NULL);
+	/* Output Comb and Region flags (-F?) */
+	if (dp->d_flags & DIR_COMB)
+		Tcl_AppendResult(interp, "/", (char *)NULL);
+	if (dp->d_flags & DIR_REGION)
+		Tcl_AppendResult(interp, "R", (char *)NULL);
 
-  if( !(dp->d_flags & DIR_COMB) )
-    return;
+	Tcl_AppendResult(interp, "\n", (char *)NULL);
 
-  /*
-   *  This node is a combination (eg, a directory).
-   *  Process all the arcs (eg, directory members).
-   */
+	if (!(dp->d_flags & DIR_COMB))
+		return;
 
-  if( rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL ) < 0 )
-	READ_ERR_return;
-  comb = (struct rt_comb_internal *)intern.idb_ptr;
+	/*
+	 *  This node is a combination (eg, a directory).
+	 *  Process all the arcs (eg, directory members).
+	 */
 
-  if( comb->tree )
-  {
-  	int node_count;
-  	int actual_count;
-  	struct rt_tree_array *rt_tree_array;
+	if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL) < 0)
+		READ_ERR_return;
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
 
-	if( comb->tree && db_ck_v4gift_tree( comb->tree ) < 0 )
-	{
-		db_non_union_push( comb->tree );
-		if( db_ck_v4gift_tree( comb->tree ) < 0 )
-		{
-			Tcl_AppendResult(interp, "Cannot flatten tree for listing\n", (char *)NULL );
-			return;
+	if (comb->tree) {
+		int			node_count;
+		int			actual_count;
+		struct rt_tree_array	*rt_tree_array;
+
+		if (comb->tree && db_ck_v4gift_tree(comb->tree) < 0) {
+			db_non_union_push(comb->tree);
+			if (db_ck_v4gift_tree(comb->tree) < 0) {
+				Tcl_AppendResult(interp, "Cannot flatten tree for listing\n", (char *)NULL );
+				return;
+			}
 		}
-	}
-	node_count = db_tree_nleaves( comb->tree );
-	if( node_count > 0 )
-	{
-		rt_tree_array = (struct rt_tree_array *)bu_calloc( node_count,
-			sizeof( struct rt_tree_array ), "tree list" );
-		actual_count = (struct rt_tree_array *)db_flatten_tree( rt_tree_array, comb->tree, OP_UNION ) - rt_tree_array;
-		if( actual_count > node_count )  bu_bomb("rt_comb_v4_export() array overflow!");
-		if( actual_count < node_count )  bu_log("WARNING rt_comb_v4_export() array underflow! %d < %d", actual_count, node_count);
-	}
+		node_count = db_tree_nleaves(comb->tree);
+		if (node_count > 0) {
+			rt_tree_array = (struct rt_tree_array *)bu_calloc( node_count,
+									   sizeof( struct rt_tree_array ), "tree list" );
+			actual_count = (struct rt_tree_array *)db_flatten_tree( rt_tree_array, comb->tree, OP_UNION ) - rt_tree_array;
+			if (actual_count > node_count)
+				bu_bomb("rt_comb_v4_export() array overflow!");
+			if (actual_count < node_count)
+				bu_log("WARNING rt_comb_v4_export() array underflow! %d < %d", actual_count, node_count);
+		}
 
-  	for( i=0 ; i<actual_count ; i++ )
-  	{
-  		char op;
+		for (i=0 ; i<actual_count ; i++) {
+			char op;
 
-		switch( rt_tree_array[i].tl_op )
-		{
+			switch (rt_tree_array[i].tl_op) {
 			case OP_UNION:
 				op = 'u';
 				break;
@@ -1056,29 +1063,29 @@ char prefix;
 			default:
 				op = '?';
 				break;
+			}
+
+			if ((nextdp = db_lookup(dbip, rt_tree_array[i].tl_tree->tr_l.tl_name, LOOKUP_NOISY)) == DIR_NULL) {
+				int j;
+				struct bu_vls tmp_vls;
+
+				for (j=0; j<pathpos+1; j++) 
+					Tcl_AppendResult(interp, "\t", (char *)NULL);
+
+				bu_vls_init(&tmp_vls);
+				bu_vls_printf(&tmp_vls, "%c ", op);
+				Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+				bu_vls_free(&tmp_vls);
+
+				Tcl_AppendResult(interp, rt_tree_array[i].tl_tree->tr_l.tl_name, "\n", (char *)NULL);
+			} else
+				printnode(nextdp, pathpos+1, op, cflag);
 		}
+		bu_free((char *)rt_tree_array, "printnode: rt_tree_array");
+	}
 
-  		if( (nextdp = db_lookup( dbip, rt_tree_array[i].tl_tree->tr_l.tl_name, LOOKUP_NOISY )) == DIR_NULL )
-  		{
-  			int j;
-			struct bu_vls tmp_vls;
-  			
-			for( j=0; j<pathpos+1; j++) 
-				Tcl_AppendResult(interp, "\t", (char *)NULL);
-
-			bu_vls_init(&tmp_vls);
-			bu_vls_printf(&tmp_vls, "%c ", op);
-			Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-			bu_vls_free(&tmp_vls);
-
-			Tcl_AppendResult(interp, rt_tree_array[i].tl_tree->tr_l.tl_name, "\n", (char *)NULL);
-		}
-  		else
-			printnode( nextdp, pathpos+1, op );
-  	}
-	bu_free( (char *)rt_tree_array, "printnode: rt_tree_array" );
-  }
-  rt_comb_ifree( &intern );
+end:
+	rt_comb_ifree( &intern );
 }
 
 
