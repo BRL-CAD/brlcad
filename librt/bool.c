@@ -386,12 +386,15 @@ struct region			*reg2;
 	/*
 	 * An application program might want to add code here
 	 * to ignore "small" overlap depths.
+	 * Print all verbiage in one call to rt_log(),
+	 * so that messages will be grouped together in parallel runs.
 	 */
-	rt_log("OVERLAP1: reg=%s isol=%s\n",
-		reg1->reg_name, pp->pt_inseg->seg_stp->st_name);
-	rt_log("OVERLAP2: reg=%s osol=%s\n",
-		reg2->reg_name, pp->pt_outseg->seg_stp->st_name);
-	rt_log("OVERLAP depth %gmm at (%g,%g,%g) x%d y%d lvl%d\n",
+	rt_log( "\
+OVERLAP1: reg=%s isol=%s\n\
+OVERLAP2: reg=%s osol=%s\n\
+OVERLAP depth %gmm at (%g,%g,%g) x%d y%d lvl%d\n",
+		reg1->reg_name, pp->pt_inseg->seg_stp->st_name,
+		reg2->reg_name, pp->pt_outseg->seg_stp->st_name,
 		depth, pt[X], pt[Y], pt[Z],
 		ap->a_x, ap->a_y, ap->a_level );
 	return(1);
