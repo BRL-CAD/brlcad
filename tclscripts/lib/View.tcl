@@ -23,7 +23,7 @@ class View {
     public variable size 1000
     public variable center {0 0 0}
     public variable aet "0 90 0"
-    public variable perspective_angle 90
+    public variable perspective_angle 0
     public variable coord "v"
     public variable rotate_about "v"
     public variable keypoint "0 0 0"
