@@ -325,7 +325,7 @@ char spectab[128] = {
 	'{',	/*{*/
 	'}',	/*}*/
 	'\'',	/*' acute accent*/
-	'\`',	/*` grave accent*/
+	'\0140',/*` grave accent*/
 	'^',	/*^*/
 	'#',	/*sharp*/
 	'\036',	/*left hand*/
