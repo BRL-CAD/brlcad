@@ -27,6 +27,7 @@
 #include "./debug.h"
 
 RT_EXTERN( struct shell *nmg_dup_shell , ( struct shell *s , long ***copy_tbl ) );
+RT_EXTERN( void nmg_isect_shell_self , ( struct shell *s , CONST struct rt_tol *tol ) );
 
 /*
  *	E x t r u d e _ N M G _ F a c e
@@ -313,6 +314,11 @@ struct rt_tol	*tol;
 	rt_free((char *)verts, "verts");
 }
 
+/*	N M G _ F I N D _ V E R T E X _ I N _ L U
+ *
+ * find a use of vertex v in loopuse lu
+ */
+
 struct vertexuse *
 nmg_find_vertex_in_lu( v , lu )
 CONST struct vertex *v;
@@ -352,6 +358,12 @@ CONST struct loopuse *lu;
 	return( ret_vu );
 }
 
+/*	N M G _ S T A R T _ N E W _ L O O P
+ *
+ * recursive routine to build tables of edgeuse that may be used
+ * to create new loopuses. lu1 and lu2 are overlapping edgeuses
+ * from the same faceuse. This is a support routine for nmg_fix_overlapping loops
+ */
 static void
 nmg_start_new_loop( start_eu , lu1 , lu2 , loops )
 struct edgeuse *start_eu;
@@ -391,8 +403,10 @@ struct nmg_ptbl *loops;
 
 		next_eu = RT_LIST_PNEXT_CIRC( edgeuse , &eu->l );
 
+		/* skip this checking until we get by the first edgeuse */
 		if( edges )
 		{
+			/* Are we back to the begining? */
 			if( (eu->vu_p->v_p == start_eu->vu_p->v_p ) )
 			{
 				/* done with this loop */
@@ -400,9 +414,11 @@ struct nmg_ptbl *loops;
 				break;
 			}
 
+			/* Are we at an intersect point? */
 			vu2 = nmg_find_vertex_in_lu( eu->vu_p->v_p , other_lu );
 			if( vu2 )
 			{
+				/* Yes, we may need to start another loop */
 				struct edgeuse *eu2;
 				struct loopuse *lu_tmp;
 				int loop_started=0;
@@ -425,9 +441,13 @@ struct nmg_ptbl *loops;
 					}
 				}
 
+				/* if a loop has not already been started here
+				 * start one with the current edgeuse
+				 */
 				if( !loop_started )
 					nmg_start_new_loop( eu , this_lu , other_lu , loops );
 
+				/* continue this loop by switching to the other loopuse */
 				eu = eu2;
 				next_eu = RT_LIST_PNEXT_CIRC( edgeuse , &eu->l );
 				lu_tmp = this_lu;
@@ -436,15 +456,36 @@ struct nmg_ptbl *loops;
 			}
 		}
 
+		/* add this edgeuse to the current list */
 		nmg_tbl( new_lu_tab , TBL_INS , (long *)eu );
 
 		edges++;
 
+		/* go to the next edgeuse */
 		eu = next_eu;
 	}
 
 }
 
+/*	N M G _ F I X _ O V E R L A P P I N G _ L O O P S
+ *
+ * Looks at each faceuse in the shell and checks if loopuses in that
+ * faceuse overlap each other. This code can only handle faceuses that
+ * have at most one OT_SAME loopuse and one OT_OPPOSITE loopuse, so
+ * nmg_split_loops_into_faces is called to simplify the faceuses.
+ *
+ * Overlapping OT_SAME and OT_OPPOSITE loops are broken into some
+ * number of OT_SAME loopuses. An edgeuse (from the OT_SAME loopuse)
+ * departing from a point where the loops intersect and outside the
+ * OT_OPPOSITE loopuse is found as a starting point. Edgeuses from this
+ * loopuse are moved to a new loopuse until another intersect point is
+ * encountered. At that point, another loop is started using the next edgeuse
+ * and the current loopuse is continued by following the other loopuse.
+ * this is continued until the original edgeuse is encountered.
+ *
+ * If overlapping loops are found, new loopsuses are created and the
+ * original loopuses are killed
+ */
 void
 nmg_fix_overlapping_loops( s , tol )
 struct shell *s;
@@ -460,10 +501,16 @@ CONST struct rt_tol *tol;
 	if( rt_g.NMG_debug & DEBUG_BASIC )
 		rt_log( "nmg_fix_overlapping_loops: s = x%x\n" , s );
 
+	/* this routine needs simple faceuses */
 	nmg_split_loops_into_faces( &s->l.magic , tol );
 
+	/* This table will contain a list of nmg_ptbl's when we are
+	 * finished. Each of those nmg_ptbl's will be a list of
+	 * edgeuses that comprise a new loop
+	 */
 	nmg_tbl( &loops , TBL_INIT , (long *)NULL );
 
+	/* process all faceuses in the shell */
 	for( RT_LIST_FOR( fu , faceuse , &s->fu_hd ) )
 	{
 		struct loopuse *lu1,*lu2;
@@ -472,26 +519,35 @@ CONST struct rt_tol *tol;
 		int inside=0;
 		int outside=0;
 
-
 		NMG_CK_FACEUSE( fu );
 
+		/* don't process the same face twice */
 		if( fu->orientation != OT_SAME )
 			continue;
 
+		/* This is pretty simple-minded right now, assuming that
+		 * there are only two loopuses
+		 */
 		lu1 = RT_LIST_FIRST( loopuse , &fu->lu_hd );
 		NMG_CK_LOOPUSE( lu1 );
 
 		lu2 = RT_LIST_PNEXT( loopuse , &lu1->l );
+
+		/* if there is only one loopuse, nothing to do */
 		if( RT_LIST_IS_HEAD( lu2 , &fu->lu_hd ) )
 			continue;
+
 		NMG_CK_LOOPUSE( lu2 );
 
+
+		/* if the loopuses aren't both loops af edges, nothing to do */
 		if( RT_LIST_FIRST_MAGIC( &lu1->down_hd ) != NMG_EDGEUSE_MAGIC )
 			continue;
 
 		if( RT_LIST_FIRST_MAGIC( &lu2->down_hd ) != NMG_EDGEUSE_MAGIC )
 			continue;
 
+		/* if both loopuses are the same orientation, something is wrong */
 		if( lu1->orientation == lu2->orientation )
 		{
 			rt_log( "nmg_fix_overlapping_loops: Cannot handle loops of same orientation\n" );
@@ -499,6 +555,8 @@ CONST struct rt_tol *tol;
 			continue;
 		}
 
+		/* At this point we have an OT_SAME and an OT_OPPOSITE loopuses
+		 * for simplicity, force lu1 to be the OT_SAME loopuse */
 		if( lu1->orientation == OT_OPPOSITE && lu2->orientation == OT_SAME )
 		{
 			struct loopuse *lu_tmp;
@@ -517,6 +575,7 @@ CONST struct rt_tol *tol;
 
 		/* lu1 is OT_SAME and lu2 is OT_OPPOSITE, check for overlap */
 
+		/* count how many vertices in lu2 are inside lu1 and outside lu1 */
 		for( RT_LIST_FOR( eu , edgeuse , &lu2->down_hd ) )
 		{
 			struct edgeuse *eu1;
@@ -526,6 +585,7 @@ CONST struct rt_tol *tol;
 
 			vu = eu->vu_p;
 
+			/* ignore vertices that are shared between the loops */
 			if( !nmg_find_vertex_in_lu( vu->v_p , lu1 ) )
 			{
 				int class;
@@ -538,18 +598,24 @@ CONST struct rt_tol *tol;
 			}
 		}
 
+		/* if we don't have vertices both inside and outside lu1,
+		 * then there is no overlap
+		 */
 		if( !inside || !outside ) /* no overlap */
 			continue;
 
 		/* the loops overlap, now fix it */
 
-		/* find a vertex that lu1 and lu2 share, where eu1 is outside lu2 */
+		/* find a vertex that lu1 and lu2 share, where eu1 is outside lu2
+		 * this will be a starting edgeuse for a new loopuse
+		 */
 		start_eu = (struct edgeuse *)NULL;
 		for( RT_LIST_FOR( eu1 , edgeuse , &lu1->down_hd ) )
 		{
 			struct vertex *v1,*v2;
 			point_t mid_pt;
 
+			/* must be a shared vertex */
 			if( !nmg_find_vertex_in_lu( eu1->vu_p->v_p , lu2 ) )
 				continue;
 
@@ -558,6 +624,7 @@ CONST struct rt_tol *tol;
 			v2 = eu1->eumate_p->vu_p->v_p;
 			NMG_CK_VERTEX( v2 );
 
+			/* use midpoint to determine if edgeuse is in or out of lu2 */
 			VBLEND2( mid_pt , 0.5 , v1->vg_p->coord , 0.5 , v2->vg_p->coord )
 
 			if( nmg_classify_pt_loop( mid_pt , lu2 , tol ) == NMG_CLASS_AoutB )
@@ -575,7 +642,9 @@ CONST struct rt_tol *tol;
 
 		nmg_tbl( &loops , TBL_RST , (long *)NULL );
 
-		/* start new loop */
+		/* start new loop
+		 * this routine will recurse, building as many tables as needed
+		 */
 		nmg_start_new_loop( start_eu , lu1 , lu2 , &loops );
 
 		/* use loops table to create the new loops */
@@ -586,8 +655,10 @@ CONST struct rt_tol *tol;
 			struct nmg_ptbl *loop_tab;
 			int eu_no;
 
+			/* each table represents a new loopuse to be constructed */
 			loop_tab = (struct nmg_ptbl *)NMG_TBL_GET( &loops , i );
 
+			/* if there are some entries in this table, make a new loopuse */
 			if( NMG_TBL_END( loop_tab ) )
 			{
 				/* create new loop */
@@ -603,12 +674,16 @@ CONST struct rt_tol *tol;
 				{
 					struct edgeuse *mv_eu;
 
+					/* get edgeuse to be moved */
 					mv_eu = (struct edgeuse *)NMG_TBL_GET( loop_tab , eu_no );
 					NMG_CK_EDGEUSE( mv_eu );
 
+					/* move it to new loopuse */
 					RT_LIST_DEQUEUE( &mv_eu->l );
 					RT_LIST_INSERT( &new_lu->down_hd , &mv_eu->l );
 					mv_eu->up.lu_p = new_lu;
+
+					/* move edgeuse mate to loopuse mate */
 					RT_LIST_DEQUEUE( &mv_eu->eumate_p->l );
 					RT_LIST_APPEND( &new_lu_mate->down_hd , &mv_eu->eumate_p->l );
 					mv_eu->eumate_p->up.lu_p = new_lu_mate;
@@ -619,6 +694,7 @@ CONST struct rt_tol *tol;
 			}
 		}
 
+		/* kill empty loopuses left in faceuse */
 		lu1 = RT_LIST_FIRST( loopuse , &fu->lu_hd );
 		while( RT_LIST_NOT_HEAD( lu1 , &fu->lu_hd ) )
 		{
@@ -657,15 +733,15 @@ CONST int is_void;
 CONST struct rt_tol *tol;
 {
 	struct model *m;
-	struct nmgregion *new_r,*r;
+	struct nmgregion *new_r;
 	struct faceuse *fu;
 	struct loopuse *lu;
 	struct edgeuse *eu;
 	struct vertexuse *vu;
-	struct nmg_ptbl fus;
-	struct shell *s_fu;	/* Shell to temporarily hold fu2 */
+	struct nmgregion *old_r;
+	struct shell *s_tmp;
+	int inside_shells;
 	int i,j;
-	int fu_no,fu2_no;
 
 	NMG_CK_SHELL( is );
 	RT_CK_TOL( tol );
@@ -674,87 +750,9 @@ CONST struct rt_tol *tol;
 		rt_log( "nmg_extrude_cleanup( is=x%x )\n" , is );
 
 	m = nmg_find_model( &is->l.magic );
-	NMG_CK_MODEL( m );
 
-	nmg_vmodel( m );
-
-	r = is->r_p;
-	NMG_CK_REGION( r );
-
-	s_fu = nmg_msv( r );
-	NMG_CK_SHELL( s_fu );
-
-	nmg_tbl( &fus , TBL_INIT , (long *)NULL );
-
-	for( RT_LIST_FOR( fu , faceuse , &is->fu_hd ) )
-	{
-		NMG_CK_FACEUSE( fu );
-
-		if( fu->orientation == OT_SAME )
-			nmg_tbl( &fus , TBL_INS , (long *)fu );
-	}
-
-	/* intersect each face with every other face in the shell */
-	for( fu_no=0 ; fu_no < NMG_TBL_END( &fus ) ; fu_no ++ )
-	{
-		struct faceuse *fu2;
-		struct faceuse *next_fu;
-
-		fu = (struct faceuse *)NMG_TBL_GET( &fus , fu_no );
-
-		NMG_CK_FACEUSE( fu );
-
-		if( rt_g.NMG_debug & DEBUG_BASIC )
-			rt_log( "nmg_extrude_cleanup: fu=x%x\n" );
-
-		/* move fu to another shell to avoid radial edge problems */
-		nmg_mv_fu_between_shells( s_fu, is, fu );
-
-		/* consider intersection this faceuse with all the faceuses
-		 * after it in the list
-		 */
-		for( fu2_no=fu_no+1 ; fu2_no < NMG_TBL_END( &fus ) ; fu2_no++ )
-		{
-			struct face *f,*f2;
-
-			fu2 = (struct faceuse *)NMG_TBL_GET( &fus , fu2_no );
-
-			if( rt_g.NMG_debug & DEBUG_BASIC )
-				rt_log( "nmg_extrude_cleanup: fu=x%x, fu2=x%x\n" , fu , fu2 );
-
-			/* skip faceuses radial to fu or not OT_SAME */
-			if( fu2->orientation != OT_SAME || nmg_faces_are_radial( fu , fu2 ) )
-				continue;
-
-			f = fu->f_p;
-			f2 = fu2->f_p;
-
-			/* skip faceuse pairs that don't have overlapping BB's */
-			if( !V3RPP_OVERLAP( f->min_pt , f->max_pt , f2->min_pt , f2->max_pt ) )
-				continue;
-
-			if( rt_g.NMG_debug & DEBUG_BASIC )
-				rt_log( "nmg_extrude_cleanup: calling nmg_isect_two_generic_faces( fu=x%x , fu2=x%x )\n" , fu , fu2 );
-
-			nmg_isect_two_generic_faces( fu , fu2 , tol );
-		}
-		/* move fu back where it belongs */
-		while( RT_LIST_NON_EMPTY( &s_fu->fu_hd ) )
-		{
-			struct faceuse *fu_tmp;
-
-			fu_tmp = RT_LIST_FIRST( faceuse , &s_fu->fu_hd );
-			NMG_CK_FACEUSE( fu_tmp );
-
-			if( rt_g.NMG_debug & DEBUG_BASIC )
-				rt_log( "nmg_extrude_cleanup: moving fu x%x back\n" , fu_tmp );
-
-			nmg_mv_fu_between_shells( is, s_fu, fu_tmp );
-		}
-	}
-
-	/* get rid of the temporary shell */
-	nmg_ks( s_fu );
+	/* intersect each face in the shell with every other face in the same shell */
+	nmg_isect_shell_self( is , tol );
 
 	/* Extrusion may create loops that overlap */
 	nmg_fix_overlapping_loops( is , tol );
@@ -800,120 +798,114 @@ CONST struct rt_tol *tol;
 		}
 	}
 
+	nmg_rebound( m , tol );
+
+	/* remember the nmgregion where "is" came from */
+	old_r = is->r_p;
+
+	/* make a new nmgregion , shell, and vertex */
+	new_r = nmg_mrsv( m );
+
+	/* s_tmp is the shell just created */
+	s_tmp = RT_LIST_FIRST( shell , &new_r->s_hd );
+
+	/* move our shell (is) to the new nmgregion
+	 * in preparaion for nmg_decompose_shell.
+	 * don't want to confuse pieces of this shell
+	 * with other shells in "old_r"
+	 */
+	(void)nmg_mv_shell_to_region( is , new_r );
+
+	/* kill the unused, newly created shell */
+	if( nmg_ks( s_tmp ) )
+		rt_bomb( "nmg_extrude_shell: Nothing got moved to new region\n" );
+
+	/* now decompose our shell */
+	if( (inside_shells=nmg_decompose_shell( is , tol )) < 2 )
 	{
-		struct nmgregion *old_r;
-		struct shell *s_tmp;
-		int inside_shells;
-
-		nmg_rebound( m , tol );
-
-		/* remember the nmgregion where "is" came from */
-		old_r = is->r_p;
-
-		/* make a new nmgregion , shell, and vertex */
-		new_r = nmg_mrsv( m );
-
-		/* s_tmp is the shell just created */
-		s_tmp = RT_LIST_FIRST( shell , &new_r->s_hd );
-
-		/* move our shell (is) to the new nmgregion
-		 * in preparaion for nmg_decompose_shell.
-		 * don't want to confuse pieces of this shell
-		 * with other shells in "old_r"
-		 */
-		(void)nmg_mv_shell_to_region( is , new_r );
-
-		/* kill the unused, newly created shell */
-		if( nmg_ks( s_tmp ) )
-			rt_bomb( "nmg_extrude_shell: Nothing got moved to new region\n" );
-
-		/* now decompose our shell */
-		if( (inside_shells=nmg_decompose_shell( is , tol )) < 2 )
+		/*  we still have only one shell */
+		if( nmg_bad_face_normals( is , tol ) )
 		{
-			/*  we still have only one shell */
-			if( nmg_bad_face_normals( is , tol ) )
-			{
-				(void)nmg_ks( is );
-				is = (struct shell *)NULL;
-			}
-			else if( nmg_shell_is_void( is ) != is_void )
-			{
-				(void)nmg_ks( is );
-				is = (struct shell *)NULL;
-			}
-			else
-				(void)nmg_mv_shell_to_region( is , old_r );
-
-			nmg_kr( new_r );
-			new_r = NULL;
+			(void)nmg_ks( is );
+			is = (struct shell *)NULL;
+		}
+		else if( nmg_shell_is_void( is ) != is_void )
+		{
+			(void)nmg_ks( is );
+			is = (struct shell *)NULL;
 		}
 		else
+			(void)nmg_mv_shell_to_region( is , old_r );
+
+		nmg_kr( new_r );
+		new_r = NULL;
+	}
+	else
+	{
+		/* look at each shell in "new_r" */
+		s_tmp = RT_LIST_FIRST( shell , &new_r->s_hd );
+		while( RT_LIST_NOT_HEAD( s_tmp , &new_r->s_hd ) )
 		{
-			/* look at each shell in "new_r" */
-			s_tmp = RT_LIST_FIRST( shell , &new_r->s_hd );
-			while( RT_LIST_NOT_HEAD( s_tmp , &new_r->s_hd ) )
+			struct shell *next_s;
+			int kill_it=0;
+
+			next_s = RT_LIST_PNEXT( shell , &s_tmp->l );
+
+			if( nmg_bad_face_normals( s_tmp , tol ) )
+				kill_it = 1;
+
+			if( !kill_it )
 			{
-				struct shell *next_s;
-				int kill_it=0;
-
-				next_s = RT_LIST_PNEXT( shell , &s_tmp->l );
-
-				if( nmg_bad_face_normals( s_tmp , tol ) )
+				if( nmg_shell_is_void( s_tmp ) != is_void )
 					kill_it = 1;
-
-				if( !kill_it )
-				{
-					if( nmg_shell_is_void( s_tmp ) != is_void )
-						kill_it = 1;
-				}
-
-				if( kill_it )
-				{
-					/* Bad shell, kill it */
-					if( nmg_ks( s_tmp ) )
-					{
-						nmg_kr( new_r );
-						new_r = NULL;
-						is = NULL;
-						break;
-					}
-				}
-				s_tmp = next_s;
 			}
-		}
 
-		if( new_r )
-		{
-			/* merge remaining shells in "new_r" */
-			is = RT_LIST_FIRST( shell , &new_r->s_hd );
-
-			s_tmp = RT_LIST_PNEXT( shell , &is->l );
-			while( RT_LIST_NOT_HEAD( s_tmp , &new_r->s_hd ) )
+			if( kill_it )
 			{
-				struct shell *next_s;
-
-				next_s = RT_LIST_PNEXT( shell , &s_tmp->l );
-
-				if( s_tmp == is )
+				/* Bad shell, kill it */
+				if( nmg_ks( s_tmp ) )
 				{
-					s_tmp = next_s;
-					continue;
+					nmg_kr( new_r );
+					new_r = (struct nmgregion *)NULL;
+					is = (struct shell *)NULL;
+					break;
 				}
+			}
+			s_tmp = next_s;
+		}
+	}
 
-				nmg_js( is , s_tmp , tol );
+	if( new_r )
+	{
+		/* merge remaining shells in "new_r" */
+		is = RT_LIST_FIRST( shell , &new_r->s_hd );
+
+		s_tmp = RT_LIST_PNEXT( shell , &is->l );
+		while( RT_LIST_NOT_HEAD( s_tmp , &new_r->s_hd ) )
+		{
+			struct shell *next_s;
+
+			next_s = RT_LIST_PNEXT( shell , &s_tmp->l );
+
+			if( s_tmp == is )
+			{
 				s_tmp = next_s;
+				continue;
 			}
 
-			/* move it all back into the original nmgregion */
-			if( is )
-				(void)nmg_mv_shell_to_region( is , old_r );
-
-			/* kill the temporary nmgregion */
-			if( RT_LIST_NON_EMPTY( &new_r->s_hd ) )
-				rt_log( "nmg_extrude_cleanup: temporary nmgregion not empty!!\n" );
-
-			(void)nmg_kr( new_r );
+			nmg_js( is , s_tmp , tol );
+			s_tmp = next_s;
 		}
+
+		/* move it all back into the original nmgregion */
+		if( is )
+			(void)nmg_mv_shell_to_region( is , old_r );
+
+		/* kill the temporary nmgregion */
+		if( RT_LIST_NON_EMPTY( &new_r->s_hd ) )
+			rt_log( "nmg_extrude_cleanup: temporary nmgregion not empty!!\n" );
+
+		(void)nmg_kr( new_r );
 	}
 	return( is );
 }
