@@ -1,17 +1,19 @@
 /*
-  Author -
-	Paul R. Stay
-
-  Source -
-	SECAD/VLD Computing Consortium, Bldg 394
-	The U. S. Army Ballistic Research Laboratory
-	Aberdeen Proving Ground, Maryland  21005-5066
-  
-  Copyright Notice -
-	This software is Copyright (C) 1986 by the United States Army.
-	All rights reserved.
-
-	$Header$ (BRL)
+ *			I F _ S G I . C
+ *
+ *  Authors -
+ *	Paul R. Stay
+ *	Michael John Muuss
+ *
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Copyright Notice -
+ *	This software is Copyright (C) 1986 by the United States Army.
+ *	All rights reserved.
+ *
  */
 #ifndef lint
 static char RCSid[] = "@(#)$Header$ (BRL)";
@@ -19,8 +21,28 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <gl.h>
+
 #include "fb.h"
 #include "./fblocal.h"
+
+
+/*
+ *  Defines for dealing with SGI Graphics Engine Pipeline
+ */
+union gepipe {
+	short	s;
+	long	l;
+	float	f;
+};
+
+/**#define MC_68010 xx	/* not a turbo */
+#ifdef MC_68010
+#define GEPIPE	((union gepipe *)0X00FD5000)
+#else
+#define GEPIPE	((union gepipe *)0X60001000)
+#endif
+#define GEP_END(p)	((union gepipe *)(((char *)p)-0x1000))	/* 68000 efficient 0xFd4000 */
+
 
 _LOCAL_ int	sgi_dopen(),
 		sgi_dclose(),
@@ -101,14 +123,16 @@ int	width, height;
 
 	ifp->if_width = width;
 	ifp->if_height = height;
-	
+	return(0);
 }
 
 _LOCAL_ int
 sgi_dclose( ifp )
 FBIO	*ifp;
 {
+	greset();
 	gexit();
+	return(0);
 }
 
 _LOCAL_ int
@@ -124,6 +148,7 @@ FBIO	*ifp;
 
 	RGBcolor( (short) 0, (short) 0, (short) 0);
 	clear();
+	return(0);
 }
 
 _LOCAL_ int
@@ -136,6 +161,7 @@ Pixel	*pp;
 	else
 		RGBcolor( (short) 0, (short) 0, (short) 0);
 	clear();
+	return(0);
 }
 
 _LOCAL_ int
@@ -179,6 +205,7 @@ int	count;
 		xpos = 0;
 		ypos--;		/* LEFTOVER from 1st quadrant days */
 	}
+	return(0);
 }
 
 _LOCAL_ int
@@ -188,42 +215,58 @@ short	x, y;
 register Pixel	*pixelp;
 short	count;
 {
-	short scan_count;
+	register union gepipe *hole = GEPIPE;
+	register short scan_count;
 	short xpos, ypos;
-	RGBvalue rr[1024], gg[1024], bb[1024];
-	register int i;
+	register short i;
 
 	xpos = x;
 	ypos = y;
 	while( count > 0 )  {
+		if( xpos >= 768 )  return(0);
 		if ( count >= ifp->if_width )  {
 			scan_count = ifp->if_width;
 		} else	{
 			scan_count = count;
 		}
 
-		cmov2s( xpos, ypos );		/* move to current position */
+		hole->l = 0x0008001A;	/* passthru, */
+		hole->s = 0x0912;		/* cmov2s */
+		hole->s = xpos;
+		hole->s = ypos;
+		GEP_END(hole)->s = (0xFF<<8)|8;	/* im_last_passthru(0) */
 
-		for( i = 0; i < scan_count; i++, pixelp++)  {
+		for( i=scan_count; i > 0; )  {
+			register int chunk;
+
+			if( i <= (127/3) )
+				chunk = i;
+			else
+				chunk = 127/3;
+			hole->s = ((chunk*3)<<8)|8;	/* GEpassthru */
+			hole->s = 0xD;		/* FBCdrawpixels */
+			i -= chunk;
 			if ( _sgi_cmap_flag == FALSE )  {
-				rr[i] = (RGBvalue) pixelp->red;
-				gg[i] = (RGBvalue) pixelp->green;
-				bb[i] = (RGBvalue) pixelp->blue;
-			}  else  {
-				rr[i] = (RGBvalue) 
-				    _sgi_cmap.cm_red[ (int) pixelp->red ];
-				gg[i] = (RGBvalue) 
-				    _sgi_cmap.cm_green[ (int) pixelp->green ];
-				bb[i] = (RGBvalue) 
-				    _sgi_cmap.cm_blue[ (int) pixelp->blue ];
+				for( ; chunk>0; chunk--,pixelp++ )  {
+					hole->s = pixelp->red;
+					hole->s = pixelp->green;
+					hole->s = pixelp->blue;
+				}
+			} else {
+				for( ; chunk>0; chunk--,pixelp++ )  {
+					hole->s = _sgi_cmap.cm_red[pixelp->red];
+					hole->s = _sgi_cmap.cm_green[pixelp->green];
+					hole->s = _sgi_cmap.cm_blue[pixelp->blue];
+				}
 			}
 		}
-		writeRGB( scan_count, rr, gg, bb ); 
+		GEP_END(hole)->s = (0xFF<<8)|8;	/* im_last_passthru(0) */
 
 		count -= scan_count;
 		xpos = 0;
 		ypos--;		/* LEFTOVER from 1st quadrant days */
 	}
+	return(0);
 }
 
 _LOCAL_ int
@@ -232,6 +275,7 @@ FBIO	*ifp;
 int	left, top, right, bottom;
 {
 	viewport( left, right, top, bottom );
+	return(0);
 }
 
 _LOCAL_ int
