@@ -1,0 +1,86 @@
+.TH CAD_PAREA 1V VMB
+'\"	last edit:	85/03/05	D A Gwyn
+'\"	SCCSID		@(#)parea.1	1.7
+.SH NAME
+cad_parea \- compute area of polygon
+.SH SYNOPSIS
+.B cad_parea
+[
+.B \-i
+input
+] [
+.B \-o
+output
+]
+.SH DESCRIPTION
+.I cad_parea\^
+reads from
+.I input\^
+(standard input if not given)
+a series of
+polygon vertex 
+.RI ( x\^ , y\^ )
+coordinate values
+and writes to
+.I output\^
+(standard output if not given)
+the polygon's area.
+Lines not beginning with a number
+are silently skipped.
+Vertices are assumed to be given
+in counter-clockwise cyclic order.
+.SH HINTS
+A hole can be accommodated as
+a clockwise section
+connected to the periphery
+by a line segment
+traced in both directions.
+.P
+Disjoint pieces may be connected
+by a line segment
+traced in both directions.
+.SH EXAMPLE
+.RS
+$ \|\fIcad_parea
+.br
+# \|comment
+.br
+1 \|0
+.br
+2 \|0
+.br
+2 \|1
+.br
+3 \|1
+.br
+3 \|2
+.br
+2 \|2
+.br
+1 \|2
+.br
+0 \|2
+.br
+0 \|1
+.br
+1 \|1
+.br
+^D\fP
+.br
+4
+.RE
+.SH "SEE ALSO"
+cad_boundp(1).
+.SH DIAGNOSTICS
+Improperly formatted input
+produces an error message
+and terminates
+.I cad_parea\^
+with non-zero exit status.
+.P
+.I cad_parea\^
+outputs ``0''
+for the area
+of a degenerate polygon.
+.SH AUTHOR
+Douglas A. Gwyn, BRL/VLD-VMB

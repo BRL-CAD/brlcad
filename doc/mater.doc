@@ -1,0 +1,159 @@
+Date:     Tue, 18 Aug 87 2:51:13 EDT
+From:     Phil Dykstra <phil@BRL.ARPA>
+Subject:  Re:  material properties library
+
+The only thing that MGED knows about materials is:
+ (1) how to change a regions material name and its parameter string.
+ (2) The "color" of a region.
+
+This information is interpreted by the application working with the model.
+The "materials" that the RT raytracer knows about are listed below.
+
+[I should point out that the whole issue of materials is still being
+worked on, so this message represents a snap shot of how things look
+now - and is the first time any of this has been described outside of
+the source code!  Things may/will change.]
+
+Setting a material from mged might look like this:
+
+	mged> mater region.r plastic
+	Was [old material and parameters]
+	Parameter string? sh=2 tr=0.1
+	Override material color (y|n)[n]? y
+	R G B (0..255)? 0 255 0
+
+This would make region.r green plastic with a shininess of 2 and
+a transparency of 10%.
+
+The model db/world.g uses four of the materials described below:
+glass, mirror, clouds, and testmap.  An image computed from this
+database is in pix/world.pix.
+
+-------------
+light
+	inten		1000 lumens
+	fract		(-1) computed later
+	angle		180 degrees
+	shadows		1
+	infinite	0
+	invisible	0
+
+The light material property makes this region a source of illumination.
+The color of the light is the region color given.  Normally all sources
+of illumination are totaled and each is made to contribute a fraction
+of 1/N to the total scaled illumination (where N is the number of lights).
+If fract is set, a light can be made to contribute more or less than
+its "fair share".  Lights can be restricted to shine over a limited angle.
+"Angle" is one half of the total angle of illumination; all directions by
+default.  The direction is down the -Z axis of the light's local coordinate
+system.  If "shadows" is set to zero, that light will not cast shadows.
+This allows for fill lights without the expense of firing shadow rays
+during the ray trace.
+
+Infinite means to treat the light as if it were infinitely distant
+in the direction from the origin toward the light.  This gives you
+planer illumination wavefronts.  If invisible is set, the light will
+not appear as a solid in the model, though it does still cast light.
+
+If any region in a model has the light property, RT will turn off its
+"implicit" invisible lights (one by default).  A significant default
+ambient term (-A option) will remain (30%!).
+-------------
+			plastic		mirror		glass
+	shine/sh	10		4		4
+	specular/sp	0.7		0.6		0.7
+	diffuse/di	0.3		0.4		0.3
+	transmit/tr	0		0		0.8
+	reflect/re	0		0.75		0.1
+	ri		1.0		1.65		1.65
+
+These are all instances of the phong shader.  Plastic is the
+default material; mirror and glass simply set up some initial
+parameter values to approximate those materials.
+sh is the exponent of the cosine.
+sp/di set the relative amounts of each component.
+tr/re determine how much energy comes from refracted and reflected rays.
+ (1-(tr+re)) comes from specular and diffuse if > 0.
+ri is the refractive index.
+See any graphics book for phong shading.
+-------------
+cloud
+	thresh		0.35
+	range		0.3
+
+Puts Geoffrey Gardner 2D style clouds on an object.   Thresh is the
+level (from 0 to 1) below which the cloud pattern is all blue.
+Range is the range over which it transitions from grey to white.
+-------------
+spm
+	file		[no default]
+	w		512
+
+Places the named "spherical texture map" onto an object.  This
+is a format which preserves roughly equal pixel size over the
+surface of a sphere.  w is the number of pixels around the
+"equator."  You need some extra software to generate these.
+See rt/spm.c
+-------------
+texture
+	transp		[none]
+	file
+	w		512
+	n		w
+	fw		w
+
+This texture maps (actually colors) a surface with the given
+"pix" file (RGB image).  w and n are the width and number of lines
+of the image (default 512x512).  fw sets the file width is different
+than the image size (old and arcane).  transp is sort of a
+"chroma key" color.  If set, the surface becomes transparent
+wherever that color would appear.
+--------------
+bump
+
+	[see texture]
+
+Applies a bump map to a surface.  The "u" perturbation comes from
+the "red" channel of the input file, the "v" from the "blue."
+You need to put the horizontal and vertical gradients of an
+image into these two channels.  This can be done with pix-bw3,
+bwfilter, and bw3-pix.  This is still very preliminary.
+--------------
+checker
+	a		white
+	b		black
+
+Maps a checkerboard pattern onto a surface with squares that are
+10 meters in size.  The two colors are a and b.  Usually put on a
+halfspace (half).
+--------------
+testmap
+
+For debugging.  Ramps the red value from off to on as the "u" coord
+of a texture map varies from 0 to 1, and the blue value a with the
+"v" coordinate.
+--------------
+fakestar
+
+Puts random multi-colored dots on a black background.
+Use at your own risk.
+--------------
+stack
+
+	[semicolon separated material commands]
+
+This "material" is used to apply several materials or shaders to
+a single surface.  For example
+
+	stack texture file=file.pix; glass;
+
+would make a glass material whose color is mapped on from the
+given file.  The stacker allows for bumpy mirrors and glass,
+shaded textures, etc.  This too is very preliminary and currently
+suffers from a 72 character limit.
+--------------
+
+Other shaders are in the works, such as Cook-Torrance.
+Hope this helps.
+
+- Phil

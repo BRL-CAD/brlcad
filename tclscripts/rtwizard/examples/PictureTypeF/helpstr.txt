@@ -1,0 +1,1 @@
+Create a new ghost image with color insert and lines.

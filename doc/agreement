@@ -1,0 +1,313 @@
+                                                                 Page 1 of 5
+
+			License Agreement
+		Statement of Terms and Conditions for Release of
+			The BRL-CAD Package
+
+
+The Federal Government of the United States of America is hereinafter
+"THE GOVERNMENT".
+
+The U. S. Army Research Laboratory, hereinafter "ARL", an agency of THE
+GOVERNMENT, is the originator of The BRL-CAD Package.
+
+The BRL-CAD Package is a collection of computer programs, data files,
+and associated documentation, hereinafter "BRL-CAD". BRL-CAD is provided in
+machine-readable form and may be obtained in either "binary executable"
+or "source code" editions.  This license applies to both editions.
+
+BRL-CAD and the "BRL-CAD Eagle" are trademarks of the United States Army.
+
+The DTIC Survivability/Vulnerability Information Analysis Center,
+hereinafter "SURVIAC", administers the supported BRL-CAD distributions
+and information exchange programs on behalf of ARL.
+
+The corporation or private individual requesting BRL-CAD as identified
+on page two is hereinafter the "RECIPIENT".
+
+Changes made to any files provided with BRL-CAD are hereinafter
+"MODIFICATIONS". New files entirely created by RECIPIENT are hereinafter
+"EXTENSIONS".
+
+1.  BRL-CAD is an unpublished work that is not generally available to
+the public, except through the terms of this limited distribution. ARL
+grants RECIPIENT a personal, non-exclusive, non-transferable license and
+right to use BRL-CAD.  No right is granted for any use of BRL-CAD by any
+third party.
+
+2.  RECIPIENT will be responsible for assuring that BRL-CAD will not
+be released or sold to any other party without the prior written
+approval of ARL.
+
+3.  RECIPIENT guarantees that BRL-CAD, and any modified versions
+thereof, will not be published for profit or in any manner offered
+for sale to THE GOVERNMENT. BRL-CAD may be used in contracts with THE
+GOVERNMENT but no development charge may be made as part of its use.
+
+4. If RECIPIENT makes MODIFICATIONS to BRL-CAD, then RECIPIENT agrees to
+provide a copy of all such MODIFICATIONS to ARL in source code form.
+RECIPIENT agrees that such MODIFICATIONS may be used by ARL and
+the entire BRL-CAD user community.
+
+5.  RECIPIENT will own full rights to any EXTENSIONS to BRL-CAD they create.
+
+6.  RECIPIENT will own full rights to any data files, databases or
+images created using BRL-CAD.
+
+7.  BRL-CAD is provided "as is", without warranty. Neither THE
+GOVERNMENT nor SURVIAC is liable or responsible for maintenance,
+updating, or correcting any errors in any materials provided. In no
+event shall THE GOVERNMENT or SURVIAC be liable for any loss or for any
+indirect, special, punitive, exemplary, incidental, or consequential
+damages arising from use, possession, or performance of BRL-CAD.
+
+			( $Revision$ )
+                                                                 Page 2 of 5
+
+8.  The RECIPIENT shall indemnify and hold harmless THE GOVERNMENT for
+any loss, claim, damage, expense, or liability of any kind occurring as a
+result of the making, using, or selling of a product, process, or
+service by or on behalf of RECIPIENT, its assignees and licensees, which
+was derived from BRL-CAD.
+
+9.  ARL will be credited should BRL-CAD be used in a product or written
+about in any publication.  ARL will be referenced as the original source
+for BRL-CAD, however, the RECIPIENT shall not in any way imply that THE
+GOVERNMENT endorses any product or service of the RECIPIENT.
+
+10.  RECIPIENT agrees that when bugs or problems are found with BRL-CAD,
+a reasonable attempt will be made to report them to SURVIAC or ARL.
+
+11.  RECIPIENT agrees to complete and return the "Recipient Survey Form"
+attached below.
+
+By signing here, RECIPIENT signifies agreement to these terms and
+conditions of the BRL-CAD distribution license agreement as detailed
+above.
+
+
+
+____________________________________________________________
+					RECIPIENT's Signature
+
+____________________________________________________________
+					RECIPIENT's Printed Name
+
+____________________________________________________________
+					Title
+
+____________________________________________________________
+					Corporation
+
+____________________________________________________________
+					Mailing Address
+
+____________________________________________________________
+					City, State, Zip Code, Country
+
+____________________________________________________________
+					Phone #
+
+____________________________________________________________
+					FAX #
+
+____________________________________________________________
+					Internet E-mail Address
+
+____________________________________________________________
+					Date
+
+
+
+
+
+
+
+
+
+			( $Revision$ )
+                                                                 Page 3 of 5
+
+			Recipient Survey Form for
+			   The BRL-CAD Package
+
+
+The information collected on this form will be used to support the
+BRL-CAD effort, and will be available only to appropriate ARL and
+SURVIAC personnel unless indicated otherwise, below.  If RECIPIENT
+grants permission to release this information, ARL and SURVIAC will make
+it available to BRL-CAD related hardware vendors and service providers.
+
+1. [ ] RECIPIENT grants ARL and SURVIAC permission to release information
+   on this "Recipient Survey Form" to outside parties.
+
+   [ ] RECIPIENT considers this information to be proprietary and does not
+   grant permission to release this information to outside parties.
+
+2. BRL-CAD is being obtained [ ] free without support privileges
+   [ ] with full-service support.
+
+3. Please designate a technical point-of-contact:
+   Mark here [ ] and leave this section blank if same as RECIPIENT on page 2.
+
+
+____________________________________________________________
+					Printed Name
+
+____________________________________________________________
+					Title
+
+____________________________________________________________
+					Corporation
+
+____________________________________________________________
+					Mailing Address
+
+____________________________________________________________
+					City, State, Zip Code, Country
+
+____________________________________________________________
+					Phone #
+
+____________________________________________________________
+					FAX #
+
+____________________________________________________________
+					Internet E-mail Address
+
+4. Please indicate the type of your organization:
+ [ ] Government: [ ] Air Force  [ ] Army  [ ] Navy  [ ] Other ___________
+ [ ] Academic ........ (Students should register as Individuals).
+ [ ] Industry ........ (Government contractors should register as Industry).
+ [ ] Private Individual
+
+5. Number of people in work group _________
+
+6. Have you used BRL-CAD before?  _________
+   If yes, for how many years? ________
+
+7. Are you interested in participating in the BRL-CAD user group?  ________
+
+
+			( $Revision$ )
+                                                                 Page 4 of 5
+
+8. Please indicate the anticipated uses of BRL-CAD at this site (check all
+that are appropriate):
+
+ [ ]  Computer Aided Design (CAD)		[ ]  Animation
+ [ ]  Computer Aided Manufacturing (CAM)	[ ]  Visualization
+ [ ]  Vulnerability Assessment 			[ ]  Image Processing
+ [ ]  Signature Prediction and Analysis		[ ]  Graphic Arts
+ [ ]  Architectural Design			[ ]  Education
+
+ [ ]  Other (please elaborate)______________________________
+
+9. Please list the computer platforms that you are likely to install
+BRL-CAD on (check all that are appropriate):
+
+    Vendor	   CPU Model		OS Revision
+    ======	   =========		===========
+ [ ] IBM	     _____		___________
+ [ ] Linux	     _____		___________
+ [ ] FreeBSD	     _____		___________
+ [ ] Sun	     _____		___________
+ [ ] SGI	     _____		___________
+ [ ] Other (specify) _____		___________
+
+10. Types of BRL-CAD users at this site (check all that are appropriate):
+
+ [ ]  Management			[ ]  Graphic artist
+ [ ]  Engineer				[ ]  Image Processor
+ [ ]  Designer				[ ]  Draftperson
+ [ ]  Other   __________________________
+
+11. Anticipated use of BRL-CAD by at least one person at this site:
+
+ [ ]  >10 days/month		[ ]  5-10 days/month
+ [ ]  1-4 days/month		[ ]  several times/year
+
+12. Please specify which edition of BRL-CAD you desire:
+
+ [ ]	6.0 Binary executable edition (versions exist for SGI-IRIX-6,
+	RedHat Linux-i386, FreeBSD-i386, Solaris(SPARC), and
+	MacOS-X architectures).
+ [ ]	6.0 Source code edition (please answer question 13 below).
+ [ ]	5.0 Binary executable edition (versions exist for SGI-IRIX-6,
+	RedHat Linux-86, and FreeBSD-86 architectures).
+ [ ]	5.0 Source code edition (please answer question 13 below).
+ [ ]	4.5 Source code edition.
+
+13. If you desire the source code edition, please indicate briefly your
+reasons and the ways you envision using the source code:
+
+_______________________________________________________________________
+
+_______________________________________________________________________
+
+_______________________________________________________________________
+
+14. If you are purchasing physical media from SURVIAC, please specify
+the format:
+
+ [ ]	No media, using free network FTP access
+ [ ]	CD-ROM 
+ [ ]	Zip(tm) 100 MByte cartridge, MS-DOS format
+
+
+			( $Revision$ )
+                                                                 Page 5 of 5
+
+
+		Instructions for completing this form
+
+For record keeping purposes, the five (5) pages of the completed and
+signed form must be returned either (a) printed on paper, or (b)
+transmitted via facsimile machine (FAX).
+
+
+Free Distribution
+
+If in item 2 you requested a "FREE distribution with no support
+privileges" from ARL for FTP file transfer over the Internet, please
+transmit the completed form via FAX to USA telephone +1.410.278.9177, or
+send via postal mail to:
+
+	BRL-CAD Distribution
+	Attn: AMSRL-SL-B
+	APG, MD  21005-5068  USA
+
+Download instructions and the decryption key will be returned to you
+by FAX or US Mail.  ARL and SURVIAC regret that they cannot accept
+inquiries about the free distribution by telephone.
+
+
+
+Full-Service Distribution
+
+If you are purchasing a "Full-service distribution" from SURVIAC, please
+complete and return a signed copy of the distribution agreement and
+survey form with a check or purchase order for $500 payable to
+"BA&H/SURVIAC" via FAX to USA 410-272-6763, or send via postal mail to:
+
+	BRL-CAD Distribution
+	SURVIAC Aberdeen Satellite Office
+	4695 Millennium Drive
+	Belcamp, MD 21017-1505  USA
+
+Included with this full-service distribution are installation support,
+maintenance release updates, technical support, and information about future
+activities.  For further details, contact "BRL-CAD 
+full-service distribution" at USA 410-273-7794 or send e-mail to
+cad-dist@arl.mil.
+
+
+
+
+
+
+
+
+
+
+			( $Revision$ )

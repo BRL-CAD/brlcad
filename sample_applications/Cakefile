@@ -1,0 +1,30 @@
+/*
+ *			sample_applications/Cakefile
+ *
+ *  $Header$
+ */
+#include "../Cakefile.defs"
+
+#define PRODUCTS	*.c *.h makefile
+#define SRCDIR	sample_applications
+#undef BINDIR
+#define BINDIR	BASEDIR/sample_applications
+#undef BINPERM
+#define BINPERM 444
+#define MANSECTION	1
+
+#define BUILD_MAKEFILE ./build_makefile.sh
+
+clean&:
+	@echo "" > /dev/null
+
+noprod&:
+	rm -f makefile
+
+clobber&:
+	@echo "" > /dev/null
+
+makefile:
+	BUILD_MAKEFILE
+
+#include "../Cakefile.rules"

@@ -1,0 +1,12 @@
+#!/bin/sh
+#
+#  File:  Compile.sgi
+#  S.Coates - 16 September 1992
+#  A file to compile the two SGI programs see2 and pictsgi.
+#
+#  Compile see2.
+cc ../irprep/see2.c -o see2 -lgl_s
+#
+#  Compile pictsgi.
+cc ../irprep/pictsgi.c -o pictsgi
+#

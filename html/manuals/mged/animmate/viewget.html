@@ -1,0 +1,111 @@
+<html>
+<HEAD><title>MGED commands: viewget, viewset</title></head>
+<body>
+<h1>NAME</h1>
+<p>
+viewget - get MGED view parameters
+<p>
+viewset - set MGED view parameters
+<h1>SYNOPSIS</h1>
+<p>
+<b>viewget s(ize)|e(ye)|c(enter)|a(et)|y(pr)|q(uat)</b>
+<p>
+<b>viewset <var>type params ?type? ?params? ...</var></b>
+<h1>DESCRIPTION</h1>
+<em>Viewget</em> returns the current value of the requested viewing parameters.
+The following viewing parameters may be requested:
+<dl>
+<dt>size
+<dd>The current viewsize.
+<dt>eye
+<dd>The current eye point, in the order <var>x y z</var>.
+<dt>center
+<dd>The current center point, in the order <var>x y z</var>. The center
+point is always directly in front of the eye point. The distance
+from the center to the eye is one half the viewsize.
+<dt>aet
+<dd>The azimuth, elevation, and twist of the current view. These angles
+are defined as follows: an aet of <em>0 0 0</em> indicates that the view
+faces the negative x direction, with the y-axis leading to the right and
+the z-axis going up. To reach any other aet, the eye is rotated
++<var>twist</var>
+degrees about the x-axis, -<var>elevation</var> degrees about the y-axis, and
+<var>azimuth</var> degrees about the z-axis.
+<dt>ypr
+<dd>The yaw, pitch, and roll of the current view. These angles are
+defined as follows: a ypr of <em>0 0 0</em> indicates that the view
+faces the positive x direction, with the y-axis leading to the left and
+the z-axis going up. To reach any other ypr, the eye is rotated
++<var>twist</var>
+degrees about the x-axis, -<var>elevation</var> degrees about the y-axis, 
+and +<var>yaw</var>
+degrees about the z-axis.
+<dt><a name="quat">quat</a>
+<dd>A unit quaternion representing the current view orientation, in the
+order <var>x y z w</var>. The identity quaternion, <var>0 0 0 1</var>,
+represents the orientation of the <kbd>press top</kbd> command:
+facing the negative z direction with the x-axis to the right and the
+y-axis going up. For any other unit quaternion, <var>x y z</var>
+represents an axis of rotation, and <var>w</var> represents
+cos(<var>theta</var> / 2), where <var>theta</var> is the angle the view is
+rotated about the given axis. For example, the quaternion <var>0.707106
+0.0 0.0 0.707106</var> represents the orientation achieved by the <kbd>press
+right</kbd> button, since this orientation can be obtained from the
+"top" orientation by rotating 90 degrees about the positive x-axis.
+</dl>
+<p>
+<em>Viewset</em> sets the current viewing parameters. Any of the
+parameter types returned by <em>viewget</em> can be set with
+<em>viewset</em>. For example,
+<p>
+<kbd>mged> viewset ypr 35 25 0</kbd>
+<p>
+sets the yaw, pitch, and roll to <var>35 25 0</var>. More than one view
+parameter may be specified at one time. If two view parameters conflict
+with each other, then one of the parameters will be ignored. For
+example, if <kbd>ypr</kbd> and <kbd>aet</kbd> are set in the same
+command, one of the two is ignored. If neither <kbd>center</kbd> or
+<kbd>eye</kbd> is specified, then the center point will remain fixed
+while the eye point changes to accomadate a change in orientation or
+viewsize.
+<p>
+If no orientation or viewsize parameter is set, then the orientation and
+viewsize are normally unchanged.
+The exception occurs when 
+<kbd>center</kbd> and <kbd>eye</kbd> are both specified in the same
+<em>viewset</em> command. In that case, 
+the viewsize
+and orientation are
+calculated from the relationship between the center point and eye
+point. Fixing the center and eye point still leaves an extra degree of
+freedom; this ambiguity is resolved by selecting a "right-side up"
+orientation (in terms of aet, an orientation with no twist).
+<h1>EXAMPLES</h1>
+The following command could be executed in an MGED interaction
+window to obtain a typical top view:
+<pre>
+mged> viewset center 0 0 0 size 2000 quat 0 0 0 1
+mged> viewget ypr
+Warning: roll arbitrarily set to 0.0; yaw set to 1.570796 radians.
+90 -90 0
+</pre>
+The warning message always occurs in relation to ypr and aet when the
+pitch or elevation is an odd multiple of 90 degrees. In that case, the
+yaw and roll become indistinguishable, and the arbitrary decision is
+made to set the roll or twist to 0.0.
+<p>
+In order to change the view orientation without moving the eye point,
+the following commands could be used:
+<pre>
+mged> viewget eye
+0 0 1000
+mged> viewset eye 0 0 1000 ypr 0 0 0
+mged> viewget center
+1000 0 1000
+mged> viewget eye
+0 0 1000
+</pre>
+<hr>
+<address>Last updated July 8, 1997</address>
+</body>
+</html>
