@@ -1,5 +1,5 @@
 #!/bin/sh
-#			V E R I F Y . S H
+#			B R L C A D - C H E C K . S H
 #
 # This shell script is used to verify the configuration of the compile-time
 # environment for the BRL CAD Package.
