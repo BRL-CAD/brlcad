@@ -1183,5 +1183,20 @@ CONST vect_t	v;
 
 	return Z;
 }
-
 #endif
+
+/*
+ *			M A T _ D U P
+ *
+ *  Return a pointer to a copy of the matrix in dynamically allocated memory.
+ */
+matp_t
+mat_dup( in )
+CONST mat_t	in;
+{
+	matp_t	out;
+
+	out = (matp_t) rt_malloc( sizeof(mat_t), "mat_dup" );
+	bcopy( (CONST char *)in, (char *)out, sizeof(mat_t) );
+	return out;
+}
