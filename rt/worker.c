@@ -27,6 +27,10 @@ static char RCSworker[] = "@(#)$Header$ (BRL)";
 #include "./mathtab.h"
 #include "./rdebug.h"
 
+#ifdef HEP
+# include <synch.h>
+#endif
+
 /***** view.c variables imported from rt.c *****/
 extern mat_t	view2model;
 extern mat_t	model2view;
@@ -41,7 +45,6 @@ extern int	perspective;	/* perspective view -vs- parallel view */
 extern vect_t	dx_model;	/* view delta-X as model-space vector */
 extern vect_t	dy_model;	/* view delta-Y as model-space vector */
 extern point_t	eye_model;	/* model-space location of eye */
-extern point_t	viewbase_model;	/* model-space location of viewplane corner */
 extern int	npts;		/* # of points to shoot: x,y */
 extern mat_t	Viewrotscale;
 extern fastf_t	viewsize;
@@ -50,6 +53,7 @@ extern int	npsw;
 extern struct resource resource[];
 
 /* Local communication with worker() */
+HIDDEN point_t	viewbase_model;	/* model-space location of viewplane corner */
 HIDDEN int cur_pixel;		/* current pixel number, 0..last_pixel */
 HIDDEN int last_pixel;		/* last pixel number */
 HIDDEN int nworkers;		/* number of workers now running */
@@ -138,21 +142,23 @@ do_run( a, b )
 #ifdef PARALLEL
 	/*
 	 *  Parallel case.  This is different for each system.
-	 *  In the case of the HEP, the workers were started in
-	 *  the mainline;  for other systems, the workers are
-	 *  started and terminated here.
+	 *  The parallel workers are started and terminated here.
 	 */
 	nworkers = 0;
+#ifdef HEP
+	for( x=1; x<npsw; x++ )  {
+		/* This is more expensive when GEMINUS>1 */
+		Dcreate( worker, x );
+	}
+	worker(0);	/* avoid wasting this task */
+#endif HEP
 #ifdef cray
 	/* Create any extra worker tasks */
-RES_ACQUIRE( &rt_g.res_worker );
 	for( x=1; x<npsw; x++ ) {
 		taskcontrol[x].tsk_len = 3;
 		taskcontrol[x].tsk_value = x;
 		TSKSTART( &taskcontrol[x], worker, x );
 	}
-for( x=0; x<1000000; x++ ) a=x+1;	/* take time to get started */
-RES_RELEASE( &rt_g.res_worker );
 	worker(0);	/* avoid wasting this task */
 	/* Wait for them to finish */
 	for( x=1; x<npsw; x++ )  {

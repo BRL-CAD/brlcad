@@ -68,14 +68,7 @@ extern mat_t view2model;
 extern mat_t model2view;
 extern int npts;
 extern int hex_out;		/* Output format, 0=binary, !0=hex */
-
-#ifdef RTSRV
-extern char scanbuf[];
-#else
-#ifdef PARALLEL
-extern char *scanbuf;		/*** Output buffering, for parallelism */
-#endif
-#endif
+extern char *scanbuf;		/* Optional output buffer */
 
 extern struct light_specific *LightHeadp;
 vect_t ambient_color = { 1, 1, 1 };	/* Ambient white light */
