@@ -64,6 +64,7 @@ struct shadework	*swp;
 	vect_t	transmit_color;
 	fastf_t	attenuation;
 	vect_t	to_eye;
+	int	code;
 
 	RT_AP_CHECK(ap);
 
@@ -201,14 +202,23 @@ struct shadework	*swp;
 do_inside:
 		sub_ap.a_hit =  rr_hit;
 		sub_ap.a_miss = rr_miss;
-		sub_ap.a_purpose = "rr internal ray seeking exit";
+		sub_ap.a_purpose = "rr internal ray probing for glass exit pnt";
 		sub_ap.a_onehit = 3;
-		switch( rt_shootray( &sub_ap ) )  {
+		switch( code = rt_shootray( &sub_ap ) )  {
+		case 3:
+			/* More glass to come.
+			 *  uvec=exit_pt, vvec=N, a_refrac_index = next RI.
+			 */
+			break;
 		case 2:
-			/* All is well, implicit returns stored in sub_ap */
+			/* No more glass to come.
+			 *  uvec=exit_pt, vvec=N, a_refrac_index = next RI.
+			 */
 			break;
 		case 1:
 			/* Treat as escaping ray */
+			if(rdebug&RDEBUG_REFRACT)
+				rt_log("rr_refract: Treating as escaping ray\n");
 			goto do_exit;
 		case 0:
 		default:
@@ -216,6 +226,9 @@ do_inside:
 			VSET( swp->sw_color, 0, 99, 0 ); /* very green */
 			goto out;			/* abandon hope */
 		}
+
+		if(rdebug&RDEBUG_REFRACT)
+			rt_log("rr_render: calculating refraction @ exit from %s\n", pp->pt_regionp->reg_name);
 
 		/* NOTE: rr_hit returns EXIT Point in sub_ap.a_uvec,
 		 *  and returns EXIT Normal in sub_ap.a_vvec,
@@ -233,11 +246,12 @@ do_inside:
 				sub_ap.a_ray.r_pt,
 				sub_ap.a_uvec );
 		}
+		/* Advance.  Exit point becomes new start point */
 		VMOVE( sub_ap.a_ray.r_pt, sub_ap.a_uvec );
 		VMOVE( incident_dir, sub_ap.a_ray.r_dir );
 
 		/*
-		 *  Calculate refraction at exit.
+		 *  Calculate refraction at exit point.
 		 *  Use "look ahead" RI value from rr_hit.
 		 */
 		if( !rr_refract( incident_dir,		/* input direction */
@@ -299,7 +313,10 @@ do_exit:
 		sub_ap.a_miss = ap->a_miss;
 		sub_ap.a_onehit = ap->a_onehit;
 		sub_ap.a_level = ap->a_level+1;
-		sub_ap.a_purpose = "rr escaping internal ray";
+		if( code == 3 )
+			sub_ap.a_purpose = "rr recurse on next glass";
+		else
+			sub_ap.a_purpose = "rr recurse on escaping internal ray";
 		sub_ap.a_refrac_index = swp->sw_refrac_index;
 		sub_ap.a_cumlen = 0;
 		(void) rt_shootray( &sub_ap );
@@ -530,12 +547,18 @@ struct partition *PartHeadp;
 		VREVERSE( hitp->hit_normal, hitp->hit_normal );
 	}
 
+	/* For refraction, want exit normal to point inward. */
+	VREVERSE( ap->a_vvec, hitp->hit_normal );
+	VMOVE( ap->a_uvec, hitp->hit_point );
+	ap->a_cumlen += (hitp->hit_dist - pp->pt_inhit->hit_dist);
+
+	ap->a_refrac_index = RI_AIR;			/* Default medium: air */
+
 	/*
 	 *  Look ahead, and see if there is more glass to come.
 	 *  If so, obtain its refractive index, to enable correct
 	 *  calculation of the departing refraction angle.
 	 */
-	ap->a_refrac_index = RI_AIR;			/* Default medium: air */
 	if( pp->pt_forw != PartHeadp )  {
 		register fastf_t	d;
 		d = pp->pt_forw->pt_inhit->hit_dist - hitp->hit_dist;
@@ -548,7 +571,7 @@ struct partition *PartHeadp;
 
 			bzero( (char *)&sw, sizeof(sw) );
 			sw.sw_transmit = sw.sw_reflect = 0.0;
-			sw.sw_refrac_index = 1.0;
+			sw.sw_refrac_index = RI_AIR;
 			sw.sw_xmitonly = 1;		/* want XMIT data only */
 			sw.sw_inputs = 0;		/* no fields filled yet */
 			VSETALL( sw.sw_color, 1 );
@@ -558,18 +581,19 @@ struct partition *PartHeadp;
 				rt_log("rr_hit calling viewshade to discover refractive index\n");
 
 			(void)viewshade( &appl, pp->pt_forw, &sw );
-			ap->a_refrac_index = sw.sw_refrac_index;
 
-			if (rdebug&RDEBUG_SHADE)
-				rt_log("rr_hit a_refrac_index=%g\n", ap->a_refrac_index);
+			if( sw.sw_transmit > 0 )  {
+				ap->a_refrac_index = sw.sw_refrac_index;
+				if (rdebug&RDEBUG_SHADE)  {
+					rt_log("rr_hit a_refrac_index=%g (trans=%g)\n",
+						ap->a_refrac_index,
+						sw.sw_transmit );
+				}
+				return 3;	/* OK -- more glass follows */
+			}
 		}
 	}
-
-	/* For refraction, want exit normal to point inward. */
-	VREVERSE( ap->a_vvec, hitp->hit_normal );
-	VMOVE( ap->a_uvec, hitp->hit_point );
-	ap->a_cumlen += (hitp->hit_dist - pp->pt_inhit->hit_dist);
-	return(2);			/* OK */
+	return 2;				/* OK -- no more glass */
 }
 
 /*
