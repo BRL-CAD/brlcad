@@ -1322,6 +1322,7 @@ struct rt_i {
 	struct bu_list	rti_solidheads[RT_DBNHASH]; /* active solid lists */
 	struct bu_ptbl	rti_resources;	/* list of 'struct resource'es encountered */
 	double		rti_nu_gfactor;	/* constant in numcells computation */
+	struct soltab	*rti_up;	/* 'up' ptr for rt_submodel rti's only */
 };
 
 #define RT_NU_GFACTOR_DEFAULT	1.5	 /* see rt_cut_it() for a description
