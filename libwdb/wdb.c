@@ -1,7 +1,12 @@
 /*
- *			L I B W D B . C
+ *			W D B . C
  *
- * Library for writing databases.
+ *  Library for writing MGED databases from arbitrary procedures.
+ *  Assumes that some of the structure of such databases are known
+ *  by the calling routines.
+ *
+ *  It is expected that this library will grow as experience is gained.
+ *  Routines for writing every permissible solid do not yet exist.
  *
  *  Authors -
  *	Michael John Muuss
@@ -13,7 +18,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1986 by the United States Army.
+ *	This software is Copyright (C) 1987 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -140,6 +145,7 @@ point_t	pts[];
 /*
  *			M K _ A R B 8
  *
+ *  All plates with 4 points must be co-planar.
  *  If there are degeneracies (ie, all 8 vertices are not distinct),
  *  then certain requirements must be met.
  *  If we think of the ARB8 as having a top and a bottom plate,
@@ -170,7 +176,6 @@ point_t	pts[];
  *
  * Make a sphere centered at point with radius r.
  */
-
 mk_sph( fp, name, point, r)
 FILE	*fp;
 char	*name;
@@ -198,6 +203,8 @@ fastf_t	r;
  *			M K _ E L L
  *
  * Make an ellipsoid centered at point with 3 perp. radius vectors.
+ * The eccentricity of the ellipsoid is controlled by the relative
+ * lengths of the three radius vectors.
  */
 mk_ell( fp, name, point, a, b, c)
 FILE	*fp;
@@ -319,7 +326,8 @@ double	r1, r2;
 
 
 /*
- * mk_rcc( name, base, height, radius)
+ *			M K _ R C C
+ *
  * Make a Right Circular Cylinder into a generalized truncated cyinder
  */
 mk_rcc( fp, name, base, height, radius )
