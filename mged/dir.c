@@ -750,6 +750,30 @@ char	**argv;
   return TCL_OK;
 }
 
+HIDDEN void
+Do_prefix( dbip, comb, comb_leaf, prefix_ptr, obj_ptr )
+struct db_i		*dbip;
+struct rt_comb_internal *comb;
+union tree		*comb_leaf;
+genptr_t		prefix_ptr, obj_ptr;
+{
+	char *prefix,*obj;
+	char tempstring[NAMESIZE+2];
+
+	RT_CK_DBI( dbip );
+	RT_CK_TREE( comb_leaf );
+
+	prefix = (char *)prefix_ptr;
+	obj = (char *)obj_ptr;
+
+	if( strncmp( comb_leaf->tr_l.tl_name, obj, NAMESIZE ) )
+		return;
+
+	(void)strcpy( tempstring, prefix);
+	(void)strcat( tempstring, obj);
+	(void)strncpy( comb_leaf->tr_l.tl_name, tempstring, NAMESIZE );
+}
+
 /*
  *			F _ P R E F I X
  *
@@ -764,8 +788,9 @@ int	argc;
 char	**argv;
 {
 	register int	i,j,k;	
-	register union record *rp;
 	register struct directory *dp;
+	struct rt_db_internal	intern;
+	struct rt_comb_internal *comb;
 	char		tempstring[NAMESIZE+2];
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
@@ -813,27 +838,16 @@ char	**argv;
 		for( dp = dbip->dbi_Head[i]; dp != DIR_NULL; dp = dp->d_forw )  {
 			if( !(dp->d_flags & DIR_COMB) )
 				continue;
-			if( (rp = db_getmrec( dbip, dp )) == (union record *)0 ) {
-			  TCL_READ_ERR_return;
-			}
-			/* [0] is COMB, [1..n] are MEMBERs */
-			for( j=1; j < dp->d_len; j++ )  {
-				if( rp[j].M.m_instname[0] == '\0' )
-					continue;
-				for( k=2; k<argc; k++ )  {
-					if( strncmp( rp[j].M.m_instname,
-					    argv[k], NAMESIZE) != 0 )
-						continue;
-					(void)strcpy( tempstring, argv[1]);
-					(void)strcat( tempstring, argv[k]);
-					(void)strncpy(rp[j].M.m_instname,
-						tempstring, NAMESIZE);
-					if( db_put( dbip, dp, rp, 0, dp->d_len ) < 0 ) {
-					  TCL_WRITE_ERR_return;
-					}
-				}
-			}
-			bu_free( (genptr_t)rp, "dir_nref recs" );
+
+			if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
+				TCL_READ_ERR_return;
+			comb = (struct rt_comb_internal *)intern.idb_ptr;
+
+			for( k=2; k<argc; k++ )
+				db_tree_funcleaf( dbip, comb, comb->tree, Do_prefix,
+					(genptr_t)argv[1], (genptr_t)argv[k] );
+			if( rt_db_put_internal( dp, dbip, &intern ) )
+				TCL_WRITE_ERR_return;
 		}
 	}
 	return TCL_OK;
@@ -852,18 +866,16 @@ node_write( dbip, dp )
 struct db_i	*dbip;
 register struct directory *dp;
 {
-	register union record	*rp;
+	struct rt_db_internal	intern;
 	int			want;
 
 	if( dp->d_nref++ > 0 )
 		return;		/* already written */
 
-	if( (rp = db_getmrec( dbip, dp )) == (union record *)0 )
+	if( rt_db_get_internal( &intern, dp, dbip, (mat_t *)NULL ) < 0 )
 		READ_ERR_return;
-	want = dp->d_len*sizeof(union record);
-	if( fwrite( (char *)rp, want, 1, keepfp ) != 1 )
-		perror("keep fwrite");
-	bu_free( (genptr_t)rp, "keep rec[]" );
+	if( mk_export_fwrite( keepfp, dp->d_namep, intern.idb_ptr, intern.idb_type ) )
+		WRITE_ERR_return;
 }
 
 int
