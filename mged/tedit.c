@@ -53,7 +53,8 @@ extern struct bu_external	es_ext;
 extern struct rt_db_internal	es_int;
 extern struct rt_db_internal	es_int_orig;
 
-static char	tmpfil[] = "/tmp/GED.aXXXXX";
+static char	tmpfil[17];
+static char	*tmpfil_init = "/tmp/GED.aXXXXXX";
 
 int writesolid(), readsolid();
 int editit();
@@ -84,6 +85,7 @@ char **argv;
 	if( not_state( ST_S_EDIT, "Solid Text Edit" ) )
 	  return TCL_ERROR;
 
+	strcpy(tmpfil, tmpfil_init);
 	(void)mktemp(tmpfil);
 	i=creat(tmpfil, 0600);
 	if( i < 0 )

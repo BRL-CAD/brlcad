@@ -86,6 +86,10 @@ int flag;	/* which type of table to make */
 FILE	*tabptr;
 
 char ctemp[7];
+
+static char	tmpfil[17];
+static char	*tmpfil_init = "/tmp/GED.aXXXXXX";
+
 /*
  *
  *	F _ E D C O D E S ( )
@@ -103,7 +107,6 @@ char	*argv[];
 {
   int i;
   int status;
-  char tmpfil[128];
   char **av;
 
   CHECK_DBI_NULL;
@@ -119,8 +122,7 @@ char	*argv[];
     return TCL_ERROR;
   }
 
-  strcpy( tmpfil, "/tmp/GED.aXXXXX" );
-
+  strcpy(tmpfil, tmpfil_init);
   (void)mktemp(tmpfil);
   i=creat(tmpfil, 0600);
   if( i < 0 ){

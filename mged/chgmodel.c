@@ -68,6 +68,9 @@ void set_localunit_TclVar();
 void set_tran();
 void	aexists();
 
+static char	tmpfil[17];
+static char	*tmpfil_init = "/tmp/GED.aXXXXXX";
+
 int		newedge;		/* new edge for arb editing */
 
 /* Add/modify item and air codes of a region */
@@ -336,7 +339,6 @@ char    *argv[];
 {
   int i;
   int status;
-  char *tmpfil = "/tmp/GED.aXXXXX";
 
   char **av;
   
@@ -353,6 +355,7 @@ char    *argv[];
     return TCL_ERROR;
   }
 
+  strcpy(tmpfil, tmpfil_init);
   (void)mktemp(tmpfil);
   i=creat(tmpfil, 0600);
   if( i < 0 ){

@@ -50,6 +50,9 @@ extern struct mater *rt_material_head;	/* now defined in librt/mater.c */
 void color_soltab();
 void color_putrec(), color_zaprec();
 
+static char	tmpfil[17];
+static char	*tmpfil_init = "/tmp/GED.aXXXXXX";
+
 static void
 pr_mater( mp )
 register struct mater *mp;
@@ -179,7 +182,6 @@ Tcl_Interp *interp;
 int	argc;
 char	**argv;
 {
-	static char tempfile[] = "/tmp/MGED.aXXXXX";
 	register struct mater *mp;
 	register struct mater *zot;
 	register FILE *fp;
@@ -199,9 +201,10 @@ char	**argv;
 	  return TCL_ERROR;
 	}
 
-	(void)mktemp(tempfile);
-	if( (fp = fopen( tempfile, "w" )) == NULL )  {
-		perror(tempfile);
+	strcpy(tmpfil, tmpfil_init);
+	(void)mktemp(tmpfil);
+	if ((fp = fopen(tmpfil, "w")) == NULL) {
+		perror(tmpfil);
 		return TCL_ERROR;;
 	}
 
@@ -214,14 +217,14 @@ char	**argv;
 	}
 	(void)fclose(fp);
 
-	if( !editit( tempfile ) )  {
+	if( !editit( tmpfil ) )  {
 	  Tcl_AppendResult(interp, "Editor returned bad status.  Aborted\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
 
 	/* Read file and process it */
-	if( (fp = fopen( tempfile, "r")) == NULL )  {
-	  perror( tempfile );
+	if( (fp = fopen( tmpfil, "r")) == NULL )  {
+	  perror( tmpfil );
 	  return TCL_ERROR;
 	}
 
@@ -261,7 +264,7 @@ char	**argv;
 		color_putrec( mp );
 	}
 	(void)fclose(fp);
-	(void)unlink( tempfile );
+	(void)unlink(tmpfil);
 
 	color_soltab();
 
