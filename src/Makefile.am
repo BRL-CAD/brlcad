@@ -21,9 +21,10 @@ bench_dirs = \
 kitchensink_dirs = \
 	libcursor \
 	libdm \
-	libpkg \
 	libfb \
 	libfft \
+	liborle \
+	libpkg \
 	librtserver \
 	libtclcad \
 	libtermio \
