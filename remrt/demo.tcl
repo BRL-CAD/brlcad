@@ -217,10 +217,16 @@ proc reconnect {} {
 
 		puts "Connecting to $host"
 		set code "!error?"
+		if { [ catch { exec host-up-brief.sh $host } code ] }  {
+			set fds($host) dead
+			set status($host) "$host dead (ping failed)"
+			puts "  $host : ping failed"
+			continue
+		}
 		if { [ catch { set fds($host) [socket $host 5353] } code ] }  {
 			set fds($host) dead
-			set status($host) "$host not-responding"
-			puts "  $host : $code"
+			set status($host) "$host dead (ping ok, connect failed)"
+			puts "  $host : ping OK, $code"
 			continue
 		}
 		# fds($host) is now set non-dead, to the actual fd.
