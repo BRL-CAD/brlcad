@@ -8,7 +8,7 @@ tcldir = @TCL_LIBRARY@
 dist_tcl_DATA = tclAppInit.c ldAix
 tcllibdir = ${libdir}
 tcllib_DATA = tclConfig.sh
-EXTRA_DIST = tclConfig.sh.in
+EXTRA_DIST = tclConfig.sh.in mkLinks
 
 AM_CFLAGS = -I${top_srcdir}/libtcl8.4/generic $(TCL_BUILD_CFLAGS)
 
