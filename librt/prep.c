@@ -718,6 +718,7 @@ struct resource		*resp;
 			break;
 		case OP_SOLID:
 			stp = treep->tr_a.tu_stp;
+			RT_CK_SOLTAB(stp);
 			bu_ptbl_ins( &stp->st_regions, (long *)regp );
 			break;
 		case OP_UNION:
