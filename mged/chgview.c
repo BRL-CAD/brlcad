@@ -771,10 +771,6 @@ f_ill()
 		(void)printf("%s multiply referenced\n", cmd_args[1]);
 		return;
 	}
-	if( lastfound->s_flag != UP )  {
-		(void)printf("%s not visible\n", cmd_args[1]);
-		return;
-	}
 	/* Make the specified solid the illuminated solid */
 	illump = lastfound;
 	illump->s_iflag = UP;
