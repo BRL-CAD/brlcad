@@ -27,7 +27,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "common.h"
 
 
-
+#include <stdlib.h>
 #include <stdio.h>	/* for stderr */
 #include <math.h>	/* for double sin(), cos() */
 
