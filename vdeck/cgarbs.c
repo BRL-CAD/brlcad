@@ -1,6 +1,6 @@
 /*
- *	@(#) cgarbs.c			retrieved 8/13/86 at 07:58:54,
- *	@(#) version 1.1		  created 3/15/83 at 08:28:12.
+ *	@(#) cgarbs.c			retrieved 8/13/86 at 07:59:01,
+ *	@(#) version 1.2		  created 3/16/83 at 15:37:13.
  *
  *	Written by Keith Applin.
  *	All rights reserved, Ballistic Research Laboratory.
@@ -113,30 +113,30 @@ int uvec[], svec[], numvec;
 	case ARB7:	/* arb7 vectors: 0 1 2 3 4 5 6 4 */
 		switch( svec[2] ) {
 		case 0:			/* 0 = 1, 3, or 4 */
-			if(svec[3] == 1)	move(&rec,4,7,6,5,1,4,3,1);
-			if(svec[3] == 3)	move(&rec,4,5,6,7,0,1,2,0);
-			if(svec[3] == 4)	move(&rec,1,2,6,5,0,3,7,0);
+			if(svec[3] == 1)	move(rec,4,7,6,5,1,4,3,1);
+			if(svec[3] == 3)	move(rec,4,5,6,7,0,1,2,0);
+			if(svec[3] == 4)	move(rec,1,2,6,5,0,3,7,0);
 			break;
 		case 1:			/* 1 = 2 or 5 */
-			if(svec[3] == 2)	move(&rec,0,4,7,3,1,5,6,1);
-			if(svec[3] == 5)	move(&rec,0,3,7,4,1,2,6,1);
+			if(svec[3] == 2)	move(rec,0,4,7,3,1,5,6,1);
+			if(svec[3] == 5)	move(rec,0,3,7,4,1,2,6,1);
 			break;
 		case 2:			/* 2 = 3 or 6 */
-			if(svec[3] == 3)	move(&rec,6,5,4,7,2,1,0,2);
-			if(svec[3] == 6)	move(&rec,3,0,4,7,2,1,5,2);
+			if(svec[3] == 3)	move(rec,6,5,4,7,2,1,0,2);
+			if(svec[3] == 6)	move(rec,3,0,4,7,2,1,5,2);
 			break;
 		case 3:			/* 3 = 7 */
-			move(&rec,2,1,5,6,3,0,4,3);
+			move(rec,2,1,5,6,3,0,4,3);
 			break;
 		case 4:			/* 4 = 5 */
 					/* if 4 = 7  do nothing */
-			if(svec[3] == 5)	move(&rec,1,2,3,0,5,6,7,5);
+			if(svec[3] == 5)	move(rec,1,2,3,0,5,6,7,5);
 			break;
 		case 5:			/* 5 = 6 */
-			move(&rec,2,3,0,1,6,7,4,6);
+			move(rec,2,3,0,1,6,7,4,6);
 			break;
 		case 6:			/* 6 = 7 */
-			move(&rec,3,0,1,2,7,4,5,7);
+			move(rec,3,0,1,2,7,4,5,7);
 			break;
 		default:
 			printf("%s: bad arb7\n", rec->s.s_name);
@@ -152,33 +152,33 @@ int uvec[], svec[], numvec;
 		switch( prod ) {
 		case 24:	/* 0123 unique */
 				/* 4=7 and 5=6  OR  4=5 and 6=7 */
-			if(svec[3] == 7)	move(&rec,3,0,1,2,4,4,5,5);
-			else			move(&rec,0,1,2,3,4,4,6,6);
+			if(svec[3] == 7)	move(rec,3,0,1,2,4,4,5,5);
+			else			move(rec,0,1,2,3,4,4,6,6);
 			break;
 		case 1680:	/* 4567 unique */
 				/* 0=3 and 1=2  OR  0=1 and 2=3 */
-			if(svec[3] == 3)	move(&rec,7,4,5,6,0,0,1,1);
-			else			move(&rec,4,5,6,7,0,0,2,2);
+			if(svec[3] == 3)	move(rec,7,4,5,6,0,0,1,1);
+			else			move(rec,4,5,6,7,0,0,2,2);
 			break;
 		case 160:	/* 0473 unique */
 				/* 1=2 and 5=6  OR  1=5 and 2=6 */
-			if(svec[3] == 2)	move(&rec,0,3,7,4,1,1,5,5);
-			else			move(&rec,4,0,3,7,1,1,2,2);
+			if(svec[3] == 2)	move(rec,0,3,7,4,1,1,5,5);
+			else			move(rec,4,0,3,7,1,1,2,2);
 			break;
 		case 672:	/* 3267 unique */
 				/* 0=1 and 4=5  OR  0=4 and 1=5 */
-			if(svec[3] == 1)	move(&rec,3,2,6,7,0,0,4,4);
-			else			move(&rec,7,3,2,6,0,0,1,1);
+			if(svec[3] == 1)	move(rec,3,2,6,7,0,0,4,4);
+			else			move(rec,7,3,2,6,0,0,1,1);
 			break;
 		case 252:	/* 1256 unique */
 				/* 0=3 and 4=7  OR 0=4 and 3=7 */
-			if(svec[3] == 3)	move(&rec,1,2,6,5,0,0,4,4);
-			else			move(&rec,5,1,2,6,0,0,3,3);
+			if(svec[3] == 3)	move(rec,1,2,6,5,0,0,4,4);
+			else			move(rec,5,1,2,6,0,0,3,3);
 			break;
 		case 60:	/* 0154 unique */
 				/* 2=3 and 6=7  OR  2=6 and 3=7 */
-			if(svec[3] == 3)	move(&rec,0,1,5,4,2,2,6,6);
-			else			move(&rec,5,1,0,4,2,2,3,3);
+			if(svec[3] == 3)	move(rec,0,1,5,4,2,2,6,6);
+			else			move(rec,5,1,0,4,2,2,3,3);
 			break;
 		default:
 			printf("%s: bad arb6\n", rec->s.s_name);
@@ -193,22 +193,22 @@ int uvec[], svec[], numvec;
 			prod = prod * (svec[i] + 1);
 		switch( prod ) {
 		case 24:	/* 0=1=2=3 */
-			move(&rec,4,5,6,7,0,0,0,0);
+			move(rec,4,5,6,7,0,0,0,0);
 			break;
 		case 1680:	/* 4=5=6=7 */
 				/* do nothing */
 			break;
 		case 160:	/* 0=3=4=7 */
-			move(&rec,1,2,6,5,0,0,0,0);
+			move(rec,1,2,6,5,0,0,0,0);
 			break;
 		case 672:	/* 2=3=7=6 */
-			move(&rec,0,1,5,4,2,2,2,2);
+			move(rec,0,1,5,4,2,2,2,2);
 			break;
 		case 252:	/* 1=2=5=6 */
-			move(&rec,0,3,7,4,1,1,1,1);
+			move(rec,0,3,7,4,1,1,1,1);
 			break;
 		case 60:	/* 0=1=5=4 */
-			move(&rec,3,2,6,7,0,0,0,0);
+			move(rec,3,2,6,7,0,0,0,0);
 			break;
 		default:
 			printf("%s: bad arb5\n", rec->s.s_name);
@@ -220,7 +220,7 @@ int uvec[], svec[], numvec;
 	case ARB4:	/* arb4 vectors:  0 1 2 0 4 4 4 4 */
 		j = svec[6];
 		if( svec[0] == 2 )	j = svec[4];
-		move(&rec,uvec[0],uvec[1],svec[2],uvec[0],j,j,j,j);
+		move(rec,uvec[0],uvec[1],svec[2],uvec[0],j,j,j,j);
 		break;
 	default:
 		printf("solid %s: unknown arb type (%d)\n",
