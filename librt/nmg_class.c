@@ -226,9 +226,8 @@ CONST struct rt_tol	*tol;
 		EUPRINT("          \tvs. eu", eu);
 	}
 	/*
-	 * XXX Note here that "pca" will be one of the endpoints,
-	 * except in the case of a near miss.
-	 * Even if "pt" is far, far away.  This can be confusing.
+	 * Note that "pca" can be one of the edge endpoints,
+	 * even if "pt" is far, far away.  This can be confusing.
 	 */
 	code = rt_dist_pt3_lseg3( &dist, pca, eupt, matept, pt, tol);
 	if( code <= 0 )  dist = 0;
@@ -413,6 +412,8 @@ CONST struct rt_tol	*tol;
 	if (RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
 		for (RT_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 			nmg_class_pt_e(closest, pt, eu, tol);
+			/* If point lies ON edge, we are done */
+			if( closest->class == NMG_CLASS_AonBshared )  break;
 		}
 	} else if (RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
 		register struct vertexuse *vu;
@@ -492,6 +493,8 @@ CONST struct rt_tol	*tol;
 
 	for (RT_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 		nmg_class_pt_l( &closest, pt, lu, tol );
+		/* If point lies ON loop edge, we are done */
+		if( closest.class == NMG_CLASS_AonBshared )  break;
 	}
 
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
@@ -598,7 +601,9 @@ CONST struct rt_tol	*tol;
 		/* Dangling faces don't participate in Jordan Curve calc */
 		if (nmg_dangling_face(fu))  continue;
 
-		/* Find point where ray hits the plane */
+		/*
+		 * Find point where ray hits the plane.
+		 */
 		stat = rt_isect_ray_plane(&dist, pt, projection_dir,
 			fu->f_p->fg_p->N);
 
@@ -620,18 +625,29 @@ CONST struct rt_tol	*tol;
 			continue;
 		}
 
-		/* Construct coordinates of hit point, and classify. */
+		/*
+		 * Construct coordinates of hit point, and classify.
+		 * XXX This really needs to be a ray/face classification
+		 * XXX The ray can start outside, graze across an edge,
+		 * XXX and keep going.
+		 */
 	    	VJOIN1(plane_pt, pt, dist, projection_dir);
+		if (rt_g.NMG_debug & DEBUG_CLASSIFY)
+			rt_log("\tClassify ray/face intercept point\n");
 		class = nmg_class_pt_f( plane_pt, fu, tol );
-		if( class != NMG_CLASS_AoutB )  hitcount++;
+		if( class == NMG_CLASS_AinB )  hitcount++;
+		else if( class == NMG_CLASS_AonBshared )  {
+			rt_log("nmg_class_pt_s: WARNING: ray grazed an edge, could be 1 hit (in/out) or 2 hits (in/in, out/out), can't tell which!\n");
+			hitcount++;
+		}
+		if (rt_g.NMG_debug & DEBUG_CLASSIFY)
+			rt_log("nmg_class_pt_s:\t ray hitcount=%d\n", hitcount);
 	}
 	rt_free( (char *)faces_seen, "nmg_class_pt_s faces_seen[]" );
 
 	/*  Using Jordan Curve Theorem, if hitcount is even, point is OUT.
 	 *  If hiscount is odd, point is IN.
 	 */
-	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-		rt_log("nmg_class_pt_s:\t hitcount=%d\n", hitcount);
 	if (hitcount & 1) {
 		class = NMG_CLASS_AinB;
 	} else {
@@ -639,8 +655,8 @@ CONST struct rt_tol	*tol;
 	}
 out:
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY)
-		rt_log("nmg_class_pt_s: returning %s\n",
-			nmg_class_name(class) );
+		rt_log("nmg_class_pt_s: returning %s, s=x%x\n",
+			nmg_class_name(class), s );
 	return class;
 }
 
