@@ -34,6 +34,7 @@
 #define DEBUG_PLOTBOX	0x400	/* Plot(3) the bounding boxes to stdout */
 #define DEBUG_RAYWRITE	0x800	/* Ray(5V) view rays to stdout */
 #define DEBUG_SPLINE	0x1000	/* Splines */
+#define DEBUG_DB	0x2000	/* Database debugging */
 
 #define DEBUG_MEM	0x4000	/* Debug dynamic memory operations */
 #define DEBUG_TESTING	0x8000	/* One-shot debugging flag */
