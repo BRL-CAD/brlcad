@@ -1,7 +1,21 @@
 /*
  *			S H O O T . C
  *
- * Ray Tracing program shot coordinator.
+ *	Ray Tracing program shot coordinator.
+ *  
+ *  Given a ray, shoot it at all the relevant parts of the model,
+ *  (building the HeadSeg chain), and then call rt_boolregions()
+ *  to build and evaluate the partition chain.
+ *  If the ray actually hit anything, call the application's
+ *  a_hit() routine with a pointer to the partition chain,
+ *  otherwise, call the application's a_miss() routine.
+ *
+ *  It is important to note that rays extend infinitely only in the
+ *  positive direction.  The ray is composed of all points P, where
+ *
+ *	P = r_pt + K * r_dir
+ *
+ *  for K ranging from 0 to +infinity.  There is no looking backwards.
  *
  *  Author -
  *	Michael John Muuss
@@ -36,24 +50,166 @@ struct resource rt_uniresource;		/* Resources for uniprocessor */
 #define AUTO auto
 #endif
 
+#define BACKING_DIST	(-2.0)		/* mm to look behind start point */
+#define OFFSET_DIST	0.01		/* mm to advance point into box */
+
+struct shootray_status {
+	fastf_t			dist_corr;	/* correction distance */
+	fastf_t			odist_corr;
+	fastf_t			box_start;
+	fastf_t			obox_start;
+	fastf_t			box_end;
+	fastf_t			obox_end;
+	fastf_t			model_end;
+	struct xray		newray;		/* closer ray start */
+	struct application	*ap;
+	union cutter		*lastcut;
+	vect_t			inv_dir;	/* inverses of ap->a_ray.r_dir */
+};
+
+
+/*
+ *			R T _ A D V A N C E _ T O _ N E X T _ C E L L
+ *
+ */
+union cutter *
+rt_advance_to_next_cell( ssp )
+struct shootray_status	*ssp;
+{
+	register union cutter	*cutp;
+	AUTO int		push_flag = 0;
+	double			fraction;
+	int			exponent;
+	register struct application *ap = ssp->ap;
+
+	for(;;)  {
+		/*
+		 * Move newray point (not box_start)
+		 * slightly into the new box.
+		 * Note that a box is never less than 1mm wide per axis.
+		 */
+		ssp->dist_corr = ssp->box_start + OFFSET_DIST;
+		if( ssp->dist_corr >= ssp->model_end )
+			break;	/* done! */
+		VJOIN1( ssp->newray.r_pt, ap->a_ray.r_pt,
+			ssp->dist_corr, ap->a_ray.r_dir );
+		if( rt_g.debug&DEBUG_ADVANCE) {
+			rt_log("rt_advance_to_next_cell() dist_corr=%g\n",
+				ssp->dist_corr);
+		}
+
+		cutp = &(ap->a_rt_i->rti_CutHead);
+		while( cutp->cut_type == CUT_CUTNODE )  {
+			if( ssp->newray.r_pt[cutp->cn.cn_axis] >=
+			    cutp->cn.cn_point )  {
+				cutp=cutp->cn.cn_r;
+			}  else  {
+				cutp=cutp->cn.cn_l;
+			}
+		}
+		if(cutp==CUTTER_NULL || cutp->cut_type != CUT_BOXNODE)
+			rt_bomb("rt_advance_to_next_cell(): leaf not boxnode");
+
+		/* Don't get stuck within the same box for long */
+		if( cutp==ssp->lastcut )  {
+			if( rt_g.debug & DEBUG_ADVANCE )  {
+				rt_log("%d,%d box push dist_corr o=%e n=%e model_end=%e\n",
+					ap->a_x, ap->a_y,
+					ssp->odist_corr, ssp->dist_corr, ssp->model_end );
+				rt_log("box_start o=%e n=%e, box_end o=%e n=%e\n",
+					ssp->obox_start, ssp->box_start,
+					ssp->obox_end, ssp->box_end );
+				VPRINT("a_ray.r_pt", ap->a_ray.r_pt);
+			     	VPRINT("Point", ssp->newray.r_pt);
+				VPRINT("Dir", ssp->newray.r_dir);
+			     	rt_pr_cut( cutp, 0 );
+			}
+
+			/* Advance 1mm, or smallest value that hardware
+			 * floating point resolution will allow.
+			 */
+			fraction = frexp( ssp->box_end, &exponent );
+			if( exponent <= 0 )  {
+				/* Never advance less than 1mm */
+				ssp->box_start = ssp->box_end + 1.0;
+			} else {
+				if( sizeof(fastf_t) <= 4 )
+					fraction += 1.0e-5;
+				else
+					fraction += 1.0e-14;
+				ssp->box_start = ldexp( fraction, exponent );
+			}
+			push_flag++;
+			continue;
+		}
+		if( push_flag )  {
+			push_flag = 0;
+			rt_log("%d,%d Escaped %d. dist_corr=%e, box_start=%e, box_end=%e\n",
+				ap->a_x, ap->a_y, push_flag,
+				ssp->dist_corr, ssp->box_start, ssp->box_end );
+		}
+		ssp->lastcut = cutp;
+
+		if( !rt_in_rpp(&ssp->newray, ssp->inv_dir,
+		     cutp->bn.bn_min, cutp->bn.bn_max) )  {
+rt_log("\nrt_advance_to_next_cell():  missed box: rmin,rmax(%g,%g) box(%g,%g)\n",
+				ssp->newray.r_min, ssp->newray.r_max,
+				ssp->box_start, ssp->box_end);
+/**		     	if( rt_g.debug & DEBUG_ADVANCE )  ***/
+			{
+				VPRINT("a_ray.r_pt", ap->a_ray.r_pt);
+			     	VPRINT("Point", ssp->newray.r_pt);
+				VPRINT("Dir", ssp->newray.r_dir);
+				VPRINT("inv_dir", ssp->inv_dir);
+			     	rt_pr_cut( cutp, 0 );
+				(void)rt_DB_rpp(&ssp->newray, ssp->inv_dir,
+				     cutp->bn.bn_min, cutp->bn.bn_max);
+		     	}
+		     	if( ssp->box_end >= INFINITY )
+				break;	/* off end of model RPP */
+			ssp->box_start = ssp->box_end;
+
+			/* Advance 1mm, or smallest value that hardware
+			 * floating point resolution will allow.
+			 */
+			fraction = frexp( ssp->box_end, &exponent );
+			if( exponent <= 0 )  {
+				/* Never advance less than 1mm */
+				ssp->box_end += 1.0;
+			} else {
+				if( sizeof(fastf_t) <= 4 )
+					fraction += 1.0e-5;
+				else
+					fraction += 1.0e-14;
+				ssp->box_end = ldexp( fraction, exponent );
+			}
+		     	continue;
+		}
+		ssp->odist_corr = ssp->dist_corr;
+		ssp->obox_start = ssp->box_start;
+		ssp->obox_end = ssp->box_end;
+		ssp->box_start = ssp->dist_corr + ssp->newray.r_min;
+		ssp->box_end = ssp->dist_corr + ssp->newray.r_max;
+	     	if( rt_g.debug & DEBUG_ADVANCE )  {
+			rt_log("rt_advance_to_next_cell() box=(%g, %g) new pt=(%g,%g,%g)\n",
+				ssp->box_start, ssp->box_end,
+	     			ssp->newray.r_pt[X],
+	     			ssp->newray.r_pt[Y],
+	     			ssp->newray.r_pt[Z] );
+	     	}
+		return(cutp);
+	}
+	/* Off the end of the model RPP */
+     	if( rt_g.debug & DEBUG_ADVANCE )  {
+     		rt_log("rt_advance_to_next_cell(): escaped model RPP\n");
+     	}
+	return(CUTTER_NULL);
+}
+
 /*
  *			R T _ S H O O T R A Y
- *  
- *  Given a ray, shoot it at all the relevant parts of the model,
- *  (building the HeadSeg chain), and then call rt_boolregions()
- *  to build and evaluate the partition chain.
- *  If the ray actually hit anything, call the application's
- *  a_hit() routine with a pointer to the partition chain,
- *  otherwise, call the application's a_miss() routine.
  *
- *  It is important to note that rays extend infinitely only in the
- *  positive direction.  The ray is composed of all points P, where
- *
- *	P = r_pt + K * r_dir
- *
- *  for K ranging from 0 to +infinity.  There is no looking backwards.
- *
- *  It is also important to note that the direction vector r_dir
+ *  Note that the direction vector r_dir
  *  must have unit length;  this is mandatory, and is not ordinarily checked,
  *  in the name of efficiency.
  *
@@ -68,7 +224,7 @@ struct resource rt_uniresource;		/* Resources for uniprocessor */
  *  fields valid.  Normal computation deferred to user code,
  *  to avoid needless computation here.
  *
- *  Returns: whatever the application function returns (an int).
+ *  Formal Return: whatever the application function returns (an int).
  *
  *  NOTE:  The appliction functions may call rt_shootray() recursively.
  *	Thus, none of the local variables may be static.
@@ -80,26 +236,18 @@ int
 rt_shootray( ap )
 register struct application *ap;
 {
+	AUTO struct shootray_status ss;
 	AUTO struct seg		*HeadSeg;
 	AUTO int		ret;
-	auto vect_t		inv_dir;	/* inverses of ap->a_ray.r_dir */
-	AUTO fastf_t		box_start, box_end, model_end;
 	AUTO fastf_t		last_bool_start;
 	AUTO union bitv_elem	*solidbits;	/* bits for all solids shot so far */
 	AUTO bitv_t		*regionbits;	/* bits for all involved regions */
 	AUTO char		*status;
-	AUTO union cutter	*lastcut;
 	auto struct partition	InitialPart;	/* Head of Initial Partitions */
 	auto struct partition	FinalPart;	/* Head of Final Partitions */
 	AUTO struct seg		*waitsegs;	/* segs awaiting rt_boolweave() */
 	AUTO struct soltab	**stpp;
-	auto struct xray	newray;		/* closer ray start */
-	AUTO fastf_t		dist_corr;	/* correction distance */
 	register union cutter	*cutp;
-	AUTO fastf_t		odist_corr, obox_start, obox_end;	/* temp */
-	AUTO int		push_flag = 0;
-	double			fraction;
-	int			exponent;
 	int			end_free_len;
 	AUTO struct rt_i	*rtip;
 	int			debug_shoot = rt_g.debug & DEBUG_SHOOT;
@@ -111,6 +259,7 @@ register struct application *ap;
 		if(rt_g.debug)rt_log("rt_shootray:  defaulting a_resource to &rt_uniresource\n");
 	}
 	RT_RESOURCE_CHECK(ap->a_resource);
+	ss.ap = ap;
 	rtip = ap->a_rt_i;
 
 	if(rt_g.debug&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION)) {
@@ -159,21 +308,21 @@ register struct application *ap;
 
 	/* Compute the inverse of the direction cosines */
 	if( !NEAR_ZERO( ap->a_ray.r_dir[X], SQRT_SMALL_FASTF ) )  {
-		inv_dir[X]=1.0/ap->a_ray.r_dir[X];
+		ss.inv_dir[X]=1.0/ap->a_ray.r_dir[X];
 	} else {
-		inv_dir[X] = INFINITY;
+		ss.inv_dir[X] = INFINITY;
 		ap->a_ray.r_dir[X] = 0.0;
 	}
 	if( !NEAR_ZERO( ap->a_ray.r_dir[Y], SQRT_SMALL_FASTF ) )  {
-		inv_dir[Y]=1.0/ap->a_ray.r_dir[Y];
+		ss.inv_dir[Y]=1.0/ap->a_ray.r_dir[Y];
 	} else {
-		inv_dir[Y] = INFINITY;
+		ss.inv_dir[Y] = INFINITY;
 		ap->a_ray.r_dir[Y] = 0.0;
 	}
 	if( !NEAR_ZERO( ap->a_ray.r_dir[Z], SQRT_SMALL_FASTF ) )  {
-		inv_dir[Z]=1.0/ap->a_ray.r_dir[Z];
+		ss.inv_dir[Z]=1.0/ap->a_ray.r_dir[Z];
 	} else {
-		inv_dir[Z] = INFINITY;
+		ss.inv_dir[Z] = INFINITY;
 		ap->a_ray.r_dir[Z] = 0.0;
 	}
 
@@ -220,11 +369,11 @@ register struct application *ap;
 	 *  If ray does not enter the model RPP, skip on.
 	 *  If ray ends exactly at the model RPP, trace it.
 	 */
-	if( !rt_in_rpp( &ap->a_ray, inv_dir, rtip->mdl_min, rtip->mdl_max )  ||
+	if( !rt_in_rpp( &ap->a_ray, ss.inv_dir, rtip->mdl_min, rtip->mdl_max )  ||
 	    ap->a_ray.r_max < 0.0 )  {
 	    	if( waitsegs != SEG_NULL )  {
 	    		/* Go handle the infinite objects we hit */
-	    		model_end = INFINITY;
+	    		ss.model_end = INFINITY;
 	    		goto weave;
 	    	}
 		rtip->nmiss_model++;
@@ -255,17 +404,15 @@ register struct application *ap;
 	 *  own start-point up, rather than depending on it here, but
 	 *  it isn't much trouble here.
 	 */
-#define BACKING_DIST	(-2.0)		/* mm to look behind start point */
-#define OFFSET_DIST	0.01		/* mm to advance point into box */
-	box_start = ap->a_ray.r_min;
-	if( box_start < BACKING_DIST )
-		box_start = BACKING_DIST; /* Only look a little bit behind */
-	box_start -= OFFSET_DIST;	/* Compensate for OFFSET_DIST below on 1st loop */
-	box_end = model_end = ap->a_ray.r_max;
-	lastcut = CUTTER_NULL;
+	ss.box_start = ap->a_ray.r_min;
+	if( ss.box_start < BACKING_DIST )
+		ss.box_start = BACKING_DIST; /* Only look a little bit behind */
+	ss.box_start -= OFFSET_DIST;	/* Compensate for OFFSET_DIST below on 1st loop */
+	ss.box_end = ss.model_end = ap->a_ray.r_max;
+	ss.lastcut = CUTTER_NULL;
 	last_bool_start = BACKING_DIST;
-	newray = ap->a_ray;		/* struct copy */
-	odist_corr = obox_start = obox_end = -99;
+	ss.newray = ap->a_ray;		/* struct copy */
+	ss.odist_corr = ss.obox_start = ss.obox_end = -99;
 
 	/*
 	 *  While the ray remains inside model space,
@@ -275,116 +422,10 @@ register struct application *ap;
 	 *  the space partitoning tree will pick wrong boxes & miss them.
 	 */
 	for(;;)  {
-		/*
-		 * Move newray point (not box_start)
-		 * slightly into the new box.
-		 * Note that a box is never less than 1mm wide per axis.
-		 */
-		dist_corr = box_start + OFFSET_DIST;
-		if( dist_corr >= model_end )
-			break;	/* done! */
-		VJOIN1( newray.r_pt, ap->a_ray.r_pt,
-			dist_corr, ap->a_ray.r_dir );
-		if( rt_g.debug&DEBUG_BOXING) {
-			rt_log("dist_corr=%g\n", dist_corr);
-			VPRINT("newray.r_pt", newray.r_pt);
-		}
-
-		cutp = &(rtip->rti_CutHead);
-		while( cutp->cut_type == CUT_CUTNODE )  {
-			if( newray.r_pt[cutp->cn.cn_axis] >=
-			    cutp->cn.cn_point )  {
-				cutp=cutp->cn.cn_r;
-			}  else  {
-				cutp=cutp->cn.cn_l;
-			}
-		}
-		if(cutp==CUTTER_NULL || cutp->cut_type != CUT_BOXNODE)
-			rt_bomb("leaf not boxnode");
-
-		/* Don't get stuck within the same box for long */
-		if( cutp==lastcut )  {
-			if( debug_shoot )  {
-				rt_log("%d,%d box push dist_corr o=%e n=%e model_end=%e\n",
-					ap->a_x, ap->a_y,
-					odist_corr, dist_corr, model_end );
-				rt_log("box_start o=%e n=%e, box_end o=%e n=%e\n",
-					obox_start, box_start,
-					obox_end, box_end );
-				VPRINT("a_ray.r_pt", ap->a_ray.r_pt);
-			     	VPRINT("Point", newray.r_pt);
-				VPRINT("Dir", newray.r_dir);
-			     	rt_pr_cut( cutp, 0 );
-			}
-
-			/* Advance 1mm, or smallest value that hardware
-			 * floating point resolution will allow.
-			 */
-			fraction = frexp( box_end, &exponent );
-			if( exponent <= 0 )  {
-				/* Never advance less than 1mm */
-				box_start = box_end + 1.0;
-			} else {
-				if( sizeof(fastf_t) <= 4 )
-					fraction += 1.0e-5;
-				else
-					fraction += 1.0e-14;
-				box_start = ldexp( fraction, exponent );
-			}
-			push_flag++;
-			continue;
-		}
-		if( push_flag )  {
-			push_flag = 0;
-			rt_log("%d,%d Escaped %d. dist_corr=%e, box_start=%e, box_end=%e\n",
-				ap->a_x, ap->a_y, push_flag,
-				dist_corr, box_start, box_end );
-		}
-		lastcut = cutp;
-
-		if( !rt_in_rpp(&newray, inv_dir,
-		     cutp->bn.bn_min, cutp->bn.bn_max) )  {
-rt_log("\nrt_shootray:  missed box: rmin,rmax(%g,%g) box(%g,%g)\n",
-				newray.r_min, newray.r_max,
-				box_start, box_end);
-/**		     	if(debug_shoot)  ***/
-			{
-				VPRINT("a_ray.r_pt", ap->a_ray.r_pt);
-			     	VPRINT("Point", newray.r_pt);
-				VPRINT("Dir", newray.r_dir);
-				VPRINT("inv_dir", inv_dir);
-			     	rt_pr_cut( cutp, 0 );
-				(void)rt_DB_rpp(&newray, inv_dir,
-				     cutp->bn.bn_min, cutp->bn.bn_max);
-		     	}
-		     	if( box_end >= INFINITY )  break;
-			box_start = box_end;
-
-			/* Advance 1mm, or smallest value that hardware
-			 * floating point resolution will allow.
-			 */
-			fraction = frexp( box_end, &exponent );
-			if( exponent <= 0 )  {
-				/* Never advance less than 1mm */
-				box_end += 1.0;
-			} else {
-				if( sizeof(fastf_t) <= 4 )
-					fraction += 1.0e-5;
-				else
-					fraction += 1.0e-14;
-				box_end = ldexp( fraction, exponent );
-			}
-		     	continue;
-		}
-		odist_corr = dist_corr;
-		obox_start = box_start;
-		obox_end = box_end;
-		box_start = dist_corr + newray.r_min;
-		box_end = dist_corr + newray.r_max;
+		if( (cutp = rt_advance_to_next_cell( &ss )) == CUTTER_NULL )
+			break;
 
 		if(debug_shoot) {
-			rt_log("ray (%g, %g) %g\n", box_start, box_end, model_end);
-			VPRINT("Point", newray.r_pt);
 			rt_pr_cut( cutp, 0 );
 		}
 
@@ -406,14 +447,14 @@ rt_log("\nrt_shootray:  missed box: rmin,rmax(%g,%g) box(%g,%g)\n",
 
 			/* Check against bounding RPP, if desired by solid */
 			if( rt_functab[stp->st_id].ft_use_rpp )  {
-				if( !rt_in_rpp( &newray, inv_dir,
+				if( !rt_in_rpp( &ss.newray, ss.inv_dir,
 				    stp->st_min, stp->st_max ) )  {
 					if(debug_shoot)rt_log("rpp miss %s\n", stp->st_name);
 					rtip->nmiss_solid++;
 					continue;	/* MISS */
 				}
-				if( dist_corr + newray.r_max < BACKING_DIST )  {
-					if(debug_shoot)rt_log("rpp skip %s, dist_corr=%g, r_max=%g\n", stp->st_name, dist_corr, newray.r_max);
+				if( ss.dist_corr + ss.newray.r_max < BACKING_DIST )  {
+					if(debug_shoot)rt_log("rpp skip %s, dist_corr=%g, r_max=%g\n", stp->st_name, ss.dist_corr, ss.newray.r_max);
 					rtip->nmiss_solid++;
 					continue;	/* MISS */
 				}
@@ -422,7 +463,7 @@ rt_log("\nrt_shootray:  missed box: rmin,rmax(%g,%g) box(%g,%g)\n",
 			if(debug_shoot)rt_log("shooting %s\n", stp->st_name);
 			rtip->nshots++;
 			if( (newseg = rt_functab[stp->st_id].ft_shot( 
-				stp, &newray, ap )
+				stp, &ss.newray, ap )
 			     ) == SEG_NULL )  {
 				rtip->nmiss++;
 				continue;	/* MISS */
@@ -433,8 +474,8 @@ rt_log("\nrt_shootray:  missed box: rmin,rmax(%g,%g) box(%g,%g)\n",
 				register struct seg *seg2 = newseg;
 				for(;;)  {
 					/* Restore to original distance */
-					seg2->seg_in.hit_dist += dist_corr;
-					seg2->seg_out.hit_dist += dist_corr;
+					seg2->seg_in.hit_dist += ss.dist_corr;
+					seg2->seg_out.hit_dist += ss.dist_corr;
 					if( seg2->seg_next == SEG_NULL )
 						break;
 					seg2 = seg2->seg_next;
@@ -478,15 +519,15 @@ rt_log("\nrt_shootray:  missed box: rmin,rmax(%g,%g) box(%g,%g)\n",
 
 			/* Evaluate regions upto box_end */
 			done = rt_boolfinal( &InitialPart, &FinalPart,
-				last_bool_start, box_end, regionbits, ap );
-			last_bool_start = box_end;
+				last_bool_start, ss.box_end, regionbits, ap );
+			last_bool_start = ss.box_end;
 
 			/* See if enough partitions have been acquired */
 			if( done > 0 )  goto hitit;
 		}
 
 		/* Push ray onwards to next box */
-		box_start = box_end;
+		ss.box_start = ss.box_end;
 	}
 
 	/*
@@ -519,7 +560,7 @@ weave:
 	 *  been computed.  Evaluate the boolean trees over each partition.
 	 */
 	(void)rt_boolfinal( &InitialPart, &FinalPart, BACKING_DIST,
-		rtip->rti_inf_box.bn.bn_len > 0 ? INFINITY : model_end,
+		rtip->rti_inf_box.bn.bn_len > 0 ? INFINITY : ss.model_end,
 		regionbits, ap);
 
 	if( FinalPart.pt_forw == &FinalPart )  {
