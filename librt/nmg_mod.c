@@ -3094,6 +3094,11 @@ CONST struct rt_tol	*tol;
 		rt_log("nmg_lu_reorient(lu=x%x, tol)\n", lu);
 	}
 
+	/* Don't harm the OT_BOOLPLACE self-loop marker vertices */
+	if( lu->orientation == OT_BOOLPLACE &&
+	    RT_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC )
+		return;
+
 	fu = lu->up.fu_p;
 	NMG_CK_FACEUSE(fu);
 	if( fu->orientation != OT_SAME )  {
