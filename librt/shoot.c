@@ -566,8 +566,8 @@ register struct application *ap;
 	struct seg		waiting_segs;	/* awaiting rt_boolweave() */
 	struct seg		finished_segs;	/* processed by rt_boolweave() */
 	AUTO fastf_t		last_bool_start;
-	AUTO union bitv_elem	*solidbits;	/* bits for all solids shot so far */
-	AUTO bitv_t		*regionbits;	/* bits for all involved regions */
+	AUTO struct bu_bitv	*solidbits;	/* bits for all solids shot so far */
+	AUTO struct bu_bitv	*regionbits;	/* bits for all involved regions */
 	AUTO char		*status;
 	auto struct partition	InitialPart;	/* Head of Initial Partitions */
 	auto struct partition	FinalPart;	/* Head of Final Partitions */
@@ -624,11 +624,28 @@ register struct application *ap;
 	RT_LIST_INIT( &waiting_segs.l );
 	RT_LIST_INIT( &finished_segs.l );
 
-	/* see rt_get_bitv() for details on how bitvector len is set. */
-	GET_BITV( rtip, solidbits, resp );
-	bzero( (char *)solidbits, rtip->rti_bv_bytes );
-	regionbits = &solidbits->be_v[
-		2+RT_BITV_BITS2WORDS(rtip->nsolids)];
+	if( RT_LIST_UNINITIALIZED( &resp->re_solid_bitv ) )
+		RT_LIST_INIT(  &resp->re_solid_bitv );
+	if( RT_LIST_IS_EMPTY( &resp->re_solid_bitv ) )  {
+		solidbits = bu_bitv_new( rtip->nsolids );
+	} else {
+		solidbits = RT_LIST_FIRST( bu_bitv, &resp->re_solid_bitv );
+		RT_LIST_DEQUEUE( &solidbits->l );
+		BU_CK_BITV(solidbits);
+		BU_BITV_NBITS_CHECK( solidbits, rtip->nsolids );
+	}
+	bu_bitv_clear(solidbits);
+
+	if( RT_LIST_UNINITIALIZED( &resp->re_region_bitv ) )
+		RT_LIST_INIT(  &resp->re_region_bitv );
+	if( RT_LIST_IS_EMPTY( &resp->re_region_bitv ) )  {
+		regionbits = bu_bitv_new( rtip->nregions );
+	} else {
+		regionbits = RT_LIST_FIRST( bu_bitv, &resp->re_region_bitv );
+		RT_LIST_DEQUEUE( &regionbits->l );
+		BU_CK_BITV(regionbits);
+		BU_BITV_NBITS_CHECK( regionbits, rtip->nregions );
+	}
 
 	/* Verify that direction vector has unit length */
 	if(rt_g.debug) {
@@ -689,7 +706,7 @@ register struct application *ap;
 
 			/* Shoot a ray */
 			if(debug_shoot)bu_log("shooting %s\n", stp->st_name);
-			BITSET( solidbits->be_v, stp->st_bit );
+			BU_BITSET( solidbits, stp->st_bit );
 			resp->re_shots++;
 			if( rt_functab[stp->st_id].ft_shot( 
 			    stp, &ap->a_ray, ap, &waiting_segs ) <= 0 )  {
@@ -779,12 +796,12 @@ register struct application *ap;
 			register struct soltab *stp = *stpp;
 
 			/* On m35.g, this block of code eats 15% of CPU! */
-			if( BITTEST( solidbits->be_v, stp->st_bit ) )  {
+			if( BU_BITTEST( solidbits, stp->st_bit ) )  {
 				continue;	/* already shot */
 			}
 
 			/* Shoot a ray */
-			BITSET( solidbits->be_v, stp->st_bit );
+			BU_BITSET( solidbits, stp->st_bit );
 
 			/* Check against bounding RPP, if desired by solid */
 			if( rt_functab[stp->st_id].ft_use_rpp )  {
@@ -931,9 +948,10 @@ hitit:
 	 */
 out:
 	/*  Free dynamic resources.  */
-	if( solidbits != BITV_NULL)  {
-		FREE_BITV( solidbits, resp );
-	}
+	BU_CK_BITV(solidbits);
+	RT_LIST_APPEND( &resp->re_solid_bitv, &solidbits->l );
+	BU_CK_BITV(regionbits);
+	RT_LIST_APPEND( &resp->re_region_bitv, &regionbits->l );
 
 	/*
 	 *  Record essential statistics in per-processor data structure.
@@ -1060,67 +1078,6 @@ register CONST fastf_t *max;
 	rp->r_min = rmin;
 	rp->r_max = rmax;
 	return(1);		/* HIT */
-}
-
-/*
- *			R T _ B I T V _ O R
- */
-void
-rt_bitv_or( out, in, nbits )
-register bitv_t *out;
-register bitv_t *in;
-int nbits;
-{
-	register int words;
-
-	words = RT_BITV_BITS2WORDS(nbits);
-#ifdef VECTORIZE
-#	include "noalias.h"
-	for( --words; words >= 0; words-- )
-		out[words] |= in[words];
-#else
-	while( words-- > 0 )
-		*out++ |= *in++;
-#endif
-}
-
-/*
- *  			R T _ G E T _ B I T V
- *  
- *  This routine is called by the GET_BITV macro when the freelist
- *  is exhausted.  Rather than simply getting one additional structure,
- *  we get a whole batch, saving overhead.  When this routine is called,
- *  the bitv resource must already be locked.
- *  malloc() locking is done in rt_malloc.
- *
- *  Also note that there is a bit of trickery going on here:
- *  the *real* size of be_v[] array is determined at runtime, here.
- */
-void
-rt_get_bitv(rtip, res)
-struct rt_i		*rtip;
-register struct resource *res;
-{
-	register char *cp;
-	register int bytes;
-	register int size;		/* size of structure to really get */
-
-	RT_CK_RTI(rtip);
-	RT_RESOURCE_CHECK(res);
-
-	size = rtip->rti_bv_bytes;
-	if( size < 1 )  rt_bomb("rt_get_bitv");
-	size = (size+sizeof(long)-1) & ~(sizeof(long)-1);
-	bytes = bu_malloc_len_roundup(16*size);
-	cp = (char *)bu_malloc(bytes, "rt_get_bitv");
-
-	while( bytes >= size )  {
-		((union bitv_elem *)cp)->be_next = res->re_bitv;
-		res->re_bitv = (union bitv_elem *)cp;
-		res->re_bitvlen++;
-		cp += size;
-		bytes -= size;
-	}
 }
 
 /* For debugging */
