@@ -1113,15 +1113,15 @@ int	sub;
 	bu_log("%s Dropping %s\n", stamp(), rtnodes[sub].host->ht_name);
 
 	if( rtnodes[sub].pkg != PKC_NULL )  {
+		Tcl_DeleteFileHandler( rtnodes[sub].pkg->pkc_fd );
 		pkg_close( rtnodes[sub].pkg );
 		rtnodes[sub].pkg = PKC_NULL;
 	}
 	if( rtnodes[sub].fd != 0 )  {
 		FD_CLR( rtnodes[sub].fd, &select_list );
-		close( rtnodes[sub].fd );
+		(void)close( rtnodes[sub].fd );
 		rtnodes[sub].fd = 0;
 	}
-	Tcl_DeleteFileHandler( rtnodes[sub].pkg->pkc_fd );
 
 	Tcl_Eval( interp, "update_cpu_status" );
 }
