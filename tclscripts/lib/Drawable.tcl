@@ -49,6 +49,7 @@ class Drawable {
 	method rtabort {args}
 	method rtcheck {args}
 	method rtedge {args}
+	method shaded_mode {args}
 	method vdraw {args}
 	method who {args}
 	method zap {args}

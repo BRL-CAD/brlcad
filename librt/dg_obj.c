@@ -121,6 +121,7 @@ static int dgo_rtabort_tcl();
 static int dgo_vdraw_tcl();
 static int dgo_overlay_tcl();
 static int dgo_get_autoview_tcl();
+static int dgo_get_eyemodel_tcl();
 static int dgo_zap_tcl();
 static int dgo_blast_tcl();
 static int dgo_assoc_tcl();
@@ -174,6 +175,7 @@ static struct bu_cmdtab dgo_cmds[] = {
 	{"erase_all",		dgo_erase_all_tcl},
 	{"ev",			dgo_ev_tcl},
 	{"get_autoview",	dgo_get_autoview_tcl},
+	{"get_eyemodel",	dgo_get_eyemodel_tcl},
 	{"headSolid",		dgo_headSolid_tcl},
 	{"illum",		dgo_illum_tcl},
 	{"label",		dgo_label_tcl},
@@ -1136,6 +1138,84 @@ dgo_get_autoview_tcl(ClientData	clientData,
 	struct dg_obj *dgop = (struct dg_obj *)clientData;
 
 	return dgo_get_autoview_cmd(dgop, interp, argc-1, argv+1);
+}
+
+/*
+ * support for get_eyemodel
+ *
+ *
+ */
+int
+dgo_get_eyemodel_cmd(struct dg_obj	*dgop,
+		     Tcl_Interp		*interp,
+		     int		argc,
+		     char		**argv)
+{
+  struct bu_vls vls;
+  struct view_obj * vop;
+  quat_t		quat;
+  vect_t		eye_model;
+  
+  if (argc != 2) {
+    struct bu_vls vls;
+    
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "helplib_alias dgo_get_eyemodel %s", argv[0]);
+    Tcl_Eval(interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+    return TCL_ERROR;
+  }
+  
+  /*
+   * Retrieve the view object
+   */
+  for (BU_LIST_FOR(vop, view_obj, &HeadViewObj.l)) {
+    if (strcmp(bu_vls_addr(&vop->vo_name), argv[1]) == 0)
+      break;
+  }
+  
+  if (BU_LIST_IS_HEAD(vop, &HeadViewObj.l)) {
+    Tcl_AppendResult(interp, 
+		     "dgo_get_eyemodel: bad view object - ", 
+		     argv[2],
+		     "\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+  
+  dgo_rt_set_eye_model(dgop, vop, eye_model);
+  
+  bu_vls_init(&vls);
+  
+  quat_mat2quat(quat, vop->vo_rotation );
+  
+  bu_vls_printf(&vls, "viewsize %.15e;\n", vop->vo_size);
+  bu_vls_printf(&vls, "orientation %.15e %.15e %.15e %.15e;\n", 
+		V4ARGS(quat));
+  bu_vls_printf(&vls, "eye_pt %.15e %.15e %.15e;\n",
+		eye_model[X], eye_model[Y], eye_model[Z] );
+  Tcl_AppendResult(interp, bu_vls_addr(&vls), NULL);
+  bu_vls_free(&vls);
+  return TCL_OK;
+}
+
+/*
+ * Usage:
+ *        procname get_eyemodel
+ */
+static int
+dgo_get_eyemodel_tcl(ClientData	clientData,
+		     Tcl_Interp *interp,
+		     int	argc,
+		     char	**argv)
+{
+	struct dg_obj *dgop = (struct dg_obj *)clientData;
+
+	fprintf(stderr, "dgo_get_eyemodel_tcl: entered\n");
+	fprintf(stderr, "argv 0 = %s\n", argv[0]);
+	fprintf(stderr, "argv 1 = %s\n", argv[1]);
+	fprintf(stderr, "argv 2 = %s\n", argv[2]);
+	  
+	return dgo_get_eyemodel_cmd(dgop, interp, argc-1, argv+1);
 }
 
 int
