@@ -580,7 +580,7 @@ struct nmg_ptbl class_table[];
 	nmg_eval_shell( sB, &bool_state );
 
 	/* Plot the result */
-	if (rt_g.NMG_debug & DEBUG_BOOLEVAL) {
+	if (rt_g.NMG_debug & DEBUG_BOOLEVAL && rt_g.NMG_debug & DEBUG_PLOTEM) {
 		FILE *fp, *fopen();
 
 		if ((fp=fopen("bool_ans.pl", "w")) == (FILE *)NULL) {
@@ -621,6 +621,9 @@ struct nmg_bool_state *bs;
 	struct edgeuse	*eu_end;
 	struct vertexuse *vu;
 	struct vertex	*v;
+	int		loops_retained;
+	int		loops_flipped;
+	int		action;
 
 	NMG_CK_SHELL(s);
 
@@ -636,13 +639,16 @@ faces_again:
 		NMG_CK_FACEUSE(fu);
 		NMG_CK_FACE(fu->f_p);
 faceloop_again:
+		loops_retained = loops_flipped = 0;
 		lu = lu_end = fu->lu_p;
 		do {
 			if( !lu )  break;
 			NMG_CK_LOOPUSE(lu);
 			eu = lu->down.eu_p;
 			NMG_CK_EDGEUSE(eu);		/* sanity */
-			if( nmg_eval_action( (genptr_t)lu->l_p, bs ) == BACTION_KILL )  {
+			switch( nmg_eval_action( (genptr_t)lu->l_p, bs ) )  {
+			case BACTION_KILL:
+			  {
 				/* Kill by demoting loop to edges */
 				register struct loopuse	*nextlu = lu->next;
 				if( lu->lumate_p == nextlu )  rt_log("lumate?\n");
@@ -656,12 +662,20 @@ faceloop_again:
 				NMG_CK_LOOPUSE(nextlu);
 				lu = nextlu;
 				continue;
+			  }
+			case BACTION_RETAIN:
+				loops_retained++;
+				break;
+			case BACTION_RETAIN_AND_FLIP:
+				loops_flipped++;
+				break;
 			}
-			/* Retain loop.  Any action will be done to the
-			 * faceuse as a whole, not just to this loop.
-			 */
 			lu = lu->next;
 		}while (lu != lu_end);
+
+		if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
+			rt_log("faceuse x%x loops retained=%d, flipped=%d\n",
+				fu, loops_retained, loops_flipped);
 
 		/*
 		 *  Here, faceuse will have 0 or more loopuses still in it.
@@ -687,11 +701,19 @@ faceloop_again:
 		if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
 	    		rt_log("faceuse x%x retained\n", fu);
 
-#if 0
-		/* XXX decide how */
-		nmg_reverse_face( fu );
-#endif
+		if( loops_flipped > 0 )  {
+			if( loops_retained > 0 )  {
+				rt_log("ERROR nmg_eval_shell() face both retained & flipped?\n");
+				/* Just retain un-flipped, for now */
+			} else {
+				if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
+			    		rt_log("faceuse x%x flipped\n", fu);
+				nmg_reverse_face( fu );
+			}
+		}
 		if( s != bs->bs_dest )  {
+			if (rt_g.NMG_debug & DEBUG_BOOLEVAL)
+		    		rt_log("faceuse x%x moved to A shell\n", fu);
 			nmg_mv_fu_between_shells( bs->bs_dest, s, fu );
 			goto faces_again;
 		}
@@ -913,7 +935,7 @@ register struct nmg_bool_state	*bs;
 	ret = BACTION_RETAIN;
 out:
 	if (rt_g.NMG_debug & DEBUG_BOOLEVAL) {
-		rt_log("nmg_eval_action(ptr=x%x) %s %s %s action=%s\n",
+		rt_log("nmg_eval_action(ptr=x%x) %s %s %s %s\n",
 			ptr, bs->bs_isA ? "A" : "B",
 			nmg_identify_magic( *((long *)ptr) ),
 			nmg_class_names[class],
