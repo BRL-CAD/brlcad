@@ -501,7 +501,9 @@ CONST genptr_t	b;
 		if( va->seq == vb->seq )  return 0;
 		return 1;
 	}
+#if 0
 	/* Between two loops each with a single vertex, use min angle */
+	/* This works, but is the "old way".  Should use dot products. */
 	if( va->lsp->n_vu_in_loop <= 1 && vb->lsp->n_vu_in_loop <= 1 )  {
 		diff = va->vu_angle - vb->vu_angle;
 		if( diff < 0 )  return -1;
@@ -513,13 +515,14 @@ CONST genptr_t	b;
 		}
 		return 1;
 	}
+#endif
 
 	/* Between loops, sort by minimum dot product of the loops */
-	/* XXX This is almost certainly wrong */
 	diff = va->lsp->min_dot - vb->lsp->min_dot;
 	if( NEAR_ZERO( diff, RT_DOT_TOL) )  {
-		/* Dot product is the same, edges are parallel.
-		 * Take min angle first.
+		/*
+		 *  The dot product is the same, so loop edges are parallel.
+		 *  Take minimum CCW angle first.
 		 */
 		diff = va->vu_angle - vb->vu_angle;
 		if( diff < 0 )  return -1;
@@ -537,6 +540,13 @@ CONST genptr_t	b;
 
 /*
  *			N M G _ F A C E _ V U _ D O T
+ *
+ *  For the purpose of computing the dot product of the edges around
+ *  this vertexuse and the ray direction vector, the edge vectors should
+ *  both be pointing inwards to the vertex,
+ *  rather than in the edge direction, so that it is possible to sort
+ *  the vertexuse's into sequence by "angle" along the ray direction,
+ *  starting with the vertexuse that the ray first encounters.
  */
 static void
 nmg_face_vu_dot( vsp, lu, rs )
@@ -570,14 +580,11 @@ CONST struct nmg_ray_state	*rs;
 	/* Second, consider the edge outbound from this vertex (forw) */
 	othereu = RT_LIST_PNEXT_CIRC( edgeuse, this_eu );
 	if( vu->v_p != othereu->vu_p->v_p )  {
-		/* Vector from this_eu to othereu */
-		VSUB2( vec, othereu->vu_p->v_p->vg_p->coord,
-			vu->v_p->vg_p->coord );
+		/* Vector from othereu to this_eu */
+		VSUB2( vec, vu->v_p->vg_p->coord,
+			othereu->vu_p->v_p->vg_p->coord );
 		VUNITIZE(vec);
 		dot = VDOT( vec, rs->dir );
-#if 0
-rt_log("dot vu=x%x dots %g %g\n", vu, vsp->min_vu_dot, dot );
-#endif
 		if( dot < vsp->min_vu_dot )  {
 			vsp->min_vu_dot = dot;
 		}
