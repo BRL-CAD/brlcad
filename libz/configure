@@ -18,9 +18,10 @@
 # If you have problems, try without defining CC and CFLAGS before reporting
 # an error.
 
+SRCDIR=../libz
 LIBS=libz.a
 SHAREDLIB=libz.so
-VER=`sed -n -e '/VERSION "/s/.*"\(.*\)".*/\1/p' < zlib.h`
+VER=`sed -n -e '/VERSION "/s/.*"\(.*\)".*/\1/p' < ${SRCDIR}/zlib.h`
 AR=${AR-"ar rc"}
 RANLIB=${RANLIB-"ranlib"}
 prefix=${prefix-/usr/local}
