@@ -51,6 +51,98 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #  include "tk.h"
 #endif
 
+#ifdef XMGED
+#ifndef False
+#define False (0)
+#endif
+
+#ifndef True
+#define True (1)
+#endif
+
+#define DEFSHELL "/bin/sh"
+#define TIME_STR_SIZE 32
+#define NFUNC   ( (sizeof(funtab)) / (sizeof(struct funtab)) )
+
+extern void (*dotitles_hook)();
+extern FILE     *ps_fp;
+extern struct dm dm_PS;
+extern char     ps_ttybuf[];
+extern int      in_middle;
+extern mat_t    ModelDelta;
+extern short earb4[5][18];
+extern short earb5[9][18];
+extern short earb6[10][18];
+extern short earb7[12][18];
+extern short earb8[12][18];
+extern FILE	*journal_file;
+extern int	journal;	/* initialize to off */
+extern int update_views;
+extern struct rt_db_internal es_int;
+extern short int fixv;         /* used in ECMD_ARB_ROTATE_FACE,f_eqn(): fixed vertex */
+
+typedef struct _cmd{
+	struct _cmd	*prev;
+	struct _cmd	*next;
+	char	*cmd;
+	char	time[TIME_STR_SIZE];
+	int	num;
+}Cmd, *CmdList;
+
+typedef struct _alias{
+	struct _alias	*left;
+	struct _alias	*right;
+	char	*name;	/* name of the alias */
+	char	*def;	/* definition of the alias */
+	int	marked;
+}Alias, *AliasList;
+
+CmdList	hhead=NULL, htail=NULL, hcurr=NULL;	/* for history list */
+AliasList atop = NULL;
+AliasList alias_free = NULL;
+
+int 	savedit = 0;
+point_t	orig_pos;
+point_t e_axis_pos;
+int irot_set = 0;
+double irot_x = 0;
+double irot_y = 0;
+double irot_z = 0;
+int tran_set = 0;
+double tran_x = 0;
+double tran_y = 0;
+double tran_z = 0;
+
+void set_e_axis_pos();
+void set_tran();
+int     mged_wait();
+int chg_state();
+
+static void	addtohist();
+static int	parse_history();
+static void	print_alias(), load_alias_def();
+static void	balance_alias_tree(), free_alias_node();
+static AliasList	get_alias_node();
+static int	extract_alias_def();
+static void    make_command();
+int	f_history(), f_alias(), f_unalias();
+int	f_journal(), f_button(), f_savedit(), f_slider();
+int	f_slewview(), f_openw(), f_closew();
+int	(*button_hook)(), (*slider_hook)();
+int	(*openw_hook)(), (*closew_hook)();
+int	(*knob_hook)();
+int (*cue_hook)(), (*zclip_hook)(), (*zbuffer_hook)();
+int (*light_hook)(), (*perspective_hook)();
+int (*tran_hook)(), (*rot_hook)();
+int (*set_tran_hook)();
+int (*bindkey_hook)();
+
+int     f_perspective(), f_cue(), f_light(), f_zbuffer(), f_zclip();
+int     f_tran(), f_irot();
+int     f_aip(), f_ps();
+int     f_bindkey();
+#endif /* XMGED */
+
 extern void	sync();
 
 #define	MAXARGS		2000	/* Maximum number of args per line */
@@ -100,6 +192,12 @@ static struct funtab funtab[] = {
         f_adc, 1, 5,
 "ae", "azim elev", "set view using az and elev angles",
 	f_aeview, 3, 3,
+#ifdef XMGED
+"aip", "[fb]", "advance illumination pointer or path position forward or backward",
+        f_aip, 1, 2,
+"alias", "[name definition]", "lists or creates an alias",
+	f_alias, 1, MAXARGS,
+#endif
 "analyze", "[arbname]", "analyze faces of ARB",
 	f_analyze,1,MAXARGS,
 "arb", "name rot fb", "make arb8, rotation + fallback",
@@ -110,10 +208,20 @@ static struct funtab funtab[] = {
 	f_attach,1,2,
 "B", "<objects>", "clear screen, edit objects",
 	f_blast,2,MAXARGS,
+#ifdef XMGED
+"bindkey", "[key] [command]", "bind key to a command",
+        f_bindkey, 1, MAXARGS,
+"button", "number", "simulates a button press, not intended for the user",
+	f_button, 2, 2,
+#endif
 "cat", "<objects>", "list attributes (brief)",
 	f_cat,2,MAXARGS,
 "center", "x y z", "set view center",
 	f_center, 4,4,
+#ifdef XMGED
+"closew", "[host]", "close drawing window associated with host",
+	f_closew, 1, 2,
+#endif
 "color", "low high r g b str", "make color entry",
 	f_color, 7, 7,
 "comb", "comb_name <operation solid>", "create or extend combination w/booleans",
@@ -130,6 +238,10 @@ static struct funtab funtab[] = {
 	f_copyeval, 1, 27,
 "cp", "from to", "copy [duplicate] object",
 	f_copy,3,3,
+#ifdef XMGED
+"cue", "", "toggle cueing",
+        f_cue, 1, 1,
+#endif
 "cpi", "from to", "copy cylinder and position at end of original cylinder",
 	f_copy_inv,3,3,
 "d", "<objects>", "delete list of objects",
@@ -190,24 +302,46 @@ static struct funtab funtab[] = {
 #endif
 "help", "[commands]", "give usage message for given commands",
 	f_help,0,MAXARGS,
+#ifdef XMGED
+"history", "[N]", "print out history of commands or last N commands",
+	f_history,1, 2,
+#else
 "history", "[-delays]", "describe command history",
 	f_history, 1, 4,
+#endif
 "i", "obj combination [operation]", "add instance of obj to comb",
 	f_instance,3,4,
 "idents", "file object(s)", "make ascii summary of region idents",
 	f_tables, 3, MAXARGS,
+#ifdef XMGED
+"iknob", "id [val]", "increment knob value",
+       f_knob,2,3,
+#endif
 "ill", "name", "illuminate object",
 	f_ill,2,2,
 "in", "[-f] [-s] parameters...", "keyboard entry of solids.  -f for no drawing, -s to enter solid edit",
 	f_in, 1, MAXARGS,
 "inside", "", "finds inside solid per specified thicknesses",
 	f_inside, 1, MAXARGS,
+#ifdef XMGED
+"irot", "x y z", "incremental/relative rotate",
+        f_irot, 4, 4,
+#endif
 "item", "region item [air]", "change item # or air code",
 	f_itemair,3,4,
+#ifdef XMGED
+"itran", "x y z", "incremental/relative translate using normalized screen coordinates",
+        f_tran, 4, 4,
+#endif
 "joint", "command [options]", "articualtion/animation commands",
 	f_joint, 1, MAXARGS,
+#ifdef XMGED
+"journal", "[file]", "toggle journaling on or off",
+	f_journal, 1, 2,
+#else
 "journal", "fileName", "record all commands and timings to journal",
 	f_journal, 1, 2,
+#endif
 "keep", "keep_file object(s)", "save named objects in specified file",
 	f_keep, 3, MAXARGS,
 "keypoint", "[x y z | reset]", "set/see center of editing transformations",
@@ -224,6 +358,10 @@ static struct funtab funtab[] = {
 	f_list,2,MAXARGS,
 "labelvert", "object[s]", "label vertices of wireframes of objects",
 	f_labelvert, 2, MAXARGS,
+#ifdef XMGED
+"light", "", "toggle lighting",
+        f_light, 1, 1,
+#endif
 "listeval", "", "lists 'evaluated' path solids",
 	f_pathsum, 1, MAXARGS,
 "ls", "", "table of contents",
@@ -250,6 +388,10 @@ static struct funtab funtab[] = {
 	f_nirt,1,MAXARGS,
 "opendb", "database.g", "Close current .g file, and open new .g file",
 	f_opendb, 2, 2,
+#ifdef XMGED
+"openw", "[host]", "open a drawing window on host",
+	f_openw, 1, 2,
+#endif
 "orientation", "x y z w", "Set view direction from quaternion",
 	f_orientation, 5, 5,
 "orot", "xdeg ydeg zdeg", "rotate object being edited",
@@ -262,6 +404,10 @@ static struct funtab funtab[] = {
 	f_pathsum, 1, MAXARGS,
 "permute", "tuple", "permute vertices of an ARB",
 	f_permute,2,2,
+#ifdef XMGED
+"perspective", "[n]", "toggle perspective",
+        f_perspective, 1, 2,
+#endif
 "plot", "[-float] [-zclip] [-2d] [-grid] [out_file] [|filter]", "make UNIX-plot of view",
 	f_plot, 2, MAXARGS,
 "polybinout", "file", "store vlist polygons into polygon file (experimental)",
@@ -276,6 +422,10 @@ static struct funtab funtab[] = {
 	f_preview, 2, MAXARGS,
 "press", "button_label", "emulate button press",
 	f_press,2,MAXARGS,
+#ifdef XMGED
+"ps", "[f] file", "create postscript file of current view with or without the faceplate",
+        f_ps, 2, 3,
+#endif
 "push", "object[s]", "pushes object's path transformations to solids",
 	f_push, 2, MAXARGS,
 "q", "", "quit",
@@ -314,6 +464,10 @@ static struct funtab funtab[] = {
 	f_rt,1,MAXARGS,
 "rtcheck", "[options]", "check for overlaps in current view",
 	f_rtcheck,1,MAXARGS,
+#ifdef XMGED
+"savedit", "", "save current edit and remain in edit state",
+	f_savedit, 1, 1,
+#endif
 "savekey", "file [time]", "save keyframe in file (experimental)",
 	f_savekey,2,MAXARGS,
 "saveview", "file [args]", "save view in file for RT",
@@ -338,16 +492,29 @@ static struct funtab funtab[] = {
 	f_shader, 3,MAXARGS,
 "size", "size", "set view size",
 	f_view, 2,2,
+#ifdef XMGED
+"slider", "slider number, value", "adjust sliders using keyboard",
+	f_slider, 3,3,
+#endif
 "solids", "file object(s)", "make ascii summary of solid parameters",
 	f_tables, 3, MAXARGS,
 #ifndef MGED_TCL
+#ifdef XMGED
+"source", "[beh] filename", "reads in and records and/or executes a file of commands",
+	f_source, 2, MAXARGS,
+#else
 "source", "file/pipe", "read and process file/pipe of commands",
 	f_source, 2,MAXARGS,
+#endif
 #endif
 "status", "", "get view status",
 	f_status, 1,1,
 "summary", "[s r g]", "count/list solid/reg/groups",
 	f_summary,1,2,
+#ifdef XMGED
+"sv", "x y", "Move view center to (x, y, 0)",
+	f_slewview, 3, 3,
+#endif
 "sync",	"",	"forces UNIX sync",
 	f_sync, 1, 1,
 "t", "", "table of contents",
@@ -364,10 +531,18 @@ static struct funtab funtab[] = {
 	f_tops,1,1,
 "track", "<parameters>", "adds tracks to database",
 	f_amtrack, 1, 27,
+#ifdef XMGED
+"tran", "x y z", "absolute translate using view coordinates",
+        f_tran, 4, 4,
+#endif
 "translate", "x y z", "trans object to x,y, z",
 	f_tr_obj,4,4,
 "tree",	"object(s)", "print out a tree of all members of an object",
 	f_tree, 2, MAXARGS,
+#ifdef XMGED
+"unalias","name/s", "deletes an alias or aliases",
+	f_unalias, 2, MAXARGS,
+#endif
 "units", "[mm|cm|m|in|ft|...]", "change units",
 	f_units,1,2,
 "vrmgr", "host {master|slave|overview}", "link with Virtual Reality manager",
@@ -382,6 +557,12 @@ static struct funtab funtab[] = {
 	f_debug, 1,2,
 "Z", "", "zap all objects off screen",
 	f_zap,1,1,
+#ifdef XMGED
+"zbuffer", "", "toggle zbuffer",
+        f_zbuffer, 1, 1,
+"zclip", "", "toggle zclipping",
+        f_zclip, 1, 1,
+#endif
 "zoom", "scale_factor", "zoom view in or out",
 	f_zoom, 2,2,
 0, 0, 0,
@@ -440,7 +621,38 @@ struct timeval *start, *finish;
 	rt_vls_free( &timing );
 }		
 
+#ifdef XMGED
+int
+f_journal(argc, argv)
+int	argc;
+char	*argv[];
+{
+	char	*path;
 
+	journal = journal ? 0 : 1;
+
+	if(journal){
+		if(argc == 2)
+			if( (journal_file = fopen(argv[1], "w")) != NULL )
+				return CMD_OK;
+			
+		if( (path = getenv("MGED_JOURNAL")) != (char *)NULL )
+			if( (journal_file = fopen(path, "w")) != NULL )
+				return CMD_OK;
+
+		if( (journal_file = fopen( "mged.journal", "w" )) != NULL )
+			return CMD_OK;
+
+		journal = 0;	/* could not open a file so turn off */
+		rt_log( "Could not open a file for journalling.\n");
+
+		return CMD_BAD;
+	}
+
+	fclose(journal_file);
+	return CMD_OK;
+}
+#else
 /*
  *	F _ J O U R N A L
  *
@@ -475,6 +687,7 @@ char **argv;
 
 	return CMD_OK;
 }
+#endif
 
 
 /*
@@ -498,7 +711,147 @@ char **argv;
 	return CMD_OK;
 }
 
+#ifdef XMGED
+int
+f_history(argc, argv)
+int	argc;
+char	*argv[];
+{
+	register int	i;
+	int	N = 0;
+	CmdList	ptr;
 
+
+	if(argc == 1){	/* print entire history list */
+		ptr = hhead;
+	}else{	/* argc == 2;  print last N commands */
+		sscanf(argv[1], "%d", &N);
+		ptr = htail->prev;
+		for(i = 1; i < N && ptr != NULL; ++i, ptr = ptr->prev);
+
+		if(ptr == NULL)
+			ptr = hhead;
+	}
+
+	for(; ptr != htail; ptr = ptr->next)
+		rt_log("%d\t%s\t%s\n", ptr->num, ptr->time,
+				ptr->cmd);
+
+	return CMD_OK;
+}
+
+/*   The node at the end of the list(pointed to by htail) always
+   contains a null cmd string. And hhead points to the
+   beginning(oldest) of the list. */
+static void
+addtohist(cmd)
+char *cmd;
+{
+	static int count = 0;
+	time_t	clock;
+
+	if(hhead != htail){	/* more than one node */
+		htail->prev->next = (CmdList)malloc(sizeof (Cmd));
+		htail->prev->next->next = htail;
+		htail->prev->next->prev = htail->prev;
+		htail->prev = htail->prev->next;
+		clock = time((time_t *) 0);
+		strftime(htail->prev->time, TIME_STR_SIZE, "%I:%M%p", localtime(&clock));
+		htail->prev->cmd =  malloc(strlen(cmd));   /* allocate space for cmd */
+		(void)strncpy(htail->prev->cmd, cmd, strlen(cmd) - 1);
+		htail->prev->cmd[strlen(cmd) - 1] = NULL;
+		htail->prev->num = count;
+		++count;
+	}else if(!count){	/* no nodes */
+		hhead = htail = hcurr = (CmdList)malloc(sizeof (Cmd));
+		htail->prev = NULL;	/* initialize pointers */
+		htail->next = NULL;
+		clock = time((time_t *) 0);
+		strftime(htail->time, TIME_STR_SIZE, "%I:%M%p", localtime(&clock));
+		htail->cmd = malloc(1);	/* allocate space */
+		htail->cmd[0] = NULL;	/* first node will have null command string */
+		++count;
+		addtohist(cmd);
+	}else{		/* only one node */
+		htail->prev = (CmdList)malloc(sizeof (Cmd));
+		htail->prev->next = htail;
+		htail->prev->prev = NULL;
+		hhead = htail->prev;
+		clock = time((time_t *) 0);
+		strftime(hhead->time, TIME_STR_SIZE, "%I:%M%p", localtime(&clock));
+		hhead->cmd =  malloc(strlen(cmd));   /* allocate space for cmd */
+		(void)strncpy(hhead->cmd, cmd, strlen(cmd) - 1);
+		hhead->cmd[strlen(cmd) - 1] = NULL;
+		hhead->num = count;
+		++count;
+	}
+}
+
+static int
+parse_history(cmd, str)
+struct rt_vls	*cmd;
+char	*str;
+{
+	register int	i;
+	int	N;
+	CmdList	ptr;
+
+	if(*str == '@'){	/* @@	last command */
+		if(htail == NULL || htail->prev == NULL){
+			rt_log( "No events in history list yet!\n");
+			return(1);	/* no command in history list yet */
+		}else{
+			rt_vls_strcpy(cmd, htail->prev->cmd);
+			rt_vls_strncat(cmd, "\n", 1);
+			return(0);
+		}
+	}else if(*str >= '0' && *str <= '9'){	/* @N	command N */
+		sscanf(str, "%d", &N);
+		for(i = 1, ptr = hhead; i < N && ptr != NULL; ++i, ptr = ptr->next);
+	
+		if(ptr != NULL){
+			rt_vls_strcpy(cmd, ptr->cmd);
+			rt_vls_strncat(cmd, "\n", 1);
+			return(0);
+		}else{
+			rt_log("%d: Event not found\n", N);
+			return(1);
+		}
+	}else if(*str == '-'){
+		++str;
+		if(*str >= '0' && *str <= '9'){
+			sscanf(str, "%d", &N);
+			for(i = 0, ptr = htail; i < N && ptr != NULL; ++i, ptr = ptr->prev);
+			if(ptr != NULL){
+	                        rt_vls_strcpy(cmd, ptr->cmd);
+				rt_vls_strncat(cmd, "\n", 1);
+	                        return(0);
+			}else{
+	                        rt_log("%s: Event not found\n", str);
+	                        return(1);
+			}
+		}else{
+			rt_log("%s: Event not found\n", str);
+			return(1);
+		}
+	}else{	/* assuming a character string for now */
+		for( ptr = htail; ptr != NULL; ptr = ptr->prev ){
+			if( strncmp( str, ptr->cmd, strlen( str ) - 1 ) )
+				continue;
+			else	/* found a match */
+				break;
+		}
+		if( ptr != NULL ){
+                        rt_vls_strcpy( cmd, ptr->cmd );
+			rt_vls_strncat( cmd, "\n", 1 );
+                        return( 0 );
+		}else{
+                        rt_log("%s: Event not found\n", str );
+                        return( 1 );
+		}
+	}
+}
+#else
 /*
  *	F _ H I S T O R Y
  *
@@ -555,7 +908,7 @@ char **argv;
 
 	return CMD_OK;
 }
-
+#endif
 
 #ifdef MGED_TCL
 
@@ -1006,8 +1359,14 @@ char **argv;
  */
 
 int
+#ifdef XMGED
+cmdline(vp, record)
+struct rt_vls	*vp;
+int record;
+#else
 cmdline(vp)
 struct rt_vls	*vp;
+#endif
 {
 	int	i;
 	int	need_prompt = 0;
@@ -1047,7 +1406,11 @@ struct rt_vls	*vp;
 		/* parse_line insists on it ending with newline&null */
 #ifndef MGED_TCL		
 		rt_vls_strcpy( &cmd_buf, rt_vls_addr(&cmd) );
+#ifdef XMGED
+		i = parse_line( record, &cmd_buf, &argc, argv);
+#else
 		i = parse_line( rt_vls_addr(&cmd_buf), &argc, argv );
+#endif
 #endif
 		while (1) {
 			int done;
@@ -1115,6 +1478,12 @@ struct rt_vls	*vp;
 	/* Record into history and return if we're all done. */
 
 			if( done ) {
+#ifdef XMGED
+				if(record){
+				  addtohist(rt_vls_addr(&hadd));
+				  hcurr = htail;		/* reset hcurr to point to most recent command */
+				}
+#endif
 					/* Record non-newline commands */
 				if( rt_vls_strlen(&hadd) > 1 )
 				    history_record( &hadd, &start, &finish );
@@ -1135,7 +1504,11 @@ struct rt_vls	*vp;
 			rt_vls_strcat( &cmd, "\n" );
 #ifndef MGED_TCL
 			rt_vls_strcpy( &cmd_buf, rt_vls_addr(&cmd) );
+#ifdef XMGED
+			i = parse_line( record, &cmd_buf, &argc, argv );
+#else
 			i = parse_line( rt_vls_addr(&cmd_buf), &argc, argv );
+#endif
 #endif
 			rt_vls_free( &str );
 		}
@@ -1163,16 +1536,30 @@ struct rt_vls	*vp;
  */
 
 int
+#ifdef XMGED
+parse_line(record, cmd, argcp, argv)
+int	record;		/* if true, add command to the history list */
+struct rt_vls   *cmd;
+#else
 parse_line(line, argcp, argv)
 char	*line;
+#endif
 int	*argcp;
 char   **argv;
 {
 	register char *lp;
 	register char *lp1;
+#ifdef XMGED
+	struct rt_vls   tmp_cmd;
+        int     n;
+#endif
 
 	(*argcp) = 0;
+#ifdef XMGED
+	lp = rt_vls_addr(cmd);
+#else
 	lp = &line[0];
+#endif
 
 	/* Delete leading white space */
 	while( (*lp == ' ') || (*lp == '\t'))
@@ -1185,6 +1572,30 @@ char   **argv;
 
 	if( *lp == '#' )
 		return 1;		/* NOP -- a comment line */
+
+#ifdef XMGED
+	/*
+	 * Recall command from history list.
+	 */
+	if( *lp == '@' ){
+		rt_vls_init( &tmp_cmd );
+		n = parse_history( &tmp_cmd, ++lp );
+		if( n )
+			return( n );	/* Don't process command line! */
+
+		rt_vls_free( cmd );
+		rt_vls_strcpy( cmd, rt_vls_addr( &tmp_cmd ) );
+		rt_vls_free( &tmp_cmd );
+		return parse_line(record, cmd, argcp, argv);
+	}
+
+	if(journal && strncmp("journal", rt_vls_addr(cmd), 7)){
+		n = rt_vls_strlen(cmd);
+		cmd->vls_str[n - 1] = NULL;
+		fprintf(journal_file, "%s\n", rt_vls_addr(cmd));
+		cmd->vls_str[n - 1] = '\n';
+	}
+#endif
 
 	/* Handle "!" shell escape char so the shell can parse the line */
 	if( *lp == '!' )  {
@@ -1238,6 +1649,13 @@ char	**argv;
 struct funtab *functions;
 {
 	register struct funtab *ftp;
+#ifdef XMGED
+	AliasList	curr;
+	struct rt_vls	cmd;
+	int result;
+	int	i, cmp;
+	int 	save_journal;
+#endif
 
 	if( argc == 0 )  {
 		rt_log("no command entered, type '%s?' for help\n",
@@ -1296,7 +1714,12 @@ char	**argv;
 		perror("/bin/sh");
 		mged_finish( 11 );
 	}
+
+#ifdef XMGED
+	while ((rpid = mged_wait(&retcode, pid)) != pid && rpid != -1)
+#else
 	while ((rpid = wait(&retcode)) != pid && rpid != -1)
+#endif
 		;
 	(void)signal(SIGINT, cur_sigint);
 	rt_log("!\n");
@@ -1480,6 +1903,93 @@ char	**argv;
 	return bad ? CMD_BAD : CMD_OK;
 }
 
+#ifdef XMGED
+/*
+ *			S O U R C E _ F I L E
+ *
+ */
+void
+mged_source_file(fp, option)
+register FILE	*fp;
+char option;
+{
+	struct rt_vls	str, cmd;
+	int		len;
+	int             cflag = 0;
+	int record;
+
+	switch(option){
+	case 'h':
+	case 'H':
+		rt_vls_init(&str);
+		rt_vls_init(&cmd);
+
+		while( (len = rt_vls_gets( &str, fp )) >= 0 )  {
+		  if(str.vls_str[len - 1] == '\\'){ /* continuation */
+			str.vls_str[len - 1] = ' ';
+                        cflag = 1;
+                  }
+
+                  rt_vls_strcat(&cmd, str.vls_str);
+
+                  if(!cflag){/* no continuation, so add to history list */
+                    rt_vls_strcat( &str, "\n" );
+
+                    if( cmd.vls_len > 0 ){
+                       addtohist( rt_vls_addr(&cmd) );
+                       rt_vls_trunc( &cmd, 0 );
+		    }
+		  }else
+                    cflag = 0;
+
+                  rt_vls_trunc( &str, 0 );
+		}
+
+		rt_vls_free(&str);
+		rt_vls_free(&cmd);
+		break;
+	case 'e':
+        case 'E':
+        case 'b':
+        case 'B':
+		if(option == 'e' || option == 'E')
+		  record = 0;
+		else
+		  record = 1;
+
+		rt_vls_init(&str);
+		rt_vls_init(&cmd);
+
+		while( (len = rt_vls_gets( &str, fp )) >= 0 ){
+		  if(str.vls_str[len - 1] == '\\'){ /* continuation */
+			str.vls_str[len - 1] = ' ';
+                        cflag = 1;
+                  }
+
+                  rt_vls_strcat(&cmd, str.vls_str);
+
+                  if(!cflag){/* no continuation, so execute command */
+                    rt_vls_strcat( &cmd, "\n" );
+
+                    if( cmd.vls_len > 0 ){
+                      cmdline( &cmd, record );
+                      rt_vls_trunc( &cmd, 0 );
+                    }
+                  }else
+		    cflag = 0;
+
+                  rt_vls_trunc( &str, 0 );
+		}
+
+		rt_vls_free(&str);
+		rt_vls_free(&cmd);
+		break;
+	default:
+		rt_log( "Unknown option: %c\n", option);
+		break;
+	}
+}
+#else
 /*
  *			S O U R C E _ F I L E
  *
@@ -1502,7 +2012,7 @@ register FILE	*fp;
 
 	rt_vls_free(&str);
 }
-
+#endif
 
 /*
  *	F _ E C H O
@@ -1523,4 +2033,913 @@ char	*argv[];
 
 	return CMD_OK;
 }
+
+#ifdef XMGED
+int
+f_alias(argc, argv)
+int	argc;
+char	*argv[];
+{
+	int	i;
+	int	namelen, deflen;
+	int	cmp;
+	AliasList curr, prev;
+
+	if(argc == 1){
+		print_alias(True, NULL, atop);
+		return CMD_BAD;
+	}
+
+	if(argc == 2){
+		print_alias(False, argv[1], atop);
+		return CMD_BAD;
+	}
+
+	namelen = strlen(argv[1]) + 1;
+
+	/* find length of alias definition */
+	for(deflen = 0, i = 2; i < argc; ++i)
+		deflen += strlen(argv[i]) + 1;
+
+	if(atop != NULL){
+		/* find a spot in the binary tree for the new node */
+		for(curr = atop; curr != NULL;){
+			if((cmp = strcmp(argv[1], curr->name)) == 0){
+			/* redefine the alias */
+				free((void *)curr->def);
+				curr->def = (char *)malloc(deflen + 1);
+				load_alias_def(curr->def, argc - 2, argv + 2);
+				return CMD_OK;
+			}else if(cmp > 0){
+				prev = curr;
+				curr = curr->right;
+			}else{
+				prev = curr;
+				curr = curr->left;
+			}
+		}
+		/* create the new node and initialize */
+		if(cmp > 0){
+			prev->right = get_alias_node();
+			curr = prev->right;
+		}else{
+			prev->left = get_alias_node();
+			curr = prev->left;
+		}
+	}else {	/* atop == NULL */
+		atop = get_alias_node();
+		curr = atop;
+	}
+
+	curr->name = (char *)malloc(namelen + 1);
+	curr->def = (char *)malloc(deflen + 1);
+	strcpy(curr->name, argv[1]);
+	load_alias_def(curr->def, argc - 2, argv + 2);
+
+	balance_alias_tree();
+
+	return CMD_OK;
+}
+
+int
+f_unalias(argc, argv)
+int	argc;
+char	*argv[];
+{
+	int	i;
+	int	cmp, o_cmp;
+	AliasList	prev, curr;
+	AliasList	right;
+
+	if(atop == NULL)
+		return CMD_BAD;
+
+	for(i = 1; i < argc; ++i){
+		prev = curr = atop;
+		while(curr != NULL){
+			if((cmp = strcmp(argv[1], curr->name)) == 0){
+				if(prev == curr){	/* tree top gets deleted */
+					if(curr->left != NULL){
+						atop = curr->left;
+						right = curr->right;
+						free_alias_node(curr);
+						for(curr = atop; curr->right != NULL; curr = curr->right);
+						curr->right = right;
+					}else{
+						atop = curr->right;
+						free_alias_node(curr);
+					}
+				}else{
+					if(curr->left != NULL){
+						if(o_cmp > 0)
+							prev->right = curr->left;
+						else
+							prev->left = curr->left;
+
+						prev = curr->left;
+						right = curr->right;
+						free_alias_node(curr);
+						for(; prev->right != NULL; prev = prev->right);
+						prev->right = right;
+					}else{
+						if(o_cmp > 0)
+							prev->right = curr->right;
+						else
+							prev->left = curr->right;
+
+						free_alias_node(curr);
+					}
+				}
+				break;
+			}else if(cmp > 0){
+				prev = curr;
+				curr = curr->right;
+			}else{
+				prev = curr;
+				curr = curr->left;
+			}
+
+			o_cmp = cmp;
+		}/* while */
+	}/* for */
+
+	balance_alias_tree();
+	return CMD_OK;
+}
+
+
+static void
+print_alias(printall, alias, curr)
+int	printall;
+char	*alias;
+AliasList	curr;
+{
+	int	cmp;
+
+	if(curr == NULL)
+		return;
+
+	if(printall){
+		print_alias(printall, alias, curr->left);
+		rt_log( "%s\t%s\n", curr->name, curr->def);
+		print_alias(printall, alias, curr->right);
+	}else{	/* print only one */
+		while(curr != NULL){
+			if((cmp = strcmp(alias, curr->name)) == 0){
+				rt_log( "%s\t%s\n", curr->name, curr->def);
+				return;
+			}else if(cmp > 0)
+				curr = curr->right;
+			else
+				curr = curr->left;
+		}
+	}
+}
+
+
+static void
+load_alias_def(def, num, params)
+char	*def;
+int	num;
+char	*params[];
+{
+	int	i;
+
+	strcpy(def, params[0]);
+
+	for(i = 1; i < num; ++i){
+		strcat(def, " ");
+		strcat(def, params[i]);
+	}
+}
+
+
+static AliasList
+get_alias_node()
+{
+	AliasList	curr;
+
+	if(alias_free == NULL)
+		curr = (AliasList)malloc(sizeof(Alias));
+	else{
+		curr = alias_free;
+		alias_free = alias_free->right;	/* using only right in this freelist */
+	}
+
+	curr->left = NULL;
+	curr->right = NULL;
+	curr->marked = 0;
+	return(curr);
+}
+
+
+static void
+free_alias_node(node)
+AliasList	node;
+{
+	free((void *)node->name);
+	free((void *)node->def);
+	node->right = alias_free;
+	alias_free = node;
+}
+
+
+static void
+balance_alias_tree()
+{
+	int	i = 0;
+}
+
+/*
+ *	Extract the alias definition and insert arguments that where called for.
+ * If there are any left over arguments, tack them on the end.
+ */
+static int
+extract_alias_def(cmd, curr, argc, argv)
+struct rt_vls *cmd;
+AliasList	curr;
+int	argc;
+char	*argv[];
+{
+	int	i = 0;
+	int	j;
+	int	start = 0;	/* used for range of arguments */
+	int	end = 0;
+	int	*arg_used;	/* used to keep track of which arguments have been used */
+	char	*p;
+
+p = curr->def;
+arg_used = (int *)calloc(argc, sizeof(int));
+
+while(p[i] != '\0'){
+	/* copy a command name or other stuff embedded in the alias */
+	for(j = i; p[j] != '$' && p[j] != ';'
+		&& p[j] != '\0'; ++j);
+
+	rt_vls_strncat( cmd, p + i, j - i);
+
+	i = j;
+
+	if(p[i] == '\0')
+		break;
+	else if(p[i] == ';'){
+		rt_vls_strcat(cmd, "\n");
+		++i;
+	}else{		/* parse the variable argument string */
+		++i;
+		if(p[i] < '0' || p[i] > '9'){
+			rt_log( "%s\n", curr->def);
+			rt_log( "Range must be numeric.\n");
+			return(1);	/* Bad */
+		}
+
+		sscanf(p + i, "%d", &start);
+		if(start < 1 || start > argc){
+			rt_log( "%s\n", curr->def);
+			rt_log( "variable argument number is out of range.\n");
+                        return(1);      /* Bad */
+		}
+		if(p[++i] == '-'){
+			++i;
+			if(p[i] < '0' || p[i] > '9')	/* put rest of args here */
+				end = argc;
+			else{
+				sscanf(p + i, "%d", &end);
+				++i;
+			}
+
+			if(end < start || end > argc){
+				rt_log( "%s\n", curr->def);
+				rt_log( "variable argument number is out of range.\n");
+	                        return(1);      /* Bad */
+			}
+		}else
+			end = start;
+
+		for(; start <= end; ++start){
+			arg_used[start] = 1;	/* mark used */
+			rt_vls_strcat(cmd, argv[start]);
+			rt_vls_strcat(cmd, " ");
+		}
+	}
+}/* while */
+
+/* tack unused arguments on the end */
+for(j = 1; j < argc; ++j){
+	if(!arg_used[j]){
+		rt_vls_strcat(cmd, " ");
+		rt_vls_strcat(cmd, argv[j]);
+	}
+}
+
+rt_vls_strcat(cmd, "\n");
+return(0);
+}
+
+int
+f_button(argc, argv)
+int	argc;
+char	*argv[];
+{
+  int	save_journal;
+  int result;
+
+  if(button_hook){
+    save_journal = journal;
+    journal = 0;
+    result = (*button_hook)(atoi(argv[1]));
+    journal = save_journal;
+    return result;
+  }
+
+  rt_log( "button: currently not available for this display manager\n");
+  return CMD_BAD;
+}
+
+int
+f_slider(argc, argv)
+int	argc;
+char	*argv[];
+{
+  int	save_journal;
+  int result;
+
+  if(slider_hook){
+    save_journal = journal;
+    journal = 0;
+    result = (*slider_hook)(atoi(argv[1]), atoi(argv[2]));
+    journal = save_journal;
+    return result;
+  }
+
+  rt_log( "slider: currently not available for this display manager\n");
+  return CMD_BAD;
+}
+
+int
+f_savedit(argc, argv)
+int	argc;
+char	*argv[];
+{
+  struct rt_vls str;
+  char	line[35];
+  int o_ipathpos;
+  register struct solid *o_illump;
+
+  o_illump = illump;
+  rt_vls_init(&str);
+
+  if(state == ST_S_EDIT){
+    rt_vls_strcpy( &str, "press accept\npress sill\n" );
+    cmdline(&str, 0);
+    illump = o_illump;
+    rt_vls_strcpy( &str, "M 1 0 0\n");
+    cmdline(&str, 0);
+    return CMD_OK;
+  }else if(state == ST_O_EDIT){
+    o_ipathpos = ipathpos;
+    rt_vls_strcpy( &str, "press accept\npress oill\n" );
+    cmdline(&str, 0);
+    (void)chg_state( ST_O_PICK, ST_O_PATH, "savedit");
+    illump = o_illump;
+    ipathpos = o_ipathpos;
+    rt_vls_strcpy( &str, "M 1 0 0\n");
+    cmdline(&str, 0);
+    return CMD_OK;
+  }
+
+  rt_log( "Savedit will only work in an edit state\n");
+  rt_vls_free(&str);
+  return CMD_BAD;
+}
+
+int
+f_slewview(argc, argv)
+int	argc;
+char	*argv[];
+{
+	int x, y;
+	vect_t tabvec;
+
+	sscanf(argv[1], "%d", &x);
+	sscanf(argv[2], "%d", &y);
+
+	tabvec[X] =  x / 2047.0;
+	tabvec[Y] =  y / 2047.0;
+	tabvec[Z] = 0;
+	slewview( tabvec );
+
+	return CMD_OK;
+}
+
+int
+f_openw(argc, argv)
+int     argc;
+char    *argv[];
+{
+  if(openw_hook){
+  	if(argc == 1)
+		return (*openw_hook)(NULL);
+  	else
+		return (*openw_hook)(argv[1]);
+  }
+
+  rt_log( "openw: currently not available\n");
+  return CMD_BAD;
+}
+
+int
+f_closew(argc, argv)
+int     argc;
+char    *argv[];
+{
+  if(closew_hook)
+    return (*closew_hook)(argv[1]);
+
+  rt_log( "closew: currently not available\n");
+  return CMD_BAD;
+}
+
+int
+f_cue(argc, argv)
+int     argc;
+char    *argv[];
+{
+  if(cue_hook)
+    return (*cue_hook)();
+
+
+  rt_log( "cue: currently not available\n");
+  return CMD_BAD;
+}
+
+int
+f_zclip(argc, argv)
+int     argc;
+char    *argv[];
+{
+  if(zclip_hook)
+    return (*zclip_hook)();
+
+  rt_log( "zclip: currently not available\n");
+  return CMD_BAD;
+}
+
+int
+f_zbuffer(argc, argv)
+int     argc;
+char    *argv[];
+{
+  if(zbuffer_hook)
+    return (*zbuffer_hook)();
+
+  rt_log( "zbuffer: currently not available\n");
+  return CMD_BAD;
+}
+
+int
+f_light(argc, argv)
+int     argc;
+char    *argv[];
+{
+  if(light_hook)
+    return (*light_hook)();
+
+  rt_log( "light: currently not available\n");
+  return CMD_BAD;
+}
+
+int
+f_perspective(argc, argv)
+int     argc;
+char    *argv[];
+{
+  int i;
+  static int perspective_angle = 0;
+  static int perspective_mode = 0;
+  static int perspective_table[] = { 30, 45, 60, 90 };
+
+  if(argc == 2){
+    perspective_mode = 1;
+    sscanf(argv[1], "%d", &i);
+    if(i < 0 || i > 3){
+      if (--perspective_angle < 0) perspective_angle = 3;
+    }else
+      perspective_angle = i;
+
+    rt_vls_printf( &dm_values.dv_string,
+		  "set perspective=%d\n",
+		  perspective_table[perspective_angle] );
+  }else{
+    perspective_mode = 1 - perspective_mode;
+    rt_vls_printf( &dm_values.dv_string,
+		  "set perspective=%d\n",
+		  perspective_mode ? perspective_table[perspective_angle] : -1 );
+  }
+
+  update_views = 1;
+  return CMD_OK;
+}
+
+static void
+make_command(line, diff)
+char	*line;
+point_t	diff;
+{
+
+  if(state == ST_O_EDIT)
+    (void)sprintf(line, "translate %f %f %f\n",
+		  (e_axis_pos[X] + diff[X]) * base2local,
+		  (e_axis_pos[Y] + diff[Y]) * base2local,
+		  (e_axis_pos[Z] + diff[Z]) * base2local);
+  else
+    (void)sprintf(line, "p %f %f %f\n",
+		  (e_axis_pos[X] + diff[X]) * base2local,
+		  (e_axis_pos[Y] + diff[Y]) * base2local,
+		  (e_axis_pos[Z] + diff[Z]) * base2local);
+
+}
+
+/*
+ *                         S E T _ T R A N
+ *
+ * Calculate the values for tran_x, tran_y, and tran_z.
+ *
+ *
+ */
+void
+set_tran(x, y, z)
+fastf_t x, y, z;
+{
+  point_t diff;
+
+  diff[X] = x - e_axis_pos[X];
+  diff[Y] = y - e_axis_pos[Y];
+  diff[Z] = z - e_axis_pos[Z];
+  
+  /* If there is more than one active view, then tran_x/y/z
+     needs to be initialized for each view. */
+  if(set_tran_hook)
+    (*set_tran_hook)(diff);
+  else{
+    point_t old_pos;
+    point_t new_pos;
+    point_t view_pos;
+
+    MAT_DELTAS_GET_NEG(old_pos, toViewcenter);
+    VADD2(new_pos, old_pos, diff);
+    MAT4X3PNT(view_pos, model2view, new_pos);
+
+    tran_x = view_pos[X];
+    tran_y = view_pos[Y];
+    tran_z = view_pos[Z];
+  }
+}
+
+void
+set_e_axis_pos()
+{
+  int	i;
+
+  /* If there is more than one active view, then tran_x/y/z
+     needs to be initialized for each view. */
+  if(set_tran_hook){
+    point_t pos;
+
+    VSETALL(pos, 0.0);
+    (*set_tran_hook)(pos);
+  }else{
+    tran_x = tran_y = tran_z = 0;
+  }
+
+  if(rot_hook)
+    (*rot_hook)();
+
+  irot_x = irot_y = irot_z = 0;
+  update_views = 1;
+
+  switch(es_int.idb_type){
+  case	ID_ARB8:
+  case	ID_ARBN:
+    if(state == ST_O_EDIT)
+      i = 0;
+    else
+      switch(es_edflag){
+      case	STRANS:
+	i = 0;
+	break;
+      case	EARB:
+	switch(es_type){
+	case	ARB5:
+	  i = earb5[es_menu][0];
+	  break;
+	case	ARB6:
+	  i = earb6[es_menu][0];
+	  break;
+	case	ARB7:
+	  i = earb7[es_menu][0];
+	  break;
+	case	ARB8:
+	  i = earb8[es_menu][0];
+	  break;
+	default:
+	  i = 0;
+	  break;
+	}
+	break;
+      case	PTARB:
+	switch(es_type){
+	case    ARB4:
+	  i = es_menu;	/* index for point 1,2,3 or 4 */
+	  break;
+	case    ARB5:
+	case	ARB7:
+	  i = 4;	/* index for point 5 */
+	  break;
+	case    ARB6:
+	  i = es_menu;	/* index for point 5 or 6 */
+	  break;
+	default:
+	  i = 0;
+	  break;
+	}
+	break;
+      case ECMD_ARB_MOVE_FACE:
+	switch(es_type){
+	case	ARB4:
+	  i = arb_faces[0][es_menu * 4];
+	  break;
+	case	ARB5:
+	  i = arb_faces[1][es_menu * 4];  		
+	  break;
+	case	ARB6:
+	  i = arb_faces[2][es_menu * 4];  		
+	  break;
+	case	ARB7:
+	  i = arb_faces[3][es_menu * 4];  		
+	  break;
+	case	ARB8:
+	  i = arb_faces[4][es_menu * 4];  		
+	  break;
+	default:
+	  i = 0;
+	  break;
+	}
+	break;
+      case ECMD_ARB_ROTATE_FACE:
+	i = fixv;
+	break;
+      default:
+	i = 0;
+	break;
+      }
+
+    VMOVE(e_axis_pos, ((struct rt_arb_internal *)es_int.idb_ptr)->pt[i]);
+    break;
+  case ID_TGC:
+  case ID_REC:
+    if(es_edflag == ECMD_TGC_MV_H ||
+       es_edflag == ECMD_TGC_MV_HH){
+      struct rt_tgc_internal  *tgc = (struct rt_tgc_internal *)es_int.idb_ptr;
+
+      VADD2(e_axis_pos, tgc->h, tgc->v);
+      break;
+    }
+  default:
+    VMOVE(e_axis_pos, es_keypoint);
+    break;
+  }
+}
+
+int
+f_tran(argc, argv)
+int     argc;
+char    *argv[];
+{
+  double x, y, z;
+  int itran;
+  char cmd[128];
+  vect_t view_pos;
+  point_t old_pos;
+  point_t new_pos;
+  point_t diff;
+  struct rt_vls str;
+  int save_journal = journal;
+
+  rt_vls_init(&str);
+  
+  sscanf(argv[1], "%lf", &x);
+  sscanf(argv[2], "%lf", &y);
+  sscanf(argv[3], "%lf", &z);
+
+  itran = !strcmp(argv[0], "itran");
+
+  if(itran){
+    tran_x += x;
+    tran_y += y;
+    tran_z += z;
+  }else{
+    tran_x = x;
+    tran_y = y;
+    tran_z = z;
+  }
+
+  VSET(view_pos, tran_x, tran_y, tran_z);
+  MAT4X3PNT( new_pos, view2model, view_pos );
+  MAT_DELTAS_GET_NEG(old_pos, toViewcenter);
+  VSUB2( diff, new_pos, old_pos );
+
+  if(state == ST_O_EDIT)
+    make_command(cmd, diff);
+  else if(state == ST_S_EDIT)
+    make_command(cmd, diff);
+  else{
+    VADD2(new_pos, orig_pos, diff);
+    MAT_DELTAS_VEC( toViewcenter, new_pos);
+    MAT_DELTAS_VEC( ModelDelta, new_pos);
+    new_mats();
+
+    if(tran_hook)
+      (*tran_hook)();
+
+    rt_vls_free(&str);
+    save_journal = journal;
+    return CMD_OK;
+  }
+
+  tran_set = 1;
+  rt_vls_strcpy( &str, cmd );
+  cmdline(&str, False);
+  rt_vls_free(&str);
+  tran_set = 0;
+  save_journal = journal;
+
+  /* If there is more than one active view, then tran_x/y/z
+     needs to be initialized for each view. */
+  if(set_tran_hook)
+    (*set_tran_hook)(diff);
+
+  return CMD_OK;
+}
+
+int
+f_irot(argc, argv)
+int argc;
+char *argv[];
+{
+  int save_journal = journal;
+  double x, y, z;
+  char cmd[128];
+  struct rt_vls str;
+  vect_t view_pos;
+  point_t new_pos;
+  point_t old_pos;
+  point_t diff;
+
+  journal = 0;
+
+  rt_vls_init(&str);
+
+  sscanf(argv[1], "%lf", &x);
+  sscanf(argv[2], "%lf", &y);
+  sscanf(argv[3], "%lf", &z);
+
+  irot_x += x;
+  irot_y += y;
+  irot_z += z;
+
+  MAT_DELTAS_GET(old_pos, toViewcenter);
+
+  if(state == ST_VIEW)
+    sprintf(cmd, "vrot %f %f %f\n", x, y, z);
+  else if(state == ST_O_EDIT)
+    sprintf(cmd, "rotobj %f %f %f\n", irot_x, irot_y, irot_z);
+  else if(state == ST_S_EDIT)
+    sprintf(cmd, "p %f %f %f\n", irot_x, irot_y, irot_z);
+
+  irot_set = 1;
+  rt_vls_strcpy( &str, cmd );
+  cmdline(&str, False);
+  rt_vls_free(&str);
+  irot_set = 0;
+
+  if(state == ST_VIEW){
+    MAT_DELTAS_GET_NEG(new_pos, toViewcenter);
+    VSUB2(diff, new_pos, orig_pos);
+    VADD2(new_pos, old_pos, diff);
+    VSET(view_pos, new_pos[X], new_pos[Y], new_pos[Z]);
+    MAT4X3PNT( new_pos, model2view, view_pos);
+    tran_x = new_pos[X];
+    tran_y = new_pos[Y];
+    tran_z = new_pos[Z];
+
+    if(tran_hook)
+      (*tran_hook)();
+  }
+
+  journal = save_journal;
+  return CMD_OK;
+}
+
+int
+f_ps(argc, argv)
+int argc;
+char *argv[];
+{
+  struct dm *o_dmp;
+  void (*o_dotitles_hook)();
+  int o_faceplate;
+  static int windowbounds[] = {
+    2047, -2048, 2047, -2048, 2047, -2048
+  };
+
+  o_faceplate = mged_variables.faceplate;
+  if(argc == 3){
+    if(*argv[1] == 'f'){
+      mged_variables.faceplate = 1;
+      ++argv;
+    }else{
+      rt_log( "Usage: ps filename [f]\n");
+      return CMD_BAD;
+    }
+  }else
+    mged_variables.faceplate = 0;
+
+  if( (ps_fp = fopen( argv[1], "w" )) == NULL )  {
+	perror(argv[1]);
+	return CMD_BAD;
+  }
+
+  o_dotitles_hook = dotitles_hook;
+  dotitles_hook = NULL;
+  o_dmp = dmp;
+  dmp = &dm_PS;
+  dmp->dmr_window(windowbounds);
+#if 0
+  if(dmp->dmr_open())
+	goto clean_up;
+#else
+
+	setbuf( ps_fp, ps_ttybuf );
+
+	mged_fputs( "%!PS-Adobe-1.0\n\
+%begin(plot)\n\
+%%DocumentFonts:  Courier\n", ps_fp );
+	fprintf(ps_fp, "%%%%Title: %s\n", argv[1] );
+	mged_fputs( "\
+%%Creator: MGED dm-ps.c\n\
+%%BoundingBox: 0 0 324 324	% 4.5in square, for TeX\n\
+%%EndComments\n\
+\n", ps_fp );
+
+	mged_fputs( "\
+4 setlinewidth\n\
+\n\
+% Sizes, made functions to avoid scaling if not needed\n\
+/FntH /Courier findfont 80 scalefont def\n\
+/DFntL { /FntL /Courier findfont 73.4 scalefont def } def\n\
+/DFntM { /FntM /Courier findfont 50.2 scalefont def } def\n\
+/DFntS { /FntS /Courier findfont 44 scalefont def } def\n\
+\n\
+% line styles\n\
+/NV { [] 0 setdash } def	% normal vectors\n\
+/DV { [8] 0 setdash } def	% dotted vectors\n\
+/DDV { [8 8 32 8] 0 setdash } def	% dot-dash vectors\n\
+/SDV { [32 8] 0 setdash } def	% short-dash vectors\n\
+/LDV { [64 8] 0 setdash } def	% long-dash vectors\n\
+\n\
+/NEWPG {\n\
+	.0791 .0791 scale	% 0-4096 to 324 units (4.5 inches)\n\
+} def\n\
+\n\
+FntH  setfont\n\
+NEWPG\n\
+", ps_fp);
+
+	in_middle = 0;
+#endif
+
+  color_soltab();
+  dmaflag = 1;
+  refresh();
+  dmp->dmr_close();
+clean_up:
+  dmp = o_dmp;
+  dotitles_hook = o_dotitles_hook;
+  mged_variables.faceplate = o_faceplate;
+  return CMD_OK;
+}
+
+int
+f_bindkey(argc, argv)
+int argc;
+char *argv[];
+{
+  if(bindkey_hook)
+    return (*bindkey_hook)(argc, argv);
+
+  rt_log( "bindkey: currently not available\n");
+  return CMD_BAD;
+}
+#endif
 
