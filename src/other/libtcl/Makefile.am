@@ -32,4 +32,4 @@ bin_PROGRAMS = tclsh
 
 tclsh_SOURCES = unix/tclAppInit.c
 
-tclsh_LDADD = $(lib_LTLIBRARIES) @TCL@
+tclsh_LDADD = $(lib_LTLIBRARIES) @TCL@ @SOCKET@
