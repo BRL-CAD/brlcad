@@ -80,9 +80,9 @@
 
 /* macros to check/validate a structure pointer
  */
-#define NMG_CK_KNOT(_p)		NMG_CKMAG(_p, RT_KNOT_VECTOR_MAGIC, "knot_vector")
-#define NMG_CK_CNURB(_p)	NMG_CKMAG(_p, RT_CNURB_MAGIC, "cnurb")
-#define NMG_CK_SNURB(_p)	NMG_CKMAG(_p, RT_SNURB_MAGIC, "snurb")
+#define NMG_CK_KNOT(_p)		BU_CKMAG(_p, RT_KNOT_VECTOR_MAGIC, "knot_vector")
+#define NMG_CK_CNURB(_p)	BU_CKMAG(_p, RT_CNURB_MAGIC, "cnurb")
+#define NMG_CK_SNURB(_p)	BU_CKMAG(_p, RT_SNURB_MAGIC, "snurb")
 
 #define GET_CNURB(p/*,m*/) 		{BU_GETSTRUCT(p, edge_g_cnurb); \
 	/* NMG_INCR_INDEX(p,m); */ \
@@ -118,8 +118,12 @@ struct oslo_mat {
 	fastf_t		* o_vec;
 };
 
-#define MAX(i,j)    ( (i) > (j) ? (i) : (j) )
-#define MIN(i,j)    ( (i) < (j) ? (i) : (j) )
+#if !defined(MAX)
+# define MAX(i,j)    ( (i) > (j) ? (i) : (j) )
+#endif
+#if !defined(MIN)
+# define MIN(i,j)    ( (i) < (j) ? (i) : (j) )
+#endif
 
 /* --- new way */
 
