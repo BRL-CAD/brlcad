@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static char RCSid[] = "$Header$";
+static const char RCSid[] = "$Header$";
 #endif
 
 #include "conf.h"
@@ -392,6 +392,10 @@ struct rt_wdb *wdb1, *wdb2;
 				continue;
 			}
 
+			/* skip the _GLOBAL object */
+			if( dp1->d_major_type == DB5_MAJORTYPE_ATTRIBUTE_ONLY )
+				continue;
+
 			/* try to get the TCL version of this object */
 			argv[2] = dp1->d_namep;
 /* XXX Dangerous downcall.  Should invoke Tcl_Eval("db1 get name") */
@@ -503,6 +507,7 @@ struct rt_wdb *wdb1, *wdb2;
 	}
 }
 
+int
 main( argc, argv )
 int argc;
 char *argv[];
@@ -614,4 +619,6 @@ char *argv[];
 
 	/* next compare objects */
 	diff_objs( wdb1, wdb2 );
+
+	return( 0 );
 }
