@@ -17,18 +17,12 @@ cake \
  chgmodel.o \
  chgtree.o \
  chgview.o \
- clip.o \
  cmd.o \
  columns.o \
  db.o &
 
 cake \
  dir.o \
- dm-X.o \
- dm-plot.o \
- dm-ps.o \
- dm-tek.o \
- dm-tek4109.o \
  dodraw.o \
  dozoom.o \
  edarb.o \
@@ -37,7 +31,6 @@ cake \
 cake \
  facedef.o \
  ged.o \
- hideline.o \
  history.o \
  inside.o \
  mater.o &
