@@ -54,6 +54,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_dm.h"
 #include "./mgedtcl.h"
 
+/* XXX Move to raytrace.h */
+BU_EXTERN(struct animate	*db_parse_1anim, (struct db_i *dbip,
+				int argc, CONST char **argv));
+
 extern struct db_tree_state	mged_initial_tree_state;	/* dodraw.c */
 extern struct bn_tol		mged_tol;	/* from ged.c */
 extern struct rt_tess_tol	mged_ttol;	/* XXX needs to replace mged_abs_tol, et.al. from dodraw.c */
@@ -496,7 +500,6 @@ char	**argv;
 {
 	register struct directory *proto;
 	register struct directory *dp;
-	struct bu_external external;
 	struct rt_db_internal internal;
 	struct rt_tgc_internal *tgc_ip;
 	int id;
@@ -513,65 +516,31 @@ char	**argv;
 	  return TCL_ERROR;
 	}
 
-	/* get external representation of slid to be copied */
-	if( db_get_external( &external, proto, dbip )) {
-	  TCL_READ_ERR_return;
+	if( (id = rt_db_get_internal( &internal, dp, dbip, (mat_t *)NULL )) < 0 )  {
+		TCL_READ_ERR_return;
 	}
-
 	/* make sure it is a TGC */
-	id = rt_id_solid( &external );
 	if( id != ID_TGC )
 	{
 	  Tcl_AppendResult(interp, "f_copy_inv: ", argv[1],
 			   " is not a cylinder\n", (char *)NULL);
-	  db_free_external( &external );
-	  return TCL_ERROR;
+		rt_db_free_internal( &internal );
+		return TCL_ERROR;
 	}
-
-	/* import the TGC */
-	if( rt_functab[id].ft_import( &internal , &external , bn_mat_identity ) < 0 )
-	{
-	  Tcl_AppendResult(interp, "f_copy_inv: import failure for ",
-			   argv[1], "\n", (char *)NULL);
-	  return TCL_ERROR;
-	}
-	db_free_external( &external );
-
 	tgc_ip = (struct rt_tgc_internal *)internal.idb_ptr;
 
 	/* translate to end of "original" cylinder */
 	VADD2( tgc_ip->v , tgc_ip->v , tgc_ip->h );
 
-	/* now export the new TGC */
-	if( rt_functab[internal.idb_type].ft_export( &external, &internal, (double)1.0 ) < 0 )
-	{
-	  Tcl_AppendResult(interp, "f_copy_inv: export failure\n", (char *)NULL);
-	  rt_functab[internal.idb_type].ft_ifree( &internal );
-	  return TCL_ERROR;
-	}
-	rt_functab[internal.idb_type].ft_ifree( &internal );   /* free internal rep */
-
-	/*
-	 * Update the disk record
-	 */
-
 	/* no interuprts */
 	(void)signal( SIGINT, SIG_IGN );
 
-	ngran = (external.ext_nbytes+sizeof(union record)-1) / sizeof(union record);
-	if( (dp = db_diradd( dbip, argv[2], -1L, ngran, DIR_SOLID)) == DIR_NULL ||
-	    db_alloc( dbip, dp, 1 ) < 0 )
-	    {
-	    	db_free_external( &external );
+	if( (dp = db_diradd( dbip, argv[2], -1L, 0, proto->d_flags)) == DIR_NULL )  {
 	    	TCL_ALLOC_ERR_return;
-	    }
-
-	if (db_put_external( &external, dp, dbip ) < 0 )
-	{
-		db_free_external( &external );
+	}
+	if( rt_db_put_internal( dp, dbip, &internal ) < 0 )  {
 		TCL_WRITE_ERR_return;
 	}
-	db_free_external( &external );
 
 	{
 	  char *av[3];
@@ -597,10 +566,6 @@ char	**argv;
 
 	return TCL_OK;
 }
-
-/* XXX Move to raytrace.h */
-BU_EXTERN(struct animate	*db_parse_1anim, (struct db_i *dbip,
-				int argc, CONST char **argv));
 
 /*
  *			F _ A R C E D
