@@ -30,7 +30,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "ged.h"
 #include "dm.h"
 
-static void	center(), cpoint(), dwreg(), ellin(),
+static void	cpoint(), dwreg(), ellin(),
 		solin(), solpl(), tgcin(), tplane();
 static int	arbn_shot(), cgarbs(), gap(), region();
 
@@ -202,7 +202,6 @@ int flag, more;
  *	  1. gap()   	puts gaps in the edges
  *	  2. region()	finds intersection of ray with a region
  *	  4. cpoint()	finds point of intersection of three planes
- *	  5. center()	finds center point of an arb
  *	  6. tplane()	tests if plane is inside enclosing rpp
  *	  7. arbn_shot()	finds intersection of ray with an arb
  *	  8. tgcin()	converts tgc to arbn
@@ -610,26 +609,6 @@ register float *c1, *c2, *c3;
 		point[i]=d*(c1[3]*v1[i]-c2[3]*v2[i]+c3[3]*v3[i]);
 }
 
-
-/* find center point */
-static void
-center()
-{
-	register float ppc;
-	register int i,j,k;
-
-	for(i=0;i<3;i++){
-		k=i;
-		ppc=0.0;
-		for(j=0; j<m_type[id]; j++) {
-			ppc += *(sp+k);
-			k+=3;
-		}
-		pcenter[i]=ppc/(float)m_type[id];
-	}
-}
-
-
 static int arb_npts;
 /*
  *			T P L A N E
@@ -860,32 +839,24 @@ static void
 solin(num)
 int num;
 {
-	static int amt[19]={0,0,0,12,15,18,21,24,0,0,0,0,0,0,0,0,0,18,12};
-	register int *ity,i,j;
+	register int i,j;
 	static float a,b,c,d,v1,v2,vt,vb;
 
-	ity = &m_type[num];
-	if(*ity==20) *ity=8;
-	if(*ity>19 || amt[*ity-1]==0){
-		(void)printf("solin: Type %d Solid not known\n",*ity);
-		return;
-	}
 	sol_min[0]=sol_min[1]=sol_min[2]=pinf;
 	sol_max[0]=sol_max[1]=sol_max[2] = -pinf;
 
-	/* ARB4,5,6,7,8 */
-	if(*ity<18){
-		for(i=0;i<*ity;i++){
+	switch( m_type[num] )  {
+	case GENARB8:
+		for(i=0;i<8;i++){
 			for(j=0;j<3;j++){
 				MIN(sol_min[j],*sp);
 				MAX(sol_max[j],*sp);
 				sp++;
 			}
 		}
-	}
+		break;
 
-	/* TGC */
-	if(*ity==18){
+	case GENTGC:
 		for(i=0;i<3;i++,sp++){
 			vt = *sp + *(sp+3);
 			a = *(sp+6);
@@ -900,10 +871,9 @@ int num;
 			MAX(sol_max[i],vt+v2);			
 		}
 		sp+=15;
-	}
+		break;
 
-	if(*ity > 18) {
-		/* ELLG */
+	case GENELL:
 		for(i=0;i<3;i++,sp++){
 			vb = *sp - *(sp+3);
 			vt = *sp + *(sp+3);
@@ -917,6 +887,10 @@ int num;
 			MAX(sol_max[i],vt+v2);
 		}
 		sp+=9;
+		break;
+
+	default:
+		printf("solin:  unknown type\n");
 	}
 
 	/* save min,maxs for this solid */
@@ -932,7 +906,7 @@ static void
 solpl(lmemb,umemb)
 {
 	static float tt;
-	static int ls, n4;
+	static int ls;
 	static float *pp,*p1,*p2,*p3,*p4;
 	register int i,j;
 	static int nfc[5]={4,5,5,6,6};
@@ -947,28 +921,40 @@ solpl(lmemb,umemb)
 	tt=tol*10.;
 	for(id=lmemb;id<umemb;id++){
 		ls=lc;
-		if(m_type[id]<18){
+		switch( m_type[id] )  {
+		case GENARB8:
+			{
+				register float ppc;
+				register int i,j,k;
 
-			/* ARB 4,5,6,7,8 */
-			n4=m_type[id]-4;
-			center();
-			j=n4*24;
-			for(i=0;i<nfc[n4];i++){
+				for(i=0;i<3;i++){
+					k=i;
+					ppc=0.0;
+					for(j=0; j<8; j++) {
+						ppc += *(sp+k);
+						k+=3;
+					}
+					pcenter[i]=ppc/8.;
+				}
+			}
+			j=4*24;
+			for(i=0;i<nfc[4];i++){
 				p1=sp+iv[j++]*3;
 				p2=sp+iv[j++]*3;
 				p3=sp+iv[j++]*3;
 				p4=sp+iv[j++]*3;
 				tplane(p1,p2,p3,p4);
 			}
-			sp+=m_type[id]*3;
-		}
-		if(m_type[id]==18){
+			sp += 8*3;
+			break;
+		case GENTGC:
 			tgcin();
 			sp+=18;
-		}
-		if(m_type[id]==19){
+			break;
+		case GENELL:
 			ellin();
 			sp+=12;
+			break;
 		}
 
 		if(m_op[id]=='-'){
