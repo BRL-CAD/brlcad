@@ -457,7 +457,7 @@ Part_import( int id_start )
 		} else if( !strncmp( line, "Vertex", 6 ) ) {
 			/* get a vertex */
 			char *ptr;
-			float v[3];
+			double v[3];
 
 			i = 7;
 			while( !isspace( line[i] ) && line[i] != '\0' )

@@ -858,9 +858,9 @@ char line[MAX_LINE_LEN];
 					endloop = 1;
 				else if ( !strncmp( &line1[start] , "vertex" , 6 ) || !strncmp( &line1[start] , "VERTEX" , 6 ) )
 				{
-					float x,y,z;
+					double x,y,z;
 
-					sscanf( &line1[start+6] , "%f%f%f" , &x , &y , &z );
+					sscanf( &line1[start+6] , "%lf%lf%lf" , &x , &y , &z );
 					if( top_level )
 					{
 						x *= conv_factor;
