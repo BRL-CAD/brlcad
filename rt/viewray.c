@@ -32,12 +32,16 @@ static char RCSrayview[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "./material.h"
 
 int		use_air = 1;		/* Handling of air in librt */
 
 int		using_mlib = 0;		/* Material routines NOT used */
-int		max_bounces;		/* stub for "set" cmd */
-int		max_ireflect;		/* stub for "set" cmd */
+
+/* Viewing module specific "set" variables */
+struct matparse view_parse[] = {
+	(char *)0,	(mp_off_ty)0,				(char *)0
+};
 
 extern FILE	*outfp;			/* optional output file */
 

@@ -30,6 +30,7 @@ static char RCSppview[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "./material.h"
 
 int		use_air = 0;		/* Handling of air in librt */
 
@@ -47,8 +48,11 @@ extern int	width;
 extern int	height;
 
 int		using_mlib = 0;		/* Material routines NOT used */
-int		max_bounces;		/* stub for "set" cmd */
-int		max_ireflect;		/* stub for "set" cmd */
+
+/* Viewing module specific "set" variables */
+struct matparse view_parse[] = {
+	(char *)0,	(mp_off_ty)0,				(char *)0
+};
 
 /* Stuff for pretty-picture output format */
 static struct soltab *last_solidp;	/* pointer to last solid hit */
