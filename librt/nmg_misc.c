@@ -275,7 +275,8 @@ CONST int wires;
 	struct edgeuse *ret_eu;
 
 	NMG_CK_EDGEUSE( eu );
-	NMG_CK_SHELL( s );
+	if( s )
+		NMG_CK_SHELL( s );
 
 	if( s && nmg_find_s_of_eu( eu ) != s )
 		rt_bomb( "nmg_find_radial_eu: eu is not in specified shell\n" );
@@ -313,7 +314,8 @@ CONST int wires;
 	struct edgeuse *ret_eu;
 
 	NMG_CK_EDGEUSE( eu );
-	NMG_CK_SHELL( s );
+	if( s )
+		NMG_CK_SHELL( s );
 
 	if( s && nmg_find_s_of_eu( eu ) != s )
 		rt_bomb( "nmg_find_radial_eu: eu is not in specified shell\n" );
