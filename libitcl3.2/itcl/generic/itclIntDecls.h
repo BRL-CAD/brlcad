@@ -150,7 +150,7 @@ EXTERN int		Itcl_HandleClass _ANSI_ARGS_((ClientData clientData,
 				Tcl_Obj *CONST objv[]));
 /* 35 */
 EXTERN int		Itcl_ClassCmdResolver _ANSI_ARGS_((
-				Tcl_Interp * interp, char* name, 
+				Tcl_Interp * interp, CONST char* name, 
 				Tcl_Namespace * context, int flags, 
 				Tcl_Command * rPtr));
 /* 36 */
@@ -485,7 +485,7 @@ typedef struct ItclIntStubs {
     int (*itcl_DeleteClass) _ANSI_ARGS_((Tcl_Interp * interp, ItclClass * cdefnPtr)); /* 32 */
     Tcl_Namespace* (*itcl_FindClassNamespace) _ANSI_ARGS_((Tcl_Interp* interp, char* path)); /* 33 */
     int (*itcl_HandleClass) _ANSI_ARGS_((ClientData clientData, Tcl_Interp * interp, int objc, Tcl_Obj *CONST objv[])); /* 34 */
-    int (*itcl_ClassCmdResolver) _ANSI_ARGS_((Tcl_Interp * interp, char* name, Tcl_Namespace * context, int flags, Tcl_Command * rPtr)); /* 35 */
+    int (*itcl_ClassCmdResolver) _ANSI_ARGS_((Tcl_Interp * interp, CONST char* name, Tcl_Namespace * context, int flags, Tcl_Command * rPtr)); /* 35 */
     int (*itcl_ClassVarResolver) _ANSI_ARGS_((Tcl_Interp * interp, char* name, Tcl_Namespace * context, int flags, Tcl_Var * rPtr)); /* 36 */
     int (*itcl_ClassCompiledVarResolver) _ANSI_ARGS_((Tcl_Interp * interp, char* name, int length, Tcl_Namespace * context, Tcl_ResolvedVarInfo ** rPtr)); /* 37 */
     void (*itcl_BuildVirtualTables) _ANSI_ARGS_((ItclClass* cdefnPtr)); /* 38 */

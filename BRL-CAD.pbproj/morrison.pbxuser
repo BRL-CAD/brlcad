@@ -1,0 +1,2363 @@
+// !$*UTF8*$!
+{
+	4E3CE3CD03C65C35003F204C = {
+		activeExec = 0;
+		executables = (
+			4E3CE3E803C65C35003F204C,
+		);
+	};
+	4E3CE3E803C65C35003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = "Geometry Databases";
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4E3CE40E03C67030003F204C = {
+		activeExec = 0;
+		executables = (
+			4E3CE43403C67030003F204C,
+		);
+	};
+	4E3CE43403C67030003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = rtrad;
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4E3CE43503C67063003F204C = {
+		activeExec = 0;
+		executables = (
+			4E3CE45B03C67063003F204C,
+		);
+	};
+	4E3CE45B03C67063003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = rtpp;
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4E3CE45C03C67077003F204C = {
+		activeExec = 0;
+		executables = (
+			4E3CE48203C67077003F204C,
+		);
+	};
+	4E3CE48203C67077003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = rtray;
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4E3CE48303C67094003F204C = {
+		activeExec = 0;
+		executables = (
+			4E3CE4A903C67094003F204C,
+		);
+	};
+	4E3CE4A903C67094003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = rtshot;
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4E3CE4AA03C670AC003F204C = {
+		activeExec = 0;
+		executables = (
+			4E3CE4D003C670AC003F204C,
+		);
+	};
+	4E3CE4D003C670AC003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = rtwalk;
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4E3CE4D103C670BB003F204C = {
+		activeExec = 0;
+		executables = (
+			4E3CE4F703C670BB003F204C,
+		);
+	};
+	4E3CE4F703C670BB003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = rtcheck;
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4E3CE4F803C670CD003F204C = {
+		activeExec = 0;
+		executables = (
+			4E3CE51E03C670CD003F204C,
+		);
+	};
+	4E3CE51E03C670CD003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = rtg3;
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4E3CE51F03C670E2003F204C = {
+		activeExec = 0;
+		executables = (
+			4E3CE54503C670E2003F204C,
+		);
+	};
+	4E3CE54503C670E2003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = rtcell;
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4E3CE54603C670F1003F204C = {
+		activeExec = 0;
+		executables = (
+			4E3CE56C03C670F1003F204C,
+		);
+	};
+	4E3CE56C03C670F1003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = rtxray;
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4E3CE56D03C670F4003F204C = {
+		activeExec = 0;
+		executables = (
+			4E3CE59303C670F4003F204C,
+		);
+	};
+	4E3CE59303C670F4003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = rthide;
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4E3CE59403C670FA003F204C = {
+		activeExec = 0;
+		executables = (
+			4E3CE5BA03C670FA003F204C,
+		);
+	};
+	4E3CE5BA03C670FA003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = rtfrac;
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4E3CE5BB03C67104003F204C = {
+		activeExec = 0;
+		executables = (
+			4E3CE5E103C67104003F204C,
+		);
+	};
+	4E3CE5E103C67104003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = rtrange;
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4E3CE5E203C67286003F204C = {
+		activeExec = 0;
+		executables = (
+			4E3CE60803C67286003F204C,
+		);
+	};
+	4E3CE60803C67286003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = rtregis;
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4E3CE60903C67290003F204C = {
+		activeExec = 0;
+		executables = (
+			4E3CE62F03C67290003F204C,
+		);
+	};
+	4E3CE62F03C67290003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = rtscale;
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4E3CE63003C67298003F204C = {
+		activeExec = 0;
+		executables = (
+			4E3CE65603C67298003F204C,
+		);
+	};
+	4E3CE65603C67298003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = rtsil;
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4E3CE65703C672A0003F204C = {
+		activeExec = 0;
+		executables = (
+			4E3CE67D03C672A0003F204C,
+		);
+	};
+	4E3CE67D03C672A0003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = rtweight;
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4E3CE67E03C672A9003F204C = {
+		activeExec = 0;
+		executables = (
+			4E3CE6A403C672A9003F204C,
+		);
+	};
+	4E3CE6A403C672A9003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = rtedge;
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4E3CE6A503C672B3003F204C = {
+		activeExec = 0;
+		executables = (
+			4E3CE6CB03C672B3003F204C,
+		);
+	};
+	4E3CE6CB03C672B3003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = rt_simple;
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4E3CE6CC03C672BE003F204C = {
+		activeExec = 0;
+		executables = (
+			4E3CE6F203C672BE003F204C,
+		);
+	};
+	4E3CE6F203C672BE003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = rtarea;
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4E8E3C3B03B6B63C003F204C = {
+		activeExec = 0;
+	};
+	4E8E3C8403B6B85C003F204C = {
+		activeExec = 0;
+		executables = (
+			4E8E3C8603B6B85C003F204C,
+		);
+	};
+	4E8E3C8603B6B85C003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = pixcmp;
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4E8E3C8D03B6B8F9003F204C = {
+		activeExec = 0;
+	};
+	4E8E3CB003B6BADC003F204C = {
+		activeExec = 0;
+	};
+	4E8E3CBC03B6BD46003F204C = {
+		activeExec = 0;
+	};
+	4E8E3CDE03B6C234003F204C = {
+		activeExec = 0;
+	};
+	4E8E3D3F03B6C82A003F204C = {
+		activeExec = 0;
+	};
+	4E8E3D5203B6C944003F204C = {
+		activeExec = 0;
+	};
+	4E8E3D6C03B6CAD9003F204C = {
+		activeExec = 0;
+	};
+	4E8E3DA503B6CC5C003F204C = {
+		activeExec = 0;
+	};
+	4E8E3DBD03B6CE94003F204C = {
+		activeExec = 0;
+		executables = (
+			4E8E3DBF03B6CE94003F204C,
+		);
+	};
+	4E8E3DBF03B6CE94003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		dylibVariantSuffix = "";
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = fbserv;
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4E8E3DD303B6D575003F204C = {
+		activeExec = 0;
+	};
+	4E8E3E7903B6D807003F204C = {
+		activeExec = 0;
+	};
+	4E8E3EA003B6D897003F204C = {
+		activeExec = 0;
+	};
+	4E8E3EB003B6DC11003F204C = {
+		activeExec = 0;
+	};
+	4E8E3EC403B6DD59003F204C = {
+		activeExec = 0;
+		executables = (
+			4E8E3EC603B6DD59003F204C,
+		);
+	};
+	4E8E3EC603B6DD59003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = asc2g;
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4E8E3F1803B70624003F204C = {
+		activeExec = 0;
+	};
+	4E8E3F2803B70865003F204C = {
+		activeExec = 0;
+	};
+	4E8E3F2A03B70888003F204C = {
+		activeExec = 0;
+	};
+	4E8E3F3103B70962003F204C = {
+		activeExec = 0;
+		executables = (
+			4E8E3F4E03B70962003F204C,
+		);
+	};
+	4E8E3F4E03B70962003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = g2asc;
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4E8E3F5103B70A99003F204C = {
+		activeExec = 0;
+		executables = (
+			4E8E3F6E03B70A99003F204C,
+		);
+	};
+	4E8E3F6E03B70A99003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = "conv-vg2g";
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4E8E3F7003B70B71003F204C = {
+		activeExec = 0;
+		executables = (
+			4E8E3F8803B70B71003F204C,
+		);
+	};
+	4E8E3F8803B70B71003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = pix2asc;
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4E8E3F8903B70B73003F204C = {
+		activeExec = 0;
+		executables = (
+			4E8E3FA103B70B73003F204C,
+		);
+	};
+	4E8E3FA103B70B73003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = asc2pix;
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4E8E3FA703B70C21003F204C = {
+		activeExec = 0;
+		executables = (
+			4E8E3FBF03B70C21003F204C,
+		);
+	};
+	4E8E3FBF03B70C21003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = "g-euclid";
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4E8E3FC003B70C24003F204C = {
+		activeExec = 0;
+		executables = (
+			4E8E3FD803B70C24003F204C,
+		);
+	};
+	4E8E3FD803B70C24003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = "euclid-g";
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4E8E3FD903B70C28003F204C = {
+		activeExec = 0;
+		executables = (
+			4E8E3FF103B70C28003F204C,
+		);
+	};
+	4E8E3FF103B70C28003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = euclid_format;
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4E8E3FF203B70C2C003F204C = {
+		activeExec = 0;
+		executables = (
+			4E8E400A03B70C2C003F204C,
+		);
+	};
+	4E8E400A03B70C2C003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = euclid_unformat;
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4E8E400B03B70C86003F204C = {
+		fRef = 4EE8D9B903B6A5C7003F204C;
+		isa = PBXTextBookmark;
+		name = "bsdselect.c: bsdselect";
+		rLen = 14;
+		rLoc = 1195;
+		rType = 0;
+		vrLen = 456;
+		vrLoc = 0;
+	};
+	4E8E400C03B70C86003F204C = {
+		fRef = 4EE8E01E03B6A5D9003F204C;
+		isa = PBXTextBookmark;
+		name = "poly.c: 52";
+		rLen = 25;
+		rLoc = 1124;
+		rType = 0;
+		vrLen = 312;
+		vrLoc = 933;
+	};
+	4E8E400D03B70C86003F204C = {
+		fRef = 4EE8D8DA03B6A5C4003F204C;
+		isa = PBXTextBookmark;
+		name = "pkg.c: pkg_open";
+		rLen = 41;
+		rLoc = 5954;
+		rType = 0;
+		vrLen = 433;
+		vrLoc = 5844;
+	};
+	4E8E400E03B70C86003F204C = {
+		fRef = 4EE8D25003B6A5B2003F204C;
+		isa = PBXTextBookmark;
+		name = "unistd.h: ioctl";
+		rLen = 58;
+		rLoc = 2762;
+		rType = 0;
+		vrLen = 803;
+		vrLoc = 2419;
+	};
+	4E8E400F03B70C86003F204C = {
+		fRef = 4EE8D25F03B6A5B3003F204C;
+		isa = PBXTextBookmark;
+		name = "externs.h: 77";
+		rLen = 21;
+		rLoc = 2129;
+		rType = 0;
+		vrLen = 447;
+		vrLoc = 1882;
+	};
+	4E8E401003B70C86003F204C = {
+		fRef = 4EE8D52E03B6A5BA003F204C;
+		isa = PBXTextBookmark;
+		name = "if_ogl.c: 2515";
+		rLen = 22;
+		rLoc = 66268;
+		rType = 0;
+		vrLen = 270;
+		vrLoc = 66140;
+	};
+	4E8E401103B70C86003F204C = {
+		fRef = 4E8E402C03B70C86003F204C;
+		isa = PBXTextBookmark;
+		name = "limits.h: 68";
+		rLen = 52;
+		rLoc = 3157;
+		rType = 0;
+		vrLen = 573;
+		vrLoc = 2006;
+	};
+	4E8E401203B70C86003F204C = {
+		fRef = 4EE8D24C03B6A5B2003F204C;
+		isa = PBXTextBookmark;
+		name = "limits.h: 24";
+		rLen = 25;
+		rLoc = 733;
+		rType = 0;
+		vrLen = 588;
+		vrLoc = 3;
+	};
+	4E8E401403B70C86003F204C = {
+		fRef = 4EE8D9B903B6A5C7003F204C;
+		isa = PBXTextBookmark;
+		name = "bsdselect.c: bsdselect";
+		rLen = 14;
+		rLoc = 1195;
+		rType = 0;
+		vrLen = 456;
+		vrLoc = 0;
+	};
+	4E8E401503B70C86003F204C = {
+		fRef = 4EE8E01E03B6A5D9003F204C;
+		isa = PBXTextBookmark;
+		name = "poly.c: 52";
+		rLen = 25;
+		rLoc = 1124;
+		rType = 0;
+		vrLen = 312;
+		vrLoc = 933;
+	};
+	4E8E401603B70C86003F204C = {
+		fRef = 4EE8D8DA03B6A5C4003F204C;
+		isa = PBXTextBookmark;
+		name = "pkg.c: pkg_open";
+		rLen = 41;
+		rLoc = 5954;
+		rType = 0;
+		vrLen = 433;
+		vrLoc = 5844;
+	};
+	4E8E401703B70C86003F204C = {
+		fRef = 4EE8D25F03B6A5B3003F204C;
+		isa = PBXTextBookmark;
+		name = "externs.h: 77";
+		rLen = 21;
+		rLoc = 2129;
+		rType = 0;
+		vrLen = 447;
+		vrLoc = 1882;
+	};
+	4E8E401803B70C86003F204C = {
+		fRef = 4EE8D25003B6A5B2003F204C;
+		isa = PBXTextBookmark;
+		name = "unistd.h: ioctl";
+		rLen = 58;
+		rLoc = 2762;
+		rType = 0;
+		vrLen = 803;
+		vrLoc = 2419;
+	};
+	4E8E401903B70C86003F204C = {
+		fRef = 4EE8D25F03B6A5B3003F204C;
+		isa = PBXTextBookmark;
+		name = "externs.h: 77";
+		rLen = 21;
+		rLoc = 2129;
+		rType = 0;
+		vrLen = 447;
+		vrLoc = 1882;
+	};
+	4E8E401A03B70C86003F204C = {
+		fRef = 4EE8D52E03B6A5BA003F204C;
+		isa = PBXTextBookmark;
+		name = "if_ogl.c: 2515";
+		rLen = 22;
+		rLoc = 66268;
+		rType = 0;
+		vrLen = 270;
+		vrLoc = 66140;
+	};
+	4E8E401B03B70C86003F204C = {
+		fRef = 4E8E402D03B70C86003F204C;
+		isa = PBXTextBookmark;
+		name = "limits.h: 68";
+		rLen = 52;
+		rLoc = 3157;
+		rType = 0;
+		vrLen = 573;
+		vrLoc = 2006;
+	};
+	4E8E401C03B70C86003F204C = {
+		fRef = 4EE8D24C03B6A5B2003F204C;
+		isa = PBXTextBookmark;
+		name = "limits.h: 24";
+		rLen = 25;
+		rLoc = 733;
+		rType = 0;
+		vrLen = 588;
+		vrLoc = 3;
+	};
+	4E8E402C03B70C86003F204C = {
+		isa = PBXFileReference;
+		name = limits.h;
+		path = /usr/include/ppc/limits.h;
+		refType = 0;
+	};
+	4E8E402D03B70C86003F204C = {
+		isa = PBXFileReference;
+		name = limits.h;
+		path = /usr/include/ppc/limits.h;
+		refType = 0;
+	};
+	4EA965F203B70EC7003F204C = {
+		activeExec = 0;
+		executables = (
+			4EA9660E03B70EC7003F204C,
+		);
+	};
+	4EA9660E03B70EC7003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = TEMPLATE;
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4EA9661003B70F92003F204C = {
+		activeExec = 0;
+		executables = (
+			4EA9662C03B70F92003F204C,
+		);
+	};
+	4EA9662C03B70F92003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = "tankill-g";
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4EA9662D03B70FAA003F204C = {
+		activeExec = 0;
+		executables = (
+			4EA9664903B70FAA003F204C,
+		);
+	};
+	4EA9664903B70FAA003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = "g-tankill";
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4EA9664A03B70FB8003F204C = {
+		activeExec = 0;
+		executables = (
+			4EA9666603B70FB8003F204C,
+		);
+	};
+	4EA9666603B70FB8003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = "viewpoint-g";
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4EA9666703B70FC2003F204C = {
+		activeExec = 0;
+		executables = (
+			4EA9668303B70FC2003F204C,
+		);
+	};
+	4EA9668303B70FC2003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = "dxf-g";
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4EA9668403B70FDD003F204C = {
+		activeExec = 0;
+		executables = (
+			4EA966A003B70FDD003F204C,
+		);
+	};
+	4EA966A003B70FDD003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = "g-nmg";
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4EA966A103B70FE9003F204C = {
+		activeExec = 0;
+		executables = (
+			4EA966BD03B70FE9003F204C,
+		);
+	};
+	4EA966BD03B70FE9003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = "g-euclid1";
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4EA966BE03B70FFA003F204C = {
+		activeExec = 0;
+		executables = (
+			4EA966DA03B70FFA003F204C,
+		);
+	};
+	4EA966DA03B70FFA003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = "fast4-g";
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4EA966DB03B71007003F204C = {
+		activeExec = 0;
+		executables = (
+			4EA966F703B71007003F204C,
+		);
+	};
+	4EA966F703B71007003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = "proe-g";
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4EA966F803B71012003F204C = {
+		activeExec = 0;
+		executables = (
+			4EA9671403B71012003F204C,
+		);
+	};
+	4EA9671403B71012003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = "asc-nmg";
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4EA9671503B7102D003F204C = {
+		activeExec = 0;
+		executables = (
+			4EA9673103B7102D003F204C,
+		);
+	};
+	4EA9673103B7102D003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = "nmg-rib";
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4EA9673203B71037003F204C = {
+		activeExec = 0;
+		executables = (
+			4EA9674E03B71037003F204C,
+		);
+	};
+	4EA9674E03B71037003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = "g-vrml";
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4EA9674F03B71043003F204C = {
+		activeExec = 0;
+		executables = (
+			4EA9676B03B71043003F204C,
+		);
+	};
+	4EA9676B03B71043003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = "g-x3d";
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4EA9676C03B7104F003F204C = {
+		activeExec = 0;
+		executables = (
+			4EA9678803B7104F003F204C,
+		);
+	};
+	4EA9678803B7104F003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = "g-acad";
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4EA9678903B71061003F204C = {
+		activeExec = 0;
+		executables = (
+			4EA967A503B71061003F204C,
+		);
+	};
+	4EA967A503B71061003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = "cy-g";
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4EA967A603B7106E003F204C = {
+		activeExec = 0;
+		executables = (
+			4EA967C203B7106E003F204C,
+		);
+	};
+	4EA967C203B7106E003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = "nastran-g";
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4EA967C303B7107B003F204C = {
+		activeExec = 0;
+		executables = (
+			4EA967DF03B7107B003F204C,
+		);
+	};
+	4EA967DF03B7107B003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = "g-wave";
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4EA967E003B71086003F204C = {
+		activeExec = 0;
+		executables = (
+			4EA967FC03B71086003F204C,
+		);
+	};
+	4EA967FC03B71086003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = "nmg-bot";
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4EA967FD03B71096003F204C = {
+		activeExec = 0;
+		executables = (
+			4EA9681903B71096003F204C,
+		);
+	};
+	4EA9681903B71096003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = "g-shell.rect";
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4EA9681A03B710A3003F204C = {
+		activeExec = 0;
+		executables = (
+			4EA9683603B710A3003F204C,
+		);
+	};
+	4EA9683603B710A3003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = "stl-g";
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4EA9683703B710AF003F204C = {
+		activeExec = 0;
+		executables = (
+			4EA9685303B710AF003F204C,
+		);
+	};
+	4EA9685303B710AF003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = "poly-bot";
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4EA9685403B710BC003F204C = {
+		activeExec = 0;
+		executables = (
+			4EA9687003B710BC003F204C,
+		);
+	};
+	4EA9687003B710BC003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = dbupgrade;
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4EA9687103B710CB003F204C = {
+		activeExec = 0;
+		executables = (
+			4EA9688D03B710CB003F204C,
+		);
+	};
+	4EA9688D03B710CB003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = "enf-g";
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4EA968E103B7132A003F204C = {
+		activeExec = 0;
+	};
+	4EA9696003B71DA8003F204C = {
+		activeExec = 0;
+		executables = (
+			4EA9696203B71DA8003F204C,
+		);
+	};
+	4EA9696203B71DA8003F204C = {
+		activeArgIndex = 2147483647;
+		activeArgIndices = (
+		);
+		argumentStrings = (
+		);
+		configStateDict = {
+		};
+		debuggerPlugin = GDBDebugging;
+		enableDebugStr = 1;
+		environmentEntries = (
+		);
+		isa = PBXExecutable;
+		name = rt;
+		shlibInfoDictList = (
+		);
+		sourceDirectories = (
+		);
+	};
+	4EA9697103B71EC3003F204C = {
+		activeExec = 0;
+	};
+	4EA9699603B73CD0003F204C = {
+		activeExec = 0;
+	};
+	4EBB1F5003C51675003F204C = {
+		fRef = 4EE8D13703B6A5AF003F204C;
+		isa = PBXTextBookmark;
+		name = "asc2g.c: 70";
+		rLen = 27;
+		rLoc = 1647;
+		rType = 0;
+		vrLen = 279;
+		vrLoc = 767;
+	};
+	4EE6809803E26F11001C1F17 = {
+		fRef = 4EE8D97003B6A5C6003F204C;
+		isa = PBXTextBookmark;
+		rLen = 1;
+		rLoc = 1838;
+		rType = 1;
+	};
+	4EE6809903E26F11001C1F17 = {
+		fRef = 4EE8D97003B6A5C6003F204C;
+		isa = PBXTextBookmark;
+		name = "nmg_inter.c: 8284";
+		rLen = 0;
+		rLoc = 236210;
+		rType = 0;
+		vrLen = 1529;
+		vrLoc = 57297;
+	};
+	4EE8D07A03B6A4D6003F204C = {
+		activeBuildStyle = 4EE8D07803B6A4D6003F204C;
+		activeExecutable = 4EA9683603B710A3003F204C;
+		activeTarget = 4EA9697103B71EC3003F204C;
+		addToTargets = (
+			4EA9696003B71DA8003F204C,
+		);
+		executables = (
+			4EA9660E03B70EC7003F204C,
+			4E3CE3E803C65C35003F204C,
+			4E8E3C8603B6B85C003F204C,
+			4E8E3DBF03B6CE94003F204C,
+			4E8E3EC603B6DD59003F204C,
+			4E8E3F4E03B70962003F204C,
+			4E8E3F6E03B70A99003F204C,
+			4E8E3F8803B70B71003F204C,
+			4E8E3FA103B70B73003F204C,
+			4E8E3FBF03B70C21003F204C,
+			4E8E3FD803B70C24003F204C,
+			4E8E3FF103B70C28003F204C,
+			4E8E400A03B70C2C003F204C,
+			4EA9662C03B70F92003F204C,
+			4EA9664903B70FAA003F204C,
+			4EA9666603B70FB8003F204C,
+			4EA9668303B70FC2003F204C,
+			4EA966A003B70FDD003F204C,
+			4EA966BD03B70FE9003F204C,
+			4EA966DA03B70FFA003F204C,
+			4EA966F703B71007003F204C,
+			4EA9671403B71012003F204C,
+			4EA9673103B7102D003F204C,
+			4EA9674E03B71037003F204C,
+			4EA9676B03B71043003F204C,
+			4EA9678803B7104F003F204C,
+			4EA967A503B71061003F204C,
+			4EA967C203B7106E003F204C,
+			4EA967DF03B7107B003F204C,
+			4EA967FC03B71086003F204C,
+			4EA9681903B71096003F204C,
+			4EA9683603B710A3003F204C,
+			4EA9685303B710AF003F204C,
+			4EA9687003B710BC003F204C,
+			4EA9688D03B710CB003F204C,
+			4EA9696203B71DA8003F204C,
+			4E3CE43403C67030003F204C,
+			4E3CE45B03C67063003F204C,
+			4E3CE48203C67077003F204C,
+			4E3CE4A903C67094003F204C,
+			4E3CE4D003C670AC003F204C,
+			4E3CE4F703C670BB003F204C,
+			4E3CE51E03C670CD003F204C,
+			4E3CE54503C670E2003F204C,
+			4E3CE56C03C670F1003F204C,
+			4E3CE59303C670F4003F204C,
+			4E3CE5BA03C670FA003F204C,
+			4E3CE5E103C67104003F204C,
+			4E3CE60803C67286003F204C,
+			4E3CE62F03C67290003F204C,
+			4E3CE65603C67298003F204C,
+			4E3CE67D03C672A0003F204C,
+			4E3CE6A403C672A9003F204C,
+			4E3CE6CB03C672B3003F204C,
+			4E3CE6F203C672BE003F204C,
+		);
+		perUserDictionary = {
+			PBXPerProjectTemplateStateSaveDate = 66615604;
+			"PBXTemplateGeometry-F5CA7ECB015C094F0DCA290F" = {
+				ContentSize = "{668, 621}";
+				LeftSlideOut = {
+					Collapsed = NO;
+					Frame = "{{0, 0}, {668, 621}}";
+					Split0 = {
+						Collapsed = NO;
+						Frame = "{{0, 0}, {668, 621}}";
+						Split0 = {
+							Frame = "{{0, 0}, {668, 621}}";
+						};
+						SplitCount = 1;
+						Tab0 = {
+							Frame = "{{0, 0}, {484, 208}}";
+						};
+						Tab1 = {
+							Debugger = {
+								Collapsed = NO;
+								Frame = "{{0, 0}, {664, 208}}";
+								Split0 = {
+									Frame = "{{0, 24}, {664, 184}}";
+									Split0 = {
+										Frame = "{{0, 0}, {325, 184}}";
+									};
+									Split1 = {
+										DebugVariablesTableConfiguration = (
+											Name,
+											123,
+											Value,
+											85,
+											Summary,
+											96.123,
+										);
+										Frame = "{{334, 0}, {330, 184}}";
+									};
+									SplitCount = 2;
+								};
+								SplitCount = 1;
+								Tab0 = {
+									Frame = "{{0, 0}, {100, 50}}";
+								};
+								Tab1 = {
+									Frame = "{{0, 0}, {100, 50}}";
+								};
+								TabCount = 2;
+								TabsVisible = YES;
+							};
+							Frame = "{{0, 0}, {664, 208}}";
+							LauncherConfigVersion = 7;
+						};
+						Tab2 = {
+							Frame = "{{0, 0}, {664, 50}}";
+							LauncherConfigVersion = 3;
+							Runner = {
+								Frame = "{{0, 0}, {664, 50}}";
+							};
+						};
+						Tab3 = {
+							BuildMessageFrame = "{{0, 0}, {614, 203}}";
+							BuildTranscriptFrame = "{{0, 212}, {614, 85}}";
+							BuildTranscriptFrameExpanded = YES;
+							Frame = "{{0, 0}, {612, 295}}";
+						};
+						Tab4 = {
+							Frame = "{{0, 0}, {612, 295}}";
+						};
+						TabCount = 5;
+						TabsVisible = NO;
+					};
+					SplitCount = 1;
+					Tab0 = {
+						Frame = "{{0, 0}, {313, 531}}";
+						GroupTreeTableConfiguration = (
+							TargetStatusColumn,
+							18,
+							MainColumn,
+							280,
+						);
+					};
+					Tab1 = {
+						ClassesFrame = "{{0, 0}, {280, 398}}";
+						ClassesTreeTableConfiguration = (
+							PBXBookColumnIdentifier,
+							20,
+							PBXClassColumnIdentifier,
+							237,
+						);
+						Frame = "{{0, 0}, {278, 659}}";
+						MembersFrame = "{{0, 407}, {280, 252}}";
+						MembersTreeTableConfiguration = (
+							PBXBookColumnIdentifier,
+							20,
+							PBXMethodColumnIdentifier,
+							236,
+						);
+					};
+					Tab2 = {
+						Frame = "{{0, 0}, {200, 100}}";
+					};
+					Tab3 = {
+						Frame = "{{0, 0}, {200, 557}}";
+						TargetTableConfiguration = (
+							ActiveObject,
+							16,
+							ObjectNames,
+							202.296,
+						);
+					};
+					Tab4 = {
+						BreakpointsTreeTableConfiguration = (
+							breakpointColumn,
+							197,
+							enabledColumn,
+							31,
+						);
+						Frame = "{{0, 0}, {250, 100}}";
+					};
+					TabCount = 5;
+					TabsVisible = NO;
+				};
+				NavBarShownByDefault = YES;
+				StatusViewVisible = NO;
+				Template = F5CA7ECB015C094F0DCA290F;
+				ToolbarVisible = NO;
+				WindowLocation = "{782, 257}";
+			};
+			PBXWorkspaceContents = (
+				{
+					LeftSlideOut = {
+						Split0 = {
+							Split0 = {
+								NavContent0 = {
+									history = (
+										4EE8E84203B6AF0D003F204C,
+										4EE8E84303B6AF0D003F204C,
+										4EE8E84403B6AF0D003F204C,
+										4EE9BEF203B6B618003F204C,
+										4E8E400B03B70C86003F204C,
+										4E8E400C03B70C86003F204C,
+										4E8E400D03B70C86003F204C,
+										4E8E400E03B70C86003F204C,
+										4E8E400F03B70C86003F204C,
+										4E8E401003B70C86003F204C,
+										4E8E401103B70C86003F204C,
+										4E8E401203B70C86003F204C,
+										4EBB1F5003C51675003F204C,
+									);
+									prevStack = (
+										4EE8E84603B6AF0D003F204C,
+										4EE8E84703B6AF0D003F204C,
+										4EE8E84803B6AF0D003F204C,
+										4EE8E84903B6AF0D003F204C,
+										4EE8E84A03B6AF0D003F204C,
+										4EE9BEF403B6B618003F204C,
+										4E8E401403B70C86003F204C,
+										4E8E401503B70C86003F204C,
+										4E8E401603B70C86003F204C,
+										4E8E401703B70C86003F204C,
+										4E8E401803B70C86003F204C,
+										4E8E401903B70C86003F204C,
+										4E8E401A03B70C86003F204C,
+										4E8E401B03B70C86003F204C,
+										4E8E401C03B70C86003F204C,
+									);
+								};
+								NavCount = 1;
+								NavGeometry0 = {
+									Frame = "{{0, 0}, {1056, 150}}";
+									NavBarVisible = YES;
+								};
+								NavSplitVertical = NO;
+							};
+							SplitCount = 1;
+							Tab1 = {
+								Debugger = {
+									Split0 = {
+										SplitCount = 2;
+									};
+									SplitCount = 1;
+									TabCount = 2;
+								};
+								LauncherConfigVersion = 7;
+							};
+							Tab2 = {
+								LauncherConfigVersion = 3;
+								Runner = {
+								};
+							};
+							TabCount = 5;
+						};
+						SplitCount = 1;
+						Tab1 = {
+							OptionsSetName = "Hierarchy, all classes";
+						};
+						TabCount = 5;
+					};
+				},
+				{
+					LeftSlideOut = {
+						Split0 = {
+							Split0 = {
+								NavContent0 = {
+									bookmark = 4EE6809903E26F11001C1F17;
+									history = (
+										4EE6809803E26F11001C1F17,
+									);
+								};
+								NavCount = 1;
+								NavGeometry0 = {
+									Frame = "{{0, 0}, {751, 547}}";
+									NavBarVisible = YES;
+								};
+								NavSplitVertical = NO;
+							};
+							SplitCount = 1;
+							Tab1 = {
+								Debugger = {
+									Split0 = {
+										SplitCount = 2;
+									};
+									SplitCount = 1;
+									TabCount = 2;
+								};
+								LauncherConfigVersion = 7;
+							};
+							Tab2 = {
+								LauncherConfigVersion = 3;
+								Runner = {
+								};
+							};
+							TabCount = 5;
+						};
+						SplitCount = 1;
+						Tab1 = {
+							OptionsSetName = "Hierarchy, all classes";
+						};
+						TabCount = 5;
+					};
+				},
+			);
+			PBXWorkspaceGeometries = (
+				{
+					ContentSize = "{1056, 730}";
+					LeftSlideOut = {
+						Collapsed = NO;
+						Frame = "{{0, 23}, {1056, 707}}";
+						Split0 = {
+							ActiveTab = 2;
+							ActiveTabName = PBXBuildResultsModule;
+							Collapsed = YES;
+							Frame = "{{0, 0}, {1056, 707}}";
+							Split0 = {
+								Frame = "{{1e+06, 1e+06}, {1056, 0}}";
+							};
+							SplitCount = 1;
+							Tab0 = {
+								Frame = "{{0, 0}, {952, 321}}";
+							};
+							Tab1 = {
+								Debugger = {
+									Collapsed = NO;
+									Frame = "{{0, 0}, {781, 452}}";
+									Split0 = {
+										Frame = "{{0, 24}, {781, 428}}";
+										Split0 = {
+											Frame = "{{0, 0}, {383, 428}}";
+										};
+										Split1 = {
+											DebugVariablesTableConfiguration = (
+												Name,
+												123,
+												Value,
+												85,
+												Summary,
+												155.123,
+											);
+											Frame = "{{392, 0}, {389, 428}}";
+										};
+										SplitCount = 2;
+									};
+									SplitCount = 1;
+									Tab0 = {
+										Frame = "{{0, 0}, {100, 50}}";
+									};
+									Tab1 = {
+										Frame = "{{0, 0}, {100, 50}}";
+									};
+									TabCount = 2;
+									TabsVisible = YES;
+								};
+								Frame = "{{0, 0}, {781, 452}}";
+								LauncherConfigVersion = 7;
+							};
+							Tab2 = {
+								Frame = "{{0, 0}, {685, 215}}";
+								LauncherConfigVersion = 3;
+								Runner = {
+									Frame = "{{0, 0}, {685, 215}}";
+								};
+							};
+							Tab3 = {
+								BuildMessageFrame = "{{0, 0}, {1058, 328}}";
+								BuildTranscriptFrame = "{{0, 337}, {1058, 342}}";
+								BuildTranscriptFrameExpanded = YES;
+								Frame = "{{0, 0}, {1056, 701}}";
+							};
+							Tab4 = {
+								Frame = "{{0, 0}, {612, 295}}";
+							};
+							TabCount = 5;
+							TabsVisible = NO;
+						};
+						SplitCount = 1;
+						Tab0 = {
+							Frame = "{{0, 0}, {300, 533}}";
+							GroupTreeTableConfiguration = (
+								TargetStatusColumn,
+								18,
+								MainColumn,
+								267,
+							);
+						};
+						Tab1 = {
+							ClassesFrame = "{{0, 0}, {280, 398}}";
+							ClassesTreeTableConfiguration = (
+								PBXBookColumnIdentifier,
+								20,
+								PBXClassColumnIdentifier,
+								237,
+							);
+							Frame = "{{0, 0}, {278, 659}}";
+							MembersFrame = "{{0, 407}, {280, 252}}";
+							MembersTreeTableConfiguration = (
+								PBXBookColumnIdentifier,
+								20,
+								PBXMethodColumnIdentifier,
+								236,
+							);
+						};
+						Tab2 = {
+							Frame = "{{0, 0}, {200, 100}}";
+						};
+						Tab3 = {
+							Frame = "{{0, 0}, {200, 100}}";
+							TargetTableConfiguration = (
+								ActiveObject,
+								16,
+								ObjectNames,
+								202.296,
+							);
+						};
+						Tab4 = {
+							BreakpointsTreeTableConfiguration = (
+								breakpointColumn,
+								197,
+								enabledColumn,
+								31,
+							);
+							Frame = "{{0, 0}, {250, 100}}";
+						};
+						TabCount = 5;
+						TabsVisible = NO;
+					};
+					NavBarShownByDefault = YES;
+					StatusViewVisible = YES;
+					Template = F5314676015831810DCA290F;
+					ToolbarVisible = YES;
+					WindowLocation = "{1600, 232}";
+				},
+				{
+					ContentSize = "{1035, 570}";
+					LeftSlideOut = {
+						ActiveTab = 0;
+						ActiveTabName = PBXGroupTreeModule;
+						Collapsed = NO;
+						Frame = "{{0, 23}, {1035, 547}}";
+						Split0 = {
+							Collapsed = NO;
+							Frame = "{{284, 0}, {751, 547}}";
+							Split0 = {
+								Frame = "{{0, 0}, {751, 547}}";
+							};
+							SplitCount = 1;
+							Tab0 = {
+								Frame = "{{0, 0}, {681, 289}}";
+							};
+							Tab1 = {
+								Debugger = {
+									Collapsed = NO;
+									Frame = "{{0, 0}, {681, 150}}";
+									Split0 = {
+										Frame = "{{0, 24}, {681, 126}}";
+										Split0 = {
+											Frame = "{{0, 0}, {333, 126}}";
+										};
+										Split1 = {
+											DebugVariablesTableConfiguration = (
+												Name,
+												123,
+												Value,
+												85,
+												Summary,
+												105.123,
+											);
+											Frame = "{{342, 0}, {339, 126}}";
+										};
+										SplitCount = 2;
+									};
+									SplitCount = 1;
+									Tab0 = {
+										Frame = "{{0, 0}, {100, 50}}";
+									};
+									Tab1 = {
+										Frame = "{{0, 0}, {100, 50}}";
+									};
+									TabCount = 2;
+									TabsVisible = YES;
+								};
+								Frame = "{{0, 0}, {681, 120}}";
+								LauncherConfigVersion = 7;
+							};
+							Tab2 = {
+								Frame = "{{0, 0}, {681, 234}}";
+								LauncherConfigVersion = 3;
+								Runner = {
+									Frame = "{{0, 0}, {681, 234}}";
+								};
+							};
+							Tab3 = {
+								BuildMessageFrame = "{{0, 0}, {683, 163}}";
+								BuildTranscriptFrame = "{{0, 172}, {683, 68}}";
+								BuildTranscriptFrameExpanded = YES;
+								Frame = "{{0, 0}, {681, 238}}";
+							};
+							Tab4 = {
+								Frame = "{{0, 0}, {612, 295}}";
+							};
+							TabCount = 5;
+							TabsVisible = NO;
+						};
+						SplitCount = 1;
+						Tab0 = {
+							Frame = "{{0, 0}, {260, 547}}";
+							GroupTreeTableConfiguration = (
+								SCMStatusColumn,
+								22,
+								TargetStatusColumn,
+								18,
+								MainColumn,
+								205,
+							);
+						};
+						Tab1 = {
+							ClassesFrame = "{{0, 0}, {250, 333}}";
+							ClassesTreeTableConfiguration = (
+								PBXBookColumnIdentifier,
+								20,
+								PBXClassColumnIdentifier,
+								207,
+							);
+							Frame = "{{0, 0}, {248, 554}}";
+							MembersFrame = "{{0, 342}, {250, 212}}";
+							MembersTreeTableConfiguration = (
+								PBXBookColumnIdentifier,
+								20,
+								PBXMethodColumnIdentifier,
+								206,
+							);
+						};
+						Tab2 = {
+							Frame = "{{0, 0}, {217, 554}}";
+						};
+						Tab3 = {
+							Frame = "{{0, 0}, {239, 554}}";
+							TargetTableConfiguration = (
+								ActiveObject,
+								16,
+								ObjectNames,
+								206.296,
+							);
+						};
+						Tab4 = {
+							BreakpointsTreeTableConfiguration = (
+								breakpointColumn,
+								197,
+								enabledColumn,
+								31,
+							);
+							Frame = "{{0, 0}, {250, 554}}";
+						};
+						TabCount = 5;
+						TabsVisible = YES;
+					};
+					NavBarShownByDefault = YES;
+					StatusViewVisible = YES;
+					Template = 64ABBB4501FA494900185B06;
+					ToolbarVisible = YES;
+					WindowLocation = "{531, 184}";
+				},
+			);
+			PBXWorkspaceStateSaveDate = 66615604;
+		};
+		perUserProjectItems = {
+			4E8E400B03B70C86003F204C = 4E8E400B03B70C86003F204C;
+			4E8E400C03B70C86003F204C = 4E8E400C03B70C86003F204C;
+			4E8E400D03B70C86003F204C = 4E8E400D03B70C86003F204C;
+			4E8E400E03B70C86003F204C = 4E8E400E03B70C86003F204C;
+			4E8E400F03B70C86003F204C = 4E8E400F03B70C86003F204C;
+			4E8E401003B70C86003F204C = 4E8E401003B70C86003F204C;
+			4E8E401103B70C86003F204C = 4E8E401103B70C86003F204C;
+			4E8E401203B70C86003F204C = 4E8E401203B70C86003F204C;
+			4E8E401403B70C86003F204C = 4E8E401403B70C86003F204C;
+			4E8E401503B70C86003F204C = 4E8E401503B70C86003F204C;
+			4E8E401603B70C86003F204C = 4E8E401603B70C86003F204C;
+			4E8E401703B70C86003F204C = 4E8E401703B70C86003F204C;
+			4E8E401803B70C86003F204C = 4E8E401803B70C86003F204C;
+			4E8E401903B70C86003F204C = 4E8E401903B70C86003F204C;
+			4E8E401A03B70C86003F204C = 4E8E401A03B70C86003F204C;
+			4E8E401B03B70C86003F204C = 4E8E401B03B70C86003F204C;
+			4E8E401C03B70C86003F204C = 4E8E401C03B70C86003F204C;
+			4EBB1F5003C51675003F204C = 4EBB1F5003C51675003F204C;
+			4EE6809803E26F11001C1F17 = 4EE6809803E26F11001C1F17;
+			4EE6809903E26F11001C1F17 = 4EE6809903E26F11001C1F17;
+			4EE8E84203B6AF0D003F204C = 4EE8E84203B6AF0D003F204C;
+			4EE8E84303B6AF0D003F204C = 4EE8E84303B6AF0D003F204C;
+			4EE8E84403B6AF0D003F204C = 4EE8E84403B6AF0D003F204C;
+			4EE8E84603B6AF0D003F204C = 4EE8E84603B6AF0D003F204C;
+			4EE8E84703B6AF0D003F204C = 4EE8E84703B6AF0D003F204C;
+			4EE8E84803B6AF0D003F204C = 4EE8E84803B6AF0D003F204C;
+			4EE8E84903B6AF0D003F204C = 4EE8E84903B6AF0D003F204C;
+			4EE8E84A03B6AF0D003F204C = 4EE8E84A03B6AF0D003F204C;
+			4EE9BEF203B6B618003F204C = 4EE9BEF203B6B618003F204C;
+			4EE9BEF403B6B618003F204C = 4EE9BEF403B6B618003F204C;
+		};
+		projectwideBuildSettings = {
+		};
+		wantsIndex = 1;
+		wantsSCM = -1;
+	};
+	4EE8D4D703B6A5BA003F204C = {
+		fileEncoding = 30;
+		isa = PBXFileReference;
+		name = hash.c;
+		path = /Users/morrison/brlcad/libbu/hash.c;
+		refType = 0;
+	};
+	4EE8E55B03B6A79C003F204C = {
+		activeExec = 0;
+	};
+	4EE8E84203B6AF0D003F204C = {
+		fRef = 4EE8D25203B6A5B2003F204C;
+		isa = PBXTextBookmark;
+		name = "conf.h: 326";
+		rLen = 0;
+		rLoc = 8492;
+		rType = 0;
+		vrLen = 556;
+		vrLoc = 8381;
+	};
+	4EE8E84303B6AF0D003F204C = {
+		fRef = 4EE8D4D703B6A5BA003F204C;
+		isa = PBXTextBookmark;
+		name = "hash.c: bu_hash_tbl_free";
+		rLen = 0;
+		rLoc = 8309;
+		rType = 0;
+		vrLen = 283;
+		vrLoc = 8161;
+	};
+	4EE8E84403B6AF0D003F204C = {
+		fRef = 4EE8D4D803B6A5BA003F204C;
+		isa = PBXTextBookmark;
+		name = "hist.c: bu_hist_pr_suppress";
+		rLen = 36;
+		rLoc = 4285;
+		rType = 0;
+		vrLen = 458;
+		vrLoc = 4022;
+	};
+	4EE8E84603B6AF0D003F204C = {
+		fRef = 4EE8D4D303B6A5BA003F204C;
+		isa = PBXTextBookmark;
+		name = "convert.c: bu_cv_w_cookie";
+		rLen = 52;
+		rLoc = 14724;
+		rType = 0;
+		vrLen = 256;
+		vrLoc = 779;
+	};
+	4EE8E84703B6AF0D003F204C = {
+		fRef = 4EE8D4D703B6A5BA003F204C;
+		isa = PBXTextBookmark;
+		name = "hash.c: bu_hash_tbl_free";
+		rLen = 0;
+		rLoc = 8387;
+		rType = 0;
+		vrLen = 254;
+		vrLoc = 8236;
+	};
+	4EE8E84803B6AF0D003F204C = {
+		fRef = 4EE8D25203B6A5B2003F204C;
+		isa = PBXTextBookmark;
+		name = "conf.h: 326";
+		rLen = 0;
+		rLoc = 8492;
+		rType = 0;
+		vrLen = 556;
+		vrLoc = 8381;
+	};
+	4EE8E84903B6AF0D003F204C = {
+		fRef = 4EE8D4D703B6A5BA003F204C;
+		isa = PBXTextBookmark;
+		name = "hash.c: bu_hash_tbl_free";
+		rLen = 0;
+		rLoc = 8309;
+		rType = 0;
+		vrLen = 283;
+		vrLoc = 8161;
+	};
+	4EE8E84A03B6AF0D003F204C = {
+		fRef = 4EE8D4D803B6A5BA003F204C;
+		isa = PBXTextBookmark;
+		name = "hist.c: bu_hist_pr_suppress";
+		rLen = 36;
+		rLoc = 4285;
+		rType = 0;
+		vrLen = 458;
+		vrLoc = 4022;
+	};
+	4EE9BEDF03B6B3E9003F204C = {
+		activeExec = 0;
+	};
+	4EE9BEF203B6B618003F204C = {
+		fRef = 4EE8D4D303B6A5BA003F204C;
+		isa = PBXTextBookmark;
+		name = "convert.c: 43";
+		rLen = 0;
+		rLoc = 969;
+		rType = 0;
+		vrLen = 438;
+		vrLoc = 857;
+	};
+	4EE9BEF403B6B618003F204C = {
+		fRef = 4EE8D4D303B6A5BA003F204C;
+		isa = PBXTextBookmark;
+		name = "convert.c: 43";
+		rLen = 0;
+		rLoc = 969;
+		rType = 0;
+		vrLen = 438;
+		vrLoc = 857;
+	};
+}

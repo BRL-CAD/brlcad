@@ -1,0 +1,20 @@
+/*
+ *			patch/Cakefile
+ *
+ *  $Header$
+ */
+#define SRCDIR	patch
+#define PRODUCTS	patch-g rpatch
+#define	SRCSUFF	.c
+#define MANSECTION	1
+
+#include "../Cakefile.defs"
+#include "../Cakefile.prog"
+
+patch-g:	patch-g.o
+	CC LDFLAGS  patch-g.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o patch-g
+
+rpatch:		rpatch.o
+	CC LDFLAGS  rpatch.o -o rpatch
+
+#include "../Cakefile.rules"

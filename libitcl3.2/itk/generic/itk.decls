@@ -26,9 +26,9 @@ interface itk
 declare 0 generic {
     int Itk_Init (Tcl_Interp *interp)
 }
-#declare 1 generic {
-#    int Itk_SafeInit (Tcl_Interp *interp)
-#}
+declare 1 generic {
+    int Itk_SafeInit (Tcl_Interp *interp)
+}
 
 
 #

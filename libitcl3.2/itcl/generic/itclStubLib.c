@@ -57,13 +57,13 @@ ItclIntStubs *itclIntStubsPtr;
  *----------------------------------------------------------------------
  */
 
-char *
+CONST char *
 Itcl_InitStubs (interp, version, exact)
     Tcl_Interp *interp;
     char *version;
     int exact;
 {
-    char *actualVersion;
+    CONST char *actualVersion;
     
     actualVersion = Tcl_PkgRequireEx(interp, "Itcl", version, exact,
         (ClientData *) &itclStubsPtr);

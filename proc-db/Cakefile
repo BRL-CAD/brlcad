@@ -1,0 +1,109 @@
+/*
+ *			proc-db/Cakefile
+ *
+ *  $Header$
+ */
+
+#define SRCDIR	proc-db
+#define PRODUCTS	pyramid molecule clutter kurt room tube teapot \
+			pipetest nmgmodel brickwall wall tea_nmg \
+			pipe terrain sphflake fence bottest sketch \
+			globe pix2g vegitation wdb_example
+
+/* pickett_fence */
+
+#define STATIC_PRODUCTS		\
+	../SRCDIR/mol-data.dat ../SRCDIR/mol-data1.dat \
+	../SRCDIR/mol-data2.dat \
+	../SRCDIR/mol-cube.dat \
+	../SRCDIR/mol-gfa2.dat ../SRCDIR/mol-gfa3.dat ../SRCDIR/pipe_helix.input
+#define	SRCSUFF	.c
+#define MANSECTION	1
+
+#include "../Cakefile.defs"
+#include "../Cakefile.prog"
+
+/* These programs are not really for system-wide installation */
+#define DONT_INSTALL	1
+#undef BINDIR
+#define BINDIR	/tmp
+#define AFTERINSTALL	rm
+
+/* Explicit composition of each product */
+
+sketch:	sketch.o
+	CC LDFLAGS  sketch.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o sketch
+
+bottest:	bottest.o
+	CC LDFLAGS  bottest.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o bottest
+
+pipe:	pipe.o
+	CC LDFLAGS  pipe.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o pipe
+
+wdb_example:	wdb_example.o
+	CC LDFLAGS  wdb_example.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o wdb_example
+
+tube:	tube.o 
+	CC LDFLAGS  tube.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o tube
+
+spltest:	spltest.o 
+	CC LDFLAGS  spltest.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o spltest
+
+room:	room.o common.o
+	CC LDFLAGS  room.o common.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o room
+
+clutter:	clutter.o common.o
+	CC LDFLAGS  clutter.o common.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o clutter
+
+kurt:		kurt.o
+	CC LDFLAGS  kurt.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o kurt
+
+pyramid:	pyramid.o
+	CC LDFLAGS  pyramid.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o pyramid
+
+molecule:	molecule.o 
+	CC LDFLAGS  molecule.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o molecule
+
+teapot:		tea.o
+	CC LDFLAGS tea.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o teapot
+
+terrain: terrain.o
+	CC LDFLAGS terrain.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o terrain
+
+tea_nmg:	tea_nmg.o LIBWDB_DEP LIBRT_DEP LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS tea_nmg.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o tea_nmg
+
+pipetest:	pipetest.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS pipetest.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o pipetest
+
+nmgmodel:	nmgmodel.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS nmgmodel.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o nmgmodel
+
+brickwall:	brickwall.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS brickwall.o LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o brickwall
+
+wall:	wall.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS wall.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o wall
+
+sphflake: sphflake.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS sphflake.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o sphflake
+
+fence:	fence.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS fence.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o fence
+
+globe:	globe.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS globe.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o globe
+
+pix2g:	pix2g.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS pix2g.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o pix2g
+
+pickett_fence: pickett_fence.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS pickett_fence.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o pickett_fence
+
+vegitation:	vegitation.o LIBRT_DEP LIBBN_DEP LIBBU_DEP
+	CC LDFLAGS vegitation.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBES -o vegitation
+
+#include "../Cakefile.rules"
+
+
+

@@ -238,9 +238,16 @@ Itcl_CreateObject(interp, name, cdefn, objc, objv, roPtr)
     if (result != TCL_OK) {
         istate = Itcl_SaveInterpState(interp, result);
 
-        Tcl_DeleteCommandFromToken(interp, newObj->accessCmd);
-        newObj->accessCmd = NULL;
-
+	/* Bug 227824.
+	 * The constructor may destroy the object, possibly indirectly
+	 * through the destruction of the main widget in the iTk
+	 * megawidget it tried to construct. If this happens we must
+	 * not try to destroy the access command a second time.
+	 */
+	if (newObj->accessCmd != (Tcl_Command) NULL) {
+	    Tcl_DeleteCommandFromToken(interp, newObj->accessCmd);
+	    newObj->accessCmd = NULL;
+	}
         result = Itcl_RestoreInterpState(interp, istate);
     }
 
@@ -254,9 +261,15 @@ Itcl_CreateObject(interp, name, cdefn, objc, objv, roPtr)
     newObj->constructed = NULL;
 
     /*
-     *  Add it to the list of all known objects.
+     *  Add it to the list of all known objects. The only
+     *  tricky thing to watch out for is the case where the
+     *  object deleted itself inside its own constructor.
+     *  In that case, we don't want to add the object to
+     *  the list of valid objects. We can determine that
+     *  the object deleted itself by checking to see if
+     *  its accessCmd member is NULL.
      */
-    if (result == TCL_OK) {
+    if (result == TCL_OK && (newObj->accessCmd != NULL))  {
         entry = Tcl_CreateHashEntry(&cdefnPtr->info->objects,
             (char*)newObj->accessCmd, &newEntry);
 
@@ -658,6 +671,16 @@ Itcl_HandleInstance(clientData, interp, objc, objv)
 
     framePtr = &context.frame;
     Itcl_PushStack((ClientData)framePtr, &info->transparentFrames);
+
+    /* Bug 227824
+     * The tcl core will blow up in 'TclLookupVar' if we don't reset
+     * the 'isProcCallFrame'. This happens because without the
+     * callframe refered to by 'framePtr' will be inconsistent
+     * ('isProcCallFrame' set, but 'procPtr' not set).
+     */
+    if (*token == 'i' && strcmp(token,"info") == 0) {
+        framePtr->isProcCallFrame = 0;
+    }
 
     result = Itcl_EvalArgs(interp, objc-1, objv+1);
 

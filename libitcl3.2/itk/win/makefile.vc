@@ -1,305 +1,293 @@
-# Visual C++ 2.x and 4.0 makefile
+######################################################################
+# Visual C++ 5.0+ makefile for [Incr Tcl]
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 # 
-# Copyright (c) 1995-1996 Sun Microsystems, Inc.
-# SCCS: @(#) makefile.vc 1.8 98/07/29 13:14:52
-
-# Does not depend on the presence of any environment variables in
-# order to compile tcl; all needed information is derived from 
-# location of the compiler directories.
-#
-# NOTE: Be sure to modify the "makefile.vc" file in the toplevel directory
-#   for the itcl distribution.  Include the location of your VC++ development
-#   tools and the installation directory.
-
-!include "..\..\makefile.vc"
-
-
-# ROOT    = top of source tree
-#
-# TMPDIR  = location where .obj files should be stored during build
-
-ROOT		= ..
-ITCLDIR     = ..\..\itcl
-
+# Copyright (c) 1993-1998 Lucent Technologies, Inc.
+# RCS: $Id$
 ######################################################################
-# Do not modify below this line
+# All needed information is derived from running vcvars32.bat
+#
+# NOTE: Be sure to modify the "config.vc" file in the toplevel directory
+#   before running this makefile.
+######################################################################
+#  Do not modify this file!  modify config.vc to effect the build.
 ######################################################################
 
-ITKNAMEPREFIX  = itk
-WISHNAMEPREFIX = itkwish
-VERSION	       = 31
-DOTVERSION     = 3.1
-STUBPREFIX = $(ITKNAMEPREFIX)stub
+!include "..\..\rules.vc"
+!include "..\..\config.vc"
+!include "..\..\pkg.vc"
 
 BINROOT		= .
-!IF "$(NODEBUG)" == "1"
-TMPDIR		= $(BINROOT)\Release
-DBGX		=
-!ELSE
-TMPDIR		= $(BINROOT)\Debug
+ROOT		= ..
+ITCLDIR		= ..\..\itcl
+ITKNAMEPREFIX  = itk
+STUBPREFIX = $(ITKNAMEPREFIX)stub
+
+!if $(DEBUG)
+TMPNAME		= Debug
 DBGX		= d
-!ENDIF
-OUTDIR		= $(TMPDIR)
+!else
+TMPNAME		= Release
+DBGX		=
+!endif
 
-ITKDLLNAME	= $(ITKNAMEPREFIX)$(VERSION)$(DBGX).dll
-ITKDLL 		= $(OUTDIR)\$(ITKDLLNAME)
-ITKLIB 		= $(OUTDIR)\$(ITKNAMEPREFIX)$(VERSION)$(DBGX).lib
+TMP_DIR		= $(BINROOT)\$(TMPNAME)
 
-ITKWISH 	= $(OUTDIR)\$(WISHNAMEPREFIX)$(VERSION)$(DBGX).exe
-DUMPEXTS 	= $(TMPDIR)\dumpexts.exe
+!ifndef OUT_DIR
+OUT_DIR		= $(TMP_DIR)
+!endif
 
-ITKSTUBLIBNAME = $(STUBPREFIX)$(VERSION)$(DBGX).lib
-ITKSTUBLIB     = $(OUTDIR)\$(ITKSTUBLIBNAME)
+!if $(STATIC_BUILD)
+ITKOUTNAME	= $(ITKNAMEPREFIX)$(ITK_VERSION)s$(DBGX)
+ITKTARGET	= "$(OUT_DIR)\$(ITKOUTNAME).lib"
+!else
+ITKOUTNAME	= $(ITKNAMEPREFIX)$(ITK_VERSION)$(DBGX)
+ITKIMPLIB	= "$(OUT_DIR)\$(ITKOUTNAME).lib"
+ITKTARGET	= "$(OUT_DIR)\$(ITKOUTNAME).dll"
+!endif
+
+!if $(ISTCLINSTALL)
+TCLSTUBLIB	= "$(TCLROOT)\lib\tclstub$(TCL_VERSION).lib"
+TKSTUBLIB	= "$(TCLROOT)\lib\tkstub$(TCL_VERSION).lib"
+TCLIMPLIB	= "$(TCLROOT)\lib\tcl$(TCL_VERSION)$(DBGX).lib"
+TKIMPLIB	= "$(TCLROOT)\lib\tk$(TCL_VERSION)$(DBGX).lib"
+TCLSH		= "$(TCLROOT)\bin\tclsh$(TCL_VERSION)$(DBGX).exe"
+WISH		= "$(TCLROOT)\bin\wish$(TCL_VERSION)$(DBGX).exe"
+!else
+TCLSTUBLIB	= "$(TCLROOT)\win\Release\tclstub$(TCL_VERSION).lib"
+TKSTUBLIB	= "$(TKROOT)\win\Release\tkstub$(TCL_VERSION).lib"
+TCLIMPLIB	= "$(TCLROOT)\win\$(OUT_DIR)\tcl$(TCL_VERSION)$(DBGX).lib"
+TKIMPLIB	= "$(TKROOT)\win\$(OUT_DIR)\tk$(TCL_VERSION)$(DBGX).lib"
+TCLSH		= "$(TCLROOT)\win\$(OUT_DIR)\tclsh$(TCL_VERSION)$(DBGX).exe"
+WISH		= "$(TCLROOT)\win\$(OUT_DIR)\wish$(TCL_VERSION)$(DBGX).exe"
+!endif
+
+ITCLSTUBLIBNAME	= itclstub$(ITCL_VERSION).lib
+ITCLSTUBLIB	= "$(ITCLDIR)\win\Release\$(ITCLSTUBLIBNAME)"
+
+ITKSTUBLIBNAME = $(STUBPREFIX)$(ITK_VERSION).lib
+ITKSTUBLIB     = "$(OUT_DIR)\$(ITKSTUBLIBNAME)"
 
 
-LIB_INSTALL_DIR	= $(INSTALLDIR)\lib
-BIN_INSTALL_DIR	= $(INSTALLDIR)\bin
-SCRIPT_INSTALL_DIR	= $(INSTALLDIR)\lib\itk$(DOTVERSION)
+LIB_INSTALL_DIR		= $(INSTALLDIR)\lib
+BIN_INSTALL_DIR		= $(INSTALLDIR)\bin
+SCRIPT_INSTALL_DIR	= $(INSTALLDIR)\lib\itk$(ITK_DOTVERSION)
 INCLUDE_INSTALL_DIR	= $(INSTALLDIR)\include
 
-ITKWISHOBJS = \
-	$(TMPDIR)\winMain.obj
-
 ITKOBJS = \
-	$(TMPDIR)\itkStubInit.obj \
-	$(TMPDIR)\itk_archetype.obj \
-	$(TMPDIR)\itk_cmds.obj \
-	$(TMPDIR)\itk_option.obj \
-	$(TMPDIR)\itk_util.obj \
-	$(TMPDIR)\dllEntryPoint.obj
+	$(TMP_DIR)\itk_archetype.obj \
+	$(TMP_DIR)\itk_cmds.obj \
+	$(TMP_DIR)\itk_option.obj \
+	$(TMP_DIR)\itk_util.obj \
+!if $(STATIC_BUILD) == 0
+	$(TMP_DIR)\dllEntryPoint.obj \
+	$(TMP_DIR)\dllResource.obj \
+!endif
+	$(TMP_DIR)\itkStubInit.obj
 
 ITKSTUBOBJS = \
-    $(TMPDIR)\itkStubLib.obj
+    $(TMP_DIR)\itkStubLib.obj
 
-cc32		= $(TOOLS32)\bin\cl.exe
-link32		= $(TOOLS32)\bin\link.exe
-rc32		= $(TOOLS32_rc)\bin\rc.exe
-include32	= -I$(TOOLS32)\include
-lib32       = "$(TOOLS32)\bin\lib.exe"
-
-WINDIR      = $(ROOT)\win
+WINDIR		= $(ROOT)\win
 GENERICDIR	= $(ROOT)\generic
-RCDIR       = $(WINDIR)\rc
-
-TCLBUILDDIR	= $(TCLDIR)\win\$(OUTDIR)
-TCLLIB      = $(TCLBUILDDIR)\tcl81$(DBGX).lib
-TCLSTUBLIB      = $(TCLBUILDDIR)\tclstub81$(DBGX).lib
-TCLDLL      = $(TCLBUILDDIR)\tcl81$(DBGX).dll
-TKBUILDDIR	= $(TKDIR)\win\$(OUTDIR)
-TKLIB       = $(TKBUILDDIR)\tk81$(DBGX).lib
-TKSTUBLIB       = $(TKBUILDDIR)\tkstub81$(DBGX).lib
-TKDLL       = $(TKBUILDDIR)\tk81$(DBGX).dll
-ITCLBUILDDIR = $(ITCLDIR)\win\$(OUTDIR)
-ITCLLIB      = $(ITCLBUILDDIR)\itcl$(VERSION)$(DBGX).lib
-ITCLDLL      = $(ITCLBUILDDIR)\itcl$(VERSION)$(DBGX).dll
-
-ITCLSTUBLIBNAME = itclstub$(VERSION)$(DBGX).lib
-ITCLSTUBLIB     = $(ITCLBUILDDIR)\$(ITCLSTUBLIBNAME)
-
-ITK_INCLUDES	= -I$(WINDIR) -I$(GENERICDIR) \
-			-I$(TCLDIR)\generic -I$(TKDIR)\generic \
-			-I$(TCLDIR)\win -I$(TKDIR)\win \
-			-I$(TKDIR)\xlib -I$(ITCLDIR)\generic
-
-ITK_EXE_DEFINES	= -DBUILD_itk $(DEBUGDEFINES)
-
-ITK_EXE_CFLAGS	= $(cdebug) $(cflags) $(cvarsdll) $(include32) \
-			$(ITK_INCLUDES) $(ITK_EXE_DEFINES) 
-
-ITK_CFLAGS	= $(ITK_EXE_CFLAGS) -DUSE_TK_STUBS -DUSE_TCL_STUBS \
-		         -DUSE_ITCL_STUBS
+RCDIR		= $(ROOT)\win\rc
 
 ######################################################################
 # Link flags
 ######################################################################
 
-!IF "$(NODEBUG)" == "1"
-ldebug = /RELEASE
-!ELSE
-ldebug = -debug:full -debugtype:cv
-!ENDIF
+!if $(DEBUG)
+ldebug = -debug:full -debugtype:cv -pdb:none
+!else
+ldebug = -release -opt:ref
+!endif
 
 # declarations common to all linker options
-lcommon = /NODEFAULTLIB /RELEASE /NOLOGO
+lcommon = -nologo -link50compat -machine:$(MACHINE)
 
-# declarations for use on Intel i386, i486, and Pentium systems
-!IF "$(MACHINE)" == "IX86"
-DLLENTRY = @12
-lflags   = $(lcommon) /MACHINE:$(MACHINE)
-!ELSE
-lflags   = $(lcommon) /MACHINE:$(MACHINE)
-!ENDIF
+ITK_LFLAGS = $(lcommon) -subsystem:windows -dll
 
-conlflags = $(lflags) -subsystem:console -entry:mainCRTStartup
-guilflags = $(lflags) -subsystem:windows -entry:WinMainCRTStartup
-dlllflags = $(lflags) -entry:_DllMainCRTStartup$(DLLENTRY) -dll
-
-!IF "$(MACHINE)" == "PPC"
-libc = libc.lib
-libcdll = crtdll.lib
-!ELSE
-libc = libc.lib oldnames.lib
-libcdll = msvcrt.lib oldnames.lib
-!ENDIF
-
-baselibs   = kernel32.lib $(optlibs) advapi32.lib
-winlibs    = $(baselibs) user32.lib gdi32.lib comdlg32.lib winspool.lib
-guilibs	   = $(libc) $(winlibs)
-
-guilibsdll = $(libcdll) $(winlibs)
+!if $(USE_TCL_STUBS)
+ITK_LLIBS	= $(TCLSTUBLIB) $(TKSTUBLIB) $(ITCLSTUBLIB)
+!else
+ITK_LLIBS	= $(TCLIMPLIB) $(TKIMPLIB) $(ITCLIMPLIB)
+!endif
 
 ######################################################################
 # Compile flags
 ######################################################################
 
-!IF "$(NODEBUG)" == "1"
-!IF "$(MACHINE)" == "ALPHA"
+!if $(DEBUG) == 0
+!if "$(MACHINE)" == "ALPHA"
 # MSVC on Alpha doesn't understand -Ot
-cdebug = -O2i -Gs -GD -DNDEBUG
-!ELSE
-cdebug = -Oti -Gs -GD -DNDEBUG
-!ENDIF
-!ELSE
-cdebug = -Z7 -Od -WX -DDEBUG
-!ENDIF
+cdebug = -O2i
+!else
+cdebug = -Ox
+!endif
+!else
+!if $(MSDEV_VER) < 6
+cdebug = -Zi -Od -WX
+!else
+cdebug = -ZI -Od -WX
+!endif
+!endif
+
+!if $(STATIC_BUILD)
+cdll	=
+!else
+cdll	= -GD
+!endif
 
 # declarations common to all compiler options
-ccommon = -c -W3 -nologo -Fp$(TMPDIR)\ -YX
+ccommon = -nologo -c -W3 -YX -Fp$(TMP_DIR)\ 
 
-!IF "$(MACHINE)" == "IX86"
-cflags = $(ccommon) -D_X86_=1
-!ELSE
-!IF "$(MACHINE)" == "MIPS"
-cflags = $(ccommon) -D_MIPS_=1
-!ELSE
-!IF "$(MACHINE)" == "PPC"
-cflags = $(ccommon) -D_PPC_=1
-!ELSE
-!IF "$(MACHINE)" == "ALPHA"
-cflags = $(ccommon) -D_ALPHA_=1
-!ENDIF
-!ENDIF
-!ENDIF
-!ENDIF
+!if $(STATIC_BUILD) && $(NOMSVCRT)
+crt	= -MT$(DBGX)
+!else
+crt	= -MD$(DBGX)
+!endif
 
-cvars      = -DWIN32 -D_WIN32
-cvarsmt    = $(cvars) -D_MT
-cvarsdll   = $(cvarsmt) -D_DLL
+!if $(ISTCLINSTALL)
+TCL_INCLUDES	= -I"$(TCLROOT)\include"
+TK_INCLUDES	= 
+!else
+TCL_INCLUDES	= -I"$(TCLROOT)\generic"
+TK_INCLUDES	= -I"$(TKROOT)\generic" -I"$(TKROOT)\xlib"
+!endif
 
-!IF "$(NODEBUG)" == "1"
-cvarsdll   = $(cvars) -MD
-!ELSE
-cvarsdll   = $(cvars) -MDd
-!ENDIF
+ITK_INCLUDES	= -I$(WINDIR) -I$(GENERICDIR)
+ITCL_INCLUDES	= -I"$(ITCLDIR)\generic"
+ITK_DEFINES	= -DBUILD_itk -DTCL_THREADS=1
+ITK_EXE_CFLAGS	= $(ccommon) $(cdebug) $(crt) $(cdll) $(ITCL_INCLUDES) $(ITK_INCLUDES) \
+		$(TCL_INCLUDES) $(TK_INCLUDES) $(ITK_DEFINES)
 
-CON_CFLAGS	= $(cdebug) $(cflags) $(cvars) $(include32) -DCONSOLE
+!if $(USE_TCL_STUBS)
+ITK_CFLAGS	= $(ITK_EXE_CFLAGS) -DUSE_TCL_STUBS -DUSE_TK_STUBS -DUSE_ITCL_STUBS
+!else
+ITK_CFLAGS	= $(ITK_EXE_CFLAGS)
+!endif
 
 ######################################################################
 # Project specific targets
 ######################################################################
 
-all:    setup $(ITKWISH) $(ITKDLL) $(ITKSTUBLIB)
+all :     setup $(ITKTARGET) $(ITKSTUBLIB)
+release : setup $(ITKTARGET) $(ITKSTUBLIB)
+
 test:	setup $(ITKDLL) $(ITKSTUBLIB) $(ITKWISH)
 	-@copy $(TCLDLL) $(TMPDIR)
 	-@copy $(TKDLL) $(TMPDIR)
 	-@copy $(ITCLDLL) $(TMPDIR)
 #	$(ITKWISH)
 
-setup:
-	if not exist $(TMPDIR) mkdir $(TMPDIR)
-	if not exist $(OUTDIR) mkdir $(OUTDIR)
+setup :
+	@$(vcvars) > nul
+	@if not exist $(TMP_DIR)\nul mkdir $(TMP_DIR) &\
+		echo Created directory '$(TMP_DIR)'
+	@if not exist $(OUT_DIR)\nul mkdir $(OUT_DIR) &\
+		echo Created directory '$(OUT_DIR)'
 
-$(ITKLIB) : $(ITKDLL) $(ITKSTUBLIB)
-$(ITKDLL) : $(ITKOBJS) $(TMPDIR)\itk.res $(TMPDIR)\itkvc.def
-	set LIB=$(TOOLS32)\lib
-       $(link32) $(ldebug) $(dlllflags) -def:$(TMPDIR)\itkvc.def \
-		-out:$@ $(TMPDIR)\itk.res $(TCLSTUBLIB)  \
-                $(TKSTUBLIB) $(guilibsdll) @<<
-			$(ITKOBJS)
-<<
-
-
-$(ITKSTUBLIB): $(ITKSTUBOBJS)
-    $(lib32) -nologo -out:$@ $(ITKSTUBOBJS)
-
-$(ITKWISH): $(ITKWISHOBJS) $(ITKLIB) $(TMPDIR)\itkwish.res
-	set LIB=$(TOOLS32)\lib
-	$(link32) $(ldebug) $(guilflags) $(TMPDIR)\itkwish.res -out:$@ \
-		$(guilibsdll) $(TCLLIB) $(TKLIB) $(ITCLLIB) $(ITKLIB) \
-		$(ITKWISHOBJS) 
-
-$(TMPDIR)\itkvc.def: $(DUMPEXTS) $(ITKOBJS)
-	$(DUMPEXTS) -o $@ $(ITKDLLNAME) @<<
+$(ITKTARGET): $(ITKOBJS)
+!if $(STATIC_BUILD)
+	$(lib32) -nologo -machine:$(MACHINE) -out:$@ @<<
+!else
+	$(link32) $(ITK_LFLAGS) -out:$@ $(ITK_LLIBS) @<<
+!endif
 		$(ITKOBJS)
 <<
 
-$(DUMPEXTS): $(TCLDIR)\win\winDumpExts.c
-	$(cc32) $(CON_CFLAGS) -Fo$(TMPDIR)\ $?
-	set LIB=$(TOOLS32)\lib
-	$(link32) $(ldebug) $(conlflags) $(guilibs) -out:$@ \
-		$(TMPDIR)\winDumpExts.obj 
+
+!if $(DEBUG) == 0
+$(ITKSTUBLIB) : $(ITKSTUBOBJS)
+	$(lib32) -nologo -out:$@ $(ITKSTUBOBJS)
+!else
+$(ITKSTUBLIB) :
+!endif
 
 install: all
-	if not exist $(INSTALLDIR) mkdir $(INSTALLDIR)
-	if not exist $(BIN_INSTALL_DIR) mkdir $(BIN_INSTALL_DIR)
-	if not exist $(LIB_INSTALL_DIR) mkdir $(LIB_INSTALL_DIR)
-	if not exist $(SCRIPT_INSTALL_DIR) mkdir $(SCRIPT_INSTALL_DIR)
-	if not exist $(INCLUDE_INSTALL_DIR) mkdir $(INCLUDE_INSTALL_DIR)
-	copy $(ITKWISH) "$(BIN_INSTALL_DIR)"
-	copy $(ITKDLL) "$(BIN_INSTALL_DIR)"
+	if not exist "$(INSTALLDIR)" mkdir "$(INSTALLDIR)"
+	if not exist "$(BIN_INSTALL_DIR)" mkdir "$(BIN_INSTALL_DIR)"
+	if not exist "$(LIB_INSTALL_DIR)" mkdir "$(LIB_INSTALL_DIR)"
+	if not exist "$(SCRIPT_INSTALL_DIR)" mkdir "$(SCRIPT_INSTALL_DIR)"
+	if not exist "$(INCLUDE_INSTALL_DIR)" mkdir "$(INCLUDE_INSTALL_DIR)"
+	copy $(ITKTARGET) "$(SCRIPT_INSTALL_DIR)"
+	copy $(ITKSTUBLIB) "$(LIB_INSTALL_DIR)"
 	copy $(ROOT)\generic\itk.h "$(INCLUDE_INSTALL_DIR)"
+	copy $(ROOT)\generic\itkDecls.h "$(INCLUDE_INSTALL_DIR)"
 	copy $(ROOT)\library\*.* "$(SCRIPT_INSTALL_DIR)"
-	copy $(ROOT)\win\*.tcl "$(SCRIPT_INSTALL_DIR)"
+	echo package ifneeded Itk $(ITK_DOTVERSION) [list load [file join $$dir $(ITKOUTNAME).dll] Itk] > \
+		"$(SCRIPT_INSTALL_DIR)\pkgIndex.tcl"
 
-#
+
+######################################################################
 # Regenerate the stubs files.
-#
+######################################################################
+
+!if $(ISTCLINSTALL) == 0
+# Only from the sources of Tcl does genStubs.tcl exist.
 genstubs:
-    $(TCLSH) $(TCLDIR)\tools\genStubs.tcl $(GENERICDIR) \
+    $(TCLSH) $(TCLROOT)\tools\genStubs.tcl $(GENERICDIR) \
         $(GENERICDIR)\itk.decls
+!else
+genstubs:
+    @echo ERROR: Can't rebuild stubs tables without the Tcl source distribution
+!endif
 
-#
+######################################################################
 # Special case object file targets
-#
-
-$(TMPDIR)\winMain.obj: $(ROOT)\win\winMain.c
-	$(cc32) $(ITK_EXE_CFLAGS) -Fo$@ $?
+######################################################################
 
 # The following object is part of the stub library and should not
 # be built as DLL objects but none of the symbols should be exported
 
-$(TMPDIR)\itkStubLib.obj : $(GENERICDIR)\itkStubLib.c
-    $(cc32) -DSTATIC_BUILD $(ITK_CFLAGS) -Fo$@ $?
+$(TMP_DIR)\itkStubLib.obj : $(GENERICDIR)\itkStubLib.c
+    $(cc32) -DSTATIC_BUILD $(ITK_EXE_CFLAGS) -Zl -Fo$@ $?
 
-#
-# Implicit rules
-#
+$(TMP_DIR)\dllResource.obj : $(TMP_DIR)\itk.res
+	$(cvtres32) -nologo -machine:$(MACHINE) -out:$@ $?
 
-{$(GENERICDIR)}.c{$(TMPDIR)}.obj:
-	$(cc32) -DDLL_BUILD $(ITK_CFLAGS) -Fo$(TMPDIR)\ $<
+######################################################################
+# Inference rules.  Use batch-mode when supported.
+######################################################################
 
-{$(WINDIR)}.c{$(TMPDIR)}.obj:
-	$(cc32) -DDLL_BUILD $(ITK_CFLAGS) -Fo$(TMPDIR)\ $<
+!if $(_NMAKE_VER) < 162
+{$(WINDIR)}.c{$(TMP_DIR)}.obj :
+!else
+{$(WINDIR)}.c{$(TMP_DIR)}.obj ::
+!endif
+	$(cc32) -DDLL_BUILD $(ITK_CFLAGS) -Fo$(TMP_DIR)\ @<<
+$<
+<<
 
-{$(ROOT)\unix}.c{$(TMPDIR)}.obj:
-	$(cc32) -DDLL_BUILD $(ITK_CFLAGS) -Fo$(TMPDIR)\ $<
+!if $(_NMAKE_VER) < 162
+{$(GENERICDIR)}.c{$(TMP_DIR)}.obj :
+!else
+{$(GENERICDIR)}.c{$(TMP_DIR)}.obj ::
+!endif
+	$(cc32) -DDLL_BUILD $(ITK_CFLAGS) -Fo$(TMP_DIR)\ @<<
+$<
+<<
 
-{$(RCDIR)}.rc{$(TMPDIR)}.res:
-	$(rc32) -fo $@ -r -i $(GENERICDIR) -i $(TCLDIR)\generic -i $(ITCLDIR)\generic $<
+{$(RCDIR)}.rc{$(TMP_DIR)}.res :
+	$(rc32) -fo $@ -DDEBUG=$(DEBUG) $(ITK_INCLUDES) $(TCL_INCLUDES) $(ITCL_INCLUDES) $(ITK_DEFINES) $<
 
-clean:
-	-@del $(OUTDIR)\*.exp 
-	-@del $(OUTDIR)\*.lib 
-	-@del $(OUTDIR)\*.dll 
-	-@del $(OUTDIR)\*.exe
-	-@del $(OUTDIR)\*.pdb
-	-@del $(TMPDIR)\*.pch
-	-@del $(TMPDIR)\*.obj
-	-@del $(TMPDIR)\*.res
-	-@del $(TMPDIR)\*.def
-	-@del $(TMPDIR)\*.exe
-	-@rmdir $(OUTDIR)
-	-@rmdir $(TMPDIR)
+######################################################################
+# Clean up
+######################################################################
+
+tidy :
+	-del $(TMP_DIR)\*.pch
+	-del $(TMP_DIR)\*.obj
+	-del $(TMP_DIR)\*.res
+
+clean : tidy
+	-del $(OUT_DIR)\*.exp
+	-del $(OUT_DIR)\*.lib
+	-del $(OUT_DIR)\*.dll
+
+hose : clean
+	-rmdir $(OUT_DIR)
+	-rmdir $(TMP_DIR)
+

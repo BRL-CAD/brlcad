@@ -1,0 +1,53 @@
+.\" Copyright (c) 1986, University of Utah
+.TH RLE_PUT_SETUP 3 2/2/87 3
+.SH NAME
+rle_put_setup \- setup to create an RLE file.
+.br
+rle_put_init \- setup for writing to an RLE file.
+.SH SYNOPSIS
+.B
+#include <rle.h>
+.sp
+.B
+void rle_put_setup( the_hdr );
+.br
+.B
+rle_hdr * the_hdr;
+.sp
+.B
+void rle_put_init( the_hdr );
+.br
+.B
+rle_hdr * the_hdr;
+.SH DESCRIPTION
+
+.I Rle_put_setup
+is called to initialize the output and write the image header of
+an
+.IR RLE (5)
+image.
+The argument is a pointer to a 
+.IR rle_hdr (3)
+structure, which has been filled in with appropriate values for the
+image being saved.
+
+.I Rle_put_init
+is called to initialize the header data structure for writing output to an
+.I RLE
+file.
+The argument is a pointer to a 
+.IR rle_hdr (3)
+structure, which has been filled in with appropriate values for the
+image being saved.  The "private" elements of the header will be
+initialized.  The header is not written to the file.
+This function could be useful for appending image data
+to an existing file.  The new data should have the same number
+channels, the same width, etc. as the existing image.
+.SH SEE ALSO
+.IR rle_hdr (3),
+.IR rle_putrow (3),
+.IR rle_putraw (3),
+.IR librle (3),
+.IR RLE (5).
+.SH AUTHOR
+Spencer W. Thomas, Todd Fuqua

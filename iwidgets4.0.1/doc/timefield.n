@@ -1,0 +1,186 @@
+'\"
+'\" Copyright (c) 1997 DSC Technologies Corporation
+'\"
+'\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\"
+'\" @(#) timefield.n 1.0 97/04/30 16:04:44
+'\" 
+.so man.macros
+.HS iwidgets::timefield iwid
+.BS
+'\" Note:  do not modify the .SH NAME line immediately below!
+.SH NAME
+iwidgets::timefield \- Create and manipulate a time field widget
+.SH SYNOPSIS
+\fBiwidgets::timefield\fI \fIpathName \fR?\fIoptions\fR?
+.SH "INHERITANCE"
+itk::Widget <- iwidgets::LabeledWidget <- iwidgets::Timefield
+.SH "STANDARD OPTIONS"
+.LP
+.nf
+.ta 4c 8c 12c
+\fB
+background  borderWidth     cursor              exportSelection
+foreground  highlightColor  highlightThickness  insertBackground
+justify     relief\fR
+.fi
+.LP
+See the "options" manual entry for details on the standard options.
+.SH "INHERITED OPTIONS"
+.LP
+.nf
+.ta 4c 8c 12c
+\fBdisabledForeground\fR	\fBlabelBitmap\fR	\fBlabelFont\fR	\fBlabelImage\fR
+\fBlabelMargin\fR	\fBlabelPos\fR	\fBlabelText\fR	\fBlabelVariable\fR
+\fBstate\fR	\fBsticky\fR
+.fi
+.LP
+See the "labeledwidget" class manual entry for details on the 
+inherited options.
+.SH "WIDGET-SPECIFIC OPTIONS"
+.LP
+.nf
+Name:	\fBchildSitePos\fR
+Class:	\fBPosition\fR
+Command-Line Switch:	\fB-childsitepos\fR
+.fi
+.IP
+Specifies the position of the child site in the time field: \fBn\fR, 
+\fBs\fR, \fBe\fR, or \fBw\fR.  The default is e.
+.LP
+.nf
+Name:	\fBcommand\fR
+Class:	\fBCommand\fR
+Command-Line Switch:	\fB-command\fR
+.fi
+.IP
+Specifies a Tcl command to be executed upon detection of a Return key 
+press event.
+.LP
+.nf
+Name:	\fBgmt\fR
+Class:	\fBGmt\fR
+Command-Line Switch:	\fB-gmt\fR
+.fi
+.IP
+Determines whether the time is calculated relative to Greenwich
+Mean Time. Accepts a boolean value. The default is no.
+.fi
+.IP
+Name:	\fBstate\fR
+Class:	\fBState\fR
+Command-Line Switch:	\fB-state\fR
+.fi
+.IP
+Specifies one of two states for the timefield: \fBnormal\fR or \fBdisabled\fR.
+If the timefield is disabled then input is not accepted.  The default is
+normal.
+.LP
+.nf
+Name:	\fBtextBackground\fR
+Class:	\fBBackground\fR
+Command-Line Switch:	\fB-textbackground\fR
+.fi
+.IP
+Background color for inside textual portion of the entry field.  The value
+may be given in any of the forms acceptable to \fBTk_GetColor\fR.
+.LP
+.nf
+Name:	\fBtextFont\fR
+Class:	\fBFont\fR
+Command-Line Switch:	\fB-textfont\fR
+.fi
+.IP
+Name of font to use for display of text in timefield.  The value
+may be given in any of the forms acceptable to \fBTk_GetFont\fR.
+.LP
+.BE
+
+.SH DESCRIPTION
+.PP
+The \fBiwidgets::timefield\fR command creates an enhanced text entry widget for
+the purpose of time entry with various degrees of built-in intelligence.
+.DE
+
+.SH "METHODS"
+.PP
+The \fBiwidgets::timefield\fR command creates a new Tcl command whose
+name is \fIpathName\fR.  This
+command may be used to invoke various
+operations on the widget.  It has the following general form:
+.DS C
+\fIpathName option \fR?\fIarg arg ...\fR?
+.DE
+\fIOption\fR and the \fIarg\fRs
+determine the exact behavior of the command.  The following
+commands are possible for timefield widgets:
+.SH "WIDGET-SPECIFIC METHODS"
+.TP
+\fIpathName \fBcget\fR \fIoption\fR
+Returns the current value of the configuration option given
+by \fIoption\fR.
+\fIOption\fR may have any of the values accepted by the \fBiwidgets::timefield\fR
+command.
+.TP
+\fIpathName\fR \fBconfigure\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?
+Query or modify the configuration options of the widget.
+If no \fIoption\fR is specified, returns a list describing all of
+the available options for \fIpathName\fR (see \fBTk_ConfigureInfo\fR for
+information on the format of this list).  If \fIoption\fR is specified
+with no \fIvalue\fR, then the command returns a list describing the
+one named option (this list will be identical to the corresponding
+sublist of the value returned if no \fIoption\fR is specified).  If
+one or more \fIoption\-value\fR pairs are specified, then the command
+modifies the given widget option(s) to have the given value(s);  in
+this case the command returns an empty string.
+\fIOption\fR may have any of the values accepted by the \fBiwidgets::timefield\fR
+command.
+.TP
+\fIpathName \fBget\fR ?\fBformat\fR?
+Returns the current contents of the timefield in a format of 
+string or as an integer clock value using the \fB-string\fR and \fB-clicks\fR
+format options respectively.  The default is by string.  Reference the 
+clock command for more information on obtaining times and their 
+formats.
+.TP
+\fIpathName \fBisvalid\fR
+Returns a boolean indication of the validity of the currently
+displayed time value.  For example, 12:59:59 is valid whereas
+25:59:59 is invalid.
+.TP
+\fIpathName \fBshow\fR \fItime\fR
+Changes the currently displayed time to be that of the time 
+argument.  The time may be specified either as a string, an
+integer clock value or the keyword "now" (the default). 
+Reference the clock command for more information on obtaining
+times and their formats.
+
+.SH "COMPONENTS"
+.LP
+.nf
+Name:	\fBtime\fR
+Class:	\fBEntry\fR
+.fi
+.IP
+The time component provides the entry field for time input and display.
+See the "entry" widget manual entry for details on the time component item.
+.fi
+
+.SH EXAMPLE
+.DS
+ package require Iwidgets 4.0
+ proc returnCmd {} {
+   puts [.tf get]
+ }
+
+ iwidgets::timefield .tf -command returnCmd
+ pack .tf -fill x -expand yes -padx 10 -pady 10
+.DE
+.SH AUTHOR
+John A. Tucker
+.DE
+Mark L. Ulferts
+.LP
+.SH KEYWORDS
+timefield, widget

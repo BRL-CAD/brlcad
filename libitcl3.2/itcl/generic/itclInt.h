@@ -238,6 +238,13 @@ typedef struct ItclContext {
     Var localStorage[20];     /* default storage for compiled locals */
 } ItclContext;
 
+/*
+ *  Compatibility flags.  Used to support small "hacks".  These are stored
+ *  in the global variable named itclCompatFlags.
+ */
+#define ITCL_COMPAT_USECMDFLAGS 0x0001	/* Tcl8.4a1 introduced a different Command
+					 * structure, and we need to adapt
+					 * dynamically */
 
 #include "itclIntDecls.h"
 

@@ -1,0 +1,221 @@
+.\" Copyright (c) 1986, University of Utah
+.\" Template man page.  Taken from wtm's page for getcx3d
+.TH RLELDMAP 1 "Nov 12, 1986" 1
+.UC 4 
+.SH NAME
+rleldmap \- Load a new color map into an RLE file
+.SH SYNOPSIS
+.B rleldmap
+[
+.B \-{ab}
+] [
+.B \-n
+.I nchan length
+] [
+.B \-s
+.I bits
+] [
+.B \-l
+[
+.I factor
+] ] [
+.B \-g
+.I gamma
+] [
+.B \-{tf}
+.I file
+] [
+.B \-m
+.I files ...
+] [
+.B \-r
+.I rlefile
+] [
+.B \-o
+.I outfile
+] [
+.I infile
+]
+.SH DESCRIPTION
+The program will load a specified color map into an
+.IR RLE (5)
+file.  The color map may be computed by 
+.I rleldmap
+or loaded from a file in one of several formats.  The input is read from
+.I infile
+or stdin if no file is given, and the result is written to
+.I outfile
+or stdout.  
+
+The following terms are used in the description of the program and its options:
+.TP
+input map:
+A color map already in the input RLE file.
+.TP
+applied map:
+The color map specified by the arguments to
+.IR rleldmap .
+This map will be applied to or will replace the input map to produce
+the output map.
+.TP
+output map:
+Unless
+.B \-a
+or
+.B \-b
+is specified, this is equal to the applied map.  Otherwise it will be
+the composition of the input and applied maps.
+.TP
+map composition:
+If the applied map is composed 
+.I after
+the input map, then the output map will be 
+.IR "applied map" [ "input map" ].
+Composing the applied map before the input map produces an output map
+equal to
+.IR "input map" [ "applied map" ].
+The maps being composed must either have the same number of channels,
+or one of them must have only one channel.  If an entry in the map
+being used as a subscript is larger than the length of the map being
+subscripted, the output value is equal to the subscript value.
+The output map will be the same
+length as the subscript map and will have the number of channels that
+is the larger of the two.  If the input map is used as a subscript, it
+will be downshifted the correct number of bits to serve as a subscript
+for the applied map (since the color map in an
+.IR RLE (5)
+file is always stored left justified in 16 bit words).  This also
+applies to the applied map if it is taken from an
+.IR RLE (5)
+file 
+.RB ( \-r 
+option below).  Note that if there is no input map, that the result of
+composition will be exactly the applied map.
+.TP
+nchan:
+The number of separate lookup tables (channels) making up the color
+map.  This defaults to 3.
+.TP
+length:
+The number of entries in each channel of the color map.  The default
+is 256.
+.TP
+bits:
+The size of each color map entry in bits.  The default value is the
+log base 2 of the length.
+.TP
+range:
+The maximum value of a color map entry, equal to 2**bits \- 1.
+.SH OPTIONS
+.TP
+.B \-a
+Compose the applied map 
+.I after
+the input map.
+.TP
+.B \-b
+Compose the applied map
+.I before
+the input map.  Only one of
+.B \-a
+or
+.B \-b
+may be specified.
+.TP
+.BI \-n " nchan length"
+Specify the size of the applied map if it is not 3x256.  The
+.I length
+should be a power of two, and will be rounded up if necessary.  If
+applying the map
+.I nchan
+must be either 1 or equal to the number of channels in the input map.
+It may have any value if the input map has one channel or is not
+present.
+.TP
+.BI \-s " bits"
+Specify the size in bits of the color map entries.  I.e., only the top
+.I bits
+bits of each color map entry will be set.
+
+Exactly one of the options
+.BR \-l ,
+.BR \-g ,
+.BR \-t ,
+.BR \-f ,
+.BR \-m ,
+or
+.BR \-r ,
+must be specified.
+.TP
+.BI \-l " factor"
+Generate a linear applied map with the 
+.I nth
+entry equal to
+.br
+.IR "		range * min(1.0, factor*(n/(length\-1)))" .
+.br
+.I Factor
+defaults to 1.0 if not specified.  Negative values of
+.I factor
+will generate a map with values equal to
+.br
+.IR "		range * max(0.0, 1.0 \- factor*(n/(length\-1)))" .
+.TP
+.BI \-g " gamma"
+Generate an applied map to compensate for a display
+with the given gamma.  The 
+.I nth
+entry is equal to
+.br
+.IR "		range * (n/(length\-1))**(1/gamma)" .
+.TP
+.BI \-t " file"
+Read color map entries from a table in a text file.  The values for each
+channel of a particular entry follow each other in the file.  Thus,
+for an RGB color map, the file would look like:
+.br
+		red0	green0	blue0
+.br
+		red1	green1	blue1
+.br
+		...	...	...
+.br
+Line breaks in the input file are irrelevant.
+.TP
+.BI \-f " file"
+Reads the applied map from a text file, with all the entries for each
+channel following each other.  Thus, the input file above would appear
+as
+.br
+		red0 red1 red2 ... (\fIlength\fP values)
+.br
+		green0 green1 green2 ... (\fIlength\fP values)
+.br
+		blue0 blue1 blue2 ... (\fIlength\fP values)
+.br
+As above, line breaks are irrelevant.
+.TP
+.BI \-m " files ..."
+Read the color map for each channel from a separate file.  The number
+of files specified must equal the number of channels in the applied
+map.  (Note: the list of files must be followed by another flag
+argument or by the null flag
+.B \-\^\-
+to separate it from the
+.I infile
+specification.
+.TP
+.BI \-o " outfile"
+The output will be written to the file
+.I outfile
+if this option is specified.  Otherwise the output will go to \fIstdout\fP.
+.TP
+.I infile
+The input will be taken from this file if specified.  Otherwise, the
+input will be read from \fIstdin\fP.
+.SH SEE ALSO
+.IR applymap (1),
+.IR urt (1),
+.IR RLE (5).
+.SH AUTHOR
+Spencer W. Thomas, University of Utah

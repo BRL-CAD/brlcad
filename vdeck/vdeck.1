@@ -1,0 +1,76 @@
+.TH VDECK 1V VMB
+'\"	last edit:	86/03/26	D A Gwyn
+'\"	SCCS ID:	@(#)vdeck.1	2.4
+.SH NAME
+vdeck \- generate COM-GEOM decks from a GED file
+.SH SYNOPSIS
+.B vdeck
+.RB file .vg
+.SH DESCRIPTION
+A list of
+objects
+to be converted are selected interactively from the table of contents.
+String matching operators (wild cards) like those used to specify file
+or directory names in
+.IR sh\^ (1)
+are provided for this purpose, as well as to search for names in the
+table of contents.
+.P
+One or more COM-GEOM decks can be output.
+Each deck consists of three
+files:
+the solid,
+region,
+and region-id
+tables.
+These can be combined with
+.IR cat\^ (1).
+.P
+A menu of the commands and their usage is available by typing
+.B ?
+to
+the program.
+.SH WARNING
+.I Vdeck\^
+is intended for new-style
+.I mged\^
+databases only.
+Files produced by older versions of GED
+may be incompatible with
+.IR vdeck\^ .
+.SH FILES
+.PD 0
+.TP "\w'/tmp/reg???   'u"
+solids
+default solid table output
+.TP
+regions
+default region table output
+.TP
+region_ids
+default region
+.SM ID
+table output
+.TP
+*.st
+unique solid table output
+.TP
+*.rt
+unique region table output
+.TP
+*.id
+unique region
+.SM ID
+table output
+.TP
+/tmp/dis???
+temporary
+.TP
+/tmp/reg???
+temporary
+.SH "SEE ALSO"
+cat(1), gedplot(1V), mged(1B).
+.SH AUTHORS
+Gary S. Moss, BRL/VLD-VMB
+.br
+Keith Applin, BRL/VLD-TAB
