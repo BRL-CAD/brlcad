@@ -11,7 +11,7 @@
  *			probably in range 0 > flicker > 10
  *
  *	stretch=dist	Specifies a scaling of the exponential stretch of the
- *			flames.  flame stretch = e^(pos[Z} * -stretch)
+ *			flames.  flame stretch = e^(pos[Z] * -stretch)
  *
  *
  *  Standard fbm parameters:
@@ -30,11 +30,7 @@
  *			"what piece of noise space maps to shader origin"
  *
  *  Usage:
- *	mged> mater fire.r
- * 	Material?  ('del' to delete, CR to skip) fire
- * 	Parameter string? ('del' to delete, CR to skip) st=3 f=2.173
- * 	Color R G B (0..255)? ('del' to delete, CR to skip)
- *	Inheritance (0|1)? (CR to skip)
+ *	mged> shader flame.r {fire {st 1.25}}
  *
  *	Note:  The fire shader provides its own color.  It does not read any
  *		color information from the region definition.
