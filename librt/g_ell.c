@@ -692,6 +692,7 @@ struct vert_strip {
 	int		nverts_per_strip;
 	int		nverts;
 	struct vertex	**vp;
+	vect_t		*norms;
 	int		nfaces;
 	struct faceuse	**fu;
 };
@@ -908,10 +909,12 @@ struct rt_tol		*tol;
 		strips[i].nfaces =
 			strips[nstrips-1-i].nfaces = (2 * i + 1)*4;
 	}
-	/* All strips have vertices */
+	/* All strips have vertices and normals */
 	for( i=0; i<nstrips; i++ )  {
 		strips[i].vp = (struct vertex **)rt_calloc( strips[i].nverts,
 			sizeof(struct vertex *), "strip vertex[]" );
+		strips[i].norms = (vect_t *)rt_calloc( strips[i].nverts,
+			sizeof( vect_t ), "strip normals[]" );
 	}
 	/* All strips have faces, except for the equator */
 	for( i=0; i < nstrips; i++ )  {
@@ -1017,6 +1020,9 @@ struct rt_tol		*tol;
 			VADD2( model_pt, model_pt, state.eip->v );
 			/* Associate vertex geometry */
 			nmg_vertex_gv( strips[i].vp[j], model_pt );
+
+			/* Convert sphere normal to ellipsoid normal */
+			MAT4X3VEC( strips[i].norms[j], state.invRoS, sphere_pt );
 		}
 	}
 
@@ -1028,13 +1034,31 @@ struct rt_tol		*tol;
 		}
 	}
 
+	/* Associate normals with vertexuses */
+	for( i=0; i < nstrips; i++ )
+	{
+		for( j=0; j < strips[i].nverts; j++ )
+		{
+			struct vertexuse *vu;
+
+			NMG_CK_VERTEX( strips[i].vp[j] );
+
+			for( RT_LIST_FOR( vu , vertexuse , &strips[i].vp[j]->vu_hd ) )
+				nmg_vertexuse_nv( vu , strips[i].norms[j] );
+		}
+	}
+
+	/* Mark the edges as real */
+	(void)nmg_mark_edges_real( &state.s->l );
+
 	/* Compute "geometry" for region and shell */
 	nmg_region_a( *r, tol );
 
 	/* Release memory */
-	/* All strips have vertices */
+	/* All strips have vertices and normals */
 	for( i=0; i<nstrips; i++ )  {
 		rt_free( (char *)strips[i].vp, "strip vertex[]" );
+		rt_free( (char *)strips[i].norms, "strip norms[]" );
 	}
 	/* All strips have faces, except for equator */
 	for( i=0; i < nstrips; i++ )  {
@@ -1045,9 +1069,10 @@ struct rt_tol		*tol;
 	return(0);
 fail:
 	/* Release memory */
-	/* All strips have vertices */
+	/* All strips have vertices and normals */
 	for( i=0; i<nstrips; i++ )  {
 		rt_free( (char *)strips[i].vp, "strip vertex[]" );
+		rt_free( (char *)strips[i].norms, "strip norms[]" );
 	}
 	/* All strips have faces, except for equator */
 	for( i=0; i < nstrips; i++ )  {
