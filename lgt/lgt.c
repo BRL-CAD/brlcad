@@ -30,7 +30,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <sys/param.h>
 #endif
 #define MAX_CPU_TICKS	(200000*HZ) /* Max ticks = seconds * ticks/sec.	*/
-#define NICENESS	10
+#define NICENESS	-6 /* should bring it down from 16 to 10 */
 #endif
 int	ready_Output_Device();
 void	close_Output_Device();
@@ -76,14 +76,21 @@ char	*argv[];
 	RES_INIT( &rt_g.res_results );
 
 #if defined( CRAY )
-	nicem( C_PROC, 0, NICENESS );
-	rt_log( "Program niced to %d.\n", NICENESS );
-	limit( C_PROC, 0, L_CPU, MAX_CPU_TICKS );
-	rt_log(	"CPU limit set to %d ticks (at %d/sec that's %d seconds).\n",
-		MAX_CPU_TICKS,
-		HZ,
-		MAX_CPU_TICKS/HZ
+	{	int	newnice;
+		long	oldlimit;
+		long	newlimit;
+	if( (newnice = nicem( C_PROC, 0, NICENESS )) == -1 )
+		perror( "nicem" );
+	else
+		rt_log( "Program niced to %d.\n", newnice - 20 );
+	oldlimit = limit( C_PROC, 0, L_CPU, MAX_CPU_TICKS );
+	newlimit = limit( C_PROC, 0, L_CPU, -1 );
+	rt_log(	"CPU time limit: was %d seconds, now set to %d seconds.\n",
+		oldlimit/HZ,
+		newlimit/HZ
 		);
+	rt_log(	"Memory limit set to %dKW.\n", limit( C_PROC, 0, L_MEM, 0 ) );
+	}
 #endif
 	
 	init_Lgts();
