@@ -760,8 +760,14 @@ int		ncpus;
 
 		if( num_attrs == 0 )
 			bu_avs_init( &tree_state.ts_attrs, 1, "tree_state" );
-		bu_avs_add( &tree_state.ts_attrs, "ORCA_Comp", (char *)NULL );
 
+		/* ifdef this out for now, it is only using memory.
+		 * perhaps a better way of initiating ORCA stuff
+		 * can be found.
+		 */
+#if 0
+		bu_avs_add( &tree_state.ts_attrs, "ORCA_Comp", (char *)NULL );
+#endif
 		i = db_walk_tree( rtip->rti_dbip, argc, argv, ncpus,
 				  &tree_state,
 				  rt_gettree_region_start,
