@@ -930,11 +930,13 @@ rt_tor_class()
  *
  */
 int
-rt_tor_plot( rp, mat, vhead, dp )
-union record	*rp;
-register mat_t	mat;
-struct vlhead	*vhead;
-struct directory *dp;
+rt_tor_plot( rp, mat, vhead, dp, abs_tol, rel_tol )
+union record		*rp;
+register mat_t		mat;
+struct vlhead		*vhead;
+struct directory	 *dp;
+double			abs_tol;
+double			rel_tol;
 {
 	fastf_t		alpha;
 	fastf_t		beta;
@@ -950,12 +952,45 @@ struct directory *dp;
 	vect_t		G;
 	vect_t		radius;
 	vect_t		edge;
+	fastf_t		r1;		/* |A| */
+	fastf_t		r2;		/* |H| */
 
 	if( rt_tor_import( &ti, rp, mat ) < 0 )
 		return(-1);		/* BAD */
 
-	dist_to_rim = MAGNITUDE(ti.h)/MAGNITUDE(ti.a);
+	r1 = MAGNITUDE(ti.a);
+	r2 = MAGNITUDE(ti.h);
 
+	if( rel_tol <= 0.0 || rel_tol >= 1.0 )  {
+		rel_tol = 0.0;		/* none */
+	} else {
+		/* Convert relative tolerance to absolute tolerance
+		 * by scaling w.r.t. the torus diameter.
+		 */
+		rel_tol *= 2*(r1+r2);
+	}
+	/* Take tighter of two (absolute) tolerances */
+	if( abs_tol <= 0.0 )  {
+		/* No absolute tolerance given */
+		if( rel_tol <= 0.0 )  {
+			/* User has no tolerance for this kind of drink! */
+			nw = 8;
+			nlen = 16;
+		} else {
+			/* Use the absolute-ized relative tolerance */
+			nlen = rt_num_circular_segments( rel_tol, r1 );
+			nw = rt_num_circular_segments( rel_tol, r2 );
+		}
+	} else {
+		/* Absolute tolerance was given */
+		if( rel_tol > 0.0 && rel_tol < abs_tol )
+			abs_tol = rel_tol;
+		nlen = rt_num_circular_segments( abs_tol, r1 );
+		nw = rt_num_circular_segments( abs_tol, r2 );
+	}
+
+	/* Compute the points on the surface of the torus */
+	dist_to_rim = r2/r1;
 	pts = (fastf_t *)rt_malloc( nw * nlen * sizeof(point_t),
 		"rt_tor_plot pts[]" );
 
@@ -1047,7 +1082,6 @@ double			rel_tol;
 	r1 = MAGNITUDE(ti.a);
 	r2 = MAGNITUDE(ti.h);
 
-rt_log("tor abs=%g, rel=%g\n", abs_tol, rel_tol );
 	if( rel_tol <= 0.0 || rel_tol >= 1.0 )  {
 		rel_tol = 0.0;		/* none */
 	} else {
@@ -1075,8 +1109,6 @@ rt_log("tor abs=%g, rel=%g\n", abs_tol, rel_tol );
 		nlen = rt_num_circular_segments( abs_tol, r1 );
 		nw = rt_num_circular_segments( abs_tol, r2 );
 	}
-rt_log("tor abs=%g, abs_rel=%g\n", abs_tol, rel_tol );
-rt_log("tor nlen=%d, nw=%d\n", nlen, nw);
 
 	/* Compute the points on the surface of the torus */
 	dist_to_rim = r2/r1;
