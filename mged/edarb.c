@@ -424,7 +424,7 @@ struct solidrec *sp;
 	VMOVE( b, &sp->s_values[use2*3] );
 	VMOVE( c, &sp->s_values[use3*3] );
 
-	return( rt_mk_plane_3pts( es_peqn[loc], a, b, c ) );
+	return( rt_mk_plane_3pts( es_peqn[loc], a, b, c, 0.000001 ) );
 }
 
 /*	INTERSECT:
