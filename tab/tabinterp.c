@@ -626,7 +626,7 @@ fastf_t			*times;
 	register int	t;
 
 	if(chp->c_ilen<3) {
-		fprintf(stderr,"spline: need at least 3 points\n");
+		fprintf(stderr,"spline(%s): need at least 3 points\n", chp->c_itag);
 		goto bad;
 	}
 
@@ -637,7 +637,7 @@ fastf_t			*times;
 		linear_interpolate( chp, times );
 
 	if( chp->c_periodic && chp->c_ival[0] != chp->c_ival[chp->c_ilen-1] )  {
-		fprintf(stderr,"spline: endpoints don't match, replacing final data value\n");
+		fprintf(stderr,"spline(%s): endpoints don't match, replacing final data value\n", chp->c_itag);
 		chp->c_ival[chp->c_ilen-1] = chp->c_ival[0];
 	}
 
