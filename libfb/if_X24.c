@@ -2969,6 +2969,17 @@ printf("blit: xi_flags & FLG_VMASK = x%x\n", xi->xi_flags & FLG_VMASK );
 		for (y = y1; y <= y2; y++) {
 			unsigned char *line_irgb;
 			unsigned char *p;
+			unsigned char *holdit;
+			int pyht;
+
+			/* Calculate the number of lines needed */
+			if (y == y1) {
+				pyht = y1ht;
+			} else if (y==y2) {
+				pyht = y2ht;
+			} else {
+				pyht = ifp->if_yzoom-1;
+			}
 
 			/* Save pointer to start of line */
 
@@ -3046,8 +3057,22 @@ printf("blit: xi_flags & FLG_VMASK = x%x\n", xi->xi_flags & FLG_VMASK );
 				}
 				line_irgb += sizeof (RGBpixel);
 			}
-			irgb += xi->xi_iwidth * sizeof(RGBpixel);
+			/*
+			 * Remember where we put all those bytes.
+			 */
+			holdit = (unsigned char *)opix;
 			opix -= xi->xi_image->bytes_per_line;
+			while (pyht--) {
+				unsigned char *src;
+				p = (unsigned char *)opix;
+				src = (unsigned char *)holdit;
+				for (x=xi->xi_image->bytes_per_line;x>=0;x--) {
+					*p++ = *src++;
+				}
+				opix -= xi->xi_image->bytes_per_line;
+			}
+
+			irgb += xi->xi_iwidth * sizeof(RGBpixel);
 		}
 		break;
 	}
