@@ -44,6 +44,10 @@
  *
  *  $Header$
  */
+
+#include <sys/time.h>
+#include <time.h>
+
 #if USE_PROTOTYPES
 #	define	MGED_EXTERN(type_and_name,args)	extern type_and_name args
 #	define	MGED_ARGS(args)			args
@@ -316,6 +320,23 @@ The in-memory table of contents may not match the status of the on-disk\n\
 database.  The on-disk database should still be intact.  For safety,\n\
 you should exit MGED now, and resolve the I/O problem, before continuing.\n")
 
+struct mged_hist {
+  struct rt_list l;
+  struct rt_vls command;
+  struct timeval start, finish;
+  int status;
+};
+
+/* variables related to the command window(s) */
+struct cmd_list {
+  struct rt_list l;
+  struct dm_list *aim;        /* the drawing window being aimed at */
+  struct mged_hist *cur_hist;
+  char name[32];
+};
+
+extern struct cmd_list head_cmd_list;
+extern struct cmd_list *curr_cmd_list;
 
 /* mged command variables for affecting the user environment */
 struct _mged_variables {
