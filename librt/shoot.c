@@ -33,7 +33,7 @@
 static char RCSshoot[] = "@(#)$Header$ (BRL)";
 #endif
 
-char rt_CopyRight_Notice[] = "@(#) Copyright (C) 1985,1991 by the United States Army";
+char rt_CopyRight_Notice[] = "@(#) Copyright (C) 1985,1991,2000 by the United States Army";
 
 #include "conf.h"
 
