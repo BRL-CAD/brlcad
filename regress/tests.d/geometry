@@ -99,8 +99,8 @@ for PRIM in $PRIMITIVES ; do
     # 
     # in args =>
     #
-    set eto_IN_ARGS ""
-    set eto_DB_ARGS ""
+    set eto_IN_ARGS "0 0 0 0 0 1 8 0 0 4 1 "
+    set eto_DB_ARGS "eto V {0 0 0} N {0 0 1} C {0 0 4} r 8 r_d 1"
 
     #
     # (extrude) Arguments
