@@ -66,15 +66,16 @@ Options:\n\
  -s #		Square grid size in pixels (default 512)\n\
  -w # -n #	Grid size width and height in pixels\n\
  -V #		View (pixel) aspect ratio (width/height)\n\
- -a #		Azimuth in degrees\n\
- -e #		Elevation in degrees\n\
- -M		Read matrix, cmds on stdin\n\
- -N #		Set NMG debug flags\n\
- -o model.pix	Specify output file, .pix format (default=fb)\n\
- -x #		Set librt debug flags\n\
- -X #		Set rt debug flags\n\
- -p #		Perspective viewing, in degrees side to side\n\
+ -a #		Azimuth in deg\n\
+ -e #		Elevation in deg\n\
+ -M		Read matrix+cmds on stdin\n\
+ -N #		NMG debug flags\n\
+ -o model.pix	Output file, .pix format (default=fb)\n\
+ -x #		librt debug flags\n\
+ -X #		rt debug flags\n\
+ -p #		Perspective, degrees side to side\n\
  -P #		Set number of processors\n\
+ -T #/#		Tolerance: distance/angular\n\
 ";
 
 extern FBIO	*fbp;			/* Framebuffer handle */
