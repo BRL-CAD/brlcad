@@ -752,15 +752,15 @@ bu_cv_w_cookie(genptr_t out, int outcookie, int	size,
 		} else if (inIsHost != CV_HOST_MASK) { /* net format */
 			switch(incookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
 			case CV_SIGNED_MASK | CV_16:
-				return(	bu_cv_ntohss(out, size, in, count));
+				return(	bu_cv_ntohss((signed short *)out, size, in, count));
 			case CV_16:
-				return( bu_cv_ntohus(out, size, in, count));
+				return( bu_cv_ntohus((unsigned short *)out, size, in, count));
 			case CV_SIGNED_MASK | CV_32:
-				return( bu_cv_ntohsl(out, size, in, count));
+				return( bu_cv_ntohsl((signed long *)out, size, in, count));
 			case CV_32:
-				return( bu_cv_ntohul(out, size, in, count));
+				return( bu_cv_ntohul((unsigned long *)out, size, in, count));
 			case CV_D:
-				(void) ntohd(out, in, count);
+				(void) ntohd((unsigned char *)out, (unsigned char *)in, count);
 				return(count);
 			}
 
@@ -771,15 +771,15 @@ bu_cv_w_cookie(genptr_t out, int outcookie, int	size,
 		} else {
 			switch(incookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
 			case CV_SIGNED_MASK | CV_16:
-				return(	bu_cv_htonss(out, size, in, count));
+				return(	bu_cv_htonss(out, size, (short *)in, count));
 			case CV_16:
-				return( bu_cv_htonus(out, size, in, count));
+				return( bu_cv_htonus(out, size, (unsigned short *)in, count));
 			case CV_SIGNED_MASK | CV_32:
-				return( bu_cv_htonsl(out, size, in, count));
+				return( bu_cv_htonsl(out, size, (long *)in, count));
 			case CV_32:
-				return( bu_cv_htonul(out, size, in, count));
+				return( bu_cv_htonul(out, size, (unsigned long *)in, count));
 			case CV_D:
-				(void) htond(out, in, count);
+				(void) htond((unsigned char *)out, (unsigned char *)in, count);
 				return(count);
 			}
 		}
@@ -852,19 +852,19 @@ bu_cv_w_cookie(genptr_t out, int outcookie, int	size,
 		if (inIsHost != CV_HOST_MASK) { /* net format */
 			switch(incookie & (CV_SIGNED_MASK | CV_TYPE_MASK)) {
 			case CV_SIGNED_MASK | CV_16:
-				(void) bu_cv_ntohss(t1, bufsize , from, work_count);
+				(void) bu_cv_ntohss((short *)t1, bufsize , from, work_count);
 				break;
 			case CV_16:
-				(void) bu_cv_ntohus(t1, bufsize , from, work_count);
+				(void) bu_cv_ntohus((unsigned short *)t1, bufsize , from, work_count);
 				break;
 			case CV_SIGNED_MASK | CV_32:
-				(void) bu_cv_ntohsl(t1, bufsize , from, work_count);
+				(void) bu_cv_ntohsl((long *)t1, bufsize , from, work_count);
 				break;
 			case CV_32:
-				(void) bu_cv_ntohul(t1, bufsize , from, work_count);
+				(void) bu_cv_ntohul((unsigned long *)t1, bufsize , from, work_count);
 				break;
 			case CV_D:
-				(void) ntohd(t1, from, work_count);
+				(void) ntohd((unsigned char *)t1, (unsigned char *)from, work_count);
 				break;
 			}
 /*
@@ -1026,7 +1026,9 @@ bu_cv_w_cookie(genptr_t out, int outcookie, int	size,
 			if (outIsHost != CV_HOST_MASK) {
 				switch (outfmt) {
 				case CV_D:
-					(void) htond(out,from, work_count);
+					(void) htond((unsigned char *)out,
+						     (unsigned char *)from,
+						     work_count);
 					break;
 #if 0
 				case CV_16:
