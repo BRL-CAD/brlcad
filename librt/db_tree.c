@@ -1043,9 +1043,9 @@ struct combined_tree_state	**region_start_statepp;
 	if(rt_g.debug&DEBUG_TREEWALK)  {
 
 		char	*sofar = db_path_to_string(pathp);
-		bu_log("db_recurse() pathp='%s', tsp=x%x, *statepp=x%x\n",
+		bu_log("db_recurse() pathp='%s', tsp=x%x, *statepp=x%x, tsp->ts_sofar=%d\n",
 			sofar, tsp,
-			*region_start_statepp );
+			*region_start_statepp, tsp->ts_sofar );
 		rt_free(sofar, "path string");
 	}
 
@@ -1498,8 +1498,7 @@ top:
 		union tree	*lhs = tp->tr_b.tb_left;
 	    	union tree	*rhs;
 
-	    	if( tp->tr_b.tb_right->tr_op == OP_UNION )
-	    		repush_child = 1;
+    		repush_child = 1;
 
 		/*  Rewrite intersect and subtraction nodes, such that
 		 *  (A u B) - C  becomes (A - C) u (B - C)
@@ -1561,8 +1560,7 @@ top:
 	{
 		/* C + (A u B) -> (C + A) u (C + B) */
 
-		if( tp->tr_b.tb_left->tr_op == OP_UNION )
-			repush_child = 1;
+		repush_child = 1;
 
 		C = tp->tr_b.tb_left;
 		A = tp->tr_b.tb_right->tr_b.tb_left;
@@ -1583,8 +1581,7 @@ top:
 	{
 		/* C - (A u B) -> C - A - B */
 
-		if( tp->tr_b.tb_left->tr_op == OP_UNION )
-			repush_child = 1;
+		repush_child = 1;
 
 		C = tp->tr_b.tb_left;
 		A = tp->tr_b.tb_right->tr_b.tb_left;
@@ -2044,13 +2041,20 @@ union tree *	(*leaf_func)();
 	if( whole_tree == TREE_NULL )
 		return(-1);	/* ERROR, nothing worked */
 
+
 	/*
 	 *  Third, push all non-union booleans down.
 	 */
 	db_non_union_push( whole_tree );
 	if( rt_g.debug&DEBUG_TREEWALK )  {
+		char *str;
+
 		bu_log("tree after db_non_union_push():\n");
 		rt_pr_tree( whole_tree, 0 );
+		bu_log( "Same tree in another form:\n" );
+		str = (char *)rt_pr_tree_str( whole_tree );
+		bu_log( "%s\n", str );
+		bu_free( str, "rturn from rt_pr_tree_str" );
 	}
 
 	/*
