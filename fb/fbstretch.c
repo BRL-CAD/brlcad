@@ -543,7 +543,11 @@ main( argc, argv )
 			/* Clear out top margin. */
 
 			for ( ; dst_y < dst_height; ++dst_y )
+#if __STDC__
 				if ( fb_write( dst_fbp, 0, dst_y, &Dst( 0, 0 ),
+#else
+				if ( fb_write( dst_fbp, 0, dst_y, Dst( 0, 0 ),
+#endif
 					       dst_width
 					     ) == -1
 				   )
@@ -560,7 +564,11 @@ main( argc, argv )
 
 		for ( src_y = bot_y; src_y < top_y; ++src_y )
 			if ( fb_read( src_fbp, 0, src_y,
+#if __STDC__
 				      &Src( 0, src_y - bot_y ), src_width
+#else
+				      Src( 0, src_y - bot_y ), src_width
+#endif
 				    ) == -1
 			   )
 				Fatal( "Error reading scan line" );
@@ -579,7 +587,11 @@ main( argc, argv )
 			{
     ccflush:		/* End of band; flush buffer. */
 
+#if __STDC__
 			if ( fb_write( dst_fbp, 0, dst_y, &Dst( 0, 0 ),
+#else
+			if ( fb_write( dst_fbp, 0, dst_y, Dst( 0, 0 ),
+#endif
 				       dst_width
 				     ) == -1
 			   )
@@ -669,7 +681,11 @@ main( argc, argv )
 
 		/* Fill input scan line buffer. */
 
+#if __STDC__
 		if ( fb_read( src_fbp, 0, src_y, &Src( 0, 0 ), src_width ) == -1
+#else
+		if ( fb_read( src_fbp, 0, src_y, Src( 0, 0 ), src_width ) == -1
+#endif
 		   )
 			Fatal( "Error reading scan line" );
 
@@ -689,7 +705,11 @@ main( argc, argv )
 
 			for ( dst_y = top_y; --dst_y >= bot_y; )
 				if ( fb_write( dst_fbp, 0, dst_y,
+#if __STDC__
 					       &Dst( 0, dst_y - bot_y ),
+#else
+					       Dst( 0, dst_y - bot_y ),
+#endif
 					       dst_width
 					     ) == -1
 				   )
@@ -781,7 +801,11 @@ main( argc, argv )
 			/* Clear out top margin. */
 
 			for ( ; dst_y < dst_height; ++dst_y )
+#if __STDC__
 				if ( fb_write( dst_fbp, 0, dst_y, &Dst( 0, 0 ),
+#else
+				if ( fb_write( dst_fbp, 0, dst_y, Dst( 0, 0 ),
+#endif
 					       dst_width
 					     ) == -1
 				   )
@@ -798,7 +822,11 @@ main( argc, argv )
 
 		for ( src_y = bot_y; src_y < top_y; ++src_y )
 			if ( fb_read( src_fbp, 0, src_y,
+#if __STDC__
 				      &Src( 0, src_y - bot_y ), src_width
+#else
+				      Src( 0, src_y - bot_y ), src_width
+#endif
 				    ) == -1
 			   )
 				Fatal( "Error reading scan line" );
@@ -809,7 +837,11 @@ main( argc, argv )
 			{
 			/* End of band; flush buffer. */
 
+#if __STDC__
 			if ( fb_write( dst_fbp, 0, dst_y, &Dst( 0, 0 ),
+#else
+			if ( fb_write( dst_fbp, 0, dst_y, Dst( 0, 0 ),
+#endif
 				       dst_width
 				     ) == -1
 			   )
@@ -896,7 +928,11 @@ main( argc, argv )
 
 		/* Fill input scan line buffer. */
 
+#if __STDC__
 		if ( fb_read( src_fbp, 0, src_y, &Src( 0, 0 ), src_width ) == -1
+#else
+		if ( fb_read( src_fbp, 0, src_y, Src( 0, 0 ), src_width ) == -1
+#endif
 		   )
 			Fatal( "Error reading scan line" );
 
@@ -908,7 +944,11 @@ main( argc, argv )
 
 			for ( dst_y = top_y; --dst_y >= bot_y; )
 				if ( fb_write( dst_fbp, 0, dst_y,
+#if __STDC__
 					       &Dst( 0, dst_y - bot_y ),
+#else
+					       Dst( 0, dst_y - bot_y ),
+#endif
 					       dst_width
 					     ) == -1
 				   )
