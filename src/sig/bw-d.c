@@ -12,6 +12,9 @@
 #include "common.h"
 
 
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h> /* for atof() */
+#endif
 
 #ifdef HAVE_STRING_H
 #include <string.h>

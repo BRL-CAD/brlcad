@@ -22,6 +22,10 @@
 
 #include <stdio.h>
 #include <math.h>
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h> /* for atof() */
+#endif
+
 
 #include "machine.h"
 
