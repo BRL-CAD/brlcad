@@ -67,7 +67,7 @@ struct partition *PartHdp;
 	for( segp = segp_in; segp != SEG_NULL; segp = segp->seg_next )  {
 
 		/* Totally ignore things behind the start position */
-		if( segp->seg_out.hit_dist < -0.005 )
+		if( segp->seg_out.hit_dist < -10.0 )
 			continue;
 
 		/*  Eliminate very thin segments, or they will cause
@@ -100,7 +100,7 @@ struct partition *PartHdp;
 		if(rt_g.debug&DEBUG_PARTITION) rt_pr_seg(segp);
 
 		/* Totally ignore things behind the start position */
-		if( segp->seg_out.hit_dist < -0.005 )
+		if( segp->seg_out.hit_dist < -10.0 )
 			continue;
 
 		/*  Eliminate very thin segments, or they will cause
@@ -136,6 +136,7 @@ struct partition *PartHdp;
 			pp->pt_outseg = segp;
 			pp->pt_outhit = &segp->seg_out;
 			APPEND_PT( pp, PartHdp );
+			if(rt_g.debug&DEBUG_PARTITION) rt_log("First partition\n");
 			goto done_weave;
 		}
 		if( segp->seg_in.hit_dist >= PartHdp->pt_back->pt_outhit->hit_dist )  {
@@ -150,6 +151,7 @@ struct partition *PartHdp;
 			pp->pt_outseg = segp;
 			pp->pt_outhit = &segp->seg_out;
 			APPEND_PT( pp, PartHdp->pt_back );
+			if(rt_g.debug&DEBUG_PARTITION) rt_log("seg starts beyond part end\n");
 			goto done_weave;
 		}
 
@@ -205,6 +207,7 @@ equal_start:
 					 *	SSSS
 					 */
 					BITSET(pp->pt_solhit, segp->seg_stp->st_bit);
+			if(rt_g.debug&DEBUG_PARTITION) rt_log("same start\n");
 					goto done_weave;
 				}
 				if( i > 0 )  {
@@ -240,6 +243,7 @@ equal_start:
 				pp->pt_inhit = &segp->seg_out;
 				pp->pt_inflip = 1;
 				INSERT_PT( newpp, pp );
+			if(rt_g.debug&DEBUG_PARTITION) rt_log("start together, seg shorter\n");
 				goto done_weave;
 			}
 			if( i < 0 )  {
@@ -268,6 +272,7 @@ equal_start:
 					newpp->pt_outhit = &segp->seg_out;
 					newpp->pt_outflip = 0;
 					INSERT_PT( newpp, pp );
+			if(rt_g.debug&DEBUG_PARTITION) rt_log("seg between 2 partitions\n");
 					goto done_weave;
 				}
 				if( i==0 )  {
@@ -287,6 +292,7 @@ equal_start:
 					VMOVE(newpp->pt_outhit->hit_point, pp->pt_inhit->hit_point);
 					newpp->pt_outflip = 0;
 					INSERT_PT( newpp, pp );
+			if(rt_g.debug&DEBUG_PARTITION) rt_log("seg ends at part start, fuse\n");
 					goto done_weave;
 				}
 				/*
@@ -337,6 +343,7 @@ equal_start:
 		 *  	PPPPP
 		 *  	     SSSSS
 		 */
+		if(rt_g.debug&DEBUG_PARTITION) rt_log("seg extends beyond end\n");
 		GET_PT_INIT( newpp );
 		BITSET(newpp->pt_solhit, segp->seg_stp->st_bit);
 		newpp->pt_inseg = lastseg;
@@ -405,7 +412,7 @@ struct application *ap;
 		 * if partition ends before current box starts,
 		 * discard it, as we should never need to look back.
 		 */
-		if( pp->pt_outhit->hit_dist < -0.005
+		if( pp->pt_outhit->hit_dist < -10.0
 		    || pp->pt_outhit->hit_dist < startdist
 		)  {
 			register struct partition *zappp;
@@ -766,7 +773,6 @@ double a, b;
 	FAST double diff;
 	FAST double d;
 
-	diff = a - b;
 	/* d = Max(Abs(a),Abs(b)) */
 	d = (a >= 0.0) ? a : -a;
 	if( b >= 0.0 )  {
@@ -776,6 +782,12 @@ double a, b;
 	}
 	if( d <= 0.0001 )
 		return(0);	/* both nearly zero */
+	if( d == INFINITY )  {
+		if( a == b )  return(0);
+		if( a < b )  return(-1);
+		return(1);
+	}
+	diff = a - b;
 	if( diff < 0.0 )  diff = -diff;
 	if( diff < 0.000001 * d )
 		return( 0 );	/* relative difference is small */
