@@ -423,6 +423,11 @@ int	catch_sigint;
   return TCL_OK;
 }
 
+/*
+ *			F _ D E B U G
+ *
+ *  Print information about solid table, and per-solid VLS
+ */
 int
 f_debug(clientData, interp, argc, argv)
 ClientData clientData;
@@ -449,6 +454,11 @@ char	**argv;
   return TCL_OK;
 }
 
+/*
+ *			F _ R E G D E B U G
+ *
+ *  Display-manager specific "hardware register" debugging.
+ */
 int
 f_regdebug(clientData, interp, argc, argv)
 ClientData clientData;
@@ -473,6 +483,11 @@ char	**argv;
 	return TCL_OK;
 }
 
+/*
+ *			F _ D E B U G B U
+ *
+ *  Provide user-level access to LIBBU debug bit vector.
+ */
 int
 f_debugbu(clientData, interp, argc, argv)
 ClientData clientData;
@@ -504,6 +519,11 @@ char	**argv;
   return TCL_OK;
 }
 
+/*
+ *			F _ D E B U G L I B
+ *
+ *  Provide user-level access to LIBRT debug bit vector
+ */
 int
 f_debuglib(clientData, interp, argc, argv)
 ClientData clientData;
@@ -536,6 +556,12 @@ char	**argv;
   return TCL_OK;
 }
 
+/*
+ *			F _ D E B U G M E M
+ *
+ *  Provide user-level access to LIBBU bu_prmem() routine.
+ *  Must be used in concert with BU_DEBUG_MEM_CHECK flag.
+ */
 int
 f_debugmem(clientData, interp, argc, argv )
 ClientData clientData;
@@ -557,6 +583,11 @@ char	**argv;
   return TCL_OK;
 }
 
+/*
+ *			F _ D E B U G N M G
+ *
+ *  Provide user-level access to LIBRT NMG_debug flags.
+ */
 int
 f_debugnmg(clientData, interp, argc, argv)
 ClientData clientData;
@@ -747,8 +778,12 @@ out:
 	bu_vls_free( &str );
 }
 
-/* List object information, verbose */
-/* Format: l object	*/
+/*
+ *			C M D _ L I S T
+ *
+ *  List object information, verbose
+ *  Format: l object
+ */
 int
 cmd_list(clientData, interp, argc, argv)
 ClientData clientData;
