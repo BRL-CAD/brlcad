@@ -201,6 +201,7 @@ register char **argv;
 			{
 				int xx, yy;
 				(void)sscanf( optarg, "%d%d", &xx, &yy );
+				fprintf(stderr,"only pixel %d %d\n", xx, yy);
 				if( xx * yy >= 0 )  {
 					pix_start = yy * width + xx;
 					pix_end = pix_start;
