@@ -324,13 +324,13 @@ int bnum;
 static void
 bv_zoomin()
 {
-  (void)mged_zoom(0.5);
+  (void)mged_zoom(2.0);
 }
 
 static void
 bv_zoomout()
 {
-  (void)mged_zoom(2.0);
+  (void)mged_zoom(0.5);
 }
 
 void
