@@ -30,6 +30,7 @@ static char RCSplastic[] = "@(#)$Header$ (BRL)";
 #include "../h/raytrace.h"
 #include "../librt/debug.h"
 #include "material.h"
+#include "mathtab.h"
 
 extern int colorview();		/* from view.c */
 
@@ -73,38 +74,6 @@ extern int hit_nothing();
 extern double ipow();
 
 #define RI_AIR		1.0    /* Refractive index of air.		*/
-
-#ifdef BENCHMARK
-#define rand0to1()	(0.5)
-#define rand_half()	(0)
-#else BENCHMARK
-/*
- *  			R A N D 0 T O 1
- *
- *  Returns a random number in the range 0 to 1
- */
-double rand0to1()
-{
-	FAST fastf_t f;
-	/* On BSD, might want to use random() */
-	/* / (double)0x7FFFFFFFL */
-	f = ((double)rand()) *
-		0.00000000046566128752457969241057508271679984532147;
-	if( f > 1.0 || f < 0 )  {
-		rt_log("rand0to1 out of range\n");
-		return(0.42);
-	}
-	return(f);
-}
-
-/*
- *  			R A N D _ H A L F
- *
- *  Returns a random number in the range -0.5 to +0.5
- */
-#define rand_half()	(rand0to1()-0.5)
-
-#endif BENCHMARK
 
 /*
  *			P H O N G _ S E T U P

@@ -296,12 +296,9 @@ struct partition *PartHeadp;
 		pp->pt_inflip = 0;
 	}
 
-	/* This really needs to be done in prep stage */
 	if( !(pp->pt_regionp->reg_ufunc) )  {
-		if( mlib_setup( pp->pt_regionp ) == 0 )  {
-			rt_log("mlib_setup failure");
-			return(0);
-		}
+		rt_log("colorview:  no reg_ufunc\n");
+		return(0);
 	}
 	return( pp->pt_regionp->reg_ufunc( ap, pp ) );
 }

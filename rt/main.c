@@ -26,6 +26,7 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "../h/machine.h"
 #include "../h/vmath.h"
 #include "../h/raytrace.h"
+#include "mathtab.h"
 
 #ifdef HEP
 # include <synch.h>
@@ -87,6 +88,7 @@ char **argv;
 	fastf_t viewsize;
 	int framenumber = 0;
 	int desiredframe = 0;
+	static struct region *regp;
 
 	npts = 512;
 	azimuth = -35.0;			/* GIFT defaults */
@@ -202,6 +204,13 @@ char **argv;
 
 	/* Allow library to prepare itself */
 	rt_prep(rtip);
+
+	/* Initialize the material library for all regions */
+	for( regp=rtip->HeadRegion; regp != REGION_NULL; regp=regp->reg_forw )  {
+		if( mlib_setup( regp ) == 0 )  {
+			rt_log("mlib_setup failure\n");
+		}
+	}
 
 	/* initialize application */
 	view_init( &ap, title_file, title_obj, npts, outputfile!=(char *)0 );
@@ -413,6 +422,7 @@ register struct application *ap;
 {
 	LOCAL struct application a;
 	LOCAL vect_t tempdir;
+	LOCAL vect_t colorsum;
 	register int com;
 
 	a.a_onehit = 1;
@@ -432,11 +442,20 @@ register struct application *ap;
 		a.a_rt_i = ap->a_rt_i;
 		a.a_rbeam = ap->a_rbeam;
 		a.a_diverge = ap->a_diverge;
+		VSETALL( colorsum, 0 );
 		for( com=0; com<=hypersample; com++ )  {
-			/* NEED to multiply a_x,y by +/-0.5 for dithering!! */
-			VJOIN2( a.a_ray.r_pt, viewbase_model,
-				a.a_x, dx_model, 
-				(npts-a.a_y-1), dy_model );
+			if( hypersample )  {
+				FAST fastf_t dx, dy;
+				dx = a.a_x + rand_half();
+				dy = (npts-a.a_y-1) + rand_half();
+				VJOIN2( a.a_ray.r_pt, viewbase_model,
+					dx, dx_model, dy, dy_model );
+			}  else  {
+				register int yy = npts-a.a_y-1;
+				VJOIN2( a.a_ray.r_pt, viewbase_model,
+					a.a_x, dx_model,
+					yy, dy_model );
+			}
 			if( perspective )  {
 				VSUB2( a.a_ray.r_dir,
 					a.a_ray.r_pt, eye_model );
@@ -448,33 +467,39 @@ register struct application *ap;
 
 			a.a_level = 0;		/* recursion level */
 			rt_shootray( &a );
-#ifndef HEP
-			view_pixel( &a );
-#else
-			{
-				register char *pixelp;
-				register int r,g,b;
-				/* .pix files go bottom to top */
-				pixelp = scanbuf+(((npts-a.a_y-1)*npts)+a.a_x)*3;
-				r = a.a_color[0]*255.;
-				g = a.a_color[1]*255.;
-				b = a.a_color[2]*255.;
-				/* Truncate glints, etc */
-				if( r > 255 )  r=255;
-				if( g > 255 )  g=255;
-				if( b > 255 )  b=255;
-				if( r<0 || g<0 || b<0 )  {
-					rt_log("Negative RGB %d,%d,%d\n", r, g, b );
-					r = 0x80;
-					g = 0xFF;
-					b = 0x80;
-				}
-				*pixelp++ = r ;
-				*pixelp++ = g ;
-				*pixelp++ = b ;
-			}
-#endif
+			VADD2( colorsum, colorsum, a.a_color );
 		}
+		if( hypersample )  {
+			FAST fastf_t f;
+			f = 1.0 / (hypersample+1);
+			VSCALE( a.a_color, colorsum, f );
+		}
+#ifndef HEP
+		view_pixel( &a );
+#else
+		{
+			register char *pixelp;
+			register int r,g,b;
+			/* .pix files go bottom to top */
+			pixelp = scanbuf+(((npts-a.a_y-1)*npts)+a.a_x)*3;
+			r = a.a_color[0]*255.;
+			g = a.a_color[1]*255.;
+			b = a.a_color[2]*255.;
+			/* Truncate glints, etc */
+			if( r > 255 )  r=255;
+			if( g > 255 )  g=255;
+			if( b > 255 )  b=255;
+			if( r<0 || g<0 || b<0 )  {
+				rt_log("Negative RGB %d,%d,%d\n", r, g, b );
+				r = 0x80;
+				g = 0xFF;
+				b = 0x80;
+			}
+			*pixelp++ = r ;
+			*pixelp++ = g ;
+			*pixelp++ = b ;
+		}
+#endif
 	}
 }
 
