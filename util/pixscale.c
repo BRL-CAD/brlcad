@@ -28,9 +28,12 @@
  */
 #include <stdio.h>
 
-unsigned char *malloc();
+extern int	getopt();
+extern char	*optarg;
+extern int	optind;
+extern unsigned char *malloc();
 
-#define	MAXBUFBYTES	1024*1024	/* max bytes to malloc in buffer space */
+#define	MAXBUFBYTES	3*1024*1024	/* max bytes to malloc in buffer space */
 
 unsigned char	*outbuf;
 unsigned char	*buffer;
@@ -40,32 +43,108 @@ int	buf_start = -1000;		/* First line in buffer */
 
 int	bufy;				/* y coordinate in buffer */
 FILE	*buffp;
+static char	*file_name;
 
-void	init_buffer(), fill_buffer(), binterp();
+int	rflag = 0;
+int	inx = 512;
+int	iny = 512;
+int	outx = 512;
+int	outy = 512;
 
-char	*Usage = "usage: pixscale infile.pix inx iny outx outy >out.pix\n";
+void	init_buffer(), fill_buffer(), binterp(), ninterp();
+
+static	char usage[] = "\
+Usage: pixscale [-r] [-s squareinsize] [-w inwidth] [-n inheight]\n\
+	[-S squareoutsize] [-W outwidth] [-N outheight] [in.pix] > out.pix\n";
+
+get_args( argc, argv )
+register char **argv;
+{
+	register int c;
+
+	while ( (c = getopt( argc, argv, "rhs:w:n:S:W:N:" )) != EOF )  {
+		switch( c )  {
+		case 'r':
+			/* pixel replication */
+			rflag = 1;
+			break;
+		case 'h':
+			/* high-res */
+			inx = iny = 1024;
+			break;
+		case 'S':
+			/* square size */
+			outx = outy = atoi(optarg);
+			break;
+		case 's':
+			/* square size */
+			inx = iny = atoi(optarg);
+			break;
+		case 'W':
+			outx = atoi(optarg);
+			break;
+		case 'w':
+			inx = atoi(optarg);
+			break;
+		case 'N':
+			outy = atoi(optarg);
+			break;
+		case 'n':
+			iny = atoi(optarg);
+			break;
+
+		default:		/* '?' */
+			return(0);
+		}
+	}
+
+	/* XXX - backward compatability hack */
+	if( optind+5 == argc ) {
+		file_name = argv[optind++];
+		if( (buffp = fopen(file_name, "r")) == NULL )  {
+			(void)fprintf( stderr,
+				"pixscale: cannot open \"%s\" for reading\n",
+				file_name );
+			return(0);
+		}
+		inx = atoi(argv[optind++]);
+		iny = atoi(argv[optind++]);
+		outx = atoi(argv[optind++]);
+		outy = atoi(argv[optind++]);
+		return(1);
+	}
+	if( optind >= argc )  {
+		if( isatty(fileno(stdin)) )
+			return(0);
+		file_name = "-";
+		buffp = stdin;
+	} else {
+		file_name = argv[optind];
+		if( (buffp = fopen(file_name, "r")) == NULL )  {
+			(void)fprintf( stderr,
+				"pixscale: cannot open \"%s\" for reading\n",
+				file_name );
+			return(0);
+		}
+	}
+
+	if ( argc > ++optind )
+		(void)fprintf( stderr, "pixscale: excess argument(s) ignored\n" );
+
+	return(1);		/* OK */
+}
 
 main( argc, argv )
 int argc; char **argv;
 {
-	int	inx, iny, outx, outy;
-
-	if( argc != 6 ) {
-		fprintf( stderr, Usage );
+	if ( !get_args( argc, argv ) || isatty(fileno(stdout)) )  {
+		(void)fputs(usage, stderr);
 		exit( 1 );
 	}
-	inx = atoi( argv[2] );
-	iny = atoi( argv[3] );
-	outx = atoi( argv[4] );
-	outy = atoi( argv[5] );
+
 	if( inx <= 0 || iny <= 0 || outx <= 0 || outy <= 0 ) {
 		fprintf( stderr, "pixscale: bad size\n" );
 		exit( 2 );
-	}
-
-	if( (buffp = fopen( argv[1], "r" )) == NULL ) {
-		fprintf( stderr, "pixscale: can't open \"%s\"\n", argv[1] );
-		exit( 3 );
 	}
 
 	/* See how many lines we can buffer */
@@ -114,7 +193,10 @@ int y;
 	buf_start = y - buflines/2;
 	if( buf_start < 0 ) buf_start = 0;
 
-	fseek( buffp, buf_start * scanlen, 0 );
+	if( fseek( buffp, buf_start * scanlen, 0 ) < 0 ) {
+		fprintf( stderr, "pixscale: Can't seek to input pixel!\n" );
+		exit( 3 );
+	}
 	fread( buffer, scanlen, buflines, buffp );
 }
 
@@ -150,8 +232,13 @@ int	ix, iy, ox, oy;
 		return( -1 );
 	}
 	if( pxlen < 1.0 || pylen < 1.0 ) {
-		/* bilinear interpolate */
-		binterp( ofp, ix, iy, ox, oy );
+		if( rflag ) {
+			/* nearest neighbor interpolate */
+			ninterp( ofp, ix, iy, ox, oy );
+		} else {
+			/* bilinear interpolate */
+			binterp( ofp, ix, iy, ox, oy );
+		}
 		return( 0 );
 	}
 
@@ -265,6 +352,51 @@ int	ix, iy, ox, oy;
 			mid1 = lp[0] + dx * ((double)lp[3] - (double)lp[0]);
 			mid2 = up[0] + dx * ((double)up[3] - (double)up[0]);
 			*op++ = mid1 + dy * (mid2 - mid1);
+		}
+
+		(void) fwrite( outbuf, 3, ox, ofp );
+	}
+}
+
+/*
+ * Nearest Neighbor Interpolate a file of pixels.
+ *
+ * This version preserves the outside pixels and interps inside only.
+ */
+void
+ninterp( ofp, ix, iy, ox, oy )
+FILE	*ofp;
+int	ix, iy, ox, oy;
+{
+	int	i, j;
+	double	x, y, dx, dy, mid1, mid2;
+	double	xstep, ystep;
+	unsigned char *op, *up, *lp;
+
+	xstep = (double)(ix - 1) / (double)ox - 1.0e-6;
+	ystep = (double)(iy - 1) / (double)oy - 1.0e-6;
+
+	/* For each output pixel */
+	for( j = 0; j < oy; j++ ) {
+		y = j * ystep;
+		/*
+		 * Make sure we have this row (and the one after it)
+		 * in the buffer
+		 */
+		bufy = (int)y - buf_start;
+		if( bufy < 0 || bufy >= buflines-1 ) {
+			fill_buffer( (int)y );
+			bufy = (int)y - buf_start;
+		}
+
+		op = outbuf;
+
+		for( i = 0; i < ox; i++ ) {
+			x = i * xstep;
+			lp = &buffer[bufy*scanlen+(int)x*3];
+			*op++ = lp[0];
+			*op++ = lp[1];
+			*op++ = lp[2];
 		}
 
 		(void) fwrite( outbuf, 3, ox, ofp );
