@@ -59,14 +59,15 @@ int		use_air = 1;		/* Handling of air in librt */
 int		using_mlib = 0;		/* Material routines NOT used */
 
 /* Viewing module specific "set" variables */
-struct structparse view_parse[] = {
+ struct structparse view_parse[] = {
 	(char *)0,(char *)0,	(stroff_t)0,				FUNC_NULL
-};
+ };
+
 
 extern FILE	*outfp;			/* optional output file */
 
 char usage[] = "\
-Usage:  rtray [options] model.g objects... >file.ray\n\
+Usage:  rtg3 [options] model.g objects... >file.ray\n\
 Options:\n\
  -s #		Grid size in pixels, default 512\n\
  -a Az		Azimuth in degrees	(conflicts with -M)\n\
@@ -82,12 +83,14 @@ int	raymiss() { return(0); }
 
 void	view_pixel() {}
 
-/* "paint" types are negative ==> interpret as "special" air codes */
-#define PAINT_FIRST_ENTRY	(-999)
-#define PAINT_INTERN_EXIT	(-998)
-#define PAINT_INTERN_ENTRY	(-997)
-#define PAINT_FINAL_EXIT	(-996)
-#define PAINT_AIR		(-1)
+#if 0
+ /* "paint" types are negative ==> interpret as "special" air codes */
+ #define PAINT_FIRST_ENTRY	(-999)
+ #define PAINT_INTERN_EXIT	(-998)
+ #define PAINT_INTERN_ENTRY	(-997)
+ #define PAINT_FINAL_EXIT	(-996)
+ #define PAINT_AIR		(-1)
+#endif
 
 /*
  *			R A Y H I T
@@ -103,16 +106,32 @@ register struct partition *PartHeadp;
 	register struct partition *pp = PartHeadp->pt_forw;
 	struct partition	*np;	/* next partition */
 	struct partition	air;
+	int 			count;
 
 	if( pp == PartHeadp )
 		return(0);		/* nothing was actually hit?? */
 
+	/*  count components in partitions */
+	count = 0;
+	for( pp=PartHeadp->pt_forw; pp!=PartHeadp; pp=pp->pt_forw )
+		count++;
+
+	fprintf(stdout,"ray header, count=%d\n",count);
+
+	/* loop here to deal with individual components */
+	for( pp=PartHeadp->pt_forw; pp!=PartHeadp; pp=pp->pt_forw )  {
+		fprintf(stdout," component and air data for '%s'\n",
+			pp->pt_regionp->reg_name );
+	}
+
+#if 0
 	/* "1st entry" paint */
 	RT_HIT_NORM( pp->pt_inhit, pp->pt_inseg->seg_stp, &(ap->a_ray) );
 	if( pp->pt_inflip )  {
 		VREVERSE( pp->pt_inhit->hit_normal, pp->pt_inhit->hit_normal );
 		pp->pt_inflip = 0;
 	}
+
 	wraypaint( pp->pt_inhit->hit_point, pp->pt_inhit->hit_normal,
 		PAINT_FIRST_ENTRY, ap, outfp );
 
@@ -135,6 +154,7 @@ register struct partition *PartHeadp;
 			}
 		}
 		wray( pp, ap, outfp );
+
 
 		/*
 		 * If there is a subsequent partition that does not
@@ -164,17 +184,20 @@ register struct partition *PartHeadp;
 				if( np->pt_regionp->reg_regionid > 0 )
 					continue;	/* both are solid */
 				/* output "internal exit" paint */
-				wraypaint( pp->pt_outhit->hit_point,
-					pp->pt_outhit->hit_normal,
-					PAINT_INTERN_EXIT, ap, outfp );
+/*				 wraypaint( pp->pt_outhit->hit_point,
+ *			       		pp->pt_outhit->hit_normal,
+ *				 	PAINT_INTERN_EXIT, ap, outfp );
+*/				
+
 			} else {
 				/* Exiting air */
 				if( np->pt_regionp->reg_regionid <= 0 )
 					continue;	/* both are air */
 				/* output "internal entry" paint */
-				wraypaint( np->pt_inhit->hit_point,
-					np->pt_inhit->hit_normal,
-					PAINT_INTERN_ENTRY, ap, outfp );
+/*				 wraypaint( np->pt_inhit->hit_point,
+ *				 	np->pt_inhit->hit_normal,
+*/					PAINT_INTERN_ENTRY, ap, outfp );
+
 			}
 			continue;
 		}
@@ -185,27 +208,35 @@ register struct partition *PartHeadp;
 		 *  Install "general air" in between,
 		 *  and put "internal entry" paint on in point.
 		 */
-		wraypaint( pp->pt_outhit->hit_point,
-			pp->pt_outhit->hit_normal,
-			PAINT_INTERN_EXIT, ap, outfp );
+/*		 wraypaint( pp->pt_outhit->hit_point,
+ *		 	pp->pt_outhit->hit_normal,
+ *		 	PAINT_INTERN_EXIT, ap, outfp );
+*/		
 
 		wraypts( pp->pt_outhit->hit_point,
 			pp->pt_outhit->hit_normal,
 			np->pt_inhit->hit_point,
 			PAINT_AIR, ap, outfp );
 
-		wraypaint( np->pt_inhit->hit_point,
-			np->pt_inhit->hit_normal,
-			PAINT_INTERN_ENTRY, ap, outfp );
+/*		 wraypaint( np->pt_inhit->hit_point,
+ *		 	np->pt_inhit->hit_normal,
+ *		 	PAINT_INTERN_ENTRY, ap, outfp );
+*/		
+
 	}
+
+#endif
+
 
 	/* "final exit" paint -- ray va(r)nishes off into the sunset */
 	pp = PartHeadp->pt_back;
-	if( pp->pt_outhit->hit_dist < INFINITY )  {
-		wraypaint( pp->pt_outhit->hit_point,
-			pp->pt_outhit->hit_normal,
-			PAINT_FINAL_EXIT, ap, outfp );
-	}
+/*	if( pp->pt_outhit->hit_dist < INFINITY )  {
+ *		wraypaint( pp->pt_outhit->hit_point,
+ *			pp->pt_outhit->hit_normal,
+ *			PAINT_FINAL_EXIT, ap, outfp );
+ *	}
+*/
+
 	return(0);
 }
 
@@ -221,6 +252,12 @@ char *file, *obj;
 	ap->a_miss = raymiss;
 	ap->a_onehit = 0;
 
+	if( minus_o )
+		rt_bomb("error is only to stdout\n");
+
+        fprintf(stdout,"overall headder\n");
+
+
 	return(0);		/* No framebuffer needed */
 }
 
@@ -229,7 +266,7 @@ void	view_eol() {;}
 void
 view_end()
 {
-	fflush(outfp);
+	fflush(stdout);
 }
 
 void
@@ -247,8 +284,10 @@ struct application	*ap;
 	int	oldid;
 	int	newid;
 
-	if( outfp == NULL )
-		rt_bomb("outfp is NULL\n");
+	if( stdout == NULL )
+		rt_bomb("stdout is NULL\n");
+
+	fprintf(stdout, "view header\n");
 
 	/*
 	 *  Apply any deltas to reg_regionid values
