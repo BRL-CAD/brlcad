@@ -627,6 +627,7 @@ checkevents()  {
 	register int n;
 	static	button0  = 0;	/*  State of button 0 */
 	static	knobs[8];	/*  Save values of dials  */
+	static	pending_middlemouse = 0;	/* state variable */
 
 	n = blkqread( values, NVAL );	/* n is # of shorts returned */
 	if( ir_debug ) printf("blkqread gave %d\n", n);
@@ -820,7 +821,8 @@ checkevents()  {
 		case MIDDLEMOUSE:
 			/* Will also get MOUSEX and MOUSEY hits */
 			if( valp[1] ) {
-				dm_values.dv_penpress = DV_PICK;
+				pending_middlemouse = 1;
+				/* Don't signal DV_PICK until MOUSEY event */
 			}
 			break;
 		case RIGHTMOUSE:
@@ -832,6 +834,22 @@ checkevents()  {
 			break;
 		case MOUSEY:
 			dm_values.dv_ypen = irisY2ged( (int)valp[1] );
+			/*
+			 *  Thanks to the tie() call, when a MIDDLEMOUSE
+			 *  event is signalled, it will be (eventually)
+			 *  followed by a MOUSEX and MOUSEY event.
+			 *  The MOUSEY event may not be in the same
+			 *  blkqread() buffer, owing to time delays in
+			 *  the outputting of the tie()'ed events.
+			 *  So, don't signal DV_PICK on MIDDLEMOUSE;
+			 *  instead, set the flag, and patiently wait until
+			 *  the subsequent MOUSEY event has arrived, which
+			 *  may need multiple trips through this subroutine.
+			 */
+			if( pending_middlemouse )  {
+				dm_values.dv_penpress = DV_PICK;
+				pending_middlemouse = 0;
+			}
 			break;
 		case REDRAW:
 			dmaflag = 1;
@@ -920,11 +938,13 @@ Ir_statechange( a, b )
 	switch( b )  {
 	case ST_VIEW:
 		unqdevice( MOUSEY );	/* constant tracking OFF */
+		/* This should not affect the tie()'d MOUSEY events */
 		break;
 		
 	case ST_S_PICK:
 	case ST_O_PICK:
 	case ST_O_PATH:
+		/*  Have all changes of MOUSEY generate an event */
 		qdevice( MOUSEY );	/* constant tracking ON */
 		break;
 	case ST_O_EDIT:
@@ -1200,8 +1220,8 @@ fastf_t	fovy, aspect, near, far, backoff;
 	mat_mul( m, m2, tran );
 }
 
-#ifndef SGI4D_Rel2
-/* Fakeouts so that we don't have to link with -lmpc */
+#if 0
+/* Handy fakeouts when we don't want to link with -lmpc */
 usinit()	{ printf("usinit\n"); }
 usnewlock()	{ printf("usnewlock\n"); }
 taskcreate()	{ printf("taskcreate\n"); }
