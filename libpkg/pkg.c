@@ -99,6 +99,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #if !__STDC__
+extern char	*getenv();
 extern char	*malloc();
 extern char	*realloc();
 extern void	perror();
@@ -1470,16 +1471,23 @@ again:
 }
 #endif
 
+/*
+ *			P K G _ C K _ D E B U G
+ */
 static void
 pkg_ck_debug()
 {
-	char	place[128];
-	sprintf( place, "/usr/tmp/pkg.%d", getpid() );
-/*#define PLACE	"/usr/tmp/pkg.log"*/
-#define PLACE	place
+	char	*place;
+	char	buf[128];
+
 	if( pkg_debug )  return;
-/*	if( access( PLACE, 2 ) < 0 )  return; */
-	if( (pkg_debug = fopen( PLACE, "a" )) == NULL )  return;
+	if( (place = getenv("LIBPKG_DEBUG")) == (char *)0 )  {
+		sprintf( buf, "/tmp/pkg.log" );
+		place = buf;
+	}
+	/* Named file must exist and be writeable */
+	if( access( place, 2 ) < 0 )  return;
+	if( (pkg_debug = fopen( place, "a" )) == NULL )  return;
 }
 
 /*
