@@ -88,7 +88,7 @@ CONST point_t	max;
 	VSET( pt8[6], max[X], max[Y], max[Z] );
 	VSET( pt8[7], min[X], max[Y], max[Z] );
 
-	return( mk_arb8( fp, name, pt8 ) );
+	return( mk_arb8( fp, name, (CONST point_t *)pt8 ) );
 }
 
 
@@ -148,7 +148,7 @@ fastf_t		x_top_len;
 	VADD2(pts[6], pts[5], yvec);	/* seventh vertex */
 	VADD2(pts[7], pts[4], yvec);	/* eighth vertex */
 
-	return( mk_arb8(fp, name, pts) );
+	return( mk_arb8(fp, name, (CONST point_t *)pts) );
 }
 
 
@@ -173,7 +173,7 @@ CONST point_t	pts[4];
 	VMOVE( pt8[6], pts[3] );
 	VMOVE( pt8[7], pts[3] );
 
-	return( mk_arb8( fp, name, pt8 ) );
+	return( mk_arb8( fp, name, (CONST point_t *)pt8 ) );
 }
 
 /*
