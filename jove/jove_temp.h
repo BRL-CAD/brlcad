@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.3  91/08/30  17:39:55  mike
+ * No symbols after #else
+ * 
  * Revision 2.2  87/04/14  20:07:34  dpk
  * Changed to support Crays.
  * 
@@ -34,7 +37,7 @@
  * to be edited.
  */
 
-#if defined(VMUNIX) || defined(CRAY)
+#if !defined(pdp11)
 
 #define	BLKMSK	077777
 #define	BNDRY	2

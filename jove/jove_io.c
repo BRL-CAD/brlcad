@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.7  91/08/30  19:17:44  mike
+ * Stardent ANSI lint
+ * 
  * Revision 2.6  91/08/30  18:46:05  mike
  * Changed from BSD index/rindex nomenclature to SYSV strchr/strrchr.
  * 
@@ -687,7 +690,8 @@ disk_line	atl;
 	return obuff + off;
 }
 
-#ifdef	VMUNIX
+#if !defined(pdp11)
+/* Cache 64 disk blocks in memory */
 #define	INCORB	64
 char	incorb[INCORB+1][BSIZ];
 #define	pagrnd(a)	((char *)(((int)a)&~(BSIZ-1)))
@@ -699,7 +703,7 @@ char	*buf;
 int	(*iofcn)();
 {
 
-#ifdef VMUNIX
+#ifdef INCORB
 	if (b < INCORB) {
 		if (iofcn == read) {
 			bcopy(pagrnd(incorb[b+1]), buf, BSIZ);
