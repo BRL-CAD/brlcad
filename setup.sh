@@ -144,7 +144,16 @@ if [ X${SILENT} = X ] ; then
 	echo
 	echo "Cleaning out ${BASEDIR}."
 fi
-echo "OK to run  \"rm -fr ${BASEDIR}/*\"  ? (yes|no)[no]"
+
+inst_dirs=" bin etc html include itcl3.0 itk3.0 lib man pro-engineer \
+	sample_applications tcl8.2 tclscripts tk8.2 vfont"
+
+echo "Is it OK to delete the following directories:"
+for dir in $inst_dirs ; do
+    echo "   ${BASEDIR}/$dir"
+done
+echo "(yes|no)[no]"
+
 read ANS
 if test "$ANS" != "yes"
 then
@@ -152,27 +161,32 @@ then
 	exit 1
 fi
 
-if [ X${SILENT} = X ] ; then
-	echo "rm -fr ${BASEDIR}/*"
-fi
-rm -fr ${BASEDIR}/*
+for dir in $inst_dirs ; do
+    if [ X${SILENT} = X ] ; then
+	echo "rm -fr ${BASEDIR}/$dir"
+    fi
+    rm -fr ${BASEDIR}/$dir
+done
+
+
 
 if [ X${SILENT} = X ] ; then
 	echo
 	echo Creating the necessary directories
 fi
 for LAST in \
-	bin include include/brlcad lib vfont \
-	man man/man1 man/man3 man/man5 etc \
+	bin include include/brlcad lib vfont etc \
+	man man/man1 man/man3 man/man5 \
 	tclscripts tclscripts/mged tclscripts/nirt \
-	tclscripts/lib tclscripts/util \
-	tclscripts/pl-dm html html/manuals html/manuals/mged \
-	html/manuals/mged/animmate html/manuals/libdm \
-	html/manuals/shaders html/manuals/Anim_Tutorial \
-	html/ReleaseNotes html/ReleaseNotes/Rel5.0 \
-	html/ReleaseNotes/Rel5.0/Summary pro-engineer \
-	pro-engineer/text pro-engineer/sgi_elf2 pro-engineer/sun4_solaris \
-	pro-engineer/text/fullhelp pro-engineer/text/menus sample_applications
+		tclscripts/lib tclscripts/util tclscripts/pl-dm \
+	html html/manuals html/manuals/mged \
+		html/manuals/mged/animmate html/manuals/libdm \
+		html/manuals/shaders html/manuals/Anim_Tutorial \
+		html/ReleaseNotes html/ReleaseNotes/Rel5.0 \
+		html/ReleaseNotes/Rel5.0/Summary \
+	pro-engineer pro-engineer/text pro-engineer/sgi_elf2 \
+		pro-engineer/sun4_solaris pro-engineer/text/fullhelp \
+		pro-engineer/text/menus sample_applications
 do
 	if test ! -d $BASEDIR/$LAST
 	then
