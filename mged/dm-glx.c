@@ -52,7 +52,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./ged.h"
 #include "./mged_dm.h"
-#include "./mged_solid.h"
 #include "./sedit.h"
 #include "dm-glx.h"
 
@@ -246,14 +245,14 @@ XEvent *eventPtr;
     case AMM_IDLE:
       if(scroll_active && eventPtr->xmotion.state & ((struct glx_vars *)dmp->dm_vars)->mb_mask)
 	bu_vls_printf( &cmd, "M 1 %d %d\n",
-		       (int)(dm_X2Normal(dmp, mx, 0) * 2047.0),
-		       (int)(dm_Y2Normal(dmp, my) * 2047.0) );
+		       (int)(dm_Xx2Normal(dmp, mx, 0) * 2047.0),
+		       (int)(dm_Xy2Normal(dmp, my) * 2047.0) );
       else if(GlxdoMotion)
 	/* do the regular thing */
 	/* Constant tracking (e.g. illuminate mode) bound to M mouse */
 	bu_vls_printf( &cmd, "M 0 %d %d\n",
-		       (int)(dm_X2Normal(dmp, mx, 1) * 2047.0),
-		       (int)(dm_Y2Normal(dmp, my) * 2047.0) );
+		       (int)(dm_Xx2Normal(dmp, mx, 1) * 2047.0),
+		       (int)(dm_Xy2Normal(dmp, my) * 2047.0) );
       else /* not doing motion */
 	goto handled;
 
@@ -376,26 +375,26 @@ XEvent *eventPtr;
 
       break;
     case AMM_ADC_ANG1:
-      fx = dm_X2Normal(dmp, mx, 1) * 2047.0 - dv_xadc;
-      fy = dm_Y2Normal(dmp, my) * 2047.0 - dv_yadc;
+      fx = dm_Xx2Normal(dmp, mx, 1) * 2047.0 - dv_xadc;
+      fy = dm_Xy2Normal(dmp, my) * 2047.0 - dv_yadc;
       bu_vls_printf(&cmd, "adc a1 %lf\n", DEGRAD*atan2(fy, fx));
 
       break;
     case AMM_ADC_ANG2:
-      fx = dm_X2Normal(dmp, mx, 1) * 2047.0 - dv_xadc;
-      fy = dm_Y2Normal(dmp, my) * 2047.0 - dv_yadc;
+      fx = dm_Xx2Normal(dmp, mx, 1) * 2047.0 - dv_xadc;
+      fy = dm_Xy2Normal(dmp, my) * 2047.0 - dv_yadc;
       bu_vls_printf(&cmd, "adc a2 %lf\n", DEGRAD*atan2(fy, fx));
 
       break;
     case AMM_ADC_TRAN:
       bu_vls_printf(&cmd, "adc hv %lf %lf\n",
-		    dm_X2Normal(dmp, mx, 1) * Viewscale * base2local,
-		    dm_Y2Normal(dmp, my) * Viewscale * base2local);
+		    dm_Xx2Normal(dmp, mx, 1) * Viewscale * base2local,
+		    dm_Xy2Normal(dmp, my) * Viewscale * base2local);
 
       break;
     case AMM_ADC_DIST:
-      fx = (dm_X2Normal(dmp, mx, 1) * 2047.0 - dv_xadc) * Viewscale * base2local / 2047.0;
-      fy = (dm_Y2Normal(dmp, my) * 2047.0 - dv_yadc) * Viewscale * base2local / 2047.0;
+      fx = (dm_Xx2Normal(dmp, mx, 1) * 2047.0 - dv_xadc) * Viewscale * base2local / 2047.0;
+      fy = (dm_Xy2Normal(dmp, my) * 2047.0 - dv_yadc) * Viewscale * base2local / 2047.0;
       td = sqrt(fx * fx + fy * fy);
       bu_vls_printf(&cmd, "adc dst %lf\n", td);
 
@@ -1555,8 +1554,8 @@ char	**argv;
 
       old_orig_gui = mged_variables->orig_gui;
 
-      x = dm_X2Normal(dmp, atoi(argv[2]), 0) * 2047.0;
-      y = dm_Y2Normal(dmp, atoi(argv[3])) * 2047.0;
+      x = dm_Xx2Normal(dmp, atoi(argv[2]), 0) * 2047.0;
+      y = dm_Xy2Normal(dmp, atoi(argv[3])) * 2047.0;
 
       if(mged_variables->faceplate &&
 	 mged_variables->orig_gui){
@@ -1577,11 +1576,11 @@ char	**argv;
 	}
       }
 
-      x = dm_X2Normal(dmp, atoi(argv[2]), 1) * 2047.0;
+      x = dm_Xx2Normal(dmp, atoi(argv[2]), 1) * 2047.0;
       mged_variables->orig_gui = 0;
 end:
       bu_vls_init(&vls);
-      if(mged_variables->mouse_nirt && !stolen){
+      if(mged_variables->mouse_behavior == 'n' && !stolen){
 	point_t view_pt;
 	point_t model_pt;
 	fastf_t sf = 1.0/2047.0;
@@ -1636,8 +1635,8 @@ end:
 	mged_variables->ecoords = 'v';
 
 	MAT4X3PNT(ea_view_pos, model2view, e_axes_pos);
-	mouse_view_pos[X] = dm_X2Normal(dmp, ((struct glx_vars *)dmp->dm_vars)->omx, 1);
-	mouse_view_pos[Y] = dm_Y2Normal(dmp, ((struct glx_vars *)dmp->dm_vars)->omy);
+	mouse_view_pos[X] = dm_Xx2Normal(dmp, ((struct glx_vars *)dmp->dm_vars)->omx, 1);
+	mouse_view_pos[Y] = dm_Xy2Normal(dmp, ((struct glx_vars *)dmp->dm_vars)->omy);
 	mouse_view_pos[Z] = ea_view_pos[Z];
 	VSUB2(diff, mouse_view_pos, ea_view_pos);
 	VSCALE(diff, diff, Viewscale * base2local);
@@ -1688,8 +1687,8 @@ end:
 
     switch(*argv[1]){
     case '1':
-      fx = dm_X2Normal(dmp, ((struct glx_vars *)dmp->dm_vars)->omx, 1) * 2047.0 - dv_xadc;
-      fy = dm_Y2Normal(dmp, ((struct glx_vars *)dmp->dm_vars)->omy) * 2047.0 - dv_yadc;
+      fx = dm_Xx2Normal(dmp, ((struct glx_vars *)dmp->dm_vars)->omx, 1) * 2047.0 - dv_xadc;
+      fy = dm_Xy2Normal(dmp, ((struct glx_vars *)dmp->dm_vars)->omy) * 2047.0 - dv_yadc;
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "adc a1 %lf\n", DEGRAD*atan2(fy, fx));
       Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -1698,8 +1697,8 @@ end:
       am_mode = AMM_ADC_ANG1;
       break;
     case '2':
-      fx = dm_X2Normal(dmp, ((struct glx_vars *)dmp->dm_vars)->omx, 1) * 2047.0 - dv_xadc;
-      fy = dm_Y2Normal(dmp, ((struct glx_vars *)dmp->dm_vars)->omy) * 2047.0 - dv_yadc;
+      fx = dm_Xx2Normal(dmp, ((struct glx_vars *)dmp->dm_vars)->omx, 1) * 2047.0 - dv_xadc;
+      fy = dm_Xy2Normal(dmp, ((struct glx_vars *)dmp->dm_vars)->omy) * 2047.0 - dv_yadc;
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "adc a2 %lf\n", DEGRAD*atan2(fy, fx));
       Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -1710,9 +1709,9 @@ end:
     case 't':
       bu_vls_init(&vls);
       bu_vls_printf(&vls, "adc hv %lf %lf\n",
-		    dm_X2Normal(dmp, ((struct glx_vars *)dmp->dm_vars)->omx, 1) *
+		    dm_Xx2Normal(dmp, ((struct glx_vars *)dmp->dm_vars)->omx, 1) *
 		    Viewscale * base2local,
-		    dm_Y2Normal(dmp, ((struct glx_vars *)dmp->dm_vars)->omy) *
+		    dm_Xy2Normal(dmp, ((struct glx_vars *)dmp->dm_vars)->omy) *
 		    Viewscale * base2local);
       Tcl_Eval(interp, bu_vls_addr(&vls));
       bu_vls_free(&vls);
@@ -1720,9 +1719,9 @@ end:
       am_mode = AMM_ADC_TRAN;
       break;
     case 'd':
-      fx = (dm_X2Normal(dmp, ((struct glx_vars *)dmp->dm_vars)->omx, 1) * 2047.0 -
+      fx = (dm_Xx2Normal(dmp, ((struct glx_vars *)dmp->dm_vars)->omx, 1) * 2047.0 -
 	    dv_xadc) * Viewscale * base2local / 2047.0;
-      fy = (dm_Y2Normal(dmp, ((struct glx_vars *)dmp->dm_vars)->omy) * 2047.0 -
+      fy = (dm_Xy2Normal(dmp, ((struct glx_vars *)dmp->dm_vars)->omy) * 2047.0 -
 	    dv_yadc) * Viewscale * base2local / 2047.0;
       td = sqrt(fx * fx + fy * fy);
       bu_vls_init(&vls);

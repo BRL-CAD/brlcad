@@ -357,10 +357,10 @@ bn_mat_print("perspective_mat", perspective_mat);
 			eye[X] = -eye_delta_scr;
 			deering_persp_mat( perspective_mat, l, h, eye );
 			break;
-		}
+                }
 		bn_mat_mul( new, perspective_mat, mat );
 		mat = new;
-	}
+		}
 
 	DM_LOADMATRIX( dmp, mat, which_eye );
 

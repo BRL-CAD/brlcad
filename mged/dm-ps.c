@@ -35,7 +35,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./ged.h"
 #include "./mged_dm.h"
-#include "./mged_solid.h"
 #include "dm-ps.h"
 
 extern void dm_var_init();
