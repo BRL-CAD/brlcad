@@ -2335,9 +2335,15 @@ set_e_axis_pos()
 {
   int	i;
 
-  VSETALL( absolute_slew, 0 );
+#if 0
   update_views = 1;
-
+  VMOVE(e_axis_pos, es_keypoint);
+  MAT4X3PNT( absolute_slew, model2view, es_keypoint );
+#else
+  update_views = 1;
+#if 0
+  VSETALL( absolute_slew, 0 );
+#endif
   switch(es_int.idb_type){
   case	ID_ARB8:
   case	ID_ARBN:
@@ -2429,6 +2435,13 @@ set_e_axis_pos()
     VMOVE(e_axis_pos, es_keypoint);
     break;
   }
+
+  if(EDIT_TRAN){
+    MAT4X3PNT( absolute_slew, model2view, e_axis_pos );
+  }else{
+    /*XXX Nothing yet */
+  }
+#endif
 }
 
 int
@@ -2503,28 +2516,15 @@ vect_t view_pos;
   point_t new_pos;
   point_t diff;
 
-  VMOVE( absolute_slew, view_pos );
-
-  /* if doing an edit other than a rotate then do the regular thing */
-  if((state == ST_S_EDIT || state == ST_O_EDIT) &&
-     (!EDIT_ROTATE && es_edflag > IDLE)){
-    int status;
-    char *av[] = {"M", "1", NULL, NULL, NULL};
-    char xval[32], yval[32];
-
+  if(state == ST_S_EDIT && !SEDIT_ROTATE && es_edflag > IDLE){
     tran_set = 1;
-    av[2] = xval;
-    av[3] = yval;
-    sprintf(xval, "%d", (int)(absolute_slew[X]*2048.0));
-    sprintf(yval, "%d", (int)(absolute_slew[Y]*2048.0));
-    status = f_mouse((ClientData)NULL, interp, 4, av);
+    sedit_mouse(view_pos);
     tran_set = 0;
-
-    if(status == TCL_OK)
-      return CMD_OK;
-    else
-      return CMD_BAD;
-  }else{ /* otherwise, slew the view */
+  }else if(state == ST_O_EDIT && !OEDIT_ROTATE && edobj){
+    tran_set = 1;
+    objedit_mouse(view_pos);
+    tran_set = 0;
+  }else{/* slew the view */
     MAT4X3PNT( new_pos, view2model, view_pos );
     MAT_DELTAS_GET_NEG( old_pos, toViewcenter );
     VSUB2( diff, new_pos, old_pos );
@@ -2533,9 +2533,9 @@ vect_t view_pos;
     MAT_DELTAS_VEC( toViewcenter, new_pos);
     MAT_DELTAS_VEC( ModelDelta, new_pos);
     new_mats();
-
-    return CMD_OK;
   }
+
+  return CMD_OK;
 }
 
 int
@@ -2548,14 +2548,17 @@ fastf_t x, y, z;
   point_t diff;
   int status;
   char *av[] = {NULL, NULL, NULL, NULL, NULL};
-  char xval[32], yval[32], zval[32];
+  struct rt_vls xval, yval, zval;
 
-  av[1] = xval;
-  av[2] = yval;
-  av[3] = zval;
-  sprintf(xval, "%f", x);
-  sprintf(yval, "%f", y);
-  sprintf(zval, "%f", z);
+  rt_vls_init(&xval);
+  rt_vls_init(&yval);
+  rt_vls_init(&zval);
+  rt_vls_printf(&xval, "%f", x);
+  rt_vls_printf(&yval, "%f", y);
+  rt_vls_printf(&zval, "%f", z);
+  av[1] = rt_vls_addr(&xval);
+  av[2] = rt_vls_addr(&yval);
+  av[3] = rt_vls_addr(&zval);
 
   /* if in view state or not doing a solid rotate then allow the view to be rotated */
   if(state == ST_VIEW || !EDIT_ROTATE){
@@ -2582,6 +2585,10 @@ fastf_t x, y, z;
     av[0] = rotobj_str;
     status = f_rot_obj((ClientData)NULL, interp, 4, av);
   }
+
+  rt_vls_free(&xval);
+  rt_vls_free(&yval);
+  rt_vls_free(&zval);
 
   if(status == TCL_OK)
     return CMD_OK;
