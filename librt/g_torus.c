@@ -165,8 +165,8 @@ struct rt_i		*rtip;
 	LOCAL fastf_t	magsq_a, magsq_b, magsq_h;
 	LOCAL mat_t	R;
 	LOCAL vect_t	A, B, Hv;
-	LOCAL vect_t	work, temp;
-	FAST fastf_t	f;
+	LOCAL vect_t	P, w1;	/* for RPP calculation */
+	FAST fastf_t	f, tmp;
 	LOCAL fastf_t	r1, r2;	/* primary and secondary radius */
 	LOCAL fastf_t	mag_b;
 
@@ -262,35 +262,45 @@ struct rt_i		*rtip;
 	VMOVE( stp->st_center, tor->tor_V );
 	stp->st_aradius = stp->st_bradius = tor->tor_r1 + r2;
 
-	/* Compute bounding RPP */
-#define TOR_MM(v)	VMINMAX( stp->st_min, stp->st_max, v );
+	/*
+	 * Compute bounding RPP
+	 *  We are fitting an RPP to a "hockey-puck" which surrounds
+	 *  the torus.  This is a unit radius RCC in the XY plane
+	 *  with the end planes at +/- alpha.
+	 *  These formulas were derived via Lagrange multipliers.
+	 *  If the torus is not circular, the scaling will have
+	 *  to be changed.
+	 */
 
-	/* Exterior radius is r1+r2;  rescale A and B here */
-	f = tor->tor_r1+r2;
-	VUNITIZE( A );
-	VSCALE( A, A, f );
-	VUNITIZE( B );
-	VSCALE( B, B, f );
-	VSCALE( Hv, Hv, r2 );
+	/* X */
+	VSET( P, 1.0, 0, 0 );		/* bounding plane normal */
+	MAT3XVEC( w1, R, P );		/* map plane into local coord syst */
+	f = fabs( w1[Z]*tor->tor_alpha ) * tor->tor_r1;		/* Z part */
+	tmp = w1[X] * w1[X] + w1[Y] * w1[Y];
+	if( tmp > 1.0e-8 )
+		f += tmp/sqrt(tmp) * (tor->tor_r1 + r2);	/* XY part */
+	stp->st_min[X] = tor->tor_V[X] - f;	/* V.P +/- f */
+	stp->st_max[X] = tor->tor_V[X] + f;
 
-	/* There are 8 corners to the enclosing RPP;  find max and min */
-	VADD3( temp, tor->tor_V, B, Hv );
-	VADD2( work, temp, A ); TOR_MM( work );	/* V + A + B + Hv */
-	VSUB2( work, temp, A ); TOR_MM( work );	/* V - A + B + Hv */
+	/* Y */
+	VSET( P, 0, 1.0, 0 );		/* bounding plane normal */
+	MAT3XVEC( w1, R, P );		/* map plane into local coord syst */
+	f = fabs( w1[Z]*tor->tor_alpha ) * tor->tor_r1;		/* Z part */
+	tmp = w1[X] * w1[X] + w1[Y] * w1[Y];
+	if( tmp > 1.0e-8 )
+		f += tmp/sqrt(tmp) * (tor->tor_r1 + r2);	/* XY part */
+	stp->st_min[Y] = tor->tor_V[Y] - f;	/* V.P +/- f */
+	stp->st_max[Y] = tor->tor_V[Y] + f;
 
-	VSUB2( temp, tor->tor_V, B );
-	VADD2( temp, temp, Hv );
-	VADD2( work, temp, A ); TOR_MM( work );	/* V + A - B + Hv */
-	VSUB2( work, temp, A ); TOR_MM( work );	/* V - A - B + Hv */
-	
-	VSUB2( temp, tor->tor_V, Hv );
-	VADD2( temp, temp, B );
-	VADD2( work, temp, A ); TOR_MM( work );	/* V + A + B - Hv */
-	VSUB2( work, temp, A ); TOR_MM( work );	/* V - A + B - Hv */
-
-	VSUB3( temp, tor->tor_V, B, Hv );
-	VADD2( work, temp, A ); TOR_MM( work );	/* V + A - B - Hv */
-	VSUB2( work, temp, A ); TOR_MM( work );	/* V - A - B - Hv */
+	/* Z */
+	VSET( P, 0, 0, 1.0 );		/* bounding plane normal */
+	MAT3XVEC( w1, R, P );		/* map plane into local coord syst */
+	f = fabs( w1[Z]*tor->tor_alpha ) * tor->tor_r1;		/* Z part */
+	tmp = w1[X] * w1[X] + w1[Y] * w1[Y];
+	if( tmp > 1.0e-8 )
+		f += tmp/sqrt(tmp) * (tor->tor_r1 + r2);	/* XY part */
+	stp->st_min[Z] = tor->tor_V[Z] - f;	/* V.P +/- f */
+	stp->st_max[Z] = tor->tor_V[Z] + f;
 
 	return(0);			/* OK */
 }
