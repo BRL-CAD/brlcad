@@ -51,6 +51,13 @@ static char RCSid[] = "$Header$";
 	(_lo1)[Y] >= (_lo2)[Y] && (_hi1)[Y] <= (_hi2)[Y] && \
 	(_lo1)[Z] >= (_lo2)[Z] && (_hi1)[Z] <= (_hi2)[Z] )
 
+#define inout(_i,_j)	in_out[_i*shell_count + _j]
+#define OUTSIDE		1
+#define INSIDE		(-1)
+#define OUTER_SHELL	0x00000001
+#define	INNER_SHELL	0x00000002
+#define INVERT_SHELL	0x00000004
+
 
 RT_EXTERN( fastf_t nmg_loop_plane_area , ( struct loopuse *lu , plane_t pl ) );
 RT_EXTERN( struct faceuse *nmg_add_loop_to_face , (struct shell *s, struct faceuse *fu, struct vertex *verts[], int n, int dir ) );
@@ -65,7 +72,9 @@ struct vlist {
 struct nmg_ptbl groups[11];
 
 static int polysolids;
+static int debug;
 static char	usage[] = "Usage: %s [-i euclid_db] [-o brlcad_db] [-p]\n\t\t(-p indicates write as polysolids)\n ";
+static struct rt_tol  tol;
 
 main(argc, argv)
 int	argc;
@@ -81,10 +90,25 @@ char	*argv[];
 	efile = NULL;
 	bfile = NULL;
 	polysolids = 0;
+	debug = 0;
+
+        tol.magic = RT_TOL_MAGIC;
+        tol.dist = 0.005;
+        tol.dist_sq = tol.dist * tol.dist;
+        tol.perp = 1e-6;
+        tol.para = 1 - tol.perp;
+
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "i:o:p")) != EOF) {
+	while ((c = getopt(argc, argv, "d:vi:o:p")) != EOF) {
 		switch (c) {
+		case 'd':
+			tol.dist = atof( optarg );
+			tol.dist_sq = tol.dist * tol.dist;
+			break;
+		case 'v':
+			debug = 1;
+			break;
 		case 'i':
 			efile = optarg;
 			if ((fpin = fopen(efile, "r")) == NULL)
@@ -145,17 +169,9 @@ int		reg_id;
 	int group_id;
 	struct nmgregion *r;
 	struct shell *s;
-	struct rt_tol  tol;
 	struct wmember head;
 
 	RT_LIST_INIT( &head.l );
-
-        /* XXX These need to be improved */
-        tol.magic = RT_TOL_MAGIC;
-        tol.dist = 0.005;
-        tol.dist_sq = tol.dist * tol.dist;
-        tol.perp = 1e-6;
-        tol.para = 1 - tol.perp;
 
 	r = RT_LIST_FIRST( nmgregion , &m->r_hd );
 	s = RT_LIST_FIRST( shell , &r->s_hd );
@@ -307,6 +323,87 @@ FILE	*fpin, *fpout;
 	build_groups( fpout );
 }
 
+static void
+add_shells_to_db( fpout, shell_count, shells, reg_id )
+FILE *fpout;
+int shell_count;
+struct shell *shells[];
+int reg_id;
+{
+	struct model *m=(struct model *)NULL;
+	char sol_name[80];
+	char *reg_name;
+	struct wmember head;
+	int solid_no=0;
+	int shell_no;
+	int gift_ident, group_id;
+
+	RT_LIST_INIT( &head.l );
+
+	for( shell_no=0 ; shell_no < shell_count ; shell_no++ )
+	{
+		if( !shells[shell_no] )
+			continue;
+
+		NMG_CK_SHELL( shells[shell_no] );
+
+		if( !m )
+			m = nmg_find_model( &shells[shell_no]->l.magic );
+
+		solid_no++;
+		sprintf( sol_name , "%d.%d.s", reg_id, solid_no );
+
+		if( mk_addmember( sol_name, &head, WMOP_UNION ) == WMEMBER_NULL )
+		{
+			rt_log( "add_shells_to_db: mk_addmember failed for solid %s\n" , sol_name );
+			rt_bomb( "add_shells_to_db: FAILED\n" );
+		}
+
+		if( polysolids )
+			write_shell_as_polysolid( fpout, sol_name, shells[shell_no] );
+		else
+		{
+			struct model *m_tmp;
+			struct nmgregion *r_tmp;
+			struct shell *s=shells[shell_no];
+
+			/* Move this shell to a seperate model and write to .g file */
+			m_tmp = nmg_mmr();
+			r_tmp = RT_LIST_FIRST( nmgregion , &m_tmp->r_hd );
+			RT_LIST_DEQUEUE( &s->l );
+			s->r_p = r_tmp;
+			RT_LIST_APPEND( &r_tmp->s_hd, &s->l )
+
+			nmg_m_reindex( m_tmp , 0 );
+
+			nmg_rebound( m_tmp, &tol );
+
+			mk_nmg( fpout , sol_name, m_tmp );
+
+			nmg_km( m_tmp );
+
+		}
+	}
+
+	nmg_m_reindex( m , 0 );
+
+	gift_ident = reg_id % 100000;
+	group_id = gift_ident/1000;
+	if( group_id > 10 )
+		group_id = 10;
+
+	reg_name = (char *)rt_malloc( strcspn( sol_name, "." ) + 3, "reg_name" );
+	sprintf( reg_name, "%d.r", reg_id );
+	if( mk_lrcomb( fpout, reg_name, &head, 1, (char *)NULL, (char *)NULL,
+	    (unsigned char *)NULL, gift_ident, 0, 0, 100, 0 ) )
+	{
+		rt_log( "add_nmg_to_db: mk_rlcomb failed for region %s\n" , reg_name );
+		rt_bomb( "add_nmg_to_db: FAILED\n" );
+	}
+
+	nmg_tbl( &groups[group_id] , TBL_INS , (long *)reg_name );
+}
+
 /*
  *	R e a d _ E u c l i d _ R e g i o n
  *
@@ -319,21 +416,13 @@ FILE	*fp, *fpdb;
 int	reg_id;
 {
 	int	cur_id, face, facet_type, hole_face, i,
-		lst[MAX_PTS_PER_FACE], np, nv;
+		lst[MAX_PTS_PER_FACE], np, nv, shell_count;
 	struct faceuse	*outfaceuses[MAX_PTS_PER_FACE];
 	struct model	*m;	/* Input/output, nmg model. */
 	struct nmgregion *r;
-	struct rt_tol	tol;
 	struct shell	*s;
 	struct vertex	*vertlist[MAX_PTS_PER_FACE];
 	struct vlist	vert;
-
-	/* Copied from proc-db/nmgmodel.c */
-	tol.magic = RT_TOL_MAGIC;
-	tol.dist = 0.01;
-	tol.dist_sq = tol.dist * tol.dist;
-	tol.perp = 0.001;
-	tol.para = 0.999;
 
 	m = nmg_mm();		/* Make nmg model. */
 	r = nmg_mrsv(m);	/* Make region, empty shell, vertex. */
@@ -386,11 +475,21 @@ int	reg_id;
 	} while (reg_id == cur_id);
 
 	/* Associate the vertex geometry, ccw. */
+	if( debug )
+		rt_log( "Associating vertex geometry:\n" );
 	for (i = 0; i < nv; i++)
+	{
 		if (vert.vt[i])
+		{
+			if( debug )
+				rt_log( "\t( %g %g %g )\n" , V3ARGS( &vert.pt[3*i] ) );
 			nmg_vertex_gv(vert.vt[i], &vert.pt[3*i]);
+		}
+	}
 
 	/* Associate the face geometry. */
+	if( debug )
+		rt_log( "Associating face geometry:\n" );
 	for (i = 0; i < face; i++)
 	{
 		plane_t pl;
@@ -402,10 +501,21 @@ int	reg_id;
 			area = nmg_loop_plane_area( lu , pl );
 			if( area > 0.0 )
 			{
+				if( debug )
+					rt_log( "\t( %g %g %g %g )\n" , V4ARGS( pl ) );
 				if( lu->orientation == OT_OPPOSITE )
+				{
+					if( debug )
+						rt_log( "\t\treversing plane normal for OT_OPPOSITE loop\n" );
 					HREVERSE( pl , pl );
+				}
 				nmg_face_g( outfaceuses[i] , pl );
 				break;
+			}
+			else
+			{
+				rt_log( "Cannot calculate geometry for loop:\n" );
+				nmg_pr_lu_briefly( lu, "" );
 			}
 		}
 	}
@@ -426,88 +536,210 @@ int	reg_id;
 	 *
 	 * first decompose the shell into maximally connected shells
 	 */
-	if( nmg_decompose_shell( s , &tol ) > 1 )
+	if( (shell_count = nmg_decompose_shell( s , &tol )) > 1 )
 	{
 		/* This shell has more than one part */
-		struct shell *outer_shell=NULL;
-		long *flags;
+		struct shell **shells;
+		struct nmg_ptbl verts;
+		int shell1_no, shell2_no, outer_shell_count=0;
+		short *in_out;
+		short *shell_inout;
 
-		flags = (long *)rt_calloc( m->maxindex , sizeof( long ) , "euclid-g: flags" );
+		shell_inout = (short *)rt_calloc( shell_count, sizeof( short ), "shell_inout" );
+		in_out = (short *)rt_calloc( shell_count * shell_count , sizeof( short ) , "in_out" );
 
+		nmg_tbl( &verts , TBL_INIT , (long *)NULL );
+
+		shells = (struct shell **)rt_calloc( shell_count, sizeof( struct shell *), "shells" );
+
+		/* fuse geometry */
+		(void)nmg_model_vertex_fuse( m, &tol );
+
+		i = 0;
+
+		if( debug )
+			rt_log( "\nShell decomposed into %d sub-shells\n", shell_count );
+
+
+		/* insure that bounding boxes are available
+		 * and that all the shells are closed.
+		 */
+		shell1_no = (-1);
 		for( RT_LIST_FOR( s , shell , &r->s_hd ) )
 		{
-			struct shell *s2;
-
-			int is_outer=1;
-
-			/* insure that bounding boxes are available */
+			shells[++shell1_no] = s;
 			if( !s->sa_p )
 				nmg_shell_a( s , &tol );
 
-			/* Check if this shells contains all the others
-			 * In TANKILL, there should only be one outer shell
-			 */
+			if( nmg_check_closed_shell( s , &tol ) )
+			{
+				rt_log( "Warning: Region %d is not a closed surface\n" , reg_id );
+				rt_log( "\tCreating new faces to close region\n" );
+				nmg_close_shell( s , &tol );
+				if( nmg_check_closed_shell( s , &tol ) )
+					rt_bomb( "Cannot close shell\n" );
+			}
+		}
+
+		shell1_no = (-1);
+		for( RT_LIST_FOR( s, shell , &r->s_hd ) )
+		{
+			struct shell *s2;
+			int outside=0;
+			int inside=0;
+
+			shell1_no++;
+
+			nmg_vertex_tabulate( &verts, &s->l.magic );
+
+			shell2_no = (-1);
 			for( RT_LIST_FOR( s2 , shell , &r->s_hd ) )
 			{
-				if( !s2->sa_p )
+				int j;
+				int in=0;
+				int on=0;
+				int out=0;
 
-					nmg_shell_a( s2 , &tol );
+				shell2_no++;
 
-				if( !V3RPP1_IN_RPP2( s2->sa_p->min_pt , s2->sa_p->max_pt ,
-						    s->sa_p->min_pt , s->sa_p->max_pt ) )
+				if( s2 == s )
+					continue;
+
+				for( j=0 ; j<NMG_TBL_END( &verts ) ; j++ )
 				{
-					/* doesn't contain shell s2, so it's not an outer shell */
-					is_outer = 0;
+					struct vertex *v;
+
+					v = (struct vertex *)NMG_TBL_GET( &verts , j );
+					NMG_CK_VERTEX( v );
+
+					if( nmg_find_v_in_shell( v, s2, 1 ) )
+					{
+						on++;
+						continue;
+					}
+
+					switch( nmg_class_pt_s(v->vg_p->coord, s2, &tol) )
+					{
+						case NMG_CLASS_AinB:
+							in++;
+							break;
+						case NMG_CLASS_AonBshared:
+							on++;
+							break;
+						case NMG_CLASS_AoutB:
+							out++;
+							break;
+						default:
+							rt_bomb( "UNKNOWN CLASS!!!\n" );
+							break;
+					}
+				}
+
+				if( out > in )
+					inout( shell1_no, shell2_no ) = OUTSIDE;
+				else
+					inout( shell1_no, shell2_no ) = INSIDE;
+
+			}
+
+			nmg_tbl( &verts , TBL_RST, (long *)NULL );
+		}
+
+		nmg_tbl( &verts, TBL_FREE, (long *)NULL );
+
+		/* determine which shells are outer shells, which are inner,
+		 * and which must be inverted
+		 */
+		for( shell1_no=0 ; shell1_no < shell_count ; shell1_no++ )
+		{
+			int outers=0,inners=0;
+
+			shell_inout[shell1_no] = 0;
+			for( shell2_no=0 ; shell2_no < shell_count ; shell2_no++ )
+			{
+
+				if( shell1_no == shell2_no )
+					continue;
+
+				if( inout( shell1_no, shell2_no ) == OUTSIDE )
+					outers++;
+				else if( inout( shell1_no, shell2_no ) == INSIDE )
+					inners++;
+			}
+
+			if( outers && !inners )
+				shell_inout[shell1_no] |= OUTER_SHELL;
+			if( inners )
+				shell_inout[shell1_no] |= INNER_SHELL;
+			if( inners%2 )
+			{
+				shell_inout[shell1_no] |= INVERT_SHELL;
+				nmg_invert_shell( shells[shell1_no], &tol );
+			}
+		}
+
+		/* join inner shells to outer shells */
+		for( shell1_no=0 ; shell1_no < shell_count ; shell1_no++ )
+		{
+			struct shell *outer_shell=(struct shell *)NULL;
+
+			if( shell_inout[shell1_no] & OUTER_SHELL )
+				continue;
+
+			if( !shell_inout[shell1_no] & INNER_SHELL )
+				rt_bomb( "Found a shell that is neither inner nor outer!!!\n" );
+
+			/* Look for an outer shell to take this inner shell */
+			for( shell2_no=0 ; shell2_no < shell_count ; shell2_no++ )
+			{
+				if( shell2_no == shell1_no )
+					continue;
+
+				if( !shells[shell2_no] )
+					continue;
+
+				if( inout( shell1_no, shell2_no ) == INSIDE &&
+					shell_inout[shell2_no] & OUTER_SHELL )
+				{
+					outer_shell = shells[shell2_no];
 					break;
 				}
+
 			}
-			if( is_outer )
-			{
-				outer_shell = s;
-				break;
-			}
-		}
-		if( !outer_shell )
-		{
-			rt_log( "euclid-g: Could not find outer shell for component code %d\n" , cur_id );
-			outer_shell = RT_LIST_FIRST( shell , &r->s_hd );
+			if( !outer_shell )
+				rt_bomb( "Cannot find outer shell for inner shell!!!\n" );
+
+			/* Place this inner shell in the outer shell */
+			nmg_js( outer_shell, shells[shell1_no], &tol );
+			shells[shell1_no] = (struct shell *)NULL;
 		}
 
-		/* reverse the normals for each void shell
-		 * and merge back into one shell */
-		s = RT_LIST_FIRST( shell , &r->s_hd );
-		while( RT_LIST_NOT_HEAD( s , &r->s_hd ) )
+		/* Check and count the outer shells */
+		for( shell1_no=0 ; shell1_no < shell_count ; shell1_no++ )
 		{
-			struct faceuse *fu;
-			struct shell *next_s;
-
-			if( s == outer_shell )
-			{
-				s = RT_LIST_PNEXT( shell , s );
+			if( !shells[shell1_no] )
 				continue;
-			}
 
-			next_s = RT_LIST_PNEXT( shell , s );
-			fu = RT_LIST_FIRST( faceuse , &s->fu_hd );
-			nmg_reverse_face( fu );
-			nmg_propagate_normals( fu , flags , &tol );
-			nmg_js( outer_shell , s , &tol );
-			s = next_s;
+			if( shell_inout[shell1_no] & INNER_SHELL )
+				rt_bomb( "An inner shell was not placed in an outer shell!!\n" );
+
+			outer_shell_count++;
 		}
-		rt_free( (char *)flags , "euclid-g: flags" );
-	}
-	s = RT_LIST_FIRST( shell , &r->s_hd );
 
-	if( nmg_check_closed_shell( s , &tol ) )
-	{
-		rt_log( "Warning: Region %d is not a closed surface\n" , reg_id );
-		rt_log( "\tCreating new faces to close region\n" );
-		nmg_close_shell( s , &tol );
-		if( nmg_check_closed_shell( s , &tol ) )
-			rt_bomb( "Cannot close shell\n" );
-	}
+		if( outer_shell_count < 1 )
+			rt_bomb( "No shells!!!!\n" );
+		else if( outer_shell_count == 1 )
+			add_nmg_to_db( fpdb, m, reg_id );
+		else
+			add_shells_to_db( fpdb, shell_count, shells, reg_id );
 
-	add_nmg_to_db(fpdb, m, reg_id);		/* Put region in db. */
+		rt_free( (char *)shells, "shells" );
+		rt_free( (char *)shell_inout, "shell_inout" );
+		rt_free( (char *)in_out, "in_out" );
+	}
+	else
+		add_nmg_to_db( fpdb, m, reg_id );
+
 	nmg_km(m);				/* Safe to kill model now. */
 
 	return(cur_id);
