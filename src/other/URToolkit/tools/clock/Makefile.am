@@ -8,8 +8,8 @@ rleClock_SOURCES = \
 
 noinst_HEADERS = font.h
 
-font.c: ${srcdir}/makeFont.sh ${srcdir}/font.src
-	@SH@ ${srcdir}/makeFont.sh ${srcdir}/font.src > font.c
+font.c: ${srcdir}/makeFont ${srcdir}/font.src
+	@SH@ ${srcdir}/makeFont ${srcdir}/font.src > font.c
 
 LDADD = ${RLE}
 
