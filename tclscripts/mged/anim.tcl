@@ -5,8 +5,8 @@
 #Sections:
 #	Create main window
 #	Curve Editor
-#	View Editor
 #	Table Editor
+#	View Editor
 #	Create Script
 #	Create Track Script
 #	Combine Scripts
@@ -84,7 +84,7 @@ proc sketch_popup_main { {p .} } {
 	button $root.b5 -text "SHOW SCRIPT" -command "sketch_popup_preview $root"
 	button $root.b6 -text "QUIT ANIMATOR" -command "sketch_quit $root"
 
-	pack $root.b0 $root.b1 $root.b2 $root.b3 $root.b4 \
+	pack $root.b0 $root.b2 $root.b1 $root.b3 $root.b4 \
 		$root.b5 $root.b6 \
 		-side top -fill x -expand yes
 
@@ -3013,6 +3013,7 @@ proc sketch_init_track {} {
 	uplevel #0 {set mged_sketch_track_len ""  }
 	uplevel #0 {set mged_sketch_track_geom 0  }
 	uplevel #0 {set mged_sketch_track_arced "0"}
+	uplevel #0 {set mged_sketch_track_antistr 0}
 	#dependencies
 	foreach dep {main objanim} {
 		if { [info globals mged_sketch_init_$dep] == "" } {
@@ -3081,6 +3082,7 @@ proc sketch_popup_track_anim { p } {
 	frame $root.fa
 	checkbutton $root.fa.cb -text "Create geometry file from frame:" -variable mged_sketch_track_geom
 	entry $root.fa.e0 -width 3 -textvariable mged_sketch_track_arced
+	checkbutton $root.cb0 -text "Enable anti-strobing" -variable mged_sketch_track_antistr
 	frame $root.f9
 	button $root.f9.b0 -text "OK" -command {sketch_do_track }
 	button $root.f9.b1 -text "Show Script" -command "sketch_popup_preview $p \$mged_sketch_objscript"
@@ -3092,7 +3094,7 @@ proc sketch_popup_track_anim { p } {
 		$root.fw \
 		$root.f4 $root.f5 $root.f3 $root.f3a\
 		$root.f6 $root.f7 \
-		$root.f8 $root.fa $root.f9\
+		$root.f8 $root.fa $root.cb0 $root.f9\
 		-side top -fill x -expand yes
 
 	pack \
@@ -3161,7 +3163,7 @@ proc sketch_do_track { } {
 		mged_sketch_track_type \
 		mged_sketch_track_len \
 		mged_sketch_track_geom \
-		mged_sketch_track_arced \
+		mged_sketch_track_arced mged_sketch_track_antistr\
 		mged_sketch_objcen mged_sketch_objori mged_sketch_objframe
 
 	upvar #0 mged_sketch_track_wname wname
@@ -3259,7 +3261,13 @@ proc sketch_do_track { } {
 		set fcmd ""
 	}
 
-	set myargs "$lencmd $arccmd $mged_sketch_track_dist -b $ypr \
+	if { $mged_sketch_track_antistr == 1 } {
+		set acmd "-a"
+	} else {
+		set acmd " "
+	}
+
+	set myargs "$acmd $lencmd $arccmd $mged_sketch_track_dist -b $ypr \
 		-d $center $fcmd $wcmd $pcmd"
 	#puts $myargs
 
