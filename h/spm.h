@@ -1,5 +1,5 @@
 /*
- *			S P H . H
+ *			S P M . H
  *
  *  Sphere data structure and function declarations.
  *
@@ -14,21 +14,25 @@
  *  Copyright Notice -
  *	This software is Copyright (C) 1986 by the United States Army.
  *	All rights reserved.
+ *
+ *  $Header$
  */
 
 typedef	struct	{
 	int	ny;		/* Number of "y" bins */
 	int	*nx;		/* Number of "x" bins per "y" bin */
+	int	elsize;		/* Size of each bin element */
 	unsigned char **xbin;	/* staring addresses of "x" bins */
 	unsigned char *_data;	/* For freeing purposes, start of data */
 } spm_map_t;
 
-#define	SPH_NULL (spm_map_t *)0
+#define	SPM_NULL (spm_map_t *)0
 
 spm_map_t *spm_init();
 void	spm_free();
 void	spm_read();
 void	spm_write();
+char	*spm_get();
 int	spm_load();
 int	spm_save();
 int	spm_pix_load();
