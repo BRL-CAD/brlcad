@@ -101,7 +101,7 @@ struct hit_list
 RT_EXTERN( void rt_pipe_ifree, (struct rt_db_internal *ip) );
 
 
-int
+HIDDEN int
 rt_bend_pipe_prep( stp, head, bend_center, bend_start, bend_end, bend_radius, bend_angle, v1, v2, od, id )
 struct soltab		*stp;
 struct rt_list	*head;
@@ -193,7 +193,7 @@ fastf_t od, id;
 
 }
 
-void
+HIDDEN void
 rt_linear_pipe_prep( stp, head, pt1, id1, od1, pt2, id2, od2 )
 struct soltab *stp;
 struct rt_list *head;
@@ -210,7 +210,6 @@ fastf_t od2;
 	LOCAL mat_t	Rinv;
 	LOCAL mat_t	S;
 	LOCAL point_t work;
-	LOCAL point_t top;
 	LOCAL vect_t seg_ht;
 	LOCAL vect_t v1,v2;
 
@@ -269,14 +268,13 @@ fastf_t od2;
 	VJOIN2( work, pt1, -od1, v1, -od1, v2 );
 	PIPE_MM( work )
 
-	VJOIN1( top, pt1, pipe->pipe_len, seg_ht );
-	VJOIN2( work, top, od1, v1, od1, v2 );
+	VJOIN2( work, pt2, od2, v1, od2, v2 );
 	PIPE_MM( work )
-	VJOIN2( work, top, -od1, v1, od1, v2 );
+	VJOIN2( work, pt2, -od2, v1, od2, v2 );
 	PIPE_MM( work )
-	VJOIN2( work, top, od1, v1, -od1, v2 );
+	VJOIN2( work, pt2, od2, v1, -od2, v2 );
 	PIPE_MM( work )
-	VJOIN2( work, top, -od1, v1, -od1, v2 );
+	VJOIN2( work, pt2, -od2, v1, -od2, v2 );
 	PIPE_MM( work )
 
 }
@@ -481,7 +479,7 @@ double mm2local;
 	rt_vls_strcat( vp, buf );
 }
 
-void
+HIDDEN void
 bend_pipe_shot( stp, rp, ap, seghead, pipe, hit_headp, hit_count, seg_no )
 struct soltab           *stp;
 register struct xray    *rp;
@@ -714,7 +712,7 @@ int			seg_no;
 
 }
 
-void
+HIDDEN void
 linear_pipe_shot( stp, rp, ap, seghead, pipe, hit_headp, hit_count, seg_no )
 struct soltab           *stp;
 register struct xray    *rp;
@@ -864,7 +862,7 @@ int			seg_no;
 
 }
 
-void
+HIDDEN void
 pipe_start_shot( stp, rp, ap, seghead, pipe, hit_headp, hit_count, seg_no )
 struct soltab           *stp;
 register struct xray    *rp;
@@ -945,7 +943,8 @@ int			seg_no;
 		}
 	}
 }
-void
+
+HIDDEN void
 pipe_end_shot( stp, rp, ap, seghead, pipe, hit_headp, hit_count, seg_no )
 struct soltab           *stp;
 register struct xray    *rp;
@@ -1408,7 +1407,7 @@ rt_pipe_class()
  * is a flag to indicate that a complete circle is desired.
  */
 
-static void
+HIDDEN void
 draw_pipe_arc( vhead, radius, center, v1, v2, end, seg_count, full_circle )
 struct rt_list		*vhead;
 fastf_t			radius;
@@ -1456,7 +1455,7 @@ int			full_circle;
 	}
 }
 
-static void
+HIDDEN void
 draw_linear_seg( vhead, p1, or1, ir1, p2, or2, ir2, v1, v2 )
 struct rt_list			*vhead;
 CONST point_t			p1,p2;
@@ -1504,7 +1503,7 @@ CONST vect_t			v2;
 	RT_ADD_VLIST( vhead, pt, RT_VLIST_LINE_DRAW );
 }
 
-static void
+HIDDEN void
 draw_pipe_bend( vhead, center, end, radius, angle, v1, v2, norm, or, ir, f1, f2, seg_count )
 struct rt_list			*vhead;
 CONST point_t			center;
@@ -1722,7 +1721,7 @@ next_pt:
 	return(0);
 }
 
-void
+HIDDEN void
 tesselate_pipe_start( pipe, arc_segs, sin_del, cos_del, outer_loop, inner_loop, r1, r2, s, tol )
 struct wdb_pipept *pipe;
 int arc_segs;
@@ -1848,7 +1847,7 @@ struct rt_tol *tol;
 	}
 }
 
-void
+HIDDEN void
 tesselate_pipe_linear( start_pt, or, ir, end_pt, end_or, end_ir, arc_segs, sin_del, cos_del, outer_loop, inner_loop, r1, r2, s, tol )
 point_t start_pt;
 fastf_t or,ir;
@@ -1868,14 +1867,16 @@ struct rt_tol *tol;
 	struct vertex **new_inner_loop;
 	struct vertex **verts[3];
 	struct faceuse *fu;
-	vect_t norm;
-	vect_t reverse_norm;
+	vect_t *norms;
 	vect_t n;
-	int i;
+	fastf_t slope;
+	fastf_t seg_len;
+	int i,j;
 
 	NMG_CK_SHELL( s );
 	RT_CK_TOL( tol );
 
+	norms = (vect_t *)rt_calloc( arc_segs, sizeof( vect_t ), "tesselate_pipe_linear: new normals" );
 
 	if( end_or > tol->dist )
 		new_outer_loop = (struct vertex **)rt_calloc( arc_segs, sizeof( struct vertex *),
@@ -1885,6 +1886,11 @@ struct rt_tol *tol;
 		new_inner_loop = (struct vertex **)rt_calloc( arc_segs, sizeof( struct vertex *),
 				"tesselate_pipe_linear: new_inner_loop" );
 
+	VSUB2( n, end_pt, start_pt );
+	seg_len = MAGNITUDE( n );
+	VSCALE( n, n, 1.0/seg_len );
+	slope = (or - end_or)/seg_len;
+
 	if( or > tol->dist && end_or > tol->dist )
 	{
 		point_t pt;
@@ -1892,15 +1898,28 @@ struct rt_tol *tol;
 		struct faceuse *fu_prev=(struct faceuse *)NULL;
 		struct vertex **verts[3];
 
-		x = end_or;
+		x = 1.0;
 		y = 0.0;
+		VCOMB2( norms[0], x, r1, y, r2 );
+		VJOIN1( norms[0], norms[0], slope, n );
+		VUNITIZE( norms[0] );
 		for( i=0 ; i<arc_segs ; i++ )
 		{
-			VJOIN2( pt, end_pt, x, r1, y, r2 );
+			j = i+1;
+			if( j == arc_segs )
+				j = 0;
+
+			VJOIN2( pt, end_pt, x*end_or, r1, y*end_or, r2 );
 			xnew = x*cos_del - y*sin_del;
 			ynew = x*sin_del + y*cos_del;
 			x = xnew;
 			y = ynew;
+			if( i < arc_segs-1 )
+			{
+				VCOMB2( norms[j], x, r1, y, r2 );
+				VJOIN1( norms[j], norms[j], slope, n );
+				VUNITIZE( norms[j] );
+			}
 
 			if( fu_prev )
 			{
@@ -1910,14 +1929,60 @@ struct rt_tol *tol;
 					rt_log( "tesselate_pipe_linear: nmg_calc_face_g failed\n" );
 					nmg_kfu( fu_prev );
 				}
+				else
+				{
+					/* assign vertexuse normals */
+					struct loopuse *lu;
+					struct edgeuse *eu;
+
+					NMG_CK_FACEUSE( fu_prev );
+
+					if( fu_prev->orientation != OT_SAME )
+						fu_prev = fu_prev->fumate_p;
+
+					lu = RT_LIST_FIRST( loopuse, &fu_prev->lu_hd );
+
+					for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+					{
+						vect_t reverse_norm;
+						struct edgeuse *eu_opp_use;
+
+						eu_opp_use = RT_LIST_PNEXT_CIRC( edgeuse, &eu->eumate_p->l );
+						if( eu->vu_p->v_p == new_outer_loop[i-1] )
+						{
+							nmg_vertexuse_nv( eu->vu_p, norms[i-1] );
+							VREVERSE( reverse_norm, norms[i-1] );
+							nmg_vertexuse_nv( eu_opp_use->vu_p, reverse_norm );
+						}
+						else if(  eu->vu_p->v_p == (*outer_loop)[i-1] )
+						{
+							nmg_vertexuse_nv( eu->vu_p, norms[i-1] );
+							VREVERSE( reverse_norm, norms[i-1] );
+							nmg_vertexuse_nv( eu_opp_use->vu_p, reverse_norm );
+						}
+						else if(  eu->vu_p->v_p == new_outer_loop[i] )
+						{
+							nmg_vertexuse_nv( eu->vu_p, norms[i] );
+							VREVERSE( reverse_norm, norms[i] );
+							nmg_vertexuse_nv( eu_opp_use->vu_p, reverse_norm );
+						}
+						else if(  eu->vu_p->v_p == (*outer_loop)[i] )
+						{
+							nmg_vertexuse_nv( eu->vu_p, norms[i] );
+							VREVERSE( reverse_norm, norms[i] );
+							nmg_vertexuse_nv( eu_opp_use->vu_p, reverse_norm );
+						}
+						else
+						{
+							rt_log( "No vu_normal assigned at (%g %g %g)\n", V3ARGS( eu->vu_p->v_p->vg_p->coord ) );
+							rt_log( "\ti=%d, arc_segs=%d, fu_prev = x%x\n" , i, arc_segs, fu_prev );
+						}
+					}
+				}
 			}
 
-			if( i == arc_segs-1 )
-				verts[0] = &(*outer_loop)[0];
-			else
-				verts[0] = &(*outer_loop)[i+1];
+			verts[0] = &(*outer_loop)[j];
 			verts[1] = &(*outer_loop)[i];
-
 			verts[2] = &new_outer_loop[i];
 
 			if( (fu = nmg_cmface( s, verts, 3 ) ) == NULL )
@@ -1934,12 +1999,60 @@ struct rt_tol *tol;
 				rt_log( "tesselate_pipe_linear: nmg_calc_face_g failed\n" );
 				nmg_kfu( fu );
 			}
+			else
+			{
+				/* assign vertexuse normals */
+				struct loopuse *lu;
+				struct edgeuse *eu;
+
+				NMG_CK_FACEUSE( fu );
+
+				if( fu->orientation != OT_SAME )
+					fu = fu->fumate_p;
+
+				lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
+
+				for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+				{
+					vect_t reverse_norm;
+					struct edgeuse *eu_opp_use;
+
+					eu_opp_use = RT_LIST_PNEXT_CIRC( edgeuse, &eu->eumate_p->l );
+					if( eu->vu_p->v_p == (*outer_loop)[0] )
+					{
+						nmg_vertexuse_nv( eu->vu_p, norms[0] );
+						VREVERSE( reverse_norm, norms[0] );
+						nmg_vertexuse_nv( eu_opp_use->vu_p, reverse_norm );
+					}
+					else if(  eu->vu_p->v_p == new_outer_loop[i] )
+					{
+						nmg_vertexuse_nv( eu->vu_p, norms[i] );
+						VREVERSE( reverse_norm, norms[i] );
+						nmg_vertexuse_nv( eu_opp_use->vu_p, reverse_norm );
+					}
+					else if(  eu->vu_p->v_p == (*outer_loop)[i] )
+					{
+						nmg_vertexuse_nv( eu->vu_p, norms[i] );
+						VREVERSE( reverse_norm, norms[i] );
+						nmg_vertexuse_nv( eu_opp_use->vu_p, reverse_norm );
+					}
+					else if(  eu->vu_p->v_p == (*outer_loop)[j] )
+					{
+						nmg_vertexuse_nv( eu->vu_p, norms[j] );
+						VREVERSE( reverse_norm, norms[j] );
+						nmg_vertexuse_nv( eu_opp_use->vu_p, reverse_norm );
+					}
+					else
+					{
+						rt_log( "No vu_normal assigned at (%g %g %g)\n", V3ARGS( eu->vu_p->v_p->vg_p->coord ) );
+						rt_log( "\ti=%d, arc_segs=%d, fu = x%x\n" , i, arc_segs, fu );
+					}
+				}
+			}
 
 			verts[1] = verts[2];
-			if( i == arc_segs-1 )
-				verts[2] = &new_outer_loop[0];
-			else
-				verts[2] = &new_outer_loop[i+1];
+			verts[2] = &new_outer_loop[j];
+
 			if( (fu_prev = nmg_cmface( s, verts, 3 ) ) == NULL )
 			{
 				rt_log( "tesselate_pipe_linear: failed to make outer face #%d or=%g, end_or=%g\n",
@@ -1954,7 +2067,6 @@ struct rt_tol *tol;
 					nmg_kfu( fu_prev );
 				}
 			}
-
 		}
 		rt_free( (char *)(*outer_loop), "tesselate_pipe_bend: outer_loop" );
 		*outer_loop = new_outer_loop;
@@ -1963,14 +2075,17 @@ struct rt_tol *tol;
 	{
 		struct vertex *v=(struct vertex *)NULL;
 
+		VSUB2( norms[0], (*outer_loop)[0]->vg_p->coord, start_pt );
+		VJOIN1( norms[0], norms[0], slope*or, n );
+		VUNITIZE( norms[0] );
 		for( i=0 ; i<arc_segs; i++ )
 		{
-			verts[1] = &(*outer_loop)[i];
-			if( i == arc_segs-1 )
-				verts[0] = &(*outer_loop)[0];
-			else
-				verts[0] = &(*outer_loop)[i+1];
+			j = i+1;
+			if( j == arc_segs )
+				j = 0;
 
+			verts[0] = &(*outer_loop)[j];
+			verts[1] = &(*outer_loop)[i];
 			verts[2] = &v;
 
 			if( (fu = nmg_cmface( s, verts, 3 ) ) == NULL )
@@ -1981,10 +2096,61 @@ struct rt_tol *tol;
 			}
 			if( i == 0 )
 				nmg_vertex_gv( v, end_pt );
+
+			if( i < arc_segs-1 )
+			{
+				VSUB2( norms[j], (*outer_loop)[j]->vg_p->coord, start_pt );
+				VJOIN1( norms[j], norms[j], slope*or, n );
+				VUNITIZE( norms[j] );
+			}
+
 			if( nmg_calc_face_g( fu ) )
 			{
 				rt_log( "tesselate_pipe_linear: nmg_calc_face_g failed\n" );
 				nmg_kfu( fu );
+			}
+			else
+			{
+				struct loopuse *lu;
+				struct edgeuse *eu;
+				struct edgeuse *eu_opp_use;
+				vect_t reverse_norm;
+
+				NMG_CK_FACEUSE( fu );
+				if( fu->orientation != OT_SAME )
+					fu = fu->fumate_p;
+
+				lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
+				for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+				{
+					eu_opp_use = RT_LIST_PNEXT_CIRC( edgeuse, &eu->eumate_p->l );
+					if( eu->vu_p->v_p == (*outer_loop)[i] )
+					{
+						nmg_vertexuse_nv( eu->vu_p, norms[i] );
+						VREVERSE( reverse_norm, norms[i] );
+						nmg_vertexuse_nv( eu_opp_use->vu_p, reverse_norm );
+					}
+					else if( eu->vu_p->v_p == (*outer_loop)[j] )
+					{
+						nmg_vertexuse_nv( eu->vu_p, norms[j] );
+						VREVERSE( reverse_norm, norms[j] );
+						nmg_vertexuse_nv( eu_opp_use->vu_p, reverse_norm );
+					}
+					else if( eu->vu_p->v_p == v )
+					{
+						vect_t tmp_norm;
+						VBLEND2( tmp_norm, 0.5, norms[i], 0.5, norms[j] );
+						VUNITIZE( tmp_norm );
+						nmg_vertexuse_nv( eu->vu_p, tmp_norm );
+						VREVERSE( reverse_norm, tmp_norm );
+						nmg_vertexuse_nv( eu_opp_use->vu_p, reverse_norm );
+					}
+					else
+					{
+						rt_log( "No vu_normal assigned at (%g %g %g)\n", V3ARGS( eu->vu_p->v_p->vg_p->coord ) );
+						rt_log( "\ti=%d, j=%d, arc_segs=%d, fu = x%x\n" , i,j, arc_segs, fu );
+					}
+				}
 			}
 		}
 
@@ -1997,24 +2163,35 @@ struct rt_tol *tol;
 		fastf_t x,y,xnew,ynew;
 		struct vertex **verts[3];
 
-		x = end_or;
+
+		x = 1.0;
 		y = 0.0;
-		VJOIN2( pt_next, end_pt, x, r1, y, r2 );
+		VCOMB2( norms[0], x, r1, y, r2 );
+		VJOIN1( pt_next, end_pt, end_or, norms[0] );
+		VJOIN1( norms[0], norms[0], slope, n );
+		VUNITIZE( norms[0] );
 		for( i=0 ; i<arc_segs; i++ )
 		{
+			j = i + 1;
+			if( j == arc_segs )
+				j = 0;
+
 			VMOVE( pt, pt_next )
 			xnew = x*cos_del - y*sin_del;
 			ynew = x*sin_del + y*cos_del;
 			x = xnew;
 			y = ynew;
-			VJOIN2( pt_next, start_pt, x, r1, y, r2 );
+			if( i < j )
+			{
+				VCOMB2( norms[j], x, r1, y, r2 );
+				VJOIN1( pt_next, end_pt, end_or, norms[j] );
+				VJOIN1( norms[j], norms[j], slope, n );
+				VUNITIZE( norms[j] );
+			}
 
 			verts[0] = &(*outer_loop)[0];
 			verts[1] = &new_outer_loop[i];
-			if( i == arc_segs-1 )
-				verts[2] = &new_outer_loop[0];
-			else
-				verts[2] = &new_outer_loop[i+1];
+			verts[2] = &new_outer_loop[j];
 
 			if( (fu = nmg_cmface( s, verts, 3 ) ) == NULL )
 			{
@@ -2022,20 +2199,66 @@ struct rt_tol *tol;
 						i, or, end_or );
 				continue;
 			}
+			if( !(*outer_loop)[0]->vg_p )
+				nmg_vertex_gv( (*outer_loop)[0], start_pt );
 			if( !new_outer_loop[i]->vg_p )
 				nmg_vertex_gv( new_outer_loop[i], pt );
-			if( i+1 < arc_segs-1 && !new_outer_loop[i+1]->vg_p )
-				nmg_vertex_gv( new_outer_loop[i+1], pt_next );
+			if( !new_outer_loop[j]->vg_p )
+				nmg_vertex_gv( new_outer_loop[j], pt_next );
 			if( nmg_calc_face_g( fu ) )
 			{
 				rt_log( "tesselate_pipe_linear: nmg_calc_face_g failed\n" );
 				nmg_kfu( fu );
 			}
-			
+			else
+			{
+				struct loopuse *lu;
+				struct edgeuse *eu;
+				struct edgeuse *eu_opp_use;
+				vect_t reverse_norm;
+
+				NMG_CK_FACEUSE( fu );
+				if( fu->orientation != OT_SAME )
+					fu = fu->fumate_p;
+
+				lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
+				for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+				{
+					eu_opp_use = RT_LIST_PNEXT_CIRC( edgeuse, &eu->eumate_p->l );
+					if( eu->vu_p->v_p == new_outer_loop[i] )
+					{
+						nmg_vertexuse_nv( eu->vu_p, norms[i] );
+						VREVERSE( reverse_norm, norms[i] );
+						nmg_vertexuse_nv( eu_opp_use->vu_p, reverse_norm );
+					}
+					else if( eu->vu_p->v_p == new_outer_loop[j] )
+					{
+						nmg_vertexuse_nv( eu->vu_p, norms[j] );
+						VREVERSE( reverse_norm, norms[j] );
+						nmg_vertexuse_nv( eu_opp_use->vu_p, reverse_norm );
+					}
+					else if( eu->vu_p->v_p == (*outer_loop)[0] )
+					{
+						vect_t tmp_norm;
+						VBLEND2( tmp_norm, 0.5, norms[i], 0.5, norms[j] );
+						VUNITIZE( tmp_norm );
+						nmg_vertexuse_nv( eu->vu_p, tmp_norm );
+						VREVERSE( reverse_norm, tmp_norm );
+						nmg_vertexuse_nv( eu_opp_use->vu_p, reverse_norm );
+					}
+					else
+					{
+						rt_log( "No vu_normal assigned at (%g %g %g)\n", V3ARGS( eu->vu_p->v_p->vg_p->coord ) );
+						rt_log( "\ti=%d, j=%d, arc_segs=%d, fu = x%x\n" , i,j, arc_segs, fu );
+					}
+				}
+			}
 		}
 		rt_free( (char *)(*outer_loop), "tesselate_pipe_linear: outer_loop" );
 		*outer_loop = new_outer_loop;
 	}
+
+	slope = (ir - end_ir)/seg_len;
 
 	if( ir > tol->dist && end_ir > tol->dist )
 	{
@@ -2044,15 +2267,28 @@ struct rt_tol *tol;
 		struct faceuse *fu_prev=(struct faceuse *)NULL;
 		struct vertex **verts[3];
 
-		x = end_ir;
+		x = 1.0;
 		y = 0.0;
+		VCOMB2( norms[0], -x, r1, -y, r2 );
+		VJOIN1( norms[0], norms[0], -slope, n );
+		VUNITIZE( norms[0] );
 		for( i=0 ; i<arc_segs ; i++ )
 		{
-			VJOIN2( pt, end_pt, x, r1, y, r2 );
+			j = i+1;
+			if( j == arc_segs )
+				j = 0;
+
+			VJOIN2( pt, end_pt, x*end_ir, r1, y*end_ir, r2 );
 			xnew = x*cos_del - y*sin_del;
 			ynew = x*sin_del + y*cos_del;
 			x = xnew;
 			y = ynew;
+			if( i < arc_segs-1 )
+			{
+				VCOMB2( norms[j], -x, r1, -y, r2 );
+				VJOIN1( norms[j], norms[j], -slope, n );
+				VUNITIZE( norms[j] );
+			}
 
 			if( fu_prev )
 			{
@@ -2062,14 +2298,60 @@ struct rt_tol *tol;
 					rt_log( "tesselate_pipe_linear: nmg_calc_face_g failed\n" );
 					nmg_kfu( fu_prev );
 				}
+				else
+				{
+					/* assign vertexuse normals */
+					struct loopuse *lu;
+					struct edgeuse *eu;
+
+					NMG_CK_FACEUSE( fu_prev );
+
+					if( fu_prev->orientation != OT_SAME )
+						fu_prev = fu_prev->fumate_p;
+
+					lu = RT_LIST_FIRST( loopuse, &fu_prev->lu_hd );
+
+					for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+					{
+						vect_t reverse_norm;
+						struct edgeuse *eu_opp_use;
+
+						eu_opp_use = RT_LIST_PNEXT_CIRC( edgeuse, &eu->eumate_p->l );
+						if( eu->vu_p->v_p == new_inner_loop[i-1] )
+						{
+							nmg_vertexuse_nv( eu->vu_p, norms[i-1] );
+							VREVERSE( reverse_norm, norms[i-1] );
+							nmg_vertexuse_nv( eu_opp_use->vu_p, reverse_norm );
+						}
+						else if(  eu->vu_p->v_p == (*inner_loop)[i-1] )
+						{
+							nmg_vertexuse_nv( eu->vu_p, norms[i-1] );
+							VREVERSE( reverse_norm, norms[i-1] );
+							nmg_vertexuse_nv( eu_opp_use->vu_p, reverse_norm );
+						}
+						else if(  eu->vu_p->v_p == new_inner_loop[i] )
+						{
+							nmg_vertexuse_nv( eu->vu_p, norms[i] );
+							VREVERSE( reverse_norm, norms[i] );
+							nmg_vertexuse_nv( eu_opp_use->vu_p, reverse_norm );
+						}
+						else if(  eu->vu_p->v_p == (*inner_loop)[i] )
+						{
+							nmg_vertexuse_nv( eu->vu_p, norms[i] );
+							VREVERSE( reverse_norm, norms[i] );
+							nmg_vertexuse_nv( eu_opp_use->vu_p, reverse_norm );
+						}
+						else
+						{
+							rt_log( "No vu_normal assigned at (%g %g %g)\n", V3ARGS( eu->vu_p->v_p->vg_p->coord ) );
+							rt_log( "\ti=%d, arc_segs=%d, fu_prev = x%x\n" , i, arc_segs, fu_prev );
+						}
+					}
+				}
 			}
 
-			if( i == arc_segs-1 )
-				verts[0] = &(*inner_loop)[0];
-			else
-				verts[0] = &(*inner_loop)[i+1];
+			verts[0] = &(*inner_loop)[j];
 			verts[1] = &new_inner_loop[i];
-
 			verts[2] = &(*inner_loop)[i];
 
 			if( (fu = nmg_cmface( s, verts, 3 ) ) == NULL )
@@ -2086,6 +2368,56 @@ struct rt_tol *tol;
 				rt_log( "tesselate_pipe_linear: nmg_calc_face_g failed\n" );
 				nmg_kfu( fu );
 			}
+			else
+			{
+				/* assign vertexuse normals */
+				struct loopuse *lu;
+				struct edgeuse *eu;
+
+				NMG_CK_FACEUSE( fu );
+
+				if( fu->orientation != OT_SAME )
+					fu = fu->fumate_p;
+
+				lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
+
+				for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+				{
+					vect_t reverse_norm;
+					struct edgeuse *eu_opp_use;
+
+					eu_opp_use = RT_LIST_PNEXT_CIRC( edgeuse, &eu->eumate_p->l );
+					if( eu->vu_p->v_p == (*inner_loop)[0] )
+					{
+						nmg_vertexuse_nv( eu->vu_p, norms[0] );
+						VREVERSE( reverse_norm, norms[0] );
+						nmg_vertexuse_nv( eu_opp_use->vu_p, reverse_norm );
+					}
+					else if(  eu->vu_p->v_p == new_inner_loop[i] )
+					{
+						nmg_vertexuse_nv( eu->vu_p, norms[i] );
+						VREVERSE( reverse_norm, norms[i] );
+						nmg_vertexuse_nv( eu_opp_use->vu_p, reverse_norm );
+					}
+					else if(  eu->vu_p->v_p == (*inner_loop)[i] )
+					{
+						nmg_vertexuse_nv( eu->vu_p, norms[i] );
+						VREVERSE( reverse_norm, norms[i] );
+						nmg_vertexuse_nv( eu_opp_use->vu_p, reverse_norm );
+					}
+					else if(  eu->vu_p->v_p == (*inner_loop)[j] )
+					{
+						nmg_vertexuse_nv( eu->vu_p, norms[j] );
+						VREVERSE( reverse_norm, norms[j] );
+						nmg_vertexuse_nv( eu_opp_use->vu_p, reverse_norm );
+					}
+					else
+					{
+						rt_log( "No vu_normal assigned at (%g %g %g)\n", V3ARGS( eu->vu_p->v_p->vg_p->coord ) );
+						rt_log( "\ti=%d, arc_segs=%d, fu = x%x\n" , i, arc_segs, fu );
+					}
+				}
+			}
 
 			verts[2] = verts[0];
 			verts[0] = verts[1];
@@ -2093,7 +2425,7 @@ struct rt_tol *tol;
 			if( i == arc_segs-1 )
 				verts[2] = &new_inner_loop[0];
 			else
-				verts[2] = &new_inner_loop[i+1];
+				verts[2] = &new_inner_loop[j];
 			if( (fu_prev = nmg_cmface( s, verts, 3 ) ) == NULL )
 			{
 				rt_log( "tesselate_pipe_linear: failed to make inner face #%d ir=%g, end_ir=%g\n",
@@ -2117,14 +2449,18 @@ struct rt_tol *tol;
 	{
 		struct vertex *v=(struct vertex *)NULL;
 
+		VSUB2( norms[0], (*inner_loop)[0]->vg_p->coord, start_pt );
+		VJOIN1( norms[0], norms[0], -slope*ir, n );
+		VUNITIZE( norms[0] );
+		VREVERSE( norms[0], norms[0] );
 		for( i=0 ; i<arc_segs; i++ )
 		{
-			verts[0] = &(*inner_loop)[i];
-			if( i == arc_segs-1 )
-				verts[1] = &(*inner_loop)[0];
-			else
-				verts[1] = &(*inner_loop)[i+1];
+			j = i+1;
+			if( j == arc_segs )
+				j = 0;
 
+			verts[0] = &(*inner_loop)[i];
+			verts[1] = &(*inner_loop)[j];
 			verts[2] = &v;
 
 			if( (fu = nmg_cmface( s, verts, 3 ) ) == NULL )
@@ -2135,10 +2471,62 @@ struct rt_tol *tol;
 			}
 			if( i == 0 )
 				nmg_vertex_gv( v, end_pt );
+
+			if( i < arc_segs-1 )
+			{
+				VSUB2( norms[j], (*inner_loop)[j]->vg_p->coord, start_pt );
+				VJOIN1( norms[j], norms[j], -slope*ir, n );
+				VUNITIZE( norms[j] );
+				VREVERSE( norms[j], norms[j] );
+			}
+
 			if( nmg_calc_face_g( fu ) )
 			{
 				rt_log( "tesselate_pipe_linear: nmg_calc_face_g failed\n" );
 				nmg_kfu( fu );
+			}
+			else
+			{
+				struct loopuse *lu;
+				struct edgeuse *eu;
+				struct edgeuse *eu_opp_use;
+				vect_t reverse_norm;
+
+				NMG_CK_FACEUSE( fu );
+				if( fu->orientation != OT_SAME )
+					fu = fu->fumate_p;
+
+				lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
+				for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+				{
+					eu_opp_use = RT_LIST_PNEXT_CIRC( edgeuse, &eu->eumate_p->l );
+					if( eu->vu_p->v_p == (*inner_loop)[i] )
+					{
+						nmg_vertexuse_nv( eu->vu_p, norms[i] );
+						VREVERSE( reverse_norm, norms[i] );
+						nmg_vertexuse_nv( eu_opp_use->vu_p, reverse_norm );
+					}
+					else if( eu->vu_p->v_p == (*inner_loop)[j] )
+					{
+						nmg_vertexuse_nv( eu->vu_p, norms[j] );
+						VREVERSE( reverse_norm, norms[j] );
+						nmg_vertexuse_nv( eu_opp_use->vu_p, reverse_norm );
+					}
+					else if( eu->vu_p->v_p == v )
+					{
+						vect_t tmp_norm;
+						VBLEND2( tmp_norm, 0.5, norms[i], 0.5, norms[j] );
+						VUNITIZE( tmp_norm );
+						nmg_vertexuse_nv( eu->vu_p, tmp_norm );
+						VREVERSE( reverse_norm, tmp_norm );
+						nmg_vertexuse_nv( eu_opp_use->vu_p, reverse_norm );
+					}
+					else
+					{
+						rt_log( "No vu_normal assigned at (%g %g %g)\n", V3ARGS( eu->vu_p->v_p->vg_p->coord ) );
+						rt_log( "\ti=%d, j=%d, arc_segs=%d, fu = x%x\n" , i,j, arc_segs, fu );
+					}
+				}
 			}
 		}
 
@@ -2151,24 +2539,34 @@ struct rt_tol *tol;
 		fastf_t x,y,xnew,ynew;
 		struct vertex **verts[3];
 
-		x = end_ir;
+		x = 1.0;
 		y = 0.0;
-		VJOIN2( pt_next, end_pt, x, r1, y, r2 );
+		VCOMB2( norms[0], -x, r1, -y, r2 );
+		VJOIN1( pt_next, end_pt, -end_ir, norms[0] );
+		VJOIN1( norms[0], norms[0], -slope, n );
+		VUNITIZE( norms[0] );
 		for( i=0 ; i<arc_segs; i++ )
 		{
+			j = i + 1;
+			if( j == arc_segs )
+				j = 0;
+
 			VMOVE( pt, pt_next )
 			xnew = x*cos_del - y*sin_del;
 			ynew = x*sin_del + y*cos_del;
 			x = xnew;
 			y = ynew;
-			VJOIN2( pt_next, end_pt, x, r1, y, r2 );
+			if( i < j )
+			{
+				VCOMB2( norms[j], -x, r1, -y, r2 );
+				VJOIN1( pt_next, end_pt, -end_ir, norms[j] );
+				VJOIN1( norms[j], norms[j], -slope, n );
+				VUNITIZE( norms[j] );
+			}
 
-			verts[2] = &(*inner_loop)[0];
+			verts[0] = &new_inner_loop[j];
 			verts[1] = &new_inner_loop[i];
-			if( i == arc_segs-1 )
-				verts[0] = &new_inner_loop[0];
-			else
-				verts[0] = &new_inner_loop[i+1];
+			verts[2] = &(*inner_loop)[0];
 
 			if( (fu = nmg_cmface( s, verts, 3 ) ) == NULL )
 			{
@@ -2176,25 +2574,68 @@ struct rt_tol *tol;
 						i, ir, end_ir );
 				continue;
 			}
-			if( i == 0 )
+			if( !(*inner_loop)[0]->vg_p )
 				nmg_vertex_gv( (*inner_loop)[0], start_pt );
 			if( !new_inner_loop[i]->vg_p )
 				nmg_vertex_gv( new_inner_loop[i], pt );
-			if( i+1 < arc_segs && !new_inner_loop[i+1]->vg_p )
-				nmg_vertex_gv( new_inner_loop[i+1], pt_next );
+			if( !new_inner_loop[j]->vg_p )
+				nmg_vertex_gv( new_inner_loop[j], pt_next );
 			if( nmg_calc_face_g( fu ) )
 			{
 				rt_log( "tesselate_pipe_linear: nmg_calc_face_g failed\n" );
 				nmg_kfu( fu );
 			}
-			
+			else
+			{
+				struct loopuse *lu;
+				struct edgeuse *eu;
+				struct edgeuse *eu_opp_use;
+				vect_t reverse_norm;
+
+				NMG_CK_FACEUSE( fu );
+				if( fu->orientation != OT_SAME )
+					fu = fu->fumate_p;
+
+				lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
+				for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+				{
+					eu_opp_use = RT_LIST_PNEXT_CIRC( edgeuse, &eu->eumate_p->l );
+					if( eu->vu_p->v_p == new_inner_loop[i] )
+					{
+						nmg_vertexuse_nv( eu->vu_p, norms[i] );
+						VREVERSE( reverse_norm, norms[i] );
+						nmg_vertexuse_nv( eu_opp_use->vu_p, reverse_norm );
+					}
+					else if( eu->vu_p->v_p == new_inner_loop[j] )
+					{
+						nmg_vertexuse_nv( eu->vu_p, norms[j] );
+						VREVERSE( reverse_norm, norms[j] );
+						nmg_vertexuse_nv( eu_opp_use->vu_p, reverse_norm );
+					}
+					else if( eu->vu_p->v_p == (*inner_loop)[0] )
+					{
+						vect_t tmp_norm;
+						VBLEND2( tmp_norm, 0.5, norms[i], 0.5, norms[j] );
+						VUNITIZE( tmp_norm );
+						nmg_vertexuse_nv( eu->vu_p, tmp_norm );
+						VREVERSE( reverse_norm, tmp_norm );
+						nmg_vertexuse_nv( eu_opp_use->vu_p, reverse_norm );
+					}
+					else
+					{
+						rt_log( "No vu_normal assigned at (%g %g %g)\n", V3ARGS( eu->vu_p->v_p->vg_p->coord ) );
+						rt_log( "\ti=%d, j=%d, arc_segs=%d, fu = x%x\n" , i,j, arc_segs, fu );
+					}
+				}
+			}
 		}
 		rt_free( (char *)(*inner_loop), "tesselate_pipe_linear: inner_loop" );
 		*inner_loop = new_inner_loop;
 	}
+	rt_free( (char *)norms, "tesselate_linear_pipe: norms" );
 }
 
-void
+HIDDEN void
 tesselate_pipe_bend( bend_start, bend_end, bend_center, or, ir, arc_segs, sin_del, cos_del, outer_loop, inner_loop, start_r1, start_r2, s, tol, ttol )
 point_t bend_start;
 point_t bend_end;
@@ -2231,12 +2672,14 @@ struct rt_tess_tol *ttol;
 	vect_t to_start;
 	vect_t to_end;
 	vect_t to_start_v;
+	vect_t norm;
 	point_t origin;
 	point_t center;
+	point_t old_center;
 	int bend_segs=3;	/* minimum number of edges along bend */
 	int bend_seg;
 	int tol_segs;
-	int i;
+	int i,j;
 
 	NMG_CK_SHELL( s );
 	RT_CK_TOL( tol );
@@ -2273,7 +2716,7 @@ struct rt_tess_tol *ttol;
 	}
 	if( ttol->rel > 0.0 )
 	{
-		tol_segs = ceil( (fastf_t)(arc_segs)*bend_angle/2.0*rt_pi );
+		tol_segs = ceil(bend_angle/(2.0*acos( 1.0 - ttol->rel ) ) );
 		if( tol_segs > bend_segs )
 			bend_segs = tol_segs;
 	}
@@ -2291,7 +2734,7 @@ struct rt_tess_tol *ttol;
 	VSETALL( origin, 0.0 );
 	mat_arb_rot( rot, origin, bend_norm, delta_angle);
 
-	VMOVE( center, bend_start )
+	VMOVE( old_center, bend_start )
 	for( bend_seg=0; bend_seg<bend_segs ; bend_seg++ )
 	{
 
@@ -2303,7 +2746,7 @@ struct rt_tess_tol *ttol;
 		VMOVE( r1, r1_tmp )
 		VMOVE( r2, r2_tmp )
 
-		VSUB2( r1_tmp, center, bend_center )
+		VSUB2( r1_tmp, old_center, bend_center )
 		MAT4X3PNT( r2_tmp, rot, r1_tmp )
 		VADD2( center, r2_tmp, bend_center )
 
@@ -2315,10 +2758,11 @@ struct rt_tess_tol *ttol;
 			struct vertex **verts[3];
 			point_t pt;
 
-			if( i == arc_segs-1 )
-				verts[0] = &(*outer_loop)[0];
-			else
-				verts[0] = &(*outer_loop)[i+1];
+			j = i+1;
+			if( j == arc_segs )
+				j = 0;
+
+			verts[0] = &(*outer_loop)[j];
 			verts[1] = &(*outer_loop)[i];
 			verts[2] = &new_outer_loop[i];
 
@@ -2335,6 +2779,54 @@ struct rt_tess_tol *ttol;
 				rt_log( "tesselate_pipe_bend: nmg_calc_face_g failed\n" );
 				nmg_kfu( fu );
 			}
+			else
+			{
+				struct loopuse *lu;
+				struct edgeuse *eu;
+
+				NMG_CK_FACEUSE( fu );
+				if( fu->orientation != OT_SAME )
+					fu = fu->fumate_p;
+
+				lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
+				for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+				{
+					struct edgeuse *eu_opp_use;
+
+					NMG_CK_EDGEUSE( eu );
+					eu_opp_use = RT_LIST_PNEXT_CIRC( edgeuse, &eu->eumate_p->l );
+
+					if( eu->vu_p->v_p == (*outer_loop)[j] )
+					{
+						VSUB2( norm, (*outer_loop)[j]->vg_p->coord, old_center );
+						VUNITIZE( norm );
+						nmg_vertexuse_nv( eu->vu_p, norm );
+						VREVERSE( norm, norm );
+						nmg_vertexuse_nv( eu_opp_use->vu_p, norm );
+					}
+					else if( eu->vu_p->v_p == (*outer_loop)[i] )
+					{
+						VSUB2( norm, (*outer_loop)[i]->vg_p->coord, old_center );
+						VUNITIZE( norm );
+						nmg_vertexuse_nv( eu->vu_p, norm );
+						VREVERSE( norm, norm );
+						nmg_vertexuse_nv( eu_opp_use->vu_p, norm );
+					}
+					else if( eu->vu_p->v_p == new_outer_loop[i] )
+					{
+						VSUB2( norm, new_outer_loop[i]->vg_p->coord, center );
+						VUNITIZE( norm );
+						nmg_vertexuse_nv( eu->vu_p, norm );
+						VREVERSE( norm, norm );
+						nmg_vertexuse_nv( eu_opp_use->vu_p, norm );
+					}
+					else
+					{
+						rt_log( "No vu_normal assigned at (%g %g %g)\n", V3ARGS( eu->vu_p->v_p->vg_p->coord ) );
+						rt_log( "\ti=%d, j=%d, arc_segs=%d, fu = x%x\n" , i,j, arc_segs, fu );
+					}
+				}
+			}
 
 			xnew = x*cos_del - y*sin_del;
 			ynew = x*sin_del + y*cos_del;
@@ -2342,10 +2834,7 @@ struct rt_tess_tol *ttol;
 			y = ynew;
 
 			verts[1] = verts[2];
-			if( i == arc_segs-1 )
-				verts[2] = &new_outer_loop[0];
-			else
-				verts[2] = &new_outer_loop[i+1];
+			verts[2] = &new_outer_loop[j];
 
 			if( (fu=nmg_cmface( s, verts, 3 )) == NULL )
 			{
@@ -2360,11 +2849,59 @@ struct rt_tess_tol *ttol;
 				rt_log( "tesselate_pipe_bend: nmg_calc_face_g failed\n" );
 				nmg_kfu( fu );
 			}
+			else
+			{
+				struct loopuse *lu;
+				struct edgeuse *eu;
 
+				NMG_CK_FACEUSE( fu );
+				if( fu->orientation != OT_SAME )
+					fu = fu->fumate_p;
+
+				lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
+				for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+				{
+					struct edgeuse *eu_opp_use;
+
+					NMG_CK_EDGEUSE( eu );
+					eu_opp_use = RT_LIST_PNEXT_CIRC( edgeuse, &eu->eumate_p->l );
+
+					if( eu->vu_p->v_p == (*outer_loop)[j] )
+					{
+						VSUB2( norm, (*outer_loop)[j]->vg_p->coord, old_center );
+						VUNITIZE( norm );
+						nmg_vertexuse_nv( eu->vu_p, norm );
+						VREVERSE( norm, norm );
+						nmg_vertexuse_nv( eu_opp_use->vu_p, norm );
+					}
+					else if( eu->vu_p->v_p == new_outer_loop[i] )
+					{
+						VSUB2( norm, new_outer_loop[i]->vg_p->coord, center );
+						VUNITIZE( norm );
+						nmg_vertexuse_nv( eu->vu_p, norm );
+						VREVERSE( norm, norm );
+						nmg_vertexuse_nv( eu_opp_use->vu_p, norm );
+					}
+					else if( eu->vu_p->v_p == new_outer_loop[j] )
+					{
+						VSUB2( norm, new_outer_loop[j]->vg_p->coord, center );
+						VUNITIZE( norm );
+						nmg_vertexuse_nv( eu->vu_p, norm );
+						VREVERSE( norm, norm );
+						nmg_vertexuse_nv( eu_opp_use->vu_p, norm );
+					}
+					else
+					{
+						rt_log( "No vu_normal assigned at (%g %g %g)\n", V3ARGS( eu->vu_p->v_p->vg_p->coord ) );
+						rt_log( "\ti=%d, j=%d, arc_segs=%d, fu = x%x\n" , i,j, arc_segs, fu );
+					}
+				}
+			}
 		}
 
 		rt_free( (char *)(*outer_loop), "tesselate_pipe_bend: outer_loop" );
 		*outer_loop = new_outer_loop;
+		VMOVE( old_center, center );
 	}
 
 	if( ir <= tol->dist )
@@ -2377,7 +2914,7 @@ struct rt_tess_tol *ttol;
 	VMOVE( r1, start_r1 )
 	VMOVE( r2, start_r2 )
 
-	VMOVE( center, bend_start )
+	VMOVE( old_center, bend_start )
 	for( bend_seg=0; bend_seg<bend_segs ; bend_seg++ )
 	{
 
@@ -2389,7 +2926,7 @@ struct rt_tess_tol *ttol;
 		VMOVE( r1, r1_tmp )
 		VMOVE( r2, r2_tmp )
 
-		VSUB2( r1_tmp, center, bend_center )
+		VSUB2( r1_tmp, old_center, bend_center )
 		MAT4X3PNT( r2_tmp, rot, r1_tmp )
 		VADD2( center, r2_tmp, bend_center )
 
@@ -2401,11 +2938,12 @@ struct rt_tess_tol *ttol;
 			struct vertex **verts[3];
 			point_t pt;
 
+			j = i + 1;
+			if( j == arc_segs )
+				j = 0;
+
 			verts[0] = &(*inner_loop)[i];
-			if( i == arc_segs-1 )
-				verts[1] = &(*inner_loop)[0];
-			else
-				verts[1] = &(*inner_loop)[i+1];
+			verts[1] = &(*inner_loop)[j];
 			verts[2] = &new_inner_loop[i];
 
 			if( (fu=nmg_cmface( s, verts, 3 )) == NULL )
@@ -2421,6 +2959,54 @@ struct rt_tess_tol *ttol;
 				rt_log( "tesselate_pipe_bend: nmg_calc_face_g failed\n" );
 				nmg_kfu( fu );
 			}
+			else
+			{
+				struct loopuse *lu;
+				struct edgeuse *eu;
+
+				NMG_CK_FACEUSE( fu );
+				if( fu->orientation != OT_SAME )
+					fu = fu->fumate_p;
+
+				lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
+				for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+				{
+					struct edgeuse *eu_opp_use;
+
+					NMG_CK_EDGEUSE( eu );
+					eu_opp_use = RT_LIST_PNEXT_CIRC( edgeuse, &eu->eumate_p->l );
+
+					if( eu->vu_p->v_p == (*inner_loop)[j] )
+					{
+						VSUB2( norm, old_center, (*inner_loop)[j]->vg_p->coord );
+						VUNITIZE( norm );
+						nmg_vertexuse_nv( eu->vu_p, norm );
+						VREVERSE( norm, norm );
+						nmg_vertexuse_nv( eu_opp_use->vu_p, norm );
+					}
+					else if( eu->vu_p->v_p == (*inner_loop)[i] )
+					{
+						VSUB2( norm, old_center, (*inner_loop)[i]->vg_p->coord );
+						VUNITIZE( norm );
+						nmg_vertexuse_nv( eu->vu_p, norm );
+						VREVERSE( norm, norm );
+						nmg_vertexuse_nv( eu_opp_use->vu_p, norm );
+					}
+					else if( eu->vu_p->v_p == new_inner_loop[i] )
+					{
+						VSUB2( norm, center, new_inner_loop[i]->vg_p->coord );
+						VUNITIZE( norm );
+						nmg_vertexuse_nv( eu->vu_p, norm );
+						VREVERSE( norm, norm );
+						nmg_vertexuse_nv( eu_opp_use->vu_p, norm );
+					}
+					else
+					{
+						rt_log( "No vu_normal assigned at (%g %g %g)\n", V3ARGS( eu->vu_p->v_p->vg_p->coord ) );
+						rt_log( "\ti=%d, j=%d, arc_segs=%d, fu = x%x\n" , i,j, arc_segs, fu );
+					}
+				}
+			}
 
 			xnew = x*cos_del - y*sin_del;
 			ynew = x*sin_del + y*cos_del;
@@ -2428,10 +3014,7 @@ struct rt_tess_tol *ttol;
 			y = ynew;
 
 			verts[0] = verts[2];
-			if( i == arc_segs-1 )
-				verts[2] = &new_inner_loop[0];
-			else
-				verts[2] = &new_inner_loop[i+1];
+			verts[2] = &new_inner_loop[j];
 
 			if( (fu=nmg_cmface( s, verts, 3 )) == NULL )
 			{
@@ -2446,16 +3029,64 @@ struct rt_tess_tol *ttol;
 				rt_log( "tesselate_pipe_bend: nmg_calc_face_g failed\n" );
 				nmg_kfu( fu );
 			}
+			else
+			{
+				struct loopuse *lu;
+				struct edgeuse *eu;
 
+				NMG_CK_FACEUSE( fu );
+				if( fu->orientation != OT_SAME )
+					fu = fu->fumate_p;
+
+				lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
+				for( RT_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
+				{
+					struct edgeuse *eu_opp_use;
+
+					NMG_CK_EDGEUSE( eu );
+					eu_opp_use = RT_LIST_PNEXT_CIRC( edgeuse, &eu->eumate_p->l );
+
+					if( eu->vu_p->v_p == (*inner_loop)[j] )
+					{
+						VSUB2( norm, old_center, (*inner_loop)[j]->vg_p->coord );
+						VUNITIZE( norm );
+						nmg_vertexuse_nv( eu->vu_p, norm );
+						VREVERSE( norm, norm );
+						nmg_vertexuse_nv( eu_opp_use->vu_p, norm );
+					}
+					else if( eu->vu_p->v_p == new_inner_loop[i] )
+					{
+						VSUB2( norm, center, new_inner_loop[i]->vg_p->coord );
+						VUNITIZE( norm );
+						nmg_vertexuse_nv( eu->vu_p, norm );
+						VREVERSE( norm, norm );
+						nmg_vertexuse_nv( eu_opp_use->vu_p, norm );
+					}
+					else if( eu->vu_p->v_p == new_inner_loop[j] )
+					{
+						VSUB2( norm, center, new_inner_loop[j]->vg_p->coord );
+						VUNITIZE( norm );
+						nmg_vertexuse_nv( eu->vu_p, norm );
+						VREVERSE( norm, norm );
+						nmg_vertexuse_nv( eu_opp_use->vu_p, norm );
+					}
+					else
+					{
+						rt_log( "No vu_normal assigned at (%g %g %g)\n", V3ARGS( eu->vu_p->v_p->vg_p->coord ) );
+						rt_log( "\ti=%d, j=%d, arc_segs=%d, fu = x%x\n" , i,j, arc_segs, fu );
+					}
+				}
+			}
 		}
 		rt_free( (char *)(*inner_loop), "tesselate_pipe_bend: inner_loop" );
 		*inner_loop = new_inner_loop;
+		VMOVE( old_center, center );
 	}
 	VMOVE( start_r1, r1 )
 	VMOVE( start_r2, r2 )
 }
 
-void
+HIDDEN void
 tesselate_pipe_end( pipe, arc_segs, sin_del, cos_del, outer_loop, inner_loop, s, tol )
 struct wdb_pipept *pipe;
 int arc_segs;
