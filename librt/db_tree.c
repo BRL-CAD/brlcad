@@ -357,7 +357,14 @@ CONST union tree	*tp;
 	else
 		bn_mat_idn( xmat );
 
-	db_apply_anims( pathp, mdp, old_xlate, xmat, &tsp->ts_mater );
+	/*  If the owning region it above this node in the tree,
+	 *  it is not possible to animation region-material properties
+	 *  lower down in the arc.  So note by sending a NULL pointer.
+	 */
+	db_apply_anims( pathp, mdp, old_xlate, xmat,
+		(tsp->ts_sofar & TS_SOFAR_REGION) ? 
+			(struct mater_info *)NULL :
+			&tsp->ts_mater );
 
 	bn_mat_mul(tsp->ts_mat, old_xlate, xmat);
 
@@ -2215,7 +2222,9 @@ int depth;			/* number of arcs */
 /*
  *			D B _ A P P L Y _ A N I M S
  *
- *  Note that 'arc' may be a null pointer.
+ *  'arc' may be a null pointer, signifying an identity matrix.
+ *  'materp' may be a null pointer, signifying that
+ *  the region has already been finalized above this point in the tree.
  */
 void
 db_apply_anims(pathp, dp, stack, arc, materp)

@@ -91,6 +91,9 @@ static char	*db_anim_matrix_strings[] = {
  *
  *  Perform the one animation operation.
  *  Leave results in form that additional operations can be cascaded.
+ *
+ *  Note that 'materp' may be a null pointer, signifying that
+ *  the region has already been finalized above this point in the tree.
  */
 int
 db_do_anim( anp, stack, arc, materp )
@@ -103,6 +106,7 @@ struct mater_info	*materp;
 
 	if( rt_g.debug&DEBUG_ANIM )
 		bu_log("db_do_anim(x%x) ", anp);
+	if( rt_g.debug&DEBUG_ANIM && !materp )  bu_log("(null materp) ");
 	RT_CK_ANIMATE(anp);
 	switch( anp->an_type )  {
 	case RT_AN_MATRIX:
@@ -152,7 +156,12 @@ struct mater_info	*materp;
 		 * if the caller does not care about property, a null
 		 * mater pointer is given.
 		 */
-		if (!materp) break;
+		if (!materp)  {
+			char *sofar = db_path_to_string(&anp->an_path);
+			bu_log("ERROR db_do_anim(%s) property animation below region, ignored\n", sofar);
+			bu_free(sofar, "path string");
+			break;
+		}
 		if (anp->an_u.anu_p.anp_op == RT_ANP_REPLACE) {
 		    	if( materp->ma_shader ) bu_free( (genptr_t)materp->ma_shader, "ma_shader" );
 			materp->ma_shader = bu_vls_strdup(&anp->an_u.anu_p.anp_shader);
@@ -176,7 +185,12 @@ struct mater_info	*materp;
 		 * if the caller does not care about property, a null
 		 * mater pointer is given.
 		 */
-		if (!materp) break;
+		if (!materp)  {
+			char *sofar = db_path_to_string(&anp->an_path);
+			bu_log("ERROR db_do_anim(%s) color animation below region, ignored\n", sofar);
+			bu_free(sofar, "path string");
+			break;
+		}
 		materp->ma_color_valid = 1;	/* XXX - really override? */
 		materp->ma_color[0] =
 		    (((double)anp->an_u.anu_c.anc_rgb[0])+0.5)*bn_inv255;
@@ -188,7 +202,12 @@ struct mater_info	*materp;
 	case RT_AN_TEMPERATURE:
 		if( rt_g.debug&DEBUG_ANIM )
 			bu_log("temperature = %g\n", anp->an_u.anu_t);
-		if( !materp )  break;
+		if (!materp)  {
+			char *sofar = db_path_to_string(&anp->an_path);
+			bu_log("ERROR db_do_anim(%s) temperature animation below region, ignored\n", sofar);
+			bu_free(sofar, "path string");
+			break;
+		}
 		materp->ma_temperature = anp->an_u.anu_t;
 		break;
 	default:
