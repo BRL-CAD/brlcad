@@ -415,6 +415,59 @@ are implemented in terms of
 .I rb_neighbor
 in the obvious way.
 .\"
+.PP
+The members
+of the
+.I rb_tree
+structure,
+as defined in
+\fI"redblack.h"\fR,
+are classified into three classes
+based on their suitability for direct manipulation by applications.
+Class I,
+members that applications may read directly,
+includes
+.PP
+    long rbt_magic;     /* Magic no. for integrity check */
+    int  rbt_nm_nodes;  /* Number of nodes */
+.PP
+Class II,
+members that applications may read or write directly
+as necessary,
+includes
+.PP
+    void (*rbt_print)();   /* Data pretty-print function */
+    int  rbt_debug;        /* Debug bits */
+    char *rbt_description; /* Comment for diagnostics */
+.PP
+Class III comprises
+members that applications should not manipulate directly;
+any access should be through the routines provided by
+.I libredblack.
+They include
+.PP
+    int            rbt_nm_orders;   /* Number of orders */
+    int            (**rbt_order)(); /* Comparison funcs */
+    struct rb_node **rbt_root;      /* The actual trees */
+    char           *rbt_unique;     /* Uniqueness flags */
+    struct rb_node *rbt_current;    /* Current node */
+    struct rb_node *rbt_empty_node; /* Sentinel for nil */
+.PP
+The distinction between classes I and III is not critical,
+but any direct modification of members in either class
+will result in unpredictable (probably dire) results.
+The order of the members within the
+.I rb_tree
+structure
+is subject to change in future releases.
+.PP
+Diagnostic output may be requested
+by setting the debug bits in the
+.I rb_tree
+structure
+using the debug bit flags defined in
+\fI"redblack.h"\fR.
+.\"
 .SH SEE ALSO
 qsort(3)
 .\"
