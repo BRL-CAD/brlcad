@@ -54,14 +54,13 @@ proc fs_dialog {w parent pattern} {
     #
     frame $w.filter
 	frame $w.filter.hdr
-	    label $w.filter.hdr.lbl
+	    label $w.filter.hdr.lbl -relief flat -bd 0
 	    pack  $w.filter.hdr.lbl -side left -anchor w
 
-	    label $w.filter.hdr.file -textvariable fs_glob(pat_file) \
-	    	-bd 1 -relief raised
+	    label $w.filter.hdr.file -textvariable fs_glob(pat_file)
 	    pack  $w.filter.hdr.file -side right -anchor e
-	    label $w.filter.hdr.dir -textvariable fs_glob(pat_dir) \
-	    	-bd 1 -relief raised
+
+	    label $w.filter.hdr.dir -textvariable fs_glob(pat_dir)
 	    pack  $w.filter.hdr.dir -side right -anchor e
 	pack  $w.filter.hdr -side top -anchor w -expand 1 -fill x
 
@@ -195,6 +194,18 @@ proc fs_dialog_resources {} {
 proc fs_dialog_rescan {} {
     global fs_glob
 
+    set cursor [$fs_glob(win) cget -cursor]
+    $fs_glob(win) config -cursor watch
+    update idletasks
+
+    set dirpat(1) $fs_glob(pat_dir).?*
+    set dirpat(2) $fs_glob(pat_dir)*
+    set filepat $fs_glob(pat_dir)$fs_glob(pat_file)
+
+    $fs_glob(listbox_dir) delete 0 end
+    $fs_glob(listbox_file) delete 0 end
+
+
     # Put the directory part in the selection box if
     # only 1 directory matches pat_dir
     set dir [glob -nocomplain $fs_glob(pat_dir)]
@@ -203,20 +214,15 @@ proc fs_dialog_rescan {} {
 	set fs_glob(fully_qualified) 0
 
 	# Fill in the directory listbox
-	set pat(1) $fs_glob(pat_dir).?*
-	set pat(2) $fs_glob(pat_dir)*
-	$fs_glob(listbox_dir) delete 0 end
-	foreach i [lsort [glob -nocomplain $pat(1) $pat(2) ]] {
+	foreach i [lsort [glob -nocomplain $dirpat(1) $dirpat(2) ]] {
 	    if { [file isdirectory $i]} {
 		$fs_glob(listbox_dir) insert end [file tail $i]
 	    }
 	}
 
 	# Fill in the file listbox
-	set pat(1) 
-	$fs_glob(listbox_file) delete 0 end
-	foreach i [lsort [glob -nocomplain $fs_glob(pat_dir)$fs_glob(pat_file)]] {
- 	    if { ! [file isdirectory $i]} {
+	foreach i [lsort [glob -nocomplain $filepat]] {
+	    if { ! [file isdirectory $i] } {
 		$fs_glob(listbox_file) insert end [file tail $i]
 	    }
 	}
@@ -226,28 +232,21 @@ proc fs_dialog_rescan {} {
 	set fs_glob(fully_qualified) 1
 
 	# Fill in the directory listbox
-	set pat(1) $fs_glob(pat_dir).?*
-	set pat(2) $fs_glob(pat_dir)*
-	$fs_glob(listbox_dir) delete 0 end
-	foreach i [lsort [glob -nocomplain $pat(1) $pat(2) ]] {
+	foreach i [lsort [glob -nocomplain $dirpat(1) $dirpat(2) ]] {
 	    if { [file isdirectory $i]} {
 		$fs_glob(listbox_dir) insert end $i
 	    }
 	}
 
 	# Fill in the file listbox
-	set pat(1) 
-	$fs_glob(listbox_file) delete 0 end
-	foreach i [lsort [glob -nocomplain $fs_glob(pat_dir)$fs_glob(pat_file)]] {
- 	    if { ! [file isdirectory $i]} {
+	foreach i [lsort [glob -nocomplain $filepat]] {
+	    if { ! [file isdirectory $i] } {
 		$fs_glob(listbox_file) insert end $i
 	    }
 	}
 
     }
-
-
-
+    $fs_glob(win) config -cursor $cursor
 }
 
 
@@ -304,7 +303,9 @@ proc fs_dialog_click_dir {y} {
 	set newdir [$fs_glob(listbox_dir) get [$fs_glob(listbox_dir) nearest $y]]
 
 	if { $fs_glob(fully_qualified) == 1} {
-		#
+		# Fully qualified path stored in directory widget
+		# Just replace the pattern with the selection
+
 		set fs_glob(pat_dir) $newdir/
 		set fs_glob(filter) $newdir/$fs_glob(pat_file)
 		fs_dialog_rescan
@@ -313,10 +314,9 @@ proc fs_dialog_click_dir {y} {
 
 	# if we've selected ".." do relative/absolute raise
 	# else just add selection to the end of the directory pattern
-	
 
 	if {[regexp {^/} $fs_glob(pat_dir)]} {
-		# Absolute Path
+		# Absolute Path (Begins with "/")
 		if {$newdir == ".."} {
 			# Delete last directory from path
 			regsub {[^/]+/$} $fs_glob(pat_dir) {} fs_glob(pat_dir)
@@ -325,32 +325,20 @@ proc fs_dialog_click_dir {y} {
 			set fs_glob(pat_dir) $fs_glob(pat_dir)$newdir/
 		}
 	} else {
-		# Relative Path
-		if {$newdir == ".."} {
-			# Add new directory to path
-			set fs_glob(pat_dir) $fs_glob(pat_dir)$newdir/
+		# Relative Path (Begins with "./" or "../"
+
+		set pat_minus_one [file dirname $fs_glob(pat_dir)]/
+		set pat_plus_one $fs_glob(pat_dir)$newdir/
+		file stat $pat_minus_one pmo
+		file stat $pat_plus_one ppo
+
+		if { $pmo(ino) == $ppo(ino) } {
+			# raising up path we descended or
+			# descending path we raised through
+			set fs_glob(pat_dir) $pat_minus_one
 		} else {
-			# if the directory selected is the name of 
-			# the last part of the pat_dir then delete the last
-			# directory from pat_dir
-			# else add new_dir to pat_dir
-			#
-			# How I wish I could just ask if dir1 == dir2
-
-			set pat_minus_one [file dirname $fs_glob(pat_dir)]/
-			set pat_plus_one $fs_glob(pat_dir)$newdir/
-			file stat $pat_minus_one pmo
-			file stat $pat_plus_one ppo
-
-			if { $pmo(ino) == $ppo(ino) } {
-				# Re-descending path we went up
-				# delete last directroy from pat_dir
-				set fs_glob(pat_dir) $pat_minus_one
-			} else {
-				# Descending new leg of tree
-				# Add new directory to path
-				set fs_glob(pat_dir) $fs_glob(pat_dir)$newdir/
-			}
+			# Raising up higher
+			set fs_glob(pat_dir) $fs_glob(pat_dir)$newdir/
 		}
 	}
 	
