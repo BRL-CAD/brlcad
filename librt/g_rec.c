@@ -723,6 +723,7 @@ register struct uvcoord *uvp;
 	LOCAL vect_t work;
 	LOCAL vect_t pprime;
 	FAST fastf_t len;
+	FAST fastf_t ratio;
 
 	/* hit_point is on surface;  project back to unit cylinder,
 	 * creating a vector from vertex to hit point.
@@ -733,19 +734,34 @@ register struct uvcoord *uvp;
 	switch( hitp->hit_surfno )  {
 	case REC_NORM_BODY:
 		/* Skin.  x,y coordinates define rotation.  radius = 1 */
-		uvp->uv_u = acos(pprime[Y]) * rt_inv2pi;
+		ratio = pprime[Y];
+		if( ratio > 1.0 )
+			ratio = 1.0;
+		if( ratio < -1.0 )
+			ratio = -1.0;
+		uvp->uv_u = acos(ratio) * rt_inv2pi;
 		uvp->uv_v = pprime[Z];		/* height */
 		break;
 	case REC_NORM_TOP:
 		/* top plate */
 		len = sqrt(pprime[X]*pprime[X]+pprime[Y]*pprime[Y]);
-		uvp->uv_u = acos(pprime[Y]/len) * rt_inv2pi;
+		ratio = pprime[Y]/len;
+		if( ratio > 1.0 )
+			ratio = 1.0;
+		if( ratio < -1.0 )
+			ratio = -1.0;
+		uvp->uv_u = acos(ratio) * rt_inv2pi;
 		uvp->uv_v = len;		/* rim v = 1 */
 		break;
 	case REC_NORM_BOT:
 		/* bottom plate */
 		len = sqrt(pprime[X]*pprime[X]+pprime[Y]*pprime[Y]);
-		uvp->uv_u = acos(pprime[Y]/len) * rt_inv2pi;
+		ratio = pprime[Y]/len;
+		if( ratio > 1.0 )
+			ratio = 1.0;
+		if( ratio < -1.0 )
+			ratio = -1.0;
+		uvp->uv_u = acos(ratio) * rt_inv2pi;
 		uvp->uv_v = 1 - len;	/* rim v = 0 */
 		break;
 	}
