@@ -138,7 +138,7 @@ f_mater()
 	fflush(stdout);
 	(void)fgets(line,sizeof(line),stdin);
 	nlp = strchr( line, '\n' );
-	if( strcmp(line, "del") == 0 || strcmp(line,"\"\"") == 0 )  {
+	if( strncmp(line, "del", 3) == 0 )  {
 		record.c.c_matname[0] = '\0';
 	} else if( line[0] != '\n' && line[0] != '\0' ) {
 		if( nlp != NULL )  *nlp = '\0';
@@ -151,7 +151,7 @@ f_mater()
 	fflush(stdout);
 	(void)fgets(line,sizeof(line),stdin);
 	nlp = strchr( line, '\n' );
-	if( strcmp(line, "del") == 0 || strcmp(line,"\"\"") == 0 )  {
+	if( strncmp(line, "del", 3) == 0  )  {
 		record.c.c_matparm[0] = '\0';
 	} else if( line[0] != '\n' && line[0] != '\0' ) {
 		if( nlp != NULL )  *nlp = '\0';
@@ -170,7 +170,7 @@ f_mater()
 	(void)printf("Color R G B (0..255)? ('del' to delete, CR to skip) ");
 	fflush(stdout);
 	(void)fgets(line,sizeof(line),stdin);
-	if( strcmp(line, "del") == 0 || strcmp(line,"\"\"") == 0 ) {
+	if( strncmp(line, "del", 3) == 0 ) {
 		record.c.c_override = 0;
 	} else if( sscanf(line, "%d %d %d", &r, &g, &b) >= 3 )  {
 		record.c.c_rgb[0] = r;
