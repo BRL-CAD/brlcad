@@ -6,6 +6,7 @@
 #define			DEF_RCF_NAME		".nirtrc"
 #define			DEF_SF_NAME		"nirt_state"
 #define			CMT_CHAR		'#'
+#define			SEP_CHAR		';'
 
 typedef struct outitem_tag
 {
