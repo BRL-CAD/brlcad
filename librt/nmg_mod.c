@@ -159,6 +159,8 @@ CONST int		simplify;
 	rt_free( (char *)flags1, "nmg_shell_coplanar_face_merge flags1[]" );
 	rt_free( (char *)flags2, "nmg_shell_coplanar_face_merge flags2[]" );
 
+	nmg_shell_a( s, tol );
+
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
 		rt_log("nmg_shell_coplanar_face_merge(s=x%x, tol=x%x, simplify=%d)\n",
 			s, tol, simplify);
