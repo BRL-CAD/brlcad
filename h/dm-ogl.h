@@ -58,10 +58,7 @@ struct ogl_vars {
   int ovec;		/* Old color map entry number */
   char is_direct;
   int index_size;
-  fastf_t *viewscale;
-  void (*color_func)();
   struct modifiable_ogl_vars mvars;
-  genptr_t app_vars;   /* application specific variables */
 /*
  * SGI Color Map table
  */

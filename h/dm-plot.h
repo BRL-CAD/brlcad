@@ -23,8 +23,6 @@ struct plot_vars {
   vect_t clipmin;
   vect_t clipmax;
   struct bu_vls vls;
-  void (*color_func)();
-  genptr_t app_vars;     /* application specific variables */
 };
 
 extern struct plot_vars head_plot_vars;

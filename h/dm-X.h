@@ -41,9 +41,7 @@ struct x_vars {
   Colormap cmap;
   unsigned long   pixel[NUM_PIXELS];
 #endif
-  void (*color_func)();
   struct modifiable_x_vars mvars;
-  genptr_t app_vars;   /* application specific variables */
 };
 
 extern struct x_vars head_x_vars;

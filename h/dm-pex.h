@@ -43,9 +43,7 @@ struct pex_vars {
   int is_monochrome;
   unsigned long black,gray,white,yellow,red,blue;
   unsigned long bd, bg, fg;   /* color of border, background, foreground */
-  void (*color_func)();
   struct modifiable_pex_vars mvars;
-  genptr_t app_vars;   /* application specific variables */
 };
 
 extern void Pex_configure_window_shape();

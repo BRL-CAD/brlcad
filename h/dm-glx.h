@@ -44,9 +44,7 @@ struct glx_vars {
   int stereo_is_on;
   int is_gt;
   fastf_t aspect;
-  void (*color_func)();
   struct modifiable_glx_vars mvars;
-  genptr_t app_vars;   /* application specific variables */
 /*
  * SGI Color Map table
  */
