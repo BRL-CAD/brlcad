@@ -105,7 +105,7 @@ void	ph_cd();
 struct pkg_switch pkgswitch[] = {
 	{ MSG_START,	ph_start,	"Startup" },
 	{ MSG_MATRIX,	ph_enqueue,	"Set Matrix" },
-	{ MSG_OPTIONS,	ph_options,	"Options" },
+	{ MSG_OPTIONS,	ph_enqueue,	"Options" },
 	{ MSG_LINES,	ph_enqueue,	"Compute lines" },
 	{ MSG_END,	ph_end,		"End" },
 	{ MSG_PRINT,	ph_unexp,	"Log Message" },
@@ -298,6 +298,9 @@ char **argv;
 			case MSG_LINES:
 				ph_lines( (struct pkg_comm *)0, (char *)lp->li_stop );
 				break;
+			case MSG_OPTIONS:
+				ph_options( (struct pkg_comm *)0, (char *)lp->li_stop );
+				break;
 			default:
 				rt_log("bad list element %d\n", lp->li_start );
 				exit(33);
@@ -450,7 +453,7 @@ char	*buf;
 	}
 
 	if( width <= 0 || height <= 0 )  {
-		rt_log("ph_matrix:  width=%d, height=%d\n", width, height);
+		rt_log("ph_options:  width=%d, height=%d\n", width, height);
 		exit(3);
 	}
 	(void)free(buf);
