@@ -1552,6 +1552,7 @@ struct carc_seg		/* circular arc segment */
 	int			orientation;	/* 0 -> ccw, !0 -> cw */
 	int			curve_count;	/* number of curves using this segment */
 	struct curve		**curves;	/* array of pointers to curves using this segment */
+	int			center;		/* index of vertex at center of arc (only used by rt_extrude_prep and rt_extrude_shot) */
 };
 #define CURVE_CARC_MAGIC     0x63617263		/* carc */
 
