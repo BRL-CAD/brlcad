@@ -55,6 +55,8 @@ void	membdump(), arsadump(), arsbdump();
 void	materdump(), bspldump(), bsurfdump();
 void	pipe_dump(), particle_dump(), dump_pipe_segs();
 void	arbn_dump();
+void	nmg_dump();
+void	strsol_dump();
 
 union record	record;		/* GED database record */
 
@@ -226,13 +228,10 @@ strsol_dump()	/* print out strsol solid info */
 	rec[0] = record;	/* struct copy the current record */
 
 	/* read the rest from stdin */
-	for( i=1 ; i<DB_SS_NGRAN ; i++ )
+	if( !fread( (char *)&rec[1], sizeof record, DB_SS_NGRAN-1, stdin ) )
 	{
-		if( !fread( (char *)&rec[i], sizeof record, 1, stdin ) )
-		{
-			(void)fprintf( stderr , "Error reading strsol granules\n" );
-			exit( -1 );
-		}
+		(void)fprintf( stderr , "Error reading strsol granules\n" );
+		exit( -1 );
 	}
 
 	/* make sure that at least the last byte is null */
