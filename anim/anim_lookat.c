@@ -61,6 +61,7 @@ char **argv;
 		dir2mat(mat,dir,prev_dir);
 		if (!print_ypr){
 			printf("start %d;\n",frame++);
+			printf("clean;\n");
 	                printf("eye_pt %f %f %f;\n",eye[0],eye[1],eye[2]);
 			printf("viewrot %f %f %f 0\n", -mat[1], -mat[5], -mat[9]);
 	                printf("%f %f %f 0\n", mat[2], mat[6], mat[10]);
