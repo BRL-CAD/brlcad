@@ -414,12 +414,12 @@ register struct rt_i *rtip;
 		rtip->Regions = (struct region **)0;
 
 		/* Free space partitions */
-		rt_fr_cut( &(rtip->rti_CutHead) );
+		rt_fr_cut( rtip, &(rtip->rti_CutHead) );
 		bzero( (char *)&(rtip->rti_CutHead), sizeof(union cutter) );
-		rt_fr_cut( &(rtip->rti_inf_box) );
+		rt_fr_cut( rtip, &(rtip->rti_inf_box) );
 		bzero( (char *)&(rtip->rti_inf_box), sizeof(union cutter) );
 	}
-	rt_cut_clean();
+	rt_cut_clean(rtip);
 	/* XXX struct seg is also bulk allocated, can't be freed. XXX */
 
 	/* Release partition structs.  XXX How to find them?  resource structs? */

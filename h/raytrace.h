@@ -1094,7 +1094,6 @@ struct application  {
  */
 struct rt_g {
 	int		debug;		/* non-zero for debug, see debug.h */
-	union cutter	*rtg_CutFree;	/* cut Freelist */
 	/*  Definitions necessary to interlock in a parallel environment */
 	int		rtg_parallel;	/* !0 = trying to use multi CPUs */
 	long		res_syscall;	/* lock on system calls */
@@ -1152,7 +1151,9 @@ struct rt_i {
 	long		nmiss_solid;	/* shots missed solid RPP */
 	union cutter	rti_CutHead;	/* Head of cut tree */
 	union cutter	rti_inf_box;	/* List of infinite solids */
-/* XXX the bu_ptbl of cutter malloc()s should be here or in rt_g, not cut.c */
+	union cutter	*rti_CutFree;	/* cut Freelist */
+	struct bu_ptbl	rti_busy_cutter_nodes; /* List of "cutter" mallocs */
+	struct bu_ptbl	rti_cuts_waiting;
 	int		rti_cut_maxlen;	/* max len RPP list in 1 cut bin */
 	int		rti_cut_nbins;	/* number of cut bins (leaves) */
 	int		rti_cut_totobj;	/* # objs in all bins, total */
@@ -1606,7 +1607,7 @@ RT_EXTERN(void rt_cut_it, (struct rt_i *rtip, int ncpu) );
 					/* print cut node */
 RT_EXTERN(void rt_pr_cut, (CONST union cutter *cutp, int lvl) );
 					/* free a cut tree */
-RT_EXTERN(void rt_fr_cut, (union cutter *cutp) );
+RT_EXTERN(void rt_fr_cut, (struct rt_i *rtip, union cutter *cutp) );
 					/* regionid-driven color override */
 RT_EXTERN(void rt_region_color_map, (struct region *regp) );
 					/* process ID_MATERIAL record */

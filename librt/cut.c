@@ -36,14 +36,23 @@ static char RCScut[] = "@(#)$Header$ (BRL)";
 int rt_cutLen;			/* normal limit on number objs per box node */
 int rt_cutDepth;		/* normal limit on depth of cut tree */
 
-HIDDEN int	rt_ck_overlap(), rt_ct_box();
-HIDDEN void	rt_ct_add(), rt_ct_optim(), rt_ct_free();
-HIDDEN void	rt_ct_measure();
-HIDDEN union cutter *rt_ct_get();
+HIDDEN int		rt_ck_overlap RT_ARGS((CONST vect_t min, CONST vect_t max,
+				CONST struct soltab *stp));
+HIDDEN int		rt_ct_box RT_ARGS((struct rt_i *rtip, union cutter *cutp,
+				int axis, double where));
+HIDDEN void		rt_ct_add RT_ARGS((union cutter *cutp, struct soltab *stp,
+				vect_t min, vect_t max, int depth));
+HIDDEN void		rt_ct_optim RT_ARGS((struct rt_i *rtip, union cutter *cutp,
+				int depth));
+HIDDEN void		rt_ct_free RT_ARGS((struct rt_i *rtip, union cutter *cutp));
+HIDDEN void		rt_ct_measure RT_ARGS((struct rt_i *rtip, union cutter *cutp,
+				int depth));
+HIDDEN union cutter	*rt_ct_get RT_ARGS((struct rt_i *rtip));
+HIDDEN void		rt_plot_cut RT_ARGS((FILE *fp, struct rt_i *rtip,
+				union cutter *cutp, int lvl));
+
 
 #define AXIS(depth)	((depth)%3)	/* cuts: X, Y, Z, repeat */
-
-HIDDEN void rt_plot_cut();
 
 /* XXX start temporary NUgrid hack  -- shared with shoot.c */
 #define RT_NUGRID_CELL(_array,_x,_y,_z)		(&(_array)[ \
@@ -57,10 +66,6 @@ struct nu_axis	*rt_nu_axis[3];
 int		rt_nu_cells_per_axis[3];
 union cutter	*rt_nu_grid;
 /* XXX end NUgrid hack */
-
-static struct bu_ptbl	rt_waiting_nodes;	/* parallel work queue */
-
-static struct bu_ptbl	rt_busy_cutter_nodes;
 
 /*
  *			R T _ F I N D _ N U G R I D
@@ -170,28 +175,32 @@ int		max;
 /*
  *			R T _ C U T _ O P T I M I Z E _ P A R A L L E L
  *
- *  Process all the nodes in the global array rt_waiting_nodes,
+ *  Process all the nodes in the global array rtip->rti_cuts_waiting,
  *  until none remain.
  *  This routine is run in parallel.
  */
+static struct rt_i	*rt_cut_rtip;	/* Shared across threads */
+
 void
 rt_cut_optimize_parallel()
 {
+	struct rt_i	*rtip = rt_cut_rtip;
 	union cutter	*cp;
 	int		i;
 
+	RT_CK_RTI(rtip);
 	for(;;)  {
 
 		RES_ACQUIRE( &rt_g.res_worker );
-		i = rt_waiting_nodes.end--;	/* get first free index */
+		i = rtip->rti_cuts_waiting.end--;	/* get first free index */
 		RES_RELEASE( &rt_g.res_worker );
 		i -= 1;				/* change to last used index */
 
 		if( i < 0 )  break;
 
-		cp = (union cutter *)NMG_TBL_GET( &rt_waiting_nodes, i );
+		cp = (union cutter *)NMG_TBL_GET( &rtip->rti_cuts_waiting, i );
 
-		rt_ct_optim( cp, Z );
+		rt_ct_optim( rtip, cp, Z );
 	}
 }
 
@@ -503,7 +512,7 @@ if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 		}
 	} RT_VISIT_ALL_SOLTABS_END
 
-	bu_ptbl_init( &rt_waiting_nodes, rtip->nsolids );
+	bu_ptbl_init( &rtip->rti_cuts_waiting, rtip->nsolids );
 
 	/*  Dynamic decisions on tree limits.
 	 *  Note that there will be (2**rt_cutDepth)*rt_cutLen leaf slots,
@@ -542,14 +551,14 @@ if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 				rt_cut_extend( &rtip->rti_CutHead, stp );
 			}
 		} RT_VISIT_ALL_SOLTABS_END
-		rt_ct_optim( &rtip->rti_CutHead, 0 );
+		rt_ct_optim( rtip, &rtip->rti_CutHead, 0 );
 #if 0
 	} else {
 		/* New way, mostly parallel */
 		union cutter	*head;
 		int	i;
 
-		head = rt_cut_one_axis( &rt_waiting_nodes, rtip,
+		head = rt_cut_one_axis( &rtip->rti_cuts_waiting, rtip,
 			Y, 0, rt_nu_cells_per_axis[Y]-1 );
 		rtip->rti_CutHead = *head;	/* struct copy */
 		rt_free( (char *)head, "union cutter" );
@@ -562,8 +571,9 @@ if(rt_g.debug&DEBUG_CUT)  rt_log("\nnu_ncells=%d, nu_sol_per_cell=%d, nu_max_nce
 			rt_pr_cut( &rtip->rti_CutHead, 0 );
 		}
 
+		rt_cut_rtip = rtip;
 		if( ncpu <= 1 )  {
-			rt_cut_optimize_parallel();
+			rt_cut_optimize_parallel(rtip);
 		} else {
 			rt_parallel( rt_cut_optimize_parallel, ncpu );
 		}
@@ -703,7 +713,8 @@ struct soltab *stp;
  *	 0	Node has been cut
  */
 HIDDEN int
-rt_ct_plan( cutp, depth )
+rt_ct_plan( rtip, cutp, depth )
+struct rt_i	*rtip;
 union cutter	*cutp;
 int		depth;
 {
@@ -714,6 +725,7 @@ int		depth;
 	int	best;
 	double	bestoff;
 
+	RT_CK_RTI(rtip);
 	for( axis = X; axis <= Z; axis++ )  {
 #if 0
  /* New way */
@@ -739,7 +751,7 @@ int		depth;
 
 		if( best < 0 )  return(-1);	/* No cut is possible */
 
-		if( rt_ct_box( cutp, best, where[best] ) > 0 )
+		if( rt_ct_box( rtip, cutp, best, where[best] ) > 0 )
 			return(0);		/* OK */
 
 		/*
@@ -858,7 +870,8 @@ double		*offcenter_p;
  *	1	success
  */
 HIDDEN int
-rt_ct_box( cutp, axis, where )
+rt_ct_box( rtip, cutp, axis, where )
+struct rt_i		*rtip;
 register union cutter	*cutp;
 register int		axis;
 double			where;
@@ -866,6 +879,7 @@ double			where;
 	register union cutter	*rhs, *lhs;
 	register int	i;
 
+	RT_CK_RTI(rtip);
 	if(rt_g.debug&DEBUG_CUTDETAIL)  {
 		rt_log("rt_ct_box(x%x, %c) %g .. %g .. %g\n",
 			cutp, "XYZ345"[axis],
@@ -875,7 +889,7 @@ double			where;
 	}
 
 	/* LEFT side */
-	lhs = rt_ct_get();
+	lhs = rt_ct_get(rtip);
 	lhs->bn.bn_type = CUT_BOXNODE;
 	VMOVE( lhs->bn.bn_min, cutp->bn.bn_min );
 	VMOVE( lhs->bn.bn_max, cutp->bn.bn_max );
@@ -893,7 +907,7 @@ double			where;
 	}
 
 	/* RIGHT side */
-	rhs = rt_ct_get();
+	rhs = rt_ct_get(rtip);
 	rhs->bn.bn_type = CUT_BOXNODE;
 	VMOVE( rhs->bn.bn_min, cutp->bn.bn_min );
 	VMOVE( rhs->bn.bn_max, cutp->bn.bn_max );
@@ -921,8 +935,8 @@ double			where;
 		}
 		rt_free( (char *)rhs->bn.bn_list, "rt_ct_box, rhs list");
 		rt_free( (char *)lhs->bn.bn_list, "rt_ct_box, lhs list");
-		rt_ct_free( rhs );
-		rt_ct_free( lhs );
+		rt_ct_free( rtip, rhs );
+		rt_ct_free( rtip, lhs );
 		return(0);		/* fail */
 	}
 
@@ -991,14 +1005,15 @@ fail:
  *  space.
  */
 HIDDEN void
-rt_ct_optim( cutp, depth )
+rt_ct_optim( rtip, cutp, depth )
+struct rt_i		*rtip;
 register union cutter *cutp;
 int	depth;
 {
 
 	if( cutp->cut_type == CUT_CUTNODE )  {
-		rt_ct_optim( cutp->cn.cn_l, depth+1 );
-		rt_ct_optim( cutp->cn.cn_r, depth+1 );
+		rt_ct_optim( rtip, cutp->cn.cn_l, depth+1 );
+		rt_ct_optim( rtip, cutp->cn.cn_r, depth+1 );
 		return;
 	}
 	if( cutp->cut_type != CUT_BOXNODE )  {
@@ -1021,7 +1036,7 @@ int	depth;
 	/*
 	 *  Attempt to make an optimal cut
 	 */
-	if( rt_ct_plan( cutp, depth ) < 0 )  {
+	if( rt_ct_plan( rtip, cutp, depth ) < 0 )  {
 		/* Unable to further subdivide this box node */
 		return;
 	}
@@ -1044,10 +1059,10 @@ int	depth;
 	oldlen = cutp->bn.bn_len;	/* save before rt_ct_box() */
  	if( rt_ct_old_assess( cutp, axis, &where, &offcenter ) <= 0 )
  		return;			/* not practical */
-	if( rt_ct_box( cutp, axis, where ) == 0 )  {
+	if( rt_ct_box( rtip, cutp, axis, where ) == 0 )  {
 	 	if( rt_ct_old_assess( cutp, AXIS(depth+1), &where, &offcenter ) <= 0 )
 	 		return;			/* not practical */
-		if( rt_ct_box( cutp, AXIS(depth+1), where ) == 0 )
+		if( rt_ct_box( rtip, cutp, AXIS(depth+1), where ) == 0 )
 			return;	/* hopeless */
 	}
 	if( cutp->cn.cn_l->bn.bn_len >= oldlen &&
@@ -1055,8 +1070,8 @@ int	depth;
  }
 #endif
 	/* Box node is now a cut node, recurse */
-	rt_ct_optim( cutp->cn.cn_l, depth+1 );
-	rt_ct_optim( cutp->cn.cn_r, depth+1 );
+	rt_ct_optim( rtip, cutp->cn.cn_l, depth+1 );
+	rt_ct_optim( rtip, cutp->cn.cn_r, depth+1 );
 }
 
 /*
@@ -1127,44 +1142,57 @@ double	*offcenter_p;
 
 /*
  *			R T _ C T _ G E T
+ *
+ *  This routine must run in parallel
  */
 HIDDEN union cutter *
-rt_ct_get()
+rt_ct_get(rtip)
+struct rt_i	*rtip;
 {
 	register union cutter *cutp;
 
-	if( !rt_busy_cutter_nodes.l.magic )
-		bu_ptbl_init( &rt_busy_cutter_nodes, 128 );
+	RT_CK_RTI(rtip);
+	RES_ACQUIRE(&rt_g.res_model);
+	if( !rtip->rti_busy_cutter_nodes.l.magic )
+		bu_ptbl_init( &rtip->rti_busy_cutter_nodes, 128 );
 
-	if( rt_g.rtg_CutFree == CUTTER_NULL )  {
+	if( rtip->rti_CutFree == CUTTER_NULL )  {
 		register int bytes;
 
 		bytes = rt_byte_roundup(64*sizeof(union cutter));
 		cutp = (union cutter *)rt_malloc(bytes," rt_ct_get");
 		/* Remember this allocation for later */
-		bu_ptbl_ins( &rt_busy_cutter_nodes, (long *)cutp );
+		bu_ptbl_ins( &rtip->rti_busy_cutter_nodes, (long *)cutp );
 		/* Now, dice it up */
 		while( bytes >= sizeof(union cutter) )  {
-			cutp->cut_forw = rt_g.rtg_CutFree;
-			rt_g.rtg_CutFree = cutp++;
+			cutp->cut_forw = rtip->rti_CutFree;
+			rtip->rti_CutFree = cutp++;
 			bytes -= sizeof(union cutter);
 		}
 	}
-	cutp = rt_g.rtg_CutFree;
-	rt_g.rtg_CutFree = cutp->cut_forw;
+	cutp = rtip->rti_CutFree;
+	rtip->rti_CutFree = cutp->cut_forw;
+	RES_RELEASE(&rt_g.res_model);
+
 	cutp->cut_forw = CUTTER_NULL;
 	return(cutp);
 }
 
 /*
  *			R T _ C T _ F R E E
+ *
+ *  This routine must run in parallel
  */
 HIDDEN void
-rt_ct_free( cutp )
-register union cutter *cutp;
+rt_ct_free( rtip, cutp )
+struct rt_i		*rtip;
+register union cutter	*cutp;
 {
-	cutp->cut_forw = rt_g.rtg_CutFree;
-	rt_g.rtg_CutFree = cutp;
+	RT_CK_RTI(rtip);
+	RES_ACQUIRE(&rt_g.res_model);
+	cutp->cut_forw = rtip->rti_CutFree;
+	rtip->rti_CutFree = cutp;
+	RES_RELEASE(&rt_g.res_model);
 }
 
 /*
@@ -1241,10 +1269,11 @@ int lvl;			/* recursion level */
  *  node, so as not to clobber rti_CutHead !
  */
 void
-rt_fr_cut( cutp )
+rt_fr_cut( rtip, cutp )
+struct rt_i		*rtip;
 register union cutter *cutp;
 {
-
+	RT_CK_RTI(rtip);
 	if( cutp == CUTTER_NULL )  {
 		rt_log("rt_fr_cut NULL\n");
 		return;
@@ -1253,12 +1282,12 @@ register union cutter *cutp;
 	switch( cutp->cut_type )  {
 
 	case CUT_CUTNODE:
-		rt_fr_cut( cutp->cn.cn_l );
-		rt_ct_free( cutp->cn.cn_l );
+		rt_fr_cut( rtip, cutp->cn.cn_l );
+		rt_ct_free( rtip, cutp->cn.cn_l );
 		cutp->cn.cn_l = CUTTER_NULL;
 
-		rt_fr_cut( cutp->cn.cn_r );
-		rt_ct_free( cutp->cn.cn_r );
+		rt_fr_cut( rtip, cutp->cn.cn_r );
+		rt_ct_free( rtip, cutp->cn.cn_r );
 		cutp->cn.cn_r = CUTTER_NULL;
 		return;
 
@@ -1284,6 +1313,7 @@ struct rt_i		*rtip;
 register union cutter	*cutp;
 int			lvl;
 {
+	RT_CK_RTI(rtip);
 	switch( cutp->cut_type )  {
 	case CUT_CUTNODE:
 		rt_plot_cut( fp, rtip, cutp->cn.cn_l, lvl+1 );
@@ -1394,6 +1424,7 @@ int			depth;
 {
 	register int	len;
 
+	RT_CK_RTI(rtip);
 	if( cutp->cut_type == CUT_CUTNODE )  {
 		rt_ct_measure( rtip, cutp->cn.cn_l, len = (depth+1) );
 		rt_ct_measure( rtip, cutp->cn.cn_r, len );
@@ -1421,25 +1452,27 @@ int			depth;
 /*
  *			R T _ C U T _ C L E A N
  *
- *  The rt_g.rtg_CutFree list can not be freed directly
+ *  The rtip->rti_CutFree list can not be freed directly
  *  because  is bulk allocated.
  *  Fortunately, we have a list of all the bu_malloc()'ed blocks.
  */
 void
-rt_cut_clean()
+rt_cut_clean(rtip)
+struct rt_i	*rtip;
 {
 	genptr_t	*p;
 
-	if( rt_waiting_nodes.l.magic )
-		bu_ptbl_free( &rt_waiting_nodes );
+	RT_CK_RTI(rtip);
+
+	if( rtip->rti_cuts_waiting.l.magic )
+		bu_ptbl_free( &rtip->rti_cuts_waiting );
 
 	/* Abandon the linked list of diced-up structures */
-	rt_g.rtg_CutFree = CUTTER_NULL;
+	rtip->rti_CutFree = CUTTER_NULL;
 
 	/* Release the blocks we got from bu_malloc() */
-	for( BU_PTBL_FOR( p, (genptr_t *), &rt_busy_cutter_nodes ) )  {
+	for( BU_PTBL_FOR( p, (genptr_t *), &rtip->rti_busy_cutter_nodes ) )  {
 		bu_free( *p, "rt_ct_get" );
 	}
-	bu_ptbl_free( &rt_busy_cutter_nodes );
+	bu_ptbl_free( &rtip->rti_busy_cutter_nodes );
 }
-
