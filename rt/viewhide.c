@@ -49,7 +49,6 @@ static char RCSrayhide[] = "@(#)$Header$ (BRL)";
 #define SEEKING_START_PT 0
 #define FOUND_START_PT 1
 #define CELLNULL ( (struct cell *) 0)
-#define MAXANGLE 0.9961947		/* cos 5 */
 
 struct cell {
 	float	c_dist;			/* distance from emanation plane to in_hit */
@@ -61,7 +60,10 @@ struct cell {
 
 static FILE	*plotfp;
 extern	int	width;			/* # of pixels in X; picture width */
+extern	double	AmbientIntensity;	/* angle bet. surface normals; default of 5deg */
+extern	double	mat_degtorad;		/* converts degrees to radians used by rt */
 fastf_t		pit_depth;		/* min. distance for drawing pits/mountains */
+fastf_t		maxangle;		/* value of the cosine of the angle bet. surface normals that triggers shading */
 
 void		swapbuff();
 void		cleanline();
@@ -87,6 +89,7 @@ char usage[] = "\
 Usage:  rthide [options] model.g objects... >file.ray\n\
 Options:\n\
  -s #		Grid size in pixels, default 512\n\
+ -A angle	Angle between surface normals (default=5degrees)\n\
  -a Az		Azimuth in degrees	(conflicts with -M)\n\
  -e Elev	Elevation in degrees	(conflicts with -M)\n\
  -M		Read model2view matrix on stdin (conflicts with -a, -e)\n\
@@ -166,6 +169,9 @@ char *file, *obj;
  *  main() in rt.c.  This routine is called once per frame.  Static
  *  images only have one frame.  Animations have MANY frames, and bounding
  *  boxes, for example, need to be computed once per frame.
+ *  Never preclude a new and nifty animation: rule: if it's a variable, it can
+ *  change from frame to frame ( frame/picture width; angle between surface
+ *  normals triggering shading.... etc).
  */
 
 void
@@ -177,6 +183,23 @@ struct application	*ap;
 		rt_bomb("outfp is NULL\n");
 
 	regionfix( ap, "rtray.regexp" );		/* XXX */
+
+	/* Determine the angle between surface normal below which shading
+	 * will take place.  The default is the for less than the cosine
+	 * of 5 degrees, there will be shading.  With the -A option, the
+	 * user can specify other number of degrees below which he wants
+	 * shading to take place.  Note that the option for ambient light
+	 * intensity had been reused since that will not be needed here.
+	 * The default of 5 degrees is used when AmbientIntensity is less
+	 * than 0.5 because it's default is set to 0.4, and the permissible
+	 * range for light intensity is 0 -> 1.
+	 */
+
+	if( AmbientIntensity <= 0.5 )  {
+		maxangle = cos( 5.0 * mat_degtorad);
+	} else {
+		maxangle = cos( AmbientIntensity * mat_degtorad);
+	}
 
 	/* Obtain the bounding boxes for the model from the rt_i(stance)
 	 * structure and feed the maximum and minimum coordinates to
@@ -377,7 +400,7 @@ struct application *ap;
  *  are the same.  If these are not identical, a vertical line is
  *  plotted to mark to boundary where the region_id codes change.  Likewise,
  *  the size of the angle between surface normals is checked: if it exceeds
- *  MAXANGLE, then a line s drawn.
+ *  maxangle, then a line s drawn.
  */
 
 void
@@ -405,16 +428,16 @@ int		y;
 		 * whether a line needs to be drawn.  This is accomplished
 		 * by finding the cosine of the angle between the two
 		 * vectors with VDOT(), the dot product.  The result
-		 * is compared against MAXANGLE, which must be determined
+		 * is compared against maxangle, which must be determined
 		 * experimentally.  This scheme will prevent curved surfaces,
 		 * on which practically "every point is a surface", from
 		 * being represented as dark blobs.
-		 * Note that MAXANGLE needs to be greater than the cosine
+		 * Note that maxangle needs to be greater than the cosine
 		 * of the angle between the two vectors because as the angle
 		 * between the increases, the cosine of said angle decreases.
 		 * Also of interest is that one needs to say: plot if id's
 		 * are not the same OR if either id is not 0 AND the cosine
-		 * of the angle between the normals is less than MAXANGLE. 
+		 * of the angle between the normals is less than maxangle. 
 		 * This test prevents the background from being shaded in.
 		 * Furthermore, it is necessary to select the hit_point.
 		 * Check for pits and pendula.  The below if statement can
@@ -426,7 +449,7 @@ int		y;
 		   ( botp->c_id != 0 && 
 		   ( (botp->c_dist + pit_depth < (botp+1)->c_dist) ||
 		     ((botp+1)->c_dist + pit_depth < botp->c_dist)  ||
- 		     (VDOT(botp->c_normal, (botp + 1)->c_normal) < MAXANGLE))))  {
+ 		     (VDOT(botp->c_normal, (botp + 1)->c_normal) < maxangle))))  {
 							     
 		   	cellp = find_cell(botp, (botp+1)); 
 
@@ -505,7 +528,7 @@ int		y;
 	state = SEEKING_START_PT;
 
 	/* If the region_ids are not equal OR either region_id is not 0 AND
-	 * the cosine of the angle between the normals is less that MAXANGLE,
+	 * the cosine of the angle between the normals is less than maxangle,
 	 * plot a line or shade the plot to produce surface normals or give
 	 * a sense of curvature.
 	 */
@@ -521,7 +544,7 @@ int		y;
 		   ( botp->c_id != 0 && 
 		     ((botp->c_dist + pit_depth < topp->c_dist) ||
 		      (topp->c_dist + pit_depth < botp->c_dist) ||
-		      (VDOT(botp->c_normal, topp->c_normal) < MAXANGLE))))  {
+		      (VDOT(botp->c_normal, topp->c_normal) < maxangle))))  {
 			if( state == FOUND_START_PT ) {
 				continue;
 			} else {
