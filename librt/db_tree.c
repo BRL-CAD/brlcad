@@ -2054,7 +2054,7 @@ int depth;			/* number of arcs */
 			return 0;
 		}
 
-		if( rt_db_get_intern( &intern, parentp, dbip, NULL ) < 0 )  return 0;
+		if( rt_db_get_internal( &intern, parentp, dbip, NULL ) < 0 )  return 0;
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
 		RT_CK_COMB(comb);
 		if( (tp = db_find_named_leaf( comb->tree, kidp->d_namep )) == TREE_NULL )  {
