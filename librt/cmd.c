@@ -83,7 +83,7 @@ register FILE	*fp;
 	return( buf );				/* OK */
 }
 
-#define MAXWORDS		32	/* Maximum number of args per command */
+#define MAXWORDS		64	/* Max # of args per command */
 
 /*
  *			R T _ D O _ C M D
@@ -107,20 +107,23 @@ register struct command_tab	*ctp;
 	register struct command_tab *tp;
 	char		*cmd_args[MAXWORDS+1];	/* array of ptrs to args */
 
-	nwords = 0;
-	cmd_args[0] = lp;
+	while( *lp != '\0' && isspace( *lp ) )
+		lp++;
 
-	if( *lp == '\n' )
+	if( *lp == '\0' )
 		return(0);		/* No command */
 
+#ifdef unix
 	/* Handle "!" shell escape char so the shell can parse the line */
 	if( *lp == '!' )  {
 		(void)system( lp+1 );
 		return(0);		/* No command */
 	}
+#endif
 
-	if( *lp != '\0' && !isspace( *lp ) )
-		nwords++;		/* some arg will be seen, [0] set */
+	/* some non-space string has been seen, cmd_args[0] is set */
+	nwords = 1;
+	cmd_args[0] = lp;
 
 	for( ; *lp != '\0'; lp++ )  {
 		register char	*lp1;
@@ -132,11 +135,10 @@ register struct command_tab	*ctp;
 		lp1 = lp + 1;
 		if( *lp1 != '\0' && !isspace( *lp1 ) )  {
 			/* Begin next word */
-			if( nwords >= MAXWORDS )  {
-				(void)fprintf(stderr,
-					"rt: More than %d arguments, excess flushed\n",
+			if( nwords >= MAXWORDS-1 )  {
+				rt_log(
+					"rt_do_cmd: More than %d arguments, aborting\n",
 					MAXWORDS);
-				cmd_args[MAXWORDS] = (char *)0;
 				return(-1);	/* ERROR */
 			}
 			cmd_args[nwords++] = lp1;
@@ -155,10 +157,10 @@ register struct command_tab	*ctp;
 		    (nwords <= tp->ct_max) )  {
 			return( tp->ct_func( nwords, cmd_args ) );
 		}
-		(void)fprintf(stderr, "rt cmd Usage: %s %s\n",
-			tp->ct_cmd, tp->ct_parms);
+		rt_log("rt_do_cmd Usage: %s %s\n\t%s\n",
+			tp->ct_cmd, tp->ct_parms, tp->ct_comment );
 		return(-1);		/* ERROR */
 	}
-	fprintf(stderr,"do_cmd(%s):  unknown command\n", cmd_args[0]);
+	fprintf(stderr,"rt_do_cmd(%s):  command not found\n", cmd_args[0]);
 	return(-1);			/* ERROR */
 }
