@@ -36,6 +36,5 @@ struct ogl_vars {
 };
 
 extern void ogl_fogHint();
-extern struct ogl_vars head_ogl_vars;
 
 #endif /* SEEN_DM_OGL */
