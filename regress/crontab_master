@@ -1,4 +1,0 @@
-0 5 * * * /vld/regress/brlcad_scripts/master.sh -d /c/regress -r /c/CVS
-0 8 * * * /vld/regress/brlcad_scripts/status.sh -d /c/regress -a lamas@arl.army.mil
-
-
