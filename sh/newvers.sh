@@ -47,7 +47,9 @@ awk '{version = $1 + 1; };END{printf "%d\n", version > "version"; }' < version
 
 VERSION=`cat version`
 DATE=`date`
-if test x$UNIXTYPE = xBSD -o x$MACHINE = x4d
+PATH=$PATH:/usr/ucb:/usr/bsd
+export PATH
+if test x$UNIXTYPE = xBSD -o -f /usr/ucb/hostname -o -f /usr/bsd/hostname
 then
 	HOST=`hostname`
 else
