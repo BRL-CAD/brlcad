@@ -598,8 +598,22 @@ if(getuid()==53) bu_avs_print( &ip->idb_avs, "comb5" );
 			VMOVE( comb->rgb, ibuf );
 			comb->rgb_valid = 1;
 		} else {
-			bu_log("unable to parse rgb attribute '%s'\n", ap);
+			bu_log("unable to parse 'rgb' attribute '%s'\n", ap);
 		}
+	}
+	if( (ap = bu_avs_get( &ip->idb_avs, "region" )) != NULL )  {
+		int	ibuf[1];
+		if( sscanf( ap, "%d", ibuf ) == 1 )  {
+			/* Presence of this attribute implies it is a region  */
+			comb->region_flag = 1;
+			/* Value of this parameter is the FASTGEN code */
+			comb->is_fastgen = ibuf[0];
+		} else {
+			bu_log("unable to parse 'region' attribute '%s'\n", ap);
+		}
+	}
+	if( (ap = bu_avs_get( &ip->idb_avs, "oshader" )) != NULL )  {
+		bu_vls_strcat( &comb->shader, ap );
 	}
 
 	return 0;			/* OK */
