@@ -1269,8 +1269,7 @@ struct rt_functab {
 	void	(*ft_vshot) RT_ARGS((struct soltab * /*stp*/[],
 			struct xray *[] /*rp*/,
 			struct seg [] /*segp*/, int /*n*/,
-			struct resource * /*resp*/,
-			CONST struct rt_tol * /*tol*/));
+			struct application * /*ap*/ ));
 #if defined(MODEL_DEFINED) && defined(NMGREGION_DEFINED)
 	int	(*ft_tessellate) RT_ARGS((
 			struct nmgregion ** /*r*/,
