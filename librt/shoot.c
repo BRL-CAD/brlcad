@@ -1097,7 +1097,20 @@ weave:
 	if( rt_g.debug&DEBUG_ADVANCE )
 		bu_log( "rt_shootray: ray has left known space\n" );
 
-/* XXX Need to rescue any dangling hits from solid pieces */
+	/* Comment on any dangling (odd) hits leftover from solid pieces */
+	{
+		struct rt_piecestate *psp;
+		for( psp = &(resp->re_pieces[rtip->rti_nsolids_with_pieces-1]);
+		     psp >= resp->re_pieces; psp-- )  {
+			if( psp->oddhit.hit_dist >= INFINITY )  continue;
+			bu_log("rt_shootray(%s) %d,%d odd hit, surf=%d dist=%g ignored\n",
+				psp->stp->st_name,
+				ap->a_x, ap->a_y,
+				psp->oddhit.hit_surfno,
+				psp->oddhit.hit_dist );
+			psp->oddhit.hit_dist = INFINITY;
+		}
+	}
 
 	
 	if( BU_LIST_NON_EMPTY( &(waiting_segs.l) ) )  {
