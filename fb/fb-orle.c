@@ -231,20 +231,7 @@ register char	**argv;
 					"\"%s\" already exists.\n",
 					argv[optind]
 					);
-			if( isatty( 0 ) )
-				{ register int	c;
-				(void) fprintf( stderr,
-						"Overwrite \"%s\" [y] ? ",
-						argv[optind]
-						);
-				c = getchar();
-				while( c != '\n' && getchar() != '\n' )
-					;
-				if( c != 'y' )
-					exit( 1 );
-				}
-			else
-				exit( 1 );
+			exit( 1 );
 			}
 		if( (fp = fopen( argv[optind], "w" )) == NULL )
 			{
@@ -260,6 +247,8 @@ register char	**argv;
 		(void) fprintf( stderr, "Too many arguments!\n" );
 		return	0;
 		}
+	if( isatty(fileno(fp)) )
+		return 0;
 	if( xlen == 0 )
 		xlen = width;
 	if( ylen == 0 )
