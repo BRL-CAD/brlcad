@@ -678,7 +678,6 @@ set -S2 "/bin/sh"
 #			define	MGED_OBJS	dm-X
 #			define	MGED_CONFIG	-DDM_X -I/usr/openwin/include
 #			define	MGED_LIBES	-L/usr/openwin/lib -lX11
-#			endif
 #		endif
 #	endif
 #	if 0
