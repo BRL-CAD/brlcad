@@ -24,10 +24,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 typedef unsigned char	u_char;
 static char	*usage[] =
 	{
-"",
-"rle-pix (%I%)",
-"",
-"Usage: rle-pix [-dv][-b (rgbBG)][file.rle]",
+"Usage: rle-pix [-dv] [-b (rgbBG)] [file.rle]",
 "",
 "If no rle file is specifed, rle-pix will read its standard input.",
 "Pix(5B) format is written to the standard output.",
@@ -35,7 +32,7 @@ static char	*usage[] =
 	};
 
 static FILE	*fp = stdin;
-static Pixel	bgpixel = { 0, 0, 0, 0 };
+static RGBpixel	bgpixel;
 static int	bgflag = 0;
 static int	pars_Argv();
 static int	xpos, ypos;
@@ -51,8 +48,8 @@ char	*argv[];
 {	
 	register int	scan_ln;
 	register int	fb_size = 512;
-	static Pixel	scanbuf[1025];
-	static Pixel	bg_scan[1025];
+	static RGBpixel	scanbuf[1025];
+	static RGBpixel	bg_scan[1025];
 	static ColorMap	cmap;
 	int		get_flags;
 	int		scan_bytes;
@@ -61,7 +58,7 @@ char	*argv[];
 		prnt_Usage();
 		return	1;
 	}
-	if( rle_rhdr( fp, &get_flags, bgflag ? NULL : &bgpixel ) == -1 )
+	if( rle_rhdr( fp, &get_flags, bgflag ? NULL : bgpixel ) == -1 )
 		return	1;
 
 	rle_rlen( &xlen, &ylen );
@@ -76,12 +73,12 @@ char	*argv[];
 		ylen = fb_size - ypos;
 	rle_wlen( xlen, ylen, 0 );
 
-	scan_bytes = fb_size * sizeof(Pixel);
+	scan_bytes = fb_size * sizeof(RGBpixel);
 
 	if( rle_verbose )
 		(void) fprintf( stderr,
 		"Background is %d %d %d\n",
-		bgpixel.red, bgpixel.green, bgpixel.blue
+		bgpixel[RED], bgpixel[GRN], bgpixel[BLU]
 		    );
 
 	/* If color map provided, use it, else go with standard map. */
@@ -108,12 +105,12 @@ char	*argv[];
 	/* Fill buffer with background.	*/
 	if( (get_flags & NO_BOX_SAVE) )  {
 		register int	i;
-		register Pixel	*to;
-		register Pixel	*from;
+		register RGBpixel	*to;
+
 		to = bg_scan;
-		from = &bgpixel;
-		for( i = 0; i < fb_size; i++ )
-			*to++ = *from;
+		for( i = 0; i < fb_size; i++,to++ )  {
+			COPYRGB( *to, bgpixel );
+		}
 	}
 
 	{	
@@ -132,16 +129,13 @@ char	*argv[];
 				return	1;
 			if( non_linear_cmap )  {
 				for( pix = 0; pix < fb_size; pix++ )  {
-					(void) putchar( cmap.cm_red[scanbuf[pix].red]>>8 );
-					(void) putchar( cmap.cm_green[scanbuf[pix].green]>>8 );
-					(void) putchar( cmap.cm_blue[scanbuf[pix].blue]>>8 );
+					(void) putchar( cmap.cm_red[scanbuf[pix][RED]]>>8 );
+					(void) putchar( cmap.cm_green[scanbuf[pix][GRN]]>>8 );
+					(void) putchar( cmap.cm_blue[scanbuf[pix][BLU]]>>8 );
 				}
 			} else {
-				for( pix = 0; pix < fb_size; pix++ )  {
-					(void) putchar( scanbuf[pix].red );
-					(void) putchar( scanbuf[pix].green );
-					(void) putchar( scanbuf[pix].blue );
-				}
+				/* .pix files are streams of RGBpixels */
+				write( 1, scanbuf, fb_size*sizeof(RGBpixel) );
 			}
 		} /* end for */
 	} /* end block */
@@ -165,25 +159,25 @@ register char	**argv;
 			switch( bgflag )
 				{
 			case 'r':
-				bgpixel.red = 255;
+				bgpixel[RED] = 255;
 				break;
 			case 'g':
-				bgpixel.green = 255;
+				bgpixel[GRN] = 255;
 				break;
 			case 'b':
-				bgpixel.blue = 255;
+				bgpixel[BLU] = 255;
 				break;
 			case 'w':
-				bgpixel.red =
-				bgpixel.green =
-				bgpixel.blue = 255;
+				bgpixel[RED] =
+				bgpixel[GRN] =
+				bgpixel[BLU] = 255;
 				break;
 			case 'B':		/* Black */
 				break;
 			case 'G':		/* 18% grey, for alignments */
-				bgpixel.red =
-				bgpixel.green =
-				bgpixel.blue = 255.0 * 0.18;
+				bgpixel[RED] =
+				bgpixel[GRN] =
+				bgpixel[BLU] = 255.0 * 0.18;
 				break;
 			default:
 				(void) fprintf( stderr,
