@@ -38,7 +38,7 @@ static int	clear_and_reset = 0;
 
 static char usage[] = "\
 Usage: fbclear [-h -c] [-F framebuffer]\n\
-	[-S squarescrsize] [-W scr_width] [-N scr_height] [r g b]\n";
+	[-S squarescrsize] [-W scr_width] [-N scr_height] [gray | r g b]\n";
 
 get_args( argc, argv )
 register char **argv;
