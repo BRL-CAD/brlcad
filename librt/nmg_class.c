@@ -1154,6 +1154,10 @@ out:
 	return(status);
 }
 
+/* XXX move to raytrace.h, in section for nmg_info.c */
+RT_EXTERN(int		nmg_2lu_identical, (CONST struct edgeuse *eu1,
+			CONST struct edgeuse *eu2));
+
 /* XXX move to nmg_info.c */
 /*
  *			N M G _ 2 L U _ I D E N T I C A L
@@ -1180,7 +1184,7 @@ CONST struct edgeuse	*eu2;
 	CONST struct edgeuse	*eu1_first;
 	CONST struct faceuse	*fu1;
 	CONST struct faceuse	*fu2;
-	int			anti;
+	int			ret;
 
 	NMG_CK_EDGEUSE(eu1);
 	NMG_CK_EDGEUSE(eu2);
@@ -1205,15 +1209,19 @@ CONST struct edgeuse	*eu2;
     	 */
 	eu1_first = eu1;
 	do {
-		if( eu1->vu_p->v_p != eu2->vu_p->v_p )  return 0;
-
+		if( eu1->vu_p->v_p != eu2->vu_p->v_p )  {
+			ret = 0;
+			goto out;
+		}
 		eu1 = RT_LIST_PNEXT_CIRC(edgeuse, &eu1->l);
 		eu2 = RT_LIST_PNEXT_CIRC(edgeuse, &eu2->l);
 	} while ( eu1 != eu1_first );
 
 	if( *lu1->up.magic_p != NMG_FACEUSE_MAGIC ||
-	    *lu2->up.magic_p != NMG_FACEUSE_MAGIC )
-		return 3;	/* one is a wire loop */
+	    *lu2->up.magic_p != NMG_FACEUSE_MAGIC )  {
+		ret = 3;	/* one is a wire loop */
+	    	goto out;
+	    }
 
 	fu1 = lu1->up.fu_p;
 	fu2 = lu2->up.fu_p;
@@ -1224,21 +1232,28 @@ CONST struct edgeuse	*eu2;
 		rt_bomb("nmg_2lu_identical() faces should have been fused\n");
 	}
 
-	rt_log("---- fu1, f=x%x, flip=%d\n", fu1->f_p, fu1->f_p->flip);
-	nmg_pr_fu_briefly(fu1, 0);
-	rt_log("---- fu2, f=x%x, flip=%d\n", fu2->f_p, fu2->f_p->flip);
-	nmg_pr_fu_briefly(fu2, 0);
+	if( rt_g.NMG_debug & DEBUG_BASIC )  {
+		rt_log("---- fu1, f=x%x, flip=%d\n", fu1->f_p, fu1->f_p->flip);
+		nmg_pr_fu_briefly(fu1, 0);
+		rt_log("---- fu2, f=x%x, flip=%d\n", fu2->f_p, fu2->f_p->flip);
+		nmg_pr_fu_briefly(fu2, 0);
+	}
 
-	/* If loopuse and faceuse and face orientations match,
-	 * this is ON-shared */
-	anti = 0;
-	if( lu1->orientation != lu2->orientation )  anti = !anti;
-	if( fu1->orientation != fu2->orientation )  anti = !anti;
-	if( fu1->f_p->flip != fu2->f_p->flip ) anti = !anti;
-
-	if( anti )
-		return 2;
-	return 1;
+	/*
+	 *  The two loops are identical, compare the two faces.
+	 *  Only raw face orientations count here.
+	 *  Loopuse and faceuse orientations do not matter.
+	 */
+	if( fu1->f_p->flip != fu2->f_p->flip )
+		ret = 2;		/* ON anti-shared */
+	else
+		ret = 1;		/* ON shared */
+out:
+	if( rt_g.NMG_debug & DEBUG_BASIC )  {
+		rt_log("nmg_2lu_identical(eu1=x%x, eu2=x%x) ret=%d\n",
+			eu1, eu2, ret);
+	}
+	return ret;
 }
 
 /*
