@@ -127,7 +127,7 @@ char				*value;		/* string containing value */
 		case 'i':
 			/* Indirect to another structure */
 			if( rt_struct_lookup(
-				(struct structparse *)spp->sp_offset,
+				(struct structparse *)spp->sp_hook,
 				name, base, value )
 			    == 0 )
 				return(0);	/* found */
@@ -242,7 +242,7 @@ char			*base;		/* base address of users structure */
 		switch( spp->sp_fmt[0] )  {
 		case 'i':
 			rt_structprint( spp->sp_name,
-				(struct structparse *)spp->sp_offset,
+				(struct structparse *)spp->sp_hook,
 				base );
 			break;
 		case '%':
