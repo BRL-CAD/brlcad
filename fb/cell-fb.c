@@ -233,6 +233,7 @@ STATIC void	prnt_Usage();
 STATIC void	val_To_RGB();
 STATIC void	log_Run();
 STATIC bool	display_Cells();
+STATIC void	fill_colortbl();
 
 main (argc, argv)
 
@@ -1049,6 +1050,7 @@ STATIC void log_Run()
 	printf("Size: %.6f\n", m_viewsize);
 }
 
+STATIC void
 fill_colortbl (lo_rgb, hi_rgb)
 
 RGBpixel	lo_rgb;
