@@ -755,6 +755,8 @@ char *file, *obj;
 		extern struct mfuncs points_mfuncs[];
 		extern struct mfuncs toyota_mfuncs[];
 		extern struct mfuncs wood_mfuncs[];
+		extern struct mfuncs fbm_mfuncs[];
+		extern struct mfuncs camo_mfuncs[];
 
 		mlib_add( phg_mfuncs );
 		mlib_add( light_mfuncs );
@@ -768,6 +770,8 @@ char *file, *obj;
 		mlib_add( points_mfuncs );
 		mlib_add( toyota_mfuncs );
 		mlib_add( wood_mfuncs );
+		mlib_add( fbm_mfuncs );
+		mlib_add( camo_mfuncs );
 	}
 
 	if( minus_o )  {
