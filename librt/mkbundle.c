@@ -58,10 +58,13 @@ int		nring;
 	double	ct, st;
 	double	theta;
 	double	delta;
+	int	count = 0;
 
 	/* Basis vectors for a disc perpendicular to the ray */
 	bn_vec_ortho( a, rp[0].r_dir );
 	VCROSS( b, rp[0].r_dir, a );
+
+	rp[0].index = count++;
 
 	for( ring=0; ring < nring; ring++ )  {
 		register int i;
@@ -76,6 +79,7 @@ int		nring;
 			st = sin(theta) * fraction;
 			VJOIN2( rayp->r_pt, rp[0].r_pt, ct, a, st, b );
 			VMOVE( rayp->r_dir, rp[0].r_dir );
+			rayp->index = count++;
 			theta += delta;
 			rayp++;
 		}

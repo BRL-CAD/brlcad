@@ -96,7 +96,7 @@ extern int	rt_find_nugrid();
 extern CONST union cutter *rt_advance_to_next_cell();
 
 /*
- *			R T _ S H O O T R A Y
+ *			R T _ S H O O T R A Y _ B U N D L E
  *
  *  Note that the direction vector r_dir
  *  must have unit length;  this is mandatory, and is not ordinarily checked,
@@ -435,7 +435,7 @@ int			nrays;
 
 				/* Be compatible with the ss backing distance stuff */
 				VMOVE( ss2_newray.r_dir, rays[ray].r_dir );
-				VJOIN( ss2_newray.r_pt, rays[ray].r_pt, ss.dist_corr, ss2_newray.r_dir );
+				VJOIN1( ss2_newray.r_pt, rays[ray].r_pt, ss.dist_corr, ss2_newray.r_dir );
 
 				/* Check against bounding RPP, if desired by solid */
 				if( rt_functab[stp->st_id].ft_use_rpp )  {
@@ -474,6 +474,7 @@ int			nrays;
 					}
 				}
 				resp->re_shot_hit++;
+				break;			/* HIT */
 			}
 		}
 		if( rt_g.debug & DEBUG_ADVANCE )
