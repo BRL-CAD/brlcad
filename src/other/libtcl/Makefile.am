@@ -1,11 +1,12 @@
 # $Id$
 
-SUBDIRS = unix
+SUBDIRS = \
+	doc \
+	generic \
+	unix
 
 EXTRA_DIST = \
 	compat \
-	doc \
-	generic \
 	library \
 	mac \
 	macosx \
