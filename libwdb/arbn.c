@@ -47,7 +47,6 @@ int	neqn;
 plane_t	*eqn;
 {
 	struct rt_arbn_internal	arbn;
-	register int	i;
 
 	if( neqn <= 0 )  return(-1);
 
