@@ -431,6 +431,13 @@ static struct dbcmdstruct rt_tcl_rt_cmds[] = {
  * Usage:
  *        procname dbCmdName ?args?
  * Returns: result of cmdName LIBRT operation.
+ *
+ * Objects of type 'procname' must have been previously created by 
+ * the 'rt_gettrees' operation performed on a database object.
+ *
+ * Example -
+ *	.inmem rt_gettrees .rt all.g
+ *	.rt shootray {0 0 0} dir {0 0 -1}
  */
 int
 rt_tcl_rt( clientData, interp, argc, argv )
