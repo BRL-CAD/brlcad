@@ -1,4 +1,5 @@
-dnl BRL-CAD		configure.ac
+dnl                   C O N F I G U R E . A C
+dnl BRL-CAD
 dnl
 dnl Copyright (C) 2004-2005 United States Government as represented by
 dnl U.S. Army Research Laboratory.
@@ -29,21 +30,27 @@ dnl separation of tests and settings should be maintained per the
 dnl recommended standard layout.  The tests should be added to the
 dnl rather clearly labeled sections below so that they are as follows:
 dnl
-dnl      0) information on the package
-dnl	 1) check command-line arguments
-dnl	 2) check programs
-dnl	 3) check libraries
-dnl	 4) check headers
-dnl	 5) check types/structures
-dnl      6) check compiler characteristics
-dnl	 7) check functions
-dnl	 8) check system services
-dnl	 9) output a summary
+dnl     0) information on the package
+dnl     1) check command-line arguments
+dnl     2) check programs
+dnl     3) check libraries
+dnl     4) check headers
+dnl     5) check types/structures
+dnl     6) check compiler characteristics
+dnl     7) check functions
+dnl     8) check system services
+dnl     9) output a summary
 dnl
-dnl Any useful build arguments should be added to the output summary
-dnl at the end.  Although it may be possible to check for certain
-dnl features of command line arguments near the top, related tests
-dnl should be delayed and placed into the appropriate test section.
+dnl Any useful build settings should be added to the output summary
+dnl at the end.  Although it may be possible to check for certain 
+dnl features near the top in the command-line arguments section, any
+dnl related tests should be delayed and placed into the appropriate
+dnl check section.
+dnl
+dnl You should use enable/disable arguments for build settings and
+dnl optional compilation components that are part of this package.
+dnl You specify with/without arguments for components that are not a
+dnl part of this package.
 dnl
 dnl Features of the GNU Autotools that would require an increase in
 dnl the minimum version requirement are highly discouraged.  Likewise
