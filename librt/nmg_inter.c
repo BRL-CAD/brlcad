@@ -8,6 +8,15 @@
  *  i.e. all geometric intersections of the two regions have explicit
  *  topological representations.
  *
+ *  The intersector makes sure that all geometric intersections gets
+ *  recorded with explicit geometry and topology that is shared between both
+ *  regions. Primary examples of this are (a) the line of intersection
+ *  between two planes (faces), and (b) the point of intersection where two
+ *  edges cross.
+ *
+ *  Entities of one region that are INSIDE, but not ON the other region
+ *  do not become shared during the intersection process.
+ *
  *  Method -
  *
  *	Find all the points of intersection between the two regions, and
@@ -3543,9 +3552,12 @@ nmg_ck_vs_in_region( s2->r_p, tol );
 			nmg_isect_two_generic_faces(fu1, fu2, tol);
 	    	}
 
+#if 0
+		/* XXX Test16.r.  This is not the correct fix.  Leave out. */
 		/* Intersect all "interior" edges that got missed by generic. */
 		/* This may make additional wire loops in s2 */
 		nmg_isect_face3p_shell_int( &is, fu1, s2 );
+#endif
 
 		/*
 		 *  Because the rest of the shell elements are wires,
