@@ -42,6 +42,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "nmg.h"
 #include "raytrace.h"
 
+#include "db.h"		/* for debugging stuff at bottom */
+
 /* States of the state machine */
 #define NMG_STATE_ERROR		0
 #define NMG_STATE_OUT		1
@@ -1425,35 +1427,7 @@ rt_log("force next eu to ray\n");
 			rt_log("wrote error.pl\n");
 		}
 		/* Store this face in a .g file for examination! */
-		{
-			FILE	*fp = fopen("error.g", "w");
-			struct rt_external	ext;
-			struct rt_db_internal	intern;
-			static union record		rec;
-
-			RT_INIT_DB_INTERNAL(&intern);
-			intern.idb_type = ID_NMG;
-			intern.idb_ptr = (genptr_t)nmg_find_model((long*)lu);
-			RT_INIT_EXTERNAL( &ext );
-
-			/* Scale change on export is 1.0 -- no change */
-			if( rt_functab[ID_NMG].ft_export( &ext, &intern, 1.0 ) < 0 )  {
-				rt_log("solid export failure\n");
-				if( intern.idb_ptr )  rt_functab[ID_NMG].ft_ifree( &intern );
-				db_free_external( &ext );
-				rt_bomb("zappo");
-			}
-			rt_functab[ID_NMG].ft_ifree( &intern );
-			NAMEMOVE( "error", ((union record *)ext.ext_buf)->s.s_name );
-
-			rec.u_id = ID_IDENT;
-			strcpy( rec.i.i_version, ID_VERSION );
-			strcpy( rec.i.i_title, "nmg_fcut.c error dump" );
-			fwrite( (char *)&rec, sizeof(rec), 1, fp );
-			fwrite( ext.ext_buf, ext.ext_nbytes, 1, fp );
-			fclose(fp);
-			rt_log("wrote error.g\n");
-		}
+		nmg_stash_model_to_file( "error.g", nmg_find_model((long*)lu), "nmg_fcut.c error dump" );
 #endif
 		/* Explode */
 		rt_bomb("nmg_face_state_transition: got action=ERROR\n");
@@ -1862,5 +1836,52 @@ CONST struct rt_tol	*tol;
 	/* Something more may need to be done.  Edges? */
 	lu->orientation = geom_orient;
 	lu->lumate_p->orientation = geom_orient;
+}
+
+/*
+ *
+ *  Store an NMG model as a separate .g file, for later examination.
+ */
+void
+nmg_stash_model_to_file( filename, m, title )
+CONST char	*filename;
+struct model	*m;
+CONST char	*title;
+{
+	FILE	*fp;
+	struct rt_external	ext;
+	struct rt_db_internal	intern;
+	union record		rec;
+
+	NMG_CK_MODEL(m);
+
+	if( (fp = fopen(filename, "w")) == NULL )  {
+		perror(filename);
+		return;
+	}
+
+	RT_INIT_DB_INTERNAL(&intern);
+	intern.idb_type = ID_NMG;
+	intern.idb_ptr = (genptr_t)m;
+	RT_INIT_EXTERNAL( &ext );
+
+	/* Scale change on export is 1.0 -- no change */
+	if( rt_functab[ID_NMG].ft_export( &ext, &intern, 1.0 ) < 0 )  {
+		rt_log("nmg_stash_model_to_file: solid export failure\n");
+		if( intern.idb_ptr )  rt_functab[ID_NMG].ft_ifree( &intern );
+		db_free_external( &ext );
+		rt_bomb("zappo");
+	}
+	rt_functab[ID_NMG].ft_ifree( &intern );
+	NAMEMOVE( "error", ((union record *)ext.ext_buf)->s.s_name );
+
+	bzero( (char *)&rec, sizeof(rec) );
+	rec.u_id = ID_IDENT;
+	strcpy( rec.i.i_version, ID_VERSION );
+	strncpy( rec.i.i_title, title, sizeof(rec.i.i_title)-1 );
+	fwrite( (char *)&rec, sizeof(rec), 1, fp );
+	fwrite( ext.ext_buf, ext.ext_nbytes, 1, fp );
+	fclose(fp);
+	rt_log("nmg_stash_model_to_file(): wrote %s\n", filename);
 }
                                                                                                                                       
