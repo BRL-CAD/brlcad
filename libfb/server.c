@@ -483,6 +483,10 @@ char *buf;
 	if( type < MSG_NORETURN ) {
 		(void)pkg_plong( &rbuf[0*NET_LONG_LEN], ret );
 		pkg_send( MSG_RETURN, rbuf, NET_LONG_LEN, pcp );
+	} else {
+		/* No formal return code.  Note errors locally */
+		if(ret < 0) fb_log("fb_server_fb_bwwriterect(%d,%d, %d,%d) error %d\n",
+			x, y, width, height, ret);
 	}
 	if( buf ) (void)free(buf);
 }
