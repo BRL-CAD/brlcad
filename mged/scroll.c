@@ -42,9 +42,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mgedtcl.h"
 #include "./sedit.h"
 
-#define RATE_ROT_FACTOR 6.0
-#define ABS_ROT_FACTOR 180.0
-
 /************************************************************************
  *									*
  *	First part:  scroll bar definitions				*

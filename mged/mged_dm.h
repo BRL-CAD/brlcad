@@ -198,6 +198,10 @@ extern struct dm_list *curr_dm_list;
 #define VIEWSIZE	(2*Viewscale)	/* Width of viewing cube */
 #define VIEWFACTOR	(1/Viewscale)	/* 2.0 / VIEWSIZE */
 
+#define RATE_ROT_FACTOR 6.0
+#define ABS_ROT_FACTOR 180.0
+#define ADC_ANGLE_FACTOR 45.0
+
 #define ALT_MOUSE_MODE_NOT_ACTIVE(_type,_name)\
   ((_type)dm_vars)->_name == ALT_MOUSE_MODE_OFF ||\
   ((_type)dm_vars)->_name == ALT_MOUSE_MODE_ON
