@@ -119,11 +119,12 @@ register struct region *rp;
 	register struct mfuncs *mfp = (struct mfuncs *)rp->reg_mfuncs;
 
 	if( mfp == MF_NULL )  {
-		rt_log("mlib_free:  reg_mfuncs NULL\n");
+		rt_log("mlib_free(%s):  reg_mfuncs NULL\n", rp->reg_name);
 		return;
 	}
 	if( mfp->mf_magic != MF_MAGIC )  {
-		rt_log("mlib_free:  reg_mfuncs bad magic, %x != %x\n",
+		rt_log("mlib_free(%s):  reg_mfuncs bad magic, %x != %x\n",
+			rp->reg_name,
 			mfp->mf_magic, MF_MAGIC );
 		return;
 	}
