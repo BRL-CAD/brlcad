@@ -71,6 +71,9 @@ register long	*p;
 		return ((struct loop_g *)p)->index;
 	case NMG_EDGEUSE_MAGIC:
 		return ((struct edgeuse *)p)->index;
+	case NMG_EDGEUSE2_MAGIC:
+		/* Points to l2 inside edgeuse */
+		return RT_LIST_MAIN_PTR(edgeuse, p, l2)->index;
 	case NMG_EDGE_MAGIC:
 		return ((struct edge *)p)->index;
 	case NMG_EDGE_G_LSEG_MAGIC:
