@@ -24,8 +24,9 @@
  *	#include <stdio.h>
  *	#include <math.h>
  *	#include "machine.h"	/_* For fastf_t definition on this machine *_/
+ *	#include "bu.h"
  *	#include "vmath.h"	/_* For vect_t definition *_/
- *	#include "rtlist.h"	/_* OPTIONAL, auto-included by raytrace.h *_/
+ *	#include "bn.h"
  *	#include "db.h"		/_* OPTIONAL, precedes raytrace.h when used *_/
  *	#include "nmg.h"	/_* OPTIONAL, precedes raytrace.h when used *_/
  *	#include "raytrace.h"
@@ -37,10 +38,6 @@
  *  $Header$
  */
 
-#ifndef SEEN_RTLIST_H
-# include "rtlist.h"
-#endif
-
 #ifndef RAYTRACE_H
 #define RAYTRACE_H seen
 
@@ -49,6 +46,7 @@
  */
 #include "bu.h"
 #include "compat4.h"
+#include "bn.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -174,23 +172,6 @@ struct rt_tess_tol  {
 #	define	RT_EXTERN(type_and_name,args)	extern type_and_name()
 #	define	RT_ARGS(args)			()
 #endif
-
-/*
- *			R T _ E X T E R N A L
- * 
- *  An "opaque" handle for holding onto objects,
- *  typically in some kind of external form that is not directly
- *  usable without passing through an "importation" function.
- */
-struct rt_external  {
-	long	ext_magic;
-	int	ext_nbytes;
-	genptr_t ext_buf;
-};
-#define RT_EXTERNAL_MAGIC	0x768dbbd0
-#define RT_INIT_EXTERNAL(_p)	{(_p)->ext_magic = RT_EXTERNAL_MAGIC; \
-	(_p)->ext_buf = GENPTR_NULL; (_p)->ext_nbytes = 0;}
-#define RT_CK_EXTERNAL(_p)	RT_CKMAG(_p, RT_EXTERNAL_MAGIC, "rt_external")
 
 /*
  *			R T _ D B _ I N T E R N A L
@@ -569,10 +550,6 @@ struct partition {
 #define GET_PT_INIT(ip,p,res)	{\
 	GET_PT(ip,p,res); \
 	bzero( ((char *) &(p)->RT_PT_MIDDLE_START), RT_PT_MIDDLE_LEN(p) ); }
-
-/* XXX Move to rtlist.h */
-#define RT_LIST_NON_EMPTY_P(p,structure,hp)	\
-	(((p)=(struct structure *)((hp)->forw)) != (struct structure *)(hp))
 
 #define GET_PT(ip,p,res)   { \
 	if( RT_LIST_NON_EMPTY_P(p, partition, &res->re_parthead) )  { \
@@ -964,45 +941,6 @@ extern struct resource	rt_uniresource;	/* default.  Defined in librt/shoot.c */
 #define RESOURCE_MAGIC	0x83651835
 #define RT_RESOURCE_CHECK(_p)	RT_CKMAG(_p, RESOURCE_MAGIC, "struct resource")
 #define RT_CK_RESOURCE(_p)	RT_CKMAG(_p, RESOURCE_MAGIC, "struct resource")
-
-/*
- *			S T R U C T P A R S E
- * -- was here
- */
-
-/*
- *			R T _ I M E X P O R T
- */
-struct rt_imexport  {
-	char		im_fmt[4];		/* "l", "i", or "%f", etc */
-	int		im_offset;		/* byte offset in struct */
-	int		im_count;		/* # of repetitions */
-};
-#define RT_IMEXPORT_NULL	((struct rt_imexport *)0)
-
-/*
- *			H I S T O G R A M
- */
-struct histogram  {
-	long		magic;
-	fastf_t		hg_min;		/* minimum value */
-	fastf_t		hg_max;		/* maximum value */
-	fastf_t		hg_clumpsize;	/* (max-min+1)/nbins+1 */
-	long		hg_nsamples;	/* total number of samples spread into histogram */
-	long		hg_nbins;	/* # of bins in hg_bins[] */
-	long		*hg_bins;	/* array of counters */
-};
-#define RT_HISTOGRAM_MAGIC	0x48697374	/* Hist */
-#define RT_CK_HISTOGRAM(_p)	RT_CKMAG(_p, RT_HISTOGRAM_MAGIC, "struct histogram")
-#define RT_HISTOGRAM_TALLY( _hp, _val )	{ \
-	if( (_val) <= (_hp)->hg_min )  { \
-		(_hp)->hg_bins[0]++; \
-	} else if( (_val) >= (_hp)->hg_max )  { \
-		(_hp)->hg_bins[(_hp)->hg_nbins]++; \
-	} else { \
-		(_hp)->hg_bins[(int)(((_val)-(_hp)->hg_min)/(_hp)->hg_clumpsize)]++; \
-	} \
-	(_hp)->hg_nsamples++;  }
 
 /*
  *			A P P L I C A T I O N
@@ -1446,33 +1384,6 @@ RT_EXTERN(void rt_pr_partitions, (CONST struct rt_i *rtip,
 RT_EXTERN(struct soltab *rt_find_solid, (CONST struct rt_i *rtip,
 	CONST char *name) );
 
-/**********************************************************************/
-					/* Parse arbitrary data structure */
-#if 0	/* Moved to bu.h */
-RT_EXTERN(int rt_structparse, (CONST struct bu_vls *vls,
-	CONST struct structparse *tab, char *base ) );
-          /* Print arbitrary data structure for human consumption*/
-RT_EXTERN(void rt_vls_item_print, (struct bu_vls *vp,
-	CONST struct structparse *sp, CONST char *base ) );
-          /* Print single element from data structure */
-RT_EXTERN(void rt_vls_item_print_nc, (struct bu_vls *vp,
-	CONST struct structparse *sp, CONST char *base ) );
-          /* Print single element from data structure, without commas */
-RT_EXTERN(int rt_vls_name_print, (struct bu_vls *vp,
-	CONST struct structparse *parsetab, CONST char *name,
-				    CONST char *base ) );
-RT_EXTERN(int rt_vls_name_print_nc, (struct bu_vls *vp,
-	CONST struct structparse *parsetab, CONST char *name,
-				    CONST char *base ) );
-          /* Print single element from data structure, chosen by name */
-RT_EXTERN(void rt_structprint, (CONST char *title,
-	CONST struct structparse *tab, CONST char *base ) );
-		/* Print arbitrary data structure to vls for rt_structparse */
-RT_EXTERN(void rt_vls_structprint, (struct bu_vls *vls,
-	CONST struct structparse *tab, CONST char *base ) );
-#endif
-/**********************************************************************/
-
 RT_EXTERN(char *rt_read_cmd, (FILE *fp) );	/* Read semi-colon terminated line */
 					/* do cmd from string via cmd table */
 RT_EXTERN(int rt_do_cmd, (struct rt_i *rtip, char *lp, struct command_tab *ctp) );
@@ -1597,15 +1508,6 @@ RT_EXTERN(void rt_cut_extend, (union cutter *cutp, struct soltab *stp) );
 					/* find RPP of one region */
 RT_EXTERN(int rt_rpp_region, (struct rt_i *rtip, char *reg_name,
 	fastf_t *min_rpp, fastf_t *max_rpp) );
-
-/* hist.c */
-RT_EXTERN(void			rt_hist_free, (struct histogram *histp));
-RT_EXTERN(void			rt_hist_init, (struct histogram *histp,
-				fastf_t min, fastf_t max, int nbins));
-RT_EXTERN(void			rt_hist_range, (struct histogram *hp,
-				fastf_t low, fastf_t high));
-RT_EXTERN(void			rt_hist_pr, (struct histogram *histp,
-				CONST char *title));
 
 /* The database library */
 
