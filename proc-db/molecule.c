@@ -17,6 +17,7 @@ static char rcs_ident[] = "$Header$";
 #include "machine.h"
 #include "db.h"
 #include "vmath.h"
+#include "wdb.h"
 
 
 struct sphere  {
@@ -33,7 +34,7 @@ struct sphere *s_head = (struct sphere *) 0;
 
 struct atoms  {
 	int a_id;
-	char * a_name;
+	char a_name[128];
 	unsigned char red, green, blue;
 };
 
@@ -44,10 +45,17 @@ char * matparm = "shine=100.0 diffuse=.8 specular=.2";
 
 void	read_data(), process_sphere();
 
+CONST static char usage[] = "Usage: molecule db_title\n";
+
 main(argc, argv)
 int argc;
 char ** argv;
 {
+
+	if( argc != 2 )  {
+		fputs( usage, stderr );
+		exit(1);
+	}
 
 	mk_id( stdout, argv[1] );
 	read_data();
