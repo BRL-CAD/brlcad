@@ -233,16 +233,16 @@ struct faceuse *fu;
 		eulast = RT_LIST_PLAST_CIRC(edgeuse, &eu->l);
 		NMG_CK_EDGEUSE(eunext);
 		NMG_CK_EDGEUSE(eulast);
-		if (eu->vu_p->v_p != eulast->eumate_p->vu_p->v_p) {
+		if (v1 != eulast->eumate_p->vu_p->v_p) {
 			VPRINT("unshared vertex (mine): ",
-				eu->vu_p->v_p->vg_p->coord);
+				v1->vg_p->coord);
 			VPRINT("\t\t (last->eumate_p): ",
 				eulast->eumate_p->vu_p->v_p->vg_p->coord);
 			rt_bomb("isect_edge_face() discontiuous edgeloop\n");
 		}
-		if( eunext->vu_p->v_p != eu->eumate_p->vu_p->v_p) {
+		if( eunext->vu_p->v_p != v1mate) {
 			VPRINT("unshared vertex (my mate): ",
-				eu->eumate_p->vu_p->v_p->vg_p->coord);
+				v1mate->vg_p->coord);
 			VPRINT("\t\t (next): ",
 				eunext->vu_p->v_p->vg_p->coord);
 			rt_bomb("isect_edge_face() discontiuous edgeloop\n");
@@ -257,12 +257,8 @@ struct faceuse *fu;
 	if (vu_other=vertex_on_face(v1, fu)) {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 			register pointp_t	p1, p2;
-			p1 = eu->vu_p->v_p->vg_p->coord;
-			NMG_CK_EDGEUSE(eu->eumate_p);
-			NMG_CK_VERTEXUSE(eu->eumate_p->vu_p);
-			NMG_CK_VERTEX(eu->eumate_p->vu_p->v_p);
-			NMG_CK_VERTEX_G(eu->eumate_p->vu_p->v_p->vg_p);
-			p2 = eu->eumate_p->vu_p->v_p->vg_p->coord;
+			p1 = v1->vg_p->coord;
+			p2 = v1mate->vg_p->coord;
 			rt_log("Edgeuse %g, %g, %g -> %g, %g, %g\n",
 				V3ARGS(p1), V3ARGS(p2) );
 			rt_log("\tvertex topologically on intersection plane\n");
@@ -271,20 +267,20 @@ struct faceuse *fu;
 		(void)nmg_tbl(bs->l1, TBL_INS_UNIQUE, &eu->vu_p->l.magic);
 		(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vu_other->l.magic);
 		return;
-	} else if (vu_other=vertex_on_face(eu->eumate_p->vu_p->v_p, fu)) {
-		register pointp_t	p1, p2;
-
+	}
+	if (vu_other=vertex_on_face(v1mate, fu)) {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT) {
-			p1 = eu->vu_p->v_p->vg_p->coord;
-			NMG_CK_EDGEUSE(eu->eumate_p);
-			NMG_CK_VERTEXUSE(eu->eumate_p->vu_p);
-			NMG_CK_VERTEX(eu->eumate_p->vu_p->v_p);
-			NMG_CK_VERTEX_G(eu->eumate_p->vu_p->v_p->vg_p);
-			p2 = eu->eumate_p->vu_p->v_p->vg_p->coord;
+			register pointp_t	p1, p2;
+			p1 = v1->vg_p->coord;
+			p2 = v1mate->vg_p->coord;
 			rt_log("Edgeuse %g, %g, %g -> %g, %g, %g\n",
 				V3ARGS(p1), V3ARGS(p2) );
 			rt_log("\tMATE vertex topologically on intersection plane. skipping edgeuse\n");
 		}
+#if 0
+		(void)nmg_tbl(bs->l1, TBL_INS_UNIQUE, &eu->eumate_p->vu_p->l.magic);
+		(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vu_other->l.magic);
+#endif
 		return;
 	}
 
@@ -338,42 +334,35 @@ struct faceuse *fu;
 		return;
 	}
 
+	/*
+	 * If the vertex on the other end of this edgeuse is on the face,
+	 * then make a linkage to an existing face vertex (if found),
+	 * and give up on this edge, knowing that we'll pick up the
+	 * intersection of the next edgeuse with the face later.
+	 */
 	if ( dist_to_plane < bs->tol )  {
 		/* First point is on plane of face, by geometry */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\tedge starts at plane intersect\n");
-
-		/* Add to list of verts on intersection line */
 		(void)nmg_tbl(bs->l1, TBL_INS_UNIQUE, &eu->vu_p->l.magic);
 
-		/* If face doesn't have a "very similar" point, give it one */
 		vu_other = nmg_find_vu_in_face(v1->vg_p->coord, fu, bs->tol);
 		if (vu_other) {
 			register pointp_t	p3;
-			/* Face has a vertex very similar to this one.
-			 * Add vertex to face's list of vertices on
-			 * intersection line.
-			 */
+			/* Face has a very similar vertex.  Add to list */
 			(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vu_other->l.magic);
-
-			/* new coordinates are the midpoint between
-			 * the two existing coordinates
-			 */
+			/* Make new coordinates be the midpoint */
 			p3 = vu_other->v_p->vg_p->coord;
 			VADD2SCALE(v1->vg_p->coord, v1->vg_p->coord, p3, 0.5);
 			/* Combine the two vertices */
 			nmg_jv(v1, vu_other->v_p);
 		} else {
-			/* Since the other face doesn't have a vertex quite
-			 * like this one, we make a copy of this one.
-			 */
+			/* Insert copy of this vertex into face */
 			if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			    	VPRINT("Making vertexloop",
 			    		v1->vg_p->coord);
 
 			plu = nmg_mlv(&fu->l.magic, v1, OT_UNSPEC);
-
-			/* Add vertex to other face's list */
 			(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE,
 				&RT_LIST_FIRST_MAGIC(&plu->down_hd) );
 		}
@@ -506,27 +495,39 @@ struct faceuse *fu;
 	}
 	if ( dist_to_plane < edge_len + bs->tol) {
 		/* Second point is on plane of face, by geometry */
-		/* Make no entries in intersection lists,
-		 * because it will be handled on the next call.
-		 */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\tedge ends at plane intersect\n");
 
-		if( RT_LIST_PNEXT_CIRC(edgeuse,eu)->vu_p->v_p !=
-		    v1mate )
+		if( RT_LIST_PNEXT_CIRC(edgeuse,eu)->vu_p->v_p != v1mate )
 			rt_bomb("isect_edge_face: discontinuous eu loop\n");
 
-		/* If face has a "very similar" point, connect up with it */
+#if 0
+		(void)nmg_tbl(bs->l1, TBL_INS_UNIQUE, &eu->vu_p->l.magic);
+#endif
+
 		vu_other = nmg_find_vu_in_face(v1mate->vg_p->coord, fu, bs->tol);
 		if (vu_other) {
 			register pointp_t	p3;
-			/* new coordinates are the midpoint between
-			 * the two existing coordinates
-			 */
+			/* Face has a very similar vertex.  Add to list */
+#if 0
+			(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vu_other->l.magic);
+#endif
+			/* Make new coordinates be the midpoint */
 			p3 = vu_other->v_p->vg_p->coord;
 			VADD2SCALE(v1mate->vg_p->coord, v1mate->vg_p->coord, p3, 0.5);
 			/* Combine the two vertices */
 			nmg_jv(v1mate, vu_other->v_p);
+		} else {
+#if 0
+			/* Insert copy of this vertex into face */
+			if (rt_g.NMG_debug & DEBUG_POLYSECT)
+			    	VPRINT("Making vertexloop",
+			    		v1mate->vg_p->coord);
+
+			plu = nmg_mlv(&fu->l.magic, v1mate, OT_UNSPEC);
+			(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE,
+				&RT_LIST_FIRST_MAGIC(&plu->down_hd) );
+#endif
 		}
 		return;
 	}
