@@ -5,8 +5,11 @@
 static	char
 rcs_id[] = "$Header$";
 
-#include	"std.h"
+#include	<stdio.h>
 #include	<ctype.h>
+#include	"std.h"
+
+extern char	*malloc();
 
 char	var_char = 'X';
 
@@ -20,6 +23,10 @@ char	**argv;
 	register	bool	ignore;
 	register	int	unmatched, i;
 	register	char	*sep;
+	char			*cp;
+	int			len;
+	int			old_join = 1;
+	int			new_join = 1;
 
 	ignore = FALSE;
 	unmatched = 0;
@@ -32,6 +39,14 @@ char	**argv;
 
 		when 'i':
 				ignore = TRUE;
+		when 'o':
+				old_join = atoi(&argv[1][i+1]);
+				if( old_join <= 0 )  usage();
+				goto nextword;
+		when 'n':
+				new_join = atoi(&argv[1][i+1]);
+				if( new_join <= 0 )  usage();
+				goto nextword;
 		when 'v':
 				if (argv[1][i+2] != '\0')
 					usage();
@@ -48,13 +63,31 @@ nextword:
 		argv++;
 	}
 
-	if (argc < 2)
+	if (argc < old_join+new_join)
 		usage();
+
+	/* Merge together "old_join" arguments to be the old string */
+	len = 1;	/* for the null */
+	for( i=0; i<old_join; i++ ) len += strlen(argv[1]);
+	old = malloc(len);
+	cp = old;
+	for( i=0; i<old_join; i++ )  {
+		/*(void)*/ strcat( cp, argv[1] );
+		cp += strlen(argv[1]);
+		argc--; argv++;
+	}
 	
-	old = argv[1];
-	new = argv[2];
-	argv += 2;
-	argc -= 2;
+	/* Merge together "new_join" arguments to be the new string */
+	len = 1;	/* for the null */
+	for( i=0; i<new_join; i++ ) len += strlen(argv[1]);
+	new = malloc(len);
+	cp = new;
+	for( i=0; i<new_join; i++ )  {
+		/*(void)*/ strcat( cp, argv[1] );
+		cp += strlen(argv[1]);
+		argc--; argv++;
+	}
+fprintf(stderr,"old='%s', new='%s'\n", old, new);
 
 	sep = "";
 	while (argc > 1)
@@ -81,7 +114,7 @@ nextword:
 
 usage()
 {
-	printf("Usage: sub [-i] [-vX] oldpattern newpattern name ...\n");
+	printf("Usage: cakesub [-i] [-vX] [-o#] [-n#] oldpattern newpattern name ...\n");
 	exit(1);
 }
 
