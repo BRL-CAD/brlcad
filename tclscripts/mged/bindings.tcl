@@ -54,10 +54,10 @@ proc mged_bind_dm { w } {
     bind $w <F9> "winset $w; set send_key !"
     bind $w <F12> "winset $w; knob zero"
 
-    bind $w <Left> {knob -i ay -$mged_rotate_factor}
-    bind $w <Right> {knob -i ay $mged_rotate_factor}
-    bind $w <Down> {knob -i ax $mged_rotate_factor}
-    bind $w <Up> {knob -i ax -$mged_rotate_factor}
+    bind $w <Left> "winset $w; knob -i ay -\$mged_rotate_factor"
+    bind $w <Right> "winset $w; knob -i ay \$mged_rotate_factor"
+    bind $w <Down> "winset $w; knob -i ax \$mged_rotate_factor"
+    bind $w <Up> "winset $w; knob -i ax -\$mged_rotate_factor"
     bind $w <Shift-Left> "winset $w; knob -i aX \$mged_tran_factor"
     bind $w <Shift-Right> "winset $w; knob -i aX -\$mged_tran_factor"
     bind $w <Shift-Down> "winset $w; knob -i aZ -\$mged_tran_factor"
@@ -86,60 +86,66 @@ proc do_mouse_bindings { w } {
 
 # default button bindings
     bind $w <1> "winset $w; zoom 0.5"
-    bind $w <2> "winset $w; set tmpstr \[dm m %b 1 %x %y\]; print_return_val \$tmpstr"
+    bind $w <2> "winset $w; set tmpstr \[dm m %b %x %y\]; print_return_val \$tmpstr"
     bind $w <3> "winset $w; zoom 2.0"
 
-    bind $w <ButtonRelease> "winset $w; dm am t 0 0 0"
-    bind $w <KeyRelease-Control_L> "winset $w; dm am t 0 0 0"
-    bind $w <KeyRelease-Control_R> "winset $w; dm am t 0 0 0"
-    bind $w <KeyRelease-Shift_L> "winset $w; dm am t 0 0 0"
-    bind $w <KeyRelease-Shift_R> "winset $w; dm am t 0 0 0"
-    bind $w <KeyRelease-Alt_L> "winset $w; dm am t 0 0 0"
-    bind $w <KeyRelease-Alt_R> "winset $w; dm am t 0 0 0"
+    bind $w <ButtonRelease> "winset $w; dm idle"
+    bind $w <KeyRelease-Control_L> "winset $w; dm idle"
+    bind $w <KeyRelease-Control_R> "winset $w; dm idle"
+    bind $w <KeyRelease-Shift_L> "winset $w; dm idle"
+    bind $w <KeyRelease-Shift_R> "winset $w; dm idle"
+    bind $w <KeyRelease-Alt_L> "winset $w; dm idle"
+    bind $w <KeyRelease-Alt_R> "winset $w; dm idle"
 
     if {$adcflag && $transform == "a"} {
-	bind $w <Shift-ButtonPress-1> "winset $w; dm adc t 1 %x %y"
-	bind $w <Shift-ButtonPress-2> "winset $w; dm adc t 1 %x %y"
-	bind $w <Shift-ButtonPress-3> "winset $w; dm adc d 1 %x %y"
+	bind $w <Shift-ButtonPress-1> "winset $w; dm adc t %x %y"
+	bind $w <Shift-ButtonPress-2> "winset $w; dm adc t %x %y"
+	bind $w <Shift-ButtonPress-3> "winset $w; dm adc d %x %y"
 
-	bind $w <Control-ButtonPress-1> "winset $w; dm adc 1 1 %x %y"
-	bind $w <Control-ButtonPress-2> "winset $w; dm adc 2 1 %x %y"
-	bind $w <Control-ButtonPress-3> "winset $w; dm adc d 1 %x %y"
+	bind $w <Control-ButtonPress-1> "winset $w; dm adc 1 %x %y"
+	bind $w <Control-ButtonPress-2> "winset $w; dm adc 2 %x %y"
+	bind $w <Control-ButtonPress-3> "winset $w; dm adc d %x %y"
 
-	bind $w <Shift-Control-ButtonPress-1> "winset $w; dm adc d 1 %x %y"
-	bind $w <Shift-Control-ButtonPress-2> "winset $w; dm adc d 1 %x %y"
-	bind $w <Shift-Control-ButtonPress-3> "winset $w; dm adc d 1 %x %y"
+	bind $w <Shift-Control-ButtonPress-1> "winset $w; dm adc d %x %y"
+	bind $w <Shift-Control-ButtonPress-2> "winset $w; dm adc d %x %y"
+	bind $w <Shift-Control-ButtonPress-3> "winset $w; dm adc d %x %y"
 
 #constrained adc defaults
-	bind $w <Alt-Shift-ButtonPress-1> "winset $w; dm con a x 1 %x %y"
-	bind $w <Alt-Shift-ButtonPress-2> "winset $w; dm con a y 1 %x %y"
-	bind $w <Alt-Shift-ButtonPress-3> "winset $w; dm con a d 1 %x %y"
-	bind $w <Alt-Control-ButtonPress-1> "winset $w; dm con a 1 1 %x %y"
-	bind $w <Alt-Control-ButtonPress-2> "winset $w; dm con a 2 1 %x %y"
-	bind $w <Alt-Control-ButtonPress-3> "winset $w; dm con a d 1 %x %y"
-	bind $w <Alt-Shift-Control-ButtonPress-1> "winset $w; dm con a d 1 %x %y"
-	bind $w <Alt-Shift-Control-ButtonPress-2> "winset $w; dm con a d 1 %x %y"
-	bind $w <Alt-Shift-Control-ButtonPress-3> "winset $w; dm con a d 1 %x %y"
+	bind $w <Alt-Shift-ButtonPress-1> "winset $w; dm con a x %x %y"
+	bind $w <Alt-Shift-ButtonPress-2> "winset $w; dm con a y %x %y"
+	bind $w <Alt-Shift-ButtonPress-3> "winset $w; dm con a d %x %y"
+
+	bind $w <Alt-Control-ButtonPress-1> "winset $w; dm con a 1 %x %y"
+	bind $w <Alt-Control-ButtonPress-2> "winset $w; dm con a 2 %x %y"
+	bind $w <Alt-Control-ButtonPress-3> "winset $w; dm con a d %x %y"
+
+	bind $w <Alt-Shift-Control-ButtonPress-1> "winset $w; dm con a d %x %y"
+	bind $w <Alt-Shift-Control-ButtonPress-2> "winset $w; dm con a d %x %y"
+	bind $w <Alt-Shift-Control-ButtonPress-3> "winset $w; dm con a d %x %y"
     } else {
-	bind $w <Shift-ButtonPress-1> "winset $w; dm am t 1 %x %y"
-	bind $w <Control-ButtonPress-1> "winset $w; dm am r 1 %x %y"
-	bind $w <Shift-ButtonPress-2> "winset $w; dm am t 1 %x %y"
-	bind $w <Control-ButtonPress-2> "winset $w; dm am r 1 %x %y"
-	bind $w <Shift-ButtonPress-3> "winset $w; dm am t 1 %x %y"
-	bind $w <Control-ButtonPress-3> "winset $w; dm am r 1 %x %y"
-	bind $w <Shift-Control-ButtonPress-1> "winset $w; dm am s 1 %x %y"
-	bind $w <Shift-Control-ButtonPress-2> "winset $w; dm am s 1 %x %y"
-	bind $w <Shift-Control-ButtonPress-3> "winset $w; dm am s 1 %x %y"
+	bind $w <Shift-ButtonPress-1> "winset $w; dm am t %x %y"
+	bind $w <Shift-ButtonPress-2> "winset $w; dm am t %x %y"
+	bind $w <Shift-ButtonPress-3> "winset $w; dm am t %x %y"
+
+	bind $w <Control-ButtonPress-1> "winset $w; dm am r %x %y"
+	bind $w <Control-ButtonPress-2> "winset $w; dm am r %x %y"
+	bind $w <Control-ButtonPress-3> "winset $w; dm am r %x %y"
+
+	bind $w <Shift-Control-ButtonPress-1> "winset $w; dm am s %x %y"
+	bind $w <Shift-Control-ButtonPress-2> "winset $w; dm am s %x %y"
+	bind $w <Shift-Control-ButtonPress-3> "winset $w; dm am s %x %y"
 
 #constrained defaults
-	bind $w <Alt-Shift-ButtonPress-1> "winset $w; dm con t x 1 %x %y"
-	bind $w <Alt-Shift-ButtonPress-2> "winset $w; dm con t y 1 %x %y"
-	bind $w <Alt-Shift-ButtonPress-3> "winset $w; dm con t z 1 %x %y"
-	bind $w <Alt-Control-ButtonPress-1> "winset $w; dm con r x 1 %x %y"
-	bind $w <Alt-Control-ButtonPress-2> "winset $w; dm con r y 1 %x %y"
-	bind $w <Alt-Control-ButtonPress-3> "winset $w; dm con r z 1 %x %y"
-	bind $w <Alt-Shift-Control-ButtonPress-1> "winset $w; dm con s x 1 %x %y"
-	bind $w <Alt-Shift-Control-ButtonPress-2> "winset $w; dm con s y 1 %x %y"
-	bind $w <Alt-Shift-Control-ButtonPress-3> "winset $w; dm con s z 1 %x %y"
+	bind $w <Alt-Shift-ButtonPress-1> "winset $w; dm con t x %x %y"
+	bind $w <Alt-Shift-ButtonPress-2> "winset $w; dm con t y %x %y"
+	bind $w <Alt-Shift-ButtonPress-3> "winset $w; dm con t z %x %y"
+
+	bind $w <Alt-Control-ButtonPress-1> "winset $w; dm con r x %x %y"
+	bind $w <Alt-Control-ButtonPress-2> "winset $w; dm con r y %x %y"
+	bind $w <Alt-Control-ButtonPress-3> "winset $w; dm con r z %x %y"
+
+	bind $w <Alt-Shift-Control-ButtonPress-1> "winset $w; dm con s x %x %y"
+	bind $w <Alt-Shift-Control-ButtonPress-2> "winset $w; dm con s y %x %y"
+	bind $w <Alt-Shift-Control-ButtonPress-3> "winset $w; dm con s z %x %y"
     }   
 }
