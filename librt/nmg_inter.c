@@ -430,8 +430,8 @@ struct faceuse		*fu;
  *	loops of a single vertex with a face).
  */
 static void
-nmg_isect_3vertex_3face(bs, vu, fu)
-struct nmg_inter_struct *bs;
+nmg_isect_3vertex_3face(is, vu, fu)
+struct nmg_inter_struct *is;
 struct vertexuse *vu;
 struct faceuse *fu;
 {
@@ -440,7 +440,7 @@ struct faceuse *fu;
 	pointp_t pt;
 	fastf_t dist;
 
-	NMG_CK_INTER_STRUCT(bs);
+	NMG_CK_INTER_STRUCT(is);
 	NMG_CK_VERTEXUSE(vu);
 	NMG_CK_VERTEX(vu->v_p);
 	NMG_CK_FACEUSE(fu);
@@ -451,8 +451,8 @@ struct faceuse *fu;
 	/* check the topology first */	
 	if (vup=nmg_find_v_in_face(vu->v_p, fu)) {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT) rt_log("\tvu lies in face (topology 1)\n");
-		(void)nmg_tbl(bs->l1, TBL_INS_UNIQUE, &vu->l.magic);
-		(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vup->l.magic);
+		(void)nmg_tbl(is->l1, TBL_INS_UNIQUE, &vu->l.magic);
+		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vup->l.magic);
 		return;
 	}
 
@@ -463,7 +463,7 @@ struct faceuse *fu;
 	pt = vu->v_p->vg_p->coord;
 	dist = DIST_PT_PLANE(pt, fu->f_p->fg_p->N);
 
-	if ( !NEAR_ZERO(dist, bs->tol.dist) )  {
+	if ( !NEAR_ZERO(dist, is->tol.dist) )  {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT) rt_log("\tvu not on face (geometry)\n");
 		return;
 	}
@@ -476,13 +476,13 @@ struct faceuse *fu;
 	 *  Note that no nmg_tbl() calls will be done during vert2p_face2p,
 	 *  which is exactly what is needed here.
 	 */
-	nmg_isect_vert2p_face2p( bs, vu, fu );
+	nmg_isect_vert2p_face2p( is, vu, fu );
 
 	/* Re-check the topology */
 	if (vup=nmg_find_v_in_face(vu->v_p, fu)) {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT) rt_log("\tvu lies in face (topology 2)\n");
-		(void)nmg_tbl(bs->l1, TBL_INS_UNIQUE, &vu->l.magic);
-		(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vup->l.magic);
+		(void)nmg_tbl(is->l1, TBL_INS_UNIQUE, &vu->l.magic);
+		(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vup->l.magic);
 		return;
 	}
 
@@ -494,8 +494,8 @@ struct faceuse *fu;
 	nmg_loop_g(plu->l_p);
 	vup = RT_LIST_FIRST(vertexuse, &plu->down_hd);
 	NMG_CK_VERTEXUSE(vup);
-	(void)nmg_tbl(bs->l1, TBL_INS_UNIQUE, &vu->l.magic);
-    	(void)nmg_tbl(bs->l2, TBL_INS_UNIQUE, &vup->l.magic);
+	(void)nmg_tbl(is->l1, TBL_INS_UNIQUE, &vu->l.magic);
+    	(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vup->l.magic);
 }
 
 /*
@@ -760,8 +760,8 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 	point_t		eu2_end;
 	vect_t		eu2_dir;
 	vect_t		dir3d;
-	fastf_t	dist[2];
-	int	status;
+	fastf_t		dist[2];
+	int		status;
 	point_t		hit_pt;
 	struct vertexuse	*vu;
 	struct vertexuse	*vu1a, *vu1b;
@@ -798,7 +798,9 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 	if( (vu1a->v_p == vu2a->v_p && vu1b->v_p == vu2b->v_p) ||
 	    (vu1a->v_p == vu2b->v_p && vu1b->v_p == vu2a->v_p) )  {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
-			rt_log("edge2p_edge2p: shared edge topology, both ends\n");
+			rt_log("nmg_isect_edge2p_edge2p: shared edge topology, both ends\n");
+	    	if( eu1->e_p != eu2->e_p )
+	    		nmg_radial_join_eu(eu1, eu2, &is->tol );
 	    	ret = 1;
 		goto topo;
 	}
@@ -1271,6 +1273,10 @@ struct faceuse *fu;
 	 *  of this edgeuse is on the other face, that is the hit point.
 	 *  Enter the two vertexuses of that starting vertex in the list,
 	 *  and return.
+	 *
+	 *  XXX Lee wonders if there might be a benefit to violating the
+	 *  XXX "only ask geom question once" rule, and doing a geom
+	 *  XXX calculation here before the topology check.
 	 */
 	if (vu_other=nmg_find_v_in_face(v1, fu)) {
 		if (rt_g.NMG_debug & DEBUG_POLYSECT) {
@@ -1290,6 +1296,11 @@ struct faceuse *fu;
 		dist = VDOT( start_pt, fu->f_p->fg_p->N ) - fu->f_p->fg_p->N[3];
 		if( !NEAR_ZERO( dist, bs->tol.dist ) )
 			goto out;		/* No geometric intersection */
+
+		/* XXX Does this ever happen, now that geom calc is done
+		 * XXX above, and there is 2D handling as well?  Lets find out.
+		 */
+		rt_bomb("nmg_isect_3edge_3face: Edge start vertex lies on other face (geometry)\n");
 
 		/* Start point lies on plane of other face */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
@@ -2030,6 +2041,162 @@ nmg_fu_touchingloops(fu2);
 }
 
 /*
+ *			N M G _ I S E C T _ E D G E 3 P _ E D G E 3 P
+ *
+ *  Intersect one edge with another.  At least one is a wire edge;
+ *  thus there is no face context or intersection line.
+ *  If the edges are non-colinear, there will be at most one point of isect.
+ *  If the edges are colinear, there may be two.
+ */
+static void
+nmg_isect_edge3p_edge3p( is, eu1, eu2 )
+struct nmg_inter_struct		*is;
+struct edgeuse		*eu1;
+struct edgeuse		*eu2;
+{
+	struct vertexuse	*vu1a;
+	struct vertexuse	*vu1b;
+	struct vertexuse	*vu2a;
+	struct vertexuse	*vu2b;
+	vect_t			eu1_dir;
+	vect_t			eu2_dir;
+	fastf_t			dist[2];
+	int			status;
+
+	NMG_CK_INTER_STRUCT(is);
+	NMG_CK_EDGEUSE(eu1);
+	NMG_CK_EDGEUSE(eu2);
+
+	vu1a = eu1->vu_p;
+	vu1b = RT_LIST_PNEXT_CIRC( edgeuse, eu1 )->vu_p;
+	vu2a = eu2->vu_p;
+	vu2b = RT_LIST_PNEXT_CIRC( edgeuse, eu2 )->vu_p;
+	NMG_CK_VERTEXUSE(vu1a);
+	NMG_CK_VERTEXUSE(vu1b);
+	NMG_CK_VERTEXUSE(vu2a);
+	NMG_CK_VERTEXUSE(vu2b);
+
+	if (rt_g.NMG_debug & DEBUG_POLYSECT)
+		rt_log("nmg_isect_edge3p_edge3p(eu1=x%x, eu2=x%x)\n\tvu1a=%x vu1b=%x, vu2a=%x vu2b=%x\n\tv1a=%x v1b=%x,   v2a=%x v2b=%x\n",
+			eu1, eu2,
+			vu1a, vu1b, vu2a, vu2b,
+			vu1a->v_p, vu1b->v_p, vu2a->v_p, vu2b->v_p );
+
+	/*
+	 *  Topology check.
+	 *  If both endpoints of both edges match, this is a trivial accept.
+	 */
+	if( (vu1a->v_p == vu2a->v_p && vu1b->v_p == vu2b->v_p) ||
+	    (vu1a->v_p == vu2b->v_p && vu1b->v_p == vu2a->v_p) )  {
+		if (rt_g.NMG_debug & DEBUG_POLYSECT)
+			rt_log("nmg_isect_edge3p_edge3p: shared edge topology, both ends\n");
+#if 0
+	    	/* Does this make sense to do with wire edges? */
+	    	if( eu1->e_p != eu2->e_p )
+	    		nmg_radial_join_eu(eu1, eu2, &is->tol );
+#endif
+	    	return;
+	}
+	VSUB2( eu1_dir, vu1b->v_p->vg_p->coord, vu1a->v_p->vg_p->coord );
+	VSUB2( eu2_dir, vu2b->v_p->vg_p->coord, vu2a->v_p->vg_p->coord );
+
+	dist[0] = dist[1] = 0;	/* for clean prints, below */
+
+	status = rt_isect_line_lseg( dist,
+			vu1a->v_p->vg_p->coord, eu1_dir,
+			vu1a->v_p->vg_p->coord, eu2_dir, &is->tol );
+
+	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
+		rt_log("\trt_isect_line3_lseg3()=%d, dist: %g, %g\n",
+			status, dist[0], dist[1] );
+	}
+
+	if( status < 0 )  {
+		/* missed */
+		return;
+	}
+	if( status == 0 )  {
+		/* lines are colinear */
+	}
+	/* XXX More goes here */
+/* XXXXXXXXXXXXXXXXXXXXXXX */
+
+	rt_bomb("nmg_isect_edge3p_edge3p\n");
+}
+
+/*
+ *			N M G _ I S E C T _ V E R T E X 3 _ E D G E 3 P
+ */
+static void
+nmg_isect_vertex3_edge3p( is, vu, eu )
+struct nmg_inter_struct		*is;
+struct vertexuse	*vu;
+struct edgeuse		*eu;
+{
+
+	NMG_CK_INTER_STRUCT(is);
+	NMG_CK_VERTEXUSE(vu);
+	NMG_CK_EDGEUSE(eu);
+
+/* XXXXXXXXXXXXXXXXXXXX */
+
+	rt_bomb("nmg_isect_vertex3_edge3p()\n");
+}
+
+/*
+ *			N M G _ I S E C T _ E D G E 3 P _ S H E L L
+ *
+ *  Intersect one wire edge with another shell.
+ *  There is no face context, or intersection line, unless this edge
+ *  happens to lie in the plane of one of the shell's faces.
+ *
+ *  XXX If this edge is split, how to ensure that all eu's are visited?
+ *  (Probably via a return code, and re-iteration)
+ */
+static void
+nmg_isect_edge3p_shell( is, eu1, s2 )
+struct nmg_inter_struct		*is;
+struct edgeuse		*eu1;
+struct shell		*s2;
+{
+	struct faceuse	*fu2;
+	struct loopuse	*lu2;
+	struct edgeuse	*eu2;
+
+	NMG_CK_INTER_STRUCT(is);
+	NMG_CK_EDGEUSE(eu1);
+	NMG_CK_SHELL(s2);
+
+	/* Check eu1 of s1 against all faces in s2 */
+	for( RT_LIST_FOR( fu2, faceuse, &s2->fu_hd ) )  {
+		NMG_CK_FACEUSE(fu2);
+		nmg_isect_3edge_3face( is, eu1, fu2 );
+	}
+
+	/* Check eu1 of s1 against all wire loops in s2 */
+	for( RT_LIST_FOR( lu2, loopuse, &s2->lu_hd ) )  {
+		NMG_CK_LOOPUSE(lu2);
+		/* Really, it's just a bunch of wire edges, in a loop. */
+		/* XXX Can there be lone-vertex loops here? */
+		for( RT_LIST_FOR( eu2, edgeuse, &lu2->down_hd ) )  {
+			NMG_CK_EDGEUSE(eu2);
+			nmg_isect_edge3p_edge3p( &is, eu1, eu2 );
+		}
+	}
+
+	/* Check eu1 of s1 against all wire edges in s2 */
+	for( RT_LIST_FOR( eu2, edgeuse, &s2->eu_hd ) )  {
+		NMG_CK_EDGEUSE(eu2);
+		nmg_isect_edge3p_edge3p( &is, eu1, eu2 );
+	}
+
+	/* Check eu1 of s1 against vert of s2 */
+	if( s2->vu_p )  {
+		nmg_isect_vertex3_edge3p( &is, s2->vu_p, eu1 );
+	}
+}
+
+/*
  *			N M G _ C R A C K S H E L L S
  *
  *	Split the components of two shells wherever they may intersect,
@@ -2041,9 +2208,15 @@ struct shell		*s1;
 struct shell		*s2;
 CONST struct rt_tol	*tol;
 {
+	struct nmg_ptbl		vert_list1, vert_list2;
+	struct nmg_inter_struct is;
+	struct shell_a	*sa1, *sa2;
 	struct face	*f1;
 	struct faceuse	*fu1, *fu2;
-	struct shell_a	*sa1, *sa2;
+	struct loopuse	*lu1;
+	struct loopuse	*lu2;
+	struct edgeuse	*eu1;
+	struct edgeuse	*eu2;
 	long		*flags;
 
 	if (rt_g.NMG_debug & DEBUG_POLYSECT)
@@ -2057,6 +2230,15 @@ CONST struct rt_tol	*tol;
 	NMG_CK_SHELL(s2);
 	sa2 = s2->sa_p;
 	NMG_CK_SHELL_A(sa2);
+
+	/* All the non-face/face isect subroutines need are tol, l1, and l2 */
+	is.magic = NMG_INTER_STRUCT_MAGIC;
+	is.vert2d = (fastf_t *)NULL;
+	is.tol = *tol;		/* struct copy */
+	is.l1 = &vert_list1;
+	is.l2 = &vert_list2;
+	(void)nmg_tbl(&vert_list1, TBL_INIT, (long *)NULL);
+	(void)nmg_tbl(&vert_list2, TBL_INIT, (long *)NULL);
 
 	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 		nmg_vshell( &s1->r_p->s_hd, s1->r_p );
@@ -2114,9 +2296,31 @@ CONST struct rt_tol	*tol;
 			}
 	    	}
 
-		/* Check f1 from s1 against wire loops and edges of s2 */
+		/*
+		 *  Because the rest of the shell elements are wires,
+		 *  there is no need to invoke the face cutter;
+		 *  finding the intersection points (vertices)
+		 *  is sufficient.
+		 */
+
+		/* Check f1 from s1 against wire loops of s2 */
+		for( RT_LIST_FOR( lu2, loopuse, &s2->lu_hd ) )  {
+			NMG_CK_LOOPUSE(lu2);
+
+			nmg_isect_loop3p_face3p( &is, lu2, fu1 );
+		}
+
+		/* Check f1 from s1 against edges of s2 */
+		for( RT_LIST_FOR( eu2, edgeuse, &s2->eu_hd ) )  {
+			NMG_CK_EDGEUSE(eu2);
+
+			nmg_isect_3edge_3face( &is, eu2, fu1 );
+		}
 
 		/* Check f1 from s1 against lone vert of s2 */
+		if( s2->vu_p )  {
+			nmg_isect_3vertex_3face( &is, s2->vu_p, fu1 );
+		}
 
 	    	NMG_INDEX_SET(flags, f1);
 
@@ -2126,17 +2330,54 @@ CONST struct rt_tol	*tol;
 		}
 	}
 
-	/*
-	 *  Check each wire loop and wire edge of shell 1 against shell 2.
-	 */
-#if 0
+	/*  Check each wire loop of shell 1 against all of shell 2. */
 	for( RT_LIST_FOR( lu1, loopuse, &s1->lu_hd ) )  {
+		NMG_CK_LOOPUSE( lu1 );
+		/* Really, it's just a bunch of wire edges, in a loop. */
+		/* XXX Can there be lone-vertex loops here? */
+		for( RT_LIST_FOR( eu1, edgeuse, &lu1->down_hd ) )  {
+			NMG_CK_EDGEUSE(eu1);
+			/* Check eu1 against all of shell 2 */
+			nmg_isect_edge3p_shell( &is, eu1, s2 );
+		}
 	}
+
+	/*  Check each wire edge of shell 1 against all of shell 2. */
 	for( RT_LIST_FOR( eu1, edgeuse, &s1->eu_hd ) )  {
+		NMG_CK_EDGEUSE( eu1 );
+		nmg_isect_edge3p_shell( &is, eu1, s2 );
 	}
-#endif
 
 	/* Check each lone vert of s1 against shell 2 */
+	if( s1->vu_p )  {
+		/* Check vert of s1 against all faceuses in s2 */
+	    	for( RT_LIST_FOR( fu2, faceuse, &s2->fu_hd ) )  {
+	    		NMG_CK_FACEUSE(fu2);
+	    		nmg_isect_3vertex_3face( &is, s1->vu_p, fu2 );
+	    	}
+		/* Check vert of s1 against all wire loops of s2 */
+		for( RT_LIST_FOR( lu2, loopuse, &s2->lu_hd ) )  {
+			NMG_CK_LOOPUSE(lu2);
+			/* Really, it's just a bunch of wire edges, in a loop. */
+			/* XXX Can there be lone-vertex loops here? */
+			for( RT_LIST_FOR( eu2, edgeuse, &lu2->down_hd ) )  {
+				NMG_CK_EDGEUSE(eu2);
+				nmg_isect_vertex3_edge3p( &is, s1->vu_p, eu2 );
+			}
+		}
+		/* Check vert of s1 against all wire edges of s2 */
+		for( RT_LIST_FOR( eu2, edgeuse, &s2->eu_hd ) )  {
+			NMG_CK_EDGEUSE(eu2);
+			nmg_isect_vertex3_edge3p( &is, s1->vu_p, eu2 );
+		}
+
+		/* Check vert of s1 against vert of s2 */
+		/* Unnecessary: already done by vertex fuser */
+	}
+
+	/* Release storage from bogus isect line */
+	(void)nmg_tbl(&vert_list1, TBL_FREE, (long *)NULL);
+	(void)nmg_tbl(&vert_list2, TBL_FREE, (long *)NULL);
 
 	rt_free( (char *)flags, "nmg_crackshells flags[]" );
 
@@ -2176,6 +2417,8 @@ CONST struct faceuse	*fu;
 	}
 	return 0;
 }
+
+/* XXX Need a routine to ensure that all verts are within tol_dist of their face, after fusing is done */
 
 /* XXX move to nmg_info.c */
 /*
