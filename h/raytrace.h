@@ -1200,14 +1200,15 @@ struct rt_i {
 #define RT_VISIT_ALL_SOLTABS_END	} }
 
 /*
- *			V L I S T
+ *			R T _ V L I S T
  *
  *  Definitions for handling lists of vectors (really verticies, or points)
  *  and polygons in 3-space.
  *  Intented for common handling of wireframe display information,
  *  in the full resolution that is calculated in.
  *
- *  On 32-bit machines, XXX of 35 results in structures just less than 1k.
+ *  On 32-bit machines, RT_VLIST_CHUNK of 35 results in rt_vlist structures
+ *  just less than 1k bytes.
  *
  *  The head of the doubly linked list can be just a "struct rt_list" head.
  *
@@ -1299,7 +1300,17 @@ struct command_tab {
 };
 
 /*
- *			F U N C T A B
+ *			R T _ P O I N T _ L A B E L S
+ *
+ *  Used by MGED for labeling vertices of a solid.
+ */
+struct rt_point_labels {
+	char	str[8];
+	point_t	pt;
+};
+
+/*
+ *			R T _ F U N C T A B
  *
  *  Object-oriented interface to geometry modules.
  *  Table is indexed by ID_xxx value of particular solid.
@@ -1588,7 +1599,7 @@ RT_EXTERN(int db_put, ( struct db_i *, CONST struct directory *dp,
 RT_EXTERN(int db_get_external, ( struct rt_external *ep,
 	CONST struct directory *dp, struct db_i *dbip ) );
 RT_EXTERN(int db_put_external, ( struct rt_external *ep,
-	CONST struct directory *dp, struct db_i *dbip ) );
+	struct directory *dp, struct db_i *dbip ) );
 RT_EXTERN(void db_free_external, ( struct rt_external *ep ) );
 
 /* db_scan.c */
