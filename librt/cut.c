@@ -210,7 +210,8 @@ register int axis;
 			pt_close = oldbox.bn.bn_list[i]->st_max[axis]+0.1;
 		}
 	}
-	if( pt_close <= oldbox.bn.bn_min[axis] )
+	if( pt_close <= oldbox.bn.bn_min[axis] ||
+	    pt_close >= oldbox.bn.bn_max[axis] )
 		return(0);	/* not worthwhile */
 
 	/* We are going to cut -- convert caller's node type */
