@@ -1333,7 +1333,7 @@ TK_VERSION="8.4"
 AC_SUBST(TK_VERSION)
 TK_LIBRARY="'${prefix}/lib/tk${TK_VERSION}'"
 AC_SUBST(TK_LIBRARY)
-TK='${top_builddir}/src/other/libtk/build/libtk${TK_VERSION}.so -Wl,--rpath -Wl,${libdir}'
+TK='-L${top_builddir}/src/other/libtk/build -ltk${TK_VERSION} -Wl,--rpath -Wl,${libdir}'
 AC_SUBST(TK)
 dnl TKSTUB='${top_builddir}/src/other/libtk/generic/libtkstub.la'
 dnl AC_SUBST(TKSTUB)
