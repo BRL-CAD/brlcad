@@ -1,6 +1,8 @@
 # $Id$
 
-man_MANS = \
+man1_MANS = wish.1
+
+man3_MANS = \
 	3DBorder.3 \
 	AddOption.3 \
 	BindTable.3 \
@@ -83,7 +85,9 @@ man_MANS = \
 	TkInitStubs.3 \
 	Tk_Init.3 \
 	Tk_Main.3 \
-	WindowId.3 \
+	WindowId.3
+
+mann_MANS = \
 	bell.n \
 	bind.n \
 	bindtags.n \
@@ -144,12 +148,30 @@ man_MANS = \
 	tkwait.n \
 	toplevel.n \
 	winfo.n \
-	wish.1 \
 	wm.n
 
 EXTRA_DIST = \
-	$(man_MANS) \
+	$(man1_MANS) \
+	$(man3_MANS) \
+	$(mann_MANS) \
 	license.terms \
 	man.macros
+
+install-data-hook:
+	@for manpage in $(man1_MANS) ; do \
+		echo "Configuring $(mandir)/man1/$$manpage" ; \
+		sed -e '/man\.macros/r $(top_srcdir)/src/other/libtk/doc/man.macros' -e '/man\.macros/d' $(mandir)/man1/$$manpage > $(mandir)/man1/$$manpage.new ; \
+		mv $(mandir)/man1/$$manpage.new $(mandir)/man1/$$manpage ; \
+	done
+	@for manpage in $(man3_MANS) ; do \
+		echo "Configuring $(mandir)/man3/$$manpage" ; \
+		sed -e '/man\.macros/r $(top_srcdir)/src/other/libtk/doc/man.macros' -e '/man\.macros/d' $(mandir)/man3/$$manpage > $(mandir)/man3/$$manpage.new ; \
+		mv $(mandir)/man3/$$manpage.new $(mandir)/man3/$$manpage ; \
+	done
+	@for manpage in $(mann_MANS) ; do \
+		echo "Configuring $(mandir)/mann/$$manpage" ; \
+		sed -e '/man\.macros/r $(top_srcdir)/src/other/libtk/doc/man.macros' -e '/man\.macros/d' $(mandir)/mann/$$manpage > $(mandir)/mann/$$manpage.new ; \
+		mv $(mandir)/mann/$$manpage.new $(mandir)/mann/$$manpage ; \
+	done
 
 MAINTAINERCLEANFILES = Makefile.in

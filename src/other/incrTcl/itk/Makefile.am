@@ -1,6 +1,7 @@
 # $Id$
 
 SUBDIRS = \
+	doc \
 	generic \
 	library
 
@@ -13,7 +14,6 @@ EXTRA_DIST = \
 	$(brlcadscript_SCRIPTS) \
 	aclocal.m4 \
 	demos \
-	doc \
 	examples \
 	itkConfig.sh.in \
 	license.terms \

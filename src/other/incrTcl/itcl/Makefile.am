@@ -1,6 +1,7 @@
 # $Id$
 
 SUBDIRS = \
+	doc \
 	generic \
 	library
 
@@ -10,7 +11,6 @@ brlcadscript_SCRIPTS = pkgIndex.tcl
 EXTRA_DIST = \
 	$(brlcadscript_SCRIPTS) \
 	aclocal.m4 \
-	doc \
 	itclConfig.sh.in \
 	license.terms \
 	mac \

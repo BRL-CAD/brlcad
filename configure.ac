@@ -1849,10 +1849,12 @@ AC_CONFIG_FILES([
 	src/other/incrTcl/Makefile
 	src/other/incrTcl/doc/Makefile
 	src/other/incrTcl/itcl/Makefile
+	src/other/incrTcl/itcl/doc/Makefile
 	src/other/incrTcl/itcl/generic/Makefile
 	src/other/incrTcl/itcl/library/Makefile
 	src/other/incrTcl/itcl/pkgIndex.tcl
 	src/other/incrTcl/itk/Makefile
+	src/other/incrTcl/itk/doc/Makefile
 	src/other/incrTcl/itk/generic/Makefile
 	src/other/incrTcl/itk/library/Makefile
 	src/other/incrTcl/itk/pkgIndex.tcl
@@ -1925,6 +1927,7 @@ AC_CONFIG_FILES([
 ])
 
 AC_OUTPUT
+
 
 dnl
 dnl Expand the variables for summary reporting
@@ -2000,4 +2003,3 @@ fi
 echo ---
 echo "$0 complete, type 'make' to begin building"
 echo
-
