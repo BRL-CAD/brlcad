@@ -21,18 +21,18 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <math.h>
+
 #include "machine.h"
 #include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "wdb.h"
 
+
 void do_bending(struct rt_wdb *fp, char *name, point_t (*pts), int npts, double bend, double od);
-void pr_pipe(char *name, struct wdb_pipept *head);
+void pr_pipe(const char *name, struct wdb_pipept *head);
 
 struct wdb_pipept  pipe1[] = {
 	{
@@ -131,7 +131,7 @@ main(int argc, char **argv)
 	for( i=0; i<pipe1_npts ; i++ )  {
 		BU_LIST_INSERT( &head, &pipe1[i].l );
 	}
-	pr_pipe( "pipe1", &head );
+	pr_pipe( "pipe1", (struct wdb_pipept *)&head );
 	if( (i = mk_pipe( outfp, "pipe1", &head )) < 0 )
 		fprintf(stderr,"mk_pipe(%s) returns %d\n", "pipe1", i);
 
@@ -151,7 +151,7 @@ do_bending(struct rt_wdb *fp, char *name, point_t (*pts), int npts, double bend,
 		mk_add_pipe_pt( &head, pts[i], od, 0.0, bend );
 	}
 
-	pr_pipe( name, &head );
+	pr_pipe( name, (struct wdb_pipept *)&head );
 
 	if( ( i = mk_pipe( fp, name, &head ) ) < 0 )
 		fprintf(stderr,"mk_pipe(%s) error %d\n", name, i );
@@ -162,7 +162,7 @@ do_bending(struct rt_wdb *fp, char *name, point_t (*pts), int npts, double bend,
 }
 
 void
-pr_pipe(char *name, struct wdb_pipept *head)
+pr_pipe(const char *name, struct wdb_pipept *head)
 {
 	register struct wdb_pipept	*psp;
 
