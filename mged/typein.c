@@ -86,7 +86,7 @@ char *p_hf[] = {
 	"Enter number of values in 'y' direction: ",
 	"Enter '1' if data can be stored as 'short' in memory, or 0: ",
 	"Enter factor to convert file data to mm: ",
-	"Enter coordinates to position HF solid (mm): ",
+	"Enter coordinates to position HF solid: ",
 	"Enter Y coordinate: ",
 	"Enter Z coordinate: ",
 	"Enter direction vector for 'x' direction: ",
@@ -95,8 +95,8 @@ char *p_hf[] = {
 	"Enter direction vector for 'y' direction: ",
 	"Enter Y coordinate: ",
 	"Enter Z coordinate: ",
-	"Enter length of HF in 'x' direction (mm): ",
-	"Enter width of HF in 'y' direction (mm): ",
+	"Enter length of HF in 'x' direction: ",
+	"Enter width of HF in 'y' direction: ",
 	"Enter scale factor for height (after conversion to mm): "
 };
 
@@ -104,7 +104,7 @@ char *p_ebm[] = {
 	"Enter name of bit-map file: ",
 	"Enter width of bit-map (number of cells): ",
 	"Enter height of bit-map (number of cells): ",
-	"Enter extrusion distance (mm): "
+	"Enter extrusion distance: "
 };
 
 char *p_vol[] = {
@@ -114,9 +114,9 @@ char *p_vol[] = {
 	"Enter Z dimension of file (number of cells): ",
 	"Enter lower threshold value: ",
 	"Enter upper threshold value: ",
-	"Enter X, Y, Z dimensions of a cell (mm)",
-	"Enter Y dimension of a cell (mm)",
-	"Enter Z dimension of a cell (mm)",
+	"Enter X, Y, Z dimensions of a cell: ",
+	"Enter Y dimension of a cell: ",
+	"Enter Z dimension of a cell: ",
 };
 
 char *p_ars[] = {
@@ -632,7 +632,7 @@ struct rt_db_internal	*intern;
 	strcpy( ebm->file, cmd_argvs[3] );
 	ebm->xdim = atoi( cmd_argvs[4] );
 	ebm->ydim = atoi( cmd_argvs[5] );
-	ebm->tallness = atof( cmd_argvs[6] );
+	ebm->tallness = atof( cmd_argvs[6] ) * local2base;
 	bn_mat_idn( ebm->mat );
 
 	return( 0 );
@@ -664,17 +664,17 @@ struct rt_db_internal	*intern;
 	hf->n = atoi( cmd_argvs[7] );
 	hf->shorts = atoi( cmd_argvs[8] );
 	hf->file2mm = atof( cmd_argvs[9] );
-	hf->v[0] = atof( cmd_argvs[10] );
-	hf->v[1] = atof( cmd_argvs[11] );
-	hf->v[2] = atof( cmd_argvs[12] );
+	hf->v[0] = atof( cmd_argvs[10] ) * local2base;
+	hf->v[1] = atof( cmd_argvs[11] ) * local2base;
+	hf->v[2] = atof( cmd_argvs[12] ) * local2base;
 	hf->x[0] = atof( cmd_argvs[13] );
 	hf->x[1] = atof( cmd_argvs[14] );
 	hf->x[2] = atof( cmd_argvs[15] );
 	hf->y[0] = atof( cmd_argvs[16] );
 	hf->y[1] = atof( cmd_argvs[17] );
 	hf->y[2] = atof( cmd_argvs[18] );
-	hf->xlen = atof( cmd_argvs[19] );
-	hf->ylen = atof( cmd_argvs[20] );
+	hf->xlen = atof( cmd_argvs[19] ) * local2base;
+	hf->ylen = atof( cmd_argvs[20] ) * local2base;
 	hf->zscale = atof( cmd_argvs[21] );
 
 	if( hf->w < 2 || hf->n < 2 )
@@ -724,9 +724,9 @@ struct rt_db_internal	*intern;
 	vol->zdim = atoi( cmd_argvs[6] );
 	vol->lo = atoi( cmd_argvs[7] );
 	vol->hi = atoi( cmd_argvs[8] );
-	vol->cellsize[0] = atof( cmd_argvs[9] );
-	vol->cellsize[1] = atof( cmd_argvs[10] );
-	vol->cellsize[2] = atof( cmd_argvs[11] );
+	vol->cellsize[0] = atof( cmd_argvs[9] ) * local2base;
+	vol->cellsize[1] = atof( cmd_argvs[10] ) * local2base;
+	vol->cellsize[2] = atof( cmd_argvs[11] ) * local2base;
 	bn_mat_idn( vol->mat );
 
 	return( 0 );
@@ -822,9 +822,9 @@ char			*promp[];
 	}
 
 	/* fill in the point of the first row */
-	arip->curves[0][0] = atof(argv[5]);
-	arip->curves[0][1] = atof(argv[6]);
-	arip->curves[0][2] = atof(argv[7]);
+	arip->curves[0][0] = atof(argv[5]) * local2base;
+	arip->curves[0][1] = atof(argv[6]) * local2base;
+	arip->curves[0][2] = atof(argv[7]) * local2base;
 
 	/* The first point is duplicated across the first curve */
 	for (i=1 ; i < arip->pts_per_curve ; ++i) {
@@ -835,7 +835,7 @@ char			*promp[];
 	axis = 0;
 	/* scan each of the other points we've already got */
 	for (i=8 ; i < argc && i < total_points * ELEMENTS_PER_PT ; ++i) {
-		arip->curves[cv][axis] = atof(argv[i]);
+		arip->curves[cv][axis] = atof(argv[i]) * local2base;
 		if (++axis >= arip->pts_per_curve * ELEMENTS_PER_PT) {
 			axis = 0;
 			cv++;
@@ -870,7 +870,7 @@ struct rt_db_internal	*intern;
 	hip->magic = RT_HALF_INTERNAL_MAGIC;
 
 	for (i = 0; i < ELEMENTS_PER_PLANE; i++) {
-		hip->eqn[i] = atof(cmd_argvs[3+i]);
+		hip->eqn[i] = atof(cmd_argvs[3+i]) * local2base;
 	}
 	VUNITIZE( hip->eqn );
 	
@@ -902,8 +902,8 @@ struct rt_db_internal	*intern;
 
 	n = atoi(&cmd_argvs[2][3]);	/* get # from "arb#" */
 	for (j = 0; j < n; j++)
-		for (i = 0; i < ELEMENTS_PER_PT; i++)
-			aip->pt[j][i] = atof(cmd_argvs[3+i+3*j]);
+	  for (i = 0; i < ELEMENTS_PER_PT; i++)
+	    aip->pt[j][i] = atof(cmd_argvs[3+i+3*j]) * local2base;
 
 	if (!strcmp("arb4", cmd_argvs[2])) {
 		VMOVE( aip->pt[7], aip->pt[3] );
@@ -946,9 +946,9 @@ struct rt_db_internal	*intern;
 	sip->magic = RT_ELL_INTERNAL_MAGIC;
 
 	for (i = 0; i < ELEMENTS_PER_PT; i++) {
-		sip->v[i] = atof(cmd_argvs[3+i]);
+		sip->v[i] = atof(cmd_argvs[3+i]) * local2base;
 	}
-	r = atof(cmd_argvs[6]);
+	r = atof(cmd_argvs[6]) * local2base;
 	VSET( sip->a, r, 0., 0. );
 	VSET( sip->b, 0., r, 0. );
 	VSET( sip->c, 0., 0., r );
@@ -986,7 +986,7 @@ struct rt_db_internal	*intern;
 
 	/* convert typed in args to reals */
 	for (i = 0; i < n; i++) {
-		vals[i] = atof(cmd_argvs[3+i]);
+		vals[i] = atof(cmd_argvs[3+i]) * local2base;
 	}
 
 	if (!strcmp("ellg", cmd_argvs[2])) {	/* everything's ok */
@@ -1054,11 +1054,11 @@ struct rt_db_internal	*intern;
 	tip->magic = RT_TOR_INTERNAL_MAGIC;
 
 	for (i = 0; i < ELEMENTS_PER_PT; i++) {
-		tip->v[i] = atof(cmd_argvs[3+i]);
-		tip->h[i] = atof(cmd_argvs[6+i]);
+		tip->v[i] = atof(cmd_argvs[3+i]) * local2base;
+		tip->h[i] = atof(cmd_argvs[6+i]) * local2base;
 	}
-	tip->r_a = atof(cmd_argvs[9]);
-	tip->r_h = atof(cmd_argvs[10]);
+	tip->r_a = atof(cmd_argvs[9]) * local2base;
+	tip->r_h = atof(cmd_argvs[10]) * local2base;
 	/* Check for radius 2 >= radius 1 */
 	if( tip->r_a <= tip->r_h )  {
 	  Tcl_AppendResult(interp, "ERROR, radius 2 >= radius 1 ....\n", (char *)NULL);
@@ -1093,13 +1093,13 @@ struct rt_db_internal	*intern;
 	tip->magic = RT_TGC_INTERNAL_MAGIC;
 
 	for (i = 0; i < ELEMENTS_PER_PT; i++) {
-		tip->v[i] = atof(cmd_argvs[3+i]);
-		tip->h[i] = atof(cmd_argvs[6+i]);
-		tip->a[i] = atof(cmd_argvs[9+i]);
-		tip->b[i] = atof(cmd_argvs[12+i]);
+		tip->v[i] = atof(cmd_argvs[3+i]) * local2base;
+		tip->h[i] = atof(cmd_argvs[6+i]) * local2base;
+		tip->a[i] = atof(cmd_argvs[9+i]) * local2base;
+		tip->b[i] = atof(cmd_argvs[12+i]) * local2base;
 	}
-	r1 = atof(cmd_argvs[15]);
-	r2 = atof(cmd_argvs[16]);
+	r1 = atof(cmd_argvs[15]) * local2base;
+	r2 = atof(cmd_argvs[16]) * local2base;
 	
 	if (MAGNITUDE(tip->h) < RT_LEN_TOL
 		|| MAGNITUDE(tip->a) < RT_LEN_TOL
@@ -1143,10 +1143,10 @@ struct rt_db_internal	*intern;
 	tip->magic = RT_TGC_INTERNAL_MAGIC;
 
 	for (i = 0; i < ELEMENTS_PER_PT; i++) {
-		tip->v[i] = atof(cmd_argvs[3+i]);
-		tip->h[i] = atof(cmd_argvs[6+i]);
+		tip->v[i] = atof(cmd_argvs[3+i]) * local2base;
+		tip->h[i] = atof(cmd_argvs[6+i]) * local2base;
 	}
-	r = atof(cmd_argvs[9]);
+	r = atof(cmd_argvs[9]) * local2base;
 	
 	if (MAGNITUDE(tip->h) < RT_LEN_TOL || r < RT_LEN_TOL) {
 	  Tcl_AppendResult(interp, "ERROR, all dimensions must be greater than zero!\n",
@@ -1187,10 +1187,10 @@ struct rt_db_internal	*intern;
 	tip->magic = RT_TGC_INTERNAL_MAGIC;
 
 	for (i = 0; i < ELEMENTS_PER_PT; i++) {
-		tip->v[i] = atof(cmd_argvs[3+i]);
-		tip->h[i] = atof(cmd_argvs[6+i]);
-		tip->a[i] = atof(cmd_argvs[9+i]);
-		tip->b[i] = atof(cmd_argvs[12+i]);
+		tip->v[i] = atof(cmd_argvs[3+i]) * local2base;
+		tip->h[i] = atof(cmd_argvs[6+i]) * local2base;
+		tip->a[i] = atof(cmd_argvs[9+i]) * local2base;
+		tip->b[i] = atof(cmd_argvs[12+i]) * local2base;
 	}
 	ratio = atof(cmd_argvs[15]);
 	if (MAGNITUDE(tip->h) < RT_LEN_TOL
@@ -1227,10 +1227,10 @@ struct rt_db_internal	*intern;
 	tip->magic = RT_TGC_INTERNAL_MAGIC;
 
 	for (i = 0; i < ELEMENTS_PER_PT; i++) {
-		tip->v[i] = atof(cmd_argvs[3+i]);
-		tip->h[i] = atof(cmd_argvs[6+i]);
-		tip->a[i] = atof(cmd_argvs[9+i]);
-		tip->b[i] = atof(cmd_argvs[12+i]);
+		tip->v[i] = atof(cmd_argvs[3+i]) * local2base;
+		tip->h[i] = atof(cmd_argvs[6+i]) * local2base;
+		tip->a[i] = atof(cmd_argvs[9+i]) * local2base;
+		tip->b[i] = atof(cmd_argvs[12+i]) * local2base;
 	}
 	
 	if (MAGNITUDE(tip->h) < RT_LEN_TOL
@@ -1267,11 +1267,11 @@ struct rt_db_internal	*intern;
 	tip->magic = RT_TGC_INTERNAL_MAGIC;
 
 	for (i = 0; i < ELEMENTS_PER_PT; i++) {
-		tip->v[i] = atof(cmd_argvs[3+i]);
-		tip->h[i] = atof(cmd_argvs[6+i]);
+		tip->v[i] = atof(cmd_argvs[3+i]) * local2base;
+		tip->h[i] = atof(cmd_argvs[6+i]) * local2base;
 	}
-	r1 = atof(cmd_argvs[9]);
-	r2 = atof(cmd_argvs[10]);
+	r1 = atof(cmd_argvs[9]) * local2base;
+	r2 = atof(cmd_argvs[10]) * local2base;
 	
 	if (MAGNITUDE(tip->h) < RT_LEN_TOL
 		|| r1 < RT_LEN_TOL || r2 < RT_LEN_TOL) {
@@ -1315,10 +1315,10 @@ struct rt_db_internal	*intern;
 	aip->magic = RT_ARB_INTERNAL_MAGIC;
 
 	for (i = 0; i < ELEMENTS_PER_PT; i++) {
-		Vrtx[i] = atof(cmd_argvs[3+i]);
-		Hgt[i] = atof(cmd_argvs[6+i]);
-		Wdth[i] = atof(cmd_argvs[9+i]);
-		Dpth[i] = atof(cmd_argvs[12+i]);
+		Vrtx[i] = atof(cmd_argvs[3+i]) * local2base;
+		Hgt[i] = atof(cmd_argvs[6+i]) * local2base;
+		Wdth[i] = atof(cmd_argvs[9+i]) * local2base;
+		Dpth[i] = atof(cmd_argvs[12+i]) * local2base;
 	}
 	
 	if (MAGNITUDE(Dpth) < RT_LEN_TOL || MAGNITUDE(Hgt) < RT_LEN_TOL
@@ -1369,12 +1369,12 @@ struct rt_db_internal	*intern;
 	aip = (struct rt_arb_internal *)intern->idb_ptr;
 	aip->magic = RT_ARB_INTERNAL_MAGIC;
 
-	xmin = atof(cmd_argvs[3+0]);
-	xmax = atof(cmd_argvs[3+1]);
-	ymin = atof(cmd_argvs[3+2]);
-	ymax = atof(cmd_argvs[3+3]);
-	zmin = atof(cmd_argvs[3+4]);
-	zmax = atof(cmd_argvs[3+5]);
+	xmin = atof(cmd_argvs[3+0]) * local2base;
+	xmax = atof(cmd_argvs[3+1]) * local2base;
+	ymin = atof(cmd_argvs[3+2]) * local2base;
+	ymax = atof(cmd_argvs[3+3]) * local2base;
+	zmin = atof(cmd_argvs[3+4]) * local2base;
+	zmax = atof(cmd_argvs[3+5]) * local2base;
 
 	if (xmin >= xmax) {
 	  Tcl_AppendResult(interp, "ERROR, XMIN greater than XMAX!\n", (char *)NULL);
@@ -1420,11 +1420,11 @@ struct rt_db_internal	*intern;
 	rip->rpc_magic = RT_RPC_INTERNAL_MAGIC;
 
 	for (i = 0; i < ELEMENTS_PER_PT; i++) {
-		rip->rpc_V[i] = atof(cmd_argvs[3+i]);
-		rip->rpc_H[i] = atof(cmd_argvs[6+i]);
-		rip->rpc_B[i] = atof(cmd_argvs[9+i]);
+		rip->rpc_V[i] = atof(cmd_argvs[3+i]) * local2base;
+		rip->rpc_H[i] = atof(cmd_argvs[6+i]) * local2base;
+		rip->rpc_B[i] = atof(cmd_argvs[9+i]) * local2base;
 	}
-	rip->rpc_r = atof(cmd_argvs[12]);
+	rip->rpc_r = atof(cmd_argvs[12]) * local2base;
 	
 	if (MAGNITUDE(rip->rpc_H) < RT_LEN_TOL
 		|| MAGNITUDE(rip->rpc_B) < RT_LEN_TOL
@@ -1457,12 +1457,12 @@ struct rt_db_internal	*intern;
 	rip->rhc_magic = RT_RHC_INTERNAL_MAGIC;
 
 	for (i = 0; i < ELEMENTS_PER_PT; i++) {
-		rip->rhc_V[i] = atof(cmd_argvs[3+i]);
-		rip->rhc_H[i] = atof(cmd_argvs[6+i]);
-		rip->rhc_B[i] = atof(cmd_argvs[9+i]);
+		rip->rhc_V[i] = atof(cmd_argvs[3+i]) * local2base;
+		rip->rhc_H[i] = atof(cmd_argvs[6+i]) * local2base;
+		rip->rhc_B[i] = atof(cmd_argvs[9+i]) * local2base;
 	}
-	rip->rhc_r = atof(cmd_argvs[12]);
-	rip->rhc_c = atof(cmd_argvs[13]);
+	rip->rhc_r = atof(cmd_argvs[12]) * local2base;
+	rip->rhc_c = atof(cmd_argvs[13]) * local2base;
 	
 	if (MAGNITUDE(rip->rhc_H) < RT_LEN_TOL
 		|| MAGNITUDE(rip->rhc_B) < RT_LEN_TOL
@@ -1495,12 +1495,12 @@ struct rt_db_internal	*intern;
 	rip->epa_magic = RT_EPA_INTERNAL_MAGIC;
 
 	for (i = 0; i < ELEMENTS_PER_PT; i++) {
-		rip->epa_V[i] = atof(cmd_argvs[3+i]);
-		rip->epa_H[i] = atof(cmd_argvs[6+i]);
-		rip->epa_Au[i] = atof(cmd_argvs[9+i]);
+		rip->epa_V[i] = atof(cmd_argvs[3+i]) * local2base;
+		rip->epa_H[i] = atof(cmd_argvs[6+i]) * local2base;
+		rip->epa_Au[i] = atof(cmd_argvs[9+i]) * local2base;
 	}
 	rip->epa_r1 = MAGNITUDE(rip->epa_Au);
-	rip->epa_r2 = atof(cmd_argvs[12]);
+	rip->epa_r2 = atof(cmd_argvs[12]) * local2base;
 	VUNITIZE(rip->epa_Au);
 	
 	if (MAGNITUDE(rip->epa_H) < RT_LEN_TOL
@@ -1537,13 +1537,13 @@ struct rt_db_internal	*intern;
 	rip->ehy_magic = RT_EHY_INTERNAL_MAGIC;
 
 	for (i = 0; i < ELEMENTS_PER_PT; i++) {
-		rip->ehy_V[i] = atof(cmd_argvs[3+i]);
-		rip->ehy_H[i] = atof(cmd_argvs[6+i]);
-		rip->ehy_Au[i] = atof(cmd_argvs[9+i]);
+		rip->ehy_V[i] = atof(cmd_argvs[3+i]) * local2base;
+		rip->ehy_H[i] = atof(cmd_argvs[6+i]) * local2base;
+		rip->ehy_Au[i] = atof(cmd_argvs[9+i]) * local2base;
 	}
 	rip->ehy_r1 = MAGNITUDE(rip->ehy_Au);
-	rip->ehy_r2 = atof(cmd_argvs[12]);
-	rip->ehy_c = atof(cmd_argvs[13]);
+	rip->ehy_r2 = atof(cmd_argvs[12]) * local2base;
+	rip->ehy_c = atof(cmd_argvs[13]) * local2base;
 	VUNITIZE(rip->ehy_Au);
 	
 	if (MAGNITUDE(rip->ehy_H) < RT_LEN_TOL
@@ -1580,12 +1580,12 @@ struct rt_db_internal	*intern;
 	eip->eto_magic = RT_ETO_INTERNAL_MAGIC;
 
 	for (i = 0; i < ELEMENTS_PER_PT; i++) {
-		eip->eto_V[i] = atof(cmd_argvs[3+i]);
-		eip->eto_N[i] = atof(cmd_argvs[6+i]);
-		eip->eto_C[i] = atof(cmd_argvs[9+i]);
+		eip->eto_V[i] = atof(cmd_argvs[3+i]) * local2base;
+		eip->eto_N[i] = atof(cmd_argvs[6+i]) * local2base;
+		eip->eto_C[i] = atof(cmd_argvs[9+i]) * local2base;
 	}
-	eip->eto_r = atof(cmd_argvs[12]);
-	eip->eto_rd = atof(cmd_argvs[13]);
+	eip->eto_r = atof(cmd_argvs[12]) * local2base;
+	eip->eto_rd = atof(cmd_argvs[13]) * local2base;
 	
 	if (MAGNITUDE(eip->eto_N) < RT_LEN_TOL
 		|| MAGNITUDE(eip->eto_C) < RT_LEN_TOL
