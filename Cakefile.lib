@@ -47,8 +47,7 @@ PRODUCTS::	EXTRA_OBJ OBJ
 
 %.o&:	SRCDIR,,%,o			if exist ../SRCDIR/%.c
 
-%9,,%,o&:	../%9/%.c [[cakeinclude -i INCDIR -s ../%9 ../%9/%.c]] \
-					if exist ../%9/%.c
+%9,,%,o&:	../%9/%.c HDR_DEP9	if exist ../%9/%.c
 	CC CFLAGS -c ../%9/%.c
 
 /* Override the modes for the library */
