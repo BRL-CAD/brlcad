@@ -276,9 +276,9 @@ PutPixel( value )
 	if ( value > entries )
 		Fatal( "Decoded color index %d exceeds color map size", value );
 
-	pixbuf[col - left][RED] = cmap[value][RED];	/* stuff pixel */
-	pixbuf[col - left][GRN] = cmap[value][GRN];
-	pixbuf[col - left][BLU] = cmap[value][BLU];
+	pixbuf[col][RED] = cmap[value][RED];	/* stuff pixel */
+	pixbuf[col][GRN] = cmap[value][GRN];
+	pixbuf[col][BLU] = cmap[value][BLU];
 
 	if ( ++col == right )
 		{
@@ -288,7 +288,7 @@ PutPixel( value )
 		   the bottom of the available frame buffer.
 		 */
 
-		if ( fb_write( fbp, left, ht - row, pixbuf, right - left ) == -1
+		if ( fb_write( fbp, 0, ht - row, pixbuf, width ) < 0
 		   )
 			Message( "Error writing scan line to frame buffer" );
 
@@ -825,6 +825,14 @@ main( argc, argv )
 
 	if ( clear && fb_clear( fbp, g_cmap[background] ) == -1 )
 		Fatal( "Error clearing frame buffer to background" );
+
+	/* Fill scanline buffer with background color too */
+	{
+		register int i;
+		for( i=0 ; i < width; i++ )  {
+			COPYRGB(pixbuf[i], g_cmap[background]);
+		}
+	}
 
 	/* Convert images.  GIF spec says no pauses between them. */
 
