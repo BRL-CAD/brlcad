@@ -21,9 +21,9 @@ HOST="$1"
 NOTE1="$2"
 NOTE2="$3"
 
-NEW_FILES="moss.log world.log star.log bldg391.log m35.log"
+NEW_FILES="moss.log world.log star.log bldg391.log m35.log sphflake.log"
 REF_FILES="../pix/moss.log ../pix/world.log ../pix/star.log \
-	../pix/bldg391.log ../pix/m35.log"
+	../pix/bldg391.log ../pix/m35.log ../pix/sphflake.log"
 
 for i in $NEW_FILES $REF_FILES
 do
@@ -44,12 +44,12 @@ CURVALS=`grep RTFM $NEW_FILES | \
 
 RATIO_LIST=""
 
-# Trick:  Force args $1 through $5 to the numbers in $CURVALS
+# Trick:  Force args $1 through $6 to the numbers in $CURVALS
 # This should be "set -- $CURVALS", but 4.2BSD /bin/sh can't handle it,
 # and CURVALS are all positive (ie, no leading dashes), so this is safe.
 set $CURVALS
 
-while test $# != 5
+while test $# -lt 6
 do	echo "${NAME}: Warning, only $# times found, adding a zero."
 	CURVALS="${CURVALS}0	"
 	set $CURVALS
@@ -65,8 +65,8 @@ do
 done
 
 # The number of plus signs must be one less than the number of elements.
-MEAN_ABS=`echo 2k $CURVALS ++++ 5/ p | dc`
-MEAN_REL=`echo 2k $RATIO_LIST ++++ 5/ p | dc`
+MEAN_ABS=`echo 2k $CURVALS +++++ 6/ p | dc`
+MEAN_REL=`echo 2k $RATIO_LIST +++++ 6/ p | dc`
 
 # Note:  Both RATIO_LIST and CURVALS have an extra trailing tab.
 # The question mark is for the mean field
