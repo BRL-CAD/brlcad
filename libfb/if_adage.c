@@ -1101,7 +1101,7 @@ long	page, offset;
 	}
 	return	0;
 }
-#endif never
+#endif
 
 _LOCAL_ int
 adage_colormap_write( ifp, cp )
