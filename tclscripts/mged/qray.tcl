@@ -349,7 +349,7 @@ proc qray_effects { id } {
 	    set qray_control($id,text_effects) "Graphics"
 	}
 	b {
-	    set qray_control($id,text_effects) "both"
+	    set qray_control($id,text_effects) "Both"
 	}
     }
 }
