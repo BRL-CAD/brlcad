@@ -349,18 +349,19 @@ rt_log("nmg_vu_angle_measure:  measured angle=%e\n", ang*rt_radtodeg);
 	 *  Since the entry edge is not on the ray, ensure the
 	 *  angles are not exactly 0 or pi.
 	 */
+#define RADIAN_TWEEK	1.0e-14	/* low bits of double prec., re: 6.28... */
 	if( ang == 0 )  {
 		if( entry_ass == NMG_E_ASSESSMENT_RIGHT )  {
-			ang = SMALL_FASTF;
+			ang = RADIAN_TWEEK;
 		} else {
 			/* Assuming NMG_E_ASSESSMENT_LEFT */
-			ang = rt_twopi;
+			ang = rt_twopi - RADIAN_TWEEK;
 		}
 	} else if( ang == rt_pi )  {
 		if( entry_ass == NMG_E_ASSESSMENT_RIGHT )  {
-			ang = rt_pi - SMALL_FASTF;
+			ang = rt_pi - RADIAN_TWEEK;
 		} else {
-			ang = rt_pi + SMALL_FASTF;
+			ang = rt_pi + RADIAN_TWEEK;
 		}
 	}
 
@@ -1099,13 +1100,17 @@ nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]));
 		 *  in both loops, use nmg_jl().
 		 */
 		eu = nmg_eu_with_vu_in_lu( lu, vu );
-		/* XXX This test is not comprehensive */
-		if( eu->radial_p->up.lu_p == prev_lu )  {
-rt_log("using nmg_jl\n");
-			nmg_jl( lu, eu->radial_p );
+		/* XXX Need better check.  If prev_lu is found around
+		 * this edge, but is not "first hop" radial in both
+		 * directions, may not want to do any joining.
+		 */
+		if( eu->radial_p->up.lu_p == prev_lu &&
+		    eu->eumate_p->radial_p->up.lu_p == prev_lu )  {
+rt_log("using nmg_jl( lu=x%x, eu=x%x\n", lu, eu );
+			nmg_jl( lu, eu );
 rt_log("After nmg_jl, before nmg_kill_snakes: ");
 nmg_face_lu_plot(nmg_lu_of_vu(rs->vu[pos]));
-			nmg_kill_snakes( lu );
+			/* nmg_kill_snakes( lu ); */
 		} else {
 			nmg_join_2loops( prev_vu, vu );
 			/* update vu[pos], as it will have changed. */
