@@ -258,31 +258,31 @@ int y_top;
 	    switch((int)mptr->scroll_val){
 	    case 0:
 	      if(second_menu)
-		f = curs_x;
+		f = (double)dv_xadc / 2047.0;
 	      else
 		f = rate_slew[X];
 	      break;
 	    case 1:
 	      if(second_menu)
-		f = curs_y;
+		f = (double)dv_yadc / 2047.0;
 	      else
 		f = rate_slew[Y];
 	      break;
 	    case 2:
 	      if(second_menu)
-		f = dv_1adc;
+		f = (double)dv_1adc / 2047.0;
 	      else
 		f = rate_slew[Z];
 	      break;
 	    case 3:
 	      if(second_menu)
-		f = dv_2adc;
+		f = (double)dv_2adc / 2047.0;
 	      else
 		f = rate_zoom;
 	      break;
 	    case 4:
 	      if(second_menu)
-		f = c_tdist;
+		f = (double)dv_distadc / 2047.0;
 	      else
 		f = rate_rotate[X];
 	      break;
