@@ -349,19 +349,22 @@ struct grass_hit *h;		/* return information */
 #define HEIGHT_OF_SOLID (500.0 * grass_sp->size) /* XXX height of solid in mm */
 	len = val * HEIGHT_OF_SOLID;
 	if (len < 0.0 /* negative grass length */ ||
-	    ldist[1] > len  /* Isect point off end of grass */)
-	    	return 0;
+	    ldist[1] > len  /* Isect point off end of grass */) {
 
+		if (rdebug&RDEBUG_SHADE) bu_log("grass short\n");
+	    	return 0;
+	}
 	/* compute Pt of closest approach along ray */
 	VJOIN1(PCA_ray, gr->r.r_pt, ldist[0], gr->r.r_dir);
 	PCA_ray_radius = gr->radius + ldist[0] * gr->diverge;
 
+#if 0
 	/* if the grass is too short, we miss and march onward */
 	if ( (PCA_ray[Z] - PCA_ray_radius) >= len) {
-		if (rdebug&RDEBUG_SHADE) bu_log("grass short\n");
+
 		return 0;
 	}
-
+#endif
 	VJOIN1(PCA_grass, npt, ldist[1], stalk);
 	VSUB2(tmp, PCA_grass, PCA_ray);
 	dist = MAGNITUDE(tmp);
@@ -585,16 +588,16 @@ struct grass_specific *grass_sp;
 		swp->sw_hit.hit_normal[Z] *= -1.0;
 
 
-	colorscale = h->alt/h->len;
-	if (colorscale < 0.0 || colorscale > 1.0) {
-		bu_log("bad:%g = %g/%g\n", colorscale, h->alt, h->len);
-	} else {
-		bu_log("good:%g = %g/%g\n", colorscale, h->alt, h->len);
-	}
-#if 0
 
-	colorscale = (h->alt/h->len) * 0.75 + 0.25;
-	VSCALE(swp->sw_color, swp->sw_basecolor, colorscale);
+#if 1
+	colorscale = h->alt/h->len;
+	if (colorscale > 0.85) {
+		/* XXX a hack to turn the grass tips brown */
+		VSET(swp->sw_color, .4, .31, .18);
+	} else {
+		colorscale = colorscale * 0.75 + 0.5;
+		VSCALE(swp->sw_color, swp->sw_basecolor, colorscale);
+	}
 #endif
 	if( rdebug&RDEBUG_SHADE) {
 
