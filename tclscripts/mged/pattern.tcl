@@ -1169,7 +1169,7 @@ proc pattern_cyl { args } {
 				incr az_index
 				set mat1 [mat_deltas_vec [mat_idn] [vreverse $center_obj]]
 				if { $do_rot } {
-					set mat2 [mat_mul [mat_ae [expr $az * 180.0 / $M_PI] 0] $mat1]
+					set mat2 [mat_mul [mat_arb_rot $center_obj $height_dir $az] $mat1]
 				} else {
 					set mat2 $mat1
 				}
