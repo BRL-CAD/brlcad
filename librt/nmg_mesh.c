@@ -119,26 +119,8 @@ CONST struct rt_tol	*tol;
 
 	if( eu1->e_p == eu2->e_p )  return;
 
-	if( eu1->vu_p->v_p == eu2->vu_p->v_p && 
-	    eu1->eumate_p->vu_p->v_p == eu2->eumate_p->vu_p->v_p )  {
-	    	/* Both edgeuses are oriented in the same direction */
-	} else if( eu1->vu_p->v_p == eu2->eumate_p->vu_p->v_p &&
-	    eu1->eumate_p->vu_p->v_p == eu2->vu_p->v_p )  {
-		/*
-		 *  Edgeuses are oriented in opposite directions.  This is OK.
-	    	 *  Taking edgeuse mate here would be disasterous, because
-	    	 *  that would switch over to the opposite faceuse!
-	    	 */
-	} else {
-		/*
-		 *  For coding convenience, let caller try to join any two edges.
-		 *  If this is not a valid configuration, just ignore the request.
-		 */
-		if (rt_g.NMG_debug & DEBUG_MESH_EU ) {
-			rt_log("nmg_radial_join_eu(eu1=x%x, eu2=x%x) edgeuses don't share both vertices, ignoring.\n", eu1, eu2);
-		}
-		return;
-	}
+	if( !NMG_ARE_EUS_ADJACENT(eu1, eu2) )
+		rt_bomb("nmg_radial_join_eu() edgeuses don't share vertices.\n");
 
 	if( eu1->vu_p->v_p == eu1->eumate_p->vu_p->v_p )  rt_bomb("nmg_radial_join_eu(): 0 length edge (topology)\n");
 
