@@ -49,35 +49,6 @@ is being invoked from a shell script created by an
 .IR mged (1)
 \fIsaveview\fR command.
 .LP
-A color vector display of ray-model intersections can be written to
-.I rtg3.pl
-and displayed with \fIpl-fb\fR or \fIpl-sgi\fR.
-.LP
-.B GIFT
-format required the translation of a ray's zero distance to the
-model center.  This was done by adding a distance correction factor.
-The cell center coordinates and the ones actually fired from are outputted.
-.LP
-Obliquity angles (declensions off the normal) are computed internally
-in
-.I radians
-but outputted in
-.I degrees
-to satisfy the
-.B GIFT
-format.  Note that 
-.I rt
-normals always point outward, whereas
-.B GIFT
-normals point inward.
-.LP
-.B
-GIFT
-prefixes the first component of each card with a space.  It also
-zero-fills the card if there are less than three components.  Neither
-COVART II nor COVART III require this zero-filling, so it is omitted by
-.I rtg3.
-.LP
 The following options are recognized.
 .TP
 .B \-s#
@@ -137,8 +108,15 @@ which is most useful when used with
 .IR mged (1)
 and
 .IR covart (1V).
+.LP
+A color vector display of ray-model intersections can be written to
+.I rtg3.pl
+by specifying the
+.B \-X80000000
+option.
+The resulting plot file can be displayed with \fIpl-fb\fR or \fIpl-sgi\fR.
 .SH "FORMAT"
-The generaly layout of the output format is:
+The general layout of the output format is:
 .LP
 Overall header line (one per run)
 .LP
@@ -147,16 +125,38 @@ View header line (one per view)
 Ray (shotline) header line (one per ray)
 .LP
 Component line (one for each three components in this ray)
-.SH "SEE ALSO"
-covart(1V), gift(1V), mged(1),
-rt(1), rtray(1),
-librt(3), plot3(5), ray(5V).
-.br
-``\fICOVART II \(em A Simulation Program for Computation of Vulnerable Areas
-and Repair Times \(em User Manual\fR'', Joint Technical Coordinating
-Group for Munitions Effectiveness, Anti-Air Aerial Target
-Vulnerability Working Group, 61-JTCG/ME-84-3.
-.SH SAMPLE USAGE
+.LP
+The
+.B GIFT-3
+shotline format has a different convention for the location of
+the start point (and thus the location of parametric distance zero)
+along the ray.  This difference is handled automaticly in
+.I rtg3
+by translating the ray's zero distance to the plane containing the
+model origin, by adding a distance correction factor.
+For each ray, both
+the cell center coordinates and
+the coordinates actually fired from are output.
+.LP
+Obliquity angles (declensions off the normal) are computed internally
+in
+.I radians
+but output in
+.I degrees
+to satisfy the
+.B GIFT-3
+format.  Note that internally,
+.I librt
+normals always point outward, whereas
+.B GIFT
+normals point inward.
+.LP
+.B GIFT
+zero-fills the fields of the component card
+if there are less than three components.  Neither
+COVART II nor COVART III require this zero-filling, so it is omitted by
+.I rtg3.
+.SH EXAMPLE
 This section will acquaint the user with the ordinary usage of \fIrtg3\fR.
 A GIFT-3 output file is produced by giving the command:
 
@@ -194,13 +194,14 @@ displayed:
  \fIcat rtrpp.plot rtg3.pl | pl-sgi\fR
 .fi
 
-.SH OVERLAP REPORTING
+.SH "OVERLAP REPORTING"
 \fIRTG3\fR shares overlap handling and reporting with the rest of the
 \fIRT\fR family of applications.  A brief description of the overlap
 reporting follows.
 .LP
 The first one hundred (100) overlaps are individually reported.  Thereafter,
-the user us notified that further overlaps, if found, are omitted.  This
+only one out of each additional one hundred overlaps are reported, and
+the user is notified that overlap printouts are being omitted.  This
 alerts the user that more overlaps exist, but that they are too numerous to
 list individually.  The general overlap message takes the following form:
 
@@ -210,13 +211,23 @@ list individually.  The general overlap message takes the following form:
 .ce
  \fI"OVERLAP2: reg=region_name isol=solid_name"\fR
 .ce
- \fI"OVERLAP depth #mm at (x, y, z) x# y# lvl#"\fR
+ \fI"OVERLAP depth #mm at (x, y, z) sx# sy# lvl#"\fR
 .fi
 
 This means that OVERLAP1 and OVERLAP2 share a common space (depth) of
-#millimeters at the x, y, and z vector coordinated within the model, and 
-at the ray coordinates (screen coordinates) x and y.  Level refers to the
-level of recursion.
+#millimeters starting at the point x, y, z in model coordinates, and 
+at the ray coordinates (screen coordinates) sx and sy.  Level refers to the
+level of recursion, and will typically be zero unless glass or mirror
+objects are present.
+.SH "SEE ALSO"
+covart(1V), gift(1V), mged(1),
+rt(1), rtray(1),
+librt(3), plot3(5), ray(5V).
+.br
+``\fICOVART II \(em A Simulation Program for Computation of Vulnerable Areas
+and Repair Times \(em User Manual\fR'', Joint Technical Coordinating
+Group for Munitions Effectiveness, Anti-Air Aerial Target
+Vulnerability Working Group, 61-JTCG/ME-84-3.
 .SH DIAGNOSTICS
 Numerous error conditions are possible, usually due to errors in
 the geometry database.
