@@ -219,6 +219,7 @@ int rt_nfunctab = sizeof(rt_functab)/sizeof(struct rt_functab);
  */
 #define DEF(func)	func() { rt_log("func unimplemented\n"); return; }
 #define IDEF(func)	func() { rt_log("func unimplemented\n"); return(0); }
+#define NDEF(func)	func() { rt_log("func unimplemented\n"); return(-1); }
 
 int IDEF(nul_prep)
 struct seg * IDEF(nul_shot)
@@ -228,9 +229,9 @@ void DEF(nul_uv)
 void DEF(nul_curve)
 int IDEF(nul_class)
 void DEF(nul_free)
-int IDEF(nul_plot)
+int NDEF(nul_plot)
 void DEF(nul_vshot)
-int IDEF(nul_tess)
+int NDEF(nul_tess)
 
 /* Map for database solidrec objects to internal objects */
 static char idmap[] = {
