@@ -433,7 +433,7 @@ binfo_LDADD = @BN@ @FB@
 # rtwizard = $(top_srcdir)/rtwizard
 # 	cp $(top_srcdir)/tclscripts/rtwizard rtwizard
 rtwizard:
-	cp $(top_srcdir)/tclscripts/rtwizard rtwizard
+	cp $(top_srcdir)/src/tclscripts/rtwizard rtwizard
 
 .PHONY : vers.c
 vers.c:
