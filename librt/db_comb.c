@@ -365,6 +365,7 @@ CONST struct db_i		*dbip;
 			bu_log( "rt_comb_v4_import: Error: Cannot convert following shader to TCL format:\n" );
 			bu_log( "\t%s\n", shader_str );
 			bu_vls_free( &comb->shader );
+			return -1;
 		}
 	}
 	/* XXX Separate flags for color inherit, shader inherit, (new) material inherit? */
@@ -498,11 +499,11 @@ CONST struct db_i		*dbip;
 	/* convert TCL list format shader to keyword=value format */
 	if( bu_shader_to_key_eq( bu_vls_addr(&comb->shader), &tmp_vls ) )
 	{
-		bu_log( "rt_comb_v4_export: Error in combination!\n" );
-		bu_log( "\tCannot convert following shader string to keyword=value format:\n" );
+		bu_log( "rt_comb_v4_export: Cannot convert following shader string to keyword=value format:\n" );
 		bu_log( "\t%s\n", bu_vls_addr(&comb->shader) );
 		rp[0].c.c_matparm[0] = '\0';
 		rp[0].c.c_matname[0] = '\0';
+		return -1;
 	}
 	else
 	{
@@ -514,17 +515,33 @@ CONST struct db_i		*dbip;
 				bu_log("WARNING: leading spaces on shader '%s' implies NULL shader\n",
 					bu_vls_addr(&tmp_vls) );
 			}
-			if( len > 32 ) len = 32;
+                        if( len >= sizeof(rp[0].c.c_matname) )  {
+                                bu_log("ERROR:  Shader name '%s' exceeds v4 database field, aborting.\n",
+                                        bu_vls_addr(&tmp_vls) );
+                                return -1;
+                        }
+                        if( strlen(endp+1) >= sizeof(rp[0].c.c_matparm) )  {
+                                bu_log("ERROR:  Shader parameters '%s' exceed v4 database field, aborting.\n",
+                                        endp+1);
+                                return -1;
+                        }
 			strncpy( rp[0].c.c_matname, bu_vls_addr(&tmp_vls), len );
 			strncpy( rp[0].c.c_matparm, endp+1, 60 );
 		} else {
-			strncpy( rp[0].c.c_matname, bu_vls_addr(&tmp_vls), 32 );
+                        if( bu_vls_strlen(&tmp_vls) >= sizeof(rp[0].c.c_matname) )  {
+                                bu_log("ERROR:  Shader name '%s' exceeds v4 database field, aborting.\n",
+                                        bu_vls_addr(&tmp_vls) );
+                                return -1;
+                        }
+			strncpy( rp[0].c.c_matname, bu_vls_addr(&tmp_vls), sizeof(rp[0].c.c_matname) );
 			rp[0].c.c_matparm[0] = '\0';
 		}
 	}
 	bu_vls_free( &tmp_vls );
 
 	rp[0].c.c_inherit = comb->inherit;
+
+	if( rt_tree_array )  bu_free( (char *)rt_tree_array, "rt_tree_array" );
 
 	return 0;		/* OK */
 }
