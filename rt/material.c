@@ -208,7 +208,7 @@ register struct shadework *swp;
 	rt_log( "\n");
 	for( i=0; i < SW_NLIGHTS; i++ )  {
 		if( swp->sw_visible[i] == (char *)0 )  continue;
-		printf("   light %d visible, intensity=%g, dir=(%g,%g,%g)\n",
+		rt_log("   light %d visible, intensity=%g, dir=(%g,%g,%g)\n",
 			i,
 			swp->sw_intensity[i],
 			V3ARGS(&swp->sw_tolight[i*3]) );
