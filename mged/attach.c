@@ -88,10 +88,14 @@ char *name;
 
 		FOR_ALL_SOLIDS( sp )  {
 			/* Write vector subs into new display processor */
-			sp->s_bytes = dmp->dmr_cvtvecs( sp );
-			sp->s_addr = memalloc( &(dmp->dmr_map), sp->s_bytes );
-			if( sp->s_addr == 0 )  break;
-			sp->s_bytes = dmp->dmr_load(sp->s_addr, sp->s_bytes);
+			if( (sp->s_bytes = dmp->dmr_cvtvecs( sp )) > 0 )  {
+				sp->s_addr = memalloc( &(dmp->dmr_map), sp->s_bytes );
+				if( sp->s_addr == 0 )  break;
+				sp->s_bytes = dmp->dmr_load(sp->s_addr, sp->s_bytes);
+			} else {
+				sp->s_addr = 0;
+				sp->s_bytes = 0;
+			}
 		}
 		dmaflag++;
 		return;
