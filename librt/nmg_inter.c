@@ -52,7 +52,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 	} \
     }
 
-/* Was nmg_boolstruct, but that name has appeared in nmg.h */
 struct nmg_inter_struct {
 	long		magic;
 	struct nmg_ptbl	*l1;		/* vertexuses on the line of */
@@ -80,7 +79,7 @@ struct ee_2d_state {
 };
 
 RT_EXTERN(void		nmg_isect2d_prep, (struct nmg_inter_struct *is, struct face *f1));
-RT_EXTERN(CONST struct vertexuse *nmg_touchingloops, (CONST struct loopuse *lu));
+RT_EXTERN(CONST struct vertexuse *nmg_loop_touches_self, (CONST struct loopuse *lu));
 
 static void	nmg_isect_edge2p_face2p RT_ARGS((struct nmg_inter_struct *is,
 			struct edgeuse *eu, struct faceuse *fu,
@@ -234,7 +233,7 @@ PLPRINT("N", fg->N);
  */
 void
 nmg_pr_ptbl_vert_list( str, tbl )
-char		*str;
+CONST char	*str;
 struct nmg_ptbl	*tbl;
 {
 	int			i;
@@ -1089,6 +1088,16 @@ topo:
 	vu1b = RT_LIST_PNEXT_CIRC(edgeuse,eu1)->vu_p;
 	vu2a = eu2->vu_p;
 	vu2b = RT_LIST_PNEXT_CIRC(edgeuse,eu2)->vu_p;
+
+	/* If endpoints match, make sure that edge is shared */
+	if( ( (vu1a->v_p == vu2a->v_p && vu1b->v_p == vu2b->v_p) ||
+	      (vu1a->v_p == vu2b->v_p && vu1b->v_p == vu2a->v_p)
+	    ) && (eu1->e_p != eu1->e_p)  )  {
+		if (rt_g.NMG_debug & DEBUG_POLYSECT)
+			rt_log("\tendpoints are shared, make edge shared.\n");
+		nmg_radial_join_eu(eu1, eu2, &is->tol);
+	}
+
 	/*
 	 *  vu1a and vu1b and their duals MUST be listed on
 	 *  the intersection line.
@@ -1214,8 +1223,6 @@ struct faceuse *fu;
 	}
 	if( status == 0 )  {
 		struct nmg_inter_struct	is;
-		struct nmg_ptbl		t1, t2;
-		point_t	foo;
 
 		/*
 		 *  Edge (ray) lies in the plane of the other face,
@@ -2126,7 +2133,6 @@ CONST struct rt_tol	*tol;
 	}
 }
 
-
 /*
  *			N M G _ F U _ T O U C H I N G L O O P S
  */
@@ -2140,7 +2146,7 @@ CONST struct faceuse	*fu;
 	NMG_CK_FACEUSE(fu);
 	for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
 		NMG_CK_LOOPUSE(lu);
-		if( vu = nmg_touchingloops( lu ) )  {
+		if( vu = nmg_loop_touches_self( lu ) )  {
 #if 0
 			/* Right now, this routine is used for debugging ONLY,
 			 * so if this condition exists, die.
@@ -2150,7 +2156,7 @@ CONST struct faceuse	*fu;
 			rt_log("nmg_fu_touchingloops(lu=x%x, vu=x%x, v=x%x)\n",
 				lu, vu, vu->v_p );
 			nmg_pr_lu_briefly(lu,0);
-			rt_bomb("nmg_touchingloops()\n");
+			rt_bomb("nmg_fu_touchingloops()\n");
 #endif
 			return 1;
 		}
@@ -2158,8 +2164,9 @@ CONST struct faceuse	*fu;
 	return 0;
 }
 
+/* XXX move to nmg_info.c */
 /*
- *			N M G _ T O U C H I N G L O O P S
+ *			N M G _ L O O P _ T O U C H E S _ S E L F
  *
  *  Search through all the vertices in a loop.
  *  If there are two distinct uses of one vertex in the loop,
@@ -2175,7 +2182,7 @@ CONST struct faceuse	*fu;
  *	0	No, the loop does not touch itself.
  */
 CONST struct vertexuse *
-nmg_touchingloops( lu )
+nmg_loop_touches_self( lu )
 CONST struct loopuse	*lu;
 {
 	CONST struct edgeuse	*eu;
