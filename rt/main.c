@@ -71,9 +71,10 @@ char **argv;
 	static int matflag = 0;		/* read matrix from stdin */
 	static double utime;
 	char *title_file, *title_obj;	/* name of file and first object */
-	float	zoomout=1;	/* >0 zoom out factor, 0..1 zoom in factor */
-	static int outfd;	/* fd of optional pixel output file */
+	static float	zoomout=1;	/* >0 zoom out, 0..1 zoom in */
+	static int outfd;		/* fd of optional pixel output file */
 	register int x,y;
+	char outbuf[132];
 
 	npts = 512;
 	azimuth = -35.0;			/* GIFT defaults */
@@ -167,7 +168,8 @@ char **argv;
 	}
 	argc--; argv++;
 
-	(void)pr_timer("DB TOC");
+	(void)read_timer( outbuf, sizeof(outbuf) );
+	fprintf(stderr,"DB TOC: %s\n", outbuf);
 	prep_timer();
 
 	/* Load the desired portion of the model */
@@ -175,7 +177,8 @@ char **argv;
 		(void)get_tree(argv[0]);
 		argc--; argv++;
 	}
-	(void)pr_timer("DB WALK");
+	(void)read_timer( outbuf, sizeof(outbuf) );
+	fprintf(stderr,"DB WALK: %s\n", outbuf);
 	prep_timer();
 
 	/* Allow library to prepare itself */
@@ -184,7 +187,8 @@ char **argv;
 	/* initialize application */
 	view_init( &ap, title_file, title_obj, npts, outfd );
 
-	(void)pr_timer("PREP");
+	(void)read_timer( outbuf, sizeof(outbuf) );
+	fprintf(stderr, "PREP: %s\n", outbuf );
 
 	if( HeadSolid == SOLTAB_NULL )  {
 		fprintf(stderr,"rt: No solids remain after prep.\n");
@@ -248,7 +252,7 @@ do_more:
 		/* Visible part is from -1 to +1 in view space */
 		for( i=0; i < 16; i++ )
 			if( scanf( "%f", &model2view[i] ) != 1 )
-				exit(0);
+				goto out;
 	}
 	mat_inv( view2model, model2view );
 
@@ -297,26 +301,37 @@ do_more:
 		view_eol( &ap );	/* End of scan line */
 #endif
 	}
+	utime = read_timer( outbuf, sizeof(outbuf) );	/* final time */
 #ifndef HEP
 	view_end( &ap );		/* End of application */
-#else
-	write( outfd, scanbuf, npts*npts*3 );
 #endif
 
 	/*
 	 *  All done.  Display run statistics.
 	 */
-	utime = pr_timer("SHOT");
-	fprintf(stderr,"ft_shot(): %ld = %ld hits + %ld miss\n",
+	fprintf(stderr, "SHOT: %s\n", outbuf );
+	fprintf(stderr,"%ld solid/ray intersections: %ld hits + %ld miss\n",
 		nshots, nhits, nmiss );
-	fprintf(stderr,"pruned:  %ld model RPP, %ld sub-tree RPP, %ld solid RPP\n",
+	fprintf(stderr,"pruned %.1f%%:  %ld model RPP, %ld dups skipped, %ld solid RPP\n",
+		((double)nhits*100.0)/nshots,
 		nmiss_model, nmiss_tree, nmiss_solid );
-	fprintf(stderr,"pruning efficiency %.1f%%\n",
-		((double)nhits*100.0)/nshots );
 	fprintf(stderr,"%d output rays in %f sec = %f rays/sec\n",
 		npts*npts, utime, (double)(npts*npts/utime) );
+#ifdef HEP
+	if( write( outfd, scanbuf, npts*npts*3 ) != npts*npts*3 )  {
+		perror("pixel output write");
+		exit(1);
+	}
+#endif
 
 	if( matflag )  goto do_more;
+out:
+#ifdef HEP
+	fprintf(stderr,"rt: killing workers\n");
+	for( x=0; x<npsw; x++ )
+		Diawrite( &work_word, -1 );
+	fprintf(stderr,"rt: exit\n");
+#endif
 	return(0);
 }
 
@@ -339,7 +354,8 @@ register struct application *ap;
 		com = work_word;
 #else
 	while(1)  {
-		com = Diaread( &work_word );
+		if( (com = Diaread( &work_word )) < 0 )
+			return;
 		/* Note: ap->... not valid until first time here */
 #endif
 		a.a_x = (com>>16)&0xFFFF;
