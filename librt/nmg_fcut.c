@@ -347,8 +347,8 @@ top:
 			/* tvu is in fu.  Is tvu on the line? */
 			if( nmg_tbl(p, TBL_LOC, &tvu->l.magic ) >= 0 )  continue;
 			/* No, not on list */
-			rt_log("ERROR: vu=x%x v=x%x is on isect line, tvu=x%x isn't.\n",
-				vu, v, tvu );
+			rt_log("ERROR: vu=x%x v=x%x is on isect line, tvu=x%x eu=x%x isn't.\n",
+				vu, v, tvu, tvu->up.magic_p );
 			/* XXX bomb here? */
 /* XXXXXXXXXXXXXXXXXXXXXXXX Horrible temporizing measure */
 			/* Another strategy:  add it in! */
