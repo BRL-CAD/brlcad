@@ -32,6 +32,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include <string.h>
 #endif
 #include "machine.h"
+#include "externs.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
@@ -1482,9 +1483,9 @@ struct v_ck_state {
 
 static void
 nmg_ck_v_in_fus( vp , state , first )
-CONST long		*vp;
+long			*vp;
 genptr_t	        state;
-CONST int		first;
+int			first;
 {
         register struct v_ck_state *sp = (struct v_ck_state *)state;
         register struct vertex  *v = (struct vertex *)vp;
