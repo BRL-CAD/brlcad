@@ -745,6 +745,12 @@ char	**argv;
 					TCL_READ_ERR_return;
 				}
 				comb = (struct rt_comb_internal *)intern.idb_ptr;
+				if( comb->region_id != 0 && comb->aircode != 0 )
+				{
+					Tcl_AppendResult(interp, "ERROR: ", dp->d_namep,
+						" has id and aircode!!!\n", (char *)NULL );
+					continue;
+				}
 				if( comb->region_id != 0 || comb->aircode != item )
 					continue;
 
