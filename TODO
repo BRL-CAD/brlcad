@@ -20,8 +20,6 @@ THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * ensure successful build on windows 
 
-* make make dist work
-
 * write up the history of brlcad
 
 * revise cvs policy document to reflect desired and practical public
