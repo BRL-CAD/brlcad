@@ -381,8 +381,8 @@ CONST struct rt_arb_internal	*arb;
  * The value of D of 'plane' is changed such that the plane
  * passes through the input point.
  */
-void
-static get_nupnt(plane, argv)
+static void
+get_nupnt(plane, argv)
 plane_t	plane;
 char	*argv[];
 {
