@@ -69,7 +69,6 @@ Options:\n\
 extern FBIO	*fbp;			/* Framebuffer handle */
 extern FILE	*outfp;			/* optional output file */
 
-extern int	rt_perspective;
 extern int	width;
 extern int	height;
 
@@ -400,6 +399,7 @@ struct partition *PartHeadp;
  *  Manage the coloring of whatever it was we just hit.
  *  This can be a recursive procedure.
  */
+int
 colorview( ap, PartHeadp )
 register struct application *ap;
 struct partition *PartHeadp;
@@ -418,13 +418,16 @@ struct partition *PartHeadp;
 	hitp = pp->pt_inhit;
 
 	if(rdebug&RDEBUG_HITS)  {
+		rt_log("colorview: lvl=%d coloring %s\n",
+			ap->a_level,
+			pp->pt_regionp->reg_name);
 		rt_pr_pt( ap->a_rt_i, pp );
 	}
 	if( hitp->hit_dist >= INFINITY )  {
 		rt_log("colorview:  entry beyond infinity\n");
 		VSET( ap->a_color, .5, 0, 0 );
 		ap->a_user = 1;		/* Signal view_pixel:  HIT */
-		return(1);
+		goto out;
 	}
 
 	/* Check to see if eye is "inside" the solid */
@@ -438,13 +441,13 @@ struct partition *PartHeadp;
 		    	if( rdebug&RDEBUG_SHOWERR )  {
 				VSET( ap->a_color, 9, 0, 0 );	/* RED */
 				rt_log("colorview:  eye inside %s (x=%d, y=%d, lvl=%d)\n",
-					pp->pt_inseg->seg_stp->st_name,
+					pp->pt_regionp->reg_name,
 					ap->a_x, ap->a_y, ap->a_level);
 		    	} else {
 		    		VSETALL( ap->a_color, 0.18 );	/* 18% Grey */
 		    	}
 			ap->a_user = 1;		/* Signal view_pixel:  HIT */
-			return(1);
+			goto out;
 		}
 		/* Push on to exit point, and trace on from there */
 		sub_ap = *ap;	/* struct copy */
@@ -455,7 +458,7 @@ struct partition *PartHeadp;
 		(void)rt_shootray( &sub_ap );
 		VSCALE( ap->a_color, sub_ap.a_color, 0.80 );
 		ap->a_user = 1;		/* Signal view_pixel: HIT */
-		return(1);
+		goto out;
 	}
 
 	if( rdebug&RDEBUG_RAYWRITE )  {
@@ -514,6 +517,14 @@ struct partition *PartHeadp;
 
 	VMOVE( ap->a_color, sw.sw_color );
 	ap->a_user = 1;		/* Signal view_pixel:  HIT */
+out:
+	if(rdebug&RDEBUG_HITS)  {
+		rt_log("colorview: lvl=%d ret a_user=%d %s\n",
+			ap->a_level,
+			ap->a_user,
+			pp->pt_regionp->reg_name);
+		VPRINT("color   ", ap->a_color);
+	}
 	return(1);
 }
 
@@ -948,7 +959,31 @@ char *file, *obj;
 		rt_bomb("bad buf_mode");
 	}
 
-	mlib_init();			/* initialize material library */
+	/*
+	 *  Connect up material library interfaces
+	 *  Note that plastic.c defines the required "default" entry.
+	 */
+	{
+		extern struct mfuncs phg_mfuncs[];
+		extern struct mfuncs light_mfuncs[];
+		extern struct mfuncs cloud_mfuncs[];
+		extern struct mfuncs spm_mfuncs[];
+		extern struct mfuncs txt_mfuncs[];
+		extern struct mfuncs stk_mfuncs[];
+		extern struct mfuncs cook_mfuncs[];
+		extern struct mfuncs marble_mfuncs[];
+		extern struct mfuncs stxt_mfuncs[];
+
+		mlib_add( phg_mfuncs );
+		mlib_add( light_mfuncs );
+		mlib_add( cloud_mfuncs );
+		mlib_add( spm_mfuncs );
+		mlib_add( txt_mfuncs );
+		mlib_add( stk_mfuncs );
+		mlib_add( cook_mfuncs );
+		mlib_add( marble_mfuncs );
+		mlib_add( stxt_mfuncs );
+	}
 
 	if( minus_o )  {
 		/* Output is destined for a pixel file */
