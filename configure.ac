@@ -1260,6 +1260,7 @@ AC_CHECK_FUNCS(\
 	atexit \
 	basename \
 	bzero \
+	calloc \
 	dlopen \
 	drand \
 	dup2 \
