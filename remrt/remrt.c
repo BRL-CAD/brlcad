@@ -117,6 +117,7 @@ int fbheight;			/* fb height - S command */
 int running = 0;		/* actually working on it */
 int detached = 0;		/* continue after EOF */
 
+char *CommandName = NULL;
 /*
  * Package Handlers.
  */
@@ -508,6 +509,11 @@ char	**argv;
 		/* Read .remrtrc file to acquire server info */
 		read_rc_file();
 
+		if (CommandName == NULL) {
+			CommandName = rt_malloc(10, "command name");
+			strcpy(CommandName, "rtsrv");
+		}
+
 		/* Go until no more clients */
 		while( clients )  {
 			do_work(0);	/* no auto starting of servers */
@@ -538,6 +544,11 @@ char	**argv;
 
 		/* Read .remrtrc file to acquire servers */
 		read_rc_file();
+
+		if (CommandName == NULL) {
+			CommandName = rt_malloc(10, "command name");
+			strcpy(CommandName, "rtsrv");
+		}
 
 		/* Collect up results of arg parsing */
 		/* automatic: outputfile, width, height */
@@ -2658,8 +2669,8 @@ struct ihost	*ihp;
 	switch( ihp->ht_where )  {
 	case HT_CD:
 		fprintf( helper_fp,
-			"%s %d %s\n",
-			ihp->ht_name, pkg_permport, ihp->ht_path );
+			"%s %s %d %s\n",
+			ihp->ht_name, CommandName, pkg_permport, ihp->ht_path );
 		break;
 	case HT_CONVERT:
 		if( file_fullname[0] == '\0' )  {
@@ -2668,8 +2679,8 @@ struct ihost	*ihp;
 			return;
 		}
 		fprintf( helper_fp,
-			"%s %d %s %s %s\n",
-			ihp->ht_name, pkg_permport, ihp->ht_path,
+			"%s %s %d %s %s %s\n",
+			ihp->ht_name, CommandName, pkg_permport, ihp->ht_path,
 			file_fullname, file_basename );
 		break;
 	default:
@@ -2718,6 +2729,7 @@ FILE	*fp;
 	char	loc_db[128];
 	char	rem_db[128];
 	char	rem_dir[128];
+	char	rem_cmd[128];
 	int	port;
 	int	cnt;
 	int	i;
@@ -2731,17 +2743,18 @@ FILE	*fp;
 		loc_db[0] = '\0';
 		rem_db[0] = '\0';
 		rem_dir[0] = '\0';
-		cnt = sscanf( line, "%s %d %s %s %s",
-			host, &port, rem_dir, loc_db, rem_db );
-		if( cnt != 3 && cnt != 5 )  {
+		rem_cmd[0] = '\0';
+		cnt = sscanf( line, "%s %s %d %s %s %s",
+			host, rem_cmd, &port, rem_dir, loc_db, rem_db );
+		if( cnt != 4 && cnt != 6 )  {
 			rt_log("host_helper: cnt=%d, aborting\n", cnt);
 			break;
 		}
 
-		if( cnt == 3 )  {
+		if( cnt == 4 )  {
 			sprintf(cmd,
-				"cd %s; rtsrv %s %d",
-				rem_dir, ourname, port );
+				"cd %s; %s %s %d",
+				rem_dir, rem_cmd, ourname, port );
 			if(debug)  {
 				rt_log("%s %s\n", stamp(), cmd);
 				fflush(stdout);
@@ -2777,11 +2790,11 @@ FILE	*fp;
 			}
 		} else {
 			sprintf(cmd,
-			 "g2asc<%s|%s %s \"cd %s; asc2g>%s; rtsrv %s %d\"",
+			 "g2asc<%s|%s %s \"cd %s; asc2g>%s; %s %s %d\"",
 				loc_db,
 				RSH, host,
 				rem_dir, rem_db,
-				ourname, port );
+				rem_cmd, ourname, port );
 			if(debug)  {
 				rt_log("%s %s\n", stamp(), cmd);
 				fflush(stdout);
@@ -3021,6 +3034,15 @@ int	enter;
 }
 
 /*** Commands ***/
+
+cd_cmdname( argc, argv)
+int argc;
+char **argv;
+{
+	if (CommandName != NULL) rt_free(CommandName, "command name");
+	CommandName = rt_malloc(strlen(argv[1])+5, "command name");
+	strcpy( CommandName, argv[1]);
+}
 
 cd_load( argc, argv )
 int	argc;
@@ -3782,7 +3804,14 @@ char	**argv;
 	}
 }
 
+struct command_tab rt_cmdtab[] = {
+	(char *)0, (char *)0, (char *)0,
+		0,		0,0	/* END */
+};
+
 struct command_tab cmd_tab[] = {
+	"cmd_name", "name",	"set the name of the server program",
+		cd_cmdname,	2, 2,
 	"load",	"file obj(s)",	"specify database and treetops",
 		cd_load,	3, 99,
 	"read", "file",		"source a command file",
