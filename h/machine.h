@@ -94,11 +94,10 @@ typedef long	bitv_t;		/* largest integer type */
 /**#define CRAY_COS	1	/* Running on Cray under COS w/bugs */
 #endif
 
-
 #ifdef convex
 /********************************
  *				*
- *  Convex C1			*
+ *  Convex C1 & C2		*
  *				*
  ********************************/
 typedef double		fastf_t;/* double|float, "Fastest" float type */
@@ -107,11 +106,12 @@ typedef double		fastf_t;/* double|float, "Fastest" float type */
 typedef long long	bitv_t;	/* largest integer type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 
-#define RES_INIT(ptr)		;
-#define RES_ACQUIRE(ptr)	;
-#define RES_RELEASE(ptr)	;
-#define MAX_PSW	1		/* only one processor, max */
-
+#define RES_INIT(ptr)		RES_RELEASE(ptr)
+/* RES_ACQUIRE is a function in machine.c, using tas instruction */
+#define RES_RELEASE(ptr)	*(ptr)=0;
+#define MAX_PSW		4	/* Max number of processors */
+#define DEFAULT_PSW	1	/* for now */
+#define PARALLEL	1
 #endif
 
 #ifdef ardent
