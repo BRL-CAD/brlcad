@@ -1263,6 +1263,8 @@ CONST struct rt_tol	*tol;		/* for printing */
 	NMG_CK_EDGEUSE(eu);
 	RT_CK_TOL(tol);
 
+rt_log("nmg_radial_build_list( existing=%d, eu=x%x )\n", existing, eu );
+
 	amin = 64;
 	amax = -64;
 
@@ -1678,6 +1680,8 @@ again:
 #if 1
 rt_log("Before -- ");
 nmg_pr_fu_around_eu_vecs( eu1, xvec, yvec, zvec, tol );
+nmg_pr_radial("prev:", prev);
+nmg_pr_radial(" rad:", rad);
 #endif
 		dest = prev->eu;
 		if( rad->needs_flip )  {
@@ -1708,6 +1712,41 @@ rt_log("nmg_radial_implement_decisions() %d remaining, go again\n", skipped);
 }
 
 /*
+ *			N M G _ P R _ R A D I A L
+ */
+int		/* XXX should be void */
+nmg_pr_radial( title, rad )
+CONST char		*title;
+CONST struct nmg_radial	*rad;
+{
+	struct face		*f;
+	int			orient;
+
+	NMG_CK_RADIAL(rad);
+	if( !rad->fu )  {
+		f = (struct face *)NULL;
+		orient = 'W';
+	} else {
+		f = rad->fu->f_p;
+		orient = nmg_orientation(rad->fu->orientation)[3];
+	}
+	rt_log("%s%8.8x, mate of \\/\n",
+		title,
+		rad->eu->eumate_p
+	);
+	rt_log("%s%8.8x, f=%8.8x, fu=%8.8x=%c, s=%8.8x %s %c%c %g deg\n",
+		title,
+		rad->eu,
+		f, rad->fu, orient,
+		rad->s,
+		rad->existing_flag ? "old" : "new",
+		rad->is_crack ? 'C' : '/',
+		rad->needs_flip ? 'F' : '/',
+		rad->ang * rt_radtodeg
+	);
+}
+
+/*
  *			N M G _ P R _ R A D I A L _ L I S T
  *
  *  Patterned after nmg_pr_fu_around_eu_vecs(), with similar format.
@@ -1718,8 +1757,6 @@ CONST struct rt_list	*hd;
 CONST struct rt_tol	*tol;		/* for printing */
 {
 	struct nmg_radial	*rad;
-	struct face		*f;
-	int			orient;
 
 	RT_CK_LIST_HEAD(hd);
 	RT_CK_TOL(tol);
@@ -1728,22 +1765,7 @@ CONST struct rt_tol	*tol;		/* for printing */
 
 	for( RT_LIST_FOR( rad, nmg_radial, hd ) )  {
 		NMG_CK_RADIAL(rad);
-		if( !rad->fu )  {
-			f = (struct face *)NULL;
-			orient = 'W';
-		} else {
-			f = rad->fu->f_p;
-			orient = nmg_orientation(rad->fu->orientation)[3];
-		}
-		rt_log(" %8.8x, f=%8.8x, fu=%8.8x=%c, s=%8.8x %s %c%c %g deg\n",
-			rad->eu,
-			f, rad->fu, orient,
-			rad->s,
-			rad->existing_flag ? "old" : "new",
-			rad->is_crack ? 'C' : '/',
-			rad->needs_flip ? 'F' : '/',
-			rad->ang * rt_radtodeg
-		);
+		nmg_pr_radial(" ", rad);
 	}
 }
 
@@ -1759,7 +1781,8 @@ struct edgeuse		*eu1;
 struct edgeuse		*eu2;
 CONST struct rt_tol	*tol;
 {
-	struct edgeuse		*euref;		/* reference eu for eu1 */
+	struct edgeuse		*eu1ref;		/* reference eu for eu1 */
+	struct edgeuse		*eu2ref;
 	struct edge_g_lseg	*best_eg;
 	struct faceuse		*fu1;
 	struct faceuse		*fu2;
@@ -1807,22 +1830,27 @@ CONST struct rt_tol	*tol;
 	 */
 	if( fu1 )  {
 		if( fu1->orientation == OT_SAME )
-			euref = eu1;
+			eu1ref = eu1;
 		else
-			euref = eu1->eumate_p;
+			eu1ref = eu1->eumate_p;
 	} else {
 		/* eu1 is a wire, find a non-wire, if there are any */
-		euref = nmg_find_ot_same_eu_of_e(eu1->e_p);
+		eu1ref = nmg_find_ot_same_eu_of_e(eu1->e_p);
 	}
-	nmg_eu_2vecs_perp( xvec, yvec, zvec, euref, tol );
+	if( eu1ref->vu_p->v_p == eu2->vu_p->v_p )  {
+		eu2ref = eu2;
+	} else {
+		eu2ref = eu2->eumate_p;
+	}
+	nmg_eu_2vecs_perp( xvec, yvec, zvec, eu1ref, tol );
 
 	/* Build the primary lists that describe the situation */
 	RT_LIST_INIT( &list1 );
 	RT_LIST_INIT( &list2 );
 	nmg_tbl( &shell_tbl, TBL_INIT, 0 );
 
-	nmg_radial_build_list( &list1, &shell_tbl, 1, eu1, xvec, yvec, zvec, tol );
-	nmg_radial_build_list( &list2, &shell_tbl, 0, eu2, xvec, yvec, zvec, tol );
+	nmg_radial_build_list( &list1, &shell_tbl, 1, eu1ref, xvec, yvec, zvec, tol );
+	nmg_radial_build_list( &list2, &shell_tbl, 0, eu2ref, xvec, yvec, zvec, tol );
 
 #if 0
 	/* OK so far? */
@@ -1868,25 +1896,25 @@ CONST struct rt_tol	*tol;
 #if 1
 rt_log("marked list:\n");
 rt_log("  edge: %g %g %g -> %g %g %g\n",
-	V3ARGS(euref->vu_p->v_p->vg_p->coord), V3ARGS(euref->eumate_p->vu_p->v_p->vg_p->coord) );
+	V3ARGS(eu1ref->vu_p->v_p->vg_p->coord), V3ARGS(eu1ref->eumate_p->vu_p->v_p->vg_p->coord) );
 nmg_pr_radial_list( &list1, tol );
 #endif
 
-	nmg_radial_implement_decisions( &list1, tol, euref, xvec, yvec, zvec );
+	nmg_radial_implement_decisions( &list1, tol, eu1ref, xvec, yvec, zvec );
 
 #if 0
 	/* How did it come out? */
 	nmg_pr_radial_list( &list1, tol );
-	nmg_pr_fu_around_eu_vecs( euref, xvec, yvec, zvec, tol );
+	nmg_pr_fu_around_eu_vecs( eu1ref, xvec, yvec, zvec, tol );
 #endif
 	if (rt_g.NMG_debug & DEBUG_MESH_EU ) {
-		nmg_pr_fu_around_eu_vecs( euref, xvec, yvec, zvec, tol );
+		nmg_pr_fu_around_eu_vecs( eu1ref, xvec, yvec, zvec, tol );
 	}
 	count1 = nmg_radial_check_parity( &list1, &shell_tbl, tol );
 	if( count1 )  rt_log("nmg_radial_join_eu_NEW() bad parity at completion, %d\n", count1);
 	nmg_radial_verify_pointers( &list1, tol );
 
-	nmg_eu_radial_check( euref, nmg_find_s_of_eu(eu1), tol );	/* expensive */
+	nmg_eu_radial_check( eu1ref, nmg_find_s_of_eu(eu1), tol );	/* expensive */
 
 	/* Ensure that all edgeuses are using the "best_eg" line */
 	for( RT_LIST_FOR( rad, nmg_radial, &list1 ) )  {
