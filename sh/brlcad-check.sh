@@ -85,6 +85,12 @@ fi
 ############################################################################
 echo verify.sh: Comparing machinetype.sh and Cakefile.defs
 
+if test ! -f Cakefile.defs
+then
+	echo "$0: No Cakefile.defs, please run this script in your BRL-CAD source directory."
+	exit 2
+fi
+
 IN_FILE=/tmp/verify_in$$
 OUT_FILE=/tmp/verify_out$$
 trap '/bin/rm -f ${IN_FILE} ${OUT_FILE}; exit 1' 1 2 3 15	# Clean up temp file
