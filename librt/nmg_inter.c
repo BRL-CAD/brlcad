@@ -2887,7 +2887,8 @@ struct nmg_ptbl		*eu2_list;
 			VPRINT("on_eg->e_pt ", is->on_eg->e_pt);
 			VPRINT("on_eg->e_dir", is->on_eg->e_dir);
 		    	dot = VDOT(is->dir, unit_e_dir);
-		    	rt_log(" dot=%g, ang=%g deg\n", dot, acos(dot) * rt_radtodeg );
+		    	rt_log(" dot=%g, ang=%g deg\n", dot,
+				acos(fabs(dot)) * rt_radtodeg );
 			rt_log("WARNING nmg_isect_line2_face2pNEW() is->pt and on_eg lines differ.  Using on_eg line.\n");
 		}
 		/* Ensure absolute consistency between the two versions of the line! */
