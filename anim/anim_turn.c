@@ -55,7 +55,16 @@ char **argv;
 	mat_t m_from_world, m_to_world;
 	double mat_atan2();
 
+	/* initialize variables */
 	VSETALL(zero, 0.0);
+	VSETALL( v , 0.0 );
+	VSETALL( point, 0.0 );
+	VSETALL( front, 0.0 );
+	VSETALL( back, 0.0 );
+	VSETALL( temp1, 0.0 );
+	VSETALL( temp2, 0.0 );
+	for( count=0 ; count<ELEMENTS_PER_MAT ; count++ )
+		m_from_world[count]=m_to_world[count]=0.0;
 	length = angle = radius = roll_ang = 0.0;
 
 	if (!get_args(argc,argv))
