@@ -1142,6 +1142,17 @@ FBIO	*ifp;
 		}
 		pr_close( SUNPR(ifp) );
 	}
+	/* free up memory associated with image */
+	if( SUN(ifp)->su_shmid != -1 ) {
+		/* detach from shared memory */
+		if( shmdt( ifp->if_mem ) == -1 ) {
+			fb_log("sun_dclose shmdt failed, errno=%d\n", errno);
+			return -1;
+		}
+	} else {
+		/* free private memory */
+		(void)free( ifp->if_mem );
+	}
 	(void) free( (char *) SUNL(ifp) );
 	SUNL(ifp) = NULL;
 	return	0;
