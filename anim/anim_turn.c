@@ -91,11 +91,11 @@ char **argv;
 
 		if (count) { /* not first time through */
 			/* calculate matrices corrsponding to last position*/
-			y_p_r2mat(m_to_world,angle,0.0,0.0);
-			add_trans(m_to_world,front,zero);
-			y_p_r2mat(m_from_world,-angle,0.0,0.0);
+			anim_y_p_r2mat(m_to_world,angle,0.0,0.0);
+			anim_add_trans(m_to_world,front,zero);
+			anim_y_p_r2mat(m_from_world,-angle,0.0,0.0);
 			VREVERSE(temp1,front);
-			add_trans(m_from_world,zero,temp1);
+			anim_add_trans(m_from_world,zero,temp1);
 		
 			/* calculate new position for front and back axles */
 			/* front goes to the point, back slides along objects*/

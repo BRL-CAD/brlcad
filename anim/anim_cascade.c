@@ -65,14 +65,14 @@ char **argv;
 
 	if (!(fp=fopen(argv[1],"r"))){
 		fprintf(stderr,"Couldn't open file %s.\n",argv[1]);
-		return;
+		return(-1);
 	}
 	while(!feof(fp)){
 		fscanf(fp,"%*f");
 		fscanf(fp,"%lf %lf %lf",mainv, mainv+1, mainv+2);
 		fscanf(fp,"%lf %lf %lf", &yaw, &pitch, &roll);
 
-		dy_p_r2mat(m_main, yaw, pitch, roll);
+		anim_dy_p_r2mat(m_main, yaw, pitch, roll);
 
 		val=scanf("%lf",&time);
 		if(val<1)
@@ -83,9 +83,9 @@ char **argv;
 		if (val<2) break;
 		MAT4X3PNT(rotated, m_main, relative);
 		VADD2(absolute, rotated, mainv);
-		dy_p_r2mat(m_rel, ryaw, rpitch, rroll);
+		anim_dy_p_r2mat(m_rel, ryaw, rpitch, rroll);
 		mat_mul(m_abs, m_main, m_rel);
-		mat2ypr(rad_angles, m_abs);
+		anim_mat2ypr(rad_angles, m_abs);
 		VSCALE(angles, rad_angles, RTOD);
 
 		printf("\t%g\t%g\t%g", absolute[0], absolute[1], absolute[2]);

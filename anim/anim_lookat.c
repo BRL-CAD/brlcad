@@ -59,7 +59,7 @@ char **argv;
 		}
 
 		VSUBUNIT(dir,look,eye);
-		dir2mat(mat,dir,prev_dir);
+		anim_dir2mat(mat,dir,prev_dir);
 		if (!print_ypr){
 			printf("start %d;\n",frame++);
 			printf("clean;\n");
@@ -71,7 +71,7 @@ char **argv;
 			printf("end;\n");
 		}
 		else {
-			mat2ypr(angles,mat);
+			anim_mat2ypr(angles,mat);
 			printf("%g\t%g\t%g\t%g\t",time,eye[0],eye[1],eye[2]);
 			printf("%g\t%g\t%g\n",angles[0],angles[1],angles[2]);
 		}

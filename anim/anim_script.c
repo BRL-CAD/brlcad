@@ -51,7 +51,7 @@ main(argc,argv)
 int argc;
 char **argv;
 {
-	void dx_y_z2mat(), add_trans();
+	void anim_dx_y_z2mat(), anim_add_trans();
 	fastf_t yaw, pitch, roll;
 	vect_t point, zero;
 	mat_t a, m_x;
@@ -97,7 +97,7 @@ char **argv;
 		if (steer)
 			go = steer_mat(a,point); /* warning: point changed by steer_mat */
 		else {
-			dx_y_z2mat(a,roll,-pitch,yaw);/* make ypr matrix */
+			anim_dx_y_z2mat(a,roll,-pitch,yaw);/* make ypr matrix */
 			go = 1;
 		}
 
@@ -106,13 +106,13 @@ char **argv;
 			mat_mul(m_x,a,m_rev_axes); 
 			MAT_MOVE(a,m_x);
 		}
-		add_trans(a,point,rcentroid); /* add translation */
+		anim_add_trans(a,point,rcentroid); /* add translation */
 		if (axes && relative_a){ /* add post-rotation back to original axes */
 			mat_mul(m_x,m_axes,a);
 			MAT_MOVE(a,m_x);
 		}
 		if (relative_c)
-			add_trans(a,centroid,zero); /* final translation */
+			anim_add_trans(a,centroid,zero); /* final translation */
 
 
 		/* print one frame of script */
@@ -132,7 +132,7 @@ char **argv;
 			printf("start %d;\n", first_frame + frame);
 			printf("clean;\n");
 			printf("anim %s matrix lmul\n", *(argv+optind));
-			an_mat_print(a,1);
+			anim_mat_print(a,1);
 			printf("end;\n");
 		}
 		frame++;
@@ -149,7 +149,7 @@ char **argv;
 	
 	int c, i;
 	double yaw,pch,rll;
-	void dx_y_z2mat(), dz_y_x2mat();
+	void anim_dx_y_z2mat(), anim_dz_y_x2mat();
 	rotate = translate = 1; /* defaults */
 	while ( (c=getopt(argc,argv,OPT_STR)) != EOF) {
 		i=0;
@@ -160,8 +160,8 @@ char **argv;
                         sscanf(argv[optind+(i++)],"%lf", &pch );
                         sscanf(argv[optind+(i++)],"%lf", &rll );
 			optind += 3;
-			dx_y_z2mat(m_axes, rll, -pch, yaw);
-			dz_y_x2mat(m_rev_axes, -rll, pch, -yaw);
+			anim_dx_y_z2mat(m_axes, rll, -pch, yaw);
+			anim_dz_y_x2mat(m_rev_axes, -rll, pch, -yaw);
 			axes = 1;
 			relative_a = 1;
                         break;
@@ -171,8 +171,8 @@ char **argv;
                         sscanf(argv[optind+(i++)],"%lf", &pch );
                         sscanf(argv[optind+(i++)],"%lf", &rll );
 			optind += 3;
-			dx_y_z2mat(m_axes, rll, -pch, yaw);
-			dz_y_x2mat(m_rev_axes, -rll, pch, -yaw);
+			anim_dx_y_z2mat(m_axes, rll, -pch, yaw);
+			anim_dz_y_x2mat(m_rev_axes, -rll, pch, -yaw);
 			axes = 1;
 			relative_a = 0;
                         break;
@@ -236,7 +236,7 @@ int steer_mat(mat,point)
 mat_t  mat;
 vect_t point;
 {
-	void dir2mat(), add_trans(), view_rev();
+	void anim_dir2mat(), anim_add_trans(), anim_view_rev();
 	static vect_t p1, p2, p3;
 	vect_t dir, dir2;
 
@@ -257,9 +257,9 @@ vect_t point;
 	}
 	else return(0); /* return signal 'don't print yet */
 
-	dir2mat(mat,dir,dir2); /* create basic rotation matrix */
+	anim_dir2mat(mat,dir,dir2); /* create basic rotation matrix */
 /*	if (view){
-		view_rev(mat);
+		anim_view_rev(mat);
 	}
 */
 	VMOVE(point,p2); /* for main's purposes, the current point is p2 */

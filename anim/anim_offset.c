@@ -62,8 +62,8 @@ char **argv;
 			break;
 		}
 
-		dy_p_r2mat(mat,yaw, pitch,roll);
-		add_trans(mat,point,zero);
+		anim_dy_p_r2mat(mat,yaw, pitch,roll);
+		anim_add_trans(mat,point,zero);
 		MAT4X3PNT(temp,mat,offset);
 		
 		printf("%f\t%f\t%f\t%f",time, temp[0], temp[1], temp[2]);

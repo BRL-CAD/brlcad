@@ -97,7 +97,7 @@ main(argc,argv)
 int argc;
 char **argv;
 {
-	void y_p_r2mat(), add_trans(), an_mat_print();
+	void anim_y_p_r2mat(), anim_add_trans(), anim_mat_print();
 	int get_args(), get_link(), track_prep(), val, frame, i, count;
 	fastf_t y_rot, distance, yaw, pch, roll;
 	vect_t cent_pos, wheel_now, wheel_prev;
@@ -121,8 +121,8 @@ char **argv;
 		fprintf(stderr,"Anim_track: Argument error.\n");
 
 	if (axes || cent ){ /* vehicle has own reference frame */
-		add_trans(m_axes,centroid,zero);
-		add_trans(m_rev_axes,zero,rcentroid);
+		anim_add_trans(m_axes,centroid,zero);
+		anim_add_trans(m_rev_axes,zero,rcentroid);
 	}
 
 	/* get track information from specified file */
@@ -190,8 +190,8 @@ char **argv;
 
 
 		if (dist_mode==CALCULATED){ /*determine distance traveled*/
-			dy_p_r2mat(mat_x,yaw,pch,roll);
-			add_trans(mat_x,cent_pos,rcentroid);			
+			anim_dy_p_r2mat(mat_x,yaw,pch,roll);
+			anim_add_trans(mat_x,cent_pos,rcentroid);			
 			VMOVE(wheel_prev,wheel_now);
 			MAT4X3PNT(wheel_now,mat_x,to_track);
 			if (frame > first_frame){ /* increment distance by distance moved*/
@@ -204,26 +204,26 @@ char **argv;
 		printf("start %d;\nclean;\n", frame);
 	        for (count=0;count<num_links;count++){
         	        (void) get_link(position,&y_rot,distance+tracklen*count/num_links);
-			y_p_r2mat(wmat,0.0,y_rot,0.0);
-	        	add_trans(wmat,position,zero);
+			anim_y_p_r2mat(wmat,0.0,y_rot,0.0);
+	        	anim_add_trans(wmat,position,zero);
 	        	if (axes || cent){ /* link moved to vehicle coords */
 	        		MAT_MOVE(mat_x,wmat);
 	        		mat_mul(wmat,m_axes,mat_x);
 	        	}
 			printf("anim %s.%d matrix lmul\n", *(argv+optind),count);
-	        	an_mat_print(wmat,1);
+	        	anim_mat_print(wmat,1);
 		}
 		if (print_wheel){
 			for (count = 0;count<num_wheels;count++){
-				y_p_r2mat(wmat,0.0,-distance/wh[count].rad,0.0);
+				anim_y_p_r2mat(wmat,0.0,-distance/wh[count].rad,0.0);
 				VREVERSE(temp,wh[count].pos);
-				add_trans(wmat,x[count].w.pos,temp);
+				anim_add_trans(wmat,x[count].w.pos,temp);
 		        	if (axes || cent){
 			        	mat_mul(mat_x,wmat,m_rev_axes);
 		        		mat_mul(wmat,m_axes,mat_x);
 		        	}
 				printf("anim %s.%d matrix lmul\n",wheel_name,count);
-				an_mat_print(wmat,1);
+				anim_mat_print(wmat,1);
 			}
 		}
 		printf("end;\n");
@@ -239,7 +239,7 @@ int argc;
 char **argv;
 {
 	fastf_t yaw, pch, rll;
-	void dx_y_z2mat(), dz_y_x2mat();
+	void anim_dx_y_z2mat(), anim_dz_y_x2mat();
 	int c, i;
 	axes = cent = print_wheel = 0;
 	stretch = elastic= 0;
@@ -253,8 +253,8 @@ char **argv;
                         sscanf(argv[optind+(i++)],"%lf", &pch );
                         sscanf(argv[optind+(i++)],"%lf", &rll );
 			optind += 3;
-			dx_y_z2mat(m_axes, rll, -pch, yaw);
-			dz_y_x2mat(m_rev_axes, -rll, pch, -yaw);
+			anim_dx_y_z2mat(m_axes, rll, -pch, yaw);
+			anim_dz_y_x2mat(m_rev_axes, -rll, pch, -yaw);
 			axes = 1;
                         break;
                 case 'd':
