@@ -3,7 +3,7 @@
  */
 
 #define SRCDIR	canon
-#define PRODUCTS	canonize pix-ipu ipustat
+#define PRODUCTS	canonize pix-ipu ipustat ipuscan
 
 #if defined(__sgi) || defined(sgi)
 #define DSLIB	-lds
@@ -33,6 +33,10 @@ canonize : canonize.o canonlib.o asize.o
 
 pix-ipu : pix-ipu.o canonlib.o asize.o
 	CC LDFLAGS -o pix-ipu pix-ipu.o canonlib.o asize.o DSLIB LIBES
+
+/* XXX Probably should be called ipu-pix */
+ipuscan : ipuscan.o canonlib.o asize.o
+	CC LDFLAGS -o ipuscan ipuscan.o canonlib.o asize.o DSLIB LIBES
 
 ipustat : ipustat.o canonlib.o
 	CC LDFLAGS -o ipustat ipustat.o canonlib.o DSLIB LIBES
