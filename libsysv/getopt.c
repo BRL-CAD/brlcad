@@ -1,5 +1,21 @@
+/*
+ *			G E T O P T . C
+ *  
+ *  Distribution Status -
+ *	Public Domain, Distribution Unlimitied.
+ */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
 
 #include <stdio.h>
+
+#ifdef SYSV
+#define index(s, c)	strchr(s, c)
+extern char	*strchr();
+#else
+extern char	*index();
+#endif
 
 /*
  * get option letter from argument vector
@@ -21,7 +37,6 @@ char	**nargv,
 {
 	static char	*place = EMSG;	/* option letter processing */
 	register char	*oli;		/* option letter list index */
-	char	*index();
 
 	if(*place=='\0') {			/* update scanning pointer */
 		if(optind >= nargc || *(place = nargv[optind]) != '-' ||
