@@ -212,10 +212,10 @@ proc ia_help { parent screen cmds } {
 	$w.l insert end $cmd
     }
 
-#    bind $w.l <Button-1> "doit_help %W $w.u $screen"
-    bind $w.l <Button-1> "handle_select %W %y; doit_help %W $w.u $screen"
-    bind $w.l <Button-2> "handle_select %W %y; doit_help %W $w.u $screen"
-    bind $w.l <Return> "doit_help %W $w.u $screen"
+#    bind $w.l <Button-1> "mged_help %W $w.u $screen"
+    bind $w.l <Button-1> "handle_select %W %y; mged_help %W $w.u $screen"
+    bind $w.l <Button-2> "handle_select %W %y; mged_help %W $w.u $screen"
+    bind $w.l <Return> "mged_help %W $w.u $screen"
 }
 
 proc handle_select { w y } {
@@ -227,7 +227,7 @@ proc handle_select { w y } {
     $w selection set [$w nearest $y]
 }
 
-proc doit_help { w1 w2 screen } {
+proc mged_help { w1 w2 screen } {
     catch { help [$w1 get [$w1 curselection]]} msg
     catch { destroy $w2 }
     mged_dialog $w2 $screen Usage $msg info 0 OK
@@ -284,30 +284,6 @@ proc tkTextInsert {w s} {
     $w insert insert $s
     $w see insert
 }
-
-proc insert_text { id str } {
-    ia_rtlog .$id.t $str
-}
-
-proc ia_rtlog { w str } {
-    $w insert insert $str
-#    $w see insert
-}
-
-proc ia_rtlog_bold { w str } {
-    set boldStart [$w index insert]
-    $w insert insert $str
-    set boldEnd [$w index insert]
-    $w tag add bold $boldStart $boldEnd
-#    $w see insert
-}
-
-proc ia_print_prompt { w str } {
-    ia_rtlog_bold $w $str
-    $w mark set promptEnd {insert}
-    $w mark gravity promptEnd left
-}
-
 
 if ![info exists mged_players] {
     set mged_players ""
@@ -432,11 +408,11 @@ proc ia_invoke { w } {
     }
 
     if {$mged_apply_to($id) == 1} {
-	set cmd "doit_local $id \"$hcmd\""
+	set cmd "mged_apply_local $id \"$hcmd\""
     } elseif {$mged_apply_to($id) == 2} {
-	set cmd "doit_using_list $id \"$hcmd\""
+	set cmd "mged_apply_using_list $id \"$hcmd\""
     } elseif {$mged_apply_to($id) == 3} {
-	set cmd "doit_all \"$hcmd\""
+	set cmd "mged_apply_all \"$hcmd\""
     } else {
 	set cmd $hcmd
     }
@@ -461,20 +437,21 @@ proc ia_invoke { w } {
             set i [string first "more arguments needed::" $ia_msg]
             if { $i > -1 } {
 		if { $i != 0 } {
-		    ia_rtlog $w [string range $ia_msg 0 [expr $i - 1]]
+		    mged_print $w [string range $ia_msg 0 [expr $i - 1]]
 		}
 		
 		set ia_prompt [string range $ia_msg [expr $i + 23] end]
-		ia_print_prompt $w $ia_prompt
+		mged_print_prompt $w $ia_prompt
 		set ia_cmd_prefix($id) $hcmd
 		$w see insert
 		set ia_more_default($id) [get_more_default]
 		return
 	    }
-	    ia_rtlog $w "Error: $ia_msg\n"
+	    mged_print_tag $w "Error: $ia_msg\n" result
 	} else {
 	    if {$ia_msg != ""} {
-		ia_rtlog $w $ia_msg\n
+		.$id.t tag add oldcmd promptEnd insert
+		mged_print_tag $w $ia_msg\n result
 	    }
 
 	    distribute_text $w $hcmd $ia_msg
@@ -483,7 +460,7 @@ proc ia_invoke { w } {
 
 	hist_add $hcmd
 	set ia_cmd_prefix($id) ""
-	ia_print_prompt $w "mged> "
+	mged_print_prompt $w "mged> "
     }
     $w see insert
 }
