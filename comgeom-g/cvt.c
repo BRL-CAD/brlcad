@@ -180,9 +180,19 @@ char **argv;
 	 */
 	printf("processing solid table\n");
 	sol_work = 0;
-	while(1) {
-		if( (i = getsolid()) == 0 ) {
+	while( sol_work < sol_total ) {
+		i = getsolid();
+		if( i < 0 )  {
+			printf("error converting solid %d\n", sol_work);
+			/* Should we abort here? */
+			continue;
+		}
+		if( i > 0 ) {
 			printf("\nprocessed %d of %d solids\n\n",sol_work,sol_total);
+			if( sol_work < sol_total )  {
+				printf("some solids are missing, aborting\n");
+				exit(1);
+			}
 			break;		/* done */
 		}
 	}
