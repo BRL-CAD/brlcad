@@ -267,6 +267,9 @@ union tree		*curtree;
 		 */
 		rt_g.NMG_debug = NMG_debug;	/* restore mode */
 
+		/* Release any intersector 2d tables */
+		nmg_isect2d_final_cleanup();
+
 		/* Release the tree memory & input regions */
 		db_free_tree(curtree);		/* Does an nmg_kr() */
 
