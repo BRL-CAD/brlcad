@@ -11,41 +11,44 @@
 PROFILE		=
 
 PRODUCTS	= fbanim loop pix-fb fb-pix \
-		pixbustup pixdiff pixinterp2x pixtile \
+		pixbustup pixdiff pixinterp2x pixtile pixuntile \
 		pp-fb fbclear fbgrid \
 		rle-fb fb-rle rle-pix pix-rle \
 		fbcmap fb-cmap cmap-fb fbgamma \
-		fbscanplot fbzoom fbpoint fblabel\
-		plot-fb fbcolor fbcmrot pixbackgnd fbframe ap-pix \
+		fbscanplot fbzoom fbpoint fblabel fbline\
+		pl-fb fbcolor fbcmrot pixbackgnd fbframe ap-pix \
 		bw-fb bw-pix bw3-pix bwcrop bwdiff bwfilter bw-impress \
 		bwhist bwhisteq bwmod bwrect bwrot bwscale bwstat fb-bw \
 		gencolor pix-bw pix-bw3 pixfilter pixhist \
 		pixhist3d pixhist3d-pl \
-		pixrect pixrot pixscale pixstat \
-		sun-pix mac-pix pixmerge tiris \
+		pixrect pixrot pixscale pixstat fbcbars \
+		sun-pix mac-pix pixmerge op-bw \
+		pl-sgi pldebug plgetframe plrot \
 		dunncolor dunnsnap
 
 SRCDIR		= util
+VPATH		= ../util
 MANSECTION	= 1
  
 CFILES		= dunncolor.c dunnsnap.c fbanim.c loop.c pix-fb.c fb-pix.c \
-		pixbustup.c pixdiff.c pixinterp2x.c pixtile.c \
+		pixbustup.c pixdiff.c pixinterp2x.c pixtile.c pixuntile.c \
 		pp-fb.c fbclear.c fbgrid.c \
 		rle-fb.c fb-rle.c rle-pix.c pix-rle.c \
 		fbcmap.c fb-cmap.c cmap-fb.c fbgamma.c \
-		fbscanplot.c fbzoom.c fbpoint.c fblabel.c plot-fb.c \
+		fbscanplot.c fbzoom.c fbpoint.c fblabel.c fbline.c pl-fb.c \
 		fbcolor.c fbcmrot.c pixbackgnd.c fbframe.c ap-pix.c \
 		bw-fb.c bw-pix.c bw3-pix.c bwcrop.c bwdiff.c bwfilter.c \
 		bw-impress.c bwhist.c bwhisteq.c \
 		bwmod.c bwrect.c bwrot.c bwscale.c bwstat.c fb-bw.c \
 		gencolor.c pix-bw.c pix-bw3.c pixfilter.c pixhist.c \
 		pixhist3d.c pixhist3d-pl.c \
-		sun-pix.c mac-pix.c pixmerge.c \
-		pixrect.c pixrot.c pixscale.c pixstat.c tiris.c
+		sun-pix.c mac-pix.c pixmerge.c fbcbars.c \
+		pixrect.c pixrot.c pixscale.c pixstat.c op-bw.c \
+		pl-sgi.c pldebug.c plgetframe.c plrot.c
 
 all:		${PRODUCTS}
 
-# This is how to make the product
+# This is how to make the product.  ${LIBES} should be listed last.
 #${PRODUCTS}:	$$@.o
 #	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBFB} ${LIBES}
 
@@ -58,8 +61,8 @@ dunnsnap:	dunnsnap.o dunncomm.o
 fbanim:		fbanim.o ${LIBFB}
 	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBES}
 
-plot-fb:	plot-fb.o ${LIBFB}
-	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBFB} ${LIBES}
+pl-fb:		pl-fb.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBFB} ${LIBPLOT} ${LIBES}
 
 loop:		loop.o
 	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES}
@@ -72,6 +75,9 @@ sun-pix:	sun-pix.o
 
 pixmerge:	pixmerge.o
 	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBES}
+
+fbcbars:	fbcbars.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBES}
 
 pix-fb:		pix-fb.o ${LIBFB}
 	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBES}
@@ -89,6 +95,9 @@ pixinterp2x:	pixinterp2x.o
 	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBES}
 
 pixtile:	pixtile.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBES}
+
+pixuntile:	pixuntile.o
 	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBES}
 
 pp-fb:		pp-fb.o ${LIBFB}
@@ -134,7 +143,10 @@ fbpoint:	fbpoint.o ${LIBFB}
 	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBTERMIO} ${LIBES} 
 
 fblabel:	fblabel.o ${LIBFB}
-	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBTERMIO} ${LIBES} 
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBES} 
+
+fbline:		fbline.o ${LIBFB}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBES} 
 
 fbcolor:	fbcolor.o ${LIBFB}
 	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBSYSV} ${LIBFB} ${LIBTERMIO} ${LIBES} 
@@ -227,11 +239,22 @@ pixstat:	pixstat.o
 	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES}
 
 pixhist3d-pl:	pixhist3d-pl.o
-	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES} ${LIBPLOT}
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBPLOT} ${LIBES}
 
-tiris:	tiris.o ${LIBFB}
-	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBFB} ${LIBES}
+pl-sgi:		pl-sgi.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBPLOT} ${LIBFB} ${LIBES}
 
+pldebug:	pldebug.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBPLOT} ${LIBES}
+
+plgetframe:	plgetframe.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBPLOT} ${LIBES}
+
+plrot:		plrot.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBPLOT} ${LIBES}
+
+op-bw:		op-bw.o
+	$(CC) ${LDFLAGS} -o $@ $@.o ${LIBES}
 
 # DO NOT DELETE THIS LINE -- make depend uses it
 dunncolor.o: dunncolor.c
@@ -247,6 +270,7 @@ pixbustup.o: pixbustup.c
 pixdiff.o: pixdiff.c
 pixinterp2x.o: pixinterp2x.c
 pixtile.o: pixtile.c
+pixuntile.o: pixuntile.c
 pp-fb.o: pp-fb.c
 pp-fb.o: ../h/fb.h
 fbclear.o: fbclear.c
@@ -281,8 +305,10 @@ fbpoint.o: fbpoint.c
 fbpoint.o: ../h/../h/fb.h
 fblabel.o: fblabel.c
 fblabel.o: ../h/fb.h
-plot-fb.o: plot-fb.c
-plot-fb.o: ../h/fb.h
+fbline.o: fbline.c
+fbline.o: ../h/fb.h
+pl-fb.o: pl-fb.c
+pl-fb.o: ../h/fb.h
 fbcolor.o: fbcolor.c
 fbcolor.o: ../h/fb.h
 fbcmrot.o: fbcmrot.c
@@ -321,11 +347,19 @@ pixhist3d-pl.o: pixhist3d-pl.c
 sun-pix.o: sun-pix.c
 mac-pix.o: mac-pix.c
 pixmerge.o: pixmerge.c
+fbcbars.o: fbcbars.c
+fbcbars.o: ../h/fb.h
 pixrect.o: pixrect.c
 pixrot.o: pixrot.c
 pixscale.o: pixscale.c
 pixstat.o: pixstat.c
-tiris.o: tiris.c
+op-bw.o: op-bw.c
+pl-sgi.o: pl-sgi.c
+pldebug.o: pldebug.c
+plgetframe.o: plgetframe.c
+plrot.o: plrot.c
+plrot.o: ../h/machine.h
+plrot.o: ../h/vmath.h
 # DEPENDENCIES MUST END AT END OF FILE
 # IF YOU PUT STUFF HERE IT WILL GO AWAY
 # see make depend above
