@@ -15,6 +15,10 @@
 #endif
 #include <math.h>
 
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+
 #include "machine.h"
 #include "bu.h"
 
