@@ -374,7 +374,9 @@ struct mged_variables {
 	int     w_axis;  /* world view axis */
 	int     v_axis;  /* view axis */
 	int     e_axis;  /* edit axis */
-	int     focus;
+#ifdef SEND_KEY_DOWN_PIPE
+        int     send_key;
+#endif
 	int     view;
 	int	predictor;
 	double	predictor_advance;

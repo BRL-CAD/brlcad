@@ -48,7 +48,9 @@ struct mged_variables mged_variables = {
 /* w_axis */    	        0,
 /* v_axis */    	        0,
 /* e_axis */            	0,
-/* focus */                     0,
+#ifdef SEND_KEY_DOWN_PIPE
+/* send_key */                  0,
+#endif
 /* view */                      0,
 /* predictor */			0,
 /* predictor_advance */		1.0,
@@ -103,7 +105,9 @@ struct structparse mged_vparse[] = {
 	{"%d",  1, "w_axis",            MV_O(w_axis),           refresh_hook },
 	{"%d",  1, "v_axis",            MV_O(v_axis),           refresh_hook },
 	{"%d",  1, "e_axis",            MV_O(e_axis),           refresh_hook },
-	{"%d",  1, "focus",             MV_O(focus),            FUNC_NULL },
+#ifdef SEND_KEY_DOWN_PIPE
+	{"%d",  1, "send_key",          MV_O(send_key),         FUNC_NULL },
+#endif
 	{"%d",  1, "view",              MV_O(view),             set_view },
 	{"%d",	1, "predictor",		MV_O(predictor),	predictor_hook },
 	{"%f",	1, "predictor_advance",	MV_O(predictor_advance),predictor_hook },

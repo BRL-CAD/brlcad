@@ -114,10 +114,8 @@ extern int journal;
 #define LOGFILE	"/vld/lib/gedlog"	/* usage log */
 #endif
 
-#define TRY_PIPES 1
-
-#if TRY_PIPES
-int ged_pipe[2];
+#ifdef SEND_KEY_DOWN_PIPE
+int dm_pipe[2];
 #endif
 
 struct db_i	*dbip;			/* database instance pointer */
@@ -373,12 +371,12 @@ char **argv;
 	/* Reset the lights */
 	dmp->dmr_light( LIGHT_RESET, 0 );
 
-#if TRY_PIPES
-	(void)pipe(ged_pipe);
+#ifdef SEND_KEY_DOWN_PIPE 
+	(void)pipe(dm_pipe);
 	Tk_CreateFileHandler(STDIN_FILENO, TK_READABLE, stdin_input,
 			     (ClientData)STDIN_FILENO);
-	Tk_CreateFileHandler(ged_pipe[0], TK_READABLE, stdin_input,
-			     (ClientData)ged_pipe[0]);
+	Tk_CreateFileHandler(dm_pipe[0], TK_READABLE, stdin_input,
+			     (ClientData)dm_pipe[0]);
 #else
 	Tk_CreateFileHandler(fileno(stdin), TK_READABLE, stdin_input,
 			     (ClientData)NULL);

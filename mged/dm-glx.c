@@ -47,9 +47,6 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-/* Experimental */
-#define TRY_PIPES 1
-
 #include "conf.h"
 
 #include <stdio.h>
@@ -83,19 +80,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "./solid.h"
 
-#ifdef VIRTUAL_TRACKBALL
-#define VIRTUAL_TRACKBALL_OFF 0
-#define VIRTUAL_TRACKBALL_IGNORE 1 /* Ignore motion events */
-#define VIRTUAL_TRACKBALL_ROTATE 2 
-#define VIRTUAL_TRACKBALL_TRANSLATE 3
-#define VIRTUAL_TRACKBALL_ZOOM 4
-#endif
-
 #define YSTEREO		491	/* subfield height, in scanlines */
 #define YOFFSET_LEFT	532	/* YSTEREO + YBLANK ? */
 
-#if TRY_PIPES
-extern int ged_pipe[];
+#ifdef SEND_KEY_DOWN_PIPE
+extern int dm_pipe[];
 #endif
 
 extern Tcl_Interp *interp;
@@ -169,7 +158,7 @@ struct modifiable_glx_vars {
   int debug;
   int linewidth;
 #ifdef VIRTUAL_TRACKBALL
-        int     virtual_trackball;
+  int virtual_trackball;
 #endif
 };
 
@@ -707,9 +696,11 @@ Glx_load_startup()
   rt_vls_init( &str );
 
   if((filename = getenv("DM_GLX_RCFILE")) == (char *)NULL )
+    /* Use default file name */
     filename = DM_GLX_RCFILE;
 
   if((path = getenv("MGED_LIBRARY")) != (char *)NULL ){
+    /* Use MGED_LIBRARY path */
     rt_vls_strcpy( &str, path );
     rt_vls_strcat( &str, "/" );
     rt_vls_strcat( &str, filename );
@@ -720,6 +711,7 @@ Glx_load_startup()
 
   if(!found){
     if( (path = getenv("HOME")) != (char *)NULL )  {
+      /* Use HOME path */
       rt_vls_strcpy( &str, path );
       rt_vls_strcat( &str, "/" );
       rt_vls_strcat( &str, filename );
@@ -730,20 +722,11 @@ Glx_load_startup()
   }
 
   if( !found ) {
+    /* Check current directory */
     if( (fp = fopen( filename, "r" )) != NULL )  {
       rt_vls_strcpy( &str, filename );
       found = 1;
     }
-  }
-
-/*XXX Temporary, so things will work without knowledge of the new environment
-      variables */
-  if( !found ) {
-    rt_vls_strcpy( &str, "/m/cad/mged/");
-    rt_vls_strcat( &str, filename);
-
-    if( (fp = fopen(rt_vls_addr(&str), "r")) != NULL )
-      found = 1;
   }
 
   if(!found){
@@ -1284,14 +1267,14 @@ annoying when running remotely. */
   if(curr_dm_list == DM_LIST_NULL)
     goto end;
 
-#if TRY_PIPES
-  if(mged_variables.focus && eventPtr->type == KeyPress){
+#ifdef SEND_KEY_DOWN_PIPE
+  if(mged_variables.send_key && eventPtr->type == KeyPress){
     char buffer[1];
 
     XLookupString(&(eventPtr->xkey), buffer, 1,
 		  (KeySym *)NULL, (XComposeStatus *)NULL);
 
-    write(ged_pipe[1], buffer, 1);
+    write(dm_pipe[1], buffer, 1);
     rt_vls_free(&cmd);
     curr_dm_list = save_dm_list;
 
@@ -1345,7 +1328,7 @@ annoying when running remotely. */
       break;
     case VIRTUAL_TRACKBALL_IGNORE:
     default:
-      break;
+      goto end;
     }
 
     omx = mx;
@@ -1533,7 +1516,9 @@ Glx_statechange( a, b )
    *  including enabling continuous tablet tracking,
    *  object highlighting
    */
+#ifdef VIRTUAL_TRACKBALL
   if(!mvars.virtual_trackball){
+#endif
  	switch( b )  {
 	case ST_VIEW:
 	  /* constant tracking OFF */
@@ -1557,7 +1542,9 @@ Glx_statechange( a, b )
 		rt_log("Glx_statechange: unknown state %s\n", state_str[b]);
 		break;
 	}
+#ifdef VIRTUAL_TRACKBALL
   }
+#endif
 	Glx_viewchange( DM_CHGV_REDO, SOLID_NULL );
 }
 
@@ -1856,6 +1843,7 @@ establish_zbuffer()
 	dmaflag = 1;
 }
 
+#ifdef VIRTUAL_TRACKBALL
 static void
 establish_vtb()
 {
@@ -1877,6 +1865,7 @@ establish_vtb()
     }
   }
 }
+#endif
 
 glx_clear_to_black()
 {
@@ -2413,6 +2402,7 @@ char	**argv;
   }
 
 #ifdef VIRTUAL_TRACKBALL  
+  if(mvars.virtual_trackball){
   if( !strcmp( argv[0], "vtb" )){
     int buttonpress;
 
@@ -2483,6 +2473,9 @@ char	**argv;
 #endif
     }
 
+    return CMD_OK;
+  }
+  }else{
     return CMD_OK;
   }
 #endif
@@ -2559,9 +2552,6 @@ Window window;
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-/* Experimental */
-#define TRY_PIPES 1
-
 #include "conf.h"
 
 /* Forwards compat with IRIX 5.0.1 */
@@ -2602,8 +2592,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define YSTEREO		491	/* subfield height, in scanlines */
 #define YOFFSET_LEFT	532	/* YSTEREO + YBLANK ? */
 
-#if TRY_PIPES
-extern int ged_pipe[];
+#ifdef SEND_KEY_DOWN_PIPE
+extern int dm_pipe[];
 #endif
 
 extern Tcl_Interp *interp;
@@ -3742,14 +3732,14 @@ annoying when running remotely. */
   if(eventPtr->xany.window != win)
     goto end;
 
-#if TRY_PIPES
-  if(mged_variables.focus && eventPtr->type == KeyPress){
+#ifdef SEND_KEY_DOWN_PIPE
+  if(mged_variables.send_key && eventPtr->type == KeyPress){
     char buffer[1];
 
     XLookupString(&(eventPtr->xkey), buffer, 1,
 		  (KeySym *)NULL, (XComposeStatus *)NULL);
 
-    write(ged_pipe[1], buffer, 1);
+    write(dm_pipe[1], buffer, 1);
     goto end;
   }
 #endif
