@@ -254,3 +254,11 @@ proc mouse_comb_edit_select { x y } {
 	set mged_gui($id,mouse_behavior) d
     }
 }
+
+proc place_near_mouse { top } {
+    set pxy [winfo pointerxy $top]
+    set x [lindex $pxy 0]
+    set y [lindex $pxy 1]
+
+    catch { wm geometry $top +$x+$y }
+}
