@@ -1249,6 +1249,12 @@ BU_EXTERN(void			htond, (unsigned char *out,
 BU_EXTERN(void			ntohd, (unsigned char *out,
 				CONST unsigned char *in, int count));
 
+/* htonf.c */
+BU_EXTERN(void			htonf, (unsigned char *out,
+				CONST unsigned char *in, int count));
+BU_EXTERN(void			ntohf, (unsigned char *out,
+				CONST unsigned char *in, int count));
+
 /* ispar.c */
 BU_EXTERN(int			bu_is_parallel, () );
 BU_EXTERN(void			bu_kill_parallel, () );
