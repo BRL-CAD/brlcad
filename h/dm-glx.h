@@ -1,3 +1,6 @@
+#ifndef SEEN_DM_GLX
+#define SEEN_DM_GLX
+
 /* Map +/-2048 GED space into -1.0..+1.0 :: x/2048*/
 #define GED2IRIS(x)	(((float)(x))*0.00048828125)
 
@@ -31,9 +34,6 @@ struct glx_vars {
   Colormap cmap;
   int depth;
   unsigned int mb_mask;
-#if 0
-  long win_l, win_b, win_r, win_t;
-#endif
   long width, height;
   int omx, omy;
   int perspective_angle;
@@ -70,3 +70,5 @@ extern int Glx_add_tol();
 extern int Glx_irisX2ged();
 extern int Glx_irisY2ged();
 extern struct glx_vars head_glx_vars;
+
+#endif /* SEEN_DM_GLX */
