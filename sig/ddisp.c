@@ -10,8 +10,8 @@
 
 double	buf[MAXPTS];
 
-int	clear = 0;
-int	pause = 0;
+int	Clear = 0;
+int	pause_time = 0;
 int	mode = 0;
 #define	VERT	1
 #define	BARS	2
@@ -31,14 +31,14 @@ char	**argv;
 	while( argc > 1 ) {
 		if( strcmp(argv[1], "-v") == 0 ) {
 			mode = VERT;
-			pause = 0;
-			clear = 0;
+			pause_time = 0;
+			Clear = 0;
 		} else if( strcmp(argv[1], "-b") == 0 ) {
 			mode = BARS;
 		} else if( strcmp(argv[1], "-p") == 0 ) {
-			pause = 3;
+			pause_time = 3;
 		} else if( strcmp(argv[1], "-c") == 0 ) {
-			clear++;
+			Clear++;
 		} else if( strcmp(argv[1], "-h") == 0 ) {
 			fbsize = 1024;
 		} else
@@ -62,7 +62,7 @@ char	**argv;
 		if( n > fb_getwidth(fbp) )
 			n = fb_getwidth(fbp);
 
-		if( clear )
+		if( Clear )
 			fb_clear( fbp, PIXEL_NULL );
 		if( mode == VERT )
 			disp_inten( buf, n );
@@ -70,8 +70,8 @@ char	**argv;
 			disp_bars( buf, n );
 		else
 			lineout( buf, n );
-		if( pause )
-			sleep( pause );
+		if( pause_time )
+			sleep( pause_time );
 	}
 	fb_close(fbp);
 }
@@ -316,7 +316,7 @@ int size;
 #ifdef DEBUG
 printf("(%6.3f,%6.3f): angle = %7.3f (%6.2f), mag = %d\n",
 	buf[i].re, buf[i].im, angle, RtoD( angle ), mag );
-#endif DEBUG
+#endif /* DEBUG */
 		if( size > 512 ) x = i;
 		else x = 2*i;
 #ifdef OVERLAY
@@ -344,4 +344,4 @@ printf("(%6.3f,%6.3f): angle = %7.3f (%6.2f), mag = %d\n",
 	mcolor[RED] = 255;
 	fb_write( fbp, size/2, 255, mcolor, 1 );
 }
-#endif OLDANDCRUFTY
+#endif /* OLDANDCRUFTY */

@@ -9,6 +9,7 @@
  */
 #include <stdio.h>
 #include <math.h>
+#include "machine.h"
 
 double	*data;			/* Input buffer */
 double	*r;			/* autocor output */

@@ -6,7 +6,7 @@
  */
 #include <stdio.h>	/* for stderr */
 #include <math.h>	/* for double sin(), cos() */
-#include "complex.h"
+#include "./complex.h"
 
 static int	_init_length = 0;	/* Internal: last initialized size */
 static int	maxinitlen = 0;

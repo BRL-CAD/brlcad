@@ -13,6 +13,7 @@
  */
 #include <stdio.h>
 #include <math.h>
+#include "machine.h"
 
 #define	MAXM	4096
 
@@ -52,7 +53,7 @@ char	**argv;
 		else
 			ibuf[i] = 0.0;	/* Imag part */
 	}
-#endif never
+#endif /* never */
 
 	if( (fp = fopen( argv[1], "r" )) == NULL ) {
 		fprintf( stderr, "dconv: can't open \"%s\"\n", argv[1] );

@@ -38,7 +38,7 @@ int num;
 	for( i = 0; i < num; i++ ) {
 		printf("linpt[%d] = %f\n", i, linpt[i]);
 	}
-#endif DEBUG
+#endif /* DEBUG */
 
 	for( i = 0; i < num; i++ ) {
 		/*

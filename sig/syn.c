@@ -3,7 +3,7 @@
  */
 #include <stdio.h>
 #include <math.h>
-#include "complex.h"
+#include "./complex.h"
 
 #define TABSIZE	512
 double	sintab[TABSIZE];

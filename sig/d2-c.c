@@ -11,10 +11,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
-
-#ifdef SYSV
-#define bzero(str,n)		memset( str, '\0', n )
-#endif
+#include "machine.h"
 
 double	obuf[2*1024];
 double	real[1024], imag[1024];

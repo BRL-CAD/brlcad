@@ -5,6 +5,7 @@
  */
 #include <stdio.h>
 #include <math.h>
+#include "machine.h"
 
 #define	BSIZE	2048		/* Must be AT LEAST 2*Points in spectrum */
 double	data[BSIZE];		/* Input buffer */

@@ -8,7 +8,8 @@
  */
 #include <stdio.h>
 #include <math.h>		/* XXX - temp debug */
-#include <brlcad/fb.h>		/* XXX - temp debug */
+#include "machine.h"
+#include "fb.h"
 
 #define	MYMETHOD	on
 
@@ -224,7 +225,7 @@ fflush( stdout );
 		*yi = y1 + (*xi-x1)*((y2-y1)/(x2-x1)) + 0.5;
 /*printf("(%3d,%3d)\n", *xi, *yi );*/
 		return;
-#endif FOOBARBAZ
+#endif /* FOOBARBAZ */
 
 		slope = (y2 - y1) / (x2 - x1);
 		ysign = sign( y1 - hor[x1 + xinc] );
@@ -245,7 +246,7 @@ fflush( stdout );
 /*printf("[%3d,%3d]", *xi, *yi );*/
 		}
 		*xi = *xi + xinc;
-#endif MYMETHOD
+#endif /* MYMETHOD */
 	}
 /*printf("(%3d,%3d)\n", *xi, *yi );*/
 }

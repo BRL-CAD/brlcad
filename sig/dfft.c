@@ -8,7 +8,8 @@
  */
 #include <stdio.h>
 #include <math.h>
-#include "complex.h"
+#include "machine.h"
+#include "./complex.h"
 
 #define	MAXFFT	4096
 #define	MAXOUT	2048		/* MAXFFT/2 XXX (Actually + 1) */
@@ -202,7 +203,8 @@ int	N;
 		for (i = 0; i <= N/2; i++) {
 			mags[i] = sqrt(mags[i]);	/*XXX?*/
 		}
-#endif;
+#endif
+		;
 	} else {
 		/* Log output */
 		for (i = 0; i <= N/2; i++) {
