@@ -30,7 +30,7 @@
 	nmg_mesh nmg_fcut nmg_class nmg_mod nmg_index \
 	nmg_rt_isect nmg_rt_segs nmg_manif \
 	nmg_visit nmg_info nmg_pr \
-	units msr vert nmg_extrude nmg_tri nmg_fuse nmg_pt_fu \
+	units vert nmg_extrude nmg_tri nmg_fuse nmg_pt_fu \
 	rtassoc \
 	pr LIBRT_TIMER storage global \
 	rt_dspline
