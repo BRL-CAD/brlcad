@@ -57,9 +57,7 @@ extern struct rt_tol		mged_tol;	/* from ged.c */
 
 extern void set_e_axis_pos();
 
-#ifdef VIRTUAL_TRACKBALL
 void set_tran();
-#endif
 
 #if 0
 extern int      savedit;
@@ -2023,9 +2021,7 @@ sedit()
 	static float la, lb, lc, ld;	/* TGC: length of vectors */
 
 	sedraw = 0;
-#ifdef MULTI_ATTACH
 	update_views = 1;
-#endif
 
 	switch( es_edflag ) {
 
@@ -3152,9 +3148,6 @@ CONST vect_t	mousevec;
 	vect_t	tr_temp;		/* temp translation vector */
 	vect_t	temp;
 
-#ifdef MULTI_ATTACH
-	update_views = 1;
-#endif
 	mat_idn( incr_change );
 	scale = 1;
 	if( movedir & SARROW )  {
@@ -4095,8 +4088,11 @@ oedit_accept()
 	 *  so we can safely fiddle the displaylist.
 	 */
 	modelchanges[15] = 1000000000;	/* => small ratio */
+
+#if 0
 	dmaflag=1;
 	refresh();
+#endif
 
 	/* Now, recompute new chunks of displaylist */
 	FOR_ALL_SOLIDS( sp )  {
@@ -4321,7 +4317,6 @@ char	**argv;
 			es_para[2] *= local2base;
 			/* fall through */
 		default:
-#ifdef VIRTUAL_TRACKBALL
 			break;
 	}
 
@@ -4337,10 +4332,6 @@ char	**argv;
 	}
 
 	return CMD_OK;
-#else
-			return CMD_OK;
-	}
-#endif
 
 	/* XXX I would prefer to see an explicit call to the guts of sedit()
 	 * XXX here, rather than littering the place with global variables

@@ -60,10 +60,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./dm.h"
 #include "./sedit.h"
 
-#ifdef VIRTUAL_TRACKBALL
 void set_tran();
-#endif
-
 void	aexists();
 
 int		newedge;		/* new edge for arb editing */
@@ -1079,17 +1076,13 @@ char	**argv;
 	if( not_state( ST_O_EDIT, "Object Rotation" ) )
 		return CMD_BAD;
 
-#ifdef VIRTUAL_TRACKBALL
 	if(!rot_set){
 	  rot_x = atof(argv[1]);
 	  rot_y = atof(argv[2]);
 	  rot_z = atof(argv[3]);
 	}
 
-#endif
-#ifdef MULTI_ATTACH
 	update_views = 1;
-#endif
 
 	if(movedir != ROTARROW) {
 		/* NOT in object rotate mode - put it in obj rot */
@@ -1125,9 +1118,7 @@ char	**argv;
 			atof(argv[2])*degtorad,
 			atof(argv[3])*degtorad );
 
-#ifdef VIRTUAL_TRACKBALL
 /*XXX*/ mat_copy(acc_rot_sol, temp); /* used to rotate solid/object axis */
-#endif
 
 	/* Record the new rotation matrix into the revised
 	 *	modelchanges matrix wrt "point"
@@ -1135,7 +1126,6 @@ char	**argv;
 	wrt_point(modelchanges, temp, modelchanges, point);
 
 	new_mats();
-	dmaflag = 1;
 
 	return CMD_OK;
 }
@@ -1157,9 +1147,7 @@ char	**argv;
 		return CMD_BAD;
 	}
 
-#ifdef MULTI_ATTACH
 	update_views = 1;
-#endif
 
 	if(movedir != SARROW) {
 		/* Put in global object scale mode */
@@ -1224,9 +1212,7 @@ char	**argv;
 	if( not_state( ST_O_EDIT, "Object Translation") )
 		return CMD_BAD;
 
-#ifdef MULTI_ATTACH
 	update_views = 1;
-#endif
 
 	mat_idn(incr);
 	mat_idn(old);
@@ -1530,7 +1516,6 @@ char	**argv;
 	wrt_point_direc(modelchanges, temp, modelchanges, point, direc);
 
 	new_mats();
-	dmaflag = 1;
 
 	return CMD_OK;
 }

@@ -41,13 +41,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 extern point_t e_axis_pos;
 static void draw_axis();
 
-#ifndef MULTI_ATTACH
-/* Variables for dozoom() */
-fastf_t	Viewscale;
-mat_t	Viewrot, toViewcenter;
-mat_t	model2view, view2model;
-mat_t	model2objview, objview2model;
-#endif
 mat_t	incr_change;
 mat_t	modelchanges;
 mat_t	identity;

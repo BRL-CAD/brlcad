@@ -25,20 +25,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "rtstring.h"
 #include "raytrace.h"
 #include "./ged.h"
-#ifdef MULTI_ATTACH
 #include "./dm.h"
-#endif
 
 #include "tcl.h"
 
 extern void	predictor_hook();		/* in ged.c */
 extern void	reattach();			/* in attach.c */
 
-#ifdef MULTI_ATTACH
 struct _mged_variables default_mged_variables = {
-#else
-struct mged_variables mged_variables = {
-#endif
 /* autosize */			1,
 /* rateknobs */			1,
 /* sgi_win_size */		0,
@@ -48,10 +42,8 @@ struct mged_variables mged_variables = {
 /* w_axis */    	        0,
 /* v_axis */    	        0,
 /* e_axis */            	0,
-#ifdef SEND_KEY_DOWN_PIPE
 /* send_key */                  0,
 /* hot_key */                   0,
-#endif
 /* view */                      0,
 /* predictor */			0,
 /* predictor_advance */		1.0,
@@ -91,11 +83,7 @@ nmg_eu_dist_set()
 	rt_log( "New nmg_eue_dist = %g\n", nmg_eue_dist);
 }
 
-#ifdef MULTI_ATTACH
 #define MV_O(_m)	offsetof(struct _mged_variables, _m)
-#else
-#define MV_O(_m)	offsetof(struct mged_variables, _m)
-#endif
 struct structparse mged_vparse[] = {
 	{"%d",	1, "autosize",		MV_O(autosize),		FUNC_NULL },
 	{"%d",	1, "rateknobs",		MV_O(rateknobs),	FUNC_NULL },
@@ -106,10 +94,8 @@ struct structparse mged_vparse[] = {
 	{"%d",  1, "w_axis",            MV_O(w_axis),           refresh_hook },
 	{"%d",  1, "v_axis",            MV_O(v_axis),           refresh_hook },
 	{"%d",  1, "e_axis",            MV_O(e_axis),           refresh_hook },
-#ifdef SEND_KEY_DOWN_PIPE
 	{"%d",  1, "send_key",          MV_O(send_key),         FUNC_NULL },
 	{"%d",  1, "hot_key",           MV_O(hot_key),         FUNC_NULL },
-#endif
 	{"%d",  1, "view",              MV_O(view),             set_view },
 	{"%d",	1, "predictor",		MV_O(predictor),	predictor_hook },
 	{"%f",	1, "predictor_advance",	MV_O(predictor_advance),predictor_hook },
@@ -268,9 +254,7 @@ char *av[];
 	}
 	rt_vls_free(&vls);
 
-#ifdef MULTI_ATTACH
-	update_views = 1;
-#endif
+	dmaflag = 1;
 	return bad ? CMD_BAD : CMD_OK;
 }
 
@@ -297,6 +281,4 @@ set_view()
   mat_copy(Viewrot, view_table[current_view]);
   Viewscale = view_scale_table[current_view];
   new_mats();
-
-  dmaflag = 1;
 }

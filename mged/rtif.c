@@ -348,11 +348,7 @@ char	**argv;
 	 */
 	dm = dmp->dmr_name;
 	if( (needs_reattach = dmp->dmr_releasedisplay) != 0 )
-#ifdef MULTI_ATTACH
 	  release(NULL);
-#else
-		release();		/* changes dmp */
-#endif
 
 	vp = &rt_cmd_vec[0];
 	*vp++ = "rt";
@@ -407,11 +403,7 @@ char	**argv;
 	 */
 	dm = dmp->dmr_name;
 	if( needs_reattach = dmp->dmr_releasedisplay )
-#ifdef MULTI_ATTACH
 	  release(NULL);
-#else
-		release();		/* changes dmp */
-#endif
 
 	vp = &rt_cmd_vec[0];
 	for( i=1; i < argc; i++ )
@@ -868,11 +860,7 @@ static mat_t	rtif_viewrot;
 static struct rt_vlblock	*rtif_vbp;
 static FILE	*rtif_fp;
 static double	rtif_delay;
-#ifdef MULTI_ATTACH
 static struct _mged_variables    rtif_saved_state;       /* saved state variable\s */
-#else
-static struct mged_variables	rtif_saved_state;	/* saved state variables */
-#endif
 static int	rtif_mode;
 static int	rtif_desiredframe;
 static int	rtif_finalframe;

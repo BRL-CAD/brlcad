@@ -57,12 +57,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #define MORE_ARGS_STR    "more arguments needed::"
 
-#ifdef VIRTUAL_TRACKBALL
 int f_tran(), f_irot();
 void set_tran();
 
 extern mat_t    ModelDelta;
-#endif
 
 extern int f_nmg_simplify();
 extern int f_make_bb();
@@ -296,16 +294,12 @@ static struct funtab funtab[] = {
 	f_in, 1, MAXARGS, FALSE,
 "inside", "", "finds inside solid per specified thicknesses",
 	f_inside, 1, MAXARGS, FALSE,
-#ifdef VIRTUAL_TRACKBALL
 "irot", "x y z", "incremental/relative rotate",
         f_irot, 4, 4, FALSE,
-#endif
 "item", "region item [air]", "change item # or air code",
 	f_itemair,3,4,FALSE,
-#ifdef VIRTUAL_TRACKBALL
 "itran", "x y z", "incremental/relative translate using normalized screen coordinates",
         f_tran, 4, 4,FALSE,
-#endif
 "joint", "command [options]", "articualtion/animation commands",
 	f_joint, 1, MAXARGS, FALSE,
 "journal", "fileName", "record all commands and timings to journal",
@@ -486,10 +480,8 @@ static struct funtab funtab[] = {
 	f_tabobj, 2, MAXARGS,FALSE,
 "ted", "", "text edit a solid's parameters",
 	f_tedit,1,1,FALSE,
-#ifdef MULTI_ATTACH
 "tie", "pathName1 pathName2", "tie display manager pathName1 to display manager pathName2",
         f_tie, 3,3,FALSE,
-#endif
 "title", "string", "change the title",
 	f_title,1,MAXARGS,FALSE,
 "tol", "[abs #] [rel #] [norm #] [dist #] [perp #]", "show/set tessellation and calculation tolerances",
@@ -498,10 +490,8 @@ static struct funtab funtab[] = {
 	f_tops,1,1,FALSE,
 "track", "<parameters>", "adds tracks to database",
 	f_amtrack, 1, 27,FALSE,
-#ifdef VIRTUAL_TRACKBALL
 "tran", "x y z", "absolute translate using view coordinates",
         f_tran, 4, 4,FALSE,
-#endif
 "translate", "x y z", "trans object to x,y, z",
 	f_tr_obj,4,4,FALSE,
 "tree",	"object(s)", "print out a tree of all members of an object",
@@ -524,10 +514,8 @@ static struct funtab funtab[] = {
 	f_vrot_center, 5, 5,FALSE,
 "whichid", "ident(s)", "lists all regions with given ident code",
 	f_which_id, 2, MAXARGS,FALSE,
-#ifdef MULTI_ATTACH
 "winset", "pathname", "sets the window focus to the Tcl/Tk window with pathname",
         f_winset, 1, 2, FALSE,
-#endif
 "x", "lvl", "print solid table & vector list",
 	f_debug, 1,2,FALSE,
 "xpush", "object", "Experimental Push Command",
@@ -775,7 +763,6 @@ Tcl_Interp *interp;
 int argc;
 char **argv;
 {
-#ifdef MULTI_ATTACH
 /*XXX I need to come back later and fix this */
     register int i;
 
@@ -827,43 +814,6 @@ char **argv;
     
     Tcl_SetResult(interp, "getknob: invalid knob name", TCL_STATIC);
     return TCL_ERROR;
-#else
-    register int i;
-
-    static struct {
-	char *knobname;
-	double *variable;
-    } knobs[] = {
-	"ax", &absolute_rotate[X],
-	"ay", &absolute_rotate[Y],
-	"az", &absolute_rotate[Z],
-	"aX", &absolute_slew[X],
-	"aY", &absolute_slew[Y],
-	"aZ", &absolute_slew[Z],
-	"aS", &absolute_zoom,
-	"x", &rate_rotate[X],
-	"y", &rate_rotate[Y],
-	"z", &rate_rotate[Z],
-	"X", &rate_slew[X],
-	"Y", &rate_slew[Y],
-	"Z", &rate_slew[Z],
-	"S", &rate_zoom
-    };
-	
-    if( argc < 2 ) {
-	Tcl_SetResult(interp, "getknob: need a knob name", TCL_STATIC);
-	return TCL_ERROR;
-    }
-
-    for (i = 0; i < sizeof(knobs); i++)
-	if (strcmp(knobs[i].knobname, argv[1]) == 0) {
-	    sprintf(interp->result, "%lf", *(knobs[i].variable));
-	    return TCL_OK;
-	}
-    
-    Tcl_SetResult(interp, "getknob: invalid knob name", TCL_STATIC);
-    return TCL_ERROR;
-#endif
 }
 
 /*
@@ -1867,9 +1817,7 @@ set_e_axis_pos()
   tran_x = tran_y = tran_z = 0;
   rot_x = rot_y = rot_z = 0;
 
-#ifdef MULTI_ATTACH
   update_views = 1;
-#endif
 
   switch(es_int.idb_type){
   case	ID_ARB8:
@@ -1964,7 +1912,6 @@ set_e_axis_pos()
   }
 }
 
-#ifdef MULTI_ATTACH
 int
 f_winset( argc, argv )
 int     argc;
@@ -1989,9 +1936,7 @@ char    **argv;
   rt_log( "Unrecognized pathname - %s\n", argv[1] );
   return CMD_BAD;
 }
-#endif
 
-#ifdef VIRTUAL_TRACKBALL
 /*
  *                         S E T _ T R A N
  *
@@ -2135,4 +2080,3 @@ char *argv[];
 
   return CMD_OK;
 }
-#endif

@@ -37,6 +37,7 @@ MGED_EXTERN(void	Nu_input, (fd_set *input, int noblock) );
 static void	Nu_void();
 static int	Nu_int0();
 static unsigned Nu_unsign();
+void find_new_owner();
 
 struct dm dm_Null = {
 	Nu_int0, Nu_void,
@@ -126,14 +127,10 @@ extern struct dm dm_glx;
 extern struct dm dm_pex;
 #endif
 
-#ifdef MULTI_ATTACH
 extern struct _mged_variables default_mged_variables;
 struct dm_list head_dm_list;  /* list of active display managers */
 struct dm_list *curr_dm_list;
 void dm_var_init();
-#else
-struct dm *dmp = &dm_Null;	/* Ptr to current Display Manager package */
-#endif
 
 /* The [0] entry will be the startup default */
 static struct dm *which_dm[] = {
@@ -190,18 +187,11 @@ static struct dm *which_dm[] = {
 	0
 };
 
-#ifdef MULTI_ATTACH
 void
 release(name)
 char *name;
 {
-#else
-void
-release()
-{
-#endif
 	register struct solid *sp;
-#ifdef MULTI_ATTACH
 	struct dm_list *p;
 	struct dm_list *save_dm_list = (struct dm_list *)NULL;
 
@@ -211,8 +201,10 @@ release()
 	      continue;
 
 	    /* found it */
-	    save_dm_list = curr_dm_list;
-	    curr_dm_list = p;
+	    if(p != curr_dm_list){
+	      save_dm_list = curr_dm_list;
+	      curr_dm_list = p;
+	    }
 	    break;
 	  }
 
@@ -223,8 +215,9 @@ release()
 	}else{
 	  if( curr_dm_list == &head_dm_list )
 	    return;
+	  else
+	    p = curr_dm_list;
 	}
-#endif
 
 	/* Delete all references to display processor memory */
 	FOR_ALL_SOLIDS( sp )  {
@@ -236,18 +229,17 @@ release()
 
 	dmp->dmr_close();
 
-#ifdef MULTI_ATTACH
-	p = curr_dm_list;
-
-	/* name was not supplied so use next one */
 	if(save_dm_list == (struct dm_list *)NULL)
 	  curr_dm_list = (struct dm_list *)curr_dm_list->l.forw;
 	else
 	  curr_dm_list = save_dm_list;  /* put it back the way it was */
 
-	RT_LIST_DEQUEUE( &p->l );
-	if(!--rc)
+	if(!--p->s_info->_rc)
 	  rt_free( (char *)p->s_info, "release: s_info" );
+	else if(p->_owner)
+	  find_new_owner(p);
+
+	RT_LIST_DEQUEUE( &p->l );
 	rt_free( (char *)p, "release: curr_dm_list" );
 
 	/* 
@@ -257,10 +249,6 @@ release()
 	if( curr_dm_list == &head_dm_list &&
 	    (struct dm_list *)head_dm_list.l.forw != &head_dm_list)
 	  curr_dm_list = (struct dm_list *)head_dm_list.l.forw;
-	  
-#else
-	dmp = &dm_Null;
-#endif
 }
 
 void
@@ -270,7 +258,6 @@ char *name;
   register struct dm **dp;
   register struct solid *sp;
 
-#ifdef MULTI_ATTACH
   register struct dm_list *dmlp;
   register struct dm_list *o_dm_list;
 
@@ -317,53 +304,9 @@ char *name;
     return;
   }
   rt_log("attach(%s): BAD\n", name);
-#if 0
-  dmlp = (struct dm_list *)rt_malloc(sizeof(struct dm_list),
-				     "dm_list");
-  RT_LIST_APPEND(&head_dm_list.l, &dmlp->l);
-  curr_dm_list = dmlp;
-  curr_dm_list->_dmp = &dm_Null;
-  dm_var_init(o_dm_list);
-#else
+
   if(*dp != (struct dm *)0)
     release(NULL);
-#endif
-#else
-	if( dmp != &dm_Null )
-		release();
-
-	for( dp=which_dm; *dp != (struct dm *)0; dp++ )  {
-		if( strcmp( (*dp)->dmr_name, name ) != 0 )
-			continue;
-		dmp = *dp;
-
-		no_memory = 0;
-		if( dmp->dmr_open() )
-			break;
-
-		rt_log("ATTACHING %s (%s)\n",
-			dmp->dmr_name, dmp->dmr_lname);
-
-		FOR_ALL_SOLIDS( sp )  {
-			/* Write vector subs into new display processor */
-			if( (sp->s_bytes = dmp->dmr_cvtvecs( sp )) != 0 )  {
-				sp->s_addr = rt_memalloc( &(dmp->dmr_map), sp->s_bytes );
-				if( sp->s_addr == 0 )  break;
-				sp->s_bytes = dmp->dmr_load(sp->s_addr, sp->s_bytes);
-			} else {
-				sp->s_addr = 0;
-				sp->s_bytes = 0;
-			}
-		}
-		dmp->dmr_colorchange();
-		color_soltab();
-		dmp->dmr_viewchange( DM_CHGV_REDO, SOLID_NULL );
-		dmaflag++;
-		return;
-	}
-	rt_log("attach(%s): BAD\n", name);
-	dmp = &dm_Null;
-#endif
 }
 
 static int Nu_int0() { return(0); }
@@ -454,7 +397,6 @@ get_attached()
 void
 reattach()
 {
-#ifdef MULTI_ATTACH
   char *name;
 
   if(curr_dm_list == &head_dm_list)
@@ -464,10 +406,8 @@ reattach()
   release(NULL);
   attach(name);
   free((void *)name);
-#else
-	attach( dmp->dmr_name );		/* reattach */
-#endif
-	dmaflag = 1;
+
+  dmaflag = 1;
 }
 
 /*
@@ -505,15 +445,10 @@ char	**argv;
 int
 is_dm_null()
 {
-#ifdef MULTI_ATTACH
   return(curr_dm_list == &head_dm_list);
-#else
-	return dmp == &dm_Null;
-#endif
 }
 
 
-#ifdef MULTI_ATTACH
 int
 f_tie( argc, argv )
 int     argc;
@@ -537,8 +472,14 @@ char    **argv;
     return CMD_BAD;
   }
 
+  /* free p1's s_info struct if not being used */
   if(!--p1->s_info->_rc)
-    rt_free( (char *)p, "tie: s_info" );
+    rt_free( (char *)p1->s_info, "tie: s_info" );
+  /* otherwise if p1's s_info struct is being used and p1 is the owner */
+  else if(p1->_owner)
+    find_new_owner(p1);
+
+  p1->_owner = 0;
 
   /* p1 now shares p2's s_info */
   p1->s_info = p2->s_info;
@@ -546,8 +487,27 @@ char    **argv;
   /* increment the reference count */
   ++p2->s_info->_rc;
 
+  dmaflag = 1;
   return CMD_OK;
 }
+
+void
+find_new_owner( op )
+struct dm_list *op;
+{
+  struct dm_list *p;
+
+  for( RT_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+    /* first one found is the new owner */
+    if(op != p && p->s_info == op->s_info){
+      p->_owner = 1;
+      return;
+    }
+  }
+
+    rt_log("find_new_owner: Failed to find a new owner\n");
+}
+
 
 void
 dm_var_init(initial_dm_list)
@@ -561,11 +521,9 @@ struct dm_list *initial_dm_list;
   size_reset();
   new_mats();
 
-#ifdef VIRTUAL_TRACKBALL
   MAT_DELTAS_GET(orig_pos, toViewcenter);
-#endif
 
-  ++rc;
+  rc = 1;
   dmaflag = 1;
+  owner = 1;
 }
-#endif

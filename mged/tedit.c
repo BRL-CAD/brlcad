@@ -43,9 +43,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "rtgeom.h"
 #include "./ged.h"
 #include "./sedit.h"
-#ifdef MULTI_ATTACH
 #include "./dm.h"
-#endif
 
 #define LINELEN		256	/* max length of input line */
 #define	DEFEDITOR	"/bin/ed"

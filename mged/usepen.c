@@ -42,9 +42,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./menu.h"
 #include "./dm.h"
 
-#ifdef VIRTUAL_TRACKBALL
 #include "./sedit.h"
-#endif
 
 /*	Degree <-> Radian conversion factors	*/
 double	degtorad =  0.01745329251994329573;
@@ -272,15 +270,8 @@ illuminate( y )  {
 		}
 	}
 
-#ifdef MULTI_ATTACH
-	if( saveillump != illump ){
-	  update_views = 1;
-	  dmaflag++;
-	}
-#else
 	if( saveillump != illump )
-		dmaflag++;
-#endif
+	  update_views = 1;
 }
 
 /*
@@ -336,10 +327,7 @@ char *argv[];
     illump = sp;
   }
 
-#ifdef MULTI_ATTACH
   update_views = 1;
-#endif
-  dmaflag = 1;
   return CMD_OK;
 }
 

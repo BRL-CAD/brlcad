@@ -56,7 +56,6 @@ static void sl_tol();
 static void	sl_itol();
 static double	sld_xadc, sld_yadc, sld_1adc, sld_2adc, sld_distadc;
 
-#ifdef MULTI_ATTACH
 struct scroll_item scr_menu[] = {
 	{ "xslew",	sl_tol,		(fastf_t *)0,	"knob X" },
 	{ "yslew",	sl_tol,		(fastf_t *)1,	"knob Y" },
@@ -76,27 +75,6 @@ struct scroll_item sl_adc_menu[] = {
 	{ "tick",	sl_itol,	(fastf_t *)4, "knob distadc" },
 	{ "",		(void (*)())NULL, 0, "" }
 };
-#else
-struct scroll_item scr_menu[] = {
-	{ "xslew",	sl_tol,		&rate_slew[X],	"knob X" },
-	{ "yslew",	sl_tol,		&rate_slew[Y],	"knob Y" },
-	{ "zslew",	sl_tol,		&rate_slew[Z],	"knob Z" },
-	{ "zoom",	sl_tol,		&rate_zoom,	"knob S" },
-	{ "xrot",	sl_tol,		&rate_rotate[X],"knob x" },
-	{ "yrot",	sl_tol,		&rate_rotate[Y],"knob y" },
-	{ "zrot",	sl_tol,		&rate_rotate[Z],"knob z" },
-	{ "",		(void (*)())NULL, 0, "" }
-};
-
-struct scroll_item sl_adc_menu[] = {
-	{ "xadc",	sl_itol,	&sld_xadc, "knob xadc" },
-	{ "yadc",	sl_itol,	&sld_yadc, "knob yadc" },
-	{ "ang 1",	sl_itol,	&sld_1adc, "knob ang1" },
-	{ "ang 2",	sl_itol,	&sld_2adc, "knob ang2" },
-	{ "tick",	sl_itol,	&sld_distadc, "knob distadc" },
-	{ "",		(void (*)())NULL, 0, "" }
-};
-#endif
 
 /************************************************************************
  *									*
@@ -194,9 +172,6 @@ double				val;
 		val = 0.0;
 	}
 
-#ifndef MULTI_ATTACH
-	*(mptr->scroll_val) = val;
-#endif
 	rt_vls_printf( &dm_values.dv_string, "%s %f\n",
 		mptr->scroll_cmd, val );
 }
@@ -205,9 +180,6 @@ static void sl_itol( mptr, val )
 register struct scroll_item     *mptr;
 double				val;
 {
-#ifndef MULTI_ATTACH
-	*(mptr->scroll_val) = val;
-#endif
 	rt_vls_printf(&dm_values.dv_string, "%s %d\n",
 		mptr->scroll_cmd,
 		(int)(val * 2047) );
@@ -235,10 +207,8 @@ int y_top;
 	struct scroll_item	*mptr;
 	struct scroll_item	**m;
 	int		xpos;
-#ifdef MULTI_ATTACH
 	int second_menu = -1;
 	fastf_t f;
-#endif
 
 	/* XXX this should be driven by the button event */
 	if( adcflag && scroll_enabled )
@@ -250,7 +220,6 @@ int y_top;
 	y = y_top;
 
 	for( m = &scroll_array[0]; *m != SCROLL_NULL; m++ )  {
-#ifdef MULTI_ATTACH
 	  ++second_menu;
 	  for( mptr = *m; mptr->scroll_string[0] != '\0'; mptr++ )  {
 	    y += SCROLL_DY;		/* y is now bottom line pos */
@@ -309,21 +278,11 @@ int y_top;
 	      xpos = f * 2047;
 	    else
 	      xpos = f * -MENUXLIM;
-#else
-		for( mptr = *m; mptr->scroll_string[0] != '\0'; mptr++ )  {
-		        y += SCROLL_DY;		/* y is now bottom line pos */
-			if( *(mptr->scroll_val) >= 0 )  {
-			     	xpos = *(mptr->scroll_val) * 2047;
-			} else {
-				/* The menu gets in the way */
-			     	xpos = *(mptr->scroll_val) * -MENUXLIM;
-			}
-#endif
 
-			dmp->dmr_puts( mptr->scroll_string,
-				xpos, y-SCROLL_DY/2, 0, DM_RED );
-			dmp->dmr_2d_line(XMAX, y, MENUXLIM, y, 0);
-		}
+	    dmp->dmr_puts( mptr->scroll_string,
+			   xpos, y-SCROLL_DY/2, 0, DM_RED );
+	    dmp->dmr_2d_line(XMAX, y, MENUXLIM, y, 0);
+	  }
 	}
 
 

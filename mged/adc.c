@@ -38,24 +38,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 /*
- * These variables are global for the benefit of
- * the display portion of dotitles.
- */
-#ifndef MULTI_ATTACH
-fastf_t	curs_x;		/* cursor X position */
-fastf_t	curs_y;		/* cursor Y position */
-fastf_t	c_tdist;		/* Cursor tick distance */
-fastf_t	angle1;		/* Angle to solid wiper */
-fastf_t	angle2;		/* Angle to dashed wiper */
-
-static int	dv_xadc;		/* A/D cursor -2048 <= adc <= +2047 */
-static int	dv_yadc;
-static int	dv_1adc;		/* angle 1 for A/D cursor */
-static int	dv_2adc;		/* angle 2 for A/D cursor */
-static int	dv_distadc;		/* Tick distance */
-#endif
-
-/*
  *			A D C U R S O R
  *
  * Compute and display the angle/distance cursor.
