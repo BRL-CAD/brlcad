@@ -439,11 +439,14 @@ CONST struct rt_tol	*tol;
  *  the caller to ensure that there are no non-explicit intersections.
  *
  *  Upon return, s2 will no longer exist.
+ *
+ *  The 'tol' arg is used strictly for printing purposes.
  */
 void
-nmg_js( s1, s2 )
+nmg_js( s1, s2, tol )
 register struct shell	*s1;		/* destination */
 register struct shell	*s2;		/* source */
+CONST struct rt_tol	*tol;
 {
 	struct faceuse	*fu2;
 	struct faceuse	*nextfu;
@@ -456,6 +459,11 @@ register struct shell	*s2;		/* source */
 
 	NMG_CK_SHELL(s1);
 	NMG_CK_SHELL(s2);
+	RT_CK_TOL(tol);
+
+	if (rt_g.NMG_debug & DEBUG_BASIC)  {
+		rt_log("nmg_js(s1=x%x, s2=x%x) START\n", s1, s2);
+	}
 
 	if( rt_g.NMG_debug & DEBUG_VERIFY )
 		nmg_vshell( &s1->r_p->s_hd, s1->r_p );
@@ -490,14 +498,14 @@ register struct shell	*s2;		/* source */
 		 */
 		fu1 = nmg_find_fu_with_fg_in_s( s1, fu2 );
 		if( fu1 )  {
-rt_log("nmg_js(): shared face_g, doing nmg_jf()\n");
+			if (rt_g.NMG_debug & DEBUG_BASIC)
+				rt_log("nmg_js(): shared face_g, doing nmg_jf()\n");
 			nmg_jf( fu1, fu2 );
 			/* fu2 pointer is invalid here */
 			fu2 = fu1;
 		} else {
 			nmg_mv_fu_between_shells( s1, s2, fu2 );
 		}
-		nmg_face_fix_radial_parity( fu2 );
 
 		fu2 = nextfu;
 	}
@@ -577,8 +585,55 @@ rt_log("nmg_js(): shared face_g, doing nmg_jf()\n");
 	nmg_ks( s2 );
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		rt_log("nmg_js(s1=x%x, s2=%d)\n", s1, s2);
+		rt_log("nmg_js(s1=x%x, s2=x%x) END\n", s1, s2);
 	}
+}
+
+/*
+ *			N M G _ I N V E R T _ S H E L L
+ *
+ *  Reverse the surface normals, and invert the orientation state of
+ *  all faceuses in a shell.
+ * 
+ *  This turns the shell "inside out", such as might be needed for the
+ *  right hand side term of a subtraction operation.
+ *
+ *  While this function is operating, the parity of faceuses radially
+ *  around edgeuses is disrupted, hence this atomic interface to
+ *  invert the shell.
+ *
+ *  The 'tol' argument is used strictly for printing.
+ */
+void
+nmg_invert_shell( s, tol )
+struct shell		*s;
+CONST struct rt_tol	*tol;
+{
+	struct model	*m;
+	struct faceuse	*fu;
+	char		*tags;
+
+	NMG_CK_SHELL(s);
+	m = s->r_p->m_p;
+	NMG_CK_MODEL(m);
+	RT_CK_TOL(tol);
+
+	if (rt_g.NMG_debug & DEBUG_BASIC)  {
+		rt_log("nmg_invert_shell(x%x)\n", s);
+	}
+
+	/* Allocate map of faces visited */
+	tags = rt_calloc( m->maxindex+1, 1, "nmg_invert_shell() tags[]" );
+
+	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
+		NMG_CK_FACEUSE(fu);
+		/* By tagging on faces, marks fu and fumate together */
+		if( NMG_INDEX_TEST( tags, fu->f_p ) )  continue;
+		NMG_INDEX_SET( tags, fu->f_p );
+		/* Process fu and fumate together */
+		nmg_reverse_face(fu);
+	}
+	rt_free( tags, "nmg_invert_shell() tags[]" );
 }
 
 /************************************************************************
@@ -1154,7 +1209,6 @@ struct faceuse *fu;
 	return( ret_val );
 }
 
-
 /*
  *			N M G _ R E V E R S E _ F A C E
  *
@@ -1184,6 +1238,14 @@ struct faceuse *fu;
  *	    OT_OPPOSITE		     OT_SAME        \
  *						     N
  *
+ *
+ *  Also note that this reverses the same:opposite:opposite:same
+ *  parity radially around each edge.  This can create parity errors
+ *  until all faces of this shell have been processed.
+ *
+ *  Applications programmers should use nmg_invert_shell(),
+ *  which does not have this problem.
+ *  This routine is for internal use only.
  */
 void
 nmg_reverse_face( fu )
@@ -1227,7 +1289,7 @@ register struct faceuse	*fu;
 	}
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		rt_log("nmg_reverse_face(fu=x%x)\n", fu);
+		rt_log("nmg_reverse_face(fu=x%x) fumate=x%x\n", fu, fumate);
 	}
 }
 
@@ -1249,10 +1311,28 @@ register struct faceuse	*fu;
  *
  *  XXX Note that this routine will not work right in the presence of
  *  XXX dangling faces.
+ *
+ *  Note that this routine can't be used incrementally, because
+ *  after an odd number (like one) of faceuses have been "fixed",
+ *  there is an inherrent parity error, which will cause wrong
+ *  decisions to be made.  Therefore, *all* faces have to be moved from
+ *  one shell to another before the radial parity can be "fixed".
+ *  Even then, this isn't going to work right unless we are given
+ *  a list of all the "suspect" faceuses, so the initial parity
+ *  value can be properly established.
+ *
+ *  XXXX I am of the opinion this routine is neither useful nor correct
+ *  XXXX in it's present form, except for limited special cases.
+ *
+ *  The 'tol' arg is used strictly for printing purposes.
+ *
+ *  Returns -
+ *	count of number of edges fixed.
  */
 int
-nmg_face_fix_radial_parity( fu )
-struct faceuse *fu;
+nmg_face_fix_radial_parity( fu, tol )
+struct faceuse		*fu;
+CONST struct rt_tol	*tol;
 {
 	struct loopuse *lu;
 	struct edgeuse *eu;
@@ -1263,6 +1343,7 @@ struct faceuse *fu;
 	NMG_CK_FACEUSE( fu );
 	s = fu->s_p;
 	NMG_CK_SHELL(s);
+	RT_CK_TOL(tol);
 
 	/* Make sure we are now dealing with the OT_SAME faceuse */
 	if( fu->orientation == OT_SAME )
@@ -1331,6 +1412,11 @@ struct faceuse *fu;
 			if( sbefore->up.lu_p->up.fu_p->orientation == OT_SAME )
 				continue;
 
+#if 0
+rt_log("sbefore eu=x%x, before=x%x, eu=x%x, eumate=x%x, after=x%x\n",
+			sbefore, before, eu, eumate, after );
+nmg_pr_fu_around_eu(eu, tol );
+#endif
 			/*
 			 *  Rearrange order to be: before, eumate, eu, after.
 			 *  NOTE: do NOT use sbefore here.
@@ -1345,6 +1431,14 @@ struct faceuse *fu;
 				rt_log("nmg_face_fix_radial_parity() exchanging eu=x%x & eumate=x%x on edge x%x\n",
 					eu, eumate, eu->e_p);
 			}
+#if 0
+			/* Can't do this incrementally, it blows up after 1st "fix" */
+			if( rt_g.NMG_debug )  {
+nmg_pr_fu_around_eu(eu, tol );
+				if( nmg_check_radial( eu, tol ) )
+					rt_bomb("nmg_face_fix_radial_parity(): nmg_check_radial failed\n");
+			}
+#endif
 		}
 	}
 
@@ -1474,7 +1568,6 @@ register struct faceuse	*src_fu;
 		nmg_move_fu_fu(dest_fu, src_fu);
 		nmg_move_fu_fu(dest_fu->fumate_p, src_fu->fumate_p);
 	} else {
-		/* XXX call nmg_reverse_face_and_radials() here? */
 		nmg_move_fu_fu(dest_fu, src_fu->fumate_p);
 		nmg_move_fu_fu(dest_fu->fumate_p, src_fu);
 	}
