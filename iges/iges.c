@@ -581,13 +581,14 @@ int entry[];
 }
 
 int
-write_freeform( fp , s , de , c )
-FILE *fp;	/* output file */
-char s[];	/* the string to be output (must not contain any NL's) */
-int de;		/* the directory entry # that this belongs to (ignored for Global section) */
-char c;		/* 'G' for global section
+write_freeform(
+FILE *fp,	/* output file */
+char s[],	/* the string to be output (must not contain any NL's) */
+int de,		/* the directory entry # that this belongs to (ignored for Global section) */
+char c)		/* 'G' for global section
 		 * 'P' for parameter section
 		 * 'S' for start section */
+
 {
 	int paramlen;
 	int start_seq;

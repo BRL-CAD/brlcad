@@ -822,7 +822,7 @@ struct faceuse *fu;
 	struct edgeuse *eu;
 	struct vertexuse *vu;
 	fastf_t *knots;
-	fastf_t u,v;
+	fastf_t u=0,v=0;
 	fastf_t *ctl_points;
 	int edge_no=0;
 	int pt_type;
@@ -849,7 +849,7 @@ struct faceuse *fu;
 	/* assign vertex geometry */
 	for( BU_LIST_FOR( eu, edgeuse, &lu->down_hd ) )
 	{
-		int u_index,v_index;
+		int u_index=0,v_index=0;
 
 		NMG_CK_EDGEUSE( eu );
 		vu = eu->vu_p;
@@ -976,7 +976,7 @@ struct shell *s;
 	int entity_type;
 	int surf_de;
 	int has_outer_boundary,inner_loop_count,outer_loop;
-	int *inner_loop;
+	int *inner_loop=NULL;
 	int i;
 	int lu_uv_orient;
 

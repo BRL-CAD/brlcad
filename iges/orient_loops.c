@@ -124,7 +124,7 @@ Orient_face_loops( fu )
 struct faceuse *fu;
 {
 	struct loopuse *lu;
-	struct loopuse *lu_outer;
+	struct loopuse *lu_outer=NULL;
 	struct loop_list *lptr;
 	int orient=OT_SAME;
 

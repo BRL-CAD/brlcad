@@ -166,14 +166,14 @@ char *argv[];
 				solid_name = optarg;
 				break;
 			case 'x':
-				sscanf( optarg, "%x", &rt_g.debug );
+				sscanf( optarg, "%x", (unsigned int *)&rt_g.debug );
 				if( RT_G_DEBUG & DEBUG_MEM )
 					bu_debug |= BU_DEBUG_MEM_LOG;
 				if( RT_G_DEBUG & DEBUG_MEM_FULL )
 					bu_debug |= BU_DEBUG_MEM_CHECK;
 				break;
 			case 'X':
-				sscanf( optarg, "%x", &rt_g.NMG_debug );
+				sscanf( optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
 				break;
 			default:
 				usage();

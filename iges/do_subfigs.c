@@ -39,7 +39,7 @@ Do_subfigs()
 		int subfigdef_index;
 		int no_of_members;
 		int *members;
-		char *name;
+		char *name=NULL;
 		struct wmember head2;
 		double mat_scale[3];
 		int non_unit;
