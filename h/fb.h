@@ -51,6 +51,7 @@ typedef struct  {
  *  the library routines.
  */
 typedef struct  {
+	int	if_magic;
 	/* Static information: per device TYPE.	*/
 	int	(*if_open)();		/* open device		*/
 	int	(*if_close)();		/* close device		*/
@@ -101,6 +102,8 @@ typedef struct  {
 		long	l;
 	} u1, u2, u3, u4, u5, u6;
 } FBIO;
+
+#define FB_MAGIC	0xfbfb00fb
 
 #ifdef NULL
 #define PIXEL_NULL	(RGBpixel *) NULL
@@ -225,5 +228,18 @@ extern int	fb_sim_getcursor();
 #define	FB_DEBUG_CMAP	2	/* Contents of colormaps */
 #define	FB_DEBUG_RW	4	/* Contents of reads and writes */
 #define	FB_DEBUG_BRW	8	/* Buffered IO rpixel and wpixel */
+
+#define FB_CKMAG(_ptr, _magic, _str)	\
+	if( !(_ptr) )  { \
+		fb_log("ERROR: null %s ptr, file %s, line %d\n", \
+			_str, __FILE__, __LINE__ ); \
+		abort(); \
+	} else if( *((long *)(_ptr)) != (_magic) )  { \
+		fb_log("ERROR: bad %s ptr x%x, s/b x%x, was x%x, file %s, line %d\n", \
+			_str, _ptr, _magic, \
+			*((long *)(_ptr)), __FILE__, __LINE__ ); \
+		abort(); \
+	}
+#define FB_CK_FBIO(_p)	FB_CKMAG(_p, FB_MAGIC, "FBIO" )
 
 #endif /* INCL_FB */
