@@ -30,6 +30,7 @@
 /* If the own routines are used, this is the size of the buffer in bytes.
    You can shrink if needed. */
 #define own_BUsize 50000
+/* (3*24*1024) */
 
 
 /*
@@ -101,7 +102,7 @@ static FILE *fin=0,*fout=0;
 static char *pcdname=0;
 static char nbuf[100];
 static uBYTE sbuffer[SECSIZE];
-static int keep_ycc;
+static int do_bw;
 
 /* Using preprocessor for inline-procs */
 #ifdef DEBUG
@@ -162,15 +163,15 @@ enum ERRORS e;
 		fprintf(stderr,"Usage: hpcdtoppm [options] pcd-file [ppm-file]\n\n");
 		fprintf(stderr,"Opts:\n");
 		fprintf(stderr,"     -x Overskip mode (tries to improve color quality.)\n");
-		fprintf(stderr,"     -i Give some (buggy) informations from fileheader\n");
-		fprintf(stderr,"     -ycc suppress ycc to rgb conversion \n");
-		fprintf(stderr,"        (Experimentally, doesn't have deeper sense)\n\n");
+		fprintf(stderr,"     -i Give some information from fileheader\n");
+		fprintf(stderr,"     -b write .bw file instead of .pix\n");
 		fprintf(stderr,"     -0 Extract thumbnails from Overview file\n");
 		fprintf(stderr,"     -1 Extract  128x192  from Image file\n");
 		fprintf(stderr,"     -2 Extract  256x384  from Image file\n");
 		fprintf(stderr,"     -3 Extract  512x768  from Image file\n");
 		fprintf(stderr,"     -4 Extract 1024x1536 from Image file\n");
 		fprintf(stderr,"     -5 Extract 2048x3072 from Image file\n");
+		fprintf(stderr,"                 -n  -w\n");
 		fprintf(stderr,"\n");
 		break;
 	case E_OPT:    
@@ -263,7 +264,7 @@ char **argv;
 	enum ERRORS eret;
 	implane Luma, Chroma1,Chroma2;
 
-	do_info=do_overskip=keep_ycc=0;
+	do_info=do_overskip=do_bw=0;
 
 	ASKIP;
 
@@ -288,9 +289,9 @@ char **argv;
 		}
 
 
-		if(!strcmp(opt,"ycc"))
+		if(!strcmp(opt,"b"))
 		{ 
-			if (!keep_ycc) keep_ycc=1;
+			if (!do_bw) do_bw=1;
 			else error(E_ARG);
 			continue;
 		}
@@ -363,6 +364,7 @@ char **argv;
 
 	if(do_info) druckeid();
 
+	fout = stdout;
 	switch(size)
 	{
 	case S_Base16: 
@@ -391,11 +393,6 @@ char **argv;
 		}
 
 		ycctorgb(w,h,&Luma,&Chroma1,&Chroma2);
-		/* Now Luma holds red, Chroma1 hold green, Chroma2 holds blue */
-
-		fout=stdout;
-		writepicture(w,h,&Luma,&Chroma1,&Chroma2);
-
 		break;
 
 	case S_Base4:  
@@ -422,12 +419,8 @@ char **argv;
 			SEEK(L_Head+L_Base16+L_Base4+1);
 			error(readplain(2*w,2*h,nullplane,&Chroma1,&Chroma2));
 		}
+
 		ycctorgb(w,h,&Luma,&Chroma1,&Chroma2);
-		/* Now Luma holds red, Chroma1 hold green, Chroma2 holds blue */
-
-		fout=stdout;
-		writepicture(w,h,&Luma,&Chroma1,&Chroma2);
-
 		break;
 
 	case S_Base:   
@@ -469,11 +462,6 @@ char **argv;
 			halve(&Chroma2);
 		}
 		ycctorgb(w,h,&Luma,&Chroma1,&Chroma2);
-		/* Now Luma holds red, Chroma1 hold green, Chroma2 holds blue */
-
-		fout=stdout;
-		writepicture(w,h,&Luma,&Chroma1,&Chroma2);
-
 		break;
 
 	case S_4Base:  
@@ -531,11 +519,6 @@ char **argv;
 
 		}
 		ycctorgb(w,h,&Luma,&Chroma1,&Chroma2);
-		/* Now Luma holds red, Chroma1 hold green, Chroma2 holds blue */
-
-		fout=stdout;
-		writepicture(w,h,&Luma,&Chroma1,&Chroma2);
-
 		break;
 
 	case S_16Base: 
@@ -573,11 +556,6 @@ char **argv;
 		interpolate(&Chroma2);
 
 		ycctorgb(w,h,&Luma,&Chroma1,&Chroma2);
-		/* Now Luma holds red, Chroma1 hold green, Chroma2 holds blue */
-
-		fout=stdout;
-		writepicture(w,h,&Luma,&Chroma1,&Chroma2);
-
 		break;
 
 	case S_Over:   
@@ -599,12 +577,10 @@ char **argv;
 			interpolate(&Chroma1);
 			interpolate(&Chroma2);
 
-			ycctorgb(w,h,&Luma,&Chroma1,&Chroma2);
-			/* Now Luma holds red, Chroma1 hold green, Chroma2 holds blue */
-
 			sprintf(nbuf,"overview%04d",bildnr+1);
 			if (!(fout=fopen(nbuf,"w"))) error(E_WRITE);
-			writepicture(w,h,&Luma,&Chroma1,&Chroma2);
+			ycctorgb(w,h,&Luma,&Chroma1,&Chroma2);
+			fclose(fout);
 		}
 		break;
 
@@ -616,6 +592,9 @@ char **argv;
 }
 #undef ASKIP
 
+/*
+ *			R E A D P L A I N
+ */
 static enum ERRORS readplain(w,h,l,c1,c2)
 dim w,h;
 implane *l,*c1,*c2;
@@ -779,12 +758,20 @@ implane *p;
 	}
 }
 
+#define BUinit {BUcount=0;BUptr=BUF;}
+#define BUflush {fwrite(BUF,BUptr-BUF,1,fout);BUinit; }
+#define BUwrite(r,g,b) {if(BUcount>=own_BUsize/3) BUflush; \
+	*BUptr++ = r ; *BUptr++ = g ; *BUptr++ = b ; BUcount++;}
+#define BUwrite1(r) {if(BUcount>=own_BUsize) BUflush; \
+	*BUptr++ = r ; BUcount++;}
+
 #define BitShift 12
 
 /*
  *			Y C C T O R G B
  *
- *  Convert in place.
+ *  Convert and output.
+ *  If "do_bw" flag is set, just output luminance channel.
  */
 static void ycctorgb(w,h,l,c1,c2)
 dim w,h;
@@ -796,13 +783,15 @@ implane *l,*c1,*c2;
 	long L;
 	static int init=0;
 	static long XL[256],XC1[256],XC2[256],XC1g[256],XC2g[256];
+	static uBYTE BUF[own_BUsize];
+	register uBYTE	*BUptr;
+	int   BUcount;
 
 	melde("ycctorgb\n");
 	if((!l ) || ( l->iwidth != w ) || ( l->iheight != h) || (! l->im)) error(E_INTERN);
 	if((!c1) || (c1->iwidth != w ) || (c1->iheight != h) || (!c1->im)) error(E_INTERN);
 	if((!c2) || (c2->iwidth != w ) || (c2->iheight != h) || (!c2->im)) error(E_INTERN);
 
-	if(keep_ycc) return;
 
 	if(!init)
 	{
@@ -817,15 +806,24 @@ implane *l,*c1,*c2;
 		}
 	}
 
-	for(y=0;y<h;y++)
-	{
-		/* Converted values are at 0*y */
+	BUinit;
+	if(do_bw)  {
+		for( y=h-1; y>=0; y-- )  {
+			pl =  l->im + y *  l->mwidth;
+			for(x=0;x<w;x++)  {
+				L = XL[*pl++]>>BitShift;
+				NORM(L);
+				BUwrite1(L);
+			}
+		}
+	}
+
+	for( y=h-1; y>=0; y-- )  {
 		pl =  l->im + y *  l->mwidth;
 		pc1= c1->im + y * c1->mwidth;
 		pc2= c2->im + y * c2->mwidth;
 
-		for(x=0;x<w;x++)
-		{
+		for(x=0;x<w;x++)  {
 			L = XL[*pl];
 			red  =(L + XC2[*pc2]               )>>BitShift;
 			green=(L + XC1g[*pc1] + XC2g[*pc2] )>>BitShift;
@@ -835,42 +833,15 @@ implane *l,*c1,*c2;
 			NORM(green);
 			NORM(blue);
 
-			*(pl++ )=red;
-			*(pc1++)=green;
-			*(pc2++)=blue;
+			BUwrite(red,green,blue);
+			pl++;
+			pc1++;
+			pc2++;
 		}
-	}
-}
-#undef BitShift
-
-static void writepicture(w,h,r,g,b)
-dim w,h;
-implane *r,*g,*b;
-{
-	dim x,y;
-	register uBYTE *pr,*pg,*pb;
-	static uBYTE BUF[own_BUsize],*BUptr;
-	int   BUcount;
-
-#define BUinit {BUcount=0;BUptr=BUF;}
-#define BUflush {fwrite(BUF,BUcount*3,1,fout);BUinit; }
-#define BUwrite(r,g,b) {if(BUcount>=own_BUsize/3) BUflush; *BUptr++ = r ; *BUptr++ = g ; *BUptr++ = b ; BUcount++;}
-
-
-	melde("writepicture\n");
-	if((!r) || (r->iwidth != w ) || (r->iheight != h) || (!r->im)) error(E_INTERN);
-	if((!g) || (g->iwidth != w ) || (g->iheight != h) || (!g->im)) error(E_INTERN);
-	if((!b) || (b->iwidth != w ) || (b->iheight != h) || (!b->im)) error(E_INTERN);
-
-	BUinit;
-	for( y=h-1; y>=0; y-- )  {
-		pr= r->im + y * r->mwidth;
-		pg= g->im + y * g->mwidth;
-		pb= b->im + y * b->mwidth;
-		for(x=0;x<w;x++) BUwrite(*pr++,*pg++,*pb++);
 	}
 	BUflush;
 }
+#undef BitShift
 
 
 struct ph1 
