@@ -34,6 +34,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "rtlist.h"
+#include "raytrace.h"
 #include "wdb.h"
 
 
@@ -653,6 +654,14 @@ char	*name;
 	int	k;
 	register int	m;
 	point_t	cent;			/* centroid of arbn */
+	struct rt_tol	tol;
+
+	/* XXX The tolerance here is sheer guesswork */
+	tol.magic = RT_TOL_MAGIC;
+	tol.dist = 0.005;
+	tol.dist_sq = tol.dist * tol.dist;
+	tol.perp = 1e-6;
+	tol.para = 1 - tol.perp;
 
 	npt = getint( scard, 10+0*10, 10 );
 	npe = getint( scard, 10+1*10, 10 );
@@ -732,8 +741,7 @@ bad:
 			} else {
 				VMOVE( c, &input_points[((s)-1)*3] );
 			}
-			/* XXX The tol_sq here is sheer guesswork */
-			if( rt_mk_plane_3pts( eqn[cur_eq], a,b,c, 0.00001 ) < 0 )  {
+			if( rt_mk_plane_3pts( eqn[cur_eq], a,b,c, &tol ) < 0 )  {
 				printf("arbn degenerate plane\n");
 				VPRINT("a", a);
 				VPRINT("b", b);
