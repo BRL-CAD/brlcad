@@ -1322,7 +1322,7 @@ char	*buf;
 		(void) fb_seek( fbp, x, y );
 		for( ; x <= rgt; x++ )
 			{
-			(void) fb_rpixel( fbp, cur );
+			(void) fb_rpixel( fbp, (RGBpixel *) cur );
 			if(	cur[RED] == old[RED]
 			    &&	cur[GRN] == old[GRN]
 			    &&	cur[BLU] == old[BLU]
@@ -1891,7 +1891,7 @@ RGBpixel	pixel;
 	(void) fb_read( fbp, cursor_pos.p_x, cursor_pos.p_y, pixel, 1 );
 #else
 	(void) fb_seek( fbp, cursor_pos.p_x, cursor_pos.p_y );
-	(void) fb_rpixel( fbp, pixel );
+	(void) fb_rpixel( fbp, (RGBpixel *) pixel );
 #endif
 	return;
 	}
