@@ -292,7 +292,7 @@ char *av[];
 		if (scr_height)
 			scr_height *= 400.0 / (double)param.i;
 		else
-			scr_height = width * 400.0 / (double)param.i;
+			scr_height = height * 400.0 / (double)param.i;
 	} else if (conv == IPU_MAG_FACTOR) {
 		if (scr_width)
 			scr_width *= 400.0 / (double)param.i;
@@ -301,7 +301,7 @@ char *av[];
 		if (scr_height)
 			scr_height *= 400.0 / (double)param.i;
 		else
-			scr_height = width * 400.0 / (double)param.i;
+			scr_height = height * 400.0 / (double)param.i;
 	}
 
 	/* Wait for printer to finish what it was doing */
