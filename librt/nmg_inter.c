@@ -1,8 +1,5 @@
 #define NEWLINE 1	/* "New" algorithm:  isect line with 2 faces in 2d */
 
-/* XXX Move to nmg.h */
-#define NMG_TBL_LASTADDR(p)	((p)->buffer + (p)->end - 1)
-
 /* XXX move to vmath.h */
 #define V2PRINT(a,b)	\
 	rt_log("%s (%g, %g)\n", a, V2ARGS(b) );
@@ -954,6 +951,15 @@ struct nmg_inter_struct	*is;
 				neu++;
 		}
 	}
+
+	/* Now join 'em up */
+	for( i=0; i < neu-1; i++ )  {
+		for( j=i+1; j < neu; j++ )  {
+			if( !NMG_ARE_EUS_ADJACENT(eu[i],eu[j]) )  continue;
+			nmg_radial_join_eu( eu[i], eu[j], &(is->tol) );
+		}
+	}
+
 	if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 		rt_log("nmg_break_2colinear_edge2p(eu1=x%x, eu2=x%x) #eu=%d\n",
 			eu1, eu2, neu);
