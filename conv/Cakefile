@@ -8,7 +8,7 @@
 #define PRODUCTS	asc2g g2asc conv-vg2g pix2asc asc2pix euclid-g \
 			g-euclid euclid_format euclid_unformat tankill-g g-tankill \
 			viewpoint-g dxf-g g-nmg g-euclid1 fast4-g proe-g \
-			asc-nmg nmg-rib g-vrml g-acad cy-g nastran-g g-wave \
+			asc-nmg nmg-rib g-vrml g-x3d g-acad cy-g nastran-g g-wave \
 			nmg-bot g-shell.rect stl-g poly-bot dbupgrade enf-g
 #define	SRCSUFF	.c
 #define MANSECTION	1
@@ -112,6 +112,9 @@ nmg-rib: nmg-rib.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP
 
 g-vrml: g-vrml.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP	
 	CC LDFLAGS g-vrml.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBTCL LIBTCL_LIBES LIBES -o g-vrml
+
+g-x3d: g-x3d.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP	
+	CC LDFLAGS g-x3d.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBTCL LIBTCL_LIBES LIBES -o g-x3d
 
 dbupgrade: dbupgrade.o LIBRT_DEP LIBBN_DEP LIBBU_DEP LIBTCL_DEP	
 	CC LDFLAGS dbupgrade.o LIBWDB LIBRT LIBBN LIBBU LIBBU_LIBES LIBTCL LIBTCL_LIBES LIBES -o dbupgrade
