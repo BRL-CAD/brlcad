@@ -38,6 +38,15 @@ static char RCSid[] = "$Header$";
 
 #define MAX(A, B) ((A) > (B) ? (A) : (B))
 
+/* macro to determine if one bounding box in entirely within another
+ * also returns true if the boxes are the same
+ */
+#define V3RPP1_IN_RPP2( _lo1 , _hi1 , _lo2 , _hi2 )	( \
+	(_lo1)[X] >= (_lo2)[X] && (_hi1)[X] <= (_hi2)[X] && \
+	(_lo1)[Y] >= (_lo2)[Y] && (_hi1)[Y] <= (_hi2)[Y] && \
+	(_lo1)[Z] >= (_lo2)[Z] && (_hi1)[Z] <= (_hi2)[Z] )
+
+
 RT_EXTERN( fastf_t nmg_loop_plane_area , ( struct loopuse *lu , plane_t pl ) );
 RT_EXTERN( struct faceuse *nmg_add_loop_to_face , (struct shell *s, struct faceuse *fu, struct vertex *verts[], int n, int dir ) );
 
@@ -410,6 +419,84 @@ int	reg_id;
 	/* fix the normals */
 	s = RT_LIST_FIRST( shell , &r->s_hd );
 	nmg_fix_normals( s );
+
+	/* if the shell we just built has a void shell inside, nmg_fix_normals will
+	 * point the normals of the void shell in the wrong direction. This section
+	 * of code looks for such a situation and reverses the normals of the void shell
+	 *
+	 * first decompose the shell into maximally connected shells
+	 */
+	if( nmg_decompose_shell( s , &tol ) > 1 )
+	{
+		/* This shell has more than one part */
+		struct shell *outer_shell=NULL;
+		long *flags;
+
+		flags = (long *)rt_calloc( m->maxindex , sizeof( long ) , "euclid-g: flags" );
+
+		for( RT_LIST_FOR( s , shell , &r->s_hd ) )
+		{
+			struct shell *s2;
+
+			int is_outer=1;
+
+			/* insure that bounding boxes are available */
+			if( !s->sa_p )
+				nmg_shell_a( s , &tol );
+
+			/* Check if this shells contains all the others
+			 * In TANKILL, there should only be one outer shell
+			 */
+			for( RT_LIST_FOR( s2 , shell , &r->s_hd ) )
+			{
+				if( !s2->sa_p )
+
+					nmg_shell_a( s2 , &tol );
+
+				if( !V3RPP1_IN_RPP2( s2->sa_p->min_pt , s2->sa_p->max_pt ,
+						    s->sa_p->min_pt , s->sa_p->max_pt ) )
+				{
+					/* doesn't contain shell s2, so it's not an outer shell */
+					is_outer = 0;
+					break;
+				}
+			}
+			if( is_outer )
+			{
+				outer_shell = s;
+				break;
+			}
+		}
+		if( !outer_shell )
+		{
+			rt_log( "euclid-g: Could not find outer shell for component code %d\n" , cur_id );
+			outer_shell = RT_LIST_FIRST( shell , &r->s_hd );
+		}
+
+		/* reverse the normals for each void shell
+		 * and merge back into one shell */
+		s = RT_LIST_FIRST( shell , &r->s_hd );
+		while( RT_LIST_NOT_HEAD( s , &r->s_hd ) )
+		{
+			struct faceuse *fu;
+			struct shell *next_s;
+
+			if( s == outer_shell )
+			{
+				s = RT_LIST_PNEXT( shell , s );
+				continue;
+			}
+
+			next_s = RT_LIST_PNEXT( shell , s );
+			fu = RT_LIST_FIRST( faceuse , &s->fu_hd );
+			nmg_reverse_face( fu );
+			nmg_propagate_normals( fu , flags , &tol );
+			nmg_js( outer_shell , s , &tol );
+			s = next_s;
+		}
+		rt_free( (char *)flags , "euclid-g: flags" );
+	}
+	s = RT_LIST_FIRST( shell , &r->s_hd );
 	
 	if( nmg_ck_closed_surf( s , &tol ) )
 		fprintf( stderr , "Warning: Region %d is not a closed surface\n" , reg_id );
