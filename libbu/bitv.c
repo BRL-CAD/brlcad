@@ -172,3 +172,102 @@ register CONST struct bu_bitv	*bv;
 	bu_log("%s", bu_vls_addr( &v ) );
 	bu_vls_free( &v );
 }
+
+/*
+ *			B U _ B I T V _ T O _ H E X
+ *
+ *	Convert a bit vector to an ascii string of hex digits.
+ *	The string is from MSB to LSB (bytes and bits).
+ */
+void
+bu_bitv_to_hex( v, bv )
+struct bu_vls *v;
+register CONST struct bu_bitv	*bv;
+{
+	int word_count, byte_no;
+
+	BU_CK_VLS( v );
+	BU_CK_BITV( bv );
+
+	word_count = bv->nbits/8/sizeof( bitv_t );
+	byte_no = sizeof( bitv_t );
+
+	bu_vls_extend( v, word_count * sizeof( bitv_t ) * 2 + 1 );
+	while( word_count-- )
+	{
+		while( byte_no-- )
+		{
+			bu_vls_printf( v, "%02x",
+				(bv->bits[word_count] & (((bitv_t)0xff)<<(byte_no*8))) >> (byte_no*8) );
+		}
+		byte_no = sizeof( bitv_t );
+	}
+}
+
+/*
+ *			B U _ H E X _ T O _ B I T V
+ *
+ *	Convert a string of HEX digits (as produces by bu_bitv_to_hex) into a bit vector.
+ */
+struct bu_bitv *
+bu_hex_to_bitv( str )
+CONST char *str;
+{
+	char abyte[3];
+	CONST char *str_start;
+	int len=0;
+	int bytes;
+	struct bu_bitv *bv;
+	unsigned long c;
+	int word_count, byte_no;
+
+	abyte[2] = '\0';
+
+	/* skip over any initial white space */
+	while( isspace( *str ) )
+		str++;
+
+	str_start = str;
+	/* count hex digits */
+	while( isxdigit( *str ) )
+		str++;
+
+	len = str - str_start;
+
+	if( len < 2 || len%2 )
+	{
+		/* Must be two digits per byte */
+		bu_log( "bu_hex_to_bitv: illegal hex bitv (%s)\n", str_start );
+		return( (struct bu_bitv *)NULL );
+	}
+
+	bytes = len / 2; /* two hex digits per byte */
+	bv = bu_bitv_new( len * 4 ); /* 4 bits per hex digit */
+	bu_bitv_clear( bv );
+	word_count = bytes/sizeof( bitv_t );
+	byte_no = bytes % sizeof( bitv_t );
+	if( !byte_no )
+		byte_no = sizeof( bitv_t );
+	else
+		word_count++;
+
+	str = str_start;
+	while( word_count-- )
+	{
+		while( byte_no-- )
+		{
+			/* get next two hex digits from string */
+			abyte[0] = *str++;
+			abyte[1] = *str++;
+
+			/* convert into an unsigned long */
+			c = strtoul( abyte, (char **)NULL, 16 );
+
+			/* set the appropriate bits in the bit vector */
+			bv->bits[word_count] |= (bitv_t)c<<(byte_no*8);
+		}
+		byte_no = sizeof( bitv_t );
+	}
+
+	return( bv );
+}

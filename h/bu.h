@@ -472,15 +472,14 @@ struct bu_list {
  *
  *  Application code should *never* peak at the bit-buffer; use the macros.
  *
- *  The external hex form should be big-endian hex, for MUVES compatability
- *  and overall ease of reading: left-to-right, starting with bit 0.
+ *  The external hex form is most signigicant byte first (bit 0 is at the right).
+ *  Note that MUVES does it differently
  */
 struct bu_bitv {
 	struct bu_list	l;		/* linked list for caller's use */
 	unsigned int	nbits;		/* actual size of bits[], in bits */
 	bitv_t		bits[2];	/* variable size array */
 };
-
 #define BU_BITV_MAGIC		0x62697476	/* 'bitv' */
 #define BU_CK_BITV(_vp)		BU_CKMAG(_vp, BU_BITV_MAGIC, "bu_bitv")
 
@@ -795,8 +794,6 @@ struct bu_structparse {
 	char		*sp_name;		/* Element's symbolic name */
 	long		sp_offset;		/* Byte offset in struct */
 	void		(*sp_hook)();		/* Optional hooked function, or indir ptr */
-	char		*sp_desc;		/* description of element */
-	void		*sp_default;		/* ptr to default value */
 };
 #define BU_STRUCTPARSE_FUNC_NULL	((void (*)())0)
 
@@ -1011,6 +1008,9 @@ BU_EXTERN(void			bu_bitv_vls, (struct bu_vls *v,
 				CONST struct bu_bitv *bv));
 BU_EXTERN(void			bu_pr_bitv, (CONST char *str,
 				CONST struct bu_bitv *bv));
+BU_EXTERN(void			bu_bitv_to_hex, (struct bu_vls *v,
+				CONST struct bu_bitv *bv));
+BU_EXTERN( struct bu_bitv *	bu_hex_to_bitv, (CONST char *str));
 
 /* bomb.c */
 BU_EXTERN(void			bu_bomb, (CONST char *str) );
