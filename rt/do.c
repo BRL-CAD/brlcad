@@ -939,17 +939,20 @@ res_pr()
 	register struct resource *res;
 	register int i;
 
+	fprintf(stderr,"\nResource use summary, by processor:\n");
 	res = &resource[0];
 	for( i=0; i<npsw; i++, res++ )  {
-		fprintf(stderr,"cpu%d seg  len=%10d get=%10d free=%10d\n",
-			i,
+		fprintf("---CPU %d:\n", i);
+		if( res->re_magic != RESOURCE_MAGIC )
+			fprintf(stderr,"Bad magic number!!\n");
+		fprintf(stderr,"seg       len=%10d get=%10d free=%10d\n",
 			res->re_seglen, res->re_segget, res->re_segfree );
-		fprintf(stderr,"cpu%d part len=%10d get=%10d free=%10d\n",
-			i,
+		fprintf(stderr,"partition len=%10d get=%10d free=%10d\n",
 			res->re_partlen, res->re_partget, res->re_partfree );
-		fprintf(stderr,"cpu%d bitv len=%10d get=%10d free=%10d\n",
-			i,
+		fprintf(stderr,"bitv_elem len=%10d get=%10d free=%10d\n",
 			res->re_bitvlen, res->re_bitvget, res->re_bitvfree );
+		fprintf(stderr,"boolstack len=%10d\n",
+			res->re_boolslen);
 	}
 }
 
