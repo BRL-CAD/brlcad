@@ -138,8 +138,6 @@ char	**argv;
 		is_pipe = 0;
 	}
 
-	color_soltab();		/* apply colors to the solid table */
-
 	if( floating )  {
 		pd_3space( fp,
 			-toViewcenter[MDX] - Viewscale,

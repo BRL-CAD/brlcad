@@ -235,7 +235,6 @@ char **argv;
 static void
 Ogl_colorchange()
 {
-  color_soltab();
   if(((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.cueing_on) {
     glEnable(GL_FOG);
   }else{
