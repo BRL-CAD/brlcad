@@ -1369,6 +1369,7 @@ register CONST mat_t		mat;
 	MAT4X3PNT( xip->ehy_V, mat, &rp->s.s_values[0*3] );
 	MAT4X3VEC( xip->ehy_H, mat, &rp->s.s_values[1*3] );
 	MAT4X3VEC( xip->ehy_Au, mat, &rp->s.s_values[2*3] );
+	VUNITIZE( xip->ehy_Au );
 	xip->ehy_r1 = rp->s.s_values[3*3] / mat[15];
 	xip->ehy_r2 = rp->s.s_values[3*3+1] / mat[15];
 	xip->ehy_c  = rp->s.s_values[3*3+2] / mat[15];
@@ -1436,7 +1437,8 @@ double				local2mm;
 	/* Warning:  type conversion */
 	VSCALE( &ehy->s.s_values[0*3], xip->ehy_V, local2mm );
 	VSCALE( &ehy->s.s_values[1*3], xip->ehy_H, local2mm );
-	VSCALE( &ehy->s.s_values[2*3], xip->ehy_Au, local2mm );
+	/* don't scale ehy_Au (unit vector!!) */
+	VMOVE( &ehy->s.s_values[2*3], xip->ehy_Au );
 	ehy->s.s_values[3*3] = xip->ehy_r1 * local2mm;
 	ehy->s.s_values[3*3+1] = xip->ehy_r2 * local2mm;
 	ehy->s.s_values[3*3+2] = xip->ehy_c * local2mm;
