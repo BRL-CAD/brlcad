@@ -1,10 +1,23 @@
 #			M O U S E . T C L
 #
-#	TCL macros for selecting among the solids/objects being displayed.
+# Author -
+#	Robert Parker
 #
-#	Author -
-#		Robert Parker
+# Source -
+#	The U. S. Army Ballistic Research Laboratory
+#	Aberdeen Proving Ground, Maryland  21005
+#  
+# Distribution Notice -
+#	Re-distribution of this software is restricted, as described in
+#	your "Statement of Terms and Conditions for the Release of
+#	The BRL-CAD Package" agreement.
 #
+# Copyright Notice -
+#	This software is Copyright (C) 1995 by the United States Army
+#	in all countries except the USA.  All rights reserved.
+#
+# Description -
+#       Mouse routines.
 
 proc mouse_get_spath { x y } {
     global mged_gui
@@ -348,14 +361,6 @@ proc mouse_comb_edit_select { x y } {
     foreach id $mged_players {
 	set mged_gui($id,mouse_behavior) d
     }
-}
-
-proc place_near_mouse { top } {
-    set pxy [winfo pointerxy $top]
-    set x [lindex $pxy 0]
-    set y [lindex $pxy 1]
-
-    catch { wm geometry $top +$x+$y }
 }
 
 ##
