@@ -2854,10 +2854,10 @@ struct edgeuse *eudst, *eusrc;
 	    (eudst->vu_p->v_p == eusrc->vu_p->v_p &&
 	    eudst_mate->vu_p->v_p == eusrc_mate->vu_p->v_p) ) ) {
 		/* edgeuses do NOT share verticies. */
-	    	VPRINT("eusrc", eusrc->vu_p->v_p->vg_p->coord);
-	    	VPRINT("eusrc_mate", eusrc_mate->vu_p->v_p->vg_p->coord);
-	    	VPRINT("eudst", eudst->vu_p->v_p->vg_p->coord);
-	    	VPRINT("eudst_mate", eudst_mate->vu_p->v_p->vg_p->coord);
+	    	bu_log( "eusrc (v=x%x) (%g %g %g)\n", eusrc->vu_p->v_p, V3ARGS( eusrc->vu_p->v_p->vg_p->coord ) );
+	    	bu_log( "eusrc_mate (v=x%x) (%g %g %g)\n", eusrc_mate->vu_p->v_p, V3ARGS( eusrc_mate->vu_p->v_p->vg_p->coord ) );
+	    	bu_log( "eudst (v=x%x) (%g %g %g)\n", eudst->vu_p->v_p, V3ARGS( eudst->vu_p->v_p->vg_p->coord ) );
+	    	bu_log( "eudst_mate (v=x%x) (%g %g %g)\n", eudst_mate->vu_p->v_p, V3ARGS( eudst_mate->vu_p->v_p->vg_p->coord ) );
 	    	rt_bomb("nmg_je() edgeuses do not share vertices, cannot share edge\n");
 	}
 
