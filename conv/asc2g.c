@@ -9,6 +9,8 @@
  *  Authors -
  *  	Charles M Kennedy
  *  	Michael J Muuss
+ *	Susanne Muuss, J.D.	 Converted to libwdb, Oct. 1990 
+ *
  *  
  *  Source -
  *	SECAD/VLD Computing Consortium, Bldg 394
@@ -24,23 +26,31 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
+#include "machine.h"
+#include "vmath.h"
+#include "rtlist.h"
 #include "db.h"
+#include "wdb.h"
+
+
+#define BUFSIZE			1024		/* Record input buffer size */
+#define TYPELEN			10
+#define NAMELEN			20
 
 extern void	exit();
 extern int	atoi();	/* bzero()? */
 extern char	*strcpy();
 extern double	atof();
 
-void	identbld(), polyhbld(), polydbld();
-void	solbld(), combbld(), membbld(), arsabld(), arsbbld();
-void	materbld(), bsplbld(), bsurfbld(), zap_nl();
-char	*nxt_spc();
+void		identbld(), polyhbld(), polydbld(), pipebld(), particlebld();
+void		solbld(), combbld(), membbld(), arsabld(), arsbbld();
+void		materbld(), bsplbld(), bsurfbld(), zap_nl();
+char		*nxt_spc();
 
-static union record	record;		/* GED database record */
-#define BUFSIZE		1024		/* Record input buffer size */
-static char buf[BUFSIZE];		/* Record input buffer */
-
-int debug;
+static union record	record;			/* GED database record */
+static char 		buf[BUFSIZE];		/* Record input buffer */
+char			name[NAMESIZE + 2];
+int 			debug;
 
 main(argc, argv)
 char **argv;
@@ -102,6 +112,14 @@ char **argv;
 			bsurfbld();
 			continue;
 
+		case DBID_PIPE:
+			pipebld();
+			continue;
+
+		case DBID_PARTICLE:
+			particlebld();
+			continue;
+
 		default:
 			(void)fprintf(stderr,"asc2g: bad record type '%c' (0%o), skipping\n", buf[0], buf[0]);
 			(void)fprintf(stderr,"%s\n", buf );
@@ -111,94 +129,187 @@ char **argv;
 	exit(0);
 }
 
+/*		S O L B L D
+ *
+ * This routine parses a solid record and determines which libwdb routine
+ * to call to replicate this solid.  Simple primitives are expected.
+ */
+
 void
-solbld()	/* Build Solid record */
+solbld()
 {
 	register char *cp;
 	register char *np;
 	register int i;
 
+	char	s_id;			/* id code for the record */
+	char	s_type;			/* id for the type of primitive */
+	short	s_cgtype;		/* comgeom solid type */
+	fastf_t	val[24];		/* array of values/parameters for solid */
+	point_t	center;			/* center; used by many solids */
+	point_t pnts[9];		/* array of points for the arbs */
+	point_t	norm;
+	point_t	min, max;
+	vect_t	a, b, c, d, n, r1, r2;	/* various vectors required */
+	vect_t	height;			/* height vector for tgc */
+	double	dd, rad1, rad2;
+
 	cp = buf;
-	record.s.s_id = *cp++;
+	s_id = *cp++;
 	cp = nxt_spc( cp );		/* skip the space */
 
-	record.s.s_type = (char)atoi( cp );
+	s_type = (char)atoi( cp );
 	cp = nxt_spc( cp );
 
-	np = record.s.s_name;
+	np = name;
 	while( *cp != ' ' )  {
 		*np++ = *cp++;
 	}
+	*np = '\0';
+	
 	cp = nxt_spc( cp );
-
-#if 0
-	record.s.s_cgtype = (short)atoi( cp );
-#else
-	record.s.s_cgtype = 0;	/* no longer significant */
-#endif
+	s_cgtype = (short)atoi( cp );
 
 	for( i = 0; i < 24; i++ )  {
 		cp = nxt_spc( cp );
-		record.s.s_values[i] = atof( cp );
+		val[i] = atof( cp );
 	}
 
-	if( debug )  {
-		(void)fprintf(stderr,"%s ty%d [0]=%f,%f,%f [3]=%e,%e,%e\n",
-			record.s.s_name, record.s.s_type,
-			record.s.s_values[0],
-			record.s.s_values[1],
-			record.s.s_values[2],
-			record.s.s_values[3],
-			record.s.s_values[4],
-			record.s.s_values[5] );
+	/* Switch on the record type to make the solids. */
+
+	switch( s_type ) {
+
+		case TOR:
+			VSET(center, val[0], val[1], val[2]);
+			VSET(n, val[3], val[4], val[5]);
+			rad1 = MAGNITUDE(&val[6]);
+			rad2 = MAGNITUDE(n);
+			VUNITIZE(n);
+
+			mk_tor(stdout, name, center, n, rad1, rad2);
+			break;
+
+		case GENTGC:
+			VSET(center, val[0], val[1], val[2]);
+			VSET(height, val[3], val[4], val[5]);
+			VSET(a, val[6], val[7], val[8]);
+			VSET(b, val[9], val[10], val[11]);
+			VSET(c, val[12], val[13], val[14]);
+			VSET(d, val[15], val[16], val[17]);
+			
+			mk_tgc(stdout, name, center, height, a, b, c, d);
+			break;
+
+		case GENELL:
+			VSET(center, val[0], val[1], val[2]);
+			VSET(a, val[3], val[4], val[5]);
+			VSET(b, val[6], val[7], val[8]);
+			VSET(c, val[9], val[10], val[11]);
+
+			mk_ell(stdout, name, center, a, b, c);
+			break;
+
+		case GENARB8:
+			VSET(pnts[0], val[0], val[1], val[2]);
+			VSET(pnts[1], val[3], val[4], val[5]);
+			VSET(pnts[2], val[6], val[7], val[8]);
+			VSET(pnts[3], val[9], val[10], val[11]);
+			VSET(pnts[4], val[12], val[13], val[14]);
+			VSET(pnts[5], val[15], val[16], val[17]);
+			VSET(pnts[6], val[18], val[19], val[20]);
+			VSET(pnts[7], val[21], val[22], val[23]);
+
+			/* Convert from vector notation to absolute points */
+			for( i=1; i<8; i++ )  {
+				VADD2( pnts[i], pnts[i], pnts[0] );
+			}
+
+			mk_arb8(stdout, name, pnts);
+			break;
+
+		case HALFSPACE:
+			VSET(norm, val[0], val[1], val[2]);
+			dd = val[3];
+
+			mk_half(stdout, name, norm, dd);
+			break;
+
+		default:
+			fprintf(stderr, "asc2g: bad solid %s s_type= %d, skipping\n",
+				name, s_type);
 	}
-	/* Write out the record */
-	(void)fwrite( (char *)&record, sizeof record, 1, stdout );
+
 }
 
-void
-combbld()	/* Build Combination record */
-{
-	register char *cp;
-	register char *np;
-	int temp_nflag, temp_pflag;
 
-	record.c.c_override = 0;
+/*			C O M B B L D
+ *
+ *  This routine builds combinations.
+ */
+
+void
+combbld()
+{
+	register char 	*cp;
+	register char 	*np;
+	int 		temp_nflag, temp_pflag;
+
+	char		override;
+	char		id;		/* Freebie.. not used */
+	char		reg_flags;	/* region flag */
+	int		is_reg;
+	short		regionid;
+	short		aircode;
+	short		length;		/* number of members expected */
+	short		num;		/* Comgeom reference number: DEPRECATED */
+	short		material;	/* GIFT material code */
+	short		los;		/* LOS estimate */
+	unsigned char	rgb[3];		/* Red, green, blue values */
+	char		matname[32];	/* String of material name */
+	char		matparm[60];	/* String of material parameters */
+	char		inherit;	/* Inheritance property */
+
+
+	/* Set all flags initially. */
+
+	override = 0;
 	temp_nflag = temp_pflag = 0;	/* indicators for optional fields */
 
 	cp = buf;
-	record.c.c_id = *cp++;
+	id = *cp++;
 	cp = nxt_spc( cp );		/* skip the space */
 
-	record.c.c_flags = *cp++;
+	reg_flags = *cp++;
 	cp = nxt_spc( cp );
 
-	np = record.c.c_name;
+	np = name;
 	while( *cp != ' ' )  {
 		*np++ = *cp++;
 	}
+	*np = '\0';
+	
 	cp = nxt_spc( cp );
 
-	record.c.c_regionid = (short)atoi( cp );
+	regionid = (short)atoi( cp );
 	cp = nxt_spc( cp );
-	record.c.c_aircode = (short)atoi( cp );
+	aircode = (short)atoi( cp );
 	cp = nxt_spc( cp );
-	record.c.c_length = (short)atoi( cp );
+	length = (short)atoi( cp );
 	cp = nxt_spc( cp );
-	record.c.c_num = (short)atoi( cp );
+	num = (short)atoi( cp );
 	cp = nxt_spc( cp );
-	record.c.c_material = (short)atoi( cp );
+	material = (short)atoi( cp );
 	cp = nxt_spc( cp );
-	record.c.c_los = (short)atoi( cp );
+	los = (short)atoi( cp );
 	cp = nxt_spc( cp );
-	record.c.c_override = (char)atoi( cp );
+	override = (char)atoi( cp );
 	cp = nxt_spc( cp );
 
-	record.c.c_rgb[0] = (unsigned char)atoi( cp );
+	rgb[0] = (unsigned char)atoi( cp );
 	cp = nxt_spc( cp );
-	record.c.c_rgb[1] = (unsigned char)atoi( cp );
+	rgb[1] = (unsigned char)atoi( cp );
 	cp = nxt_spc( cp );
-	record.c.c_rgb[2] = (unsigned char)atoi( cp );
+	rgb[2] = (unsigned char)atoi( cp );
 	cp = nxt_spc( cp );
 
 	temp_nflag = atoi( cp );
@@ -206,64 +317,96 @@ combbld()	/* Build Combination record */
 	temp_pflag = atoi( cp );
 
 	cp = nxt_spc( cp );
-	record.c.c_inherit = atoi( cp );
+	inherit = atoi( cp );
 
-	if( record.c.c_flags == 'Y' )
-		record.c.c_flags = 'R';
+	if( reg_flags == 'Y' )
+		is_reg = 1;
 	else
-		record.c.c_flags = ' ';
+		is_reg = 0;
 
 	if( temp_nflag )  {
 		fgets( buf, BUFSIZE, stdin );
 		zap_nl();
-		strncpy( record.c.c_matname, buf, sizeof(record.c.c_matname)-1 );
+		strncpy( matname, buf, sizeof(matname)-1 );
 	}
 	if( temp_pflag )  {
 		fgets( buf, BUFSIZE, stdin );
 		zap_nl();
-		strncpy( record.c.c_matparm, buf, sizeof(record.c.c_matparm)-1 );
+		strncpy( matparm, buf, sizeof(matparm)-1 );
 	}
 
-	/* Write out the record */
-	(void)fwrite( (char *)&record, sizeof record, 1, stdout );
+	if( mk_rcomb(stdout, name, length, is_reg,
+		temp_nflag ? matname : (char *)0,
+		temp_pflag ? matparm : (char *)0,
+		override ? rgb : (char *)0,
+		id, aircode, material, los, inherit) < 0 )  {
+			fprintf(stderr,"asc2g: mk_rcomb fail\n");
+			exit(1);
+	}
+
 }
 
+
+/*		M E M B B L D
+ *
+ *  This routine invokes libwdb to build a member of a combination.
+ */
+
 void
-membbld()	/* Build Member record */
+membbld()
 {
-	register char *cp;
-	register char *np;
-	register int i;
+	register char 	*cp;
+	register char 	*np;
+	register int 	i;
+	char		id;
+	char		relation;	/* boolean operation */
+	char		inst_name[NAMESIZE];
+	fastf_t		mat[16];	/* transformation matrix */
+	short		num;		/* comgeom reference num: DEPRECATED */
 
 	cp = buf;
-	record.M.m_id = *cp++;
+	id = *cp++;
 	cp = nxt_spc( cp );		/* skip the space */
 
-	record.M.m_relation = *cp++;
+	relation = *cp++;
 	cp = nxt_spc( cp );
 
-	np = record.M.m_instname;
+	np = inst_name;
 	while( *cp != ' ' )  {
 		*np++ = *cp++;
 	}
+	*np = '\0';
+
 	cp = nxt_spc( cp );
 
 	for( i = 0; i < 16; i++ )  {
-		record.M.m_mat[i] = atof( cp );
+		mat[i] = atof( cp );
 		cp = nxt_spc( cp );
 	}
 
-	record.M.m_num = (short)atoi( cp );
+	num = (short)atoi( cp );	/* What to do with this? */
 
-	/* Write out the record */
-	(void)fwrite( (char *)&record, sizeof record, 1, stdout );
+
+	/* Call mk_memb(). Should the name or the inst_name be used? */
+
+	mk_memb(stdout, inst_name, mat, relation );
 }
 
+
+/*		A R S B L D
+ *
+ * This routine builds ARS's.  Leave alone for now.
+ */
+
 void
-arsabld()	/* Build ARS A record */
+arsabld()
 {
+
+
 	register char *cp;
 	register char *np;
+	point_t	      max[3];
+	point_t	      min[3];
 
 	cp = buf;
 	record.a.a_id = *cp++;
@@ -299,38 +442,25 @@ arsabld()	/* Build ARS A record */
 	cp = nxt_spc( cp );
 	record.a.a_zmin = atof( cp );
 
-#ifdef never
-	(void)sscanf( buf, "%c %d %s %d %d %d %d %f %f %f %f %f %f",
-		&record.a.a_id,
-		&temp1,
-		&record.a.a_name[0],
-		&temp2,
-		&temp3,
-		&temp4,
-		&temp5,
-		&record.a.a_xmax,
-		&record.a.a_xmin,
-		&record.a.a_ymax,
-		&record.a.a_ymin,
-		&record.a.a_zmax,
-		&record.a.a_zmin
-	);
-	record.a.a_type = (char)temp1;
-	record.a.a_m = (short)temp2;
-	record.a.a_n = (short)temp3;
-	record.a.a_curlen = (short)temp4;
-	record.a.a_totlen = (short)temp5;
-#endif
-
 	/* Write out the record */
 	(void)fwrite( (char *)&record, sizeof record, 1, stdout );
+
 }
 
+/*		A R S B L D
+ *
+ * This is the second half of the ars-building.  It builds the ARS B record.
+ * Also leave alone for now.
+ */
+
 void
-arsbbld()	/* Build ARS B record */
+arsbbld()
 {
+
+
 	register char *cp;
 	register int i;
+	point_t	      pnt[8];		/* need 8 points */
 
 	cp = buf;
 	record.b.b_id = *cp++;
@@ -347,46 +477,17 @@ arsbbld()	/* Build ARS B record */
 		record.b.b_values[i] = atof( cp );
 	}
 
-#ifdef never
-		/*		   0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 */
-	(void)sscanf( buf, "%c %d %d %d %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f",
-		&record.b.b_id,
-		&temp1,
-		&temp2,
-		&temp3,
-		&record.b.b_values[0],
-		&record.b.b_values[1],
-		&record.b.b_values[2],
-		&record.b.b_values[3],
-		&record.b.b_values[4],
-		&record.b.b_values[5],
-		&record.b.b_values[6],
-		&record.b.b_values[7],
-		&record.b.b_values[8],
-		&record.b.b_values[9],
-		&record.b.b_values[10],
-		&record.b.b_values[11],
-		&record.b.b_values[12],
-		&record.b.b_values[13],
-		&record.b.b_values[14],
-		&record.b.b_values[15],
-		&record.b.b_values[16],
-		&record.b.b_values[17],
-		&record.b.b_values[18],
-		&record.b.b_values[19],
-		&record.b.b_values[20],
-		&record.b.b_values[21],
-		&record.b.b_values[22],
-		&record.b.b_values[23]
-	);
-	record.b.b_type = (char)temp1;
-	record.b.b_n = (short)temp2;
-	record.b.b_ngranule = (short)temp3;
-#endif
-
 	/* Write out the record */
 	(void)fwrite( (char *)&record, sizeof record, 1, stdout );
+
 }
+
+
+/*		Z A P _ N L
+ *
+ * This routine removes newline characters from the buffer and substitutes
+ * in NULL.
+ */
 
 void
 zap_nl()
@@ -402,126 +503,136 @@ zap_nl()
 	}
 }
 
+
+/*		I D E N T B L D
+ *
+ * This routine makes an ident record.  It calls libwdb to do this.
+ */
+
 void
-identbld()	/* Build Ident record */
+identbld()
 {
-	register char *cp;
-	register char *np;
+	register char	*cp;
+	register char	*np;
+	char		id;		/* a freebie */
+	char		units;		/* libwdb doesn't take this?! */
+	char		version[6];
+	char		title[72];
 
 	cp = buf;
-	record.i.i_id = *cp++;
+	id = *cp++;
 	cp = nxt_spc( cp );		/* skip the space */
 
-	record.i.i_units = (char)atoi( cp );
+	/* Note that there is no provision for handing libwdb the units.  Just
+	 * ignore.
+	 */
+
+	units = (char)atoi( cp );
 	cp = nxt_spc( cp );
 
-	np = record.i.i_version;
+	/* Note that there is no provision for handing libwdb the version either.
+	 * However, this is automatically provided when needed.
+	 */
+
+	np = version;
 	while( *cp != '\n' && *cp != '\0' )  {
 		*np++ = *cp++;
+	}
+	*np = '\0';
+
+	if( strcmp( version, ID_VERSION ) != 0 )  {
+		fprintf(stderr, "WARNING:  input file version (%s) is not %s\n",
+			version, ID_VERSION);
 	}
 
 	(void)fgets( buf, BUFSIZE, stdin);
 	zap_nl();
-	(void)strcpy( &record.i.i_title[0], buf );
+	(void)strncpy( title, buf, sizeof(title)-1 );
 
-	/* Write out the record */
-	(void)fwrite( (char *)&record, sizeof record, 1, stdout );
+	/* Call mk_id() */
+	mk_id(stdout, title);
 }
 
+
+/*		P O L Y H B L D
+ *
+ *  This routine builds the record headder for a polysolid.
+ */
+
 void
-polyhbld()	/* Build Polyhead record */
+polyhbld()
 {
-	register char *cp;
-	register char *np;
+
+	/* Headder for polysolid */
+
+	register char	*cp;
+	register char	*np;
+	char		id;
 
 	cp = buf;
-	record.p.p_id = *cp++;
+	id = *cp++;
 	cp = nxt_spc( cp );		/* skip the space */
 
-	np = record.p.p_name;
+	np = name;
 	while( *cp != '\n' && *cp != '\0' )  {
 		*np++ = *cp++;
 	}
 
-	/* Write out the record */
-	(void)fwrite( (char *)&record, sizeof record, 1, stdout );
+	/* Call mk_polysolid()  */
+	mk_polysolid(stdout, name);
 }
+
+/*		P O L Y D B L D
+ *
+ * This routine builds a polydata record using libwdb.
+ */
 
 void
-polydbld()	/* Build Polydata record */
+polydbld()
 {
-	register char *cp;
-	register int i, j;
+	register char	*cp;
+	register int	i, j;
+	char		id;
+	char		count;		/* number of vertices */
+	fastf_t		verts[5][3];	/* vertices for the polygon */
+	fastf_t		norms[5][3];	/* normals at each vertex */
 
 	cp = buf;
-	record.q.q_id = *cp++;
+	id = *cp++;
 	cp = nxt_spc( cp );		/* skip the space */
 
-	record.q.q_count = (char)atoi( cp );
+	count = (char)atoi( cp );
 
 	for( i = 0; i < 5; i++ )  {
 		for( j = 0; j < 3; j++ )  {
 			cp = nxt_spc( cp );
-			record.q.q_verts[i][j] = atof( cp );
+			verts[i][j] = atof( cp );
 		}
 	}
 
 	for( i = 0; i < 5; i++ )  {
 		for( j = 0; j < 3; j++ )  {
 			cp = nxt_spc( cp );
-			record.q.q_norms[i][j] = atof( cp );
+			norms[i][j] = atof( cp );
 		}
 	}
 
-#ifdef never
-	int temp1;
-
-		/*		   0  1  2  3  4  5  6  7  8  9 10 11 12 13 14  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 */
-	(void)sscanf( buf, "%c %d %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f", 
-		&record.q.q_id,
-		&temp1,
-		&record.q.q_verts[0][0],
-		&record.q.q_verts[0][1],
-		&record.q.q_verts[0][2],
-		&record.q.q_verts[1][0],
-		&record.q.q_verts[1][1],
-		&record.q.q_verts[1][2],
-		&record.q.q_verts[2][0],
-		&record.q.q_verts[2][1],
-		&record.q.q_verts[2][2],
-		&record.q.q_verts[3][0],
-		&record.q.q_verts[3][1],
-		&record.q.q_verts[3][2],
-		&record.q.q_verts[4][0],
-		&record.q.q_verts[4][1],
-		&record.q.q_verts[4][2],
-		&record.q.q_norms[0][0],
-		&record.q.q_norms[0][1],
-		&record.q.q_norms[0][2],
-		&record.q.q_norms[1][0],
-		&record.q.q_norms[1][1],
-		&record.q.q_norms[1][2],
-		&record.q.q_norms[2][0],
-		&record.q.q_norms[2][1],
-		&record.q.q_norms[2][2],
-		&record.q.q_norms[3][0],
-		&record.q.q_norms[3][1],
-		&record.q.q_norms[3][2],
-		&record.q.q_norms[4][0],
-		&record.q.q_norms[4][1],
-		&record.q.q_norms[4][2]
-	);
-	record.q.q_count = (char)temp1;
-#endif
-
-	/* Write out the record */
-	(void)fwrite( (char *)&record, sizeof record, 1, stdout );
+	/* Call mk_poly() */
+	mk_poly(stdout, count, verts, norms);
 }
+
+
+/*		M A T E R B L D
+ *
+ * The need for this is being phased out. Leave alone.
+ */
 
 void
 materbld()
 {
+
 	register char *cp;
+	register char *np;
 
 	cp = buf;
 	record.md.md_id = *cp++;
@@ -543,48 +654,55 @@ materbld()
 	(void)fwrite( (char *)&record, sizeof record, 1, stdout );
 }
 
-void
-bsplbld()	/* Build B-spline solid record */
-{
-	register char *cp;
-	register char *np;
+/*		B S P L B L D
+ *
+ *  This routine builds B-splines using libwdb.
+ */
 
+void
+bsplbld()
+{
+	register char	*cp;
+	register char	*np;
+	char		id;
+	short		nsurf;		/* number of surfaces */
+	fastf_t		resolution;	/* resolution of flatness */
+	
 	cp = buf;
-	record.B.B_id = *cp++;
+	id = *cp++;
 	cp = nxt_spc( cp );		/* skip the space */
 
-	np = record.B.B_name;
+	np = name;
 	while( *cp != ' ' )  {
 		*np++ = *cp++;
 	}
+	*np = '\0';
 	cp = nxt_spc( cp );
 
-	record.B.B_nsurf = (short)atoi( cp );
+	nsurf = (short)atoi( cp );
 	cp = nxt_spc( cp );
-	record.B.B_resolution = atof( cp );
+	resolution = atof( cp );
 
-#ifdef never
-	(void)sscanf( buf, "%c %s %d %f",
-		&record.B.B_id,
-		&record.B.B_name[0],
-		&temp1,
-		&record.B.B_resolution
-	);
-	record.B.B_nsurf = (short)temp1;
-#endif
-
-	/* Write out the record */
-	(void)fwrite( (char *)&record, sizeof record, 1, stdout );
+	/* Call mk_bsolid() */
+	mk_bsolid(stdout, name, nsurf, resolution);
 }
 
+/* 		B S U R F B L D
+ *
+ * This routine builds d-spline surface descriptions using libwdb.
+ */
+
 void
-bsurfbld()	/* Build d-spline surface description record */
+bsurfbld()
 {
-	register char *cp;
-	register int i;
-	register float *vp;
-	int nbytes, count;
-	float *fp;
+
+/* HELP! This involves mk_bsurf(filep, bp) where bp is a ptr to struct */
+
+	register char	*cp;
+	register int	i;
+	register float	*vp;
+	int		nbytes, count;
+	float		*fp;
 
 	cp = buf;
 	record.d.d_id = *cp++;
@@ -614,32 +732,6 @@ bsurfbld()	/* Build d-spline surface description record */
 	record.d.d_nctls = 
 		ngran( record.d.d_ctl_size[0] * record.d.d_ctl_size[1] 
 			* record.d.d_geom_type);
-
-#ifdef never
-	int temp1, temp2, temp3, temp4, temp5, temp6, temp7, temp8, temp9;
-
-	(void)sscanf( buf, "%c %d %d %d %d %d %d %d %d %d",
-		&record.d.d_id,
-		&temp1,
-		&temp2,
-		&temp3,
-		&temp4,
-		&temp5,
-		&temp6,
-		&temp7,
-		&temp8,
-		&temp9
-	);
-	record.d.d_order[0] = (short)temp1;
-	record.d.d_order[1] = (short)temp2;
-	record.d.d_kv_size[0] = (short)temp3;
-	record.d.d_kv_size[1] = (short)temp4;
-	record.d.d_ctl_size[0] = (short)temp5;
-	record.d.d_ctl_size[1] = (short)temp6;
-	record.d.d_geom_type = (short)temp7;
-	record.d.d_nknots = (short)temp8;
-	record.d.d_nctls = (short)temp9;
-#endif
 
 	/* Write out the record */
 	(void)fwrite( (char *)&record, sizeof record, 1, stdout );
@@ -702,6 +794,125 @@ bsurfbld()	/* Build d-spline surface description record */
 	(void)free( (char *)fp );
 }
 
+/*		P I P E B L D
+ *
+ *  This routine reads pipe data from standard in, constructs a doublely
+ *  linked list of pipe segments, and sends this list to mk_pipe().
+ */
+
+void
+pipebld()
+{
+
+	char			name[NAMELEN];
+	char			ident;
+	char			type[TYPELEN];
+	int			ret;
+	fastf_t			id;
+	fastf_t			od;
+	point_t			start;
+	point_t			bendcenter;
+	register char		*cp;
+	register char		*np;
+	struct wdb_pipeseg	*sp;
+	struct wdb_pipeseg	head;
+
+	/* Process the first buffer */
+
+	cp = buf;
+	ident = *cp++;			/* not used later */
+	cp = nxt_spc( cp );		/* skip spaces */
+
+	np = name;
+	while( *cp != '\n' )  {
+		*np++ = *cp++;
+	}
+	*np = '\0';			/* null terminate the string */
+
+
+	/* Read data lines and process */
+
+	RT_LIST_INIT( &head.l );
+	do{
+		fgets( buf, BUFSIZE, stdin);
+		(void)sscanf( buf, "%s %le %le %le %le %le %le %le %le", type, 
+				&id, &od,
+				&start[0],
+				&start[1],
+				&start[2],
+				&bendcenter[0],
+				&bendcenter[1],
+				&bendcenter[2]);
+
+		if( (sp = (struct wdb_pipeseg *)malloc(sizeof(struct wdb_pipeseg) ) )
+			== WDB_PIPESEG_NULL)  {
+				printf("asc2g: malloc failure for pipe\n");
+				exit(-1);
+		}
+
+		sp->ps_id = id;
+		sp->ps_od = od;
+		VMOVE(sp->ps_start, start);
+
+		/* Identify type */
+		if( (ret = (strcmp( type, "end" ))) == 0)  {
+			sp->ps_type = WDB_PIPESEG_TYPE_END;
+		} else if( (ret = (strcmp( type, "linear" ))) == 0)  {
+			sp->ps_type = WDB_PIPESEG_TYPE_LINEAR;
+		} else if( (ret = (strcmp( type, "bend"))) == 0)  {
+			sp->ps_type = WDB_PIPESEG_TYPE_BEND;
+			VMOVE(sp->ps_bendcenter, bendcenter);
+		} else  {
+			fprintf(stderr, "asc2g: no pipe type %s\n", type);
+		}
+
+		RT_LIST_INSERT( &head.l, &sp->l);
+	} while( (ret = (strcmp (type , "end"))) != 0);
+
+	mk_pipe(stdout, name, &head.l);
+	mk_freemembers( &head.l );
+	free( sp );
+}
+
+/*			P A R T I C L E B L D
+ *
+ * This routine reads particle data from standard in, and constructs the
+ * parameters required by mk_particle.
+ */
+
+void
+particlebld()
+{
+
+	char		name[NAMELEN];
+	char		ident;
+	char		type[TYPELEN];
+	point_t		vertex;
+	vect_t		height;
+	double		vrad;
+	double		hrad;
+	register char	*cp;
+	register char	*np;
+
+
+	/* Read all the information out of the existing buffer.  Note that
+	 * particles fit into one granule.
+	 */
+
+	(void)sscanf(buf, "%c %s %le %le %le %le %le %le %le %le",
+		&ident, name,
+		&vertex[0],
+		&vertex[1],
+		&vertex[2],
+		&height[0],
+		&height[1],
+		&height[2],
+		&vrad, &hrad);
+
+	mk_particle( stdout, name, vertex, height, vrad, hrad);
+}
+
+
 char *
 nxt_spc( cp)
 register char *cp;
@@ -723,14 +934,3 @@ ngran( nfloat )
 	gran = (gran * sizeof(float)) / sizeof(union record);
 	return(gran);
 }
-
-#ifdef SYSV
-
-bzero( str, n )
-register char *str;
-register int n;
-{
-	while( n-- > 0 )
-		*str++ = '\0';
-}
-#endif
