@@ -30,10 +30,10 @@ Lgt_Source	lgts[MAX_LGTS];
 /* Animation control structure.						*/
 Movie	movie =
 	{
-	FALSE,	/* m_fullscreen */
-	TRUE,	/* m_lgts */
-	FALSE,	/* m_over */
-	FALSE,	/* m_keys */
+	false,	/* m_fullscreen */
+	true,	/* m_lgts */
+	false,	/* m_over */
+	false,	/* m_keys */
 	1,	/* m_noframes */
 	0,	/* m_curframe */
 	0,	/* m_endframe */
@@ -100,17 +100,17 @@ fastf_t	view2model[16];		/* View-to-model matrix from view_rots.	*/
 fastf_t	view_size;		/* Absolute grid size from MGED view.	*/
 fastf_t	cell_sz = 0.0;		/* Cell size of grid in target coords.	*/
 
-int anti_aliasing = FALSE;	/* Anti-aliasing thru over-sampling.	*/
+int anti_aliasing = false;	/* Anti-aliasing thru over-sampling.	*/
 int aperture_sz = 1;		/* Size of window for over-sampling.	*/
 int background[3];		/* Background as RGB values.		*/
 int co;				/* Number of columns on screen/layer.	*/
-int fatal_error = FALSE;	/* Fatal error, must abort raytrace.	*/
+int fatal_error = false;	/* Fatal error, must abort raytrace.	*/
 int fb_size;			/* Size of frame buffer.		*/
-int force_cellsz = FALSE;	/* If (true) cell_sz drives resolution.	*/
-int force_fbsz = FALSE;		/* If (true) fb_size used.		*/
-int force_viewsz = FALSE;	/* If (true) view_size is set manually.	*/
+int force_cellsz = false;	/* If (true) cell_sz drives resolution.	*/
+int force_fbsz = false;		/* If (true) fb_size used.		*/
+int force_viewsz = false;	/* If (true) view_size is set manually.	*/
 int frame_no = 0;		/* Current frame being processed.	*/
-int grid_position = FALSE;	/* Did user set distance yet.		*/
+int grid_position = false;	/* Did user set distance yet.		*/
 int grid_sz = 32;		/* Default resolution 32x32 pixels.	*/
 int grid_x_org = 0;		/* Grid x position to begin raytracing.	*/
 int grid_x_fin = 32;		/* Grid x position to end raytracing.	*/
@@ -118,14 +118,14 @@ int grid_x_cur = 0; 		/* Grid x current position.		*/
 int grid_y_cur = 0; 		/* Grid y current position.		*/
 int grid_y_org = 0;		/* Grid y position to begin raytracing.	*/
 int grid_y_fin = 32;		/* Grid y position to end raytracing.	*/
-int hiddenln_draw = FALSE;	/* Generate hidden-line drawing.	*/
+int hiddenln_draw = false;	/* Generate hidden-line drawing.	*/
 int ir_aperture;		/* Size of window IR data over-sampling.*/
 int ir_noise = 2;		/* Threshold for subdivision of octree.	*/
 int ir_min = ABSOLUTE_ZERO;	/* IR input temperature ranges.		*/
 int ir_max = ABSOLUTE_ZERO;
 int ir_paint;			/* For temperature-to-location mapping.	*/
-int ir_doing_paint = FALSE;	/* Is user doing above mapping.		*/
-int ir_offset = FALSE;		/* Has user specified auto mapping.	*/
+int ir_doing_paint = false;	/* Is user doing above mapping.		*/
+int ir_offset = false;		/* Has user specified auto mapping.	*/
 int ir_mapx, ir_mapy;		/* Auto mapping offsets for above.	*/
 int ir_mapping = IR_OFF;	/* IR mapping.				*/
 int lgt_db_size = 0;		/* Current size of light data base.	*/
@@ -133,17 +133,17 @@ int li;				/* Number of lines in window.		*/
 int max_bounce = 0;		/* Recursion level for raytracer.	*/
 int npsw = DEFAULT_PSW;		/* Number of worker PSWs to run.	*/
 int pix_buffered = B_LINE;	/* Scan line buffering is default.	*/
-int query_region = FALSE;	/* If (true) spit out region info.	*/
-int report_overlaps = TRUE;	/* If (false) shut-up about overlaps.	*/
-int reverse_video = FALSE;	/* If (true) HL drawing white-on-black.	*/
-int save_view_flag = FALSE;	/* View specified in "model2view".	*/
-int sgi_console = FALSE;	/* Logged in to IRIS console.		*/
-int sgi_usemouse = FALSE;	/* User wants to use the IRIS mouse.	*/
-int shadowing = TRUE;		/* If (false) no shadows are computed.	*/
-int tracking_cursor=FALSE;	/* Cursor is on by default.		*/
+int query_region = false;	/* If (true) spit out region info.	*/
+int report_overlaps = true;	/* If (false) shut-up about overlaps.	*/
+int reverse_video = false;	/* If (true) HL drawing white-on-black.	*/
+int save_view_flag = false;	/* View specified in "model2view".	*/
+int sgi_console = false;	/* Logged in to IRIS console.		*/
+int sgi_usemouse = false;	/* User wants to use the IRIS mouse.	*/
+int shadowing = true;		/* If (false) no shadows are computed.	*/
+int tracking_cursor=false;	/* Cursor is on by default.		*/
 int tty;			/* Is input attached to a terminal.	*/
 int type_grid = GT_RPP_CENTERED;
-int user_interrupt = FALSE;	/* User-level interrupt of raytrace.	*/
+int user_interrupt = false;	/* User-level interrupt of raytrace.	*/
 int x_fb_origin = 0;		/* Display origin left-most pixel.	*/
 int y_fb_origin = 0;		/* Display origin top-most pixel.	*/
 struct resource	resource[MAX_PSW]; /* Memory resources.			*/
