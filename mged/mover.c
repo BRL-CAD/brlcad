@@ -33,10 +33,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 extern int	printf();
 
 /* default region ident codes */
-int	item_default = 1000;
+int	item_default = 1000;	/* GIFT region ID */
 int	air_default = 0;
-int	mat_default = 1;
-int	los_default = 100;
+int	mat_default = 1;	/* GIFT material code */
+int	los_default = 100;	/* Line-of-sight estimate */
 
 /*
  *			M O V E H O B J
@@ -236,16 +236,20 @@ int air;				/* Air code */
 		record.c.c_length = 1;
 		record.c.c_flags = record.c.c_aircode = 0;
 		record.c.c_regionid = -1;
-		record.c.c_material = record.c.c_los = 0;
+		record.c.c_material = 0;
+		record.c.c_los = 0;
+		record.c.c_override = 0;
+		record.c.c_matname[0] = '\0';
+		record.c.c_matparm[0] = '\0';
 		NAMEMOVE( combname, record.c.c_name );
 		if( region_flag ) {       /* creating a region */
 			record.c.c_flags = 'R';
 			record.c.c_regionid = ident;
 			record.c.c_aircode = air;
-			record.c.c_material = mat_default;
 			record.c.c_los = los_default;
-			(void)printf("Creating region id=%d, air=%d, mat=%d, los=%d\n",
-				ident, air, mat_default, los_default );
+			record.c.c_material = mat_default;
+			(void)printf("Creating region id=%d, air=%d, los=%d, GIFTmaterial=%d\n",
+				ident, air, los_default, mat_default );
 		}
 
 		/* finished with combination record - write it out */
