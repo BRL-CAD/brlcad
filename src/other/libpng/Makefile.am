@@ -4,7 +4,6 @@ lib_LTLIBRARIES = libpng.la
 
 libpng_la_LDFLAGS = -version-info 3:5:2
 libpng_la_SOURCES = \
-	example.c \
 	png.c \
 	pngerror.c \
 	pnggccrd.c \
@@ -51,6 +50,7 @@ EXTRA_DIST = \
 	README \
 	TODO \
 	Y2KINFO \
+	example.c \
 	libpng.txt \
 	pngbar.jpg \
 	pngbar.png \
