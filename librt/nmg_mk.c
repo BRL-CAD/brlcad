@@ -1800,6 +1800,16 @@ struct shell *s;
  *	vertices to use in creating the face/loop.  Null entries within the
  *	list will cause a new vertex to be created for that point.  Such new
  *	vertices will be inserted into the list for return to the caller.
+ *
+ *	The vertices should be listed in "clockwise" order if this is
+ *	an ordinary face, and in "counterclockwise" order if this is
+ *	an interior ("hole" or "subtracted") face.
+ *	See the comments in nmg_cmface() for more details.
+ *
+ *	Note that this routine inserts new vertices (by edge use splitting)
+ *	at the head of the loop, which reverses the order.
+ *	Therefore, the callers vertices are inserted in reverse order,
+ *	to effect the proper vertex order in the final face loop.
  */
 struct faceuse *nmg_cface(s, verts, n)
 struct shell *s;
@@ -1819,10 +1829,10 @@ unsigned n;
 		fu = nmg_mf(nmg_mlv(&s->magic, verts[0], OT_SAME));
 		eu = nmg_meonvu(fu->lu_p->down.vu_p);
 
-		if (!verts[0])
-			verts[0] = eu->vu_p->v_p;
+		if (!verts[n-1])
+			verts[n-1] = eu->vu_p->v_p;
 
-		for (i = 1 ; i < n ; ++i) {
+		for (i = n-2 ; i >= 0 ; i--) {
 			eu = nmg_eusplit(verts[i], fu->lu_p->down.eu_p);
 			if (!verts[i])
 				verts[i] = eu->vu_p->v_p;
@@ -2269,8 +2279,8 @@ struct shell *s;
  *	Create a face for a manifold shell from a list of vertices
  *
  *	"verts" is an array of "n" pointers to pointers to (struct vertex).
- *	"s" is the
- *	parent shell for the new face.  The face will consist of a single loop
+ *	"s" is the parent shell for the new face.
+ *	The face will consist of a single loop
  *	made from edges between the n vertices.  Before an edge is created
  *	between a pair of verticies, we check to see if there is already an
  *	edge with a single use-pair (in this shell) between the two verticies.
@@ -2296,6 +2306,40 @@ struct shell *s;
  *   n	|  +--|------------------------>|   +---|---------> (struct vertex)
  *	-------				---------
  *
+ *
+ *	The vertices should be listed in "clockwise" order if this is
+ *	an ordinary face, and in "counterclockwise" order if this is
+ *	an interior ("hole" or "subtracted") face.
+ *	Note that while this routine makes only topology, without
+ *	reference to geometry, by following the clockwise rule,
+ *	finding the surface normal
+ *	of ordinary faces can be done using the following procedure.
+ *
+ *
+ *			C                   D
+ *	                *-------------------*
+ *	                |                   |
+ *	                |   ^...........>   |
+ *	   ^     N      |   .           .   |
+ *	   |      \     |   .           .   |
+ *	   |       \    |   . clockwise .   |
+ *	   |C-B     \   |   .           .   |
+ *	   |         \  |   .           v   |
+ *	   |          \ |   <............   |
+ *	               \|                   |
+ *	                *-------------------*
+ *	                B                   A
+ *			       ----->
+ *				A-B
+ *
+ *	If the points are given in the order A B C D (eg, clockwise),
+ *	then the outward pointing surface normal N = (A-B) x (C-B).
+ *	This is the "right hand rule".
+ *
+ *	Note that this routine inserts new vertices (by edge use splitting)
+ *	at the head of the loop, which reverses the order.
+ *	Therefore, the callers vertices are inserted in reverse order,
+ *	to effect the proper vertex order in the final face loop.
  */
 struct faceuse *nmg_cmface(s, verts, n)
 struct shell *s;
@@ -2338,10 +2382,10 @@ unsigned n;
 	fu = nmg_mf(nmg_mlv(&s->magic, *verts[0], OT_SAME));
 	eu = nmg_meonvu(fu->lu_p->down.vu_p);
 
-	if (!(*verts[0]))
-		*verts[0] = eu->vu_p->v_p;
+	if (!(*verts[n-1]))
+		*verts[n-1] = eu->vu_p->v_p;
 
-	for (i = 1 ; i < n ; ++i) {
+	for (i = n-2 ; i >= 0 ; i--) {
 
 		euold = fu->lu_p->down.eu_p;
 
@@ -2350,7 +2394,7 @@ unsigned n;
 		 */
 		if (*verts[i]) {
 			/* look for an existing edge to share */
-			eur = findeu(*verts[i-1], *verts[i], s);
+			eur = findeu(*verts[i+1], *verts[i], s);
 			eu = nmg_eusplit(*verts[i], euold);
 			if (eur) nmg_moveeu(eur, eu);
 		} else {
