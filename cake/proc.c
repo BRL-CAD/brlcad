@@ -400,7 +400,7 @@ reg	char	**vector;
 
 		if (count >= MAXARGS)
 		{
-			fprintf(stderr, "cake: '%s' has too many arguments\n", cmd);
+			fprintf(stderr, "cake: '%s' has too many arguments for cake\n", cmd);
 			exit_cake(FALSE);
 		}
 
