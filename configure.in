@@ -318,7 +318,6 @@ AC_OUTPUT([
 	pro-engineer/Makefile
 	pro-engineer/sgi_mips4/Makefile
 	pro-engineer/text/Makefile
-	pro-engineer/text/resource/Makefile
 	remrt/Makefile
 	rt/Makefile
 	sample_applications/Makefile
