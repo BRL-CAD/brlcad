@@ -122,7 +122,7 @@ union record  {
 	struct solidrec  {
 		char	s_id;		/* ID_SOLID */
 		char	s_type;		/* GED primitive type */
-/* also TOR 	16	/* toroid */
+/* also TOR 	16	   toroid */
 #define GENTGC	18	/* supergeneralized TGC; internal form */
 #define GENELL	19	/* ready for drawing ELL:  V,A,B,C */
 #define GENARB8	20	/* generalized ARB8:  V, and 7 other vectors */
