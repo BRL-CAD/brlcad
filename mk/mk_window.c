@@ -209,7 +209,7 @@ char *argv[];
 	pts[7][2] = (fastf_t) (hgt / 2.);
 	solnam[5] = 97 + i;
 	solnam[6] = '1';
-	mk_arb8(fpw,solnam,pts);
+	mk_arb8(fpw,solnam, &pts[0][X]);
 
 	/*  Create second arb8.  */
 	pts[0][1] = (fastf_t) (wid / 2.);
@@ -229,7 +229,7 @@ char *argv[];
 	pts[7][1] = (fastf_t) ((-wid) / 2.);
 	pts[7][2] = (fastf_t) (hgt / 2. - rds);
 	solnam[6] = '2';
-	mk_arb8(fpw,solnam,pts);
+	mk_arb8(fpw,solnam, &pts[0][X]);
 
 	/*  Create cylinder 1.  */
 	bs[0] = (fastf_t)0.;
