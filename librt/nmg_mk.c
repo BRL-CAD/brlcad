@@ -1372,6 +1372,8 @@ register struct edgeuse *eu1;
 		if (e->eg_p) FREE_EDGE_G(e->eg_p);
 		FREE_EDGE(e);
 		e = (struct edge *)NULL;
+		eu1->e_p = e;	/* sanity */
+		eu2->e_p = e;
 	}
 
 	/* remove the edgeuses from their parents */
