@@ -26,7 +26,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include <stdio.h>
 #include <math.h>
-#include <values.h>
+#include <limits.h>			/* home of INT_MAX aka MAXINT */
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -34,7 +34,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #define made_it()	bu_log("Made it to %s:%d\n", __FILE__, __LINE__);
 
 #define	OPT_STRING	"a:ce:g:opr:t:ux:?"
-#define	RAND_NUM	((fastf_t)random()/MAXINT)
+#define	RAND_NUM	((fastf_t)random()/INT_MAX)
 #define	RAND_OFFSET	((1 - cell_center) *		\
 			 (RAND_NUM * celsiz - celsiz / 2))
 #define	TITLE_LEN	80
