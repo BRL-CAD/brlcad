@@ -21,13 +21,11 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #else
-#include <strings.h>
+#  include <strings.h>
 #endif
 #include <assert.h>
 
@@ -35,9 +33,12 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
+
 #include "./hmenu.h"
 #include "./lgt.h"
 #include "./extern.h"
+
+
 extern int	LI, CO;
 #ifndef STATIC
 #define STATIC static
@@ -100,17 +101,12 @@ prnt_HMitem(HMitem *itemp)
 		return;
 	(void) fprintf( stderr, "text=\"%s\"\n", itemp->text );
 	(void) fprintf( stderr, "help=\"%s\"\n", itemp->help == NULL ? "(null)" : itemp->help );
-	(void) fprintf( stderr, "next=0x%lx\n", (long unsigned int)itemp->next );
+	(void) fprintf( stderr, "next=0x%lx\n", (unsigned long int)itemp->next );
 #ifndef sgi
-	if (sizeof(itemp->dfn) > sizeof(unsigned int)) {
-		(void) fprintf( stderr, "dfn=0x%X\n", itemp->dfn );
-		(void) fprintf( stderr, "bfn=0x%X\n", itemp->bfn );
-	} else {
-		(void) fprintf( stderr, "dfn=0x%x\n", itemp->dfn );
-		(void) fprintf( stderr, "bfn=0x%x\n", itemp->bfn );
-	}
+	(void) fprintf( stderr, "dfn=0x%lx\n", (unsigned long int)itemp->dfn );
+	(void) fprintf( stderr, "bfn=0x%lx\n", (unsigned long int)itemp->bfn );
 #endif
-	(void) fprintf( stderr, "hfn=0x%lx\n", (long unsigned int)itemp->hfn );
+	(void) fprintf( stderr, "hfn=0x%lx\n", (unsigned long int)itemp->hfn );
 	(void) fprintf( stderr, "data=%ld\n--\n", itemp->data );
 	return;
 	}
