@@ -18,6 +18,7 @@
 #include <string.h>
 #else
 #include <strings.h>
+#endif
 
 #include "./machine.h"	/* special copy */
 #include "vmath.h"
