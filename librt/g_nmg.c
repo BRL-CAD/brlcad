@@ -1,3 +1,12 @@
+/* XXX Move to nmg.h */
+#define NMG_CK2MAG(_ptr, _magic1, _magic2, _str)	\
+	if( !(_ptr) || (*((long *)(_ptr)) != (_magic1) && *((long *)(_ptr)) != (_magic2) ) )  { \
+		rt_badmagic( (long *)(_ptr), _magic1, _str, __FILE__, __LINE__ ); \
+	}
+#define NMG_CK_FACE_G_EITHER(_p)	NMG_CK2MAG(_p, NMG_FACE_G_PLANE_MAGIC, NMG_FACE_G_SNURB_MAGIC, "face_g_plane|face_g_snurb")
+#define NMG_CK_EDGE_G_EITHER(_p)	NMG_CK2MAG(_p, NMG_EDGE_G_LSEG_MAGIC, NMG_EDGE_G_CNURB_MAGIC, "edge_g_lseg|edge_g_cnurb")
+
+
 #define DEBUG	0
 /*
  *			G _ N M G . C
@@ -32,8 +41,9 @@ static char RCSnmg[] = "@(#)$Header$ (BRL)";
 #include "rtlist.h"
 #include "nmg.h"
 #include "raytrace.h"
+#include "nurb.h"
 #include "./debug.h"
-#include "./nmg_rt.h"
+#include "./nmg_rt.h"		/* XXX Why do we need this? */
 
 /* rt_nmg_internal is just "model", from nmg.h */
 
@@ -390,6 +400,13 @@ CONST struct rt_tol	*tol;
 	return(0);
 }
 
+#define RT_CK_DISKMAGIC(_cp,_magic)	\
+	if( rt_glong(_cp) != _magic )  { \
+		rt_log("RT_CK_DISKMAGIC: magic mis-match, got x%x, s/b x%x, file %s, line %d\n", \
+			rt_glong(_cp), _magic, __FILE__, __LINE__); \
+		rt_bomb("bad magic\n"); \
+	}
+
 /*
  * ----------------------------------------------------------------------
  *
@@ -467,14 +484,14 @@ struct disk_face {
 	unsigned char		flip[4];
 };
 
-#define DISK_FACE_G_PLANE_MAGIC	0x4e665f70	/* Nf_p */
+#define DISK_FACE_G_PLANE_MAGIC	0x4e666770	/* Nfgp */
 struct disk_face_g_plane {
 	unsigned char		magic[4];
 	struct disk_rt_list	f_hd;
 	unsigned char		N[4*8];
 };
 
-#define DISK_FACE_G_SNURB_MAGIC	0x4e665f73	/* Nf_s */
+#define DISK_FACE_G_SNURB_MAGIC	0x4e666773	/* Nfgs */
 struct disk_face_g_snurb {
 	unsigned char		magic[4];
 	struct disk_rt_list	f_hd;
@@ -482,12 +499,12 @@ struct disk_face_g_snurb {
 	unsigned char		v_order[4];
 	unsigned char		u_size[4];	/* u.k_size */
 	unsigned char		v_size[4];	/* v.k_size */
-	/* XXXXXX knot vetor??? u.knots */
-	/* XXXXXX knot vetor??? v.knots */
+	disk_index_t		u_knots;	/* u.knots subscript */
+	disk_index_t		v_knots;	/* v.knots subscript */
 	unsigned char		us_size[4];
 	unsigned char		vs_size[4];
 	unsigned char		pt_type[4];
-	/* XXXXXX ctl_points ???? */
+	disk_index_t		ctl_points;	/* subscript */
 };
 
 #define DISK_FACEUSE_MAGIC	0x4e667520	/* Nfu */
@@ -532,11 +549,10 @@ struct disk_loopuse {
 struct disk_edge {
 	unsigned char		magic[4];
 	disk_index_t		eu_p;
-	disk_index_t		eg_p;
 	unsigned char		is_real[4];
 };
 
-#define DISK_EDGE_G_LSEG_MAGIC	0x4e655f67	/* Ne_g */
+#define DISK_EDGE_G_LSEG_MAGIC	0x4e65676c	/* Negl */
 struct disk_edge_g_lseg {
 	unsigned char		magic[4];
 	struct disk_rt_list	eu_hd2;
@@ -544,16 +560,16 @@ struct disk_edge_g_lseg {
 	unsigned char		e_dir[3*8];
 };
 
-#define DISK_EDGE_G_CNURB_MAGIC	0x4e655f63	/* Ne_c */
+#define DISK_EDGE_G_CNURB_MAGIC	0x4e656763	/* Negc */
 struct disk_edge_g_cnurb {
 	unsigned char		magic[4];
 	struct disk_rt_list	eu_hd2;
 	unsigned char		order[4];
 	unsigned char		k_size[4];	/* k.k_size */
-	/* XXXXXXX knot vector???   knot.knots */
+	disk_index_t		knots;		/* knot.knots subscript */
 	unsigned char		c_size[4];
 	unsigned char		pt_type[4];
-	/* XXXXXXX ctl_points[] ???? */
+	disk_index_t		ctl_points;	/* subscript */
 };
 
 #define DISK_EDGEUSE_MAGIC	0x4e657520	/* Neu */
@@ -605,6 +621,13 @@ struct disk_vertexuse_a_cnurb {
 	unsigned char		param[3*8];
 };
 
+#define DISK_DOUBLE_ARRAY_MAGIC	0x4e666172		/* Narr */
+struct disk_double_array  {
+	unsigned char		magic[4];
+	unsigned char		ndouble[4];	/* # of doubles to follow */
+	unsigned char		vals[1*8];	/* actually [ndouble*8] */
+};
+
 /* ---------------------------------------------------------------------- */
 /* All these arrays and defines have to use the same implicit index values */
 #define NMG_KIND_MODEL		0
@@ -636,7 +659,7 @@ struct disk_vertexuse_a_cnurb {
 /* 26 is the limit, in the current incarnation of db.h */
 #define NMG_N_KINDS		26		/* number of kinds */
 
-int	rt_nmg_disk_sizes[NMG_N_KINDS] = {
+CONST int	rt_nmg_disk_sizes[NMG_N_KINDS] = {
 	sizeof(struct disk_model),		/* 0 */
 	sizeof(struct disk_model_a),
 	sizeof(struct disk_nmgregion),
@@ -662,9 +685,9 @@ int	rt_nmg_disk_sizes[NMG_N_KINDS] = {
 	0,
 	0,
 	0,
-	0					/* 25: MUST BE ZERO */
+	0  /* disk_double_array, MUST BE ZERO */	/* 25: MUST BE ZERO */
 };
-char	rt_nmg_kind_names[NMG_N_KINDS+2][18] = {
+CONST char	rt_nmg_kind_names[NMG_N_KINDS+2][18] = {
 	"model",				/* 0 */
 	"model_a",
 	"nmgregion",
@@ -763,7 +786,140 @@ struct nmg_exp_counts {
 	long	new_subscript;
 	long	per_struct_index;
 	int	kind;
+	long	first_fastf_relpos;	/* for snurb and cnurb. */
+	long	byte_offset;		/* for snurb and cnurb. */
 };
+
+/* XXX These are horribly non-PARALLEL, and they *must* be PARALLEL ! */
+static unsigned char	*rt_nmg_fastf_p;
+static unsigned int	rt_nmg_cur_fastf_subscript;
+
+/*
+ *			R T _ N M G _ E X P O R T _ F A S T F
+ *
+ *  Format a variable sized array of fastf_t's into external format
+ *  (IEEE big endian double precision) with a 2 element header.
+ *
+ *		+-----------+
+ *		|  magic    |
+ *		+-----------+
+ *		|  count    |
+ *		+-----------+
+ *		|           |
+ *		~  doubles  ~
+ *		~    :      ~
+ *		|           |
+ *		+-----------+
+ *
+ *  Increments the pointer to the next free byte in the external array,
+ *  and increments the subscript number of the next free array.
+ *
+ *  Note that this subscript number is consistent with the rest of the
+ *  NMG external subscript numbering, so that the first disk_double_array
+ *  subscript will be one larger than the largest disk_vertex_g subscript,
+ *  and in the external record the array of fastf_t arrays will follow
+ *  the array of disk_vertex_g structures.
+ *
+ *  Returns -
+ *	subscript number of this array, in the external form.
+ */
+int
+rt_nmg_export_fastf( fp, count, scale )
+CONST fastf_t	*fp;
+int		count;
+double		scale;
+{
+	register unsigned char	*cp;
+
+	cp = rt_nmg_fastf_p;
+	(void)rt_plong( cp + 0, DISK_DOUBLE_ARRAY_MAGIC );
+	(void)rt_plong( cp + 4, count );
+	if( scale == 1.0 )  {
+		htond( cp + (4+4), (unsigned char *)fp, count );
+	} else {
+		fastf_t		*new;
+
+		/* Blah, need to scale data by 'scale' ! */
+/* XXX Needs stride!  Don't want to scale the homogeneous coord, if present! */
+		new = (fastf_t *)rt_malloc( count*sizeof(fastf_t), "rt_nmg_export_fastf" );
+		VSCALEN( new, fp, scale, count );
+		htond( cp + (4+4), (unsigned char *)new, count );
+		rt_free( (char *)new, "rt_nmg_export_fastf" );
+	}
+	cp += (4+4) + count * 8;
+	rt_nmg_fastf_p = cp;
+	return rt_nmg_cur_fastf_subscript++;
+}
+
+/*
+ *			R T _ N M G _ I M P O R T _ F A S T F
+ */
+fastf_t *
+rt_nmg_import_fastf( base, ecnt, subscript, mat, len, stride )
+CONST unsigned char	*base;
+struct nmg_exp_counts	*ecnt;
+int			subscript;
+CONST matp_t		mat;
+int			len;		/* expected size */
+int			stride;
+{
+	CONST unsigned char	*cp;
+	register int		count;
+	fastf_t			*ret;
+	fastf_t			*tmp;
+
+	if( ecnt[subscript].byte_offset <= 0 || ecnt[subscript].kind != NMG_KIND_DOUBLE_ARRAY )  {
+		rt_log("subscript=%d, byte_offset=%d, kind=%d (expected %d)\n",
+			subscript, ecnt[subscript].byte_offset,
+			ecnt[subscript].kind, NMG_KIND_DOUBLE_ARRAY );
+		rt_bomb("rt_nmg_import_fastf() bad ecnt table\n");
+	}
+
+
+	cp = base + ecnt[subscript].byte_offset;
+	if( rt_glong( cp ) != DISK_DOUBLE_ARRAY_MAGIC )  {
+		rt_log("magic mis-match, got x%x, s/b x%x, file %s, line %d\n",
+			rt_glong(cp), DISK_DOUBLE_ARRAY_MAGIC, __FILE__, __LINE__);
+		rt_log("subscript=%d, byte_offset=%d\n",
+			 subscript, ecnt[subscript].byte_offset);
+		rt_bomb("rt_nmg_import_fastf() bad magic\n");
+	}
+	count = rt_glong( cp + 4 );
+	if( count != len )  {
+		rt_log("rt_nmg_import_fastf() subscript=%d, expected len=%d, got=%d\n",
+			subscript, len, count );
+		rt_bomb("rt_nmg_import_fastf()\n");
+	}
+	ret = (fastf_t *)rt_malloc( count * sizeof(fastf_t), "rt_nmg_import_fastf[]" );
+	if( !mat )  {
+		ntohd( (unsigned char *)ret, cp + (4+4), count );
+		return ret;
+	}
+
+	/*
+	 *  An amazing amount of work: transform all points by 4x4 mat.
+	 *  Need to know width of data points, may be 3, or 4-tuples.
+	 *  The vector times matrix calculation can't be done in place.
+	 */
+	tmp = (fastf_t *)rt_malloc( count * sizeof(fastf_t), "rt_nmg_import_fastf tmp[]" );
+	ntohd( (unsigned char *)tmp, cp + (4+4), count );
+	switch( stride )  {
+	case 3:
+		for( count -= 3 ; count >= 0; count -= 3 )  {
+			MAT4X3PNT( &ret[count], mat, &tmp[count] );
+		}
+		break;
+	case 4:
+		for( count -= 4 ; count >= 0; count -= 4 )  {
+			MAT4X4PNT( &ret[count], mat, &tmp[count] );
+		}
+		break;
+	default:
+		rt_bomb("rt_nmg_import_fastf() unsupported # of coords in ctl_point\n");
+	}
+	rt_free( (char *)tmp, "rt_nmg_import_fastf tmp[]" );
+	return ret;
+}
 
 /*
  *			R T _ N M G _ R E I N D E X
@@ -955,7 +1111,9 @@ double		local2mm;
 		{
 			struct face_g_snurb	*fg = (struct face_g_snurb *)ip;
 			struct disk_face_g_snurb	*d;
+			int	relpos;
 
+			relpos = ecnt[index].first_fastf_relpos;
 			d = &((struct disk_face_g_snurb *)op)[oindex];
 			NMG_CK_FACE_G_SNURB(fg);
 			PUTMAGIC( DISK_FACE_G_SNURB_MAGIC );
@@ -964,11 +1122,18 @@ double		local2mm;
 			rt_plong( d->v_order, fg->order[1] );
 			rt_plong( d->u_size, fg->u.k_size );
 			rt_plong( d->v_size, fg->v.k_size );
+			rt_plong( d->u_knots,
+				rt_nmg_export_fastf( fg->u.knots, fg->u.k_size, 1.0 ) );
+			rt_plong( d->v_knots,
+				rt_nmg_export_fastf( fg->v.knots, fg->v.k_size, 1.0 ) );
 			rt_plong( d->us_size, fg->s_size[0] );
 			rt_plong( d->vs_size, fg->s_size[1] );
 			rt_plong( d->pt_type, fg->pt_type );
-			/* XXX scale ctl_points by local2mm */
-/* XXX */		rt_bomb("face_g_snurb knot & ctl_points export\n");
+			/* scale ctl_points by local2mm */
+			rt_plong( d->ctl_points,
+				rt_nmg_export_fastf( fg->ctl_points,
+					fg->s_size[0] * fg->s_size[1],
+					local2mm ) );
 		}
 		return;
 	case NMG_KIND_LOOPUSE:
@@ -1068,10 +1233,17 @@ double		local2mm;
 			INDEXL( d, eg, eu_hd2 );
 			rt_plong( d->order, eg->order );
 			rt_plong( d->k_size, eg->k.k_size );
+			rt_plong( d->knots,
+				rt_nmg_export_fastf( eg->k.knots, eg->k.k_size, 1.0 ) );
 			rt_plong( d->c_size, eg->c_size );
 			rt_plong( d->pt_type, eg->pt_type );
-			/* XXX Scale ctl_points by local2mm */
-/* XXX */		rt_bomb("edge_g_cnurb knots and ctl_points export\n");
+			/*
+			 * The curve's control points are in parameter space.
+			 * They do NOT get transformed!
+			 */
+			rt_plong( d->ctl_points,
+				rt_nmg_export_fastf( eg->ctl_points,
+					eg->c_size, 1.0 ) );
 		}
 		return;
 	case NMG_KIND_VERTEXUSE:
@@ -1139,14 +1311,6 @@ double		local2mm;
 #undef INDEX
 #undef INDEXL
 
-#define RT_CK_DISKMAGIC(_cp,_magic)	\
-	if( rt_glong(_cp) != _magic )  { \
-		rt_log("RT_CK_DISKMAGIC: magic mis-match, got x%x, s/b x%x, file %s, line %d\n", \
-			rt_glong(_cp), _magic, __FILE__, __LINE__); \
-		rt_bomb("bad magic\n"); \
-	}
-
-
 /*
  *  For symmetry with export, use same macro names and arg ordering,
  *  but here take from "o" (outboard) variable and put in "i" (internal).
@@ -1171,13 +1335,14 @@ double		local2mm;
  *  Transform geometry by given matrix.
  */
 int
-rt_nmg_idisk( op, ip, ecnt, index, ptrs, mat )
+rt_nmg_idisk( op, ip, ecnt, index, ptrs, mat, basep )
 genptr_t	op;		/* ptr to in-memory structure */
 genptr_t	ip;		/* base of disk array */
 struct nmg_exp_counts	*ecnt;
 int		index;
 long		**ptrs;
-mat_t		mat;
+CONST mat_t	mat;
+CONST unsigned char	*basep;	/* base of whole import record */
 {
 	int	iindex;		/* index in ip */
 
@@ -1291,7 +1456,7 @@ mat_t		mat;
 			f->g.magic_p = (long *)ptrs[g_index];
 			f->flip = rt_glong( d->flip );
 			/* Enrole this face on fg's list of users */
-			NMG_CK_FACE_G_PLANE(f->g.plane_p);
+			NMG_CK_FACE_G_EITHER(f->g.magic_p);
 			INDEXL_HD( d, f, l, f->g.plane_p->f_hd ); /* after fu->fg_p set */
 			NMG_CK_FACEUSE(f->fu_p);
 		}
@@ -1320,12 +1485,21 @@ mat_t		mat;
 			fg->order[0] = rt_glong( d->u_order );
 			fg->order[1] = rt_glong( d->v_order );
 			fg->u.k_size = rt_glong( d->u_size );
+			fg->u.knots = rt_nmg_import_fastf( basep, ecnt,
+				rt_glong( d->u_knots ), (matp_t)NULL,
+				fg->u.k_size, 1 );
 			fg->v.k_size = rt_glong( d->v_size );
+			fg->v.knots = rt_nmg_import_fastf( basep, ecnt,
+				rt_glong( d->v_knots ), (matp_t)NULL, fg->v.k_size,
+				1 );
 			fg->s_size[0] = rt_glong( d->us_size );
 			fg->s_size[1] = rt_glong( d->vs_size );
 			fg->pt_type = rt_glong( d->pt_type );
-			/* XXX Must transform ctl_points by 'mat' */
-/* XXX */		rt_bomb("snurb u.knots, v.knots, ctl_points\n");
+			/* Transform ctl_points by 'mat' */
+			fg->ctl_points = rt_nmg_import_fastf( basep, ecnt,
+				rt_glong( d->ctl_points ), mat,
+				fg->s_size[0] * fg->s_size[1],
+				RT_NURB_EXTRACT_COORDS(fg->pt_type) );
 		}
 		return 0;
 	case NMG_KIND_LOOPUSE:
@@ -1410,7 +1584,7 @@ mat_t		mat;
 			NMG_CK_EDGEUSE(eu->eumate_p);
 			NMG_CK_EDGEUSE(eu->radial_p);
 			NMG_CK_VERTEXUSE(eu->vu_p);
-			NMG_CK_EDGE_G_LSEG(eu->g.lseg_p);	/* XXX */
+			NMG_CK_EDGE_G_EITHER(eu->g.magic_p);
 
 			/* Note that l2 subscripts will be for edgeuse, not l2 */
 			/* g.lseg_p->eu_hd2 is a pun for g.cnurb_p->eu_hd2 also */
@@ -1468,12 +1642,20 @@ mat_t		mat;
 			NMG_CK_EDGE_G_CNURB(eg);
 			RT_CK_DISKMAGIC( d->magic, DISK_EDGE_G_CNURB_MAGIC );
 			INDEXL_HD( d, eg, eu_hd2, eg->eu_hd2 );
-			/* XXX Must transform ctl_points by 'mat' */
 			eg->order = rt_glong( d->order );
 			eg->k.k_size = rt_glong( d->k_size );
+			eg->k.knots = rt_nmg_import_fastf( basep, ecnt,
+				rt_glong( d->knots ), (matp_t)NULL,
+				eg->k.k_size, 1 );
 			eg->c_size = rt_glong( d->c_size );
 			eg->pt_type = rt_glong( d->pt_type );
-/* XXX */		rt_bomb("cnurb knots and ctl_points?\n");
+			/*
+			 * The curve's control points are in parameter space.
+			 * They do NOT get transformed!
+			 */
+			eg->ctl_points = rt_nmg_import_fastf( basep, ecnt,
+				rt_glong( d->ctl_points ), (matp_t)NULL,
+				eg->c_size, 1 );
 		}
 		return 0;
 	case NMG_KIND_VERTEXUSE:
@@ -1561,7 +1743,8 @@ int				kind_counts[NMG_N_KINDS];
 	int			j;
 
 	subscript = 1;
-	for( kind = 0; kind < NMG_N_KINDS; kind++ )  {
+	/* Specifically avoid the last kind, fastf_t arrays */
+	for( kind = 0; kind < NMG_N_KINDS-1; kind++ )  {
 #if DEBUG
 rt_log("%d  %s\n", kind_counts[kind], rt_nmg_kind_names[kind] );
 #endif
@@ -1774,6 +1957,59 @@ ptrs[subscript], nmg_index_of_struct(ptrs[subscript]) );
 }
 
 /*
+ *			R T _ N M G _ I 2 A L L O C
+ *
+ *  Find the locations of all the variable-sized fastf_t arrays in
+ *  the input record.  Record that position as a byte offset from the
+ *  very front of the input record in ecnt[], indexed by subscript number.
+ *
+ *  No storage is allocated here, that will be done by rt_nmg_import_fastf()
+ *  on the fly.
+ *  A separate call to rt_malloc() will be used, so that nmg_keg(), etc.,
+ *  can kill each array as appropriate.
+ */
+void
+rt_nmg_i2alloc( ecnt, cp, kind_counts, maxindex )
+struct nmg_exp_counts	*ecnt;
+unsigned char		*cp;
+int			kind_counts[NMG_N_KINDS];
+int			maxindex;
+{
+	register int	kind;
+	int		nkind;
+	int		subscript;
+	int		offset;
+	int		i;
+
+	nkind = kind_counts[NMG_KIND_DOUBLE_ARRAY];
+	if( nkind <= 0 )  return;
+
+	/* First, find the beginning of the fastf_t arrays */
+	subscript = 1;
+	offset = 0;
+	for( kind = 0; kind < NMG_N_KINDS; kind++ )  {
+		if( kind == NMG_KIND_DOUBLE_ARRAY )  continue;
+		offset += rt_nmg_disk_sizes[kind] * kind_counts[kind];
+		subscript += kind_counts[kind];
+	}
+
+	/* Should have found the first one now */
+	RT_CK_DISKMAGIC( cp + offset, DISK_DOUBLE_ARRAY_MAGIC );
+rt_log("rt_nmg_i2alloc() first one at cp=x%x, offset=%d, subscript=%d\n", cp, offset, subscript );
+
+	for( i=0; i < nkind; i++ )  {
+		int	ndouble;
+		RT_CK_DISKMAGIC( cp + offset, DISK_DOUBLE_ARRAY_MAGIC );
+		ndouble = rt_glong( cp + offset + 4 );
+		ecnt[subscript].kind = NMG_KIND_DOUBLE_ARRAY;
+		/* Stored byte offset is from beginning of disk record */
+		ecnt[subscript].byte_offset = offset;
+		offset += (4+4) + 8*ndouble;
+		subscript++;
+	}
+}
+
+/*
  *			R T _ N M G _ I M P O R T _ I N T E R N A L
  *
  *  Import an NMG from the database format to the internal format.
@@ -1795,7 +2031,7 @@ CONST struct rt_tol		*tol;
 	struct model			*m;
 	union record			*rp;
 	int				kind_counts[NMG_N_KINDS];
-	char				*cp;
+	unsigned char			*cp;
 	long				**real_ptrs;
 	long				**ptrs;
 	struct nmg_exp_counts		*ecnt;
@@ -1848,11 +2084,16 @@ CONST struct rt_tol		*tol;
 	/* Allocate storage for all the NMG structs, in ptrs[] */
 	m = rt_nmg_ialloc( ptrs, ecnt, kind_counts );
 
+	/* Locate the variably sized fastf_t arrays.  ecnt[] has room. */
+	cp = (unsigned char *)(rp+1);	/* start at first granule in */
+	rt_nmg_i2alloc( ecnt, cp, kind_counts, maxindex );
+
 	/* Import each structure, in turn */
-	cp = (char *)(rp+1);	/* start at first granule in */
 	for( i=1; i < maxindex; i++ )  {
+		/* If we made it to the last kind, stop.  Nothing follows */
+		if( ecnt[i].kind == NMG_KIND_DOUBLE_ARRAY )  break;
 		if( rt_nmg_idisk( (genptr_t)(ptrs[i]), (genptr_t)cp,
-			ecnt, i, ptrs, mat ) < 0 )
+			ecnt, i, ptrs, mat, (unsigned char *)(rp+1) ) < 0 )
 				return -1;	/* FAIL */
 		cp += rt_nmg_disk_sizes[ecnt[i].kind];
 	}
@@ -1942,6 +2183,8 @@ int				compact;
 	int				tot_size;
 	int				kind;
 	char				*cp;
+	int				double_count;
+	int				fastf_byte_count;
 
 	RT_CK_DB_INTERNAL(ip);
 	if( ip->idb_type != ID_NMG )  return(-1);
@@ -1961,12 +2204,46 @@ int				compact;
 	for( i = 0; i < NMG_N_KINDS; i++ )
 		kind_counts[i] = 0;
 	subscript = 1;		/* must be larger than DISK_INDEX_NULL */
+	double_count = 0;
+	fastf_byte_count = 0;
 	for( i=0; i < m->maxindex; i++ )  {
 		if( ptrs[i] == (long *)0 )  continue;
 		kind = rt_nmg_magic_to_kind( *(ptrs[i]) );
 		ecnt[i].per_struct_index = kind_counts[kind]++;
 		ecnt[i].kind = kind;
+		/* Handle the variable sized kinds */
+		switch(kind)  {
+		case NMG_KIND_FACE_G_SNURB:
+			{
+				struct face_g_snurb	*fg;
+				int			ndouble;
+				fg = (struct face_g_snurb *)ptrs[i];
+				ecnt[i].first_fastf_relpos = kind_counts[NMG_KIND_DOUBLE_ARRAY];
+				kind_counts[NMG_KIND_DOUBLE_ARRAY] += 3;
+				ndouble =  fg->u.k_size +
+					   fg->v.k_size +
+					   fg->s_size[0] * fg->s_size[1];
+				double_count += ndouble;
+				ecnt[i].byte_offset = fastf_byte_count;
+				fastf_byte_count += 3*(4+4) + 8*ndouble;
+			}
+			break;
+		case NMG_KIND_EDGE_G_CNURB:
+			{
+				struct edge_g_cnurb	*eg;
+				int			ndouble;
+				eg = (struct edge_g_cnurb *)ptrs[i];
+				ecnt[i].first_fastf_relpos = kind_counts[NMG_KIND_DOUBLE_ARRAY];
+				kind_counts[NMG_KIND_DOUBLE_ARRAY] += 2;
+				ndouble = eg->k.k_size + eg->c_size;
+				double_count += ndouble;
+				ecnt[i].byte_offset = fastf_byte_count;
+				fastf_byte_count += 2*(4+4) + 8*ndouble;
+			}
+			break;
+		}
 	}
+rt_log("kind_counts[DOUBLE]=%d, double_count=%d\n", kind_counts[NMG_KIND_DOUBLE_ARRAY], double_count);
 	if( compact )  {
 		kind_counts[NMG_KIND_NMGREGION_A] = 0;
 		kind_counts[NMG_KIND_SHELL_A] = 0;
@@ -1995,6 +2272,10 @@ int				compact;
 			ecnt[i].new_subscript = subscript++;
 		}
 	}
+	/* Tack on the variable sized fastf_t arrays at the end */
+	rt_nmg_cur_fastf_subscript = subscript;
+rt_log("first fastf subscript=%d, count=%d\n", subscript, kind_counts[NMG_KIND_DOUBLE_ARRAY] );
+	subscript += kind_counts[NMG_KIND_DOUBLE_ARRAY];
 
 	/* Sanity checking */
 #if DEBUG
@@ -2030,6 +2311,10 @@ rt_log("Mapping of old index to new index, and kind\n");
 		}
 		tot_size += kind_counts[i] * rt_nmg_disk_sizes[i];
 	}
+	/* Account for variable sized double arrays, at the end */
+	tot_size += kind_counts[NMG_KIND_DOUBLE_ARRAY] * (4+4) +
+			double_count * 8;
+
 	additional_grans = (tot_size + sizeof(union record)-1) / sizeof(union record);
 	RT_INIT_EXTERNAL(ep);
 	ep->ext_nbytes = (1 + additional_grans) * sizeof(union record);
@@ -2049,6 +2334,8 @@ rt_log("Mapping of old index to new index, and kind\n");
 		disk_arrays[i] = (genptr_t)cp;
 		cp += kind_counts[i] * rt_nmg_disk_sizes[i];
 	}
+	/* disk_arrays[NMG_KIND_DOUBLE_ARRAY] is set properly because it is last */
+	rt_nmg_fastf_p = disk_arrays[NMG_KIND_DOUBLE_ARRAY];
 
 	/* Convert all the structures to their disk versions */
 	for( i = m->maxindex-1; i >= 0; i-- )  {
