@@ -355,6 +355,7 @@ register struct partition *PartHeadp;
 		int	region_id;	/* solid region's id */
 		int	air_id;		/* air id */
 		fastf_t	air_thickness;	/* air line of sight thickness */
+		vect_t	normal;		/* surface normal */
 		register struct partition	*nextpp = pp->pt_forw;
 
 		if( (region_id = pp->pt_regionp->reg_regionid) <= 0 )  {
@@ -411,26 +412,34 @@ register struct partition *PartHeadp;
 		/* next macro must be on one line for 3d compiler */
 		RT_HIT_NORM( pp->pt_inhit, pp->pt_inseg->seg_stp, &(ap->a_ray) );
 		if( pp->pt_inflip )  {
-			VREVERSE( pp->pt_inhit->hit_normal,
-				  pp->pt_inhit->hit_normal );
-			pp->pt_inflip = 0;
+			VREVERSE( normal, pp->pt_inhit->hit_normal );
+		} else {
+			VMOVE( normal, pp->pt_inhit->hit_normal );
 		}
-		in_obliq = acos( -VDOT( ap->a_ray.r_dir,
-			pp->pt_inhit->hit_normal ) ) * mat_radtodeg;
+		in_obliq = acos( -VDOT( ap->a_ray.r_dir, normal ) ) *
+			mat_radtodeg;
 		/* next macro must be on one line for 3d compiler */
 		RT_HIT_NORM( pp->pt_outhit, pp->pt_outseg->seg_stp, &(ap->a_ray) );
 		if( pp->pt_outflip )  {
-			VREVERSE( pp->pt_outhit->hit_normal,
-				  pp->pt_outhit->hit_normal );
-			pp->pt_outflip = 0;
+			VREVERSE( normal, pp->pt_outhit->hit_normal );
+		} else {
+			VMOVE( normal, pp->pt_outhit->hit_normal );
 		}
-		out_obliq = acos( VDOT( ap->a_ray.r_dir,
-			pp->pt_outhit->hit_normal ) ) * mat_radtodeg;
+		out_obliq = acos( VDOT( ap->a_ray.r_dir, normal ) ) *
+			mat_radtodeg;
 
 		/* Check for exit obliquties greater than 90 degrees. */
-
-		if( out_obliq > 90)  {
+		if( in_obliq > 90 || in_obliq < 0 )  {
+			rt_log("ERROR: in_obliquity=%g\n", in_obliq);
+			rt_pr_partitions(ap->a_rt_i, PartHeadp, "Defective partion:");
+		}
+		if( out_obliq > 90 || out_obliq < 0 )  {
 			rt_log("ERROR: out_obliquity=%g\n", out_obliq);
+			VPRINT(" r_dir", ap->a_ray.r_dir);
+			VPRINT("normal", normal);
+			rt_log("dot=%g, acos(dot)=%g\n",
+				VDOT( ap->a_ray.r_dir, normal ),
+				acos( VDOT( ap->a_ray.r_dir, normal ) ) );
 			rt_pr_partitions(ap->a_rt_i, PartHeadp, "Defective partion:");
 		}
 
