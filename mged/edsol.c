@@ -1091,6 +1091,7 @@ init_sedit()
 	case ID_TOR:
 	case ID_ETO:
 	case ID_BSPLINE:
+	case ID_NMG:
 		rt_log("Experimental:  new_way=1\n");
 		new_way = 1;
 
@@ -1155,7 +1156,7 @@ replot_editing_solid()
 
 	dp = illump->s_path[illump->s_last];
 
-		if( new_way )  {
+	if( new_way )  {
 		ip = &es_int;
 	} else {
 		/* Fake up an external representation */
@@ -1193,13 +1194,14 @@ replot_editing_solid()
  */
 void
 transform_editing_solid(os, mat, is, free)
-struct rt_db_internal	*os;
+struct rt_db_internal	*os;		/* output solid */
 mat_t			mat;
-struct rt_db_internal	*is;
+struct rt_db_internal	*is;		/* input solid */
 int			free;
 {
 	struct directory	*dp;
-	dp = illump->s_path[illump->s_last];
+
+	RT_CK_DB_INTERNAL( is );
 	if( rt_functab[is->idb_type].ft_xform( os, mat, is, free ) < 0 )
 		rt_bomb("transform_editing_solid");
 #if 0
@@ -1208,6 +1210,7 @@ int			free;
  * modified into rt_generic_xform() in librt/table.c
  * rt_generic_xform is normally called via rt_functab[id].ft_xform()
  */
+	dp = illump->s_path[illump->s_last];
 	if( rt_db_xform_internal( os, mat, is, free, dp->d_namep ) < 0 )
 		rt_bomb("transform_editing_solid");		/* FAIL */
 #endif
