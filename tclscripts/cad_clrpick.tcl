@@ -33,7 +33,7 @@
 # Create a color widget and let the user choose a color.
 # The caller is responsible for calling "unset data"
 #
-proc cadColorWidget { mode parent args } {
+proc cadColorWidget { mode parent child args } {
     if ![winfo exists $parent] {
 	cad_dialog .cadColorWidgetError [winfo screen .]\
 		"cadColorWidget: parent does not exist"\
@@ -44,7 +44,12 @@ proc cadColorWidget { mode parent args } {
     }
 
     # Allow more than one color tool
-    set w $parent.colorWidget
+    set w $parent.$child
+    if [winfo exists $w] {
+	raise $w
+	return
+    }
+
     upvar #0 $w data
 
     # The lines variables track the start and end indices of the line
@@ -80,11 +85,11 @@ proc cadColorWidget { mode parent args } {
     cadColorWidget_InitValues $w 1
 
     set data(xoffset) [expr 3 + $data(indent)]
-    if ![winfo exists $w] {
-	# Create toplevel on parent's screen
-	toplevel $w -class tkColorDialog -screen [winfo screen $parent]
-	cadColorWidget_Build $w $mode
-    }
+
+    # Create toplevel on parent's screen
+    toplevel $w -class tkColorDialog -screen [winfo screen $parent]
+    cadColorWidget_Build $w $mode
+
     wm transient $w $parent
 
     # 5. Withdraw the window, then update all the geometry information
@@ -1150,4 +1155,11 @@ proc cadColorWidget_setColorModel { w } {
     cadColorWidget_MoveSelector $w $w.top.colorStrip.colorBar3.sel colorBar3 $x3 0
 
     cadColorWidget_RedrawColorBars $w all
+}
+
+proc cadColorWidget_destroy { w } {
+    upvar #0 $w data
+
+    destroy $w
+    unset data
 }
