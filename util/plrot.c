@@ -42,6 +42,7 @@ char	cbuf[48];		/* COPY and SKIP macro buffer */
 mat_t	rmat;			/* rotation matrix to be applied */
 double	scale;			/* scale factor to be applied */
 int	doscale;
+int	verbose;
 
 int	rpp;			/* indicates new center and space values */
 double	centx, centy, centz;	/* new center of rotation values */
@@ -59,7 +60,9 @@ Usage: plrot [options] [file1 ... fileN] > file.plot\n\
    -a# -e#        Azimuth/Elevation from front view\n\
                   (usually first, in this order, implies -M)\n\
    -g		  MGED front view to display coordinates (usually last)\n\
-   -M             Autoscale space command like RT model RPP\n";
+   -M             Autoscale space command like RT model RPP\n\
+   -m#		  Takes a 4X4 matrix as an argument\n\
+   -v		  Verbose\n";
 
 get_args( argc, argv )
 register char **argv;
@@ -70,7 +73,7 @@ register char **argv;
 	mat_idn( rmat );
 	scale = 1.0;
 
-	while ( (c = getopt( argc, argv, "Mga:e:x:y:z:X:Y:Z:s:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "m:vMga:e:x:y:z:X:Y:Z:s:" )) != EOF )  {
 		switch( c )  {
 		case 'M':
 			/* model RPP! */
@@ -110,25 +113,28 @@ register char **argv;
 			break;
 		case 'X':
 			mat_idn( tmp );
-			tmp[3] = atof(optarg);
+			tmp[MDX] = atof(optarg);
 			mat_copy( m, rmat );
 			mat_mul( rmat, tmp, m );
 			break;
 		case 'Y':
 			mat_idn( tmp );
-			tmp[7] = atof(optarg);
+			tmp[MDY] = atof(optarg);
 			mat_copy( m, rmat );
 			mat_mul( rmat, tmp, m );
 			break;
 		case 'Z':
 			mat_idn( tmp );
-			tmp[11] = atof(optarg);
+			tmp[MDZ] = atof(optarg);
 			mat_copy( m, rmat );
 			mat_mul( rmat, tmp, m );
 			break;
 		case 's':
 			scale *= atof(optarg);
 			doscale++;
+			break;
+		case 'v':
+			verbose++;
 			break;
 		default:		/* '?' */
 			return(0);	/* Bad */
@@ -152,6 +158,11 @@ char	**argv;
 	if( !get_args( argc, argv ) )  {
 		(void)fputs(usage, stderr);
 		exit( 1);
+	}
+
+	if( verbose )  {
+		mat_print("rmat", rmat);
+		fprintf(stderr, "scale=%g\n", scale);
 	}
 
 	if( optind < argc ) {
@@ -205,6 +216,7 @@ FILE	*fp;
 		case 'p':
 		case 'm':
 		case 'n':
+			/* Two coordinates in, three out. Change command. */
 			putchar( UPPER_CASE(c) );
 			two_coord_out( fp, rmat );
 			break;
@@ -337,10 +349,12 @@ FILE	*fp;
 		case 'x':
 		case 'o':
 		case 'q':
+			/* Two coordinates in, three out.  Change command. */
 			putchar( UPPER_CASE(c) );
 			two_dcoord_out( fp, rmat );
 			break;
 		case 'v':
+			/* Two coordinates in, three out.  Change command. */
 			putchar( 'V' );
 			two_dcoord_out( fp, rmat );
 			two_dcoord_out( fp, rmat );
@@ -389,6 +403,14 @@ double	minx, miny, minz, maxx, maxy, maxz;
 	dz = maxz - minz;
 	viewsize = sqrt( dx*dx + dy*dy + dz*dz );
 
+	if( verbose )  {
+		fprintf(stderr, "space (%g, %g, %g) (%g, %g, %g)\n",
+			minx, miny, minz,
+			maxx, maxy, maxz);
+		fprintf(stderr, "  center=(%g, %g, %g, size=%g\n",
+			centx, centy, centz, viewsize);
+	}
+
 	doscale++;
 
 	return( 1 );
@@ -401,13 +423,12 @@ two_coord_out( fp, m )
 FILE	*fp;
 mat_t	m;
 {
-	double	p1[4];
-	short	p2[4];
+	point_t	p1;
+	short	p2[3];
 
 	p1[0] = getshort(fp);	/* get X */
 	p1[1] = getshort(fp);	/* and Y */
 	p1[2] = 0;		/* no Z  */
-	p1[3] = 1.0;
 
 	if( doscale ) {
 		p1[0] = (p1[0] - centx) * scale;
@@ -415,7 +436,7 @@ mat_t	m;
 		p1[2] = (p1[2] - centz) * scale;
 	}
 
-	MAT4X4PNT( p2, m, p1 );
+	MAT4X3PNT( p2, m, p1 );
 
 	putsi(p2[0]);		/* put X */
 	putsi(p2[1]);		/* and Y */
@@ -427,13 +448,12 @@ three_coord_out( fp, m )
 FILE	*fp;
 mat_t	m;
 {
-	double	p1[4];
-	short	p2[4];
+	point_t	p1;
+	short	p2[3];
 
 	p1[0] = getshort(fp);	/* get X */
 	p1[1] = getshort(fp);	/* and Y */
 	p1[2] = getshort(fp);	/* and Z */
-	p1[3] = 1.0;
 
 	if( doscale ) {
 		p1[0] = (p1[0] - centx) * scale;
@@ -441,7 +461,7 @@ mat_t	m;
 		p1[2] = (p1[2] - centz) * scale;
 	}
 
-	MAT4X4PNT( p2, m, p1 );
+	MAT4X3PNT( p2, m, p1 );
 
 	putsi(p2[0]);		/* put X */
 	putsi(p2[1]);		/* and Y */
@@ -454,12 +474,12 @@ FILE	*fp;
 mat_t	m;
 {
 	char	buf[2*8];
-	double	p1[4], p2[4];
+	point_t	p1; 
+	double	p2[3];
 
 	fread( buf, 1, 2*8, fp );
 	ntohd( p1, buf, 2 );
 	p1[2] = 0;		/* no Z  */
-	p1[3] = 1.0;
 
 	if( doscale ) {
 		p1[0] = (p1[0] - centx) * scale;
@@ -467,7 +487,7 @@ mat_t	m;
 		p1[2] = (p1[2] - centz) * scale;
 	}
 
-	MAT4X4PNT( p2, m, p1 );
+	MAT4X3PNT( p2, m, p1 );
 
 	htond( buf, p2, 3 );
 	fwrite( buf, 1, 3*8, stdout );
@@ -479,11 +499,11 @@ FILE	*fp;
 mat_t	m;
 {
 	char	buf[3*8];
-	double	p1[4], p2[4];
+	point_t	p1;
+	double	p2[3];
 
 	fread( buf, 1, 3*8, fp );
 	ntohd( p1, buf, 3 );
-	p1[3] = 1.0;
 
 /*fprintf( stderr, "Before [%g %g %g %g]\n", p1[0], p1[1], p1[2], p1[3] );*/
 	if( doscale ) {
@@ -492,7 +512,7 @@ mat_t	m;
 		p1[2] = (p1[2] - centz) * scale;
 	}
 
-	MAT4X4PNT( p2, m, p1 );
+	MAT4X3PNT( p2, m, p1 );
 
 /*fprintf( stderr, "After [%g %g %g %g]\n", p2[0], p2[1], p2[2], p2[3] );*/
 	htond( buf, p2, 3 );
