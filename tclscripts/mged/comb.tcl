@@ -513,6 +513,15 @@ proc comb_apply { id } {
 		    "" 0 OK 
 	}
 
+	set ret [catch {eval attr set $comb_control($id,name) $comb_control($id,attrs) } comb_error ]
+
+	if {$ret} {
+	    cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) \
+		    "comb_apply: Error"\
+		    $comb_error\
+		    "" 0 OK 
+	}
+
 	return $ret
     }
 
@@ -533,6 +542,15 @@ proc comb_apply { id } {
 		"" 0 OK 
     }
     
+    set ret [catch {eval attr set $comb_control($id,name) $comb_control($id,attrs) } comb_error ]
+
+    if {$ret} {
+	cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen) \
+	    "comb_apply: Error"\
+	    $comb_error\
+	    "" 0 OK 
+    }
+
     return $ret
 }
 
@@ -560,6 +578,48 @@ proc comb_reset { id } {
 		"" 0 OK
 	return
     }
+
+    set result [catch {attr get $comb_control($id,name)} comb_attrs]
+    if { $result == 1 } {
+	cad_dialog $tkPriv(cad_dialog) $mged_gui($id,screen)\
+		"comb_reset: Error"\
+		$comb_attrs\
+		"" 0 OK
+	return
+    }
+
+    # eliminate attributes that might conflict with changes we make
+    set tmp_comb_attrs {}
+    set num_attrs [expr [llength $comb_attrs] / 2]
+    for { set i $num_attrs } { $i > 0 } { incr i -1 } {
+	set key [lindex $comb_attrs [expr ($i - 1) * 2]]
+	set keep 1
+	if { [string compare $key "region"] == 0 } {
+	    set keep 0
+	} elseif { [string compare $key "region_id"] == 0 } {
+	    set keep 0
+	} elseif { [string compare $key "material_id"] == 0 } {
+	    set keep 0
+	} elseif { [string compare $key "los"] == 0 } {
+	    set keep 0
+	} elseif { [string compare $key "aircode"] == 0 } {
+	    set keep 0
+	} elseif { [string compare $key "rgb"] == 0 } {
+	    set keep 0
+	} elseif { [string compare $key "oshader"] == 0 } {
+	    set keep 0
+	} elseif { [string compare $key "inherit"] == 0 } {
+	    set keep 0
+	} elseif { [string compare $key "temp"] == 0 } {
+	    set keep 0
+	}
+
+	if { $keep } {
+	    lappend tmp_comb_attrs $key [lindex $comb_attrs [expr {($i - 1) * 2 + 1}]]
+	}
+    }
+
+    set comb_control($id,attrs) $tmp_comb_attrs
 
     set comb_control($id,isRegion) [lindex $comb_defs 1]
 
