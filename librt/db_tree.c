@@ -695,6 +695,49 @@ CONST mat_t	mat;
 }
 
 /*
+ *			D B _ T R E E _ F U N C L E A F
+ *
+ *	This routine traverses a combination (union tree) in LNR order
+ *	and calls the provided function for each OP_DB_LEAF node.
+ *	Note that this routine does not go outside this one
+ *	combination!!!!
+ *	was comb_functree().
+ */
+void
+db_tree_funcleaf( dbip, comb, comb_tree, leaf_func, user_ptr1, user_ptr2 )
+struct db_i		*dbip;
+struct rt_comb_internal	*comb;
+union tree		*comb_tree;
+void			(*leaf_func)();
+genptr_t		user_ptr1,user_ptr2;
+{
+	RT_CK_DBI( dbip );
+
+	if( !comb_tree )
+		return;
+
+	RT_CK_TREE( comb_tree );
+
+	switch( comb_tree->tr_op )
+	{
+		case OP_DB_LEAF:
+			(*leaf_func)( dbip, comb, comb_tree, user_ptr1, user_ptr2 );
+			break;
+		case OP_UNION:
+		case OP_INTERSECT:
+		case OP_SUBTRACT:
+		case OP_XOR:
+			db_tree_funcleaf( dbip, comb, comb_tree->tr_b.tb_left, leaf_func, user_ptr1, user_ptr2 );
+			db_tree_funcleaf( dbip, comb, comb_tree->tr_b.tb_right, leaf_func, user_ptr1, user_ptr2 );
+			break;
+		default:
+			bu_log( "db_tree_funcleaf: bad op %d\n", comb_tree->tr_op );
+			bu_bomb( "db_tree_funcleaf: bad op\n" );
+			break;
+	}
+}
+
+/*
  *			D B _ F O L L O W _ P A T H _ F O R _ S T A T E
  *
  *  Follow the slash-separated path given by "cp", and update
