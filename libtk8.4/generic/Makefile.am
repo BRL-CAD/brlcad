@@ -12,3 +12,6 @@ brlcadincludedir = $(includedir)/brlcad
 include_HEADERS = tkDecls.h tk.h tkPlatDecls.h
 brlcadinclude_HEADERS = $(include_HEADERS)
 
+tkdir = ${prefix}/tk8.4
+dist_tk_DATA = prolog.ps
+

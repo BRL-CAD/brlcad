@@ -8,3 +8,5 @@ AM_CFLAGS = -I${top_srcdir}/libtcl8.4/generic -I${top_srcdir}/libtk8.4/generic @
 
 noinst_HEADERS = tkUnixDefault.h tkUnixInt.h tkUnixPort.h
 
+tkdir = ${prefix}/tk8.4
+tk_DATA = tkAppInit.c

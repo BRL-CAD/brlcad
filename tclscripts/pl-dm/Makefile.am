@@ -1,8 +1,9 @@
 # $Id$
 
 tcldir = $(prefix)/tclscripts/pl-dm
-tcl_SCRIPTS = bindings.tcl help.tcl menu.tcl
-EXTRA_DIST = $(tcl_SCRIPTS)
+tclfiles = bindings.tcl help.tcl menu.tcl
+tcl_SCRIPTS = $(tclfiles) tclIndex
+EXTRA_DIST = $(tclfiles)
 
 .PHONY : tclIndex
 tclIndex:

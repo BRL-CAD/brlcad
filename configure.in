@@ -298,7 +298,9 @@ AC_OUTPUT([
 	libtk8.4/bitmaps/Makefile
 	libtk8.4/doc/Makefile
 	libtk8.4/generic/Makefile
+	libtk8.4/library/demos/images/Makefile
 	libtk8.4/library/demos/Makefile
+	libtk8.4/library/images/Makefile
 	libtk8.4/library/Makefile
 	libtk8.4/library/msgs/Makefile
 	libtk8.4/Makefile
