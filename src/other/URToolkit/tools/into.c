@@ -45,7 +45,7 @@ extern int errno;
 extern char *sys_errlist[];
 #endif
 
-void
+int
 main(argc, argv)
 int argc;
 char **argv;
