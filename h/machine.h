@@ -35,6 +35,7 @@ typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 
 /* full means resource free, empty means resource busy */
+#define RES_INIT(ptr)		RES_RELEASE(ptr)
 #define	RES_ACQUIRE(ptr)	(void)Daread(ptr)	/* wait full set empty */
 #define RES_RELEASE(ptr)	(void)Daset(ptr,3)	/* set full */
 
@@ -68,13 +69,21 @@ typedef double	fastf_t;	/* double|float, "Fastest" float type */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	6	/* log2( bits_wide(bitv_t) ) */
 
+#ifndef PARALLEL
+#define RES_INIT(ptr)		;
 #define RES_ACQUIRE(ptr)	;
 #define RES_RELEASE(ptr)	;
+#else
+/* Cray multi-tasking routines */
+#define RES_INIT(ptr)		LOCKASGN(ptr);
+#define RES_ACQUIRE(ptr)	LOCKON(ptr);
+#define RES_RELEASE(ptr)	LOCKOFF(ptr);
+#endif
 
 /**buggy #define bzero(str,n)		memset( str, '\0', n ) ***/
 #define bcopy(from,to,count)	memcpy( to, from, count )
 
-#define CRAY_COS	1	/* Running on Cray under COS w/bugs */
+/**#define CRAY_COS	1	/* Running on Cray under COS w/bugs */
 
 #endif cray
 
@@ -89,6 +98,7 @@ typedef double	fastf_t;	/* double|float, "Fastest" float type */
 typedef long	bitv_t;		/* largest integer type */
 #define BITV_SHIFT	5	/* log2( bits_wide(bitv_t) ) */
 
+#define RES_INIT(ptr)		;
 #define RES_ACQUIRE(ptr)	;
 #define RES_RELEASE(ptr)	;
 #endif
