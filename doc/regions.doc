@@ -132,3 +132,159 @@ kept getting prioritized ahead of that project, and it still languishes.
 	Best,
 	 -Mike
   
+From:     Keith Applin (VLD/VMB) <keith@BRL.ARPA>
+Subject:  Good Modeling Practices
+
+Solid modeling using MGED can tend to be quite individual, however I
+will attempt to give my version ( < 500 words ) of some "good" modeling
+practices.  To model a particular object, I would recommend something
+like this:
+
+First decide how to represent the object, including the amount
+of detail and the solid[s] and region[s] necessary.  Then the solids 
+are created and edited to have the size, shape, and orientation desired.
+Solids can be created via "make", "cp", "mirror", or "in" commands.
+Depending on complexity the solids are created in the desired location
+or; to take advantage of symmetry created at the origin and later
+translated (and "push"ed) to the desired location.  Once all the solids
+are finished it is time to create the region[s], which tell how to combine
+the solids to represent the object.  The region[s] are then given
+the desired item/air and material codes.  I usually use the "edcodes"
+command to do this.  The region[s] are then put into a group, usually
+for function.  A group is just a collection of objectslity definition.
+for functionality definition.  A group really has no operation as such,
+and is really just a collection of objects.
+
+Now a little bit about regions.  Regions are the objects that the
+application ray-tracing interrogates.  If solids are not part of 
+regions they will not be "seen" at all.  Some ray-trace applications
+will create a default region out of such an orphan solid.  Thus one
+in general does not have solids in a "functional" group.  There are
+times when temporary groups are made, say for editing purposes, where
+it is desirable to include solids.
+
+There are three operations allowed in regions; intersection (+),
+union (u) and difference (-).  Intersection gives the common volume, 
+union gives the volume in all members, and difference subtracts from one
+member the common volume with a second.  The union operator needs
+clarification as to precedence:
+
+	r region1 u solid1 - solid2 u solid3 - solid4
+
+is evaluated as:  region1 = u (solid1 - solid2) u (solid3 - solid4)
+
+Thus, the above region with unions is the same as the two regions:
+
+    r region1 + solid1 - solid2   and    r region2 + solid3 - solid4
+
+In fact, it is probably better practice to make the two distinct regions.
+Of course, by using the two regions instead of the "union" region, one
+must be aware of possible interference between the two regions.
+
+Note,  r region1 u solid1 - solid2   and   r region1 + solid1 - solid2    
+produce the exact same results; however, for good practice one should use the
+union only when the region is really intended for unions (ie more than
+one union operation).
+
+Members of regions are generally solids, however other regions are 
+acceptable.  Again it is probably good practice to use regions as
+members of other regions only when really necessary.
+
+The above is a brief summary of my views of "good" modeling practices,
+for what it's worth.  Comments?
+
+			-keith-
+
+From:     "Gary S. Moss" (VLD/VMB) <moss@BRL.ARPA>
+
+	The suggestion of parenthesis is a good one, however the modeler
+is not designed in a way that would accommodate this scheme, at least not
+in a straightforward manner.  There is no place to store an "expression"
+that represents the region set operations.  The way it is done is that
+every member of a region contains an operation and the boolean expression
+falls out of the order of the region members as entered with the "r"egion
+command, with precedence following a couple of rules;
+
+	1] operations are applied "left to right" (the current operation
+	is done to the current solid with respect to the existing region).
+
+	2] there are implied parenthesis that lie in-between union operators.
+
+so
+	
+	+ s1 - s2 + s3 u s4 - s5 u s6
+
+is equivalent to:
+
+	((s1 - s2) + s3) u (s4 - s5) u s6
+
+that is, if parenthesis were allowed.  Therefore, you can think of the
+solids between unions (surrounded by implied parenthesis) as sub-regions.
+The order of the region members (which can be printed out with the "l"
+command) is critical, and must be scrutinized when members are added or
+deleted from a region.
+
+	Physically, the only thing that is stored in the region record
+is the number of members (length).  Immediately following the region
+record are "length"-many member records which contain; the object's name,
+the set operation, and a transformation matrix.  It is not clear that we
+could permit parenthesis without radical redesign of the data base
+structure.  Although I concede that it would be nice, it does not seem to
+be justified once you understand how the implied precedence work.
+
+Thoughts anyone?
+~moss/...
+
+From:     Mike Muuss <mike@BRL.ARPA>
+
+Using "groups" BELOW the "region" node for expression grouping
+is perfectly fine.  Using the implied parens around UNION operators
+is another strategy.
+
+Parens would be nice, but we don't presently have any easy way of
+storing them.  Early versions of librt didn't know about the
+"implied parens" rule, a legacy from GIFT, now we are stuck with it.
+
+Overall, I don't feel the present state is unacceptable.
+	Best,
+	 -Mike
+
+From:     "John R. Anderson" (VLD/ASB) <jra@BRL.ARPA>
+
+Gwyn suggested in a previous message that a component should be kept as
+a single region if possible.  Back in the days of GIFT, it was common
+practice to describe a component with more than one region.  We tried to
+stay away from complex regions mainly because the more complicated the
+region, the harder it is to figure out what is going on and what effects
+a single change might have. Therfore, a component was often a series of
+simple regions with the same ident code.  I use the term "component" to
+refer to an object with a particular ident code, but I'm not sure this
+is still the accepted definition.  I have no qualms about letting "mged"
+or "rt" crunch through complex regions, but I think we should make it
+very clear to all users if components described as a group of regions
+are going to cause them trouble later on.
+
+
+				-John
+
+From:     Earl Weaver (VLD/ASB) <earl@BRL.ARPA>
+
+Perhaps we have a semantic problem here.  The term "component" may mean
+different things to different people.   For example, most people would
+think of a flight control rod in a helicopter as one component.  However
+an application program  may need to know the difference between the
+tube-part of the control rod and each end (or clevis) of the rod because
+those sections of the control rod might  exhibit different physical
+properties.  Thus it would be appropriate to model that one "component"
+(which in reality is one piece--not designed to be disassembled) as
+three regions and each one can be treated as a component.  My practice
+would be to group those three "regions" into "control_rod", then further
+group the control rods into flight controls.
+
+					-Earl
+
+From:     Doug Gwyn (VLD/VMB) <gwyn@BRL.ARPA>
+
+I think "component" should still be identified with a collection of MGED
+"regions" that share an "ident code".  For the time being I don't see
+any necessity to make an actual single MGED "region" out of them.
