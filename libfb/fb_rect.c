@@ -172,7 +172,11 @@ CONST unsigned char	*pp;
 		/* Copy monochrome (b&w) intensity into all three chans */
 		bp = buf;
 		for( x=0; x < width; x++ )  {
-			*bp++ = *bp++ = *bp++ = *pp++;
+			register unsigned char	c = *pp++;
+			bp[0] = c;
+			bp[1] = c;
+			bp[2] = c;
+			bp += 3;
 		}
 
 		got = fb_write( ifp, xmin, y, buf, xlen );
