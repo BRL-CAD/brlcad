@@ -1195,13 +1195,14 @@ wdb_do_trace(dbip, comb, comb_leaf, user_ptr1, user_ptr2, user_ptr3)
 	if ((nextdp = db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_NOISY)) == DIR_NULL)
 		return;
 
-	wdb_trace(dbip, nextdp, (*pathpos)+1, new_xlate, *flag);
+	wdb_trace(curr_interp, dbip, nextdp, (*pathpos)+1, new_xlate, *flag);
 }
 
 /*
  */
 HIDDEN void
-wdb_trace(dbip, dp, pathpos, old_xlate, flag)
+wdb_trace(interp, dbip, dp, pathpos, old_xlate, flag)
+     Tcl_Interp			*interp;
      struct db_i		*dbip;
      register struct directory *dp;
      int pathpos;
@@ -1223,19 +1224,19 @@ wdb_trace(dbip, dp, pathpos, old_xlate, flag)
 
 		bu_vls_init(&tmp_vls);
 		bu_vls_printf(&tmp_vls, "nesting exceeds %d levels\n", WDB_MAX_LEVELS);
-		Tcl_AppendResult(curr_interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		bu_vls_free(&tmp_vls);
 
 		for(i=0; i < WDB_MAX_LEVELS; i++)
-			Tcl_AppendResult(curr_interp, "/", wdb_path[i]->d_namep, (char *)NULL);
+			Tcl_AppendResult(interp, "/", wdb_path[i]->d_namep, (char *)NULL);
 
-		Tcl_AppendResult(curr_interp, "\n", (char *)NULL);
+		Tcl_AppendResult(interp, "\n", (char *)NULL);
 		return;
 	}
 
 	if (dp->d_flags & DIR_COMB) {
 		if (rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL) < 0) {
-			Tcl_AppendResult(curr_interp, "Database read error, aborting\n", (char *)NULL);
+			Tcl_AppendResult(interp, "Database read error, aborting\n", (char *)NULL);
 			return;
 		}
 
@@ -1270,27 +1271,27 @@ wdb_trace(dbip, dp, pathpos, old_xlate, flag)
 
 	/* print the path */
 	for (k=0; k<pathpos; k++)
-		Tcl_AppendResult(curr_interp, "/", wdb_path[k]->d_namep, (char *)NULL);
+		Tcl_AppendResult(interp, "/", wdb_path[k]->d_namep, (char *)NULL);
 
 	if (flag == WDB_LISTPATH) {
 		bu_vls_printf( &str, "/%16s:\n", dp->d_namep );
-		Tcl_AppendResult(curr_interp, bu_vls_addr(&str), (char *)NULL);
+		Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
 		bu_vls_free(&str);
 		return;
 	}
 
 	/* NOTE - only reach here if flag == WDB_LISTEVAL */
-	Tcl_AppendResult(curr_interp, "/", (char *)NULL);
+	Tcl_AppendResult(interp, "/", (char *)NULL);
 	if ((id=rt_db_get_internal(&intern, dp, dbip, wdb_xform)) < 0) {
-		Tcl_AppendResult(curr_interp, "rt_db_get_internal(", dp->d_namep,
+		Tcl_AppendResult(interp, "rt_db_get_internal(", dp->d_namep,
 				 ") failure", (char *)NULL );
 		return;
 	}
 	bu_vls_printf(&str, "%16s:\n", dp->d_namep);
 	if (rt_functab[id].ft_describe(&str, &intern, 1, dbip->dbi_base2local) < 0)
-		Tcl_AppendResult(curr_interp, dp->d_namep, ": describe error\n", (char *)NULL);
+		Tcl_AppendResult(interp, dp->d_namep, ": describe error\n", (char *)NULL);
 	rt_functab[id].ft_ifree(&intern);
-	Tcl_AppendResult(curr_interp, bu_vls_addr(&str), (char *)NULL);
+	Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);
 	bu_vls_free(&str);
 }
 
@@ -1369,7 +1370,7 @@ wdb_pathsum_tcl(clientData, interp, argc, argv)
 
 	bn_mat_idn( wdb_xform );
 
-	wdb_trace(wdbop->wdb_wp->dbip, wdb_objects[0], 0, bn_mat_identity, flag);
+	wdb_trace(interp, wdbop->wdb_wp->dbip, wdb_objects[0], 0, bn_mat_identity, flag);
 
 	if (wdb_prflag == 0) {
 		/* path not found */
