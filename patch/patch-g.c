@@ -2021,7 +2021,7 @@ int cnt;
 }
 
 /* 
- *	Process fastgen wedge shape - this does not process hollows
+ *	Process fastgen wedge shape - also process hollow wedges.
  */
 void
 proc_wedge(cnt)
@@ -2029,14 +2029,27 @@ int cnt;
 {
 	point_t	pts[1];
 	point_t	pt8[8];
-	int k,l;
+	point_t inpt8[8];
+	int i,k,l;
 	vect_t	ab, ac , ad;
-	vect_t	v1,v2,v3,v4;
+	fastf_t len;
+	plane_t planes[5];
 	static int count=0;
 	static int mir_count=0;
 	static int last_cc=0;
 	char	shflg,mrflg,ctflg;
 	char	name[17];
+	int ret = 0;
+	static struct rt_tol tol;
+	static struct rt_tol *tols = &tol;
+
+
+        tol.magic = RT_TOL_MAGIC;
+        tol.dist = 0.01;
+        tol.dist_sq = tol.dist * tol.dist;
+        tol.perp = 0.001;
+        tol.para = 1 - tol.perp;
+
 
 	if( in[cnt-1].cc != last_cc )
 	{
@@ -2075,6 +2088,52 @@ int cnt;
 
 		(void) mk_addmember(name,&head,WMOP_UNION);
 
+		if( in[k].surf_mode == '-' ){
+
+			ctflg = 'y';
+			strcpy( name , proc_sname (shflg,mrflg,count,ctflg) );
+			
+		/* Create planes for arb6. Planes will be formed with
+		   normal pointing inward for creation of inner arb6 */
+
+			ret = rt_mk_plane_3pts(planes[0],pt8[0],pt8[3],pt8[2],tols);
+			ret = ret | rt_mk_plane_3pts(planes[1],pt8[2],pt8[3],pt8[6],tols);
+			ret = ret | rt_mk_plane_3pts(planes[2],pt8[6],pt8[3],pt8[0],tols);
+			ret = ret | rt_mk_plane_3pts(planes[3],pt8[4],pt8[0],pt8[1],tols);
+			ret = ret | rt_mk_plane_3pts(planes[4],pt8[1],pt8[2],pt8[6],tols);
+
+
+		/* Moves planes inward by normal thickness */
+
+			for (i=0; i < 5; i++) {
+				
+				planes[i][3] += in[k].rsurf_thick;
+			}
+
+		/* Find new vertices of interior arb6 using
+		   intersection of 3 planes subroutine */
+
+			ret = ret | rt_mkpoint_3planes(inpt8[0],planes[0],planes[3],planes[2]);
+			ret = ret | rt_mkpoint_3planes(inpt8[1],planes[0],planes[3],planes[4]);
+			ret = ret | rt_mkpoint_3planes(inpt8[2],planes[0],planes[1],planes[4]);
+			ret = ret | rt_mkpoint_3planes(inpt8[3],planes[0],planes[1],planes[2]);
+			ret = ret | rt_mkpoint_3planes(inpt8[4],planes[2],planes[3],planes[4]);
+			ret = ret | rt_mkpoint_3planes(inpt8[6],planes[1],planes[2],planes[4]);
+
+			VMOVE(inpt8[7],inpt8[6]);
+			VMOVE(inpt8[5],inpt8[4]);
+
+			if( ret == 0 ) { /* valid record */
+				
+				mk_arb8( stdout, name, &inpt8[0][X] );
+				mk_addmember(name,&head,WMOP_SUBTRACT);
+			}
+			else {
+				/* add to check group */
+				mk_addmember(name,&headf,WMOP_UNION);
+			}
+		}
+
 		/* make regions for every num_unions solids */
 
 		if ((count % num_unions) == 0)
@@ -2087,7 +2146,7 @@ int cnt;
 		proc_region(name);
 
 	/*   Mirror Processing - duplicates above code!   */
-
+	ret = 0;
 	for(k=0 ; k <= (cnt-1) && in[k].mirror != 0 ; k+=4){
 
 		VSET( pt8[0], in[k].x,-in[k].y,in[k].z );
@@ -2114,6 +2173,51 @@ int cnt;
 		mir_count++;
 
 		(void) mk_addmember(name,&head,WMOP_UNION);
+		if( in[k].surf_mode == '-' ){
+
+			ctflg = 'y';
+			strcpy( name , proc_sname (shflg,mrflg,count,ctflg) );
+
+		/* Create planes for arb6. Planes will be formed with
+		   normal pointing inward for creation of inner arb6 */
+
+			ret = rt_mk_plane_3pts(planes[0],pt8[0],pt8[3],pt8[2],tols);
+			ret = ret | rt_mk_plane_3pts(planes[1],pt8[2],pt8[3],pt8[6],tols);
+			ret = ret | rt_mk_plane_3pts(planes[2],pt8[6],pt8[3],pt8[0],tols);
+			ret = ret | rt_mk_plane_3pts(planes[3],pt8[4],pt8[0],pt8[1],tols);
+			ret = ret | rt_mk_plane_3pts(planes[4],pt8[1],pt8[2],pt8[6],tols);
+
+
+		/* Moves planes inward by normal thickness */
+
+			for (i=0; i < 5; i++) {
+				
+				planes[i][3] += in[k].rsurf_thick;
+			}
+
+		/* Find new vertices of interior arb6 using
+		   intersection of 3 planes subroutine */
+
+			ret = ret | rt_mkpoint_3planes(inpt8[0],planes[0],planes[3],planes[2]);
+			ret = ret | rt_mkpoint_3planes(inpt8[1],planes[0],planes[3],planes[4]);
+			ret = ret | rt_mkpoint_3planes(inpt8[2],planes[0],planes[1],planes[4]);
+			ret = ret | rt_mkpoint_3planes(inpt8[3],planes[0],planes[1],planes[2]);
+			ret = ret | rt_mkpoint_3planes(inpt8[4],planes[2],planes[3],planes[4]);
+			ret = ret | rt_mkpoint_3planes(inpt8[6],planes[1],planes[2],planes[4]);
+
+			VMOVE(inpt8[7],inpt8[6]);
+			VMOVE(inpt8[5],inpt8[4]);
+
+			if( ret == 0 ) { /* valid record */
+
+				mk_arb8( stdout, name, &pt8[0][X] );
+				mk_addmember(name,&head,WMOP_SUBTRACT);
+			}
+			else {
+				/* add to check group */
+				mk_addmember(name,&headf,WMOP_UNION);
+			}
+		}
 
 		if ((mir_count % num_unions) == 0)
 			proc_region(name);
