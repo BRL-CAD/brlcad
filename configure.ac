@@ -118,6 +118,8 @@ if test "x$cache_file" = "x/dev/null" ; then
 						;;
 				esac
 		esac
+	else
+		AC_MSG_RESULT([not found])
 	fi
 
 	dnl if we are on sgi, bash may choke on sed syntax in the cache
