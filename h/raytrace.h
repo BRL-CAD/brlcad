@@ -2013,15 +2013,27 @@ BU_EXTERN(struct bu_list *rt_vlblock_find, (struct bn_vlblock *vbp,
 	int r, int g, int b) );
 
 /* pr.c */
-BU_EXTERN(void rt_pr_tree_vls, (struct bu_vls *vls, CONST union tree *tp));
+BU_EXTERN(void rt_pr_soltab, (CONST struct soltab *stp));
+BU_EXTERN(void rt_pr_region, (CONST struct region *rp));
+BU_EXTERN(void rt_pr_partitions, (CONST struct rt_i *rtip,
+	CONST struct partition	*phead, CONST char *title));
+BU_EXTERN(void rt_pr_pt_vls, (struct bu_vls *v,
+	CONST struct rt_i *rtip, CONST struct partition *pp));
+BU_EXTERN(void rt_pr_pt, (CONST struct rt_i *rtip, CONST struct partition *pp));
+BU_EXTERN(void rt_pr_seg_vls, (struct bu_vls *, CONST struct seg *));
+BU_EXTERN(void rt_pr_seg, (CONST struct seg *segp));
+BU_EXTERN(void rt_pr_hit, (CONST char *str, CONST struct hit	*hitp));
 BU_EXTERN(void rt_pr_hit_vls, (struct bu_vls *v, CONST char *str,
 	CONST struct hit *hitp));
-BU_EXTERN(void rt_pr_pt_vls, (struct bu_vls *v, CONST struct rt_i *rtip,
-	CONST struct partition *pp));
-BU_EXTERN(void bu_logindent_vls, (struct bu_vls	*v));
+BU_EXTERN(void rt_pr_tree, (CONST union tree *tp, int lvl));
+BU_EXTERN(void rt_pr_tree_vls, (struct bu_vls *vls, CONST union tree *tp));
+BU_EXTERN(char *rt_pr_tree_str, (CONST union tree *tree));
+BU_EXTERN(void rt_pr_tree_val, (CONST union tree *tp,
+	CONST struct partition *partp, int pr_name, int lvl));
 BU_EXTERN(void rt_pr_fallback_angle, (struct bu_vls *str, CONST char *prefix,
 	CONST double angles[5]));
 BU_EXTERN(void rt_find_fallback_angle, (double angles[5], CONST vect_t vec));
+BU_EXTERN(void rt_pr_tol, (CONST struct bn_tol	*tol));
 
 /* regionfix.c */
 BU_EXTERN(void rt_regionfix, (struct rt_i *rtip));
