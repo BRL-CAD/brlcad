@@ -156,6 +156,10 @@
 #		define _XOPEN_SOURCE	1
 #	endif
 #	define HAVE_SYS_ERRLIST_DECL	1
+#	define USE_PROTOTYPES	1
+#	define HAVE_STDLIB_H	1
+#	define HAVE_UNISTD_H	1
+#	define HAVE_FLOAT_H	1
 #endif
 
 #if defined(linux)
