@@ -579,7 +579,7 @@ CONST struct rt_functab rt_functab[ID_MAXIMUM+3] = {
 		rt_nul_piece_shot, rt_nul_piece_hitsegs,
 		rt_pipe_uv,	rt_pipe_curve,	rt_pipe_class,	rt_pipe_free,
 		rt_pipe_plot,	rt_pipe_vshot,	rt_pipe_tess,	rt_nul_tnurb,
-		rt_nul_import5, rt_nul_export5,
+		rt_pipe_import5, rt_pipe_export5,
 		rt_pipe_import,	rt_pipe_export,	rt_pipe_ifree,
 		rt_pipe_describe,rt_pipe_xform,	NULL,
 		sizeof(struct rt_pipe_internal), RT_PIPE_INTERNAL_MAGIC,
