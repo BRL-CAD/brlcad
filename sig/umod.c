@@ -198,5 +198,5 @@ char **argv;
 			clip_high, clip_low );
 	}
 
-	return0;
+	return 0;
 }
