@@ -2,15 +2,6 @@
 
 noinst_LTLIBRARIES = libtkgeneric.la
 
-lib_LTLIBRARIES = libtkstub.la libtkstub@TK_VERSION@.la
-
-libtkstub_la_SOURCES = \
-	tkStubLib.c \
-	tkStubImg.c
-
-libtkstub@TK_VERSION@_la_SOURCES = \
-	$(libtkstub_la_SOURCES)
-
 libtkgeneric_la_SOURCES = \
 	tk3d.c \
 	tkArgv.c \
@@ -38,7 +29,6 @@ libtkgeneric_la_SOURCES = \
 	tkEntry.c \
 	tkError.c \
 	tkEvent.c \
-	tkFileFilter.c \
 	tkFocus.c \
 	tkFont.c \
 	tkFrame.c \
@@ -52,9 +42,7 @@ libtkgeneric_la_SOURCES = \
 	tkImgGIF.c \
 	tkImgPPM.c \
 	tkImgPhoto.c \
-	tkImgUtil.c \
 	tkListbox.c \
-	tkMacWinMenu.c \
 	tkMain.c \
 	tkMenu.c \
 	tkMenuDraw.c \
@@ -70,7 +58,7 @@ libtkgeneric_la_SOURCES = \
 	tkScale.c \
 	tkScrollbar.c \
 	tkSelect.c \
-	tkSquare.c \
+	tkStubImg.c \
 	tkStubInit.c \
 	tkStubLib.c \
 	tkStyle.c \
@@ -137,4 +125,3 @@ AM_CPPFLAGS = \
 
 libtkgeneric_la_LIBADD = ${X_LIBS}
 
-AM_CFLAGS = ${X_CFLAGS}
