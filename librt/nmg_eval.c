@@ -137,6 +137,7 @@ CONST char *
 nmg_class_name(class)
 int	class;
 {
+	if( class == NMG_CLASS_Unknown )  return "Unknown";
 	if( class < 0 || class > NMG_CLASS_BAD )  class = NMG_CLASS_BAD;
 	return nmg_class_names[class];
 }
@@ -611,7 +612,7 @@ out:
 			ptr, index,
 			bs->bs_isA ? "A" : "B",
 			rt_identify_magic( *((long *)ptr) ),
-			nmg_class_names[class],
+			nmg_class_name(class),
 			nmg_baction_names[ret] );
 	}
 	return(ret);
