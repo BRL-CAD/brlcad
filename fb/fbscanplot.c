@@ -32,7 +32,7 @@ extern int	optind;
 int yline;		/* line to plot */
 int width = 0;		/* framebuffer width */
 int verbose = 0;	/* output scanline values to stdout */
-int overlay = 0;	/* plot on background, else black with grid */
+int fb_overlay = 0;	/* plot on background, else black with grid */
 int reverse = 0;	/* highlight chosen line by inverting it */
 char *outframebuffer = NULL;
 FBIO *fbp, *fboutp;
@@ -55,7 +55,7 @@ register char **argv;
 			width = 1024;
 			break;
 		case 'o':
-			overlay++;
+			fb_overlay++;
 			break;
 		case 'r':
 			reverse++;
@@ -116,7 +116,7 @@ int argc; char **argv;
 	scan[width+1][BLU] = scan[width][BLU];
 
 	/* figure out where to put it on the screen */
-	if( overlay == 0 && fboutp == fbp && yline < fb_getheight(fbp)/2 ) {
+	if( fb_overlay == 0 && fboutp == fbp && yline < fb_getheight(fbp)/2 ) {
 		yoffset = fb_getheight(fbp) - 256;
 		if( yoffset <= yline )
 			yoffset = 0;
@@ -134,7 +134,7 @@ int argc; char **argv;
 	}
 
 	for( y = 0; y < 256; y++ ) {
-		if( overlay )
+		if( fb_overlay )
 			fb_read( fboutp, 0, y+yoffset, backgnd, width );
 
 		ip = &scan[1][RED];
@@ -167,7 +167,7 @@ int argc; char **argv;
 					op[BLU] = 0;
 			}
 
-			if( overlay ) {
+			if( fb_overlay ) {
 				/* background */
 				if( op[RED] == 0 && op[GRN] == 0 && op[BLU] == 0 ) {
 					op[RED] = backgnd[x][RED];
