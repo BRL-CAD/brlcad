@@ -72,11 +72,11 @@ struct hit {
  *
  *  Information about curvature of the surface at a hit point.
  *  The principal direction pdir has unit length and principal curvature c1.
- *  Principal curvature c1 is <= c2.  A POSITIVE curvature in a
- *  particular direction indicates that the surface bends AWAY
- *  from the (outward pointing) normal vector.  (Thanks to GIFT).
- *  c1 and c2 are inverse radii.
- *  XXX this information needs to be changed, it is out of date!!
+ *  |c1| <= |c2|, i.e. c1 is the most nearly flat principle curvature.
+ *  A POSITIVE curvature indicates that the surface bends TOWARD the
+ *  (outward pointing) normal vector at that point.
+ *  c1 and c2 are the inverse radii of curvature.
+ *  The other principle direction is implied: pdir2 = normal x pdir1.
  */
 struct curvature {
 	vect_t		crv_pdir;	/* Principle direction */
