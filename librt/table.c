@@ -257,12 +257,21 @@ int rt_nfunctab = sizeof(rt_functab)/sizeof(struct rt_functab);
 /*
  *  Hooks for unimplemented routines
  */
+#if __STDC__
+#define DEF(func,args)	func RT_ARGS(args) { \
+	rt_log(#func " unimplemented\n"); return; }
+#define IDEF(func,args)	func RT_ARGS(args) { \
+	rt_log(#func " unimplemented\n"); return(0); }
+#define NDEF(func,args)	func RT_ARGS(args) { \
+	rt_log(#func " unimplemented\n"); return(-1); }
+#else
 #define DEF(func,args)	func RT_ARGS(args) { \
 	rt_log("func unimplemented\n"); return; }
 #define IDEF(func,args)	func RT_ARGS(args) { \
 	rt_log("func unimplemented\n"); return(0); }
 #define NDEF(func,args)	func RT_ARGS(args) { \
 	rt_log("func unimplemented\n"); return(-1); }
+#endif
 
 int IDEF(rt_nul_prep,(struct soltab *stp,
 			struct rt_db_internal *ip,
