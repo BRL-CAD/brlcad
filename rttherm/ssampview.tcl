@@ -34,9 +34,10 @@ frame .scale
 frame .entry_line1
 frame .entry_line2
 frame .plot
-frame .spatial_v
-frame .spatial 	-borderwidth 2 -relief ridge
-frame .spectral 	-borderwidth 2 -relief groove
+frame .plot.spatial 	-borderwidth 2 -relief ridge
+frame .plot.spectral 	-borderwidth 2 -relief groove
+frame .plot.spatial.spatial_v
+
 #pack .buttons -side top
 pack .scale -side top
 pack .entry_line1 -side top
@@ -46,26 +47,28 @@ pack .plot -side top
 set int_min 0
 set int_max 200
 
-scale .minscale -label Min -from 0 -to 1000 -showvalue no -length 400 \
+scale .scale.min -label Min -from 0 -to 1000 -showvalue no -length 400 \
 	-orient horizontal -variable int_min -command {scalechange minval}
-scale .maxscale -label Max -from 0 -to 1000 -showvalue no -length 400 \
+scale .scale.max -label Max -from 0 -to 1000 -showvalue no -length 400 \
 	-orient horizontal -variable int_max -command {scalechange maxval}
-pack .minscale .maxscale -side top -in .scale
+pack .scale.min .scale.max -side top -in .scale
 
-label .min1 -text "Min:"
-label .min2 -textvariable minval
-label .max1 -text "Max:"
-label .max2 -textvariable maxval
-checkbutton .cursor_on -text "FB cursor" -variable cursor_on -command {update}
-checkbutton .atmosphere_on -text "Atmosphere" -variable use_atmosphere -command {update}
-checkbutton .cie_on -text "CIE" -variable use_cie_xyz -command {update}
-pack .min1 .min2 .max1 .max2 .cursor_on .atmosphere_on .cie_on \
+label .entry_line1.min1 -text "Min:"
+label .entry_line1.min2 -textvariable minval
+label .entry_line1.max1 -text "Max:"
+label .entry_line.max2 -textvariable maxval
+checkbutton .entry_line.cursor_on -text "FB cursor" -variable cursor_on -command {update}
+checkbutton .entry_line1.atmosphere_on -text "Atmosphere" -variable use_atmosphere -command {update}
+checkbutton .entry_line1.cie_on -text "CIE" -variable use_cie_xyz -command {update}
+pack .entry_line1.min1 .entry_line1.min2 .entry_line1.max1 .entry_line.max2 \
+	.entry_line.cursor_on .entry_line1.atmosphere_on .entry_line1.cie_on \
 	-side left -in .entry_line1
 
-label .wl1 -text "Wavelength of Framebuffer = "
-label .wl3 -textvariable lambda -width 8
-label .wl4 -text "microns"
-pack .wl1 .wl3 .wl4 -side left -in .entry_line2
+label .entry_line2.wl1 -text "Wavelength of Framebuffer = "
+label .entry_line2.wl3 -textvariable lambda -width 8
+label .entry_line2.wl4 -text "microns"
+pack .entry_line2.wl1 .entry_line2.wl3 .entry_line2.wl4 \
+	-side left -in .entry_line2
 
 proc update { {foo 0} } {
 	global wavel
@@ -95,27 +98,32 @@ proc scalechange {var value} {
 	update
 }
 
-label .scanline4 -text "Scanline Plot"
-checkbutton .scanline5 -text "Rescale" -variable rescale_scanline -command {update}
-scale .scanline3 -label Scanline -from [expr $height - 1] -to 0 \
+label .plot.spatial.spatial_v.scanline4 -text "Scanline Plot"
+checkbutton .plot.spatial.spatial_v.scanline5 -text "Rescale" \
+	-variable rescale_scanline -command {update}
+canvas .plot.spatial.spatial_v.canvas_scanline -width $width -height 280
+scale .plot.spatial.spatial_v.pixel1 -label Pixel \
+	-from 0 -to [expr $width - 1] -showvalue yes \
+	-orient horizontal -variable pixel_num -command {update}
+pack .plot.spatial.spatial_v.scanline4 .plot.spatial_v.scanline5 \
+	.plot.spatial_v.canvas_scanline \
+	.spatial_v.pixel1 -side top -in .plot.spatial.spatial_v
+
+scale .plot.spatial.scanline3 -label Scanline -from [expr $height - 1] -to 0 \
 	-showvalue yes -length 280 \
 	-orient vertical -variable line_num -command {update}
-canvas .canvas_scanline -width $width -height 280
+pack .plot.spatial.spatial_v .plot.spatial.scanline3 -side left -in .plot.spatial
 
-scale .pixel1 -label Pixel -from 0 -to [expr $width - 1] -showvalue yes \
-	-orient horizontal -variable pixel_num -command {update}
-
-pack .scanline4 .scanline5 .canvas_scanline .pixel1 -side top -in .spatial_v
-pack .spatial_v .scanline3 -side left -in .spatial
-
-label .spectral1 -text "Spectral Plot"
-checkbutton .spectral2 -text "Rescale" -variable rescale_spectral -command {update}
-canvas .canvas_pixel -width $nwave -height 280
-scale .wl2 -label "Wavelen" -from 0 -to [expr $nwave - 1] -showvalue yes \
+label .plot.spectral.spectral1 -text "Spectral Plot"
+checkbutton .plot.spectral.spectral2 -text "Rescale" -variable rescale_spectral -command {update}
+canvas .plot.spectral.canvas_pixel -width $nwave -height 280
+scale .plot.spectral.wl2 -label "Wavelen" \
+	-from 0 -to [expr $nwave - 1] -showvalue yes \
 	-orient horizontal -variable wavel -command {update}
-pack .spectral1 .spectral2 .canvas_pixel .wl2 -side top -in .spectral
+pack .plot.spectral.spectral1 .plot.spectral.spectral2 .plot.spectral.canvas_pixel \
+	.spectral.wl2 -side top -in .plot.spectral
 
-pack .spatial .spectral -side left -in .plot
+pack .plot.spatial .plot.spectral -side left -in .plot
 
 # Remember: 4th quadrant addressing!
 proc scanline { {foo 0} } {
