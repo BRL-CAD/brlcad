@@ -40,10 +40,6 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "./rdebug.h"
 #include "../librt/debug.h"
 
-#ifdef HAVE_SBRK
-extern char	*sbrk();
-#endif
-
 extern char	usage[];
 
 int		rdebug;			/* RT program debugging (not library) */
