@@ -37,6 +37,7 @@ HIDDEN union tree *rt_mkbool_tree();
 HIDDEN int rt_rpp_tree();
 HIDDEN char *rt_basename();
 HIDDEN struct region *rt_getregion();
+HIDDEN void rt_fr_tree();
 
 extern int nul_prep(),	nul_print(), nul_norm(), nul_uv();
 extern int tor_prep(),	tor_print(), tor_norm(), tor_uv();
@@ -180,7 +181,9 @@ HIDDEN char *rt_path_str();
 
 static struct mater_info rt_no_mater = {
 	1.0, 1.0, 1.0,		/* color, RGB */
-	0			/* override */
+	0,			/* override */
+	DB_INH_LOWER,		/* color inherit */
+	DB_INH_LOWER		/* mater inherit */
 };
 
 double		rt_inv255 = 1.0/255.0;
@@ -519,21 +522,33 @@ struct mater_info *materp;
 	}
 	regionp = argregion;
 
-	/* Handle inheritance of material property */
+	/*
+	 *  Handle inheritance of material property.
+	 *  Color and the material property have separate
+	 *  inheritance interlocks.
+	 */
 	curmater = *materp;	/* struct copy */
-	if( rec.c.c_override == 1 || rec.c.c_matname[0] != '\0' )  {
+	if( rec.c.c_override == 1 )  {
 		if( argregion != REGION_NULL )  {
-			rt_log("Error:  material property spec within region %s\n", argregion->reg_name );
+			rt_log("rt_drawobj: ERROR: color override in combination within region %s\n", argregion->reg_name );
 		} else {
-			if( rec.c.c_override == 1 )  {
+			if( curmater.ma_cinherit == DB_INH_LOWER )  {
 				curmater.ma_override = 1;
 				curmater.ma_color[0] = (rec.c.c_rgb[0]+0.5)*rt_inv255;
 				curmater.ma_color[1] = (rec.c.c_rgb[1]+0.5)*rt_inv255;
 				curmater.ma_color[2] = (rec.c.c_rgb[2]+0.5)*rt_inv255;
+				curmater.ma_cinherit = rec.c.c_inherit;
 			}
-			if( rec.c.c_matname[0] != '\0' )  {
+		}
+	}
+	if( rec.c.c_matname[0] != '\0' )  {
+		if( argregion != REGION_NULL )  {
+			rt_log("rt_drawobj: ERROR: material property spec in combination within region %s\n", argregion->reg_name );
+		} else {
+			if( curmater.ma_minherit == DB_INH_LOWER )  {
 				strncpy( curmater.ma_matname, rec.c.c_matname, sizeof(rec.c.c_matname) );
 				strncpy( curmater.ma_matparm, rec.c.c_matparm, sizeof(rec.c.c_matparm) );
+				curmater.ma_minherit = rec.c.c_inherit;
 			}
 		}
 	}
@@ -1245,6 +1260,50 @@ register union tree *tp;
 	rtip->nregions++;
 	if( rt_g.debug & DEBUG_REGIONS )
 		rt_log("Add Region %s\n", regp->reg_name);
+}
+
+/*
+ *			R T _ D E L _ R E G T R E E
+ *
+ *  Remove a region from the linked list.  Used to remove a particular
+ *  region from the active database, presumably after some useful
+ *  information has been extracted (eg, a light being converted to
+ *  implicit type), or for special effects.
+ *
+ *  Returns -
+ *	-1	if unable to find indicated region
+ *	 0	success
+ */
+int
+rt_del_regtree( rtip, delregp )
+struct rt_i *rtip;
+register struct region *delregp;
+{
+	register struct region *regp;
+	register struct region *nextregp;
+
+	if( rt_g.debug & DEBUG_REGIONS )
+		rt_log("Del Region %s\n", regp->reg_name);
+
+	if( (regp = rtip->HeadRegion ) == delregp )  {
+		rtip->HeadRegion = regp->reg_forw;
+		goto zot;
+	}
+
+	for( ; regp != REGION_NULL; regp=nextregp )  {
+		nextregp=regp->reg_forw;
+		if( nextregp == delregp )  {
+			regp->reg_forw = nextregp->reg_forw;	/* unlink */
+			goto zot;
+		}
+	}
+	rt_log("rt_del_region:  unable to find %s\n", delregp->reg_name);
+	return(-1);
+zot:
+	rt_fr_tree( delregp->reg_treetop );
+	rt_free( delregp->reg_name, "region name str");
+	rt_free( (char *)delregp, "struct region");
+	return(0);
 }
 
 /*
