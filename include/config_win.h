@@ -74,7 +74,7 @@
 #define HAVE_SYS_TIME 1
 #define bzero(str,n)		memset( str, 0, n )
 #define bcopy(from,to,count)	memcpy( to, from, count )
-#define REVERSED_IEEE	yes
+#define REVERSE_IEEE	yes
 #define INSTALL_DIRECTORY "C:/brlcad7_0"
 #define HAVE_TIME_H 1
 #define HAVE_FCNTL_H 1

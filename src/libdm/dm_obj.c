@@ -34,25 +34,24 @@
 
 #include "common.h"
 
-
 #ifdef HAVE_STRING_H
-#include <string.h>
+#  include <string.h>
 #endif
 #include <math.h>
 
 #if defined(DM_X) || defined(WIN32)
-#include "tk.h"
-#include <X11/Xutil.h>
+#  include "tk.h"
+#  include <X11/Xutil.h>
 #else
-#include "tcl.h"
+#  include "tcl.h"
 #endif
 
 #ifdef WIN32
-#include <tkwinport.h>
+#  include <tkwinport.h>
 #else
-#if 1
-#define USE_FBSERV
-#endif
+#  if 1
+#    define USE_FBSERV
+#  endif
 #endif
 
 #include "machine.h"
@@ -71,31 +70,33 @@
 #include "zlib.h"
 
 #if defined(DM_X) || defined(WIN32)
+
 #include "dm-X.h"
 #include "dm_xvars.h"
 
 #ifdef DM_OGL
-#ifndef WIN32
-#include <GL/glx.h>
-#endif
-#include <GL/gl.h>
-#include "dm-ogl.h"
-#ifdef USE_FBSERV
+#  ifndef WIN32
+#    include <GL/glx.h>
+#  endif
+#  include <GL/gl.h>
+#  include "dm-ogl.h"
+#  ifdef USE_FBSERV
 extern int _ogl_open_existing();
 extern int ogl_close_existing();
-#endif /* USE_FBSERV */
+#  endif /* USE_FBSERV */
 #endif /* DM_OGL */
 
 #ifdef USE_FBSERV
-#ifndef WIN32
+#  ifndef WIN32
 /* These functions live in libfb. */
 extern int _X24_open_existing();
 extern int X24_close_existing();
-#endif
+#  endif
 extern int fb_refresh();
 #endif /* USE_FBSERV */
 
-#endif /* DM_X */
+#endif /* DM_X || WIN32 */
+
 
 static int dmo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);
 #if 0
@@ -2806,10 +2807,12 @@ dmo_png_cmd(struct dm_obj	*dmop,
 	 * We need to reverse things if the image byte order
 	 * is different from the system's byte order.
 	 */
-	if ((BYTE_ORDER == LITTLE_ENDIAN &&
-	     ximage_p->byte_order == MSBFirst) ||
-	    (BYTE_ORDER == BIG_ENDIAN &&
-	     ximage_p->byte_order == LSBFirst)) {
+#ifdef NATURAL_IEEE
+#  define CHECK_ORDER (ximage_p->byte_order == MSBFirst)
+#elif defined(REVERSE_IEEE)
+#  define CHECK_ORDER (ximage_p->byte_order == LSBFirst)
+#endif
+	if (CHECK_ORDER) {
 #if 0
 	    bu_log("red mask - %ld\n", ximage_p->red_mask);
 	    bu_log("green mask - %ld\n", ximage_p->green_mask);

@@ -67,7 +67,7 @@ htonf(register unsigned char *out, register const unsigned char *in, int count)
 #	define	HTONF	yes1
 #endif
 
-#if	defined(REVERSED_IEEE)
+#if	defined(REVERSE_IEEE)
 	/* This machine uses IEEE, but in little-endian byte order */
 	register int	i;
 	for( i=count-1; i >= 0; i-- )  {
@@ -113,7 +113,7 @@ ntohf(register unsigned char *out, register const unsigned char *in, int count)
 	return;
 #	define	NTOHF	yes1
 #endif
-#if	defined(REVERSED_IEEE)
+#if	defined(REVERSE_IEEE)
 	/* This machine uses IEEE, but in little-endian byte order */
 	register int	i;
 	for( i=count-1; i >= 0; i-- )  {
