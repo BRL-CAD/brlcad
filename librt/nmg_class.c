@@ -1,5 +1,3 @@
-/* XXX Move to nmg.h */
-#define NMG_INDEX_CLEAR(_tab,_p)		{(_tab)[(_p)->index] = 0;}
 /*
  *			N M G _ C L A S S . C
  *
