@@ -2563,8 +2563,6 @@ struct faceuse		*fu1, *fu2;
 			point_t hit_pt;
 			int hit_no;
 			int hit_count;
-			struct vertex *hitv;
-			struct vertexuse *hit_vu;
 
 			eu2 = (struct edgeuse *)BU_PTBL_GET( &eu2_list, j );
 			NMG_CK_EDGEUSE( eu2 );
@@ -2605,6 +2603,8 @@ struct faceuse		*fu1, *fu2;
 			for( hit_no=0 ; hit_no < hit_count ; hit_no++ )
 			{
 				struct edgeuse *new_eu;
+				struct vertex *hitv;
+				struct vertexuse *hit_vu = NULL;
 
 				if( dist[hit_no] < 0.0 || dist[hit_no] > 1.0 )
 					continue;
