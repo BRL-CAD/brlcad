@@ -73,6 +73,13 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include <sys/shm.h>
 #endif
 
+#include <X11/X.h>
+#include <X11/Xfuncproto.h>
+#include <X11/Xosdefs.h>
+#if defined(linux)
+#	undef	X_NOT_STDC_ENV
+#	undef	X_NOT_POSIX
+#endif
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>

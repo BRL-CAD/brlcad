@@ -25,17 +25,24 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <ctype.h>
-#include <X11/X.h>
-#define XLIB_ILLEGAL_ACCESS	/* necessary on facist SGI 5.0.1 */
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
-#include <X11/cursorfont.h>
-#include <X11/Xatom.h>		/* for XA_RGB_BEST_MAP */
 
 #include "machine.h"
 #include "externs.h"
 #include "fb.h"
 #include "./fblocal.h"
+
+#include <X11/X.h>
+#include <X11/Xfuncproto.h>
+#include <X11/Xosdefs.h>
+#if defined(linux)
+#	undef	X_NOT_STDC_ENV
+#	undef	X_NOT_POSIX
+#endif
+#define XLIB_ILLEGAL_ACCESS	/* necessary on facist SGI 5.0.1 */
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+#include <X11/cursorfont.h>
+#include <X11/Xatom.h>		/* for XA_RGB_BEST_MAP */
 
 static	void	slowrect();
 static	int	linger();
@@ -1395,7 +1402,7 @@ FBIO *ifp;
 	color_map = XCreateColormap( XI(ifp)->dpy, 
 		XI(ifp)->win, XI(ifp)->visual, AllocNone);
 
-	if( color_map == NULL)
+	if( color_map == (Colormap)NULL)
 		fprintf(stderr,"Warning: color map missing\n");
 
 	XI(ifp)->cmap = color_map;
