@@ -21,20 +21,25 @@
 #define DEBUG_OFF	0	/* No debugging */
 
 /* These definitions are each for one bit */
-#define DEBUG_SOLIDS	0x01	/* Print prep'ed solids */
-#define DEBUG_HITS	0x02	/* Print hits used by view() */
-#define DEBUG_ALLRAYS	0x04	/* Print all attempted shots */
-#define DEBUG_ROOTS	0x08	/* Print details about rootfinder errors */
-#define DEBUG_REGIONS	0x10	/* Print regions & boolean trees */
-#define DEBUG_ARB8	0x20	/* Print voluminus ARB8 details */
-#define DEBUG_PARTITION	0x40	/* Print ray partitioning process */
-#define DEBUG_CUT	0x80	/* Print space cutting details */
-#define DEBUG_BOXING	0x100	/* Print object/box checking details */
-#define DEBUG_SHOOT	0x200	/* Info about shootray() processing */
-#define DEBUG_PLOTBOX	0x400	/* Plot(3) the bounding boxes to stdout */
-#define DEBUG_RAYWRITE	0x800	/* Ray(5V) view rays to stdout */
-#define DEBUG_SPLINE	0x1000	/* Splines */
-#define DEBUG_DB	0x2000	/* Database debugging */
 
-#define DEBUG_MEM	0x4000	/* Debug dynamic memory operations */
-#define DEBUG_TESTING	0x8000	/* One-shot debugging flag */
+/* Options useful for debugging applications */
+#define DEBUG_ALLRAYS	0x00000001	/* Print calls to shootray() */
+#define DEBUG_SHOOT	0x00000002	/* Info about shootray() processing */
+
+/* Options useful for debugging the database */
+#define DEBUG_DB	0x00000010	/* Database debugging */
+#define DEBUG_SOLIDS	0x00000020	/* Print prep'ed solids */
+#define DEBUG_REGIONS	0x00000040	/* Print regions & boolean trees */
+#define DEBUG_ARB8	0x00000080	/* Print voluminus ARB8 details */
+#define DEBUG_SPLINE	0x00000100	/* Splines */
+
+/* Options useful for debugging the library */
+#define DEBUG_ROOTS	0x00001000	/* Print rootfinder details */
+#define DEBUG_PARTITION	0x00002000	/* Info about bool_weave() */
+#define DEBUG_CUT	0x00004000	/* Print space cutting details */
+#define DEBUG_BOXING	0x00008000	/* Object/box checking details */
+#define DEBUG_MEM	0x00010000	/* Debug dynamic memory operations */
+#define DEBUG_TESTING	0x00020000	/* One-shot debugging flag */
+
+/* These will cause binary debugging output */
+#define DEBUG_PLOTBOX	0x80000000	/* Plot(3) bounding boxes to stdout */
