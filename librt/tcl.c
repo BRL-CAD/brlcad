@@ -99,7 +99,7 @@ struct rt_solid_type_lookup {
 	{ ID_ARB8,    sizeof(struct rt_arb_internal), (long)RT_ARB_INTERNAL_MAGIC, "arb8",rt_arb8_parse },
 	{ ID_HALF,    sizeof(struct rt_half_internal),(long)RT_HALF_INTERNAL_MAGIC,"half",rt_half_parse },
 	{ ID_REC,     sizeof(struct rt_tgc_internal), (long)RT_TGC_INTERNAL_MAGIC, "rec", rt_tgc_parse },
-	{ ID_SPH,     sizeof(struct rt_ell_internal), (long)RT_ELL_INTERNAL_MAGIC, "sph", rt_ell_parse },
+	{ ID_ELL,     sizeof(struct rt_ell_internal), (long)RT_ELL_INTERNAL_MAGIC, "sph", rt_ell_parse },
 	{ ID_EBM,     sizeof(struct rt_ebm_internal), (long)RT_EBM_INTERNAL_MAGIC, "ebm", rt_ebm_parse },
 	{ ID_VOL,     sizeof(struct rt_vol_internal), (long)RT_VOL_INTERNAL_MAGIC, "vol", rt_vol_parse },
 	{ ID_PARTICLE,sizeof(struct rt_part_internal),(long)RT_PART_INTERNAL_MAGIC,"part",rt_part_parse },
