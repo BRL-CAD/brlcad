@@ -291,17 +291,18 @@ set_view()
             current_view = VIEW_TABLE_SIZE - 1;
   }
 
+#if 0
   if(EDIT_TRAN)
     MAT4X3PNT(model_pos, view2model, edit_absolute_tran);
-
+#endif
   /* restore previously saved view and Viewscale */
   mat_copy(Viewrot, viewrot_table[current_view]);
   Viewscale = viewscale_table[current_view];
   new_mats();
-
+#if 0
   if(EDIT_TRAN)
     MAT4X3PNT(edit_absolute_tran, model2view, model_pos);
-
+#endif
   VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
   MAT4X3PNT(absolute_slew, model2view, new_pos);
 }

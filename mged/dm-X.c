@@ -168,7 +168,7 @@ XEvent *eventPtr;
       {
 	fastf_t fx, fy;
 
-	if(EDIT_TRAN){
+	if(EDIT_TRAN && mged_variables.edit){
 	  fx = (mx/(fastf_t)((struct x_vars *)dmp->dm_vars)->width - 0.5) * 2;
 	  fy = (0.5 - my/(fastf_t)((struct x_vars *)dmp->dm_vars)->height) * 2;
 	  bu_vls_printf( &cmd, "knob aX %f aY %f\n", fx, fy );
@@ -309,16 +309,14 @@ char *argv[];
       return TCL_ERROR;
     }
 
-    av[0] = "M";
-    av[1] = argv[2];
-    av[2] = xstr;
-    av[3] = ystr;
-    av[4] = NULL;
-
-    sprintf(xstr, "%d", Xx_TO_GED(dmp, atoi(argv[3])));
-    sprintf(ystr, "%d", Xy_TO_GED(dmp, atoi(argv[4])));
-    status = f_mouse((ClientData)NULL, interp, 4, av);
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "M %s %d %d", argv[2],
+		  Xx_TO_GED(dmp, atoi(argv[3])),
+		  Xy_TO_GED(dmp, atoi(argv[4])));
+    status = Tcl_Eval(interp, bu_vls_addr(&vls));
+#if 0
     mged_print_result(status);
+#endif
     return status;
   }
 
@@ -347,7 +345,7 @@ char *argv[];
       case 't':
 	am_mode = ALT_MOUSE_MODE_TRANSLATE;
 
-	if(EDIT_TRAN){
+	if(EDIT_TRAN && mged_variables.edit){
 	  bu_vls_init(&vls);
 	  bu_vls_printf(&vls, "knob aX %f aY %f\n",
 			(((struct x_vars *)dmp->dm_vars)->omx /

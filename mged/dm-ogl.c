@@ -241,7 +241,7 @@ XEvent *eventPtr;
       {
 	fastf_t fx, fy;
 
-	if(EDIT_TRAN){
+	if(EDIT_TRAN && mged_variables.edit){
 	  fx = (mx/(fastf_t)((struct ogl_vars *)dmp->dm_vars)->width - 0.5) * 2;
 	  fy = (0.5 - my/(fastf_t)((struct ogl_vars *)dmp->dm_vars)->height) * 2;
 	  bu_vls_printf( &cmd, "knob aX %f aY %f\n", fx, fy);
@@ -757,7 +757,7 @@ char	**argv;
 	break;
       case 't':
 	am_mode = ALT_MOUSE_MODE_TRANSLATE;
-	if(EDIT_TRAN){
+	if(EDIT_TRAN && mged_variables.edit){
 	  bu_vls_init(&vls);
 	  bu_vls_printf(&vls, "knob aX %f aY %f\n",
 			(((struct ogl_vars *)dmp->dm_vars)->omx /

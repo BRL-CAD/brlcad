@@ -2507,17 +2507,23 @@ set_e_axes_pos()
     break;
   }
 
-  if(EDIT_TRAN) {
-    MAT4X3PNT( edit_absolute_tran, model2view, e_axes_pos );
-  }else{
+  if(EDIT_ROTATE)
+    VSETALL( edit_absolute_rotate, 0.0 )
+  else if(EDIT_TRAN)
+#if 0
+    MAT4X3PNT( edit_absolute_tran, model2view, e_axes_pos )
+#else
+  VSETALL( edit_absolute_tran, 0.0 )
+#endif
+
+#if 0
+  {
     point_t new_pos;
 
     VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
     MAT4X3PNT(absolute_slew, model2view, new_pos);
-
-    if(EDIT_ROTATE)
-      VSETALL( edit_absolute_rotate, 0.0 );
   }
+#endif
 #endif
 }
 
@@ -2580,29 +2586,31 @@ char    **argv;
 
 
 int
-tran(view_pos)
-vect_t view_pos;
+tran(view_flag)
+int view_flag;
 {
   point_t old_pos;
   point_t new_pos;
   point_t diff;
+  point_t model_pos;
 
-  if(SEDIT_TRAN){
-    tran_set = 1;
-    sedit_mouse(view_pos);
-    tran_set = 0;
-  }else if(OEDIT_TRAN){
-    tran_set = 1;
-    objedit_mouse(view_pos);
-    tran_set = 0;
+  if(EDIT_TRAN && mged_variables.edit && !view_flag){
+    VSCALE(diff, edit_absolute_tran, Viewscale);
+    VADD2(model_pos, diff, e_axes_pos);
+    MAT4X3PNT(new_pos, model2view, model_pos);
+
+    if(state = ST_S_EDIT){
+      sedit_mouse(new_pos);
+    }else
+      objedit_mouse(new_pos);
   }else{/* slew the view */
-    MAT4X3PNT( new_pos, view2model, view_pos );
-    MAT_DELTAS_GET_NEG( old_pos, toViewcenter );
-    VSUB2( diff, new_pos, old_pos );
-    VADD2(new_pos, orig_pos, diff);
-    MAT_DELTAS_VEC( toViewcenter, new_pos);
+    MAT4X3PNT( new_pos, view2model, absolute_slew )
+    MAT_DELTAS_GET_NEG( old_pos, toViewcenter )
+    VSUB2( diff, new_pos, old_pos )
+    VADD2(new_pos, orig_pos, diff)
+    MAT_DELTAS_VEC( toViewcenter, new_pos)
 #if 0
-    MAT_DELTAS_VEC( ModelDelta, new_pos);
+    MAT_DELTAS_VEC( ModelDelta, new_pos)
 #endif
     new_mats();
   }
@@ -2619,7 +2627,7 @@ int iflag;
   point_t new_pos;
   int status;
 
-  if(state == ST_VIEW || !EDIT_ROTATE){
+  if(state == ST_VIEW || !EDIT_ROTATE || !mged_variables.edit){
     status = mged_vrot(x, y, z);
   }else{
     char *av[6];

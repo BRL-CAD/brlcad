@@ -927,6 +927,18 @@ int	non_blocking;
 #endif
       }
       if( rateflag_slew )  {
+#if 1
+	struct bu_vls vls;
+
+	non_blocking++;
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "knob -i -v aX %f aY %f aZ %f",
+		      rate_slew[X] / 10.0,
+		      rate_slew[Y] / 10.0,
+		      rate_slew[Z] / 10.0);
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+#else
 	non_blocking++;
 
 	/* slew 1/10th of the view per update */
@@ -934,9 +946,19 @@ int	non_blocking;
 	knobvec[Y] = -rate_slew[Y] / 10;
 	knobvec[Z] = -rate_slew[Z] / 10;
 	slewview( knobvec );
+#endif
       }
       if( rateflag_zoom )  {
 #if 1
+#if 1
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "zoom %f",
+		      1.0 / (1.0 - (rate_zoom / 10.0)));
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+#else
 	int status;
 	struct bu_vls vls;
 	char *av[3];
@@ -952,6 +974,7 @@ int	non_blocking;
 
 	if( status == TCL_OK )
 	  non_blocking++;
+#endif
 #else
 	fastf_t	factor;
 	mat_t scale_mat;
@@ -1165,15 +1188,16 @@ double a1, a2, a3;		/* DOUBLE angles, in degrees */
   point_t model_pos;
   point_t new_pos;
 
+#if 0
   if(EDIT_TRAN)
     MAT4X3PNT(model_pos, view2model, edit_absolute_tran);
-
+#endif
   buildHrot( Viewrot, a1 * degtorad, a2 * degtorad, a3 * degtorad );
   new_mats();
-
+#if 0
   if(EDIT_TRAN)
     MAT4X3PNT(edit_absolute_tran, model2view, model_pos);
-
+#endif
   VSET(new_pos, -orig_pos[X], -orig_pos[Y], -orig_pos[Z]);
   MAT4X3PNT(absolute_slew, model2view, new_pos);
 
@@ -1185,40 +1209,20 @@ void
 aslewview( view_pos )
 vect_t view_pos;
 {
-#if 1
   struct bu_vls vls;
+  vect_t model_pos;
+  vect_t diff;
+  extern point_t e_axes_pos;
+
+  MAT4X3PNT(model_pos, view2model, view_pos);
+  VSUB2(diff, model_pos, e_axes_pos);
+  VSCALE(diff, diff, 1/Viewscale);
 
   bu_vls_init(&vls);
   bu_vls_printf(&vls, "knob aX %f aY %f aZ %f",
-		view_pos[X], view_pos[Y], view_pos[Z]);
+		diff[X], diff[Y], diff[Z]);
   Tcl_Eval(interp, bu_vls_addr(&vls));
   bu_vls_free(&vls);
-#else
-  char *av[8];
-  struct bu_vls x_vls, y_vls, z_vls;
-
-  bu_vls_init(&x_vls);
-  bu_vls_init(&y_vls);
-  bu_vls_init(&z_vls);
-  bu_vls_printf(&x_vls, "%f", view_pos[X]);
-  bu_vls_printf(&y_vls, "%f", view_pos[Y]);
-  bu_vls_printf(&z_vls, "%f", view_pos[Z]);
-
-  av[0] = "knob";
-  av[1] = "aX";
-  av[2] = bu_vls_addr(&x_vls);
-  av[3] = "aY";
-  av[4] = bu_vls_addr(&y_vls);;
-  av[5] = "aZ";
-  av[6] = bu_vls_addr(&z_vls);;
-  av[7] = NULL;
-
-  (void)f_knob((ClientData)NULL, interp, 7, av);
-
-  bu_vls_free(&x_vls);
-  bu_vls_free(&y_vls);
-  bu_vls_free(&z_vls);
-#endif
 }
 
 /*

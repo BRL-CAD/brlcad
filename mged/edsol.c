@@ -3610,12 +3610,16 @@ CONST vect_t	mousevec;
 			point_t	pt;
 			vect_t	delta;
 			mat_t	xlatemat;
-
+#if 0
 			MAT4X3PNT( temp, es_mat, es_keypoint );
 			MAT4X3PNT( pos_view, model2view, temp );
 			pos_view[X] = mousevec[X];
 			pos_view[Y] = mousevec[Y];
 			MAT4X3PNT( temp, view2model, pos_view );
+#else
+			/* Experimental */
+			MAT4X3PNT( temp, view2model, mousevec );
+#endif
 			MAT4X3PNT( pt, es_invmat, temp );
 
 			/* Need vector from current vertex/keypoint
@@ -3636,11 +3640,16 @@ CONST vect_t	mousevec;
 		 * project result back to model space.
 		 * Leave desired location in es_mparam.
 		 */
+#if 0
 		MAT4X3PNT( temp, es_mat, es_keypoint );
 		MAT4X3PNT( pos_view, model2view, temp );
 		pos_view[X] = mousevec[X];
 		pos_view[Y] = mousevec[Y];
 		MAT4X3PNT( temp, view2model, pos_view );
+#else
+		/* Experimental */
+		MAT4X3PNT( temp, view2model, mousevec );
+#endif
 		MAT4X3PNT( es_mparam, es_invmat, temp );
 		es_mvalid = 1;	/* es_mparam is valid */
 		/* Leave the rest to code in sedit() */
@@ -3654,6 +3663,7 @@ CONST vect_t	mousevec;
 				(struct rt_tgc_internal *)es_int.idb_ptr;
 			RT_TGC_CK_MAGIC(tgc);
 
+#if 0
 			VADD2( temp, tgc->v, tgc->h );
 			MAT4X3PNT(pos_model, es_mat, temp);
 			MAT4X3PNT( pos_view, model2view, pos_model );
@@ -3661,6 +3671,10 @@ CONST vect_t	mousevec;
 			pos_view[Y] = mousevec[Y];
 			/* Do NOT change pos_view[Z] ! */
 			MAT4X3PNT( temp, view2model, pos_view );
+#else
+			/* Experimental */
+			MAT4X3PNT( temp, view2model, mousevec );
+#endif
 			MAT4X3PNT( tr_temp, es_invmat, temp );
 			VSUB2( tgc->h, tr_temp, tgc->v );
 		}
@@ -3676,11 +3690,16 @@ CONST vect_t	mousevec;
 
 			VMOVE( temp , arb->pt[es_menu] );
 		}
+#if 0
 		MAT4X3PNT(pos_model, es_mat, temp);
 		MAT4X3PNT(pos_view, model2view, pos_model);
 		pos_view[X] = mousevec[X];
 		pos_view[Y] = mousevec[Y];
 		MAT4X3PNT(temp, view2model, pos_view);
+#else
+		/* Experimental */
+		MAT4X3PNT( temp, view2model, mousevec );
+#endif
 		MAT4X3PNT(pos_model, es_invmat, temp);
 		editarb( pos_model );
 		sedraw = 1;
@@ -4992,7 +5011,7 @@ char	**argv;
 		case ECMD_ARS_MOVE_PT:
 		case ECMD_ARS_MOVE_CRV:
 		case ECMD_ARS_MOVE_COL:
-#if 1
+#if 0
 		  if(SEDIT_TRAN){
 		    vect_t temp;
 		    

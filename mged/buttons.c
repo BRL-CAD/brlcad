@@ -39,6 +39,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./mged_dm.h"
 #include "./sedit.h"
 
+extern void set_e_axes_pos();
+
 /* This flag indicates that SOLID editing is in effect.
  * edobj may not be set at the same time.
  * It is set to the 0 if off, or the value of the button function

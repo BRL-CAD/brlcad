@@ -77,23 +77,19 @@
 #define ECMD_ARS_EDIT_MENU	47	/* display the ARS edit menu */
 
 #define SEDIT_ROTATE (state == ST_S_EDIT && \
-		      mged_variables.edit && \
 		      (es_edflag == SROT || \
 		       es_edflag == ECMD_TGC_ROT_H || \
 		       es_edflag ==  ECMD_TGC_ROT_AB || \
 		       es_edflag == ECMD_ARB_ROTATE_FACE || \
 		       es_edflag == ECMD_ETO_ROT_C))
 #define OEDIT_ROTATE (state == ST_O_EDIT && \
-		      mged_variables.edit && \
 		      edobj == BE_O_ROTATE)
 #define EDIT_ROTATE (SEDIT_ROTATE || OEDIT_ROTATE)
 
 #define SEDIT_SCALE (state == ST_S_EDIT && \
-		     mged_variables.edit && \
 		     (es_edflag == SSCALE || \
 		      es_edflag == PSCALE ))
 #define OEDIT_SCALE (state == ST_O_EDIT && \
-		     mged_variables.edit && \
 		     (edobj == BE_O_XSCALE || \
 		      edobj == BE_O_YSCALE || \
 		      edobj == BE_O_ZSCALE || \
@@ -101,7 +97,6 @@
 #define EDIT_SCALE (SEDIT_SCALE || OEDIT_SCALE)
 
 #define SEDIT_TRAN (state == ST_S_EDIT && \
-		    mged_variables.edit && \
 		    (es_edflag == STRANS || \
 		     es_edflag == ECMD_TGC_MV_H || \
 		     es_edflag == ECMD_TGC_MV_HH || \
@@ -112,7 +107,6 @@
 		     es_edflag == ECMD_NMG_EMOVE || \
 		     es_edflag == ECMD_PIPE_PT_MOVE))
 #define OEDIT_TRAN (state == ST_O_EDIT && \
-		    mged_variables.edit && \
 		    (edobj == BE_O_X || \
 		     edobj == BE_O_Y || \
 		     edobj == BE_O_XY))

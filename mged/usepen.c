@@ -226,8 +226,10 @@ char	**argv;
 	  return TCL_OK;
 
 	case ST_S_EDIT:
-	  if(SEDIT_TRAN || SEDIT_SCALE){
+	  if((SEDIT_TRAN || SEDIT_SCALE) && mged_variables.edit){
+#if 0
 	    mousevec[Z] = edit_absolute_tran[Z];
+#endif
 	    aslewview( mousevec );
 	  }else
 #if 1
@@ -274,7 +276,7 @@ char	**argv;
 		return TCL_OK;
 
 	case ST_O_EDIT:
-	  if(OEDIT_TRAN || OEDIT_SCALE)
+	  if((OEDIT_TRAN || OEDIT_SCALE) && mged_variables.edit)
 	    aslewview( mousevec );
 	  else
 #if 1

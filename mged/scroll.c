@@ -65,10 +65,10 @@ struct scroll_item scr_menu[] = {
       };
 
 struct scroll_item sl_abs_menu[] = {
-	{ "Xslew",	sl_tol,		0,	"aX" },
-	{ "Yslew",	sl_tol,		1,	"aY" },
-	{ "Zslew",	sl_tol,		2,	"aZ" },
-	{ "Zoom",	sl_tol,		3,	"aS" },
+	{ "Xslew",	sl_tol,	0,	"aX" },
+	{ "Yslew",	sl_tol,	1,	"aY" },
+	{ "Zslew",	sl_tol,	2,	"aZ" },
+	{ "Zoom",	sl_tol,	3,	"aS" },
 	{ "Xrot",	sl_artol,	4,	"ax" },
 	{ "Yrot",	sl_artol,	5,	"ay" },
 	{ "Zrot",	sl_artol,	6,	"az" },
@@ -317,7 +317,7 @@ int y_top;
 	if(second_menu)
 	  f = (double)dv_xadc / 2047.0;
 	else {
-	  if(EDIT_TRAN){
+	  if(EDIT_TRAN && mged_variables.edit){
 	    if(mged_variables.rateknobs)
 	      f = edit_rate_tran[X];
 	    else
@@ -338,7 +338,7 @@ int y_top;
 	if(second_menu)
 	  f = (double)dv_yadc / 2047.0;
 	else {
-	  if(EDIT_TRAN){
+	  if(EDIT_TRAN && mged_variables.edit){
 	    if(mged_variables.rateknobs)
 	      f = edit_rate_tran[Y];
 	    else
@@ -359,7 +359,7 @@ int y_top;
 	if(second_menu)
 	  f = (double)dv_1adc / 2047.0;
 	else {
-	  if(EDIT_TRAN){
+	  if(EDIT_TRAN && mged_variables.edit){
 	    if(mged_variables.rateknobs)
 	      f = edit_rate_tran[Z];
 	    else
@@ -380,7 +380,7 @@ int y_top;
 	if(second_menu)
 	  f = (double)dv_2adc / 2047.0;
 	else {
-	  if(EDIT_SCALE){
+	  if(EDIT_SCALE && mged_variables.edit){
 	    if(mged_variables.rateknobs)
 	      f = edit_rate_scale;
 	    else
@@ -401,7 +401,7 @@ int y_top;
 	if(second_menu)
 	  f = (double)dv_distadc / 2047.0;
 	else {
-	  if(EDIT_ROTATE){
+	  if(EDIT_ROTATE && mged_variables.edit){
 	    if(mged_variables.rateknobs)
 	      f = edit_rate_rotate[X];
 	    else
@@ -423,7 +423,7 @@ int y_top;
 	  Tcl_AppendResult(interp, "scroll_display: 2nd scroll menu is hosed\n",
 			   (char *)NULL);
 	else {
-	  if(EDIT_ROTATE){
+	  if(EDIT_ROTATE && mged_variables.edit){
 	    if(mged_variables.rateknobs)
 	      f = edit_rate_rotate[Y];
 	    else
@@ -445,7 +445,7 @@ int y_top;
 	  Tcl_AppendResult(interp, "scroll_display: 2nd scroll menu is hosed\n",
 			   (char *)NULL);
 	else {
-	  if(EDIT_ROTATE){
+	  if(EDIT_ROTATE && mged_variables.edit){
 	    if(mged_variables.rateknobs)
 	      f = edit_rate_rotate[Z];
 	    else
