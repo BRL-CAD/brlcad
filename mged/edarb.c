@@ -717,7 +717,7 @@ a4toa6:
 	replot_editing_solid();
 	update_views = 1;
 
-	return CMD_OK;
+	return TCL_OK;
 }
 
 /* define an arb8 using rot fb angles to define a face */
