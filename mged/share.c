@@ -33,14 +33,6 @@
 #include "./ged.h"
 #include "./mged_dm.h"
 
-extern void mged_vls_struct_parse();
-
-extern struct bu_structparse axes_vparse[];
-extern struct bu_structparse color_scheme_vparse[];
-extern struct bu_structparse grid_vparse[];
-extern struct bu_structparse rubber_band_vparse[];
-extern struct bu_structparse mged_vparse[];
-
 #define RESOURCE_TYPE_ADC		0
 #define RESOURCE_TYPE_AXES		1
 #define RESOURCE_TYPE_COLOR_SCHEMES	2
@@ -63,8 +55,9 @@ extern struct bu_structparse mged_vparse[];
       strp = dlp1->resource; \
       BU_GETSTRUCT(dlp1->resource, str); \
       *dlp1->resource = *strp;        /* struct copy */ \
+      dlp1->resource->rc = 1; \
     } else { \
-      /* already sharing a menu */ \
+      /* already sharing this resource */ \
       if (dlp1->resource == dlp2->resource) { \
 	bu_vls_free(&vls); \
 	return TCL_OK; \
@@ -77,6 +70,17 @@ extern struct bu_structparse mged_vparse[];
       ++dlp1->resource->rc; \
     } \
 }
+
+extern void mged_vls_struct_parse(); /* defined in vparse.c */
+extern void view_ring_init(); /* defined in chgview.c */
+
+extern struct bu_structparse axes_vparse[];
+extern struct bu_structparse color_scheme_vparse[];
+extern struct bu_structparse grid_vparse[];
+extern struct bu_structparse rubber_band_vparse[];
+extern struct bu_structparse mged_vparse[];
+
+void free_all_resources();
 
 /*
  * SYNOPSIS
@@ -186,9 +190,23 @@ char **argv;
   case 'V':
     if (argv[1][1] == 'a' || argv[1][1] == 'A')
       SHARE_RESOURCE(uflag,_mged_variables,dml_mged_variables,mv_rc,dlp1,dlp2,vls,"share: mged_variables")
-    else if (argv[1][1] == 'i' || argv[1][1] == 'I')
-      SHARE_RESOURCE(uflag,_view_state,dml_view_state,vs_rc,dlp1,dlp2,vls,"share: view_state")
-    else {
+    else if (argv[1][1] == 'i' || argv[1][1] == 'I') {
+      if (uflag) {
+	struct _view_state *ovsp;
+
+	ovsp = dlp1->dml_view_state;
+	SHARE_RESOURCE(uflag,_view_state,dml_view_state,vs_rc,dlp1,dlp2,vls,"share: view_state")
+
+	/* initialize dlp1's view_state */
+	view_ring_init(dlp1->dml_view_state, ovsp);
+      } else {
+	/* free dlp2's view_state resources if currently not sharing */
+	if (dlp2->dml_view_state->vs_rc == 1)
+	  view_ring_destroy(dlp2);
+
+	SHARE_RESOURCE(uflag,_view_state,dml_view_state,vs_rc,dlp1,dlp2,vls,"share: view_state")
+      }
+    }else {
       bu_vls_printf(&vls, "share: resource type '%s' unknown\n", argv[1]);
       Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 
@@ -305,4 +323,69 @@ char    **argv;
   bu_vls_free(&vls);
 
   return TCL_OK;
+}
+
+/*
+ * dlp1 takes control of dlp2's resources. dlp2 is
+ * probably on its way out (i.e. being destroyed).
+ */
+void
+usurp_all_resources(dlp1, dlp2)
+struct dm_list *dlp1;
+struct dm_list *dlp2;
+{
+  free_all_resources(dlp1);
+  dlp1->dml_view_state = dlp2->dml_view_state;
+  dlp1->dml_adc_state = dlp2->dml_adc_state;
+  dlp1->dml_menu_state = dlp2->dml_menu_state;
+  dlp1->dml_rubber_band = dlp2->dml_rubber_band;
+  dlp1->dml_mged_variables = dlp2->dml_mged_variables;
+  dlp1->dml_color_scheme = dlp2->dml_color_scheme;
+  dlp1->dml_grid_state = dlp2->dml_grid_state;
+  dlp1->dml_axes_state = dlp2->dml_axes_state;
+
+  /* sanity */
+  dlp2->dml_view_state = (struct _view_state *)NULL;
+  dlp2->dml_adc_state = (struct _adc_state *)NULL;
+  dlp2->dml_menu_state = (struct _menu_state *)NULL;
+  dlp2->dml_rubber_band = (struct _rubber_band *)NULL;
+  dlp2->dml_mged_variables = (struct _mged_variables *)NULL;
+  dlp2->dml_color_scheme = (struct _color_scheme *)NULL;
+  dlp2->dml_grid_state = (struct _grid_state *)NULL;
+  dlp2->dml_axes_state = (struct _axes_state *)NULL;
+}
+
+/*
+ * - decrement the reference count of all resources
+ * - free all resources that are not being used
+ */
+void
+free_all_resources(dlp)
+struct dm_list *dlp;
+{
+  if(!--dlp->dml_view_state->vs_rc){
+    view_ring_destroy(dlp);
+    bu_free((genptr_t)dlp->dml_view_state, "release: view_state");
+  }
+
+  if (!--dlp->dml_adc_state->adc_rc)
+    bu_free((genptr_t)dlp->dml_adc_state, "release: adc_state");
+
+  if (!--dlp->dml_menu_state->ms_rc)
+    bu_free((genptr_t)dlp->dml_menu_state, "release: menu_state");
+
+  if (!--dlp->dml_rubber_band->rb_rc)
+    bu_free((genptr_t)dlp->dml_rubber_band, "release: rubber_band");
+
+  if (!--dlp->dml_mged_variables->mv_rc)
+    bu_free((genptr_t)dlp->dml_mged_variables, "release: mged_variables");
+
+  if (!--dlp->dml_color_scheme->cs_rc)
+    bu_free((genptr_t)dlp->dml_color_scheme, "release: color_scheme");
+
+  if (!--dlp->dml_grid_state->gr_rc)
+    bu_free((genptr_t)dlp->dml_grid_state, "release: grid_state");
+
+  if (!--dlp->dml_axes_state->ax_rc)
+    bu_free((genptr_t)dlp->dml_axes_state, "release: axes_state");
 }
