@@ -408,6 +408,10 @@ CONST struct rt_tol	*tol;
 	NMG_CK_SHELL(s);
 	RT_CK_TOL(tol);
 
+	if (rt_g.NMG_debug & DEBUG_BASIC)  {
+		rt_log("nmg_s_split_touching_loops(s=x%x, tol=x%x) START\n", s, tol);
+	}
+
 	/* First, handle any splitting */
 	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
 		for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
@@ -427,7 +431,50 @@ CONST struct rt_tol	*tol;
 	}
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		rt_log("nmg_s_split_touching_loops(s=x%x, tol=x%x)\n", s, tol);
+		rt_log("nmg_s_split_touching_loops(s=x%x, tol=x%x) END\n", s, tol);
+	}
+}
+
+/*
+ *			N M G _ S _ J O I N _ T O U C H I N G L O O P S
+ *
+ *  For every loop in a shell, invoke nmg_join_touchingloops() on it.
+ */
+void
+nmg_s_join_touchingloops(s, tol)
+struct shell		*s;
+CONST struct rt_tol	*tol;
+{
+	struct faceuse	*fu;
+	struct loopuse	*lu;
+
+	NMG_CK_SHELL(s);
+	RT_CK_TOL(tol);
+
+	if (rt_g.NMG_debug & DEBUG_BASIC)  {
+		rt_log("nmg_s_join_touching_loops(s=x%x, tol=x%x) START\n", s, tol);
+	}
+
+	/* First, handle any joining */
+	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
+		for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
+			nmg_join_touchingloops( lu );
+		}
+	}
+	for( RT_LIST_FOR( lu, loopuse, &s->lu_hd ) )  {
+		nmg_join_touchingloops( lu );
+	}
+
+	/* Second, reorient any disoriented loop fragments */
+	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
+		for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
+			if( lu->orientation != OT_UNSPEC )  continue;
+			nmg_lu_reorient( lu, tol );
+		}
+	}
+
+	if (rt_g.NMG_debug & DEBUG_BASIC)  {
+		rt_log("nmg_s_join_touching_loops(s=x%x, tol=x%x) END\n", s, tol);
 	}
 }
 
@@ -1674,14 +1721,16 @@ struct edgeuse *eu;
 	NMG_CK_EDGEUSE(eu_r);
 	NMG_CK_EDGEUSE(eu_r->eumate_p);
 
+	lu2 = eu_r->up.lu_p;
+	NMG_CK_LOOPUSE(lu2);
+
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		rt_log("nmg_jl(lu=x%x, eu=x%x)\n", lu, eu);
+		rt_log("nmg_jl(lu=x%x, eu=x%x) lu2=x%x\n", lu, eu, lu2);
 	}
 
 	if (eu->up.lu_p != lu)
 		rt_bomb("nmg_jl: edgeuse is not child of loopuse?\n");
 
-	lu2 = eu_r->up.lu_p;
 	if (lu2->l.magic != NMG_LOOPUSE_MAGIC)
 		rt_bomb("nmg_jl: radial edgeuse not part of loopuse\n");
 
@@ -1780,7 +1829,8 @@ struct vertexuse	*vu2;
 	NMG_CK_LOOPUSE(lu2);
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		rt_log("nmg_join_2loops( vu1=x%x, vu2=x%x )\n", vu1, vu2 );
+		rt_log("nmg_join_2loops(vu1=x%x, vu2=x%x) lu1=x%x, lu2=x%x\n",
+			vu1, vu2, lu1, lu2 );
 	}
 
 	if( lu1 == lu2 || lu1->l_p == lu2->l_p )
@@ -1791,7 +1841,10 @@ struct vertexuse	*vu2;
 
 	/* Joining same & opp gives same.  */
 	if( lu1->orientation != lu2->orientation )  {
-		new_orient = OT_SAME;
+		if( lu1->orientation == OT_SAME || lu2->orientation == OT_SAME )
+			new_orient = OT_SAME;
+		else
+			new_orient = OT_UNSPEC;
 	} else {
 		new_orient = lu1->orientation;
 	}
@@ -1873,7 +1926,8 @@ struct vertexuse	*vu1, *vu2;
 	NMG_CK_VERTEXUSE( vu2 );
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		rt_log("nmg_join_singvu_loop( vu1=x%x, vu2=x%x )\n", vu1, vu2 );
+		rt_log("nmg_join_singvu_loop(vu1=x%x, vu2=x%x) lu1=x%x, lu2=x%x\n",
+			vu1, vu2, vu1->up.lu_p, vu2->up.lu_p );
 	}
 
 	if( *vu2->up.magic_p != NMG_LOOPUSE_MAGIC ||
@@ -1920,7 +1974,8 @@ struct vertexuse	*vu1, *vu2;
 	struct loopuse	*lu1, *lu2;
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		rt_log("nmg_join_2singvu_loops( vu1=x%x, vu2=x%x )\n", vu1, vu2 );
+		rt_log("nmg_join_2singvu_loops(vu1=x%x, vu2=x%x) lu1=x%x, lu2=x%x\n",
+			vu1, vu2, vu1->up.lu_p, vu2->up.lu_p );
 	}
 
 	NMG_CK_VERTEXUSE( vu1 );
@@ -2139,7 +2194,8 @@ struct vertexuse *vu1, *vu2;
 	}
 out:
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		rt_log("nmg_cut_loop(vu1=x%x, vu2=x%x) new lu=x%x\n", vu1, vu2, lu );
+		rt_log("nmg_cut_loop(vu1=x%x, vu2=x%x) old_lu=x%x, new_lu=x%x\n",
+			vu1, vu2, oldlu, lu );
 	}
 
 	return lu;
@@ -2331,6 +2387,9 @@ top:
  *  Whenever another loopuse in the same faceuse refers to one of this
  *  loop's vertices, the two loops touch at (at least) that vertex.
  *  Join them together.
+ *
+ *  Return -
+ *	count of loops joined (eliminated)
  */
 int
 nmg_join_touchingloops( lu )
