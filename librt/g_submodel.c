@@ -533,8 +533,8 @@ struct seg		*seghead;
 	gb.delta = VDOT( vdiff, ap->a_ray.r_dir );
 
 	/* set flag indicating not to bother with boolean computation. */
-/* XXX rt_shootray() doesn't pay attention yet. */
-	submodel->rtip->rti_nobool = 1;
+	sub_ap.a_segs_only = 1;
+	/* What about a_onehit? */
 
 	code = rt_shootray( &sub_ap );
 
