@@ -39,8 +39,15 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include "shadework.h"
 #include "rtprivate.h"
 
+int		rdebug;			/* RT program debugging */
+double		AmbientIntensity = 0.4;	/* Ambient light intensity */
+
 #define MFUNCS(_name)	\
 	{ extern struct mfuncs _name[]; mlib_add_shader( headp, _name ); }
+
+const struct bn_table		*spectrum;	/* definition of spectrum */
+struct bn_tabdata		*background;		/* radiant emittance of bg */
+
 
 /*
  *			M U L T I S P E C T R A L _ S H A D E R _ I N I T
