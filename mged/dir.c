@@ -395,7 +395,7 @@ dir_print() {
 /*
  *			D I R _ L O O K U P
  *
- * This routine takes a name, and looks it up in the
+ * This routine takes a name, trims to NAMESIZE, and looks it up in the
  * directory table.  If the name is present, a pointer to
  * the directory struct element is returned, otherwise
  * NULL is returned.
@@ -404,22 +404,29 @@ dir_print() {
  * the return code indicates failure.
  */
 struct directory *
-lookup( str, noisy )
-register char *str;
+lookup( name, noisy )
+register char *name;
 {
 	register struct directory *dp;
+	static char local[NAMESIZE+2];
+	register int i;
 
-	for( dp = *dir_hash(str); dp != DIR_NULL; dp=dp->d_forw )  {
+	if( (i=strlen(name)) > NAMESIZE )  {
+		(void)strncpy( local, name, NAMESIZE );	/* Trim the name */
+		local[NAMESIZE] = '\0';			/* ensure null termination */
+		name = local;
+	}
+	for( dp = *dir_hash(name); dp != DIR_NULL; dp=dp->d_forw )  {
 		if(
-			str[0] == dp->d_namep[0]  &&	/* speed */
-			str[1] == dp->d_namep[1]  &&	/* speed */
-			strcmp( str, dp->d_namep ) == 0
+			name[0] == dp->d_namep[0]  &&	/* speed */
+			name[1] == dp->d_namep[1]  &&	/* speed */
+			strcmp( name, dp->d_namep ) == 0
 		)
 			return(dp);
 	}
 
 	if( noisy )
-		(void)printf("dir_lookup:  could not find '%s'\n", str );
+		(void)printf("dir_lookup:  could not find '%s'\n", name );
 	return( DIR_NULL );
 }
 
