@@ -739,6 +739,7 @@ struct bu_ptbl {
 #define BU_PTBL_END(ptbl)	((ptbl)->end)
 #define BU_PTBL_LEN(p)	((p)->end)
 #define BU_PTBL_GET(ptbl,i)	((ptbl)->buffer[(i)])
+#define BU_PTBL_SET(ptbl,i,val)	((ptbl)->buffer[(i)] = (long*)(val))
 #define BU_PTBL_TEST(ptbl)	((ptbl)->l.magic == BU_PTBL_MAGIC)
 #define BU_PTBL_CLEAR_I(_ptbl, _i) ((_ptbl)->buffer[(_i)] = (long *)0)
 
