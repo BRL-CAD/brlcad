@@ -208,10 +208,7 @@ int		op;
 long		*classlist[8];
 CONST struct rt_tol	*tol;
 {
-	struct loopuse	*lu;
-	struct faceuse	*fu;
 	int CONST	*actions;
-	int		i;
 	struct nmg_bool_state	bool_state;
 
 	NMG_CK_SHELL(sA);
@@ -306,9 +303,7 @@ struct nmg_bool_state *bs;
 	struct edgeuse	*eu;
 	struct edgeuse	*nexteu;
 	struct vertexuse *vu;
-	struct vertex	*v;
 	int		loops_retained;
-	plane_t		peqn;
 
 	NMG_CK_SHELL(s);
 	RT_CK_TOL(bs->bs_tol);
@@ -336,7 +331,6 @@ struct nmg_bool_state *bs;
 
 		/* Consider this face */
 		NMG_CK_FACE(fu->f_p);
-		NMG_GET_FU_PLANE( peqn, fu );
 
 		loops_retained = 0;
 		lu = RT_LIST_FIRST( loopuse, &fu->lu_hd );
@@ -638,7 +632,6 @@ int		delay;
 {
 	FILE	*fp;
 	char	fname[128];
-	struct faceuse	*fu;
 	int	do_plot = 0;
 	int	do_anim = 0;
 
