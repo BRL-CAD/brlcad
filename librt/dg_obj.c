@@ -66,6 +66,8 @@ static int dgo_open_tcl();
 static int dgo_close_tcl();
 static int dgo_cmd();
 static int dgo_headSolid_tcl();
+static int dgo_illum_tcl();
+static int dgo_label_tcl();
 static int dgo_draw_tcl();
 static int dgo_erase_tcl();
 static int dgo_erase_all_tcl();
@@ -115,6 +117,8 @@ static struct bu_cmdtab dgo_cmds[] = {
 	"erase_all",		dgo_erase_all_tcl,
 	"get_autoview",		dgo_get_autoview_tcl,
 	"headSolid",		dgo_headSolid_tcl,
+	"illum",		dgo_illum_tcl,
+	"label",		dgo_label_tcl,
 	"overlay",		dgo_overlay_tcl,
 	"rt",			dgo_rt_tcl,
 	"rtcheck",		dgo_rtcheck_tcl,
@@ -310,7 +314,7 @@ dgo_open_tcl(clientData, interp, argc, argv)
  * Usage:
  *        procname headSolid
  *
- * Returns: database objects headSolid.
+ * Returns: database object's headSolid.
  */
 static int
 dgo_headSolid_tcl(clientData, interp, argc, argv)
@@ -335,6 +339,130 @@ dgo_headSolid_tcl(clientData, interp, argc, argv)
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 	return TCL_OK;
+}
+
+/*
+ * Illuminate/highlight database object
+ *
+ * Usage:
+ *        procname illum [-n] obj
+ *
+ */
+static int
+dgo_illum_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
+{
+	struct dg_obj *dgop = (struct dg_obj *)clientData;
+	register struct solid *sp;
+	struct bu_vls vls;
+	int found = 0;
+	int illum = 1;
+
+	DGO_CHECK_WDBP_NULL(dgop,interp);
+
+	if (argc == 4) {
+		if (argv[2][0] == '-' && argv[2][1] == 'n')
+			illum = 0;
+		else
+			goto bad;
+
+		--argc;
+		++argv;
+	}
+
+	if (argc != 3)
+		goto bad;
+
+	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid.l) {
+		register struct solid *forw;
+		register int i;
+
+#if 0
+		if (*argv[2] == *sp->s_path[0]->d_namep &&
+		    strcmp(argv[2], sp->s_path[0]->d_namep) == 0) {
+			found = 1;
+			if (illum)
+				sp->s_iflag = UP;
+			else
+				sp->s_iflag = DOWN;
+			FOR_REST_OF_SOLIDS(forw, sp, &dgop->dgo_headSolid.l){
+				if (forw->s_path[0] == sp->s_path[0]) {
+					if (illum)
+						forw->s_iflag = UP;
+					else
+						forw->s_iflag = DOWN;
+				}
+			}
+
+			break;
+		}
+#else
+		for (i = 0; i <= sp->s_last; ++i) {
+			if (*argv[2] == *sp->s_path[i]->d_namep &&
+			    strcmp(argv[2], sp->s_path[i]->d_namep) == 0) {
+				found = 1;
+				if (illum)
+					sp->s_iflag = UP;
+				else
+					sp->s_iflag = DOWN;
+#if 0
+				if (i < sp->s_last) {
+					FOR_REST_OF_SOLIDS(forw, sp, &dgop->dgo_headSolid.l){
+						if (forw->s_path[i] == sp->s_path[i]) {
+							if (illum)
+								forw->s_iflag = UP;
+							else
+								forw->s_iflag = DOWN;
+						}
+					}
+				}
+
+				break;
+#endif
+			}
+		}
+#endif
+	}
+
+	if (!found) {
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "illum: %s not found", argv[2]);
+		Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	dgo_notify(dgop, interp);
+	return TCL_OK;
+
+bad:
+	bu_vls_init(&vls);
+	bu_vls_strcpy(&vls, "helplib dgo_illum");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+}
+
+/*
+ * Label database objects.
+ *
+ * Usage:
+ *        procname label [-n] obj
+ *
+ */
+static int
+dgo_label_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
+{
+	struct dg_obj *dgop = (struct dg_obj *)clientData;
+
+	DGO_CHECK_WDBP_NULL(dgop,interp);
 }
 
 static void
@@ -520,14 +648,14 @@ dgo_who_tcl(clientData, interp, argc, argv)
 
 	DGO_CHECK_WDBP_NULL(dgop,interp);
 
-	if(argc < 2 || 3 < argc){
-	  struct bu_vls vls;
+	if (argc < 2 || 3 < argc) {
+		struct bu_vls vls;
 
-	  bu_vls_init(&vls);
-	  bu_vls_printf(&vls, "help dgo_who");
-	  Tcl_Eval(interp, bu_vls_addr(&vls));
-	  bu_vls_free(&vls);
-	  return TCL_ERROR;
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "help dgo_who");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
 	}
 
 	skip_real = 0;
@@ -554,29 +682,29 @@ dgo_who_tcl(clientData, interp, argc, argv)
 		
 
 	/* Find all unique top-level entries.
-	 *  Mark ones already done with s_iflag == UP
+	 *  Mark ones already done with s_flag == UP
 	 */
 	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid.l)
-	  sp->s_iflag = DOWN;
-	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid.l)  {
-	  register struct solid *forw;	/* XXX */
+		sp->s_flag = DOWN;
+	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid.l) {
+		register struct solid *forw;	/* XXX */
 
-	  if( sp->s_iflag == UP )
-	    continue;
-	  if (sp->s_path[0]->d_addr == RT_DIR_PHONY_ADDR){
-	    if (skip_phony) continue;
-	  } else {
-	    if (skip_real) continue;
-	  }
-	  Tcl_AppendResult(interp, sp->s_path[0]->d_namep, " ", (char *)NULL);
-	  sp->s_iflag = UP;
-	  FOR_REST_OF_SOLIDS(forw, sp, &dgop->dgo_headSolid.l){
-	    if( forw->s_path[0] == sp->s_path[0] )
-	      forw->s_iflag = UP;
-	  }
+		if (sp->s_flag == UP)
+			continue;
+		if (sp->s_path[0]->d_addr == RT_DIR_PHONY_ADDR) {
+			if (skip_phony) continue;
+		} else {
+			if (skip_real) continue;
+		}
+		Tcl_AppendResult(interp, sp->s_path[0]->d_namep, " ", (char *)NULL);
+		sp->s_flag = UP;
+		FOR_REST_OF_SOLIDS(forw, sp, &dgop->dgo_headSolid.l){
+			if (forw->s_path[0] == sp->s_path[0])
+				forw->s_flag = UP;
+		}
 	}
 	FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid.l)
-		sp->s_iflag = DOWN;
+		sp->s_flag = DOWN;
 
 	return TCL_OK;
 }
@@ -1181,7 +1309,7 @@ dgo_rtcheck_vector_handler(clientData, mask)
 		fclose(rtcp->fp);
 
 		FOR_ALL_SOLIDS(sp, &rtcp->dgop->dgo_headSolid.l)
-			sp->s_iflag = DOWN;
+			sp->s_flag = DOWN;
 
 		/* Add overlay */
 		dgo_cvt_vlblock_to_solids(rtcp->dgop, rtcp->interp, rtcp->vbp, "OVERLAPS", 0);
@@ -1893,6 +2021,11 @@ dgo_drawtrees(dgop, interp, argc, argv, kind)
 	dgcdp->wireframe_color_override = 0;
 	dgcdp->fastpath_count = 0;
 
+	/* default color - red */
+	dgcdp->wireframe_color[0] = 255;
+	dgcdp->wireframe_color[1] = 0;
+	dgcdp->wireframe_color[2] = 0;
+
 	dgo_enable_fastpath = 0;
 
 	/* Parse options. */
@@ -2263,18 +2396,21 @@ dgo_drawH_part2(dashflag, vhead, pathp, tsp, existing_sp, dgcdp)
 		} else {
 			sp->s_uflag = 0;
 			if (tsp) {
-			  if (tsp->ts_mater.ma_color_valid) {
-			    sp->s_dflag = 0;	/* color specified in db */
-			  } else {
-			    sp->s_dflag = 1;	/* default color */
-			  }
-			  /* Copy into basecolor anyway, to prevent black */
-			  sp->s_basecolor[0] = tsp->ts_mater.ma_color[0] * 255.;
-			  sp->s_basecolor[1] = tsp->ts_mater.ma_color[1] * 255.;
-			  sp->s_basecolor[2] = tsp->ts_mater.ma_color[2] * 255.;
+				if (tsp->ts_mater.ma_color_valid) {
+					sp->s_dflag = 0;	/* color specified in db */
+					sp->s_basecolor[0] = tsp->ts_mater.ma_color[0] * 255.;
+					sp->s_basecolor[1] = tsp->ts_mater.ma_color[1] * 255.;
+					sp->s_basecolor[2] = tsp->ts_mater.ma_color[2] * 255.;
+				} else {
+					sp->s_dflag = 1;	/* default color */
+					sp->s_basecolor[0] = 255;
+					sp->s_basecolor[1] = 0;
+					sp->s_basecolor[2] = 0;
+				}
 			}
 		}
 		sp->s_cflag = 0;
+		sp->s_flag = DOWN;
 		sp->s_iflag = DOWN;
 		sp->s_soldash = dashflag;
 		sp->s_Eflag = 0;	/* This is a solid */
@@ -2285,8 +2421,14 @@ dgo_drawH_part2(dashflag, vhead, pathp, tsp, existing_sp, dgcdp)
 			sp->s_path[i] = pathp->fp_names[i];
 		}
 		sp->s_regionid = tsp->ts_regionid;
+
+		/* Add to linked list of solid structs */
+		bu_semaphore_acquire(RT_SEM_MODEL);
+		BU_LIST_APPEND(dgcdp->dgop->dgo_headSolid.l.back, &sp->l);
+		bu_semaphore_release(RT_SEM_MODEL);
 	}
 
+#if 0
 	/* Solid is successfully drawn */
 	if (!existing_sp) {
 		/* Add to linked list of solid structs */
@@ -2295,8 +2437,9 @@ dgo_drawH_part2(dashflag, vhead, pathp, tsp, existing_sp, dgcdp)
 		bu_semaphore_release(RT_SEM_MODEL);
 	} else {
 		/* replacing existing solid -- struct already linked in */
-		sp->s_iflag = UP;
+		sp->s_flag = UP;
 	}
+#endif
 }
 
 /*
@@ -2467,14 +2610,14 @@ dgo_build_tops(interp, hsp, start, end)
 
 	/*
 	 * Find all unique top-level entries.
-	 *  Mark ones already done with s_iflag == UP
+	 *  Mark ones already done with s_flag == UP
 	 */
 	FOR_ALL_SOLIDS(sp, &hsp->l)
-		sp->s_iflag = DOWN;
+		sp->s_flag = DOWN;
 	FOR_ALL_SOLIDS(sp, &hsp->l)  {
 		register struct solid *forw;
 
-		if (sp->s_iflag == UP)
+		if (sp->s_flag == UP)
 			continue;
 		if (sp->s_path[0]->d_addr == RT_DIR_PHONY_ADDR)
 			continue;	/* Ignore overlays, predictor, etc */
@@ -2485,10 +2628,10 @@ dgo_build_tops(interp, hsp, start, end)
 				   sp->s_path[0]->d_namep, "\n", (char *)NULL);
 		  break;
 		}
-		sp->s_iflag = UP;
+		sp->s_flag = UP;
 		for (BU_LIST_PFOR(forw, sp, solid, &hsp->l)) {
 			if (forw->s_path[0] == sp->s_path[0])
-				forw->s_iflag = UP;
+				forw->s_flag = UP;
 		}
 	}
 	*vp = (char *) 0;
