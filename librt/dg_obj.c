@@ -69,7 +69,9 @@ static int dgo_overlay_tcl();
 static int dgo_get_autoview_tcl();
 static int dgo_zap_tcl();
 static int dgo_blast_tcl();
+#if 0
 static int dgo_tol_tcl();
+#endif
 static int dgo_rtcheck_tcl();
 
 static union tree *dgo_wireframe_region_end();
@@ -104,7 +106,9 @@ static struct bu_cmdtab dgo_cmds[] = {
 	"overlay",		dgo_overlay_tcl,
 	"rt",			dgo_rt_tcl,
 	"rtcheck",		dgo_rtcheck_tcl,
+#if 0
 	"tol",			dgo_tol_tcl,
+#endif
 	"vdraw",		dgo_vdraw_tcl,
 	"who",			dgo_who_tcl,
 	"zap",			dgo_zap_tcl,
@@ -244,6 +248,7 @@ dgo_open_tcl(clientData, interp, argc, argv)
 	BU_LIST_INIT(&dgop->dgo_headSolid.l);
 	BU_LIST_INIT(&dgop->dgo_headVDraw);
 
+#if 0
 	/* initilize tolerance structures */
 	dgop->dgo_ttol.magic = RT_TESS_TOL_MAGIC;
 	dgop->dgo_ttol.abs = 0.0;		/* disabled */
@@ -260,6 +265,7 @@ dgo_open_tcl(clientData, interp, argc, argv)
 	dgop->dgo_initial_tree_state = rt_initial_tree_state;  /* struct copy */
 	dgop->dgo_initial_tree_state.ts_ttol = &dgop->dgo_ttol;
 	dgop->dgo_initial_tree_state.ts_tol = &dgop->dgo_tol;
+#endif
 
 	/* append to list of dg_obj's */
 	BU_LIST_APPEND(&HeadDGObj.l,&dgop->l);
@@ -864,6 +870,7 @@ dgo_blast_tcl(clientData, interp, argc, argv)
 	return TCL_OK;
 }
 
+#if 0
 /*
  * Usage:
  *        procname tol [abs|rel|norm|dist|perp [#]]
@@ -1063,6 +1070,7 @@ dgo_tol_tcl(clientData, interp, argc, argv)
 
 	return TCL_OK;
 }
+#endif
 
 struct rtcheck {
 	int			fd;
@@ -1847,7 +1855,7 @@ dgo_drawtrees(dgop, interp, argc, argv, kind)
 	case 1:		/* Wireframes */
 		ret = db_walk_tree(dgop->dgo_wdbp->dbip, argc, (CONST char **)argv,
 			ncpu,
-			&dgop->dgo_initial_tree_state,
+			&dgop->dgo_wdbp->wdb_initial_tree_state,
 			0,			/* take all regions */
 			dgo_wireframe_region_end,
 			dgo_wireframe_leaf, (genptr_t)dgcdp);
@@ -1860,7 +1868,7 @@ dgo_drawtrees(dgop, interp, argc, argv, kind)
 		{
 		/* NMG */
 	  	dgo_nmg_model = nmg_mm();
-		dgop->dgo_initial_tree_state.ts_m = &dgo_nmg_model;
+		dgop->dgo_wdbp->wdb_initial_tree_state.ts_m = &dgo_nmg_model;
 	  	if (dgcdp->draw_edge_uses) {
 			Tcl_AppendResult(interp, "Doing the edgeuse thang (-u)\n", (char *)NULL);
 			dgcdp->draw_edge_uses_vbp = rt_vlblock_init();
@@ -1868,7 +1876,7 @@ dgo_drawtrees(dgop, interp, argc, argv, kind)
 
 		ret = db_walk_tree(dgop->dgo_wdbp->dbip, argc, (CONST char **)argv,
 				   ncpu,
-				   &dgop->dgo_initial_tree_state,
+				   &dgop->dgo_wdbp->wdb_initial_tree_state,
 				   dgo_enable_fastpath ? dgo_nmg_region_start : 0,
 				   dgo_nmg_region_end,
 				   dgo_nmg_use_tnurbs ? nmg_booltree_leaf_tnurb : nmg_booltree_leaf_tess,
