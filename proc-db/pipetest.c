@@ -91,7 +91,7 @@ point_t	pipe2[] = {
 	/* Left face, in X= A-R plane */
 	A-R, B, A,
 	A-R, A-R, A,
-	A-R, A-R, A+0.2		/* "repeat" of first point */
+	A-R, A-R, A+0.5		/* "repeat" of first point */
 };
 int	pipe2_npts = sizeof(pipe2)/sizeof(point_t);
 
@@ -143,29 +143,14 @@ double	bend;
 double	od;
 {
 	struct wdb_pipept	head;
-	struct wdb_pipept	*ps;
 	vect_t			prev, next;
 	point_t			my_end, next_start;
 	int			i;
 
-	RT_LIST_INIT( &head.l );
-	ps = (struct wdb_pipept *)calloc(1,sizeof(struct wdb_pipept));
-	ps->l.magic = WDB_PIPESEG_MAGIC;
-	ps->pp_id = 0;
-	ps->pp_od = od;
-	ps->pp_bendradius = bend;
-	VMOVE( ps->pp_coord, pts[0] );
-	RT_LIST_INSERT( &head.l, &ps->l );
+	mk_pipe_init( &head, pts[0], od, 0.0, bend );
 
-	for( i=1; i < npts-1; i++ )  {
-		ps = (struct wdb_pipept *)calloc(1,sizeof(struct wdb_pipept));
-		ps->l.magic = WDB_PIPESEG_MAGIC;
-		ps->pp_id = 0;
-		ps->pp_od = od;
-		ps->pp_bendradius = bend;
-		VMOVE( ps->pp_coord, pts[i] );
-		RT_LIST_INSERT( &head.l, &ps->l );
-
+	for( i=0; i < npts; i++ )  {
+		mk_add_pipe_pt( &head, pts[i], od, 0.0, bend );
 	}
 
 	pr_pipe( name, &head );
@@ -175,6 +160,7 @@ double	od;
 
 	/* free the storage */
 	mk_pipe_free( &head );
+
 }
 
 void
