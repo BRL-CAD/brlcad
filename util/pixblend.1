@@ -1,0 +1,43 @@
+.TH PIXBLEND 1 BRL/CAD
+.SH NAME
+pixblend \-
+blend two pix(5) or bw(5) images
+.SH SYNOPSIS
+.B pixblend
+.RB [ \-b\ blend value ]
+source.pix destination.pix > out.pix
+.SH DESCRIPTION
+.I pixblend
+Given two streams of data, typically
+.IR pix (5)
+or
+.IR bw (5)
+images,
+generate an output stream of the same size, where the value of
+the output is determined by a linear blend from the source image to
+the destination image. A blend value of 0.0 will render the
+the source image completely. A blend value of 1.0 will render the
+destination image completely. The formula for blending is the 
+classic linear blend (i.e.  (1.0 - blend) * source + blend * destination).
+This routine operates on a pixel-by-pixel basis, and thus
+is independent of the resolution of the image.
+More sophisticated processing can be performed by the
+.I pixblend
+program.
+.ft R
+.SH EXAMPLES
+.ft I
+      pixblend -b .25 source.pix destination.pix > out.pix
+.SH "SEE ALSO"
+brlcad(1), gencolor(1), pix(5), bw(5)
+.SH AUTHOR
+Paul Randal Stay
+.SH SOURCE
+SECAD/VLD Computing Consortium, Bldg 247
+.br
+The U. S. Army Research Laboratory
+.br
+Aberdeen Proving Ground, Maryland  21005
+.SH "BUG REPORTS"
+Reports of bugs or problems should be submitted via electronic
+mail to <CAD@BRL.MIL>.
