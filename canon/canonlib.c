@@ -398,7 +398,7 @@ ipu_put_image(struct dsreq *dsp,
 		if (dsdebug)
 			fd = fopen("put_image", "w");
 	}
-	bytes_per_line = w * 3;
+	bytes_per_line = w * ipu_bytes_per_pixel;
 	lines_per_buf = BUFSIZE / bytes_per_line;
 	bytes_per_buf = bytes_per_line * lines_per_buf;
 
@@ -433,21 +433,31 @@ ipu_put_image(struct dsreq *dsp,
 	img_line = 0;
 	for (buf_no=0 ; buf_no < fullbuffers ; buf_no++) {
 		/* fill a full buffer */
-		for (buf_line = lines_per_buf ; buf_line-- > 0 ; img_line++) {
-			/* move img_line to buf_line */
-			scanline = &img[img_line*bytes_per_line];
+		if( ipu_bytes_per_pixel == 3 )  {
+			for (buf_line = lines_per_buf ; buf_line-- > 0 ; img_line++) {
+				/* move img_line to buf_line */
+				scanline = &img[img_line*bytes_per_line];
 
-			r = & red[buf_line*w];
-			g = & grn[buf_line*w];
-			b = & blu[buf_line*w];
+				r = & red[buf_line*w];
+				g = & grn[buf_line*w];
+				b = & blu[buf_line*w];
 
-			for (pixel=0,ip=0 ; pixel < w ; pixel++ ) {
-				r[pixel] = scanline[ip++];
-				g[pixel] = scanline[ip++];
-				b[pixel] = scanline[ip++];
+				for (pixel=0,ip=0 ; pixel < w ; pixel++ ) {
+					r[pixel] = scanline[ip++];
+					g[pixel] = scanline[ip++];
+					b[pixel] = scanline[ip++];
+				}
+			}
+		} else {
+			/* Monochrome */
+			for (buf_line = lines_per_buf ; buf_line-- > 0 ; img_line++) {
+				/* move img_line to buf_line */
+				scanline = &img[img_line*bytes_per_line];
+				r = & red[buf_line*w];
+
+				memcpy( r, scanline, bytes_per_line );
 			}
 		}
-
 
 		/* send buffer to IPU */
 		toshort(&p[5], h-img_line);	/* sy */
@@ -475,16 +485,26 @@ ipu_put_image(struct dsreq *dsp,
 			fprintf(stderr, "\nDoing %d orphans (img_line %d)\n",
 				orphan_lines, img_line);
 
-		for (buf_line = orphan_lines ; buf_line-- > 0 ; img_line++) {
-			scanline = &img[img_line*bytes_per_line];
-			r = & red[buf_line*w];
-			g = & grn[buf_line*w];
-			b = & blu[buf_line*w];
+		if( ipu_bytes_per_pixel == 3 )  {
+			for (buf_line = orphan_lines ; buf_line-- > 0 ; img_line++) {
+				scanline = &img[img_line*bytes_per_line];
+				r = & red[buf_line*w];
+				g = & grn[buf_line*w];
+				b = & blu[buf_line*w];
 
-			for (pixel=0 ; pixel < w ; pixel++ ) {
-				r[pixel] = scanline[pixel*3];
-				g[pixel] = scanline[pixel*3+1];
-				b[pixel] = scanline[pixel*3+2];
+				for (pixel=0 ; pixel < w ; pixel++ ) {
+					r[pixel] = scanline[pixel*3];
+					g[pixel] = scanline[pixel*3+1];
+					b[pixel] = scanline[pixel*3+2];
+				}
+			}
+		}  else  {
+			/* Monochrome */
+			for (buf_line = orphan_lines ; buf_line-- > 0 ; img_line++) {
+				scanline = &img[img_line*bytes_per_line];
+				r = & red[buf_line*w];
+
+				memcpy( r, scanline, bytes_per_line );
 			}
 		}
 
