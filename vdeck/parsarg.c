@@ -25,7 +25,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #else
 #include <strings.h>
 #endif
-#include <setjmp.h>
 
 #include "machine.h"
 #include "vmath.h"

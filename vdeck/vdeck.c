@@ -64,7 +64,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <strings.h>
 #endif
 #include <math.h>
-#include <setjmp.h>
 
 #include "machine.h"
 #include "vmath.h"
