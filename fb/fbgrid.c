@@ -111,7 +111,7 @@ int argc; char **argv;
 	if( flavor == OLD )
 		oldflavor();	/* exits */
 
-	if( (fbp = fb_open( NULL, fbwidth, fbheight )) == NULL )
+	if( (fbp = fb_open( framebuffer, fbwidth, fbheight )) == NULL )
 		exit( 2 );
 
 	fbwidth = fb_getwidth( fbp );
