@@ -168,7 +168,8 @@ static void sl_tol( mptr, val )
 register struct scroll_item     *mptr;
 double				val;
 {
-#if 0
+	struct rt_vls cmd;
+
 	if( val < -SL_TOL )   {
 		val += SL_TOL;
 	} else if( val > SL_TOL )   {
@@ -176,14 +177,11 @@ double				val;
 	} else {
 		val = 0.0;
 	}
-#else
-	struct rt_vls cmd;
 
 	rt_vls_init( &cmd );
 	rt_vls_printf( &cmd, "%s %f\n", mptr->scroll_cmd, val );
 	(void)cmdline( &cmd, FALSE );
 	rt_vls_free(&cmd);
-#endif
 }
 
 static void sl_itol( mptr, val )
@@ -319,13 +317,12 @@ int y_top;
 				 (char *)NULL);
 	    }
 
-	    if(f > 0.000001)
-	      xpos = (f + SL_TOL) * 2047;
-	    else if(f < - 0.000001)
+	    if(f > 0)
+	      xpos = (f + SL_TOL) * 2047.0;
+	    else if(f < 0)
 	      xpos = (f - SL_TOL) * -MENUXLIM;
 	    else
 	      xpos = 0;
-
 
 	    dmp->dmr_puts( mptr->scroll_string,
 			   xpos, y-SCROLL_DY/2, 0, DM_RED );

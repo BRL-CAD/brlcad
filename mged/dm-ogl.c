@@ -996,30 +996,7 @@ XEvent *eventPtr;
     if(keysym == mged_variables.hot_key)
       goto end;
 
-#if 0
-    /* drawing window is being aimed at by a Tcl/Tk command window */
-    if(curr_dm_list->aim &&
-       strcmp(rt_vls_addr(&curr_dm_list->aim->name), "mged")){
-#if 1
-      /* This doesn't work because Tk ignores key events if the
-	 text window we're sending to doesn't have the focus which defeats
-	 the purpose. */
-      Status status;
-#if 1
-      eventPtr->xkey.window = (Window)(curr_dm_list->aim->id);
-      eventPtr->xkey.display = (Display *)(curr_dm_list->aim->sp);
-#endif
-      status = XSendEvent((Display *)(curr_dm_list->aim->sp), (Window)(curr_dm_list->aim->id),
-		 True, KeyPressMask, eventPtr);
-#else
-      /* This doesn't properly handle control sequences or even \r */
-      buffer[1] = '\0';
-      rt_vls_printf(&cmd, "insert_text %s %s\n", curr_dm_list->aim->name, buffer);
-      (void)cmdline(&cmd, FALSE);
-#endif
-    }else
-#endif
-      write(dm_pipe[1], buffer, 1);
+    write(dm_pipe[1], buffer, 1);
 
     rt_vls_free(&cmd);
     curr_dm_list = save_dm_list;
@@ -1051,12 +1028,6 @@ XEvent *eventPtr;
   } else if( eventPtr->type == MotionNotify ) {
     int mx, my;
 
-#if 0
-    if( !OgldoMotion &&
-	(VIRTUAL_TRACKBALL_NOT_ACTIVE(struct ogl_vars *, mvars.virtual_trackball)) )
-      goto end;
-#endif
-
     mx = eventPtr->xmotion.x;
     my = eventPtr->xmotion.y;
 
@@ -1074,20 +1045,8 @@ XEvent *eventPtr;
 
       break;
     case VIRTUAL_TRACKBALL_ROTATE:
-#if 0
-      absolute_rotate[Y] += (mx - omx)/512.0;
-
-      /* wrap around */
-      if(absolute_rotate[Y] < -1.0)
-	absolute_rotate[Y] = absolute_rotate[Y] + 2.0;
-      else if(absolute_rotate[Y] > 1.0)
-	absolute_rotate[Y] = absolute_rotate[Y] - 2.0;
-
-      rt_vls_printf( &cmd, "iknob ax %f\n", (my - omy)/512.0);
-#else
       rt_vls_printf( &cmd, "iknob ax %f; iknob ay %f\n",
 		     (my - omy)/512.0, (mx - omx)/512.0 );
-#endif
       break;
     case VIRTUAL_TRACKBALL_TRANSLATE:
       {
@@ -1096,6 +1055,7 @@ XEvent *eventPtr;
 	fx = (mx/(fastf_t)((struct ogl_vars *)dm_vars)->width - 0.5) * 2;
 	fy = (0.5 - my/(fastf_t)((struct ogl_vars *)dm_vars)->height) * 2;
 
+#if 0
 	if(fx > 0.000001)
 	  fx += SL_TOL;
 	else if(fx < 0.000001)
@@ -1103,24 +1063,14 @@ XEvent *eventPtr;
 	else
 	  fx = 0.0;
 
-#if 1
-	if( fy < -1.0 )
-	  fy = -1.0;
-	else if( fy > 1.0 )
-	  fy = 1.0;
-	
-	absolute_slew[Y] = fy;
-	rt_vls_printf( &cmd, "knob aX %f\n", fx);
-#else
 	if(fy > 0.000001)
 	  fy += SL_TOL;
 	else if(fy < 0.000001)
 	  fy += -SL_TOL;
 	else
 	  fy = 0.0;
-
-	rt_vls_printf( &cmd, "knob aX %f; knob aY %f\n", fx, fy );
 #endif
+	rt_vls_printf( &cmd, "knob aX %f; knob aY %f\n", fx, fy );
       }	     
       break;
     case VIRTUAL_TRACKBALL_ZOOM:
@@ -2056,7 +2006,6 @@ char	**argv;
 	  break;
 	case 't':
 	  ((struct ogl_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_TRANSLATE;
-#if 1
 	  {
 	    fastf_t fx, fy;
 
@@ -2064,6 +2013,7 @@ char	**argv;
 	    fx = (omx/(fastf_t)((struct ogl_vars *)dm_vars)->width - 0.5) * 2;
 	    fy = (0.5 - omy/(fastf_t)((struct ogl_vars *)dm_vars)->height) * 2;
 
+#if 0
 	    if(fx > 0.000001)
 	      fx += SL_TOL;
 	    else if(fx < 0.000001)
@@ -2071,37 +2021,18 @@ char	**argv;
 	    else
 	      fx = 0.0;
 
-#if 1
-	    if( fy < -1.0 )
-	      fy = -1.0;
-	    else if( fy > 1.0 )
-	      fy = 1.0;
-
-	    absolute_slew[Y] = fy;
-	    rt_vls_printf( &vls, "knob aX %f\n", fx);
-#else
 	    if(fy > 0.000001)
 	      fy += SL_TOL;
 	    else if(fy < 0.000001)
 	      fy += -SL_TOL;
 	    else
 	      fy = 0.0;
-
-	    rt_vls_printf( &vls, "knob aX %f; knob aY %f\n", fx, fy);
 #endif
+	    rt_vls_printf( &vls, "knob aX %f; knob aY %f\n", fx, fy);
 	    (void)cmdline(&vls, FALSE);
 	    rt_vls_free(&vls);
 	  }
-#else
-	  sprintf(xstr, "%f", (omx/(double)((struct ogl_vars *)dm_vars)->width - 0.5) * 2);
-	  sprintf(ystr, "%f", (0.5 - omy/(double)((struct ogl_vars *)dm_vars)->height) * 2);
-	  sprintf(zstr, "%f", tran_z);
-	  av[0] = "tran";
-	  av[1] = xstr;
-	  av[2] = ystr;
-	  av[3] = zstr;
-	  status = f_tran((ClientData)NULL, interp, 4, av);
-#endif
+
 	  break;
 	case 'z':
 	  ((struct ogl_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_ZOOM;
