@@ -1,0 +1,40 @@
+/*
+  *			fb/Cakefile
+ */
+
+#define SRCDIR	canon
+#define PRODUCTS	canonize pix-ipu ipustat
+
+#if defined(__sgi) || defined(sgi)
+#define DSLIB	-lds
+#else
+#define DSLIB
+#endif
+
+#define	SRCSUFF	.c
+#define MANSECTION	1
+
+#include "../Cakefile.defs"
+
+/* XXX
+ * The following is necessary because SGI's <sys/dsreq.h> won't pass the
+ * -ansiposix flag on their own compiler under Irix 4.0.1.  Sigh.
+ */
+#if defined(__sgi) || defined(sgi)
+#undef CFLAGS
+#define CFLAGS -O
+#endif
+
+#include "../Cakefile.prog"
+/* Explicit composition of each product */
+
+canonize : canonize.o canonlib.o asize.o
+	cc -O2 -o canonize canonize.o canonlib.o asize.o DSLIB
+
+pix-ipu : pix-ipu.o canonlib.o asize.o
+	cc -O2 -o pix-ipu pix-ipu.o canonlib.o asize.o DSLIB
+
+ipustat : ipustat.o canonlib.o
+	cc -O2 -o ipustat ipustat.o canonlib.o DSLIB
+
+#include "../Cakefile.rules"
