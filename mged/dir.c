@@ -115,7 +115,7 @@ char *name;
 void
 dir_build()  {
 	register FILE *fp;
-	static long	addr;
+	register long addr;
 
 	(void)lseek( objfd, 0L, 0 );
 	(void)read( objfd, (char *)&record, sizeof record );
@@ -146,89 +146,88 @@ dir_build()  {
 		return;
 	}
 
-	while(1)  {
-		addr = lseek( objfd, 0L, 1 );
-		if( (unsigned)read( objfd, (char *)&record, sizeof record )
-				!= sizeof record )
-			break;
+	addr = 0L;		/* Addr of record read at top of loop */
+	while(
+	    fread( (char *)&record, sizeof(record), 1, fp ) == 1  &&
+	    !feof(fp)
+	)  switch( record.u_id )  {
 
-		if( record.u_id == ID_IDENT )  {
-			(void)printf("%s (units=%s)\n",
-				record.i.i_title,
-				units_str[record.i.i_units] );
-			continue;
-		}
-		if( record.u_id == ID_FREE )  {
-			/* Inform db manager of avail. space */
-			memfree( &dbfreep, 1, addr/sizeof(union record) );
-			continue;
-		}
-		if( record.u_id == ID_ARS_A )  {
-			(void)dir_add( record.a.a_name, addr, DIR_SOLID, record.a.a_totlen+1 );
-
-			/* Skip remaining B type records.	*/
-			(void)lseek( objfd,
-				(long)(record.a.a_totlen) *
-				(long)(sizeof record),
-				1 );
-			continue;
-		}
-		if( record.u_id == ID_B_SPL_HEAD ) {
-			dir_add( record.d.d_name, addr, DIR_SOLID, record.d.d_totlen+1 );
-			/* Skip remaining B-spline records.    */
-			(void)lseek( objfd,
-				(long)(record.d.d_totlen+1) *
-				(long)(sizeof( record )),
-				1 );
-			continue;
-		}
-		if( record.u_id == ID_SOLID )  {
-			(void)dir_add( record.s.s_name, addr, DIR_SOLID, 1 );
-			continue;
-		}
-		if( record.u_id == ID_P_HEAD )  {
-			union record rec;
-			register int nrec;
-			register int j;
-			nrec = 1;
-			while(1) {
-				j = read( objfd, (char *)&rec, sizeof(rec) );
-				if( j != sizeof(rec) )
-					break;
-				if( rec.u_id != ID_P_DATA )  {
-					(void)lseek( objfd, -(sizeof(rec)), 1 );
-					break;
-				}
-				nrec++;
-			}
-			(void)dir_add( record.p.p_name, addr, DIR_SOLID, nrec );
-			continue;
-		}
-		if( record.u_id != ID_COMB )  {
-			(void)printf( "dir_build:  unknown record %c (0%o)\n",
-				record.u_id, record.u_id );
-			/* zap this record and put in free map */
-			zapper.u_id = ID_FREE;	/* The rest will be zeros */
-			(void)lseek( objfd, addr, 0 );
-			if( !read_only )
-				(void)write(objfd, (char *)&zapper, sizeof(zapper));
-			memfree( &dbfreep, 1, addr/(sizeof(union record)) );
-			continue;
-		}
-
-		(void)dir_add( record.c.c_name,
-			addr,
+	case ID_COMB:
+		(void)dir_add( record.c.c_name, addr,
 			record.c.c_flags == 'R' ?
 				DIR_COMB|DIR_REGION : DIR_COMB,
 			record.c.c_length+1 );
-		/* Skip over member records */
-		(void)lseek( objfd,
-			(long)record.c.c_length * (long)sizeof record,
-			1 );
+		addr += (long)(record.c.c_length+1) * (long)sizeof record;
+		(void)fseek( fp, addr, 0 );
+		continue;
+
+	case ID_ARS_A:
+		(void)dir_add( record.a.a_name, addr,
+			DIR_SOLID, record.a.a_totlen+1 );
+		addr += (long)(record.a.a_totlen+1) * (long)(sizeof record);
+		(void)fseek( fp, addr, 0 );
+		continue;
+
+	case ID_B_SPL_HEAD:
+		dir_add( record.d.d_name, addr,
+			DIR_SOLID, record.d.d_totlen+1 );
+		addr += (long)(record.d.d_totlen+1) * (long)(sizeof(record));
+		(void)fseek( fp, addr, 0 );
+		continue;
+
+	case ID_P_HEAD:
+		{
+			union record rec;
+			register int nrec;
+
+			nrec = 1;
+			while( fread((char *)&rec, sizeof(rec), 1, fp) == 1 &&
+			    !feof(fp)  &&
+			    rec.u_id == ID_P_DATA )
+				nrec++;
+			(void)dir_add( record.p.p_name, addr, DIR_SOLID, nrec );
+			addr += (long)nrec * (long)sizeof(record);
+			(void)fseek( fp, addr, 0 );
+			continue;
+		}
+
+	case ID_IDENT:
+		(void)printf("%s (units=%s)\n",
+			record.i.i_title,
+			units_str[record.i.i_units] );
+		addr += sizeof(record);
+		continue;
+
+	case ID_FREE:
+		/* Inform db manager of avail. space */
+		memfree( &dbfreep, 1, addr/sizeof(union record) );
+		addr += sizeof(record);
+		continue;
+
+	case ID_SOLID:
+		(void)dir_add( record.s.s_name, addr, DIR_SOLID, 1 );
+		addr += sizeof(record);
+		continue;
+
+	default:
+		(void)printf( "dir_build:  unknown record %c (0%o) erased\n",
+			record.u_id, record.u_id );
+		if( !read_only )  {
+			/* zap this record and put in free map */
+			zapper.u_id = ID_FREE;	/* The rest will be zeros */
+			(void)lseek( objfd, addr, 0 );
+			(void)write(objfd, (char *)&zapper, sizeof(zapper));
+		}
+		memfree( &dbfreep, 1, addr/(sizeof(union record)) );
+		addr += sizeof(record);
+		continue;
 	}
 
 	/* Record current end of objects file */
-	objfdend = lseek( objfd, 0L, 1 );
+	objfdend = ftell(fp);
+	if( objfdend != addr )
+		(void)printf("ftell=%d, addr=%d\n", objfdend, addr);
+	(void)fclose(fp);
 }
 
 /*
