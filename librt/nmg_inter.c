@@ -3798,7 +3798,9 @@ struct edgeuse		*eu2;
 		rt_log("nmg_isect_edge3p_edge3p() colinear case.  Untested waters.\n");
 		/* Initialize 2D vertex cache with EDGE info. */
 		nmg_isect2d_prep( is, &eu1->l.magic );
-		(void)nmg_isect_2colinear_edge2p( eu1, eu2, eu1->e_p, is, 0, 0 );
+		/* 3rd arg has to be a faceuse.  Tried to send it eu1->e_p */
+		/* XXX This will rt_bomb() when faceuse is checked. */
+		(void)nmg_isect_2colinear_edge2p( eu1, eu2, (struct faceuse *)NULL, is, 0, 0 );
 		return;
 	}
 
