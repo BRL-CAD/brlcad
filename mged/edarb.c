@@ -51,7 +51,6 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 void	ext4to6(),old_ext4to6();
 
-extern struct bu_external	es_ext;
 extern struct rt_db_internal	es_int;
 extern struct rt_db_internal	es_int_orig;
 extern struct bn_tol		mged_tol;		/* from ged.c */
