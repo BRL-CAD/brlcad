@@ -699,6 +699,27 @@ struct rt_comb_internal  {
 #define RT_COMB_MAGIC	0x436f6d49	/* "ComI" */
 #define RT_CK_COMB(_p)		BU_CKMAG( _p , RT_COMB_MAGIC , "rt_comb_internal" )
 
+
+/*
+ *			R T _ W D B
+ *
+ * XXX Somebody give me a descriptive comment
+ */
+ 
+struct rt_wdb  {
+	long		magic;
+	int		type;
+	FILE		*fp;
+	struct db_i	*dbip;
+};
+
+#define	RT_WDB_MAGIC			0x5f576462
+#define RT_WDB_NULL		((struct rt_wdb *)NULL)
+#define RT_WDB_TYPE_FILE			1
+#define RT_WDB_TYPE_DB_DISK			2
+#define RT_WDB_TYPE_DB_INMEM			3
+#define RT_WDB_TYPE_DB_INMEM_APPEND_ONLY	4
+
 /*
  *			D B _ T R E E _ S T A T E
  *
@@ -1701,6 +1722,10 @@ RT_EXTERN(int rt_rpp_region, (struct rt_i *rtip, CONST char *reg_name,
 
 /* The database library */
 
+/* wdb.c */
+RT_EXTERN(struct rt_wdb *wdb_dbopen, (struct db_i *dbip, int mode));
+RT_EXTERN(struct rt_wdb *wdb_fopen, (CONST char *filename));
+
 /* db_anim.c */
 RT_EXTERN(int db_add_anim, (struct db_i *dbip, struct animate *anp, int root) );
 RT_EXTERN(int db_do_anim, (struct animate *anp, mat_t stack, mat_t arc,
@@ -1830,9 +1855,6 @@ RT_EXTERN(void db_apply_anims, (struct db_full_path *pathp,
 	struct mater_info *materp));
 
 /* db_comb.c */
-#ifdef _TCL
-RT_EXTERN(int db_tcl_comb_describe, (Tcl_Interp *interp, struct rt_comb_internal *comb, CONST char *item));
-#endif
 
 /* memalloc.c -- non PARALLEL routines */
 RT_EXTERN(unsigned long rt_memalloc, (struct mem_map **pp, unsigned size) );
