@@ -1294,9 +1294,7 @@ out:
 	}
 
 	winclose( ifp->if_fd );		/* close window */
-	if( sgi_nwindows <= 1 )  {
-		gexit();		/* mandatory finish */
-	}
+
 	if( fp ) fclose(fp);		/* close our "complaints window" */
 
 	if( SGIL(ifp) != NULL ) {
