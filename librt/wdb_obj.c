@@ -191,8 +191,6 @@ static struct bu_cmdtab wdb_cmds[] = {
 	{"whichid",	wdb_which_tcl},
 #if 0
 	/* Commands to be added */
-
-	{"units",	wdb_units_tcl},
 	{"comb_color",	wdb_comb_color_tcl},
 	{"copymat",	wdb_copymat_tcl},
 	{"copyeval",	wdb_copyeval_tcl},
@@ -3146,7 +3144,7 @@ struct wdb_id_to_names {
 
 /*
  * Usage:
- *        procname whichair/whichid id(s)
+ *        procname whichair/whichid [-s] id(s)
  */
 static int
 wdb_which_tcl(clientData, interp, argc, argv)
@@ -3165,6 +3163,7 @@ wdb_which_tcl(clientData, interp, argc, argv)
 	struct wdb_id_to_names *itnp;
 	struct wdb_id_names *inp;
 	int isAir;
+	int sflag;
 
 	if (argc < 3 || MAXARGS < argc) {
 		struct bu_vls vls;
@@ -3180,6 +3179,25 @@ wdb_which_tcl(clientData, interp, argc, argv)
 		isAir = 1;
 	else
 		isAir = 0;
+
+	if (strcmp(argv[2], "-s") == 0) {
+		--argc;
+		++argv;
+
+		if (argc < 2) {
+			struct bu_vls vls;
+
+			bu_vls_init(&vls);
+			bu_vls_printf(&vls, "helplib wdb_%s", argv[-1]);
+			Tcl_Eval(interp, bu_vls_addr(&vls));
+			bu_vls_free(&vls);
+			return TCL_ERROR;
+		}
+
+		sflag = 1;
+	} else {
+		sflag = 0;
+	}
 
 	BU_LIST_INIT(&headIdName.l);
 
@@ -3265,21 +3283,36 @@ wdb_which_tcl(clientData, interp, argc, argv)
 				}
 			}
 
-			rt_db_free_internal(&intern, &rt_uniresource);
+			rt_comb_ifree( &intern, &rt_uniresource );
 		}
 	}
 
 	/* place data in interp and free memory */
 	 while (BU_LIST_WHILE(itnp,wdb_id_to_names,&headIdName.l)) {
-		 while (BU_LIST_WHILE(inp,wdb_id_names,&itnp->headName.l)) {
-			 Tcl_AppendElement(interp, bu_vls_addr(&inp->name));
-			 BU_LIST_DEQUEUE(&inp->l);
-			 bu_vls_free(&inp->name);
-			 bu_free((genptr_t)inp, "f_which: inp");
+		if (!sflag) {
+			struct bu_vls vls;
+
+			bu_vls_init(&vls);
+			bu_vls_printf(&vls, "Region[s] with %s %d:\n",
+				      isAir ? "air code" : "ident", itnp->id);
+			Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+			bu_vls_free(&vls);
+		}
+
+		while (BU_LIST_WHILE(inp,wdb_id_names,&itnp->headName.l)) {
+			if (sflag)
+				Tcl_AppendElement(interp, bu_vls_addr(&inp->name));
+			else
+				Tcl_AppendResult(interp, "   ", bu_vls_addr(&inp->name),
+						 "\n", (char *)NULL);
+
+			BU_LIST_DEQUEUE(&inp->l);
+			bu_vls_free(&inp->name);
+			bu_free((genptr_t)inp, "which: inp");
 		}
 
 		BU_LIST_DEQUEUE(&itnp->l);
-		bu_free((genptr_t)itnp, "f_which: itnp");
+		bu_free((genptr_t)itnp, "which: itnp");
 	}
 
 	return TCL_OK;
