@@ -222,7 +222,7 @@ set -S2 "/bin/sh"
 #	define	LIBRT_TIMER	timer42
 #	define	LIBFB_CONFIG	-DIF_REMOTE -I''XINCDIR -DIF_X
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
-#	define	LIBFB_OBJS	if_remote if_ab if_X
+#	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
 #	define	MGED_OBJS	dm-X
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #	define	MGED_LIBES	-L''XLIBDIR -lX11
@@ -285,7 +285,7 @@ set -S2 "/bin/sh"
 
 #	define	LIBFB_CONFIG	-DIF_REMOTE -I''XINCDIR -DIF_X
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
-#	define	LIBFB_OBJS	if_remote if_ab if_X
+#	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
 
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #	define	MGED_LIBES	-L''XLIBDIR -lX11
@@ -381,7 +381,7 @@ set -S2 "/bin/sh"
 /*	-Xc for ANSI, otherwise non-ANSI */
 #	define	CC_OPTS	-D__stardent=1 -Xc
 #	define	LIBPKG_CONFIG	-DBSD=43
-#	define  LIBFB_OBJS      if_remote if_X
+#	define  LIBFB_OBJS      if_remote if_X if_X24
 #	define  LIBFB_CONFIG    -DIF_REMOTE -DIF_X -I''XINCDIR
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11 -lresolv -lsocket -lnsl -L/usr/ucblib -lucb
 #	define	MGED_OBJS	dm-X
@@ -408,12 +408,12 @@ set -S2 "/bin/sh"
 #	if 1
 /*		Normal Configuration */
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_PTTY -DIF_AB
-#		define	LIBFB_OBJS	if_remote if_ptty if_ab
+#		define	LIBFB_OBJS	if_remote if_ab
 #		define	LIBFB_LIBES	LIBPKG
 #	else
 /*		X-Windows Configuration */
-#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_PTTY -DIF_AB -DIF_X -I/m/X11/core
-#		define	LIBFB_OBJS	if_remote if_ptty if_ab if_X
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_X -I/m/X11/core
+#		define	LIBFB_OBJS	if_remote if_ab if_X if_X24
 #		define	LIBFB_LIBES	LIBPKG /usr/local/lib/libX11.a
 #		define	MGED_OBJS	dm-X
 #		define	MGED_CONFIG	-DDM_X -I/m/X11/core
@@ -445,7 +445,7 @@ set -S2 "/bin/sh"
 #	else
 /*		X-Windows Configuration */
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_X
-#		define	LIBFB_OBJS	if_remote if_ab if_X
+#		define	LIBFB_OBJS	if_remote if_ab if_X if_X24
 #		define	LIBFB_LIBES	LIBPKG /usr/local/lib/libX11.a
 #		define	MGED_OBJS	dm-X
 #		define	MGED_CONFIG	-DDM_X
@@ -462,8 +462,8 @@ set -S2 "/bin/sh"
 #	define HAS_TCP	1
 #	define CC_DEFS	-Dvoid=int
 #	define CC_OPTS	-Olimit 4096
-#	define LIBFB_OBJS	if_X if_remote if_ab if_ptty
-#	define LIBFB_CONFIG	-DIF_X -DIF_REMOTE -DIF_AB -DIF_PTTY
+#	define LIBFB_OBJS	if_X if_X24 if_remote if_ab
+#	define LIBFB_CONFIG	-DIF_X -DIF_REMOTE -DIF_AB
 #	define LIBFB_LIBES	LIBPKB -lX11
 #	define LIBRT_TIMER	timer42
 #	define MGED_CONFIG	-DDM_X
@@ -496,7 +496,7 @@ set -S2 "/bin/sh"
 #	define	XINCDIR	/usr/X11/include
 #	define	XLIBDIR	/usr/X11/lib
 
-#	define	LIBFB_OBJS	if_remote if_ab if_4d if_X
+#	define	LIBFB_OBJS	if_remote if_ab if_4d if_X if_X24
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_4D -DBSD=43 -I''XINCDIR -DIF_X
 #	define	LIBFB_LIBES	-L''XLIBDIR -lX11''SHARED LIBPKG -lgl''SHARED
 #	if 1	/* PRODUCTION=1 */
@@ -570,7 +570,7 @@ set -S2 "/bin/sh"
 #	define  CC_OPTS		GFLAG -ansiposix -DIRIX=5
 #	define	LGT_CONFIG	GFLAG
 
-#	define	LIBFB_OBJS	if_remote if_ab if_4d if_X
+#	define	LIBFB_OBJS	if_remote if_ab if_4d if_X if_X24
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_4D -DBSD=43 -DIF_X -I''XINCDIR
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11''SHARED -lgl''SHARED
 #	define	MGED_OBJS	dm-4d dm-X
@@ -632,7 +632,7 @@ set -S2 "/bin/sh"
 #	define	LGT_CONFIG	GFLAG
 
 /* GAK!  No GL library in 64-bit mode, only OpenGL!  ARRRRGH! */
-#	define	LIBFB_OBJS	if_remote if_ab if_X
+#	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DBSD=43 -DIF_X -I''XINCDIR
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
 #	define	MGED_OBJS	dm-X
@@ -724,7 +724,7 @@ set -S2 "/bin/sh"
 #	endif
 #	ifdef sun_x11
 /*		Sun with X11 configuration */
-#		define	LIBFB_OBJS	if_remote if_ab if_sun if_X
+#		define	LIBFB_OBJS	if_remote if_ab if_sun if_X if_X24
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB \
 			-I''XINCDIR -DIF_X
 #		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
@@ -734,7 +734,7 @@ set -S2 "/bin/sh"
 #	endif
 #	ifdef sun_openwin
 /*		Sun with SunOS 4.1.1 and OpenWindows configuration */
-#		define	LIBFB_OBJS	if_remote if_ab if_sun if_X
+#		define	LIBFB_OBJS	if_remote if_ab if_sun if_X if_X24
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB \
 			-I''XINCDIR -DIF_X
 #		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
@@ -744,7 +744,7 @@ set -S2 "/bin/sh"
 #	endif
 #	ifdef sun_x11_gds
 /*		Sun with X11 configuration and TekSource GDS hardware*/
-#		define	LIBFB_OBJS	if_remote if_ab if_sun if_X if_ts
+#		define	LIBFB_OBJS	if_remote if_ab if_sun if_X if_X24 if_ts
 #		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_SUN -DIF_TS \
 			-I''XINCDIR -DIF_X
 #		define	LIBFB_LIBES	LIBPKG -lsuntool -lsunwindow -lpixrect \
@@ -803,7 +803,7 @@ set -S2 "/bin/sh"
 #		define	XLIBDIR		/usr/openwin/lib
 #		if 1	/* PRODUCTION=1 */
 /*			Sun with X11 (aka "openwin") Default for SunOS 4.1.1 */
-#			define	LIBFB_OBJS	if_remote if_ab if_X
+#			define	LIBFB_OBJS	if_remote if_ab if_X if_X24
 #			define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB \
 				-I''XINCDIR -DIF_X
 #			define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
@@ -824,7 +824,7 @@ set -S2 "/bin/sh"
 /*			Sun with MIT X11. No Suntools support. */
 #			define	XINCDIR		/usr/X11/include
 #			define	XLIBDIR		/usr/X11/lib
-#			define	LIBFB_OBJS	if_remote if_ab if_X
+#			define	LIBFB_OBJS	if_remote if_ab if_X if_X24
 #			define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB \
 				-I''XINCDIR -DIF_X
 #			define	LIBFB_LIBES	LIBPKG \
@@ -887,7 +887,7 @@ set -S2 "/bin/sh"
 #	define	LIBRT_TIMER	timerunix
 #	define	LIBRT_LIBES	-lthread
 
-#	define	LIBFB_OBJS	if_remote if_ab if_X
+#	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -I''XINCDIR -DIF_X
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -R''XLIBDIR -lX11 -lnsl -lsocket
 
@@ -922,7 +922,7 @@ set -S2 "/bin/sh"
 #	endif
 #	define	LIBRT_TIMER	timer42
 /*	NeXT with X11 configuration */
-#	define	LIBFB_OBJS	if_remote if_ab if_X
+#	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_X -I''XINCDIR
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
 #	define	MGED_OBJS	dm-X
@@ -946,7 +946,7 @@ set -S2 "/bin/sh"
 #	define	FC_OPTS	CC_OPTS
 #	define	LD_OPTS	CC_OPTS -g
 #	define	LIBRT_TIMER	timer42
-#	define	LIBFB_OBJS	if_remote if_X
+#	define	LIBFB_OBJS	if_remote if_X if_X24
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_X -I''XINCDIR
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
 #	define	MGED_OBJS	dm-X
@@ -992,7 +992,7 @@ set -S2 "/bin/sh"
 #	define	XINCDIR		/usr/include/X11
 
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_X -I''XINCDIR
-#	define	LIBFB_OBJS	if_remote if_ab if_X
+#	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
 #	define	LIBPKG_CONFIG	-DBSD=43
 #	define	RFBD_CONFIG	-DBSD=43
@@ -1008,7 +1008,7 @@ set -S2 "/bin/sh"
 #	define	UNIXTYPE SYSV
 #	define	HAS_TCP=0
 #	define	LIBRT_TIMER 	timerunix
-#	define	LIBFB_OBJS 	if_X
+#	define	LIBFB_OBJS 	if_X if_X24
 #	define	LIBFB_CONFIG 	-DIF_X -I''XINCDIR
 #	define	LIBFB_LIBES   	-L''XLIBDIR -lX11
 #	define	MGED_OBJS	dm-X
@@ -1048,7 +1048,7 @@ set -S2 "/bin/sh"
 #	define	XINCDIR		/usr/include/X11
 
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_X -I''XINCDIR
-#	define	LIBFB_OBJS	if_remote if_ab if_X
+#	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
 #	define	MGED_OBJS	dm-X
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
@@ -1066,7 +1066,7 @@ set -S2 "/bin/sh"
 #	define	XLIBDIR		/usr/X11/lib
 
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_X -I''XINCDIR
-#	define	LIBFB_OBJS	if_remote if_ab if_X
+#	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
 #	define	LIBRT_TIMER	timer42
 #	define 	MGED_OBJS	dm-X
@@ -1104,7 +1104,7 @@ set -S2 "/bin/sh"
 #	define	XLIBDIR		/usr/X11/lib
 
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_X -I''XINCDIR
-#	define	LIBFB_OBJS	if_remote if_X
+#	define	LIBFB_OBJS	if_remote if_X if_X24
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
 #	define	MGED_OBJS	dm-X
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
@@ -1120,7 +1120,7 @@ set -S2 "/bin/sh"
 #	define	LIBRT_TIMER	timerunix
 /*XXX	Note that this X11 configuration may need tweaking */
 #	define	LIBFB_CONFIG	-DIF_X -I''XINCDIR
-#	define	LIBFB_OBJS	if_X
+#	define	LIBFB_OBJS	if_X if_X24
 #	define	LIBFB_LIBES	-L''XLIBDIR -lX11
 #	define	MGED_OBJS	dm-X
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
@@ -1138,7 +1138,7 @@ set -S2 "/bin/sh"
 #	define	HAS_TCP	1
 #	define	LIBRT_TIMER	timerunix
 #	define	LIBFB_CONFIG	-DIF_X -I''XINCDIR
-#	define	LIBFB_OBJS	if_X
+#	define	LIBFB_OBJS	if_X if_X24
 #	define	LIBFB_LIBES	-L''XLIBDIR -lX11
 #	define	MGED_OBJS	dm-X
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
@@ -1241,8 +1241,8 @@ set -S2 "/bin/sh"
 #		define	LIBFB_OBJS	if_ptty
 #		define	LIBFB_CONFIG	-DIF_PTTY
 #	else
-#		define	LIBFB_OBJS	if_remote if_ptty if_ab
-#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_PTTY -DIF_AB
+#		define	LIBFB_OBJS	if_remote if_ab
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB
 #		define	LIBFB_LIBES	LIBPKG
 #	endif
 /*	LIBFB_SETUP is only to be defined when needed */
