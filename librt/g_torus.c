@@ -166,7 +166,7 @@ struct rt_i		*rtip;
 	LOCAL mat_t	R;
 	LOCAL vect_t	A, B, Hv;
 	LOCAL vect_t	P, w1;	/* for RPP calculation */
-	FAST fastf_t	f, tmp;
+	FAST fastf_t	f, tmp, a2, b2;
 	LOCAL fastf_t	r1, r2;	/* primary and secondary radius */
 	LOCAL fastf_t	mag_b;
 
@@ -265,40 +265,40 @@ struct rt_i		*rtip;
 	/*
 	 * Compute bounding RPP
 	 *  We are fitting an RPP to a "hockey-puck" which surrounds
-	 *  the torus.  This is a unit radius RCC in the XY plane
-	 *  with the end planes at +/- alpha.
-	 *  These formulas were derived via Lagrange multipliers.
-	 *  If the torus is not circular, the scaling will have
-	 *  to be changed.
+	 *  the torus.  This is an REC in the XY plane with the
+	 *  end planes at Z = +/- r2.
+	 *  These equations were derived via Lagrange multipliers.
 	 */
+	a2 = (r1 + r2) * (r1 + r2);		/* r1 = mag_a */
+	b2 = (mag_b + r2) * (mag_b + r2);
 
 	/* X */
 	VSET( P, 1.0, 0, 0 );		/* bounding plane normal */
 	MAT3XVEC( w1, R, P );		/* map plane into local coord syst */
-	f = fabs( w1[Z]*tor->tor_alpha ) * tor->tor_r1;		/* Z part */
-	tmp = w1[X] * w1[X] + w1[Y] * w1[Y];
+	f = fabs( w1[Z] * r2 );		/* Z part */
+	tmp = a2 * w1[X] * w1[X] + b2 * w1[Y] * w1[Y];
 	if( tmp > 1.0e-8 )
-		f += tmp/sqrt(tmp) * (tor->tor_r1 + r2);	/* XY part */
+		f += tmp/sqrt(tmp);	/* XY part */
 	stp->st_min[X] = tor->tor_V[X] - f;	/* V.P +/- f */
 	stp->st_max[X] = tor->tor_V[X] + f;
 
 	/* Y */
 	VSET( P, 0, 1.0, 0 );		/* bounding plane normal */
 	MAT3XVEC( w1, R, P );		/* map plane into local coord syst */
-	f = fabs( w1[Z]*tor->tor_alpha ) * tor->tor_r1;		/* Z part */
-	tmp = w1[X] * w1[X] + w1[Y] * w1[Y];
+	f = fabs( w1[Z] * r2 );		/* Z part */
+	tmp = a2 * w1[X] * w1[X] + b2 * w1[Y] * w1[Y];
 	if( tmp > 1.0e-8 )
-		f += tmp/sqrt(tmp) * (tor->tor_r1 + r2);	/* XY part */
+		f += tmp/sqrt(tmp);	/* XY part */
 	stp->st_min[Y] = tor->tor_V[Y] - f;	/* V.P +/- f */
 	stp->st_max[Y] = tor->tor_V[Y] + f;
 
 	/* Z */
 	VSET( P, 0, 0, 1.0 );		/* bounding plane normal */
 	MAT3XVEC( w1, R, P );		/* map plane into local coord syst */
-	f = fabs( w1[Z]*tor->tor_alpha ) * tor->tor_r1;		/* Z part */
-	tmp = w1[X] * w1[X] + w1[Y] * w1[Y];
+	f = fabs( w1[Z] * r2 );		/* Z part */
+	tmp = a2 * w1[X] * w1[X] + b2 * w1[Y] * w1[Y];
 	if( tmp > 1.0e-8 )
-		f += tmp/sqrt(tmp) * (tor->tor_r1 + r2);	/* XY part */
+		f += tmp/sqrt(tmp);	/* XY part */
 	stp->st_min[Z] = tor->tor_V[Z] - f;	/* V.P +/- f */
 	stp->st_max[Z] = tor->tor_V[Z] + f;
 
