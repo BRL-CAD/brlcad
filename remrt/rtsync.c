@@ -253,6 +253,72 @@ register char **argv;
 }
 
 /*
+ *			L I S T _ R T N O D E S
+ *
+ *  Give list of valid rtnode structure indices
+ */
+int
+list_rtnodes( clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	int	i;
+
+	for( i=0; i < MAX_NODES; i++ )  {
+		char	buf[32];
+
+		if( rtnodes[i].fd <= 0 )  continue;
+		sprintf(buf, "%d", i);
+		Tcl_AppendResult(interp, " ", buf, NULL);
+	}
+	return TCL_OK;
+}
+
+/*
+ *			G E T _ R T N O D E
+ *
+ *  Print status of a given rtnode structure, for TCL script consumption.
+ */
+int
+get_rtnode( clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	int	i;
+	struct bu_vls	str;
+
+	if( argc != 2 )  {
+		Tcl_AppendResult(interp, "Usage: get_rtnode ###\n", NULL);
+		return TCL_ERROR;
+	}
+	i = atoi(argv[1]);
+	if( i < 0 || i >= MAX_NODES )  {
+		Tcl_AppendResult(interp, "get_rtnode ",
+			argv[1], " is out of range\n", NULL);
+		return TCL_ERROR;
+	}
+	if( rtnodes[i].fd <= 0 )  {
+		Tcl_AppendResult(interp, "get_rtnode ",
+			argv[1], " index not assigned\n", NULL);
+		return TCL_ERROR;
+	}
+	bu_vls_init(&str);
+	bu_vls_printf(&str, "%2d %4g %s %9s %s",
+		rtnodes[i].ncpus,
+		rtnodes[i].lps,
+		rtnodes[i].busy ? "BUSY" : "wait",
+		states[rtnodes[i].state],
+		rtnodes[i].host->ht_name );
+	Tcl_AppendResult(interp, bu_vls_addr(&str), NULL);
+	bu_vls_free(&str);
+	return TCL_OK;
+}
+
+/*
  *			N O D E _ S E N D
  *
  *  Arrange to send a string to all rtnode processes,
@@ -695,6 +761,10 @@ char	*argv[];
 	(void)Tcl_CreateCommand(interp, "reprep", reprep,
 		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 	(void)Tcl_CreateCommand(interp, "refresh", refresh,
+		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+	(void)Tcl_CreateCommand(interp, "list_rtnodes", list_rtnodes,
+		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+	(void)Tcl_CreateCommand(interp, "get_rtnode", get_rtnode,
 		(ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
 	/* Accept commands on stdin */
