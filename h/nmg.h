@@ -354,6 +354,7 @@ struct shell_a {
  */
 #define face_g			face_g_plane	/* compat */
 #define edge_g			edge_g_lseg	/* compat */
+#define vertexuse_a		vertexuse_a_plane	/* compat */
 struct face {
 	struct rt_list		l;	/* faces in face_g's f_hd list */
 	struct faceuse		*fu_p;	/* Ptr up to one use of this face */
@@ -635,6 +636,7 @@ struct vertexuse {
 	long			index;	/* struct # in this model */
 };
 
+/* vertexuse_a_plane */
 struct vertexuse_a {
 	long			magic;
 	vect_t			N;	/* (opt) surface Normal at vertexuse */
