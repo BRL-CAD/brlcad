@@ -42,7 +42,23 @@
 #ifndef _REGEX_H_
 #define	_REGEX_H_
 
-#include <sys/cdefs.h>
+#include "conf.h"	/* BRLCAD file */
+
+/* From #include <sys/cdefs.h> */
+#if defined(USE_PROTOTYPES)
+#define __P(args)       args
+#else
+#define __P(args)       ()
+#define const		/**/
+#endif
+#ifdef __cplusplus
+#define __BEGIN_DECLS   extern "C" {
+#define __END_DECLS     }
+#else
+#define __BEGIN_DECLS
+#define __END_DECLS
+#endif
+
 
 /* types */
 typedef off_t regoff_t;
