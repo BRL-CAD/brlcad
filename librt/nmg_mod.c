@@ -726,7 +726,8 @@ CONST struct rt_tol	*tol;
 	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
 		for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
 			if( lu->orientation != OT_UNSPEC )  continue;
-			nmg_lu_reorient( lu, tol );
+			nmg_lu_reorient( lu );
+rt_log( "Reoriented lu x%x to %s\n", lu, nmg_orientation( lu->orientation ) );
 		}
 	}
 
@@ -769,7 +770,7 @@ CONST struct rt_tol	*tol;
 	for( RT_LIST_FOR( fu, faceuse, &s->fu_hd ) )  {
 		for( RT_LIST_FOR( lu, loopuse, &fu->lu_hd ) )  {
 			if( lu->orientation != OT_UNSPEC )  continue;
-			nmg_lu_reorient( lu, tol );
+			nmg_lu_reorient( lu );
 		}
 	}
 
@@ -2094,6 +2095,7 @@ struct shell *s;
  *  Either both loops must be of the same orientation, or then
  *  first loop must be OT_SAME, and the second loop must be OT_OPPOSITE.
  *  Joining OT_SAME & OT_OPPOSITE always gives an OT_SAME result.
+ *		Above statment is not true!!!! I have added nmg_lu_reorient() -JRA
  *  Since "lu" must survive, it must be the OT_SAME one.
  */
 void
@@ -2177,6 +2179,7 @@ struct edgeuse *eu;
 	 */
 	if( nmg_keu(eu) )  rt_bomb("nmg_jl() loop vanished?\n");
 
+	nmg_lu_reorient( lu );
 }
 
 /*
@@ -3906,9 +3909,8 @@ int		is_opposite;
  *  The loopuses either both agree with their faceuse, or both differ.
  */
 void
-nmg_lu_reorient( lu, tol )
+nmg_lu_reorient( lu )
 struct loopuse		*lu;
-CONST struct rt_tol	*tol;
 {
 	struct faceuse	*fu;
 	int	ccw;
@@ -3917,10 +3919,9 @@ CONST struct rt_tol	*tol;
 	plane_t lu_pl;
 
 	NMG_CK_LOOPUSE(lu);
-	RT_CK_TOL(tol);
 
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
-		rt_log("nmg_lu_reorient(lu=x%x, tol)\n", lu);
+		rt_log("nmg_lu_reorient(lu=x%x)\n", lu);
 	}
 
 	/* Don't harm the OT_BOOLPLACE self-loop marker vertices */
@@ -3949,12 +3950,7 @@ CONST struct rt_tol	*tol;
 	}
 
 	nmg_loop_plane_newell( lu, lu_pl );
-#if 0
-	if( lu_pl[X] == 0.0 && lu_pl[Y] == 0.0 && lu_pl[Z] == 0.0 )
-	{
-		rt_log( "Loop is a crack\n" );
-	}
-#endif
+
 	if( VDOT( lu_pl, norm ) < 0.0 )
 		geom_orient = OT_OPPOSITE;
 	else
