@@ -294,9 +294,9 @@ the form of the selected shader type." } }
 	-command "comb_shader_gui $id extern"
     hoc_register_menu_data "Shader" "extern" "Shader - extern" \
 	{ { summary "Use the extern shader (shader parameters in an external file)." } }
-    $top.shaderMB.m add command -label "Unknown" \
-	-command "comb_shader_gui $id unknown"
-    hoc_register_menu_data "Shader" "Unknown" "Shader - unknown" \
+    $top.shaderMB.m add command -label "unlisted" \
+	-command "comb_shader_gui $id unlisted"
+    hoc_register_menu_data "Shader" "unlisted" "Shader - unlisted" \
 	{ { summary "Apply a shader that this gui doesn't recognize." } }
 
     label $top.combL -text "Boolean Expression:" -anchor w
