@@ -74,6 +74,8 @@ RT_EXTERN(int rt_ebm_dda,(struct xray *rp, struct soltab *stp,
 RT_EXTERN(int rt_seg_planeclip,(struct seg *out_hd, struct seg *in_hd,
 	vect_t out_norm, fastf_t in, fastf_t out,
 	struct xray *rp, struct application *ap));
+RT_EXTERN( void rt_ebm_plate, ( int x1, int y1, int x2, int y2,
+	double t, mat_t mat, struct rt_list *vhead ) );
 
 /*
  *  Codes to represent surface normals.
@@ -1012,6 +1014,7 @@ struct rt_tol		*tol;
 }
 
 /* either x1==x2, or y1==y2 */
+void
 rt_ebm_plate( x1, y1, x2, y2, t, mat, vhead )
 int			x1, y1;
 int			x2, y2;
