@@ -167,11 +167,11 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 
 	/* Compute R and Rinv matrices */
 	mat_zero( R );
-	f = 1.0/sqrt(magsq_a);
+	f = 1.0/mag_a;
 	VSCALE( &R[0], A, f );
-	f = 1.0/sqrt(magsq_b);
+	f = 1.0/mag_b;
 	VSCALE( &R[4], B, f );
-	f = 1.0/sqrt(magsq_h);
+	f = 1.0/mag_h;
 	VSCALE( &R[8], H, f );
 	mat_trn( Rinv, R );			/* inv of rot mat is trn */
 

@@ -24,7 +24,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern struct soltab *HeadSolid;
 extern struct functab functab[];
-extern int nsolids;		/* total # of solids participating */
+extern long nsolids;		/* total # of solids participating */
+extern long nregions;		/* total # of regions participating */
+
 struct region *HeadRegion;
 
 void pr_region();
@@ -283,6 +285,7 @@ matp_t old_xlate;
 			regionp->reg_name = strdup(path_str(pathpos));
 			regionp->reg_forw = HeadRegion;
 			HeadRegion = regionp;
+			nregions++;
 			if( debug & DEBUG_REGIONS )
 				printf("Add Region %s\n", regionp->reg_name);
 		}

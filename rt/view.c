@@ -29,9 +29,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern int ikfd;		/* defined in iklib.o */
 
-vect_t l0color = {  28,  28, 255 };
+vect_t l0color = {  28,  28, 255 };		/* R, G, B */
 vect_t l1color = { 255,  28,  28 };
-vect_t l2color = { 255, 100,   0 };
+vect_t l2color = { 255, 255, 255 };		/* Grey */
 extern vect_t l0vec;
 extern vect_t l1vec;
 extern vect_t l2vec;
@@ -128,4 +128,28 @@ int x, y;
 {
 	if( ikfd > 0 )
 		ikwpixel( x+XOFFSET, y+YOFFSET, 0x00404040 );	/* Grey */
+}
+
+/*
+ *  			D E V _ S E T U P
+ *  
+ *  Prepare the Ikonas display for operation with
+ *  npts x npts of useful pixels.
+ */
+dev_setup(npts)
+int npts;
+{
+	ikopen();
+	load_map(1);
+	ikclear();
+	if( npts <= 64 )  {
+		ikzoom( 7, 7 );		/* 1 pixel gives 8 */
+		ikwindow( (0)*4, 4063+29 );
+	} else if( npts <= 128 )  {
+		ikzoom( 3, 3 );		/* 1 pixel gives 4 */
+		ikwindow( (0)*4, 4063+25 );
+	} else if ( npts <= 256 )  {
+		ikzoom( 1, 1 );		/* 1 pixel gives 2 */
+		ikwindow( (0)*4, 4063+17 );
+	}
 }
