@@ -34,7 +34,7 @@ static const char RCSppview[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "rtprivate.h"
-#include "../librad/rad.h"
+#include "rad.h"
 
 #ifndef M_PI
 #define M_PI            3.14159265358979323846
