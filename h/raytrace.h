@@ -842,7 +842,7 @@ struct resource {
 #endif
 
 struct structparse {
-	char		*sp_fmt;		/* "indir" or "%f", etc */
+	char		sp_fmt[4];		/* "i" or "%f", etc */
 	int		sp_count;		/* number of elements */
 	char		*sp_name;		/* Element's symbolic name */
 	int		sp_offset;		/* Byte offset in struct */
@@ -854,7 +854,7 @@ struct structparse {
  *			R T _ I M E X P O R T
  */
 struct rt_imexport  {
-	char		im_fmt[4];		/* "len", "indir", or "%f", etc */
+	char		im_fmt[4];		/* "l", "i", or "%f", etc */
 	int		im_offset;		/* byte offset in struct */
 	int		im_count;		/* # of repetitions */
 };
