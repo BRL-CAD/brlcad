@@ -639,7 +639,7 @@ mged_setup()
 	bu_vls_init(&tcl_output_hook);
 
 	/* Locate the BRL-CAD-specific Tcl scripts */
-	filename = bu_brlcad_path( "tclscripts" );
+	filename = bu_brlcad_path( "" );
 
 	/* Create the interpreter */
 	interp = Tcl_CreateInterp();
@@ -648,7 +648,7 @@ mged_setup()
 	if( Tcl_Init(interp) == TCL_ERROR )
 		bu_log("Tcl_Init error %s\n", interp->result);
 
-#if 0
+#if 1
 	/* Initialize [incr Tcl] */
 	if (Itcl_Init(interp) == TCL_ERROR)
 	  bu_log("Itcl_Init error %s\n", interp->result);
@@ -677,8 +677,9 @@ mged_setup()
 #endif
 
 	bu_vls_init(&str);
-	bu_vls_printf(&str, "set auto_path [linsert $auto_path 0 %s/mged %s]",
-		      filename, filename);
+	bu_vls_printf(&str, "set auto_path [linsert $auto_path 0 \
+                             %stclscripts/mged %stclscripts %s/lib/iwidgets/scripts]",
+		      filename, filename, filename);
 	(void)Tcl_Eval(interp, bu_vls_addr(&str));
 
 	/* Tcl needs to write nulls onto subscripted variable names */
