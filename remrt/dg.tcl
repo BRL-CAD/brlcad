@@ -7,12 +7,17 @@
 # Uses "send rtsync" directives to exert control.
 #  -Mike Muuss, ARL, December 1997.
 
+puts "running dg.tcl"
+##option add *background #ffffff
+##. configure -background #ffffff
+
 # Set the application name by which other applications will be able to
 # SEND commands to us with "send dg _stuff_".
 # It is not yet clear why this might be beneficial.
 tk appname dg
 wm title . dg
 
+# Global variables
 global red grn blu
 set red 0
 set grn 0
@@ -33,9 +38,12 @@ set air_shader1 "200 200 255"
 set air_shader2 "air dpm=.01"
 set air_region_name "air.r"
 
-puts "running dg.tcl"
-##option add *background #ffffff
-##. configure -background #ffffff
+global treetop_name
+global treetop_tree
+set treetop_name all.g
+# XXX Hack from Moss-World, should be obtained with
+# XXX set treetop_tree [list [send rtsync vrmgr_send .inmem get all.g]]
+set treetop_tree "{u {u {u {u {u {l platform.r {1 0 0 0  0 1 0 0  0 0 1 0  0 0 0 1}} {l box.r {1 0 0 -23.6989  0 1 0 13.41  0 0 1 8.02399  0 0 0 1}}} {l cone.r {1 0 0 22.0492  0 1 0 12.2349  0 0 1 2.11125e-07  0 0 0 1}}} {l ellipse.r {1 0 0 14.6793  0 1 0 -41.6077  0 0 1 38.7988  0 0 0 1}}} {l tor.r {1 0 0 0  0 1 0 0  0 0 1 0  0 0 0 1}}} {l light.r {1 0 0 0  0 1 0 0  0 0 1 0  0 0 0 1}}}"
 
 # Create main interaction widget
 frame .logo_fr ; pack .logo_fr -side top
@@ -43,7 +51,7 @@ frame .title_fr ; pack .title_fr -side top
 frame .sunangle_fr -relief ridge -bd 2 ; pack .sunangle_fr -side top -expand 1 -fill x
 frame .suncolor_fr -relief ridge -bd 2 ; pack .suncolor_fr -side top -expand 1 -fill x
 frame .air_fr  -relief ridge -bd 2 ; pack .air_fr -side top -expand 1 -fill x
-frame .button_fr ; pack .button_fr -side top
+frame .hole_fr ; pack .hole_fr -side top
 
 # Title, across the top
 frame .words_fr
@@ -177,6 +185,53 @@ proc apply_air {} {
 			rgb "{" $air_shader1 "}" \
 			shader "{" $air_shader2 "}" ";" \
 		reprep ";" refresh
+}
+
+# The dynamic hole-maker
+button .hole_init -text "Hole Init" -command hole_init
+entry .hole_treetop -width 16 -relief sunken -bd 2 -textvariable treetop_name
+button .hole_size1 -text "Size1" -command "hole_size 40"
+button .hole_size2 -text "Size2" -command "hole_size 80"
+button .hole_size3 -text "Size3" -command "hole_size 120"
+pack .hole_init .hole_treetop .hole_size1 .hole_size2 .hole_size3 -side left -in .hole_fr
+
+proc hole_init {} {
+	global treetop_name
+	global treetop_tree
+
+	# .inmem form tgc
+	send rtsync \
+		vrmgr_send \
+			_mged_kill _hole.s
+
+	send rtsync \
+		vrmgr_send "{" \
+			.inmem put _hole.s tgc \
+				V "{" 0 0  50 "}" \
+				H "{" 0 0 -50 "}" \
+				A "{" 1 0 0 "}" \
+				B "{" 1 0 0 "}" \
+				C "{" 0 1 0 "}" \
+				D "{" 0 1 0 "}" \
+			";" \
+			_mged_e _hole.s ";" \
+		"}"
+
+	set newtree [list "{" - $treetop_tree "{" l _hole.s \
+		"{" 1 0 0 0  0 1 0 0  0 0 1 0  0 0 0 1 "}" \
+		"}" "}" ]
+	puts "newtree = $newtree"
+
+	send rtsync \
+		vrmgr_send .inmem adjust $treetop_name \
+			tree "{" $newtree "}"
+}
+
+proc hole_size { radius } {
+	send rtsync \
+		vrmgr_send .inmem adjust _hole.s \
+			V "{" 0 0 0 "}" \
+			
 }
 
 puts "done dg.tcl"
