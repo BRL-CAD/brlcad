@@ -55,7 +55,9 @@ static int	NMG_debug;	/* saved arg of -X, for longjmp handling */
 static int	verbose;
 static int	ncpu = 1;	/* Number of processors */
 static char	*output_file = NULL;	/* output filename */
+static char	*error_file = NULL;	/* error filename */
 static FILE	*fp;		/* Output file pointer */
+static FILE	*fpe;		/* Error file pointer */
 static struct db_i		*dbip;
 static struct rt_vls		base_seg;
 static struct rt_tess_tol	ttol;
@@ -65,7 +67,8 @@ static struct model		*the_model;
 static struct db_tree_state	tree_state;	/* includes tol & model */
 
 static int	regions_tried = 0;
-static int	regions_done = 0;
+static int	regions_converted = 0;
+static int	regions_written = 0;
 
 /*
  *			M A I N
@@ -116,7 +119,7 @@ char	*argv[];
 	RT_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "a:n:o:r:vx:D:P:X:")) != EOF) {
+	while ((c = getopt(argc, argv, "a:n:o:r:vx:D:P:X:e:u:")) != EOF) {
 		switch (c) {
 		case 'a':		/* Absolute tolerance. */
 			ttol.abs = atof(optarg);
@@ -149,6 +152,12 @@ char	*argv[];
 			sscanf( optarg, "%x", &rt_g.NMG_debug );
 			NMG_debug = rt_g.NMG_debug;
 			break;
+		case 'e':		/* Error file name. */
+			error_file = optarg;
+			break;
+		case 'u':
+
+			break;
 		default:
 			rt_log(  usage, argv[0]);
 			exit(1);
@@ -172,6 +181,15 @@ char	*argv[];
 			perror( argv[0] );
 			exit( 1 );
 		}
+	}
+
+	/* Open g-acad error log file */
+
+	if( (fpe=fopen( error_file, "w" )) == NULL )
+	{
+	rt_log( "Cannot open output file (%s) for writing\n", error_file );
+		perror( argv[0] );
+		exit( 1 );
 	}
 
 	/* Open brl-cad database */
@@ -204,15 +222,21 @@ char	*argv[];
 		nmg_booltree_leaf_tess);	/* in librt/nmg_bool.c */
 
 	percent = 0;
-	if(regions_tried>0)  percent = ((double)regions_done * 100) / regions_tried;
-	printf("Tried %d regions, %d converted successfully.  %g%%\n",
-		regions_tried, regions_done, percent);
+	if(regions_tried>0)
+		  percent = ((double)regions_converted * 100) / regions_tried;
+	printf("Tried %d regions, %d converted to NMG's successfully.  %g%%\n",
+		regions_tried, regions_converted, percent);
+	percent = 0;
 
+	if( regions_tried > 0 )
+		percent = ((double)regions_written * 100) / regions_tried;
+	printf( "                  %d triangulated successfully. %g%%\n",
+		regions_written, percent );
 /* XXX Write out number of facet entities to .facet file */
 
 	rewind(fp);
 	fseek(fp,46,0); /* Re-position pointer to 2nd line */
-	fprintf(fp,"%d\n",regions_done); /* Write out number of regions */
+	fprintf(fp,"%d\n",regions_written); /* Write out number of regions */
 	fclose(fp);
 
 	/* Release dynamic storage */
@@ -243,6 +267,8 @@ int material_id;
 	int numtri   = 0;		/* Number of triangles to output */
 	int tricount = 0;		/* Triangle number */
 	int i;
+	double npercent;
+	double tpercent;
 
 	NMG_CK_REGION( r );
 	RT_CK_FULL_PATH(pathp);
@@ -251,7 +277,14 @@ int material_id;
 
 	printf("Attempting to process region %s\n",region_name);
 	fflush(stdout);
-
+/* XXX */
+	if(regions_tried>0){
+		npercent = ((double)regions_converted * 100) / regions_tried;
+		tpercent = ((double)regions_written * 100) / regions_tried;
+		printf("Tried %d regions, %d conv. to NMG's %d conv. to tri. nmgper = %g%% triper = %g%% \n",
+		regions_tried, regions_converted, regions_written, npercent,tpercent);
+	}
+/* XXX */
 	m = r->m_p;
 	NMG_CK_MODEL( m );
 
@@ -421,10 +454,11 @@ int material_id;
 			}
 		}
 	}
-	regions_done++;  
+/*	regions_converted++;  
 	printf("Processed region %s\n",region_name);
-	printf("Regions attempted = %d Regions done = %d\n",regions_tried,regions_done);
+	printf("Regions attempted = %d Regions done = %d\n",regions_tried,regions_converted);
 	fflush(stdout);
+*/
 	nmg_tbl( &verts, TBL_FREE, (long *)NULL );
 	rt_free( region_name, "region name" );
 }
@@ -459,7 +493,7 @@ union tree		*curtree;
 		char	*sofar = db_path_to_string(pathp);
 		rt_log("\ndo_region_end(%d %d%%) %s\n",
 			regions_tried,
-			regions_tried>0 ? (regions_done * 100) / regions_tried : 0,
+			regions_tried>0 ? (regions_converted * 100) / regions_tried : 0,
 			sofar);
 		rt_free(sofar, "path string");
 	}
@@ -472,8 +506,15 @@ union tree		*curtree;
 	if( ncpu == 1 ) {
 		if( RT_SETJUMP )  {
 			/* Error, bail out */
+			char *sofar;
 			RT_UNSETJUMP;		/* Relinquish the protection */
-
+			
+			sofar = db_path_to_string(pathp);
+	                rt_log( "FAILED in Boolean evaluation: %s\n", sofar );
+			fprintf(fpe,"Failed Bool. Eval.: %s\n",sofar);
+			fflush(fpe);
+                        rt_free( (char *)sofar, "sofar" );
+                                
 			/* Sometimes the NMG library adds debugging bits when
 			 * it detects an internal error, before rt_bomb().
 			 */
@@ -483,7 +524,7 @@ union tree		*curtree;
 			nmg_isect2d_final_cleanup();
 
 			/* Release the tree memory & input regions */
-			db_free_tree(curtree);		/* Does an nmg_kr() */
+/*XXX*/			/* db_free_tree(curtree);*/		/* Does an nmg_kr() */
 
 			/* Get rid of (m)any other intermediate structures */
 			if( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )  {
@@ -504,9 +545,89 @@ union tree		*curtree;
 	else
 		r = (struct nmgregion *)NULL;
 /*	regions_done++;  XXX */
-	if( r )
-		nmg_to_acad( r, pathp, tsp->ts_regionid, tsp->ts_gmater );
+	
 	RT_UNSETJUMP;		/* Relinquish the protection */
+	regions_converted++;
+
+	if (r != 0)
+	{
+		struct shell *s;
+		int empty_region=0;
+		int empty_model=0;
+
+		/* Kill cracks */
+		s = RT_LIST_FIRST( shell, &r->s_hd );
+		while( RT_LIST_NOT_HEAD( &s->l, &r->s_hd ) )
+		{
+			struct shell *next_s;
+
+			next_s = RT_LIST_PNEXT( shell, &s->l );
+			if( nmg_kill_cracks( s ) )
+			{
+				if( nmg_ks( s ) )
+				{
+					empty_region = 1;
+					break;
+				}
+			}
+			s = next_s;
+		}
+
+		/* kill zero length edgeuses */
+		if( !empty_region )
+		{
+			 empty_model = nmg_kill_zero_length_edgeuses( *tsp->ts_m );
+		}
+
+		if( !empty_region && !empty_model )
+		{
+			if( RT_SETJUMP )
+			{
+				char *sofar;
+
+				RT_UNSETJUMP;
+
+				sofar = db_path_to_string(pathp);
+				rt_log( "FAILED in triangulator: %s\n", sofar );
+				fprintf(fpe,"Failed in triangulator: %s\n",sofar);
+				fflush(fpe);
+				rt_free( (char *)sofar, "sofar" );
+
+				/* Sometimes the NMG library adds debugging bits when
+				 * it detects an internal error, before rt_bomb().
+				 */
+				rt_g.NMG_debug = NMG_debug;	/* restore mode */
+
+				/* Release any intersector 2d tables */
+				nmg_isect2d_final_cleanup();
+
+				/* Get rid of (m)any other intermediate structures */
+				if( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )
+				{
+					nmg_km(*tsp->ts_m);
+				}
+				else
+				{
+					rt_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
+				}
+			
+				/* Now, make a new, clean model structure for next pass. */
+				*tsp->ts_m = nmg_mm();
+				goto out;
+			}
+		/* Write the region to the TANKILL file */
+			nmg_to_acad( r, pathp, tsp->ts_regionid, tsp->ts_gmater );
+
+			regions_written++;
+
+			RT_UNSETJUMP;
+		}
+
+		if( !empty_model )
+			nmg_kr( r );
+	}
+
+out:
 	/*
 	 *  Dispose of original tree, so that all associated dynamic
 	 *  memory is released now, not at the end of all regions.
@@ -514,9 +635,11 @@ union tree		*curtree;
 	 *  and there is no point to adding _another_ message to our output,
 	 *  so we need to cons up an OP_NOP node to return.
 	 */
+
+
+
 	db_free_tree(curtree);		/* Does an nmg_kr() */
 
-out:
 	GETUNION(curtree, tree);
 	curtree->magic = RT_TREE_MAGIC;
 	curtree->tr_op = OP_NOP;
