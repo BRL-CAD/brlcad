@@ -66,7 +66,8 @@ _LOCAL_ int	adage_device_open(),
 		adage_zoom_set(),
 		adage_curs_set(),
 		adage_cmemory_addr(),
-		adage_cscreen_addr();
+		adage_cscreen_addr(),
+		adage_help();
 
 FBIO adage_interface =
 		{
@@ -84,6 +85,7 @@ FBIO adage_interface =
 		adage_curs_set,
 		adage_cmemory_addr,
 		adage_cscreen_addr,
+		adage_help,
 		"Adage RDS3000",
 		1024,
 		1024,
@@ -1184,4 +1186,25 @@ register RGBpixel	*bpp;
 	}
 
 	return	0;
+}
+
+_LOCAL_ int
+adage_help( ifp )
+FBIO	*ifp;
+{
+	fb_log( "Description: %s\n", adage_interface.if_type );
+	fb_log( "Device: %s\n", ifp->if_name );
+	fb_log( "Max width/height: %d %d\n",
+		adage_interface.if_max_width,
+		adage_interface.if_max_height );
+	fb_log( "Default width/height: %d %d\n",
+		adage_interface.if_width,
+		adage_interface.if_height );
+	fb_log( "Usage: /dev/ik[#][flag]\n" );
+	fb_log( "  Where # is a unit number\n" );
+	fb_log( "  flag is optionally ONE of\n" );
+	fb_log( "     n      no init (don't change device state)\n" );
+	fb_log( "     v      NTSC Video (interlaced, external sync)\n" );
+
+	return(0);
 }

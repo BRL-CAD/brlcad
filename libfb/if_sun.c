@@ -113,7 +113,8 @@ _LOCAL_ int	sun_dopen(),
 		sun_zoom_set(),
 		sun_curs_set(),
 		sun_cmemory_addr(),
-		sun_cscreen_addr();
+		sun_cscreen_addr(),
+		sun_help();
 
 /* This is the ONLY thing that we "export" */
 FBIO            sun_interface = {
@@ -131,6 +132,7 @@ FBIO            sun_interface = {
 				 sun_curs_set,
 				 sun_cmemory_addr,
 				 sun_cscreen_addr,
+				 sun_help,
 				 "SUN Pixwin",
 				 XMAXWINDOW,	/* max width */
 				 YMAXWINDOW,	/* max height */
@@ -1454,3 +1456,19 @@ pw_24dither8Abit_rop(ifp, pr_24, size)
 	pr_destroy(pr_comp);
 }
 #endif DIT
+
+_LOCAL_ int
+sun_help( ifp )
+FBIO	*ifp;
+{
+	fb_log( "Description: %s\n", sun_interface.if_type );
+	fb_log( "Device: %s\n", ifp->if_name );
+	fb_log( "Max width/height: %d %d\n",
+		sun_interface.if_max_width,
+		sun_interface.if_max_height );
+	fb_log( "Default width/height: %d %d\n",
+		sun_interface.if_width,
+		sun_interface.if_height );
+
+	return(0);
+}
