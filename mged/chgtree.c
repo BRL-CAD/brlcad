@@ -36,6 +36,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 #include <signal.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "tcl.h"
 
@@ -526,7 +527,7 @@ char	**argv;
 	union record		*rec;
 	int			i;
 
-	if( not_state( ST_VIEW, "Viewing state" ) )  return CMD_BAD;
+	if( not_state( ST_VIEW, "Arc edit" ) )  return CMD_BAD;
 
 	if( !strchr( argv[1], '/' ) )  {
 		rt_log("arced: bad path specification '%s'\n", argv[1]);
@@ -793,4 +794,92 @@ char      	**argv;
 	db_free_full_path( &rhs );
 	db_free_full_path( &both );
 	return TCL_OK;
+}
+
+/*
+ *			F _ P U T M A T
+ *
+ *	Replace the matrix on an arc in the database from the command line,
+ *	when NOT in an edit state.  Used mostly to facilitate writing shell
+ *	scripts.  There are two valid syntaxes, each of which is implemented
+ *	as an appropriate call to f_arced.  Commands of the form
+ *
+ *		    putmat a/b m0 m1 ... m15
+ *
+ *	are converted to
+ *
+ *		arced a/b matrix rarc m0 m1 ... m15,
+ *
+ *	while commands of the form
+ *
+ *			    putmat a/b I
+ *
+ *	are converted to
+ *
+ *	    arced a/b matrix rarc 1 0 0 0   0 1 0 0   0 0 1 0   0 0 0 1.
+ *
+ */
+int
+f_putmat (argc, argv)
+
+int	argc;
+char	**argv;
+
+{
+    int			i;			/* Dummy loop index */
+    int			result = CMD_OK;	/* Return code */
+    char		*ep;			/* Matrix element */
+    char		*eep;			/* End of element */
+    char		*newargv[20];
+    struct rt_vls	*avp;
+
+    if (not_state( ST_VIEW, "Command-line matrix replace"))
+	return CMD_BAD;
+
+    if (!strchr( argv[1], '/'))
+    {
+	rt_log("putmat: bad path specification '%s'\n", argv[1]);
+	return CMD_BAD;
+    }
+    switch (argc)
+    {
+	case 18:
+	    avp = rt_vls_vlsinit();
+	    rt_vls_from_argv(avp, 16, argv + 2);
+	    break;
+	case 3:
+	    if ((argv[2][0] == 'I') && (argv[2][1] == '\0'))
+	    {
+		avp = rt_vls_vlsinit();
+		rt_vls_printf(avp, "1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 ");
+		break;
+	    }
+	    /* This case falls through intentionally */
+	default:
+	    rt_log("error in matrix specification\n");
+	    return CMD_BAD;
+    }
+    newargv[0] = "arced";
+    newargv[1] = argv[1];
+    newargv[2] = "matrix";
+    newargv[3] = "rarc";
+
+    ep = rt_vls_addr(avp);
+    for (i = 0; i < 16; ++i)
+    {
+	if ((eep = strchr(ep, ' ')) == NULL)
+	{
+	    rt_log("%s:%d: bad matrix.  This shouldn't happen\n",
+		__FILE__, __LINE__);
+	    result = CMD_BAD;
+	    break;
+	}
+	newargv[4 + i] = ep;
+	*eep = '\0';
+	ep = eep + 1;
+    }
+    if (result != CMD_BAD)
+	result = f_arced(20, newargv);
+    rt_vls_vlsfree(avp);
+    return (result);
 }

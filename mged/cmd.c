@@ -460,6 +460,8 @@ static struct funtab funtab[] = {
 #endif
 "push", "object[s]", "pushes object's path transformations to solids",
 	f_push, 2, MAXARGS,FALSE,
+"putmat", "a/b {I | m0 m1 ... m16}", "replace matrix on combination's arc",
+	f_putmat, 3,MAXARGS,FALSE,
 "q", "", "quit",
 	f_quit,1,1,FALSE,
 "quit", "", "quit",
