@@ -254,10 +254,17 @@ next_pt:		;
 			pa.pa_faces * sizeof(struct aface) );
 
 		if( uv_wanted )  {
-			arbp->arb_opt = (struct oface *)rt_malloc(
+			register struct oface	*ofp;
+			/*
+			 * To avoid a multi-processor race here,
+			 * copy the data first, THEN update arb_opt,
+			 * because arb_opt doubles as the "UV avail" flag.
+			 */
+			ofp = (struct oface *)rt_malloc(
 				pa.pa_faces * sizeof(struct oface), "arb_opt");
-			bcopy( (char *)pa.pa_opt, (char *)arbp->arb_opt,
+			bcopy( (char *)pa.pa_opt, (char *)ofp,
 				pa.pa_faces * sizeof(struct oface) );
+			arbp->arb_opt = ofp;
 		} else {
 			arbp->arb_opt = (struct oface *)0;
 		}
@@ -690,12 +697,20 @@ register struct uvcoord *uvp;
 	LOCAL fastf_t r;
 
 	if( arbp->arb_opt == (struct oface *)0 )  {
+		register int	ret = 0;
+
 		/*
-		 * PARALLEL: This might want to be interlocked on res_model.
-		 * The only harm now is wasting some memory, though. XXX
+		 *  The double check of arb_opt is to avoid the case
+		 *  where another processor did the UV setup while
+		 *  this processor was waiting in RES_ACQUIRE().
 		 */
-		if( arb_setup( stp, (union record *)0, ap->a_rt_i, 1 ) != 0 ||
-		    arbp->arb_opt == (struct oface *)0 )  {
+		RES_ACQUIRE( &rt_g.res_model );
+		if( arbp->arb_opt == (struct oface *)0 )  {
+			ret = arb_setup(stp, (union record *)0, ap->a_rt_i, 1);
+		}
+		RES_RELEASE( &rt_g.res_model );
+
+		if( ret != 0 || arbp->arb_opt == (struct oface *)0 )  {
 			rt_log("arb_uv(%s) dyanmic setup failure st_specific=x%x, optp=x%x\n",
 				stp->st_name,
 		    		stp->st_specific, arbp->arb_opt );
