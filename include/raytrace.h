@@ -5001,7 +5001,7 @@ RT_EXPORT BU_EXTERN(void nmg_snurb_fu_to_vlist,
 		    (struct bu_list		*vhead,
 		     const struct faceuse	*fu,
 		     int			poly_markers));
-RT_EXPORT BU_EXTERN(voidnmg_s_to_vlist,
+RT_EXPORT BU_EXTERN(void nmg_s_to_vlist,
 		    (struct bu_list		*vhead,
 		     const struct shell	*s,
 		     int			poly_markers));
