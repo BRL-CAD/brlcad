@@ -1009,7 +1009,6 @@ CONST mat_t		mat;
 	 * in the internal form.
 	 */
 	if( raw.attributes.ext_buf )  {
-if(getuid()==53) bu_hexdump_external( stderr, &raw.attributes, "rt_db_get_internal5: raw.attributes");
 		if( db5_import_attributes( &ip->idb_avs, &raw.attributes ) < 0 )  {
 			bu_log("rt_db_get_internal5(%s):  mal-formed attributes in database\n",
 				dp->d_namep );
