@@ -79,3 +79,7 @@ extern	int	maxprocs;
 extern	char	*get_newname();
 extern		put_trail();
 extern		get_trail();
+
+extern	int	carry_out();
+extern	int	action();
+extern	int	cake_wait();
