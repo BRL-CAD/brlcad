@@ -198,7 +198,9 @@ long	*up_magic_p;
 	struct edgeuse	*eu;
 	struct edgeuse	*eunext;
 	struct edgeuse	*eulast;
+	long		up_magic;
 
+	up_magic = *up_magic_p;
 	for( RT_LIST_FOR( eu, edgeuse, hp ) )  {
 		NMG_CK_EDGEUSE(eu);
 
@@ -224,8 +226,12 @@ long	*up_magic_p;
 			rt_bomb("nmg_veu() next edgeuse has NULL back\n");
 		}
 
-		/* Ensure that vertices are shared */
-		if (eu->vu_p->v_p != eulast->eumate_p->vu_p->v_p) {
+		/*
+		 *  Ensure that vertices are shared.
+		 *  This does not apply to wire edgeuses in the shell.
+		 */
+		if ( up_magic != NMG_SHELL_MAGIC &&
+		     eu->vu_p->v_p != eulast->eumate_p->vu_p->v_p) {
 			rt_log("unshared vertex (mine) v=x%x: (%g, %g, %g)\n",
 				eu->vu_p->v_p,
 				V3ARGS(eu->vu_p->v_p->vg_p->coord) );
@@ -234,7 +240,8 @@ long	*up_magic_p;
 				V3ARGS(eulast->eumate_p->vu_p->v_p->vg_p->coord) );
 			rt_bomb("nmg_veu() discontinuous edgeloop mine/last\n");
 		}
-		if( eunext->vu_p->v_p != eu->eumate_p->vu_p->v_p) {
+		if ( up_magic != NMG_SHELL_MAGIC &&
+		     eunext->vu_p->v_p != eu->eumate_p->vu_p->v_p) {
 			rt_log("unshared vertex (mate) v=x%x: (%g, %g, %g)\n",
 				eu->eumate_p->vu_p->v_p,
 				V3ARGS(eu->eumate_p->vu_p->v_p->vg_p->coord) );
