@@ -199,8 +199,9 @@ found_interface:
 	}
 	(void) strcpy( ifp->if_name, file );
 
-	if( (*ifp->if_open)( ifp, file, width, height ) <= -1 )  {
-		fb_log(	"fb_open: can not open device \"%s\".\n", file );
+	if( (i=(*ifp->if_open)( ifp, file, width, height )) <= -1 )  {
+		fb_log(	"fb_open: can not open device \"%s\", ret=%d.\n",
+			file, i );
 		free( (void *) ifp->if_name );
 		free( (void *) ifp );
 		return	FBIO_NULL;
@@ -212,9 +213,12 @@ int
 fb_close( ifp )
 FBIO	*ifp;
 {
+	int	i;
+
 	_fb_pgflush( ifp );
-	if( (*ifp->if_close)( ifp ) <= -1 )  {
-		fb_log(	"fb_close: can not close device \"%s\".\n", ifp->if_name );
+	if( (i=(*ifp->if_close)( ifp )) <= -1 )  {
+		fb_log(	"fb_close: can not close device \"%s\", ret=%d.\n",
+			ifp->if_name, i );
 		return	-1;
 	}
 	if( ifp->if_pbase != PIXEL_NULL )
