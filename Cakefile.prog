@@ -21,9 +21,11 @@
 everything&::	PRODUCTS
 
 %.o:	../SRCDIR/%.c HDR_DEP		if exist ../SRCDIR/%.c
+	@rm -f ./%.o
 	CC CFLAGS -c ../SRCDIR/%.c
 
 %.o:	../SRCDIR/%.f 			if exist ../SRCDIR/%.f
+	@rm -f ./%.o
 	FC FFLAGS -c ../SRCDIR/%.f
 
 /* There is a conflict here:  When debugging, it's nice to
@@ -34,12 +36,12 @@ everything&::	PRODUCTS
 
 /* Non-ANSI compilers can't take tab-# */
 %.o:    ../SRCDIR/%.l			if exist ../SRCDIR/%.l
-	-rm -f ./%.c
+	-rm -f ./%.c ./%.o
         LEX -t LEX_OPTS ../SRCDIR/%.l | sed -e 's/^[ 	]#/#/' > ./%.c
 	if test `wc -l < ./%.c` -lt 2; then rm -f ./%.c; exit 1; fi
 	CC CFLAGS -I. -c ./%.c
 
 %.o:    ../SRCDIR/%.y			if exist ../SRCDIR/%.y
-	-rm -f ./%.c ./%.h
+	-rm -f ./%.c ./%.h ./%.o
         YACC YACC_OPTS ../SRCDIR/%.y
 	CC CFLAGS -I. -c ./%.c
