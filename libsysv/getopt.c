@@ -23,20 +23,31 @@ char	**nargv,
 	register char	*oli;		/* option letter list index */
 	char	*index();
 
-	if(!*place) {			/* update scanning pointer */
-		if(optind >= nargc || *(place = nargv[optind]) != '-' || !*++place) return(EOF);
+	if(*place=='\0') {			/* update scanning pointer */
+		if(optind >= nargc || *(place = nargv[optind]) != '-' ||
+		   !*++place)  {
+		   	place = EMSG;
+			return(EOF);
+		}
 		if (*place == '-') {	/* found "--" */
+			place = EMSG;
 			++optind;
 			return(EOF);
 		}
 	}				/* option letter okay? */
 	if ((optopt = (int)*place++) == (int)':' || !(oli = index(ostr,optopt))) {
-		if(!*place) ++optind;
+		if(*place == '\0') {
+			++optind;
+			place = EMSG;
+		}
 		tell(": illegal option -- ");
 	}
 	if (*++oli != ':') {		/* don't need argument */
 		optarg = NULL;
-		if (!*place) ++optind;
+		if (*place == '\0') {
+			++optind;
+			place = EMSG;
+		}
 	}
 	else {				/* need an argument */
 		if (*place) optarg = place;	/* no white space */
