@@ -2286,6 +2286,28 @@ struct rt_db_internal	*ip;
 		break;
 
 	case ID_ELL:
+		if( new_way )  {
+			point_t	work;
+			point_t	pos_view;
+			struct rt_ell_internal	*ell = 
+				(struct rt_ell_internal *)es_int.idb_ptr;
+			RT_ELL_CK_MAGIC(ell);
+
+			MAT4X3PNT( pos_view, xform, ell->v );
+			POINT_LABEL( pos_view, 'V' );
+
+			VADD2( work, ell->v, ell->a );
+			MAT4X3PNT(pos_view, xform, work);
+			POINT_LABEL( pos_view, 'A' );
+
+			VADD2( work, ell->v, ell->b );
+			MAT4X3PNT(pos_view, xform, work);
+			POINT_LABEL( pos_view, 'B' );
+
+			VADD2( work, ell->v, ell->c );
+			MAT4X3PNT(pos_view, xform, work);
+			POINT_LABEL( pos_view, 'C' );
+		} else {
 		MAT4X3PNT( pos_view, xform, &es_rec.s.s_ell_V );
 		POINT_LABEL( pos_view, 'V' );
 
@@ -2300,6 +2322,7 @@ struct rt_db_internal	*ip;
 		VADD2( work, &es_rec.s.s_ell_V, &es_rec.s.s_ell_C );
 		MAT4X3PNT(pos_view, xform, work);
 		POINT_LABEL( pos_view, 'C' );
+		}
 		break;
 
 	case ID_TOR:
