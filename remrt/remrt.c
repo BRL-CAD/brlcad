@@ -136,10 +136,18 @@ struct servers {
 #define SERVERS_NULL	((struct servers *)0)
 
 /* Options */
-int	npts = 64;
-int	hypersample = 0;
-double	perspective = 0;
-int	benchmark = 0;
+int		width = 64;
+int		height = 64;
+extern int	hypersample;
+extern int	matflag;
+double		perspective = 0;
+int		benchmark = 0;
+int		rdebug;
+int		use_air = 0;
+
+/* struct rt_g	rt_g; */
+int	rt_g[128];		/* fool the loader */
+
 extern double	atof();
 
 /* START */
@@ -218,9 +226,32 @@ char	**argv;
 	    (tcp_listen_fd = pkg_permserver("20210", "tcp", 8, errlog)) < 0 )
 		exit(1);
 	/* Now, pkg_permport has tcp port number */
-	printf("REMRT listening\n");
 	(void)signal( SIGPIPE, SIG_IGN );
-	clients = (1<<0);
+
+	if( argc <= 1 )  {
+		printf("Interactive REMRT listening at port %d\n", pkg_permport);
+		clients = (1<<0);
+	} else {
+		printf("Automatic REMRT listening at port %d\n", pkg_permport);
+		clients = 0;
+
+		/* parse command line args for sizes, etc */
+		if( !get_args( argc, argv ) )  {
+			fprintf(stderr,"remrt:  bad arg list\n");
+			exit(1);
+		}
+		/* Collect up results of arg parsing */
+		/* Most importantly, -o, -F */
+
+		/* take note of database name and treetops */
+		/* Read .remrtrc file to acquire servers */
+
+		if( !matflag )  {
+			/* if not -M, start off single az/el frame */
+		} else {
+			/* if -M, start reading RT script */
+		}
+	}
 
 	while(clients)  {
 		(void)signal( SIGINT, SIG_IGN );
@@ -270,7 +301,7 @@ int waittime;
 	}
 	/* Finally, handle any command input (This can recurse via "read") */
 	if( waittime>0 && (ibits & (1<<(fileno(stdin)))) )  {
-		interactive(stdin);
+		interactive_cmd(stdin);
 	}
 }
 
@@ -443,9 +474,9 @@ char *str;
 }
 
 /*
- *			I N T E R A C T I V E
+ *			I N T E R A C T I V E _ C M D
  */
-interactive(fp)
+interactive_cmd(fp)
 FILE *fp;
 {
 	char buf[BUFSIZ];
@@ -535,10 +566,10 @@ FILE *fp;
 		return;
 	}
 	if( strcmp( cmd_args[0], "f" ) == 0 )  {
-		npts = atoi( cmd_args[1] );
-		if( npts < 4 || npts > 8*1024 )
-			npts = 64;
-		printf("npts=%d, takes effect after next MAT\n", npts);
+		width = height = atoi( cmd_args[1] );
+		if( width < 4 || width > 16*1024 )
+			width = 64;
+		printf("width=%d, height=%d, takes effect after next MAT\n", width, height);
 		return;
 	}
 	if( strcmp( cmd_args[0], "-H" ) == 0 )  {
@@ -553,7 +584,7 @@ FILE *fp;
 	}
 	if( strcmp( cmd_args[0], "p" ) == 0 )  {
 		perspective = atof( cmd_args[1] );
-		printf("perspective angle=%f, takes effect after next MAT\n", perspective);
+		printf("perspective angle=%g, takes effect after next MAT\n", perspective);
 		return;
 	}
 	if( strcmp( cmd_args[0], "read" ) == 0 )  {
@@ -566,7 +597,7 @@ FILE *fp;
 		}
 		while( !feof(fp) )  {
 			/* do one command from file */
-			interactive(fp);
+			interactive_cmd(fp);
 			/* Without delay, see if anything came in */
 			check_input(0);
 		}
@@ -857,7 +888,7 @@ FILE *fp;
 	}
 	if( strcmp( cmd_args[0], "?" ) == 0 )  {
 		printf("load db.g trees\n");
-		printf("f #		set npts\n");
+		printf("f #		set width&height\n");
 		printf("p #		set perspective angle (0=ortho)\n");
 		printf("-H #		set hypersampling\n");
 		printf("-B		set benchmark flag\n");
@@ -893,7 +924,8 @@ register struct frame *fr;
 	register struct list *lp;
 
 	/* Get local buffer for image */
-	fr->fr_width = fr->fr_height = npts;
+	fr->fr_width = width;
+	fr->fr_height = height;
 	fr->fr_perspective = perspective;
 	fr->fr_hyper = hypersample;
 	fr->fr_benchmark = benchmark;
@@ -978,9 +1010,9 @@ schedule()
 			delta,
 			fr->fr_nrays,
 			fr->fr_cpu );
-		printf("  RTFMc=%g rays/s RTFMe=%g rays/sec\n",
-			fr->fr_nrays/fr->fr_cpu,
-			fr->fr_nrays/delta );
+		printf("  RTFM=%g rays/sec (%g rays/cpu sec)\n",
+			fr->fr_nrays/delta,
+			fr->fr_nrays/fr->fr_cpu );
 
 		if( out_file[0] != '\0' )  {
 			sprintf(name, "%s.%d", out_file, fr->fr_number);
@@ -1346,12 +1378,9 @@ int
 init_fb(name)
 char *name;
 {
-	int res = 512;
-
 	if( fbp != FBIO_NULL )  fb_close(fbp);
-	while( npts > res )  res <<= 1;
-	if( (fbp = fb_open( name, res, res )) == FBIO_NULL )  {
-		printf("fb_open %d failed\n", res);
+	if( (fbp = fb_open( name, width, height )) == FBIO_NULL )  {
+		printf("fb_open %d,%d failed\n", width, height);
 		return(-1);
 	}
 	fb_wmap( fbp, COLORMAP_NULL );	/* Standard map: linear */
@@ -1488,4 +1517,9 @@ register struct list *lhp;
 			lp->li_start, lp->li_stop,
 			lp->li_frame->fr_number );
 	}
+}
+
+mathtab_constant()
+{
+	/* Called on -B (benchmark) flag, by get_args() */
 }
