@@ -49,6 +49,8 @@
 #ifndef RAYTRACE_H
 #define RAYTRACE_H seen
 
+#include <setjmp.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -1177,7 +1179,7 @@ struct rt_g {
 	int		rtg_logindent;	/* rt_log() indentation level */
 	int		NMG_debug;	/* debug bits for NMG's see nmg.h */
 	int		rtg_setjmp_valid;/* !0 = rtg_jmpbuf is valid */
-	long		rtg_jmpbuf[64];	/* for RT_SETJMP.  should be jmp_buf */
+	jmp_buf		rtg_jmpbuf;	/* for RT_SETJMP. */
 	struct rt_list	rtg_mapped_files; /* list of mapped files open */
 	struct rt_list	rtg_resources;	/* list of 'struct resource'es in use */
 };
@@ -1189,7 +1191,7 @@ extern struct rt_g rt_g;
  * It is 0 on the first pass through, and non-zero when
  * re-entered via a longjmp().
  */
-#define RT_SETJUMP	(rt_g.rtg_setjmp_valid=1,setjmp((int *)rt_g.rtg_jmpbuf))
+#define RT_SETJUMP	setjmp((rt_g.rtg_setjmp_valid=1,rt_g.rtg_jmpbuf))
 #define RT_UNSETJUMP	(rt_g.rtg_setjmp_valid=0)
 
 /*
