@@ -346,7 +346,8 @@ do_inside:
 		 *  Calculate refraction at exit point.
 		 *  Use "look ahead" RI value from rr_hit.
 		 */
-		if( !rr_refract( incident_dir,		/* input direction */
+		if( sub_ap.a_refrac_index != swp->sw_refrac_index &&
+		    !rr_refract( incident_dir,		/* input direction */
 			sub_ap.a_vvec,			/* exit normal */
 			swp->sw_refrac_index,		/* current RI */
 			sub_ap.a_refrac_index,		/* next RI */
