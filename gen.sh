@@ -808,7 +808,7 @@ EndOfFile
 
 cat > contents << EOF
 @name brlcad-$RELEASE
-@pkgdep png-1.0.10
+@pkgdep png-1.2.1
 @cwd /usr
 @owner bin
 @group bin
@@ -847,7 +847,7 @@ Summary:  BRL-CAD(tm) Solid Modeling System with ray-tracer and geometry editor
 Name: brlcad
 Version: ${RELEASE}
 Release: ${REV}
-Copyright:  Copyright 2000 by U.S.Army in all countires except the USA.  See distribution restrictions in your license agreement or ftp.arl.mil:/pub/brl-cad/agreement
+Copyright:  Copyright 2002 by U.S.Army in all countires except the USA.  See distribution restrictions in your license agreement or ftp.arl.mil:/pub/brl-cad/agreement
 Group: Applications/Graphics
 Source:  http://ftp.arl.mil:/brl-cad/Downloads/Rel${RELEASE}/
 URL:  http://ftp.arl.mil/brlcad/
@@ -861,7 +861,7 @@ a generic framebuffer library, a network-distributed image-processing
 and signal-processing capability, and a large collection of related
 tools and utilities.
 
-This version was compiled on RedHat Linux 7.1
+This version was compiled on RedHat Linux 7.2
 
 %prep
         exit 0
@@ -901,7 +901,7 @@ editor, a ray tracing library, two ray-tracing based lighting models, \
 a generic framebuffer library, a network-distributed image-processing \
 and signal-processing capability, and a large collection of related \
 tools and utilities. \
-Copyright 2000 by U.S.Army in all countires except the USA.  See distribution restrictions in your license agreement or ftp.arl.mil:/pub/brl-cad/agreement
+Copyright 2002 by U.S.Army in all countires except the USA.  See distribution restrictions in your license agreement or ftp.arl.mil:/pub/brl-cad/agreement
 VENDOR=The U. S. Army Research Laboratory, Aberdeen Proving Ground, MD  USA  21005-5068
 HOTLINE=http://ftp.arl.army.mil/brlcad/
 EMAIL=acst@arl.army.mil
