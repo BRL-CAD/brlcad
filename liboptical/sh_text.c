@@ -26,21 +26,23 @@ static char RCStext[] = "@(#)$Header$ (BRL)";
 #include "material.h"
 
 struct txt_specific {
-	char	*tx_file[128];	/* Filename */
+	char	tx_file[128];	/* Filename */
 	int	tx_w;		/* Width of texture in pixels */
 	int	tx_fw;		/* File width of texture in pixels */
 	int	tx_l;		/* Length of pixels in lines */
 	char	*tx_pixels;	/* Pixel holding area */
-	unsigned char tx_transp[4];	/* RGB for transparency */
+	char	tx_transp[4];	/* RGB for transparency */
 };
 #define TX_NULL	((struct txt_specific *)0)
 
 struct matparse txt_parse[] = {
-	"file",		(int)&(TX_NULL->tx_file[0]),	"%s",
+	"file",		(int)(TX_NULL->tx_file),	"%s",
 	"w",		(int)&(TX_NULL->tx_w),		"%d",
 	"l",		(int)&(TX_NULL->tx_l),		"%d",
 	"fw",		(int)&(TX_NULL->tx_fw),		"%d",
-	"transp",	(int)&(TX_NULL->tx_transp[0]),	"%C",
+#ifndef cray
+	"transp",	(int)(TX_NULL->tx_transp),	"%C",
+#endif
 	(char *)0,	0,				(char *)0
 };
 
@@ -173,9 +175,9 @@ struct partition *pp;
 	 * Fire another ray to determine the actual color
 	 */
 	if( tp->tx_transp[3] == 0 ||
-	    r != tp->tx_transp[0] ||
-	    g != tp->tx_transp[1] ||
-	    b != tp->tx_transp[2] )  {
+	    r != (tp->tx_transp[0]&0xFF) ||
+	    g != (tp->tx_transp[1]&0xFF) ||
+	    b != (tp->tx_transp[2]&0xFF) )  {
 		f = 1.0 / 255.0;
 		VSET( ap->a_color, r * f, g * f, b * f );
 		return(1);
