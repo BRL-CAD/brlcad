@@ -37,10 +37,24 @@
     else if (*((long *)(p)) != (m))					\
     {									\
 	fprintf(stderr,							\
-	    "Error Bad %s pointer x%x s/b x%x was x%x, file %s, line %d\n", \
+	    "Error: Bad %s pointer x%x s/b x%x was x%x, file %s, line %d\n", \
 	    (_s), (p), (m), *((long *)(p)), __FILE__, __LINE__);	\
 	exit (0);							\
-    }									\
+    }
+
+/*			R B _ C K O R D E R ( )
+ *
+ *	This macro has two parameters: a tree and an order number.
+ *	It ensures that the order number is valid for the tree.
+ */
+#define RB_CKORDER(t, o)						\
+    if (((o) < 0) || ((o) >= (t) -> rbt_nm_orders))			\
+    {									\
+	fprintf(stderr,							\
+	    "Error: Order %d outside 0..%d (nm_orders-1), file %s, line %s\n", \
+	    (o), (t) -> rbt_nm_orders - 1, __FILE__, __LINE__);		\
+	exit (0);							\
+    }
 
 /*
  *	Access functions for fields of rb_tree and (struct rb_node)
