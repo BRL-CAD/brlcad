@@ -4,6 +4,12 @@
 #
 #==============================================================================
 
+set helplib_data(dm_best_type)          {{} {return the best available display manager type}}
+set helplib_data(dm_best_name)          {{} {return the best available display manager name}}
+set helplib_data(dm_name2type)          {{name} {return the display manager type that corresponds to name}}
+set helplib_data(dm_names)              {{} {return a list of available display manager names}}
+set helplib_data(dm_type2name)          {{type} {return the display manager name that corresponds to type}}
+set helplib_data(dm_types)              {{} {return a list of available display manager types}}
 set helplib_data(wdb_open)		{{widget_command file filename}	{}}
 set helplib_data(rt_wdb_inmem_rgb)	{{$wdbp comb r g b}	{}}
 set helplib_data(rt_wdb_inmem_shader)	{{$wdbp comb shader [params]}	{}}
