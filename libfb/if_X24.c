@@ -2777,9 +2777,12 @@ int flags;		/* BLIT_xxx flags */
 	unsigned long a_mask;
 
 	int red_shift, green_shift, blue_shift;
+	unsigned int mask_red = xi->xi_image->red_mask << 6;
+	unsigned int mask_green = xi->xi_image->green_mask << 6;
+	unsigned int mask_blue = xi->xi_image->blue_mask << 6;
 	int i;
 
-	a_mask = xi->xi_visual->red_mask;
+	a_mask = mask_red;
 	test_mask = 1;
 	for (i=0; i<sizeof(unsigned long)*8;i++) {
 		if (test_mask & a_mask) break;
@@ -2791,7 +2794,7 @@ int flags;		/* BLIT_xxx flags */
 	}
 	red_shift = i-8;
 
-	a_mask = xi->xi_visual->green_mask;
+	a_mask = mask_green;
 	test_mask = 1;
 	for (i=0; i<sizeof(unsigned long)*8;i++) {
 		if (test_mask & a_mask) break;
@@ -2803,7 +2806,7 @@ int flags;		/* BLIT_xxx flags */
 	}
 	green_shift = i-8;
 
-	a_mask = xi->xi_visual->blue_mask;
+	a_mask = mask_blue;
 	test_mask = 1;
 	for (i=0; i<sizeof(unsigned long)*8;i++) {
 		if (test_mask & a_mask) break;
@@ -2954,14 +2957,15 @@ printf("blit: xi_flags & FLG_VMASK = x%x\n", xi->xi_flags & FLG_VMASK );
 
 				/* Make as many copies as needed */
 				if (xi->xi_flags & (FLG_XCMAP | FLG_LINCMAP))  {
-					a_pixel  = (line_irgb[RED] << red_shift) & xi->xi_visual->red_mask;
-					a_pixel |= (line_irgb[GRN] << green_shift) & xi->xi_visual->green_mask;
-					a_pixel |= (line_irgb[BLU] << blue_shift) & xi->xi_visual->blue_mask;
+					a_pixel  = (line_irgb[RED] << red_shift) & mask_red;
+					a_pixel |= (line_irgb[GRN] << green_shift) & mask_green;
+					a_pixel |= (line_irgb[BLU] << blue_shift) & mask_blue;
 				} else {
-					a_pixel  = (red[line_irgb[RED]] << red_shift) & xi->xi_visual->red_mask;
-					a_pixel |= (grn[line_irgb[GRN]] << green_shift) & xi->xi_visual->green_mask;
-					a_pixel |= (blu[line_irgb[BLU]] << blue_shift) & xi->xi_visual->blue_mask;
+					a_pixel  = (red[line_irgb[RED]] << red_shift) & mask_red;
+					a_pixel |= (grn[line_irgb[GRN]] << green_shift) & mask_green;
+					a_pixel |= (blu[line_irgb[BLU]] << blue_shift) & mask_blue;
 				}
+				a_pixel = a_pixel >> 6;
 
 				if( ImageByteOrder(xi->xi_dpy) == MSBFirst )  {
 					if (xi->xi_image->bits_per_pixel == 16) {
