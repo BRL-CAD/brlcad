@@ -276,9 +276,9 @@ done_weave:	; /* Sorry about the goto's, but they give clarity */
 		if(debug&DEBUG_PARTITION)
 			fprintf(stderr,"considering partition %.8x\n", pp );
 
-		/* Sanity check.  Remove later. */
-		if( pp->pt_forw != &PartHd && pp->pt_outdist > pp->pt_forw->pt_outdist )  {
-			fprintf(stderr,"bool_regions:  defect!\n");
+		/* Sanity check of sorting.  Remove later. */
+		if( pp->pt_forw != &PartHd && pp->pt_outdist > pp->pt_forw->pt_indist )  {
+			fprintf(stderr,"bool_regions:  sorting defect!\n");
 			pr_partitions( &PartHd, "With DEFECT" );
 		}
 
@@ -338,7 +338,7 @@ done_weave:	; /* Sorry about the goto's, but they give clarity */
 	 * and zap the reg_active chain.
 	 */
 	for( segp = segp_in; segp != SEG_NULL; segp = segp->seg_next )  {
-		segp->seg_stp->st_bin = FALSE;
+		segp->seg_stp->st_bin = 0;
 	}
 	{
 		register struct region *regp;			/* XXX */
