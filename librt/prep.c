@@ -326,7 +326,9 @@ register struct rt_i *rtip;
 	/* rt_g.rtg_CutFree list could be freed, but is bulk allocated, XXX
 	 * so cutter structures will hang around.  XXX
 	 */
-	/* XXX same thing is true for struct partition and struct seg XXX */
+	/* XXX struct seg is also bulk allocated, can't be freed. XXX */
+
+	/* Release partition structs.  XXX How to find them?  resource structs? */
 
 	/* Reset instancing counters in database directory */
 	for( i=0; i < RT_DBNHASH; i++ )  {
