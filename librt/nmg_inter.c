@@ -3054,6 +3054,7 @@ struct shell		*s2;
 	for( RT_LIST_FOR( fu2, faceuse, &s2->fu_hd ) )  {
 		NMG_CK_FACEUSE(fu2);
 		if( fu2->orientation != OT_SAME )  continue;
+		/* XXX _must_ look at return code here! */
 		nmg_isect_edge3p_face3p( is, eu1, fu2 );
 	}
 
@@ -3078,6 +3079,122 @@ struct shell		*s2;
 	if( s2->vu_p )  {
 		nmg_isect_vertex3_edge3p( &is, s2->vu_p, eu1 );
 	}
+}
+
+/*
+ * XXX move to nmg_info.c
+ *			N M G _ F I N D _ V _ I N _ S H E L L
+ *
+ *  Search shell "s" for a vertexuse that refers to vertex "v".
+ *  For efficiency, the search is done on the uses of "v".
+ *
+ *  If "edges_only" is set, only a vertexuse from an edgeuse will
+ *  be returned, otherwise, vu's from self-loops and lone-shell-vu's
+ *  are also candidates.
+ */
+struct vertexuse *
+nmg_find_v_in_shell( v, s, edges_only )
+CONST struct vertex	*v;
+CONST struct shell	*s;
+int			edges_only;
+{
+	struct vertexuse	*vu;
+
+	for( RT_LIST_FOR( vu, vertexuse, &v->vu_hd ) )  {
+		NMG_CK_VERTEXUSE(vu);
+
+		if( *vu->up.magic_p == NMG_LOOPUSE_MAGIC )  {
+			if( edges_only )  continue;
+			if( nmg_find_s_of_lu( vu->up.lu_p ) == s )
+				return vu;
+			continue;
+		}
+		if( *vu->up.magic_p == NMG_SHELL_MAGIC )  {
+			if( edges_only )  continue;
+			if( vu->up.s_p == s )
+				return vu;
+			continue;
+		}
+		if( *vu->up.magic_p != NMG_EDGEUSE_MAGIC )
+			rt_bomb("nmg_find_v_in_shell(): bad vu up ptr\n");
+
+		/* vu is being used by an edgeuse */
+		if( nmg_find_s_of_eu( vu->up.eu_p ) == s )
+			return vu;
+	}
+	return (struct vertexuse *)NULL;
+}
+
+/*
+ *			N M G _ I S E C T _ F A C E 3 P _ S H E L L _ I N T
+ *
+ *  Intersect all the edges in fu1 that don't lie on any of the faces
+ *  of shell s2 with s2, i.e. "interior" edges, where the
+ *  endpoints lie on s2, but the edge is not shared with a face of s2.
+ *  Such edges wouldn't have been processed by
+ *  the NEWLINE version of nmg_isect_two_generic_faces(), so
+ *  intersections need to be looked for here.
+ *  Fortunately, it's easy to reject everything except edges that need
+ *  processing using only the topology structures.
+ *
+ *  The "_int" at the end of the name is to signify that this routine
+ *  does only "interior" edges, and is not a general face/shell intersector.
+ */
+void
+nmg_isect_face3p_shell_int( fu1, s2 )
+struct faceuse	*fu1;
+struct shell	*s2;
+{
+	struct shell	*s1;
+	struct loopuse	*lu1;
+	struct edgeuse	*eu1;
+
+	NMG_CK_FACEUSE(fu1);
+	NMG_CK_SHELL(s2);
+	s1 = fu1->s_p;
+	NMG_CK_SHELL(s1);
+
+	for( RT_LIST_FOR( lu1, loopuse, &fu1->lu_hd ) )  {
+		NMG_CK_LOOPUSE(lu1);
+		if( RT_LIST_FIRST_MAGIC( &lu1->down_hd ) == NMG_VERTEXUSE_MAGIC)
+			continue;
+		for( RT_LIST_FOR( eu1, edgeuse, &lu1->down_hd ) )  {
+			struct vertexuse	*vu1a, *vu1b;
+			struct vertexuse	*vu2a, *vu2b;
+			struct edgeuse		*eu2;
+
+			NMG_CK_EDGEUSE(eu1);
+			vu1a = eu1->vu_p;
+			vu1b = RT_LIST_PNEXT_CIRC( edgeuse, eu1 )->vu_p;
+			NMG_CK_VERTEXUSE(vu1a);
+			NMG_CK_VERTEXUSE(vu1b);
+			if( (vu2a = nmg_find_v_in_shell( vu1a->v_p, s2, 0 )) == (struct vertexuse *)NULL )
+				continue;
+			if( (vu2b = nmg_find_v_in_shell( vu1b->v_p, s2, 0 )) == (struct vertexuse *)NULL )
+				continue;
+
+			/* Both vertices have vu's of eu's in s2 */
+
+			eu2 = nmg_findeu( vu1a->v_p, vu1b->v_p, s2,
+			    (CONST struct edgeuse *)NULL, 0 );
+			if( eu2	)  {
+				/*  Whether the edgeuse is in a face, or a
+				 *  wire edgeuse, the other guys will isect it.
+				 */
+				continue;
+			}
+			/*  vu2a and vu2b are in shell s2, but there is no
+			 *  edge running between them in shell s2.
+			 *  Create a line of intersection, and go to it!.
+			 */
+rt_log("nmg_isect_face3p_shell_int() no eu: v1=x%x, v2=x%x (skipping)\n", vu1a->v_p, vu1b->v_p);
+rt_bomb("nmg_isect_face3p_shell_int()\n");	/* needs finishing */
+#if 0
+			nmg_isect_edge3p_shell( is, eu1, s2 );
+#endif
+		}
+	}
+
 }
 
 /*
@@ -3178,6 +3295,9 @@ nmg_ck_vs_in_region( s2->r_p, tol );
 
 			nmg_isect_two_generic_faces(fu1, fu2, tol);
 	    	}
+
+		/* Intersect all "interior" edges that got missed by generic. */
+		nmg_isect_face3p_shell_int( fu1, s2 );
 
 		/*
 		 *  Because the rest of the shell elements are wires,
