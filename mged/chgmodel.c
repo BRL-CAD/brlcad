@@ -919,7 +919,8 @@ char	**argv;
 		localunit = dbip->dbi_localunit;
 		local2base = dbip->dbi_local2base;
 		base2local = dbip->dbi_base2local;
-		db_ident( dbip, dbip->dbi_title, new_unit );
+		if( db_ident( dbip, dbip->dbi_title, new_unit ) < 0 )
+			printf("Warning: unable to stash working units into database\n");
 		if(state == ST_S_EDIT)
 			pr_solid( &es_rec.s );
 
