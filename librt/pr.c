@@ -514,7 +514,7 @@ CONST union tree *tree;
 {
 	char *left,*right;
 	char *return_str;
-	char op;
+	char op = OP_GUARD;
 	int return_length;
 
 	if( tree == NULL )

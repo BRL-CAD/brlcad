@@ -946,7 +946,7 @@ CONST struct bn_tol	*tol;
 	point_t		p1;
 	struct rt_pt_node	*pos_a, *pos_b, *pts_a, *pts_b, *rt_ptalloc();
 	struct shell	*s;
-	struct faceuse	**outfaceuses;
+	struct faceuse	**outfaceuses = NULL;
 	struct faceuse	*fu_top;
 	struct loopuse	*lu;
 	struct edgeuse	*eu;
@@ -1146,12 +1146,15 @@ CONST struct bn_tol	*tol;
 			face = nseg*(1 + 3*((1 << (nell-1)) - 1));
 			/* array for each triangular face */
 			outfaceuses = (struct faceuse **)
-			bu_malloc( (face+1) * sizeof(struct faceuse *), "faceuse []" );
+				bu_malloc( (face+1) * sizeof(struct faceuse *), "ehy: *outfaceuses[]" );
 		} else if (theta_new < theta_prev) {
 			nseg *= 2;
 			pts_dbl[i] = 1;
-		} else
+			outfaceuses = NULL;
+		} else {
 			pts_dbl[i] = 0;
+			outfaceuses = NULL;
+		}
 		theta_prev = theta_new;
 
 		ellipses[i] = (fastf_t *)bu_malloc(3*(nseg+1)*sizeof(fastf_t),
@@ -1189,6 +1192,7 @@ CONST struct bn_tol	*tol;
 		bu_log("rt_ehy_tess() failure, top face\n");
 		goto fail;
 	}
+	BU_ASSERT_PTR( outfaceuses, !=, NULL );
 	fu_top = outfaceuses[0];
 
 	/* Mark edges of this face as real, this is the only real edge */
