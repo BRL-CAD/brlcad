@@ -1243,7 +1243,7 @@ struct rt_piecestate  {
 	fastf_t		mindist;	/* dist ray enters solids bounding volume */
 	fastf_t		maxdist;	/* dist ray leaves solids bounding volume */
 	struct rt_htbl	htab;		/* accumulating hits here */
-	union cutter	*cutp;		/* current bounding volume */
+	const union cutter *cutp;		/* current bounding volume */
 };
 #define RT_PIECESTATE_MAGIC	0x70637374	/* pcst */
 #define RT_CK_PIECESTATE(_p)	BU_CKMAG(_p, RT_PIECESTATE_MAGIC, "struct rt_piecestate")
