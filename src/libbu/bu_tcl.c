@@ -1,9 +1,25 @@
-/*****h* libbu/cmd.c
+/*                        B U _ T C L . C
+ * BRL-CAD
  *
- * NAME
- *	B U _ T C L . C
+ * Copyright (c) 1998-2004 United States Government as represented by
+ * the U.S. Army Research Laboratory.
  *
- * SYNOPSIS
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Library General Public License
+ * as published by the Free Software Foundation; either version 2 of
+ * the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Library General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file bu_tcl.c
+ *
  *	Tcl interfaces to all the LIBBU Basic BRL-CAD Utility routines.
  *
  *	Remember that in MGED you need to say "set glob_compat_mode 0"
