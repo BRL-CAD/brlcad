@@ -228,6 +228,7 @@ the following subcommands:
 <HR>
 
 <DT><a NAME="make_name"><B>make_name</B> <I>template</I></DT>
+<DT><B>make_name</B> <I>-s [num]</I></DT>
 
 <DD>This command generates an object name that does not occur in the database.
 The name, which is generated in the format specified by <I>template</I>,
@@ -246,6 +247,13 @@ then the count appears at that position in the name.
 	</DL>
 The two-character string '@@' is interpreted as the literal '@',
 and thus is ignored for the purposes of positioning the name count.
+<br><br>
+The integer counter starts at 0 and, by default, it is incremented
+each time <I>make_name</I> is executed.
+The <I>-s</I> option resets this counter.
+If the argument <I>num</I> is specified,
+the counter is set to this value.
+Otherwise it is set to 0.
 </DD>
 <HR>
 

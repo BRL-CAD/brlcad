@@ -2389,15 +2389,37 @@ char **argv;
     if (dbip == DBI_NULL)
 	return TCL_OK;
 
-    if ((argc < 2) || (2 < argc))
+    switch (argc)
     {
-	struct bu_vls vls;
+	case 2:
+	    if (strcmp(argv[1], "-s") != 0)
+		break;
+	    else
+	    {
+		i = 0;
+		return TCL_OK;
+	    }
+	case 3:
+	{
+	    int		new_i;
 
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helpdevel make_name");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
+	    if ((strcmp(argv[1], "-s") == 0)
+	     && (sscanf(argv[2], "%d", &new_i) == 1))
+	    {
+		i = new_i;
+		return TCL_OK;
+	    }
+	}
+	default:
+	{
+	    struct bu_vls	vls;
+
+	    bu_vls_init(&vls);
+	    bu_vls_printf(&vls, "helpdevel make_name");
+	    Tcl_Eval(interp, bu_vls_addr(&vls));
+	    bu_vls_free(&vls);
+	    return TCL_ERROR;
+	}
     }
 
     bu_vls_init(&obj_name);
