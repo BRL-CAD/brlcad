@@ -565,8 +565,10 @@ int		npix;
 		 *  better accomplished with pixmode(PM_STRIDE,wds/scanline),
 		 *  but no earlier models have this subroutine, sigh.
 		 */
-		if( npix > 32 )  {
-			/* Multiple line case, wide lines, send full lines */
+		if( npix > 32 && ifp->if_width == SGI(ifp)->mi_memwidth)  {
+			/* Multiple line case, wide lines, matching sizes,
+			 * send full lines
+			 */
 			if( SGI(ifp)->mi_is_gt)
 				lrectwrite(
 					SGI(ifp)->mi_xoff+0,
@@ -910,6 +912,7 @@ int	width, height;
 				/* NULL */ ;
 
 			exit(0);
+			/* NOTREACHED */
 		} else if( f < 0 )  {
 			fb_log("sgi_open:  linger-mode fork failure\n");
 			return(-1);
