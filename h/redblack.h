@@ -16,20 +16,6 @@
 #define REDBLACK_H seen
 
 /*
- *  Macros for providing function prototypes, regardless of whether
- *  the compiler understands them or not.
- *  It is vital that the argument list given for "args" be enclosed
- *  in parens.
- */
-#if __STDC__ || USE_PROTOTYPES
-#	define	RB_EXTERN(type_and_name,args)	extern type_and_name args
-#	define	RB_ARGS(args)			args
-#else
-#	define	RB_EXTERN(type_and_name,args)	extern type_and_name()
-#	define	RB_ARGS(args)			()
-#endif
-
-/*
  *			    R B _ L I S T
  *
  *		    List of nodes or packages
@@ -41,7 +27,7 @@
  */
 struct rb_list
 {
-    struct rt_list	l;
+    struct bu_list	l;
     union
     {
 	struct rb_node    *rbl_n;
@@ -168,30 +154,30 @@ struct rb_node
 /*
  *	Applications interface to LIBREDBLACK
  */
-RB_EXTERN(rb_tree *rb_create,	(char		*description,
+BU_EXTERN(rb_tree *rb_create,	(char		*description,
 				 int 		nm_orders,
 				 int		(**order_funcs)()
 				));
-RB_EXTERN(rb_tree *rb_create1,	(char		*description,
+BU_EXTERN(rb_tree *rb_create1,	(char		*description,
 				 int		(*order_func)()
 				));
-RB_EXTERN(void *rb_curr,	(rb_tree	*tree,
+BU_EXTERN(void *rb_curr,	(rb_tree	*tree,
 				 int		order
 				));
 #define		rb_curr1(t)	rb_curr((t), 0)
-RB_EXTERN(void rb_delete,	(rb_tree	*tree,
+BU_EXTERN(void rb_delete,	(rb_tree	*tree,
 				 int		order
 				));
 #define		rb_delete1(t)	rb_delete((t), 0)
-RB_EXTERN(void rb_diagnose_tree,(rb_tree	*tree,
+BU_EXTERN(void rb_diagnose_tree,(rb_tree	*tree,
 				 int		order,
 				 int		trav_type
 				));
-RB_EXTERN(void *rb_extreme,	(rb_tree	*tree,
+BU_EXTERN(void *rb_extreme,	(rb_tree	*tree,
 				 int		order,
 				 int		sense
 				));
-RB_EXTERN(void rb_free,		(rb_tree	*tree,
+BU_EXTERN(void rb_free,		(rb_tree	*tree,
 				 void		(*free_data)()
 				));
 #define	RB_RETAIN_DATA	((void (*)()) 0)
@@ -202,49 +188,49 @@ RB_EXTERN(void rb_free,		(rb_tree	*tree,
 				"red-black order function");		\
 		    rb_free(t,f);					\
 		}
-RB_EXTERN(void *rb_select,	(rb_tree	*tree,
+BU_EXTERN(void *rb_select,	(rb_tree	*tree,
 				 int		order,
 				 int		k
 				));
 #define		rb_select1(t,k)	rb_select((t), 0, (k))
-RB_EXTERN(int rb_insert,	(rb_tree	*tree,
+BU_EXTERN(int rb_insert,	(rb_tree	*tree,
 				 void		*data
 				));
-RB_EXTERN(int rb_is_uniq,	(rb_tree	*tree,
+BU_EXTERN(int rb_is_uniq,	(rb_tree	*tree,
 				 int		order
 				));
 #define		rb_is_uniq1(t)	rb_is_uniq((t), 0)
-RB_EXTERN(void *rb_neighbor,	(rb_tree	*tree,
+BU_EXTERN(void *rb_neighbor,	(rb_tree	*tree,
 				 int		order,
 				 int		sense
 				));
-RB_EXTERN(int rb_rank,		(rb_tree	*tree,
+BU_EXTERN(int rb_rank,		(rb_tree	*tree,
 				 int		order
 				));
 #define		rb_rank1(t)	rb_rank1((t), 0)
-RB_EXTERN(void *rb_search,	(rb_tree	*tree,
+BU_EXTERN(void *rb_search,	(rb_tree	*tree,
 				 int		order,
 				 void		*data
 				));
 #define		rb_search1(t,d)	rb_search((t), 0, (d))
-RB_EXTERN(void rb_set_uniqv,	(rb_tree	*tree,
+BU_EXTERN(void rb_set_uniqv,	(rb_tree	*tree,
 				 bitv_t		vec
 				));
-RB_EXTERN(void rb_summarize_tree,(rb_tree	*tree
+BU_EXTERN(void rb_summarize_tree,(rb_tree	*tree
 				 ));
-RB_EXTERN(void rb_uniq_all_off,	(rb_tree	*tree
+BU_EXTERN(void rb_uniq_all_off,	(rb_tree	*tree
 				));
-RB_EXTERN(void rb_uniq_all_on,	(rb_tree	*tree
+BU_EXTERN(void rb_uniq_all_on,	(rb_tree	*tree
 				));
-RB_EXTERN(int rb_uniq_off,	(rb_tree	*tree,
+BU_EXTERN(int rb_uniq_off,	(rb_tree	*tree,
 				 int		order
 				));
 #define		rb_uniq_off1(t)	rb_uniq_off((t), 0)
-RB_EXTERN(int rb_uniq_on,	(rb_tree	*tree,
+BU_EXTERN(int rb_uniq_on,	(rb_tree	*tree,
 				 int		order
 				));
 #define		rb_uniq_on1(t)	rb_uniq_on((t), 0)
-RB_EXTERN(void rb_walk,		(rb_tree	*tree,
+BU_EXTERN(void rb_walk,		(rb_tree	*tree,
 				 int		order,
 				 void		(*visit)(),
 				 int		trav_type

@@ -14,8 +14,7 @@ static char RCSid[] = "@(#) $Header$";
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
-#include "vmath.h"
-#include "raytrace.h"
+#include "bu.h"
 #include "redblack.h"
 #include "./rb_internals.h"
 
@@ -170,13 +169,13 @@ int	order;
 
     if (tree -> rbt_nm_nodes <= 0)
     {
-	rt_log("Error: Attempt to delete from tree with %d nodes\n",
+	bu_log("Error: Attempt to delete from tree with %d nodes\n",
 		tree -> rbt_nm_nodes);
 	exit (0);
     }
     if (rb_current(tree) == rb_null(tree))
     {
-	rt_log("Warning: rb_delete(): current node is undefined\n");
+	bu_log("Warning: rb_delete(): current node is undefined\n");
 	return;
     }
 
@@ -184,7 +183,7 @@ int	order;
     package = (rb_current(tree) -> rbn_package)[order];
 
     node = (struct rb_node **)
-	    rt_malloc(nm_orders * sizeof(struct rb_node *), "node list");
+	    bu_malloc(nm_orders * sizeof(struct rb_node *), "node list");
 	
     for (order = 0; order < nm_orders; ++order)
 	node[order] = (package -> rbp_node)[order];
@@ -197,5 +196,5 @@ int	order;
 
     --(tree -> rbt_nm_nodes);
     rb_free_package(package);
-    rt_free((char *) node, "node list");
+    bu_free((genptr_t) node, "node list");
 }

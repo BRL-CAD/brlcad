@@ -7,6 +7,7 @@
  *
  *  $Header$
  */
+#include "compat4.h"
 
 #ifndef REDBLACK_H
 #include "redblack.h"
@@ -22,20 +23,7 @@
  *	expected at that location, and a string describing the expected
  *	structure type.
  */
-#define	RB_CKMAG(p, m, _s)					\
-    if ((p) == 0)						\
-    {								\
-	rt_log("Error: Null %s pointer, file %s, line %d\n",	\
-	    (_s), __FILE__, __LINE__);				\
-	exit (0);						\
-    }								\
-    else if (*((long *)(p)) != (m))				\
-    {								\
-	rt_log(							\
-	    "Error: Bad %s pointer x%x s/b x%x was x%x, file %s, line %d\n", \
-	    (_s), (p), (m), *((long *)(p)), __FILE__, __LINE__);\
-	exit (0);						\
-    }
+#define	RB_CKMAG		BU_CKMAG
 #define	RB_NODE_MAGIC		0x72626e6f
 #define	RB_PKG_MAGIC		0x7262706b
 #define	RB_LIST_MAGIC		0x72626c73
@@ -48,7 +36,7 @@
 #define RB_CKORDER(t, o)					\
     if (((o) < 0) || ((o) >= (t) -> rbt_nm_orders))		\
     {								\
-	rt_log(							\
+	bu_log(							\
 	    "Error: Order %d outside 0..%d (nm_orders-1), file %s, line %d\n", \
 	    (o), (t) -> rbt_nm_orders - 1, __FILE__, __LINE__);	\
 	exit (0);						\
@@ -132,27 +120,27 @@
 /*
  *	Functions internal to LIBREDBLACK
  */
-RB_EXTERN(struct rb_node *_rb_neighbor,	(struct rb_node	*node,
+BU_EXTERN(struct rb_node *_rb_neighbor,	(struct rb_node	*node,
 					 int		order,
 					 int		sense
 					));
-RB_EXTERN(void _rb_rot_left,		(struct rb_node	*x,
+BU_EXTERN(void _rb_rot_left,		(struct rb_node	*x,
 					 int		order
 					));
-RB_EXTERN(void _rb_rot_right,		(struct rb_node	*y,
+BU_EXTERN(void _rb_rot_right,		(struct rb_node	*y,
 					 int		order
 					));
-RB_EXTERN(void _rb_walk,		(rb_tree	*tree,
+BU_EXTERN(void _rb_walk,		(rb_tree	*tree,
 			    		 int		order,
 					 void		(*visit)(),
 					 int		what_to_visit,
 					 int		trav_type
 					));
-RB_EXTERN(void rb_free_node,		(struct rb_node *node));
-RB_EXTERN(void rb_free_package,		(struct rb_package *package));
+BU_EXTERN(void rb_free_node,		(struct rb_node *node));
+BU_EXTERN(void rb_free_package,		(struct rb_package *package));
 
 #endif /* RB_INTERNALS_H */
 
-#define	made_it()	fprintf(stderr, "Made it to file '%s' line %d\n", \
-					__FILE__, __LINE__);fflush(stderr);
+#define	made_it()	bu_log("Made it to file '%s' line %d\n", \
+					__FILE__, __LINE__);
 

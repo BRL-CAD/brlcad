@@ -14,8 +14,7 @@ static char RCSid[] = "@(#) $Header$";
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
-#include "vmath.h"
-#include "raytrace.h"
+#include "bu.h"
 #include "redblack.h"
 #include "./rb_internals.h"
 
@@ -57,7 +56,7 @@ struct rb_node	*new_node;
     rb_right_child(new_node, order) = rb_null(tree);
     rb_size(new_node, order) = 1;
     if (tree -> rbt_debug & RB_DEBUG_OS)
-	rt_log("_rb_insert(%x): size(%x, %d)=%d\n",
+	bu_log("_rb_insert(%x): size(%x, %d)=%d\n",
 	    new_node, new_node, order, rb_size(new_node, order));
 
     /*
@@ -71,20 +70,20 @@ struct rb_node	*new_node;
 	parent = node;
 	++rb_size(parent, order);
 	if (tree -> rbt_debug & RB_DEBUG_OS)
-	    rt_log("_rb_insert(%x): size(%x, %d)=%d\n",
+	    bu_log("_rb_insert(%x): size(%x, %d)=%d\n",
 		new_node, parent, order, rb_size(parent, order));
 	comparison = (*compare)(rb_data(new_node, order), rb_data(node, order));
 	if (comparison < 0)
 	{
 	    if (tree -> rbt_debug & RB_DEBUG_INSERT)
-		rt_log("_rb_insert(%x): <_%d <%x>, going left\n",
+		bu_log("_rb_insert(%x): <_%d <%x>, going left\n",
 		    new_node, order, node);
 	    node = rb_left_child(node, order);
 	}
 	else
 	{
 	    if (tree -> rbt_debug & RB_DEBUG_INSERT)
-		rt_log("_rb_insert(%x): >=_%d <%x>, going right\n",
+		bu_log("_rb_insert(%x): >=_%d <%x>, going right\n",
 		    new_node, order, node);
 	    node = rb_right_child(node, order);
 	    if (comparison == 0)
@@ -141,7 +140,7 @@ struct rb_node	*new_node;
     rb_set_color(rb_root(tree, order), order, RB_BLACK);
 
     if (tree -> rbt_debug & RB_DEBUG_INSERT)
-	rt_log("_rb_insert(%x): comparison = %d, returning %d\n",
+	bu_log("_rb_insert(%x): comparison = %d, returning %d\n",
 	    new_node, comparison, result);
 
     return (result);
@@ -189,7 +188,7 @@ void	*data;
 	    (rb_search(tree, order, data) != NULL))
 	{
 	    if (tree -> rbt_debug & RB_DEBUG_UNIQ)
-		rt_log("rb_insert(<%x>, <%x>, TBD) will return %d\n",
+		bu_log("rb_insert(<%x>, <%x>, TBD) will return %d\n",
 		    tree, data, -(order + 1));
 	    return (-(order + 1));
 	}
@@ -199,12 +198,12 @@ void	*data;
      *	and add it to the list of all packages.
      */
     package = (struct rb_package *)
-		rt_malloc(sizeof(struct rb_package), "red-black package");
+		bu_malloc(sizeof(struct rb_package), "red-black package");
     package -> rbp_node = (struct rb_node **)
-		rt_malloc(nm_orders * sizeof(struct rb_node *),
+		bu_malloc(nm_orders * sizeof(struct rb_node *),
 			    "red-black package nodes");
     rblp = (struct rb_list *)
-		rt_malloc(sizeof(struct rb_list), "red-black list element");
+		bu_malloc(sizeof(struct rb_list), "red-black list element");
     rblp -> rbl_magic = RB_LIST_MAGIC;
     rblp -> rbl_package = package;
     RT_LIST_PUSH(&(tree -> rbt_packages.l), rblp);
@@ -215,27 +214,27 @@ void	*data;
      *	and add it to the list of all nodes.
      */
     node = (struct rb_node *)
-		rt_malloc(sizeof(struct rb_node), "red-black node");
+		bu_malloc(sizeof(struct rb_node), "red-black node");
     node -> rbn_parent = (struct rb_node **)
-		rt_malloc(nm_orders * sizeof(struct rb_node *),
+		bu_malloc(nm_orders * sizeof(struct rb_node *),
 			    "red-black parents");
     node -> rbn_left = (struct rb_node **)
-		rt_malloc(nm_orders * sizeof(struct rb_node *),
+		bu_malloc(nm_orders * sizeof(struct rb_node *),
 			    "red-black left children");
     node -> rbn_right = (struct rb_node **)
-		rt_malloc(nm_orders * sizeof(struct rb_node *),
+		bu_malloc(nm_orders * sizeof(struct rb_node *),
 			    "red-black right children");
     node -> rbn_color = (char *)
-		rt_malloc((size_t) ceil((double) (nm_orders / 8.0)),
+		bu_malloc((size_t) ceil((double) (nm_orders / 8.0)),
 			    "red-black colors");
     node -> rbn_size = (int *)
-		rt_malloc(nm_orders * sizeof(int),
+		bu_malloc(nm_orders * sizeof(int),
 			    "red-black subtree sizes");
     node -> rbn_package = (struct rb_package **)
-		rt_malloc(nm_orders * sizeof(struct rb_package *),
+		bu_malloc(nm_orders * sizeof(struct rb_package *),
 			    "red-black packages");
     rblp = (struct rb_list *)
-		rt_malloc(sizeof(struct rb_list), "red-black list element");
+		bu_malloc(sizeof(struct rb_list), "red-black list element");
     rblp -> rbl_magic = RB_LIST_MAGIC;
     rblp -> rbl_node = node;
     RT_LIST_PUSH(&(tree -> rbt_nodes.l), rblp);
@@ -272,7 +271,7 @@ void	*data;
 	    rb_set_color(node, order, RB_BLACK);
 	    rb_size(node, order) = 1;
 	    if (tree -> rbt_debug & RB_DEBUG_OS)
-		rt_log("rb_insert(<%x>, <%x>, <%x>): size(%x, %d)=%d\n",
+		bu_log("rb_insert(<%x>, <%x>, <%x>): size(%x, %d)=%d\n",
 		    tree, data, node, node, order, rb_size(node, order));
 	}
     /*	Otherwise, insert the node into the tree */
@@ -281,7 +280,7 @@ void	*data;
 	for (order = 0; order < nm_orders; ++order)
 	    result += _rb_insert(tree, order, node);
 	if (tree -> rbt_debug & RB_DEBUG_UNIQ)
-	    rt_log("rb_insert(<%x>, <%x>, <%x>) will return %d\n",
+	    bu_log("rb_insert(<%x>, <%x>, <%x>) will return %d\n",
 		tree, data, node, result);
     }
 
@@ -398,7 +397,7 @@ bitv_t	flag_rep;
 	    rb_set_uniqueness(tree, order, 1);
 
     if (flag_rep != 0)
-	rt_log("rb_set_uniqv(): Ignoring bits beyond rightmost %d\n",
+	bu_log("rb_set_uniqv(): Ignoring bits beyond rightmost %d\n",
 	    nm_orders);
 }
 

@@ -14,8 +14,7 @@ static char RCSid[] = "@(#) $Header$";
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
-#include "vmath.h"
-#include "raytrace.h"
+#include "bu.h"
 #include "redblack.h"
 #include "./rb_internals.h"
 
@@ -68,19 +67,19 @@ void	(*free_data)();
      *	Free the tree's NIL sentinel
      */
     node = tree -> rbt_empty_node;
-    rt_free((char *) node -> rbn_left, "red-black left children");
-    rt_free((char *) node -> rbn_right, "red-black right children");
-    rt_free((char *) node -> rbn_parent, "red-black parents");
-    rt_free((char *) node -> rbn_color, "red-black colors");
-    rt_free((char *) node -> rbn_package, "red-black packages");
-    rt_free((char *) node, "red-black empty node");
+    bu_free((genptr_t) node -> rbn_left, "red-black left children");
+    bu_free((genptr_t) node -> rbn_right, "red-black right children");
+    bu_free((genptr_t) node -> rbn_parent, "red-black parents");
+    bu_free((genptr_t) node -> rbn_color, "red-black colors");
+    bu_free((genptr_t) node -> rbn_package, "red-black packages");
+    bu_free((genptr_t) node, "red-black empty node");
 
     /*
      *	Free the tree itself
      */
-    rt_free((char *) tree -> rbt_root, "red-black roots");
-    rt_free((char *) tree -> rbt_unique, "red-black uniqueness flags");
-    rt_free((char *) tree, "red-black tree");
+    bu_free((genptr_t) tree -> rbt_root, "red-black roots");
+    bu_free((genptr_t) tree -> rbt_unique, "red-black uniqueness flags");
+    bu_free((genptr_t) tree, "red-black tree");
 }
 
 /*		    R B _ F R E E _ N O D E ( )
@@ -111,13 +110,13 @@ struct rb_node	*node;
     RB_CKMAG(node -> rbn_list_pos, RB_LIST_MAGIC, "red-black list element");
     RT_LIST_DEQUEUE(&(node -> rbn_list_pos -> l));
 
-    rt_free((char *) node -> rbn_parent, "red-black parents");
-    rt_free((char *) node -> rbn_left, "red-black left children");
-    rt_free((char *) node -> rbn_right, "red-black right children");
-    rt_free((char *) node -> rbn_color, "red-black colors");
-    rt_free((char *) node -> rbn_package, "red-black packages");
-    rt_free((char *) node -> rbn_list_pos, "red-black list element");
-    rt_free((char *) node, "red-black node");
+    bu_free((genptr_t) node -> rbn_parent, "red-black parents");
+    bu_free((genptr_t) node -> rbn_left, "red-black left children");
+    bu_free((genptr_t) node -> rbn_right, "red-black right children");
+    bu_free((genptr_t) node -> rbn_color, "red-black colors");
+    bu_free((genptr_t) node -> rbn_package, "red-black packages");
+    bu_free((genptr_t) node -> rbn_list_pos, "red-black list element");
+    bu_free((genptr_t) node, "red-black node");
 }
 
 /*		    R B _ F R E E _ P A C K A G E ( )
@@ -142,7 +141,7 @@ struct rb_package	*package;
     RB_CKMAG(package -> rbp_list_pos, RB_LIST_MAGIC, "red-black list element");
     RT_LIST_DEQUEUE(&(package -> rbp_list_pos -> l));
 
-    rt_free((char *) package -> rbp_node, "red-black package nodes");
-    rt_free((char *) package -> rbp_list_pos, "red-black list element");
-    rt_free((char *) package, "red-black package");
+    bu_free((genptr_t) package -> rbp_node, "red-black package nodes");
+    bu_free((genptr_t) package -> rbp_list_pos, "red-black list element");
+    bu_free((genptr_t) package, "red-black package");
 }
