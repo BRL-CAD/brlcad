@@ -2699,12 +2699,11 @@ int				cmd;		/* RT_VLIST_LINE_DRAW, etc */
 		/* Skip first and last points */
 		vp += coords;		/* skip i=0 */
 		for( i = 1; i < c->c_size-1; i++)  {
-			fastf_t		*final;
+			fastf_t		final[4];
 
 			/* convert 'vp' from UV coord to XYZ coord via surf! */
-			final = rt_nurb_s_eval( &s, vp[0], vp[1] );
+			rt_nurb_s_eval( &s, vp[0], vp[1], final );
 			RT_ADD_VLIST( vhead, final, cmd );
-			rt_free( (char *)final, "nmg_cnurb_to_vlist() XYZ coord");
 			vp += coords;
 		}
 	}
