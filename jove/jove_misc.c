@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 11.3  1997/01/03  17:42:17  jra
+ * Mods for Irix 6.2
+ *
  * Revision 11.2  1995/06/21  03:43:41  gwyn
  * Eliminated trailing blanks.
  * RunEdit() now returns null pointer upon ^G abort; was nonportable (char*)-1.
@@ -308,6 +311,16 @@ VtKeys()
 
 	case 'C':
 		ForChar();
+		break;
+
+	case '5':			/* page up */
+		PrevPage();
+		(void)getch();		/* eat the "~" */
+		break;
+
+	case '6':			/* page down */
+		NextPage();
+		(void)getch();		/* eat the "~" */
 		break;
 
 	default:
