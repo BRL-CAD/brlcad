@@ -43,16 +43,21 @@
 #include "db.h"
 #include "raytrace.h"
 #include "rtstring.h"
+#include "rtlist.h"
 #include "externs.h"
 #include "./ged.h"
 
-struct rt_vls history;
-struct rt_vls replay_history;
-struct timeval lastfinish;
-long int hist_index;
+struct mged_hist {
+    struct rt_list l;
+    struct rt_vls command;
+    struct timeval start, finish;
+    int status;
+} mged_hist_head, *cur_hist;
 
 FILE *journalfp;
 int firstjournal;
+
+void history_journalize();
 
 /*
  *	H I S T O R Y _ R E C O R D
@@ -67,56 +72,58 @@ struct rt_vls *cmdp;
 struct timeval *start, *finish;
 int status;   /* Either CMD_OK or CMD_BAD */
 {
-    static int done = 0;
-    struct rt_vls timing;
-    struct rt_vls command;
+    struct mged_hist *new_hist;
 
-    rt_vls_init(&timing);
-    rt_vls_init(&command);
-    
-    if (status == CMD_BAD) {
-	rt_vls_strcpy(&command, "# ");
-	rt_vls_vlscat(&command, cmdp);
-    } else {
-	rt_vls_vlscat(&command, cmdp);
-    }
+    if (strcmp(rt_vls_addr(cmdp), "\n") == 0)
+	return;
 
-    if (done != 0) {
-	if (lastfinish.tv_usec > start->tv_usec) {
-	    rt_vls_printf(&timing, "delay %ld %08ld\n",
-			  start->tv_sec - lastfinish.tv_sec - 1,
-			  start->tv_usec - lastfinish.tv_usec + 1000000L);
-	} else {
-	    rt_vls_printf(&timing, "delay %ld %08ld\n",
-			  start->tv_sec - lastfinish.tv_sec,
-			  start->tv_usec - lastfinish.tv_usec);
-	}
-    }		
+    new_hist = (struct mged_hist *)rt_malloc(sizeof(struct mged_hist),
+					     "mged history");
+    rt_vls_init(&(new_hist->command));
+    rt_vls_vlscat(&(new_hist->command), cmdp);
+    new_hist->start = *start;
+    new_hist->finish = *finish;
+    new_hist->status = status;
+    RT_LIST_INSERT(&(mged_hist_head.l), &(new_hist->l));
 
     /* As long as this isn't our first command to record after setting
        up the journal (which would be "journal", which we don't want
        recorded!)... */
 
-    if (journalfp != NULL && !firstjournal) {
-	rt_vls_fwrite(journalfp, &timing);
-	rt_vls_fwrite(journalfp, &command);
-    }
-    
-    rt_vls_vlscat(&replay_history, &timing);
-    rt_vls_vlscat(&replay_history, &command);
+    if (journalfp != NULL && !firstjournal)
+	history_journalize(new_hist);
 
-    rt_vls_vlscat(&history, &command);
-
-    lastfinish.tv_sec = finish->tv_sec;
-    lastfinish.tv_usec = finish->tv_usec;
-    done = 1;
+    cur_hist = &mged_hist_head;
     firstjournal = 0;
+}
 
-    rt_vls_free(&command);
-    rt_vls_free(&timing);
+HIDDEN void
+timediff(tvdiff, start, finish)
+struct timeval *tvdiff, *start, *finish;
+{
+    tvdiff->tv_sec = finish->tv_sec - start->tv_sec;
+    tvdiff->tv_usec = finish->tv_usec - start->tv_usec;
+    if (tvdiff->tv_usec < 0) {
+	--tvdiff->tv_sec;
+	tvdiff->tv_usec += 1000000L;
+    }
+}
 
-    hist_index = rt_vls_strlen(&history) - 1;
-}		
+void
+history_journalize(hptr)
+struct mged_hist *hptr;
+{
+    struct timeval tvdiff;
+    struct mged_hist *lasthptr;
+
+    lasthptr = RT_LIST_PREV(mged_hist, &(hptr->l));
+    timediff(&tvdiff, &(lasthptr->finish), &(hptr->start));
+
+    fprintf(journalfp, "delay %d %d\n", tvdiff.tv_sec, tvdiff.tv_usec);
+    if (hptr->status == CMD_BAD)
+	fprintf(journalfp, "# ");
+    fprintf(journalfp, "%s", hptr->command);
+}
 
 /*
  *	F _ J O U R N A L
@@ -149,7 +156,6 @@ char **argv;
 	    firstjournal = 1;
 	}
     }
-
     return CMD_OK;
 }
 
@@ -185,50 +191,107 @@ f_history( argc, argv )
 int argc;
 char **argv;
 {
-	FILE *fp;
-	struct rt_vls *which_history;
-
-	fp = NULL;
-	which_history = &history;
-
-	while( argc >= 2 ) {
-		if( strcmp(argv[1], "-delays") == 0 ) {
-			if( which_history == &replay_history ) {
-				rt_log( "history: -delays option given more than once\n" );
-				return CMD_BAD;
-			}
-			which_history = &replay_history;
-		} else if( strcmp(argv[1], "-outfile") == 0 ) {
-			if( fp != NULL ) {
-				rt_log( "history: -outfile option given more than once\n" );
-				return CMD_BAD;
-			} else if( argc < 3 || strcmp(argv[2], "-delays") == 0 ) {
-				rt_log( "history: I need a file name\n" );
-				return CMD_BAD;
-			} else {
-				fp = fopen( argv[2], "a+" );
-				if( fp == NULL ) {
-					rt_log( "history: error opening file" );
-					return CMD_BAD;
-				}
-				--argc;
-				++argv;
-			}
-		} else {
-			rt_log( "Invalid option %s\n", argv[1] );
+    FILE *fp;
+    int with_delays = 0;
+    struct mged_hist *hp, *hp_prev;
+    struct rt_vls str;
+    struct timeval tvdiff;
+    
+    fp = NULL;
+    while( argc >= 2 ) {
+	if( strcmp(argv[1], "-delays") == 0 )
+	    with_delays = 1;
+	else if( strcmp(argv[1], "-outfile") == 0 ) {
+	    if( fp != NULL ) {
+		rt_log( "history: -outfile option given more than once\n" );
+		return CMD_BAD;
+	    } else if( argc < 3 || strcmp(argv[2], "-delays") == 0 ) {
+		rt_log( "history: I need a file name\n" );
+		return CMD_BAD;
+	    } else {
+		fp = fopen( argv[2], "a+" );
+		if( fp == NULL ) {
+		    rt_log( "history: error opening file" );
+		    return CMD_BAD;
 		}
 		--argc;
 		++argv;
-	}
-
-	if( fp == NULL ) {
-		rt_log( "%s", rt_vls_addr(which_history) );
+	    }
 	} else {
-		rt_vls_fwrite( fp, which_history );
-		fclose( fp );
+	    rt_log( "Invalid option %s\n", argv[1] );
+	}
+	--argc;
+	++argv;
+    }
+
+    rt_vls_init(&str);
+    for (RT_LIST_FOR(hp, mged_hist, &(mged_hist_head.l))) {
+	rt_vls_trunc(&str, 0);
+	hp_prev = RT_LIST_PREV(mged_hist, &(hp->l));
+	if (with_delays && RT_LIST_NOT_HEAD(hp_prev, &(mged_hist_head.l))) {
+	    timediff(&tvdiff, &(hp_prev->finish), &(hp->start));
+	    rt_vls_printf(&str, "delay %d %d\n", tvdiff.tv_sec,
+			  tvdiff.tv_usec);
 	}
 
-	return CMD_OK;
+	if (hp->status == CMD_BAD)
+	    rt_vls_printf(&str, "# ");
+	rt_vls_vlscat(&str, &(hp->command));
+
+	if (fp != NULL)
+	    rt_vls_fwrite(fp, &str);
+	else
+	    rt_log("%s", rt_vls_addr(&str));
+    }
+
+    if (fp != NULL)
+	fclose(fp);
+
+    return CMD_OK;
+}
+
+/*      H I S T O R Y _ P R E V
+ */
+struct rt_vls *
+history_prev()
+{
+    struct mged_hist *hp;
+
+    hp = RT_LIST_PREV(mged_hist, &(cur_hist->l));
+    if (RT_LIST_IS_HEAD(hp, &(mged_hist_head.l)))
+	return NULL;
+    else {
+	cur_hist = hp;
+	return &(hp->command);
+    }
+}
+
+/*      H I S T O R Y _ C U R
+ */
+struct rt_vls *
+history_cur()
+{
+    if (RT_LIST_IS_HEAD(cur_hist, &(mged_hist_head.l)))
+	return NULL;
+    else
+	return &(cur_hist->command);
+}
+
+/*      H I S T O R Y _ N E X T
+ */
+struct rt_vls *
+history_next()
+{
+    struct mged_hist *hp;
+
+    hp = RT_LIST_NEXT(mged_hist, &(cur_hist->l));
+    if (RT_LIST_IS_HEAD(hp, &(mged_hist_head.l))) {
+	cur_hist = hp;
+	return 0;
+    } else {
+	cur_hist = hp;
+	return &(hp->command);
+    }
 }
 
 /*
@@ -244,24 +307,12 @@ Tcl_Interp *interp;
 int argc;
 char **argv;
 {
-    struct rt_vls result;
-    register char *cp;
+    struct rt_vls *vp;
+    vp = history_prev();
+    if (vp == NULL)
+	vp = &(cur_hist->command);
 
-    cp = rt_vls_addr(&history) + hist_index;
-
-    do {
-	--cp;
-	--hist_index;
-    } while (hist_index > 0 && *cp != '\n');
-
-    rt_vls_init(&result);
-    if (*cp == '\n') ++cp;
-    while (*cp && *cp != '\n')
-	rt_vls_putc(&result, (int)(*cp++));
-
-    Tcl_SetResult(interp, rt_vls_addr(&result), TCL_VOLATILE);
-
-    rt_vls_free(&result);
+    Tcl_SetResult(interp, rt_vls_addr(vp), TCL_VOLATILE);
     return TCL_OK;
 }
 
@@ -278,16 +329,21 @@ Tcl_Interp *interp;
 int argc;
 char **argv;
 {
-	return TCL_OK;
+    struct rt_vls *vp;
+    vp = history_next();
+    if (vp == NULL)
+	vp = &(cur_hist->command);
+
+    Tcl_SetResult(interp, rt_vls_addr(vp), TCL_VOLATILE);
+    return TCL_OK;
 }
 
 
 void
 history_setup()
 {
-    rt_vls_init(&history);
-    rt_vls_init(&replay_history);
+    RT_LIST_INIT(&(mged_hist_head.l));
+    cur_hist = &mged_hist_head;
     journalfp = NULL;
-    hist_index = 0;
 }
     
