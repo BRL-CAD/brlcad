@@ -53,25 +53,26 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  */
 union record *
 db_getmrec( dbip, dp )
-struct db_i		*dbip;
+CONST struct db_i	*dbip;
 CONST struct directory	*dp;
 {
 	union record	*where;
 
-	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_getmrec:  bad dbip\n");
+	RT_CK_DBI(dbip);
+	RT_CK_DIR(dp);
 	if(rt_g.debug&DEBUG_DB) bu_log("db_getmrec(%s) x%x, x%x\n",
 		dp->d_namep, dbip, dp );
 
 	if( dp->d_addr < 0 )
 		return( (union record *)0 );	/* was dummy DB entry */
-	where = (union record *)rt_malloc(
+	where = (union record *)bu_malloc(
 		dp->d_len * sizeof(union record),
 		"db_getmrec record[]");
 
 	if( db_read( dbip, (char *)where,
 	    (long)dp->d_len * sizeof(union record),
 	    dp->d_addr ) < 0 )  {
-		rt_free( (char *)where, "db_getmrec record[]" );
+		bu_free( (genptr_t)where, "db_getmrec record[]" );
 		return( (union record *)0 );	/* VERY BAD */
 	}
 	return( where );
@@ -89,14 +90,15 @@ CONST struct directory	*dp;
  */
 int
 db_get( dbip, dp, where, offset, len )
-struct db_i	*dbip;
-CONST struct directory *dp;
+CONST struct db_i	*dbip;
+CONST struct directory	*dp;
 union record	*where;
 int		offset;
 int		len;
 {
 
-	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_get:  bad dbip\n");
+	RT_CK_DBI(dbip);
+	RT_CK_DIR(dp);
 	if(rt_g.debug&DEBUG_DB) bu_log("db_get(%s) x%x, x%x x%x off=%d len=%d\n",
 		dp->d_namep, dbip, dp, where, offset, len );
 
@@ -131,14 +133,15 @@ int		len;
  */
 int
 db_put( dbip, dp, where, offset, len )
-struct db_i	*dbip;
-CONST struct directory *dp;
+CONST struct db_i	*dbip;
+CONST struct directory	*dp;
 union record	*where;
 int		offset;
 int		len;
 {
 
-	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_put:  bad dbip\n");
+	RT_CK_DBI(dbip);
+	RT_CK_DIR(dp);
 	if(rt_g.debug&DEBUG_DB) bu_log("db_put(%s) x%x, x%x x%x off=%d len=%d\n",
 		dp->d_namep, dbip, dp, where, offset, len );
 
@@ -173,7 +176,7 @@ int		len;
  */
 int
 db_read( dbip, addr, count, offset )
-struct db_i	*dbip;
+CONST struct db_i	*dbip;
 genptr_t	addr;
 long		count;		/* byte count */
 long		offset;		/* byte offset from start of file */
@@ -181,7 +184,7 @@ long		offset;		/* byte offset from start of file */
 	register int	got;
 	register long	s;
 
-	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_read:  bad dbip\n");
+	RT_CK_DBI(dbip);
 	if(rt_g.debug&DEBUG_DB)  {
 		bu_log("db_read(dbip=x%x, addr=x%x, count=%d., offset=%d.)\n",
 			dbip, addr, count, offset );
@@ -204,12 +207,12 @@ long		offset;		/* byte offset from start of file */
 #ifdef HAVE_UNIX_IO
 	if ((s=(long)lseek( dbip->dbi_fd, (off_t)offset, 0 )) != offset) {
 		bu_log("db_read: lseek returns %d not %d\n", s, offset);
-		rt_bomb("Goodbye");
+		bu_bomb("db_read: Goodbye");
 	}
 	got = read( dbip->dbi_fd, addr, count );
 #else
 	if (fseek( dbip->dbi_fp, offset, 0 ))
-		rt_bomb("db_read: fseek error\n");
+		bu_bomb("db_read: fseek error\n");
 	got = fread( addr, 1, count, dbip->dbi_fp );
 #endif
 	RES_RELEASE( &rt_g.res_syscall );
@@ -236,14 +239,14 @@ long		offset;		/* byte offset from start of file */
  */
 int
 db_write( dbip, addr, count, offset )
-struct db_i	*dbip;
+CONST struct db_i	*dbip;
 CONST genptr_t	addr;
 long		count;
 long		offset;
 {
 	register int	got;
 
-	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_write:  bad dbip\n");
+	RT_CK_DBI(dbip);
 	if(rt_g.debug&DEBUG_DB)  {
 		bu_log("db_write(dbip=x%x, addr=x%x, count=%d., offset=%d.)\n",
 			dbip, addr, count, offset );
@@ -289,9 +292,10 @@ int
 db_get_external( ep, dp, dbip )
 register struct bu_external	*ep;
 CONST struct directory		*dp;
-struct db_i			*dbip;
+CONST struct db_i		*dbip;
 {
-	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_get_external:  bad dbip\n");
+	RT_CK_DBI(dbip);
+	RT_CK_DIR(dp);
 	if(rt_g.debug&DEBUG_DB) bu_log("db_get_external(%s) ep=x%x, dbip=x%x, dp=x%x\n",
 		dp->d_namep, ep, dbip, dp );
 
@@ -300,12 +304,12 @@ struct db_i			*dbip;
 
 	BU_INIT_EXTERNAL(ep);
 	ep->ext_nbytes = dp->d_len * sizeof(union record);
-	ep->ext_buf = (genptr_t)rt_malloc(
+	ep->ext_buf = (genptr_t)bu_malloc(
 		ep->ext_nbytes, "db_get_ext ext_buf");
 
 	if( db_read( dbip, (char *)ep->ext_buf,
 	    (long)ep->ext_nbytes, dp->d_addr ) < 0 )  {
-		rt_free( (char *)ep->ext_buf, "db_get_ext ext_buf" );
+		bu_free( ep->ext_buf, "db_get_ext ext_buf" );
 	    	ep->ext_buf = (genptr_t)NULL;
 	    	ep->ext_nbytes = 0;
 		return( -1 );	/* VERY BAD */
@@ -333,7 +337,8 @@ struct db_i		*dbip;
 	union record		*rec;
 	int	ngran;
 
-	if( dbip->dbi_magic != DBI_MAGIC )  rt_bomb("db_put_external:  bad dbip\n");
+	RT_CK_DBI(dbip);
+	RT_CK_DIR(dp);
 	if(rt_g.debug&DEBUG_DB) bu_log("db_put_external(%s) ep=x%x, dbip=x%x, dp=x%x\n",
 		dp->d_namep, ep, dbip, dp );
 
@@ -355,7 +360,7 @@ struct db_i		*dbip;
 	if( ngran != dp->d_len )  {
 		bu_log("db_put_external(%s) ngran=%d != dp->d_len %d\n",
 			dp->d_namep, ngran, dp->d_len );
-		rt_bomb("db_io.c: db_put_external()");
+		bu_bomb("db_io.c: db_put_external()");
 	}
 
 	/* Add name.  Depends on solid names always being in the same place */
@@ -376,7 +381,7 @@ register struct bu_external	*ep;
 {
 	BU_CK_EXTERNAL(ep);
 	if( ep->ext_buf )  {
-		rt_free( ep->ext_buf, "db_get_ext ext_buf" );
+		bu_free( ep->ext_buf, "db_get_ext ext_buf" );
 		ep->ext_buf = GENPTR_NULL;
 	}
 }
