@@ -606,7 +606,7 @@ set -S2 "/bin/sh"
 #	else
 #		define	OPTIMIZER	-g
 #	endif
-#	define	CC_OPTS		-Xc -K PIC 
+#	define	CC_OPTS		-Xc -K PIC
 /*	SunPro C 2.0.1 does not define __sparc or sparc.  3.0 on does */
 #	define	CC_DEFS		-D_REENTRANT -D__sparc -DSUNOS=53
 
@@ -615,10 +615,10 @@ set -S2 "/bin/sh"
 #	define	LIBVERS		../sharedlibvers.sh
 #	define	BUILD_LIBRARY	ld -Bdynamic -G -h PRODUCTS[[LIBVERS]] -o
 #	define	RANLIB		true
-#	define	STANDARD_LIBES	-lm -R /usr/lib:LIBDIR
+#	define	STANDARD_LIBES	-lm -lnsl -lsocket -R /usr/lib:LIBDIR
 
-#	define	XINCDIR		/usr/openwin/include
-#	define	XLIBDIR		/usr/openwin/lib
+#	define	XINCDIR		/usr/X11/include
+#	define	XLIBDIR		/usr/X11/lib
 
 #	define	LIBPKG_CONFIG	-DBSD=43 -D_KERNEL
 #	define	LIBPKG_LIBES	-lnsl -lsocket
@@ -632,11 +632,12 @@ set -S2 "/bin/sh"
 #	define	TCL_DEFS	OPTIMIZER -DTCL_LIBRARY='"'TCLLIBDIR'"' -DTCL_PACKAGE_PATH='"'TCLLIBDIR'"' -DNO_STRING_H=1 -DHAVE_UNISTD_H=1 -DHAVE_SYS_TIME_H=1 -DTIME_WITH_SYS_TIME=1 -DHAVE_TZNAME=1 -DHAVE_TIMEZONE_VAR=1 -Dstrtod=fixstrtod -DSTDC_HEADERS=1 -DNO_UNION_WAIT=1 -DNEED_MATHERR=1 -Dvfork=fork -DGETTOD_NOT_DECLARED=1 -DHAVE_SYS_IOCTL_H=1 -DHAVE_SYS_FILIO_H=1
 #	define	TCL_COMPAT_FILES	fixstrtod
 #	define	TK_DEFS		-DTK_LIBRARY='"'TKLIBDIR'"' -DHAVE_UNISTD_H=1 -DHAVE_LIMITS_H=1 -DSTDC_HEADERS=1 -Dstrtod=fixstrtod
+#	define	LIBTK_CONFIG	-I''XINCDIR
 
 #  if 1	/* PRODUCTION=1 */
 #	define	LIBMESA_CONFIG	-DFBIND=2
 #	define	LIBDM_OBJS	dm-X
-#	define	LIBDM_CONFIG	
+#	define	LIBDM_CONFIG	 -I''XINCDIR
 #	define	MGED_OBJS	dm-X
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #	define	MGED_LIBES	LIBDM -L''XLIBDIR -R''XLIBDIR -lX11 -lnsl -lsocket
@@ -1757,6 +1758,9 @@ set -S2 "/bin/sh"
 #endif
 #if !defined(TK_DEFS)
 #	define	TK_DEFS	/**/
+#endif
+#if !defined(LIBTK_CONFIG)
+#	define	LIBTK_CONFIG	/**/
 #endif
 #if !defined(GFLAG)
 #	define	GFLAG	/**/
