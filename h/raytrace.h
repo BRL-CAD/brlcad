@@ -1,5 +1,7 @@
 /*
- *			R A Y . H
+ *			R T . H
+ *
+ * All the structures necessary for dealing with the RT ray tracer routines.
  *
  * $Revision$
  */
@@ -8,18 +10,19 @@ extern char *malloc();
 extern void free();
 
 /*
- *			R A Y
+ *			X R A Y
  *
  * All necessary information about a ray.
+ * Not called just "ray" to prevent conflicts with other VLD stuff.
  */
-struct ray {
+struct xray {
 	point_t		r_pt;		/* Point at which ray starts */
 	vect_t		r_dir;		/* Direction of ray (UNIT Length) */
 	fastf_t		r_min;		/* entry dist to bounding sphere */
 	fastf_t		r_max;		/* exit dist from bounding sphere */
-	struct ray	*r_forw;	/* !0 -> ray after deflection */
+	struct xray	*r_forw;	/* !0 -> ray after deflection */
 };
-#define RAY_NULL	((struct ray *)0)
+#define RAY_NULL	((struct xray *)0)
 
 
 /*
@@ -81,6 +84,8 @@ struct soltab {
 	struct soltab	*st_forw;	/* Linked list of solids */
 	char		*st_name;	/* Name of solid */
 	struct region	*st_regionp;	/* Pointer to containing region */
+	vect_t		st_min;		/* min X, Y, Z of bounding RPP */
+	vect_t		st_max;		/* max X, Y, Z of bounding RPP */
 	int		st_bin;		/* Temporary for boolean processing */
 };
 #define SOLTAB_NULL	((struct soltab *)0)
@@ -220,7 +225,7 @@ extern struct partition *FreePart;		 /* Head of freelist */
  */
 struct application  {
 	/* THESE ELEMENTS ARE MANDATORY */
-	struct ray a_ray;	/* Actual ray to be shot */
+	struct xray a_ray;	/* Actual ray to be shot */
 	int	(*a_hit)();	/* routine to call when shot hits model */
 	int	(*a_miss)();	/* routine to call when shot misses */
 	int	a_x;		/* Screen X of ray, where applicable */
