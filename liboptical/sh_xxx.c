@@ -19,6 +19,8 @@
  *	4) Edit Cakefile to add shader file to "FILES" macro (without the .o)
  *	5) replace this list with a description of the shader, its parameters
  *		and use.
+ *	6) Edit shaders.tcl and comb.tcl in the ../tclscripts/mged directory to
+ *		add a new gui for this shader.
  */
 #include "conf.h"
 
