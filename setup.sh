@@ -13,6 +13,9 @@
 SHELL=/bin/sh
 export SHELL
 
+# Ensure that other users can read and execute what we install!
+umask 002
+
 
 ############################################################################
 #
