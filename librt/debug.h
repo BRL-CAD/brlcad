@@ -28,6 +28,7 @@
 /* Options useful for debugging applications */
 #define DEBUG_ALLRAYS	0x00000001	/* 1 Print calls to shootray() */
 #define DEBUG_SHOOT	0x00000002	/* 2 Info about shootray() processing */
+#define DEBUG_INSTANCE	0x00000004	/* 3 regionid instance revectoring */
 
 /* Options useful for debugging the database */
 #define DEBUG_DB	0x00000010	/* 5 Database debugging */
@@ -64,4 +65,4 @@
 \027TESTING\026TREEWALK\025CUTDETAIL\024PARALLEL\023FDIFF\022MEM_FULL\
 \021MEM\020BOXING\017CUTING\016PARTITION\015ROOTS\014VOL\
 \013EBM\012ANIM\011SPLINE\010ARB8\7REGIONS\6SOLIDS\5DB\
-\2SHOOT\1ALLRAYS"
+\3INSTANCE\2SHOOT\1ALLRAYS"
