@@ -538,127 +538,6 @@ short *cell_max;
 
 
 
-#define DEBUG_PLOT_TRI(_A, _B, _C) \
-	if (rt_g.debug & DEBUG_HF && plot_em) { \
-		char buf[132]; \
- \
-		RES_ACQUIRE( &rt_g.res_model); \
-		sprintf(buf, "dsp%d_1.pl", plot_file_num++); \
-		RES_RELEASE( &rt_g.res_model); \
-		bu_log("%s\n", buf); \
- \
-		RES_ACQUIRE( &rt_g.res_syscall); \
-		if ((fd=fopen(buf, "w")) != (FILE *)NULL) { \
-			vect_t tmp; \
-			vect_t A_B; \
-			vect_t A_C; \
- \
-			VSUB2(A_B, _B, _A); \
-			VSUB2(A_C, _C, _A); \
- \
-			if (_A[Z] != _B[Z] || _A[Z] != _C[Z]) { \
-				short min_val; \
-				short max_val; \
-				cell_minmax(isect->dsp, cell[X], cell[Y], \
-					&min_val, &max_val); \
- \
-				/* plot bounding box */ \
-				pl_color(fd, 60, 60, 190); \
-				pl_3move(fd, cell[X],   cell[Y],   min_val); \
-				pl_3cont(fd, cell[X]+1, cell[Y],   min_val); \
-				pl_3cont(fd, cell[X]+1, cell[Y]+1, min_val); \
-				pl_3cont(fd, cell[X],   cell[Y]+1, min_val); \
-				pl_3cont(fd, cell[X],   cell[Y],   min_val); \
-				\
-				pl_3cont(fd, cell[X], cell[Y], max_val); \
-				pl_3cont(fd, cell[X]+1, cell[Y], max_val); \
-				pl_3cont(fd, cell[X]+1, cell[Y]+1, max_val); \
-				pl_3cont(fd, cell[X], cell[Y]+1, max_val); \
-				pl_3cont(fd, cell[X], cell[Y], max_val); \
-			} \
- \
-			/* plot the triangle */ \
-			pl_color(fd, 90, 220, 90); \
-			pdv_3move(fd, _A); \
-			pdv_3cont(fd, _B); \
-			pdv_3cont(fd, _C); \
-			pdv_3cont(fd, _A); \
- \
-			/* plot the normal */ \
-			pl_color(fd, 40, 180, 40); \
-			VADD2(tmp, _A, N); \
-			pdv_3line(fd, A, tmp); \
- \
-			/* plot NdotD */ \
-			pl_color(fd, 10, 100, 10); \
-			VMOVE(tmp, A); \
-			tmp[X] -= .1; \
-			tmp[Y] -= .1; \
-			pdv_3move(fd, tmp); \
-			VJOIN1(tmp, tmp, NdotD, N); \
-			pdv_3cont(fd, tmp); \
- \
-			/* plot the perpendicular */ \
-			pl_color(fd, 180, 180, 255); \
-			VADD2(tmp, _A, PAxD); \
-			pdv_3line(fd, A, tmp); \
- \
-			/* plot PA */ \
-			pl_color(fd, 200, 200, 185); \
-			VSUB2(tmp, _A, PA); \
-			pdv_3line(fd, A, tmp); \
- \
-			/* plot the ray */ \
-			pl_color(fd, 255, 40, 40); \
-			pdv_3line(fd, curr_pt, next_pt); \
- \
-			/* plot the extent of the A_B side */ \
-			pl_color(fd, 90, 220, 220); \
-			VMOVE(tmp, _A); \
-			tmp[Z] += .1; \
-			pdv_3move(fd, tmp); \
-			VJOIN1(tmp, tmp, abs_NdotD, A_B); \
-			pdv_3cont(fd, tmp); \
- \
-			/* plot alpha */ \
-			pl_color(fd, 20, 170, 170); \
-			VMOVE(tmp, _A); \
-			tmp[Z] += .2; \
-			pdv_3move(fd, tmp); \
-			VJOIN1(tmp, tmp, alpha, A_C); \
-			pdv_3cont(fd, tmp); \
- \
-			/* plot the extent of the A_C side */ \
-			pl_color(fd, 90, 220, 220); \
-			VMOVE(tmp, _A); \
-			tmp[Z] += .1; \
-			pdv_3move(fd, tmp); \
-			VJOIN1(tmp, tmp, abs_NdotD, A_C); \
-			pdv_3cont(fd, tmp); \
- \
-			/* plot beta */ \
-			pl_color(fd, 20, 170, 170); \
-			VMOVE(tmp, _A); \
-			tmp[Z] += .2; \
-			pdv_3move(fd, tmp); \
-			VJOIN1(tmp, tmp, beta, A_B); \
-			pdv_3cont(fd, tmp); \
- \
-		} \
-		RES_RELEASE( &rt_g.res_syscall); \
-	}
-
-#define DEBUG_PLOT_CLOSE(dist) \
-	if (rt_g.debug & DEBUG_HF && plot_em) { \
-		if ( dist != 0.0) { \
- 			/* plot the dist */ \
- 			pl_color(fd, 20, 20, 140); \
-			pdv_3move(fd, isect->r.r_pt); \
- 			VJOIN1(tmp, isect->r.r_pt, dist, isect->r.r_dir); \
-			pdv_3cont(fd, tmp); \
-		} \
-		fclose(fd); \
-	}
 
 void
 print_isect_segs(isect, inside)
@@ -766,7 +645,75 @@ int line;
 	}
 }
 
+static void
+plot_cell_ray(isect, cell, A, B, C, D, curr_pt, next_pt, hit1, dist1, hit2, dist2, inside)
+struct isect_stuff *isect;
+int cell[3];
+vect_t A, B, C, D, curr_pt, next_pt;
+int hit1;
+double dist1;
+int hit2;
+double dist2;
+int inside;
+{
+	FILE *fd;
+	char buf[132];
+	vect_t tmp;
+	vect_t A_B;
+	vect_t A_C;
+	short min_val;
+	short max_val;
 
+	RES_ACQUIRE( &rt_g.res_model);
+	sprintf(buf, "dsp%d_1.pl", plot_file_num++);
+	RES_RELEASE( &rt_g.res_model);
+	bu_log("%s\n", buf);
+
+	RES_ACQUIRE( &rt_g.res_syscall);
+	if ((fd=fopen(buf, "w")) != (FILE *)NULL) {
+
+		VSUB2(A_B, B, A);
+		VSUB2(A_C, C, A);
+
+		if (A[Z] != B[Z] || A[Z] != C[Z] || A[Z] != D[Z]) {
+			cell_minmax(isect->dsp, cell[X], cell[Y],
+				&min_val, &max_val);
+
+			/* plot cell top bounding box */
+			pl_color(fd, 60, 60, 190);
+			pd_3move(fd, A[X], A[Y], (double)min_val);
+			pd_3cont(fd, B[X], B[Y], (double)min_val);
+			pd_3cont(fd, D[X], D[Y], (double)min_val);
+			pd_3cont(fd, C[X], C[Y], (double)min_val);
+			pd_3cont(fd, A[X], A[Y], (double)min_val);
+
+			pd_3cont(fd, A[X], A[Y], (double)max_val);
+			pd_3cont(fd, B[X], B[Y], (double)max_val);
+			pd_3cont(fd, D[X], D[Y], (double)max_val);
+			pd_3cont(fd, C[X], C[Y], (double)max_val);
+			pd_3cont(fd, A[X], A[Y], (double)max_val);
+		}
+
+		/* plot the triangles */
+		pl_color(fd, 90, 220, 90);
+		pdv_3move(fd, A);
+		pdv_3cont(fd, B);
+		pdv_3cont(fd, D);
+		pdv_3cont(fd, A);
+		pdv_3cont(fd, C);
+		pdv_3cont(fd, D);
+
+
+
+		/* plot the ray */
+		pl_color(fd, 255, 40, 40);
+		pdv_3line(fd, curr_pt, next_pt);
+
+
+		fclose(fd);
+		RES_RELEASE( &rt_g.res_syscall);
+	}
+}
 
 
 
@@ -793,14 +740,18 @@ int *inside;
 	vect_t PAxD;
 	double alpha;
 	double beta;
-	double NdotD;
+	double NdotD1;
+	double NdotD2;
 	double abs_NdotD;
-	double	dist;
+	double	dist1;
+	double	dist2;
+	int hit1;
+	int hit2;
+	char *reason1;
+	char *reason2;
 
 	FILE *fd;
 	short h, i;
-
-
 
 	point_t tmp;
 
@@ -824,130 +775,207 @@ int *inside;
 		VPRINT("D", D);
 	}
 
-
 	VSUB2(AB, B, A);
 	VSUB2(AC, C, A);
 	VSUB2(AD, D, A);
 
-	VCROSS(N, AB, AD);
-	NdotD = VDOT( N, isect->r.r_dir);
-
-
-	abs_NdotD = NdotD >= 0.0 ? NdotD : (-NdotD);
-	if (BN_VECT_ARE_PERP(NdotD, isect->tol)) {
-		if (rt_g.debug & DEBUG_HF)
-			bu_log("miss tri1 (perp %g vs tol %g)\n",
-				abs_NdotD, isect->tol);
-		goto tri2;
-	}
-
 	VSUB2(PA, A, isect->r.r_pt);
-	
+
 	/* get perpendicular to PA, D */
 	VCROSS(PAxD, PA, isect->r.r_dir);
 
-	/* project PAxD onto AB giving the distance along *AD* */
+	VCROSS(N, AB, AD);
+	NdotD1 = VDOT( N, isect->r.r_dir);
+
+	hit1 = 0;
+	reason1 = "";
+	if ( BN_VECT_ARE_PERP(NdotD1, isect->tol)) {
+		reason1 = "perpendicular";
+		goto tri2;
+	}
+
+	/* project PAxD onto AB giving scaled distance along *AD* */
 	alpha = VDOT( AB, PAxD );
 
-	/* project PAxD onto AD giving the distance along *AB* */
+	if (NdotD1 > 0.0) alpha = -alpha;
+
+	abs_NdotD = NdotD1 >= 0.0 ? NdotD1 : (-NdotD1);
+
+	if (alpha < 0.0 || alpha > abs_NdotD ) {
+		reason1 = "miss tri1 (alpha)\n";
+		goto tri2;
+	}
+
+	/* project PAxD onto AD giving scaled distance along *AB* */
 	beta = VDOT( AD, PAxD );
 
-	dist = 0.0;
+	if ( NdotD1 < 0.0 ) beta = -beta;
 
-	if (NdotD > 0.0) alpha = -alpha;
-	if ( NdotD < 0.0 ) beta = -beta;
-
-	if (rt_g.debug & DEBUG_HF)
-		bu_log("alpha:%g beta:%g NdotD:%g\n", alpha, beta, NdotD);
-	DEBUG_PLOT_TRI(A, B, D);
-
-
-	if (alpha < 0.0 || alpha > abs_NdotD ) {
-		if (rt_g.debug & DEBUG_HF)
-			bu_log("miss tri1 (alpha)\n");
-		goto tri2;
-	}
 	if( beta < 0.0 || beta > abs_NdotD ) {
-		if (rt_g.debug & DEBUG_HF)
-			bu_log("miss tri1 (beta)\n");
+		reason1 = "miss tri1 (beta)\n";
 		goto tri2;
 	}
 	if ( alpha+beta > abs_NdotD ) {
-		/* miss triangle */
-		if (rt_g.debug & DEBUG_HF)
-			bu_log("miss tri1 (alpha+beta > NdotD)\n");
+		reason1 = "miss tri1 (alpha+beta > NdotD)\n";
 		goto tri2;
 	}
-
-	dist = VDOT( PA, N ) / NdotD;
-
-	if (rt_g.debug & DEBUG_HF)
-		bu_log("hit tri1 dist %g (inv:%g)\n", dist, VDOT( N, PA));
-
-
-	/* XXX what if we're inside, leave tri2 and enter tri1 ? */
-
-	do_hit(dist, inside, NdotD, isect, TRI1, "tri1", cell, __LINE__);
-
+	hit1 = 1;
+	dist1 = VDOT( PA, N ) / NdotD1;
 
 tri2:
-	DEBUG_PLOT_CLOSE(dist);
 
 	VCROSS(N, AD, AC);
-	NdotD = VDOT( N, isect->r.r_dir);
+	NdotD2 = VDOT( N, isect->r.r_dir);
 
-
-	abs_NdotD = NdotD >= 0.0 ? NdotD : (-NdotD);
-	if (BN_VECT_ARE_PERP(NdotD, isect->tol)) {
-		if (rt_g.debug & DEBUG_HF)
-			bu_log("miss tri2 (perp %g vs tol %g)\n",
-				abs_NdotD, isect->tol);
-		goto bail_out;
+	hit2 = 0;
+	reason2 = "";
+	if (BN_VECT_ARE_PERP(NdotD2, isect->tol)) {
+		reason2 = "perpendicular";
+		goto done;
 	}
 
-	/* project PAxD onto AD */
+	/* project PAxD onto AD giving scaled distance along *AC* */
 	alpha = VDOT( AD, PAxD );
-
-	/* project PAxD onto AC */
-	beta = VDOT( AC, PAxD );
-
-	if (NdotD > 0.0) alpha = -alpha;
-	if ( NdotD < 0.0 ) beta = -beta;
-
-
-	if (rt_g.debug & DEBUG_HF)
-		bu_log("alpha:%g beta:%g NdotD:%g\n", alpha, beta, NdotD);
-
-	dist = 0.0;
-	DEBUG_PLOT_TRI(A, D, C);
-
+	if (NdotD2 > 0.0) alpha = -alpha;
+	abs_NdotD = NdotD2 >= 0.0 ? NdotD2 : (-NdotD2);
 	if (alpha < 0.0 || alpha > abs_NdotD ) {
-		if (rt_g.debug & DEBUG_HF)
-			bu_log("miss tri2 (alpha)\n");
-		goto bail_out;
+		reason2 = "miss tri2 (alpha)\n";
+		goto done;
 	}
+
+	/* project PAxD onto AC giving scaled distance along *AD* */
+	beta = VDOT( AC, PAxD );
+	if ( NdotD2 < 0.0 ) beta = -beta;
 	if( beta < 0.0 || beta > abs_NdotD ) {
-		if (rt_g.debug & DEBUG_HF)
-			bu_log("miss tri2 (beta)\n");
-		goto bail_out;
+		reason2 = "miss tri2 (beta)\n";
+		goto done;
 	}
+
 	if ( alpha+beta > abs_NdotD ) {
-		/* miss triangle */
-		if (rt_g.debug & DEBUG_HF)
-			bu_log("miss tri2 (alpha+beta > NdotD)\n");
-
-		goto bail_out;
+		reason2 = "miss tri2 (alpha+beta > NdotD)\n";
+		goto done;
 	}
 
-	dist = VDOT( PA, N ) / NdotD;
+	hit2 = 1;
+	dist2 = VDOT( PA, N ) / NdotD2;
 
-	if (rt_g.debug & DEBUG_HF)
-		bu_log("hit tri2 dist %g\n", dist);
+done:
+	/* plot some diagnostic overlays */
+	if (rt_g.debug & DEBUG_HF && plot_em)
+		plot_cell_ray(isect, cell, A, B, C, D, curr_pt, next_pt, hit1, dist1, hit2, dist2, *inside);
 
-	do_hit(dist, inside, NdotD, isect, TRI2, "tri2", cell, __LINE__);
 
-bail_out:
-	DEBUG_PLOT_CLOSE(dist);
+
+	/* sort the hit distances and add the hits to the segment list */
+	if (hit1 && hit2) {
+		int first_tri, second_tri;
+		double first, second;
+		double firstND, secondND;
+
+		/* hit both */
+		if (dist1 < dist2) {
+			first_tri = TRI1;
+			firstND = NdotD1;
+			first = dist1;
+			second_tri = TRI2;
+			secondND = NdotD2;
+			second = dist2;
+		} else {
+			first_tri = TRI2;
+			firstND = NdotD2;
+			first = dist2;
+			second_tri = TRI1;
+			secondND = NdotD1;
+			second = dist1;
+		}
+
+		if (firstND < 0) {
+			/* entering */
+			if (*inside) {
+				bu_log("%s:%d ray entering while inside dsp",
+					__FILE__, __LINE__);
+				bu_bomb("");
+			}
+			INHIT(isect, first, first_tri, cell);
+
+			if (secondND < 0) {
+				bu_log("%s:%d ray entering while inside dsp",
+					__FILE__, __LINE__);
+				bu_bomb("");
+			}
+			OUTHIT(isect, second, second_tri, cell);
+
+		} else {
+			/* leaving */
+			if (! *inside) {
+				bu_log("%s:%d ray leaving while outside dsp",
+					__FILE__, __LINE__);
+				bu_bomb("");
+			}
+			OUTHIT(isect, first, TRI1, cell);
+			HIT_COMMIT(isect);
+			*inside = 0;
+
+			if (secondND > 0) {
+				bu_log("%s:%d ray leaving while outside dsp",
+					__FILE__, __LINE__);
+				bu_bomb("");
+			}
+			INHIT(isect, second, second_tri, cell);
+			*inside = 1;
+		}
+	} else if (hit1) {
+		/* only hit tri 1 */
+
+		if (NdotD1 < 0) {
+			/* entering */
+			if (*inside) {
+				bu_log("%s:%d ray entering while inside dsp",
+					__FILE__, __LINE__);
+				bu_bomb("");
+			}
+
+			INHIT(isect, dist1, TRI1, cell);
+			*inside = 1;
+		} else {
+			/* leaving */
+			if (! *inside) {
+				bu_log("%s:%d ray leaving while outside dsp",
+					__FILE__, __LINE__);
+				bu_bomb("");
+			}
+			OUTHIT(isect, dist1, TRI1, cell);
+			HIT_COMMIT(isect);
+			*inside = 0;
+		}
+	} else if (hit2) {
+		/* only hit 2 */
+		if (NdotD2 < 0) {
+			/* entering */
+			if (*inside) {
+				bu_log("%s:%d ray entering while inside dsp",
+					__FILE__, __LINE__);
+				bu_bomb("");
+			}
+
+			INHIT(isect, dist2, TRI2, cell);
+			*inside = 1;
+		} else {
+			/* leaving */
+			if (! *inside) {
+				bu_log("%s:%d ray leaving while outside dsp",
+					__FILE__, __LINE__);
+				bu_bomb("");
+			}
+			OUTHIT(isect, dist2, TRI2, cell);
+			HIT_COMMIT(isect);
+			*inside = 0;
+		}
+	} else {
+		/* missed everything */
+	}
+
+
 
 }
 
@@ -1049,18 +1077,6 @@ point_t pt;
 	return (wall_top > pt[Z]);
 }
 
-int
-isect_cell_z_wall(isect, cell, surf, dist, pt)
-struct isect_stuff *isect;
-int cell[3];
-int surf;
-double dist;
-point_t pt;
-{
-	if (rt_g.debug & DEBUG_HF)
-		bu_log("isect_cell_z_wall()\n");
-	return 1;
-}
 
 
 static void
@@ -1298,12 +1314,18 @@ grid_cell[X], grid_cell[Y], tX, tY, inside, V3ARGS(curr_pt), curr_surf, curr_dis
 					}
 					break;
 				case BBSURF(ZMIN) :
-					hit = isect_cell_z_wall(
-						isect, grid_cell, curr_surf,
-						curr_dist, curr_pt);
+					if (curr_dist != bbin_dist){
+						bu_log("%s:%d hitting bottom of dsp for entry while past bottom?\n",
+							__FILE__, __LINE__);
+						bu_bomb("");
+					}
+					hit = 1;
+					break;
+				case BBSURF(ZMAX) :
+					hit = 0;
 					break;
 				default:
-					bu_log("%s:%d", __FILE__, __LINE__);
+					bu_log("%s:%d surface %d ", __FILE__, __LINE__, curr_surf);
 					bu_bomb("bad surface to intersect\n");
 				}
 
@@ -1420,12 +1442,18 @@ grid_cell[X], grid_cell[Y], tX, tY, inside, V3ARGS(curr_pt), curr_surf, curr_dis
 					}
 					break;
 				case BBSURF(ZMIN) :
-					hit = isect_cell_z_wall(
-						isect, grid_cell, curr_surf,
-						curr_dist, curr_pt);
+					if (curr_dist != bbin_dist) {
+						bu_log("%s:%d hitting bottom of dsp for entry while past bottom?\n",
+							__FILE__, __LINE__);
+						bu_bomb("");
+					}
+					hit = 1;
+					break;
+				case BBSURF(ZMAX) :
+					hit = 0;
 					break;
 				default:
-					bu_log("%s:%d", __FILE__, __LINE__);
+					bu_log("%s:%d surface %d ", __FILE__, __LINE__, curr_surf);
 					bu_bomb("bad surface to intersect\n");
 				}
 
@@ -2208,3 +2236,97 @@ struct rt_db_internal	*ip;
 	rt_free( (char *)dsp_ip, "dsp ifree" );
 	ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#if 0
+
+			/* plot the normal */
+			pl_color(fd, 40, 180, 40);
+			VADD2(tmp, _A, N);
+			pdv_3line(fd, A, tmp);
+
+			/* plot NdotD */
+			pl_color(fd, 10, 100, 10);
+			VMOVE(tmp, A);
+			tmp[X] -= .1;
+			tmp[Y] -= .1;
+			pdv_3move(fd, tmp);
+			VJOIN1(tmp, tmp, NdotD, N);
+			pdv_3cont(fd, tmp);
+
+			/* plot the perpendicular */
+			pl_color(fd, 180, 180, 255);
+			VADD2(tmp, _A, PAxD);
+			pdv_3line(fd, A, tmp);
+
+			/* plot PA */
+			pl_color(fd, 200, 200, 185);
+			VSUB2(tmp, _A, PA);
+			pdv_3line(fd, A, tmp);
+
+
+			/* plot the extent of the A_B side */
+			pl_color(fd, 90, 220, 220);
+			VMOVE(tmp, _A);
+			tmp[Z] += .1;
+			pdv_3move(fd, tmp);
+			VJOIN1(tmp, tmp, abs_NdotD, A_B);
+			pdv_3cont(fd, tmp);
+
+			/* plot alpha */
+			pl_color(fd, 20, 170, 170);
+			VMOVE(tmp, _A);
+			tmp[Z] += .2;
+			pdv_3move(fd, tmp);
+			VJOIN1(tmp, tmp, alpha, A_C);
+			pdv_3cont(fd, tmp);
+
+			/* plot the extent of the A_C side */
+			pl_color(fd, 90, 220, 220);
+			VMOVE(tmp, _A);
+			tmp[Z] += .1;
+			pdv_3move(fd, tmp);
+			VJOIN1(tmp, tmp, abs_NdotD, A_C);
+			pdv_3cont(fd, tmp);
+
+			/* plot beta */
+			pl_color(fd, 20, 170, 170);
+			VMOVE(tmp, _A);
+			tmp[Z] += .2;
+			pdv_3move(fd, tmp);
+			VJOIN1(tmp, tmp, beta, A_B);
+			pdv_3cont(fd, tmp);
+
+		}
+#define DEBUG_PLOT_CLOSE(dist)
+	if (rt_g.debug & DEBUG_HF && plot_em) {
+		if ( dist != 0.0) {
+ 			/* plot the dist */
+ 			pl_color(fd, 20, 20, 140);
+			pdv_3move(fd, isect->r.r_pt);
+ 			VJOIN1(tmp, isect->r.r_pt, dist, isect->r.r_dir);
+			pdv_3cont(fd, tmp);
+		}
+		fclose(fd);
+	}
+#endif
