@@ -2255,7 +2255,7 @@ RT_EXTERN(void			nmg_crackshells, (struct shell *s1, struct shell *s2, CONST str
 
 /* From nmg_index.c */
 RT_EXTERN(int			nmg_index_of_struct, (long *p) );
-RT_EXTERN(void			nmg_m_reindex, (struct model *m) );
+RT_EXTERN(void			nmg_m_reindex, (struct model *m, int newindex) );
 RT_EXTERN(void			nmg_pr_struct_counts, 
 				(struct nmg_struct_counts *ctr, char *str) );
 RT_EXTERN(long			**nmg_m_struct_count,
