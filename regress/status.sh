@@ -242,15 +242,17 @@ if [ "x$MAIL_RESULTS" = "x1" ] ; then
 		# now iterate over the architectures that ran
 		for ARCH in $ARCHES ; do
 		    if [ -d "$REGRESS_DIR/.regress.$ARCH" ] && [ -r "$REGRESS_DIR/.regress.$ARCH" ] ; then
-
-			# is there no regress log (bad)
-			if [ -f "$REGRESS_DIR/.regress.$ARCH/DIFFS" ] ; then
-			    REGRESS_LOG="\n${REGRESS_LOG}\nSee ${REGRESS_DIR}/.regress.$ARCH/MAKE_LOG (or DIFFS) for details\n"
-			    ATTACHMENTS="$ATTACHMENTS '$REGRESS_DIR/.regress.$ARCH/DIFFS' 'diff log for $ARCH'"
-			elif [ -f "$REGRESS_DIR/.regress.$ARCH/MAKE_LOG" ] ; then
-			    REGRESS_LOG="\n${REGRESS_LOG}\nSee ${REGRESS_DIR}/.regress.$ARCH/MAKE_LOG for details\n"
-			    ATTACHMENTS="$ATTACHMENTS '$REGRESS_DIR/.regress.$ARCH/MAKE_LOG' 'build log (diff log missing) for $ARCH'"
-			fi
+                        DIFFERENT=`diff -w -b ./ref_${ARCH} $REGRESS_DIR/.regress.${ARCH}/MAKE_LOG | wc | awk '{print $1}'`
+                        if [ ! "x$DIFFERENT" = x0 ] ; then
+                            # is there no regress log (bad)
+                            if [ -f "$REGRESS_DIR/.regress.$ARCH/DIFFS" ] ; then
+                                REGRESS_LOG="\n${REGRESS_LOG}\nSee ${REGRESS_DIR}/.regress.$ARCH/MAKE_LOG (or DIFFS) for details\n"
+                                ATTACHMENTS="$ATTACHMENTS '$REGRESS_DIR/.regress.$ARCH/DIFFS' 'diff log for $ARCH'"
+                            elif [ -f "$REGRESS_DIR/.regress.$ARCH/MAKE_LOG" ] ; then
+                                REGRESS_LOG="\n${REGRESS_LOG}\nSee ${REGRESS_DIR}/.regress.$ARCH/MAKE_LOG for details\n"
+                                ATTACHMENTS="$ATTACHMENTS '$REGRESS_DIR/.regress.$ARCH/MAKE_LOG' 'build log (diff log missing) for $ARCH'"
+                            fi
+                        fi
 		    fi
 		done
 	    fi
