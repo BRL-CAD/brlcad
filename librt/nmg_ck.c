@@ -493,10 +493,10 @@ struct shell *s;
 		switch (fu->orientation) {
 		case OT_NONE	: break;
 		case OT_SAME	: if (fu->fumate_p->orientation != OT_OPPOSITE)
-					rt_bomb("nmg_vfu() faceuse of \"SAME\" orientation has mate that is not \"OPPOSITE\" orientation");
+					rt_bomb("nmg_vfu() faceuse of \"SAME\" orientation has mate that is not \"OPPOSITE\" orientation\n");
 				break;
 		case OT_OPPOSITE:  if (fu->fumate_p->orientation != OT_SAME)
-					rt_bomb("nmg_vfu() faceuse of \"OPPOSITE\" orientation has mate that is not \"SAME\" orientation");
+					rt_bomb("nmg_vfu() faceuse of \"OPPOSITE\" orientation has mate that is not \"SAME\" orientation\n");
 				break;
 		case OT_UNSPEC	: break;
 		default		: rt_bomb("nmg_vfu() unknown faceuse orintation\n"); break;
@@ -532,7 +532,7 @@ struct nmgregion *r;
 		if (s->r_p != r) {
 			rt_log("shell's r_p (%8x) doesn't point to parent (%8x)\n",
 				s->r_p, r);
-			rt_bomb("nmg_vshell()");
+			rt_bomb("nmg_vshell()\n");
 		}
 
 		if (!s->l.forw) {
@@ -1016,7 +1016,7 @@ char *s;
 		NMG_CK_EDGEUSE(eu);
 		if (eu->up.lu_p != cklu) {
 			rt_log("nmg_cl_lueu() edgeuse of %s (going next) has lost proper parent\n", s);
-			rt_bomb("nmg_ck_lueu");
+			rt_bomb("nmg_ck_lueu\n");
 		}
 		if ((struct edgeuse *)eu->l.forw->back != eu) {
 			rt_log("nmg_cl_lueu() %s next edge (%8x) doesn't point back to me (%8x)!\n", s, eu->l.forw, eu);
@@ -1039,7 +1039,7 @@ char *s;
 		NMG_CK_EDGEUSE(eu);
 		if (eu->up.lu_p != cklu) {
 			rt_log("nmg_cl_lueu() edgeuse of %s (lumate going next) has lost proper parent\n", s);
-			rt_bomb("nmg_ck_lueu");
+			rt_bomb("nmg_ck_lueu\n");
 		}
 		if ((struct edgeuse *)eu->l.forw->back != eu) {
 			rt_log("nmg_cl_lueu() %s next edge (%8x) doesn't point back to me (%8x)!\n", s, eu->l.forw, eu);
