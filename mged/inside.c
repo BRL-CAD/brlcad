@@ -269,11 +269,11 @@ char **argv;
 	  status = TCL_ERROR;
 	  goto end;
 	}
-	if( (int)strlen(argv[arg]) >= NAMESIZE )  {
+	if( dbip->dbi_version < 5 && (int)strlen(argv[arg]) >= NAMESIZE )  {
 	  struct bu_vls tmp_vls;
 
 	  bu_vls_init(&tmp_vls);
-	  bu_vls_printf(&tmp_vls, "Names are limited to %d characters\n", NAMESIZE-1);
+	  bu_vls_printf(&tmp_vls, "Database version 4 names are limited to %d characters\n", NAMESIZE-1);
 	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	  bu_vls_free(&tmp_vls);
 	  status = TCL_ERROR;
