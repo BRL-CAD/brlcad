@@ -60,8 +60,8 @@ int		depth;
  */
 static void inwalknodes (root, order, visit, depth)
 
-(struct rb_node	*root;
-int		order,
+struct rb_node	*root;
+int		order;
 void		(*visit)();
 int		depth;
 
@@ -174,7 +174,7 @@ int		depth;
  *	(or just to its data), and the type of traversal (preorder,
  *	inorder, or postorder).
  */
-void _rb_walk (tree, order, *visit, what_to_visit, trav_type)
+void _rb_walk (tree, order, visit, what_to_visit, trav_type)
 
 rb_tree	*tree;
 int	order;
