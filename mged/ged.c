@@ -242,6 +242,11 @@ char **argv;
 			cur_sigint = sig2;	/* back to here w/!0 return */
 	} else {
 		(void)fprintf(outfile, "\nAborted.\n");
+		/* If parallel routine was interrupted, need to reset */
+		RES_RELEASE( &rt_g.res_syscall );
+		RES_RELEASE( &rt_g.res_worker );
+		RES_RELEASE( &rt_g.res_stats );
+		RES_RELEASE( &rt_g.res_results );
 	}
 	(void)signal( SIGPIPE, SIG_IGN );
 	pr_prompt();
