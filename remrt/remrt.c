@@ -23,6 +23,7 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
+#define _BSD_TYPES		/* Needed for IRIX 5.0.1 */
 #include <ctype.h>
 #include <signal.h>
 #include <errno.h>
@@ -1288,6 +1289,7 @@ register struct frame *fr;
 /*
  *			D O _ A _ F R A M E
  */
+void
 do_a_frame()
 {
 	register struct frame *fr;
@@ -3051,6 +3053,7 @@ int	enter;
 
 /*** Commands ***/
 
+int
 cd_load( argc, argv )
 int	argc;
 char	**argv;
@@ -3059,7 +3062,7 @@ char	**argv;
 
 	if( running )  {
 		rt_log("Can't load while running!!\n");
-		return;
+		return -1;
 	}
 
 	/* Really ought to reset here, too */
@@ -3072,6 +3075,7 @@ char	**argv;
 	}
 
 	build_start_cmd( argc, argv, 1 );
+	return 0;
 }
 
 /*
@@ -3089,6 +3093,7 @@ char	**argv;
 		sscanf( argv[1], "%x", &rem_debug );
 	}
 	rt_log("%s Dispatcher debug=x%x\n", stamp(), rem_debug );
+	return 0;
 }
 
 /*
@@ -3114,6 +3119,7 @@ char	**argv;
 		if( pkg_send( MSG_OPTIONS, RT_VLS_ADDR(&cmd), len, sp->sr_pc) < 0 )
 			drop_server(sp, "MSG_OPTIONS pkg_send error");
 	}
+	return 0;
 }
 
 cd_f( argc, argv )
@@ -3126,6 +3132,7 @@ char	**argv;
 		width = 64;
 	rt_log("width=%d, height=%d, takes effect after next MAT\n",
 		width, height);
+	return 0;
 }
 
 cd_S( argc, argv )
@@ -3139,6 +3146,7 @@ char	**argv;
 		fbheight = 512;
 	rt_log("fb width=%d, height=%d, takes effect after next attach\n",
 		fbwidth, fbheight);
+	return 0;
 }
 
 cd_N( argc, argv )
@@ -3150,6 +3158,7 @@ char	**argv;
 		fbheight = 512;
 	rt_log("fb height=%d, takes effect after next attach\n",
 		fbheight);
+	return 0;
 }
 
 cd_hyper( argc, argv )
@@ -3158,6 +3167,7 @@ char	**argv;
 {
 	hypersample = atoi( argv[1] );
 	rt_log("hypersample=%d, takes effect after next MAT\n", hypersample);
+	return 0;
 }
 
 cd_bench( argc, argv )
@@ -3166,6 +3176,7 @@ char	**argv;
 {
 	benchmark = atoi( argv[1] );
 	rt_log("Benchmark flag=%d, takes effect after next MAT\n", benchmark);
+	return 0;
 }
 
 cd_persp( argc, argv )
@@ -3175,6 +3186,7 @@ char	**argv;
 	rt_perspective = atof( argv[1] );
 	if( rt_perspective < 0.0 )  rt_perspective = 0.0;
 	rt_log("perspective angle=%g, takes effect after next MAT\n", rt_perspective);
+	return 0;
 }
 
 cd_read( argc, argv )
@@ -3185,11 +3197,12 @@ char	**argv;
 
 	if( (fp = fopen(argv[1], "r")) == NULL )  {
 		perror(argv[1]);
-		return;
+		return -1;
 	}
 	source(fp);
 	fclose(fp);
 	rt_log("%s 'read' command done\n", stamp());
+	return 0;
 }
 
 source(fp)
@@ -3210,6 +3223,7 @@ char	**argv;
 	detached = 1;
 	clients &= ~(1<<0);	/* drop stdin */
 	close(0);
+	return 0;
 }
 
 cd_file( argc, argv )
@@ -3218,6 +3232,7 @@ char	**argv;
 {
 	if(outputfile)  rt_free(outputfile, "outputfile");
 	outputfile = rt_strdup( argv[1] );
+	return 0;
 }
 
 /*
@@ -3243,7 +3258,7 @@ char	**argv;
 
 	if( (fp = fopen(argv[1], "r")) == NULL )  {
 		perror(argv[1]);
-		return;
+		return -1;
 	}
 
 	/* Find the one desired frame */
@@ -3251,7 +3266,7 @@ char	**argv;
 		if(read_matrix( fp, fr ) <= 0 )  {
 			rt_log("mat: failure\n");
 			fclose(fp);
-			return;
+			return -1;
 		}
 	}
 	fclose(fp);
@@ -3261,6 +3276,7 @@ char	**argv;
 	} else {
 		APPEND_FRAME( fr, FrameHead.fr_back );
 	}
+	return 0;
 }
 
 cd_movie( argc, argv )
@@ -3276,24 +3292,24 @@ char	**argv;
 	/* movie mat a b */
 	if( running )  {
 		rt_log("already running, please wait\n");
-		return;
+		return -1;
 	}
 	if( file_fullname[0] == '\0' )  {
 		rt_log("need LOAD before MOVIE\n");
-		return;
+		return -1;
 	}
 	a = atoi( argv[2] );
 	b = atoi( argv[3] );
 	if( (fp = fopen(argv[1], "r")) == NULL )  {
 		perror(argv[1]);
-		return;
+		return -1;
 	}
 	/* Skip over unwanted beginning frames */
 	for( i=0; i<a; i++ )  {
 		if(read_matrix( fp, &dummy_frame ) <= 0 )  {
 			rt_log("movie:  error in old style frame list\n");
 			fclose(fp);
-			return;
+			return -1;
 		}
 	}
 	for( i=a; i<b; i++ )  {
@@ -3304,7 +3320,7 @@ char	**argv;
 		if( (ret=read_matrix( fp, fr )) < 0 )  {
 			rt_log("movie:  frame %d bad\n", i);
 			fclose(fp);
-			return;
+			return -1;
 		}
 		if( ret == 0 )  break;			/* EOF */
 		if( create_outputfilename( fr ) < 0 )  {
@@ -3315,6 +3331,7 @@ char	**argv;
 	}
 	fclose(fp);
 	rt_log("Movie ready\n");
+	return 0;
 }
 
 cd_add( argc, argv )
@@ -3329,6 +3346,7 @@ char	**argv;
 			add_host( ihp );
 		}
 	}
+	return 0;
 }
 
 cd_drop( argc, argv )
@@ -3338,8 +3356,9 @@ char	**argv;
 	register struct servers *sp;
 
 	sp = get_server_by_name( argv[1] );
-	if( sp == SERVERS_NULL || sp->sr_pc == PKC_NULL )  return;
+	if( sp == SERVERS_NULL || sp->sr_pc == PKC_NULL )  return -1;
 	drop_server(sp, "drop command issued");
+	return 0;
 }
 
 cd_hold( argc, argv )
@@ -3350,13 +3369,15 @@ char	**argv;
 	register struct ihost *ihp;
 
 	ihp = host_lookup_by_name( argv[1], 0);
-	if (ihp == IHOST_NULL) return;
+	if (ihp == IHOST_NULL) return -1;
 	ihp->ht_flags |= HT_HOLD;
 
 	sp = get_server_by_name( argv[1] );
-	if ( sp == SERVERS_NULL || sp->sr_pc == PKC_NULL) return;
+	if ( sp == SERVERS_NULL || sp->sr_pc == PKC_NULL) return -1;
 	drop_server(sp, "hold command issued");
+	return 0;
 }
+
 cd_resume( argc, argv )
 int	argc;
 char	**argv;
@@ -3364,10 +3385,12 @@ char	**argv;
 	struct ihost	*ihp;
 
 	ihp = host_lookup_by_name( argv[1], 0);
-	if (ihp == IHOST_NULL ) return;
+	if (ihp == IHOST_NULL ) return -1;
 	ihp->ht_flags &= ~HT_HOLD;
 	add_host( ihp );
+	return 0;
 }
+
 cd_restart( argc, argv )
 int	argc;
 char	**argv;
@@ -3381,12 +3404,13 @@ char	**argv;
 			if( sp->sr_pc == PKC_NULL )  continue;
 			send_restart( sp );
 		}
-		return;
+		return -1;
 	}
 	sp = get_server_by_name( argv[1] );
-	if( sp == SERVERS_NULL || sp->sr_pc == PKC_NULL )  return;
+	if( sp == SERVERS_NULL || sp->sr_pc == PKC_NULL )  return -1;
 	send_restart( sp );
 	/* The real action takes place when he closes the conn */
+	return 0;
 }
 
 cd_stop( argc, argv )
@@ -3395,6 +3419,7 @@ char	**argv;
 {
 	rt_log("%s No more scanlines being scheduled, done soon\n", stamp() );
 	running = 0;
+	return 0;
 }
 
 cd_reset( argc, argv )
@@ -3405,13 +3430,14 @@ char	**argv;
 
 	if( running )  {
 		rt_log("must STOP before RESET!\n");
-		return;
+		return -1;
 	}
 	do {
 		fr = FrameHead.fr_forw;
 		CHECK_FRAME(fr);
 		destroy_frame( fr );
 	} while( FrameHead.fr_forw != &FrameHead );
+	return 0;
 }
 
 cd_attach( argc, argv )
@@ -3426,12 +3452,13 @@ char	**argv;
 	} else {
 		name = argv[1];
 	}
-	if( init_fb(name) < 0 )  return;
-	if( fbp == FBIO_NULL ) return;
-	if( (fr = FrameHead.fr_forw) == &FrameHead )  return;
+	if( init_fb(name) < 0 )  return -1;
+	if( fbp == FBIO_NULL ) return -1;
+	if( (fr = FrameHead.fr_forw) == &FrameHead )  return -1;
 	CHECK_FRAME(fr);
 
 	repaint_fb( fr );
+	return 0;
 }
 
 cd_release( argc, argv )
@@ -3440,6 +3467,7 @@ char	**argv;
 {
 	if(fbp != FBIO_NULL) fb_close(fbp);
 	fbp = FBIO_NULL;
+	return 0;
 }
 
 
@@ -3474,6 +3502,7 @@ char	**argv;
 		rt_log("\tcmd=%s\n", RT_VLS_ADDR(&fr->fr_cmd) );
 		rt_log("\tafter_cmd=%s\n", RT_VLS_ADDR(&fr->fr_after_cmd) );
 	}
+	return 0;
 }
 
 cd_memprint( argc, argv)
@@ -3487,7 +3516,9 @@ char	**argv;
 	} else {
 		rt_prmem("memprint command");
 	}
+	return 0;
 }
+
 /*
  *			C D _ S T A T
  *
@@ -3540,6 +3571,7 @@ char	**argv;
 			frame,
 			sp->sr_host->ht_name );
 	}
+	return 0;
 }
 
 /*
@@ -3610,15 +3642,17 @@ char	**argv;
 		if( rem_debug )
 			pr_list( &(sp->sr_work) );
 	}
+	return 0;
 }
 
 cd_clear( argc, argv )
 int	argc;
 char	**argv;
 {
-	if( fbp == FBIO_NULL )  return;
+	if( fbp == FBIO_NULL )  return -1;
 	fb_clear( fbp, PIXEL_NULL );
 	cur_fbwidth = 0;
+	return 0;
 }
 
 cd_print( argc, argv )
@@ -3639,6 +3673,7 @@ char	**argv;
 	rt_log("%s Printing of remote messages is %s\n",
 		stamp(),
 		print_on?"ON":"Off" );
+	return 0;
 }
 
 cd_go( argc, argv )
@@ -3646,6 +3681,7 @@ int	argc;
 char	**argv;
 {
 	do_a_frame();
+	return 0;
 }
 
 cd_wait( argc, argv )
@@ -3678,6 +3714,7 @@ char	**argv;
 		rt_log("%s All servers idle\n", stamp() );
 	}
 	clients |= 1<<fileno(stdin);
+	return 0;
 }
 
 cd_help( argc, argv )
@@ -3691,6 +3728,7 @@ char	**argv;
 			tp->ct_cmd, tp->ct_parms,
 			tp->ct_comment );
 	}
+	return 0;
 }
 
 /*
@@ -3742,10 +3780,11 @@ char	**argv;
 				break;
 			}
 		}
-		return;
+		return 0;
 	}
 
-	if( (ihp = host_lookup_by_name( argv[argpoint++], 1 )) == IHOST_NULL )  return;
+	if( (ihp = host_lookup_by_name( argv[argpoint++], 1 )) == IHOST_NULL )
+		return -1;
 
 	/* When */
 	if( strcmp( argv[argpoint], "always" ) == 0 ) {
@@ -3787,6 +3826,7 @@ char	**argv;
 	} else {
 		rt_log("unknown 'where' string '%s'\n", argv[argpoint] );
 	}
+	return 0;
 }
 
 /*
@@ -3797,6 +3837,7 @@ int	argc;
 char	**argv;
 {
 	exit(0);
+	return 0;
 }
 
 /* 		C D _ F R A M E
@@ -3821,6 +3862,7 @@ char	**argv;
 	if (strcmp(argv[1], "off") != 0 ) {
 		frame_script = rt_strdup(argv[1]);
 	}
+	return 0;
 }
 
 struct command_tab cmd_tab[] = {
