@@ -24,6 +24,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "vmath.h"
+#include "raytrace.h"
 #include "wdb.h"
 
 double	mk_conv2mm = 1.0;		/* Conversion factor to mm */
