@@ -448,13 +448,16 @@ typedef struct bu_list bu_list_t;
 	BU_LIST_APPEND(hp, (struct bu_list *)(p))
 
 #define BU_LIST_POP(structure,hp,p)				\
-	if (BU_LIST_NON_EMPTY(hp))				\
-	{							\
-	    (p) = ((struct structure *)((hp)->forw));		\
-	    BU_LIST_DEQUEUE((struct bu_list *)(p));		\
-	}							\
-	else							\
-	     (p) = (struct structure *) 0
+	{ 							\
+	    if BU_LIST_NON_EMPTY(hp))				\
+	    {							\
+	        (p) = ((struct structure *)((hp)->forw));	\
+	        BU_LIST_DEQUEUE((struct bu_list *)(p));		\
+	    }							\
+	    else {						\
+	     (p) = (struct structure *) 0;			\
+	    }							\
+	}
 
 #define BU_LIST_POP_T(hp, type )				\
 	((type *)bu_list_pop( hp )
