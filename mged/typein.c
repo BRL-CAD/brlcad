@@ -479,13 +479,6 @@ do_extern_update:
 	/* don't allow interrupts while we update the database! */
 	(void)signal( SIGINT, SIG_IGN);
 
-	/* Add name to database record */
-	{
-		union record	*rec = (union record *)external.ext_buf;
-		/* NOTE:  This depends on name always being in the same place */
-		NAMEMOVE( name, rec->s.s_name );
-	}
-
 	ngran = (external.ext_nbytes+sizeof(union record)-1) / sizeof(union record);
 	if ((dp=db_diradd(dbip, name, -1L, ngran, DIR_SOLID)) == DIR_NULL ||
 	     db_alloc(dbip, dp, ngran ) < 0) {
