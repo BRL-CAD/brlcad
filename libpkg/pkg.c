@@ -8,9 +8,11 @@
  *	pkg_open	Open a network connection to a host
  *	pkg_initserver	Create a network server, and listen for connection
  *	pkg_getclient	As network server, accept a new connection
- *	pkg_makeconn	Make a pkg_conn structure.
+ *	pkg_makeconn	Make a pkg_conn structure
  *	pkg_close	Close a network connection
  *	pkg_send	Send a message on the connection
+ *	pkg_stream	Send a message that doesn't need a push
+ *	pkg_flush	Empty the stream buffer of any queued messages
  *	pkg_waitfor	Wait for a specific msg, user buf, processing others
  *	pkg_bwaitfor	Wait for specific msg, malloc buf, processing others
  *	pkg_get		Read bytes from connection, assembling message
@@ -61,6 +63,8 @@ static char errbuf[80];
 #define PKG_CK(p)	{if(p==PKC_NULL||p->pkc_magic!=PKG_MAGIC) {\
 			sprintf(errbuf,"pkg: bad pointer x%x\n",p);\
 			(p->pkc_errlog)(errbuf);abort();}}
+
+#define	MAXQLEN	512	/* largest packet we will queue on stream */
 
 /*
  *			P K G _ O P E N
@@ -276,6 +280,7 @@ void (*errlog)();
 	pc->pkc_left = -1;
 	pc->pkc_buf = (char *)0;
 	pc->pkc_curpos = (char *)0;
+	pc->pkc_strpos = 0;
 	return(pc);
 }
 
@@ -363,6 +368,15 @@ register struct pkg_conn *pc;
 	PKG_CK(pc);
 	if( len < 0 )  len=0;
 
+	/*
+	 * Flush any queued stream output
+	 * XXX - If len < MAXQLEN we may wish to queue this one
+	 * also and THEN flush the whole business.  This would
+	 * also cover the writev problem for small packets.
+	 */
+	if( pc->pkc_strpos > 0 )
+		pkg_flush( pc );
+
 	do  {
 		/* Finish any partially read message */
 		if( pc->pkc_left > 0 )
@@ -396,7 +410,7 @@ register struct pkg_conn *pc;
 	 */
 	if( (i = writev( pc->pkc_fd, cmdvec, (len>0)?2:1 )) != len+sizeof(hdr) )  {
 		if( i < 0 )  {
-			perror("pkg_send: write");
+			pkg_perror(pc->pkc_errlog, "pkg_send: write");
 			return(-1);
 		}
 		sprintf(errbuf,"pkg_send of %d+%d, wrote %d\n",
@@ -405,6 +419,79 @@ register struct pkg_conn *pc;
 		return(i-sizeof(hdr));	/* amount of user data sent */
 	}
 	return(len);
+}
+
+/*
+ *  			P K G _ S T R E A M
+ *
+ *  Exactly like pkg_send except no "push" is necessary here.
+ *  If the packet is sufficiently small (MAXQLEN) it will be placed
+ *  in the pkc_stream buffer (after flushing this buffer if there
+ *  insufficient room).  If it is larger than this limit, it is sent
+ *  via pkg_send (who will do a pkg_flush if there is already data in
+ *  the stream queue).
+ *
+ *  Returns number of bytes of user data actually sent (or queued).
+ */
+int
+pkg_stream( type, buf, len, pc )
+int type;
+char *buf;
+int len;
+register struct pkg_conn *pc;
+{
+	static struct pkg_header hdr;
+
+	if( len > MAXQLEN )
+		return( pkg_send(type, buf, len, pc) );
+
+	if( len > PKG_STREAMLEN - sizeof(struct pkg_header) - pc->pkc_strpos )
+		pkg_flush( pc );
+
+	/* Queue it */
+	hdr.pkg_magic = htons(PKG_MAGIC);
+	hdr.pkg_type = htons(type);
+	hdr.pkg_len = htonl(len);
+
+	bcopy( &hdr, &(pc->pkc_stream[pc->pkc_strpos]), sizeof(struct pkg_header) );
+	pc->pkc_strpos += sizeof(struct pkg_header);
+	bcopy( buf, &(pc->pkc_stream[pc->pkc_strpos]), len );
+	pc->pkc_strpos += len;
+
+	return( len + sizeof(struct pkg_header) );
+}
+
+/*
+ *  			P K G _ F L U S H
+ *
+ *  Flush any pending data in the pkc_stream buffer.
+ *
+ *  Returns < 0 on failure, else number of bytes sent.
+ */
+int
+pkg_flush( pc )
+register struct pkg_conn *pc;
+{
+	register int	i;
+
+	if( pc->pkc_strpos <= 0 ) {
+		pc->pkc_strpos = 0;	/* sanity for < 0 */
+		return( 0 );
+	}
+
+	if( (i = write(pc->pkc_fd,pc->pkc_stream,pc->pkc_strpos)) != pc->pkc_strpos )  {
+		if( i < 0 ) {
+			pkg_perror(pc->pkc_errlog, "pkg_flush: write");
+			return(-1);
+		}
+		sprintf(errbuf,"pkg_flush of %d, wrote %d\n",
+			pc->pkc_strpos, i);
+		(pc->pkc_errlog)(errbuf);
+		pc->pkc_strpos -= i;
+		return( i );	/* amount of user data sent */
+	}
+	pc->pkc_strpos = 0;
+	return( i );
 }
 
 /*
@@ -568,7 +655,7 @@ register struct pkg_conn *pc;
 	if( pc->pkc_left > 0 )  {
 		if( (i = read( pc->pkc_fd, pc->pkc_curpos, pc->pkc_left )) <= 0 )  {
 			pc->pkc_left = -1;
-			perror("pkg_get: read");
+			pkg_perror(pc->pkc_errlog, "pkg_get: read");
 			return(-1);
 		}
 		pc->pkc_curpos += i;
