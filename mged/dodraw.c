@@ -1131,10 +1131,6 @@ char	**argv;
 	NMG_CK_REGION( mged_facetize_tree->tr_d.td_r );
 	rt_log("facetize:  %s\n", mged_facetize_tree->tr_d.td_name );
 
-	/* Free boolean tree */
-	db_free_tree( mged_facetize_tree );
-    	mged_facetize_tree = (union tree *)NULL;
-
 	/* Triangulate model, if requested */
 	if( triangulate )
 	{
@@ -1161,6 +1157,7 @@ char	**argv;
 		return CMD_BAD;				/* FAIL */
 	}
 	rt_functab[ID_NMG].ft_ifree( &intern );
+	mged_facetize_tree->tr_d.td_r = (struct nmgregion *)NULL;
 
 	ngran = (ext.ext_nbytes + sizeof(union record)-1)/sizeof(union record);
 	if( (dp=db_diradd( dbip, newname, -1, ngran, DIR_SOLID)) == DIR_NULL ||
@@ -1178,6 +1175,11 @@ char	**argv;
 	rt_log("facetize:  wrote %.2f Kbytes to database\n",
 		ext.ext_nbytes / 1024.0 );
 	db_free_external( &ext );
+
+	/* Free boolean tree, and the regions in it */
+	db_free_tree( mged_facetize_tree );
+    	mged_facetize_tree = (union tree *)NULL;
+
 	return CMD_OK;					/* OK */
 }
 
@@ -1309,8 +1311,8 @@ char	**argv;
 				default:
 					rt_log( "Unrecognized operator: (%c)\n" , op );
 					rt_log( "Aborting\n" );
-					nmg_km( mged_nmg_model );
 					db_free_tree( mged_facetize_tree );
+					nmg_km( mged_nmg_model );
 					return CMD_BAD;
 					break;
 			}
@@ -1353,9 +1355,6 @@ char	**argv;
 
 	nmg_vmodel( mged_nmg_model );
 
-	/* Free boolean tree */
-	db_free_tree( tmp_tree );
-
 	/* Triangulate model, if requested */
 	if( triangulate )
 	{
@@ -1382,6 +1381,7 @@ char	**argv;
 		return CMD_BAD;				/* FAIL */
 	}
 	rt_functab[ID_NMG].ft_ifree( &intern );
+	tmp_tree->tr_d.td_r = (struct nmgregion *)NULL;
 
 	ngran = (ext.ext_nbytes + sizeof(union record)-1)/sizeof(union record);
 	if( (dp=db_diradd( dbip, newname, -1, ngran, DIR_SOLID)) == DIR_NULL ||
@@ -1400,6 +1400,8 @@ char	**argv;
 		ext.ext_nbytes / 1024.0 );
 	db_free_external( &ext );
 
+	/* Free boolean tree, and the regions in it. */
+	db_free_tree( tmp_tree );
 
 	/* draw the new solid */
 	edit_args[0] = (char *)NULL;
