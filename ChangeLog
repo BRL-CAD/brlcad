@@ -1,0 +1,760 @@
+Sat Apr  2 23:25:41 2005  brlcad  <brlcad@users.sourceforge.net>
+
+	* /cvsroot/brlcad/brlcad/src/util/Attic/pl-X10.1.stub, /cvsroot/brlcad/brlcad/src/util/Makefile.am, /cvsroot/brlcad/brlcad/src/util/pl-X.1, /cvsroot/brlcad/brlcad/src/util/pl-X10.1:
+	separate the pl-X and pl-X10 manpages, adding pl-X10.1, removing the unused pl-X10.1.stub
+
+	* /cvsroot/brlcad/brlcad/src/bwish/Makefile.am, /cvsroot/brlcad/brlcad/configure.ac:
+	hack to work around the irix compiler crashing on the libtool btclsh relink attempt when we get to tclscripts -- only do the hack for that os/compiler since it will cause link problems on other platforms
+
+	* /cvsroot/brlcad/brlcad/src/other/jove/.cvsignore:
+	ignore the conditionally built jove generated files
+
+	* /cvsroot/brlcad/brlcad/include/Makefile.am:
+	add optical.h to the header list for source distribution
+
+	* /cvsroot/brlcad/brlcad/src/bwish/Makefile.am:
+	hack to work around the irix compiler crashing on the libtool btclsh relink attempt when we get to tclscripts.  this lets all of the pkgIndex and tclIndex scripts get generated during the build so the build doesn't halt (should be mipspro-specific as it's a compiler crash on relink)
+
+Fri Apr  1 23:05:50 2005  brlcad  <brlcad@users.sourceforge.net>
+
+	* /cvsroot/brlcad/brlcad/configure.ac:
+	customize the test for sys/sched.h to override the default header check that lets the unusable header pass on freebsd.
+
+Thu Mar 31 15:52:49 2005  brlcad  <brlcad@users.sourceforge.net>
+
+	* /cvsroot/brlcad/brlcad/src/bwish/Makefile.am:
+	simplify the libraries to (hopefully) just what is needed
+
+	* /cvsroot/brlcad/brlcad/src/rttherm/Makefile.am:
+	score one for irix, tcl lib must come after the tk lib to resolve the tcl symbols in libtk ..
+
+	* /cvsroot/brlcad/brlcad/NEWS:
+	fixed rtedge/rtwizard background render failure bug where the -c set background option would not behave as expected (it seemingly did nothing).  the problem is related to different way rtedge deals with the background compared to rt -- rt uses a float triplet, rtedge was trying to use an int triplet.  code changes from some time ago made all background modifiers use liboptical's (float triplet) global, which resulted in the bug.  the int triplet was reinstated, though rtedge should probably be modified to do what rt does.  this fixes sf bug 1172633.
+
+	* /cvsroot/brlcad/brlcad/src/rt/viewedge.c:
+	arrrrgh!!!  rtedge was using a global named background, which was removed when liboptical picked up the rt background variable of the same name.  the problem is that rtedge was using a triplet of ints, rt/liboptical used/uses a triplet of floats! .. this caused the set command struct parse variable setting to not work quite as was intended... resulting in the background never changing from black.  this fixes the problem by reinstating rtedges global int triplet but lets call it bgcolor now.. (addresses sf bug 1172633)  should probably make rtedge do what rt does eventually.
+
+Wed Mar 30 07:41:13 2005  brlcad  <brlcad@users.sourceforge.net>
+
+	* /cvsroot/brlcad/brlcad/src/rt/do.c:
+	fix rttherm (and pretty much any of the rt progs) from crashing when the output file already exists and is larger than the size currently being rendered.  also change the pixmap malloc to a bu_malloc to avoid returning null
+
+	* /cvsroot/brlcad/brlcad/include/spectrum.h:
+	add the headers this header depends on
+
+	* /cvsroot/brlcad/brlcad/NEWS:
+	fixed rttherm previous results interference bug
+
+	* /cvsroot/brlcad/brlcad/src/rttherm/viewtherm.c:
+	env_region is  provided through liboptical so not needed in the front end
+
+	* /cvsroot/brlcad/brlcad/src/rttherm/ssampview.c:
+	quell basename duplicate symbol warning (system lib on os x), quell Tcl_CreateCommand argument type warnings)
+
+	* /cvsroot/brlcad/brlcad/src/rttherm/ssamp-bw.c:
+	quell a basename duplicate symbol warning
+
+	* /cvsroot/brlcad/brlcad/src/rttherm/pixtest.c:
+	spectrum is in liboptical library now
+
+	* /cvsroot/brlcad/brlcad/src/libmultispectral/init.c:
+	remove rdebug, AbientIntensity, spectrum, and background from libmultispectral as those defines are (at least now) coming from liboptical's init.c.  this avoids duplicate symbol and initialization scope errors
+
+	* /cvsroot/brlcad/brlcad/src/liboptical/init.c, /cvsroot/brlcad/brlcad/src/liboptical/refract.c, /cvsroot/brlcad/brlcad/src/liboptical/sh_camo.c, /cvsroot/brlcad/brlcad/src/liboptical/sh_light.c, /cvsroot/brlcad/brlcad/src/liboptical/sh_noise.c, /cvsroot/brlcad/brlcad/src/liboptical/sh_plastic.c, /cvsroot/brlcad/brlcad/src/liboptical/shade.c:
+	consistency on the #ifdef inclusions of RT_MULTISPECTRAL, clean up the spectrum extern declarations now that spectrum is now a liboptical global.
+
+	* /cvsroot/brlcad/brlcad/src/rttherm/Makefile.am:
+	get rid of the stale files and make lib dependant upon liboptical (for AmbientIntensity, rdebug, background and maybe a couple other globals).
+
+	* /cvsroot/brlcad/brlcad/src/liboptical/Makefile.am:
+	ACK!  shade has a multispectral mode too and must be included into libmultispectral otherwise nasty crashes occur.
+
+	* /cvsroot/brlcad/brlcad/src/liboptical/material.c:
+	quell warning about type conversion
+
+Tue Mar 29 06:12:53 2005  brlcad  <brlcad@users.sourceforge.net>
+
+	* /cvsroot/brlcad/brlcad/Makefile.am:
+	write out a detailed log entry on a make install to the install log file, record the release, user, date, and root
+
+	* /cvsroot/brlcad/brlcad/Makefile.am:
+	simplify the instructions for running the tests
+
+	* /cvsroot/brlcad/brlcad/Makefile.am: must cd and make at the same time
+
+	* /cvsroot/brlcad/brlcad/Makefile.am:
+	add regression and test as regress synonyms, use the SH make variable instead of the automake variable, append a log suffix to the install log marker.
+
+	* /cvsroot/brlcad/brlcad/regress/Makefile.am:
+	separate the files to one per line and sort.  add regression and test as additional targets, regression being the work-horse and regress or test being synonyms.
+
+	* /cvsroot/brlcad/brlcad/bench/Makefile.am:
+	might as well say 'type' instead of 'typ.' ..
+
+	* /cvsroot/brlcad/brlcad/bench/Makefile.am:
+	separate the extra_dist to one per line, make the benchmark targets explict phonies
+
+	* /cvsroot/brlcad/brlcad/misc/.cvsignore:
+	might as well ignore the backups for copying and install too
+
+	* /cvsroot/brlcad/brlcad/src/tclscripts/rtwizard/lib/.cvsignore, /cvsroot/brlcad/brlcad/src/tclscripts/util/.cvsignore, /cvsroot/brlcad/brlcad/src/tclscripts/nirt/.cvsignore, /cvsroot/brlcad/brlcad/src/tclscripts/pl-dm/.cvsignore, /cvsroot/brlcad/brlcad/src/tclscripts/rtwizard/.cvsignore, /cvsroot/brlcad/brlcad/src/tclscripts/geometree/.cvsignore, /cvsroot/brlcad/brlcad/src/tclscripts/lib/.cvsignore, /cvsroot/brlcad/brlcad/src/tclscripts/.cvsignore:
+	ignore the generated index files
+
+	* /cvsroot/brlcad/brlcad/src/other/libtk/unix/.cvsignore, /cvsroot/brlcad/brlcad/src/other/libtk/library/.cvsignore, /cvsroot/brlcad/brlcad/src/other/iwidgets/.cvsignore, /cvsroot/brlcad/brlcad/src/other/libtcl/unix/.cvsignore, /cvsroot/brlcad/brlcad/src/other/incrTcl/itk/.cvsignore, /cvsroot/brlcad/brlcad/src/other/incrTcl/itcl/.cvsignore:
+	add the generated config and index scripts
+
+Mon Mar 28 23:51:57 2005  brlcad  <brlcad@users.sourceforge.net>
+
+	* /cvsroot/brlcad/brlcad/bench/.cvsignore: add pixcmp
+
+	* /cvsroot/brlcad/brlcad/src/util/pixblend.c, /cvsroot/brlcad/brlcad/src/irprep/all_sf.c, /cvsroot/brlcad/brlcad/src/irprep/shapefact.c, /cvsroot/brlcad/brlcad/src/proc-db/vegitation.c:
+	use HAVE_SRAND48 symbol check
+
+	* /cvsroot/brlcad/brlcad/src/liboptical/photonmap.c:
+	oop, missed a few win32 defs, using HAVE_DRAND48 and HAVE_SRAND48 instead
+
+	* /cvsroot/brlcad/brlcad/configure.ac: search for srand48() function
+
+	* /cvsroot/brlcad/brlcad/src/rttherm/Makefile.am:
+	rttherm needs fb, ssamp-bw needs bu and bn
+
+	* /cvsroot/brlcad/brlcad/src/liboptical/photonmap.c:
+	if drand48 isn't available, use the win32 rand() alternative
+
+	* /cvsroot/brlcad/brlcad/configure.ac: drand is bogus, check for dran48
+
+	* /cvsroot/brlcad/brlcad/include/config_win.h:
+	windows reportedly doesn't have drand48 function, so don't claim to have it
+
+	* /cvsroot/brlcad/brlcad/src/librt/Makefile.am:
+	add importFg4Section.c to the build
+
+	* /cvsroot/brlcad/brlcad/src/librt/importFg4Section.c:
+	remove \r carriage returns, should only be \n. windows editors should be set to output 'unix' line endings, otherwise obscure problems ensue.
+
+	* /cvsroot/brlcad/brlcad/src/other/libtk/.cvsignore, /cvsroot/brlcad/brlcad/src/other/libtcl/.cvsignore:
+	ignore the built binaries
+
+	* /cvsroot/brlcad/brlcad/src/other/libpng/.cvsignore:
+	ignore pngtest binary
+
+Mon Mar 28 17:44:23 2005  bob1961  <bob1961@users.sourceforge.net>
+
+	* /cvsroot/brlcad/brlcad/src/liboptical/wray.c: Include optical.h
+
+Mon Mar 28 17:09:39 2005  brlcad  <brlcad@users.sourceforge.net>
+
+	* /cvsroot/brlcad/brlcad/src/other/URToolkit/tools/clock/.cvsignore, /cvsroot/brlcad/brlcad/src/other/URToolkit/cnv/rletogif/.cvsignore, /cvsroot/brlcad/brlcad/src/other/URToolkit/cnv/rletoabA62/.cvsignore:
+	ignore generated binaries
+
+	* /cvsroot/brlcad/brlcad/src/librt/.cvsignore:
+	comb and nurb_example are noinst programs
+
+	* /cvsroot/brlcad/brlcad/src/libfft/.cvsignore:
+	fftest is a noinst proggie too
+
+	* /cvsroot/brlcad/brlcad/src/lgt/.cvsignore:
+	ignore the generated lgt binary
+
+	* /cvsroot/brlcad/brlcad/src/jack/.cvsignore:
+	ignore the generated g-jack and jack-g binary
+
+	* /cvsroot/brlcad/brlcad/src/irprep/.cvsignore:
+	display was renamed to showtherm
+
+	* /cvsroot/brlcad/brlcad/src/halftone/.cvsignore:
+	ignore the generated halftone binary
+
+	* /cvsroot/brlcad/brlcad/src/gtools/.cvsignore:
+	ignore the generated testfree, solshoot, g_lint, g_diff binaries
+
+	* /cvsroot/brlcad/brlcad/src/fbserv/.cvsignore:
+	ignore the generated fbserv binary
+
+	* /cvsroot/brlcad/brlcad/src/fbed/.cvsignore:
+	ignore the generated fbed binary
+
+	* /cvsroot/brlcad/brlcad/src/comgeom-g/.cvsignore:
+	ignore the generated comgeom-g binary
+
+	* /cvsroot/brlcad/brlcad/src/rttherm/Makefile.am, /cvsroot/brlcad/brlcad/src/other/URToolkit/tools/into.c, /cvsroot/brlcad/brlcad/src/burst/prnt.c, /cvsroot/brlcad/brlcad/src/libpkg/pkg.c, /cvsroot/brlcad/brlcad/configure.ac:
+	make HAVE_SYS_ERRLIST_DECL go away.  there's a better way to check for it, so fix when solaris returns to the rotation (where it'll probably be a problem).  windows gets _sys_errlist from stdlib.h so make sure that's included too.
+
+	* /cvsroot/brlcad/brlcad/src/bwish/.cvsignore:
+	ignore the generated btclsh and bwish binaries
+
+	* /cvsroot/brlcad/brlcad/src/burst/.cvsignore: ignore the built burst
+
+	* /cvsroot/brlcad/brlcad/misc/pro-engineer/.cvsignore:
+	ignore the generated mk and protk.dat files
+
+	* /cvsroot/brlcad/brlcad/misc/macosx/.cvsignore:
+	ignore the openUp binary
+
+	* /cvsroot/brlcad/brlcad/include/optical.h:
+	remove \r carriage returns, should only be \n.  editor/studio/.net should be set to never create \n\r line endings on windows for new or existing files -- causes obscure problems.
+
+	* /cvsroot/brlcad/brlcad/configure.ac:
+	if sproc() is available (e.g. on irix), do NOT try to link with pthreads as it will cause bad things to happen even if not explicitly using pthreading in the code.  add check for XQueryExtension and reinstate HAS_SGIGL define until the code that relies on it can be decoupled
+
+Mon Mar 28 06:31:37 2005  bob1961  <bob1961@users.sourceforge.net>
+
+	* /cvsroot/brlcad/brlcad/src/liboptical/sh_noise.c, /cvsroot/brlcad/brlcad/src/liboptical/sh_null.c, /cvsroot/brlcad/brlcad/src/liboptical/sh_plastic.c, /cvsroot/brlcad/brlcad/src/liboptical/sh_points.c, /cvsroot/brlcad/brlcad/src/liboptical/sh_prj.c, /cvsroot/brlcad/brlcad/src/liboptical/sh_rtrans.c, /cvsroot/brlcad/brlcad/src/liboptical/sh_scloud.c, /cvsroot/brlcad/brlcad/src/liboptical/sh_spm.c, /cvsroot/brlcad/brlcad/src/liboptical/sh_stack.c, /cvsroot/brlcad/brlcad/src/liboptical/sh_stxt.c, /cvsroot/brlcad/brlcad/src/liboptical/sh_tcl.c, /cvsroot/brlcad/brlcad/src/liboptical/sh_text.c, /cvsroot/brlcad/brlcad/src/liboptical/sh_toyota.c, /cvsroot/brlcad/brlcad/src/liboptical/sh_treetherm.c, /cvsroot/brlcad/brlcad/src/liboptical/sh_wood.c, /cvsroot/brlcad/brlcad/src/liboptical/sh_xxx.c, /cvsroot/brlcad/brlcad/src/liboptical/shade.c, /cvsroot/brlcad/brlcad/src/rt/do.c, /cvsroot/brlcad/brlcad/src/rt/ext.h, /cvsroot/brlcad/brlcad/src/rt/main.c, /cvsroot/brlcad/brlcad/src/rt/opt.c, /cvsroot/brlcad/brlcad/src/rt/view.c, /cvsroot/brlcad/brlcad/src/rt/viewedge.c, /cvsroot/brlcad/brlcad/src/liboptical/material.c, /cvsroot/brlcad/brlcad/src/liboptical/refract.c, /cvsroot/brlcad/brlcad/src/liboptical/sh_air.c, /cvsroot/brlcad/brlcad/src/liboptical/sh_billboard.c, /cvsroot/brlcad/brlcad/src/liboptical/sh_brdf.c, /cvsroot/brlcad/brlcad/src/liboptical/sh_camo.c, /cvsroot/brlcad/brlcad/src/liboptical/sh_cloud.c, /cvsroot/brlcad/brlcad/src/liboptical/sh_cook.c, /cvsroot/brlcad/brlcad/src/liboptical/sh_fbm.c, /cvsroot/brlcad/brlcad/src/liboptical/sh_fire.c, /cvsroot/brlcad/brlcad/src/liboptical/sh_flat.c, /cvsroot/brlcad/brlcad/src/liboptical/sh_gauss.c, /cvsroot/brlcad/brlcad/src/liboptical/sh_grass.c, /cvsroot/brlcad/brlcad/src/liboptical/sh_light.c, /cvsroot/brlcad/brlcad/include/light.h, /cvsroot/brlcad/brlcad/include/optical.h, /cvsroot/brlcad/brlcad/include/photonmap.h, /cvsroot/brlcad/brlcad/include/rtprivate.h, /cvsroot/brlcad/brlcad/include/shadefuncs.h, /cvsroot/brlcad/brlcad/src/libmultispectral/sh_temp.c, /cvsroot/brlcad/brlcad/src/liboptical/init.c:
+	Add code to allow liboptical to be a Windows DLL
+
+	* /cvsroot/brlcad/brlcad/include/spectrum.h:
+	Declare more librt functions
+
+	* /cvsroot/brlcad/brlcad/include/spm.h:
+	Mods to make more of libbn's functions available via a Windows DLL
+
+	* /cvsroot/brlcad/brlcad/include/raytrace.h:
+	Declare more functions from librt
+
+	* /cvsroot/brlcad/brlcad/src/librt/timer-nt.c:
+	Include vmath.h and raytrace.h
+
+	* /cvsroot/brlcad/brlcad/src/librt/table.c:
+	Remove declaration of rt_binunif_free(). Its already declared in raytrace.h
+
+	* /cvsroot/brlcad/brlcad/src/libwdb/pipe.c:
+	Remove declaration of rt_pipe_ck(). It's now declared in raytrace.h
+
+	* /cvsroot/brlcad/brlcad/src/libpkg/pkg.c:
+	If Windows, use _sys_nerr and _sys_errlist
+
+	* /cvsroot/brlcad/brlcad/src/librt/importFg4Section.c:
+	Change mk_bot to rt_mk_bot to avoid name collision with routines in libwdb
+
+	* /cvsroot/brlcad/brlcad/src/liboptical/photonmap.c:
+	Add mods for Windows port
+
+	* /cvsroot/brlcad/brlcad/src/libfb/tcl.c:
+	If Windows, use _stricmp and strnicmp instead of strcasecmp and strncmp, respectively
+
+	* /cvsroot/brlcad/brlcad/src/libfb/if_ogl_win32.c:
+	Change function signatures from K&R to ANSI
+
+	* /cvsroot/brlcad/brlcad/src/libfb/if_disk.c:
+	Add code for Windows port: unlink() changes to remove(), lseek() changes to _lseek()
+
+	* /cvsroot/brlcad/brlcad/src/libbn/asize.c:
+	Move declarations of bn_common_name_size() and bn_common_image_size() to bn.h
+
+	* /cvsroot/brlcad/brlcad/src/conv/asc2g.c:
+	If Windows, call Tcl_FindExecutable() before calling Tcl_CreateInterp()
+
+	* /cvsroot/brlcad/brlcad/include/wdb.h:
+	Add code to allow libwdb to be a Windows DLL
+
+	* /cvsroot/brlcad/brlcad/include/pkg.h:
+	Add code to allow libpkg to be a Windows DLL
+
+	* /cvsroot/brlcad/brlcad/include/fb.h:
+	Add code to allow libfb to be a Windows DLL
+
+	* /cvsroot/brlcad/brlcad/include/bn.h:
+	Modify bn_common_name_size declaration: add "const" specifier to "name" parameter
+
+	* /cvsroot/brlcad/brlcad/include/config_win.h: Add HAVE_GL_GL_H
+
+	* /cvsroot/brlcad/brlcad/src/mged/ged.c:
+	Added call to wdb_create_cmd() due to change in wdb_init_obj()
+
+Sun Mar 27 14:58:47 2005  brlcad  <brlcad@users.sourceforge.net>
+
+	* /cvsroot/brlcad/brlcad/src/util/Makefile.am:
+	need sgi gl library, not the OpenGL library
+
+	* /cvsroot/brlcad/brlcad/src/lgt/Makefile.am, /cvsroot/brlcad/brlcad/src/fbed/Makefile.am:
+	don't actually need the GL library, just sgi gl library
+
+	* /cvsroot/brlcad/brlcad/src/lgt/Makefile.am, /cvsroot/brlcad/brlcad/src/fbed/Makefile.am:
+	sgi_dep.c has LIBSGIGL symbols, so add to LDADD list
+
+	* /cvsroot/brlcad/brlcad/NEWS:
+	output object name when root solver fails to converge
+
+	* /cvsroot/brlcad/brlcad/NEWS: fixed aborted benchmark summary bug
+
+	* /cvsroot/brlcad/brlcad/BUGS:
+	the benchmark should no longer report environment garbage into the summary file if the benchmark run is aborted
+
+	* /cvsroot/brlcad/brlcad/bench/perf.sh:
+	fix the output if there are no summary values -- this happens if the benchmarks fail (crash) or are aborted early.  i believe this happens to fix sf bug #925404 too (bench/run.sh generates garbage if aborted).
+
+	* /cvsroot/brlcad/brlcad/bench/perf.sh:
+	use same tab spacing for vgr line as the current value line (instead of spaces).  tighten the summary output too.
+
+Sat Mar 26 20:25:38 2005  brlcad  <brlcad@users.sourceforge.net>
+
+	* /cvsroot/brlcad/brlcad/include/config_win.h, /cvsroot/brlcad/brlcad/src/libdm/dm_obj.c, /cvsroot/brlcad/brlcad/src/librt/librt.opt, /cvsroot/brlcad/brlcad/src/libbu/htond.c, /cvsroot/brlcad/brlcad/src/libbu/htonf.c:
+	use REVERSE_IEEE now instead of REVERSED_IEEE
+
+	* /cvsroot/brlcad/brlcad/src/libdm/dm-ogl.c:
+	check for HAVE_XQUERYEXTENSION define
+
+	* /cvsroot/brlcad/brlcad/configure.ac:
+	rename REVERSED_IEEE to REVERSE_IEEE so the name matches in length to NATURAL_IEEE
+
+Fri Mar 25 10:00:32 2005  brlcad  <brlcad@users.sourceforge.net>
+
+	* /cvsroot/brlcad/brlcad/src/tclscripts/mged/anim.tcl, /cvsroot/brlcad/brlcad/src/tclscripts/mged/overlap.tcl:
+	might as well make the other exec rm instances use file delete too for portability
+
+Thu Mar 24 22:10:14 2005  bob1961  <bob1961@users.sourceforge.net>
+
+	* /cvsroot/brlcad/brlcad/src/conv/g2asc.c: Fix typo
+
+	* /cvsroot/brlcad/brlcad/include/raytrace.h: Declare wdb_create_cmd
+
+	* /cvsroot/brlcad/brlcad/src/tclscripts/mged/asc2g.tcl:
+	Use Tcl's "file delete" comand to delete
+
+	* /cvsroot/brlcad/brlcad/src/tclscripts/lib/QuadDisplay.tcl:
+	Add the following methods: getDrawLabelsHook, setDrawLabelsHook, setDrawLabelsHookAll
+
+	* /cvsroot/brlcad/brlcad/src/tclscripts/lib/Mged.tcl:
+	Add the following methods: facetize, importFg4Section, attachObservers, detachObservers
+
+	* /cvsroot/brlcad/brlcad/src/tclscripts/lib/Db.tcl:
+	Added the following methods: facetize and importFg4Section. Added help for the following commands: binary, make_bb, move_arb_edge, move_arb_face, rmap, rotate_arb_face and track. Also added minor formatting.
+
+	* /cvsroot/brlcad/brlcad/src/tclscripts/lib/Database.tcl:
+	Minor formatting
+
+	* /cvsroot/brlcad/brlcad/src/tclscripts/lib/Command.tcl:
+	Add code to check to see if BRL-CAD's history object is available
+
+	* /cvsroot/brlcad/brlcad/src/tclscripts/lib/Display.tcl:
+	Add the following options: -primitiveLabels, -primitiveLabelsColor and -usePhony. Add code to limit the mouse dx and dy's that are calculated. This affects rotation, translation and scaling via the mouse
+
+	* /cvsroot/brlcad/brlcad/src/tclscripts/lib/Dm.tcl:
+	Add the following methods: drawLabels, getDrawLabelsHook and setDrawLabelsHook
+
+	* /cvsroot/brlcad/brlcad/src/mged/cmd.c:
+	If Windows, use double-quotes around pathnames in case there are spaces. Also, if Windows, call Tcl_FindExecutable before calling Tcl_CreateInterp
+
+	* /cvsroot/brlcad/brlcad/src/mged/rtif.c:
+	If Windows, use double-quotes around pathnames in case there are spaces.
+
+	* /cvsroot/brlcad/brlcad/src/mged/utility1.c:
+	If Windows, use remove() and _lseek
+
+	* /cvsroot/brlcad/brlcad/src/rt/opt.c:
+	Initialize width and height to zero
+
+	* /cvsroot/brlcad/brlcad/src/rt/main.c, /cvsroot/brlcad/brlcad/src/rt/do.c:
+	Add code to open files in binary mode (Windows Only)
+
+	* /cvsroot/brlcad/brlcad/src/libdm/dm_obj.c:
+	Added the following commands to the display manager Tcl object: drawLabels, getDrawLabelsHook and setDrawLabelsHook
+
+	* /cvsroot/brlcad/brlcad/src/conv/g2asc.c:
+	Added call to Tcl_FindExecutable before call to Tcl_CreateInterp to hack around Tcl problem (i.e. getting a null pointer exception when calling Tcl_CreateInterp).
+
+	* /cvsroot/brlcad/brlcad/src/conv/asc2g.c:
+	Added call to wdb_create_cmd due to change in wdb_init_obj
+
+	* /cvsroot/brlcad/brlcad/src/librt/importFg4Section.c:
+	Initial check-in of code that imports a fg4 section from a string. This adds a method to the database object.
+
+	* /cvsroot/brlcad/brlcad/src/librt/wdb_obj.c:
+	Add wdb_importFg4Section and wdb_create_cmd. Add new and optional "tops" behavior.
+
+	* /cvsroot/brlcad/brlcad/src/librt/vdraw.c:
+	Add transparency and dmode parameters to dgo_invent_solid
+
+	* /cvsroot/brlcad/brlcad/src/librt/dg_obj.c:
+	Add transparency and dmode parameters to dgo_invent_solid. Add -p option to dgo_get_autoview_cmd (include psuedo-solids if specified). Add code to handle paths and file names that include spaces (Windows Only). Add code to open files/pipes in binary mode (Windows Only)
+
+	* /cvsroot/brlcad/brlcad/include/solid.h: Declare FreeSolid
+
+	* /cvsroot/brlcad/brlcad/include/regex.h:
+	Add another condition for deciding how to define SYSV_EXPORT (allows for static compile)
+
+	* /cvsroot/brlcad/brlcad/include/raytrace.h:
+	Add another condition for deciding how to define RT_EXPORT (allows for static compile); Declare new and a few previously hidden functions
+
+	* /cvsroot/brlcad/brlcad/include/nurb.h:
+	Use RT_EXPORT to potentially export functions (i.e. for WINDOWS dll)
+
+	* /cvsroot/brlcad/brlcad/include/mater.h:
+	Add another condition for deciding how to define RT_EXPORT (allows for static compile)
+
+	* /cvsroot/brlcad/brlcad/include/dm.h:
+	Add another condition for deciding how to define DM_EXPORT (allows for static compile); Declare Dm_d_Init; Add viewmat, dmo_drawLabelsHook and dmo_drawLabelsHookClientdata to "struct dm_obj"
+
+	* /cvsroot/brlcad/brlcad/include/config_win.h:
+	Define the following constants: BRLCAD_ROOT, HAVE_CALLOC, INSTALL_DIRECTORY, HAVE_TIME_H, HAVE_FCNTL_H and HAVE_ERRNO_H
+
+	* /cvsroot/brlcad/brlcad/include/bu.h:
+	Add another condition for deciding how to define BU_EXPORT (allows for static compile); Declare Bu_d_Init
+
+	* /cvsroot/brlcad/brlcad/include/brlregex.h:
+	Add another condition for deciding how to define SYSV_EXPORT (allows for static compile)
+
+	* /cvsroot/brlcad/brlcad/include/bn.h:
+	Add another condition for deciding how to define BN_EXPORT (allows for static compile); Declare Bn_d_Init
+
+	* /cvsroot/brlcad/brlcad/src/libpkg/pkg.c:
+	If Windows, use _sys_nerr, and _sys_errlist
+
+	* /cvsroot/brlcad/brlcad/src/libbu/brlcad_path.c:
+	Add code to remove '\' from the end of the path (Windows Only); it causes bu_file_exists test to fail
+
+	* /cvsroot/brlcad/brlcad/src/libsysv/tcl.c:
+	Add cpp directives to optionally compile Sysv_d_Init
+
+	* /cvsroot/brlcad/brlcad/src/librt/tcl.c:
+	Add cpp directives to optionally compile Rt_d_Init
+
+	* /cvsroot/brlcad/brlcad/src/libdm/tcl.c:
+	Add cpp directives to optionally compile Dm_d_Init
+
+	* /cvsroot/brlcad/brlcad/src/libbu/bu_tcl.c:
+	Add cpp directives to optionally compile Bu_d_Init
+
+	* /cvsroot/brlcad/brlcad/src/libbn/bn_tcl.c:
+	Add cpp directives to optionally compile Bn_d_Init
+
+Thu Mar 24 07:32:30 2005  brlcad  <brlcad@users.sourceforge.net>
+
+	* /cvsroot/brlcad/brlcad/configure.ac:
+	make /usr/X11/ a retry directory instead of a search directory since it's where the o32 libraries are kept on irix -- there's a better way to deal with n32 vs. o32 vs. 64 but this'll have to do for now
+
+	* /cvsroot/brlcad/brlcad/src/libbu/parallel.c:
+	oops, restore killed comment
+
+Wed Mar 23 19:29:15 2005  bob1961  <bob1961@users.sourceforge.net>
+
+	* /cvsroot/brlcad/brlcad/src/libbu/malloc.c:
+	*- removed duplicate lines of code (this wouldn't compile on Windows)
+
+Wed Mar 23 15:55:32 2005  lbutler  <lbutler@users.sourceforge.net>
+
+	* /cvsroot/brlcad/brlcad/src/libbu/malloc.c:
+	Changes to support Jim Hunt's fast memory debugging
+
+	* /cvsroot/brlcad/brlcad/include/bu.h:
+	changes to suport Jim Hunt's fast memory debugging
+
+Wed Mar 23 06:15:57 2005  brlcad  <brlcad@users.sourceforge.net>
+
+	* /cvsroot/brlcad/brlcad/src/libbu/parallel.c:
+	ugh, so much to do in this file.. -- use some of the new header and function checks
+
+	* /cvsroot/brlcad/brlcad/configure.ac:
+	add checks for sys/sched.h sys/sysmp.h sys/wait.h ulocks.h headers as well as prtcl() and sysmp() functions
+
+	* /cvsroot/brlcad/brlcad/configure.ac:
+	some systems (e.g. solaris) use /usr/X11 instead of /usr/X11R6, so be sure to go there too
+
+Tue Mar 22 14:38:09 2005  bob1961  <bob1961@users.sourceforge.net>
+
+	* /cvsroot/brlcad/brlcad/src/libbu/malloc.c:
+	*- call to bzero requires two arguments
+
+Mon Mar 21 23:46:09 2005  brlcad  <brlcad@users.sourceforge.net>
+
+	* /cvsroot/brlcad/brlcad/Makefile.am:
+	make the install permissions warning find script work even when the install location is a symlink
+
+Mon Mar 21 20:33:50 2005  bob1961  <bob1961@users.sourceforge.net>
+
+	* /cvsroot/brlcad/brlcad/src/tclscripts/lib/TableView.tcl:
+	*- added the following methods:  bindRowLabels, cgetRowLabel, configRowLabels, getRowLabelIndex, getLastRowLabelIndex, setLastRowLabelIndex, configColLabel_win, getHighlightRow, unhighlightRow, sortByCol, sortByCol_win, searchCol and flashRow
+
+	* /cvsroot/brlcad/brlcad/src/tclscripts/lib/Table.tcl:
+	*- added the following methods:  moveRow, printColRange, sortByCol, searchCol and deleteEmptyRows
+
+Mon Mar 21 05:08:38 2005  brlcad  <brlcad@users.sourceforge.net>
+
+	* /cvsroot/brlcad/brlcad/src/libdm/query.c: remove USE_MESA_GL
+
+	* /cvsroot/brlcad/brlcad/configure.ac:
+	massive library detection reworking, add new tests for GL and X11 libraries -- almost ready to get rid of the X11 hack.  get rid of GL_* flag hacks, add /opt/X11R6 to retry search list.
+
+	* /cvsroot/brlcad/brlcad/src/other/libtkGLX/Makefile.am, /cvsroot/brlcad/brlcad/src/libfb/Makefile.am, /cvsroot/brlcad/brlcad/src/mged/Makefile.am:
+	GL_* is gone, now LIBGL for the library
+
+Sun Mar 20 02:00:25 2005  brlcad  <brlcad@users.sourceforge.net>
+
+	* /cvsroot/brlcad/brlcad/src/conv/dxf-g.c:
+	prevent the converter from crashing on input mismatch
+
+	* /cvsroot/brlcad/brlcad/m4/Makefile.am: add search.m4
+
+	* /cvsroot/brlcad/brlcad/m4/search.m4:
+	add BC_SEARCH_DIRECTORY to find locations that should always be searched (e.g., for X11)
+
+	* /cvsroot/brlcad/brlcad/configure.ac:
+	add BC_SEARCH_DIRECTORY to find locations that should always be searched (e.g., for X11), remove the forced retry hack
+
+	* /cvsroot/brlcad/brlcad/src/libfb/if_ogl_win32.c, /cvsroot/brlcad/brlcad/src/mged/dm-ogl.c, /cvsroot/brlcad/brlcad/src/libdm/dm-ogl.c, /cvsroot/brlcad/brlcad/src/libdm/dm-ogl_win.c, /cvsroot/brlcad/brlcad/src/libdm/query.c, /cvsroot/brlcad/brlcad/src/libfb/if_ogl.c:
+	bye bye USE_MESA_GL .. needs some good testing on the ogl interface
+
+Sat Mar 19 23:32:26 2005  brlcad  <brlcad@users.sourceforge.net>
+
+	* /cvsroot/brlcad/brlcad/configure.ac:
+	search /usr/X11R6, obliterate USE_MESA_GL, search for some of the GL headers
+
+	* /cvsroot/brlcad/brlcad/m4/retry.m4:
+	pass the variables on to configure retries by exporting the variables
+
+	* /cvsroot/brlcad/brlcad/m4/Makefile.am: add retry.m4
+
+	* /cvsroot/brlcad/brlcad/m4/retry.m4, /cvsroot/brlcad/brlcad/configure.ac:
+	consolidate the 3 restart macros from configure.ac to 2 in m4/retry.m4: BC_RETRY_DIRECTORY and BC_RETRY_CONFIGURE.  specified retry directories will get searched on a configure retry.  configure will restart once searching the extra locations if it ends up not finding some required component.
+
+	* /cvsroot/brlcad/brlcad/configure.ac:
+	remove the unnecessary possbilities
+
+Fri Mar 18 23:38:10 2005  brlcad  <brlcad@users.sourceforge.net>
+
+	* /cvsroot/brlcad/brlcad/configure.ac:
+	missing var init and output a label of output instead of Makefiles
+
+	* /cvsroot/brlcad/brlcad/m4/Makefile.am: add restore.m4
+
+	* /cvsroot/brlcad/brlcad/m4/restore.m4, /cvsroot/brlcad/brlcad/configure.ac:
+	separate out the tests for a clobbered INSTALL/COPYING file into their own m4/restore.m4 using a BC_RESTORE_CLOBBERED macro function.  it takes two optional arguments for the files to check and the directory off of the srcdir to find them in.  if the files have a revision id, those take precedence over a content difference in the backup.
+
+	* /cvsroot/brlcad/brlcad/m4/Makefile.am:
+	add cache.m4 as one of the first brlcad m4 files
+
+	* /cvsroot/brlcad/brlcad/m4/cache.m4, /cvsroot/brlcad/brlcad/configure.ac:
+	separate out the configure cache check from configure.ac to it's own m4 file, m4/cache.m4.  takes one optional arg for the cache file name.  call it BC_CONFIG_CACHE.
+
+	* /cvsroot/brlcad/brlcad/sh/footer.sh:
+	add support for m4 files too -- m4 files don't seem to have an emacs m4-mode variable that controls indentation, so just make sure the standard indent is set.
+
+	* /cvsroot/brlcad/brlcad/configure.ac: removed obsolete comment
+
+	* /cvsroot/brlcad/brlcad/configure.ac:
+	fix up the header line to be consistent with the others, s/\t/ /g for the itemized section list, add a paragraph on the difference between using enable and with arguments
+
+Wed Mar 16 07:46:21 2005  brlcad  <brlcad@users.sourceforge.net>
+
+	* /cvsroot/brlcad/brlcad/src/libfb/if_disk.c:
+	potentially need both sys/file.h and fcntl.h so separate them (solaris fix)
+
+	* /cvsroot/brlcad/brlcad/src/libpkg/pkg.c:
+	potentially requires sys_errlist, so need optional extern declarations.
+
+	* /cvsroot/brlcad/brlcad/configure.ac:
+	duplicate strerror and check for strerror_r
+
+Tue Mar 15 21:44:05 2005  brlcad  <brlcad@users.sourceforge.net>
+
+	* /cvsroot/brlcad/brlcad/src/other/libtcl/Makefile.am:
+	libtcl needs libdl for symbols from tclLoadDl.o
+
+Mon Mar 14 23:30:04 2005  brlcad  <brlcad@users.sourceforge.net>
+
+	* /cvsroot/brlcad/brlcad/NEWS:
+	renamed the irprep 'display' tool to 'showtherm'
+
+	* /cvsroot/brlcad/brlcad/src/irprep/Attic/display.1, /cvsroot/brlcad/brlcad/src/irprep/Attic/display.c, /cvsroot/brlcad/brlcad/src/irprep/all_sf.1, /cvsroot/brlcad/brlcad/src/irprep/firpass.1, /cvsroot/brlcad/brlcad/src/irprep/ir-X.1, /cvsroot/brlcad/brlcad/src/irprep/ir-sgi.1, /cvsroot/brlcad/brlcad/src/irprep/ir-sgi.c, /cvsroot/brlcad/brlcad/src/irprep/irdisp.1, /cvsroot/brlcad/brlcad/src/irprep/irdisp.c, /cvsroot/brlcad/brlcad/src/irprep/pictsgi.1, /cvsroot/brlcad/brlcad/src/irprep/pictsgi.c, /cvsroot/brlcad/brlcad/src/irprep/pictx.1, /cvsroot/brlcad/brlcad/src/irprep/pictx.c, /cvsroot/brlcad/brlcad/src/irprep/secpass.1, /cvsroot/brlcad/brlcad/src/irprep/see.1, /cvsroot/brlcad/brlcad/src/irprep/see2.1, /cvsroot/brlcad/brlcad/src/irprep/see2.c, /cvsroot/brlcad/brlcad/src/irprep/shapefact.1, /cvsroot/brlcad/brlcad/src/irprep/showtherm.1, /cvsroot/brlcad/brlcad/src/irprep/showtherm.c, /cvsroot/brlcad/brlcad/src/irprep/Makefile.am:
+	the old tool name 'display' is now renamed to 'showtherm'.  the old name was ambiguous and misleading.  it also happens to conflict with the ImageMagik tool of the same name.
+
+	* /cvsroot/brlcad/brlcad/autogen.sh:
+	fixes for solaris .. must pass bang to test and fix names in restoration section
+
+	* /cvsroot/brlcad/brlcad/autogen.sh:
+	don't just blindly copy the backup files back .. check the revision number and only when it's less than the backup revision will it copy it back.  the 'default' has no rcs revision, so it'll be zero (and hence less than any backup).
+
+	* /cvsroot/brlcad/brlcad/src/libbu/Makefile.am:
+	use LIBTHREAD instead of PTHREAD_LIBS now
+
+	* /cvsroot/brlcad/brlcad/configure.ac:
+	add threading library checks (pthreads) to the forray of proper library checks -- this will likely need more tweaking and testing for versatility for other pthread variants; more work is still needed to allow different threading models too
+
+	* /cvsroot/brlcad/brlcad/src/libtclcad/.cvsignore, /cvsroot/brlcad/brlcad/src/libtermio/.cvsignore, /cvsroot/brlcad/brlcad/src/libsysv/.cvsignore, /cvsroot/brlcad/brlcad/src/libpkg/.cvsignore, /cvsroot/brlcad/brlcad/src/librt/.cvsignore, /cvsroot/brlcad/brlcad/src/liborle/.cvsignore, /cvsroot/brlcad/brlcad/src/libdm/.cvsignore, /cvsroot/brlcad/brlcad/src/libfb/.cvsignore, /cvsroot/brlcad/brlcad/src/libmultispectral/.cvsignore, /cvsroot/brlcad/brlcad/src/liboptical/.cvsignore, /cvsroot/brlcad/brlcad/src/libcursor/.cvsignore, /cvsroot/brlcad/brlcad/src/libbu/.cvsignore, /cvsroot/brlcad/brlcad/src/libbn/.cvsignore:
+	ignore generated verison files
+
+	* /cvsroot/brlcad/brlcad/src/libwdb/.cvsignore: ignore version
+
+	* /cvsroot/brlcad/brlcad/src/mged/.cvsignore, /cvsroot/brlcad/brlcad/src/mk/.cvsignore, /cvsroot/brlcad/brlcad/src/nirt/.cvsignore:
+	ignore generated files
+
+	* /cvsroot/brlcad/brlcad/src/off/.cvsignore: ignore g-off and off-g
+
+	* /cvsroot/brlcad/brlcad/src/patch/.cvsignore:
+	ignore patch-g and rpatch
+
+	* /cvsroot/brlcad/brlcad/src/remrt/.cvsignore, /cvsroot/brlcad/brlcad/src/tab/.cvsignore, /cvsroot/brlcad/brlcad/src/rttherm/.cvsignore:
+	ignore generated files
+
+	* /cvsroot/brlcad/brlcad/src/proc-db/.cvsignore:
+	ignore the built binaries
+
+	* /cvsroot/brlcad/brlcad/src/other/URToolkit/cnv/.cvsignore, /cvsroot/brlcad/brlcad/src/other/URToolkit/tools/.cvsignore, /cvsroot/brlcad/brlcad/include/.cvsignore, /cvsroot/brlcad/brlcad/bench/.cvsignore, /cvsroot/brlcad/brlcad/db/.cvsignore, /cvsroot/brlcad/brlcad/.cvsignore:
+	why ignore the .cvsignore files?
+
+	* /cvsroot/brlcad/brlcad/src/vas4/.cvsignore: ignore vas4
+
+	* /cvsroot/brlcad/brlcad/src/vdeck/.cvsignore: ignore vdeck
+
+	* /cvsroot/brlcad/brlcad/src/libbu/Makefile.am: needs libmalloc
+
+	* /cvsroot/brlcad/brlcad/TODO:
+	have x11/tk mged output a helpful message when DISPLAY is unset
+
+	* /cvsroot/brlcad/brlcad/autogen.sh: oops, missing backticks
+
+	* /cvsroot/brlcad/brlcad/autogen.sh:
+	if a secondary autoconf fails with an error saying that AC_PROG_LIBTOOL is missing, pull the misc/libtool.m4 in as an acinclude.m4 and restart the configuration.  this should allow a successful autogen on systems that have a libtool that's already moved forward to LT_INIT or otherwise don't have the AC_PROG_LIBTOOL macro.
+
+	* /cvsroot/brlcad/brlcad/misc/libtool.m4, /cvsroot/brlcad/brlcad/misc/Makefile.am:
+	add a libtool.m4 just in case the compiling user has a libtool installed that's already converted to LT_INIT or a setup that is otherwise missing the AC_PROG_LIBTOOL macro.  it's not a good idea to put the libtool.m4 into the m4/ directory as that may cause automake variable mismatch bugs (where the libraries end up missing their extensions) when there's a suitable system libtool.m4 already.
+
+	* /cvsroot/brlcad/brlcad/configure.ac:
+	delineate each of the configuration steps with a checking line .. helps locate specific results
+
+Sun Mar 13 23:27:26 2005  brlcad  <brlcad@users.sourceforge.net>
+
+	* /cvsroot/brlcad/brlcad/configure.ac:
+	announce that the backup is being made in the result, equal is probably modified locally
+
+	* /cvsroot/brlcad/brlcad/src/conv/.cvsignore: new additions to ignore
+
+	* /cvsroot/brlcad/brlcad/src/other/URToolkit/tools/.cvsignore, /cvsroot/brlcad/brlcad/src/other/URToolkit/cnv/.cvsignore:
+	ignore generated files
+
+	* /cvsroot/brlcad/brlcad/src/rt/.cvsignore:
+	few missing generated version files
+
+	* /cvsroot/brlcad/brlcad/configure.ac:
+	rename INSTALL,COPYING check variables
+
+	* /cvsroot/brlcad/brlcad/HACKING:
+	Update the ChangeLog with entries since the last release
+
+	* /cvsroot/brlcad/brlcad/src/util/Makefile.am, /cvsroot/brlcad/brlcad/src/fbed/sgi_dep.c, /cvsroot/brlcad/brlcad/src/lgt/Makefile.am, /cvsroot/brlcad/brlcad/src/fbed/Makefile.am:
+	use LIBGL for -lgl instead of SGIGL
+
+	* /cvsroot/brlcad/brlcad/configure.ac:
+	improved/individual library checks across the board for gl, dl, mx, malloc, dl, nsl, and socket.  get rid of the 'bad' AC_SEARCH_LIBS.  improve the INSTALL and COPYING file bug check by comparing the rcs revision numbers.
+
+	* /cvsroot/brlcad/brlcad/COPYING, /cvsroot/brlcad/brlcad/INSTALL:
+	add an rcs revision number for change tracking
+
+	* /cvsroot/brlcad/brlcad/TODO:
+	need non-generic installation instructinos
+
+	* /cvsroot/brlcad/brlcad/configure.ac: zlib link naming consistency
+
+	* /cvsroot/brlcad/brlcad/src/other/libtcl/Makefile.am: add libnsl
+
+	* /cvsroot/brlcad/brlcad/configure.ac:
+	library link reworking, add libnsl check, clean up libsocket check
+
+	* /cvsroot/brlcad/brlcad/src/other/libtcl/Makefile.am:
+	libtcl requires -lsocket if it's available
+
+	* /cvsroot/brlcad/brlcad/configure.ac: s/SOCKET/LIBSOCKET/g
+
+	* /cvsroot/brlcad/brlcad/configure.ac:
+	HAVE_ defines need to be undefined when false, not set to zero -- HAVE_SYS_ERRLIST_DECL needed fix'in
+
+	* /cvsroot/brlcad/brlcad/src/other/URToolkit/tools/into.c:
+	quell warning, main needs to return an int
+
+	* /cvsroot/brlcad/brlcad/configure.ac:
+	support the busted term.h header on solaris.  it requires curses.h, so check for an include it before the header check.
+
+	* /cvsroot/brlcad/brlcad/src/libdm/dm-glx.c, /cvsroot/brlcad/brlcad/src/libdm/dm-ogl.c, /cvsroot/brlcad/brlcad/src/libdm/dm-ogl_win.c, /cvsroot/brlcad/brlcad/src/libdm/dm-X.c, /cvsroot/brlcad/brlcad/NEWS:
+	quell the Xlib extension warning on XInputExtension by checking for it and not making a call to XListInputDevices if it's not available.
+
+Sat Mar 12 19:26:31 2005  brlcad  <brlcad@users.sourceforge.net>
+
+	* /cvsroot/brlcad/brlcad/TODO:
+	consider providing installation and post configuration support scripts
+
+Sat Mar 12 05:32:06 2005  lbutler  <lbutler@users.sourceforge.net>
+
+	* /cvsroot/brlcad/brlcad/src/conv/g-shell.rect.1:
+	Since this man page was pretty hard to read, I re-formatted it.
+
+Fri Mar 11 21:26:23 2005  brlcad  <brlcad@users.sourceforge.net>
+
+	* /cvsroot/brlcad/brlcad/autogen.sh:
+	pull back the requirement of libtool to 1.4.2 for the default irix freeware and for solaris
+
+	* /cvsroot/brlcad/brlcad/sh/make_dmg.sh, /cvsroot/brlcad/brlcad/Makefile.am:
+	provide more arguments to the dmg script
+
+	* /cvsroot/brlcad/brlcad/Makefile.am:
+	feed the script that resources dir
+
+	* /cvsroot/brlcad/brlcad/sh/make_pkg.sh:
+	add an optional 6th argument for a resources directory -- if given, copy the contents to the resource dir in the package
+
+	* /cvsroot/brlcad/brlcad/COPYING: damnits, it's a word mark
+
+	* /cvsroot/brlcad/brlcad/misc/macosx/Resources/License.rtf:
+	clean up word wrap, and it's a word mark silly
+
+	* /cvsroot/brlcad/brlcad/configure.ac: build jove .. not use jove
+
+	* /cvsroot/brlcad/brlcad/configure.ac:
+	check for X11/Xlib.h .. start of support for X11 availability checks.
+
+Thu Mar 10 21:28:15 2005  lbutler  <lbutler@users.sourceforge.net>
+
+	* /cvsroot/brlcad/brlcad/include/raytrace.h:
+	Fixed a single line where a function prototype return value (void) had lost the
+	trailing white space.  This resulted in a bad prototype:
+		voidnmg_s_to_vlist
+	instead of
+		void nmg_s_to_vlist
+	Fortunately, few places in the code called this routine.
+
+Wed Mar  9 06:38:29 2005  brlcad  <brlcad@users.sourceforge.net>
+
+	* /cvsroot/brlcad/brlcad/misc/macosx/Resources/Welcome.rtfd/TXT.rtf, /cvsroot/brlcad/brlcad/misc/macosx/Resources/ReadMe.rtfd/TXT.rtf:
+	update to release 7.2.0
+
+	* /cvsroot/brlcad/brlcad/misc/macosx/Resources/License.rtf:
+	update old license file to new distribution terms from COPYING (with updates to non-source distribution)
+
+	* /cvsroot/brlcad/brlcad/misc/macosx/Makefile.am:
+	allow openUp to be built on request
+
+	* /cvsroot/brlcad/brlcad/misc/macosx/openUp.c:
+	M-x indent-region, quell return warning, add an argument usage check
+
+Mon Mar  7 01:17:15 2005  brlcad  <brlcad@users.sourceforge.net>
+
+	* /cvsroot/brlcad/brlcad/sh/make_pkg.sh:
+	woo hoo .. the pax archive now correctly includes it's full heirarchy and sets permissions correctly.  the package will now generate and install correctly.
+
+Sun Mar  6 09:20:13 2005  brlcad  <brlcad@users.sourceforge.net>
+
+	* /cvsroot/brlcad/brlcad/sh/make_pkg.sh:
+	copy the archive into a temporary root for creating a proper bill of materials
+
+	* /cvsroot/brlcad/brlcad/src/mged/cmd.c:
+	avoid segment violation on a short argv[1]
+
+	* /cvsroot/brlcad/brlcad/sh/make_pkg.sh:
+	create pax files in cpio format and strip the leading slash so that the stored archive loation is relative
+
+	* /cvsroot/brlcad/brlcad/sh/make_pkg.sh:
+	root authorization and yes, it's required for the compat folks too
+
+Sat Mar  5 09:38:55 2005  brlcad  <brlcad@users.sourceforge.net>
+
+	* /cvsroot/brlcad/brlcad/HACKING:
+	clarify and clean up the release to-do list
+
+	* /cvsroot/brlcad/brlcad/README, /cvsroot/brlcad/brlcad/configure.ac:
+	update the version to dev patch number 7.2.1
+
+	* /cvsroot/brlcad/brlcad/NEWS:
+	7.2.0 was released on 20050305; mged illumination fix didn't make the tag; begin new section for the next release.
+
+	* /cvsroot/brlcad/brlcad/src/rt/Makefile.am:
+	give the RT execs better names especially for the ?able ones
+
