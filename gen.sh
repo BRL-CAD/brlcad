@@ -29,8 +29,9 @@ NFS=1
 # Label number for this CAD Release,
 # RCS main Revision number, and date.
 #RELEASE=M.N;	RCS_REVISION=X;		REL=DATE=dd-mmm-yy
-#RELEASE=3.17;	RCS_REVISION=9;		REL_DATE=Today
-RELEASE=3.16;	RCS_REVISION=9;		REL_DATE=19-July-91	# Beta+4
+#RELEASE=3.18;	RCS_REVISION=9;		REL_DATE=Today
+RELEASE=3.17;	RCS_REVISION=9;		REL_DATE=23-July-91	# Beta+5
+#RELEASE=3.16;	RCS_REVISION=9;		REL_DATE=19-July-91	# Beta+4
 #RELEASE=3.15;	RCS_REVISION=9;		REL_DATE=17-Jul-91	# Beta+3
 #RELEASE=3.14;	RCS_REVISION=9;		REL_DATE=15-July-91	# Beta+2
 #RELEASE=3.13;	RCS_REVISION=9;		REL_DATE=9-Jul-91	# Beta+1
@@ -324,6 +325,15 @@ rmdir)
 	for dir in ${BDIRS}; do
 		rm -fr ${DIRPRE}${dir}${DIRSUF}
 	done;;
+
+wc)
+	rm -f /tmp/cad-lines
+	for dir in ${ADIRS} ${BDIRS} ${CDIRS}; do
+		( cd ${dir}; wc *.[chsly] | grep total >> /tmp/cad-lines )
+	done
+	awk '{tot += $1;}; END{print "Total lines of source = ", tot;}' < /tmp/cad-lines
+	rm -f /tmp/cad-lines
+	;;
 
 shell)
 	for dir in ${BDIRS}; do
