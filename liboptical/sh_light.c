@@ -239,7 +239,9 @@ light_init()
 	}
 
 	/* Compute total emitted energy, including ambient */
-	inten *= (1 + AmbientIntensity);
+/**	inten *= (1 + AmbientIntensity); **/
+	/* This is non-physical and risky, but gives nicer pictures for now */
+	inten *= (1 + AmbientIntensity*0.5);
 
 	for( lp = LightHeadp; lp; lp = lp->lt_forw )  {
 		if( lp->lt_fraction > 0 )  continue;	/* overridden */
