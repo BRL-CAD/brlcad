@@ -703,6 +703,7 @@ cat > contents << EOF
 @name brlcad-5.0
 @pkgdep tcl-8.0.4
 @pkgdep tk-8.0.4
+@pkgdep png-1.0.3
 @cwd /usr
 @cwd /usr
 @owner bin
