@@ -49,7 +49,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define MAX_COLORTBL	11
 #define WHITE		colortbl[0]
 #define BACKGROUND	colortbl[MAX_COLORTBL]
-#define	OPT_STRING	"CF:N:S:W:X:a:b:c:d:ef:ghikl:m:p:s:v:x:?"
+#define	OPT_STRING	"CM:F:N:S:W:X:a:b:c:d:ef:ghikl:m:p:s:v:x:?"
+#define	BLEND_USING_HSV	1
 
 
 /* Macros with arguments */
@@ -137,6 +138,7 @@ static char	*usage[] = {
 	"Usage: cell-fb [options] [file]",
 	"Options:",
 	" -C            Use first 3 fields as r, g, and b",
+	" -M \"r g b r g b\"  Use first 3 fields as r, g, and b",
 	" -F dev        Use frame-buffer device `dev'",
 	" -N n          Set frame-buffer height to `n' pixels",
 	" -S n          Set frame-buffer height and width to `n' pixels",
@@ -574,6 +576,8 @@ long	ncells;
 	}
     	/*  Center the color key from side-to-side in the viewport.
     	 *  Find screen coords of min and max vals, clip to (0,fb_width).
+	 *  If there are fewer than 11 cells, the run the key
+	 *  from the left edge to beyond the right edge.
 	 */
     	scr_min = H2SCRX(xmin);
     	scr_max = H2SCRX(xmax);
@@ -582,11 +586,11 @@ long	ncells;
     	if( scr_max < 0 )  scr_max = 0;
     	if( scr_max > fb_width )  scr_max = fb_width;
     	scr_center = (scr_max + scr_min)/2;
+    	if ((center_cell = VPX2CX(SCRX2VPX(scr_center))) < 5)
+	    center_cell = 5;
 
-    	center_cell = VPX2CX( SCRX2VPX( scr_center ) );
     	/* Draw 10 cells for the color key */
-	bu_log("inputs range from %g to %g with a conversion of %g\n",
-	    dom_min, dom_max, dom_cvt);
+	dom_cvt = 10.0;
 	for (i = 0; i <= 10; i++)
 	{	
 	    cell_val	cv;
@@ -596,12 +600,8 @@ long	ncells;
 	     *	being careful not to back up beyond the beginning of buf.
 	     */
     	    base = VPX2SCRX( CX2VPX( center_cell - 10/2 + i ) );
-	    if (base < 0)
-		base = 0;
 
 	    cv.v_scalar = i / 10.0;
-	    bu_log("v_scalar = %d * %g / 10.0 = %g\n",
-		i, dom_cvt, cv.v_scalar);
 
 	    val_To_RGB(cv, pixel);
 	    for (j = 0; j < wid; j++)
@@ -610,6 +610,7 @@ long	ncells;
 		COPYRGB(&buf[3*index], pixel);
 	    }
 	}
+	dom_cvt = 10.0 / (dom_max - dom_min);
 
 	for (i = yorigin; i < yorigin+hgt; i++)
 	    if (fb_write(fbiop, 0, i, buf, fb_width) == -1)
@@ -641,7 +642,6 @@ RGBpixel	rgb;
 	return;
     }
     val = (cv.v_scalar - dom_min) * dom_cvt;
-    bu_log("v_scalar=%g, val=%g\n", cv.v_scalar, val);
     if ((boolean_flag && (cv.v_scalar != bool_val))
 	|| (val < 0.0) || (val > 10.0))
     {
@@ -659,16 +659,22 @@ RGBpixel	rgb;
 
 	if (interp_flag)
 	{
+	    double	prev_hsv[3];
+	    double	hsv[3];
+	    double	next_hsv[3];
+
 	    index = val + 0.01; /* convert to range [0 to 10] */
 	    if ((rem = val - (double) index) < 0.0) /* remainder */
 		rem = 0.0;
 	    res = 1.0 - rem;
-	    rgb[RED] = res*colortbl[index][RED]
-			+ rem*colortbl[index+1][RED];
-	    rgb[GRN] = res*colortbl[index][GRN]
-			+ rem*colortbl[index+1][GRN];
-	    rgb[BLU] = res*colortbl[index][BLU]
-			+ rem*colortbl[index+1][BLU];
+#if BLEND_USING_HSV
+	    bu_rgb_to_hsv(colortbl[index], prev_hsv);
+	    bu_rgb_to_hsv(colortbl[index+1], next_hsv);
+	    VBLEND2(hsv, res, prev_hsv, rem, next_hsv);
+	    bu_hsv_to_rgb(hsv, rgb);
+#else
+	    VBLEND2(rgb, res, colortbl[index], rem, colortbl[index+1]);
+#endif
 	}
 	else
 	{
@@ -713,6 +719,32 @@ register char	**argv;
 	    case 'C':
 		color_flag = true;
 		break;
+	    case 'M':
+		{	
+		    double	value;
+		    RGBpixel	lo_rgb, hi_rgb;
+		    int		lo_red, lo_grn, lo_blu;
+		    int		hi_red, hi_grn, hi_blu;
+		    int		index;
+
+		    if (sscanf(optarg, "%d %d %d %d %d %d",
+			    &lo_red, &lo_grn, &lo_blu,
+			    &hi_red, &hi_grn, &hi_blu)
+			< 3)
+		    {
+			bu_log("Invalid color-mapping: '%s'\n",
+			    optarg);
+			return (false);
+		    }
+		    lo_rgb[RED] = lo_red;
+		    lo_rgb[GRN] = lo_grn;
+		    lo_rgb[BLU] = lo_blu;
+		    hi_rgb[RED] = hi_red;
+		    hi_rgb[GRN] = hi_grn;
+		    hi_rgb[BLU] = hi_blu;
+		    fill_colortbl(lo_rgb, hi_rgb);
+		    break;
+		}
 	    case 'F':
 		(void) strncpy(fbfile, optarg, MAX_LINE);
 		break;
@@ -1015,4 +1047,34 @@ STATIC void log_Run()
 	 */
 	m_viewsize = hv_viewsize/hv2model[15];
 	printf("Size: %.6f\n", m_viewsize);
+}
+
+fill_colortbl (lo_rgb, hi_rgb)
+
+RGBpixel	lo_rgb;
+RGBpixel	hi_rgb;
+
+{
+    int		i;
+    double	a, b;
+
+#if BLEND_USING_HSV
+
+    double	lo_hsv[3], hi_hsv[3], hsv[3];
+
+    bu_rgb_to_hsv(lo_rgb, lo_hsv);
+    bu_rgb_to_hsv(hi_rgb, hi_hsv);
+#endif
+
+    for (i = 0; i < MAX_COLORTBL; ++i)
+    {
+	b = ((double) i) / (MAX_COLORTBL - 1);
+	a = 1.0 - b;
+#if BLEND_USING_HSV
+	VBLEND2(hsv, a, lo_hsv, b, hi_hsv);
+	bu_hsv_to_rgb(hsv, colortbl[i]);
+#else
+	VBLEND2(colortbl[i], a, lo_rgb, b, hi_rgb);
+#endif
+    }
 }
