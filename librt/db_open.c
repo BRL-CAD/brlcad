@@ -168,9 +168,12 @@ fail:
 /*
  *			D B _ C R E A T E
  *
- *  Create a new database containing just an IDENT record,
- *  regardless of whether it previously existed or not,
+ *  Create a new database containing just a header record,
+ *  regardless of whether the database previously existed or not,
  *  and open it for reading and writing.
+ *
+ *  New in BRL-CAD Release 6.0 is that this routine also calls
+ *  db_dirbuild(), so the caller shouldn't.
  *
  *
  *  Returns:
