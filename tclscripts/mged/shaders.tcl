@@ -999,6 +999,25 @@ proc do_phong { shade_var id } {
 	label $shader_params($id,window).fr.ext -text Extinction
 	entry $shader_params($id,window).fr.ext_e -width 5 -textvariable shader_params($id,ext)
 	bind $shader_params($id,window).fr.ext_e <KeyRelease> "do_shader_apply $shade_var $id"
+	label $shader_params($id,window).fr.emiss -text Emission
+	entry $shader_params($id,window).fr.emiss_e -width 5 -textvariable shader_params($id,emiss)
+	bind $shader_params($id,window).fr.emiss_e <KeyRelease> "do_shader_apply $shade_var $id"
+
+	hoc_register_data $shader_params($id,window).fr.emiss Emissivity {
+		{summary "In addition to reflecting and transmitting light,\n\
+			an object may also emit or absorb light. This paramter\n\
+			describes that property."}
+		{description "Emissivity/absorption"}
+		{range "-1.0 through 1.0"}
+	}
+
+	hoc_register_data $shader_params($id,window).fr.emiss_e Emissivity {
+		{summary "In addition to reflecting and transmitting light,\n\
+			an object may also emit or absorb light. This paramter\n\
+			describes that property."}
+		{description "Emissivity/absorption"}
+		{range "-1.0 through 1.0"}
+	}
 
 	hoc_register_data $shader_params($id,window).fr.trans Transparency {
 		{summary "The observer can see diffuse and specular reflections from\n\
@@ -1167,12 +1186,14 @@ proc do_phong { shade_var id } {
 	grid $shader_params($id,window).fr.spec_e -row 1 -column 1 -sticky w
 	grid $shader_params($id,window).fr.diff -row 1 -column 2 -sticky e
 	grid $shader_params($id,window).fr.diff_e -row 1 -column 3 -sticky w
-	grid $shader_params($id,window).fr.ri -row 2 -column 1 -sticky e
-	grid $shader_params($id,window).fr.ri_e -row 2 -column 2 -sticky w
-	grid $shader_params($id,window).fr.shine -row 3 -column 1 -sticky e
-	grid $shader_params($id,window).fr.shine_e -row 3 -column 2 -sticky w
-	grid $shader_params($id,window).fr.ext -row 4 -column 1 -sticky e
-	grid $shader_params($id,window).fr.ext_e -row 4 -column 2 -sticky w
+	grid $shader_params($id,window).fr.ri -row 2 -column 0 -sticky e
+	grid $shader_params($id,window).fr.ri_e -row 2 -column 1 -sticky w
+	grid $shader_params($id,window).fr.shine -row 3 -column 0 -sticky e
+	grid $shader_params($id,window).fr.shine_e -row 3 -column 1 -sticky w
+	grid $shader_params($id,window).fr.ext -row 2 -column 2 -sticky e
+	grid $shader_params($id,window).fr.ext_e -row 2 -column 3 -sticky w
+	grid $shader_params($id,window).fr.emiss -row 3 -column 2 -sticky e
+	grid $shader_params($id,window).fr.emiss_e -row 3 -column 3 -sticky w
 	
 	grid $shader_params($id,window).fr -sticky ew -ipadx 3 -ipady 3
 
@@ -1201,6 +1222,7 @@ proc set_phong_values { shader_str id } {
 	set shader_params($id,ri) $shader_params($id,def_ri)
 	set shader_params($id,shine) $shader_params($id,def_shine)
 	set shader_params($id,ext) $shader_params($id,def_ext)
+	set shader_params($id,emiss) $shader_params($id,def_emiss)
 
 	if { [llength $shader_str] > 1 } then {
 		set params [lindex $shader_str 1]
@@ -1263,6 +1285,12 @@ proc set_phong_values { shader_str id } {
 					if { $value != $shader_params($id,def_ext) } then {
 						set shader_params($id,ext) $value }
 				     }
+				}
+				emission -
+				em { catch {
+					if { $value != $shader_params($id,def_emiss) } then {
+						set shader_params($id,emiss) $value }
+					}
 				}
 			}
 		}
@@ -1336,6 +1364,11 @@ proc do_phong_apply { id } {
 		if { [expr $shader_params($id,ext) != $shader_params($id,def_ext)] } then {
 			lappend params ex $shader_params($id,ext) } }
 	    }
+	if { [string length $shader_params($id,emiss)] > 0 } then {
+	    catch {
+		if { [expr $shader_params($id,emiss) != $shader_params($id,def_emiss)] } then {
+			lappend params em $shader_params($id,emiss) } }
+	    }
 
 	return "$params"
 }
@@ -1350,6 +1383,7 @@ proc set_plastic_defaults { id } {
 	set shader_params($id,def_refl) 0
 	set shader_params($id,def_ri) 1.0
 	set shader_params($id,def_ext) 0
+	set shader_params($id,def_emiss) 0
 }
 
 proc set_mirror_defaults { id } {
@@ -1362,6 +1396,7 @@ proc set_mirror_defaults { id } {
 	set shader_params($id,def_refl) 0.75
 	set shader_params($id,def_ri) 1.65
 	set shader_params($id,def_ext) 0
+	set shader_params($id,def_emiss) 0
 }
 
 proc set_glass_defaults { id } {
@@ -1374,6 +1409,7 @@ proc set_glass_defaults { id } {
 	set shader_params($id,def_refl) 0.1
 	set shader_params($id,def_ri) 1.65
 	set shader_params($id,def_ext) 0
+	set shader_params($id,def_emiss) 0
 }
 
 # TEXTURE MAP routines
