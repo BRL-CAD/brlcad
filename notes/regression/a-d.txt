@@ -1,5 +1,0 @@
-Would have expected for the tool to accept standard input without a filename given.  Would have expected output to go to stdout without a "doubles" filename.  Usage argument was vague (not clear that filenames are wanted).
-
-Giving bad input results in a zero length file output.
-
-Ascii doubles are truncated to float.
