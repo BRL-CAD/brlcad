@@ -7243,6 +7243,7 @@ CONST struct rt_tol *tol;
 		struct loopuse *lu;
 		plane_t pl;
 		fastf_t area;
+		int still_collinear=0;
 
 		made_face = 0;
 
@@ -7253,10 +7254,16 @@ CONST struct rt_tol *tol;
 		{
 			i++;
 			if( i >= NMG_TBL_END( verts ) )
+			{
+				still_collinear = 1;
 				break;
+			}
 
 			if( verts_in_face >= max_vert_no )
+			{
+				still_collinear = 1;
 				break;
+			}
 
 			face_verts[verts_in_face] = (struct vertex *)NMG_TBL_GET( verts , i );
 			verts_in_face++;
@@ -7273,25 +7280,32 @@ CONST struct rt_tol *tol;
 					V3ARGS( face_verts[debug_int]->vg_p->coord ) );
 		}
 
-		/* make the new face */
-		new_fu = nmg_cface( dst , face_verts , verts_in_face );
-		lu = RT_LIST_FIRST( loopuse , &new_fu->lu_hd );
-		area = nmg_loop_plane_area( lu , pl );
-
-		if( area <= 0.0 )
+		if( !still_collinear )
 		{
-			rt_bomb( "nmg_make_connect_faces: Failed to calculate plane eqn\n" );
-			nmg_kfu( new_fu );
+			/* make the new face */
+			new_fu = nmg_cface( dst , face_verts , verts_in_face );
+			lu = RT_LIST_FIRST( loopuse , &new_fu->lu_hd );
+			area = nmg_loop_plane_area( lu , pl );
+
+			if( area <= 0.0 )
+			{
+				rt_log( "Bad lu:\n" );
+				nmg_pr_lu_briefly( lu, " " );
+				nmg_kfu( new_fu );
+				rt_bomb( "nmg_make_connect_faces: Failed to calculate plane eqn\n" );
+			}
+			else
+			{
+				made_face = 1;
+
+				nmg_face_g( new_fu , pl );
+
+				/* glue this face in */
+				nmg_glue_face_in_shell( new_fu , dst , tol );
+			}
 		}
 		else
-		{
-			made_face = 1;
-
-			nmg_face_g( new_fu , pl );
-
-			/* glue this face in */
-			nmg_glue_face_in_shell( new_fu , dst , tol );
-		}
+			made_face = 0;
 
 		/* If we are half way to the other end of the edge,
 		 * switch from vpa to vpb for the basis of the faces.
