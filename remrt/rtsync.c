@@ -249,6 +249,44 @@ register char **argv;
 }
 
 /*
+ *			S T D I N _ E V E N T _ H A N D L E R
+ *
+ *  Read Tcl commands from a "tty" file descriptor.
+ *  Called from the TCL/Tk event handler
+ */
+void
+stdin_event_handler(clientData, mask)
+ClientData	clientData;	/* fd */
+int		mask;
+{
+	char	buf[511+1];
+	int	fd;
+	int	got;
+bu_log("stdin_event_handler() called\n");
+
+	fd = (int)clientData;
+
+	got = read(fd, buf, 511);
+	if( got >= 0 && got < 511 )  buf[got] = '\0';
+	else	buf[0] = '\0';
+
+	if( got <= 0 )  {
+		bu_log("EOF on stdin\n");
+		Tcl_DeleteFileHandler( Tcl_GetFile(clientData, TCL_UNIX_FD) );
+		return;
+	}
+
+	/* Do something here.  Eventually, feed off to Tcl interp. */
+	if( Tcl_Eval( interp, buf ) == TCL_OK )  {
+		bu_log("%s\n", interp->result);
+
+		Tcl_DoWhenIdle( dispatcher, (ClientData)0 );
+	} else {
+		bu_log("ERROR %s\n", interp->result);
+	}
+}
+
+/*
  *			P K G _ E V E N T _ H A N D L E R
  *
  *  Generic event handler to read from a LIBPKG connection.
@@ -261,6 +299,7 @@ int		mask;
 {
 	struct pkg_conn	*pc;
 	int	val;
+bu_log("pkg_event_handler() called\n");
 
 	pc = (struct pkg_conn *)clientData;
 
@@ -278,6 +317,8 @@ int		mask;
 	}
 	if( pkg_process( pc ) < 0 )
 		bu_log("pc:  pkg_process error encountered\n");
+
+	Tcl_DoWhenIdle( dispatcher, (ClientData)0 );
 }
 
 /*
@@ -293,6 +334,7 @@ int		mask;
 {
 	struct pkg_conn	*pc;
 	int	val;
+bu_log("vrmgr_event_handler() called\n");
 
 	pc = (struct pkg_conn *)clientData;
 
@@ -312,6 +354,8 @@ int		mask;
 	}
 	if( pkg_process( pc ) < 0 )
 		bu_log("vrmgr:  pkg_process error encountered\n");
+
+	Tcl_DoWhenIdle( dispatcher, (ClientData)0 );
 }
 
 /*
@@ -326,6 +370,7 @@ ClientData	clientData;	/* subscript to rtnodes[] */
 int		mask;
 {
 	int	i;
+bu_log("rtnode_event_handler() called\n");
 
 	i = (int)clientData;
 	if( rtnodes[i].fd == 0 )  {
@@ -343,6 +388,8 @@ int		mask;
 	if( pkg_process( rtnodes[i].pkg ) < 0 ) {
 		bu_log("pkg_process error encountered (2)\n");
 	}
+
+	Tcl_DoWhenIdle( dispatcher, (ClientData)0 );
 }
 
 /*
@@ -354,9 +401,12 @@ ClientData	clientData;	/* FBIO * */
 int		mask;
 {
 	FBIO	*fbp;
+bu_log("fb_event_handler() called\n");
 
 	fbp = (FBIO *)clientData;
 	fb_poll(fbp);
+
+	Tcl_DoWhenIdle( dispatcher, (ClientData)0 );
 }
 
 /*
@@ -367,6 +417,8 @@ vrmgr_listen_handler(clientData, mask)
 ClientData	clientData;	/* fd */
 int		mask;
 {
+bu_log("vrmgr_listen_handler() called\n");
+
 	/* Accept any new VRMGR connections.  Only one at a time is permitted. */
 	if( vrmgr_pc )  {
 		bu_log("New VRMGR connection received with one still active, dropping old one.\n");
@@ -394,6 +446,8 @@ int		mask;
 		if( vrmgr_pc->pkc_fd > max_fd )  max_fd = vrmgr_pc->pkc_fd;
 		setup_socket( vrmgr_pc->pkc_fd );
 	}
+
+	Tcl_DoWhenIdle( dispatcher, (ClientData)0 );
 }
 
 /*
@@ -404,8 +458,11 @@ rtsync_listen_handler(clientData, mask)
 ClientData	clientData;	/* fd */
 int		mask;
 {
+bu_log("rtsync_listen_handler() called\n");
 	new_rtnode( pkg_getclient( (int)clientData,
 		rtsync_pkgswitch, bu_log, 0 ) );
+
+	Tcl_DoWhenIdle( dispatcher, (ClientData)0 );
 }
 
 /*
@@ -446,17 +503,31 @@ char	*argv[];
 		bu_log("Tcl_Init error %s\n", interp->result);
 	bn_tcl_setup(interp);
 	rt_tcl_setup(interp);
+	/* Don't allow unknown commands to be fed to the shell */
+	Tcl_SetVar( interp, "tcl_interactive", "0", TCL_GLOBAL_ONLY );
 
-#if 0
 	/* This runs the tk.tcl script */
 	if(Tk_Init(interp) == TCL_ERROR)  bu_bomb("Try setting TK_LIBRARY environment variable\n");
 	if((tkwin = Tk_MainWindow(interp)) == NULL)
 		bu_bomb("Tk_MainWindow failed\n");
+
+	/* Let main window pop up before running script */
+	while( Tcl_DoOneEvent(TCL_DONT_WAIT) != 0 ) ;
 # if 0
 	(void)Tcl_Eval( interp, "wm withdraw .");
-	(void)Tcl_EvalFile( interp, ".rtsyncrc" );
 # endif
-#endif
+	if( Tcl_EvalFile( interp, "/m/cad/remrt/rtsync.tcl" ) != TCL_OK )
+		bu_log("ERROR %s\n*** Script aborted\n", interp->result);
+
+	/* Accept commands on stdin */
+	if( isatty(fileno(stdin)) )  {
+		Tcl_CreateFileHandler(
+			Tcl_GetFile((ClientData)fileno(stdin), TCL_UNIX_FD),
+			TCL_READABLE|TCL_EXCEPTION, stdin_event_handler,
+			(ClientData)fileno(stdin) );
+		bu_log("rtsync accepting commands on stdin\n");
+	}
+
 
 	/* Connect up with framebuffer, for control & size purposes */
 	if( !framebuffer )  framebuffer = getenv("FB_FILE");
@@ -628,7 +699,10 @@ char	*argv[];
 
 	}
 #else
-	for(;;)  Tcl_DoOneEvent(0);
+	for(;;)  {
+		Tcl_DoOneEvent(0);
+bu_log("Tcl_DoOneEvent() returned\n");
+	}
 #endif
 }
 
@@ -637,6 +711,10 @@ char	*argv[];
  *
  *  Where all the work gets sent out.
  *  
+ *  This is only called once and then evaporates;
+ *  the event-handlers are responsible for queueing up more when
+ *  something might have happened, with:
+ *	Tcl_DoWhenIdle( dispatcher, (ClientData)0 );
  */
 void
 dispatcher(clientData)
@@ -646,8 +724,7 @@ ClientData clientData;
 	int		ncpu = 0;
 	int		start_line;
 	int		lowest_index = 0;
-
-	Tcl_DoWhenIdle( dispatcher, (ClientData)0 );
+bu_log("dispatcher() called\n");
 
 	if( !pending_pov )  return;
 
