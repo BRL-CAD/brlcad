@@ -7,16 +7,19 @@ items are on top, older topics are on the bottom.
 
 THESE SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
-
-THESE ARE LOWER PRIORITY
-
 * make opengl optional via configure without editing files
 
 * add checks for termcap and curses to skip building those components
 
 * add checks for urt to skip building it
 
-* add checks for libtool to autogen.sh
+* add checks for system libs and optionally build our libs only if
+  they don't have suitable system libs (namely, libtcl)
+
+
+THESE ARE LOWER PRIORITY
+
+* converter support for common simple formats like nff and bzw
 
 * write up the history of brlcad
 
@@ -26,9 +29,6 @@ THESE ARE LOWER PRIORITY
 
 * obliterate compilation warnings
 
-* add checks for system libs and optionally build our libs only if
-  they don't have suitable system libs (namely, libtcl)
-
 * add support for subgeometry support to the geometry syndicator
 
 * add xml geometry import and export support
@@ -36,9 +36,6 @@ THESE ARE LOWER PRIORITY
 * add support for filesystem-based geometry collections
 
 * add support for levels of detail
-
-* make benchmarks scale over time by performing multi-resolution
-  raytrace iterations of increasing size
 
 * add nfs support and ability to safely interrupt benchmark
 
@@ -49,6 +46,8 @@ THESE BREAK PROTOCOL AND ARE BACKWARDS INCOMPATIBLE
   primitive types.  this includes modifying the major/minor code or
   combinations/regions and binary objects
 
+* make benchmarks scale over time by performing multi-resolution
+  raytrace iterations of increasing size
 
 ---
 
