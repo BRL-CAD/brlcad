@@ -48,6 +48,25 @@ struct shadework {
 	fastf_t		sw_frametime;	/* frame time delta off 1st frame */
 	fastf_t		sw_pixeltime;	/* pixel time delta off 1st pixel of 1st frame */
 	struct seg	*sw_segs;	/* segs which made partition */
+/*
+ * The following is experimental.  DO NOT USE
+ */
+#define	SW_SET_TRANSMIT		0x01
+#define SW_SET_REFLECT		0x02
+#define SW_SET_REFRAC_INDEX	0x04
+#define SW_SET_EXTINCTION	0x10
+#define SW_SET_AMBIENT		0x20
+#define SW_SET_EMISSION		0x40
+	int		sw_phong_set_vector;
+	fastf_t		sw_phong_transmit;
+	fastf_t		sw_phong_reflect;
+	fastf_t		sw_phong_ri;
+	fastf_t		sw_phong_extinction;
+	fastf_t		sw_phong_ambient;
+	fastf_t		sw_phong_emission;
+/*
+ * End of experimental
+ */
 };
 
 BU_EXTERN(void		pr_shadework, (CONST char *str, CONST struct shadework *swp));
