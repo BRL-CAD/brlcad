@@ -1,9 +1,9 @@
 
 #	Makefile -- for Frame buffer utilities
 
-#	last edit:	86/06/16	Gary S. Moss
+#	last edit:	86/06/17	Gary S. Moss
 
-#	SCCS ID:	@(#)Makefile	1.20
+#	SCCS ID:	@(#)Makefile	1.21
 
 PRODUCTS= pp-fb fbclear fbgrid rle-fb fb-rle fbcmap
 HEADERS =
@@ -81,17 +81,15 @@ install:	all
 	@for i in ${PRODUCTS} fbzoom ; \
 	do	if cmp -s ${BINDIR}/$$i $$i; \
 		then	echo $$i unchanged; \
-		else	${INS} $$i ${BINDIR}; \
+		else	${INS} $$i ${BINDIR} && echo $$i installed in ${BINDIR}; \
 			chmod ${BINPERM} ${BINDIR}/$$i ; \
-			echo $$i installed in ${BINDIR}; \
 		fi \
 	done
 	@for i in ${MANUALS} ; \
 	do	if cmp -s ${MANDIR}/$$i $$i; \
 		then	echo $$i unchanged; \
-		else	${INS} $$i ${MANDIR}; \
+		else	${INS} $$i ${MANDIR} && echo $$i installed in ${MANDIR}; \
 			chmod ${MANPERM} ${MANDIR}/$$i ; \
-			echo $$i installed in ${MANDIR}; \
 		fi \
 	done
 	-@if vax; \
