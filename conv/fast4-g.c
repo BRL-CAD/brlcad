@@ -2757,11 +2757,11 @@ make_bot_object()
 	count = bot_vertex_fuse( &bot_ip );
 	if( count )
 		(void)bot_condense( &bot_ip );
-
+#if 0
 	count = bot_face_fuse( &bot_ip );
 	if( count )
 		bu_log( "\t%d duplicate faces eliminated\n", count );
-
+#endif
 	BU_LIST_INIT( &bot_region.l );
 
 	make_solid_name( name , BOT , element_id , comp_id , group_id , 0 );
@@ -3333,6 +3333,8 @@ char *output_file;
 {
 	struct db_i *dbip;
 	struct directory *dp;
+
+	bu_log( "Cleaning up please wait.....\n" );
 
 	if ((dbip = db_open( output_file , "rw")) == DBI_NULL)
 	{
