@@ -69,6 +69,7 @@ in all countries except the USA.  All rights reserved.";
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
+#include "libtermio.h"
 #include "./ged.h"
 #include "./titles.h"
 #include "./mged_solid.h"
