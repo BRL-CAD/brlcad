@@ -602,7 +602,7 @@ int	ncpu;
 		/*  Stack size per proc comes from RLIMIT_STACK (64MBytes). */
 		new = sproc( bu_sgi_func, PR_SALL, func );
 #else
-		new = sprocsp( bu_sgi_func, PR_SALL, func, NULL, 4*1024*1024 );
+		new = sprocsp( bu_sgi_func, PR_SALL, (void *)func, NULL, 4*1024*1024 );
 #endif
 		if( new < 0 )  {
 			perror("sproc");
