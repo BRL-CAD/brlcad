@@ -2514,7 +2514,7 @@ nmg_fu_touchingloops(rs->fu2);
 	 *  to use the edge_g structure of the intersection line (ray).
 	 */
 	if( NMG_V_ASSESSMENT_PREV(assessment) == NMG_E_ASSESSMENT_ON_REV )  {
-		eu = nmg_find_eu_with_vu_in_lu( nmg_find_lu_of_vu(vu), vu );
+		eu = nmg_find_eu_of_vu(vu);
 		eu = RT_LIST_PLAST_CIRC( edgeuse, eu );
 		NMG_CK_EDGEUSE(eu);
 		if( rs->eg_p && eu->e_p->eg_p != rs->eg_p )  {
@@ -2523,7 +2523,7 @@ rt_log("force prev eu to ray\n");
 		}
 	}
 	if( NMG_V_ASSESSMENT_NEXT(assessment) == NMG_E_ASSESSMENT_ON_FORW )  {
-		eu = nmg_find_eu_with_vu_in_lu( nmg_find_lu_of_vu(vu), vu );
+		eu = nmg_find_eu_of_vu(vu);
 		NMG_CK_EDGEUSE(eu);
 		if( rs->eg_p && eu->e_p->eg_p != rs->eg_p )  {
 rt_log("force next eu to ray\n");
