@@ -157,6 +157,10 @@ HIDDEN double	ylim_view = 1.0;
 /* lighting parameters */
 HIDDEN float amb_three[] = {0.3, 0.3, 0.3, 1.0};
 
+#if USE_SURVICE_MODS
+HIDDEN float light0_direction[] = {0.0, 0.0, 1.0, 0.0};
+HIDDEN float light0_diffuse[] = {1.0, 1.0, 1.0, 1.0}; /* white */
+#else
 HIDDEN float light0_position[] = {100.0, 200.0, 100.0, 0.0};
 HIDDEN float light1_position[] = {100.0, 30.0, 100.0, 0.0};
 HIDDEN float light2_position[] = {-100.0, 20.0, 20.0, 0.0};
@@ -166,6 +170,7 @@ HIDDEN float light0_diffuse[] = {0.70, 0.70, 0.70, 1.0}; /* white */
 HIDDEN float light1_diffuse[] = {0.60, 0.10, 0.10, 1.0}; /* red */
 HIDDEN float light2_diffuse[] = {0.10, 0.30, 0.10, 1.0}; /* green */
 HIDDEN float light3_diffuse[] = {0.10, 0.10, 0.30, 1.0}; /* blue */
+#endif
 
 void
 ogl_fogHint(dmp, fastfog)
@@ -792,6 +797,15 @@ struct dm *dmp;
   if (dmp->dm_debugLevel)
     bu_log("ogl_drawEnd\n");
 
+
+#if USE_SURVICE_MODS
+  if (dmp->dm_light) {
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    glLightfv(GL_LIGHT0, GL_POSITION, light0_direction);
+  }
+#endif
+
   if(((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer ){
     glXSwapBuffers(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 		   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win);
@@ -915,6 +929,7 @@ int which_eye;
   glTranslatef( 0.0, 0.0, -1.0 );
   glMultMatrixf( gtmat );
 
+#if !USE_SURVICE_MODS
   /* Make sure that new matrix is applied to the lights */
   if (dmp->dm_light) {
     glLightfv(GL_LIGHT0, GL_POSITION, light0_position);
@@ -922,6 +937,7 @@ int which_eye;
     glLightfv(GL_LIGHT2, GL_POSITION, light2_position);
     glLightfv(GL_LIGHT3, GL_POSITION, light3_position);
   }
+#endif
 
   return TCL_OK;
 }
@@ -1159,13 +1175,24 @@ int strict;
       material[1] = ( g / 255.0) * .2;
       material[2] = ( b / 255.0) * .2;
       material[3] = 1.0;
+
+#if USE_SURVICE_MODS
+      glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, material);
+      glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, material);
+#else
       glMaterialfv(GL_FRONT, GL_AMBIENT, material);
       glMaterialfv(GL_FRONT, GL_SPECULAR, material);
+#endif
 
       material[0] *= 3.0;
       material[1] *= 3.0;
       material[2] *= 3.0;
+
+#if USE_SURVICE_MODS
+      glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, material);
+#else
       glMaterialfv(GL_FRONT, GL_DIFFUSE, material);
+#endif
     }else{
       glColor3ub( (GLubyte)r,  (GLubyte)g,  (GLubyte)b );
     }
@@ -1581,8 +1608,15 @@ int lighting_on;
     glLightModelfv(GL_LIGHT_MODEL_AMBIENT, amb_three);
     glLightModeli(GL_LIGHT_MODEL_LOCAL_VIEWER, GL_FALSE);
 
-    /* light positions specified in ogl_newrot */
+#if USE_SURVICE_MODS
+    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, light0_diffuse);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, light0_diffuse);
 
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+#else
+    /* light positions specified in ogl_newrot */
     glLightfv(GL_LIGHT0, GL_SPECULAR, light0_diffuse);
     glLightfv(GL_LIGHT0, GL_DIFFUSE, light0_diffuse);
     glLightfv(GL_LIGHT1, GL_SPECULAR, light1_diffuse);
@@ -1595,8 +1629,9 @@ int lighting_on;
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
     glEnable(GL_LIGHT1);
-    glEnable(GL_LIGHT3);
     glEnable(GL_LIGHT2);
+    glEnable(GL_LIGHT3);
+#endif
   }
 
   return TCL_OK;

@@ -50,6 +50,22 @@
 #include "raytrace.h"
 #include "rtgeom.h"
 #include "solid.h"
+
+#if USE_SURVICE_MODS
+#define DGO_SHADED_MODE_BOTS 1
+#define DGO_SHADED_MODE_ALL 2
+static union tree *dgo_bot_check_region_end();
+static union tree *dgo_bot_check_leaf();
+
+struct dgo_bot_check_data {
+  struct dg_obj *dgop;
+  Tcl_Interp *interp;
+};
+
+int dgo_shaded_mode_cmd();
+static int dgo_shaded_mode_tcl();
+#endif
+
 /* XXX this should be done else where? */
 int rt_pg_plot(struct bu_list *, struct rt_db_internal *,
 	       const struct rt_tess_tol *, const struct bn_tol *);
@@ -170,6 +186,9 @@ static struct bu_cmdtab dgo_cmds[] = {
 	{"rtabort",		dgo_rtabort_tcl},
 	{"rtcheck",		dgo_rtcheck_tcl},
 	{"rtedge",		dgo_rt_tcl},
+#if USE_SURVICE_MODS
+	{"shaded_mode",		dgo_shaded_mode_tcl},
+#endif
 #if 0
 	{"tol",			dgo_tol_tcl},
 #endif
@@ -567,7 +586,49 @@ dgo_draw_cmd(struct dg_obj	*dgop,
 	 *  Silently skip any leading options (which start with minus signs).
 	 */
 	dgo_eraseobjpath(dgop, interp, argc, argv, LOOKUP_QUIET, 0);
+#if USE_SURVICE_MODS
+	/*
+	 * If asking for wireframe and in shaded_mode,
+	 * draw shaded polygons for each object's primitives if possible.
+	 *
+	 * Note -
+	 * If shaded_mode is DGO_SHADED_MODE_BOTS, only BOTS and polysolids
+	 * will be shaded. The rest is drawn as wireframe.
+	 * If shaded_mode is DGO_SHADED_MODE_ALL, everything except pipe solids
+	 * are drawn as shaded polygons.
+	 */
+	if (kind == 1 && dgop->dgo_shaded_mode) {
+	  int  i;
+	  int  ac = 1;
+	  char *av[2];
+	  struct directory *dp;
+	  struct dgo_bot_check_data bcd;
+
+	  bcd.dgop = dgop;
+	  bcd.interp = interp;
+	  av[1] = (char *)0;
+
+	  for (i = 0; i < argc; ++i) {
+	    if ((dp = db_lookup(dgop->dgo_wdbp->dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL)
+	      continue;
+
+	    av[0] = argv[i];
+
+	    db_walk_tree(dgop->dgo_wdbp->dbip,
+			 ac,
+			 (const char **)av,
+			 1,
+			 &dgop->dgo_wdbp->wdb_initial_tree_state,
+			 0,
+			 dgo_bot_check_region_end,
+			 dgo_bot_check_leaf,
+			 (genptr_t)&bcd);
+	  }
+	} else
+	  dgo_drawtrees(dgop, interp, argc, argv, kind);
+#else
 	dgo_drawtrees(dgop, interp, argc, argv, kind);
+#endif
 	dgo_color_soltab(&dgop->dgo_headSolid);
 
 	return TCL_OK;
@@ -2004,6 +2065,62 @@ dgo_nirt_tcl(ClientData	clientData,
 	return dgo_nirt_cmd(dgop, vop, interp, argc-2, argv+2);
 }
 
+#if USE_SURVICE_MODS
+int
+dgo_shaded_mode_cmd(struct dg_obj	*dgop,
+		    Tcl_Interp		*interp,
+		    int			argc,
+		    char 		**argv)
+{
+  struct bu_vls vls;
+
+  /* get shaded mode */
+  if (argc == 1) {
+    bu_vls_init(&vls);
+    bu_vls_printf(&vls, "%d", dgop->dgo_shaded_mode);
+    Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)0);
+    bu_vls_free(&vls);
+    return TCL_OK;
+  }
+
+  /* set shaded mode */
+  if (argc == 2) {
+    int shaded_mode;
+
+    if (sscanf(argv[1], "%d", &shaded_mode) != 1)
+      goto bad;
+
+    if (shaded_mode < 0 || 2 < shaded_mode)
+      goto bad;
+
+    dgop->dgo_shaded_mode = shaded_mode;
+    return TCL_OK;
+  }
+
+ bad:
+  bu_vls_init(&vls);
+  bu_vls_printf(&vls, "helplib_alias dgo_shaded_mode %s", argv[0]);
+  Tcl_Eval(interp, bu_vls_addr(&vls));
+  bu_vls_free(&vls);
+  return TCL_ERROR;
+}
+
+/*
+ * Usage:
+ *        procname 
+ */
+static int
+dgo_shaded_mode_tcl(ClientData	clientData,
+		    Tcl_Interp	*interp,
+		    int		argc,
+		    char	**argv)
+{
+	struct dg_obj *dgop = (struct dg_obj *)clientData;
+
+	return dgo_shaded_mode_cmd(dgop, interp, argc-1, argv+1);
+}
+#endif
+
 #if 0
 /* skeleton functions for dg_obj methods */
 int
@@ -2280,10 +2397,6 @@ dgo_nmg_region_end(tsp, pathp, curtree, client_data)
 
 	  Tcl_AppendResult(dgcdp->interp, "dgo_nmg_region_end() path='", sofar,
 			   "'\n", (char *)NULL);
-	  bu_free((genptr_t)sofar, "path string");
-	} else {
-	  char	*sofar = db_path_to_string(pathp);
-	  bu_log( "region: %s\n", sofar );
 	  bu_free((genptr_t)sofar, "path string");
 	}
 
@@ -3631,3 +3744,56 @@ dgo_pr_wait_status(Tcl_Interp	*interp,
 	Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), "\n", (char *)NULL);
 	bu_vls_free(&tmp_vls);
 }
+
+#if USE_SURVICE_MODS
+static union tree *
+dgo_bot_check_region_end(register struct db_tree_state	*tsp,
+			 struct db_full_path		*pathp,
+			 union tree			*curtree,
+			 genptr_t			client_data)
+{
+  return curtree;
+}
+
+static union tree *
+dgo_bot_check_leaf(struct db_tree_state		*tsp,
+		   struct db_full_path		*pathp,
+		   struct rt_db_internal	*ip,
+		   genptr_t			client_data)
+{
+  union tree *curtree;
+  int  ac = 1;
+  char *av[2];
+  struct dgo_bot_check_data *bcdp = (struct dgo_bot_check_data *)client_data;
+
+  av[0] = db_path_to_string(pathp);
+  av[1] = (char *)0;
+
+  /* Indicate success by returning something other than TREE_NULL */
+  RT_GET_TREE(curtree, tsp->ts_resp);
+  curtree->magic = RT_TREE_MAGIC;
+  curtree->tr_op = OP_NOP;
+
+  switch (bcdp->dgop->dgo_shaded_mode) {
+  case DGO_SHADED_MODE_BOTS:
+    if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD &&
+	(ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_BOT ||
+	 ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_POLY))
+      dgo_drawtrees(bcdp->dgop, bcdp->interp, ac, av, 3);
+    else
+      dgo_drawtrees(bcdp->dgop, bcdp->interp, ac, av, 1);
+
+    break;
+  case DGO_SHADED_MODE_ALL:
+    if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD &&
+	ip->idb_minor_type != DB5_MINORTYPE_BRLCAD_PIPE)
+	 dgo_drawtrees(bcdp->dgop, bcdp->interp, ac, av, 3);
+    else
+      dgo_drawtrees(bcdp->dgop, bcdp->interp, ac, av, 1);
+
+    break;
+  }
+
+  return curtree;
+}
+#endif
