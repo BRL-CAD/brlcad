@@ -2020,6 +2020,12 @@ char	**argv;
       ((dbip = db_open( argv[1], "r"   )) == DBI_NULL ) )  {
     char line[128];
 
+    /* check to see if we can access the database */
+    if (access(argv[1], R_OK|W_OK) != 0) {
+      perror("opendb");
+      return TCL_ERROR;
+    }
+
     if(mged_init_flag){
       if(classic_mged){
 	perror( argv[1] );
