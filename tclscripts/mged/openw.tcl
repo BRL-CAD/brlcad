@@ -1778,37 +1778,16 @@ hoc_register_menu_data "ViewRing" "Add View" "Add View"\
 		{ see_also "dm" } }
 	}
 
+	# BEGIN TOOLS MENU
+
+	# BEGIN CONTROL PANELS (control behavior and settings)
+
 	menu .$id.menubar.tools -title "Tools" -tearoff $mged_default(tearoff_menus)
 	.$id.menubar.tools add command -label "ADC Control Panel" -underline 0\
 			-command "init_adc_control $id"
 	hoc_register_menu_data "Tools" "ADC Control Panel" "ADC Control Panel"\
 			{ { summary "Tool for controlling the angle distance cursor." }
 	{ see_also "adc" } }
-	.$id.menubar.tools add command -label "Grid Control Panel" -underline 0\
-			-command "init_grid_control $id"
-	hoc_register_menu_data "Tools" "Grid Control Panel" "Grid Control Panel"\
-			{ { summary "Tool for setting grid parameters." }
-	{ see_also "rset" } }
-	.$id.menubar.tools add command -label "Query Ray Control Panel" -underline 0\
-			-command "init_qray_control $id"
-	hoc_register_menu_data "Tools" "Query Ray Control Panel" "Query Ray Control Panel"\
-			{ { summary "Tool for setting query ray parameters." }
-	{ see_also "qray" } }
-	.$id.menubar.tools add command -label "Raytrace Control Panel" -underline 0\
-			-command "init_Raytrace $id"
-	hoc_register_menu_data "Tools" "Raytrace Control Panel" "Raytrace Control Panel"\
-			{ { summary "Tool for raytracing." }
-	{ see_also rt } }
-
-	.$id.menubar.tools add command -label "Build Pattern Tool" -underline 0\
-			-command "pattern_control .#auto"
-	hoc_register_menu_data "Tools" "Build Pattern Tool" "Build Pattern Tool"\
-			{ { summary "A tool for building a repetitive pattern from an existing object." } }
-
-	.$id.menubar.tools add command -label "Overlap Tool" -underline 0\
-			-command "overlap_tool $id"
-	hoc_register_menu_data "Tools" "Overlap Tool" "Overlap Tool"\
-			{ { summary "A tool for discovering and correcting overlapping regions." } }
 
 	.$id.menubar.tools add command -label "AnimMate Control Panel" -underline 1\
 			-command "animmate $id .$id"
@@ -1816,36 +1795,85 @@ hoc_register_menu_data "ViewRing" "Add View" "Add View"\
 			{ { summary "Tool for building animation scripts." }
 	{ see_also animmate } }
 
+	.$id.menubar.tools add command -label "Grid Control Panel" -underline 0\
+			-command "init_grid_control $id"
+	hoc_register_menu_data "Tools" "Grid Control Panel" "Grid Control Panel"\
+			{ { summary "Tool for setting grid parameters." }
+	{ see_also "rset" } }
+
+	.$id.menubar.tools add command -label "Query Ray Control Panel" -underline 0\
+			-command "init_qray_control $id"
+	hoc_register_menu_data "Tools" "Query Ray Control Panel" "Query Ray Control Panel"\
+			{ { summary "Tool for setting query ray parameters." }
+	{ see_also "qray" } }
+
+	.$id.menubar.tools add command -label "Raytrace Control Panel" -underline 0\
+			-command "init_Raytrace $id"
+	hoc_register_menu_data "Tools" "Raytrace Control Panel" "Raytrace Control Panel"\
+			{ { summary "Tool for raytracing." }
+	{ see_also rt } }
+
+	# BEGIN TOOLS (perform operation (subtle (bogus) difference))
+
+	.$id.menubar.tools add separator
+
+	.$id.menubar.tools add command -label "Build Pattern Tool" -underline 0\
+			-command "pattern_control .#auto"
+	hoc_register_menu_data "Tools" "Build Pattern Tool" "Build Pattern Tool"\
+			{ { summary "A tool for building a repetitive pattern from an existing object." } }
+
+	.$id.menubar.tools add command -label "Color Selector" -underline 1\
+			-command "cadColorWidget tool .$id colorEditTool\
+			-title \"Color Selector\"\
+			-initialcolor black"
+	hoc_register_menu_data "Tools" "Color Selector" "Color Selector"\
+			{ { summary "Tool for creating, displaying, and selecting colors." } }
+
+	.$id.menubar.tools add command -label "Geometry Browser" -underline 0\
+			-command "geometree"
+	hoc_register_menu_data "Tools" "Geometry Browser" "Geometry Browser"\
+			{ { summary "Tool for browsing the geometry in a database." } }
+
+	.$id.menubar.tools add command -label "Overlap Tool" -underline 0\
+			-command "overlap_tool $id"
+	hoc_register_menu_data "Tools" "Overlap Tool" "Overlap Tool"\
+			{ { summary "A tool for discovering and correcting overlapping regions." } }
+
+	# BEGIN ACTIONS (perform some operation (subtle (bogus) difference))
+
+	.$id.menubar.tools add separator
+
 	.$id.menubar.tools add command -label "Upgrade Database..." -underline 1\
 			-command "dbupgrade"
 	hoc_register_menu_data "Tools" "Upgrade Database..." "Upgrade Database..."\
 			{ { summary "Upgrade to the current database format." }
 	{ see_also dbupgrade } }
 
+# XXX These are already included on the edit menu! -- csm
+#	.$id.menubar.tools add separator
+#	.$id.menubar.tools add command -label "Prim Editor" -underline 0\
+#			-command "init_edit_solid $id"
+#	hoc_register_menu_data "Tools" "Prim Editor" "Prim Editor"\
+#			{ { summary "Tool for creating/editing primitives." } }
+#	.$id.menubar.tools add command -label "Combination Editor" -underline 0\
+#			-command "init_comb $id"
+#	hoc_register_menu_data "Tools" "Combination Editor" "Combination Editor"\
+#			{ { summary "Tool for creating/editing combinations." } }
+
+	# BEGIN WINDOWS (display main windows)
+
 	.$id.menubar.tools add separator
-	.$id.menubar.tools add command -label "Prim Editor" -underline 0\
-			-command "init_edit_solid $id"
-	hoc_register_menu_data "Tools" "Prim Editor" "Prim Editor"\
-			{ { summary "Tool for creating/editing primitives." } }
-	.$id.menubar.tools add command -label "Combination Editor" -underline 0\
-			-command "init_comb $id"
-	hoc_register_menu_data "Tools" "Combination Editor" "Combination Editor"\
-			{ { summary "Tool for creating/editing combinations." } }
-	.$id.menubar.tools add command -label "Color Editor" -underline 1\
-			-command "cadColorWidget tool .$id colorEditTool\
-			-title \"Color Editor\"\
-			-initialcolor black"
-	hoc_register_menu_data "Tools" "Color Editor" "Color Editor"\
-			{ { summary "Tool for creating/displaying colors." } }
-	.$id.menubar.tools add separator
+
 	.$id.menubar.tools add command -label "Command Window" -underline 6\
 			-command "raise .$id"
 	hoc_register_menu_data "Tools" "Command Window" "Command Window"\
 			{ { summary "Raise the command window." } }
-	.$id.menubar.tools add command -label "Geometry Window" -underline 7\
+	.$id.menubar.tools add command -label "Graphics Window" -underline 7\
 			-command "raise $mged_gui($id,top)"
-	hoc_register_menu_data "Tools" "Geometry Window" "Geometry Window"\
+	hoc_register_menu_data "Tools" "Graphics Window" "Graphics Window"\
 			{ { summary "Raise the geometry window." } }
+
+	# END TOOLS MENU
 
 	menu .$id.menubar.help -title "Help" -tearoff $mged_default(tearoff_menus)
 	.$id.menubar.help add command -label "Dedication" -underline 0\
@@ -2291,10 +2319,15 @@ proc gui_destroy args {
 	catch { destroy $mged_gui($id,top) }
 	catch { destroy .$id }
 
+# this will disable the File->Close option
+# XXX this should be disabled initially, and then enabled during an opendb or
+# a file->open action.
+#
 	if { [llength $mged_players] == 1 } {
 		set id [lindex $mged_players 0]
 		.$id.menubar.file entryconfigure 14 -state disabled
 	}
+
 }
 
 proc reconfig_gui_default { id } {
