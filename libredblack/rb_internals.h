@@ -119,32 +119,27 @@
 /*
  *	Functions internal to LIBREDBLACK
  */
-struct rb_node *_rb_neighbor	(
-				    struct rb_node	*node,
-				    int			order,
-				    int			sense
-				);
-void _rb_rot_left		(
-				    struct rb_node	*x,
-				    int order
-				);
-void _rb_rot_right		(
-				    struct rb_node	*y,
-				    int order
-				);
-struct rb_node *_rb_search	(
-				    struct rb_node	*root,
-				    int			order_nm,
-				    int			(*order)(),
-				    void		*data
-				);
-void _rb_walk			(
-				    rb_tree		*tree,
-				    int			order,
-				    void		(*visit)(),
-				    int			what_to_visit,
-				    int			trav_type
-				);
+RB_EXTERN(struct rb_node *_rb_neighbor,	(struct rb_node	*node,
+					 int		order,
+					 int		sense
+					));
+RB_EXTERN(void _rb_rot_left,		(struct rb_node	*x,
+					 int		order
+					));
+RB_EXTERN(void _rb_rot_right,		(struct rb_node	*y,
+					 int		order
+					));
+RB_EXTERN(struct rb_node *_rb_search,	(struct rb_node	*root,
+			    		 int		order_nm,
+					 int		(*order)(),
+					 void		*data
+					));
+RB_EXTERN(void _rb_walk,		(rb_tree	*tree,
+			    		 int		order,
+					 void		(*visit)(),
+					 int		what_to_visit,
+					 int		trav_type
+					));
 
 #endif /* RB_INTERNALS_H */
 
