@@ -224,12 +224,13 @@ typedef long bitv_t;
 #define SQRT_SMALL_FASTF	1.00E-37
 #define SMALL SQRT_SMALL_FASTF
 #endif
+
 /*
  *  Definitions for big-endian -vs- little-endian.
  *	BIG_ENDIAN:	Byte [0] is on left side of word (msb).
  *	LITTLE_ENDIAN:	Byte [0] is on right side of word (lsb).
 
-/*  Bit vector mask */
+ *  Bit vector mask */
 #define BITV_MASK	((1<<BITV_SHIFT)-1)
 
 /*
