@@ -1,3 +1,4 @@
+#define OLD_NMG	1	/* Tags Mike's changes */
 /*
  *			N M G . H
  *
@@ -170,6 +171,8 @@ struct nmg_ptbl {
 #define NMG_SHELL_A_MAGIC	0x65207761
 #define NMG_FACE_MAGIC		45454545
 #define NMG_FACE_G_MAGIC	0x726b6e65
+#define NMG_FACE_G_PLANE_MAGIC	0x726b6e65
+#define NMG_FACE_G_SNURB_MAGIC	0x736e7262	/* was RT_SNURB_MAGIC */
 #define NMG_FACEUSE_MAGIC	56565656
 #define NMG_FACEUSE_A_MAGIC	0x20476f64
 #define NMG_LOOP_MAGIC		67676767
@@ -178,12 +181,15 @@ struct nmg_ptbl {
 #define NMG_LOOPUSE_A_MAGIC	0x68657265
 #define NMG_EDGE_MAGIC		33333333
 #define NMG_EDGE_G_MAGIC	0x6c696768
+#define NMG_EDGE_G_LSEG_MAGIC	0x6c696768
+#define NMG_EDGE_G_CNURB_MAGIC	0x636e7262	/* was RT_CNURB_MAGIC */
 #define NMG_EDGEUSE_MAGIC	90909090
 #define NMG_EDGEUSE_A_MAGIC	0x20416e64
 #define NMG_VERTEX_MAGIC	123123
 #define NMG_VERTEX_G_MAGIC	727737707
 #define NMG_VERTEXUSE_MAGIC	12341234
 #define NMG_VERTEXUSE_A_MAGIC	0x69676874
+#define NMG_KNOT_VECTOR_MAGIC	0x6b6e6f74	/* aka RT_KNOT_VECTOR_MAGIC */
 
 /* macros to check/validate a structure pointer
  */
@@ -200,6 +206,8 @@ struct nmg_ptbl {
 #define NMG_CK_SHELL_A(_p)	NMG_CKMAG(_p, NMG_SHELL_A_MAGIC, "shell_a")
 #define NMG_CK_FACE(_p)		NMG_CKMAG(_p, NMG_FACE_MAGIC, "face")
 #define NMG_CK_FACE_G(_p)	NMG_CKMAG(_p, NMG_FACE_G_MAGIC, "face_g")
+#define NMG_CK_FACE_G_PLANE(_p)	NMG_CKMAG(_p, NMG_FACE_G_PLANE_MAGIC, "face_g plane")
+#define NMG_CK_FACE_G_SNURB(_p)	NMG_CKMAG(_p, NMG_FACE_G_SNURB_MAGIC, "face_g snurb")
 #define NMG_CK_FACEUSE(_p)	NMG_CKMAG(_p, NMG_FACEUSE_MAGIC, "faceuse")
 #define NMG_CK_FACEUSE_A(_p)	NMG_CKMAG(_p, NMG_FACEUSE_A_MAGIC, "faceuse_a")
 #define NMG_CK_LOOP(_p)		NMG_CKMAG(_p, NMG_LOOP_MAGIC, "loop")
@@ -208,6 +216,8 @@ struct nmg_ptbl {
 #define NMG_CK_LOOPUSE_A(_p)	NMG_CKMAG(_p, NMG_LOOPUSE_A_MAGIC, "loopuse_a")
 #define NMG_CK_EDGE(_p)		NMG_CKMAG(_p, NMG_EDGE_MAGIC, "edge")
 #define NMG_CK_EDGE_G(_p)	NMG_CKMAG(_p, NMG_EDGE_G_MAGIC, "edge_g")
+#define NMG_CK_EDGE_G_LSEG(_p)	NMG_CKMAG(_p, NMG_EDGE_G_LSEG_MAGIC, "edge_g_lseg")
+#define NMG_CK_EDGE_G_CNURB(_p)	NMG_CKMAG(_p, NMG_EDGE_G_CNURB_MAGIC, "edge_g_cnurb")
 #define NMG_CK_EDGEUSE(_p)	NMG_CKMAG(_p, NMG_EDGEUSE_MAGIC, "edgeuse")
 #define NMG_CK_EDGEUSE_A(_p)	NMG_CKMAG(_p, NMG_EDGEUSE_A_MAGIC, "edgeuse_a")
 #define NMG_CK_VERTEX(_p)	NMG_CKMAG(_p, NMG_VERTEX_MAGIC, "vertex")
@@ -228,6 +238,22 @@ struct nmg_ptbl {
 	(_p)->eumate_p->vu_p->up.eu_p != (_p)->eumate_p) {\
 	    	rt_log("in %s at %d edgeuse lost vertexuse\n",\
 	    		 __FILE__, __LINE__); rt_bomb("bye");}
+
+/*
+ *			K N O T _ V E C T O R
+ *
+ *  Definition of a knot vector.
+ *  Not found independently, but used in the cnurb and snurb structures.
+ *  (Exactly the same as the definition in nurb.h)
+ */
+#ifndef NURB_H
+struct knot_vector {
+	int		magic;
+	int		k_size;		/* knot vector size */
+	fastf_t		* knots;	/* pointer to knot vector  */
+	long		index;		/* struct # in this model */
+};
+#endif
 
 /*
  *	N O T I C E !
@@ -326,10 +352,20 @@ struct shell_a {
  *  Note: there will always be exactly two faceuse's using a face.
  *  To find them, go up fu_p for one, then across fumate_p to other.
  */
+#define face_g			face_g_plane	/* compat */
+#define edge_g			edge_g_lseg	/* compat */
 struct face {
 	struct rt_list		l;	/* faces in face_g's f_hd list */
 	struct faceuse		*fu_p;	/* Ptr up to one use of this face */
+#if OLD_NMG
 	struct face_g		*fg_p;	/* geometry */
+#else
+	union {
+		long		    *magic_p;	
+		struct face_g_plane *plane_p;
+		struct face_g_snurb *snurb_p;
+	} g;				/* geometry */
+#endif
 	int			flip;	/* !0 ==> flip normal of fg */
 	/* These might be better stored in a face_a (not faceuse_a!) */
 	/* These are not stored on disk */
@@ -338,15 +374,24 @@ struct face {
 	long			index;	/* struct # in this model */
 };
 
-struct face_g {
+struct face_g_plane {
 	long			magic;
 	struct rt_list		f_hd;	/* list of faces sharing this surface */
 	plane_t			N;	/* Plane equation (incl normal) */
-#if 0
-/* XXX This moves to struct face */
-	point_t			min_pt;	/* minimums of bounding box */
-	point_t			max_pt;	/* maximums of bounding box */
-#endif
+	long			index;	/* struct # in this model */
+};
+
+/* !OLD_NMG */
+struct face_g_snurb {
+	struct rt_list		l;	/* magic, forw */
+	struct rt_list		f_hd;	/* list of faces sharing this surface */
+	int			order[2]; /* surface order [0] = u, [1] = v */
+	struct knot_vector	u_knots;/* surface knot vectors */
+	struct knot_vector	v_knots;/* surface knot vectors */
+	/* surface control points */
+	int			s_size[2]; /* mesh size, u,v */
+	int			pt_type; /* surface point type */
+	fastf_t			*ctl_points; /* array [size[0]*size[1]] */
 	long			index;	/* struct # in this model */
 };
 
@@ -355,16 +400,23 @@ struct faceuse {
 	struct shell		*s_p;	/* owning shell */
 	struct faceuse		*fumate_p;    /* opposite side of face */
 	int			orientation;  /* rel to face geom defn */
+#if !OLD_NMG
+	int			outside; /* RESERVED for future:  See Lee Butler */
+#endif
 	struct face		*f_p;	/* face definition and attributes */
+#if OLD_NMG
 	struct faceuse_a	*fua_p;	/* attributess */
+#endif
 	struct rt_list		lu_hd;	/* list of loops in face-use */
 	long			index;	/* struct # in this model */
 };
 
+#if OLD_NMG
 struct faceuse_a {
 	long			magic;
 	long			index;	/* struct # in this model */
 };
+#endif
 
 /* Returns a 3-tuple (vect_t), given faceuse and state of flip flags */
 #define NMG_GET_FU_NORMAL(_N, _fu)	{ \
@@ -468,20 +520,56 @@ struct loopuse_a {
  *  while the second form gives a vertexuse in the faceuse of the correct
  *  orientation.  If going on to the vertex (vu_p->v_p), both forms
  *  are identical.
+ *
+ *  An edge_g_lseg structure represents a line in 3-space.  All edges on that
+ *  line should share the same edge_g.
+ *
+ *  An edge occupies the range eu->param to eu->eumate_p->param in it's
+ *  geometry's parameter space.  (cnurbs only)
  */
 struct edge {
+#if OLD_NMG
 	long			magic;
+#else
+	struct rt_list		l;
+#endif
 	struct edgeuse		*eu_p;	/* Ptr to one use of this edge */
+#if OLD_NMG
 	struct edge_g		*eg_p;  /* geometry */
-	long			is_real;/* artifact or modeled edge */
+#else
+	union {
+		long		    *magic_p;
+		struct edge_g_lseg  *lseg_p;
+		struct edge_g_cnurb *cnurb_p;
+	} g;				/* geometry */
+#endif
+	long			is_real;/* artifact or modeled edge (from tessellator) */
 	long			index;	/* struct # in this model */
 };
 
-struct edge_g {
+struct edge_g_lseg {
 	long			magic;
+#if OLD_NMG
 	long			usage;	/* # of uses of this geometry */
-	point_t			e_pt;	/* parametric equation of the edge */
+#else
+	struct rt_list		e_hd;	/* heads list of edges on this line */
+#endif
+	point_t			e_pt;	/* parametric equation of the line */
 	vect_t			e_dir;
+	long			index;	/* struct # in this model */
+};
+
+/* !OLD_NMG */
+/* The ctl_points on this curve are (u,v) values on the face's surface */
+struct edge_g_cnurb {
+	long			magic;
+	struct rt_list		e_hd;	/* heads list of edges on this curve */
+	int			order;	/* Curve Order */
+	struct knot_vector	knot;	/* curve knot vector */
+	/* curve control polygon */
+	int			c_size;	/* number of ctl points */
+	int			pt_type;/* curve point type */
+	fastf_t			*ctl_points; /* array [c_size] */
 	long			index;	/* struct # in this model */
 };
 
@@ -495,16 +583,23 @@ struct edgeuse {
 	struct edgeuse		*eumate_p;  /* eu on other face or other end of wire*/
 	struct edgeuse		*radial_p;  /* eu on radially adj. fu (null if wire)*/
 	struct edge		*e_p;	    /* edge definition and attributes */
-	struct edgeuse_a	*eua_p;	    /* parametric space geom */
+#if OLD_NMG
+	struct edgeuse_a	*eua_p;	    /* link to (parametric space) geom */
+#endif
 	int	  		orientation;/* compared to geom (null if wire) */
 	struct vertexuse	*vu_p;	    /* first vu of eu in this orient */
+#if !OLD_NMG
+	fastf_t			param;	/* parametric dist of starting vert */
+#endif
 	long			index;	/* struct # in this model */
 };
 
+#if OLD_NMG
 struct edgeuse_a {
 	long			magic;
 	long			index;	/* struct # in this model */
 };
+#endif
 
 /*
  *			V E R T E X
@@ -591,6 +686,8 @@ struct vertexuse_a {
 #define GET_SHELL_A(p,m)    {NMG_GETSTRUCT(p, shell_a); NMG_INCR_INDEX(p,m);}
 #define GET_FACE(p,m)	    {NMG_GETSTRUCT(p, face); NMG_INCR_INDEX(p,m);}
 #define GET_FACE_G(p,m)	    {NMG_GETSTRUCT(p, face_g); NMG_INCR_INDEX(p,m);}
+#define GET_FACE_G_PLANE(p,m) {NMG_GETSTRUCT(p, face_g_plane); NMG_INCR_INDEX(p,m);}
+#define GET_FACE_G_SNURB(p,m) {NMG_GETSTRUCT(p, face_g_snurb); NMG_INCR_INDEX(p,m);}
 #define GET_FACEUSE(p,m)    {NMG_GETSTRUCT(p, faceuse); NMG_INCR_INDEX(p,m);}
 #define GET_FACEUSE_A(p,m)  {NMG_GETSTRUCT(p, faceuse_a); NMG_INCR_INDEX(p,m);}
 #define GET_LOOP(p,m)	    {NMG_GETSTRUCT(p, loop); NMG_INCR_INDEX(p,m);}
@@ -599,6 +696,8 @@ struct vertexuse_a {
 #define GET_LOOPUSE_A(p,m)  {NMG_GETSTRUCT(p, loopuse_a); NMG_INCR_INDEX(p,m);}
 #define GET_EDGE(p,m)	    {NMG_GETSTRUCT(p, edge); NMG_INCR_INDEX(p,m);}
 #define GET_EDGE_G(p,m)	    {NMG_GETSTRUCT(p, edge_g); (p)->usage = 1; NMG_INCR_INDEX(p,m);}
+#define GET_EDGE_G_LSEG(p,m)  {NMG_GETSTRUCT(p, edge_g_lseg); NMG_INCR_INDEX(p,m);}
+#define GET_EDGE_G_CNURB(p,m) {NMG_GETSTRUCT(p, edge_g_cnurb); NMG_INCR_INDEX(p,m);}
 #define GET_EDGEUSE(p,m)    {NMG_GETSTRUCT(p, edgeuse); NMG_INCR_INDEX(p,m);}
 #define GET_EDGEUSE_A(p,m)  {NMG_GETSTRUCT(p, edgeuse_a); NMG_INCR_INDEX(p,m);}
 #define GET_VERTEX(p,m)	    {NMG_GETSTRUCT(p, vertex); NMG_INCR_INDEX(p,m);}
@@ -614,6 +713,8 @@ struct vertexuse_a {
 #define FREE_SHELL_A(p)	    NMG_FREESTRUCT(p, shell_a)
 #define FREE_FACE(p)	    NMG_FREESTRUCT(p, face)
 #define FREE_FACE_G(p)	    NMG_FREESTRUCT(p, face_g)
+#define FREE_FACE_G_PLANE(p) NMG_FREESTRUCT(p, face_g_plane)
+#define FREE_FACE_G_SNURB(p) NMG_FREESTRUCT(p, face_g_snurb)
 #define FREE_FACEUSE(p)	    NMG_FREESTRUCT(p, faceuse)
 #define FREE_FACEUSE_A(p)   NMG_FREESTRUCT(p, faceuse_a)
 #define FREE_LOOP(p)	    NMG_FREESTRUCT(p, loop)
@@ -622,6 +723,8 @@ struct vertexuse_a {
 #define FREE_LOOPUSE_A(p)   NMG_FREESTRUCT(p, loopuse_a)
 #define FREE_EDGE(p)	    NMG_FREESTRUCT(p, edge)
 #define FREE_EDGE_G(p)	    if (--((p)->usage) <= 0)  NMG_FREESTRUCT(p, edge_g)
+#define FREE_EDGE_G_LSEG(p)  NMG_FREESTRUCT(p, edge_g_lseg)
+#define FREE_EDGE_G_CNURB(p) NMG_FREESTRUCT(p, edge_g_cnurb)
 #define FREE_EDGEUSE(p)	    NMG_FREESTRUCT(p, edgeuse)
 #define FREE_EDGEUSE_A(p)   NMG_FREESTRUCT(p, edgeuse_a)
 #define FREE_VERTEX(p)	    NMG_FREESTRUCT(p, vertex)
@@ -727,7 +830,12 @@ struct nmg_struct_counts {
 	long	faceuse;
 	long	faceuse_a;
 	long	face;
+#if OLD_NMG
 	long	face_g;
+#else
+	long	face_g_plane;
+	long	face_g_snurb;
+#endif
 	long	loopuse;
 	long	loopuse_a;
 	long	loop;
@@ -735,7 +843,12 @@ struct nmg_struct_counts {
 	long	edgeuse;
 	long	edgeuse_a;
 	long	edge;
+#if OLD_NMG
 	long	edge_g;
+#else
+	long	edge_g_lseg;
+	long	edge_g_cnurb;
+#endif
 	long	vertexuse;
 	long	vertexuse_a;
 	long	vertex;
