@@ -1236,16 +1236,10 @@ XEvent *eventPtr;
   rt_vls_init(&cmd);
   save_dm_list = curr_dm_list;
 
-#if 1
   curr_dm_list = get_dm_list(eventPtr->xany.window);
 
   if(curr_dm_list == DM_LIST_NULL)
     goto end;
-
-#else
-  curr_dm_list = (struct dm_list *)clientData;
-  TkGLXwin_RefWinset(ref, GLX_NORMAL);
-#endif
 
   if(mged_variables.send_key && eventPtr->type == KeyPress){
     char buffer[1];
@@ -1289,12 +1283,6 @@ XEvent *eventPtr;
     switch(mvars.virtual_trackball){
     case VIRTUAL_TRACKBALL_OFF:
     case VIRTUAL_TRACKBALL_ON:
-#if 0
-      if(state != ST_S_PICK && state != ST_O_PICK &&
-	 state != ST_S_VPICK && state != ST_O_PATH)
-	goto end;
-#endif
-
       if(scroll_active && eventPtr->xmotion.state & mb_mask)
 	rt_vls_printf( &cmd, "M 1 %d %d\n", irisX2ged(mx), irisY2ged(my));
       else if(state == ST_S_PICK || state == ST_O_PICK ||
@@ -1307,7 +1295,7 @@ XEvent *eventPtr;
 
       break;
     case VIRTUAL_TRACKBALL_ROTATE:
-      rt_vls_printf( &cmd, "iknob ax %f; iknob ay %f\n",
+      rt_vls_printf( &cmd, "iknob ax %f ay %f\n",
 		     (my - omy)/512.0, (mx - omx)/512.0 );
       break;
     case VIRTUAL_TRACKBALL_TRANSLATE:
@@ -1317,25 +1305,11 @@ XEvent *eventPtr;
 	fx = (mx/(fastf_t)winx_size - 0.5) * 2;
 	fy = (0.5 - my/(fastf_t)winy_size) * 2;
 
-	if(fx > 0.000001)
-	  fx += SL_TOL;
-	else if(fx < 0.000001)
-	  fx += -SL_TOL;
-	else
-	  fx = 0.0;
-
-	if(fy > 0.000001)
-	  fy += SL_TOL;
-	else if(fy < 0.000001)
-	  fy += -SL_TOL;
-	else
-	  fy = 0.0;
-
-	rt_vls_printf( &cmd, "knob aX %f; knob aY %f\n", fx, fy );
+	rt_vls_printf( &cmd, "knob aX %f aY %f\n", fx, fy );
       }	     
       break;
     case VIRTUAL_TRACKBALL_ZOOM:
-      rt_vls_printf( &cmd, "zoom %lf\n", (omy - my)/(double)winy_size + 1.0);
+      rt_vls_printf( &cmd, "iknob aS %f\n", (omy - my)/(double)winy_size);
       break;
     }
 
@@ -1349,7 +1323,7 @@ XEvent *eventPtr;
 
     if(button0){
       glx_dbtext(
-		(adcflag ? kn1_knobs:kn2_knobs)[M->first_axis]);
+		(mged_variables.adcflag ? kn1_knobs:kn2_knobs)[M->first_axis]);
       goto end;
     }
 
@@ -1358,7 +1332,7 @@ XEvent *eventPtr;
 
     switch(DIAL0 + M->first_axis){
     case DIAL0:
-      if(adcflag) {
+      if(mged_variables.adcflag) {
 	rt_vls_printf( &cmd, "iknob ang1 %d\n",
 		      setting );
       }
@@ -1368,7 +1342,7 @@ XEvent *eventPtr;
 		    setting / 2048.0 );
       break;
     case DIAL2:
-      if(adcflag)
+      if(mged_variables.adcflag)
 	rt_vls_printf( &cmd , "iknob ang2 %d\n",
 		      setting );
       else {
@@ -1381,7 +1355,7 @@ XEvent *eventPtr;
       }
       break;
     case DIAL3:
-      if(adcflag)
+      if(mged_variables.adcflag)
 	rt_vls_printf( &cmd , "iknob distadc %d\n",
 		      setting );
       else {
@@ -1394,7 +1368,7 @@ XEvent *eventPtr;
       }
       break;
     case DIAL4:
-      if(adcflag)
+      if(mged_variables.adcflag)
 	rt_vls_printf( &cmd , "iknob yadc %d\n",
 		      setting );
       else {
@@ -1415,7 +1389,7 @@ XEvent *eventPtr;
 		       setting / 512.0 );
       break;
     case DIAL6:
-      if(adcflag)
+      if(mged_variables.adcflag)
 	rt_vls_printf( &cmd , "iknob xadc %d\n",
 		      setting );
       else {
@@ -2500,42 +2474,16 @@ char	**argv;
 	  break;
 	case 't':
 	  mvars.virtual_trackball = VIRTUAL_TRACKBALL_TRANSLATE;
-#if 1
 	  {
 	    fastf_t fx, fy;
 
 	    rt_vls_init(&vls);
 	    fx = (omx/(fastf_t)winx_size - 0.5) * 2;
 	    fy = (0.5 - omy/(fastf_t)winy_size) * 2;
-
-	    if(fx > 0.000001)
-	      fx += SL_TOL;
-	    else if(fx < 0.000001)
-	      fx += -SL_TOL;
-	    else
-	      fx = 0.0;
-
-	    if(fy > 0.000001)
-	      fy += SL_TOL;
-	    else if(fy < 0.000001)
-	      fy += -SL_TOL;
-	    else
-	      fy = 0.0;
-
-	    rt_vls_printf( &vls, "knob aX %f; knob aY %f\n", fx, fy);
+	    rt_vls_printf( &vls, "knob aX %f aY %f\n", fx, fy);
 	    (void)cmdline(&vls, FALSE);
 	    rt_vls_free(&vls);
 	  }
-#else
-	  sprintf(xstr, "%f", (omx/(double)winx_size - 0.5) * 2);
-	  sprintf(ystr, "%f", (0.5 - omy/(double)winy_size) * 2);
-	  sprintf(zstr, "%f", tran_z);
-	  av[0] = "tran";
-	  av[1] = xstr;
-	  av[2] = ystr;
-	  av[3] = zstr;
-	  status = f_tran((ClientData)NULL, interp, 4, av);
-#endif
 	  break;
 	case 'z':
 	  mvars.virtual_trackball = VIRTUAL_TRACKBALL_ZOOM;

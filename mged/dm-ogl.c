@@ -1045,7 +1045,7 @@ XEvent *eventPtr;
 
       break;
     case VIRTUAL_TRACKBALL_ROTATE:
-      rt_vls_printf( &cmd, "iknob ax %f; iknob ay %f\n",
+      rt_vls_printf( &cmd, "iknob ax %f ay %f\n",
 		     (my - omy)/512.0, (mx - omx)/512.0 );
       break;
     case VIRTUAL_TRACKBALL_TRANSLATE:
@@ -1054,28 +1054,12 @@ XEvent *eventPtr;
 
 	fx = (mx/(fastf_t)((struct ogl_vars *)dm_vars)->width - 0.5) * 2;
 	fy = (0.5 - my/(fastf_t)((struct ogl_vars *)dm_vars)->height) * 2;
-
-#if 0
-	if(fx > 0.000001)
-	  fx += SL_TOL;
-	else if(fx < 0.000001)
-	  fx += -SL_TOL;
-	else
-	  fx = 0.0;
-
-	if(fy > 0.000001)
-	  fy += SL_TOL;
-	else if(fy < 0.000001)
-	  fy += -SL_TOL;
-	else
-	  fy = 0.0;
-#endif
-	rt_vls_printf( &cmd, "knob aX %f; knob aY %f\n", fx, fy );
+	rt_vls_printf( &cmd, "knob aX %f aY %f\n", fx, fy);
       }	     
       break;
     case VIRTUAL_TRACKBALL_ZOOM:
-      rt_vls_printf( &cmd, "zoom %lf\n",
-		     (omy - my)/(double)((struct ogl_vars *)dm_vars)->height + 1.0);
+      rt_vls_printf( &cmd, "iknob aS %f\n",
+		     (omy - my)/(double)((struct ogl_vars *)dm_vars)->height);
       break;
     }
 
@@ -1089,7 +1073,7 @@ XEvent *eventPtr;
 
     if(button0){
       ogl_dbtext(
-		(adcflag ? kn1_knobs:kn2_knobs)[M->first_axis]);
+		(mged_variables.adcflag ? kn1_knobs:kn2_knobs)[M->first_axis]);
       goto end;
     }
 
@@ -1098,17 +1082,21 @@ XEvent *eventPtr;
 
     switch(DIAL0 + M->first_axis){
     case DIAL0:
-      if(adcflag) {
+      if(mged_variables.adcflag) {
 	rt_vls_printf( &cmd, "iknob ang1 %d\n",
 		      setting );
       }
       break;
     case DIAL1:
-      rt_vls_printf( &cmd , "iknob S %f\n",
-		    setting / 2048.0 );
+      if(mged_variables.rateknobs)
+	rt_vls_printf( &cmd , "iknob S %f\n",
+		       setting / 2048.0 );
+      else
+	rt_vls_printf( &cmd , "iknob aS %f\n",
+		       setting / 512.0 );
       break;
     case DIAL2:
-      if(adcflag)
+      if(mged_variables.adcflag)
 	rt_vls_printf( &cmd , "iknob ang2 %d\n",
 		      setting );
       else {
@@ -1121,7 +1109,7 @@ XEvent *eventPtr;
       }
       break;
     case DIAL3:
-      if(adcflag)
+      if(mged_variables.adcflag)
 	rt_vls_printf( &cmd , "iknob distadc %d\n",
 		      setting );
       else {
@@ -1134,7 +1122,7 @@ XEvent *eventPtr;
       }
       break;
     case DIAL4:
-      if(adcflag)
+      if(mged_variables.adcflag)
 	rt_vls_printf( &cmd , "iknob yadc %d\n",
 		      setting );
       else{
@@ -1155,7 +1143,7 @@ XEvent *eventPtr;
 		       setting / 512.0 );
       break;
     case DIAL6:
-      if(adcflag)
+      if(mged_variables.adcflag)
 	rt_vls_printf( &cmd , "iknob xadc %d\n",
 		      setting );
       else{
@@ -2012,23 +2000,7 @@ char	**argv;
 	    rt_vls_init(&vls);
 	    fx = (omx/(fastf_t)((struct ogl_vars *)dm_vars)->width - 0.5) * 2;
 	    fy = (0.5 - omy/(fastf_t)((struct ogl_vars *)dm_vars)->height) * 2;
-
-#if 0
-	    if(fx > 0.000001)
-	      fx += SL_TOL;
-	    else if(fx < 0.000001)
-	      fx += -SL_TOL;
-	    else
-	      fx = 0.0;
-
-	    if(fy > 0.000001)
-	      fy += SL_TOL;
-	    else if(fy < 0.000001)
-	      fy += -SL_TOL;
-	    else
-	      fy = 0.0;
-#endif
-	    rt_vls_printf( &vls, "knob aX %f; knob aY %f\n", fx, fy);
+	    rt_vls_printf( &vls, "knob aX %f aY %f\n", fx, fy);
 	    (void)cmdline(&vls, FALSE);
 	    rt_vls_free(&vls);
 	  }

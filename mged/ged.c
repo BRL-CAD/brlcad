@@ -1001,7 +1001,7 @@ refresh()
       dmp->dmr_normal();
 
       /* Compute and display angle/distance cursor */
-      if (adcflag)
+      if (mged_variables.adcflag)
 	adcursor();
 
       /* Display titles, etc., if desired */
@@ -1167,13 +1167,8 @@ vect_t view_pos;
   struct rt_vls cmd;
 
   rt_vls_init(&cmd);
-#if 1
-  rt_vls_printf(&cmd, "iknob aX %f; iknob aY %f\n",
-		-view_pos[X], -view_pos[Y]);
-#else
-  rt_vls_printf(&cmd, "iknob aX %f; iknob aY %f; iknob aZ %f\n",
+  rt_vls_printf(&cmd, "iknob aX %f aY %f aZ %f\n",
 		-view_pos[X], -view_pos[Y], -view_pos[Z]);
-#endif
   (void)cmdline(&cmd, FALSE);
   rt_vls_free(&cmd);
 #else

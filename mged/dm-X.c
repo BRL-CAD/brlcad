@@ -78,9 +78,9 @@ int     X_dm();
 static int   X_load_startup();
 static struct dm_list *get_dm_list();
 #ifdef USE_PROTOTYPES
-static Tk_GenericProc Xdoevent;
+static Tk_GenericProc X_doevent;
 #else
-static int Xdoevent();
+static int X_doevent();
 #endif
 
 struct dm dm_X = {
@@ -196,10 +196,10 @@ X_close()
   rt_free(dm_vars, "X_close: dm_vars");
 
 #if 0
-  Tk_DeleteGenericHandler(Xdoevent, (ClientData)curr_dm_list);
+  Tk_DeleteGenericHandler(X_doevent, (ClientData)curr_dm_list);
 #else
   if(RT_LIST_IS_EMPTY(&head_x_vars.l))
-    Tk_DeleteGenericHandler(Xdoevent, (ClientData)NULL);
+    Tk_DeleteGenericHandler(X_doevent, (ClientData)NULL);
 #endif
 }
 
@@ -478,7 +478,7 @@ int dashed;
 }
 
 static int
-Xdoevent(clientData, eventPtr)
+X_doevent(clientData, eventPtr)
 ClientData clientData;
 XEvent *eventPtr;
 {
@@ -491,19 +491,11 @@ XEvent *eventPtr;
   register struct dm_list *save_dm_list;
   int status = CMD_OK;
 
-#if 1
   save_dm_list = curr_dm_list;
-#endif
-
-#if 1
   curr_dm_list = get_dm_list(eventPtr->xany.window);
 
   if(curr_dm_list == DM_LIST_NULL)
     goto end;
-
-#else
-  curr_dm_list = (struct dm_list *)clientData;
-#endif
 
   if(mged_variables.send_key && eventPtr->type == KeyPress){
     char buffer[1];
@@ -535,12 +527,6 @@ XEvent *eventPtr;
   } else if( eventPtr->type == MotionNotify ) {
     int mx, my;
 
-#if 0
-    if ( !XdoMotion &&
-	 (VIRTUAL_TRACKBALL_NOT_ACTIVE(struct x_vars *, mvars.virtual_trackball)) )
-      goto end;
-#endif
-
     rt_vls_init(&cmd);
     mx = eventPtr->xmotion.x;
     my = eventPtr->xmotion.y;
@@ -559,7 +545,7 @@ XEvent *eventPtr;
 
       break;
     case VIRTUAL_TRACKBALL_ROTATE:
-       rt_vls_printf( &cmd, "iknob ax %f; iknob ay %f\n",
+       rt_vls_printf( &cmd, "iknob ax %f ay %f\n",
 		      (my - ((struct x_vars *)dm_vars)->omy)/512.0,
 		      (mx - ((struct x_vars *)dm_vars)->omx)/512.0 );
       break;
@@ -570,27 +556,13 @@ XEvent *eventPtr;
 	fx = (mx/(fastf_t)((struct x_vars *)dm_vars)->width - 0.5) * 2;
 	fy = (0.5 - my/(fastf_t)((struct x_vars *)dm_vars)->height) * 2;
 
-	if(fx > 0.000001)
-	  fx += SL_TOL;
-	else if(fx < 0.000001)
-	  fx += -SL_TOL;
-	else
-	  fx = 0.0;
-
-	if(fy > 0.000001)
-	  fy += SL_TOL;
-	else if(fy < 0.000001)
-	  fy += -SL_TOL;
-	else
-	  fy = 0.0;
-
-	rt_vls_printf( &cmd, "knob aX %f; knob aY %f\n", fx, fy );
+	rt_vls_printf( &cmd, "knob aX %f aY %f\n", fx, fy );
       }
       break;
     case VIRTUAL_TRACKBALL_ZOOM:
-      rt_vls_printf( &cmd, "zoom %lf",
+      rt_vls_printf( &cmd, "iknob aS %f\n",
 		     ((double)((struct x_vars *)dm_vars)->omy - my)/
-		     ((struct x_vars *)dm_vars)->height + 1.0);
+		     ((struct x_vars *)dm_vars)->height);
       break;
     }
 
@@ -839,7 +811,7 @@ char	*name;
   }
 
   if(RT_LIST_IS_EMPTY(&head_x_vars.l))
-    Tk_CreateGenericHandler(Xdoevent, (ClientData)NULL);
+    Tk_CreateGenericHandler(X_doevent, (ClientData)NULL);
 
   RT_LIST_APPEND(&head_x_vars.l, &((struct x_vars *)curr_dm_list->_dm_vars)->l);
 
@@ -1026,7 +998,7 @@ char	*name;
 
 #if 0    
     /* Register the file descriptor with the Tk event handler */
-    Tk_CreateGenericHandler(Xdoevent, (ClientData)curr_dm_list);
+    Tk_CreateGenericHandler(X_doevent, (ClientData)curr_dm_list);
 #endif
 
     Tk_SetWindowBackground(((struct x_vars *)dm_vars)->xtkwin, ((struct x_vars *)dm_vars)->bg);
@@ -1268,7 +1240,6 @@ char *argv[];
 	  break;
 	case 't':
 	  ((struct x_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_TRANSLATE;
-#if 1
 	  {
 	    fastf_t fx, fy;
 
@@ -1277,38 +1248,10 @@ char *argv[];
 	      (fastf_t)((struct x_vars *)dm_vars)->width - 0.5) * 2;
 	    fy = (0.5 - ((struct x_vars *)dm_vars)->omy/
 		   (fastf_t)((struct x_vars *)dm_vars)->height) * 2;
-
-	    if(fx > 0.000001)
-	      fx += SL_TOL;
-	    else if(fx < 0.000001)
-	      fx += -SL_TOL;
-	    else
-	      fx = 0.0;
-
-	    if(fy > 0.000001)
-	      fy += SL_TOL;
-	    else if(fy < 0.000001)
-	      fy += -SL_TOL;
-	    else
-	      fy = 0.0;
-
-	    rt_vls_printf( &vls, "knob aX %f; knob aY %f\n", fx, fy);
+	    rt_vls_printf( &vls, "knob aX %f aY %f\n", fx, fy);
 	    (void)cmdline(&vls, FALSE);
 	    rt_vls_free(&vls);
 	  }
-#else
-	  sprintf(xstr, "%f", ((double)((struct x_vars *)dm_vars)->omx/
-			       ((struct x_vars *)dm_vars)->width - 0.5) * 2);
-	  sprintf(ystr, "%f", (0.5 - (double)((struct x_vars *)dm_vars)->omy/
-			       ((struct x_vars *)dm_vars)->height) * 2);
-	  sprintf(zstr, "%f", tran_z);
-
-	  av[0] = "tran";
-	  av[1] = xstr;
-	  av[2] = ystr;
-	  av[3] = zstr;
-	  status = f_tran((ClientData)NULL, interp, 4, av);
-#endif
 	  break;
 	case 'z':
 	  ((struct x_vars *)dm_vars)->mvars.virtual_trackball = VIRTUAL_TRACKBALL_ZOOM;
