@@ -12,7 +12,7 @@ and are interpreted for various devices
 by standard programs described in
 .IR  plot\^ (1G),
 as well as additional programs such as
-.IR plot-fb (1).
+.IR pl-fb (1).
 The format of output from
 .IR libplot3
 differs from that of
@@ -151,6 +151,45 @@ the minimum corner of the plotting area;
 the following six give the maximum corner.
 The plot will be magnified or reduced to fit
 the device as closely as possible.
+.TP
+.B  F
+3flush:
+.TP
+.B  x
+double_point:  The double-precision version of point.
+.TP
+.B  v
+double_line:  The double-precision version of line.
+.TP
+.B  o
+double_move:  The double-precision version of move.
+.TP
+.B  q
+double_cont:  The double-precision version of cont.
+.TP
+.B  w
+double_space:  The double-precision version of space.
+.TP
+.B  i
+double_circle:  The double-precision version of circle.
+.TP
+.B  r
+double_arc:  The double-precision version of arc.
+.TP
+.B  W
+double_3space:  The double-precision, 3_D version of space.
+.TP
+.B  X
+double_3point:  The double-precision, 3_D version of point.
+.TP
+.B  O
+double_3move:  The double-precision, 3_D version of move.
+.TP
+.B  Q
+double_3cont:  The double-precision, 3_D version of cont.
+.TP
+.B  V
+double_3line:  The double-precision, 3_D version of line.
 .PP
 Space settings that exactly fill the plotting area
 with unity scaling appear below for
@@ -205,4 +244,4 @@ The U. S. Army Ballistic Research Laboratory
 Aberdeen Proving Ground, Maryland  21005
 .SH BUG REPORTS
 Reports of bugs or problems should be submitted via electronic
-mail to <CAD@BRL.ARPA>.
+mail to <CAD@BRL.MIL>.
