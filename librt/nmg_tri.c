@@ -962,12 +962,12 @@ struct bu_list *tlist, *tbl2d;
 
 	}
 
+	bu_log("didn't find trapezoid for hole-start point at:\n\t%g %g %g\n",
+		V3ARGS(pt->vu_p->v_p->vg_p->coord) );
+
 	nmg_stash_model_to_file("tri_lone_hole.g",
 		nmg_find_model(&pt->vu_p->l.magic),
 		"lone hole start");
-
-	bu_log("didn't find trapezoid for hole-start point at:\n\t%g %g %g\n",
-		V3ARGS(pt->vu_p->v_p->vg_p->coord) );
 
 	rt_bomb("bombing\n");
 gotit:
@@ -1769,13 +1769,10 @@ int void_ok;
 				V3ARGS(p1->vu_p->v_p->vg_p->coord),
 				V3ARGS(p2->vu_p->v_p->vg_p->coord) );
 
-			nmg_stash_model_to_file( "bad_tri_cut.g",
-				nmg_find_model(&p1->vu_p->l.magic), buf );
-
 			sprintf(name, "bad_tri_cut%d.g", iter++);
 			if ((fd=fopen("bad_tri_cut.pl", "w")) == (FILE *)NULL)
 				rt_bomb("cut_mapped_loop() goodnight 2\n");
-	
+			
 			VSUB2(cut_vect, p2->vu_p->v_p->vg_p->coord, p1->vu_p->v_p->vg_p->coord);
 			/* vector goes past end point by 50% */
 			VJOIN1(cut_end, p2->vu_p->v_p->vg_p->coord, 0.5, cut_vect);
@@ -1790,6 +1787,9 @@ int void_ok;
 			pdv_3line(fd, p2->vu_p->v_p->vg_p->coord, cut_end);
 
 			(void)fclose(fd);
+			nmg_stash_model_to_file( "bad_tri_cut.g",
+						 nmg_find_model(&p1->vu_p->l.magic), buf );
+
 			rt_bomb("cut_mapped_loop() goodnight 2\n");
 		}
 	}
