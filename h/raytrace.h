@@ -2748,6 +2748,8 @@ extern void db_inmem(struct directory	*dp,
 extern int db_is_directory_non_empty( const struct db_i	*dbip);
 
 BU_EXTERN(int db_dirhash, (const char *str) );
+BU_EXTERN(int db_dircheck,( struct db_i *dbip, struct bu_vls *ret_name,
+			    int noisy, struct directory ***headp ) );
 					/* convert name to directory ptr */
 BU_EXTERN(struct directory *db_lookup,( const struct db_i *, const char *name, int noisy ) );
 					/* add entry to directory */
@@ -4614,6 +4616,55 @@ BU_EXTERN(size_t		db5_type_sizeof_n_binu,
 				(const int			minor));
 
 #endif
+
+/* defined in wdb_obj.c */
+BU_EXTERN(int	wdb_init_obj,		(Tcl_Interp *interp, struct rt_wdb *wdbp, char *oname));
+BU_EXTERN(int	wdb_close_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_reopen_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_match_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_get_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_put_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_adjust_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_form_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_tops_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_rt_gettrees_cmd,	(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_dump_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_dbip_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_ls_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_list_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_pathsum_cmd,	(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_expand_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_kill_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_killall_cmd,	(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_killtree_cmd,	(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_copy_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_move_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_move_all_cmd,	(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_concat_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_dup_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_group_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_remove_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_region_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_comb_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_find_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_which_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_title_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_tree_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_color_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_prcolor_cmd,	(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_tol_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_push_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_whatid_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_keep_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_cat_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_instance_cmd,	(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_observer_cmd,	(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_make_bb_cmd,	(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_make_name_cmd,	(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_units_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_hide_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_unhide_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
+BU_EXTERN(int	wdb_attr_cmd,		(struct rt_wdb *wdbp, Tcl_Interp *interp, int argc, char **argv));
 
 /*
  *  Constants provided and used by the RT library.
