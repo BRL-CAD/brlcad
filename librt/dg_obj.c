@@ -3118,7 +3118,7 @@ dgo_eraseobjpath(struct dg_obj	*dgop,
 		}
 		list = bu_vls_addr(&vls);
 #endif
-		if (Tcl_SplitList(interp, list, &ac, &av_orig) != TCL_OK)
+		if (Tcl_SplitList(interp, list, &ac, (const char ***)&av_orig) != TCL_OK)
 			continue;
 
 		/* make sure we will not dereference null */
