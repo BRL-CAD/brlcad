@@ -27,6 +27,22 @@ static char RCSplane[] = "@(#)$Header$ (BRL)";
 #include "./debug.h"
 
 /*
+ *			R T _ D I S T _ P T 3 _ P T 3
+ *
+ *  Returns distance between two points.
+ */
+double
+rt_dist_pt3_pt3( a, b )
+CONST point_t	a;
+CONST point_t	b;
+{
+	vect_t	diff;
+
+	VSUB2( diff, a, b );
+	return MAGNITUDE( diff );
+}
+
+/*
  *			R T _ P T 3 _ P T 3 _ E Q U A L
  *
  *  Returns -
@@ -1430,12 +1446,21 @@ CONST point_t	a;
 	register fastf_t	FdotD;
 
 	VSUB2( f, pt, a );
-	if( (FdotD = MAGNITUDE(dir)) <= SMALL_FASTF )
-		return 0.0;
+	if( (FdotD = MAGNITUDE(dir)) <= SMALL_FASTF )  {
+		FdotD = 0.0;
+		goto out;
+	}
 	FdotD = VDOT( f, dir ) / FdotD;
-	if( (FdotD = VDOT( f, f ) - FdotD * FdotD ) <= SMALL_FASTF )
-		return(0.0);
-	return( sqrt(FdotD) );
+	if( (FdotD = VDOT( f, f ) - FdotD * FdotD ) <= SMALL_FASTF )  {
+		FdotD = 0.0;
+		goto out;
+	}
+	FdotD = sqrt(FdotD);
+out:
+	if( rt_g.debug & DEBUG_MATH )  {
+		rt_log("rt_dist_line3_pt3() ret=%g\n", FdotD);
+	}
+	return FdotD;
 }
 
 /*
@@ -1459,11 +1484,18 @@ CONST point_t	a;
 	register fastf_t	FdotD;
 
 	VSUB2( f, pt, a );
-	if( (FdotD = MAGNITUDE(dir)) <= SMALL_FASTF )
-		return 0.0;
+	if( (FdotD = MAGNITUDE(dir)) <= SMALL_FASTF )  {
+		FdotD = 0.0;
+		goto out;
+	}
 	FdotD = VDOT( f, dir ) / FdotD;
-	if( (FdotD = VDOT( f, f ) - FdotD * FdotD ) <= SMALL_FASTF )
-		return(0.0);
+	if( (FdotD = VDOT( f, f ) - FdotD * FdotD ) <= SMALL_FASTF )  {
+		FdotD = 0.0;
+	}
+out:
+	if( rt_g.debug & DEBUG_MATH )  {
+		rt_log("rt_distsq_line3_pt3() ret=%g\n", FdotD);
+	}
 	return FdotD;
 }
 
