@@ -83,8 +83,9 @@ top:
 	 */
 	sp = cp;		/* start pointer */
 	while (*cp) {
-		register char tc=*cp;
-		cp++;
+		register char tc;
+
+		tc = *cp; cp++;
 		/*
 		 * Numbers come in the following forms
 		 *	[0-9]*
