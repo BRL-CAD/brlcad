@@ -68,8 +68,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define H2CX(_h)	( ((_h) - xmin) / cell_size )
 #define V2CY(_v)	( ((_v) - ymin) / cell_size )
 
-#define CX2VPX(_cx)	( (_cx) * (wid + grid_flag)+1.0 )
-#define CY2VPY(_cy)	( (_cy) * (hgt + grid_flag)+key_height )
+#define CX2VPX(_cx)	( ((_cx)             ) * (wid + grid_flag) )
+#define CY2VPY(_cy)	( ((_cy) + key_height) * (hgt + grid_flag) )
 
 #define VPX2SCRX(_vp_x)	( (_vp_x) + xorigin )
 #define VPY2SCRY(_vp_y)	( (_vp_y) + yorigin )
@@ -79,8 +79,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define SCRX2VPX(_scr_x) ( (_scr_x) - xorigin )
 #define SCRY2VPY(_scr_y) ( (_scr_y) - yorigin )
 
-#define VPX2CX(_vp_x)	( (_vp_x) / (wid+grid_flag)-1.0 )
-#define VPY2CY(_vp_y)	( (_vp_y) / (hgt+grid_flag)-key_height )
+#define VPX2CX(_vp_x)	( (_vp_x) / (wid+grid_flag) )
+#define VPY2CY(_vp_y)	( (_vp_y) / (hgt+grid_flag) - key_height )
 
 #define CX2H(_cx)	( (_cx) * cell_size + xmin )
 #define CY2V(_cy)	( (_cy) * cell_size + ymin )
