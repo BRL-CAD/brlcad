@@ -1368,9 +1368,17 @@ char *buf;
 		return(-1);
 	}
 	while( pkg_gshort(pc->pkc_hdr.pkh_magic) != PKG_MAGIC )  {
-		sprintf(errbuf,"pkg_gethdr: skipping noise x%x %c\n",
-			*((unsigned char *)&pc->pkc_hdr),
-			*((unsigned char *)&pc->pkc_hdr) );
+		int	c;
+		c = *((unsigned char *)&pc->pkc_hdr);
+		if( isascii(c) && isprint(c) )  {
+			sprintf(errbuf,
+				"pkg_gethdr: skipping noise x%x %c\n",
+				c, c );
+		} else {
+			sprintf(errbuf,
+				"pkg_gethdr: skipping noise x%x\n",
+				c );
+		}
 		(pc->pkc_errlog)(errbuf);
 		/* Slide over one byte and try again */
 		bcopy( ((char *)&pc->pkc_hdr)+1, (char *)&pc->pkc_hdr, sizeof(struct pkg_header)-1);
@@ -1466,8 +1474,10 @@ char *s;
 	if( errno >= 0 && errno < sys_nerr ) {
 		sprintf( errbuf, "%s: %s\n", s, sys_errlist[errno] );
 		errlog( errbuf );
-	} else
-		errlog( s );
+	} else {
+		sprintf( errbuf, "%s: errno=%d\n", s, errno );
+		errlog( errbuf );
+	}
 }
 
 /*
