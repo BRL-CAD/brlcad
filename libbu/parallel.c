@@ -690,7 +690,7 @@ genptr_t	arg;
 		new = sprocsp( (void (*)(void *, size_t))bu_parallel_interface,
 			PR_SALL, 0, NULL,
 #			if IRIX64
-				32*1024*1024 - 32*1024
+				64*1024*1024 - 32*1024
 #			else
 				4*1024*1024 - 32*1024
 #			endif
