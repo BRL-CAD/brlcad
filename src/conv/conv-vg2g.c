@@ -27,11 +27,17 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 
 
 #include <stdio.h>
+
 #ifdef USE_STRING_H
 #include <string.h>
 #else
 #include <strings.h>
 #endif
+
+#if HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+
 #include "machine.h"
 #include "db.h"
 
