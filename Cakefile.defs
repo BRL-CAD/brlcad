@@ -436,8 +436,14 @@ set -S2 "/bin/sh"
 #if defined(__CAKE__m4i64)
 /*	Silicon Graphics 4D, running IRIX64 6.4 (on a MIPS4 machine) */
 #	undef	sgi
+#	if 1 /*	Use 64 bit	*/
+#		define M4I64_USE_64_BIT
+#	endif
+#	if 1 /*	PRODUCTION	*/
+#		define	M4I64_PRODUCTION
+#	endif
 #	define	MTYPE	m4i64
-#	if 1	/* PRODUCTION=1 */
+#	ifdef M4I64_PRODUCTION
 /*		This version for production: optimization & shared libraries */
 /*		Warning 1429 is "the type "long long" is nonstandard " (/usr/include/sys/time.h) */
 /*		Warning 1203 is "nonstandard type for a bit field" (libpkg). */
@@ -457,16 +463,27 @@ set -S2 "/bin/sh"
 /*		-fullwarn is pretty verbose */
 #		define	OPTIMIZER	-g -use_readonly_const
 #	endif
-#	define	GFLAG		-64 -mips4 -KPIC -G 7
+#	ifdef M4I64_USE_64_BIT
+#		define	GFLAG		-64 -mips4 -KPIC -G 7
+#		define	XLIBDIR /usr/lib64
+#	else
+#		define	GFLAG		-n32 -mips4 -KPIC -G 7
+#		define	XLIBDIR /usr/lib32
+#	endif
 #	define  XINCDIR /usr/include/X11
-#	define	XLIBDIR /usr/lib64
-#	if 1	/* PRODUCTION=1 */
+
+#	ifdef M4I64_PRODUCTION
 /*		Shared library version support */
 #		define	ARCH_SUF	so
 #		define	LIBVERS ../sh/sharedlibvers.sh
-#		define	BUILD_LIBRARY	ld -64 -mips4 -shared -o
+#		ifdef M4I64_USE_64_BIT
+#			define	BUILD_LIBRARY	ld -64 -mips4 -shared -o
+#			define	STANDARD_LIBES	-lm -lmalloc -lc -rpath LIBDIR:/usr/lib64
+#		else
+#			define	BUILD_LIBRARY	ld -n32 -mips4 -shared -o
+#			define	STANDARD_LIBES	-lm -lmalloc -lc -rpath LIBDIR:/usr/lib32
+#		endif
 #		define	RANLIB	true
-#		define	STANDARD_LIBES	-lm -lmalloc -lc -rpath LIBDIR:/usr/lib64
 /*		When debugging libraries, -m and -v are helpful LD_OPTS */
 #		define	LD_OPTS		GFLAG -Wl,-woff,84 -Wl,-woff,85 -Wl,-woff,134
 #		define	LIBBU_LIBES	LIBTCL LIBTCL_LIBES	/*hack*/
