@@ -512,11 +512,12 @@ int			seg_no;
 	LOCAL fastf_t	dist_to_pca;
 	LOCAL vect_t	to_start;
 
+	*hit_count = 0;
+
 	VSUB2( to_start, rp->r_pt, pipe->bend_V );
 	dist_to_pca = VDOT( to_start, rp->r_dir );
 	if( (MAGSQ( to_start ) - dist_to_pca*dist_to_pca) > pipe->bend_R_SQ )
 	{
-		*hit_count = 0;
 		return;			/* Miss */
 	}
 
@@ -1052,6 +1053,7 @@ register struct xray	*rp;
 	struct hit_list *first;
 	struct hit_list *second;
 	struct hit_list *prev;
+	struct hit_list *next_hit;
 
 	hitp = BU_LIST_FIRST( hit_list, &h->l );
 	while( BU_LIST_NEXT_NOT_HEAD( &hitp->l, &h->l ) )
@@ -1087,8 +1089,6 @@ register struct xray	*rp;
 	hitp = BU_LIST_FIRST( hit_list, &h->l );
 	while( BU_LIST_NEXT_NOT_HEAD( &hitp->l, &h->l ) )
 	{
-		struct hit_list *next_hit;
-
 		next_hit = BU_LIST_NEXT( hit_list, &hitp->l );
 
 		if( NEAR_ZERO( hitp->hitp->hit_dist - next_hit->hitp->hit_dist, 0.00001) &&
@@ -1102,6 +1102,15 @@ register struct xray	*rp;
 			bu_free( (char *)tmp->hitp, "rt_pipe_hitsort: tmp->hitp" );
 			bu_free( (char *)tmp, "rt_pipe_hitsort: tmp" );
 			(*nh)--;
+			tmp = hitp;
+			next_hit = BU_LIST_NEXT( hit_list, &hitp->l );
+			hitp = next_hit;
+			BU_LIST_DEQUEUE( &tmp->l );
+			bu_free( (char *)tmp->hitp, "rt_pipe_hitsort: tmp->hitp" );
+			bu_free( (char *)tmp, "rt_pipe_hitsort: tmp" );
+			(*nh)--;
+			if( BU_LIST_IS_HEAD( &hitp->l, &h->l ) )
+				break;
 		}
 		else
 			hitp = next_hit;
