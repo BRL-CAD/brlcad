@@ -72,6 +72,7 @@ set helplib_data(wdb_shells)		{{nmg_model}	{breaks model into seperate shells}}
 set helplib_data(wdb_showmats)		{{path}	{show xform matrices along path}}
 set helplib_data(wdb_nmg_collapse)	{{nmg_solid new_solid maximum_error_distance [minimum_allowed_angle]}	{decimate NMG solid via edge collapse}}
 set helplib_data(wdb_nmg_simplify)	{{[arb|tgc|ell|poly] new_solid nmg_solid}	{simplify nmg_solid, if possible}}
+set helplib_data(wdb_version)		{{} {returns the database version}}
 
 set helplib_data(vo_aet)		{{["az el tw"]} {set/get the azimuth, elevation and twist}}
 set helplib_data(vo_arot)		{{x y z angle} {rotate angle degrees about the axis specified by xyz}}
