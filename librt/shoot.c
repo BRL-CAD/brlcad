@@ -443,26 +443,21 @@ test:		if( cutp==CUTTER_NULL ) {
 
 		switch( cutp->cut_type ) {
 		case CUT_BOXNODE:
-#if EXTRA_SAFETY
-			if( (ssp->rstep[X] <= 0 && px < cutp->bn.bn_min[X]) ||
-			    (ssp->rstep[X] >= 0 && px > cutp->bn.bn_max[X]) ||
-			    (ssp->rstep[Y] <= 0 && py < cutp->bn.bn_min[Y]) ||
-			    (ssp->rstep[Y] >= 0 && py > cutp->bn.bn_max[Y]) ||
-			    (ssp->rstep[Z] <= 0 && pz < cutp->bn.bn_min[Z]) ||
-			    (ssp->rstep[Z] >= 0 && pz > cutp->bn.bn_max[Z]) ) {
+			if( rt_g.debug&DEBUG_ADVANCE && (
+			    (px < cutp->bn.bn_min[X]) || (px > cutp->bn.bn_max[X]) ||
+			    (py < cutp->bn.bn_min[Y]) || (py > cutp->bn.bn_max[Y]) ||
+			    (pz < cutp->bn.bn_min[Z]) || (pz > cutp->bn.bn_max[Z]) 
+			) ) {
 				/* This cell is old news. */
 				bu_log(
-		  "rt_advance_to_next_cell(): point not in cell, advancing\n");
-				if( rt_g.debug & DEBUG_ADVANCE ) {
-					bu_log( " pt (%.20e,%.20e,%.20e)\n",
-						px, py, pz );
-					bu_log(	"  min (%.20e,%.20e,%.20e)\n",
-						V3ARGS(cutp->bn.bn_min) );
-					bu_log( "  max (%.20e,%.20e,%.20e)\n",
-						V3ARGS(cutp->bn.bn_max) );
-					bu_log( "pt=(%g,%g,%g)\n",px, py, pz );
-					rt_pr_cut( cutp, 0 );
-				}
+	  "rt_advance_to_next_cell(): point not in cell, advancing\n   pt (%.20e,%.20e,%.20e)\n",
+					px, py, pz );
+				bu_log(	"  min (%.20e,%.20e,%.20e)\n",
+					V3ARGS(cutp->bn.bn_min) );
+				bu_log( "  max (%.20e,%.20e,%.20e)\n",
+					V3ARGS(cutp->bn.bn_max) );
+				bu_log( "pt=(%g,%g,%g)\n",px, py, pz );
+				rt_pr_cut( cutp, 0 );
 
 				/*
 				 * Move newray point further into new box.
@@ -471,9 +466,7 @@ test:		if( cutp==CUTTER_NULL ) {
 				t0 += OFFSET_DIST;
 				goto top;
 			}
-#endif			
-			/* Don't get stuck within the same box for
-			   long */
+			/* Don't get stuck within the same box for long */
 			if( cutp==ssp->lastcut ) {
 				fastf_t	delta;
 push:				;	
@@ -513,8 +506,6 @@ push:				;
 				else
 					fraction += 1.0e-14;
 				delta = ldexp( fraction, exponent );
-#define MUCHO_DIAGS	1
-#if MUCHO_DIAGS
 				if( rt_g.debug & DEBUG_ADVANCE ) {
 					bu_log(
 						"ldexp: delta=%g, fract=%g, exp=%d\n",
@@ -522,7 +513,7 @@ push:				;
 						fraction,
 						exponent );
 				}
-#endif
+
 				/* Never advance less than 1mm */
 				if( delta < 1 ) delta = 1.0;
 				ssp->box_start = ssp->box_end + delta;
