@@ -48,10 +48,12 @@ extern FILE	*fopenrc();
 #define		OIT_FLOAT	1
 #define		OIT_FNOUNIT	2	/* Local units don't apply */
 #define		OIT_STRING	3
+#define		OIT_ATTRIB	4
 #define		oit_name(t)	(((t)==OIT_INT) ? "int" :\
 				 ((t)==OIT_FLOAT) ? "float" :\
 				 ((t)==OIT_FNOUNIT) ? "float" :\
-				 ((t)==OIT_STRING) ? "string" : "unknown")
+				 ((t)==OIT_STRING) ? "string" : \
+				 ((t)==OIT_ATTRIB) ? "attrib" : "unknown")
 
 /* Codes for output-statement types */
 #define		FMT_RAY 	0
@@ -127,6 +129,7 @@ extern FILE	*fopenrc();
 #define		VTI_CLAIMANT_COUNT 56
 #define		VTI_CLAIMANT_LIST 57
 #define		VTI_CLAIMANT_LISTN 58
+#define		VTI_ATTRIBUTES 59
 
 #define		direct(i)	(ValTab[VTI_X_DIR + i].value.fval)
 #define		target(i)	(ValTab[VTI_X_ORIG + i].value.fval)

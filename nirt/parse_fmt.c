@@ -86,6 +86,7 @@ outval		ValTab[] =
 		    { "claimant_count", VTI_CLAIMANT_COUNT, OIT_INT },
 		    { "claimant_list", VTI_CLAIMANT_LIST, OIT_STRING },
 		    { "claimant_listn", VTI_CLAIMANT_LISTN, OIT_STRING },
+		    { "attributes", VTI_ATTRIBUTES, OIT_ATTRIB },
 		    { 0 }
 		};
 outitem		*oi_list[FMT_NONE];
@@ -98,8 +99,8 @@ FILE		*outf = (FILE *)NULL;
 char		*def_fmt[] =
 		{
 		    "\"Origin (x y z) = (%.2f %.2f %.2f)  (h v d) = (%.2f %.2f %.2f)\nDirection (x y z) = (%.4f %.4f %.4f)  (az el) = (%.2f %.2f)\n\" x_orig y_orig z_orig h v d_orig x_dir y_dir z_dir a e",
-		    "\"    Region Name               Entry (x y z)              LOS  Obliq_in\n\"",
-		    "\"%-20s (%9.3f %9.3f %9.3f) %8.2f %8.3f\n\" reg_name x_in y_in z_in los obliq_in",
+		    "\"    Region Name               Entry (x y z)              LOS  Obliq_in Attrib\n\"",
+		    "\"%-20s (%9.3f %9.3f %9.3f) %8.2f %8.3f %A\n\" reg_name x_in y_in z_in los obliq_in attributes",
 		    "\"\"",
 		    "\"You missed the target\n\"",
 		    "\"OVERLAP: '%s' and '%s' xyz_in=(%g %g %g) los=%g\n\" ov_reg1_name ov_reg2_name ov_x_in ov_y_in ov_z_in ov_los"
@@ -113,11 +114,8 @@ extern char			local_u_name[];
 extern int			overlap_claims;
 extern char			*ocname[];
 
-void format_output (buffer, ctp)
-
-char		*buffer;
-com_table	*ctp;
-
+void 
+format_output (char *buffer, com_table	*ctp)
 {
     char	*bp = buffer;	/* was  + 1; */
     int		fmt_type = FMT_NONE;
@@ -399,6 +397,46 @@ outitem		*oil;		/* List of output items */
     printf("\n");
 }
 
+void
+format_attributes(char *s)
+{
+    struct bu_mro **attr_vals;
+    int i;
+    char *p;
+    struct bu_vls *vls;
+
+    attr_vals = 
+	((struct region *)ValTab[VTI_ATTRIBUTES].value.sval)->attr_values;
+
+    if ( (p=strstr(s, "%A")) == NULL) return;
+
+    /* if there was stuff before the %A in the fmt, print it */
+    if (p != s) {
+	*p = '\0';
+	fprintf(outf, "%s", s);
+    }
+    p += 2;
+
+    for (i=0 ; i < attrib_use ; i++) {
+	BU_CK_MRO(attr_vals[i]);
+
+	vls = &attr_vals[i]->string_rep;
+
+	/* XXX only print attributes that actually were set */
+	if (bu_vls_strlen(vls) > 0) {
+	    fprintf(outf, "%s=\"%s\" ",
+		    attrib[i], bu_vls_addr(vls));
+	}
+    }
+
+    if (*p) {
+	fprintf(outf, "%s", p);
+    }
+}
+
+
+
+
 void report(outcom_type)
 
 int	outcom_type;
@@ -430,6 +468,18 @@ int	outcom_type;
 		break;
 	    case OIT_STRING:
 		fprintf(outf, oip -> format, ValTab[oip -> code_nm].value.sval);
+		break;
+	    case OIT_ATTRIB:
+		switch (outcom_type) {
+		case FMT_RAY: break;
+		case FMT_FOOT: /* fallthrough */
+		case FMT_HEAD: fprintf(outf, "Attributes"); break;
+		case FMT_PART: format_attributes(oip->format); break;
+		case FMT_MISS: break;
+		case FMT_OVLP: break;
+		case FMT_NONE: break;
+		}
+
 		break;
 	    default:
 		fflush(stdout);
@@ -619,6 +669,8 @@ outitem	*oip;
 		fprintf(stderr,
 			" for item %s, which is a %s\n",
 			ValTab[oip -> code_nm].name, oit_name(oi_type));
+		break;
+	    case 'A':
 		break;
 	    default:
 		++warnings;

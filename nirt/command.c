@@ -303,6 +303,13 @@ int			ctp;
 
     extern void	init_ovlp();
 
+    if (need_prep) {
+	if (rtip) rt_clean(rtip);
+	do_rt_gettrees(rtip, NULL, NULL);
+    }
+
+
+
     if (do_backout)
     {
 	backout();
@@ -479,6 +486,32 @@ com_table	*ctp;
 
     bu_log("Invalid overlap_claims specification: '%s'\n", buffer + i);
 }
+
+void
+cm_attr(buffer, ctp)
+char		*buffer;
+com_table	*ctp;
+{
+    while (isascii(*buffer) && isspace(*buffer)) buffer++;
+
+    if (strlen(buffer) == 0) {
+	com_usage(ctp);
+	return;
+    }
+
+    if (! strncmp(buffer, "-p", 2) ) {
+	attrib_print();
+	return;
+    }
+
+    if (! strncmp(buffer, "-f", 2) ) {
+	attrib_flush();
+	return;
+    }
+
+    attrib_add(buffer);
+}
+
 
 void
 cm_debug(buffer, ctp)

@@ -39,13 +39,18 @@ static const char RCSid[] = "$Header$";
 #include "./nirt.h"
 #include "./usrfmt.h"
 
+
+
+
 extern char	version[];		/* from vers.c */
 extern void	cm_libdebug();
 extern void	cm_debug();
+extern void	cm_attr();
 
 char		*db_name;	/* the name of the BRL-CAD geometry file */
 com_table	ComTab[] =
 		{
+		    { "attr", cm_attr, "select attributes", "<-f(flush) | -p(print) | attribute_name>" },
 		    { "ae", az_el, "set/query azimuth and elevation", 
 			"azimuth elevation" },
 		    { "dir", dir_vect, "set/query direction vector", 
@@ -96,6 +101,77 @@ struct rt_i		*rtip;
 struct resource		res_tab;
 
 struct application	ap;
+
+
+int need_prep = 1;
+int attrib_use;
+int attrib_cnt;
+char **attrib;
+
+void
+attrib_print(void)
+{
+    int i;
+
+    for (i=0 ; i < attrib_use ; i++) {
+	bu_log("\"%s\"\n", attrib[i]);
+    }
+
+}
+
+void
+attrib_flush()
+{
+    int i;
+    /* flush the list of desired attributs */
+
+    attrib_use = 0;
+    for (i=0 ; i < attrib_use; i++ )
+	bu_free(attrib[i], "strdup");
+
+    return;
+}
+
+void
+attrib_add(char *a)
+{
+    char *p;
+
+    if (!a) {
+	bu_log("attrib_add null arg\n");
+	return; /* null char ptr */
+    }
+
+    p = strtok(a, "\t ");
+    while (p) {
+
+	/* make sure we have space */
+	if (!attrib || attrib_use >= (attrib_cnt-1)) {
+	    attrib_cnt += 16;
+	    attrib = bu_realloc(attrib, attrib_cnt * sizeof(char *),
+				"attrib_tab");
+	}
+
+	/* add the attribute name(s) */
+    	attrib[attrib_use] = bu_strdup(p);
+	/* bu_log("attrib[%d]=\"%s\"\n", attrib_use, attrib[attrib_use]); */
+	attrib[++attrib_use] = (char *)NULL;
+
+	p = strtok((char *)NULL, "\t ");
+	need_prep = 1;
+    }
+
+}
+
+
+
+
+
+
+
+
+
+
 
 struct script_rec
 {
@@ -267,6 +343,9 @@ char **argv;
     while ((Ch = getopt(argc, argv, OPT_STRING)) != EOF)
         switch (Ch)
         {
+	    case 'A':
+		attrib_add(optarg);
+		break;
 	    case 'b':
 		do_backout = 1;
 		break;
@@ -410,7 +489,7 @@ char **argv;
 	printf("\nPrepping the geometry...");
     ++optind;
     do_rt_gettrees (rtip, argv + optind, argc - optind);
- 
+
     /* Initialize the table of resource structures */
     rt_init_resource( &res_tab, 0, rtip );
 
@@ -425,6 +504,7 @@ char **argv;
     ap.a_rt_i = rtip;         /* rt_i pointer                        */
     ap.a_zero1 = 0;           /* sanity check, sayth raytrace.h      */
     ap.a_zero2 = 0;           /* sanity check, sayth raytrace.h      */
+    ap.a_uptr = (genptr_t)attrib;
 
     rt_prep( rtip );
 
@@ -531,7 +611,7 @@ int		nm_objects;
 	prev_names = object_name;
 	prev_nm = nm_objects;
     }
-    if (rt_gettrees (rtip, nm_objects, (const char **) object_name, 1))
+    if (rt_gettrees_and_attrs(rtip, attrib, nm_objects, (const char **) object_name, 1))
     {
 	fflush(stdout);
 	fprintf(stderr, "rt_gettrees() failed\n");
@@ -546,4 +626,6 @@ int		nm_objects;
 	    printf(" '%s'", object_name[i]);
 	printf(" processed\n");
     }
+
+
 }

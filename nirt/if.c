@@ -45,9 +45,17 @@ struct seg		*finished_segs;
     point_t		onormal;
     struct bu_vls	claimant_list;	/* Names of the claiming regions */
     int			need_to_free = 0;	/* Clean up the bu_vls? */
-
     fastf_t		get_obliq();
 
+#if 0
+    avs = (struct bu_attribute_value_set *)ap->a_uptr;
+int
+db5_get_attributes( ap->a_rt_i->rti_dbip
+		    avs,
+		    part->pt_inseg->seg_stp->stp_dp
+		    part->pt_regionp
+		    const struct directory *dp )
+#endif
 
     report(FMT_RAY);
     report(FMT_HEAD);
@@ -158,6 +166,9 @@ struct seg		*finished_segs;
 		    *cp = '\n';
 	    need_to_free = 1;
 	}
+
+	ValTab[VTI_ATTRIBUTES].value.sval = (char *)part->pt_regionp;
+
 
 	/* Do the printing for this partition */
 	report(FMT_PART);

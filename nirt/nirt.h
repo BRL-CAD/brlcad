@@ -48,7 +48,7 @@
 #define DEBUG_FMT	"\020\5HITS\4BACKOUT\3MAT\2SCRIPTS\1INTERACT"
 
 /*	STRING FOR USE WITH GETOPT(3)	*/
-#define	OPT_STRING      "bEe:f:MO:su:vx:X:?"
+#define	OPT_STRING      "A:bEe:f:MO:su:vx:X:?"
 
 #define	made_it()	bu_log("Made it to %s:%d\n", __FILE__, __LINE__)
 
@@ -78,6 +78,13 @@ struct VarTable
 	vect_t  grid;
 };
 
+extern struct rt_i		*rtip;
+extern int		attrib_use;
+extern int		attrib_cnt;
+extern char		**attrib;
+extern void		attrib_add(char *a);
+extern void 		attrib_print(void);
+extern void 		attrib_flush(void);
 extern void		az_el();
 extern void		dir_vect();
 extern void	        grid_coor();
@@ -107,3 +114,5 @@ extern void		dir2ae();
 extern void		set_diameter();
 extern void		report();
 extern int		check_conv_spec();
+extern void                   do_rt_gettrees();
+extern int need_prep;
