@@ -12,8 +12,10 @@ entire history of the project is available through CVS.
 ----------------------------------------------------------------------
 
 This minor release update fixes several build issues experienced on
-certain platforms including Debian and Mac OS X.  Special thanks to 
-Cliff Yapp for quickly getting us an ebuild for Gentoo set up.
+various platforms including Gentoo, Debian, and Mac OS X.
+
+* update of libpng from 1.2.5 to 1.2.8 - Sean Morrison
+* gentoo build fixes - Cliff Yapp
 
 
 ----------------------------------------------------------------------
