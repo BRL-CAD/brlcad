@@ -707,10 +707,20 @@ dist)
 	echo "${FTP_ARCHIVE}-i.gz created (libtcl libtk libitcl)"
 
 	rm -f ${EXCLUDE}
+
+#	Select available encryption utility
+	echo "Hello" | crypt key > /dev/null 2>&1
+	if test $? -gt 0
+	then
+		COMMAND=enigma
+	else
+		COMMAND=crypt
+	fi
+
 	if test ${DO_ENCRYPTION} -eq 1
 	then
 		for FILE in ${FTP_ARCHIVE}-*.gz ; do
-			crypt ${KEY} < ${FILE} > ${FILE}.crypt
+			$COMMAND ${KEY} < ${FILE} > ${FILE}.crypt
 			rm -f ${FILE}
 		done
 	else
