@@ -354,12 +354,10 @@ struct db_full_path		*pathp;
 CONST struct rt_external	*ep;
 int				id;
 {
-	register fastf_t	f;
 	register struct soltab	*stp;
 	union tree		*curtree;
 	struct directory	*dp;
 	struct rt_db_internal	intern;
-	register int		i;
 	register matp_t		mat;
 
 	RT_CK_DBI(tsp->ts_dbip);

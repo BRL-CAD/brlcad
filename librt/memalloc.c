@@ -124,7 +124,7 @@ unsigned int place;
 
 	prevp = MAP_NULL;		/* special for first pass through */
 	if( size == 0 )
-		return( -1 );	/* Anything non-zero */
+		rt_bomb("memget() size==0\n");
 
 	curp = *pp;
 	while( curp )  {

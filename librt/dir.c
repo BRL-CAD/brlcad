@@ -90,7 +90,6 @@ int	len;
 {
 	register struct rt_i	*rtip;
 	register struct db_i	*dbip;		/* Database instance ptr */
-	register int		i;
 
 	if( RT_LIST_FIRST( rt_list, &rt_g.rtg_vlfree ) == 0 )  {
 		RT_LIST_INIT( &rt_g.rtg_vlfree );
@@ -183,7 +182,6 @@ struct directory	*dp;
 struct db_i		*dbip;
 {
 	struct rt_external	ext;
-	register int		id;
 
 	RT_INIT_EXTERNAL(&ext);
 	RT_CK_DB_INTERNAL( ip );

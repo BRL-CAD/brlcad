@@ -49,7 +49,6 @@ double		scale;		/* scale factor to change 1x1 char sz */
 	vect_t	temp;
 	vect_t	loc;
 	mat_t	xlate_to_origin;
-	mat_t	mtemp;
 	mat_t	mat;
 
 	if( string == NULL || *string == '\0' )

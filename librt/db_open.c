@@ -132,7 +132,7 @@ char	*mode;
 		dbip->dbi_eof = sb.st_size;	/* needed by db_read() */
 		if( (dbip->dbi_inmem = mmap(
 		    (caddr_t)0, sb.st_size, PROT_READ, MAP_PRIVATE,
-		    dbip->dbi_fd, (off_t)0 )) == (caddr_t)-1 )  {
+		    dbip->dbi_fd, (off_t)0 )) == (caddr_t)-1L )  {
 			perror("mmap");
 			dbip->dbi_inmem = (char *)0;
 		} else {

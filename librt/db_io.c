@@ -213,7 +213,7 @@ long		offset;		/* byte offset from start of file */
 	got = fread( addr, 1, count, dbip->dbi_fp );
 #endif
 	RES_RELEASE( &rt_g.res_syscall );
-out:
+
 	if( got != count )  {
 		perror("db_read");
 		rt_log("db_read(%s):  read error.  Wanted %d, got %d bytes\n",

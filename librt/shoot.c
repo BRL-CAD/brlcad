@@ -575,7 +575,6 @@ register struct application *ap;
 	AUTO struct soltab	**stpp;
 	register CONST union cutter *cutp;
 	struct resource		*resp;
-	int			end_free_len;
 	AUTO struct rt_i	*rtip;
 	CONST int		debug_shoot = rt_g.debug & DEBUG_SHOOT;
 
