@@ -109,8 +109,8 @@ register struct partition *PartHeadp;
 		}
 
 		if( pp->pt_outhit->hit_dist < INFINITY )  {
-			RT_HIT_NORM( pp->pt_outhit,
-				pp->pt_outseg->seg_stp, &(ap->a_ray) );
+			/* next macro must be on one line for 3d compiler */
+			RT_HIT_NORM( pp->pt_outhit, pp->pt_outseg->seg_stp, &(ap->a_ray) );
 			if( pp->pt_outflip )  {
 				VREVERSE( pp->pt_outhit->hit_normal,
 					  pp->pt_outhit->hit_normal );

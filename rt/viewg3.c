@@ -357,8 +357,8 @@ register struct partition *PartHeadp;
 		 *  Hence the one sign change.
 		 *  XXX this should probably be done with atan2()
 		 */
-		RT_HIT_NORM( pp->pt_inhit,
-			pp->pt_inseg->seg_stp, &(ap->a_ray) );
+		/* next macro must be on one line for 3d compiler */
+		RT_HIT_NORM( pp->pt_inhit, pp->pt_inseg->seg_stp, &(ap->a_ray) );
 		if( pp->pt_inflip )  {
 			VREVERSE( pp->pt_inhit->hit_normal,
 				  pp->pt_inhit->hit_normal );
