@@ -642,8 +642,6 @@ CONST char		*cp;
 		/* Perhaps the root of the tree is the named leaf? */
 		if( (*tp)->tr_op == OP_DB_LEAF &&
 		    strcmp( cp, (*tp)->tr_l.tl_name ) == 0 )  {
-bu_log("db_free_tree from db_tree_del_dbleaf\n");
-db_ck_tree( *tp );
 		    	db_free_tree( *tp );
 		    	*tp = TREE_NULL;
 		    	return 0;
@@ -2350,8 +2348,12 @@ struct mater_info *materp;
  *
  *  Given the name of a region, return the matrix which maps model coordinates
  *  into "region" coordinates.
+ *
+ *  Returns:
+ *	0	OK
+ *	<0	Failure
  */
-void
+int
 db_region_mat(m, dbip, name)
 mat_t m;
 CONST struct db_i *dbip;
@@ -2363,19 +2365,21 @@ CONST char *name;
 	/* get transformation between world and "region" coordinates */
 	if (db_string_to_path( &full_path, dbip, name) ) {
 		/* bad thing */
-		bu_log("db_string_to_path(%s) error\n", name);
-		rt_bomb("error getting path\n");
+		bu_log("db_region_mat: db_string_to_path(%s) error\n", name);
+		return -1;
 	}
 	if(! db_path_to_mat((struct db_i *)dbip, &full_path, region_to_model, 0)) {
 		/* bad thing */
-		bu_log("db_path_to_mat(%s) error", name);
-		rt_bomb("error getting region coordinate matrix\n");
+		bu_log("db_region_mat: db_path_to_mat(%s) error", name);
+		return -2;
 	}
 
 	/* get matrix to map points from model (world) space
 	 * to "region" space
 	 */
 	bn_mat_inv(m, region_to_model);
+	db_free_full_path( &full_path );
+	return 0;
 }
 
 
@@ -2391,8 +2395,12 @@ CONST char *name;
  *  The area occupied by the region's bounding box (in region coordinates)
  *  are then mapped into the unit cube.  This unit cube defines
  *  "shader space".
+ *
+ *  Returns:
+ *	0	OK
+ *	<0	Failure
  */
-void
+int
 db_shader_mat(model_to_shader, rtip, rp, p_min, p_max)
 mat_t model_to_shader;
 CONST struct rt_i *rtip;
@@ -2413,7 +2421,8 @@ point_t p_max;	/* shader/region max point */
 	bu_log("db_shader_mat(%s)\n", rp->reg_name);
 #endif
 	/* get model-to-region space mapping */
-	db_region_mat(model_to_region, rtip->rti_dbip, rp->reg_name);
+	if( db_region_mat(model_to_region, rtip->rti_dbip, rp->reg_name) < 0 )
+		return -1;
 
 #ifdef DEBUG_SHADER_MAT
 	bn_mat_print("model_to_region", model_to_region);
@@ -2459,4 +2468,5 @@ point_t p_max;	/* shader/region max point */
 	bn_mat_idn(m_scale);
 	MAT_SCALE_VEC(m_scale, v_tmp);
 	bn_mat_mul(model_to_shader, m_scale, m_tmp);
+	return 0;
 }
