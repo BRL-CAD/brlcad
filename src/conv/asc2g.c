@@ -65,11 +65,6 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #include <fcntl.h>
 #endif
 
-extern void rt_dsp_ifree( struct rt_db_internal	*ip);
-extern void rt_ebm_ifree( struct rt_db_internal	*ip);
-extern void rt_vol_ifree( struct rt_db_internal	*ip);
-
-
 #define BUFSIZE			(8*1024)	/* input line buffer size */
 #define TYPELEN			10
 #define NAME_LEN			20
@@ -176,6 +171,9 @@ main(int argc, char **argv)
 
 		rewind( ifp );
 		BU_LIST_INIT(&rt_g.rtg_headwdb.l);
+#ifdef WIN32
+		Tcl_FindExecutable("asc2g");
+#endif
 		interp = Tcl_CreateInterp();
 		if (wdb_init_obj(interp, ofp, db_name) != TCL_OK ||
 		    wdb_create_cmd(interp, ofp, db_name) != TCL_OK) {
