@@ -55,16 +55,32 @@ char	*dp;
 
 	if( swp->sw_reflect <= 0 && swp->sw_transmit <= 0 )
 		goto finish;
+
 	if( ap->a_level >= MAX_BOUNCE )  {
 		/* Nothing more to do for this ray */
-#ifdef debug
-		rt_log("rr_render: lvl=%d, stopping at %s\n",
+		static long count = 0;		/* Not PARALLEL, should be OK */
+
+		if( ++count > 100 )  {
+			if( (count%100) != 3 )  goto show_quench;
+			rt_log("(bounces omitted)\n");
+		}
+		rt_log("rr_render: Maximum bounces=%d, stopping with %s at %d,%d\n",
 			ap->a_level,
-			pp->pt_inseg->seg_stp->st_name);
-		VSET( swp->sw_color, 99, 99, 0 );
-#else
-		VSETALL( swp->sw_color, 0 );
-#endif
+			pp->pt_inseg->seg_stp->st_name,
+			ap->a_x, ap->a_y );
+show_quench:	;
+		if(rdebug&RDEBUG_SHOWERR)  {
+			VSET( swp->sw_color, 99, 99, 0 );	/* Yellow */
+		} else {
+			/* Return basic color of object, ignoring the
+			 * the fact that it is supposed to be
+			 * filtering or reflecting light here.
+			 * This is better than returning just black,
+			 * but something better might be done
+			 * (eg, hand off to phong shader too).
+			 */
+			VMOVE( swp->sw_color, swp->sw_basecolor );
+		}
 		goto finish;
 	}
 	VMOVE( filter_color, swp->sw_basecolor );
@@ -171,29 +187,39 @@ do_inside:
 			swp->sw_refrac_index, RI_AIR,
 			sub_ap.a_ray.r_dir		/* output direction */
 		) )  {
-			static long count = 0;
+			static long count = 0;		/* not PARALLEL, should be OK */
 
 			/* Reflected internally -- keep going */
 			if( (++sub_ap.a_level) <= MAX_IREFLECT )
 				goto do_inside;
 
+			/* A chattering should probably be supressed, except
+			 * in the SHOWERR case, as this will be the "normal"
+			 * behavior now.
+			 */
 			if( ++count > 100 )  {
-				if( (count%100) != 3 )  goto show_err;
-				rt_log("(reflections omitted)\n");
+				if( (count%100) != 3 )  goto show_rstop;
+				rt_log("(internal reflections omitted)\n");
 			}
 			rt_log("rr_render: %s Internal reflection stopped after %d bounces, (x%d, y%d, lvl=%d)\n",
 				pp->pt_inseg->seg_stp->st_name,
 				sub_ap.a_level,
 				sub_ap.a_x, sub_ap.a_y, ap->a_level );
-show_err:		;
+show_rstop:		;
 			if(rdebug&RDEBUG_SHOWERR) {
 				VSET( swp->sw_color, 0, 9, 0 );	/* green */
-			} else {
-				/* 18% grey, filtered */
-				VSETALL( work, .18*swp->sw_transmit );
-				VELMUL( swp->sw_color, filter_color, work );
+				goto finish;
 			}
-			goto finish;
+			/*
+			 *  Internal Reflection limit exceeded -- just let
+			 *  the ray escape, continuing on current course.
+			 *  This will cause some energy from somewhere in the
+			 *  sceen to be received through this glass,
+			 *  which is much better than just returning
+			 *  grey or black, as before.
+			 */
+			VMOVE( sub_ap.a_ray.r_dir, incident_dir );
+			goto do_exit;
 		}
 do_exit:
 		/* This is the only place we might recurse dangerously */
@@ -272,6 +298,31 @@ struct partition *PartHeadp;
 			rt_pr_hit("inhit", hitp);
 		}
 		goto bad;
+	}
+
+	/* If there is a very small crack in the glass, perhaps formed
+	 * by a small error when taking the Union of two solids,
+	 * attempt to find the real exit point.
+	 * NOTE that this is usually taken care of inside librt
+	 * in the bool_weave code, but it is inexpensive to check for it
+	 * here.  If this case is detected, push on, and log it.
+	 * This code is not expected to be needed.
+	 * Since this shot was done with the "one hit" flag set,
+	 * there are no assurances about the accuracy of things behind
+	 * this hit point.  I don't know if this is significant here.
+	 * Perhaps this might be good motivation for adding support for
+	 * a setting of the "one hit" flag that is accurate through the
+	 * EXIT point, rather than the entry point.
+	 */
+	while( pp->pt_forw != PartHeadp )  {
+		register fastf_t d;
+		d = pp->pt_forw->pt_inhit->hit_dist - pp->pt_outhit->hit_dist;
+		if( !NEAR_ZERO( d, 1.0e-3 ) )	/* XXX absolute tolerance */
+			break;
+		if( pp->pt_forw->pt_regionp != pp->pt_regionp )
+			break;
+		rt_log("rr_hit:  fusing small crack in glass\n");
+		pp = pp->pt_forw;
 	}
 
 	hitp = pp->pt_outhit;
