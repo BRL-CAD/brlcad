@@ -45,7 +45,9 @@ static char RCSarb[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
+#include "bu.h"
 #include "vmath.h"
+#include "bn.h"
 #include "nmg.h"
 #include "db.h"
 #include "rtstring.h"
@@ -801,7 +803,7 @@ register struct uvcoord *uvp;
 			return;
 		}
 		if( rt_arb_import( &intern, &ext,
-		    stp->st_matp ? stp->st_matp : rt_identity ) < 0 )  {
+		    stp->st_matp ? stp->st_matp : bn_mat_identity ) < 0 )  {
 			rt_log("rt_arb_uv(%s) database import error\n",
 				stp->st_name);
 			db_free_external( &ext );

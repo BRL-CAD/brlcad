@@ -810,15 +810,15 @@ struct xray *rp;
 struct b_tree * tree;
 int level;
 {
-	struct  spl_poly * poly, *p, *tmp;
+	struct  spl_poly * _poly, *p, *tmp;
 	struct  local_hit * h0;
 	int hit_count;
 
 	hit_count = 0;
 	
-	poly = (struct spl_poly *) spl_to_poly( tree->root );
+	_poly = (struct spl_poly *) spl_to_poly( tree->root );
 
-	for( p = poly; p!= ( struct spl_poly *)0; p = p->next)
+	for( p = _poly; p!= ( struct spl_poly *)0; p = p->next)
 	{
 		h0 = rt_spl_ray_poly( rp, p);
 		if ( h0 != NULLHIT )
@@ -833,7 +833,7 @@ int level;
 		}
 	}
 
-	for ( p = poly; p != (struct spl_poly *) 0;  )
+	for ( p = _poly; p != (struct spl_poly *) 0;  )
 	{
 		tmp = p;
 		p = p->next;
