@@ -44,7 +44,7 @@ HIDDEN int light_setup(), light_render(), light_print();
 int light_free();
 
 struct mfuncs light_mfuncs[] = {
-	"light",	0,		0,
+	"light",	0,		0,		0,
 	light_setup,	light_render,	light_print,	light_free,
 
 	(char *)0,	0,		0,
@@ -57,14 +57,15 @@ struct mfuncs light_mfuncs[] = {
  *  If we have a direct view of the light, return it's color.
  */
 HIDDEN int
-light_render( ap, pp )
-register struct application *ap;
-register struct partition *pp;
+light_render( ap, pp, swp )
+struct application	*ap;
+struct partition	*pp;
+struct shadework	*swp;
 {
 	register struct light_specific *lp =
 		(struct light_specific *)pp->pt_regionp->reg_udata;
 
-	VSCALE( ap->a_color, lp->lt_color, lp->lt_fraction );
+	VSCALE( swp->sw_color, lp->lt_color, lp->lt_fraction );
 }
 
 /*

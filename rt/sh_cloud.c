@@ -44,10 +44,10 @@ struct matparse cloud_parse[] = {
 HIDDEN int cloud_setup(), cloud_render(), cloud_print(), cloud_free();
 
 struct mfuncs cloud_mfuncs[] = {
-	"cloud",	0,		0,
+	"cloud",	0,		0,		MFI_UV,
 	cloud_setup,	cloud_render,	cloud_print,	cloud_free,
 
-	(char *)0,	0,		0,
+	(char *)0,	0,		0,		0,
 	0,		0,		0,		0
 };
 
@@ -151,21 +151,18 @@ char *cp;
  *   from 0 to 1.
  *  thresh=0.35, range=0.3 for decent clouds.
  */
-cloud_render( ap, pp )
-register struct application *ap;
-register struct partition *pp;
+cloud_render( ap, pp, swp )
+struct application	*ap;
+struct partition	*pp;
+struct shadework	*swp;
 {
 	register struct cloud_specific *cp =
 		(struct cloud_specific *)pp->pt_regionp->reg_udata;
-	auto struct uvcoord uv;
 	double intensity;
 	FAST fastf_t	TR;
 
-	VJOIN1( pp->pt_inhit->hit_point, ap->a_ray.r_pt,
-		pp->pt_inhit->hit_dist, ap->a_ray.r_dir );
-	rt_functab[pp->pt_inseg->seg_stp->st_id].ft_uv(
-		ap, pp->pt_inseg->seg_stp, pp->pt_inhit, &uv );
-	intensity = cloud_texture( uv.uv_u, uv.uv_v, 1.0, 2.0, 1.0 );
+	intensity = cloud_texture( swp->sw_uv.uv_u, swp->sw_uv.uv_v,
+		1.0, 2.0, 1.0 );
 
 	/* Intensity is normalized - check bounds */
 	if( intensity > 1.0 )
@@ -180,7 +177,7 @@ register struct partition *pp;
 	else if (TR > 1.0)
 		TR = 1.0;
 
-	ap->a_color[0] = ((1-TR) * intensity + (TR * .31));	/* Red */
-	ap->a_color[1] = ((1-TR) * intensity + (TR * .31));	/* Green */
-	ap->a_color[2] = ((1-TR) * intensity + (TR * .78));	/* Blue */
+	swp->sw_color[0] = ((1-TR) * intensity + (TR * .31));	/* Red */
+	swp->sw_color[1] = ((1-TR) * intensity + (TR * .31));	/* Green */
+	swp->sw_color[2] = ((1-TR) * intensity + (TR * .78));	/* Blue */
 }

@@ -27,6 +27,7 @@ static char RCSrt[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
+#include "./material.h"
 #include "./mathtab.h"
 #include "./rdebug.h"
 #include "../librt/debug.h"
@@ -390,7 +391,8 @@ int framenumber;
 				rt_log("mlib_setup failure on %s\n", regp->reg_name);
 			} else {
 				if(rdebug&RDEBUG_MATERIAL)
-					regp->reg_mfuncs->mf_print( regp );
+					((struct mfuncs *)(regp->reg_mfuncs))->
+						mf_print( regp );
 				/* Perhaps this should be a function? */
 			}
 		}

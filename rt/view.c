@@ -44,6 +44,7 @@ static char RCSview[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "fb.h"
 #include "./rdebug.h"
+#include "./material.h"
 #include "./mathtab.h"
 #include "./light.h"
 
@@ -64,6 +65,7 @@ Options:\n\
 extern FBIO	*fbp;			/* Framebuffer handle */
 extern FILE	*outfp;			/* optional output file */
 
+extern int	perspective;
 extern int	width;
 extern int	height;
 extern int	lightmodel;		/* lighting model # to use */
@@ -318,6 +320,13 @@ register struct application *ap;
 	if(rdebug&RDEBUG_HITS) rt_log("rgb=%3d,%3d,%3d\n", r,g,b);
 }
 
+static struct shadework shade_default = {
+	0.0,				/* xmit */
+	0.0,				/* reflect */
+	1.0,				/* refractive index */
+	1.0, 1.0, 1.0,			/* color: white */
+	/* rest are zeros */
+};
 
 /*
  *			C O L O R V I E W
@@ -331,6 +340,8 @@ struct partition *PartHeadp;
 {
 	register struct partition *pp;
 	register struct hit *hitp;
+	register struct mfuncs *mfp;
+	struct shadework sw;
 
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 		if( pp->pt_outhit->hit_dist >= 0.0 )  break;
@@ -351,6 +362,7 @@ struct partition *PartHeadp;
 	}
 
 	/* Check to see if eye is "inside" the solid */
+	/* It might only be worthwhile doing all this in perspective mode */
 	if( hitp->hit_dist < 0.0 )  {
 		struct application sub_ap;
 		FAST fastf_t f;
@@ -373,9 +385,8 @@ struct partition *PartHeadp;
 		sub_ap.a_level = ap->a_level+1;
 		f = pp->pt_outhit->hit_dist+0.0001;
 		VJOIN1(sub_ap.a_ray.r_pt, ap->a_ray.r_pt, f, ap->a_ray.r_dir);
-		(void)rt_shootray( &sub_ap );
-		VSCALE( ap->a_color, sub_ap.a_color, 0.8 );
-		ap->a_user = 1;		/* Signal view_pixel:  HIT */
+		ap->a_user = rt_shootray( &sub_ap );	/* Signal view_pixel*/
+		VSCALE( ap->a_color, sub_ap.a_color, 0.80 );
 		return(1);
 	}
 
@@ -407,31 +418,100 @@ struct partition *PartHeadp;
 	/*
 	 *  Call the material-handling function.
 	 *  Note that only hit_dist is valid in pp_inhit.
-	 *  ft_uv() routines must have hit_point computed
-	 *  in advance, which is responsibility of reg_ufunc() routines.
-	 *  RT_HIT_NORM() must also be called if hit_norm is needed,
+	 *  RT_HIT_NORM() must be called if hit_norm is needed,
 	 *  after which pt_inflip must be handled.
-	 *  These operations have been pushed down to the individual
-	 *  material-handling functions for efficiency reasons,
-	 *  because not all materials need the normals.
+	 *  ft_uv() routines must have hit_point computed
+	 *  in advance.
 	 */
-	{
-		register struct mfuncs *mfp = pp->pt_regionp->reg_mfuncs;
-		register int ret;
+	sw = shade_default;	/* struct copy */
 
-		if( mfp == MF_NULL )  {
-			rt_log("colorview:  reg_mfuncs NULL\n");
-			return(0);
-		}
-		if( mfp->mf_magic != MF_MAGIC )  {
-			rt_log("colorview:  reg_mfuncs bad magic, %x != %x\n",
-				mfp->mf_magic, MF_MAGIC );
-			return(0);
-		}
-		ret = mfp->mf_render( ap, pp );
-		ap->a_user = 1;		/* Signal view_pixel:  HIT */
-		return(1);		/* "ret" isn't reliable yet */
+	if( (mfp = (struct mfuncs *)pp->pt_regionp->reg_mfuncs) == MF_NULL )  {
+		rt_log("colorview:  reg_mfuncs NULL\n");
+		return(0);
 	}
+	if( mfp->mf_magic != MF_MAGIC )  {
+		rt_log("colorview:  reg_mfuncs bad magic, %x != %x\n",
+			mfp->mf_magic, MF_MAGIC );
+		return(0);
+	}
+
+	/* Get color-by-ident for this region id */
+	{
+		register struct region *rp;
+		if( (rp=pp->pt_regionp) == REGION_NULL )  {
+			rt_log("bad region pointer\n");
+			return(0);
+		}
+		if( rp->reg_mater.ma_override )  {
+			VSET( sw.sw_color,
+				rp->reg_mater.ma_rgb[0]/255.,
+				rp->reg_mater.ma_rgb[1]/255.,
+				rp->reg_mater.ma_rgb[2]/255. );
+		} else {
+			/* Default color is white (uncolored) */
+		}
+	}
+
+	sw.sw_hit = *(pp->pt_inhit);		/* struct copy */
+	if( sw.sw_hit.hit_dist < 0.0 )
+		sw.sw_hit.hit_dist = 0.0;	/* Eye inside solid */
+	if( mfp->mf_inputs )  {
+		VJOIN1( sw.sw_hit.hit_point, ap->a_ray.r_pt,
+			sw.sw_hit.hit_dist, ap->a_ray.r_dir );
+	}
+	if( mfp->mf_inputs & MFI_NORMAL )  {
+		if( pp->pt_inhit->hit_dist < 0.0 )  {
+			/* Eye inside solid, orthoview */
+			VREVERSE( sw.sw_hit.hit_normal, ap->a_ray.r_dir );
+		} else {
+			fastf_t f;
+			/* Get surface normal for hit point */
+			RT_HIT_NORM( &(sw.sw_hit), pp->pt_inseg->seg_stp,
+				&(ap->a_ray) );
+
+			/* Temporary check to make sure normals are OK */
+			if( sw.sw_hit.hit_normal[X] < -1.01 || sw.sw_hit.hit_normal[X] > 1.01 ||
+			    sw.sw_hit.hit_normal[Y] < -1.01 || sw.sw_hit.hit_normal[Y] > 1.01 ||
+			    sw.sw_hit.hit_normal[Z] < -1.01 || sw.sw_hit.hit_normal[Z] > 1.01 )  {
+			    	VPRINT("colorview: N", sw.sw_hit.hit_normal);
+				VSET( ap->a_color, 9, 9, 0 );	/* Yellow */
+				return(0);
+			}
+			if( pp->pt_inflip )  {
+				VREVERSE( sw.sw_hit.hit_normal, sw.sw_hit.hit_normal );
+				pp->pt_inflip = 0;	/* shouldnt be needed now??? */
+			}
+			/* More temporary checking */
+			if( (f=VDOT( ap->a_ray.r_dir, sw.sw_hit.hit_normal )) > 0 )  {
+				rt_log("colorview: flipped normal %d %d %s dot=%g\n",
+					ap->a_x, ap->a_y,
+					pp->pt_inseg->seg_stp->st_name, f);
+				VPRINT("Dir ", ap->a_ray.r_dir);
+				VPRINT("Norm", sw.sw_hit.hit_norm);
+			}
+		}
+	}
+	if( mfp->mf_inputs & MFI_UV )  {
+		if( pp->pt_inhit->hit_dist < 0.0 )  {
+			/* Eye inside solid, orthoview */
+			sw.sw_uv.uv_u = sw.sw_uv.uv_v = 0.5;
+			sw.sw_uv.uv_du = sw.sw_uv.uv_dv = 0;
+		} else {
+			rt_functab[pp->pt_inseg->seg_stp->st_id].ft_uv(
+				ap, pp->pt_inseg->seg_stp,
+				&(sw.sw_hit), &(sw.sw_uv) );
+		}
+	}
+
+	/* Invoke the actual shader (may be a tree of them) */
+	(void)mfp->mf_render( ap, pp, &sw );
+
+	/* As a special case for now, handle reflection & refraction */
+	(void)rr_render( ap, pp, &sw );
+
+	VMOVE( ap->a_color, sw.sw_color );
+	ap->a_user = 1;		/* Signal view_pixel:  HIT */
+	return(1);		/* "ret" isn't reliable yet */
 }
 
 /*

@@ -80,7 +80,7 @@ register struct region *rp;
 {
 	register struct mfuncs *mfp;
 
-	if( rp->reg_mfuncs != MF_NULL )  {
+	if( rp->reg_mfuncs != (char *)0 )  {
 		rt_log("mlib_setup:  region %s already setup\n", rp->reg_name );
 		return(-1);
 	}
@@ -97,7 +97,7 @@ register struct region *rp;
 def:
 	mfp = phg_mfuncs;		/* default */
 found:
-	rp->reg_mfuncs = mfp;
+	rp->reg_mfuncs = (char *)mfp;
 	rp->reg_udata = (char *)0;
 	if( mfp->mf_setup( rp ) < 0 )  {
 		/* What to do if setup fails? */
@@ -116,7 +116,7 @@ found:
 mlib_free( rp )
 register struct region *rp;
 {
-	register struct mfuncs *mfp = rp->reg_mfuncs;
+	register struct mfuncs *mfp = (struct mfuncs *)rp->reg_mfuncs;
 
 	if( mfp == MF_NULL )  {
 		rt_log("mlib_free:  reg_mfuncs NULL\n");
@@ -128,7 +128,7 @@ register struct region *rp;
 		return;
 	}
 	mfp->mf_free( rp->reg_udata );
-	rp->reg_mfuncs = MF_NULL;
+	rp->reg_mfuncs = (char *)0;
 	rp->reg_udata = (char *)0;
 }
 

@@ -34,19 +34,19 @@ HIDDEN int star_render();
 extern int mlib_zero();
 
 struct mfuncs txt_mfuncs[] = {
-	"texture",	0,		0,
+	"texture",	0,		0,		MFI_UV,
 	txt_setup,	txt_render,	txt_print,	txt_free,
 
-	"checker",	0,		0,
+	"checker",	0,		0,		MFI_UV,
 	ckr_setup,	ckr_render,	ckr_print,	ckr_free,
 
-	"testmap",	0,		0,
+	"testmap",	0,		0,		MFI_UV,
 	mlib_zero,	tstm_render,	mlib_zero,	mlib_zero,
 
-	"fakestar",	0,		0,
+	"fakestar",	0,		0,		0,
 	mlib_zero,	star_render,	mlib_zero,	mlib_zero,
 
-	(char *)0,	0,		0,
+	(char *)0,	0,		0,		0,
 	0,		0,		0,		0
 };
 
@@ -89,7 +89,7 @@ register struct txt_specific *tp;
 	register int i;
 
 	if( (fp = fopen(tp->tx_file, "r")) == NULL )  {
-		rt_log("txt_render(%s):  can't open\n", tp->tx_file);
+		rt_log("txt_read(%s):  can't open\n", tp->tx_file);
 		tp->tx_file[0] = '\0';
 		return(0);
 	}
@@ -122,23 +122,18 @@ register struct txt_specific *tp;
  *  which works out very naturally for the indexing scheme.
  */
 HIDDEN
-txt_render( ap, pp )
-struct application *ap;
-struct partition *pp;
+txt_render( ap, pp, swp )
+struct application	*ap;
+struct partition	*pp;
+struct shadework	*swp;
 {
 	register struct txt_specific *tp =
 		(struct txt_specific *)pp->pt_regionp->reg_udata;
-	auto struct uvcoord uv;
 	fastf_t xmin, xmax, ymin, ymax;
 	int line;
 	int dx, dy;
 	int x,y;
 	register long r,g,b;
-
-	VJOIN1( pp->pt_inhit->hit_point, ap->a_ray.r_pt,
-		pp->pt_inhit->hit_dist, ap->a_ray.r_dir );
-	rt_functab[pp->pt_inseg->seg_stp->st_id].ft_uv(
-		ap, pp->pt_inseg->seg_stp, pp->pt_inhit, &uv );
 
 	/*
 	 * If no texture file present, or if
@@ -146,32 +141,32 @@ struct partition *pp;
 	 */
 	if( tp->tx_file[0] == '\0'  ||
 	    ( tp->tx_pixels == (char *)0 && txt_read(tp) == 0 ) )  {
-		VSET( ap->a_color, uv.uv_u, 0, uv.uv_v );
+		VSET( swp->sw_color, swp->sw_uv.uv_u, 0, swp->sw_uv.uv_v );
 		return(1);
 	}
 	/* u is left->right index, v is line number bottom->top */
-	if( uv.uv_u < 0 || uv.uv_u > 1 || uv.uv_v < 0 || uv.uv_v > 1 )  {
+	if( swp->sw_uv.uv_u < 0 || swp->sw_uv.uv_u > 1 || swp->sw_uv.uv_v < 0 || swp->sw_uv.uv_v > 1 )  {
 		rt_log("txt_render:  bad u,v=%g,%g du,dv=%g,%g seg=%s\n",
-			uv.uv_u, uv.uv_v,
-			uv.uv_du, uv.uv_dv,
+			swp->sw_uv.uv_u, swp->sw_uv.uv_v,
+			swp->sw_uv.uv_du, swp->sw_uv.uv_dv,
 			pp->pt_inseg->seg_stp->st_name );
-		VSET( ap->a_color, 0, 1, 0 );
+		VSET( swp->sw_color, 0, 1, 0 );
 		return(1);
 	}
 	/* Don't filter more than 1/8 of the texture for 1 pixel! */
-	if( uv.uv_du > 0.125 )  uv.uv_du = 0.125;
-	if( uv.uv_dv > 0.125 )  uv.uv_dv = 0.125;
+	if( swp->sw_uv.uv_du > 0.125 )  swp->sw_uv.uv_du = 0.125;
+	if( swp->sw_uv.uv_dv > 0.125 )  swp->sw_uv.uv_dv = 0.125;
 
-	if( uv.uv_du < 0 || uv.uv_dv < 0 )  {
+	if( swp->sw_uv.uv_du < 0 || swp->sw_uv.uv_dv < 0 )  {
 		rt_log("txt_render uv=%g,%g, du dv=%g %g seg=%s\n",
-			uv.uv_u, uv.uv_v, uv.uv_du, uv.uv_dv,
+			swp->sw_uv.uv_u, swp->sw_uv.uv_v, swp->sw_uv.uv_du, swp->sw_uv.uv_dv,
 			pp->pt_inseg->seg_stp->st_name );
-		uv.uv_du = uv.uv_dv = 0;
+		swp->sw_uv.uv_du = swp->sw_uv.uv_dv = 0;
 	}
-	xmin = uv.uv_u - uv.uv_du;
-	xmax = uv.uv_u + uv.uv_du;
-	ymin = uv.uv_v - uv.uv_dv;
-	ymax = uv.uv_v + uv.uv_dv;
+	xmin = swp->sw_uv.uv_u - swp->sw_uv.uv_du;
+	xmax = swp->sw_uv.uv_u + swp->sw_uv.uv_du;
+	ymin = swp->sw_uv.uv_v - swp->sw_uv.uv_dv;
+	ymax = swp->sw_uv.uv_v + swp->sw_uv.uv_dv;
 	if( xmin < 0 )  xmin = 0;
 	if( ymin < 0 )  ymin = 0;
 	if( xmax > 1 )  xmax = 1;
@@ -211,17 +206,17 @@ struct partition *pp;
 	    b != (tp->tx_transp[2]) )  {
 		FAST fastf_t f;
 		f = 1.0 / 255.0;
-		VSET( ap->a_color, r * f, g * f, b * f );
+		VSET( swp->sw_color, r * f, g * f, b * f );
 		return(1);
 	}
 #endif
 	if( pp->pt_outhit->hit_dist >= INFINITY )  {
 		rt_log("txt_render:  transparency on infinite object?\n");
-		VSET( ap->a_color, 0, 1, 0 );
+		VSET( swp->sw_color, 0, 1, 0 );
 		return(1);
 	}
 	if( (ap->a_level%100) > 5 )  {
-		VSET( ap->a_color, .1, .1, .1);
+		VSET( swp->sw_color, .1, .1, .1);
 		return(1);
 	}
 	{
@@ -231,7 +226,7 @@ struct partition *pp;
 		VJOIN1( sub_ap.a_ray.r_pt, ap->a_ray.r_pt,
 			pp->pt_outhit->hit_dist, ap->a_ray.r_dir );
 		(void)rt_shootray( &sub_ap );
-		VMOVE( ap->a_color, sub_ap.a_color );
+		VMOVE( swp->sw_color, sub_ap.a_color );
 	}
 	return(1);
 }
@@ -302,9 +297,10 @@ struct matparse ckr_parse[] = {
  *			C K R _ R E N D E R
  */
 HIDDEN int
-ckr_render( ap, pp )
-register struct application *ap;
-register struct partition *pp;
+ckr_render( ap, pp, swp )
+struct application	*ap;
+struct partition	*pp;
+register struct shadework	*swp;
 {
 	register struct ckr_specific *ckp =
 		(struct ckr_specific *)pp->pt_regionp->reg_udata;
@@ -312,19 +308,14 @@ register struct partition *pp;
 	register unsigned char *cp;
 	FAST fastf_t f;
 
-	VJOIN1( pp->pt_inhit->hit_point, ap->a_ray.r_pt,
-		pp->pt_inhit->hit_dist, ap->a_ray.r_dir );
-	rt_functab[pp->pt_inseg->seg_stp->st_id].ft_uv(
-		ap, pp->pt_inseg->seg_stp, pp->pt_inhit, &uv );
-
-	if( (uv.uv_u < 0.5 && uv.uv_v < 0.5) ||
-	    (uv.uv_u >=0.5 && uv.uv_v >=0.5) )  {
+	if( (swp->sw_uv.uv_u < 0.5 && swp->sw_uv.uv_v < 0.5) ||
+	    (swp->sw_uv.uv_u >=0.5 && swp->sw_uv.uv_v >=0.5) )  {
 		cp = ckp->ckr_a;
 	} else {
 		cp = ckp->ckr_b;
 	}
 	f = 1.0/255.;
-	VSET( ap->a_color, cp[0]*f, cp[1]*f, cp[2]*f );
+	VSET( swp->sw_color, cp[0]*f, cp[1]*f, cp[2]*f );
 }
 
 /*
@@ -369,17 +360,12 @@ char *cp;
  *  Mostly useful for debugging ft_uv() routines.
  */
 HIDDEN
-tstm_render( ap, pp )
-register struct application *ap;
-register struct partition *pp;
+tstm_render( ap, pp, swp )
+struct application	*ap;
+struct partition	*pp;
+register struct shadework	*swp;
 {
-	auto struct uvcoord uv;
-
-	VJOIN1( pp->pt_inhit->hit_point, ap->a_ray.r_pt,
-		pp->pt_inhit->hit_dist, ap->a_ray.r_dir );
-	rt_functab[pp->pt_inseg->seg_stp->st_id].ft_uv(
-		ap, pp->pt_inseg->seg_stp, pp->pt_inhit, &uv );
-	VSET( ap->a_color, uv.uv_u, 0, uv.uv_v );
+	VSET( swp->sw_color, swp->sw_uv.uv_u, 0, swp->sw_uv.uv_v );
 	return(1);
 }
 
@@ -404,9 +390,10 @@ static vect_t star_colors[] = {
  *			S T A R _ R E N D E R
  */
 HIDDEN
-star_render( ap, pp )
+star_render( ap, pp, swp )
 register struct application *ap;
 register struct partition *pp;
+struct shadework	*swp;
 {
 	/* Probably want to diddle parameters based on what part of sky */
 	if( rand0to1() >= 0.98 )  {
@@ -415,8 +402,8 @@ register struct partition *pp;
 		i = (sizeof(star_colors)-1) / sizeof(star_colors[0]);
 		i = ((double)i) * rand0to1();
 		f = rand0to1();
-		VSCALE( ap->a_color, star_colors[i], f );
+		VSCALE( swp->sw_color, star_colors[i], f );
 	} else {
-		VSETALL( ap->a_color, 0 );
+		VSETALL( swp->sw_color, 0 );
 	}
 }

@@ -373,7 +373,7 @@ struct matparse spm_parse[] = {
 HIDDEN int spm_setup(), spm_render(), spm_print(), spm_mfree();
 
 struct mfuncs spm_mfuncs[] = {
-	"sph",		0,		0,
+	"sph",		0,		0,		MFI_UV,
 	spm_setup,	spm_render,	spm_print,	spm_mfree,
 
 	(char *)0,	0,		0,
@@ -387,27 +387,22 @@ struct mfuncs spm_mfuncs[] = {
  *  return a pointer to the relevant pixel.
  */
 HIDDEN int
-spm_render( ap, pp )
+spm_render( ap, pp, swp )
 struct application *ap;
 struct partition *pp;
+struct shadework	*swp;
 {
 	register struct spm_specific *spp =
 		(struct spm_specific *)pp->pt_regionp->reg_udata;
-	auto struct uvcoord uv;
 	int	x, y;
 	register unsigned char *cp;
 
-	VJOIN1( pp->pt_inhit->hit_point, ap->a_ray.r_pt,
-		pp->pt_inhit->hit_dist, ap->a_ray.r_dir );
-	rt_functab[pp->pt_inseg->seg_stp->st_id].ft_uv(
-		ap, pp->pt_inseg->seg_stp, pp->pt_inhit, &uv );
-
 	/** spm_read( spp->sp_map, xxx ); **/
 	/* Limits checking? */
-	y = uv.uv_v * spp->sp_map->ny;
-	x = uv.uv_u * spp->sp_map->nx[y];
+	y = swp->sw_uv.uv_v * spp->sp_map->ny;
+	x = swp->sw_uv.uv_u * spp->sp_map->nx[y];
 	cp = &(spp->sp_map->xbin[y][x*3]);
-	VSET( ap->a_color, cp[RED]/256., cp[GRN]/256., cp[BLU]/256. );
+	VSET( swp->sw_color, cp[RED]/256., cp[GRN]/256., cp[BLU]/256. );
 }
 
 /*
