@@ -1497,7 +1497,7 @@ char	**argv;
 	    Tcl_AppendElement(interp, "bot");
 	    Tcl_AppendElement(interp, "ehy");
 	    Tcl_AppendElement(interp, "ell");
-	    Tcl_AppendElement(interp, "ellg");
+	    Tcl_AppendElement(interp, "ell1");
 	    Tcl_AppendElement(interp, "epa");
 	    Tcl_AppendElement(interp, "eto");
 	    Tcl_AppendElement(interp, "grip");
@@ -1680,7 +1680,7 @@ char	**argv;
 		    -view_state->vs_toViewcenter[MDZ]);
 		VSET( grp_ip->normal, 1.0, 0.0, 0.0);
 		grp_ip->mag = view_state->vs_Viewscale*0.75;
-	} else if( strcmp( argv[2], "ell" ) == 0 )  {
+	} else if( strcmp( argv[2], "ell1" ) == 0 )  {
 		internal.idb_type = ID_ELL;
 		internal.idb_meth = &rt_functab[ID_ELL];
 		internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_ell_internal) , "rt_ell_internal" );
@@ -1690,7 +1690,7 @@ char	**argv;
 		VSET( ell_ip->a, (0.5*view_state->vs_Viewscale), 0.0, 0.0 );	/* A */
 		VSET( ell_ip->b, 0.0, (0.25*view_state->vs_Viewscale), 0.0 );	/* B */
 		VSET( ell_ip->c, 0.0, 0.0, (0.25*view_state->vs_Viewscale) );	/* C */
-	} else if( strcmp( argv[2], "ellg" ) == 0 )  {
+	} else if( strcmp( argv[2], "ell" ) == 0 )  {
 		internal.idb_type = ID_ELL;
 		internal.idb_meth = &rt_functab[ID_ELL];
 		internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_ell_internal) , "rt_ell_internal" );
