@@ -41,21 +41,28 @@ struct pkg_header {
 	unsigned char	pkh_len[4];		/* Byte count of remainder */
 };
 
-#define	PKG_STREAMLEN	4096
+#define	PKG_STREAMLEN	(32*1024)
 struct pkg_conn {
 	int		pkc_fd;		/* TCP connection fd */
 	struct pkg_switch *pkc_switch;	/* Array of message handlers */
 	void		(*pkc_errlog)(); /* Error message logger */
+	struct pkg_header pkc_hdr;	/* hdr of cur msg */
+	long		pkc_len;	/* pkg_len, in host order */
+	unsigned short	pkc_type;	/* pkg_type, in host order */
+	/* OUTPUT BUFFER */
+	char		pkc_stream[PKG_STREAMLEN]; /* output stream */
 	int		pkc_magic;	/* for validating pointers */
+	int		pkc_strpos;	/* index into stream buffer */
+	/* FIRST LEVEL INPUT BUFFER */
+	char		*pkc_inbuf;	/* input stream buffer */
+	int		pkc_incur;	/* current pos in inbuf */
+	int		pkc_inend;	/* first unused pos in inbuf */
+	int		pkc_inlen;	/* length of pkc_inbuf */
+	/* DYNAMIC BUFFER FOR USER */
 	int		pkc_left;	/* # bytes pkg_get expects */
 		/* neg->read new hdr, 0->all here, >0 ->more to come */
 	char		*pkc_buf;	/* start of dynamic buf */
 	char		*pkc_curpos;	/* current position in pkg_buf */
-	struct pkg_header pkc_hdr;	/* hdr of cur msg */
-	long		pkc_len;	/* pkg_len, in host order */
-	unsigned short	pkc_type;	/* pkg_type, in host order */
-	char		pkc_stream[PKG_STREAMLEN];
-	int		pkc_strpos;	/* index into stream buffer */
 };
 #define PKC_NULL	((struct pkg_conn *)0)
 #define PKC_ERROR	((struct pkg_conn *)(-1))
