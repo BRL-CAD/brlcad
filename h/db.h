@@ -80,6 +80,8 @@ union record  {
 #define ID_BSURF	'D'     /* d_spline surface header */
 #define ID_MATERIAL	'm'	/* Material description record */
 
+	char	u_size[126];	/* Minimum record size */
+
 	struct ident  {
 		char	i_id;		/* I */
 		char	i_units;	/* units */
