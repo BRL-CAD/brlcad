@@ -29,8 +29,9 @@ NFS=1
 # Label number for this CAD Release,
 # RCS main Revision number, and date.
 #RELEASE=M.N;	RCS_REVISION=X;		REL=DATE=dd-mmm-yy
-#RELEASE=3.12;	RCS_REVISION=9;		REL_DATE=Today
-RELEASE=3.11;	RCS_REVISION=9;		REL_DATE=2-Jul-91	# alpha+1
+#RELEASE=3.13;	RCS_REVISION=9;		REL_DATE=Today
+RELEASE=3.12;	RCS_REVISION=9;		REL_DATE=8-Jul-91	# Beta
+#RELEASE=3.11;	RCS_REVISION=9;		REL_DATE=2-Jul-91	# alpha+1
 #RELEASE=3.10;	RCS_REVISION=9;		REL_DATE=1-Jul-91	# alpha
 #RELEASE=3.9;	RCS_REVISION=9;		REL_DATE=28-Jan-91	# internal
 #RELEASE=3.8;	RCS_REVISION=9;		REL_DATE=3-Jan-91	# internal
@@ -136,6 +137,7 @@ BDIRS="bench \
 	proc-db \
 	comgeom-g \
 	iges-g \
+	fb \
 	util \
 	fbed \
 	lgt \
