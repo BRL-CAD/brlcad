@@ -55,6 +55,7 @@ struct dm dm_Null = {
 
 /* All systems can compile these! */
 extern struct dm dm_Tek;
+extern struct dm dm_Tek4109;
 extern struct dm dm_Plot;
 
 /* Only some systems can do these */
@@ -77,6 +78,7 @@ struct dm *dmp = &dm_Null;	/* Ptr to current Display Manager package */
 static struct dm *which_dm[] = {
 	&dm_Null,		/* This should go first */
 	&dm_Tek,
+	&dm_Tek4109,
 	&dm_Plot,
 #ifdef DM_IR
 	&dm_Ir,
