@@ -2326,7 +2326,7 @@ struct hold_point *hp;
 		    hp->path.fp_names[hp->path.fp_len-1], dbip) < 0) return 0;
 		id = rt_id_solid( &es_ext);
 		if (id != ID_GRIP) return 0;
-		if (rt_functab[id].ft_import( &es_int, &es_ext, mat) < 0) {
+		if (rt_functab[id].ft_import( &es_int, &es_ext, mat, dbip) < 0) {
 			db_free_external(&es_ext);
 			return 0;
 		}
@@ -3608,7 +3608,7 @@ int			id;
  * get the grip information.
  */
 	RT_INIT_DB_INTERNAL(&internal);
-	if ( rt_functab[id].ft_import( &internal, ep, tsp->ts_mat) < 0 ) {
+	if ( rt_functab[id].ft_import( &internal, ep, tsp->ts_mat, dbip) < 0 ) {
 	  Tcl_AppendResult(interp, dp->d_namep, ": solid import failure\n", (char *)NULL);
 	  if (internal.idb_ptr) rt_functab[id].ft_ifree(&internal);
 	  return curtree;

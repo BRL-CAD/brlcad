@@ -2125,7 +2125,7 @@ init_sedit()
 	}
 
 	id = rt_id_solid( &es_ext );
-	if( rt_functab[id].ft_import( &es_int, &es_ext, bn_mat_identity ) < 0 )  {
+	if( rt_functab[id].ft_import( &es_int, &es_ext, bn_mat_identity, dbip ) < 0 )  {
 	  Tcl_AppendResult(interp, "init_sedit(", illump->s_path[illump->s_last]->d_namep,
 			   "):  solid import failure\n", (char *)NULL);
 	  if( es_int.idb_ptr )  rt_functab[id].ft_ifree( &es_int );
@@ -6150,7 +6150,7 @@ init_objedit()
 	}
 
 	id = rt_id_solid( &es_ext );
-	if( rt_functab[id].ft_import( &es_int, &es_ext, bn_mat_identity ) < 0 )  {
+	if( rt_functab[id].ft_import( &es_int, &es_ext, bn_mat_identity, dbip ) < 0 )  {
 	  Tcl_AppendResult(interp, "init_objedit(", illump->s_path[illump->s_last]->d_namep,
 			   "):  solid import failure\n", (char *)NULL);
 	  if( es_int.idb_ptr )  rt_functab[id].ft_ifree( &es_int );
@@ -6464,7 +6464,7 @@ sedit_accept()
 	dp = illump->s_path[illump->s_last];
 
 	/* Scale change on export is 1.0 -- no change */
-	if( rt_functab[es_int.idb_type].ft_export( &es_ext, &es_int, 1.0 ) < 0 )  {
+	if( rt_functab[es_int.idb_type].ft_export( &es_ext, &es_int, 1.0, dbip ) < 0 )  {
 	  Tcl_AppendResult(interp, "sedit_accept(", dp->d_namep,
 			   "):  solid export failure\n", (char *)NULL);
 	  if( es_int.idb_ptr )  rt_functab[es_int.idb_type].ft_ifree( &es_int );

@@ -377,7 +377,7 @@ char **argv;
 	}
 
 	RT_INIT_DB_INTERNAL( &internal );
-	if( rt_functab[id].ft_import( &internal, &external, identity ) < 0 )
+	if( rt_functab[id].ft_import( &internal, &external, identity, dbip ) < 0 )
 	{
 	  Tcl_AppendResult(interp, "solid import failure on ",
 			   argv[argc-1], "\n", (char *)NULL);
@@ -413,7 +413,7 @@ char **argv;
 	  return TCL_ERROR;
 	}
 
-	if( rt_functab[id].ft_export( &new_ext , &new_int , 1.0 ) )
+	if( rt_functab[id].ft_export( &new_ext , &new_int , 1.0, dbip ) )
 	{
 	  db_free_external( &new_ext );
 	  db_free_external( &external );
@@ -882,7 +882,7 @@ char **argv;
 		  continue;
 		}
 		id = rt_id_solid( &es_ext);
-		if (rt_functab[id].ft_import(&es_int, &es_ext, pip->pi_mat) < 0 ) {
+		if (rt_functab[id].ft_import(&es_int, &es_ext, pip->pi_mat, dbip) < 0 ) {
 		  Tcl_AppendResult(interp, "push(", pip->pi_dir->d_namep,
 				   "): solid import failure\n", (char *)NULL);
 		  if (es_int.idb_ptr) rt_functab[id].ft_ifree( &es_int);
@@ -890,7 +890,7 @@ char **argv;
 		  continue;
 		}
 		RT_CK_DB_INTERNAL( &es_int);
-		if ( rt_functab[id].ft_export( &es_ext, &es_int, 1.0) < 0 ) {
+		if ( rt_functab[id].ft_export( &es_ext, &es_int, 1.0, dbip) < 0 ) {
 		  Tcl_AppendResult(interp, "push(", pip->pi_dir->d_namep,
 				   "): solid export failure\n", (char *)NULL);
 		} else {
@@ -1220,7 +1220,7 @@ mat_t xform;
 	RT_INIT_DB_INTERNAL( &sol_int );
 
 	id = rt_id_solid( &sol_ext );
-	if( rt_functab[id].ft_import( &sol_int, &sol_ext, xform ) < 0 )
+	if( rt_functab[id].ft_import( &sol_int, &sol_ext, xform, dbip ) < 0 )
 	{
 	  Tcl_AppendResult(interp, "Cannot import solid ",
 			   dp->d_namep, "\n", (char *)NULL);
