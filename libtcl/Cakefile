@@ -1,0 +1,63 @@
+/*
+ *			libtcl/Cakefile
+ */
+#define SRCDIR	libtcl
+#define	SRCSUFF	.c
+#define MANSECTION	3
+
+#include "../Cakefile.defs"
+
+#if !defined(BUILD_LIBRARY)
+#define TCL_OPTS	--srcdir=[[pwd]]/../SRCDIR/"unix" --cache-file cache.MTYPE \
+			 --exec-prefix=/usr/brlcad --prefix=/usr/brlcad
+#define PRODUCTS	libtcl.a tclsh
+#define	AFTER_MAKE	/**/
+#else
+#define TCL_OPTS	--srcdir=[[pwd]]/../SRCDIR/"unix" --enable-shared \
+			 --cache-file cache.MTYPE --exec-prefix=/usr/brlcad --prefix=/usr/brlcad
+#define PRODUCTS	libtcl.so tclsh
+#define SHARED_PRODUCT	libtcl.so''[[LIBVERS]]
+#define	AFTER_MAKE	mv libtcl.so SHARED_PRODUCT ; sharedliblink.sh SHARED_PRODUCT
+#endif
+
+PRODUCTS: Makefile.MTYPE cache.MTYPE
+	make -f Makefile.MTYPE
+	AFTER_MAKE
+
+Makefile.MTYPE cache.MTYPE:		if not exist Makefile.MTYPE or not exist cache.MTYPE
+	( \C\F\L\A\G\S=\"GFLAG OPTIMIZER PROFILER\"; \
+		\R\A\N\L\I\B=\"RANLIB\"; \
+		\L\D\F\L\A\G\S=\"LDFLAGS\"; \
+		 export \C\F\L\A\G\S \R\A\N\L\I\B \L\D\F\L\A\G\S; \
+		 ../SRCDIR/"unix"/configure TCL_OPTS; \
+		../SRCDIR/fix_makefile.sh > Makefile.MTYPE)
+
+
+clean&:
+	make -f Makefile.MTYPE clean
+
+noprod&:
+	rm -rf *.so *.a
+
+clobber&: Makefile.MTYPE
+	make -f Makefile.MTYPE clean
+	rm -f *.MTYPE
+
+install&: Makefile.MTYPE
+	make -f Makefile.MTYPE install
+
+install-nobak&: Makefile.MTYPE
+	make -f Makefile.MTYPE install
+
+tclsh: Makefile.MTYPE
+	make -f Makefile.MTYPE tclsh
+
+tcltest: Makefile.MTYPE
+	make -f Makefile.MTYPE tcltest
+
+test&: Makefile.MTYPE
+	make -f Makefile.MTYPE test
+
+/* dltest:			if not exist dltest
+	cp -r ../SRCDIR/"unix"/dltest .
+*/
