@@ -51,7 +51,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define NAME_LEN			20
 
 void		identbld(), polyhbld(), polydbld(), pipebld(), particlebld();
-void		solbld(), arbnbld(), fgpbld(), botbld(), extrbld(), sktbld();
+void		solbld(), arbnbld(), clinebld(), botbld(), extrbld(), sktbld();
 int		combbld();
 void		membbld(), arsabld(), arsbbld();
 void		materbld(), bsplbld(), bsurfbld(), zap_nl();
@@ -178,8 +178,8 @@ after_read:
 			arbnbld();
 			continue;
 
-		case DBID_FGP:
-			fgpbld();
+		case DBID_CLINE:
+			clinebld();
 			continue;
 
 		case DBID_BOT:
@@ -1309,16 +1309,17 @@ bsurfbld()
 	(void)free( (char *)fp );
 }
 
-/*		F G P B L D
+/*		C L I N E B L D
  *
  */
 void
-fgpbld()
+clinebld()
 {
 	char			my_name[NAME_LEN];
-	char			ref_name[NAME_LEN];
 	fastf_t			thickness;
-	int			mode;
+	fastf_t			radius;
+	point_t			V;
+	vect_t			height;
 	register char		*cp;
 	register char		*np;
 
@@ -1333,20 +1334,37 @@ fgpbld()
 
 	cp = nxt_spc( cp );
 
-	np = ref_name;
-	while( *cp != ' ' && *cp != '\n' )
-		*np++ = *cp++;
-	*np = '\0';
+	V[0] = atof( cp );
+
+	cp = nxt_spc( cp );
+
+	V[1] = atof( cp );
+
+	cp = nxt_spc( cp );
+
+	V[2] = atof( cp );
+
+	cp = nxt_spc( cp );
+
+	height[0] = atof( cp );
+
+	cp = nxt_spc( cp );
+
+	height[1] = atof( cp );
+
+	cp = nxt_spc( cp );
+
+	height[2] = atof( cp );
+
+	cp = nxt_spc( cp );
+
+	radius = atof( cp );
 
 	cp = nxt_spc( cp );
 
 	thickness = atof( cp );
 
-	cp = nxt_spc( cp );
-
-	mode = atoi( cp );
-
-	mk_fgp( ofp, my_name, ref_name, thickness, mode );
+	mk_cline( ofp, my_name, V, height, radius, thickness );
 }
 
 /*		B O T B L D

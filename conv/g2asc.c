@@ -53,7 +53,7 @@ void	soldump(), extrdump(), sketchdump();
 void	membdump(), arsadump(), arsbdump();
 void	materdump(), bspldump(), bsurfdump();
 void	pipe_dump(), particle_dump(), dump_pipe_segs();
-void	arbn_dump(), fgp_dump(), bot_dump();
+void	arbn_dump(), cline_dump(), bot_dump();
 void	nmg_dump();
 void	strsol_dump();
 
@@ -143,8 +143,8 @@ top:
 	    	case DBID_ARBN:
 	    		arbn_dump();
 	    		continue;
-	    	case DBID_FGP:
-	    		fgp_dump();
+	    	case DBID_CLINE:
+	    		cline_dump();
 	    		continue;
 	    	case DBID_BOT:
 	    		bot_dump();
@@ -352,36 +352,36 @@ soldump()	/* Print out Solid record information */
 }
 
 void
-fgp_dump()
+cline_dump()
 {
 	int				ngranules;	/* number of granules, total */
 	char				*name;
-	struct rt_fgp_internal	*plt;
+	struct rt_cline_internal	*cli;
 	struct bu_external		ext;
 	struct rt_db_internal		intern;
 
 	ngranules = 1;
-	name = record.fgp.fgp_name;
+	name = record.cli.cli_name;
 
 	get_ext( &ext, ngranules );
 
 	/* Hand off to librt's import() routine */
-	if( (rt_fgp_import( &intern, &ext, id_mat, DBI_NULL )) != 0 )  {
-		fprintf(stderr, "g2asc: fgp import failure\n");
+	if( (rt_cline_import( &intern, &ext, id_mat, DBI_NULL )) != 0 )  {
+		fprintf(stderr, "g2asc: cline import failure\n");
 		exit(-1);
 	}
 
-	plt = (struct rt_fgp_internal *)intern.idb_ptr;
-	RT_FGP_CK_MAGIC(plt);
+	cli = (struct rt_cline_internal *)intern.idb_ptr;
+	RT_CLINE_CK_MAGIC(cli);
 
-	(void)fprintf(ofp, "%c ", DBID_FGP );	/* f */
+	(void)fprintf(ofp, "%c ", DBID_CLINE );	/* c */
 	(void)fprintf(ofp, "%.16s ", name );	/* unique name */
-	(void)fprintf(ofp, "%.16s ", plt->referenced_solid );	/* name of referenced solid */
-	(void)fprintf(ofp, "%.12e ", plt->thickness );	/* fgp thickness */
-	(void)fprintf(ofp, "%d ", plt->mode );		/* fgp mode */
+	(void)fprintf(ofp, "%.12e %.12e %.12e ", V3ARGS( cli->v ) );
+	(void)fprintf(ofp, "%.12e %.12e %.12e ", V3ARGS( cli->h ) );
+	(void)fprintf(ofp, "%.12e %.12e", cli->radius, cli->thickness );
 	(void)fprintf(ofp, "\n");			/* Terminate w/ a newline */
 
-	rt_fgp_ifree( &intern );
+	rt_cline_ifree( &intern );
 	db_free_external( &ext );
 }
 

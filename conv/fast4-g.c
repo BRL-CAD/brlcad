@@ -1660,6 +1660,8 @@ do_cline()
 	fastf_t radius;
 	vect_t height;
 	char name[NAMESIZE+1];
+	char name2[NAMESIZE+1];
+	struct wmember r_head;
 
 	if( debug )
 		bu_log( "do_cline: %s\n" , line );
@@ -1695,7 +1697,6 @@ do_cline()
 	if( !pass )
 	{
 		make_region_name( name , group_id , comp_id , element_id , CLINE );
-		make_region_name( name , group_id , comp_id , -pt1 , CLINE );
 		return;
 	}
 
@@ -1708,22 +1709,17 @@ do_cline()
 	VSUB2( height , grid_pts[pt2] , grid_pts[pt1] );
 
 	make_solid_name( name , CLINE , element_id , comp_id , group_id , 0 );
-	mk_rcc( fdout , name , grid_pts[pt1] , height , radius );
+	mk_cline( fdout , name , grid_pts[pt1] , height , radius, thick );
 
-	if( thick > radius )
-	{
-		bu_log( "ERROR: CLINE thickness (%f) greater than radius (%f)\n", thick, radius );
-		bu_log( "\tnot making inner cylinder\n" );
-		bu_log( "\telement %d, component %d, group %d\n" , element_id , comp_id , group_id );
-		thick = 0.0;
-	}
-	else if( thick > 0.0 )
-	{
-		make_solid_name( name , CLINE , element_id , comp_id , group_id , 1 );
-		mk_rcc( fdout , name , grid_pts[pt1] , height , radius-thick );
-	}
+	BU_LIST_INIT( &r_head.l );
+	if( mk_addmember( name , &r_head , WMOP_UNION ) == (struct wmember *)NULL )
+		bu_bomb( "CLINE: mk_addmember failed\n" );
 
-	Add_to_clines( element_id , pt1 , pt2 , thick , radius );
+	/* subtract any holes for this component */
+	Subtract_holes( &r_head , comp_id , group_id );
+
+	MK_REGION( fdout , &r_head , group_id , comp_id , element_id , CLINE )
+
 }
 
 void
