@@ -327,9 +327,6 @@ static struct bu_cmdtab wdb_cmds[] = {
 	{(char *)NULL,	(int (*)())0 }
 };
 
-/* This could go in struct rt_wdb */
-static Tcl_Interp *wdb_obj_interp;
-
 int
 Wdb_Init(interp)
      Tcl_Interp *interp;
@@ -624,12 +621,6 @@ wdb_close_cmd(struct rt_wdb	*wdbp,
 		bu_vls_free(&vls);
 		return TCL_ERROR;
 	}
-
-	/*
-	 * Maybe this should go in "struct rt_wdb". For now,
-	 * use a global.
-	 */
-	wdb_obj_interp = interp;
 
 	/*
 	 * Among other things, this will call wdb_deleteProc.
@@ -6207,7 +6198,6 @@ wdb_units_cmd(struct rt_wdb	*wdbp,
 	double		loc2mm;
 	struct bu_vls 	vls;
 	const char	*str;
-	fastf_t		sf;
 	int 		sflag = 0;
 
 	bu_vls_init(&vls);
@@ -6239,8 +6229,6 @@ wdb_units_cmd(struct rt_wdb	*wdbp,
 		bu_vls_free(&vls);
 		return TCL_OK;
 	}
-
-	sf = wdbp->dbip->dbi_base2local;
 
 	/* Allow inputs of the form "25cm" or "3ft" */
 	if ((loc2mm = bu_mm_value(argv[1]) ) <= 0) {
