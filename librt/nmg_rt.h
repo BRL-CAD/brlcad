@@ -4,6 +4,13 @@
 #define NMG_RT_HIT_SUB_MAGIC 0x48696d00	/* "Him" */
 #define NMG_RT_MISS_MAGIC 0x4d697300	/* "Mis" */
 
+
+/* These values are for the hitmiss "in_out" variable and indicate the
+ * nature of the hit when known
+ */
+#define NMG_HIT_INBOUND 1
+#define NMG_HIT_OUTBOUND -1
+
 #define HMG_HIT_IN_IN	1
 #define HMG_HIT_IN_OUT	2
 #define HMG_HIT_OUT_IN	4
@@ -98,13 +105,26 @@ struct ray_data {
 	struct rt_list	rd_hit;		/* list of hit elements */
 	struct rt_list	rd_miss;	/* list of missed/sub-hit elements */
 
+/* The following are to support isect_ray_face() */
+
+	/* plane_pt is the intercept point of the ray with the plane of the
+	 * face.
+	 */
 	pointp_t	plane_pt;	/* ray/plane(face) intercept point */
-	fastf_t		ray_dist_to_plane; /* parametric dist to plane */
-	fastf_t		plane_dist;	/* dist in plane (item -> plane_pt) */
-	long		*plane_closest;	/* ptr to item with min(plane_dist) */
-	int		plane_dist_type;/* is PCA at an  edge-span,
-					 *  edge-vertex, or vertex?
-					 */
+
+	/* ray_dist_to_plane is the parametric distance along the ray from
+	 * the ray origin (rd->rp->r_pt) to the ray/plane intercept point
+	 */
+	fastf_t		ray_dist_to_plane; /* ray parametric dist to plane */
+
+	/* the "face_subhit" element is a boolean used by isect_ray_face
+	 * and [e|v]u_touch_func to record the fact that the ray/(plane/face)
+	 * intercept point was within tolerance of an edge/vertex of the face.
+	 * In such instances, isect_ray_face does NOT need to generate a hit 
+	 * point for the face, as the hit point for the edge/vertex will 
+	 * suffice.
+	 */
+	int		face_subhit;	
 };
 
 #define GET_HITMISS(_p) { \
