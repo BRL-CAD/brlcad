@@ -1110,10 +1110,7 @@ register int	count;
 
 	while( count )  
 	{
-		register struct gt_pix * ip;
 		register unsigned int n;
-
-		ip = &gt_scan[0];
 
 		if( ymem >= ifp->if_height )
 			break;
@@ -1129,17 +1126,43 @@ register int	count;
 		    cp, scan_count*sizeof(RGBpixel) );
 
 		if ( GT(ifp)->mi_cmap_flag == FALSE )  {
+			register struct gt_pix * ip = &gt_scan[0];
+
 			n = scan_count;
-			while( n  )  {
-				/* alpha channel is always zero */
-				ip->red = cp[0];
-				ip->green = cp[1];
-				ip->blue = cp[2];
-				cp += 3;
-				ip++;
-				n--;
+			if( (n & 3) != 0 )  {
+				/* This code uses 60% of all CPU time */
+				while( n )  {
+					/* alpha channel is always zero */
+					ip->red   = cp[RED];
+					ip->green = cp[GRN];
+					ip->blue  = cp[BLU];
+					ip++;
+					cp += 3;
+					n--;
+				}
+			} else {
+				while( n )  {
+					/* alpha channel is always zero */
+					ip[0].red   = cp[RED+0*3];
+					ip[0].green = cp[GRN+0*3];
+					ip[0].blue  = cp[BLU+0*3];
+					ip[1].red   = cp[RED+1*3];
+					ip[1].green = cp[GRN+1*3];
+					ip[1].blue  = cp[BLU+1*3];
+					ip[2].red   = cp[RED+2*3];
+					ip[2].green = cp[GRN+2*3];
+					ip[2].blue  = cp[BLU+2*3];
+					ip[3].red   = cp[RED+3*3];
+					ip[3].green = cp[GRN+3*3];
+					ip[3].blue  = cp[BLU+3*3];
+					ip += 4;
+					cp += 3*4;
+					n -= 4;
+				}
 			}
 		} else {
+			register struct gt_pix * ip = &gt_scan[0];
+
 			n = scan_count;
 			while( n )  {
 				/* alpha channel is always zero */
