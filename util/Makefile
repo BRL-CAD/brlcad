@@ -3,7 +3,7 @@
 
 #	last edit:	86/06/16	Gary S. Moss
 
-#	SCCS ID:	@(#)Makefile	1.19
+#	SCCS ID:	@(#)Makefile	1.20
 
 PRODUCTS= pp-fb fbclear fbgrid rle-fb fb-rle fbcmap
 HEADERS =
@@ -34,7 +34,7 @@ LDFLAGS = -n
 S52_LIBES= ${LIBDIR}/librle.a ${LIBDIR}/libfb.a -lm
 BSD_LIBES= -lrle -lfb -lm
 LIBES	= ${S52_LIBES}
-SOURCES	= Makefile make_bsd ${CFILES} ${HEADERS}
+SOURCES	= Makefile make_bsd ${CFILES} ${HEADERS} ${MANUALS}
 COMPAT=
 INS	= cp
 SHELL	= /bin/sh
@@ -100,11 +100,9 @@ install:	all
 	 fi
 
 clean:
-	-if vax; then rm -f ${HEADERS} ${CFILES}; fi
 	-rm -f ${OBJS}
 
 clobber:	clean
-	-if vax; then rm -f ${MANUALS}; fi
 	-rm -f ${PRODUCTS} fbzoom
 
 pp-fb.o: pp-fb.c
