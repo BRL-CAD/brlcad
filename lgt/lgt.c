@@ -80,7 +80,7 @@ char	*argv[];
 #if ! defined( BSD ) && ! defined( sgi ) && ! defined( CRAY2 )
 	(void) setvbuf( stderr, (char *) NULL, _IOLBF, BUFSIZ );
 #endif
-	beginptr = sbrk(0);
+	beginptr = (char *) sbrk(0);
 
 	npsw = rt_avail_cpus();
 	if( npsw > MAX_PSW )
