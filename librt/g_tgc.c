@@ -1414,10 +1414,10 @@ tgc_class()
  *  Apply modeling transformations as well.
  */
 int
-tgc_import( tip, rp, matp )
+tgc_import( tip, rp, mat )
 struct tgc_internal	*tip;
 union record		*rp;
-register matp_t		matp;
+register mat_t		mat;
 {
 	LOCAL fastf_t	vec[3*6];
 
@@ -1431,12 +1431,12 @@ register matp_t		matp;
 	rt_fastf_float( vec, rp->s.s_values, 6 );
 
 	/* Apply modeling transformations */
-	MAT4X3PNT( tip->v, matp, &vec[0*3] );
-	MAT4X3VEC( tip->h, matp, &vec[1*3] );
-	MAT4X3VEC( tip->a, matp, &vec[2*3] );
-	MAT4X3VEC( tip->b, matp, &vec[3*3] );
-	MAT4X3VEC( tip->c, matp, &vec[4*3] );
-	MAT4X3VEC( tip->d, matp, &vec[5*3] );
+	MAT4X3PNT( tip->v, mat, &vec[0*3] );
+	MAT4X3VEC( tip->h, mat, &vec[1*3] );
+	MAT4X3VEC( tip->a, mat, &vec[2*3] );
+	MAT4X3VEC( tip->b, mat, &vec[3*3] );
+	MAT4X3VEC( tip->c, mat, &vec[4*3] );
+	MAT4X3VEC( tip->d, mat, &vec[5*3] );
 
 	return(0);		/* OK */
 }
@@ -1445,9 +1445,9 @@ register matp_t		matp;
  *			T G C _ P L O T
  */
 void
-tgc_plot( rp, matp, vhead, dp )
+tgc_plot( rp, mat, vhead, dp )
 union record	*rp;
-register matp_t matp;
+register mat_t	mat;
 struct vlhead	*vhead;
 struct directory *dp;
 {
@@ -1458,7 +1458,7 @@ struct directory *dp;
 	LOCAL fastf_t		points[3*8];
 	LOCAL struct tgc_internal	ti;
 
-	if( tgc_import( &ti, rp, matp ) < 0 )  return;
+	if( tgc_import( &ti, rp, mat ) < 0 )  return;
 
 	ell_16pts( bottom, ti.v, ti.a, ti.b );
 	VADD2( work, ti.v, ti.h );
@@ -1568,12 +1568,13 @@ struct soltab *stp;
  *  Preliminary tesselation of the TGC, same algorithm as vector list.
  */
 void
-tgc_tess( s, rp, matp, dp )
+tgc_tess( s, rp, mat, dp )
 struct shell	*s;
 union record	*rp;
-register matp_t matp;
+register mat_t	mat;
 struct directory *dp;
 {
+#if 0
 	register int		i;
 	LOCAL fastf_t		top[16*3];
 	struct vertex		*vtop[16+1];
@@ -1583,7 +1584,7 @@ struct directory *dp;
 	LOCAL fastf_t		points[3*8];
 	LOCAL struct tgc_internal	ti;
 
-	if( tgc_import( &ti, rp, matp ) < 0 )  return;
+	if( tgc_import( &ti, rp, mat ) < 0 )  return;
 
 	/* Create two 16 point ellipses */
 	ell_16pts( bottom, ti.v, ti.a, ti.b );
@@ -1651,4 +1652,7 @@ struct directory *dp;
 	return;
 fail:
 	rt_log("tgc_tess: failure\n");
+#else
+	nul_tess( s, rp, mat, dp );
+#endif
 }
