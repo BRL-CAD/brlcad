@@ -70,7 +70,7 @@ struct bn_tabdata *data;
 }
 
 /*
- *			R T _ C K _ T A B L E
+ *			B N _ C K _ T A B L E
  */
 void
 bn_ck_table( tabp )
