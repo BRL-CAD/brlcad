@@ -34,8 +34,10 @@ static char RCSreadfile[] = "@(#)$Header$";
 #endif
 #include <math.h>
 #include "machine.h"
+#include "externs.h"
 #include "vmath.h"
-
+#include "bu.h"
+#include "raytrace.h"
 
 #define BUFF_LEN 256
 #define FALSE 0
