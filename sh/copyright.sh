@@ -2,8 +2,8 @@
 #                    C O P Y R I G H T . S H
 # BRL-CAD
 #
-# Copyright (c) 2004 United States Government as represented by the
-# U.S. Army Research Laboratory.
+# Copyright (C) 2004-2005 United States Government as represented by
+# the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -57,8 +57,8 @@ if [ ! -d "$findgen" ] ; then
   if [ -r "`dirname $0`/../configure.ac" ] ; then
     findgen="`dirname $0`/.."
   else
-    for dir in . .. ; do
-      if [ -r "$findgen/configure.ac" ] ; then
+    for dir in . .. brlcad ; do
+      if [ -r "$dir/configure.ac" ] ; then
 	findgen="$dir"
 	break
       fi
@@ -76,17 +76,11 @@ fi
 # generate a list of files to check, excluding directories that are
 # not BRL-CAD sources, CVS, or start with a dot.
 files="`find $findgen -type f | \
-        grep -v 'libtcl' | \
-        grep -v 'libtk' | \
-        grep -v 'incrTcl' | \
-        grep -v 'iwidgets' | \
-        grep -v 'jove' | \
-        grep -v 'libutahrle' | \
-        grep -v 'libz' | \
-        grep -v 'libpng' | \
+        grep -v 'other/' | \
         grep -v 'CVS' | \
         grep -v 'misc/' | \
         grep -v \"$findgen/\.\" | \
+        grep -v 'autom4te.cache' | \
         grep -v '\.g$' | \
         grep -v '\.pix$' |\
         grep -v '\.jpg$' |\
@@ -128,7 +122,7 @@ for file in $files ; do
   echo -n "."
 
   year=`date +%Y`
-  sed -E "s/Copyright ?\([cC]\) ?([0-9][0-9][0-9][0-9]) ?-? ?[0-9]?[0-9]?[0-9]?[0-9]?([ .;]+)(by +the +United +States +Army)/Copyright (C) \1-$year\2\3/" < $file > $file.copyright.new
+  sed -E "s/[cC]opyright ?\([cC]\) ?([0-9][0-9][0-9][0-9]) ?-? ?[0-9]?[0-9]?[0-9]?[0-9]?([ .;]+)(.*United +States)/Copyright (C) \1-$year\2\3/" < $file > $file.copyright.new
 
   filediff="`diff $file $file.copyright.new`"
   if [ "x$filediff" = "x" ] ; then
@@ -146,7 +140,7 @@ for file in $files ; do
     mv $file.copyright.new $file
   fi
 
-  sed -E "s/Copyright \(C\) $year-$year/Copyright (C) $year/" < $file > $file.copyright.new
+  sed -E "s/Copyright \(c\) $year-$year/Copyright (c) $year/" < $file > $file.copyright.new
 
   filediff="`diff $file $file.copyright.new`"
   if [ "x$filediff" = "x" ] ; then
