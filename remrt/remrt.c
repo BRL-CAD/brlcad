@@ -232,8 +232,9 @@ extern struct rt_g	rt_g;
 
 extern struct command_tab cmd_tab[];	/* given at end */
 
-char	start_cmd[512];		/* contains file name & objects */
 char	file_basename[128];	/* contains last component of file name */
+char	file_fullname[128];	/* contains full file name */
+char	object_list[512];	/* contains list of "MGED" objects */
 
 FILE	*helper_fp;		/* pipe to rexec helper process */
 char	ourname[128];
@@ -586,6 +587,8 @@ start_servers()
 	int	night;
 	int	add;
 
+	if( file_fullname[0] == '\0' )  return;
+
 	(void)gettimeofday( &now, (struct timezone *)0 );
 	if( tvdiff( &now, &last_server_check_time ) < SERVER_CHECK_INTERVAL )
 		return;
@@ -884,7 +887,7 @@ do_a_frame()
 		printf("already running, please wait or STOP\n");
 		return;
 	}
-	if( start_cmd[0] == '\0' )  {
+	if( file_fullname[0] == '\0' )  {
 		printf("need LOAD before GO\n");
 		return;
 	}
@@ -973,7 +976,7 @@ schedule()
 	}
 	scheduler_going = 1;
 
-	if( start_cmd[0] == '\0' )  goto out;
+	if( file_fullname[0] == '\0' )  goto out;
 
 	/* Kick off any new servers */
 	for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
@@ -1320,7 +1323,8 @@ char *buf;
 		fprintf(stderr,"struct_inport error, %d, %d\n", i, info.li_len);
 		return;
 	}
-fprintf(stderr,"PIXELS fr=%d, pix=%d..%d, rays=%d, cpu=%g, el=%g\n",
+fprintf(stderr,"%s:fr=%d, %d..%d, ry=%d, cpu=%g, el=%g\n",
+sp->sr_host->ht_name,
 info.li_frame, info.li_startpix, info.li_endpix,
 info.li_nrays, info.li_cpusec, sp->sr_l_elapsed );
 
@@ -1524,18 +1528,21 @@ send_start(sp)
 register struct servers *sp;
 {
 	register struct ihost	*ihp;
+	char	cmd[512];
 
 	if( sp->sr_pc == PKC_NULL )  return;
-	if( start_cmd[0] == '\0' || sp->sr_state != SRST_VERSOK )  return;
+	if( file_fullname[0] == '\0' || sp->sr_state != SRST_VERSOK )  return;
 
 	ihp = sp->sr_host;
 	switch( ihp->ht_where )  {
 	case HT_CD:
 		if( pkg_send( MSG_CD, ihp->ht_path, strlen(ihp->ht_path)+1, sp->sr_pc ) < 0 )
 			drop_server(sp);
+		sprintf( cmd, "%s %s", file_fullname, object_list );
 		break;
 	case HT_CONVERT:
 		/* Conversion was done when server was started */
+		sprintf( cmd, "%s %s", file_basename, object_list );
 		break;
 	default:
 		printf("send_start: ht_where=%d unimplemented\n", ihp->ht_where);
@@ -1543,7 +1550,7 @@ register struct servers *sp;
 		return;
 	}
 
-	if( pkg_send( MSG_START, start_cmd, strlen(start_cmd)+1, sp->sr_pc ) < 0 )
+	if( pkg_send( MSG_START, cmd, strlen(cmd)+1, sp->sr_pc ) < 0 )
 		drop_server(sp);
 	sp->sr_state = SRST_LOADING;
 }
@@ -1587,7 +1594,6 @@ register struct frame *fr;
 	    fr->fr_cmd.vls_str, fr->fr_cmd.vls_cur+1, sp->sr_pc
 	    ) < 0 )
 		drop_server(sp);
-	printf("sent matrix to %s\n", sp->sr_host->ht_name);
 }
 
 /*
@@ -1632,7 +1638,7 @@ mathtab_constant()
  *
  *  There are two message formats:
  *	HT_CD		host, port, rem_dir
- *	HT_CONVERT	host, port, rem_dir, db
+ *	HT_CONVERT	host, port, rem_dir, loc_db, rem_db
  */
 add_host( ihp )
 struct ihost	*ihp;
@@ -1645,9 +1651,15 @@ struct ihost	*ihp;
 			ihp->ht_name, pkg_permport, ihp->ht_path );
 		break;
 	case HT_CONVERT:
+		if( file_fullname[0] == '\0' )  {
+			printf("unable to add CONVERT host %s until database given\n",
+				ihp->ht_name);
+			return;
+		}
 		fprintf( helper_fp,
-			"%s %d %s %s\n",
-			ihp->ht_name, pkg_permport, ihp->ht_path, file_basename );
+			"%s %d %s %s %s\n",
+			ihp->ht_name, pkg_permport, ihp->ht_path,
+			file_fullname, file_basename );
 		break;
 	default:
 		printf("add_host:  ht_where=%d?\n", ihp->ht_where );
@@ -1686,7 +1698,8 @@ FILE	*fp;
 	char	line[512];
 	char	cmd[128];
 	char	host[128];
-	char	db[128];
+	char	loc_db[128];
+	char	rem_db[128];
 	char	rem_dir[128];
 	int	port;
 	int	cnt;
@@ -1698,11 +1711,12 @@ FILE	*fp;
 		(void)fgets( line, sizeof(line), fp );
 		if( feof(fp) )  break;
 
-		db[0] = '\0';
+		loc_db[0] = '\0';
+		rem_db[0] = '\0';
 		rem_dir[0] = '\0';
-		cnt = sscanf( line, "%s %d %s %s",
-			host, &port, rem_dir, db );
-		if( cnt != 3 && cnt != 4 )  {
+		cnt = sscanf( line, "%s %d %s %s %s",
+			host, &port, rem_dir, loc_db, rem_db );
+		if( cnt != 3 && cnt != 5 )  {
 			printf("host_helper: cnt=%d, aborting\n", cnt);
 			break;
 		}
@@ -1739,10 +1753,10 @@ printf("%s\n", cmd); fflush(stdout);
 			}
 		} else {
 			sprintf(cmd,
-			 "g2asc<%s|%s %s -n \"cd %s; asc2g>%s; rtsrv %s %d\"",
-				db,
+			 "g2asc<%s|%s %s \"cd %s; asc2g>%s; rtsrv %s %d\"",
+				loc_db,
 				RSH, host,
-				rem_dir, db,
+				rem_dir, rem_db,
 				ourname, port );
 printf("%s\n", cmd); fflush(stdout);
 
@@ -1822,9 +1836,11 @@ int	startc;
 
 	if( startc+2 > argc )  {
 		printf("build_start_cmd:  need file and at least one object\n");
-		start_cmd[0] = '\0';
+		file_fullname[0] = '\0';
 		return;
 	}
+
+	strncpy( file_fullname, argv[startc], sizeof(file_fullname) );
 
 	/* Save last component of file name */
 	if( (cp = strrchr( argv[startc], '/' )) != (char *)0 )  {
@@ -1833,10 +1849,10 @@ int	startc;
 		(void)strncpy( file_basename, argv[startc], sizeof(file_basename) );
 	}
 
-	/* Build new start_cmd[] string */
-	cp = start_cmd;
-	for( i=startc; i < argc; i++ )  {
-		if( i > startc )  *cp++ = ' ';
+	/* Build new object_list[] string */
+	cp = object_list;
+	for( i=startc+1; i < argc; i++ )  {
+		if( i > startc+1 )  *cp++ = ' ';
 		len = strlen( argv[i] );
 		bcopy( argv[i], cp, len );
 		cp += len;
@@ -1888,8 +1904,8 @@ char	*name;
 
 	/* Default host parameters */
 	ihp->ht_when = HT_PASSIVE;
-	ihp->ht_where = HT_CD;
-	ihp->ht_path = ".";
+	ihp->ht_where = HT_CONVERT;
+	ihp->ht_path = "/tmp";
 
 	/* Add to linked list of known hosts */
 	ihp->ht_next = HostHead;
@@ -1941,21 +1957,17 @@ int	enter;
 {
 	struct sockaddr_in	sin;
 	struct hostent		*addr;
-	unsigned long		addr_tmp;
 
 	/* Determine name to be found */
 	if( isdigit( *name ) )  {
 		/* Numeric */
 		sin.sin_family = AF_INET;
 #ifdef CRAY
-		addr_tmp = sin.sin_addr = inet_addr(name);
-		addr = gethostbyaddr( &addr_tmp, sizeof(struct in_addr),
-			sin.sin_family );
+		sin.sin_addr = inet_addr(name);
 #else
 		sin.sin_addr.s_addr = inet_addr(name);
-		addr = gethostbyaddr( &sin.sin_addr, sizeof(struct in_addr),
-			sin.sin_family );
 #endif
+		return( host_lookup_by_addr( &sin, enter ) );
 	} else {
 		addr = gethostbyname(name);
 	}
@@ -1980,8 +1992,8 @@ char	**argv;
 	}
 
 	/* Really ought to reset here, too */
-	if(start_cmd[0] != '\0' )  {
-		printf("Was loaded with %s, restarting all\n", start_cmd);
+	if(file_fullname[0] != '\0' )  {
+		printf("Was loaded with %s, restarting all\n", file_fullname);
 		for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 			if( sp->sr_pc == PKC_NULL )  continue;
 			send_restart( sp );
@@ -2128,7 +2140,7 @@ char	**argv;
 		printf("already running, please wait\n");
 		return;
 	}
-	if( start_cmd[0] == '\0' )  {
+	if( file_fullname[0] == '\0' )  {
 		printf("need LOAD before MOVIE\n");
 		return;
 	}
@@ -2297,12 +2309,12 @@ char	**argv;
 	register struct servers *sp;
     	int	num;
 
-	if( start_cmd[0] == '\0' )
+	if( file_fullname[0] == '\0' )
 		printf("No model loaded yet\n");
 	else
-		printf("\n%s %s\n",
+		printf("\n%s %s %s\n",
 			running ? "RUNNING" : "loaded",
-			start_cmd );
+			file_fullname, object_list );
 
 	if( fbp != FBIO_NULL )
 		printf("Framebuffer is %s\n", fbp->if_name);
