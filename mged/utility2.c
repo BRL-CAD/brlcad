@@ -204,8 +204,12 @@ f_copyeval( )
 {
 
 	register struct directory *dp;
-	int i, j, k, kk, ngran;
-	int pos_in;
+	int	i;
+	int	j;
+	int	k;
+	int	kk = 1;
+	int	ngran;
+	int	pos_in;
 	vect_t	vec;
 
 	prflag = 0;

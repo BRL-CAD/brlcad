@@ -422,7 +422,8 @@ struct mater_info *materp;
 		}
 
 		if( rt_functab[id].ft_plot( recordp, xform, &vhead,
-		    cur_path[pathpos] ) < 0 )  {
+		    cur_path[pathpos],
+		    mged_abs_tol, mged_rel_tol, mged_nrm_tol ) < 0 )  {
 			printf("%s: vector conversion failure\n",
 				cur_path[pathpos]->d_namep);
 		}
