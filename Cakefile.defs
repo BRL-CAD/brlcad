@@ -487,6 +487,8 @@ set -S2 "/bin/sh"
 #		define	MGED_OBJS	dm-4d dm-X
 #		define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR
 #		define	MGED_LIBES	-L''XLIBDIR -lX11''SHARED -lgl''SHARED
+#		define	XMGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -DDMX_SIGNALS -I/usr/include/X11
+#		define	XMGED_LIBES	-lXirisw -lgl_s -lXm -lXt -lX11_s -lsun -lPW
 #	else
 /*		Lee Butler experimental version */
 #		define	MGED_OBJS	dm-4d mged_widget dm-X
@@ -520,6 +522,7 @@ set -S2 "/bin/sh"
 #	endif
 #	define	GFLAG		-KPIC
 # if 1
+/*	Shared library version support */
 #	define	ARCH_SUF	so
 /*	should be ../sharedlibvers.sh, but LD doesn't grok the version numbers! */
 #	define	LIBVERS echo
@@ -527,7 +530,8 @@ set -S2 "/bin/sh"
 #	define	RANLIB		/**/
 /*	Note that /usr/lib MUST go first on -rpath, so that -lmalloc is the system one */
 #	define	STANDARD_LIBES	-lm -lmalloc -lc''SHARED -rpath /usr/lib:LIBDIR
-/*				-m and -v are helpful here */
+/*	When debugging libraries, -m and -v are helpful LD_OPTS */
+/*	-Wl,-S supresses non-fatal LD errors.  LD has gotten chatty. */
 #	define	LD_OPTS		GFLAG
 # else
 #	define	RANLIB	ranlib5.sh
@@ -535,7 +539,6 @@ set -S2 "/bin/sh"
 #	define	LD_OPTS		GFLAG
 # endif
 /* -ansiposix	ANSI+POSIX mode is used over ANSI, to get fdopen(), etc, defined. */
-/* -ansi is used, to get struct timeval */
 #	define  CC_OPTS		GFLAG -ansiposix -DIRIX=5
 #	define	LIBRT_LIBES	-lmpc
 #	define	LGT_CONFIG	GFLAG -lmpc
@@ -543,10 +546,11 @@ set -S2 "/bin/sh"
 #	define	LIBFB_OBJS	if_remote if_ab if_4d if_X
 #	define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_4D -DBSD=43 -DIF_X -I''XINCDIR
 #	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11''SHARED -lgl''SHARED
-/*	X11 for MGED */
 #	define	MGED_OBJS	dm-4d dm-X
 #	define	MGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -I''XINCDIR
 #	define	MGED_LIBES	-L''XLIBDIR -lX11''SHARED -lgl''SHARED
+#	define	XMGED_CONFIG	GFLAG -DIR_KNOBS=8 -DIR_BUTTONS=32 -DDM_4D -DDM_X -DDMX_SIGNALS -I/usr/include/X11
+#	define	XMGED_LIBES	-lXirisw -lgl_s -lXm -lXt -lX11_s -lsun -lPW
 #	define	HAS_TCP	1
 #	define	CC	/usr/bin/cc
 #	define	GETHOST	hostname
@@ -627,26 +631,22 @@ set -S2 "/bin/sh"
 #	ifdef sun_x11
 /*		Sun with X11 configuration */
 #		define	LIBFB_OBJS	if_remote if_ab if_sun if_X
-#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_SUN \
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB \
 			-I''XINCDIR -DIF_X
-#		define	LIBFB_LIBES	LIBPKG -lsuntool -lsunwindow -lpixrect \
-			-L''XLIBDIR -lX11
-#		define	MGED_OBJS	dm-sun dm-X
-#		define	MGED_CONFIG	-DDM_SUNPW -DDM_X -I''XINCDIR
-#		define	MGED_LIBES	-lsuntool -lsunwindow -lpixrect \
-			-L''XLIBDIR -lX11
+#		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
+#		define	MGED_OBJS	dm-X
+#		define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#		define	MGED_LIBES	-L''XLIBDIR -lX11
 #	endif
 #	ifdef sun_openwin
 /*		Sun with SunOS 4.1.1 and OpenWindows configuration */
 #		define	LIBFB_OBJS	if_remote if_ab if_sun if_X
-#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_SUN \
+#		define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB \
 			-I''XINCDIR -DIF_X
-#		define	LIBFB_LIBES	LIBPKG -lsuntool -lsunwindow -lpixrect \
-			-L''XLIBDIR -lX11
-#		define	MGED_OBJS	dm-sun dm-X
-#		define	MGED_CONFIG	-DDM_SUNPW -DDM_X -I''XINCDIR
-#		define	MGED_LIBES	-lsuntool -lsunwindow -lpixrect \
-			-L''XLIBDIR -lX11
+#		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
+#		define	MGED_OBJS	dm-X
+#		define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#		define	MGED_LIBES	-L''XLIBDIR -lX11
 #	endif
 #	ifdef sun_x11_gds
 /*		Sun with X11 configuration and TekSource GDS hardware*/
@@ -723,16 +723,16 @@ set -S2 "/bin/sh"
 #	else
 #		if 1
 /*			Sun with X11 (aka "openwin") & Suntools.  Default for SunOS 4.1.1 */
-#			define	LIBFB_OBJS	if_remote if_ab if_sun if_X
-#			define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB -DIF_SUN \
+#			define	LIBFB_OBJS	if_remote if_ab if_X
+#			define	LIBFB_CONFIG	-DIF_REMOTE -DIF_AB \
 				-I/usr/openwin/include -I''XINCDIR -DIF_X
-#			define	LIBFB_LIBES	LIBPKG -lsuntool -lsunwindow -lpixrect \
+#			define	LIBFB_LIBES	LIBPKG \
 				-L/usr/openwin/lib -L''XLIBDIR -lX11
 #			if 1
 /*				Sun with X11 only */
-#				define	MGED_OBJS	dm-sun dm-X
-#				define	MGED_CONFIG	-DDM_SUNPW -DDM_X -I/usr/openwin/include -I''XINCDIR
-#				define	MGED_LIBES	-lsuntool -lsunwindow -lpixrect \
+#				define	MGED_OBJS	dm-X
+#				define	MGED_CONFIG	-DDM_X -I/usr/openwin/include -I''XINCDIR
+#				define	MGED_LIBES	\
 					-L/usr/openwin/lib -L''XLIBDIR -lX11
 #			else
 /*				Sun with X11 and XGL (an unbundled product) */
