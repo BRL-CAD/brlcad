@@ -61,6 +61,12 @@
 #define	ECMD_PIPE_PT_DEL	32	/* Delete a pipe point */
 #define	ECMD_PIPE_PT_MOVE	33	/* Move a pipe point */
 
+#define EDIT_ROTATE (es_edflag == SROT || \
+		     es_edflag == ECMD_TGC_ROT_H || \
+		     es_edflag ==  ECMD_TGC_ROT_AB || \
+		     es_edflag == ECMD_ARB_ROTATE_FACE || \
+		     es_edflag == ECMD_ETO_ROT_C)
+
 extern fastf_t	es_scale;		/* scale factor */
 extern fastf_t 	es_para[3];		/* keyboard input parameter changes */
 extern fastf_t	es_peqn[7][4];		/* ARBs defining plane equations */
