@@ -22,7 +22,7 @@
  *
  *  Include Sequencing -
  *	#include "common.h"	/_* Must come before system <> includes *_/
- *	#ifdef USE_STRING_H	/_* OPTIONAL, for strcmp() etc. *_/
+ *	#ifdef HAVE_STRING_H	/_* OPTIONAL, for strcmp() etc. *_/
  *	#  include <string.h>
  *	#else
  *	#  include <strings.h>

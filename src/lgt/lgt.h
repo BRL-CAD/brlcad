@@ -10,7 +10,7 @@
 #ifndef INCL_LGT
 #define INCL_LGT
 
-#ifdef USE_STRING_H
+#ifdef HAVE_STRING_H
 #include <string.h>
 #else
 #include <strings.h>

@@ -36,7 +36,7 @@ static const char RCSray_bot_faces[] = "@(#)$Header$ (BRL)";
 # include <sys/stat.h>
 #endif
 
-#ifdef USE_STRING_H
+#ifdef HAVE_STRING_H
 #include <string.h>
 #else
 #include <strings.h>

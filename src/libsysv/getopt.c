@@ -24,7 +24,7 @@ char getopt_dummy;   /* some systems can't handle empty object modules */
 #else
 
 #include <stdio.h>
-#ifdef USE_STRING_H
+#ifdef HAVE_STRING_H
 #include <string.h>
 #else
 #include <strings.h>

@@ -34,7 +34,7 @@ static const char RCSregionfix[] = "@(#)$Header$ (BRL)";
 #  include <regex.h>
 #endif
 #endif
-#ifdef USE_STRING_H
+#ifdef HAVE_STRING_H
 #include <string.h>
 #else
 #include <strings.h>

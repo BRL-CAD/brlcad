@@ -26,7 +26,7 @@ static const char RCSid[] = "@(#)$Header$ (ARL)";
 #include <signal.h>
 #include <errno.h>
 #include <math.h>
-#ifdef USE_STRING_H
+#ifdef HAVE_STRING_H
 
 # include <string.h>
 #else

@@ -25,7 +25,7 @@
 #endif
                                                                                                                                                                             
 #include <stdio.h>
-#ifdef USE_STRING_H
+#ifdef HAVE_STRING_H
 #include <string.h>
 #else
 #include <strings.h>

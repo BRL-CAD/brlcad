@@ -49,7 +49,7 @@ static const char RCSid[] = "@(#)$Header$ (BRL)";
 #  define BSD __BSDbackup
 #endif
 
-#ifdef USE_STRING_H
+#ifdef HAVE_STRING_H
 #include <string.h>
 #else
 #include <strings.h>

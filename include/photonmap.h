@@ -17,7 +17,7 @@
 
 #include "common.h"
 
-#ifdef USE_STRING_H     /* OPTIONAL, for strcmp() etc. */
+#ifdef HAVE_STRING_H     /* OPTIONAL, for strcmp() etc. */
 #  include <string.h>
 #else
 #  include <strings.h>

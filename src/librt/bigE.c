@@ -24,7 +24,7 @@ static const char RCSid[] = "";
 
 #include <stdio.h>
 #include <signal.h>
-#ifdef USE_STRING_H
+#ifdef HAVE_STRING_H
 #	include <string.h>
 #else
 #	include <strings.h>

@@ -17,8 +17,6 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 
 #include "common.h"
 
-
-
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/time.h>
@@ -27,7 +25,7 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include <stdlib.h>
 #endif
 #include <ctype.h>
-#ifdef USE_STRING_H
+#ifdef HAVE_STRING_H
 #include <string.h>
 #else
 #include <strings.h>

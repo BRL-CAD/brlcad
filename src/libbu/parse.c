@@ -39,7 +39,7 @@ static const char RCSparse[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <ctype.h>
 #include <math.h>
-#ifdef USE_STRING_H
+#ifdef HAVE_STRING_H
 # include <string.h>
 #else
 # include <strings.h>

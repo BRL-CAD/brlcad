@@ -31,7 +31,7 @@
 #include "common.h"
 
 #include <stdio.h>
-#ifndef USE_STRING_H
+#ifndef HAVE_STRING_H
 #include <strings.h>
 #else
 #include <string.h>

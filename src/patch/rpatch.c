@@ -12,7 +12,7 @@
 #include <math.h>
 #include <stdlib.h>
 
-#if defined USE_STRING_H
+#if defined HAVE_STRING_H
 #include <string.h>
 #else
 #include <strings.h>
