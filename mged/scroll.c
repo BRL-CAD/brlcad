@@ -54,6 +54,7 @@ static void sl_tol();
 static void sl_rrtol();
 static void sl_artol();
 static void sl_itol();
+static void sl_adctol();
 
 struct scroll_item sl_menu[] = {
 	{ "xslew",	sl_tol,		0,	"X" },
@@ -80,8 +81,8 @@ struct scroll_item sl_abs_menu[] = {
 struct scroll_item sl_adc_menu[] = {
 	{ "xadc",	sl_itol,	0,	"xadc" },
 	{ "yadc",	sl_itol,	1,	"yadc" },
-	{ "ang 1",	sl_itol,	2,	"ang1" },
-	{ "ang 2",	sl_itol,	3,	"ang2" },
+	{ "ang 1",	sl_adctol,	2,	"ang1" },
+	{ "ang 2",	sl_adctol,	3,	"ang2" },
 	{ "tick",	sl_itol,	4,	"distadc" },
 	{ "",		(void (*)())NULL, 0, "" }
 };
@@ -235,6 +236,28 @@ double val;
 
 
 static void
+sl_adctol( mptr, val )
+register struct scroll_item     *mptr;
+double				val;
+{
+  struct bu_vls vls;
+
+  if( val < -SL_TOL )   {
+    val += SL_TOL;
+  } else if( val > SL_TOL )   {
+    val -= SL_TOL;
+  } else {
+    val = 0.0;
+  }
+
+  bu_vls_init(&vls);
+  bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, 45.0 - val*45.0);
+  Tcl_Eval(interp, bu_vls_addr(&vls));
+  bu_vls_free(&vls);
+}
+
+
+static void
 sl_itol( mptr, val )
 register struct scroll_item     *mptr;
 double				val;
@@ -250,7 +273,7 @@ double				val;
   }
 
   bu_vls_init(&vls);
-  bu_vls_printf(&vls, "knob %s %d", mptr->scroll_cmd, val*2047.0);
+  bu_vls_printf(&vls, "knob %s %f", mptr->scroll_cmd, val*2047.0);
   Tcl_Eval(interp, bu_vls_addr(&vls));
   bu_vls_free(&vls);
 }
