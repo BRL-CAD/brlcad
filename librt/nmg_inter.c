@@ -2531,19 +2531,22 @@ struct faceuse		*fu2;
 	for( eup = (struct edgeuse **)NMG_TBL_LASTADDR(&eutab);
 	     eup >= (struct edgeuse **)NMG_TBL_BASEADDR(&eutab); eup--
 	)  {
+		fastf_t		a, b;
+
 		NMG_CK_EDGEUSE(*eup);
-		if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
-			rt_log("\tConsidering *eup=x%x for colinearity\n", *eup);
-		}
 
 		vu1a = (*eup)->vu_p;
 		vu1b = RT_LIST_PNEXT_CIRC( edgeuse, (*eup) )->vu_p;
 		NMG_CK_VERTEXUSE(vu1a);
 		NMG_CK_VERTEXUSE(vu1b);
 
-		if( rt_distsq_line3_pt3( is->pt, is->dir, vu1a->v_p->vg_p->coord ) > is->tol.dist_sq  )
-			continue;
-		if( rt_distsq_line3_pt3( is->pt, is->dir, vu1b->v_p->vg_p->coord ) > is->tol.dist_sq )
+		a = rt_distsq_line3_pt3( is->pt, is->dir, vu1a->v_p->vg_p->coord );
+		b = rt_distsq_line3_pt3( is->pt, is->dir, vu1b->v_p->vg_p->coord );
+		if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
+			rt_log("\tColinearity check *eup=x%x, a=%g, b=%g\n",
+				*eup, a, b);
+		}
+		if( a > is->tol.dist_sq || b > is->tol.dist_sq )
 			continue;
 		n_colinear++;
 	}
@@ -2569,7 +2572,16 @@ struct faceuse		*fu2;
 		 *  came from the same original edge, and share edge geometry.
 		 *  Now what?
 		 */
-		rt_log("\tOnly %d of %d edgeuses claim colinearity.\n", n_colinear, NMG_TBL_END(&eutab)-1);
+		if( code >= 1 )  {
+			if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
+				rt_log("\t%d of %d eus claim colinearity.  Using isect point.\n",
+					n_colinear, NMG_TBL_END(&eutab));
+			}
+			/* Don't enlist ANY of the eu's due to colinearity */
+			goto not_colinear;
+		}
+		rt_log("\tOnly %d of %d edgeuses claim colinearity.\n",
+			n_colinear, NMG_TBL_END(&eutab));
 		rt_bomb("partially colinear edge geometry?\n");
 	}
 	/*  If rt_isect_line2_line2() says colinear, we are done. */
