@@ -166,6 +166,8 @@ CONST int		simplify;
 				dist = VDOT( n1, n2 );
 				if( !(dist >= tol->para) ) continue;
 
+				if( nmg_ck_fu_verts( fu2, f1, tol ) )
+					continue;
 			}
 
 			/*
@@ -996,11 +998,11 @@ int		n;
 
 				if (rt_g.NMG_debug & DEBUG_CMFACE)
 					rt_log("nmg_cmface() found another edgeuse (%8x) between %8x and %8x\n",
-						eur, *verts[i+1], *verts[i]);
+						eur, *verts[(i+1)%n], *verts[i]);
 			} else {
 				if (rt_g.NMG_debug & DEBUG_CMFACE)
 				    rt_log("nmg_cmface() didn't find edge from verts[%d]%8x to verts[%d]%8x\n",
-					i+1, *verts[i+1], i, *verts[i]);
+					i+1, *verts[(i+1)%n], i, *verts[i]);
 			}
 		} else {
 			eu = nmg_eusplit(*verts[i], euold, 0);
