@@ -179,12 +179,12 @@ char	*argv[];
 
 			case 'x':  /* librt debug flags */
 
-				sscanf( optarg , "%x" , &rt_g.debug );
+				sscanf( optarg , "%x" , (unsigned int *)&rt_g.debug );
 				break;
 
 			case 'X':  /* librt NMG debug flags */
 
-				sscanf( optarg , "%x" , &rt_g.NMG_debug );
+				sscanf( optarg , "%x" , (unsigned int *)&rt_g.NMG_debug );
 				break;
 
 			case 'p':  /* polysolid output */
@@ -1103,7 +1103,7 @@ struct rt_tol *tol;
 		else
 		{
 			struct vertex **vert_p[3];
-			int found_verts;
+			int found_verts=0;
 
 			/* Check if this face was already made */
 			for( i=0 ; i<NMG_TBL_END( &faces ) ; i++ )
@@ -2246,7 +2246,7 @@ int cnt;
 	static int count=0;
 	static int mir_count=0;
 	static int last_cc=0;
-	char	shflg,mrflg,ctflg;
+	char	shflg='\0',mrflg,ctflg;
 	char	name[17];
 	int ret = 0;
 	static struct rt_tol *tols = &tol;
@@ -2492,7 +2492,7 @@ int cnt;
 	fastf_t rad;
 	point_t center;
 	int i;
-	char    shflg,mrflg,ctflg;
+	char    shflg='\0',mrflg,ctflg;
 	static int count=0;
 	static int mir_count=0;
 	static int last_cc=0;
@@ -2621,7 +2621,7 @@ int cnt;
 	vect_t	ab, ac , ad, abi, aci, adi;
 	fastf_t len,leni;			/* box edge lengths */
 	int valid;				/* valid inside box? */
-	char    shflg,mrflg,ctflg;
+	char    shflg='\0',mrflg,ctflg;
 	static int count=0;
 	static int mir_count=0;
 	static int last_cc=0;
@@ -3221,7 +3221,7 @@ int cnt;
 	int k,j;
 	struct subtract_list *slist,*get_subtract();
 	double	thick,ht,sht;
-	char    shflg,mrflg,ctflg;
+	char    shflg='\0',mrflg,ctflg;
 	static int count=0;
 	static int mir_count=0;
 	static int last_cc=0;
@@ -3861,7 +3861,7 @@ int cnt;
 	point_t	top;
 	fastf_t tmp;
 	fastf_t tmp1;
-	char    shflg,mrflg,ctflg;
+	char    shflg='\0',mrflg,ctflg;
 	static int count=0;
 	static int mir_count=0;
 	static int last_cc=0;
