@@ -14,6 +14,7 @@ LEXOPTS=
 # LEXOPTS= -l
 
 BINDIR=/usr/brlcad/bin
+MANDIR=/usr/brlcad/man/man1
 
 #LDFLAGS=-k 64k
 
@@ -44,6 +45,9 @@ install:	cake
 		mv cake $(BINDIR)/cake
 		rm -f $(BINDIR)/fake
 		ln $(BINDIR)/cake $(BINDIR)/fake
+		rm -f $(MANDIR)/cake.1
+		cp cake.1 $(MANDIR)
+		ln $(MANDIR)/cake.1 $(MANDIR)/fake.1
 
 $(OBJ):		$(HDR)
 $(GOBJ):	$(HDR)
