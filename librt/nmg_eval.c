@@ -167,8 +167,11 @@ register struct loopuse	*lu;
 	NMG_LIST_DEQUEUE( &lumate->l );
 
 	/* Add lu and lumate to dest shell */
-	NMG_LIST_APPEND( &src->lu_hd, &lu->l );
+	NMG_LIST_APPEND( &dest->lu_hd, &lu->l );
 	NMG_LIST_APPEND( &lu->l, &lumate->l );
+
+	lu->up.s_p = dest;
+	lumate->up.s_p = dest;
 }
 
 /*
@@ -212,6 +215,9 @@ register struct edgeuse	*eu;
 	/* Add eu and eumate to dest shell */
 	NMG_LIST_APPEND( &dest->eu_hd, &eu->l );
 	NMG_LIST_APPEND( &eu->l, &eumate->l );
+
+	eu->up.s_p = dest;
+	eumate->up.s_p = dest;
 }
 
 /*
