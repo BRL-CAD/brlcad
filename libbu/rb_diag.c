@@ -22,6 +22,8 @@
 static void describe_node (struct rb_node *node, int depth, int order)
 {
     RB_CKMAG(node, RB_NODE_MAGIC, "red-black node");
+    RB_CKORDER(node -> rbn_tree, order);
+
     fprintf(stderr, "%*snode <%x>...\n",
 			depth * 2, "", node);
     fprintf(stderr, "%*s  tree:   <%x>\n",
@@ -55,8 +57,9 @@ static void internal_walk (struct rb_node *root, int depth,
 			   int order, void (*visit)())
 {
 
-    /* Check data type of the parameter "root" */
     RB_CKMAG(root, RB_NODE_MAGIC, "red-black node");
+    RB_CKORDER(root -> rbn_tree, order);
+
     if (root == rb_null(root -> rbn_tree))
 	return;
     visit(root, depth, order);
@@ -75,6 +78,7 @@ void rb_diagnose_tree (rb_tree *tree, int order)
 {
     RB_CKMAG(tree, RB_TREE_MAGIC, "red-black tree");
     RB_CKORDER(tree, order);
+
     fprintf(stderr, "-------- Red-black tree <%x> contents --------\n", tree);
     fprintf(stderr, "Description: '%s'\n", tree -> rbt_description);
     fprintf(stderr, "Order:       %d of %d\n", order, tree -> rbt_nm_orders);
@@ -101,6 +105,7 @@ void rb_summarize_tree (rb_tree *tree)
     int		i;
 
     RB_CKMAG(tree, RB_TREE_MAGIC, "red-black tree");
+
     fprintf(stderr, "-------- Red-black tree <%x> summary --------\n", tree);
     fprintf(stderr, "Description: '%s'\n", tree -> rbt_description);
     fprintf(stderr, "Empty node:  <%x>\n", tree -> rbt_empty_node);
