@@ -509,18 +509,27 @@
  *
  * NO_BOMBING_MACROS
  *	turns off many macros in h/bu.h and h/bn.h that check a condition (such as a
- *	magic number) and bu_bomb on failure.
+ *	magic number) and bu_bomb on failure.  note that turning this flag on will
+ *	remove the debug capability to catch fatal runtime erros (bugs) and exit
+ *	gracefully.
  * NO_MAGIC_CHECKING
- *	turns off allocation of (some) variables and calls to check magic numbers
+ *	turns off allocation of (some) variables and calls to check magic numbers.
+ *	note that this will hinder memory corrupting bug detection.
  * NO_BADRAY_CHECKING
  *	is a risky optimization to turn off checking in librt/shoot.c for bad rays 
  *	passed in to the expensive shootray() routine.
+ * NO_DEBUG_CHECKING
+ * 	is an optimization that replaces instances of rt_g.debug in if statements 
+ *	where checking for a debug level occurs (in order to output a debug message)
+ * 	with the integer constant 0.  note that turning this flag on will remove the
+ *	capability to output debug messages and commands that take a debug-level args
+ *	will not output as expected.  see h/raytrace.h for the implementation details.
  ****************/
 #ifdef PRODUCTION
 #  define NO_BOMBING_MACROS	1	/* Don't do anything for macros that only bomb on a fatal error */
 #  define NO_MAGIC_CHECKING	1	/* Don't perform magic number checking */
 #  define NO_BADRAY_CHECKING	1	/* Don't check for divide by zero in rt (shoot.c/shootray())*/
-#  define NO_DEBUG_CHECKING	1	/* Don't use the rt_g.debug (h/raytrace.h) facilities */
+#  define NO_DEBUG_CHECKING	1	/* Don't use the rt_g.debug facilities */
 #endif
 
 

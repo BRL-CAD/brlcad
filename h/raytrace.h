@@ -71,7 +71,7 @@ extern "C" {
  *				D E B U G
  *  
  *  Each type of debugging support is independently controled,
- *  by a separate bit in the word rt_g.debug
+ *  by a separate bit in the word RT_G_DEBUG
  *
  *  For programs based on the "RT" program, these flags follow
  *  the "-x" (lower case x) option.
@@ -1588,6 +1588,17 @@ struct rt_g {
 	struct rt_wdb	rtg_headwdb;	/* head of database object list */
 };
 extern struct rt_g rt_g;
+
+/* Normally set when in production mode, setting the RT_G_DEBUG define to 0
+ * will allow chucks of code to poof away at compile time (since they are
+ * truth-functionally constant (false))  This can boost raytrace performance
+ * considerably (~10%).
+ */
+#ifdef NO_DEBUG_CHECKING
+#	define	RT_G_DEBUG	0
+#else
+#	define	RT_G_DEBUG	rt_g.debug
+#endif
 
 /*
  *			S E M A P H O R E S
