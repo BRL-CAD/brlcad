@@ -47,9 +47,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 struct dm	*plot_open();
 static int	plot_close();
 static int	plot_drawBegin(), plot_drawEnd();
-static int	plot_normal(), plot_newrot();
+static int	plot_normal(), plot_loadMatrix();
 static int	plot_drawString2D(), plot_drawLine2D();
-static int      plot_drawVertex2D();
+static int      plot_drawPoint2D();
 static int	plot_drawVList();
 static int      plot_setColor();
 static int      plot_setLineAttr();
@@ -60,10 +60,10 @@ struct dm dm_plot = {
   plot_drawBegin,
   plot_drawEnd,
   plot_normal,
-  plot_newrot,
+  plot_loadMatrix,
   plot_drawString2D,
   plot_drawLine2D,
-  plot_drawVertex2D,
+  plot_drawPoint2D,
   plot_drawVList,
   plot_setColor,
   plot_setLineAttr,
@@ -267,14 +267,34 @@ struct dm *dmp;
 }
 
 /*
- *  			P L O T _ N E W R O T
+ *  			P L O T _ L O A D M A T R I X
+ *
+ *  Load a new transformation matrix.  This will be followed by
+ *  many calls to plot_drawVList().
  */
 static int
-plot_newrot(dmp, mat, which_eye)
+plot_loadMatrix(dmp, mat, which_eye)
 struct dm *dmp;
 mat_t mat;
 int which_eye;
 {
+  if(((struct plot_vars *)dmp->dm_vars)->debug){
+    struct bu_vls tmp_vls;
+
+    Tcl_AppendResult(interp, "plot_loadMatrix()\n", (char *)NULL);
+
+    bu_vls_init(&tmp_vls);
+    bu_vls_printf(&tmp_vls, "which eye = %d\t", which_eye);
+    bu_vls_printf(&tmp_vls, "transformation matrix = \n");
+    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[0], mat[4], mat[8],mat[12]);
+    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[1], mat[5], mat[9],mat[13]);
+    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[2], mat[6], mat[10],mat[14]);
+    bu_vls_printf(&tmp_vls, "%g %g %g %g\n", mat[3], mat[7], mat[11],mat[15]);
+
+    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+    bu_vls_free(&tmp_vls);
+  }
+
   bn_mat_copy(plotmat, mat);
   return TCL_OK;
 }
@@ -411,7 +431,7 @@ int x2, y2;
 
 
 static int
-plot_drawVertex2D(dmp, x, y)
+plot_drawPoint2D(dmp, x, y)
 struct dm *dmp;
 int x, y;
 {
@@ -464,14 +484,14 @@ struct dm *dmp;
 register int w[];
 {
   /* Compute the clipping bounds */
-  ((struct plot_vars *)dmp->dm_vars)->clipmin[0] = w[1] / 2048.;
-  ((struct plot_vars *)dmp->dm_vars)->clipmax[0] = w[0] / 2047.;
-  ((struct plot_vars *)dmp->dm_vars)->clipmin[1] = w[3] / 2048.;
-  ((struct plot_vars *)dmp->dm_vars)->clipmax[1] = w[2] / 2047.;
+  ((struct plot_vars *)dmp->dm_vars)->clipmin[0] = w[0] / 2048.;
+  ((struct plot_vars *)dmp->dm_vars)->clipmax[0] = w[1] / 2047.;
+  ((struct plot_vars *)dmp->dm_vars)->clipmin[1] = w[2] / 2048.;
+  ((struct plot_vars *)dmp->dm_vars)->clipmax[1] = w[3] / 2047.;
 
   if(((struct plot_vars *)dmp->dm_vars)->zclip){
-    ((struct plot_vars *)dmp->dm_vars)->clipmin[2] = w[5] / 2048.;
-    ((struct plot_vars *)dmp->dm_vars)->clipmax[2] = w[4] / 2047.;
+    ((struct plot_vars *)dmp->dm_vars)->clipmin[2] = w[4] / 2048.;
+    ((struct plot_vars *)dmp->dm_vars)->clipmax[2] = w[5] / 2047.;
   }else{
     ((struct plot_vars *)dmp->dm_vars)->clipmin[2] = -1.0e20;
     ((struct plot_vars *)dmp->dm_vars)->clipmax[2] = 1.0e20;
