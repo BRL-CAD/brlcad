@@ -409,7 +409,7 @@ int waittime;
 	for( i=0; i<NFD; i++ )  {
 		register struct pkg_conn *pc;
 
-		if( i == fileno(stdin) )  continue;
+		if( !feof(stdin) && i == fileno(stdin) )  continue;
 		if( i == tcp_listen_fd )  continue;
 		if( !(ibits&(1<<i)) )  continue;
 		pc = servers[i].sr_pc;
@@ -1142,15 +1142,9 @@ fprintf(stderr,"PIXELS y=%d, rays=%d, cpu=%g\n", info.li_y, info.li_nrays, info.
 
 	/* If display attached, also draw it */
 	if( fbp != FBIO_NULL )  {
-		int maxx;
-		maxx = i/3;
-		if( maxx > fb_getwidth(fbp) )  {
-			maxx = fb_getwidth(fbp);
-			fprintf(stderr,"clipping fb scanline to %d\n", maxx);
-		}
-		size_display(fr);
-		fb_write( fbp, 0, info.li_y%fb_getheight(fbp),
-			buf+info.li_len, maxx );
+		write_fb( buf + info.li_len, fr,
+			info.li_y*fr->fr_width + 0,
+			info.li_y*fr->fr_width + i/3 );
 	}
 	if(buf) (void)free(buf);
 
@@ -1208,6 +1202,53 @@ register struct list *lhp;
 			APPEND_LIST( lp2, lp );
 			return;
 		}
+	}
+}
+
+/*
+ *			W R I T E _ F B
+ *
+ *  Buffer 'pp' contains pixels numbered 'a' through (not including) 'b'.
+ *  Write them out, clipping them to the current screen.
+ */
+write_fb( pp, fr, a, b )
+RGBpixel	*pp;
+struct frame	*fr;
+int		a;
+int		b;
+{
+	register int	x, y;	/* screen coordinates of pixel 'a' */
+	int	offset;		/* pixel offset beyond 'pp' */
+	int	pixels_todo;	/* # of pixels in buffer to be written */
+	int	write_len;	/* # of pixels to write on this scanline */
+	int	len_to_eol;	/* # of pixels from 'a' to end of scanline */
+
+	size_display(fr);
+
+	x = a % fb_getwidth(fbp);
+	y = (a / fb_getwidth(fbp)) % fb_getheight(fbp);
+	pixels_todo = b - a;
+
+	/* Simple case */
+	if( fr->fr_width == fb_getwidth(fbp) )  {
+		fb_write( fbp, x, y,
+			pp, pixels_todo );
+		return;
+	}
+
+	/* Hard case -- clip drawn region to the framebuffer */
+	offset = 0;
+	while( pixels_todo > 0 )  {
+		write_len = fb_getwidth(fbp) - x;
+		len_to_eol = fr->fr_width - x;
+		if( write_len > pixels_todo )  write_len = pixels_todo;
+		if( write_len > 0 )
+			fb_write( fbp, x, y, pp+offset, write_len );
+		offset += len_to_eol;
+		a += len_to_eol;
+		y = (y+1) % fb_getheight(fbp);
+		x = 0;
+		pixels_todo -= len_to_eol;
 	}
 }
 
@@ -1806,7 +1847,6 @@ char	**argv;
 {
 	register struct frame *fr;
 	register int	i;
-	int		maxx;
 	char		*name;
 
 	if( argc <= 1 )  {
@@ -1824,14 +1864,7 @@ char	**argv;
 	if( fbp == FBIO_NULL ) return;
 
 	/* Trim to what can be drawn */
-	maxx = fr->fr_width;
-	if( maxx > fb_getwidth(fbp) )
-		maxx = fb_getwidth(fbp);
-	for( i=0; i<fr->fr_height; i++ )  {
-		fb_write( fbp, 0, i%fb_getheight(fbp),
-			fr->fr_picture + i*fr->fr_width*3,
-			maxx );
-	}
+	write_fb( fr->fr_picture, fr, 0, fr->fr_height*fr->fr_width );
 }
 
 cd_release( argc, argv )
@@ -1916,10 +1949,10 @@ char	**argv;
 		printf("\tlast:  elapsed=%g, cpu=%g\n",
 			sp->sr_l_elapsed,
 			sp->sr_l_cpu );
-		printf("\t avg:  elapsed=%g, weighted=%g, cpu=%g clump=%d\n",
+		printf("\t avg:  elapsed=%g, cpu=%g, weighted=%g, clump=%d\n",
 			sp->sr_s_elapsed/num,
-			sp->sr_w_elapsed,
 			sp->sr_s_cpu/num,
+			sp->sr_w_elapsed,
 			sp->sr_lump );
 
 		pr_list( &(sp->sr_work) );
