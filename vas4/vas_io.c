@@ -33,6 +33,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 static struct termios	vtty;
 
+#if defined(__bsdi__)
+#	include <sys/ioctl_compat.h>
+#	define TAB3 (TAB1|TAB2)
+#	define OCRNL   0000010
+#endif
+
 #else	/* !defined(HAVE_XOPEN) */
 
 #ifdef SYSV
