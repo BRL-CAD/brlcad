@@ -182,14 +182,18 @@ struct rt_i		*rtip;
 	argv[1] = NULL;
 	if( rt_gettrees( sub_rtip, 1, (CONST char **)argv, 1 ) < 0 )  {
 		bu_log("submodel(%s) rt_gettrees(%s) failed\n", stp->st_name, argv[0]);
-		rt_free_rti( sub_rtip );
+		/* Can't call rt_free_rti( sub_rtip ) because it may have
+		 * already been instanced!
+		 */
 		return -2;
 	}
 
 	if( sub_rtip->nsolids <= 0 )  {
 		bu_log("rt_submodel_prep(%s): %s No solids found\n",
 			stp->st_dp->d_namep, sip->file );
-		rt_free_rti( sub_rtip );
+		/* Can't call rt_free_rti( sub_rtip ) because it may have
+		 * already been instanced!
+		 */
 		return -3;
 	}
 
