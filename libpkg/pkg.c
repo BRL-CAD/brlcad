@@ -384,7 +384,8 @@ register struct pkg_conn *pc;
 	if( pc->pkc_buf )
 		(void)free(pc->pkc_buf);
 	pc->pkc_buf = (char *)0;	/* safety */
-	(void)free(pc->pkc_buf);
+	pc->pkc_magic = 0;		/* safety */
+	(void)free( (char *)pc );
 }
 
 /*
