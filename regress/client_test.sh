@@ -7,7 +7,7 @@
 . `dirname $0`/library
 
 initializeVariable ARCH `${REGRESS_DIR}/brlcad/sh/machinetype.sh`
-initializeVariable TESTS_DIR "$PWD/tests.d"
+initializeVariable TESTS_DIR "${REGRESS_DIR}/brlcad/regress/tests.d"
 
 #
 # Now we have an installed version of the software.  We can now excercise the
