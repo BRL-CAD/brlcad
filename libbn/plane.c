@@ -2741,3 +2741,82 @@ CONST int pl_count;
 	return( 0 );
 
 }
+
+/*
+ *			B N _ I S E C T _ L S E G _ R P P
+ *
+ *  Intersect a line segment with a rectangular parallelpiped (RPP)
+ *  that has faces parallel to the coordinate planes (a clipping RPP).
+ *  The RPP is defined by a minimum point and a maximum point.
+ *  This is a very close relative to rt_in_rpp() from librt/shoot.c
+ *
+ *  Returns -
+ *	 0  if ray does not hit RPP,
+ *	!0  if ray hits RPP.
+ *
+ *  Implicit Return -
+ *	if !0 was returned, "a" and "b" have been clipped to the RPP.
+ */
+int
+bn_isect_lseg_rpp( a, b, min, max )
+point_t		a;
+point_t		b;
+register fastf_t *min, *max;
+{
+	auto vect_t	diff;
+	register fastf_t *pt = &a[0];
+	register fastf_t *dir = &diff[0];
+	register int i;
+	register double sv;
+	register double st;
+	register double mindist, maxdist;
+
+	mindist = -INFINITY;
+	maxdist = INFINITY;
+	VSUB2( diff, b, a );
+
+	for( i=0; i < 3; i++, pt++, dir++, max++, min++ )  {
+		if( *dir < -SQRT_SMALL_FASTF )  {
+			if( (sv = (*min - *pt) / *dir) < 0.0 )
+				return(0);	/* MISS */
+			if(maxdist > sv)
+				maxdist = sv;
+			if( mindist < (st = (*max - *pt) / *dir) )
+				mindist = st;
+		}  else if( *dir > SQRT_SMALL_FASTF )  {
+			if( (st = (*max - *pt) / *dir) < 0.0 )
+				return(0);	/* MISS */
+			if(maxdist > st)
+				maxdist = st;
+			if( mindist < ((sv = (*min - *pt) / *dir)) )
+				mindist = sv;
+		}  else  {
+			/*
+			 *  If direction component along this axis is NEAR 0,
+			 *  (ie, this ray is aligned with this axis),
+			 *  merely check against the boundaries.
+			 */
+			if( (*min > *pt) || (*max < *pt) )
+				return(0);	/* MISS */;
+		}
+	}
+	if( mindist >= maxdist )
+		return(0);	/* MISS */
+
+	if( mindist > 1 || maxdist < 0 )
+		return(0);	/* MISS */
+
+	if( mindist >= 0 && maxdist <= 1 )
+		return(1);	/* HIT within box, no clipping needed */
+
+	/* Don't grow one end of a contained segment */
+	if( mindist < 0 )
+		mindist = 0;
+	if( maxdist > 1 )
+		maxdist = 1;
+
+	/* Compute actual intercept points */
+	VJOIN1( b, a, maxdist, diff );		/* b must go first */
+	VJOIN1( a, a, mindist, diff );
+	return(1);		/* HIT */
+}
