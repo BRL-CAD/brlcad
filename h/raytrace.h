@@ -1123,8 +1123,18 @@ extern void rt_pr_roots();		/* print complex roots */
 /*
  *  Constants provided and used by the RT library.
  */
-extern double	rt_invpi, rt_inv2pi;
-extern double	rt_inv255;
+#if __STDC__
+#define	CONST	const
+#else
+#define	CONST	/**/
+#endif
+
+extern CONST double rt_pi;
+extern CONST double rt_twopi;
+extern CONST double rt_halfpi;
+extern CONST double rt_invpi;
+extern CONST double rt_inv2pi;
+extern CONST double rt_inv255;
 
 /*
  *  System library routines used by the RT library.
