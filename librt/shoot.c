@@ -789,58 +789,11 @@ register struct application *ap;
 	}
 
 	/*
-	 *  If there are infinite solids in the model,
-	 *  shoot at all of them, all of the time
-	 *  (until per-solid classification is implemented)
-	 *  before considering the model RPP.
-	 *  This code is a streamlined version of the real version.
-	 */
-	if( rtip->rti_inf_box.bn.bn_len > 0 )  {
-		/* Consider all objects within the box */
-		cutp = &(rtip->rti_inf_box);
-		stpp = &(cutp->bn.bn_list[cutp->bn.bn_len-1]);
-		for( ; stpp >= cutp->bn.bn_list; stpp-- )  {
-			register struct soltab *stp = *stpp;
-
-			/* Shoot a ray */
-			if(debug_shoot)bu_log("shooting %s\n", stp->st_name);
-			BU_BITSET( solidbits, stp->st_bit );
-			resp->re_shots++;
-			BU_LIST_INIT( &(new_segs.l) );
-			if( rt_functab[stp->st_id].ft_shot( 
-			    stp, &ap->a_ray, ap, &new_segs ) <= 0 )  {
-				resp->re_shot_miss++;
-				continue;	/* MISS */
-			}
-
-			/* Add seg chain to list awaiting rt_boolweave() */
-			{
-				register struct seg *s2;
-				while(BU_LIST_WHILE(s2,seg,&(new_segs.l)))  {
-					BU_LIST_DEQUEUE( &(s2->l) );
-					s2->seg_in.hit_rayp = s2->seg_out.hit_rayp = &ap->a_ray;
-					BU_LIST_INSERT( &(waiting_segs.l), &(s2->l) );
-				}
-			}
-			resp->re_shot_hit++;
-		}
-	}
-
-	/*
 	 *  If ray does not enter the model RPP, skip on.
 	 *  If ray ends exactly at the model RPP, trace it.
 	 */
 	if( !rt_in_rpp( &ap->a_ray, ss.inv_dir, rtip->mdl_min, rtip->mdl_max )  ||
 	    ap->a_ray.r_max < 0.0 )  {
-	    	/* XXX it would be better to do the infinite objects here,
-	    	 * XXX and let rt_advance_to_next_cell mention them otherwise,
-	    	 * XXX such as when rays escape from the model RPP.
-	    	 */
-	    	if( BU_LIST_NON_EMPTY( &waiting_segs.l ) )  {
-	    		/* Go handle the infinite objects we hit */
-	    		ss.model_end = INFINITY;
-	    		goto weave;
-	    	}
 		resp->re_nmiss_model++;
 		ap->a_return = ap->a_miss( ap );
 		status = "MISS model";

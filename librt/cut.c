@@ -740,12 +740,9 @@ int			ncpu;
 	RT_VISIT_ALL_SOLTABS_START( stp, rtip ) {
 		/* Ignore "dead" solids in the list.  (They failed prep) */
 		if( stp->st_aradius <= 0 )  continue;
-		if( stp->st_aradius >= INFINITY )  {
-			/* Add to infinite solids list for special handling */
-			rt_cut_extend( &rtip->rti_inf_box, stp, rtip );
-		} else {
-			rt_cut_extend( finp, stp, rtip );
-		}
+
+		/* Infinite and finite solids all get lumpped together */
+		rt_cut_extend( finp, stp, rtip );
 	} RT_VISIT_ALL_SOLTABS_END
 
 	/*  Dynamic decisions on tree limits.  Note that there * will be
@@ -839,7 +836,6 @@ int			ncpu;
 		      (fastf_t)rtip->rti_cutdepth+1, rtip->rti_cutdepth+1 );
 	bzero( rtip->rti_ncut_by_type, sizeof(rtip->rti_ncut_by_type) );
 	rt_ct_measure( rtip, &rtip->rti_CutHead, 0 );
-	rt_ct_measure( rtip, &rtip->rti_inf_box, 0 );
 	if( rt_g.debug&DEBUG_CUT ) {
 		bu_log( "Cut: maxdepth=%d, nbins=%d, maxlen=%d, avg=%g\n",
 			rtip->rti_cut_maxdepth,
