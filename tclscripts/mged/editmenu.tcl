@@ -131,7 +131,12 @@ proc build_solid_menu { type id paths } {
 	set screen [winfo screen $win]
     }
 
-    create_listbox $top $screen Solid $paths "destroy $top"
+    # reverse paths
+    for {set i [expr [llength $paths] - 1]} {0 <= $i} {incr i -1} {
+	lappend rpaths [lindex $paths $i]
+    }
+
+    create_listbox $top $screen Solid $rpaths "destroy $top"
     set mged_gui($id,edit_menu) $top
 
     switch $type {
