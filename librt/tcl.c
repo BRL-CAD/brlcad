@@ -1933,6 +1933,10 @@ ClientData clientData;
  *	set wdbp [wdb_open .inmem inmem $dbip]
  *	.inmem get box.s
  *	.inmem close
+ *
+ *	wdb_open db file "bob.g"
+ *	db get white.r
+ *	db close
  */
 int
 wdb_open( clientData, interp, argc, argv )
