@@ -562,8 +562,12 @@ float sin_table[SINTABSIZE] = {
 -0.0122715,	-0.00920375,	-0.00613588,	-0.00306796
 };
 
-/* The actual table of random numbers, range -0.5 to +0.5 */
-float rand_tab[RANDTABSIZE] = {
+/*
+ *  The actual table of random numbers, range -0.5 to +0.5
+ *  Table is padded with zeros for parallel processing case
+ *  which may sometimes index slightly beyond RANDTABSIZE.
+ */
+float rand_tab[RANDTABSIZE+MAX_PSW+8] = {
 0.468071,	-0.433269,	-0.021719,	0.409534,
 -0.148308,	0.432534,	0.154436,	-0.478930,
 0.012205,	-0.297981,	0.439977,	-0.295918,
