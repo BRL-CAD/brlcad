@@ -1,13 +1,24 @@
-dnl ****************************
-dnl *** BRL-CAD configure.ac ***
-dnl ****************************
 dnl $Id$
+dnl BRL-CAD
+dnl Copyright (c) 2004 BRL-CAD Developers
 dnl
-dnl Herein lies the venerable GNU Autotools configure template for BRL-CAD.
-dnl As best is reasonably possible, proper ordering and separation of tests
-dnl and settings should be maintained per the recommended standard layout.
-dnl The tests should be added to the rather clearly labeled sections below so
-dnl that they are as follows:
+dnl This program is free software; you can redistribute it and/or
+dnl modify it under the terms of the appropriate license described in
+dnl the file named COPYING that should have accompanied this file.
+dnl
+dnl This program is distributed in the hope that it will be useful,
+dnl but WITHOUT ANY WARRANTY; without even the implied warranty of
+dnl MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+dnl
+dnl ******************************************************************
+dnl ***                  BRL-CAD's configure.ac                    ***
+dnl ******************************************************************
+dnl
+dnl Herein lies the venerable GNU Autotools configure template for
+dnl BRL-CAD.  As best is reasonably possible, proper ordering and
+dnl separation of tests and settings should be maintained per the
+dnl recommended standard layout.  The tests should be added to the
+dnl rather clearly labeled sections below so that they are as follows:
 dnl
 dnl      0) information on the package
 dnl	 1) check command-line arguments
@@ -20,14 +31,15 @@ dnl	 7) check functions
 dnl	 8) check system services
 dnl	 9) output a summary
 dnl
-dnl Any useful build arguments should be added to the output summary at the
-dnl end.  Although it may be possible to check for certain features of command
-dnl line arguments near the top, related tests should be delayed and placed
-dnl into the appropriate test section.
+dnl Any useful build arguments should be added to the output summary
+dnl at the end.  Although it may be possible to check for certain
+dnl features of command line arguments near the top, related tests
+dnl should be delayed and placed into the appropriate test section.
 dnl
-dnl Features of the GNU Autotools that would require an increase in the minimum
-dnl version requirement are highly discouraged.  Likewise discouraged is
-dnl rolling back support for versions released prior to autoconf 2.50.
+dnl Features of the GNU Autotools that would require an increase in
+dnl the minimum version requirement are highly discouraged.  Likewise
+dnl discouraged is rolling back support for versions released prior
+dnl to autoconf 2.50.
 dnl
 dnl Strive to tame the chaos that is so easily achieved.
 dnl
