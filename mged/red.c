@@ -448,6 +448,9 @@ char *str;
     done = 0;
     ptr = strtok(llp->line, delims);
     while (!done) {
+      if ( !ptr )
+	break;
+
       /* First non-white is the relation operator */
       relation = (*ptr);
       if (relation == '\0')
@@ -1503,6 +1506,9 @@ char *old_name;
 		first=1;
 		ptr = strtok( line, delims );
 		while (!done2) {
+			if ( !ptr )
+			  break;
+
 			/* First non-white is the relation operator */
 			relation = (*ptr);
 			if( relation == '\0' )
