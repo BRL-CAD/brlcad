@@ -643,6 +643,99 @@ CONST struct db_i		*dbip;
 }
 
 /*
+ *			R T _ H L F _ I M P O R T 5
+ */
+int
+rt_hlf_import5( ip, ep, mat, dbip )
+struct rt_db_internal           *ip;
+CONST struct bu_external        *ep;
+register CONST mat_t            mat;
+CONST struct db_i               *dbip;
+{
+	struct rt_half_internal	*hip;
+	point_t			tmp_pt, new_pt;
+	plane_t			tmp_plane;
+	fastf_t			tmp_dist;
+	register double		f,t;
+
+	BU_CK_EXTERNAL( ep );
+
+	BU_ASSERT_LONG( ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 4 );
+
+	RT_INIT_DB_INTERNAL( ip );
+	ip->idb_type = ID_HALF;
+	ip->idb_meth = &rt_functab[ID_HALF];
+	ip->idb_ptr = bu_malloc( sizeof(struct rt_half_internal), "rt_half_internal");
+
+	hip = (struct rt_half_internal *)ip->idb_ptr;
+	hip->magic = RT_HALF_INTERNAL_MAGIC;
+
+	/* Convert from database (network) to internal (host) format */
+	ntohd( (unsigned char *)tmp_plane, ep->ext_buf, 4 );
+
+	/* to apply modeling transformations, create a temporary
+	 * normal vector and point on the plane
+	 */
+	VSCALE( tmp_pt, tmp_plane, tmp_plane[3] );
+
+	/* transform both the point and the vector */
+	MAT4X3VEC( hip->eqn, mat, tmp_plane );
+	MAT4X3PNT( new_pt, mat, tmp_pt );
+
+	/* and calculate the new distance */
+	hip->eqn[3] = VDOT( hip->eqn, new_pt );
+
+	/* Verify that normal has unit length */
+	f = MAGNITUDE( hip->eqn );
+	if( f < SMALL )  {
+		bu_log("rt_hlf_import:  bad normal, len=%g\n", f );
+		return(-1);		/* BAD */
+	}
+	t = f - 1.0;
+	if( !NEAR_ZERO( t, 0.001 ) )  {
+		/* Restore normal to unit length */
+		f = 1/f;
+		VSCALE( hip->eqn, hip->eqn, f );
+		hip->eqn[3] *= f;
+	}
+	return(0);			/* OK */
+}
+
+/*
+ *		R T _ H A L F _ E X P O R T 5
+ */
+int
+rt_hlf_export5( ep, ip, local2mm, dbip )
+struct bu_external              *ep;
+CONST struct rt_db_internal     *ip;
+double                          local2mm;
+CONST struct db_i               *dbip;
+{
+	struct rt_half_internal		*hip;
+	fastf_t				scaled_dist;
+
+	RT_CK_DB_INTERNAL( ip );
+	if( ip->idb_type != ID_HALF ) return -1;
+	hip = (struct rt_half_internal *)ip->idb_ptr;
+	RT_HALF_CK_MAGIC( hip );
+
+	BU_INIT_EXTERNAL( ep );
+	ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 4;
+	ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes, "half external" );
+
+	/* only the distance needs to be scaled */
+	scaled_dist = hip->eqn[3] * local2mm;
+
+	/* Convert from internal (host) to database (network) format */
+	/* the normal */
+	htond( ep->ext_buf, (unsigned char *)hip->eqn, 3 );
+	/* the distance */
+	htond( ep->ext_buf + SIZEOF_NETWORK_DOUBLE*3, (unsigned char *)&scaled_dist, 1);
+
+	return 0;
+}
+
+/*
  *			R T _ H L F _ D E S C R I B E
  *
  *  Make human-readable formatted presentation of this solid.
