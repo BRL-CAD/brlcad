@@ -28,18 +28,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
-#include "raytrace.h"
 #include "nmg.h"
+#include "raytrace.h"
 #include "./ged.h"
 #include "externs.h"
 #include "./solid.h"
 #include "./dm.h"
 
 #include "../librt/debug.h"	/* XXX */
-
-extern int	getopt();
-extern char	*optarg;
-extern int	optind;
 
 extern void	(*nmg_plot_anim_upcall)();
 extern void	(*nmg_vlblock_anim_upcall)();
