@@ -1,3 +1,4 @@
+#define FULL_DSP_DEBUGGING 1
 /*
  *			G _ D S P . C
  *
@@ -681,7 +682,7 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
     xs = dsp->xsiz;
     ys = dsp->ysiz;
     tot = xs * ys;
-    bu_log("layer %d   %dx%d\n", 0, xs, ys);
+    /*    bu_log("layer %d   %dx%d\n", 0, xs, ys); */
     dsp->layers = 1;
     while ( xs > 1 || ys > 1 ) {
 	xv = xs / DIM_BB_CHILDREN;
@@ -1090,6 +1091,7 @@ plot_seg(struct isect_stuff *isect,
 #define ADD_SEG(isect, in, out, min, max, r, g, b) \
 	add_seg(isect, in, out, min, max, r, g, b, __LINE__)
 
+
 static int
 add_seg(struct isect_stuff *isect,
 	struct hit *in_hit,
@@ -1119,8 +1121,14 @@ add_seg(struct isect_stuff *isect,
 	seg = BU_LIST_LAST(seg, &isect->seglist);
 	if ( fabs(seg->seg_out.hit_dist - in_hit->hit_dist) <= tt) {
 
+#if 0
 	    seg->seg_out = *out_hit; /* struct copy  most expensive line */
 	    seg->seg_out.hit_magic = RT_HIT_MAGIC;
+#else
+	    seg->seg_out.hit_dist = out_hit->hit_dist;
+	    seg->seg_out.hit_surfno = out_hit->hit_surfno;
+	    VMOVE(seg->seg_out.hit_normal, out_hit->hit_normal);
+#endif
 	    seg->seg_out.hit_vpriv[Z] = 1.0; /* flag as out-hit */
 
 	    if (RT_G_DEBUG & DEBUG_HF) {
@@ -1177,12 +1185,15 @@ add_seg(struct isect_stuff *isect,
      * mostly to avoid seeing inside-out segments 
      */
     delta = out_hit->hit_dist - in_hit->hit_dist;
-    if (NEAR_ZERO(delta, isect->tol->dist)) {
+
+
+    if (delta == 0.0) {
+	bu_log("short seg %g\n", delta);
 	return 0;
     }
 
     /* if the segment is inside-out, we need to say something about it */
-    if (delta < 0.0) {
+    if (delta < 0.0 && !NEAR_ZERO(delta, isect->tol->dist)) {
 	bu_log(" %s:%dDSP:  Adding inside-out seg in:%g out:%g\n",
 	       __FILE__, __LINE__,
 	       in_hit->hit_dist, out_hit->hit_dist);
@@ -1196,16 +1207,25 @@ add_seg(struct isect_stuff *isect,
 
     RT_GET_SEG(seg, isect->ap->a_resource);
 
+#if 0
     seg->seg_in = *in_hit; /* struct copy */
-
     seg->seg_in.hit_magic = RT_HIT_MAGIC;
-    seg->seg_in.hit_vpriv[Z] = 0.0; /* flag as in-hit */
-
-
     seg->seg_out = *out_hit; /* struct copy */
     seg->seg_out.hit_magic = RT_HIT_MAGIC;
-    seg->seg_out.hit_vpriv[Z] = 1.0; /* flag as out-hit */
 
+#else
+    seg->seg_in.hit_dist    = in_hit->hit_dist;
+    seg->seg_out.hit_dist   = out_hit->hit_dist;
+
+    seg->seg_in.hit_surfno  = in_hit->hit_surfno;
+    seg->seg_out.hit_surfno = out_hit->hit_surfno;
+
+    VMOVE(seg->seg_in.hit_normal, in_hit->hit_normal);
+    VMOVE(seg->seg_out.hit_normal, out_hit->hit_normal);
+
+#endif
+    seg->seg_in.hit_vpriv[Z] = 0.0; /* flag as in-hit */
+    seg->seg_out.hit_vpriv[Z] = 1.0; /* flag as out-hit */
 
     seg->seg_stp = isect->stp;
 
@@ -2152,6 +2172,8 @@ recurse_dsp_bb(struct isect_stuff *isect,
 #ifdef FULL_DSP_DEBUGGING
     dlog("recurse_dsp_bb  cell size: %d  current cell: %d %d\n",
 	 cs, cX, cY);
+    dlog("dspb_ch_dim x:%d  y:%d\n",
+	 dsp_bb->dspb_ch_dim[X], dsp_bb->dspb_ch_dim[Y]);
 #endif
 
     tX = tY = curr_dist = isect->r.r_min;
@@ -2199,6 +2221,10 @@ recurse_dsp_bb(struct isect_stuff *isect,
     out_dist = isect->r.r_max - isect->tol->dist;
 
     p = &dsp_bb->dspb_children[dsp_bb->dspb_ch_dim[X] * cY + cX];
+#ifdef FULL_DSP_DEBUGGING
+    dlog("tX:%g tY:%g\n", tX, tY);
+
+#endif
 
     do {
 	/* intersect with the current cell */
@@ -2244,12 +2270,17 @@ recurse_dsp_bb(struct isect_stuff *isect,
 	    cY += stepY;  /* track cell offset for debugging */
 	    p += stepPY;
 #ifdef FULL_DSP_DEBUGGING
-	    dlog("stepping Y to %d because %g >= %g\n", cX, tX, tY);
+	    dlog("stepping Y to %d because %g >= %g\n", cY, tX, tY);
 #endif
 	    curr_dist = tY;
 	    tY += tDY;
 	}
-    } while ( curr_dist < out_dist );
+#ifdef FULL_DSP_DEBUGGING
+	dlog("curr_dist %g, out_dist %g\n", curr_dist, out_dist);
+#endif
+    } while ( curr_dist < out_dist &&
+	      cX < dsp_bb->dspb_ch_dim[X] && cX >= 0 &&
+	      cY < dsp_bb->dspb_ch_dim[Y] && cY >= 0 );
 
     return 0;
 }
@@ -2281,7 +2312,8 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
     if (dsp_bb) {
 	DSP_BB_CK(dsp_bb);
     } else {
-	bu_log("null ptr pixel %d %d\n", isect->ap->a_x,  isect->ap->a_y); 
+	bu_log("%s:%d null ptr pixel %d %d\n", 
+	       __FILE__, __LINE__, isect->ap->a_x,  isect->ap->a_y); 
 	bu_bomb("");
     }
 
@@ -2493,7 +2525,7 @@ rt_dsp_shot( stp, rp, ap, seghead )
 	break;
     case RT_DSP_SRC_OBJ:
 	RT_CK_DB_INTERNAL(dsp->dsp_i.dsp_bip);
-	    RT_CK_BINUNIF(dsp->dsp_i.dsp_bip->idb_ptr);
+	RT_CK_BINUNIF(dsp->dsp_i.dsp_bip->idb_ptr);
 	break;
     }
 
@@ -2552,19 +2584,23 @@ rt_dsp_shot( stp, rp, ap, seghead )
     for (BU_LIST_FOR(segp, seg, &isect.seglist)) {
 	i += 2;
 	if (RT_G_DEBUG & DEBUG_HF) {
-	    bu_log("solid in:%6g out:%6g\t",
+	    bu_log("\nsolid in:%6g out:%6g\t",
 		   segp->seg_in.hit_dist,
 		   segp->seg_out.hit_dist);
 	}
 
+	/* form vector for hit point from start in solid space */
 	VSCALE(dir, isect.r.r_dir, segp->seg_in.hit_dist);
-	MAT4X3VEC(v, dsp->dsp_i.dsp_stom, dir)
-	    segp->seg_in.hit_dist = MAGNITUDE(v);
+	/* transform vector into model space */
+	MAT4X3VEC(v, dsp->dsp_i.dsp_stom, dir);
+	/* get magnitude */
+	segp->seg_in.hit_dist = MAGNITUDE(v);
+	/* XXX why is this necessary? */
 	if (VDOT(v, rp->r_dir) < 0.0) segp->seg_in.hit_dist *= -1.0;
 
 	VSCALE(dir, isect.r.r_dir, segp->seg_out.hit_dist);
-	MAT4X3VEC(v, dsp->dsp_i.dsp_stom, dir)
-	    segp->seg_out.hit_dist = MAGNITUDE(v);
+	MAT4X3VEC(v, dsp->dsp_i.dsp_stom, dir);
+	segp->seg_out.hit_dist = MAGNITUDE(v);
 	if (VDOT(v, rp->r_dir) < 0.0) segp->seg_out.hit_dist *= -1.0;
 
 
@@ -2576,6 +2612,8 @@ rt_dsp_shot( stp, rp, ap, seghead )
 		   delta);
 	}
 
+#if 0
+	/* transform normals into model space */
 	MAT4X3VEC(v, dsp->dsp_i.dsp_mtos, segp->seg_in.hit_normal);
 	VMOVE(segp->seg_in.hit_normal, v);
 	VUNITIZE( segp->seg_in.hit_normal );
@@ -2583,9 +2621,9 @@ rt_dsp_shot( stp, rp, ap, seghead )
 	MAT4X3VEC(v, dsp->dsp_i.dsp_mtos, segp->seg_out.hit_normal);
 	VMOVE(segp->seg_out.hit_normal, v);
 	VUNITIZE( segp->seg_out.hit_normal );
-
+#endif
 	if (RT_G_DEBUG & DEBUG_HF) {
-	    bu_log("model in:%6g out:%6g\n",
+	    bu_log("model in:%6g out:%6g\t",
 		   segp->seg_in.hit_dist,
 		   segp->seg_out.hit_dist);
 	}
@@ -2658,35 +2696,69 @@ compute_normal_at_gridpoint(N, dsp, x, y, fd, boolean)
     point_t A, C, D, E, tmp;
     vect_t Vac, Vde;
 
-    if (x == 0) {	VSET(tmp, x, y, DSP(&dsp->dsp_i, x, y) );	}
-    else {		VSET(tmp, x-1, y, DSP(&dsp->dsp_i, x-1, y) );	}
-    MAT4X3PNT(A, dsp->dsp_i.dsp_stom, tmp);
-
-    if (x >= XSIZ(dsp)) {	VSET(tmp, x, y,  DSP(&dsp->dsp_i, x, y) ); } 
-    else {			VSET(tmp, x+1, y,  DSP(&dsp->dsp_i, x+1, y) );	}
-    MAT4X3PNT(C, dsp->dsp_i.dsp_stom, tmp);
-
-
-    if (y == 0) {	VSET(tmp, x, y, DSP(&dsp->dsp_i, x, y) ); }
-    else {		VSET(tmp, x, y-1, DSP(&dsp->dsp_i, x, y-1) );	}
-    MAT4X3PNT(D, dsp->dsp_i.dsp_stom, tmp);
-
-    if (y >= YSIZ(dsp)) {	VSET(tmp, x, y, DSP(&dsp->dsp_i, x, y) ); }
-    else {			VSET(tmp, x, y+1, DSP(&dsp->dsp_i, x, y+1) );	}
-    MAT4X3PNT(E, dsp->dsp_i.dsp_stom, tmp);
 
     if (fd && boolean) {
+
+	/* the debugging/plot version, with more matrix operations */
+	if (x == 0) {	VSET(tmp, x, y, DSP(&dsp->dsp_i, x, y) );	}
+	else {		VSET(tmp, x-1, y, DSP(&dsp->dsp_i, x-1, y) );	}
+	MAT4X3PNT(A, dsp->dsp_i.dsp_stom, tmp);
+
+	if (x >= XSIZ(dsp)) { VSET(tmp, x, y,  DSP(&dsp->dsp_i, x, y) );    } 
+	else {		  VSET(tmp, x+1, y,  DSP(&dsp->dsp_i, x+1, y) );}
+	MAT4X3PNT(C, dsp->dsp_i.dsp_stom, tmp);
+
+
+	if (y == 0) {	VSET(tmp, x, y, DSP(&dsp->dsp_i, x, y) );       }
+	else {		VSET(tmp, x, y-1, DSP(&dsp->dsp_i, x, y-1) );	}
+	MAT4X3PNT(D, dsp->dsp_i.dsp_stom, tmp);
+
+	if (y >= YSIZ(dsp)) { VSET(tmp, x, y, DSP(&dsp->dsp_i, x, y) );     }
+	else {		 VSET(tmp, x, y+1, DSP(&dsp->dsp_i, x, y+1) );	}
+	MAT4X3PNT(E, dsp->dsp_i.dsp_stom, tmp);
+
 	pl_color(fd, 220, 220, 90);
 	pdv_3line(fd, A, C);
 	pdv_3line(fd, D, E);
+
+	VSUB2(Vac, C, A);
+	VSUB2(Vde, E, D);
+
+	VCROSS(N, Vac, Vde);
+
+	VUNITIZE(N);
+
+    } else {
+
+	/* the leaner, faster, production version */
+	if (x == 0) {	VSET(A, x, y, DSP(&dsp->dsp_i, x, y) );	}
+	else {		VSET(A, x-1, y, DSP(&dsp->dsp_i, x-1, y) );	}
+
+
+	if (x >= XSIZ(dsp)) { VSET(C, x, y,  DSP(&dsp->dsp_i, x, y) );    } 
+	else {		  VSET(C, x+1, y,  DSP(&dsp->dsp_i, x+1, y) );}
+
+
+
+	if (y == 0) {	VSET(D, x, y, DSP(&dsp->dsp_i, x, y) );       }
+	else {		VSET(D, x, y-1, DSP(&dsp->dsp_i, x, y-1) );	}
+
+
+	if (y >= YSIZ(dsp)) { VSET(E, x, y, DSP(&dsp->dsp_i, x, y) );     }
+	else {		 VSET(E, x, y+1, DSP(&dsp->dsp_i, x, y+1) );	}
+
+
+	VSUB2(Vac, C, A);
+	VSUB2(Vde, E, D);
+
+	VCROSS(tmp, Vac, Vde);
+
+	MAT4X3VEC(N, dsp->dsp_i.dsp_stom, tmp);
+
+	VUNITIZE(N);
+
     }
 
-    VSUB2(Vac, C, A);
-    VSUB2(Vde, E, D);
-
-    VCROSS(N, Vac, Vde);
-
-    VUNITIZE(N);
 }
 
 /*
@@ -2701,7 +2773,6 @@ rt_dsp_norm( hitp, stp, rp )
      register struct xray	*rp;
 {
     vect_t N, t, tmp, A, B, C, D;
-    char buf[32];
     struct dsp_specific *dsp = (struct dsp_specific *)stp->st_specific;
     vect_t Anorm, Bnorm, Dnorm, Cnorm, ABnorm, CDnorm;
     double Xfrac, Yfrac;
@@ -2721,6 +2792,8 @@ rt_dsp_norm( hitp, stp, rp )
 	BU_CK_MAPPED_FILE(dsp->dsp_i.dsp_mp);
 	break;
     case RT_DSP_SRC_OBJ:
+	RT_CK_DB_INTERNAL(dsp->dsp_i.dsp_bip);
+	RT_CK_BINUNIF(dsp->dsp_i.dsp_bip->idb_ptr);
 	break;
     }
 
@@ -2736,11 +2809,21 @@ rt_dsp_norm( hitp, stp, rp )
 	bu_bomb("");
     }
 
+    /* compute hit point */
+    VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
+
+
     if ( hitp->hit_surfno < ZTOP || !dsp->dsp_i.dsp_smooth ) {
 	/* We've hit one of the sides or bottom, or the user didn't
 	 * ask for smoothing of the elevation data,
-	 * so there's no interpolation to do
+	 * so there's no interpolation to do.  Just transform the normal to
+	 * model space, and comput the actual hit point
 	 */
+
+	/* transform normal into model space */
+	MAT4X3VEC(tmp, dsp->dsp_i.dsp_mtos, hitp->hit_normal);
+	VUNITIZE( tmp );
+	VMOVE(hitp->hit_normal, tmp);
 
 	if (RT_G_DEBUG & DEBUG_HF)
 	    bu_log("\tno Interpolation needed.  Normal: %g,%g,%g\n", 
@@ -2758,17 +2841,8 @@ rt_dsp_norm( hitp, stp, rp )
     len = MAGNITUDE(t);
 
     if (RT_G_DEBUG & DEBUG_HF) {
-	bu_semaphore_acquire( BU_SEM_SYSCALL);
-	sprintf(buf, "dsp_gourand%02d.pl", plot_file_num++);
-	fd=fopen(buf, "w");
-	bu_semaphore_release( BU_SEM_SYSCALL);
-
-	if (fd == (FILE *)NULL) {
-	    bu_log("Couldn't open plot file \"%s\"\n", buf);
-	    bu_bomb("");
-	} else {
-	    bu_log("plotting normals in %s\n", buf);
-	}
+	fd = bu_fopen_uniq("plotting normals in %s", 
+		      "dsp_gourand%02d.pl", plot_file_num++);
     }
 
     /* get the cell we hit */
