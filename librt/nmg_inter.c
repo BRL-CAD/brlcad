@@ -500,14 +500,6 @@ struct edgeuse		*eu1;		/* Edge to be broken (in fu1) */
 	if( rt_pt3_pt3_equal( hit_pt, v1mate->vg_p->coord, &is->tol ) )
 		rt_bomb("nmg_break_3edge_at_plane() hit_pt equal to v1mate\n");
 
-	/* Check hit_pt against face/face intersection line */
-	dist = rt_dist_line_point( is->pt, is->dir, hit_pt );
-	if( dist > is->tol.dist )  {
-		rt_log("WARNING nmg_break_3edge_at_plane() hit_pt off line %g*tol (%e, tol=%e)\n",
-			dist/is->tol.dist,
-			dist, is->tol.dist);
-	}
-
 	{
 		vect_t	va, vb;
 		VSUB2( va, hit_pt, eu1->vu_p->v_p->vg_p->coord  );
@@ -529,10 +521,10 @@ struct edgeuse		*eu1;		/* Edge to be broken (in fu1) */
 		t2.dist_sq = t2.dist * t2.dist;
 		dist = DIST_PT_PT(hit_pt, v1->vg_p->coord);
 		if( rt_pt3_pt3_equal( hit_pt, v1->vg_p->coord, &t2 ) )
-			rt_log("WARNING: nmg_break_3edge_at_plane() hit_pt nearly equal to v1 %g*tol\n", dist/is->tol.dist);
+			rt_log("NOTICE: nmg_break_3edge_at_plane() hit_pt nearly equal to v1 %g*tol\n", dist/is->tol.dist);
 		dist = DIST_PT_PT(hit_pt, v1mate->vg_p->coord);
 		if( rt_pt3_pt3_equal( hit_pt, v1mate->vg_p->coord, &t2 ) )
-			rt_log("WARNING: nmg_break_3edge_at_plane() hit_pt nearly equal to v1mate %g*tol\n", dist/is->tol.dist);
+			rt_log("NOTICE: nmg_break_3edge_at_plane() hit_pt nearly equal to v1mate %g*tol\n", dist/is->tol.dist);
 	}
 
 	/* if we can't find the appropriate vertex in the
@@ -603,8 +595,8 @@ rt_log("%%%%%% point is outside face loop, no need to break eu1?\n");
 			break;
 		case NMG_CLASS_AonBshared:
 			/* point is on a loop boundary.  Break fu2 loop too? */
-rt_log("%%%%%% point is on loop boundary.  Break fu2 loop too?\n");
-#if 1
+			if (rt_g.NMG_debug & DEBUG_POLYSECT)
+				rt_log("%%%%%% point is on loop boundary.  Break fu2 loop too?\n");
 			nmg_isect_3vertex_3face( is, vu1_final, fu2 );
 			/* XXX should get new vu2 from isect_3vertex_3face! */
 			vu2_final = nmg_find_v_in_face( vu1_final->v_p, fu2 );
@@ -612,8 +604,6 @@ rt_log("%%%%%% point is on loop boundary.  Break fu2 loop too?\n");
 			NMG_CK_VERTEXUSE(vu2_final);
 			(void)nmg_tbl(is->l2, TBL_INS_UNIQUE, &vu2_final->l.magic);
 			return vu2_final;
-#endif
-			break;
 		case NMG_CLASS_AoutB:
 			/* Can't optimize this, break edge anyway. */
 			break;
@@ -926,7 +916,7 @@ struct faceuse		*fu2;		/* fu of eu2, for error checks */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT) {
 			rt_log("\trt_isect_line2_lseg2()=%d, eu2dist: %g, %g\n",
 				status, eu2dist[0], eu2dist[1] );
-rt_log("ptol = %g, eu2dist=%g, %g\n", ptol, eu2dist[0], eu2dist[1]);
+			rt_log("ptol = %g, eu2dist=%g, %g\n", ptol, eu2dist[0], eu2dist[1]);
 		}
 
 		nmg_isect_two_colinear_edge2p( eu2dist, is->l2, is->l1,
@@ -1750,25 +1740,30 @@ struct faceuse		*fu1;		/* fu that eu1 is from */
 	VSUB2( line.r_dir, vu2->v_p->vg_p->coord, line.r_pt );
 	VUNITIZE( line.r_dir );
 	VINVDIR( invdir, line.r_dir );
-VPRINT("fu2 min", fu2->f_p->fg_p->min_pt);
-VPRINT("fu2 max", fu2->f_p->fg_p->max_pt);
 	if( !rt_in_rpp( &line, invdir, fu2->f_p->fg_p->min_pt, fu2->f_p->fg_p->max_pt ) )  {
 		rt_bomb("nmg_isect_edge2p_face2p() edge ray missed face bounding RPP\n");
 	}
-rt_log("r_min=%g, r_max=%g\n", line.r_min, line.r_max);
+	if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
+		VPRINT("fu2 min", fu2->f_p->fg_p->min_pt);
+		VPRINT("fu2 max", fu2->f_p->fg_p->max_pt);
+		rt_log("r_min=%g, r_max=%g\n", line.r_min, line.r_max);
+	}
 	/* Start point will line on min side of face RPP */
 	VJOIN1( is->pt, line.r_pt, line.r_min, line.r_dir );
 	if( line.r_min > line.r_max )  {
 		/* Direction is heading the wrong way, flip it */
 		VREVERSE( is->dir, line.r_dir );
-rt_log("flipping dir\n");
+		if (rt_g.NMG_debug & DEBUG_POLYSECT)
+			rt_log("flipping dir\n");
 	} else {
 		VMOVE( is->dir, line.r_dir );
 	}
-VPRINT("r_pt ", line.r_pt);
-VPRINT("r_dir", line.r_dir);
-VPRINT("->pt ", is->pt);
-VPRINT("->dir", is->dir);
+	if (rt_g.NMG_debug & DEBUG_POLYSECT)  {
+		VPRINT("r_pt ", line.r_pt);
+		VPRINT("r_dir", line.r_dir);
+		VPRINT("->pt ", is->pt);
+		VPRINT("->dir", is->dir);
+	}
 
 nmg_fu_touchingloops(fu2);
 nmg_fu_touchingloops(fu1);
@@ -1819,6 +1814,7 @@ nmg_region_v_unique( fu1->s_p->r_p, &is->tol );
     		goto out;
     	}
 
+	/* Invoke the face cutter to snip and join loops along isect line */
 nmg_fu_touchingloops(fu2);
 nmg_fu_touchingloops(fu1);
 nmg_region_v_unique( fu2->s_p->r_p, &is->tol );
@@ -1950,11 +1946,9 @@ struct faceuse		*fu1, *fu2;
 	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 		nmg_vfu( &fu1->s_p->fu_hd, fu1->s_p );
 		nmg_vfu( &fu2->s_p->fu_hd, fu2->s_p );
-	}
 nmg_fu_touchingloops(fu1);
 nmg_fu_touchingloops(fu2);
-nmg_region_v_unique( fu1->s_p->r_p, &is->tol );
-nmg_region_v_unique( fu2->s_p->r_p, &is->tol );
+	}
 
 	(void)nmg_tbl(&vert_list1, TBL_INIT,(long *)NULL);
 	(void)nmg_tbl(&vert_list2, TBL_INIT,(long *)NULL);
@@ -1969,12 +1963,9 @@ nmg_region_v_unique( fu2->s_p->r_p, &is->tol );
     	}
 
 	nmg_isect_face3p_face3p(is, fu1, fu2);
+	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 nmg_fu_touchingloops(fu1);
 nmg_fu_touchingloops(fu2);
-nmg_region_v_unique( fu1->s_p->r_p, &is->tol );
-nmg_region_v_unique( fu2->s_p->r_p, &is->tol );
-
-	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 		nmg_vfu( &fu1->s_p->fu_hd, fu1->s_p );
 		nmg_vfu( &fu2->s_p->fu_hd, fu2->s_p );
 	}
@@ -1992,12 +1983,10 @@ nmg_region_v_unique( fu2->s_p->r_p, &is->tol );
     	is->l2 = &vert_list1;
     	is->l1 = &vert_list2;
 	nmg_isect_face3p_face3p(is, fu2, fu1);
-nmg_fu_touchingloops(fu1);
-nmg_fu_touchingloops(fu2);
-nmg_region_v_unique( fu1->s_p->r_p, &is->tol );
-nmg_region_v_unique( fu2->s_p->r_p, &is->tol );
 
 	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
+nmg_fu_touchingloops(fu1);
+nmg_fu_touchingloops(fu2);
 		nmg_vfu( &fu1->s_p->fu_hd, fu1->s_p );
 		nmg_vfu( &fu2->s_p->fu_hd, fu2->s_p );
 	}
@@ -2021,19 +2010,21 @@ nmg_region_v_unique( fu2->s_p->r_p, &is->tol );
 	}
 
 	nmg_face_cutjoin(&vert_list1, &vert_list2, fu1, fu2, is->pt, is->dir, &is->tol);
+
+	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 nmg_fu_touchingloops(fu1);
 nmg_fu_touchingloops(fu2);
 nmg_region_v_unique( fu1->s_p->r_p, &is->tol );
 nmg_region_v_unique( fu2->s_p->r_p, &is->tol );
-
-	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 		nmg_vfu( &fu1->s_p->fu_hd, fu1->s_p );
 		nmg_vfu( &fu2->s_p->fu_hd, fu2->s_p );
 	}
 
 	nmg_mesh_faces(fu1, fu2, &is->tol);
+	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 nmg_fu_touchingloops(fu1);
 nmg_fu_touchingloops(fu2);
+	}
 
 #if 0
 	show_broken_stuff((long *)fu1, (long **)NULL, 1, 0);
@@ -2101,9 +2092,9 @@ CONST struct rt_tol	*tol;
 		nmg_pr_fu_briefly( fu1 , "\t" );
 		rt_log( "fu2:\n" );
 		nmg_pr_fu_briefly( fu2 , "\t" );
-	}
 nmg_fu_touchingloops(fu1);
 nmg_fu_touchingloops(fu2);
+	}
 
 	if ( !V3RPP_OVERLAP_TOL(f2->fg_p->min_pt, f2->fg_p->max_pt,
 	    f1->fg_p->min_pt, f1->fg_p->max_pt, &bs.tol) )  return;
@@ -2164,10 +2155,12 @@ rt_log("co-planar faces.\n");
 	}
 
 	if(bs.vert2d)  rt_free( (char *)bs.vert2d, "vert2d" );
+	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 nmg_region_v_unique( fu1->s_p->r_p, &bs.tol );
 nmg_region_v_unique( fu2->s_p->r_p, &bs.tol );
 nmg_fu_touchingloops(fu1);
 nmg_fu_touchingloops(fu2);
+	}
 }
 
 /*
@@ -2517,10 +2510,9 @@ nmg_ck_vs_in_region( s2->r_p, tol );
 	if( rt_g.NMG_debug & DEBUG_VERIFY )  {
 		nmg_vshell( &s1->r_p->s_hd, s1->r_p );
 		nmg_vshell( &s2->r_p->s_hd, s2->r_p );
-	}
-
 nmg_ck_vs_in_region( s1->r_p, tol );
 nmg_ck_vs_in_region( s2->r_p, tol );
+	}
 }
 
 /*
@@ -2547,6 +2539,8 @@ CONST struct faceuse	*fu;
 				lu, vu, vu->v_p );
 			nmg_pr_lu_briefly(lu,0);
 			rt_bomb("nmg_fu_touchingloops()\n");
+#else
+			/* Perhaps log something here? */
 #endif
 			return 1;
 		}
