@@ -5765,6 +5765,102 @@ struct nmg_inter_struct *is;
 		rt_bomb( "Uneven number of vertices on cut list" );
 	}
 
+	/* Sort vertices on cut list into some order */
+	if( BU_PTBL_END( &cut_list ) > 2 )
+	{
+		struct vertex *v1=(struct vertex *)NULL;
+		struct vertex *v2=(struct vertex *)NULL;
+		struct vertex *end1, *end2;
+		fastf_t max_dist = 0.0;
+		vect_t diff;
+		fastf_t *dist_array;
+		int done;
+
+		/* find longest distance between two vertices */
+		for( i=0 ; i<BU_PTBL_END( &cut_list ) ; i++ )
+		{
+			int j;
+
+			v1 = (struct vertex *)BU_PTBL_GET( &cut_list, i );
+
+			for( j=i ; j<BU_PTBL_END( &cut_list ) ; j++ )
+			{
+				fastf_t tmp_dist;
+
+				v2 = (struct vertex *)BU_PTBL_GET( &cut_list, j );
+				VSUB2( diff, v1->vg_p->coord, v2->vg_p->coord )
+				tmp_dist = MAGSQ( diff );
+				if( tmp_dist > max_dist )
+				{
+					max_dist = tmp_dist;
+					end1 = v1;
+					end2 = v2;
+				}
+			}
+		}
+		if( !end1 || !end2 )
+		{
+			bu_log( "nmg_cut_lu_into_coplanar_and_non: Cannot find endpoints\n" );
+			rt_bomb( "nmg_cut_lu_into_coplanar_and_non: Cannot find endpoints\n" );
+		}
+
+		/* create array of distances (SQ) along the line from end1 to end2 */
+		dist_array = (fastf_t *)bu_calloc( sizeof( fastf_t ), BU_PTBL_END( &cut_list ), "distance array" );
+		for( i=0 ; i<BU_PTBL_END( &cut_list ) ; i++ )
+		{
+			v1 = (struct vertex *)BU_PTBL_GET( &cut_list, i );
+			if( v1 == end1 )
+			{
+				dist_array[i] = 0.0;
+				continue;
+			}
+			if( v1 == end2 )
+			{
+				dist_array[i] = max_dist;
+				continue;
+			}
+
+			VSUB2( diff, v1->vg_p->coord, end1->vg_p->coord )
+			dist_array[i] = MAGSQ( diff );
+		}
+
+		/* sort vertices according to distance array */
+		done = 0;
+		while( !done )
+		{
+			fastf_t tmp_dist;
+			long *tmp_v;
+
+			done = 1;
+			for( i=1 ; i<BU_PTBL_END( &cut_list ) ; i++ )
+			{
+				if( dist_array[i-1] <= dist_array[i] )
+					continue;
+
+				/* swap distances in array */
+				tmp_dist = dist_array[i];
+				dist_array[i] = dist_array[i-1];
+				dist_array[i-1] = tmp_dist;
+
+				/* swap vertices */
+				tmp_v = cut_list.buffer[i];
+				cut_list.buffer[i] = cut_list.buffer[i-1];
+				cut_list.buffer[i-1] = tmp_v;
+
+				done = 0;
+			}
+		}
+
+		if (rt_g.NMG_debug & DEBUG_POLYSECT)
+		{
+			bu_log( "After sorting:\n" );
+			for( i=0 ; i<BU_PTBL_END( &cut_list ) ; i++ )
+				bu_log( "v=x%x, dist=%g\n", BU_PTBL_GET( &cut_list, i ), dist_array[i] );
+		}
+
+		bu_free( (char *)dist_array, "distance array" );
+	}
+
 	for( i=0 ; i<BU_PTBL_END( &cut_list ) ; i += 2 )
 	{
 		struct loopuse *lu1;
@@ -5780,6 +5876,9 @@ struct nmg_inter_struct *is;
 
 		vcut1 = (struct vertex *)BU_PTBL_GET( &cut_list, i );
 		vcut2 = (struct vertex *)BU_PTBL_GET( &cut_list, i+1 );
+
+		if( vcut1 == vcut2 )
+			continue;
 
 		/* make sure these are not the ends of an edge of lu */
 		for( BU_LIST_FOR( vu, vertexuse, &vcut1->vu_hd ) )
@@ -5803,7 +5902,7 @@ struct nmg_inter_struct *is;
 		VSUB2( dir, vcut2->vg_p->coord, vcut1->vg_p->coord );
 		len = MAGNITUDE( dir );
 		if( len <= is->tol.dist )
-			break;
+			continue;
 
 		inv_len = 1.0/len;
 		VSCALE( is->dir, dir, inv_len );
