@@ -51,8 +51,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 int
 mk_dsp( fp, name, file, xdim, ydim, mat )
 FILE		*fp;
-char		*name;
-char		*file;		/* name of file containing elevation data */
+CONST char	*name;
+CONST char	*file;		/* name of file containing elevation data */
 int		xdim;		/* X dimension of file (w cells) */
 int		ydim;		/* Y dimension of file (n cells) */
 CONST matp_t	mat;		/* convert solid coords to model space */
@@ -68,11 +68,14 @@ CONST matp_t	mat;		/* convert solid coords to model space */
 	return( mk_export_fwrite( fp, name, (genptr_t)&dsp, ID_DSP ) );
 }
 
+/*
+ *			M K _ E B M
+ */
 int
 mk_ebm( fp, name, file, xdim, ydim, tallness, mat )
 FILE		*fp;
-char		*name;
-char		*file;		/* name of file containing bitmap */
+CONST char	*name;
+CONST char	*file;		/* name of file containing bitmap */
 int		xdim;		/* X dimansion of file (w cells) */
 int		ydim;		/* Y dimension of file (n cells) */
 fastf_t		tallness;	/* Z extrusion height (mm) */
@@ -90,17 +93,20 @@ CONST matp_t	mat;		/* convert local coords to model space */
 	return( mk_export_fwrite( fp, name, (genptr_t)&ebm, ID_EBM ) );
 }
 
+/*
+ *			M K _ V O L
+ */
 int
 mk_vol( fp, name, file, xdim, ydim, zdim, lo, hi, cellsize, mat )
 FILE		*fp;
-char		*name;
-char		*file;		/* name of file containing bitmap */
+CONST char	*name;
+CONST char	*file;		/* name of file containing bitmap */
 int		xdim;		/* X dimansion of file (w cells) */
 int		ydim;		/* Y dimension of file (n cells) */
 int		zdim;		/* Z dimension of file (d cells) */
 int		lo;		/* Low threshold */
 int		hi;		/* High threshold */
-vect_t		cellsize;	/* ideal coords: size of each cell */
+CONST vect_t	cellsize;	/* ideal coords: size of each cell */
 CONST matp_t	mat;		/* convert local coords to model space */
 {
 	struct rt_vol_internal	vol;
