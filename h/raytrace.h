@@ -244,7 +244,6 @@ union tree {
  *			M A T E R _ I N F O
  */
 struct mater_info {
-	float	ma_transmit[3];		/* 0..1 light transmission [RGB] */
 	float	ma_color[3];		/* explicit color:  0..1  */
 	char	ma_override;		/* non-0 ==> ma_color is valid */
 	char	ma_matname[32];		/* Material name */
@@ -268,6 +267,7 @@ struct region  {
 	struct mater_info reg_mater;	/* Real material information */
 	char		*reg_mfuncs;	/* User appl. funcs for material */
 	char		*reg_udata;	/* User appl. data for material */
+	short		reg_transmit;	/* flag:  material transmits light */
 };
 #define REGION_NULL	((struct region *)0)
 
@@ -513,6 +513,7 @@ struct application  {
 	/* THE FOLLOWING ROUTINES ARE MAINLINE & APPLICATION SPECIFIC */
 	int		a_x;		/* Screen X of ray, if applicable */
 	int		a_y;		/* Screen Y of ray, if applicable */
+	char		*a_purpose;	/* Debug string:  purpose of ray */
 	int		a_user;		/* application-specific value */
 	char		*a_uptr;	/* application-specific pointer */
 	fastf_t		a_rbeam;	/* initial beam radius (mm) */
