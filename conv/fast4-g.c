@@ -2619,6 +2619,29 @@ make_bot_object()
 
 }
 
+void
+skip_section()
+{
+	long section_start;
+
+	/* skip to start of next section */
+	section_start = ftell( fdin );
+	if( getline() )
+	{
+		while( line[0] && strncmp( line, "SECTION" , 7 ) &&
+				strncmp( line, "HOLE", 4 ) &&
+				strncmp( line, "WALL", 4 ) &&
+				strncmp( line, "VEHICLE", 7 ) )
+		{
+			section_start = ftell( fdin );
+			if( !getline() )
+				break;
+		}
+	}
+	/* seek to start of the section */
+	fseek( fdin, section_start, SEEK_SET );
+}
+
 /*	cleanup from previous component and start a new one.
  *	This is called with final == 1 when ENDDATA is found
  */
@@ -2626,6 +2649,8 @@ void
 do_section( final )
 int final;
 {
+	int found;
+	struct name_tree *nm_ptr;
 
 	if( debug )
 		bu_log( "do_section(%d): %s\n", final , line );
@@ -2640,9 +2665,6 @@ int final;
 
 			if( bot )
 				make_bot_object();
-
-			make_comp_group();
-
 		}
 		if( final && debug ) /* The ENDATA card has been found */
 			List_names();
@@ -2666,24 +2688,7 @@ int final;
 
 		if( skip_region( region_id ) ) /* do not process this component */
 		{
-			long section_start;
-
-			/* skip to start of next section */
-			section_start = ftell( fdin );
-			if( getline() )
-			{
-				while( line[0] && strncmp( line, "SECTION" , 7 ) &&
-						strncmp( line, "HOLE", 4 ) &&
-						strncmp( line, "WALL", 4 ) &&
-						strncmp( line, "VEHICLE", 7 ) )
-				{
-					section_start = ftell( fdin );
-					if( !getline() )
-						break;
-				}
-			}
-			/* seek to start of the section */
-			fseek( fdin, section_start, SEEK_SET );
+			skip_section();
 			return;
 		}
 
@@ -2702,7 +2707,15 @@ int final;
 			mode = 2;
 		}
 
-		if( pass )
+               if( !pass )
+               {
+                       nm_ptr = Search_ident( name_root, region_id, &found );
+                       if( found && nm_ptr->mode != mode ) {
+                               bu_log( "ERROR: second SECTION card found with different mode for component (group=%d, component=%d), conversion of this component will be incorrect!!!\n",
+                                       group_id, comp_id );
+                       }
+               }
+               else
 			name_name[0] = '\0';
 
 	}
