@@ -353,19 +353,12 @@ FBIO	*ifp;
 ColorMap	*cmp;
 {
 	if( cmp == COLORMAP_NULL )  {
-		/* Standard Colormap */
-		register int	i;
-
-		for( i=0; i<256; i++ )  {
-			MI(ifp)->cmap.cm_red[i] = i<<8;
-			MI(ifp)->cmap.cm_green[i] = i<<8;
-			MI(ifp)->cmap.cm_blue[i] = i<<8;
-		}
+		fb_make_linear_colormap( &(MI(ifp)->cmap) );
 	} else {
 		MI(ifp)->cmap = *cmp;		/* struct copy */
 	}
 	if( MI(ifp)->write_thru ) {
-		return fb_wmap( MI(ifp)->fbp, cmp );
+		return fb_wmap( MI(ifp)->fbp, &(MI(ifp)->cmap) );
 		/* Map isn't dirty if already written through */
 	}
 	MI(ifp)->cmap_dirty = 1;
