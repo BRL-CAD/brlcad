@@ -1145,51 +1145,6 @@ struct rt_tol		*tol;
 #endif
 	}
 
-	/* Associate normal vectors with vertexuses */
-	for( i=0 ; i<pa.pa_faces ; i++ )
-	{
-		struct loopuse *lu;
-		vect_t norm_opp;
-
-		NMG_CK_FACEUSE( fu[i] );
-
-		VREVERSE( norm_opp , pa.pa_face[i].peqn );
-
-		for( RT_LIST_FOR( lu , loopuse , &fu[i]->lu_hd ) )
-		{
-			struct edgeuse *eu;
-
-			NMG_CK_LOOPUSE( lu );
-
-			if( RT_LIST_FIRST_MAGIC( &lu->down_hd ) != NMG_EDGEUSE_MAGIC )
-			{
-				/* This is bad!! */
-				rt_log( "Tesselating an arb, has a vertex-loop\n" );
-				return -1;
-			}
-
-			for( RT_LIST_FOR( eu , edgeuse , &lu->down_hd ) )
-			{
-				struct vertexuse *vu;
-
-				NMG_CK_EDGEUSE( eu );
-
-				/* normals in same direction as faceuse normals */
-				vu = eu->vu_p;
-				NMG_CK_VERTEXUSE( vu );
-
-				/* OT_SAME faceuse */
-				nmg_vertexuse_nv( vu , pa.pa_face[i].peqn );
-
-				vu = eu->eumate_p->vu_p;
-				NMG_CK_VERTEXUSE( vu );
-
-				/* OT_OPPOSITE faceuse */
-				nmg_vertexuse_nv( vu , norm_opp );
-			}
-		}
-	}
-
 	/* Mark edges as real */
 	(void)nmg_mark_edges_real( &s->l );
 
