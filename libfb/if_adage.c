@@ -149,6 +149,10 @@ int		width, height;
 		long	xbsval[34];
 		int	dev_mode;
 
+	/* /dev/ik0l */
+	/* 012345678 */
+	if( width > 512 )
+		file[8] = 'h';
 	if( (ifp->if_fd = open( file, O_RDWR, 0 )) == -1 )
 		return	-1;
 #if defined( vax )
@@ -302,6 +306,7 @@ Pixel		*pixelp;
 int		count;
 	{	register long bytes = count * (long) sizeof(Pixel);
 		register long todo;
+	y = ifp->if_width-1-y;		/* 1st quadrant */
 	if( lseek(	ifp->if_fd,
 			(((long) y * (long) ifp->if_width) + (long) x)
 			* (long) sizeof(Pixel),
@@ -335,6 +340,7 @@ Pixel	*pixelp;
 long	count;
 	{	register long	bytes = count * (long) sizeof(Pixel);
 		register int	todo;
+	y = ifp->if_width-1-y;		/* 1st quadrant */
 	if( lseek(	ifp->if_fd,
 			((long) y * (long) ifp->if_width + (long) x)
 			* (long) sizeof(Pixel),
@@ -368,6 +374,7 @@ int		x, y;
 long		*data;
 	{	register int i;
 		register struct ikdevice *ikp = (struct ikdevice *)_ikUBaddr;
+	y = ifp->if_width-1-y;		/* 1st quadrant */
 	i = 10000;
 	while( i-- && !(ikp->ubcomreg & IKREADY) )  /* NULL */ 	;
 	if( i == 0 )
@@ -408,6 +415,7 @@ long		*datap;
 	{	register int i;
 		register struct ikdevice *ikp = (struct ikdevice *)_ikUBaddr;
 		register long data;
+	y = ifp->if_width-1-y;		/* 1st quadrant */
 	i = 10000;
 	while( i-- && !(ikp->ubcomreg & IKREADY) )  /* NULL */ 	;
 	if( i == 0 )
@@ -456,6 +464,7 @@ adage_zoom_set( ifp, x, y )
 FBIO	*ifp;
 register int	x, y;
 	{
+#ifdef never
 	/* Ikonas can only zoom to 1, 2, 4, 8 or 16 times actual size.	*/
 	/* AHEM!!  Ikonas can pixel replicate from 0 to 15 times */
 	if( x < 2 )
@@ -484,6 +493,12 @@ register int	x, y;
 		y = 8;
 	else
 		y = 16;
+#else
+	if( x < 1 )  x=1;
+	if( y < 1 )  y=1;
+	if( x > 16 )  x=16;
+	if( y > 16 )  y=16;
+#endif
 	x_zoom = x;
 	y_zoom = y;
 
@@ -514,6 +529,7 @@ adage_window_set( ifp, x, y )
 FBIO	*ifp;
 register int	x, y;
 	{
+	y = ifp->if_width-1-y;		/* 1st quadrant */
 	/* Window relative to image center.				*/
 	x_window = x -= x_origin;
 	y_window = y -= y_origin;
@@ -607,6 +623,7 @@ FBIO	*ifp;
 int		mode;
 int		x, y;
 	{	register int	x_cursor_offset, y_cursor_offset;
+	y = ifp->if_width-1-y;		/* 1st quadrant */
 	/* Map image coordinates to screen space.			*/
 	if( ifp->if_width == 1024 )
 		{
@@ -671,6 +688,7 @@ FBIO	*ifp;
 int		mode;
 int		x, y;
 	{
+	y = ifp->if_width-1-y;		/* 1st quadrant */
 	if( ifp->if_width == 1024 && y_zoom == 1 )
 		y += 30;
 	if (mode)
