@@ -1539,6 +1539,7 @@ set light_data {
 	e	fraction	f	1.0	"fraction of total light contributed"		"0..1" 		0 0 \
 	e	angle		a	180	"angle of light cone"				"0..180" 	1 0 \
 	e	target		d	{0 0 0}	"Point to which light is directed\n   (angle must be less than 180)"   "any X,Y,Z"	2 0 \
+	e	lumens		b	1.0	"Lumens for Photon mapping" 		        "And Real #"	3 0 \
 	c	infinite 	i	0	"Boolean: light is infinite distance away"	"0,1" 		3 2 \
 	c	visible 	v	1	"Boolean: light souce object can be seen"	"0,1" 		3 3 \
 	i	icon		icon	""	"Shows effect of values for:\n  Shadow Rays\n  infinite\n  visible" "" 0 4 \
