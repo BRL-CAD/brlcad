@@ -250,14 +250,12 @@ proc sliders_zero { id w } {
     }
 }
 
-## knob
-##   To replace the regular knob function.
-proc knob args {
+# set_sliders
+proc set_sliders {} {
     global sliders
     global rateknobs
     global adcflag
 
-    eval _mged_knob $args
     set id_list [cmd_get]
 
     if { $rateknobs } {
@@ -287,45 +285,20 @@ proc knob args {
 	    }
 	}
     }
+}
+
+
+## knob
+##   To replace the regular knob function.
+proc knob args {
+    eval _mged_knob $args
+    set_sliders
 }
 
 
 ## iknob
 ##   To replace the regular iknob function.
 proc iknob args {
-    global sliders
-    global rateknobs
-    global adcflag
-
     eval _mged_iknob $args
-    set id_list [cmd_get]
-
-    if { $rateknobs } {
-	foreach id $id_list {
-	    foreach knob { X Y Z S x y z } {
-		set sliders($id,$knob) [sliders_add_tol \
-			[expr [getknob $knob] * $sliders(scale)]]
-	    }
-
-	    if { $adcflag } {
-		foreach knob { xadc yadc ang1 ang2 distadc } {
-		    set sliders($id,$knob) [sliders_add_tol [getknob $knob]]
-		}
-	    }
-	}
-    } else {
-	foreach id $id_list {
-	    foreach knob { aX aY aZ aS ax ay az } {
-		set sliders($id,$knob) [sliders_add_tol \
-			[expr [getknob $knob] * $sliders(scale)]]
-	    }
-
-	    if { $adcflag } {
-		foreach knob { xadc yadc ang1 ang2 distadc } {
-		    set sliders($id,$knob) [sliders_add_tol [getknob $knob]]
-		}
-	    }
-	}
-    }
+    set_sliders
 }
-
