@@ -1356,6 +1356,9 @@ BU_EXTERN(unsigned char *	bu_plong, (register unsigned char *msgp,
 				register unsigned long l));
 
 
+/* association.c */
+BU_EXTERN(struct bu_vls *bu_association, (CONST char *fname, CONST char *value, int field_sep));
+
 #ifdef __cplusplus
 }
 #endif

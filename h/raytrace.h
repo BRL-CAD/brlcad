@@ -1938,9 +1938,6 @@ RT_EXTERN(void rt_vlblock_free, (struct bn_vlblock *vbp) );
 RT_EXTERN(struct bu_list *rt_vlblock_find, (struct bn_vlblock *vbp,
 	int r, int g, int b) );
 
-/* rtassoc.c */
-RT_EXTERN(struct bu_vls *rt_assoc, (char *fname, char *value, int field_sep));
-
 /* pr.c */
 RT_EXTERN(void rt_pr_tree_vls, (struct bu_vls *vls, CONST union tree *tp));
 RT_EXTERN(void rt_pr_hit_vls, (struct bu_vls *v, CONST char *str,
