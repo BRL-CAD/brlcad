@@ -133,12 +133,6 @@ typedef char	*pointer;		/* generic pointer */
 	   \ characters in character-constant and string-literal tokens. */
 #endif
 
-/* Kludges for deficient C implementations */
-
-/*#define	strchr	index		/* 7th Edition UNIX, 4.2BSD */
-/*#define	strrchr	rindex		/* 7th Edition UNIX, 4.2BSD */
-/*#define	void	int		/* K&R Appendix A followers */
-
 #if defined(sgi) && defined(mips)	/* missing from <signal.h>: */
 extern void	(*signal(int, void (*)(int)))(int);
 #endif
