@@ -26,14 +26,25 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 struct mged_variables mged_variables = {
 /* autosize */		1,
 /* sgi_win_size */	0,
-/* sgi_win_origin */	{ 0, 0 }
+/* sgi_win_origin */	{ 0, 0 },
+/* faceplate */		1
 };
+
+/*
+ *  Cause screen to be refreshed when all cmds have been processed.
+ */
+static void
+refresh_hook()
+{
+	dmaflag = 1;
+}
 
 #define MV_O(_m)	offsetof(struct mged_variables, _m)
 struct structparse mged_vparse[] = {
 	{"%d",	1, "autosize",		MV_O(autosize),		FUNC_NULL },
 	{"%d",	1, "sgi_win_size",	MV_O(sgi_win_size),	FUNC_NULL },
 	{"%d",	2, "sgi_win_origin",	MV_O(sgi_win_origin[0]),FUNC_NULL },
+	{"%d",	1, "faceplate",		MV_O(faceplate),	refresh_hook },
 	{"",	0,  (char *)0,		0,			FUNC_NULL }
 };
 

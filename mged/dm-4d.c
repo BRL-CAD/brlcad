@@ -939,8 +939,6 @@ Ir_puts( str, x, y, size, colour )
 register char *str;
 int x,y,size, colour;
 {
-	if( no_faceplate )  return;
-
 	cmov2( GED2IRIS(x), GED2IRIS(y));
 	if( ir_has_rgb )  {
 		RGBcolor( (short)ir_rgbtab[colour].r,
@@ -963,8 +961,6 @@ int x2, y2;
 int dashed;
 {
 	register int nvec;
-
-	if( no_faceplate )  return;
 
 	if( ir_has_rgb )  {
 		/* Yellow */
@@ -1310,6 +1306,10 @@ checkevents()  {
 				}
 				/* Toggle faceplate on/off */
 				no_faceplate = !no_faceplate;
+				rt_vls_strcat( &dm_values.dv_string,
+					no_faceplate ?
+					"set faceplate=0\n" :
+					"set faceplate=1\n" );
 				dmaflag = 1;
 				continue;
 			}
