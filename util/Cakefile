@@ -31,7 +31,7 @@
 	plcolor pldebug plgetframe plline2 plrot plstat \
 	query rle-pix sgi-pix sun-pix xyz-pl msrandom pixblend pixmorph \
 	pixborder mst texturescale pixclump pixcount imgdims remapid \
-	wavelet pixsubst terrain ttcp
+	wavelet pixsubst terrain ttcp dsp_add
 
 /* SGI specific goodies: pix-ci */
 /* X11 specific program:  pl-X */
@@ -412,6 +412,9 @@ imgdims:	imgdims.o LIBBN_DEP LIBBU_DEP LIBTCL_DEP
 
 terrain:	terrain.o LIBBN_DEP LIBBU_DEP LIBTCL_DEP
 	CC LDFLAGS -o terrain terrain.o LIBBN LIBBU LIBTCL LIBTCL_LIBES LIBES
+
+dsp_add:	dsp_add.o LIBBN_DEP LIBBU_DEP LIBTCL_DEP
+	CC LDFLAGS -o dsp_add dsp_add.o LIBBN LIBBU LIBTCL LIBTCL_LIBES LIBES
 
 
 #include "../Cakefile.rules"
