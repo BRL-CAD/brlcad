@@ -298,6 +298,7 @@ int tbl[MAX_PSW];
  *	bu_sgi_func().  When "func" returns, calling _exit() gets the process
  *	killed without going through the file-descriptor bashing
  */
+#if IRIX <= 4
 static void
 bu_sgi_func( arg )
 void	*arg;
@@ -308,6 +309,19 @@ void	*arg;
 
 	_exit(0);
 }
+#else
+static void
+bu_sgi_func( arg, stksize )
+void	*arg;
+size_t	stksize;
+{
+	void	(*func)() = (void (*)())arg;
+
+	(*func)();
+
+	_exit(0);
+}
+#endif
 
 /*
  *			B U _ P R _ F I L E
@@ -467,16 +481,26 @@ int	ncpu;
 	stdin_pos = ftell(stdin);
 	stdin_save = *(stdin);		/* struct copy */
 
+	/* Note:  it may be beneficial to call prctl(PR_SETEXITSIG); */
+	/* prctl(PR_TERMCHILD) could help when parent dies.  But SIGHUP??? hmmm */
 	for( x = 1; x < ncpu; x++)  {
 		/*
 		 *  Start a share-group process, sharing ALL resources.
 		 *  This direct sys-call can be used because none of the
 		 *  task-management services of, eg, taskcreate() are needed.
 		 */
-		if( (new = sproc( bu_sgi_func, PR_SALL, func )) < 0 )  {
+#if IRIX <= 4
+		/*  Stack size per proc comes from RLIMIT_STACK (64MBytes). */
+		new = sproc( bu_sgi_func, PR_SALL, func );
+#else
+		new = sprocsp( bu_sgi_func, PR_SALL, func, NULL, 4*1024*1024 );
+#endif
+		if( new < 0 )  {
 			perror("sproc");
 			bu_log("ERROR parallel.c/bu_parallel(): sproc(x%x, x%x, )=%d failed on processor %d\n",
-				new, func, PR_SALL, x );
+				func, PR_SALL,
+				new, x );
+			bu_log("sbrk(0)=x%x\n", sbrk(0) );
 			bu_bomb("bu_parallel() failure");
 		} else {
 			worker_pid_tbl[x] = new;
