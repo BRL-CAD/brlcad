@@ -396,6 +396,7 @@ proc ia_invoke { w } {
     global ia_more_default
     global dm_insert_char_flag
     global mged_apply_to
+    global glob_compat_mode
 
     set id [get_player_id_t $w]
 
@@ -423,8 +424,13 @@ proc ia_invoke { w } {
 	if {!$dm_insert_char_flag} {
 	    cmd_set $id
 	}
-	catch [list db_glob $cmd] globbed_cmd
-	set result [catch [list uplevel #0 $globbed_cmd] ia_msg]
+
+	if {$glob_compat_mode} {
+	    catch { expand $cmd } globbed_cmd
+	    set result [catch { uplevel #0 $globbed_cmd } ia_msg]
+	} else {
+	    set result [catch { uplevel #0 $cmd } ia_msg]
+	}
 
 	if { ![winfo exists $w] } {
 	    distribute_text $w $hcmd $ia_msg
