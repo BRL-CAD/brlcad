@@ -351,7 +351,26 @@ dotitles()
 	/*
 	 * Second status line
 	 */
-	if( illump != SOLID_NULL )  {
+
+	/* Priorities for what to display:
+	 *	1.  adc info
+	 *	2.  illuminated path
+	 *	3.  title
+	 *
+	 * This way the adc info will be displayed during editing
+	 */
+
+	if( adcflag ) {
+		/* Angle/Distance cursor */
+		(void)sprintf( &linebuf[0],
+" curs:  a1=%.1f,  a2=%.1f,  dst=%.3f,  cent=(%.3f, %.3f)",
+			angle1 * radtodeg, angle2 * radtodeg,
+			(c_tdist / 2047.0) *Viewscale*base2local,
+			(curs_x / 2047.0) *Viewscale*base2local,
+			(curs_y / 2047.0) *Viewscale*base2local );
+		dmp->dmr_puts( &linebuf[0], TITLE_XBASE, TITLE_YBASE + TEXT1_DY, 1, DM_YELLOW );
+	}
+	else if( illump != SOLID_NULL )  {
 		/* Illuminated path */
 		(void)sprintf( linebuf, " Path: ");
 		for( i=0; i <= illump->s_last; i++ )  {
@@ -362,15 +381,6 @@ dotitles()
 			FINDNULL(cp);
 			(void)sprintf(cp, "/%s", illump->s_path[i]->d_namep );
 		}
-		dmp->dmr_puts( &linebuf[0], TITLE_XBASE, TITLE_YBASE + TEXT1_DY, 1, DM_YELLOW );
-	} else if (adcflag)  {
-		/* Angle/Distance cursor */
-		(void)sprintf( &linebuf[0],
-" curs:  a1=%.1f,  a2=%.1f,  dst=%.3f,  cent=(%.3f, %.3f)",
-			angle1 * radtodeg, angle2 * radtodeg,
-			(c_tdist / 2047.0) *Viewscale*base2local,
-			(curs_x / 2047.0) *Viewscale*base2local,
-			(curs_y / 2047.0) *Viewscale*base2local );
 		dmp->dmr_puts( &linebuf[0], TITLE_XBASE, TITLE_YBASE + TEXT1_DY, 1, DM_YELLOW );
 	} else {
 		/* Title of model */
