@@ -831,7 +831,11 @@ struct pkg_conn *pc;
 	fd = pc->pkc_fd;
 
 	fromlen = sizeof (from);
+#if defined(sgi)
+	if (getpeername(fd, (struct sockaddr *)&from, &fromlen) < 0) {
+#else
 	if (getpeername(fd, (struct sockaddr *)&from, (socklen_t *)&fromlen) < 0) {
+#endif
 		perror("getpeername");
 		close(fd);
 		return;
