@@ -1,0 +1,5 @@
+# $Id$
+
+EXTRA_DIST = \
+	ctype.inc
+	debug.inc
