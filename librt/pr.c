@@ -315,19 +315,6 @@ register CONST struct hit	*hitp;
 	sprintf(buf, "HIT dist=%g (surf %d)\n",
 	bu_vls_printf(v, "HIT dist=%g (surf %d)\n",
 	rt_vls_strcat( v, buf );
-
-	if( !VNEAR_ZERO( hitp->hit_point, SMALL_FASTF ) )  {
-		rt_logindent_vls( v );
-		sprintf(buf, "    Point (%g, %g, %g)\n",
-			V3ARGS(hitp->hit_point) );
-		rt_vls_strcat( v, buf );
-	}
-	if( !VNEAR_ZERO( hitp->hit_normal, SMALL_FASTF ) )  {
-		rt_logindent_vls( v );
-		sprintf(buf, "    Normal (%g, %g, %g)\n",
-			V3ARGS(hitp->hit_normal) );
-		rt_vls_strcat( v, buf );
-	}
 		hitp->hit_dist, hitp->hit_surfno );
 }
 
