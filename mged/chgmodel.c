@@ -1491,6 +1491,7 @@ char	**argv;
 	struct rt_eto_internal *eto_ip;
 	struct rt_part_internal *part_ip;
 	struct rt_pipe_internal *pipe_ip;
+	struct rt_sketch_internal *sketch_ip;
 
 	if(dbip == DBI_NULL)
 	  return TCL_OK;
@@ -1515,7 +1516,7 @@ char	**argv;
 	RT_INIT_DB_INTERNAL( &internal );
 
 	/* make name <arb8 | arb7 | arb6 | arb5 | arb4 | ellg | ell |
-	 * sph | tor | tgc | rec | trc | rcc | grp | half | nmg> */
+	 * sph | tor | tgc | rec | trc | rcc | grp | half | nmg | sketch> */
 	if( strcmp( argv[2], "arb8" ) == 0 )  {
 		internal.idb_type = ID_ARB8;
 		internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_arb_internal) , "rt_arb_internal" );
@@ -1827,6 +1828,64 @@ char	**argv;
 		ps->pp_id = 0.5*ps->pp_od;
 		ps->pp_bendradius = ps->pp_od;
 		BU_LIST_INSERT( &pipe_ip->pipe_segs_head, &ps->l );
+	} else if( strcmp( argv[2], "sketch" ) == 0 ) {
+		struct line_seg *lsg;
+
+		internal.idb_type = ID_SKETCH;
+		internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_sketch_internal), "rt_sketch_internal" );
+		sketch_ip = (struct rt_sketch_internal *)internal.idb_ptr;
+		sketch_ip->magic = RT_SKETCH_INTERNAL_MAGIC;
+		VSET( sketch_ip->V, -toViewcenter[MDX] , -toViewcenter[MDY] , -toViewcenter[MDZ]-Viewscale*0.5 );
+		VSET( sketch_ip->u_vec, 1, 0, 0 );
+		VSET( sketch_ip->v_vec, 0, 1, 0 );
+		sketch_ip->vert_count = 4;
+		sketch_ip->verts = (point2d_t *)bu_calloc( sketch_ip->vert_count, sizeof( point2d_t ), "sketch_ip->verts" );
+		sketch_ip->verts[0][0] = -Viewscale;
+		sketch_ip->verts[0][1] = -Viewscale;
+		sketch_ip->verts[1][0] = Viewscale;
+		sketch_ip->verts[1][1] = -Viewscale;
+		sketch_ip->verts[2][0] = -Viewscale*0.5;
+		sketch_ip->verts[2][1] = -Viewscale*0.5;
+		sketch_ip->verts[3][0] = -Viewscale;
+		sketch_ip->verts[3][1] = Viewscale;
+		sketch_ip->curve_count = 1;
+		sketch_ip->curves = (struct curve *)bu_calloc( sketch_ip->curve_count, sizeof( struct curve ), "sketch_ip->curves" );
+		strcpy( sketch_ip->curves[0].crv_name, "curve0" );
+		sketch_ip->curves[0].seg_count = 4;
+		sketch_ip->curves[0].reverse = (int *)bu_calloc( sketch_ip->curves[0].seg_count, sizeof( int ), "sketch_ip->curves[0].reverse" );
+		sketch_ip->curves[0].segments = (genptr_t *)bu_calloc( sketch_ip->curves[0].seg_count, sizeof( genptr_t ), "sketch_ip->curves[0].segments" );
+
+		lsg = bu_calloc( 1, sizeof( struct line_seg ), "segments" );
+		sketch_ip->curves[0].segments[0] = lsg;
+		lsg->magic = CURVE_LSEG_MAGIC;
+		lsg->start = 0;
+		lsg->end = 1;
+		lsg->curve_count = 1;
+		lsg->curves = &sketch_ip->curves;
+
+		lsg = bu_calloc( 1, sizeof( struct line_seg ), "segments" );
+		sketch_ip->curves[0].segments[1] = lsg;
+		lsg->magic = CURVE_LSEG_MAGIC;
+		lsg->start = 1;
+		lsg->end = 2;
+		lsg->curve_count = 1;
+		lsg->curves = &sketch_ip->curves;
+
+		lsg = bu_calloc( 1, sizeof( struct line_seg ), "segments" );
+		sketch_ip->curves[0].segments[2] = lsg;
+		lsg->magic = CURVE_LSEG_MAGIC;
+		lsg->start = 2;
+		lsg->end = 3;
+		lsg->curve_count = 1;
+		lsg->curves = &sketch_ip->curves;
+
+		lsg = bu_calloc( 1, sizeof( struct line_seg ), "segments" );
+		sketch_ip->curves[0].segments[3] = lsg;
+		lsg->magic = CURVE_LSEG_MAGIC;
+		lsg->start = 3;
+		lsg->end = 0;
+		lsg->curve_count = 1;
+		lsg->curves = &sketch_ip->curves;
 	} else if( strcmp( argv[2], "ars" ) == 0 ||
 		   strcmp( argv[2], "poly" ) == 0 ||
 		   strcmp( argv[2], "ebm" ) == 0 ||
@@ -1840,7 +1899,7 @@ char	**argv;
 	} else {
 	  Tcl_AppendResult(interp, "make:  ", argv[2], " is not a known primitive\n",
 			   "\tchoices are: arb8, arb7, arb6, arb5, arb4, sph, ell, ellg, grip, tor,\n",
-			   "\t\ttgc, tec, rec, trc, rcc, half, rpc, rhc, epa, ehy, eto, part\n",
+			   "\t\ttgc, tec, rec, trc, rcc, half, rpc, rhc, epa, ehy, eto, part, sketch\n",
 			   (char *)NULL);
 	  return TCL_ERROR;
 	}
