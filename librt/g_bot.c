@@ -981,6 +981,13 @@ CONST struct db_i		*dbip;
 		bot_ip->num_vertices * 3 * 8 + bot_ip->num_faces * 3 * 4;
 	if( bot_ip->mode == RT_BOT_PLATE || bot_ip->mode == RT_BOT_PLATE_NOCOS )
 	{
+	  if( !bot_ip->face_mode )
+	    {
+	      bot_ip->face_mode = bu_bitv_new( bot_ip->num_faces );
+	      bu_bitv_clear( bot_ip->face_mode );
+	    }
+	  if( !bot_ip->thickness )
+	      bot_ip->thickness = (fastf_t *)bu_calloc( bot_ip->num_faces, sizeof( fastf_t ), "BOT thickness" );
 		bu_vls_init( &face_mode );
 		bu_bitv_to_hex( &face_mode, bot_ip->face_mode );
 		ep->ext_nbytes += bot_ip->num_faces * 8 + bu_vls_strlen( &face_mode ) + 1;
@@ -1937,19 +1944,6 @@ char			**argv;
 			    return( TCL_ERROR );
 			  }
 		      }
-		    if( bot->mode != RT_BOT_PLATE && bot->mode != RT_BOT_PLATE_NOCOS )
-		      {
-			if( bot->thickness )
-			  {
-			    bu_free( (char *)bot->thickness, "BOT thickness" );
-			    bot->thickness = (fastf_t *)NULL;
-			  }
-			if( bot->face_mode )
-			  {
-			    bu_free( (char *)bot->face_mode, "BOT facemode" );
-			    bot->face_mode = (bitv_t)NULL;
-			  }
-		      }
 		  }
 		else if( !strncmp( argv[0], "orient", 6 ) )
 		  {
@@ -2000,6 +1994,19 @@ char			**argv;
 	      {
 		bot->face_mode = bu_bitv_new( bot->num_faces );
 		bu_bitv_clear( bot->face_mode );
+	      }
+	  }
+	else
+	  {
+	    if( bot->thickness )
+	      {
+		bu_free( (char *)bot->thickness, "BOT thickness" );
+		bot->thickness = (fastf_t *)NULL;
+	      }
+	    if( bot->face_mode )
+	      {
+		bu_free( (char *)bot->face_mode, "BOT facemode" );
+		bot->face_mode = (bitv_t)NULL;
 	      }
 	  }
 
