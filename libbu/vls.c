@@ -495,6 +495,63 @@ char	**argv;
 }
 
 /*
+ *			B U _ A R G V _ F R O M _ S T R I N G
+ *
+ *  Build argv[] array from input buffer, by splitting whitespace
+ *  separated "words" into null terminated strings.
+ *  The input buffer is altered by this process.
+ *  The argv[] array points into the input buffer.
+ *  The input buffer should not be freed until argv has been freed
+ *  or passes out of scope.
+ *
+ *  'lim' indicates the number of elements in the argv[] array.
+ *
+ *  Returns -
+ *	 0	no words in input
+ *	nwords	number of words of input, now in argv[]
+ *
+ *  Built from rt_split_cmd(), but without the shell escape support.
+ */
+int
+bu_argv_from_string(argv, lim, lp )
+char		**argv;
+int		lim;
+register char	*lp;
+{
+	register int	nwords;			/* number of words seen */
+	register char	*lp1;
+
+	argv[0] = "_NIL_";		/* sanity */
+
+	while( *lp != '\0' && isspace( *lp ) )
+		lp++;
+
+	if( *lp == '\0' )
+		return 0;		/* No words */
+
+	/* some non-space string has been seen, argv[0] is set */
+	nwords = 1;
+	argv[0] = lp;
+
+	for( ; *lp != '\0'; lp++ )  {
+		if( !isspace( *lp ) )
+			continue;	/* skip over current word */
+
+		*lp = '\0';		/* terminate current word */
+		lp1 = lp + 1;
+		if( *lp1 != '\0' && !isspace( *lp1 ) )  {
+			/* Begin next word */
+			if( nwords >= lim-1 )
+				break;	/* argv[] full */
+
+			argv[nwords++] = lp1;
+		}
+	}
+	argv[nwords] = (char *)0;	/* safety */
+	return nwords;
+}
+
+/*
  *			B U _ V L S _ F W R I T E
  */
 void
@@ -515,6 +572,33 @@ CONST struct bu_vls	*vp;
 		perror("fwrite");
 		bu_bomb("bu_vls_fwrite() write error\n");
 	}
+}
+
+/*
+ *			B U _ V L S _ W R I T E
+ */
+void
+bu_vls_write( fd, vp )
+int			fd;
+CONST struct bu_vls	*vp;
+{
+	int status;
+
+	BU_CK_VLS(vp);
+	if( vp->vls_len <= 0 )  return;
+
+#if !unix
+	bu_bomb("bu_vls_write(): This isn't UNIX\n");
+#else
+	bu_semaphore_acquire(BU_SEM_SYSCALL);
+	status = write( fd, vp->vls_str + vp->vls_offset, vp->vls_len );
+	bu_semaphore_release(BU_SEM_SYSCALL);
+
+	if( status != vp->vls_len ) {    
+		perror("write");
+		bu_bomb("bu_vls_write() write error\n");
+	}
+#endif
 }
 
 /*
