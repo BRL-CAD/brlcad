@@ -1484,8 +1484,8 @@ CONST int		first;
 
 void
 nmg_ck_vs_in_region( r , tol )
-struct nmgregion *r;
-struct rt_tol *tol;
+CONST struct nmgregion *r;
+CONST struct rt_tol *tol;
 {
 	struct model			*m;
 	struct v_ck_state		st;
@@ -1493,12 +1493,13 @@ struct rt_tol *tol;
 	struct nmg_ptbl			tab;
 
         NMG_CK_REGION(r);
+	RT_CK_TOL( tol );
         m = r->m_p;
         NMG_CK_MODEL(m);
 
         st.visited = (char *)rt_calloc(m->maxindex+1, sizeof(char), "visited[]");
         st.tabl = &tab;
-	st.tol = tol;
+	st.tol = (struct rt_tol *)tol;
 
         (void)nmg_tbl( &tab, TBL_INIT, 0 );
 
