@@ -79,6 +79,9 @@
 #define	ECMD_NMG_EKILL		26	/* kill current edge */
 #define	ECMD_NMG_LEXTRU		27	/* Extrude loop */
 
+#define ECMD_PIPE_PICK		28	/* Pick pipe segment */
+#define	ECMD_PIPE_SPLIT		29	/* Split a pipe segment into two */
+
 extern fastf_t	es_scale;		/* scale factor */
 extern fastf_t 	es_para[3];		/* keyboard input parameter changes */
 extern fastf_t	es_peqn[7][4];		/* ARBs defining plane equations */
