@@ -2413,7 +2413,7 @@ struct rt_db_internal	*is;		/* input solid */
 int			free;
 {
 	RT_CK_DB_INTERNAL( is );
-	if( rt_functab[is->idb_type].ft_xform( os, mat, is, free ) < 0 )
+	if( rt_functab[is->idb_type].ft_xform( os, mat, is, free, dbip ) < 0 )
 		bu_bomb("transform_editing_solid");
 }
 

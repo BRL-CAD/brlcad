@@ -81,7 +81,7 @@ CONST struct bu_structparse rt_nul_parse[] = {
 			double mm2local)); \
 	RT_EXTERN(int rt_##name##_xform, (struct rt_db_internal *op, \
 			CONST mat_t mat, struct rt_db_internal *ip, \
-			int free)); \
+			int free, struct db_i *dbip)); \
 	extern CONST struct bu_structparse rt_##name##_parse[];
 #else
 # define RT_DECLARE_INTERFACE(name)	\
@@ -124,7 +124,7 @@ CONST struct bu_structparse rt_nul_parse[] = {
 			double mm2local)); \
 	RT_EXTERN(int rt_/**/name/**/_xform, (struct rt_db_internal *op, \
 			CONST mat_t mat, struct rt_db_internal *ip, \
-			int free)); \
+			int free, struct db_i *dbip)); \
 	extern CONST struct bu_structparse rt_/**/name/**/_parse[];
 #endif
 
@@ -253,9 +253,11 @@ BU_EXTERN(int rt_bot_tcladjust, (Tcl_Interp *interp,
 /* XXX from shoot.c / vshoot.c */
 RT_EXTERN(void rt_vstub, (struct soltab *stp[], struct xray *rp[],
 	struct seg segp[], int n, struct application *ap ));
+
+/* From here in table.c */
 RT_EXTERN(int rt_generic_xform, (struct rt_db_internal *op, 
 	CONST mat_t mat, struct rt_db_internal *ip,
-	int free));
+	int free, struct db_i *dbip));
 
 /* Stub Tcl interfaces */
 #if __STDC__
@@ -778,7 +780,7 @@ int NDEF(rt_nul_describe,(struct bu_vls *str,
 			int verbose, double mm2local))
 int NDEF(rt_nul_xform, (struct rt_db_internal *op,
 			CONST mat_t mat, struct rt_db_internal *ip,
-			int free))
+			int free, struct db_i *dbip))
 
 /* Map for database solidrec objects to internal objects */
 static char idmap[] = {
@@ -940,20 +942,23 @@ CONST char *label;
  *	 0	OK
  */
 int
-rt_generic_xform(op, mat, ip, free)
+rt_generic_xform(op, mat, ip, free, dbip)
 struct rt_db_internal	*op;
 CONST mat_t		mat;
 struct rt_db_internal	*ip;
 int			free;
+struct db_i		*dbip;
 {
 	struct bu_external	ext;
 	int			id;
 
 	RT_CK_DB_INTERNAL( ip );
+	RT_CK_DBI(dbip);
+
 	id = ip->idb_type;
 	BU_INIT_EXTERNAL(&ext);
 	/* Scale change on export is 1.0 -- no change */
-	if( rt_functab[id].ft_export( &ext, ip, 1.0, DBI_NULL ) < 0 )  {
+	if( rt_functab[id].ft_export( &ext, ip, 1.0, dbip ) < 0 )  {
 		bu_log("rt_generic_xform():  %s export failure\n",
 			rt_functab[id].ft_name);
 		return -1;			/* FAIL */
@@ -963,7 +968,7 @@ int			free;
     		ip->idb_ptr = (genptr_t)0;
     	}
 
-	if( rt_functab[id].ft_import( op, &ext, mat, DBI_NULL ) < 0 )  {
+	if( rt_functab[id].ft_import( op, &ext, mat, dbip ) < 0 )  {
 		bu_log("rt_generic_xform():  solid import failure\n");
 		return -1;			/* FAIL */
 	}
