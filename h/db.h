@@ -3,6 +3,42 @@
  *
  *		GED Database Format
  *
+ * All records are rounded up to have a fixed length;  each such
+ * database record is also known as a "granule", and is the smallest
+ * unit of database storage.
+ *
+ * Every granule can be identified by the first byte, which can
+ * be accessed by the u_id name.  Note that the u_id field is not
+ * valid when writing the actual data for splines.
+ *
+ * Each granule is read into a "union record", and is then processed
+ * based on the value of u_id.  Each granule will have one of these formats:
+ *	A Free record
+ *	An ID record
+ *	A SOLID record
+ *	A COMBINATION record, followed by multiple
+ *		MEMBER records
+ *	An ARS `A' (header) record, followed by multiple
+ *		ARS `B' (data) records
+ *	A Polygon header record, followed by multiple
+ *		Polygon data records
+ *      A B-spline solid header record, followed by multiple
+ *		B-spline surface records, followed by
+ *			d_kv_size[0] floats,
+ *			d_kv_size[1] floats,
+ *			padded to d_nknots granules, followed by
+ *			ctl_size[0]*ctl_size[1]*geom_type floats,
+ *			padded to d_nctls granules.
+ *
+ * The records are stored as binary records corresponding to PDP-11 and
+ * VAX C structs, so padding must be supplied explicitly for alignment.
+ *
+ * For the time being, the representation of the floating point numbers
+ * in the database is machine-specific, requiring conversion to ASCII
+ * (via g2asc) and back to binary (via asc2g) when exchanging between
+ * machines of dissimilar types.  In time, an external representation
+ * for floats might be implemented.
+ *
  *  Author -
  *	Michael John Muuss
  *  
@@ -25,31 +61,9 @@
 #define NAMEMOVE(from,to)	(void)strncpy(to, from, NAMESIZE)
 extern char *strncpy();
 
-/*
- *		FILE FORMAT
- *
- * All records are of fixed length, and have one of these formats:
- *	A Free record
- *	An ID record
- *	A SOLID record
- *	A COMBINATION record, followed by multiple
- *		MEMBER records
- *	An ARS `A' (header) record, followed by multiple
- *		ARS `B' (data) records
- *	A Polygon header record, followed by multiple
- *		Polygon data records
- *      A B-spline solid header record, followed by multiple
- *		B-spline surface records, followed by
- *			d_kv_size[0] floats,
- *			d_kv_size[1] floats,
- *			padded to d_nknots granules, followed by
- *			ctl_size[0]*ctl_size[1]*geom_type floats,
- *			padded to d_nctls granules.
- *
- * The records are stored as binary records corresponding to PDP-11 and
- * VAX C structs, so padding must be supplied explicitly for alignment.
- */
+
 union record  {
+
 	char	u_id;		/* To differentiate record types */
 #define ID_IDENT	'I'
 #define ID_SOLID	'S'
@@ -63,51 +77,9 @@ union record  {
 #define ID_BSOLID	'b'	/* B-spline solid.  multiple surfs */
 #define ID_BSURF	'D'     /* d_spline surface header */
 #define ID_MATERIAL	'm'	/* Material description record */
+
 	char	u_size[128];	/* Total record size */
-	struct material_rec {
-		char	md_id;		/* = ID_MATERIAL color override */
-		char	md_flags;	/* UNUSED */
-		short	md_low;		/* lower end of region IDs affected */
-		short	md_hi;		/* upper end of region IDs affected */
-		unsigned char md_r;
-		unsigned char md_g;	/* color of these regions:  0..255 */
-		unsigned char md_b;
-		char	md_material[100]; /* UNUSED now */
-	} md;
-	struct B_solid {
-		char	B_id;		/* = ID_BSOLID */
-		char	B_pad;
-		char	B_name[NAMESIZE];
-		short	B_nsurf;	/* # of surfaces in this solid */
-		float   B_resolution;	/* resolution of flatness */
-	} B;
-	struct b_surf {
-		char    d_id;		/* = ID_BSURF */
-		short   d_order[2];	/* order of u and v directions */
-		short   d_kv_size[2];	/* knot vector size  (u and v) */
-		short   d_ctl_size[2];  /* control mesh size ( u and v) */
-		short   d_geom_type;	/* geom type 3 or 4 */
-		short	d_nknots;	/* # granules of knots */
-		short	d_nctls;	/* # granules of ctls */
-	} d;
-	/* 
-	 * The b_surf_head record is followed by
-	 * d_nknots granules of knot vectors (first u, then v),
-	 * and then by d_nctls granules of control mesh information.
-	 * Note that neither of these have an ID field!
-	 */
-#define SPLINE   22
-	struct polyhead  {
-		char	p_id;		/* = POLY_HEAD */
-		char	p_pad1;
-		char	p_name[NAMESIZE];
-	} p;
-	struct polydata  {
-		char	q_id;		/* = POLY_DATA */
-		char	q_count;	/* # of vertices <= 5 */
-		float	q_verts[5][3];	/* Actual vertices for this polygon */
-		float	q_norms[5][3];	/* Normals at each vertex */
-	} q;
+
 	struct ident  {
 		char	i_id;		/* I */
 		char	i_units;	/* units */
@@ -121,6 +93,7 @@ union record  {
 #define ID_VERSION	"v4"		/* Current Version */
 		char	i_title[72];	/* Title or description */
 	} i;
+
 	struct solidrec  {
 		char	s_id;		/* = SOLID */
 		char	s_type;		/* GED primitive type */
@@ -128,7 +101,10 @@ union record  {
 #define GENTGC	18	/* supergeneralized TGC; internal form */
 #define GENELL	19	/* ready for drawing ELL:  V,A,B,C */
 #define GENARB8	20	/* generalized ARB8:  V, and 7 other vectors */
-#define HALFSPACE 21	/* half-space */
+#define	ARS	21	/* HACK arbitrary triangular-surfaced polyhedron */
+#define ARSCONT 22	/* HACK extension record type for ARS solid */
+#define SPLINE   22	/* HACK and trouble */
+#define HALFSPACE 24	/* half-space */
 		char	s_name[NAMESIZE];	/* unique name */
 		short	s_cgtype;		/* COMGEOM solid type */
 #define RPP	1	/* axis-aligned rectangular parallelopiped */
@@ -170,7 +146,11 @@ union record  {
 #define s_ell_A s_values[3]
 #define s_ell_B s_values[6]
 #define s_ell_C s_values[9]
+
+#define s_half_N s_values[0]
+#define s_half_d s_values[3]
 	}  s;
+
 	struct combination  {
 		char	c_id;		/* C */
 		char	c_flags;		/* `R' if region, else ` ' */
@@ -199,10 +179,56 @@ union record  {
 		short	m_num;			/* COMGEOM solid # ref */
 		short	m_pad2;
 	}  M;
+
+	struct material_rec {
+		char	md_id;		/* = ID_MATERIAL color override */
+		char	md_flags;	/* UNUSED */
+		short	md_low;		/* lower end of region IDs affected */
+		short	md_hi;		/* upper end of region IDs affected */
+		unsigned char md_r;
+		unsigned char md_g;	/* color of these regions:  0..255 */
+		unsigned char md_b;
+		char	md_material[100]; /* UNUSED now */
+	} md;
+
+	struct B_solid {
+		char	B_id;		/* = ID_BSOLID */
+		char	B_pad;
+		char	B_name[NAMESIZE];
+		short	B_nsurf;	/* # of surfaces in this solid */
+		float   B_resolution;	/* resolution of flatness */
+	} B;
+	struct b_surf {
+		char    d_id;		/* = ID_BSURF */
+		short   d_order[2];	/* order of u and v directions */
+		short   d_kv_size[2];	/* knot vector size  (u and v) */
+		short   d_ctl_size[2];  /* control mesh size ( u and v) */
+		short   d_geom_type;	/* geom type 3 or 4 */
+		short	d_nknots;	/* # granules of knots */
+		short	d_nctls;	/* # granules of ctls */
+	} d;
+	/* 
+	 * The b_surf record is followed by
+	 * d_nknots granules of knot vectors (first u, then v),
+	 * and then by d_nctls granules of control mesh information.
+	 * Note that neither of these have an ID field!
+	 */
+
+	struct polyhead  {
+		char	p_id;		/* = POLY_HEAD */
+		char	p_pad1;
+		char	p_name[NAMESIZE];
+	} p;
+	struct polydata  {
+		char	q_id;		/* = POLY_DATA */
+		char	q_count;	/* # of vertices <= 5 */
+		float	q_verts[5][3];	/* Actual vertices for this polygon */
+		float	q_norms[5][3];	/* Normals at each vertex */
+	} q;
+
 	struct ars_rec  {
 		char	a_id;		/* A */
 		char	a_type;			/* primitive type */
-#define	ARS	21	/* arbitrary triangular-surfaced polyhedron */
 		char	a_name[NAMESIZE];	/* unique name */
 		short	a_m;			/* # of curves */
 		short	a_n;			/* # of points per curve */
@@ -219,7 +245,6 @@ union record  {
 	struct ars_ext  {			/* one "granule" */
 		char	b_id;		/* B */
 		char	b_type;			/* primitive type */
-#define ARSCONT 22	/* extension record type for ARS solid */
 		short	b_n;			/* current curve # */
 		short	b_ngranule;		/* curr. granule for curve */
 		short	b_pad;
