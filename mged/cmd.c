@@ -61,7 +61,7 @@ int cmd_set();
 int cmd_get();
 int get_more_default();
 int tran(), irot();
-void set_tran(), gui_setup(), mged_setup(), cmd_setup();
+void set_tran(), gui_setup(), mged_setup(), cmd_setup(), mged_compat();
 
 extern mat_t    ModelDelta;
 
@@ -1371,7 +1371,7 @@ struct rt_vls *dest, *src;
  * on the given vls (typically input from the keyboard.)
  */
 
-int
+void
 mged_compat( dest, src )
 struct rt_vls *dest, *src;
 {
