@@ -33,6 +33,10 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <netinet/in.h>		/* for htons(), etc */
 #endif
 
+#if BSD >= 43
+# include <sys/socket.h>
+#endif
+
 #ifdef BSD
 #include <strings.h>
 #else
@@ -144,6 +148,16 @@ int	width, height;
 	}
 	PCPL(ifp) = (char *)pc;			/* stash in u1 */
 	ifp->if_fd = pc->pkc_fd;		/* unused */
+
+#if BSD >= 43
+	{
+		int	n;
+		int	val = 32767;
+		n = setsockopt( pc->pkc_fd, SOL_SOCKET,
+			SO_SNDBUF, (char *)&val, sizeof(val) );
+		if( n < 0 )  perror("setsockopt: SO_SNDBUF");
+	}
+#endif
 
 	(void)fbputlong( width, &buf[0*NET_LONG_LEN] );
 	(void)fbputlong( height, &buf[1*NET_LONG_LEN] );
