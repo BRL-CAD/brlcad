@@ -197,11 +197,11 @@ register struct application *ap;
 	}
 
 	if( fbp != FBIO_NULL )  {
-		Pixel p;
-		p.red = r;
-		p.green = g;
-		p.blue = b;
-		fb_write( fbp, ap->a_x, ap->a_y, &p, 1 );
+		RGBpixel p;
+		p[RED] = r;
+		p[GRN] = g;
+		p[BLU] = b;
+		fb_write( fbp, ap->a_x, ap->a_y, p, 1 );
 	}
 	if( pixfp != NULL )  {
 		if( hex_out )  {
