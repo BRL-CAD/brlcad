@@ -471,6 +471,7 @@ rt_comb_import5(
 	RT_CK_DBI(dbip);
 	RT_CK_RESOURCE(resp);
 
+	ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	ip->idb_type = ID_COMBINATION;
 	ip->idb_meth = &rt_functab[ID_COMBINATION];
 	BU_GETSTRUCT( comb, rt_comb_internal );

@@ -607,6 +607,7 @@ wrobj( char name[], int flags )
 					VADD2( arb->pt[i], &sol.s_values[i*3], arb->pt[0] )
 
 				intern.idb_ptr = (genptr_t)arb;
+				intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 				intern.idb_type = ID_ARB8;
 				intern.idb_meth = &rt_functab[ID_ARB8];
 			}
@@ -627,6 +628,7 @@ wrobj( char name[], int flags )
 				VMOVE( tgc->d, &sol.s_values[15] );
 
 				intern.idb_ptr = (genptr_t)tgc;
+				intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 				intern.idb_type = ID_TGC;
 				intern.idb_meth = &rt_functab[ID_TGC];
 			}

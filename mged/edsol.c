@@ -3352,6 +3352,7 @@ sedit()
 			{
 				/* free the old sketch */
 				RT_INIT_DB_INTERNAL( &tmp_ip );
+				tmp_ip.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 				tmp_ip.idb_type = ID_SKETCH;
 				tmp_ip.idb_ptr = (genptr_t)extr->skt;
 				tmp_ip.idb_meth = &rt_functab[ID_SKETCH];

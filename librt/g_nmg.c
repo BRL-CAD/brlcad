@@ -2177,6 +2177,7 @@ const struct bn_tol		*tol;
 	}
 
 	RT_CK_DB_INTERNAL( ip );
+	ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	ip->idb_type = ID_NMG;
 	ip->idb_meth = &rt_functab[ID_NMG];
 	ip->idb_ptr = (genptr_t)m;
@@ -2551,6 +2552,7 @@ rt_nmg_import5( struct rt_db_internal	*ip,
 	nmg_rebound(m, &tol);
 
 	RT_CK_DB_INTERNAL( ip );
+	ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	ip->idb_type = ID_NMG;
 	ip->idb_meth = &rt_functab[ ID_NMG ];
 	ip->idb_ptr = (genptr_t)m;

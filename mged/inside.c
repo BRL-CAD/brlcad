@@ -798,6 +798,7 @@ arbin(
 		nmg_km( m );
 
 		/* put new solid in "ip" */
+		ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		ip->idb_type = ID_BOT;
 		ip->idb_meth = &rt_functab[ID_BOT];
 		ip->idb_ptr = (genptr_t)bot;

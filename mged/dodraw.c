@@ -1512,6 +1512,7 @@ char	**argv;
 
 		/* Export BOT as a new solid */
 		RT_INIT_DB_INTERNAL(&intern);
+		intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		intern.idb_type = ID_BOT;
 		intern.idb_meth = &rt_functab[ID_BOT];
 		intern.idb_ptr = (genptr_t) bot;
@@ -1523,6 +1524,7 @@ char	**argv;
 
 		/* Export NMG as a new solid */
 		RT_INIT_DB_INTERNAL(&intern);
+		intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		intern.idb_type = ID_NMG;
 		intern.idb_meth = &rt_functab[ID_NMG];
 		intern.idb_ptr = (genptr_t)mged_nmg_model;
@@ -1805,6 +1807,7 @@ char	**argv;
 
 	/* Export NMG as a new solid */
 	RT_INIT_DB_INTERNAL(&intern);
+	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_NMG;
 	intern.idb_meth = &rt_functab[ID_NMG];
 	intern.idb_ptr = (genptr_t)mged_nmg_model;

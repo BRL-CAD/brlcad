@@ -179,6 +179,7 @@ rt_hf_to_dsp(struct rt_db_internal *db_intern, struct resource *resp)
 	rt_db_free_internal( db_intern, resp );
 
 	db_intern->idb_ptr = (genptr_t)dsp;
+	db_intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	db_intern->idb_type = ID_DSP;
 	db_intern->idb_meth = &rt_functab[ID_DSP];
 
@@ -1990,6 +1991,7 @@ const struct db_i		*dbip;
 	}
 
 	RT_CK_DB_INTERNAL( ip );
+	ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	ip->idb_type = ID_HF;
 	ip->idb_meth = &rt_functab[ID_HF];
 	ip->idb_ptr = bu_calloc( 1, sizeof(struct rt_hf_internal), "rt_hf_internal");

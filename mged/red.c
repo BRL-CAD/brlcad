@@ -1296,6 +1296,7 @@ make_tree(comb, dp, node_count, old_name, new_name, rt_tree_array, tree_index)
 		final_tree = (union tree *)NULL;
 
 	RT_INIT_DB_INTERNAL(&intern);
+	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_COMBINATION;
 	intern.idb_meth = &rt_functab[ID_COMBINATION];
 	intern.idb_ptr = (genptr_t)comb;

@@ -1225,6 +1225,7 @@ const struct db_i		*dbip;
 	}
 
 	RT_CK_DB_INTERNAL( ip );
+	ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	ip->idb_type = ID_BOT;
 	ip->idb_meth = &rt_functab[ID_BOT];
 	ip->idb_ptr = bu_malloc( sizeof(struct rt_bot_internal), "rt_bot_internal");
@@ -1402,6 +1403,7 @@ const struct db_i               *dbip;
 	BU_CK_EXTERNAL( ep );
 
 	RT_CK_DB_INTERNAL( ip );
+	ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	ip->idb_type = ID_BOT;
 	ip->idb_meth = &rt_functab[ID_BOT];
 	ip->idb_ptr = bu_malloc( sizeof(struct rt_bot_internal), "rt_bot_internal");
@@ -1739,6 +1741,7 @@ struct db_i	*dbip;
 				botop->thickness[i] = botip->thickness[i];
 		}
 		op->idb_ptr = (genptr_t)botop;
+		op->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		op->idb_type = ID_BOT;
 		op->idb_meth = &rt_functab[ID_BOT];
 	}

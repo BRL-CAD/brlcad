@@ -2195,6 +2195,7 @@ struct resource			*resp;
 	}
 
 	RT_CK_DB_INTERNAL( ip );
+	ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	ip->idb_type = ID_EXTRUDE;
 	ip->idb_meth = &rt_functab[ID_EXTRUDE];
 	ip->idb_ptr = bu_malloc( sizeof(struct rt_extrude_internal), "rt_extrude_internal");
@@ -2355,6 +2356,7 @@ rt_extrude_import5(
 	BU_CK_EXTERNAL( ep );
 
 	RT_CK_DB_INTERNAL( ip );
+	ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	ip->idb_type = ID_EXTRUDE;
 	ip->idb_meth = &rt_functab[ID_EXTRUDE];
 	ip->idb_ptr = bu_malloc( sizeof(struct rt_extrude_internal), "rt_extrude_internal");
@@ -2455,6 +2457,7 @@ struct rt_db_internal	*ip;
 	if( extrude_ip->skt )
 	{
 		RT_INIT_DB_INTERNAL( &tmp_ip );
+		tmp_ip.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		tmp_ip.idb_type = ID_SKETCH;
 		tmp_ip.idb_ptr = (genptr_t)extrude_ip->skt;
 		tmp_ip.idb_meth = &rt_functab[ID_SKETCH];
@@ -2497,6 +2500,7 @@ rt_extrude_xform(
 		eop->magic = RT_EXTRUDE_INTERNAL_MAGIC;
 		op->idb_ptr = (genptr_t)eop;
 		op->idb_meth = &rt_functab[ID_EXTRUDE];
+		op->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		op->idb_type = ID_EXTRUDE;
 	}
 	else

@@ -226,6 +226,7 @@ char	*argv[];
 		    bu_log("Got 'em!\nThink I own %d of 'em\n", bip->count);
 		    fflush(stderr);
 	    }
+	    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    intern.idb_type = minor_code;
 	    intern.idb_meth = &rt_functab[ID_BINUNIF];
 	    intern.idb_ptr = (genptr_t)bip;

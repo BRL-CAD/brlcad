@@ -238,6 +238,7 @@ struct dg_client_data *dgcdp;
 			else
 			{
 				RT_INIT_DB_INTERNAL( &intern2 );
+				intern2.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 				intern2.idb_type = ID_BOT;
 				intern2.idb_meth = &rt_functab[ID_BOT];
 				intern2.idb_ptr = (genptr_t)bot;
@@ -2098,6 +2099,7 @@ fix_halfs(struct dg_client_data	*dgcdp)
 			struct rt_db_internal intern2;
 
 			RT_INIT_DB_INTERNAL( &intern2 );
+			intern2.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 			intern2.idb_type = ID_POLY;
 			intern2.idb_meth = &rt_functab[ID_POLY];
 			intern2.idb_ptr = (genptr_t)pg;

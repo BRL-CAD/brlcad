@@ -844,6 +844,7 @@ const struct db_i		*dbip;
 	}
 
 	RT_CK_DB_INTERNAL( ip );
+	ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	ip->idb_type = ID_SUBMODEL;
 	ip->idb_meth = &rt_functab[ID_SUBMODEL];
 	ip->idb_ptr = bu_malloc( sizeof(struct rt_submodel_internal), "rt_submodel_internal");
@@ -948,6 +949,7 @@ const struct db_i		*dbip;
 	RT_CK_DBI(dbip);
 
 	RT_CK_DB_INTERNAL( ip );
+	ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	ip->idb_type = ID_SUBMODEL;
 	ip->idb_meth = &rt_functab[ID_SUBMODEL];
 	ip->idb_ptr = bu_malloc( sizeof(struct rt_submodel_internal), "rt_submodel_internal");

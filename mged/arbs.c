@@ -218,6 +218,7 @@ char	**argv;
 	}
 
 	RT_INIT_DB_INTERNAL( &internal );
+	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_ARB8;
 	internal.idb_meth = &rt_functab[ID_ARB8];
 	internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_arb_internal) , "rt_arb_internal" );
@@ -478,6 +479,7 @@ char	**argv;
 	thick *= local2base;
 
 	RT_INIT_DB_INTERNAL( &internal );
+	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_ARB8;
 	internal.idb_meth = &rt_functab[ID_ARB8];
 	internal.idb_ptr = (genptr_t)bu_malloc( sizeof(struct rt_arb_internal) , "rt_arb_internal" );

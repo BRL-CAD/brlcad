@@ -815,6 +815,7 @@ const struct db_i		*dbip;
 	}
 
 	RT_CK_DB_INTERNAL( ip );
+	ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	ip->idb_type = ID_ARBN;
 	ip->idb_meth = &rt_functab[ID_ARBN];
 	ip->idb_ptr = bu_malloc( sizeof(struct rt_arbn_internal), "rt_arbn_internal");
@@ -935,6 +936,7 @@ const struct db_i		*dbip;
 	BU_ASSERT_LONG(ep->ext_nbytes, ==, 4+ byte_count);
 
 	RT_CK_DB_INTERNAL( ip );
+	ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	ip->idb_type = ID_ARBN;
 	ip->idb_meth = &rt_functab[ID_ARBN];
 	ip->idb_ptr = bu_malloc( sizeof(struct rt_arbn_internal), "rt_arbn_internal");

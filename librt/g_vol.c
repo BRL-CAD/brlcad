@@ -421,6 +421,7 @@ const struct db_i		*dbip;
 	}
 
 	RT_CK_DB_INTERNAL( ip );
+	ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	ip->idb_type = ID_VOL;
 	ip->idb_meth = &rt_functab[ID_VOL];
 	ip->idb_ptr = bu_calloc(1, sizeof(struct rt_vol_internal), "rt_vol_internal");
@@ -560,6 +561,7 @@ const struct db_i		*dbip;
 	BU_CK_EXTERNAL( ep );
 
 	RT_CK_DB_INTERNAL( ip );
+	ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	ip->idb_type = ID_VOL;
 	ip->idb_meth = &rt_functab[ID_VOL];
 	ip->idb_ptr = bu_calloc(1, sizeof(struct rt_vol_internal), "rt_vol_internal");

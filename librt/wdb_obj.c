@@ -1387,6 +1387,7 @@ wdb_shells_cmd(struct rt_wdb	*wdbp,
 
 			/* Export NMG as a new solid */
 			RT_INIT_DB_INTERNAL(&new_intern);
+			new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 			new_intern.idb_type = ID_NMG;
 			new_intern.idb_meth = &rt_functab[ID_NMG];
 			new_intern.idb_ptr = (genptr_t)m_tmp;
@@ -6267,6 +6268,7 @@ not_found:
 
 	/* set up internal structure */
 	RT_INIT_DB_INTERNAL(&new_intern);
+	new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	new_intern.idb_type = ID_ARB8;
 	new_intern.idb_meth = &rt_functab[ID_ARB8];
 	new_intern.idb_ptr = (genptr_t)arb;
@@ -6967,6 +6969,7 @@ wdb_nmg_simplify_cmd(struct rt_wdb	*wdbp,
 
 		if (nmg_to_arb(m, &arb_int)) {
 			new_intern.idb_ptr = (genptr_t)(&arb_int);
+			new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 			new_intern.idb_type = ID_ARB8;
 			new_intern.idb_meth = &rt_functab[ID_ARB8];
 			success = 1;
@@ -6982,6 +6985,7 @@ wdb_nmg_simplify_cmd(struct rt_wdb	*wdbp,
 				(void) nmg_unbreak_region_edges( &r->l.magic );
 				if (nmg_to_arb(m, &arb_int)) {
 					new_intern.idb_ptr = (genptr_t)(&arb_int);
+					new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 					new_intern.idb_type = ID_ARB8;
 					new_intern.idb_meth = &rt_functab[ID_ARB8];
 					success = 1;
@@ -7001,6 +7005,7 @@ wdb_nmg_simplify_cmd(struct rt_wdb	*wdbp,
 
 		if (nmg_to_tgc(m, &tgc_int, &wdbp->wdb_tol)) {
 			new_intern.idb_ptr = (genptr_t)(&tgc_int);
+			new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 			new_intern.idb_type = ID_TGC;
 			new_intern.idb_meth = &rt_functab[ID_TGC];
 			success = 1;
@@ -7025,6 +7030,7 @@ wdb_nmg_simplify_cmd(struct rt_wdb	*wdbp,
 			(void) nmg_unbreak_region_edges( &r->l.magic );
 			if (nmg_to_arb(m, &arb_int )) {
 				new_intern.idb_ptr = (genptr_t)(&arb_int);
+				new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 				new_intern.idb_type = ID_ARB8;
 				new_intern.idb_meth = &rt_functab[ID_ARB8];
 				success = 1;
@@ -7045,6 +7051,7 @@ wdb_nmg_simplify_cmd(struct rt_wdb	*wdbp,
 
 		if (nmg_to_poly( m, poly_int, &wdbp->wdb_tol)) {
 			new_intern.idb_ptr = (genptr_t)(poly_int);
+			new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 			new_intern.idb_type = ID_POLY;
 			new_intern.idb_meth = &rt_functab[ID_POLY];
 			success = 1;
@@ -7833,6 +7840,7 @@ wdb_combadd(Tcl_Interp			*interp,
 			flags = DIR_COMB;
 
 		RT_INIT_DB_INTERNAL(&intern);
+		intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		intern.idb_type = ID_COMBINATION;
 		intern.idb_meth = &rt_functab[ID_COMBINATION];
 

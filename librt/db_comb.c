@@ -306,6 +306,7 @@ rt_comb_import4(
 		tree = (union tree *)NULL;
 
 	RT_INIT_DB_INTERNAL( ip );
+	ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	ip->idb_type = ID_COMBINATION;
 	ip->idb_meth = &rt_functab[ID_COMBINATION];
 	comb = (struct rt_comb_internal *)bu_malloc( sizeof( struct rt_comb_internal ) , "rt_comb_import4: rt_comb_internal" );

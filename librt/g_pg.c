@@ -678,6 +678,7 @@ const struct db_i		*dbip;
 	}
 
 	RT_CK_DB_INTERNAL( ip );
+	ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	ip->idb_type = ID_POLY;
 	ip->idb_meth = &rt_functab[ID_POLY];
 	ip->idb_ptr = bu_malloc(sizeof(struct rt_pg_internal), "rt_pg_internal");
@@ -1012,6 +1013,7 @@ rt_pg_to_bot( struct rt_db_internal *ip, const struct bn_tol *tol, struct resour
 
 	rt_db_free_internal( ip, resp );
 
+	ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	ip->idb_type = ID_BOT;
 	ip->idb_meth = &rt_functab[ID_BOT];
 	ip->idb_ptr = ip_bot;

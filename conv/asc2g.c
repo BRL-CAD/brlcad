@@ -1273,6 +1273,7 @@ polyhbld()
 
 	/* Convert the polysolid to a BoT */
 	RT_INIT_DB_INTERNAL(&intern);
+	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_POLY;
 	intern.idb_meth = &rt_functab[ID_POLY];
 	intern.idb_ptr = pg;
