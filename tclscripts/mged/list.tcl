@@ -11,17 +11,19 @@
 proc create_listbox { top screen type items abort_cmd } {
     toplevel $top -screen $screen
     frame $top.frame
-    listbox $top.listbox -yscrollcommand "$top.scrollbar set"
+    listbox $top.listbox -xscrollcommand "$top.hscrollbar set" -yscrollcommand "$top.vscrollbar set"
     foreach word $items {
 	$top.listbox insert end $word
     }
     # right justify
     $top.listbox xview 1000
-    scrollbar $top.scrollbar -command "$top.listbox yview"
+    scrollbar $top.hscrollbar -orient horizontal -command "$top.listbox xview"
+    scrollbar $top.vscrollbar -command "$top.listbox yview"
     button $top.abortB -text "Abort $type Selection" \
 	-command "$abort_cmd"
 
-    grid $top.listbox $top.scrollbar -sticky "nsew" -in $top.frame
+    grid $top.listbox $top.vscrollbar -sticky "nsew" -in $top.frame
+    grid $top.hscrollbar x -sticky "nsew" -in $top.frame
     grid $top.frame -sticky "nsew" -padx 8 -pady 8
     grid $top.abortB -padx 8 -pady 8
     grid columnconfigure $top.frame 0 -weight 1
