@@ -31,7 +31,7 @@ set mged_Priv(ellipses) {ehy ell ell1 epa sph}
 set mged_Priv(other_prims) {ars dsp epa eto extrude half part pipe sketch tor}
 
 # weak edit support for these primitives
-set mged_Priv(weak_prims) {arbn bot nmg}
+set mged_Priv(weak_prims) {bot nmg}
 
 if {![info exists tk_version]} {
     loadtk
@@ -720,11 +720,12 @@ hoc_register_menu_data "Edit" "Combination Editor" "Combination Editor"\
 menu .$id.menubar.create -title "Create" -tearoff $mged_default(tearoff_menus)
 
 .$id.menubar.create add cascade\
-	-label "Arb8" -underline 0 -menu .$id.menubar.create.arb8
+	-label "Arbs" -underline 0 -menu .$id.menubar.create.arb8
 .$id.menubar.create add cascade\
-	-label "Cones & Cyls" -underline 0 -menu .$id.menubar.create.cones
+	-label "Cones & Cylinders" -underline 0 -menu .$id.menubar.create.cones
 .$id.menubar.create add cascade\
 	-label "Ellipsoids" -underline 0 -menu .$id.menubar.create.ell
+.$id.menubar.create add separator
    
 menu .$id.menubar.create.arb8 -title "Arb8" -tearoff $mged_default(tearoff_menus)
 menu .$id.menubar.create.cones -title "Cones & Cyls" -tearoff $mged_default(tearoff_menus)
@@ -736,9 +737,21 @@ foreach ptype $mged_Priv(arb8) {
 	    -command "init_solid_create $id $ptype"
 
     set ksl {}
-    lappend ksl "summary \"Make a $ptype.\"" "see_also \"make, in\""
-    hoc_register_menu_data "Arb8" "$ptype..." "Make a $ptype" $ksl
+    lappend ksl "summary \"Make an $ptype.\"" "see_also \"make, in\""
+    hoc_register_menu_data "Arb8" "$ptype..." "Make an $ptype" $ksl
 }
+
+    .$id.menubar.create.arb8 add separator
+
+# separate the arbn from the other arb representations
+    set ptype arbn
+
+    .$id.menubar.create.arb8 add command -foreground firebrick4 -label "$ptype..."\
+	    -command "init_solid_create $id $ptype"
+    set ksl {}
+    lappend ksl "summary \"Make an $ptype (limited edit capabilities).\"" "see_also \"make, in\""
+    hoc_register_menu_data "Arb8" "$ptype..." "Make an $ptype" $ksl
+
 
 # populate "Cones & Cyls" menu
 foreach ptype $mged_Priv(cones) {
@@ -784,11 +797,11 @@ foreach ptype $mged_Priv(other_prims) {
 
 # populate the remainder of the Create menu with weak_prims
 foreach ptype $mged_Priv(weak_prims) {
-    .$id.menubar.create add command -label "$ptype..."\
+    .$id.menubar.create add command -foreground firebrick4 -label "$ptype..."\
 	    -command "init_solid_create $id $ptype"
 
     set ksl {}
-    lappend ksl "summary \"Make a $ptype.\"" "see_also \"make, in\""
+    lappend ksl "summary \"Make a $ptype (limited edit capability).\"" "see_also \"make, in\""
     hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 }
 
