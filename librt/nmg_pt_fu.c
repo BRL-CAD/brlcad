@@ -807,7 +807,7 @@ nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list
  * same edge.
  *
  */
-HIDDEN void
+HIDDEN void make_near_list( struct edge_info *edge_list, struct bu_list *near1)
 {
 	struct edge_info *ei;
 	struct edge_info *ei_p;
