@@ -286,7 +286,7 @@ class Sketch_editor {
 			return
 		}
 			
-		set dir_list [$item get_tangent_at_vertex $vertex]
+		set dir_list [$item get_tangent_at_vertex $common_vertex]
 		set dir(0) [lindex $dir_list 0]
 		set dir(1) [lindex $dir_list 1]
 
@@ -325,8 +325,36 @@ class Sketch_editor {
 			set dir(0) [expr { -$dir(0) } ]
 			set dir(1) [expr { -$dir(1) } ]
 		}
-		set center(0) [expr { [lindex $v1 0] + $new_radius * $dir(0) } ]
-		set center(1) [expr { [lindex $v1 1] + $new_radius * $dir(1) } ]
+		set vcom [lindex $VL $common_vertex]
+
+		# calculate arc centers in both directions
+		set centera(0) [expr { [lindex $vcom 0] + $new_radius * $dir(0) } ]
+		set centera(1) [expr { [lindex $vcom 1] + $new_radius * $dir(1) } ]
+		set centerb(0) [expr { [lindex $vcom 0] - $new_radius * $dir(0) } ]
+		set centerb(1) [expr { [lindex $vcom 1] - $new_radius * $dir(1) } ]
+
+		# choose the one that is the correct distance from the other vertex
+		if { $vcom == $v1 } {
+		    set vother $v2
+		} else {
+		    set vother $v1
+		}
+		set diff2(0) [expr { $centera(0) - [lindex $vother 0] } ]
+		set diff2(1) [expr { $centera(1) - [lindex $vother 1] } ]
+		set dista [expr { abs( sqrt( $diff2(0) * $diff2(0) + $diff2(1) * $diff2(1)) - $new_radius)}]
+
+		set diff2(0) [expr { $centerb(0) - [lindex $vother 0] } ]
+		set diff2(1) [expr { $centerb(1) - [lindex $vother 1] } ]
+		set distb [expr { abs( sqrt( $diff2(0) * $diff2(0) + $diff2(1) * $diff2(1)) - $new_radius)}]
+
+		if { $dista < $distb } {
+		    set center(0) $centera(0)
+		    set center(1) $centera(1)
+		} else {
+		    set center(0) $centerb(0)
+		    set center(1) $centerb(1)
+		}
+
 		set diff2(0) [expr { $center(0) - [lindex $v2 0] } ]
 		set diff2(1) [expr { $center(1) - [lindex $v2 1] } ]
 		set cross [cross2d diff2 diff]
@@ -637,14 +665,14 @@ class Sketch_editor {
 	}
 
 	method describe {} {
-		puts stderr "Sketch: $sketch_name"
-		puts stderr "Scale Factor = $myscale"
-		puts stderr "conversion factors: to local = $tolocal to base = $tobase"
-		puts stderr "V = ($V(0), $V(1), $V(2)), A = ($A(0), $A(1), $A(2)), B = ($B(0), $B(1), $B(2))"
-		puts stderr "Vertex List:"
+		puts "Sketch: $sketch_name"
+		puts "Scale Factor = $myscale"
+		puts "conversion factors: to local = $tolocal to base = $tobase"
+		puts "V = ($V(0), $V(1), $V(2)), A = ($A(0), $A(1), $A(2)), B = ($B(0), $B(1), $B(2))"
+		puts "Vertex List:"
 		set index 0
 		foreach vertex $VL {
-			puts stderr "\tvertex #$index = ($vertex)"
+			puts "\tvertex #$index = ($vertex)"
 			incr index
 		}
 		foreach seg $segments {
@@ -1431,6 +1459,7 @@ class Sketch_editor {
 		set new_seg [Sketch_line #auto $this $itk_component(canvas) "S $index1 E $index2"]
 		lappend segments ::Sketch_editor::$new_seg
 		set needs_saving 1
+		draw_verts
 		draw_segs
 		$itk_component(status_line) configure -text "Click and hold mouse button 1 to adjust end point\n\
 			or click mouse button 3 to select an existing vertex to set the endpoint\n\
@@ -1439,8 +1468,8 @@ class Sketch_editor {
 		bind $itk_component(canvas) <ButtonPress-1> [code $this continue_line $new_seg 2 1 %x %y]
 		bind $itk_component(canvas) <ButtonRelease-1> [code $this continue_line $new_seg 1 1 %x %y]
 		bind $itk_component(canvas) <ButtonRelease-3> [code $this continue_line_pick $new_seg %x %y]
-		bind $itk_component(coords).x <Return> [code $this continue_line $new_seg 1 0 0 0]
-		bind $itk_component(coords).y <Return> [code $this continue_line $new_seg 1 0 0 0]
+		bind $itk_component(coords).x <Return> [code $this continue_line $new_seg 2 0 0 0]
+		bind $itk_component(coords).y <Return> [code $this continue_line $new_seg 2 0 0 0]
 	}
 
 	method continue_line_pick { seg x y } {
@@ -1485,8 +1514,8 @@ class Sketch_editor {
 			bind $itk_component(coords).x <Return> {}
 			bind $itk_component(coords).y <Return> {}
 			$itk_component(status_line) configure -text ""
-			draw_verts
 		}
+		draw_verts
 	}
 
 	method get_tangent_at_vertex { index exclude } {
