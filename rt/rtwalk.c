@@ -453,6 +453,7 @@ write_matrix(frame)
 	vect_t	view;
 
 	fprintf(outfp, "start %d;\n", frame);
+	fprintf(outfp, "clean;\n");
 	fprintf(outfp, "viewsize %g;\n", viewsize);
 	fprintf(outfp, "eye_pt %g %g %g;\n", V3ARGS(pt_prev_step) );
 	fprintf(outfp, "lookat_pt %g %g %g  0;\n", V3ARGS(goal_point) );
