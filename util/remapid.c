@@ -863,7 +863,7 @@ char	*db_name;
 	bu_log("Cannot open database file '%s'\n", db_name);
 	exit (1);
     }
-    db_scan(dbip, (int (*)()) db_diradd, 1, NULL);
+    db_dirbuild(dbip);
 
     for (i = 0; i < RT_DBNHASH; ++i)
 	for (dp = dbip -> dbi_Head[i]; dp != DIR_NULL; dp = dp -> d_forw)
