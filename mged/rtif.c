@@ -1368,6 +1368,7 @@ char	**argv;
 	int use_input_orig = 0;
 	vect_t	center_model;
 	vect_t dir;
+	vect_t cml;
 	register int i;
 	register struct solid *sp;
 	char line[MAXLINE];
@@ -1393,7 +1394,6 @@ char	**argv;
 
 	vp = &rt_cmd_vec[0];
 	*vp++ = "nirt";
-	*vp++ = "-M";
 
 	/* swipe x, y, z off the end if present */
 	if(argc > 3){
@@ -1424,14 +1424,36 @@ char	**argv;
 	  VSET(center_model, -view_state->vs_toViewcenter[MDX],
 	       -view_state->vs_toViewcenter[MDY], -view_state->vs_toViewcenter[MDZ]);
 	}
+	if( mged_variables->mv_perspective_mode )
+	{
+		point_t pt, eye;
+
+		/* get eye point */
+		VSET(pt, 0.0, 0.0, 1.0);
+		MAT4X3PNT(eye, view_state->vs_view2model, pt);
+		VSCALE(eye, eye, base2local);
+
+		/* point passed in is actually the aim point */
+		VSCALE(cml, center_model, base2local);
+		VSUB2(dir, cml, eye);
+		VUNITIZE(dir);
+
+		/* copy eye point to cml (cml is used for the "xyz" command to nirt */
+		VMOVE(cml, eye);
+	} else {
+		VSCALE(cml, center_model, base2local);
+		VMOVEN(dir, view_state->vs_Viewrot + 8, 3);
+		VSCALE(dir, dir, -1.0);
+	}
+
+	bu_vls_init(&p_vls);
+	bu_vls_printf(&p_vls, "xyz %lf %lf %lf;",
+		cml[X], cml[Y], cml[Z]);
+	bu_vls_printf(&p_vls, "dir %lf %lf %lf; s",
+		dir[X], dir[Y], dir[Z]);
 
 	i = 0;
 	if(QRAY_GRAPHICS){
-	  vect_t cml;
-
-	  VSCALE(cml, center_model, base2local);
-	  VMOVEN(dir, view_state->vs_Viewrot + 8, 3);
-	  VSCALE(dir, dir, -1.0);
 
 	  *vp++ = "-e";
 	  *vp++ = QRAY_FORMAT_NULL;
@@ -1440,12 +1462,7 @@ char	**argv;
 	  *vp++ = "-e";
 	  *vp++ = QRAY_FORMAT_P;
 
-	  bu_vls_init(&p_vls);
-	  bu_vls_printf(&p_vls, "xyz %lf %lf %lf;",
-			cml[X], cml[Y], cml[Z]);
-	  bu_vls_printf(&p_vls, "dir %lf %lf %lf;",
-			dir[X], dir[Y], dir[Z]);
-	  bu_vls_printf(&p_vls, "s; fmt r \"\\n\"");
+	  /* ray start, direction, and 's' command */
 	  *vp++ = "-e";
 	  *vp++ = bu_vls_addr(&p_vls);
 
@@ -1453,15 +1470,15 @@ char	**argv;
 	  *vp++ = "-e";
 	  *vp++ = QRAY_FORMAT_O;
 
+	  /* ray start, direction, and 's' command */
+	  *vp++ = "-e";
+	  *vp++ = bu_vls_addr(&p_vls);
+
 	  if(QRAY_TEXT){
 	    char *cp;
 	    int count;
 
 	    bu_vls_init(&o_vls);
-	    bu_vls_printf(&o_vls, "xyz %lf %lf %lf;",
-			  cml[X], cml[Y], cml[Z]);
-	    bu_vls_printf(&o_vls, "dir %lf %lf %lf;",
-			  dir[X], dir[Y], dir[Z]);
 
 	    /* get 'r' format now; prepend its' format string with a newline */
 	    val = bu_vls_addr(&qray_fmts[0].fmt);
@@ -1485,9 +1502,9 @@ char	**argv;
 
 done:
 	    if(*val == '\0')
-	      bu_vls_printf(&o_vls, "s; fmt r \"\\n\" ");
+	      bu_vls_printf(&o_vls, " fmt r \"\\n\" ");
 	    else{
-	      bu_vls_printf(&o_vls, "s; fmt r \"\\n%*s\" ", count, val);
+	      bu_vls_printf(&o_vls, " fmt r \"\\n%*s\" ", count, val);
 	      if(count)
 		val += count + 1;
 	      bu_vls_printf(&o_vls, "%s", val);
@@ -1522,6 +1539,9 @@ done:
 	  *vp++ = "-e";
 	  *vp++ = bu_vls_addr(&qray_script);
 	}
+
+        *vp++ = "-e";
+        *vp++ = bu_vls_addr(&p_vls);
 
 	for( i=1; i < argc; i++ )
 		*vp++ = argv[i];
@@ -1582,14 +1602,13 @@ done:
 	(void)close( pipe_err[1] );
 	fp_err = fdopen( pipe_err[0], "r" );
 
-	/* As parent, send view information down pipe */
-	rt_write(fp_in, center_model );
+	/* send quit command to nirt */
+	fwrite( "q\n", 1, 2, fp_in );
 	(void)fclose( fp_in );
 
+	bu_vls_free(&p_vls);   /* use to form "partition" part of nirt command above */
 	if(QRAY_GRAPHICS){
-#if 1
-	  bu_vls_free(&p_vls);   /* use to form "partition" part of nirt command above */
-#endif
+
 	  if(QRAY_TEXT)
 	    bu_vls_free(&o_vls); /* used to form "overlap" part of nirt command above */
 
