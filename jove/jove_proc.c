@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.3  91/08/30  17:49:13  mike
+ * Paul Stay mods for ANSI C
+ * 
  * Revision 2.2  87/04/14  20:11:25  dpk
  * Added hack for supporting CRAY.
  * 
@@ -30,7 +33,7 @@ static char RCSid[] = "@(#)$Header$";
    and buffer to shell commands.  It isn't especially neat, but I think
    it is understandable. */
 
-#include "jove.h"
+#include "./jove.h"
 
 #include <signal.h>
 

@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.0  84/12/26  16:46:58  dpk
+ * System as distributed to Berkeley 26 Dec 84
+ * 
  * Revision 1.2  83/12/16  00:08:53  dpk
  * Added distinctive RCS header
  * 
@@ -20,7 +23,7 @@ static char RCSid[] = "@(#)$Header$";
    Creation of marks, and routines to adjust the marks after insertion
    or deletion.  */
 
-#include "jove.h"
+#include "./jove.h"
 
 MARK *
 DoMakeMark(buf, line, column)

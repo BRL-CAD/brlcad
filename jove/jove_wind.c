@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.0  84/12/26  16:49:18  dpk
+ * System as distributed to Berkeley 26 Dec 84
+ * 
  * Revision 1.2  83/12/16  00:09:58  dpk
  * Added distinctive RCS header
  * 
@@ -19,8 +22,8 @@ static char RCSid[] = "@(#)$Header$";
 
    This creates/deletes/divides/grows/shrinks windows.  */
 
-#include "jove.h"
-#include "termcap.h"
+#include "./jove.h"
+#include <termcap.h>
 
 char	onlyone[] = "You only have one window!";
 char	toosmall[] = "too small";

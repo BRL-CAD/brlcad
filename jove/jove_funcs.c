@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.1  91/08/30  17:49:06  mike
+ * Paul Stay mods for ANSI C
+ * 
  * Revision 2.0  84/12/26  16:46:12  dpk
  * System as distributed to Berkeley 26 Dec 84
  * 
@@ -21,6 +24,9 @@ static char RCSid[] = "@(#)$Header$";
  * $Revision$
  *
  * $Log$
+ * Revision 2.1  91/08/30  17:49:06  mike
+ * Paul Stay mods for ANSI C
+ * 
  * Revision 2.0  84/12/26  16:46:12  dpk
  * System as distributed to Berkeley 26 Dec 84
  * 
@@ -43,7 +49,7 @@ static char RCSid[] = "@(#)$Header$";
    This is like the second half of jove_extend.c.  It was divided
    because the file was taking too long to compile ... 
  */
-#include "jove.h"
+#include "./jove.h"
 
 static int	nfuncs = 0,
 		nmacros = 0,

@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.1  91/08/30  17:49:04  mike
+ * Paul Stay mods for ANSI C
+ * 
  * Revision 2.0  84/12/26  16:45:54  dpk
  * System as distributed to Berkeley 26 Dec 84
  * 
@@ -23,9 +26,9 @@ static char RCSid[] = "@(#)$Header$";
    This contains, among other things, the modeline formatting, and the
    message routines (for prompting).  */
 
-#include "jove.h"
+#include "./jove.h"
 
-#include "termcap.h"
+#include <termcap.h>
 
 char mesgbuf[100];
 
@@ -261,7 +264,7 @@ PrevPage()
    information in them, or temporarily writing over the user's text. */
 
 
-#include "termcap.h"
+#include <termcap.h>
 
 static char	*BufToUse;	/* Buffer to pop to if we are using buffers */
 static WINDOW	*LastW;		/* Save old window here so we can return */

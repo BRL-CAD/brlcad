@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.3  88/03/10  05:25:54  phil
+ * ignore ll if li != winsize
+ * 
  * Revision 2.2  85/05/14  01:43:59  dpk
  * Added changes to support System V (conditional on SYS5)
  * 
@@ -37,9 +40,9 @@ static char RCSid[] = "@(#)$Header$";
    write what is already there.  It keeps an exact image of the screen
    in the Screen array.  */
 
-#include "jove.h"
-#include "jove_temp.h"
-#include "termcap.h"
+#include "./jove.h"
+#include "./jove_temp.h"
+#include <termcap.h>
 
 extern int	BufSize;
 

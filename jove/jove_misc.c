@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.4  91/08/30  17:49:12  mike
+ * Paul Stay mods for ANSI C
+ * 
  * Revision 2.3  87/04/14  22:46:43  dpk
  * Fixed bug in paragraph justification.
  * 
@@ -32,7 +35,7 @@ static char RCSid[] = "@(#)$Header$";
    Various commands that are (by default) invoked by ESC-key.
    Not a very good name since the ESC key can be rebound...  */
 
-#include "jove.h"
+#include "./jove.h"
 
 #include <ctype.h>
 #include <signal.h>

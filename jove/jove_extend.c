@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.3  91/08/30  17:49:05  mike
+ * Paul Stay mods for ANSI C
+ * 
  * Revision 2.2  87/04/14  20:18:43  dpk
  * Fixed casting on RunEdit call
  * 
@@ -30,7 +33,7 @@ static char RCSid[] = "@(#)$Header$";
    various random routines.  This is not well organized...use the
    tags feature of jove to find your way around...  */
 
-#include "jove.h"
+#include "./jove.h"
 
 int	InJoverc = 0;
 

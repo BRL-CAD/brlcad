@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.3  91/08/30  17:49:08  mike
+ * Paul Stay mods for ANSI C
+ * 
  * Revision 2.2  87/04/14  20:27:17  dpk
  * Commented out the bcopy routine.  Will use memcpy for bcopy.
  * 
@@ -35,8 +38,8 @@ static char RCSid[] = "@(#)$Header$";
   
    Commands to read/write files/regions.  */
 
-#include "jove.h"
-#include "termcap.h"
+#include "./jove.h"
+#include <termcap.h>
 
 #include <errno.h>
 #include <sys/types.h>
@@ -534,7 +537,7 @@ long	offset;
    Much of this code was lifted from VI (ex_temp.c).  These functions
    deal with (put/get)ing lines in/from the tmp file.  */
 
-#include "jove_temp.h"
+#include "./jove_temp.h"
 
 int	DOLsave = 0;	/* Do Lsave flag.  If lines aren't being save
 			   when you think they should have been, this

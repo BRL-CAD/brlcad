@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.1  91/08/30  17:48:53  mike
+ * Paul Stay mods for ANSI C
+ * 
  * Revision 2.0  84/12/26  16:45:00  dpk
  * System as distributed to Berkeley 26 Dec 84
  * 
@@ -22,7 +25,7 @@ static char RCSid[] = "@(#)$Header$";
    Contains commands that deal with creating, selecting, killing and
    listing buffers.  (And find-file) */
 
-#include "jove.h"
+#include "./jove.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>

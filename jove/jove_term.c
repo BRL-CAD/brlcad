@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.4  91/08/30  17:49:16  mike
+ * Paul Stay mods for ANSI C
+ * 
  * Revision 2.3  88/03/10  05:25:30  phil
  * ignore ll if li != winsize
  * 
@@ -43,7 +46,7 @@ static char RCSid[] = "@(#)$Header$";
    Gets the termcap information and complains if there are not enough
    of the basic features on the particular terminal. */
 
-#include "jove.h"
+#include "./jove.h"
 #ifndef SYS5
 #include <sgtty.h>
 #else

@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.1  91/08/30  17:49:14  mike
+ * Paul Stay mods for ANSI C
+ * 
  * Revision 2.0  84/12/26  16:47:42  dpk
  * System as distributed to Berkeley 26 Dec 84
  * 
@@ -24,7 +27,7 @@ static char RCSid[] = "@(#)$Header$";
    modified a lot and features have been added, but the general algorithm
    is the same. */
 
-#include "jove.h"
+#include "./jove.h"
 
 #define	CBRA		1	/* \( */
 #define	CCHR		2	/* Normal comparisn */

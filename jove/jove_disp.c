@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.1  85/01/17  23:57:57  dpk
+ * Added minimal blit support, more to come...
+ * 
  * Revision 2.0  84/12/26  16:45:33  dpk
  * System as distributed to Berkeley 26 Dec 84
  * 
@@ -25,8 +28,8 @@ static char RCSid[] = "@(#)$Header$";
    movement and intraline movement, taking advantage of insert/delete
    line/character features of the terminal (if they exist).  */
 
-#include "jove.h"
-#include "termcap.h"
+#include "./jove.h"
+#include <termcap.h>
 
 #include <signal.h>
 

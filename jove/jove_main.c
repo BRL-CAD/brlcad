@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.12  91/08/30  17:49:09  mike
+ * Paul Stay mods for ANSI C
+ * 
  * Revision 2.11  87/09/16  21:28:40  mike
  * Hopefully, the Final Word on the SysV "poll" for input
  * code.
@@ -65,8 +68,8 @@ static char RCSid[] = "@(#)$Header$";
 
    Contains the main loop, initializations, getch routine... */
 
-#include "jove.h"
-#include "termcap.h"
+#include "./jove.h"
+#include <termcap.h>
 
 #include <signal.h>
 #ifndef SYS5

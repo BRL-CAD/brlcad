@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.0  84/12/26  16:45:11  dpk
+ * System as distributed to Berkeley 26 Dec 84
+ * 
  * Revision 1.2  83/12/16  00:07:20  dpk
  * Added distinctive RCS header
  * 
@@ -19,7 +22,7 @@ static char RCSid[] = "@(#)$Header$";
 
    contains commands for C mode, paren matching routines are in here. */
 
-#include "jove.h"
+#include "./jove.h"
 
 BUFLOC *
 m_paren(orig, stop)

@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.0  84/12/26  16:45:23  dpk
+ * System as distributed to Berkeley 26 Dec 84
+ * 
  * Revision 1.2  83/12/16  00:07:27  dpk
  * Added distinctive RCS header
  * 
@@ -22,7 +25,7 @@ static char RCSid[] = "@(#)$Header$";
    uses some of the same stuff, but doesn't save the text in the
    kill-buffer.  */
 
-#include "jove.h"
+#include "./jove.h"
 
 int diffnum = 0;
 

@@ -4,6 +4,9 @@
  * $Revision$
  *
  * $Log$
+ * Revision 2.0  84/12/26  16:46:25  dpk
+ * System as distributed to Berkeley 26 Dec 84
+ * 
  * Revision 1.2  83/12/16  00:08:22  dpk
  * Added distinctive RCS header
  * 
@@ -18,7 +21,7 @@ static char RCSid[] = "@(#)$Header$";
    Insert routines: the routine to Yank from the kill buffer
    and to insert lines, and characters into the buffer.  */
 
-#include "jove.h"
+#include "./jove.h"
 
 /* Make a newline after `after' or course in `buf' */
 
