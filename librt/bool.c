@@ -684,7 +684,9 @@ OVERLAP4: depth %.5fmm at (%g,%g,%g) x%d y%d lvl%d\n",
 		pp->pt_outseg->seg_stp->st_name,
 		depth, pt[X], pt[Y], pt[Z],
 		ap->a_x, ap->a_y, ap->a_level );
-rt_pr_partitions( ap->a_rt_i, pheadp, "Entire partition containing overlap");
+#if 0
+	rt_pr_partitions( ap->a_rt_i, pheadp, "Entire ray containing overlap");
+#endif
 
 	/*
 	 *  Apply heuristics as to which region should claim partition.
@@ -701,6 +703,7 @@ choose:
 		if( pp->pt_back->pt_regionp == reg2 )
 			return 2;
 	}
+
 	/* To provide some consistency from ray to ray, use lowest bit # */
 	if( reg1->reg_bit < reg2->reg_bit )
 		return 1;
@@ -756,25 +759,45 @@ struct partition	*InputHdp;
 		 */
 		if( lastregion->reg_aircode != 0 && regp->reg_aircode == 0 )  {
 			/* last region is air, replace with solid regp */
-			code = 2;
+			goto code2;
 		} else if( lastregion->reg_aircode == 0 && regp->reg_aircode != 0 )  {
 			/* last region solid, regp is air, keep last */
-			code = 1;
+			goto code1;
 		} else if( lastregion->reg_aircode != 0 &&
 		    regp->reg_aircode != 0 &&
 		    regp->reg_aircode == lastregion->reg_aircode )  {
 		    	/* both are same air, keep last */
-		    	code = 1;
-		} else {
-		   	/*
-		   	 *  Hand overlap to old-style application-specific
-		   	 *  overlap handler, or default.
-			 *	0 = destroy partition,
-			 *	1 = keep part, claiming region=lastregion
-			 *	2 = keep part, claiming region=regp
-		   	 */
-			code = ap->a_overlap(ap, pp, lastregion, regp, InputHdp);
+			goto code1;
 		}
+
+
+		/*
+		 *  To support ray bundles, find partition with the lower
+		 *  contributing ray number (closer to center of bundle),
+		 *  and retain that one.
+		 */
+		{
+			int	r1 = rt_tree_max_raynum( lastregion->reg_treetop, pp );
+			int	r2 = rt_tree_max_raynum( regp->reg_treetop, pp );
+			/* Only use this algorithm if one is not the main ray */
+			if( r1 > 0 || r2 > 0 )  {
+/* if(rt_g.debug&DEBUG_PARTITION) */
+bu_log("Potential overlay along ray bundle: r1=%d, r2=%d, resolved to %s\n", r1, r2,
+(r1<r2)?lastregion->reg_name:regp->reg_name);
+				if( r1 < r2 )
+					goto code1;	/* keep lastregion */
+				goto code2;		/* keep regp */
+			}
+		}
+
+	   	/*
+	   	 *  Hand overlap to old-style application-specific
+	   	 *  overlap handler, or default.
+		 *	0 = destroy partition,
+		 *	1 = keep part, claiming region=lastregion
+		 *	2 = keep part, claiming region=regp
+	   	 */
+		code = ap->a_overlap(ap, pp, lastregion, regp, InputHdp);
 
 		/* Implement the policy in "code" */
 		if( code == 0 )  {
@@ -785,11 +808,13 @@ struct partition	*InputHdp;
 			bu_ptbl_reset(regiontable);
 			return;
 		} else if( code == 1 ) {
+code1:
 			/* Keep partition, claiming region = lastregion */
 			if(rt_g.debug&DEBUG_PARTITION)  bu_log("rt_default_multioverlap:  overlap code=%d, p retained in region=%s\n",
 				code, lastregion->reg_name );
 			BU_PTBL_CLEAR_I(regiontable, i);
 		} else {
+code2:
 			/* Keep partition, claiming region = regp */
 			bu_ptbl_zero(regiontable, (long *)lastregion);
 			lastregion = regp;
@@ -1681,4 +1706,58 @@ register CONST struct partition	*pp;
 		}
 	}
 	return 1;
+}
+
+
+/*
+ *			R T _ T R E E _ M A X _ R A Y N U M
+ *
+ *  Find the maximum value of the raynum (seg_rayp->index)
+ *  encountered in the segments contributing to this region.
+ *
+ *  Returns -
+ *	#	Maximum ray index
+ *	-1	If no rays are contributing segs for this region.
+ */
+int
+rt_tree_max_raynum( tp, pp )
+register CONST union tree	*tp;
+register CONST struct partition	*pp;
+{
+	RT_CK_TREE(tp);
+	RT_CK_PARTITION(pp);
+
+	switch( tp->tr_op )  {
+	case OP_NOP:
+		return -1;
+
+	case OP_SOLID:
+		{
+			register struct soltab *seek_stp = tp->tr_a.tu_stp;
+			register struct seg **segpp;
+			for( BU_PTBL_FOR( segpp, (struct seg **), &pp->pt_seglist ) )  {
+				if( (*segpp)->seg_stp != seek_stp )  continue;
+				return (*segpp)->seg_in.hit_rayp->index;
+			}
+		}
+		/* Maybe it hasn't been shot yet, or ray missed */
+		return -1;
+
+	case OP_NOT:
+		return rt_tree_max_raynum( tp->tr_b.tb_left, pp );
+
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+		{
+			int a = rt_tree_max_raynum( tp->tr_b.tb_left, pp );
+			int b = rt_tree_max_raynum( tp->tr_b.tb_right, pp );
+			if( a > b )  return a;
+			return b;
+		}
+	default:
+		bu_bomb("rt_tree_max_raynum: bad op\n");
+	}
+	return 0;
 }
