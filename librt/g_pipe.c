@@ -1174,6 +1174,7 @@ int *nh;
 				continue;
 			}
 		}
+		first = RT_LIST_NEXT( hit_list, &first->l );
 	}
 }
 
