@@ -35,6 +35,10 @@
 #ifndef RAYTRACE_H
 #define RAYTRACE_H seen
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define RAYTRACE_H_VERSION	"@(#)$Header$ (BRL)"
 
 /*
@@ -1118,8 +1122,19 @@ struct rt_g {
 	struct rt_list	rtg_vlfree;	/* head of rt_vlist freelist */
 	int		rtg_logindent;	/* rt_log() indentation level */
 	int		NMG_debug;	/* debug bits for NMG's see nmg.h */
+	int		rtg_setjmp_valid;/* !0 = rtg_jmpbuf is valid */
+	int		rtg_jmpbuf[64];	/* for RT_SETJMP.  should be jmp_buf */
 };
 extern struct rt_g rt_g;
+
+/*
+ *  Macros used for automatic restart capability in rt_bomb().
+ * The return from this macro is the return from the setjmp().
+ * It is 0 on the first pass through, and non-zero when
+ * re-entered via a longjmp().
+ */
+#define RT_SETJUMP	(rt_g.rtg_setjmp_valid=1,setjmp((int *)rt_g.rtg_jmpbuf))
+#define RT_UNSETJUMP	(rt_g.rtg_setjmp_valid=0)
 
 /*
  *			R T _ I
@@ -1759,7 +1774,7 @@ RT_EXTERN(void rt_badmagic, (long *ptr, long magic, char *str,
 /* inout.c */
 RT_EXTERN( unsigned char *rt_plong, (unsigned char *msgp, unsigned long l) );
 RT_EXTERN( unsigned char *rt_pshort, (unsigned char *msgp, int s));
-RT_EXTERN( unsigned long rt_glong, (CONST char *msgp));
+RT_EXTERN( unsigned long rt_glong, (CONST unsigned char *msgp));
 RT_EXTERN( unsigned short rt_gshort, (CONST unsigned char *msgp));
 RT_EXTERN( int rt_struct_get, (struct rt_external *ext, FILE *fp));
 RT_EXTERN( int rt_struct_put, (FILE *fp, CONST struct rt_external *ext));
@@ -2009,5 +2024,9 @@ extern CONST double rt_inv255;
 extern CONST double rt_degtorad;
 extern CONST double rt_radtodeg;
 extern CONST mat_t  rt_identity;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* RAYTRACE_H */
