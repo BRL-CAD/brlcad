@@ -70,8 +70,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <errno.h>
-
 #include "pkg.h"
+
+#if defined(SYSV) && !defined(bzero)
+#	define bzero(str,n)		memset( str, '\0', n )
+#	define bcopy(from,to,count)	memcpy( to, from, count )
+#endif
 
 extern char *malloc();
 extern void perror();
