@@ -128,8 +128,8 @@ if [ ! -d ${REGRESS_DIR}/.regress.$ARCH ] ; then mkdir ${REGRESS_DIR}/.regress.$
 # run the build script out of the source tree
 #
 echo "Building source"
-echo "Running [./client_build.sh -d $REGRESS_DIR]"
-./client_build.sh -d $REGRESS_DIR
+echo "Running [client_build.sh -d $REGRESS_DIR]"
+`dirname $0`/client_build.sh -d $REGRESS_DIR
 
 releaseLock ${REGRESS_DIR}/start_${ARCH}.semaphore
 

@@ -89,7 +89,7 @@ echo "$HOSTNAME .regress.${ARCH} installation complete" >> ${REGRESS_DIR}/.regre
 cd $STARTPWD
 
 echo "Testing package"
-echo "Running [./client_test.sh -d $REGRESS_DIR]"
-./client_test.sh -d $REGRESS_DIR
+echo "Running [client_test.sh -d $REGRESS_DIR]"
+`dirname $0`/client_test.sh -d $REGRESS_DIR
 
 echo "Done client_build.sh"
