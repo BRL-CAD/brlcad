@@ -129,12 +129,13 @@ FBIO *_if_list[] = {
 #ifdef IF_UG
 	&ug_interface,
 #endif
-	&debug_interface,
-/* never get any of the following by default */
 #ifdef IF_X
 	&X24_interface,
 	&X_interface,
 #endif
+
+	&debug_interface,
+/* never get any of the following by default */
 #ifdef IF_AB
 	&abekas_interface,
 #endif
