@@ -153,6 +153,7 @@ char **argv;
 {
 	extern char *bu_optarg;
 	extern int bu_optind, bu_opterr, bu_optopt;
+	int	force_interactive = 0;
 	int	rateflag = 0;
 	int	c;
 	int	read_only_flag=0;
@@ -166,10 +167,13 @@ char **argv;
 	}
 #endif
 
-	while ((c = bu_getopt(argc, argv, "hnr")) != EOF)
+	while ((c = bu_getopt(argc, argv, "hinr")) != EOF)
 	{
 		switch( c )
 		{
+			case 'i':
+				force_interactive = 1;
+				break;
 			case 'r':
 				read_only_flag = 1;
 				break;
@@ -177,7 +181,7 @@ char **argv;
 				classic_mged = 1;
 				break;
 			case 'h':
-				fprintf(stdout, "Usage:  %s [-h] [-n] [-r] [database [command]]\n", argv[0]);
+				fprintf(stdout, "Usage:  %s [-h] [-i] [-n] [-r] [database [command]]\n", argv[0]);
 				fflush(stdout);
 				return(1);
 			default:
@@ -219,6 +223,9 @@ char **argv;
 	    }
 	  }
 	}
+
+	if( force_interactive )
+		interactive = 1;
 
 	(void)signal( SIGPIPE, SIG_IGN );
 
