@@ -39,6 +39,9 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include "shadework.h"
 #include "../rt/rdebug.h"
 
+#define MFUNCS(_name)	\
+	{ extern struct mfuncs _name[]; mlib_add_shader( headp, _name ); }
+
 /*
  *			O P T I C A L _ S H A D E R _ I N I T
  */
@@ -50,51 +53,26 @@ struct mfuncs	**headp;
 	 *  Connect up shader ("material") interfaces
 	 *  Note that sh_plastic.c defines the required "default" entry.
 	 */
-	{
-		extern struct mfuncs phg_mfuncs[];
-		extern struct mfuncs light_mfuncs[];
-		extern struct mfuncs cloud_mfuncs[];
-		extern struct mfuncs spm_mfuncs[];
-		extern struct mfuncs txt_mfuncs[];
-		extern struct mfuncs stk_mfuncs[];
-		extern struct mfuncs cook_mfuncs[];
-		extern struct mfuncs marble_mfuncs[];
-		extern struct mfuncs stxt_mfuncs[];
-		extern struct mfuncs points_mfuncs[];
-		extern struct mfuncs toyota_mfuncs[];
-		extern struct mfuncs wood_mfuncs[];
-		extern struct mfuncs camo_mfuncs[]; 
-		extern struct mfuncs scloud_mfuncs[];
-		extern struct mfuncs air_mfuncs[];
-		extern struct mfuncs rtrans_mfuncs[];
-		extern struct mfuncs fire_mfuncs[];
-		extern struct mfuncs brdf_mfuncs[];
-		extern struct mfuncs gauss_mfuncs[];
-		extern struct mfuncs gravel_mfuncs[];
-		extern struct mfuncs prj_mfuncs[];
-		extern struct mfuncs grass_mfuncs[];
-
-		mlib_add_shader( headp, phg_mfuncs );
-		mlib_add_shader( headp, light_mfuncs );
-		mlib_add_shader( headp, cloud_mfuncs );
-		mlib_add_shader( headp, spm_mfuncs );
-		mlib_add_shader( headp, txt_mfuncs );
-		mlib_add_shader( headp, stk_mfuncs );
-		mlib_add_shader( headp, cook_mfuncs );
-		mlib_add_shader( headp, marble_mfuncs );
-		mlib_add_shader( headp, stxt_mfuncs );
-		mlib_add_shader( headp, points_mfuncs );
-		mlib_add_shader( headp, toyota_mfuncs );
-		mlib_add_shader( headp, wood_mfuncs );
-		mlib_add_shader( headp, camo_mfuncs );
-		mlib_add_shader( headp, scloud_mfuncs );
-		mlib_add_shader( headp, air_mfuncs );
-		mlib_add_shader( headp, rtrans_mfuncs );
-		mlib_add_shader( headp, fire_mfuncs );
-		mlib_add_shader( headp, brdf_mfuncs );
-		mlib_add_shader( headp, gauss_mfuncs );
-		mlib_add_shader( headp, gravel_mfuncs );
-		mlib_add_shader( headp, prj_mfuncs );
-		mlib_add_shader( headp, grass_mfuncs );
-	}
+	MFUNCS( phg_mfuncs );
+	MFUNCS( light_mfuncs );
+	MFUNCS( cloud_mfuncs );
+	MFUNCS( spm_mfuncs );
+	MFUNCS( txt_mfuncs );
+	MFUNCS( stk_mfuncs );
+	MFUNCS( cook_mfuncs );
+	MFUNCS( marble_mfuncs );
+	MFUNCS( stxt_mfuncs );
+	MFUNCS( points_mfuncs );
+	MFUNCS( toyota_mfuncs );
+	MFUNCS( wood_mfuncs );
+	MFUNCS( camo_mfuncs ); 
+	MFUNCS( scloud_mfuncs );
+	MFUNCS( air_mfuncs );
+	MFUNCS( rtrans_mfuncs );
+	MFUNCS( fire_mfuncs );
+	MFUNCS( brdf_mfuncs );
+	MFUNCS( gauss_mfuncs );
+	MFUNCS( gravel_mfuncs );
+	MFUNCS( prj_mfuncs );
+	MFUNCS( grass_mfuncs );
 }
