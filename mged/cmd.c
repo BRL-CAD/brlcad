@@ -33,6 +33,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #else
 #include <strings.h>
 #endif
+#include <sys/time.h>
+#include <time.h>
+
 #include "machine.h"
 #include "vmath.h"
 #include "db.h"
@@ -56,9 +59,9 @@ int	inpara;			/* parameter input from keyboard */
 extern int	cmd_glob();
 
 int	f_matpick();
-
 int	mged_cmd();
 int	f_sync();
+
 #ifdef MGED_TCL
 int	f_gui();
 
@@ -82,6 +85,7 @@ struct funtab {
 	int ft_min;
 	int ft_max;
 };
+
 static struct funtab funtab[] = {
 "", "", "Primary command Table.",
 	0, 0, 0,
@@ -187,7 +191,7 @@ static struct funtab funtab[] = {
 "help", "[commands]", "give usage message for given commands",
 	f_help,0,MAXARGS,
 "history", "[-delays]", "describe command history",
-	f_history, 1, 2,
+	f_history, 1, 4,
 "i", "obj combination [operation]", "add instance of obj to comb",
 	f_instance,3,4,
 "idents", "file object(s)", "make ascii summary of region idents",
@@ -384,9 +388,13 @@ static struct funtab funtab[] = {
 	0, 0, 0,
 };
 
+
+
 /*
  *	H I S T O R Y _ R E C O R D
  *
+ *	Stores the given command with start and finish times in the
+ *	  history vls'es.
  */
 
 void
@@ -402,15 +410,19 @@ struct timeval *start, *finish;
 	rt_vls_init( &timing );
 	if( done != 0 ) {
 		if( lastfinish.tv_usec > start->tv_usec ) {
-			rt_vls_printf( &timing, "delay %ld %ld\n",
+			rt_vls_printf( &timing, "delay %ld %08ld\n",
 			    start->tv_sec - lastfinish.tv_sec - 1,
 			    start->tv_usec - lastfinish.tv_usec + 1000000L );
 		} else {
-			rt_vls_printf( &timing, "delay %ld %ld\n",
+			rt_vls_printf( &timing, "delay %ld %08ld\n",
 				start->tv_sec - lastfinish.tv_sec,
 				start->tv_usec - lastfinish.tv_usec );
 		}
 	}		
+
+	/* As long as this isn't our first command to record after setting
+           up the journal (which would be "journal", which we don't want
+	   recorded!)... */
 
 	if( journalfp != NULL && !firstjournal ) {
 		rt_vls_fwrite( journalfp, &timing );
@@ -428,9 +440,13 @@ struct timeval *start, *finish;
 	rt_vls_free( &timing );
 }		
 
+
 /*
  *	F _ J O U R N A L
  *
+ *	Opens the journal file, so each command and the time since the previous
+ *	  one will be recorded.  Or, if called with no arguments, closes the
+ *	  journal file.
  */
 
 int
@@ -460,10 +476,12 @@ char **argv;
 	return CMD_OK;
 }
 
+
 /*
  *	F _ D E L A Y
  *
- * 	Uses select to delay for the specified amount of time.
+ * 	Uses select to delay for the specified amount of seconds and 
+ *	  microseconds.
  */
 
 int
@@ -480,10 +498,11 @@ char **argv;
 	return CMD_OK;
 }
 
+
 /*
  *	F _ H I S T O R Y
  *
- *	Prints out the command history. 
+ *	Prints out the command history, either to rt_log or to a file.
  */
 
 int
@@ -491,18 +510,52 @@ f_history( argc, argv )
 int argc;
 char **argv;
 {
-	if( argc == 2 )
-		if( strcmp(argv[1], "-delays") == 0 )
-			rt_log( rt_vls_addr(&replay_history) );
-		else {
-			rt_log( "history: invalid option %s\n", argv[1] );
-			return CMD_BAD;
+	FILE *fp;
+	struct rt_vls *which_history;
+
+	fp = NULL;
+	which_history = &history;
+
+	while( argc >= 2 ) {
+		if( strcmp(argv[1], "-delays") == 0 ) {
+			if( which_history == &replay_history ) {
+				rt_log( "history: -delays option given more than once\n" );
+				return CMD_BAD;
+			}
+			which_history = &replay_history;
+		} else if( strcmp(argv[1], "-outfile") == 0 ) {
+			if( fp != NULL ) {
+				rt_log( "history: -outfile option given more than once\n" );
+				return CMD_BAD;
+			} else if( argc < 3 || strcmp(argv[2], "-delays") == 0 ) {
+				rt_log( "history: I need a file name\n" );
+				return CMD_BAD;
+			} else {
+				fp = fopen( argv[2], "a+" );
+				if( fp == NULL ) {
+					rt_log( "history: error opening file" );
+					return CMD_BAD;
+				}
+				--argc;
+				++argv;
+			}
+		} else {
+			rt_log( "Invalid option %s\n", argv[1] );
 		}
-	else
-		rt_log( rt_vls_addr(&history) );
+		--argc;
+		++argv;
+	}
+
+	if( fp == NULL ) {
+		rt_log( rt_vls_addr(which_history) );
+	} else {
+		rt_vls_fwrite( fp, which_history );
+		fclose( fp );
+	}
 
 	return CMD_OK;
 }
+
 
 #ifdef MGED_TCL
 
@@ -669,46 +722,130 @@ Tcl_Interp *interp;
 int argc;
 char **argv;
 {
-	;
+	return TCL_OK;
 }
 
-
 /*
- *	S A V E _ H I S T O R Y
- *
- *	Saves the history to the given filename.
+ *	C M D _ N E X T
  */
 
 int
-save_history( clientData, interp, argc, argv )
+cmd_next( clientData, interp, argc, argv )
 ClientData clientData;
 Tcl_Interp *interp;
 int argc;
 char **argv;
 {
-	FILE *fp;
-
-	if( argc < 3 ) {
-		rt_log("save_history: Usage: %s history|replay_history fileName\n", argv[0]);
-		interp->result = "save_history: Insufficient args";
-		return TCL_ERROR;
-	}
-
-	fp = fopen( argv[2], "a+" );
-	if( fp == NULL ) {
-		rt_log("save_history: Error opening file\n");
-		interp->result = "save_history: Error opening file";
-		return TCL_ERROR;
-	}
-
-	if( strcmp( argv[1], "history" )==0 ) {
-		fprintf( fp, "%s", rt_vls_addr(&history) );
-	} else if( strcmp( argv[1], "replay_history" )==0 ) {
-		fprintf( fp, "%s", rt_vls_addr(&replay_history) );
-	}
-
-	fclose( fp );
 	return TCL_OK;
+}
+
+
+/*
+ *	G E T K N O B
+ *
+ *	Procedure called by the Tcl/Tk interface code to find the values
+ *	of the knobs/sliders.
+ */
+
+int
+getknob( clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	char *cmd;
+
+	if( argc < 2 ) {
+		interp->result = "getknob: need a knob name";
+		return TCL_ERROR;
+	}
+
+	cmd = argv[1];
+	switch( cmd[0] ) {
+	case 'x':
+		if( mged_variables.rateknobs )
+			sprintf(interp->result, "%lf", rate_rotate[X]);
+		else
+			sprintf(interp->result, "%lf", absolute_rotate[X]);
+		return TCL_OK;
+	case 'y':
+		if( mged_variables.rateknobs )
+			sprintf(interp->result, "%lf", rate_rotate[Y]);
+		else
+			sprintf(interp->result, "%lf", absolute_rotate[Y]);
+		return TCL_OK;
+	case 'z':
+		if( mged_variables.rateknobs )
+			sprintf(interp->result, "%lf", rate_rotate[Z]);
+		else	
+			sprintf(interp->result, "%lf", absolute_rotate[Z]);
+		return TCL_OK;
+	case 'X':
+		if( mged_variables.rateknobs )
+			sprintf(interp->result, "%lf", rate_slew[X]);
+		else
+			sprintf(interp->result, "0");
+		return TCL_OK;
+	case 'Y':
+		if( mged_variables.rateknobs )
+			sprintf(interp->result, "%lf", rate_slew[Y]);
+		else
+			sprintf(interp->result, "0");
+		return TCL_OK;
+	case 'Z':
+		if( mged_variables.rateknobs )
+			sprintf(interp->result, "%lf", rate_slew[Z]);
+		else
+			sprintf(interp->result, "0");
+		return TCL_OK;
+	case 'S':
+		if( mged_variables.rateknobs )
+			sprintf(interp->result, "%lf", rate_zoom);
+		else
+			sprintf(interp->result, "0");
+		return TCL_OK;
+	default:
+		interp->result = "getknob: invalid knob name";
+		return TCL_ERROR;
+	}
+}
+
+/*
+ *	G U I _ K N O B
+ *
+ *	Replaces the regular knob function.
+ *	All this one does is call the regular one knob function, then update
+ *	  the Tk sliders.
+ */
+
+int
+gui_knob( clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+	int result;
+
+	/* First, call regular "knob" function and proceed if ok. */
+	if((result=cmd_wrapper( clientData, interp, argc, argv )) == TCL_OK) { 
+		struct rt_vls tclcmd;
+
+		rt_vls_init( &tclcmd );
+		if( strcmp(argv[1], "zero") == 0 ) {
+			rt_vls_strcpy( &tclcmd, "sliders_zero" );
+		} else {
+			rt_vls_printf( &tclcmd, 
+    "global sliders; if { $sliders(exist) } then { .sliders.f.k%s set %d }",
+				argv[1], (int) (2048.0*atof(argv[2])) );
+		}
+
+		result = Tcl_Eval( interp, rt_vls_addr(&tclcmd) );
+		rt_vls_free( &tclcmd );
+	}
+
+	return result;
 }
 
 
@@ -728,8 +865,10 @@ char **argv;
 	rt_add_hook( gui_output );
 	Tcl_CreateCommand(interp, "cmdline", gui_cmdline, (ClientData)NULL,
 			  (Tcl_CmdDeleteProc *)NULL);
-	Tcl_CreateCommand(interp, "save_history", save_history,
-			  (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
+	Tcl_CreateCommand(interp, "getknob", getknob, (ClientData)NULL,
+			  (Tcl_CmdDeleteProc *)NULL);
+	Tcl_CreateCommand(interp, "knob", gui_knob, (ClientData)NULL,
+			  (Tcl_CmdDeleteProc *)NULL);
 	gui_mode = 1;
 	return CMD_OK;
 }
@@ -843,6 +982,7 @@ char **argv;
  *	!0	when a prompt needs to be printed.
  *	 0	no prompt needed.
  */
+
 int
 cmdline(vp)
 struct rt_vls	*vp;
