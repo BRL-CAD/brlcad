@@ -40,7 +40,7 @@ struct  frame {
 	int	tp;
 	int	tl;
 };
-#define MAGIC	0xdeadbeefL
+#define MAGIC	0x0deadbefL
 #define FLAG_CLEAN	0x1
 #define FLAG_SCRIPT	0x2
 
