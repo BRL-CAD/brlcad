@@ -186,21 +186,22 @@ l l.
 System Name	Configuration
 _	_
 alliant	Alliant FX/8 (8 CEs, 9 IPs, 64 Mbytes), Concentrix 3.0
+amber	HP 9000/720, 32 MB memory
 amsaa-seer	Gould PN 9080, w/MACCs, UTX 2.0, 4x4Mb mem boards
 ardec-3	Pyramid 90Mx, Dual-CPU, OSx 2.5, 16 Mbytes
-bob.brl.mil	Cray-2, SN 2009, 4.3ns clock
-brl-patton	Cray X-MP/48, SN213, UNICOS 5.0, 8.5ns clock
-brl-spark	Gould PN 9050, no MACC, UTX 2.0, 2x4Mb mem boards
-brl-sws2	Convex C120, 16 Mbytes, Convex Unix 6.2.32.2
-brl-vector	Alliant FX/80 (8 ACEs, 6 IPs, 32 Mbytes), Concentrix
-brl-venom	Alliant FX/8 (8 CEs, 6 IPs, 32 Mbytes), Concentrix
-brl-vgr	VAX 780, FPA, 4.3 BSD
-brl-virus	Sun-3/50, 15 Mhz clock, 12 Mhz 68881, Sun UNIX 3.2
-brl-vista	SGI 3030, w/FP chip, UNIX release 3.5
-brl-vmb	Gould PN 9080, no MACCs, UTX 2.0, 12x1Mb mem boards
-brl-vhs	Silicon Graphics 4D/60T, 12.5 Mhz clock 16 MB memory
-brl-voyage	Silicon Graphics 4D/120, 16.7 Mhz clock 16 MB memory 
-brl-taylor	Silicon Graphics 4D/220, 25 Mhz clock 16 MB memory
+bob	Cray-2, SN 2009, 4.3ns clock
+patton	Cray X-MP/48, SN213, UNICOS 5.0, 8.5ns clock
+spark	Gould PN 9050, no MACC, UTX 2.0, 2x4Mb mem boards
+sws2	Convex C120, 16 Mbytes, Convex Unix 6.2.32.2
+vector	Alliant FX/80 (8 ACEs, 6 IPs, 32 Mbytes), Concentrix
+venom	Alliant FX/8 (8 CEs, 6 IPs, 32 Mbytes), Concentrix
+vgr	VAX 780, FPA, 4.3 BSD
+virus	Sun-3/50, 15 Mhz clock, 12 Mhz 68881, Sun UNIX 3.2
+vista	SGI 3030, w/FP chip, UNIX release 3.5
+vmb	Gould PN 9080, no MACCs, UTX 2.0, 12x1Mb mem boards
+vhs	Silicon Graphics 4D/60T, 12.5 Mhz clock 16 MB memory
+ovoyage	Silicon Graphics 4D/120, 16.7 Mhz clock 16 MB memory 
+taylor	Silicon Graphics 4D/220, 25 Mhz clock 16 MB memory
 c1east	T{
 Convex C1 XP (2 IOPs, 4 Multibus, 64 Mbytes),
 S/W 6.0.1.12
@@ -215,6 +216,8 @@ MIPS Mseries, Release 0.6, UMIPS 2.1, 16 MB of R2350 RAM.
 R2000 CPU rev 5.0, R2010 FP rev 2.0
 T}
 multiflow	Multiflow Trace 7/200 (PRELIMINARY)
+nova	Sun SPARCserver 490, 32 Mb, 33 MHz clock, 33 MHz TI 8847 FPU, SunOS 4.1.1B
+rh2	Tektronix, Motorola 88000
 snm2	Cray 1-M, SN2, UNICOS 2.0
 sws1	Convex C1, ConvexOS 9.1 48MB memory
 tek4132	Tektronix 4132, 32082 fpp, UTek 2.3
@@ -226,6 +229,7 @@ vision	Sun-3/280, 16 MB memory
 vortac	Sun-3/160, 16.67 Mhz clock, 12 Mhz 68881, Sun 3.2
 walrus	Silicon Graphics 4D/280 25 Mhz clock 64 MB memory Irix 3.3.1
 whiz	Silicon Graphics 4D/240 25 Mhz clock 56 MB memory Irix 3.3.1
+whisper	Sun SPARCStation 1+
 wilted	Sun SPARCstation ELC , Diskless, 12MB memory Sun UNIX 4.1.1
 .TE
 .NH 1
@@ -521,6 +525,9 @@ _
 Abs	vector	5813.76	2260.61	1638.31	1422.82	2783.87	Alliant 3.0
 *vgr	vector	41.87	33.66	30.07	28.97	33.64	-P 8
 _
+Abs	amber	5901.29	2702.65	2096.35	1893.41	3148.42
+*vgr	amber	42.50	40.24	38.47	38.55	39.94	-P 1
+_
 Abs	bob	7934.12	3392.98	2119.11	1929.74	3843.98	UNICOS 4.0, /bin/cc
 *vgr	bob	64.69	57.18	45.78	41.99	52.41	-P 3
 _
@@ -555,8 +562,54 @@ _
 Abs	vhs	973.11	475.00	384.62	351.12	343.44	505.45	1
 *vgr	vhs	7.56	8.72	8.51	8.70	7.00	8.09	
 _
-Abs	voyage	1969.57	1001.21	862.77	809.61	786.11	1085.85	2
-*vgr	voyage	15.31	18.38	19.10	20.06	16.03	17.77	
+Abs	ovoyage	1969.57	1001.21	862.77	809.61	786.11	1085.85	2
+*vgr	ovoyage	15.31	18.38	19.10	20.06	16.03	17.77	
+_
+Abs	taylor	2446.98	1076.24	912.03	837.56	799.58	1214.47	1
+*vgr	taylor	19.02	19.75	20.19	20.75	16.31	19.20	
+_
+Abs	viper	3255.73	1368.96	1102.71	1039.37	1008.15	1554.98	8
+*vgr	viper	25.30	25.13	24.41	25.75	20.56	24.23  
+_
+Abs	vector	3956.86	1625.23	1234.03	1137.36	1121.41	1814.97	8
+*vgr	vector	30.75	29.83	27.31	28.18	22.87	27.78
+_
+Abs	taylor	4730.05	2225.56	1742.09	1590.57	1551.78	2368.01	2
+*vgr	taylor	36.76	40.85	38.56	39.41	31.65	37.44	
+_
+Abs	patton	16028.8	7289.7	4827.9	4392.5	20829.2	53368.1	4
+*vgr	patton	124.6	133.83	106.88	108.85	106.23	116.07
+.TE
+.bp
+.NH 1
+RELEASE 3.7 STATISTICS (19-June-1989)
+.LP
+.TS H
+expand box;
+l l | n n n n n | n | l.
+A/*	H/W	Moss	World	Star	Bldg	M35	Mean	P
+_
+.TH
+Abs	vgr	128.64	54.47	45.17	40.35	49.02	63.53	1
+*vgr	vgr	1.00	1.00	1.00	1.00	1.00	1.00	
+_
+Abs	rh2	1704.56	791.31	599.81	549.74	589.01	846.88	1
+*vgr	rh2	13.25	14.52	13.27	13.62	12.01	13.33
+_
+Abs	spark	435.69	208.59	176.76	177.69	174.67	234.68	1
+*vgr	spark	3.53	3.61	4.17	4.29	3.40	3.80	
+_
+Abs	vhs	973.11	475.00	384.62	351.12	343.44	505.45	1
+*vgr	vhs	7.56	8.72	8.51	8.70	7.00	8.09	
+_
+Abs	whisper	1118.35	561.81	473.52	439.76	509.26	620.54	1
+*vgr	whisper	8.69	10.31	10.48	10.89	10.38	10.15	
+_
+Abs	nova	2024.80	976.01	790.17	732.35	?	1130.83	1
+*vgr	nova	15.74	17.92	17.49	18.15	?	17.32
+_
+Abs	ovoyage	1969.57	1001.21	862.77	809.61	786.11	1085.85	2
+*vgr	ovoyage	15.31	18.38	19.10	20.06	16.03	17.77	
 _
 Abs	taylor	2446.98	1076.24	912.03	837.56	799.58	1214.47	1
 *vgr	taylor	19.02	19.75	20.19	20.75	16.31	19.20	
