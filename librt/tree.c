@@ -34,7 +34,7 @@ int rt_pure_boolean_expressions = 0;
 
 HIDDEN union tree *rt_drawobj();
 HIDDEN void rt_add_regtree();
-HIDDEN union tree *rt_make_bool_tree();
+HIDDEN union tree *rt_mkbool_tree();
 HIDDEN int rt_rpp_tree();
 HIDDEN char *rt_basename();
 HIDDEN struct region *rt_getregion();
@@ -595,7 +595,7 @@ struct mater_info *materp;
 
 	/* Build tree representing boolean expression in Member records */
 	if( rt_pure_boolean_expressions )  {
-		curtree = rt_make_bool_tree( trees, subtreecount, regionp );
+		curtree = rt_mkbool_tree( trees, subtreecount, regionp );
 	} else {
 		register struct tree_list *tstart;
 
@@ -617,7 +617,7 @@ struct mater_info *materp;
 				continue;
 			if( (j = tlp-tstart) <= 0 )
 				continue;
-			tstart->tl_tree = rt_make_bool_tree( tstart, j, regionp );
+			tstart->tl_tree = rt_mkbool_tree( tstart, j, regionp );
 			if(rt_g.debug&DEBUG_REGIONS) rt_pr_tree(tstart->tl_tree, 0);
 			/* has side effect of zapping all trees,
 			 * so build new first node */
@@ -625,7 +625,7 @@ struct mater_info *materp;
 			/* tstart here at union */
 			tstart = tlp;
 		}
-		curtree = rt_make_bool_tree( trees, subtreecount, regionp );
+		curtree = rt_mkbool_tree( trees, subtreecount, regionp );
 		if(rt_g.debug&DEBUG_REGIONS) rt_pr_tree(curtree, 0);
 	}
 
@@ -643,7 +643,7 @@ out:
 }
 
 /*
- *			R T _ M A K E _ B O O L _ T R E E
+ *			R T _ M K B O O L _ T R E E
  *
  *  Given a tree_list array, build a tree of "union tree" nodes
  *  appropriately connected together.  Every element of the
@@ -652,7 +652,7 @@ out:
  *  Returns a pointer to the top of the tree.
  */
 HIDDEN union tree *
-rt_make_bool_tree( tree_list, howfar, regionp )
+rt_mkbool_tree( tree_list, howfar, regionp )
 struct tree_list *tree_list;
 int howfar;
 struct region *regionp;
@@ -690,7 +690,7 @@ struct region *regionp;
 	/* Allocate all the tree structs we will need */
 	i = sizeof(union tree)*(inuse-1);
 	if( (xtp=(union tree *)rt_malloc( i, "tree array")) == TREE_NULL )
-		rt_bomb("rt_make_bool_tree: malloc failed\n");
+		rt_bomb("rt_mkbool_tree: malloc failed\n");
 	bzero( (char *)xtp, i );
 
 	curtree = first_tlp->tl_tree;
