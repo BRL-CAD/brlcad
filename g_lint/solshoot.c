@@ -24,17 +24,17 @@ static char RCSid[] = "@(#)$Header$ (ARL)";
 #include <stdio.h>
 #include <math.h>
 #include "machine.h"
+#include "bu.h"
 #include "vmath.h"
 #include "rtstring.h"
 #include "rtlist.h"
 #include "raytrace.h"
-#include "redblack.h"
 #include "../librt/debug.h"
 
 #define	TITLE_LEN		80
 #define	ORDER_BY_NAME		 0
 #define	ORDER_BY_DISTANCE	 1
-#define	made_it()		rt_log("Made it to %s:%d\n",	\
+#define	made_it()		bu_log("Made it to %s:%d\n",	\
 					__FILE__, __LINE__);
 
 /*
@@ -99,11 +99,11 @@ fastf_t	dist;
     struct sol_name_dist	*sp;
 
     sp = (struct sol_name_dist *)
-	    rt_malloc(sizeof(struct sol_name_dist), "solid name-and_dist");
+	    bu_malloc(sizeof(struct sol_name_dist), "solid name-and_dist");
     sp -> magic = SOL_NAME_DIST_MAGIC;
     sp -> name = name;
     sp -> dist = dist;
-    rt_log("Created solid (%s, %g)\n", sp -> name, sp -> dist);
+    bu_log("Created solid (%s, %g)\n", sp -> name, sp -> dist);
     return (sp);
 }
 
@@ -119,8 +119,8 @@ char	*vp;
 
     RT_CKMAG(sol, SOL_NAME_DIST_MAGIC, "solid name-and-dist");
 
-    rt_log("freeing solid (%s, %g)...\n", sol -> name, sol -> dist);
-    rt_free((char *) sol, "solid name-and-dist");
+    bu_log("freeing solid (%s, %g)...\n", sol -> name, sol -> dist);
+    bu_free((char *) sol, "solid name-and-dist");
 }
 
 /*
@@ -135,7 +135,7 @@ int	depth;
     struct sol_name_dist	*sol = vp;
 
     RT_CKMAG(sol, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
-    rt_log("solid %s at distance %g along ray\n", sol -> name, sol -> dist);
+    bu_log("solid %s at distance %g along ray\n", sol -> name, sol -> dist);
 }
 
 /*			R P T _ H I T
@@ -153,7 +153,7 @@ struct partition	*ph;
     struct partition		*pp;
     struct seg			*sh;
     struct seg			*sp;
-    rb_tree			*solids;
+    bu_rb_tree			*solids;
     struct sol_name_dist	*old_sol;
     struct sol_name_dist	*sol;
     static int			(*orders[])() =
@@ -162,17 +162,17 @@ struct partition	*ph;
 				    sol_comp_dist
 				};
 
-    rt_log("I hit it!\n");
+    bu_log("I hit it!\n");
     /*
      *	Initialize the solid list
      */
-    if ((solids = rb_create("Solid list", 2, orders)) == RB_TREE_NULL)
+    if ((solids = bu_rb_create("Solid list", 2, orders)) == RB_TREE_NULL)
     {
-	rt_log("%s: %d: rb_create() bombed\n", __FILE__, __LINE__);
+	bu_log("%s: %d: bu_rb_create() bombed\n", __FILE__, __LINE__);
 	exit (1);
     }
     solids -> rbt_print = print_solid;
-    rb_uniq_on(solids, ORDER_BY_NAME);
+    bu_rb_uniq_on(solids, ORDER_BY_NAME);
 
     /*
      *	Get the list of segments along this ray
@@ -194,36 +194,36 @@ struct partition	*ph;
 	    sp = (struct seg *) sp -> l.forw)
     {
 	RT_CKMAG(sp, RT_SEG_MAGIC, "seg structure");
-	rt_log("I saw solid %s at distance %g\n",
+	bu_log("I saw solid %s at distance %g\n",
 	    sp -> seg_stp -> st_name,
 	    sp -> seg_in.hit_dist);
 	
 	sol = mk_solid(sp -> seg_stp -> st_name, sp -> seg_in.hit_dist);
-	if (rb_insert(solids, (void *) sol) < 0)
+	if (bu_rb_insert(solids, (void *) sol) < 0)
 	{
-	    old_sol = (struct sol_name_dist *) rb_curr(solids, ORDER_BY_NAME);
+	    old_sol = (struct sol_name_dist *) bu_rb_curr(solids, ORDER_BY_NAME);
 	    RT_CKMAG(old_sol, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
 	    if (sol -> dist >= old_sol -> dist)
 		free_solid((char *) sol);
 	    else
 	    {
-		rb_delete(solids, ORDER_BY_NAME);
-		rb_insert(solids, sol);
+		bu_rb_delete(solids, ORDER_BY_NAME);
+		bu_rb_insert(solids, sol);
 		free_solid((char *) old_sol);
 	    }
 	}
     }
-    rt_log("\n- - - Solids along the ray - - -\n");
-    rb_walk(solids, ORDER_BY_DISTANCE, print_solid, INORDER);
+    bu_log("\n- - - Solids along the ray - - -\n");
+    bu_rb_walk(solids, ORDER_BY_DISTANCE, print_solid, INORDER);
 
-    rt_prmem("Before rb_free()...");
-    rb_diagnose_tree(solids, ORDER_BY_NAME, INORDER);
+    bu_prmem("Before bu_rb_free()...");
+    bu_rb_diagnose_tree(solids, ORDER_BY_NAME, INORDER);
 #if 0
-    rb_free(solids, RB_RETAIN_DATA);
+    bu_rb_free(solids, RB_RETAIN_DATA);
 #else
-    rb_free(solids, free_solid);
+    bu_rb_free(solids, free_solid);
 #endif
-    rt_prmem("After rb_free()...");
+    bu_prmem("After bu_rb_free()...");
 
     return (1);
 }
@@ -255,29 +255,29 @@ char	**argv;
 
     if (--argc < 2)
     {
-	rt_log("Usage: 'solshoot model.g obj [obj...]'\n");
+	bu_log("Usage: 'solshoot model.g obj [obj...]'\n");
 	exit (1);
     }
 
     /* Read in the geometry model */
-    rt_log("Database file:  '%s'\n", *++argv);
-    rt_log("Building the directory... ");
+    bu_log("Database file:  '%s'\n", *++argv);
+    bu_log("Building the directory... ");
     if ((rtip = rt_dirbuild(*argv , db_title, TITLE_LEN)) == RTI_NULL)
     {
-	rt_log("Could not build directory for file '%s'\n", *argv);
+	bu_log("Could not build directory for file '%s'\n", *argv);
 	exit(1);
     }
     rtip -> useair = 1;
-    rt_log("\nPreprocessing the geometry... ");
+    bu_log("\nPreprocessing the geometry... ");
     while (--argc > 0)
     {
 	if (rt_gettree(rtip, *++argv) == -1)
 	    exit (1);
-	rt_log("\nObject '%s' processed", *argv);
+	bu_log("\nObject '%s' processed", *argv);
     }
-    rt_log("\nPrepping the geometry... ");
+    bu_log("\nPrepping the geometry... ");
     rt_prep(rtip);
-    rt_log("\n");
+    bu_log("\n");
 
     rt_g.debug = DEBUG_MEM_FULL;
 
