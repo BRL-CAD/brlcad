@@ -1153,6 +1153,9 @@ struct edge *e;
 	NMG_CK_VERTEX(e->eu_p->eumate_p->vu_p->v_p);
 	NMG_CK_VERTEX_G(e->eu_p->eumate_p->vu_p->v_p->vg_p);
 
+	if(e->eu_p->vu_p->v_p == e->eu_p->eumate_p->vu_p->v_p )
+		rt_bomb("nmg_edge_g(): edge runs from+to same vertex, 0 len!\n");
+
 	/* make sure we've got a valid edge_g structure */
 	if (eg_p = e->eg_p) {
 		NMG_CK_EDGE_G(eg_p);
@@ -1184,6 +1187,7 @@ struct edge *e;
 
 		VSET(eg_p->e_dir, 1.0, 0.0, 0.0);
 		VPRINT("nmg_edge_g(): Forcing e_dir to", eg_p->e_dir);
+		rt_bomb("nmg_edge_g():  0 length edge\n");
 	}
 }
 
