@@ -43,14 +43,14 @@ main()
 
 	printf( "$03" );
 
-	while( gets( str ) )
+	while( fgets( str, sizeof(str), stdin ) )
 	{
 		sscanf( str, "%d %d %d %d %d %f", &face_no, &npts, &face_type, &e, &ident, &a );
 
 		if( ident > 0 )
 			old_id = ident;
 
-		if( !gets( str ) )
+		if( !fgets( str, sizeof(str), stdin ) )
 			break;
 
 		sscanf( str, "%f %f %f %f", &a, &b, &c, &d );
@@ -66,7 +66,7 @@ main()
 				fprintf( stderr , "Too many points, MAX is %d\n" , MAX_PTS );
 				exit( 1 );
 			}
-			if( !gets( str ) )
+			if( !fgets( str, sizeof(str), stdin ) )
 			{
 				fprintf( stderr, "Unexpected EOF\n" );
 				break;
