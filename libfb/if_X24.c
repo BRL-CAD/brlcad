@@ -1255,7 +1255,6 @@ printf("xsetup(ifp:0x%x, width:%d, height:%d) entered\n", ifp, width, height);
 	case -1:
 		fb_log("if_X24: Can't get supported Visual on X display \"%s\"\n",
 		       XDisplayName(NULL));
-		XCloseDisplay(xi->xi_dpy);
 		return (-1);
 	}
 
@@ -1483,7 +1482,6 @@ printf("xsetup(ifp:0x%x, width:%d, height:%d) entered\n", ifp, width, height);
 
 		if (!xi->xi_redmap || !xi->xi_grnmap || !xi->xi_blumap) {
 			fb_log("if_X24: Can't allocate colormap memory\n");
-			XCloseDisplay(xi->xi_dpy);
 			return (-1);
 		}
 	}
