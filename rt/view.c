@@ -376,7 +376,7 @@ struct partition *PartHeadp;
 	if( hitp->hit_dist < 0.0 )  {
 		r = 0xFF;
 		g = b = 0;
-		if(debug)fprintf(stderr,"colorview:  eye inside solid\n");
+		fprintf(stderr,"colorview:  eye inside solid\n");
 		goto done;
 	}
 
@@ -466,6 +466,7 @@ struct partition *PartHeadp;
 	if( g > 255 ) g = 255;
 	if( b > 255 ) b = 255;
 	if( r<0 || g<0 || b<0 )  {
+		fprintf(stderr,"colorview: negative RGB\n");
 		r = 0x80;
 		g = 0xFF;
 		b = 0x80;
@@ -503,7 +504,7 @@ register struct application *ap;
 	if( ikfd > 0 )
 		ikwpixel( ap->a_x, ap->a_y, bg );
 	if( outfd > 0 )  {
-		*pixelp++ = bg & 0xFF;	/* R */
+		*pixelp++ = bg & 0xFF;		/* R */
 		*pixelp++ = (bg>>8) & 0xFF;	/* G */
 		*pixelp++ = (bg>>16) & 0xFF;	/* B */
 	}
