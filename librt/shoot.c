@@ -133,7 +133,7 @@ register struct shootray_status	*ssp;
 	int			push_flag = 0;
 	double			fraction;
 	int			exponent;
-	register struct application *ap = ssp->ap;
+	register CONST struct application *ap = ssp->ap;
 
 	if( ssp->lastcut == &(ap->a_rt_i->rti_inf_box) )  {
 	     	if( rt_g.debug & DEBUG_ADVANCE )  {
@@ -363,25 +363,38 @@ register struct shootray_status	*ssp;
 	int			push_flag = 0;
 	double			fraction;
 	int			exponent;
-	register struct application *ap = ssp->ap;
+	register CONST struct application *ap = ssp->ap;
 	register fastf_t	*pt = ssp->newray.r_pt;
 
 	for(;;)  {
 		/*
-		 * Move newray point (not box_start)
-		 * slightly into the new box.
-		 * Note that a box is never less than 1mm wide per axis.
+		 *  The point corresponding to the box_start distance
+		 *  may not be in the "right" place,
+		 *  due to the effects of floating point fuzz:
+		 *  1)  The point might lie just outside
+		 *	the model RPP, resulting in the point not
+		 *	falling within the RPP of the indicated cell, or
+		 *  2)	The poing might lie just a little bit on the
+		 *	wrong side of the cell wall, resulting in
+		 *	the ray getting "stuck", and needing rescuing
+		 *	all the time by the error recovery code below.
+		 *  Therefore, "nudge" the point just slightly into the
+		 *  next cell by adding OFFSET_DIST.
+		 *  XXX At present, a cell is never less than 1mm wide.
+		 *  XXX The value of OFFSET_DIST should be some percentage
+		 *	of the cell's smallest dimension,
+		 *	rather than an absolute distance in mm.
+		 *	This will prevent doing microscopic models.
 		 */
 		ssp->dist_corr = ssp->box_start + OFFSET_DIST;
+top:
 		if( ssp->dist_corr >= ssp->model_end )
 			break;	/* done! */
 		VJOIN1( pt, ap->a_ray.r_pt,
 			ssp->dist_corr, ap->a_ray.r_dir );
 		if( rt_g.debug&DEBUG_ADVANCE) {
-			rt_log("rt_advance_to_next_cell() dist_corr=%g\n",
-				ssp->dist_corr );
-			rt_log("rt_advance_to_next_cell() newray.r_pt=(%g, %g, %g)\n",
-				V3ARGS( pt ) );
+			rt_log("rt_advance_to_next_cell() dist_corr=%g, pt=(%g, %g, %g)\n",
+				ssp->dist_corr, V3ARGS( pt ) );
 		}
 
 		cutp = &(ap->a_rt_i->rti_CutHead);
@@ -397,37 +410,43 @@ register struct shootray_status	*ssp;
 			rt_bomb("rt_advance_to_next_cell(): leaf not boxnode");
 
 		/* Ensure point is located in the indicated cell */
-		if( (rt_g.debug & DEBUG_ADVANCE) &&
-		    ! RT_POINT_IN_RPP( pt,
-		    cutp->bn.bn_min, cutp->bn.bn_max ) )  {
-		    	VPRINT( "newray.r_pt", pt );
+		if( ! RT_POINT_IN_RPP( pt, cutp->bn.bn_min, cutp->bn.bn_max ) )  {
+			rt_log("rt_advance_to_next_cell(): point not in cell, advancing\n");
+#if 0
+		    	rt_log(" newray.r_pt (%.20e,%.20e,%.20e)\n", V3ARGS(pt) );
+		    	rt_log("  min (%.20e,%.20e,%.20e)\n", V3ARGS(cutp->bn.bn_min) );
+		    	rt_log("  max (%.20e,%.20e,%.20e)\n", V3ARGS(cutp->bn.bn_max) );
+		    	VPRINT(" newray.r_pt", pt);
 		     	rt_pr_cut( cutp, 0 );
-			rt_bomb("rt_advance_to_next_cell(): point not in cell\n");
+#endif
+			/*
+			 * Move newray point further into new box.  Try again.
+			 */
+			ssp->dist_corr += OFFSET_DIST;
+		    	goto top;
 		}
 
 		/* Don't get stuck within the same box for long */
 		if( cutp==ssp->lastcut )  {
+push:			;
+			rt_log("%d,%d box push odist_corr=%.20e n=%.20e model_end=%.20e\n",
+				ap->a_x, ap->a_y,
+				ssp->odist_corr, ssp->dist_corr, ssp->model_end );
+			rt_log("box_start o=%.20e n=%.20e, box_end o=%.20e n=%.20e\n",
+				ssp->obox_start, ssp->box_start,
+				ssp->obox_end, ssp->box_end );
 #if 0
-			if( rt_g.debug & DEBUG_ADVANCE )  {
-#else
-			{
+			VPRINT("a_ray.r_pt", ap->a_ray.r_pt);
+		     	VPRINT("Point", pt);
+			VPRINT("Dir", ssp->newray.r_dir);
+		     	rt_pr_cut( cutp, 0 );
 #endif
-				rt_log("%d,%d box push dist_corr o=%e n=%e model_end=%e\n",
-					ap->a_x, ap->a_y,
-					ssp->odist_corr, ssp->dist_corr, ssp->model_end );
-				rt_log("box_start o=%e n=%e, box_end o=%e n=%e\n",
-					ssp->obox_start, ssp->box_start,
-					ssp->obox_end, ssp->box_end );
-				VPRINT("a_ray.r_pt", ap->a_ray.r_pt);
-			     	VPRINT("Point", pt);
-				VPRINT("Dir", ssp->newray.r_dir);
-			     	rt_pr_cut( cutp, 0 );
-			}
 
 			/* Advance 1mm, or smallest value that hardware
 			 * floating point resolution will allow.
 			 */
 			fraction = frexp( ssp->box_end, &exponent );
+rt_log("frexp: box_end=%g, fract=%g, exp=%d\n", ssp->box_end, fraction, exponent);
 			if( exponent <= 0 )  {
 				/* Never advance less than 1mm */
 				ssp->box_start = ssp->box_end + 1.0;
@@ -440,6 +459,7 @@ register struct shootray_status	*ssp;
 				else
 					fraction += 1.0e-14;
 				ssp->box_start = ldexp( fraction, exponent );
+rt_log("ldexp: box_end=%g, fract=%g, exp=%d\n", ssp->box_end, fraction, exponent);
 			}
 			if( rt_g.debug & DEBUG_ADVANCE )  {
 				rt_log("push: was=%.20e, now=%.20e\n",
@@ -450,7 +470,7 @@ register struct shootray_status	*ssp;
 		}
 		if( push_flag )  {
 			push_flag = 0;
-			rt_log("%d,%d Escaped %d. dist_corr=%e, box_start=%e, box_end=%e\n",
+			rt_log("%d,%d Escaped %d. dist_corr=%g, box_start=%g, box_end=%g\n",
 				ap->a_x, ap->a_y, push_flag,
 				ssp->dist_corr, ssp->box_start, ssp->box_end );
 		}
@@ -458,39 +478,10 @@ register struct shootray_status	*ssp;
 
 		if( !rt_in_rpp(&ssp->newray, ssp->inv_dir,
 		     cutp->bn.bn_min, cutp->bn.bn_max) )  {
-			rt_log("\nrt_advance_to_next_cell():  MISSED BOX\n");
-			rt_log("rmin,rmax(%g,%g) box(%g,%g)\n",
+			rt_log("\nrt_advance_to_next_cell():  MISSED BOX\nrmin,rmax(%.20e,%.20e) box(%.20e,%.20e)\n",
 				ssp->newray.r_min, ssp->newray.r_max,
 				ssp->box_start, ssp->box_end);
-/**		     	if( rt_g.debug & DEBUG_ADVANCE )  ***/
-			{
-				VPRINT("a_ray.r_pt", ap->a_ray.r_pt);
-			     	VPRINT("Point", pt);
-				VPRINT("Dir", ssp->newray.r_dir);
-				VPRINT("inv_dir", ssp->inv_dir);
-			     	rt_pr_cut( cutp, 0 );
-				(void)rt_DB_rpp(&ssp->newray, ssp->inv_dir,
-				     cutp->bn.bn_min, cutp->bn.bn_max);
-		     	}
-		     	if( ssp->box_end >= INFINITY )
-				break;	/* off end of model RPP */
-			ssp->box_start = ssp->box_end;
-
-			/* Advance 1mm, or smallest value that hardware
-			 * floating point resolution will allow.
-			 */
-			fraction = frexp( ssp->box_end, &exponent );
-			if( exponent <= 0 )  {
-				/* Never advance less than 1mm */
-				ssp->box_end += 1.0;
-			} else {
-				if( sizeof(fastf_t) <= 4 )
-					fraction += 1.0e-5;
-				else
-					fraction += 1.0e-14;
-				ssp->box_end = ldexp( fraction, exponent );
-			}
-		     	continue;
+		     	goto push;
 		}
 		ssp->odist_corr = ssp->dist_corr;
 		ssp->obox_start = ssp->box_start;
@@ -946,9 +937,9 @@ out:
  */
 rt_in_rpp( rp, invdir, min, max )
 register struct xray *rp;
-register fastf_t *invdir;	/* inverses of rp->r_dir[] */
-register fastf_t *min;
-register fastf_t *max;
+register CONST fastf_t *invdir;	/* inverses of rp->r_dir[] */
+register CONST fastf_t *min;
+register CONST fastf_t *max;
 {
 	register fastf_t *pt = &rp->r_pt[0];
 	FAST fastf_t sv;
@@ -1086,11 +1077,11 @@ register struct resource *res;
 /* For debugging */
 rt_DB_rpp( rp, invdir, min, max )
 register struct xray *rp;
-register fastf_t *invdir;	/* inverses of rp->r_dir[] */
-register fastf_t *min;
-register fastf_t *max;
+register CONST fastf_t *invdir;	/* inverses of rp->r_dir[] */
+register CONST fastf_t *min;
+register CONST fastf_t *max;
 {
-	register fastf_t *pt = &rp->r_pt[0];
+	register CONST fastf_t *pt = &rp->r_pt[0];
 	FAST fastf_t sv;
 
 	/* Start with infinite ray, and trim it down */
