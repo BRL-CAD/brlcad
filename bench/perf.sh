@@ -1,16 +1,17 @@
 #!/bin/sh
-# A Shell script to extract the 4 benchmark statistics, and build an
-# entry for the tables in doc/benchmark.doc.
-# Note well that the args may have embedded spaces.
+# A Shell script to extract the benchmark statistics, and build an
+# entry suitable for the tables in doc/benchmark.doc.
+# Note well that the command-line args may have embedded spaces.
 #  Mike Muuss & Susan Muuss, 11-Sept-88.
 #  @(#)$Header$ (BRL)
 
 # Ensure /bin/sh
 export PATH || (sh $0 $*; kill $$)
 
+NAME=$0
 if test "x$1" = x
 then
-	echo "Usage:  $0 hostname [note1] [note2]"
+	echo "Usage:  $NAME hostname [note1] [note2]"
 	exit 1
 fi
 
@@ -20,8 +21,9 @@ HOST="$1"
 NOTE1="$2"
 NOTE2="$3"
 
-NEW_FILES="moss.log world.log star.log bldg391.log"
-REF_FILES="../pix/moss.log ../pix/world.log ../pix/star.log ../pix/bldg391.log"
+NEW_FILES="moss.log world.log star.log bldg391.log m35.log"
+REF_FILES="../pix/moss.log ../pix/world.log ../pix/star.log \
+	../pix/bldg391.log ../pix/m35.log"
 
 # Use TR to convert newlines to tabs.
 VGRREF=`grep RTFM $REF_FILES | \
@@ -33,10 +35,15 @@ CURVALS=`grep RTFM $NEW_FILES | \
 
 RATIO_LIST=""
 
-# Trick:  Force args $1 through $4 to 4 numbers in $CURVALS
+# Trick:  Force args $1 through $5 to the numbers in $CURVALS
 # This should be "set -- $CURVALS", but 4.2BSD /bin/sh can't handle it,
 # and CURVALS are all positive (ie, no leading dashes), so this is safe.
 set $CURVALS
+
+if test $# != 5
+then	echo "${NAME}: Error, only $# times found"
+	exit 1
+fi
 
 for ref in $VGRREF
 do
@@ -47,8 +54,9 @@ do
 	RATIO_LIST="${RATIO_LIST}$RATIO	"
 done
 
-MEAN_ABS=`echo 2k $CURVALS +++ 4/ p | dc`
-MEAN_REL=`echo 2k $RATIO_LIST +++ 4/ p | dc`
+# The number of plus signs must be one less than the number of elements.
+MEAN_ABS=`echo 2k $CURVALS ++++ 5/ p | dc`
+MEAN_REL=`echo 2k $RATIO_LIST ++++ 5/ p | dc`
 
 # Note:  Both RATIO_LIST and CURVALS have an extra trailing tab.
 # The question mark is for the mean field
