@@ -787,9 +787,9 @@ char **argv;
     }
 
     if( argc != 2 )  {
-	tkwin = Tk_CreateMainWindow(interp, (char *)NULL, "TkMGED", "tkMGED");
+	tkwin = Tk_CreateMainWindow(interp, (char *)NULL, "MGED", "MGED");
     } else {
-	tkwin = Tk_CreateMainWindow(interp, argv[1], "TkMGED", "tkMGED");
+	tkwin = Tk_CreateMainWindow(interp, argv[1], "MGED", "MGED");
     }
     if (tkwin == NULL)
 	return TCL_ERROR;
