@@ -2506,6 +2506,15 @@ extern int db5_realloc( struct db_i *dbip,
 			struct bu_external *ep );
 
 /* db5_io.c */
+extern void db5_export_object3 (struct bu_external *out, 
+		int				dli,
+		CONST char			*name,
+		CONST struct bu_external	*attrib,
+		CONST struct bu_external	*body,
+		int				major,
+		int				minor,
+		int				a_zzz,
+		int				b_zzz );
 extern int rt_db_cvt_to_external5(struct bu_external *ext,
 				  const char *name,
 				  const struct rt_db_internal *ip,
@@ -2681,7 +2690,17 @@ BU_EXTERN(void db_conversions, ( struct db_i *, int units ) );
 int db_v4_get_units_code( const char *str );
 
 /* db5_scan.c */
-int db_dirbuild( struct db_i *dbip );
+extern int db_dirbuild( struct db_i *dbip );
+extern struct directory *db5_diradd( struct db_i *dbip, const struct db5_raw_internal *rip, long laddr, genptr_t client_data );
+extern int db_get_version( struct db_i *dbip );
+
+/* db5_comb.c */
+extern int rt_comb_import5( struct rt_db_internal   *ip,
+        const struct bu_external *ep,
+        const mat_t             mat,
+        const struct db_i       *dbip,
+        struct resource         *resp );
+
 
 /* db_lookup.c */
 extern int db_get_directory_size( const struct db_i	*dbip );
