@@ -84,6 +84,9 @@ struct db_i	*dbip;
 
 	rt_uniresource.re_magic = RESOURCE_MAGIC;
 
+	/* list of invisible light regions to be deleted after light_init() */
+	bu_ptbl_init( &rtip->delete_regs, 8, "rt_i delete regions list" );
+
 	VSETALL( rtip->mdl_min,  INFINITY );
 	VSETALL( rtip->mdl_max, -INFINITY );
 	VSETALL( rtip->rti_inf_box.bn.bn_min, -0.1 );
@@ -926,6 +929,8 @@ register struct rt_i *rtip;
 		for( ; dp != DIR_NULL; dp = dp->d_forw )
 			dp->d_uses = 0;
 	}
+
+	bu_ptbl_reset( &rtip->delete_regs );
 
 	rtip->rti_magic = RTI_MAGIC;
 	rtip->needprep = 1;
