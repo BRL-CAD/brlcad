@@ -115,7 +115,6 @@ char	*usage[] = {
 	See 'db.h' for defined units and ident record definition.  This
 	capability dates back to GED database version (v4).
  */
-double	unit_conversion = 1.0;
 
 /* Sorted table of contents.						*/
 char	*toc_list[NDIR];
@@ -162,7 +161,7 @@ extern void		quit();
 
 char			getcmd();
 void			prompt();
-void			eread(), ewrite();
+void			ewrite();
 
 /* Head of linked list of solids */
 struct soltab	sol_hd;
@@ -716,8 +715,8 @@ int			num;
 
 	vls_itoa( v, num, 5 );
 	vls_blanks( v, 5 );
-	vls_ftoa( v, gp->r_a*unit_conversion, 10, 4 );
-	vls_ftoa( v, gp->r_h*unit_conversion, 10, 4 );
+	vls_ftoa_cvt( v, gp->r_a, 10, 4 );
+	vls_ftoa_cvt( v, gp->r_h, 10, 4 );
 	vls_blanks( v, 4*10 );
 	rt_vls_strcat( v, name );
 	rt_vls_strcat( v, "\n");
@@ -1165,27 +1164,6 @@ int			num;
 		/* Output the points on this curve */
 		ars_curve_out( v, gp->curves[i], gp->pts_per_curve, i, num );
 	}
-}
-
-/*	e r e a d ( )
-	Read with error checking.
- */
-void
-eread( fd, buf, bytes )
-int		fd;
-char		*buf;
-unsigned	bytes;
-{	
-	int	bytes_read;
-	if(	(bytes_read = read( fd, buf, bytes )) != (int) bytes
-	    &&	bytes_read != 0
-	    )
-		(void) fprintf( stderr,
-		    "ERROR: Read of %d bytes returned %d\n",
-		    bytes,
-		    bytes_read
-		    );
-	return;
 }
 
 /*	e w r i t e

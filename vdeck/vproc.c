@@ -31,7 +31,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "./std.h"
 
-extern void	eread(), ewrite();
+extern void	ewrite();
 
 
 char		getarg();
@@ -69,8 +69,9 @@ register char *prefix;
 		exit( 10 );
 		}
 
+
 	/* Target units (a2,3x)						*/
-	ewrite( solfd, "mm", 2 );	/* XXX Need units here */
+	ewrite( solfd, rt_units_string(dbip->dbi_local2base), 2 );
 	blank_fill( solfd, 3 );
 
 	/* Title							*/
@@ -527,9 +528,9 @@ vect_t		vec;
 int		w;
 int		d;
 {
-	vls_ftoa( v, vec[X]*unit_conversion, w, d );
-	vls_ftoa( v, vec[Y]*unit_conversion, w, d );
-	vls_ftoa( v, vec[Z]*unit_conversion, w, d );
+	vls_ftoa( v, vec[X]*dbip->dbi_base2local, w, d );
+	vls_ftoa( v, vec[Y]*dbip->dbi_base2local, w, d );
+	vls_ftoa( v, vec[Z]*dbip->dbi_base2local, w, d );
 }
 
 vls_ftoa_vec( v, vec, w, d )
@@ -548,7 +549,7 @@ struct rt_vls	*v;
 register double	f;
 register int	w, d;
 {
-	vls_ftoa( v, f*unit_conversion, w, d );
+	vls_ftoa( v, f*dbip->dbi_base2local, w, d );
 }
 
 /*
