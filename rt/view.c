@@ -31,7 +31,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char RCSview[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
@@ -41,7 +41,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "../h/mater.h"
 #include "../h/raytrace.h"
 #include "../librt/debug.h"
-#include "fb.h"				/* /vld/lib/fb.h */
+#include "../h/fb.h"
 
 char usage[] = "\
 Usage:  rt [options] model.g objects...\n\
@@ -53,11 +53,6 @@ Options:\n\
  -o model.pix	Specify output file, .pix format (default=fb)\n\
  -x#		Set debug flags\n\
  -p[#]		Perspective viewing, focal length scaling\n\
- -l#		Select lighting model\n\
- 	0	Two lights, one at eye (default)\n\
-	1	One light, from eye (diffuse)\n\
-	2	Surface-normals as colors\n\
-	3	Three light debugging model (diffuse)\n\
 ";
 
 int fbfd = -1;			/* framebuffer file descriptor */
@@ -71,7 +66,7 @@ extern mat_t model2view;
 static char scanline[MAX_LINE*3];	/* 1 scanline pixel buffer, R,G,B */
 static char *pixelp;			/* pointer to first empty pixel */
 static int scanbytes;			/* # bytes in scanline to write */
-static int pixfd;			/* fd of .pix file */
+static FILE *pixfp = NULL;		/* fd of .pix file */
 
 struct soltab *l0stp = SOLTAB_NULL;	/* ptr to light solid tab entry */
 vect_t l0color = {  1,  1,  1 };		/* White */
@@ -86,9 +81,6 @@ extern double AmbientIntensity;
 
 #define MAX_IREFLECT	9	/* Maximum internal reflection level */
 #define MAX_BOUNCE	4	/* Maximum recursion level */
-
-HIDDEN int	rfr_hit(), rfr_miss();
-HIDDEN int	refract();
 
 /*
  *			V I E W I T
@@ -200,7 +192,7 @@ register struct application *ap;
 		p.blue = b;
 		fbwrite( ap->a_x, ap->a_y, &p, 1 );
 	}
-	if( pixfd > 0 )  {
+	if( pixfp != NULL )  {
 		*pixelp++ = r & 0xFF;
 		*pixelp++ = g & 0xFF;
 		*pixelp++ = b & 0xFF;
@@ -319,7 +311,7 @@ struct partition *PartHeadp;
 
 	if( rt_g.debug&DEBUG_RAYWRITE )  {
 		/* Record the approach path */
-		if( hitp->hit_dist > EPSILON )
+		if( hitp->hit_dist > 0.0001 )
 			wraypts( ap->a_ray.r_pt,
 				hitp->hit_point,
 				ap, stdout );
@@ -341,115 +333,12 @@ struct partition *PartHeadp;
 	}
 
 	if( !(pp->pt_regionp->reg_ufunc) )  {
-		if( matlib_setup( pp->pt_regionp ) == 0 )  {
-			rt_log("matlib_setup failure");
+		if( mlib_setup( pp->pt_regionp ) == 0 )  {
+			rt_log("mlib_setup failure");
 			return(0);
 		}
 	}
 	return( pp->pt_regionp->reg_ufunc( ap, pp ) );
-}
-
-/*
- *			R F R _ M I S S
- */
-HIDDEN int
-/*ARGSUSED*/
-rfr_miss( ap, PartHeadp )
-register struct application *ap;
-struct partition *PartHeadp;
-{
-	rt_log("rfr_miss: Refracted ray missed!\n" );
-	/* Return entry point as exit point */
-	VREVERSE( ap->a_color, ap->a_ray.r_dir );	/* inward pointing */
-	VMOVE( ap->a_uvec, ap->a_ray.r_pt );
-	return(0);
-}
-
-/*
- *			R F R _ H I T
- */
-HIDDEN int
-rfr_hit( ap, PartHeadp )
-register struct application *ap;
-struct partition *PartHeadp;
-{
-	register struct hit	*hitp = PartHeadp->pt_forw->pt_outhit;
-	register struct soltab *stp;
-
-	stp = PartHeadp->pt_forw->pt_outseg->seg_stp;
-	rt_functab[stp->st_id].ft_norm(
-		hitp, stp, &(ap->a_ray) );
-	VMOVE( ap->a_uvec, hitp->hit_point );
-	/* For refraction, want exit normal to point inward. */
-	VREVERSE( ap->a_color, hitp->hit_normal );
-	return(1);
-}
-
-/*
- *			R E F R A C T
- *
- *	Compute the refracted ray 'v_2' from the incident ray 'v_1' with
- *	the refractive indices 'ri_2' and 'ri_1' respectively.
- *	Using Schnell's Law:
- *
- *		theta_1 = angle of v_1 with surface normal
- *		theta_2 = angle of v_2 with reversed surface normal
- *		ri_1 * sin( theta_1 ) = ri_2 * sin( theta_2 )
- *
- *		sin( theta_2 ) = ri_1/ri_2 * sin( theta_1 )
- *		
- *	The above condition is undefined for ri_1/ri_2 * sin( theta_1 )
- *	being greater than 1, and this represents the condition for total
- *	reflection, the 'critical angle' is the angle theta_1 for which
- *	ri_1/ri_2 * sin( theta_1 ) equals 1.
- *
- *  Returns TRUE if refracted, FALSE if reflected.
- *
- *  Note:  output (v_2) can be same storage as an input.
- */
-HIDDEN int
-refract( v_1, norml, ri_1, ri_2, v_2 )
-register vect_t	v_1;
-register vect_t	norml;
-double	ri_1, ri_2;
-register vect_t	v_2;
-{
-	LOCAL vect_t	w, u;
-	FAST fastf_t	beta;
-
-	if( NEAR_ZERO(ri_1) || NEAR_ZERO( ri_2 ) )  {
-		rt_log("refract:ri1=%f, ri2=%f\n", ri_1, ri_2 );
-		beta = 1;
-	} else {
-		beta = ri_1/ri_2;		/* temp */
-	}
-	VSCALE( w, v_1, beta );
-	VCROSS( u, w, norml );
-	/*
-	 *	|w X norml| = |w||norml| * sin( theta_1 )
-	 *	        |u| = ri_1/ri_2 * sin( theta_1 ) = sin( theta_2 )
-	 */
-	if( (beta = VDOT( u, u )) > 1.0 )  {
-		/*  Past critical angle, total reflection.
-		 *  Calculate reflected (bounced) incident ray.
-		 */
-		VREVERSE( u, v_1 );
-		beta = 2 * VDOT( u, norml );
-		VSCALE( w, norml, beta );
-		VSUB2( v_2, w, u );
-		return(0);		/* reflected */
-	} else {
-		/*
-		 * 1 - beta = 1 - sin( theta_2 )^^2
-		 *	    = cos( theta_2 )^^2.
-		 *     beta = -1.0 * cos( theta_2 ) - Dot( w, norml ).
-		 */
-		beta = -sqrt( 1.0 - beta) - VDOT( w, norml );
-		VSCALE( u, norml, beta );
-		VADD2( v_2, w, u );
-		return(1);		/* refracted */
-	}
-	/* NOTREACHED */
 }
 
 /*
@@ -461,8 +350,8 @@ register vect_t	v_2;
 view_eol()
 {
 	register int i;
-	if( pixfd > 0 )  {
-		i = write( pixfd, (char *)scanline, scanbytes );
+	if( pixfp != NULL )  {
+		i = fwrite( (char *)scanline, 1, scanbytes, pixfp );
 		if( i != scanbytes )  {
 			rt_log("view_eol: wrote %d, got %d\n", scanbytes, i);
 			rt_bomb("write error");
@@ -517,13 +406,14 @@ char *file, *obj;
  *
  *  Called each time a new image is about to be done.
  */
-view_2init( ap, outfd )
+view_2init( ap, outfp )
 register struct application *ap;
+FILE *outfp;
 {
 	extern int hit_nothing();
 	vect_t temp;
 
-	pixfd = outfd;
+	pixfp = outfp;
 	ap->a_miss = hit_nothing;
 	ap->a_onehit = 1;
 

@@ -16,7 +16,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char RCSmaterial[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
@@ -25,37 +25,37 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "../h/raytrace.h"
 #include "material.h"
 
-extern int plastic_setup();
-extern int texture_setup();
-extern int testmap_setup();
+extern int phong_setup();
+extern int txt_setup();
+extern int tmap_setup();
 extern int cloud_setup();
 
 struct matlib {
 	char	*ml_name;
 	int	(*ml_setup)();
 } matlib[] = {
-	"plastic",	plastic_setup,
-	"texture",	texture_setup,
-	"testmap",	testmap_setup,
+	"plastic",	phong_setup,
+	"texture",	txt_setup,
+	"testmap",	tmap_setup,
 	"cloud",	cloud_setup,
 	(char *)0,	0			/* END */
 };
 
 /*
- *			M A T L I B _ S E T U P
+ *			M L I B _ S E T U P
  *
  *  Returns -
  *	0	failed
  *	!0	success
  */
 int
-matlib_setup( rp )
+mlib_setup( rp )
 register struct region *rp;
 {
 	register struct matlib *mlp;
 
 	if( rp->reg_ufunc )  {
-		rt_log("matlib_setup:  region %s already setup\n", rp->reg_name );
+		rt_log("mlib_setup:  region %s already setup\n", rp->reg_name );
 		return(0);
 	}
 	if( rp->reg_mater.ma_matname[0] == '\0' )
@@ -66,16 +66,16 @@ register struct region *rp;
 			continue;
 		return( mlp->ml_setup( rp ) );
 	}
-	rt_log("matlib_setup(%s):  material not known, default assumed\n",
+	rt_log("mlib_setup(%s):  material not known, default assumed\n",
 		rp->reg_mater.ma_matname );
 def:
-	return( plastic_setup( rp ) );
+	return( phong_setup( rp ) );
 }
 
 /*
- *			M A T L I B _ P A R S E
+ *			M L I B _ P A R S E
  */
-matlib_parse( cp, parsetab, base )
+mlib_parse( cp, parsetab, base )
 register char *cp;
 struct matparse *parsetab;
 char *base;		/* base address of users structure */
@@ -118,15 +118,15 @@ char *base;		/* base address of users structure */
 				goto out;
 			}
 		}
-		rt_log("matlib_parse:  %s=%s not a valid arg\n", name, value);
+		rt_log("mlib_parse:  %s=%s not a valid arg\n", name, value);
 out:		;
 	}
 }
 
 /*
- *			M A T L I B _ P R I N T
+ *			M L I B _ P R I N T
  */
-matlib_print( title, parsetab, base )
+mlib_print( title, parsetab, base )
 char *title;
 struct matparse *parsetab;
 char *base;		/* base address of users structure */

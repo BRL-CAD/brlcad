@@ -19,7 +19,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char RCSplastic[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
@@ -43,7 +43,7 @@ extern double AmbientIntensity;
 #define MAX_BOUNCE	4	/* Maximum recursion level */
 
 /* Local information */
-struct plastic_specific {
+struct phong_specific {
 	int	shine;
 	double	wgt_specular;
 	double	wgt_diffuse;
@@ -51,9 +51,9 @@ struct plastic_specific {
 	double	reflect;	/* Moss "transmission" */
 	double	refrac_index;
 };
-#define PL_NULL	((struct plastic_specific *)0)
+#define PL_NULL	((struct phong_specific *)0)
 
-struct matparse plastic_parse[] = {
+struct matparse phong_parse[] = {
 	"shine",	(int)&(PL_NULL->shine),		"%d",
 	"specular",	(int)&(PL_NULL->wgt_specular),	"%f",
 	"diffuse",	(int)&(PL_NULL->wgt_diffuse),	"%f",
@@ -63,10 +63,10 @@ struct matparse plastic_parse[] = {
 	(char *)0,	0,				(char *)0
 };
 
-extern int plastic_render();
-HIDDEN int plastic_rfr_miss();
-HIDDEN int plastic_rfr_hit();
-HIDDEN int plastic_refract();
+extern int phong_render();
+HIDDEN int phg_rmiss();
+HIDDEN int phg_rhit();
+HIDDEN int phg_refract();
 
 extern int light_hit(), light_miss();
 extern int hit_nothing();
@@ -111,13 +111,13 @@ double rand0to1()
  *			P L A S T I C _ S E T U P
  */
 int
-plastic_setup( rp )
+phong_setup( rp )
 register struct region *rp;
 {
-	register struct plastic_specific *pp;
+	register struct phong_specific *pp;
 
-	GETSTRUCT( pp, plastic_specific );
-	rp->reg_ufunc = plastic_render;
+	GETSTRUCT( pp, phong_specific );
+	rp->reg_ufunc = phong_render;
 	rp->reg_udata = (char *)pp;
 
 	pp->shine = 7;
@@ -127,8 +127,7 @@ register struct region *rp;
 	pp->reflect = 0.0;
 	pp->refrac_index = 0.0;
 
-	matlib_parse( rp->reg_mater.ma_matparm, plastic_parse, (char *)pp );
-	matlib_print( "plastic", plastic_parse, (char *)pp );
+	mlib_parse( rp->reg_mater.ma_matparm, phong_parse, (char *)pp );
 	return(1);
 }
 
@@ -199,7 +198,7 @@ register struct region *rp;
 	s	is the angle between the reflected ray and the observer.
 	n	'Shininess' of the material,  range 1 to 10.
  */
-plastic_render( ap, pp )
+phong_render( ap, pp )
 register struct application *ap;
 register struct partition *pp;
 {
@@ -215,8 +214,8 @@ register struct partition *pp;
 	auto vect_t	to_eye;
 	auto vect_t	to_light;
 	auto point_t	mcolor;		/* Material color */
-	struct plastic_specific *ps =
-		(struct plastic_specific *)pp->pt_regionp->reg_udata;
+	struct phong_specific *ps =
+		(struct phong_specific *)pp->pt_regionp->reg_udata;
 
 
 	/* Get default color-by-ident for region.			*/
@@ -361,7 +360,7 @@ register struct partition *pp;
 		sub_ap.a_level = ap->a_level * 100;	/* flag */
 		sub_ap.a_x = ap->a_x;
 		sub_ap.a_y = ap->a_y;
-		if( !plastic_refract(ap->a_ray.r_dir, /* Incident ray (IN) */
+		if( !phg_refract(ap->a_ray.r_dir, /* Incident ray (IN) */
 			hitp->hit_normal,
 			RI_AIR, ps->refrac_index,
 			sub_ap.a_ray.r_dir	/* Refracted ray (OUT) */
@@ -373,10 +372,10 @@ register struct partition *pp;
 		/* Find new exit point from the inside. */
 		VMOVE( sub_ap.a_ray.r_pt, hitp->hit_point );
 do_inside:
-		sub_ap.a_hit =  plastic_rfr_hit;
-		sub_ap.a_miss = plastic_rfr_miss;
+		sub_ap.a_hit =  phg_rhit;
+		sub_ap.a_miss = phg_rmiss;
 		(void) rt_shootray( &sub_ap );
-		/* NOTE: plastic_rfr_hit returns EXIT point in sub_ap.a_uvec,
+		/* NOTE: phg_rhit returns EXIT point in sub_ap.a_uvec,
 		 *  and returns EXIT normal in sub_ap.a_color.
 		 */
 		if( rt_g.debug&DEBUG_RAYWRITE )  {
@@ -386,7 +385,7 @@ do_inside:
 		VMOVE( sub_ap.a_ray.r_pt, sub_ap.a_uvec );
 
 		/* Calculate refraction at exit. */
-		if( !plastic_refract( sub_ap.a_ray.r_dir,	/* input direction */
+		if( !phg_refract( sub_ap.a_ray.r_dir,	/* input direction */
 			sub_ap.a_color,			/* exit normal */
 			ps->refrac_index, RI_AIR,
 			sub_ap.a_ray.r_dir		/* output direction */
@@ -421,11 +420,11 @@ finish:
  */
 HIDDEN int
 /*ARGSUSED*/
-plastic_rfr_miss( ap, PartHeadp )
+phg_rmiss( ap, PartHeadp )
 register struct application *ap;
 struct partition *PartHeadp;
 {
-	rt_log("plastic_rfr_miss: Refracted ray missed!\n" );
+	rt_log("phg_rmiss: Refracted ray missed!\n" );
 	/* Return entry point as exit point */
 	VREVERSE( ap->a_color, ap->a_ray.r_dir );	/* inward pointing */
 	VMOVE( ap->a_uvec, ap->a_ray.r_pt );
@@ -436,7 +435,7 @@ struct partition *PartHeadp;
  *			R F R _ H I T
  */
 HIDDEN int
-plastic_rfr_hit( ap, PartHeadp )
+phg_rhit( ap, PartHeadp )
 register struct application *ap;
 struct partition *PartHeadp;
 {
@@ -475,7 +474,7 @@ struct partition *PartHeadp;
  *  Note:  output (v_2) can be same storage as an input.
  */
 HIDDEN int
-plastic_refract( v_1, norml, ri_1, ri_2, v_2 )
+phg_refract( v_1, norml, ri_1, ri_2, v_2 )
 register vect_t	v_1;
 register vect_t	norml;
 double	ri_1, ri_2;
@@ -484,8 +483,8 @@ register vect_t	v_2;
 	LOCAL vect_t	w, u;
 	FAST fastf_t	beta;
 
-	if( NEAR_ZERO(ri_1) || NEAR_ZERO( ri_2 ) )  {
-		rt_log("plastic_refract:ri1=%f, ri2=%f\n", ri_1, ri_2 );
+	if( NEAR_ZERO(ri_1, 0.0001) || NEAR_ZERO( ri_2, 0.0001 ) )  {
+		rt_log("phg_refract:ri1=%f, ri2=%f\n", ri_1, ri_2 );
 		beta = 1;
 	} else {
 		beta = ri_1/ri_2;		/* temp */

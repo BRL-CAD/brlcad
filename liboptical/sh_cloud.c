@@ -19,7 +19,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static char RCSid[] = "@(#)$Header$ (BRL)";
+static char RCScloud[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
@@ -138,7 +138,7 @@ register struct region *rp;
 
 	cp->cl_thresh = 0.35;
 	cp->cl_range = 0.3;
-	matlib_parse( rp->reg_mater.ma_matparm, cloud_parse, (char *)cp );
+	mlib_parse( rp->reg_mater.ma_matparm, cloud_parse, (char *)cp );
 	return(1);
 }
 
