@@ -76,7 +76,7 @@ mk_bot_w_normals(
 	bot->magic = RT_BOT_INTERNAL_MAGIC;
 	bot->mode = mode;
 	bot->orientation = orientation;
-	bot->bot_flags = 0;
+	bot->bot_flags = flags;
 	bot->num_vertices = num_vertices;
 	bot->num_faces = num_faces;
 	bot->vertices = (fastf_t *)bu_calloc( num_vertices * 3, sizeof( fastf_t ), "bot->vertices" );
@@ -99,7 +99,6 @@ mk_bot_w_normals(
 	}
 
 	if( (num_normals > 0) && (fp->dbip->dbi_version >= 5 ) ) {
-		bot->bot_flags = RT_BOT_HAS_SURFACE_NORMALS | RT_BOT_USE_NORMALS;
 		bot->num_normals = num_normals;
 		bot->num_face_normals = bot->num_faces;
 		bot->normals = (fastf_t *)bu_calloc( bot->num_normals * 3, sizeof( fastf_t ), "BOT normals" );
