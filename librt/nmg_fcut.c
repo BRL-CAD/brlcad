@@ -168,6 +168,7 @@ struct vertexuse *vu1, *vu2;
 
 	nmg_kvu(RT_LIST_FIRST(vertexuse, &lu->down_hd));
 	nmg_kvu(RT_LIST_FIRST(vertexuse, &lu->lumate_p->down_hd));
+	/* nmg_kvu() does RT_LIST_INIT() on down_hd */
 
 	/* move the edges into one of the uses of the new loop */
 	for (eu = eu2 ; eu != eu1 ; eu = eunext) {
