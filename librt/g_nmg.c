@@ -35,7 +35,7 @@ static char RCSnmg[] = "@(#)$Header$ (BRL)";
 
 struct hitlist {
 	struct rt_list	l;
-	struct hit	hit;
+	struct hit	*hit;
 };
 
 struct nmg_specific {
@@ -157,91 +157,6 @@ struct faceuse *fu;
 
 
 
- 
-/*	I S E C T _ R A Y _ F A C E U S E
- *
- *	intersect a ray with a faceuse.
- *
- *	Returns:
- *		1	hit
- */
-struct hitlist *
-nmg_isect_ray_faceuse(stp, rp, fu_p, novote)
-struct soltab		*stp;
-register struct xray	*rp;	/* info about the ray */
-struct faceuse		*fu_p;
-long 			*novote;
-{
-	register struct nmg_specific *nmg =
-		(struct nmg_specific *)stp->st_specific;
-	point_t	pt_in_plane;
-	int status;
-	fastf_t dist=0.0;
-
-	NMG_CK_FACEUSE(fu_p);
-	NMG_CK_FACE(fu_p->f_p);
-	NMG_CK_FACE_G(fu_p->f_p->fg_p);
-
-	if (rt_g.NMG_debug & DEBUG_NMGRT)
-		rt_log("doing faceuse %0x (fumate %0x)\n", fu_p, fu_p->fumate_p);
-
-	if (!rt_in_rpp(rp, nmg->nmg_invdir,
-	    fu_p->f_p->fg_p->min_pt,fu_p->f_p->fg_p->max_pt) )
-		return((struct hitlist *)0);	/* MISS */
-	    
-	status = rt_isect_ray_plane(&dist, rp->r_pt, rp->r_dir,
-			fu_p->f_p->fg_p->N);
-
-/*	rt_g.NMG_debug |= DEBUG_NMGRT|DEBUG_CLASSIFY; */
-
-	if (rt_g.NMG_debug & DEBUG_NMGRT) {
-		plot_ray_face(rp->r_pt, rp->r_dir, fu_p);
-
-		rt_log("Ray (%g %g %g) -> %g %g %g\nNMG f:(%g %g %g %g) dist:%g\n",
-			rp->r_pt[0], rp->r_pt[1], rp->r_pt[2],
-			rp->r_dir[0], rp->r_dir[1], rp->r_dir[2],
-			fu_p->f_p->fg_p->N[0], fu_p->f_p->fg_p->N[1],
-			fu_p->f_p->fg_p->N[2], fu_p->f_p->fg_p->N[3],
-			dist);
-	}
-
-	/* translate ray start point into plane of faceuse
-	 * to determine ray/plane intercept location
-	 */
-	VJOIN1(pt_in_plane, rp->r_pt, dist, rp->r_dir);
-
-	/* we need to find the closest edge in the face to the intersection
-	 * point so that we can decide whether the ray actually hits the face
-	 * or not.
-	 *
-	 * XXX alas, we have to "invent" a tolerance to call pt_hitmis_f
-	 */
-	status = nmg_pt_hitmis_f(pt_in_plane, fu_p, SQRT_SMALL_FASTF, novote);
-
-
-	if (status) {
-		/* we hit the face, fill in a hit structure */
-		struct hitlist *hit;
-
-		hit = (struct hitlist *)rt_calloc(1, sizeof(struct hitlist), "face hit structure");
-		hit->hit.hit_dist = dist;
-		VMOVE(hit->hit.hit_point, pt_in_plane);
-		VMOVEN(hit->hit.hit_normal, fu_p->f_p->fg_p->N, 4);
-		hit->hit.hit_private = (genptr_t)fu_p;
-		hit->hit.hit_surfno = fu_p->f_p->index;
-
-		if (rt_g.NMG_debug & DEBUG_NMGRT)
-			rt_log("NMG/ray hit\n");
-		return(hit);
-	}
-
-	if (rt_g.NMG_debug & DEBUG_NMGRT)
-		rt_log("NMG/ray miss\n");
-
-	return((struct hitlist *)0); /* MISS */
-
-}
-
 
 /*
  *  			R T _ N M G _ S H O T
@@ -270,12 +185,11 @@ struct seg		*seghead;	/* intersection w/ ray */
 	int status;
 	int state;
 	int seg_count=0;
-	struct hitlist hl, *a_hit, *b_hit;
+	struct hitlist *hl, *a_hit, *b_hit, *isect_ray_nmg();
 	long *novote;	/* faces that can't vode in hit/miss/list */
 
+	fastf_t tol=0.05;
 
-	bzero(&hl, sizeof(struct hitlist));
-	RT_LIST_INIT(&hl.l);
 
 	/* check validity of nmg specific structure */
  	if (nmg->nmg_smagic != G_NMG_START_MAGIC)
@@ -304,65 +218,10 @@ struct seg		*seghead;	/* intersection w/ ray */
 		rp->r_dir[Z] = 0.0;
 	}
 
-	NMG_CK_MODEL(nmg->nmg_model);
+	rt_g.NMG_debug |= DEBUG_NMGRT;
+	hl = isect_ray_nmg(rp, nmg->nmg_invdir, nmg->nmg_model, tol);
 
-	novote = (long *)rt_calloc( nmg->nmg_model->maxindex,
-		sizeof(long), "pt_inout_s novote[]" );
-
-	/* at this point, we know the ray intersects the nmg model RPP */
-	for (RT_LIST_FOR(r_p, nmgregion, &nmg->nmg_model->r_hd) ) {
-		NMG_CK_REGION(r_p);
-		NMG_CK_REGION_A(r_p->ra_p);
-
-		if ( !rt_in_rpp(rp, nmg->nmg_invdir,
-		    r_p->ra_p->min_pt, r_p->ra_p->max_pt) )
-			continue;
-
-		/* we now know the ray intersects the nmgregion RPP */
-		for (RT_LIST_FOR(s_p, shell, &r_p->s_hd)) {
-			NMG_CK_SHELL(s_p);
-			NMG_CK_SHELL_A(s_p->sa_p);
-			if (!rt_in_rpp(rp, nmg->nmg_invdir,
-			    s_p->sa_p->min_pt, s_p->sa_p->max_pt) )
-				continue;
-			
-			/* we now know that the ray intersects the
-			 * nmg shell RPP
-			 */
-			for (RT_LIST_FOR(fu_p, faceuse, &s_p->fu_hd) ) {
-
-				if ( NMG_INDEX_TEST( novote, fu_p ) ) {
-					if (rt_g.NMG_debug & DEBUG_NMGRT)
-						rt_log("skipping faceuse %0x (fumate %0x)\n", fu_p, fu_p->fumate_p);
-					continue;
-				}
-
-				a_hit = nmg_isect_ray_faceuse(stp, rp,
-						fu_p, novote);
-
-				NMG_INDEX_SET(novote, fu_p->f_p);
-				NMG_INDEX_SET(novote, fu_p);
-				NMG_INDEX_SET(novote, fu_p->fumate_p);
-
-				/* if we found a hit, add it to the list
-				 * of hit locations.  Keep the list sorted
-				 * in ascending hit distance.
-				 */
-				if (a_hit) {
-				    for(RT_LIST_FOR(b_hit, hitlist, &hl.l))
-					if (b_hit->hit.hit_dist >
-					    a_hit->hit.hit_dist )
-					    	break;
-
-				    RT_LIST_INSERT(&b_hit->l, &(a_hit->l));
-				}
-			}
-		}
-	}
-
-	rt_free( (char *)novote, "pt_inout_s novote[]" );
-
-	if (RT_LIST_IS_EMPTY(&hl.l)) {
+	if (! hl || RT_LIST_IS_EMPTY(&hl->l)) {
 		if (rt_g.NMG_debug & DEBUG_NMGRT)
 			rt_log("ray missed NMG\n");
 		return(0);			/* MISS */
@@ -370,9 +229,16 @@ struct seg		*seghead;	/* intersection w/ ray */
 
 	if (rt_g.NMG_debug & DEBUG_NMGRT) {
 		rt_log("sorted nmg/ray hit list\n");
-		for (RT_LIST_FOR(a_hit, hitlist, &hl.l))
-			rt_log("hit_distance %g\n", a_hit->hit.hit_dist);
+		for (RT_LIST_FOR(a_hit, hitlist, &hl->l))
+			rt_log("hit_distance %g (%g %g %g)\n",
+				a_hit->hit->hit_dist,
+				a_hit->hit->hit_point[0],
+				a_hit->hit->hit_point[1],
+				a_hit->hit->hit_point[2]);
 	}
+
+	return(0);
+
 
 	/* build up the list of segments based upon the hit points.
 	 * state	face	action			New state
@@ -384,12 +250,12 @@ struct seg		*seghead;	/* intersection w/ ray */
 	 *  1 pt	none	error?
 	 */
 	state = 0;
-	for (RT_LIST_FOR(a_hit, hitlist, &hl.l)) {
+	for (RT_LIST_FOR(a_hit, hitlist, &hl->l)) {
 		if (state == 0) {
 			RT_GET_SEG(segp, ap->a_resource );
 
 			if (rt_g.NMG_debug & DEBUG_NMGRT)
-				rt_log("first hit in seg %g", a_hit->hit.hit_dist);
+				rt_log("first hit in seg %g", a_hit->hit->hit_dist);
 
 			bcopy(&a_hit->hit, &segp->seg_in, sizeof(struct hit));
 
@@ -397,11 +263,11 @@ struct seg		*seghead;	/* intersection w/ ray */
 				rt_log(" (%g) \n", segp->seg_in.hit_dist);
 
 			if (!nmg_manifold_face(
-			    (struct faceuse *)a_hit->hit.hit_private) ) {
+			    (struct faceuse *)a_hit->hit->hit_private) ) {
 
 
 				if (rt_g.NMG_debug & DEBUG_NMGRT)
-					rt_log("secod hit in seg %g", a_hit->hit.hit_dist);
+					rt_log("secod hit in seg %g", a_hit->hit->hit_dist);
 
 				bcopy(a_hit->hit, &segp->seg_out,
 					sizeof(struct hit));
@@ -429,7 +295,7 @@ struct seg		*seghead;	/* intersection w/ ray */
 				state = 1;
 		} else {
 			if (rt_g.NMG_debug & DEBUG_NMGRT)
-				rt_log("fisrt and secod hit in seg %g -> %g", a_hit->hit.hit_dist);
+				rt_log("fisrt and secod hit in seg %g -> %g", a_hit->hit->hit_dist);
 
 			bcopy(&a_hit->hit, &segp->seg_out, sizeof(struct hit));
 
@@ -453,10 +319,10 @@ struct seg		*seghead;	/* intersection w/ ray */
 		    			segp->seg_out.hit_dist);
 
 			if (!nmg_manifold_face(
-			    (struct faceuse *)a_hit->hit.hit_private) ) {
+			    (struct faceuse *)a_hit->hit->hit_private) ) {
 				RT_GET_SEG(segp, ap->a_resource );
 				if (rt_g.NMG_debug & DEBUG_NMGRT)
-					rt_log("first hit in seg %g", a_hit->hit.hit_dist);
+					rt_log("first hit in seg %g", a_hit->hit->hit_dist);
 
 				bcopy(&a_hit->hit, &segp->seg_in,
 					sizeof(struct hit));
@@ -473,7 +339,7 @@ struct seg		*seghead;	/* intersection w/ ray */
 	}
 
 
-	for (RT_LIST_FOR(a_hit, hitlist, &hl.l))
+	for (RT_LIST_FOR(a_hit, hitlist, &hl->l))
 		rt_free((char *)a_hit, "free a hit");
 
 	return(seg_count);			/* MISS */
