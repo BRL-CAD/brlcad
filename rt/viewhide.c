@@ -125,20 +125,6 @@ char *file, *obj;
 
 	output_is_binary = 0;		/* output is printable ascii */
 
-	/* malloc() two buffers that have room for as many struct cell 's
-	 * as the incoming file is wide (width), plus two for the border.
-	 * Rather than using malloc(), though, rt_malloc() is used.  This
-	 * has the advantage of inbuild error-checking and automatic aborting
-	 * if there is no memory.  Also, rt_malloc() takes a string as its
-	 * final parameter: this tells the usr exactly where memory ran out.
-	 * The file_height is counted by using ap->a_y directly. The benefit
-	 * of this is WHAT?
-	 */
-
-	botp = (struct cell *)rt_malloc(sizeof(struct cell) * (width + 2),
-		"bottom cell buffer" );
-	topp = (struct cell *)rt_malloc(sizeof(struct cell) * (width + 2),
-		"top cell buffer" );
 
 	/* Open a plotfile for writing and check that a valid file pointer
 	 * has been acquired.
@@ -150,13 +136,6 @@ char *file, *obj;
 		exit(1);
 	}
 
-	/* Clear both in-buffers to ensure abscence of garbage.  Note 
-	 * that the zero-filled "bottom" buffer now provides the first
-	 * in-memory buffer for comparisons.
-	 */
-
-	cleanline(botp, width);
-	cleanline(topp, width);
 
 	return(0);		/* No framebuffer needed */
 }
@@ -183,6 +162,30 @@ struct application	*ap;
 		rt_bomb("outfp is NULL\n");
 
 	regionfix( ap, "rtray.regexp" );		/* XXX */
+
+	/* malloc() two buffers that have room for as many struct cell 's
+	 * as the incoming file is wide (width), plus two for the border.
+	 * Rather than using malloc(), though, rt_malloc() is used.  This
+	 * has the advantage of inbuild error-checking and automatic aborting
+	 * if there is no memory.  Also, rt_malloc() takes a string as its
+	 * final parameter: this tells the usr exactly where memory ran out.
+	 * The file_height is counted by using ap->a_y directly. The benefit
+	 * of this is WHAT?
+	 */
+
+	botp = (struct cell *)rt_malloc(sizeof(struct cell) * (width + 2),
+		"bottom cell buffer" );
+	topp = (struct cell *)rt_malloc(sizeof(struct cell) * (width + 2),
+		"top cell buffer" );
+
+	/* Clear both in-buffers to ensure abscence of garbage.  Note 
+	 * that the zero-filled "bottom" buffer now provides the first
+	 * in-memory buffer for comparisons.
+	 */
+
+	cleanline(botp, width);
+	cleanline(topp, width);
+
 
 	/* Determine the angle between surface normal below which shading
 	 * will take place.  The default is the for less than the cosine
@@ -218,6 +221,8 @@ struct application	*ap;
 	 */
 
 	pit_depth = 4 * MAGNITUDE( dx_model );
+
+
 }
 
 
