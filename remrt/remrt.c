@@ -38,6 +38,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "fb.h"
 #include "pkg.h"
 
+#include "./list.h"
 #include "./rtsrv.h"
 #include "./remrt.h"
 #include "./inout.h"
@@ -81,14 +82,6 @@ int numargs;
 #define NFD 32
 #define MAXSERVERS	NFD		/* No relay function yet */
 
-/* Lists */
-struct list {
-	struct list	*li_forw;
-	struct list	*li_back;
-	struct frame	*li_frame;
-	int		li_start;
-	int		li_stop;
-};
 struct list *FreeList;
 
 struct frame {
@@ -1075,7 +1068,7 @@ top:
 			lp->li_start = a;
 			lp->li_stop = b;
 			APPEND_LIST( lp, &(sp->sr_work) );
-			if( a == 0 )  {
+			if( fr->fr_start.tv_sec == 0 )  {
 				(void)gettimeofday( &fr->fr_start, (struct timezone *)0 );
 			}
 			send_do_lines( sp, a, b );
