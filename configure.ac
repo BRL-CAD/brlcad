@@ -155,14 +155,15 @@ BC_RESTORE_CLOBBERED([COPYING INSTALL], [misc])
 # automatically enable and load our configure cache file if available
 BC_CONFIG_CACHE([config.cache.${host_os}.${ac_hostname}])
 
+dnl be sure to search these directories for components
+BC_SEARCH_DIRECTORY([/usr/X11R6], [X11])
+
 dnl search several additional locations if configure happens to fail
 dnl to find a required component
 BC_RETRY_DIRECTORY([/usr/freeware], [freeware])
-BC_RETRY_DIRECTORY([/usr/X11R6], [X11])
 BC_RETRY_DIRECTORY([/usr/local])
 BC_RETRY_DIRECTORY([/opt])
 BC_RETRY_DIRECTORY([/sw], [fink])
-BC_RETRY_CONFIGURE
 
 AC_DEFINE(DM_X,1,[Display for X])
 AC_DEFINE(DM_OGL,1,[yeah, GL])
