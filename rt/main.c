@@ -43,6 +43,7 @@ extern char usage[];
 
 extern void wray(), wraypts();
 extern double atof();
+extern char *sbrk();
 
 /***** Variables shared with viewing model *** */
 double AmbientIntensity = 0.4;	/* Ambient light intensity */
@@ -73,7 +74,6 @@ fastf_t	zoomout=1;	/* >0 zoom out, 0..1 zoom in */
 
 #ifdef PARALLEL
 char *scanbuf;		/*** Output buffering, for parallelism */
-extern char *sbrk();
 #endif
 
 /* Eventually, npsw = MAX_PSW by default */
