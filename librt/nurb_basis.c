@@ -20,8 +20,13 @@
 static char	rcs_ident[] = "$Header$";
 #endif
 
+#include "conf.h"
+
+#include <stdio.h>
+
 #include "machine.h"
 #include "vmath.h"
+#include "raytrace.h"
 #include "nurb.h"
 
 /* This uses the traditional De Boor-Cox algorithm, 

@@ -17,9 +17,12 @@
  *     All rights reserved.
  */
 
+#include "conf.h"
+
 #include <stdio.h>
 #include "machine.h"
 #include "vmath.h"
+#include "raytrace.h"
 #include "nurb.h"
 
 /* If the order of the surface is linear either direction

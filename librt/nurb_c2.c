@@ -17,12 +17,15 @@
  *	All rights reserved.
  */
 
+#include "conf.h"
+
 #include <stdio.h>
 #include <math.h>
+
 #include "machine.h"
 #include "vmath.h"
-#include "nurb.h"
 #include "raytrace.h"
+#include "nurb.h"
 
 void
 rt_nurb_curvature(cvp, srf, u, v)
