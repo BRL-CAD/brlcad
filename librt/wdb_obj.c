@@ -101,6 +101,7 @@ static int wdb_color_tcl();
 static int wdb_prcolor_tcl();
 static int wdb_tol_tcl();
 static int wdb_push_tcl();
+static int wdb_whatid_tcl();
 
 static void wdb_deleteProc();
 static void wdb_deleteProc_rt();
@@ -154,10 +155,9 @@ static struct bu_cmdtab wdb_cmds[] = {
 	"prcolor",	wdb_prcolor_tcl,
 	"tol",		wdb_tol_tcl,
 	"push",		wdb_push_tcl,
+	"whatid",	wdb_whatid_tcl,
 #if 0
-	"analyze",	wdb_analyze_tcl,
 	"keep",		wdb_keep_tcl,
-	"inside",	wdb_inside_tcl,
 	"cat",		wdb_cat_tcl,
 	"units",	wdb_units_tcl,
 	"i",		wdb_instance_tcl,
@@ -168,12 +168,13 @@ static struct bu_cmdtab wdb_cmds[] = {
 	"getmat",	wdb_getmat_tcl,
 	"putmat",	wdb_putmat_tcl,
 	"summary",	wdb_summary_tcl,
-	"whatid",	wdb_whatid_tcl,
 	"which_shader",	wdb_which_shader_tcl,
 	"rcodes",	wdb_rcodes_tcl,
 	"wcodes",	wdb_wcodes_tcl,
 	"rmater",	wdb_rmater_tcl,
 	"wmater",	wdb_wmater_tcl,
+	"analyze",	wdb_analyze_tcl,
+	"inside",	wdb_inside_tcl,
 #endif
 	"close",	wdb_close_tcl,
 	(char *)0,	(int (*)())0
@@ -342,13 +343,13 @@ Usage: wdb_open\n\
 				wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM_APPEND_ONLY);
 			else {
 				Tcl_AppendResult(interp, "wdb_open ", argv[2],
-						 " target type not recognized\n", NULL);
+						 " target type not recognized", NULL);
 				return TCL_ERROR;
 			}
 		}
 	}
 	if (wdbp == RT_WDB_NULL) {
-		Tcl_AppendResult(interp, "wdb_open ", argv[1], " failed\n", NULL);
+		Tcl_AppendResult(interp, "wdb_open ", argv[1], " failed", NULL);
 		return TCL_ERROR;
 	}
 
@@ -427,10 +428,12 @@ wdb_prep_dbip(interp, filename)
 		}
 
 		if ((dbip = db_create(filename)) == DBI_NULL) {
-			Tcl_AppendResult(interp, "wdb_open: failed to create ", filename, "\n",\
+			Tcl_AppendResult(interp,
+					 "wdb_open: failed to create ", filename,
 					 (char *)NULL);
 			if (dbip == DBI_NULL)
-				Tcl_AppendResult(interp, "opendb: no database is currently opened!", \
+				Tcl_AppendResult(interp,
+						 "opendb: no database is currently opened!", \
 						 (char *)NULL);
 
 			return DBI_NULL;
@@ -621,7 +624,7 @@ wdb_put_tcl(clientData, interp, argc, argv)
 	if (wdb_export(wdbp, name, intern.idb_ptr, intern.idb_type,
 			1.0) < 0)  {
 		Tcl_AppendResult(interp, "wdb_export(", argv[1],
-				 ") failure\n", (char *)NULL);
+				 ") failure", (char *)NULL);
 		rt_db_free_internal(&intern);
 		return TCL_ERROR;
 	}
@@ -674,7 +677,7 @@ wdb_adjust_tcl( clientData, interp, argc, argv )
 
 	dp = db_lookup(wdbp->dbip, name, LOOKUP_QUIET);
 	if (dp == DIR_NULL) {
-		Tcl_AppendResult(interp, name, ": not found\n",
+		Tcl_AppendResult(interp, name, ": not found",
 				 (char *)NULL );
 		return TCL_ERROR;
 	}
@@ -682,7 +685,7 @@ wdb_adjust_tcl( clientData, interp, argc, argv )
 	status = rt_db_get_internal(&intern, dp, wdbp->dbip, (matp_t)NULL);
 	if (status < 0) {
 		Tcl_AppendResult(interp, "rt_db_get_internal(", name,
-				 ") failure\n", (char *)NULL );
+				 ") failure", (char *)NULL );
 		return TCL_ERROR;
 	}
 	RT_CK_DB_INTERNAL(&intern);
@@ -694,7 +697,7 @@ wdb_adjust_tcl( clientData, interp, argc, argv )
 	if( status == TCL_OK && wdb_export(wdbp, name, intern.idb_ptr,
 					   intern.idb_type, 1.0) < 0)  {
 		Tcl_AppendResult(interp, "wdb_export(", name,
-				 ") failure\n", (char *)NULL);
+				 ") failure", (char *)NULL);
 		rt_db_free_internal(&intern);
 		return TCL_ERROR;
 	}
@@ -816,7 +819,7 @@ wdb_rt_gettrees_tcl( clientData, interp, argc, argv )
 		Tcl_AppendResult(interp,
 				 "rt_gettrees: wrong # args: should be \"",
 				 argv[0], " ", argv[1],
-				 " newprocname [-i] [-u] treetops...\"\n", (char *)NULL );
+				 " newprocname [-i] [-u] treetops...\"", (char *)NULL );
 		return TCL_ERROR;
 	}
 
@@ -844,7 +847,7 @@ wdb_rt_gettrees_tcl( clientData, interp, argc, argv )
 
 	if (rt_gettrees(rtip, argc-3, (CONST char **)&argv[3], 1) < 0) {
 		Tcl_AppendResult(interp,
-				 "rt_gettrees() returned error\n", (char *)NULL);
+				 "rt_gettrees() returned error", (char *)NULL);
 		rt_free_rti(rtip);
 		return TCL_ERROR;
 	}
@@ -908,13 +911,16 @@ wdb_dump_tcl( clientData, interp, argc, argv )
 	if (argc != 3) {
 		Tcl_AppendResult(interp,
 				 "dump: wrong # args: should be \"",
-				 argv[0], "dump filename.g\n", (char *)NULL);
+				 argv[0], "dump filename.g", (char *)NULL);
 		return TCL_ERROR;
 	}
 
 	if ((op = wdb_fopen(argv[2])) == RT_WDB_NULL) {
 		Tcl_AppendResult(interp,
-				 argv[0], " dump:  ", argv[2], ": cannot create\n",
+				 argv[0],
+				 " dump:  ",
+				 argv[2],
+				 ": cannot create",
 				 (char *)NULL);
 		return TCL_ERROR;
 	}
@@ -922,7 +928,7 @@ wdb_dump_tcl( clientData, interp, argc, argv )
 	wdb_close(op);
 	if (ret < 0) {
 		Tcl_AppendResult(interp,
-				 argv[0], " dump ", argv[2], ": db_dump() error\n",
+				 argv[0], " dump ", argv[2], ": db_dump() error",
 				 (char *)NULL);
 		return TCL_ERROR;
 	}
@@ -1017,7 +1023,7 @@ wdb_ls_tcl(clientData, interp, argc, argv)
 			sflag = 1;
 			break;
 		default:
-			bu_vls_printf(&vls, "Unrecognized option - %c\n", c);
+			bu_vls_printf(&vls, "Unrecognized option - %c", c);
 			Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 			bu_vls_free(&vls);
 			return TCL_ERROR;
@@ -1140,7 +1146,7 @@ wdb_list_tcl(clientData, interp, argc, argv)
 
 			if ((id = rt_db_get_internal(&intern, dp, wdbp->dbip, ts.ts_mat)) < 0) {
 				Tcl_AppendResult(interp, "rt_db_get_internal(", dp->d_namep,
-						 ") failure\n", (char *)NULL );
+						 ") failure", (char *)NULL );
 				continue;
 			}
 
@@ -1149,7 +1155,7 @@ wdb_list_tcl(clientData, interp, argc, argv)
 			bu_vls_printf( &str, "%s:  ", argv[arg] );
 
 			if (rt_functab[id].ft_describe(&str, &intern, 99, wdbp->dbip->dbi_base2local) < 0)
-				Tcl_AppendResult(interp, dp->d_namep, ": describe error\n", (char *)NULL);
+				Tcl_AppendResult(interp, dp->d_namep, ": describe error", (char *)NULL);
 
 			rt_functab[id].ft_ifree(&intern);
 		} else {
@@ -1306,7 +1312,7 @@ err:
 	/* path not found */
 	Tcl_AppendResult(interp, "Path:  ", (char *)NULL);
 	db_full_path_appendresult( interp, &desired_path );
-	Tcl_AppendResult(interp, "  not found\n", (char *)NULL);
+	Tcl_AppendResult(interp, "  not found", (char *)NULL);
 
 	db_free_full_path( &desired_path );
     	return TCL_ERROR;
@@ -1444,7 +1450,7 @@ wdb_kill_tcl(clientData, interp, argc, argv)
 	int	verbose = LOOKUP_NOISY;
 
 	if (wdbp->dbip->dbi_read_only) {
-		Tcl_AppendResult(interp, "Database is read-only!\n", (char *)NULL);
+		Tcl_AppendResult(interp, "Database is read-only!", (char *)NULL);
 		return TCL_ERROR;
 	}
 
@@ -1485,7 +1491,7 @@ wdb_kill_tcl(clientData, interp, argc, argv)
 				/* Abort kill processing on first error */
 				Tcl_AppendResult(interp,
 						 "an error occurred while deleting ",
-						 argv[i], "\n", (char *)NULL);
+						 argv[i], (char *)NULL);
 				return TCL_ERROR;
 			}
 		}
@@ -1516,7 +1522,7 @@ wdb_killall_tcl(clientData, interp, argc, argv)
 	int			ret;
 
 	if (wdbp->dbip->dbi_read_only) {
-		Tcl_AppendResult(interp, "Database is read-only!\n", (char *)NULL);
+		Tcl_AppendResult(interp, "Database is read-only!", (char *)NULL);
 		return TCL_ERROR;
 	}
 
@@ -1608,7 +1614,7 @@ wdb_killtree_tcl(clientData, interp, argc, argv)
 	register int i;
 
 	if (wdbp->dbip->dbi_read_only) {
-		Tcl_AppendResult(interp, "Database is read-only!\n", (char *)NULL);
+		Tcl_AppendResult(interp, "Database is read-only!", (char *)NULL);
 		return TCL_ERROR;
 	}
 
@@ -1681,7 +1687,7 @@ wdb_copy_tcl(clientData, interp, argc, argv)
 	struct bu_external external;
 
 	if (wdbp->dbip->dbi_read_only) {
-		Tcl_AppendResult(interp, "Database is read-only!\n", (char *)NULL);
+		Tcl_AppendResult(interp, "Database is read-only!", (char *)NULL);
 		return TCL_ERROR;
 	}
 
@@ -1699,26 +1705,26 @@ wdb_copy_tcl(clientData, interp, argc, argv)
 		return TCL_ERROR;
 
 	if (db_lookup(wdbp->dbip, argv[3], LOOKUP_QUIET) != DIR_NULL) {
-		Tcl_AppendResult(interp, argv[3], ":  already exists\n", (char *)NULL);
+		Tcl_AppendResult(interp, argv[3], ":  already exists", (char *)NULL);
 		return TCL_ERROR;
 	}
 
 	if (db_get_external(&external , proto , wdbp->dbip)) {
-		Tcl_AppendResult(interp, "Database read error, aborting\n", (char *)NULL);
+		Tcl_AppendResult(interp, "Database read error, aborting", (char *)NULL);
 		return TCL_ERROR;
 	}
 
 	if ((dp=db_diradd(wdbp->dbip, argv[3], -1, proto->d_len, proto->d_flags, NULL)) == DIR_NULL ||
 	    db_alloc(wdbp->dbip, dp, proto->d_len) < 0) {
 		Tcl_AppendResult(interp,
-				 "An error has occured while adding a new object to the database.\n",
+				 "An error has occured while adding a new object to the database.",
 				 (char *)NULL);
 		return TCL_ERROR;
 	}
 
 	if (db_put_external(&external, dp, wdbp->dbip) < 0) {
 		db_free_external(&external);
-		Tcl_AppendResult(interp, "Database write error, aborting\n", (char *)NULL);
+		Tcl_AppendResult(interp, "Database write error, aborting", (char *)NULL);
 		return TCL_ERROR;
 	}
 	db_free_external(&external);
@@ -1744,7 +1750,7 @@ wdb_move_tcl(clientData, interp, argc, argv)
 	struct rt_db_internal	intern;
 
 	if (wdbp->dbip->dbi_read_only) {
-		Tcl_AppendResult(interp, "Database is read-only!\n", (char *)NULL);
+		Tcl_AppendResult(interp, "Database is read-only!", (char *)NULL);
 		return TCL_ERROR;
 	}
 
@@ -1762,12 +1768,12 @@ wdb_move_tcl(clientData, interp, argc, argv)
 		return TCL_ERROR;
 
 	if (db_lookup(wdbp->dbip, argv[3], LOOKUP_QUIET) != DIR_NULL) {
-		Tcl_AppendResult(interp, argv[3], ":  already exists\n", (char *)NULL);
+		Tcl_AppendResult(interp, argv[3], ":  already exists", (char *)NULL);
 		return TCL_ERROR;
 	}
 
 	if (rt_db_get_internal(&intern, dp, wdbp->dbip, (fastf_t *)NULL) < 0) {
-		Tcl_AppendResult(interp, "Database read error, aborting\n", (char *)NULL);
+		Tcl_AppendResult(interp, "Database read error, aborting", (char *)NULL);
 		return TCL_ERROR;
 	}
 
@@ -1775,13 +1781,13 @@ wdb_move_tcl(clientData, interp, argc, argv)
 	if (db_rename(wdbp->dbip, dp, argv[3]) < 0) {
 		rt_db_free_internal(&intern);
 		Tcl_AppendResult(interp, "error in db_rename to ", argv[3],
-				 ", aborting\n", (char *)NULL);
+				 ", aborting", (char *)NULL);
 		return TCL_ERROR;
 	}
 
 	/* Re-write to the database.  New name is applied on the way out. */
 	if (rt_db_put_internal(dp, wdbp->dbip, &intern) < 0) {
-		Tcl_AppendResult(interp, "Database write error, aborting\n", (char *)NULL);
+		Tcl_AppendResult(interp, "Database write error, aborting", (char *)NULL);
 		return TCL_ERROR;
 	}
 
@@ -1809,7 +1815,7 @@ wdb_move_all_tcl(clientData, interp, argc, argv)
 	struct bu_ptbl		stack;
 
 	if (wdbp->dbip->dbi_read_only) {
-		Tcl_AppendResult(interp, "Database is read-only!\n", (char *)NULL);
+		Tcl_AppendResult(interp, "Database is read-only!", (char *)NULL);
 		return TCL_ERROR;
 	}
 
@@ -1827,7 +1833,7 @@ wdb_move_all_tcl(clientData, interp, argc, argv)
 		struct bu_vls tmp_vls;
 
 		bu_vls_init(&tmp_vls);
-		bu_vls_printf(&tmp_vls, "ERROR: name length limited to %d characters\n", RT_NAMESIZE);
+		bu_vls_printf(&tmp_vls, "ERROR: name length limited to %d characters", RT_NAMESIZE);
 		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 		bu_vls_free(&tmp_vls);
 		return TCL_ERROR;
@@ -1838,25 +1844,25 @@ wdb_move_all_tcl(clientData, interp, argc, argv)
 		return TCL_ERROR;
 
 	if (db_lookup(wdbp->dbip, argv[3], LOOKUP_QUIET) != DIR_NULL) {
-		Tcl_AppendResult(interp, argv[3], ":  already exists\n", (char *)NULL);
+		Tcl_AppendResult(interp, argv[3], ":  already exists", (char *)NULL);
 		return TCL_ERROR;
 	}
 
 	/*  Change object name in the directory. */
 	if (db_rename(wdbp->dbip, dp, argv[3]) < 0) {
 		Tcl_AppendResult(interp, "error in rename to ", argv[3],
-				 ", aborting\n", (char *)NULL);
+				 ", aborting", (char *)NULL);
 		return TCL_ERROR;
 	}
 
 	/* Change name in the file */
 	if (rt_db_get_internal(&intern, dp, wdbp->dbip, (fastf_t *)NULL) < 0) {
-		Tcl_AppendResult(interp, "Database read error, aborting\n", (char *)NULL);
+		Tcl_AppendResult(interp, "Database read error, aborting", (char *)NULL);
 		return TCL_ERROR;
 	}
 
 	if (rt_db_put_internal(dp, wdbp->dbip, &intern) < 0) {
-		Tcl_AppendResult(interp, "Database write error, aborting\n", (char *)NULL);
+		Tcl_AppendResult(interp, "Database write error, aborting", (char *)NULL);
 		return TCL_ERROR;
 	}
 
@@ -1909,7 +1915,7 @@ wdb_move_all_tcl(clientData, interp, argc, argv)
 					bu_ptbl_free( &stack );
 					rt_comb_ifree( &intern );
 					Tcl_AppendResult(interp,
-							 "Database write error, aborting\n",
+							 "Database write error, aborting",
 							 (char *)NULL);
 					return TCL_ERROR;
 				}
@@ -1983,7 +1989,7 @@ wdb_dir_add(input_dbip, name, laddr, len, flags, ptr)
 	struct dir_add_stuff	*dasp = (struct dir_add_stuff *)ptr;
 
 	if (input_dbip->dbi_magic != DBI_MAGIC)
-		bu_bomb("wdb_dir_add:  bad dbip\n");
+		bu_bomb("wdb_dir_add:  bad dbip");
 
 	/* Add the prefix, if any */
 	if (dasp->wdbp->wdb_ncharadd > 0) {
@@ -2107,7 +2113,7 @@ wdb_concat_tcl(clientData, interp, argc, argv)
 	struct dir_add_stuff	das;
 
 	if (wdbp->dbip->dbi_read_only) {
-		Tcl_AppendResult(interp, "Database is read-only!\n", (char *)NULL);
+		Tcl_AppendResult(interp, "Database is read-only!", (char *)NULL);
 		return TCL_ERROR;
 	}
 
@@ -2137,7 +2143,7 @@ wdb_concat_tcl(clientData, interp, argc, argv)
 	if ((newdbp = db_open(argv[2], "r")) == DBI_NULL) {
 		perror(argv[2]);
 		Tcl_AppendResult(interp, "concat: Can't open ",
-				 argv[2], "\n", (char *)NULL);
+				 argv[2], (char *)NULL);
 		return TCL_ERROR;
 	}
 
@@ -2146,7 +2152,7 @@ wdb_concat_tcl(clientData, interp, argc, argv)
 	das.main_dbip = wdbp->dbip;
 	das.wdbp = wdbp;
 	if (db_scan(newdbp, wdb_dir_add, 1, (genptr_t)&das) < 0) {
-		Tcl_AppendResult(interp, "concat: db_scan failure\n", (char *)NULL);
+		Tcl_AppendResult(interp, "concat: db_scan failure", (char *)NULL);
 		bad = 1;	
 		/* Fall through, to close off database */
 	}
@@ -2248,7 +2254,7 @@ wdb_dup_tcl(clientData, interp, argc, argv)
 	/* open the input file */
 	if ((newdbp = db_open(argv[2], "r")) == DBI_NULL) {
 		perror(argv[2]);
-		Tcl_AppendResult(interp, "dup: Can't open ", argv[2], "\n", (char *)NULL);
+		Tcl_AppendResult(interp, "dup: Can't open ", argv[2], (char *)NULL);
 		return TCL_ERROR;
 	}
 
@@ -2273,7 +2279,7 @@ wdb_dup_tcl(clientData, interp, argc, argv)
 	dcs.wdbp = wdbp;
 	dcs.dup_dirp = dirp0;
 	if (db_scan(newdbp, wdb_dir_check, 0, (genptr_t)&dcs) < 0) {
-		Tcl_AppendResult(interp, "dup: db_scan failure\n", (char *)NULL);
+		Tcl_AppendResult(interp, "dup: db_scan failure", (char *)NULL);
 		bu_free((genptr_t)dirp0, "wdb_getspace array");
 		db_close(newdbp);
 		return TCL_ERROR;
@@ -2281,7 +2287,7 @@ wdb_dup_tcl(clientData, interp, argc, argv)
 
 	bu_vls_init(&vls);
 	wdb_vls_col_pr4v(&vls, dirp0, (int)(dcs.dup_dirp - dirp0));
-	bu_vls_printf(&vls, "\n -----  %d duplicate names found  -----\n", wdbp->wdb_num_dups);
+	bu_vls_printf(&vls, "\n -----  %d duplicate names found  -----", wdbp->wdb_num_dups);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 	bu_free((genptr_t)dirp0, "wdb_getspace array");
@@ -2306,7 +2312,7 @@ wdb_group_tcl(clientData, interp, argc, argv)
 	register int i;
 
 	if (wdbp->dbip->dbi_read_only) {
-		Tcl_AppendResult(interp, "Database is read-only!\n", (char *)NULL);
+		Tcl_AppendResult(interp, "Database is read-only!", (char *)NULL);
 		return TCL_ERROR;
 	}
 
@@ -2355,7 +2361,7 @@ wdb_remove_tcl(clientData, interp, argc, argv)
 	int			ret;
 
 	if (wdbp->dbip->dbi_read_only) {
-		Tcl_AppendResult(interp, "Database is read-only!\n", (char *)NULL);
+		Tcl_AppendResult(interp, "Database is read-only!", (char *)NULL);
 		return TCL_ERROR;
 	}
 
@@ -2374,12 +2380,12 @@ wdb_remove_tcl(clientData, interp, argc, argv)
 
 	if ((dp->d_flags & DIR_COMB) == 0) {
 		Tcl_AppendResult(interp, "rm: ", dp->d_namep,
-				 " is not a combination\n", (char *)NULL );
+				 " is not a combination", (char *)NULL );
 		return TCL_ERROR;
 	}
 
 	if (rt_db_get_internal(&intern, dp, wdbp->dbip, (fastf_t *)NULL) < 0) {
-		Tcl_AppendResult(interp, "Database read error, aborting\n", (char *)NULL);
+		Tcl_AppendResult(interp, "Database read error, aborting", (char *)NULL);
 		return TCL_ERROR;
 	}
 
@@ -2404,7 +2410,7 @@ wdb_remove_tcl(clientData, interp, argc, argv)
 	}
 
 	if (rt_db_put_internal(dp, wdbp->dbip, &intern) < 0) {
-		Tcl_AppendResult(interp, "Database write error, aborting\n", (char *)NULL);
+		Tcl_AppendResult(interp, "Database write error, aborting", (char *)NULL);
 		return TCL_ERROR;
 	}
 
@@ -2429,7 +2435,7 @@ wdb_region_tcl(clientData, interp, argc, argv)
 	char oper;
 
 	if (wdbp->dbip->dbi_read_only) {
-		Tcl_AppendResult(interp, "Database is read-only!\n", (char *)NULL);
+		Tcl_AppendResult(interp, "Database is read-only!", (char *)NULL);
 		return TCL_ERROR;
 	}
 
@@ -2452,7 +2458,7 @@ wdb_region_tcl(clientData, interp, argc, argv)
  
 	/* Check for even number of arguments */
 	if (argc & 01) {
-		Tcl_AppendResult(interp, "error in number of args!\n", (char *)NULL);
+		Tcl_AppendResult(interp, "error in number of args!", (char *)NULL);
 		return TCL_ERROR;
 	}
 
@@ -2502,7 +2508,7 @@ wdb_region_tcl(clientData, interp, argc, argv)
 
 		if (wdb_combadd(interp, wdbp->dbip, dp,
 				argv[1], 1, oper, ident, air, wdbp) == DIR_NULL) {
-			Tcl_AppendResult(interp, "error in combadd\n", (char *)NULL);
+			Tcl_AppendResult(interp, "error in combadd", (char *)NULL);
 			return TCL_ERROR;
 		}
 	}
@@ -2538,7 +2544,7 @@ wdb_comb_tcl(clientData, interp, argc, argv)
 	char	oper;
 
 	if (wdbp->dbip->dbi_read_only) {
-		Tcl_AppendResult(interp, "Database is read-only!\n", (char *)NULL);
+		Tcl_AppendResult(interp, "Database is read-only!", (char *)NULL);
 		return TCL_ERROR;
 	}
 
@@ -2558,7 +2564,7 @@ wdb_comb_tcl(clientData, interp, argc, argv)
 
 	/* Check for odd number of arguments */
 	if (argc & 01) {
-		Tcl_AppendResult(interp, "error in number of args!\n", (char *)NULL);
+		Tcl_AppendResult(interp, "error in number of args!", (char *)NULL);
 		return TCL_ERROR;
 	}
 
@@ -2568,7 +2574,7 @@ wdb_comb_tcl(clientData, interp, argc, argv)
 		if (!(dp->d_flags & DIR_COMB)) {
 			Tcl_AppendResult(interp,
 					 "ERROR: ", comb_name,
-					 " is not a combination\n", (char *)0 );
+					 " is not a combination", (char *)0 );
 			return TCL_ERROR;
 		}
 	}
@@ -2597,14 +2603,14 @@ wdb_comb_tcl(clientData, interp, argc, argv)
 		}
 
 		if (wdb_combadd(interp, wdbp->dbip, dp, comb_name, 0, oper, 0, 0, wdbp) == DIR_NULL) {
-			Tcl_AppendResult(interp, "error in combadd\n", (char *)NULL);
+			Tcl_AppendResult(interp, "error in combadd", (char *)NULL);
 			return TCL_ERROR;
 		}
 	}
 
 	if (db_lookup(wdbp->dbip, comb_name, LOOKUP_QUIET) == DIR_NULL) {
 		Tcl_AppendResult(interp, "Error:  ", comb_name,
-				 " not created\n", (char *)NULL);
+				 " not created", (char *)NULL);
 		return TCL_ERROR;
 	}
 
@@ -2669,7 +2675,7 @@ wdb_find_tcl(clientData, interp, argc, argv)
 				continue;
 
 			if (rt_db_get_internal(&intern, dp, wdbp->dbip, (fastf_t *)NULL) < 0) {
-				Tcl_AppendResult(interp, "Database read error, aborting\n", (char *)NULL);
+				Tcl_AppendResult(interp, "Database read error, aborting", (char *)NULL);
 				return TCL_ERROR;
 			}
 
@@ -2793,7 +2799,7 @@ wdb_which_tcl(clientData, interp, argc, argv)
 				continue;
 
 			if (rt_db_get_internal( &intern, dp, wdbp->dbip, (fastf_t *)NULL ) < 0) {
-				Tcl_AppendResult(interp, "Database read error, aborting\n", (char *)NULL);
+				Tcl_AppendResult(interp, "Database read error, aborting", (char *)NULL);
 				return TCL_ERROR;
 			}
 			comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -2854,7 +2860,7 @@ wdb_title_tcl(clientData, interp, argc, argv)
 	int bad = 0;
 
 	if (wdbp->dbip->dbi_read_only) {
-		Tcl_AppendResult(interp, "Database is read-only!\n", (char *)NULL);
+		Tcl_AppendResult(interp, "Database is read-only!", (char *)NULL);
 		return TCL_ERROR;
 	}
 
@@ -2869,7 +2875,7 @@ wdb_title_tcl(clientData, interp, argc, argv)
 	}
 
 	if (argc < 3) {
-		Tcl_AppendResult(interp, wdbp->dbip->dbi_title, "\n", (char *)NULL);
+		Tcl_AppendResult(interp, wdbp->dbip->dbi_title, (char *)NULL);
 		return TCL_OK;
 	}
 
@@ -2877,7 +2883,7 @@ wdb_title_tcl(clientData, interp, argc, argv)
 	bu_vls_from_argv(&title, argc-2, argv+2);
 
 	if (db_ident(wdbp->dbip, bu_vls_addr(&title), wdbp->dbip->dbi_localunit) < 0) {
-		Tcl_AppendResult(interp, "Error: unable to change database title\n");
+		Tcl_AppendResult(interp, "Error: unable to change database title");
 		bad = 1;
 	}
 
@@ -2931,7 +2937,7 @@ wdb_print_node(wdbp, interp, dp, pathpos, prefix)
 	 */
 
 	if (rt_db_get_internal(&intern, dp, wdbp->dbip, (fastf_t *)NULL) < 0) {
-		Tcl_AppendResult(interp, "Database read error, aborting\n", (char *)NULL);
+		Tcl_AppendResult(interp, "Database read error, aborting", (char *)NULL);
 		return;
 	}
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
@@ -2944,7 +2950,7 @@ wdb_print_node(wdbp, interp, dp, pathpos, prefix)
 		if (comb->tree && db_ck_v4gift_tree(comb->tree) < 0) {
 			db_non_union_push(comb->tree);
 			if (db_ck_v4gift_tree(comb->tree) < 0) {
-				Tcl_AppendResult(interp, "Cannot flatten tree for listing\n", (char *)NULL);
+				Tcl_AppendResult(interp, "Cannot flatten tree for listing", (char *)NULL);
 				return;
 			}
 		}
@@ -3068,7 +3074,7 @@ wdb_color_putrec(mp, interp, dbip)
 		/* Need to allocate new database space */
 		if (db_alloc(dbip, &dir, 1) < 0) {
 			Tcl_AppendResult(interp,
-					 "Database alloc error, aborting\n",
+					 "Database alloc error, aborting",
 					 (char *)NULL);
 			return;
 		}
@@ -3080,7 +3086,7 @@ wdb_color_putrec(mp, interp, dbip)
 
 	if (db_put(dbip, &dir, &rec, 0, 1) < 0) {
 		Tcl_AppendResult(interp,
-				 "Database write error, aborting\n",
+				 "Database write error, aborting",
 				 (char *)NULL);
 		return;
 	}
@@ -3110,7 +3116,7 @@ wdb_color_zaprec(mp, interp, dbip)
 
 	if (db_delete(dbip, &dir) < 0) {
 		Tcl_AppendResult(interp,
-				 "Database delete error, aborting\n",
+				 "Database delete error, aborting",
 				 (char *)NULL);
 		return;
 	}
@@ -3132,7 +3138,7 @@ wdb_color_tcl(clientData, interp, argc, argv)
 	register struct mater *newp,*next_mater;
 
 	if (wdbp->dbip->dbi_read_only) {
-		Tcl_AppendResult(interp, "Database is read-only!\n", (char *)NULL);
+		Tcl_AppendResult(interp, "Database is read-only!", (char *)NULL);
 		return TCL_ERROR;
 	}
 
@@ -3226,7 +3232,7 @@ wdb_prcolor_tcl(clientData, interp, argc, argv)
 	}
 
 	if (rt_material_head == MATER_NULL) {
-		Tcl_AppendResult(interp, "none\n", (char *)NULL);
+		Tcl_AppendResult(interp, "none", (char *)NULL);
 		return TCL_OK;
 	}
 
@@ -3312,7 +3318,7 @@ wdb_tol_tcl(clientData, interp, argc, argv)
 		bu_vls_init(&vls);
 		bu_vls_printf(&vls,"Calculational tolerances:\n");
 		bu_vls_printf(&vls,
-			      "\tdistance = %g mm\n\tperpendicularity = %g (cosine of %g degrees)\n",
+			      "\tdistance = %g mm\n\tperpendicularity = %g (cosine of %g degrees)",
 			      wdbp->wdb_tol.dist, wdbp->wdb_tol.perp,
 			      acos(wdbp->wdb_tol.perp)*bn_radtodeg);
 		Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
@@ -3353,7 +3359,7 @@ wdb_tol_tcl(clientData, interp, argc, argv)
 			bu_vls_printf(&vls, "%g", wdbp->wdb_tol.perp);
 			break;
 		default:
-			bu_vls_printf(&vls, "unrecognized tolerance type - %s\n", argv[2]);
+			bu_vls_printf(&vls, "unrecognized tolerance type - %s", argv[2]);
 			status = TCL_ERROR;
 			break;
 		}
@@ -3366,7 +3372,7 @@ wdb_tol_tcl(clientData, interp, argc, argv)
 	/* set the specified tolerance */
 	if (sscanf(argv[3], "%lf", &f) != 1) {
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "bad tolerance - %s\n", argv[3]);
+		bu_vls_printf(&vls, "bad tolerance - %s", argv[3]);
 		Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 		bu_vls_free(&vls);
 
@@ -3426,7 +3432,7 @@ wdb_tol_tcl(clientData, interp, argc, argv)
 		break;
 	default:
 		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "unrecognized tolerance type - %s\n", argv[2]);
+		bu_vls_printf(&vls, "unrecognized tolerance type - %s", argv[2]);
 		Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 		bu_vls_free(&vls);
 
@@ -3581,7 +3587,7 @@ wdb_push_tcl(clientData, interp, argc, argv)
 	extern	char *bu_optarg;
 
 	if (wdbp->dbip->dbi_read_only) {
-		Tcl_AppendResult(interp, "Database is read-only!\n", (char *)NULL);
+		Tcl_AppendResult(interp, "Database is read-only!", (char *)NULL);
 		return TCL_ERROR;
 	}
 
@@ -3657,7 +3663,7 @@ wdb_push_tcl(clientData, interp, argc, argv)
 		rt_g.debug = old_debug;
 		bu_free((genptr_t)wpdp, "wdb_push_tcl: wpdp");
 		Tcl_AppendResult(interp,
-				 "push:\tdb_walk_tree failed or there was a solid moving\n\tin two or more directions\n",
+				 "push:\tdb_walk_tree failed or there was a solid moving\n\tin two or more directions",
 				 (char *)NULL);
 		return TCL_ERROR;
 	}
@@ -3727,6 +3733,54 @@ wdb_push_tcl(clientData, interp, argc, argv)
 	bu_free((genptr_t)wpdp, "wdb_push_tcl: wpdp");
 
 	return push_error ? TCL_ERROR : TCL_OK;
+}
+
+/*
+ * Usage:
+ *        procname whatid object
+ */
+static int
+wdb_whatid_tcl(clientData, interp, argc, argv)
+     ClientData clientData;
+     Tcl_Interp *interp;
+     int     argc;
+     char    **argv;
+{
+	struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
+	struct directory *dp;
+	struct rt_db_internal intern;
+	struct rt_comb_internal *comb;
+	struct bu_vls vls;
+
+	if (argc != 3) {
+		struct bu_vls vls;
+
+		bu_vls_init(&vls);
+		bu_vls_printf(&vls, "helplib wdb_whatid");
+		Tcl_Eval(interp, bu_vls_addr(&vls));
+		bu_vls_free(&vls);
+		return TCL_ERROR;
+	}
+
+	if ((dp=db_lookup(wdbp->dbip, argv[2], LOOKUP_NOISY )) == DIR_NULL )
+		return TCL_ERROR;
+
+	if (!(dp->d_flags & DIR_REGION)) {
+		Tcl_AppendResult(interp, argv[2], " is not a region", (char *)NULL );
+		return TCL_ERROR;
+	}
+
+	if (rt_db_get_internal(&intern, dp, wdbp->dbip, (fastf_t *)NULL) < 0)
+		return TCL_ERROR;
+	comb = (struct rt_comb_internal *)intern.idb_ptr;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "%d", comb->region_id);
+	rt_comb_ifree(&intern);
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
+
+	return TCL_OK;
 }
 
 #if 0
@@ -3830,22 +3884,22 @@ wdb_vls_col_pr4v(vls, list_of_names, num_in_list)
 {
 	int lines, i, j, namelen, this_one;
 
-	qsort( (genptr_t)list_of_names,
-	       (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
-	       (int (*)())wdb_cmpdirname);
+	qsort((genptr_t)list_of_names,
+	      (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
+	      (int (*)())wdb_cmpdirname);
 
 	/*
 	 * For the number of (full and partial) lines that will be needed,
 	 * print in vertical format.
 	 */
 	lines = (num_in_list + 3) / 4;
-	for( i=0; i < lines; i++) {
-		for( j=0; j < 4; j++) {
+	for (i=0; i < lines; i++) {
+		for (j=0; j < 4; j++) {
 			this_one = j * lines + i;
 			/* Restrict the print to 16 chars per spec. */
 			bu_vls_printf(vls,  "%.16s", list_of_names[this_one]->d_namep);
-			namelen = strlen( list_of_names[this_one]->d_namep);
-			if( namelen > 16)
+			namelen = strlen(list_of_names[this_one]->d_namep);
+			if (namelen > 16)
 				namelen = 16;
 			/*
 			 * Region and ident checks here....  Since the code
@@ -3854,11 +3908,11 @@ wdb_vls_col_pr4v(vls, list_of_names, num_in_list)
 			 * be delayed until now.  There is no way to make the
 			 * decision on where to place them before now.
 			 */
-			if(list_of_names[this_one]->d_flags & DIR_COMB) {
+			if (list_of_names[this_one]->d_flags & DIR_COMB) {
 				bu_vls_putc(vls, '/');
 				namelen++;
 			}
-			if(list_of_names[this_one]->d_flags & DIR_REGION) {
+			if (list_of_names[this_one]->d_flags & DIR_REGION) {
 				bu_vls_putc(vls, 'R');
 				namelen++;
 			}
@@ -3867,7 +3921,7 @@ wdb_vls_col_pr4v(vls, list_of_names, num_in_list)
 			 * Note that this will catch the end of the lines
 			 * that are full too.
 			 */
-			if( this_one + lines >= num_in_list) {
+			if (this_one + lines >= num_in_list) {
 				bu_vls_putc(vls, '\n');
 				break;
 			} else {
@@ -3875,7 +3929,7 @@ wdb_vls_col_pr4v(vls, list_of_names, num_in_list)
 				 * Pad to next boundary as there will be
 				 * another entry to the right of this one. 
 				 */
-				while( namelen++ < 20)
+				while (namelen++ < 20)
 					bu_vls_putc(vls, ' ');
 			}
 		}
