@@ -54,14 +54,14 @@ set -S2 "/bin/sh"
  * In this mode, the object modules are placed into the		*
  * same directory as the source code.				*
  *								*
- * If the symbol NFS is defined, then the nfs-based		*
+ * If the symbol NFS is defined to 1, then the nfs-based	*
  * multi-machine behavior is implemented.			*
  * In this mode, a separate directory is made for each		*
  * source directory for each type of client machine.		*
  * This way, the binaries for each type of client machine	*
  * can not co-mingle, yet everything is generated from		*
  * a common set of source code.					*
- * This is the strategy used to handle the machines at BRL.	*
+ * This is the strategy used to handle the machines at ARL.	*
  * For example, the sources in cad/librt/ would have		*
  * sun3 binaries in cad/.librt.sun3/ and			*
  * SGI 4-D binaries in cad/.librt.4d/				*
@@ -69,11 +69,17 @@ set -S2 "/bin/sh"
  * are in the right directory before running "cake", but	*
  * being able to share one set of sources across many		*
  * different kinds of machines makes this well worthwhile.	*
+ * Most of us use c-shell alias "mcd" to assist with this:	*
+ *	alias mcd "cd $cadroot/\!:1; pushd ../.\!:1."'$machine'	*
+ *								*
+ * You must also edit gen.sh to enable this feature.		*
+ *								*
  * If you only have one kind of machine, don't bother.		*
  *								*
  ****************************************************************/
 #undef NFS
 #define NFS	1
+/* Place "#define NFS	1" here to enable NFS feature */
 
 /****************************************************************
  *								*
@@ -200,6 +206,34 @@ set -S2 "/bin/sh"
 #		define  LIBFB_CONFIG    -DIF_REMOTE
 #		define	LIBFB_LIBES	LIBPKG
 #	endif
+#	define	MGED_OBJS	dm-X
+#	define	MGED_CONFIG	-DDM_X -I''XINCDIR
+#	define	MGED_LIBES	-L''XLIBDIR -lX11
+#endif
+
+#if defined(__CAKE__linux)
+/*	IBM PC or clone running Linux */
+#	undef	li
+#	define	MTYPE	li
+#	define	UNIXTYPE SYSV
+#	define	HAS_TCP 1
+#	define	HAS_SYMLINKS 1
+#	define	RANLIB	ar -s
+#	define	CC	gcc
+#	if 0	/* PRODUCTION=1 */
+#		define	OPTIMIZER	-O2
+#	else
+#		define	OPTIMIZER	-g
+#	endif
+/*	Don't use -ansi, that gives __STRICT_ANSI__.  Default is _GNU_SOURCE. */
+#	define	CC_OPTS /**/
+#	define	XINCDIR	/usr/X11/include
+#	define	XLIBDIR	/usr/X11/lib
+
+#	define	LIBRT_TIMER	timer42
+#	define	LIBFB_CONFIG	-DIF_REMOTE -I''XINCDIR -DIF_X
+#	define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lX11
+#	define	LIBFB_OBJS	if_remote if_ab if_X if_X24
 #	define	MGED_OBJS	dm-X
 #	define	MGED_CONFIG	-DDM_X -I''XINCDIR
 #	define	MGED_LIBES	-L''XLIBDIR -lX11
