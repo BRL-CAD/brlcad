@@ -57,6 +57,7 @@ int specify_base;	/* user specified a base */
 int user_base;		/* value of user-specified base */
 int force_shell;	/* force shell script for each frame */
 int suppress_shell;	/* suppress shell script for each frame */
+int frame_offset;	/* offset added to frame numbers */
 
 void squirtframes();
 void sf();
@@ -134,6 +135,7 @@ FILE *in;
 	RT_LIST_INIT(&(new->l));
 	RT_LIST_MAGIC_SET(&(new->l),MAGIC);
 	new->number = atoi(yytext);
+	new->number += frame_offset;
 /*
  * The next token should be SEMI COLON;
  */
@@ -380,7 +382,7 @@ int skip;
 	}
 }
 
-#define OPT_STR "qb:fs"
+#define OPT_STR "qb:fso:"
 int get_args (argc,argv)
 int argc;
 char **argv;
@@ -388,6 +390,7 @@ char **argv;
 	int c;
 	verbose = 1;
 	specify_base = force_shell = suppress_shell = 0;
+	frame_offset = 0;
 	while ( (c=getopt(argc,argv,OPT_STR)) != EOF) {
 		switch(c){
 		case 'q':
@@ -404,6 +407,9 @@ char **argv;
 		case 's':
 			suppress_shell = 1;
 			force_shell = 0;
+			break;
+		case 'o':
+			frame_offset = atoi(optarg);
 			break;
 		default:
 			fprintf(stderr,"Unknown option: -%c\n",c);

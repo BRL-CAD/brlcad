@@ -1,10 +1,11 @@
 .TH SCRIPTSORT 1 BRL_CAD
 .SH NAME
-scriptsort \- sort an rt/mged animation script or scripts
+scriptsort - sort an rt/mged animation script or scripts
 .SH SYNOPSIS
 .B scriptsort
 .RB [ \-fsq ]
 .RB [ \-b\ base]
+.RB [ \-o\ frame_offset]
 < unsorted.script
 .SH DESCRIPTION
 .I Scriptsort
@@ -17,7 +18,8 @@ frames.
 organizes the input script into three different categories.
 The first category consists of
 numbered frames. Each frame begins with a 
-.BR start\ frame_num;
+.B start 
+.IR frame_num ;
 command, and ends with an
 .BR end ;
 command. All of the text between those two commands makes up the body of
@@ -100,6 +102,14 @@ whether or not shell commands were found in the input script.
 .B \-q
 enables quiet mode. The status messages normally printed on standard
 error are suppressed.
+.TP
+.B \-o 
+frame_offset specifies an integer which should be added to all of the frame
+numbers. For example, suppose that the user wants to concatenate 
+two animation scripts which begin at frame zero and are 300 frames long. 
+He or she should run one script through 
+.I scriptsort
+with an offset of 300 before doing the concatenation.
 .SH AUTHORS
 Christopher T. Johnson
 .PP
