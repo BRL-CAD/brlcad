@@ -116,8 +116,10 @@ int	r, g, b;
 
 	new = ((r&0xFF)<<16)|((g&0xFF)<<8)|(b&0xFF);
 
+#if 0
 	/* Map black plots into default color (yellow) */
 	if( new == 0 ) return( &(vbp->head[0]) );
+#endif
 
 	for( n=0; n < vbp->nused; n++ )  {
 		if( vbp->rgb[n] == new )
