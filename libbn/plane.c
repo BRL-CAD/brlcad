@@ -233,48 +233,55 @@ CONST plane_t	a, b, c;
 }
 
 /*
- *			R T _ I S E C T _ R A Y _ P L A N E
+ *			R T _ I S E C T _ L I N E 3 _ P L A N E
  *
- *  Intersect a ray with a plane that has an outward pointing normal.
- *  The ray direction vector need not have unit length.
+ *  Intersect an infinite line (specified in point and direction vector form)
+ *  with a plane that has an outward pointing normal.
+ *  The direction vector need not have unit length.
  *
  *  Explicit Return -
  *	-2	missed (ray is outside halfspace)
  *	-1	missed (ray is inside)
- *	 0	hit (ray is entering halfspace)
- *	 1	hit (ray is leaving)
+ *	 0	line lies on plane
+ *	 1	hit (ray is entering halfspace)
+ *	 2	hit (ray is leaving)
  *
  *  Implicit Return -
  *	The value at *dist is set to the parametric distance of the intercept
  */
 int
-rt_isect_ray_plane( dist, pt, dir, plane )
+rt_isect_line3_plane( dist, pt, dir, plane, tol )
 fastf_t		*dist;
 CONST point_t	pt;
 CONST vect_t	dir;
 CONST plane_t	plane;
+CONST struct rt_tol	*tol;
 {
 	register fastf_t	slant_factor;
 	register fastf_t	norm_dist;
+
+	RT_CK_TOL(tol);
 
 	norm_dist = plane[3] - VDOT( plane, pt );
 	slant_factor = VDOT( plane, dir );
 
 	if( slant_factor < -SQRT_SMALL_FASTF )  {
 		*dist = norm_dist/slant_factor;
-		return(0);			/* HIT, entering */
+		return 1;			/* HIT, entering */
 	} else if( slant_factor > SQRT_SMALL_FASTF )  {
 		*dist = norm_dist/slant_factor;
-		return(1);			/* HIT, leaving */
+		return 2;			/* HIT, leaving */
 	}
 
 	/*
 	 *  Ray is parallel to plane when dir.N == 0.
 	 */
 	*dist = 0;		/* sanity */
-	if( norm_dist < 0.0 )
-		return(-2);	/* missed, outside */
-	return(-1);		/* missed, inside */
+	if( norm_dist < -tol->dist )
+		return -2;	/* missed, outside */
+	if( norm_dist > tol->dist )
+		return -1;	/* missed, inside */
+	return 0;		/* Ray lies in the plane */
 }
 
 /*
