@@ -1127,7 +1127,7 @@ CONST struct rt_tol *tol;
 {
 	struct nmg_ray_state rs;
 	struct nmg_ptbl b;
-	struct pt2d *pt1, *pt2, sp;
+	struct pt2d *pt1, *pt2, *sp;
 	point_t pt;
 	vect_t dir;
 	struct faceuse *fu1, *fu2;
