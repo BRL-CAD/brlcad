@@ -44,7 +44,9 @@ Usage:  rtshot [options] model.g objects...\n\
  -N #		Set NMG debug flags\n\
  -d # # #	Set direction vector\n\
  -p # # #	Set starting point\n\
- -a # # #	Set shoot-at point\n";
+ -a # # #	Set shoot-at point\n\
+ -o #		Set onehit flag\n\
+ -r #		Set ray length\n";
 
 int		rdebug;			/* RT program debugging (not library) */
 static FILE	*plotfp;		/* For plotting into */
@@ -54,6 +56,8 @@ struct application	ap;
 int		set_dir = 0;
 int		set_pt = 0;
 int		set_at = 0;
+int		set_onehit = 0;
+fastf_t		set_ray_length = 0.0;
 vect_t		at_vect;
 int		use_air = 0;		/* Handling of air */
 
@@ -78,6 +82,21 @@ char **argv;
 	argv++;
 
 	while( argv[0][0] == '-' ) switch( argv[0][1] )  {
+	case 'o':
+		sscanf( argv[1], "%d", &set_onehit );
+		argc -= 2;
+		argv += 2;
+		break;
+	case 'r':
+		{
+			float ray_len;
+
+			sscanf( argv[1], "%f", &ray_len );
+			set_ray_length = ray_len;
+		}
+		argc -= 2;
+		argv += 2;
+		break;
 	case 'U':
 		sscanf( argv[1], "%d", &use_air );
 		argc -= 2;
@@ -196,6 +215,16 @@ err:
 
 	VPRINT( "Pnt", ap.a_ray.r_pt );
 	VPRINT( "Dir", ap.a_ray.r_dir );
+
+	if( set_onehit )
+		ap.a_onehit = set_onehit;
+	else
+		ap.a_onehit = 0;
+
+	if( set_ray_length > 0.0 )
+		ap.a_ray_length = set_ray_length;
+	else
+		ap.a_ray_length = 0.0;
 
 	/* Shoot Ray */
 	ap.a_hit = hit;
