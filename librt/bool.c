@@ -521,15 +521,20 @@ struct application *ap;
 		 *  the state of the partition is not fully known yet,
 		 *  so stop now.
 		 */
-		if( pp->pt_inhit->hit_dist > enddist )
+		if( rt_fdiff( pp->pt_inhit->hit_dist, enddist) > 0 )  {
+			if(rt_g.debug&DEBUG_PARTITION)rt_log(
+				"partition begins beyond current box end, returning\n");
 			return(0);
+		}
 
 		/*
 		 *  If partition ends somewhere beyond the end of the current
 		 *  box, the condition of the outhit information is not fully
 		 *  known yet.
 		 */
-		if( pp->pt_outhit->hit_dist > enddist )  {
+		if( rt_fdiff( pp->pt_outhit->hit_dist, enddist) > 0 )  {
+			if(rt_g.debug&DEBUG_PARTITION)rt_log(
+				"partition ends beyond current box end\n");
 			if( ap->a_onehit <= 0 )
 				return(0);
 			if( HITS_TODO > 1 )
