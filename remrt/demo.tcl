@@ -250,8 +250,9 @@ proc register {informal_name formalname} {
 
 frame .button1_fr
 frame .button2_fr
-button .rtnode_button -text "Start Checked NODES" -command start_nodes
-pack .rtnode_button -side left -in .button1_fr
+button .rtnode_button -text "Start Checked NODES" -command {start_nodes 0}
+button .rtnode_allbut -text "Start All NODES" -command {start_nodes 1}
+pack .rtnode_button .rtnode_allbut -side left -in .button1_fr
 button .sense_button -text "Re-SENSE" -command sense_servers
 button .reconnect_button -text "RECONNECT" -command reconnect
 button .restart_button -text "(Restart RTMON)" -command restart_rtmon
@@ -281,20 +282,20 @@ proc restart_rtmon {} {
 	puts "restart_rtmon finished"
 }
 
-proc start_nodes {} {
+proc start_nodes {all} {
 	global rtsync_host
 	global rtsync_port
 	global nodes
 	global	fds
 	global status
 
-	puts "start_nodes"
+	puts "start_nodes $all"
 	# loop through list of nodes selected, starting each one selected.
 	set j [array startsearch nodes]
 	while { [array anymore nodes $j] } {
 		set host [array nextelement nodes $j]
 		if { $fds($host) == "dead" }  continue
-		if { $nodes($host) == 0 }  continue
+		if { $all == 0 && $nodes($host) == 0 }  continue
 		puts "Starting rtnode on $host"
 		set code "!error?"
 		if { [ catch {
