@@ -19,6 +19,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include <varargs.h>
 
+#ifdef cray
+void
+fb_log( fmt, a,b,c,d,e,f,g,h,i )
+char	*fmt;
+{
+	fprintf( stderr, fmt, a,b,c,d,e,f,g,h,i );
+}
+#else
 /* VARARGS */
 void
 fb_log( fmt, va_alist )
@@ -30,3 +38,4 @@ va_dcl
 	va_end( ap );
 	return;
 	}
+#endif
