@@ -4,11 +4,11 @@ common_files = \
 	ssampview.c \
 	viewtherm.c
 
-# removed pixtest due to missing funcs
-# removed ssampview
-# removed rttherm
+# pixtest removed, looks like an outdated sample_application
 bin_PROGRAMS = \
-	ssamp-bw
+	rttherm \
+	ssamp-bw \
+	ssampview
 
 dist_bin_SCRIPTS = ssampview.tcl
 
@@ -23,20 +23,50 @@ EXTRA_DIST = \
 	test.sh \
 	$(man_MANS)
 
-#rttherm_SOURCES = \
-#	$(common_files) \
-#	../liboptical/material.c \
-#	../rt/do.c \
-#	../rt/main.c \
-#	../rt/opt.c \
-#	../rt/worker.c \
-#	../rt/wray.c \
-#	spectrum.c \
-#	vers.c
 
-#ssampview_SOURCES = \
-#	spectrum.c \
-#	ssampview.c
+
+do.c: $(top_srcdir)/src/rt/do.c
+	$(CP) $(top_srcdir)/src/rt/do.c .
+
+ext.h: $(top_srcdir)/src/rt/ext.h
+	$(CP) $(top_srcdir)/src/rt/ext.h .
+
+main.c: $(top_srcdir)/src/rt/main.c
+	$(CP) $(top_srcdir)/src/rt/main.c .
+
+opt.c: $(top_srcdir)/src/rt/opt.c
+	$(CP) $(top_srcdir)/src/rt/opt.c .
+
+worker.c: $(top_srcdir)/src/rt/worker.c
+	$(CP) $(top_srcdir)/src/rt/worker.c .
+
+vers.c: $(ALLSRCS)
+	@SH@ $(top_srcdir)/sh/vers.sh version "Thermal Multi-Spectral RT" > $@
+
+noinst_LTLIBRARIES = librttherm.la
+
+librttherm_la_SOURCES = \
+	do.c \
+	main.c \
+	ext.h \
+	opt.c \
+	worker.c
+
+rttherm_SOURCES = \
+	spectrum.c \
+	vers.c \
+	viewtherm.c
+
+rttherm_CFLAGS = -DRT_MULTISPECTRAL
+rttherm_LDADD = $(MULTISPECTRAL) $(LDADD) librttherm.la
+
+ssampview_SOURCES = \
+	spectrum.c \
+	ssampview.c
+
+ssampview_LDADD = \
+	$(TK) \
+	$(LDADD)
 
 ssamp_bw_SOURCES = \
 	ssamp-bw.c
@@ -45,6 +75,8 @@ ssamp_bw_SOURCES = \
 #	pixtest.c \
 #	spectrum.c
 
-#BUILT_SOURCES = vers.c
-vers.c: $(ALLSRCS)
-	@SH@ $(top_srcdir)/sh/vers.sh version "Thermal Multi-Spectral RT" > $@
+BUILT_SOURCES = \
+	$(librttherm_la_SOURCES) \
+	vers.c
+
+DISTCLEANFILES = $(BUILT_SOURCES)
