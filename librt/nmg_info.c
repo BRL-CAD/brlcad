@@ -908,8 +908,8 @@ int		first;
 	NMG_CK_VERTEX(va);
 	NMG_CK_VERTEX(vb);
 
-	MAT4X3VEC( a2, sp->mat, va->vg_p->coord );
-	MAT4X3VEC( b2, sp->mat, vb->vg_p->coord );
+	MAT4X3PNT( a2, sp->mat, va->vg_p->coord );
+	MAT4X3PNT( b2, sp->mat, vb->vg_p->coord );
 
 	code = rt_dist_pt2_lseg2( &dist_sq, pca, a2, b2, sp->pt2, sp->tol );
 
