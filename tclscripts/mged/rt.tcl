@@ -72,10 +72,8 @@ proc init_Raytrace { id } {
     frame $top.gridF2 -relief groove -bd 2
     frame $top.gridF3 -relief groove -bd 2
     frame $top.gridF4
-#    frame $top.framebufferF -relief sunken -bd 2
     frame $top.filenameF -relief sunken -bd 2
     frame $top.sizeF -relief sunken -bd 2
-    frame $top.colorF -relief sunken -bd 2
 
     menu $top.menubar -tearoff 0
     $top.menubar add cascade -label "Active Pane" -underline 0 -menu $top.menubar.active
@@ -109,19 +107,10 @@ proc init_Raytrace { id } {
     $top.menubar.fb add radiobutton -value 0 -variable mged_fb_overlay($id)\
 	    -label "Underlay" -underline 0\
 	    -command "mged_apply $id \"set fb_overlay \$mged_fb_overlay($id)\""
-#    $top.menubar.fb add separator
-#    $top.menubar.fb add checkbutton -offvalue 0 -onvalue 1 -variable mged_fb($id)\
-#	    -label "Framebuffer Active" -underline 0\
-#	    -command "set_fb $id"
-#    $top.menubar.fb add checkbutton -offvalue 0 -onvalue 1 -variable mged_listen($id)\
-#	    -label "Listen For Clients" -underline 0\
-#	    -command "set_listen $id" -state disabled
 
     radiobutton $top.framebufferRB -text "Frame Buffer" -anchor w\
 	    -value framebuffer -variable rt_control($id,fb_or_file)\
 	    -command "rt_set_fb_state $id"
-#    entry $top.framebufferE -relief flat -width 12 -textvar rt_control($id,fb)\
-#	    -state $fb_state
     label $top.framebufferL -textvariable rt_control($id,fb)
 
     radiobutton $top.filenameRB -text "File Name" -anchor w\
@@ -151,29 +140,13 @@ proc init_Raytrace { id } {
 	    -command "set rt_control($id,size) 1024"
 
     label $top.colorL -text "Background Color" -anchor w
-    entry $top.colorE -relief flat -width 12 -textvar rt_control($id,color)
-    menubutton $top.colorMB -relief raised -bd 2\
-	    -menu $top.colorMB.colorM -indicatoron 1
-    menu $top.colorMB.colorM -tearoff 0
-    $top.colorMB.colorM add command -label black\
-	     -command "set rt_control($id,color) \"0 0 0\"; rt_set_colorMB $id"
-    $top.colorMB.colorM add command -label white\
-	     -command "set rt_control($id,color) \"220 220 220\"; rt_set_colorMB $id"
-    $top.colorMB.colorM add command -label red\
-	     -command "set rt_control($id,color) \"220 0 0\"; rt_set_colorMB $id"
-    $top.colorMB.colorM add command -label green\
-	     -command "set rt_control($id,color) \"0 220 0\"; rt_set_colorMB $id"
-    $top.colorMB.colorM add command -label blue\
-	     -command "set rt_control($id,color) \"0 0 220\"; rt_set_colorMB $id"
-    $top.colorMB.colorM add command -label yellow\
-	     -command "set rt_control($id,color) \"220 220 0\"; rt_set_colorMB $id"
-    $top.colorMB.colorM add command -label cyan\
-	    -command "set rt_control($id,color) \"0 220 220\"; rt_set_colorMB $id"
-    $top.colorMB.colorM add command -label magenta\
-	    -command "set rt_control($id,color) \"220 0 220\"; rt_set_colorMB $id"
-    $top.colorMB.colorM add separator
-    $top.colorMB.colorM add command -label "Color Tool..."\
-	    -command "rt_choose_color $id $top"
+
+    # $top.colorF is the name of the container created by color_entry_build
+    # that contains the entry and menubutton for specifying a color
+    color_entry_build $top color rt_control($id,color)\
+	    "color_entry_chooser $id $top color \"Background Color\"\
+	    rt_control $id,color"\
+	    12 $rt_control($id,color)
 
     button $top.advancedB -relief raised -text "Advanced Settings..."\
 	    -command "do_Advanced_Settings $id"
@@ -184,26 +157,20 @@ proc init_Raytrace { id } {
     button $top.dismissB -relief raised -text "Dismiss" \
 	    -command "catch { destroy $top }"
 
-#    grid $top.framebufferE -sticky "ew" -in $top.framebufferF
-#    grid $top.framebufferF $top.framebufferRB -sticky "ew"\
-#	    -in $top.gridF2 -padx 8 -pady 8
     grid $top.framebufferL $top.framebufferRB -sticky "ew"\
 	    -in $top.gridF2 -padx 8 -pady 8
     grid $top.filenameE -sticky "ew" -in $top.filenameF
     grid $top.filenameF $top.filenameRB -sticky "ew"\
 	    -in $top.gridF2 -padx 8 -pady 8
-#    grid columnconfigure $top.framebufferF 0 -weight 1
     grid columnconfigure $top.filenameF 0 -weight 1
     grid columnconfigure $top.gridF2 0 -weight 1
 
     grid $top.sizeE $top.sizeMB -sticky "ew" -in $top.sizeF
     grid $top.sizeF $top.sizeL -sticky "ew" -in $top.gridF3 -padx 8 -pady 8
-    grid $top.colorE $top.colorMB -sticky "ew" -in $top.colorF
     grid $top.colorF $top.colorL -sticky "ew" -in $top.gridF3 -padx 8 -pady 8
     grid $top.advancedB - -in $top.gridF3 -padx 8 -pady 8
 
     grid columnconfigure $top.sizeF 0 -weight 1
-    grid columnconfigure $top.colorF 0 -weight 1
     grid columnconfigure $top.gridF3 0 -weight 1
 
     grid $top.raytraceB x $top.clearB x $top.dismissB -sticky "nsew" -in $top.gridF4
@@ -213,8 +180,7 @@ proc init_Raytrace { id } {
     pack $top.gridF2 $top.gridF3 $top.gridF4 -side top -expand 1 -fill both\
 	    -padx 8 -pady 8
 
-    bind $top.colorE <Return> "rt_set_colorMB $id; break"
-    rt_set_colorMB $id
+    color_entry_update $top color $rt_control($id,color)
     update_Raytrace $id
 
     set pxy [winfo pointerxy $top]
@@ -413,54 +379,6 @@ proc rt_set_file_state { id } {
     focus $top.filenameE
 }
 
-proc rt_choose_color { id parent } {
-    global player_screen
-    global rt_control
-
-    set child bgColor
-
-    cadColorWidget dialog $parent $child\
-	    -title "Raytrace Background Color"\
-	    -initialcolor [$parent.colorMB cget -background]\
-	    -ok "rt_color_ok $id $parent $parent.$child"\
-	    -cancel "cadColorWidget_destroy $parent.$child"
-}
-
-proc rt_color_ok { id parent w } {
-    global rt_control
-
-    upvar #0 $w data
-
-    $parent.colorMB configure -bg $data(finalColor)
-    set rt_control($id,color) "$data(red) $data(green) $data(blue)"
-
-    destroy $w
-    unset data
-}
-
-proc rt_set_colorMB { id } {
-    global player_screen
-    global rt_control
-
-    set top .$id.do_rt
-
-    if {$rt_control($id,color) != ""} {
-	set result [regexp "^(\[0-9\]+)\[ \]+(\[0-9\]+)\[ \]+(\[0-9\]+)$" \
-		$rt_control($id,color) cmatch red green blue]
-	if {!$result} {
-	    cad_dialog .$id.rtDialog $player_screen($id)\
-		    "Improper color specification!"\
-		    "Improper color specification: $rt_control($id,color)"\
-		    "" 0 OK
-	    return
-	}
-    } else {
-	return
-    }
-
-    $top.colorMB configure -bg [format "#%02x%02x%02x" $red $green $blue]
-}
-
 proc rt_set_fb_size { id } {
     global mged_top
     global mged_dm_loc
@@ -485,7 +403,6 @@ proc do_Advanced_Settings { id } {
 
     frame $top.gridF1 -relief groove -bd 2
     frame $top.gridF2
-#    frame $top.gridF3
 
     frame $top.nprocF
     frame $top.nprocFF -relief sunken -bd 2
@@ -495,10 +412,6 @@ proc do_Advanced_Settings { id } {
     frame $top.jitterFF -relief sunken -bd 2
     frame $top.lmodelF
     frame $top.lmodelFF -relief sunken -bd 2
-#    frame $top.rect_locF
-#    frame $top.rect_locF -relief sunken -bd 2
-#    frame $top.rect_sizeF
-#    frame $top.rect_sizeF -relief sunken -bd 2
 
     label $top.nprocL -text "# of Processors" -anchor w
     entry $top.nprocE -relief flat -width 4 -textvar rt_control($id,nproc)
@@ -537,15 +450,6 @@ proc do_Advanced_Settings { id } {
 	    -command "set rt_control($id,lmodel) 4"
     $top.lmodelMB.lmodelM add command -label 5\
 	    -command "set rt_control($id,lmodel) 5"
-
-#    radiobutton $top.rectRB -text "Rectangle" -anchor w\
-#	    -value 1 -variable 
-
-#    label $top.rect_locL -text "Location" -anchor w
-#    entry $top.rect_locE -relief flat -textvar rt_rect_loc($id)
-
-#    label $top.rect_sizeL -text "Size" -anchor w
-#    entry $top.rect_sizeE -relief flat -textvar rt_rect_size($id
 
     button $top.dismissB -relief raised -text "Dismiss" \
 	    -command "catch { destroy $top }"
