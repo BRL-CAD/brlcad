@@ -1941,10 +1941,14 @@ struct bn_tol *tol;
 	if( end_or > tol->dist )
 		new_outer_loop = (struct vertex **)bu_calloc( arc_segs, sizeof( struct vertex *),
 				"tesselate_pipe_linear: new_outer_loop" );
+	else
+		new_outer_loop = (struct vertex **)NULL;
 
 	if( end_ir > tol->dist )
 		new_inner_loop = (struct vertex **)bu_calloc( arc_segs, sizeof( struct vertex *),
 				"tesselate_pipe_linear: new_inner_loop" );
+	else
+		new_inner_loop = (struct vertex **)NULL;
 
 	VSUB2( n, end_pt, start_pt );
 	seg_len = MAGNITUDE( n );

@@ -1004,18 +1004,18 @@ CONST struct bn_tol	*tol;
 {
 	fastf_t		a, b;	/* axis lengths of ellipse */
 	fastf_t		ang, ch, cv, dh, dv, ntol, dtol, phi, theta;
-	fastf_t		*eto_ells;
+	fastf_t		*eto_ells = NULL;
 	int		i, j, nfaces, npts, nells;
-	point_t		*ell;	/* array of ellipse points */
+	point_t		*ell = NULL;	/* array of ellipse points */
 	point_t		Ell_V;	/* vertex of an ellipse */
 	point_t		*rt_mk_ell();
 	struct rt_eto_internal	*tip;
 	struct shell	*s;
-	struct vertex	**verts;
-	struct faceuse	**faces;
+	struct vertex	**verts = NULL;
+	struct faceuse	**faces = NULL;
 	struct vertex	**vertp[4];
 	vect_t		Au, Bu, Nu, Cp, Dp, Xu;
-	vect_t		*norms;	/* normal vectors for each vertex */
+	vect_t		*norms = NULL;	/* normal vectors for each vertex */
 	int		fail=0;
 
 	RT_CK_DB_INTERNAL(ip);

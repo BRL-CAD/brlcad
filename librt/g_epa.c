@@ -1018,7 +1018,7 @@ CONST struct bn_tol	*tol;
 	point_t		p1;
 	struct rt_pt_node	*pos_a, *pos_b, *pts_a, *pts_b, *rt_ptalloc();
 	struct shell	*s;
-	struct faceuse	**outfaceuses;
+	struct faceuse	**outfaceuses = NULL;
 	struct vertex	*vertp[3];
 	struct vertex	***vells = (struct vertex ***)NULL;
 	vect_t		A, Au, B, Bu, Hu, V;
@@ -1214,8 +1214,11 @@ CONST struct bn_tol	*tol;
 		} else if (theta_new < theta_prev) {
 			nseg *= 2;
 			pts_dbl[i] = 1;
-		} else
+			outfaceuses = NULL;
+		} else {
 			pts_dbl[i] = 0;
+			outfaceuses = NULL;
+		}
 		theta_prev = theta_new;
 
 		ellipses[i] = (fastf_t *)bu_malloc(3*(nseg+1)*sizeof(fastf_t),

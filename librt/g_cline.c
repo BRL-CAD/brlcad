@@ -17,7 +17,7 @@
  *	All rights reserved.
  */
 #ifndef lint
-static const char RCSxxx[] = "@(#)$Header$ (BRL)";
+static const char RCScline[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include "conf.h"
@@ -578,6 +578,9 @@ CONST struct bn_tol	*tol;
 	{
 		base_inner = (struct cline_vert *)bu_calloc( nsegs, sizeof( struct cline_vert ), "base inner vertices" );
 		top_inner = (struct cline_vert *)bu_calloc( nsegs, sizeof( struct cline_vert ), "top inner vertices" );
+	} else {
+		base_inner = NULL;
+		top_inner = NULL;
 	}
 
 	/* calculate geometry for each vertex */
@@ -598,6 +601,8 @@ CONST struct bn_tol	*tol;
 		{
 			c = a * (cline_ip->radius - cline_ip->thickness);
 			d = b * (cline_ip->radius - cline_ip->thickness);
+		} else {
+			c = d = 0;
 		}
 
 		a *= cline_ip->radius;
