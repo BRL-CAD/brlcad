@@ -9,9 +9,17 @@
 /*  Enters only the coordinates of the endpoints and the radius  */
 /*  of the lines.  */
 
+#include "conf.h"
+
 #include <stdio.h>
+#ifdef HAVE_STDLIB_H
 #include <stdlib.h>
+#endif
+#ifdef USE_STRING_H
 #include <string.h>
+#else
+#include <strings.h>
+#endif
 #include <math.h>
 
 #include "machine.h"
@@ -24,6 +32,7 @@
 				/*  because of the way the name of the  */
 				/*  segments is found.  */
 
+int
 main(argc,argv)
 
 int argc;
@@ -438,5 +447,5 @@ char *argv[];
    }							/*  END # 50  */
 
    mk_lfcomb(fpw,group,&comb1,0);
-
+   return 0;
 }							/*  END # 1  */
