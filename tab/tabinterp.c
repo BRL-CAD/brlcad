@@ -334,7 +334,7 @@ char	*itag;
 
 		if( max_chans <= 0 )  {
 			max_chans = 32;
-			chan = (struct chan *)rt_malloc(
+			chan = (struct chan *)rt_calloc( 1, 
 				max_chans * sizeof(struct chan),
 				"chan[]" );
 		} else {
