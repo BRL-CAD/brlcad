@@ -889,7 +889,7 @@ set -S2 "/bin/sh"
 #	define	BSD	44
 #	define	LIBRT_TIMER	timer42
 #	define	CC	/usr/bin/gcc
-#	define	CC_OPTS	-pipe -fpic -DHAVE_UNISTD_H
+#	define	CC_OPTS	-pipe -fpic -DHAVE_UNISTD_H -D__STDC__=1
 #	define	OPTIMIZER	-O2
 #	define	STANDARD_LIBES	-lm
 
