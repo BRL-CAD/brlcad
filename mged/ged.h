@@ -435,24 +435,44 @@ extern struct cmd_list *curr_cmd_list;
 struct _mged_variables {
 	int	autosize;
 	int	rateknobs;
-        int     adcflag;
-        int     slidersflag;
+        int	adcflag;
+        int	slidersflag;
     	int	sgi_win_size;
 	int	sgi_win_origin[2];
 	int	faceplate;
-        int     orig_gui;
-	int     m_axes;  /* model axes */
-	int     v_axes;  /* view axes */
-	int	v_axes_pos; /* view axes position */
-	int     e_axes;  /* edit axes */
-        int     linewidth;
-        int     linestyle;
-        int     send_key;
-        int     hot_key;
-        int     context;
+        int	orig_gui;
+	int	m_axes;  /* model axes */
+	int	m_axes_color[3];
+	int	m_axes_label_color[3];
+	int	m_axes_size;
+	int	m_axes_linewidth;
+	fastf_t	m_axes_pos[3];
+	int	v_axes;  /* view axes */
+	int	v_axes_color[3];
+	int	v_axes_label_color[3];
+	int	v_axes_size;
+	int	v_axes_linewidth;
+	int	v_axes_pos[2]; /* view axes position */
+	int	e_axes;  /* edit axes */
+	int	e_axes_color1[3];
+	int	e_axes_color2[3];
+	int	e_axes_label_color1[3];
+	int	e_axes_label_color2[3];
+	int	e_axes_size1;
+	int	e_axes_size2;
+	int	e_axes_linewidth1;
+	int	e_axes_linewidth2;
+        int	linewidth;
+	char	linestyle;
+        int	send_key;
+        int	hot_key;
+        int	context;
 	int	dlist;
 	int	use_air;
-	int	echo_nirt_cmd;
+	int	echo_query_ray_cmd;
+	int	query_ray_color_odd[3];
+	int	query_ray_color_even[3];
+	int	query_ray_color_void[3];	
 #ifdef USE_FRAMEBUFFER
 	int	listen;		/* nonzero to listen on port */
 	int	port;		/* port to listen on */
@@ -461,10 +481,23 @@ struct _mged_variables {
 	int	fb_overlay;	/* 0 - underlay     1 - overlay */
 #endif
 #ifdef DO_RUBBER_BAND
-	int	rubber_band;
+	int	rubber_band;	/* draw rubber band rectangle */
+	int	rubber_band_color[3];
+	int	rubber_band_linewidth;
+	char	rubber_band_linestyle;
+#endif
+#ifdef DO_SNAP_TO_GRID
+	int	grid_draw;		/* draw grid */
+	int	grid_snap;		/* snap to grid */
+	int	grid_color[3];
+	fastf_t grid_anchor[3];
+	fastf_t	grid_res_h;		/* grid resolution in h */
+	fastf_t grid_res_v;		/* grid resolution in v */
+	int grid_res_major_h;		/* major grid resolution in h */
+	int grid_res_major_v;		/* major grid resolution in v */
 #endif
 	char	mouse_behavior;
-	char	nirt_behavior;
+	char	query_ray_behavior;
 	char	coords;
 	char	rotate_about;
         char    transform;
