@@ -298,6 +298,7 @@ struct bu_list {
 
 /* Handle list initialization */
 #define	BU_LIST_UNINITIALIZED(hp)	((hp)->forw == BU_LIST_NULL)
+#define	BU_LIST_IS_INITIALIZED(hp)	((hp)->forw != BU_LIST_NULL)
 #define BU_LIST_INIT(hp)	{ \
 	(hp)->forw = (hp)->back = (hp); \
 	(hp)->magic = BU_LIST_HEAD_MAGIC;	/* used by circ. macros */ }
