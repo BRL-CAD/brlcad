@@ -135,8 +135,6 @@ if test "x$cache_file" = "x/dev/null" ; then
 		cache_file="$brlcad_cache"
 		CONFIG_CACHE="$cache_file"
 	else
-		CFLAGS="$CFLAGS -mips4 -KPIC -G 7 -DIRIX=6 -DIRIX64=65"
-		LDFLAGS="$LDFLAGS -mips4 -KPIC -G 7"
 		AC_MSG_NOTICE([Automatic caching is unavailable on IRIX])
 	fi
 	AC_SUBST(CONFIG_CACHE)
@@ -240,6 +238,18 @@ if test "x$warn_only_both" != "xno" ; then
 	AC_MSG_WARN([Building both benchmark and librtserver])
 	AC_MSG_NOTICE([<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<])
 fi
+
+# enable 64-bit builds
+build_64bit=auto
+AC_ARG_ENABLE(64bit-build,
+	AC_HELP_STRING(--enable-64bit-build,
+		[enable 64-bit compilation mode (default=auto)]),
+	[if test "x$enableval" = "xno" ; then
+		build_64bit=no
+	elif test "x$enableval" = "xyes" ; then
+		build_64bit=yes
+	fi]
+)
 
 # force enable/disable building of libregex
 dnl build_regex has alias(es)
@@ -349,7 +359,31 @@ AC_ARG_ENABLE(profiling,
 	fi]
 )
 
-# argument aliases go below here (they should all become a single blank line)
+
+###
+# argument aliases
+# they need to go below here in order for --help to consolidate the
+# blank line to exactly one line in the right place
+###
+
+# 64-bit compilation
+AC_ARG_ENABLE(64bit,,
+	[if test "x$enable_64bit" != "xno" ; then
+		build_64bit=yes
+	fi]
+)
+AC_ARG_ENABLE(64-bit,,
+	[if test "x$enable_64_bit" != "xno" ; then
+		build_64bit=yes
+	fi]
+)
+AC_ARG_ENABLE(64-bit-build,,
+	[if test "x$enable_64_bit_build" != "xno" ; then
+		build_64bit=yes
+	fi]
+)
+AC_MSG_CHECKING(whether to compile in 64-bit mode)
+AC_MSG_RESULT($build_64bit)
 
 # alias to force building libregex
 AC_ARG_ENABLE(regex,,
@@ -460,6 +494,11 @@ case "$target" in
 		;;
 	*-*-*irix*)
 		is_irix=yes
+		# XXX nasty temp hack for backwards cake compatibility
+		CFLAGS="$CFLAGS -DIRIX"
+		if test "x$build_64bit" = "xyes" ; then
+			CFLAGS="$CFLAGS -DIRIX64"
+		fi
 		;;
 esac
 AC_SUBST(PTHREAD_LIBS)
@@ -512,7 +551,11 @@ if test "x$CFLAGS" = "x" ; then
 	CFLAGS=" "
 fi
 
-AC_C_CHAR_UNSIGNED
+# cannot override LD directly, so warn about that (configure sets it)
+if test "x$LD" != "x" ; then
+	AC_MSG_WARN([LD cannot be set directly yet it seems to be set ($LD)])
+fi
+
 
 dnl **************************
 dnl *** Check for programs ***
@@ -802,6 +845,7 @@ dnl **********************************
 dnl *** Check for types/structures ***
 dnl **********************************
 
+AC_C_CHAR_UNSIGNED
 AC_HEADER_STAT
 AC_HEADER_STDBOOL
 AC_HEADER_TIME
@@ -892,6 +936,91 @@ AC_TRY_LINK( [], [], [], [search_paths_first_flag_works=no])
 AC_MSG_RESULT($search_paths_first_flag_works)
 if test "x$search_paths_first_flag_works" = "xno" ; then
 	LDFLAGS="$PRELDFLAGS"
+fi
+
+dnl 64bit compilation flags
+if test "x$build_64bit" = "xyes" ; then
+	AC_MSG_CHECKING([if configure snuck on a 32bit flag to ld])
+	PRELD="$LD"
+	LD="`echo $LD | sed 's/32/64/'`"
+	if test "x$LD" = "x$PRELD" ; then
+		AC_MSG_RESULT(no)
+	else
+		AC_MSG_RESULT(yes)
+	fi
+
+	found_64bit_flag=no
+	if test "x$found_64bit_flag" = "xno" ; then
+		flag_64="-64"
+		AC_MSG_CHECKING([if the compiler understands $flag_64])
+		flag_64_works=yes
+		PRECFLAGS="$CFLAGS"
+		PRELDFLAGS="$LDFLAGS"
+		CFLAGS="$CFLAGS $flag_64"
+		LDFLAGS="$LDFLAGS $flag_64"
+		AC_TRY_COMPILE( [], [], [], [flag_64_works=no])
+		AC_MSG_RESULT($flag_64_works)
+		if test "x$flag_64_works" = "xno" ; then
+			CFLAGS="$PRECFLAGS"
+			LDFLAGS="$PRELDFLAGS"
+		else
+			found_64bit_flag=yes
+		fi
+	fi
+	
+	if test "x$found_64bit_flag" = "xno" ; then
+		mabi_64_flag="-mabi=64"
+		AC_MSG_CHECKING([if the compiler understands $mabi_64_flag])
+		mabi_64_flag_works=yes
+		PRECFLAGS="$CFLAGS"
+		PRELDFLAGS="$LDFLAGS"
+		CFLAGS="$CFLAGS $mabi_64_flag"
+		LDFLAGS="$LDFLAGS $mabi_64_flag"
+		AC_TRY_COMPILE( [], [], [], [mabi_64_flag_works=no])
+		AC_MSG_RESULT($mabi_64_flag_works)
+		if test "x$mabi_64_flag_works" = "xno" ; then
+			CFLAGS="$PRECFLAGS"
+			LDFLAGS="$PRELDFLAGS"
+		else
+			found_64bit_flag=yes
+		fi
+	fi
+
+	if test "x$found_64bit_flag" = "xno" ; then
+		m64_flag="-m64"
+		AC_MSG_CHECKING([if the compiler understands $m64_flag])
+		m64_flag_works=yes
+		PRECFLAGS="$CFLAGS"
+		PRELDFLAGS="$LDFLAGS"
+		CFLAGS="$CFLAGS $m64_flag"
+		LDFLAGS="$LDFLAGS $m64_flag"
+		AC_TRY_COMPILE( [], [], [], [m64_flag_works=no])
+		AC_MSG_RESULT($m64_flag_works)
+		if test "x$m64_flag_works" = "xno" ; then
+			CFLAGS="$PRECFLAGS"
+			LDFLAGS="$PRELDFLAGS"
+		else
+			found_64bit_flag=yes
+		fi
+	fi
+
+	if test "x$found_64bit_flag" = "xno" ; then
+		q64_flag="-q64"
+		AC_MSG_CHECKING([if the compiler understands $q64_flag])
+		q64_flag_works=yes
+		PRECFLAGS="$CFLAGS"
+		PRELDFLAGS="$LDFLAGS"
+		CFLAGS="$CFLAGS $q64_flag"
+		LDFLAGS="$LDFLAGS $q64_flag"
+		AC_TRY_COMPILE( [], [], [], [q64_flag_works=no])
+		AC_MSG_RESULT($q64_flag_works)
+		if test "x$q64_flag_works" = "xno" ; then
+			CFLAGS="$PRECFLAGS"
+			LDFLAGS="$PRELDFLAGS"
+		else
+			found_64bit_flag=yes
+		fi
+	fi
 fi
 
 dnl optimization flags
@@ -1671,7 +1800,8 @@ echo
 echo Build IWidgets .......................: yes
 echo Build Itcl/Itk .......................: yes
 echo Build Tcl ............................: yes
-echo Build Tk .............................: yes
+# we have to build Tk as it's been customized with tkCanvBezier
+# echo Build Tk .............................: yes
 echo Build libpng .........................: ${build_brlcad_png}
 echo Build libregex .......................: ${build_brlcad_regex}
 echo Build libz ...........................: ${build_brlcad_zlib}
@@ -1682,6 +1812,7 @@ echo X11 support ..........................: yes
 echo Open GL support ......................: yes
 echo Enable run-time debugging ............: yes
 echo
+echo Build 64-bit release .................: $build_64bit
 echo Build optimized release ..............: $use_optimized
 echo Build debug release ..................: $use_debug
 echo Build profile release ................: $use_profiling
