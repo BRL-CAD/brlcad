@@ -81,6 +81,7 @@ extern char	*scanbuf;		/* Optional output buffer */
 extern int	incr_mode;		/* !0 for incremental resolution */
 extern int	incr_level;		/* current incremental level */
 extern int	incr_nlevel;		/* number of levels */
+extern int	pix_start;		/* pixel to start at */
 
 extern int	max_bounces;		/* from refract.c */
 
@@ -110,8 +111,8 @@ void	shade_inputs();
  *  The buffering strategy for an "online" libfb framebuffer:
  *	buf_mode = 0	single pixel I/O
  *	buf_mode = 1	line buffering
- *	buf_mode = 2	full frame buffering, dump to fb at end of scanline
- *	buf_mode = 3	full frame buffering, dump to fb at end of frame
+ *	buf_mode = 2	full frame buf, dump to fb+file at end of scanline
+ *	buf_mode = 3	full frame buf, dump to fb+file at end of frame
  */
 void
 view_pixel(ap)
@@ -170,9 +171,11 @@ register struct application *ap;
 	if(rdebug&RDEBUG_HITS) rt_log("rgb=%3d,%3d,%3d xy=%3d,%3d\n", r,g,b, ap->a_x, ap->a_y);
 
 	/*
-	 *  Handle file output
+	 *  Handle file output in the simple cases where we let stdio
+	 *  do the buffering.
 	 */
-	if( !rt_g.rtg_parallel && outfp != NULL )  {
+	if( buf_mode <= 1 && outfp != NULL )  {
+		/* Single pixel I/O or "line buffering" (to screen) case */
 		if( hex_out )  {
 			fprintf(outfp, "%2.2x%2.2x%2.2x\n", r, g, b);
 		} else {
@@ -242,23 +245,37 @@ register struct application *ap;
 		}
 		RES_RELEASE( &rt_g.res_results );
 
-		if( do_eol && fbp != FBIO_NULL )  {
-			RES_ACQUIRE( &rt_g.res_syscall );
-			if( incr_mode )  {
-				register int dy, yy;
-				register int spread;
+		if( do_eol )  {
+			/* buf_mode == 2 if we got here */
+			if( fbp != FBIO_NULL )  {
+				RES_ACQUIRE( &rt_g.res_syscall );
+				if( incr_mode )  {
+					register int dy, yy;
+					register int spread;
 
-				spread = 1<<(incr_nlevel-incr_level);
-				for( dy=0; dy<spread; dy++ )  {
-					yy = ap->a_y + dy;
-					fb_write( fbp, 0, yy,
-					    scanbuf+yy*width*3, width );
+					spread = 1<<(incr_nlevel-incr_level);
+					for( dy=0; dy<spread; dy++ )  {
+						yy = ap->a_y + dy;
+						fb_write( fbp, 0, yy,
+						    scanbuf+yy*width*3, width );
+					}
+				} else {
+					fb_write( fbp, 0, ap->a_y,
+					    scanbuf+ap->a_y*width*3, width );
 				}
-			} else {
-				fb_write( fbp, 0, ap->a_y,
-				    scanbuf+ap->a_y*width*3, width );
+				RES_RELEASE( &rt_g.res_syscall );
 			}
-			RES_RELEASE( &rt_g.res_syscall );
+			if( outfp != NULL )  {
+				int	count;
+
+				RES_ACQUIRE( &rt_g.res_syscall );
+				fseek( outfp, ap->a_y*width*3L, 0 );
+				count = fwrite( scanbuf+ap->a_y*width*3,
+					sizeof(char), width*3, outfp );
+				RES_RELEASE( &rt_g.res_syscall );
+				if( count != width*3 )
+					rt_bomb("view_pixel:  fwrite failure\n");
+			}
 		}
 	}
 }
@@ -267,8 +284,10 @@ register struct application *ap;
  *  			V I E W _ E O L
  *  
  *  This routine is called by main when the last pixel of a scanline
- *  has been finished.  When in parallel mode, there is no guarantee
- *  that the last few pixels are done -- just send off the buffer.
+ *  has been finished.  When in parallel mode, this routine is not
+ *  used;  the do_eol check in view_pixel() handles things.
+ *  This routine handles framebuffer output only, all file output
+ *  is done elsewhere.
  */
 void
 view_eol(ap)
@@ -299,25 +318,25 @@ struct application *ap;
 	register struct light_specific *lp, *nlp;
 
 	if( buf_mode == 3 )  {
-		/* Dump full screen */
-		if( fb_getwidth(fbp) == width && fb_getheight(fbp) == height )  {
-			fb_write( fbp, 0, 0, scanbuf, width*height );
-		} else {
-			register int y;
-			for( y=0; y<height; y++ )
-				fb_write( fbp, 0, y, scanbuf+y*width*3, width );
+		if( fbp != FBIO_NULL )  {
+			/* Dump full screen */
+			if( fb_getwidth(fbp) == width && fb_getheight(fbp) == height )  {
+				fb_write( fbp, 0, 0, scanbuf, width*height );
+			} else {
+				register int y;
+				for( y=0; y<height; y++ )
+					fb_write( fbp, 0, y, scanbuf+y*width*3, width );
+			}
 		}
-	}
-	if( incr_mode )  {
-		if( incr_level < incr_nlevel )
-			return(0);		 /* more res to come */
-	}
-	if( rt_g.rtg_parallel )  {
 		if( (outfp != NULL) &&
 		    fwrite( scanbuf, sizeof(char), width*height*3, outfp ) != width*height*3 )  {
 			fprintf(stderr,"view_end:  fwrite failure\n");
 			return(-1);		/* BAD */
 		}
+	}
+	if( incr_mode )  {
+		if( incr_level < incr_nlevel )
+			return(0);		 /* more res to come */
 	}
 
 	/* Eliminate invisible lights (typ. implicit lights) */
@@ -1027,6 +1046,22 @@ register struct application *ap;
 		} else {
 			for( i=0; i<height; i++ )
 				npix_left[i] = width;
+		}
+
+		/* If not starting with pixel offset > 0,
+		 * read in existing pixels first
+		 */
+		if( outfp != NULL && pix_start > 0 )  {
+			/* We depend on file being r+w in this case */
+			rewind( outfp );
+			if( fread( scanbuf, 3, pix_start, outfp ) != pix_start )
+				rt_log("view_2init:  bad initial fread\n");
+
+			/* Account for pixels that don't need to be done */
+			i = pix_start/width;
+			npix_left[i] -= pix_start%width;
+			for( i--; i >= 0; i-- )
+				npix_left[i] = 0;
 		}
 		break;
 	default:

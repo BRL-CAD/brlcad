@@ -604,13 +604,17 @@ int framenumber;
 					 *  don't seem to work right, and this
 					 *  way is simpler anyway.
 					 */
-					if( (fd = open( framename, 1 )) < 0 ||
-					    lseek( fd, (long)des_pos, 0 ) < 0 ||
-					    (outfp = fdopen( fd, "w" )) == NULL )  {
+					if( (fd = open( framename, 2 )) < 0 ||
+					    (outfp = fdopen( fd, "r+" )) == NULL )  {
 						perror( framename );
 						if( matflag )  return(0);	/* OK */
 						return(-1);			/* Bad */
 					}
+					(void)fseek( outfp, (long)des_pos, 0);
+					/*
+					 *  view_2init() reads the file into
+					 *  scanbuf, when needed by buffering.
+					 */
 				}
 			}
 		}
