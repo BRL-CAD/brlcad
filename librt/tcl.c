@@ -1139,6 +1139,7 @@ char	      **argv;
 	struct rt_wdb	       *wdb = (struct rt_wdb *)clientData;
 	Tcl_DString		ds;
 	struct bu_vls		str;
+	char			*curr_elem;
 
 	--argc;
 	++argv;
@@ -1174,16 +1175,61 @@ char	      **argv;
 		return TCL_ERROR;
 	}
 #else
-	status = wdb_import( wdb, &intern, argv[1], (matp_t)NULL );
-	if( status == -4 )  {
-		Tcl_AppendResult( interp, argv[1], ": not found\n",
-				  (char *)NULL );
-		return TCL_ERROR;
+	if( strchr( argv[1], '/' ) )
+	{
+		/* This is a path */
+		struct db_tree_state	ts;
+		struct db_full_path	old_path;
+		struct db_full_path	new_path;
+		struct directory	*dp_curr;
+		int			ret;
+
+		db_init_db_tree_state( &ts, wdb->dbip );
+		db_full_path_init(&old_path);
+		db_full_path_init(&new_path);
+
+		if( db_string_to_path( &new_path, wdb->dbip, argv[1] ) < 0 )  {
+			Tcl_AppendResult(interp, "tcl_follow_path: '",
+				argv[1], "' contains unknown object names\n", (char *)NULL);
+			return TCL_ERROR;
+		}
+
+		dp_curr = DB_FULL_PATH_CUR_DIR( &new_path );
+		ret = db_follow_path( &ts, &old_path, &new_path, LOOKUP_NOISY );
+		db_free_full_path( &old_path );
+		db_free_full_path( &new_path );
+
+		if( ret < 0 )  {
+			Tcl_AppendResult(interp, "tcl_follow_path: '",
+				argv[1], "' is a bad path\n", (char *)NULL );
+			return TCL_ERROR;
+		}
+
+		status = wdb_import( wdb, &intern, dp_curr->d_namep, ts.ts_mat );
+		if( status == -4 )  {
+			Tcl_AppendResult( interp, dp_curr->d_namep, ": not found\n",
+					  (char *)NULL );
+			return TCL_ERROR;
+		}
+		if( status < 0 ) {
+			Tcl_AppendResult( interp, "wdb_import failure: ",
+					  dp_curr->d_namep, (char *)NULL );
+			return TCL_ERROR;
+		}
 	}
-	if( status < 0 ) {
-		Tcl_AppendResult( interp, "wdb_import failure: ",
-				  argv[1], (char *)NULL );
-		return TCL_ERROR;
+	else
+	{
+		status = wdb_import( wdb, &intern, argv[1], (matp_t)NULL );
+		if( status == -4 )  {
+			Tcl_AppendResult( interp, argv[1], ": not found\n",
+					  (char *)NULL );
+			return TCL_ERROR;
+		}
+		if( status < 0 ) {
+			Tcl_AppendResult( interp, "wdb_import failure: ",
+					  argv[1], (char *)NULL );
+			return TCL_ERROR;
+		}
 	}
 #endif
 	RT_CK_DB_INTERNAL( &intern );
