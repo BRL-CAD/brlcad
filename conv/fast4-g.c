@@ -37,6 +37,7 @@ static char RCSid[] = "$Header$";
 
 #include "machine.h"
 #include "externs.h"
+#include "db.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"
@@ -125,6 +126,10 @@ RT_EXTERN( fastf_t mat_determinant , (mat_t matrix ) );
 #define		CSPHERE		's'
 #define		NMG		'n'
 #define		BOT		't'
+#define		COMPSPLT	'h'
+
+void make_region_name();
+void make_solid_name();
 
 /* convenient macro for building regions */
 #define		MK_REGION( fp , headp , g_id , c_id , e_id , type ) \
@@ -195,6 +200,14 @@ struct name_tree
 	char name[NAMESIZE+1];
 	struct name_tree *nleft,*nright,*rleft,*rright;
 } *name_root;
+
+struct compsplt
+{
+	int ident_to_split;
+	int new_ident;
+	fastf_t z;
+	struct compsplt *next;
+} *compsplt_root;
 
 struct hole_list
 {
@@ -410,6 +423,132 @@ int group_id;
 }
 
 void
+Compsplt( headp, comp_id, group_id )
+struct wmember *headp;
+int comp_id, group_id;
+{
+	int ident;
+	struct compsplt *splt;
+	struct wmember spl_head;
+	struct wmember *m1, *m2;
+	vect_t norm;
+	char name[NAMESIZE+1];
+	int found_union;
+
+	ident = group_id * 1000 + comp_id;
+
+	splt = compsplt_root;
+
+	while( splt )
+	{
+		if( splt->ident_to_split == ident )
+		{
+			/* make a halfspace */
+			VSET( norm, 0.0, 0.0, 1.0 );
+			make_solid_name( name, COMPSPLT, 0, comp_id, group_id, 0 );
+			mk_half( fdout, name, norm, splt->z );
+
+			BU_LIST_INIT( &spl_head.l );
+
+			/* Go through member list simultaneoulsy copying the list
+			 * and adding references to the halfspace
+			 */
+			m1 = BU_LIST_FIRST( wmember, &headp->l );
+			if( m1->wm_op == UNION )
+				found_union = -1;
+			else
+				found_union = 0;
+			while( BU_LIST_NOT_HEAD( &m1->l, &headp->l ) )
+			{
+				if( m1->wm_op == UNION )
+					found_union++;
+				if( found_union > 0 )
+				{
+					/* time to subtract the halfspace from the new region */
+					(void)mk_addmember( name, &spl_head, WMOP_SUBTRACT );
+
+					/* and intersect it with the old one */
+					/* start by adding the new membwe to the end of the list */
+					m2 = mk_addmember( name, headp, WMOP_INTERSECT );
+
+					/* now get it out of the list */
+					BU_LIST_DEQUEUE( &m2->l );
+
+					/* and put it back in where I want it */
+					BU_LIST_INSERT( &m1->l, &m2->l );
+
+					found_union = 0;
+				}
+
+				/* copy this member to the new list */
+				switch( m1->wm_op )
+				{
+					case UNION:
+						(void)mk_addmember( m1->wm_name, &spl_head, WMOP_UNION );
+						break;
+					case INTERSECT:
+						(void)mk_addmember( m1->wm_name, &spl_head, WMOP_INTERSECT );
+						break;
+					case SUBTRACT:
+						(void)mk_addmember( m1->wm_name, &spl_head, WMOP_SUBTRACT );
+						break;
+				}
+				m1 = BU_LIST_NEXT( wmember, &m1->l );
+			}
+
+			(void)mk_addmember( name, &spl_head, WMOP_SUBTRACT );
+			(void)mk_addmember( name, headp, WMOP_INTERSECT );
+
+			MK_REGION( fdout, &spl_head, splt->new_ident/1000, splt->new_ident%1000, 0, COMPSPLT )
+
+			return;
+		}
+		splt = splt->next;
+	}
+}
+
+void
+do_compsplt()
+{
+	int gr, co, gr1,  co1;
+	fastf_t z;
+	struct compsplt *splt;
+
+	strncpy( field, &line[8], 8 );
+	gr = atoi( field );
+
+	strncpy( field, &line[16], 8 );
+	co = atoi( field );
+
+	strncpy( field, &line[24], 8 );
+	gr1 = atoi( field );
+
+	strncpy( field, &line[32], 8 );
+	co1 = atoi( field );
+
+	strncpy( field, &line[40], 8 );
+	z = atof( field ) * 25.4;
+
+	if( compsplt_root == NULL )
+	{
+		compsplt_root = (struct compsplt *)bu_calloc( 1, sizeof( struct compsplt ), "compsplt_root" );
+		splt = compsplt_root;
+	}
+	else
+	{
+		splt = compsplt_root;
+		while( splt->next )
+			splt = splt->next;
+		splt->next = (struct compsplt *)bu_calloc( 1, sizeof( struct compsplt ), "compsplt_root" );
+		splt = splt->next;
+	}
+	splt->next = (struct compsplt *)NULL;
+	splt->ident_to_split = gr * 1000 + co;
+	splt->new_ident = gr1 * 1000 + co1;
+	splt->z = z;
+}
+
+void
 List_holes()
 {
 	struct holes *hole_ptr;
@@ -450,7 +589,10 @@ List_names()
 		if( !ptr )
 			break;
 
-		bu_log( "%s %d %d\n" , ptr->name , ptr->region_id , ptr->element_id );
+		if( ptr->in_comp_group )
+			bu_log( "%s %d %d (in a comp group)\n" , ptr->name , ptr->region_id , ptr->element_id );
+		else
+			bu_log( "%s %d %d (not in a comp group)\n" , ptr->name , ptr->region_id , ptr->element_id );
 		ptr = ptr->rright;
 	}
 
@@ -1101,6 +1243,38 @@ make_comp_group()
 }
 
 void
+Add_stragglers_to_groups()
+{
+	struct name_tree *ptr;
+
+	ptr = name_root;
+
+	while( 1 )
+	{
+		while( ptr )
+		{
+			PUSH( ptr );
+			ptr = ptr->rleft;
+		}
+		POP( name_tree, ptr );
+		if( !ptr )
+			break;
+
+		/* visit node */
+		CK_TREE_MAGIC( ptr );
+
+		if( !ptr->in_comp_group )
+		{
+			/* add this component to a series */
+			(void)mk_addmember( ptr->name, &group_head[ptr->region_id/1000], WMOP_UNION );
+			ptr->in_comp_group = 1;
+		}
+
+		ptr = ptr->rright;
+	}
+}
+
+void
 do_groups()
 {
 	int group_no;
@@ -1110,6 +1284,8 @@ do_groups()
 		bu_log( "do_groups\n" );
 
 	BU_LIST_INIT( &head_all.l );
+
+	Add_stragglers_to_groups();
 
 	for( group_no=0 ; group_no < 11 ; group_no++ )
 	{
@@ -1317,7 +1493,7 @@ do_grid()
 	if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
 		bu_log( "ERROR: bu_mem_barriercheck failed at end of do_grid\n" );
 }
-
+#if 0
 void
 make_cline_regions()
 {
@@ -1425,6 +1601,9 @@ make_cline_regions()
 			/* subtract any holes for this component */
 			Subtract_holes( &head , comp_id , group_id );
 
+			/* process any component splitting */
+			Compsplt( &head, comp_id, group_id );
+
 			/* now make the region */
 			if( BU_LIST_NON_EMPTY( &head.l ) )
 				MK_REGION( fdout , &head , group_id , comp_id , -pt_no , CLINE )
@@ -1493,6 +1672,9 @@ make_cline_regions()
 			/* subtract any holes for this component */
 			Subtract_holes( &head , comp_id , group_id );
 
+			/* process any component splitting */
+			Compsplt( &head, comp_id, group_id );
+
 			/* make the region */
 			MK_REGION( fdout , &head , group_id , comp_id , cline_ptr->element_id , CLINE );
 		}
@@ -1520,7 +1702,7 @@ make_cline_regions()
 		bu_log( "ERROR: bu_mem_barriercheck failed in make_cline_regions\n" );
 
 }
-
+#endif
 void
 do_sphere()
 {
@@ -1596,6 +1778,9 @@ do_sphere()
 
 	/* subtract any holes for this component */
 	Subtract_holes( &sphere_region , comp_id , group_id );
+
+	/* process any component splitting */
+	Compsplt( &sphere_region, comp_id, group_id );
 
 	MK_REGION( fdout , &sphere_region , group_id , comp_id , element_id , CSPHERE )
 }
@@ -1716,6 +1901,9 @@ do_cline()
 
 	/* subtract any holes for this component */
 	Subtract_holes( &r_head , comp_id , group_id );
+
+	/* process any component splitting */
+	Compsplt( &r_head, comp_id, group_id );
 
 	MK_REGION( fdout , &r_head , group_id , comp_id , element_id , CLINE )
 
@@ -1938,6 +2126,9 @@ do_ccone1()
 	/* subtract any holes for this component */
 	Subtract_holes( &r_head , comp_id , group_id );
 
+	/* process any component splitting */
+	Compsplt( &r_head, comp_id, group_id );
+
 	MK_REGION( fdout , &r_head , group_id , comp_id , element_id , CCONE1 )
 }
 
@@ -2056,6 +2247,9 @@ do_ccone2()
 
 	/* subtract any holes for this component */
 	Subtract_holes( &r_head , comp_id , group_id );
+
+	/* process any component splitting */
+	Compsplt( &r_head, comp_id, group_id );
 
 	MK_REGION( fdout , &r_head , group_id , comp_id , element_id , CCONE2 )
 }
@@ -2289,6 +2483,10 @@ do_ccone3()
 			Subtract_holes( &r_head , comp_id , group_id );
 		}
 	}
+
+	/* process any component splitting */
+	Compsplt( &r_head, comp_id, group_id );
+
 	MK_REGION( fdout , &r_head , group_id , comp_id , element_id , CCONE3 )
 }
 
@@ -2766,6 +2964,9 @@ make_bot_object()
 	/* subtract any holes for this component */
 	Subtract_holes( &bot_region , comp_id , group_id );
 
+	/* process any component splitting */
+	Compsplt( &bot_region, comp_id, group_id );
+
 	MK_REGION( fdout , &bot_region , group_id , comp_id , element_id , BOT )
 }
 
@@ -2788,7 +2989,9 @@ int final;
 
 			if( bot )
 				make_bot_object();
+#if 0
 			make_cline_regions();
+#endif
 			make_comp_group();
 
 		}
@@ -3042,6 +3245,9 @@ do_hex2()
 	/* subtract any holes for this component */
 	Subtract_holes( &head , comp_id , group_id );
 
+	/* process any component splitting */
+	Compsplt( &head, comp_id, group_id );
+
 	MK_REGION( fdout , &head , group_id , comp_id , element_id , CHEX1 )
 
 	if( rt_g.debug&DEBUG_MEM_FULL &&  bu_mem_barriercheck() )
@@ -3063,6 +3269,8 @@ Process_hole_wall()
 			do_hole_wall( HOLE );
 		else if( !strncmp( line , "WALL" , 4 ) )
 			do_hole_wall( WALL );
+		else if( !strncmp( line , "COMPSPLT", 8 ) )
+			do_compsplt();
 		else if( !strncmp( line , "ENDDATA" , 7 ) )
 			break;
 
@@ -3104,6 +3312,8 @@ int pass_number;
 		else if( !strncmp( line , "HOLE" , 4 ) )
 			;
 		else if( !strncmp( line , "WALL" , 4 ) )
+			;
+		else if( !strncmp( line , "COMPSPLT", 8 ) )
 			;
 		else if( !strncmp( line , "SECTION" , 7 ) )
 			do_section( 0 );
@@ -3362,7 +3572,7 @@ char *argv[];
 		bu_log( "doing memory checking\n" );
 
 	if( argc-optind != 2 )
-		rt_bomb( usage );
+		bu_bomb( usage );
 
 	if( (fdin=fopen( argv[optind] , "r" )) == (FILE *)NULL )
 	{
@@ -3409,6 +3619,8 @@ char *argv[];
 
 	hole_root = (struct holes *)NULL;
 
+	compsplt_root = (struct compsplt *)NULL;
+
 	name_name[0] = '\0';
 	name_count = 0;
 
@@ -3447,4 +3659,5 @@ char *argv[];
 
 	if( !quiet )
 		bu_log( "%d components converted\n", comp_count );
+
 }
