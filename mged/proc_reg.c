@@ -300,8 +300,12 @@ struct mater_info *materp;
 		  Tcl_AppendResult(interp, "Edrawobj: ERROR: material property spec in combination within region ", dp->d_namep, "\n", (char *)NULL);
 		} else {
 			if( curmater.ma_minherit == DB_INH_LOWER )  {
-				strncpy( curmater.ma_matname, rp[0].c.c_matname, sizeof(rp[0].c.c_matname) );
-				strncpy( curmater.ma_matparm, rp[0].c.c_matparm, sizeof(rp[0].c.c_matparm) );
+				struct bu_vls	str;
+				bu_vls_init(&str);
+				bu_vls_strncat( &str, rp[0].c.c_matname, sizeof(rp[0].c.c_matname) );
+				bu_vls_strncpy( &str, rp[0].c.c_matparm, sizeof(rp[0].c.c_matparm) );
+				curmater.ma_shader = bu_vls_strgrab( &str );
+				/* bu_vls_free() done by bu_vls_strgrab() */
 				curmater.ma_minherit = rp[0].c.c_inherit;
 			}
 		}

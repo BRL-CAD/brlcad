@@ -647,11 +647,10 @@ CONST struct rt_comb_internal	*comb;
 	}
 
 	bu_vls_strcat( vls, "--\n" );
-	if( bu_vls_strlen(&comb->shader_name) > 0 ) {
+	if( bu_vls_strlen(&comb->shader) > 0 ) {
 		bu_vls_printf( vls,
-			"Shader '%s' '%s'\n",
-		bu_vls_addr(&comb->shader_name),
-			bu_vls_addr(&comb->shader_param) );
+			"Shader '%s'\n",
+			bu_vls_addr(&comb->shader) );
 	}
 
 	if( comb->rgb_valid ) {
@@ -662,7 +661,7 @@ CONST struct rt_comb_internal	*comb;
 			comb->rgb[2]);
 	}
 
-	if( bu_vls_strlen(&comb->shader_name) > 0 || comb->rgb_valid )  {
+	if( bu_vls_strlen(&comb->shader) > 0 || comb->rgb_valid )  {
 		if( comb->inherit ) {
 			bu_vls_strcat( vls, 
 	"(These material properties override all lower ones in the tree)\n");
