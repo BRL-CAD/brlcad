@@ -1106,6 +1106,7 @@ struct rt_wdb  {
 	struct db_tree_state	wdb_initial_tree_state;
 	struct rt_tess_tol	wdb_ttol;
 	struct bn_tol		wdb_tol;
+	struct resource		*wdb_resp;
 
 	/* variables for name prefixing */
 	char		wdb_prestr[RT_NAMESIZE];
@@ -2870,6 +2871,7 @@ void db_get_directory(register struct resource *resp);
 BU_EXTERN(void db_functree, (struct db_i *dbip, struct directory *dp,
 	void (*comb_func)(struct db_i *, struct directory *, genptr_t),
 	void (*leaf_func)(struct db_i *, struct directory *, genptr_t),
+	struct resource *resp,
 	genptr_t client_data));
 
 /* g_arb.c */
