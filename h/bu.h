@@ -480,6 +480,7 @@ struct bu_bitv {
 	unsigned int	nbits;		/* actual size of bits[], in bits */
 	bitv_t		bits[2];	/* variable size array */
 };
+
 #define BU_BITV_MAGIC		0x62697476	/* 'bitv' */
 #define BU_CK_BITV(_vp)		BU_CKMAG(_vp, BU_BITV_MAGIC, "bu_bitv")
 
@@ -794,6 +795,8 @@ struct bu_structparse {
 	char		*sp_name;		/* Element's symbolic name */
 	long		sp_offset;		/* Byte offset in struct */
 	void		(*sp_hook)();		/* Optional hooked function, or indir ptr */
+	char		*sp_desc;		/* description of element */
+	void		*sp_default;		/* ptr to default value */
 };
 #define BU_STRUCTPARSE_FUNC_NULL	((void (*)())0)
 
