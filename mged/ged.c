@@ -251,9 +251,6 @@ char **argv;
 	  }
 	}
 
-	if(!interactive)
-	  classic_mged = 0;
-
 	(void)signal( SIGPIPE, SIG_IGN );
 
 	/*
