@@ -26,6 +26,8 @@ static char RCSplane[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./debug.h"
 
+#define PI      3.14159265358979323
+
 /*
  *			R T _ P T 3 _ P T 3 _ E Q U A L
  *
@@ -53,22 +55,24 @@ CONST struct rt_tol	*tol;
  *  Check to see if three points are collinear.
  *
  *  Returns (boolean) -
- *	1	If all 3 points are collinear
+ *	1	If 3 points are collinear
  *	0	If they are not
  */
 int
 rt_3pts_collinear(a, b, c, tol)
 point_t	a, b, c;
-fastf_t	tol;
+struct rt_tol	*tol;
 {
-	vect_t	v1, v2, v3;
+	fastf_t	dist, mag_ba, mag_ca, theta;
+	vect_t	ba, ca;
 
-	VSUB2(v1, b, a);
-	VUNITIZE(v1);
-	VSUB2(v2, c, a);
-	VUNITIZE(v2);
-	VREVERSE(v3, v2);
-	return(VAPPROXEQUAL(v1, v2, tol) || VAPPROXEQUAL(v1, v3, tol));
+	VSUB2(ba, b, a);
+	VSUB2(ca, c, a);
+	mag_ba = MAGNITUDE(ba);
+	mag_ca = MAGNITUDE(ca);
+	theta = acos(VDOT(ba, ca)/(mag_ba * mag_ca));
+	dist = mag_ba * sin(theta);
+	return(fabs(dist) < tol->dist);
 }
 
 
