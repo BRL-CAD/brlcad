@@ -16,6 +16,8 @@
 .\"	27 October 1992 - Update to put in troff format.
 .\"	Last Update to File:  22 February 1993 - to put in info about
 .\"	  all_sf.
+.\"	Last Update to File:  1 April 1993 - to put in info about firpass
+.\"	  & secpass being able to fire 3 sets of orthogonal rays.
 .\"	To Print:
 .\"	troff -Ti300 irprep.doc | dimp -P imt2 &
 .ft B
@@ -59,6 +61,9 @@ to indicate the end of the file.  PRISM requires this line.
 surface area in the PRISM facet file.  This is done because
 PRISM will not accept a zero in the exterior surface area
 field.  (FRED seems to do the same thing.)
+.sp
+8.  Allows three sets of orthogonal rays to be fired.  (The user
+may still fire only one set of rays if desired.)
 .sp 2
 .ft B
 .in -0.75i
@@ -79,6 +84,9 @@ must come first).
 or 3.0 format).
 .sp
 4.  Some diagnostic information is no longer printed out.
+.sp
+5.  Allows three sets of orthogonal rays to be fired.  (The user may
+still fire only one set of rays if desired.)
 .sp 2
 .ft B
 .in -0.75i
@@ -109,7 +117,7 @@ after all other regions.  This program creates three files:  an
 output file, a longwave radiation exchange file, and an error file.
 The output file lists the shapefactors between each region.  The
 longwave radiation exchange file if for use with PRISM.  This file
-is not PRISM ready and the user must file in the missing parameters
+is not PRISM ready and the user must fill in the missing parameters
 if this file is to be used with PRISM.  The error file is basically
 used for checking errors in the program and will probably not be
 used by the average user.
