@@ -40,29 +40,22 @@
  *  to have all "void" functions so declared.
  */
 
+#include "conf.h"
 #include "rle_config.h"
+
 #include <stdio.h>
 #include <ctype.h>
-#ifndef USE_STDARG
+#if defined(HAVE_STDARG_H)
+#include <stdarg.h>
+#elif defined(HAVE_VARARGS_H)
 #include <varargs.h>
 #else
-#include <stdarg.h>
+#error "Need stdarg.h or varargs.h"
 #endif
 
-#ifdef USE_STDLIB_H
-#include <stdlib.h>
-#else
+#include "machine.h"
+#include "externs.h"
 
-#ifndef VOID_STAR
-extern char *malloc();
-extern char *realloc();
-#else
-extern void *malloc();
-extern void *realloc();
-#endif
-void free();
-
-#endif /* USE_STDLIB_H */
 typedef char bool;
 /* 
  * An explicit assumption is made in this code that all pointers look
@@ -84,10 +77,6 @@ typedef int *ptr;
 #define NEW( type, cnt )	(type *) malloc( (cnt) * sizeof( type ) )
 #define RENEW( type, ptr, cnt )	(type *) realloc( ptr, (cnt) * sizeof( type ) )
 
-#if defined(c_plusplus) && !defined(USE_PROTOTYPES)
-#define USE_PROTOTYPES
-#endif
-
 #ifndef USE_PROTOTYPES
 static char * prformat();
 static int isnum();
@@ -105,16 +94,18 @@ void		scan_usage( char **, CONST_DECL char * );
  * Argument list is (argc, argv, format, ... )
  */
 int
-#ifndef USE_STDARG
+#ifdef HAVE_STDARG_H
+scanargs ( int argc, char **argv, CONST_DECL char *format, ... )
+#else
 scanargs ( va_alist )
 va_dcl
-#else
-scanargs ( int argc, char **argv, CONST_DECL char *format, ... )
-#endif /* !USE_STDARG */
+#endif
 {
     va_list argl;
     int retval;
-#ifndef USE_STDARG
+#ifdef HAVE_STDARG_H
+    va_start( argl, format );
+#else
     int argc;
     char ** argv;
     CONST_DECL char *format;
@@ -123,8 +114,6 @@ scanargs ( int argc, char **argv, CONST_DECL char *format, ... )
     argc = va_arg( argl, int );
     argv = va_arg( argl, char ** );
     format = va_arg( argl, CONST_DECL char * );
-#else
-    va_start( argl, format );
 #endif
     retval = _do_scanargs( argc, argv, format, argl );
     va_end( argl );
@@ -315,10 +304,6 @@ reswitch:				/* after finding '*' or ',' */
 		    case 'X': 		/* long hexadecimal # */
 		    case 'N':		/* long number in C syntax */
 		    case 'F': 		/* double precision floating # */
-#if defined(sgi) && !defined(mips)
-			/* Fix for broken SGI IRIS 2400/3000 floats */
-			if ( typchr == 'F' ) typchr = 'f';
-#endif /* sgi */
 			for (cnt = optarg+1; cnt < argc; cnt++)
 			{
 			    argp = argv[cnt];
