@@ -327,6 +327,7 @@ union record  {
 		char	N_id;			/* DBID_NMG */
 		char	N_pad;
 		char	N_name[NAMESIZE];
+		char	N_pad2[2];		/* neatness */
 		char	N_count[4];		/* # additional granules */
 		char	N_structs[26*4];	/* # of structs needed */
 	} nmg;
