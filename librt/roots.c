@@ -25,6 +25,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "vmath.h"
 #include "polyno.h"
 #include "complex.h"
+#include "debug.h"
 
 int		polyRoots();
 HIDDEN void	synthetic(), deflate();
