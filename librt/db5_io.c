@@ -1240,7 +1240,6 @@ fail:
  *			R T _ F W R I T E _ I N T E R N A L 5
  *
  *  Put an object in internal format out onto a file in external format.
- *  Used by LIBWDB.
  *
  *  The internal representation is always freed.
  *
@@ -1250,7 +1249,9 @@ fail:
  *	0	OK
  *	<0	error
  *
- *  NOTE:  Users of this should be using wdb_export() instead!
+ *  This routine isn't used anymore.
+ *  NOTE:  Potential users of this routine really should consider using
+ *  wdb_put_internal() instead!
  */
 int
 rt_fwrite_internal5( fp, name, ip, conv2mm )

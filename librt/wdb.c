@@ -258,6 +258,9 @@ wdb_export_external(
  *  The internal representation is always freed.
  *  This is the analog of rt_db_put_internal() for rt_wdb objects.
  *
+ *  Use this routine in preference to wdb_export() whenever the
+ *  caller already has an rt_db_internal structure handy.
+ *
  *  Returns -
  *	 0	OK
  *	<0	error
@@ -315,6 +318,10 @@ out:
  *  WARNING: The caller must be careful not to double-free gp,
  *  particularly if it's been extracted from an rt_db_internal,
  *  e.g. by passing intern.idb_ptr for gp.
+ *
+ *  If the caller has an rt_db_internal structure handy already,
+ *  they should call wdb_put_internal() directly -- this is a
+ *  convenience routine intended primarily for internal use in LIBWDB.
  *
  *  Returns -
  *	 0	OK
