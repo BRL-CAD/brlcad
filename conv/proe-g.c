@@ -58,8 +58,11 @@ extern char *optarg;
 extern int optind,opterr,optopt;
 extern int errno;
 
+#define NAME_LENGTH	79
+static char *input_file;	/* name of the input file */
 static char *brlcad_file;	/* name of output file */
-static int stl_format=0;		/* Flag, non-zero indocates raw Stereolithography format input */
+static char forced_name[NAME_LENGTH+1];	/* name specified on command line */
+static int stl_format=0;	/* Flag, non-zero indocates raw Stereolithography format input */
 static int polysolid=1;		/* Flag for polysolid output rather than NMG's */
 static int solid_count=0;	/* count of solids converted */
 static struct rt_tol tol;	/* Tolerance structure */
@@ -90,6 +93,7 @@ static char *proe_usage="%s [-psdarS] [-u reg_exp] [-x rt_debug_flag] [-X nmg_de
 static char *stl_usage="%s [-psda] [-u reg_exp] [-x rt_debug_flag] [-X nmg_debug_flag] input.stl output.g\n\
 	where input.stl is a STereoLithography file\n\
 	and output.g is the name of a BRL-CAD database file to receive the conversion.\n\
+	The -N option specifies a name to use for the object.\n\
 	The -n option is to NMG solids rather than polysolids.\n\
 	The -s option is to simplify the objects to ARB's where possible.\n\
 	The -d option prints additional debugging information.\n\
@@ -784,7 +788,7 @@ Convert_part( line )
 char line[MAX_LINE_LEN];
 {
 	char line1[MAX_LINE_LEN];
-	char name[80];
+	char name[NAME_LENGTH + 1];
 	unsigned int obj;
 	char *solid_name;
 	int tmp_count;
@@ -855,6 +859,34 @@ char line[MAX_LINE_LEN];
 
 		/* get object id */
 		sscanf( &line[start] , "%x" , &obj );
+	}
+	else if( stl_format && forced_name[0] != '\0' )
+		strcpy( name, forced_name );
+	else if( stl_format ) /* build a name from the file name */
+	{
+		char tmp_str[NAME_LENGTH+1];
+		char *ptr;
+		int len;
+
+		/* copy the file name into our work space */
+		strncpy( tmp_str, input_file, NAME_LENGTH );
+		if( strlen( input_file ) >= NAME_LENGTH )
+			tmp_str[NAME_LENGTH] = '\0';
+
+		/* eliminate a trailing ".stl" */
+		ptr = strstr( tmp_str, ".stl" );
+		if( ptr )
+			*ptr = '\0';
+
+		/* skip over all characters prior to the last '/' */
+		ptr = strrchr( tmp_str, '/' );
+		if( !ptr )
+			ptr = tmp_str;
+		else
+			ptr++;
+
+		/* now copy what is left to the name */
+		strcpy( name, ptr );
 	}
 	else
 		strcpy( name, "noname" );
@@ -1484,6 +1516,8 @@ char	*argv[];
 
 	nmg_tbl( &null_parts, TBL_INIT, (long *)NULL );
 
+	forced_name[0] = '\0';
+
 	if( strstr( argv[0], "stl-g" ) )
 	{
 		/* this code was called as stl-g */
@@ -1501,8 +1535,14 @@ char	*argv[];
 	}
 
 	/* Get command line arguments. */
-	while ((c = getopt(argc, argv, "Si:rsdax:X:nu:")) != EOF) {
+	while ((c = getopt(argc, argv, "Si:rsdax:X:nu:N:")) != EOF) {
 		switch (c) {
+		case 'N':	/* force a name on this object */
+			strncpy( forced_name, optarg, NAME_LENGTH );
+			if( strlen( optarg ) > NAME_LENGTH )
+				forced_name[NAME_LENGTH] = '\0';
+			break;
+
 		case 'S':	/* raw stl_format format */
 			stl_format = 1;
 			do_reorient = 0;
@@ -1551,9 +1591,10 @@ char	*argv[];
 		}
 	}
 
-	if( (fd_in=fopen( argv[optind], "r")) == NULL )
+	input_file = argv[optind];
+	if( (fd_in=fopen( input_file, "r")) == NULL )
 	{
-		rt_log( "Cannot open input file (%s)\n" , argv[optind] );
+		rt_log( "Cannot open input file (%s)\n" , input_file );
 		perror( argv[0] );
 		exit( 1 );
 	}
