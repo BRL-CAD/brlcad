@@ -117,6 +117,24 @@ long	magic;
 	}
 }
 
+/*	N M G _ M M
+ *
+ *	Make Model
+ *	Create a new model Essentially
+ *	this creates a minimal model system.
+ */
+struct model *nmg_mm()
+{
+	struct model *m;
+
+	GET_MODEL(m);
+
+	m->magic = NMG_MODEL_MAGIC;
+	m->r_p = (struct nmgregion *)NULL;
+	m->ma_p = (struct model_a *)NULL;
+
+	return(m);
+}
 /*	N M G _ M M R
  *
  *	Make Model, Region
