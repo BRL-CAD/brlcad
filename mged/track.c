@@ -339,7 +339,7 @@ tryagain:	/* sent here to try next set of names */
 	/* add the regions */
 	record.c.c_id = ID_COMB;
 	record.c.c_flags = 'R';
-	record.c.c_aircode = record.c.c_length = 0;
+	record.c.c_aircode = 0;
 	record.c.c_regionid = 111;
 	record.c.c_material = 0;
 	record.c.c_los = 0;

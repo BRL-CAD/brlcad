@@ -333,12 +333,6 @@ top:
 			goto top;
 		}
 	}
-	/* go back and update the header record */
-	if( num_deleted ) {
-		db_get( dbip, dp, &record, 0, 1 );
-		record.c.c_length -= num_deleted;
-		db_put( dbip, dp, &record, 0, 1 );
-	}
 }
 
 /* Copy a cylinder and position at end of original cylinder

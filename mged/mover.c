@@ -236,7 +236,6 @@ int air;				/* Air code */
 
 		/* Generate the disk record */
 		record.c.c_id = ID_COMB;
-		record.c.c_length = 1;
 		record.c.c_flags = record.c.c_aircode = 0;
 		record.c.c_regionid = -1;
 		record.c.c_material = 0;
@@ -286,8 +285,6 @@ int air;				/* Air code */
 			return DIR_NULL;
 		}
 	}
-	record.c.c_length++;
-	db_put( dbip, dp, &record, 0, 1 );
 	db_grow( dbip, dp, 1 );
 
 	/* Fill in new Member record */

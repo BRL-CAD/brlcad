@@ -87,9 +87,9 @@ f_tabobj( )
 			(void)printf("%c '%c' %s %d %d %d %d %d \n",
 			record.c.c_id,record.c.c_flags,
 			record.c.c_name,record.c.c_regionid,
-			record.c.c_aircode,record.c.c_length,
+			record.c.c_aircode, dp->d_len-1,
 			record.c.c_material,record.c.c_los);
-			nmemb = record.c.c_length;
+			nmemb = dp->d_len-1;
 			for(j=1; j<=nmemb; j++) {
 				mat_t	xmat;
 
@@ -364,7 +364,7 @@ int flag;
 	db_get( dbip, dp, &record, 0, 1);
 
 	if( record.u_id == ID_COMB ) {
-		nparts = record.c.c_length;
+		nparts = dp->d_len-1;
 		for(i=1; i<=nparts; i++) {
 			mat_t	xmat;
 
@@ -701,7 +701,7 @@ mat_t	old_xlate;
 
 	db_get( dbip, dp, &record, 0, 1);
 	if( record.u_id == ID_COMB ) {
-		nparts = record.c.c_length;
+		nparts = dp->d_len-1;
 		for(i=1; i<=nparts; i++) {
 			mat_t	xmat;
 
@@ -812,7 +812,7 @@ struct directory *dp;
 	mat_idn( identity );
 	db_get( dbip, dp, &record, 0, 1);
 	if( record.u_id == ID_COMB ) {
-		nparts = record.c.c_length;
+		nparts = dp->d_len-1;
 		for(i=1; i<=nparts; i++) {
 			db_get( dbip, dp, &record, i, 1);
 
