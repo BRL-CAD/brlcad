@@ -520,7 +520,7 @@ char	**argv;
 		if( (dp = db_lookup( dbip, argv[arg], LOOKUP_NOISY )) == DIR_NULL )
 			continue;
 
-		do_list( stdout, dp, 1 );	/* verbose */
+		do_list( stdout, dp, 99 );	/* very verbose */
 	}
 }
 
