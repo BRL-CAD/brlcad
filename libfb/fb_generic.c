@@ -207,3 +207,35 @@ FBIO	*ifp;
 	free( (void *) ifp );
 	return	0;
 }
+
+/*
+ *  Generic Help.
+ *  Print out the list of available frame buffers.
+ */
+int
+fb_genhelp()
+{
+	int	i;
+
+	i = 0;
+	while( _if_list[i] != (FBIO *)NULL ) {
+		fb_log( "%-12s  %s\n",
+			_if_list[i]->if_name,
+			_if_list[i]->if_type );
+		i++;
+	}
+
+	/* Print the ones not in the device list */
+#ifdef IF_REMOTE
+	fb_log( "%-12s  %s\n",
+		remote_interface.if_name,
+		remote_interface.if_type );
+#endif
+	if( _disk_enable ) {
+		fb_log( "%-12s  %s\n",
+			disk_interface.if_name,
+			disk_interface.if_type );
+	}
+
+	return	0;
+}
