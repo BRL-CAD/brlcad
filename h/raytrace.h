@@ -1664,6 +1664,7 @@ struct rt_i {
 	int		needprep;	/* needs rt_prep */
 	struct region	**Regions;	/* ptrs to regions [reg_bit] */
 	struct bu_list	HeadRegion;	/* ptr of list of regions in model */
+	genptr_t	Orca_hash_tbl;	/* Hash table in matrices for ORCA */
 	/* Ray-tracing statistics */
 	long		nregions;	/* total # of regions participating */
 	long		nsolids;	/* total # of solids participating */
@@ -2363,7 +2364,7 @@ BU_EXTERN(int rt_gettrees, (struct rt_i	*rtip,
 	int argc, const char **argv, int ncpus));
 BU_EXTERN(int rt_gettrees_and_attrs, (struct rt_i *rtip, const char **attrs,
 				      int argc, const char **argv, int ncpus ) );
-BU_EXTERN(int rt_gettrees_muves, (struct rt_i *rtip, const char **attrs, Tcl_HashTable *tbl,
+BU_EXTERN(int rt_gettrees_muves, (struct rt_i *rtip, const char **attrs,
 				  int argc, const char **argv, int ncpus ) );
 BU_EXTERN(int rt_load_attrs, ( struct rt_i *rtip, char **attrs ) );
 					/* Print seg struct */
