@@ -5,10 +5,8 @@
 			Maryland 21005-5066
 			(301)278-6647 or AV-298-6647
 */
+#ifndef INCL_MATDB
 #define INCL_MATDB
-#if ! defined( NULL )
-#include <stdio.h>
-#endif
 #define MAX_MAT_DB	100
 #define MAX_MAT_NM	81
 #define MF_USED		1
@@ -41,3 +39,5 @@ extern int		mat_Edit_Db_Entry();
 extern int		mat_Print_Db();
 
 extern Mat_Db_Entry	mat_dfl_entry;
+
+#endif
