@@ -732,12 +732,10 @@ char	**argv;
 {
 	register struct directory *dp;
 	struct rt_db_internal	internal;
-	struct bu_external	external;
 	struct rt_arb_internal	arb;
 	int i, j;
 	fastf_t rota, fb;
 	vect_t norm1,norm2,norm3;
-	int ngran;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
@@ -787,29 +785,20 @@ char	**argv;
 	for( i=0 ; i<4 ; i++ )
 		VJOIN1( arb.pt[i+4] , arb.pt[i] , -50.8 , norm1 );
 
-	if( rt_functab[internal.idb_type].ft_export( &external, &internal, 1.0 ) < 0 )
-	{
-	   Tcl_AppendResult(interp, "f_make: export failure\n", (char *)NULL);
-	   return TCL_ERROR;
-	}
-
 	/* no interrupts */
 	(void)signal( SIGINT, SIG_IGN );
 
-	ngran = (external.ext_nbytes+sizeof(union record)-1) / sizeof(union record);
-	if( (dp = db_diradd( dbip, argv[1], -1L, ngran, DIR_SOLID)) == DIR_NULL ||
-	    db_alloc( dbip, dp, 1 ) < 0 )
-	    {
-	    	db_free_external( &external );
-	    	TCL_ALLOC_ERR_return;
-	    }
-
-	if (db_put_external( &external, dp, dbip ) < 0 )
+	if( (dp=db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID)) == DIR_NULL )
 	{
-		db_free_external( &external );
+		Tcl_AppendResult(interp, "Cannot add ", argv[1], " to directory\n", (char *)NULL );
+		return TCL_ERROR;
+	}
+
+	if( rt_db_put_internal( dp, dbip, &internal ) < 0 )
+	{
+		rt_db_free_internal( &internal );
 		TCL_WRITE_ERR_return;
 	}
-	db_free_external( &external );
 
 	{
 	  char *av[3];
