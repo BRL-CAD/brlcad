@@ -23,7 +23,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <math.h>
-#include "./machine.h"	/* special copy */
+#include "machine.h"
 #include "vmath.h"
 #include "db.h"
 #include "./ged.h"
@@ -58,8 +58,8 @@ int	movedir;	/* RARROW | UARROW | SARROW | ROTARROW */
  * The "accumulation" solid rotation matrix and scale factor
  */
 mat_t	acc_rot_sol;
-float	acc_sc_sol;
-float	acc_sc[3];	/* local object scale factors --- accumulations */
+fastf_t	acc_sc_sol;
+fastf_t	acc_sc[3];	/* local object scale factors --- accumulations */
 
 static void bv_top(), bv_bottom(), bv_right();
 static void bv_left(), bv_front(), bv_rear();
@@ -109,7 +109,7 @@ struct buttons  {
 };
 
 static mat_t sav_viewrot, sav_toviewcenter;
-static float sav_vscale;
+static fastf_t sav_vscale;
 static int	vsaved = 0;	/* set iff view saved */
 
 void btn_head_menu();

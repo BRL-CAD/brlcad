@@ -23,7 +23,7 @@
 #include <string.h>
 #endif
 
-#include "./machine.h"	/* special copy */
+#include "machine.h"
 #include "vmath.h"
 #include "db.h"
 #include "./ged.h"
@@ -634,8 +634,8 @@ int flag;
 	int nparts, i, k, j;
 	int arslen, kk, npt, n, nsoltemp;
 	int dchar = 0;
-	float vertex[3];
-	float vec[3];
+	vect_t	vertex;
+	vect_t	vec;
 
 	if( pathpos >= MAX_LEVELS ) {
 		(void)printf("nesting exceeds %d levels\n",MAX_LEVELS);

@@ -28,7 +28,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <string.h>
 #endif
 
-#include "./machine.h"	/* special copy */
+#include "machine.h"
 #include "vmath.h"
 #include "db.h"
 #include "./ged.h"
@@ -58,10 +58,10 @@ moveHobj( dp, xlate )
 register struct directory *dp;
 matp_t xlate;
 {
-	vect_t	work;			/* Working vector */
+	vect_t	work;
 	register int i;
-	register float *p;		/* -> to vector to be worked on */
-	static float *area_end;		/* End of area to be processed */
+	register dbfloat_t *p;		/* -> to vector to be worked on */
+	static dbfloat_t *area_end;	/* End of area to be processed */
 	union record record;
 
 	db_getrec( dp, &record, 0 );

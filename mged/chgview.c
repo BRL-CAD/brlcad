@@ -48,7 +48,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 #include <signal.h>
 #include <stdio.h>
-#include "./machine.h"	/* special copy */
+#include "machine.h"
 #include "vmath.h"
 #include "db.h"
 #include "mater.h"
@@ -101,7 +101,7 @@ f_vrot()
 void
 f_view()
 {
-	float f;
+	fastf_t f;
 	f = atof( cmd_args[1] );
 	if( f < 0.0001 ) f = 0.0001;
 	Viewscale = f * 0.5 * local2base;
@@ -496,10 +496,10 @@ vect_t eye_model;
  */
 HIDDEN int
 rt_read(fp, scale, eye, mat)
-FILE *fp;
-float *scale;
-vect_t eye;
-mat_t mat;
+FILE	*fp;
+fastf_t	*scale;
+vect_t	eye;
+mat_t	mat;
 {
 	register int i;
 	double d;
@@ -968,7 +968,7 @@ f_sed()
 void
 f_knob()
 {
-	float f;
+	fastf_t f;
 
 	f = atof(cmd_args[2]);
 	if( f < -1.0 )
@@ -1131,7 +1131,7 @@ f_savekey()
 {
 	register int i;
 	register FILE *fp;
-	float	time;
+	fastf_t	time;
 	vect_t	eye_model;
 	vect_t temp;
 

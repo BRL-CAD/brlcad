@@ -23,7 +23,7 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#include "./machine.h"	/* special copy */
+#include "machine.h"
 #include "vmath.h"
 #include "./ged.h"
 #include "./menu.h"

@@ -18,7 +18,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <stdio.h>
 #include <math.h>
-#include "./machine.h"  /* a special copy */
+#include "machine.h"
 #include "db.h"
 #include "vmath.h"
 #include "./ged.h"
@@ -319,7 +319,9 @@ int loc;
 }
 	
 /* 			G E T _ R O T F B (  )
- * Gets information from the array cmd_args[] starting at the position 'arr_loc'.
+ *
+ * Gets information from the array cmd_args[] starting at the position
+ * 'arr_loc'.
  * Finds the planar equation given rotation and fallback angles, plus a
  * fixed point. Result is stored in 'loc' of array es_peqn. The values
  * pointed to by 's_recp' are used if a vertex is chosen as fixed point.
@@ -330,7 +332,7 @@ int arr_loc;
 int loc;	
 struct solidrec *s_recp;
 {
-	float rota, fb;
+	fastf_t rota, fb;
 	short int i,temp;
 	struct solidrec plane_pts;
 

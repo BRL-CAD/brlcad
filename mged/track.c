@@ -15,7 +15,7 @@
 #include <string.h>
 #endif
 
-#include "./machine.h"
+#include "machine.h"
 #include "vmath.h"
 #include "db.h"
 #include "./ged.h"
@@ -36,7 +36,7 @@ extern int	args;
 extern int	argcnt;
 
 static int	Trackpos = 0;
-static float	plano[4], plant[4];
+static fastf_t	plano[4], plant[4];
 
 static union record record;
 
@@ -52,11 +52,11 @@ f_amtrack(  )
 {
 
 	register struct directory *dp;
-	float fw[3], lw[3], iw[3], dw[3], tr[3];
+	fastf_t fw[3], lw[3], iw[3], dw[3], tr[3];
 	char solname[12], regname[12], grpname[9], oper[3];
 	int i, j, memb[4];
 	char temp[4];
-	float temp1[3], temp2[3];
+	vect_t	temp1, temp2;
 	int item, mat, los;
 
 	/* interupts */
@@ -486,11 +486,12 @@ char name[];
 
 
 tancir( cir1, cir2 )
-register float cir1[], cir2[];
+register fastf_t cir1[], cir2[];
 {
-	static fastf_t work[3], mag;
+	static fastf_t mag;
+	vect_t	work;
 	FAST fastf_t f;
-	static double temp, tempp, ang, angc;
+	static fastf_t	temp, tempp, ang, angc;
 
 	work[0] = cir2[0] - cir1[0];
 	work[2] = cir2[1] - cir1[1];
@@ -524,10 +525,13 @@ register float cir1[], cir2[];
 
 
 slope( wh1, wh2 , t )
-float wh1[], wh2[], t[];
+fastf_t wh1[], wh2[], t[];
 {
 	int i, j, switchs;
-	float temp, del[3], mag, work[3], z, r, b;
+	fastf_t	temp;
+	fastf_t	mag;
+	fastf_t	z, r, b;
+	vect_t	del, work;
 
 	switchs = 0;
 	if( wh1[2] < wh2[2] ) {
@@ -591,10 +595,11 @@ float wh1[], wh2[], t[];
 
 
 crdummy( w, t, flag )
-float w[3], t[3];
-int flag;
+fastf_t	w[3], t[3];
+int	flag;
 {
-	float temp, vec[3];
+	fastf_t	temp;
+	vect_t	vec;
 	int i, j;
 
 	vec[1] = 0.0;
@@ -635,7 +640,7 @@ int flag;
 
 
 trcurve( wh, t )
-float wh[], t[];
+fastf_t wh[], t[];
 {
 	record.s.s_values[0] = wh[0];
 	record.s.s_values[1] = t[0];
@@ -650,9 +655,10 @@ float wh[], t[];
 
 
 bottom( vec1, vec2, t )
-float vec1[], vec2[], t[];
+vect_t	vec1, vec2;
+fastf_t	t[];
 {
-	float tvec[3];
+	vect_t	tvec;
 	int i, j;
 
 	VMOVE(&record.s.s_values[0], vec1);
@@ -677,9 +683,11 @@ float vec1[], vec2[], t[];
 
 
 top( vec1, vec2, t )
-float vec1[], vec2[], t[];
+vect_t	vec1, vec2;
+fastf_t	t[];
 {
-	float tooch, del[3], tvec[3], mag;
+	fastf_t	tooch, mag;
+	vect_t	del, tvec;
 	int i, j;
 
 	tooch = t[2] * .25;

@@ -30,7 +30,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <string.h>
 #endif
 
-#include "./machine.h"	/* special copy */
+#include "machine.h"
 #include "vmath.h"
 #include "db.h"
 #include "./sedit.h"
@@ -41,7 +41,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 extern int	printf();
 
-static int	compar();
+static int	dbcompar();
 
 /* face definitions for each arb type */
 int arb_faces[5][24] = {
@@ -185,7 +185,7 @@ vect_t pos_model;
 	static int pt1, pt2, bp1, bp2, newp, p1, p2, p3;
 	short *edptr;		/* pointer to arb edit array */
 	short *final;		/* location of points to redo */
-	register float *op;
+	register dbfloat_t *op;
 	static int i, *iptr;
 
 	/* set the pointer */
@@ -407,8 +407,8 @@ err:
 
 
 static int
-compar( x, y )
-float *x,*y;
+dbcompar( x, y )
+register dbfloat_t *x,*y;
 {
 
 	int i;
@@ -431,13 +431,14 @@ planeqn(loc, use1, use2, use3, sp)
 int loc, use1, use2, use3;
 struct solidrec *sp;
 {
-	float work[3],worc[3],mag;
+	vect_t	work, worc;
+	fastf_t	mag;
 
-	if( compar(&sp->s_values[use1*3],&sp->s_values[use2*3]) )
+	if( dbcompar(&sp->s_values[use1*3],&sp->s_values[use2*3]) )
 		return(1);
-	if( compar(&sp->s_values[use2*3],&sp->s_values[use3*3]) )
+	if( dbcompar(&sp->s_values[use2*3],&sp->s_values[use3*3]) )
 		return(1);
-	if( compar(&sp->s_values[use1*3],&sp->s_values[use3*3]) )
+	if( dbcompar(&sp->s_values[use1*3],&sp->s_values[use3*3]) )
 		return(1);
 	VSUB2(work,&sp->s_values[use2*3],&sp->s_values[use1*3]);
 	VSUB2(worc,&sp->s_values[use3*3],&sp->s_values[use1*3]);
@@ -459,8 +460,8 @@ intersect( type, loc, pos, sp )
 int type, loc, pos;
 struct solidrec *sp;
 {
-	float vec1[3], vec2[3], vec3[3];
-	float d;
+	vect_t	vec1, vec2, vec3;
+	fastf_t	d;
 	int i, j, i1, i2, i3;
 
 	j = type - 4;
@@ -486,7 +487,6 @@ printf("intersect planes are %d %d %d\n",i1+1,i2+1,i3+1);
 	}
 
 	return( 0 );
-
 }
 
 
@@ -499,8 +499,8 @@ mv_edge(thru, bp1, bp2, end1, end2)
 vect_t thru;
 int bp1, bp2, end1, end2;
 {
-	float *op;
-	double t;
+	dbfloat_t *op;
+	fastf_t	t;
 
 	if( VDOT(&es_peqn[bp1][0], es_m) == 0 ||
 	    VDOT(&es_peqn[bp2][0], es_m) == 0 ) {

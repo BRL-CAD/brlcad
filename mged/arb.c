@@ -22,7 +22,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include	<math.h>
 #include	<stdio.h>
-#include "./machine.h"	/* special copy */
+#include "machine.h"
 #include "vmath.h"
 #include "db.h"
 #include "./dm.h"
@@ -44,32 +44,29 @@ struct solidrec *origp;
 register matp_t matp;
 {
 	register int i;
-	register float *ip;
-	register float *op;
+	register dbfloat_t *ip;
+	register fastf_t *op;
 	static vect_t work;
-	static struct solidrec sr;
-
-	/* Because we will modify the values, make a private copy */
-	sr = *origp;		/* struct copy */
+	static fastf_t	points[3*8];
 	
 	/*
 	 * Convert from vector to point notation for drawing.
 	 */
-	MAT4X3PNT( &sr.s_values[0], matp, &origp->s_values[0] );
+	MAT4X3PNT( &points[0], matp, &origp->s_values[0] );
 
 	ip = &origp->s_values[1*3];
-	op = &sr.s_values[1*3];
+	op = &points[1*3];
 	for( i=1; i<8; i++ )  {
 		VADD2( work, &origp->s_values[0], ip );
 		MAT4X3PNT( op, matp, work );
 		ip += 3;
-		op += 3;
+		op += ELEMENTS_PER_VECT;
 	}
 
-	face( sr.s_values, 0, 1, 2, 3 );
-	face( sr.s_values, 4, 0, 3, 7 );
-	face( sr.s_values, 5, 4, 7, 6 );
-	face( sr.s_values, 1, 5, 6, 2 );
+	face( points, 0, 1, 2, 3 );
+	face( points, 4, 0, 3, 7 );
+	face( points, 5, 4, 7, 6 );
+	face( points, 1, 5, 6, 2 );
 }
 
 /*
@@ -79,7 +76,7 @@ register matp_t matp;
  */
 static void
 face( valp, a, b, c, d )
-register float *valp;
+register fastf_t *valp;
 {
 	DM_GOTO( &valp[a*3], PEN_UP );
 	DM_GOTO( &valp[b*3], PEN_DOWN );

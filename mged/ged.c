@@ -59,7 +59,7 @@ struct timeval {
 };
 #endif
 
-#include "./machine.h"	/* special copy */
+#include "machine.h"
 #include "vmath.h"
 #include "db.h"
 #include "./ged.h"
@@ -414,7 +414,7 @@ refresh()
  */
 void
 usejoy( xangle, yangle, zangle )
-float xangle, yangle, zangle;
+fastf_t xangle, yangle, zangle;
 {
 	static mat_t	newrot;		/* NEW rot matrix, from joystick */
 

@@ -1,4 +1,3 @@
-
 /*
  *			A R B S . C
  *
@@ -33,7 +32,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <math.h>
-#include "./machine.h"
+#include "machine.h"
 #include "vmath.h"
 #include "db.h"
 #include "./ged.h"
@@ -84,10 +83,12 @@ char *p_arb3pt[] = {
 f_3ptarb(  )
 {
 	int i, solve;
-	float vec1[3], vec2[3], pt4[2], length, thick;
-	double norm[4];
+	vect_t	vec1;
+	vect_t	vec2;
+	fastf_t	pt4[2], length, thick;
+	vect_t	norm;
+	fastf_t	ndotv;
 	struct directory *dp;
-
 
 	args = numargs;
 	argcnt = 0;
@@ -236,10 +237,7 @@ thickagain:
 	record.s.s_type = GENARB8;
 	record.s.s_cgtype = ARB8;
 
-	norm[3] =  record.s.s_values[0] * norm[0]
-                 + record.s.s_values[1] * norm[1]
-   		 + record.s.s_values[2] * norm[2];
-
+	ndotv = VDOT( &record.s.s_values[0], norm );
 
 	switch( solve ) {
 
@@ -247,7 +245,7 @@ thickagain:
 			/* solve for x-coord of 4th point */
 			record.s.s_values[10] = pt4[0];	/* y-coord */
 			record.s.s_values[11] = pt4[1]; 	/* z-coord */
-			record.s.s_values[9] =  ( norm[3]
+			record.s.s_values[9] =  ( ndotv
 						- norm[1] * record.s.s_values[10]
 						- norm[2] * record.s.s_values[11])
 						/ norm[0];	/* x-coord */
@@ -257,7 +255,7 @@ thickagain:
 			/* solve for y-coord of 4th point */
 			record.s.s_values[9] = pt4[0];	/* x-coord */
 			record.s.s_values[11] = pt4[1]; 	/* z-coord */
-			record.s.s_values[10] =  ( norm[3]
+			record.s.s_values[10] =  ( ndotv
 						- norm[0] * record.s.s_values[9]
 						- norm[2] * record.s.s_values[11])
 						/ norm[1];	/* y-coord */
@@ -267,7 +265,7 @@ thickagain:
 			/* solve for z-coord of 4th point */
 			record.s.s_values[9] = pt4[0];	/* x-coord */
 			record.s.s_values[10] = pt4[1]; 	/* y-coord */
-			record.s.s_values[11] =  ( norm[3]
+			record.s.s_values[11] =  ( ndotv
 						- norm[0] * record.s.s_values[9]
 						- norm[1] * record.s.s_values[10])
 						/ norm[2];	/* z-coord */
@@ -328,10 +326,12 @@ char *p_rfin[] = {
 f_rfarb()
 {
 	struct directory *dp;
-	int i, solve[3];
-	float pt[3][2], thick, rota, fba;
-	double norm[4];
-
+	int	i;
+	int	solve[3];
+	fastf_t	pt[3][2];
+	fastf_t	thick, rota, fba;
+	vect_t	norm;
+	fastf_t	ndotv;
 
 	/* interupts */
 	(void)signal( SIGINT, sig2 );
@@ -478,9 +478,7 @@ thckagain:
 	record.s.s_type = GENARB8;
 	record.s.s_cgtype = ARB8;
 
-	norm[3] =  record.s.s_values[0] * norm[0]
-                 + record.s.s_values[1] * norm[1]
-   		 + record.s.s_values[2] * norm[2];
+	ndotv = VDOT( &record.s.s_values[0], norm );
 
 	/* calculate the unknown coordinate for points 2,3,4 */
 	for(i=0; i<3; i++) {
@@ -489,7 +487,7 @@ thckagain:
 			case XCOORD:
 				record.s.s_values[3*i+4] = pt[i][0];
 				record.s.s_values[3*i+5] = pt[i][1];
-				record.s.s_values[3*i+3] = ( norm[3]
+				record.s.s_values[3*i+3] = ( ndotv
 					- norm[1] * record.s.s_values[3*i+4]
 					- norm[2] * record.s.s_values[3*i+5])
 					/ norm[0];
@@ -497,7 +495,7 @@ thckagain:
 			case YCOORD:
 				record.s.s_values[3*i+3] = pt[i][0];
 				record.s.s_values[3*i+5] = pt[i][1];
-				record.s.s_values[3*i+4] = ( norm[3]
+				record.s.s_values[3*i+4] = ( ndotv
 					- norm[0] * record.s.s_values[3*i+3]
 					- norm[2] * record.s.s_values[3*i+5])
 					/ norm[1];
@@ -505,7 +503,7 @@ thckagain:
 			case ZCOORD:
 				record.s.s_values[3*i+3] = pt[i][0];
 				record.s.s_values[3*i+4] = pt[i][1];
-				record.s.s_values[3*i+5] = ( norm[3]
+				record.s.s_values[3*i+5] = ( ndotv
 					- norm[0] * record.s.s_values[3*i+3]
 					- norm[1] * record.s.s_values[3*i+4])
 					/ norm[2];
@@ -873,8 +871,8 @@ move( p0, p1, p2, p3, p4, p5, p6, p7 )
 int p0, p1, p2, p3, p4, p5, p6, p7;
 {
 	register int i, j;
-	static int pts[8];
-	static float copy[24];
+	static int	pts[8];
+	static fastf_t	copy[24];
 
 	pts[0] = p0 * 3;
 	pts[1] = p1 * 3;
@@ -900,14 +898,15 @@ int p0, p1, p2, p3, p4, p5, p6, p7;
 
 static int
 comparvec( x, y )
-register float *x,*y;
+register vect_t	x,y;
 {
-	register int i;
+	if( fabs( x[0] - y[0] ) > 0.0001 )
+		return(0);   /* different */
+	if( fabs( x[1] - y[1] ) > 0.0001 )
+		return(0);   /* different */
+	if( fabs( x[2] - y[2] ) > 0.0001 )
+		return(0);   /* different */
 
-	for(i=0; i<3; i++) {
-		if( fabs( *x++ - *y++ ) > 0.0001 )
-			return(0);   /* different */
-	}
 	return(1);  /* same */
 }
 

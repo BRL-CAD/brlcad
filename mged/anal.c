@@ -22,7 +22,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include <math.h>
 #include <stdio.h>
-#include "./machine.h"	/* special copy */
+#include "machine.h"
 #include "vmath.h"
 #include "db.h"
 #include "./sedit.h"
@@ -52,7 +52,7 @@ static void	ars_anal();
  */
 
 static union record temp_rec;		/* local copy of es_rec */
-float	tot_vol, tot_area;
+fastf_t	tot_vol, tot_area;
 int type;	/* comgeom type */
 
 void
@@ -268,8 +268,8 @@ int face;
 {
 	register int i, j, k;
 	static int a, b, c, d;		/* 4 points of face to look at */
-	static float angles[5];	/* direction cosines, rot, fb */
-	static float temp, area[2], len[6];
+	static fastf_t angles[5];	/* direction cosines, rot, fb */
+	static fastf_t temp, area[2], len[6];
 	static vect_t v_temp;
 
 	a = arb_faces[type][face*4+0];
@@ -316,9 +316,12 @@ int face;
 	}
 
 	(void)printf("| %4d |",prface[type][face]);
-	(void)printf(" %6.2f %6.2f | %6.3f %6.3f %6.3f %11.3f |",angles[3],angles[4],
-			es_peqn[6][0],es_peqn[6][1],es_peqn[6][2],es_peqn[6][3]*base2local);
-	(void)printf("   %13.3f  |\n",(area[0]+area[1])*base2local*base2local);
+	(void)printf(" %6.2f %6.2f | %6.3f %6.3f %6.3f %11.3f |",
+		angles[3], angles[4],
+		es_peqn[6][0],es_peqn[6][1],es_peqn[6][2],
+		es_peqn[6][3]*base2local);
+	(void)printf("   %13.3f  |\n",
+		(area[0]+area[1])*base2local*base2local);
 }
 
 /*	Analyzes arb edges - finds lengths */
@@ -363,7 +366,7 @@ find_vol( loc )
 int loc;
 {
 	int a, b, c, d;
-	float vol, height, len[3], temp, areabase;
+	fastf_t vol, height, len[3], temp, areabase;
 	vect_t v_temp;
 
 	/* a,b,c = base of the arb4 */
@@ -399,7 +402,7 @@ static double pi = 3.1415926535898;
 static void
 tor_anal()
 {
-	float r1, r2, vol, sur_area;
+	fastf_t r1, r2, vol, sur_area;
 
 	r1 = MAGNITUDE( &temp_rec.s.s_values[6] );
 	r2 = MAGNITUDE( &temp_rec.s.s_values[3] );
@@ -421,9 +424,9 @@ tor_anal()
 static void
 ell_anal()
 {
-	float ma, mb, mc;
-	float ecc, major, minor;
-	float vol, sur_area;
+	fastf_t ma, mb, mc;
+	fastf_t ecc, major, minor;
+	fastf_t vol, sur_area;
 
 	ma = MAGNITUDE( &temp_rec.s.s_values[3] );
 	mb = MAGNITUDE( &temp_rec.s.s_values[6] );
@@ -513,8 +516,8 @@ ell_anal()
 static void
 tgc_anal()
 {
-	float maxb, ma, mb, mc, md, mh;
-	float area_base, area_top, area_side, vol;
+	fastf_t maxb, ma, mb, mc, md, mh;
+	fastf_t area_base, area_top, area_side, vol;
 	vect_t axb;
 	int cgtype = 0;
 

@@ -45,11 +45,13 @@ extern int     es_edflag;		/* type of editing for this solid */
 #define ROTFACE 13
 #define CHGMENU 14
 #define SETUP_ROTFACE 15
-extern float	es_scale;		/* scale factor */
-extern float 	es_para[3];		/* keyboard input parameter changes */
-extern float	es_peqn[7][4];		/* ARBs defining plane equations */
-extern float	es_m[3];		/* edge(line) slope */
+
+extern fastf_t	es_scale;		/* scale factor */
+extern fastf_t 	es_para[3];		/* keyboard input parameter changes */
+extern fastf_t	es_peqn[7][4];		/* ARBs defining plane equations */
+extern fastf_t	es_m[3];		/* edge(line) slope */
 extern int	es_menu;		/* item selected from menu */
+
 #define MENUH		1
 #define MENUR1		2
 #define MENUR2		3

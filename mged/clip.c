@@ -26,14 +26,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <stdio.h>
-#include "./machine.h"	/* special copy */
+#include "machine.h"
 #include "vmath.h"
 
 static int	code();
 
 int
 clip (xp1, yp1, xp2, yp2)
-float *xp1, *yp1, *xp2, *yp2;
+vect_t	xp1, yp1, xp2, yp2;
 {
 	char code1, code2;
 
@@ -47,7 +47,7 @@ float *xp1, *yp1, *xp2, *yp2;
 		/* SWAP codes, X's, and Y's */
 		if (code1 == 0) {
 			char ctemp;
-			float temp;
+			fastf_t temp;
 
 			ctemp = code1;
 			code1 = code2;
@@ -87,7 +87,7 @@ float *xp1, *yp1, *xp2, *yp2;
 
 static int
 code (x, y)
-float x, y;
+fastf_t x, y;
 {
 	int cval;
 

@@ -36,7 +36,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <string.h>
 #endif
 
-#include "./machine.h"	/* special copy */
+#include "machine.h"
 #include "vmath.h"
 #include "db.h"
 #include "./sedit.h"
@@ -63,10 +63,10 @@ static short int fixv;		/* used in ROTFACE,f_eqn(): fixed vertex */
 union record es_rec;		/* current solid record */
 union record es_orig;		/* original solid record */
 int     es_edflag;		/* type of editing for this solid */
-float	es_scale;		/* scale factor */
-float 	es_para[3];		/* keyboard input parameter changes */
-float	es_peqn[7][4];		/* ARBs defining plane equations */
-float	es_m[3];		/* edge(line) slope */
+fastf_t	es_scale;		/* scale factor */
+fastf_t	es_para[3];		/* keyboard input parameter changes */
+fastf_t	es_peqn[7][4];		/* ARBs defining plane equations */
+fastf_t	es_m[3];		/* edge(line) slope */
 int	es_menu;		/* item selected from menu */
 mat_t	es_mat;			/* accumulated matrix of path */ 
 mat_t 	es_invmat;		/* inverse of es_mat   KAA */
@@ -619,7 +619,6 @@ init_sedit()
 {
 	struct solidrec temprec;	/* copy of solid to determine type */
 	register int i, type, p1, p2, p3;
-	float *op;
 
 	/*
 	 * Check for a processed region or other illegal solid.
@@ -743,7 +742,8 @@ sedit_menu()  {
 void
 sedit()
 {
-	register float *op;
+	register dbfloat_t *op;
+	fastf_t	*eqp;
 	static vect_t work;
 	register int i;
 	static int pnt5;		/* SETUP_ROTFACE, special arb7 case */
@@ -860,9 +860,9 @@ sedit()
 			 * then perform new rotation
 			 */
 			mat_inv( invsolr, acc_rot_sol );
-			op = &es_peqn[es_menu][0];	/* es_menu==plane of interest */
-			VMOVE( work, op );
-			MAT4X3VEC( op, invsolr, work );
+			eqp = &es_peqn[es_menu][0];	/* es_menu==plane of interest */
+			VMOVE( work, eqp );
+			MAT4X3VEC( eqp, invsolr, work );
 
 			if( numargs == (1+3) ){		/* absolute X,Y,Z rotations */
 				/* Build completely new rotation change */
@@ -874,9 +874,9 @@ sedit()
 				mat_copy(acc_rot_sol, modelchanges);
 
 				/* Apply new rotation to face */
-				op = &es_peqn[es_menu][0];
-				VMOVE( work, op );
-				MAT4X3VEC( op, modelchanges, work );
+				eqp = &es_peqn[es_menu][0];
+				VMOVE( work, eqp );
+				MAT4X3VEC( eqp, modelchanges, work );
 			}
 			else if( numargs== (1+2) ){	/* rot,fb given */
 				rota= atof(cmd_args[1]) * degtorad;
@@ -902,7 +902,7 @@ sedit()
 
 			/* set D of planar equation to anchor at fixed vertex */
 			/* es_menu == plane of interest */
-			es_peqn[es_menu][3]=VDOT(op,tempvec);	
+			es_peqn[es_menu][3]=VDOT(eqp,tempvec);	
 
 			/*  Clear out solid rotation */
 			mat_idn( modelchanges );
@@ -911,9 +911,9 @@ sedit()
 			/* Apply incremental changes */
 			static vect_t tempvec;
 
-			op = &es_peqn[es_menu][0];
-			VMOVE( work, op );
-			MAT4X3VEC( op, incr_change, work );
+			eqp = &es_peqn[es_menu][0];
+			VMOVE( work, eqp );
+			MAT4X3VEC( eqp, incr_change, work );
 
 			/* point notation of fixed vertex */
 			if( fixv ){		/* special case for solid vertex */
@@ -925,7 +925,7 @@ sedit()
 
 			/* set D of planar equation to anchor at fixed vertex */
 			/* es_menu == plane of interest */
-			es_peqn[es_menu][3]=VDOT(op,tempvec);	
+			es_peqn[es_menu][3]=VDOT(eqp,tempvec);	
 		}
 
 		calc_pnts( &es_rec.s, es_rec.s.s_cgtype );
@@ -1132,12 +1132,13 @@ sedit()
  *			F I N D A N G
  *
  * finds direction cosines and rotation, fallback angles of a unit vector
- * angles = pointer to 5 floats to store angles
+ * angles = pointer to 5 fastf_t's to store angles
  * unitv = pointer to the unit vector (previously computed)
  */
 void
 findang( angles, unitv )
-register float *angles, *unitv;
+register fastf_t	*angles;
+register vect_t		unitv;
 {
 	FAST fastf_t f;
 
@@ -1205,10 +1206,10 @@ register struct solidrec *sp;
 {
 	static vect_t work;
 	register int i;
-	static float ma;
-	static float r1, r2;
+	static fastf_t ma;
+	static fastf_t r1, r2;
 	static vect_t unitv;
-	static float ang[5];
+	static fastf_t ang[5];
 	static struct solidrec local;
 	register int length;
 	int cgtype;
@@ -1381,9 +1382,9 @@ arbcommon:
 void
 pscale()
 {
-	register float *op;
-	static float ma,mb;
-	static float mr1,mr2;
+	register dbfloat_t *op;
+	static fastf_t ma,mb;
+	static fastf_t mr1,mr2;
 
 	switch( es_menu ) {
 

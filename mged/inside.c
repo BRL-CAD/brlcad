@@ -36,7 +36,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <string.h>
 #endif
 
-#include "./machine.h"	/* special copy */
+#include "machine.h"
 #include "vmath.h"
 #include "db.h"
 #include "./ged.h"
@@ -56,7 +56,8 @@ extern char	*cmd_args[];	/* array of pointers to args */
 extern char	**promp;	/* pointer to a pointer to a char */
 
 static int	nface, np, nm, mp;
-static float	thick[6], pc[3];
+static fastf_t	thick[6];
+static vect_t	pc;
 static union record newrec;		/* new record to find inside solid */
 
 #define MAXLINE		512	/* Maximum number of chars per line */
@@ -414,7 +415,7 @@ center( )
 {
 
 	int i, j, k;
-	float ppc;
+	fastf_t ppc;
 
 	for(i=0; i<3; i++) {
 		ppc = 0.0;
@@ -422,7 +423,7 @@ center( )
 			k = j * 3 + i;
 			ppc += newrec.s.s_values[k];
 		}
-		pc[i] = ppc / (float)np;
+		pc[i] = ppc / (fastf_t)np;
 	}
 
 	return;
@@ -436,10 +437,13 @@ center( )
 int
 tgcin()
 {
-	float mag[5], nmag[5], unitH[3], unitA[3], unitB[3];
-	float hwork[3], aa[2], ab[2], ba[2], bb[2];
-	float dt, h1, h2, ht, dtha, dthb, s, d4, d5, ctan, t3;
-	int i, j, k;
+	fastf_t	mag[5], nmag[5];
+	vect_t	unitH, unitA, unitB;
+	vect_t	hwork;
+	fastf_t	aa[2], ab[2], ba[2], bb[2];
+	fastf_t	dt, h1, h2, ht, dtha, dthb;
+	fastf_t	s, d4, d5, ctan, t3;
+	register int i, j, k;
 	double ratio;
 
 	thick[3] = thick[2];
@@ -507,7 +511,7 @@ tgcin()
 int
 torin()
 {
-	float mr1, mr2, mnewr2, msum, mdif, nmsum, nmdif;
+	fastf_t	mr1, mr2, mnewr2, msum, mdif, nmsum, nmdif;
 
 
 	if( thick[0] == 0.0 )
@@ -545,8 +549,8 @@ int
 ellgin()
 {
 	int i, j, k, order[3];
-	float mag[3], nmag[3];
-	double ratio;
+	fastf_t mag[3], nmag[3];
+	fastf_t ratio;
 
 	if( thick[0] == 0.0 ) 
 		return(0);
@@ -575,7 +579,8 @@ ellgin()
 		if( (nmag[i] = mag[i] - thick[i]) <= 0.0 )
 			(void)printf("Warning: new vector length <= 0 \n");
 		j = (i+1) * 3;
-		VSCALE(&newrec.s.s_values[j],&newrec.s.s_values[j],nmag[i]/mag[i]);
+		VSCALE(&newrec.s.s_values[j], &newrec.s.s_values[j],
+			nmag[i]/mag[i]);
 	}
 	return(0);
 }

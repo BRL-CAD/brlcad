@@ -20,7 +20,7 @@
 #include <string.h>
 #endif
 
-#include "./machine.h"	/* special copy */
+#include "machine.h"
 #include "vmath.h"
 #include "db.h"
 #include "./ged.h"
@@ -204,7 +204,7 @@ f_copyeval( )
 	register struct directory *dp;
 	int i, j, k, kk, ngran;
 	int pos_in;
-	float vec[3];
+	vect_t	vec;
 
 	prflag = 0;
 	pos_in = args = numargs;
@@ -343,8 +343,8 @@ int flag;
 	mat_t new_xlate;
 	int nparts, i, k, j;
 	int arslen, kk, npt, n;
-	float vertex[3];
-	float vec[3];
+	vect_t	vertex;
+	vect_t	vec;
 
 	if( pathpos >= MAX_LEVELS ) {
 		(void)printf("nesting exceeds %d levels\n",MAX_LEVELS);
@@ -533,7 +533,7 @@ f_push( )
 
 	struct directory *dp, *tdp;
 	int i, j, k, kk, ii, ngran;
-	float vec[3];
+	vect_t	vec;
 
 	(void)signal( SIGINT, sig2 );		/* interupts */
 

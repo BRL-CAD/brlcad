@@ -46,7 +46,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <string.h>
 #endif
 
-#include "./machine.h"	/* special copy */
+#include "machine.h"
 #include "vmath.h"
 #include "db.h"
 #include "./ged.h"
@@ -590,7 +590,7 @@ int type;
 int
 tor_in()
 {
-	float rad1, rad2;
+	fastf_t rad1, rad2;
 
 	while( args < (3 + 8) )  {
 		(void)printf("%s", promp[args-3]);
@@ -835,8 +835,8 @@ int
 checkv( loc )
 int loc;
 {
-	int i;
-	float work[3];
+	register int	i;
+	vect_t	work;
 
 	for(i=0; i<3; i++) {
 		work[i] = atof(cmd_args[(loc+i)]);
@@ -964,20 +964,20 @@ int
 cvt_ged( in )
 struct solidrec *in;
 {
-	static struct solidrec out;
-	register float *iv;
-	register float *ov;
+	register dbfloat_t *iv;
+	register fastf_t *ov;
+	fastf_t	points[3*8];
 	register int i;
-	float r1, r2, r3, r4;
-	float work[3];
-	float m1, m2, m3;
-	float m5, m6;
+	fastf_t r1, r2, r3, r4;
+	vect_t	work;
+	fastf_t m1, m2, m3;
+	fastf_t m5, m6;
 	short cgtype;
-	static float pi = 3.14159265358979323264;
+	static fastf_t pi = 3.14159265358979323264;
 
 	/* Get positioned at s_values[0] to begin conversion */
 	iv = &in->s_values[0];
-	ov = &out.s_values[0];
+	ov = &points[0];
 	cgtype = in->s_cgtype;
 
 	switch( cgtype )  {

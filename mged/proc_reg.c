@@ -24,7 +24,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <math.h>
-#include "./machine.h"	/* special copy */
+#include "machine.h"
 #include "vmath.h"
 #include "db.h"
 #include "./ged.h"
@@ -45,7 +45,7 @@ static union record input;		/* Holds an object file record */
 static int	nmemb = 0;		/* actual number of members */
 static int	m_type[NMEMB];		/* member solid types */
 static char	m_op[NMEMB];		/* member operations */
-static float	m_param[NMEMB*24];	/* member parameters */
+static fastf_t	m_param[NMEMB*24];	/* member parameters */
 static int	memb_count = 0;		/* running count of members */
 static int	param_count = 0; 	/* location in m_param[] array */
 
@@ -65,7 +65,7 @@ register mat_t xform;
 int flag, more;
 {
 	register int i;
-	register float *op;	/* Used for scanning vectors */
+	register dbfloat_t *op;	/* Used for scanning vectors */
 	static vect_t	work;		/* Vector addition work area */
 	static int length, type;
 	static int uvec[8], svec[11];
@@ -486,7 +486,7 @@ int p0, p1, p2, p3, p4, p5, p6, p7;
 {
 	register int i, j;
 	static int pts[8];
-	static float copy[24];
+	static dbfloat_t copy[24];
 
 	pts[0] = p0 * 3;
 	pts[1] = p1 * 3;
@@ -512,7 +512,7 @@ int p0, p1, p2, p3, p4, p5, p6, p7;
 
 static int
 comparvec( x, y )
-register float *x,*y;
+register dbfloat_t *x,*y;
 {
 	register int i;
 
@@ -581,21 +581,21 @@ points()
 
 
 #define NPLANES	500
-static float	peq[NPLANES*4];		/* plane equations for EACH region */
-static float	solrpp[NMEMB*6];	/* enclosing RPPs for each member of the region */
-static float	regi[NMEMB], rego[NMEMB];	/* distances along ray where ray enters and leaves the region */
-static float	pcenter[3];		/* center (interior) point of a solid */
-static float	reg_min[3], reg_max[3];		/* min,max's for the region */
-static float	sol_min[3], sol_max[3];		/* min,max's for a solid */
-static float	xb[3];			/* starting point of ray */
-static float	wb[3];			/* direction cosines of ray */
-static float	rin, rout;		/* location where ray enters and leaves a solid */
-static float	ri, ro;			/* location where ray enters and leaves a region */
-static float	tol;			/* tolerance */
-static float	*sp, *savesp;		/* pointers to the solid parameter array m_param[] */
+static fastf_t	peq[NPLANES*4];		/* plane equations for EACH region */
+static fastf_t	solrpp[NMEMB*6];	/* enclosing RPPs for each member of the region */
+static fastf_t	regi[NMEMB], rego[NMEMB];	/* distances along ray where ray enters and leaves the region */
+static fastf_t	pcenter[3];		/* center (interior) point of a solid */
+static fastf_t	reg_min[3], reg_max[3];		/* min,max's for the region */
+static fastf_t	sol_min[3], sol_max[3];		/* min,max's for a solid */
+static fastf_t	xb[3];			/* starting point of ray */
+static fastf_t	wb[3];			/* direction cosines of ray */
+static fastf_t	rin, rout;		/* location where ray enters and leaves a solid */
+static fastf_t	ri, ro;			/* location where ray enters and leaves a region */
+static fastf_t	tol;			/* tolerance */
+static fastf_t	*sp, *savesp;		/* pointers to the solid parameter array m_param[] */
 static int	mlc[NMEMB];		/* location of last plane for each member */
 static int	la, lb, lc, id, jd, ngaps;
-static float	pinf = 1000000.0;
+static fastf_t	pinf = 1000000.0;
 static int	negpos;
 static char	oper;
 
@@ -606,7 +606,7 @@ dwreg()
 	static int k,l;
 	static int n,m;
 	static int itemp;
-	static float c1[3*4]={1.,0.,0.,0.,0.,1.,0.,0.,0.,0.,1.,0.};
+	static fastf_t c1[3*4]={1.,0.,0.,0.,0.,1.,0.,0.,0.,0.,1.,0.};
 	static int lmemb, umemb;/* lower and upper limit of members of region
 				 * from one OR to the next OR */
 
@@ -708,7 +708,8 @@ noskip:
 					/* ray intersects region */
 					/* plot this ray  including gaps */
 					for(n=0; n<k; n++){
-						static float pi[3],po[3];
+						static vect_t	pi, po;
+
 						VJOIN1( pi, xb, regi[n], wb );
 						VJOIN1( po, xb, rego[n], wb );
 						DM_GOTO( pi, PEN_UP);
@@ -737,7 +738,7 @@ skipid:
 /* put gaps into region line */
 static int
 gap(si,so)
-float si,so;
+fastf_t si,so;
 {
 	register int igap,lgap,i;
 
@@ -829,8 +830,8 @@ static int
 region(lmemb,umemb)
 {
 	register int	i, kd;
-	static float s1[3],s2[3];
-	static float a1, a2;
+	static vect_t	s1, s2;
+	static fastf_t a1, a2;
 
 	ngaps=0;
 	ri = -1.0 * pinf;
@@ -911,12 +912,12 @@ region(lmemb,umemb)
  */
 static void
 cpoint(point,c1,c2,c3)
-float *point;
-register float *c1, *c2, *c3;
+vect_t	point;
+register fastf_t *c1, *c2, *c3;
 {
-	static float v1[4], v2[4], v3[4];
+	static vect_t	v1, v2, v3;
 	register int i;
-	static float d;
+	static fastf_t d;
 
 	VCROSS(v1,c2,c3);
 	if((d=VDOT(c1,v1))==0)  {
@@ -935,7 +936,7 @@ register float *c1, *c2, *c3;
 static void
 center()
 {
-	register float ppc;
+	register fastf_t ppc;
 	register int i,j,k;
 
 	for(i=0;i<3;i++){
@@ -945,7 +946,7 @@ center()
 			ppc += *(sp+k);
 			k+=3;
 		}
-		pcenter[i]=ppc/(float)m_type[id];
+		pcenter[i]=ppc/(fastf_t)m_type[id];
 	}
 }
 
@@ -958,15 +959,15 @@ center()
  */
 static void
 tplane(p,q,r,s)
-float *p, *q, *r, *s;
+fastf_t *p, *q, *r, *s;
 {
-	register float *pp,*pf;
+	register fastf_t *pp,*pf;
 	register int i;
 
 	/* If all 4 pts have coord outside region RPP,
 	 * discard this plane, as the polygon is definitely outside */
 	for(i=0;i<3;i++){
-		FAST float t;
+		FAST fastf_t t;
 		t=reg_min[i]-tol;
 		if(*(p+i)<t && *(q+i)<t && *(r+i)<t && *(s+i)<t)
 			return;
@@ -1007,11 +1008,11 @@ float *p, *q, *r, *s;
  */
 static int
 planeeq(eqn,p1,p2,p3)
-float *eqn;
-float *p1, *p2, *p3;
+fastf_t *eqn;
+fastf_t *p1, *p2, *p3;
 {
-	static float vecl;
-	static float va[3],vb[3],vc[3];
+	static fastf_t vecl;
+	static vect_t	va, vb, vc;
 
 	VSUB2( va, p2, p1 );
 	VSUB2( vb, p3, p1 );
@@ -1027,7 +1028,7 @@ float *p1, *p2, *p3;
 static int
 arb()
 {
-	static float s,*pp,dxbdn,wbdn,te;
+	static fastf_t s,*pp,dxbdn,wbdn,te;
 
 	rin = ri;
 	rout = ro;
@@ -1064,8 +1065,8 @@ arb()
 static void
 tgcin()
 {
-	static float vt[3], p[3], q[3], r[3], t[3];
-	static float s,sa,c,ca,sd=.38268343,cd=.92387953;
+	static fastf_t vt[3], p[3], q[3], r[3], t[3];
+	static fastf_t s,sa,c,ca,sd=.38268343,cd=.92387953;
 	register int i,j,lk;
 
 	lk = lc;
@@ -1119,9 +1120,9 @@ tgcin()
 static void
 ellin()
 {
-	static float p[3], q[3], r[3], t[3];
-	static float s1,s2,sa,c1,c2,ca,sd=.5,cd=.8660254,sgn;
-	static float se, ce;
+	static fastf_t p[3], q[3], r[3], t[3];
+	static fastf_t s1,s2,sa,c1,c2,ca,sd=.5,cd=.8660254,sgn;
+	static fastf_t se, ce;
 	register int i,j,ih,ie;
 
 	sgn = -1.;
@@ -1214,7 +1215,7 @@ int num;
 {
 	static int amt[19]={0,0,0,12,15,18,21,24,0,0,0,0,0,0,0,0,0,18,12};
 	register int *ity,i,j;
-	static float a,b,c,d,v1,v2,vt,vb;
+	static fastf_t a,b,c,d,v1,v2,vt,vb;
 
 	ity = &m_type[num];
 	if(*ity==20) *ity=8;
@@ -1284,9 +1285,9 @@ int num;
 static void
 solpl(lmemb,umemb)
 {
-	static float tt;
+	static fastf_t tt;
 	static int ls, n4;
-	static float *pp,*p1,*p2,*p3,*p4;
+	static fastf_t *pp,*p1,*p2,*p3,*p4;
 	register int i,j;
 	static int nfc[5]={4,5,5,6,6};
 	static int iv[5*24]={

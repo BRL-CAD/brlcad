@@ -23,7 +23,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <math.h>
-#include "./machine.h"	/* special copy */
+#include "machine.h"
 #include "vmath.h"
 #include "db.h"
 #include "./ged.h"
@@ -75,7 +75,7 @@ static void	illuminate();
 void
 usepen()
 {
-	static float scale;
+	static fastf_t scale;
 	register struct solid *sp;
 	static vect_t pos_view;	 	/* Unrotated view space pos */
 	static vect_t pos_model;	/* Rotated screen space pos */
@@ -172,7 +172,7 @@ usepen()
 		case SSCALE:
 		case PSCALE:
 			/* use pen to get a scale factor */
-			es_scale = 1.0 + 0.25 * ((float)
+			es_scale = 1.0 + 0.25 * ((fastf_t)
 				(dm_values.dv_ypen > 0 ?
 					dm_values.dv_ypen :
 					-dm_values.dv_ypen) / 2047);
@@ -301,7 +301,7 @@ usepen()
 		scale = 1;
 		if( movedir & SARROW )  {
 			/* scaling option is in effect */
-			scale = 1.0 + (float)(dm_values.dv_ypen > 0 ?
+			scale = 1.0 + (fastf_t)(dm_values.dv_ypen > 0 ?
 				dm_values.dv_ypen :
 				-dm_values.dv_ypen) / (2047);
 			if ( dm_values.dv_ypen <= 0 )
@@ -389,7 +389,7 @@ illuminate( y )  {
 	 * zone number as a sequential position among solids
 	 * which are drawn.
 	 */
-	count = ( (float) y + 2048.0 ) * ndrawn / 4096.0;
+	count = ( (fastf_t) y + 2048.0 ) * ndrawn / 4096.0;
 
 	FOR_ALL_SOLIDS( sp )  {
 		if( sp->s_flag == UP )
@@ -417,8 +417,8 @@ buildHrot( mat, alpha, beta, ggamma )
 register matp_t mat;
 double alpha, beta, ggamma;
 {
-	static float calpha, cbeta, cgamma;
-	static float salpha, sbeta, sgamma;
+	static fastf_t calpha, cbeta, cgamma;
+	static fastf_t salpha, sbeta, sgamma;
 
 	calpha = cos( alpha );
 	cbeta = cos( beta );

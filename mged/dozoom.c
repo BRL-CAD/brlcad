@@ -21,7 +21,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <math.h>
-#include "./machine.h"	/* special copy */
+#include "machine.h"
 #include "vmath.h"
 #include "db.h"
 #include "./ged.h"
@@ -30,13 +30,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "./dm.h"
 
 /* Variables for dozoom() */
-float	Viewscale;
+fastf_t	Viewscale;
 mat_t	Viewrot, toViewcenter;
 mat_t	model2view, view2model;
 mat_t	model2objview, objview2model;
 mat_t	incr_change;
 mat_t	modelchanges;
-float	maxview = 0.5;
+fastf_t	maxview = 0.5;
 mat_t	identity;
 
 struct solid	*FreeSolid;	/* Head of freelist */
@@ -55,7 +55,7 @@ void
 dozoom()
 {
 	register struct solid *sp;
-	FAST float ratio;
+	FAST fastf_t ratio;
 
 	ndrawn = 0;
 

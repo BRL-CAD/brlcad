@@ -92,7 +92,7 @@ extern int	los_default;
  *
  *  These are allocated storage in dozoom.c
  */
-extern float	Viewscale;
+extern fastf_t	Viewscale;
 extern mat_t	Viewrot;
 extern mat_t	toViewcenter;
 extern mat_t	model2view, view2model;
@@ -103,7 +103,7 @@ extern mat_t	incr_change;		/* change(s) from last cycle */
 #define VIEWSIZE	(2*Viewscale)
 #define VIEWFACTOR	(1/Viewscale)	/* 2.0 / VIEWSIZE */
 
-extern float	maxview;
+extern fastf_t	maxview;
 
 /*
  * Identity matrix.  Handy to have around. - initialized in e1.c
@@ -114,8 +114,8 @@ extern mat_t	identity;
 extern int	drawreg;	/* if > 0, process and draw regions */
 
 /* defined in buttons.c */
-extern float	acc_sc_sol;	/* accumulate solid scale factor */
-extern float	acc_sc[3];	/* accumulate local object scale factors */
+extern fastf_t	acc_sc_sol;	/* accumulate solid scale factor */
+extern fastf_t	acc_sc[3];	/* accumulate local object scale factors */
 extern mat_t	acc_rot_sol;	/* accumulate solid rotations */
 
 /* defined in path.c */
@@ -134,11 +134,11 @@ extern int	menuflag;	/* flag indicating if a menu item is selected */
  * These variables are global for the benefit of
  * the display portion of dozoom. - defined in adc.c
  */
-extern float	curs_x;		/* cursor X position */
-extern float	curs_y;		/* cursor Y position */
-extern float	c_tdist;	/* Cursor tick distance */
-extern float	angle1;		/* Angle to solid wiper */
-extern float	angle2;		/* Angle to dashed wiper */
+extern fastf_t	curs_x;		/* cursor X position */
+extern fastf_t	curs_y;		/* cursor Y position */
+extern fastf_t	c_tdist;	/* Cursor tick distance */
+extern fastf_t	angle1;		/* Angle to solid wiper */
+extern fastf_t	angle2;		/* Angle to dashed wiper */
 
 /*
  *	GED functions referenced in more than one source file:

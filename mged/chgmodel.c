@@ -41,7 +41,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <math.h>
 #include <signal.h>
 #include <stdio.h>
-#include "./machine.h"	/* special copy */
+#include "machine.h"
 #include "vmath.h"
 #include "db.h"
 #include "./sedit.h"
@@ -245,7 +245,7 @@ f_extrude()
 	static int face;
 	static int pt[4];
 	static int prod;
-	static float dist;
+	static fastf_t dist;
 	static struct solidrec lsolid;	/* local copy of solid */
 
 	if( not_state( ST_S_EDIT, "Extrude" ) )
@@ -480,7 +480,7 @@ f_arbdef()
 	register struct directory *dp;
 	union record record;
 	int i, j;
-	float rota, fb;
+	fastf_t rota, fb;
 	vect_t	norm;
 
 	if( lookup( cmd_args[1] , LOOKUP_QUIET ) != DIR_NULL )  {
@@ -1240,7 +1240,7 @@ f_edgedir()
 {
 	register int i;
 	vect_t work;
-	FAST float rot, fb;
+	FAST fastf_t rot, fb;
 
 	if( not_state( ST_S_EDIT, "Edgedir" ) )
 		return;

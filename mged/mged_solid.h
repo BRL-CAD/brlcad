@@ -23,8 +23,8 @@ extern char	*malloc();
  */
 #define MAX_PATH	16	/* Maximum depth of path */
 struct solid  {
-	float	s_size;		/* Distance across solid, in model space */
-	float	s_csize;	/* Dist across clipped solid (model space) */
+	fastf_t	s_size;		/* Distance across solid, in model space */
+	fastf_t	s_csize;	/* Dist across clipped solid (model space) */
 	vect_t	s_center;	/* Center point of solid, in model space */
 	unsigned s_addr;	/* Display processor's core address */
 	unsigned s_bytes;	/* Display processor's core length */

@@ -20,7 +20,7 @@
 static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
-#include "./machine.h"	/* special copy */
+#include "machine.h"
 #include "vmath.h"
 #include "db.h"
 #include "./ged.h"
@@ -65,8 +65,7 @@ int regionid;
 	register int i;
 	int dashflag;		/* draw with dashed lines */
 	int count;
-	static float xmax, ymax, zmax;
-	static float xmin, ymin, zmin;
+	vect_t	max, min;
 
 	vlp = &veclist[0];
 	if( regmemb >= 0 ) {
@@ -165,22 +164,19 @@ int regionid;
 	 * Compute the min, max, and center points.
 	 */
 #define INFINITY	100000000.0
-	xmax = ymax = zmax = -INFINITY;
-	xmin = ymin = zmin =  INFINITY;
+	VSETALL( max, -INFINITY );
+	VSETALL( min,  INFINITY );
 	for( vp = &veclist[0]; vp < vlp; vp++ )  {
-		MIN( xmin, vp->vl_pnt[X] );
-		MAX( xmax, vp->vl_pnt[X] );
-		MIN( ymin, vp->vl_pnt[Y] );
-		MAX( ymax, vp->vl_pnt[Y] );
-		MIN( zmin, vp->vl_pnt[Z] );
-		MAX( zmax, vp->vl_pnt[Z] );
+		VMINMAX( min, max, vp->vl_pnt );
 	}
 	VSET( sp->s_center,
-		(xmax + xmin)/2, (ymax + ymin)/2, (zmax + zmin)/2 );
+		(max[X] + min[X])*0.5,
+		(max[Y] + min[Y])*0.5,
+		(max[Z] + min[Z])*0.5 );
 
-	sp->s_size = xmax - xmin;
-	MAX( sp->s_size, ymax - ymin );
-	MAX( sp->s_size, zmax - zmin );
+	sp->s_size = max[X] - min[X];
+	MAX( sp->s_size, max[Y] - min[Y] );
+	MAX( sp->s_size, max[Z] - min[Z] );
 
 	/* Make a private copy of the vector list */
 	sp->s_vlen = vlp - &veclist[0];		/* # of structs */

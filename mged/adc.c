@@ -21,7 +21,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #endif
 
 #include <math.h>
-#include "./machine.h"	/* special copy */
+#include "machine.h"
 #include "vmath.h"
 #include "./ged.h"
 #include "./dm.h"
@@ -30,11 +30,11 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  * These variables are global for the benefit of
  * the display portion of dotitles.
  */
-float	curs_x;		/* cursor X position */
-float	curs_y;		/* cursor Y position */
-float	c_tdist;		/* Cursor tick distance */
-float	angle1;		/* Angle to solid wiper */
-float	angle2;		/* Angle to dashed wiper */
+fastf_t	curs_x;		/* cursor X position */
+fastf_t	curs_y;		/* cursor Y position */
+fastf_t	c_tdist;		/* Cursor tick distance */
+fastf_t	angle1;		/* Angle to solid wiper */
+fastf_t	angle2;		/* Angle to dashed wiper */
 
 /*
  *			A D C U R S O R
@@ -45,12 +45,12 @@ void
 adcursor()
 {
 	static double	pi = 3.14159265358979323264;
-	static float	x1, Y1;	/* not "y1", due to conflict with math lib */
-	static float	x2, y2;
-	static float	x3, y3;
-	static float	x4, y4;
-	static float	d1, d2;
-	static float	t1, t2;
+	static fastf_t	x1, Y1;	/* not "y1", due to conflict with math lib */
+	static fastf_t	x2, y2;
+	static fastf_t	x3, y3;
+	static fastf_t	x4, y4;
+	static fastf_t	d1, d2;
+	static fastf_t	t1, t2;
 	static long	idxy[2];
 
 	/*
@@ -68,8 +68,8 @@ adcursor()
 	dmp->dmr_2d_line( MINVAL, idxy[1], MAXVAL, idxy[1], 0 ); /* Horiz */
 	dmp->dmr_2d_line( idxy[0], MAXVAL, idxy[0], MINVAL, 0);  /* Vert */
 
-	curs_x = (float) (idxy[0]);
-	curs_y = (float) (idxy[1]);
+	curs_x = (fastf_t) (idxy[0]);
+	curs_y = (fastf_t) (idxy[1]);
 
 	/*
 	 * Calculate a-d cursor rotation.
@@ -77,8 +77,8 @@ adcursor()
 	/* - to make rotation match knob direction */
 	idxy[0] = -dm_values.dv_1adc;	/* solid line */
 	idxy[1] = -dm_values.dv_2adc;	/* dashed line */
-	angle1 = ((2047.0 + (float) (idxy[0])) * pi) / (4.0 * 2047.0);
-	angle2 = ((2047.0 + (float) (idxy[1])) * pi) / (4.0 * 2047.0);
+	angle1 = ((2047.0 + (fastf_t) (idxy[0])) * pi) / (4.0 * 2047.0);
+	angle2 = ((2047.0 + (fastf_t) (idxy[1])) * pi) / (4.0 * 2047.0);
 
 	/* sin for X and cos for Y to reverse sense of knob */
 	d1 = cos (angle1) * 8000.0;
@@ -121,7 +121,7 @@ adcursor()
 	 */
 	/* map -2048 - 2047 into 0 - 4096 * sqrt (2) */
 	/* Tick distance */
-	c_tdist = ((float)(dm_values.dv_distadc) + 2047.0) * 1.4142136;
+	c_tdist = ((fastf_t)(dm_values.dv_distadc) + 2047.0) * 1.4142136;
 
 	d1 = c_tdist * cos (angle1);
 	d2 = c_tdist * sin (angle1);
