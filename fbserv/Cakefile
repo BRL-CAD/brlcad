@@ -1,5 +1,7 @@
 /*
- *			rfbd/Cakefile
+ *			fbserv/Cakefile
+ *
+ *  $Header$
  */
 
 #define CONFIGDEFS	RFBD_CONFIG
@@ -17,6 +19,6 @@
 /* Explicit composition of each product */
 
 fbserv:	OBJ LIBFB
-	CC LDFLAGS -o fbserv OBJ LIB_PRE''LIBFB RFBD_LIBES LIBES
+	CC LDFLAGS -o fbserv OBJ LIB_PRE''LIBFB LIBFB_LIBES RFBD_LIBES LIBES
 
 #include "../Cakefile.rules"
