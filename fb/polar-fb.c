@@ -3,15 +3,20 @@
  *
  *	This routine plots normalized polar functions on a frame buffer.
  *
- *	Written by:	Paul J. Tanenbaum <pjt@brl>
- *			U.S. Army Ballistic Research Laboratory
- *
- *	Date:		17 February 1988
- *	Latest Mod:	20 July 1990
- *
- *	To compile:	cc source.c -lm /usr/brlcad/lib/libfb.a \
- *			-I/usr/include/brlcad
+ *  Author -
+ *	Paul J. Tanenbaum <pjt@brl.mil>
+ *  
+ *  Source -
+ *	SECAD/VLD Computing Consortium, Bldg 394
+ *	The U. S. Army Ballistic Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5066
+ *  
+ *  Distribution Status -
+ *	Public Domain, Distribution Unlimitied.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (BRL)";
+#endif
 
 #include <stdio.h>
 #include <math.h>
