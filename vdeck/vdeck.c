@@ -1,13 +1,14 @@
 /*
- *	d e c k . c
+ *	@(#) vdeck.c		retrieved 8/13/86 at 08:03:47,
+ *	@(#) version 1.2		  created 2/23/83 at 14:47:47.
+ *
+ *	Written by Gary S. Moss.
+ *	All rights reserved, Ballistic Research Laboratory.
+ *
  *	Generates interactively, a COMGEOM deck of objects from GED data
  *	base file.
  *
  *	Written by	Gary S. Moss
- *
- *	All rights reserved:
- *				Ballistic Research Laboratory
- *				Aberdeen Proving Ground, Md.  21005
  *
  *	Derived from KARDS, written by Keith Applin.
  *
@@ -19,9 +20,8 @@
 #include "3d.h"
 #include "deck.h"
 #include "deck_glob.h"
-#include "tty.h"
 
-static char	*cmd[] = {
+char	*cmd[] = {
 "",
 "C O M M A N D                  D E S C R I P T I O N",
 "",
@@ -41,28 +41,20 @@ static char	*cmd[] = {
 "as in the UNIX shell.",
 0 };
 
-static char	*usage[] = {
+char	*usage[] = {
 "",
-"D E C K ====",
+"d e c k ====",
 "Make COMGEOM decks of objects from a GED data base file",
-"Usage:  deck file [{obj1} {obj2} ... {objn}]",
+"Usage:  deck {file}.g [{obj1} {obj2} ... {objn}]",
 "",
 0 };
 
-/*	==== M A I N ( )
- *	
+/*	==== m a i n ( )
  */
-main(	argc,	 argv )
-int	argc;
-char		*argv[];
+main( argc, argv )	char	*argv[];
 {
-	int	i;
-
-	/* no file name given
-	 */
-	if( argc < 2 ) { menu( usage );	exit( 10 ); }
-
-	delsol = delreg = 0;		
+	if( argc < 2 ) { menu( usage );	exit( 1 ); }
+	setbuf( stdout, malloc( BUFSIZ ) );
 
 	/* open  G E D  data base object file
 	 */
@@ -72,36 +64,24 @@ char		*argv[];
 		exit( 10 );
 	} else	objfile = argv[1];
 	
-	/* build directory from object file
-	 */
-	builddir();
+	builddir();	/* Build directory from object file.	 	*/
 	
-	/* traverse directory and build table of contents
-	 */
-	toc();
+	toc();	/* Traverse directory and build table of contents.	*/
 	
-	/* get terminal type for clearing screen
-	 */
-	if( (term = getenv( "TERM" )) )	printf( "TERM=%s\n", term );	
-
-	/* add solids listed on command line to current list
-	 */
+	/* Add solids listed on command line to current list.		*/
 	if( argc > 1 ) {
 		pars_arg( argv, argc );
 		insert( arg_list, arg_ct );
 	}
 
-	/* point of re-entry from aborted command
+	/* C o m m a n d   I n t e r p r e t e r
 	 */
-	setjmp( env );
-
-	/* C O M M A N D   I N T E R P R E T E R
-	 */
-	printf( "%s", CMD_PROMPT );	
+	setjmp( env );	/* Point of re-entry from aborted command.	*/
+	prompt( "%s", CMD_PROMPT );	
 	while( 1 ) {
-		/* return to default interrupt handler after every command,
+		/* Return to default interrupt handler after every command,
 		 * allows exit from program only while command interpreter
-		 * is waiting for input from keyboard
+		 * is waiting for input from keyboard.
 		 */
 		signal( SIGINT, quit );
 
@@ -114,12 +94,13 @@ char		*argv[];
 			break;
 		case INSERT:
 			if( arg_list[1] == 0 ) {
-				printf( "enter object[s] to insert: " );
+				prompt( "enter object[s] to insert: " );
 				getcmd( arg_list, arg_ct );
 			}
 			insert( arg_list, arg_ct );
 			break;
 		case LIST:
+		{	register int	i;
 			if( arg_list[1] == 0 ) {
 				col_prt( curr_list, curr_ct );
 				break;
@@ -129,15 +110,16 @@ char		*argv[];
 					tmp_list[tmp_ct++] = curr_list[i];
 			col_prt( tmp_list, tmp_ct );
 			break;
+		}
 		case MENU:
 			menu( cmd );
-			printf( "%s", PROMPT );
+			prompt( "%s", PROMPT );
 			continue;
 		case NUMBER:
 			if( arg_list[1] == 0 ) {
-				printf( "enter number of 1st solid: " );
+				prompt( "enter number of 1st solid: " );
 				getcmd( arg_list, arg_ct );
-				printf( "enter number of 1st region: " );
+				prompt( "enter number of 1st region: " );
 				getcmd( arg_list, arg_ct );
 			}
 			if( arg_list[1] ) delsol = atoi( arg_list[1] ) - 1;
@@ -145,40 +127,40 @@ char		*argv[];
 			break;
 		case REMOVE:
 			if( arg_list[1] == 0 ) {
-				printf( "enter object[s] to remove: " );
+				prompt( "enter object[s] to remove: " );
 				getcmd( arg_list, arg_ct );
 			}
 			delete( arg_list );
 			break;
 		case RETURN:
-			printf( "%s", PROMPT );
+			prompt( "%s", PROMPT );
 			continue;
 		case SHELL:
 			if( arg_list[1] == 0 ) {
-				printf( "enter shell command: " );
+				prompt( "enter shell command: " );
 				getcmd( arg_list, arg_ct );
 			}
-			new_screen( term );
 			shell( arg_list );
 			break;
 		case TOC:
 			list_toc( arg_list );
 			break;
 		case QUIT:
-			printf( "quitting...\n" );
+			prompt( "quitting...\n" );
 			exit( 0 );
 		UNKNOWN:
-			printf( "invalid command\n%s", PROMPT );
+			prompt( "invalid command\n%s", PROMPT );
 			continue;
 		}
-		printf( "%s", CMD_PROMPT );		
+		prompt( "%s", CMD_PROMPT );		
 	}
 }
 
-/*	==== C G O B J ( )
- *	build deck for object pointed to by 'dp'
+/*	==== c g o b j ( )
+ *	Build deck for object pointed to by 'dp'.
  */
-cgobj( dp, pathpos, old_xlate )
+cgobj(	   dp, pathpos, old_xlate )
+register
 Directory *dp;
 int	pathpos;
 matp_t	old_xlate;
@@ -196,26 +178,28 @@ matp_t	old_xlate;
 	char	buf[80], *bp;
 	char	ars_name[16];
 
+	/* Limit tree hierarchy to 8 levels.				*/
 	if( pathpos >= 8 ) {
-		printf( "nesting exceeds 8 levels\n" );
-		for( i = 0; i < 8; i++ ) printf( "/%s", path[i]->d_namep );
-		printf( "\n" );
+		fprintf( stderr, "Nesting exceeds 8 levels\n" );
+		for( i = 0; i < 8; i++ )
+			fprintf( stderr, "/%s", path[i]->d_namep );
+		fprintf( stderr, "\n" );
 		return;
 	}
 	savepos = lseek( objfd, 0L, 1 );
 	lseek( objfd, dp->d_addr, 0 );
 	read( objfd, &rec, sizeof rec );
 
-	/* C O M B I N A T I O N  record
-	 */
-	if( rec.u_id == COMB )  {
+	if( rec.u_id == COMB )  { /* We have a group.			*/
 		if( regflag > 0 ) {
 			/* record is part of a region
 			 */
 			if( operate == UNION ) {
-				printf( "region: %s is member of ",
+				fprintf( stderr,
+					"Region: %s is member of ",
 					rec.c.c_name );
-				printf( "region: %s with OR operation\n",
+				fprintf( stderr,
+					"region %s with OR operation.\n",
 					buff );
 				exit( 10 );
 			}
@@ -248,7 +232,8 @@ matp_t	old_xlate;
 			if( j > nnr ) {   /* region not in desc yet */
 				numrr++;
 				if( numrr > MAXRR ) {
-					printf( "more than %d regions\n",
+					fprintf( stderr,
+						"More than %d regions.\n",
 						MAXRR );
 					exit( 10 );
 				}
@@ -357,12 +342,15 @@ matp_t	old_xlate;
 					34 - strlen( rec.c.c_name )
 				);
 			} else	write( ridfd, buf, bp - buf );
-			write( ridfd, rec.c.c_name, strlen( rec.c.c_name ) );
+			write(	ridfd,
+				rec.c.c_name,
+				strlen( rec.c.c_name )
+			);
 			write( ridfd, LF, 1 );
 			printf( "\nREGION %4d    ", nnr+delreg );
 			for( j = 0; j < pathpos; j++ )
 				printf( "/%s", path[j]->d_namep );
-			printf( "/%s", rec.c.c_name );
+			prompt( "/%s", rec.c.c_name );
 		}
 		isave = 0;
 		for( i = 1; i <= nparts; i++ )  {
@@ -406,8 +394,10 @@ matp_t	old_xlate;
 	/* N O T  a  C O M B I N A T I O N  record
 	 */
 	if( rec.u_id != SOLID && rec.u_id != ARS_A ) {
-		printf( "bad input: should have a 'S' or 'A' record " );
-		printf( "but have '%c'\n", rec.u_id );
+		fprintf( stderr,
+			"Bad input: should have a 'S' or 'A' record, " );
+		fprintf( stderr,
+			"but have '%c'.\n", rec.u_id );
 		exit( 10 );
 	}
 
@@ -467,7 +457,8 @@ matp_t	old_xlate;
 	ident.i_index = nns;
 
 	if( nns > MAXSOL ) {
-		printf("\n\nnumber of solids (%d) greater than max (%d)\n",
+		fprintf( stderr,
+			"\nNumber of solids (%d) greater than max (%d).\n",
 			nns, MAXSOL );
 		exit( 10 );
 	}
@@ -511,7 +502,8 @@ matp_t	old_xlate;
 		addars( &rec );
 		break;
 	default:
-		printf( "cgobj: solid type (%d) unknown\n", rec.s.s_type );
+		fprintf( stderr,
+			"Solid type (%d) unknown.\n", rec.s.s_type );
 		exit( 10 );
 	}
 
@@ -583,11 +575,14 @@ notnew:	/* sent here if solid already in solid table
 		
 		if( rec.u_id == ARS_B ) {	/* ars extension record
 						 */
-			printf( "/%s", ars_name );
+			prompt( "/%s", ars_name );
 			write( ridfd, ars_name, strlen( ars_name ) );
 		} else	{
-			printf( "/%s", rec.s.s_name );
-			write( ridfd, rec.s.s_name, strlen( rec.s.s_name ) );
+			prompt( "/%s", rec.s.s_name );
+			write(	ridfd,
+				rec.s.s_name,
+				strlen( rec.s.s_name )
+			);
 		}
 		write( ridfd, LF, 1 );
 		write( regfd, LF, 1 );
@@ -597,15 +592,17 @@ notnew:	/* sent here if solid already in solid table
 	return;
 }
 
-/*	==== P S P ( )
- *	print solid parameters  -  npts points or vectors
+/*	==== p s p ( )
+ *	Print solid parameters  -  npts points or vectors.
  */
 psp(	npts,  rec )
+register
 int	npts;
+register
 Record *rec;
 {
-	int	i, j, k, jk;
-	char	buf[60];
+	register int	i, j, k, jk;
+	char		buf[60];
 
 	j = jk = 0;
 	for( i = 0; i < npts*3; i += 3 )  {
@@ -621,7 +618,10 @@ Record *rec;
 			 */
 			write( solfd, buf, 60 );
 			jk = 0;
-			write( solfd, rec->s.s_name, strlen( rec->s.s_name ) );
+			write(	solfd,
+				rec->s.s_name,
+				strlen( rec->s.s_name )
+			);
 			write( solfd, LF, 1 );
 			if( i != (npts-1)*3 ) {   /* new line */
 				itoa( nns+delsol, buf, 3 );
@@ -639,10 +639,11 @@ Record *rec;
 	return;
 }
 
-/*	==== A D D T O R ( )
- *	process torus
+/*	==== a d d t o r ( )
+ *	Process torus.
  */
 addtor( rec )
+register
 Record *rec;
 {
 	int	i;
@@ -676,10 +677,11 @@ Record *rec;
 	return;
 }
 
-/*	==== A D D A R B ( )
- *	process generalized arb
+/*	==== a d d a r b ( )
+ *	Process generalized arb.
  */
 addarb( rec )
+register
 Record *rec;
 {
 	register int	i;
@@ -705,7 +707,10 @@ Record *rec;
 
 		/* point notation
 		 */
-		VADD2( &(rec->s.s_values[i]), &(rec->s.s_values[0]), v_workk );
+		VADD2(	&(rec->s.s_values[i]),
+			&(rec->s.s_values[0]),
+			v_workk
+		);
 	}
 
 	
@@ -763,16 +768,17 @@ Record *rec;
 		psp( 2, rec );
 		break;
 	default:
-		fprintf( stderr, "unknown arb (%d)\n", rec->s.s_num );
+		fprintf( stderr, "Unknown arb (%d).\n", rec->s.s_num );
 		exit( 10 );
 	}
 	return;
 }
 
-/*	==== A D D E L L ( )
- *	process the general ellipsoid
+/*	==== a d d e l l ( )
+ *	Process the general ellipsoid.
  */
 addell( rec )
+register
 Record *rec;
 {
 	int	i;
@@ -831,17 +837,18 @@ Record *rec;
 		psp( 2, rec );
 		break;
 	default:
-		fprintf( stderr, "error in type of ellipse (%d)\n",
-			rec->s.s_num );
+		fprintf( stderr,
+			"Error in type of ellipse (%d).\n", rec->s.s_num );
 		exit( 10 );
 	}
 	return;
 }
 
-/*	==== A D D T G C ( )
- *	process generalized truncated cone
+/*	==== a d d t g c ( )
+ *	Process generalized truncated cone.
  */
 addtgc( rec )
+register
 Record *rec;
 {
 	int	i;
@@ -928,16 +935,18 @@ Record *rec;
 		psp( 4, rec );
 		break;
 	default:
-		fprintf( stderr, "error in tgc type (%d)\n", rec->s.s_num );
+		fprintf( stderr,
+			"Error in tgc type (%d).\n", rec->s.s_num );
 		exit( 10 );
 	}
 	return;
 }
 
-/*	==== A D D A R S ( )
- *	process triangular surfaced polyhedron - ars
+/*	==== a d d a r s ( )
+ *	Process triangular surfaced polyhedron - ars.
  */
 addars( rec )
+register
 Record *rec;
 {
 	char	buf[10];
@@ -1000,15 +1009,17 @@ Record *rec;
 	return;
 }
 
-/*	==== P A R S P ( )
- *	print npts points of an ars
+/*	==== p a r s p ( )
+ *	Print npts points of an ars.
  */
 parsp(	npts,	 rec )
+register
 int	npts;
+register
 Record	*rec;
 {
-	int	i, j, k, jk;
-	char	bufout[80];
+	register int	i, j, k, jk;
+	char		bufout[80];
 
 	j = jk = 0;
 
@@ -1046,7 +1057,7 @@ Record	*rec;
 	return;
 }
 
-/*	==== M A T _ Z E R O ( )
+/*	==== m a t _ z e r o ( )
  *	Fill in the matrix "m" with zeros.
  */
 mat_zero(	m )
@@ -1058,7 +1069,7 @@ register matp_t m;
 	for( i = 0; i < 16; i++ )	*m++ = 0;
 }
 
-/*	M A T _ I D N ( )
+/*	m a t _ i d n ( )
  *	Fill in the matrix "m" with an identity matrix.
  */
 mat_idn(	m )
@@ -1068,20 +1079,20 @@ register matp_t m;
 	m[0] = m[5] = m[10] = m[15] = 1;
 }
 
-/*	==== M A T _ C O P Y ( )
+/*	==== m a t _ c o p y ( )
  *	Copy the matrix "im" into the matrix "om".
  */
 mat_copy(	om, im )
 register matp_t om, im;
 {
-	register int i = 0;
+	register int	i;
 
-	/* Copy all elements */
-	for( ; i< 16; i++ )	*om++ = *im++;
+	/* Copy all elements.				*/
+	for( i = 0; i< 16; i++ )	*om++ = *im++;
 }
 
 
-/*	==== M A T _ M U L ( )
+/*	==== m a t _ m u l ( )
  *	Multiply matrix "im1" by "im2" and store the result in "om".
  *	NOTE:  This is different from multiplying "im2" by "im1" (most
  *	of the time!)
@@ -1089,29 +1100,24 @@ register matp_t om, im;
 mat_mul(	om, im1, im2 )
 register matp_t om, im1, im2;
 {
-	register int em1;		/* Element subscript for im1 */
-	register int em2;		/* Element subscript for im2 */
-	register int el = 0;		/* Element subscript for om */
-	register int i;			/* For counting */
+	register int em1;	/* Element subscript for im1.	*/
+	register int em2;	/* Element subscript for im2.	*/
+	register int el = 0;	/* Element subscript for om.	*/
 
 	/* For each element in the output matrix... */
-	for( ; el < 16; el++ ) {
-
-		om[el] = 0;		/* Start with zero in output */
-		em1 = (el / 4) * 4;	/* Element at rt of row in im1 */
-		em2 = el % 4;		/* Element at top of col in im2 */
-
+	for( ; el < 16; el++ ) { register int i;
+		om[el] = 0;		/* Start with zero in output.	*/
+		em1 = (el / 4) * 4;	/* Element at rt of row in im1.	*/
+		em2 = el % 4;		/* Element at top of col in im2.*/
 		for( i = 0; i < 4; i++ ) {
 			om[el] += im1[em1] * im2[em2];
-
-			em1++;		/* Next row element in m1 */
-			em2 += 4;	/* Next column element in m2 */
+			em1++;		/* Next row element in m1.	*/
+			em2 += 4;	/* Next column element in m2.	*/
 		}
 	}
 }
 
-
-/*	==== M A T   X   V E C ( )
+/*	==== m a t X v e c ( )
  *	Multiply the vector "iv" by the matrix "im" and store the result
  *	in the vector "ov".
  */
@@ -1120,9 +1126,9 @@ register vectp_t op;
 register matp_t  mp;
 register vectp_t vp;
 {
-	register int io;		/* Position in output vector */
-	register int im = 0;		/* Position in input matrix */
-	register int iv;		/* Position in input vector */
+	register int io;	/* Position in output vector.	*/
+	register int im = 0;	/* Position in input matrix.	*/
+	register int iv;	/* Position in input vector.	*/
 
 	/* fill each element of output vector with
 	 */
@@ -1134,8 +1140,7 @@ register vectp_t vp;
 	}
 }
 
-/*	==== V T O H _ M O V E ( )
- *
+/*	==== v t o h _ m o v e ( )
  */
 vtoh_move(	h, v)
 register float *h,*v;
@@ -1146,24 +1151,30 @@ register float *h,*v;
 	*h++ = 1.;
 }
 
-/*	==== H T O V _ M O V E ( )
- *
+/*	==== h t o v _ m o v e ( )
  */
 htov_move(	v, h )
 register float *v,*h;
-{
-	static float inv;
+{	static float inv;
 
 	if( h[3] == 1. ) {
 		*v++ = *h++;
 		*v++ = *h++;
 		*v   = *h;
-	}
-	else {
+	} else {
 		if( h[3] == 0. )	inv = 1.;
 		else			inv = 1. / h[3];
 		*v++ = *h++ * inv;
 		*v++ = *h++ * inv;
 		*v = *h * inv;
 	}
+}
+
+/*	==== p r o m p t ( )
+ *	Flush stdout after the printf.
+ */
+prompt( a0, a1, a2, a3, a4, a5, a6, a7, a8, a9 )
+{
+	printf( a0, a1, a2, a3, a4, a5, a6, a7, a8, a9 );
+	fflush( stdout );
 }
