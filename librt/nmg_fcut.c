@@ -4,14 +4,12 @@
  *  After two faces have been intersected, cut or join loops crossed
  *  by the line of intersection.  (Formerly nmg_comb.c)
  *
- *  XXX A better name than nmg_face_combine() might be
- *  XXX nmg_face_cutjoin() or nmg_fcut() or
- *  XXX nmg_face_loop_partition() or nmg_face_loop_split() or something,
- *  XXX since the main goal is not combining faces, but spliting the loops
- *  XXX across the line of intersection.
+ *  The main external routine here is nmg_face_cutjoin().
  *
  *  The line of intersection ("ray") will divide the face into two sets
- *  of loops.  No one loop may cross the ray after this routine is finished.
+ *  of loops.
+ *  No one loop may cross the ray after this routine is finished.
+ *  (Current optimization may remove this property).
  *
  *  Intersection points of significance to the other face but not yet
  *  part of the current face's geometry are denoted by a vu on the ray
@@ -28,7 +26,7 @@
  *	Aberdeen Proving Ground, Maryland  21005-5066
  *  
  *  Copyright Notice -
- *	This software is Copyright (C) 1991 by the United States Army.
+ *	This software is Copyright (C) 1992 by the United States Army.
  *	All rights reserved.
  */
 #ifndef lint
@@ -778,35 +776,26 @@ got_loop:
  *	collapse loops,vertices within face fu1 (relative to fu2)
  *
  */
-void
-nmg_face_combine(b, fu1, fu2, pt, dir)
+HIDDEN void
+nmg_face_combineX(b, fu1, fu2, pt, dir, mag)
 struct nmg_ptbl	*b;		/* table of vertexuses in fu1 on intercept line */
 struct faceuse	*fu1;		/* face being worked */
 struct faceuse	*fu2;		/* for plane equation */
 point_t		pt;
 vect_t		dir;
+fastf_t		*mag;
 {
-	fastf_t		*mag;
 	struct vertexuse	**vu;
 	register int	i;
 	register int	j;
 	int		k;
 	int		m;
-	fastf_t		dist_tol = 0.005;	/* XXX */
 	struct nmg_ray_state	rs;
 
 	if(rt_g.NMG_debug&DEBUG_COMBINE)  {
 		rt_log("\nnmg_face_combine(fu1=x%x, fu2=x%x)\n", fu1, fu2);
 		nmg_pr_fu_briefly(fu1,(char *)0);
 	}
-	mag = (fastf_t *)rt_calloc(b->end, sizeof(fastf_t),
-		"vector magnitudes along ray, for sort");
-
-	/*
-	 *  Sort hit points by increasing distance, vertex ptr, vu ptr,
-	 *  and eliminate any duplicate vu's.
-	 */
-	ptbl_vsort(b, fu1, fu2, pt, dir, mag, dist_tol);
 
 	/*
 	 *  Set up nmg_ray_state structure.
@@ -846,15 +835,6 @@ vect_t		dir;
 	VREVERSE( rs.ang_y_dir, rs.left );
 
 	nmg_face_plot( fu1 );
-
-	/* Print list of intersections */
-	if(rt_g.NMG_debug&DEBUG_COMBINE)  {
-		rt_log("Ray vu intersection list:\n");
-		for( i=0; i < b->end; i++ )  {
-			rt_log(" %d %e ", i, mag[i] );
-			nmg_pr_vu_briefly( vu[i], (char *)0 );
-		}
-	}
 
 	/*
 	 *  Find the extent of the vertexuses at this distance.
@@ -910,8 +890,88 @@ vect_t		dir;
 
 /*		rt_bomb("nmg_face_combine() bad ending state\n"); */
 	}
+}
 
-	rt_free((char *)mag, "vector magnitudes");
+/*
+ *			N M G _ F A C E _ C U T J O I N
+ *
+ *  The main face cut handler.
+ *  Called from nmg_inter.c by nmg_isect_2faces().
+ *
+ *  A wrapper for nmg_face_combine, for now.
+ *
+ *  The two vertexuse lists may be of different lengths, because
+ *  one may have multiple uses of a vertex, while the other has only
+ *  a single use of that same vertex.
+ */
+void
+nmg_face_cutjoin(b1, b2, fu1, fu2, pt, dir, tol)
+struct nmg_ptbl	*b1;		/* table of vertexuses in fu1 on intercept line */
+struct nmg_ptbl	*b2;		/* table of vertexuses in fu2 on intercept line */
+struct faceuse	*fu1;		/* face being worked */
+struct faceuse	*fu2;		/* for plane equation */
+point_t		pt;
+vect_t		dir;
+CONST struct rt_tol	*tol;
+{
+	fastf_t		*mag1;
+	fastf_t		*mag2;
+	fastf_t		dist_tol = 0.005;	/* XXX */
+	struct vertexuse **vu1, **vu2;
+	int		i;
+
+	if(rt_g.NMG_debug&DEBUG_COMBINE)  {
+		rt_log("\nnmg_face_cutjoin(fu1=x%x, fu2=x%x)\n", fu1, fu2);
+	}
+
+	mag1 = (fastf_t *)rt_calloc(b1->end, sizeof(fastf_t),
+		"vector magnitudes along ray, for sort");
+	mag2 = (fastf_t *)rt_calloc(b2->end, sizeof(fastf_t),
+		"vector magnitudes along ray, for sort");
+
+	/*
+	 *  Sort hit points by increasing distance, vertex ptr, vu ptr,
+	 *  and eliminate any duplicate vu's.
+	 */
+	ptbl_vsort(b1, fu1, fu2, pt, dir, mag1, dist_tol);
+	ptbl_vsort(b2, fu2, fu1, pt, dir, mag2, dist_tol);
+
+	vu1 = (struct vertexuse **)b1->buffer;
+	vu2 = (struct vertexuse **)b2->buffer;
+
+	/* Print list of intersections */
+	if(rt_g.NMG_debug&DEBUG_COMBINE)  {
+		rt_log("Ray vu intersection list:\n");
+		for( i=0; i < b1->end; i++ )  {
+			rt_log(" %d %e ", i, mag1[i] );
+			nmg_pr_vu_briefly( vu1[i], (char *)0 );
+		}
+		for( i=0; i < b2->end; i++ )  {
+			rt_log(" %d %e ", i, mag2[i] );
+			nmg_pr_vu_briefly( vu2[i], (char *)0 );
+		}
+	}
+
+#if 0
+	/* Check to see if lists are different */
+	{
+		i = b1->end-1;
+		if( b2->end-1 < i )  i = b2->end-1;
+		for( ; i >= 0; i-- )  {
+			NMG_CK_VERTEXUSE(vu1[i]);
+			NMG_CK_VERTEXUSE(vu2[i]);
+			if( vu1[i]->v_p == vu2[i]->v_p ) continue;
+			rt_log("Index %d mis-match, x%x != x%x\n",
+				i, vu1[i]->v_p, vu2[i]->v_p );
+		}
+	}
+#endif
+
+	nmg_face_combineX( b1, fu1, fu2, pt, dir, mag1 );
+	nmg_face_combineX( b2, fu2, fu1, pt, dir, mag2 );
+
+	rt_free((char *)mag1, "vector magnitudes");
+	rt_free((char *)mag2, "vector magnitudes");
 }
 
 /*
