@@ -28,7 +28,7 @@
  *
  *  @(#)$Header$ (BRL)
  */
-#if defined(__STDC__) || defined(CRAY)
+#if __STDC__
 #	include "noalias-prag.h"
 #else
 #	ifdef convex
