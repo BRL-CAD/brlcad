@@ -1275,7 +1275,7 @@ struct ray_data	*rd;
 
 	if (BU_LIST_IS_EMPTY(&rd->rd_hit)) {
 
-		NMG_FREE_HITLIST( &rd->rd_miss );
+		NMG_FREE_HITLIST( &rd->rd_miss, rd->ap );
 
 		if (rt_g.NMG_debug & DEBUG_RT_SEGS) {
 			if (last_miss)	bu_log(".");
@@ -1296,8 +1296,8 @@ struct ray_data	*rd;
 	last_miss = 0;
 
 	if (check_hitstate((struct hitmiss *)&rd->rd_hit, rd)) {
-		NMG_FREE_HITLIST( &rd->rd_hit );
-		NMG_FREE_HITLIST( &rd->rd_miss );
+		NMG_FREE_HITLIST( &rd->rd_hit, rd->ap );
+		NMG_FREE_HITLIST( &rd->rd_miss, rd->ap );
 		return 0;
 	}
 
@@ -1312,8 +1312,8 @@ struct ray_data	*rd;
 	seg_count = nmg_bsegs(rd, rd->ap, rd->seghead, rd->stp);
 
 
-	NMG_FREE_HITLIST( &rd->rd_hit );
-	NMG_FREE_HITLIST( &rd->rd_miss );
+	NMG_FREE_HITLIST( &rd->rd_hit, rd->ap );
+	NMG_FREE_HITLIST( &rd->rd_miss, rd->ap );
 
 
 	if (rt_g.NMG_debug & DEBUG_RT_SEGS) {
