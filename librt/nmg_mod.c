@@ -4196,8 +4196,8 @@ CONST struct rt_tol	*tol;
 			nmg_radial_join_eu( new_eu, oeu, tol );
 		}
 /* XXX Will this catch it? */
-if( nmg_check_radial( eu, tol ) ) rt_bomb("ebreaker eu bad\n");
-if( nmg_check_radial( new_eu, tol ) ) rt_bomb("ebreaker new_eu bad\n");
+if( nmg_check_radial( eu, tol ) ) rt_log("ERROR ebreaker eu=x%x bad\n", eu);
+if( nmg_check_radial( new_eu, tol ) ) rt_log("ERROR ebreaker new_eu=x%x bad\n", new_eu);
 	}
 	if (rt_g.NMG_debug & DEBUG_BASIC)  {
 		rt_log("nmg_ebreaker( v=x%x, eu=x%x ) new_eu=x%x\n", v, eu, new_eu);
