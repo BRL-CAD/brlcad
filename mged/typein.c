@@ -26,6 +26,7 @@
  *	ehy_in		reads elliptical hyperboloid params from keyboard
  *	eto_in		reads elliptical torus params from keyboard
  *	part_in		reads particle params from keyboard
+ *	extrude_in	reads extrude params from keyboard
  *	checkv		checks for zero vector from keyboard
  *
  * Authors -
@@ -463,6 +464,35 @@ char *p_binunif[] = {
 	"Enter name of file containing the data: "
 };
 
+char *p_extrude[] = {
+	"Enter X, Y, Z of vertex: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter X, Y, Z of H: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter X, Y, Z of A: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter X, Y, Z of B: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter name of sketch: ",
+	"Enter K: ",
+	NULL
+};
+
+char *p_grip[] = {
+	"Enter X, Y, Z of center: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter X, Y, Z of normal: ",
+	"Enter Y: ",
+	"Enter Z: ",
+	"Enter Magnitude: ",
+	NULL
+};
+
 /*	F _ I N ( ) :  	decides which solid reader to call
  *			Used for manual entry of solids.
  */
@@ -487,7 +517,7 @@ char **argv;
 				sph_in(), tec_in(), tgc_in(), tor_in(), ars_in(),
 				trc_in(), ebm_in(), vol_in(), hf_in(), bot_in(),
 				dsp_in_v4(),dsp_in_v5(), submodel_in(), part_in(), pipe_in(),
-				binunif_in(), arbn_in();
+				binunif_in(), arbn_in(), extrude_in(), grip_in();
 
 	CHECK_DBI_NULL;
 
@@ -598,9 +628,19 @@ char **argv;
 		menu = p_vol;
 		fn_in = vol_in;
 	} else if( strcmp( argv[2], "hf" ) == 0 )  {
-		nvals = 19;
-		menu = p_hf;
-		fn_in = hf_in;
+		if (dbip->dbi_version <= 4) {
+			nvals = 19;
+			menu = p_hf;
+			fn_in = hf_in;
+			Tcl_AppendResult(interp, "in: the height field is deprecated. Use the dsp primitive.\n", (char *)NULL);
+		} else {
+			Tcl_AppendResult(interp, "in: the height field is deprecated and not supported by this command when using a new\nstyle database. Use the dsp primitive.\n", (char *)NULL);
+			return TCL_ERROR;
+		}
+	} else if (strcmp(argv[2], "poly") == 0 ||
+		   strcmp(argv[2], "pg") == 0) {
+		Tcl_AppendResult(interp, "in: the polysolid is deprecated and not supported by this command.\nUse the bot primitive.\n", (char *)NULL);
+		return TCL_ERROR;
 	} else if( strcmp( argv[2], "dsp" ) == 0 )  {
 		if (dbip->dbi_version <= 4) {
 			nvals = 6;
@@ -728,11 +768,32 @@ char **argv;
 		menu = p_part;
 		fn_in = part_in;
 	} else if( strcmp( argv[2], "binunif" ) == 0 ) {
-		nvals = 2;
-		menu = p_binunif;
-		fn_in = binunif_in;
-		do_solid_edit = 0;
-		dont_draw = 1;
+		if (dbip->dbi_version <= 4) {
+			Tcl_AppendResult(interp, "in: the binunif primitive is not supported by this command when using an old style database", (char *)NULL);
+			return TCL_ERROR;
+		} else {
+			nvals = 2;
+			menu = p_binunif;
+			fn_in = binunif_in;
+			do_solid_edit = 0;
+			dont_draw = 1;
+		}
+	} else if (strcmp(argv[2], "extrude") == 0) {
+		nvals = 4*3 + 2;
+		menu = p_extrude;
+		fn_in = extrude_in;
+	} else if (strcmp(argv[2], "grip") == 0) {
+		nvals = 2*3 + 1;
+		menu = p_grip;
+		fn_in = grip_in;
+	} else if (strcmp(argv[2], "cline") == 0 ||
+		   strcmp(argv[2], "grip") == 0 ||
+		   strcmp(argv[2], "nmg") == 0 ||
+		   strcmp(argv[2], "nurb") == 0 ||
+		   strcmp(argv[2], "sketch") == 0 ||
+		   strcmp(argv[2], "spline") == 0) {
+		Tcl_AppendResult(interp, "in: the ", argv[2], " primitive is not supported by this command", (char *)NULL);
+		return TCL_ERROR;
 	} else {
 	  Tcl_AppendResult(interp, "f_in:  ", argv[2], " is not a known primitive\n",
 			   (char *)NULL);
@@ -2439,3 +2500,85 @@ struct rt_db_internal	*intern;
 	return(0);	/* success */
 }
 
+/*   E X T R U D E _ I N ( ) :   	reads extrude parameters from keyboard
+ *					returns 0 if successful read
+ *					1 if unsuccessful read
+ */
+int
+extrude_in(cmd_argvs, intern)
+char			*cmd_argvs[];
+struct rt_db_internal	*intern;
+{
+	int			i;
+	struct rt_extrude_internal	*eip;
+	struct rt_db_internal		tmp_ip;
+	struct directory		*dp;
+
+	CHECK_DBI_NULL;
+
+	intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	intern->idb_type = ID_EXTRUDE;
+	intern->idb_meth = &rt_functab[ID_EXTRUDE];
+	intern->idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_extrude_internal),
+					      "rt_extrude_internal");
+	eip = (struct rt_extrude_internal *)intern->idb_ptr;
+	eip->magic = RT_EXTRUDE_INTERNAL_MAGIC;
+
+	for (i = 0; i < ELEMENTS_PER_PT; i++) {
+		eip->V[i] = atof(cmd_argvs[3+i]) * local2base;
+		eip->h[i] = atof(cmd_argvs[6+i]) * local2base;
+		eip->u_vec[i] = atof(cmd_argvs[9+i]) * local2base;
+		eip->v_vec[i] = atof(cmd_argvs[12+i]) * local2base;
+	}
+	eip->sketch_name = bu_strdup(cmd_argvs[15]);
+	eip->keypoint = atoi(cmd_argvs[16]);
+
+	if ((dp=db_lookup(dbip, eip->sketch_name, LOOKUP_NOISY)) == DIR_NULL) {
+		Tcl_AppendResult(interp, "Cannot find sketch (", eip->sketch_name,
+				 ") for extrusion (", cmd_argvs[1], ")\n", (char *)NULL);
+		eip->skt = (struct rt_sketch_internal *)NULL;
+		return 1;
+	}
+
+	if (rt_db_get_internal(&tmp_ip, dp, dbip, bn_mat_identity, &rt_uniresource) != ID_SKETCH) {
+		Tcl_AppendResult(interp, "Cannot import sketch (", eip->sketch_name,
+				 ") for extrusion (", cmd_argvs[1], ")\n", (char *)NULL);
+		eip->skt = (struct rt_sketch_internal *)NULL;
+		return 1;
+	} else
+		eip->skt = (struct rt_sketch_internal *)tmp_ip.idb_ptr;
+
+	return 0;	/* success */
+}
+
+/*   G R I P _ I N ( ) :   	reads grip parameters from keyboard
+ *				returns 0 if successful read
+ *				1 if unsuccessful read
+ */
+int
+grip_in(cmd_argvs, intern)
+char			*cmd_argvs[];
+struct rt_db_internal	*intern;
+{
+	int			i;
+	struct rt_grip_internal	*gip;
+
+	CHECK_DBI_NULL;
+
+	intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	intern->idb_type = ID_GRIP;
+	intern->idb_meth = &rt_functab[ID_GRIP];
+	intern->idb_ptr = (genptr_t)bu_malloc(sizeof(struct rt_grip_internal),
+					      "rt_grip_internal");
+	gip = (struct rt_grip_internal *)intern->idb_ptr;
+	gip->magic = RT_GRIP_INTERNAL_MAGIC;
+
+	for (i = 0; i < ELEMENTS_PER_PT; i++) {
+		gip->center[i] = atof(cmd_argvs[3+i]) * local2base;
+		gip->normal[i] = atof(cmd_argvs[6+i]) * local2base;
+	}
+
+	gip->mag = atof(cmd_argvs[9]);
+
+	return 0;
+}
