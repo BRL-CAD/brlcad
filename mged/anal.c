@@ -536,6 +536,12 @@ ars_anal()
 (void)printf("ARS analyze not implimented\n");
 }
 
+/*	anaylze spline */
+static void
+spline_anal()
+{
+(void)printf("SPLINE analyze not implimented\n");
+}
 
 /*
  *  		M A T H E R R
