@@ -12,11 +12,13 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "raytrace.h"
+#include "./vecmath.h"
 #include "./lgt.h"
 #include "./tree.h"
 #include "./screen.h"
 #include "./ascii.h"
 #include "./extern.h"
+
 static char	*usage[] =
 	{
 "",
@@ -101,161 +103,107 @@ static char	*ir_menu[] =
 	NULL
 	};
 
+char	screen[TOP_SCROLL_WIN+1][TEMPLATE_COLS+1];
+
+/*	pad_Strcpy -- WARNING: this routine does NOT nul-terminate the
+	destination buffer, but pads it with blanks.
+ */
+_LOCAL_ void
+pad_Strcpy( des, src, len )
+register char	*des, *src;
+register int	len;
+	{
+	while( len > 0 && *src != '\0' )
+		{
+		*des++ = *src++;
+		len--;
+		}
+	while( len-- > 0 )
+		*des++ = ' ';
+	return;
+	}
+
+/*	i n i t _ S t a t u s ( )					*/
+void
+init_Status()
+	{	register int	row, col;
+	for( row = 0; row <= TOP_SCROLL_WIN; row++ )
+		for( col = 0; col <= TEMPLATE_COLS; col++ )
+			screen[row][col] = '\0';
+	return;
+	}
+
 /*	p r n t _ S t a t u s ( )					*/
 void
 prnt_Status()
-	{
-	if( ir_mapping )
-		prnt_IR_Status();
-	else
-		prnt_Lgt_Status();
-	return;
-	}
-
-/*	p r n t _ L g t _ S t a t u s ( )				*/
-void
-prnt_Lgt_Status()
-	{
-	TITLE_MOVE();
-	(void) fputs( title, stdout );
-	TIMER_MOVE();
-	(void) fputs( timer, stdout );
-	F_SCRIPT_MOVE();
-	(void) fputs( script_file, stdout );
-	FIELD_OF_VU_MOVE();
-	(void) printf( "%6.4f", grid_scale );
-	if( err_file[0] != '\0' )
-		{
-		F_ERRORS_MOVE();
-		(void) printf( "%-32s", err_file );
-		}
-	GRID_DIS_MOVE();
-	(void) printf( "%11.4f", grid_dist );
-	if( mat_db_file[0] != '\0' )
-		{
-		F_MAT_DB_MOVE();
-		(void) printf( "%-32s", mat_db_file );
-		}
-	GRID_XOF_MOVE();
-	(void) printf( "%11.4f", x_grid_offset );
-	if( lgt_db_file[0] != '\0' )
-		{
-		F_LGT_DB_MOVE();
-		(void) printf( "%-32s", lgt_db_file );
-		}
-	GRID_YOF_MOVE();
-	(void) printf( "%11.4f", y_grid_offset );
-	if( fb_file[0] != '\0' )
-		{
-		F_RASTER_MOVE();
-		(void) printf( "%-32s", fb_file );
-		}
-	MODEL_RA_MOVE();
-	(void) printf( "%11.4f", modl_radius );
-	F_TEXTURE_MOVE();
-	(void) printf( "%-32s", txtr_file );
-	BACKGROU_MOVE();
-	(void) printf( "%3d %3d %3d", background[0], background[1], background[2] );
-	BUFFERED_MOVE();
-	(void) printf( "%4s",	pix_buffered == B_PAGE ? "PAGE" :
+	{	static char	scratchbuf[TEMPLATE_COLS+1];
+	pad_Strcpy( TITLE_PTR, title, TITLE_LEN - 1 );
+	pad_Strcpy( TIMER_PTR, timer, TIMER_LEN - 1 );
+	pad_Strcpy( F_SCRIPT_PTR, script_file, 32 );
+	(void) sprintf( scratchbuf, "%6.4f", grid_scale );
+	(void) strncpy( FIELD_OF_VU_PTR, scratchbuf, strlen( scratchbuf ) );
+	pad_Strcpy( F_ERRORS_PTR, err_file, 32 );
+	(void) sprintf( scratchbuf, "%11.4f", grid_dist );
+	(void) strncpy( GRID_DIS_PTR, scratchbuf, strlen( scratchbuf ) );
+	pad_Strcpy( F_MAT_DB_PTR, mat_db_file, 32 );
+	(void) sprintf( scratchbuf, "%11.4f", x_grid_offset );
+	(void) strncpy( GRID_XOF_PTR, scratchbuf, strlen( scratchbuf ) );
+	pad_Strcpy( F_LGT_DB_PTR, lgt_db_file, 32 );
+	(void) sprintf( scratchbuf, "%11.4f", y_grid_offset );
+	(void) strncpy( GRID_YOF_PTR, scratchbuf, strlen( scratchbuf ) );
+	pad_Strcpy( F_RASTER_PTR, fb_file, 32 );
+	(void) sprintf( scratchbuf, "%11.4f", modl_radius );
+	(void) strncpy( MODEL_RA_PTR, scratchbuf, strlen( scratchbuf ) );
+	pad_Strcpy( F_TEXTURE_PTR, txtr_file, 32 );
+	(void) sprintf( scratchbuf, "%3d %3d %3d", background[0], background[1], background[2] );
+	(void) strncpy( BACKGROU_PTR, scratchbuf, strlen( scratchbuf ) );
+	(void) sprintf( scratchbuf,
+			"%4s",	pix_buffered == B_PAGE ? "PAGE" :
 				pix_buffered == B_PIO ? "PIO" :
 				pix_buffered == B_LINE ? "LINE" : "?"
 				);
-	DEBUGGER_MOVE();
-	(void) printf( "0x%06x", rt_g.debug );
-	MAX_BOUN_MOVE();
-	(void) printf( "%-2d", max_bounce );
-	(void) SetStandout();
-	PROGRAM_NM_MOVE();
-	(void) printf( " LGT %s", version );
-	if( ged_file != NULL )
-		{
-		F_GED_DB_MOVE();
-		(void) printf( " %s ", ged_file );
-		}
-	GRID_PIX_MOVE();
-	(void) printf( " [%04d-", grid_x_org );
-	GRID_SIZ_MOVE();
-	(void) printf( "%04d,", grid_x_fin );
-	GRID_SCN_MOVE();
-	(void) printf( "%04d-", grid_y_org );
-	GRID_FIN_MOVE();
-	(void) printf( "%04d] ", grid_y_fin );
-	(void) ClrStandout();
+	(void) strncpy( BUFFERED_PTR, scratchbuf, strlen( scratchbuf ) );
+	(void) sprintf( scratchbuf, "0x%06x", rt_g.debug );
+	(void) strncpy( DEBUGGER_PTR, scratchbuf, strlen( scratchbuf ) );
+	(void) sprintf( scratchbuf, "%-2d", max_bounce );
+	(void) strncpy( MAX_BOUN_PTR, scratchbuf, strlen( scratchbuf ) );
+	(void) sprintf( scratchbuf, " LGT %s", version );
+	(void) strncpy( PROGRAM_NM_PTR, scratchbuf, strlen( scratchbuf ) );
+	(void) sprintf( scratchbuf, " %s ", ged_file == NULL ? "(null)" : ged_file );
+	(void) strncpy( F_GED_DB_PTR, scratchbuf, strlen( scratchbuf ) );
+	(void) sprintf( scratchbuf, " [%04d-", grid_x_org );
+	(void) strncpy( GRID_PIX_PTR, scratchbuf, strlen( scratchbuf ) );
+	(void) sprintf( scratchbuf, "%04d,", grid_x_fin );
+	(void) strncpy( GRID_SIZ_PTR, scratchbuf, strlen( scratchbuf ) );
+	(void) sprintf( scratchbuf, "%04d-", grid_y_org );
+	(void) strncpy( GRID_SCN_PTR, scratchbuf, strlen( scratchbuf ) );
+	(void) sprintf( scratchbuf, "%04d] ", grid_y_fin );
+	(void) strncpy( GRID_FIN_PTR, scratchbuf, strlen( scratchbuf ) );
+	update_Screen();
 	return;
 	}
 
-/*	p r n t _ I R _ S t a t u s ( )					*/
 void
-prnt_IR_Status()
-	{
-	TITLE_MOVE();
-	(void) fputs( title, stdout );
-	TIMER_MOVE();
-	(void) fputs( timer, stdout );
-	F_SCRIPT_MOVE();
-	(void) fputs( script_file, stdout );
-	FIELD_OF_VU_MOVE();
-	(void) printf( "%6.4f", grid_scale );
-	if( err_file[0] != '\0' )
-		{
-		F_ERRORS_MOVE();
-		(void) printf( "%-32s", err_file );
+update_Screen()
+	{	register int	tem_co, row, col;
+	tem_co = Min( co, TEMPLATE_COLS );
+	for( row = 0; template[row] != NULL; row++ )
+		{	register int	lastcol = -2;
+		if( template[row+1] == NULL )
+			(void) SetStandout();
+		for( col = 0; col < tem_co; col++ )
+			if( screen[row][col] != template[row][col] )
+				{
+				if( col != lastcol+1 )
+					MvCursor( col+1, row+1 );
+				lastcol = col;
+				(void) putchar( template[row][col] );
+				screen[row][col] = template[row][col];
+				}
 		}
-	GRID_DIS_MOVE();
-	(void) printf( "%11.4f", grid_dist );
-	if( ir_file[0] != '\0' )
-		{
-		F_MAT_DB_MOVE();
-		(void) printf( "%-32s", ir_file );
-		}
-	GRID_XOF_MOVE();
-	(void) printf( "%11.4f", x_grid_offset );
-	if( lgt_db_file[0] != '\0' )
-		{
-		F_LGT_DB_MOVE();
-		(void) printf( "%-32s", lgt_db_file );
-		}
-	GRID_YOF_MOVE();
-	(void) printf( "%11.4f", y_grid_offset );
-	if( fb_file[0] != '\0' )
-		{
-		F_RASTER_MOVE();
-		(void) printf( "%-32s", fb_file );
-		}
-	MODEL_RA_MOVE();
-	(void) printf( "%11.4f", modl_radius );
-	BACKGROU_MOVE();
-	(void) printf( "%3d %3d %3d", background[0], background[1], background[2] );
-	BUFFERED_MOVE();
-	(void) printf( "%4s",	pix_buffered == B_PAGE ? "PAGE" :
-				pix_buffered == B_PIO ? "PIO" :
-				pix_buffered == B_LINE ? "LINE" : "?"
-				);
-	DEBUGGER_MOVE();
-	(void) printf( "0x%06x", rt_g.debug );
-	IR_AUTO_MAP_MOVE();
-	(void) printf( "%4s", 	ir_offset == 1 ? "ON" : "OFF" );
-	IR_PAINT_MOVE();
-	if( ir_doing_paint )
-		(void) printf( "%4d", ir_paint );
-	else
-		(void) printf( "none" );
-	(void) SetStandout();
-	PROGRAM_NM_MOVE();
-	(void) printf(	" LGT (%s) IR Module [%s] ",
-			*version == '%' ? "EXP" : version,
-			ir_mapping & IR_READONLY ? "readonly" : "editmode"
-			);
-	GRID_PIX_MOVE();
-	(void) printf( " [%04d-", grid_x_org );
-	GRID_SIZ_MOVE();
-	(void) printf( "%04d,", grid_x_fin );
-	GRID_SCN_MOVE();
-	(void) printf( "%04d-", grid_y_org );
-	GRID_FIN_MOVE();
-	(void) printf( "%04d] ", grid_y_fin );
 	(void) ClrStandout();
+	EVENT_MOVE();
+	(void) fflush( stdout );
 	return;
 	}
 
@@ -296,7 +244,7 @@ int	*linesp;
 	prnt_Prompt( "-- More -- " );
 	ClrStandout();
 	(void) fflush( stdout );
-	switch( get_Char() )
+	switch( hm_getchar() )
 		{
 	case 'q' :
 	case 'n' :
@@ -322,6 +270,7 @@ prnt_Menu()
 	prnt_Paged_Menu( lgt_menu );
 	if( ir_mapping )
 		prnt_Paged_Menu( ir_menu );
+	hmredraw();
 	return;
 	}
 
@@ -344,26 +293,22 @@ char	*prompt;
 
 /*	p r n t _ T i m e r ( )						*/
 void
-prnt_Timer( s )
-char	*s;
+prnt_Timer( eventstr )
+char	*eventstr;
 	{
 	(void) rt_read_timer( timer, TIMER_LEN-1 );
 	if( tty )
-		{	register int	nblanks;
-		nblanks = (TIMER_LEN-1) - strlen( timer );
-		TIMER_MOVE();
-		(void) fputs( timer, stdout );
-		while( nblanks-- > 0 )
-			(void) putc( ' ', stdout );
+		{
+		pad_Strcpy( TIMER_PTR, timer, TIMER_LEN-1 );
+		update_Screen();
 		}
 	else
-		rt_log( "(%s) %s\n", s == NULL ? "(null)" : s, timer );
+		rt_log( "(%s) %s\n", eventstr == NULL ? "(null)" : eventstr, timer );
 	return;
 	}
 
 /*	p r n t _ E v e n t ( )						*/
 void
-
 prnt_Event( s )
 char	*s;
 	{
@@ -380,16 +325,11 @@ char	*s;
 
 /*	p r n t _ T i t l e ( )						*/
 void
-prnt_Title( s )
-char	*s;
+prnt_Title( title )
+char	*title;
 	{
-	if( tty && ! rt_g.debug )
-		{
-		TITLE_MOVE();
-		(void) fputs( s, stdout );
-		}
-	else
-		rt_log( "%s\n", s == NULL ? "(null)" : s );
+	if( ! tty || rt_g.debug )
+		rt_log( "%s\n", title == NULL ? "(null)" : title );
 	return;
 	}
 
@@ -405,7 +345,7 @@ prnt_Usage()
 	}
 
 #include <varargs.h>
-#ifdef cray
+#if defined( cray ) && ! defined( CRAY2 )
 /* VARARGS */
 void
 prnt_Scroll(fmt, a,b,c,d,e,f,g,h,i)
@@ -442,6 +382,7 @@ char *fmt;
 			(void) fprintf( stdout, fmt, a,b,c,d,e,f,g,h,i );
 		/* End of line detected by existance of a newline.	*/
 		newline = fmt[strlen( fmt )-1] == '\n';
+		hmredraw();
 		}
 	else
 		(void) fprintf( stdout, fmt, a,b,c,d,e,f,g,h,i );
@@ -488,6 +429,7 @@ va_dcl
 			(void) _doprnt( fmt, ap, stdout );
 		/* End of line detected by existance of a newline.	*/
 		newline = fmt[strlen( fmt )-1] == '\n';
+		hmredraw();
 		}
 	else
 		(void) _doprnt( fmt, ap, stderr );
