@@ -14,6 +14,8 @@
 ARGS="$*"
 PATH_TO_AUTOGEN="`dirname $0`"
 
+SUITE="BRL-CAD"
+
 AUTOCONF_MAJOR_VERSION=2
 AUTOCONF_MINOR_VERSION=50
 AUTOCONF_PATCH_VERSION=0
@@ -75,7 +77,7 @@ else
   echo
 fi
 if [ "x$_report_error" = "xyes" ] ; then
-  echo "ERROR:  To prepare the BRL-CAD build system from scratch,"
+  echo "ERROR:  To prepare the ${SUITE} build system from scratch,"
   echo "        at least version $AUTOCONF_MAJOR_VERSION.$AUTOCONF_MINOR_VERSION of GNU Autoconf must be installed."
   echo 
   echo "$PATH_TO_AUTOGEN/autogen.sh does not need to be run on the same machine that will"
@@ -329,7 +331,7 @@ fi
 # summarize.  actually build if arg was provided #
 ##################################################
 if [ ! "x$ARGS" = "x" ] ; then
-  echo "The BRL-CAD build system is now prepared.  Building here with:"
+  echo "The ${SUITE} build system is now prepared.  Building here with:"
   echo "$PATH_TO_AUTOGEN/configure $ARGS"
   $PATH_TO_AUTOGEN/configure $ARGS
   [ ! $? = 0 ] && echo "ERROR: configure failed" && exit $?
@@ -338,7 +340,7 @@ if [ ! "x$ARGS" = "x" ] ; then
   exit 0
 fi
 
-echo "The BRL-CAD build system is now prepared.  To build here, run:"
+echo "The ${SUITE} build system is now prepared.  To build here, run:"
 echo "  $PATH_TO_AUTOGEN/configure"
 echo "  make"
 
