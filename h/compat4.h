@@ -78,14 +78,27 @@ extern "C" {
 #define rt_parallel	bu_parallel
 
 /* parse.c */
-#define rt_structparse		bu_structparse
+
+#define rt_struct_export	bu_struct_export
+#define rt_struct_import	bu_struct_import
+#define rt_struct_put		bu_struct_put
+#define rt_struct_get		bu_struct_get
+#define rt_gshort		bu_gshort
+#define rt_glong		bu_glong
+#define rt_pshort		bu_pshort
+#define rt_plong		bu_plong
+#define rt_struct_buf		bu_struct_wrap_buf
+#define rt_structparse		bu_struct_parse
 #define structparse		bu_structparse
-#define rt_vls_item_print	bu_vls_item_print
-#define rt_vls_item_print_nc	bu_vls_item_print_nc
-#define rt_vls_name_print	bu_vls_name_print
-#define rt_vls_name_print_nc	bu_vls_name_print_nc
-#define rt_structprint		bu_structprint
-#define rt_vls_structprint	bu_vls_structprint
+
+#define rt_vls_item_print( v, sp, b )	 bu_vls_struct_item( v, sp, b, ',' )
+#define rt_vls_item_print_nc( v, sp, b ) bu_vls_struct_item( v, sp, b, ' ' )
+#define rt_vls_name_print( v, sp, n, b ) \
+	bu_vls_struct_item_named( v, sp, n, b, ',' )
+#define rt_vls_name_print_nc( v, sp, n, b ) \
+	bu_vls_struct_item_named( v, sp, n, b, ' ' )
+#define rt_structprint		bu_struct_print
+#define rt_vls_structprint	bu_vls_struct_print
 #if !__STDC__ && !defined(offsetof)
 # define offsetof		bu_offsetof
 #endif
