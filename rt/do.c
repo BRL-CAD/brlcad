@@ -306,10 +306,8 @@ char	**argv;
 		return(0);
 	}
 	rt_prep_timer();
-	for( i=1; i < argc; i++ )  {
-		if( rt_gettree(rtip, argv[i]) < 0 )
-			fprintf(stderr,"rt_gettree(%s) FAILED\n", argv[i]);
-	}
+	if( rt_gettrees(rtip, argc, argv) < 0 )
+		fprintf(stderr,"rt_gettrees(%s) FAILED\n", argv[0]);
 	(void)rt_read_timer( outbuf, sizeof(outbuf) );
 	fprintf(stderr,"GETTREE: %s\n", outbuf);
 	return(0);
@@ -393,7 +391,7 @@ char	**argv;
 		fprintf(stderr,"cm_anim:  type %s unknown\n", argv[2]);
 		goto bad;
 	}
-	if( rt_add_anim( rtip, anp, at_root ) < 0 )  {
+	if( db_add_anim( rtip, anp, at_root ) < 0 )  {
 		fprintf(stderr,"cm_anim:  %s %s failed\n", argv[1], argv[2]);
 		goto bad;
 	}
@@ -521,10 +519,8 @@ register struct rt_i	*rtip;
 	}
 
 	rt_prep_timer();
-	for( i=0; i < nobjs; i++ )  {
-		if( rt_gettree(rtip, objtab[i]) < 0 )
-			fprintf(stderr,"rt_gettree(%s) FAILED\n", objtab[i]);
-	}
+	if( rt_gettrees(rtip, nobjs, objtab) < 0 )
+		fprintf(stderr,"rt_gettrees(%s) FAILED\n", objtab[0]);
 	(void)rt_read_timer( outbuf, sizeof(outbuf) );
 	fprintf(stderr,"GETTREE: %s\n", outbuf);
 }
