@@ -2704,12 +2704,13 @@ rt_log("force next eu to ray\n");
 	    }
 	case NMG_ACTION_NONE:
 	case NMG_ACTION_NONE_OPTIM:
-		if( *(vu->up.magic_p) == NMG_LOOPUSE_MAGIC )  {
-			lu = vu->up.lu_p;
-			/* Drop this loop of a single vertex in sanitize() */
-			if( lu->orientation == OT_UNSPEC );
-				lu->orientation =
-				  lu->lumate_p->orientation = OT_BOOLPLACE;
+		if( *(vu->up.magic_p) != NMG_LOOPUSE_MAGIC )  break;
+		lu = vu->up.lu_p;
+		if( old_state != NMG_STATE_OUT && lu->orientation == OT_BOOLPLACE )  {
+			/* If something connects to the surface of our face,
+			 * hang on to this vertexuse.
+			 */
+			lu->orientation = lu->lumate_p->orientation = OT_UNSPEC;
 		}
 		break;
 	case NMG_ACTION_VFY_EXT:
