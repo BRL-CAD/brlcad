@@ -427,9 +427,8 @@ struct mater_info {
 	char	ma_override;		/* non-0 ==> ma_color is valid */
 	char	ma_cinherit;		/* DB_INH_LOWER / DB_INH_HIGHER */
 	char	ma_minherit;		/* DB_INH_LOWER / DB_INH_HIGHER */
-	/* XXX These should become (char *) to bu_strdup() */
-	char	ma_matname[32];		/* Material name */
-	char	ma_matparm[60];		/* String Material parms */
+	char	*ma_matname;		/* Material name */
+	char	*ma_matparm;		/* String Material parms */
 };
 
 /*
@@ -689,7 +688,7 @@ struct rt_comb_internal  {
 	char		inherit;
 };
 #define RT_COMB_MAGIC	0x436f6d49	/* "ComI" */
-#define RT_CK_COMB(_p)		NMG_CKMAG( _p , RT_COMB_MAGIC , "rt_comb_internal" )
+#define RT_CK_COMB(_p)		BU_CKMAG( _p , RT_COMB_MAGIC , "rt_comb_internal" )
 
 /*
  *			D B _ T R E E _ S T A T E
@@ -1531,11 +1530,9 @@ RT_EXTERN(void db_pr_tree_state, (CONST struct db_tree_state *tsp));
 RT_EXTERN(void db_pr_combined_tree_state,
 	(CONST struct combined_tree_state *ctsp));
 RT_EXTERN(int db_apply_state_from_comb, (struct db_tree_state *tsp,
-	CONST struct db_full_path *pathp, CONST struct bu_external *ep));
-#if defined(DB_H)
+	CONST struct db_full_path *pathp, CONST struct rt_comb_internal *comb));
 RT_EXTERN(int db_apply_state_from_memb, (struct db_tree_state *tsp,
-	struct db_full_path *pathp, CONST struct member	*mp));
-#endif
+	struct db_full_path *pathp, CONST union tree *tp));
 RT_EXTERN(int db_follow_path_for_state, (struct db_tree_state *tsp,
 	struct db_full_path *pathp, CONST char *orig_str, int noisy));
 RT_EXTERN(union tree *db_recurse, (struct db_tree_state	*tsp,
@@ -1556,6 +1553,9 @@ RT_EXTERN(int db_path_to_mat, (struct db_i *dbip, struct db_full_path *pathp,
 RT_EXTERN(void db_apply_anims, (struct db_full_path *pathp,
 	struct directory *dp, mat_t stck, mat_t arc,
 	struct mater_info *materp));
+
+/* db_comb.c */
+
 
 /* memalloc.c -- non PARALLEL routines */
 RT_EXTERN(unsigned long rt_memalloc, (struct mem_map **pp, unsigned size) );
