@@ -126,8 +126,6 @@ if [ ! $? = 0 ] ; then
   fi
 fi
 
-# !!! check where ltmain.sh is put
-ln -s ../ltmain.sh misc/ltmain.sh
 
 ##############
 # stash path #
@@ -172,11 +170,19 @@ fi
 ############################################
 # prepare build via autoreconf or manually #
 ############################################
+reconfigure_manually=no
 if [ "x$HAVE_AUTORECONF" = "xyes" ] && [ "x$HAVE_LIBTOOLIZE" = "xyes" ] ; then
   echo $ECHO_N "Automatically preparing build ...$ECHO_C"
   autoreconf -i
-  [ ! $? = 0 ] && echo "ERROR: autoreconf failed" && exit 2
+  if [ ! $? = 0 ] ; then
+    reconfigure_manually=yes
+    echo "WARNING: autoreconf failed"
+    echo "Attempting to run the configuration steps individually"
 else
+  reconfigure_manually=yes
+fi
+
+if [ "x$reconfigure_manually" = "xyes" ] ; then
   echo $ECHO_N "Preparing build ...$ECHO_C"
   if [ "x$HAVE_LIBTOOLIZE" = "xyes" ] ; then 
     libtoolize --automake -c -f
