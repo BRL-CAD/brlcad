@@ -984,6 +984,16 @@ CONST struct bn_tol	*tol;
 			eup = eup->radial_p->eumate_p;
 		} while (eup != eu->radial_p->eumate_p);
 
+		/* look for another eu between these two vertices */
+		if( nmg_find_matching_eu_in_s( eu, s ) )
+		{
+			NMG_INDEX_SET(classlist[NMG_CLASS_AonBshared],
+				eu->e_p );
+			reason = "another eu between same vertices is on shell";
+			status = ON_SURF;
+			goto out;
+		}
+
 		/* although the two endpoints are "on" the shell,
 		 * the edge would appear to be either "inside" or "outside",
 		 * since there are no uses of this edge in the shell.
