@@ -98,11 +98,15 @@ int argc; char **argv;
 		switch( mode ) {
 		case DIFF:
 			for( i = 0; i < n; i++ ) {
+#ifdef vax
 				/*
 				 * *p's promoted to ints automatically,
 				 * VAX then does /2 much faster! (extzv)
 				 */
 				*op++ = (*p1 - *p2)/2 + 128;
+#else
+				*op++ = (((int)*p1 - (int)*p2)>>1) + 128;
+#endif
 				p1++;
 				p2++;
 			}
