@@ -2446,7 +2446,7 @@ struct rt_tol *tol;
 									V3ARGS( eu->eumate_p->vu_p->v_p->vg_p->coord ),
 									V3ARGS( eu1->vu_p->v_p->vg_p->coord ) );
 							}
-							tmp_eu = nmg_esplit(eu1->vu_p->v_p, eu);
+							tmp_eu = nmg_ebreak(eu1->vu_p->v_p, eu);
 							split_count++;
 						}
 						else if( rt_g.NMG_debug & DEBUG_BASIC )
