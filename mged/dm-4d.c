@@ -158,7 +158,7 @@ static int	ir_debug;		/* 2 for basic, 3 for full */
 static int	ir_is_gt;		/* 0 for non-GT machines */
 static int	ir_has_zbuf;		/* 0 if no Z buffer */
 static int	ir_has_rgb;		/* 0 if mapped mode must be used */
-
+static int	ir_has_doublebuffer;	/* 0 if singlebuffer mode must be used */
 long gr_id;
 long win_l, win_b, win_r, win_t;
 long winx_size, winy_size;
@@ -299,11 +299,15 @@ Ir_configure_window_shape()
 		lsetdepth(0, 0x07fffff );
 	}
 
-	/* Clear out image from windows underneath */
-	frontbuffer(1);
-	ir_clear_to_black();
-	frontbuffer(0);
-	ir_clear_to_black();
+	if( ir_has_doublebuffer)
+	{
+		/* Clear out image from windows underneath */
+		frontbuffer(1);
+		ir_clear_to_black();
+		frontbuffer(0);
+		ir_clear_to_black();
+	} else
+		ir_clear_to_black();
 	
 	switch( getmonitor() )  {
 	default:
@@ -385,6 +389,7 @@ Ir_open()
 			ir_is_gt = 1;
 			ir_has_zbuf = 1;
 			ir_has_rgb = 1;
+			ir_has_doublebuffer = 1;
 			break;
 		case INV_GR1BOARD:	/* Persoanl Iris */
 			if ( inv->state & INV_GR1RE2 )
@@ -393,6 +398,13 @@ Ir_open()
 				ir_has_zbuf = 1;
 			if(inv->state & INV_GR1BIT24 )
 				ir_has_rgb = 1;
+			ir_has_doublebuffer = 1;
+			break;
+		case INV_LIGHT:		/* Entry Level Indigo */
+			ir_is_gt = 0;
+			ir_has_zbuf = 1;
+			ir_has_doublebuffer = 0;
+			ir_has_rgb = 1;
 			break;
 		}
 	}
@@ -477,7 +489,9 @@ Ir_open()
 		/* one indexed color map of 4096 entries */
 		onemap();
 	}
-	doublebuffer();
+	if ( ir_has_doublebuffer)
+		doublebuffer();
+
 	gconfig();
 
 	/*
@@ -635,8 +649,11 @@ Ir_prolog()
 
 	ortho2( -1.0,1.0, -1.0,1.0);	/* L R Bot Top */
 
-	if( !dmaflag )
+	if( dmaflag && !ir_has_doublebuffer )
+	{
+		ir_clear_to_black();
 		return;
+	}
 }
 
 /*
@@ -671,10 +688,12 @@ Ir_epilog()
 	Ir_2d_line( 0, 0, 0, 0, 0 );
 	/* End of faceplate */
 
-	swapbuffers();
-
-	/* give Graphics pipe time to work */
-	ir_clear_to_black();
+	if(ir_has_doublebuffer )
+	{
+		swapbuffers();
+		/* give Graphics pipe time to work */
+		ir_clear_to_black();
+	}
 }
 
 /*
@@ -723,6 +742,7 @@ Ir_object( sp, m, ratio, white )
 register struct solid *sp;
 register fastf_t *m;
 double ratio;
+int white;
 {
 	register struct rt_vlist	*vp;
 	register int nvec;
@@ -1416,7 +1436,8 @@ checkevents()  {
 			/* Window may have moved */
 			Ir_configure_window_shape();
 			dmaflag = 1;
-			refresh();		/* to fix back buffer */
+			if( ir_has_doublebuffer) /* to fix back buffer */
+				refresh();		
 			dmaflag = 1;
 			break;
 		case INPUTCHANGE:
@@ -1477,7 +1498,8 @@ checkevents()  {
 			/* Window may have moved */
 			Ir_configure_window_shape();
 			dmaflag = 1;
-			refresh();		/* to fix back buffer */
+			if( ir_has_doublebuffer) /* to fix back buffer */
+				refresh();		
 			dmaflag = 1;
 			break;
 		case INPUTCHANGE:
