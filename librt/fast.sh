@@ -19,7 +19,6 @@ cake ${SILENT}  \
  cmd.o \
  cut.o \
  dir.o \
- rtlex.o \
  g_hf.o \
  &
 
