@@ -29,6 +29,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <signal.h>
 #include <errno.h>
 #include <netdb.h>
+#include <time.h>
 #include <math.h>
 
 #include <sys/types.h>
@@ -59,7 +60,7 @@ extern char	*getenv();
 
 struct vls  {
 	char	*vls_str;
-	int	vls_cur;
+	int	vls_cur;	/* Length, not counting the null */
 	int	vls_max;
 };
 
@@ -74,7 +75,7 @@ char		*s;
 		vp->vls_str = rt_malloc( vp->vls_max = len*4, "vls initial" );
 		vp->vls_cur = 0;
 	}
-	if( vp->vls_cur + len > vp->vls_max )  {
+	if( vp->vls_cur + len >= vp->vls_max )  {
 		vp->vls_max = (vp->vls_max + len) * 2;
 		vp->vls_str = rt_realloc( vp->vls_str, vp->vls_max, "vls" );
 	}
@@ -161,7 +162,7 @@ struct servers {
 
 /* Internal Host table */
 struct ihost {
-	struct hostent	ht_host;	/* All details of this host */
+	char		*ht_name;	/* Official name of host */
 	int		ht_when;	/* When to use this host */
 #define HT_ALWAYS	1		/* Always try to use this one */
 #define HT_NIGHT	2		/* Only use at night */
@@ -275,11 +276,20 @@ char	**argv;
 	    (tcp_listen_fd = pkg_permserver("20210", "tcp", 8, errlog)) < 0 )
 		exit(1);
 	/* Now, pkg_permport has tcp port number */
+
 	(void)signal( SIGPIPE, SIG_IGN );
+	(void)signal( SIGINT, SIG_IGN );
 
 	if( argc <= 1 )  {
 		printf("Interactive REMRT listening at port %d\n", pkg_permport);
 		clients = (1<<0);
+
+		while(clients)  {
+			check_input( 30 );	/* delay up to 30 secs */
+		}
+		/* Might want to see if any work remains, and if so,
+		 * record it somewhere */
+		printf("REMRT out of clients\n");
 	} else {
 		FILE	*fp;
 
@@ -329,18 +339,14 @@ char	**argv;
 			/* if -M, start reading RT script */
 		}
 
-		/* Attempt to start some servers */
-
 		/* Compute until no work remains */
+		running = 1;
+		while( FrameHead.fr_forw != &FrameHead )  {
+			start_servers();
+			check_input( 30 );	/* delay up to 30 secs */
+		}
+		printf("REMRT:  task accomplished\n");
 	}
-
-	while(clients)  {
-		(void)signal( SIGINT, SIG_IGN );
-		check_input( 30 );	/* delay 30 secs */
-	}
-	/* Might want to see if any work remains, and if so,
-	 * record it somewhere */
-	printf("REMRT out of clients\n");
 	exit(0);
 }
 
@@ -431,7 +437,7 @@ struct pkg_conn *pc;
 	sp->sr_index = fd;
 	sp->sr_host = ihp;
 
-	printf("%s: ACCEPT\n", sp->sr_host->ht_host.h_name );
+	printf("%s: ACCEPT\n", sp->sr_host->ht_name );
 
 	if( start_cmd[0] != '\0' )  {
 		send_start(sp);
@@ -452,7 +458,7 @@ register struct pkg_conn *pc;
 
 	fd = pc->pkc_fd;
 	sp = &servers[fd];
-	printf("REMRT closing fd %d %s\n", fd, sp->sr_host->ht_host.h_name);
+	printf("REMRT closing fd %d %s\n", fd, sp->sr_host->ht_name);
 	if( fd <= 3 || fd >= NFD )  {
 		printf("That's unreasonable, forget it!\n");
 		return;
@@ -476,6 +482,75 @@ register struct pkg_conn *pc;
 		pr_list(&(fr->fr_todo));
 	}
 	if(running) schedule();
+}
+
+/*
+ *			S T A R T _ S E R V E R S
+ *
+ *  Scan the ihost table.  For all eligible hosts that don't
+ *  presently have a server running, try to start a server.
+ */
+#define SERVER_CHECK_INTERVAL	(10*60)		/* seconds */
+struct timeval	last_server_check_time;
+
+start_servers()
+{
+	register struct ihost	*ihp;
+	register struct servers	*sp;
+	struct timeval	now;
+
+	(void)gettimeofday( &now, (struct timezone *)0 );
+	if( tvdiff( &now, &last_server_check_time ) < SERVER_CHECK_INTERVAL )
+		return;
+
+	printf("seeking servers to start\n");
+	for( ihp = HostHead; ihp != IHOST_NULL; ihp = ihp->ht_next )  {
+
+		/* Skip hosts which are not eligible */
+		switch( ihp->ht_when )  {
+		case HT_ALWAYS:
+			break;
+		case HT_NIGHT:
+			if( is_night( &now ) )  break;
+			printf("bypassing %s:  not night\n", ihp->ht_name);
+			continue;
+		default:
+		case HT_PASSIVE:
+			continue;
+		}
+
+		for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
+			if( sp->sr_pc == PKC_NULL )  continue;
+			if( sp->sr_host == ihp )  goto next_host;
+		}
+		/* This host is not busy, and is eligible */
+		add_host( ihp->ht_name );
+
+next_host:	continue;
+	}
+	last_server_check_time = now;		/* struct copy */
+}
+
+/*
+ *			I S _ N I G H T
+ *
+ *  Indicate whether the given time is "night", ie, off-peak time.
+ *  The simple algorithm used here does not take into account
+ *  using machines in another time zone, nor is it nice to
+ *  machines used by hackers who stay up late.
+ */
+int
+is_night( tv )
+struct timeval	*tv;
+{
+	struct tm	*tp;
+
+	tp = localtime( &tv->tv_sec );
+
+	/* Sunday(0) and Saturday(6) are "night" */
+	if( tp->tm_wday == 0 || tp->tm_wday == 6 )  return(1);
+	if( tp->tm_hour < 8 || tp->tm_hour >= 18 )  return(1);
+	return(0);
 }
 
 /*
@@ -565,7 +640,6 @@ FILE *fp;
 
 		/* Eof on stdin */
 		clients &= ~(1<<fileno(fp));
-		close( tcp_listen_fd ); tcp_listen_fd = -1;
 
 		/* We might want to wait if something is running? */
 		for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
@@ -788,7 +862,7 @@ top:
 				lp->li_start = b+1;
 
 			printf("fr%d %d..%d -> %s\n", fr->fr_number,
-				a, b, sp->sr_host->ht_host.h_name);
+				a, b, sp->sr_host->ht_name);
 
 			/* Record newly allocated scanlines */
 			GET_LIST(lp);
@@ -889,7 +963,7 @@ char *buf;
 		printf("MSG_START in state %d?\n", sp->sr_started);
 	}
 	sp->sr_started = SRST_READY;
-	printf("%s READY FOR WORK\n", sp->sr_host->ht_host.h_name);
+	printf("%s READY FOR WORK\n", sp->sr_host->ht_name);
 	if(running) schedule();
 }
 
@@ -902,7 +976,7 @@ register struct pkg_conn *pc;
 char *buf;
 {
 	if(print_on)
-		printf("%s:%s", servers[pc->pkc_fd].sr_host->ht_host.h_name, buf );
+		printf("%s:%s", servers[pc->pkc_fd].sr_host->ht_name, buf );
 	if(buf) (void)free(buf);
 }
 
@@ -1075,7 +1149,7 @@ register struct servers *sp;
 {
 	if( start_cmd[0] == '\0' || sp->sr_started != SRST_NEW )  return;
 
-	printf("Sending model info to %s\n", sp->sr_host->ht_host.h_name);
+	printf("Sending start to %s\n", sp->sr_host->ht_name);
 	if( pkg_send( MSG_START, start_cmd, strlen(start_cmd)+1, sp->sr_pc ) < 0 )
 		dropclient(sp->sr_pc);
 	sp->sr_started = SRST_LOADING;
@@ -1098,7 +1172,7 @@ register struct servers *sp;
 send_loglvl(sp)
 register struct servers *sp;
 {
-	if( pkg_send( MSG_LOGLVL, print_on?"1":"0", 1, sp->sr_pc ) < 0 )
+	if( pkg_send( MSG_LOGLVL, print_on?"1":"0", 2, sp->sr_pc ) < 0 )
 		dropclient(sp->sr_pc);
 }
 
@@ -1112,9 +1186,11 @@ struct servers *sp;
 register struct frame *fr;
 {
 
-	if( pkg_send( MSG_MATRIX, fr->fr_cmd.vls_str, fr->fr_cmd.vls_cur, sp->sr_pc ) < 0 )
+	if( pkg_send( MSG_MATRIX,
+	    fr->fr_cmd.vls_str, fr->fr_cmd.vls_cur+1, sp->sr_pc
+	    ) < 0 )
 		dropclient(sp->sr_pc);
-	printf("sent matrix to %s\n", sp->sr_host->ht_host.h_name);
+	printf("sent matrix to %s\n", sp->sr_host->ht_name);
 }
 
 /*
@@ -1149,6 +1225,19 @@ register struct list *lhp;
 mathtab_constant()
 {
 	/* Called on -B (benchmark) flag, by get_args() */
+}
+
+add_host( host )
+char	*host;
+{
+	/* Send message to helper process */
+	fprintf( helper_fp, "%s %d ", host, pkg_permport );
+	fflush( helper_fp );
+
+	/* Wait briefly to try and catch the incomming connection,
+	 * in case there are several of these spawned in a row.
+	 */
+	check_input(1);
 }
 
 start_helper()
@@ -1249,7 +1338,7 @@ int		enter;
 
 	/* Search list for existing instance */
 	for( ihp = HostHead; ihp != IHOST_NULL; ihp = ihp->ht_next )  {
-		if( strcmp( ihp->ht_host.h_name, addr->h_name ) != 0 )
+		if( strcmp( ihp->ht_name, addr->h_name ) != 0 )
 			continue;
 		return( ihp );
 	}
@@ -1258,7 +1347,11 @@ int		enter;
 
 	/* If not found and enter==1, enter in host table w/defaults */
 	GETSTRUCT( ihp, ihost );
-	ihp->ht_host = *addr;		/* struct copy */
+
+	/* Duplicate those fields of interst -- 
+	 * gethostbyxxx() routines keep stuff in a static buffer
+	 */
+	ihp->ht_name = rt_strdup( addr->h_name );
 
 	/* Default host parameters */
 	ihp->ht_when = HT_PASSIVE;
@@ -1528,10 +1621,7 @@ char	**argv;
 	register int i;
 
 	for( i=1; i<argc; i++ )  {
-		fprintf( helper_fp, "%s %d ",
-			argv[i], pkg_permport );
-		fflush( helper_fp );
-		check_input(1);		/* get connections */
+		add_host( argv[i] );
 	}
 }
 
@@ -1695,7 +1785,7 @@ char	**argv;
 	printf("Servers:\n");
 	for( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 		if( sp->sr_pc == PKC_NULL )  continue;
-		printf("  %2d  %s ", sp->sr_index, sp->sr_host->ht_host.h_name );
+		printf("  %2d  %s ", sp->sr_index, sp->sr_host->ht_name );
 		switch( sp->sr_started )  {
 		case SRST_NEW:
 			printf("Idle"); break;
@@ -1786,7 +1876,7 @@ char	**argv;
 	if( argc < 5 )  {
 		printf("Registered Host Table:\n");
 		for( ihp = HostHead; ihp != IHOST_NULL; ihp=ihp->ht_next )  {
-			printf("%s ", ihp->ht_host.h_name);
+			printf("%s ", ihp->ht_name);
 			switch(ihp->ht_when)  {
 			case HT_ALWAYS:
 				printf("always ");
