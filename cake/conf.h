@@ -54,9 +54,9 @@ typedef	int	Cast;
 #define	MAXARGS		128		/* BRL, was 64 */
 #define	MAXGSTACK	128
 #define	MAXARGSIZE	128
-#define	MAXPATSIZE	4096		/* BRL, was 512 */
-#define	MAXLEXBUF	4096		/* BRL, was 2048 */
-#define	MAXSIZE		4096		/* BRL, was 2048 */
+#define	MAXPATSIZE	(8*1024)	/* BRL, was 512 */
+#define	MAXLEXBUF	(8*1024)	/* BRL, was 2048 */
+#define	MAXSIZE		(16*1024)	/* BRL, was 2048 */
 #define	MAXSCRIPT	16384
 #define	MAXNEST		8
 #define	SIZE		97		/* size of tables */
