@@ -95,6 +95,7 @@ void	f_zoom();
 void	f_mouse();
 void	f_fracture();
 void	f_orientation();
+void	f_dm();
 
 static struct funtab {
 	char *ft_name;
@@ -152,6 +153,8 @@ static struct funtab {
 	f_debugmem, 1, 1,
 "debugnmg", "[hex code]", "Show/set debugging bit vector for NMG",
 	f_debugnmg,1,2,
+"dm", "set var=val", "Do display-manager specific command",
+	f_dm, 2, MAXARGS,
 "dup", "file [prefix]", "check for dup names in 'file'",
 	f_dup, 2, 3,
 "E", "<objects>", "evaluated edit of objects",
