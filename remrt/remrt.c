@@ -810,7 +810,13 @@ char	*why;
 	oldstate = sp->sr_state;
 	sp->sr_state = SRST_CLOSING;
 
-	rt_log("%s dropping %s (%s)\n", stamp(), sp->sr_host->ht_name, why);
+	/* Only remark on servers that got out of "NEW" state.
+	 * This keeps the one-shot commands from blathering here.
+	 */
+	if( oldstate != SRST_NEW )  {
+		rt_log("%s dropping %s (%s)\n",
+			 stamp(), sp->sr_host->ht_name, why);
+	}
 
 	pc = sp->sr_pc;
 	if( pc == PKC_NULL )  {
@@ -1686,6 +1692,7 @@ struct timeval		*nowp;
 {
 	register struct list	*lp;
 	int			a, b;
+	int			lump;
 
 	if( sp->sr_pc == PKC_NULL )  return(0);
 
@@ -1763,9 +1770,14 @@ struct timeval		*nowp;
 	 *	available network bandwidth & load
 	 *	local processing delays
 	 */
-	sp->sr_lump = assignment_time() * sp->sr_w_elapsed;
-	if( sp->sr_lump < 32 )  sp->sr_lump = 32;
-	if( sp->sr_lump > REMRT_MAX_PIXELS )  sp->sr_lump = REMRT_MAX_PIXELS;
+	/* Base new assignment on desired result rate & measured speed */
+	lump = assignment_time() * sp->sr_w_elapsed;
+	/* Limit growth in assignment size to 2X each assignment */
+	if( lump > 2*sp->sr_lump )  lump = 2*sp->sr_lump;
+	/* Provide some bounds checking */
+	if( lump < 32 )  lump = 32;
+	else if( lump > REMRT_MAX_PIXELS )  lump = REMRT_MAX_PIXELS;
+	sp->sr_lump = lump;
 
 	a = lp->li_start;
 	b = a+sp->sr_lump-1;	/* work increment */
