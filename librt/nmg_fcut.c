@@ -1491,7 +1491,9 @@ vect_t		dir;
 	rs->fu2 = fu2;
 	VMOVE( rs->pt, pt );
 	VMOVE( rs->dir, dir );
+/* XXX We can't assume that "dir" lies in the direction of an edge. */
 	VCROSS( rs->left, fu1->f_p->fg_p->N, dir );
+	VUNITIZE( rs->left );
 	switch( fu1->orientation )  {
 	case OT_SAME:
 		break;
