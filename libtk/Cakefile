@@ -17,21 +17,21 @@
 #define TK_OPTS	--srcdir=[[pwd]]/../SRCDIR/"unix" --cache-file cache.MTYPE \
 			 --exec-prefix=BASEDIR --prefix=BASEDIR \
 			 --x-includes=XINCDIR --x-libraries=XLIBDIR \
-			 --with-tcl=../TCL_DIR
+			 --with-tcl=../TCL_DIR --quiet
 #define PRODUCTS	libtk.a wish
 #define	AFTER_MAKE	/**/
 #else
 #define TK_OPTS	--srcdir=[[pwd]]/../SRCDIR/"unix" --enable-shared \
 			 --cache-file cache.MTYPE --exec-prefix=BASEDIR --prefix=BASEDIR \
 			 --x-includes=XINCDIR --x-libraries=XLIBDIR \
-			 --with-tcl=../TCL_DIR
+			 --with-tcl=../TCL_DIR --quiet
 #define PRODUCTS	libtk.so wish
 #define	SHARED_PRODUCT  libtk.so''[[LIBVERS]]
 #define	AFTER_MAKE	mv -f libtk.so SHARED_PRODUCT ; sharedliblink.sh SHARED_PRODUCT
 #endif
 
 PRODUCTS: Makefile.MTYPE cache.MTYPE
-	make -f Makefile.MTYPE
+	make `echo CAKEFLAGS | tr '\040' '\012' | grep -- -s` -f Makefile.MTYPE
 
 Makefile.MTYPE cache.MTYPE:		if not exist Makefile.MTYPE or not exist cache.MTYPE
 	( \C\F\L\A\G\S=\"GFLAG OPTIMIZER PROFILER -DTK_NO_SECURITY\"; \
@@ -47,9 +47,8 @@ clean&:
 noprod&:
 	rm -rf *.so *.a
 
-clobber&: Makefile.MTYPE
-	make -f Makefile.MTYPE clean
-	rm -f *.MTYPE
+clobber&: 
+	rm -f *.o *.a *.MTYPE tkConfig.sh config.log config.status Makefile
 
 install&: Makefile.MTYPE
 	make -f Makefile.MTYPE install
