@@ -20,6 +20,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 struct rt_nurb_internal	si;
 
+void make_face( point_t a, point_t b, point_t c, point_t d, int order);
+
 main(argc, argv)
 char	**argv;
 {
