@@ -77,7 +77,7 @@ set -S2 "/bin/sh"
  *								*
  ****************************************************************/
 #undef NFS
-
+#define NFS	1	/* BRL */
 
 /****************************************************************
  *								*
@@ -193,6 +193,7 @@ set -S2 "/bin/sh"
 #	define	HAS_TCP	1
 /*	set CC_OPTS= -Zf only if Weitek FP chip installed */
 #	define	CC_OPTS	-Zf
+#	define	FC_OPTS	CC_OPTS
 #	define	LD_OPTS	CC_OPTS
 #	define	FC	/bin/f77
 #	define	RANLIB	ranlib
@@ -328,6 +329,7 @@ set -S2 "/bin/sh"
 /*#	define	CC_OPTS	-fswitch*/
 /*#	define	CC_OPTS	-ffpa */
 #	define	CC_OPTS	-f68881
+#	define	FC_OPTS	CC_OPTS
 #	define	LD_OPTS	CC_OPTS
 #	define	LIBMALLOC	/* must use libc.a, for _malloc_at_addr() */
 #	define	LIBRT_TIMER	timer42
@@ -513,7 +515,7 @@ set -S2 "/bin/sh"
 #	define	MTYPE	eta
 #	define	HAS_TCP	0
 #	define	LIBRT_TIMER	timerunix
-#ifdef pyramid
+#endif
 
 #ifdef pyr
 #	define	UNIXTYPE	BSD
@@ -577,6 +579,10 @@ set -S2 "/bin/sh"
 
 #if !defined(CC_OPTS)
 #	define	CC_OPTS	/**/
+#endif
+
+#if !defined(FC_OPTS)
+#	define	FC_OPTS	/**/
 #endif
 
 #if !defined(LD_OPTS)
@@ -777,7 +783,7 @@ set -S2 "/bin/sh"
 
 /* Loader flags.  Note that CC is used to do the loading */
 #define	LDFLAGS	OPTIMIZER LD_OPTS CONFIGDEFS
-#define FFLAGS	OPTIMIZER
+
 /* FORTRAN flags */
 #define FFLAGS	OPTIMIZER FC_OPTS
 
