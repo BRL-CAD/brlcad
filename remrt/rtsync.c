@@ -180,6 +180,7 @@ static	FBIO	*fbp;
 static	char	*framebuffer;
 static	int	width = 0;		/* use default size */
 static	int	height = 0;
+int		debug = 0;
 
 CONST char	*database;
 struct bu_vls	treetops;
@@ -193,7 +194,7 @@ char	*stamp();
 
 
 static char usage[] = "\
-Usage:  rtsync [-h] [-S squaresize] [-W width] [-N height] [-F framebuffer]\n\
+Usage:  rtsync [-d#] [-h] [-S squaresize] [-W width] [-N height] [-F framebuffer]\n\
 ";
 
 /*
@@ -204,8 +205,11 @@ register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "hF:s:w:n:S:W:N:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "d:hF:s:w:n:S:W:N:" )) != EOF )  {
 		switch( c )  {
+		case 'd':
+			debug = atoi(optarg);
+			break;
 		case 'h':
 			/* high-res */
 			height = width = 1024;
@@ -663,6 +667,7 @@ vrmgr_ph_pov(pc, buf)
 register struct pkg_conn *pc;
 char			*buf;
 {
+	if( debug )  bu_log("%s %s\n", stamp(), buf);
 	if( pending_pov )  free(pending_pov);
 	pending_pov = buf;
 }
