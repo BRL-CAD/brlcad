@@ -247,8 +247,8 @@ register struct application *ap;
 		/* MSWISS -- real-time multi-spectral case */
 		unsigned char obuf[4096];
 		int i;
-		struct bn_tabdata *line = (struct bn_tabdata *)
-			scanline[ap->a_y].sl_buf;
+		char *line = (char *)scanline[ap->a_y].sl_buf;
+		struct bn_tabdata *sp;
 		int npix;
 
 		/* Convert from spectral to monochrome image */
@@ -256,30 +256,33 @@ register struct application *ap;
 		extern double	filter_gain;
 		extern int	filter_freq_index;
 /* Hack, re-equalize per line */
+#if 1
 {
 double lo = INFINITY, hi = -INFINITY;
 	for( i=0; i<width; i++ )  {
-		register double tmp = line[i].y[filter_freq_index];
+		register double tmp;
+		sp = (struct bn_tabdata *)(line + i * BN_SIZEOF_TABDATA(spectrum));
+		tmp = sp->y[filter_freq_index];
 		if( tmp < lo ) lo = tmp;
 		if( tmp > hi ) hi = tmp;
 	}
 	filter_bias = lo;
 	filter_gain = 255/(hi-lo);
-fprintf(stderr,"y=%d, freq=%d, lo=%g, hi=%g\n", ap->a_y, filter_freq_index, lo, hi);
 }
+#endif
 
 		BN_CK_TABDATA(line);
 		BU_ASSERT( width < sizeof(obuf) );
 		/* A variety of filters could be used here, eventually */
 		for( i=0; i<width; i++ )  {
 			register double tmp;
+			sp = (struct bn_tabdata *)(line + i * BN_SIZEOF_TABDATA(spectrum));
 			tmp = filter_gain *
-				(line[i].y[filter_freq_index] - filter_bias);
+				(sp->y[filter_freq_index] - filter_bias);
 			if( tmp <= 0 )  obuf[i] = 0;
 			else if( tmp >= 255 )  obuf[i] = 255;
 			else obuf[i] = (unsigned char)tmp;
 		}
-		obuf[ap->a_y] = ap->a_y;	/* debug */
 
 		/* Output the scanline */
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
