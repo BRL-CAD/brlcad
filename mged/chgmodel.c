@@ -88,6 +88,10 @@ char	**argv;
 
 	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 	  return TCL_ERROR;
+	if( (dp->d_flags & DIR_COMB) == 0 )  {
+	  Tcl_AppendResult(interp, dp->d_namep, ": not a combination\n", (char *)NULL);
+	  return TCL_ERROR;
+	}
 
 	air = ident = 0;
 	ident = atoi( argv[2] );
@@ -98,10 +102,6 @@ char	**argv;
 	}
 	if( db_get( dbip,  dp, &record, 0 , 1) < 0 ) {
 	  TCL_READ_ERR_return;
-	}
-	if( record.u_id != ID_COMB ) {
-	  Tcl_AppendResult(interp, dp->d_namep, ": not a combination\n", (char *)NULL);
-	  return TCL_ERROR;
 	}
 	if( record.c.c_flags != 'R' ) {
 	  Tcl_AppendResult(interp, dp->d_namep, ": not a region\n", (char *)NULL);
@@ -136,14 +136,13 @@ char	**argv;
 	
 	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 	  return TCL_ERROR;
+	if( (dp->d_flags & DIR_COMB) == 0 )  {
+	  Tcl_AppendResult(interp, dp->d_namep, ": not a combination\n", (char *)NULL);
+	  return TCL_ERROR;
+	}
 
 	if( db_get( dbip, dp, &record, 0 , 1) < 0 ) {
 	  TCL_READ_ERR_return;
-	}
-
-	if( record.u_id != ID_COMB )  {
-	  Tcl_AppendResult(interp, dp->d_namep, ": not a combination\n", (char *)NULL);
-	  return TCL_ERROR;
 	}
 
 	if( argc >= 3 )  {
@@ -372,15 +371,14 @@ char    *argv[];
       status = TCL_ERROR;
       continue;
     }
-
-    if( db_get( dbip, dp, &record, 0 , 1) < 0 ){
-      TCL_READ_ERR;
+    if( (dp->d_flags & DIR_COMB) == 0 )  {
+      Tcl_AppendResult(interp, dp->d_namep, ": not a combination\n", (char *)NULL);
       status = TCL_ERROR;
       continue;
     }
 
-    if( record.u_id != ID_COMB ) {
-      Tcl_AppendResult(interp, dp->d_namep, ": not a combination\n", (char *)NULL);
+    if( db_get( dbip, dp, &record, 0 , 1) < 0 ){
+      TCL_READ_ERR;
       status = TCL_ERROR;
       continue;
     }
@@ -543,16 +541,14 @@ char	**argv;
 
     if ((dp = db_lookup(dbip,  argv[1], LOOKUP_NOISY)) == DIR_NULL)
       return TCL_ERROR;
+    if( (dp->d_flags & DIR_COMB) == 0 )  {
+      Tcl_AppendResult(interp, dp->d_namep, ": not a combination\n", (char *)NULL);
+      return TCL_ERROR;
+    }
 
     if (db_get(dbip,  dp, &record, 0 , 1) < 0)
     {
       TCL_READ_ERR_return;
-    }
-
-    if (record.u_id != ID_COMB)
-    {
-      Tcl_AppendResult(interp, dp->d_namep, ": not a combination\n", (char *)NULL);
-      return TCL_ERROR;
     }
 
     for (i = 0; i < 3; ++i)
@@ -596,14 +592,13 @@ char	**argv;
 
 	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 	  return TCL_ERROR;
+	if( (dp->d_flags & DIR_COMB) == 0 )  {
+	  Tcl_AppendResult(interp, dp->d_namep, ": not a combination\n", (char *)NULL);
+	  return TCL_ERROR;
+	}
 
 	if( db_get( dbip,  dp, &record, 0 , 1) < 0 ) {
 	  TCL_READ_ERR_return;
-	}
-
-	if( record.u_id != ID_COMB )  {
-	  Tcl_AppendResult(interp, dp->d_namep, ": not a combination\n", (char *)NULL);
-	  return TCL_ERROR;
 	}
 
 	strncpy( record.c.c_matname, argv[2], sizeof(record.c.c_matname)-1 );
@@ -1206,6 +1201,10 @@ char	**argv;
 
 	if( (dp = db_lookup( dbip,  argv[1], LOOKUP_NOISY )) == DIR_NULL )
 	  return TCL_ERROR;
+	if( (dp->d_flags & DIR_COMB) == 0 )  {
+	  Tcl_AppendResult(interp, dp->d_namep, ": not a combination\n", (char *)NULL);
+	  return TCL_ERROR;
+	}
 
 	regionid = atoi( argv[3] );
 	air = atoi( argv[4] );
@@ -1214,10 +1213,6 @@ char	**argv;
 
 	if( db_get( dbip,  dp, &record, 0 , 1) < 0 ) {
 	  TCL_READ_ERR_return;
-	}
-	if( record.u_id != ID_COMB ) {
-	  Tcl_AppendResult(interp, dp->d_namep, ": not a combination\n", (char *)NULL);
-	  return TCL_ERROR;
 	}
 
 	if( argv[2][0] == 'R' )
