@@ -57,15 +57,15 @@ struct resource rt_uniresource;		/* Resources for uniprocessor */
 	if( ap->a_ray.r_dir[_ax] == 0.0 )  { \
 		ssp->tv[_ax] = INFINITY; \
 	} else if( ap->a_ray.r_dir[_ax] > 0 ) { \
-		ssp->tv[_ax] = (rti_nu_axis[_ax][_cno].nu_epos - \
+		ssp->tv[_ax] = (ap->a_rt_i->rti_nu_axis[_ax][_cno].nu_epos - \
 				ssp->newray.r_pt[_ax]) * ssp->inv_dir[_ax]; \
 	} else { \
-		ssp->tv[_ax] = (rti_nu_axis[_ax][_cno].nu_spos - \
+		ssp->tv[_ax] = (ap->a_rt_i->rti_nu_axis[_ax][_cno].nu_spos - \
 				ssp->newray.r_pt[_ax]) * ssp->inv_dir[_ax]; \
 	}
 #define NUGRID_T_ADV(_ax,_cno)  \
 	if( ap->a_ray.r_dir[_ax] != 0 )  { \
-		ssp->tv[_ax] += rti_nu_axis[_ax][_cno].nu_width * \
+		ssp->tv[_ax] += ap->a_rt_i->rti_nu_axis[_ax][_cno].nu_width * \
 			ssp->abs_inv_dir[_ax]; \
 	}
 
@@ -113,11 +113,6 @@ register struct shootray_status	*ssp;
 /*
  *  This version uses Gigante's non-uniform 3-D space grid/mesh discretization.
  */
-
-#define rti_nu_axis		(ap->a_rt_i->rti_nu_axis)
-#define rti_nu_cells_per_axis	(ap->a_rt_i->rti_nu_cells_per_axis)
-#define rti_nu_stepsize 	(ap->a_rt_i->rti_nu_stepsize)
-#define rti_nu_grid		(ap->a_rt_i->rti_nu_grid)			
 		if( ssp->lastcut == &(ap->a_rt_i->rti_inf_box) )  {
 			if( rt_g.debug & DEBUG_ADVANCE )  {
 				bu_log("rt_advance_to_next_cell(): finished infinite solids\n");
@@ -142,9 +137,9 @@ register struct shootray_status	*ssp;
 
 			if( x<0 || y<0 || z<0 ) break;
 
-			cutp = &rti_nu_grid[z*rti_nu_stepsize[Z] +
-					    y*rti_nu_stepsize[Y] +
-					    x*rti_nu_stepsize[X]];
+			cutp = &ap->a_rt_i->rti_nu_grid[z*ap->a_rt_i->rti_nu_stepsize[Z] +
+					    y*ap->a_rt_i->rti_nu_stepsize[Y] +
+					    x*ap->a_rt_i->rti_nu_stepsize[X]];
 
 			ssp->igrid[X] = x;
 			ssp->igrid[Y] = y;
@@ -165,13 +160,13 @@ if(rt_g.debug&DEBUG_ADVANCE)bu_log("igrid=(%d, %d, %d)\n", ssp->igrid[X], ssp->i
 			ssp->t0 = ssp->t1;
 			if( ap->a_ray.r_dir[ssp->out_axis] > 0.0 ) {
 				if( ++(ssp->igrid[ssp->out_axis]) >=
-				    rti_nu_cells_per_axis[ssp->out_axis] )
+			     ap->a_rt_i->rti_nu_cells_per_axis[ssp->out_axis] )
 					break;
-				cutp += rti_nu_stepsize[ssp->out_axis];
+				cutp += ap->a_rt_i->rti_nu_stepsize[ssp->out_axis];
 			} else {
 				if( --(ssp->igrid[ssp->out_axis]) < 0 )
 					break;
-				cutp -= rti_nu_stepsize[ssp->out_axis];
+				cutp -= ap->a_rt_i->rti_nu_stepsize[ssp->out_axis];
 			}
 			NUGRID_T_ADV( ssp->out_axis, ssp->igrid[ssp->out_axis] );
 if(rt_g.debug&DEBUG_ADVANCE)bu_log("igrid=(%d, %d, %d)\n", ssp->igrid[X], ssp->igrid[Y], ssp->igrid[Z]);
