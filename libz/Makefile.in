@@ -95,7 +95,7 @@ minigzip: minigzip.o $(LIBS)
 install: $(LIBS)
 	-@if [ ! -d $(includedir)  ]; then mkdir $(includedir); fi
 	-@if [ ! -d $(libdir) ]; then mkdir $(libdir); fi
-	cp zlib.h zconf.h $(includedir)
+	cp ../h/zlib.h ../h/zconf.h $(includedir)
 	chmod 644 $(includedir)/zlib.h $(includedir)/zconf.h
 	cp $(LIBS) $(libdir)
 	cd $(libdir); chmod 755 $(LIBS)
