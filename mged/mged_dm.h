@@ -144,3 +144,10 @@ extern struct veclist *vlend;	/* pointer to first invalid veclist element */
 #define DM_BLUE		2
 #define DM_YELLOW	3
 #define DM_WHITE	4
+
+/* Command parameter to dmr_viewchange() */
+#define DM_CHGV_REDO	0	/* Display has changed substantially */
+#define DM_CHGV_ADD	1	/* Add an object to the display */
+#define DM_CHGV_DEL	2	/* Delete an object from the display */
+#define DM_CHGV_REPL	3	/* Replace an object */
+#define DM_CHGV_ILLUM	4	/* Make new object the illuminated object */
