@@ -58,6 +58,11 @@ int rb_insert		(
 			    rb_tree	*tree,
 			    void	*data
 			);
+void *rb_search		(
+			    rb_tree	*tree,
+			    int		order,
+			    void	*datum
+			);
 void rb_walk		(
 			    rb_tree	*tree,
 			    int		order,
