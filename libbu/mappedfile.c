@@ -321,12 +321,15 @@ void
 bu_free_mapped_files(verbose)
 int	verbose;
 {
-	struct bu_mapped_file	*mp;
+	struct bu_mapped_file	*mp, *next;
 
 	bu_semaphore_acquire(BU_SEM_MAPPEDFILE);
 
-	for( BU_LIST_FOR( mp, bu_mapped_file, &bu_mapped_file_list ) )  {
-		BU_CK_MAPPED_FILE(mp);
+	next = BU_LIST_FIRST( bu_mapped_file, &bu_mapped_file_list );
+	while( BU_LIST_NOT_HEAD( next, &bu_mapped_file_list ) )  {
+		BU_CK_MAPPED_FILE(next);
+		mp = next;
+		next = BU_LIST_NEXT( bu_mapped_file, &mp->l );
 
 		if( mp->uses > 0 )  continue;
 
@@ -354,10 +357,6 @@ int	verbose;
 			bu_free( mp->buf, "bu_mapped_file.buf[]" );
 		}
 		mp->buf = (genptr_t)NULL;		/* sanity */
-		if( mp->apbuf )  {
-			bu_free( mp->apbuf, "bu_mapped_file.apbuf[]" );
-			mp->apbuf = (genptr_t)NULL;	/* sanity */
-		}
 		bu_free( (genptr_t)mp->name, "bu_mapped_file.name" );
 		if( mp->appl )  bu_free( (genptr_t)mp->appl, "bu_mapped_file.appl" );
 		bu_free( (genptr_t)mp, "struct bu_mapped_file" );
