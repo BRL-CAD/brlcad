@@ -275,6 +275,13 @@ set -S2 "/bin/sh"
 #		define	RANLIB	ranlib5.sh
 #		define	STANDARD_LIBES	-L/usr/lib -lm -lmalloc -lc_s
 #		define	LD_OPTS		GFLAG
+#if 1
+#       define  XINCDIR /usr/X11/include
+#       define  XLIBDIR /usr/X11/lib
+#else
+#       define  XINCDIR /usr/include/X11
+#       define  XLIBDIR /usr/lib
+#endif
 #if 0
 #		define	LIBFB_LIBES	LIBPKG -L''XLIBDIR -lGL -lgl -lXt -lXm -lX11
 #else
