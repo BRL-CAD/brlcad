@@ -6,13 +6,22 @@
  *	John R. Anderson
  *  
  *  Source -
- *      The US Army Research Laboratory
- *      Aberdeen Proving Ground, Maryland  21005-5066
+ *	The U. S. Army Research Laboratory
+ *	Aberdeen Proving Ground, Maryland  21005-5068  USA
+ *  
+ *  Distribution Notice -
+ *	Re-distribution of this software is restricted, as described in
+ *	your "Statement of Terms and Conditions for the Release of
+ *	The BRL-CAD Package" agreement.
  *
  *  Copyright Notice -
- *	This software is Copyright (C) 1993 by the United States Army.
- *	All rights reserved.
+ *	This software is Copyright (C) 1994 by the United States Army
+ *	in all countries except the USA.  All rights reserved.
  */
+#ifndef lint
+static char RCSid[] = "@(#)$Header$ (ARL)";
+#endif
+
 #include "conf.h"
 #include <stdio.h>
 #include <math.h>
@@ -43,7 +52,6 @@ struct rt_tol	*tol;	/* NMG tolerances. */
 {
 	fastf_t		cosang;
 	int		nfaces;
-	struct edgeuse	*eu;
 	struct faceuse	*fu2, *nmg_dup_face(), **outfaces;
 	int		face_count=2;
 	struct loopuse	*lu, *lu2;
@@ -536,7 +544,8 @@ CONST struct rt_tol *tol;
 				{
 					struct edgeuse *new_eu;
 
-					if( dist[0]>0.0 && dist[0]<1.0 && dist[1]>=0.0 && dist[2]<=1.0 )
+					if( dist[0]>0.0 && dist[0]<1.0 &&
+					    dist[1]>=0.0 && dist[1]<=1.0 )
 					{
 						point_t pt;
 
@@ -815,12 +824,9 @@ CONST struct rt_tol *tol;
 	struct nmgregion *new_r;
 	struct faceuse *fu;
 	struct loopuse *lu;
-	struct edgeuse *eu;
 	struct vertexuse *vu;
 	struct nmgregion *old_r;
 	struct shell *s_tmp;
-	int inside_shells;
-	int i,j;
 
 	NMG_CK_SHELL( is );
 	RT_CK_TOL( tol );
@@ -839,19 +845,13 @@ CONST struct rt_tol *tol;
 	/* look for self-touching loops */
 	for( RT_LIST_FOR( fu , faceuse , &is->fu_hd ) )
 	{
-		struct loopuse *lu1;
-		plane_t plane;
-
 		if( fu->orientation != OT_SAME )
 			continue;
-
-		NMG_GET_FU_PLANE( plane , fu );
 
 		lu = RT_LIST_LAST( loopuse , &fu->lu_hd );
 		while( RT_LIST_NOT_HEAD( lu , &fu->lu_hd ) )
 		{
 			struct loopuse *new_lu;
-			struct faceuse *new_fu;
 			int orientation;
 
 			/* check this loopuse */
@@ -900,8 +900,8 @@ CONST struct rt_tol *tol;
 	if( nmg_ks( s_tmp ) )
 		rt_bomb( "nmg_extrude_shell: Nothing got moved to new region\n" );
 
-	/* now decompose our shell */
-	if( (inside_shells=nmg_decompose_shell( is , tol )) < 2 )
+	/* now decompose our shell, count number of inside shells */
+	if( (nmg_decompose_shell( is , tol )) < 2 )
 	{
 		/*  we still have only one shell */
 		if( nmg_bad_face_normals( is , tol ) )
@@ -1013,7 +1013,6 @@ CONST int approximate;
 CONST struct rt_tol *tol;
 {
 	struct nmgregion *new_r,*old_r;
-	struct vertex *v;
 	struct vertexuse *vu;
 	struct edgeuse *eu;
 	struct loopuse *lu;
@@ -1022,13 +1021,11 @@ CONST struct rt_tol *tol;
 	struct model *m;
 	struct shell *is;	/* inside shell */
 	struct shell *s_tmp;
-	struct nmg_ptbl vertex_uses,faces;
 	struct nmg_ptbl shells;
 	long *flags;
 	long **copy_tbl;
 	int shell_no;
 	int is_void;
-	int i,j;
 
 	if( rt_g.NMG_debug & DEBUG_BASIC )
 		rt_log( "nmg_extrude_shell( s=x%x , thick=%f)\n" , s , thick );
