@@ -406,7 +406,7 @@ the grid, then close the control panel." } }
     hoc_register_data $top.applyB "Apply"\
 	    { { summary "Apply grid control panel settings to the grid." } }
     button $top.resetB -relief raised -text "Reset"\
-	    -command "grid_control_reset $id $top"
+	    -command "grid_control_reset $id"
     hoc_register_data $top.resetB "Reset"\
 	    { { summary "Reset the control panel from the grid." } }
     button $top.autosizeB -relief raised -text "Autosize"\
@@ -483,7 +483,7 @@ The tick spacing will be a power of 10 in local units." } }
     grid columnconfigure $top 0 -weight 1
     grid columnconfigure $top 0 -minsize 400
 
-    grid_control_reset $id $top
+    grid_control_reset $id
     set grid_control($id,square) 1
     set_grid_square $id
 
@@ -531,10 +531,14 @@ proc grid_control_apply { id } {
     set mged_grid($id,snap) $grid_control($id,snap)
 }
 
-proc grid_control_reset { id top } {
+proc grid_control_reset { id } {
     global mged_active_dm
     global mged_grid
     global grid_control
+
+    if ![winfo exists .$id.grid_control] {
+	return
+    }
 
     winset $mged_active_dm($id)
 
