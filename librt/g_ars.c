@@ -1280,14 +1280,26 @@ char			**argv;
 			else if( i > ars->ncurves ) {
 				ars->curves = (fastf_t **)bu_realloc( ars->curves,
 						    i*sizeof( fastf_t *), "ars->curves" );
-				/* new curves are duplicates of the last */
-				for( j=ars->ncurves ; j<i ; j++ ) {
-					ars->curves[j] = (fastf_t *)bu_malloc(
-					      ars->pts_per_curve * 3 * sizeof( fastf_t ),
-					      "ars->curves[j]" );
-					for( k=0 ; k<ars->pts_per_curve ; k++ ) {
-						VMOVE( &ars->curves[j][k*3],
-						       &ars->curves[j-1][k*3] );
+				if( ars->pts_per_curve ) {
+				        /* new curves are duplicates of the last */
+					for( j=ars->ncurves ; j<i ; j++ ) {
+					    ars->curves[j] = (fastf_t *)bu_malloc(
+						 ars->pts_per_curve * 3 * sizeof( fastf_t ),
+								    "ars->curves[j]" );
+					    for( k=0 ; k<ars->pts_per_curve ; k++ ) {
+						 if ( j ) {
+							 VMOVE( &ars->curves[j][k*3],
+								&ars->curves[j-1][k*3] );
+						 }
+						 else {
+							 VSETALL(&ars->curves[j][k*3], 0.0);
+						 }
+					    }
+					}
+				}
+				else {
+					for( j=ars->ncurves ; j<i ; j++ ) {
+						ars->curves[j] = NULL;
 					}
 				}
 				ars->ncurves = i;
@@ -1317,8 +1329,13 @@ char			**argv;
 						    "ars->curves[j]" );
 					/* new points are duplicates of last */
 					for( k=ars->pts_per_curve ; k<i ; k++ ) {
-						VMOVE( &ars->curves[j][k*3],
-						       &ars->curves[j][(k-1)*3] );
+						if( k ) {
+							VMOVE( &ars->curves[j][k*3],
+							       &ars->curves[j][(k-1)*3] );
+						}
+						else {
+							VSETALL( &ars->curves[j][k*3], 0 );
+						}
 					}
 				}
 				ars->pts_per_curve = i;
