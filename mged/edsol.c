@@ -6200,16 +6200,6 @@ oedit_accept()
 		bu_log( "Sorry, this database is READ-ONLY\n" );
 		pr_prompt();
 
-#ifdef DO_SINGLE_DISPLAY_LIST
-		save_dmlp = curr_dm_list;
-		FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
-		  if(dmlp->dml_dmp->dm_displaylist && dmlp->dml_mged_variables->mv_dlist){
-		    curr_dm_list = dmlp;
-		    createDList(&HeadSolid);
-		  }
-		}
-		curr_dm_list = save_dmlp;
-#endif
 		return;
 	}
 
@@ -6265,17 +6255,6 @@ oedit_accept()
 		(void)replot_original_solid( sp );
 		sp->s_iflag = DOWN;
 	}
-
-#ifdef DO_SINGLE_DISPLAY_LIST
-	save_dmlp = curr_dm_list;
-	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
-	  if(dmlp->dml_dmp->dm_displaylist && dmlp->dml_mged_variables->mv_dlist){
-	    curr_dm_list = dmlp;
-	    createDList(&HeadSolid);
-	  }
-	}
-	curr_dm_list = save_dmlp;
-#endif
 
 	bn_mat_idn( modelchanges );
 	bn_mat_idn( acc_rot_sol );
@@ -6394,17 +6373,6 @@ sedit_accept()
 	if( sedraw > 0)
 	  sedit();
 
-#ifdef DO_SINGLE_DISPLAY_LIST
-	save_dmlp = curr_dm_list;
-	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
-	  if(dmlp->dml_dmp->dm_displaylist && dmlp->dml_mged_variables->mv_dlist){
-	    curr_dm_list = dmlp;
-	    createDList(&HeadSolid);
-	  }
-	}
-	curr_dm_list = save_dmlp;
-#endif
-
 	es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
 	es_pipept = (struct wdb_pipept *)NULL; /* Reset es_pipept */
 	if( lu_copy )
@@ -6479,17 +6447,6 @@ sedit_reject()
 	      (void)replot_original_solid( sp );
 	  }
 	}
-
-#ifdef DO_SINGLE_DISPLAY_LIST
-	save_dmlp = curr_dm_list;
-	FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l){
-	  if(dmlp->dml_dmp->dm_displaylist && dmlp->dml_mged_variables->mv_dlist){
-	    curr_dm_list = dmlp;
-	    createDList(&HeadSolid);
-	  }
-	}
-	curr_dm_list = save_dmlp;
-#endif
 
 	menu_state->ms_flag = 0;
 	movedir = 0;

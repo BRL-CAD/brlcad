@@ -1238,10 +1238,6 @@ char	**argv;
 	  }
 
 	  color_soltab();
-
-#ifdef DO_SINGLE_DISPLAY_LIST
-	  createDList(&HeadSolid);
-#endif
 	}
 
 	curr_dm_list = save_dmlp;
