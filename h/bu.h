@@ -870,6 +870,16 @@ struct bu_attribute_value_set {
 #define BU_AVS_FOR(_pp, _avp)	\
 	(_pp) = &(_avp)->avp[(_avp)->count-1]; (_pp) >= (_avp)->avp; (_pp)--
 
+/*
+ *  Some (but not all) attribute name and value string pointers are
+ *  taken from an on-disk format bu_external block,
+ *  while others have been bu_strdup()ed and need to be freed.
+ *  This macro indicates whether the pointer needs to be freed or not.
+ */
+#define AVS_IS_FREEABLE(_avsp, _p)	\
+	( (_avsp)->readonly_max == NULL || \
+	    ((_p) < (_avsp)->readonly_min || (_p) > (_avsp)->readonly_max) )
+
 /*----------------------------------------------------------------------*/
 /* vls.c */
 /*
@@ -907,6 +917,41 @@ struct bu_vls  {
 /* These are global because BU_SETJUMP must be macro.  Please don't touch. */
 extern int	bu_setjmp_valid;		/* !0 = bu_jmpbuf is valid */
 extern jmp_buf	bu_jmpbuf;			/* for BU_SETJMP() */
+
+/*-------------------------------------------------------------------------*/
+/* 			B U _ M R O
+ *
+ *	Support for Multiply Represented Objects
+ */
+
+struct bu_mro {
+	long		magic;
+	struct bu_vls	string_rep;
+	char		long_rep_is_valid;
+	long		long_rep;
+	char		double_rep_is_valid;
+	double		double_rep;
+};
+
+#define BU_MRO_MAGIC	0x4D524F4F	/* MROO */
+#define BU_CK_MRO(_vp)		BU_CKMAG(_vp, BU_MRO_MAGIC, "bu_mro")
+
+#define BU_MRO_INVALIDATE(_p ) {\
+	_p->long_rep_is_valid = '\0';\
+	_p->long_rep = 0;\
+	_p->double_rep_is_valid = '\0';\
+	_p->double_rep = 0.0;\
+}
+
+#define BU_MRO_GETDOUBLE( _p ) ( _p->double_rep_is_valid ? _p->double_rep : \
+	(_p->double_rep = strtod( bu_vls_addr( &_p->string_rep ), NULL ), \
+	( _p->double_rep_is_valid='y', _p->double_rep ) ) )
+
+#define BU_MRO_GETLONG( _p ) ( _p->long_rep_is_valid ? _p->long_rep : \
+	(_p->long_rep = strtol( bu_vls_addr( &_p->string_rep ), NULL, 10 ), \
+	( _p->long_rep_is_valid='y', _p->long_rep ) ) )
+
+#define BU_MRO_GETSTRING( _p ) bu_vls_addr( &_p->string_rep )
 
 /*----------------------------------------------------------------------*/
 /*
@@ -1277,7 +1322,7 @@ extern int			bu_avs_add_vls(struct bu_attribute_value_set *avp,
 				const char *attribute,
 				const struct bu_vls *value_vls);
 void				bu_avs_merge( struct bu_attribute_value_set *dest,
-				struct bu_attribute_value_set *src );
+				const struct bu_attribute_value_set *src );
 extern const char *		bu_avs_get( const struct bu_attribute_value_set *avp,
 				const char *attribute );
 BU_EXTERN(int			bu_avs_remove, (struct bu_attribute_value_set *avp,
@@ -1785,6 +1830,12 @@ int bu_lex(
 	struct bu_lex_key *keywords,
 	struct bu_lex_key *symbols);
 
+
+/* mro.c */
+void bu_mro_init_with_string( struct bu_mro *mrop, const char *string );
+void bu_mro_set( struct bu_mro *mrop, const char *string );
+void bu_mro_init( struct bu_mro *mrop );
+void bu_mro_free( struct bu_mro *mrop );
 
 #ifdef __cplusplus
 }

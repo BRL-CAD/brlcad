@@ -569,6 +569,9 @@ struct region  {
 #define REGION_NON_FASTGEN	0
 #define REGION_FASTGEN_PLATE	1
 #define REGION_FASTGEN_VOLUME	2
+	struct bu_mro	**attr_values;	/* Null terminated array of MRO structs
+					 * Each containing a value for the corresponding
+					 * attribute name passed to rt_gettrees_and_attrs() */
 };
 #define REGION_NULL	((struct region *)0)
 #define RT_REGION_MAGIC	0xdffb8001
@@ -961,6 +964,7 @@ struct db_tree_state {
 			/* XXX ts_mat should be a matrix pointer, not a matrix */
 	mat_t		ts_mat;		/* transform matrix */
 	int		ts_is_fastgen;	/* REGION_NON_FASTGEN/_PLATE/_VOLUME */
+	struct bu_attribute_value_set	ts_attrs;	/* attribute/value structure */
 
 	int		ts_stop_at_regions;	/* else stop at solids */
 	int		(*ts_region_start_func) BU_ARGS((
@@ -1526,6 +1530,9 @@ struct application  {
 	fastf_t		a_diverge;	/* slope of beam divergance/mm */
 	int		a_return;	/* Return of a_hit()/a_miss() */
 	int		a_no_booleans;	/* 1= partitions==segs, no booleans */
+	char		**attrs;	/* null terminated list of attributes
+					 * This list should be the same as passed to
+					 * rt_gettrees_and_attrs() */
 	/* THESE ELEMENTS ARE USED BY THE PROGRAM "rt" AND MAY BE USED BY */
 	/* THE LIBRARY AT SOME FUTURE DATE */
 	/* AT THIS TIME THEY MAY BE LEFT ZERO */
