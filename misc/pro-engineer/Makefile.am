@@ -45,44 +45,68 @@ proe_brl_SOURCES = proe-brl.c
 # libproe2brl_sodir = @PRO_ENGINEER_DIR@/$(PRO_MACHINE_TYPE)
 
 libproe2brl.so: mk
-	make -f mk lib
+	make -f mk dll
 
 all-am: Makefile
 	@if test "x$(MAKECMDGOALS)" = "xall-am" -o "x$(.TARGETS)" = "xall-am" -o "x$(MAKECMDGOALS)" = "x" -a "x$(.TARGETS)" = "x" ; then \
 	  @ECHO@ "---" ; \
 	  @ECHO@ "Run 'make plugin' from misc/pro-engineer before 'make install' to build the Pro-Engineer plugin." ; \
+	  @ECHO@ "Run 'make plugin2' from misc/pro-engineer before 'make install' to build a .so Pro-Engineer plugin." ; \
 	  @ECHO@ ; \
 	fi
 
-#install-data-local:
-#	@if test -f .libs/proe-brl ; then \
-#		@ECHO@ "Installing proe-brl" ; \
-#		$(INSTALL) .libs/proe-brl $(DESTDIR)$(proebindir)/proe-brl ; \
-#	fi
-#	@if test -f libproe2brl.so ; then \
-#		@ECHO@ "Installing libproe2brl.so" ; \
-#		$(INSTALL) libproe2brl.so $(DESTDIR)$(proelibdir)/libproe2brl.so ; \
-#	fi
-
-unlock: proe-brl libproe2brl.la
-	@if test -f proe-brl ; then \
-		$(PROTK_UNLOCK) proe-brl ; \
-	else \
-		@ECHO@ "Run 'make install' before running 'make unlock'" ; \
+install-data-local:
+	@if test -f .libs/proe-brl ; then \
+		@ECHO@ "Installing proe-brl" ; \
+		if ! test -d $(DESTDIR)$(proe_brldir) ; then \
+			mkdir -p $(DESTDIR)$(proe_brldir) ; \
+		fi ; \
+		$(INSTALL) .libs/proe-brl $(DESTDIR)$(proe_brldir)/proe-brl ; \
 	fi
 	@if test -f libproe2brl.so ; then \
-		$(PROTK_UNLOCK) libproe2brl.so ; \
-	else \
-		@ECHO@ "Run 'make install' before running 'make unlock'" ; \
+		@ECHO@ "Installing libproe2brl.so" ; \
+		if ! test -d $(DESTDIR)$(proe_brldir) ; then \
+			mkdir -p $(DESTDIR)$(proe_brldir) ; \
+		fi ; \
+		$(INSTALL) libproe2brl.so $(DESTDIR)$(proe_brldir)/libproe2brl.so ; \
 	fi
 
-plugin: proe-brl libproe2brl.la
+unlock:
+	@if test -x $(PROTK_UNLOCK) ; then \
+		if test -f .libs/proe-brl ; then \
+			$(PROTK_UNLOCK) .libs/proe-brl ; \
+		else \
+			@ECHO@ "Run 'make plugin' before running 'make unlock'" ; \
+		fi ; \
+	else \
+		@ECHO@ "The ProE unlock tool does not exist as $(PROTK_UNLOCK)" ; \
+		@ECHO@ "Set and verify PROTK_UNLOCK in misc/pro-engineer/Makefile" ; \
+	fi
+
+unlock2:
+	@if test -x $(PROTK_UNLOCK) ; then \
+		if test -f libproe2brl.so ; then \
+			$(PROTK_UNLOCK) libproe2brl.so ; \
+		else \
+			@ECHO@ "Run 'make plugin2' before running 'make unlock2'" ; \
+		fi ; \
+	else \
+		@ECHO@ "The ProE unlock tool does not exist as $(PROTK_UNLOCK)" ; \
+		@ECHO@ "Set and verify PROTK_UNLOCK in misc/pro-engineer/Makefile" ; \
+	fi
+
+plugin: proe-brl
 	@@ECHO@ "---"
 	@@ECHO@ "Run 'make unlock' to unlock the Pro-Engineer plugin for distribution"
 	@@ECHO@ "Run 'make install' to install the Pro-Engineer plugin into @PRO_ENGINEER_DIR@"
+	@@ECHO# "You will need to edit protk.dat to use this plugin instead of libproe2brl.so"
 	@@ECHO@
 
-unlock: plugin
+plugin2: libproe2brl.so
+	@@ECHO@ "---"
+	@@ECHO@ "Run 'make unlock2' to unlock the Pro-Engineer .so plugin for distribution"
+	@@ECHO@ "Run 'make install' to install the Pro-Engineer .so plugin into @PRO_ENGINEER_DIR@"
+	@@ECHO@
 
 proedir = @PRO_ENGINEER_DIR@
 tmsgdir = @PRO_ENGINEER_DIR@/text/usascii/
