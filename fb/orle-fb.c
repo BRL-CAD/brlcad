@@ -1,7 +1,7 @@
 /*
-	SCCS id:	@(#) rle-fb.c	1.5
-	Last edit: 	3/27/85 at 11:28:44
-	Retrieved: 	8/13/86 at 03:17:07
+	SCCS id:	@(#) rle-fb.c	1.6
+	Last edit: 	3/27/85 at 20:45:14
+	Retrieved: 	8/13/86 at 03:17:15
 	SCCS archive:	/m/cad/fb_utils/RCS/s.rle-fb.c
 
 	Author:		Gary S. Moss
@@ -12,7 +12,7 @@
  */
 #if ! defined( lint )
 static
-char	sccsTag[] = "@(#) rle-fb.c	1.5	last edit 3/27/85 at 11:28:44";
+char	sccsTag[] = "@(#) rle-fb.c	1.6	last edit 3/27/85 at 20:45:14";
 #endif
 #include <stdio.h>
 #include <fb.h>
@@ -23,18 +23,14 @@ char	sccsTag[] = "@(#) rle-fb.c	1.5	last edit 3/27/85 at 11:28:44";
 #else
 #define MAX_DMA	1024*16
 #endif
-#define PIXELS_PER_DMA	(MAX_DMA/sizeof(Pixel))
-#define SCANS_PER_DMA	(PIXELS_PER_DMA/fbsz)
-#define PIXEL_OFFSET	((scan_ln%scans_per_dma)*fbsz)
-#define Fbread_Dma( y )\
-		if( y >= scans_per_dma &&\
-		    fbread(0,(y)-scans_per_dma,scan_buf,pixels_per_dma)==-1)\
-			return 1;
+#define DMA_PIXELS	(MAX_DMA/sizeof(Pixel))
+#define DMA_SCANS	(DMA_PIXELS/fbsz)
+#define PIXEL_OFFSET	((scan_ln%dma_scans)*fbsz)
 
 typedef unsigned char	u_char;
 static char	*usage[] = {
 "",
-"rle-fb (1.5)",
+"rle-fb (1.6)",
 "",
 "Usage: rle-fb [-Odv][-b (rgbBG)][-p X Y] [file.rle]",
 "",
@@ -60,15 +56,15 @@ char	*argv[];
 	{
 	register int	scan_ln;
 	register int	fbsz = 512;
-	register int	scans_per_dma;
-	static Pixel	scan_buf[PIXELS_PER_DMA];
+	register int	dma_scans;
+	static Pixel	scans[DMA_PIXELS];
 	static Pixel	bg_scan[1024];
 	static ColorMap	cmap;
 	static int	get_flags;
 	static int	xlen, ylen;
 	static int	xpos, ypos;
 	static int	scan_bytes;
-	static int	pixels_per_dma;
+	static int	dma_pixels;
 
 	if( ! pars_Argv( argc, argv ) )
 		{
@@ -90,8 +86,8 @@ char	*argv[];
 		fbsz = 1024;
 		setfbsize( fbsz );
 		}
-	pixels_per_dma = PIXELS_PER_DMA;
-	scans_per_dma = SCANS_PER_DMA;
+	dma_pixels = DMA_PIXELS;
+	dma_scans = DMA_SCANS;
 	scan_bytes = fbsz * sizeof(Pixel);
 	if( fbopen( NULL, APPEND ) == -1 )
 		return	1;
@@ -149,59 +145,71 @@ char	*argv[];
 
 	{	register int	page_fault = 1;
 		register int	dirty_flag = 1;
-		register int	y_buffer = fbsz - scans_per_dma;
-
-	for( scan_ln = fbsz - 1; scan_ln >= fbsz - ylen; scan_ln-- )
+		register int	by = fbsz - dma_scans;
+		int		top = fbsz - ylen;
+	for( scan_ln = fbsz - 1; scan_ln >= 0; scan_ln-- )
 		{
 		if( page_fault )
 			{
 			if( olflag )
-				{ /* Overlay -- read cluster from fb.	*/
-				if(	fbread(	0,
-						y_buffer,
-						scan_buf,
-						pixels_per_dma
-						)
-				    ==	-1
-					)
+				{ /* Overlay - read cluster from fb.	*/
+				if( fbread( 0, by, scans, dma_pixels ) == -1 )
 					return	1;
 				}
 			else
 			if( (get_flags & NO_BOX_SAVE) && dirty_flag )
-				{ /* Fill buffer with background.	*/
-				register int	i;
-				register Pixel	*scan_ptr = scan_buf;
-				for( i = 0; i < scans_per_dma; ++i )
-					{
-					(void) memcpy(	(char *) scan_ptr,
-							(char *) bg_scan,
-							scan_bytes
-							);
-					scan_ptr += fbsz;
-					}
-				}
+				fill_Buffer(	(char *) scans,
+						(char *) bg_scan,
+						fbsz*sizeof(Pixel),
+						dma_scans
+						);
 			dirty_flag = 0;
 			page_fault = 0;
 			}
-		{ register int
-			touched = rle_decode_ln( fp, scan_buf+PIXEL_OFFSET );
+		if( scan_ln > top )
+			{ register int
+			touched = rle_decode_ln( fp, scans+PIXEL_OFFSET );
 
 			if( touched == -1 )
 				return	1;
 			else
 				dirty_flag += touched;
-		}
-		if( page_fault = ! (scan_ln%scans_per_dma) )
+			}
+		if( page_fault = ! (scan_ln%dma_scans) )
 			{
-			if( fbwrite( 0, y_buffer, scan_buf, pixels_per_dma )
+			if( fbwrite( 0, by, scans, dma_pixels )
 			    ==	-1
 				)
 				return	1;
-			y_buffer -= scans_per_dma;
+			by -= dma_scans;
 			}
 		} /* end for */
 	} /* end block */
 	return	0;
+	}
+
+/*	f i l l _ B u f f e r ( )
+	Fill cluster buffer from scanline (as fast as possible).
+ */
+fill_Buffer( buff_p, scan_p, scan_bytes, dma_scans )
+register char	*buff_p;	/* On VAX, known to be R11 */
+register char	*scan_p;	/* VAX R10 */
+register int	scan_bytes;	/* VAX R9 */
+register int	dma_scans;
+	{
+	register int	i;
+
+	for( i = 0; i < dma_scans; ++i )
+		{
+#if ! defined( vax ) || defined( lint )
+		(void) memcpy( buff_p, scan_p, scan_bytes );
+#else
+		/* Pardon the efficiency.  movc3 len,src,dest */
+		asm("	movc3	r9,(r10),(r11)");
+#endif
+		buff_p += scan_bytes;
+		}
+	return;
 	}
 
 /*	p a r s _ A r g v ( )
