@@ -81,8 +81,8 @@ struct slope	s;	/* vector between this axle and the previous axle */
 };
 
 /* external variables */
-extern int optind;
-extern char *optarg;
+extern int bu_optind;
+extern char *bu_optarg;
 
 /* variables describing track geometry - used by main, trackprep, get_link*/
 struct all *x;
@@ -152,8 +152,8 @@ char **argv;
 
 	/* get track information from specified file */
 	
-	if (!(stream = fopen(*(argv+optind),"r"))){
-		fprintf(stderr,"Track: Could not open file %s.\n",*(argv+optind));
+	if (!(stream = fopen(*(argv+bu_optind),"r"))){
+		fprintf(stderr,"Track: Could not open file %s.\n",*(argv+bu_optind));
 		return(0);
 	}
 	num_wheels = -1;
@@ -377,7 +377,7 @@ char **argv;
 	len_mode = TRACK_MIN;
 	anti_strobe = 0;
 
-        while ( (c=getopt(argc,argv,OPT_STR)) != EOF) {
+        while ( (c=bu_getopt(argc,argv,OPT_STR)) != EOF) {
                 i=0;
                 switch(c){
                 case 's':
@@ -396,88 +396,88 @@ char **argv;
                 	read_wheels = 1;
                 	break;
                 case 'b':
-                	optind -= 1;
-                        sscanf(argv[optind+(i++)],"%lf", &yaw );
-                        sscanf(argv[optind+(i++)],"%lf", &pch );
-                        sscanf(argv[optind+(i++)],"%lf", &rll );
-			optind += 3;
+                	bu_optind -= 1;
+                        sscanf(argv[bu_optind+(i++)],"%lf", &yaw );
+                        sscanf(argv[bu_optind+(i++)],"%lf", &pch );
+                        sscanf(argv[bu_optind+(i++)],"%lf", &rll );
+			bu_optind += 3;
 			anim_dx_y_z2mat(m_axes, rll, -pch, yaw);
 			anim_dz_y_x2mat(m_rev_axes, -rll, pch, -yaw);
 			axes = 1;
                         break;
                 case 'd':
-                        optind -= 1;
-                        sscanf(argv[optind+(i++)],"%lf",centroid);
-                        sscanf(argv[optind+(i++)],"%lf",centroid+1);
-                        sscanf(argv[optind+(i++)],"%lf",centroid+2);
-                        optind += 3;
+                        bu_optind -= 1;
+                        sscanf(argv[bu_optind+(i++)],"%lf",centroid);
+                        sscanf(argv[bu_optind+(i++)],"%lf",centroid+1);
+                        sscanf(argv[bu_optind+(i++)],"%lf",centroid+2);
+                        bu_optind += 3;
                         VREVERSE(rcentroid,centroid);
                 	cent = 1;
                         break;
                 case 'f':
-                	sscanf(optarg,"%d",&first_frame);
+                	sscanf(bu_optarg,"%d",&first_frame);
                         break;
                 case 'i':
-                	sscanf(optarg,"%lf",&init_dist);
+                	sscanf(bu_optarg,"%lf",&init_dist);
                 	break;
                 case 'r':
-                	sscanf(optarg,"%lf",&radius);
+                	sscanf(bu_optarg,"%lf",&radius);
                 	one_radius = 1;
                 	break;
                 case 'p':
-                	sscanf(optarg,"%d", &num_links);
-                	link_nindex = optind;
-                	optind += 1;
+                	sscanf(bu_optarg,"%d", &num_links);
+                	link_nindex = bu_optind;
+                	bu_optind += 1;
                 	print_link = 1;
                         break;
                 case 'w':
-                	wheel_nindex = optind - 1;
-                	/*sscanf(optarg,"%s",wheel_name);*/
+                	wheel_nindex = bu_optind - 1;
+                	/*sscanf(bu_optarg,"%s",wheel_name);*/
                 	print_wheel = 1;
                         break;
                 case 'g':
-                	sscanf(optarg,"%d",&arced_frame);
+                	sscanf(bu_optarg,"%d",&arced_frame);
                 	print_mode = PRINT_ARCED;
                 	break;
                 case 'm':
-                	switch (*optarg) {
+                	switch (*bu_optarg) {
                 	case 'p':
-                		strncpy(link_cmd,argv[optind], 10);
+                		strncpy(link_cmd,argv[bu_optind], 10);
                 		break;
                 	case 'w':
-                		strncpy(wheel_cmd,argv[optind], 10);
+                		strncpy(wheel_cmd,argv[bu_optind], 10);
                 		break;
                 	default:
-                		fprintf(stderr,"Unknown option: -m%c\n",*optarg);
+                		fprintf(stderr,"Unknown option: -m%c\n",*bu_optarg);
                 		return(0);
                 	}
-                	optind += 1;
+                	bu_optind += 1;
                 	break;
                 case 'l':
-                	switch (*optarg) {
+                	switch (*bu_optarg) {
                 	case 'm':
                 		len_mode = TRACK_MIN;
                 		break;
                 	case 'f':
                 		len_mode = TRACK_FIXED;
-	                	sscanf(argv[optind],"%lf",&first_tracklen);
+	                	sscanf(argv[bu_optind],"%lf",&first_tracklen);
 	                	tracklen = first_tracklen;
-	                	optind++;
+	                	bu_optind++;
                 		break;
                 	case 's':
 	        		len_mode = TRACK_STRETCH;
-	                	sscanf(argv[optind],"%lf",&first_tracklen);
+	                	sscanf(argv[bu_optind],"%lf",&first_tracklen);
 	                	tracklen = first_tracklen;
-	                	optind++;
+	                	bu_optind++;
                        		break;
                 	case 'e':
                 		len_mode = TRACK_ELASTIC;
-	                	sscanf(argv[optind],"%lf",&first_tracklen);
+	                	sscanf(argv[bu_optind],"%lf",&first_tracklen);
 	                	tracklen = first_tracklen;
-	                	optind++;
+	                	bu_optind++;
                 		break;
                 	default:
-                		fprintf(stderr,"Unknown option: -l%c\n",*optarg);
+                		fprintf(stderr,"Unknown option: -l%c\n",*bu_optarg);
                 		return(0);
                 	}
                 	break;

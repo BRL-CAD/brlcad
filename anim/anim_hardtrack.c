@@ -76,8 +76,8 @@ fastf_t		ang;	/* initial angle */
 };
 
 /* external variables */
-extern int optind;
-extern char *optarg;
+extern int bu_optind;
+extern char *bu_optarg;
 
 /* variables describing track geometry - used by main, trackprep, get_link */
 struct all *x;
@@ -142,8 +142,8 @@ char **argv;
 
 	/* get track information from specified file */
 
-	if (!(stream = fopen(*(argv+optind),"r"))){
-		fprintf(stderr,"Anim_hardtrack: Could not open file %s.\n",*(argv+optind));
+	if (!(stream = fopen(*(argv+bu_optind),"r"))){
+		fprintf(stderr,"Anim_hardtrack: Could not open file %s.\n",*(argv+bu_optind));
 		return(0);
 	}
 	num_wheels = -1;
@@ -405,71 +405,71 @@ char **argv;
 	print_mode = TRACK_ANIM;
 	strcpy(link_cmd, "rarc");
 	strcpy(wheel_cmd, "lmul");
-        while ( (c=getopt(argc,argv,OPT_STR)) != EOF) {
+        while ( (c=bu_getopt(argc,argv,OPT_STR)) != EOF) {
                 i=0;
                 switch(c){
                 case 'b':
-                	optind -= 1;
-                        sscanf(argv[optind+(i++)],"%lf", &yaw );
-                        sscanf(argv[optind+(i++)],"%lf", &pch );
-                        sscanf(argv[optind+(i++)],"%lf", &rll );
-			optind += 3;
+                	bu_optind -= 1;
+                        sscanf(argv[bu_optind+(i++)],"%lf", &yaw );
+                        sscanf(argv[bu_optind+(i++)],"%lf", &pch );
+                        sscanf(argv[bu_optind+(i++)],"%lf", &rll );
+			bu_optind += 3;
 			anim_dx_y_z2mat(m_axes, rll, -pch, yaw);
 			anim_dz_y_x2mat(m_rev_axes, -rll, pch, -yaw);
 			axes = 1;
                         break;
                 case 'd':
-                        optind -= 1;
-                        sscanf(argv[optind+(i++)],"%lf",centroid);
-                        sscanf(argv[optind+(i++)],"%lf",centroid+1);
-                        sscanf(argv[optind+(i++)],"%lf",centroid+2);
-                        optind += 3;
+                        bu_optind -= 1;
+                        sscanf(argv[bu_optind+(i++)],"%lf",centroid);
+                        sscanf(argv[bu_optind+(i++)],"%lf",centroid+1);
+                        sscanf(argv[bu_optind+(i++)],"%lf",centroid+2);
+                        bu_optind += 3;
                         VREVERSE(rcentroid,centroid);
                 	cent = 1;
                         break;
                 case 'f':
-                	sscanf(optarg,"%d",&first_frame);
+                	sscanf(bu_optarg,"%d",&first_frame);
                         break;
                 case 'i':
-                	sscanf(optarg,"%lf",&init_dist);
+                	sscanf(bu_optarg,"%lf",&init_dist);
                 	break;
                 case 'p':
                 	links_placed = 1;
                 	break;
                 case 'r':
-                	sscanf(optarg,"%lf",&radius);
+                	sscanf(bu_optarg,"%lf",&radius);
                 	break;
                 case 'w':
-                	wheel_nindex = optind - 1;
-                	/*sscanf(optarg,"%s",wheel_name);*/
+                	wheel_nindex = bu_optind - 1;
+                	/*sscanf(bu_optarg,"%s",wheel_name);*/
                 	print_wheel = 1;
                         break;
                 case 'l':
-                	sscanf(optarg,"%d", &num_links);
-                	link_nindex = optind;
-                	optind += 1;
+                	sscanf(bu_optarg,"%d", &num_links);
+                	link_nindex = bu_optind;
+                	bu_optind += 1;
                 	print_link = 1;
                         break;
                 case 's':
                 	steer = 1;
                 	break;
                 case 'g':
-                	sscanf(optarg,"%d",&arced_frame);
+                	sscanf(bu_optarg,"%d",&arced_frame);
                 	print_mode = TRACK_ARCED;
                 	break;
                 case 'm':
-                	switch (*optarg) {
+                	switch (*bu_optarg) {
                 	case 'l':
-                		strncpy(link_cmd,argv[optind], 10);
+                		strncpy(link_cmd,argv[bu_optind], 10);
                 		break;
                 	case 'w':
-                		strncpy(wheel_cmd,argv[optind], 10);
+                		strncpy(wheel_cmd,argv[bu_optind], 10);
                 		break;
                 	default:
-                		fprintf(stderr,"Unknown option: -m%c\n",*optarg);
+                		fprintf(stderr,"Unknown option: -m%c\n",*bu_optarg);
                 		return(0);
                 	}
-                	optind += 1;
+                	bu_optind += 1;
                 	break;
                 case 'c':
                 	get_circumf = 1;

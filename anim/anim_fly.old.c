@@ -35,8 +35,8 @@
 #define M_PI	3.14159265358979323846
 #endif
 
-extern int optind;
-extern char *optarg;
+extern int bu_optind;
+extern char *bu_optarg;
 
 int loop = 1;
 int print_int = 1;
@@ -219,14 +219,14 @@ int argc;
 char **argv;
 {
 	int c;
-	while ( (c=getopt(argc,argv,OPT_STR)) != EOF) {
+	while ( (c=bu_getopt(argc,argv,OPT_STR)) != EOF) {
 		switch(c){
 		case 'f':
-			sscanf(optarg,"%lf",&magic_factor);
+			sscanf(bu_optarg,"%lf",&magic_factor);
 			magic_factor *= 0.001; /* to put factors in a more reasonable range */
 			break;
 		case 'p':
-			sscanf(optarg,"%d",&print_int);
+			sscanf(bu_optarg,"%d",&print_int);
 			break;
 		case 'r':
 			loop = 0;

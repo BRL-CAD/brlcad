@@ -36,8 +36,8 @@
 #endif
 
 
-extern int optind;
-extern char *optarg;
+extern int bu_optind;
+extern char *bu_optarg;
 
 int print_int = 1;
 int angle_set = 0;
@@ -149,26 +149,26 @@ int argc;
 char **argv;
 {
 	int c;
-	while ( (c=getopt(argc,argv,OPT_STR)) != EOF) {
+	while ( (c=bu_getopt(argc,argv,OPT_STR)) != EOF) {
 		switch(c){
 		case 'l':
-			sscanf(optarg,"%lf",&length);
+			sscanf(bu_optarg,"%lf",&length);
 			break;
 		case 'a':
-			sscanf(optarg,"%lf",&angle);
+			sscanf(bu_optarg,"%lf",&angle);
 			angle *= DTOR; /* degrees to radians */
 			angle_set = 1;
 			break;
 		case 'r':
-			sscanf(optarg,"%lf",&radius);
+			sscanf(bu_optarg,"%lf",&radius);
 			turn_wheels = 1;
 			break;
 		case 'f':
 			turn_wheels = 1;
-			sscanf(optarg,"%lf",&factor);
+			sscanf(bu_optarg,"%lf",&factor);
 			break;
 		case 'p':
-			sscanf(optarg,"%d",&print_int);
+			sscanf(bu_optarg,"%d",&print_int);
 			break;
 		default:
 			fprintf(stderr,"Unknown option: -%c\n",c);

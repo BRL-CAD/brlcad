@@ -159,7 +159,7 @@ char **argv;
         int c;
 	suppressed = 0;
 
-        while ( (c=getopt(argc,argv,OPT_STR)) != EOF) {
+        while ( (c=bu_getopt(argc,argv,OPT_STR)) != EOF) {
                 switch(c){
                 case 'c':
                 	suppressed = 1;

@@ -36,8 +36,8 @@
 #define M_PI	3.14159265358979323846
 #endif
 
-extern int optind;
-extern char *optarg;
+extern int bu_optind;
+extern char *bu_optarg;
 
  /* info from command line args */
 int relative_a, relative_c, axes, translate, quaternion, rotate;/*flags*/
@@ -149,7 +149,7 @@ char **argv;
 		else if (go){
 			printf("start %d;\n", frame);
 			printf("clean;\n");
-			printf("anim %s matrix %s\n", *(argv+optind), mat_cmd);
+			printf("anim %s matrix %s\n", *(argv+bu_optind), mat_cmd);
 			anim_mat_print(stdout,a,1);
 			printf("end;\n");
 		}
@@ -171,54 +171,54 @@ char **argv;
 	rotate = translate = 1; /* defaults */
 	quaternion = permute = 0;
 	strcpy(mat_cmd, "lmul");
-	while ( (c=getopt(argc,argv,OPT_STR)) != EOF) {
+	while ( (c=bu_getopt(argc,argv,OPT_STR)) != EOF) {
 		i=0;
 		switch(c){
 		case 'a':
-			optind -= 1;
-                        sscanf(argv[optind+(i++)],"%lf", &yaw );
-                        sscanf(argv[optind+(i++)],"%lf", &pch );
-                        sscanf(argv[optind+(i++)],"%lf", &rll );
-			optind += 3;
+			bu_optind -= 1;
+                        sscanf(argv[bu_optind+(i++)],"%lf", &yaw );
+                        sscanf(argv[bu_optind+(i++)],"%lf", &pch );
+                        sscanf(argv[bu_optind+(i++)],"%lf", &rll );
+			bu_optind += 3;
 			anim_dx_y_z2mat(m_axes, rll, -pch, yaw);
 			anim_dz_y_x2mat(m_rev_axes, -rll, pch, -yaw);
 			axes = 1;
 			relative_a = 1;
                         break;
 		case 'b':
-			optind -= 1;
-                        sscanf(argv[optind+(i++)],"%lf", &yaw );
-                        sscanf(argv[optind+(i++)],"%lf", &pch );
-                        sscanf(argv[optind+(i++)],"%lf", &rll );
-			optind += 3;
+			bu_optind -= 1;
+                        sscanf(argv[bu_optind+(i++)],"%lf", &yaw );
+                        sscanf(argv[bu_optind+(i++)],"%lf", &pch );
+                        sscanf(argv[bu_optind+(i++)],"%lf", &rll );
+			bu_optind += 3;
 			anim_dx_y_z2mat(m_axes, rll, -pch, yaw);
 			anim_dz_y_x2mat(m_rev_axes, -rll, pch, -yaw);
 			axes = 1;
 			relative_a = 0;
                         break;
 		case 'c':
-			optind -= 1;
-                        sscanf(argv[optind+(i++)],"%lf",centroid);
-                        sscanf(argv[optind+(i++)],"%lf",centroid+1);
-                        sscanf(argv[optind+(i++)],"%lf",centroid+2);
-			optind += 3;
+			bu_optind -= 1;
+                        sscanf(argv[bu_optind+(i++)],"%lf",centroid);
+                        sscanf(argv[bu_optind+(i++)],"%lf",centroid+1);
+                        sscanf(argv[bu_optind+(i++)],"%lf",centroid+2);
+			bu_optind += 3;
 			VREVERSE(rcentroid,centroid);
 			relative_c = 1;
                         break;
 		case 'd':
-			optind -= 1;
-                        sscanf(argv[optind+(i++)],"%lf",centroid);
-                        sscanf(argv[optind+(i++)],"%lf",centroid+1);
-                        sscanf(argv[optind+(i++)],"%lf",centroid+2);
-			optind += 3;
+			bu_optind -= 1;
+                        sscanf(argv[bu_optind+(i++)],"%lf",centroid);
+                        sscanf(argv[bu_optind+(i++)],"%lf",centroid+1);
+                        sscanf(argv[bu_optind+(i++)],"%lf",centroid+2);
+			bu_optind += 3;
 			VREVERSE(rcentroid,centroid);
 			relative_c = 0;
                         break;
 		case 'f':
-			sscanf(optarg,"%d",&first_frame);
+			sscanf(bu_optarg,"%d",&first_frame);
 			break;
                 case 'm':
-               		strncpy(mat_cmd,optarg, 10);
+               		strncpy(mat_cmd,bu_optarg, 10);
                		break;
 		case 'p':
 			permute = 1;
@@ -241,7 +241,7 @@ char **argv;
 			rotate = 0;
 			break;
 		case 'v':
-			yes = sscanf(optarg,"%lf",&viewsize);
+			yes = sscanf(bu_optarg,"%lf",&viewsize);
 			if (!yes) viewsize = 0.0;
 			if (viewsize < 0.0)
 				readview = 1;

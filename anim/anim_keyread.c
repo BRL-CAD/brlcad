@@ -59,8 +59,8 @@
 int mode; 
 int units;
 
-extern int optind;
-extern char *optarg;
+extern int bu_optind;
+extern char *bu_optarg;
 
 main(argc,argv)
 int argc;
@@ -132,7 +132,7 @@ char **argv;
 	mode = QUATERNION; /* default */
 	units = DEGREES;
 
-	while ( (c=getopt(argc,argv,OPT_STR)) != EOF) {
+	while ( (c=bu_getopt(argc,argv,OPT_STR)) != EOF) {
 		switch(c){
 		case 'y':
 			mode = YPR;

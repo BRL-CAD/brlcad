@@ -31,8 +31,8 @@
 #include "vmath.h"
 #include "anim.h"
 
-extern int optind;
-extern char *optarg;
+extern int bu_optind;
+extern char *bu_optarg;
 
 int full_print = 0;
 vect_t offset;
@@ -81,16 +81,16 @@ int argc;
 char **argv;
 {
 	int c;
-	while ( (c=getopt(argc,argv,OPT_STR)) != EOF) {
+	while ( (c=bu_getopt(argc,argv,OPT_STR)) != EOF) {
 		switch(c){
 		case 'r':
 			full_print = 1;
 			break;
 		case 'o':
-			sscanf(argv[optind-1],"%lf",offset+0);
-			sscanf(argv[optind],"%lf",offset+1);
-			sscanf(argv[optind+1],"%lf",offset+2);
-			optind += 2;
+			sscanf(argv[bu_optind-1],"%lf",offset+0);
+			sscanf(argv[bu_optind],"%lf",offset+1);
+			sscanf(argv[bu_optind+1],"%lf",offset+2);
+			bu_optind += 2;
 			break;
 		default:
 			fprintf(stderr,"Unknown option: -%c\n",c);

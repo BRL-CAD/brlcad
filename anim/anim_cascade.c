@@ -58,8 +58,8 @@
 #define CASCADE_R	1
 #define CASCADE_F	2
 
-extern int optind;
-extern char *optarg;
+extern int bu_optind;
+extern char *bu_optarg;
 
 vect_t fcenter, fypr, rcenter, rypr, acenter, aypr;
 int cmd_fcen, cmd_fypr, cmd_rcen, cmd_rypr, cmd_acen, cmd_aypr;
@@ -207,22 +207,22 @@ char **argv;
 	output_mode = CASCADE_A;
 	cmd_fcen = cmd_fypr = cmd_rcen = cmd_rypr = cmd_acen = cmd_aypr = 0;
 	print_time = 1;
-	while ( (c=getopt(argc,argv,OPT_STR)) != EOF) {
+	while ( (c=bu_getopt(argc,argv,OPT_STR)) != EOF) {
 		switch(c){
 		case 'f':
-			d = *(optarg);
+			d = *(bu_optarg);
 			if (d == 'c'){
-				sscanf(argv[optind],"%lf",fcenter+0);
-				sscanf(argv[optind+1],"%lf",fcenter+1);
-				sscanf(argv[optind+2],"%lf",fcenter+2);
-				optind += 3;
+				sscanf(argv[bu_optind],"%lf",fcenter+0);
+				sscanf(argv[bu_optind+1],"%lf",fcenter+1);
+				sscanf(argv[bu_optind+2],"%lf",fcenter+2);
+				bu_optind += 3;
 				cmd_fcen = 1;
 				break;
 			} else if ( d =='y'){
-				sscanf(argv[optind],"%lf",fypr+0);
-				sscanf(argv[optind+1],"%lf",fypr+1);
-				sscanf(argv[optind+2],"%lf",fypr+2);
-				optind += 3;
+				sscanf(argv[bu_optind],"%lf",fypr+0);
+				sscanf(argv[bu_optind+1],"%lf",fypr+1);
+				sscanf(argv[bu_optind+2],"%lf",fypr+2);
+				bu_optind += 3;
 				cmd_fypr = 1;
 				break;
 			} else {
@@ -230,19 +230,19 @@ char **argv;
 			}
 			break;
 		case 'r':
-			d = *(optarg);
+			d = *(bu_optarg);
 			if (d == 'c'){
-				sscanf(argv[optind],"%lf",rcenter+0);
-				sscanf(argv[optind+1],"%lf",rcenter+1);
-				sscanf(argv[optind+2],"%lf",rcenter+2);
-				optind += 3;
+				sscanf(argv[bu_optind],"%lf",rcenter+0);
+				sscanf(argv[bu_optind+1],"%lf",rcenter+1);
+				sscanf(argv[bu_optind+2],"%lf",rcenter+2);
+				bu_optind += 3;
 				cmd_rcen = 1;
 				break;
 			} else if ( d =='y'){
-				sscanf(argv[optind],"%lf",rypr+0);
-				sscanf(argv[optind+1],"%lf",rypr+1);
-				sscanf(argv[optind+2],"%lf",rypr+2);
-				optind += 3;
+				sscanf(argv[bu_optind],"%lf",rypr+0);
+				sscanf(argv[bu_optind+1],"%lf",rypr+1);
+				sscanf(argv[bu_optind+2],"%lf",rypr+2);
+				bu_optind += 3;
 				cmd_rypr = 1;
 				break;
 			} else {
@@ -250,19 +250,19 @@ char **argv;
 			}
 			break;
 		case 'a':
-			d = *(optarg);
+			d = *(bu_optarg);
 			if (d == 'c'){
-				sscanf(argv[optind],"%lf",acenter+0);
-				sscanf(argv[optind+1],"%lf",acenter+1);
-				sscanf(argv[optind+2],"%lf",acenter+2);
-				optind += 3;
+				sscanf(argv[bu_optind],"%lf",acenter+0);
+				sscanf(argv[bu_optind+1],"%lf",acenter+1);
+				sscanf(argv[bu_optind+2],"%lf",acenter+2);
+				bu_optind += 3;
 				cmd_acen = 1;
 				break;
 			} else if ( d =='y'){
-				sscanf(argv[optind],"%lf",aypr+0);
-				sscanf(argv[optind+1],"%lf",aypr+1);
-				sscanf(argv[optind+2],"%lf",aypr+2);
-				optind += 3;
+				sscanf(argv[bu_optind],"%lf",aypr+0);
+				sscanf(argv[bu_optind+1],"%lf",aypr+1);
+				sscanf(argv[bu_optind+2],"%lf",aypr+2);
+				bu_optind += 3;
 				cmd_aypr = 1;
 				break;
 			} else {
@@ -270,7 +270,7 @@ char **argv;
 			}
 			break;
 		case 'o':
-			d = *(optarg);
+			d = *(bu_optarg);
 			if (d == 'r'){
 				output_mode = CASCADE_R;
 			} else if (d == 'f') {

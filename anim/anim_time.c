@@ -31,8 +31,8 @@
 #include "bu.h"
 #include "raytrace.h"
 
-extern int optind;
-extern char *optarg;
+extern int bu_optind;
+extern char *bu_optarg;
 
 
 #define MAXLEN		64
@@ -236,18 +236,18 @@ char **argv;
 {
 	int c;
 
-	while ( (c=getopt(argc,argv,OPT_STR)) != EOF) {
+	while ( (c=bu_getopt(argc,argv,OPT_STR)) != EOF) {
 		switch(c){
 		case 's':
-			sscanf(optarg,"%lf",&inv0);
+			sscanf(bu_optarg,"%lf",&inv0);
 			v0_set = TIME_ABSOLUTE;
 			break;
 		case 'e':
-			sscanf(optarg,"%lf",&inv1);
+			sscanf(bu_optarg,"%lf",&inv1);
 			v1_set = TIME_ABSOLUTE;
 			break;
 		case 'i':
-			sscanf(optarg,"%lf",&inv0);
+			sscanf(bu_optarg,"%lf",&inv0);
 			v0_set = TIME_RELATIVE;
 			if ((inv0>3.0)||(inv0<0.0)) {
 				fprintf(stderr,"anim_time: -i argument must lie between 0.0 and 3.0\n");
@@ -255,7 +255,7 @@ char **argv;
 			}
 			break;
 		case 'f':
-			sscanf(optarg,"%lf",&inv1);
+			sscanf(bu_optarg,"%lf",&inv1);
 			v1_set = TIME_RELATIVE;
 			if ((inv1>3.0)||(inv1<0.0)) {
 				fprintf(stderr,"anim_time: -f argument must lie between 0.0 and 3.0\n");
@@ -266,7 +266,7 @@ char **argv;
 			query = 1;
 			break;
 		case 'm':
-			sscanf(optarg,"%d",&maxlines);
+			sscanf(bu_optarg,"%d",&maxlines);
 			domem = 1;
 			break;
 		case 'v':
