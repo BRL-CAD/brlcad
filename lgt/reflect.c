@@ -1946,6 +1946,9 @@ vect_t aliasbuf[];
 	/* Translate grid coordinates to frame buffer coords. */
 	x = ap->a_x/aperture_sz + x_fb_origin;
 	y = ap->a_y/aperture_sz + y_fb_origin;
+	/* Image translation can necessitate clipping. */
+	if( x < 0 || y < 0 )
+		goto failed;
 
 	/* Clip relative intensity on each gun to range 0.0 to 1.0;
 		then scale to RGB values. */
@@ -1960,20 +1963,27 @@ vect_t aliasbuf[];
 		return;
 	switch( pix_buffered )
 		{
-	case B_PIO :
+	case B_PIO :	/* Programmed I/O to frame buffer (if possible).*/
+		/* Image translation can necessitate clipping. */
+		if( x >= fb_getwidth( fbiop ) || y >= fb_getheight( fbiop ) )
+			goto failed;
 		if( fb_write( fbiop, x, y, pixel, 1 ) != -1 )
-			/* Programmed I/O to frame buffer (if possible).*/
 			return;
 		break;
-	case B_PAGE :
-		/* Buffered writes to frame buffer. */
+	case B_PAGE :	/* Buffered writes to frame buffer. */
+		/* Image translation can necessitate clipping. */
+		if( x >= fb_getwidth( fbiop ) || y >= fb_getheight( fbiop ) )
+			goto failed;
 		if( fb_seek( fbiop, x, y ) != -1 )
 			{ /* WARNING: no error checking. */
 			FB_WPIXEL( fbiop, pixel );
 			return;
 			}
 		break;
-	case B_LINE :
+	case B_LINE :	/* Line buffering. */
+		/* Image translation can necessitate clipping. */
+		if( x >= MAX_SCANSIZE )
+			goto failed;
 		COPYRGB( scanbuf[x], pixel );
 		return;
 	default :
@@ -1981,7 +1991,10 @@ vect_t aliasbuf[];
 			pix_buffered );
 		return;
 		}
+failed:
+#ifdef DEBUG
 	rt_log( "Write failed to pixel <%d,%d>.\n", x, y );
+#endif
 	return;
 	}
 
@@ -2020,6 +2033,16 @@ RGBpixel scanbuf[];
 	{	int x = grid_x_org + x_fb_origin;
 		int y = ap->a_y/aperture_sz + y_fb_origin;
 		int ct = (ap->a_x - grid_x_org)/aperture_sz;
+	/* Clip image, necessary due to image translation command. */
+	if( y < 0 )
+		return;
+	if( x < 0 )
+		{
+		if( (ct += x) <= 0 )
+			return;
+		x = 0;
+		}
+
 	/* Reset horizontal pixel position. */
 	ap->a_x = grid_x_org * aperture_sz;
 
