@@ -132,6 +132,8 @@ char	*dp;
 	if( rtrans_sp->threshold >= 1.0 || drand48() < rtrans_sp->threshold )
 	{
 		swp->sw_transmit = 1.0;
+		swp->sw_reflect = 0.0;
+		swp->sw_refrac_index = 1.0;
 		VSETALL( swp->sw_basecolor, 1.0 );
 	}
 
