@@ -98,7 +98,7 @@ RT_EXTERN(void rt_vol_plate,(point_t a, point_t b, point_t c, point_t d,
 	 ((_yy)+VOL_YWIDEN))* ((_vip)->xdim + VOL_XWIDEN*2)+ \
 	  (_xx)+VOL_XWIDEN ]
 
-#define OK(_vip,_v)	( (_v) >= (_vip)->lo && (_v) <= (_vip)->hi )
+#define OK(_vip,_v)	( (int)(_v) >= (_vip)->lo && (int)(_v) <= (_vip)->hi )
 
 static int rt_vol_normtab[3] = { NORM_XPOS, NORM_YPOS, NORM_ZPOS };
 
