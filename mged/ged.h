@@ -509,6 +509,7 @@ MGED_EXTERN(int f_set, (int argc, char **argv));
 MGED_EXTERN(int f_setview, (int argc, char **argv));
 MGED_EXTERN(int f_shader, (int argc, char **argv));
 MGED_EXTERN(int f_shells, (int argc, char **argv));
+MGED_EXTERN(int f_showmats, (int argc, char **argv));
 MGED_EXTERN(int f_source, (int argc, char **argv));
 MGED_EXTERN(int f_status, (int argc, char **argv));
 MGED_EXTERN(int f_summary, (int argc, char **argv));
