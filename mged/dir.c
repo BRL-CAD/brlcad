@@ -731,7 +731,7 @@ int cont;		/* non-zero when continuing partly printed line */
 
 	if( !cont ) {
 		for( i=0; i<(pathpos*(NAMESIZE+2)); i++) 
-			rt_log(" ");
+			rt_putchar(' ');
 		cont = 1;
 	}
 	rt_log("| %s", dp->d_namep);
@@ -747,7 +747,7 @@ int cont;		/* non-zero when continuing partly printed line */
 	 */
 	i = NAMESIZE - strlen(dp->d_namep);
 	while( i-- > 0 )
-		rt_log("_");
+		rt_putchar('_');
 
 	if( dp->d_len <= 1 )
 		rt_log("\n");		/* empty combination */
@@ -806,18 +806,18 @@ char prefix;
 		READ_ERR_return;
 
 	for( i=0; i<pathpos; i++) 
-		rt_log("\t");
+		rt_putchar('\t');
 	if( prefix ) {
-		rt_log("%c", prefix);
-		rt_log(" ");
+		rt_putchar(prefix);
+		rt_putchar(' ');
 	}
 
 	rt_log("%s", dp->d_namep);
 	/* Output Comb and Region flags (-F?) */
 	if( dp->d_flags & DIR_COMB )
-		rt_log("/");
+		rt_putchar('/');
 	if( dp->d_flags & DIR_REGION )
-		rt_log("R");
+		rt_putchar('R');
 	rt_log("\n");
 
 	if( !(dp->d_flags & DIR_COMB) )  {

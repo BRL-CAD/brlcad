@@ -50,19 +50,19 @@ register char *cp;
 	/* Output newline if last column printed. */
 	if( col_count >= COLUMNS || (col_len+NAMESIZE-1) >= TERMINAL_WIDTH )  {
 		/* line now full */
-		rt_log( "\n" );
+		rt_putchar( '\n' );
 		col_count = 0;
 	} else if ( col_count != 0 ) {
 		/* Space over before starting new column */
 		do {
-			rt_log( " " );
+			rt_putchar( ' ' );
 			col_len++;
 		}  while ( (col_len % NAMESIZE) != 0 );
 	}
 	/* Output string and save length for next tab. */
 	col_len = 0;
 	while ( *cp != '\0' )  {
-		rt_log( "%c", *cp );	/* dreadful performance */
+		rt_putchar( *cp );
 		++cp;
 		++col_len;
 	}
@@ -74,7 +74,7 @@ void
 col_putchar(c)
 char c;
 {
-	rt_log("%c", c);	/* dreadful performance */
+	rt_putchar(c);
 	col_len++;
 }
 
@@ -82,7 +82,7 @@ void
 col_eol()
 {
 	if ( col_count != 0 )		/* partial line */
-		rt_log( "\n" );
+		rt_putchar( '\n' );
 	col_count = 0;
 	col_len = 0;
 }
@@ -143,11 +143,11 @@ int num_in_list;
 			 * decision on where to place them before now.
 			 */
 			if(list_of_names[this_one]->d_flags & DIR_COMB) {
-				rt_log("/");
+				rt_putchar('/');
 				namelen++;
 			}
 			if(list_of_names[this_one]->d_flags & DIR_REGION) {
-				rt_log("R");
+				rt_putchar('R');
 				namelen++;
 			}
 			/*
@@ -164,7 +164,7 @@ int num_in_list;
 				 * another entry to the right of this one. 
 				 */
 				while( namelen++ < 20)
-					rt_log(" ");
+					rt_putchar(' ');
 			}
 		}
 	}
