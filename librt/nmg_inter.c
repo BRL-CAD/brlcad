@@ -330,14 +330,14 @@ VPRINT("\t\t (next): ", eu->next->vu_p->v_p->vg_p->coord);
 		rt_log("\tmag of vect:%g  Dist to plane:%g\n",
 			MAGNITUDE(vect), mag);
 
-	if( mag < -(bs->tol) )  {
+	if ( dist < -(bs->tol) )  {
 		/* Hit is behind first point */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\tplane behind first point\n");
 		return;
 	}
 
-	if( mag < bs->tol )  {
+	if ( mag < bs->tol )  {
 		/* First point is on plane of face, by geometry */
 		if (rt_g.NMG_debug & DEBUG_POLYSECT)
 			rt_log("\tedge starts at plane intersect\n");
