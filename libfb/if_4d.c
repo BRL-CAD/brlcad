@@ -1,10 +1,11 @@
 /*
  *			I F _ 4 D . C
  *
- *  BRL Frame Buffer Library interface for SGI Iris-4D, and
- *  SGI Iris-4D with Graphics Turbo.
+ *  BRL-CAD Frame Buffer Library interface for SGI Iris-4D
+ *  running the IRIX32 operating system with the GL graphics library.
  *  Support for the 3030/2400 series ("Iris-3D") is in if_sgi.c
- *  However, all are called /dev/sgi
+ *  However, both are called /dev/sgi
+ *  Support for OpenGL is found in if_ogl.c
  *
  *  In order to use a large chunck of memory with the shared memory 
  *  system it is necessary to increase the shmmax and shmall paramaters
@@ -87,6 +88,8 @@ _LOCAL_ void	gt_zbuf_to_screen(FBIO	*ifp, int one_y);
 #else
 _LOCAL_ void	gt_zbuf_to_screen();
 #endif
+_LOCAL_ void	fake_rectwrite();
+_LOCAL_ void	sgi_clipper();
 
 /* Exported routines */
 _LOCAL_ int	sgi_open(),
@@ -2187,6 +2190,7 @@ int		one_y;
  *  The screen coordinates of the lower left pixle in view are:
  *	(xscroff, yscroff)
  */
+_LOCAL_ void
 sgi_clipper( ifp, clp )
 register FBIO	*ifp;
 register struct sgi_clip	*clp;
@@ -2243,6 +2247,7 @@ register struct sgi_clip	*clp;
  * is more inefficient than is necessary.  However, this required the
  * calling sequences to be somewhat altered -vs- the lrectwrite() replaced.
  */
+_LOCAL_ void
 fake_rectwrite( x1, y1, x2, y2, pixels)
 short	x1, y1;
 short	x2, y2;
