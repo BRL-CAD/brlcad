@@ -1408,20 +1408,32 @@ double			mm2local;
 	RT_TOR_CK_MAGIC(tip);
 	rt_vls_strcat( str, "torus (TOR)\n");
 
-	sprintf(buf, "\tV (%g, %g, %g), |A|=r1=%g, |H|=r2=%g\n",
+	sprintf(buf, "\tV (%g, %g, %g), r1=|A|=%g, r2=|H|=%g\n",
 		tip->v[X] * mm2local,
 		tip->v[Y] * mm2local,
 		tip->v[Z] * mm2local,
 		tip->r_a * mm2local, tip->r_h * mm2local );
 	rt_vls_strcat( str, buf );
 
-	sprintf(buf, "\t|H|=(%g, %g, %g)\n",
+	sprintf(buf, "\tN=(%g, %g, %g)\n",
 		tip->h[X] * mm2local / tip->r_h,
 		tip->h[Y] * mm2local / tip->r_h,
 		tip->h[Z] * mm2local / tip->r_h );
 	rt_vls_strcat( str, buf );
 
 	if( !verbose )  return(0);
+
+	sprintf(buf, "\tA=(%g, %g, %g)\n",
+		tip->a[X] * mm2local / tip->r_a,
+		tip->a[Y] * mm2local / tip->r_a,
+		tip->a[Z] * mm2local / tip->r_a );
+	rt_vls_strcat( str, buf );
+
+	sprintf(buf, "\tB=(%g, %g, %g)\n",
+		tip->b[X] * mm2local / tip->r_b,
+		tip->b[Y] * mm2local / tip->r_b,
+		tip->b[Z] * mm2local / tip->r_b );
+	rt_vls_strcat( str, buf );
 
 	r3 = tip->r_a - tip->r_h;
 	sprintf(buf, "\tvector to inner edge = (%g, %g, %g)\n",
