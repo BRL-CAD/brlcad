@@ -1,11 +1,5 @@
 /*
-			vdeck/Cakefile
-
-	To enlarge the number of regions and solids that vdeck can
-	handle, define MAXSOL and NDIR as follows:
-
-	#define CONFIGDEFS="-DMAXSOL=15000 -DNDIR=30000"
-
+ *			vdeck/Cakefile
  */
 
 #define SRCDIR	vdeck
@@ -13,19 +7,16 @@
 #define	SRCSUFF	.c
 #define MANSECTION	1
 
-/* The numbers 15000 and 30000 should be tailored to fit your needs,
-   since static arrays are allocated, be conservative. */
+#define FILES	vdeck cgarbs match parsarg
 
-/* #define CONFIGDEFS=-DMAXSOL=15000 -DNDIR=30000 */
-
-#define FILES	vdeck cgarbs match parsarg vproc vglobal vsort
+#define EXTRA_CLEAN	solids regions region_ids
 
 #include "../Cakefile.defs"
 #include "../Cakefile.prog"
 
 /* Explicit composition of each product */
 
-vdeck:	OBJ
-	CC LDFLAGS -o vdeck OBJ LIBES
+vdeck:	OBJ LIBRT
+	CC LDFLAGS -o vdeck OBJ LIB_PRE''LIBRT LIBRT_LIBES LIBES
 
 #include "../Cakefile.rules"
