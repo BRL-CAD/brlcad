@@ -25,27 +25,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include <stdio.h>
 #include "fb.h"
 
-#if defined(BSD)
-#include <sys/time.h>		/* for struct timeval */
-#define HAS_TIMEVAL	yes
-#endif
-
-#if defined(sgi)
-#	if !defined(mips) || defined(SGI4D_Rel2)
-		/* 3D systems, and Rel2 4D systems. */
-#		include <bsd/sys/types.h>
-#		include <bsd/sys/time.h>
-#	else
-		/* Rel3 4D systems got it right */
-#		include <sys/types.h>
-#		include <sys/time.h>
-#	endif
-#	define HAS_TIMEVAL yes
-#endif
-
-#ifdef HAS_TIMEVAL
-struct timeval	tv;
-#endif
+int		sec;
+int		usec;
 
 extern int	getopt();
 extern char	*optarg;
@@ -150,15 +131,13 @@ char **argv;
 	else
 		fps = atoi(argv[optind+2]);
 
-#ifdef HAS_TIMEVAL
 	if( fps <= 1 )  {
-		tv.tv_sec = fps ? 1 : 4;
-		tv.tv_usec = 0;
+		sec = fps ? 1 : 4;
+		usec = 0;
 	} else {
-		tv.tv_sec = 0;
-		tv.tv_usec = 1000000/fps;
+		sec = 0;
+		usec = 1000000/fps;
 	}
-#endif
 
 	if( (fbp = fb_open( NULL, screen_width, screen_height )) == NULL )  {
 		fprintf(stderr,"fbanim: fb_open failed\n");
@@ -202,9 +181,5 @@ register int i;
 		fflush( stdout );
 	}
 	fb_window( fbp, xPan, yPan );
-#ifdef HAS_TIMEVAL
-	(void)select( 0, 0, 0, 0, &tv );
-#else
-	(void)sleep(1);	/* best I can do, sorry */
-#endif
+	bsdselect( 0, sec, usec );
 }
