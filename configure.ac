@@ -60,6 +60,11 @@ umask 022
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
+# am_init_automake performs a ac_prog_install check so need to handle
+# problematic /usr/brl/bin/install on irix
+if test "x$build_vendor" = "xsgi" ; then
+   PATH="`echo $PATH | sed 's/\/brl\/bin/bin/g'`"
+fi
 AM_INIT_AUTOMAKE(brlcad, $BRLCAD_VERSION.$CONFIG_DATE)
 AM_CONFIG_HEADER(include/config.h)
 

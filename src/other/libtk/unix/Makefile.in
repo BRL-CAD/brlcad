@@ -625,6 +625,9 @@ install-doc:
 	@if test ! -x $(UNIX_DIR)/mkLinks; then \
 	    chmod +x $(UNIX_DIR)/mkLinks; \
 	    fi
+	@if test "x`uname`" = "xIRIX64" ; then \
+	    PATH="`echo $PATH | sed 's/\/brl\/bin/bin/g'`" ; \
+	    fi
 	@for i in $(MAN_INSTALL_DIR) $(MAN1_INSTALL_DIR) $(MAN3_INSTALL_DIR) $(MANN_INSTALL_DIR) ; \
 	    do \
 	    if [ ! -d $$i ] ; then \
