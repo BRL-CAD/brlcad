@@ -1276,7 +1276,6 @@ FBIO	*ifp;
 	int k;
 	FILE *fp = NULL;
 
-	if(sgi_mpfail(ifp, "close", 0)) return(-1);
 	winset(ifp->if_fd);
 
 	if( sgi_nwindows > 1 ||
@@ -1386,7 +1385,6 @@ register RGBpixel	*pp;
 	register int	cnt;
 	register int	y;
 
-	if(sgi_mpfail(ifp, "clear", 0)) return(-1);
 	winset(ifp->if_fd);
 
 	if( qtest() )
@@ -1435,7 +1433,6 @@ int	xcenter, ycenter;
 int	xzoom, yzoom;
 {
 
-	if(sgi_mpfail(ifp, "view", ycenter)) return(-1);
 	winset(ifp->if_fd);
 
 	if( qtest() )
@@ -1482,7 +1479,6 @@ int	*xcenter, *ycenter;
 int	*xzoom, *yzoom;
 {
 
-	if(sgi_mpfail(ifp, "getview", ycenter)) return(-1);
 	winset(ifp->if_fd);
 
 	if( qtest() )
@@ -1653,7 +1649,6 @@ int		count;
 	 * Handle events after updating the memory, and
 	 * before updating the screen
 	 */
-	if(sgi_mpfail(ifp, "write", y)) return(-1);
 	winset(ifp->if_fd);
 
 	if( qtest() )
@@ -1725,7 +1720,6 @@ RGBpixel	*pp;
 	 * Handle events after updating the memory, and
 	 * before updating the screen
 	 */
-	if(sgi_mpfail(ifp, "writerect", y)) return(-1);
 	winset(ifp->if_fd);
 
 	if( qtest() )
@@ -1808,7 +1802,6 @@ register ColorMap	*cmp;
 	register int	i;
 	int		prev;	/* !0 = previous cmap was non-linear */
 
-	if(sgi_mpfail(ifp, "wmap", 0)) return(-1);
 	winset(ifp->if_fd);
 
 	if( qtest() )
@@ -1854,7 +1847,6 @@ int		xorig, yorig;
 	register int	xbytes;
 	Cursor		newcursor;
 
-	if(sgi_mpfail(ifp, "setcursor", yorig)) return(-1);
 	winset(ifp->if_fd);
 
 	if( qtest() )
@@ -1896,7 +1888,6 @@ int	x, y;
 	short	xwidth;
 	long left, bottom, x_size, y_size;
 
-	if(sgi_mpfail(ifp, "cursor", y)) return(-1);
 	winset(ifp->if_fd);
 
 	if( qtest() )
@@ -2130,51 +2121,6 @@ register struct sgi_clip	*clp;
 		clp->ymax = ifp->if_height-1;
 	}
 }
-
-/*
- *			S G I _ M P F A I L
- *
- *  The IRIX 3.1 version of the Graphics Library (libgl) will HANG
- *  the machine if it is used from a child process (thread) in a multi-tasking
- *  process.  If this condition exists, express our displeasure,
- *  and prevent any attempt to access the graphics library routines.
- *
- *  Returns -
- *	 0	OK
- *	-1	Failure
- */
-static int
-sgi_mpfail(ifp, str, y)
-FBIO	*ifp;
-char	*str;
-int	y;
-{
-	static int	count = 0;
-
-	if( SGI(ifp)->mi_pid == getpid() )
-		return(0);		/* OK */
-
-	if( count == 0 )  {
-		count = 1;
-		fb_log("A multi-tasking program has attempted to display graphics\n");
-		fb_log("from a child thread.  The SGI-provided GL library is not\n");
-		fb_log("presently capable of performing this operation, and no\n");
-		fb_log("recovery is possible.  Please call the SGI hotline, and\n");
-		fb_log("voice your displeasure about companies that build multi-\n");
-		fb_log("processor graphics systems which can't display graphics\n");
-		fb_log("from all processors, simultaneously.  This problem is claimed\n");
-		fb_log("by SGI to be fixed in the October-1989 IRIX release.\n");
-
-		if( (ifp->if_mode & MODE_1MASK) == MODE_1SHARED )  {
-			fb_log("If it is any consolation, the shared memory segment\n");
-			fb_log("is being correctly updated and contains your image,\n");
-			fb_log("which 'fb-pix' can save into a disk file.\n");
-		}
-	}
-	fb_log("libfb/sgi_%s mp error y=%d\n", str, y);
-	return(-1);			/* BAD */
-}
-
 
 /*
  *			F A K E _ L R E C T W R I T E
