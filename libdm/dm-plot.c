@@ -34,6 +34,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "bu.h"
 #include "vmath.h"
+#include "bn.h"
 #include "mater.h"
 #include "raytrace.h"
 #include "dm.h"
@@ -52,7 +53,6 @@ static int      plot_drawVertex2D();
 static int	plot_drawVList();
 static int      plot_setColor();
 static int      plot_setLineAttr();
-static unsigned plot_cvtvecs(), plot_load();
 static int	plot_setWinBounds(), plot_debug();
 
 struct dm dm_plot = {
@@ -67,12 +67,15 @@ struct dm dm_plot = {
   plot_drawVList,
   plot_setColor,
   plot_setLineAttr,
-  plot_cvtvecs,
-  plot_load,
   plot_setWinBounds,
   plot_debug,
   Nu_int0,
+  Nu_int0,
+  Nu_int0,
+  Nu_int0,
+  Nu_int0,
   0,			/* no displaylist */
+  0,                    /* no stereo */
   PLOTBOUND,
   "plot",
   "Screen to UNIX-Plot",
@@ -87,11 +90,11 @@ struct dm dm_plot = {
   0,
   0,
   0,
-  0,
   0
 };
 
 struct plot_vars head_plot_vars;
+static mat_t plotmat;
 
 /*
  *			P L O T _ O P E N
@@ -142,7 +145,6 @@ char *argv[];
     case 'g':
       ((struct plot_vars *)dmp->dm_vars)->grid = 1;
       break;
-#if 0
     case 'f':
       ((struct plot_vars *)dmp->dm_vars)->floating = 1;
       break;
@@ -152,7 +154,6 @@ char *argv[];
       Tcl_AppendResult(interp, "Clipped in Z to viewing cube\n", (char *)NULL);
       ((struct plot_vars *)dmp->dm_vars)->zclip = 1;
       break;
-#endif
     default:
       Tcl_AppendResult(interp, "bad PLOT option ", argv[0], "\n", (char *)NULL);
       (void)plot_close(dmp);
@@ -168,7 +169,7 @@ char *argv[];
 
   if( argv[0][0] == '|' )  {
     bu_vls_strcpy(&((struct plot_vars *)dmp->dm_vars)->vls, &argv[0][1]);
-    while( (++argv)[1] != (char *)0 ) {
+    while( (++argv)[0] != (char *)0 ) {
       bu_vls_strcat( &((struct plot_vars *)dmp->dm_vars)->vls, " " );
       bu_vls_strcat( &((struct plot_vars *)dmp->dm_vars)->vls, argv[0] );
     }
@@ -211,6 +212,8 @@ char *argv[];
   else
     pl_space( ((struct plot_vars *)dmp->dm_vars)->up_fp,
 	      -2048, -2048, 2048, 2048 );
+
+  bn_mat_idn(plotmat);
 
   return dmp;
 }
@@ -267,14 +270,14 @@ struct dm *dmp;
 
 /*
  *  			P L O T _ N E W R O T
- *  Stub.
  */
-/* ARGSUSED */
 static int
-plot_newrot(dmp, mat)
+plot_newrot(dmp, mat, which_eye)
 struct dm *dmp;
 mat_t mat;
+int which_eye;
 {
+  bn_mat_copy(plotmat, mat);
   return TCL_OK;
 }
 
@@ -287,22 +290,20 @@ mat_t mat;
  *
  *  Returns 0 if object could be drawn, !0 if object was omitted.
  */
-/* ARGSUSED */
 static int
-plot_drawVList( dmp, vp, mat )
+plot_drawVList( dmp, vp )
 struct dm *dmp;
 register struct rt_vlist *vp;
-mat_t mat;
 {
   static vect_t			last;
   register struct rt_vlist	*tvp;
   int useful = 0;
 
-#if 0
-  if( illum )  {
-    pl_linmod( ((struct plot_vars *)dmp->dm_vars)->up_fp, "longdashed" );
-  } else
-#endif
+  if(((struct plot_vars *)dmp->dm_vars)->floating){
+    rt_vlist_to_uplot(((struct plot_vars *)dmp->dm_vars)->up_fp, &vp->l);
+		      
+    return TCL_OK;
+  }
 
   for( BU_LIST_FOR( tvp, rt_vlist, &vp->l ) )  {
     register int	i;
@@ -318,13 +319,13 @@ mat_t mat;
       case RT_VLIST_POLY_MOVE:
       case RT_VLIST_LINE_MOVE:
 	/* Move, not draw */
-	MAT4X3PNT( last, mat, *pt );
+	MAT4X3PNT( last, plotmat, *pt );
 	continue;
       case RT_VLIST_POLY_DRAW:
       case RT_VLIST_POLY_END:
       case RT_VLIST_LINE_DRAW:
 	/* draw */
-	MAT4X3PNT( fin, mat, *pt );
+	MAT4X3PNT( fin, plotmat, *pt );
 	VMOVE( start, last );
 	VMOVE( last, fin );
 	break;
@@ -332,9 +333,7 @@ mat_t mat;
       if(vclip(start, fin, ((struct plot_vars *)dmp->dm_vars)->clipmin,
 		((struct plot_vars *)dmp->dm_vars)->clipmax) == 0)
 	continue;
-#if 0      
-      pl_color( ((struct plot_vars *)dmp->dm_vars)->up_fp, r, g, b );
-#endif
+
       if(((struct plot_vars *)dmp->dm_vars)->is_3D)
 	pl_3line( ((struct plot_vars *)dmp->dm_vars)->up_fp, 
 		  (int)( start[X] * 2047 ),
@@ -450,33 +449,6 @@ int style;
   return TCL_OK;
 }
 
-
-/* ARGSUSED */
-static unsigned
-plot_cvtvecs( dmp, sp )
-struct dm *dmp;
-struct solid *sp;
-{
-  return( 0 );
-}
-
-/*
- * Loads displaylist
- */
-static unsigned
-plot_load( dmp, addr, count )
-struct dm *dmp;
-unsigned addr, count;
-{
-  struct bu_vls tmp_vls;
-
-  bu_vls_init(&tmp_vls);
-  bu_vls_printf(&tmp_vls, "plot_load(x%x, %d.)\n", addr, count);
-  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-  bu_vls_free(&tmp_vls);
-  return( 0 );
-}
-
 /* ARGSUSED */
 static int
 plot_debug(dmp, lvl)
@@ -495,11 +467,17 @@ register int w[];
 {
   /* Compute the clipping bounds */
   ((struct plot_vars *)dmp->dm_vars)->clipmin[0] = w[1] / 2048.;
-  ((struct plot_vars *)dmp->dm_vars)->clipmin[1] = w[3] / 2048.;
-  ((struct plot_vars *)dmp->dm_vars)->clipmin[2] = w[5] / 2048.;
   ((struct plot_vars *)dmp->dm_vars)->clipmax[0] = w[0] / 2047.;
+  ((struct plot_vars *)dmp->dm_vars)->clipmin[1] = w[3] / 2048.;
   ((struct plot_vars *)dmp->dm_vars)->clipmax[1] = w[2] / 2047.;
-  ((struct plot_vars *)dmp->dm_vars)->clipmax[2] = w[4] / 2047.;
+
+  if(((struct plot_vars *)dmp->dm_vars)->zclip){
+    ((struct plot_vars *)dmp->dm_vars)->clipmin[2] = w[5] / 2048.;
+    ((struct plot_vars *)dmp->dm_vars)->clipmax[2] = w[4] / 2047.;
+  }else{
+    ((struct plot_vars *)dmp->dm_vars)->clipmin[2] = -1.0e20;
+    ((struct plot_vars *)dmp->dm_vars)->clipmax[2] = 1.0e20;
+  }
 
   return TCL_OK;
 }
