@@ -27,6 +27,8 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "./debug.h"
 
+RT_EXTERN(void rt_pr_tree_vls, (struct rt_vls *vls, CONST union tree *tp));
+
 
 /*
  *			R T _ P R _ S O L T A B
@@ -61,6 +63,8 @@ void
 rt_pr_region( rp )
 register CONST struct region *rp;
 {
+	struct rt_vls	v;
+
 	rt_log("REGION %s (bit %d)\n", rp->reg_name, rp->reg_bit );
 	rt_log("instnum=%d, id=%d, air=%d, gift_material=%d, los=%d\n",
 		rp->reg_instnum,
@@ -75,8 +79,12 @@ register CONST struct region *rp;
 		rt_log("Material '%s' '%s'\n",
 			rp->reg_mater.ma_matname,
 			rp->reg_mater.ma_matparm );
-	rt_pr_tree( rp->reg_treetop, 0 );
-	rt_log("\n");
+
+	rt_vls_init(&v);
+	rt_pr_tree_vls(&v, rp->reg_treetop);
+	rt_log("%s %d %s\n", rp->reg_name,
+		rp->reg_instnum, rt_vls_addr(&v) );
+	rt_vls_free(&v);
 }
 
 /*
