@@ -36,7 +36,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 
 /*
- *			D B _ R E A L L O C 5
+ *			D B 5 _ R E A L L O C
  *
  *  Change the size of a v5 database object.
  *
@@ -57,14 +57,14 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
  *	-1	Failure
  */
 int
-db_realloc5( struct db_i *dbip, struct directory *dp, struct bu_external *ep )
+db5_realloc( struct db_i *dbip, struct directory *dp, struct bu_external *ep )
 {
 	RT_CK_DBI(dbip);
 	RT_CK_DIR(dp);
 	BU_CK_EXTERNAL(ep);
-	if(rt_g.debug&DEBUG_DB) bu_log("db_realloc5(%s) dbip=x%x, dp=x%x, ext_nbytes=%ld\n",
+	if(rt_g.debug&DEBUG_DB) bu_log("db5_realloc(%s) dbip=x%x, dp=x%x, ext_nbytes=%ld\n",
 		dp->d_namep, dbip, dp, ep->ext_nbytes );
 
 
-	bu_bomb("db_realloc5() not fully implemented\n");
+	bu_bomb("db5_realloc() not fully implemented\n");
 }

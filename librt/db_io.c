@@ -413,7 +413,7 @@ struct db_i		*dbip;
 		NAMEMOVE( dp->d_namep, rec->s.s_name );
 	} else if( dbip->dbi_version == 5 )  {
 		if( ep->ext_nbytes != dp->d_len || dp->d_addr == -1L )  {
-			if( db_realloc5( dbip, dp, ep ) < 0 )  {
+			if( db5_realloc( dbip, dp, ep ) < 0 )  {
 				bu_log("db_put_external(%s) db_realloc5() failed\n", dp->d_namep);
 				return -5;
 			}
