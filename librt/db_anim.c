@@ -151,14 +151,22 @@ struct mater_info	*materp;
 		 * mater pointer is given.
 		 */
 		if (!materp) break;
-		if (*rt_vls_addr(&anp->an_u.anu_p.anp_matname)) {
+		if ((anp->an_u.anu_p.anp_op == RT_ANP_RBOTH) ||
+		    (anp->an_u.anu_p.anp_op == RT_ANP_RMATERIAL)) {
 			strncpy(materp->ma_matname,
 			    rt_vls_addr(&anp->an_u.anu_p.anp_matname), 32);
 			materp->ma_matname[31] = '\0';
 		}
-		if (*rt_vls_addr(&anp->an_u.anu_p.anp_matparam)) {
+		if ((anp->an_u.anu_p.anp_op == RT_ANP_RBOTH) ||
+		    (anp->an_u.anu_p.anp_op == RT_ANP_RPARAM)) {
 			strncpy(materp->ma_matparm,
 			    rt_vls_addr(&anp->an_u.anu_p.anp_matparam), 60);
+			materp->ma_matparm[59] = '\0';
+		}
+		if (anp->an_u.anu_p.anp_op == RT_ANP_APPEND) {
+			strncat(materp->ma_matparm,
+			    rt_vls_addr(&anp->an_u.anu_p.anp_matparam),
+			    60-strlen(materp->ma_matparm));
 			materp->ma_matparm[59] = '\0';
 		}
 		break;
@@ -171,9 +179,12 @@ struct mater_info	*materp;
 		 */
 		if (!materp) break;
 		materp->ma_override = 1;	/* XXX - really override? */
-		materp->ma_color[0] = anp->an_u.anu_c.anc_rgb[0];
-		materp->ma_color[1] = anp->an_u.anu_c.anc_rgb[1];
-		materp->ma_color[2] = anp->an_u.anu_c.anc_rgb[2];
+		materp->ma_color[0] =
+		    (((double)anp->an_u.anu_c.anc_rgb[0])+0.5)*rt_inv255;
+		materp->ma_color[1] =
+		    (((double)anp->an_u.anu_c.anc_rgb[1])+0.5)*rt_inv255;
+		materp->ma_color[2] =
+		    (((double)anp->an_u.anu_c.anc_rgb[2])+0.5)*rt_inv255;
 		break;
 	default:
 		if( rt_g.debug&DEBUG_ANIM )
@@ -290,14 +301,18 @@ char		**argv;
 			rt_vls_strcpy( &anp->an_u.anu_p.anp_matname, argv[4] );
 			rt_vls_from_argv( &anp->an_u.anu_p.anp_matparam,
 				argc-5, &argv[5] );
+			anp->an_u.anu_p.anp_op = RT_ANP_RBOTH;
 		} else if( strcmp( argv[3], "rmaterial" ) == 0 )  {
 			rt_vls_strcpy( &anp->an_u.anu_p.anp_matname, argv[4] );
+			anp->an_u.anu_p.anp_op = RT_ANP_RMATERIAL;
 		} else if( strcmp( argv[3], "rparam" ) == 0 )  {
 			rt_vls_from_argv( &anp->an_u.anu_p.anp_matparam,
 				argc-4, &argv[4] );
+			anp->an_u.anu_p.anp_op = RT_ANP_RPARAM;
 		} else if( strcmp( argv[3], "append" ) == 0 )  {
 			rt_vls_from_argv( &anp->an_u.anu_p.anp_matparam,
 				argc-4, &argv[4] );
+			anp->an_u.anu_p.anp_op = RT_ANP_APPEND;
 		} else {
 			rt_log("db_parse_anim:  material animation '%s' unknown\n",
 				argv[3]);
@@ -320,4 +335,81 @@ bad:
 	db_free_full_path( &anp->an_path );
 	rt_free( (char *)anp, "animate");
 	return(-1);		/* BAD */
+}
+int
+db_write_anim(fop, anp)
+FILE *fop;
+struct animate *anp;
+{
+	char *thepath;
+	int i;
+
+	RT_CK_ANIMATE(anp);
+
+	thepath  = db_path_to_string(&(anp->an_path));
+
+	fprintf(fop,"anim %s ", thepath);
+	rt_free(thepath, "path string");
+
+	switch (anp->an_type) {
+	case RT_AN_MATRIX:
+		fputs("matrix ",fop);
+		switch (anp->an_u.anu_m.anm_op) {
+		case ANM_RSTACK:
+			fputs("rstack\n", fop);
+			break;
+		case ANM_RARC:
+			fputs("rarc\n", fop);
+			break;
+		case ANM_LMUL:
+			fputs("lmul\n", fop);
+			break;
+		case ANM_RMUL:
+			fputs("rmul\n", fop);
+			break;
+		case ANM_RBOTH:
+			fputs("rboth\n", fop);
+			break;
+		default:
+			fputs("unknown\n",fop);
+			rt_log("db_write_anim: unknown matrix operation\n");
+		}
+		for (i=0; i<16; i++) {
+			fprintf(fop, " %8.3f", anp->an_u.anu_m.anm_mat[i]);
+			if ((i == 15) || ((i&3) == 3)) {
+				fputs("\n",fop);
+			}
+		}
+		break;
+	case RT_AN_MATERIAL:
+		fputs("material ",fop);
+		switch (anp->an_u.anu_p.anp_op) {
+		case RT_ANP_RBOTH:
+			fputs("rboth ", fop);
+			break;
+		case RT_ANP_RMATERIAL:
+			fputs("rmaterial ", fop);
+			break;
+		case RT_ANP_RPARAM:
+			fputs("rparam ", fop);
+			break;
+		case RT_ANP_APPEND:
+			fputs("append ", fop);
+			break;
+		default:
+			rt_log("db_write_anim: unknown property operation.\n");
+			break;
+		}
+		break;
+	case RT_AN_COLOR:
+		fprintf(fop,"color %d %d %d", anp->an_u.anu_c.anc_rgb[0],
+		    anp->an_u.anu_c.anc_rgb[1], anp->an_u.anu_c.anc_rgb[2]);
+		break;
+	case RT_AN_SOLID:
+		break;
+	default:
+		rt_log("db_write_anim: Unknown animate type.\n");
+	}
+	fputs(";\n", fop);
+	return;
 }
