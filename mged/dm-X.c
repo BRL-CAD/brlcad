@@ -547,9 +547,7 @@ XEvent *eventPtr;
     case VIRTUAL_TRACKBALL_ON:
       /* trackball not active so do the regular thing */
       /* Constant tracking (e.g. illuminate mode) bound to M mouse */
-      rt_vls_printf( &cmd, "M 0 %d %d\n",
-		     (mx/(double)((struct x_vars *)dm_vars)->width - 0.5) * 4095,
-		     (0.5 - my/(double)((struct x_vars *)dm_vars)->height) * 4095);
+      rt_vls_printf( &cmd, "M 0 %d %d\n", Xx_TO_GED(mx), Xy_TO_GED(my));
       break;
     case VIRTUAL_TRACKBALL_ROTATE:
       rt_vls_printf( &cmd, "irot %f %f 0\n",
@@ -1161,7 +1159,6 @@ char *argv[];
       /* Bare set command, print out current settings */
       rt_structprint("dm_X internal variables", X_vparse,
 		     (CONST char *)&((struct x_vars *)dm_vars)->mvars );
-      rt_log("%s", rt_vls_addr(&vls) );
     } else if( argc == 2 ) {
       rt_vls_name_print( &vls, X_vparse, argv[1],
 			 (CONST char *)&((struct x_vars *)dm_vars)->mvars);
@@ -1187,16 +1184,7 @@ char *argv[];
 		       "mouse 1|0 xpos ypos\n", (char *)NULL);
       return TCL_ERROR;
     }
-#if 0
-    sprintf(xstr, "%d", Xx_TO_GED(atoi(argv[2])));
-    sprintf(ystr, "%d", Xy_TO_GED(atoi(argv[3])));
 
-    av[0] = "M";
-    av[1] = argv[1];
-    av[2] = xstr;
-    av[3] = ystr;
-    return f_mouse((ClientData)NULL, interp, 4, av);
-#else
     rt_vls_init(&vls);
     rt_vls_printf(&vls, "M %s %d %d\n", argv[1],
 		  Xx_TO_GED(atoi(argv[2])), Xy_TO_GED(atoi(argv[3])));
@@ -1207,7 +1195,6 @@ char *argv[];
       return TCL_OK;
 
     return TCL_ERROR;
-#endif
   }
 
   status = TCL_OK;

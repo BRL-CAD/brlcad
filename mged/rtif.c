@@ -323,7 +323,10 @@ run_rt()
 
 	if( retcode != 0 )
 		pr_wait_status( retcode );
+
+#if 0
 	(void)signal(SIGINT, cur_sigint);
+#endif
 
 	FOR_ALL_SOLIDS( sp )
 		sp->s_iflag = DOWN;
@@ -547,7 +550,15 @@ char	**argv;
 
 	if( retcode != 0 )
 		pr_wait_status( retcode );
+
+#if 0
 	(void)signal(SIGINT, cur_sigint);
+#else
+	if( setjmp( jmp_env ) == 0 )
+	  (void)signal( SIGINT, sig3);  /* allow interupts */
+        else
+	  return TCL_OK;
+#endif
 
 	FOR_ALL_SOLIDS( sp )
 		sp->s_iflag = DOWN;
@@ -726,8 +737,15 @@ char	**argv;
 	  break;
 	}
 work:
+#if 0
 	/* If user hits ^C, this will stop, but will leave hanging filedes */
 	(void)signal(SIGINT, cur_sigint);
+#else
+        if( setjmp( jmp_env ) == 0 )
+	  (void)signal( SIGINT, sig3);  /* allow interupts */
+        else
+	  return TCL_OK;
+#endif
 	while( !feof( fp ) &&
 	    rt_read( fp, &scale, eye_model, rot ) >= 0 )  {
 	    	switch(mode)  {
@@ -949,7 +967,7 @@ int	num;
 		rtif_vbp = (struct rt_vlblock *)NULL;
 	}
 	db_free_anim(dbip);	/* Forget any anim commands */
-	sig2();			/* Call main SIGINT handler */
+	sig3();			/* Call main SIGINT handler */
 	/* NOTREACHED */
 }
 
@@ -1041,8 +1059,11 @@ char	**argv;
 	VSET(temp, 0, 0, 1);
 	MAT4X3PNT(rtif_eye_model, view2model, temp);
 
-	/* If user hits ^C, preview will stop, and clean up */
-	(void)signal(SIGINT, rtif_sigint);
+	if( setjmp( jmp_env ) == 0 )
+	  /* If user hits ^C, preview will stop, and clean up */
+	  (void)signal(SIGINT, rtif_sigint);
+	else
+	  return TCL_OK;
 
 	while( ( cmd = rt_read_cmd( rtif_fp )) != NULL )  {
 		/* Hack to prevent running framedone scripts prematurely */
@@ -1213,7 +1234,10 @@ char	**argv;
 
 	if( retcode != 0 )
 		pr_wait_status( retcode );
+
+#if 0
 	(void)signal(SIGINT, cur_sigint);
+#endif
 
 	FOR_ALL_SOLIDS( sp )
 		sp->s_iflag = DOWN;

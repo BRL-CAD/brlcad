@@ -75,6 +75,7 @@ struct dm dm_Plot = {
 
 extern struct device_values dm_values;	/* values read from devices */
 
+static int plot_count = 0;
 static vect_t clipmin, clipmax;		/* for vector clipping */
 static FILE	*up_fp;
 static char	ttybuf[BUFSIZ];
@@ -95,26 +96,27 @@ static char	ttybuf[BUFSIZ];
  */
 Plot_open()
 {
-	char line[64];
+  char line[64];
 
-	rt_log("UNIX-Plot filter [pl-fb]? ");
-	(void)fgets( line, sizeof(line), stdin ); /* \n, Null terminated */
-	line[strlen(line)-1] = '\0';		/* remove newline */
-	if( feof(stdin) )  quit();
-	if( line[0] != '\0' )  {
-		if( (up_fp = popen( line, "w" )) == NULL )  {
-			perror(line);
-			return(1);		/* BAD */
-		}
-	} else {
-		if( (up_fp = popen("pl-fb", "w")) == NULL )  {
-			perror("pl-fb");
-			return(1);	/* BAD */
-		}
-	}
-	setbuf( up_fp, ttybuf );
-	pl_space( up_fp, -2048, -2048, 2048, 2048 );
-	return(0);			/* OK */
+  if(plot_count){
+    ++plot_count;
+    Tcl_AppendResult(interp, "Plot_open: plot is already open\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  if( (up_fp = popen( dname, "w" )) == NULL ) {
+    if( (up_fp = popen("pl-fb", "w")) == NULL ) {
+      Tcl_AppendResult(interp, "Plot_open: failed to open ", dname,
+		       " and pl-fb\n", (char *)NULL);
+      return TCL_ERROR;
+    }
+  }
+
+  setbuf( up_fp, ttybuf );
+  pl_space( up_fp, -2048, -2048, 2048, 2048 );
+  plot_count = 1;
+  rt_vls_printf(&pathName, ".dm_plot");
+  return TCL_OK;
 }
 
 /*
@@ -125,8 +127,14 @@ Plot_open()
 void
 Plot_close()
 {
-	(void)fflush(up_fp);
-	pclose(up_fp);			/* close pipe, eat dead children */
+  if(plot_count > 1){
+    --plot_count;
+    return;
+  }
+
+  plot_count = 0;
+  (void)fflush(up_fp);
+  pclose(up_fp);			/* close pipe, eat dead children */
 }
 
 /*
@@ -137,14 +145,11 @@ Plot_close()
 void
 Plot_prolog()
 {
-	if( !dmaflag )
-		return;
+  /* We expect the screen to be blank so far, from last frame flush */
 
-	/* We expect the screen to be blank so far, from last frame flush */
-
-	/* Put the center point up */
-	pl_move( up_fp,  0, 0 );
-	pl_cont( up_fp,  0, 0 );
+  /* Put the center point up */
+  pl_move( up_fp,  0, 0 );
+  pl_cont( up_fp,  0, 0 );
 }
 
 /*
@@ -153,10 +158,10 @@ Plot_prolog()
 void
 Plot_epilog()
 {
-	pl_flush( up_fp );			/* BRL-specific command */
-	pl_erase( up_fp );			/* forces drawing */
-	(void)fflush( up_fp );
-	return;
+  pl_flush( up_fp );			/* BRL-specific command */
+  pl_erase( up_fp );			/* forces drawing */
+  (void)fflush( up_fp );
+  return;
 }
 
 /*
@@ -395,8 +400,13 @@ unsigned
 Plot_load( addr, count )
 unsigned addr, count;
 {
-	rt_log("Plot_load(x%x, %d.)\n", addr, count );
-	return( 0 );
+  struct rt_vls tmp_vls;
+
+  rt_vls_init(&tmp_vls);
+  rt_vls_printf(&tmp_vls, "Plot_load(x%x, %d.)\n", addr, count);
+  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+  rt_vls_free(&tmp_vls);
+  return( 0 );
 }
 
 void
@@ -419,8 +429,8 @@ Plot_colorchange()
 void
 Plot_debug(lvl)
 {
-	(void)fflush(up_fp);
-	rt_log("flushed\n");
+  (void)fflush(up_fp);
+  Tcl_AppendResult(interp, "flushed\n", (char *)NULL);
 }
 
 void

@@ -379,8 +379,20 @@ Glx_configure_window_shape()
  */
 Glx_open()
 {
+#ifdef DM_OGL
+  /* This is a hack to handle the fact that the sgi attach crashes
+   * if a direct OpenGL context has been previously opened in the 
+   * current mged session. This stops the attach before it crashes.
+   */
+  if (ogl_ogl_used){
+    Tcl_AppendResult(interp, "Can't attach sgi, because a direct OpenGL context has\n",
+		     "previously been opened in this session. To use sgi,\n",
+		     "quit this session and reopen it.\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+  ogl_sgi_used = 1;
+#endif /* DM_OGL */
   glx_var_init();
-
   return glx_setup(dname);
 }
 
@@ -723,6 +735,9 @@ Glx_load_startup()
 void
 Glx_close()
 {
+  if(ogl_ogl_used)
+    return;
+
   if(xtkwin != NULL){
 #if 1
     if(mvars.cueing_on)
@@ -1123,8 +1138,7 @@ Glx_update()
 	if (mvars.debug)
 	  Tcl_AppendResult(interp, "Glx_update()\n", (char *)NULL);
 
-	if( !dmaflag )
-		return;
+	return;
 }
 
 /*
@@ -1297,8 +1311,7 @@ XEvent *eventPtr;
 
       /* do the regular thing */
       /* Constant tracking (e.g. illuminate mode) bound to M mouse */
-      rt_vls_printf( &cmd, "M 0 %d %d\n", (mx/(double)winx_size - 0.5) * 4095,
-		     (0.5 - my/(double)winy_size) * 4095);
+      rt_vls_printf( &cmd, "M 0 %d %d\n", irisX2ged(mx), irisY2ged(my));
       break;
     case VIRTUAL_TRACKBALL_ROTATE:
       rt_vls_printf( &cmd, "irot %f %f 0\n", (my - omy)/2.0,
@@ -2368,7 +2381,6 @@ char	**argv;
     if( argc < 2 )  {
       /* Bare set command, print out current settings */
       rt_structprint("dm_4d internal variables", Glx_vparse, (CONST char *)&mvars );
-      rt_log("%s", rt_vls_addr(&vls) );
     } else if( argc == 2 ) {
       rt_vls_name_print( &vls, Glx_vparse, argv[1], (CONST char *)&mvars );
       rt_log( "%s\n", rt_vls_addr(&vls) );
@@ -2394,16 +2406,6 @@ char	**argv;
       return TCL_ERROR;
     }
 
-#if 0
-    sprintf(xstr, "%d", irisX2ged(atoi(argv[2])));
-    sprintf(ystr, "%d", irisY2ged(atoi(argv[3])));
-
-    av[0] = "M";
-    av[1] = argv[1];
-    av[2] = xstr;
-    av[3] = ystr;
-    return f_mouse((ClientData)NULL, interp, 4, av);
-#else
     rt_vls_init(&vls);
     rt_vls_printf(&vls, "M %s %d %d\n", argv[1],
 		  irisX2ged(atoi(argv[2])), irisY2ged(atoi(argv[3])));
@@ -2414,7 +2416,6 @@ char	**argv;
       return TCL_OK;
 
     return TCL_ERROR;
-#endif
   }
 
   status = TCL_OK;

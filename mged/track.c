@@ -80,7 +80,10 @@ char **argv;
 	  return TCL_ERROR;
 
 	/* interupts */
-	(void)signal( SIGINT, sig2);    /* allow interupts */
+	if( setjmp( jmp_env ) == 0 )
+	  (void)signal( SIGINT, sig3);  /* allow interupts */
+	else
+	  return TCL_OK;
 
 	oper[0] = oper[2] = INTERSECT;
 	oper[1] = SUBTRACT;

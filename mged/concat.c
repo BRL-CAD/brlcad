@@ -107,7 +107,10 @@ char	**argv;
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 
-	(void)signal( SIGINT, sig2 );           /* allow interrupts */
+	if( setjmp( jmp_env ) == 0 )
+	  (void)signal( SIGINT, sig3);	/* allow interupts */
+	else
+	  return TCL_OK;
 
 	/* get any prefix */
 	if( argc < 3 ) {

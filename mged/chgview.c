@@ -351,8 +351,11 @@ int	catch_sigint;
 	  refresh();
 	}
 
-	if( catch_sigint )
-		(void)signal( SIGINT, sig2 );	/* allow interupts after here */
+	
+	if( setjmp( jmp_env ) == 0 )
+	  (void)signal( SIGINT, sig3);	/* allow interupts */
+	else
+	  return TCL_OK;
 
 	nvectors = 0;
 	rt_prep_timer();
@@ -1216,27 +1219,28 @@ char	**argv;
 void
 check_nonzero_rates()
 {
-	if( rate_rotate[X] != 0.0 ||
-	    rate_rotate[Y] != 0.0 ||
-	    rate_rotate[Z] != 0.0 )  {
-	    	rateflag_rotate = 1;
-	} else {
-		rateflag_rotate = 0;
-	}
-	if( rate_slew[X] != 0.0 ||
-	    rate_slew[Y] != 0.0 ||
-	    rate_slew[Z] != 0.0 )  {
-	    	rateflag_slew = 1;
-	} else {
-		rateflag_slew = 0;
-	}
-	if( rate_zoom != 0.0 )  {
-		rateflag_zoom = 1;
+#define RATE_TOL 0.0001
 
-	} else {
-		rateflag_zoom = 0;
-	}
-	dmaflag = 1;	/* values changed so update faceplate */
+  if(-RATE_TOL < rate_rotate[X] && rate_rotate[X] < RATE_TOL &&
+     -RATE_TOL < rate_rotate[Y] && rate_rotate[Y] < RATE_TOL &&
+     -RATE_TOL < rate_rotate[Z] && rate_rotate[Z] < RATE_TOL)
+    rateflag_rotate = 0;
+  else
+    rateflag_rotate = 1;
+
+  if(-RATE_TOL < rate_slew[X] && rate_slew[X] < RATE_TOL &&
+     -RATE_TOL < rate_slew[Y] && rate_slew[Y] < RATE_TOL &&
+     -RATE_TOL < rate_slew[Z] && rate_slew[Z] < RATE_TOL)
+    rateflag_slew = 0;
+  else
+    rateflag_slew = 1;
+
+  if(-RATE_TOL < rate_zoom && rate_zoom < RATE_TOL)
+    rateflag_zoom = 0;
+  else
+    rateflag_zoom = 1;
+
+  dmaflag = 1;	/* values changed so update faceplate */
 }
 
 /* Main processing of a knob twist.  "knob id val" */
@@ -1252,13 +1256,13 @@ char	**argv;
 	char	*cmd = argv[1];
 	static int aslewflag = 0;
 	vect_t	aslew;
-#if 1
+
   int iknob;
 
   if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
     return TCL_ERROR;
 
-  if(!strcmp(argv[0], "iknob"))
+  if(strstr(argv[0], "iknob"))
     iknob = 1;
   else
     iknob = 0;
@@ -1387,87 +1391,6 @@ char	**argv;
 			  absolute_slew[Z] += f;
 			else
 			  absolute_slew[Z] = f;
-#else
-	if( !aslewflag ) {
-		VSETALL( absolute_slew, 0.0 );
-		aslewflag = 1;
-	}
-
-	if(argc == 2)  {
-		i = 0;
-		f = 0;
-	} else {
-		i = atoi(argv[2]);
-		f = atof(argv[2]);
-		if( f < -1.0 )
-			f = -1.0;
-		else if( f > 1.0 )
-			f = 1.0;
-	}
-	if( cmd[1] == '\0' )  {
-		switch( cmd[0] )  {
-		case 'x':
-			rate_rotate[X] = f;
-			break;
-		case 'y':
-			rate_rotate[Y] = f;
-			break;
-		case 'z':
-			rate_rotate[Z] = f;
-			break;
-		case 'X':
-			rate_slew[X] = f;
-			break;
-		case 'Y':
-			rate_slew[Y] = f;
-			break;
-		case 'Z':
-			rate_slew[Z] = f;
-			break;
-		case 'S':
-			rate_zoom = f;
-			break;
-		default:
-			goto usage;
-		}
-	} else if( cmd[0] == 'a' && cmd[1] != '\0' && cmd[2] == '\0' ) {
-		switch( cmd[1] ) {
-		case 'x':
-			VSETALL(rate_rotate, 0);
-			absolute_rotate[X] = f;
-			absview_v( absolute_rotate );
-			break;
-		case 'y':
-			VSETALL(rate_rotate, 0);
-			absolute_rotate[Y] = f;
-			absview_v( absolute_rotate );
-			break;
-		case 'z':
-			VSETALL(rate_rotate, 0);
-			absolute_rotate[Z] = f;
-			absview_v( absolute_rotate );
-			break;
-		case 'X':
-			aslew[X] = f - absolute_slew[X];
-			aslew[Y] = absolute_slew[Y];
-			aslew[Z] = absolute_slew[Z];
-			slewview( aslew );
-			absolute_slew[X] = f;
-			break;
-		case 'Y':
-			aslew[X] = absolute_slew[X];
-			aslew[Y] = f - absolute_slew[Y];
-			aslew[Z] = absolute_slew[Z];
-			slewview( aslew );
-			absolute_slew[Y] = f;
-			break;
-		case 'Z':
-			aslew[X] = absolute_slew[X];
-			aslew[Y] = absolute_slew[Y];
-			aslew[Z] = f - absolute_slew[Z];
-			slewview( aslew );
-			absolute_slew[Z] = f;
-#endif
 			break;
 		case 'S':
 			break;

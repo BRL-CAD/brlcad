@@ -40,11 +40,12 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "./mgedtcl.h"
 
+#if 0
 static int	scroll_top;	/* screen loc of the first menu item */
-
 static int	scroll_enabled = 0;
 
 struct scroll_item *scroll_array[6];	/* Active scroll bar definitions */
+#endif
 
 /************************************************************************
  *									*

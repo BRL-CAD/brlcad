@@ -76,7 +76,9 @@ extern struct device_values dm_values;	/* values read from devices */
 static vect_t	clipmin, clipmax;	/* for vector clipping */
 FILE	*ps_fp;			/* PostScript file pointer */
 static char	ttybuf[BUFSIZ];
+#if 0
 static int	in_middle;		/* !0 when in middle of image */
+#endif
 
 /*
  * Display coordinate conversion:
@@ -94,26 +96,12 @@ static int	in_middle;		/* !0 when in middle of image */
 PS_open()
 {
 	char line[64];
-#if 0
-	rt_log("PostScript file? ");
-	(void)fgets( line, sizeof(line), stdin ); /* \n, null terminated */
-	line[strlen(line)-1] = '\0';		/* remove newline */
-	if( feof(stdin) )  quit();
-	if( line[0] != '\0' )  {
-		if( (ps_fp = fopen( line, "w" )) == NULL )  {
-			perror(line);
-			return(1);		/* BAD */
-		}
-	} else {
-		return(1);		/* BAD */
-	}
-#else
+
 	if( (ps_fp = fopen( dname, "w" )) == NULL ){
 	  Tcl_AppendResult(interp, "f_ps: Error opening file - ", dname,
 			   "\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
-#endif
 
 	setbuf( ps_fp, ttybuf );
 	fputs( "%!PS-Adobe-1.0\n\
@@ -150,7 +138,9 @@ FntH  setfont\n\
 NEWPG\n\
 ", ps_fp);
 
+#if 0
 	in_middle = 0;
+#endif
 
 	return(0);			/* OK */
 }
@@ -163,15 +153,11 @@ NEWPG\n\
 void
 PS_close()
 {
+  if( !ps_fp )  return;
 
-	if( !ps_fp )  return;
-
-	fputs("%end(plot)\n", ps_fp);
-	(void)fclose(ps_fp);
-	ps_fp = (FILE *)NULL;
-#if 0
-	rt_log("PS_close()\n");
-#endif
+  fputs("%end(plot)\n", ps_fp);
+  (void)fclose(ps_fp);
+  ps_fp = (FILE *)NULL;
 }
 
 /*
@@ -183,27 +169,22 @@ void
 PS_prolog()
 {
 #if 0
-	if( !dmaflag )
-		return;
+  /* We expect the screen to be blank so far */
+  if( in_middle )  {
+    /*
+     *  Force the release of this Display Manager
+     *  This assures only one frame goes into the file.
+     */
+
+    release(NULL);
+    return;
+  }
+
+  in_middle = 1;
 #endif
 
-	/* We expect the screen to be blank so far */
-	if( in_middle )  {
-		/*
-		 *  Force the release of this Display Manager
-		 *  This assures only one frame goes into the file.
-		 */
-#ifdef MULTI_ATTACH
-	  release(NULL);
-#else
-		release();
-#endif
-		return;
-	}
-	in_middle = 1;
-
-	/* Put the center point up */
-	PS_2d_line( 0, 0, 1, 1, 0 );
+  /* Put the center point up */
+  PS_2d_line( 0, 0, 1, 1, 0 );
 }
 
 /*
@@ -212,11 +193,11 @@ PS_prolog()
 void
 PS_epilog()
 {
-	if( !ps_fp )  return;
+  if( !ps_fp )  return;
 
-	fputs("% showpage	% uncomment to use raw file\n", ps_fp);
-	(void)fflush( ps_fp );
-	return;
+  fputs("% showpage	% uncomment to use raw file\n", ps_fp);
+  (void)fflush( ps_fp );
+  return;
 }
 
 /*

@@ -34,10 +34,6 @@ extern FILE *ps_fp;
 #define VIRTUAL_TRACKBALL_TRANSLATE 3
 #define VIRTUAL_TRACKBALL_ZOOM 4
 
-#define VIRTUAL_TRACKBALL_NOT_ACTIVE(_type,_name)\
-  ((_type)dm_vars)->_name == VIRTUAL_TRACKBALL_OFF ||\
-  ((_type)dm_vars)->_name == VIRTUAL_TRACKBALL_ON
-
 /* Interface to a specific Display Manager */
 struct dm {
 	int	(*dmr_open)();
@@ -113,6 +109,11 @@ struct shared_info {
   double _tran_z;
   point_t _orig_pos;
 
+/* Slider stuff */
+  int _scroll_top;
+  int _scroll_enabled;
+  struct scroll_item *_scroll_array[6];
+
   int _rot_set;
   int _tran_set;
   int _dmaflag;
@@ -129,7 +130,8 @@ struct dm_list {
   char *_dm_vars;   /* pointer to dependant display manager variables */
   struct rt_vls _pathName; /* full name of drawing window */
   int _dirty;      /* true if received an expose or configuration event */
-  int _owner;
+  int _owner;      /* true if owner of the shared info */
+  struct cmd_list *aim;
   char _dname[80];  /* Display name */
   void (*_knob_offset_hook)();
   void (*_axis_color_hook)();
@@ -193,6 +195,14 @@ extern struct dm_list *curr_dm_list;
 #define tran_set curr_dm_list->s_info->_tran_set
 #define dmaflag curr_dm_list->s_info->_dmaflag
 #define rc curr_dm_list->s_info->_rc
+
+#define scroll_top curr_dm_list->s_info->_scroll_top
+#define scroll_enabled curr_dm_list->s_info->_scroll_enabled
+#define scroll_array curr_dm_list->s_info->_scroll_array
+
+#define VIRTUAL_TRACKBALL_NOT_ACTIVE(_type,_name)\
+  ((_type)dm_vars)->_name == VIRTUAL_TRACKBALL_OFF ||\
+  ((_type)dm_vars)->_name == VIRTUAL_TRACKBALL_ON
 
 /*
  * Definitions for dealing with the buttons and lights.

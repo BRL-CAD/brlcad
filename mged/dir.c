@@ -120,7 +120,10 @@ char	**argv;
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 
-	(void)signal( SIGINT, sig2);	/* allow interupts */
+	if( setjmp( jmp_env ) == 0 )
+	  (void)signal( SIGINT, sig3);	/* allow interupts */
+	else
+	  return TCL_OK;
 
 	if( argc > 1) {
 		/* Just list specified names */
@@ -338,7 +341,10 @@ dir_summary(flag)
 	static int sol, comb, reg;
 	struct directory **dirp, **dirp0;
 
-	(void)signal( SIGINT, sig2);    /* allow interupts */
+	if( setjmp( jmp_env ) == 0 )
+	  (void)signal( SIGINT, sig3);	/* allow interupts */
+	else
+	  return;
 
 	sol = comb = reg = 0;
 	for( i = 0; i < RT_DBNHASH; i++ )  {
@@ -396,7 +402,10 @@ char	**argv;
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 
-	(void)signal( SIGINT, sig2);    /* allow interupts */
+	if( setjmp( jmp_env ) == 0 )
+	  (void)signal( SIGINT, sig3);	/* allow interupts */
+	else
+	  return TCL_OK;
 
 	dir_nref();
 	/*
@@ -643,7 +652,10 @@ char	**argv;
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 
-	(void)signal( SIGINT, sig2);    /* allow interupts */
+	if( setjmp( jmp_env ) == 0 )
+	  (void)signal( SIGINT, sig3);	/* allow interupts */
+	else
+	  return TCL_OK;
 
 	/* Examine all COMB nodes */
 	for( i = 0; i < RT_DBNHASH; i++ )  {
@@ -885,7 +897,11 @@ char	**argv;
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 
-	(void)signal( SIGINT, sig2);    /* allow interupts */
+
+	if( setjmp( jmp_env ) == 0 )
+	  (void)signal( SIGINT, sig3);  /* allow interupts */
+	else
+	  return TCL_OK;
 
 	for ( j = 1; j < argc; j++) {
 		if( j > 1 )
@@ -961,7 +977,11 @@ char	**argv;
 	register struct directory *dp;
 	register int j;
 
-	(void)signal( SIGINT, sig2);    /* allow interupts */
+	
+	if( setjmp( jmp_env ) == 0 )
+	  (void)signal( SIGINT, sig3);  /* allow interupts */
+	else
+	  return TCL_OK;
 
 	for ( j = 1; j < argc; j++) {
 		if( j > 1 )
@@ -1141,7 +1161,10 @@ char	**argv;
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 
-	(void)signal( SIGINT, sig2);    /* allow interupts */
+	if( setjmp( jmp_env ) == 0 )
+	  (void)signal( SIGINT, sig3);  /* allow interupts */
+	else
+	  return TCL_OK;
 
 	/* Examine all COMB nodes */
 	for( i = 0; i < RT_DBNHASH; i++ )  {
@@ -1200,7 +1223,10 @@ char	**argv;
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 
-	(void)signal( SIGINT, sig2);    /* allow interupts */
+	if( setjmp( jmp_env ) == 0 )
+	  (void)signal( SIGINT, sig3);  /* allow interupts */
+        else
+	  return TCL_OK;
 
 	for(i=1; i<argc; i++) {
 		if( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY) ) == DIR_NULL )

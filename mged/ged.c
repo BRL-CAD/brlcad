@@ -105,11 +105,10 @@ void		(*viewpoint_hook)() = NULL;
 
 static int	windowbounds[6];	/* X hi,lo;  Y hi,lo;  Z hi,lo */
 
-static jmp_buf	jmp_env;		/* For non-local gotos */
+jmp_buf	jmp_env;		/* For non-local gotos */
 int             cmd_stuff_str();
 void		(*cur_sigint)();	/* Current SIGINT status */
-void            (*cmdline_sig)();
-void		sig2();
+void		sig2(), sig3();
 void		new_mats();
 void		usejoy();
 void            slewview();
@@ -334,26 +333,7 @@ char **argv;
 	Tk_CreateFileHandler(dm_pipe[0], TK_READABLE, stdin_input,
 			     (ClientData)dm_pipe[0]);
 
-	/* Caught interrupts take us back here, via longjmp() */
-	if( setjmp( jmp_env ) == 0 )  {
-		/* First pass, determine SIGINT handler for interruptable cmds */
-		if( cur_sigint == (void (*)())SIG_IGN )
-			cur_sigint = (void (*)())SIG_IGN; /* detached? */
-		else
-			cur_sigint = sig2;	/* back to here w/!0 return */
-	} else {
-		rt_log("\nAborted.\n");
-		/* If parallel routine was interrupted, need to reset */
-		RES_RELEASE( &rt_g.res_syscall );
-		RES_RELEASE( &rt_g.res_worker );
-		RES_RELEASE( &rt_g.res_stats );
-		RES_RELEASE( &rt_g.res_results );
-		/* Truncate input string */
-		rt_vls_trunc(&input_str, 0);
-		rt_vls_trunc(&input_str_prefix, 0);
-		rt_vls_trunc(&curr_cmd_list->more_default, 0);
-		input_str_index = 0;
-	}
+	(void)signal( SIGINT, SIG_IGN );
 
 	rt_vls_strcpy(&mged_prompt, MGED_PROMPT);
 	pr_prompt();
@@ -365,11 +345,7 @@ char **argv;
 	    clr_Echo(fileno(stdin));
 	}
 
-	cmdline_sig = SIG_IGN;
-
 	while(1) {
-		(void)signal( SIGINT, cmdline_sig );
-
 		/* This test stops optimizers from complaining about an infinite loop */
 		if( (rateflag = event_check( rateflag )) < 0 )  break;
 
@@ -453,32 +429,42 @@ int mask;
 	/* If there are any characters already in the command string (left
 	   over from a CMD_MORE), then prepend them to the new input. */
 
-	rt_vls_trunc(&temp, 0);
-	rt_vls_vlscat(&temp, &input_str_prefix);  /* Make a backup copy */
-	rt_vls_printf(&input_str_prefix, "%s%S\n",
-		      rt_vls_strlen(&input_str_prefix) > 0 ? " " : "",
-		      &input_str);
+	/* If no input and a default is supplied then use it */
+	if(!rt_vls_strlen(&input_str) && rt_vls_strlen(&curr_cmd_list->more_default))
+	  rt_vls_printf(&input_str_prefix, "%s%S\n",
+			rt_vls_strlen(&input_str_prefix) > 0 ? " " : "",
+			&curr_cmd_list->more_default);
+	else
+	  rt_vls_printf(&input_str_prefix, "%s%S\n",
+			rt_vls_strlen(&input_str_prefix) > 0 ? " " : "",
+			&input_str);
+
+	rt_vls_trunc(&curr_cmd_list->more_default, 0);
 
 	/* If a complete line was entered, attempt to execute command. */
 	
 	if (Tcl_CommandComplete(rt_vls_addr(&input_str_prefix))) {
-	    cmdline_sig = SIG_IGN; /* Ignore interrupts when command finishes*/
+	    curr_cmd_list = &head_cmd_list;
+	    if(curr_cmd_list->aim)
+	      curr_dm_list = curr_cmd_list->aim;
 	    if (cmdline_hook != NULL) {
 		if ((*cmdline_hook)(&input_str))
 		    pr_prompt();
 		rt_vls_trunc(&input_str, 0);
 		rt_vls_trunc(&input_str_prefix, 0);
-		input_str_index = 0;
+		(void)signal( SIGINT, SIG_IGN );
 	    } else {
 		if (cmdline(&input_str_prefix, TRUE) == CMD_MORE) {
 		    /* Remove newline */
 		    rt_vls_trunc(&input_str_prefix,
 				 rt_vls_strlen(&input_str_prefix)-1);
 		    rt_vls_trunc(&input_str, 0);
-		    cmdline_sig = sig2;  /* Still in CMD_MORE; allow ^C. */
+
+		    (void)signal( SIGINT, sig2 );
 		} else {
 		    rt_vls_trunc(&input_str_prefix, 0);
 		    rt_vls_trunc(&input_str, 0);
+		    (void)signal( SIGINT, SIG_IGN );
 		}
 		pr_prompt();
 	    }
@@ -487,7 +473,7 @@ int mask;
 	} else {
 	    rt_vls_trunc(&input_str, 0);
 	    /* Allow the user to hit ^C. */
-	    cmdline_sig = sig2;
+	    (void)signal( SIGINT, sig2 );
 	}
 	rt_vls_free(&temp);
 	return;
@@ -541,11 +527,6 @@ int mask;
 	/* If there are any characters already in the command string (left
 	   over from a CMD_MORE), then prepend them to the new input. */
 
-	rt_vls_init(&temp);
-	
-	rt_vls_trunc(&temp, 0);
-	rt_vls_vlscat(&temp, &input_str_prefix);  /* Make a backup copy */
-
 	/* If no input and a default is supplied then use it */
 	if(!rt_vls_strlen(&input_str) && rt_vls_strlen(&curr_cmd_list->more_default))
 	  rt_vls_printf(&input_str_prefix, "%s%S\n",
@@ -562,16 +543,21 @@ int mask;
 	   concerned) then execute it. */
 	
 	if (Tcl_CommandComplete(rt_vls_addr(&input_str_prefix))) {
-	    cmdline_sig = SIG_IGN;
 	    curr_cmd_list = &head_cmd_list;
+	    if(curr_cmd_list->aim)
+	      curr_dm_list = curr_cmd_list->aim;
 	    if (cmdline_hook) {  /* Command-line hooks don't do CMD_MORE */
 		reset_Tty(fileno(stdin));
+
 		if ((*cmdline_hook)(&input_str_prefix))
 		    pr_prompt();
+
 		set_Cbreak(fileno(stdin));
 		clr_Echo(fileno(stdin));
+
 		rt_vls_trunc(&input_str, 0);
 		rt_vls_trunc(&input_str_prefix, 0);
+		(void)signal( SIGINT, SIG_IGN );
 	    } else {
 		reset_Tty(fileno(stdin)); /* Backwards compatibility */
 		if (cmdline(&input_str_prefix, TRUE) == CMD_MORE) {
@@ -579,31 +565,28 @@ int mask;
 		    rt_vls_trunc(&input_str_prefix,
 				 rt_vls_strlen(&input_str_prefix)-1);
 		    rt_vls_trunc(&input_str, 0);
-		    cmdline_sig = sig2; /* Allow ^C */
+		    (void)signal( SIGINT, sig2 );
        /* *** The mged_prompt vls now contains prompt for more input. *** */
 		} else {
+		    /* All done; clear all strings. */
 		    rt_vls_trunc(&input_str_prefix, 0);
 		    rt_vls_trunc(&input_str, 0);
-		    /* All done; clear all strings. */
+		    (void)signal( SIGINT, SIG_IGN );
 		}
 		set_Cbreak(fileno(stdin)); /* Back to single-character mode */
 		clr_Echo(fileno(stdin));
 	    }
 	} else {
 	    rt_vls_trunc(&input_str, 0);
-#if 0
-	    rt_vls_strcpy(&mged_prompt, "? ");
-#else
 	    rt_vls_strcpy(&mged_prompt, "\r? ");
-#endif
+
 	    /* Allow the user to hit ^C */
-	    cmdline_sig = sig2;
+	    (void)signal( SIGINT, sig2 );
 	}
 	pr_prompt(); /* Print prompt for more input */
 	input_str_index = 0;
 	freshline = 1;
 	escaped = bracketed = 0;
-	rt_vls_free(&temp);
 	break;
     case BACKSPACE:
     case DELETE:
@@ -1247,9 +1230,24 @@ quit()
 void
 sig2()
 {
-    rt_vls_strcpy(&mged_prompt, MGED_PROMPT);
-    longjmp( jmp_env, 1 );
-	/* NOTREACHED */
+  /* Truncate input string */
+  rt_vls_trunc(&input_str, 0);
+  rt_vls_trunc(&input_str_prefix, 0);
+  rt_vls_trunc(&curr_cmd_list->more_default, 0);
+  input_str_index = 0;
+
+  rt_vls_strcpy(&mged_prompt, MGED_PROMPT);
+  rt_log("\n");
+  pr_prompt();
+
+  (void)signal( SIGINT, SIG_IGN );
+}
+
+void
+sig3()
+{
+  longjmp( jmp_env, 1 );
+  (void)signal( SIGINT, SIG_IGN );
 }
 
 
@@ -1262,16 +1260,6 @@ sig2()
 void
 new_mats()
 {
-#if 0
-	mat_mul( model2view, Viewrot, toViewcenter );
-	model2view[15] = Viewscale;
-	mat_inv( view2model, model2view );
-	if( state != ST_VIEW )  {
-		mat_mul( model2objview, model2view, modelchanges );
-		mat_inv( objview2model, model2objview );
-	}
-	dmaflag = 1;
-#else
 	mat_mul( model2view, Viewrot, toViewcenter );
 	model2view[15] = Viewscale;
 	mat_inv( view2model, model2view );
@@ -1295,7 +1283,6 @@ new_mats()
 	    update_views = 1;
 	}else
 	  dmaflag = 1;
-#endif
 }
 
 /*

@@ -89,7 +89,10 @@ char **argv;
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 
-	(void)signal( SIGINT, sig2);    /* allow interupts */
+	if( setjmp( jmp_env ) == 0 )
+	  (void)signal( SIGINT, sig3);  /* allow interupts */
+	else
+	  return TCL_OK;
 
 	if( state != ST_S_EDIT ){
 	  Tcl_AppendResult(interp, "Facedef: must be in solid edit mode\n", (char *)NULL);

@@ -87,13 +87,17 @@ char **argv;
     } else {
 	register struct menu_item **m;
 	struct rt_vls result;
+	int status;
 
 	rt_vls_init(&result);
 	rt_vls_strcat(&result, "list");
 	for (m = menu_array; m - menu_array < NMENU; m++)
 	    rt_vls_printf(&result, " [%s %d]", argv[0], m-menu_array);
 
-	return Tcl_Eval(interp, rt_vls_addr(&result));
+	status = Tcl_Eval(interp, rt_vls_addr(&result));
+	rt_vls_free(&result);
+
+	return status;
     }
 
     return TCL_OK;

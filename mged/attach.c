@@ -38,6 +38,7 @@ static void	Nu_void();
 static int	Nu_int0();
 static unsigned Nu_unsign();
 void find_new_owner();
+static int do_2nd_attach_prompt();
 
 struct dm dm_Null = {
 	Nu_int0, Nu_void,
@@ -115,10 +116,6 @@ extern struct dm dm_XGL;
 extern struct dm dm_ogl;
 #endif
 
-#ifdef DM_OGL2
-extern struct dm dm_ogl2;
-#endif
-
 #ifdef DM_GLX
 extern struct dm dm_glx;
 #endif
@@ -132,11 +129,10 @@ struct dm_list head_dm_list;  /* list of active display managers */
 struct dm_list *curr_dm_list;
 void dm_var_init();
 
-/* The [0] entry will be the startup default */
 static struct dm *which_dm[] = {
+	&dm_PS,  /* We won't be advertising this guy --- access is now through the ps command */
 	&dm_Tek,
 	&dm_T49,
-	&dm_PS,
 	&dm_Plot,
 #ifdef DM_IR
 	&dm_Ir,
@@ -180,9 +176,6 @@ static struct dm *which_dm[] = {
 #ifdef DM_OGL
 	&dm_ogl,
 #endif
-#ifdef DM_OGL2
-	&dm_ogl2,
-#endif
 	0
 };
 
@@ -192,6 +185,7 @@ char *name;
 {
 	register struct solid *sp;
 	struct dm_list *p;
+	struct cmd_list *p_cmd;
 	struct dm_list *save_dm_list = DM_LIST_NULL;
 
 	if(name != NULL){
@@ -233,6 +227,11 @@ char *name;
 	  rt_free( (char *)p->s_info, "release: s_info" );
 	else if(p->_owner)
 	  find_new_owner(p);
+
+	/* If this display is being referenced by a command window, remove it */
+	for( RT_LIST_FOR(p_cmd, cmd_list, &head_cmd_list.l) )
+	  if(p_cmd->aim == p)
+	    p_cmd->aim = (struct dm_list *)NULL;
 
 	rt_vls_free(&pathName);
 	RT_LIST_DEQUEUE( &p->l );
@@ -301,6 +300,55 @@ reattach()
   return status;
 }
 
+
+static int
+do_2nd_attach_prompt(name)
+char *name;
+{
+  static char plot_default[] = "pl-fb";
+  static char tek_default[] = "/dev/tty";
+#if 0
+  static char ps_default[] = "mged.ps";
+#endif
+  char *dm_default;
+  struct rt_vls prompt;
+
+  rt_vls_init(&prompt);
+
+  if(!strcmp(name, "plot")){
+    dm_default = plot_default;
+    rt_vls_printf(&prompt, "UNIX-Plot filter [pl-fb]? ");
+  }else if(!strcmp(name, "tek")){
+    dm_default = tek_default;
+    rt_vls_printf(&prompt, "Output tty [stdout]? ");
+#if 0
+  }else if(!strcmp(name, "ps")){
+    dm_default = ps_default;
+    rt_vls_printf(&prompt, "PostScript file [mged.ps]? ");
+#endif
+  }else{
+    char  hostname[80];
+    char  display[82];
+
+    /* get or create the default display */
+    if( (dm_default = getenv("DISPLAY")) == NULL ) {
+      /* Env not set, use local host */
+      gethostname( hostname, 80 );
+      hostname[79] = '\0';
+      (void)sprintf( display, "%s:0", hostname );
+      dm_default = display;
+    }
+
+    rt_vls_printf(&prompt, "Display [%s]? ", dm_default);
+  }
+
+  Tcl_AppendResult(interp, MORE_ARGS_STR, rt_vls_addr(&prompt), (char *)NULL);
+  rt_vls_printf(&curr_cmd_list->more_default, "%s", dm_default);
+
+  return TCL_ERROR;
+}
+
+
 int
 f_attach(clientData, interp, argc, argv)
 ClientData clientData;
@@ -317,7 +365,7 @@ char    **argv;
     return TCL_ERROR;
 
   if(argc == 1){
-    dp = &which_dm[0];
+    dp = &which_dm[1];  /* not advertising dm_PS */
     Tcl_AppendResult(interp, MORE_ARGS_STR, "attach (", (*dp++)->dmr_name, (char *)NULL);
     for( ; *dp != (struct dm *)0; dp++ )
       Tcl_AppendResult(interp, "|", (*dp)->dmr_name, (char *)NULL);
@@ -334,6 +382,9 @@ char    **argv;
     goto Bad;
 
   if(argc == 2){
+#if 1
+    return do_2nd_attach_prompt((*dp)->dmr_name);
+#else
     char  *envp;
     char  hostname[80];
     char  display[82];
@@ -350,6 +401,7 @@ char    **argv;
     Tcl_AppendResult(interp, MORE_ARGS_STR, "Display [", envp, "]? ", (char *)NULL);
     rt_vls_printf(&curr_cmd_list->more_default, "%s", envp);
     return TCL_ERROR;
+#endif
   }else{
     dmlp = (struct dm_list *)rt_malloc(sizeof(struct dm_list), "dm_list");
     bzero((void *)dmlp, sizeof(struct dm_list));
@@ -450,7 +502,7 @@ char    **argv;
       break;
 
   if(p == &head_dm_list){
-    Tcl_AppendResult(interp, "f_untie: bad pathname - %s\n", argv[1]);
+    Tcl_AppendResult(interp, "f_untie: bad pathname - %s\n", argv[1], (char *)NULL);
     return TCL_ERROR;
   }
 

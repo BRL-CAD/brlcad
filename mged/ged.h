@@ -154,6 +154,8 @@ extern int	menuflag;	/* flag indicating if a menu item is selected */
 /* defined in ged.c */
 extern FILE *infile;
 extern FILE *outfile;
+extern jmp_buf jmp_env;
+
 /*
  *	GED functions referenced in more than one source file:
  */
@@ -171,7 +173,7 @@ extern void		sedit_menu();
 extern void		attach(), get_attached();
 #endif
 extern void		(*cur_sigint)();	/* Current SIGINT status */
-extern void		sig2();
+extern void		sig2(), sig3();
 
 extern void		aexists();
 extern int		clip(), getname(), use_pen(), dir_print();
@@ -450,6 +452,7 @@ extern	char	ogl_sgi_used;
 MGED_EXTERN(int f_3ptarb, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_adc, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_aeview, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+MGED_EXTERN(int f_aim, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_aip, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_amtrack, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_analyze, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
@@ -542,6 +545,7 @@ MGED_EXTERN(int f_putmat, (ClientData clientData, Tcl_Interp *interp, int argc, 
 MGED_EXTERN(int f_quit, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_qorot, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_qvrot, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+MGED_EXTERN(int f_rcodes, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_red, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_refresh, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_regdebug, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
@@ -584,6 +588,7 @@ MGED_EXTERN(int f_view, (ClientData clientData, Tcl_Interp *interp, int argc, ch
 MGED_EXTERN(int f_vrmgr, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_vrot, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_vrot_center, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
+MGED_EXTERN(int f_wcodes, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_which_id, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_winset, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));
 MGED_EXTERN(int f_xpush, (ClientData clientData, Tcl_Interp *interp, int argc, char **argv));

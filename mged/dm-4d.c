@@ -323,8 +323,8 @@ Ir_configure_window_shape()
 
 		val = Tcl_GetVar2(interp, "sgi_ntsc", NULL, TCL_GLOBAL_ONLY);
 		if( val && atoi(val) != 0 )  {
-			rt_log("dm-4d: setting NTSC size window\n");
-			monitor = NTSC;
+		  Tcl_AppendResult(interp, "dm-4d: setting NTSC size window\n", (char *)NULL);
+		  monitor = NTSC;
 		}
 	}
 	switch( monitor )  {
@@ -427,13 +427,13 @@ Ir_open()
 	 * if a direct OpenGL context has been previously opened in the 
 	 * current mged session. This stops the attach before it crashes.
 	 */
-	ogl_sgi_used = 1;
 	if (ogl_ogl_used){
 	  Tcl_AppendResult(interp, "Can't attach sgi, because a direct OpenGL context has\n",
 			   "previously been opened in this session. To use sgi,\n",
 			   "quit this session and reopen it.\n", (char *)NULL);
 	  return TCL_ERROR;
 	}
+	ogl_sgi_used = 1;
 #endif /* DM_OGL */
 
 	ir_var_init();
@@ -480,7 +480,7 @@ Ir_open()
 		case INV_GR1ZBUFFER:
 			mvars.zbuf = 1;
 			break;
-		case INV_GR1BOARD:	/* Persoanl Iris */
+		case INV_GR1BOARD:	/* Personal Iris */
 			if ( inv->state & INV_GR1RE2 )
 				ir_is_gt = 1;
 			if(inv->state & INV_GR1ZBUF24 )
@@ -745,6 +745,9 @@ Ir_open()
 void
 Ir_close()
 {
+  if (ogl_ogl_used)
+    return;
+
   if(ir_count > 1){
     --ir_count;
     return;
@@ -770,8 +773,11 @@ Ir_close()
 
   winclose(gr_id);
 
-  Tk_DeleteFileHandler(ir_fd);
-  rt_free(dm_vars, "Ir_close: dm_vars");
+  if(ir_fd)
+    Tk_DeleteFileHandler(ir_fd);
+
+  if(dm_vars)
+    rt_free(dm_vars, "Ir_close: dm_vars");
 
   ir_count = 0;
   return;
@@ -796,7 +802,7 @@ Ir_prolog()
 	ortho( -xlim_view, xlim_view, -ylim_view, ylim_view, -1.0, 1.0 );
 #endif
 
-	if( dmaflag && !mvars.doublebuffer )
+	if( !mvars.doublebuffer )
 	{
 		ir_clear_to_black();
 		return;
@@ -1156,8 +1162,7 @@ Ir_update()
 	if (mvars.debug)
 	  Tcl_AppendResult(interp, "Ir_update()\n", (char *)NULL);
 
-	if( !dmaflag )
-		return;
+	return;
 }
 
 /*
@@ -1339,17 +1344,30 @@ int mask;
 */
 
   rt_vls_init(&cmd);
+
   save_dm_list = curr_dm_list;
   curr_dm_list = (struct dm_list *)clientData;
 
   n = blkqread( values, NVAL );	/* n is # of shorts returned */
-  if( mvars.debug )
-    rt_log("blkqread gave %d\n", n);
+  if( mvars.debug ){
+    struct rt_vls tmp_vls;
+
+    rt_vls_init(&tmp_vls);
+    rt_vls_printf(&tmp_vls, "blkqread gave %d\n", n);
+    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+    rt_vls_free(&tmp_vls);
+  }
   for( valp = values; n > 0; n -= 2, valp += 2 )  {
 
     ret = *valp;
-    if( mvars.debug )
-      rt_log("qread ret=%d, val=%d\n", ret, valp[1]);
+    if( mvars.debug ){
+      struct rt_vls tmp_vls;
+
+      rt_vls_init(&tmp_vls);
+      rt_vls_printf(&tmp_vls, "qread ret=%d, val=%d\n", ret, valp[1]);
+      Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+      rt_vls_free(&tmp_vls);
+    }
 #if IR_BUTTONS
     if((ret >= SWBASE && ret < SWBASE+IR_BUTTONS)
        || (ret >= F1KEY && ret <= F12KEY)
@@ -1856,8 +1874,15 @@ continue;
 			/* These show up as a consequence of using qgetfd().  Most regrettable.  Ignore. */
 			break;
 		default:
-			rt_log("IRIS device %d gave %d?\n", ret, valp[1]);
-			break;
+		  {
+		    struct rt_vls tmp_vls;
+
+		    rt_vls_init(&tmp_vls);
+		    rt_vls_printf(&tmp_vls, "IRIS device %d gave %d?\n", ret, valp[1]);
+		    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+		    rt_vls_free(&tmp_vls);
+		  }
+		  break;
 		}
   }
 
@@ -1928,7 +1953,14 @@ unsigned addr, count;
 void
 Ir_statechange( a, b )
 {
-	if( mvars.debug ) rt_log("statechange %d %d\n", a, b );
+	if( mvars.debug ){
+	  struct rt_vls tmp_vls;
+
+	  rt_vls_init(&tmp_vls);
+	  rt_vls_printf(&tmp_vls, "statechange %d %d\n", a, b );
+	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  rt_vls_free(&tmp_vls);
+	}
 	/*
 	 *  Based upon new state, possibly do extra stuff,
 	 *  including enabling continuous tablet tracking,
@@ -1952,8 +1984,15 @@ Ir_statechange( a, b )
 		unqdevice( MOUSEY );	/* constant tracking OFF */
 		break;
 	default:
-		rt_log("Ir_statechange: unknown state %s\n", state_str[b]);
-		break;
+	  {
+	    struct rt_vls tmp_vls;
+
+	    rt_vls_init(&tmp_vls);
+	    rt_vls_printf(&tmp_vls, "Ir_statechange: unknown state %s\n", state_str[b]);
+	    Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	    rt_vls_free(&tmp_vls);
+	  }
+	  break;
 	}
 	Ir_viewchange( DM_CHGV_REDO, SOLID_NULL );
 }
@@ -1963,7 +2002,14 @@ Ir_viewchange( cmd, sp )
 register int cmd;
 register struct solid *sp;
 {
-	if( mvars.debug ) rt_log("viewchange( %d, x%x )\n", cmd, sp );
+	if( mvars.debug ){
+	  struct rt_vls tmp_vls;
+
+	  rt_vls_init(&tmp_vls);
+	  rt_vls_printf(&tmp_vls, "viewchange( %d, x%x )\n", cmd, sp );
+	  Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	  rt_vls_free(&tmp_vls);
+	}
 	switch( cmd )  {
 	case DM_CHGV_ADD:
 		break;
@@ -2004,7 +2050,8 @@ Ir_colorchange()
 	register int i;
 	register int nramp;
 
-	if( mvars.debug )  rt_log("colorchange\n");
+	if( mvars.debug )
+	  Tcl_AppendResult(interp, "colorchange\n", (char *)NULL);
 
 	/* Program the builtin colors */
 	ir_rgbtab[0].r=0; 
@@ -2039,8 +2086,8 @@ Ir_colorchange()
 
 	ir_nslots = getplanes();
 	if(mvars.cueing_on && (ir_nslots < 7)) {
-		rt_log("Too few bitplanes: depthcueing disabled\n");
-		mvars.cueing_on = 0;
+	  Tcl_AppendResult(interp, "Too few bitplanes: depthcueing disabled\n");
+	  mvars.cueing_on = 0;
 	}
 	ir_nslots = 1<<ir_nslots;
 	if( ir_nslots > NSLOTS )  ir_nslots = NSLOTS;
@@ -2137,7 +2184,8 @@ register char *str;
 	*cp = 0;
 	dbtext(buf);
 # else
-	rt_log("dm-4d: You pressed Help key and '%s'\n", str);
+	Tcl_AppendResult(interp, "dm-4d: You pressed Help key and '", str,
+			 "'\n", (char *)NULL);
 # endif
 #else
 	return;
@@ -2232,7 +2280,7 @@ static void
 establish_zbuffer()
 {
 	if( mvars.zbuf == 0 )  {
-		rt_log("dm-4d: This machine has no Zbuffer to enable\n");
+	  Tcl_AppendResult(interp, "dm-4d: This machine has no Zbuffer to enable\n", (char *)NULL);
 		mvars.zbuffer_on = 0;
 	}
 	zbuffer( mvars.zbuffer_on );
@@ -2735,16 +2783,20 @@ int	argc;
 char	**argv;
 {
 	struct rt_vls	vls;
+	struct rt_vls tmp_vls;
 
 	if( argc < 1 )  return -1;
 
 	/* For now, only "set" command is implemented */
 	if( strcmp( argv[0], "set" ) != 0 )  {
-		rt_log("dm: command is not 'set'\n");
-		return CMD_BAD;
+	  Tcl_AppendResult(interp, "dm: command is not 'set'\n", (char *)NULL);
+	  return TCL_ERROR;
 	}
 
 	rt_vls_init(&vls);
+	rt_vls_init(&tmp_vls);
+	start_catching_output(&tmp_vls);
+
 	if( argc < 2 )  {
 		/* Bare set command, print out current settings */
 	  rt_structprint( "dm_4d internal variables", Ir_vparse, (char *)&mvars );
@@ -2758,8 +2810,13 @@ char	**argv;
 		rt_vls_putc( &vls, '\"' );
 		rt_structparse( &vls, Ir_vparse, (char *)&mvars );
 	}
+
 	rt_vls_free(&vls);
-	return CMD_OK;
+
+	stop_catching_output(&tmp_vls);
+	Tcl_AppendResult(interp, rt_vls_addr(&tmp_vls), (char *)NULL);
+	rt_vls_free(&tmp_vls);
+	return TCL_OK;
 }
 
 static void

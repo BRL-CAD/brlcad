@@ -92,9 +92,6 @@ char	**argv;
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 
-	/* interupts */
-	(void)signal( SIGINT, sig2 );
-
 	/* get the arb name */
 	if( argc < 2 ) {
 	  Tcl_AppendResult(interp, MORE_ARGS_STR, "Enter name for this arb: ", (char *)NULL);
@@ -362,9 +359,6 @@ char	**argv;
 
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
-
-	/* interupts */
-	(void)signal( SIGINT, sig2 );
 
 	/* get the arb name */
 	if( argc < 2 ) {

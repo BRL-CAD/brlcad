@@ -101,7 +101,10 @@ char	**argv;
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 
-	(void)signal( SIGINT, sig2 );		/* allow interrupts */
+	if( setjmp( jmp_env ) == 0 )
+	  (void)signal( SIGINT, sig3);  /* allow interupts */
+	else
+	  return TCL_OK;
 
 	/* find out which ascii table is desired */
 	if( strcmp(argv[0], "solids") == 0 ) {
@@ -240,11 +243,12 @@ f_edcodes(clientData, interp, argc, argv )
 ClientData clientData;
 Tcl_Interp *interp;
 int	argc;
-char	**argv;
+char	*argv[];
 {
   int i;
   int status;
   char tmpfil[] = "/tmp/GED.aXXXXX";
+  char **av;
 
   if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
     return TCL_ERROR;
@@ -258,37 +262,57 @@ char	**argv;
 
   (void)close(i);
 
-  regflag = lastmemb = 0;
-  if( writecodes(tmpfil, argc, argv) == TCL_ERROR ){
+  av = (char **)rt_malloc(sizeof(char *)*argc + 2, "f_edcodes: av");
+  av[0] = "wcodes";
+  av[1] = tmpfil;
+  for(i = 2; i < argc + 1; ++i)
+    av[i] = argv[i-1];
+
+  av[i] = NULL;
+
+  if( f_wcodes(clientData, interp, argc + 1, av) == TCL_ERROR ){
     (void)unlink(tmpfil);
+    rt_free((char *)av, "f_edcodes: av");
     return TCL_ERROR;
   }
 
   if( editit(tmpfil) ){
     regflag = lastmemb = 0;
-    status = readcodes(tmpfil, argc, argv);
+    av[0] = "rcodes";
+    av[2] = NULL;
+    status = f_rcodes(clientData, interp, 2, av);
   }else
     status = TCL_ERROR;
 
   (void)unlink(tmpfil);
+  rt_free((char *)av, "f_edcodes: av");
   return status;
 }
 
 
+/* write codes to a file */
 int
-writecodes(fname, argc, argv)
-char *fname;
-int argc;
-char *argv[];
+f_wcodes(clientData, interp, argc, argv )
+ClientData clientData;
+Tcl_Interp *interp;
+int	argc;
+char	*argv[];
 {
   register int i;
   int status;
   FILE *fp;
   register struct directory *dp;
 
-  fp = fopen(fname, "w");
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+    return TCL_ERROR;
 
-  for(i = 1; i < argc; ++i){
+  if((fp = fopen(argv[1], "w")) == NULL){
+    Tcl_AppendResult(interp, "f_wcodes: Failed to open file - ", argv[1], (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  regflag = lastmemb = 0;
+  for(i = 2; i < argc; ++i){
     if( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY)) != DIR_NULL ){
       status = printcodes(fp, dp, 0);
 
@@ -303,32 +327,66 @@ char *argv[];
   return TCL_OK;
 }
 
-
+/* read codes from a file and load them into the database */
 int
-readcodes(fname, argc, argv)
-char *fname;
-int argc;
-char *argv[];
+f_rcodes(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int     argc;
+char    *argv[];
 {
-  register int i;
-  int status;
+  int item, air, mat, los;
+  char name[MAX_LEVELS * NAMESIZE];
+  char line[LINELEN];
+  char *cp;
   FILE *fp;
   register struct directory *dp;
 
-  fp = fopen(fname, "r");
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+        return TCL_ERROR;
 
-  for(i = 1; i < argc; ++i){
-    if( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY)) != DIR_NULL ){
-      status = loadcodes(fp, dp, 0);
+  if((fp = fopen(argv[1], "r")) == NULL){
+    Tcl_AppendResult(interp, "f_rcodes: Failed to read file - ", argv[1], (char *)NULL);
+    return TCL_ERROR;
+  }
 
-      if(status == TCL_ERROR){
-	(void)fclose(fp);
-	return TCL_ERROR;
-      }
+  while(fgets( line , LINELEN, fp ) != NULL){
+    if(sscanf(line, "%d%d%d%d%s", &item, &air, &mat, &los, name) != 5)
+      continue; /* not useful */
+
+    /* skip over the path */
+    if((cp = strrchr(name, (int)'/')) == NULL)
+      cp = name;
+    else
+      ++cp;
+
+    if(*cp == '\0')
+      continue;
+
+    if((dp = db_lookup( dbip, cp, LOOKUP_NOISY )) == DIR_NULL){
+      Tcl_AppendResult(interp, "f_rcodes: Warning - ", cp, " not found in database.\n",
+		       (char *)NULL);
+      continue;
+    }
+
+    if( db_get( dbip, dp, &record, 0, 1) < 0 )
+      TCL_READ_ERR_return;
+
+    /* make the changes */
+    record.c.c_regionid = item;
+    record.c.c_aircode = air;
+    record.c.c_material = mat;
+    record.c.c_los = los;
+
+    /* write out all changes */
+    if( db_put( dbip, dp, &record, 0, 1 ) < 0 ){
+      Tcl_AppendResult(interp, "Database write error, aborting.\n",
+		       (char *)NULL);
+      TCL_ERROR_RECOVERY_SUGGESTION;
+      return TCL_ERROR;
     }
   }
 
-  (void)fclose(fp);
   return TCL_OK;
 }
 
@@ -421,112 +479,12 @@ int pathpos;
   return TCL_OK;
 }
 
-
-int
-loadcodes(fp, dp, pathpos)
-FILE *fp;
-struct directory *dp;
-int pathpos;
-{
-  int i;
-  int status;
-  int nparts;
-  int item, air, mat, los;
-  char line[LINELEN];
-  struct directory *nextdp;
-
-  if(pathpos >= MAX_LEVELS){
-    regflag = ABORTED;
-    return TCL_ERROR;
-  }
-
-  if( db_get( dbip, dp, &record, 0, 1) < 0 )
-    return TCL_ERROR;
-
-  if( record.u_id == ID_COMB ){
-    if(regflag > 0){
-      if(lastmemb)
-	regflag = lastmemb = 0;
-
-      return TCL_OK;
-    }
-
-    regflag = 0;
-    nparts = dp->d_len-1;
-    if(record.c.c_flags == 'R'){
-      /* first region in this path */
-      regflag = 1;
-
-      if( nparts == 0 )	/* dummy region */
-	regflag = 0;
-
-      if( fgets( line , LINELEN, fp ) == NULL )
-	return TCL_ERROR;
-
-      sscanf(line, "%d%d%d%d", &item, &air, &mat, &los);
-      record.c.c_regionid = item;
-      record.c.c_aircode = air;
-      record.c.c_material = mat;
-      record.c.c_los = los;
-
-      /* write out all changes */
-      if( db_put( dbip, dp, &record, 0, 1 ) < 0 ){
-	Tcl_AppendResult(interp, "Database write error, aborting.\n",
-			 (char *)NULL);
-	TCL_ERROR_RECOVERY_SUGGESTION;
-	return TCL_ERROR;
-      }
-    }
-
-    lastmemb = 0;
-    for(i=1; i<=nparts; i++) {
-      if(i == nparts)
-	lastmemb = 1;
-
-      if( db_get( dbip, dp, &record, i, 1) < 0 ){
-	TCL_READ_ERR_return;
-      }
-
-      if( (nextdp = db_lookup( dbip, record.M.m_instname, LOOKUP_NOISY)) == DIR_NULL )
-	continue;
-
-      /* Recursive call */
-      status = loadcodes(fp, nextdp, pathpos+1);
-      if(status == TCL_ERROR)
-	return TCL_ERROR;
-    }
-
-    return TCL_OK;
-  }      
-
-  /* not a combination  -  should have a solid */
-  if( lastmemb ){
-    regflag = lastmemb = 0;
-  }
-
-  return TCL_OK;
-}
-
-
-/*
- *
- *	F _ D U P ( ) :	checks for dup names in preparation for cat'ing of files
- *
- *
- */
-extern char new_name[NAMESIZE];	/* from concat.o */
-extern char prestr[15];
-extern int ncharadd;
-
-
-
 /*
  *
  *		T A B L E S ( ) :    builds ascii tables (summary)
  *
  *
  */
-
 void
 tables( dp, pathpos, old_xlate, flag)
 register struct directory *dp;
@@ -1017,8 +975,10 @@ char	**argv;
 	if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
 	  return TCL_ERROR;
 
-	/* allow interupts */
-	(void)signal( SIGINT, sig2 );
+	if( setjmp( jmp_env ) == 0 )
+	  (void)signal( SIGINT, sig3);  /* allow interupts */
+        else
+	  return TCL_OK;
 
 	for( j=1; j<argc; j++) {
 		item = atoi( argv[j] );

@@ -58,6 +58,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 int cmd_mged_glob();
 int cmd_init();
 int cmd_set();
+int cmd_get();
 int get_more_default();
 int f_tran(), f_irot();
 void set_tran(), gui_setup(), mged_setup(), cmd_setup();
@@ -163,6 +164,8 @@ static struct funtab funtab[] = {
         f_adc, 1, 5, TRUE,
 "ae", "azim elev", "set view using az and elev angles",
 	f_aeview, 3, 3, TRUE,
+"aim", "[command_window [pathName]]", "aims command_window at pathName",
+        f_aim, 1, 3, TRUE,
 "aip", "[fb]", "advance illumination pointer or path position forward or backward",
         f_aip, 1, 2, TRUE,
 "analyze", "[arbname]", "analyze faces of ARB",
@@ -399,6 +402,8 @@ static struct funtab funtab[] = {
 	f_region,4,MAXARGS,TRUE,
 "R",  "1|0 xpos ypos", "handle a right mouse event",
 	cmd_right_mouse, 4,4, TRUE,
+"rcodes", "filename", "read region ident codes from filename",
+        f_rcodes, 2, 2, TRUE,
 "red", "object", "edit a group or region using a text editor",
 	f_red, 2, 2,TRUE,
 "refresh", "", "send new control list",
@@ -507,6 +512,8 @@ static struct funtab funtab[] = {
 	f_vrot,4,4,TRUE,
 "vrot_center", "v|m x y z", "set center point of viewpoint rotation, in model or view coords",
 	f_vrot_center, 5, 5,TRUE,
+"wcodes", "filename object(s)", "write region ident codes to filename",
+        f_wcodes, 3, MAXARGS, TRUE,
 "whichid", "ident(s)", "lists all regions with given ident code",
 	f_which_id, 2, MAXARGS,TRUE,
 "winset", "pathname", "sets the window focus to the Tcl/Tk window with pathname",
@@ -974,7 +981,7 @@ gui_setup()
   if(!found){
     rt_log("gui_setup: user interface startup file was not found.\n\n");
     rt_log("Note: there are three environment variables that should be set.\n");
-    rt_log("\tMGED_GUIRC is the name of the startup file.\n");
+    rt_log("\tMGED_GUIRC is the name of the user interface startup file.\n");
     rt_log("\tMGED_LIBRARY is the path where the Tcl files live.\n");
     rt_log("\tMGED_HTML_DIR is the path where the html files live.\n\n");
     return;
@@ -1040,6 +1047,8 @@ cmd_setup()
 			    (Tcl_CmdDeleteProc *)NULL);
     (void)Tcl_CreateCommand(interp, "cmd_set", cmd_set, (ClientData)NULL,
 			    (Tcl_CmdDeleteProc *)NULL);
+    (void)Tcl_CreateCommand(interp, "cmd_get", cmd_get, (ClientData)NULL,
+			    (Tcl_CmdDeleteProc *)NULL);
     (void)Tcl_CreateCommand(interp, "get_more_default", get_more_default, (ClientData)NULL,
 			    (Tcl_CmdDeleteProc *)NULL);
     (void)Tcl_CreateCommand(interp, "stuff_str", cmd_stuff_str, (ClientData)NULL,
@@ -1094,7 +1103,38 @@ char **argv;
 }
 
 
-/* sets the current command window */
+/* returns a list of ids associated with the current command window */
+int
+cmd_get(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char **argv;
+{
+  struct dm_list *p;
+
+  /* The current command window is not tied to a display manager so,
+     simply return the id of the current command window */
+  if(!curr_cmd_list->aim){
+    Tcl_AppendElement(interp, curr_cmd_list->name);
+    return TCL_OK;
+  }
+
+  /* return all ids associated with the current command window */
+  for( RT_LIST_FOR(p, dm_list, &head_dm_list.l) ){
+    /* The display manager tied to the current command window shares
+       information with display manager p */
+    if(curr_cmd_list->aim->s_info == p->s_info)
+      /* This display manager is tied to a command window */
+      if(p->aim)
+	Tcl_AppendElement(interp, p->aim->name);
+  }
+
+  return TCL_OK;
+}
+
+
+/* given an id sets the current command window */
 int
 cmd_set(clientData, interp, argc, argv)
 ClientData clientData;
@@ -1361,14 +1401,19 @@ int record;
 
     switch (status) {
     case TCL_OK:
+      if( setjmp( jmp_env ) == 0 ){
+	(void)signal( SIGINT, sig3);  /* allow interupts */
 	len = strlen(interp->result);
 
-    /* If the command had something to say, print it out. */	     
-	if (len > 0) {
-	  struct rt_vls tmp_vls;
-
+	/* If the command had something to say, print it out. */	     
+	if (len > 0)
 	  rt_log("%s%s", interp->result,
 		 interp->result[len-1] == '\n' ? "" : "\n");
+
+	/* A user typed this command so let everybody see, then record
+	   it in the history. */
+	if (record){
+	  struct rt_vls tmp_vls;
 
 	  rt_vls_init(&tmp_vls);
 	  rt_vls_printf(&tmp_vls, "distribute_text \{\} \{%s\} \{%s\}",
@@ -1377,14 +1422,16 @@ int record;
 	  Tcl_SetResult(interp, "", TCL_STATIC);
 	  rt_vls_free(&tmp_vls);
 	}
+      }else
+	rt_log("\n");
+      
 
-    /* Then record it in the history, if desired. */
-	if (record)
-	  history_record(vp, &start, &finish, CMD_OK);
+      if(record)
+	history_record(vp, &start, &finish, CMD_OK);
 
-	rt_vls_free(&globbed);
-	rt_vls_strcpy(&mged_prompt, MGED_PROMPT);
-	return CMD_OK;
+      rt_vls_free(&globbed);
+      rt_vls_strcpy(&mged_prompt, MGED_PROMPT);
+      return CMD_OK;
 
     case TCL_ERROR:
     default:
@@ -1588,7 +1635,10 @@ char	**argv;
 
 	while ((rpid = wait(&retcode)) != pid && rpid != -1)
 		;
+
+#if 0
 	(void)signal(SIGINT, cur_sigint);
+#endif
 	Tcl_AppendResult(interp, "!\n", (char *)NULL);
 
 	return TCL_OK;
@@ -1965,6 +2015,87 @@ char    *argv[];
 #endif
 
 int
+f_aim(clientData, interp, argc, argv)
+ClientData clientData;
+Tcl_Interp *interp;
+int argc;
+char *argv[];
+{
+  struct cmd_list *p_cmd;
+  struct dm_list *p_dm;
+
+  if(mged_cmd_arg_check(argc, argv, (struct funtab *)NULL))
+        return TCL_ERROR;
+
+  if(argc == 1){
+    for( RT_LIST_FOR(p_cmd, cmd_list, &head_cmd_list.l) )
+      if(p_cmd->aim)
+	Tcl_AppendResult(interp, p_cmd->name, " ---> ", rt_vls_addr(&p_cmd->aim->_pathName),
+			 "\n", (char *)NULL);
+      else
+	Tcl_AppendResult(interp, p_cmd->name, " ---> ", "\n", (char *)NULL);
+
+    if(p_cmd->aim)
+      Tcl_AppendResult(interp, p_cmd->name, " ---> ", rt_vls_addr(&p_cmd->aim->_pathName),
+		       "\n", (char *)NULL);
+    else
+      Tcl_AppendResult(interp, p_cmd->name, " ---> ", "\n", (char *)NULL);
+
+    return TCL_OK;
+  }
+
+  for( RT_LIST_FOR(p_cmd, cmd_list, &head_cmd_list.l) )
+    if(!strcmp((char *)p_cmd->name, argv[1]))
+      break;
+
+  if(p_cmd == &head_cmd_list &&
+     (strcmp(head_cmd_list.name, argv[1]))){
+    Tcl_AppendResult(interp, "f_aim: unrecognized command_window - ", argv[1],
+		     "\n", (char *)NULL);
+    return TCL_ERROR;
+  }
+
+  /* print out the display manager being aimed at */
+  if(argc == 2){
+    if(p_cmd->aim)
+      Tcl_AppendResult(interp, p_cmd->name, " ---> ", rt_vls_addr(&p_cmd->aim->_pathName),
+		       "\n", (char *)NULL);
+    else
+      Tcl_AppendResult(interp, p_cmd->name, " ---> ", "\n", (char *)NULL);
+
+    return TCL_OK;
+  }
+
+  for( RT_LIST_FOR(p_dm, dm_list, &head_dm_list.l) )
+    if(!strcmp(argv[2], rt_vls_addr(&p_dm->_pathName)))
+      break;
+
+  if(p_dm == &head_dm_list &&
+     strcmp(argv[2], rt_vls_addr(&head_dm_list._pathName))){
+    Tcl_AppendResult(interp, "f_aim: unrecognized pathName - ", argv[2],
+		     "\n", (char *)NULL);
+
+    return TCL_ERROR;
+  }
+
+  /* already aiming */
+  if(p_cmd->aim)
+    p_cmd->aim->aim = (struct cmd_list *)NULL;
+
+  p_cmd->aim = p_dm;
+
+  /* already being aimed at */
+  if(p_dm->aim)
+    p_dm->aim->aim = (struct dm_list *)NULL;
+
+  p_dm->aim = p_cmd;
+  Tcl_AppendResult(interp, p_cmd->name, " ---> ", rt_vls_addr(&p_cmd->aim->_pathName),
+		   "\n", (char *)NULL);
+  
+  return TCL_OK;
+}
+
+int
 f_ps(clientData, interp, argc, argv)
 ClientData clientData;
 Tcl_Interp *interp;
@@ -2182,6 +2313,10 @@ char    **argv;
   for( RT_LIST_FOR(p, dm_list, &head_dm_list.l ) ){
     if( !strcmp( argv[1], rt_vls_addr( &p->_pathName ) ) ){
       curr_dm_list = p;
+
+      if(curr_dm_list->aim)
+	curr_cmd_list = curr_dm_list->aim;
+
       return TCL_OK;
     }
   }
@@ -2326,6 +2461,8 @@ char *argv[];
       sprintf(cmd, "rotobj %f %f %f\n", rot_x, rot_y, rot_z);
     else if(state == ST_S_EDIT)
       sprintf(cmd, "p %f %f %f\n", rot_x, rot_y, rot_z);
+    else
+      return TCL_OK;
   }
 
   rot_set = 1;

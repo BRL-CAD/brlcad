@@ -156,8 +156,10 @@ char **argv;
 	rt_vls_init(&tmp_vls);
 	start_catching_output(&tmp_vls);
 
-	/* interupts */
-	(void)signal( SIGINT, sig2);    /* allow interupts */
+	if( setjmp( jmp_env ) == 0 )
+	  (void)signal( SIGINT, sig3);  /* allow interupts */
+	else
+	  return TCL_OK;
 
 	for(i=1; i<argc; i++) {
 		if( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL )
@@ -282,8 +284,10 @@ char	**argv;
 	 */
 	prflag = 0;
 
-	/* interupts */
-	(void)signal( SIGINT, sig2);    /* allow interupts */
+	if( setjmp( jmp_env ) == 0 )
+	  (void)signal( SIGINT, sig3);  /* allow interupts */
+        else
+	  return TCL_OK;
 
 	/* find out which command was entered */
 	if( strcmp( argv[0], "paths" ) == 0 ) {
@@ -370,8 +374,10 @@ char **argv;
 
 	mat_idn( start_mat );
 
-	/* interupts */
-	(void)signal( SIGINT, sig2);    /* allow interupts */
+	if( setjmp( jmp_env ) == 0 )
+	  (void)signal( SIGINT, sig3);  /* allow interupts */
+        else
+	  return TCL_OK;
 
 	/* build directory pointer array for desired path */
 	for(i=2; i<argc; i++)
@@ -419,8 +425,10 @@ char **argv;
 	  return TCL_ERROR;
 	}
 
-	/* No interupts */
-	(void)signal( SIGINT, SIG_IGN );
+	if( setjmp( jmp_env ) == 0 )
+	  (void)signal( SIGINT, sig3);  /* allow interupts */
+        else
+	  return TCL_OK;
 
 	/* Have found the desired path - xform is the transformation matrix */
 	/* xform matrix calculated in trace() */
