@@ -37,6 +37,7 @@
 #include	"vmath.h"
 
 extern int	printf();
+extern double	sin(), cos();
 
 static double degtorad = 0.0174532925;
 
@@ -360,7 +361,6 @@ double elev;
 {
 	static double sin_az, sin_el;
 	static double cos_az, cos_el;
-	extern double sin(), cos();
 
 	azimuth *= degtorad;
 	elev *= degtorad;
