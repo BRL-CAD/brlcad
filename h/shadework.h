@@ -20,6 +20,7 @@ struct shadework {
 	fastf_t		sw_reflect;	/* 0.0 -> 1.0 */
 	fastf_t		sw_extinction;	/* extinction coeff, mm^-1 */
 	fastf_t		sw_refrac_index;
+	fastf_t		sw_temperature;
 #if RT_MULTISPECTRAL
 	struct bn_tabdata *msw_color;
 	struct bn_tabdata *msw_basecolor;

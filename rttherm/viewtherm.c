@@ -570,6 +570,10 @@ struct seg *finished_segs;
 	sw.sw_pixeltime = sw.sw_frametime = curframe * frame_delta_t;
 	sw.msw_color = bn_tabdata_get_constval( 1.0, spectrum );
 	sw.msw_basecolor = bn_tabdata_get_constval( 1.0, spectrum );
+	if( pp->pt_regionp->reg_mater.ma_temperature > 0 )
+		sw.sw_temperature = pp->pt_regionp->reg_mater.ma_temperature;
+	else
+		sw.sw_temperature = bg_temp;
 
 	if (rdebug&RDEBUG_SHADE)
 		rt_log("colorview calling viewshade\n");

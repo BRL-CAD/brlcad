@@ -79,6 +79,8 @@ register CONST struct region *rp;
 			(int)rp->reg_mater.ma_color[0]*255.,
 			(int)rp->reg_mater.ma_color[1]*255.,
 			(int)rp->reg_mater.ma_color[2]*255. );
+	if( rp->reg_mater.ma_temperature > 0 )
+		bu_log("Temperature %g degrees K\n", rp->reg_mater.ma_temperature );
 	if( rp->reg_mater.ma_shader && rp->reg_mater.ma_shader[0] != '\0' )
 		bu_log("Shader '%s'\n", rp->reg_mater.ma_shader );
 

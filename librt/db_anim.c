@@ -185,6 +185,12 @@ struct mater_info	*materp;
 		materp->ma_color[2] =
 		    (((double)anp->an_u.anu_c.anc_rgb[2])+0.5)*bn_inv255;
 		break;
+	case RT_AN_TEMPERATURE:
+		if( rt_g.debug&DEBUG_ANIM )
+			bu_log("temperature = %g\n", anp->an_u.anu_t);
+		if( !materp )  break;
+		materp->ma_temperature = anp->an_u.anu_t;
+		break;
 	default:
 		if( rt_g.debug&DEBUG_ANIM )
 			bu_log("unknown op\n");
@@ -352,6 +358,10 @@ CONST char	**argv;
 		anp->an_u.anu_c.anc_rgb[0] = atoi( argv[3+0] );
 		anp->an_u.anu_c.anc_rgb[1] = atoi( argv[3+1] );
 		anp->an_u.anu_c.anc_rgb[2] = atoi( argv[3+2] );
+	} else if( strcmp( argv[2], "temperature" ) == 0 ||
+		   strcmp( argv[2], "temp" ) == 0 )  {
+		anp->an_type = RT_AN_TEMPERATURE;
+		anp->an_u.anu_t = atof( argv[3] );
 	} else {
 		bu_log("db_parse_1anim:  animation type '%s' unknown\n", argv[2]);
 		goto bad;

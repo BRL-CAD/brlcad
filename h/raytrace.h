@@ -438,9 +438,10 @@ struct soltab {
  */
 struct mater_info {
 	float	ma_color[3];		/* explicit color:  0..1  */
+	float	ma_temperature;		/* positive ==> degrees Kelvin */
 	char	ma_override;		/* non-0 ==> ma_color is valid */
-	char	ma_cinherit;		/* DB_INH_LOWER / DB_INH_HIGHER */
-	char	ma_minherit;		/* DB_INH_LOWER / DB_INH_HIGHER */
+	char	ma_cinherit;		/* color: DB_INH_LOWER / DB_INH_HIGHER */
+	char	ma_minherit;		/* mater: DB_INH_LOWER / DB_INH_HIGHER */
 	char	*ma_shader;		/* shader name & parms */
 };
 
@@ -714,6 +715,7 @@ struct rt_comb_internal  {
 	/* End GIFT compatability */
 	char		rgb_valid;	/* !0 ==> rgb[] has valid color */
 	unsigned char	rgb[3];
+	float		temperature;	/* > 0 ==> region temperature */
 	struct rt_vls	shader;
 	struct rt_vls	material;
 	char		inherit;
@@ -927,12 +929,14 @@ struct animate {
 		struct anim_mat		anu_m;
 		struct rt_anim_property	anu_p;
 		struct rt_anim_color	anu_c;
+		float			anu_t;
 	}		an_u;
 };
 #define RT_AN_MATRIX	1			/* Matrix animation */
 #define RT_AN_MATERIAL	2			/* Material property anim */
 #define RT_AN_COLOR	3			/* Material color anim */
 #define RT_AN_SOLID	4			/* Solid parameter anim */
+#define RT_AN_TEMPERATURE 5			/* Region temperature */
 
 #define ANIM_NULL	((struct animate *)0)
 #define ANIMATE_MAGIC	0x414e4963		/* 1095649635 */

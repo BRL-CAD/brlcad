@@ -178,6 +178,7 @@ register CONST struct db_tree_state	*tsp;
 		tsp->ts_mater.ma_color[0],
 		tsp->ts_mater.ma_color[1],
 		tsp->ts_mater.ma_color[2] );
+	bu_log(" ts_mater.ma_temperature=%g K\n", tsp->ts_mater.ma_temperature);
 	bu_log(" ts_mater.ma_shader=%s\n", tsp->ts_mater.ma_shader ? tsp->ts_mater.ma_shader : "" );
 	bn_mat_print("ts_mat", tsp->ts_mat );
 }
@@ -241,6 +242,22 @@ register CONST struct rt_comb_internal	*comb;
 			tsp->ts_mater.ma_cinherit = comb->inherit;
 		}
 	}
+	if( comb->temperature > 0 )  {
+		if( tsp->ts_sofar & TS_SOFAR_REGION )  {
+			if( (tsp->ts_sofar&(TS_SOFAR_MINUS|TS_SOFAR_INTER)) == 0 )  {
+				/* This combination is within a region */
+				char	*sofar = db_path_to_string(pathp);
+
+				bu_log("db_apply_state_from_comb(): WARNING: temperature in combination below region '%s', ignored\n",
+					sofar );
+				bu_free(sofar, "path string");
+			}
+			/* Just quietly ignore it -- it's being subtracted off */
+		} else if( tsp->ts_mater.ma_minherit == 0 )  {
+			/* DB_INH_LOWER -- lower nodes in tree override */
+			tsp->ts_mater.ma_temperature = comb->temperature;
+		}
+	}
 	if( bu_vls_strlen( &comb->shader ) > 0 )  {
 		if( tsp->ts_sofar & TS_SOFAR_REGION )  {
 			if( (tsp->ts_sofar&(TS_SOFAR_MINUS|TS_SOFAR_INTER)) == 0 )  {
@@ -274,7 +291,7 @@ register CONST struct rt_comb_internal	*comb;
 				tsp->ts_mater.ma_shader = bu_vls_strdup( &tmp_vls );
 				bu_vls_free( &tmp_vls );
 			}
-		tsp->ts_mater.ma_minherit = comb->inherit;
+			tsp->ts_mater.ma_minherit = comb->inherit;
 		}
 	}
 

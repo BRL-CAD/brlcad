@@ -3664,6 +3664,7 @@ static struct db_tree_state mesh_initial_tree_state = {
 #endif
 		/* struct mater_info ts_mater */
 		1.0, 0.0, 0.0,	/* color, RGB */
+		-1.0,		/* Temperature */
 		0,		/* override */
 		0,		/* color inherit */
 		0,		/* mater inherit */

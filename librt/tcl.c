@@ -973,6 +973,7 @@ char			      **argv;
 {
 	char	buf[128];
 	int	i;
+	double	d;
 	
 	RT_CK_COMB( comb );
 
@@ -986,6 +987,11 @@ char			      **argv;
 			if( Tcl_GetBoolean( interp, argv[1], &i )!= TCL_OK )
 				return TCL_ERROR;
 			comb->region_flag = (char)i;
+		} else if( strcmp(buf, "temp")==0 ) {
+			if( !comb->region_flag ) goto not_region;
+			if( Tcl_GetDouble( interp, argv[1], &d ) != TCL_OK )
+				return TCL_ERROR;
+			comb->temperature = (float)d;
 		} else if( strcmp(buf, "id")==0 ) {
 			if( !comb->region_flag ) goto not_region;
 			if( Tcl_GetInt( interp, argv[1], &i ) != TCL_OK )
@@ -1366,6 +1372,7 @@ char	      **argv;
 		/* Create combination with appropriate values */
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
 		comb->magic = (long)RT_COMB_MAGIC;
+		comb->temperature = -1;
 		comb->tree = (union tree *)0;
 		comb->region_flag = 1;
 		comb->region_id = 0;
@@ -2013,6 +2020,12 @@ char		**argv;
 			(int)(ts.ts_mater.ma_color[0]*255),
 			(int)(ts.ts_mater.ma_color[1]*255),
 			(int)(ts.ts_mater.ma_color[2]*255) );
+		Tcl_DStringAppendElement( &ds, buf );
+	}
+
+	if( ts.ts_mater.ma_temperature > 0 )  {
+		Tcl_DStringAppendElement( &ds, "temp" );
+		sprintf( buf, "%g", ts.ts_mater.ma_temperature );
 		Tcl_DStringAppendElement( &ds, buf );
 	}
 

@@ -280,6 +280,7 @@ CONST struct db_i		*dbip;
 	bu_vls_init( &comb->shader );
 	bu_vls_init( &comb->material );
 	comb->tree = tree;
+	comb->temperature = -1;
 	comb->region_flag = (rp[0].c.c_flags == 'R');
 
 	if( comb->region_flag )  {
