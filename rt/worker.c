@@ -119,8 +119,6 @@ grid_setup()
 void
 do_run( a, b )
 {
-	int	x;
-
 	cur_pixel = a;
 	last_pixel = b;
 
@@ -138,10 +136,15 @@ do_run( a, b )
 	nworkers = 0;
 	rt_parallel( worker, npsw );
 
-	/* Ensure that all the workers are REALLY dead */
-	x = 0;
-	while( nworkers > 0 )  x++;
-	if( x > 0 )  rt_log("do_run(%d,%d): termination took %d extra loops\n", a, b, x);	
+	/*
+	 *  Ensure that all the workers are REALLY finished.
+	 *  On some systems, if threads core dump, the rest of
+	 *  the gang keeps going, so this can actually happen (sigh).
+	 */
+	if( nworkers > 0 )  {
+		rt_log("\n***ERROR: %d workers did not finish!\n\n",
+			nworkers);
+	}
 }
 
 #define CRT_BLEND(v)	(0.26*(v)[X] + 0.66*(v)[Y] + 0.08*(v)[Z])
