@@ -15,6 +15,7 @@
  *	mat_trn( &o, &i )		Transpose matrix i into matrix o
  *	mat_ae( &o, azimuth, elev)	Make rot matrix from azimuth+elevation
  *	mat_ae_vec( &az, &el, v )		Find az/elev from dir vector
+ *	mat_aet_vec( &az, &el, &twist, v1, v2 ) Find az,el,twist from two vectors
  *	mat_angles( &o, alpha, beta, gama )	Make rot matrix from angles
  *	mat_eigen2x2()			Eigen values and vectors
  *	mat_lookat			Make rot mat:  xform from D to -Z
@@ -494,6 +495,57 @@ CONST vect_t	v;
 	}
 	*elp = mat_atan2( v[Z], hypot( v[X], v[Y] ) ) * mat_radtodeg;
 }
+
+/*			M A T _ A E T _ V E C
+ *
+ * Find the azimuth, elevation, and twist from two vectors.
+ * Vec_ae is in the direction of view (+z in mged view)
+ * and vec_twist points to the viewers right (+x in mged view).
+ * Vec_twist must be a unit vector.
+ * Accuracy (degrees) is used to stabilze flutter between
+ * equivalent extremes of atan2(), and to snap twist to zero
+ * when elevation is near +/- 90
+ */
+void
+mat_aet_vec( az , el , twist , vec_ae, vec_twist , accuracy )
+fastf_t *az,*el,*twist;
+vect_t vec_ae,vec_twist;
+fastf_t accuracy;
+{
+	vect_t zero_twist,ninety_twist;
+	vect_t z_dir;
+
+	/* Get az and el as usual */
+	mat_ae_vec( az , el , vec_ae );
+
+	/* stabilize fluctuation bewteen 0 and 360
+	 * change azimuth near 360 to 0 */
+	if( NEAR_ZERO( *az - 360.0 , accuracy ) )
+		*az = 0.0;
+
+	/* if elevation is +/-90 set twist to zero and calculate azimuth */
+	if( NEAR_ZERO( *el - 90.0 , accuracy ) || NEAR_ZERO( *el + 90.0 , accuracy ) )
+	{
+		*twist = 0.0;
+		*az = mat_atan2( -vec_twist[X] , vec_twist[Y] ) * mat_radtodeg;
+	}
+	else
+	{
+		/* Calculate twist from vec_twist */
+		VSET( z_dir , 0 , 0 , 1 );
+		VCROSS( zero_twist , z_dir , vec_ae );
+		VUNITIZE( zero_twist );
+		VCROSS( ninety_twist , zero_twist , vec_ae );
+		VUNITIZE( ninety_twist );
+
+		*twist = mat_atan2( VDOT( vec_twist , ninety_twist ) , VDOT( vec_twist , zero_twist ) ) * mat_radtodeg;
+
+		/* stabilize flutter between +/- 180 */
+		if( NEAR_ZERO( *twist + 180.0 , accuracy ) )
+			*twist = 180.0;
+	}
+}
+
 
 /*
  *			M A T _ A N G L E S
