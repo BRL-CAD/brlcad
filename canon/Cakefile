@@ -48,7 +48,7 @@ pix-ipu : pix-ipu.o canonlib.o asize.o
 	CC LDFLAGS -o pix-ipu pix-ipu.o canonlib.o asize.o DSLIB LIBES
 
 png-ipu : png-ipu.o canonlib.o asize.o
-	CC LDFLAGS -o png-ipu png-ipu.o canonlib.o asize.o LIBPNG LIBZ LIBBU LIBBU_LIBES DSLIB LIBES
+	CC LDFLAGS -o png-ipu png-ipu.o canonlib.o asize.o LIBBU LIBBU_LIBES LIBPNG LIBZ DSLIB LIBES
 
 /* XXX Probably should be called ipu-pix */
 ipuscan : ipuscan.o canonlib.o asize.o
