@@ -35,9 +35,6 @@ static char RCSview[] = "@(#)$Header$ (BRL)";
 #include "raytrace.h"
 #include "shadefuncs.h"
 #include "shadework.h"
-#if RT_MULTISPECTRAL
-# include "tabdata.h"
-#endif
 #include "./ext.h"
 #include "./rdebug.h"
 #include "./mathtab.h"
@@ -90,12 +87,12 @@ register struct shadework *swp;
 
 #if RT_MULTISPECTRAL
 	/* XXX where does region get reflectance?  Default temperature? */
-	RT_CK_TABDATA(swp->msw_color);
-	RT_CK_TABDATA(swp->msw_basecolor);
+	BN_CK_TABDATA(swp->msw_color);
+	BN_CK_TABDATA(swp->msw_basecolor);
 	if( rp->reg_mater.ma_override )  {
 		rt_spect_reflectance_rgb( swp->msw_color, rp->reg_mater.ma_color );
 	}
-	rt_tabdata_copy(swp->msw_basecolor, swp->msw_color);
+	bn_tabdata_copy(swp->msw_basecolor, swp->msw_color);
 #else
 	/* Default color is white (uncolored) */
 	if( rp->reg_mater.ma_override )  {
@@ -326,7 +323,7 @@ register CONST struct shadework *swp;
 	for( i=0; i < SW_NLIGHTS; i++ )  {
 		if( swp->sw_visible[i] == (char *)0 )  continue;
 #if RT_MULTISPECTRAL
-		RT_CK_TABDATA(swp->msw_intensity[i]);
+		BN_CK_TABDATA(swp->msw_intensity[i]);
 		bu_log("   light %d visible, dir=(%g,%g,%g)\n",
 			i,
 			V3ARGS(&swp->sw_tolight[i*3]) );

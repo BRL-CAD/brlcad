@@ -28,9 +28,6 @@ static char RCSrefract[] = "@(#)$Header$ (BRL)";
 #include "./rdebug.h"
 #include "shadefuncs.h"
 #include "shadework.h"
-#if RT_MULTISPECTRAL
-# include "tabdata.h"
-#endif
 
 int	max_ireflect = 5;	/* Maximum internal reflection level */
 int	max_bounces = 5;	/* Maximum recursion level */
@@ -46,8 +43,8 @@ HIDDEN int	rr_hit(), rr_miss();
 HIDDEN int	rr_refract();
 
 #if RT_MULTISPECTRAL
-extern CONST struct rt_table	*spectrum;
-extern struct rt_tabdata	*background; /* from rttherm/viewtherm.c */
+extern CONST struct bn_table	*spectrum;
+extern struct bn_tabdata	*background; /* from rttherm/viewtherm.c */
 #else
 extern vect_t background;
 #endif
@@ -65,25 +62,25 @@ struct shadework	*swp;
 	vect_t	work;
 	vect_t	incident_dir;
 #if RT_MULTISPECTRAL
-	struct rt_tabdata	*ms_filter_color = RT_TABDATA_NULL;
+	struct bn_tabdata	*ms_filter_color = BN_TABDATA_NULL;
 #else
 	vect_t	filter_color;
 #endif
 	fastf_t	shader_fract;
 #if RT_MULTISPECTRAL
-	struct rt_tabdata	*ms_shader_color = RT_TABDATA_NULL;
+	struct bn_tabdata	*ms_shader_color = BN_TABDATA_NULL;
 #else
 	vect_t	shader_color;
 #endif
 	fastf_t	reflect;
 #if RT_MULTISPECTRAL
-	struct rt_tabdata	*ms_reflect_color = RT_TABDATA_NULL;
+	struct bn_tabdata	*ms_reflect_color = BN_TABDATA_NULL;
 #else
 	vect_t	reflect_color;
 #endif
 	fastf_t	transmit;
 #if RT_MULTISPECTRAL
-	struct rt_tabdata	*ms_transmit_color = RT_TABDATA_NULL;
+	struct bn_tabdata	*ms_transmit_color = BN_TABDATA_NULL;
 #else
 	vect_t	transmit_color;
 #endif
@@ -97,7 +94,7 @@ struct shadework	*swp;
 	RT_AP_CHECK(ap);
 
 #if RT_MULTISPECTRAL
-	sub_ap.a_spectrum = RT_TABDATA_NULL;
+	sub_ap.a_spectrum = BN_TABDATA_NULL;
 #endif
 
 	/*
@@ -143,9 +140,9 @@ struct shadework	*swp;
 		 * but something better might be done.
 		 */
 #if RT_MULTISPECTRAL
-		RT_CK_TABDATA(swp->msw_color);
-		RT_CK_TABDATA(swp->msw_basecolor);
-		rt_tabdata_copy( swp->msw_color, swp->msw_basecolor );
+		BN_CK_TABDATA(swp->msw_color);
+		BN_CK_TABDATA(swp->msw_basecolor);
+		bn_tabdata_copy( swp->msw_color, swp->msw_basecolor );
 #else
 		VMOVE( swp->sw_color, swp->sw_basecolor );
 #endif
@@ -153,8 +150,8 @@ struct shadework	*swp;
 		goto out;
 	}
 #if RT_MULTISPECTRAL
-	RT_CK_TABDATA(swp->msw_basecolor);
-	ms_filter_color = rt_tabdata_dup( swp->msw_basecolor );
+	BN_CK_TABDATA(swp->msw_basecolor);
+	ms_filter_color = bn_tabdata_dup( swp->msw_basecolor );
 
 #else
 	VMOVE( filter_color, swp->sw_basecolor );
@@ -209,8 +206,8 @@ struct shadework	*swp;
 			pp->pt_regionp->reg_name );
 	}
 #if RT_MULTISPECTRAL
-	RT_GET_TABDATA( ms_shader_color, swp->msw_color->table );
-	rt_tabdata_scale( ms_shader_color, swp->msw_color, shader_fract );
+	BN_GET_TABDATA( ms_shader_color, swp->msw_color->table );
+	bn_tabdata_scale( ms_shader_color, swp->msw_color, shader_fract );
 #else
 	VSCALE( shader_color, swp->sw_color, shader_fract );
 #endif
@@ -231,7 +228,7 @@ struct shadework	*swp;
 		 */
 		sub_ap = *ap;		/* struct copy */
 #if RT_MULTISPECTRAL
-		sub_ap.a_spectrum = rt_tabdata_dup( (struct rt_tabdata *)ap->a_spectrum );
+		sub_ap.a_spectrum = bn_tabdata_dup( (struct bn_tabdata *)ap->a_spectrum );
 #endif
 		sub_ap.a_level = 0;	/* # of internal reflections */
 		sub_ap.a_cumlen = 0;	/* distance through the glass */
@@ -261,7 +258,7 @@ struct shadework	*swp;
 			reflect += transmit;
 			transmit = 0;
 #if RT_MULTISPECTRAL
-			ms_transmit_color = rt_tabdata_get_constval( 0.0, spectrum );
+			ms_transmit_color = bn_tabdata_get_constval( 0.0, spectrum );
 #else
 			VSETALL( transmit_color, 0 );
 #endif
@@ -425,21 +422,21 @@ do_exit:
 		/* a_user has hit/miss flag! */
 		if( sub_ap.a_user == 0 )  {
 #if RT_MULTISPECTRAL
-			rt_tabdata_copy( ms_transmit_color, background );
+			bn_tabdata_copy( ms_transmit_color, background );
 #else
 			VMOVE( transmit_color, background );
 #endif
 			sub_ap.a_cumlen = 0;
 		} else {
 #if RT_MULTISPECTRAL
-			rt_tabdata_copy( ms_transmit_color, sub_ap.a_spectrum );
+			bn_tabdata_copy( ms_transmit_color, sub_ap.a_spectrum );
 #else
 			VMOVE( transmit_color, sub_ap.a_color );
 #endif
 		}
 		transmit *= attenuation;
 #if RT_MULTISPECTRAL
-		rt_tabdata_mul( ms_transmit_color, ms_filter_color, ms_transmit_color );
+		bn_tabdata_mul( ms_transmit_color, ms_filter_color, ms_transmit_color );
 #else
 		VELMUL( transmit_color, filter_color, transmit_color );
 #endif
@@ -450,7 +447,7 @@ do_exit:
 		}
 	} else {
 #if RT_MULTISPECTRAL
-		rt_tabdata_constval( ms_transmit_color, 0.0 );
+		bn_tabdata_constval( ms_transmit_color, 0.0 );
 #else
 		VSETALL( transmit_color, 0 );
 #endif
@@ -463,8 +460,8 @@ do_exit:
 do_reflection:
 #if RT_MULTISPECTRAL
 	if(sub_ap.a_spectrum)  {
-		bu_free(sub_ap.a_spectrum, "rr_render: sub_ap.a_spectrum rt_tabdata*");
-		sub_ap.a_spectrum = RT_TABDATA_NULL;
+		bu_free(sub_ap.a_spectrum, "rr_render: sub_ap.a_spectrum bn_tabdata*");
+		sub_ap.a_spectrum = BN_TABDATA_NULL;
 	}
 #endif
 	if( reflect > 0 )  {
@@ -473,7 +470,7 @@ do_reflection:
 		/* Mirror reflection */
 		sub_ap = *ap;		/* struct copy */
 #if RT_MULTISPECTRAL
-		sub_ap.a_spectrum = rt_tabdata_dup( (struct rt_tabdata *)ap->a_spectrum );
+		sub_ap.a_spectrum = bn_tabdata_dup( (struct bn_tabdata *)ap->a_spectrum );
 #endif
 		sub_ap.a_rbeam = ap->a_rbeam + swp->sw_hit.hit_dist * ap->a_diverge;
 		sub_ap.a_diverge = 0.0;
@@ -504,21 +501,21 @@ do_reflection:
 		if( sub_ap.a_user == 0 )  {
 			/* MISS */
 #if RT_MULTISPECTRAL
-			rt_tabdata_copy( ms_reflect_color, background );
+			bn_tabdata_copy( ms_reflect_color, background );
 #else
 			VMOVE( reflect_color, background );
 #endif
 		} else {
 			ap->a_cumlen += sub_ap.a_cumlen;
 #if RT_MULTISPECTRAL
-			rt_tabdata_copy( ms_reflect_color, sub_ap.a_spectrum );
+			bn_tabdata_copy( ms_reflect_color, sub_ap.a_spectrum );
 #else
 			VMOVE( reflect_color, sub_ap.a_color );
 #endif
 		}
 	} else {
 #if RT_MULTISPECTRAL
-		rt_tabdata_constval( ms_reflect_color, 0.0 );
+		bn_tabdata_constval( ms_reflect_color, 0.0 );
 #else
 		VSETALL( reflect_color, 0 );
 #endif
@@ -528,7 +525,7 @@ do_reflection:
 	 *  Collect the contributions to the final color
 	 */
 #if RT_MULTISPECTRAL
-	rt_tabdata_join2( swp->msw_color, ms_shader_color,
+	bn_tabdata_join2( swp->msw_color, ms_shader_color,
 		reflect, ms_reflect_color,
 		transmit, ms_transmit_color );
 #else
@@ -545,11 +542,11 @@ do_reflection:
 		{ struct bu_vls str;
 			bu_vls_init(&str);
 			bu_vls_strcat(&str, "ms_shader_color: ");
-			rt_tabdata_to_tcl( &str, ms_shader_color);
+			bn_tabdata_to_tcl( &str, ms_shader_color);
 			bu_vls_strcat(&str, "\nms_reflect_color: ");
-			rt_tabdata_to_tcl( &str, ms_reflect_color);
+			bn_tabdata_to_tcl( &str, ms_reflect_color);
 			bu_vls_strcat(&str, "\nms_transmit_color: ");
-			rt_tabdata_to_tcl( &str, ms_transmit_color);
+			bn_tabdata_to_tcl( &str, ms_transmit_color);
 			bu_log("rr_render: %s\n", bu_vls_addr(&str) );
 			bu_vls_free(&str);
 		}
@@ -565,7 +562,7 @@ out:
 		{ struct bu_vls str;
 			bu_vls_init(&str);
 			bu_vls_strcat(&str, "final swp->msw_color: ");
-			rt_tabdata_to_tcl( &str, swp->msw_color);
+			bn_tabdata_to_tcl( &str, swp->msw_color);
 			bu_log("rr_render: %s\n", bu_vls_addr(&str) );
 			bu_vls_free(&str);
 		}
@@ -576,10 +573,10 @@ out:
 
 	/* Release all the dynamic spectral curves */
 #if RT_MULTISPECTRAL
-	if(ms_filter_color) bu_free(ms_filter_color, "rr_render: ms_filter_color rt_tabdata*");
-	if(ms_shader_color) bu_free(ms_shader_color, "rr_render: ms_shader_color rt_tabdata*");
-	if(ms_reflect_color) bu_free(ms_reflect_color, "rr_render: ms_reflect_color rt_tabdata*");
-	if(sub_ap.a_spectrum) bu_free(sub_ap.a_spectrum, "rr_render: sub_ap.a_spectrum rt_tabdata*");
+	if(ms_filter_color) bu_free(ms_filter_color, "rr_render: ms_filter_color bn_tabdata*");
+	if(ms_shader_color) bu_free(ms_shader_color, "rr_render: ms_shader_color bn_tabdata*");
+	if(ms_reflect_color) bu_free(ms_reflect_color, "rr_render: ms_reflect_color bn_tabdata*");
+	if(sub_ap.a_spectrum) bu_free(sub_ap.a_spectrum, "rr_render: sub_ap.a_spectrum bn_tabdata*");
 #endif
 
 	return(1);
@@ -752,8 +749,8 @@ struct partition *PartHeadp;
 			sw.sw_xmitonly = 1;		/* want XMIT data only */
 			sw.sw_inputs = 0;		/* no fields filled yet */
 #if RT_MULTISPECTRAL
-			sw.msw_color = rt_tabdata_get_constval( 1.0, spectrum );
-			sw.msw_basecolor = rt_tabdata_get_constval( 1.0, spectrum );
+			sw.msw_color = bn_tabdata_get_constval( 1.0, spectrum );
+			sw.msw_basecolor = bn_tabdata_get_constval( 1.0, spectrum );
 #else
 			VSETALL( sw.sw_color, 1 );
 			VSETALL( sw.sw_basecolor, 1 );

@@ -131,7 +131,7 @@ register char **argv;
 	bu_optind = 1;		/* restart */
 
 #define GETOPT_STR	\
-	".:,:@:a:b:c:d:e:f:g:ij:l:n:o:p:rs:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:RST:U:V:X:"
+	".:,:@:a:b:c:d:e:f:g:ij:l:n:o:p:rs:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:RST:U:V:X:!:"
 
 	while( (c=bu_getopt( argc, argv, GETOPT_STR )) != EOF )  {
 		switch( c )  {
@@ -260,6 +260,9 @@ register char **argv;
 			break;
 		case 'X':
 			sscanf( bu_optarg, "%x", &rdebug );
+			break;
+		case '!':
+			sscanf( bu_optarg, "%x", &bu_debug );
 			break;
 
 		case 's':

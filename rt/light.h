@@ -27,7 +27,7 @@ struct light_specific {
 	int	lt_exaim;	/* !0 if explicit aim in lt_dir */
 	/* Internal fields */
 #if RT_MULTISPECTRAL
-	struct rt_tabdata *lt_spectrum;	/* Units?  mw*sr ? */
+	struct bn_tabdata *lt_spectrum;	/* Units?  mw*sr ? */
 #else
 	vect_t	lt_color;	/* RGB, as 0..1 */
 #endif
