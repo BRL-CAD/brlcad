@@ -69,6 +69,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 
 #include "machine.h"
 #include "vmath.h"
+#include "bu.h"
 #include "raytrace.h"
 #include "./ged.h"
 #include "./dm.h"
@@ -293,7 +294,7 @@ refresh_hook()
 }
 
 #define GLX_MV_O(_m) offsetof(struct modifiable_glx_vars, _m)
-struct structparse Glx_vparse[] = {
+struct bu_structparse Glx_vparse[] = {
 	{"%d",	1, "depthcue",		GLX_MV_O(cueing_on),	Glx_colorchange },
 	{"%d",  1, "zclip",		GLX_MV_O(zclipping_on),	refresh_hook },
 	{"%d",  1, "zbuffer",		GLX_MV_O(zbuffer_on),	establish_zbuffer },
@@ -2483,15 +2484,15 @@ char	**argv;
 
     if( argc < 2 )  {
       /* Bare set command, print out current settings */
-      rt_structprint("dm_4d internal variables", Glx_vparse, (CONST char *)&mvars );
+      bu_structprint("dm_4d internal variables", Glx_vparse, (CONST char *)&mvars );
     } else if( argc == 2 ) {
-      rt_vls_name_print( &vls, Glx_vparse, argv[1], (CONST char *)&mvars );
+      bu_vls_name_print( &vls, Glx_vparse, argv[1], (CONST char *)&mvars );
       bu_log( "%s\n", bu_vls_addr(&vls) );
     } else {
       bu_vls_printf( &vls, "%s=\"", argv[1] );
       bu_vls_from_argv( &vls, argc-2, argv+2 );
       bu_vls_putc( &vls, '\"' );
-      rt_structparse( &vls, Glx_vparse, (char *)&mvars);
+      bu_structparse( &vls, Glx_vparse, (char *)&mvars);
     }
 
     bu_vls_free(&vls);

@@ -52,6 +52,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "externs.h"
 #include "vmath.h"
 #include "mater.h"
+#include "bu.h"
 #include "raytrace.h"
 #include "./ged.h"
 #include "./dm.h"
@@ -162,7 +163,7 @@ struct pex_vars {
 };
 
 #define Pex_MV_O(_m) offsetof(struct modifiable_pex_vars, _m)
-struct structparse Pex_vparse[] = {
+struct bu_structparse Pex_vparse[] = {
 #if TRY_DEPTHCUE
   {"%d",  1, "depthcue",	Pex_MV_O(cue),	Pex_colorchange },
 #endif
@@ -1293,17 +1294,17 @@ char *argv[];
 
     if( argc < 2 )  {
       /* Bare set command, print out current settings */
-      rt_structprint("dm_X internal variables", Pex_vparse,
+      bu_structprint("dm_X internal variables", Pex_vparse,
 		     (CONST char *)&((struct pex_vars *)dm_vars)->mvars );
     } else if( argc == 2 ) {
-      rt_vls_name_print( &vls, Pex_vparse, argv[1],
+      bu_vls_name_print( &vls, Pex_vparse, argv[1],
 			 (CONST char *)&((struct pex_vars *)dm_vars)->mvars);
       bu_log( "%s\n", bu_vls_addr(&vls) );
     } else {
       bu_vls_printf( &vls, "%s=\"", argv[1] );
       bu_vls_from_argv( &vls, argc-2, argv+2 );
       bu_vls_putc( &vls, '\"' );
-      rt_structparse( &vls, Pex_vparse, (char *)&((struct pex_vars *)dm_vars)->mvars);
+      bu_structparse( &vls, Pex_vparse, (char *)&((struct pex_vars *)dm_vars)->mvars);
     }
 
     bu_vls_free(&vls);

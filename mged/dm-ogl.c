@@ -50,6 +50,7 @@
 #include "externs.h"
 #include "vmath.h"
 #include "mater.h"
+#include "bu.h"
 #include "raytrace.h"
 #include "./ged.h"
 #include "./dm.h"
@@ -297,7 +298,7 @@ do_fog()
 }
 
 #define Ogl_MV_O(_m) offsetof(struct modifiable_ogl_vars, _m)
-struct structparse Ogl_vparse[] = {
+struct bu_structparse Ogl_vparse[] = {
 	{"%d",	1, "depthcue",		Ogl_MV_O(cueing_on),	Ogl_colorchange },
 	{"%d",  1, "zclip",		Ogl_MV_O(zclipping_on),	refresh_hook },
 	{"%d",  1, "zbuffer",		Ogl_MV_O(zbuffer_on),	establish_zbuffer },
@@ -2008,15 +2009,15 @@ char	**argv;
 
     if( argc < 2 )  {
       /* Bare set command, print out current settings */
-      rt_structprint("dm_ogl internal variables", Ogl_vparse, (CONST char *)&((struct ogl_vars *)dm_vars)->mvars );
+      bu_structprint("dm_ogl internal variables", Ogl_vparse, (CONST char *)&((struct ogl_vars *)dm_vars)->mvars );
     } else if( argc == 2 ) {
-      rt_vls_name_print( &vls, Ogl_vparse, argv[1], (CONST char *)&((struct ogl_vars *)dm_vars)->mvars );
+      bu_vls_name_print( &vls, Ogl_vparse, argv[1], (CONST char *)&((struct ogl_vars *)dm_vars)->mvars );
       bu_log( "%s\n", bu_vls_addr(&vls) );
     } else {
       bu_vls_printf( &vls, "%s=\"", argv[1] );
       bu_vls_from_argv( &vls, argc-2, argv+2 );
       bu_vls_putc( &vls, '\"' );
-      rt_structparse( &vls, Ogl_vparse, (char *)&((struct ogl_vars *)dm_vars)->mvars );
+      bu_structparse( &vls, Ogl_vparse, (char *)&((struct ogl_vars *)dm_vars)->mvars );
     }
 
     bu_vls_free(&vls);

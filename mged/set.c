@@ -23,6 +23,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #include "machine.h"
 #include "vmath.h"
 #include "rtstring.h"
+#include "bu.h"
 #include "raytrace.h"
 #include "./sedit.h"
 #include "./ged.h"
@@ -87,7 +88,7 @@ nmg_eu_dist_set()
 }
 
 #define MV_O(_m)	offsetof(struct _mged_variables, _m)
-struct structparse mged_vparse[] = {
+struct bu_structparse mged_vparse[] = {
 	{"%d",	1, "autosize",		MV_O(autosize),		FUNC_NULL },
 	{"%d",	1, "rateknobs",		MV_O(rateknobs),	FUNC_NULL },
 	{"%d",	1, "adcflag",		MV_O(adcflag),          set_scroll },
@@ -129,10 +130,10 @@ Tcl_Interp *interp;
 char *name1, *name2;
 int flags;
 {
-    struct structparse *sp = (struct structparse *)clientData;
+    struct bu_structparse *sp = (struct bu_structparse *)clientData;
     struct bu_vls str;
 
-    /* Ask the librt structparser for the value of the variable */
+    /* Ask the libbu structparser for the value of the variable */
 
     bu_vls_init( &str );
     rt_vls_item_print( &str, sp, (CONST char *)&mged_variables );
@@ -158,7 +159,7 @@ Tcl_Interp *interp;
 char *name1, *name2;
 int flags;
 {
-    struct structparse *sp = (struct structparse *)clientData;
+    struct bu_structparse *sp = (struct structparse *)clientData;
     struct bu_vls str;
     char *newvalue;
 
@@ -166,7 +167,7 @@ int flags;
 			  (flags&TCL_GLOBAL_ONLY)|TCL_LEAVE_ERR_MSG);
     bu_vls_init( &str );
     bu_vls_printf( &str, "%s=\"%s\"", name1, newvalue );
-    if( rt_structparse( &str, mged_vparse, (char *)&mged_variables ) < 0) {
+    if( bu_structparse( &str, mged_vparse, (char *)&mged_variables ) < 0) {
       Tcl_AppendResult(interp, "ERROR OCCURED WHEN SETTING ", name1,
 		       " TO ", newvalue, "\n", (char *)NULL);
     }
@@ -188,7 +189,7 @@ Tcl_Interp *interp;
 char *name1, *name2;
 int flags;
 {
-    struct structparse *sp = (struct structparse *)clientData;
+    struct bu_structparse *sp = (struct bu_structparse *)clientData;
 
     if( flags & TCL_INTERP_DESTROYED )
 	return NULL;
@@ -217,7 +218,7 @@ void
 mged_variable_setup(interp)
 Tcl_Interp *interp;    
 {
-    register struct structparse *sp;
+    register struct bu_structparse *sp;
     register int i;
 
     for( sp = &mged_vparse[0]; sp->sp_name != NULL; sp++ ) {
@@ -251,14 +252,14 @@ char *argv[];
 
 	  bu_vls_init(&tmp_vls);
 	  start_catching_output(&tmp_vls);
-	  rt_structprint("mged variables", mged_vparse, (CONST char *)&mged_variables);
+	  bu_structprint("mged variables", mged_vparse, (CONST char *)&mged_variables);
 	  bu_log("%s", bu_vls_addr(&vls) );
 	  stop_catching_output(&tmp_vls);
 	  Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	  bu_vls_free(&tmp_vls);
 	} else if (argc == 2) {
 		bu_vls_strcpy(&vls, argv[1]);
-		rt_structparse(&vls, mged_vparse, (char *)&mged_variables);
+		bu_structparse(&vls, mged_vparse, (char *)&mged_variables);
 	}
 
 	bu_vls_free(&vls);
