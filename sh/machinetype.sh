@@ -47,6 +47,13 @@ cat << EOF > ${IN_FILE}
 	HAS_SYMLINKS=1;
 #endif
 
+#if defined(__ksr_cc)
+	MACHINE=ksr;
+	UNIXTYPE=SYSV;		# MACH
+	HAS_TCP=1;
+	HAS_SYMLINKS=1;
+#endif
+
 #ifdef vax
 #	undef	vax
 	MACHINE=vax;
