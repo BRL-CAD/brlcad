@@ -202,8 +202,10 @@ char **argv;
 		fb_zoom( fbp, fb_getwidth(fbp)/width, fb_getheight(fbp)/height );
 		fb_window( fbp, width/2, height/2 );
 	} else if( outputfile == (char *)0 )  {
+		/* If not going to framebuffer, or to a file, then use stdout */
+		if( outfp == NULL )  outfp = stdout;
 		/* output_is_binary is changed by view_init, as appropriate */
-		if( output_is_binary && outfp && isatty(fileno(outfp)) )  {
+		if( output_is_binary && isatty(fileno(outfp)) )  {
 			fprintf(stderr,"rt:  attempting to send binary output to terminal, aborting\n");
 			exit(14);
 		}
