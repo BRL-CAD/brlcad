@@ -5,7 +5,7 @@
  *  The wonderful thing about standards is that there are so many to
  *  choose from:
  *	FCC/EBU		Full screen is FCC pattern
- *	EIA		Uses lower and upper patterns (default)
+ *	EIA		Uses lower and upper patterns
  *	SMPTE		Uses three patterns
  *
  *  The lower portion of the screen will contain:
@@ -59,7 +59,7 @@ extern int	getopt();
 extern char	*optarg;
 extern int	optind;
 
-#define MAX_LINE	2048		/* Max pixels/line */
+#define MAX_LINE	(8*1024)	/* Max pixels/line */
 static RGBpixel scanline[MAX_LINE];	/* 1 scanline pixel buffer */
 static int scanbytes;			/* # of bytes of scanline */
 
@@ -147,20 +147,24 @@ static char usage[] = "\
 Usage: fbcbars [-fs] [-h] [-F framebuffer]\n\
 	[-S squarescrsize] [-W scr_width] [-N scr_height]\n\
 	-f	FCC/EBU bars\n\
+	-e	EIA bars\n\
 	-s	SMPTE bars\n";
 
 #define	M_EIA	0
 #define M_FCC	1
 #define M_SMPTE	2
-int	mode = M_EIA;
+int	mode = M_SMPTE;
 
 get_args( argc, argv )
 register char **argv;
 {
 	register int c;
 
-	while ( (c = getopt( argc, argv, "fshF:S:W:N:" )) != EOF )  {
+	while ( (c = getopt( argc, argv, "efshF:S:W:N:" )) != EOF )  {
 		switch( c )  {
+		case 'e':
+			mode = M_EIA;
+			break;
 		case 's':
 			mode = M_SMPTE;
 			break;
