@@ -369,10 +369,14 @@ union tree		*curtree;
 		drawH_part2( 0, &vhead, pathp, tsp, SOLID_NULL );
 
 		/* NMG region is no longer necessary, only vlist remains */
-		if( !mged_draw_edge_uses )  {
-			db_free_tree( curtree );
-			return (union tree *)NULL;
+		if( mged_draw_edge_uses )  {
+			/* Leave nmgregion intact for caller to use
+			 * via mged_nmg_model, kill off tree.
+			 */
+			curtree->tr_d.td_r = (struct nmgregion *)NULL;
 		}
+		db_free_tree( curtree );
+		return (union tree *)NULL;
 	}
 
 	/* Return tree -- it needs to be freed (by caller) */
