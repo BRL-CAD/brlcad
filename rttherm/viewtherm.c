@@ -165,6 +165,32 @@ register struct application *ap;
 }
 
 /*
+ *			B A C K G R O U N D _ R A D I A T I O N
+ *
+ *  Concoct _some_ kind of background radiation when the ray misses the
+ *  model and there is no environment map defined.
+ *  XXX For now this is a gross hack.
+ */
+void
+background_radiation( ap )
+struct application *ap;
+{
+	fastf_t	dist;
+	fastf_t	radius;
+	fastf_t	cm2;
+
+	dist = 10000000.0;	/* 10 Km */
+	radius = ap->a_rbeam + dist * ap->a_diverge;
+	cm2 = 4 * radius * radius * 0.01;	/* mm2 to cm2 */
+
+	curve_attach(ap);
+
+	/* XXX This should be attenuated by some atmosphere now */
+	/* At least it's in proper power units */
+	bn_tabdata_scale( ap->a_spectrum, background, cm2 );
+}
+
+/*
  *  			V I E W _ P I X E L
  *  
  *  Arrange to have the pixel "output".
@@ -184,20 +210,8 @@ register struct application *ap;
 	RT_CK_RTI(ap->a_rt_i);
 
 	if( ap->a_user == 0 )  {
-		fastf_t	dist;
-		fastf_t	radius;
-		fastf_t	cm2;
-
 		/* Shot missed the model */
-		dist = 10000000.0;	/* 10 Km */
-		radius = ap->a_rbeam + dist * ap->a_diverge;
-		cm2 = 4 * radius * radius * 0.01;	/* mm2 to cm2 */
-
-		curve_attach(ap);
-
-		/* XXX This should be attenuated by some atmosphere now */
-		/* At least it's in proper power units */
-		bn_tabdata_scale( ap->a_spectrum, background, cm2 );
+		background_radiation(ap);
 	} else {
 		if( !ap->a_spectrum )
 			rt_bomb("view_pixel called with no spectral curve associated\n");
@@ -399,11 +413,13 @@ register struct application *ap;
 
 		bn_tabdata_copy( ap->a_spectrum, u.sw.msw_color );
 		ap->a_user = 1;		/* Signal view_pixel:  HIT */
+		ap->a_uptr = (genptr_t)&env_region;
 		return(1);
 	}
 #endif
 
 	ap->a_user = 0;		/* Signal view_pixel:  MISS */
+	background_radiation(ap);	/* In case someone looks */
 	return(0);
 }
 
@@ -431,6 +447,10 @@ struct seg *finished_segs;
 	struct bn_tabdata	*pixelp;
 	vect_t		normal;
 
+#if NO_MATER
+	sw.msw_color = BN_TABDATA_NULL;
+#endif
+
 	for( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
 		if( pp->pt_outhit->hit_dist >= 0.0 )  break;
 	if( pp == PartHeadp )  {
@@ -438,6 +458,7 @@ struct seg *finished_segs;
 		return(0);
 	}
 	hitp = pp->pt_inhit;
+	ap->a_uptr = (genptr_t)pp->pt_regionp;	/* note which region was shaded */
 
 	if(rdebug&RDEBUG_HITS)  {
 		rt_log("colorview: lvl=%d coloring %s\n",
@@ -447,7 +468,9 @@ struct seg *finished_segs;
 	}
 	if( hitp->hit_dist >= INFINITY )  {
 		rt_log("colorview:  entry beyond infinity\n");
-		ap->a_user = 0;		/* Signal view_pixel:  MISS */
+		background_radiation(ap);	/* was VSET( ap->a_color, .5, 0, 0 ); */
+		ap->a_user = 1;		/* Signal view_pixel:  HIT */
+		ap->a_dist = hitp->hit_dist;
 		goto out;
 	}
 
@@ -461,20 +484,35 @@ struct seg *finished_segs;
 
 		if( pp->pt_outhit->hit_dist >= INFINITY ||
 		    ap->a_level > max_bounces )  {
-			rt_log("colorview:  eye inside %s (x=%d, y=%d, lvl=%d)\n",
+			bu_log("colorview:  eye inside %s (x=%d, y=%d, lvl=%d)\n",
 				pp->pt_regionp->reg_name,
 				ap->a_x, ap->a_y, ap->a_level);
-			ap->a_user = 0;		/* Signal view_pixel:  MISS */
+		    	background_radiation(ap);	/* was: VSETALL( ap->a_color, 0.18 ); */
+			ap->a_user = 1;		/* Signal view_pixel:  HIT */
+			ap->a_dist = hitp->hit_dist;
 			goto out;
 		}
 		/* Push on to exit point, and trace on from there */
 		sub_ap = *ap;	/* struct copy */
 		sub_ap.a_level = ap->a_level+1;
+		curve_attach(ap);
+		sub_ap.a_spectrum = bn_tabdata_dup( ap->a_spectrum );
+
 		f = pp->pt_outhit->hit_dist+0.0001;
 		VJOIN1(sub_ap.a_ray.r_pt, ap->a_ray.r_pt, f, ap->a_ray.r_dir);
 		sub_ap.a_purpose = "pushed eye position";
 		(void)rt_shootray( &sub_ap );
-		ap->a_user = sub_ap.a_user;
+
+		/* The eye is inside a solid and we are "Looking out" so
+		 * we are going to darken what we see beyond to give a visual
+		 * cue that something is wrong.
+		 */
+		bn_tabdata_scale( ap->a_spectrum, sub_ap.a_spectrum, 0.80 );
+		bu_free( sub_ap.a_spectrum, "bn_tabdata *a_spectrum");
+
+		ap->a_user = 1;		/* Signal view_pixel: HIT */
+		ap->a_dist = f + sub_ap.a_dist;
+		ap->a_uptr = sub_ap.a_uptr;	/* which region */
 		goto out;
 	}
 
@@ -540,11 +578,13 @@ if (rdebug&RDEBUG_SHADE) pr_shadework( "shadework before viewshade", &sw);
 	(void)viewshade( ap, pp, &sw );
 if (rdebug&RDEBUG_SHADE) pr_shadework( "shadework after viewshade", &sw);
 
-	/* As a special case for now, handle reflection & refraction */
-	if( sw.sw_reflect > 0 || sw.sw_transmit > 0 )
-		(void)rr_render( ap, pp, &sw );
+	/* individual shaders must handle reflection & refraction */
 
 	bn_tabdata_copy( ap->a_spectrum, sw.msw_color );
+	ap->a_user = 1;		/* Signal view_pixel:  HIT */
+	/* XXX This is always negative when eye is inside air solid */
+	ap->a_dist = hitp->hit_dist;
+
 	bu_free( sw.msw_color, "sw.msw_color");
 	bu_free( sw.msw_basecolor, "sw.msw_basecolor");
 #else
@@ -605,11 +645,13 @@ powerfrac = 1;
 #endif
 
 out:
+	RT_CK_REGION(ap->a_uptr);
 	if(rdebug&RDEBUG_HITS)  {
-		rt_log("colorview: lvl=%d ret a_user=%d %s\n",
+		bu_log("colorview: lvl=%d ret a_user=%d %s\n",
 			ap->a_level,
 			ap->a_user,
 			pp->pt_regionp->reg_name);
+		bn_pr_tabdata("a_spectrum", ap->a_spectrum );
 	}
 	return(1);
 }
