@@ -138,25 +138,29 @@ information on available commands.
 </DD>
 <HR>
 
-<DT><a NAME="B"><B>B</B> [<I>-C#/#/#</I>] &lt;<I>objects</I>&gt</DT>
+<DT><a NAME="B"><B>B</B> [<I>-A -o -C#/#/#</I>] &lt;<I>objects</I> | attribute name/value pairs&gt</DT>
 
 <DD> Clear the <I>mged</I> display of any currently
-displayed objects, then display the list of objects provided in the
+displayed objects, then display the objects specified in the
 parameter list.
 Equivalent to
 the <a href="#Z">Z</a> command
-followed by the command
-<a href="#draw">draw</a> &lt;<I>objects</I>&gt.
+followed by the
+<a href="#draw">draw</a> command with the same arguments from the <I>B</I> command.
 The <I>-C</I> option provides the user a way to
 specify a color that overrides all other color
 specifications including combination colors and
-region id based colors.
+region id based colors. The <I>-A</I> and <I>-o</I> options allow the user to
+select objects by attribute. See the <a href="#draw">draw</a> command for a detailed
+description of the options.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
 	<DD>
 	<kbd>mged></kbd> <b>B some_object</b><br>
 	-- Clear the display, then display the object named <I>some_object</I>.<br>
+	<kbd>mged></kbd> <b>B -A -o Comment {First comment} Comment {Second comment}</b><br>
+	-- Clear the display, then draw objects that have a ``Comment'' attribute with a value of either ``First comment'' or ``Second comment''.<br>
 	</DD>
 	</DL>
 </DD>
@@ -1476,7 +1480,7 @@ before the next command will be processed.
      </DL>
 <HR>
 
-<DT><a NAME="draw"><B>draw</B> [<I>-C#/#/#</I>] &lt;<I>objects</I>&gt</DT>
+<DT><a NAME="draw"><B>draw</B> [<I>-A -o -C#/#/#</I>] &lt;<I>objects</I> | <I>attribute name/value pairs</I>&gt</DT>
 
 <DD> Add &lt;<I>objects</I>&gt to the
 display list so that they will appear on the <I>MGED</I> display.
@@ -1488,10 +1492,13 @@ is a synonym for <I>draw</I>.
 specify a color that overrides all other color
 specifications including combination colors and
 region id based colors.
-<li>The <I>-r</I> option specifies that all objects are to be drawn in red,
-which can be useful when examining objects colored black.
 <li>The <I>-s</I> option specifies that subtracted and intersected objects
 should be drawn with solid lines rather than dot-dash lines.
+<li>The <I>-A</I> option specifies that the arguments provided to this command are attribute
+name/value pairs, and only objects having the specified attributes and values are to be displayed.
+<li>The <I>-o</I> option specifies that any object having at least one of the specified attribute
+name/value pairs should be displayed. The default (without <I>-o</I>) is that only objects having
+all the specified attribute name/value pairs will be displayed.
 </ul>
 
 	<DL>
@@ -1499,6 +1506,8 @@ should be drawn with solid lines rather than dot-dash lines.
 	<DD>
 	<kbd>mged></kbd> <b>draw object1 object2</b><br>
 	-- draw <I>object1</I> and <I>object2</I> in the <I>MGED</I> display.<br>
+	<kbd>mged></kbd> <b>draw -A -o Comment {First comment} Comment {Second comment}</b><br>
+	-- draw objects that have a ``Comment'' attribute with a value of either ``First comment'' or ``Second comment''.<br>
 	</DD>
 	</DL>
 </DD>
@@ -1527,22 +1536,25 @@ to insure that there are no name clashes.
 </DD>
 <HR>
 
-<DT><a NAME="e"><B>e</B> [<I>-C#/#/#</I>] &lt;<I>objects</I>&gt</DT>
+<DT><a NAME="e"><B>e</B> [<I>-A -o -C#/#/#</I>] &lt;<I>objects</I> | <I>attribute name/value pairs</I>&gt</DT>
 
-<DD> The ``e'' command adds the objects in the argument list to the
+<DD> The ``e'' command adds the objects specified in the argument list to the
 display list so that they will appear on the <I>MGED</I> display. This
 is a synonym for the <a href="#draw">draw</a> command,
 see that entry for a full list of options.
 The <I>-C</I> option provides the user a way to
 specify a color that overrides all other color
 specifications including combination colors and
-region id based colors.
+region id based colors. The <I>-A</I> and <I>-o</I> options allow the user to
+select objects by attribute.
 
 	<DL>
 	<DT><big>Examples:</big></DT>
 	<DD>
 	<kbd>mged></kbd> <b>e object1 object2</b><br>
 	-- draw <I>object1</I> and <I>object2</I> in the <I>MGED</I> display.<br>
+	<kbd>mged></kbd> <b>e -A -o Comment {First comment} Comment {Second comment}</b><br>
+	-- draw objects that have a ``Comment'' attribute with a value of either ``First comment'' or ``Second comment''.<br>
 	</DD>
 	</DL>
 </DD>
