@@ -8,15 +8,21 @@
 pixborder \- add a 1-pixel-wide border to regions of a specified color
 .SH SYNOPSIS
 .B pixborder
-.RB [ -b " 'R G B']"
-.RB [ -i " 'R G B']"
-.RB [ -t " 'R G B']"
-.sp
-.RB [ -ah ]
-.RB [ -n " file_height]"
-.RB [ -s " squaresize]"
-.RB [ -w " file_width]"
-    [file.pix]
+.RB [ \-b\  "'R\ G\ B']"
+.RB [ \-i\  "'R\ G\ B']"
+.RB [ \-t\  "'R\ G\ B']"
+.RB [ \-B\  "'H\ S\ V']"
+.RB [ \-I\  "'H\ S\ V']"
+.RB [ \-T\  "'H\ S\ V']"
+.RB [ \-x\  left_edge]
+.RB [ \-y\  top_edge]
+.RB [ \-X\  right_edge]
+.RB [ \-Y\  bottom_edge]
+.RB [ \-ah ]
+.RB [ \-n\  file_height]
+.RB [ \-s\  squaresize]
+.RB [ \-w\  file_width]
+[file.pix]
 .SH DESCRIPTION
 .I Pixborder
 reads an input stream of
@@ -58,51 +64,50 @@ option likewise sets
 the border color to
 .IR "R G B" .
 
-The
-.B -n
-option causes
-.I bary
-to normalize each tuple of weights to sum to one.
-This has the effect of computing
-barycentric combinations of the sites.
-
-If any line of weights in the input stream
-contains more fields than the number of sites,
-.I bary
-will, by default,
-ignore the excess fields.
-The
+Variation in the color of the region interior
+may be accomodated by the
 .B -t
-option causes
-.I bary
-to copy all such trailing fields verbatim onto the tail of
-the corresponding line of output.
+option,
+with which one specifies a symmetric tolerance
+for each of the red, green, and blue channels.
+Any color
+within the specified tolerance of the nominal interior color
+is treated as though it were the interior color.
 
-.SH EXAMPLE
-The command
+The
+.BR -B , -I ,
+and
+.B -T
+options are analogous to
+.BR -b , -i ,
+and
+.BR -t ,
+respectively,
+except that they are used to specify colors
+in the HSV color model.
+.IR H , S ,
+and
+.I V
+are reals,
+with
+\fIH\fR in [0,\ 360)
+and
+\fIS\fR, \fIV\fR in [0,\ 1].
 
-.nf
-.in +4
-bary -tn -s '0 0 0' -s '1 0 0' -s '0.5 0.866 0' <<EOF
-#------------------------------
-# x   y   z     aux. data
-#------------------------------
- 1.0 2.5 3.6    58 alpha
- 0.0 1.0 2.0    37 bravo
-13.0 9.2 6.3    69 charlie delta
-EOF
-.in -4
-.fi
 
-maps the triples to points in an equilateral triangle in the \fIxy\fR-plane,
-producing the following output:
-
-.nf
-.in +4
-0.605634 0.439099 0    58 alpha
-0.666667 0.577333 0    37 bravo
-0.433333 0.191432 0    69 charlie delta
-.in -4
-.fi
+.SH HINT
+To obtain borders more than one pixel wide,
+one can run several copies of
+.I pixborder
+in a pipeline.
+In doing this together with the
+.BR -x , -y , -X ,
+and
+.B -Y
+options
+to get, for instance, a border made up of constant-thickness
+segments of different colors,
+one should produce all the segments of a given layer
+before beginning any segments of the next inner layer.
 .SH AUTHOR
 Paul Tanenbaum
