@@ -353,7 +353,8 @@ int flag;
 	struct directory *nextdp;
 	mat_t new_xlate;
 	int nparts, i, k, j;
-	int arslen, kk, npt, n;
+	int arslen, npt, n;
+	int	kk = 0;
 	vect_t	vertex;
 	vect_t	vec;
 
@@ -549,7 +550,8 @@ f_push( )
 {
 
 	struct directory *dp, *tdp;
-	int i, j, k, kk, ii, ngran;
+	int i, j, k, ii, ngran;
+	int	kk = 0;
 	vect_t	vec;
 
 	(void)signal( SIGINT, sig2 );		/* interupts */
