@@ -48,8 +48,8 @@ int		reproj_max;	/* out of total number of pixels */
 /* XXX should record width&height, in case size changes on-the-fly */
 
 /* Local communication with worker() */
-HIDDEN int cur_pixel;		/* current pixel number, 0..last_pixel */
-HIDDEN int last_pixel;		/* last pixel number */
+int cur_pixel;			/* current pixel number, 0..last_pixel */
+int last_pixel;			/* last pixel number */
 
 /*
  *			G R I D _ S E T U P
