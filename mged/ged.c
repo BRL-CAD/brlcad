@@ -79,6 +79,16 @@ in all countries except the USA.  All rights reserved.";
 #include "./sedit.h"
 #include "./dm.h"
 
+#ifdef MGED_TCL
+#  define XLIB_ILLEGAL_ACCESS	/* necessary on facist SGI 5.0.1 */
+#  include "tcl.h"
+#  include "tk.h"
+
+/* defined in cmd.c */
+extern Tcl_Interp *interp;
+extern Tk_Window tkwin;
+#endif
+
 #ifndef	LOGFILE
 #define LOGFILE	"/vld/lib/gedlog"	/* usage log */
 #endif
@@ -226,16 +236,16 @@ char **argv;
 	/* Perform any necessary initializations for the command parser */
 	cmd_setup(interactive);
 
-	/* --- Now safe to process commands.  BUT, no geometry yet. --- */
-	if( interactive )  {
-		/* This is an interactive mged, process .mgedrc */
-		do_rc();
-	}
-
 	/* Open the database, attach a display manager */
 	f_opendb( argc, argv );
 
 	dmp->dmr_window(windowbounds);
+
+	/* --- Now safe to process commands. --- */
+	if( interactive )  {
+		/* This is an interactive mged, process .mgedrc */
+		do_rc();
+	}
 
 	/* --- Now safe to process geometry. --- */
 
@@ -746,37 +756,58 @@ do_rc()
 {
 	FILE	*fp;
 	char	*path;
+	int 	found;
+	struct	rt_vls str;
 
-	if( (path = getenv("MGED_RCFILE")) != (char *)NULL )  {
-		if( (fp = fopen(path, "r")) != NULL )  {
-			mged_source_file( fp );
-			fclose(fp);
-			return(0);
-		}
-	}
-	if( (path = getenv("HOME")) != (char *)NULL )  {
-		struct rt_vls	str;
-		rt_vls_init(&str);
-		rt_vls_strcpy( &str, path );
+	found = 0;
+	rt_vls_init( &str );
+
 #ifdef MGED_TCL
-		rt_vls_strcat( &str, "/.tmgedrc" );
+# define ENVRC	"TMGED_RCFILE"
+# define RCFILE	".tmgedrc"
 #else
-		rt_vls_strcat( &str, "/.mgedrc" );
+# define ENVRC	"MGED_RCFILE"
+# define RCFILE	".mgedrc"
 #endif
-		if( (fp = fopen(rt_vls_addr(&str), "r")) != NULL )  {
-			mged_source_file( fp );
-			fclose(fp);
-			rt_vls_free(&str);
-			return(0);
+
+	if( (path = getenv(ENVRC)) != (char *)NULL ) {
+		if ((fp = fopen(path, "r")) != NULL ) {
+			rt_vls_strcpy( &str, path );
+			found = 1;
 		}
-		rt_vls_free(&str);
 	}
-	if( (fp = fopen( ".mgedrc", "r" )) != NULL )  {
-		mged_source_file( fp );
-		fclose(fp);
-		return(0);
+
+	if( !found ) {
+		if( (path = getenv("HOME")) != (char *)NULL )  {
+			rt_vls_strcpy( &str, path );
+			rt_vls_strcat( &str, "/" );
+			rt_vls_strcat( &str, RCFILE );
+		}
+		if( (fp = fopen(rt_vls_addr(&str), "r")) != NULL )
+			found = 1;
 	}
-	return(-1);
+
+	if( !found ) {
+		if( (fp = fopen( RCFILE, "r" )) != NULL )  {
+			rt_vls_strcpy( &str, RCFILE );
+			found = 1;
+		}
+	}
+
+    /* At this point, if none of the above attempts panned out, give up. */
+
+	if( !found )
+		return -1;
+
+#ifdef MGED_TCL
+	fclose( fp );
+	Tcl_EvalFile( interp, rt_vls_addr(&str) );
+#else
+	mged_source_file( fp );
+	fclose( fp );
+#endif
+	return 0;
+
 }
 
 /*
