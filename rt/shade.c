@@ -301,7 +301,7 @@ register int	want;
 			VMOVE( sub_ap.a_ray.r_dir, tolight );
 			{
 				register fastf_t f;
-				f = pp->pt_inhit->hit_dist + ap->a_rt_i->rti_tol.dist;
+				f = ap->a_rt_i->rti_tol.dist;
 				VJOIN1( sub_ap.a_ray.r_pt,
 					swp->sw_hit.hit_point,
 					f, tolight );
