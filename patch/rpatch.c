@@ -26,7 +26,7 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 double
 get_ftn_float( str , start_col , format )
 char *str,*format;
-int start_col;
+unsigned int start_col;
 {
 	char *ptr;
 	char tmp_str[MAXLINELEN];
