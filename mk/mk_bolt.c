@@ -323,7 +323,7 @@ char *argv[];
    pts[7][2] = (fastf_t)0.;
    solnam[6] = 97 + i;
    solnam[7] = '1';
-   mk_arb8(fpw,solnam,pts);
+   mk_arb8(fpw,solnam,&pts[0][X]);
 
    /*  Create second solid.  */
    pts[0][0] = (fastf_t) (hd / 2.);
@@ -351,7 +351,7 @@ char *argv[];
    pts[7][1] = (fastf_t)(-leg);
    pts[7][2] = (fastf_t)0.;
    solnam[7] = '2';
-   mk_arb8(fpw,solnam,pts);
+   mk_arb8(fpw,solnam,&pts[0][X]);
 
    /*  Create washer if necessary.  */
    if( (iopt == 2) || (iopt == 3) )

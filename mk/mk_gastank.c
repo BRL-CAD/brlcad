@@ -226,7 +226,7 @@ char *argv[];
 	solnam[5] = 97 + i;
 	solnam[6] = '0';
 	solnam[7] = '1';
-	mk_arb8(fpw,solnam,pts);
+	mk_arb8(fpw,solnam, &pts[0][X]);
 
 	pts[0][0] = (fastf_t)(dpt / 2. - rds);
 	pts[0][1] = (fastf_t)(wid / 2.);
@@ -245,7 +245,7 @@ char *argv[];
 	pts[7][0] = pts[4][0];
 	pts[7][1] = pts[2][1];
 	solnam[7] = '2';
-	mk_arb8(fpw,solnam,pts);
+	mk_arb8(fpw,solnam, &pts[0][X]);
 
 	pts[0][1] = (fastf_t)(wid / 2. - rds);
 	pts[0][2] = (fastf_t)(hgt / 2.);
@@ -264,7 +264,7 @@ char *argv[];
 	pts[7][1] = pts[2][1];
 	pts[7][2] = pts[0][2];
 	solnam[7] = '3';
-	mk_arb8(fpw,solnam,pts);
+	mk_arb8(fpw,solnam, &pts[0][X]);
 
 	/*  Make 8 spheres.  */
 

@@ -226,7 +226,7 @@ char *argv[];
 	solnam[5] = 97 + i;
 	solnam[6] = '0';
 	solnam[7] = '1';
-	mk_arb8(fpw,solnam,pts);
+	mk_arb8(fpw,solnam, &pts[0][X]);
 
 	/*  Create second arb8.  */
 	pts[0][1] = (fastf_t) (wid / 2.);
@@ -246,7 +246,7 @@ char *argv[];
 	pts[7][1] = (fastf_t) ((-wid) / 2.);
 	pts[7][2] = (fastf_t) (hgt / 2. - rds);
 	solnam[7] = '2';
-	mk_arb8(fpw,solnam,pts);
+	mk_arb8(fpw,solnam, &pts[0][X]);
 
 	/*  Create cylinder 1.  */
 	bs[0] = (fastf_t)0.;
@@ -301,7 +301,7 @@ char *argv[];
 	pts[7][1] = (fastf_t) (rds - wid / 2.);
 	pts[7][2] = (fastf_t) (hgt / 2. - isw);
 	solnam[7] = '7';
-	mk_arb8(fpw,solnam,pts);
+	mk_arb8(fpw,solnam, &pts[0][X]);
 
 	/*  Create arb8 4.  */
 	pts[0][1] = (fastf_t) (wid / 2. - isw);
@@ -321,7 +321,7 @@ char *argv[];
 	pts[7][1] = (fastf_t) ((-wid) / 2. + isw);
 	pts[7][2] = (fastf_t) (hgt / 2. - rds);
 	solnam[7] = '8';
-	mk_arb8(fpw,solnam,pts);
+	mk_arb8(fpw,solnam, &pts[0][X]);
 
 	/*  Create cylinder 5.  */
 	bs[0] = (fastf_t)0.;

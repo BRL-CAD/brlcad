@@ -301,7 +301,7 @@ char *argv[];
    pts[7][1] = (fastf_t) (len / 2. - r1 - r2);
    pts[7][2] = (fastf_t) (hgt -r1 - r2);
    solnam[6] ='6';
-   mk_arb8(fpw,solnam,pts);
+   mk_arb8(fpw,solnam, &pts[0][X]);
 
    /*  Create left arb8.  */
    pts[0][1] = (-pts[0][1]);
@@ -313,7 +313,7 @@ char *argv[];
    pts[6][1] = (-pts[6][1]);
    pts[7][1] = (-pts[7][1]);
    solnam[6] = '7';
-   mk_arb8(fpw,solnam,pts);
+   mk_arb8(fpw,solnam, &pts[0][X]);
 
    /*  Create all regions.  */
 
