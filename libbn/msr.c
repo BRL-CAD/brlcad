@@ -24,6 +24,9 @@ static char rcsid[] = "$Header$";
  *
  *
  * $Log$
+ * Revision 10.3  1994/02/07  20:02:28  cjohnson
+ * Fix the magic number check in *_unif_* routines.
+ *
  * Revision 10.2  1994/02/07  17:54:36  cjohnson
  * Fix comments.
  *
@@ -43,6 +46,8 @@ static char rcsid[] = "$Header$";
  * Initial revision
  * 
  */
+
+#include "conf.h"
 
 #include <stdio.h>
 #include <math.h>
