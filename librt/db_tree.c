@@ -87,6 +87,21 @@ register struct db_tree_state	*tsp;
 }
 
 /*
+ *			D B _ I N I T _ D B _ T R E E _ S T A T E
+ */
+void
+db_init_db_tree_state( tsp, dbip )
+register struct db_tree_state	*tsp;
+struct db_i			*dbip;
+{
+	RT_CK_DBI(dbip);
+
+	bzero( (char *)tsp, sizeof(*tsp) );
+	tsp->ts_dbip = dbip;
+	bn_mat_idn( tsp->ts_mat );	/* XXX should use null pointer convention! */
+}
+
+/*
  *			D B _ N E W _ C O M B I N E D _ T R E E _ S T A T E
  */
 struct combined_tree_state *
@@ -299,60 +314,9 @@ CONST union tree	*tp;
 	db_add_node_to_full_path( pathp, mdp );
 
 	bn_mat_copy( old_xlate, tsp->ts_mat );
-	if( tp->tr_l.tl_mat )
-		bn_mat_copy( xmat, tp->tr_l.tl_mat );
-	else
-		bn_mat_idn( xmat );
-
-	/* Check here for animation to apply */
-	if ((mdp->d_animate != ANIM_NULL) && (rt_g.debug & DEBUG_ANIM)) {
-		char	*sofar = db_path_to_string(pathp);
-		bu_log("Animate %s with...\n", sofar);
-		bu_free(sofar, "path string");
-	}
-	/*
-	 *  For each of the animations attached to the mentioned object,
-	 *  see if the current accumulated path matches the path
-	 *  specified in the animation.
-	 *  Comparison is performed right-to-left (from leafward to rootward).
-	 */
-	for( anp = mdp->d_animate; anp != ANIM_NULL; anp = anp->an_forw ) {
-		register int i;
-		register int j = pathp->fp_len-1;
-		register int anim_flag;
-		
-		RT_CK_ANIMATE(anp);
-		i = anp->an_path.fp_len-1;
-		anim_flag = 1;
-
-		if (rt_g.debug & DEBUG_ANIM) {
-			char	*str;
-
-			str = db_path_to_string( &(anp->an_path) );
-			bu_log( "\t%s\t", str );
-			bu_free( str, "path string" );
-			bu_log("an_path.fp_len-1:%d  pathp->fp_len-1:%d\n",
-				i, j);
-
-		}
-		for( ; i>=0 && j>=0; i--, j-- )  {
-			if( anp->an_path.fp_names[i] != pathp->fp_names[j] ) {
-				if (rt_g.debug & DEBUG_ANIM) {
-					bu_log("%s != %s\n",
-					     anp->an_path.fp_names[i]->d_namep,
-					     pathp->fp_names[j]->d_namep);
-				}
-				anim_flag = 0;
-				break;
-			}
-		}
-		/* Perhaps tsp->ts_mater should be just tsp someday? */
-		if (anim_flag)  {
-			db_do_anim( anp, old_xlate, xmat, &(tsp->ts_mater) );
-		}
-	}
-
+	db_apply_anims( pathp, mdp, xmat, tp->tr_l.tl_mat, &tsp->ts_mater );
 	bn_mat_mul(tsp->ts_mat, old_xlate, xmat);
+
 	return(0);		/* Success */
 }
 
@@ -738,71 +702,70 @@ genptr_t		user_ptr1,user_ptr2,user_ptr3;
 }
 
 /*
- *			D B _ F O L L O W _ P A T H _ F O R _ S T A T E
+ *			D B _ F O L L O W _ P A T H
  *
- *  Follow the slash-separated path given by "cp", and update
- *  *tsp and *pathp with full state information along the way.
+ *  Starting with possible prior partial path and corresponding accumulated state,
+ *  follow the path given by "new_path", updating
+ *  *tsp and *total_path with full state information along the way.
+ *  In a better world, there would have been a "combined_tree_state" arg.
  *
- *  A much more complete version of rt_plookup().
+ *  A much more complete version of rt_plookup() and pathHmat().
+ *  There is also a TCL interface.
  *
  *  Returns -
  *	 0	success (plus *tsp is updated)
  *	-1	error (*tsp values are not useful)
  */
 int
-db_follow_path_for_state( tsp, pathp, orig_str, noisy )
-struct db_tree_state	*tsp;
-struct db_full_path	*pathp;
-CONST char		*orig_str;
-int			noisy;
+db_follow_path( tsp, total_path, new_path, noisy, depth )
+struct db_tree_state		*tsp;
+struct db_full_path		*total_path;
+CONST struct db_full_path	*new_path;
+int				noisy;
+int				depth;		/* # arcs in new_path to use */
 {
-	struct bu_external	ext;
 	struct rt_db_internal	intern;
 	struct rt_comb_internal	*comb;
 	register int		i;
-	register char		*cp;
-	register char		*ep;
-	char			*str;		/* ptr to duplicate string */
-	char			oldc;
-	register struct member *mp;
 	struct directory	*comb_dp;	/* combination's dp */
 	struct directory	*dp;		/* element's dp */
+	int			j;
 
 	RT_CHECK_DBI( tsp->ts_dbip );
-	RT_CK_FULL_PATH( pathp );
+	RT_CK_FULL_PATH( total_path );
+	RT_CK_FULL_PATH( new_path );
 
 	if(rt_g.debug&DEBUG_TREEWALK)  {
-		char	*sofar = db_path_to_string(pathp);
-		bu_log("db_follow_path_for_state() pathp='%s', tsp=x%x, orig_str='%s', noisy=%d\n",
-			sofar, tsp, orig_str, noisy );
+		char	*sofar = db_path_to_string(total_path);
+		char	*toofar = db_path_to_string(new_path);
+		bu_log("db_follow_path() total_path='%s', tsp=x%x, new_path='%s', noisy=%d, depth=%d\n",
+			sofar, tsp, toofar, noisy, depth );
 		bu_free(sofar, "path string");
+		bu_free(toofar, "path string");
 	}
 
-	if( *orig_str == '\0' )  return(0);		/* Null string */
+	if( depth < 0 )  {
+		depth = new_path->fp_len-1 + depth;
+		if( depth < 0 ) rt_bomb("db_follow_path() depth exceeded provided path\n");
+	} else if( depth >= new_path->fp_len )  {
+		depth = new_path->fp_len-1;
+	} else if( depth == 0 )  {
+		/* depth of zero means "do it all". */
+		depth = new_path->fp_len-1;
+	}
 
-	BU_INIT_EXTERNAL( &ext );
-	cp = str = bu_strdup( orig_str );
+	j = 0;
 
-	/* Prime the pumps, and get the starting combination */
-	if( pathp->fp_len > 0 )  {
-		comb_dp = DB_FULL_PATH_CUR_DIR(pathp);
-		oldc = 'X';	/* Anything non-null */
+	/* Get the first combination */
+	if( total_path->fp_len > 0 )  {
+		/* Some path has already been processed */
+		comb_dp = DB_FULL_PATH_CUR_DIR(total_path);
 	}  else  {
-		/* Peel out first path element & look it up. */
+		/* No prior path. Process any animations located at the root */
+		comb_dp = DIR_NULL;
+		dp = new_path->fp_names[0];
+		RT_CK_DIR(dp);
 
-		/* Skip any leading slashes */
-		while( *cp && *cp == '/' )  cp++;
-
-		/* Find end of this path element and null terminate */
-		ep = cp;
-		while( *ep != '\0' && *ep != '/' )  ep++;
-		oldc = *ep;
-		*ep = '\0';
-
-		if( (dp = db_lookup( tsp->ts_dbip, cp, noisy )) == DIR_NULL )
-			goto fail;
-
-		/* Process animations located at the root */
 		if( tsp->ts_dbip->dbi_anroot )  {
 			register struct animate *anp;
 			mat_t	old_xlate, xmat;
@@ -818,110 +781,120 @@ int			noisy;
 			}
 		}
 
-		db_add_node_to_full_path( pathp, dp );
+		db_add_node_to_full_path( total_path, dp );
 
 		if( (dp->d_flags & DIR_COMB) == 0 )  goto is_leaf;
 
 		/* Advance to next path element */
-		cp = ep+1;
+		j = 1;
 		comb_dp = dp;
 	}
 	/*
-	 *  Process two things at once: the combination, and it's member.
+	 *  Process two things at once:
+	 *  the combination at [j], and it's member at [j+1].
 	 */
 	do  {
-		if( oldc == '\0' )  break;
+		/* j == depth is the last one, presumably a leaf */
+		if( j > depth )  break;
+		dp = new_path->fp_names[j];
+		RT_CK_DIR(dp);
 
-		/* Skip any leading slashes */
-		while( *cp && *cp == '/' )  cp++;
-		if( *cp == '\0' )  break;
-
-		/* Find end of this path element and null terminate */
-		ep = cp;
-		while( *ep != '\0' && *ep != '/' )  ep++;
-		oldc = *ep;
-		*ep = '\0';
-
-		if( (dp = db_lookup( tsp->ts_dbip, cp, noisy )) == DIR_NULL )
+		if( (comb_dp->d_flags & DIR_COMB) == 0 )  {
+			bu_log("db_follow_path() %s isn't combination\n", comb_dp->d_namep);
 			goto fail;
+		}
 
 		/* At this point, comb_db is the comb, dp is the member */
 		if(rt_g.debug&DEBUG_TREEWALK)  {
-			bu_log("db_follow_path_for_state() at %s/%s\n", comb_dp->d_namep, dp->d_namep );
+			bu_log("db_follow_path() at %s/%s\n", comb_dp->d_namep, dp->d_namep );
 		}
 
-		/* Load the entire combination into contiguous memory */
-		if( db_get_external( &ext, comb_dp, tsp->ts_dbip ) < 0 )
+		/* Load the combination object into memory */
+		if( rt_db_get_internal( &intern, comb_dp, tsp->ts_dbip, NULL ) < 0 )
 			goto fail;
-
-		if( rt_comb_v4_import( &intern , &ext , NULL ) < 0 )  {
-			bu_log("db_follow_path_for_state() import of %s failed\n", comb_dp->d_namep);
-			goto fail;
-		}
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
 		RT_CK_COMB(comb);
-		if( db_apply_state_from_comb( tsp, pathp, comb ) < 0 )
+		if( db_apply_state_from_comb( tsp, total_path, comb ) < 0 )
 			goto fail;
 
 		/* Crawl tree searching for specified leaf */
-		if( db_apply_state_from_one_member( tsp, pathp, cp, 0, comb->tree ) <= 0 )  {
-			bu_log("db_follow_path_for_state() ERROR: unable to apply member %s state\n", dp->d_namep);
+		if( db_apply_state_from_one_member( tsp, total_path, dp->d_namep, 0, comb->tree ) <= 0 )  {
+			bu_log("db_follow_path() ERROR: unable to apply member %s state\n", dp->d_namep);
 			goto fail;
 		}
-		/* Found it, state has been applied, sofar applied, directory entry pushed onto pathp */
-		/* Done */
+		/* Found it, state has been applied, sofar applied, directory entry pushed onto total_path */
 		rt_comb_ifree( &intern );
-
-		db_free_external( &ext );
 
 		/* If member is a leaf, handle leaf processing too. */
 		if( (dp->d_flags & DIR_COMB) == 0 )  {
 is_leaf:
 			/* Object is a leaf */
-			/*db_add_node_to_full_path( pathp, dp );*/
-			if( oldc == '\0' )  {
+			if( j == new_path->fp_len-1 )  {
 				/* No more path was given, all is well */
 				goto out;
 			}
 			/* Additional path was given, this is wrong */
 			if( noisy )  {
-				char	*sofar = db_path_to_string(pathp);
-				bu_log("db_follow_path_for_state(%s) ERROR: found leaf early at '%s'\n",
-					cp, sofar );
+				char	*sofar = db_path_to_string(total_path);
+				char	*toofar = db_path_to_string(new_path);
+				bu_log("db_follow_path() ERROR: path ended in leaf at '%s', additional path specified '%s'\n",
+					sofar, toofar );
 				bu_free(sofar, "path string");
-			}
-			goto fail;
-		}
-
-		/* Member is itself a combination */
-		if( dp->d_len <= 1 )  {
-			/* Combination has no members */
-			if( noisy )  {
-				bu_log("db_follow_path_for_state(%s) ERROR: combination '%s' has no members\n",
-					cp, dp->d_namep );
+				bu_free(toofar, "path string");
 			}
 			goto fail;
 		}
 
 		/* Advance to next path element */
-		cp = ep+1;
+		j++;
 		comb_dp = dp;
-	} while( oldc != '\0' );
+	} while( j <= depth );
 
 out:
-	db_free_external( &ext );
-	bu_free( str, "bu_strdup (dup'ed path)" );
 	if(rt_g.debug&DEBUG_TREEWALK)  {
-		char	*sofar = db_path_to_string(pathp);
-		bu_log("db_follow_path_for_state() returns pathp='%s'\n",
+		char	*sofar = db_path_to_string(total_path);
+		bu_log("db_follow_path() returns total_path='%s'\n",
 			sofar);
 		bu_free(sofar, "path string");
 	}
-	return(0);		/* SUCCESS */
+	return 0;		/* SUCCESS */
 fail:
-	db_free_external( &ext );
-	bu_free( str, "bu_strdup (dup'ed path)" );
-	return(-1);		/* FAIL */
+	return -1;		/* FAIL */
+}
+
+/*
+ *			D B _ F O L L O W _ P A T H _ F O R _ S T A T E
+ *
+ *  Follow the slash-separated path given by "cp", and update
+ *  *tsp and *total_path with full state information along the way.
+ *
+ *  A much more complete version of rt_plookup().
+ *
+ *  Returns -
+ *	 0	success (plus *tsp is updated)
+ *	-1	error (*tsp values are not useful)
+ */
+int
+db_follow_path_for_state( tsp, total_path, orig_str, noisy )
+struct db_tree_state	*tsp;
+struct db_full_path	*total_path;
+CONST char		*orig_str;
+int			noisy;
+{
+	struct db_full_path	new_path;
+	int			ret;
+
+	if( *orig_str == '\0' )  return 0;		/* Null string */
+
+	if( db_string_to_path( &new_path, tsp->ts_dbip, orig_str ) < 0 )
+		return -1;
+
+	if( new_path.fp_len <= 0 )  return 0;		/* Null string */
+
+	ret = db_follow_path( tsp, total_path, &new_path, noisy, 0 );
+	db_free_full_path( &new_path );
+
+	return ret;
 }
 
 
@@ -2130,6 +2103,7 @@ union tree *	(*leaf_func)();
 
 /*
  *			D B _ P A T H _ T O _ M A T
+ *  XXX should be able to just call db_follow_path().
  */
 int
 db_path_to_mat( dbip, pathp, mat, depth)
@@ -2253,6 +2227,8 @@ struct mater_info *materp;
 			str = db_path_to_string( &(anp->an_path) );
 			bu_log( "\t%s\t", str );
 			bu_free( str, "path string" );
+			bu_log("an_path.fp_len-1:%d  pathp->fp_len-1:%d\n",
+				i, j);
 		}
 
 		for( ; i>=0 && j>=0; i--, j-- )  {
@@ -2310,6 +2286,8 @@ CONST char *name;
 
 
 /*		D B _ S H A D E R _ M A T
+ * XXX given that this routine depends on rtip, it should be called
+ * XXX rt_shader_mat().
  *
  *  Given a region, return a matrix which maps model coordinates into
  *  region "shader space".  This is a space where points in the model
