@@ -5,12 +5,11 @@
 #define PRODUCTS	librtserver.ARCH_SUF
 #define	SRCSUFF	.c
 #define MANSECTION	3
+#define CONFIGDEFS	-I/usr/java/j2sdk1.4.2_02/include "-I/usr/java/j2sdk1.4.2_02/include/linux"
 
 #include "../Cakefile.defs"
 
-#if defined(RESOLVE_LIBRARIES)
-#	define EXTRA_OBJ_NO_DEPENDENCY -lc -lm -brtl -L../.libbu.sp3 -lbu -L../.libbn.sp3 -lbn -L../.libtcl8.4.sp3 -ltcl8.4
-#endif
+#define EXTRA_OBJ_NO_DEPENDENCY -L../.librt.''MTYPE -lrt -L../.libbn.''MTYPE -lbn -L../.libbu.''MTYPE -lbu -L../.libtcl8.4.''MTYPE -ltcl8.4
 
 #define FILES	librtserver
 
