@@ -198,40 +198,9 @@ after_read:
 	exit(0);
 }
 
-/* XXX structparse for EBM and VOL taken from g_ebm.c and g_vol.c, should be kept in just one place */
-#define RT_EBM_O(m)	offsetof(struct rt_ebm_internal, m)
-
-struct structparse ebm_parse[] = {
-#if CRAY && !__STDC__
-	{"%s",	RT_EBM_NAME_LEN, "file",	1,	FUNC_NULL },
-#else
-	{"%s",	RT_EBM_NAME_LEN, "file", offsetofarray(struct rt_ebm_internal, file), FUNC_NULL },
-#endif
-	{"%d",	1, "w",		RT_EBM_O(xdim),		FUNC_NULL },
-	{"%d",	1, "n",		RT_EBM_O(ydim),		FUNC_NULL },
-	{"%f",	1, "d",		RT_EBM_O(tallness),	FUNC_NULL },
-	{"%f",	16, "mat", offsetofarray(struct rt_ebm_internal, mat), FUNC_NULL },
-	{"",	0, (char *)0, 0,			FUNC_NULL }
-};
-
-#define VOL_O(m)	offsetof(struct rt_vol_internal, m)
-
-struct structparse vol_parse[] = {
-#if CRAY && !__STDC__
-	{"%s",	RT_VOL_NAME_LEN, "file",	1,		FUNC_NULL },
-#else
-	{"%s",	RT_VOL_NAME_LEN, "file",	offsetofarray(struct rt_vol_internal, file), FUNC_NULL },
-#endif
-	{"%d",	1, "w",		VOL_O(xdim),	FUNC_NULL },
-	{"%d",	1, "n",		VOL_O(ydim),	FUNC_NULL },
-	{"%d",	1, "d",		VOL_O(zdim),	FUNC_NULL },
-	{"%d",	1, "lo",	VOL_O(lo),		FUNC_NULL },
-	{"%d",	1, "hi",	VOL_O(hi),		FUNC_NULL },
-	{"%f",	ELEMENTS_PER_VECT, "size",offsetofarray(struct rt_vol_internal, cellsize), FUNC_NULL },
-	{"%f",	16, "mat", offsetofarray(struct rt_vol_internal,mat), FUNC_NULL },
-	{"",	0, (char *)0,	0,			FUNC_NULL }
-};
-
+/*
+ *			S T R S O L B L D
+ */
 void
 strsolbld()
 {
@@ -264,48 +233,12 @@ strsolbld()
 
 	cp = nxt_spc( cp );
 
-/* XXX This block of code could easily be disposed of */
-#if 1
-	if( !strcmp( keyword , "ebm" ) )
-	{
-		struct rt_ebm_internal ebm;
+	/* Zap the trailing newline */
+	cp[strlen(cp)-1] = '\0';
 
-		mat_idn( ebm.mat );
-		rt_vls_init( &vls );
-		rt_vls_strcat( &vls , cp );
-		rt_structparse( &vls , ebm_parse , (char *)&ebm );
-		ebm.magic =  RT_EBM_INTERNAL_MAGIC;
-		if( mk_export_fwrite( ofp , name , (genptr_t)&ebm , ID_EBM ) )
-		{
-			rt_log( "asc2g: Failed to convert EBM solid\n" );
-			rt_log( "buf=%s\n" , buf );
-		}
-		rt_vls_free( &vls );
-	}
-	else if( !strcmp( keyword , "vol" ) )
-	{
-		struct rt_vol_internal vol;
-
-		mat_idn( vol.mat );
-		VSET( vol.cellsize , 1 , 1 , 1 );
-		rt_vls_init( &vls );
-		rt_vls_strcat( &vls , cp );
-		rt_structparse( &vls , vol_parse , (char *)&vol );
-		vol.magic =  RT_VOL_INTERNAL_MAGIC;
-		if( mk_export_fwrite( ofp , name , (genptr_t)&vol , ID_VOL ) )
-		{
-			rt_log( "asc2g: Failed to convert VOL solid\n" );
-			rt_log( "buf=%s\n" , buf );
-		}
-		rt_vls_free( &vls );
-	}
-	else
-#endif
-	{
-		if( mk_strsol( ofp, name, keyword, cp ) )  {
-			rt_log("asc2g(%s) couldn't convert %s type solid\n",
-				name, keyword );
-		}
+	if( mk_strsol( ofp, name, keyword, cp ) )  {
+		rt_log("asc2g(%s) couldn't convert %s type solid\n",
+			name, keyword );
 	}
 }
 
@@ -664,7 +597,7 @@ combbld()
 	if( mk_lrcomb(ofp, name, &head, is_reg,
 		temp_nflag ? matname : (char *)0,
 		temp_pflag ? matparm : (char *)0,
-		override ? (char *)rgb : (char *)0,
+		override ? (unsigned char *)rgb : (unsigned char *)0,
 		regionid, aircode, material, los, inherit) < 0 )  {
 			fprintf(stderr,"asc2g: mk_rcomb fail\n");
 			exit(1);
