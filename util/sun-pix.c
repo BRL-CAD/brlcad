@@ -149,7 +149,7 @@ char **argv;
 {
 	register int	i, c;
 
-	if ( !get_args( argc, argv ) || isatty(fileno(stdout)) )  {
+	if ( !get_args( argc, argv ) || (isatty(fileno(stdout)) && (hflag == 0)) ) {
 		(void)fputs(usage, stderr);
 		exit( 1 );
 	}
