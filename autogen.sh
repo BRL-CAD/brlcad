@@ -17,7 +17,10 @@ which sed > /dev/null 2>&1
 which autoconf > /dev/null 2>&1
 [ $? = 0 ] && _autofound=yes || _autofound=no
 _report_error=no
-if [ "x$_autofound" = "xyes" ] ; then
+if [ ! "x$_autofound" = "xyes" ] ; then
+    echo "ERROR:  Unable to locate the GNU Autotools."
+    _report_error=yes
+else
     _version_line="`autoconf -V | head -1`"
     if [ "x$HAVE_SED" = "xyes" ] ; then
 	_maj_version="`echo $_version_line | sed 's/.*\([0-9]\)\..*/\1/'`"
@@ -34,15 +37,9 @@ if [ "x$_autofound" = "xyes" ] ; then
 	echo "Warning:  sed is not available to properly detect version of GNU Autotools"
     fi
     echo
-else
-    _report_error=yes
+    echo "ERROR:  To prepare the BRL-CAD build system from scratch,"
 fi
 if [ "x$_report_error" = "xyes" ] ; then
-    if [ ! "x$_autofound" = "xyes" ] ; then
-	echo "ERROR:  Unable to locate the GNU Autotools."
-    else
-	echo "ERROR:  To prepare the BRL-CAD build system from scratch,"
-    fi
     echo "        At least version $MAJOR_VERSION.$MINOR_VERSION of the GNU Autotools must be installed."
     echo 
     echo "$PATH_TO_AUTOGEN/autogen.sh does not need to be run on the same machine that will"
