@@ -723,7 +723,7 @@ char *file;
 	return (!stat);
 #endif
 #else
-	register pid, xpid;
+	register int pid, xpid;
 	int stat;
 	void (*s2)(), (*s3)();
 
