@@ -102,8 +102,8 @@ FBIO mips_interface =
 		mips_cmemory_addr,
 		fb_null,		/* cscreen_addr */
 		"Silicon Graphics Iris-4D",
-		1280,			/* max width */
-		1024,			/* max height */
+		XMAXSCREEN+1,		/* max width */
+		YMAXSCREEN+1,		/* max height */
 		"/dev/sgi",
 		512,			/* current/default width  */
 		512,			/* current/default height */
@@ -672,9 +672,9 @@ int	width, height;
 	/* Setup default cursor.					*/
 	defcursor( 1, cursor );
 	curorigin( 1, 0, 0 );
-	drawmode(CURSORDRAW);
-	mapcolor(1, 255, 255, 255);
-	drawmode(NORMALDRAW);
+	drawmode( CURSORDRAW );
+	mapcolor( 1, 255, 0, 0 );
+	drawmode( NORMALDRAW );
 	setcursor(1, 1, 0);
 
 	/* The screen has no useful state.  Restore it as it was before */
@@ -1206,7 +1206,7 @@ int		xorig, yorig;
 	}
 	defcursor( 1, newcursor );
 	curorigin( 1, (short) xorig, (short) yorig );
-	setcursor(1,0,0);
+	setcursor( 1, 0, 0 );
 	return	0;
 }
 
@@ -1246,15 +1246,15 @@ int	x, y;
 	getorigin( &left, &bottom );
 
 /*	RGBcursor( 1, 255, 255, 0, 0xFF, 0xFF, 0xFF ); */
-	setvaluator( MOUSEX, x+left, 0, 1023 );
-	setvaluator( MOUSEY, y+bottom, 0, 1023 );
+	setvaluator( MOUSEX, x+left, 0, XMAXSCREEN );
+	setvaluator( MOUSEY, y+bottom, 0, YMAXSCREEN );
 
 	return	0;
 }
 
 
 /*
- *			S G W _ I N Q U E U E
+ *			M P W _ I N Q U E U E
  *
  *  Called when a qtest() indicates that there is a window event.
  *  Process all events, so that we don't loop on recursion to sgw_bwrite.
