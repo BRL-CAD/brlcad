@@ -20,7 +20,6 @@ static char RCStimer[] = "@(#)$Header$ (BRL)";
 #include "conf.h"
 
 #include <stdio.h>
-#define _BSD_TYPES		/* Needed for IRIX 5.0.1 */
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -30,6 +29,7 @@ static char RCStimer[] = "@(#)$Header$ (BRL)";
 
 static struct	timeval time0;	/* Time at which timeing started */
 static struct	rusage ru0;	/* Resource utilization at the start */
+static struct	rusage ru0c;	/* Resource utilization at the start */
 
 static void prusage();
 static void tvadd();
@@ -44,6 +44,7 @@ rt_prep_timer()
 {
 	gettimeofday(&time0, (struct timezone *)0);
 	getrusage(RUSAGE_SELF, &ru0);
+	getrusage(RUSAGE_CHILDREN, &ru0c);
 }
 
 /*
@@ -62,11 +63,13 @@ double		*elapsed;
 {
 	struct timeval timedol;
 	struct rusage ru1;
+	struct rusage ru1c;
 	struct timeval td;
 	double	user_cpu_secs;
 	double	elapsed_secs;
 
 	getrusage(RUSAGE_SELF, &ru1);
+	getrusage(RUSAGE_CHILDREN, &ru1c);
 	gettimeofday(&timedol, (struct timezone *)0);
 
 	elapsed_secs = (timedol.tv_sec - time0.tv_sec) +
@@ -74,13 +77,21 @@ double		*elapsed;
 
 	tvsub( &td, &ru1.ru_utime, &ru0.ru_utime );
 	user_cpu_secs = td.tv_sec + ((double)td.tv_usec) / 1000000;
+
+	tvsub( &td, &ru1c.ru_utime, &ru0c.ru_utime );
+	user_cpu_secs += td.tv_sec + ((double)td.tv_usec) / 1000000;
+
 	if( user_cpu_secs < 0.00001 )  user_cpu_secs = 0.00001;
 	if( elapsed_secs < 0.00001 )  elapsed_secs = user_cpu_secs;	/* It can't be any less! */
 
 	if( elapsed )  *elapsed = elapsed_secs;
 
-	if( vp )
+	if( vp )  {
+		rt_vls_strcat( vp, "parent: " );
 		prusage(&ru0, &ru1, &timedol, &time0, vp);
+		rt_vls_strcat( vp, "\n\tchildren: ");
+		prusage(&ru0c, &ru1c, &timedol, &time0, vp);
+	}
 
 	return( user_cpu_secs );
 }
@@ -237,6 +248,7 @@ char *str;
 
 	rt_vls_init( &vls );
 	cpu = rt_get_timer( &vls, (double *)0 );
+rt_log("rt_read_timer:  %g\n", cpu);
 	todo = rt_vls_strlen( &vls );
 	if( todo > len )  todo = len-1;
 	strncpy( str, rt_vls_addr(&vls), todo );
