@@ -50,19 +50,19 @@ register char *cp;
 	/* Output newline if last column printed. */
 	if( col_count >= COLUMNS || (col_len+NAMESIZE-1) >= TERMINAL_WIDTH )  {
 		/* line now full */
-		(void)putchar( '\n' );
+		rt_log( "\n" );
 		col_count = 0;
 	} else if ( col_count != 0 ) {
 		/* Space over before starting new column */
 		do {
-			(void)putchar( ' ' );
+			rt_log( ' ' );
 			col_len++;
 		}  while ( (col_len % NAMESIZE) != 0 );
 	}
 	/* Output string and save length for next tab. */
 	col_len = 0;
 	while ( *cp != '\0' )  {
-		(void)putchar( *cp );	/* is a macro */
+		rt_log( "%c", *cp );	/* dreadful performance */
 		++cp;
 		++col_len;
 	}
@@ -74,7 +74,7 @@ void
 col_putchar(c)
 char c;
 {
-	(void)putchar(c);
+	rt_log("%c", c);	/* dreadful performance */
 	col_len++;
 }
 
@@ -82,7 +82,7 @@ void
 col_eol()
 {
 	if ( col_count != 0 )		/* partial line */
-		(void)putchar( '\n' );
+		rt_log( "\n" );
 	col_count = 0;
 	col_len = 0;
 }

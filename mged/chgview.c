@@ -492,7 +492,7 @@ int	verbose;
 				if( status & STAT_PERSP )
 					(void)fprintf(outfp," ??Perspective=[%g,%g,%g]??",
 						xmat[12], xmat[13], xmat[14] );
-				(void)putchar('\n');
+				rt_log("\n");
 			} else {
 				char	buf[132];
 				register char	*cp = buf;
