@@ -1564,7 +1564,7 @@ CONST char                      *attr;
 		ret = TCL_ERROR;
 	}
 
-        Tcl_DStringAppendElement( &ds, bu_vls_addr( &vls ) );
+        Tcl_DStringAppend( &ds, bu_vls_addr( &vls ), -1 );
         Tcl_DStringResult( interp, &ds );
         Tcl_DStringFree( &ds );
         bu_vls_free( &vls );
