@@ -2,9 +2,9 @@
  *			M A T E R I A L . H
  */
 
-#if 0
+#if defined(CRAY)
 	/*
-	 * CRAY used to have a problem taking the address of an arbitrary
+	 * CRAY machines have a problem taking the address of an arbitrary
 	 * character within a structure.  int pointers have to be used.
 	 * There is some matching hackery in the invididual tables.
 	 */
