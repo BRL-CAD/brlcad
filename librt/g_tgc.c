@@ -25,7 +25,7 @@
 #include "./complex.h"
 #include <math.h>
 
-static int	stdCone();
+HIDDEN int	stdCone();
 static void	rotate(), shear(), PtSort(), tgcnormal();
 
 struct  tgc_specific {
@@ -35,9 +35,11 @@ struct  tgc_specific {
 	fastf_t	tgc_B;		/*  magnitude of B vector		*/
 	fastf_t	tgc_C;		/*  magnitude of C vector		*/
 	fastf_t	tgc_D;		/*  magnitude of D vector		*/
+	fastf_t	tgc_ABsq;	/*  (A/B)**2 or (C/D)**2  */
 	vect_t	tgc_norm;	/*  normal at 'top' of cone		*/
 	mat_t	tgc_ShoR;	/*  Shear( Rot( vect ))			*/
 	mat_t	tgc_invRoSh;	/*  invRot( trnShear( vect ))		*/
+	char	tgc_AD_CB;	/*  boolean:  A*D == C*B  */
 };
 
 
@@ -152,6 +154,22 @@ matp_t mat;			/* Homogenous 4x4, with translation, [15]=1 */
 	tgc->tgc_B = NEAR_ZERO( mag_b ) ? 10*SMALL : mag_b;
 	tgc->tgc_C = NEAR_ZERO( mag_c ) ? 10*SMALL : mag_c;
 	tgc->tgc_D = NEAR_ZERO( mag_d ) ? 10*SMALL : mag_d;
+
+	/*  If the eccentricities of the two ellipses are the same,
+	 *  then the cone equation reduces to a much simpler quadratic
+	 *  form.  Otherwise it is a (gah!) quartic equation.
+	 */
+	f = reldiff( (tgc->tgc_A*tgc->tgc_D), (tgc->tgc_C*tgc->tgc_B) );
+	tgc->tgc_AD_CB = (f < EPSILON);		/* A*D == C*B */
+	if ( tgc->tgc_AD_CB )  {
+		if ( !NEAR_ZERO( tgc->tgc_A ) && !NEAR_ZERO( tgc->tgc_B ) ){
+			tgc->tgc_ABsq = tgc->tgc_A/tgc->tgc_B;
+		} else {
+			tgc->tgc_ABsq = tgc->tgc_C/tgc->tgc_D;
+		}
+		tgc->tgc_ABsq *= tgc->tgc_ABsq;		/* (A/B)**2 */
+	} else
+		tgc->tgc_ABsq = 0;			/* safety */
 
 	rotate( A, B, Hv, Rot, iRot, tgc );
 	MAT4X3VEC( nH, Rot, Hv );
@@ -319,6 +337,12 @@ register struct soltab	*stp;
 	VPRINT( "Top normal", tgc->tgc_norm );
 	mat_print( "Sh o R", tgc->tgc_ShoR );
 	mat_print( "invR o trnSh", tgc->tgc_invRoSh );
+	if( tgc->tgc_AD_CB )  {
+		fprintf(stderr, "A*D == C*B.  Equal eccentricities gives quadratic equation.\n");
+		fprintf(stderr, "(A/B)**2 = %f\n", tgc->tgc_ABsq );
+	} else {
+		fprintf(stderr, "A*D != C*B.  Quatric equation.\n");
+	}
 }
 
 /*
@@ -567,38 +591,38 @@ register struct xray	*rp;
  *  First, find X, Y, and Z in terms of 't' for this line, then
  *  substitute them into the equation above.
  */
-static int
+HIDDEN int
 stdCone( pprime, dprime, tgc, t )
 vect_t		pprime, dprime;
 struct tgc_specific	*tgc;
 double		t[];
-
 {
-	LOCAL poly		C;	/*  final equation	*/
-			/* space to store intermediate polynomials	*/
-	LOCAL poly		tfun[3], Xsqr, Ysqr;
-	LOCAL poly		Q, Qsqr, R, Rsqr;
-	LOCAL poly		T1, T2, T3, sum;
-	LOCAL complex		val[MAXP];	/* roots of final equation */
-	LOCAL fastf_t		A_B;	/*  eccentricity of bottom ellipse */
-	register int		i, l, npts;
+	LOCAL poly	C;	/*  final equation	*/
+	LOCAL poly	Xsqr, Ysqr;
+	LOCAL poly	Q, Qsqr;
+	LOCAL poly	R, Rsqr;
+	LOCAL poly	T1, T2, T3, sum;
+	LOCAL complex	val[MAXP];	/* roots of final equation */
+	register int	i, l, npts;
 
 	/*  Express each variable (X, Y, and Z) as a linear equation
-	 *  in 't'.
+	 *  in 't', eg, (dprime[X] * t) + pprime[X], and
+	 *  substitute into the cone equation.
 	 */
-	for ( l=0; l < 3; ++l ){
-		tfun[l].dgr = 1;
-		tfun[l].cf[0] = dprime[l];
-		tfun[l].cf[1] = pprime[l];
-	}
+	Xsqr.dgr = 2;
+	Xsqr.cf[0] = dprime[X] * dprime[X];
+	Xsqr.cf[1] = 2.0 * dprime[X] * pprime[X];
+	Xsqr.cf[2] = pprime[X] * pprime[X];
 
-	/*  Substitute the resulting linear equations into the cone
-	 *  equation.
-	 */
-	(void) polyMul( &tfun[0], &tfun[0], &Xsqr );
-	(void) polyMul( &tfun[1], &tfun[1], &Ysqr );
+	Ysqr.dgr = 2;
+	Ysqr.cf[0] = dprime[Y] * dprime[Y];
+	Ysqr.cf[1] = 2.0 * dprime[Y] * pprime[Y];
+	Ysqr.cf[2] = pprime[Y] * pprime[Y];
 
-	R = tfun[2];
+	R.dgr = 1;
+	R.cf[0] = dprime[Z];
+	R.cf[1] = pprime[Z];
+
 	(void) polyScal( &R, ((tgc->tgc_C - tgc->tgc_A)/tgc->tgc_sH) );
 	R.cf[1] += tgc->tgc_A;
 	(void) polyMul( &R, &R, &Rsqr );
@@ -607,25 +631,26 @@ double		t[];
 	 *  then the cone equation reduces to a much simpler quadratic
 	 *  form.  Otherwise it is a (gah!) quartic equation.
 	 */
-	if ( ( tgc->tgc_A*tgc->tgc_D ) == ( tgc->tgc_C*tgc->tgc_B ) ){
-		if ( !NEAR_ZERO( tgc->tgc_A ) && !NEAR_ZERO( tgc->tgc_B ) ){
-			A_B = tgc->tgc_A/tgc->tgc_B;
-		} else {
-			A_B = tgc->tgc_C/tgc->tgc_D;
-		}
-		(void) polyScal( &Ysqr, ( A_B*A_B ) );
+	if ( tgc->tgc_AD_CB ){
+		(void) polyScal( &Ysqr, tgc->tgc_ABsq );
 		(void) polyAdd( &Xsqr, &Ysqr, &sum );
 		(void) polySub( &sum, &Rsqr, &C );
 	} else {
-		Q = tfun[2];
-		(void) polyScal( &Q, ((tgc->tgc_D - tgc->tgc_B)/tgc->tgc_sH) );
+		Q.dgr = 1;
+		Q.cf[0] = dprime[Z];
+		Q.cf[1] = pprime[Z];
+		(void)polyScal( &Q, ((tgc->tgc_D - tgc->tgc_B)/tgc->tgc_sH) );
 		Q.cf[1] += tgc->tgc_B;
 		(void) polyMul( &Q, &Q, &Qsqr );
 
 		(void) polyMul( &Qsqr, &Xsqr, &T1 );
 		(void) polyMul( &Rsqr, &Ysqr, &T2 );
 		(void) polyMul( &Rsqr, &Qsqr, &T3 );
-		(void) polySub( polyAdd( &T1, &T2, &sum ), &T3, &C );
+		(void) polyAdd( &T1, &T2, &sum );
+		(void) polySub( &sum, &T3, &C );
+	}
+	if( C.dgr != 0 && C.dgr != 2 && C.dgr != 4 )  {
+		fprintf(stderr, "stdCone:  equation is degree %d!\n", C.dgr);
 	}
 
 	/*  Since the equation must be either 2nd or 4th order, the root
@@ -650,7 +675,6 @@ double		t[];
 	/* Here, 'i' is number of points being returned */
 	if ( i != 0 && i != 2 && i != 4 ){
 		fprintf(stderr,"stdCone:  reduced %d to %d roots\n",npts,i);
-		pr_poly( &C );
 		pr_roots( npts, val );
 	}
 	return i;
