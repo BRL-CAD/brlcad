@@ -61,16 +61,27 @@ re_error( n )
 #define RETURN( c )	return (char *)0
 #define ERROR( n )	re_error( n )
 
-/* following for safety's sake */
+/* change the following global extern variables for safety's sake */
+#define braelist re_braelist
+#define braslist re_braslist
+#define	ebra	re_ebra
 #define	sed	re_sed
 #define	nbra	re_nbra
 #define	loc1	re_loc1
 #define	loc2	re_loc2
 #define	locs	re_locs
+#define nodelim	re_nodelim
 #define	circf	re_circf
+#define low	re_low
+#define size	re_size
+#define bittab	re_bittab
+
+/* change the following global extern functions for safety's sake */
 #define	compile	re_cmpl			/* avoid truncated name collision! */
 #define	step	re_step
 #define	advance	re_advance
+#define getrnge	re_getrnge
+#define ecmp	re_ecmp
 
 #include	<regexp.h>
 
