@@ -336,19 +336,6 @@ matp_t old_xlate;
 		nextdp = dir_lookup( rec.M.m_instname, LOOKUP_NOISY );
 		if( nextdp == DIR_NULL )
 			continue;
-		if( rec.M.m_brname[0] != '\0' )  {
-			register struct directory *tdp;	/* XXX */
-			/*
-			 * Create an alias.  First step towards full
-			 * branch naming.  User is responsible for his
-			 * branch names being unique.
-			 */
-			tdp = dir_lookup(rec.M.m_brname, LOOKUP_QUIET);
-			if( tdp != DIR_NULL )
-				nextdp = tdp; /* use existing alias */
-			else
-				nextdp=dir_add(rec.M.m_brname,nextdp->d_addr);
-		}
 		{
 			register int j;
 			for( j=0; j<4*4; j++ )
