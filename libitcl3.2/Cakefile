@@ -55,8 +55,9 @@ Makefile.MTYPE cache.MTYPE:		if not exist Makefile.MTYPE or not exist cache.MTYP
 		\R\A\N\L\I\B=\"RANLIB\"; \
 		\L\D\F\L\A\G\S=\"LDFLAGS\"; \
 		\S\H\L\I\B\_\L\D=\"BUILD_LIBRARY\"; \
+		\C\C=\"CC\"; \
 		 export INSTALL \C\F\L\A\G\S \R\A\N\L\I\B \L\D\F\L\A\G\S; \
-		 export \S\H\L\I\B\_\L\D \A\F\T\E\R\_\M\A\K\E; \
+		 export \S\H\L\I\B\_\L\D \C\C \A\F\T\E\R\_\M\A\K\E; \
 		 echo ../SRCDIR/configure ITCL_OPTS; \
 		 ../SRCDIR/configure ITCL_OPTS; \
 		 echo ../SRCDIR/fix_makefile.sh '>' Makefile.MTYPE; \

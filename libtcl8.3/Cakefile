@@ -46,7 +46,8 @@ Makefile.MTYPE cache.MTYPE:		if not exist Makefile.MTYPE or not exist cache.MTYP
 		\R\A\N\L\I\B=\"RANLIB\"; \
 		\L\D\F\L\A\G\S=\"LDFLAGS\"; \
 		\B\U\I\L\D\_\L\I\B\R\A\R\Y=\"BUILD_LIBRARY\"; \
-		 export \C\F\L\A\G\S \R\A\N\L\I\B \L\D\F\L\A\G\S \B\U\I\L\D\_\L\I\B\R\A\R\Y \A\F\T\E\R\_\M\A\K\E; \
+		\C\C=\"CC\"; \
+		 export \C\F\L\A\G\S \R\A\N\L\I\B \L\D\F\L\A\G\S \B\U\I\L\D\_\L\I\B\R\A\R\Y \C\C \A\F\T\E\R\_\M\A\K\E; \
 		 ../SRCDIR/"unix"/configure TCL_OPTS; \
 		../SRCDIR/fix_makefile.sh > Makefile.MTYPE)
 
