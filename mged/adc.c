@@ -43,7 +43,9 @@ static char RCSid[] = "@(#)$Header$ (BRL)";
 #define M_SQRT2_DIV2       0.70710678118654752440
 #endif
 
-void
+static void adc_print_vars();
+
+static void
 adc_model_To_adc_view()
 {
   MAT4X3PNT(adc_pos_view, model2view, adc_pos_model);
@@ -51,7 +53,7 @@ adc_model_To_adc_view()
   dv_yadc = adc_pos_view[Y] * GED_MAX;
 }
 
-void
+static void
 adc_grid_To_adc_view()
 {
   point_t model_pt;
@@ -64,7 +66,7 @@ adc_grid_To_adc_view()
   dv_yadc = adc_pos_view[Y] * GED_MAX;
 }
 
-void
+static void
 adc_view_To_adc_grid()
 {
   fastf_t f;
@@ -74,6 +76,74 @@ adc_view_To_adc_grid()
   VSETALL(model_pt, 0.0);
   MAT4X3PNT(view_pt, model2view, model_pt);
   VSUB2(adc_pos_grid, adc_pos_view, view_pt);
+}
+
+static void
+calc_adc_pos()
+{
+  if(adc_anchor_pos == 1){
+    adc_model_To_adc_view();
+    adc_view_To_adc_grid();
+  }else if(adc_anchor_pos == 2){
+    adc_grid_To_adc_view();
+    MAT4X3PNT(adc_pos_model, view2model, adc_pos_view);
+  }else{
+    adc_view_To_adc_grid();
+    MAT4X3PNT(adc_pos_model, view2model, adc_pos_view);
+  }
+}
+
+static void
+calc_adc_a1()
+{
+  if(adc_anchor_a1){
+    fastf_t angle;
+    fastf_t dx, dy;
+    point_t view_pt;
+
+    MAT4X3PNT(view_pt, model2view, adc_anchor_pt_a1);
+    dx = view_pt[X] * GED_MAX - dv_xadc;
+    dy = view_pt[Y] * GED_MAX - dv_yadc;
+
+    if(dx != 0 || dy != 0)
+      adc_a1 = RAD2DEG*atan2(dy, dx);
+  }
+}
+
+static void
+calc_adc_a2()
+{
+  if(adc_anchor_a2){
+    fastf_t angle;
+    fastf_t dx, dy;
+    point_t view_pt;
+
+    MAT4X3PNT(view_pt, model2view, adc_anchor_pt_a2);
+    dx = view_pt[X] * GED_MAX - dv_xadc;
+    dy = view_pt[Y] * GED_MAX - dv_yadc;
+
+    if(dx != 0 || dy != 0)
+      adc_a2 = RAD2DEG*atan2(dy, dx);
+  }
+}
+
+static void
+calc_adc_dst()
+{
+  if(adc_anchor_dst){
+    fastf_t dist;
+    fastf_t dx, dy;
+    point_t view_pt;
+
+    MAT4X3PNT(view_pt, model2view, adc_anchor_pt_dst);
+
+    dx = view_pt[X] * GED_MAX - dv_xadc;
+    dy = view_pt[Y] * GED_MAX - dv_yadc;
+    dist = sqrt(dx * dx + dy * dy);
+    adc_dst = dist * INV_GED;
+    dv_distadc = (dist / M_SQRT2_DIV2) - 2047;
+  }else
+    adc_dst = (dv_distadc * INV_GED + 1.0) * M_SQRT2_DIV2;
 }
 
 static void
@@ -159,59 +229,11 @@ adcursor()
   fastf_t t1, t2;
   fastf_t angle1, angle2;
   long idxy[2];
-  fastf_t dx, dy;
-  point_t model_pt;
-  point_t view_pt;
 
-  /*
-   * Calculate a-d cursor displacement.
-   */
-
-  if(adc_anchor_pos == 1){
-    adc_model_To_adc_view();
-    adc_view_To_adc_grid();
-  }else if(adc_anchor_pos == 2){
-    adc_grid_To_adc_view();
-    MAT4X3PNT(adc_pos_model, view2model, adc_pos_view);
-  }else{
-    adc_view_To_adc_grid();
-    MAT4X3PNT(adc_pos_model, view2model, adc_pos_view);
-  }
-
-  if(adc_anchor_a1){
-    fastf_t angle;
-
-    MAT4X3PNT(view_pt, model2view, adc_anchor_pt_a1);
-    dx = view_pt[X] * GED_MAX - dv_xadc;
-    dy = view_pt[Y] * GED_MAX - dv_yadc;
-
-    if(dx != 0 || dy != 0)
-      adc_a1 = RAD2DEG*atan2(dy, dx);
-  }
-
-  if(adc_anchor_a2){
-    fastf_t angle;
-
-    MAT4X3PNT(view_pt, model2view, adc_anchor_pt_a2);
-    dx = view_pt[X] * GED_MAX - dv_xadc;
-    dy = view_pt[Y] * GED_MAX - dv_yadc;
-
-    if(dx != 0 || dy != 0)
-      adc_a2 = RAD2DEG*atan2(dy, dx);
-  }
-
-  if(adc_anchor_dst){
-    fastf_t dist;
-
-    MAT4X3PNT(view_pt, model2view, adc_anchor_pt_dst);
-
-    dx = view_pt[X] * GED_MAX - dv_xadc;
-    dy = view_pt[Y] * GED_MAX - dv_yadc;
-    dist = sqrt(dx * dx + dy * dy);
-    adc_dst = dist * INV_GED;
-    dv_distadc = (dist / M_SQRT2_DIV2) - 2047;
-  }else
-    adc_dst = (dv_distadc * INV_GED + 1.0) * M_SQRT2_DIV2;
+  calc_adc_pos();
+  calc_adc_a1();
+  calc_adc_a2();
+  calc_adc_dst();
 
 #if 0
   idxy[0] = dv_xadc;
@@ -313,6 +335,7 @@ adc_reset()
 
 static char	adc_syntax[] = "\
  adc			toggle display of angle/distance cursor\n\
+ adc vars		print a list of all variables (i.e. var = val)\n\
  adc draw [#]		set or get the draw parameter\n\
  adc a1 [#]		set or get angle1\n\
  adc a2 [#]		set or get angle2\n\
@@ -335,6 +358,7 @@ static char	adc_syntax[] = "\
  adc reset		reset angles, location, and tick distance\n\
  adc help		prints this help message\n\
 ";
+
 int
 f_adc (clientData, interp, argc, argv)
 ClientData clientData;
@@ -667,6 +691,7 @@ char	**argv;
 
       adc_anchor_pos = i;
 
+      calc_adc_pos();
       dirty = 1;
       return TCL_OK;
     }
@@ -692,6 +717,7 @@ char	**argv;
       else
 	adc_anchor_a1 = 0;
 
+      calc_adc_a1();
       dirty = 1;
       return TCL_OK;
     }
@@ -720,6 +746,7 @@ char	**argv;
 	VMOVE(adc_anchor_pt_a1, user_pt);
       }
 
+      calc_adc_a1();
       dirty = 1;
       return TCL_OK;
     }
@@ -745,6 +772,7 @@ char	**argv;
       else
 	adc_anchor_a2 = 0;
 
+      calc_adc_a2();
       dirty = 1;
       return TCL_OK;
     }
@@ -773,6 +801,7 @@ char	**argv;
 	VMOVE(adc_anchor_pt_a2, user_pt);
       }
 
+      calc_adc_a2();
       dirty = 1;
       return TCL_OK;
     }
@@ -793,11 +822,12 @@ char	**argv;
     }else if(argc == 1){
       i = (int)user_pt[X];
 
-      if(i)
+      if(i){
 	adc_anchor_dst = 1;
-      else
+      }else
 	adc_anchor_dst = 0;
 
+      calc_adc_dst();
       dirty = 1;
       return TCL_OK;
     }
@@ -826,6 +856,7 @@ char	**argv;
 	VMOVE(adc_anchor_pt_dst, user_pt);
       }
 
+      calc_adc_dst();
       dirty = 1;
       return TCL_OK;
     }
@@ -835,7 +866,7 @@ char	**argv;
     return TCL_ERROR;
   }
 
-  if( strcmp(parameter, "reset") == 0)  {
+  if(strcmp(parameter, "reset") == 0){
     if (argc == 0) {
       adc_reset();
 
@@ -847,7 +878,12 @@ char	**argv;
     return TCL_ERROR;
   }
 
-  if( strcmp(parameter, "help") == 0)  {
+  if(strcmp(parameter, "vars") == 0){
+    adc_print_vars();
+    return TCL_OK;
+  }
+
+  if(strcmp(parameter, "help") == 0){
     Tcl_AppendResult(interp, "Usage:\n", adc_syntax, (char *)NULL);
     return TCL_OK;
   }
@@ -855,4 +891,27 @@ char	**argv;
   Tcl_AppendResult(interp, "ADC: unrecognized command: '",
 		   argv[1], "'\nUsage:\n", adc_syntax, (char *)NULL);
   return TCL_ERROR;
+}
+
+static void
+adc_print_vars()
+{
+  struct bu_vls vls;
+
+  bu_vls_init(&vls);
+  bu_vls_printf(&vls, "draw = %d\n", adc_draw);
+  bu_vls_printf(&vls, "a1 = %.15e\n", adc_a1);
+  bu_vls_printf(&vls, "a2 = %.15e\n", adc_a2);
+  bu_vls_printf(&vls, "dst = %.15e\n", adc_dst);
+  bu_vls_printf(&vls, "hv = %.15e %.15e\n", adc_pos_grid[X], adc_pos_grid[Y]);
+  bu_vls_printf(&vls, "xyz = %.15e %.15e %.15e\n", V3ARGS(adc_pos_model));
+  bu_vls_printf(&vls, "anchor_pos = %d\n", adc_anchor_pos);
+  bu_vls_printf(&vls, "anchor_a1 = %d\n", adc_anchor_a1);
+  bu_vls_printf(&vls, "anchor_a2 = %d\n", adc_anchor_a2);
+  bu_vls_printf(&vls, "anchor_dst = %d\n", adc_anchor_dst);
+  bu_vls_printf(&vls, "anchorpoint_a1 = %.15e %.15e %.15e\n", V3ARGS(adc_anchor_pt_a1));
+  bu_vls_printf(&vls, "anchorpoint_a2 = %.15e %.15e %.15e\n", V3ARGS(adc_anchor_pt_a2));
+  bu_vls_printf(&vls, "anchorpoint_dst = %.15e %.15e %.15e\n", V3ARGS(adc_anchor_pt_dst));
+  Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+  bu_vls_free(&vls);
 }
